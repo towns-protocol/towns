@@ -1144,38 +1144,38 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@bufbuild/protobuf@npm:1.9.0, @bufbuild/protobuf@npm:^1.7.2, @bufbuild/protobuf@npm:^1.9.0":
-  version: 1.9.0
-  resolution: "@bufbuild/protobuf@npm:1.9.0"
-  checksum: 2e276d3cf1367683e04a85fbb6fd361e29ec91cba0b6ab9dc3e2bfbbd886c7f781036ffcbabeb352951344a2004b93dbba2f2fdb5731c6e6967b36c804a22a8e
+"@bufbuild/protobuf@npm:2.2.3, @bufbuild/protobuf@npm:^2.2.2, @bufbuild/protobuf@npm:^2.2.3":
+  version: 2.2.3
+  resolution: "@bufbuild/protobuf@npm:2.2.3"
+  checksum: 567ca0497669a8944fe84a9fdfa236e4a91d5879190c0ec0c8727d5220cbc21a85d06a114ac1eb35387fc5cb1dcbb7adc583c4d4f6a2ecb34fbe61dcaa7e7e9b
   languageName: node
   linkType: hard
 
-"@bufbuild/protoc-gen-es@npm:^1.9.0":
-  version: 1.9.0
-  resolution: "@bufbuild/protoc-gen-es@npm:1.9.0"
+"@bufbuild/protoc-gen-es@npm:^2.2.2":
+  version: 2.2.3
+  resolution: "@bufbuild/protoc-gen-es@npm:2.2.3"
   dependencies:
-    "@bufbuild/protobuf": ^1.9.0
-    "@bufbuild/protoplugin": 1.9.0
+    "@bufbuild/protobuf": ^2.2.3
+    "@bufbuild/protoplugin": 2.2.3
   peerDependencies:
-    "@bufbuild/protobuf": 1.9.0
+    "@bufbuild/protobuf": 2.2.3
   peerDependenciesMeta:
     "@bufbuild/protobuf":
       optional: true
   bin:
     protoc-gen-es: bin/protoc-gen-es
-  checksum: 81dced21c0015ed6f889f48a0ae93adb92404325b134be586c0d4d71e112bc0a607698897b394d80d4d02d43c045c4f2ee6d562cf8aa95aa3bb0c147f4a73438
+  checksum: d75c7de1c5ea8ae59b28ae603ed1eef4b89cd335604086d8b03c7504c8b641c58bb307634531b1943de2c5203afd135b640f1b598df03e2f83e6185c738712f0
   languageName: node
   linkType: hard
 
-"@bufbuild/protoplugin@npm:1.9.0, @bufbuild/protoplugin@npm:^1.7.2":
-  version: 1.9.0
-  resolution: "@bufbuild/protoplugin@npm:1.9.0"
+"@bufbuild/protoplugin@npm:2.2.3":
+  version: 2.2.3
+  resolution: "@bufbuild/protoplugin@npm:2.2.3"
   dependencies:
-    "@bufbuild/protobuf": 1.9.0
-    "@typescript/vfs": ^1.4.0
-    typescript: 4.5.2
-  checksum: 12fd0a740049f12373b31ef8b4b4c99624b277177b691fd19fb458a7a79ddb652d17fe6d4856c5bdefae25ddb277c819810da79cd516b5b67bc3db9049981bbf
+    "@bufbuild/protobuf": 2.2.3
+    "@typescript/vfs": ^1.5.2
+    typescript: 5.4.5
+  checksum: d679f1e4f9a4e9846bfbd68923807ae3c219ba53f6cd5bc3d234e9843c3c49af7ead2a2ce4323dc1542f6c923451e65daaf653cf6439c47ee9a35565d005668f
   languageName: node
   linkType: hard
 
@@ -1259,54 +1259,32 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@connectrpc/connect-node@npm:^1.4.0":
-  version: 1.4.0
-  resolution: "@connectrpc/connect-node@npm:1.4.0"
-  dependencies:
-    undici: ^5.28.3
+"@connectrpc/connect-node@npm:^2.0.0":
+  version: 2.0.2
+  resolution: "@connectrpc/connect-node@npm:2.0.2"
   peerDependencies:
-    "@bufbuild/protobuf": ^1.4.2
-    "@connectrpc/connect": 1.4.0
-  checksum: d13dc98d25e7321cce9969a009788874046ae9c0848922ecd2690dddc833b732fe756d486213fe0de55b1e4ae68024a45505d193ba0a927c6ec5b8a6d6a599e0
+    "@bufbuild/protobuf": ^2.2.0
+    "@connectrpc/connect": 2.0.2
+  checksum: eefc554b816a3b4d92731630e542ffa5e92b93174ebaff8a0c9d339cd5dc70ca7fc250af41c7e1b33211b6db6f3b7ea918a13e97806dd0b47b5b109afa86d434
   languageName: node
   linkType: hard
 
-"@connectrpc/connect-web@npm:^1.4.0":
-  version: 1.4.0
-  resolution: "@connectrpc/connect-web@npm:1.4.0"
+"@connectrpc/connect-web@npm:^2.0.0":
+  version: 2.0.2
+  resolution: "@connectrpc/connect-web@npm:2.0.2"
   peerDependencies:
-    "@bufbuild/protobuf": ^1.4.2
-    "@connectrpc/connect": 1.4.0
-  checksum: bf53f5cdd0be69be1cdebf7d7e01f74936f83b410fb26d7f515284771290e6c24f5701e6144ea600805fa2e39d5255ef009210f7b1c35f1dade60005e231b022
+    "@bufbuild/protobuf": ^2.2.0
+    "@connectrpc/connect": 2.0.2
+  checksum: 5eb802c68bf8fd21295f1c381baebf7ce7a4e0ae9c7bb549f47eceb6f569f4cd4e372fe057d8a7407713738827a2e6a0a99065345eb5e4050d8633a0dd8443ff
   languageName: node
   linkType: hard
 
-"@connectrpc/connect@npm:^1.4.0":
-  version: 1.4.0
-  resolution: "@connectrpc/connect@npm:1.4.0"
+"@connectrpc/connect@npm:^2.0.0":
+  version: 2.0.2
+  resolution: "@connectrpc/connect@npm:2.0.2"
   peerDependencies:
-    "@bufbuild/protobuf": ^1.4.2
-  checksum: 388145ea90b3216f133b34d96a47dfd0273dfa12c4b4963c7223cf45bdcbf8b3490ab234dda34fd42a7112ad9f51f22efc013f3183744a3f2ae65b825917b870
-  languageName: node
-  linkType: hard
-
-"@connectrpc/protoc-gen-connect-es@npm:^1.4.0":
-  version: 1.4.0
-  resolution: "@connectrpc/protoc-gen-connect-es@npm:1.4.0"
-  dependencies:
-    "@bufbuild/protobuf": ^1.7.2
-    "@bufbuild/protoplugin": ^1.7.2
-  peerDependencies:
-    "@bufbuild/protoc-gen-es": ^1.7.2
-    "@connectrpc/connect": 1.4.0
-  peerDependenciesMeta:
-    "@bufbuild/protoc-gen-es":
-      optional: true
-    "@connectrpc/connect":
-      optional: true
-  bin:
-    protoc-gen-connect-es: bin/protoc-gen-connect-es
-  checksum: 90d91a0bdcb8e1ed6d012b5df2ca6d9b41113f2ac252bcb59eec7378a8f490bba3f5c38f2f32901d34fb9d58d635a20b79125abf0b411c77eb4d732f87f944fe
+    "@bufbuild/protobuf": ^2.2.0
+  checksum: a5c12c09e73810b19221df5ce9a9434dcfdff13c4d57086bb8bfbe9fd92b7216262312033ed3ab4339ca6aeaf39b3dc0a3762e0d009242202db214edeec15fc4
   languageName: node
   linkType: hard
 
@@ -6635,7 +6613,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@river-build/dlog@workspace:packages/dlog"
   dependencies:
-    "@bufbuild/protobuf": ^1.9.0
+    "@bufbuild/protobuf": ^2.2.2
     "@river-build/proto": "workspace:^"
     "@types/debug": ^4.1.8
     "@typescript-eslint/eslint-plugin": ^6.10.0
@@ -6665,7 +6643,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@river-build/encryption@workspace:packages/encryption"
   dependencies:
-    "@bufbuild/protobuf": ^1.9.0
+    "@bufbuild/protobuf": ^2.2.2
     "@ethereumjs/util": ^8.0.1
     "@matrix-org/olm": ^3.2.15
     "@river-build/dlog": "workspace:^"
@@ -6799,9 +6777,8 @@ __metadata:
   resolution: "@river-build/proto@workspace:packages/proto"
   dependencies:
     "@bufbuild/buf": ^1.32.0
-    "@bufbuild/protobuf": ^1.9.0
-    "@bufbuild/protoc-gen-es": ^1.9.0
-    "@connectrpc/protoc-gen-connect-es": ^1.4.0
+    "@bufbuild/protobuf": ^2.2.2
+    "@bufbuild/protoc-gen-es": ^2.2.2
     "@river-build/proto-source": "workspace:^"
     "@types/node": ^20.5.0
     lodash.debounce: ^4.0.8
@@ -6847,10 +6824,10 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@river-build/sdk@workspace:packages/sdk"
   dependencies:
-    "@bufbuild/protobuf": ^1.9.0
-    "@connectrpc/connect": ^1.4.0
-    "@connectrpc/connect-node": ^1.4.0
-    "@connectrpc/connect-web": ^1.4.0
+    "@bufbuild/protobuf": ^2.2.2
+    "@connectrpc/connect": ^2.0.0
+    "@connectrpc/connect-node": ^2.0.0
+    "@connectrpc/connect-web": ^2.0.0
     "@ethereumjs/util": ^8.0.1
     "@river-build/dlog": "workspace:^"
     "@river-build/encryption": "workspace:^"
@@ -6895,7 +6872,7 @@ __metadata:
   dependencies:
     "@aws-sdk/client-cloudfront": ^3.645.0
     "@bufbuild/buf": ^1.32.0
-    "@bufbuild/protobuf": ^1.9.0
+    "@bufbuild/protobuf": ^2.2.2
     "@fastify/cors": ^9.0.1
     "@river-build/dlog": "workspace:^"
     "@river-build/encryption": "workspace:^"
@@ -6937,7 +6914,7 @@ __metadata:
   resolution: "@river-build/stress@workspace:packages/stress"
   dependencies:
     "@babel/node": ^7.23.9
-    "@bufbuild/protobuf": ^1.9.0
+    "@bufbuild/protobuf": ^2.2.2
     "@river-build/dlog": "workspace:^"
     "@river-build/encryption": "workspace:^"
     "@river-build/proto": "workspace:^"
@@ -9320,12 +9297,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@typescript/vfs@npm:^1.4.0":
-  version: 1.4.0
-  resolution: "@typescript/vfs@npm:1.4.0"
+"@typescript/vfs@npm:^1.5.2":
+  version: 1.6.1
+  resolution: "@typescript/vfs@npm:1.6.1"
   dependencies:
     debug: ^4.1.1
-  checksum: 67219c9354d142ef8259da172066db043133d8b6cc0a5d862b9867d5950c5f6c9b816e8b29f8901e8cd2572003282fbbec097e53932bc6da01d0fa2e40520014
+  peerDependencies:
+    typescript: "*"
+  checksum: 7908de7875283a11b7272f2f0df5bf02c708e93d871d6d1466001af2bae7e66c6f9f56733fa118294597f7bf002b89b0ba05545e5fe493c8e4151827020649db
   languageName: node
   linkType: hard
 
@@ -29095,16 +29074,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"typescript@npm:4.5.2":
-  version: 4.5.2
-  resolution: "typescript@npm:4.5.2"
-  bin:
-    tsc: bin/tsc
-    tsserver: bin/tsserver
-  checksum: 74f9ce65d532bdf5d0214b3f60cf37992180023388c87a11ee6f838a803067ef0b63c600fa501b0deb07f989257dce1e244c9635ed79feca40bbccf6e0aa1ebc
-  languageName: node
-  linkType: hard
-
 "typescript@npm:5.3.3, typescript@npm:^5.1.6":
   version: 5.3.3
   resolution: "typescript@npm:5.3.3"
@@ -29122,6 +29091,16 @@ __metadata:
     tsc: bin/tsc
     tsserver: bin/tsserver
   checksum: 96d80fde25a09bcb04d399082fb27a808a9e17c2111e43849d2aafbd642d835e4f4ef0de09b0ba795ec2a700be6c4c2c3f62bf4660c05404c948727b5bbfb32a
+  languageName: node
+  linkType: hard
+
+"typescript@npm:5.4.5":
+  version: 5.4.5
+  resolution: "typescript@npm:5.4.5"
+  bin:
+    tsc: bin/tsc
+    tsserver: bin/tsserver
+  checksum: 53c879c6fa1e3bcb194b274d4501ba1985894b2c2692fa079db03c5a5a7140587a1e04e1ba03184605d35f439b40192d9e138eb3279ca8eee313c081c8bcd9b0
   languageName: node
   linkType: hard
 
@@ -29145,16 +29124,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"typescript@patch:typescript@4.5.2#~builtin<compat/typescript>":
-  version: 4.5.2
-  resolution: "typescript@patch:typescript@npm%3A4.5.2#~builtin<compat/typescript>::version=4.5.2&hash=bcec9a"
-  bin:
-    tsc: bin/tsc
-    tsserver: bin/tsserver
-  checksum: e25e689eba64f7da7cfc43f8ea76cac7176b56caba42655f0a4cb29c0b7c36e67ca54f33df95902859f56108464245d8b45bcdfe21e3d66d9560feb8db780246
-  languageName: node
-  linkType: hard
-
 "typescript@patch:typescript@5.3.3#~builtin<compat/typescript>, typescript@patch:typescript@^5.1.6#~builtin<compat/typescript>":
   version: 5.3.3
   resolution: "typescript@patch:typescript@npm%3A5.3.3#~builtin<compat/typescript>::version=5.3.3&hash=e012d7"
@@ -29172,6 +29141,16 @@ __metadata:
     tsc: bin/tsc
     tsserver: bin/tsserver
   checksum: c1b669146bca5529873aae60870e243fa8140c85f57ca32c42f898f586d73ce4a6b4f6bb02ae312729e214d7f5859a0c70da3e527a116fdf5ad00c9fc733ecc6
+  languageName: node
+  linkType: hard
+
+"typescript@patch:typescript@5.4.5#~builtin<compat/typescript>":
+  version: 5.4.5
+  resolution: "typescript@patch:typescript@npm%3A5.4.5#~builtin<compat/typescript>::version=5.4.5&hash=d69c25"
+  bin:
+    tsc: bin/tsc
+    tsserver: bin/tsserver
+  checksum: 2373c693f3b328f3b2387c3efafe6d257b057a142f9a79291854b14ff4d5367d3d730810aee981726b677ae0fd8329b23309da3b6aaab8263dbdccf1da07a3ba
   languageName: node
   linkType: hard
 
@@ -29311,7 +29290,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"undici@npm:5.28.4, undici@npm:^5.28.3, undici@npm:^5.28.4":
+"undici@npm:5.28.4, undici@npm:^5.28.4":
   version: 5.28.4
   resolution: "undici@npm:5.28.4"
   dependencies:

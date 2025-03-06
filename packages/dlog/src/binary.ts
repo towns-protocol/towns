@@ -1,4 +1,5 @@
-import { protoBase64 } from '@bufbuild/protobuf'
+// eslint-disable-next-line import/no-unresolved
+import { base64Decode, base64Encode } from '@bufbuild/protobuf/wire'
 import {
     bytesToHex,
     bytesToUtf8,
@@ -8,11 +9,11 @@ import {
 } from 'ethereum-cryptography/utils'
 
 export function bin_fromBase64(base64String: string): Uint8Array {
-    return protoBase64.dec(base64String)
+    return base64Decode(base64String)
 }
 
 export function bin_toBase64(uint8Array: Uint8Array): string {
-    return protoBase64.enc(uint8Array)
+    return base64Encode(uint8Array)
 }
 
 export function bin_fromHexString(hexString: string): Uint8Array {

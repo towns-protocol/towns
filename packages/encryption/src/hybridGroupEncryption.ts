@@ -1,8 +1,14 @@
-import { EncryptedData, EncryptedDataVersion, HybridGroupSessionKey } from '@river-build/proto'
+import {
+    EncryptedData,
+    EncryptedDataSchema,
+    EncryptedDataVersion,
+    HybridGroupSessionKey,
+} from '@river-build/proto'
 import { EncryptionAlgorithm, IEncryptionParams } from './base'
 import { GroupEncryptionAlgorithmId } from './olmLib'
 import { dlog } from '@river-build/dlog'
 import { encryptAesGcm, importAesGsmKeyBytes } from './cryptoAesGcm'
+import { create } from '@bufbuild/protobuf'
 
 const log = dlog('csb:encryption:groupEncryption')
 
@@ -83,7 +89,7 @@ export class HybridGroupEncryption extends EncryptionAlgorithm {
         const key = await importAesGsmKeyBytes(sessionKey.key)
         const payloadBytes = new TextEncoder().encode(payload)
         const { ciphertext, iv } = await encryptAesGcm(key, payloadBytes)
-        return new EncryptedData({
+        return create(EncryptedDataSchema, {
             algorithm: this.algorithm,
             senderKey: this.device.deviceCurve25519Key!,
             sessionIdBytes: sessionKey.sessionId,
@@ -103,7 +109,7 @@ export class HybridGroupEncryption extends EncryptionAlgorithm {
         const sessionKey: HybridGroupSessionKey = await this._ensureOutboundSession(streamId)
         const key = await importAesGsmKeyBytes(sessionKey.key)
         const { ciphertext, iv } = await encryptAesGcm(key, payload)
-        return new EncryptedData({
+        return create(EncryptedDataSchema, {
             algorithm: this.algorithm,
             senderKey: this.device.deviceCurve25519Key!,
             sessionIdBytes: sessionKey.sessionId,
