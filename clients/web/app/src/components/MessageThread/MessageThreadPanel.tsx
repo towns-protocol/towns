@@ -143,7 +143,7 @@ export const MessageThreadPanel = (props: Props) => {
                             <MessageTimeline
                                 align="bottom"
                                 highlightId={highlightId}
-                                groupByUser={false}
+                                groupByUser={tickerAttachment ? true : false}
                             />
                         </MessageTimelineWrapper>
                     </Stack>

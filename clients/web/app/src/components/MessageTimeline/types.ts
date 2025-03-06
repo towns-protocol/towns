@@ -6,6 +6,7 @@ import {
     RedactedMessageRenderEvent,
     RenderEvent,
     ThreadUpdateRenderEvent,
+    TokenTransferRenderEvent,
     UserMessagesRenderEvent,
 } from './util/getEventsByDate'
 
@@ -25,6 +26,7 @@ export type ListItem =
               | EncryptedMessageRenderEvent
               | RedactedMessageRenderEvent
               | MissingMessageRenderEvent
+              | TokenTransferRenderEvent
       }
     | { key: string; type: 'thread-update'; item: ThreadUpdateRenderEvent }
     | {

@@ -24,10 +24,12 @@ import {
     MissingMessageRenderEvent,
     RedactedMessageRenderEvent,
     RenderEventType,
+    TokenTransferRenderEvent,
     getEventsByDate,
     isChannelMessage,
     isMissingMessage,
     isRedactedChannelMessage,
+    isTokenTransfer,
 } from './util/getEventsByDate'
 import { usePersistedUnreadMarkers } from './hooks/usePersistedUnreadMarkers'
 import { useScrollback } from './hooks/useScrollback'
@@ -243,6 +245,7 @@ export const MessageTimeline = (props: Props) => {
                                 | EncryptedMessageRenderEvent
                                 | RedactedMessageRenderEvent
                                 | MissingMessageRenderEvent
+                                | TokenTransferRenderEvent
 
                             if (isChannelMessage(event)) {
                                 item = {
@@ -265,6 +268,13 @@ export const MessageTimeline = (props: Props) => {
                                     }
                                 } else {
                                     item = null
+                                }
+                            } else if (isTokenTransfer(event)) {
+                                item = {
+                                    type: RenderEventType.TokenTransfer,
+                                    key: stableKey,
+                                    event,
+                                    displayContext: getMessageDisplayContext(index, events.length),
                                 }
                             } else if (isMissingMessage(event)) {
                                 item = {

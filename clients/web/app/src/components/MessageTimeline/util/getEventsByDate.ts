@@ -64,6 +64,7 @@ export type ZStreamMembershipEvent = Omit<TimelineEvent, 'content'> & {
 
 export type ZTokenTransferEvent = Omit<TimelineEvent, 'content'> & {
     content: TokenTransferEvent
+    isRedacted: false
 }
 
 export type ZInceptionEvent = Omit<TimelineEvent, 'content'> & { content: InceptionEvent }
@@ -80,6 +81,7 @@ export interface UserMessagesRenderEvent extends BaseEvent {
         | ZChannelMessageEncryptedEvent
         | ZChannelMessageRedactedEvent
         | ZRoomMissingMessageEvent
+        | ZTokenTransferEvent
     )[]
 }
 
@@ -159,6 +161,7 @@ export interface TokenTransferRenderEvent extends BaseEvent {
     type: RenderEventType.TokenTransfer
     key: string
     event: ZTokenTransferEvent
+    displayContext: 'single' | 'head' | 'body' | 'tail'
 }
 
 const isInception = (event: TimelineEvent): event is ZInceptionEvent => {
@@ -302,7 +305,8 @@ export const getEventsByDate = (
             if (
                 isChannelMessage(event) ||
                 isEncryptedChannelMessage(event) ||
-                isMissingMessage(event)
+                isMissingMessage(event) ||
+                isTokenTransfer(event)
             ) {
                 if (!isThread && event.threadParentId) {
                     // skip messages from threads if not applicable
@@ -320,7 +324,8 @@ export const getEventsByDate = (
                             (r) =>
                                 r.type === RenderEventType.UserMessages ||
                                 r.type === RenderEventType.Message ||
-                                r.type === RenderEventType.RedactedMessage,
+                                r.type === RenderEventType.RedactedMessage ||
+                                r.type === RenderEventType.TokenTransfer,
                         )
                     ) {
                         group.isNew = true
@@ -337,7 +342,7 @@ export const getEventsByDate = (
 
                 const userGroup =
                     groupByUser &&
-                    (!isThread || index > 1) &&
+                    index > 1 &&
                     canGroupWithPrevMessage(prevEvent, event, inlinedReplies)
 
                 if (userGroup) {
@@ -403,16 +408,6 @@ export const getEventsByDate = (
                 renderEvents.push({
                     type: RenderEventType.ChannelProperties,
                     key: `room-properties-${event.eventId}`,
-                    event,
-                })
-            } else if (isTokenTransfer(event)) {
-                if (!isThread && event.threadParentId) {
-                    // skip messages from threads if not applicable
-                    return result
-                }
-                renderEvents.push({
-                    type: RenderEventType.TokenTransfer,
-                    key: `token-transfer-${event.eventId}`,
                     event,
                 })
             }
