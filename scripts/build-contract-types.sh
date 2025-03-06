@@ -7,15 +7,6 @@ IGNORED="${1:-}"
 FROZEN="${2:-}"
 ABI_DIR="packages/generated/dev/abis"
 
-# some packages strictly don't want to build contract types. but since this script
-# is coupled with the build process, we need to allow opting out of it.
-# examples include: stream-metadata service, xchain monitor, metrics-aggregator
-SKIP_BUILD_CONTRACT_TYPES="${SKIP_BUILD_CONTRACT_TYPES:-false}"
-if [ "$SKIP_BUILD_CONTRACT_TYPES" = "true" ]; then
-  echo "Skipping build-contract-types.sh"
-  exit 0
-fi
-
 yarn turbo build --filter=@river-build/contracts
 
 CONTRACT_INTERFACES="(IDiamond|IDiamondCut|IArchitect|ILegacyArchitect|IProxyManager|IPausable|IEntitlementsManager|IChannel|IRoles|IMulticall|IRuleEntitlement|IRuleEntitlementV2|IWalletLink|INodeRegistry|IOperatorRegistry|IStreamRegistry|OwnableFacet|TokenPausableFacet|UserEntitlement|ISpaceOwner|MockERC721A|MembershipFacet|IMembershipMetadata|Member|IBanning|IPricingModules|ICrossChainEntitlement|MockEntitlementGated|PrepayFacet|IERC721AQueryable|IEntitlementDataQueryable|PlatformRequirementsFacet|IERC721A|INodeOperator|ISpaceDelegation|IEntitlementChecker|IERC5267|ICreateSpace|IDropFacet|ITownsPoints|ITipping|IReview)"

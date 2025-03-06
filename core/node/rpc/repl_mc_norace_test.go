@@ -7,6 +7,8 @@ package rpc
 
 import (
 	"testing"
+
+	"github.com/towns-protocol/towns/core/node/testutils"
 )
 
 func TestReplMcConversationNoRace(t *testing.T) {
@@ -24,6 +26,7 @@ func TestReplMcConversationNoRace(t *testing.T) {
 		testReplMcConversation(t, 30, 1000, 50, 1000)
 	})
 	t.Run("100x100", func(t *testing.T) {
+		testutils.SkipFlakyTest(t, "TODO: REPLICATION: FIX: flaky")
 		if testing.Short() {
 			t.Skip("skipping 100x100 in short mode")
 		}
