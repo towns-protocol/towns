@@ -233,6 +233,29 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
   }
 
   /// @inheritdoc IStreamRegistry
+  function syncNodesOnStreams(uint256 start, uint256 stop) external {
+    uint256 end;
+    unchecked {
+      uint256 streamCount = ds.streams.length();
+      uint256 maxStreamIndex = FixedPointMathLib.min(stop, streamCount);
+      uint256 count = FixedPointMathLib.zeroFloorSub(maxStreamIndex, start);
+      end = start + count;
+    }
+
+    unchecked {
+      for (; start < end; ++start) {
+        bytes32 streamId = ds.streams.at(start);
+        Stream storage stream = ds.streamById[streamId];
+        address[] storage nodes = stream.nodes;
+        uint256 nodeCount = nodes.length;
+        for (uint256 i; i < nodeCount; ++i) {
+          ds.streamIdsByNode[nodes[i]].add(streamId);
+        }
+      }
+    }
+  }
+
+  /// @inheritdoc IStreamRegistry
   function getStream(
     bytes32 streamId
   ) external view returns (Stream memory stream) {
@@ -277,23 +300,6 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
     address nodeAddress
   ) external view returns (uint256 count) {
     count = ds.streamIdsByNode[nodeAddress].length();
-  }
-
-  /// @inheritdoc IStreamRegistry
-  function getStreamsOnNode(
-    address nodeAddress
-  ) external view returns (StreamWithId[] memory streams) {
-    EnumerableSet.Bytes32Set storage streamIds = ds.streamIdsByNode[
-      nodeAddress
-    ];
-    uint256 streamCount = streamIds.length();
-    streams = new StreamWithId[](streamCount);
-
-    for (uint256 i; i < streamCount; ++i) {
-      StreamWithId memory stream = streams[i];
-      stream.id = streamIds.at(i);
-      stream.stream = ds.streamById[stream.id];
-    }
   }
 
   /// @inheritdoc IStreamRegistry

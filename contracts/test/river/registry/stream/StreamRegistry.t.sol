@@ -571,14 +571,18 @@ contract StreamRegistryTest is
     assertEq(genesisMiniblockHash, SAMPLE_STREAM.genesisMiniblockHash);
   }
 
-  function test_getStreamsOnNode()
+  function test_getPaginatedStreamsOnNode()
     public
     givenNodeOperatorIsApproved(OPERATOR)
     givenNodeIsRegistered(OPERATOR, NODE, "url")
   {
     _addStreams();
 
-    StreamWithId[] memory streams = streamRegistry.getStreamsOnNode(NODE);
+    StreamWithId[] memory streams = streamRegistry.getPaginatedStreamsOnNode(
+      NODE,
+      0,
+      10
+    );
 
     assertEq(streams.length, 10);
     for (uint256 i; i < streams.length; ++i) {

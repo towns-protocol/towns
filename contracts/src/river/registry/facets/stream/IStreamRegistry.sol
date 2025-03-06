@@ -91,6 +91,13 @@ interface IStreamRegistry is IStreamRegistryBase {
   function getStream(bytes32 streamId) external view returns (Stream memory);
 
   /**
+   * @notice Sync node addresses for streams in a range to `streamIdsByNode` mapping
+   * @param start The starting index for pagination
+   * @param stop The ending index for pagination, exclusive
+   */
+  function syncNodesOnStreams(uint256 start, uint256 stop) external;
+
+  /**
    * @notice Set the last miniblock for multiple streams in a batch operation
    * @param miniblocks Array of SetMiniblock structs containing stream IDs and their last miniblock information
    * @dev Only callable by registered nodes
@@ -128,10 +135,6 @@ interface IStreamRegistry is IStreamRegistryBase {
   function getStreamCountOnNode(
     address nodeAddress
   ) external view returns (uint256);
-
-  function getStreamsOnNode(
-    address nodeAddress
-  ) external view returns (StreamWithId[] memory streams);
 
   function getPaginatedStreamsOnNode(
     address nodeAddress,
