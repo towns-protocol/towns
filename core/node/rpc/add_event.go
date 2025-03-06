@@ -32,34 +32,9 @@ func (s *Service) localAddEvent(
 	log.Debugw("localAddEvent", "parsedEvent", parsedEvent)
 
 	if parsedEvent.MiniblockRef.Num >= 0 {
-		// before trying to add the event to the stream schedule a sync request if outdated.
-		var timeout <-chan time.Time
-		scheduled := false
-		for {
-			// TODO: this has the potential to cause a lot of syn stream tasks.
-			//  Consider not scheduling a sync task when the node is almost up to date and trust on the client retry mechanism
-			streamUpToDate := streamView.GetStats().LastMiniblockNum >= parsedEvent.MiniblockRef.Num
-			if streamUpToDate {
-				break
-			}
-
-			if !scheduled {
-				s.cache.SubmitSyncStreamTask(ctx, localStream)
-				scheduled = true
-				timeout = time.After(5000 * time.Millisecond)
-			}
-
-			select {
-			case <-time.After(10 * time.Millisecond):
-				streamView, err = localStream.GetViewIfLocal(ctx)
-				if err != nil {
-					return nil, err
-				}
-			case <-timeout:
-				return nil, RiverError(Err_MINIBLOCK_TOO_NEW, "Miniblock too new").Func("localAddEvent")
-			case <-ctx.Done():
-				return nil, ctx.Err()
-			}
+		streamView, err = s.getStreamViewForAddEvent(ctx, streamView, parsedEvent, localStream, err)
+		if err != nil {
+			return nil, err
 		}
 	}
 
@@ -89,6 +64,50 @@ func (s *Service) localAddEvent(
 		return connect.NewResponse(&AddEventResponse{
 			NewEvents: newEvents,
 		}), nil
+	}
+}
+
+// getStreamViewForAddEvent returns the StreamView for the given StreamId that is up to date to
+// add the given parsedEvent.
+func (s *Service) getStreamViewForAddEvent(
+	ctx context.Context,
+	streamView *StreamView,
+	parsedEvent *ParsedEvent,
+	localStream *Stream,
+	err error,
+) (*StreamView, error) {
+	retryCount := 0
+	backoff := BackoffTracker{
+		NextDelay:  100 * time.Millisecond,
+		Multiplier: 2,
+		Divisor:    1,
+	}
+
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	for {
+		stats := streamView.GetStats()
+		streamUpToDate := stats.LastMiniblockNum >= parsedEvent.MiniblockRef.Num
+		if streamUpToDate {
+			return streamView, nil
+		}
+
+		retryCount++
+		if retryCount == 5 { // schedules task after 100ms + 200ms + 400ms + 800ms = 1500ms
+			s.cache.SubmitSyncStreamTask(s.serverCtx, localStream)
+		}
+
+		if err := backoff.Wait(ctx, RiverError(Err_BAD_BLOCK_NUMBER, "Stream out-of-sync",
+			"streamBlockNum", stats.LastMiniblockNum,
+			"eventBlockNum", parsedEvent.MiniblockRef.Num)); err != nil {
+			return nil, err
+		}
+
+		streamView, err = localStream.GetViewIfLocal(ctx)
+		if err != nil {
+			return nil, err
+		}
 	}
 }
 

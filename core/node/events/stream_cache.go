@@ -69,11 +69,13 @@ type StreamCache struct {
 	streamCacheUnloadedGauge prometheus.Gauge
 	streamCacheRemoteGauge   prometheus.Gauge
 
-	stoppedMu                         sync.RWMutex
-	onlineSyncWorkerPool              *workerpool.WorkerPool
+	stoppedMu sync.RWMutex
+	stopped   bool
+
 	onlineSyncStreamTasksInProgressMu deadlock.Mutex
 	onlineSyncStreamTasksInProgress   mapset.Set[StreamId]
-	stopped                           bool
+	
+	onlineSyncWorkerPool *workerpool.WorkerPool
 
 	disableCallbacks bool
 }
