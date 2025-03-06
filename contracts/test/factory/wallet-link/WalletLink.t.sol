@@ -10,7 +10,7 @@ import {Vm} from "forge-std/Test.sol";
 import {LibString} from "solady/utils/LibString.sol";
 import {SCL_EIP6565_UTILS} from "crypto-lib/lib/libSCL_eddsaUtils.sol";
 import {WalletLib} from "contracts/src/factory/facets/wallet-link/libraries/WalletLib.sol";
-import {SolanaUtils} from "contracts/test/factory/wallet-link/SolanaUtils.sol";
+import {SolanaUtils} from "contracts/src/factory/facets/wallet-link/libraries/SolanaUtils.sol";
 
 // contracts
 import {DeployBase} from "contracts/scripts/common/DeployBase.s.sol";
@@ -27,12 +27,14 @@ contract WalletLinkTest is IWalletLinkBase, BaseSetup, DeployBase {
   Vm.Wallet internal wallet;
   Vm.Wallet internal smartAccount;
 
+  Vm.Wallet internal secondRootWallet;
+  Vm.Wallet internal secondLinkedWallet;
+
   MockDelegationRegistry public mockDelegationRegistry;
 
   uint256 private constant MAX_LINKED_WALLETS = 10;
   bytes32 private constant DELEGATE_REGISTRY_V2 =
     bytes32("DELEGATE_REGISTRY_V2");
-
   string private constant SOLANA_WALLET_ADDRESS =
     "3p5wau6jqBV8sQswjN1HEeSZLjv5TB173zBgupGQD4we";
 
@@ -45,6 +47,9 @@ contract WalletLinkTest is IWalletLinkBase, BaseSetup, DeployBase {
     rootWallet = vm.createWallet("rootKey");
     wallet = vm.createWallet("eoaWallet");
     smartAccount = vm.createWallet("smartAccount");
+
+    secondRootWallet = vm.createWallet("secondRootKey");
+    secondLinkedWallet = vm.createWallet("secondLinkedWallet");
 
     mockDelegationRegistry = MockDelegationRegistry(
       walletLink.getDependency(DELEGATE_REGISTRY_V2)
@@ -152,10 +157,9 @@ contract WalletLinkTest is IWalletLinkBase, BaseSetup, DeployBase {
     _;
   }
 
-  // =============================================================
-  //                   linkCallerToRootKey
-  // =============================================================
-
+  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+  /*                   linkNonEVMWalletToRootKey                */
+  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
   function test_linkNonEVMWalletToRootKey(
     uint256 secretSeed
   )
@@ -177,16 +181,202 @@ contract WalletLinkTest is IWalletLinkBase, BaseSetup, DeployBase {
     assertTrue(
       walletLink.checkIfNonEVMWalletLinked(rootWallet.addr, walletHash)
     );
+  }
 
-    WalletMetadata[] memory wallets = walletLink.explicitWalletsByRootKey(
-      rootWallet.addr,
-      WalletQueryOptions({includeDelegations: false})
+  function test_revertWhen_linkNonEVMWalletToRootKeyEmptyAddress() external {
+    WalletLib.Wallet memory solanaWallet = WalletLib.Wallet({
+      addr: "",
+      vmType: WalletLib.VirtualMachineType.SVM
+    });
+
+    NonEVMLinkedWallet memory nonEVMWallet = NonEVMLinkedWallet({
+      wallet: solanaWallet,
+      signature: "",
+      message: "",
+      extraData: new VMSpecificData[](0)
+    });
+
+    vm.prank(wallet.addr);
+    vm.expectRevert(WalletLink__InvalidNonEVMAddress.selector);
+    walletLink.linkNonEVMWalletToRootKey(nonEVMWallet, 0);
+  }
+
+  function test_revertWhen_linkNonEVMWalletToRootKeyAddressTooLong() external {
+    string
+      memory longAddress = "3p5wau6jqBV8sQswjN1HEeSZLjv5TB173zBgupGQD4we3p5wau6jqBV8sQswjN1HEeSZLjv5TB173zBgupGQD4we3p5wau6jqBV8sQswjN1HEeSZLjv5TB173zBgupGQD4we3p5wau6jqBV8sQswjN1HEeSZLjv5TB173zBgupGQD4we3p5wau6jqBV8sQswjN1HEeSZLjv5TB173zBgupGQD4we3p5wau6jqBV8sQswjN1HEeSZLjv5TB173zBgupGQD4we";
+
+    WalletLib.Wallet memory solanaWallet = WalletLib.Wallet({
+      addr: longAddress,
+      vmType: WalletLib.VirtualMachineType.SVM
+    });
+
+    NonEVMLinkedWallet memory nonEVMWallet = NonEVMLinkedWallet({
+      wallet: solanaWallet,
+      signature: "",
+      message: "",
+      extraData: new VMSpecificData[](0)
+    });
+
+    vm.prank(wallet.addr);
+    vm.expectRevert(WalletLink__InvalidNonEVMAddress.selector);
+    walletLink.linkNonEVMWalletToRootKey(nonEVMWallet, 0);
+  }
+
+  function test_revertWhen_linkNonEVMWalletToRootKeyNotLinked() external {
+    WalletLib.Wallet memory solanaWallet = WalletLib.Wallet({
+      addr: SOLANA_WALLET_ADDRESS,
+      vmType: WalletLib.VirtualMachineType.SVM
+    });
+
+    NonEVMLinkedWallet memory nonEVMWallet = NonEVMLinkedWallet({
+      wallet: solanaWallet,
+      signature: "",
+      message: "",
+      extraData: new VMSpecificData[](0)
+    });
+
+    vm.prank(wallet.addr);
+    vm.expectRevert(
+      abi.encodeWithSelector(
+        WalletLink__NotLinked.selector,
+        wallet.addr,
+        address(0)
+      )
+    );
+    walletLink.linkNonEVMWalletToRootKey(nonEVMWallet, 0);
+  }
+
+  function test_revertWhen_linkNonEVMWalletToRootKeyDifferentRootKey(
+    uint256 secretSeed
+  ) external givenWalletIsLinkedViaCaller {
+    // Link a second wallet to a second root key
+    uint256 secondNonce = walletLink.getLatestNonceForRootKey(
+      secondRootWallet.addr
+    );
+    bytes memory secondSignature = _signWalletLink(
+      secondRootWallet.privateKey,
+      secondLinkedWallet.addr,
+      secondNonce
     );
 
-    for (uint256 i; i < wallets.length; ++i) {
-      console.log(wallets[i].wallet.addr);
-    }
+    vm.prank(secondLinkedWallet.addr);
+    walletLink.linkCallerToRootKey(
+      LinkedWallet(
+        secondRootWallet.addr,
+        secondSignature,
+        LINKED_WALLET_MESSAGE
+      ),
+      secondNonce
+    );
+
+    // Generate Solana wallet data
+    (
+      uint256[5] memory solanaExtPubKey,
+      uint256[2] memory solanaSigner
+    ) = SCL_EIP6565_UTILS.SetKey(secretSeed);
+
+    string memory solanaAddress = SolanaUtils.toBase58String(
+      bytes32(solanaExtPubKey[4])
+    );
+
+    string memory consentMessage = LibString.toHexString(secondRootWallet.addr);
+    (uint256 r, uint256 s) = SCL_EIP6565_UTILS.Sign(
+      solanaExtPubKey[4],
+      solanaSigner,
+      consentMessage
+    );
+
+    WalletLib.Wallet memory solanaWallet = WalletLib.Wallet({
+      addr: solanaAddress,
+      vmType: WalletLib.VirtualMachineType.SVM
+    });
+
+    VMSpecificData[] memory extraData = new VMSpecificData[](1);
+    extraData[0] = VMSpecificData({
+      key: "extPubKey",
+      value: abi.encode(SolanaSpecificData({extPubKey: solanaExtPubKey}))
+    });
+
+    NonEVMLinkedWallet memory nonEVMWallet = NonEVMLinkedWallet({
+      wallet: solanaWallet,
+      signature: abi.encodePacked(r, s),
+      message: consentMessage,
+      extraData: extraData
+    });
+
+    // First link the Solana wallet to the second root key
+    uint256 linkNonce = walletLink.getLatestNonceForRootKey(
+      secondRootWallet.addr
+    );
+
+    vm.prank(secondLinkedWallet.addr);
+    walletLink.linkNonEVMWalletToRootKey(nonEVMWallet, linkNonce);
+
+    // Now try to link the same Solana wallet to the first root key
+    // This should fail with WalletLink__RootKeyMismatch
+    uint256 firstRootKeyNonce = walletLink.getLatestNonceForRootKey(
+      rootWallet.addr
+    );
+
+    vm.prank(wallet.addr);
+    vm.expectRevert(
+      abi.encodeWithSelector(
+        WalletLink__RootKeyMismatch.selector,
+        rootWallet.addr,
+        secondRootWallet.addr
+      )
+    );
+    walletLink.linkNonEVMWalletToRootKey(nonEVMWallet, firstRootKeyNonce);
   }
+
+  function test_revertWhen_linkNonEVMWalletToRootKeyRootKeyAlreadyLinked(
+    uint256 secretSeed
+  )
+    external
+    givenWalletIsLinkedViaCaller
+    givenSolanaWalletIsLinkedToRootKey(secretSeed)
+  {
+    uint256 nonce = walletLink.getLatestNonceForRootKey(rootWallet.addr);
+    NonEVMLinkedWallet memory nonEVMWallet = _createNonEVMWallet(
+      secretSeed,
+      rootWallet.addr
+    );
+
+    vm.prank(wallet.addr);
+    vm.expectRevert(
+      abi.encodeWithSelector(
+        WalletLink__NonEVMWalletAlreadyLinked.selector,
+        nonEVMWallet.wallet.addr,
+        rootWallet.addr
+      )
+    );
+    walletLink.linkNonEVMWalletToRootKey(nonEVMWallet, nonce);
+  }
+
+  function test_revertWhen_linkNonEVMWalletToRootKeyMaxLinkedWalletsReached()
+    external
+    givenWalletIsLinkedViaCaller
+  {
+    uint256 nonce;
+    NonEVMLinkedWallet memory nonEVMWallet;
+
+    for (uint256 i = 0; i < MAX_LINKED_WALLETS; i++) {
+      nonce = walletLink.getLatestNonceForRootKey(rootWallet.addr);
+      nonEVMWallet = _createNonEVMWallet(i, rootWallet.addr);
+      vm.prank(wallet.addr);
+      walletLink.linkNonEVMWalletToRootKey(nonEVMWallet, nonce);
+    }
+
+    nonce = walletLink.getLatestNonceForRootKey(rootWallet.addr);
+    nonEVMWallet = _createNonEVMWallet(_randomUint256(), rootWallet.addr);
+
+    vm.prank(wallet.addr);
+    vm.expectRevert(WalletLink__MaxLinkedWalletsReached.selector);
+    walletLink.linkNonEVMWalletToRootKey(nonEVMWallet, nonce);
+  }
+  // =============================================================
+  //                   linkCallerToRootKey
+  // =============================================================
 
   function test_linkCallerToRootKey() external givenWalletIsLinkedViaCaller {
     assertTrue(walletLink.checkIfLinked(rootWallet.addr, wallet.addr));
@@ -820,7 +1010,7 @@ contract WalletLinkTest is IWalletLinkBase, BaseSetup, DeployBase {
     vm.prank(coldWallet);
     mockDelegationRegistry.delegateAll(wallet.addr);
 
-    WalletMetadata[] memory walletMetadata = walletLink
+    WalletLib.Wallet[] memory walletMetadata = walletLink
       .explicitWalletsByRootKey(
         rootWallet.addr,
         WalletQueryOptions({includeDelegations: true})
@@ -828,7 +1018,7 @@ contract WalletLinkTest is IWalletLinkBase, BaseSetup, DeployBase {
 
     address[] memory wallets = new address[](walletMetadata.length);
     for (uint256 i; i < walletMetadata.length; ++i) {
-      wallets[i] = vm.parseAddress(walletMetadata[i].wallet.addr);
+      wallets[i] = vm.parseAddress(walletMetadata[i].addr);
     }
 
     assertContains(wallets, coldWallet);
@@ -859,28 +1049,59 @@ contract WalletLinkTest is IWalletLinkBase, BaseSetup, DeployBase {
     walletLink.setDefaultWallet(address(simpleAccount));
     vm.stopPrank();
 
-    WalletMetadata[] memory wallets = walletLink.explicitWalletsByRootKey(
+    WalletLib.Wallet[] memory wallets = walletLink.explicitWalletsByRootKey(
       rootWallet.addr,
       WalletQueryOptions({includeDelegations: false})
     );
     uint256 walletLen = wallets.length;
 
+    address[] memory walletAddresses = new address[](walletLen);
     for (uint256 i; i < walletLen; ++i) {
-      WalletMetadata memory w = wallets[i];
-      if (
-        LibString.eq(
-          w.wallet.addr,
-          LibString.toHexString(address(simpleAccount))
-        )
-      ) {
-        assertEq(w.isDefaultWallet, true);
-        assertEq(w.isSmartAccount, true);
-      } else if (
-        LibString.eq(w.wallet.addr, LibString.toHexString(wallet.addr))
-      ) {
-        assertEq(w.isDefaultWallet, false);
-        assertEq(w.isSmartAccount, false);
-      }
+      walletAddresses[i] = vm.parseAddress(wallets[i].addr);
     }
+
+    assertContains(walletAddresses, address(simpleAccount));
+    assertContains(walletAddresses, wallet.addr);
+  }
+
+  function _createNonEVMWallet(
+    uint256 secretSeed,
+    address rootKey
+  ) internal view returns (NonEVMLinkedWallet memory) {
+    (
+      uint256[5] memory solanaExtPubKey,
+      uint256[2] memory solanaSigner
+    ) = SCL_EIP6565_UTILS.SetKey(secretSeed);
+
+    string memory solanaAddress = SolanaUtils.toBase58String(
+      bytes32(solanaExtPubKey[4])
+    );
+
+    string memory consentMessage = LibString.toHexString(rootKey);
+    (uint256 r, uint256 s) = SCL_EIP6565_UTILS.Sign(
+      solanaExtPubKey[4],
+      solanaSigner,
+      consentMessage
+    );
+
+    WalletLib.Wallet memory solanaWallet = WalletLib.Wallet({
+      addr: solanaAddress,
+      vmType: WalletLib.VirtualMachineType.SVM
+    });
+
+    VMSpecificData[] memory extraData = new VMSpecificData[](1);
+    extraData[0] = VMSpecificData({
+      key: "extPubKey",
+      value: abi.encode(SolanaSpecificData({extPubKey: solanaExtPubKey}))
+    });
+
+    NonEVMLinkedWallet memory nonEVMWallet = NonEVMLinkedWallet({
+      wallet: solanaWallet,
+      signature: abi.encodePacked(r, s),
+      message: consentMessage,
+      extraData: extraData
+    });
+
+    return nonEVMWallet;
   }
 }

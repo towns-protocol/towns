@@ -32,12 +32,6 @@ interface IWalletLinkBase {
     VMSpecificData[] extraData; // Flexible array for VM-specific requirements
   }
 
-  struct WalletMetadata {
-    WalletLib.Wallet wallet;
-    bool isDefaultWallet;
-    bool isSmartAccount;
-  }
-
   /// @notice Struct for Solana wallet linking requirements
   /// @dev This will be encoded in extraData for Solana wallets with key being "extPubKey"
   /// SolanaSpecificData memory solanaSpecificData = abi.decode(
@@ -130,7 +124,7 @@ interface IWalletLink is IWalletLinkBase {
    * @notice Link a non-EVM wallet to a root wallet
    * @param wallet the wallet being linked to the root wallet
    * @param nonce a nonce used to prevent replay attacks, nonce must always be higher than previous nonce
-   * @dev The function is called by an already linked wallet
+   * @dev The function can only be called by an already linked wallet
    */
   function linkNonEVMWalletToRootKey(
     NonEVMLinkedWallet calldata wallet,
@@ -141,7 +135,7 @@ interface IWalletLink is IWalletLinkBase {
    * @notice Remove a non-EVM wallet link from a root wallet
    * @param wallet the wallet being removed from the root wallet
    * @param nonce a nonce used to prevent replay attacks, nonce must always be higher than previous nonce
-   * @dev The function is called by an already linked wallet
+   * @dev The function can only be called by an already linked wallet
    */
   function removeNonEVMWalletLink(
     WalletLib.Wallet memory wallet,
@@ -208,7 +202,7 @@ interface IWalletLink is IWalletLinkBase {
   function explicitWalletsByRootKey(
     address rootKey,
     WalletQueryOptions calldata options
-  ) external view returns (WalletMetadata[] memory wallets);
+  ) external view returns (WalletLib.Wallet[] memory wallets);
 
   /**
    * @notice Returns the root key for a given wallet

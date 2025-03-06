@@ -13,6 +13,8 @@ import {ISCL_EIP6565} from "./interfaces/ISCL_EIP6565.sol";
 import {LibString} from "solady/utils/LibString.sol";
 import {WalletLib} from "./libraries/WalletLib.sol";
 import {CustomRevert} from "contracts/src/utils/libraries/CustomRevert.sol";
+import {SolanaUtils} from "./libraries/SolanaUtils.sol";
+import {LibString} from "solady/utils/LibString.sol";
 
 // contracts
 import {Nonces} from "@river-build/diamond/src/utils/Nonces.sol";
@@ -49,7 +51,7 @@ abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
   /// @param rootWallet the root wallet that the caller is linking to
   /// @param nonce a nonce used to prevent replay attacks, nonce must always be higher than previous nonce
   function _linkCallerToRootWallet(
-    LinkedWallet memory rootWallet,
+    LinkedWallet calldata rootWallet,
     uint256 nonce
   ) internal {
     WalletLinkStorage.Layout storage ds = WalletLinkStorage.layout();
@@ -93,8 +95,8 @@ abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
   /// The wallet signs a message containing the root wallet's address and nonce, while the root wallet signs a message
   /// containing the wallet's address and nonce. Both signatures must be valid for the link to be created.
   function _linkWalletToRootWallet(
-    LinkedWallet memory wallet,
-    LinkedWallet memory rootWallet,
+    LinkedWallet calldata wallet,
+    LinkedWallet calldata rootWallet,
     uint256 nonce
   ) internal {
     WalletLinkStorage.Layout storage ds = WalletLinkStorage.layout();
@@ -187,7 +189,7 @@ abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
 
   function _removeNonEVMWalletLink(
-    WalletLib.Wallet memory wallet,
+    WalletLib.Wallet calldata wallet,
     uint256 nonce
   ) internal {
     WalletLinkStorage.Layout storage ds = WalletLinkStorage.layout();
@@ -216,7 +218,7 @@ abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
 
   function _removeLink(
     address walletToRemove,
-    LinkedWallet memory rootWallet,
+    LinkedWallet calldata rootWallet,
     uint256 nonce
   ) internal {
     WalletLinkStorage.Layout storage ds = WalletLinkStorage.layout();
@@ -402,7 +404,7 @@ abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
   function _explicitWalletsByRootKey(
     address rootKey,
     WalletQueryOptions calldata options
-  ) internal view returns (WalletMetadata[] memory wallets) {
+  ) internal view returns (WalletLib.Wallet[] memory wallets) {
     WalletLinkStorage.Layout storage ds = WalletLinkStorage.layout();
     WalletLib.RootWallet storage rootWallet = ds.rootWalletByRootKey[rootKey];
 
@@ -421,18 +423,13 @@ abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
     uint256 evmLength = linkedWallets.length;
     uint256 nonEVMLength = nonEVMLinkedWallets.length;
     uint256 totalLength = evmLength + nonEVMLength;
-    address defaultWallet = rootWallet.defaultWallet;
 
-    wallets = new WalletMetadata[](totalLength);
+    wallets = new WalletLib.Wallet[](totalLength);
 
     for (uint256 i; i < evmLength; ++i) {
-      wallets[i] = WalletMetadata({
-        wallet: WalletLib.Wallet({
-          addr: LibString.toHexString(linkedWallets[i]),
-          vmType: WalletLib.VirtualMachineType.EVM
-        }),
-        isDefaultWallet: linkedWallets[i] == defaultWallet,
-        isSmartAccount: _isSmartAccount(linkedWallets[i])
+      wallets[i] = WalletLib.Wallet({
+        addr: LibString.toHexString(linkedWallets[i]),
+        vmType: WalletLib.VirtualMachineType.EVM
       });
     }
 
@@ -440,13 +437,8 @@ abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
       WalletLib.Wallet memory wallet = rootWallet.walletByHash[
         nonEVMLinkedWallets[i]
       ];
-
       uint256 index = evmLength + i;
-      wallets[index] = WalletMetadata({
-        wallet: wallet,
-        isDefaultWallet: false,
-        isSmartAccount: false
-      });
+      wallets[index] = wallet;
     }
 
     return wallets;
@@ -539,11 +531,6 @@ abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
   ) internal view {
     address caller = msg.sender;
 
-    // Check that the caller wallet is not address(0)
-    if (caller == address(0)) {
-      revert WalletLink__InvalidAddress();
-    }
-
     // Check that the wallet address string is not empty
     if (bytes(nonEVMWallet.wallet.addr).length == 0) {
       revert WalletLink__InvalidNonEVMAddress();
@@ -611,13 +598,6 @@ abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
   function _verifySolanaWallet(
     NonEVMLinkedWallet calldata nonEVMWallet
   ) internal {
-    ISCL_EIP6565 sclEIP6565 = ISCL_EIP6565(_getDependency(SCL_EIP6565));
-
-    (uint256 r, uint256 s) = abi.decode(
-      nonEVMWallet.signature,
-      (uint256, uint256)
-    );
-
     SolanaSpecificData memory solanaSpecificData = abi.decode(
       nonEVMWallet.extraData[0].value,
       (SolanaSpecificData)
@@ -626,6 +606,23 @@ abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
     if (solanaSpecificData.extPubKey.length != 5) {
       revert WalletLink__InvalidSignature();
     }
+
+    // Check that the extPubKey and the wallet address match
+    if (
+      !SolanaUtils.isValidSolanaAddress(
+        nonEVMWallet.wallet.addr,
+        solanaSpecificData.extPubKey
+      )
+    ) {
+      revert WalletLink__InvalidSignature();
+    }
+
+    ISCL_EIP6565 sclEIP6565 = ISCL_EIP6565(_getDependency(SCL_EIP6565));
+
+    (uint256 r, uint256 s) = abi.decode(
+      nonEVMWallet.signature,
+      (uint256, uint256)
+    );
 
     bool isValidSignature = sclEIP6565.Verify_LE(
       nonEVMWallet.message,
@@ -645,19 +642,9 @@ abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
     if (wallet.vmType == WalletLib.VirtualMachineType.SVM) {
       // Validate Solana address format (base58, 32-44 chars)
       if (bytes(wallet.addr).length < 32 || bytes(wallet.addr).length > 44) {
-        CustomRevert.revertWith(
-          IWalletLinkBase.WalletLink__InvalidNonEVMAddress.selector
-        );
+        CustomRevert.revertWith(WalletLink__InvalidNonEVMAddress.selector);
       }
     }
-  }
-
-  function _isSmartAccount(address wallet) internal view returns (bool) {
-    uint256 codeSize;
-    assembly {
-      codeSize := extcodesize(wallet)
-    }
-    return codeSize > 0;
   }
 
   function _getLinkedWalletTypedDataHash(
