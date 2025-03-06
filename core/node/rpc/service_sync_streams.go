@@ -85,7 +85,7 @@ func (s *Service) ModifySync(
 	ctx, log := utils.CtxAndLogForRequest(ctx, req)
 	res := connect.NewResponse(&ModifySyncResponse{})
 
-	go runWithLabels(ctx, req.Msg.GetSyncId(), func(ctx context.Context) {
+	runWithLabels(ctx, req.Msg.GetSyncId(), func(ctx context.Context) {
 		for _, syncPos := range req.Msg.GetAddStreams() {
 			if _, err := s.syncHandler.AddStreamToSync(ctx, connect.NewRequest(&AddStreamToSyncRequest{
 				SyncId:  req.Msg.GetSyncId(),
