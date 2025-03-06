@@ -276,24 +276,6 @@ func TestStreamEvents(t *testing.T) {
 	require.Len(lastMBC, 0)
 	require.Len(placementC, 0)
 
-	// Add stream
-	streamId = testutils.StreamIdFromBytes([]byte{0xa4, 0x05, 0x06})
-	addrs = []common.Address{nodeAddr1}
-	genesisHash = common.HexToHash("0x12345")
-	lastMiniblockHash := common.HexToHash("0x56789")
-	lastMiniblockNum := int64(1)
-	err = rr1.AddStream(ctx, streamId, addrs, genesisHash, lastMiniblockHash, lastMiniblockNum, true)
-	require.NoError(err)
-
-	added := <-addedC
-	require.NotNil(added)
-	require.Equal(streamId, StreamId(added.StreamId))
-	require.Equal(addrs, added.Stream.Nodes)
-	require.Equal(genesisHash, common.Hash(added.GenesisMiniblockHash))
-	require.Equal(lastMiniblockHash, common.Hash(added.Stream.LastMiniblockHash))
-	require.Equal(lastMiniblockNum, int64(added.Stream.LastMiniblockNum))
-	require.True(added.Stream.Flags&uint64(StreamFlagSealed) != 0)
-
 	// Update stream placement
 	tx, err := bc1.TxPool.Submit(ctx, "UpdateStreamPlacement",
 		func(opts *bind.TransactOpts) (*types.Transaction, error) {
@@ -364,4 +346,22 @@ func TestStreamEvents(t *testing.T) {
 	require.False(lastMB.IsSealed)
 	require.Len(allocatedC, 0)
 	require.Len(placementC, 0)
+
+	// Add stream
+	streamId = testutils.StreamIdFromBytes([]byte{0xa1, 0x02, 0x04})
+	addrs = []common.Address{nodeAddr1}
+	genesisHash = common.HexToHash("0x12345")
+	lastMiniblockHash := common.HexToHash("0x56789")
+	lastMiniblockNum := int64(1)
+	err = rr1.AddStream(ctx, streamId, addrs, genesisHash, lastMiniblockHash, lastMiniblockNum, true)
+	require.NoError(err)
+
+	added := <-addedC
+	require.NotNil(added)
+	require.Equal(streamId, StreamId(added.StreamId))
+	require.Equal(addrs, added.Stream.Nodes)
+	require.Equal(genesisHash, common.Hash(added.GenesisMiniblockHash))
+	require.Equal(lastMiniblockHash, common.Hash(added.Stream.LastMiniblockHash))
+	require.Equal(lastMiniblockNum, int64(added.Stream.LastMiniblockNum))
+	require.True(added.Stream.Flags&uint64(StreamFlagSealed) != 0)
 }
