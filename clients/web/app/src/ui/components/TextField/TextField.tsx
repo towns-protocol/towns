@@ -37,11 +37,10 @@ export const TextField = forwardRef<HTMLInputElement, Props>((props, ref) => {
         autoComplete,
         inputWidth,
         inputLimit,
-        rounded,
         ...fieldProps
     } = props
     return (
-        <Field {...fieldProps} rounded={rounded}>
+        <Field {...fieldProps}>
             {(overlays, { className, ...inputProps }) => (
                 <>
                     <Box
@@ -56,7 +55,6 @@ export const TextField = forwardRef<HTMLInputElement, Props>((props, ref) => {
                         autoComplete={autoComplete || 'off'}
                         width={inputWidth}
                         maxLength={inputLimit}
-                        rounded={rounded}
                     />
                     {overlays}
                 </>

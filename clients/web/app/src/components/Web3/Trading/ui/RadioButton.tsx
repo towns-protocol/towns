@@ -12,19 +12,24 @@ export const RadioButton = (props: {
     return (
         <Box horizontal grow flexBasis="none" key={props.label} position="relative">
             <Box
-                position="absolute"
-                background={props.selected ? 'cta1' : undefined}
-                rounded="full"
-                style={{ height: 'calc(100% + 2px)', width: 'calc(100% + 2px)', inset: '-1px' }}
-            />
-            <Box grow position="relative" width="100%">
+                grow
+                position="relative"
+                width="100%"
+                borderRadius="full"
+                color={props.color}
+                style={{
+                    borderStyle: 'solid',
+                    borderWidth: 1,
+                    borderColor: props.selected ? 'inherit' : 'transparent',
+                }}
+            >
                 <FancyButton
                     layoutRoot
                     compact
                     borderRadius="full"
                     icon={props.icon}
                     iconSize="square_xs"
-                    gap="xs"
+                    gap="none"
                     paddingX="sm"
                     color={props.color}
                     background="level2"

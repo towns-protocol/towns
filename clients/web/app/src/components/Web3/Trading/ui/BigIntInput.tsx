@@ -1,9 +1,10 @@
-import React, { ComponentProps, useCallback, useEffect, useState } from 'react'
+import React, { ComponentProps, useCallback, useEffect, useRef, useState } from 'react'
+import useResizeObserver from '@react-hook/resize-observer'
 import { Icon, IconName, TextField } from '@ui'
 import { formatUnits, parseUnits } from 'hooks/useBalance'
 
 type Props = {
-    icon: IconName
+    icon?: IconName
     decimals: number
     value: bigint | undefined
     onChange: (value: bigint) => void
@@ -43,18 +44,33 @@ export const BigIntInput = (props: Props) => {
         },
         [onChange, setDisplayValue, decimals],
     )
+    const measureRef = useRef<HTMLDivElement>(null)
+    const textRef = useRef<HTMLInputElement>(null)
+
+    useResizeObserver(measureRef, (entry) => {
+        if (textRef.current) {
+            textRef.current.style.width = `${entry.contentRect.width}px`
+        }
+    })
+
     return (
-        <TextField
-            background="level2"
-            paddingX="md"
-            rounded="full"
-            before={<Icon type={icon} size="square_xs" />}
-            value={displayValue}
-            height="x5"
-            style={{ width: '100%', minWidth: 55 }}
-            maxWidth="x20"
-            onChange={onTextFieldChanged}
-            {...inputProps}
-        />
+        <>
+            <TextField
+                ref={textRef}
+                background="level2"
+                paddingX="md"
+                rounded="full"
+                before={icon ? <Icon type={icon} size="square_xs" /> : undefined}
+                value={displayValue}
+                height="x5"
+                style={{ width: 100, minWidth: !displayValue ? 55 : 33 }}
+                maxWidth="x20"
+                onChange={onTextFieldChanged}
+                {...inputProps}
+            />
+            <div style={{ position: 'absolute', left: -1000, top: -1000 }} ref={measureRef}>
+                {displayValue}
+            </div>
+        </>
     )
 }

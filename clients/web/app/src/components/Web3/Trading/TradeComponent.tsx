@@ -131,12 +131,21 @@ export const TradeComponent = (props: Props) => {
 
     const quickSelectValues = useMemo(() => {
         if (mode === 'buy') {
-            return [
-                { label: '0.25', value: 0.25 },
-                { label: '0.5', value: 0.5 },
-                { label: '1.0', value: 1 },
-                { label: 'custom', value: 2 },
-            ].map((v) => ({
+            return (
+                chainConfig.chainId === 'solana-mainnet'
+                    ? [
+                          { label: '0.25', value: 0.25 },
+                          { label: '0.5', value: 0.5 },
+                          { label: '1.0', value: 1 },
+                          { label: 'custom', value: 0 },
+                      ]
+                    : [
+                          { label: '0.010', value: 0.01 },
+                          { label: '0.025', value: 0.025 },
+                          { label: '0.050', value: 0.05 },
+                          { label: 'custom', value: 0 },
+                      ]
+            ).map((v) => ({
                 ...v,
                 icon: chainConfig.icon,
                 value: BigInt(v.value * 10 ** chainConfig.decimals),
@@ -145,15 +154,15 @@ export const TradeComponent = (props: Props) => {
             return [
                 { label: '25%', value: 25n },
                 { label: '50%', value: 50n },
-                { label: '75%', value: 75n },
                 { label: '100%', value: 100n },
+                { label: 'custom', value: 0n },
             ].map((v) => ({
                 ...v,
                 icon: undefined,
                 value: (currentTokenBalance * v.value) / 100n,
             }))
         }
-    }, [chainConfig.decimals, chainConfig.icon, currentTokenBalance, mode])
+    }, [chainConfig.chainId, chainConfig.decimals, chainConfig.icon, currentTokenBalance, mode])
 
     const [preselectedOption, setPreselectedOption] = useState<{ label: string; value: bigint }>()
 
@@ -350,7 +359,7 @@ export const TradeComponent = (props: Props) => {
                                     option.label === 'custom' ? (
                                         <Box grow flexBasis="none" key={option.label}>
                                             <BigIntInput
-                                                icon={chainConfig.icon}
+                                                icon={mode === 'buy' ? chainConfig.icon : undefined}
                                                 decimals={currentBalanceDecimals}
                                                 value={amount}
                                                 placeholder="Custom"
@@ -361,6 +370,7 @@ export const TradeComponent = (props: Props) => {
                                         <RadioButton
                                             key={option.label}
                                             label={option.label}
+                                            color={mode === 'buy' ? 'positive' : 'peach'}
                                             selected={selected}
                                             icon={option.icon}
                                             onClick={() => onSelect(option)}
@@ -419,7 +429,7 @@ const BuySellButton = (props: {
                     gap="xxs"
                     paddingLeft="sm"
                     paddingRight="md"
-                    background={mode === 'buy' ? 'positive' : 'negative'}
+                    background={mode === 'buy' ? 'positive' : 'peach'}
                     borderRadius="full"
                     icon="lightning"
                     iconSize="square_sm"
