@@ -9,12 +9,12 @@ import {LibBit} from "solady/utils/LibBit.sol";
  */
 library SolanaUtils {
   // Constants for Base58 encoding
-  bytes constant ALPHABET =
+  bytes internal constant ALPHABET =
     "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
 
   // Precomputed bitmask for Base58 allowed characters
   // prettier-ignore
-  uint256 constant internal BASE58_MAP =
+  uint256 internal constant BASE58_MAP =
       // Digits: '1'-'9' (ASCII 49-57)
       (1 << 49) | (1 << 50) | (1 << 51) | (1 << 52) | (1 << 53) | (1 << 54) | (1 << 55) | (1 << 56) | (1 << 57)
       // Uppercase letters: 'A'-'H', 'J'-'N', 'P'-'Z' (ASCII 65-72, 74-78, 80-90)
