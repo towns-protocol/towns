@@ -7,7 +7,6 @@ import {
     mapSupportedChainIds,
     supportedTokenNetworkMap,
     toContractMetadata,
-    withSimpleHashImage,
 } from '../../utils'
 
 export const getCollectionMetadataAcrossNetworks = async (
@@ -83,13 +82,7 @@ export const getCollectionMetadataAcrossNetworks = async (
                         nftMetadata &&
                         nftMetadata.tokenType !== TokenType.NO_SUPPORTED_NFT_STANDARD
                     ) {
-                        // TODO: remove simplehash dependency https://linear.app/hnt-labs/issue/HNT-7233/remove-simplehash-in-token-worker-once-alchemy-supports-other-networks
-                        // data should be toContractMetadata(json)
-                        data = await withSimpleHashImage({
-                            chainId,
-                            contractMetadata: toContractMetadata(nftMetadata),
-                            simpleHashApiKey: env.SIMPLEHASH_API_KEY,
-                        })
+                        data = toContractMetadata(nftMetadata)
                     } else {
                         if (tokenResult.status === 'fulfilled') {
                             tokenMetadata = tokenResult.value

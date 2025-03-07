@@ -24,7 +24,6 @@ describe('getCollectionMetadataAcrossNetworks()', () => {
         env = {
             ALCHEMY_API_KEY: 'fake_key',
             AUTH_SECRET: 'fake_secret',
-            SIMPLEHASH_API_KEY: 'fake_key',
             ENVIRONMENT: 'test' as const,
             CODEX_API_KEY: 'fake_key',
         }

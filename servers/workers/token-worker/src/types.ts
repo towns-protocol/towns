@@ -12,7 +12,6 @@ import { AuthEnv, Environment } from 'worker-common'
 export interface Env extends AuthEnv {
     ENVIRONMENT: Environment
     ALCHEMY_API_KEY: string
-    SIMPLEHASH_API_KEY: string
     CODEX_API_KEY: string
 }
 
@@ -162,16 +161,4 @@ export enum TokenType {
     NOT_A_CONTRACT = 'NOT_A_CONTRACT',
     NO_SUPPORTED_NFT_STANDARD = 'NO_SUPPORTED_NFT_STANDARD',
     UNKNOWN = 'UNKNOWN',
-}
-
-// https://docs.simplehash.com/reference/collections-by-contract
-// abbreviated for simplicity
-export type SimpleHashCollectionsResponse = {
-    collections: {
-        collection_id: string
-        name: string
-        description: string | null
-        image_url: string | null
-        image_properties: string | null
-    }[]
 }
