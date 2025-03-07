@@ -37,7 +37,6 @@ type TestAppServer struct {
 	hs256SecretKey   []byte
 	encryptionDevice app_client.EncryptionDevice
 	client           protocolconnect.StreamServiceClient
-	solicitations    chan shared.StreamId
 }
 
 // validateSignature verifies that the incoming request has a HS256-encoded jwt auth token stored
@@ -99,9 +98,6 @@ func NewTestAppServer(
 		url:       url,
 		appWallet: appWallet,
 		client:    client,
-		// Make this channel large enough not to block for most tests if
-		// the caller chooses not to wait for solicitations
-		solicitations: make(chan shared.StreamId, 256),
 	}
 
 	return b

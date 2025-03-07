@@ -32,7 +32,7 @@ func (p *MessageToAppProcessor) OnMessageEvent(
 	members mapset.Set[string],
 	event *events.ParsedEvent,
 ) {
-	log := logging.FromCtx(ctx)
+	log := logging.FromCtx(ctx).With("func", "MessageToAppProcessor.OnMessageEvent")
 	appIds := make([]common.Address, 0, members.Cardinality())
 
 	// TODO: Apply logic to filter out which events to send to which apps based on app preferences.

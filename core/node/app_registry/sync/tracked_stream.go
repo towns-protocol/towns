@@ -45,7 +45,7 @@ func (b *AppRegistryTrackedStreamView) processUserInboxMessage(ctx context.Conte
 
 func (b *AppRegistryTrackedStreamView) onNewEvent(ctx context.Context, view *StreamView, event *ParsedEvent) error {
 	streamId := view.StreamId()
-	log := logging.FromCtx(ctx)
+	log := logging.FromCtx(ctx).With("func", "AppRegistryTrackedStreamView.onNewEvent")
 
 	if streamId.Type() == shared.STREAM_USER_INBOX_BIN {
 		return b.processUserInboxMessage(ctx, event)

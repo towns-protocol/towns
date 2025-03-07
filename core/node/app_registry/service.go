@@ -122,7 +122,7 @@ func NewService(
 }
 
 func (s *Service) Start(ctx context.Context) {
-	log := logging.FromCtx(ctx)
+	log := logging.FromCtx(ctx).With("func", "AppRegistryService.Start")
 
 	go func() {
 		for {
@@ -210,7 +210,7 @@ func (s *Service) waitForAppEncryptionDevice(
 	ctx context.Context,
 	appId common.Address,
 ) (*storage.EncryptionDevice, error) {
-	log := logging.FromCtx(ctx)
+	log := logging.FromCtx(ctx).With("func", "AppRegistryService.waitForEncryptionDevice")
 	ctx, cancel := context.WithTimeout(ctx, time.Second*10)
 	userMetadataStreamId := shared.UserMetadataStreamIdFromAddress(appId)
 	defer cancel()
@@ -234,7 +234,6 @@ waitLoop:
 			if err != nil {
 				continue
 			}
-			log.Debugw("Found user metadata stream record", "streamId", userMetadataStreamId, "appId", appId)
 			nodes := nodes.NewStreamNodesWithLock(stream.Nodes, common.Address{})
 			streamResponse, err := utils.PeerNodeRequestWithRetries(
 				ctx,
@@ -272,7 +271,7 @@ waitLoop:
 	}
 
 	if len(encryptionDevices) == 0 {
-		log.Errorw("No usermetadata stream available for app", "appId", appId, "stream", userMetadataStreamId)
+		log.Errorw("no usermetadata stream available for app", "appId", appId, "stream", userMetadataStreamId)
 		return nil, base.AsRiverError(loopExitErr, Err_NOT_FOUND).
 			Message("encryption device for app not found").
 			Tag("appId", appId).
