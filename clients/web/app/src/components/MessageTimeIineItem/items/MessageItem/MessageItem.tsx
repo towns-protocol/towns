@@ -114,10 +114,13 @@ export const MessageItem = (props: Props) => {
         timelineContext
 
     const isMessage = itemData.type === RenderEventType.Message
+    const isTokenTransfer = itemData.type === RenderEventType.TokenTransfer
     const isEncryptedMessage = itemData.type === RenderEventType.EncryptedMessage
+
     const isRedacted = isRedactedChannelMessage(event)
 
-    const displayContext = isMessage || isEncryptedMessage ? itemData.displayContext : 'single'
+    const displayContext =
+        isMessage || isEncryptedMessage || isTokenTransfer ? itemData.displayContext : 'single'
     const isEditing = event.eventId === timelineActions.editingMessageId
 
     const pin = timelineContext.pins?.find((p) => p.event.hashStr === event.eventId)
@@ -349,7 +352,13 @@ const MessageWrapper = React.memo((props: MessageWrapperProps) => {
             isChannelReactable={isChannelReactable}
             user={user}
             paddingTop={displayContext === 'head' || displayContext === 'single' ? 'md' : 'sm'}
-            paddingBottom={displayContext === 'tail' || displayContext === 'single' ? 'md' : 'sm'}
+            paddingBottom={
+                displayContext === 'tail' || displayContext === 'single'
+                    ? 'md'
+                    : event.content?.kind === RiverTimelineEvent.TokenTransfer
+                    ? '2'
+                    : 'sm'
+            }
             paddingX="md"
             spaceId={spaceId}
             reactions={reactions}

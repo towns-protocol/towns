@@ -59,7 +59,7 @@ export const TokenTransferImpl = (props: TokenTransferImplProps) => {
                 background={isBuy ? 'positiveSubtle' : 'peachSubtle'}
                 paddingX="sm"
                 alignItems="start"
-                rounded="xs"
+                rounded="sm"
             >
                 <Text paddingBottom="sm" paddingTop="sm" color={isBuy ? 'positive' : 'peach'}>
                     {text}
