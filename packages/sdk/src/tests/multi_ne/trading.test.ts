@@ -122,6 +122,12 @@ describe('Trading', () => {
         })
     })
 
+    afterAll(async () => {
+        await bobClient.stop()
+        await aliceClient.stop()
+        await charlieClient.stop()
+    })
+
     test('should reject token transfers where the amount doesnt match the transferred amount', async () => {
         // this is a transfer event with an amount that doesn't match the amount transferred
         const transferEvent: PlainMessage<BlockchainTransaction_TokenTransfer> = {
