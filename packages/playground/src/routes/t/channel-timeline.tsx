@@ -37,7 +37,7 @@ export const ChannelTimelineRoute = () => {
                 Channel Timeline {channel.metadata?.name ? `#${channel.metadata.name}` : ''}
             </h2>
             <>
-                {!isJoining && channelId && !channel.isJoined ? (
+                {channelId && !channel.isJoined ? (
                     <button
                         className="flex h-8 w-full items-center justify-center gap-2 rounded-sm border border-neutral-200 bg-neutral-100 px-2 dark:border-neutral-800 dark:bg-neutral-900"
                         disabled={isJoining}
