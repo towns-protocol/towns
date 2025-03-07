@@ -5,8 +5,9 @@
 import { assert } from '../../check'
 import { Client } from '../../client'
 import { makeTestClient } from '../testUtils'
-import { SessionKeys } from '@river-build/proto'
+import { SessionKeysSchema } from '@river-build/proto'
 import { dlog } from '@river-build/dlog'
+import { create, fromJsonString, toJsonString } from '@bufbuild/protobuf'
 
 const log = dlog('test:clientCrypto')
 
@@ -32,9 +33,10 @@ describe('clientCrypto', () => {
             alicesClient.userDeviceKey().deviceKey !== bobsClient.userDeviceKey().deviceKey,
         ).toBe(true)
         alicesClient.startSync()
-        const keys = new SessionKeys({ keys: ['hi!'] })
+        const keys = create(SessionKeysSchema, { keys: ['hi!'] })
+        const jsonStr = toJsonString(SessionKeysSchema, keys)
         // create a message to encrypt with Bob's devices
-        const envelope = await alicesClient.encryptWithDeviceKeys(keys, [
+        const envelope = await alicesClient.encryptWithDeviceKeys(jsonStr, [
             bobsClient.userDeviceKey(),
         ])
         expect(envelope[bobsClient.userDeviceKey().deviceKey]).toBeDefined()
@@ -45,7 +47,7 @@ describe('clientCrypto', () => {
         )
         log('clear', clear)
         assert(clear !== undefined, 'clear should not be undefined')
-        const keys2 = SessionKeys.fromJsonString(clear)
+        const keys2 = fromJsonString(SessionKeysSchema, clear)
         expect(keys2.keys[0]).toEqual('hi!')
     })
 
@@ -59,9 +61,10 @@ describe('clientCrypto', () => {
         alicesClient.startSync()
 
         for (const message of ['oh hello', 'why how are you?']) {
-            const keys = new SessionKeys({ keys: [message] })
+            const keys = create(SessionKeysSchema, { keys: [message] })
+            const jsonStr = toJsonString(SessionKeysSchema, keys)
             // create a message to encrypt with Bob's devices
-            const envelope = await alicesClient.encryptWithDeviceKeys(keys, [
+            const envelope = await alicesClient.encryptWithDeviceKeys(jsonStr, [
                 bobsClient.userDeviceKey(),
             ])
             expect(envelope[bobsClient.userDeviceKey().deviceKey]).toBeDefined()
@@ -72,7 +75,7 @@ describe('clientCrypto', () => {
             )
             assert(clear !== undefined, 'clear should not be undefined')
             log('clear', clear)
-            const keys2 = SessionKeys.fromJsonString(clear)
+            const keys2 = fromJsonString(SessionKeysSchema, clear)
             expect(keys2.keys[0]).toEqual(message)
         }
     })

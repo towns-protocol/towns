@@ -947,6 +947,7 @@ func (a *Archiver) startImpl(ctx context.Context, once bool, metrics infra.Metri
 			ctx,
 			blockNum+1,
 			a.onStreamAllocated,
+			a.onStreamAdded,
 			a.onStreamLastMiniblockUpdated,
 			a.onStreamPlacementUpdated,
 		)
@@ -962,6 +963,13 @@ func (a *Archiver) onStreamAllocated(ctx context.Context, event *river.StreamReg
 	a.newStreamAllocated.Add(1)
 	id := StreamId(event.StreamId)
 	a.addNewStream(ctx, id, &event.Nodes, 0)
+	a.tasks <- id
+}
+
+func (a *Archiver) onStreamAdded(ctx context.Context, event *river.StreamRegistryV1StreamCreated) {
+	a.newStreamAllocated.Add(1)
+	id := StreamId(event.StreamId)
+	a.addNewStream(ctx, id, &event.Stream.Nodes, 0)
 	a.tasks <- id
 }
 
