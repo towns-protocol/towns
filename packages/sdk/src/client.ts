@@ -812,73 +812,6 @@ export class Client
         chunkCount: number,
         streamSettings?: PlainMessage<StreamSettings>,
         perChunkEncryption?: boolean,
-    ): Promise<{ streamId: string; prevMiniblockHash: Uint8Array }> {
-        assert(this.userStreamId !== undefined, 'userStreamId must be set')
-        if (!channelId && !spaceId && !userId) {
-            throw Error('channelId, spaceId or userId must be set')
-        }
-        if (spaceId) {
-            assert(isSpaceStreamId(spaceId), 'spaceId must be a valid streamId')
-        }
-        if (channelId) {
-            assert(
-                isChannelStreamId(channelId) ||
-                    isDMChannelStreamId(channelId) ||
-                    isGDMChannelStreamId(channelId),
-                'channelId must be a valid streamId',
-            )
-        }
-        if (userId) {
-            assert(isUserId(userId), 'userId must be a valid userId')
-        }
-
-        const streamId = makeUniqueMediaStreamId()
-
-        this.logCall('createMedia', channelId ?? spaceId, userId, streamId)
-        const inceptionEvent = await makeEvent(
-            this.signerContext,
-            make_MediaPayload_Inception({
-                streamId: streamIdAsBytes(streamId),
-                channelId: channelId ? streamIdAsBytes(channelId) : undefined,
-                spaceId: spaceId ? streamIdAsBytes(spaceId) : undefined,
-                userId: userId ? addressFromUserId(userId) : undefined,
-                chunkCount,
-                settings: streamSettings,
-                perChunkEncryption: perChunkEncryption,
-            }),
-        )
-
-        const response = await this.rpcClient.createStream({
-            events: [inceptionEvent],
-            streamId: streamIdAsBytes(streamId),
-        })
-
-        const unpackedResponse = await unpackStream(response.stream, this.unpackEnvelopeOpts)
-        const streamView = new StreamStateView(this.userId, streamId)
-        streamView.initialize(
-            unpackedResponse.streamAndCookie.nextSyncCookie,
-            unpackedResponse.streamAndCookie.events,
-            unpackedResponse.snapshot,
-            unpackedResponse.streamAndCookie.miniblocks,
-            [],
-            unpackedResponse.prevSnapshotMiniblockNum,
-            undefined,
-            [],
-            undefined,
-        )
-
-        check(isDefined(streamView.prevMiniblockHash), 'prevMiniblockHash must be defined')
-
-        return { streamId: streamId, prevMiniblockHash: streamView.prevMiniblockHash }
-    }
-
-    async createMediaStreamNew(
-        channelId: string | Uint8Array | undefined,
-        spaceId: string | Uint8Array | undefined,
-        userId: string | undefined,
-        chunkCount: number,
-        streamSettings?: PlainMessage<StreamSettings>,
-        perChunkEncryption?: boolean,
     ): Promise<{ creationCookie: CreationCookie }> {
         assert(this.userStreamId !== undefined, 'userStreamId must be set')
         if (!channelId && !spaceId && !userId) {
@@ -1800,21 +1733,6 @@ export class Client
     }
 
     async sendMediaPayload(
-        streamId: string,
-        data: Uint8Array,
-        chunkIndex: number,
-        prevMiniblockHash: Uint8Array,
-        iv?: Uint8Array,
-    ): Promise<{ prevMiniblockHash: Uint8Array; eventId: string }> {
-        const payload = make_MediaPayload_Chunk({
-            data: data,
-            chunkIndex: chunkIndex,
-            iv: iv,
-        })
-        return this.makeEventWithHashAndAddToStream(streamId, payload, prevMiniblockHash)
-    }
-
-    async sendMediaPayloadNew(
         creationCookie: CreationCookie,
         last: boolean,
         data: Uint8Array,

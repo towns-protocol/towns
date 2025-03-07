@@ -116,20 +116,7 @@ func (s *localSyncer) RemoveStream(ctx context.Context, streamID StreamId) (bool
 
 // OnUpdate is called each time a new cookie is available for a stream
 func (s *localSyncer) OnUpdate(r *StreamAndCookie) {
-	select {
-	case s.messages <- &SyncStreamsResponse{SyncOp: SyncOp_SYNC_UPDATE, Stream: r}:
-		return
-	case <-s.syncStreamCtx.Done():
-		return
-	default:
-		err := RiverError(Err_BUFFER_FULL, "Client sync subscription message channel is full").
-			Tag("syncId", s.globalSyncOpID).
-			Func("OnUpdate")
-
-		_ = err.LogError(logging.FromCtx(s.syncStreamCtx))
-
-		s.cancelGlobalSyncOp(err)
-	}
+	s.sendResponse(&SyncStreamsResponse{SyncOp: SyncOp_SYNC_UPDATE, Stream: r})
 }
 
 // OnSyncError is called when a sync subscription failed unrecoverable
@@ -146,20 +133,7 @@ func (s *localSyncer) OnSyncError(error) {
 
 // OnStreamSyncDown is called when updates for a stream could not be given.
 func (s *localSyncer) OnStreamSyncDown(streamID StreamId) {
-	select {
-	case s.messages <- &SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: streamID[:]}:
-		return
-	case <-s.syncStreamCtx.Done():
-		return
-	default:
-		err := RiverError(Err_BUFFER_FULL, "Client sync subscription message channel is full").
-			Tag("syncId", s.globalSyncOpID).
-			Func("sendSyncStreamResponseToClient")
-
-		_ = err.LogError(logging.FromCtx(s.syncStreamCtx))
-
-		s.cancelGlobalSyncOp(err)
-	}
+	s.sendResponse(&SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: streamID[:]})
 }
 
 func (s *localSyncer) addStream(ctx context.Context, streamID StreamId, cookie *SyncCookie) error {
@@ -198,4 +172,23 @@ func (s *localSyncer) DebugDropStream(_ context.Context, streamID StreamId) (boo
 	}
 
 	return false, RiverError(Err_NOT_FOUND, "stream not found").Tag("stream", streamID)
+}
+
+// OnUpdate is called each time a new cookie is available for a stream
+func (s *localSyncer) sendResponse(r *SyncStreamsResponse) {
+	select {
+	case s.messages <- r:
+		return
+	case <-s.syncStreamCtx.Done():
+		return
+	default:
+		err := RiverError(Err_BUFFER_FULL, "Client sync subscription message channel is full").
+			Tag("syncId", s.globalSyncOpID).
+			Tag("op", r.GetSyncOp()).
+			Func("localSyncer.sendResponse")
+
+		_ = err.LogError(logging.FromCtx(s.syncStreamCtx))
+
+		s.cancelGlobalSyncOp(err)
+	}
 }
