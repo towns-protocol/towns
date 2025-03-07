@@ -1781,7 +1781,7 @@ func TestGetMiniblocksRangeLimit(t *testing.T) {
 		crypto.ABIEncodeUint64(uint64(expectedLimit)),
 	)
 
-	alice := tt.newTestClient(0)
+	alice := tt.newTestClient(0, testClientOpts{})
 	_ = alice.createUserStream()
 	spaceId, _ := alice.createSpace()
 	channelId, _, _ := alice.createChannel(spaceId)

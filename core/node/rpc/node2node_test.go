@@ -21,7 +21,7 @@ func Test_Node2Node_GetMiniblocksByIds(t *testing.T) {
 		},
 	})
 
-	alice := tt.newTestClient(0)
+	alice := tt.newTestClient(0, testClientOpts{})
 	_ = alice.createUserStream()
 	spaceId, _ := alice.createSpace()
 	channelId, creationMb, _ := alice.createChannel(spaceId)

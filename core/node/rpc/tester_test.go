@@ -545,45 +545,56 @@ func (r *receivedStreamUpdates) Updates() []*SyncStreamsResponse {
 }
 
 type testClient struct {
-	t               *testing.T
-	ctx             context.Context
-	assert          *assert.Assertions
-	require         *require.Assertions
-	client          protocolconnect.StreamServiceClient
-	node2nodeClient protocolconnect.NodeToNodeClient
-	nodes           []*testNodeRecord
-	wallet          *crypto.Wallet
-	userId          common.Address
-	userStreamId    StreamId
-	name            string
-	syncID          atomic.String // use testClient#SyncID() to retrieve the value
-	updates         *xsync.MapOf[StreamId, *receivedStreamUpdates]
+	t                    *testing.T
+	ctx                  context.Context
+	assert               *assert.Assertions
+	require              *require.Assertions
+	client               protocolconnect.StreamServiceClient
+	node2nodeClient      protocolconnect.NodeToNodeClient
+	nodes                []*testNodeRecord
+	wallet               *crypto.Wallet
+	userId               common.Address
+	userStreamId         StreamId
+	name                 string
+	syncID               atomic.String // use testClient#SyncID() to retrieve the value
+	enableSync           bool
+	updates              *xsync.MapOf[StreamId, *receivedStreamUpdates]
+	disableMiniblockComp bool
 }
 
-func (st *serviceTester) newTestClient(i int) *testClient {
+type testClientOpts struct {
+	disableMiniblockComp bool
+	// enableSync set to true means that the client will sync with all channels that it joined and compares all
+	// received updates with other clients.
+	enableSync bool
+}
+
+func (st *serviceTester) newTestClient(i int, opts testClientOpts) *testClient {
 	wallet, err := crypto.NewWallet(st.ctx)
 	st.require.NoError(err)
 	return &testClient{
-		t:               st.t,
-		ctx:             st.ctx,
-		assert:          assert.New(st.t),
-		require:         st.require,
-		client:          st.testClient(i),
-		node2nodeClient: st.testNode2NodeClient(i),
-		nodes:           st.nodes,
-		wallet:          wallet,
-		userId:          wallet.Address,
-		userStreamId:    UserStreamIdFromAddr(wallet.Address),
-		name:            fmt.Sprintf("%d-%s", i, wallet.Address.Hex()[2:8]),
-		updates:         xsync.NewMapOf[StreamId, *receivedStreamUpdates](),
+		t:                    st.t,
+		ctx:                  st.ctx,
+		assert:               assert.New(st.t),
+		require:              st.require,
+		client:               st.testClient(i),
+		node2nodeClient:      st.testNode2NodeClient(i),
+		nodes:                st.nodes,
+		wallet:               wallet,
+		userId:               wallet.Address,
+		userStreamId:         UserStreamIdFromAddr(wallet.Address),
+		name:                 fmt.Sprintf("%d-%s", i, wallet.Address.Hex()[2:8]),
+		enableSync:           opts.enableSync,
+		updates:              xsync.NewMapOf[StreamId, *receivedStreamUpdates](),
+		disableMiniblockComp: opts.disableMiniblockComp,
 	}
 }
 
 // newTestClients creates a testClients with clients connected to nodes in round-robin fashion.
-func (st *serviceTester) newTestClients(numClients int) testClients {
+func (st *serviceTester) newTestClients(numClients int, opts testClientOpts) testClients {
 	clients := make(testClients, numClients)
 	for i := range clients {
-		clients[i] = st.newTestClient(i % st.opts.numNodes)
+		clients[i] = st.newTestClient(i%st.opts.numNodes, opts)
 	}
 	clients.parallelForAll(func(tc *testClient) {
 		tc.createUserStream()
@@ -591,6 +602,7 @@ func (st *serviceTester) newTestClients(numClients int) testClients {
 	clients.parallelForAll(func(tc *testClient) {
 		tc.startSync()
 	})
+
 	return clients
 }
 
@@ -623,6 +635,10 @@ func (tcs testClients) requireSubscribed(streamId StreamId, expectedMemberships 
 }
 
 func (tc *testClient) requireSubscribed(channelId StreamId) {
+	if !tc.enableSync {
+		return
+	}
+
 	tc.require.Eventually(func() bool {
 		_, ok := tc.updates.Load(channelId)
 		return ok
@@ -630,6 +646,10 @@ func (tc *testClient) requireSubscribed(channelId StreamId) {
 }
 
 func (tc *testClient) syncChannel(cookie *SyncCookie) {
+	if !tc.enableSync {
+		return
+	}
+
 	_, err := tc.client.ModifySync(tc.ctx, connect.NewRequest(&ModifySyncRequest{
 		SyncId:     tc.SyncID(),
 		AddStreams: []*SyncCookie{cookie},
@@ -640,6 +660,10 @@ func (tc *testClient) syncChannel(cookie *SyncCookie) {
 
 // startSync initiates a sync session without streams.
 func (tc *testClient) startSync() {
+	if !tc.enableSync {
+		return
+	}
+
 	updates, err := tc.client.SyncStreams(tc.ctx, connect.NewRequest(&SyncStreamsRequest{}))
 	tc.require.NoError(err)
 
@@ -1165,85 +1189,113 @@ func (tcs testClients) createChannelAndJoin(spaceId StreamId) StreamId {
 	return channelId
 }
 
-func (tcs testClients) compareNowImpl(t require.TestingT, streamId StreamId) []*StreamAndCookie {
+func (tcs testClients) compareNowImpl(
+	t require.TestingT,
+	streamId StreamId,
+	miniBlockChain bool,
+	syncUpdates bool,
+) []*StreamAndCookie {
 	assert := assert.New(t)
-	streamC := make(chan *StreamAndCookie, len(tcs))
-	tcs.parallelForAllT(t, func(tc *testClient) {
-		streamC <- tc.getStream(streamId)
-	})
-	streams := []*StreamAndCookie{}
-	for range tcs {
-		streams = append(streams, <-streamC)
-	}
-	if testfmt.Enabled() {
-		testfmt.Println(tcs[0].t, "compareNowImpl: Got all streams")
-		for i, stream := range streams {
-			testfmt.Println(
-				tcs[0].t,
-				"    ",
-				i,
-				"MBs:",
+	success := true
+	var streams []*StreamAndCookie
+
+	if miniBlockChain {
+		streamC := make(chan *StreamAndCookie, len(tcs))
+		tcs.parallelForAllT(t, func(tc *testClient) {
+			streamC <- tc.getStream(streamId)
+		})
+
+		for range tcs {
+			streams = append(streams, <-streamC)
+		}
+		if false /*testfmt.Enabled()*/ {
+			testfmt.Println(tcs[0].t, "compareNowImpl: Got all streams")
+			for i, stream := range streams {
+				testfmt.Println(
+					tcs[0].t,
+					"    ",
+					i,
+					"MBs:",
+					len(stream.Miniblocks),
+					"Gen:",
+					stream.NextSyncCookie.MinipoolGen,
+					"Events:",
+					len(stream.Events),
+				)
+			}
+		}
+		first := streams[0]
+		for i, stream := range streams[1:] {
+			success = success && assert.Equal(
+				len(first.Miniblocks),
 				len(stream.Miniblocks),
-				"Gen:",
+				"different number of miniblocks, 0 and %d",
+				i+1,
+			)
+			success = success &&
+				assert.Equal(len(first.Events), len(stream.Events), "different number of events, 0 and %d", i+1)
+			success = success && assert.Equal(
+				common.BytesToHash(first.NextSyncCookie.PrevMiniblockHash).Hex(),
+				common.BytesToHash(stream.NextSyncCookie.PrevMiniblockHash).Hex(),
+				"different prev miniblock hash, 0 and %d",
+				i+1,
+			)
+			success = success && assert.Equal(
+				first.NextSyncCookie.MinipoolGen,
 				stream.NextSyncCookie.MinipoolGen,
-				"Events:",
-				len(stream.Events),
+				"different minipool gen, 0 and %d",
+				i+1,
+			)
+			success = success && assert.Equal(
+				first.NextSyncCookie.MinipoolSlot,
+				stream.NextSyncCookie.MinipoolSlot,
+				"different minipool slot, 0 and %d",
+				i+1,
 			)
 		}
 	}
-	first := streams[0]
-	var success bool
-	for i, stream := range streams[1:] {
-		success = assert.Equal(
-			len(first.Miniblocks),
-			len(stream.Miniblocks),
-			"different number of miniblocks, 0 and %d",
-			i+1,
-		)
-		success = success &&
-			assert.Equal(len(first.Events), len(stream.Events), "different number of events, 0 and %d", i+1)
-		success = success && assert.Equal(
-			common.BytesToHash(first.NextSyncCookie.PrevMiniblockHash).Hex(),
-			common.BytesToHash(stream.NextSyncCookie.PrevMiniblockHash).Hex(),
-			"different prev miniblock hash, 0 and %d",
-			i+1,
-		)
-		success = success && assert.Equal(
-			first.NextSyncCookie.MinipoolGen,
-			stream.NextSyncCookie.MinipoolGen,
-			"different minipool gen, 0 and %d",
-			i+1,
-		)
-		success = success && assert.Equal(
-			first.NextSyncCookie.MinipoolSlot,
-			stream.NextSyncCookie.MinipoolSlot,
-			"different minipool slot, 0 and %d",
-			i+1,
-		)
-	}
 
-	firstClient := tcs[0]
-	for _, client := range tcs[1:] {
-		f, _ := firstClient.updates.Load(streamId)
-		c, _ := client.updates.Load(streamId)
+	testfmt.Printf(tcs[0].t, "after miniBlockChain result: %v\n", success)
 
-		firstUpdates := f.Updates()
-		clientUpdates := c.Updates()
+	if syncUpdates {
+		firstClient := tcs[0]
+		for _, client := range tcs[1:] {
+			if !client.enableSync {
+				continue
+			}
 
-		success = success && len(firstUpdates) == len(clientUpdates)
+			if !firstClient.enableSync {
+				firstClient = client
+				continue
+			}
 
-		for i, first := range firstUpdates {
-			success = success && cmp.Equal(first, clientUpdates[i],
-				cmp.Comparer(func(x, y *SyncStreamsResponse) bool {
-					return cmp.Equal(x.GetSyncOp(), y.GetSyncOp()) &&
-						cmp.Equal(x.GetStreamId(), y.GetStreamId()) &&
-						cmp.Equal(x.GetStream().GetSyncReset(), y.GetStream().GetSyncReset()) &&
-						cmp.Equal(x.GetStream().GetNextSyncCookie().GetMinipoolGen(), y.GetStream().GetNextSyncCookie().GetMinipoolGen()) &&
-						cmp.Equal(x.GetStream().GetNextSyncCookie().GetMinipoolSlot(), y.GetStream().GetNextSyncCookie().GetMinipoolSlot()) &&
-						cmp.Equal(x.GetStream().GetNextSyncCookie().GetPrevMiniblockHash(), y.GetStream().GetNextSyncCookie().GetPrevMiniblockHash())
-				}))
+			f, _ := firstClient.updates.Load(streamId)
+			c, _ := client.updates.Load(streamId)
+
+			firstUpdates := f.Updates()
+			clientUpdates := c.Updates()
+
+			success = success && len(firstUpdates) == len(clientUpdates)
+
+			for i, first := range firstUpdates {
+				success = success && cmp.Equal(first, clientUpdates[i],
+					cmp.Comparer(func(x, y *SyncStreamsResponse) bool {
+						return cmp.Equal(x.GetSyncOp(), y.GetSyncOp()) &&
+							cmp.Equal(x.GetStreamId(), y.GetStreamId()) &&
+							cmp.Equal(x.GetStream().GetSyncReset(), y.GetStream().GetSyncReset()) &&
+							cmp.Equal(x.GetStream().GetNextSyncCookie().GetMinipoolGen(), y.GetStream().GetNextSyncCookie().GetMinipoolGen()) &&
+							cmp.Equal(x.GetStream().GetNextSyncCookie().GetMinipoolSlot(), y.GetStream().GetNextSyncCookie().GetMinipoolSlot()) &&
+							cmp.Equal(x.GetStream().GetNextSyncCookie().GetPrevMiniblockHash(), y.GetStream().GetNextSyncCookie().GetPrevMiniblockHash())
+					}))
+			}
+
+			if !success {
+				break
+			}
 		}
 	}
+
+	testfmt.Printf(tcs[0].t, "after syncUpdates result: %v\n", success)
 
 	if !success {
 		return streams
@@ -1252,11 +1304,11 @@ func (tcs testClients) compareNowImpl(t require.TestingT, streamId StreamId) []*
 }
 
 //nolint:unused
-func (tcs testClients) compareNow(streamId StreamId) {
+func (tcs testClients) compareNow(streamId StreamId, miniBlockChain bool, sync bool) {
 	if len(tcs) < 2 {
 		panic("need at least 2 clients to compare")
 	}
-	streams := tcs.compareNowImpl(tcs[0].t, streamId)
+	streams := tcs.compareNowImpl(tcs[0].t, streamId, miniBlockChain, sync)
 	if streams != nil {
 		for i, s := range streams {
 			tcs[i].maybeDumpStream(s)
@@ -1265,13 +1317,13 @@ func (tcs testClients) compareNow(streamId StreamId) {
 	}
 }
 
-func (tcs testClients) compare(streamId StreamId) {
+func (tcs testClients) compare(streamId StreamId, miniBlockChain bool, sync bool) {
 	if len(tcs) < 2 {
 		panic("need at least 2 clients to compare")
 	}
 	var streams []*StreamAndCookie
 	success := tcs[0].assert.EventuallyWithT(func(t *assert.CollectT) {
-		streams = tcs.compareNowImpl(t, streamId)
+		streams = tcs.compareNowImpl(t, streamId, miniBlockChain, sync)
 	}, 10*time.Second, 100*time.Millisecond)
 	for i, s := range streams {
 		tcs[i].maybeDumpStream(s)

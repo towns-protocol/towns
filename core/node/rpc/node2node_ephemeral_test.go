@@ -17,7 +17,7 @@ import (
 func TestCreateEphemeralStream(t *testing.T) {
 	tt := newServiceTester(t, serviceTesterOpts{numNodes: 1, start: true})
 
-	alice := tt.newTestClient(0)
+	alice := tt.newTestClient(0, testClientOpts{})
 	_ = alice.createUserStream()
 	spaceId, _ := alice.createSpace()
 	channelId, _, _ := alice.createChannel(spaceId)

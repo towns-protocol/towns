@@ -34,7 +34,7 @@ func TestGetStreamEx(t *testing.T) {
 	)
 	require := tt.require
 
-	alice := tt.newTestClient(0)
+	alice := tt.newTestClient(0, testClientOpts{})
 	_ = alice.createUserStream()
 	spaceId, _ := alice.createSpace()
 	channelId, _, _ := alice.createChannel(spaceId)
@@ -101,7 +101,7 @@ func TestMiniBlockProductionFrequency(t *testing.T) {
 		config.Graffiti = "firstNode"
 	}})
 
-	alice := tt.newTestClient(0)
+	alice := tt.newTestClient(0, testClientOpts{})
 	_ = alice.createUserStream()
 	spaceId, _ := alice.createSpace()
 	channelId, _, _ := alice.createChannel(spaceId)
