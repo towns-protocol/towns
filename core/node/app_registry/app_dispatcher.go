@@ -40,6 +40,7 @@ func NewAppDispatcher(
 		appClient:                  appClient,
 		workerPool:                 *workerpool.New(workerPoolSize),
 		solicitationRateLimitCache: cache.New(5*time.Second, 1*time.Minute),
+		dataEncryptionKey:          dataEncryptionKey,
 	}
 
 	// Cleanup

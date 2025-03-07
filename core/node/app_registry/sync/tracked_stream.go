@@ -21,39 +21,40 @@ type AppRegistryTrackedStreamView struct {
 	store    EncryptedMessageStore
 }
 
+func (b *AppRegistryTrackedStreamView) processUserInboxMessage(ctx context.Context, event *ParsedEvent) error {
+	// Capture keys sent to the app's inbox and store them in the message cache so that
+	// we can dequeue any existing messages that require decryption this session, and immediately
+	// forward incoming messages with the same session id.
+	if payload := event.Event.GetUserInboxPayload(); payload != nil {
+		if groupEncryptionSessions := payload.GetGroupEncryptionSessions(); groupEncryptionSessions != nil {
+			sessionIds := groupEncryptionSessions.GetSessionIds()
+			deviceCipherTexts := groupEncryptionSessions.GetCiphertexts()
+			streamId, err := shared.StreamIdFromBytes(groupEncryptionSessions.StreamId)
+			if err != nil {
+				return err
+			}
+			for deviceKey, cipherTexts := range deviceCipherTexts {
+				if err := b.store.PublishSessionKeys(ctx, streamId, deviceKey, sessionIds, cipherTexts); err != nil {
+					return err
+				}
+			}
+		}
+	}
+	return nil
+}
+
 func (b *AppRegistryTrackedStreamView) onNewEvent(ctx context.Context, view *StreamView, event *ParsedEvent) error {
 	streamId := view.StreamId()
 	log := logging.FromCtx(ctx)
 
 	if streamId.Type() == shared.STREAM_USER_INBOX_BIN {
-		// Capture keys sent to the app's inbox and store them in the message cache so that
-		// we can dequeue any existing messages that require decryption this session, and immediately
-		// forward incoming messages with the same session id.
-		if payload := event.Event.GetUserInboxPayload(); payload != nil {
-			if groupEncryptionSessions := payload.GetGroupEncryptionSessions(); groupEncryptionSessions != nil {
-				sessionIds := groupEncryptionSessions.GetSessionIds()
-				deviceCipherTexts := groupEncryptionSessions.GetCiphertexts()
-				for deviceKey, cipherTexts := range deviceCipherTexts {
-					log.Debugw("Publishing session keys for device", "deviceKey", deviceKey, "streamId", streamId)
-					if err := b.store.PublishSessionKeys(ctx, *streamId, deviceKey, sessionIds, cipherTexts); err != nil {
-						logging.FromCtx(ctx).Errorw(
-							"Unable to publish session keys for device",
-							"deviceKey",
-							deviceKey,
-							"streamId",
-							streamId,
-							"sessionIds",
-							sessionIds,
-						)
-						return err
-					}
-				}
-			}
-		}
-		return nil
+		return b.processUserInboxMessage(ctx, event)
 	}
 
 	members, err := view.GetChannelMembers()
+	if err != nil {
+		return err
+	}
 	appMembers := mapset.NewSet[string]()
 	members.Each(func(member string) bool {
 		// Trim 0x prefix
@@ -72,12 +73,20 @@ func (b *AppRegistryTrackedStreamView) onNewEvent(ctx context.Context, view *Str
 		}
 		return false
 	})
-	if err != nil {
-		return err
-	}
 
+	// log.Debugw(
+	// 	"Witnessed channel message",
+	// 	"streamId",
+	// 	streamId,
+	// 	"members",
+	// 	members,
+	// 	"appMembers",
+	// 	appMembers,
+	// 	"event",
+	// 	event,
+	// )
 	if appMembers.Cardinality() > 0 {
-		log.Debugw("OnMessageEvent message", "streamId", streamId, "appMembers", appMembers, "event", event)
+		// log.Debugw("OnMessageEvent message", "streamId", streamId, "appMembers", appMembers, "event", event)
 		b.listener.OnMessageEvent(ctx, *streamId, view.StreamParentId(), appMembers, event)
 	}
 
@@ -90,7 +99,7 @@ func (b *AppRegistryTrackedStreamView) onNewEvent(ctx context.Context, view *Str
 // starts with a miniblock that contains a snapshot with stream members.
 func NewTrackedStreamForAppRegistryService(
 	ctx context.Context,
-	streamID shared.StreamId,
+	streamId shared.StreamId,
 	cfg crypto.OnChainConfiguration,
 	stream *StreamAndCookie,
 	listener track_streams.StreamEventListener,
@@ -100,13 +109,18 @@ func NewTrackedStreamForAppRegistryService(
 		listener: listener,
 		store:    store,
 	}
-	_, err := trackedView.TrackedStreamViewImpl.Init(ctx, streamID, cfg, stream, trackedView.onNewEvent)
+	view, err := trackedView.TrackedStreamViewImpl.Init(ctx, streamId, cfg, stream, trackedView.onNewEvent)
 	if err != nil {
 		return nil, err
 	}
 
-	// TODO: capture returned view above and update cache / storage with all group encryption sessions,
-	// iff this is an app user inbox stream.
+	if streamId.Type() == shared.STREAM_USER_INBOX_BIN {
+		for event := range view.AllEvents() {
+			if err := trackedView.processUserInboxMessage(ctx, event); err != nil {
+				return nil, err
+			}
+		}
+	}
 
 	return trackedView, nil
 }

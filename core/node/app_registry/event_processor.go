@@ -32,7 +32,9 @@ func (p *MessageToAppProcessor) OnMessageEvent(
 	members mapset.Set[string],
 	event *events.ParsedEvent,
 ) {
-	appIds := make([]common.Address, members.Cardinality(), 0)
+	log := logging.FromCtx(ctx)
+	appIds := make([]common.Address, 0, members.Cardinality())
+
 	// TODO: Apply logic to filter out which events to send to which apps based on app preferences.
 
 	members.Each(func(memberId string) bool {
@@ -45,15 +47,28 @@ func (p *MessageToAppProcessor) OnMessageEvent(
 	})
 	streamBytes, err := proto.Marshal(event.Event)
 	if err != nil {
-		logging.FromCtx(ctx).
-			Errorw("Error marshalling stream event", "event", event, "streamId", channelId, "spaceId", spaceId)
+		log.Errorw("Error marshalling stream event", "event", event, "streamId", channelId, "spaceId", spaceId)
 		return
 	}
 
 	// The cache is also a broker that will dispatch sendable messages to the appropriate
 	// consumers in order to make webhook calls to app services.
-	if err := p.cache.EnqueueMessages(ctx, appIds, event.GetChannelMessage().Message.SessionId, channelId, streamBytes); err != nil {
-		logging.FromCtx(ctx).
-			Errorw("Error enqueueing messages for stream event", "event", event, "streamId", channelId, "spaceId", spaceId, "error", err)
+	message := event.GetEncryptedMessage()
+	// Ignore membership changes, etc, and focus only on channel content.
+	if message != nil {
+		// log.Debugw("ChannelMessage detected", "appIds", appIds, "sessionId", message.SessionId, "channelId", channelId)
+		if err := p.cache.EnqueueMessages(ctx, appIds, message.SessionId, channelId, streamBytes); err != nil {
+			log.Errorw(
+				"Error enqueueing messages for stream event",
+				"event",
+				event,
+				"streamId",
+				channelId,
+				"spaceId",
+				spaceId,
+				"error",
+				err,
+			)
+		}
 	}
 }
