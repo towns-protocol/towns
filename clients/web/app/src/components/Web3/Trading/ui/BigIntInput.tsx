@@ -1,6 +1,6 @@
 import React, { ComponentProps, useCallback, useEffect, useRef, useState } from 'react'
 import useResizeObserver from '@react-hook/resize-observer'
-import { Icon, IconName, TextField } from '@ui'
+import { Box, Icon, IconName, TextField } from '@ui'
 import { formatUnits, parseUnits } from 'hooks/useBalance'
 
 type Props = {
@@ -8,6 +8,7 @@ type Props = {
     decimals: number
     value: bigint | undefined
     onChange: (value: bigint) => void
+    onSelect?: () => void
 } & Omit<ComponentProps<typeof TextField>, 'onChange' | 'value'>
 
 export const BigIntInput = (props: Props) => {
@@ -53,8 +54,12 @@ export const BigIntInput = (props: Props) => {
         }
     })
 
+    const onSelect = useCallback(() => {
+        textRef.current?.focus()
+    }, [])
+
     return (
-        <>
+        <Box onClick={onSelect}>
             <TextField
                 ref={textRef}
                 background="level2"
@@ -65,12 +70,13 @@ export const BigIntInput = (props: Props) => {
                 height="x5"
                 style={{ width: 100, minWidth: !displayValue ? 55 : 33 }}
                 maxWidth="x20"
+                onFocus={props.onSelect}
                 onChange={onTextFieldChanged}
                 {...inputProps}
             />
             <div style={{ position: 'absolute', left: -1000, top: -1000 }} ref={measureRef}>
                 {displayValue}
             </div>
-        </>
+        </Box>
     )
 }

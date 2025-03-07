@@ -8,7 +8,7 @@ import React, {
 } from 'react'
 import { TSigner, TransactionStatus, useConnectivity } from 'use-towns-client'
 import { useCoinData } from '@components/TradingChart/useCoinData'
-import { Box, FancyButton, Stack, Text } from '@ui'
+import { Box, FancyButton, IconName, Stack, Text } from '@ui'
 import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
 import { WalletReady } from 'privy/WalletReady'
 import { popupToast } from '@components/Notifications/popupToast'
@@ -44,6 +44,12 @@ export type QuoteStatus = (
       }
 ) & { mode: 'buy' | 'sell' }
 
+type QuickSelectOption = {
+    label: string
+    value: bigint
+    icon?: IconName
+}
+
 type Props = {
     mode: 'buy' | 'sell'
     tokenAddress: string
@@ -72,6 +78,11 @@ export const TradeComponent = (props: Props) => {
         },
         [props],
     )
+
+    const [_amount, setAmount] = useState<bigint>()
+    const [customAmount, setCustomAmount] = useState<bigint>(0n)
+    const [preselectedOption, setPreselectedOption] = useState<QuickSelectOption>()
+    const amount = preselectedOption?.label === 'custom' ? customAmount : _amount
 
     useEffect(() => {
         setMode(props.mode)
@@ -107,14 +118,8 @@ export const TradeComponent = (props: Props) => {
         chain: chainId,
     })
 
-    // const { data: toTokenData } = useCoinData({
-    //     address: toTokenAddress,
-    //     chain: chainId,
-    // })
-
     const currentBalanceDecimals =
         mode === 'buy' ? chainConfig.decimals : fromTokenData?.token.decimals ?? 18
-    const [amount, setAmount] = useState<bigint>()
 
     const cachedAmounts = useRef<Record<string, bigint | undefined>>({})
 
@@ -129,7 +134,7 @@ export const TradeComponent = (props: Props) => {
         cachedAmounts.current[key] = amount
     }, [amount, key])
 
-    const quickSelectValues = useMemo(() => {
+    const quickSelectValues = useMemo<QuickSelectOption[]>(() => {
         if (mode === 'buy') {
             return (
                 chainConfig.chainId === 'solana-mainnet'
@@ -164,8 +169,6 @@ export const TradeComponent = (props: Props) => {
         }
     }, [chainConfig.chainId, chainConfig.decimals, chainConfig.icon, currentTokenBalance, mode])
 
-    const [preselectedOption, setPreselectedOption] = useState<{ label: string; value: bigint }>()
-
     useImperativeHandle(props.resetRef, () => ({
         reset: () => {
             setPreselectedOption(undefined)
@@ -173,18 +176,22 @@ export const TradeComponent = (props: Props) => {
         },
     }))
 
-    const onSetPreselectedAmount = useCallback((option: { label: string; value: bigint }) => {
+    const onSetPreselectedAmount = useCallback((option: QuickSelectOption) => {
         setPreselectedOption(option)
         setAmount(option.value)
     }, [])
 
     const onCustomAmount = useCallback(
         (value: bigint) => {
-            setAmount(value)
-            setPreselectedOption(undefined)
+            setCustomAmount(value)
+            setPreselectedOption({ label: 'custom', value, icon: undefined })
         },
-        [setAmount],
+        [setCustomAmount],
     )
+
+    const onCustomFieldSelect = useCallback(() => {
+        setPreselectedOption({ label: 'custom', value: customAmount, icon: undefined })
+    }, [customAmount])
 
     const { data: coinData } = useCoinData({
         address: tokenAddress ?? '',
@@ -327,6 +334,10 @@ export const TradeComponent = (props: Props) => {
         }
     }, [isQuoteError, isQuoteLoading, metaData, mode, quoteError?.message, request])
 
+    const selectFn = useCallback((v1: QuickSelectOption | undefined, v2: QuickSelectOption) => {
+        return v1?.label === v2.label
+    }, [])
+
     if (!isTradingChain(chainId)) {
         return (
             <Box>
@@ -353,15 +364,30 @@ export const TradeComponent = (props: Props) => {
                     <Stack gap="sm">
                         <Stack horizontal justifyContent="spaceBetween" display="flex" gap="sm">
                             <ButtonSelection
-                                value={quickSelectValues.find((v) => v === preselectedOption)}
+                                value={quickSelectValues.find((option) =>
+                                    selectFn(preselectedOption, option),
+                                )}
                                 options={quickSelectValues}
+                                selectFn={selectFn}
                                 renderItem={({ option, onSelect, selected }) =>
                                     option.label === 'custom' ? (
-                                        <Box grow flexBasis="none" key={option.label}>
+                                        <Box
+                                            grow
+                                            flexBasis="none"
+                                            key={option.label}
+                                            cursor="pointer"
+                                            borderRadius="full"
+                                            color={mode === 'buy' ? 'positive' : 'peach'}
+                                            style={{
+                                                border: '1px solid',
+                                                borderColor: selected ? 'inherit' : 'transparent',
+                                            }}
+                                            onClick={onCustomFieldSelect}
+                                        >
                                             <BigIntInput
                                                 icon={mode === 'buy' ? chainConfig.icon : undefined}
                                                 decimals={currentBalanceDecimals}
-                                                value={amount}
+                                                value={customAmount}
                                                 placeholder="Custom"
                                                 onChange={onCustomAmount}
                                             />
@@ -380,7 +406,6 @@ export const TradeComponent = (props: Props) => {
                                 onChange={onSetPreselectedAmount}
                             />
                         </Stack>
-
                         {/* if there's no threadInfo, we're inside the global trade panel,
                             show buy/sell button */}
                         {!threadInfo && sendTradeTransaction && (

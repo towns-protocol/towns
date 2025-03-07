@@ -10,6 +10,7 @@ export const ButtonSelection = <T,>(props: {
     value: T | undefined
     options: T[]
     onChange: (value: T) => void
+    selectFn: (v1: T | undefined, v2: T) => boolean
     renderItem: (props: ButtonSelectionProps<T>) => React.ReactNode
 }) => {
     const { value, options, renderItem } = props
@@ -19,5 +20,11 @@ export const ButtonSelection = <T,>(props: {
         },
         [props],
     )
-    return options.map((option) => renderItem({ option, onSelect, selected: value === option }))
+    return options.map((option) =>
+        renderItem({
+            option,
+            onSelect,
+            selected: props.selectFn(value, option),
+        }),
+    )
 }
