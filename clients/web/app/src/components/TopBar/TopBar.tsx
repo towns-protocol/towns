@@ -48,9 +48,9 @@ export const TopBar = () => {
 
                 <Stack horizontal gap="md" paddingRight="lg" alignItems="center">
                     <PointsButton />
+                    {isHNTMember && <WalletButton />}
                     <NodeStatusButton />
                     <BugReportButton />
-                    {isHNTMember && <WalletButton />}
                     <Box ref={profileButtonRef}>
                         <ProfileCardButton />
                     </Box>
