@@ -1,4 +1,4 @@
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef } from 'react'
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { Connection as SolanaConnection, VersionedTransaction } from '@solana/web3.js'
 import { base64ToUint8Array } from '@river-build/sdk'
 import { TransactionStatus, queryClient, useTownsClient, useTownsContext } from 'use-towns-client'
@@ -422,7 +422,7 @@ const useTokenTransferRollups = () => {
     const { casablancaClient } = useTownsContext()
 
     // map of trades: token address -> transfers
-    const rollup = useRef<{
+    const [rollup, setRollup] = useState<{
         [key: string]: {
             channelId: string
             address: Uint8Array
@@ -446,10 +446,14 @@ const useTokenTransferRollups = () => {
                 transfer.chainId === 'solana-mainnet'
                     ? bin_toString(transfer.address)
                     : '0x' + bin_toHexString(transfer.address)
-            if (!rollup.current[address]) {
-                rollup.current[address] = []
-            }
-            rollup.current[address].push({ ...transfer, channelId })
+            setRollup((prevRollup) => {
+                const newRollup = { ...prevRollup }
+                if (!newRollup[address]) {
+                    newRollup[address] = []
+                }
+                newRollup[address] = [...newRollup[address], { ...transfer, channelId }]
+                return newRollup
+            })
         }
 
         const onStreamInitialized = (streamId: string) => {
@@ -468,6 +472,6 @@ const useTokenTransferRollups = () => {
             casablancaClient.off('streamTokenTransfer', onStreamTokenTransfer)
             casablancaClient.off('streamInitialized', onStreamInitialized)
         }
-    }, [casablancaClient])
-    return { tokenTransferRollups: rollup.current }
+    }, [casablancaClient, setRollup])
+    return { tokenTransferRollups: rollup }
 }
