@@ -53,6 +53,17 @@ const zParsedTokenResponse = z.object({
     }),
 })
 
+// Codex uses the following network ids + addresses for solana and ethereum native tokens
+// we need to remap if needed
+function remapAddressToCodexFormat(networkId: number, address: string) {
+    if (networkId === 1399811149 && address === '11111111111111111111111111111111') {
+        return 'So11111111111111111111111111111111111111112:1399811149'
+    } else if (networkId === 8453 && address === '0x0000000000000000000000000000000000000000') {
+        return '0x4200000000000000000000000000000000000006:8453'
+    }
+    return `${address}:${networkId}`
+}
+
 export const useCoinData = ({
     address,
     chain,
@@ -63,13 +74,13 @@ export const useCoinData = ({
     disabled?: boolean
 }) => {
     const networkId = chain === 'solana-mainnet' ? 1399811149 : Number(chain)
+    const remappedAddress = remapAddressToCodexFormat(networkId, address)
+
     const query = `
      {
         filterTokens(
-            filters: {
-                network: [${networkId}]
-            }
-            tokens: ["${address}:${networkId}"]
+            filters: {}
+            tokens: ["${remappedAddress}"]
             limit: 1
         ) {
             results {
