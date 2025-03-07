@@ -125,7 +125,7 @@ export const TradingChartAttachment = (props: {
                         color="cta1"
                         onClick={() => onTradeClick('buy')}
                     >
-                        Buy
+                        <Text>Buy</Text>
                     </Button>
                     <Button
                         grow
@@ -135,7 +135,7 @@ export const TradingChartAttachment = (props: {
                         color="peach"
                         onClick={() => onTradeClick('sell')}
                     >
-                        Sell
+                        <Text>Sell</Text>
                     </Button>
                 </Stack>
             )}
@@ -194,8 +194,8 @@ export const TradingChart = (props: { address: string; chainId: string; disabled
         <>
             <Box width="100%" position="relative">
                 <SizeBox
-                    cursor={!isFocused ? 'pointer' : 'default'}
-                    onClick={() => setIsFocused(true)}
+                    cursor={!isFocused && isTradingThreadContext ? 'pointer' : 'default'}
+                    onClick={isTradingThreadContext ? () => setIsFocused(true) : undefined}
                 >
                     <ChartComponent
                         isFocused={isFocused}
@@ -240,7 +240,7 @@ export const TradingChart = (props: { address: string; chainId: string; disabled
                     </Stack>
                 </Box>
             </Box>
-            <Stack paddingX paddingY="none" gap="paragraph">
+            <Stack paddingX paddingY="none" gap="md">
                 {coinData ? (
                     <>
                         <Stack horizontal={isTradingThreadContext} gap="paragraph">
@@ -252,23 +252,29 @@ export const TradingChart = (props: { address: string; chainId: string; disabled
                                     }}
                                 />
                                 <Box maxWidth="200" overflow="hidden" paddingY="xs" gap="sm">
-                                    <Text
-                                        truncate
-                                        maxWidth="150"
-                                        fontSize="lg"
-                                        fontWeight="strong"
-                                        textTransform="uppercase"
-                                    >
+                                    <Stack horizontal gap="sm" alignItems="end">
+                                        <Text
+                                            truncate
+                                            color="gray2"
+                                            maxWidth="150"
+                                            fontSize="sm"
+                                            fontWeight="strong"
+                                            textTransform="uppercase"
+                                        >
+                                            {coinData.token.symbol}
+                                        </Text>
+                                        <ClipboardCopy
+                                            maxWidth="100"
+                                            color="gray2"
+                                            fontSize="sm"
+                                            gap="none"
+                                            clipboardContent={address}
+                                            label={address}
+                                        />
+                                    </Stack>
+                                    <Text truncate maxWidth="250" fontSize="lg" fontWeight="strong">
                                         {coinData.token.name}
                                     </Text>
-                                    <ClipboardCopy
-                                        maxWidth="100"
-                                        color="gray2"
-                                        fontSize="sm"
-                                        gap="xs"
-                                        clipboardContent={address}
-                                        label={address}
-                                    />
                                 </Box>
                             </Stack>
                             <Stack horizontal grow gap="sm">
@@ -305,69 +311,103 @@ export const TradingChart = (props: { address: string; chainId: string; disabled
                             </Stack>
                         </Stack>
                         {(!isTradingThreadContext || isExpanded) && (
-                            <Stack grow horizontal gap="sm" color="gray2" flexWrap="wrap">
-                                {balance > 0n && coinData && (
-                                    <Pill background="level3" color="inherit" whiteSpace="nowrap">
-                                        <Stack
-                                            horizontal
-                                            gap="xxs"
-                                            alignItems="center"
-                                            color="default"
-                                        >
-                                            <Icon type="wallet" size="square_xs" />
-                                            <Text fontSize="sm">
-                                                {formatCompactNumber(
-                                                    Number(
-                                                        formatUnits(
-                                                            balance,
-                                                            coinData.token.decimals,
-                                                        ),
-                                                    ),
-                                                )}
-                                            </Text>
-                                        </Stack>
-                                    </Pill>
+                            <Stack gap="sm">
+                                {(balance > 0n && coinData) || tradingUserIds.length > 0 ? (
+                                    <Stack grow horizontal gap="sm" color="gray2" flexWrap="wrap">
+                                        {balance > 0n && coinData && (
+                                            <Pill background="lightHover" whiteSpace="nowrap">
+                                                <Stack horizontal gap="xs" alignItems="center">
+                                                    <Icon
+                                                        type="wallet"
+                                                        size="square_xs"
+                                                        color="gray2"
+                                                    />
+                                                    <Text fontSize="sm" color="gray1">
+                                                        {formatCompactNumber(
+                                                            Number(
+                                                                formatUnits(
+                                                                    balance,
+                                                                    coinData.token.decimals,
+                                                                ),
+                                                            ),
+                                                        )}
+                                                    </Text>
+                                                </Stack>
+                                            </Pill>
+                                        )}
+                                        {tradingUserIds.length > 0 && (
+                                            <Pill
+                                                background="lightHover"
+                                                color="inherit"
+                                                whiteSpace="nowrap"
+                                            >
+                                                <TradingUserIds userIds={tradingUserIds} />
+                                            </Pill>
+                                        )}
+                                    </Stack>
+                                ) : (
+                                    <></>
                                 )}
-                                {tradingUserIds.length > 0 && (
-                                    <Pill background="level3" color="inherit" whiteSpace="nowrap">
-                                        <TradingUserIds userIds={tradingUserIds} />
-                                    </Pill>
-                                )}
-                                {/* 
+                                <Stack grow horizontal gap="sm" color="gray2" flexWrap="wrap">
+                                    {/* 
                             `codexResponse.marketCap` is actually not the market cap, but the FDV.
                             This is a bit confusing, but it's how the API is.
                             Market cap is `codexResponse.token.info.circulatingSupply * codexResponse.priceUSD`
                             (&#8201; is "thin space")
                             */}
-                                <Pill background="level3" color="inherit" whiteSpace="nowrap">
-                                    <Text fontSize="sm">
-                                        LIQ&#8201;${formatCompactNumber(Number(coinData.liquidity))}
-                                    </Text>
-                                </Pill>
-                                <Pill background="level3" color="inherit" whiteSpace="nowrap">
-                                    <Text fontSize="sm">
-                                        VOL&#8201;${formatCompactNumber(Number(coinData.volume24))}
-                                    </Text>
-                                </Pill>
-                                <Pill background="level3" color="inherit" whiteSpace="nowrap">
-                                    <Text fontSize="sm">
-                                        MCAP&#8201; $
-                                        {formatCompactNumber(
-                                            Number(coinData.token.info.circulatingSupply) *
-                                                Number(coinData.priceUSD),
-                                        )}
-                                    </Text>
-                                </Pill>
-                                <Pill background="level3" color="inherit" whiteSpace="nowrap">
-                                    <Text fontSize="sm">
-                                        HDLRS&#8201;{formatCompactNumber(coinData.holders)}
-                                    </Text>
-                                </Pill>
-                                <Pill background="level3" color="inherit" whiteSpace="nowrap">
-                                    <Text fontSize="sm">
-                                        FDV&#8201;${formatCompactNumber(Number(coinData.marketCap))}
-                                    </Text>
-                                </Pill>
+                                    <Pill
+                                        background="lightHover"
+                                        color="inherit"
+                                        whiteSpace="nowrap"
+                                    >
+                                        <Text fontSize="sm">
+                                            LIQ&#8201;$
+                                            {formatCompactNumber(Number(coinData.liquidity))}
+                                        </Text>
+                                    </Pill>
+                                    <Pill
+                                        background="lightHover"
+                                        color="inherit"
+                                        whiteSpace="nowrap"
+                                    >
+                                        <Text fontSize="sm">
+                                            VOL&#8201;$
+                                            {formatCompactNumber(Number(coinData.volume24))}
+                                        </Text>
+                                    </Pill>
+                                    <Pill
+                                        background="lightHover"
+                                        color="inherit"
+                                        whiteSpace="nowrap"
+                                    >
+                                        <Text fontSize="sm">
+                                            MCAP&#8201; $
+                                            {formatCompactNumber(
+                                                Number(coinData.token.info.circulatingSupply) *
+                                                    Number(coinData.priceUSD),
+                                            )}
+                                        </Text>
+                                    </Pill>
+                                    <Pill
+                                        background="lightHover"
+                                        color="inherit"
+                                        whiteSpace="nowrap"
+                                    >
+                                        <Text fontSize="sm">
+                                            HDLRS&#8201;{formatCompactNumber(coinData.holders)}
+                                        </Text>
+                                    </Pill>
+                                    <Pill
+                                        background="lightHover"
+                                        color="inherit"
+                                        whiteSpace="nowrap"
+                                    >
+                                        <Text fontSize="sm">
+                                            FDV&#8201;$
+                                            {formatCompactNumber(Number(coinData.marketCap))}
+                                        </Text>
+                                    </Pill>
+                                </Stack>
                             </Stack>
                         )}
                     </>
@@ -659,13 +699,10 @@ const TickerChangeIndicator = ({ change }: { change: number }) => (
         rounded="md"
         insetBottom="xxs"
         background={change > 0 ? 'positiveSubtle' : 'peachSubtle'}
+        color={change > 0 ? 'positive' : 'peach'}
     >
-        <Icon
-            insetY="xxs"
-            size="square_xxs"
-            type={change > 0 ? 'arrowSmallUp' : 'arrowSmallDown'}
-        />
-        <Text fontWeight="strong" size="sm" color={change > 0 ? 'greenBlue' : 'peach'}>
+        <Icon size="square_xxs" type={change > 0 ? 'arrowSmallUp' : 'arrowSmallDown'} />
+        <Text fontWeight="strong" size="sm">
             {Math.abs(change).toFixed(2)}%
         </Text>
     </Box>
