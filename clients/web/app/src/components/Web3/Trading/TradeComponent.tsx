@@ -356,7 +356,7 @@ export const TradeComponent = (props: Props) => {
                 value={mode}
                 tabs={[
                     { label: 'Buy', value: 'buy' },
-                    { label: 'Sell', value: 'sell' },
+                    { label: 'Sell', value: 'sell', disabled: tokenBalance === 0n },
                 ]}
                 onChange={onModeChanged}
             >

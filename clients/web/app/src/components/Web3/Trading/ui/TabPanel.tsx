@@ -6,7 +6,7 @@ export const TabPanel = (
         layoutId: string
         value: string
         children: React.ReactNode
-        tabs: { label: string; value: string }[]
+        tabs: { label: string; value: string; disabled?: boolean }[]
         onChange?: (tab: 'buy' | 'sell') => void
     } & Omit<BoxProps, 'onChange'>,
 ) => {
@@ -29,12 +29,15 @@ export const TabPanel = (
                         <Box
                             grow
                             borderBottom
-                            cursor="pointer"
+                            cursor={tab.disabled ? 'default' : 'pointer'}
                             key={tab.value}
                             height="x4"
-                            onClick={() => onChange?.(tab.value as 'buy' | 'sell')}
+                            opacity={tab.disabled ? '0.5' : undefined}
+                            onClick={() =>
+                                tab.disabled ? undefined : onChange?.(tab.value as 'buy' | 'sell')
+                            }
                         >
-                            <Box centerContent grow>
+                            <Box centerContent grow userSelect="none">
                                 <Text
                                     fontWeight={isSelected ? 'strong' : 'normal'}
                                     color={isSelected ? 'default' : 'gray2'}
