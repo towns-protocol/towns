@@ -7,8 +7,7 @@ import {
     waitFor,
 } from '../testUtils'
 import { makeUniqueChannelStreamId } from '../../id'
-import { PlainMessage } from '@bufbuild/protobuf'
-import { BlockchainTransaction_TokenTransfer } from '@river-build/proto'
+import { BlockchainTransaction_TokenTransfer, PlainMessage } from '@river-build/proto'
 import { SolanaTransactionReceipt } from '../../types'
 import { bin_fromHexString, bin_fromString, bin_toString } from '@river-build/dlog'
 
@@ -236,12 +235,12 @@ describe('Trading Solana', () => {
             const transferEvents = extractMemberBlockchainTransactions(bobClient, channelId)
             expect(transferEvents.length).toBe(2)
             const [event0, event1] = transferEvents
-            expect(BigInt(event0!.amount)).toBe(4804294168682n)
-            expect(BigInt(event1!.amount)).toBe(4804294168682n)
-            expect(bin_toString(event0!.sender)).toBe(bobSolanaWalletAddress)
-            expect(bin_toString(event1!.sender)).toBe(bobSolanaWalletAddress)
-            expect(event0!.isBuy).toBe(false)
-            expect(event1!.isBuy).toBe(true)
+            expect(BigInt(event0.amount)).toBe(4804294168682n)
+            expect(BigInt(event1.amount)).toBe(4804294168682n)
+            expect(bin_toString(event0.sender)).toBe(bobSolanaWalletAddress)
+            expect(bin_toString(event1.sender)).toBe(bobSolanaWalletAddress)
+            expect(event0.isBuy).toBe(false)
+            expect(event1.isBuy).toBe(true)
         })
     })
 })

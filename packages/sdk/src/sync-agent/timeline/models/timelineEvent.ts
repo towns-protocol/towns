@@ -13,6 +13,9 @@ import {
     type UserPayload,
     MembershipOp,
     BlockchainTransaction,
+    PlainMessage,
+    ChannelMessage_Post_AttachmentSchema,
+    ChannelMessage_PostSchema,
 } from '@river-build/proto'
 import { isDefined, logNever, checkNever } from '../../../check'
 import {
@@ -56,7 +59,6 @@ import {
     SpaceReviewEvent,
     TokenTransferEvent,
 } from './timeline-types'
-import type { PlainMessage } from '@bufbuild/protobuf'
 import { userIdFromAddress, streamIdFromBytes, streamIdAsString } from '../../../id'
 import {
     type StreamTimelineEvent,
@@ -68,6 +70,7 @@ import {
 } from '../../../types'
 
 import { getSpaceReviewEventDataBin } from '@river-build/web3'
+import { create } from '@bufbuild/protobuf'
 
 type SuccessResult = {
     content: TimelineEvent_OneOf
@@ -415,9 +418,12 @@ function toTownsContent_MemberPayload(
                         return { error: `${description} no receipt` }
                     }
                     const reviewContent = transaction.content.value
+                    if (!reviewContent.event) {
+                        return { error: `${description} no event in space review` }
+                    }
                     const { comment, rating } = getSpaceReviewEventDataBin(
                         transaction.receipt.logs,
-                        transaction.receipt.from,
+                        reviewContent.event.user,
                     )
                     return {
                         content: {
@@ -1079,7 +1085,7 @@ export function transformAttachments(attachments?: Attachment[]): ChannelMessage
         .map((attachment) => {
             switch (attachment.type) {
                 case 'chunked_media':
-                    return new ChannelMessage_Post_Attachment({
+                    return create(ChannelMessage_Post_AttachmentSchema, {
                         content: {
                             case: 'chunkedMedia',
                             value: {
@@ -1098,7 +1104,7 @@ export function transformAttachments(attachments?: Attachment[]): ChannelMessage
                     })
 
                 case 'embedded_media':
-                    return new ChannelMessage_Post_Attachment({
+                    return create(ChannelMessage_Post_AttachmentSchema, {
                         content: {
                             case: 'embeddedMedia',
                             value: {
@@ -1108,7 +1114,7 @@ export function transformAttachments(attachments?: Attachment[]): ChannelMessage
                         },
                     })
                 case 'image':
-                    return new ChannelMessage_Post_Attachment({
+                    return create(ChannelMessage_Post_AttachmentSchema, {
                         content: {
                             case: 'image',
                             value: {
@@ -1121,7 +1127,7 @@ export function transformAttachments(attachments?: Attachment[]): ChannelMessage
                     if (!channelMessageEvent) {
                         return
                     }
-                    const post = new ChannelMessage_Post({
+                    const post = create(ChannelMessage_PostSchema, {
                         threadId: channelMessageEvent.threadId,
                         threadPreview: channelMessageEvent.threadPreview,
                         content: {
@@ -1132,7 +1138,7 @@ export function transformAttachments(attachments?: Attachment[]): ChannelMessage
                             },
                         },
                     })
-                    const value = new ChannelMessage_Post_Attachment({
+                    const value = create(ChannelMessage_Post_AttachmentSchema, {
                         content: {
                             case: 'embeddedMessage',
                             value: {
@@ -1144,7 +1150,7 @@ export function transformAttachments(attachments?: Attachment[]): ChannelMessage
                     return value
                 }
                 case 'unfurled_link':
-                    return new ChannelMessage_Post_Attachment({
+                    return create(ChannelMessage_Post_AttachmentSchema, {
                         content: {
                             case: 'unfurledUrl',
                             value: {
@@ -1162,7 +1168,7 @@ export function transformAttachments(attachments?: Attachment[]): ChannelMessage
                         },
                     })
                 case 'ticker':
-                    return new ChannelMessage_Post_Attachment({
+                    return create(ChannelMessage_Post_AttachmentSchema, {
                         content: {
                             case: 'ticker',
                             value: {

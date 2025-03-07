@@ -297,7 +297,6 @@ func TestAppRegistry_ForwardsChannelEvents(t *testing.T) {
 			Num:  channel.GetMinipoolGen() - 1,
 			Hash: common.Hash(channel.GetPrevMiniblockHash()),
 		},
-		nil,
 	)
 	require.NoError(err)
 	add, err := client.AddEvent(tester.ctx, connect.NewRequest(&protocol.AddEventRequest{
