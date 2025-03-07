@@ -111,5 +111,24 @@ export function createSendTokenTransferDataSolana(
         transaction: { signatures: transactionResponse.transaction.signatures },
     }
 
+    /// Temp workaround for the fact that the preTokenBalances are not always updated
+    if (
+        !receipt.meta.preTokenBalances.some(
+            (balance) => balance.mint === mintAddress && balance.owner === ownerAddress,
+        )
+    ) {
+        // use the decimals from the post token balance
+        const decimals = postTokenBalances.find((balance) => balance.mint === mintAddress)?.amount
+            .decimals
+        receipt.meta.preTokenBalances.push({
+            amount: {
+                amount: '0',
+                decimals: decimals ?? 9,
+            },
+            mint: mintAddress,
+            owner: ownerAddress,
+        })
+    }
+
     return { event, receipt }
 }
