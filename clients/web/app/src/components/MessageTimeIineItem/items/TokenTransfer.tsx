@@ -18,7 +18,6 @@ type TokenTransferImplProps = {
 
 export const TokenTransferImpl = (props: TokenTransferImplProps) => {
     const { chainId, rawAddress, amount, isBuy } = props
-
     const address = useMemo(() => {
         return chainId === 'solana-mainnet'
             ? bin_toString(rawAddress)
@@ -28,15 +27,27 @@ export const TokenTransferImpl = (props: TokenTransferImplProps) => {
     const { data: coinData } = useCoinData({ address, chain: chainId })
 
     const text = useMemo(() => {
-        const preFormattedAmount = Number(
-            formatUnitsToFixedLength(BigInt(amount), coinData?.token.decimals ?? 9, 2),
-        )
-        const formattedAmount = Intl.NumberFormat('en-US', { notation: 'compact' }).format(
-            preFormattedAmount,
-        )
+        const parsedAmount = BigInt(amount)
+        const formattedAmount = () => {
+            // if the amount is less than 10^(decimals - 2)
+            // we need to show the amount in the smallest possible unit
+            // this mainly applies to super small quantities of tokens
+            // like 200 $WIF or (which has 6 decimals)
+            if (!coinData?.token.decimals) {
+                return ''
+            }
+            if (parsedAmount < 10n ** BigInt(coinData.token.decimals - 2)) {
+                return (Number(parsedAmount) / 10 ** coinData.token.decimals).toFixed(3)
+            }
+            const preFormattedAmount = Number(
+                formatUnitsToFixedLength(parsedAmount, coinData?.token.decimals, 2),
+            )
+            return Intl.NumberFormat('en-US', { notation: 'compact' }).format(preFormattedAmount)
+        }
+
         const verb = isBuy ? 'Bought' : 'Sold'
         const symbol = coinData?.token.symbol ?? ''
-        return `${verb} ${formattedAmount} ${symbol}`
+        return `${verb} ${formattedAmount()} ${symbol}`
     }, [amount, isBuy, coinData])
 
     return (
