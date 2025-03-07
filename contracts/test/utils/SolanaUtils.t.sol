@@ -5,17 +5,11 @@ import {TestUtils} from "contracts/test/utils/TestUtils.sol";
 import {SolanaUtils} from "contracts/src/factory/facets/wallet-link/libraries/SolanaUtils.sol";
 import {SCL_EIP6565_UTILS} from "crypto-lib/lib/libSCL_eddsaUtils.sol";
 
-// debugging
-import {console} from "forge-std/console.sol";
-
 contract SolanaUtilsTest is TestUtils {
   // Test data
   uint256[5] internal validExtPubKey;
   bytes32 internal validCompressedKey;
   string internal validSolanaAddress;
-
-  string private constant SOLANA_WALLET_ADDRESS =
-    "3p5wau6jqBV8sQswjN1HEeSZLjv5TB173zBgupGQD4we";
 
   function setUp() public {
     // Set up test data with known values
@@ -31,57 +25,6 @@ contract SolanaUtilsTest is TestUtils {
     // and then verify its behavior in the tests
     validSolanaAddress = this.callToBase58String(validCompressedKey);
   }
-
-  // Helper function to call the internal toBase58String function
-  function callToBase58String(
-    bytes32 data
-  ) external pure returns (string memory) {
-    return SolanaUtils.toBase58String(data);
-  }
-
-  // Helper function to call the internal getCompressedPublicKey function
-  function callGetCompressedPublicKey(
-    uint256[5] memory pubkey
-  ) external pure returns (bytes32) {
-    return SolanaUtils.getCompressedPublicKey(pubkey);
-  }
-
-  // Helper function to call the internal getCompressedPublicKeyAsString function
-  function callGetCompressedPublicKeyAsString(
-    uint256[5] memory pubkey
-  ) external pure returns (string memory) {
-    return SolanaUtils.getCompressedPublicKeyAsString(pubkey);
-  }
-
-  // Helper function to call the internal getSolanaAddressFromCompressedKey function
-  function callGetSolanaAddressFromCompressedKey(
-    uint256 compressedPubkey
-  ) external pure returns (string memory) {
-    return SolanaUtils.getSolanaAddressFromCompressedKey(compressedPubkey);
-  }
-
-  // Helper function to call the internal getSolanaAddressFromFixedExtPubKey function
-  function callGetSolanaAddressFromFixedExtPubKey(
-    uint256[5] memory extPubKey
-  ) external pure returns (string memory) {
-    return SolanaUtils.getSolanaAddressFromFixedExtPubKey(extPubKey);
-  }
-
-  // Helper function to call the internal isValidSolanaAddress function (with pubkey)
-  function callIsValidSolanaAddress(
-    string memory solanaAddress,
-    uint256[5] memory extPubKey
-  ) external pure returns (bool) {
-    return SolanaUtils.isValidSolanaAddress(solanaAddress, extPubKey);
-  }
-
-  // Helper function to call the internal isValidSolanaAddress function (string only)
-  function callIsValidSolanaAddress(
-    string memory solanaAddress
-  ) external pure returns (bool) {
-    return SolanaUtils.isValidSolanaAddress(solanaAddress);
-  }
-
   // Test getCompressedPublicKey
   function testGetCompressedPublicKey() public view {
     bytes32 result = this.callGetCompressedPublicKey(validExtPubKey);
@@ -197,7 +140,8 @@ contract SolanaUtilsTest is TestUtils {
     assertTrue(result, "Valid Solana address format should be validated");
 
     // Test with another valid-looking address
-    string memory anotherValidAddress = SOLANA_WALLET_ADDRESS;
+    string
+      memory anotherValidAddress = "3Myn3St4YQgL4WQvZxPdMaBWH1EvkzzpkLX8oVK3c7T4";
     bool anotherResult = this.callIsValidSolanaAddress(anotherValidAddress);
     assertTrue(
       anotherResult,
@@ -216,9 +160,6 @@ contract SolanaUtilsTest is TestUtils {
       memory tooLongAddress = "3Myn3St4YQgL4WQvZxPdMaBWH1EvkzzpkLX8oVK3c7T4ABCDEFGHIJKLMN";
     bool tooLongResult = this.callIsValidSolanaAddress(tooLongAddress);
     assertFalse(tooLongResult, "Too long address should not be validated");
-
-    // Skip the invalid character test for now since it's causing issues
-    // We'll focus on the other tests that are more critical
 
     // Empty string
     string memory emptyAddress = "";
@@ -331,5 +272,58 @@ contract SolanaUtilsTest is TestUtils {
       result2,
       "Address with trailing invalid character should not be validated"
     );
+  }
+
+  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+  /*                         Helpers                            */
+  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+  // Helper function to call the internal toBase58String function
+  function callToBase58String(
+    bytes32 data
+  ) external pure returns (string memory) {
+    return SolanaUtils.toBase58String(data);
+  }
+
+  // Helper function to call the internal getCompressedPublicKey function
+  function callGetCompressedPublicKey(
+    uint256[5] memory pubkey
+  ) external pure returns (bytes32) {
+    return SolanaUtils.getCompressedPublicKey(pubkey);
+  }
+
+  // Helper function to call the internal getCompressedPublicKeyAsString function
+  function callGetCompressedPublicKeyAsString(
+    uint256[5] memory pubkey
+  ) external pure returns (string memory) {
+    return SolanaUtils.getCompressedPublicKeyAsString(pubkey);
+  }
+
+  // Helper function to call the internal getSolanaAddressFromCompressedKey function
+  function callGetSolanaAddressFromCompressedKey(
+    uint256 compressedPubkey
+  ) external pure returns (string memory) {
+    return SolanaUtils.getSolanaAddressFromCompressedKey(compressedPubkey);
+  }
+
+  // Helper function to call the internal getSolanaAddressFromFixedExtPubKey function
+  function callGetSolanaAddressFromFixedExtPubKey(
+    uint256[5] memory extPubKey
+  ) external pure returns (string memory) {
+    return SolanaUtils.getSolanaAddressFromFixedExtPubKey(extPubKey);
+  }
+
+  // Helper function to call the internal isValidSolanaAddress function (with pubkey)
+  function callIsValidSolanaAddress(
+    string memory solanaAddress,
+    uint256[5] memory extPubKey
+  ) external pure returns (bool) {
+    return SolanaUtils.isValidSolanaAddress(solanaAddress, extPubKey);
+  }
+
+  // Helper function to call the internal isValidSolanaAddress function (string only)
+  function callIsValidSolanaAddress(
+    string memory solanaAddress
+  ) external pure returns (bool) {
+    return SolanaUtils.isValidSolanaAddress(solanaAddress);
   }
 }
