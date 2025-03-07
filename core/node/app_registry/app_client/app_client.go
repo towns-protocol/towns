@@ -18,7 +18,7 @@ type EncryptionDevice struct {
 	FallbackKey string `json:"fallbackKey"`
 }
 
-// command: "initializez"
+// command: "initialize"
 type InitializeData struct{}
 
 type InitializeResponse struct {
