@@ -171,6 +171,7 @@ func (tracker *StreamsTrackerImpl) Run(ctx context.Context) error {
 	log.Infow("Loaded streams from streams registry",
 		"count", streamsLoaded,
 		"total", totalStreams,
+		"initialBlockNum", tracker.riverRegistry.Blockchain.InitialBlockNum,
 		"took", time.Since(start).String())
 
 	// wait till service stopped
@@ -209,6 +210,7 @@ func (tracker *StreamsTrackerImpl) forwardStreamEventsFromInception(
 }
 
 func (tracker *StreamsTrackerImpl) AddStream(ctx context.Context, streamId shared.StreamId) error {
+	logging.FromCtx(ctx).Infow("AddStream call", "streamId", streamId)
 	stream, err := tracker.riverRegistry.StreamRegistry.GetStream(nil, streamId)
 	if err != nil {
 		return base.WrapRiverError(protocol.Err_CANNOT_CALL_CONTRACT, err).
@@ -227,6 +229,7 @@ func (tracker *StreamsTrackerImpl) OnStreamAllocated(
 	event *river.StreamRegistryV1StreamAllocated,
 ) {
 	streamID := shared.StreamId(event.StreamId)
+	logging.FromCtx(ctx).Debugw("Witnessed stream allocation", "streamID", streamID)
 	if !tracker.filter.TrackStream(streamID) {
 		return
 	}

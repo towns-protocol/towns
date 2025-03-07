@@ -830,9 +830,9 @@ func (c *RiverRegistryContract) callOptsWithBlockNum(ctx context.Context, blockN
 
 type NodeEvents interface {
 	river.NodeRegistryV1NodeAdded |
-	river.NodeRegistryV1NodeRemoved |
-	river.NodeRegistryV1NodeStatusUpdated |
-	river.NodeRegistryV1NodeUrlUpdated
+		river.NodeRegistryV1NodeRemoved |
+		river.NodeRegistryV1NodeStatusUpdated |
+		river.NodeRegistryV1NodeUrlUpdated
 }
 
 func (c *RiverRegistryContract) GetNodeEventsForBlock(ctx context.Context, blockNum crypto.BlockNumber) ([]any, error) {
@@ -898,6 +898,7 @@ func (c *RiverRegistryContract) OnStreamEvent(
 		c.Address,
 		c.StreamEventTopics,
 		func(ctx context.Context, log types.Log) {
+			logging.FromCtx(ctx).Debugw("OnStreamEvent", "log", log)
 			parsed, err := c.ParseEvent(ctx, c.StreamRegistry.BoundContract(), c.StreamEventInfo, &log)
 			if err != nil {
 				logging.FromCtx(ctx).Errorw("Failed to parse event", "err", err, "log", log)

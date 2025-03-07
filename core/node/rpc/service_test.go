@@ -240,6 +240,49 @@ func createSpace(
 	return resspace.Msg.Stream.NextSyncCookie, joinSpace.Hash, nil
 }
 
+func joinChannel(
+	ctx context.Context,
+	wallet *crypto.Wallet,
+	userStreamSyncCookie *protocol.SyncCookie,
+	client protocolconnect.StreamServiceClient,
+	spaceId StreamId,
+	channelId StreamId,
+) error {
+	userJoin, err := events.MakeEnvelopeWithPayload(
+		wallet,
+		events.Make_UserPayload_Membership(
+			protocol.MembershipOp_SO_JOIN,
+			channelId,
+			nil,
+			spaceId[:],
+		),
+		&MiniblockRef{
+			Hash: common.BytesToHash(userStreamSyncCookie.PrevMiniblockHash),
+			Num:  userStreamSyncCookie.MinipoolGen - 1,
+		},
+	)
+	if err != nil {
+		return err
+	}
+
+	add, err := client.AddEvent(
+		ctx,
+		connect.NewRequest(
+			&protocol.AddEventRequest{
+				StreamId: userStreamSyncCookie.StreamId,
+				Event:    userJoin,
+			},
+		),
+	)
+	if err != nil {
+		return err
+	}
+	if add.Msg.Error != nil {
+		return fmt.Errorf("Could not add join event to user stream: %v", add.Msg.Error.Msg)
+	}
+	return nil
+}
+
 func createChannel(
 	ctx context.Context,
 	wallet *crypto.Wallet,
@@ -467,29 +510,13 @@ func testMethodsWithClient(tester *serviceTester, client protocolconnect.StreamS
 	require.NotNil(channel, "nil sync cookie")
 
 	// user2 joins channel
-	userJoin, err := events.MakeEnvelopeWithPayload(
-		wallet2,
-		events.Make_UserPayload_Membership(
-			protocol.MembershipOp_SO_JOIN,
-			channelId,
-			nil,
-			spaceId[:],
-		),
-		&MiniblockRef{
-			Hash: common.BytesToHash(resuser.PrevMiniblockHash),
-			Num:  resuser.MinipoolGen - 1,
-		},
-	)
-	require.NoError(err)
-
-	_, err = client.AddEvent(
+	err = joinChannel(
 		ctx,
-		connect.NewRequest(
-			&protocol.AddEventRequest{
-				StreamId: resuser.StreamId,
-				Event:    userJoin,
-			},
-		),
+		wallet2,
+		resuser,
+		client,
+		spaceId,
+		channelId,
 	)
 	require.NoError(err)
 

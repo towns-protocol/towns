@@ -78,8 +78,7 @@ func (tracker *AppRegistryStreamsTracker) TrackStream(streamId shared.StreamId) 
 
 	return streamType == shared.STREAM_DM_CHANNEL_BIN ||
 		streamType == shared.STREAM_GDM_CHANNEL_BIN ||
-		streamType == shared.STREAM_CHANNEL_BIN ||
-		streamType == shared.STREAM_USER_INBOX_BIN // for tracking key fulfillments for app key solicitations
+		streamType == shared.STREAM_CHANNEL_BIN
 }
 
 func (tracker *AppRegistryStreamsTracker) NewTrackedStream(
@@ -88,8 +87,6 @@ func (tracker *AppRegistryStreamsTracker) NewTrackedStream(
 	cfg crypto.OnChainConfiguration,
 	stream *protocol.StreamAndCookie,
 ) (events.TrackedStreamView, error) {
-	// TODO: pass in storage to the tracked stream constructor and implement logic for updating storage
-	// and caches within the tracked stream.
 	return NewTrackedStreamForAppRegistryService(
 		ctx,
 		streamID,
