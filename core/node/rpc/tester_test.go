@@ -3,7 +3,6 @@ package rpc
 import (
 	"context"
 	"fmt"
-	"github.com/google/go-cmp/cmp"
 	"github.com/puzpuzpuz/xsync/v3"
 	"go.uber.org/atomic"
 	"hash/fnv"
@@ -537,7 +536,7 @@ func (r *receivedStreamUpdates) AddUpdate(update *SyncStreamsResponse) {
 	r.updates = append(r.updates, update)
 }
 
-func (r *receivedStreamUpdates) Updates() []*SyncStreamsResponse {
+func (r *receivedStreamUpdates) Clone() []*SyncStreamsResponse {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -1255,11 +1254,10 @@ func (tcs testClients) compareNowImpl(
 		}
 	}
 
-	testfmt.Printf(tcs[0].t, "after miniBlockChain result: %v\n", success)
-
-	if syncUpdates {
+	if success && syncUpdates {
 		firstClient := tcs[0]
-		for _, client := range tcs[1:] {
+	LOOP:
+		for i, client := range tcs[1:] {
 			if !client.enableSync {
 				continue
 			}
@@ -1272,30 +1270,66 @@ func (tcs testClients) compareNowImpl(
 			f, _ := firstClient.updates.Load(streamId)
 			c, _ := client.updates.Load(streamId)
 
-			firstUpdates := f.Updates()
-			clientUpdates := c.Updates()
+			firstUpdates := f.Clone()
+			clientUpdates := c.Clone()
 
-			success = success && len(firstUpdates) == len(clientUpdates)
+			success = success && assert.Equal(len(firstUpdates), len(clientUpdates))
 
-			for i, first := range firstUpdates {
-				success = success && cmp.Equal(first, clientUpdates[i],
-					cmp.Comparer(func(x, y *SyncStreamsResponse) bool {
-						return cmp.Equal(x.GetSyncOp(), y.GetSyncOp()) &&
-							cmp.Equal(x.GetStreamId(), y.GetStreamId()) &&
-							cmp.Equal(x.GetStream().GetSyncReset(), y.GetStream().GetSyncReset()) &&
-							cmp.Equal(x.GetStream().GetNextSyncCookie().GetMinipoolGen(), y.GetStream().GetNextSyncCookie().GetMinipoolGen()) &&
-							cmp.Equal(x.GetStream().GetNextSyncCookie().GetMinipoolSlot(), y.GetStream().GetNextSyncCookie().GetMinipoolSlot()) &&
-							cmp.Equal(x.GetStream().GetNextSyncCookie().GetPrevMiniblockHash(), y.GetStream().GetNextSyncCookie().GetPrevMiniblockHash())
-					}))
-			}
+			for j, first := range firstUpdates {
+				if !success {
+					break LOOP
+				}
 
-			if !success {
-				break
+				clientUpdate := clientUpdates[j]
+
+				success = success && assert.Equal(
+					first.GetSyncOp(), clientUpdates[i].GetSyncOp(),
+					"sync op not matching [%d:%d]: %s / %s",
+					i+1, j,
+					first.GetSyncOp(),
+					clientUpdate.GetSyncOp())
+
+				success = success && assert.Equal(
+					first.GetStreamId(), clientUpdates[i].GetStreamId(),
+					"different stream id [%d:%d]: %x / %x",
+					i+1, j,
+					first.GetStreamId(),
+					clientUpdate.GetStreamId())
+
+				success = success && assert.Equal(
+					first.GetStream().GetSyncReset(),
+					clientUpdate.GetStream().GetSyncReset(),
+					"sync reset differs [%d:%d]: %v / %v",
+					i+1, j,
+					first.GetStream().GetSyncReset(),
+					clientUpdate.GetStream().GetSyncReset())
+
+				success = success && assert.Equal(
+					first.GetStream().GetNextSyncCookie().GetMinipoolGen(),
+					clientUpdate.GetStream().GetNextSyncCookie().GetMinipoolGen(),
+					"minipool gen differs [%d:%d]: %d / %d",
+					i+1, j,
+					first.GetStream().GetNextSyncCookie().GetMinipoolGen(),
+					clientUpdate.GetStream().GetNextSyncCookie().GetMinipoolGen())
+
+				success = success && assert.Equal(
+					first.GetStream().GetNextSyncCookie().GetMinipoolSlot(),
+					clientUpdate.GetStream().GetNextSyncCookie().GetMinipoolSlot(),
+					"minipool slot differs [%d:%d]: %d / %d",
+					i+1, j,
+					first.GetStream().GetNextSyncCookie().GetMinipoolSlot(),
+					clientUpdate.GetStream().GetNextSyncCookie().GetMinipoolSlot())
+
+				success = success && assert.Equal(
+					first.GetStream().GetNextSyncCookie().GetPrevMiniblockHash(),
+					clientUpdate.GetStream().GetNextSyncCookie().GetPrevMiniblockHash(),
+					"prev miniblock hash differs [%d:%d]: %x / %x",
+					i+1, j,
+					first.GetStream().GetNextSyncCookie().GetPrevMiniblockHash(),
+					clientUpdate.GetStream().GetNextSyncCookie().GetPrevMiniblockHash())
 			}
 		}
 	}
-
-	testfmt.Printf(tcs[0].t, "after syncUpdates result: %v\n", success)
 
 	if !success {
 		return streams
