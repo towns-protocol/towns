@@ -173,6 +173,7 @@ export const MessageLayout = (props: Props) => {
     const showDecryptionDebugger = debug.enabled('app:decryption')
 
     const onMobileTap = isTouch && isSelectable ? onClick : undefined
+    const streamId = channelId ?? spaceId
 
     return (
         <Stack
@@ -320,6 +321,7 @@ export const MessageLayout = (props: Props) => {
                                                 eventId={eventId}
                                                 messageOwner={messageOwner}
                                                 key={`tip-${eventId}`}
+                                                streamId={streamId}
                                             />
                                         ) : (
                                             <></>
@@ -334,6 +336,7 @@ export const MessageLayout = (props: Props) => {
                                         tips={tips}
                                         eventId={eventId}
                                         messageOwner={messageOwner}
+                                        streamId={streamId}
                                     />
                                 </Box>
                             ) : null}

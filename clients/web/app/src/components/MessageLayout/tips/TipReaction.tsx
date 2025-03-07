@@ -24,9 +24,10 @@ type Props = {
     eventId: string | undefined
     messageOwner: LookupUser
     isTippable?: boolean
+    streamId?: string
 }
 
-export function TipReaction({ tips, eventId, messageOwner, isTippable }: Props) {
+export function TipReaction({ tips, eventId, messageOwner, isTippable, streamId }: Props) {
     if (!tips || !Object.keys(tips).length) {
         return null
     }
@@ -36,12 +37,13 @@ export function TipReaction({ tips, eventId, messageOwner, isTippable }: Props) 
             eventId={eventId}
             messageOwner={messageOwner}
             isTippable={isTippable}
+            streamId={streamId}
         />
     )
 }
 
-function TipReactionInner({ tips, eventId, messageOwner, isTippable }: Props) {
-    const tippers = useTippers(tips ?? emptyTips)
+function TipReactionInner({ tips, eventId, messageOwner, isTippable, streamId }: Props) {
+    const tippers = useTippers(tips ?? emptyTips, streamId)
     const theme = useStore((state) => state.getTheme())
     const amount = useTipAmount(tips ?? emptyTips)
     const ref = useRef<HTMLDivElement>(null)
@@ -188,7 +190,7 @@ export function useTipAmount(tips: MessageTips): string {
     })
 }
 
-export function useTippers(tips: MessageTips): LookupUser[] {
+export function useTippers(tips: MessageTips, streamId?: string): LookupUser[] {
     const userIds = new Set(tips.map((t) => t.content.fromUserId))
-    return useUserLookupArray(Array.from(userIds))
+    return useUserLookupArray(Array.from(userIds), streamId)
 }

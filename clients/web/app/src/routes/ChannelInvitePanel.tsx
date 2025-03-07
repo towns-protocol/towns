@@ -105,7 +105,7 @@ const InviteSuccessToast = ({
         [channelId],
     )
 
-    const users = useUserLookupArray(userIds)
+    const users = useUserLookupArray(userIds, channelId)
 
     const message = useMemo(() => {
         const usersNameList = getNameListFromUsers(users)

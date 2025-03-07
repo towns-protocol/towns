@@ -32,7 +32,7 @@ export const TownMembersPanel = () => {
 const TownMembers = (props: { memberIds: string[] }) => {
     const spaceId = useSpaceId()
 
-    const lookupUsers = useUserLookupArray(props.memberIds)
+    const lookupUsers = useUserLookupArray(props.memberIds, spaceId)
 
     const { searchText, filteredItems, handleSearchChange } = useFuzzySearchByProperty(
         lookupUsers,

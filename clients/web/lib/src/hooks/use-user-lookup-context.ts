@@ -3,6 +3,7 @@ import { UserLookupContext } from '../components/UserLookupContext'
 import { useUserLookupStore, userLookupFn } from '../store/use-user-lookup-store'
 import React, { useCallback } from 'react'
 import memoize from 'lodash/memoize'
+import { isChannelStreamId, isSpaceStreamId, spaceIdFromChannelId } from '@river-build/sdk'
 
 export type LookupUserFn = (userId: string) => LookupUser
 
@@ -54,8 +55,18 @@ export const useUserLookup = (userId: string) => {
  * as independent components it would be recommended to lookup each user slice individually to
  * avoid full re-renders. @see useUserLookup()
  */
-export const useUserLookupArray = (userIds: string[]) => {
-    const { spaceId, channelId } = React.useContext(UserLookupContext) ?? {}
+export const useUserLookupArray = (userIds: string[], streamId?: string) => {
+    let spaceId: string | undefined
+    let channelId: string | undefined
+    if (streamId) {
+        if (isChannelStreamId(streamId)) {
+            spaceId = spaceIdFromChannelId(streamId)
+        } else if (isSpaceStreamId(streamId)) {
+            spaceId = streamId
+        } else {
+            channelId = streamId
+        }
+    }
     return useUserLookupStore((s) => {
         return userIds.reduce<LookupUser[]>((acc, userId) => {
             acc.push(userLookupFn(s, userId, spaceId, channelId) ?? getStableDefault(userId))

@@ -29,7 +29,7 @@ export const useEditorMemberData = (
         () => uniq([...draftUserIds, ...channelMemberIds, ...spaceMemberIds]),
         [channelMemberIds, draftUserIds, spaceMemberIds],
     )
-    const availableMembers = useUserLookupArray(availableMemberIds)
+    const availableMembers = useUserLookupArray(availableMemberIds, channelId)
 
     // Array of users which is used to show the autocomplete popup on @
     const userMentions: TComboboxItemWithData<TUserWithChannel>[] = useMemo(() => {
