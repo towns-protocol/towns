@@ -8,6 +8,7 @@ import {IWalletLink} from "contracts/src/factory/facets/wallet-link/IWalletLink.
 
 // libraries
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import {CustomRevert} from "contracts/src/utils/libraries/CustomRevert.sol";
 import {EntitlementsManagerStorage} from "contracts/src/spaces/facets/entitlements/EntitlementsManagerStorage.sol";
 import {MembershipStorage} from "contracts/src/spaces/facets/membership/MembershipStorage.sol";
 import {ERC721ABase} from "contracts/src/diamond/facets/token/ERC721A/ERC721ABase.sol";
@@ -88,7 +89,7 @@ abstract contract Entitled is
     address user,
     string calldata permission
   ) internal view returns (bool) {
-    return _isEntitled(IN_TOWN, user, bytes32(abi.encodePacked(permission)));
+    return _isEntitled(IN_TOWN, user, bytes32(bytes(permission)));
   }
 
   function _isEntitledToChannel(
@@ -96,7 +97,7 @@ abstract contract Entitled is
     address user,
     string calldata permission
   ) internal view returns (bool) {
-    return _isEntitled(channelId, user, bytes32(abi.encodePacked(permission)));
+    return _isEntitled(channelId, user, bytes32(bytes(permission)));
   }
 
   function _isAllowed(
@@ -107,7 +108,7 @@ abstract contract Entitled is
     return
       _owner() == caller ||
       (!_paused() &&
-        _isEntitled(channelId, caller, bytes32(abi.encodePacked(permission))));
+        _isEntitled(channelId, caller, bytes32(bytes(permission))));
   }
 
   function _isAllowed(
@@ -119,12 +120,12 @@ abstract contract Entitled is
     return
       _owner() == sender ||
       (!_paused() &&
-        _isEntitled(channelId, sender, bytes32(abi.encodePacked(permission))));
+        _isEntitled(channelId, sender, bytes32(bytes(permission))));
   }
 
   function _validatePermission(string memory permission) internal view {
     if (!_isAllowed(IN_TOWN, permission)) {
-      revert Entitlement__NotAllowed();
+      CustomRevert.revertWith(Entitlement__NotAllowed.selector);
     }
   }
 
@@ -133,14 +134,25 @@ abstract contract Entitled is
     address caller
   ) internal view {
     if (!_isAllowed(IN_TOWN, permission, caller)) {
-      revert Entitlement__NotAllowed();
+      CustomRevert.revertWith(Entitlement__NotAllowed.selector);
     }
   }
 
   function _validateMembership(address user) internal view {
-    if (!_isMember(user) && _owner() != user) {
-      revert Entitlement__NotMember();
+    // return if the user is a member or the owner
+    if (_isMember(user)) return;
+    address owner = _owner();
+    if (user == owner) return;
+
+    // otherwise, check if the user is a linked wallet
+    address[] memory wallets = _getLinkedWalletsWithUser(user);
+    uint256 length = wallets.length;
+    for (uint256 i; i < length; ++i) {
+      if (_isMember(wallets[i]) || wallets[i] == owner) {
+        return;
+      }
     }
+    CustomRevert.revertWith(Entitlement__NotMember.selector);
   }
 
   function _validateChannelPermission(
@@ -148,7 +160,7 @@ abstract contract Entitled is
     string memory permission
   ) internal view {
     if (!_isAllowed(channelId, permission)) {
-      revert Entitlement__NotAllowed();
+      CustomRevert.revertWith(Entitlement__NotAllowed.selector);
     }
   }
 
@@ -159,16 +171,18 @@ abstract contract Entitled is
     address[] memory linkedWallets = wl.getWalletsByRootKey(rootKey);
 
     // Allow for the possibility that the user is not a root key, but a linked wallet.
-    address alternateRootKey = wl.getRootKeyForWallet(rootKey);
-    if (linkedWallets.length == 0 && alternateRootKey != address(0)) {
-      rootKey = alternateRootKey;
-      linkedWallets = wl.getWalletsByRootKey(rootKey);
+    if (linkedWallets.length == 0) {
+      address alternateRootKey = wl.getRootKeyForWallet(rootKey);
+      if (alternateRootKey != address(0)) {
+        rootKey = alternateRootKey;
+        linkedWallets = wl.getWalletsByRootKey(rootKey);
+      }
     }
 
     uint256 linkedWalletsLength = linkedWallets.length;
 
     address[] memory wallets = new address[](linkedWalletsLength + 1);
-    for (uint256 i = 0; i < linkedWalletsLength; i++) {
+    for (uint256 i; i < linkedWalletsLength; ++i) {
       wallets[i] = linkedWallets[i];
     }
     wallets[linkedWalletsLength] = rootKey;
