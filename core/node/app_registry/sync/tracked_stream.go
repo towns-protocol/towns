@@ -22,7 +22,6 @@ type AppRegistryTrackedStreamView struct {
 }
 
 func (b *AppRegistryTrackedStreamView) processUserInboxMessage(ctx context.Context, event *ParsedEvent) error {
-	log := logging.FromCtx(ctx)
 	// Capture keys sent to the app's inbox and store them in the message cache so that
 	// we can dequeue any existing messages that require decryption this session, and immediately
 	// forward incoming messages with the same session id.
@@ -35,25 +34,7 @@ func (b *AppRegistryTrackedStreamView) processUserInboxMessage(ctx context.Conte
 				return err
 			}
 			for deviceKey, cipherTexts := range deviceCipherTexts {
-				log.Debugw(
-					"Publishing session keys for device",
-					"deviceKey",
-					deviceKey,
-					"streamId",
-					streamId,
-					"sessionIds",
-					sessionIds,
-				)
 				if err := b.store.PublishSessionKeys(ctx, streamId, deviceKey, sessionIds, cipherTexts); err != nil {
-					logging.FromCtx(ctx).Errorw(
-						"Unable to publish session keys for device",
-						"deviceKey",
-						deviceKey,
-						"streamId",
-						streamId,
-						"sessionIds",
-						sessionIds,
-					)
 					return err
 				}
 			}
@@ -93,21 +74,19 @@ func (b *AppRegistryTrackedStreamView) onNewEvent(ctx context.Context, view *Str
 		return false
 	})
 
-	log.Debugw(
-		"Witnessed channel message",
-		"streamId",
-		streamId,
-		"members",
-		members,
-		"appMembers",
-		appMembers,
-		"event",
-		event,
-	)
-
+	// log.Debugw(
+	// 	"Witnessed channel message",
+	// 	"streamId",
+	// 	streamId,
+	// 	"members",
+	// 	members,
+	// 	"appMembers",
+	// 	appMembers,
+	// 	"event",
+	// 	event,
+	// )
 	if appMembers.Cardinality() > 0 {
-		log.Debugw("OnMessageEvent message", "streamId", streamId, "appMembers", appMembers, "event", event)
-		log.Sync()
+		// log.Debugw("OnMessageEvent message", "streamId", streamId, "appMembers", appMembers, "event", event)
 		b.listener.OnMessageEvent(ctx, *streamId, view.StreamParentId(), appMembers, event)
 	}
 
@@ -136,7 +115,6 @@ func NewTrackedStreamForAppRegistryService(
 	}
 
 	if streamId.Type() == shared.STREAM_USER_INBOX_BIN {
-		logging.FromCtx(ctx).Debugw("Detected user inbox stream", "streamId", view.StreamId())
 		for event := range view.AllEvents() {
 			if err := trackedView.processUserInboxMessage(ctx, event); err != nil {
 				return nil, err

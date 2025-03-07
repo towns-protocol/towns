@@ -33,25 +33,13 @@ func (p *MessageToAppProcessor) OnMessageEvent(
 	event *events.ParsedEvent,
 ) {
 	log := logging.FromCtx(ctx)
-	log.Debug("OnMessageEvent", "channelId", channelId, "spaceId", spaceId, "members", members, "event", event)
 	appIds := make([]common.Address, 0, members.Cardinality())
+
 	// TODO: Apply logic to filter out which events to send to which apps based on app preferences.
 
 	members.Each(func(memberId string) bool {
 		appId := common.HexToAddress(memberId)
-		log.Debugw(
-			"Evaluating member is app...",
-			"member",
-			memberId,
-			"appId",
-			appId,
-			"channelId",
-			channelId,
-			"spaceId",
-			spaceId,
-		)
 		if p.cache.HasRegisteredWebhook(ctx, appId) {
-			log.Debugw("IsApp!", "appId", appId, "channelId", channelId, "spaceId", spaceId)
 			appIds = append(appIds, appId)
 		}
 
@@ -68,7 +56,7 @@ func (p *MessageToAppProcessor) OnMessageEvent(
 	message := event.GetEncryptedMessage()
 	// Ignore membership changes, etc, and focus only on channel content.
 	if message != nil {
-		log.Debugw("ChannelMessage detected", "appIds", appIds, "sessionId", message.SessionId, "channelId", channelId)
+		// log.Debugw("ChannelMessage detected", "appIds", appIds, "sessionId", message.SessionId, "channelId", channelId)
 		if err := p.cache.EnqueueMessages(ctx, appIds, message.SessionId, channelId, streamBytes); err != nil {
 			log.Errorw(
 				"Error enqueueing messages for stream event",

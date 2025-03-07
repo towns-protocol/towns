@@ -90,12 +90,6 @@ func (d *AppDispatcher) RequestKeySolicitations(
 							channelId,
 							"webhookUrl",
 							device.WebhookUrl,
-							"sharedSecret",
-							sharedSecret,
-							"encryptedSecret",
-							device.EncryptedSharedSecret,
-							"dataEncryptionKey",
-							d.dataEncryptionKey,
 							"error",
 							err,
 						)

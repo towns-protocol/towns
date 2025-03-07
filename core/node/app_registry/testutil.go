@@ -22,7 +22,6 @@ import (
 	"github.com/towns-protocol/towns/core/node/shared"
 	"github.com/towns-protocol/towns/core/node/testutils/testcert"
 	"github.com/towns-protocol/towns/core/node/utils"
-	"go.uber.org/zap/zapcore"
 )
 
 type AppServiceRequestEnvelope struct {
@@ -131,7 +130,7 @@ func (b *TestAppServer) Close() {
 
 func (b *TestAppServer) solicitKeys(ctx context.Context, data app_client.KeySolicitationData) error {
 	log := logging.FromCtx(ctx).With("func", "TestAppServer.solicitKeys")
-	log.Debugw("Soliciting keys for channel", "channeL", data.ChannelId, "sessionId", data.SessionId)
+	log.Debugw("soliciting keys for channel", "channeL", data.ChannelId, "sessionId", data.SessionId)
 	streamBytes, err := hex.DecodeString(data.ChannelId)
 	if err != nil {
 		log.Errorw("failed to decode channel id", "error", err, "channelId", data.ChannelId)
@@ -147,18 +146,9 @@ func (b *TestAppServer) solicitKeys(ctx context.Context, data app_client.KeySoli
 		},
 	)
 	if err != nil {
-		log.Errorw("Failed to get last miniblock for stream", "streamId", data.ChannelId)
+		log.Errorw("failed to get last miniblock for stream", "streamId", data.ChannelId)
 		return fmt.Errorf("failed to get last miniblock hash for stream %v: %w", data.ChannelId, err)
 	}
-	log.Debugw(
-		"Last miniblock info",
-		"hash",
-		resp.Msg.Hash,
-		"bytestoahsh",
-		common.BytesToHash(resp.Msg.Hash),
-		"num",
-		resp.Msg.MiniblockNum,
-	)
 
 	envelope, err := events.MakeEnvelopeWithPayload(
 		b.appWallet,
@@ -199,7 +189,6 @@ func (b *TestAppServer) solicitKeys(ctx context.Context, data app_client.KeySoli
 		log.Errorw("Failed to add key solicitation event to stream", "err", err)
 		return fmt.Errorf("error adding key solicitation event to stream: %w", err)
 	}
-	log.Debugw("AddEvent succeeded...")
 	if addErr := addEventResp.Msg.GetError(); addErr != nil {
 		log.Errorw("Failed to add key solicitation event to stream", "err", addErr)
 		return fmt.Errorf(
@@ -209,28 +198,29 @@ func (b *TestAppServer) solicitKeys(ctx context.Context, data app_client.KeySoli
 			addErr.Funcs,
 		)
 	}
-	log.Infow("Returning with success")
 	return nil
 }
 
 func (b *TestAppServer) rootHandler(w http.ResponseWriter, r *http.Request) {
 	// Ensure that the request method is POST.
-	log := logging.DefaultZapLogger(zapcore.DebugLevel)
-	log.Info("TestAppServer rootHandler called!")
+	// Uncomment to unconditionally enable logging
+	// log := logging.DefaultZapLogger(zapcore.DebugLevel).With("func", "TestAppServer.rootHandler")
+	log := logging.FromCtx(r.Context())
+	log.Debug("TestAppServer rootHandler called!")
 	if r.Method != http.MethodPost {
-		log.Errorw("TestAppServer method not allowed")
+		log.Errorw("method not allowed")
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
 
 	if err := validateSignature(r, b.hs256SecretKey, b.appWallet.Address); err != nil {
-		log.Errorw("TestAppServer invalid signature", "secretKey", b.hs256SecretKey, "expectedWallet", b.appWallet)
+		log.Errorw("invalid signature", "secretKey", b.hs256SecretKey, "expectedWallet", b.appWallet)
 		http.Error(w, "JWT Signature Invalid", http.StatusForbidden)
 	}
 
 	// Check that the Content-Type is application/json.
 	if r.Header.Get("Content-Type") != "application/json" {
-		log.Errorw("TestAppServer wrong content type", "ct", r.Header.Get("Content-Type"))
+		log.Errorw("wrong content type", "ct", r.Header.Get("Content-Type"))
 		http.Error(w, "Content-Type must be application/json", http.StatusUnsupportedMediaType)
 		return
 	}
@@ -241,21 +231,19 @@ func (b *TestAppServer) rootHandler(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close() // Ensure the body is closed once we're done.
 
 	if err := decoder.Decode(&payload); err != nil {
-		log.Errorw("TestAppServer error decoding json", "err", err)
+		log.Errorw("error decoding json", "err", err)
 		http.Error(w, fmt.Sprintf("Error decoding JSON: %v", err), http.StatusBadRequest)
 		return
 	}
 
-	// For demonstration, print the received payload.
-	// log := logging.DefaultZapLogger(zapcore.DebugLevel)
-	log.Infow("Received payload", "payload", payload, "command", payload.Command)
+	log.Debugw("received payload", "payload", payload, "command", payload.Command)
 
 	// Send a response back.
 	w.Header().Set("Content-Type", "application/json")
 	var response any
 	switch payload.Command {
 	case "initialize":
-		log.Debugw("TestAppServer initialize request detected")
+		log.Debugw("initialize request detected")
 		response = app_client.InitializeResponse{
 			DefaultEncryptionDevice: app_client.EncryptionDevice{
 				DeviceKey:   b.encryptionDevice.DeviceKey,
@@ -263,7 +251,7 @@ func (b *TestAppServer) rootHandler(w http.ResponseWriter, r *http.Request) {
 			},
 		}
 	case "solicit":
-		log.Debugw("TestAppServer solicitation request detected")
+		log.Debugw("solicitation request detected")
 		var data app_client.KeySolicitationData
 		if err := json.Unmarshal(payload.Data, &data); err != nil {
 			log.Errorw(
@@ -273,23 +261,23 @@ func (b *TestAppServer) rootHandler(w http.ResponseWriter, r *http.Request) {
 				"payloadData",
 				payload.Data,
 			)
-			http.Error(w, fmt.Sprintf("TestAppServer unable to solicit keys: %v", err), http.StatusBadRequest)
+			http.Error(w, fmt.Sprintf("unable to solicit keys: %v", err), http.StatusBadRequest)
 			return
 		}
-		log.Debugw("TestAppServer proceeding with solicitatino request...", "data", data)
+		log.Debugw("proceeding with solicitation request...", "data", data)
 		if err := b.solicitKeys(logging.CtxWithLog(r.Context(), log), data); err != nil {
-			log.Errorw("TestAppServer solicit request failed", "error", err, "data", data)
+			log.Errorw("solicit keys request failed", "error", err, "data", data)
 			http.Error(w, fmt.Sprintf("TestAppServer unable to solicit keys: %v", err), http.StatusBadRequest)
 		}
 		response = app_client.KeySolicitationResponse{}
 	default:
-		log.Errorw("TestAppServer Unrecognized payload type", "command", payload.Command)
+		log.Errorw("unrecognized payload type", "command", payload.Command)
 		http.Error(w, fmt.Sprintf("Unrecognized payload type: %v", payload.Command), http.StatusBadRequest)
-		log.Sync()
 		return
 	}
 
 	if err := json.NewEncoder(w).Encode(response); err != nil {
+		log.Errorw("error encoding app service response", "error", err)
 		b.t.Errorf("Error encoding app service response: %v", err)
 	}
 }
