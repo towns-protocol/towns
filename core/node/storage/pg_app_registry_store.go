@@ -546,6 +546,14 @@ func (s *PostgresAppRegistryStore) EnqueueUnsendableMessages(
 	return sendableDevices, unsendableDevices, nil
 }
 
+func addressesToStrings(addresses []common.Address) []string {
+	ret := make([]string, len(addresses))
+	for i, addr := range addresses {
+		ret[i] = hex.EncodeToString(addr[:])
+	}
+	return ret
+}
+
 func (s *PostgresAppRegistryStore) enqueueUnsendableMessages(
 	ctx context.Context,
 	appIds []common.Address,
@@ -559,14 +567,20 @@ func (s *PostgresAppRegistryStore) enqueueUnsendableMessages(
 	}
 	rows, err := tx.Query(
 		ctx,
-		`   SELECT app_id, app_ids.device_key, webhook, encrypted_shared_secret, session_ids, ciphertexts
-			FROM (
-				SELECT * FROM app_registry
-				WHERE app_registry.app_id = ANY($2)
-			) as app_ids
-		    INNER JOIN app_session_keys
-			ON app_ids.device_key = app_session_keys.device_key
-			AND $1 = ANY(app_session_keys.session_ids)
+		`   
+		    SELECT DISTINCT on (app_registry.app_id)
+		      app_registry.app_id,
+			  app_registry.device_key,
+			  app_registry.webhook,
+			  app_registry.encrypted_shared_secret,
+			  app_session_keys.session_ids,
+			  app_session_keys.ciphertexts
+			FROM app_registry
+			INNER JOIN app_session_keys
+			  ON app_registry.device_key = app_session_keys.device_key
+			  AND app_registry.app_id = ANY($2)
+			  AND $1 = ANY(app_session_keys.session_ids)
+			ORDER BY app_registry.app_id, app_session_keys.session_ids
 		`,
 		sessionId,
 		appIdStrings,
@@ -606,10 +620,6 @@ func (s *PostgresAppRegistryStore) enqueueUnsendableMessages(
 			unsendableAppIds = append(unsendableAppIds, appId)
 		}
 	}
-	unsendableAppIdStrings := make([]string, len(unsendableAppIds))
-	for i, appId := range unsendableAppIds {
-		unsendableAppIdStrings[i] = hex.EncodeToString(appId[:])
-	}
 
 	rows, err = tx.Query(
 		ctx,
@@ -617,7 +627,7 @@ func (s *PostgresAppRegistryStore) enqueueUnsendableMessages(
 		    FROM app_registry
 		    WHERE app_id = ANY($1)
 		`,
-		unsendableAppIdStrings,
+		addressesToStrings(unsendableAppIds),
 	)
 	if err != nil {
 		return nil, nil, WrapRiverError(

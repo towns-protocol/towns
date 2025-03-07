@@ -12,6 +12,9 @@ import (
 	"github.com/towns-protocol/towns/core/node/storage"
 )
 
+// SessionMessages encapsulates all the needed information for an app client to send
+// a batch of messages in the same stream, encrypted by the same collection of
+// session ids.
 type SessionMessages struct {
 	AppId                 common.Address // included for logging / metrics
 	DeviceKey             string
@@ -22,7 +25,9 @@ type SessionMessages struct {
 	StreamEvents          [][]byte
 }
 
-// CachedEncryptedMessageQueue keeps app keys in the cache and
+// CachedEncryptedMessageQueue enqueues and dispatches messages to app servers according
+// to the availability of needed session keys. It also keeps the list of app ids in memory
+// for the sake of determining which channel members are apps.
 type CachedEncryptedMessageQueue struct {
 	store         storage.AppRegistryStore
 	appDispatcher *AppDispatcher
