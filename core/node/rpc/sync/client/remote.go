@@ -386,13 +386,15 @@ func (s *remoteSyncer) AddStream(ctx context.Context, cookie *SyncCookie) error 
 
 	// If the given stream exists in the pending list to remove, remove it from there
 	var removed bool
-	s.pendingModifySync.RemoveStreams = slices.DeleteFunc[[][]byte, []byte](s.pendingModifySync.RemoveStreams, func(id []byte) bool {
-		if StreamId(id) == streamID {
-			removed = true
-			return true
-		}
-		return false
-	})
+	s.pendingModifySync.RemoveStreams = slices.DeleteFunc[[][]byte, []byte](
+		s.pendingModifySync.RemoveStreams,
+		func(id []byte) bool {
+			if StreamId(id) == streamID {
+				removed = true
+				return true
+			}
+			return false
+		})
 
 	// If the stream was not in the pending list to remove, add it to the list to add
 	if !removed {
@@ -418,13 +420,15 @@ func (s *remoteSyncer) RemoveStream(ctx context.Context, streamID StreamId) (boo
 
 	// If the given stream exists in the pending list to add, remove it from there
 	var removed bool
-	s.pendingModifySync.AddStreams = slices.DeleteFunc[[]*SyncCookie, *SyncCookie](s.pendingModifySync.AddStreams, func(c *SyncCookie) bool {
-		if addStreamID, _ := StreamIdFromBytes(c.GetStreamId()); addStreamID == streamID {
-			removed = true
-			return true
-		}
-		return false
-	})
+	s.pendingModifySync.AddStreams = slices.DeleteFunc[[]*SyncCookie, *SyncCookie](
+		s.pendingModifySync.AddStreams,
+		func(c *SyncCookie) bool {
+			if addStreamID, _ := StreamIdFromBytes(c.GetStreamId()); addStreamID == streamID {
+				removed = true
+				return true
+			}
+			return false
+		})
 
 	// If the stream was not in the pending list to add, add it to the list to remove
 	if !removed {
