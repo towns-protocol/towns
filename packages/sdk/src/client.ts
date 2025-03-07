@@ -1,4 +1,4 @@
-import { Message, PlainMessage } from '@bufbuild/protobuf'
+import { create, toBinary, toJsonString } from '@bufbuild/protobuf'
 import {
     Permission,
     SpaceAddressFromSpaceId,
@@ -6,6 +6,7 @@ import {
     SpaceReviewEventObject,
 } from '@river-build/web3'
 import {
+    PlainMessage,
     MembershipOp,
     ChannelOp,
     ChannelMessage_Post_Mention,
@@ -39,6 +40,20 @@ import {
     ChannelProperties,
     CreationCookie,
     BlockchainTransaction_TokenTransfer,
+    BlockchainTransactionReceipt,
+    BlockchainTransactionReceipt_LogSchema,
+    BlockchainTransactionReceiptSchema,
+    ChannelPropertiesSchema,
+    FullyReadMarkersSchema,
+    ChunkedMediaSchema,
+    EncryptedDataSchema,
+    UserBioSchema,
+    MemberPayload_NftSchema,
+    ChannelMessageSchema,
+    SolanaBlockchainTransactionReceiptSchema,
+    SolanaBlockchainTransactionReceipt,
+    SessionKeysSchema,
+    EnvelopeSchema,
 } from '@river-build/proto'
 import {
     bin_fromHexString,
@@ -224,6 +239,7 @@ export class Client
         unpackEnvelopeOpts?: UnpackEnvelopeOpts,
         defaultGroupEncryptionAlgorithm?: GroupEncryptionAlgorithmId,
         inLogId?: string,
+        private streamOpts?: { useModifySync?: boolean },
     ) {
         super()
         if (logNamespaceFilter) {
@@ -272,6 +288,7 @@ export class Client
             this,
             this.unpackEnvelopeOpts,
             this.logId,
+            this.streamOpts,
         )
         this.syncedStreamsExtensions = new SyncedStreamsExtension(
             highPriorityStreamIds,
@@ -600,11 +617,8 @@ export class Client
     }
 
     private async createStreamAndSync(
-        request: Omit<PlainMessage<CreateStreamRequest>, 'metadata'> & {
-            metadata?: Record<string, Uint8Array>
-        },
+        request: PlainMessage<CreateStreamRequest>,
     ): Promise<{ streamId: string }> {
-        request.metadata = request.metadata ?? {}
         const streamId = streamIdAsString(request.streamId)
         try {
             this.creatingStreamIds.add(streamId)
@@ -660,6 +674,7 @@ export class Client
         return this.createStreamAndSync({
             events: [inceptionEvent, joinEvent],
             streamId: spaceId,
+            metadata: {},
         })
     }
 
@@ -698,6 +713,7 @@ export class Client
         return this.createStreamAndSync({
             events: [inceptionEvent, joinEvent],
             streamId: channelId,
+            metadata: {},
         })
     }
 
@@ -738,6 +754,7 @@ export class Client
         return this.createStreamAndSync({
             events: [inceptionEvent, joinEvent, inviteEvent],
             streamId: channelId,
+            metadata: {},
         })
     }
 
@@ -784,6 +801,7 @@ export class Client
         return this.createStreamAndSync({
             events: events,
             streamId: channelId,
+            metadata: {},
         })
     }
 
@@ -793,6 +811,7 @@ export class Client
         userId: string | undefined,
         chunkCount: number,
         streamSettings?: PlainMessage<StreamSettings>,
+        perChunkEncryption?: boolean,
     ): Promise<{ creationCookie: CreationCookie }> {
         assert(this.userStreamId !== undefined, 'userStreamId must be set')
         if (!channelId && !spaceId && !userId) {
@@ -825,6 +844,7 @@ export class Client
                 userId: userId ? addressFromUserId(userId) : undefined,
                 chunkCount,
                 settings: streamSettings,
+                perChunkEncryption: perChunkEncryption,
             }),
         )
 
@@ -909,10 +929,13 @@ export class Client
         assert(isGDMChannelStreamId(streamId), 'streamId must be a valid GDM stream id')
         check(isDefined(this.cryptoBackend))
 
-        const channelProps = new ChannelProperties({ name: channelName, topic: channelTopic })
+        const channelProps = create(ChannelPropertiesSchema, {
+            name: channelName,
+            topic: channelTopic,
+        } satisfies PlainMessage<ChannelProperties>)
         const encryptedData = await this.cryptoBackend.encryptGroupEvent(
             streamId,
-            channelProps.toBinary(),
+            toBinary(ChannelPropertiesSchema, channelProps),
             this.defaultGroupEncryptionAlgorithm,
         )
 
@@ -955,15 +978,15 @@ export class Client
             throw Error('userSettingsStreamId is not defined')
         }
 
-        const fullyReadMarkersContent: FullyReadMarkers = new FullyReadMarkers({
+        const fullyReadMarkersContent: FullyReadMarkers = create(FullyReadMarkersSchema, {
             markers: fullyReadMarkers,
-        })
+        } satisfies PlainMessage<FullyReadMarkers>)
 
         return this.makeEventAndAddToStream(
             this.userSettingsStreamId,
             make_UserSettingsPayload_FullyReadMarkers({
                 streamId: streamIdAsBytes(channelId),
-                content: { data: fullyReadMarkersContent.toJsonString() },
+                content: { data: toJsonString(FullyReadMarkersSchema, fullyReadMarkersContent) },
             }),
             { method: 'sendFullyReadMarker' },
         )
@@ -1018,14 +1041,14 @@ export class Client
         // use the lowercased spaceId as the key phrase
         const { key, iv } = await deriveKeyAndIV(context)
         const { ciphertext } = await encryptAESGCM(
-            new ChunkedMedia(chunkedMediaInfo).toBinary(),
+            toBinary(ChunkedMediaSchema, create(ChunkedMediaSchema, chunkedMediaInfo)),
             key,
             iv,
         )
-        const encryptedData = new EncryptedData({
+        const encryptedData = create(EncryptedDataSchema, {
             ciphertext: uint8ArrayToBase64(ciphertext),
             algorithm: AES_GCM_DERIVED_ALGORITHM,
-        })
+        }) // aellis this should probably include `satisfies PlainMessage<EncryptedData>`
 
         // add the event to the stream
         const event = make_SpacePayload_SpaceImage(encryptedData)
@@ -1043,14 +1066,14 @@ export class Client
         // use the lowercased userId as the key phrase
         const { key, iv } = await deriveKeyAndIV(context)
         const { ciphertext } = await encryptAESGCM(
-            new ChunkedMedia(chunkedMediaInfo).toBinary(),
+            toBinary(ChunkedMediaSchema, create(ChunkedMediaSchema, chunkedMediaInfo)),
             key,
             iv,
         )
-        const encryptedData = new EncryptedData({
+        const encryptedData = create(EncryptedDataSchema, {
             ciphertext: uint8ArrayToBase64(ciphertext),
             algorithm: AES_GCM_DERIVED_ALGORITHM,
-        })
+        }) // aellis this should probably include `satisfies PlainMessage<EncryptedData>`
 
         // add the event to the stream
         const event = make_UserMetadataPayload_ProfileImage(encryptedData)
@@ -1062,7 +1085,7 @@ export class Client
         return this.stream(streamId)?.view.userMetadataContent.getProfileImage()
     }
 
-    async setUserBio(bio: UserBio) {
+    async setUserBio(bio: PlainMessage<UserBio>) {
         this.logCall('setUserBio', bio)
 
         // create the chunked media to be added
@@ -1073,12 +1096,12 @@ export class Client
         // use the lowercased userId as the key phrase
         const { key, iv } = await deriveKeyAndIV(context)
         bio.updatedAtEpochMs = BigInt(Date.now())
-        const bioBinary = bio.toBinary()
+        const bioBinary = toBinary(UserBioSchema, create(UserBioSchema, bio))
         const { ciphertext } = await encryptAESGCM(bioBinary, key, iv)
-        const encryptedData = new EncryptedData({
+        const encryptedData = create(EncryptedDataSchema, {
             ciphertext: uint8ArrayToBase64(ciphertext),
             algorithm: AES_GCM_DERIVED_ALGORITHM,
-        })
+        }) // aellis this should probably include `satisfies PlainMessage<EncryptedData>`
 
         // add the event to the stream
         const event = make_UserMetadataPayload_Bio(encryptedData)
@@ -1142,12 +1165,12 @@ export class Client
     async setNft(streamId: string, tokenId: string, chainId: number, contractAddress: string) {
         const payload =
             tokenId.length > 0
-                ? new MemberPayload_Nft({
+                ? create(MemberPayload_NftSchema, {
                       chainId: chainId,
                       contractAddress: bin_fromHexString(contractAddress),
                       tokenId: bin_fromString(tokenId),
-                  })
-                : new MemberPayload_Nft()
+                  } satisfies PlainMessage<MemberPayload_Nft>)
+                : create(MemberPayload_NftSchema)
         await this.makeEventAndAddToStream(streamId, make_MemberPayload_Nft(payload), {
             method: 'nft',
         })
@@ -1491,8 +1514,8 @@ export class Client
     async sendMessage(
         streamId: string,
         body: string,
-        mentions?: ChannelMessage_Post_Mention[],
-        attachments: ChannelMessage_Post_Attachment[] = [],
+        mentions?: PlainMessage<ChannelMessage_Post_Mention>[],
+        attachments: PlainMessage<ChannelMessage_Post_Attachment>[] = [],
     ): Promise<{ eventId: string }> {
         return this.sendChannelMessage_Text(streamId, {
             content: {
@@ -1505,12 +1528,13 @@ export class Client
 
     async sendChannelMessage(
         streamId: string,
-        payload: ChannelMessage,
+        inPayload: PlainMessage<ChannelMessage>,
         opts?: SendChannelMessageOptions,
     ): Promise<{ eventId: string }> {
         const stream = this.stream(streamId)
 
         check(stream !== undefined, 'stream not found')
+        const payload = create(ChannelMessageSchema, inPayload)
         const localId = stream.appendLocalEvent(payload, 'sending')
         opts?.onLocalEventAppended?.(localId)
         if (opts?.beforeSendEventHook) {
@@ -1571,28 +1595,29 @@ export class Client
         }
 
         const tags = opts?.disableTags === true ? undefined : makeTags(payload, stream.view)
-        const cleartext = payload.toBinary()
+        const cleartext = toBinary(ChannelMessageSchema, payload)
 
         let message: EncryptedData
         const encryptionAlgorithm = stream.view.membershipContent.encryptionAlgorithm
+        const buffer = toBinary(ChannelMessageSchema, payload)
         switch (encryptionAlgorithm) {
             case GroupEncryptionAlgorithmId.HybridGroupEncryption:
                 message = await this.encryptGroupEvent(
-                    payload,
+                    buffer,
                     streamId,
                     GroupEncryptionAlgorithmId.HybridGroupEncryption,
                 )
                 break
             case GroupEncryptionAlgorithmId.GroupEncryption:
                 message = await this.encryptGroupEvent(
-                    payload,
+                    buffer,
                     streamId,
                     GroupEncryptionAlgorithmId.GroupEncryption,
                 )
                 break
             default: {
                 message = await this.encryptGroupEvent(
-                    payload,
+                    buffer,
                     streamId,
                     this.defaultGroupEncryptionAlgorithm,
                 )
@@ -1639,7 +1664,7 @@ export class Client
         const { content, ...options } = payload
         return this.sendChannelMessage(
             streamId,
-            new ChannelMessage({
+            {
                 payload: {
                     case: 'post',
                     value: {
@@ -1650,7 +1675,7 @@ export class Client
                         },
                     },
                 },
-            }),
+            },
             opts,
         )
     }
@@ -1665,7 +1690,7 @@ export class Client
         const { content, ...options } = payload
         return this.sendChannelMessage(
             streamId,
-            new ChannelMessage({
+            {
                 payload: {
                     case: 'post',
                     value: {
@@ -1676,7 +1701,7 @@ export class Client
                         },
                     },
                 },
-            }),
+            },
             opts,
         )
     }
@@ -1691,7 +1716,7 @@ export class Client
         const { content, ...options } = payload
         return this.sendChannelMessage(
             streamId,
-            new ChannelMessage({
+            {
                 payload: {
                     case: 'post',
                     value: {
@@ -1702,7 +1727,7 @@ export class Client
                         },
                     },
                 },
-            }),
+            },
             opts,
         )
     }
@@ -1751,12 +1776,12 @@ export class Client
     ): Promise<{ eventId: string }> {
         return this.sendChannelMessage(
             streamId,
-            new ChannelMessage({
+            {
                 payload: {
                     case: 'reaction',
-                    value: new ChannelMessage_Reaction(payload),
+                    value: payload,
                 },
-            }),
+            },
             opts,
         )
     }
@@ -1772,15 +1797,12 @@ export class Client
         if (!stream.view.events.has(payload.refEventId)) {
             throw new Error(`ref event not found: ${payload.refEventId}`)
         }
-        return this.sendChannelMessage(
-            streamId,
-            new ChannelMessage({
-                payload: {
-                    case: 'redaction',
-                    value: new ChannelMessage_Redaction(payload),
-                },
-            }),
-        )
+        return this.sendChannelMessage(streamId, {
+            payload: {
+                case: 'redaction',
+                value: payload,
+            },
+        })
     }
 
     async sendChannelMessage_Edit(
@@ -1788,18 +1810,15 @@ export class Client
         refEventId: string,
         newPost: PlainMessage<ChannelMessage_Post>,
     ): Promise<{ eventId: string }> {
-        return this.sendChannelMessage(
-            streamId,
-            new ChannelMessage({
-                payload: {
-                    case: 'edit',
-                    value: {
-                        refEventId: refEventId,
-                        post: newPost,
-                    },
+        return this.sendChannelMessage(streamId, {
+            payload: {
+                case: 'edit',
+                value: {
+                    refEventId: refEventId,
+                    post: newPost,
                 },
-            }),
-        )
+            },
+        })
     }
 
     async sendChannelMessage_Edit_Text(
@@ -1995,20 +2014,26 @@ export class Client
         check(isDefined(this.userStreamId))
         const transaction = {
             receipt: !isSolanaTransactionReceipt(receipt)
-                ? {
+                ? create(BlockchainTransactionReceiptSchema, {
                       chainId: BigInt(chainId),
                       transactionHash: bin_fromHexString(receipt.transactionHash),
                       blockNumber: BigInt(receipt.blockNumber),
                       to: bin_fromHexString(receipt.to),
                       from: bin_fromHexString(receipt.from),
-                      logs: receipt.logs.map((log) => ({
-                          address: bin_fromHexString(log.address),
-                          topics: log.topics.map(bin_fromHexString),
-                          data: bin_fromHexString(log.data),
-                      })),
-                  }
+                      logs: receipt.logs.map((log) =>
+                          create(BlockchainTransactionReceipt_LogSchema, {
+                              address: bin_fromHexString(log.address),
+                              topics: log.topics.map(bin_fromHexString),
+                              data: bin_fromHexString(log.data),
+                          }),
+                      ),
+                  } satisfies PlainMessage<BlockchainTransactionReceipt>)
                 : undefined,
-            solanaReceipt: isSolanaTransactionReceipt(receipt) ? receipt : undefined,
+            solanaReceipt: isSolanaTransactionReceipt(receipt)
+                ? create(SolanaBlockchainTransactionReceiptSchema, {
+                      ...receipt,
+                  } satisfies PlainMessage<SolanaBlockchainTransactionReceipt>)
+                : undefined,
             content: content ?? { case: undefined },
         } satisfies PlainMessage<BlockchainTransaction>
         const event = make_UserPayload_BlockchainTransaction(transaction)
@@ -2638,9 +2663,10 @@ export class Client
 
         const sessionIds = sessions.map((session) => session.sessionId)
         const payload = makeSessionKeys(sessions)
+        const payloadClearText = toJsonString(SessionKeysSchema, payload)
         const promises = Object.entries(toDevices).map(async ([userId, deviceKeys]) => {
             try {
-                const ciphertext = await this.encryptWithDeviceKeys(payload, deviceKeys)
+                const ciphertext = await this.encryptWithDeviceKeys(payloadClearText, deviceKeys)
                 if (Object.keys(ciphertext).length === 0) {
                     this.logCall('encryptAndShareGroupSessions: no ciphertext to send', userId)
                     return
@@ -2673,7 +2699,7 @@ export class Client
 
     // Encrypt event using GroupEncryption.
     public encryptGroupEvent(
-        event: Message,
+        event: Uint8Array,
         streamId: string,
         algorithm: GroupEncryptionAlgorithmId,
     ): Promise<EncryptedData> {
@@ -2681,18 +2707,18 @@ export class Client
             throw new Error('crypto backend not initialized')
         }
 
-        return this.cryptoBackend.encryptGroupEvent(streamId, event.toBinary(), algorithm)
+        return this.cryptoBackend.encryptGroupEvent(streamId, event, algorithm)
     }
 
     async encryptWithDeviceKeys(
-        payload: Message,
+        payloadClearText: string,
         deviceKeys: UserDevice[],
     ): Promise<Record<string, string>> {
         check(isDefined(this.cryptoBackend), 'crypto backend not initialized')
 
         // Don't encrypt to our own device
         return this.cryptoBackend.encryptWithDeviceKeys(
-            payload.toJsonString(),
+            payloadClearText,
             deviceKeys.filter((key) => key.deviceKey !== this.userDeviceKey().deviceKey),
         )
     }
@@ -2715,7 +2741,7 @@ export class Client
     }
 
     public async debugForceAddEvent(streamId: string, event: Envelope): Promise<void> {
-        const jsonStr = event.toJsonString()
+        const jsonStr = toJsonString(EnvelopeSchema, event)
         await this.rpcClient.info({ debug: ['add_event', streamId, jsonStr] })
     }
 

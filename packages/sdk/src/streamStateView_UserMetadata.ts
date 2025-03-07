@@ -8,6 +8,8 @@ import {
     ChunkedMedia,
     type EncryptedData,
     UserBio,
+    ChunkedMediaSchema,
+    UserBioSchema,
 } from '@river-build/proto'
 import { StreamStateView_AbstractContent } from './streamStateView_AbstractContent'
 import { check } from '@river-build/dlog'
@@ -16,6 +18,7 @@ import { UserDevice } from '@river-build/encryption'
 import { StreamEncryptionEvents, StreamStateEvents } from './streamEvents'
 import { getUserIdFromStreamId } from './id'
 import { decryptDerivedAESGCM } from './crypto_utils'
+import { fromBinary } from '@bufbuild/protobuf'
 
 export class StreamStateView_UserMetadata extends StreamStateView_AbstractContent {
     readonly streamId: string
@@ -135,7 +138,7 @@ export class StreamStateView_UserMetadata extends StreamStateView_AbstractConten
                 image: this.decrypt(
                     encryptedData,
                     (decrypted) => {
-                        const profileImage = ChunkedMedia.fromBinary(decrypted)
+                        const profileImage = fromBinary(ChunkedMediaSchema, decrypted)
                         this.profileImage = profileImage
                         return profileImage
                     },
@@ -169,7 +172,7 @@ export class StreamStateView_UserMetadata extends StreamStateView_AbstractConten
                 bio: this.decrypt(
                     encryptedData,
                     (plaintext) => {
-                        const bioPlaintext = UserBio.fromBinary(plaintext)
+                        const bioPlaintext = fromBinary(UserBioSchema, plaintext)
                         this.bio = bioPlaintext
                         return bioPlaintext
                     },

@@ -2,9 +2,10 @@
  * @group main
  */
 
-import { EncryptedData } from '@river-build/proto'
+import { EncryptedDataSchema } from '@river-build/proto'
 import { MemberMetadata_Usernames } from '../../memberMetadata_Usernames'
 import { usernameChecksum } from '../../utils'
+import { create } from '@bufbuild/protobuf'
 
 describe('memberMetadata_UsernamesTests', () => {
     const streamId = 'streamid1'
@@ -16,7 +17,7 @@ describe('memberMetadata_UsernamesTests', () => {
     test('clientCanSetUsername', async () => {
         const username = 'bob-username1'
         const checksum = usernameChecksum(username, streamId)
-        const encryptedData = new EncryptedData({
+        const encryptedData = create(EncryptedDataSchema, {
             ciphertext: username,
             checksum: checksum,
         })
@@ -37,7 +38,7 @@ describe('memberMetadata_UsernamesTests', () => {
     test('clientCannotSetDuplicateUsername', async () => {
         const username = 'bob-username1'
         const checksum = usernameChecksum(username, streamId)
-        const encryptedData = new EncryptedData({
+        const encryptedData = create(EncryptedDataSchema, {
             ciphertext: username,
             checksum: checksum,
         })
@@ -70,14 +71,14 @@ describe('memberMetadata_UsernamesTests', () => {
     test('duplicateUsernamesAreCaseInsensitive', async () => {
         const username = 'bob-username1'
         const checksum = usernameChecksum(username, streamId)
-        const encryptedData = new EncryptedData({
+        const encryptedData = create(EncryptedDataSchema, {
             ciphertext: username,
             checksum: checksum,
         })
 
         const username2 = 'BOB-USERNAME1'
         const checksum2 = usernameChecksum(username2, streamId)
-        const encryptedData2 = new EncryptedData({
+        const encryptedData2 = create(EncryptedDataSchema, {
             ciphertext: username2,
             checksum: checksum2,
         })
@@ -110,7 +111,7 @@ describe('memberMetadata_UsernamesTests', () => {
     test('usernameIsAvailableAfterChange', async () => {
         const username = 'bob-username1'
         const checksum = usernameChecksum(username, streamId)
-        const encryptedData = new EncryptedData({
+        const encryptedData = create(EncryptedDataSchema, {
             ciphertext: username,
             checksum: checksum,
         })
@@ -129,7 +130,7 @@ describe('memberMetadata_UsernamesTests', () => {
 
         const username2 = 'bob-username2'
         const checksum2 = usernameChecksum(username2, streamId)
-        const encryptedData2 = new EncryptedData({
+        const encryptedData2 = create(EncryptedDataSchema, {
             ciphertext: username2,
             checksum: checksum2,
         })
@@ -170,7 +171,7 @@ describe('memberMetadata_UsernamesTests', () => {
     test('clientCannotFakeChecksum', async () => {
         const username = 'bob-username1'
         const checksum = 'invalid-checksum'
-        const encryptedData = new EncryptedData({
+        const encryptedData = create(EncryptedDataSchema, {
             ciphertext: username,
             checksum: checksum,
         })
@@ -191,7 +192,7 @@ describe('memberMetadata_UsernamesTests', () => {
     test('encryptedFlagsAreReturnedWhenEncrypted', async () => {
         const username = 'bob-username1'
         const checksum = usernameChecksum(username, streamId)
-        const encryptedData = new EncryptedData({
+        const encryptedData = create(EncryptedDataSchema, {
             ciphertext: username,
             checksum: checksum,
         })

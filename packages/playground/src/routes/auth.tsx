@@ -8,7 +8,7 @@ import { Button, buttonVariants } from '@/components/ui/button'
 import { RiverEnvSwitcherContent } from '@/components/dialog/env-switcher'
 import { Dialog } from '@/components/ui/dialog'
 import { Block } from '@/components/ui/block'
-import { RiverBeaver } from '@/components/river-beaver'
+import { TownsMinimal } from '@/components/towns-minimal'
 import { TownsIcon } from '@/components/towns-icon'
 import { cn } from '@/utils'
 
@@ -33,7 +33,7 @@ export const AuthRoute = () => {
             {/* Main Content */}
             <div className={cn('mx-auto max-w-3xl space-y-6 text-center', isDev && 'max-w-4xl')}>
                 <h1 className="text-4xl font-bold tracking-tight sm:text-6xl">
-                    Welcome to River Playground
+                    Welcome to Towns Playground
                 </h1>
                 <p className="text-lg text-muted-foreground">
                     An interactive environment for testing and experimenting with{' '}
@@ -42,8 +42,8 @@ export const AuthRoute = () => {
                         target="_blank"
                         className="inline-flex items-center font-semibold underline-offset-4 hover:underline"
                     >
-                        River Protocol
-                        <RiverBeaver className="ml-2 size-4" />
+                        Towns Protocol
+                        <TownsMinimal className="ml-2 size-4" />
                     </a>
                 </p>
 

@@ -300,7 +300,7 @@ func testGDMReactionMessage(
 	eventHash := common.BytesToHash(event.Hash)
 	expectedUsersToReceiveNotification := map[common.Address]int{userA.Address: 1}
 
-	// ensure that user A received notificaton
+	// ensure that user A received notification
 	test.req.Eventuallyf(func() bool {
 		nc.WebPushNotificationsMu.Lock()
 		defer nc.WebPushNotificationsMu.Unlock()
@@ -336,7 +336,7 @@ func testGDMTipMessage(
 	eventHash := common.BytesToHash(event.Hash)
 	expectedUsersToReceiveNotification := map[common.Address]int{userA.Address: 1}
 
-	// ensure that user A received notificaton
+	// ensure that user A received notification
 	test.req.Eventuallyf(func() bool {
 		nc.WebPushNotificationsMu.Lock()
 		defer nc.WebPushNotificationsMu.Unlock()

@@ -7,8 +7,7 @@ import {
     waitFor,
 } from '../testUtils'
 import { makeUniqueChannelStreamId } from '../../id'
-import { PlainMessage } from '@bufbuild/protobuf'
-import { BlockchainTransaction_TokenTransfer } from '@river-build/proto'
+import { BlockchainTransaction_TokenTransfer, PlainMessage } from '@river-build/proto'
 import { SolanaTransactionReceipt } from '../../types'
 import { bin_fromHexString, bin_fromString, bin_toString } from '@river-build/dlog'
 
@@ -49,7 +48,7 @@ describe('Trading Solana', () => {
     const validBuyReceipt: SolanaTransactionReceipt = {
         transaction: {
             signatures: [
-                '4uPV4YciNkRoRqaN5bsDw4HzPTCuavM94sbdaZPkaVVEXkyaNNT4KLpuvwBsyJUkzzzjLXpVx88dRswJ6tRp41VG',
+                '3jFRj6BYWEcwHxPkF7N2x7xNggvuNkfEPwcwnQRPzY5urC9oQ1Fh9rR8MG76Vosf7xWg4CWB4RSpBhkuHvHX9qDj',
             ],
         },
         meta: {
@@ -84,7 +83,7 @@ describe('Trading Solana', () => {
         const result = await bobClient.sendMessage(channelId, 'try out this token: $yo!')
         threadParentId = result.eventId
 
-        bobClient.on('streamTokenTransfer', (streamId, data) => {
+        bobClient.once('streamTokenTransfer', (streamId, data) => {
             expect(streamId).toBe(channelId)
             expect(data.createdAtEpochMs > 0n).toBe(true)
             expect(data.chainId).toBe('solana-mainnet')
@@ -169,7 +168,7 @@ describe('Trading Solana', () => {
         ).rejects.toThrow('solana transfer transaction mint not found')
     })
 
-    test('Solana transactions are accepted if the amount, mint and owner are valid', async () => {
+    test('Solana transactions are accepted if the amount, mint and owner are valid (sell)', async () => {
         const transferEvent: PlainMessage<BlockchainTransaction_TokenTransfer> = {
             amount: 4804294168682n.toString(),
             address: bin_fromString(mintAddress),
@@ -181,6 +180,37 @@ describe('Trading Solana', () => {
 
         await expect(
             bobClient.addTransaction_Transfer(1151111081099710, validSellReceipt, transferEvent),
+        ).resolves.not.toThrow()
+    })
+
+    test('Duplicate solana transactions are not accepted', async () => {
+        // this tx is the same as the one above
+        const transferEvent: PlainMessage<BlockchainTransaction_TokenTransfer> = {
+            amount: 4804294168682n.toString(),
+            address: bin_fromString(mintAddress),
+            sender: bin_fromString(bobSolanaWalletAddress),
+            messageId: bin_fromHexString(threadParentId),
+            channelId: bin_fromHexString(channelId),
+            isBuy: false,
+        }
+
+        await expect(
+            bobClient.addTransaction_Transfer(1151111081099710, validSellReceipt, transferEvent),
+        ).rejects.toThrow()
+    })
+
+    test('Solana transactions are accepted if the amount, mint and owner are valid (buy)', async () => {
+        const transferEvent: PlainMessage<BlockchainTransaction_TokenTransfer> = {
+            amount: 4804294168682n.toString(),
+            address: bin_fromString(mintAddress),
+            sender: bin_fromString(bobSolanaWalletAddress),
+            messageId: bin_fromHexString(threadParentId),
+            channelId: bin_fromHexString(channelId),
+            isBuy: true,
+        }
+
+        await expect(
+            bobClient.addTransaction_Transfer(1151111081099710, validBuyReceipt, transferEvent),
         ).resolves.not.toThrow()
     })
 
@@ -203,10 +233,14 @@ describe('Trading Solana', () => {
     test('bob sees the transfer event in the channel stream', async () => {
         await waitFor(() => {
             const transferEvents = extractMemberBlockchainTransactions(bobClient, channelId)
-            expect(transferEvents.length).toBe(1)
-            const event0 = transferEvents[0]
-            expect(BigInt(event0!.amount)).toBe(4804294168682n)
-            expect(bin_toString(event0!.sender)).toBe(bobSolanaWalletAddress)
+            expect(transferEvents.length).toBe(2)
+            const [event0, event1] = transferEvents
+            expect(BigInt(event0.amount)).toBe(4804294168682n)
+            expect(BigInt(event1.amount)).toBe(4804294168682n)
+            expect(bin_toString(event0.sender)).toBe(bobSolanaWalletAddress)
+            expect(bin_toString(event1.sender)).toBe(bobSolanaWalletAddress)
+            expect(event0.isBuy).toBe(false)
+            expect(event1.isBuy).toBe(true)
         })
     })
 })

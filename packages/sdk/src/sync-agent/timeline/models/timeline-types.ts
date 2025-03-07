@@ -14,8 +14,9 @@ import type {
     UserPayload_ReceivedBlockchainTransaction,
     BlockchainTransaction_Tip,
     BlockchainTransaction_SpaceReview_Action,
+    BlockchainTransaction_TokenTransfer,
+    PlainMessage,
 } from '@river-build/proto'
-import type { PlainMessage } from '@bufbuild/protobuf'
 import type { DecryptionSessionError } from '@river-build/encryption'
 
 export enum EventStatus {
@@ -89,6 +90,7 @@ export type TimelineEvent_OneOf =
     | SpaceUpdateHideUserJoinLeavesEvent
     | SpaceUsernameEvent
     | TipEvent
+    | TokenTransferEvent
     | SpaceReviewEvent
     | UserBlockchainTransactionEvent
     | UserReceivedBlockchainTransactionEvent
@@ -121,6 +123,7 @@ export enum RiverTimelineEvent {
     StreamEncryptionAlgorithm = 'm.stream_encryption_algorithm',
     StreamMembership = 'm.stream_membership',
     TipEvent = 'm.tip_event',
+    TokenTransfer = 'm.token_transfer',
     Unpin = 'm.unpin',
     UserBlockchainTransaction = 'm.user_blockchain_transaction',
     UserReceivedBlockchainTransaction = 'm.user_received_blockchain_transaction',
@@ -288,6 +291,15 @@ export interface TipEvent {
     fromUserId: string
     refEventId: string
     toUserId: string
+}
+
+export interface TokenTransferEvent {
+    kind: RiverTimelineEvent.TokenTransfer
+    transaction: PlainMessage<BlockchainTransaction>
+    transfer: PlainMessage<BlockchainTransaction_TokenTransfer>
+    fromUserId: string
+    createdAtEpochMs: bigint
+    threadParentId: string
 }
 
 export interface SpaceReviewEvent {

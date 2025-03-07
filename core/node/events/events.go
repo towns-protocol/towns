@@ -589,13 +589,14 @@ func Make_MediaPayload_Inception(inception *MediaPayload_Inception) *StreamEvent
 	}
 }
 
-func Make_MediaPayload_Chunk(data []byte, chunkIndex int32) *StreamEvent_MediaPayload {
+func Make_MediaPayload_Chunk(data []byte, chunkIndex int32, iv []byte) *StreamEvent_MediaPayload {
 	return &StreamEvent_MediaPayload{
 		MediaPayload: &MediaPayload{
 			Content: &MediaPayload_Chunk_{
 				Chunk: &MediaPayload_Chunk{
 					Data:       data,
 					ChunkIndex: chunkIndex,
+					Iv:         iv,
 				},
 			},
 		},

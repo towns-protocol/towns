@@ -187,7 +187,7 @@ export async function _getStream(
 		const unpackedResponse = await unpackStream(response.stream, opts)
 		return streamViewFromUnpackedResponse(streamId, unpackedResponse)
 	} catch (e) {
-		logger.error(
+		logger.warn(
 			{ url: client.url, streamId, err: e },
 			'getStream failed, removing client from cache',
 		)

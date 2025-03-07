@@ -15,7 +15,7 @@ type JoinableStreamView interface {
 	GetMembership(userAddress []byte) (protocol.MembershipOp, error)
 	GetKeySolicitations(userAddress []byte) ([]*protocol.MemberPayload_KeySolicitation, error)
 	GetPinnedMessages() ([]*protocol.MemberPayload_SnappedPin, error)
-	HasTransaction(receipt *protocol.BlockchainTransactionReceipt) (bool, error) // defined in userStreamView
+	HasTransaction(evmReceipt *protocol.BlockchainTransactionReceipt, solanaReceipt *protocol.SolanaBlockchainTransactionReceipt) (bool, error) // defined in userStreamView
 }
 
 var _ JoinableStreamView = (*StreamView)(nil)

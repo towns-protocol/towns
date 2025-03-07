@@ -1,4 +1,9 @@
-import { PersistedMiniblock, PersistedSyncedStream, Snapshot } from '@river-build/proto'
+import {
+    PersistedMiniblockSchema,
+    PersistedSyncedStream,
+    PersistedSyncedStreamSchema,
+    Snapshot,
+} from '@river-build/proto'
 import Dexie, { Table } from 'dexie'
 import { ParsedMiniblock } from './types'
 import {
@@ -11,6 +16,7 @@ import {
 import { bin_toHexString, dlog, dlogError } from '@river-build/dlog'
 import { isDefined } from './check'
 import { isChannelStreamId, isDMChannelStreamId, isGDMChannelStreamId } from './id'
+import { fromBinary, toBinary } from '@bufbuild/protobuf'
 
 const MAX_CACHED_SCROLLBACK_COUNT = 3
 const DEFAULT_RETRY_COUNT = 2
@@ -161,7 +167,7 @@ export class PersistenceStore extends Dexie implements IPersistenceStore {
         if (!record) {
             return undefined
         }
-        const cachedSyncedStream = PersistedSyncedStream.fromBinary(record.data)
+        const cachedSyncedStream = fromBinary(PersistedSyncedStreamSchema, record.data)
         const psstpss = persistedSyncedStreamToParsedSyncedStream(streamId, cachedSyncedStream)
         return psstpss
     }
@@ -244,7 +250,7 @@ export class PersistenceStore extends Dexie implements IPersistenceStore {
         const records = await this.syncedStreams.bulkGet(streamIds)
         const cachedSyncedStreams = records.map((x) =>
             x
-                ? { streamId: x.streamId, data: PersistedSyncedStream.fromBinary(x.data) }
+                ? { streamId: x.streamId, data: fromBinary(PersistedSyncedStreamSchema, x.data) }
                 : undefined,
         )
         const psstpss = cachedSyncedStreams.reduce((acc, x) => {
@@ -260,7 +266,7 @@ export class PersistenceStore extends Dexie implements IPersistenceStore {
         log('saving synced stream', streamId)
         await this.syncedStreams.put({
             streamId,
-            data: syncedStream.toBinary(),
+            data: toBinary(PersistedSyncedStreamSchema, syncedStream),
         })
     }
 
@@ -270,7 +276,7 @@ export class PersistenceStore extends Dexie implements IPersistenceStore {
         await this.miniblocks.put({
             streamId: streamId,
             miniblockNum: miniblock.header.miniblockNum.toString(),
-            data: cachedMiniblock.toBinary(),
+            data: toBinary(PersistedMiniblockSchema, cachedMiniblock),
         })
     }
 
@@ -284,7 +290,10 @@ export class PersistenceStore extends Dexie implements IPersistenceStore {
                 return {
                     streamId: streamId,
                     miniblockNum: mb.header.miniblockNum.toString(),
-                    data: parsedMiniblockToPersistedMiniblock(mb, direction).toBinary(),
+                    data: toBinary(
+                        PersistedMiniblockSchema,
+                        parsedMiniblockToPersistedMiniblock(mb, direction),
+                    ),
                 }
             }),
         )
@@ -298,7 +307,7 @@ export class PersistenceStore extends Dexie implements IPersistenceStore {
         if (!record) {
             return undefined
         }
-        const cachedMiniblock = PersistedMiniblock.fromBinary(record.data)
+        const cachedMiniblock = fromBinary(PersistedMiniblockSchema, record.data)
         return persistedMiniblockToParsedMiniblock(cachedMiniblock)
     }
 
@@ -318,7 +327,7 @@ export class PersistenceStore extends Dexie implements IPersistenceStore {
                 if (!record) {
                     return undefined
                 }
-                const cachedMiniblock = PersistedMiniblock.fromBinary(record.data)
+                const cachedMiniblock = fromBinary(PersistedMiniblockSchema, record.data)
                 return persistedMiniblockToParsedMiniblock(cachedMiniblock)
             })
             .filter(isDefined)
