@@ -80,7 +80,7 @@ export function NotificationRoute(): JSX.Element | null {
         ])
 
     /** phase 2: check if the required path params are present */
-    const { parent: threadParent } = useTimelineThread(channelId, threadId)
+    const { threadData } = useTimelineThread(channelId, threadId)
 
     const isChannelIdPresent = useMemo((): boolean => {
         if (!spaceId || !channelId) {
@@ -110,8 +110,8 @@ export function NotificationRoute(): JSX.Element | null {
             // unspecified is ok
             return true
         }
-        return threadParent !== undefined
-    }, [threadId, threadParent])
+        return threadData !== undefined
+    }, [threadId, threadData])
 
     const isRequiredPathParamsPresent = useMemo((): boolean => {
         const isRequiredPresent =

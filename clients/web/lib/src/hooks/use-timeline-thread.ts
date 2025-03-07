@@ -10,14 +10,14 @@ export function useTimelineThread(
     eventId?: string,
 ): {
     messages: TimelineEvent[]
-    parent: ThreadStatsData | undefined
+    threadData: ThreadStatsData | undefined
 } {
     const dummyThreadStatCache = useRef<Record<string, ThreadStatsData>>({})
     const callback = useCallback(
         (state: TimelineStoreStates) =>
             eventId
                 ? {
-                      parent:
+                      threadData:
                           state.threadsStats[roomId]?.[eventId] ??
                           toDummyThreadStats(
                               dummyThreadStatCache,
@@ -25,7 +25,7 @@ export function useTimelineThread(
                           ),
                       messages: state.threads[roomId]?.[eventId] ?? EMPTY_TIMELINE,
                   }
-                : { parent: undefined, messages: EMPTY_TIMELINE },
+                : { threadData: undefined, messages: EMPTY_TIMELINE },
         [eventId, roomId],
     )
     return useRawTimelineStore(callback)

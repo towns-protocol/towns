@@ -7,14 +7,14 @@ import {
     useSpaceId,
     useSpaceThreadRoots,
 } from 'use-towns-client'
-import { MessageThread } from '@components/MessageThread/MessageThread'
+import { ButtonSpinner } from '@components/Login/LoginButton/Spinner/ButtonSpinner'
+import { MessageThreadCard } from '@components/MessageThread/MessageThreadCard'
+import { NoJoinedChannelsFallback } from '@components/NoJoinedChannelsFallback'
+import { TouchScrollToTopScrollId } from '@components/TouchTabBar/TouchScrollToTopScrollId'
 import { Box, Divider, Heading, Icon, Paragraph, Stack } from '@ui'
-import { usePersistOrder } from 'hooks/usePersistOrder'
 import { useDevice } from 'hooks/useDevice'
 import { useHasJoinedChannels } from 'hooks/useHasJoinedChannels'
-import { NoJoinedChannelsFallback } from '@components/NoJoinedChannelsFallback'
-import { ButtonSpinner } from '@components/Login/LoginButton/Spinner/ButtonSpinner'
-import { TouchScrollToTopScrollId } from '@components/TouchTabBar/TouchScrollToTopScrollId'
+import { usePersistOrder } from 'hooks/usePersistOrder'
 import { useSpaceChannels } from 'hooks/useSpaceChannels'
 
 function sortThreads(threads: ThreadResult[]) {
@@ -63,7 +63,7 @@ export const SpaceThreads = () => {
                                     channelId={channel.id}
                                 >
                                     <>
-                                        <MessageThread
+                                        <MessageThreadCard
                                             userId={userId}
                                             parentId={thread.parentId}
                                             channelId={channel.id}

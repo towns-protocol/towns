@@ -62,7 +62,7 @@ export const GiphyPickerCard = (props: GiphyPickerCardProps) => {
 
     const isInReplyThread = !!props.threadId
     const channelId = useChannelId()
-    const { parent } = useTimelineThread(channelId, threadId)
+    const { threadData } = useTimelineThread(channelId, threadId)
     const gutterWidth = baseline * 0.75
 
     const spaceDetailsAnalytics = useGatherSpaceDetailsAnalytics({
@@ -99,7 +99,7 @@ export const GiphyPickerCard = (props: GiphyPickerCardProps) => {
         const ogImage = gifData.images.original
         const messageContent: SendMessageOptions = {
             threadId: isInReplyThread ? threadId : undefined,
-            threadParticipants: parent?.userIds,
+            threadParticipants: threadData?.userIds,
             threadPreview: threadPreview,
             messageType: MessageType.Image,
             info: {

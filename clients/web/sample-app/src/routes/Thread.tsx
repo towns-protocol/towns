@@ -38,8 +38,8 @@ function ThreadContent(props: { threadParentId: string }): JSX.Element {
     const { sendMessage } = useTownsClient()
     const channelId = useChannelId()
     const membership = useMyMembership(channelId)
-    const { messages, parent } = useChannelThread(threadParentId)
-    const parentMessage = parent?.parentEvent
+    const { messages, threadData } = useChannelThread(threadParentId)
+    const parentMessage = threadData?.parentEvent
     const timeline = useMemo(() => {
         return parentMessage ? [parentMessage, ...messages] : messages
     }, [messages, parentMessage])

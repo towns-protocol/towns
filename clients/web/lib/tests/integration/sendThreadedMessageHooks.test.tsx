@@ -278,8 +278,8 @@ describe('sendThreadedMessageHooks', () => {
                     </div>
                     <div data-testid="threadRoots">{threadRootsContent}</div>
                     <div data-testid="channel2ThreadParent">
-                        {channel_2_thread?.parent
-                            ? formatThreadParent(channel_2_thread.parent)
+                        {channel_2_thread?.threadData
+                            ? formatThreadParent(channel_2_thread.threadData)
                             : undefined}
                     </div>
                     <div data-testid="channel2ThreadMessages">
