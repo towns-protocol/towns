@@ -4,6 +4,9 @@ import {
     Snapshot,
     WrappedEncryptedData,
     MemberPayload_Nft,
+    MemberPayload_MemberBlockchainTransaction,
+    BlockchainTransaction_TokenTransfer,
+    WrappedEncryptedDataSchema,
 } from '@river-build/proto'
 import TypedEmitter from 'typed-emitter'
 import { StreamEncryptionEvents, StreamStateEvents } from './streamEvents'
@@ -26,6 +29,7 @@ import { KeySolicitationContent } from '@river-build/encryption'
 import { makeParsedEvent } from './sign'
 import { StreamStateView_AbstractContent } from './streamStateView_AbstractContent'
 import { utils } from 'ethers'
+import { create } from '@bufbuild/protobuf'
 import { getSpaceReviewEventDataBin, SpaceReviewEventObject } from '@river-build/web3'
 
 const log = dlog('csb:streamStateView_Members')
@@ -60,6 +64,16 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
         review: SpaceReviewEventObject
         createdAtEpochMs: bigint
         eventHashStr: string
+    }[] = []
+
+    tokenTransfers: {
+        address: Uint8Array
+        amount: bigint
+        isBuy: boolean
+        chainId: string
+        userId: string
+        createdAtEpochMs: bigint
+        messageId: string
     }[] = []
 
     constructor(streamId: string) {
@@ -192,7 +206,13 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
                         if (!receipt) {
                             return
                         }
-                        const review = getSpaceReviewEventDataBin(receipt.logs, receipt.from)
+                        if (!transactionContent.value.event) {
+                            return
+                        }
+                        const review = getSpaceReviewEventDataBin(
+                            receipt.logs,
+                            transactionContent.value.event.user,
+                        )
                         const existingReview = this.spaceReviews.find(
                             (r) => r.review.user === review.user,
                         )
@@ -207,10 +227,19 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
                         }
                         break
                     }
+                    case 'tokenTransfer': {
+                        this.addTokenTransfer(
+                            payload.content.value,
+                            transactionContent.value,
+                            event.createdAtEpochMs,
+                            stateEmitter,
+                            true,
+                        )
+                        break
+                    }
                     default:
                         break
                 }
-
                 break
             }
             default:
@@ -296,7 +325,7 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
                 {
                     const stateMember = this.joined.get(event.creatorUserId)
                     check(isDefined(stateMember), 'displayName from non-member')
-                    stateMember.encryptedDisplayName = new WrappedEncryptedData({
+                    stateMember.encryptedDisplayName = create(WrappedEncryptedDataSchema, {
                         data: payload.content.value,
                     })
                     this.memberMetadata.appendDisplayName(
@@ -313,7 +342,7 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
                 {
                     const stateMember = this.joined.get(event.creatorUserId)
                     check(isDefined(stateMember), 'username from non-member')
-                    stateMember.encryptedUsername = new WrappedEncryptedData({
+                    stateMember.encryptedUsername = create(WrappedEncryptedDataSchema, {
                         data: payload.content.value,
                     })
                     this.memberMetadata.appendUsername(
@@ -370,7 +399,6 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
                 }
                 break
             case 'memberBlockchainTransaction': {
-                const receipt = payload.content.value.transaction?.receipt
                 const transactionContent = payload.content.value.transaction?.content
                 switch (transactionContent?.case) {
                     case undefined:
@@ -391,12 +419,25 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
                         break
                     }
                     case 'tokenTransfer':
+                        this.addTokenTransfer(
+                            payload.content.value,
+                            transactionContent.value,
+                            event.createdAtEpochMs,
+                            stateEmitter,
+                        )
                         break
                     case 'spaceReview': {
+                        const receipt = payload.content.value.transaction?.receipt
                         if (!receipt) {
                             return
                         }
-                        const review = getSpaceReviewEventDataBin(receipt.logs, receipt.from)
+                        if (!transactionContent.value.event) {
+                            return
+                        }
+                        const review = getSpaceReviewEventDataBin(
+                            receipt.logs,
+                            transactionContent.value.event.user,
+                        )
                         const existingReviewIndex = this.spaceReviews.findIndex(
                             (r) => r.review.user === review.user,
                         )
@@ -524,6 +565,33 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
 
     joinedOrInvitedParticipants(): Set<string> {
         return this.membership.joinedOrInvitedParticipants()
+    }
+
+    private addTokenTransfer(
+        payload: MemberPayload_MemberBlockchainTransaction,
+        transferContent: BlockchainTransaction_TokenTransfer,
+        createdAtEpochMs: bigint,
+        stateEmitter: TypedEmitter<StreamStateEvents> | undefined,
+        prepend: boolean = false,
+    ) {
+        const receipt = payload.transaction?.receipt
+        const solanaReceipt = payload.transaction?.solanaReceipt
+
+        const transferData = {
+            address: transferContent.address,
+            userId: userIdFromAddress(payload.fromUserAddress),
+            chainId: receipt
+                ? receipt.chainId.toString()
+                : solanaReceipt
+                ? 'solana-mainnet'
+                : 'unknown chain',
+            createdAtEpochMs: createdAtEpochMs,
+            isBuy: transferContent.isBuy,
+            messageId: bin_toHexString(transferContent.messageId),
+            amount: BigInt(transferContent.amount),
+        }
+        prepend ? this.tokenTransfers.unshift(transferData) : this.tokenTransfers.push(transferData)
+        stateEmitter?.emit('streamTokenTransfer', this.streamId, transferData)
     }
 
     private addPin(

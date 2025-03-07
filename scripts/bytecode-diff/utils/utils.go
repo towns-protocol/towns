@@ -100,7 +100,7 @@ func GetFacetFiles(facetSourcePath string, verbose bool) ([]FacetFile, error) {
 			return err
 		}
 
-		if strings.Contains(path, "facets") {
+		if strings.Contains(path, "facets") || strings.Contains(path, "airdrop") {
 			if !info.IsDir() && strings.HasSuffix(info.Name(), ".sol") && !strings.HasPrefix(info.Name(), "I") {
 				if verbose {
 					Log.Info().Msgf("Found facet file: %s", info.Name())
@@ -482,17 +482,20 @@ func getLatestYamlFileFromS3(client *s3.Client, s3Path string, currentCommitHash
 
 	// Find the latest YAML file by date and last modified time
 	var latestFiles []*types.Object
-	var latestDate int
+	var latestDate time.Time
 
 	for _, obj := range resp.Contents {
 		if strings.HasSuffix(*obj.Key, ".yaml") {
 			commitHash := strings.Split(filepath.Base(*obj.Key), "_")[0]
 			if commitHash != currentCommitHash {
-				date, _ := getDateFromFileName(*obj.Key)
-				if date > latestDate {
+				date, err := getDateFromFileNameAsTime(*obj.Key)
+				if err != nil {
+					continue // Skip files with invalid date format
+				}
+				if latestDate.IsZero() || date.After(latestDate) {
 					latestDate = date
 					latestFiles = []*types.Object{&obj}
-				} else if date == latestDate {
+				} else if date.Equal(latestDate) {
 					latestFiles = append(latestFiles, &obj)
 				}
 			}
@@ -543,6 +546,19 @@ func getDateFromFileName(fileName string) (int, error) {
 		return 0, fmt.Errorf("invalid filename format")
 	}
 	return strconv.Atoi(parts[1])
+}
+
+// Helper function to extract date from filename in the form filename_MMDDYYYY.yaml
+func getDateFromFileNameAsTime(fileName string) (time.Time, error) {
+	parts := strings.Split(strings.TrimSuffix(filepath.Base(fileName), ".yaml"), "_")
+	if len(parts) < 2 {
+		return time.Time{}, fmt.Errorf("invalid filename format")
+	}
+	dateStr := parts[1]
+	if len(dateStr) != 8 {
+		return time.Time{}, fmt.Errorf("invalid date format")
+	}
+	return time.ParseInLocation("01022006", dateStr, time.UTC)
 }
 
 func categorizeHashes(

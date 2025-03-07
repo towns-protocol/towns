@@ -79,14 +79,8 @@ contract TownsPoints is IERC20Metadata, ITownsPoints, OwnableBase, Facet {
     bytes calldata data
   ) external pure returns (uint256 points) {
     if (action == Action.JoinSpace) {
-      uint256 protocolFee = abi.decode(data, (uint256));
-      if (protocolFee <= 0.0003 ether) {
-        points = protocolFee * 1_000_000;
-      } else if (protocolFee <= 0.001 ether) {
-        points = protocolFee * 2_000_000;
-      } else {
-        points = protocolFee * 3_000_000;
-      }
+      uint256 membershipPrice = abi.decode(data, (uint256));
+      points = membershipPrice * 200_000;
     }
 
     if (action == Action.CheckIn) {

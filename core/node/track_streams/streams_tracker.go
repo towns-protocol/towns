@@ -10,6 +10,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 
 	"github.com/towns-protocol/towns/core/contracts/river"
+	"github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/crypto"
 	"github.com/towns-protocol/towns/core/node/events"
 	"github.com/towns-protocol/towns/core/node/infra"
@@ -36,8 +37,16 @@ type StreamFilter interface {
 }
 
 type StreamsTracker interface {
+	// Once the tracker is running, it will analyze all existing streams to see if they meet the criteria for
+	// tracking. In addition, it will continuously consider new streams upon stream allocation.
 	Run(ctx context.Context) error
+
+	// A stream that does not meet criteria for tracking at the time it is created can later be added via
+	// AddStream. An error will be returned if the stream could not be successfully added to the sync runner.
+	AddStream(ctx context.Context, streamId shared.StreamId) error
 }
+
+var _ StreamsTracker = (*StreamsTrackerImpl)(nil)
 
 // The StreamsTrackerImpl implements watching the river registry, detecting new streams, and syncing them.
 // It defers to the filter to determine whether a stream should be tracked and to create new tracked stream
@@ -77,6 +86,7 @@ func (tracker *StreamsTrackerImpl) Init(
 		ctx,
 		tracker.riverRegistry.Blockchain.InitialBlockNum,
 		tracker.OnStreamAllocated,
+		tracker.OnStreamAdded,
 		tracker.OnStreamLastMiniblockUpdated,
 		tracker.OnStreamPlacementUpdated,
 	); err != nil {
@@ -172,24 +182,17 @@ func (tracker *StreamsTrackerImpl) Run(ctx context.Context) error {
 	return nil
 }
 
-// OnStreamAllocated is called each time a stream is allocated in the river registry.
-// If the stream must be tracked for the service, then add it to the worker that is
-// responsible for it.
-func (tracker *StreamsTrackerImpl) OnStreamAllocated(
+func (tracker *StreamsTrackerImpl) forwardStreamEventsFromInception(
 	ctx context.Context,
-	event *river.StreamRegistryV1StreamAllocated,
+	streamId shared.StreamId,
+	nodes []common.Address,
 ) {
-	streamID := shared.StreamId(event.StreamId)
-	if !tracker.filter.TrackStream(streamID) {
-		return
-	}
-
-	_, loaded := tracker.tracked.LoadOrStore(streamID, struct{}{})
+	_, loaded := tracker.tracked.LoadOrStore(streamId, struct{}{})
 	if !loaded {
 		go func() {
 			stream := &registries.GetStreamResult{
-				StreamId: streamID,
-				Nodes:    event.Nodes,
+				StreamId: streamId,
+				Nodes:    nodes,
 			}
 
 			idx := rand.Int63n(int64(len(tracker.nodeRegistries)))
@@ -204,6 +207,47 @@ func (tracker *StreamsTrackerImpl) OnStreamAllocated(
 			)
 		}()
 	}
+}
+
+func (tracker *StreamsTrackerImpl) AddStream(ctx context.Context, streamId shared.StreamId) error {
+	stream, err := tracker.riverRegistry.StreamRegistry.GetStream(nil, streamId)
+	if err != nil {
+		return base.WrapRiverError(protocol.Err_CANNOT_CALL_CONTRACT, err).
+			Message("Could not fetch stream from contract")
+	}
+
+	tracker.forwardStreamEventsFromInception(ctx, streamId, stream.Nodes)
+	return nil
+}
+
+// OnStreamAllocated is called each time a stream is allocated in the river registry.
+// If the stream must be tracked for the service, then add it to the worker that is
+// responsible for it.
+func (tracker *StreamsTrackerImpl) OnStreamAllocated(
+	ctx context.Context,
+	event *river.StreamRegistryV1StreamAllocated,
+) {
+	streamID := shared.StreamId(event.StreamId)
+	if !tracker.filter.TrackStream(streamID) {
+		return
+	}
+
+	tracker.forwardStreamEventsFromInception(ctx, streamID, event.Nodes)
+}
+
+// OnStreamAdded is called each time a stream is added in the river registry.
+// If the stream must be tracked for the service, then add it to the worker that is
+// responsible for it.
+func (tracker *StreamsTrackerImpl) OnStreamAdded(
+	ctx context.Context,
+	event *river.StreamRegistryV1StreamCreated,
+) {
+	streamID := shared.StreamId(event.StreamId)
+	if !tracker.filter.TrackStream(streamID) {
+		return
+	}
+
+	tracker.forwardStreamEventsFromInception(ctx, streamID, event.Stream.Nodes)
 }
 
 func (tracker *StreamsTrackerImpl) OnStreamLastMiniblockUpdated(

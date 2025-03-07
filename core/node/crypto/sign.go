@@ -15,7 +15,6 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/ethereum/go-ethereum/crypto/secp256k1"
 	"golang.org/x/crypto/sha3"
 
 	. "github.com/towns-protocol/towns/core/node/base"
@@ -288,11 +287,11 @@ func (w *Wallet) SaveWallet(
 }
 
 func (w *Wallet) SignHash(hash common.Hash) ([]byte, error) {
-	return secp256k1.Sign(hash[:], w.PrivateKey)
+	return crypto.Sign(hash[:], w.PrivateKeyStruct)
 }
 
 func RecoverSignerPublicKey(hash []byte, signature []byte) ([]byte, error) {
-	pubKey, err := secp256k1.RecoverPubkey(hash, signature)
+	pubKey, err := crypto.Ecrecover(hash, signature)
 	if err == nil {
 		return pubKey, nil
 	}

@@ -7,7 +7,7 @@ import {
     makeDefaultChannelStreamId,
 } from '@river-build/sdk'
 import { Wallet, ethers } from 'ethers'
-import { makeStressClient } from '../../utils/stressClient'
+import { makeStressClient, StressClient } from '../../utils/stressClient'
 import { kickoffChat } from './kickoffChat'
 import { joinChat } from './joinChat'
 import { updateProfile } from './updateProfile'
@@ -30,16 +30,18 @@ export async function startStressChat(opts: {
     const logger = getLogger('stress:run')
     const chatConfig = getChatConfig(opts)
     logger.info({ chatConfig }, 'make clients')
-    const clients = await Promise.all(
-        chatConfig.localClients.wallets.map((wallet, i) =>
-            makeStressClient(
-                opts.config,
-                chatConfig.localClients.startIndex + i,
-                wallet,
-                chatConfig.globalPersistedStore,
-            ),
-        ),
-    )
+    const clients: StressClient[] = []
+
+    for (let i = 0; i < chatConfig.localClients.wallets.length; i++) {
+        const wallet = chatConfig.localClients.wallets[i]
+        const client = await makeStressClient(
+            opts.config,
+            chatConfig.localClients.startIndex + i,
+            wallet,
+            chatConfig.globalPersistedStore,
+        )
+        clients.push(client)
+    }
 
     check(
         clients.length === chatConfig.clientsPerProcess,

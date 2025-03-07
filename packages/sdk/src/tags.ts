@@ -1,10 +1,10 @@
-import { PlainMessage } from '@bufbuild/protobuf'
 import {
     BlockchainTransaction_TokenTransfer,
     ChannelMessage,
     GroupMentionType,
     MessageInteractionType,
     Tags,
+    PlainMessage,
 } from '@river-build/proto'
 import { IStreamStateView } from './streamStateView'
 import { addressFromUserId } from './id'
@@ -146,13 +146,6 @@ function getParticipatingUserAddresses(
                         event.decryptedContent?.kind === 'channelMessage' &&
                         event.decryptedContent.content.payload.case === 'post' &&
                         event.decryptedContent.content.payload.value.threadId === parentId &&
-                        event.remoteEvent?.event.creatorAddress
-                    ) {
-                        participating.add(event.remoteEvent.event.creatorAddress)
-                    } else if (
-                        event.decryptedContent?.kind === 'channelMessage' &&
-                        event.decryptedContent.content.payload.case === 'reaction' &&
-                        event.decryptedContent.content.payload.value.refEventId === parentId &&
                         event.remoteEvent?.event.creatorAddress
                     ) {
                         participating.add(event.remoteEvent.event.creatorAddress)

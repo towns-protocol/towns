@@ -3,6 +3,7 @@ package events
 import (
 	"context"
 	"slices"
+	"sync"
 	"sync/atomic"
 	"time"
 
@@ -66,7 +67,9 @@ type StreamCache struct {
 	streamCacheUnloadedGauge prometheus.Gauge
 	streamCacheRemoteGauge   prometheus.Gauge
 
+	stoppedMu            sync.RWMutex
 	onlineSyncWorkerPool *workerpool.WorkerPool
+	stopped              bool
 
 	disableCallbacks bool
 }
@@ -158,7 +161,10 @@ func (s *StreamCache) Start(ctx context.Context) error {
 
 	go func() {
 		<-ctx.Done()
+		s.stoppedMu.Lock()
+		s.stopped = true
 		s.onlineSyncWorkerPool.Stop()
+		s.stoppedMu.Unlock()
 		initialSyncWorkerPool.Stop()
 	}()
 

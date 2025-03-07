@@ -7,10 +7,10 @@ import { Client } from '../../client'
 import { dlog } from '@river-build/dlog'
 import { AES_GCM_DERIVED_ALGORITHM } from '@river-build/encryption'
 import { makeUniqueChannelStreamId, makeUniqueMediaStreamId } from '../../id'
-import { ChunkedMedia, MediaInfo, MembershipOp } from '@river-build/proto'
+import { ChunkedMedia, MediaInfoSchema, MembershipOp, PlainMessage } from '@river-build/proto'
 import { deriveKeyAndIV } from '../../crypto_utils'
-import { PlainMessage } from '@bufbuild/protobuf'
 import { nanoid } from 'nanoid'
+import { create } from '@bufbuild/protobuf'
 
 const log = dlog('csb:test')
 
@@ -153,7 +153,7 @@ describe('spaceTests', () => {
         try {
             // make a space image event
             const mediaStreamId = makeUniqueMediaStreamId()
-            const image = new MediaInfo({
+            const image = create(MediaInfoSchema, {
                 mimetype: 'image/png',
                 filename: 'bob-1.png',
             })
@@ -206,7 +206,7 @@ describe('spaceTests', () => {
 
             // make another space image event
             const mediaStreamId2 = makeUniqueMediaStreamId()
-            const image2 = new MediaInfo({
+            const image2 = create(MediaInfoSchema, {
                 mimetype: 'image/jpg',
                 filename: 'bob-2.jpg',
             })

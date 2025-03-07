@@ -1,6 +1,6 @@
 {
     "name": "@river-build/proto",
-    "version": "0.0.174",
+    "version": "0.0.186",
     "packageManager": "yarn@3.8.0",
     "type": "module",
     "main": "dist/index.js",
@@ -19,12 +19,11 @@
         "watch:go": "node scripts/watch_proto_files_go.cjs"
     },
     "dependencies": {
-        "@bufbuild/protobuf": "^1.9.0"
+        "@bufbuild/protobuf": "^2.2.2"
     },
     "devDependencies": {
         "@bufbuild/buf": "^1.32.0",
-        "@bufbuild/protoc-gen-es": "^1.9.0",
-        "@connectrpc/protoc-gen-connect-es": "^1.4.0",
+        "@bufbuild/protoc-gen-es": "^2.2.2",
         "@river-build/proto-source": "workspace:^",
         "@types/node": "^20.5.0",
         "lodash.debounce": "^4.0.8",

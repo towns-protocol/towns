@@ -1,11 +1,14 @@
 import {
     PersistedEvent,
+    PersistedEventSchema,
     PersistedMiniblock,
+    PersistedMiniblockSchema,
     PersistedSyncedStream,
     SyncCookie,
 } from '@river-build/proto'
 import { ParsedEvent, ParsedMiniblock } from './types'
 import { bin_toHexString } from '@river-build/dlog'
+import { create } from '@bufbuild/protobuf'
 import { isDefined, logNever } from './check'
 
 export interface ParsedPersistedSyncedStream {
@@ -103,7 +106,7 @@ export function parsedMiniblockToPersistedMiniblock(
     miniblock: ParsedMiniblock,
     direction: 'forward' | 'backward',
 ) {
-    return new PersistedMiniblock({
+    return create(PersistedMiniblockSchema, {
         hash: miniblock.hash,
         header: miniblock.header,
         events: miniblock.events
@@ -113,7 +116,7 @@ export function parsedMiniblockToPersistedMiniblock(
 }
 
 function parsedEventToPersistedEvent(event: ParsedEvent) {
-    return new PersistedEvent({
+    return create(PersistedEventSchema, {
         event: event.event,
         hash: event.hash,
         signature: event.signature,

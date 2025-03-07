@@ -15,7 +15,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	. "github.com/towns-protocol/towns/core/node/base"
@@ -498,7 +497,7 @@ func (s *PostgresStreamStore) createStreamStorageTx(
 		streamId,
 	)
 	if _, err := tx.Exec(ctx, sql, streamId, genesisMiniblock); err != nil {
-		if pgerr, ok := err.(*pgconn.PgError); ok && pgerr.Code == pgerrcode.UniqueViolation {
+		if isPgError(err, pgerrcode.UniqueViolation) {
 			return WrapRiverError(Err_ALREADY_EXISTS, err).Message("stream already exists")
 		}
 		return err
@@ -529,7 +528,7 @@ func (s *PostgresStreamStore) createStreamArchiveStorageTx(
 ) error {
 	sql := `INSERT INTO es (stream_id, latest_snapshot_miniblock, migrated) VALUES ($1, -1, true);`
 	if _, err := tx.Exec(ctx, sql, streamId); err != nil {
-		if pgerr, ok := err.(*pgconn.PgError); ok && pgerr.Code == pgerrcode.UniqueViolation {
+		if isPgError(err, pgerrcode.UniqueViolation) {
 			return WrapRiverError(Err_ALREADY_EXISTS, err).Message("stream already exists")
 		}
 		return err
@@ -1185,7 +1184,7 @@ func (s *PostgresStreamStore) writeMiniblockCandidateTx(
 		hex.EncodeToString(blockHash.Bytes()), // avoid leading '0x'
 		miniblock,
 	); err != nil {
-		if pgErr, ok := err.(*pgconn.PgError); ok && pgErr.Code == pgerrcode.UniqueViolation {
+		if isPgError(err, pgerrcode.UniqueViolation) {
 			return RiverError(Err_ALREADY_EXISTS, "Miniblock candidate already exists")
 		}
 		return err

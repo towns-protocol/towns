@@ -5,6 +5,7 @@ pragma solidity ^0.8.19;
 import {MembershipBaseSetup} from "../MembershipBaseSetup.sol";
 
 //interfaces
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IEntitlementGated} from "contracts/src/spaces/facets/gated/IEntitlementGated.sol";
 import {IEntitlementGatedBase} from "contracts/src/spaces/facets/gated/IEntitlementGated.sol";
 import {IEntitlementCheckerBase} from "contracts/src/base/registry/facets/checker/IEntitlementChecker.sol";
@@ -34,9 +35,10 @@ contract MembershipJoinSpaceTest is
     uint256 membershipFee = platformReqs.getMembershipFee();
 
     vm.deal(alice, membershipFee);
-    vm.startPrank(alice);
+    vm.prank(alice);
     MembershipFacet(dynamicSpace).joinSpace{value: membershipFee}(alice);
-    vm.stopPrank();
+
+    assertEq(IERC20(riverAirdrop).balanceOf(alice), _getPoints(membershipFee));
   }
 
   function test_joinSpaceMultipleTimes()
@@ -55,6 +57,10 @@ contract MembershipJoinSpaceTest is
 
     assertEq(membershipToken.balanceOf(alice), 1);
     assertEq(alice.balance, 0);
+    assertEq(
+      IERC20(riverAirdrop).balanceOf(alice),
+      _getPoints(MEMBERSHIP_PRICE)
+    );
   }
 
   /// @dev Test that a user can join a space with an entitled root wallet as the signer
@@ -296,6 +302,7 @@ contract MembershipJoinSpaceTest is
 
     assertEq(membershipToken.balanceOf(bob), 1);
     assertEq(bob.balance, overPayment - MEMBERSHIP_PRICE);
+    assertEq(IERC20(riverAirdrop).balanceOf(bob), _getPoints(MEMBERSHIP_PRICE));
   }
 
   function test_joinSpace_refundOnFail() external givenMembershipHasPrice {
@@ -326,6 +333,7 @@ contract MembershipJoinSpaceTest is
 
     assertEq(membershipToken.balanceOf(bob), 0);
     assertEq(bob.balance, MEMBERSHIP_PRICE);
+    assertEq(IERC20(riverAirdrop).balanceOf(bob), 0);
   }
 
   function test_revertWhen_joinSpaceWithZeroAddress() external {
@@ -473,6 +481,7 @@ contract MembershipJoinSpaceTest is
     // bob gets no membership token and a refund
     assertEq(membershipToken.balanceOf(bob), 0);
     assertEq(bob.balance, MEMBERSHIP_PRICE);
+    assertEq(IERC20(riverAirdrop).balanceOf(bob), 0);
   }
 
   function test_joinSpaceWithInitialFreeAllocation() external {
@@ -515,6 +524,7 @@ contract MembershipJoinSpaceTest is
 
     assertEq(membershipToken.balanceOf(alice), 1);
     assertEq(alice.balance, 0);
+    assertEq(IERC20(riverAirdrop).balanceOf(alice), _getPoints(fee));
     assertEq(membership.revenue(), 0);
   }
 

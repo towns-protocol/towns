@@ -3,7 +3,9 @@ import { Permission } from '@river-build/web3'
 import {
     AddEventResponse_Error,
     EncryptedData,
+    PlainMessage,
     SessionKeys,
+    SessionKeysSchema,
     UserInboxPayload_GroupEncryptionSessions,
 } from '@river-build/proto'
 import {
@@ -20,6 +22,7 @@ import {
     parseGroupEncryptionAlgorithmId,
     UserDevice,
 } from './olmLib'
+import { create, fromJsonString } from '@bufbuild/protobuf'
 import { GroupEncryptionCrypto } from './groupEncryptionCrypto'
 
 export interface EntitlementsDelegate {
@@ -222,6 +225,7 @@ export abstract class BaseDecryptionExtensions {
         userDevice: UserDevice,
         userId: string,
         upToDateStreams: Set<string>,
+        inLogId: string,
     ) {
         this.emitter = emitter
         this.crypto = crypto
@@ -232,7 +236,8 @@ export abstract class BaseDecryptionExtensions {
         // ready for processing
         this.upToDateStreams = upToDateStreams
 
-        const logId = generateLogId(userId, userDevice.deviceKey)
+        const shortKey = shortenHexString(userDevice.deviceKey)
+        const logId = `${inLogId}:${shortKey}`
         this.log = {
             debug: dlog('csb:decryption:debug', { defaultEnabled: false }).extend(logId),
             info: dlog('csb:decryption', { defaultEnabled: true }).extend(logId),
@@ -656,7 +661,7 @@ export abstract class BaseDecryptionExtensions {
         }
         // decrypt the message
         const cleartext = await this.crypto.decryptWithDeviceKey(ciphertext, session.senderKey)
-        const sessionKeys = SessionKeys.fromJsonString(cleartext)
+        const sessionKeys = fromJsonString(SessionKeysSchema, cleartext)
         check(sessionKeys.keys.length === session.sessionIds.length, 'bad sessionKeys')
         // make group sessions
         const sessions = neededKeyIndexs.map(
@@ -918,9 +923,9 @@ export abstract class BaseDecryptionExtensions {
 
 export function makeSessionKeys(sessions: GroupEncryptionSession[]): SessionKeys {
     const sessionKeys = sessions.map((s) => s.sessionKey)
-    return new SessionKeys({
+    return create(SessionKeysSchema, {
         keys: sessionKeys,
-    })
+    } satisfies PlainMessage<SessionKeys>)
 }
 
 /// Returns the first item from the array,
@@ -969,11 +974,4 @@ function isSessionNotFoundError(err: unknown): boolean {
         return (err.message as string).toLowerCase().includes('session not found')
     }
     return false
-}
-
-function generateLogId(userId: string, deviceKey: string): string {
-    const shortId = shortenHexString(userId.startsWith('0x') ? userId.slice(2) : userId)
-    const shortKey = shortenHexString(deviceKey)
-    const logId = `${shortId}:${shortKey}`
-    return logId
 }

@@ -116,33 +116,12 @@ func testReplMcConversation(t *testing.T, numClients int, numSteps int, listenIn
 	}
 }
 
-func TestReplMcConversation(t *testing.T) {
+func TestReplMcConversationShort(t *testing.T) {
 	t.Parallel()
 	t.Run("5x5", func(t *testing.T) {
 		testReplMcConversation(t, 5, 5, 1, 1)
 	})
 	t.Run("5x100", func(t *testing.T) {
 		testReplMcConversation(t, 5, 100, 10, 100)
-	})
-	t.Run("10x1000", func(t *testing.T) {
-		t.Skip("TODO: REPLICATION: FIX: flacky")
-		if testing.Short() {
-			t.Skip("skipping 10x1000 in short mode")
-		}
-		testReplMcConversation(t, 10, 1000, 20, 1000)
-	})
-	t.Run("30x1000", func(t *testing.T) {
-		t.Skip("TODO: REPLICATION: FIX: flacky")
-		if testing.Short() {
-			t.Skip("skipping 30x1000 in short mode")
-		}
-		testReplMcConversation(t, 30, 1000, 50, 1000)
-	})
-	t.Run("100x100", func(t *testing.T) {
-		t.Skip("TODO: REPLICATION: FIX: flacky")
-		if testing.Short() {
-			t.Skip("skipping 100x100 in short mode")
-		}
-		testReplMcConversation(t, 100, 100, 20, 50)
 	})
 }

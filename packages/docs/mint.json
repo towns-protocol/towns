@@ -110,7 +110,8 @@
             "towns-token/mechanics",
             "towns-token/delegation",
             "towns-token/distribution",
-            "towns-token/claiming"
+            "towns-token/claiming",
+            "towns-token/staking"
           ]
         },
         {
@@ -158,13 +159,7 @@
       "pages": [
         "build/towns-messaging-datastructures",
         "build/delegate-key-signing",
-        "build/towns-encryption",
-        {
-          "group": "Recipes",
-          "pages": [
-            "towns-recipes/adding-events"
-          ]
-        }
+        "build/towns-encryption"
       ]
     },
     {

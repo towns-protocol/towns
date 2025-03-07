@@ -1,4 +1,3 @@
-import { PlainMessage } from '@bufbuild/protobuf'
 import {
     bigIntToBytes,
     bin_equal,
@@ -14,8 +13,13 @@ import {
     Err,
     Miniblock,
     StreamAndCookie,
-    SyncCookie,
     Tags,
+    PlainMessage,
+    StreamEventSchema,
+    EnvelopeSchema,
+    StreamAndCookieSchema,
+    SyncCookieSchema,
+    EventRefSchema,
 } from '@river-build/proto'
 import { assertBytes } from 'ethereum-cryptography/utils'
 import { recoverPublicKey, signSync, verify } from 'ethereum-cryptography/secp256k1'
@@ -24,6 +28,7 @@ import { ParsedEvent, ParsedMiniblock, ParsedStreamAndCookie, ParsedStreamRespon
 import { SignerContext, checkDelegateSig } from './signerContext'
 import { keccak256 } from 'ethereum-cryptography/keccak'
 import { createHash } from 'crypto'
+import { create, fromBinary, toBinary } from '@bufbuild/protobuf'
 
 export interface UnpackEnvelopeOpts {
     // the client recreates the hash from the event bytes in the envelope
@@ -44,7 +49,7 @@ export const _impl_makeEvent_impl_ = async (
     prevMiniblockHash?: Uint8Array,
     tags?: PlainMessage<Tags>,
 ): Promise<Envelope> => {
-    const streamEvent = new StreamEvent({
+    const streamEvent = create(StreamEventSchema, {
         creatorAddress: context.creatorAddress,
         salt: genIdBlob(),
         prevMiniblockHash,
@@ -57,11 +62,11 @@ export const _impl_makeEvent_impl_ = async (
         streamEvent.delegateExpiryEpochMs = context.delegateExpiryEpochMs ?? 0n
     }
 
-    const event = streamEvent.toBinary()
+    const event = toBinary(StreamEventSchema, streamEvent)
     const hash = riverHash(event)
     const signature = await riverSign(hash, context.signerPrivateKey())
 
-    return new Envelope({ hash, signature, event })
+    return create(EnvelopeSchema, { hash, signature, event })
 }
 
 export const makeEvent = async (
@@ -140,14 +145,14 @@ export const unpackStreamEx = async (
     miniblocks: Miniblock[],
     opts: UnpackEnvelopeOpts | undefined,
 ): Promise<ParsedStreamResponse> => {
-    const streamAndCookie: StreamAndCookie = new StreamAndCookie()
+    const streamAndCookie: StreamAndCookie = create(StreamAndCookieSchema, {})
     streamAndCookie.events = []
     streamAndCookie.miniblocks = miniblocks
     // We don't need to set a valid nextSyncCookie here, as we are currently using getStreamEx only
     // for fetching media streams, and the result does not return a nextSyncCookie. However, it does
     // need to be non-null to avoid runtime errors when unpacking the stream into a StreamStateView,
     // which parses content by type.
-    streamAndCookie.nextSyncCookie = new SyncCookie()
+    streamAndCookie.nextSyncCookie = create(SyncCookieSchema)
     return unpackStream(streamAndCookie, opts)
 }
 
@@ -193,7 +198,7 @@ export const unpackEnvelope = async (
     check(hasElements(envelope.hash), 'Event hash is not set', Err.BAD_EVENT)
     check(hasElements(envelope.signature), 'Event signature is not set', Err.BAD_EVENT)
 
-    const event = StreamEvent.fromBinary(envelope.event)
+    const event = fromBinary(StreamEventSchema, envelope.event)
     let hash = envelope.hash
 
     const doCheckEventHash = opts?.disableHashValidation !== true
@@ -243,7 +248,7 @@ export function makeParsedEvent(
     hash: Uint8Array | undefined,
     signature: Uint8Array | undefined,
 ) {
-    hash = hash ?? riverHash(event.toBinary())
+    hash = hash ?? riverHash(toBinary(StreamEventSchema, event))
     return {
         event,
         hash,
@@ -288,7 +293,7 @@ export const unpackStreamEnvelopes = async (
 }
 
 export const makeEventRef = (streamId: string | Uint8Array, event: Envelope): EventRef => {
-    return new EventRef({
+    return create(EventRefSchema, {
         streamId: streamIdAsBytes(streamId),
         hash: event.hash,
         signature: event.signature,
