@@ -107,6 +107,7 @@ func (b *AppRegistryTrackedStreamView) onNewEvent(ctx context.Context, view *Str
 
 	if appMembers.Cardinality() > 0 {
 		log.Debugw("OnMessageEvent message", "streamId", streamId, "appMembers", appMembers, "event", event)
+		log.Sync()
 		b.listener.OnMessageEvent(ctx, *streamId, view.StreamParentId(), appMembers, event)
 	}
 
