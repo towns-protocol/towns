@@ -32,14 +32,26 @@ func (p *MessageToAppProcessor) OnMessageEvent(
 	members mapset.Set[string],
 	event *events.ParsedEvent,
 ) {
-	logging.FromCtx(ctx).
-		Debug("OnMessageEvent", "channelId", channelId, "spaceId", spaceId, "members", members, "event", event)
+	log := logging.FromCtx(ctx)
+	log.Debug("OnMessageEvent", "channelId", channelId, "spaceId", spaceId, "members", members, "event", event)
 	appIds := make([]common.Address, 0, members.Cardinality())
 	// TODO: Apply logic to filter out which events to send to which apps based on app preferences.
 
 	members.Each(func(memberId string) bool {
 		appId := common.HexToAddress(memberId)
+		log.Debugw(
+			"Evaluating member is app...",
+			"member",
+			memberId,
+			"appId",
+			appId,
+			"channelId",
+			channelId,
+			"spaceId",
+			spaceId,
+		)
 		if p.cache.HasRegisteredWebhook(ctx, appId) {
+			log.Debugw("IsApp!", "appId", appId, "channelId", channelId, "spaceId", spaceId)
 			appIds = append(appIds, appId)
 		}
 
@@ -47,8 +59,7 @@ func (p *MessageToAppProcessor) OnMessageEvent(
 	})
 	streamBytes, err := proto.Marshal(event.Event)
 	if err != nil {
-		logging.FromCtx(ctx).
-			Errorw("Error marshalling stream event", "event", event, "streamId", channelId, "spaceId", spaceId)
+		log.Errorw("Error marshalling stream event", "event", event, "streamId", channelId, "spaceId", spaceId)
 		return
 	}
 
@@ -57,9 +68,19 @@ func (p *MessageToAppProcessor) OnMessageEvent(
 	message := event.GetEncryptedMessage()
 	// Ignore membership changes, etc, and focus only on channel content.
 	if message != nil {
+		log.Debugw("ChannelMessage detected", "appIds", appIds, "sessionId", message.SessionId, "channelId", channelId)
 		if err := p.cache.EnqueueMessages(ctx, appIds, message.SessionId, channelId, streamBytes); err != nil {
-			logging.FromCtx(ctx).
-				Errorw("Error enqueueing messages for stream event", "event", event, "streamId", channelId, "spaceId", spaceId, "error", err)
+			log.Errorw(
+				"Error enqueueing messages for stream event",
+				"event",
+				event,
+				"streamId",
+				channelId,
+				"spaceId",
+				spaceId,
+				"error",
+				err,
+			)
 		}
 	}
 }

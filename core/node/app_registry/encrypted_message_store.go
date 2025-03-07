@@ -7,6 +7,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/towns-protocol/towns/core/node/base"
+	"github.com/towns-protocol/towns/core/node/logging"
 	"github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/shared"
 	"github.com/towns-protocol/towns/core/node/storage"
@@ -118,8 +119,25 @@ func (q *CachedEncryptedMessageQueue) EnqueueMessages(
 	if err != nil {
 		return err
 	}
+	log := logging.FromCtx(ctx)
+	log.Debugw(
+		"EnqueueMessages",
+		"sendableApps",
+		sendableApps,
+		"unsendableApps",
+		unsendableApps,
+		"sessionId",
+		sessionId,
+		"channelId",
+		channelId,
+	)
 
 	if len(sendableApps)+len(unsendableApps) != len(appIds) {
+		log.Errorw(
+			"Unexpected return value from enqueue: sendable + unsendable does not equal original # of apps",
+			"appIds",
+			appIds,
+		)
 		return base.AsRiverError(
 			fmt.Errorf(
 				"unexpected error: number of enqueued messages plus sendable devices does not equal the total number of devices",
@@ -130,6 +148,13 @@ func (q *CachedEncryptedMessageQueue) EnqueueMessages(
 
 	// Submit a single message for each sendable device
 	for _, sendableApp := range sendableApps {
+		log.Debugw(
+			"Send message",
+			"sendableApp",
+			sendableApp,
+			"channelId",
+			channelId,
+		)
 		if err := q.appDispatcher.SubmitMessages(ctx, &SessionMessages{
 			AppId:                 sendableApp.AppId,
 			DeviceKey:             sendableApp.DeviceKey,
@@ -141,6 +166,17 @@ func (q *CachedEncryptedMessageQueue) EnqueueMessages(
 			return err
 		}
 	}
+	log.Debugw(
+		"RequestKeySoliciations",
+		"channelId",
+		channelId,
+		"unsendable",
+		unsendableApps,
+		"sessionId",
+		sessionId,
+		"channelId",
+		channelId,
+	)
 	return q.appDispatcher.RequestKeySolicitations(
 		ctx,
 		sessionId,

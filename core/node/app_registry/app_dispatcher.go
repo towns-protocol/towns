@@ -40,6 +40,7 @@ func NewAppDispatcher(
 		appClient:                  appClient,
 		workerPool:                 *workerpool.New(workerPoolSize),
 		solicitationRateLimitCache: cache.New(5*time.Second, 1*time.Minute),
+		dataEncryptionKey:          dataEncryptionKey,
 	}
 
 	// Cleanup
@@ -89,6 +90,12 @@ func (d *AppDispatcher) RequestKeySolicitations(
 							channelId,
 							"webhookUrl",
 							device.WebhookUrl,
+							"sharedSecret",
+							sharedSecret,
+							"encryptedSecret",
+							device.EncryptedSharedSecret,
+							"dataEncryptionKey",
+							d.dataEncryptionKey,
 							"error",
 							err,
 						)

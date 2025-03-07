@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"connectrpc.com/connect"
+	"go.uber.org/zap/zapcore"
 
 	"github.com/ethereum/go-ethereum/common"
 
@@ -177,11 +178,14 @@ func (s *Service) Register(
 
 	// Generate a secret, encrypt it, and store the app record in pg.
 	appSecret, err := genHS256SharedSecret()
+	logging.DefaultZapLogger(zapcore.DebugLevel).Debugw("Generated shared secret for app", "appSecret", appSecret)
 	if err != nil {
 		return nil, base.AsRiverError(err, Err_INTERNAL).Message("error generating shared secret for app")
 	}
 
 	encrypted, err := encryptSharedSecret(appSecret, s.sharedSecretDataEncryptionKey)
+	logging.DefaultZapLogger(zapcore.DebugLevel).
+		Debugw("Encrypted secret for app", "encrypted", encrypted, "DEK", s.sharedSecretDataEncryptionKey)
 	if err != nil {
 		return nil, base.AsRiverError(err, Err_INTERNAL).Message("error encrypting shared secret for app")
 	}
