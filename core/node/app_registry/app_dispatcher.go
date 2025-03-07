@@ -80,7 +80,7 @@ func (d *AppDispatcher) RequestKeySolicitations(
 				func() {
 					// TODO: retries?
 					if err := d.appClient.RequestSolicitation(ctx, device.AppId, sharedSecret, device.WebhookUrl, channelId, sessionId); err != nil {
-						logging.FromCtx(ctx).Errorw(
+						logging.FromCtx(ctx).With("func", "AppDispatcher.RequestKeySolicitations").Errorw(
 							"Could not complete request for app to send a key solicitation",
 							"appId",
 							device.AppId,
