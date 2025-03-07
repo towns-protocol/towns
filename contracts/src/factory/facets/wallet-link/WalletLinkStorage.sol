@@ -5,7 +5,7 @@ pragma solidity ^0.8.23;
 
 // libraries
 import {WalletLib} from "./libraries/WalletLib.sol";
-import {StringSet} from "contracts/src/utils/StringSet.sol";
+
 // contracts
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
@@ -21,7 +21,9 @@ library WalletLinkStorage {
     mapping(address => address) rootKeyByWallet;
     // mapping of wallet link external dependencies
     mapping(bytes32 => address) dependencies;
+    // mapping of root key to root wallet
     mapping(address => WalletLib.RootWallet) rootWalletByRootKey;
+    // mapping of root key hash to root key
     mapping(bytes32 => address) rootKeyByHash;
   }
 

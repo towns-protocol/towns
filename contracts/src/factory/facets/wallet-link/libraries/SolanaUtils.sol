@@ -2,6 +2,7 @@
 pragma solidity ^0.8.23;
 
 // libraries
+import {LibBit} from "solady/utils/LibBit.sol";
 import {LibString} from "solady/utils/LibString.sol";
 
 /**
@@ -11,6 +12,20 @@ library SolanaUtils {
   // Constants for Base58 encoding
   bytes constant ALPHABET =
     "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
+
+  // Precomputed bitmask for Base58 allowed characters
+  // prettier-ignore
+  uint256 constant internal BASE58_MAP =
+      // Digits: '1'-'9' (ASCII 49-57)
+      (1 << 49) | (1 << 50) | (1 << 51) | (1 << 52) | (1 << 53) | (1 << 54) | (1 << 55) | (1 << 56) | (1 << 57)
+      // Uppercase letters: 'A'-'H', 'J'-'N', 'P'-'Z' (ASCII 65-72, 74-78, 80-90)
+      | (1 << 65) | (1 << 66) | (1 << 67) | (1 << 68) | (1 << 69) | (1 << 70) | (1 << 71) | (1 << 72)
+      | (1 << 74) | (1 << 75) | (1 << 76) | (1 << 77) | (1 << 78)
+      | (1 << 80) | (1 << 81) | (1 << 82) | (1 << 83) | (1 << 84) | (1 << 85) | (1 << 86) | (1 << 87) | (1 << 88) | (1 << 89) | (1 << 90)
+      // Lowercase letters: 'a'-'k', 'm'-'z' (ASCII 97-107, 109-122)
+      | (1 << 97) | (1 << 98) | (1 << 99) | (1 << 100) | (1 << 101) | (1 << 102) | (1 << 103) | (1 << 104)
+      | (1 << 105) | (1 << 106) | (1 << 107)
+      | (1 << 109) | (1 << 110) | (1 << 111) | (1 << 112) | (1 << 113) | (1 << 114) | (1 << 115) | (1 << 116) | (1 << 117) | (1 << 118) | (1 << 119) | (1 << 120) | (1 << 121) | (1 << 122);
 
   /**
    * @dev Get the compressed public key from an extended public key array
@@ -30,41 +45,92 @@ library SolanaUtils {
    */
   function toBase58String(bytes32 data) internal pure returns (string memory) {
     // Remove leading zeros
-    uint8 zeros = 0;
     uint256 value = uint256(data);
-
-    // Count leading zeros by checking byte by byte
-    for (uint i = 0; i < 32; i++) {
-      if ((value >> (8 * (31 - i))) & 0xFF != 0) break;
-      zeros++;
-    }
+    uint256 zeros = LibBit.clz(value) >> 3;
 
     // Calculate the maximum possible length of the result
     uint8 resultSize = 44; // Max size of a base58 encoded 32 byte value
 
+    // Load ALPHABET into memory for assembly access
+    bytes memory alphabet = ALPHABET;
+
     // Prepare the resulting bytes
     bytes memory result = new bytes(resultSize);
-    uint resultLen = resultSize;
+    uint256 resultLen = resultSize;
 
-    // Perform base58 encoding
-    while (value > 0) {
-      uint remainder = value % 58;
-      value = value / 58;
-      result[--resultLen] = ALPHABET[remainder];
+    // Perform base58 encoding with unrolled divisions
+    assembly ("memory-safe") {
+      let ptr := add(result, 0x20)
+      let alphabetPtr := add(alphabet, 0x20)
+
+      // Unrolled division loop for large values
+      for {
+        let i := 0
+      } lt(i, 8) {
+        i := add(i, 1)
+      } {
+        // Divide by 58^4 (11316496) in one step
+        let quotient := div(value, 11316496)
+        let remainder := sub(value, mul(quotient, 11316496))
+
+        // Process the remainder (0 to 11316495)
+        let r1 := mod(remainder, 58)
+        remainder := div(remainder, 58)
+        let r2 := mod(remainder, 58)
+        remainder := div(remainder, 58)
+        let r3 := mod(remainder, 58)
+        remainder := div(remainder, 58)
+        let r4 := div(remainder, 58)
+
+        // Store results if non-zero or if we've already stored a digit
+        if or(gt(r4, 0), lt(resultLen, resultSize)) {
+          resultLen := sub(resultLen, 1)
+          // Get character from ALPHABET
+          mstore8(add(ptr, resultLen), mload(add(alphabetPtr, r4)))
+        }
+        if or(gt(r3, 0), lt(resultLen, resultSize)) {
+          resultLen := sub(resultLen, 1)
+          mstore8(add(ptr, resultLen), mload(add(alphabetPtr, r3)))
+        }
+        if or(gt(r2, 0), lt(resultLen, resultSize)) {
+          resultLen := sub(resultLen, 1)
+          mstore8(add(ptr, resultLen), mload(add(alphabetPtr, r2)))
+        }
+        if or(gt(r1, 0), lt(resultLen, resultSize)) {
+          resultLen := sub(resultLen, 1)
+          mstore8(add(ptr, resultLen), mload(add(alphabetPtr, r1)))
+        }
+
+        value := quotient
+        if iszero(value) {
+          break
+        }
+      }
+
+      // Handle any remaining value with standard algorithm
+      for {} gt(value, 0) {} {
+        let remainder := mod(value, 58)
+        resultLen := sub(resultLen, 1)
+        mstore8(add(ptr, resultLen), mload(add(alphabetPtr, remainder)))
+        value := div(value, 58)
+      }
+
+      // Add leading '1's for zeros
+      let alphabet0 := mload(alphabetPtr) // First character of ALPHABET
+      for {
+        let i := zeros
+      } gt(i, 0) {
+        i := sub(i, 1)
+      } {
+        resultLen := sub(resultLen, 1)
+        mstore8(add(ptr, resultLen), alphabet0)
+      }
+
+      // Set the correct length for result
+      mstore(result, sub(resultSize, resultLen))
     }
 
-    // Add leading '1's for each leading zero byte
-    for (uint i = 0; i < zeros; i++) {
-      result[--resultLen] = ALPHABET[0];
-    }
-
-    // Create the final string with the correct length
-    bytes memory finalResult = new bytes(resultSize - resultLen);
-    for (uint i = 0; i < resultSize - resultLen; i++) {
-      finalResult[i] = result[resultLen + i];
-    }
-
-    return string(finalResult);
+    return string(result);
   }
 
   /**
@@ -122,23 +188,28 @@ library SolanaUtils {
     string memory solanaAddress
   ) internal pure returns (bool) {
     bytes memory addressBytes = bytes(solanaAddress);
+    uint256 len = addressBytes.length;
 
     // Solana addresses are between 32-44 characters
-    if (addressBytes.length < 32 || addressBytes.length > 44) {
+    if (len < 32 || len > 44) {
       return false;
     }
 
-    // Check if all characters are in the Base58 alphabet
-    for (uint i = 0; i < addressBytes.length; i++) {
-      bool validChar = false;
-      for (uint j = 0; j < ALPHABET.length; j++) {
-        if (addressBytes[i] == ALPHABET[j]) {
-          validChar = true;
-          break;
+    // Use a single assembly block for the entire validation
+    assembly ("memory-safe") {
+      // Load BASE58_MAP once
+      let map := BASE58_MAP
+
+      for {
+        let i := 0
+      } lt(i, len) {
+        i := add(i, 1)
+      } {
+        let char := byte(0, mload(add(add(addressBytes, 0x20), i)))
+        // More efficient bit check
+        if iszero(and(shr(char, map), 1)) {
+          return(0, 0)
         }
-      }
-      if (!validChar) {
-        return false;
       }
     }
 

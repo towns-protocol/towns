@@ -80,27 +80,21 @@ contract WalletLink is IWalletLink, WalletLinkBase, OwnableBase, Facet {
     return _getDefaultWallet(rootWallet);
   }
 
-  /*
-   * @inheritdoc IWalletLink
-   */
+  /// @inheritdoc IWalletLink
   function getWalletsByRootKey(
     address rootKey
   ) external view returns (address[] memory wallets) {
     return _getWalletsByRootKey(rootKey);
   }
 
-  /**
-   * @inheritdoc IWalletLink
-   */
+  /// @inheritdoc IWalletLink
   function getWalletsByRootKeyWithDelegations(
     address rootKey
   ) external view returns (address[] memory wallets) {
     return _getWalletsByRootKeyWithDelegations(rootKey);
   }
 
-  /**
-   * @inheritdoc IWalletLink
-   */
+  /// @inheritdoc IWalletLink
   function explicitWalletsByRootKey(
     address rootKey,
     WalletQueryOptions calldata options
@@ -108,18 +102,14 @@ contract WalletLink is IWalletLink, WalletLinkBase, OwnableBase, Facet {
     return _explicitWalletsByRootKey(rootKey, options);
   }
 
-  /**
-   * @inheritdoc IWalletLink
-   */
+  /// @inheritdoc IWalletLink
   function getRootKeyForWallet(
     address wallet
   ) external view returns (address rootKey) {
     return _getRootKeyByWallet(wallet);
   }
 
-  /**
-   * @inheritdoc IWalletLink
-   */
+  /// @inheritdoc IWalletLink
   function checkIfLinked(
     address rootKey,
     address wallet
@@ -127,9 +117,7 @@ contract WalletLink is IWalletLink, WalletLinkBase, OwnableBase, Facet {
     return _checkIfLinked(rootKey, wallet);
   }
 
-  /**
-   * @inheritdoc IWalletLink
-   */
+  /// @inheritdoc IWalletLink
   function checkIfNonEVMWalletLinked(
     address rootKey,
     bytes32 walletHash
@@ -137,25 +125,19 @@ contract WalletLink is IWalletLink, WalletLinkBase, OwnableBase, Facet {
     return _checkIfNonEVMWalletLinked(rootKey, walletHash);
   }
 
-  /**
-   * @inheritdoc IWalletLink
-   */
+  /// @inheritdoc IWalletLink
   function getLatestNonceForRootKey(
     address rootKey
   ) external view returns (uint256) {
     return _latestNonce(rootKey);
   }
 
-  /**
-   * @inheritdoc IWalletLink
-   */
+  /// @inheritdoc IWalletLink
   function getDependency(bytes32 dependency) external view returns (address) {
     return _getDependency(dependency);
   }
 
-  /**
-   * @inheritdoc IWalletLink
-   */
+  /// @inheritdoc IWalletLink
   function setDependency(
     bytes32 dependency,
     address dependencyAddress

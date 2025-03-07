@@ -7,14 +7,13 @@ import {IDelegateRegistry} from "./interfaces/IDelegateRegistry.sol";
 
 // libraries
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import {ECDSA} from "solady/utils/ECDSA.sol";
 import {WalletLinkStorage} from "./WalletLinkStorage.sol";
 import {ISCL_EIP6565} from "./interfaces/ISCL_EIP6565.sol";
 import {LibString} from "solady/utils/LibString.sol";
 import {WalletLib} from "./libraries/WalletLib.sol";
 import {CustomRevert} from "contracts/src/utils/libraries/CustomRevert.sol";
 import {SolanaUtils} from "./libraries/SolanaUtils.sol";
-import {LibString} from "solady/utils/LibString.sol";
 
 // contracts
 import {Nonces} from "@river-build/diamond/src/utils/Nonces.sol";
@@ -36,11 +35,11 @@ abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
   /// @dev Maximum number of linked wallets per root key
   uint256 internal constant MAX_LINKED_WALLETS = 10;
 
-  // Address of delegate.xyz v2 registry
+  /// @dev Dependency name of delegate.xyz v2 registry
   bytes32 internal constant DELEGATE_REGISTRY_V2 =
     bytes32("DELEGATE_REGISTRY_V2");
 
-  // Address of SCL_EIP6565 verifier library
+  /// @dev Dependency name of SCL_EIP6565 verifier library
   bytes32 internal constant SCL_EIP6565 = bytes32("SCL_EIP6565");
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -319,11 +318,16 @@ abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
     address[] memory linkedWallets = linkedWalletsSet.values();
     uint256 totalCount = linkedWalletsLength;
 
+    IDelegateRegistry.Delegation[][]
+      memory allDelegations = new IDelegateRegistry.Delegation[][](
+        linkedWalletsLength
+      );
+
     // First pass: count total delegations add to totalCount
     for (uint256 i; i < linkedWalletsLength; ++i) {
-      IDelegateRegistry.Delegation[] memory delegations = IDelegateRegistry(
-        delegateRegistry
-      ).getIncomingDelegations(linkedWallets[i]);
+      allDelegations[i] = IDelegateRegistry(delegateRegistry)
+        .getIncomingDelegations(linkedWallets[i]);
+      IDelegateRegistry.Delegation[] memory delegations = allDelegations[i];
 
       uint256 delegationsLength = delegations.length;
       for (uint256 j; j < delegationsLength; ++j) {
@@ -336,11 +340,11 @@ abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
     // Initialize result array
     wallets = new address[](totalCount);
 
-    assembly {
+    assembly ("memory-safe") {
       // Copy linked wallets to result array
       let walletsPtr := add(wallets, 0x20)
       let linkedWalletsPtr := add(linkedWallets, 0x20)
-      let size := mul(linkedWalletsLength, 0x20)
+      let size := shl(5, linkedWalletsLength)
 
       // Copy linked wallets data
       pop(staticcall(gas(), 4, linkedWalletsPtr, size, walletsPtr, size))
@@ -353,28 +357,20 @@ abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
 
       // Update ptr to the next empty slot
       ptr := add(ptr, mul(currentIndex, 0x20))
-
-      // Store the current position for later use
-      mstore(0x40, ptr)
     }
 
     // Second pass: add delegators
     uint256 currentIndex = linkedWalletsLength;
-    for (uint256 i; i < linkedWalletsLength; ) {
-      IDelegateRegistry.Delegation[] memory delegations = IDelegateRegistry(
-        delegateRegistry
-      ).getIncomingDelegations(linkedWallets[i]);
+
+    for (uint256 i; i < linkedWalletsLength; ++i) {
+      IDelegateRegistry.Delegation[] memory delegations = allDelegations[i];
 
       uint256 delegationsLength = delegations.length;
 
-      assembly {
-        // Get delegations array data pointer
+      assembly ("memory-safe") {
         let delegationsPtr := add(delegations, 0x20)
-
-        // Get wallets array data pointer
         let walletsPtr := add(wallets, 0x20)
 
-        // Loop through delegations
         for {
           let j := 0
         } lt(j, delegationsLength) {
@@ -382,19 +378,15 @@ abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
         } {
           let delegationPtr := mload(add(delegationsPtr, mul(j, 0x20)))
 
-          // Check if type is ALL (1)
           if eq(mload(delegationPtr), 1) {
-            // Load the 'from' address and store it
+            // Check if type is ALL (1)
             mstore(
               add(walletsPtr, mul(currentIndex, 0x20)),
-              mload(add(delegationPtr, 0x40))
+              mload(add(delegationPtr, 0x40)) // Load 'from' address
             )
             currentIndex := add(currentIndex, 1)
           }
         }
-      }
-      unchecked {
-        ++i;
       }
     }
 
@@ -440,8 +432,6 @@ abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
       uint256 index = evmLength + i;
       wallets[index] = wallet;
     }
-
-    return wallets;
   }
 
   function _getRootKeyByWallet(
@@ -526,7 +516,7 @@ abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   function _validateNonEVMWalletInputs(
     WalletLinkStorage.Layout storage ds,
-    NonEVMLinkedWallet memory nonEVMWallet,
+    NonEVMLinkedWallet calldata nonEVMWallet,
     bytes32 walletHash
   ) internal view {
     address caller = msg.sender;
@@ -633,7 +623,7 @@ abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
   }
 
   function _validateAddressFormatByVMType(
-    WalletLib.Wallet memory wallet
+    WalletLib.Wallet calldata wallet
   ) internal pure {
     if (wallet.vmType == WalletLib.VirtualMachineType.SVM) {
       // Validate Solana address format (base58, 32-44 chars)

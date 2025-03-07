@@ -19,9 +19,6 @@ import {Nonces} from "@river-build/diamond/src/utils/Nonces.sol";
 import {MockDelegationRegistry} from "contracts/test/mocks/MockDelegationRegistry.sol";
 import {SimpleAccount} from "account-abstraction/samples/SimpleAccount.sol";
 
-// debugging
-import {console} from "forge-std/console.sol";
-
 contract WalletLinkTest is IWalletLinkBase, BaseSetup, DeployBase {
   Vm.Wallet internal rootWallet;
   Vm.Wallet internal wallet;
