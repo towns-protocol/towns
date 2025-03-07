@@ -2,9 +2,8 @@
 pragma solidity ^0.8.23;
 
 // libraries
-import {LibBit} from "solady/utils/LibBit.sol";
 import {LibString} from "solady/utils/LibString.sol";
-
+import {LibBit} from "solady/utils/LibBit.sol";
 /**
  * @dev Utility library for Solana address and public key operations
  */
@@ -44,93 +43,39 @@ library SolanaUtils {
    * @return The Base58 encoded string
    */
   function toBase58String(bytes32 data) internal pure returns (string memory) {
-    // Remove leading zeros
+    // Count leading zeros using Solady's LibBit.clz
     uint256 value = uint256(data);
-    uint256 zeros = LibBit.clz(value) >> 3;
+    uint256 zeros = LibBit.clz(value) >> 3; // Divide by 8 to convert bits to bytes
 
     // Calculate the maximum possible length of the result
     uint8 resultSize = 44; // Max size of a base58 encoded 32 byte value
 
-    // Load ALPHABET into memory for assembly access
-    bytes memory alphabet = ALPHABET;
-
     // Prepare the resulting bytes
     bytes memory result = new bytes(resultSize);
-    uint256 resultLen = resultSize;
+    uint resultLen = resultSize;
 
-    // Perform base58 encoding with unrolled divisions
-    assembly ("memory-safe") {
-      let ptr := add(result, 0x20)
-      let alphabetPtr := add(alphabet, 0x20)
-
-      // Unrolled division loop for large values
-      for {
-        let i := 0
-      } lt(i, 8) {
-        i := add(i, 1)
-      } {
-        // Divide by 58^4 (11316496) in one step
-        let quotient := div(value, 11316496)
-        let remainder := sub(value, mul(quotient, 11316496))
-
-        // Process the remainder (0 to 11316495)
-        let r1 := mod(remainder, 58)
-        remainder := div(remainder, 58)
-        let r2 := mod(remainder, 58)
-        remainder := div(remainder, 58)
-        let r3 := mod(remainder, 58)
-        remainder := div(remainder, 58)
-        let r4 := div(remainder, 58)
-
-        // Store results if non-zero or if we've already stored a digit
-        if or(gt(r4, 0), lt(resultLen, resultSize)) {
-          resultLen := sub(resultLen, 1)
-          // Get character from ALPHABET
-          mstore8(add(ptr, resultLen), mload(add(alphabetPtr, r4)))
-        }
-        if or(gt(r3, 0), lt(resultLen, resultSize)) {
-          resultLen := sub(resultLen, 1)
-          mstore8(add(ptr, resultLen), mload(add(alphabetPtr, r3)))
-        }
-        if or(gt(r2, 0), lt(resultLen, resultSize)) {
-          resultLen := sub(resultLen, 1)
-          mstore8(add(ptr, resultLen), mload(add(alphabetPtr, r2)))
-        }
-        if or(gt(r1, 0), lt(resultLen, resultSize)) {
-          resultLen := sub(resultLen, 1)
-          mstore8(add(ptr, resultLen), mload(add(alphabetPtr, r1)))
-        }
-
-        value := quotient
-        if iszero(value) {
-          break
-        }
-      }
-
-      // Handle any remaining value with standard algorithm
-      for {} gt(value, 0) {} {
-        let remainder := mod(value, 58)
-        resultLen := sub(resultLen, 1)
-        mstore8(add(ptr, resultLen), mload(add(alphabetPtr, remainder)))
-        value := div(value, 58)
-      }
-
-      // Add leading '1's for zeros
-      let alphabet0 := mload(alphabetPtr) // First character of ALPHABET
-      for {
-        let i := zeros
-      } gt(i, 0) {
-        i := sub(i, 1)
-      } {
-        resultLen := sub(resultLen, 1)
-        mstore8(add(ptr, resultLen), alphabet0)
-      }
-
-      // Set the correct length for result
-      mstore(result, sub(resultSize, resultLen))
+    // Perform base58 encoding
+    while (value > 0) {
+      uint remainder = value % 58;
+      value = value / 58;
+      result[--resultLen] = ALPHABET[remainder];
     }
 
-    return string(result);
+    // Create the final string with the correct length
+    bytes memory finalResult;
+
+    // Add leading '1's for each leading zero byte
+    assembly ("memory-safe") {
+      mstore(
+        add(result, resultLen),
+        0x3131313131313131313131313131313131313131313131313131313131313131
+      )
+      resultLen := sub(resultLen, zeros)
+      finalResult := add(result, resultLen)
+      mstore(finalResult, sub(resultSize, resultLen))
+    }
+
+    return string(finalResult);
   }
 
   /**
@@ -167,7 +112,12 @@ library SolanaUtils {
     return toBase58String(bytes32(extPubKey[4]));
   }
 
-  // validate a string vs a pubkey
+  /**
+   * @dev Validates if a string matches the Solana address derived from the given public key
+   * @param solanaAddress The address string to validate
+   * @param extPubKey The extended public key array
+   * @return True if the address matches the derived address from the public key
+   */
   function isValidSolanaAddress(
     string memory solanaAddress,
     uint256[5] memory extPubKey
@@ -195,7 +145,7 @@ library SolanaUtils {
       return false;
     }
 
-    // Use a single assembly block for the entire validation
+    bool isValid = true;
     assembly ("memory-safe") {
       // Load BASE58_MAP once
       let map := BASE58_MAP
@@ -206,13 +156,16 @@ library SolanaUtils {
         i := add(i, 1)
       } {
         let char := byte(0, mload(add(add(addressBytes, 0x20), i)))
-        // More efficient bit check
+
+        // Check if the character is valid using the bitmask
+        // If the bit at position 'char' is not set in the map, the character is invalid
         if iszero(and(shr(char, map), 1)) {
-          return(0, 0)
+          isValid := false
+          break
         }
       }
     }
 
-    return true;
+    return isValid;
   }
 }

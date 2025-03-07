@@ -348,15 +348,6 @@ abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
 
       // Copy linked wallets data
       pop(staticcall(gas(), 4, linkedWalletsPtr, size, walletsPtr, size))
-
-      // Current position in result array
-      let currentIndex := linkedWalletsLength
-
-      // Get the array pointer
-      let ptr := walletsPtr
-
-      // Update ptr to the next empty slot
-      ptr := add(ptr, mul(currentIndex, 0x20))
     }
 
     // Second pass: add delegators
@@ -364,27 +355,12 @@ abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
 
     for (uint256 i; i < linkedWalletsLength; ++i) {
       IDelegateRegistry.Delegation[] memory delegations = allDelegations[i];
-
       uint256 delegationsLength = delegations.length;
-
-      assembly ("memory-safe") {
-        let delegationsPtr := add(delegations, 0x20)
-        let walletsPtr := add(wallets, 0x20)
-
-        for {
-          let j := 0
-        } lt(j, delegationsLength) {
-          j := add(j, 1)
-        } {
-          let delegationPtr := mload(add(delegationsPtr, mul(j, 0x20)))
-
-          if eq(mload(delegationPtr), 1) {
-            // Check if type is ALL (1)
-            mstore(
-              add(walletsPtr, mul(currentIndex, 0x20)),
-              mload(add(delegationPtr, 0x40)) // Load 'from' address
-            )
-            currentIndex := add(currentIndex, 1)
+      for (uint256 j; j < delegationsLength; ++j) {
+        IDelegateRegistry.Delegation memory delegation = delegations[j];
+        if (delegation.type_ == IDelegateRegistry.DelegationType.ALL) {
+          unchecked {
+            wallets[currentIndex++] = delegation.from;
           }
         }
       }

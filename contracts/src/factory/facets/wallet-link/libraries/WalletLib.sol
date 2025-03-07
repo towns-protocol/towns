@@ -2,10 +2,9 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {IWalletLinkBase} from "../IWalletLink.sol";
 
 // libraries
-import {CustomRevert} from "contracts/src/utils/libraries/CustomRevert.sol";
+
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 // contracts
 
@@ -36,7 +35,7 @@ library WalletLib {
   function addWallet(
     RootWallet storage self,
     bytes32 walletHash,
-    Wallet memory wallet
+    Wallet calldata wallet
   ) internal {
     self.walletHashes.add(walletHash);
     self.walletByHash[walletHash] = wallet;
