@@ -303,21 +303,26 @@ func (s *remoteSyncer) modifySync() error {
 		return err
 	}
 
+	logger := logging.FromCtx(s.syncStreamCtx)
+
 	// Remove failed adds
 	for _, cookie := range toAdd {
-		streamId, _ := StreamIdFromBytes(cookie.GetStreamId())
+		streamId, err := StreamIdFromBytes(cookie.GetStreamId())
+		if err != nil {
+			logger.Errorw("Failed to parse stream ID", "err", err)
+			continue
+		}
 
 		var isFailed bool
 		for _, failed := range resp.Msg.GetAdds() {
-			failedStreamId, _ := StreamIdFromBytes(failed.GetStreamId())
-			if failedStreamId.Compare(streamId) == 0 {
+			if failedStreamId, _ := StreamIdFromBytes(failed.GetStreamId()); failedStreamId.Compare(streamId) == 0 {
 				isFailed = true
 				break
 			}
 		}
 
 		if isFailed {
-			logging.FromCtx(s.syncStreamCtx).Errorw("Failed to add stream", "stream", streamId)
+			logger.Errorw("Failed to add stream", "stream", streamId)
 		} else {
 			s.streams.Store(streamId, struct{}{})
 		}
@@ -329,15 +334,14 @@ func (s *remoteSyncer) modifySync() error {
 
 		var isFailed bool
 		for _, failed := range resp.Msg.GetRemovals() {
-			failedStreamId, _ := StreamIdFromBytes(failed.GetStreamId())
-			if failedStreamId.Compare(streamId) == 0 {
+			if failedStreamId, _ := StreamIdFromBytes(failed.GetStreamId()); failedStreamId == streamId {
 				isFailed = true
 				break
 			}
 		}
 
 		if isFailed {
-			logging.FromCtx(s.syncStreamCtx).Errorw("Failed to remove stream", "stream", streamId)
+			logger.Errorw("Failed to remove stream", "stream", streamId)
 		} else {
 			s.streams.Delete(streamId)
 		}
@@ -379,10 +383,10 @@ func (s *remoteSyncer) AddStream(ctx context.Context, cookie *SyncCookie) error 
 		s.pendingModifySync = &ModifySyncRequest{}
 	}
 
-	// If the given stream exists in the pending list to remove, remove it from there
+	// If the given stream exists in the pending list to remove, remove the first match from the end
 	var removed bool
 	for i := len(s.pendingModifySync.RemoveStreams) - 1; i >= 0; i-- {
-		if StreamId(s.pendingModifySync.RemoveStreams[i]).Compare(streamID) == 0 {
+		if StreamId(s.pendingModifySync.RemoveStreams[i]) == streamID {
 			if i == len(s.pendingModifySync.RemoveStreams)-1 {
 				s.pendingModifySync.RemoveStreams = s.pendingModifySync.RemoveStreams[:i]
 			} else {
@@ -393,6 +397,7 @@ func (s *remoteSyncer) AddStream(ctx context.Context, cookie *SyncCookie) error 
 		}
 	}
 
+	// If the stream was not in the pending list to remove, add it to the list to add
 	if !removed {
 		s.pendingModifySync.AddStreams = append(s.pendingModifySync.AddStreams, cookie)
 	}
@@ -417,8 +422,12 @@ func (s *remoteSyncer) RemoveStream(ctx context.Context, streamID StreamId) (boo
 	// If the given stream exists in the pending list to add, remove the last one from there
 	var removed bool
 	for i := len(s.pendingModifySync.AddStreams) - 1; i >= 0; i-- {
-		addStreamID, _ := StreamIdFromBytes(s.pendingModifySync.AddStreams[i].GetStreamId())
-		if streamID.Compare(addStreamID) == 0 {
+		addStreamID, err := StreamIdFromBytes(s.pendingModifySync.AddStreams[i].GetStreamId())
+		if err != nil {
+			return false, err
+		}
+
+		if streamID == addStreamID {
 			if i == len(s.pendingModifySync.AddStreams)-1 {
 				s.pendingModifySync.AddStreams = s.pendingModifySync.AddStreams[:i] // Trim the last element safely
 			} else {
