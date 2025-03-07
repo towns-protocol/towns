@@ -261,7 +261,9 @@ export function toEvent(timelineEvent: StreamTimelineEvent, userId: string): Tim
             return undefined
         }
 
-        return payload.value.content.value.sessionId
+        return payload.value.content.value.sessionIdBytes.length > 0
+            ? bin_toHexString(payload.value.content.value.sessionIdBytes)
+            : payload.value.content.value.sessionId
     }
 
     const sessionId = extractSessionId(timelineEvent)
