@@ -79,6 +79,11 @@ describe('transactions', () => {
         expect(dummyReceiptCopy).toEqual(dummyReceipt)
     })
 
+    afterAll(async () => {
+        await bob.stop()
+        await alice.stop()
+    })
+
     test('addEvent', async () => {
         // a user should be able to upload a transaction that
         // is from their account or one of their linked accounts and

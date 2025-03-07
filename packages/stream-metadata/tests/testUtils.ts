@@ -9,19 +9,7 @@ import {
 	MediaInfo,
 	MediaInfoSchema,
 } from '@river-build/proto'
-import {
-	Client,
-	encryptAESGCM,
-	genId,
-	makeSignerContext,
-	makeSpaceStreamId,
-	makeStreamRpcClient,
-	MockEntitlementsDelegate,
-	RiverDbManager,
-	SignerContext,
-	streamIdAsString,
-	userIdFromAddress,
-} from '@river-build/sdk'
+import { Client, encryptAESGCM, streamIdAsString } from '@river-build/sdk'
 import {
 	CreateLegacySpaceParams,
 	ETH_ADDRESS,
@@ -35,11 +23,6 @@ import {
 import { create } from '@bufbuild/protobuf'
 
 import { config } from '../src/environment'
-import { getRiverRegistry } from '../src/evmRpcClient'
-
-export function makeUniqueSpaceStreamId(): string {
-	return makeSpaceStreamId(genId(40))
-}
 
 export function getTestServerUrl() {
 	// use the .env.test config to derive the baseURL of the server under test
@@ -47,57 +30,8 @@ export function getTestServerUrl() {
 	return streamMetadataBaseUrl
 }
 
-export async function getAnyNodeUrlFromRiverRegistry() {
-	const riverRegistry = getRiverRegistry()
-	const nodes = await riverRegistry.getAllNodeUrls()
-
-	if (!nodes || nodes.length === 0) {
-		return undefined
-	}
-
-	const randomIndex = Math.floor(Math.random() * nodes.length)
-	const anyNode = nodes[randomIndex]
-
-	return anyNode.url
-}
-
 export function makeEthersProvider(wallet: ethers.Wallet) {
 	return new LocalhostWeb3Provider(config.baseChainRpcUrl, wallet)
-}
-
-export async function makeTestClient(wallet: ethers.Wallet): Promise<Client> {
-	// create all the constructor arguments for the SDK client
-
-	// arg: user context
-	const context = await makeUserContext(wallet)
-
-	// arg: stream rpc client
-	const nodeUrl = await getAnyNodeUrlFromRiverRegistry()
-	if (!nodeUrl) {
-		throw new Error('No nodes available')
-	}
-	const rpcClient = makeStreamRpcClient(nodeUrl)
-
-	// arg: crypto store
-	const deviceId = `${genId(5)}`
-	const userId = userIdFromAddress(context.creatorAddress)
-	const dbName = `database-${userId}-${deviceId}`
-	const cryptoStore = RiverDbManager.getCryptoDb(userId, dbName)
-
-	// arg: entitlements delegate
-	const entitlementsDelegate = new MockEntitlementsDelegate()
-
-	// arg: persistence db name
-	const persistenceDbName = `persistence-${userId}-${deviceId}`
-
-	// create the client with all the args
-	return new Client(context, rpcClient, cryptoStore, entitlementsDelegate, persistenceDbName)
-}
-
-export async function makeUserContext(wallet: ethers.Wallet): Promise<SignerContext> {
-	const userPrimaryWallet = wallet
-	const delegateWallet = ethers.Wallet.createRandom()
-	return makeSignerContext(userPrimaryWallet, delegateWallet, { days: 1 })
 }
 
 export function makeJpegBlob(fillSize: number): {
@@ -139,7 +73,7 @@ export async function encryptAndSendMediaPayload(
 	const { ciphertext, secretKey, iv } = await encryptAESGCM(data)
 	const chunkCount = Math.ceil(ciphertext.length / chunkSize)
 
-	const mediaStreamInfo = await client.createMediaStreamNew(
+	const mediaStreamInfo = await client.createMediaStream(
 		undefined,
 		spaceId,
 		undefined,
@@ -154,7 +88,7 @@ export async function encryptAndSendMediaPayload(
 	for (let i = 0, index = 0; i < ciphertext.length; i += chunkSize, index++) {
 		const chunk = ciphertext.slice(i, i + chunkSize)
 		const last = ciphertext.length - i <= chunkSize
-		const { creationCookie } = await client.sendMediaPayloadNew(cc, last, chunk, index)
+		const { creationCookie } = await client.sendMediaPayload(cc, last, chunk, index)
 
 		cc = create(CreationCookieSchema, {
 			...cc,
