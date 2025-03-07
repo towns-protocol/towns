@@ -5,30 +5,33 @@ if [ -z "$1" ]; then
     exit 1
 fi
 
-
 # Ensure there is an .env file to work with
 touch clients/web/app/.env
 
-# Switch to the specified environment by copying .env.xyz -> .env
+# Function to handle environment switching
+switch_env() {
+    local env=$1
+    local env_file="clients/web/app/.deployment.env.${env}"
+    local overrides_file="clients/web/app/.deployment.overrides.${env}"
+
+    echo "Switching to ${env}"
+    ./scripts/download-envs.sh "$env"
+    cp "$env_file" clients/web/app/.env
+
+    if [ -f "$overrides_file" ]; then
+        echo "" >> clients/web/app/.env  # Add a blank line
+        echo "## Overrides from .deployment.overrides.${env}" >> clients/web/app/.env
+        cat "$overrides_file" >> clients/web/app/.env  # Append the overrides
+    fi
+}
+
+# Switch to the specified environment
 case "$1" in
-    "gamma")
-        echo "Switching to gamma"
-        ./scripts/download-envs.sh gamma
-        cp clients/web/app/.deployment.env.gamma clients/web/app/.env
-        ;;
-    "alpha")
-        echo "Switching to alpha"
-        ./scripts/download-envs.sh alpha
-        cp clients/web/app/.deployment.env.alpha clients/web/app/.env
-        ;;
-    "omega")
-        echo "Switching to omega"
-        ./scripts/download-envs.sh omega
-        cp clients/web/app/.deployment.env.omega clients/web/app/.env
+    "gamma" | "alpha" | "omega")
+        switch_env "$1"
         ;;
     "localhost")
         echo "Switching to localhost"
-        # the localhost env is checked into the repo
         cp clients/web/app/.deployment.env.localhost clients/web/app/.env
         ;;
     *)
