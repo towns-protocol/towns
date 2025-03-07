@@ -12,6 +12,12 @@ import { bin_toHexString } from '@river-build/dlog'
 import { MemberMetadata_EnsAddresses } from './memberMetadata_EnsAddresses'
 import { MemberMetadata_Nft } from './memberMetadata_Nft'
 
+export interface Nft {
+    chainId: number
+    tokenId: string
+    contractAddress: string
+}
+
 export type UserInfo = {
     username: string
     usernameConfirmed: boolean
@@ -19,11 +25,7 @@ export type UserInfo = {
     displayName: string
     displayNameEncrypted: boolean
     ensAddress?: string
-    nft?: {
-        chainId: number
-        tokenId: string
-        contractAddress: string
-    }
+    nft?: Nft
 }
 
 export class StreamStateView_MemberMetadata {

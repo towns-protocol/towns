@@ -2,8 +2,9 @@
  * @group main
  */
 
-import { EncryptedData } from '@river-build/proto'
+import { EncryptedDataSchema } from '@river-build/proto'
 import { MemberMetadata_DisplayNames } from '../../memberMetadata_DisplayNames'
+import { create } from '@bufbuild/protobuf'
 
 describe('memberMetadata_DisplayNamesTests', () => {
     const streamId = 'streamid1'
@@ -14,7 +15,7 @@ describe('memberMetadata_DisplayNamesTests', () => {
 
     test('clientCanSetDisplayName', async () => {
         const displayName = 'Bob Display Name'
-        const encryptedData = new EncryptedData({
+        const encryptedData = create(EncryptedDataSchema, {
             ciphertext: displayName,
         })
         displayNames.addEncryptedData(
@@ -35,7 +36,7 @@ describe('memberMetadata_DisplayNamesTests', () => {
 
     test('clientCanUseSameDisplayName', async () => {
         const displayName = 'Bob Display Name'
-        const encryptedData = new EncryptedData({
+        const encryptedData = create(EncryptedDataSchema, {
             ciphertext: displayName,
         })
         displayNames.addEncryptedData(
@@ -73,7 +74,7 @@ describe('memberMetadata_DisplayNamesTests', () => {
 
     test('encryptedFlagsAreReturnedWhenEncrypted', async () => {
         const displayName = 'bob-username1'
-        const encryptedData = new EncryptedData({
+        const encryptedData = create(EncryptedDataSchema, {
             ciphertext: displayName,
         })
 

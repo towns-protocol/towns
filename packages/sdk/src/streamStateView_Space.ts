@@ -12,6 +12,7 @@ import {
     SpacePayload_Snapshot,
     SpacePayload_UpdateChannelAutojoin,
     SpacePayload_UpdateChannelHideUserJoinLeaveEvents,
+    ChunkedMediaSchema,
 } from '@river-build/proto'
 import { StreamEncryptionEvents, StreamEvents, StreamStateEvents } from './streamEvents'
 import { StreamStateView_AbstractContent } from './streamStateView_AbstractContent'
@@ -19,6 +20,7 @@ import { DecryptedContent } from './encryptedContentTypes'
 import { check, throwWithCode } from '@river-build/dlog'
 import { logNever } from './check'
 import { contractAddressFromSpaceId, isDefaultChannelId, streamIdAsString } from './id'
+import { fromBinary } from '@bufbuild/protobuf'
 import { decryptDerivedAESGCM } from './crypto_utils'
 
 export type ParsedChannelProperties = {
@@ -162,7 +164,7 @@ export class StreamStateView_Space extends StreamStateView_AbstractContent {
             const spaceAddress = contractAddressFromSpaceId(this.streamId)
             const context = spaceAddress.toLowerCase()
             const plaintext = await decryptDerivedAESGCM(context, encryptedData)
-            const decryptedImage = ChunkedMedia.fromBinary(plaintext)
+            const decryptedImage = fromBinary(ChunkedMediaSchema, plaintext)
             if (encryptedData === this.decryptionInProgress?.encryptedData) {
                 this.spaceImage = decryptedImage
             }

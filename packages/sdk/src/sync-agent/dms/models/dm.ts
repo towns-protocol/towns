@@ -8,8 +8,8 @@ import type {
     ChannelMessage_Post_Attachment,
     ChannelMessage_Post_Mention,
     ChannelProperties,
+    PlainMessage,
 } from '@river-build/proto'
-import type { PlainMessage } from '@bufbuild/protobuf'
 import { MessageTimeline } from '../../timeline/timeline'
 
 const logger = dlogger('csb:dm')

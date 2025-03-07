@@ -6,6 +6,7 @@ import {
     MemberPayload_Nft,
     MemberPayload_MemberBlockchainTransaction,
     BlockchainTransaction_TokenTransfer,
+    WrappedEncryptedDataSchema,
 } from '@river-build/proto'
 import TypedEmitter from 'typed-emitter'
 import { StreamEncryptionEvents, StreamStateEvents } from './streamEvents'
@@ -28,6 +29,7 @@ import { KeySolicitationContent } from '@river-build/encryption'
 import { makeParsedEvent } from './sign'
 import { StreamStateView_AbstractContent } from './streamStateView_AbstractContent'
 import { utils } from 'ethers'
+import { create } from '@bufbuild/protobuf'
 import { getSpaceReviewEventDataBin, SpaceReviewEventObject } from '@river-build/web3'
 
 const log = dlog('csb:streamStateView_Members')
@@ -323,7 +325,7 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
                 {
                     const stateMember = this.joined.get(event.creatorUserId)
                     check(isDefined(stateMember), 'displayName from non-member')
-                    stateMember.encryptedDisplayName = new WrappedEncryptedData({
+                    stateMember.encryptedDisplayName = create(WrappedEncryptedDataSchema, {
                         data: payload.content.value,
                     })
                     this.memberMetadata.appendDisplayName(
@@ -340,7 +342,7 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
                 {
                     const stateMember = this.joined.get(event.creatorUserId)
                     check(isDefined(stateMember), 'username from non-member')
-                    stateMember.encryptedUsername = new WrappedEncryptedData({
+                    stateMember.encryptedUsername = create(WrappedEncryptedDataSchema, {
                         data: payload.content.value,
                     })
                     this.memberMetadata.appendUsername(

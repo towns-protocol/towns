@@ -1,20 +1,15 @@
 import 'fake-indexeddb/auto' // used to mock indexdb in dexie, don't remove
 
 import { ethers } from 'ethers'
-import { ChunkedMedia, CreationCookie, MediaInfo } from '@river-build/proto'
 import {
-	Client,
-	encryptAESGCM,
-	genId,
-	makeSignerContext,
-	makeSpaceStreamId,
-	makeStreamRpcClient,
-	MockEntitlementsDelegate,
-	RiverDbManager,
-	SignerContext,
-	streamIdAsString,
-	userIdFromAddress,
-} from '@river-build/sdk'
+	ChunkedMedia,
+	ChunkedMediaSchema,
+	CreationCookie,
+	CreationCookieSchema,
+	MediaInfo,
+	MediaInfoSchema,
+} from '@river-build/proto'
+import { Client, encryptAESGCM, streamIdAsString } from '@river-build/sdk'
 import {
 	CreateLegacySpaceParams,
 	ETH_ADDRESS,
@@ -25,13 +20,9 @@ import {
 	Permission,
 	SpaceDapp,
 } from '@river-build/web3'
+import { create } from '@bufbuild/protobuf'
 
 import { config } from '../src/environment'
-import { getRiverRegistry } from '../src/evmRpcClient'
-
-export function makeUniqueSpaceStreamId(): string {
-	return makeSpaceStreamId(genId(40))
-}
 
 export function getTestServerUrl() {
 	// use the .env.test config to derive the baseURL of the server under test
@@ -39,57 +30,8 @@ export function getTestServerUrl() {
 	return streamMetadataBaseUrl
 }
 
-export async function getAnyNodeUrlFromRiverRegistry() {
-	const riverRegistry = getRiverRegistry()
-	const nodes = await riverRegistry.getAllNodeUrls()
-
-	if (!nodes || nodes.length === 0) {
-		return undefined
-	}
-
-	const randomIndex = Math.floor(Math.random() * nodes.length)
-	const anyNode = nodes[randomIndex]
-
-	return anyNode.url
-}
-
 export function makeEthersProvider(wallet: ethers.Wallet) {
 	return new LocalhostWeb3Provider(config.baseChainRpcUrl, wallet)
-}
-
-export async function makeTestClient(wallet: ethers.Wallet): Promise<Client> {
-	// create all the constructor arguments for the SDK client
-
-	// arg: user context
-	const context = await makeUserContext(wallet)
-
-	// arg: stream rpc client
-	const nodeUrl = await getAnyNodeUrlFromRiverRegistry()
-	if (!nodeUrl) {
-		throw new Error('No nodes available')
-	}
-	const rpcClient = makeStreamRpcClient(nodeUrl)
-
-	// arg: crypto store
-	const deviceId = `${genId(5)}`
-	const userId = userIdFromAddress(context.creatorAddress)
-	const dbName = `database-${userId}-${deviceId}`
-	const cryptoStore = RiverDbManager.getCryptoDb(userId, dbName)
-
-	// arg: entitlements delegate
-	const entitlementsDelegate = new MockEntitlementsDelegate()
-
-	// arg: persistence db name
-	const persistenceDbName = `persistence-${userId}-${deviceId}`
-
-	// create the client with all the args
-	return new Client(context, rpcClient, cryptoStore, entitlementsDelegate, persistenceDbName)
-}
-
-export async function makeUserContext(wallet: ethers.Wallet): Promise<SignerContext> {
-	const userPrimaryWallet = wallet
-	const delegateWallet = ethers.Wallet.createRandom()
-	return makeSignerContext(userPrimaryWallet, delegateWallet, { days: 1 })
 }
 
 export function makeJpegBlob(fillSize: number): {
@@ -114,7 +56,7 @@ export function makeJpegBlob(fillSize: number): {
 	return {
 		magicBytes,
 		data,
-		info: new MediaInfo({
+		info: create(MediaInfoSchema, {
 			mimetype: 'image/jpeg', // Set the expected MIME type
 			sizeBytes: BigInt(data.length),
 		}),
@@ -142,20 +84,20 @@ export async function encryptAndSendMediaPayload(
 		throw new Error('Failed to create media stream')
 	}
 
-	let cc: CreationCookie = new CreationCookie(mediaStreamInfo.creationCookie)
+	let cc: CreationCookie = create(CreationCookieSchema, mediaStreamInfo.creationCookie)
 	for (let i = 0, index = 0; i < ciphertext.length; i += chunkSize, index++) {
 		const chunk = ciphertext.slice(i, i + chunkSize)
 		const last = ciphertext.length - i <= chunkSize
 		const { creationCookie } = await client.sendMediaPayloadNew(cc, last, chunk, index)
 
-		cc = new CreationCookie({
+		cc = create(CreationCookieSchema, {
 			...cc,
 			prevMiniblockHash: new Uint8Array(creationCookie.prevMiniblockHash),
 			miniblockNum: creationCookie.miniblockNum,
 		})
 	}
 
-	const chunkedMedia = new ChunkedMedia({
+	const chunkedMedia = create(ChunkedMediaSchema, {
 		info,
 		streamId: streamIdAsString(mediaStreamInfo.creationCookie.streamId),
 		encryption: {

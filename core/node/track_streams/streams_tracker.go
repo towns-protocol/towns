@@ -86,6 +86,7 @@ func (tracker *StreamsTrackerImpl) Init(
 		ctx,
 		tracker.riverRegistry.Blockchain.InitialBlockNum,
 		tracker.OnStreamAllocated,
+		tracker.OnStreamAdded,
 		tracker.OnStreamLastMiniblockUpdated,
 		tracker.OnStreamPlacementUpdated,
 	); err != nil {
@@ -232,6 +233,21 @@ func (tracker *StreamsTrackerImpl) OnStreamAllocated(
 	}
 
 	tracker.forwardStreamEventsFromInception(ctx, streamID, event.Nodes)
+}
+
+// OnStreamAdded is called each time a stream is added in the river registry.
+// If the stream must be tracked for the service, then add it to the worker that is
+// responsible for it.
+func (tracker *StreamsTrackerImpl) OnStreamAdded(
+	ctx context.Context,
+	event *river.StreamRegistryV1StreamCreated,
+) {
+	streamID := shared.StreamId(event.StreamId)
+	if !tracker.filter.TrackStream(streamID) {
+		return
+	}
+
+	tracker.forwardStreamEventsFromInception(ctx, streamID, event.Stream.Nodes)
 }
 
 func (tracker *StreamsTrackerImpl) OnStreamLastMiniblockUpdated(
