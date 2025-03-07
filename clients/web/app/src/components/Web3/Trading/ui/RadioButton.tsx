@@ -1,10 +1,12 @@
 import React from 'react'
 import { Box, FancyButton, IconName } from '@ui'
+import { TextSprinkles } from 'ui/components/Text/Text.css'
 
 export const RadioButton = (props: {
     label: string
     selected: boolean
     icon?: IconName
+    color?: TextSprinkles['color']
     onClick: () => void
 }) => {
     return (
@@ -24,7 +26,7 @@ export const RadioButton = (props: {
                     iconSize="square_xs"
                     gap="xs"
                     paddingX="sm"
-                    color="greenBlue"
+                    color={props.color}
                     background="level2"
                     onClick={props.onClick}
                 >

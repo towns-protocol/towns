@@ -284,6 +284,20 @@ export const colorProperties = defineProperties({
                     '--background': vars.color.tone.negative,
                 },
             },
+            [ToneName.Peach]: {
+                background: vars.color.tone.peach,
+                color: vars.color.text.default,
+                vars: {
+                    '--background': vars.color.tone.peach,
+                },
+            },
+            [ToneName.PeachSubtle]: {
+                background: Figma.Colors.PeachBackground,
+                color: vars.color.text.default,
+                vars: {
+                    '--background': Figma.Colors.PeachBackground,
+                },
+            },
             modalContainer: {
                 background: 'rgba(0,0,0,0.3)',
                 backgdropFilter: 'blur(4px)',

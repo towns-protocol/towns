@@ -132,7 +132,7 @@ export const TradingChartAttachment = (props: {
                         size="button_x5"
                         tone="level3"
                         rounded="full"
-                        color="negative"
+                        color="peach"
                         onClick={() => onTradeClick('sell')}
                     >
                         Sell
@@ -622,7 +622,7 @@ const ChartTransfer = ({ transfer }: { transfer: TokenTransferRollupEvent }) => 
                 border: `2px solid ${
                     transfer.isBuy
                         ? vars.color.tone[ToneName.Positive]
-                        : vars.color.tone[ToneName.Negative]
+                        : vars.color.tone[ToneName.Peach]
                 }`,
             }}
             pointerEvents="auto"
@@ -658,14 +658,14 @@ const TickerChangeIndicator = ({ change }: { change: number }) => (
         paddingY="xs"
         rounded="md"
         insetBottom="xxs"
-        background={change > 0 ? 'positiveSubtle' : 'negativeSubtle'}
+        background={change > 0 ? 'positiveSubtle' : 'peachSubtle'}
     >
         <Icon
             insetY="xxs"
             size="square_xxs"
             type={change > 0 ? 'arrowSmallUp' : 'arrowSmallDown'}
         />
-        <Text fontWeight="strong" size="sm" color={change > 0 ? 'greenBlue' : 'error'}>
+        <Text fontWeight="strong" size="sm" color={change > 0 ? 'greenBlue' : 'peach'}>
             {Math.abs(change).toFixed(2)}%
         </Text>
     </Box>

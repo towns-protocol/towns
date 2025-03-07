@@ -15,6 +15,8 @@ export const ToneName = {
     NegativeSubtle: 'negativeSubtle',
     None: 'none',
     Base: 'base',
+    Peach: 'peach',
+    PeachSubtle: 'peachSubtle',
 } as const
 
 export type ToneNameType = (typeof ToneName)[keyof typeof ToneName]
@@ -31,6 +33,7 @@ const tone = {
     [ToneName.Negative]: Figma.Colors.Red,
     [ToneName.Presence]: Figma.Colors.Green,
     [ToneName.Base]: Figma.Colors.CoinbaseBlue,
+    [ToneName.Peach]: Figma.Colors.Peach,
 } as const
 
 const overlay = {

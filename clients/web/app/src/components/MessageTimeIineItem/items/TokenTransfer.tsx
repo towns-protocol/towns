@@ -56,12 +56,12 @@ export const TokenTransferImpl = (props: TokenTransferImplProps) => {
                 shrink
                 grow={false}
                 justifyContent="start"
-                background={isBuy ? 'positiveSubtle' : 'negativeSubtle'}
+                background={isBuy ? 'positiveSubtle' : 'peachSubtle'}
                 paddingX="sm"
                 alignItems="start"
                 rounded="xs"
             >
-                <Text paddingBottom="sm" paddingTop="sm" color={isBuy ? 'greenBlue' : 'error'}>
+                <Text paddingBottom="sm" paddingTop="sm" color={isBuy ? 'positive' : 'peach'}>
                     {text}
                 </Text>
             </Box>
