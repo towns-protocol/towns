@@ -32,7 +32,7 @@ func (s *Service) localAddEvent(
 	log.Debugw("localAddEvent", "parsedEvent", parsedEvent)
 
 	if parsedEvent.MiniblockRef.Num >= 0 {
-		streamView, err = s.getStreamViewForAddEvent(ctx, streamView, parsedEvent, localStream)
+		streamView, err = s.ensureStreamIsUpToDate(ctx, streamView, parsedEvent, localStream)
 		if err != nil {
 			return nil, err
 		}
@@ -67,9 +67,9 @@ func (s *Service) localAddEvent(
 	}
 }
 
-// getStreamViewForAddEvent returns the StreamView for the given StreamId that is up to date to
+// ensureStreamIsUpToDate returns the StreamView for the given StreamId that is up to date enough to
 // add the given parsedEvent.
-func (s *Service) getStreamViewForAddEvent(
+func (s *Service) ensureStreamIsUpToDate(
 	ctx context.Context,
 	streamView *StreamView,
 	parsedEvent *ParsedEvent,
