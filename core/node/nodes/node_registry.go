@@ -33,10 +33,11 @@ type NodeRegistry interface {
 }
 
 type nodeRegistryImpl struct {
-	contract         *registries.RiverRegistryContract
-	localNodeAddress common.Address
-	httpClient       *http.Client
-	connectOpts      []connect.ClientOption
+	contract           *registries.RiverRegistryContract
+	localNodeAddress   common.Address
+	httpClient         *http.Client
+	httpClientWithCert *http.Client
+	connectOpts        []connect.ClientOption
 
 	mu              sync.Mutex
 	nodes           map[common.Address]*NodeRecord
@@ -52,6 +53,7 @@ func LoadNodeRegistry(
 	appliedBlockNum crypto.BlockNumber,
 	chainMonitor crypto.ChainMonitor,
 	httpClient *http.Client,
+	httpClientWithCert *http.Client,
 	connectOtelIterceptor *otelconnect.Interceptor,
 ) (*nodeRegistryImpl, error) {
 	log := logging.FromCtx(ctx)
@@ -67,12 +69,13 @@ func LoadNodeRegistry(
 	}
 
 	ret := &nodeRegistryImpl{
-		contract:         contract,
-		localNodeAddress: localNodeAddress,
-		httpClient:       httpClient,
-		nodes:            make(map[common.Address]*NodeRecord, len(nodes)),
-		appliedBlockNum:  appliedBlockNum,
-		connectOpts:      connectOpts,
+		contract:           contract,
+		localNodeAddress:   localNodeAddress,
+		httpClient:         httpClient,
+		httpClientWithCert: httpClientWithCert,
+		nodes:              make(map[common.Address]*NodeRecord, len(nodes)),
+		appliedBlockNum:    appliedBlockNum,
+		connectOpts:        connectOpts,
 	}
 
 	chainMonitor.OnContractWithTopicsEvent(
@@ -144,7 +147,7 @@ func (n *nodeRegistryImpl) addNode(addr common.Address, url string, status uint8
 		nn.local = true
 	} else {
 		nn.streamServiceClient = NewStreamServiceClient(n.httpClient, url, n.connectOpts...)
-		nn.nodeToNodeClient = NewNodeToNodeClient(n.httpClient, url, n.connectOpts...)
+		nn.nodeToNodeClient = NewNodeToNodeClient(n.httpClientWithCert, url, n.connectOpts...)
 	}
 	n.nodes[addr] = nn
 	return nn
