@@ -179,6 +179,16 @@ import { TipEventObject } from '@river-build/generated/dev/typings/ITipping'
 
 export type ClientEvents = StreamEvents & DecryptionEvents
 
+export type ClientOptions = {
+    persistenceStoreName?: string
+    logNamespaceFilter?: string
+    highPriorityStreamIds?: string[]
+    unpackEnvelopeOpts?: UnpackEnvelopeOpts
+    defaultGroupEncryptionAlgorithm?: GroupEncryptionAlgorithmId
+    logId?: string
+    streamOpts?: { useModifySync?: boolean }
+}
+
 type SendChannelMessageOptions = {
     beforeSendEventHook?: Promise<void>
     onLocalEventAppended?: (localId: string) => void
@@ -197,7 +207,6 @@ export class Client
     readonly rpcClient: StreamRpcClient
     readonly userId: string
     readonly streams: SyncedStreams
-    readonly unpackEnvelopeOpts: UnpackEnvelopeOpts | undefined
 
     userStreamId?: string
     userSettingsStreamId?: string
@@ -233,17 +242,11 @@ export class Client
         rpcClient: StreamRpcClient,
         cryptoStore: CryptoStore,
         entitlementsDelegate: EntitlementsDelegate,
-        persistenceStoreName?: string,
-        logNamespaceFilter?: string,
-        highPriorityStreamIds?: string[],
-        unpackEnvelopeOpts?: UnpackEnvelopeOpts,
-        defaultGroupEncryptionAlgorithm?: GroupEncryptionAlgorithmId,
-        inLogId?: string,
-        private streamOpts?: { useModifySync?: boolean },
+        public opts?: ClientOptions,
     ) {
         super()
-        if (logNamespaceFilter) {
-            debug.enable(logNamespaceFilter)
+        if (opts?.logNamespaceFilter) {
+            debug.enable(opts.logNamespaceFilter)
         }
         assert(
             isDefined(signerContext.creatorAddress) && signerContext.creatorAddress.length === 20,
@@ -257,13 +260,13 @@ export class Client
         this.entitlementsDelegate = entitlementsDelegate
         this.signerContext = signerContext
         this.rpcClient = rpcClient
-        this.unpackEnvelopeOpts = unpackEnvelopeOpts
         this.userId = userIdFromAddress(signerContext.creatorAddress)
         this.defaultGroupEncryptionAlgorithm =
-            defaultGroupEncryptionAlgorithm ?? GroupEncryptionAlgorithmId.HybridGroupEncryption
+            opts?.defaultGroupEncryptionAlgorithm ??
+            GroupEncryptionAlgorithmId.HybridGroupEncryption
 
         this.logId =
-            inLogId ??
+            opts?.logId ??
             shortenHexString(this.userId.startsWith('0x') ? this.userId.slice(2) : this.userId)
 
         this.logCall = dlog('csb:cl:call').extend(this.logId)
@@ -276,8 +279,8 @@ export class Client
         this.logDebug = dlog('csb:cl:debug').extend(this.logId)
         this.cryptoStore = cryptoStore
 
-        if (persistenceStoreName) {
-            this.persistenceStore = new PersistenceStore(persistenceStoreName)
+        if (opts?.persistenceStoreName) {
+            this.persistenceStore = new PersistenceStore(opts.persistenceStoreName)
         } else {
             this.persistenceStore = new StubPersistenceStore()
         }
@@ -286,12 +289,12 @@ export class Client
             this.userId,
             this.rpcClient,
             this,
-            this.unpackEnvelopeOpts,
+            opts?.unpackEnvelopeOpts,
             this.logId,
-            this.streamOpts,
+            opts?.streamOpts,
         )
         this.syncedStreamsExtensions = new SyncedStreamsExtension(
-            highPriorityStreamIds,
+            opts?.highPriorityStreamIds,
             {
                 startSyncStreams: async () => {
                     this.streams.startSyncStreams()
@@ -526,7 +529,7 @@ export class Client
             optional: true,
         })
         if (response.stream) {
-            return unpackStream(response.stream, this.unpackEnvelopeOpts)
+            return unpackStream(response.stream, this.opts?.unpackEnvelopeOpts)
         } else {
             return undefined
         }
@@ -549,7 +552,7 @@ export class Client
             streamId: streamIdAsBytes(userStreamId),
             metadata: metadata,
         })
-        return unpackStream(response.stream, this.unpackEnvelopeOpts)
+        return unpackStream(response.stream, this.opts?.unpackEnvelopeOpts)
     }
 
     private async createUserMetadataStream(
@@ -570,7 +573,7 @@ export class Client
             streamId: streamIdAsBytes(userMetadataStreamId),
             metadata: metadata,
         })
-        return unpackStream(response.stream, this.unpackEnvelopeOpts)
+        return unpackStream(response.stream, this.opts?.unpackEnvelopeOpts)
     }
 
     private async createUserInboxStream(
@@ -591,7 +594,7 @@ export class Client
             streamId: streamIdAsBytes(userInboxStreamId),
             metadata: metadata,
         })
-        return unpackStream(response.stream, this.unpackEnvelopeOpts)
+        return unpackStream(response.stream, this.opts?.unpackEnvelopeOpts)
     }
 
     private async createUserSettingsStream(
@@ -613,7 +616,7 @@ export class Client
             streamId: userSettingsStreamId,
             metadata: metadata,
         })
-        return unpackStream(response.stream, this.unpackEnvelopeOpts)
+        return unpackStream(response.stream, this.opts?.unpackEnvelopeOpts)
     }
 
     private async createStreamAndSync(
@@ -630,7 +633,7 @@ export class Client
                 // fetch the stream to get the client in the rigth state
                 response = await this.rpcClient.getStream({ streamId: request.streamId })
             }
-            const unpacked = await unpackStream(response.stream, this.unpackEnvelopeOpts)
+            const unpacked = await unpackStream(response.stream, this.opts?.unpackEnvelopeOpts)
             await stream.initializeFromResponse(unpacked)
             if (stream.view.syncCookie) {
                 this.streams.addStreamToSync(streamId, stream.view.syncCookie)
@@ -1289,7 +1292,10 @@ export class Client
             const response = await this.rpcClient.getStream({
                 streamId: streamIdAsBytes(streamId),
             })
-            const unpackedResponse = await unpackStream(response.stream, this.unpackEnvelopeOpts)
+            const unpackedResponse = await unpackStream(
+                response.stream,
+                this.opts?.unpackEnvelopeOpts,
+            )
             return this.streamViewFromUnpackedResponse(streamId, unpackedResponse)
         } catch (err) {
             this.logCall('getStream', streamId, 'ERROR', err)
@@ -1368,7 +1374,7 @@ export class Client
                     )}.`,
                 )
             }
-            const unpackedResponse = await unpackStreamEx(miniblocks, this.unpackEnvelopeOpts)
+            const unpackedResponse = await unpackStreamEx(miniblocks, this.opts?.unpackEnvelopeOpts)
             return this.streamViewFromUnpackedResponse(streamId, unpackedResponse)
         } catch (err) {
             this.logCall('getStreamEx', streamId, 'ERROR', err)
@@ -1442,7 +1448,10 @@ export class Client
                     const response = await this.rpcClient.getStream({
                         streamId: streamIdAsBytes(streamId),
                     })
-                    const unpacked = await unpackStream(response.stream, this.unpackEnvelopeOpts)
+                    const unpacked = await unpackStream(
+                        response.stream,
+                        this.opts?.unpackEnvelopeOpts,
+                    )
                     this.logCall('initStream calling initializingFromResponse', streamId)
                     await stream.initializeFromResponse(unpacked)
                     if (stream.view.syncCookie) {
@@ -2153,7 +2162,7 @@ export class Client
             streamId,
             fromInclusive,
             toExclusive,
-            this.unpackEnvelopeOpts,
+            this.opts?.unpackEnvelopeOpts,
         )
 
         await this.persistenceStore.saveMiniblocks(
@@ -2513,7 +2522,7 @@ export class Client
             this.entitlementsDelegate,
             this.userId,
             this.userDeviceKey(),
-            this.unpackEnvelopeOpts,
+            this.opts?.unpackEnvelopeOpts,
             this.logId,
         )
     }
