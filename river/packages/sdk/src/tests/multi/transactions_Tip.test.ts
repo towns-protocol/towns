@@ -119,6 +119,11 @@ describe('transactions_Tip', () => {
         expect(dummyTipEventCopy).toEqual(dummyTipEvent) // don't modify it please, it's used for error cases
     })
 
+    afterAll(async () => {
+        await bob.stop()
+        await alice.stop()
+    })
+
     test('addTip', async () => {
         // a user should be able to upload a transaction that
         // is a tip and is valid on chain
