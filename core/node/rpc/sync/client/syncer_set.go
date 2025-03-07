@@ -97,7 +97,7 @@ func NewSyncers(
 		log             = logging.FromCtx(ctx)
 		syncers         = make(map[common.Address]StreamsSyncer)
 		streamID2Syncer = make(map[StreamId]StreamsSyncer)
-		messages        = make(chan *SyncStreamsResponse, 256)
+		messages        = make(chan *SyncStreamsResponse, 500)
 		ss              = &SyncerSet{
 			ctx:                   ctx,
 			globalSyncOpCtxCancel: globalSyncOpCtxCancel,
