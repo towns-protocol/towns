@@ -620,10 +620,6 @@ func (s *PostgresAppRegistryStore) enqueueUnsendableMessages(
 			unsendableAppIds = append(unsendableAppIds, appId)
 		}
 	}
-	unsendableAppIdStrings := make([]string, len(unsendableAppIds))
-	for i, appId := range unsendableAppIds {
-		unsendableAppIdStrings[i] = hex.EncodeToString(appId[:])
-	}
 
 	rows, err = tx.Query(
 		ctx,
