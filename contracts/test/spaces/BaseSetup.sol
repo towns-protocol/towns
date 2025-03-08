@@ -18,6 +18,8 @@ import {INodeOperator} from "contracts/src/base/registry/facets/operator/INodeOp
 import {IEntryPoint} from "account-abstraction/interfaces/IEntryPoint.sol";
 import {ICreateSpace} from "contracts/src/factory/facets/create/ICreateSpace.sol";
 import {ITowns} from "contracts/src/tokens/towns/mainnet/ITowns.sol";
+import {IAppInstaller} from "contracts/src/app/interfaces/IAppInstaller.sol";
+import {IAppRegistry} from "contracts/src/app/interfaces/IAppRegistry.sol";
 
 // libraries
 import {MessageHashUtils} from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
@@ -42,6 +44,7 @@ import {DeployTownsBase} from "contracts/scripts/deployments/utils/DeployTownsBa
 import {DeployProxyBatchDelegation} from "contracts/scripts/deployments/utils/DeployProxyBatchDelegation.s.sol";
 import {DeployBaseRegistry} from "contracts/scripts/deployments/diamonds/DeployBaseRegistry.s.sol";
 import {DeployRiverAirdrop} from "contracts/scripts/deployments/diamonds/DeployRiverAirdrop.s.sol";
+import {DeployAppStore} from "contracts/scripts/deployments/diamonds/DeployAppStore.s.sol";
 
 /*
  * @notice - This is the base setup to start testing the entire suite of contracts
@@ -59,6 +62,7 @@ contract BaseSetup is TestUtils, EIP712Utils, SpaceHelper {
   DeployProxyBatchDelegation internal deployProxyBatchDelegation =
     new DeployProxyBatchDelegation();
   DeployRiverAirdrop internal deployRiverAirdrop = new DeployRiverAirdrop();
+  DeployAppStore internal deployAppStore = new DeployAppStore();
 
   address[] internal operators;
   address[] internal nodes;
@@ -90,6 +94,7 @@ contract BaseSetup is TestUtils, EIP712Utils, SpaceHelper {
   address internal tieredPricingModule;
 
   address internal riverAirdrop;
+  address internal appStore;
 
   SimpleAccountFactory internal simpleAccountFactory;
 
@@ -98,6 +103,8 @@ contract BaseSetup is TestUtils, EIP712Utils, SpaceHelper {
   IWalletLink internal walletLink;
   INodeOperator internal nodeOperator;
   EIP712Facet eip712Facet;
+  IAppInstaller internal appInstaller;
+  IAppRegistry internal appRegistry;
 
   MockMessenger internal messenger;
 
@@ -150,10 +157,15 @@ contract BaseSetup is TestUtils, EIP712Utils, SpaceHelper {
     implementationRegistry = IImplementationRegistry(spaceFactory);
     eip712Facet = EIP712Facet(spaceFactory);
 
-    // River Airdrop
+    // Towns Airdrop
     deployRiverAirdrop.setBaseRegistry(baseRegistry);
     deployRiverAirdrop.setSpaceFactory(spaceFactory);
     riverAirdrop = deployRiverAirdrop.deploy(deployer);
+
+    // App Store
+    appStore = deployAppStore.deploy(deployer);
+    appInstaller = IAppInstaller(appStore);
+    appRegistry = IAppRegistry(appStore);
 
     // Base Registry Diamond
     bridge = TownsLib.L2_STANDARD_BRIDGE;
@@ -163,6 +175,7 @@ contract BaseSetup is TestUtils, EIP712Utils, SpaceHelper {
     ISpaceOwner(spaceOwner).setFactory(spaceFactory);
     IImplementationRegistry(spaceFactory).addImplementation(baseRegistry);
     IImplementationRegistry(spaceFactory).addImplementation(riverAirdrop);
+    IImplementationRegistry(spaceFactory).addImplementation(appStore);
     ISpaceDelegation(baseRegistry).setRiverToken(townsToken);
     ISpaceDelegation(baseRegistry).setMainnetDelegation(baseRegistry);
     IMainnetDelegation(baseRegistry).setProxyDelegation(mainnetProxyDelegation);

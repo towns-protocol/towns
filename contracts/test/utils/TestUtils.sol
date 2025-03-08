@@ -61,6 +61,7 @@ contract TestUtils is Context, Test {
         )
       )
     );
+
     // solhint-enable
   }
 

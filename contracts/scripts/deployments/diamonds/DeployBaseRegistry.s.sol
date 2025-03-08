@@ -48,6 +48,7 @@ contract DeployBaseRegistry is DiamondHelper, Deployer {
   DeployMockMessenger messengerHelper = new DeployMockMessenger();
   DeployEIP712Facet eip712Helper = new DeployEIP712Facet();
   DeployXChain xchainHelper = new DeployXChain();
+
   address multiInit;
   address diamondCut;
   address diamondLoupe;
