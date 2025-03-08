@@ -927,9 +927,10 @@ func (ru *aeBlockchainTransactionRules) validBlockchainTransaction_CheckReceiptM
 		var amountBefore = big.NewInt(0)
 		if idx != len(meta.GetPreTokenBalances()) {
 			var ok bool
-			amountBefore, ok = new(big.Int).SetString(meta.GetPreTokenBalances()[idx].Amount.Amount, 0)
+			amountString := meta.GetPreTokenBalances()[idx].Amount.Amount
+			amountBefore, ok = new(big.Int).SetString(amountString, 0)
 			if !ok {
-				return false, RiverError(Err_INVALID_ARGUMENT, "invalid pre token balance amount")
+				return false, RiverError(Err_INVALID_ARGUMENT, "invalid pre token balance amount", "amount", amountString)
 			}
 		}
 
