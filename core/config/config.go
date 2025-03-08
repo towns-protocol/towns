@@ -452,7 +452,7 @@ type AppRegistryConfig struct {
 
 	// NumMessagesSendWorkers controls the number of workers allocated to make webhook calls. These
 	// workers empty the queue of outgoing webhook calls, whether they are for message sends or key
-	// solicitations.
+	// solicitations. If unset or set to < 1, it will default to 50.
 	NumMessageSendWorkers int
 }
 
