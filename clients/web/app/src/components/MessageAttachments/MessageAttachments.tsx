@@ -34,8 +34,9 @@ import { PATHS } from 'routes'
 import { ErrorBoundary } from '@components/ErrorBoundary/ErrorBoundary'
 import { addressFromSpaceId } from 'ui/utils/utils'
 import { minterRoleId } from '@components/SpaceSettingsPanel/rolePermissions.const'
-import { TradingChartAttachment } from '@components/TradingChart/TradingChart'
 import { useSizeContext } from 'ui/hooks/useSizeContext'
+
+import { Ticker } from '@components/TradingChart/Ticker'
 import { MessageAttachmentsContext } from './MessageAttachmentsContext'
 
 const emptyArray: never[] = []
@@ -45,8 +46,9 @@ export const MessageAttachments = (props: {
     onClick?: (e: React.MouseEvent) => void
     onAttachmentClick?: (streamId: string) => void
     eventId: string | undefined
+    threadParentId?: string
 }) => {
-    const { onAttachmentClick, attachments, onClick, eventId } = props
+    const { onAttachmentClick, attachments, onClick, eventId, threadParentId } = props
 
     // prevent recursive rendering of message attachments
     const isMessageAttachementContext =
@@ -141,10 +143,14 @@ export const MessageAttachments = (props: {
             {/* show ticker attachments in vertical stack */}
             {tickerAttachments.length > 0 && (
                 <Stack>
-                    {tickerAttachments.map((ticker) => {
+                    {tickerAttachments.slice(0, 1).map((ticker) => {
                         return (
                             <Box key={ticker.id} gap="lg">
-                                <TradingChartAttachment attachment={ticker} eventId={eventId} />
+                                <Ticker
+                                    attachment={ticker}
+                                    eventId={eventId}
+                                    threadParentId={threadParentId}
+                                />
                             </Box>
                         )
                     })}

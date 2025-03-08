@@ -1,5 +1,3 @@
-import React, { useCallback, useContext, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import { TickerAttachment } from '@river-build/sdk'
 import {
     AreaSeries,
     CandlestickSeries,
@@ -13,33 +11,24 @@ import {
     createChart,
 } from 'lightweight-charts'
 import { zip } from 'lodash'
-import { useInView } from 'react-intersection-observer'
-import { useMyUserId, useUserLookupContext } from 'use-towns-client'
-import { ToneName, themes } from 'ui/styles/themes'
-import { Box, Button, Dropdown, Icon, IconButton, Pill, SizeBox, Stack, Text } from '@ui'
-import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
-import { useStore } from 'store/store'
-import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
-import { formatCompactNumber } from '@components/Web3/Trading/tradingUtils'
-import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
-import { CHANNEL_INFO_PARAMS } from 'routes'
-import { useSizeContext } from 'ui/hooks/useSizeContext'
-import { shimmerClass } from 'ui/styles/globals/shimmer.css'
-import { TokenIcon } from '@components/Web3/Trading/ui/TokenIcon'
-import { TokenPrice } from '@components/Web3/Trading/ui/TokenPrice'
-import { useOpenMessageThread } from 'hooks/useOpenThread'
+import React, { useCallback, useContext, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useUserLookupContext } from 'use-towns-client'
+import { Avatar } from '@components/Avatar/Avatar'
 import { TickerThreadContext } from '@components/MessageThread/TickerThreadContext'
-import { MessageTimelineContext } from '@components/MessageTimeline/MessageTimelineContext'
-import { useTokenBalance } from '@components/Web3/Trading/useTokenBalance'
-import { formatUnits } from 'hooks/useBalance'
+import { TokenTransferImpl } from '@components/MessageTimeIineItem/items/TokenTransfer'
 import {
     TokenTransferRollupEvent,
     useTradingContext,
 } from '@components/Web3/Trading/TradingContextProvider'
-import { Avatar } from '@components/Avatar/Avatar'
-import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
+import { useTokenBalance } from '@components/Web3/Trading/useTokenBalance'
+import { Box, Dropdown, IconButton, SizeBox, Stack, Text } from '@ui'
+import { useStore } from 'store/store'
+import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
+import { useSizeContext } from 'ui/hooks/useSizeContext'
+import { ToneName, themes } from 'ui/styles/themes'
 import { vars } from 'ui/styles/vars.css'
-import { TokenTransferImpl } from '@components/MessageTimeIineItem/items/TokenTransfer'
+import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
+import { TickerInfoBox } from './TickerInfoBox'
 import { GetBars, TimeFrame, useCoinBars } from './useCoinBars'
 import { useCoinData } from './useCoinData'
 const CHART_TIME_FORMAT_OPTIONS: {
@@ -53,95 +42,6 @@ const CHART_TIME_FORMAT_OPTIONS: {
     '365d': { month: 'short', year: 'numeric' },
 }
 
-export const TradingChartAttachment = (props: {
-    attachment: TickerAttachment
-    eventId: string | undefined
-}) => {
-    const { attachment, eventId } = props
-    const { ref, inView } = useInView({
-        rootMargin: '10px 0px',
-    })
-    const { openPanel } = usePanelActions()
-    // a little workaround to cover the case where old tickers were posted
-    // a temp chainId for solana
-    const remappedChain =
-        attachment.chainId === '1151111081099710' ? 'solana-mainnet' : attachment.chainId
-    const { onOpenMessageThread } = useOpenMessageThread()
-
-    const isTradeThreadContext = useContext(TickerThreadContext) !== undefined
-    const timelineContext = useContext(MessageTimelineContext)
-
-    const onTradeClick = useCallback(
-        (mode: 'buy' | 'sell') => {
-            // if the user is not in a space, open the trade panel
-            // for now, we don't support threaded trading in DMs
-            if (eventId && timelineContext?.spaceId) {
-                onOpenMessageThread(eventId)
-            } else {
-                openPanel(CHANNEL_INFO_PARAMS.TRADE_PANEL, {
-                    mode,
-                    tokenAddress: attachment.address,
-                    chainId: remappedChain,
-                })
-            }
-        },
-        [
-            eventId,
-            onOpenMessageThread,
-            openPanel,
-            attachment.address,
-            remappedChain,
-            timelineContext,
-        ],
-    )
-
-    const { containerWidth } = useSizeContext()
-
-    return (
-        <Stack
-            gap="paragraph"
-            rounded="md"
-            style={{
-                width: 550,
-                maxWidth: containerWidth - 80,
-            }}
-            background="level2"
-            ref={ref}
-            overflow="hidden"
-            paddingBottom="md"
-        >
-            <TradingChart
-                address={props.attachment.address}
-                chainId={remappedChain}
-                disabled={!inView}
-            />
-            {!isTradeThreadContext && (
-                <Stack horizontal paddingX paddingY="none" gap="sm">
-                    <Button
-                        grow
-                        size="button_x5"
-                        tone="level3"
-                        rounded="full"
-                        color="cta1"
-                        onClick={() => onTradeClick('buy')}
-                    >
-                        <Text>Buy</Text>
-                    </Button>
-                    <Button
-                        grow
-                        size="button_x5"
-                        tone="level3"
-                        rounded="full"
-                        color="peach"
-                        onClick={() => onTradeClick('sell')}
-                    >
-                        <Text>Sell</Text>
-                    </Button>
-                </Stack>
-            )}
-        </Stack>
-    )
-}
 export const TradingChart = (props: { address: string; chainId: string; disabled?: boolean }) => {
     const { address, chainId, disabled } = props
     const balance = useTokenBalance(chainId, address)
@@ -183,12 +83,6 @@ export const TradingChart = (props: { address: string; chainId: string; disabled
     })
 
     const [isFocused, setIsFocused] = useState(false)
-
-    const [isExpanded, setIsExpanded] = useState(false)
-
-    const onToggleExpanded = useCallback(() => {
-        setIsExpanded((e) => !e)
-    }, [])
 
     return (
         <>
@@ -241,211 +135,14 @@ export const TradingChart = (props: { address: string; chainId: string; disabled
                 </Box>
             </Box>
             <Stack paddingX paddingY="none" gap="md">
-                {coinData ? (
-                    <>
-                        <Stack horizontal={isTradingThreadContext} gap="paragraph">
-                            <Stack horizontal gap="sm" alignItems="center" insetY="xxs">
-                                <TokenIcon
-                                    asset={{
-                                        imageUrl: coinData.token.info.imageThumbUrl ?? '',
-                                        chain: chainId,
-                                    }}
-                                />
-                                <Box maxWidth="200" overflow="hidden" paddingY="xs" gap="sm">
-                                    <Stack horizontal gap="sm" alignItems="end">
-                                        <Text
-                                            truncate
-                                            color="gray2"
-                                            maxWidth="150"
-                                            fontSize="sm"
-                                            fontWeight="strong"
-                                            textTransform="uppercase"
-                                        >
-                                            {coinData.token.symbol}
-                                        </Text>
-                                        <ClipboardCopy
-                                            maxWidth="100"
-                                            color="gray2"
-                                            fontSize="sm"
-                                            gap="none"
-                                            clipboardContent={address}
-                                            label={address}
-                                        />
-                                    </Stack>
-                                    <Text truncate maxWidth="250" fontSize="lg" fontWeight="strong">
-                                        {coinData.token.name}
-                                    </Text>
-                                </Box>
-                            </Stack>
-                            <Stack horizontal grow gap="sm">
-                                <Stack
-                                    grow
-                                    horizontal={!isTradingThreadContext}
-                                    gap="sm"
-                                    alignItems="end"
-                                >
-                                    <TokenPrice fontWeight="strong" fontSize="lg" before="$">
-                                        {coinData.priceUSD}
-                                    </TokenPrice>
-                                    <Stack horizontal gap="sm" alignItems="end">
-                                        <TickerChangeIndicator change={Number(coinData.change24)} />
-                                        {!isTradingThreadContext && (
-                                            <Text color="gray2" size="sm">
-                                                Past day
-                                            </Text>
-                                        )}
-                                    </Stack>
-                                </Stack>
-                                {isTradingThreadContext && (
-                                    <Stack centerContent>
-                                        <IconButton
-                                            style={{
-                                                transform: !isExpanded ? 'none' : 'rotate(180deg)',
-                                            }}
-                                            icon="arrowDown"
-                                            color="default"
-                                            onClick={onToggleExpanded}
-                                        />
-                                    </Stack>
-                                )}
-                            </Stack>
-                        </Stack>
-                        {(!isTradingThreadContext || isExpanded) && (
-                            <Stack gap="sm">
-                                {(balance > 0n && coinData) || tradingUserIds.length > 0 ? (
-                                    <Stack grow horizontal gap="sm" color="gray2" flexWrap="wrap">
-                                        {balance > 0n && coinData && (
-                                            <Pill background="lightHover" whiteSpace="nowrap">
-                                                <Stack horizontal gap="xs" alignItems="center">
-                                                    <Icon
-                                                        type="wallet"
-                                                        size="square_xs"
-                                                        color="gray2"
-                                                    />
-                                                    <Text fontSize="sm" color="gray1">
-                                                        {formatCompactNumber(
-                                                            Number(
-                                                                formatUnits(
-                                                                    balance,
-                                                                    coinData.token.decimals,
-                                                                ),
-                                                            ),
-                                                        )}
-                                                    </Text>
-                                                </Stack>
-                                            </Pill>
-                                        )}
-                                        {tradingUserIds.length > 0 && (
-                                            <Pill
-                                                background="lightHover"
-                                                color="inherit"
-                                                whiteSpace="nowrap"
-                                            >
-                                                <TradingUserIds userIds={tradingUserIds} />
-                                            </Pill>
-                                        )}
-                                    </Stack>
-                                ) : (
-                                    <></>
-                                )}
-                                <Stack grow horizontal gap="sm" color="gray2" flexWrap="wrap">
-                                    {/* 
-                            `codexResponse.marketCap` is actually not the market cap, but the FDV.
-                            This is a bit confusing, but it's how the API is.
-                            Market cap is `codexResponse.token.info.circulatingSupply * codexResponse.priceUSD`
-                            (&#8201; is "thin space")
-                            */}
-                                    <Pill
-                                        background="lightHover"
-                                        color="inherit"
-                                        whiteSpace="nowrap"
-                                    >
-                                        <Text fontSize="sm">
-                                            LIQ&#8201;$
-                                            {formatCompactNumber(Number(coinData.liquidity))}
-                                        </Text>
-                                    </Pill>
-                                    <Pill
-                                        background="lightHover"
-                                        color="inherit"
-                                        whiteSpace="nowrap"
-                                    >
-                                        <Text fontSize="sm">
-                                            VOL&#8201;$
-                                            {formatCompactNumber(Number(coinData.volume24))}
-                                        </Text>
-                                    </Pill>
-                                    <Pill
-                                        background="lightHover"
-                                        color="inherit"
-                                        whiteSpace="nowrap"
-                                    >
-                                        <Text fontSize="sm">
-                                            MCAP&#8201; $
-                                            {formatCompactNumber(
-                                                Number(coinData.token.info.circulatingSupply) *
-                                                    Number(coinData.priceUSD),
-                                            )}
-                                        </Text>
-                                    </Pill>
-                                    <Pill
-                                        background="lightHover"
-                                        color="inherit"
-                                        whiteSpace="nowrap"
-                                    >
-                                        <Text fontSize="sm">
-                                            HDLRS&#8201;{formatCompactNumber(coinData.holders)}
-                                        </Text>
-                                    </Pill>
-                                    <Pill
-                                        background="lightHover"
-                                        color="inherit"
-                                        whiteSpace="nowrap"
-                                    >
-                                        <Text fontSize="sm">
-                                            FDV&#8201;$
-                                            {formatCompactNumber(Number(coinData.marketCap))}
-                                        </Text>
-                                    </Pill>
-                                </Stack>
-                            </Stack>
-                        )}
-                    </>
-                ) : (
-                    <>
-                        <Stack horizontal alignItems="center">
-                            <Stack horizontal gap="sm" alignItems="center">
-                                <Box
-                                    width="x2.5"
-                                    height="x2.5"
-                                    rounded="full"
-                                    className={shimmerClass}
-                                />
-                            </Stack>
-                            <Box grow />
-                            <Box>
-                                <Box
-                                    height="x2"
-                                    className={shimmerClass}
-                                    width="x12"
-                                    rounded="md"
-                                />
-                            </Box>
-                        </Stack>
-
-                        <Box height="x2" className={shimmerClass} width="x12" rounded="md" />
-
-                        <Stack horizontal grow gap="sm">
-                            <Box height="x2" className={shimmerClass} width="x12" rounded="md" />
-                        </Stack>
-                        <Stack horizontal grow gap="sm" color="gray1">
-                            <Box height="x2" className={shimmerClass} rounded="md" width="x6" />
-                            <Box height="x2" className={shimmerClass} rounded="md" width="x6" />
-                            <Box height="x2" className={shimmerClass} rounded="md" width="x6" />
-                            <Box height="x2" className={shimmerClass} rounded="md" width="x6" />
-                        </Stack>
-                    </>
-                )}
+                <TickerInfoBox
+                    minimal={isTradingThreadContext}
+                    coinData={coinData}
+                    address={address}
+                    chainId={chainId}
+                    balance={balance}
+                    tradingUserIds={tradingUserIds}
+                />
             </Stack>
         </>
     )
@@ -686,75 +383,6 @@ const ChartTransfer = ({ transfer }: { transfer: TokenTransferRollupEvent }) => 
                 <Avatar size="avatar_xs" userId={transfer.userId} />
             </Box>
         </Box>
-    )
-}
-
-const TickerChangeIndicator = ({ change }: { change: number }) => (
-    <Box
-        horizontal
-        alignItems="center"
-        gap="xs"
-        paddingX="sm"
-        paddingY="xs"
-        rounded="md"
-        insetBottom="xxs"
-        background={change > 0 ? 'positiveSubtle' : 'peachSubtle'}
-        color={change > 0 ? 'positive' : 'peach'}
-    >
-        <Icon size="square_xxs" type={change > 0 ? 'arrowSmallUp' : 'arrowSmallDown'} />
-        <Text fontWeight="strong" size="sm">
-            {Math.abs(change).toFixed(2)}%
-        </Text>
-    </Box>
-)
-
-const TradingUserIds = ({ userIds }: { userIds: string[] }) => {
-    const { lookupUser } = useUserLookupContext()
-    const myUserId = useMyUserId()
-
-    const summaryText = useMemo(() => {
-        if (userIds.length === 0) {
-            return ''
-        }
-        const getPrettyDisplayNameOrYou = (userId: string) => {
-            if (userId === myUserId) {
-                return 'you'
-            }
-            return getPrettyDisplayName(lookupUser(userId))
-        }
-        if (userIds.length === 1) {
-            return getPrettyDisplayNameOrYou(userIds[0]) + ' traded'
-        }
-        if (userIds.length === 2) {
-            return (
-                getPrettyDisplayNameOrYou(userIds[0]) +
-                ' and ' +
-                getPrettyDisplayNameOrYou(userIds[1]) +
-                ' traded'
-            )
-        }
-        const prefix =
-            getPrettyDisplayNameOrYou(userIds[0]) + ', ' + getPrettyDisplayNameOrYou(userIds[1])
-        return userIds.length == 3
-            ? prefix + ' and one other traded'
-            : prefix + ' and ' + (userIds.length - 2) + ' others traded'
-    }, [lookupUser, userIds, myUserId])
-
-    return (
-        <Stack horizontal gap="xs" alignItems="center" paddingLeft="sm">
-            <Stack horizontal gap="xs">
-                {userIds.slice(0, 3).map((userId) => (
-                    <Box insetLeft="sm" paddingLeft="xs" key={userId}>
-                        <Box border="faint" rounded="full" zIndex="above">
-                            <Avatar size="avatar_xs" userId={userId} />
-                        </Box>
-                    </Box>
-                ))}
-            </Stack>
-            <Text fontSize="sm" color="default">
-                {summaryText}
-            </Text>
-        </Stack>
     )
 }
 

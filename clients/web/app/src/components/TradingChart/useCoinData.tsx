@@ -107,7 +107,7 @@ export const useCoinData = ({
     }
     `
 
-    const { data, isLoading } = useQuery({
+    const { data, isLoading, isError, error } = useQuery({
         queryKey: ['searchTokens', query],
         queryFn: async () => {
             const apiKey = env.VITE_CODEX_API_KEY
@@ -129,5 +129,10 @@ export const useCoinData = ({
         enabled: !disabled,
     })
 
-    return { data: data as GetCoinDataResponse | undefined, isLoading }
+    return {
+        data: data as GetCoinDataResponse | undefined,
+        isLoading,
+        isError,
+        error,
+    }
 }

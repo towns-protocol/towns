@@ -94,17 +94,7 @@ export const MessageThread = (props: {
         isChannelWritable,
     }
 
-    const editorContent = tickerAttachment ? (
-        <WalletReady>
-            {({ getSigner }) => (
-                <ThreadEditor {...editorProps} {...props.editorProps} getSigner={getSigner} />
-            )}
-        </WalletReady>
-    ) : (
-        <ThreadEditor {...editorProps} {...props.editorProps} />
-    )
-
-    const messageContent = (
+    const timelineContent = (
         <MessageTimelineWrapper
             spaceId={spaceId}
             channelId={channelId}
@@ -115,6 +105,16 @@ export const MessageThread = (props: {
         >
             <MessageTimeline {...timelineProps} />
         </MessageTimelineWrapper>
+    )
+
+    const editorContent = tickerAttachment ? (
+        <WalletReady>
+            {({ getSigner }) => (
+                <ThreadEditor {...editorProps} {...props.editorProps} getSigner={getSigner} />
+            )}
+        </WalletReady>
+    ) : (
+        <ThreadEditor {...editorProps} {...props.editorProps} />
     )
 
     return (
@@ -128,9 +128,9 @@ export const MessageThread = (props: {
                 disableDrop={!isChannelWritable}
             >
                 {MessageContainer ? (
-                    <MessageContainer>{messageContent}</MessageContainer>
+                    <MessageContainer>{timelineContent}</MessageContainer>
                 ) : (
-                    messageContent
+                    timelineContent
                 )}
                 {EditorContainer ? (
                     <EditorContainer>{editorContent}</EditorContainer>
