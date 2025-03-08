@@ -9,7 +9,11 @@ contract SolanaUtilsTest is TestUtils {
   // Test data
   uint256[5] internal validExtPubKey;
   bytes32 internal validCompressedKey;
-  string internal validSolanaAddress;
+
+  // Reference values for testing
+  string internal knownBase58ForZero;
+  bytes32 internal knownBytes;
+  string internal knownBase58ForKnownBytes;
 
   function setUp() public {
     // Set up test data with known values
@@ -19,12 +23,19 @@ contract SolanaUtilsTest is TestUtils {
     // The compressed key is the 5th element of the extended key
     validCompressedKey = bytes32(validExtPubKey[4]);
 
-    // Pre-compute the expected Solana address for our test key
-    // This would be the Base58 encoding of validCompressedKey
-    // For testing purposes, we'll use the actual function to generate it
-    // and then verify its behavior in the tests
-    validSolanaAddress = this.callToBase58String(validCompressedKey);
+    // Set up reference values for testing
+    knownBase58ForZero = "11111111111111111111111111111111";
+
+    // Known input bytes and their expected Base58 encoding
+    knownBytes = bytes32(
+      uint256(
+        0x0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20
+      )
+    );
+    // This is the actual Base58 encoding of knownBytes, computed externally
+    knownBase58ForKnownBytes = "4wBqpZM9xaSheZzJSMawUKKwhdpChKbZ5eu5ky4Vigw";
   }
+
   // Test getCompressedPublicKey
   function testGetCompressedPublicKey() public view {
     bytes32 result = this.callGetCompressedPublicKey(validExtPubKey);
@@ -37,39 +48,22 @@ contract SolanaUtilsTest is TestUtils {
 
   // Test toBase58String with various inputs
   function testToBase58String() public view {
-    // Test with our valid compressed key
-    string memory result = this.callToBase58String(validCompressedKey);
-
-    assertEq(
-      result,
-      validSolanaAddress,
-      "Base58 encoding should match expected value"
-    );
-
     // Test with zero value
     bytes32 zeroBytes = bytes32(0);
     string memory zeroResult = this.callToBase58String(zeroBytes);
 
-    string memory expectedZeroResult = "11111111111111111111111111111111";
-
     assertEq(
       zeroResult,
-      expectedZeroResult,
+      knownBase58ForZero,
       "Base58 encoding of zero should be '11111111111111111111111111111111'"
     );
 
-    // Test with a known value
-    bytes32 knownBytes = bytes32(
-      uint256(
-        0x0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20
-      )
-    );
+    // Test with a known value and its pre-computed Base58 encoding
     string memory knownResult = this.callToBase58String(knownBytes);
-    // The expected result would be the Base58 encoding of the above bytes
-    // This is a placeholder - in a real test, you would compute this separately
-    assertTrue(
-      bytes(knownResult).length > 0,
-      "Base58 encoding should produce a non-empty string"
+    assertEq(
+      knownResult,
+      knownBase58ForKnownBytes,
+      "Base58 encoding should match the pre-computed value"
     );
   }
 
@@ -78,10 +72,13 @@ contract SolanaUtilsTest is TestUtils {
     string memory result = this.callGetCompressedPublicKeyAsString(
       validExtPubKey
     );
+
+    // Verify that the result matches what we'd get from the direct method
+    string memory directResult = this.callToBase58String(validCompressedKey);
     assertEq(
       result,
-      validSolanaAddress,
-      "Compressed public key as string should match expected Solana address"
+      directResult,
+      "getCompressedPublicKeyAsString should match direct Base58 encoding of the compressed key"
     );
   }
 
@@ -90,10 +87,13 @@ contract SolanaUtilsTest is TestUtils {
     string memory result = this.callGetSolanaAddressFromCompressedKey(
       validExtPubKey[4]
     );
+
+    // Verify that the result matches what we'd get from the direct method
+    string memory directResult = this.callToBase58String(validCompressedKey);
     assertEq(
       result,
-      validSolanaAddress,
-      "Solana address from compressed key should match expected address"
+      directResult,
+      "getSolanaAddressFromCompressedKey should match direct Base58 encoding of the compressed key"
     );
   }
 
@@ -102,17 +102,23 @@ contract SolanaUtilsTest is TestUtils {
     string memory result = this.callGetSolanaAddressFromFixedExtPubKey(
       validExtPubKey
     );
+
+    // Verify that the result matches what we'd get from the direct method
+    string memory directResult = this.callToBase58String(validCompressedKey);
     assertEq(
       result,
-      validSolanaAddress,
-      "Solana address from fixed ext pubkey should match expected address"
+      directResult,
+      "getSolanaAddressFromFixedExtPubKey should match direct Base58 encoding of the compressed key"
     );
   }
 
   // Test isValidSolanaAddress with pubkey
   function testIsValidSolanaAddressWithPubkey() public view {
+    // Generate the Solana address directly
+    string memory expectedAddress = this.callToBase58String(validCompressedKey);
+
     bool result = this.callIsValidSolanaAddress(
-      validSolanaAddress,
+      expectedAddress,
       validExtPubKey
     );
     assertTrue(
@@ -135,6 +141,11 @@ contract SolanaUtilsTest is TestUtils {
 
   // Test isValidSolanaAddress (string only)
   function testIsValidSolanaAddress() external view {
+    // Generate a valid Solana address
+    string memory validSolanaAddress = this.callToBase58String(
+      validCompressedKey
+    );
+
     // Test with valid address format
     bool result = this.callIsValidSolanaAddress(validSolanaAddress);
     assertTrue(result, "Valid Solana address format should be validated");
@@ -191,42 +202,36 @@ contract SolanaUtilsTest is TestUtils {
       )
     );
     string memory leadingZerosResult = this.callToBase58String(leadingZeros);
-    // The expected result would have multiple '1's at the beginning (Base58 encoding of zeros)
-    assertTrue(
-      bytes(leadingZerosResult).length > 0,
-      "Base58 encoding with leading zeros should produce a valid string"
+
+    // Expected result for leading zeros (computed externally)
+    string
+      memory expectedLeadingZerosResult = "11111111111111111111111111111162";
+    assertEq(
+      leadingZerosResult,
+      expectedLeadingZerosResult,
+      "Base58 encoding with leading zeros should match expected value"
     );
 
     // Test with all zeros
     bytes32 allZeros = bytes32(0);
     string memory allZerosResult = this.callToBase58String(allZeros);
-
-    // Instead of comparing strings directly, let's check the length and content
-    bytes memory allZerosResultBytes = bytes(allZerosResult);
-    assertTrue(
-      allZerosResultBytes.length > 0,
-      "Base58 encoding of all zeros should produce a non-empty string"
-    );
-
-    // Check if all characters are '1' (ASCII 49)
-    bool allOnes = true;
-    for (uint i = 0; i < allZerosResultBytes.length; i++) {
-      if (allZerosResultBytes[i] != "1") {
-        allOnes = false;
-        break;
-      }
-    }
-    assertTrue(
-      allOnes,
-      "Base58 encoding of all zeros should consist of only '1' characters"
+    assertEq(
+      allZerosResult,
+      knownBase58ForZero,
+      "Base58 encoding of all zeros should match expected value"
     );
 
     // Test with max value
     bytes32 maxValue = bytes32(type(uint256).max);
     string memory maxValueResult = this.callToBase58String(maxValue);
-    assertTrue(
-      bytes(maxValueResult).length > 0,
-      "Base58 encoding of max value should produce a valid string"
+
+    // Expected result for max value (computed externally)
+    string
+      memory expectedMaxValueResult = "JEKNVnkbo3jma5nREBBJCDoXFVeKkD56V3xKrvRmWxFG";
+    assertEq(
+      maxValueResult,
+      expectedMaxValueResult,
+      "Base58 encoding of max value should match expected value"
     );
   }
 
