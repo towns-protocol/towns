@@ -1,13 +1,8 @@
-import {
-    CryptoStore,
-    EntitlementsDelegate,
-    GroupEncryptionAlgorithmId,
-} from '@river-build/encryption'
-import { Client, ClientEvents } from '../../../client'
+import { CryptoStore, EntitlementsDelegate } from '@river-build/encryption'
+import { Client, ClientEvents, ClientOptions } from '../../../client'
 import { StreamRpcClient } from '../../../makeStreamRpcClient'
 import { SignerContext } from '../../../signerContext'
 import { Store } from '../../../store/store'
-import { UnpackEnvelopeOpts } from '../../../sign'
 
 export class TransactionalClient extends Client {
     store: Store
@@ -17,25 +12,9 @@ export class TransactionalClient extends Client {
         rpcClient: StreamRpcClient,
         cryptoStore: CryptoStore,
         entitlementsDelegate: EntitlementsDelegate,
-        persistenceStoreName?: string,
-        logNamespaceFilter?: string,
-        highPriorityStreamIds?: string[],
-        unpackEnvelopeOpts?: UnpackEnvelopeOpts,
-        defaultGroupEncryptionAlgorithm?: GroupEncryptionAlgorithmId,
-        logId?: string,
+        opts?: ClientOptions,
     ) {
-        super(
-            signerContext,
-            rpcClient,
-            cryptoStore,
-            entitlementsDelegate,
-            persistenceStoreName,
-            logNamespaceFilter,
-            highPriorityStreamIds,
-            unpackEnvelopeOpts,
-            defaultGroupEncryptionAlgorithm,
-            logId,
-        )
+        super(signerContext, rpcClient, cryptoStore, entitlementsDelegate, opts)
         this.store = store
     }
 

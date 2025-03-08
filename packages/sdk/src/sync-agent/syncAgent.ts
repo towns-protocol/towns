@@ -85,15 +85,17 @@ export class SyncAgent {
             signerContext: config.context,
             cryptoStore: RiverDbManager.getCryptoDb(this.userId, this.cryptoDbName()),
             entitlementsDelegate: new Entitlements(this.config.riverConfig, spaceDapp),
-            persistenceStoreName:
-                config.disablePersistenceStore !== true ? this.persistenceDbName() : undefined,
-            logNamespaceFilter: undefined,
-            highPriorityStreamIds: this.config.highPriorityStreamIds,
+            opts: {
+                persistenceStoreName:
+                    config.disablePersistenceStore !== true ? this.persistenceDbName() : undefined,
+                logNamespaceFilter: undefined,
+                highPriorityStreamIds: this.config.highPriorityStreamIds,
+                unpackEnvelopeOpts: config.unpackEnvelopeOpts,
+                logId: config.logId,
+            },
             rpcRetryParams: config.retryParams,
             encryptionDevice: config.encryptionDevice,
             onTokenExpired: config.onTokenExpired,
-            unpackEnvelopeOpts: config.unpackEnvelopeOpts,
-            logId: config.logId,
         })
 
         this.user = new User(this.userId, this.store, this.riverConnection)
