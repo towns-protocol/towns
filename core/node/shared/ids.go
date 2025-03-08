@@ -145,6 +145,13 @@ func UserMetadataStreamIdFromAddress(addr common.Address) StreamId {
 	return b
 }
 
+func UserInboxStreamIdFromAddress(addr common.Address) StreamId {
+	var b StreamId
+	b[0] = STREAM_USER_INBOX_BIN
+	copy(b[1:], addr.Bytes())
+	return b
+}
+
 func GetUserAddressFromStreamIdBytes(inStreamId []byte) (common.Address, error) {
 	streamId, err := StreamIdFromBytes(inStreamId)
 	if err != nil {

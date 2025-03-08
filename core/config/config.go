@@ -449,6 +449,11 @@ type AppRegistryConfig struct {
 	// testing only and should not be used in production environments, in order to prevent server side
 	// request forgery attacks.
 	AllowInsecureWebhooks bool
+
+	// NumMessagesSendWorkers controls the number of workers allocated to make webhook calls. These
+	// workers empty the queue of outgoing webhook calls, whether they are for message sends or key
+	// solicitations. If unset or set to < 1, it will default to 50.
+	NumMessageSendWorkers int
 }
 
 type LogConfig struct {
