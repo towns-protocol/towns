@@ -267,7 +267,7 @@ fork-base :;
 
 verify-base :;
 	@$(MAKE) verify-any rpc=base
-	@$(MAKE) explicit-verify-any rpc=base verifier=${BLOCKSCOUT_BASE_URL} etherscan=${BLOCKSCOUT_BASE_API_KEY}
+	@$(MAKE) explicit-verify-any rpc=base verifier=blockscout verifier-url=${BLOCKSCOUT_BASE_URL}
 
 
 
