@@ -57,7 +57,7 @@ func (p *MessageToAppProcessor) OnMessageEvent(
 	// Ignore membership changes, etc, and focus only on channel content.
 	if message != nil {
 		// log.Debugw("ChannelMessage detected", "appIds", appIds, "sessionId", message.SessionId, "channelId", channelId)
-		if err := p.cache.EnqueueMessages(ctx, appIds, message.SessionId, channelId, streamBytes); err != nil {
+		if err := p.cache.DispatchOrEnqueueMessages(ctx, appIds, message.SessionId, channelId, streamBytes); err != nil {
 			log.Errorw(
 				"Error enqueueing messages for stream event",
 				"event",

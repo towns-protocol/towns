@@ -18,7 +18,7 @@ import (
 type AppRegistryTrackedStreamView struct {
 	TrackedStreamViewImpl
 	listener track_streams.StreamEventListener
-	store    EncryptedMessageStore
+	queue    EncryptedMessageQueue
 }
 
 func (b *AppRegistryTrackedStreamView) processUserInboxMessage(ctx context.Context, event *ParsedEvent) error {
@@ -34,7 +34,7 @@ func (b *AppRegistryTrackedStreamView) processUserInboxMessage(ctx context.Conte
 				return err
 			}
 			for deviceKey, cipherTexts := range deviceCipherTexts {
-				if err := b.store.PublishSessionKeys(ctx, streamId, deviceKey, sessionIds, cipherTexts); err != nil {
+				if err := b.queue.PublishSessionKeys(ctx, streamId, deviceKey, sessionIds, cipherTexts); err != nil {
 					return err
 				}
 			}
@@ -68,7 +68,7 @@ func (b *AppRegistryTrackedStreamView) onNewEvent(ctx context.Context, view *Str
 			return false
 		}
 		memberAddress := common.BytesToAddress(bytes)
-		if b.store.HasRegisteredWebhook(ctx, memberAddress) {
+		if b.queue.HasRegisteredWebhook(ctx, memberAddress) {
 			appMembers.Add(member)
 		}
 		return false
@@ -103,11 +103,11 @@ func NewTrackedStreamForAppRegistryService(
 	cfg crypto.OnChainConfiguration,
 	stream *StreamAndCookie,
 	listener track_streams.StreamEventListener,
-	store EncryptedMessageStore,
+	store EncryptedMessageQueue,
 ) (TrackedStreamView, error) {
 	trackedView := &AppRegistryTrackedStreamView{
 		listener: listener,
-		store:    store,
+		queue:    store,
 	}
 	view, err := trackedView.TrackedStreamViewImpl.Init(ctx, streamId, cfg, stream, trackedView.onNewEvent)
 	if err != nil {

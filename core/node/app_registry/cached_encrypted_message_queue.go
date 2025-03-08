@@ -102,7 +102,7 @@ func (q *CachedEncryptedMessageQueue) PublishSessionKeys(
 
 // EnqueueMessages will immediately send a message for each device that has session keys, and will
 // enqueue unsendable messages and send them as soon as keys become available.
-func (q *CachedEncryptedMessageQueue) EnqueueMessages(
+func (q *CachedEncryptedMessageQueue) DispatchOrEnqueueMessages(
 	ctx context.Context,
 	appIds []common.Address,
 	sessionId string,

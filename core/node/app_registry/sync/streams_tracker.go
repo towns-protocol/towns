@@ -15,7 +15,7 @@ import (
 	"github.com/towns-protocol/towns/core/node/track_streams"
 )
 
-type EncryptedMessageStore interface {
+type EncryptedMessageQueue interface {
 	PublishSessionKeys(
 		ctx context.Context,
 		streamId shared.StreamId,
@@ -29,7 +29,7 @@ type EncryptedMessageStore interface {
 		appId common.Address,
 	) bool
 
-	EnqueueMessages(
+	DispatchOrEnqueueMessages(
 		ctx context.Context,
 		appIds []common.Address,
 		sessionId string,
@@ -42,7 +42,7 @@ type AppRegistryStreamsTracker struct {
 	// TODO: eventually this struct will contain references to whatever types of cache / storage access
 	// the TrackedStreamView for the app registry service needs.
 	track_streams.StreamsTrackerImpl
-	store EncryptedMessageStore
+	queue EncryptedMessageQueue
 }
 
 func NewAppRegistryStreamsTracker(
@@ -53,10 +53,10 @@ func NewAppRegistryStreamsTracker(
 	nodes []nodes.NodeRegistry,
 	metricsFactory infra.MetricsFactory,
 	listener track_streams.StreamEventListener,
-	store EncryptedMessageStore,
+	store EncryptedMessageQueue,
 ) (track_streams.StreamsTracker, error) {
 	tracker := &AppRegistryStreamsTracker{
-		store: store,
+		queue: store,
 	}
 	if err := tracker.StreamsTrackerImpl.Init(
 		ctx,
@@ -93,6 +93,6 @@ func (tracker *AppRegistryStreamsTracker) NewTrackedStream(
 		cfg,
 		stream,
 		tracker.StreamsTrackerImpl.Listener(),
-		tracker.store,
+		tracker.queue,
 	)
 }
