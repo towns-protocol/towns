@@ -189,7 +189,6 @@ func (syncOp *StreamSyncOperation) runCommandsProcessing(
 					cmd.Reply(err)
 					continue
 				}
-
 				cmd.Reply(syncers.AddStream(cmd.Ctx, nodeAddress, streamID, cmd.AddStreamReq.Msg.GetSyncPos()))
 			} else if cmd.RmStreamReq != nil {
 				streamID, err := shared.StreamIdFromBytes(cmd.RmStreamReq.Msg.GetStreamId())
