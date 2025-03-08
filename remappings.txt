@@ -1,5 +1,4 @@
 @openzeppelin/=node_modules/@openzeppelin/
-@openzeppelin/contracts/=node_modules/@openzeppelin/contracts
 account-abstraction/=node_modules/account-abstraction/contracts/
 ds-test/=node_modules/ds-test/src/
 forge-std/=node_modules/forge-std/src/
@@ -7,4 +6,4 @@ forge-std/=node_modules/forge-std/src/
 @prb/test/=node_modules/@prb/test/src/
 solady/=node_modules/solady/src/
 @river-build/diamond/=node_modules/@river-build/diamond/
-crypto-lib/=node_modules/crypto-lib/src
+crypto-lib/=node_modules/crypto-lib/src/
