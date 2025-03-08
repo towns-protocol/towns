@@ -428,6 +428,10 @@ export class Client
         }
     }
 
+    public onNetworkStatusChanged(isOnline: boolean) {
+        this.streams.onNetworkStatusChanged(isOnline)
+    }
+
     private async initUserStream(metadata: { spaceId: Uint8Array } | undefined) {
         this.userStreamId = makeUserStreamId(this.userId)
         const userStream = this.createSyncedStream(this.userStreamId)
