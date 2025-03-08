@@ -1,7 +1,7 @@
 import { SpacePayload_ChannelSettings, StreamSettings, PlainMessage } from '@river-build/proto'
 import { Permission } from '@river-build/web3'
 import { TSigner } from './web3-types'
-import { MessageType, Attachment, Membership } from '@river-build/sdk'
+import { MessageType, Attachment, Membership, Nft } from '@river-build/sdk'
 
 export interface ChannelData {
     spaceId: string | undefined
@@ -90,12 +90,6 @@ export interface TownsStreamMember {
     ensAddress?: string
     nft?: Nft
     ensName?: string
-}
-
-export interface Nft {
-    chainId: number
-    contractAddress: string
-    tokenId: string
 }
 
 export interface UserIdToMember {

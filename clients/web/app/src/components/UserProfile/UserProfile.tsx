@@ -1,7 +1,7 @@
-import { Nft, useMemberOf, useUserLookup } from 'use-towns-client'
+import { useMemberOf, useUserLookup } from 'use-towns-client'
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useEvent } from 'react-use-event-hook'
-import { isDefined } from '@river-build/sdk'
+import { Nft, isDefined } from '@river-build/sdk'
 import { AnimatePresence, MotionConfig } from 'framer-motion'
 import {
     Box,

@@ -1,4 +1,4 @@
-import { Nft } from './towns-types'
+import { Nft } from '@river-build/sdk'
 
 export type UserLookupContextType = {
     spaceId?: string
