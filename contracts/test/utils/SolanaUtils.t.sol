@@ -29,11 +29,11 @@ contract SolanaUtilsTest is TestUtils {
     // Known input bytes and their expected Base58 encoding
     knownBytes = bytes32(
       uint256(
-        0x0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20
+        0x850f2d6e02a47af824d09ab69dc42d70cb28cbfa249fb7ee57b9d256c12762ef
       )
     );
     // This is the actual Base58 encoding of knownBytes, computed externally
-    knownBase58ForKnownBytes = "4wBqpZM9xaSheZzJSMawUKKwhdpChKbZ5eu5ky4Vigw";
+    knownBase58ForKnownBytes = "9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin";
   }
 
   // Test getCompressedPublicKey
@@ -187,7 +187,8 @@ contract SolanaUtilsTest is TestUtils {
       "7Np41oeYqPefeNQEHSv1UDhYrehxin3NStELsSKCT4K2"
     ];
 
-    for (uint i = 0; i < realAddresses.length; i++) {
+    uint256 len = realAddresses.length;
+    for (uint256 i; i < len; ++i) {
       bool result = this.callIsValidSolanaAddress(realAddresses[i]);
       assertTrue(result, "Real-world Solana address should be validated");
     }
