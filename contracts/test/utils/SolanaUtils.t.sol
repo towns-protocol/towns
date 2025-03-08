@@ -2,6 +2,7 @@
 pragma solidity ^0.8.23;
 
 import {TestUtils} from "contracts/test/utils/TestUtils.sol";
+import {LibBytes} from "solady/utils/LibBytes.sol";
 import {SolanaUtils} from "contracts/src/factory/facets/wallet-link/libraries/SolanaUtils.sol";
 import {SCL_EIP6565_UTILS} from "crypto-lib/lib/libSCL_eddsaUtils.sol";
 
@@ -34,6 +35,13 @@ contract SolanaUtilsTest is TestUtils {
     );
     // This is the actual Base58 encoding of knownBytes, computed externally
     knownBase58ForKnownBytes = "9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin";
+  }
+
+  function test_fuzz_isBase58(bytes1 char) public pure {
+    assertEq(
+      (SolanaUtils.BASE58_MAP >> uint8(char)) & 1 != 0,
+      LibBytes.contains(SolanaUtils.ALPHABET, bytes.concat(char))
+    );
   }
 
   // Test getCompressedPublicKey
