@@ -44,6 +44,19 @@ export function errorToCodeException(error: unknown, category: ErrorCategory) {
         reason?: string
         code?: number | string
         data?: unknown
+        details?: string
+    }
+
+    // VIEM has great, formatted errors, which include a `details` field
+    // Filling the rest the code/data fields might not be necessary or even possible w/ their error messages, TBD
+    if (err.details) {
+        return new CodeException({
+            message: err.details,
+            code: err.code ?? '',
+            // unknown
+            data: err.data,
+            category,
+        })
     }
 
     const reason = err?.message || err?.reason
@@ -223,20 +236,18 @@ export function matchGasTooLowError(error: unknown):
 
 export function matchReplacementUnderpriced(error: unknown) {
     const err = errorToCodeException(error, 'replacement_underpriced')
-    // alchemy
-    if (err.code.toString().startsWith('-32')) {
-        const possibleGasErrors = [
-            // alchemy
-            'replacement underpriced',
-            // stackup
-            'replacement op',
-        ]
-        const match = possibleGasErrors.find((error) => err.message.includes(error))
-        if (match) {
-            return {
-                error: err,
-                type: match,
-            }
+
+    const possibleMessages = [
+        // alchemy/viem
+        'replacement underpriced',
+        // stackup
+        'replacement op',
+    ]
+    const match = possibleMessages.find((error) => err.message.includes(error))
+    if (match) {
+        return {
+            error: err,
+            type: match,
         }
     }
 }

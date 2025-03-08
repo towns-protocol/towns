@@ -13,7 +13,6 @@ import { estimateGasFeesWithReplacement } from './middleware/estimateGasFees'
 import { isUsingAlchemyBundler } from '../../utils/isUsingAlchemyBundler'
 import { paymasterProxyMiddleware } from './middleware/paymaster'
 import { isSponsoredOp } from '../../utils/isSponsoredOp'
-import { getGasFees } from './middleware/getGasFees'
 import {
     selectUserOpsByAddress,
     userOpsStore,
@@ -216,7 +215,8 @@ export const prepareUserOperation =
             isUsingAlchemyBundler(bundlerUrl) &&
             !isSponsoredOp({ paymasterAndData: request.paymasterAndData })
         ) {
-            const fees = await getGasFees({
+            const fees = await estimateGasFeesWithReplacement({
+                sender: account.address,
                 client: rpcClient,
             })
             request = {

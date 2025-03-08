@@ -81,6 +81,7 @@ export async function sendUseropWithPermissionless(
     }
 
     const resetUseropStore = () => {
+        console.log('[UserOperations] resetting user op store')
         const { setCurrent, reset, setSequenceName } = userOpsStore.getState()
         reset(sender)
         const space = args.spaceId ? spaceDapp?.getSpace(args.spaceId) : undefined
@@ -103,6 +104,7 @@ export async function sendUseropWithPermissionless(
     const pendingUserOp = selectUserOpsByAddress(sender).pending
 
     if (pendingUserOp.hash) {
+        console.log('[UserOperations] pending user op found, checking if it has landed...')
         try {
             // check if the pending op has landed
             const result = await getUserOperationReceipt({
@@ -111,7 +113,10 @@ export async function sendUseropWithPermissionless(
             })
 
             if (result) {
+                console.log('[UserOperations] previously pending user op landed', result)
                 resetUseropStore()
+            } else {
+                console.log('[UserOperations] previously pending user op has not landed')
             }
         } catch (error) {
             // TODO: retry getUserOperationReceipt
@@ -132,6 +137,10 @@ export async function sendUseropWithPermissionless(
         sender,
         hash: opResponse.userOpHash,
     })
+    console.log(
+        '[UserOperations] set pending user op',
+        userOpsStore.getState().userOps[sender].pending,
+    )
     return {
         userOpHash: opResponse.userOpHash,
         wait: async () => {
