@@ -290,7 +290,7 @@ func TestAppRegistry_ForwardsChannelEvents(t *testing.T) {
 
 	// Participant sends a test message to send to the channel with session id "session0"
 	testMessageText := "xyz"
-	event, err := events.MakeEnvelopeWithPayloadAndTags(
+	event, err := events.MakeEnvelopeWithPayload(
 		participant,
 		events.Make_ChannelPayload_Message_WithSession(testMessageText, "session0"),
 		&MiniblockRef{
