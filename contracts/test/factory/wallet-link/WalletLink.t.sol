@@ -74,7 +74,7 @@ contract WalletLinkTest is IWalletLinkBase, BaseSetup, DeployBase {
     vm.expectEmit(address(walletLink));
     emit LinkWalletToRootKey(wallet.addr, rootWallet.addr);
     walletLink.linkCallerToRootKey(
-      LinkedWallet(rootWallet.addr, signature, LINKED_WALLET_MESSAGE),
+      LinkRequest(rootWallet.addr, signature, LINKED_WALLET_MESSAGE),
       nonce
     );
     vm.stopPrank();
@@ -106,8 +106,8 @@ contract WalletLinkTest is IWalletLinkBase, BaseSetup, DeployBase {
     vm.expectEmit(address(walletLink));
     emit LinkWalletToRootKey(wallet.addr, rootWallet.addr);
     walletLink.linkWalletToRootKey(
-      LinkedWallet(wallet.addr, walletSignature, LINKED_WALLET_MESSAGE),
-      LinkedWallet(rootWallet.addr, rootSignature, LINKED_WALLET_MESSAGE),
+      LinkRequest(wallet.addr, walletSignature, LINKED_WALLET_MESSAGE),
+      LinkRequest(rootWallet.addr, rootSignature, LINKED_WALLET_MESSAGE),
       rootNonce
     );
     vm.stopPrank();
@@ -139,7 +139,7 @@ contract WalletLinkTest is IWalletLinkBase, BaseSetup, DeployBase {
       value: abi.encode(SolanaSpecificData({extPubKey: extPubKey}))
     });
 
-    NonEVMLinkedWallet memory nonEVMWallet = NonEVMLinkedWallet({
+    NonEVMLinkRequest memory nonEVMWallet = NonEVMLinkRequest({
       wallet: solanaWallet,
       signature: abi.encodePacked(r, s),
       message: consentMessage,
@@ -186,7 +186,7 @@ contract WalletLinkTest is IWalletLinkBase, BaseSetup, DeployBase {
       vmType: WalletLib.VirtualMachineType.SVM
     });
 
-    NonEVMLinkedWallet memory nonEVMWallet = NonEVMLinkedWallet({
+    NonEVMLinkRequest memory nonEVMWallet = NonEVMLinkRequest({
       wallet: solanaWallet,
       signature: "",
       message: "",
@@ -207,7 +207,7 @@ contract WalletLinkTest is IWalletLinkBase, BaseSetup, DeployBase {
       vmType: WalletLib.VirtualMachineType.SVM
     });
 
-    NonEVMLinkedWallet memory nonEVMWallet = NonEVMLinkedWallet({
+    NonEVMLinkRequest memory nonEVMWallet = NonEVMLinkRequest({
       wallet: solanaWallet,
       signature: "",
       message: "",
@@ -225,7 +225,7 @@ contract WalletLinkTest is IWalletLinkBase, BaseSetup, DeployBase {
       vmType: WalletLib.VirtualMachineType.SVM
     });
 
-    NonEVMLinkedWallet memory nonEVMWallet = NonEVMLinkedWallet({
+    NonEVMLinkRequest memory nonEVMWallet = NonEVMLinkRequest({
       wallet: solanaWallet,
       signature: "",
       message: "",
@@ -258,7 +258,7 @@ contract WalletLinkTest is IWalletLinkBase, BaseSetup, DeployBase {
 
     vm.prank(secondLinkedWallet.addr);
     walletLink.linkCallerToRootKey(
-      LinkedWallet(
+      LinkRequest(
         secondRootWallet.addr,
         secondSignature,
         LINKED_WALLET_MESSAGE
@@ -294,7 +294,7 @@ contract WalletLinkTest is IWalletLinkBase, BaseSetup, DeployBase {
       value: abi.encode(SolanaSpecificData({extPubKey: solanaExtPubKey}))
     });
 
-    NonEVMLinkedWallet memory nonEVMWallet = NonEVMLinkedWallet({
+    NonEVMLinkRequest memory nonEVMWallet = NonEVMLinkRequest({
       wallet: solanaWallet,
       signature: abi.encodePacked(r, s),
       message: consentMessage,
@@ -334,7 +334,7 @@ contract WalletLinkTest is IWalletLinkBase, BaseSetup, DeployBase {
     givenSolanaWalletIsLinkedToRootKey(secretSeed)
   {
     uint256 nonce = walletLink.getLatestNonceForRootKey(rootWallet.addr);
-    NonEVMLinkedWallet memory nonEVMWallet = _createNonEVMWallet(
+    NonEVMLinkRequest memory nonEVMWallet = _createNonEVMWallet(
       secretSeed,
       rootWallet.addr
     );
@@ -355,7 +355,7 @@ contract WalletLinkTest is IWalletLinkBase, BaseSetup, DeployBase {
     givenWalletIsLinkedViaCaller
   {
     uint256 nonce;
-    NonEVMLinkedWallet memory nonEVMWallet;
+    NonEVMLinkRequest memory nonEVMWallet;
 
     for (uint256 i = 0; i < MAX_LINKED_WALLETS; i++) {
       nonce = walletLink.getLatestNonceForRootKey(rootWallet.addr);
@@ -376,7 +376,7 @@ contract WalletLinkTest is IWalletLinkBase, BaseSetup, DeployBase {
     external
     givenWalletIsLinkedViaCaller
   {
-    NonEVMLinkedWallet memory nonEVMWallet = _createNonEVMWallet(
+    NonEVMLinkRequest memory nonEVMWallet = _createNonEVMWallet(
       _randomUint256(),
       rootWallet.addr
     );
@@ -394,7 +394,7 @@ contract WalletLinkTest is IWalletLinkBase, BaseSetup, DeployBase {
     external
     givenWalletIsLinkedViaCaller
   {
-    NonEVMLinkedWallet memory nonEVMWallet = _createNonEVMWallet(
+    NonEVMLinkRequest memory nonEVMWallet = _createNonEVMWallet(
       _randomUint256(),
       rootWallet.addr
     );
@@ -412,7 +412,7 @@ contract WalletLinkTest is IWalletLinkBase, BaseSetup, DeployBase {
     external
     givenWalletIsLinkedViaCaller
   {
-    NonEVMLinkedWallet memory nonEVMWallet = _createNonEVMWallet(
+    NonEVMLinkRequest memory nonEVMWallet = _createNonEVMWallet(
       _randomUint256(),
       rootWallet.addr
     );
@@ -439,7 +439,7 @@ contract WalletLinkTest is IWalletLinkBase, BaseSetup, DeployBase {
       consentMessage
     );
 
-    NonEVMLinkedWallet memory nonEVMWallet = _createNonEVMWallet(
+    NonEVMLinkRequest memory nonEVMWallet = _createNonEVMWallet(
       _randomUint256(),
       rootWallet.addr
     );
@@ -469,7 +469,7 @@ contract WalletLinkTest is IWalletLinkBase, BaseSetup, DeployBase {
     vm.prank(wallet.addr);
     vm.expectRevert(WalletLink__InvalidAddress.selector);
     walletLink.linkCallerToRootKey(
-      LinkedWallet(address(0), signature, LINKED_WALLET_MESSAGE),
+      LinkRequest(address(0), signature, LINKED_WALLET_MESSAGE),
       nonce
     );
   }
@@ -484,7 +484,7 @@ contract WalletLinkTest is IWalletLinkBase, BaseSetup, DeployBase {
     vm.prank(rootWallet.addr);
     vm.expectRevert(WalletLink__CannotLinkToSelf.selector);
     walletLink.linkCallerToRootKey(
-      LinkedWallet(rootWallet.addr, signature, LINKED_WALLET_MESSAGE),
+      LinkRequest(rootWallet.addr, signature, LINKED_WALLET_MESSAGE),
       nonce
     );
   }
@@ -510,7 +510,7 @@ contract WalletLinkTest is IWalletLinkBase, BaseSetup, DeployBase {
       )
     );
     walletLink.linkCallerToRootKey(
-      LinkedWallet(rootWallet.addr, signature, LINKED_WALLET_MESSAGE),
+      LinkRequest(rootWallet.addr, signature, LINKED_WALLET_MESSAGE),
       nonce
     );
     vm.stopPrank();
@@ -532,7 +532,7 @@ contract WalletLinkTest is IWalletLinkBase, BaseSetup, DeployBase {
       )
     );
     walletLink.linkCallerToRootKey(
-      LinkedWallet(wallet.addr, "", LINKED_WALLET_MESSAGE),
+      LinkRequest(wallet.addr, "", LINKED_WALLET_MESSAGE),
       nonce
     );
   }
@@ -555,7 +555,7 @@ contract WalletLinkTest is IWalletLinkBase, BaseSetup, DeployBase {
       )
     );
     walletLink.linkCallerToRootKey(
-      LinkedWallet(root, signature, LINKED_WALLET_MESSAGE),
+      LinkRequest(root, signature, LINKED_WALLET_MESSAGE),
       nonce2
     );
   }
@@ -576,7 +576,7 @@ contract WalletLinkTest is IWalletLinkBase, BaseSetup, DeployBase {
 
       vm.prank(account);
       walletLink.linkCallerToRootKey(
-        LinkedWallet({
+        LinkRequest({
           addr: rootWallet.addr,
           signature: signature,
           message: LINKED_WALLET_MESSAGE
@@ -592,7 +592,7 @@ contract WalletLinkTest is IWalletLinkBase, BaseSetup, DeployBase {
     vm.prank(failingAccount);
     vm.expectRevert(WalletLink__MaxLinkedWalletsReached.selector);
     walletLink.linkCallerToRootKey(
-      LinkedWallet(rootWallet.addr, signature, LINKED_WALLET_MESSAGE),
+      LinkRequest(rootWallet.addr, signature, LINKED_WALLET_MESSAGE),
       nonce
     );
   }
@@ -609,7 +609,7 @@ contract WalletLinkTest is IWalletLinkBase, BaseSetup, DeployBase {
     vm.prank(wallet.addr);
     vm.expectRevert(WalletLink__InvalidSignature.selector);
     walletLink.linkCallerToRootKey(
-      LinkedWallet(rootWallet.addr, signature, LINKED_WALLET_MESSAGE),
+      LinkRequest(rootWallet.addr, signature, LINKED_WALLET_MESSAGE),
       nonce
     );
   }
@@ -636,7 +636,7 @@ contract WalletLinkTest is IWalletLinkBase, BaseSetup, DeployBase {
       )
     );
     walletLink.linkCallerToRootKey(
-      LinkedWallet(rootWallet.addr, signature, LINKED_WALLET_MESSAGE),
+      LinkRequest(rootWallet.addr, signature, LINKED_WALLET_MESSAGE),
       nonce
     );
   }
@@ -653,8 +653,8 @@ contract WalletLinkTest is IWalletLinkBase, BaseSetup, DeployBase {
     vm.prank(smartAccount.addr);
     vm.expectRevert(WalletLink__InvalidAddress.selector);
     walletLink.linkWalletToRootKey(
-      LinkedWallet(address(0), "", LINKED_WALLET_MESSAGE),
-      LinkedWallet(address(0), "", LINKED_WALLET_MESSAGE),
+      LinkRequest(address(0), "", LINKED_WALLET_MESSAGE),
+      LinkRequest(address(0), "", LINKED_WALLET_MESSAGE),
       0
     );
   }
@@ -663,8 +663,8 @@ contract WalletLinkTest is IWalletLinkBase, BaseSetup, DeployBase {
     vm.prank(smartAccount.addr);
     vm.expectRevert(WalletLink__CannotLinkToSelf.selector);
     walletLink.linkWalletToRootKey(
-      LinkedWallet(wallet.addr, "", LINKED_WALLET_MESSAGE),
-      LinkedWallet(wallet.addr, "", LINKED_WALLET_MESSAGE),
+      LinkRequest(wallet.addr, "", LINKED_WALLET_MESSAGE),
+      LinkRequest(wallet.addr, "", LINKED_WALLET_MESSAGE),
       0
     );
   }
@@ -682,8 +682,8 @@ contract WalletLinkTest is IWalletLinkBase, BaseSetup, DeployBase {
       )
     );
     walletLink.linkWalletToRootKey(
-      LinkedWallet(wallet.addr, "", LINKED_WALLET_MESSAGE),
-      LinkedWallet(rootWallet.addr, "", LINKED_WALLET_MESSAGE),
+      LinkRequest(wallet.addr, "", LINKED_WALLET_MESSAGE),
+      LinkRequest(rootWallet.addr, "", LINKED_WALLET_MESSAGE),
       0
     );
     vm.stopPrank();
@@ -704,8 +704,8 @@ contract WalletLinkTest is IWalletLinkBase, BaseSetup, DeployBase {
       )
     );
     walletLink.linkWalletToRootKey(
-      LinkedWallet(anotherWallet, "", LINKED_WALLET_MESSAGE),
-      LinkedWallet(wallet.addr, "", LINKED_WALLET_MESSAGE),
+      LinkRequest(anotherWallet, "", LINKED_WALLET_MESSAGE),
+      LinkRequest(wallet.addr, "", LINKED_WALLET_MESSAGE),
       nonce
     );
   }
@@ -726,8 +726,8 @@ contract WalletLinkTest is IWalletLinkBase, BaseSetup, DeployBase {
       )
     );
     walletLink.linkWalletToRootKey(
-      LinkedWallet(rootWallet.addr, "", LINKED_WALLET_MESSAGE),
-      LinkedWallet(root, "", LINKED_WALLET_MESSAGE),
+      LinkRequest(rootWallet.addr, "", LINKED_WALLET_MESSAGE),
+      LinkRequest(root, "", LINKED_WALLET_MESSAGE),
       nonce2
     );
   }
@@ -746,8 +746,8 @@ contract WalletLinkTest is IWalletLinkBase, BaseSetup, DeployBase {
     vm.prank(smartAccount.addr);
     vm.expectRevert(WalletLink__InvalidSignature.selector);
     walletLink.linkWalletToRootKey(
-      LinkedWallet(wallet.addr, "", LINKED_WALLET_MESSAGE),
-      LinkedWallet(rootWallet.addr, signature, LINKED_WALLET_MESSAGE),
+      LinkRequest(wallet.addr, "", LINKED_WALLET_MESSAGE),
+      LinkRequest(rootWallet.addr, signature, LINKED_WALLET_MESSAGE),
       nonce
     );
   }
@@ -774,8 +774,8 @@ contract WalletLinkTest is IWalletLinkBase, BaseSetup, DeployBase {
     vm.prank(smartAccount.addr);
     vm.expectRevert(WalletLink__InvalidSignature.selector);
     walletLink.linkWalletToRootKey(
-      LinkedWallet(wallet.addr, walletSignature, LINKED_WALLET_MESSAGE),
-      LinkedWallet(rootWallet.addr, rootSignature, LINKED_WALLET_MESSAGE),
+      LinkRequest(wallet.addr, walletSignature, LINKED_WALLET_MESSAGE),
+      LinkRequest(rootWallet.addr, rootSignature, LINKED_WALLET_MESSAGE),
       nonce
     );
   }
@@ -808,8 +808,8 @@ contract WalletLinkTest is IWalletLinkBase, BaseSetup, DeployBase {
       )
     );
     walletLink.linkWalletToRootKey(
-      LinkedWallet(anotherWallet.addr, walletSignature, LINKED_WALLET_MESSAGE),
-      LinkedWallet(rootWallet.addr, rootSignature, LINKED_WALLET_MESSAGE),
+      LinkRequest(anotherWallet.addr, walletSignature, LINKED_WALLET_MESSAGE),
+      LinkRequest(rootWallet.addr, rootSignature, LINKED_WALLET_MESSAGE),
       nonce
     );
   }
@@ -895,7 +895,7 @@ contract WalletLinkTest is IWalletLinkBase, BaseSetup, DeployBase {
     emit RemoveLink(wallet.addr, smartAccount.addr);
     walletLink.removeLink({
       wallet: wallet.addr,
-      rootWallet: LinkedWallet(
+      rootWallet: LinkRequest(
         rootWallet.addr,
         signature,
         LINKED_WALLET_MESSAGE
@@ -919,7 +919,7 @@ contract WalletLinkTest is IWalletLinkBase, BaseSetup, DeployBase {
     vm.expectRevert(WalletLink__InvalidAddress.selector);
     walletLink.removeLink({
       wallet: address(0),
-      rootWallet: LinkedWallet(
+      rootWallet: LinkRequest(
         rootWallet.addr,
         signature,
         LINKED_WALLET_MESSAGE
@@ -931,7 +931,7 @@ contract WalletLinkTest is IWalletLinkBase, BaseSetup, DeployBase {
     vm.expectRevert(WalletLink__InvalidAddress.selector);
     walletLink.removeLink({
       wallet: wallet.addr,
-      rootWallet: LinkedWallet(address(0), signature, LINKED_WALLET_MESSAGE),
+      rootWallet: LinkRequest(address(0), signature, LINKED_WALLET_MESSAGE),
       nonce: nonce
     });
   }
@@ -948,7 +948,7 @@ contract WalletLinkTest is IWalletLinkBase, BaseSetup, DeployBase {
     vm.expectRevert(WalletLink__CannotRemoveRootWallet.selector);
     walletLink.removeLink({
       wallet: rootWallet.addr,
-      rootWallet: LinkedWallet(
+      rootWallet: LinkRequest(
         rootWallet.addr,
         signature,
         LINKED_WALLET_MESSAGE
@@ -975,7 +975,7 @@ contract WalletLinkTest is IWalletLinkBase, BaseSetup, DeployBase {
     );
     walletLink.removeLink({
       wallet: wallet.addr,
-      rootWallet: LinkedWallet(
+      rootWallet: LinkRequest(
         rootWallet.addr,
         signature,
         LINKED_WALLET_MESSAGE
@@ -999,7 +999,7 @@ contract WalletLinkTest is IWalletLinkBase, BaseSetup, DeployBase {
     vm.expectRevert(WalletLink__InvalidSignature.selector);
     walletLink.removeLink({
       wallet: wallet.addr,
-      rootWallet: LinkedWallet(
+      rootWallet: LinkRequest(
         rootWallet.addr,
         signature,
         LINKED_WALLET_MESSAGE
@@ -1029,7 +1029,7 @@ contract WalletLinkTest is IWalletLinkBase, BaseSetup, DeployBase {
     );
     walletLink.removeLink({
       wallet: wallet.addr,
-      rootWallet: LinkedWallet(
+      rootWallet: LinkRequest(
         rootWallet.addr,
         signature,
         LINKED_WALLET_MESSAGE
@@ -1118,7 +1118,7 @@ contract WalletLinkTest is IWalletLinkBase, BaseSetup, DeployBase {
 
     vm.startPrank(address(simpleAccount));
     walletLink.linkCallerToRootKey(
-      LinkedWallet(rootWallet.addr, signature, LINKED_WALLET_MESSAGE),
+      LinkRequest(rootWallet.addr, signature, LINKED_WALLET_MESSAGE),
       nonce
     );
     walletLink.setDefaultWallet(address(simpleAccount));
@@ -1142,7 +1142,7 @@ contract WalletLinkTest is IWalletLinkBase, BaseSetup, DeployBase {
   function _createNonEVMWallet(
     uint256 secretSeed,
     address rootKey
-  ) internal view returns (NonEVMLinkedWallet memory) {
+  ) internal view returns (NonEVMLinkRequest memory) {
     (
       uint256[5] memory solanaExtPubKey,
       uint256[2] memory solanaSigner
@@ -1170,7 +1170,7 @@ contract WalletLinkTest is IWalletLinkBase, BaseSetup, DeployBase {
       value: abi.encode(SolanaSpecificData({extPubKey: solanaExtPubKey}))
     });
 
-    NonEVMLinkedWallet memory nonEVMWallet = NonEVMLinkedWallet({
+    NonEVMLinkRequest memory nonEVMWallet = NonEVMLinkRequest({
       wallet: solanaWallet,
       signature: abi.encodePacked(r, s),
       message: consentMessage,

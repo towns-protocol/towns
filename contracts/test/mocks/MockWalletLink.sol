@@ -13,7 +13,7 @@ contract MockWalletLink is IWalletLinkBase {
   using EnumerableSet for EnumerableSet.AddressSet;
 
   function linkCallerToRootKey(
-    LinkedWallet memory rootWallet,
+    LinkRequest calldata rootWallet,
     uint256
   ) external {
     MockWalletLinkStorage.Layout storage ds = MockWalletLinkStorage.layout();
@@ -27,8 +27,8 @@ contract MockWalletLink is IWalletLinkBase {
   }
 
   function linkWalletToRootKey(
-    LinkedWallet memory wallet,
-    LinkedWallet memory rootWallet,
+    LinkRequest calldata wallet,
+    LinkRequest calldata rootWallet,
     uint256
   ) external {
     MockWalletLinkStorage.Layout storage ds = MockWalletLinkStorage.layout();

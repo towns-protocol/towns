@@ -23,7 +23,7 @@ contract WalletLink is IWalletLink, WalletLinkBase, OwnableBase, Facet {
 
   /// @inheritdoc IWalletLink
   function linkCallerToRootKey(
-    LinkedWallet calldata rootWallet,
+    LinkRequest calldata rootWallet,
     uint256 nonce
   ) external {
     _linkCallerToRootWallet(rootWallet, nonce);
@@ -31,8 +31,8 @@ contract WalletLink is IWalletLink, WalletLinkBase, OwnableBase, Facet {
 
   /// @inheritdoc IWalletLink
   function linkWalletToRootKey(
-    LinkedWallet calldata wallet,
-    LinkedWallet calldata rootWallet,
+    LinkRequest calldata wallet,
+    LinkRequest calldata rootWallet,
     uint256 nonce
   ) external {
     _linkWalletToRootWallet(wallet, rootWallet, nonce);
@@ -40,7 +40,7 @@ contract WalletLink is IWalletLink, WalletLinkBase, OwnableBase, Facet {
 
   /// @inheritdoc IWalletLink
   function linkNonEVMWalletToRootKey(
-    NonEVMLinkedWallet calldata wallet,
+    NonEVMLinkRequest calldata wallet,
     uint256 nonce
   ) external {
     _linkNonEVMWalletToRootWalletViaCaller(wallet, nonce);
@@ -57,7 +57,7 @@ contract WalletLink is IWalletLink, WalletLinkBase, OwnableBase, Facet {
   /// @inheritdoc IWalletLink
   function removeLink(
     address wallet,
-    LinkedWallet calldata rootWallet,
+    LinkRequest calldata rootWallet,
     uint256 nonce
   ) external {
     _removeLink(wallet, rootWallet, nonce);
