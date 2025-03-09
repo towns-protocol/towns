@@ -93,6 +93,7 @@ func (b *ConfigBuilder[T]) Build() (*T, error) {
 				DecodeAddressOrAddressFileHook(),
 				DecodeDurationHook(),
 				DecodeUint64SliceHook(),
+				DecodeLogLevelsHook(),
 			),
 		),
 	)

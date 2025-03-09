@@ -13,8 +13,17 @@ import (
 func NewTestContext() (context.Context, context.CancelFunc) {
 	logLevel := os.Getenv("RIVER_TEST_LOG")
 	if logLevel == "" {
+		core := logging.NewComponentCore(zapcore.NewNopCore(), logging.LogLevels{})
+		logger := zap.New(core, zap.AddCaller())
+
+		cl := &logging.ComponentsLogger{
+			Default:   logger.Named("default").Sugar(),
+			Miniblock: logger.Named("miniblock").Sugar(),
+			Rpc:       logger.Named("rpc").Sugar(),
+		}
+
 		//lint:ignore LE0000 context.Background() used correctly
-		ctx := logging.CtxWithLog(context.Background(), zap.NewNop().Sugar())
+		ctx := logging.CtxWithLog(context.Background(), cl)
 		return context.WithCancel(ctx)
 	} else {
 		return NewTestContextWithLogging(logLevel)
