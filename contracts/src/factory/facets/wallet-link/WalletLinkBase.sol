@@ -50,7 +50,7 @@ abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
   /// @param rootWallet the root wallet that the caller is linking to
   /// @param nonce a nonce used to prevent replay attacks, nonce must always be higher than previous nonce
   function _linkCallerToRootWallet(
-    LinkedWallet calldata rootWallet,
+    LinkRequest calldata rootWallet,
     uint256 nonce
   ) internal {
     WalletLinkStorage.Layout storage ds = WalletLinkStorage.layout();
@@ -73,7 +73,7 @@ abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
     if (
       ECDSA.recover(rootKeyMessageHash, rootWallet.signature) != rootWallet.addr
     ) {
-      revert WalletLink__InvalidSignature();
+      CustomRevert.revertWith(WalletLink__InvalidSignature.selector);
     }
 
     //Check that the nonce being used is higher than the last nonce used
@@ -94,8 +94,8 @@ abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
   /// The wallet signs a message containing the root wallet's address and nonce, while the root wallet signs a message
   /// containing the wallet's address and nonce. Both signatures must be valid for the link to be created.
   function _linkWalletToRootWallet(
-    LinkedWallet calldata wallet,
-    LinkedWallet calldata rootWallet,
+    LinkRequest calldata wallet,
+    LinkRequest calldata rootWallet,
     uint256 nonce
   ) internal {
     WalletLinkStorage.Layout storage ds = WalletLinkStorage.layout();
@@ -115,7 +115,7 @@ abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
     if (
       ECDSA.recover(rootKeyMessageHash, rootWallet.signature) != rootWallet.addr
     ) {
-      revert WalletLink__InvalidSignature();
+      CustomRevert.revertWith(WalletLink__InvalidSignature.selector);
     }
 
     structHash = _getLinkedWalletTypedDataHash(
@@ -127,7 +127,7 @@ abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
 
     // Verify the signature of the wallet is correct for the nonce and root wallet address
     if (ECDSA.recover(walletMessageHash, wallet.signature) != wallet.addr) {
-      revert WalletLink__InvalidSignature();
+      CustomRevert.revertWith(WalletLink__InvalidSignature.selector);
     }
 
     //Check that the nonce being used is higher than the last nonce used
@@ -141,7 +141,7 @@ abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
   }
 
   function _linkNonEVMWalletToRootWalletViaCaller(
-    NonEVMLinkedWallet calldata nonEVMWallet,
+    NonEVMLinkRequest calldata nonEVMWallet,
     uint256 nonce
   ) internal {
     WalletLinkStorage.Layout storage ds = WalletLinkStorage.layout();
@@ -217,7 +217,7 @@ abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
 
   function _removeLink(
     address walletToRemove,
-    LinkedWallet calldata rootWallet,
+    LinkRequest calldata rootWallet,
     uint256 nonce
   ) internal {
     WalletLinkStorage.Layout storage ds = WalletLinkStorage.layout();
@@ -241,7 +241,7 @@ abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
     if (
       ds.rootWalletByRootKey[rootWallet.addr].defaultWallet == walletToRemove
     ) {
-      revert WalletLink__CannotRemoveDefaultWallet();
+      CustomRevert.revertWith(WalletLink__CannotRemoveDefaultWallet.selector);
     }
 
     // Verify that the root wallet signature contains the correct nonce and the correct wallet
@@ -280,7 +280,7 @@ abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
 
     // check that the default wallet is not the wallet to remove
     if (ds.rootWalletByRootKey[rootWallet].defaultWallet == walletToRemove) {
-      revert WalletLink__CannotRemoveDefaultWallet();
+      CustomRevert.revertWith(WalletLink__CannotRemoveDefaultWallet.selector);
     }
 
     // Remove the link in the walletToRemove to root keys map
@@ -365,8 +365,6 @@ abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
         }
       }
     }
-
-    return wallets;
   }
 
   function _explicitWalletsByRootKey(
@@ -438,7 +436,7 @@ abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
   function _setDefaultWallet(address caller, address defaultWallet) internal {
     // check that the default wallet is not address(0)
     if (defaultWallet == address(0)) {
-      revert WalletLink__InvalidAddress();
+      CustomRevert.revertWith(WalletLink__InvalidAddress.selector);
     }
 
     address rootKey = _getRootKeyByWallet(defaultWallet);
@@ -458,7 +456,7 @@ abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
 
     // check that the default isn't already the default wallet
     if (rootWallet.defaultWallet == defaultWallet) {
-      revert WalletLink__DefaultWalletAlreadySet();
+      CustomRevert.revertWith(WalletLink__DefaultWalletAlreadySet.selector);
     }
 
     rootWallet.defaultWallet = defaultWallet;
@@ -492,19 +490,19 @@ abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   function _validateNonEVMWalletInputs(
     WalletLinkStorage.Layout storage ds,
-    NonEVMLinkedWallet calldata nonEVMWallet,
+    NonEVMLinkRequest calldata nonEVMWallet,
     bytes32 walletHash
   ) internal view {
     address caller = msg.sender;
 
     // Check that the wallet address string is not empty
     if (bytes(nonEVMWallet.wallet.addr).length == 0) {
-      revert WalletLink__InvalidNonEVMAddress();
+      CustomRevert.revertWith(WalletLink__InvalidNonEVMAddress.selector);
     }
 
     // Limit wallet address length
     if (bytes(nonEVMWallet.wallet.addr).length > 100) {
-      revert WalletLink__InvalidNonEVMAddress();
+      CustomRevert.revertWith(WalletLink__InvalidNonEVMAddress.selector);
     }
 
     address callerRootKey = ds.rootKeyByWallet[msg.sender];
@@ -557,12 +555,12 @@ abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
 
     // Check that we haven't reached the maximum number of linked wallets
     if (ds.walletsByRootKey[rootWallet].length() >= MAX_LINKED_WALLETS) {
-      revert WalletLink__MaxLinkedWalletsReached();
+      CustomRevert.revertWith(WalletLink__MaxLinkedWalletsReached.selector);
     }
   }
 
   function _verifySolanaWallet(
-    NonEVMLinkedWallet calldata nonEVMWallet
+    NonEVMLinkRequest calldata nonEVMWallet
   ) internal {
     SolanaSpecificData memory solanaSpecificData = abi.decode(
       nonEVMWallet.extraData[0].value,
@@ -576,7 +574,7 @@ abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
         solanaSpecificData.extPubKey
       )
     ) {
-      revert WalletLink__AddressMismatch();
+      CustomRevert.revertWith(WalletLink__AddressMismatch.selector);
     }
 
     ISCL_EIP6565 sclEIP6565 = ISCL_EIP6565(_getDependency(SCL_EIP6565));
@@ -594,7 +592,7 @@ abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
     );
 
     if (!isValidSignature) {
-      revert WalletLink__InvalidSignature();
+      CustomRevert.revertWith(WalletLink__InvalidSignature.selector);
     }
   }
 

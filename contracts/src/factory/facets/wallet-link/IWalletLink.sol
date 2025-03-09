@@ -13,7 +13,7 @@ interface IWalletLinkBase {
   // =============================================================
 
   /// @notice Struct for EVM only linked wallets
-  struct LinkedWallet {
+  struct LinkRequest {
     address addr;
     bytes signature;
     string message;
@@ -25,7 +25,7 @@ interface IWalletLinkBase {
   }
 
   /// @notice Struct for non-EVM linked wallets
-  struct NonEVMLinkedWallet {
+  struct NonEVMLinkRequest {
     WalletLib.Wallet wallet;
     bytes signature; // Signature in the VM's native format
     string message; // Message that was signed
@@ -105,7 +105,7 @@ interface IWalletLink is IWalletLinkBase {
    * @param nonce a nonce used to prevent replay attacks, nonce must always be higher than previous nonce
    */
   function linkCallerToRootKey(
-    LinkedWallet memory rootWallet,
+    LinkRequest calldata rootWallet,
     uint256 nonce
   ) external;
 
@@ -116,8 +116,8 @@ interface IWalletLink is IWalletLinkBase {
    * @param nonce a nonce used to prevent replay attacks, nonce must always be higher than previous nonce
    */
   function linkWalletToRootKey(
-    LinkedWallet memory wallet,
-    LinkedWallet memory rootWallet,
+    LinkRequest calldata wallet,
+    LinkRequest calldata rootWallet,
     uint256 nonce
   ) external;
 
@@ -128,7 +128,7 @@ interface IWalletLink is IWalletLinkBase {
    * @dev The function can only be called by an already linked wallet
    */
   function linkNonEVMWalletToRootKey(
-    NonEVMLinkedWallet calldata wallet,
+    NonEVMLinkRequest calldata wallet,
     uint256 nonce
   ) external;
 
@@ -139,7 +139,7 @@ interface IWalletLink is IWalletLinkBase {
    * @dev The function can only be called by an already linked wallet
    */
   function removeNonEVMWalletLink(
-    WalletLib.Wallet memory wallet,
+    WalletLib.Wallet calldata wallet,
     uint256 nonce
   ) external;
 
@@ -149,7 +149,7 @@ interface IWalletLink is IWalletLinkBase {
    */
   function removeLink(
     address wallet,
-    LinkedWallet memory rootWallet,
+    LinkRequest calldata rootWallet,
     uint256 nonce
   ) external;
 
