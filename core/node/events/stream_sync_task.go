@@ -12,7 +12,7 @@ import (
 	"github.com/towns-protocol/towns/core/node/registries"
 )
 
-func (s *StreamCache) submitSyncStreamTask(
+func (s *StreamCache) SubmitSyncStreamTask(
 	ctx context.Context,
 	stream *Stream,
 ) {
@@ -30,9 +30,16 @@ func (s *StreamCache) submitSyncStreamTaskToPool(
 	stream *Stream,
 	streamRecord *registries.GetStreamResult,
 ) {
-	pool.Submit(func() {
-		s.syncStreamFromPeers(ctx, stream, streamRecord)
-	})
+	s.onlineSyncStreamTasksInProgressMu.Lock()
+	if s.onlineSyncStreamTasksInProgress.Add(stream.StreamId()) {
+		pool.Submit(func() {
+			s.syncStreamFromPeers(ctx, stream, streamRecord)
+			s.onlineSyncStreamTasksInProgressMu.Lock()
+			s.onlineSyncStreamTasksInProgress.Remove(stream.StreamId())
+			s.onlineSyncStreamTasksInProgressMu.Unlock()
+		})
+	}
+	s.onlineSyncStreamTasksInProgressMu.Unlock()
 }
 
 func (s *StreamCache) syncStreamFromPeers(
