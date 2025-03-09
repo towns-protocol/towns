@@ -2,6 +2,7 @@ package rpc
 
 import (
 	"context"
+	"github.com/towns-protocol/towns/core/node/logging"
 	"net"
 	"net/http"
 	"sync/atomic"
@@ -9,9 +10,6 @@ import (
 
 	"connectrpc.com/otelconnect"
 	"github.com/prometheus/client_golang/prometheus"
-	"go.opentelemetry.io/otel/trace"
-	"go.uber.org/zap"
-
 	"github.com/towns-protocol/towns/core/config"
 	"github.com/towns-protocol/towns/core/node/app_registry"
 	"github.com/towns-protocol/towns/core/node/auth"
@@ -25,6 +23,7 @@ import (
 	river_sync "github.com/towns-protocol/towns/core/node/rpc/sync"
 	"github.com/towns-protocol/towns/core/node/storage"
 	"github.com/towns-protocol/towns/core/xchain/entitlement"
+	"go.opentelemetry.io/otel/trace"
 )
 
 type HttpClientMakerFunc = func(context.Context, *config.Config) (*http.Client, error)
@@ -35,7 +34,7 @@ type Service struct {
 	serverCtxCancel context.CancelFunc
 	config          *config.Config
 	instanceId      string
-	defaultLogger   *zap.SugaredLogger
+	defaultLogger   *logging.ComponentsLogger
 	wallet          *crypto.Wallet
 	startTime       time.Time
 	mode            string

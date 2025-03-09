@@ -280,7 +280,7 @@ func (s *Service) initWallet() error {
 	if !s.config.Log.Simplify {
 		s.defaultLogger = s.defaultLogger.With("nodeAddress", wallet.Address.Hex())
 		s.serverCtx = logging.CtxWithLog(ctx, s.defaultLogger)
-		zap.ReplaceGlobals(s.defaultLogger.Desugar())
+		zap.ReplaceGlobals(s.defaultLogger.Default.Desugar())
 	}
 
 	return nil
@@ -498,7 +498,7 @@ func (s *Service) runHttpServer() error {
 
 	corsMiddleware := cors.New(cors.Options{
 		AllowCredentials: false,
-		Debug:            cfg.Log.Level == "debug",
+		Debug:            cfg.Log.Level.DebugEnabled(),
 		AllowedOrigins:   []string{"*"},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE"},
 		// AllowedHeaders: []string{"*"} also works for CORS issues w/ OPTIONS requests

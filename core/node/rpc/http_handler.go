@@ -3,8 +3,6 @@ package rpc
 import (
 	"net/http"
 
-	"go.uber.org/zap"
-
 	. "github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/logging"
 )
@@ -15,12 +13,12 @@ const (
 
 type httpHandler struct {
 	base http.Handler
-	log  *zap.SugaredLogger
+	log  *logging.ComponentsLogger
 }
 
 var _ http.Handler = (*httpHandler)(nil)
 
-func newHttpHandler(b http.Handler, l *zap.SugaredLogger) *httpHandler {
+func newHttpHandler(b http.Handler, l *logging.ComponentsLogger) *httpHandler {
 	return &httpHandler{
 		base: b,
 		log:  l,

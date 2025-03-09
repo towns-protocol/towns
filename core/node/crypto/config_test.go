@@ -302,9 +302,13 @@ type CfgInner struct {
 }
 
 // Disable color output for console testing.
-func noColorLogger() *zap.SugaredLogger {
+func noColorLogger() *logging.ComponentsLogger {
 	logger, _ := zap.NewDevelopment()
-	return logger.Sugar()
+	return &logging.ComponentsLogger{
+		Default:   logger.Sugar(),
+		Miniblock: logger.Sugar(),
+		Rpc:       logger.Sugar(),
+	}
 }
 
 func TestDecoder(t *testing.T) {

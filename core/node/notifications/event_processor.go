@@ -10,15 +10,13 @@ import (
 	"slices"
 	"time"
 
-	"go.uber.org/zap"
-
-	"github.com/towns-protocol/towns/core/node/base"
-	"github.com/towns-protocol/towns/core/node/crypto"
-
 	"github.com/SherClockHolmes/webpush-go"
 	mapset "github.com/deckarep/golang-set/v2"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/sideshow/apns2/payload"
+	"github.com/towns-protocol/towns/core/node/base"
+	"github.com/towns-protocol/towns/core/node/crypto"
+	"go.uber.org/zap"
 	"google.golang.org/protobuf/proto"
 
 	"github.com/towns-protocol/towns/core/config"
@@ -56,7 +54,7 @@ type MessageToNotificationsProcessor struct {
 	cache                  UserPreferencesStore
 	subscriptionExpiration time.Duration
 	notifier               push.MessageNotifier
-	log                    *zap.SugaredLogger
+	log                    *logging.ComponentsLogger
 }
 
 // NewNotificationMessageProcessor processes incoming messages, determines when and to whom to send a notification

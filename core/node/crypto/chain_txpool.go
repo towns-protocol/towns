@@ -24,7 +24,6 @@ import (
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
-	"go.uber.org/zap"
 )
 
 type (
@@ -250,7 +249,7 @@ func (pool *pendingTransactionPool) run(ctx context.Context) {
 }
 
 func (pool *pendingTransactionPool) closeTx(
-	log *zap.SugaredLogger,
+	log *logging.ComponentsLogger,
 	ptx *txPoolPendingTransaction,
 	receipt *types.Receipt,
 	txHash common.Hash,

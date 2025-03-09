@@ -10,6 +10,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 
 	. "github.com/towns-protocol/towns/core/node/base"
+	"github.com/towns-protocol/towns/core/node/logging"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 )
 
@@ -44,9 +45,9 @@ func GetDefaultConfig() *Config {
 			GetMiniblocksPageSize: 128,
 		},
 		Log: LogConfig{
-			Level:   "info", // NOTE: this default is replaced by flag value
-			Console: true,   // NOTE: this default is replaced by flag value
-			File:    "",     // NOTE: this default is replaced by flag value
+			Level:   logging.LogLevels{}, // NOTE: this default is replaced by flag value
+			Console: true,                // NOTE: this default is replaced by flag value
+			File:    "",                  // NOTE: this default is replaced by flag value
 		},
 		Metrics: MetricsConfig{
 			Enabled: true,
@@ -452,11 +453,11 @@ type AppRegistryConfig struct {
 }
 
 type LogConfig struct {
-	Level        string // Used for both file and console if their levels not set explicitly
-	File         string // Path to log file
-	FileLevel    string // If not set, use Level
-	Console      bool   // Log to console if true
-	ConsoleLevel string // If not set, use Level
+	Level        logging.LogLevels // Used for both file and console if their levels not set explicitly
+	File         string            // Path to log file
+	FileLevel    logging.LogLevels // If not set, use Level
+	Console      bool              // Log to console if true
+	ConsoleLevel logging.LogLevels // If not set, use Level
 
 	// Intended for dev use with text logs, do not output instance attributes with each log entry,
 	// drop some large messages.

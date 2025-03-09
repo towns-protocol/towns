@@ -16,10 +16,10 @@ import (
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 
-	"github.com/towns-protocol/towns/core/node/protocol"
-
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/rpc"
+	"github.com/towns-protocol/towns/core/node/logging"
+	"github.com/towns-protocol/towns/core/node/protocol"
 )
 
 // Constants are not exported when go bindings are generated from solidity, so there is duplication here.
@@ -403,28 +403,28 @@ func (e *RiverErrorImpl) LogWithLevel(l *zap.SugaredLogger, level zapcore.Level)
 	return e
 }
 
-func (e *RiverErrorImpl) Log(l *zap.SugaredLogger) *RiverErrorImpl {
-	return e.LogWithLevel(l, zapcore.ErrorLevel)
+func (e *RiverErrorImpl) Log(l *logging.ComponentsLogger) *RiverErrorImpl {
+	return e.LogWithLevel(l.Default, zapcore.ErrorLevel)
 }
 
-func (e *RiverErrorImpl) LogError(l *zap.SugaredLogger) *RiverErrorImpl {
-	return e.LogWithLevel(l, zapcore.ErrorLevel)
+func (e *RiverErrorImpl) LogError(l *logging.ComponentsLogger) *RiverErrorImpl {
+	return e.LogWithLevel(l.Default, zapcore.ErrorLevel)
 }
 
-func (e *RiverErrorImpl) LogWarn(l *zap.SugaredLogger) *RiverErrorImpl {
-	return e.LogWithLevel(l, zapcore.WarnLevel)
+func (e *RiverErrorImpl) LogWarn(l *logging.ComponentsLogger) *RiverErrorImpl {
+	return e.LogWithLevel(l.Default, zapcore.WarnLevel)
 }
 
-func (e *RiverErrorImpl) LogInfo(l *zap.SugaredLogger) *RiverErrorImpl {
-	return e.LogWithLevel(l, zapcore.InfoLevel)
+func (e *RiverErrorImpl) LogInfo(l *logging.ComponentsLogger) *RiverErrorImpl {
+	return e.LogWithLevel(l.Default, zapcore.InfoLevel)
 }
 
-func (e *RiverErrorImpl) LogDebug(l *zap.SugaredLogger) *RiverErrorImpl {
-	return e.LogWithLevel(l, zapcore.DebugLevel)
+func (e *RiverErrorImpl) LogDebug(l *logging.ComponentsLogger) *RiverErrorImpl {
+	return e.LogWithLevel(l.Default, zapcore.DebugLevel)
 }
 
-func (e *RiverErrorImpl) LogLevel(l *zap.SugaredLogger, level zapcore.Level) *RiverErrorImpl {
-	return e.LogWithLevel(l, level)
+func (e *RiverErrorImpl) LogLevel(l *logging.ComponentsLogger, level zapcore.Level) *RiverErrorImpl {
+	return e.LogWithLevel(l.Default, level)
 }
 
 func (e *RiverErrorImpl) MarshalLogObject(enc zapcore.ObjectEncoder) error {
