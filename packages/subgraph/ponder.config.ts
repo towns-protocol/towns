@@ -1,15 +1,23 @@
 import { createConfig } from 'ponder'
-import { http, getAddress, hexToNumber } from 'viem'
-
-import SpaceFactoryDeploy from '../../broadcast/DeploySpaceFactory.s.sol/31337/run-latest.json'
-
-const address = getAddress(
-    SpaceFactoryDeploy.transactions.find((t) => t.contractName === 'Diamond')!.contractAddress,
-)
-const startBlock = hexToNumber(SpaceFactoryDeploy.receipts[0]!.blockNumber as `0x${string}`)
+import { http } from 'viem'
 
 // import abis
 import { createSpaceFacetAbi } from '@river-build/contracts/typings'
+
+// Import our contract address utility
+import { getContractAddress } from './utils/contractAddresses'
+
+// Get the start block from environment variable or use default
+const startBlock = process.env.PONDER_START_BLOCK
+    ? parseInt(process.env.PONDER_START_BLOCK, 10)
+    : 22890725
+
+// Get the space factory address using our utility
+// Enable debug mode to see detailed path information
+const spaceFactory = getContractAddress('spaceFactory')
+if (!spaceFactory) {
+    throw new Error('Space factory address not found')
+}
 
 export default createConfig({
     networks: {
@@ -23,7 +31,7 @@ export default createConfig({
         CreateSpace: {
             network: 'anvil',
             abi: createSpaceFacetAbi,
-            address,
+            address: spaceFactory,
             startBlock,
         },
     },
