@@ -17,8 +17,8 @@ export const getTokenValueData = (props: {
         return {
             icon: chainConfig.icon,
             value: formatUnitsToFixedLength(BigInt(amount), chainConfig.decimals, 5),
-            symbol,
-            name,
+            symbol: chainConfig.tokenSymbol,
+            name: chainConfig.name,
         }
     }
 

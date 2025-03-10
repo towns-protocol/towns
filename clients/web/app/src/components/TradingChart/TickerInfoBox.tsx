@@ -9,9 +9,9 @@ import { shimmerClass } from 'ui/styles/globals/shimmer.css'
 import { TokenIcon } from '@components/Web3/Trading/ui/TokenIcon'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { Avatar } from '@components/Avatar/Avatar'
+import { isTradingChain } from '@components/Web3/Trading/tradingConstants'
 import { GetCoinDataResponse } from './useCoinData'
 import { TickerChangeIndicator } from './TickerChangeIndicator'
-
 export const TickerInfoBox = (props: {
     minimal: boolean
     coinData: GetCoinDataResponse | undefined
@@ -86,7 +86,7 @@ export const TickerHeader = (
                 <TokenIcon
                     asset={{
                         imageUrl: coinData.token.info.imageThumbUrl ?? '',
-                        chain: chainId,
+                        chain: isTradingChain(chainId) ? chainId : undefined,
                     }}
                 />
                 <Box maxWidth="200" overflow="hidden" paddingY="xs" gap="sm">

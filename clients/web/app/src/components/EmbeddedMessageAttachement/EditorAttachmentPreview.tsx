@@ -18,7 +18,7 @@ import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
 import { shortAddress } from 'ui/utils/utils'
 import { useCoinData } from '@components/TradingChart/useCoinData'
 import { TokenIcon } from '@components/Web3/Trading/ui/TokenIcon'
-import { chainIdToLitteral } from '@components/Web3/Trading/useTokenBalance'
+import { isTradingChain } from '@components/Web3/Trading/tradingConstants'
 
 type MessageAttachmentPreviewProps = {
     attachment: EmbeddedMessageAttachment
@@ -245,7 +245,9 @@ const TickerPreview = (props: {
                         <TokenIcon
                             asset={{
                                 imageUrl: token.info.imageThumbUrl ?? '',
-                                chain: chainIdToLitteral(attachment.chainId),
+                                chain: isTradingChain(attachment.chainId)
+                                    ? attachment.chainId
+                                    : undefined,
                             }}
                         />
                         <Paragraph truncate strong size="sm">

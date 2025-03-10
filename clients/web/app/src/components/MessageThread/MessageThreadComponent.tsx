@@ -28,13 +28,15 @@ import {
     EvmTransactionRequest,
     SolanaTransactionRequest,
 } from '@components/Web3/Trading/TradingContextProvider'
-import { Box, BoxProps, FancyButton, Stack, Tooltip } from '@ui'
+import { Box, BoxProps, FancyButton, Paragraph, Stack, Tooltip } from '@ui'
 import { useDevice } from 'hooks/useDevice'
 import { useIsChannelReactable } from 'hooks/useIsChannelReactable'
 import { useIsChannelWritable } from 'hooks/useIsChannelWritable'
 import { useSendReply } from 'hooks/useSendReply'
 import { useSpaceChannels } from 'hooks/useSpaceChannels'
 import { WalletReady } from 'privy/WalletReady'
+import { TokenIcon } from '@components/Web3/Trading/ui/TokenIcon'
+import { isTradingChain, tradingChains } from '@components/Web3/Trading/tradingConstants'
 import { EditSlippageButton } from '../Web3/Trading/EditSlippagePopover'
 import { getTickerAttachment } from './getTickerAttachment'
 import { TickerThreadContext } from './TickerThreadContext'
@@ -270,7 +272,7 @@ const ThreadEditor = (props: {
     const renderSendButton = useCallback(
         (onSend: () => void) => {
             const mode = tradeData?.metaData.mode ?? quoteStatus?.mode
-            return getSigner && quoteStatus ? (
+            return getSigner && quoteStatus && typeof mode === 'string' ? (
                 <Stack horizontal gap="sm" alignItems="center">
                     <Box
                         centerContent
@@ -278,14 +280,12 @@ const ThreadEditor = (props: {
                             quoteStatus.status === 'error' || !tradeData?.metaData?.value.value ? (
                                 ``
                             ) : (
-                                <Tooltip>
-                                    <Stack>
-                                        {mode === 'buy' ? 'Buy' : 'Sell'}{' '}
-                                        {tradeData?.metaData.value.value}{' '}
-                                        {tradeData?.metaData.value.symbol}
-                                    </Stack>
-                                    <Stack>Slippage: {slippage * 100}%</Stack>
-                                </Tooltip>
+                                <TransactionTooltip
+                                    mode={mode}
+                                    chainId={tickerAttachment?.chainId ?? ''}
+                                    tradeData={tradeData?.metaData}
+                                    slippage={slippage}
+                                />
                             )
                         }
                         opacity={
@@ -316,9 +316,8 @@ const ThreadEditor = (props: {
             isTradingProgress,
             quoteStatus,
             slippage,
-            tradeData?.metaData.mode,
-            tradeData?.metaData.value.symbol,
-            tradeData?.metaData.value.value,
+            tickerAttachment?.chainId,
+            tradeData?.metaData,
         ],
     )
 
@@ -367,5 +366,52 @@ const ThreadEditor = (props: {
                 editor
             )}
         </>
+    )
+}
+
+const TransactionTooltip = (props: {
+    mode: 'buy' | 'sell'
+    chainId: string
+    tradeData: QuoteMetaData
+    slippage: number
+}) => {
+    const { mode, tradeData, slippage } = props
+
+    // a little workaround to cover the case where old tickers were posted
+    // a temp chainId for solana
+    const chainId = props.chainId === '1151111081099710' ? 'solana-mainnet' : props.chainId
+    const chainConfig = isTradingChain(chainId) ? tradingChains[chainId] : tradingChains[1]
+    const slippageText = slippage ? `(± ${slippage}%)` : ''
+
+    return (
+        <Box padding="sm">
+            <Tooltip background="level2">
+                <Stack horizontal padding="sm" gap="sm">
+                    <Stack>
+                        <Box position="relative" alignSelf="start">
+                            <TokenIcon
+                                asset={{
+                                    imageUrl: tradeData.value.icon ?? '',
+                                    chain: chainConfig.chainId,
+                                }}
+                            />
+                        </Box>
+                    </Stack>
+                    <Stack gap="sm">
+                        <Paragraph
+                            color={mode === 'buy' ? 'positive' : 'peach'}
+                            whiteSpace="nowrap"
+                        >
+                            {mode === 'buy' ? 'Buy' : 'Sell'} {tradeData.value.value}{' '}
+                            {tradeData.value.symbol} {mode === 'buy' ? slippageText : ''}
+                        </Paragraph>
+                        <Paragraph color="gray1">
+                            For {tradeData.valueAt.value} {tradeData.valueAt.symbol}{' '}
+                            {mode === 'sell' ? slippageText : ''}
+                        </Paragraph>
+                    </Stack>
+                </Stack>
+            </Tooltip>
+        </Box>
     )
 }

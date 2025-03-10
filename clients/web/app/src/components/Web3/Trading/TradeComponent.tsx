@@ -65,6 +65,7 @@ export type QuoteMetaData = {
     mode: 'buy' | 'sell'
     symbol: string
     value: ReturnType<typeof getTokenValueData>
+    valueAt: ReturnType<typeof getTokenValueData>
 }
 
 export const TradeComponent = (props: Props) => {
@@ -304,10 +305,26 @@ export const TradeComponent = (props: Props) => {
                       chainConfig,
                       tokenData: coinData,
                   })
+
+        const valueAt =
+            mode === 'buy'
+                ? getTokenValueData({
+                      amount: quoteData.estimate.fromAmount ?? '0',
+                      tokenAddress: fromTokenAddress,
+                      chainConfig,
+                      tokenData: coinData,
+                  })
+                : getTokenValueData({
+                      amount: quoteData.estimate.toAmount ?? '0',
+                      tokenAddress: toTokenAddress,
+                      chainConfig,
+                      tokenData: coinData,
+                  })
         return {
             mode,
             symbol: coinData?.token.symbol ?? '',
             value,
+            valueAt,
         } satisfies QuoteMetaData
     }, [quoteData, mode, toTokenAddress, chainConfig, coinData, fromTokenAddress])
 

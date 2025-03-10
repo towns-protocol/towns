@@ -7,6 +7,7 @@ import { notUndefined } from 'ui/utils/utils'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
 import { ChainWalletAssets, formatCents } from './tradingUtils'
 import { TokenIcon } from './ui/TokenIcon'
+import { isTradingChain, tradingChains } from './tradingConstants'
 
 const baseImageURL =
     'https://coin-images.coingecko.com/coins/images/31199/thumb/59302ba8-022e-45a4-8d00-e29fe2ee768c-removebg-preview.png?1696530026'
@@ -41,7 +42,7 @@ export const TradingTokensList = ({
             symbol: 'BASE',
             name: 'Base',
             walletAddress: asset.walletAddress,
-            chain: 'base',
+            chain: '8453',
         } as const
     }, [assets])
 
@@ -63,7 +64,12 @@ export const TradingTokensList = ({
     }, [assets])
 
     const allAssets = useMemo(() => {
-        return [baseNativeAsset, solNativeAsset, ...flattenedAssets].filter(notUndefined)
+        return [baseNativeAsset, solNativeAsset, ...flattenedAssets]
+            .filter(notUndefined)
+            .map((asset) => ({
+                ...asset,
+                chain: isTradingChain(asset.chain) ? asset.chain : undefined,
+            }))
     }, [baseNativeAsset, solNativeAsset, flattenedAssets])
 
     if (isLoading) {
@@ -92,7 +98,7 @@ type AssetData = {
     symbol: string
     holdingValueCents: number
     priceChange24h: number
-    chain: string
+    chain: keyof typeof tradingChains | undefined
     walletAddress?: string
 }
 
