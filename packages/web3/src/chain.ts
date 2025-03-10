@@ -40,4 +40,10 @@ export const townsTestnet = defineChain({
     blockExplorers: {
         default: { name: 'Towns Chain Explorer', url: 'https://testnet.explorer.towns.com/' },
     },
+    contracts: {
+        multicall3: {
+            address: '0xcaBdE26Efcf78d31040Dc57F85484e786E0a1E13',
+            blockCreated: 20137781,
+        },
+    },
 })
