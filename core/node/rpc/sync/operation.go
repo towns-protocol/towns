@@ -4,7 +4,6 @@ import (
 	"context"
 	"time"
 
-	"github.com/towns-protocol/towns/core/node/rpc/sync/dynmsgbuf"
 
 	"connectrpc.com/connect"
 	"github.com/ethereum/go-ethereum/common"
@@ -16,6 +15,7 @@ import (
 	"github.com/towns-protocol/towns/core/node/rpc/sync/client"
 	"github.com/towns-protocol/towns/core/node/shared"
 	"go.opentelemetry.io/otel/attribute"
+	"github.com/towns-protocol/towns/core/node/rpc/sync/dynmsgbuf"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -150,10 +150,6 @@ func (syncOp *StreamSyncOperation) Run(
 			return context.Cause(syncOp.ctx)
 		case _, open := <-messages.Wait():
 			msgs := messages.GetBatch(messages.Len())
-			if len(msgs) == 0 {
-				continue
-			}
-
 			for i, msg := range msgs {
 				msg.SyncId = syncOp.SyncID
 				if err := res.Send(msg); err != nil {
