@@ -39,7 +39,7 @@ async function getObjectData(
 
     const mb = await unpackMiniblock(
         firstChunk.value.data.value,
-        casablancaClient.unpackEnvelopeOpts,
+        casablancaClient.opts?.unpackEnvelopeOpts,
     )
 
     const payload: MediaPayload = mb.events[0].event.payload.value as MediaPayload
@@ -62,7 +62,10 @@ async function getObjectData(
         }
 
         if (chunk.data.case === 'miniblock') {
-            const mb = await unpackMiniblock(chunk.data.value, casablancaClient.unpackEnvelopeOpts)
+            const mb = await unpackMiniblock(
+                chunk.data.value,
+                casablancaClient.opts?.unpackEnvelopeOpts,
+            )
 
             for (const event of mb.events) {
                 const payload: MediaPayload = event.event.payload.value as MediaPayload

@@ -61,7 +61,9 @@ export const useMintBot = () => {
                 rpcClient,
                 cryptoStore,
                 clientSingleton, // re-using current user's client for entitlement checks for now
-                persistenceDbName,
+                {
+                    persistenceStoreName: persistenceDbName,
+                },
             )
             await botClient.initializeUser({ spaceId })
             await botClient.joinUser(spaceId, botWallet.address)

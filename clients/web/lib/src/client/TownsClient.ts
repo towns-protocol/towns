@@ -274,19 +274,13 @@ export class TownsClient
         const cryptoDbName = this.cryptoDbName(context)
         const persistenceDbName = this.persistenceDbName(context)
         const cryptoStore = RiverDbManager.getCryptoDb(userId, cryptoDbName)
-        this.casablancaClient = new CasablancaClient(
-            context,
-            rpcClient,
-            cryptoStore,
-            this,
-            persistenceDbName,
-            this.opts.logNamespaceFilter,
-            this.opts.highPriorityStreamIds,
-            this.opts.unpackEnvelopeOpts,
-            undefined,
-            undefined,
-            { useModifySync: this.opts.useModifySync },
-        )
+        this.casablancaClient = new CasablancaClient(context, rpcClient, cryptoStore, this, {
+            persistenceStoreName: persistenceDbName,
+            logNamespaceFilter: this.opts.logNamespaceFilter,
+            highPriorityStreamIds: this.opts.highPriorityStreamIds,
+            unpackEnvelopeOpts: this.opts.unpackEnvelopeOpts,
+            streamOpts: { useModifySync: this.opts.useModifySync },
+        })
         this.casablancaClient.setMaxListeners(100)
 
         let endIntializeUser: (() => void) | undefined
