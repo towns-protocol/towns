@@ -191,11 +191,6 @@ export type SendImageMessageOptions = SendMessageOptionsBase & {
     }
 }
 
-export type MediaStreamBlockInfo = {
-    streamId: string
-    prevMiniblockHash: Uint8Array
-}
-
 export interface SpaceIdOptions {
     parentSpaceId?: string
 }

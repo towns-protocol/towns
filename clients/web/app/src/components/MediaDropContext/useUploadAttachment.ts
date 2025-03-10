@@ -11,7 +11,7 @@ const MAX_THUMBNAIL_WIDTH = 20 // pixels
 const MAX_THUMBNAIL_SIZE = 0.0003 // 300 bytes
 
 export const useUploadAttachment = () => {
-    const { createMediaStreamNew, setUserProfileImage, sendMediaPayloadNew, setSpaceImage } =
+    const { createMediaStream, setUserProfileImage, sendMediaPayload, setSpaceImage } =
         useTownsClient()
 
     function shouldCompressFile(file: File): boolean {
@@ -34,7 +34,7 @@ export const useUploadAttachment = () => {
                 ? await encryptChunkedAESGCM(data, chunkSize)
                 : await encryptAESGCM(data, chunkSize)
             const chunkCount = encryptionResult.chunks.length
-            const mediaStreamInfo = await createMediaStreamNew(
+            const mediaStreamInfo = await createMediaStream(
                 channelId,
                 spaceId,
                 userId,
@@ -57,7 +57,7 @@ export const useUploadAttachment = () => {
             for (let chunkIndex = 0; chunkIndex < chunkCount; chunkIndex++) {
                 const chunk = encryptionResult.chunks[chunkIndex]
                 setProgress(chunkIndex / chunkCount)
-                const result = await sendMediaPayloadNew(
+                const result = await sendMediaPayload(
                     cc,
                     chunkIndex == chunkCount - 1,
                     chunk.ciphertext,
@@ -105,7 +105,7 @@ export const useUploadAttachment = () => {
                 thumbnail: thumbnailInfo,
             } satisfies ChunkedMediaAttachment
         },
-        [createMediaStreamNew, sendMediaPayloadNew],
+        [createMediaStream, sendMediaPayload],
     )
 
     const uploadFile = useCallback(

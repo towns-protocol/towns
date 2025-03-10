@@ -51,7 +51,6 @@ import {
 import {
     CreateChannelInfo,
     CreateSpaceInfo,
-    MediaStreamBlockInfo,
     TownsStreamMember,
     SendMessageOptions,
     SendTextMessageOptions,
@@ -658,26 +657,6 @@ export class TownsClient
      * Media
      *************************************************/
     public async createMediaStream(
-        channelId: string | undefined,
-        spaceId: string | undefined,
-        userId: string | undefined,
-        chunkCount: number,
-        perChunkEncryption?: boolean,
-    ): Promise<MediaStreamBlockInfo> {
-        if (!this.casablancaClient) {
-            throw new Error("Casablanca client doesn't exist")
-        }
-        return await this.casablancaClient.createMediaStream(
-            channelId,
-            spaceId,
-            userId,
-            chunkCount,
-            undefined,
-            perChunkEncryption,
-        )
-    }
-
-    public async createMediaStreamNew(
         channelId: string | Uint8Array | undefined,
         spaceId: string | Uint8Array | undefined,
         userId: string | undefined,
@@ -687,7 +666,7 @@ export class TownsClient
         if (!this.casablancaClient) {
             throw new Error("Casablanca client doesn't exist")
         }
-        return await this.casablancaClient.createMediaStreamNew(
+        return await this.casablancaClient.createMediaStream(
             channelId,
             spaceId,
             userId,
@@ -1422,25 +1401,6 @@ export class TownsClient
     }
 
     public async sendMediaPayload(
-        streamId: string,
-        data: Uint8Array,
-        chunkIndex: number,
-        prevMiniblockHash: Uint8Array,
-        iv?: Uint8Array,
-    ): Promise<{ prevMiniblockHash: Uint8Array; eventId: string }> {
-        if (!this.casablancaClient) {
-            throw new Error('Casablanca client not initialized')
-        }
-        return await this.casablancaClient.sendMediaPayload(
-            streamId,
-            data,
-            chunkIndex,
-            prevMiniblockHash,
-            iv,
-        )
-    }
-
-    public async sendMediaPayloadNew(
         creationCookie: CreationCookie,
         last: boolean,
         data: Uint8Array,
@@ -1450,7 +1410,7 @@ export class TownsClient
         if (!this.casablancaClient) {
             throw new Error('Casablanca client not initialized')
         }
-        return await this.casablancaClient.sendMediaPayloadNew(
+        return await this.casablancaClient.sendMediaPayload(
             creationCookie,
             last,
             data,

@@ -30,7 +30,6 @@ import {
 import {
     CreateChannelInfo,
     CreateSpaceInfo,
-    MediaStreamBlockInfo,
     SendMessageOptions,
     SendTextMessageOptions,
     StreamView,
@@ -156,13 +155,6 @@ interface TownsClientImpl {
         userId: string | undefined,
         chunkCount: number,
         perChunkEncryption?: boolean,
-    ) => Promise<MediaStreamBlockInfo | undefined>
-    createMediaStreamNew: (
-        channelId: string | undefined,
-        spaceId: string | undefined,
-        userId: string | undefined,
-        chunkCount: number,
-        perChunkEncryption?: boolean,
     ) => Promise<{ creationCookie: CreationCookie } | undefined>
     createRoleTransaction: (
         spaceNetworkId: string,
@@ -265,13 +257,6 @@ interface TownsClientImpl {
         threadId?: string,
     ) => Promise<void>
     sendMediaPayload: (
-        streamId: string,
-        data: Uint8Array,
-        chunkIndex: number,
-        prevMiniblockHash: Uint8Array,
-        iv?: Uint8Array,
-    ) => Promise<{ prevMiniblockHash: Uint8Array; eventId: string } | undefined>
-    sendMediaPayloadNew: (
         creationCookie: CreationCookie,
         last: boolean,
         data: Uint8Array,
@@ -441,7 +426,6 @@ export function useTownsClient(): TownsClientImpl {
         createSpaceTransaction: useWithCatch(clientSingleton?.createSpaceTransaction),
         waitForCreateSpaceTransaction,
         createMediaStream: useWithCatch(clientSingleton?.createMediaStream),
-        createMediaStreamNew: useWithCatch(clientSingleton?.createMediaStreamNew),
 
         createChannelTransaction: useWithCatch(clientSingleton?.createChannelTransaction),
         waitForCreateChannelTransaction: useWithCatch(
@@ -513,7 +497,6 @@ export function useTownsClient(): TownsClientImpl {
         retrySendMessage: useWithCatch(clientSingleton?.retrySendMessage),
         sendReaction: useWithCatch(clientSingleton?.sendReaction),
         sendMediaPayload: useWithCatch(clientSingleton?.sendMediaPayload),
-        sendMediaPayloadNew: useWithCatch(clientSingleton?.sendMediaPayloadNew),
         sendReadReceipt: useWithCatch(sendReadReceipt),
         sendTokenTransfer: useWithCatch(clientSingleton?.sendTokenTransfer),
         adminRedactMessage: useWithCatch(clientSingleton?.adminRedactMessage),
