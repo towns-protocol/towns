@@ -8,7 +8,7 @@
         "db": "ponder db",
         "codegen": "ponder codegen",
         "serve": "ponder serve",
-        "lint": "eslint .",
+        "lint": "eslint \"src/**/*.{ts,tsx}\" \"ponder.config.ts\" \"ponder.schema.ts\"",
         "typecheck": "tsc",
         "dev:fork": "../../scripts/setup-subgraph.sh",
         "find-paths": "tsx utils/findContractsPath.ts"
