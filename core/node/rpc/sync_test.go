@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"reflect"
 	"strings"
-	"sync/atomic"
 	"testing"
 	"time"
 
@@ -25,7 +24,7 @@ const defaultTimeout = 5 * time.Second
 type syncClient struct {
 	client  protocolconnect.StreamServiceClient
 	syncId  string
-	err     atomic.Pointer[error]
+	err     chan error
 	errC    chan error
 	syncIdC chan string
 	updateC chan *protocol.StreamAndCookie
@@ -79,7 +78,7 @@ func (c *syncClient) syncMany(ctx context.Context, cookies []*protocol.SyncCooki
 
 	// Store pointer to error: if error is nil, sync is completed successfully
 	// if error is not nil, sync failed
-	c.err.Store(&err)
+	c.err <- err
 	if err != nil {
 		c.errC <- err
 	}
@@ -106,6 +105,7 @@ func makeSyncClients(tt *serviceTester, numNodes int) *syncClients {
 	for i := range numNodes {
 		clients[i] = &syncClient{
 			client:  tt.testClient(i),
+			err:     make(chan error, 1),
 			errC:    make(chan error, 100),
 			syncIdC: make(chan string, 100),
 			updateC: make(chan *protocol.StreamAndCookie, 100),
@@ -165,13 +165,9 @@ func (sc *syncClients) startSync(t *testing.T, ctx context.Context, cookie *prot
 
 func (sc *syncClients) checkDone(t *testing.T) {
 	for i, client := range sc.clients {
-		err := client.err.Load()
-		if err == nil {
-			t.Fatalf("sync client not done %d", i)
-			return
-		}
-		if *err != nil {
-			t.Fatalf("Error in sync client %d: %v", i, *err)
+		err := <-client.err
+		if err != nil {
+			t.Fatalf("Error in sync client %d: %v", i, err)
 			return
 		}
 		// Check that all updates and pongs are consumed
