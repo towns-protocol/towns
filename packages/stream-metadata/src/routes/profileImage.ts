@@ -39,7 +39,7 @@ export async function fetchUserProfileImage(request: FastifyRequest, reply: Fast
 	const { userId } = parseResult.data
 
 	logger.info({ userId }, 'Fetching user image')
-	let stream: StreamStateView
+	let stream: StreamStateView | undefined
 	try {
 		const userMetadataStreamId = makeStreamId(StreamPrefix.UserMetadata, userId)
 		stream = await getStream(logger, userMetadataStreamId)
@@ -51,6 +51,11 @@ export async function fetchUserProfileImage(request: FastifyRequest, reply: Fast
 			},
 			'Failed to get stream',
 		)
+		return reply.code(500).send('Failed to get stream')
+	}
+
+	if (!stream) {
+		logger.info({ userId }, 'Stream not found')
 		return reply.code(404).header('Cache-Control', CACHE_CONTROL[404]).send('Stream not found')
 	}
 
