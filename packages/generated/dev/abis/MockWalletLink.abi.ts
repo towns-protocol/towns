@@ -82,6 +82,25 @@ export default [
   },
   {
     "type": "function",
+    "name": "getWalletsByRootKeyWithDelegations",
+    "inputs": [
+      {
+        "name": "rootKey",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "wallets",
+        "type": "address[]",
+        "internalType": "address[]"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
     "name": "linkCallerToRootKey",
     "inputs": [
       {

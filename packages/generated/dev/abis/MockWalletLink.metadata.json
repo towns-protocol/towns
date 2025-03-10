@@ -367,6 +367,25 @@
       {
         "inputs": [
           {
+            "internalType": "address",
+            "name": "rootKey",
+            "type": "address"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function",
+        "name": "getWalletsByRootKeyWithDelegations",
+        "outputs": [
+          {
+            "internalType": "address[]",
+            "name": "wallets",
+            "type": "address[]"
+          }
+        ]
+      },
+      {
+        "inputs": [
+          {
             "internalType": "struct IWalletLinkBase.LinkedWallet",
             "name": "rootWallet",
             "type": "tuple",
@@ -513,10 +532,10 @@
       "license": "MIT"
     },
     "contracts/test/mocks/MockWalletLink.sol": {
-      "keccak256": "0x6a1f6fedbee90c04a73f6243e359de6ecf4a9d1fd08fec5b87ca9392fa08499f",
+      "keccak256": "0x9436bd6b1891fec0db60f7ef2b4741abb0b3fdcbf4a5e81d980bea698dff681b",
       "urls": [
-        "bzz-raw://548494ef1d1c936da5907a518bd959fac7bf3783e65fd586fe934e7bd38181cf",
-        "dweb:/ipfs/QmaR4VJsZkPGisV4DYuZRutGXq4gmzgpuF7b8Wms226pCZ"
+        "bzz-raw://d81c5329b623ca66f01ef810933b5e90891a1644530892dad7336dcc13ea4749",
+        "dweb:/ipfs/QmYejE9VfHz2FbP35Vd5dehSbPfTcfCNv5bbRhzMvLLF9M"
       ],
       "license": "Apache-2.0"
     },
