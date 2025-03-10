@@ -147,7 +147,7 @@ func (syncOp *StreamSyncOperation) Run(
 			// otherwise syncOp is stopped internally.
 			return context.Cause(syncOp.ctx)
 		case msg, ok := <-messages:
-			if !ok {
+			if !ok || msg.GetSyncOp() == SyncOp_SYNC_CLOSE {
 				_ = res.Send(&SyncStreamsResponse{
 					SyncId: syncOp.SyncID,
 					SyncOp: SyncOp_SYNC_CLOSE,
@@ -164,11 +164,6 @@ func (syncOp *StreamSyncOperation) Run(
 			messagesSendToClient++
 
 			log.Debug("Pending messages in sync operation", "count", len(messages))
-
-			// If the message is a close message, stop sending messages to the client and close the sync operation
-			if msg.GetSyncOp() == SyncOp_SYNC_CLOSE {
-				return nil
-			}
 		}
 	}
 }
