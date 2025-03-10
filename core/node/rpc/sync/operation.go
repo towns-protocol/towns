@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/towns-protocol/towns/core/node/rpc/sync/dynmsgbuf"
-
 	"connectrpc.com/connect"
 	"github.com/ethereum/go-ethereum/common"
 	. "github.com/towns-protocol/towns/core/node/base"
@@ -164,6 +163,11 @@ func (syncOp *StreamSyncOperation) Run(
 				messagesSendToClient++
 
 				log.Debug("Pending messages in sync operation", "count", messages.Len()+len(msgs)-i-1)
+
+				// If the message is a close message, stop sending messages to the client and close the sync operation
+				if msg.GetSyncOp() == SyncOp_SYNC_CLOSE {
+					return nil
+				}
 			}
 
 			// If the client sent a close message, stop sending messages to client from the buffer
