@@ -19,10 +19,13 @@
   "settings": {
     "remappings": [
       "@openzeppelin/=node_modules/@openzeppelin/",
+      "@openzeppelin/contracts/=node_modules/@openzeppelin/contracts/",
       "@prb/math/=node_modules/@prb/math/src/",
       "@prb/test/=node_modules/@prb/test/src/",
       "@river-build/diamond/=node_modules/@river-build/diamond/",
+      "@solidity/=node_modules/crypto-lib/src/",
       "account-abstraction/=node_modules/account-abstraction/contracts/",
+      "crypto-lib/=node_modules/crypto-lib/src/",
       "ds-test/=node_modules/ds-test/src/",
       "forge-std/=node_modules/forge-std/src/",
       "hardhat-deploy/=node_modules/hardhat-deploy/",
@@ -44,10 +47,10 @@
   },
   "sources": {
     "contracts/src/river/registry/facets/stream/IStreamRegistry.sol": {
-      "keccak256": "0x06302a58bcf1a6abce7e48113a0c3c83ef8db405f2bd90df00250d9ecf83f339",
+      "keccak256": "0x85011c1cea4c3269a9b885deb0ba61cd07cb81c23ddda95e44300860de08c415",
       "urls": [
-        "bzz-raw://0f9da906b67f94b83f910bc8c23731910861ed80764e8043810415ceaf289b92",
-        "dweb:/ipfs/QmXoxuk38q5jBYe5ay9psfP4RTbpHDV7vxADUS3c28tWwZ"
+        "bzz-raw://5f251ee7f20a441a7a29c9bd4eeea4679950aaad61bbf04aeff45a7276c5378e",
+        "dweb:/ipfs/QmefpgU4w2T1vaMixzGX6Rcts2QiodHPrdKyQXW98xQbKR"
       ],
       "license": "MIT"
     },
