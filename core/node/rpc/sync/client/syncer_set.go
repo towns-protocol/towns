@@ -6,14 +6,16 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/linkdata/deadlock"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
+
 	. "github.com/towns-protocol/towns/core/node/base"
 	. "github.com/towns-protocol/towns/core/node/events"
 	"github.com/towns-protocol/towns/core/node/logging"
 	"github.com/towns-protocol/towns/core/node/nodes"
 	. "github.com/towns-protocol/towns/core/node/protocol"
+	"github.com/towns-protocol/towns/core/node/rpc/sync/dynmsgbuf"
 	. "github.com/towns-protocol/towns/core/node/shared"
-	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/trace"
 )
 
 type (
@@ -39,7 +41,7 @@ type (
 		// localNodeAddress is the node address for this stream node instance
 		localNodeAddress common.Address
 		// messages is the channel to which StreamsSyncers write updates that must be sent to the client
-		messages chan *SyncStreamsResponse
+		messages *dynmsgbuf.DynamicBuffer[*SyncStreamsResponse]
 		// streamCache is used to subscribe to streams managed by this node instance
 		streamCache *StreamCache
 		// nodeRegistry keeps a mapping from node address to node meta-data
@@ -92,12 +94,12 @@ func NewSyncers(
 	localNodeAddress common.Address,
 	cookies StreamCookieSetGroupedByNodeAddress,
 	otelTracer trace.Tracer,
-) (*SyncerSet, chan *SyncStreamsResponse, error) {
+) (*SyncerSet, *dynmsgbuf.DynamicBuffer[*SyncStreamsResponse], error) {
 	var (
 		log             = logging.FromCtx(ctx)
 		syncers         = make(map[common.Address]StreamsSyncer)
 		streamID2Syncer = make(map[StreamId]StreamsSyncer)
-		messages        = make(chan *SyncStreamsResponse, 512)
+		messages        = dynmsgbuf.NewDynamicBuffer[*SyncStreamsResponse]()
 		ss              = &SyncerSet{
 			ctx:                   ctx,
 			globalSyncOpCtxCancel: globalSyncOpCtxCancel,
@@ -115,13 +117,13 @@ func NewSyncers(
 		unavailableRemote = func(cookieSet SyncCookieSet) {
 			for _, cookie := range cookieSet.AsSlice() {
 				select {
-				case messages <- &SyncStreamsResponse{
-					SyncOp:   SyncOp_SYNC_DOWN,
-					StreamId: cookie.GetStreamId(),
-				}:
-					continue
 				case <-ctx.Done():
 					return
+				default:
+					_ = messages.AddMessage(&SyncStreamsResponse{
+						SyncOp:   SyncOp_SYNC_DOWN,
+						StreamId: cookie.GetStreamId(),
+					})
 				}
 			}
 		}

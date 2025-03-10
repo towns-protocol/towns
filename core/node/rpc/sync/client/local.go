@@ -2,16 +2,19 @@ package client
 
 import (
 	"context"
+	"errors"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/linkdata/deadlock"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
+
 	. "github.com/towns-protocol/towns/core/node/base"
 	. "github.com/towns-protocol/towns/core/node/events"
 	"github.com/towns-protocol/towns/core/node/logging"
 	. "github.com/towns-protocol/towns/core/node/protocol"
+	"github.com/towns-protocol/towns/core/node/rpc/sync/dynmsgbuf"
 	. "github.com/towns-protocol/towns/core/node/shared"
-	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/trace"
 )
 
 type localSyncer struct {
@@ -22,7 +25,7 @@ type localSyncer struct {
 
 	streamCache *StreamCache
 	cookies     []*SyncCookie
-	messages    chan<- *SyncStreamsResponse
+	messages    *dynmsgbuf.DynamicBuffer[*SyncStreamsResponse]
 	localAddr   common.Address
 
 	activeStreamsMu deadlock.Mutex
@@ -39,7 +42,7 @@ func newLocalSyncer(
 	localAddr common.Address,
 	streamCache *StreamCache,
 	cookies []*SyncCookie,
-	messages chan<- *SyncStreamsResponse,
+	messages *dynmsgbuf.DynamicBuffer[*SyncStreamsResponse],
 	otelTracer trace.Tracer,
 ) (*localSyncer, error) {
 	return &localSyncer{
@@ -175,20 +178,27 @@ func (s *localSyncer) DebugDropStream(_ context.Context, streamID StreamId) (boo
 }
 
 // OnUpdate is called each time a new cookie is available for a stream
-func (s *localSyncer) sendResponse(r *SyncStreamsResponse) {
+func (s *localSyncer) sendResponse(msg *SyncStreamsResponse) {
 	select {
-	case s.messages <- r:
-		return
 	case <-s.syncStreamCtx.Done():
 		return
 	default:
-		err := RiverError(Err_BUFFER_FULL, "Client sync subscription message channel is full").
-			Tag("syncId", s.globalSyncOpID).
-			Tag("op", r.GetSyncOp()).
-			Func("localSyncer.sendResponse")
+		if err := s.messages.AddMessage(msg); err != nil {
+			var rvrErr *RiverErrorImpl
 
-		_ = err.LogError(logging.FromCtx(s.syncStreamCtx))
+			if errors.Is(err, dynmsgbuf.ErrBufferFull) {
+				rvrErr = RiverError(Err_BUFFER_FULL, "Client sync subscription message channel is full")
+			} else {
+				rvrErr = AsRiverError(err, Err_INTERNAL)
+			}
 
-		s.cancelGlobalSyncOp(err)
+			rvrErr = rvrErr.Tag("syncId", s.globalSyncOpID).
+				Tag("op", msg.GetSyncOp()).
+				Func("localSyncer.sendResponse")
+
+			_ = rvrErr.LogError(logging.FromCtx(s.syncStreamCtx))
+
+			s.cancelGlobalSyncOp(err)
+		}
 	}
 }
