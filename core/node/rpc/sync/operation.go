@@ -4,6 +4,8 @@ import (
 	"context"
 	"time"
 
+	"github.com/towns-protocol/towns/core/node/rpc/sync/dynmsgbuf"
+
 	"connectrpc.com/connect"
 	"github.com/ethereum/go-ethereum/common"
 	. "github.com/towns-protocol/towns/core/node/base"
@@ -121,11 +123,11 @@ func (syncOp *StreamSyncOperation) Run(
 				select {
 				case <-syncOp.ctx.Done():
 					return
-				case messages <- &SyncStreamsResponse{
-					SyncOp:   SyncOp_SYNC_DOWN,
-					StreamId: cookie.GetStreamId(),
-				}:
-					continue
+				default:
+					_ = messages.AddMessage(&SyncStreamsResponse{
+						SyncOp:   SyncOp_SYNC_DOWN,
+						StreamId: cookie.GetStreamId(),
+					})
 				}
 			}
 		}
@@ -146,27 +148,30 @@ func (syncOp *StreamSyncOperation) Run(
 			}
 			// otherwise syncOp is stopped internally.
 			return context.Cause(syncOp.ctx)
-		case msg, ok := <-messages:
-			if !ok {
+		case _, open := <-messages.Wait():
+			msgs := messages.GetBatch(messages.Len())
+			if len(msgs) == 0 {
+				continue
+			}
+
+			for i, msg := range msgs {
+				msg.SyncId = syncOp.SyncID
+				if err := res.Send(msg); err != nil {
+					log.Errorw("Unable to send sync stream update to client", "err", err)
+					return err
+				}
+
+				messagesSendToClient++
+
+				log.Debug("Pending messages in sync operation", "count", messages.Len()+len(msgs)-i-1)
+			}
+
+			// If the client sent a close message, stop sending messages to client from the buffer
+			if !open {
 				_ = res.Send(&SyncStreamsResponse{
 					SyncId: syncOp.SyncID,
 					SyncOp: SyncOp_SYNC_CLOSE,
 				})
-				return nil
-			}
-
-			msg.SyncId = syncOp.SyncID
-			if err := res.Send(msg); err != nil {
-				log.Errorw("Unable to send sync stream update to client", "err", err)
-				return err
-			}
-
-			messagesSendToClient++
-
-			log.Debug("Pending messages in sync operation", "count", len(messages))
-
-			// If the message is a close message, stop sending messages to the client and close the sync operation
-			if msg.GetSyncOp() == SyncOp_SYNC_CLOSE {
 				return nil
 			}
 		}
@@ -175,7 +180,7 @@ func (syncOp *StreamSyncOperation) Run(
 
 func (syncOp *StreamSyncOperation) runCommandsProcessing(
 	syncers *client.SyncerSet,
-	messages chan *SyncStreamsResponse,
+	messages *dynmsgbuf.DynamicBuffer[*SyncStreamsResponse],
 ) {
 	for {
 		select {
@@ -200,14 +205,15 @@ func (syncOp *StreamSyncOperation) runCommandsProcessing(
 			} else if cmd.DebugDropStream != (shared.StreamId{}) {
 				cmd.Reply(syncers.DebugDropStream(cmd.Ctx, cmd.DebugDropStream))
 			} else if cmd.CancelReq != nil {
-				messages <- &SyncStreamsResponse{SyncOp: SyncOp_SYNC_CLOSE}
+				_ = messages.AddMessage(&SyncStreamsResponse{SyncOp: SyncOp_SYNC_CLOSE})
+				messages.Close()
 				cmd.Reply(nil)
 				return
 			} else if cmd.PingReq != nil {
-				messages <- &SyncStreamsResponse{
+				_ = messages.AddMessage(&SyncStreamsResponse{
 					SyncOp:    SyncOp_SYNC_PONG,
 					PongNonce: cmd.PingReq.Msg.GetNonce(),
-				}
+				})
 				cmd.Reply(nil)
 			}
 		}

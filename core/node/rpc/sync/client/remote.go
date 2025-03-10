@@ -19,6 +19,7 @@ import (
 	"github.com/towns-protocol/towns/core/node/nodes"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/protocol/protocolconnect"
+	"github.com/towns-protocol/towns/core/node/rpc/sync/dynmsgbuf"
 	. "github.com/towns-protocol/towns/core/node/shared"
 )
 
@@ -30,7 +31,7 @@ type remoteSyncer struct {
 	forwarderSyncID       string
 	remoteAddr            common.Address
 	client                protocolconnect.StreamServiceClient
-	messages              chan<- *SyncStreamsResponse
+	messages              *dynmsgbuf.DynamicBuffer[*SyncStreamsResponse]
 	streams               sync.Map
 	responseStream        *connect.ServerStreamForClient[SyncStreamsResponse]
 	unsubStream           func(streamID StreamId)
@@ -48,7 +49,7 @@ func newRemoteSyncer(
 	nodeRegistry nodes.NodeRegistry,
 	cookies []*SyncCookie,
 	unsubStream func(streamID StreamId),
-	messages chan<- *SyncStreamsResponse,
+	messages *dynmsgbuf.DynamicBuffer[*SyncStreamsResponse],
 	otelTracer trace.Tracer,
 ) (*remoteSyncer, error) {
 	client, err := nodeRegistry.GetStreamServiceClientForAddress(remoteAddr)
@@ -65,15 +66,15 @@ func newRemoteSyncer(
 
 			for _, cookie := range cookies {
 				select {
-				case messages <- &SyncStreamsResponse{
-					SyncOp:   SyncOp_SYNC_DOWN,
-					StreamId: cookie.GetStreamId(),
-				}:
-					continue
 				case <-timeout:
 					return
 				case <-ctx.Done():
 					return
+				default:
+					messages.AddMessage(&SyncStreamsResponse{
+						SyncOp:   SyncOp_SYNC_DOWN,
+						StreamId: cookie.GetStreamId(),
+					})
 				}
 			}
 		}()
@@ -191,14 +192,10 @@ func (s *remoteSyncer) Run() {
 // If the channel is full or the sync operation is cancelled, the function returns an error.
 func (s *remoteSyncer) sendSyncStreamResponseToClient(msg *SyncStreamsResponse) error {
 	select {
-	case s.messages <- msg:
-		return nil
 	case <-s.syncStreamCtx.Done():
 		return s.syncStreamCtx.Err()
 	default:
-		return RiverError(Err_BUFFER_FULL, "Client sync subscription message channel is full").
-			Tag("syncId", s.forwarderSyncID).
-			Func("sendSyncStreamResponseToClient")
+		return s.messages.AddMessage(msg)
 	}
 }
 
