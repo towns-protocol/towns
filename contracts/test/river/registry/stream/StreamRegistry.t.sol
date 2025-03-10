@@ -551,6 +551,10 @@ contract StreamRegistryTest is
     );
   }
 
+  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+  /*                         Getters                            */
+  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
   function test_getStream() public {
     test_allocateStream();
 
@@ -565,5 +569,63 @@ contract StreamRegistryTest is
       .getStreamWithGenesis(SAMPLE_STREAM.streamId);
     assertEq(stream.lastMiniblockHash, SAMPLE_STREAM.genesisMiniblockHash);
     assertEq(genesisMiniblockHash, SAMPLE_STREAM.genesisMiniblockHash);
+  }
+
+  function test_getPaginatedStreamsOnNode()
+    public
+    givenNodeOperatorIsApproved(OPERATOR)
+    givenNodeIsRegistered(OPERATOR, NODE, "url")
+  {
+    _addStreams();
+
+    StreamWithId[] memory streams = streamRegistry.getPaginatedStreamsOnNode(
+      NODE,
+      0,
+      10
+    );
+
+    assertEq(streams.length, 10);
+    for (uint256 i; i < streams.length; ++i) {
+      assertEq(streams[i].id, bytes32(uint256(i)));
+      assertEq(streams[i].stream.lastMiniblockHash, bytes32(uint256(i)));
+    }
+  }
+
+  function test_getPaginatedStreams()
+    public
+    givenNodeOperatorIsApproved(OPERATOR)
+    givenNodeIsRegistered(OPERATOR, NODE, "url")
+  {
+    _addStreams();
+
+    (StreamWithId[] memory streams, bool isLastPage) = streamRegistry
+      .getPaginatedStreams(0, 10);
+
+    assertEq(streams.length, 10);
+    for (uint256 i; i < streams.length; ++i) {
+      assertEq(streams[i].id, bytes32(uint256(i)));
+      assertEq(streams[i].stream.lastMiniblockHash, bytes32(uint256(i)));
+    }
+    assertTrue(isLastPage);
+  }
+
+  function _addStreams() internal {
+    Stream[] memory streams = new Stream[](10);
+    for (uint256 i; i < streams.length; ++i) {
+      streams[i] = Stream({
+        lastMiniblockHash: bytes32(uint256(i)),
+        lastMiniblockNum: 1,
+        flags: StreamFlags.SEALED,
+        reserved0: 0,
+        nodes: new address[](1)
+      });
+      streams[i].nodes[0] = NODE;
+      vm.prank(NODE);
+      streamRegistry.addStream(
+        bytes32(uint256(i)),
+        bytes32(uint256(i)),
+        streams[i]
+      );
+    }
   }
 }

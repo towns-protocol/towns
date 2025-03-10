@@ -99,6 +99,18 @@ func (s *Service) newEventReceived(
 		return nil, err
 	}
 
+	view, err := stream.GetViewIfLocal(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	if parsedEvent.MiniblockRef.Num >= 0 {
+		_, err = s.ensureStreamIsUpToDate(ctx, view, parsedEvent, stream)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	err = stream.AddEvent(ctx, parsedEvent)
 	if err != nil {
 		return nil, err

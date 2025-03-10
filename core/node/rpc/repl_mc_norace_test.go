@@ -17,19 +17,19 @@ func TestReplMcConversationNoRace(t *testing.T) {
 		if testing.Short() {
 			t.Skip("skipping 10x1000 in short mode")
 		}
-		testReplMcConversation(t, 10, 1000, 20, 1000)
+		testReplMcConversation(t, 10, 1000, 20, 1000, 1000)
 	})
 	t.Run("30x1000", func(t *testing.T) {
 		if testing.Short() {
 			t.Skip("skipping 30x1000 in short mode")
 		}
-		testReplMcConversation(t, 30, 1000, 50, 1000)
+		testReplMcConversation(t, 30, 1000, 50, 1000, 1000)
 	})
 	t.Run("100x100", func(t *testing.T) {
 		testutils.SkipFlakyTest(t, "TODO: REPLICATION: FIX: flaky")
 		if testing.Short() {
 			t.Skip("skipping 100x100 in short mode")
 		}
-		testReplMcConversation(t, 100, 100, 20, 50)
+		testReplMcConversation(t, 100, 100, 20, 50, 100)
 	})
 }

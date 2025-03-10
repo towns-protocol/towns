@@ -92,6 +92,21 @@ contract ReviewFacetTest is MembershipBaseSetup, IReviewBase {
     assertEq(review.rating, newReview.rating, "Rating mismatch");
   }
 
+  function test_addReview_withEntitledLinkedWallet()
+    external
+    givenAliceHasMintedMembership
+    givenWalletIsLinked(aliceWallet, bobWallet)
+  {
+    Review memory newReview = Review({comment: "Great service!", rating: 5});
+
+    vm.prank(bob);
+    reviewFacet.setReview(Action.Add, abi.encode(newReview));
+
+    ReviewStorage.Content memory review = reviewFacet.getReview(bob);
+    assertEq(review.comment, newReview.comment, "Comment mismatch");
+    assertEq(review.rating, newReview.rating, "Rating mismatch");
+  }
+
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                           UPDATE                           */
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
