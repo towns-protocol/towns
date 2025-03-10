@@ -14,6 +14,9 @@ const (
 var (
 	// ErrBufferFull is returned when the buffer is full.
 	ErrBufferFull = errors.New("buffer is full")
+
+	// ErrClosed is returned when the buffer is closed.
+	ErrClosed = errors.New("buffer is closed")
 )
 
 // DynamicBuffer is a thread-safe, dynamically resizing message buffer.
@@ -35,8 +38,7 @@ func NewDynamicBuffer[T any]() *DynamicBuffer[T] {
 // AddMessage adds a new item to the buffer.
 func (db *DynamicBuffer[T]) AddMessage(item T) error {
 	if atomic.LoadInt64(&db.closed) == 1 {
-		// TODO: Return error
-		return nil
+		return ErrClosed
 	}
 
 	db.mu.Lock()
