@@ -120,7 +120,7 @@ func NewSyncers(
 				case <-ctx.Done():
 					return
 				default:
-					messages.AddMessage(&SyncStreamsResponse{
+					_ = messages.AddMessage(&SyncStreamsResponse{
 						SyncOp:   SyncOp_SYNC_DOWN,
 						StreamId: cookie.GetStreamId(),
 					})
