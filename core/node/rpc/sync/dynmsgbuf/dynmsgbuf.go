@@ -1,7 +1,6 @@
 package dynmsgbuf
 
 import (
-	"errors"
 	"sync"
 
 	. "github.com/towns-protocol/towns/core/node/base"
@@ -14,11 +13,6 @@ const (
 
 	// minBufferSize is the minimum buffer size.
 	minBufferSize = 16
-)
-
-var (
-	// ErrClosed is returned when the buffer is closed.
-	ErrClosed = errors.New("buffer is closed")
 )
 
 // DynamicBuffer is a thread-safe, dynamically resizing message buffer.
