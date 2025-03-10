@@ -3,8 +3,6 @@ package rpc
 import (
 	"context"
 	"fmt"
-	"github.com/puzpuzpuz/xsync/v3"
-	"go.uber.org/atomic"
 	"hash/fnv"
 	"io"
 	"log"
@@ -24,8 +22,10 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/puzpuzpuz/xsync/v3"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/atomic"
 
 	"github.com/towns-protocol/towns/core/config"
 	"github.com/towns-protocol/towns/core/contracts/river"

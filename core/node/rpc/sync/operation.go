@@ -165,7 +165,6 @@ func (syncOp *StreamSyncOperation) Run(
 
 			log.Debug("Pending messages in sync operation", "count", len(messages))
 
-			// If the message is a close message, stop sending messages to the client and close the sync operation
 			if msg.GetSyncOp() == SyncOp_SYNC_CLOSE {
 				return nil
 			}
@@ -189,7 +188,6 @@ func (syncOp *StreamSyncOperation) runCommandsProcessing(
 					cmd.Reply(err)
 					continue
 				}
-
 				cmd.Reply(syncers.AddStream(cmd.Ctx, nodeAddress, streamID, cmd.AddStreamReq.Msg.GetSyncPos()))
 			} else if cmd.RmStreamReq != nil {
 				streamID, err := shared.StreamIdFromBytes(cmd.RmStreamReq.Msg.GetStreamId())

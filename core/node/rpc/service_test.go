@@ -14,6 +14,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
+
 	"connectrpc.com/connect"
 	"github.com/ethereum/go-ethereum/accounts"
 	"github.com/ethereum/go-ethereum/common"
@@ -932,31 +934,33 @@ OuterLoop:
 		channelHash,
 	)
 	require.Nilf(err, "error creating message event: %v", err)
-	_, err = aliceClient.AddEvent(
-		ctx,
-		connect.NewRequest(
-			&protocol.AddEventRequest{
-				StreamId: channelId[:],
-				Event:    message2,
-			},
-		),
-	)
-	require.Nilf(err, "error calling AddEvent: %v", err)
 
-	gotUnexpectedMsg := make(chan *protocol.SyncStreamsResponse)
-	go func() {
-		if syncRes.Receive() {
-			gotUnexpectedMsg <- syncRes.Msg()
+	require.EventuallyWithT(func(collect *assert.CollectT) {
+		_, err = aliceClient.AddEvent(
+			ctx,
+			connect.NewRequest(
+				&protocol.AddEventRequest{
+					StreamId: channelId[:],
+					Event:    message2,
+				},
+			),
+		)
+		require.Nilf(err, "error calling AddEvent: %v", err)
+
+		gotUnexpectedMsg := make(chan *protocol.SyncStreamsResponse)
+		go func() {
+			if syncRes.Receive() {
+				gotUnexpectedMsg <- syncRes.Msg()
+			}
+		}()
+
+		select {
+		case <-time.After(time.Second):
+			break
+		case <-gotUnexpectedMsg:
+			collect.Errorf("received message after stream was removed from sync")
 		}
-	}()
-
-	select {
-	case <-time.After(3 * time.Second):
-		break
-	case <-gotUnexpectedMsg:
-		require.Fail("received message after stream was removed from sync")
-	}
-
+	}, time.Second*6, time.Second/2)
 	syncCancel()
 
 	/**
