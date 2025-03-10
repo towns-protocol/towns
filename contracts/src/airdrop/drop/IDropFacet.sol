@@ -76,6 +76,7 @@ interface IDropFacetBase {
   error DropFacet__CurrencyNotSet();
   error DropFacet__RewardsDistributionNotSet();
   error DropFacet__InsufficientBalance();
+  error DropFacet__InvalidLockDuration();
 }
 
 interface IDropFacet is IDropFacetBase {
@@ -132,13 +133,10 @@ interface IDropFacet is IDropFacetBase {
   /// @notice Claims tokens and stakes them in the staking contract
   /// @param claim The claim to process
   /// @param delegatee The address of the delegatee
-  /// @param deadline The deadline for the transaction
-  /// @param signature The signature of the delegatee
   /// @return The amount of tokens claimed
   function claimAndStake(
     Claim calldata claim,
     address delegatee,
-    uint256 deadline,
-    bytes calldata signature
+    uint48 lockDuration
   ) external returns (uint256);
 }

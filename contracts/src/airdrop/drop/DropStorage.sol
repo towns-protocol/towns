@@ -24,6 +24,8 @@ library DropStorage {
     uint48 conditionCount;
     mapping(uint256 conditionId => mapping(address => SupplyClaim)) supplyClaimedByWallet;
     mapping(uint256 conditionId => IDropFacetBase.ClaimCondition) conditionById;
+    uint48 minLockDuration;
+    uint48 maxLockDuration;
   }
 
   function layout() internal pure returns (Layout storage l) {

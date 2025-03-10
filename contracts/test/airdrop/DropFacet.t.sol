@@ -208,8 +208,7 @@ contract DropFacetTest is
         proof: proof
       }),
       operator,
-      deadline,
-      signature
+      0
     );
     _;
   }
