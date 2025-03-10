@@ -196,19 +196,10 @@ func (s *remoteSyncer) sendSyncStreamResponseToClient(msg *SyncStreamsResponse) 
 		return s.syncStreamCtx.Err()
 	default:
 		if err := s.messages.AddMessage(msg); err != nil {
-			var rvrErr *RiverErrorImpl
-
-			if errors.Is(err, dynmsgbuf.ErrBufferFull) {
-				rvrErr = RiverError(Err_BUFFER_FULL, "Client sync subscription message channel is full")
-			} else {
-				rvrErr = AsRiverError(err, Err_INTERNAL)
-			}
-
-			rvrErr = rvrErr.Tag("syncId", s.syncID).
+			return AsRiverError(err).
+				Tag("syncId", s.syncID).
 				Tag("op", msg.GetSyncOp()).
 				Func("sendSyncStreamResponseToClient")
-
-			return rvrErr
 		}
 
 		return nil

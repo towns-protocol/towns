@@ -138,6 +138,7 @@ func (syncOp *StreamSyncOperation) Run(
 	var messagesSendToClient int
 	defer log.Debugw("Stream sync operation stopped", "send", messagesSendToClient)
 
+	var msgs []*SyncStreamsResponse
 	for {
 		select {
 		case <-syncOp.ctx.Done():
@@ -148,7 +149,7 @@ func (syncOp *StreamSyncOperation) Run(
 			// otherwise syncOp is stopped internally.
 			return context.Cause(syncOp.ctx)
 		case _, open := <-messages.Wait():
-			msgs := messages.GetBatch(messages.Len())
+			msgs = messages.GetBatch(msgs)
 			for i, msg := range msgs {
 				msg.SyncId = syncOp.SyncID
 				if err := res.Send(msg); err != nil {

@@ -3,18 +3,20 @@ package dynmsgbuf
 import (
 	"errors"
 	"sync"
-	"sync/atomic"
+
+	. "github.com/towns-protocol/towns/core/node/base"
+	. "github.com/towns-protocol/towns/core/node/protocol"
 )
 
 const (
-	// maxBufferSize
-	maxBufferSize = 512
+	// maxBufferSize is the maximum buffer size.
+	maxBufferSize = 2048
+
+	// minBufferSize is the minimum buffer size.
+	minBufferSize = 16
 )
 
 var (
-	// ErrBufferFull is returned when the buffer is full.
-	ErrBufferFull = errors.New("buffer is full")
-
 	// ErrClosed is returned when the buffer is closed.
 	ErrClosed = errors.New("buffer is closed")
 )
@@ -24,7 +26,6 @@ type DynamicBuffer[T any] struct {
 	mu         sync.Mutex
 	buffer     []T
 	signalChan chan struct{} // Signals when new items are added
-	closed     int64
 }
 
 // NewDynamicBuffer initializes a new dynamic buffer.
@@ -37,18 +38,19 @@ func NewDynamicBuffer[T any]() *DynamicBuffer[T] {
 
 // AddMessage adds a new item to the buffer.
 func (db *DynamicBuffer[T]) AddMessage(item T) error {
-	if atomic.LoadInt64(&db.closed) == 1 {
+	db.mu.Lock()
+	if db.buffer == nil {
+		db.mu.Unlock()
 		return ErrClosed
 	}
 
-	db.mu.Lock()
-	defer db.mu.Unlock()
-
 	if len(db.buffer) >= maxBufferSize {
-		return ErrBufferFull
+		db.mu.Unlock()
+		return RiverError(Err_BUFFER_FULL, "Message buffer is full").
+			Func("DynamicBuffer.AddMessage")
 	}
-
 	db.buffer = append(db.buffer, item)
+	db.mu.Unlock()
 
 	// Non-blocking signal (only if empty, avoids duplicate wake-ups)
 	select {
@@ -60,25 +62,25 @@ func (db *DynamicBuffer[T]) AddMessage(item T) error {
 }
 
 // GetBatch retrieves up to `batchSize` messages, removing them from the buffer.
-func (db *DynamicBuffer[T]) GetBatch(batchSize int) []T {
+func (db *DynamicBuffer[T]) GetBatch(prev []T) []T {
+	// Reset if capacity is unused
+	if prev == nil || (cap(prev) > minBufferSize*2 && len(prev) < cap(prev)/2) {
+		prev = make([]T, 0, minBufferSize)
+	} else {
+		// Deref pointers so they can be gc'ed faster
+		var zero T
+		for i := range prev {
+			prev[i] = zero
+		}
+		prev = prev[:0]
+	}
+
 	db.mu.Lock()
-	defer db.mu.Unlock()
+	ret := db.buffer
+	db.buffer = prev
+	db.mu.Unlock()
 
-	if len(db.buffer) == 0 {
-		return nil
-	}
-
-	// Determine batch size (avoid slicing out of range)
-	if batchSize > len(db.buffer) {
-		batchSize = len(db.buffer)
-	}
-
-	// Copy batch & remove from buffer
-	batch := make([]T, batchSize)
-	copy(batch, db.buffer[:batchSize])
-	db.buffer = db.buffer[batchSize:]
-
-	return batch
+	return ret
 }
 
 // Len returns the number of messages in the buffer.
@@ -94,8 +96,10 @@ func (db *DynamicBuffer[T]) Wait() <-chan struct{} {
 	return db.signalChan
 }
 
-// Close ...
+// Close closes the buffer.
 func (db *DynamicBuffer[T]) Close() {
-	atomic.StoreInt64(&db.closed, 1)
+	db.mu.Lock()
+	db.buffer = nil
+	db.mu.Unlock()
 	close(db.signalChan)
 }
