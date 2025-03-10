@@ -25,9 +25,11 @@ export function makeClientParams(config: SyncAgentConfig, spaceDapp: SpaceDapp):
             makeTestCryptoDbName(userId, config.deviceId),
         ),
         entitlementsDelegate: new Entitlements(config.riverConfig, spaceDapp),
-        persistenceStoreName: makeTestPersistenceDbName(userId, config.deviceId),
-        logNamespaceFilter: undefined,
-        highPriorityStreamIds: undefined,
+        opts: {
+            persistenceStoreName: makeTestPersistenceDbName(userId, config.deviceId),
+            logNamespaceFilter: undefined,
+            highPriorityStreamIds: undefined,
+        },
         rpcRetryParams: config.retryParams,
     } satisfies ClientParams
 }
