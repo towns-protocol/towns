@@ -159,6 +159,10 @@ func (syncOp *StreamSyncOperation) Run(
 				messagesSendToClient++
 
 				log.Debug("Pending messages in sync operation", "count", messages.Len()+len(msgs)-i-1)
+
+				if msg.GetSyncOp() == SyncOp_SYNC_CLOSE {
+					return nil
+				}
 			}
 
 			// If the client sent a close message, stop sending messages to client from the buffer
