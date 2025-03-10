@@ -41,7 +41,8 @@ func (db *DynamicBuffer[T]) AddMessage(item T) error {
 	db.mu.Lock()
 	if db.buffer == nil {
 		db.mu.Unlock()
-		return ErrClosed
+		return RiverError(Err_BUFFER_CLOSED, "Message buffer is closed").
+			Func("DynamicBuffer.AddMessage")
 	}
 
 	if len(db.buffer) >= maxBufferSize {

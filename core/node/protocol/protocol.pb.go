@@ -7,12 +7,13 @@
 package protocol
 
 import (
+	reflect "reflect"
+	sync "sync"
+
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
-	reflect "reflect"
-	sync "sync"
 )
 
 const (
@@ -456,6 +457,8 @@ const (
 	// The encryption device returned by the app service webhook does not match the first
 	// encryption device found in the app's user metadata stream.
 	Err_BAD_ENCRYPTION_DEVICE Err = 68
+	// The buffer is closed and cannot be used anymore.
+	Err_BUFFER_CLOSED Err = 69
 )
 
 // Enum value maps for Err.
