@@ -115,7 +115,7 @@ export class SyncedStreamsLoop {
     // syncState is used to track the current sync state
     private _syncState: SyncState = SyncState.NotSyncing
     // retry logic
-    releaseRetryWait: (() => void) | undefined
+    private releaseRetryWait: (() => void) | undefined
     private currentRetryCount: number = 0
     private forceStopSyncStreams: (() => void) | undefined
     private interruptSync: ((err: unknown) => void) | undefined
@@ -282,6 +282,13 @@ export class SyncedStreamsLoop {
 
     public setHighPriorityStreams(streamIds: string[]) {
         this.highPriorityIds = new Set(streamIds)
+    }
+
+    public onNetworkStatusChanged(isOnline: boolean) {
+        if (isOnline) {
+            this.log('back online, release retry wait', { syncState: this.syncState })
+            this.releaseRetryWait?.()
+        }
     }
 
     private createSyncLoop() {
