@@ -181,7 +181,7 @@ func (p *miniblockProducer) scheduleCandidates(ctx context.Context, blockNum cry
 
 	for _, stream := range candidates {
 		if !p.isLocalLeaderOnCurrentBlock(stream, blockNum) {
-			log.Debugw(
+			log.Miniblock.Debugw(
 				"MiniblockProducer: OnNewBlock: Not a leader for stream",
 				"streamId",
 				stream.streamId,
@@ -193,13 +193,13 @@ func (p *miniblockProducer) scheduleCandidates(ctx context.Context, blockNum cry
 		j := p.trySchedule(ctx, stream)
 		if j != nil {
 			scheduled = append(scheduled, j)
-			log.Debugw(
+			log.Miniblock.Debugw(
 				"MiniblockProducer: OnNewBlock: Scheduled miniblock production",
 				"streamId",
 				stream.streamId,
 			)
 		} else {
-			log.Debugw(
+			log.Miniblock.Debugw(
 				"MiniblockProducer: OnNewBlock: Miniblock production already scheduled",
 				"streamId",
 				stream.streamId,
@@ -383,7 +383,7 @@ func (p *miniblockProducer) submitProposalBatch(ctx context.Context, proposals [
 		} else {
 			success = append(success, job.stream.streamId)
 
-			log.Debugw("submitProposalBatch: skip miniblock registration",
+			log.Miniblock.Debugw("submitProposalBatch: skip miniblock registration",
 				"streamId", job.stream.streamId, "blocknum", job.candidate.Ref.Num)
 		}
 	}
@@ -409,14 +409,14 @@ func (p *miniblockProducer) submitProposalBatch(ctx context.Context, proposals [
 			success = append(success, successRegistered...)
 			invalidProposals = append(invalidProposals, invalid...)
 			if len(failed) > 0 {
-				log.Errorw("processMiniblockProposalBatch: Failed to register some miniblocks", "failed", failed)
+				log.Miniblock.Errorw("processMiniblockProposalBatch: Failed to register some miniblocks", "failed", failed)
 			}
 		} else {
-			log.Errorw("processMiniblockProposalBatch: Error registering miniblock batch", "err", err)
+			log.Miniblock.Errorw("processMiniblockProposalBatch: Error registering miniblock batch", "err", err)
 		}
 	}
 
-	log.Infow("processMiniblockProposalBatch: Submitted SetStreamLastMiniblockBatch",
+	log.Miniblock.Infow("processMiniblockProposalBatch: Submitted SetStreamLastMiniblockBatch",
 		"total", len(proposals),
 		"actualSubmitted", len(filteredProposals),
 		"success", len(success),
@@ -431,7 +431,7 @@ func (p *miniblockProducer) submitProposalBatch(ctx context.Context, proposals [
 			go func() {
 				err := job.stream.ApplyMiniblock(ctx, job.candidate)
 				if err != nil {
-					log.Errorw(
+					log.Miniblock.Errorw(
 						"processMiniblockProposalBatch: Error applying miniblock",
 						"streamId",
 						job.stream.streamId,
@@ -449,7 +449,7 @@ func (p *miniblockProducer) submitProposalBatch(ctx context.Context, proposals [
 	}
 
 	if err := p.promoteConfirmedCandidates(ctx, streamsOutOfSync); err != nil {
-		log.Error("processMiniblockProposalBatch: Error promoting confirmed miniblock candidates", "err", err)
+		log.Miniblock.Error("processMiniblockProposalBatch: Error promoting confirmed miniblock candidates", "err", err)
 	}
 }
 
@@ -472,7 +472,7 @@ func (p *miniblockProducer) promoteConfirmedCandidates(ctx context.Context, jobs
 	for _, job := range jobs {
 		stream, err := registry.GetStream(ctx, job.stream.streamId, crypto.BlockNumber(headNum))
 		if err != nil {
-			log.Error("Unable to retrieve stream details from registry",
+			log.Miniblock.Error("Unable to retrieve stream details from registry",
 				"streamId", job.stream.streamId, "err", err)
 
 			p.jobDone(ctx, job)
@@ -485,12 +485,12 @@ func (p *miniblockProducer) promoteConfirmedCandidates(ctx context.Context, jobs
 		}
 
 		if err := job.stream.promoteCandidate(ctx, &committedLocalCandidateRef); err == nil {
-			log.Info("Promoted miniblock candidate",
+			log.Miniblock.Info("Promoted miniblock candidate",
 				"streamId", job.stream.streamId,
 				"num", committedLocalCandidateRef.Num,
 				"hash", committedLocalCandidateRef.Hash)
 		} else {
-			log.Error("Unable to promote candidate",
+			log.Miniblock.Error("Unable to promote candidate",
 				"streamId", job.stream.streamId,
 				"num", committedLocalCandidateRef.Num,
 				"hash", committedLocalCandidateRef.Hash,

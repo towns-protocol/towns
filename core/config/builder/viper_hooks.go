@@ -12,6 +12,7 @@ import (
 	"github.com/mitchellh/mapstructure"
 
 	"github.com/towns-protocol/towns/core/node/base"
+	"github.com/towns-protocol/towns/core/node/logging"
 	"github.com/towns-protocol/towns/core/node/protocol"
 )
 
@@ -19,6 +20,7 @@ var (
 	commonAddressType = reflect.TypeOf(common.Address{})
 	timeDurationType  = reflect.TypeOf(time.Duration(0))
 	uint64SliceType   = reflect.TypeOf([]uint64{})
+	logLevelsType     = reflect.TypeOf(logging.LogLevels{})
 )
 
 func DecodeAddressOrAddressFileHook() mapstructure.DecodeHookFuncType {
@@ -71,6 +73,22 @@ func DecodeUint64SliceHook() mapstructure.DecodeHookFuncType {
 				result = append(result, val)
 			}
 			return result, nil
+		}
+		return data, nil
+	}
+}
+
+func DecodeLogLevelsHook() mapstructure.DecodeHookFuncType {
+	return func(from reflect.Type, to reflect.Type, data interface{}) (interface{}, error) {
+		if from.Kind() == reflect.String && to == logLevelsType {
+			levels, err := logging.ParseLogLevels(data.(string))
+			if err != nil {
+				return nil, base.AsRiverError(err, protocol.Err_BAD_CONFIG).
+					Message("Failed to parse log levels").
+					Tag("cfg", data.(string)).
+					Func("DecodeLogLevelsHook")
+			}
+			return levels, nil
 		}
 		return data, nil
 	}
