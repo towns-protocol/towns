@@ -48,7 +48,7 @@ import {DeployMockLegacyArchitect} from "contracts/scripts/deployments/facets/De
 import {DeploySpaceProxyInitializer} from "contracts/scripts/deployments/utils/DeploySpaceProxyInitializer.s.sol";
 import {DeploySpaceFactoryInit} from "contracts/scripts/deployments/facets/DeploySpaceFactoryInit.s.sol";
 import {DeploySLCEIP6565} from "contracts/scripts/deployments/utils/DeploySLCEIP6565.s.sol";
-import {MockDelegationRegistry} from "contracts/test/mocks/MockDelegationRegistry.sol";
+import {DeployMockDelegationRegistry} from "contracts/scripts/deployments/utils/DeployMockDelegationRegistry.s.sol";
 
 contract DeploySpaceFactory is DiamondHelper, Deployer {
   // diamond helpers
@@ -97,6 +97,9 @@ contract DeploySpaceFactory is DiamondHelper, Deployer {
 
   DeploySpaceFactoryInit deploySpaceFactoryInit = new DeploySpaceFactoryInit();
 
+  DeployMockDelegationRegistry deployMockDelegationRegistry =
+    new DeployMockDelegationRegistry();
+
   // helpers
   address multiInit;
 
@@ -131,8 +134,9 @@ contract DeploySpaceFactory is DiamondHelper, Deployer {
   address public tieredLogPricingV2;
   address public tieredLogPricingV3;
   address public fixedPricing;
-  address public mockDelegationRegistry;
+
   address public sclEip6565;
+  address public mockDelegationRegistry;
   address[] pricingModules;
 
   // init
@@ -215,6 +219,9 @@ contract DeploySpaceFactory is DiamondHelper, Deployer {
 
     if (isAnvil()) {
       legacyArchitect = deployMockLegacyArchitect.deploy(deployer);
+      mockDelegationRegistry = deployMockDelegationRegistry.deploy(deployer);
+    } else {
+      mockDelegationRegistry = 0x00000000000000447e69651d841bD8D104Bed493;
     }
 
     addFacet(
@@ -286,7 +293,7 @@ contract DeploySpaceFactory is DiamondHelper, Deployer {
     addFacet(
       walletLinkHelper.makeCut(walletLink, IDiamond.FacetCutAction.Add),
       walletLink,
-      walletLinkHelper.makeInitData(_getDelegateRegistry(), sclEip6565)
+      walletLinkHelper.makeInitData(mockDelegationRegistry, sclEip6565)
     );
     addFacet(
       eip712Helper.makeCut(eip712, IDiamond.FacetCutAction.Add),
@@ -411,11 +418,11 @@ contract DeploySpaceFactory is DiamondHelper, Deployer {
       } else if (facetNameHash == keccak256(abi.encodePacked("WalletLink"))) {
         walletLink = walletLinkHelper.deploy(deployer);
         sclEip6565 = deployVerifierLib.deploy(deployer);
-        address delegateRegistry = _getDelegateRegistry();
+        mockDelegationRegistry = 0x00000000000000447e69651d841bD8D104Bed493;
         addFacet(
           walletLinkHelper.makeCut(walletLink, IDiamond.FacetCutAction.Add),
           walletLink,
-          walletLinkHelper.makeInitData(delegateRegistry, sclEip6565)
+          walletLinkHelper.makeInitData(mockDelegationRegistry, sclEip6565)
         );
       } else if (facetNameHash == keccak256(abi.encodePacked("EIP712Facet"))) {
         eip712 = eip712Helper.deploy(deployer);
@@ -447,14 +454,6 @@ contract DeploySpaceFactory is DiamondHelper, Deployer {
         );
       }
     }
-  }
-
-  function _getDelegateRegistry() internal returns (address) {
-    if (isAnvil()) {
-      mockDelegationRegistry = address(new MockDelegationRegistry());
-      return mockDelegationRegistry;
-    }
-    return 0x00000000000000447e69651d841bD8D104Bed493;
   }
 
   function diamondInitHelper(
