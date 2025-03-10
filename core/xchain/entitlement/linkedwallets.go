@@ -51,7 +51,7 @@ func GetLinkedWallets(
 	if callDurations != nil {
 		timer = prometheus.NewTimer(callDurations.WithLabelValues("GetWalletsByRootKey"))
 	}
-	wallets, err := walletLink.GetWalletsByRootKey(&bind.CallOpts{Context: ctx}, rootKey)
+	wallets, err := walletLink.GetWalletsByRootKeyWithDelegations(&bind.CallOpts{Context: ctx}, rootKey)
 	if timer != nil {
 		timer.ObserveDuration()
 	}

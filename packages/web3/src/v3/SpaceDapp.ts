@@ -733,6 +733,19 @@ export class SpaceDapp implements ISpaceDapp {
         return [wallet, ...linkedWallets]
     }
 
+    public async getLinkedWalletsWithDelegations(wallet: string): Promise<string[]> {
+        let linkedWallets = await this.walletLink.getLinkedWalletsWithDelegations(wallet)
+        // If there are no linked wallets, consider that the wallet may be linked to another root key.
+        if (linkedWallets.length === 0) {
+            const possibleRoot = await this.walletLink.getRootKeyForWallet(wallet)
+            if (possibleRoot !== INVALID_ADDRESS) {
+                linkedWallets = await this.walletLink.getLinkedWalletsWithDelegations(possibleRoot)
+                return [possibleRoot, ...linkedWallets]
+            }
+        }
+        return [wallet, ...linkedWallets]
+    }
+
     private async evaluateEntitledWallet(
         rootKey: string,
         allWallets: string[],
@@ -829,7 +842,7 @@ export class SpaceDapp implements ISpaceDapp {
         rootKey: string,
         xchainConfig: XchainConfig,
     ): Promise<EntitledWallet> {
-        const allWallets = await this.getLinkedWallets(rootKey)
+        const allWallets = await this.getLinkedWalletsWithDelegations(rootKey)
 
         const space = this.getSpace(spaceId)
         if (!space) {
@@ -926,7 +939,7 @@ export class SpaceDapp implements ISpaceDapp {
 
         const channelId = ensureHexPrefix(channelNetworkId)
 
-        const linkedWallets = await this.getLinkedWallets(user)
+        const linkedWallets = await this.getLinkedWalletsWithDelegations(user)
 
         const owner = await space.Ownable.read.owner()
 
@@ -1674,7 +1687,7 @@ export class SpaceDapp implements ISpaceDapp {
         if (!space) {
             throw new Error(`Space with spaceId "${spaceId}" is not found.`)
         }
-        const linkedWallets = await this.getLinkedWallets(owner)
+        const linkedWallets = await this.getLinkedWalletsWithDelegations(owner)
         const tokenIds = await space.getTokenIdsOfOwner(linkedWallets)
         return tokenIds[0]
     }
