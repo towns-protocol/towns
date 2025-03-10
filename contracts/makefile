@@ -256,7 +256,7 @@ interact-river :;
 # 				 		Base
 # ===========================
 deploy-base :;
-	@$(MAKE) deploy-any-ledger rpc=base hd_path=${HD_PATH} sender=${SENDER_ADDRESS} verifier=${BLOCKSCOUT_BASE_URL} etherscan=${BLOCKSCOUT_BASE_API_KEY}
+	@$(MAKE) deploy-any-ledger rpc=base hd_path=${HD_PATH} sender=${SENDER_ADDRESS} verifier=blockscout verifier-url=${BLOCKSCOUT_BASE_URL}
 	@$(MAKE) resume-any-ledger rpc=base hd_path=${HD_PATH} sender=${SENDER_ADDRESS} verifier=${BASESCAN_URL} etherscan=${BASESCAN_API_KEY}
 
 interact-base :;
