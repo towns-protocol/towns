@@ -16,7 +16,7 @@ export const TooltipBoundaryBox = (props: BoxProps & { tooltipPadding?: number }
     const { tooltipPadding = 16, ...boxProps } = props
     return (
         <TooltipBoundaryContext.Provider value={{ ref, tooltipPadding }}>
-            <Box {...boxProps} ref={ref}>
+            <Box as="span" {...boxProps} ref={ref}>
                 {props.children}
             </Box>
         </TooltipBoundaryContext.Provider>

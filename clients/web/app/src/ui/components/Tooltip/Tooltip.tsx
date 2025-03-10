@@ -15,12 +15,13 @@ export const Tooltip = ({ children, ...boxProps }: { children: React.ReactNode }
 
     children =
         typeof children === 'string' ? (
-            <p className={atoms({ fontSize: 'sm' })}>{children}</p>
+            <span className={atoms({ fontSize: 'sm' })}>{children}</span>
         ) : (
             children
         )
     return (
         <Box
+            as="span"
             padding="sm"
             background="level1"
             color="gray1"

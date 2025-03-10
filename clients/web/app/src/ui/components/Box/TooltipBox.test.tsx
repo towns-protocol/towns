@@ -11,7 +11,7 @@ describe('Box', () => {
     it('should render', () => {
         const component = TestRenderer.create(<Box />)
         const tree = toJsonTree(component)
-        expect(tree.type).toBe('div')
+        expect(tree.type).toBe('span')
     })
 
     it('should display default tooltip on hover', async () => {

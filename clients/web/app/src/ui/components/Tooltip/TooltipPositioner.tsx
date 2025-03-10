@@ -191,12 +191,12 @@ export const TooltipPositioner = (props: TooltipPositionerProps) => {
 
     return !containerRect?.height ? (
         // allows measurements before the animate presence animation triggers
-        <div className={className} ref={ref} style={containerStyle}>
+        <span className={className} ref={ref} style={containerStyle}>
             {render}
-        </div>
+        </span>
     ) : (
-        <motion.div className={className} ref={ref} style={containerStyle}>
-            <motion.div
+        <motion.span className={className} ref={ref} style={containerStyle}>
+            <motion.span
                 initial={{ opacity: 0, scale: 0.9, originX, originY, x, y }}
                 animate={{ opacity: visible ? 1 : 0, scale: 1, x: 0, y: 0 }}
                 exit={{ opacity: 0, scale: 0.9, x, y }}
@@ -206,8 +206,8 @@ export const TooltipPositioner = (props: TooltipPositionerProps) => {
                 }}
             >
                 {render}
-            </motion.div>
-        </motion.div>
+            </motion.span>
+        </motion.span>
     )
 }
 
