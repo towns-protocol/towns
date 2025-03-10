@@ -328,7 +328,7 @@ func TestAppRegistry_RegisterWebhook(t *testing.T) {
 	)
 
 	// Create needed streams and add an encryption device to the user metadata stream for the app service.
-	tc := tester.newTestClient(0)
+	tc := tester.newTestClient(0, testClientOpts{})
 	defaultEncryptionDevice := app_client.EncryptionDevice{
 		DeviceKey:   "deviceKey",
 		FallbackKey: "fallbackKey",
