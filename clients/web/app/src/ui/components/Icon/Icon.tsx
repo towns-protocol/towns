@@ -807,6 +807,28 @@ const LightningIcon = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) => (
     </svg>
 ))
 
+const LineChartIcon = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) => (
+    <svg
+        width="24"
+        height="24"
+        viewBox="0 0 24 24"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        {...props}
+        ref={ref}
+    >
+        <g>
+            <path
+                d="M4 16C6 12.5 7 12 8 11C9 11.5 11 12 12 12.5C13 11.5 14.5 10.5 16 4C17 9.8 18.5 10.2 20 10.5"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+            />
+        </g>
+    </svg>
+))
+
 const LinkIcon = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) => (
     <svg
         width="24"
@@ -2445,6 +2467,7 @@ const iconMap = {
     italic: ItalicIcon,
     key: KeyIcon,
     lightning: LightningIcon,
+    linechart: LineChartIcon,
     link: LinkIcon,
     linkOut: LinkOut,
     linkOutWithFrame: LinkOutWithFrame,

@@ -1,13 +1,26 @@
+import { isThisYear, isToday } from 'date-fns'
 import {
+    AreaData,
     AreaSeries,
+    AreaSeriesOptions,
+    AreaStyleOptions,
+    CandlestickData,
     CandlestickSeries,
+    CandlestickSeriesOptions,
+    CandlestickStyleOptions,
     ColorType,
+    DeepPartial,
     IChartApi,
+    ISeriesApi,
     ISeriesPrimitive,
+    LineStyle,
+    MouseEventHandler,
     SeriesAttachedParameter,
+    SeriesOptionsCommon,
     SeriesType,
     Time,
     UTCTimestamp,
+    WhitespaceData,
     createChart,
 } from 'lightweight-charts'
 import { zip } from 'lodash'
@@ -20,6 +33,7 @@ import {
     TokenTransferRollupEvent,
     useTradingContext,
 } from '@components/Web3/Trading/TradingContextProvider'
+import { formatCompactNumber } from '@components/Web3/Trading/tradingUtils'
 import { useTokenBalance } from '@components/Web3/Trading/useTokenBalance'
 import { Box, Dropdown, IconButton, SizeBox, Stack, Text } from '@ui'
 import { useStore } from 'store/store'
@@ -82,17 +96,11 @@ export const TradingChart = (props: { address: string; chainId: string; disabled
         disabled,
     })
 
-    const [isFocused, setIsFocused] = useState(false)
-
     return (
         <>
             <Box width="100%" position="relative">
-                <SizeBox
-                    cursor={!isFocused && isTradingThreadContext ? 'pointer' : 'default'}
-                    onClick={isTradingThreadContext ? () => setIsFocused(true) : undefined}
-                >
+                <SizeBox>
                     <ChartComponent
-                        isFocused={isFocused}
                         data={barData}
                         chartType={chartType}
                         timeframe={timeframe}
@@ -107,7 +115,7 @@ export const TradingChart = (props: { address: string; chainId: string; disabled
                 <Box position="absolute" top="md" right="md" zIndex="above">
                     <Stack horizontal gap="sm" alignItems="center" position="relative">
                         <IconButton
-                            icon="candlestick"
+                            icon={chartType === 'candlestick' ? 'candlestick' : 'linechart'}
                             background="level4"
                             color="gray1"
                             rounded="full"
@@ -149,13 +157,12 @@ export const TradingChart = (props: { address: string; chainId: string; disabled
 }
 
 const ChartComponent = (props: {
-    isFocused: boolean
     data: GetBars
     timeframe: TimeFrame
     chartType: 'area' | 'candlestick'
     transfers: TokenTransferRollupEvent[]
 }) => {
-    const { isFocused, data, chartType, timeframe, transfers } = props
+    const { data, chartType, timeframe, transfers } = props
 
     const { getTheme } = useStore()
     const theme = getTheme()
@@ -210,6 +217,8 @@ const ChartComponent = (props: {
         })
     }, [transfers, data])
 
+    const crosshairRef = useRef<HTMLDivElement>(null)
+
     useLayoutEffect(() => {
         const container = chartContainerRef.current
         if (!container) {
@@ -220,6 +229,9 @@ const ChartComponent = (props: {
         }
 
         const chart = createChart(container, {
+            handleScale: false,
+            handleScroll: false,
+
             layout: {
                 background: {
                     bottomColor: backgroundGradientBottom,
@@ -233,7 +245,17 @@ const ChartComponent = (props: {
             leftPriceScale: {
                 visible: false,
             },
-
+            crosshair: {
+                mode: 1,
+                horzLine: {
+                    visible: false,
+                },
+                vertLine: {
+                    color: themes.dark.tone.cta2,
+                    width: 1,
+                    style: LineStyle.Dotted,
+                },
+            },
             rightPriceScale: {
                 visible: false,
                 borderVisible: false,
@@ -257,8 +279,24 @@ const ChartComponent = (props: {
             },
         })
 
+        let areaSeries: ISeriesApi<
+            'Area',
+            Time,
+            AreaData<Time> | WhitespaceData<Time>,
+            AreaSeriesOptions,
+            DeepPartial<AreaStyleOptions & SeriesOptionsCommon>
+        >
+
+        let candleStickSeries: ISeriesApi<
+            'Candlestick',
+            Time,
+            CandlestickData<Time> | WhitespaceData<Time>,
+            CandlestickSeriesOptions,
+            DeepPartial<CandlestickStyleOptions & SeriesOptionsCommon>
+        >
+
         if (chartType === 'area') {
-            const areaSeries = chart.addSeries(AreaSeries, {
+            areaSeries = chart.addSeries(AreaSeries, {
                 lineColor,
                 topColor: areaTopColor,
                 bottomColor: areaBottomColor,
@@ -272,12 +310,18 @@ const ChartComponent = (props: {
                 new ChartAvatarSeriesPrimitive(chart, filteredTransfers, transferMapRef),
             )
         } else {
-            const candleStickSeries = chart.addSeries(CandlestickSeries, {})
-            const formattedData = zip(data.t, data.o, data.h, data.l, data.c).map(
-                ([time, open, high, low, close]) => {
-                    return { time: time as UTCTimestamp, open, high, low, close }
-                },
-            )
+            candleStickSeries = chart.addSeries(CandlestickSeries, {})
+            const formattedData = zip(data.t, data.o, data.h, data.l, data.c)
+                .filter((values): values is [number, number, number, number, number] =>
+                    values.every((v) => v !== undefined),
+                )
+                .map(([time, open, high, low, close]) => ({
+                    time: time as UTCTimestamp,
+                    open,
+                    high,
+                    low,
+                    close,
+                }))
             candleStickSeries.setData(formattedData)
             candleStickSeries.attachPrimitive(
                 new ChartAvatarSeriesPrimitive(chart, filteredTransfers, transferMapRef),
@@ -289,7 +333,68 @@ const ChartComponent = (props: {
 
         focusChart(chart, false)
 
+        const handleCrosshairMove: MouseEventHandler<Time> = (param) => {
+            const el = crosshairRef.current
+
+            if (!el) {
+                return
+            }
+
+            const data = areaSeries
+                ? (param.seriesData?.get(areaSeries) as AreaData<Time>)
+                : (param.seriesData?.get(candleStickSeries) as CandlestickData<Time>)
+
+            if (data && param.point) {
+                if (el.children.length === 2) {
+                    const date = new Date(Number(data.time) * 1000)
+
+                    const notToday = !isToday(date)
+                    const notThisYear = !isThisYear(date)
+
+                    const dateString = date
+                        .toLocaleString('en-US', {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            // show month and year if not current
+                            month: notToday ? 'short' : undefined,
+                            day: notToday ? 'numeric' : undefined,
+                            year: notThisYear ? 'numeric' : undefined,
+                        })
+                        // remove space before am/pm
+                        ?.replace(/\s(?=am|pm)/i, '')
+
+                    if ('value' in data) {
+                        // area series
+                        const value = formatCompactNumber(data.value)
+                        el.children[0].textContent = `$${value}`
+                        el.children[1].textContent = dateString
+                    } else {
+                        // candlestick series
+                        const open = formatCompactNumber(data.open)
+                        const close = formatCompactNumber(data.close)
+
+                        el.children[0].textContent = `$${open} $${close}`
+                        el.children[1].textContent = dateString
+                    }
+                }
+                el.style.display = 'flex'
+
+                const width = el.getBoundingClientRect().width
+
+                el.style.transform = `translate(
+                    calc(min(var(--sizebox-width) - ${width + 4}px, max(4px, -50% + ${
+                    param.point.x
+                }px))), 
+                    calc(max(4px, -100% - 10px + ${param.point.y}px))`
+            } else {
+                el.style.display = 'none'
+            }
+        }
+
+        chart.subscribeCrosshairMove(handleCrosshairMove)
+
         return () => {
+            chart.unsubscribeCrosshairMove(handleCrosshairMove)
             chart.remove()
         }
     }, [
@@ -317,15 +422,24 @@ const ChartComponent = (props: {
         }
     }, [containerWidth])
 
-    useLayoutEffect(() => {
-        if (chartRef.current) {
-            focusChart(chartRef.current, isFocused)
-        }
-    }, [isFocused, focusChart])
-
     return (
         <Box height="200" ref={chartContainerRef}>
             <Box absoluteFill zIndex="above" pointerEvents="none">
+                <Box
+                    horizontal
+                    ref={crosshairRef}
+                    background="level3"
+                    rounded="md"
+                    padding="sm"
+                    paddingX="md"
+                    gap="sm"
+                    alignItems="center"
+                    whiteSpace="nowrap"
+                    position="topLeft"
+                >
+                    <Text as="span" size="md" color="gray1" fontWeight="medium" />
+                    <Text as="span" size="md" color="gray2" />
+                </Box>
                 {filteredTransfers
                     .map((transfer, index) => ({
                         ...transfer,
