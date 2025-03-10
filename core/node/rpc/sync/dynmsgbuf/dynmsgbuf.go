@@ -1,8 +1,19 @@
 package dynmsgbuf
 
 import (
+	"errors"
 	"sync"
 	"sync/atomic"
+)
+
+const (
+	// maxBufferSize
+	maxBufferSize = 512
+)
+
+var (
+	// ErrBufferFull is returned when the buffer is full.
+	ErrBufferFull = errors.New("buffer is full")
 )
 
 // DynamicBuffer is a thread-safe, dynamically resizing message buffer.
@@ -16,8 +27,8 @@ type DynamicBuffer[T any] struct {
 // NewDynamicBuffer initializes a new dynamic buffer.
 func NewDynamicBuffer[T any]() *DynamicBuffer[T] {
 	return &DynamicBuffer[T]{
-		buffer:     make([]T, 0),
-		signalChan: make(chan struct{}, 1), // Non-blocking signal
+		buffer:     make([]T, 0, maxBufferSize),
+		signalChan: make(chan struct{}, 1),
 	}
 }
 
@@ -31,14 +42,11 @@ func (db *DynamicBuffer[T]) AddMessage(item T) error {
 	db.mu.Lock()
 	defer db.mu.Unlock()
 
-	db.buffer = append(db.buffer, item)
+	if len(db.buffer) >= maxBufferSize {
+		return ErrBufferFull
+	}
 
-	// TODO: Set some hard limit on the buffer size to prevent memory exhaustion
-	/*
-		RiverError(Err_BUFFER_FULL, "Client sync subscription message channel is full").
-					Tag("syncId", s.forwarderSyncID).
-					Func("sendSyncStreamResponseToClient")
-	*/
+	db.buffer = append(db.buffer, item)
 
 	// Non-blocking signal (only if empty, avoids duplicate wake-ups)
 	select {
