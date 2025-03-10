@@ -44,11 +44,12 @@ contract ForkStreamRegistry is DeployBase, TestUtils, IDiamond {
   }
 
   function test_syncNodesOnStreams() public {
+    uint256 stop = 200;
     (StreamWithId[] memory streams, ) = streamRegistry.getPaginatedStreams(
       0,
-      10
+      stop
     );
-    for (uint256 i; i < 10; ++i) {
+    for (uint256 i; i < stop; ++i) {
       StreamWithId memory stream = streams[i];
       address[] memory nodes = stream.stream.nodes;
       for (uint256 j; j < nodes.length; ++j) {
@@ -62,8 +63,10 @@ contract ForkStreamRegistry is DeployBase, TestUtils, IDiamond {
       assertEq(streamRegistry.getStreamCountOnNode(_ghostNodes[i]), 0);
     }
 
+    vm.startSnapshotGas("syncNodesOnStreams");
     // sync nodes
-    streamRegistry.syncNodesOnStreams(0, 10);
+    streamRegistry.syncNodesOnStreams(0, stop);
+    vm.stopSnapshotGas();
 
     // `getPaginatedStreamsOnNode` should return all streams after syncing
     for (uint256 i; i < _ghostNodes.length; ++i) {
@@ -76,7 +79,7 @@ contract ForkStreamRegistry is DeployBase, TestUtils, IDiamond {
       );
 
       StreamWithId[] memory streamsOnNode = streamRegistry
-        .getPaginatedStreamsOnNode(_ghostNodes[i], 0, 10);
+        .getPaginatedStreamsOnNode(_ghostNodes[i], 0, stop);
       assertEq(streamsOnNode.length, streamIds.length());
 
       for (uint256 j; j < streamsOnNode.length; ++j) {
