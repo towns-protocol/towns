@@ -38,6 +38,7 @@ export function usePricingModuleForMembership(spaceId: string | undefined):
     | {
           isLoading: boolean
           data: {
+              address: string
               isFixed: boolean
           }
       } {
@@ -67,6 +68,7 @@ export function usePricingModuleForMembership(spaceId: string | undefined):
             isLoading: false,
             data: {
                 isFixed,
+                address: membershipPricingModuleAddress,
                 ...membershipPricingModule,
             },
         }

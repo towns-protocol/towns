@@ -3,61 +3,11 @@ import {
     Permission,
     type RoleDetails,
     useMembershipInfo,
-    usePlatformMembershipFee,
+    usePlatformMinMembershipPrice,
     usePricingModuleForMembership,
-    useRoleDetails,
 } from 'use-towns-client'
 import { BigNumber } from 'ethers'
 import { channelPermissionDescriptions, townPermissionDescriptions } from './rolePermissions.const'
-
-export function useMembershipInfoAndRoleDetails(spaceId: string | undefined) {
-    const {
-        data: membershipInfo,
-        isLoading: isLoadingMembershipInfo,
-        error: membershipInfoError,
-    } = useMembershipInfo(spaceId ?? '')
-    // get role details of the minter role
-    // TBD will xchain entitlements change this?
-    const {
-        isLoading: isLoadingRoleDetails,
-        roleDetails,
-        error: roleDetailsError,
-    } = useRoleDetails(spaceId ?? '', 1)
-
-    const { data: membershipPricingModule, isLoading: isLoadingMembershipPricingModule } =
-        usePricingModuleForMembership(spaceId)
-
-    return useMemo(() => {
-        if (!spaceId) {
-            return { isLoading: false, data: undefined, error: undefined }
-        }
-        if (isLoadingMembershipInfo || isLoadingRoleDetails || isLoadingMembershipPricingModule) {
-            return { isLoading: true, data: undefined, error: undefined }
-        }
-        if (membershipInfoError || roleDetailsError) {
-            return {
-                isLoading: false,
-                data: undefined,
-                error: membershipInfoError || roleDetailsError,
-            }
-        }
-        return {
-            isLoading: false,
-            data: { membershipInfo, roleDetails, pricingModule: membershipPricingModule },
-            error: undefined,
-        }
-    }, [
-        isLoadingMembershipInfo,
-        isLoadingMembershipPricingModule,
-        isLoadingRoleDetails,
-        membershipInfo,
-        membershipInfoError,
-        membershipPricingModule,
-        roleDetails,
-        roleDetailsError,
-        spaceId,
-    ])
-}
 
 export function useChannelAndTownRoleDetails(roleDetails: RoleDetails | null | undefined) {
     return useMemo(() => {
@@ -99,20 +49,36 @@ export function useChannelAndTownRoleDetails(roleDetails: RoleDetails | null | u
     }, [roleDetails])
 }
 
-// a space is free
-// 1. if it's price is 0
-// 2. if it's price is equal to the platform membership fee. Because if a free space has exceeded its free allocations, members have to pay the platform membership fee to join.
-export function useIsFreeSpace(args: {
-    isFixedPricingModule: boolean
-    spaceId: string | undefined
-}) {
-    const { isFixedPricingModule, spaceId } = args
+export function useIsSpaceCurrentlyFree(args: { spaceId: string | undefined }) {
+    const { spaceId } = args
     const { data: membershipInfo } = useMembershipInfo(spaceId ?? '')
-    const { data: platformMembershipFee } = usePlatformMembershipFee()
+    const { data: spacePricingModule } = usePricingModuleForMembership(spaceId)
+    const { data: minMembershipPrice } = usePlatformMinMembershipPrice()
 
+    // 3.6.2025
+    // - the only space that can be created < minMembershipPrice is a "0" price space. No 0.0000001, it won't work.
+    // - if there are remaining free allocations, membershipInfo?.price = 0
+    // - if there are no remaining free allocations, membershipInfo?.price = platformMembershipFee (via usePlatformMembershipFee hook)
+    //
+    // the platformMembershipFee SHOULD be < minMembershipPrice. This is controlled by contracts and has caused issues on different envs in the past.
+    // IF platformMembershipFee > minMembershipPrice, then this check will have issues
+    //
+    // So THEORETICALLY, for a fixed price space, a space can have 3 prices:
+    // 1. 0
+    // 2. platformMembershipFee
+    // 3. > minMembershipPrice
+    //
+    // checking minMembershipPrice seems to be the most stable across alpha/gamma/omega.
     return (
-        isFixedPricingModule &&
-        platformMembershipFee instanceof BigNumber &&
-        (membershipInfo?.price.eq(0) || membershipInfo?.price.eq(platformMembershipFee))
+        spacePricingModule?.isFixed &&
+        (membershipInfo?.price.eq(0) ||
+            (minMembershipPrice instanceof BigNumber &&
+                membershipInfo?.price.lt(minMembershipPrice)))
     )
+}
+
+export function useIsSpaceCurrentlyDynamic(args: { spaceId: string | undefined }) {
+    const { spaceId } = args
+    const { data: spacePricingModule } = usePricingModuleForMembership(spaceId)
+    return !spacePricingModule?.isFixed
 }

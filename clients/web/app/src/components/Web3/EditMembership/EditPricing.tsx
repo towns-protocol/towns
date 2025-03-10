@@ -8,7 +8,6 @@ import {
 import { FadeInBox } from '@components/Transitions'
 import { MembershipSettingsSchemaType } from '@components/SpaceSettingsPanel/membershipSettingsSchema'
 import { ErrorMessage, Paragraph, RadioCard, Stack, TextField } from '@ui'
-import { usePlatformMinMembershipPriceInEth } from 'hooks/usePlatformMinMembershipPriceInEth'
 import { shimmerClass } from 'ui/styles/globals/shimmer.css'
 import { TOWNS_PRICING_TERMS_LINK } from 'data/links'
 import { atoms } from 'ui/styles/atoms.css'
@@ -27,22 +26,19 @@ const isPricingPreset = (preset: string): preset is PricingPreset => {
 export function EditPricing({
     pricingModules,
     isLoadingPricingModules,
-    // currently, a space cannot switch from fixed to dynamic pricing
-    disablePricingModules,
-    freeAllocation,
-    isEditMode,
+    minimumMembershipPrice,
+    isLoadingMinMembershipPrice,
+    isFixed,
     isFree,
 }: {
-    freeAllocation: number | undefined
     pricingModules?: PricingModuleStruct[]
     isLoadingPricingModules?: boolean
-    disablePricingModules?: boolean
-    isEditMode?: boolean
+    minimumMembershipPrice?: string
+    isLoadingMinMembershipPrice?: boolean
     isFree?: boolean
+    isFixed?: boolean
 }) {
     const { formState, setValue, watch, trigger } = useFormContext<MembershipSettingsSchemaType>()
-    const { data: minimumMemebershipPrice, isLoading: isLoadingMinMembershipPrice } =
-        usePlatformMinMembershipPriceInEth()
 
     const formProps = useFormContext<MembershipSettingsSchemaType>()
 
@@ -60,7 +56,7 @@ export function EditPricing({
 
     const presetRef = useRef({
         prepaidMemberships: 0,
-        membershipCost: minimumMemebershipPrice,
+        membershipCost: minimumMembershipPrice,
     })
 
     useEffect(() => {
@@ -74,9 +70,6 @@ export function EditPricing({
 
     const onSelectPricingPreset = useCallback(
         (preset: typeof pricingPreset) => {
-            if (isEditMode) {
-                return
-            }
             setPricingPreset(preset)
             formProps.setValue('clientPricingOption', preset)
 
@@ -94,7 +87,7 @@ export function EditPricing({
                     formProps.setValue('prepaidMemberships', 0)
                     formProps.setValue(
                         'membershipCost',
-                        presetRef.current.membershipCost ?? minimumMemebershipPrice ?? '',
+                        presetRef.current.membershipCost ?? minimumMembershipPrice ?? '',
                         {
                             shouldValidate: false,
                         },
@@ -114,14 +107,8 @@ export function EditPricing({
                 }
             }
         },
-        [formProps, isEditMode, minimumMemebershipPrice],
+        [formProps, minimumMembershipPrice],
     )
-
-    // const { data: platformMintLimit } = usePlatformMintLimit()
-
-    // const { data: membershipFee } = usePlatformMembershipPriceForSupplyInEth(1)
-    // const { data: totalMembershipFee } =
-    //     usePlatformMembershipPriceForSupplyInEth(prepaidMemberships)
 
     const enabledPricingModules = useMemo(() => {
         if (pricingModules) {
@@ -131,6 +118,14 @@ export function EditPricing({
             ].filter(Boolean)
         }
     }, [pricingModules])
+
+    // 3.6.25
+    // we're going to be updating this form to allow for swtiching between different pricing modules
+    // for now, only allowing dynamic -> fixed
+    // so, dynamic should only show if a space is using dynamic pricing
+    const showDynamicPricing = enabledPricingModules?.includes('dynamic') && !isFixed
+    // fixed can show if a space is using fixed pricing or dynamic pricing
+    const showFixedPricing = enabledPricingModules?.includes('fixed')
 
     if (isLoadingPricingModules) {
         return (
@@ -148,14 +143,6 @@ export function EditPricing({
             </Stack>
         )
     }
-
-    const showDynamicPricing =
-        enabledPricingModules?.includes('dynamic') &&
-        (isEditMode ? pricingPreset === PricingPreset.Dynamic : true)
-
-    const showFixedPricing =
-        enabledPricingModules?.includes('fixed') &&
-        (isEditMode ? pricingPreset === PricingPreset.Fixed : true)
 
     return (
         <Stack gap="sm">
@@ -226,80 +213,6 @@ export function EditPricing({
                     ) : null}
                 </RadioCard>
             )}
-            {/* {!isEditMode && enabledPricingModules?.includes('dynamic') && (
-                <RadioCard
-                    name="clientPricingOption"
-                    value="prepaid"
-                    title="Prepaid"
-                    description="Members join for free and don't pay any gas or River Protocol fees. Prepayment for fees over first 100 members is required"
-                    dataTestId="membership-pricing-type-prepaid"
-                    onClick={() => {
-                        onSelectPricingPreset(PricingPreset.Prepaid)
-                    }}
-                    {...formProps}
-                >
-                    {pricingPreset === PricingPreset.Prepaid ? (
-                        <Stack padding border gap="lg" borderRadius="sm">
-                            <Stack horizontal>
-                                <Box grow>
-                                    <Paragraph>Prepaid memberships included</Paragraph>
-                                </Box>
-                                <Box>
-                                    <Paragraph>{platformMintLimit}</Paragraph>
-                                </Box>
-                            </Stack>
-                            <Stack horizontal>
-                                <Box grow gap="sm" justifyContent="center">
-                                    <Paragraph>Additional memberships</Paragraph>
-                                    {membershipFee ? (
-                                        <Paragraph size="sm" color="gray2">
-                                            {membershipFee} ETH per member
-                                        </Paragraph>
-                                    ) : null}
-                                </Box>
-                                <Box>
-                                    <TextField
-                                        autoFocus
-                                        width="100"
-                                        step={100}
-                                        min={0}
-                                        background="level3"
-                                        autoComplete="one-time-code"
-                                        type="number"
-                                        {...formProps.register('prepaidMemberships', {
-                                            valueAsNumber: true,
-                                        })}
-                                        textAlign="right"
-                                        border={
-                                            formProps.formState.errors['prepaidMemberships']
-                                                ? 'negative'
-                                                : undefined
-                                        }
-                                    />
-                                </Box>
-                            </Stack>
-                            <Stack height="x2">
-                                <Box grow borderTop />
-                            </Stack>
-
-                            <Stack horizontal>
-                                <Box grow gap="sm" justifyContent="center">
-                                    <Paragraph fontWeight="strong">
-                                        Total Prepaid Memberships
-                                    </Paragraph>
-                                </Box>
-                                <Box>
-                                    {totalMembershipFee ? (
-                                        <Paragraph fontWeight="strong">
-                                            {totalMembershipFee} ETH
-                                        </Paragraph>
-                                    ) : null}
-                                </Box>
-                            </Stack>
-                        </Stack>
-                    ) : null}
-                </RadioCard>
-            )} */}
             {formState.errors['membershipCost'] ? (
                 <FadeInBox key="error">
                     <ErrorMessage errors={formState.errors} fieldName="membershipCost" />

@@ -4,6 +4,7 @@ import {
     findDynamicPricingModule,
     findFixedPricingModule,
     useEditSpaceMembershipTransaction,
+    usePricingModuleForMembership,
     usePricingModules,
     useRoleDetails,
 } from 'use-towns-client'
@@ -12,30 +13,43 @@ import isEqual from 'lodash/isEqual'
 import { useEvent } from 'react-use-event-hook'
 import { Button } from '@ui'
 import { parseUnits } from 'hooks/useBalance'
-import { usePlatformMinMembershipPriceInEth } from 'hooks/usePlatformMinMembershipPriceInEth'
 import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
 import { prepareGatedDataForSubmit } from '@components/Tokens/utils'
 import { createPrivyNotAuthenticatedNotification } from '@components/Notifications/utils'
 import { GetSigner, WalletReady } from 'privy/WalletReady'
+import { usePlatformMinMembershipPriceInEth } from 'hooks/usePlatformMinMembershipPriceInEth'
 import { EditMembershipSchemaType } from './editMembershipSchema'
-import { useIsFreeSpace } from './hooks'
 
 export function EditMembershipSubmitButton({
     children,
     spaceId,
     transactionIsPending,
+    pricingModules,
+    minimumMembershipPrice,
+    isLoadingPricingModules,
+    isLoadingRoleDetails,
+    roleDetails,
+    currentPricingModule,
+    isCurrentlyFree,
+    isCurrentlyDynamic,
 }: {
     children?: React.ReactNode
     spaceId: string | undefined
     transactionIsPending: boolean
+    pricingModules: ReturnType<typeof usePricingModules>['data']
+    minimumMembershipPrice: ReturnType<typeof usePlatformMinMembershipPriceInEth>['data']
+    isLoadingPricingModules: boolean
+    isLoadingRoleDetails: boolean
+    roleDetails: ReturnType<typeof useRoleDetails>['roleDetails']
+    currentPricingModule: ReturnType<typeof usePricingModuleForMembership>['data']
+    isCurrentlyFree: boolean
+    isCurrentlyDynamic: boolean
 }) {
     const { handleSubmit, formState, watch, setError } = useFormContext<EditMembershipSchemaType>()
     const { defaultValues } = formState
     const watchAllFields = watch()
     // success and error statuses are handled by <BlockchainTxNotifier />
     const { editSpaceMembershipTransaction } = useEditSpaceMembershipTransaction()
-    const { data: pricingModules, isLoading: isLoadingPricingModules } = usePricingModules()
-    const { roleDetails, isLoading: isLoadingRoleDetails } = useRoleDetails(spaceId ?? '', 1)
     const { closePanel } = usePanelActions()
 
     const isUnchanged = useMemo(() => {
@@ -63,13 +77,6 @@ export function EditMembershipSubmitButton({
         transactionIsPending
 
     const isSubmittedRef = React.useRef(false)
-
-    const { data: minimumMmebershipPrice } = usePlatformMinMembershipPriceInEth()
-
-    const isFreeSpace = useIsFreeSpace({
-        isFixedPricingModule: watchAllFields.membershipPricingType === 'fixed',
-        spaceId,
-    })
 
     const onValid = useEvent(async (data: EditMembershipSchemaType, getSigner: GetSigner) => {
         if (
@@ -117,28 +124,33 @@ export function EditMembershipSubmitButton({
             return
         }
 
-        const isFixedPricing = watchAllFields.membershipPricingType === 'fixed'
+        const nextPricingModuleIsFixed = watchAllFields.membershipPricingType === 'fixed'
+        const isSwitchingToFixedPriceFromDynamic = isCurrentlyDynamic && nextPricingModuleIsFixed
 
-        // fixed price space that was not created with a minimum price must be at least the minimum price
+        // when switching to fixed price from dynamic, or if the fixed price space has a non-zero price,
+        // the updated price must be at least the minimum price
         // or else the contract will revert
         if (
-            !isFreeSpace &&
-            minimumMmebershipPrice !== undefined &&
-            isFixedPricing &&
-            priceInWei < parseUnits(minimumMmebershipPrice)
+            (isSwitchingToFixedPriceFromDynamic || !isCurrentlyFree) &&
+            minimumMembershipPrice !== undefined &&
+            nextPricingModuleIsFixed &&
+            priceInWei < parseUnits(minimumMembershipPrice)
         ) {
-            setError('membershipPricingType', {
+            setError('membershipCost', {
                 type: 'manual',
-                message: `Fixed price must be at least ${minimumMmebershipPrice} ETH`,
+                message: `Fixed price must be at least ${minimumMembershipPrice} ETH`,
             })
             return
         }
 
         let pricingModuleToSubmit: string
-        if (isFixedPricing && fixedPricingModule) {
+        if (nextPricingModuleIsFixed && fixedPricingModule) {
             pricingModuleToSubmit = await fixedPricingModule.module
-        } else if (dynamicPricingModule) {
-            pricingModuleToSubmit = await dynamicPricingModule.module
+        }
+        // dynamic priced spaces cannot currently be updated to a different module, so we just submit the current module
+        // if this changes in the future, the editMembership user operation will also need to handle this
+        else if (dynamicPricingModule && currentPricingModule?.address) {
+            pricingModuleToSubmit = currentPricingModule.address
         } else {
             console.warn('No pricing module to submit')
             setPricingModuleError()

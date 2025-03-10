@@ -2,8 +2,10 @@ import React, { useMemo } from 'react'
 import {
     BlockchainTransactionType,
     useIsTransactionPending,
-    useMembershipFreeAllocation,
+    useMembershipInfo,
+    usePricingModuleForMembership,
     usePricingModules,
+    useRoleDetails,
 } from 'use-towns-client'
 import { constants } from 'ethers'
 import { FormProvider, UseFormReturn } from 'react-hook-form'
@@ -19,61 +21,64 @@ import { useEnvironment } from 'hooks/useEnvironmnet'
 import { formatUnits } from 'hooks/useBalance'
 import { EditPricingTitle } from '@components/Web3/EditMembership/EditPricingTitle'
 import { useEntitlements } from 'hooks/useEntitlements'
+import { usePlatformMinMembershipPriceInEth } from 'hooks/usePlatformMinMembershipPriceInEth'
 import { EditMembershipSchemaType, editMembershipSchema } from './editMembershipSchema'
-import { useIsFreeSpace, useMembershipInfoAndRoleDetails } from './hooks'
+import { useIsSpaceCurrentlyDynamic, useIsSpaceCurrentlyFree } from './hooks'
 import { EditMembershipSubmitButton } from './EditMembershipSubmitButton'
 import { minterRoleId } from './rolePermissions.const'
 
-export const EDIT_MEMBERSHIP_SETTINGS_PANEL = 'editMembershipSettings'
-
 export const EditMembershipSettingsPanel = React.memo(() => {
-    return <EditMembershipSettingsPanelWithoutAuth />
-})
-
-function EditMembershipSettingsPanelWithoutAuth() {
     const spaceIdFromPath = useSpaceIdFromPathname()
-    const { data, isLoading } = useMembershipInfoAndRoleDetails(spaceIdFromPath)
     const transactionIsPending = useIsTransactionPending(
         BlockchainTransactionType.EditSpaceMembership,
     )
+    const onChainData = useLookupOnChainDataForThisForm({
+        spaceId: spaceIdFromPath,
+    })
     return (
         <>
             <Stack gap grow position="relative">
-                {isLoading ? (
+                {onChainData.isLoadingSomeData ? (
                     <Stack grow centerContent>
                         <ButtonSpinner />
                     </Stack>
-                ) : data ? (
-                    <EditMembershipForm defaultFormData={data} spaceId={spaceIdFromPath} />
-                ) : (
+                ) : onChainData.someErrorOccurred ? (
                     <Paragraph>Failed to load membership info</Paragraph>
+                ) : (
+                    <EditMembershipForm spaceId={spaceIdFromPath} onChainData={onChainData} />
                 )}
             </Stack>
             {transactionIsPending && <FullPanelOverlay text="" withSpinner={false} />}
         </>
     )
-}
+})
 
 function EditMembershipForm({
-    defaultFormData,
     spaceId,
+    onChainData,
 }: {
-    defaultFormData: NonNullable<ReturnType<typeof useMembershipInfoAndRoleDetails>['data']>
     spaceId: string | undefined
+    onChainData: ReturnType<typeof useLookupOnChainDataForThisForm>
 }) {
     const environment = useEnvironment()
-    const { membershipInfo, pricingModule } = defaultFormData
     const transactionIsPending = useIsTransactionPending(
         BlockchainTransactionType.EditSpaceMembership,
     )
-    const { data: freeAllocation } = useMembershipFreeAllocation(spaceId)
 
-    const { data: entitlements, isLoading: isEntitlementsLoading } = useEntitlements(
-        spaceId,
-        minterRoleId,
-    )
-
-    const { data: pricingModules, isLoading: isLoadingPricingModules } = usePricingModules()
+    const {
+        entitlements,
+        isEntitlementsLoading,
+        pricingModules,
+        isLoadingPricingModules,
+        minimumMembershipPrice,
+        isLoadingMinMembershipPrice,
+        roleDetails,
+        currentPricingModule,
+        isCurrentlyFree,
+        isCurrentlyDynamic,
+        isLoadingRoleDetails,
+        membershipInfo,
+    } = onChainData
 
     const defaultValues: EditMembershipSchemaType = useMemo(
         () => ({
@@ -83,16 +88,15 @@ function EditMembershipForm({
             usersGatedBy: entitlements.users,
             membershipLimit: Number(membershipInfo?.maxSupply) ?? 0,
             membershipCost: formatUnits(membershipInfo?.price.toBigInt() ?? 0n),
-            membershipPricingType: pricingModule?.isFixed ? 'fixed' : 'dynamic',
-            clientPricingOption: pricingModule?.isFixed ? 'fixed' : 'dynamic',
+            membershipPricingType: currentPricingModule?.isFixed ? 'fixed' : 'dynamic',
+            clientPricingOption: currentPricingModule?.isFixed ? 'fixed' : 'dynamic',
             membershipCurrency: (membershipInfo?.currency as string) ?? constants.AddressZero,
             prepaidMemberships: 0,
         }),
-        [entitlements, membershipInfo, pricingModule],
+        [entitlements, membershipInfo, currentPricingModule],
     )
 
-    const isFree = useIsFreeSpace({
-        isFixedPricingModule: pricingModule?.isFixed ?? false,
+    const isFree = useIsSpaceCurrentlyFree({
         spaceId,
     })
 
@@ -119,32 +123,36 @@ function EditMembershipForm({
                                     <>
                                         <Stack gap="paragraph">
                                             <EditPricingTitle />
-                                            {!pricingModule?.isFixed && isFixedPricingSelected && (
-                                                <Stack
-                                                    horizontal
-                                                    background="level2"
-                                                    padding="md"
-                                                    gap="sm"
-                                                    rounded="sm"
-                                                    alignItems="center"
-                                                >
-                                                    <Icon
-                                                        type="info"
-                                                        color="negative"
-                                                        size="square_sm"
-                                                    />
-                                                    <Text size="sm">
-                                                        {`This space is using dynamic pricing. If you
+                                            {!currentPricingModule?.isFixed &&
+                                                isFixedPricingSelected && (
+                                                    <Stack
+                                                        horizontal
+                                                        background="level2"
+                                                        padding="md"
+                                                        gap="sm"
+                                                        rounded="sm"
+                                                        alignItems="center"
+                                                    >
+                                                        <Icon
+                                                            type="info"
+                                                            color="negative"
+                                                            size="square_sm"
+                                                        />
+                                                        <Text size="sm">
+                                                            {`This space is using dynamic pricing. If you
                         switch to fixed pricing, you can't go back.`}
-                                                    </Text>
-                                                </Stack>
-                                            )}
+                                                        </Text>
+                                                    </Stack>
+                                                )}
                                             <EditPricing
-                                                isEditMode
+                                                isFixed={currentPricingModule?.isFixed}
                                                 isFree={isFree}
-                                                freeAllocation={freeAllocation}
                                                 pricingModules={pricingModules}
                                                 isLoadingPricingModules={isLoadingPricingModules}
+                                                minimumMembershipPrice={minimumMembershipPrice}
+                                                isLoadingMinMembershipPrice={
+                                                    isLoadingMinMembershipPrice
+                                                }
                                             />
                                         </Stack>
                                         <Stack gap="paragraph">
@@ -157,6 +165,14 @@ function EditMembershipForm({
                                 <EditMembershipSubmitButton
                                     spaceId={spaceId}
                                     transactionIsPending={transactionIsPending}
+                                    pricingModules={pricingModules}
+                                    minimumMembershipPrice={minimumMembershipPrice}
+                                    isLoadingPricingModules={isLoadingPricingModules}
+                                    roleDetails={roleDetails}
+                                    currentPricingModule={currentPricingModule}
+                                    isCurrentlyFree={!!isCurrentlyFree}
+                                    isCurrentlyDynamic={!!isCurrentlyDynamic}
+                                    isLoadingRoleDetails={isLoadingRoleDetails}
                                 >
                                     Update
                                 </EditMembershipSubmitButton>
@@ -166,5 +182,93 @@ function EditMembershipForm({
                 }}
             </FormRender>
         </>
+    )
+}
+
+function useLookupOnChainDataForThisForm(args: { spaceId: string | undefined }) {
+    const { spaceId } = args
+    const {
+        data: pricingModules,
+        isLoading: isLoadingPricingModules,
+        error: pricingModuleError,
+    } = usePricingModules()
+    const {
+        roleDetails,
+        isLoading: isLoadingRoleDetails,
+        error: roleDetailsError,
+    } = useRoleDetails(spaceId ?? '', 1)
+    const { data: currentPricingModule, isLoading: isLoadingMembershipPricingModule } =
+        usePricingModuleForMembership(spaceId)
+    const {
+        data: minimumMembershipPrice,
+        isLoading: isLoadingMinMembershipPrice,
+        error: minimumMembershipPriceError,
+    } = usePlatformMinMembershipPriceInEth()
+    const isCurrentlyFree = useIsSpaceCurrentlyFree({
+        spaceId,
+    })
+    const isCurrentlyDynamic = useIsSpaceCurrentlyDynamic({
+        spaceId,
+    })
+
+    const { data: entitlements, isLoading: isEntitlementsLoading } = useEntitlements(
+        spaceId,
+        minterRoleId,
+    )
+
+    const {
+        data: membershipInfo,
+        isLoading: isLoadingMembershipInfo,
+        error: membershipInfoError,
+    } = useMembershipInfo(spaceId ?? '')
+
+    const isLoadingSomeData =
+        isLoadingPricingModules ||
+        isLoadingRoleDetails ||
+        isLoadingMinMembershipPrice ||
+        isLoadingMembershipInfo ||
+        isLoadingMembershipPricingModule ||
+        isEntitlementsLoading
+
+    const someErrorOccurred =
+        membershipInfoError || roleDetailsError || pricingModuleError || minimumMembershipPriceError
+
+    return useMemo(
+        () => ({
+            pricingModules,
+            minimumMembershipPrice,
+            isCurrentlyFree,
+            isCurrentlyDynamic,
+            currentPricingModule,
+            isLoadingPricingModules,
+            isLoadingRoleDetails,
+            roleDetails,
+            entitlements,
+            isEntitlementsLoading,
+            isLoadingMinMembershipPrice,
+            membershipInfo,
+            isLoadingMembershipInfo,
+            membershipInfoError,
+            isLoadingSomeData,
+            someErrorOccurred,
+        }),
+        [
+            pricingModules,
+            minimumMembershipPrice,
+            isCurrentlyFree,
+            isCurrentlyDynamic,
+            currentPricingModule,
+            isLoadingPricingModules,
+            isLoadingRoleDetails,
+            roleDetails,
+            entitlements,
+            isEntitlementsLoading,
+            isLoadingMinMembershipPrice,
+            membershipInfo,
+            isLoadingMembershipInfo,
+            membershipInfoError,
+            isLoadingSomeData,
+            someErrorOccurred,
+        ],
     )
 }
