@@ -259,10 +259,13 @@ export class SyncedStreamsLoop {
         }
         if (this.syncState === SyncState.Syncing) {
             try {
-                await this.rpcClient.removeStreamFromSync({
+                const resp = await this.rpcClient.modifySync({
                     syncId: this.syncId,
-                    streamId: streamIdAsBytes(streamId),
+                    removeStreams: [streamIdAsBytes(streamId)],
                 })
+                if (resp.removals.length > 0) {
+                    this.log('removeStreamFromSync err', resp.removals)
+                }
             } catch (err) {
                 // Trigger restart of sync loop
                 this.log('removeStreamFromSync err', err)
