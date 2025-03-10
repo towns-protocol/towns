@@ -23,17 +23,19 @@ import { MessageTimelineWrapper } from '@components/MessageTimeline/MessageTimel
 import { TownsEditorContainer } from '@components/RichTextPlate/TownsEditorContainer'
 import { useSendTradeTransaction } from '@components/Web3/Trading/hooks/useTradeQuote'
 import { QuoteMetaData, QuoteStatus, TradeComponent } from '@components/Web3/Trading/TradeComponent'
+import { useTradeSettings } from '@components/Web3/Trading/tradeSettingsStore'
 import {
     EvmTransactionRequest,
     SolanaTransactionRequest,
 } from '@components/Web3/Trading/TradingContextProvider'
-import { Box, BoxProps, FancyButton } from '@ui'
+import { Box, BoxProps, FancyButton, Stack, Tooltip } from '@ui'
 import { useDevice } from 'hooks/useDevice'
 import { useIsChannelReactable } from 'hooks/useIsChannelReactable'
 import { useIsChannelWritable } from 'hooks/useIsChannelWritable'
 import { useSendReply } from 'hooks/useSendReply'
 import { useSpaceChannels } from 'hooks/useSpaceChannels'
 import { WalletReady } from 'privy/WalletReady'
+import { EditSlippageButton } from '../Web3/Trading/EditSlippagePopover'
 import { getTickerAttachment } from './getTickerAttachment'
 import { TickerThreadContext } from './TickerThreadContext'
 
@@ -263,41 +265,61 @@ const ThreadEditor = (props: {
         }
     })
 
+    const slippage = useTradeSettings((state) => state.slippage)
+
     const renderSendButton = useCallback(
         (onSend: () => void) => {
             const mode = tradeData?.metaData.mode ?? quoteStatus?.mode
             return getSigner && quoteStatus ? (
-                <Box
-                    centerContent
-                    tooltip={
-                        quoteStatus.status === 'error'
-                            ? ``
-                            : `${mode === 'buy' ? 'Buy' : 'Sell'} ${
-                                  tradeData?.metaData.value.value
-                              } ${tradeData?.metaData.value.symbol}`
-                    }
-                    opacity={
-                        quoteStatus?.status !== 'ready' || isTradingProgress ? '0.5' : undefined
-                    }
-                >
-                    <FancyButton
-                        compact="x4"
-                        gap="xxs"
-                        paddingLeft="sm"
-                        paddingRight="md"
-                        background={mode === 'buy' ? 'positive' : 'negative'}
-                        borderRadius="full"
-                        icon="lightning"
-                        spinner={quoteStatus?.status === 'loading' || isTradingProgress}
-                        disabled={quoteStatus?.status !== 'ready' || isTradingProgress}
-                        onClick={onSend}
+                <Stack horizontal gap="sm" alignItems="center">
+                    <Box
+                        centerContent
+                        tooltip={
+                            quoteStatus.status === 'error' || !tradeData?.metaData?.value.value ? (
+                                ``
+                            ) : (
+                                <Tooltip>
+                                    <Stack>
+                                        {mode === 'buy' ? 'Buy' : 'Sell'}{' '}
+                                        {tradeData?.metaData.value.value}{' '}
+                                        {tradeData?.metaData.value.symbol}
+                                    </Stack>
+                                    <Stack>Slippage: {slippage * 100}%</Stack>
+                                </Tooltip>
+                            )
+                        }
+                        opacity={
+                            quoteStatus?.status !== 'ready' || isTradingProgress ? '0.5' : undefined
+                        }
                     >
-                        {mode === 'buy' ? 'Buy' : 'Sell'}
-                    </FancyButton>
-                </Box>
+                        <FancyButton
+                            compact="x4"
+                            gap="xxs"
+                            paddingLeft="sm"
+                            paddingRight="md"
+                            background={mode === 'buy' ? 'positive' : 'negative'}
+                            borderRadius="full"
+                            icon="lightning"
+                            spinner={quoteStatus?.status === 'loading' || isTradingProgress}
+                            disabled={quoteStatus?.status !== 'ready' || isTradingProgress}
+                            onClick={onSend}
+                        >
+                            {mode === 'buy' ? 'Buy' : 'Sell'}
+                        </FancyButton>
+                    </Box>
+                    <EditSlippageButton />
+                </Stack>
             ) : undefined
         },
-        [getSigner, isTradingProgress, quoteStatus, tradeData],
+        [
+            getSigner,
+            isTradingProgress,
+            quoteStatus,
+            slippage,
+            tradeData?.metaData.mode,
+            tradeData?.metaData.value.symbol,
+            tradeData?.metaData.value.value,
+        ],
     )
 
     const editor = (

@@ -30,6 +30,7 @@ import { useTokenBalance } from './useTokenBalance'
 import { getTokenValueData } from './hooks/getTokenValue'
 import { isTradingChain, tradingChains } from './tradingConstants'
 import { useSendTradeTransaction } from './hooks/useTradeQuote'
+import { useTradeSettings } from './tradeSettingsStore'
 
 // const DISPLAY_QUOTE = false
 
@@ -198,6 +199,8 @@ export const TradeComponent = (props: Props) => {
         chain: chainId,
     })
 
+    const slippage = useTradeSettings(({ slippage }) => slippage)
+
     const quote = useLifiQuote({
         fromToken: fromTokenAddress,
         toToken: toTokenAddress,
@@ -207,7 +210,7 @@ export const TradeComponent = (props: Props) => {
         currentTokenBalance,
         fromChain: chainId,
         toChain: chainId,
-        slippage: 0.01,
+        slippage,
     })
 
     const {
