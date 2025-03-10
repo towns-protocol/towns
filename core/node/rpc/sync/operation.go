@@ -4,7 +4,6 @@ import (
 	"context"
 	"time"
 
-
 	"connectrpc.com/connect"
 	"github.com/ethereum/go-ethereum/common"
 	. "github.com/towns-protocol/towns/core/node/base"
@@ -13,9 +12,9 @@ import (
 	"github.com/towns-protocol/towns/core/node/nodes"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/rpc/sync/client"
+	"github.com/towns-protocol/towns/core/node/rpc/sync/dynmsgbuf"
 	"github.com/towns-protocol/towns/core/node/shared"
 	"go.opentelemetry.io/otel/attribute"
-	"github.com/towns-protocol/towns/core/node/rpc/sync/dynmsgbuf"
 	"go.opentelemetry.io/otel/trace"
 )
 
