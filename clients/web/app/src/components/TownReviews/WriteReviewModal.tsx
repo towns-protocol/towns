@@ -14,6 +14,8 @@ import { createPrivyNotAuthenticatedNotification } from '@components/Notificatio
 import { popupToast } from '@components/Notifications/popupToast'
 import { StandardToast } from '@components/Notifications/StandardToast'
 import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
+import { Analytics } from 'hooks/useAnalytics'
+import { useGatherSpaceDetailsAnalytics } from '@components/Analytics/useGatherSpaceDetailsAnalytics'
 import { validateReview } from './reviewModerator'
 
 interface WriteReviewModalProps {
@@ -45,6 +47,7 @@ export const WriteReviewModal = ({
     const [validationError, setValidationError] = useState<string | null>(null)
     const [isValidating, setIsValidating] = useState(false)
     const spaceData = useSpaceData()
+    const spaceDetails = useGatherSpaceDetailsAnalytics({ spaceId: spaceData?.id })
     const { loggedInWalletAddress } = useConnectivity()
     const { data: myAbstractAccount } = useAbstractAccountAddress({
         rootKeyAddress: loggedInWalletAddress,
@@ -86,6 +89,15 @@ export const WriteReviewModal = ({
                 ))
                 return
             }
+
+            Analytics.getInstance().track('clicked submit review', {
+                starRating: data.rating,
+                spaceName: spaceData.name,
+                spaceId: spaceData.id,
+                gatedSpace: spaceDetails.gatedSpace,
+                gatedChannel: spaceDetails.gatedChannel,
+                pricingModule: spaceDetails.pricingModule,
+            })
 
             await review(
                 {

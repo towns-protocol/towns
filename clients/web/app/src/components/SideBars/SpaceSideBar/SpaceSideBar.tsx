@@ -34,6 +34,7 @@ import { OffscreenMarker, OffscreenPill } from '@components/OffscreenPill/Offscr
 import { Analytics } from 'hooks/useAnalytics'
 import { DirectMessageItemSkeleton } from '@components/DirectMessages/DirectMessageItemSkeleton'
 import { addressFromSpaceId } from 'ui/utils/utils'
+import { useGatherSpaceDetailsAnalytics } from '@components/Analytics/useGatherSpaceDetailsAnalytics'
 import * as styles from './SpaceSideBar.css'
 import { SpaceSideBarHeader } from './SpaceSideBarHeader'
 import { SidebarLoadingAnimation } from './SpaceSideBarLoading'
@@ -155,8 +156,34 @@ export const SpaceSideBar = (props: Props) => {
     const shouldShowReviewPrompt =
         !hasReviewBeenDismissed(space.id) && !hasUserReviewed && env.VITE_REVIEWS_ENABLED
 
+    const spaceDetails = useGatherSpaceDetailsAnalytics({ spaceId: space?.id })
+
     const handleReviewClick = useEvent(() => {
+        if (space?.id) {
+            Analytics.getInstance().track('clicked review prompt', {
+                action: 'review',
+                spaceName: space.name,
+                spaceId: space.id,
+                gatedSpace: spaceDetails.gatedSpace,
+                gatedChannel: spaceDetails.gatedChannel,
+                pricingModule: spaceDetails.pricingModule,
+            })
+        }
         openPanel(CHANNEL_INFO_PARAMS.REVIEWS)
+    })
+
+    const handleReviewDismiss = useEvent(() => {
+        if (space?.id) {
+            Analytics.getInstance().track('clicked review prompt', {
+                action: 'dismiss',
+                spaceName: space.name,
+                spaceId: space.id,
+                gatedSpace: spaceDetails.gatedSpace,
+                gatedChannel: spaceDetails.gatedChannel,
+                pricingModule: spaceDetails.pricingModule,
+            })
+            dismissReview(space.id)
+        }
     })
 
     const itemRenderer = useCallback(
@@ -197,10 +224,6 @@ export const SpaceSideBar = (props: Props) => {
         },
         [membersNotInDMs, space],
     )
-
-    const handleReviewDismiss = useEvent((e: React.MouseEvent) => {
-        dismissReview(space.id)
-    })
 
     return (
         <>

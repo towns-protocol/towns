@@ -17,6 +17,8 @@ import { createPrivyNotAuthenticatedNotification } from '@components/Notificatio
 import { useReviews } from 'hooks/useReviews'
 import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
 import { useContainerWidth } from 'ui/hooks/useContainerWidth'
+import { Analytics } from 'hooks/useAnalytics'
+import { useGatherSpaceDetailsAnalytics } from '@components/Analytics/useGatherSpaceDetailsAnalytics'
 import { WriteReviewModal } from './WriteReviewModal'
 import { ReviewItem } from './ReviewItem'
 
@@ -34,6 +36,7 @@ export const ReviewsPanel = () => {
     })
 
     const space = useSpaceData()
+    const spaceDetails = useGatherSpaceDetailsAnalytics({ spaceId: space?.id })
     const { data: contractSpaceInfo } = useContractSpaceInfo(space?.id)
     const [sortBy, setSortBy] = useState<'recommended' | 'recent'>('recent')
     const [isDropdownOpen, setIsDropdownOpen] = useState(false)
@@ -161,6 +164,20 @@ export const ReviewsPanel = () => {
     const { ref: containerRef, width: containerWidth } = useContainerWidth()
     const isNarrow = containerWidth > 0 && containerWidth < 430
 
+    const handleWriteOrEditReviewClick = useCallback(() => {
+        if (space?.id) {
+            Analytics.getInstance().track('clicked write/edit review', {
+                action: userReview ? 'edit' : 'write',
+                spaceName: space.name,
+                spaceId: space.id,
+                gatedSpace: spaceDetails.gatedSpace,
+                gatedChannel: spaceDetails.gatedChannel,
+                pricingModule: spaceDetails.pricingModule,
+            })
+        }
+        userReview ? handleEditReview(userReview.id) : setActiveModal({ type: 'write' })
+    }, [space, spaceDetails, userReview, handleEditReview])
+
     return (
         <Panel label="Reviews" padding="none" paddingX="none" paddingTop="sm">
             <Stack gap="md" ref={containerRef}>
@@ -186,11 +203,7 @@ export const ReviewsPanel = () => {
                             <Button
                                 tone="cta1"
                                 width={isNarrow ? '100%' : 'x20'}
-                                onClick={() =>
-                                    userReview
-                                        ? handleEditReview(userReview.id)
-                                        : setActiveModal({ type: 'write' })
-                                }
+                                onClick={handleWriteOrEditReviewClick}
                             >
                                 {userReview ? 'Edit Review' : 'Write a Review'}
                             </Button>

@@ -1,5 +1,6 @@
 import React from 'react'
 import { useEvent } from 'react-use-event-hook'
+import { useSpaceData } from 'use-towns-client'
 import { Box, Paragraph, Stack, Text, TextButton } from '@ui'
 import { useDevice } from 'hooks/useDevice'
 import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
@@ -7,6 +8,8 @@ import { CHANNEL_INFO_PARAMS } from 'routes'
 import { ReviewStars } from '@components/ReviewStars/ReviewStars'
 import { env } from 'utils'
 import { useReviews } from 'hooks/useReviews'
+import { Analytics } from 'hooks/useAnalytics'
+import { useGatherSpaceDetailsAnalytics } from '@components/Analytics/useGatherSpaceDetailsAnalytics'
 
 interface TownReviewsProps {
     setActiveModal: (modal: 'reviews' | null) => void
@@ -17,8 +20,20 @@ export const TownReviews = ({ setActiveModal, spaceId }: TownReviewsProps) => {
     const { openPanel } = usePanelActions()
     const { isTouch } = useDevice()
     const { averageRating, totalReviews } = useReviews(spaceId ?? '')
+    const space = useSpaceData()
+    const spaceDetails = useGatherSpaceDetailsAnalytics({ spaceId: space?.id })
 
     const onShowReviews = useEvent(() => {
+        if (space?.id) {
+            Analytics.getInstance().track('clicked reviews', {
+                spaceName: space.name,
+                spaceId: space.id,
+                gatedSpace: spaceDetails.gatedSpace,
+                gatedChannel: spaceDetails.gatedChannel,
+                pricingModule: spaceDetails.pricingModule,
+            })
+        }
+
         if (isTouch) {
             setActiveModal('reviews')
         } else {
