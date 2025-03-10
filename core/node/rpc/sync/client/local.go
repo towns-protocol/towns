@@ -2,7 +2,6 @@ package client
 
 import (
 	"context"
-	"errors"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/linkdata/deadlock"
@@ -184,19 +183,12 @@ func (s *localSyncer) sendResponse(msg *SyncStreamsResponse) {
 		return
 	default:
 		if err := s.messages.AddMessage(msg); err != nil {
-			var rvrErr *RiverErrorImpl
-
-			if errors.Is(err, dynmsgbuf.ErrBufferFull) {
-				rvrErr = RiverError(Err_BUFFER_FULL, "Client sync subscription message channel is full")
-			} else {
-				rvrErr = AsRiverError(err, Err_INTERNAL)
-			}
-
-			rvrErr = rvrErr.Tag("syncId", s.globalSyncOpID).
+			err := AsRiverError(err).
+				Tag("syncId", s.globalSyncOpID).
 				Tag("op", msg.GetSyncOp()).
 				Func("localSyncer.sendResponse")
 
-			_ = rvrErr.LogError(logging.FromCtx(s.syncStreamCtx))
+			_ = err.LogError(logging.FromCtx(s.syncStreamCtx))
 
 			s.cancelGlobalSyncOp(err)
 		}
