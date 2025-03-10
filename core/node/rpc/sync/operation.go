@@ -164,11 +164,6 @@ func (syncOp *StreamSyncOperation) Run(
 			messagesSendToClient++
 
 			log.Debug("Pending messages in sync operation", "count", len(messages))
-
-			// If the message is a close message, stop sending messages to the client and close the sync operation
-			if msg.GetSyncOp() == SyncOp_SYNC_CLOSE {
-				return nil
-			}
 		}
 	}
 }
@@ -201,6 +196,7 @@ func (syncOp *StreamSyncOperation) runCommandsProcessing(
 				cmd.Reply(syncers.DebugDropStream(cmd.Ctx, cmd.DebugDropStream))
 			} else if cmd.CancelReq != nil {
 				messages <- &SyncStreamsResponse{SyncOp: SyncOp_SYNC_CLOSE}
+				close(messages)
 				cmd.Reply(nil)
 				return
 			} else if cmd.PingReq != nil {
