@@ -25,7 +25,7 @@ type DynamicBuffer[T any] struct {
 // NewDynamicBuffer initializes a new dynamic buffer.
 func NewDynamicBuffer[T any]() *DynamicBuffer[T] {
 	return &DynamicBuffer[T]{
-		buffer:     make([]T, 0),
+		buffer:     make([]T, 0, minBufferSize),
 		signalChan: make(chan struct{}, 1),
 	}
 }
