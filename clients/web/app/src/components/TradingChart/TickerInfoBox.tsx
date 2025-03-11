@@ -1,7 +1,6 @@
 import React, { useCallback, useMemo, useState } from 'react'
-import { formatUnits } from 'viem'
 import { useMyUserId, useUserLookupContext } from 'use-towns-client'
-import { Box, Icon, IconButton, Pill, Stack, Text } from '@ui'
+import { Box, IconButton, Pill, Stack, Text } from '@ui'
 import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
 import { formatCompactNumber } from '@components/Web3/Trading/tradingUtils'
 import { TokenPrice } from '@components/Web3/Trading/ui/TokenPrice'
@@ -17,10 +16,9 @@ export const TickerInfoBox = (props: {
     coinData: GetCoinDataResponse | undefined
     address: string
     chainId: string
-    balance: bigint
     tradingUserIds: string[]
 }) => {
-    const { minimal, coinData, address, chainId, balance, tradingUserIds } = props
+    const { minimal, coinData, address, chainId, tradingUserIds } = props
     const [isExpanded, setIsExpanded] = useState(false)
     const onToggleExpanded = useCallback(() => {
         setIsExpanded((e) => !e)
@@ -37,11 +35,7 @@ export const TickerInfoBox = (props: {
                 onToggleExpanded={onToggleExpanded}
             />
             {(!minimal || isExpanded) && (
-                <TickerPills
-                    coinData={coinData}
-                    balance={balance}
-                    tradingUserIds={tradingUserIds}
-                />
+                <TickerPills coinData={coinData} tradingUserIds={tradingUserIds} />
             )}
         </>
     ) : (
@@ -148,29 +142,15 @@ export const TickerHeader = (
 
 const TickerPills = ({
     coinData,
-    balance,
     tradingUserIds,
 }: {
     coinData: GetCoinDataResponse
-    balance: bigint
     tradingUserIds: string[]
 }) => {
     return (
         <Stack gap="sm">
-            {(balance > 0n && coinData) || tradingUserIds.length > 0 ? (
+            {tradingUserIds.length > 0 ? (
                 <Stack grow horizontal gap="sm" color="gray2" flexWrap="wrap">
-                    {balance > 0n && coinData && (
-                        <Pill background="lightHover" whiteSpace="nowrap">
-                            <Stack horizontal gap="xs" alignItems="center">
-                                <Icon type="wallet" size="square_xs" color="gray2" />
-                                <Text fontSize="sm" color="gray1">
-                                    {formatCompactNumber(
-                                        Number(formatUnits(balance, coinData.token.decimals)),
-                                    )}
-                                </Text>
-                            </Stack>
-                        </Pill>
-                    )}
                     {tradingUserIds.length > 0 && (
                         <Pill background="lightHover" color="inherit" whiteSpace="nowrap">
                             <TradingUserIds userIds={tradingUserIds} />

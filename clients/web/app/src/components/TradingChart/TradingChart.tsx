@@ -34,7 +34,6 @@ import {
     useTradingContext,
 } from '@components/Web3/Trading/TradingContextProvider'
 import { formatCompactNumber } from '@components/Web3/Trading/tradingUtils'
-import { useTokenBalance } from '@components/Web3/Trading/useTokenBalance'
 import { Box, Dropdown, IconButton, SizeBox, Stack, Text } from '@ui'
 import { useStore } from 'store/store'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
@@ -58,7 +57,6 @@ const CHART_TIME_FORMAT_OPTIONS: {
 
 export const TradingChart = (props: { address: string; chainId: string; disabled?: boolean }) => {
     const { address, chainId, disabled } = props
-    const balance = useTokenBalance(chainId, address)
     const [timeframe, setTimeframe] = useState<TimeFrame>('1d')
     const [chartType, setChartType] = useState<'area' | 'candlestick'>('area')
 
@@ -148,7 +146,6 @@ export const TradingChart = (props: { address: string; chainId: string; disabled
                     coinData={coinData}
                     address={address}
                     chainId={chainId}
-                    balance={balance}
                     tradingUserIds={tradingUserIds}
                 />
             </Stack>
