@@ -12,6 +12,7 @@ import (
 	"github.com/towns-protocol/towns/core/node/nodes"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/rpc/sync/client"
+	"github.com/towns-protocol/towns/core/node/rpc/sync/dynmsgbuf"
 	"github.com/towns-protocol/towns/core/node/shared"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
@@ -121,11 +122,11 @@ func (syncOp *StreamSyncOperation) Run(
 				select {
 				case <-syncOp.ctx.Done():
 					return
-				case messages <- &SyncStreamsResponse{
-					SyncOp:   SyncOp_SYNC_DOWN,
-					StreamId: cookie.GetStreamId(),
-				}:
-					continue
+				default:
+					_ = messages.AddMessage(&SyncStreamsResponse{
+						SyncOp:   SyncOp_SYNC_DOWN,
+						StreamId: cookie.GetStreamId(),
+					})
 				}
 			}
 		}
@@ -137,6 +138,7 @@ func (syncOp *StreamSyncOperation) Run(
 	var messagesSendToClient int
 	defer log.Debugw("Stream sync operation stopped", "send", messagesSendToClient)
 
+	var msgs []*SyncStreamsResponse
 	for {
 		select {
 		case <-syncOp.ctx.Done():
@@ -146,26 +148,30 @@ func (syncOp *StreamSyncOperation) Run(
 			}
 			// otherwise syncOp is stopped internally.
 			return context.Cause(syncOp.ctx)
-		case msg, ok := <-messages:
-			if !ok {
+		case _, open := <-messages.Wait():
+			msgs = messages.GetBatch(msgs)
+			for i, msg := range msgs {
+				msg.SyncId = syncOp.SyncID
+				if err := res.Send(msg); err != nil {
+					log.Errorw("Unable to send sync stream update to client", "err", err)
+					return err
+				}
+
+				messagesSendToClient++
+
+				log.Debug("Pending messages in sync operation", "count", messages.Len()+len(msgs)-i-1)
+
+				if msg.GetSyncOp() == SyncOp_SYNC_CLOSE {
+					return nil
+				}
+			}
+
+			// If the client sent a close message, stop sending messages to client from the buffer
+			if !open {
 				_ = res.Send(&SyncStreamsResponse{
 					SyncId: syncOp.SyncID,
 					SyncOp: SyncOp_SYNC_CLOSE,
 				})
-				return nil
-			}
-
-			msg.SyncId = syncOp.SyncID
-			if err := res.Send(msg); err != nil {
-				log.Errorw("Unable to send sync stream update to client", "err", err)
-				return err
-			}
-
-			messagesSendToClient++
-
-			log.Debug("Pending messages in sync operation", "count", len(messages))
-
-			if msg.GetSyncOp() == SyncOp_SYNC_CLOSE {
 				return nil
 			}
 		}
@@ -174,7 +180,7 @@ func (syncOp *StreamSyncOperation) Run(
 
 func (syncOp *StreamSyncOperation) runCommandsProcessing(
 	syncers *client.SyncerSet,
-	messages chan *SyncStreamsResponse,
+	messages *dynmsgbuf.DynamicBuffer[*SyncStreamsResponse],
 ) {
 	for {
 		select {
@@ -199,14 +205,15 @@ func (syncOp *StreamSyncOperation) runCommandsProcessing(
 			} else if cmd.DebugDropStream != (shared.StreamId{}) {
 				cmd.Reply(syncers.DebugDropStream(cmd.Ctx, cmd.DebugDropStream))
 			} else if cmd.CancelReq != nil {
-				messages <- &SyncStreamsResponse{SyncOp: SyncOp_SYNC_CLOSE}
+				_ = messages.AddMessage(&SyncStreamsResponse{SyncOp: SyncOp_SYNC_CLOSE})
+				messages.Close()
 				cmd.Reply(nil)
 				return
 			} else if cmd.PingReq != nil {
-				messages <- &SyncStreamsResponse{
+				_ = messages.AddMessage(&SyncStreamsResponse{
 					SyncOp:    SyncOp_SYNC_PONG,
 					PongNonce: cmd.PingReq.Msg.GetNonce(),
-				}
+				})
 				cmd.Reply(nil)
 			}
 		}

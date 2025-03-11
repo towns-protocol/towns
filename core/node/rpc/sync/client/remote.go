@@ -19,21 +19,22 @@ import (
 	"github.com/towns-protocol/towns/core/node/nodes"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/protocol/protocolconnect"
+	"github.com/towns-protocol/towns/core/node/rpc/sync/dynmsgbuf"
 	. "github.com/towns-protocol/towns/core/node/shared"
 )
 
 type remoteSyncer struct {
-	cancelGlobalSyncOp    context.CancelCauseFunc
-	syncStreamCtx         context.Context
-	syncStreamCancel      context.CancelFunc
-	syncID                string
-	forwarderSyncID       string
-	remoteAddr            common.Address
-	client                protocolconnect.StreamServiceClient
-	messages              chan<- *SyncStreamsResponse
-	streams               sync.Map
-	responseStream        *connect.ServerStreamForClient[SyncStreamsResponse]
-	unsubStream           func(streamID StreamId)
+	cancelGlobalSyncOp context.CancelCauseFunc
+	syncStreamCtx      context.Context
+	syncStreamCancel   context.CancelFunc
+	syncID             string
+	forwarderSyncID    string
+	remoteAddr         common.Address
+	client             protocolconnect.StreamServiceClient
+	messages           *dynmsgbuf.DynamicBuffer[*SyncStreamsResponse]
+	streams            sync.Map
+	responseStream     *connect.ServerStreamForClient[SyncStreamsResponse]
+	unsubStream        func(streamID StreamId)
 	pendingModifySync     *ModifySyncRequest
 	pendingModifySyncLock sync.Mutex
 	// otelTracer is used to trace individual sync Send operations, tracing is disabled if nil
@@ -45,17 +46,12 @@ func newRemoteSyncer(
 	cancelGlobalSyncOp context.CancelCauseFunc,
 	forwarderSyncID string,
 	remoteAddr common.Address,
-	nodeRegistry nodes.NodeRegistry,
+	client protocolconnect.StreamServiceClient,
 	cookies []*SyncCookie,
 	unsubStream func(streamID StreamId),
-	messages chan<- *SyncStreamsResponse,
+	messages *dynmsgbuf.DynamicBuffer[*SyncStreamsResponse],
 	otelTracer trace.Tracer,
 ) (*remoteSyncer, error) {
-	client, err := nodeRegistry.GetStreamServiceClientForAddress(remoteAddr)
-	if err != nil {
-		return nil, err
-	}
-
 	syncStreamCtx, syncStreamCancel := context.WithCancel(ctx)
 	responseStream, err := client.SyncStreams(syncStreamCtx, connect.NewRequest(&SyncStreamsRequest{SyncPos: cookies}))
 	if err != nil {
@@ -65,15 +61,15 @@ func newRemoteSyncer(
 
 			for _, cookie := range cookies {
 				select {
-				case messages <- &SyncStreamsResponse{
-					SyncOp:   SyncOp_SYNC_DOWN,
-					StreamId: cookie.GetStreamId(),
-				}:
-					continue
 				case <-timeout:
 					return
 				case <-ctx.Done():
 					return
+				default:
+					_ = messages.AddMessage(&SyncStreamsResponse{
+						SyncOp:   SyncOp_SYNC_DOWN,
+						StreamId: cookie.GetStreamId(),
+					})
 				}
 			}
 		}()
@@ -191,14 +187,17 @@ func (s *remoteSyncer) Run() {
 // If the channel is full or the sync operation is cancelled, the function returns an error.
 func (s *remoteSyncer) sendSyncStreamResponseToClient(msg *SyncStreamsResponse) error {
 	select {
-	case s.messages <- msg:
-		return nil
 	case <-s.syncStreamCtx.Done():
 		return s.syncStreamCtx.Err()
 	default:
-		return RiverError(Err_BUFFER_FULL, "Client sync subscription message channel is full").
-			Tag("syncId", s.forwarderSyncID).
-			Func("sendSyncStreamResponseToClient")
+		if err := s.messages.AddMessage(msg); err != nil {
+			return AsRiverError(err).
+				Tag("syncId", s.syncID).
+				Tag("op", msg.GetSyncOp()).
+				Func("sendSyncStreamResponseToClient")
+		}
+
+		return nil
 	}
 }
 
