@@ -16,7 +16,6 @@ import (
 
 	. "github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/logging"
-	"github.com/towns-protocol/towns/core/node/nodes"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/protocol/protocolconnect"
 	"github.com/towns-protocol/towns/core/node/rpc/sync/dynmsgbuf"
@@ -24,17 +23,17 @@ import (
 )
 
 type remoteSyncer struct {
-	cancelGlobalSyncOp context.CancelCauseFunc
-	syncStreamCtx      context.Context
-	syncStreamCancel   context.CancelFunc
-	syncID             string
-	forwarderSyncID    string
-	remoteAddr         common.Address
-	client             protocolconnect.StreamServiceClient
-	messages           *dynmsgbuf.DynamicBuffer[*SyncStreamsResponse]
-	streams            sync.Map
-	responseStream     *connect.ServerStreamForClient[SyncStreamsResponse]
-	unsubStream        func(streamID StreamId)
+	cancelGlobalSyncOp    context.CancelCauseFunc
+	syncStreamCtx         context.Context
+	syncStreamCancel      context.CancelFunc
+	syncID                string
+	forwarderSyncID       string
+	remoteAddr            common.Address
+	client                protocolconnect.StreamServiceClient
+	messages              *dynmsgbuf.DynamicBuffer[*SyncStreamsResponse]
+	streams               sync.Map
+	responseStream        *connect.ServerStreamForClient[SyncStreamsResponse]
+	unsubStream           func(streamID StreamId)
 	pendingModifySync     *ModifySyncRequest
 	pendingModifySyncLock sync.Mutex
 	// otelTracer is used to trace individual sync Send operations, tracing is disabled if nil
