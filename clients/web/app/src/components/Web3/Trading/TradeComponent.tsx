@@ -136,6 +136,10 @@ export const TradeComponent = (props: Props) => {
         cachedAmounts.current[key] = amount
     }, [amount, key])
 
+    const balanceIsInsufficient = useMemo(() => {
+        return (amount ?? 0n) > currentTokenBalance
+    }, [amount, currentTokenBalance])
+
     const quickSelectValues = useMemo<QuickSelectOption[]>(() => {
         if (mode === 'buy') {
             return (
@@ -426,6 +430,9 @@ export const TradeComponent = (props: Props) => {
                                 onChange={onSetPreselectedAmount}
                             />
                         </Stack>
+
+                        {balanceIsInsufficient && <Text color="error">Insufficient balance</Text>}
+
                         {/* if there's no threadInfo, we're inside the global trade panel,
                             show buy/sell button */}
                         {!threadInfo && sendTradeTransaction && (

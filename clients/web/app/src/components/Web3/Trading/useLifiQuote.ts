@@ -86,7 +86,7 @@ export const useLifiQuote = (props: {
         fromAmount.length > 0 &&
         fromToken.length > 0 &&
         parseInt(fromAmount) > 0 &&
-        currentTokenBalance > 0n
+        currentTokenBalance >= BigInt(fromAmount)
 
     const queryKey = [
         'lifiQuote',
