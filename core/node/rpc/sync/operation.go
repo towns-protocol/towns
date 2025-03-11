@@ -164,6 +164,17 @@ func (syncOp *StreamSyncOperation) Run(
 				if msg.GetSyncOp() == SyncOp_SYNC_CLOSE {
 					return nil
 				}
+
+				select {
+				case <-syncOp.ctx.Done():
+					// clientErr non-nil indicates client hung up, get the error from the root ctx.
+					if clientErr := syncOp.rootCtx.Err(); clientErr != nil {
+						return clientErr
+					}
+					// otherwise syncOp is stopped internally.
+					return context.Cause(syncOp.ctx)
+				default:
+				}
 			}
 
 			// If the client sent a close message, stop sending messages to client from the buffer
