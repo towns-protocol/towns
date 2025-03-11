@@ -9,6 +9,7 @@
         "codegen": "ponder codegen",
         "serve": "ponder serve",
         "lint": "eslint \"src/**/*.{ts,tsx}\" \"ponder.config.ts\" \"ponder.schema.ts\"",
+        "format": "prettier --write \"src/**/*.{ts,tsx}\" \"ponder.config.ts\" \"ponder.schema.ts\"",
         "typecheck": "tsc",
         "dev:fork": "../../scripts/setup-subgraph.sh",
         "find-paths": "tsx utils/findContractsPath.ts"
@@ -19,9 +20,14 @@
         "viem": "^2.21.3"
     },
     "devDependencies": {
+        "@river-build/eslint-config": "workspace:^",
+        "@river-build/prettier-config": "workspace:^",
         "@types/node": "^20.10.0",
         "eslint": "^8.54.0",
         "eslint-config-ponder": "^0.9.27",
+        "eslint-import-resolver-typescript": "^3.5.5",
+        "eslint-plugin-prettier": "^4.2.1",
+        "prettier": "^2.8.8",
         "tsx": "^4.7.0",
         "typescript": "^5.3.2"
     },
