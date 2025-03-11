@@ -221,7 +221,6 @@ func (h *handlerImpl) ModifySync(
 ) (*connect.Response[ModifySyncResponse], error) {
 	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
-
 	if op, ok := h.activeSyncOperations.Load(req.Msg.GetSyncId()); ok {
 		return op.(*StreamSyncOperation).ModifySync(ctx, req)
 	}

@@ -314,6 +314,7 @@ func (ss *SyncerSet) RemoveStream(ctx context.Context, streamID StreamId) error 
 	return nil
 }
 
+// Modify splits the given request into add and remove operations and forwards them to the responsible syncers.
 func (ss *SyncerSet) Modify(ctx context.Context, req ModifyRequest) error {
 	ss.muSyncers.Lock()
 	defer ss.muSyncers.Unlock()
@@ -336,15 +337,10 @@ func (ss *SyncerSet) Modify(ctx context.Context, req ModifyRequest) error {
 		}
 
 		nodeAddress := common.BytesToAddress(cookie.GetNodeAddress())
-		modifySync, found := modifySyncs[nodeAddress]
-		if !found {
-			modifySync = &ModifySyncRequest{
-				SyncId: ss.syncID,
-			}
-			modifySyncs[nodeAddress] = modifySync
+		if _, ok := modifySyncs[nodeAddress]; !ok {
+			modifySyncs[nodeAddress] = &ModifySyncRequest{}
 		}
-
-		modifySync.AddStreams = append(modifySync.AddStreams, cookie)
+		modifySyncs[nodeAddress].AddStreams = append(modifySyncs[nodeAddress].AddStreams, cookie)
 	}
 
 	// group streamIDs by node address
@@ -360,15 +356,11 @@ func (ss *SyncerSet) Modify(ctx context.Context, req ModifyRequest) error {
 				Tags("syncId", ss.syncID, "streamId", streamID)
 		}
 
-		modifySync, found := modifySyncs[syncer.Address()]
-		if !found {
-			modifySync = &ModifySyncRequest{
-				SyncId: ss.syncID,
-			}
-			modifySyncs[syncer.Address()] = modifySync
+		if _, ok := modifySyncs[syncer.Address()]; !ok {
+			modifySyncs[syncer.Address()] = &ModifySyncRequest{}
 		}
 
-		modifySync.RemoveStreams = append(modifySync.RemoveStreams, streamIDRaw)
+		modifySyncs[syncer.Address()].RemoveStreams = append(modifySyncs[syncer.Address()].RemoveStreams, streamIDRaw)
 	}
 
 	if len(modifySyncs) == 0 {

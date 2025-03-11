@@ -311,6 +311,9 @@ func (s *remoteSyncer) Modify(ctx context.Context, request *ModifySyncRequest) (
 		defer span.End()
 	}
 
+	// Force set the syncID to the current syncID
+	request.SyncId = s.syncID
+
 	resp, err := s.client.ModifySync(ctx, connect.NewRequest(request))
 	if err != nil {
 		return nil, false, err
