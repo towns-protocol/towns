@@ -19,6 +19,7 @@ import (
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	. "github.com/towns-protocol/towns/core/node/shared"
 	"github.com/towns-protocol/towns/core/node/storage"
+	"google.golang.org/protobuf/proto"
 )
 
 type AddableStream interface {
@@ -615,7 +616,7 @@ func (s *Stream) tryCleanup(expiration time.Duration) bool {
 	return true
 }
 
-// GetMiniblocks returns miniblock data directly fromn storage, bypassing the cache.
+// GetMiniblocks returns miniblock data directly from storage, bypassing the cache.
 // This is useful when we expect block data to be substantial and do not want to bust the cache.
 // miniblocks: with indexes from fromIndex inclusive, to toIndex exclusive
 // terminus: true if fromIndex is 0, or if there are no more blocks because they've been garbage collected
@@ -625,22 +626,22 @@ func (s *Stream) GetMiniblocks(
 	fromInclusive int64,
 	toExclusive int64,
 ) ([]*Miniblock, bool, error) {
+	// TODO: FIX: if some miniblocks are already in cache, return them instead of reading from storage
 	blocks, err := s.params.Storage.ReadMiniblocks(ctx, s.streamId, fromInclusive, toExclusive)
 	if err != nil {
 		return nil, false, err
 	}
 
 	miniblocks := make([]*Miniblock, len(blocks))
-	startMiniblockNumber := int64(-1)
-	for i, binMiniblock := range blocks {
-		miniblock, err := NewMiniblockInfoFromBytes(binMiniblock, startMiniblockNumber+int64(i))
+	for i, bytes := range blocks {
+		var pb Miniblock
+		err = proto.Unmarshal(bytes, &pb)
 		if err != nil {
-			return nil, false, err
+			return nil, false, AsRiverError(err, Err_INVALID_ARGUMENT).
+				Message("Failed to decode miniblock from bytes").
+				Func("GetMiniblocks")
 		}
-		if i == 0 {
-			startMiniblockNumber = miniblock.Header().MiniblockNum
-		}
-		miniblocks[i] = miniblock.Proto
+		miniblocks[i] = &pb
 	}
 
 	terminus := fromInclusive == 0
