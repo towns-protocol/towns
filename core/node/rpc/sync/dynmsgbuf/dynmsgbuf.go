@@ -8,11 +8,11 @@ import (
 )
 
 const (
-	// maxBufferSize is the maximum buffer size.
-	maxBufferSize = 2048
+	// MaxBufferSize is the maximum buffer size.
+	MaxBufferSize = 2048
 
-	// minBufferSize is the minimum buffer size.
-	minBufferSize = 16
+	// MinBufferSize is the minimum buffer size.
+	MinBufferSize = 16
 )
 
 // DynamicBuffer is a thread-safe, dynamically resizing message buffer.
@@ -25,7 +25,7 @@ type DynamicBuffer[T any] struct {
 // NewDynamicBuffer initializes a new dynamic buffer.
 func NewDynamicBuffer[T any]() *DynamicBuffer[T] {
 	return &DynamicBuffer[T]{
-		buffer:     make([]T, 0, minBufferSize),
+		buffer:     make([]T, 0, MinBufferSize),
 		signalChan: make(chan struct{}, 1),
 	}
 }
@@ -39,7 +39,7 @@ func (db *DynamicBuffer[T]) AddMessage(item T) error {
 			Func("DynamicBuffer.AddMessage")
 	}
 
-	if len(db.buffer) >= maxBufferSize {
+	if len(db.buffer) >= MaxBufferSize {
 		db.mu.Unlock()
 		return RiverError(Err_BUFFER_FULL, "Message buffer is full").
 			Func("DynamicBuffer.AddMessage")
@@ -61,8 +61,8 @@ func (db *DynamicBuffer[T]) AddMessage(item T) error {
 // The caller is expected not to use prev anymore and only use the returned buffer after calling this function.
 func (db *DynamicBuffer[T]) GetBatch(prev []T) []T {
 	// Reset if capacity is unused
-	if prev == nil || (cap(prev) > minBufferSize*2 && len(prev) < cap(prev)/2) {
-		prev = make([]T, 0, minBufferSize)
+	if prev == nil || (cap(prev) > MinBufferSize*2 && len(prev) < cap(prev)/2) {
+		prev = make([]T, 0, MinBufferSize)
 	} else {
 		// Deref pointers so they can be gc'ed faster
 		var zero T
