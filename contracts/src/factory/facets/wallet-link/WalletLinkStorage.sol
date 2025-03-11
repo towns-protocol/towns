@@ -4,6 +4,7 @@ pragma solidity ^0.8.23;
 // interfaces
 
 // libraries
+import {WalletLib} from "./libraries/WalletLib.sol";
 
 // contracts
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
@@ -18,6 +19,12 @@ library WalletLinkStorage {
     mapping(address => EnumerableSet.AddressSet) walletsByRootKey;
     // mapping Ethereum Wallets to RootKey is a 1 to 1 relationship, a wallet can only be linked to 1 root key
     mapping(address => address) rootKeyByWallet;
+    // mapping of wallet link external dependencies
+    mapping(bytes32 => address) dependencies;
+    // mapping of root key to root wallet
+    mapping(address => WalletLib.RootWallet) rootWalletByRootKey;
+    // mapping of root key hash to root key
+    mapping(bytes32 => address) rootKeyByHash;
   }
 
   function layout() internal pure returns (Layout storage s) {
