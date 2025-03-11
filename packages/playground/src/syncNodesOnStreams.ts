@@ -2,14 +2,14 @@ import type { Hex } from 'viem'
 import { createWalletClient, getContract, http, publicActions } from 'viem'
 import { privateKeyToAccount } from 'viem/accounts'
 import CONTRACT_ABI from '@river-build/generated/dev/abis/StreamRegistry.abi.ts'
-import { towns } from '@river-build/web3/dist/chain.ts'
+import { towns } from '@river-build/web3/src/chain.ts'
 
 const PRIVATE_KEY: Hex = process.env.PRIVATE_KEY as Hex
 const STREAM_REGISTRY_ADDRESS = '0x1298c03Fde548dc433a452573E36A713b38A0404'
-const UPGRADE_BLOCK = 12635400n
+const UPGRADE_BLOCK = 12741185n
 
 // Configure your batch parameters
-const BATCH_SIZE = 200n
+const BATCH_SIZE = 300n
 const START_INDEX = 0n
 
 const walletClient = createWalletClient({
