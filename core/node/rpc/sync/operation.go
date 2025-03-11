@@ -4,7 +4,6 @@ import (
 	"context"
 	"time"
 
-	"github.com/towns-protocol/towns/core/node/rpc/sync/dynmsgbuf"
 	"connectrpc.com/connect"
 	"github.com/ethereum/go-ethereum/common"
 	. "github.com/towns-protocol/towns/core/node/base"
@@ -13,6 +12,7 @@ import (
 	"github.com/towns-protocol/towns/core/node/nodes"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/rpc/sync/client"
+	"github.com/towns-protocol/towns/core/node/rpc/sync/dynmsgbuf"
 	"github.com/towns-protocol/towns/core/node/shared"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
@@ -138,6 +138,7 @@ func (syncOp *StreamSyncOperation) Run(
 	var messagesSendToClient int
 	defer log.Debugw("Stream sync operation stopped", "send", messagesSendToClient)
 
+	var msgs []*SyncStreamsResponse
 	for {
 		select {
 		case <-syncOp.ctx.Done():
@@ -148,11 +149,7 @@ func (syncOp *StreamSyncOperation) Run(
 			// otherwise syncOp is stopped internally.
 			return context.Cause(syncOp.ctx)
 		case _, open := <-messages.Wait():
-			msgs := messages.GetBatch(messages.Len())
-			if len(msgs) == 0 {
-				continue
-			}
-
+			msgs = messages.GetBatch(msgs)
 			for i, msg := range msgs {
 				msg.SyncId = syncOp.SyncID
 				if err := res.Send(msg); err != nil {
