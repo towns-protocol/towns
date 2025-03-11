@@ -15,6 +15,7 @@ import { AppBugReportOverlay } from '@components/AppBugReport/AppBugReportOverla
 import { PATHS, PATHS_REGEX } from 'routes'
 import { StartupProvider } from 'StartupProvider'
 import { TownsPrivyProvider } from 'privy/PrivyProvider'
+import { env } from 'utils'
 
 const App = React.lazy(() => import('App'))
 
@@ -55,8 +56,6 @@ export const Main = () => {
         })
     }, [])
 
-    usePeriodicUpdates()
-
     const isHomeRoute = useMemo(() => window.location.pathname === '/', [])
     const isTownPageRoute = useMemo(
         () =>
@@ -69,6 +68,7 @@ export const Main = () => {
     return (
         <PrivyAndErrorBoundary>
             <StartupProvider>
+                {env.VITE_ENABLE_MSW_BROWSER ? null : <PeriodicUpdates />}
                 <BrowserRouter>
                     <DebugRouter>
                         <Suspense
@@ -96,4 +96,9 @@ export const Main = () => {
             </StartupProvider>
         </PrivyAndErrorBoundary>
     )
+}
+
+function PeriodicUpdates() {
+    usePeriodicUpdates()
+    return null
 }

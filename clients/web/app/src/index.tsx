@@ -58,4 +58,22 @@ if (!node) {
     throw new Error('no root node enable')
 }
 
-createRoot(node).render(<Main />)
+async function enableMocking() {
+    console.log('Starting MSW...')
+    const { worker } = await import('../mocks/browser')
+    if ('start' in worker && typeof worker.start === 'function') {
+        // once the Service Worker is up and ready to intercept requests.
+        return worker.start()
+    }
+}
+
+if (env.DEV && env.VITE_ENABLE_MSW_BROWSER) {
+    const logLine = `🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨 BROWSER MSW ENABLED, SOME REQUESTS MAY BE MOCKED 🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨`
+    console.log(logLine)
+    setInterval(() => console.log(logLine), 10_000)
+    enableMocking().then(() => {
+        createRoot(node).render(<Main />)
+    })
+} else {
+    createRoot(node).render(<Main />)
+}

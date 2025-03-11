@@ -14,6 +14,34 @@ export const browserHandlers = [
         const data = { name: 'beavis' }
         return res(ctx.status(200), ctx.json(data))
     }),
+
+    rest.post('*', async (req, res, ctx) => {
+        if (env.VITE_RESPOND_REPLACEMENT_UNDERPRICED) {
+            const body = await req.json()
+            // Check if this is an eth_sendUserOperation request
+            if (body.method === 'eth_sendUserOperation') {
+                // this is alchemy's eth_sendUserOperation response for replacement underpriced
+                return res(
+                    ctx.status(200),
+                    ctx.json({
+                        jsonrpc: '2.0',
+                        id: body.id, // preserve the original request id
+                        error: {
+                            code: -32602,
+                            message: 'replacement underpriced',
+                            data: {
+                                currentMaxPriorityFee: '0x1312d0',
+                                currentMaxFee: '0x885786',
+                            },
+                        },
+                    }),
+                )
+            }
+        }
+
+        // Pass through if it doesn't match our specific case
+        return req.passthrough()
+    }),
 ]
 
 export const testHandlers = [

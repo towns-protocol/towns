@@ -6,11 +6,20 @@ import { Box, FancyButton } from '@ui'
 import { FadeInBox } from '@components/Transitions'
 import { SECOND_MS } from 'data/constants'
 import { clearAllWorkers } from 'hooks/usePeriodicUpdates'
+import { env } from 'utils'
 
 const log = debug('app:ReloadPrompt')
 log.enabled = true
 
 export const ReloadPrompt = () => {
+    if (env.VITE_ENABLE_MSW_BROWSER) {
+        return null
+    }
+
+    return <ReloadPromptChild />
+}
+
+const ReloadPromptChild = () => {
     const {
         needRefresh: [needRefresh],
         updateServiceWorker,

@@ -17,6 +17,7 @@ const commitHash = process.env.RENDER_GIT_COMMIT
     : execSync('git rev-parse --short HEAD').toString().trim()
 
 const isProduction = process.env.NODE_ENV === 'production'
+const enableMSWBrowser = process.env.VITE_ENABLE_MSW_BROWSER === 'true'
 
 // Turning off in production because of HNT-4418
 const profiling =
@@ -84,7 +85,8 @@ export default ({ mode }: { mode: string }) => {
         assetsInclude: ['**/*.png', '**/*.svg', '**/*.wasm'],
         plugins: [
             wasm(),
-            VitePWA(vitePWAOptions(mode, env)),
+            // these workers conflict with each other
+            ...(enableMSWBrowser ? [] : [VitePWA(vitePWAOptions(mode, env))]),
             nodePolyfills(),
             react(),
             tsconfigPaths(),

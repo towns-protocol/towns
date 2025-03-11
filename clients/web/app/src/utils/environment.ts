@@ -118,6 +118,10 @@ const envSchema = z.object({
     // Reviews feature flag and OpenAI integration
     VITE_REVIEWS_ENABLED: boolish.default(false),
     VITE_OPENAI_API_KEY: z.string().optional(),
+    // Enable MSW for browser (DEV only)
+    VITE_ENABLE_MSW_BROWSER: boolish.default(false),
+    // Enable replacement underpriced error for eth_sendUserOperation
+    VITE_RESPOND_REPLACEMENT_UNDERPRICED: boolish.default(false),
 })
 
 const parsed = envSchema.safeParse(import.meta.env)
