@@ -333,7 +333,7 @@ func (ss *SyncerSet) Modify(ctx context.Context, req ModifyRequest) error {
 		}
 
 		if _, found := ss.streamID2Syncer[streamID]; found {
-			return nil // stream is already part of sync operation
+			continue
 		}
 
 		nodeAddress := common.BytesToAddress(cookie.GetNodeAddress())
@@ -394,7 +394,6 @@ func (ss *SyncerSet) Modify(ctx context.Context, req ModifyRequest) error {
 			}
 
 			ss.syncers[nodeAddress] = syncer
-
 			ss.startSyncer(syncer)
 		}
 
@@ -471,28 +470,6 @@ func (ss *SyncerSet) DebugDropStream(ctx context.Context, streamID StreamId) err
 	}
 
 	return nil
-}
-
-// ValidateAndGroupSyncCookies validates the given syncCookies and groups them by node address/streamID.
-func ValidateAndGroupSyncCookies(syncCookies []*SyncCookie) (StreamCookieSetGroupedByNodeAddress, error) {
-	cookies := make(StreamCookieSetGroupedByNodeAddress)
-	for _, cookie := range syncCookies {
-		if err := SyncCookieValidate(cookie); err != nil {
-			return nil, err
-		}
-
-		streamID, err := StreamIdFromBytes(cookie.GetStreamId())
-		if err != nil {
-			return nil, err
-		}
-
-		nodeAddr := common.BytesToAddress(cookie.NodeAddress)
-		if cookies[nodeAddr] == nil {
-			cookies[nodeAddr] = make(map[StreamId]*SyncCookie)
-		}
-		cookies[nodeAddr][streamID] = cookie
-	}
-	return cookies, nil
 }
 
 func (ss *SyncerSet) rmStream(streamID StreamId) {
