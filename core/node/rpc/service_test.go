@@ -1716,7 +1716,7 @@ func TestSyncSubscriptionWithTooSlowClient(t *testing.T) {
 	}
 
 	// send a bunch of messages and ensure that the sync op is cancelled because the client can't keep up
-	for i := range 5000 {
+	for i := range 7000 {
 		if syncOpStopped.Load() { // no need to send additional messages, sync op already cancelled
 			break
 		}
