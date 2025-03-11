@@ -117,21 +117,31 @@ func (s *localSyncer) RemoveStream(ctx context.Context, streamID StreamId) (bool
 }
 
 func (s *localSyncer) Modify(ctx context.Context, request *ModifySyncRequest) (*ModifySyncResponse, bool, error) {
-	// TODO: Be compatible with ModifySyncResponse
+	var resp ModifySyncResponse
+
 	for _, cookie := range request.GetAddStreams() {
-		if err := s.AddStream(ctx, cookie); err != nil {
-			return nil, false, err
+		if err := s.addStream(ctx, StreamId(cookie.GetStreamId()), cookie); err != nil {
+			rvrErr := AsRiverError(err)
+			resp.Adds = append(resp.Adds, &SyncStreamOpStatus{
+				StreamId: cookie.GetStreamId(),
+				Code:     int32(rvrErr.Code),
+				Message:  rvrErr.GetMessage(),
+			})
 		}
 	}
+
+	s.activeStreamsMu.Lock()
+	defer s.activeStreamsMu.Unlock()
 
 	for _, streamID := range request.GetRemoveStreams() {
-		_, err := s.RemoveStream(ctx, StreamId(streamID))
-		if err != nil {
-			return nil, false, err
+		syncStream, found := s.activeStreams[StreamId(streamID)]
+		if found {
+			syncStream.Unsub(s)
+			delete(s.activeStreams, StreamId(streamID))
 		}
 	}
 
-	return &ModifySyncResponse{}, len(s.activeStreams) == 0, nil
+	return &resp, len(s.activeStreams) == 0, nil
 }
 
 // OnUpdate is called each time a new cookie is available for a stream
