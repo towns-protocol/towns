@@ -33,26 +33,25 @@ func NewDynamicBuffer[T any]() *DynamicBuffer[T] {
 // AddMessage adds a new item to the buffer.
 func (db *DynamicBuffer[T]) AddMessage(item T) error {
 	db.mu.Lock()
+	defer db.mu.Unlock()
+
 	if db.buffer == nil {
-		db.mu.Unlock()
 		return RiverError(Err_UNAVAILABLE, "Message buffer is closed").
 			Func("DynamicBuffer.AddMessage")
 	}
 
 	if len(db.buffer) >= maxBufferSize {
-		db.mu.Unlock()
 		return RiverError(Err_BUFFER_FULL, "Message buffer is full").
 			Func("DynamicBuffer.AddMessage")
 	}
 	db.buffer = append(db.buffer, item)
-	db.mu.Unlock()
 
 	// Non-blocking signal (only if empty, avoids duplicate wake-ups)
 	select {
 	case db.signalChan <- struct{}{}:
 	default:
 	}
-
+	
 	return nil
 }
 
@@ -97,6 +96,6 @@ func (db *DynamicBuffer[T]) Wait() <-chan struct{} {
 func (db *DynamicBuffer[T]) Close() {
 	db.mu.Lock()
 	db.buffer = nil
-	db.mu.Unlock()
 	close(db.signalChan)
+	db.mu.Unlock()
 }

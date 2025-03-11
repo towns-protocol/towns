@@ -174,7 +174,6 @@ func (syncOp *StreamSyncOperation) Run(
 					// otherwise syncOp is stopped internally.
 					return context.Cause(syncOp.ctx)
 				default:
-					break
 				}
 			}
 
