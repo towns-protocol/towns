@@ -1731,7 +1731,7 @@ export class BaseTransactor {
         }
     }
 
-    public async sendUserOperationWithCallData(
+    public async sendTokenTransferOperationWithCallData(
         args: {
             value: bigint
             signer: TSigner
@@ -1740,7 +1740,7 @@ export class BaseTransactor {
         let transaction: TransactionOrUserOperation | undefined = undefined
         let error: Error | undefined = undefined
         if (!this.isAccountAbstractionEnabled()) {
-            throw new Error('sendUserOperationWithCallData requires account abstraction')
+            throw new Error('sendTokenTransferOperationWithCallData requires account abstraction')
         }
 
         const continueStoreTx = this.blockchainTransactionStore.begin({
@@ -1748,10 +1748,13 @@ export class BaseTransactor {
         })
 
         try {
-            transaction = await this.userOps?.sendUserOperationWithCallData(args)
+            transaction = await this.userOps?.sendTokenTransferOperationWithCallData(args)
             this.log(`[userOperation with calldata] transaction created`)
         } catch (err) {
-            error = this.tryDecodeError(err, `[sendUserOperationWithCallData] cannot decode error`)
+            error = this.tryDecodeError(
+                err,
+                `[sendTokenTransferOperationWithCallData] cannot decode error`,
+            )
         }
 
         continueStoreTx({

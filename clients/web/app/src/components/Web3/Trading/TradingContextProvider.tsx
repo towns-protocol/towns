@@ -283,7 +283,7 @@ export const TradingContextProvider = ({ children }: { children: React.ReactNode
                 ))
             }
             try {
-                let transactionContext = await townsClient.sendUserOperationWithCallData({
+                let transactionContext = await townsClient.sendTokenTransferOperationWithCallData({
                     ...data,
                     value: BigInt(request.transaction.value),
                     signer,

@@ -70,6 +70,7 @@ export const FunctionHash = {
     tip: 'tip',
     checkIn: 'checkIn',
 
+    trading: 'trading',
     // unsponsored user ops
     unsponsored: 'unsponsored',
 } as const

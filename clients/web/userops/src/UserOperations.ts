@@ -615,7 +615,7 @@ export class UserOps {
         })
     }
 
-    public async sendUserOperationWithCallData(
+    public async sendTokenTransferOperationWithCallData(
         args: {
             value: bigint
             signer: ethers.Signer
@@ -624,7 +624,7 @@ export class UserOps {
         return this.sendUserOp({
             ...args,
             spaceId: undefined,
-            functionHashForPaymasterProxy: 'unsponsored',
+            functionHashForPaymasterProxy: 'trading',
         })
     }
 

@@ -10,4 +10,4 @@ export const ERC4337 = {
 // don't go below 1.1x, userop requires an increase of at least 10% of gas fees for replacement
 export const MAX_MULTIPLIER = 1.3
 export const NON_SPONSORED_LOGIN_METHODS = ['email']
-export const NON_SPONSORED_FUNCTION_HASHES: FunctionHash[] = ['checkIn', 'unsponsored']
+export const NON_SPONSORED_FUNCTION_HASHES: FunctionHash[] = ['checkIn', 'unsponsored', 'trading']

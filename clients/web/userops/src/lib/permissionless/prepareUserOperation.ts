@@ -310,6 +310,11 @@ export const prepareUserOperation =
                 if (balance < totalCost) {
                     throw new InsufficientTipBalanceException()
                 }
+            } else if (functionHashForPaymasterProxy === 'trading') {
+                // `trading` is a special case where we don't want to prompt the user
+                // because they already know that they need to pay for the operation
+                // so we just skip the prompt
+                // we have already made sure that the user has enough balance in their wallet
             } else {
                 if (request.sender) {
                     await promptUser(request.sender)
