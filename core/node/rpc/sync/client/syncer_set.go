@@ -5,12 +5,11 @@ import (
 	"slices"
 	"sync"
 
-	"golang.org/x/sync/errgroup"
-
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/linkdata/deadlock"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
+	"golang.org/x/sync/errgroup"
 
 	. "github.com/towns-protocol/towns/core/node/base"
 	. "github.com/towns-protocol/towns/core/node/events"
@@ -32,6 +31,13 @@ type (
 
 	DebugStreamsSyncer interface {
 		DebugDropStream(ctx context.Context, streamID StreamId) (bool, error)
+	}
+
+	ModifyRequest struct {
+		ToAdd                  []*SyncCookie
+		ToRemove               [][]byte
+		AddingFailureHandler   func(status *SyncStreamOpStatus)
+		RemovingFailureHandler func(status *SyncStreamOpStatus)
 	}
 
 	// SyncerSet is the set of StreamsSyncers that are used for a sync operation.
@@ -306,13 +312,6 @@ func (ss *SyncerSet) RemoveStream(ctx context.Context, streamID StreamId) error 
 	}
 
 	return nil
-}
-
-type ModifyRequest struct {
-	ToAdd                  []*SyncCookie
-	ToRemove               [][]byte
-	AddingFailureHandler   func(status *SyncStreamOpStatus)
-	RemovingFailureHandler func(status *SyncStreamOpStatus)
 }
 
 func (ss *SyncerSet) Modify(ctx context.Context, req ModifyRequest) error {
