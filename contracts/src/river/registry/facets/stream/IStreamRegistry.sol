@@ -7,10 +7,38 @@ import {Stream, StreamWithId, SetMiniblock} from "contracts/src/river/registry/l
 // libraries
 
 // contracts
+
 interface IStreamRegistryBase {
-  // =============================================================
-  //                           Events
-  // =============================================================
+  /// @notice The type of stream event
+  enum StreamEventType {
+    Allocate,
+    Create,
+    PlacementUpdated,
+    LastMiniblockUpdated,
+    LastMiniblockUpdateFailed,
+    LastMiniblockBatchUpdated
+  }
+
+  /// @notice The event emitted when a stream is updated
+  /// @dev One event to rule them all
+  /// To decode:
+  ///   switch (eventType) {
+  ///     case StreamEventType.Allocate:
+  ///       (bytes32 streamId, Stream memory stream, bytes32 genesisMiniblockHash, bytes genesisMiniblock) = abi.decode(data, (bytes32, Stream, bytes32, bytes));
+  ///     case StreamEventType.Create:
+  ///       (bytes32 streamId, Stream memory stream, bytes32 genesisMiniblockHash) = abi.decode(data, (bytes32, Stream, bytes32));
+  ///     case StreamEventType.PlacementUpdated:
+  ///     case StreamEventType.LastMiniblockUpdated:
+  ///       (bytes32 streamId, Stream memory stream) = abi.decode(data, (bytes32, Stream));
+  ///     case StreamEventType.LastMiniblockUpdateFailed:
+  ///       (bytes32 streamId, bytes32 lastMiniblockHash, uint64 lastMiniblockNum, string reason) = abi.decode(data, (bytes32, bytes32, uint64, string));
+  ///     case StreamEventType.LastMiniblockBatchUpdated:
+  ///       (bytes32[] memory streamIds, Stream[] memory streams) = abi.decode(data, (bytes32[], Stream[]));
+  ///   }
+  /// @param eventType The type of stream event
+  /// @param data The data of the stream event
+  event StreamUpdated(StreamEventType eventType, bytes data);
+
   event StreamAllocated(
     bytes32 streamId,
     address[] nodes,
@@ -46,10 +74,6 @@ interface IStreamRegistryBase {
 }
 
 interface IStreamRegistry is IStreamRegistryBase {
-  // =============================================================
-  //                           Streams
-  // =============================================================
-
   /**
    * @notice Check if a stream exists in the registry
    * @param streamId The ID of the stream to check
