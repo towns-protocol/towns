@@ -71,9 +71,13 @@ func (db *DynamicBuffer[T]) GetBatch(prev []T) []T {
 		prev = prev[:0]
 	}
 
+	var ret []T
+
 	db.mu.Lock()
-	ret := db.buffer
-	db.buffer = prev
+	if db.buffer != nil {
+		ret = db.buffer
+		db.buffer = prev
+	}
 	db.mu.Unlock()
 
 	return ret
