@@ -56,6 +56,7 @@ type Props = {
     userId?: string
     isFullWidthOnTouch?: boolean
     renderSendButton?: (onSend: () => void) => React.ReactNode
+    renderTradingBottomBar?: React.ReactNode
     allowEmptyMessage?: boolean
 } & Pick<BoxProps, 'background'>
 
@@ -76,6 +77,7 @@ const TownsTextEditorWithoutBoundary = ({
     draftUserIds,
     initialValue,
     renderSendButton,
+    renderTradingBottomBar,
     allowEmptyMessage = false,
     background = 'level2',
 }: Props) => {
@@ -277,6 +279,7 @@ const TownsTextEditorWithoutBoundary = ({
                     unfurledLinkAttachments={unfurledLinkAttachments}
                     tickerAttachments={tickerAttachments}
                     renderSendButton={renderSendButton}
+                    renderTradingBottomBar={renderTradingBottomBar}
                     allowEmptyMessage={allowEmptyMessage}
                     onSelectTicker={onAddTickerAttachment}
                     onRemoveTicker={onRemoveTickerAttachment}

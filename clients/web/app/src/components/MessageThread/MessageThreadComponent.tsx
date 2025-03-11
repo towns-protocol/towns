@@ -15,6 +15,7 @@ import {
     useMyProfile,
     useSpaceMembers,
 } from 'use-towns-client'
+import { AnimatePresence } from 'framer-motion'
 import { getPostedMessageType, trackPostedMessage } from '@components/Analytics/postedMessage'
 import { useGatherSpaceDetailsAnalytics } from '@components/Analytics/useGatherSpaceDetailsAnalytics'
 import { MediaDropContextProvider } from '@components/MediaDropContext/MediaDropContext'
@@ -37,7 +38,9 @@ import { useSpaceChannels } from 'hooks/useSpaceChannels'
 import { WalletReady } from 'privy/WalletReady'
 import { TokenIcon } from '@components/Web3/Trading/ui/TokenIcon'
 import { isTradingChain, tradingChains } from '@components/Web3/Trading/tradingConstants'
-import { EditSlippageButton } from '../Web3/Trading/EditSlippagePopover'
+import { FadeInBox } from '@components/Transitions'
+import { EditSlippageButton } from '@components/Web3/Trading/EditSlippagePopover'
+import { formatCompactNumber } from '@components/Web3/Trading/tradingUtils'
 import { getTickerAttachment } from './getTickerAttachment'
 import { TickerThreadContext } from './TickerThreadContext'
 
@@ -269,9 +272,10 @@ const ThreadEditor = (props: {
 
     const slippage = useTradeSettings((state) => state.slippage)
 
+    const mode = tradeData?.metaData.mode ?? quoteStatus?.mode
+
     const renderSendButton = useCallback(
         (onSend: () => void) => {
-            const mode = tradeData?.metaData.mode ?? quoteStatus?.mode
             return getSigner && quoteStatus && typeof mode === 'string' ? (
                 <Stack horizontal gap="sm" alignItems="center">
                     <Box
@@ -307,19 +311,24 @@ const ThreadEditor = (props: {
                             {mode === 'buy' ? 'Buy' : 'Sell'}
                         </FancyButton>
                     </Box>
-                    <EditSlippageButton />
                 </Stack>
             ) : undefined
         },
         [
             getSigner,
             isTradingProgress,
+            mode,
             quoteStatus,
             slippage,
             tickerAttachment?.chainId,
             tradeData?.metaData,
         ],
     )
+
+    const renderTradingBottomBar =
+        mode && tradeData?.metaData ? (
+            <TradingBottomBar tradeData={tradeData?.metaData} mode={mode} />
+        ) : undefined
 
     const editor = (
         <TownsEditorContainer
@@ -336,6 +345,7 @@ const ThreadEditor = (props: {
             userId={userId}
             allowEmptyMessage={allowEmptyMessage}
             renderSendButton={renderSendButton}
+            renderTradingBottomBar={renderTradingBottomBar}
             autoFocus={autoFocus ?? !isTouch}
             threadPreview={threadData?.parentEvent?.fallbackContent}
             onSend={onSend}
@@ -350,7 +360,7 @@ const ThreadEditor = (props: {
         <>
             {tickerAttachment ? (
                 <Box elevate rounded="md">
-                    <Box padding="md">
+                    <Box padding="md" paddingBottom="xs">
                         <TradeComponent
                             mode="buy"
                             tokenAddress={tickerAttachment.address}
@@ -384,7 +394,7 @@ const TransactionTooltip = (props: {
     const slippageText = slippage ? `(± ${slippage}%)` : ''
 
     return (
-        <Box padding="sm">
+        <FadeInBox padding="sm">
             <Tooltip background="level2">
                 <Stack horizontal padding="sm" gap="sm">
                     <Stack>
@@ -402,16 +412,66 @@ const TransactionTooltip = (props: {
                             color={mode === 'buy' ? 'positive' : 'peach'}
                             whiteSpace="nowrap"
                         >
-                            {mode === 'buy' ? 'Buy' : 'Sell'} {tradeData.value.value}{' '}
+                            {mode === 'buy' ? 'Buy' : 'Sell'}{' '}
+                            {formatCompactNumber(Number(tradeData.value.value))}{' '}
                             {tradeData.value.symbol} {mode === 'buy' ? slippageText : ''}
                         </Paragraph>
                         <Paragraph color="gray1">
-                            For {tradeData.valueAt.value} {tradeData.valueAt.symbol}{' '}
-                            {mode === 'sell' ? slippageText : ''}
+                            For {formatCompactNumber(Number(tradeData.valueAt.value))}{' '}
+                            {tradeData.valueAt.symbol} {mode === 'sell' ? slippageText : ''}
                         </Paragraph>
                     </Stack>
                 </Stack>
             </Tooltip>
-        </Box>
+        </FadeInBox>
+    )
+}
+
+const TradingBottomBar = (props: { tradeData?: QuoteMetaData; mode: 'buy' | 'sell' }) => {
+    const { tradeData, mode } = props
+
+    const { value, symbol } = useMemo(() => {
+        return mode === 'buy'
+            ? {
+                  value: tradeData?.value?.value ?? '',
+                  symbol: tradeData?.value?.symbol ?? '',
+              }
+            : {
+                  value: tradeData?.valueAt?.value ?? '',
+                  symbol: tradeData?.valueAt?.symbol ?? '',
+              }
+    }, [mode, tradeData])
+
+    if (!tradeData) {
+        return null
+    }
+
+    return (
+        <Stack horizontal gap="sm" alignItems="center">
+            <TokenPrice value={value} symbol={symbol} />
+            <EditSlippageButton />
+        </Stack>
+    )
+}
+
+const TokenPrice = (props: { value: string; symbol: string }) => {
+    const { value, symbol } = props
+    return (
+        <AnimatePresence>
+            {!!value && (
+                <FadeInBox
+                    background="lightHover"
+                    paddingX="paragraph"
+                    paddingY="sm"
+                    borderRadius="md"
+                    height="height_md"
+                    justifyContent="center"
+                >
+                    <Paragraph size="sm" fontWeight="medium" color="gray2">
+                        {formatCompactNumber(Number(value))} {symbol}
+                    </Paragraph>
+                </FadeInBox>
+            )}
+        </AnimatePresence>
     )
 }

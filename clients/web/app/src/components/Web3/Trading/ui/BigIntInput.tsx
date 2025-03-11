@@ -67,7 +67,7 @@ export const BigIntInput = (props: Props) => {
                 rounded="full"
                 before={icon ? <Icon type={icon} size="square_xs" /> : undefined}
                 value={displayValue}
-                height="x5"
+                height="x4"
                 style={{ width: 100, minWidth: !displayValue ? 55 : 33 }}
                 maxWidth="x20"
                 onFocus={props.onSelect}

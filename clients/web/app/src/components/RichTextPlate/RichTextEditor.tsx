@@ -87,6 +87,7 @@ type RichTextEditorProps = {
     onChange?: (editor: TPlateEditor) => void
     onArrowEscape?: (direction: 'up' | 'down') => void
     renderSendButton?: (onSend: () => void) => React.ReactNode
+    renderTradingBottomBar?: React.ReactNode
     allowEmptyMessage?: boolean
 }
 
@@ -120,6 +121,7 @@ export const RichTextEditor = ({
     onSend = noop,
     onChange = noop,
     renderSendButton,
+    renderTradingBottomBar,
     allowEmptyMessage = false,
 }: RichTextEditorProps) => {
     /* refs */
@@ -493,6 +495,7 @@ export const RichTextEditor = ({
                                 pointerEvents="all"
                             />
                         )}
+                        {renderTradingBottomBar}
                     </Stack>
                 </Stack>
             </Box>

@@ -12,7 +12,7 @@ export const EditSlippageButton = () => {
                 <Box tooltip={`Edit slippage (${slippage * 100}%)`}>
                     <IconButton
                         icon="filter"
-                        color="gray1"
+                        color="gray2"
                         {...triggerProps}
                         ref={triggerProps.ref}
                     />
