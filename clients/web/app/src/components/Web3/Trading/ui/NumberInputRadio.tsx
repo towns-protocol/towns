@@ -11,7 +11,7 @@ type Props = {
     onSelect?: () => void
 } & Omit<ComponentProps<typeof TextField>, 'onChange' | 'value'>
 
-export const BigIntInput = (props: Props) => {
+export const NumberInputRadio = (props: Props) => {
     const { icon, decimals, value: rawValue, onChange, ...inputProps } = props
     const [displayValue, setDisplayValue] = useState('')
 

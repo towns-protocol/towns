@@ -468,7 +468,8 @@ const TokenPrice = (props: { value: string; symbol: string }) => {
                     justifyContent="center"
                 >
                     <Paragraph size="sm" fontWeight="medium" color="gray2">
-                        {formatCompactNumber(Number(value))} {symbol}
+                        {value.startsWith('~') ? value : formatCompactNumber(Number(value))}{' '}
+                        {symbol}
                     </Paragraph>
                 </FadeInBox>
             )}

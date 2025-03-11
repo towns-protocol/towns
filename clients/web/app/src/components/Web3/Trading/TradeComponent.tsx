@@ -13,7 +13,7 @@ import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
 import { WalletReady } from 'privy/WalletReady'
 import { popupToast } from '@components/Notifications/popupToast'
 import { StandardToast } from '@components/Notifications/StandardToast'
-import { BigIntInput } from './ui/BigIntInput'
+import { NumberInputRadio } from './ui/NumberInputRadio'
 import { RadioButton } from './ui/RadioButton'
 import { ButtonSelection } from './ui/SelectButton'
 import { TabPanel } from './ui/TabPanel'
@@ -31,6 +31,7 @@ import { getTokenValueData } from './hooks/getTokenValue'
 import { isTradingChain, tradingChains } from './tradingConstants'
 import { useSendTradeTransaction } from './hooks/useTradeQuote'
 import { useTradeSettings } from './tradeSettingsStore'
+import { PercentInputRadio } from './ui/PercentInputRadio'
 
 // const DISPLAY_QUOTE = false
 
@@ -83,8 +84,8 @@ export const TradeComponent = (props: Props) => {
 
     const [_amount, setAmount] = useState<bigint>()
     const [customAmount, setCustomAmount] = useState<bigint>(0n)
+    const [customPercent, setCustomPercent] = useState<bigint>(0n)
     const [preselectedOption, setPreselectedOption] = useState<QuickSelectOption>()
-    const amount = preselectedOption?.label === 'custom' ? customAmount : _amount
 
     useEffect(() => {
         setMode(props.mode)
@@ -122,6 +123,13 @@ export const TradeComponent = (props: Props) => {
 
     const currentBalanceDecimals =
         mode === 'buy' ? chainConfig.decimals : fromTokenData?.token.decimals ?? 18
+
+    const amount =
+        preselectedOption?.label === 'custom'
+            ? mode === 'buy'
+                ? customAmount
+                : (currentTokenBalance * customPercent) / 100n
+            : _amount
 
     const cachedAmounts = useRef<Record<string, bigint | undefined>>({})
 
@@ -194,6 +202,12 @@ export const TradeComponent = (props: Props) => {
         },
         [setCustomAmount],
     )
+
+    const onCustomPercent = useCallback((_value: number) => {
+        const value = BigInt(Math.max(0, Math.min(_value || 0, 100)))
+        setCustomPercent(value)
+        setPreselectedOption({ label: 'custom', value, icon: undefined })
+    }, [])
 
     const onCustomFieldSelect = useCallback(() => {
         setPreselectedOption({ label: 'custom', value: customAmount, icon: undefined })
@@ -408,13 +422,17 @@ export const TradeComponent = (props: Props) => {
                                             }}
                                             onClick={onCustomFieldSelect}
                                         >
-                                            <BigIntInput
-                                                icon={mode === 'buy' ? chainConfig.icon : undefined}
-                                                decimals={currentBalanceDecimals}
-                                                value={customAmount}
-                                                placeholder="Custom"
-                                                onChange={onCustomAmount}
-                                            />
+                                            {mode === 'buy' ? (
+                                                <NumberInputRadio
+                                                    icon={chainConfig.icon}
+                                                    decimals={currentBalanceDecimals}
+                                                    value={customAmount}
+                                                    placeholder="Custom"
+                                                    onChange={onCustomAmount}
+                                                />
+                                            ) : (
+                                                <PercentInputRadio onChange={onCustomPercent} />
+                                            )}
                                         </Box>
                                     ) : (
                                         <RadioButton
