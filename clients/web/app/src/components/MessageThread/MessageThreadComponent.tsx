@@ -391,7 +391,7 @@ const TransactionTooltip = (props: {
     // a temp chainId for solana
     const chainId = props.chainId === '1151111081099710' ? 'solana-mainnet' : props.chainId
     const chainConfig = isTradingChain(chainId) ? tradingChains[chainId] : tradingChains[1]
-    const slippageText = slippage ? `(± ${slippage}%)` : ''
+    const slippageText = slippage ? `(± ${slippage * 100}%)` : ''
 
     return (
         <FadeInBox padding="sm">

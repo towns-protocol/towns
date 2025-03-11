@@ -97,6 +97,7 @@ export const useLifiQuote = (props: {
         fromAmount,
         fromAddress,
         toAddress,
+        slippage,
     ]
 
     const { data, error, isError, isLoading } = useQuery({
