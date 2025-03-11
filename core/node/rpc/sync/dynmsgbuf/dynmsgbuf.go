@@ -56,7 +56,9 @@ func (db *DynamicBuffer[T]) AddMessage(item T) error {
 	return nil
 }
 
-// GetBatch retrieves up to `batchSize` messages, removing them from the buffer.
+// GetBatch returns a batch of messages from the buffer.
+// Using a previous slice is optional, but can be used to reduce allocations.
+// The caller is expected not to use prev anymore and only use the returned buffer after calling this function.
 func (db *DynamicBuffer[T]) GetBatch(prev []T) []T {
 	// Reset if capacity is unused
 	if prev == nil || (cap(prev) > minBufferSize*2 && len(prev) < cap(prev)/2) {
