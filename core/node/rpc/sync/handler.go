@@ -7,14 +7,15 @@ import (
 
 	"connectrpc.com/connect"
 	"github.com/ethereum/go-ethereum/common"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
+
 	. "github.com/towns-protocol/towns/core/node/base"
 	. "github.com/towns-protocol/towns/core/node/events"
 	"github.com/towns-protocol/towns/core/node/nodes"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/shared"
-	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/codes"
-	"go.opentelemetry.io/otel/trace"
 )
 
 type (
@@ -38,6 +39,11 @@ type (
 			ctx context.Context,
 			req *connect.Request[RemoveStreamFromSyncRequest],
 		) (*connect.Response[RemoveStreamFromSyncResponse], error)
+
+		ModifySync(
+			ctx context.Context,
+			req *connect.Request[ModifySyncRequest],
+		) (*connect.Response[ModifySyncResponse], error)
 
 		CancelSync(
 			ctx context.Context,
@@ -205,6 +211,19 @@ func (h *handlerImpl) RemoveStreamFromSync(
 
 	if op, ok := h.activeSyncOperations.Load(req.Msg.GetSyncId()); ok {
 		return op.(*StreamSyncOperation).RemoveStreamFromSync(ctx, req)
+	}
+	return nil, RiverError(Err_NOT_FOUND, "unknown sync operation").Tag("syncId", req.Msg.GetSyncId())
+}
+
+func (h *handlerImpl) ModifySync(
+	ctx context.Context,
+	req *connect.Request[ModifySyncRequest],
+) (*connect.Response[ModifySyncResponse], error) {
+	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
+	defer cancel()
+
+	if op, ok := h.activeSyncOperations.Load(req.Msg.GetSyncId()); ok {
+		return op.(*StreamSyncOperation).ModifySync(ctx, req)
 	}
 	return nil, RiverError(Err_NOT_FOUND, "unknown sync operation").Tag("syncId", req.Msg.GetSyncId())
 }

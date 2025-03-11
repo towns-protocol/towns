@@ -2,10 +2,14 @@ package sync
 
 import (
 	"context"
+	"sync"
 	"time"
 
 	"connectrpc.com/connect"
 	"github.com/ethereum/go-ethereum/common"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
+
 	. "github.com/towns-protocol/towns/core/node/base"
 	. "github.com/towns-protocol/towns/core/node/events"
 	"github.com/towns-protocol/towns/core/node/logging"
@@ -14,8 +18,6 @@ import (
 	"github.com/towns-protocol/towns/core/node/rpc/sync/client"
 	"github.com/towns-protocol/towns/core/node/rpc/sync/dynmsgbuf"
 	"github.com/towns-protocol/towns/core/node/shared"
-	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/trace"
 )
 
 type (
@@ -47,6 +49,7 @@ type (
 		Ctx             context.Context
 		RmStreamReq     *connect.Request[RemoveStreamFromSyncRequest]
 		AddStreamReq    *connect.Request[AddStreamToSyncRequest]
+		ModifySyncReq   *client.ModifyRequest
 		PingReq         *connect.Request[PingSyncRequest]
 		CancelReq       *connect.Request[CancelSyncRequest]
 		DebugDropStream shared.StreamId
@@ -202,6 +205,8 @@ func (syncOp *StreamSyncOperation) runCommandsProcessing(
 					continue
 				}
 				cmd.Reply(syncers.RemoveStream(cmd.Ctx, streamID))
+			} else if cmd.ModifySyncReq != nil {
+				cmd.Reply(syncers.Modify(cmd.Ctx, *cmd.ModifySyncReq))
 			} else if cmd.DebugDropStream != (shared.StreamId{}) {
 				cmd.Reply(syncers.DebugDropStream(cmd.Ctx, cmd.DebugDropStream))
 			} else if cmd.CancelReq != nil {
@@ -279,6 +284,49 @@ func (syncOp *StreamSyncOperation) RemoveStreamFromSync(
 	}
 
 	return connect.NewResponse(&RemoveStreamFromSyncResponse{}), nil
+}
+
+func (syncOp *StreamSyncOperation) ModifySync(
+	ctx context.Context,
+	req *connect.Request[ModifySyncRequest],
+) (*connect.Response[ModifySyncResponse], error) {
+	if req.Msg.GetSyncId() != syncOp.SyncID {
+		return nil, RiverError(Err_INVALID_ARGUMENT, "invalid syncId").Tag("syncId", req.Msg.GetSyncId())
+	}
+
+	if syncOp.otelTracer != nil {
+		var span trace.Span
+		ctx, span = syncOp.otelTracer.Start(ctx, "modifySync",
+			trace.WithAttributes(attribute.String("syncId", req.Msg.GetSyncId())))
+		defer span.End()
+	}
+
+	resp := connect.NewResponse(&ModifySyncResponse{})
+	respLock := sync.Mutex{}
+	cmd := &subCommand{
+		Ctx: ctx,
+		ModifySyncReq: &client.ModifyRequest{
+			ToAdd:    req.Msg.GetAddStreams(),
+			ToRemove: req.Msg.GetRemoveStreams(),
+			AddingFailureHandler: func(status *SyncStreamOpStatus) {
+				respLock.Lock()
+				resp.Msg.Adds = append(resp.Msg.Adds, status)
+				respLock.Unlock()
+			},
+			RemovingFailureHandler: func(status *SyncStreamOpStatus) {
+				respLock.Lock()
+				resp.Msg.Removals = append(resp.Msg.Removals, status)
+				respLock.Unlock()
+			},
+		},
+		reply: make(chan error, 1),
+	}
+
+	if err := syncOp.process(cmd); err != nil {
+		return nil, err
+	}
+
+	return resp, nil
 }
 
 func (syncOp *StreamSyncOperation) CancelSync(
