@@ -857,6 +857,9 @@ message GetStreamRequest {
     bytes stream_id = 1;
     // if optional is true and stream doesn't exist, response will be a nil stream instead of ERROR NOT_FOUND
     bool optional = 2;
+    // if a sync cookie is provided, the response will be a delta from the sync cookie
+    // or a new sync cookie with sync_reset set to true if the stream has advanced far enough
+    SyncCookie sync_cookie = 3;
 }
 
 message GetStreamResponse {
