@@ -195,7 +195,7 @@ jobs:
                       }
 
     Upgrade_Facets:
-        if: inputs.job_to_run == 'Upgrade_Facets' || github.event_name == 'schedule'
+        if: ${{ inputs.job_to_run == 'Upgrade_Facets' || github.event.schedule == '0 20 * * 5' }}
         runs-on: ubuntu-latest
         steps:
             - name: Checkout code
