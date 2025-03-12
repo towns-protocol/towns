@@ -25,7 +25,7 @@ func (s *Service) startArchiveMode(opts *ServerStartOpts, once bool) error {
 		return RiverError(Err_BAD_CONFIG, "ArchiveId must be set").LogError(s.defaultLogger)
 	}
 
-	s.initTracing()
+	s.initTracing("river-archive", s.config.Archive.ArchiveId)
 
 	err = s.initRiverChain()
 	if err != nil {
