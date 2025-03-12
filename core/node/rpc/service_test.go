@@ -1768,7 +1768,7 @@ func TestSyncSubscriptionWithTooSlowClient(t *testing.T) {
 	}
 
 	// send a bunch of messages and ensure that the sync op is cancelled because the client can't keep up
-	for i := range 2500 {
+	for i := range 10000 {
 		if syncOpStopped.Load() { // no need to send additional messages, sync op already cancelled
 			break
 		}
@@ -1833,10 +1833,10 @@ func TestGetMiniblocksRangeLimit(t *testing.T) {
 		crypto.ABIEncodeUint64(uint64(expectedLimit)),
 	)
 
-	alice := tt.newTestClient(0)
+	alice := tt.newTestClient(0, testClientOpts{})
 	_ = alice.createUserStream()
 	spaceId, _ := alice.createSpace()
-	channelId, _ := alice.createChannel(spaceId)
+	channelId, _, _ := alice.createChannel(spaceId)
 
 	// Here we create a miniblock for each message sent by Alice.
 	// Creating a bit more miniblocks than limit.

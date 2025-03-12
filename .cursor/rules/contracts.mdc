@@ -1,6 +1,7 @@
 ---
 description: These rules are essential for working with a complex blockchain-based space management and permission system. They're particularly helpful when:  1. Implementing new features or modifying existing ones in the space management system 2. Working with cross-chain entitlements and permission validation 3. Developing token distribution mechanisms or reward systems 4. Adding or modifying role-based access control 5. Upgrading contracts using the Diamond Pattern 6. Implementing new entitlement types or rules 7. Debugging permission or access control issues 8. Writing tests for contract interactions
 globs: contracts/**/*.sol
+alwaysApply: false
 ---
 # Overview
 Blockchain-based space/channel management system with role-based access control and entitlements. It implements a complex permission system using smart contracts that allows for cross-chain rule validation and user management.
@@ -47,6 +48,7 @@ The system allows for:
   - Standardized deployment patterns
   - Contract architecture management
   - Component registration
+  - Wallet Linking for offchain asset evaluation
 
 - `/contracts/src/utils/` - Utility libraries providing:
   - Currency transfer helpers
@@ -103,6 +105,7 @@ Each contract follows the Diamond Pattern (EIP-2535) for upgradeability and impl
 5. Use events for important state changes
 6. Implement proper input validation
 7. Follow semantic versioning for contract upgrades
+8. Use calldata in external function argument definitions when possible
 
 ### Storage Rules
 

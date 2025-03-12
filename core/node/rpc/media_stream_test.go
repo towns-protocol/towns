@@ -18,10 +18,10 @@ import (
 func TestCreateMediaStream(t *testing.T) {
 	tt := newServiceTester(t, serviceTesterOpts{numNodes: 5, replicationFactor: 5, start: true})
 
-	alice := tt.newTestClient(0)
+	alice := tt.newTestClient(0, testClientOpts{})
 	_ = alice.createUserStream()
 	spaceId, _ := alice.createSpace()
-	channelId, _ := alice.createChannel(spaceId)
+	channelId, _, _ := alice.createChannel(spaceId)
 
 	mediaStreamId, err := StreamIdFromString(STREAM_MEDIA_PREFIX + strings.Repeat("0", 62))
 	tt.require.NoError(err)
@@ -111,7 +111,7 @@ func TestCreateMediaStream(t *testing.T) {
 		}
 
 		// Make sure all replicas have the stream sealed
-		for i, client := range tt.newTestClients(5) {
+		for i, client := range tt.newTestClients(5, testClientOpts{}) {
 			t.Run(fmt.Sprintf("Stream sealed in node %d", i), func(t *testing.T) {
 				t.Parallel()
 
@@ -155,10 +155,10 @@ func TestCreateMediaStream(t *testing.T) {
 func TestCreateMediaStream_Legacy(t *testing.T) {
 	tt := newServiceTester(t, serviceTesterOpts{numNodes: 1, start: true})
 
-	alice := tt.newTestClient(0)
+	alice := tt.newTestClient(0, testClientOpts{})
 	_ = alice.createUserStream()
 	spaceId, _ := alice.createSpace()
-	channelId, _ := alice.createChannel(spaceId)
+	channelId, _, _ := alice.createChannel(spaceId)
 
 	mediaStreamId, err := StreamIdFromString(STREAM_MEDIA_PREFIX + strings.Repeat("0", 62))
 	tt.require.NoError(err)
