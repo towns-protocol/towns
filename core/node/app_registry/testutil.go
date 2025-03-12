@@ -13,6 +13,8 @@ import (
 	"connectrpc.com/connect"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/golang-jwt/jwt/v4"
+	"google.golang.org/protobuf/proto"
+
 	"github.com/towns-protocol/towns/core/node/app_registry/app_client"
 	"github.com/towns-protocol/towns/core/node/crypto"
 	"github.com/towns-protocol/towns/core/node/events"
@@ -22,7 +24,6 @@ import (
 	"github.com/towns-protocol/towns/core/node/shared"
 	"github.com/towns-protocol/towns/core/node/testutils/testcert"
 	"github.com/towns-protocol/towns/core/node/utils"
-	"google.golang.org/protobuf/proto"
 )
 
 type AppServiceRequestEnvelope struct {

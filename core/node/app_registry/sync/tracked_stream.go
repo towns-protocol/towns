@@ -6,6 +6,7 @@ import (
 
 	mapset "github.com/deckarep/golang-set/v2"
 	"github.com/ethereum/go-ethereum/common"
+	"go.uber.org/zap/zapcore"
 
 	"github.com/towns-protocol/towns/core/node/crypto"
 	. "github.com/towns-protocol/towns/core/node/events"
@@ -22,6 +23,8 @@ type AppRegistryTrackedStreamView struct {
 }
 
 func (b *AppRegistryTrackedStreamView) processUserInboxMessage(ctx context.Context, event *ParsedEvent) error {
+	log := logging.DefaultZapLogger(zapcore.DebugLevel)
+	log.Debugw("user inbox message", "event", event)
 	// Capture keys sent to the app's inbox and store them in the message cache so that
 	// we can dequeue any existing messages that require decryption this session, and immediately
 	// forward incoming messages with the same session id.
@@ -29,6 +32,7 @@ func (b *AppRegistryTrackedStreamView) processUserInboxMessage(ctx context.Conte
 		if groupEncryptionSessions := payload.GetGroupEncryptionSessions(); groupEncryptionSessions != nil {
 			sessionIds := groupEncryptionSessions.GetSessionIds()
 			deviceCipherTexts := groupEncryptionSessions.GetCiphertexts()
+			log.Debugw("GroupEncryptionSessions", "session", sessionIds, "deviceCiphertexts", deviceCipherTexts)
 			streamId, err := shared.StreamIdFromBytes(groupEncryptionSessions.StreamId)
 			if err != nil {
 				return err
@@ -113,6 +117,9 @@ func NewTrackedStreamForAppRegistryService(
 	listener track_streams.StreamEventListener,
 	store EncryptedMessageQueue,
 ) (TrackedStreamView, error) {
+	log := logging.DefaultZapLogger(zapcore.DebugLevel)
+	log.Debugw("NewTrackedStream", "streamId", streamId)
+
 	trackedView := &AppRegistryTrackedStreamView{
 		listener: listener,
 		queue:    store,
