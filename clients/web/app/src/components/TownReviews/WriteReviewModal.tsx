@@ -14,6 +14,8 @@ import { createPrivyNotAuthenticatedNotification } from '@components/Notificatio
 import { popupToast } from '@components/Notifications/popupToast'
 import { StandardToast } from '@components/Notifications/StandardToast'
 import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
+import { useEnvironment } from 'hooks/useEnvironmnet'
+import { baseScanUrl } from '@components/Web3/utils'
 import { Analytics } from 'hooks/useAnalytics'
 import { useGatherSpaceDetailsAnalytics } from '@components/Analytics/useGatherSpaceDetailsAnalytics'
 import { validateReview } from './reviewModerator'
@@ -54,6 +56,7 @@ export const WriteReviewModal = ({
     })
     const { review, isLoading: isSubmitting } = useReviewTransaction()
     const reviewPending = useIsTransactionPending(BlockchainTransactionType.Review)
+    const { baseChain } = useEnvironment()
 
     const handleSubmit = async (data: { rating: number; text: string }, getSigner: GetSigner) => {
         setIsValidating(true)
@@ -99,7 +102,7 @@ export const WriteReviewModal = ({
                 pricingModule: spaceDetails.pricingModule,
             })
 
-            await review(
+            const result = await review(
                 {
                     spaceId: spaceData.id,
                     rating: data.rating,
@@ -112,20 +115,12 @@ export const WriteReviewModal = ({
                     onSuccess: () => {
                         onSubmit?.(data)
                         onHide()
-                        popupToast(({ toast }) => (
-                            <StandardToast.Success
-                                message={
-                                    initialReview
-                                        ? 'Review updated successfully'
-                                        : 'Review posted successfully'
-                                }
-                                toast={toast}
-                            />
-                        ))
                     },
                     onError: (error) => {
                         const errorMessage = 'Failed to submit review'
                         const subMessage = 'Please try again.'
+
+                        console.error(error)
 
                         popupToast(({ toast }) => (
                             <StandardToast.Error
@@ -137,6 +132,44 @@ export const WriteReviewModal = ({
                     },
                 },
             )
+
+            // Show success toast with transaction link if available
+            if (result?.transaction) {
+                const message = initialReview
+                    ? 'Review updated successfully'
+                    : 'Review posted successfully'
+
+                let transactionHash: string | undefined
+
+                const tx = result.transaction
+                if ('getUserOperationReceipt' in tx) {
+                    // For user operations, wait for the receipt to get the final transaction hash
+                    const receipt = await tx.getUserOperationReceipt()
+                    transactionHash = receipt?.receipt?.transactionHash
+                } else {
+                    transactionHash = tx.hash
+                }
+
+                if (transactionHash) {
+                    const transactionUrl = `${baseScanUrl(baseChain.id)}/tx/${transactionHash}`
+                    popupToast(({ toast: toastInstance }) => (
+                        <StandardToast.Success
+                            message={message}
+                            toast={toastInstance}
+                            cta="View Transaction"
+                            onCtaClick={({ dismissToast }) => {
+                                window.open(transactionUrl, '_blank', 'noopener,noreferrer')
+                                dismissToast()
+                            }}
+                        />
+                    ))
+                } else {
+                    // If we couldn't get the transaction hash, show success without the link
+                    popupToast(({ toast: toastInstance }) => (
+                        <StandardToast.Success message={message} toast={toastInstance} />
+                    ))
+                }
+            }
         } catch (error) {
             console.error('Error submitting review:', error)
             setValidationError('Error submitting review')
