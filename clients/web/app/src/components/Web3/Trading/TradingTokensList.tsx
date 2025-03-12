@@ -5,14 +5,11 @@ import { formatUnitsToFixedLength } from 'hooks/useBalance'
 import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
 import { notUndefined } from 'ui/utils/utils'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
+import ethIcon from 'ui/components/Icon/assets/eth.svg?url'
+import solIcon from 'ui/components/Icon/assets/solana.svg?url'
 import { ChainWalletAssets, formatCents } from './tradingUtils'
 import { TokenIcon } from './ui/TokenIcon'
 import { isTradingChain, tradingChains } from './tradingConstants'
-
-const baseImageURL =
-    'https://coin-images.coingecko.com/coins/images/31199/thumb/59302ba8-022e-45a4-8d00-e29fe2ee768c-removebg-preview.png?1696530026'
-const solImageURL =
-    'https://coin-images.coingecko.com/coins/images/4128/thumb/solana.png?1718769756'
 
 export const TradingTokensList = ({
     assets,
@@ -36,7 +33,7 @@ export const TradingTokensList = ({
         }
         return {
             ...asset.nativeAsset,
-            imageUrl: baseImageURL,
+            imageUrl: ethIcon,
             decimals: 18,
             tokenAddress: '',
             symbol: 'BASE',
@@ -53,7 +50,7 @@ export const TradingTokensList = ({
         }
         return {
             ...asset.nativeAsset,
-            imageUrl: solImageURL,
+            imageUrl: solIcon,
             decimals: 9,
             tokenAddress: '',
             symbol: 'SOL',

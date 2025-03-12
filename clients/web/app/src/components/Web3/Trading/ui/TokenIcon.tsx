@@ -10,11 +10,11 @@ type AssetData = {
 
 const tokenStyle = {
     position: 'absolute',
-    bottom: '-1px',
-    right: '-1px',
-    width: '14px',
-    height: '14px',
-    border: `1px solid var(--background)`,
+    bottom: '-2px',
+    right: '-2px',
+    width: '12px',
+    height: '12px',
+    boxShadow: `0 0 0 1px var(--background)`,
 } as CSSProperties
 
 const iconStyle = {
