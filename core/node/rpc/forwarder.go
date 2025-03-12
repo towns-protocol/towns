@@ -212,7 +212,6 @@ func (s *Service) getStreamImpl(
 		} else {
 			stub, err := s.nodeRegistry.GetStreamServiceClientForAddress(nodeAddress)
 			if err == nil {
-
 				ret, err := stub.GetStream(ctx, req)
 				if err != nil {
 					return nil, err
@@ -220,6 +219,8 @@ func (s *Service) getStreamImpl(
 				return connect.NewResponse(ret.Msg), nil
 			}
 			// in the case were we couldn't get a stub for this node, fall through and try to get the stream from scratch
+			// when nodes can exit the network this is a legitimate code path, for now it's an error
+			logging.FromCtx(ctx).Errorw("Node in sync cookie not found", "nodeAddress", nodeAddress, "streamId", req.Msg.StreamId)
 		}
 	}
 
