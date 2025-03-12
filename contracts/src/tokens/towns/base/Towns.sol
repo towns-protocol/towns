@@ -38,6 +38,7 @@ contract Towns is
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                          Errors                            */
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
   error DelegateeSameAsCurrent();
   error TransferLockEnabled();
 
@@ -182,14 +183,15 @@ contract Towns is
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                           Lock                               */
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-  function isLockEnabled(address account) external view virtual returns (bool) {
-    return _lockEnabled(account);
+
+  function isLockActive(address account) external view virtual returns (bool) {
+    return _isLockActive(account);
   }
 
-  function lockCooldown(
+  function lockExpiration(
     address account
   ) external view virtual returns (uint256) {
-    return _lockCooldown(account);
+    return _lockExpiration(account);
   }
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -242,12 +244,13 @@ contract Towns is
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                     Internal Overrides                     */
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
   function _beforeTokenTransfer(
     address from,
     address to,
     uint256 amount
   ) internal override {
-    if (from != address(0) && _lockEnabled(from)) {
+    if (from != address(0) && _isLockActive(from)) {
       // allow transferring at minting time
       CustomRevert.revertWith(TransferLockEnabled.selector);
     }
@@ -287,7 +290,7 @@ contract Towns is
     return true;
   }
 
-  /// @notice Override the default lock check to disable it.
+  /// @dev Override the default lock check to disable it.
   function _canLock() internal pure override returns (bool) {
     return false;
   }
