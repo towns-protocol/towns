@@ -1,9 +1,7 @@
 name: 'Run Userops Tests'
 env:
     FOUNDRY_VERSION: stable
-    RIVER_BLOCK_TIME: 1
-    BASE_EXECUTION_CLIENT: geth_dev
-    BASE_BLOCK_TIME: 2
+    RIVER_BLOCK_TIME: 2
 
 on:
     pull_request:
@@ -53,13 +51,17 @@ jobs:
             - name: Build workers
               run: yarn workers:build
 
+            # - name: Start Base blockchain
+            #   run: ./river/scripts/start-local-basechain.sh &
+
             - name: Start 4337
               env:
                   STACKUP_CONTRACTS_GIT_TOKEN: ${{ secrets.STACKUP_CONTRACTS_GIT_TOKEN }}
-              run: ./scripts/start-4337.sh &
+                  ANVIL_RPC: http://localhost:8545
+              run: cd servers/4337 && docker compose -f docker-compose.yml -f docker-compose.CI.yml up -d
 
             - name: Wait for 4337
-              timeout-minutes: 10
+              timeout-minutes: 5
               run: ./scripts/wait-for-4337.sh
 
             - name: Start River blockchain

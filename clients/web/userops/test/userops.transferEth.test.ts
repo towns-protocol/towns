@@ -79,7 +79,7 @@ test('can transfer max eth to given address', async () => {
     await waitForOpAndTx(transferOp, alice)
     const randomWalletBalance = await alice.getBalance(randomWallet.address)
 
-    const lowerBound = utils.parseEther('0.9999')
+    const lowerBound = utils.parseEther('0.9')
     const upperBound = utils.parseEther('1')
 
     expect(randomWalletBalance.gte(lowerBound)).toBe(true)

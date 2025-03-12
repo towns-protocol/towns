@@ -257,7 +257,7 @@ export const prepareUserOperation =
                 const gas = await estimateGasLimit({
                     userOp: request as UserOperationRequest,
                     account,
-                    client: rpcClient,
+                    client: bundlerClient,
                     spaceId,
                     functionHashForPaymasterProxy,
                     spaceDapp,

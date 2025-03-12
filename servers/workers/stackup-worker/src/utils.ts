@@ -16,10 +16,9 @@ export const durationLogger = (step: string) => {
     }
 }
 
-export function createStackupPMSponsorUserOperationRequest(params: {
+export function createPMSponsorUserOperationRequest(params: {
     userOperation: IUserOperation
     entryPoint: string
-    type: { type: string }
 }): RequestInit {
     const init = {
         body: JSON.stringify({

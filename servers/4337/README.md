@@ -1,80 +1,128 @@
-# ERC-4337 Devnet
+# 4337 Infrastructure
 
-A simple Docker setup to deploy ERC-4337 infrastructure on your local dev environment.
+This directory contains the infrastructure for running an ERC-4337 (Account Abstraction) stack, including an Anvil node, bundler, contracts, and mock paymaster.
 
-> **🚀 Need access to Smart Account infrastructure for your production environment? Check out [stackup.sh](https://www.stackup.sh/)!**
+## Overview
 
-## Usage
+The infrastructure consists of several Docker services that work together to provide a complete ERC-4337 environment:
 
-The following command will deploy a local devnet with all the required ERC-4337 infrastructure components ready to go.
+- **Anvil**: A local Ethereum node for development and testing
+- **Contracts**: Deploys the necessary smart contracts to the Anvil node
+- **Bundler**: Processes and bundles user operations
+- **Mock Paymaster**: Provides paymaster services for gas sponsorship
+
+This setup draws heavily from [Pimlico's example](https://github.com/pimlicolabs/mock-aa-environment/tree/main).
+
+## Directory Structure
+
+```/servers/4337/
+├── bundler/ # Bundler service configuration and code
+├── contracts/ # Smart contract deployment scripts
+├── docker-compose.yml # Base Docker Compose configuration
+├── docker-compose.CI.yml # CI-specific Docker Compose overrides
+├── mock-paymaster/ # Mock paymaster service
+├── wait.sh # Script to wait for services to be ready
+└── makefile # Utility commands
+```
+
+
+## Services
+
+### Anvil Node
+
+A local Ethereum node powered by Foundry's Anvil. In local development, this runs on your host machine. You need to have anvil running on port 8545.
+ 
+ In CI, it runs as a Docker container.
+
+Configuration:
+- Port: 8545
+- Block time: Configurable via environment variable (default: 2 seconds)
+
+### Contracts
+
+Deploys the necessary ERC-4337 contracts to the Anvil node.
+
+- Connects to the Anvil node via RPC
+- Deploys EntryPoint and other required contracts
+- Runs once and exits after successful deployment
+
+### Bundler
+
+Processes and bundles user operations according to the ERC-4337 specification.
+
+- Port: 43370
+- Connects to the Anvil node for transaction submission
+- Implements the Bundler RPC methods
+
+Known issues:
+- estimating callGasLimit with anvil + bundler for our base contracts is not accurate. It's too low. So clients should at least double this value.
+
+### Mock Paymaster
+
+Provides paymaster services for gas sponsorship.
+
+- Port: 43371
+- Connects to the bundler for user operation submission
+- Connects to the Anvil node for verification
+
+Known issues:
+- this server has been modified to return a high callGasLimit value, for the same reason as the bundler.
+- calling `alchemy_requestPaymasterAndData` is a WIP. For now call `pm_sponsorUserOperation` when developing locally against this server.
+
+## Configuration
+
+### Local Development
+
+For local development, the services connect to an Anvil node running on your host machine via `host.docker.internal:8545`.
 
 ```bash
+# Start the services
+cd servers/4337
 docker-compose up
 ```
 
-You can run the following command to check if the devnet is ready. This signals that the relevant contracts have been deployed to the devnet and all infra components are up and running.
+### CI Environment
+
+For CI, we use a different configuration that includes an Anvil node as a Docker service and adjusts the connections accordingly.
 
 ```bash
-make wait
+# Start the services in CI
+cd servers/4337
+docker-compose -f docker-compose.yml -f docker-compose.CI.yml up -d
 ```
 
-You can point you local applications to any of these RPC URLs:
+Key differences in CI:
+- Anvil runs as a Docker service instead of on the host
+- Services connect to the Anvil container via `http://anvil:8545`
+- Block time can be configured via the `RIVER_BLOCK_TIME` environment variable
 
-- `http://localhost:8545` for access to all node and bundler RPC methods.
-- `http://localhost:8546` for node RPC methods only.
-- `http://localhost:43370` for bundler RPC methods only.
-- `http://localhost:43371` for paymaster RPC methods only.
+## Environment Variables
 
-## Useful commands
+- `ANVIL_RPC`: RPC URL for the Anvil node (default: http://host.docker.internal:8545)
+- `RIVER_BLOCK_TIME`: Block time in seconds for the Anvil node in CI (default: 2)
 
-Fund any address on the devnet:
+## Usage
+
+### Starting the Services
 
 ```bash
-# ADDRESS and ETH can be set to any value.
-make fund-address ADDRESS=0x... ETH=1
+# Local development
+docker-compose up
+
+# CI environment
+docker-compose -f docker-compose.yml -f docker-compose.CI.yml up -d
 ```
 
-## Relevant entities
+### Waiting for Services
 
-The ERC-4337 devnet uses the following mnemonic and derived entities. **These should be strictly used for development and testing only and never in production.**
+The `wait.sh` script can be used to wait for all services to be ready:
 
-### Mnemonic
-
-This is used to derive all EOAs, particularly the Bundler account and Paymaster signer.
-
-```
-test test test test test test test test test test test junk
+```bash
+./wait.sh
 ```
 
-### Primary EOA
+### Stopping the Services
 
-This is the first EOA account derived from the mnemonic above. It uses the default path `m/44'/60'/0'/0/0`.
-
+```bash
+docker-compose down
 ```
-Address: 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266
-Private Key: 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
-```
-
-### V0.6 Stackup paymaster contract
-
-This is the [Stackup verifying paymaster](https://github.com/stackup-wallet/contracts) contract for `v0.6`. The signer for this contract is the primary EOA above.
-
-```
-Address: 0x42051Fa8F6c012102899c902aA214f1e97bD8aDb
-```
-
-## Components
-
-The ERC-4337 devnet is composed of several pieces:
-
-- `node`: go-ethereum running in dev mode. It runs the [ERC-4337 Execution Client](https://github.com/stackup-wallet/erc-4337-execution-clients) build to leverage native bundler tracers.
-- `bundler`: stackup-bundler that depends on `node` for the underlying ethereum client.
-- `proxy`: [OpenResty](https://openresty.org/en/) server used to proxy JSON-RPC methods to the `node` or `bundler`.
-- `fund-account`: A one off command to fund the primary EOA on startup.
-- `deploy-v0.6`: A one off command to deploy `v0.6` ERC-4337 contracts.
-- `deploy-v0.6-stackup-paymaster`: A one off command to deploy a Stackup verifying paymaster for `v0.6`.
-- `stake-v0.6-stackup-paymaster`: A one off command to stake the `v0.6` Stackup verifying paymaster.
-- `deposit-v0.6-stackup-paymaster`: A one off command to deposit funds to the `v0.6` Stackup verifying paymaster.
-- `get-v0.6-stackup-paymaster`: A one off command to get the deposit info for the `v0.6` Stackup verifying paymaster.
-- `deploy-v0.7`: A one off command to deploy `v0.7` ERC-4337 contracts.
-- `paymaster`: stackup-paymaster that depends on `node` for the underlying ethereum client and contract from `deploy-v0.6-stackup-paymaster`.

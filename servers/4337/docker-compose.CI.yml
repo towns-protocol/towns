@@ -1,0 +1,30 @@
+version: "3.8"
+services:
+  anvil:
+      image: ghcr.io/foundry-rs/foundry
+      ports: [ "8545:8545" ]
+      entrypoint: [ "anvil", "--host", "0.0.0.0", "--block-time", "${RIVER_BLOCK_TIME:-2}", "--silent"]
+      platform: linux/amd64/v8
+      healthcheck:
+        test: ["CMD-SHELL", "cast rpc web3_clientVersion | grep -c anvil > /dev/null "]
+        start_interval: 250ms
+        start_period: 10s
+        interval: 30s
+        timeout: 5s
+        retries: 50
+
+  contracts:
+    environment:
+      - ANVIL_RPC=http://anvil:8545
+    depends_on:
+      anvil:
+        condition: service_healthy
+
+  bundler:
+    environment:
+      - ANVIL_RPC=http://anvil:8545
+
+  mock-paymaster:
+    environment:
+      - BUNDLER_RPC=http://bundler:4337
+      - ANVIL_RPC=http://anvil:8545

@@ -16,7 +16,7 @@ import {
     WorkerRequest,
     getContentAsJson,
     durationLogger,
-    createStackupPMSponsorUserOperationRequest,
+    createPMSponsorUserOperationRequest,
     createAlchemyRequestGasAndPaymasterDataRequest,
 } from './utils'
 import { contractAddress, createFilterWrapper, runLogQuery } from './logFilter'
@@ -168,7 +168,7 @@ router.post('/api/sponsor-userop', async (request: WorkerRequest, env: Env, { pr
     }
     const { data } = content
 
-    const { townId, functionHash, rootKeyAddress, ...userOperation } = data
+    const { townId, functionHash, rootKeyAddress, gasOverrides, ...userOperation } = data
 
     const verificationErrorResponse = await handleVerifications({
         privyClient,
@@ -181,12 +181,10 @@ router.post('/api/sponsor-userop', async (request: WorkerRequest, env: Env, { pr
         return verificationErrorResponse
     }
 
-    const requestInit = createStackupPMSponsorUserOperationRequest({
+    // This endpoint does not support gas overrides
+    const requestInit = createPMSponsorUserOperationRequest({
         userOperation,
         entryPoint: env.ERC4337_ENTRYPOINT_ADDRESS,
-        // can be 'payg' or 'erc20token'
-        // see https://docs.stackup.sh/reference/pm-sponsoruseroperation
-        type: { type: 'payg' },
     })
     console.log('paymaster API request:', requestInit.body)
     const durationStackupApiRequest = durationLogger('paymaster API Request')

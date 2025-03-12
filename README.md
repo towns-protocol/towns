@@ -90,7 +90,7 @@ There are a few ways to run the local dev environment:
 
 To run using tmux:
 
-You can start the entire local dev setup with the script: `./scripts/start_dev_4337.sh`, and kill all local processes with: `./scripts/kill_dev.sh`. I suggest you make aliases for these scripts.
+You can start the entire local dev setup with the script: `./scripts/start_dev.sh`, and kill all local processes with: `./scripts/kill_dev.sh`. I suggest you make aliases for these scripts.
 
 When the startup script completes, you will be attached to a tmux session. You can view the windows from within the session by pressing `Ctrl+b` then `"w"`. Then you can switch to whatever process you want and hit `Enter` to attach to it. From here you can monitor or restart the process. i.e. if I made changes to the unfurl worker, I might attach and restart it. It's also an option to kill a process by pressing `Ctrl+c`, then in a separate terminal you can run the process again, if that's your desired workflow.
 

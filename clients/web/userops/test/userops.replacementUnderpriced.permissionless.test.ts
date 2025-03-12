@@ -193,7 +193,12 @@ test(
             async (parameters) => {
                 const { rpcParameters, signature, request } = await mockViemSendUserOperation(
                     smartAccountClient.client,
-                    parameters,
+                    {
+                        ...parameters,
+                        callGasLimit: 1_000_000n,
+                        verificationGasLimit: 3_000_000n,
+                        preVerificationGas: 1_000_000n,
+                    },
                 )
                 callParams.push(rpcParameters)
                 try {
@@ -299,9 +304,9 @@ test(
             nonce: 0,
             maxFeePerGas: '0x2540BE400',
             maxPriorityFeePerGas: '0x2540BE400',
-            callGasLimit: 0,
-            verificationGasLimit: 0,
-            preVerificationGas: 0,
+            callGasLimit: 0n,
+            verificationGasLimit: 0n,
+            preVerificationGas: 0n,
             paymasterAndData: '0x',
             signature: '0x',
         }
@@ -334,7 +339,12 @@ test(
             async (parameters) => {
                 const { rpcParameters, signature, request } = await mockViemSendUserOperation(
                     smartAccountClient.client,
-                    parameters,
+                    {
+                        ...parameters,
+                        preVerificationGas: 1_000_000n,
+                        verificationGasLimit: 3_000_000n,
+                        callGasLimit: 1_000_000n,
+                    },
                 )
                 callParams.push(rpcParameters)
                 try {

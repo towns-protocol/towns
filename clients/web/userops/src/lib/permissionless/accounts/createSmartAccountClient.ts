@@ -2,9 +2,7 @@ import {
     createSmartAccountClient as permissionlessCreateSmartAccountClient,
     SmartAccountClient,
 } from 'permissionless'
-import { http, Hex, publicActions, Address } from 'viem'
-import { createPimlicoClient } from 'permissionless/clients/pimlico'
-import { BundlerClient } from 'viem/account-abstraction'
+import { http, Hex, Address, createPublicClient, PublicClient } from 'viem'
 import { ethers } from 'ethers'
 import { prepareUserOperation } from '../prepareUserOperation'
 import { getBlock } from 'viem/actions'
@@ -27,9 +25,7 @@ export type CreateSmartAccountClientArgs<entryPointVersion extends '0.6' | '0.7'
     paymasterProxyAuthSecret: string
     spaceDapp: ISpaceDapp | undefined
     fetchAccessTokenFn: (() => Promise<string | null>) | undefined
-    smartAccountImpl: (args: {
-        pimlicoClient: ReturnType<typeof createPimlicoClient>
-    }) => Promise<ViemSmartAccount>
+    smartAccountImpl: (args: { publicClient: PublicClient }) => Promise<ViemSmartAccount>
     entrypointAddress: Address
     entrypointVersion: entryPointVersion
     factoryAddress: Address
@@ -64,14 +60,14 @@ export async function createSmartAccountClient<entryPointVersion extends '0.6' |
 
     const chain = await getChain(signer)
 
-    const pimlicoClient = createPimlicoClient({
+    const publicRpcClient = createPublicClient({
         transport: http(rpcUrl),
         chain,
-    }).extend(publicActions)
+    }) as PublicClient
 
     const smartAccountClient = permissionlessCreateSmartAccountClient({
-        account: await smartAccountImpl({ pimlicoClient }),
-        client: pimlicoClient,
+        account: await smartAccountImpl({ publicClient: publicRpcClient }),
+        client: publicRpcClient,
         bundlerTransport: http(bundlerUrl),
         userOperation: {
             prepareUserOperation: prepareUserOperation({
@@ -124,11 +120,11 @@ export async function createSmartAccountClient<entryPointVersion extends '0.6' |
             const response = {
                 userOpHash,
                 wait: async () => {
-                    const block = await getBlock(pimlicoClient)
+                    const block = await getBlock(publicRpcClient)
 
                     const polledAction = await poll({
                         action: async () => {
-                            const logs = await pimlicoClient.getLogs({
+                            const logs = await publicRpcClient.getLogs({
                                 address: entrypointAddress,
                                 event: userOperationEventAbi,
                                 args: {
@@ -147,7 +143,7 @@ export async function createSmartAccountClient<entryPointVersion extends '0.6' |
                         action: async () => {
                             try {
                                 const receipt = await getUserOperationReceipt({
-                                    bundlerClient: pimlicoClient as unknown as BundlerClient,
+                                    bundlerClient: smartAccountClient,
                                     userOpHash,
                                 })
 

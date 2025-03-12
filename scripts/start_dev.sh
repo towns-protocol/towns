@@ -3,11 +3,11 @@ set -euo pipefail
 
 SESSION_NAME="River"
 
-# Set BASE_EXECUTION_CLIENT to empty string if not set
-BASE_EXECUTION_CLIENT=${BASE_EXECUTION_CLIENT:-""}
+# Enable 4337 by default
+: ${ENABLE_4337:=true}
 
-# Print the value of BASE_EXECUTION_CLIENT
-echo "BASE_EXECUTION_CLIENT is set to: $BASE_EXECUTION_CLIENT"
+# Print the value of ENABLE_4337
+echo "ENABLE_4337 is set to: $ENABLE_4337"
 
 # Function to wait for a process and exit if it fails
 wait_for_process() {
@@ -57,6 +57,8 @@ if ! command -v yq &> /dev/null; then
     echo "yq installed successfully."
 fi
 
+yarn install
+
 # Create a new tmux session
 tmux new-session -d -s $SESSION_NAME
 
@@ -77,13 +79,12 @@ export RIVER_BLOCK_TIME=2
 # Start chains and Postgres in separate panes of the same window
 tmux new-window -t $SESSION_NAME -n 'BlockChains'
 
-if [ -n "$BASE_EXECUTION_CLIENT" ]; then
-    tmux send-keys -t $SESSION_NAME:1 "./scripts/start-4337.sh" C-m
-else 
-    tmux send-keys -t $SESSION_NAME:1 "./river/scripts/start-local-basechain.sh" C-m
-fi
+tmux send-keys -t $SESSION_NAME:1 "./river/scripts/start-local-basechain.sh" C-m
 tmux split-window -v
 tmux send-keys -t $SESSION_NAME:1 "./river/scripts/start-local-riverchain.sh" C-m
+
+
+
 
 # Function to wait for a specific port
 wait_for_port() {
@@ -102,8 +103,11 @@ wait_for_port() {
 wait_for_port 8545
 wait_for_port 8546
 
-# Run the script only if BASE_EXECUTION_CLIENT is set
-if [ -n "${BASE_EXECUTION_CLIENT}" ]; then
+
+if [ -n "$ENABLE_4337" ]; then
+    # Start 4337 in a new window
+    tmux new-window -t $SESSION_NAME -n '4337'
+    tmux send-keys -t $SESSION_NAME:2 "./scripts/start-4337.sh" C-m
     sh ./scripts/wait-for-4337.sh
 fi
 
@@ -119,12 +123,10 @@ wait_for_process "$BUILD_PID" "build"
 echo "STARTED ALL CHAINS AND DEPLOYED ALL CONTRACTS"
 
 # Now generate the core server config
-(cd ./river/core && just BASE_EXECUTION_CLIENT=$BASE_EXECUTION_CLIENT RUN_ENV=multi stop config build)
+(cd ./river/core && just RUN_ENV=multi stop config build)
 
 # Continue with rest of the script
 echo "Continuing with the rest of the script..."
-
-yarn install
 
 # build protobufs
 yarn csb:build
@@ -139,15 +141,14 @@ commands=(
     "watch_worker:cd servers/workers/worker-common && yarn watch"
     "watch_proto:cd river/packages/proto && yarn watch"
     "watch_web3:cd river/packages/web3 && yarn watch"
-    "app:cd ./scripts/switch-to-env.sh localhost && cd clients/web/app && yarn dev"
+    "app:sh ./scripts/switch-to-env.sh localhost && cd clients/web/app && yarn dev"
     "worker_unfurl:cd servers/workers/unfurl-worker && yarn dev:local"
     "worker_token:cd servers/workers/token-worker && yarn dev:local"
     "worker_gateway:cd servers/workers/gateway-worker && yarn dev:local"
     #"notification_service:sleep 4 && ./scripts/start-local-notification-service.sh"
-    "$(if [ -n "${BASE_EXECUTION_CLIENT}" ]; then echo 'worker_stackup:sh ./scripts/run-stackup-worker-development.sh'; else echo 'worker_stackup:cd servers/workers/stackup-worker && yarn dev:local'; fi)"
+    "$(if [ -n "${ENABLE_4337}" ]; then echo 'worker_stackup:sh ./scripts/run-stackup-worker-development.sh'; else echo 'worker_stackup:cd servers/workers/stackup-worker && yarn dev:local'; fi)"
     "river_stream_metadata_multi:yarn workspace @river-build/stream-metadata dev:local_multi"
-    "core:(cd ./river/core && just BASE_EXECUTION_CLIENT=$BASE_EXECUTION_CLIENT  RUN_ENV=multi start)"    
-    "$(if [ -n "${BASE_EXECUTION_CLIENT}" ]; then echo 'fund_multi_for_geth:sh ./scripts/fund_multi_for_geth.sh'; fi)"
+    "core:(cd ./river/core && just RUN_ENV=multi start)"    
 )
 
 # Create a Tmux window for each command

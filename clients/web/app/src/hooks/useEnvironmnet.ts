@@ -65,7 +65,7 @@ function makeEnvironments(): TownsEnvironmentInfo[] {
             }
         }
         // Account abstraction only works on local nodes if running geth, not anvil
-        else if (deployment.base.executionClient === 'geth_dev') {
+        else {
             envInfo.accountAbstractionConfig = {
                 aaRpcUrl: 'http://localhost:8545',
                 bundlerUrl: 'http://localhost:43370',

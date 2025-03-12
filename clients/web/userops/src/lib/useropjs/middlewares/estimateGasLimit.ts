@@ -6,6 +6,7 @@ import { BigNumber, BigNumberish } from 'ethers'
 import { errorCategories, errorToCodeException } from '../../../errors'
 import { ISpaceDapp } from '@river-build/web3'
 import { OpToJSON } from '../../../utils/opToJson'
+import { doubleGasIfLocalAnvil } from '../../../utils/anvilGasLimit'
 
 export async function estimateGasLimit(args: {
     ctx: IUserOperationMiddlewareCtx
@@ -60,7 +61,11 @@ export async function estimateGasLimit(args: {
             percentage: 10,
         })
         ctx.op.verificationGasLimit = estimate.verificationGasLimit ?? estimate.verificationGas
-        ctx.op.callGasLimit = estimate.callGasLimit
+
+        ctx.op.callGasLimit = doubleGasIfLocalAnvil(
+            provider.network.chainId,
+            BigNumber.from(estimate.callGasLimit).toBigInt(),
+        )
     } catch (error) {
         const exception = errorToCodeException(error, errorCategories.userop_non_sponsored)
 

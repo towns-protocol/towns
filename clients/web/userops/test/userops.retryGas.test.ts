@@ -177,9 +177,10 @@ test('permissionless: a non-sponsored userop that fails because of gas too low r
     vi.spyOn(paymasterPermissionless, 'paymasterProxyMiddleware').mockImplementation(async () => {
         return {
             paymasterAndData: '0x',
-            preVerificationGas: 0n,
-            verificationGasLimit: 0n,
-            callGasLimit: 0n,
+            // these cannot be 0n, or the alto bundler will reject
+            preVerificationGas: 2n,
+            verificationGasLimit: 2n,
+            callGasLimit: 2n,
         }
     })
     isGasTooLowSpy.mockImplementation(() => ({

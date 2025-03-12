@@ -10,6 +10,7 @@ import {
 import { getAction } from 'viem/utils'
 import { Client, parseEther } from 'viem'
 import { ISpaceDapp } from '@river-build/web3'
+import { doubleGasIfLocalAnvil } from '../../../utils/anvilGasLimit'
 
 export async function estimateGasLimit(args: {
     userOp: UserOperationRequest
@@ -83,6 +84,7 @@ export async function estimateGasLimit(args: {
 
         return {
             ...estimate,
+            callGasLimit: doubleGasIfLocalAnvil(client.chain?.id, estimate.callGasLimit),
             preVerificationGas: increaseByPercentage({
                 gas: estimate.preVerificationGas,
                 percentage: 10,
@@ -103,7 +105,7 @@ export async function estimateGasLimit(args: {
             error: exception,
         })
 
-        console.error('[promptUser] calling estimateUserOperationGas failed:', {
+        console.error('[estimateGasLimit] calling estimateUserOperationGas failed:', {
             op: userOp,
             originalError: exception,
             parsedError,
