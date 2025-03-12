@@ -106,6 +106,9 @@ export default ({ mode }: { mode: string }) => {
                 ...plateImports,
             },
         },
+        worker: {
+            format: 'es',
+        },
     }
 
     if (env.VITE_USE_LOCAL_NETWORK_HTTPS === 'true') {

@@ -1,38 +1,25 @@
-import { SpaceDapp } from '@river-build/web3'
-
 import { Address } from '@river-build/web3'
 import { getInitData } from '../workers'
+import { ERC4337 } from '../constants'
 
 export const abstractAddressMap = new Map<Address, Address>()
 
 export async function getAbstractAccountAddress({
     rootKeyAddress,
-    factoryAddress,
-    entryPointAddress,
-    spaceDapp,
     aaRpcUrl,
 }: {
     rootKeyAddress: Address
-    factoryAddress: string | undefined
-    entryPointAddress: string | undefined
-    spaceDapp: SpaceDapp | undefined
     aaRpcUrl: string
 }): Promise<Address | undefined> {
     if (abstractAddressMap.get(rootKeyAddress)) {
         return abstractAddressMap.get(rootKeyAddress)
     }
 
-    if (!factoryAddress) {
-        throw new Error('factoryAddress is required')
-    }
-    if (!entryPointAddress) {
-        throw new Error('entryPointAddress is required')
-    }
-    if (!spaceDapp?.provider) {
-        throw new Error('spaceDapp is required')
-    }
+    // TODO: gonna have to figure out how to do this while migrating accounts to 0.7
+    // internally this calls entyrpoint w/ initcode
+    // so we probably need to determine what version of entrypoint this address is using
     const result = await getInitData({
-        factoryAddress,
+        factoryAddress: ERC4337.SimpleAccount.Factory,
         signerAddress: rootKeyAddress,
         rpcUrl: aaRpcUrl,
     })

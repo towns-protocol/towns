@@ -1,4 +1,3 @@
-import { BundlerJsonRpcProvider, IUserOperation } from 'userop'
 import { Address, LocalhostWeb3Provider } from '@river-build/web3'
 import { Permission } from '@river-build/web3'
 import {
@@ -6,7 +5,6 @@ import {
     createUngatedSpace,
     generatePrivyWalletIfKey,
     mockViemSendUserOperation,
-    sleepBetweenTxs,
 } from './utils'
 import { expect, vi, test } from 'vitest'
 import { selectUserOpsByAddress, userOpsStore } from '../src/store/userOpsStore'
@@ -15,10 +13,9 @@ import { MAX_MULTIPLIER } from '../src/constants'
 import { Wallet, utils } from 'ethers'
 import { BigNumber } from 'ethers'
 import { TestUserOps } from './TestUserOps'
-import { PaymasterProxyPostData } from '../src/lib/useropjs/middlewares/paymasterProxyMiddleware'
 import { BaseError, Hex, hexToBigInt, RpcUserOperation } from 'viem'
 import { entryPoint06Address, getUserOperationError, UserOperation } from 'viem/account-abstraction'
-const provider = new BundlerJsonRpcProvider(process.env.AA_RPC_URL as string)
+import { PaymasterProxyPostData } from '../src/lib/permissionless/middleware/paymaster'
 
 afterEach(() => {
     vi.clearAllMocks()
@@ -33,10 +30,7 @@ test(
         )
         await alice.ready
 
-        const { spaceDapp, userOps: userOpsAlice } = await createSpaceDappAndUserops(
-            alice,
-            'permissionless',
-        )
+        const { spaceDapp, userOps: userOpsAlice } = await createSpaceDappAndUserops(alice)
         const smartAccountClient = await userOpsAlice.getSmartAccountClient({
             signer: alice.wallet,
         })
@@ -74,10 +68,6 @@ test(
         // - we use alchemy in production
         // - b/c of this, some userop middleware is either applied or skipped - i.e. the stackup paymaster requires gas fee estimates to be included in the user operation, or else it fails, but the alchemy paymaster fails with the inverse
         // - so the prime objective of this test is just to ensure that the paymaster is called with the correct gas overrides
-
-        // see comment at end of test
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const sendSpy = vi.spyOn(provider, 'send')
 
         // this could fail or succeed
         // mostly it succeeds b/c actually the stackup paymaster seems to use the gas estimate provided to it! (it does not use gas overrides, it just passes along the gas estimate the payload provides)
@@ -127,24 +117,6 @@ test(
         })
 
         expect(hasExpectedGasOverrides).toBe(true)
-
-        // while the below passes, like i said it's stackup not alchemy, so this doesn't really indicate anything
-        // once we have local alchemy, this should always pass
-        //
-        // const ethSendUserOperationCalls = sendSpy.mock.calls.filter((call) =>
-        //     call[0].includes('eth_sendUserOperation'),
-        // )
-        // expect(ethSendUserOperationCalls.length).toBe(1)
-        // const replacementSendUserOpCall = ethSendUserOperationCalls[0]
-        // expect(replacementSendUserOpCall[1]).toBeDefined()
-        // const replacementOpParams = replacementSendUserOpCall[1][0] as IUserOperation
-        // expect([
-        //     BigNumber.from(replacementOpParams.maxFeePerGas).toBigInt(),
-        //     BigNumber.from(replacementOpParams.maxPriorityFeePerGas).toBigInt(),
-        // ]).toEqual([
-        //     bigIntMultiply(ogOp.maxFeePerGas, MAX_MULTIPLIER),
-        //     bigIntMultiply(ogOp.maxPriorityFeePerGas, MAX_MULTIPLIER),
-        // ])
     },
     {
         retry: 3,
@@ -160,10 +132,7 @@ test(
         )
         await alice.ready
 
-        const { spaceDapp, userOps: userOpsAlice } = await createSpaceDappAndUserops(
-            alice,
-            'permissionless',
-        )
+        const { spaceDapp, userOps: userOpsAlice } = await createSpaceDappAndUserops(alice)
         const smartAccountClient = await userOpsAlice.getSmartAccountClient({
             signer: alice.wallet,
         })
@@ -283,10 +252,7 @@ test(
         )
         await alice.ready
 
-        const { spaceDapp, userOps: userOpsAlice } = await createSpaceDappAndUserops(
-            alice,
-            'permissionless',
-        )
+        const { spaceDapp, userOps: userOpsAlice } = await createSpaceDappAndUserops(alice)
         const smartAccountClient = await userOpsAlice.getSmartAccountClient({
             signer: alice.wallet,
         })
@@ -437,76 +403,61 @@ test(
 test.skip(
     'a userop that uses [execute] and fails to get a receipt within the timeout should be replaced',
     async () => {
-        const alice = new LocalhostWeb3Provider(
-            process.env.AA_RPC_URL as string,
-            generatePrivyWalletIfKey(process.env.PRIVY_WALLET_PRIVATE_KEY_1),
-        )
-        await alice.ready
-
-        const { spaceDapp, userOps: userOpsAlice } = await createSpaceDappAndUserops(
-            alice,
-            'useropjs',
-        )
-        const aaAddress = await fundAbstractAccount(alice, userOpsAlice)
-        const userOpClient = await userOpsAlice.getUserOpClient()
-        // set the wait timeout and interval to 0 so we don't wait for the userop to be mined
-        userOpClient.setWaitTimeoutMs(1)
-        userOpClient.setWaitIntervalMs(0)
-
-        const randomWallet = Wallet.createRandom().connect(spaceDapp.provider)
-
-        const ethToSend = utils.parseEther('0.1')
-
-        // transfer eth is a simple op that will bypass the paymaster proxy middleware
-        const ogOpTx = await userOpsAlice.sendTransferEthOp(
-            { recipient: randomWallet.address, value: ethToSend },
-            alice.wallet,
-        )
-
-        const ogOp = selectUserOpsByAddress(aaAddress).current.op!
-
-        expect(ogOp.maxFeePerGas).toBeDefined()
-        expect(ogOp.maxPriorityFeePerGas).toBeDefined()
-
-        // this should be null b/c we're not waiting for the userop to be mined
-        expect(await ogOpTx.getUserOperationReceipt()).toBeNull()
-        const sendSpy = vi.spyOn(provider, 'send')
-
-        // set the wait timeout and interval to 0 so we don't wait for the userop to be mined
-        userOpClient.setWaitTimeoutMs(10_000)
-        userOpClient.setWaitIntervalMs(100)
-        const replacementOpTx = await userOpsAlice.dropAndReplace(ogOpTx.userOpHash, alice.wallet)
-
-        expect((await replacementOpTx.getUserOperationReceipt())?.userOpHash).toBeDefined()
-
-        const ethSendUserOperationCalls = sendSpy.mock.calls.filter((call) =>
-            call[0].includes('eth_sendUserOperation'),
-        )
-        expect(ethSendUserOperationCalls.length).toBe(1)
-        const replacementSendUserOpCall = ethSendUserOperationCalls[0]
-        expect(replacementSendUserOpCall[1]).toBeDefined()
-        const replacementOpParams = replacementSendUserOpCall[1][0] as IUserOperation
-
-        expect(replacementOpParams.callData).toEqual(ogOp.callData)
-        expect(replacementOpParams.initCode).toEqual(ogOp.initCode)
-        expect(replacementOpParams.sender).toEqual(ogOp.sender)
-        expect(replacementOpParams.nonce).toEqual(ogOp.nonce)
-
-        // gas fees of the og op should be multiplied by the max multiplier
-        expect([
-            BigNumber.from(replacementOpParams.maxFeePerGas).toBigInt(),
-            BigNumber.from(replacementOpParams.maxPriorityFeePerGas).toBigInt(),
-        ]).toEqual([
-            bigIntMultiply(BigNumber.from(ogOp.maxFeePerGas).toBigInt(), MAX_MULTIPLIER),
-            bigIntMultiply(BigNumber.from(ogOp.maxPriorityFeePerGas).toBigInt(), MAX_MULTIPLIER),
-        ])
-
-        await sleepBetweenTxs(2_000)
-
-        // make sure the original op was dropped
-        userOpClient.setWaitTimeoutMs(0)
-        userOpClient.setWaitIntervalMs(0)
-        expect(await ogOpTx.getUserOperationReceipt()).toBeNull()
+        // const alice = new LocalhostWeb3Provider(
+        //     process.env.AA_RPC_URL as string,
+        //     generatePrivyWalletIfKey(process.env.PRIVY_WALLET_PRIVATE_KEY_1),
+        // )
+        // await alice.ready
+        // const { spaceDapp, userOps: userOpsAlice } = await createSpaceDappAndUserops(alice)
+        // const aaAddress = await fundAbstractAccount(alice, userOpsAlice)
+        // const smartAccountClient = await userOpsAlice.getSmartAccountClient({
+        //     signer: alice.wallet,
+        // })
+        // // set the wait timeout and interval to 0 so we don't wait for the userop to be mined
+        // smartAccountClient.setWaitTimeoutMs(1)
+        // smartAccountClient.setWaitIntervalMs(0)
+        // const randomWallet = Wallet.createRandom().connect(spaceDapp.provider)
+        // const ethToSend = utils.parseEther('0.1')
+        // // transfer eth is a simple op that will bypass the paymaster proxy middleware
+        // const ogOpTx = await userOpsAlice.sendTransferEthOp(
+        //     { recipient: randomWallet.address, value: ethToSend },
+        //     alice.wallet,
+        // )
+        // const ogOp = selectUserOpsByAddress(aaAddress).current.op!
+        // expect(ogOp.maxFeePerGas).toBeDefined()
+        // expect(ogOp.maxPriorityFeePerGas).toBeDefined()
+        // // this should be null b/c we're not waiting for the userop to be mined
+        // expect(await ogOpTx.getUserOperationReceipt()).toBeNull()
+        // const sendSpy = vi.spyOn(provider, 'send')
+        // // set the wait timeout and interval to 0 so we don't wait for the userop to be mined
+        // smartAccountClient.setWaitTimeoutMs(10_000)
+        // smartAccountClient.setWaitIntervalMs(100)
+        // const replacementOpTx = await userOpsAlice.dropAndReplace(ogOpTx.userOpHash, alice.wallet)
+        // expect((await replacementOpTx.getUserOperationReceipt())?.userOpHash).toBeDefined()
+        // const ethSendUserOperationCalls = sendSpy.mock.calls.filter((call) =>
+        //     call[0].includes('eth_sendUserOperation'),
+        // )
+        // expect(ethSendUserOperationCalls.length).toBe(1)
+        // const replacementSendUserOpCall = ethSendUserOperationCalls[0]
+        // expect(replacementSendUserOpCall[1]).toBeDefined()
+        // const replacementOpParams = replacementSendUserOpCall[1][0] as IUserOperation
+        // expect(replacementOpParams.callData).toEqual(ogOp.callData)
+        // expect(replacementOpParams.initCode).toEqual(ogOp.initCode)
+        // expect(replacementOpParams.sender).toEqual(ogOp.sender)
+        // expect(replacementOpParams.nonce).toEqual(ogOp.nonce)
+        // // gas fees of the og op should be multiplied by the max multiplier
+        // expect([
+        //     BigNumber.from(replacementOpParams.maxFeePerGas).toBigInt(),
+        //     BigNumber.from(replacementOpParams.maxPriorityFeePerGas).toBigInt(),
+        // ]).toEqual([
+        //     bigIntMultiply(BigNumber.from(ogOp.maxFeePerGas).toBigInt(), MAX_MULTIPLIER),
+        //     bigIntMultiply(BigNumber.from(ogOp.maxPriorityFeePerGas).toBigInt(), MAX_MULTIPLIER),
+        // ])
+        // await sleepBetweenTxs(2_000)
+        // // make sure the original op was dropped
+        // smartAccountClient.setWaitTimeoutMs(0)
+        // smartAccountClient.setWaitIntervalMs(0)
+        // expect(await ogOpTx.getUserOperationReceipt()).toBeNull()
     },
     {
         retry: 3,
@@ -516,78 +467,65 @@ test.skip(
 test.skip(
     'a userop that uses [executeBatch] and fails to get a receipt within the timeout should be replaced',
     async () => {
-        const alice = new LocalhostWeb3Provider(
-            process.env.AA_RPC_URL as string,
-            generatePrivyWalletIfKey(process.env.PRIVY_WALLET_PRIVATE_KEY_1),
-        )
-        await alice.ready
-
-        const { spaceDapp, userOps: userOpsAlice } = await createSpaceDappAndUserops(
-            alice,
-            'useropjs',
-        )
-        let aaAddress = await userOpsAlice.getAbstractAccountAddress({
-            rootKeyAddress: alice.wallet.address as Address,
-        })
-        expect(aaAddress).toBeDefined()
-        aaAddress = aaAddress!
-        const userOpClient = await userOpsAlice.getUserOpClient()
-        // set the wait timeout and interval to 0 so we don't wait for the userop to be mined
-        userOpClient.setWaitTimeoutMs(1)
-        userOpClient.setWaitIntervalMs(0)
-
-        const ogOpTx = await createUngatedSpace({
-            userOps: userOpsAlice,
-            spaceDapp,
-            signer: alice.wallet,
-            rolePermissions: [Permission.Read, Permission.Write],
-            spaceName: 'test',
-        })
-
-        const ogOp = selectUserOpsByAddress(aaAddress).current.op!
-
-        expect(ogOp.maxFeePerGas).toBeDefined()
-        expect(ogOp.maxPriorityFeePerGas).toBeDefined()
-
-        // this should be null b/c we're not waiting for the userop to be mined
-        expect(await ogOpTx.getUserOperationReceipt()).toBeNull()
-        const sendSpy = vi.spyOn(provider, 'send')
-
-        // set the wait timeout and interval to 0 so we don't wait for the userop to be mined
-        userOpClient.setWaitTimeoutMs(10_000)
-        userOpClient.setWaitIntervalMs(100)
-        const replacementOpTx = await userOpsAlice.dropAndReplace(ogOpTx.userOpHash, alice.wallet)
-
-        expect((await replacementOpTx.getUserOperationReceipt())?.userOpHash).toBeDefined()
-
-        const ethSendUserOperationCalls = sendSpy.mock.calls.filter((call) =>
-            call[0].includes('eth_sendUserOperation'),
-        )
-        expect(ethSendUserOperationCalls.length).toBe(1)
-        const replacementSendUserOpCall = ethSendUserOperationCalls[0]
-        expect(replacementSendUserOpCall[1]).toBeDefined()
-        const replacementOpParams = replacementSendUserOpCall[1][0] as IUserOperation
-
-        expect(replacementOpParams.callData).toEqual(ogOp.callData)
-        expect(replacementOpParams.initCode).toEqual(ogOp.initCode)
-        expect(replacementOpParams.sender).toEqual(ogOp.sender)
-        expect(replacementOpParams.nonce).toEqual(ogOp.nonce)
-
-        // gas fees of the og op should be multiplied by the max multiplier
-        expect([
-            BigNumber.from(replacementOpParams.maxFeePerGas).toBigInt(),
-            BigNumber.from(replacementOpParams.maxPriorityFeePerGas).toBigInt(),
-        ]).toEqual([
-            bigIntMultiply(BigNumber.from(ogOp.maxFeePerGas).toBigInt(), MAX_MULTIPLIER),
-            bigIntMultiply(BigNumber.from(ogOp.maxPriorityFeePerGas).toBigInt(), MAX_MULTIPLIER),
-        ])
-
-        await sleepBetweenTxs(2_000)
-
-        // make sure the original op was dropped
-        userOpClient.setWaitTimeoutMs(0)
-        userOpClient.setWaitIntervalMs(0)
-        expect(await ogOpTx.getUserOperationReceipt()).toBeNull()
+        // const alice = new LocalhostWeb3Provider(
+        //     process.env.AA_RPC_URL as string,
+        //     generatePrivyWalletIfKey(process.env.PRIVY_WALLET_PRIVATE_KEY_1),
+        // )
+        // await alice.ready
+        // const { spaceDapp, userOps: userOpsAlice } = await createSpaceDappAndUserops(alice)
+        // const smartAccountClient = await userOpsAlice.getSmartAccountClient({
+        //     signer: alice.wallet,
+        // })
+        // let aaAddress = await userOpsAlice.getAbstractAccountAddress({
+        //     rootKeyAddress: alice.wallet.address as Address,
+        // })
+        // expect(aaAddress).toBeDefined()
+        // aaAddress = aaAddress!
+        // // set the wait timeout and interval to 0 so we don't wait for the userop to be mined
+        // smartAccountClient.setWaitTimeoutMs(1)
+        // smartAccountClient.setWaitIntervalMs(0)
+        // const ogOpTx = await createUngatedSpace({
+        //     userOps: userOpsAlice,
+        //     spaceDapp,
+        //     signer: alice.wallet,
+        //     rolePermissions: [Permission.Read, Permission.Write],
+        //     spaceName: 'test',
+        // })
+        // const ogOp = selectUserOpsByAddress(aaAddress).current.op!
+        // expect(ogOp.maxFeePerGas).toBeDefined()
+        // expect(ogOp.maxPriorityFeePerGas).toBeDefined()
+        // // this should be null b/c we're not waiting for the userop to be mined
+        // expect(await ogOpTx.getUserOperationReceipt()).toBeNull()
+        // const sendSpy = vi.spyOn(provider, 'send')
+        // // set the wait timeout and interval to 0 so we don't wait for the userop to be mined
+        // smartAccountClient.setWaitTimeoutMs(10_000)
+        // smartAccountClient.setWaitIntervalMs(100)
+        // const replacementOpTx = await userOpsAlice.dropAndReplace(ogOpTx.userOpHash, alice.wallet)
+        // expect((await replacementOpTx.getUserOperationReceipt())?.userOpHash).toBeDefined()
+        // const ethSendUserOperationCalls = sendSpy.mock.calls.filter((call) =>
+        //     call[0].includes('eth_sendUserOperation'),
+        // )
+        // expect(ethSendUserOperationCalls.length).toBe(1)
+        // const replacementSendUserOpCall = ethSendUserOperationCalls[0]
+        // expect(replacementSendUserOpCall[1]).toBeDefined()
+        // const replacementOpParams = replacementSendUserOpCall[1][0] as IUserOperation
+        // expect(replacementOpParams.callData).toEqual(ogOp.callData)
+        // expect(replacementOpParams.initCode).toEqual(ogOp.initCode)
+        // expect(replacementOpParams.sender).toEqual(ogOp.sender)
+        // expect(replacementOpParams.nonce).toEqual(ogOp.nonce)
+        // // gas fees of the og op should be multiplied by the max multiplier
+        // expect([
+        //     BigNumber.from(replacementOpParams.maxFeePerGas).toBigInt(),
+        //     BigNumber.from(replacementOpParams.maxPriorityFeePerGas).toBigInt(),
+        // ]).toEqual([
+        //     bigIntMultiply(BigNumber.from(ogOp.maxFeePerGas).toBigInt(), MAX_MULTIPLIER),
+        //     bigIntMultiply(BigNumber.from(ogOp.maxPriorityFeePerGas).toBigInt(), MAX_MULTIPLIER),
+        // ])
+        // await sleepBetweenTxs(2_000)
+        // // make sure the original op was dropped
+        // smartAccountClient.setWaitTimeoutMs(0)
+        // smartAccountClient.setWaitIntervalMs(0)
+        // expect(await ogOpTx.getUserOperationReceipt()).toBeNull()
     },
     {
         retry: 3,
@@ -597,100 +535,83 @@ test.skip(
 test.skip(
     'a userop that fails to get a receipt and fails to successfully drop and replace should be replaced with a new op',
     async () => {
-        const alice = new LocalhostWeb3Provider(
-            process.env.AA_RPC_URL as string,
-            generatePrivyWalletIfKey(process.env.PRIVY_WALLET_PRIVATE_KEY_1),
-        )
-        await alice.ready
-
-        const { spaceDapp, userOps: userOpsAlice } = await createSpaceDappAndUserops(
-            alice,
-            'useropjs',
-        )
-        const aaAddress = await fundAbstractAccount(alice, userOpsAlice)
-        const userOpClient = await userOpsAlice.getUserOpClient()
-        // set the wait timeout and interval to 0 so we don't wait for the userop to be mined
-        userOpClient.setWaitTimeoutMs(1)
-        userOpClient.setWaitIntervalMs(0)
-
-        const randomWallet = Wallet.createRandom().connect(spaceDapp.provider)
-
-        const ethToSend = utils.parseEther('0.1')
-
-        // transfer eth is a simple op that will bypass the paymaster proxy middleware
-        const ogOpTx = await userOpsAlice.sendTransferEthOp(
-            { recipient: randomWallet.address, value: ethToSend },
-            alice.wallet,
-        )
-
-        const ogOp = selectUserOpsByAddress(aaAddress).current.op!
-
-        expect(ogOp.maxFeePerGas).toBeDefined()
-        expect(ogOp.maxPriorityFeePerGas).toBeDefined()
-
-        // this should be null b/c we're not waiting for the userop to be mined
-        expect(await ogOpTx.getUserOperationReceipt()).toBeNull()
-        const sendSpy = vi.spyOn(provider, 'send')
-
-        const replacementOpTx = await userOpsAlice.dropAndReplace(ogOpTx.userOpHash, alice.wallet)
-        expect(await replacementOpTx.getUserOperationReceipt()).toBeNull()
-
-        const ethSendUserOperationCalls = sendSpy.mock.calls.filter((call) =>
-            call[0].includes('eth_sendUserOperation'),
-        )
-        expect(ethSendUserOperationCalls.length).toBe(1)
-        const replacementSendUserOpCall = ethSendUserOperationCalls[0]
-        expect(replacementSendUserOpCall[1]).toBeDefined()
-        const replacementOpParams = replacementSendUserOpCall[1][0] as IUserOperation
-
-        expect(replacementOpParams.callData).toEqual(ogOp.callData)
-        expect(replacementOpParams.initCode).toEqual(ogOp.initCode)
-        expect(replacementOpParams.sender).toEqual(ogOp.sender)
-        expect(replacementOpParams.nonce).toEqual(ogOp.nonce)
-
-        // gas fees of the og op should be multiplied by the max multiplier
-        expect([
-            BigNumber.from(replacementOpParams.maxFeePerGas).toBigInt(),
-            BigNumber.from(replacementOpParams.maxPriorityFeePerGas).toBigInt(),
-        ]).toEqual([
-            bigIntMultiply(BigNumber.from(ogOp.maxFeePerGas).toBigInt(), MAX_MULTIPLIER),
-            bigIntMultiply(BigNumber.from(ogOp.maxPriorityFeePerGas).toBigInt(), MAX_MULTIPLIER),
-        ])
-
-        sendSpy.mockClear()
-
-        const thirdOpTx = await createUngatedSpace({
-            userOps: userOpsAlice,
-            spaceDapp,
-            signer: alice.wallet,
-            rolePermissions: [Permission.Read, Permission.Write],
-        })
-
-        await sleepBetweenTxs(4_000)
-        expect((await thirdOpTx.getUserOperationReceipt())?.userOpHash).toBeDefined()
-
-        const ethSendUserOperationCalls2 = sendSpy.mock.calls.filter((call) =>
-            call[0].includes('eth_sendUserOperation'),
-        )
-        expect(ethSendUserOperationCalls2.length).toBe(1)
-        const thirdOpSendUserOpCall = ethSendUserOperationCalls2[0]
-        expect(thirdOpSendUserOpCall[1]).toBeDefined()
-        const thirdOpParams = thirdOpSendUserOpCall[1][0] as IUserOperation
-
-        // gas fees of the og op should be multiplied by the max multiplier
-        expect([
-            BigNumber.from(thirdOpParams.maxFeePerGas).toBigInt(),
-            BigNumber.from(thirdOpParams.maxPriorityFeePerGas).toBigInt(),
-        ]).toEqual([
-            bigIntMultiply(
-                BigNumber.from(replacementOpParams.maxFeePerGas).toBigInt(),
-                MAX_MULTIPLIER,
-            ),
-            bigIntMultiply(
-                BigNumber.from(replacementOpParams.maxPriorityFeePerGas).toBigInt(),
-                MAX_MULTIPLIER,
-            ),
-        ])
+        // const alice = new LocalhostWeb3Provider(
+        //     process.env.AA_RPC_URL as string,
+        //     generatePrivyWalletIfKey(process.env.PRIVY_WALLET_PRIVATE_KEY_1),
+        // )
+        // await alice.ready
+        // const { spaceDapp, userOps: userOpsAlice } = await createSpaceDappAndUserops(alice)
+        // const aaAddress = await fundAbstractAccount(alice, userOpsAlice)
+        // const smartAccountClient = await userOpsAlice.getSmartAccountClient({
+        //     signer: alice.wallet,
+        // })
+        // // set the wait timeout and interval to 0 so we don't wait for the userop to be mined
+        // smartAccountClient.setWaitTimeoutMs(1)
+        // smartAccountClient.setWaitIntervalMs(0)
+        // const randomWallet = Wallet.createRandom().connect(spaceDapp.provider)
+        // const ethToSend = utils.parseEther('0.1')
+        // // transfer eth is a simple op that will bypass the paymaster proxy middleware
+        // const ogOpTx = await userOpsAlice.sendTransferEthOp(
+        //     { recipient: randomWallet.address, value: ethToSend },
+        //     alice.wallet,
+        // )
+        // const ogOp = selectUserOpsByAddress(aaAddress).current.op!
+        // expect(ogOp.maxFeePerGas).toBeDefined()
+        // expect(ogOp.maxPriorityFeePerGas).toBeDefined()
+        // // this should be null b/c we're not waiting for the userop to be mined
+        // expect(await ogOpTx.getUserOperationReceipt()).toBeNull()
+        // const sendSpy = vi.spyOn(provider, 'send')
+        // const replacementOpTx = await userOpsAlice.dropAndReplace(ogOpTx.userOpHash, alice.wallet)
+        // expect(await replacementOpTx.getUserOperationReceipt()).toBeNull()
+        // const ethSendUserOperationCalls = sendSpy.mock.calls.filter((call) =>
+        //     call[0].includes('eth_sendUserOperation'),
+        // )
+        // expect(ethSendUserOperationCalls.length).toBe(1)
+        // const replacementSendUserOpCall = ethSendUserOperationCalls[0]
+        // expect(replacementSendUserOpCall[1]).toBeDefined()
+        // const replacementOpParams = replacementSendUserOpCall[1][0] as IUserOperation
+        // expect(replacementOpParams.callData).toEqual(ogOp.callData)
+        // expect(replacementOpParams.initCode).toEqual(ogOp.initCode)
+        // expect(replacementOpParams.sender).toEqual(ogOp.sender)
+        // expect(replacementOpParams.nonce).toEqual(ogOp.nonce)
+        // // gas fees of the og op should be multiplied by the max multiplier
+        // expect([
+        //     BigNumber.from(replacementOpParams.maxFeePerGas).toBigInt(),
+        //     BigNumber.from(replacementOpParams.maxPriorityFeePerGas).toBigInt(),
+        // ]).toEqual([
+        //     bigIntMultiply(BigNumber.from(ogOp.maxFeePerGas).toBigInt(), MAX_MULTIPLIER),
+        //     bigIntMultiply(BigNumber.from(ogOp.maxPriorityFeePerGas).toBigInt(), MAX_MULTIPLIER),
+        // ])
+        // sendSpy.mockClear()
+        // const thirdOpTx = await createUngatedSpace({
+        //     userOps: userOpsAlice,
+        //     spaceDapp,
+        //     signer: alice.wallet,
+        //     rolePermissions: [Permission.Read, Permission.Write],
+        // })
+        // await sleepBetweenTxs(4_000)
+        // expect((await thirdOpTx.getUserOperationReceipt())?.userOpHash).toBeDefined()
+        // const ethSendUserOperationCalls2 = sendSpy.mock.calls.filter((call) =>
+        //     call[0].includes('eth_sendUserOperation'),
+        // )
+        // expect(ethSendUserOperationCalls2.length).toBe(1)
+        // const thirdOpSendUserOpCall = ethSendUserOperationCalls2[0]
+        // expect(thirdOpSendUserOpCall[1]).toBeDefined()
+        // const thirdOpParams = thirdOpSendUserOpCall[1][0] as IUserOperation
+        // // gas fees of the og op should be multiplied by the max multiplier
+        // expect([
+        //     BigNumber.from(thirdOpParams.maxFeePerGas).toBigInt(),
+        //     BigNumber.from(thirdOpParams.maxPriorityFeePerGas).toBigInt(),
+        // ]).toEqual([
+        //     bigIntMultiply(
+        //         BigNumber.from(replacementOpParams.maxFeePerGas).toBigInt(),
+        //         MAX_MULTIPLIER,
+        //     ),
+        //     bigIntMultiply(
+        //         BigNumber.from(replacementOpParams.maxPriorityFeePerGas).toBigInt(),
+        //         MAX_MULTIPLIER,
+        //     ),
+        // ])
     },
     {
         retry: 3,

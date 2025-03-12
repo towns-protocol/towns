@@ -1,7 +1,6 @@
 export * from './types'
 export * from './UserOperations'
 export * from './store/userOpsStore'
-export * from './lib/useropjs/TownsUserOpClient'
 export * from './errors'
 export * from './utils/decodeCallData'
 export * from './utils/getTransactionHashOrUserOpHash'

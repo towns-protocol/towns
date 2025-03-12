@@ -22,15 +22,7 @@ export async function createSpace(
         fnArgs: Parameters<SpaceDapp['createSpace']>
     },
 ) {
-    const {
-        spaceDapp,
-        timeTracker,
-        fnArgs,
-        entryPointAddress,
-        factoryAddress,
-        aaRpcUrl,
-        sendUserOp,
-    } = params
+    const { spaceDapp, timeTracker, fnArgs, aaRpcUrl, sendUserOp } = params
     if (!spaceDapp) {
         throw new Error('spaceDapp is required')
     }
@@ -60,9 +52,6 @@ export async function createSpace(
     )
     const abstractAccountAddress = await getAbstractAccountAddress({
         rootKeyAddress: await getSignerAddress(signer),
-        factoryAddress,
-        entryPointAddress,
-        spaceDapp,
         aaRpcUrl,
     })
 
@@ -107,7 +96,7 @@ export async function createSpace(
                 signer,
                 spaceId: undefined,
                 functionHashForPaymasterProxy,
-                value: cost,
+                value: cost.toBigInt(),
             },
             TimeTrackerEvents.CREATE_SPACE,
         )
@@ -156,7 +145,7 @@ export async function createSpace(
                 signer,
                 spaceId: undefined,
                 functionHashForPaymasterProxy,
-                value: cost,
+                value: cost.toBigInt(),
             },
             TimeTrackerEvents.CREATE_SPACE,
         )
@@ -172,7 +161,7 @@ export async function createLegacySpace(
         fnArgs: Parameters<SpaceDapp['createLegacySpace']>
     },
 ) {
-    const { spaceDapp, fnArgs, entryPointAddress, factoryAddress, aaRpcUrl, sendUserOp } = params
+    const { spaceDapp, fnArgs, aaRpcUrl, sendUserOp } = params
     if (!spaceDapp) {
         throw new Error('spaceDapp is required')
     }
@@ -191,9 +180,6 @@ export async function createLegacySpace(
 
     const abstractAccountAddress = await getAbstractAccountAddress({
         rootKeyAddress: await getSignerAddress(signer),
-        factoryAddress,
-        entryPointAddress,
-        spaceDapp,
         aaRpcUrl,
     })
 

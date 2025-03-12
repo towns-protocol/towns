@@ -2,9 +2,9 @@ import { createWorkerPromise } from '../createWorkerPromise'
 import type { CreateAccountWorkerMessage, CreateAccountWorkerReturn } from './createAccount.worker'
 
 /**
- * Default salt for userops.js, all our accounts use this salt
+ * All our accounts use this salt, which was the default with the removed userop.js lib
  */
-const SALT = 0
+const SALT = 0n
 
 export async function getInitData(args: {
     factoryAddress: string

@@ -37,6 +37,9 @@ export type TSmartAccount = {
     address: Address
     type: 'simple' | 'light'
     client: SmartAccountClient
+    publicRpcClient: PublicClient
+    factoryAddress: Address
+    entrypointAddress: Address
     sendUserOperation: (args: { callData: Hex }) => Promise<SendUserOperationReturnType>
     setWaitTimeoutMs: (timeoutMs: number) => void
     setWaitIntervalMs: (intervalMs: number) => void
@@ -54,6 +57,7 @@ export async function createSmartAccountClient<entryPointVersion extends '0.6' |
         spaceDapp,
         entrypointAddress,
         type,
+        factoryAddress,
         smartAccountImpl,
         fetchAccessTokenFn,
     } = args
@@ -108,6 +112,9 @@ export async function createSmartAccountClient<entryPointVersion extends '0.6' |
         address: smartAccountClient.account.address,
         client: smartAccountClient,
         type,
+        factoryAddress,
+        entrypointAddress,
+        publicRpcClient: publicRpcClient,
         sendUserOperation: async (args: {
             callData: Hex
         }): Promise<SendUserOperationReturnType> => {

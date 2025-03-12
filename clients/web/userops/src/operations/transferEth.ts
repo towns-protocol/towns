@@ -1,4 +1,4 @@
-import { ethers } from 'ethers'
+import { BigNumber, Signer, BigNumberish } from 'ethers'
 import { getAbstractAccountAddress } from '../utils/getAbstractAccountAddress'
 import { SpaceDapp } from '@river-build/web3'
 import { getSignerAddress } from '../utils/getSignerAddress'
@@ -7,31 +7,20 @@ import { UserOps } from '../UserOperations'
 export async function transferEth(params: {
     transferData: {
         recipient: string
-        value: ethers.BigNumberish
+        value: BigNumberish
     }
-    signer: ethers.Signer
+    signer: Signer
     spaceDapp: SpaceDapp | undefined
     aaRpcUrl: string
     factoryAddress: string | undefined
     entryPointAddress: string | undefined
     sendUserOp: UserOps['sendUserOp']
 }) {
-    const {
-        transferData,
-        signer,
-        spaceDapp,
-        aaRpcUrl,
-        factoryAddress,
-        entryPointAddress,
-        sendUserOp,
-    } = params
+    const { transferData, signer, aaRpcUrl, sendUserOp } = params
     const { recipient, value } = transferData
 
     const aaAddress = await getAbstractAccountAddress({
         rootKeyAddress: await getSignerAddress(signer),
-        factoryAddress,
-        entryPointAddress,
-        spaceDapp,
         aaRpcUrl,
     })
 
@@ -53,6 +42,6 @@ export async function transferEth(params: {
         functionHashForPaymasterProxy: 'transferEth',
         signer,
         spaceId: undefined,
-        value,
+        value: BigNumber.from(value).toBigInt(),
     })
 }

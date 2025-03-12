@@ -1558,7 +1558,6 @@ export class BaseTransactor {
 
         try {
             if (isUserOpResponse(transaction)) {
-                // wait for the userop event - this .wait is not the same as ethers.ContractTransaction.wait - see userop.js sendUserOperation
                 let endWaitForUserOpReceipt: ((endSequence?: boolean) => void) | undefined
                 if (sequenceName) {
                     endWaitForUserOpReceipt = getTimeTracker().startMeasurement(

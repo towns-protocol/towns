@@ -18,9 +18,9 @@ export default defineWorkspace([
     {
         test: {
             include: ['**/test/**.test.ts'],
-            // don't run limits or useropjs tests by default
-            exclude: ['**/test/userops.limits.test.ts', '**/test/*.useropjs.test.ts'],
-            name: 'permissionless',
+            // don't run limits tests by default
+            exclude: ['**/test/userops.limits.test.ts'],
+            name: 'main',
             ...commonConfig,
         },
     },
@@ -39,14 +39,6 @@ export default defineWorkspace([
                 '**/test/userops.editMembership.test.ts',
             ],
             name: 'legacy',
-            ...commonConfig,
-        },
-    },
-    {
-        test: {
-            // useropjs just needs to run joinSpace for now since we're removing it
-            include: ['**/test/userops.joinSpace.test.ts'],
-            name: 'useropjs',
             ...commonConfig,
         },
     },

@@ -25,7 +25,7 @@ export async function prepayMembership(params: {
         callData,
         signer,
         spaceId,
-        value: cost,
+        value: cost.toBigInt(),
         functionHashForPaymasterProxy: 'prepayMembership',
     })
 }

@@ -1,7 +1,6 @@
 import { Address, LocalhostWeb3Provider } from '@river-build/web3'
 import { createSpaceDappAndUserops, generatePrivyWalletIfKey, waitForOpAndTx } from './utils'
 import { Wallet, utils } from 'ethers'
-import * as balanceUseropjs from '../src/lib/useropjs/middlewares/balance'
 import * as balancePermissionless from '../src/lib/permissionless/middleware/balance'
 import { vi } from 'vitest'
 import { NegativeValueException } from '../src/errors'
@@ -91,7 +90,6 @@ test('cannot transfer eth if value is less than gas cost', async () => {
     const gasCost = utils.parseEther('2')
 
     // mock both for whatever scenario
-    vi.spyOn(balanceUseropjs, 'costOfGas').mockReturnValue(gasCost)
     vi.spyOn(balancePermissionless, 'costOfGas').mockReturnValue(gasCost.toBigInt())
 
     const alice = new LocalhostWeb3Provider(

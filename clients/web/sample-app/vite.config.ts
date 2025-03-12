@@ -49,4 +49,7 @@ export default ({ mode }: { mode: string }) =>
                 overlay: false,
             },
         },
+        worker: {
+            format: 'es',
+        },
     })

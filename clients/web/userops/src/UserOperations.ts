@@ -2,9 +2,6 @@ import { Address, SpaceDapp, UpdateRoleParams, LegacyUpdateRoleParams } from '@r
 import { ethers } from 'ethers'
 import { UserOpsConfig, FunctionHash, TimeTracker, TimeTrackerEvents } from './types'
 import { selectUserOpsByAddress, userOpsStore } from './store/userOpsStore'
-import { ERC4337 } from 'userop/dist/constants'
-import { TownsSimpleAccount } from './lib/useropjs/TownsSimpleAccount'
-import { TownsUserOpClient } from './lib/useropjs/TownsUserOpClient'
 import { SendUserOperationReturnType } from './lib/types'
 import {
     removeLink,
@@ -38,8 +35,6 @@ import {
     TownsReviewParams,
 } from './operations'
 import { getAbstractAccountAddress } from './utils/getAbstractAccountAddress'
-import { sendUserOpWithUseropJs, UserOpParamsUseropJs } from './lib/useropjs/sendUserOpWithUseropJs'
-import { addMiddleware } from './lib/useropjs/addMiddleware'
 import { isSingleData } from './utils/decodeCallData'
 import { isBatchData } from './utils/decodeCallData'
 import { TSmartAccount } from './lib/permissionless/accounts/createSmartAccountClient'
@@ -53,25 +48,11 @@ export class UserOps {
     private bundlerUrl: string
     private aaRpcUrl: string
     private paymasterProxyUrl: string | undefined
-    // defaults to Stackup's deployed entry point
-    private entryPointAddress: string | undefined
-    // defaults to Stackup's deployed factory
-    private factoryAddress: string | undefined
     private paymasterProxyAuthSecret: string | undefined
     protected spaceDapp: SpaceDapp | undefined
     private timeTracker: TimeTracker | undefined
     private fetchAccessTokenFn: (() => Promise<string | null>) | undefined
-    private middlewareInitialized = false
-    private lib: 'useropjs' | 'permissionless'
     private smartAccount: Promise<TSmartAccount> | undefined
-    /**
-     * @deprecated
-     */
-    private userOpClient: Promise<TownsUserOpClient> | undefined
-    /**
-     * @deprecated
-     */
-    private builder: Promise<TownsSimpleAccount> | undefined
 
     constructor(
         config: UserOpsConfig & {
@@ -82,20 +63,10 @@ export class UserOps {
         this.bundlerUrl = config.bundlerUrl ?? ''
         this.aaRpcUrl = config.aaRpcUrl
         this.paymasterProxyUrl = config.paymasterProxyUrl
-        this.entryPointAddress = config.entryPointAddress ?? ERC4337.EntryPoint
-        this.factoryAddress = config.factoryAddress ?? ERC4337.SimpleAccount.Factory
         this.paymasterProxyAuthSecret = config.paymasterProxyAuthSecret
         this.spaceDapp = config.spaceDapp
         this.timeTracker = config.timeTracker
         this.fetchAccessTokenFn = config.fetchAccessTokenFn
-        if (config.lib) {
-            if (config.lib !== 'useropjs' && config.lib !== 'permissionless') {
-                throw new Error('Invalid lib used for UserOps constructor')
-            }
-            this.lib = config.lib
-        } else {
-            this.lib = 'useropjs'
-        }
     }
 
     public async getAbstractAccountAddress({
@@ -109,21 +80,8 @@ export class UserOps {
         })
     }
 
-    /**
-     * @deprecated
-     */
-    public async getUserOpClient() {
-        if (!this.userOpClient) {
-            this.userOpClient = TownsUserOpClient.init(this.aaRpcUrl, {
-                entryPoint: this.entryPointAddress,
-                overrideBundlerRpc: this.bundlerUrl,
-            })
-        }
-        return this.userOpClient
-    }
-
     public async sendUserOp(
-        args: (UserOpParamsUseropJs | UserOpParamsPermissionless) & {
+        args: UserOpParamsPermissionless & {
             // a function signature hash to pass to paymaster proxy - this is just the function name for now
             functionHashForPaymasterProxy: FunctionHash
             spaceId: string | undefined
@@ -132,27 +90,15 @@ export class UserOps {
         sequenceName?: TimeTrackerEvents,
     ): Promise<SendUserOperationReturnType> {
         const { functionHashForPaymasterProxy, spaceId, retryCount, ...rest } = args
-        if (this.lib === 'useropjs') {
-            return this.sendUserOpWithUseropJs(
-                {
-                    functionHashForPaymasterProxy,
-                    spaceId,
-                    retryCount,
-                    ...(rest as UserOpParamsUseropJs),
-                },
-                sequenceName,
-            )
-        } else {
-            return this.sendUserOpWithPermissionless(
-                {
-                    functionHashForPaymasterProxy,
-                    spaceId,
-                    retryCount,
-                    ...(rest as UserOpParamsPermissionless),
-                },
-                sequenceName,
-            )
-        }
+        return this.sendUserOpWithPermissionless(
+            {
+                functionHashForPaymasterProxy,
+                spaceId,
+                retryCount,
+                ...(rest as UserOpParamsPermissionless),
+            },
+            sequenceName,
+        )
     }
 
     public async getSmartAccountClient(args: { signer: ethers.Signer }) {
@@ -181,8 +127,6 @@ export class UserOps {
         return {
             spaceDapp: this.spaceDapp,
             timeTracker: this.timeTracker,
-            entryPointAddress: this.entryPointAddress,
-            factoryAddress: this.factoryAddress,
             aaRpcUrl: this.aaRpcUrl,
             sendUserOp: this.sendUserOp.bind(this),
         }
@@ -227,58 +171,8 @@ export class UserOps {
         throw new Error('[UserOperations.sendUserOpWithPermissionless]::Invalid arguments')
     }
 
-    private async sendUserOpWithUseropJs(
-        args: UserOpParamsUseropJs & {
-            // a function signature hash to pass to paymaster proxy - this is just the function name for now
-            functionHashForPaymasterProxy: FunctionHash
-            spaceId: string | undefined
-            retryCount?: number
-        },
-        sequenceName?: TimeTrackerEvents,
-    ): Promise<SendUserOperationReturnType> {
-        const timeTracker = this.timeTracker
-
-        let endInitBuilder: (() => void) | undefined
-
-        if (sequenceName) {
-            endInitBuilder = timeTracker?.startMeasurement(sequenceName, 'userops_init_builder')
-        }
-        const builder = await this.getBuilder({ signer: args.signer })
-
-        if (!this.middlewareInitialized) {
-            this.middlewareInitialized = true
-            addMiddleware({
-                builder,
-                signer: args.signer,
-                bundlerUrl: this.bundlerUrl,
-                paymasterProxyUrl: this.paymasterProxyUrl,
-                paymasterProxyAuthSecret: this.paymasterProxyAuthSecret,
-                fetchAccessTokenFn: this.fetchAccessTokenFn,
-                timeTracker,
-                spaceDapp: this.spaceDapp,
-            })
-        }
-
-        endInitBuilder?.()
-
-        let endInitClient: (() => void) | undefined
-        if (sequenceName) {
-            endInitClient = timeTracker?.startMeasurement(sequenceName, 'userops_init_client')
-        }
-        const userOpClient = await this.getUserOpClient()
-        endInitClient?.()
-
-        return sendUserOpWithUseropJs({
-            ...args,
-            builder,
-            userOpClient,
-            spaceDapp: this.spaceDapp,
-        })
-    }
-
     public async dropAndReplace(hash: string, signer: ethers.Signer) {
-        const builder = await this.getBuilder({ signer })
-        const sender = builder.getSenderAddress()
+        const sender = (await this.getSmartAccountClient({ signer })).address
         const userOpState = selectUserOpsByAddress(sender, userOpsStore.getState())
         if (!userOpState) {
             throw new Error('current user op not found')
@@ -329,8 +223,11 @@ export class UserOps {
     public async sendCreateLegacySpaceOp(
         args: Parameters<SpaceDapp['createLegacySpace']>,
     ): Promise<SendUserOperationReturnType> {
+        const smartAccountClient = await this.getSmartAccountClient({ signer: args[1] })
         return createLegacySpace({
             ...this.commonParams(),
+            factoryAddress: smartAccountClient.factoryAddress,
+            entryPointAddress: smartAccountClient.entrypointAddress,
             fnArgs: args,
         })
     }
@@ -338,8 +235,11 @@ export class UserOps {
     public async sendCreateSpaceOp(
         args: Parameters<SpaceDapp['createSpace']>,
     ): Promise<SendUserOperationReturnType> {
+        const smartAccountClient = await this.getSmartAccountClient({ signer: args[1] })
         return createSpace({
             ...this.commonParams(),
+            factoryAddress: smartAccountClient.factoryAddress,
+            entryPointAddress: smartAccountClient.entrypointAddress,
             fnArgs: args,
         })
     }
@@ -350,8 +250,11 @@ export class UserOps {
     public async sendJoinSpaceOp(
         args: Parameters<SpaceDapp['joinSpace']>,
     ): Promise<SendUserOperationReturnType> {
+        const smartAccountClient = await this.getSmartAccountClient({ signer: args[2] })
         return joinSpace({
             ...this.commonParams(),
+            factoryAddress: smartAccountClient.factoryAddress,
+            entryPointAddress: smartAccountClient.entrypointAddress,
             fnArgs: args,
         })
     }
@@ -555,10 +458,13 @@ export class UserOps {
         },
         signer: ethers.Signer,
     ) {
+        const smartAccountClient = await this.getSmartAccountClient({ signer })
         return transferEth({
             ...this.commonParams(),
             transferData,
             signer,
+            factoryAddress: smartAccountClient.factoryAddress,
+            entryPointAddress: smartAccountClient.entrypointAddress,
         })
     }
 
@@ -578,12 +484,12 @@ export class UserOps {
         },
         signer: ethers.Signer,
     ) {
-        const provider = (await this.getBuilder({ signer })).provider
+        const smartAccountClient = await this.getSmartAccountClient({ signer })
         return transferAssets({
             ...this.commonParams(),
             transferData,
             signer,
-            provider,
+            client: smartAccountClient.publicRpcClient,
         })
     }
 
@@ -629,44 +535,15 @@ export class UserOps {
     }
 
     /**
-     * @deprecated Use `getSmartAccountClient` instead
-     */
-    public async getBuilder(args: { signer: ethers.Signer }) {
-        if (!this.builder) {
-            const { signer } = args
-            this.builder = TownsSimpleAccount.init(signer, this.aaRpcUrl, {
-                entryPoint: this.entryPointAddress,
-                factory: this.factoryAddress,
-                overrideBundlerRpc: this.bundlerUrl,
-                // salt?: BigNumberish;
-                // nonceKey?: number;
-            })
-        }
-        return this.builder
-    }
-
-    /**
      * Collectively these calls can take > 1s
      * So optionally you can call this method to prep the builder and userOpClient prior to sending the first user operation
      */
     public async setup(signer: ethers.Signer) {
-        if (this.lib === 'useropjs') {
-            return Promise.all([this.getBuilder({ signer }), this.getUserOpClient()])
-        } else {
-            return Promise.all([this.getSmartAccountClient({ signer })])
-        }
+        return Promise.all([this.getSmartAccountClient({ signer })])
     }
 
     public async reset() {
-        let sender: string | undefined
-        if (this.lib === 'useropjs') {
-            sender = (await this.builder)?.getSenderAddress()
-        } else {
-            sender = (await this.smartAccount)?.address
-        }
-        this.builder = undefined
-        this.userOpClient = undefined
-        this.middlewareInitialized = false
+        const sender = (await this.smartAccount)?.address
         this.smartAccount = undefined
         this.clearStore(sender)
     }

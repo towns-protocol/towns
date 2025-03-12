@@ -1,6 +1,6 @@
 import { SpaceDapp } from '@river-build/web3'
 import { FunctionHash, TimeTrackerEvents } from '../../types'
-import { BigNumber, ethers } from 'ethers'
+import { Signer } from 'ethers'
 import { Address, Hex } from 'viem'
 import { encodeExecuteAbi, encodeExecuteBatchAbi } from './accounts/simple/abi'
 import { selectUserOpsByAddress } from '../../store/userOpsStore'
@@ -13,17 +13,17 @@ import { TSmartAccount } from './accounts/createSmartAccountClient'
 
 export type UserOpParamsPermissionless = {
     value?: bigint
-    signer: ethers.Signer
+    signer: Signer
 } & (ExecuteSingleData | ExecuteBatchData)
 
 type ExecuteSingleData = {
-    toAddress?: Address
-    callData?: Hex
+    toAddress?: string
+    callData?: string
 }
 
 type ExecuteBatchData = {
-    toAddress?: Address[]
-    callData?: Hex[]
+    toAddress?: string[]
+    callData?: string[]
 }
 
 export async function sendUseropWithPermissionless(
@@ -56,8 +56,8 @@ export async function sendUseropWithPermissionless(
             throw new Error('toAddress and callData must be the same length')
         }
         _callData = encodeExecuteBatchAbi({
-            to: toAddress,
-            data: callData,
+            to: toAddress as `0x${string}`[],
+            data: callData as `0x${string}`[],
         })
     } else {
         if (Array.isArray(callData)) {
@@ -74,9 +74,9 @@ export async function sendUseropWithPermissionless(
          * This kind of tx would be something like joining a town that has a fixed membership cost, but ALSO contains prepaid seats
          */
         _callData = encodeExecuteAbi({
-            to: toAddress,
-            value: value ? BigNumber.from(value).toBigInt() : 0n,
-            data: callData,
+            to: toAddress as `0x${string}`,
+            value: value ?? 0n,
+            data: callData as `0x${string}`,
         })
     }
 

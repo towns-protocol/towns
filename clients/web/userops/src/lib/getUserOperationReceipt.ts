@@ -1,32 +1,14 @@
-import { BundlerJsonRpcProvider } from 'userop'
-import { Address, isHex, toHex, Log as ViemLog } from 'viem'
+import { isHex, toHex, Log as ViemLog } from 'viem'
 import { BundlerClient, GetUserOperationReceiptReturnType } from 'viem/account-abstraction'
 import { providers } from 'ethers'
 import { EthGetUserOperationReceiptResponse } from './types'
 
 export async function getUserOperationReceipt(args: {
-    provider: BundlerJsonRpcProvider
-    userOpHash: string
-}): Promise<EthGetUserOperationReceiptResponse>
-
-export async function getUserOperationReceipt(args: {
     bundlerClient: BundlerClient
-    userOpHash: Address
-}): Promise<EthGetUserOperationReceiptResponse>
-
-export async function getUserOperationReceipt(args: {
-    provider?: BundlerJsonRpcProvider
-    bundlerClient?: BundlerClient
     userOpHash: string
 }): Promise<EthGetUserOperationReceiptResponse | null> {
-    const { provider, bundlerClient, userOpHash } = args
+    const { bundlerClient, userOpHash } = args
 
-    if (provider) {
-        const receipt = (await provider.send('eth_getUserOperationReceipt', [
-            userOpHash,
-        ])) as EthGetUserOperationReceiptResponse
-        return receipt
-    }
     if (bundlerClient && isHex(userOpHash)) {
         const receipt = await bundlerClient.request({
             method: 'eth_getUserOperationReceipt',

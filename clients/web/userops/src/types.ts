@@ -1,5 +1,5 @@
 import { BaseChainConfig, SpaceDapp } from '@river-build/web3'
-import { BigNumberish } from 'ethers'
+import { BigNumberish, BytesLike } from 'ethers'
 
 export type AccountAbstractionConfig = Omit<UserOpsConfig, 'chainId' | 'provider' | 'config'>
 
@@ -12,7 +12,6 @@ export type UserOpsConfig = {
     aaRpcUrl: string
     /**
      * Optionally route bundler RPC methods to this endpoint. If the bundler and node RPC methods do not share the same rpcUrl, you must provide this. (i.e. local dev, or different node provider than bundler provider)
-     * https://docs.stackup.sh/docs/useropjs-provider#bundlerjsonrpcprovider
      */
     bundlerUrl?: string
     /**
@@ -23,7 +22,6 @@ export type UserOpsConfig = {
     factoryAddress?: string
     paymasterProxyAuthSecret?: string
     fetchAccessTokenFn: (() => Promise<string | null>) | undefined
-    lib?: 'useropjs' | 'permissionless'
 }
 
 export const FunctionHash = {
@@ -107,3 +105,20 @@ export enum PaymasterErrorCode {
 }
 
 export type RetryType = 'gasTooLow' | 'replacementUnderpriced'
+
+/**
+ * @deprecated old userop.js type, should be changed to viem type
+ */
+export interface IUserOperation {
+    sender: string
+    nonce: BigNumberish
+    initCode: BytesLike
+    callData: BytesLike
+    callGasLimit: BigNumberish
+    verificationGasLimit: BigNumberish
+    preVerificationGas: BigNumberish
+    maxFeePerGas: BigNumberish
+    maxPriorityFeePerGas: BigNumberish
+    paymasterAndData: BytesLike
+    signature: BytesLike
+}

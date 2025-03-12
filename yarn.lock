@@ -13503,7 +13503,6 @@ __metadata:
     permissionless: ^0.2.33
     superjson: ^2.2.2
     typescript: 5.6.2
-    userop: ^0.3.7
     viem: 2.23.2
     vitest: ^1.6.0
     web3: ^4.16.0
@@ -38412,17 +38411,6 @@ __metadata:
     ethers: ^5.7.2
     js-base64: ^3.7.5
   checksum: b7da3e9f0cb5b8c4e47101b0abd2ce9185e1b52aa18484a4856e1800dc997c8a14bf2ab720d0eda509e469157b0a7a1feca9d5e6e6506cd28913ec135182a54b
-  languageName: node
-  linkType: hard
-
-"userop@npm:^0.3.7":
-  version: 0.3.7
-  resolution: "userop@npm:0.3.7"
-  dependencies:
-    elliptic: ^6.5.4
-    ethers: ^5.7.2
-    js-base64: ^3.7.5
-  checksum: 159a86ca1ae63acadef1e478d4980a53592387df83a6bebca807f20d69f872e35205516b6c06c2269ae9cf346c473bebd1914caea7e277536e6f1fd761258e7d
   languageName: node
   linkType: hard
 

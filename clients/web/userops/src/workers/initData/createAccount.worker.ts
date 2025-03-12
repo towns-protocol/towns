@@ -1,13 +1,22 @@
 import { Address } from '@river-build/web3'
-import { utils, providers, BigNumber, BigNumberish } from 'ethers'
-import { EntryPoint__factory, SimpleAccountFactory__factory } from 'userop/dist/typechain'
-import { ERC4337 } from '../../constants'
-
+import { entryPoint06Abi, entryPoint06Address } from 'viem/account-abstraction'
+import {
+    concatHex,
+    ContractFunctionRevertedError,
+    createPublicClient,
+    encodeFunctionData,
+    getContract,
+    GetContractReturnType,
+    http,
+    PublicClient,
+} from 'viem'
+import { createAccountAbi as simpleCreateAccountAbi } from '../../lib/permissionless/accounts/simple/abi'
+import { BaseError } from 'viem'
 export type CreateAccountWorkerMessage = {
     factoryAddress: string
     signerAddress: string
     rpcUrl: string
-    salt?: BigNumberish
+    salt?: bigint
 }
 
 export type CreateAccountWorkerReturn = {
@@ -15,38 +24,60 @@ export type CreateAccountWorkerReturn = {
     addr: Address
 }
 
+let client: PublicClient
+let entryPointContract: GetContractReturnType<
+    typeof entryPoint06Abi,
+    typeof client,
+    typeof entryPoint06Address
+>
+
 self.onmessage = async (e: MessageEvent<CreateAccountWorkerMessage>) => {
     const { factoryAddress, signerAddress, rpcUrl, salt } = e.data
 
     let initCode: string
     let addr: Address
 
+    if (!client) {
+        client = createPublicClient({
+            transport: http(rpcUrl),
+        })
+    }
+
+    if (!entryPointContract) {
+        entryPointContract = getContract({
+            address: entryPoint06Address,
+            abi: entryPoint06Abi,
+            client,
+        })
+    }
+
     try {
-        initCode = utils.hexConcat([
-            factoryAddress,
-            SimpleAccountFactory__factory.createInterface().encodeFunctionData('createAccount', [
-                signerAddress,
-                BigNumber.from(salt ?? 0),
-            ]),
+        initCode = concatHex([
+            factoryAddress as `0x${string}`,
+            encodeFunctionData({
+                abi: simpleCreateAccountAbi,
+                functionName: 'createAccount',
+                args: [signerAddress as `0x${string}`, salt ?? 0n],
+            }),
         ])
 
-        // Simulate the entryPoint call to get the sender address from error
-        const entryPoint = EntryPoint__factory.connect(
-            ERC4337.EntryPoint,
-            new providers.StaticJsonRpcProvider(rpcUrl),
-        )
-
         try {
-            await entryPoint.callStatic.getSenderAddress(initCode)
+            await entryPointContract.simulate.getSenderAddress([initCode as `0x${string}`])
             throw new Error('getSenderAddress: unexpected result')
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } catch (error: any) {
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-            if (typeof error?.errorArgs?.sender === 'string') {
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-                addr = error.errorArgs.sender
+        } catch (err: unknown) {
+            if (err instanceof BaseError) {
+                const revertError = err.walk((err) => err instanceof ContractFunctionRevertedError)
+
+                if (
+                    revertError instanceof ContractFunctionRevertedError &&
+                    revertError.data?.errorName === 'SenderAddressResult'
+                ) {
+                    addr = revertError.data.args?.[0] as Address
+                } else {
+                    throw err
+                }
             } else {
-                throw error
+                throw err
             }
         }
         // eslint-disable-next-line @typescript-eslint/no-explicit-any

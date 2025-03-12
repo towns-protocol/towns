@@ -6,36 +6,17 @@ import {
     matchReplacementUnderpriced,
 } from '../errors'
 import { datadogLogs } from '@datadog/browser-logs'
-import { TownsUserOpClient } from './useropjs/TownsUserOpClient'
-import { TownsSimpleAccount } from './useropjs/TownsSimpleAccount'
 import { selectUserOpsByAddress, userOpsStore } from '../store/userOpsStore'
-import { IUserOperation } from 'userop'
 import { SendUserOperationReturnType } from './types'
 import { Hex } from 'viem'
 import { TSmartAccount } from './permissionless/accounts/createSmartAccountClient'
-export async function sendUserOperationWithRetry(args: {
-    userOpClient: TownsUserOpClient
-    simpleAccount: TownsSimpleAccount
-    onBuild?: (op: IUserOperation) => void
-    retryCount?: number
-}): Promise<SendUserOperationReturnType>
 
 export async function sendUserOperationWithRetry(args: {
     smartAccount: TSmartAccount
-    onBuild?: (op: IUserOperation) => void
     retryCount?: number
     callData: Hex
-}): Promise<SendUserOperationReturnType>
-
-export async function sendUserOperationWithRetry(args: {
-    userOpClient?: TownsUserOpClient
-    simpleAccount?: TownsSimpleAccount
-    smartAccount?: TSmartAccount
-    onBuild?: (op: IUserOperation) => void
-    retryCount?: number
-    callData?: Hex
 }): Promise<SendUserOperationReturnType> {
-    const { userOpClient, simpleAccount, smartAccount, retryCount, callData } = args
+    const { smartAccount, retryCount, callData } = args
     const { setOperationAttempt, setRetryDetails } = userOpsStore.getState()
 
     let attempt = 0
@@ -44,22 +25,10 @@ export async function sendUserOperationWithRetry(args: {
 
     while (shouldTry && attempt < (retryCount ?? 3)) {
         try {
-            if (userOpClient && simpleAccount) {
-                const res = await userOpClient.sendUserOperation(simpleAccount, {
-                    onBuild: (op) => {
-                        console.log('[UserOperations] Signed UserOperation:', op)
-                        args.onBuild?.(op)
-                    },
-                })
-                console.log('[UserOperations] userOpHash:', res.userOpHash)
-                return res
-            } else if (smartAccount && callData) {
-                const res = await smartAccount.sendUserOperation({
-                    callData,
-                })
-                return res
-            }
-            throw new Error('[sendUserOperationWithRetry] missing userOpClient or smartAccount')
+            const res = await smartAccount.sendUserOperation({
+                callData,
+            })
+            return res
         } catch (error) {
             const matchPrivyError = matchPrivyUnknownConnectorError(error)
             const matchGasError = matchGasTooLowError(error)
@@ -67,12 +36,8 @@ export async function sendUserOperationWithRetry(args: {
 
             const storedOp = selectUserOpsByAddress(smartAccount?.address).current.op
 
-            const senderAddress = simpleAccount
-                ? simpleAccount.getSenderAddress()
-                : smartAccount?.address
-            const paymasterAndData = simpleAccount
-                ? simpleAccount.getPaymasterAndData()
-                : storedOp?.paymasterAndData
+            const senderAddress = smartAccount?.address
+            const paymasterAndData = storedOp?.paymasterAndData
 
             if (!senderAddress) {
                 throw new Error('[sendUserOperationWithRetry] missing senderAddress')

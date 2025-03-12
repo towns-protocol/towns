@@ -1,5 +1,5 @@
 import { ethers } from 'ethers'
-import { IUserOperation } from 'userop'
+import { IUserOperation } from '../types'
 
 export const OpToJSON = (op: IUserOperation): IUserOperation => {
     return Object.keys(op)

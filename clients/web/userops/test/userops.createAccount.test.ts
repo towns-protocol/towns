@@ -6,6 +6,9 @@ import { Address } from 'viem'
 // this private key will break permissionless.js
 const PRIVATE_KEY = '0x1ffeb42d5991715177ec8bf1f06aef3a62e558d3dc6a686cc9fe23a8ab652bb2'
 
+// this is the address that the smart account for this private key should have
+const COUNTERFACTUAL_ADDRESS = '0xeff76E9F3414E53b6362E230107145cf118f1883'
+
 test('can create a simple account with this private key', async () => {
     const alice = new LocalhostWeb3Provider(
         process.env.AA_RPC_URL as string,
@@ -23,4 +26,5 @@ test('can create a simple account with this private key', async () => {
     })
     expect(aaGetAddress).toBeDefined()
     expect(aaGetAddress).toBe(saAddress)
+    expect(aaGetAddress).toBe(COUNTERFACTUAL_ADDRESS)
 })

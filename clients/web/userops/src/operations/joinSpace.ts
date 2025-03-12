@@ -18,15 +18,7 @@ export async function joinSpace(params: {
     aaRpcUrl: string
     fnArgs: Parameters<SpaceDapp['joinSpace']>
 }) {
-    const {
-        spaceDapp,
-        sendUserOp,
-        timeTracker,
-        entryPointAddress,
-        factoryAddress,
-        aaRpcUrl,
-        fnArgs,
-    } = params
+    const { spaceDapp, sendUserOp, timeTracker, aaRpcUrl, fnArgs } = params
     if (!spaceDapp) {
         throw new Error('spaceDapp is required')
     }
@@ -44,9 +36,6 @@ export async function joinSpace(params: {
 
     const abstractAccountAddress = await getAbstractAccountAddress({
         rootKeyAddress: await getSignerAddress(signer),
-        factoryAddress,
-        entryPointAddress,
-        spaceDapp,
         aaRpcUrl,
     })
     endGetAA?.()
@@ -84,7 +73,7 @@ export async function joinSpace(params: {
             {
                 toAddress: space.Address,
                 callData: callDataJoinSpace,
-                value: membershipPrice,
+                value: membershipPrice.toBigInt(),
                 signer,
                 spaceId: space.SpaceId,
                 functionHashForPaymasterProxy,
@@ -114,7 +103,7 @@ export async function joinSpace(params: {
     return sendUserOp(
         {
             toAddress: space.Address,
-            value: membershipPrice,
+            value: membershipPrice.toBigInt(),
             callData: callDataJoinSpace,
             signer,
             spaceId: space.SpaceId,

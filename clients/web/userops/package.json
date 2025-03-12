@@ -11,16 +11,14 @@
         "lint:fix": "yarn lint --fix",
         "watch": "tsc --watch",
         "test:userops:paymaster-limits": "DOTENV_CONFIG_PATH=.env.test-sample vitest run --project limits",
-        "test:userops": "DOTENV_CONFIG_PATH=.env.test-sample vitest run --project permissionless",
-        "test:userops:legacy": "DOTENV_CONFIG_PATH=.env.test-sample CREATE_LEGACY_SPACES=true vitest run --project legacy",
-        "test:userops:useropjs": "DOTENV_CONFIG_PATH=.env.test-sample AA_LIB=useropjs vitest run --project useropjs"
+        "test:userops": "DOTENV_CONFIG_PATH=.env.test-sample vitest run --project main",
+        "test:userops:legacy": "DOTENV_CONFIG_PATH=.env.test-sample CREATE_LEGACY_SPACES=true vitest run --project legacy"
     },
     "dependencies": {
         "@river-build/web3": "workspace:^",
         "dotenv": "^16.4.5",
         "permissionless": "^0.2.33",
         "superjson": "^2.2.2",
-        "userop": "^0.3.7",
         "viem": "2.23.2",
         "web3": "^4.16.0",
         "zod": "^3.21.4",

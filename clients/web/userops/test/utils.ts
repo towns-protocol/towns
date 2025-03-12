@@ -64,13 +64,7 @@ export const boredApeRuleData = createOperationsTree([
     },
 ])
 
-export const UserOps = ({
-    spaceDapp,
-    lib,
-}: {
-    spaceDapp: SpaceDapp
-    lib: 'useropjs' | 'permissionless' | undefined
-}) => {
+export const UserOps = ({ spaceDapp }: { spaceDapp: SpaceDapp }) => {
     return new TestUserOps({
         provider: spaceDapp.provider,
         config: spaceDapp.config,
@@ -82,7 +76,6 @@ export const UserOps = ({
         factoryAddress: process.env.AA_FACTORY_ADDRESS,
         paymasterProxyAuthSecret: process.env.AA_PAYMASTER_PROXY_AUTH_SECRET!,
         fetchAccessTokenFn: undefined,
-        lib: lib ?? (process.env.AA_LIB as 'useropjs' | 'permissionless'),
     })
 }
 
@@ -100,6 +93,8 @@ export async function createUngatedSpace({
     rolePermissions,
     spaceName,
     legacy = false,
+    membershipPrice,
+    freeAllocation = 100,
 }: {
     userOps: TestUserOps
     spaceDapp: SpaceDapp
@@ -107,6 +102,8 @@ export async function createUngatedSpace({
     rolePermissions: Permission[]
     spaceName?: string
     legacy?: boolean
+    membershipPrice?: bigint
+    freeAllocation?: number
 }): Promise<SendUserOperationReturnType> {
     const signerAddress = await signer.getAddress()
     const { spaceName: generatedSpaceName, channelName: channelName } =
@@ -120,12 +117,12 @@ export async function createUngatedSpace({
             settings: {
                 name: 'Everyone',
                 symbol: 'MEMBER',
-                price: 0,
+                price: membershipPrice ?? 0,
                 maxSupply: 100,
                 duration: 0,
                 currency: ethers.constants.AddressZero,
                 feeRecipient: ethers.constants.AddressZero,
-                freeAllocation: 100,
+                freeAllocation: freeAllocation,
                 pricingModule: fixedPricingModule.module,
             },
             permissions: rolePermissions,
@@ -151,12 +148,12 @@ export async function createUngatedSpace({
             settings: {
                 name: 'Everyone',
                 symbol: 'MEMBER',
-                price: 0,
+                price: membershipPrice ?? 0,
                 maxSupply: 100,
                 duration: 0,
                 currency: ethers.constants.AddressZero,
                 feeRecipient: ethers.constants.AddressZero,
-                freeAllocation: 100,
+                freeAllocation: freeAllocation,
                 pricingModule: fixedPricingModule.module,
             },
             permissions: rolePermissions,
@@ -451,16 +448,12 @@ export function generatePrivyWalletIfKey(privateKey?: string) {
     }
 }
 
-export const createSpaceDappAndUserops = async (
-    provider: LocalhostWeb3Provider,
-    lib?: 'useropjs' | 'permissionless',
-) => {
+export const createSpaceDappAndUserops = async (provider: LocalhostWeb3Provider) => {
     const baseConfig = getWeb3Deployment(process.env.RIVER_ENV as string).base // see util.test.ts for loading from env
     const spaceDapp = new SpaceDapp(baseConfig, provider)
 
     const userOpsInstance = UserOps({
         spaceDapp,
-        lib,
     })
 
     const aaAddress = await userOpsInstance.getAbstractAccountAddress({
