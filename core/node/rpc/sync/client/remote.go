@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -301,6 +302,50 @@ func (s *remoteSyncer) RemoveStream(ctx context.Context, streamID StreamId) (boo
 	}
 
 	return noMoreStreams, err
+}
+
+func (s *remoteSyncer) Modify(ctx context.Context, request *ModifySyncRequest) (*ModifySyncResponse, bool, error) {
+	if s.otelTracer != nil {
+		var span trace.Span
+		ctx, span = s.otelTracer.Start(ctx, "remoteSyncer::modify")
+		defer span.End()
+	}
+
+	// Force set the syncID to the current syncID
+	request.SyncId = s.syncID
+
+	resp, err := s.client.ModifySync(ctx, connect.NewRequest(request))
+	if err != nil {
+		return nil, false, err
+	}
+
+	for _, cookie := range request.GetAddStreams() {
+		if !slices.ContainsFunc(resp.Msg.GetAdds(), func(status *SyncStreamOpStatus) bool {
+			return StreamId(status.StreamId) == StreamId(cookie.GetStreamId())
+		}) {
+			s.streams.Store(StreamId(cookie.GetStreamId()), struct{}{})
+		}
+	}
+
+	for _, streamIdRaw := range request.GetRemoveStreams() {
+		if !slices.ContainsFunc(resp.Msg.GetRemovals(), func(status *SyncStreamOpStatus) bool {
+			return StreamId(status.StreamId) == StreamId(streamIdRaw)
+		}) {
+			s.streams.Delete(StreamId(streamIdRaw))
+		}
+	}
+
+	noMoreStreams := true
+	s.streams.Range(func(key, value any) bool {
+		noMoreStreams = false
+		return false
+	})
+
+	if noMoreStreams {
+		s.syncStreamCancel()
+	}
+
+	return resp.Msg, noMoreStreams, nil
 }
 
 func (s *remoteSyncer) DebugDropStream(ctx context.Context, streamID StreamId) (bool, error) {
