@@ -11,17 +11,16 @@ import {IVotes} from "@openzeppelin/contracts/governance/utils/IVotes.sol";
 import {IOptimismMintableERC20, ILegacyMintableERC20} from "contracts/src/tokens/towns/base/IOptimismMintableERC20.sol";
 import {ISemver} from "contracts/src/tokens/towns/base/ISemver.sol";
 import {IERC7802} from "contracts/src/tokens/towns/base/IERC7802.sol";
-import {CustomRevert} from "contracts/src/utils/libraries/CustomRevert.sol";
 
 // libraries
+import {CustomRevert} from "contracts/src/utils/libraries/CustomRevert.sol";
 import {TownsLib} from "./TownsLib.sol";
-import {Context} from "@openzeppelin/contracts/utils/Context.sol";
 
 // contracts
-import {Initializable} from "solady/utils/Initializable.sol";
-import {UUPSUpgradeable} from "solady/utils/UUPSUpgradeable.sol";
 import {IntrospectionBase} from "@river-build/diamond/src/facets/introspection/IntrospectionBase.sol";
 import {Ownable} from "solady/auth/Ownable.sol";
+import {Initializable} from "solady/utils/Initializable.sol";
+import {UUPSUpgradeable} from "solady/utils/UUPSUpgradeable.sol";
 import {ERC20Votes} from "solady/tokens/ERC20Votes.sol";
 import {LockBase} from "contracts/src/tokens/lock/LockBase.sol";
 
@@ -34,8 +33,7 @@ contract Towns is
   Initializable,
   ERC20Votes,
   UUPSUpgradeable,
-  Ownable,
-  Context
+  Ownable
 {
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                          Errors                            */
@@ -62,13 +60,17 @@ contract Towns is
 
   /// @notice A modifier that only allows the bridge to call
   modifier onlyL2StandardBridge() {
-    if (_msgSender() != TownsLib.L2_STANDARD_BRIDGE) revert Unauthorized();
+    if (msg.sender != TownsLib.L2_STANDARD_BRIDGE) {
+      CustomRevert.revertWith(Unauthorized.selector);
+    }
     _;
   }
 
   /// @notice A modifier that only allows the super chain to call
   modifier onlyL2SuperChainBridge() {
-    if (_msgSender() != TownsLib.SUPERCHAIN_TOKEN_BRIDGE) revert Unauthorized();
+    if (msg.sender != TownsLib.SUPERCHAIN_TOKEN_BRIDGE) {
+      CustomRevert.revertWith(Unauthorized.selector);
+    }
     _;
   }
 
