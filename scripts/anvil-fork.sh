@@ -81,11 +81,8 @@ if [ -z "$FORK_BLOCK_NUMBER" ]; then
     echo "Getting latest block number from $FORK_URL..."
   fi
 
-  LATEST_BLOCK=$(curl -s -X POST -H "Content-Type: application/json" --data '{"jsonrpc":"2.0","method":"eth_blockNumber","params":[],"id":1}' "$FORK_URL" | grep -o '"result":"0x[^"]*' | cut -d'"' -f4)
-  if [ -n "$LATEST_BLOCK" ]; then
-    # Convert hex to decimal
-    FORK_BLOCK_NUMBER=$((16#${LATEST_BLOCK:2}))
-
+  FORK_BLOCK_NUMBER=$(cast block-number --rpc-url $FORK_URL)
+  if [ $? -eq 0 ]; then
     # Only show debug messages if not in output-block-number mode
     if [ "$OUTPUT_BLOCK_NUMBER" = "false" ]; then
       echo "Latest block number: $FORK_BLOCK_NUMBER"

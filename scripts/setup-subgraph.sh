@@ -84,6 +84,10 @@ EOF
 echo "Created Ponder environment file at $PONDER_ENV_FILE with:"
 cat "$PONDER_ENV_FILE"
 
+# Kill any existing Anvil processes
+echo "Killing any existing Anvil processes..."
+pkill -f anvil || true
+
 # Start Anvil in the background
 echo "Starting Anvil fork in the background..."
 ./scripts/anvil-fork.sh --fork-url "$FORK_URL" --fork-block-number "$FORK_BLOCK_NUMBER" --chain-id "$CHAIN_ID" --port "$PORT" --silent &
@@ -101,9 +105,7 @@ trap cleanup EXIT
 # Wait for Anvil to start
 echo "Waiting for Anvil to start..."
 for i in {1..30}; do
-  if curl -s -X POST -H "Content-Type: application/json" \
-     --data '{"jsonrpc":"2.0","method":"eth_blockNumber","params":[],"id":1}' \
-     http://localhost:$PORT > /dev/null; then
+  if cast block-number --rpc-url "http://localhost:$PORT" &>/dev/null; then
     echo "Anvil is running!"
     break
   fi
@@ -116,6 +118,12 @@ for i in {1..30}; do
   echo "Waiting for Anvil to start... ($i/30)"
   sleep 1
 done
+
+# Generating typings if not exists
+if [ ! -f "contracts/typings/index.ts" ]; then
+  echo "Generating contract typings..."
+  yarn workspace @river-build/contracts typings
+fi
 
 # Now update the ponder.config.ts file to use the environment variables
 echo "Updating Ponder configuration..."
