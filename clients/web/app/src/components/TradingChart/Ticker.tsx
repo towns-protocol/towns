@@ -88,7 +88,9 @@ export const TradingChartTicker = (props: {
             // if the user is not in a space, open the trade panel
             // for now, we don't support threaded trading in DMs
             if (eventId && timelineContext?.spaceId) {
-                onOpenMessageThread(eventId)
+                onOpenMessageThread(eventId, {
+                    mode,
+                })
             } else {
                 openPanel(CHANNEL_INFO_PARAMS.TRADE_PANEL, {
                     mode,

@@ -286,20 +286,13 @@ const ThreadEditor = (props: {
 
     const slippage = useTradeSettings((state) => state.slippage)
 
-    const [params] = useSearchParams()
+    const [params, setParams] = useSearchParams()
     const [mode, setMode] = useState<'buy' | 'sell'>(() => {
         const mode = params.get('mode')
         return mode === 'buy' ? 'buy' : 'sell'
     })
     useEffect(() => {
         setMode(() => {
-            if (tradeData?.metaData) {
-                return tradeData.metaData.mode
-            }
-            if (quoteStatus) {
-                return quoteStatus.mode
-            }
-
             const mode = params.get('mode')
 
             if (mode === 'buy' || mode === 'sell') {
@@ -307,10 +300,13 @@ const ThreadEditor = (props: {
             }
             return 'buy'
         })
-    }, [params, quoteStatus, tradeData])
+    }, [params])
 
     const onModeChanged = useEvent((mode: 'buy' | 'sell') => {
-        setMode(mode)
+        setParams((prev) => {
+            prev.set('mode', mode)
+            return prev
+        })
     })
 
     const renderSendButton = useCallback(

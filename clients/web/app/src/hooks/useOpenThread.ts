@@ -7,11 +7,15 @@ export const useOpenMessageThread = (spaceId?: string, channelId?: string) => {
     const { createLink } = useCreateLink()
 
     const onOpenMessageThread = useCallback(
-        (eventId: string) => {
-            const link = createLink({
+        (eventId: string, params?: Record<string, string>) => {
+            let link = createLink({
                 threadId: eventId,
                 channelId: channelId,
             })
+
+            if (params) {
+                link = `${link}?${new URLSearchParams(params).toString()}`
+            }
 
             if (link) {
                 navigate(link)
