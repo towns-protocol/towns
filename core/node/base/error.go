@@ -7,6 +7,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"github.com/towns-protocol/towns/core/node/logging"
 	"os"
 	"runtime"
 	"strconv"
@@ -397,33 +398,33 @@ func (e *RiverErrorImpl) GetTag(name string) any {
 	return nil
 }
 
-func (e *RiverErrorImpl) LogWithLevel(l *zap.SugaredLogger, level zapcore.Level) *RiverErrorImpl {
+func (e *RiverErrorImpl) LogWithLevel(l *logging.Log, level zapcore.Level) *RiverErrorImpl {
 	// Context for zap is optional, generally in this codebase context is not passed to zap.
 	l.Logw(level, e.GetMessage(), e.FlattenTags()...)
 	return e
 }
 
-func (e *RiverErrorImpl) Log(l *zap.SugaredLogger) *RiverErrorImpl {
+func (e *RiverErrorImpl) Log(l *logging.Log) *RiverErrorImpl {
 	return e.LogWithLevel(l, zapcore.ErrorLevel)
 }
 
-func (e *RiverErrorImpl) LogError(l *zap.SugaredLogger) *RiverErrorImpl {
+func (e *RiverErrorImpl) LogError(l *logging.Log) *RiverErrorImpl {
 	return e.LogWithLevel(l, zapcore.ErrorLevel)
 }
 
-func (e *RiverErrorImpl) LogWarn(l *zap.SugaredLogger) *RiverErrorImpl {
+func (e *RiverErrorImpl) LogWarn(l *logging.Log) *RiverErrorImpl {
 	return e.LogWithLevel(l, zapcore.WarnLevel)
 }
 
-func (e *RiverErrorImpl) LogInfo(l *zap.SugaredLogger) *RiverErrorImpl {
+func (e *RiverErrorImpl) LogInfo(l *logging.Log) *RiverErrorImpl {
 	return e.LogWithLevel(l, zapcore.InfoLevel)
 }
 
-func (e *RiverErrorImpl) LogDebug(l *zap.SugaredLogger) *RiverErrorImpl {
+func (e *RiverErrorImpl) LogDebug(l *logging.Log) *RiverErrorImpl {
 	return e.LogWithLevel(l, zapcore.DebugLevel)
 }
 
-func (e *RiverErrorImpl) LogLevel(l *zap.SugaredLogger, level zapcore.Level) *RiverErrorImpl {
+func (e *RiverErrorImpl) LogLevel(l *logging.Log, level zapcore.Level) *RiverErrorImpl {
 	return e.LogWithLevel(l, level)
 }
 

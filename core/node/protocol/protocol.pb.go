@@ -456,8 +456,6 @@ const (
 	// The encryption device returned by the app service webhook does not match the first
 	// encryption device found in the app's user metadata stream.
 	Err_BAD_ENCRYPTION_DEVICE Err = 68
-	// The buffer is closed and cannot be used anymore.
-	Err_BUFFER_CLOSED Err = 69
 )
 
 // Enum value maps for Err.

@@ -56,7 +56,7 @@ type MessageToNotificationsProcessor struct {
 	cache                  UserPreferencesStore
 	subscriptionExpiration time.Duration
 	notifier               push.MessageNotifier
-	log                    *zap.SugaredLogger
+	log                    *logging.Log
 }
 
 // NewNotificationMessageProcessor processes incoming messages, determines when and to whom to send a notification
