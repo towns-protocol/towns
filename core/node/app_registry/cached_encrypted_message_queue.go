@@ -7,6 +7,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/towns-protocol/towns/core/node/base"
+	"github.com/towns-protocol/towns/core/node/logging"
 	"github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/shared"
 	"github.com/towns-protocol/towns/core/node/storage"
@@ -19,9 +20,10 @@ type SessionMessages struct {
 	AppId                 common.Address // included for logging / metrics
 	DeviceKey             string
 	EncryptedSharedSecret [32]byte
+	WebhookUrl            string
+	StreamId              shared.StreamId
 	SessionIds            []string
 	CipherTexts           string
-	WebhookUrl            string
 	StreamEvents          [][]byte
 }
 
@@ -84,6 +86,8 @@ func (q *CachedEncryptedMessageQueue) PublishSessionKeys(
 	sessionIds []string,
 	ciphertexts string,
 ) (err error) {
+	log := logging.FromCtx(ctx)
+	log.Debugw("PublishSessionKeys", "streamId", streamId, "deviceKey", deviceKey, "sessionIds", sessionIds)
 	sendableMessages, err := q.store.PublishSessionKeys(ctx, streamId, deviceKey, sessionIds, ciphertexts)
 	if err != nil {
 		return err
@@ -93,6 +97,7 @@ func (q *CachedEncryptedMessageQueue) PublishSessionKeys(
 		EncryptedSharedSecret: sendableMessages.EncryptedSharedSecret,
 		DeviceKey:             deviceKey,
 		SessionIds:            sessionIds,
+		StreamId:              streamId,
 		CipherTexts:           ciphertexts,
 		WebhookUrl:            sendableMessages.WebhookUrl,
 		StreamEvents:          sendableMessages.StreamEvents,
@@ -159,6 +164,7 @@ func (q *CachedEncryptedMessageQueue) DispatchOrEnqueueMessages(
 			DeviceKey:             sendableApp.DeviceKey,
 			EncryptedSharedSecret: sendableApp.SendMessageSecrets.EncryptedSharedSecret,
 			CipherTexts:           sendableApp.SendMessageSecrets.CipherTexts,
+			StreamId:              channelId,
 			WebhookUrl:            sendableApp.WebhookUrl,
 			StreamEvents:          [][]byte{streamEventBytes},
 		}); err != nil {

@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
+	"go.uber.org/zap/zapcore"
 
 	"github.com/towns-protocol/towns/core/contracts/river"
 	"github.com/towns-protocol/towns/core/node/base"
@@ -188,8 +189,11 @@ func (tracker *StreamsTrackerImpl) forwardStreamEventsFromInception(
 	streamId shared.StreamId,
 	nodes []common.Address,
 ) {
+	log := logging.DefaultZapLogger(zapcore.DebugLevel)
+	log.Debugw("forwardStreamEventsFromInception", "streamId", streamId)
 	_, loaded := tracker.tracked.LoadOrStore(streamId, struct{}{})
 	if !loaded {
+		log.Debugw("...starting sync for stream", "streamId", streamId)
 		go func() {
 			stream := &registries.GetStreamResult{
 				StreamId: streamId,
@@ -198,7 +202,7 @@ func (tracker *StreamsTrackerImpl) forwardStreamEventsFromInception(
 
 			idx := rand.Int63n(int64(len(tracker.nodeRegistries)))
 			tracker.syncRunner.Run(
-				ctx,
+				logging.CtxWithLog(ctx, log),
 				stream,
 				true,
 				tracker.nodeRegistries[idx],
@@ -211,7 +215,7 @@ func (tracker *StreamsTrackerImpl) forwardStreamEventsFromInception(
 }
 
 func (tracker *StreamsTrackerImpl) AddStream(ctx context.Context, streamId shared.StreamId) error {
-	// logging.FromCtx(ctx).Debugw("AddStream call", "streamId", streamId)
+	logging.FromCtx(ctx).Debugw("AddStream call", "streamId", streamId)
 	stream, err := tracker.riverRegistry.StreamRegistry.GetStream(nil, streamId)
 	if err != nil {
 		return base.WrapRiverError(protocol.Err_CANNOT_CALL_CONTRACT, err).

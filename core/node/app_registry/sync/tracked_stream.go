@@ -6,6 +6,7 @@ import (
 
 	mapset "github.com/deckarep/golang-set/v2"
 	"github.com/ethereum/go-ethereum/common"
+	"go.uber.org/zap/zapcore"
 
 	"github.com/towns-protocol/towns/core/node/crypto"
 	. "github.com/towns-protocol/towns/core/node/events"
@@ -22,6 +23,8 @@ type AppRegistryTrackedStreamView struct {
 }
 
 func (b *AppRegistryTrackedStreamView) processUserInboxMessage(ctx context.Context, event *ParsedEvent) error {
+	log := logging.DefaultZapLogger(zapcore.DebugLevel)
+	log.Debugw("user inbox message", "event", event)
 	// Capture keys sent to the app's inbox and store them in the message cache so that
 	// we can dequeue any existing messages that require decryption this session, and immediately
 	// forward incoming messages with the same session id.
@@ -29,6 +32,7 @@ func (b *AppRegistryTrackedStreamView) processUserInboxMessage(ctx context.Conte
 		if groupEncryptionSessions := payload.GetGroupEncryptionSessions(); groupEncryptionSessions != nil {
 			sessionIds := groupEncryptionSessions.GetSessionIds()
 			deviceCipherTexts := groupEncryptionSessions.GetCiphertexts()
+			log.Debugw("GroupEncryptionSessions", "session", sessionIds, "deviceCiphertexts", deviceCipherTexts)
 			streamId, err := shared.StreamIdFromBytes(groupEncryptionSessions.StreamId)
 			if err != nil {
 				return err
@@ -45,6 +49,7 @@ func (b *AppRegistryTrackedStreamView) processUserInboxMessage(ctx context.Conte
 
 func (b *AppRegistryTrackedStreamView) onNewEvent(ctx context.Context, view *StreamView, event *ParsedEvent) error {
 	streamId := view.StreamId()
+	ctx = logging.CtxWithLog(ctx, logging.DefaultZapLogger(zapcore.DebugLevel))
 	log := logging.FromCtx(ctx).With("func", "AppRegistryTrackedStreamView.onNewEvent")
 
 	if streamId.Type() == shared.STREAM_USER_INBOX_BIN {
@@ -74,19 +79,19 @@ func (b *AppRegistryTrackedStreamView) onNewEvent(ctx context.Context, view *Str
 		return false
 	})
 
-	// log.Debugw(
-	// 	"Witnessed channel message",
-	// 	"streamId",
-	// 	streamId,
-	// 	"members",
-	// 	members,
-	// 	"appMembers",
-	// 	appMembers,
-	// 	"event",
-	// 	event,
-	// )
+	log.Debugw(
+		"Witnessed channel message",
+		"streamId",
+		streamId,
+		"members",
+		members,
+		"appMembers",
+		appMembers,
+		"event",
+		event,
+	)
 	if appMembers.Cardinality() > 0 {
-		// log.Debugw("OnMessageEvent message", "streamId", streamId, "appMembers", appMembers, "event", event)
+		log.Debugw("OnMessageEvent message", "streamId", streamId, "appMembers", appMembers, "event", event)
 		b.listener.OnMessageEvent(ctx, *streamId, view.StreamParentId(), appMembers, event)
 	}
 
@@ -105,6 +110,9 @@ func NewTrackedStreamForAppRegistryService(
 	listener track_streams.StreamEventListener,
 	store EncryptedMessageQueue,
 ) (TrackedStreamView, error) {
+	log := logging.DefaultZapLogger(zapcore.DebugLevel)
+	log.Debugw("NewTrackedStream", "streamId", streamId)
+
 	trackedView := &AppRegistryTrackedStreamView{
 		listener: listener,
 		queue:    store,

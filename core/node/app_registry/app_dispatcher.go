@@ -115,6 +115,7 @@ func (d *AppDispatcher) SubmitMessages(
 				ctx,
 				messages.AppId,
 				sharedSecret,
+				messages.StreamId,
 				messages.SessionIds,
 				messages.CipherTexts,
 				messages.WebhookUrl,

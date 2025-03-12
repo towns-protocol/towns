@@ -22,6 +22,8 @@ import (
 	"github.com/towns-protocol/towns/core/node/shared"
 	"github.com/towns-protocol/towns/core/node/testutils/testcert"
 	"github.com/towns-protocol/towns/core/node/utils"
+	"go.uber.org/zap/zapcore"
+	"google.golang.org/protobuf/proto"
 )
 
 type AppServiceRequestEnvelope struct {
@@ -197,11 +199,97 @@ func (b *TestAppServer) solicitKeys(ctx context.Context, data app_client.KeySoli
 	return nil
 }
 
+func (b *TestAppServer) respondToSendMessages(
+	ctx context.Context,
+	data *app_client.SendSessionMessagesRequestData,
+) error {
+	// log := zap.NewNop().Sugar()
+	log := logging.DefaultZapLogger(zapcore.DebugLevel).With("func", "TestAppServer.rootHandler")
+	log.Debugw("respondToSendMessages", "numEvents", len(data.StreamEvents), "sessionIds", data.SessionIds)
+
+	// streamBytes, err := proto.Marshal(event.Event)
+	for _, streamBytes := range data.StreamEvents {
+		var streamEvent protocol.StreamEvent
+		if err := proto.Unmarshal(streamBytes, &streamEvent); err != nil {
+			log.Errorw("Could not unmarshal stream event", "error", err)
+			return fmt.Errorf("Could not unmarshal stream event: %w", err)
+		}
+		payload, ok := streamEvent.Payload.(*protocol.StreamEvent_ChannelPayload)
+		if !ok {
+			log.Errorw("Could not cast channel stream payload")
+			return fmt.Errorf("Could not cast channel stream payload")
+		}
+		message, ok := payload.ChannelPayload.GetContent().(*protocol.ChannelPayload_Message)
+		if !ok {
+			log.Errorw("Could not extract message from channel payload")
+			return fmt.Errorf("Could not extract message from channel payload")
+		}
+		if message.Message.SenderKey == b.encryptionDevice.DeviceKey {
+			log.Debugw("Detected message from this sender, ignoring...")
+			continue
+		}
+
+		streamIdBytes, err := shared.StreamIdFromString(data.StreamId)
+		if err != nil {
+			log.Errorw("Could not parse stream id", "error", err)
+			return fmt.Errorf("Could not parse stream id: %w", err)
+		}
+
+		resp, err := b.client.GetLastMiniblockHash(
+			ctx,
+			&connect.Request[protocol.GetLastMiniblockHashRequest]{
+				Msg: &protocol.GetLastMiniblockHashRequest{
+					StreamId: streamIdBytes[:],
+				},
+			},
+		)
+		if err != nil {
+			log.Errorw("Could not get last miniblock hash of stream in order to post a response", "error", err)
+			return fmt.Errorf("Could not get last miniblock hash of stream in order to post a response: %w", err)
+		}
+
+		envelope, err := events.MakeEnvelopeWithPayload(
+			b.appWallet,
+			events.Make_ChannelPayload_Message_WithSession(
+				fmt.Sprintf("%v %v reply", message.Message.SessionId, message.Message.Ciphertext),
+				message.Message.SenderKey,
+			),
+			&shared.MiniblockRef{
+				Hash: common.Hash(resp.Msg.Hash),
+				Num:  resp.Msg.MiniblockNum,
+			},
+		)
+		if err != nil {
+			log.Errorw("Could not construct envelope of message reply", "error", err)
+			return fmt.Errorf("Could not construct envelope of message reply: %w", err)
+		}
+
+		addResp, err := b.client.AddEvent(
+			ctx,
+			&connect.Request[protocol.AddEventRequest]{
+				Msg: &protocol.AddEventRequest{
+					StreamId: streamIdBytes[:],
+					Event:    envelope,
+				},
+			},
+		)
+		if err != nil {
+			log.Errorw("AddEvent failed for reply", "error", err)
+			return fmt.Errorf("AddEvent failed for reply: %w", err)
+		}
+		if addResp.Msg.Error != nil {
+			log.Errorw("AddEvent failed for reply", "error", addResp.Msg.Error.Msg)
+			return fmt.Errorf("AddEvent failed for reply: %v", addResp.Msg.Error.Msg)
+		}
+	}
+	return nil
+}
+
 func (b *TestAppServer) rootHandler(w http.ResponseWriter, r *http.Request) {
 	// Ensure that the request method is POST.
 	// Uncomment to unconditionally enable logging
-	// log := logging.DefaultZapLogger(zapcore.DebugLevel).With("func", "TestAppServer.rootHandler")
-	log := logging.FromCtx(r.Context())
+	log := logging.DefaultZapLogger(zapcore.DebugLevel).With("func", "TestAppServer.rootHandler")
+	// log := logging.FromCtx(r.Context())
 	log.Debug("TestAppServer rootHandler called!")
 	if r.Method != http.MethodPost {
 		log.Errorw("method not allowed")
@@ -266,6 +354,26 @@ func (b *TestAppServer) rootHandler(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, fmt.Sprintf("TestAppServer unable to solicit keys: %v", err), http.StatusBadRequest)
 		}
 		response = app_client.KeySolicitationResponse{}
+	case "messages":
+		log.Debugw("messages sent")
+		var data app_client.SendSessionMessagesRequestData
+		if err := json.Unmarshal(payload.Data, &data); err != nil {
+			log.Errorw(
+				"Unable to unmarshal payload data into send session messages request data",
+				"error",
+				err,
+				"payloadData",
+				payload.Data,
+			)
+			http.Error(w, fmt.Sprintf("unable to unmarshal message data: %v", err), http.StatusBadRequest)
+			return
+		}
+		if err := b.respondToSendMessages(logging.CtxWithLog(r.Context(), log), &data); err != nil {
+			http.Error(w, fmt.Sprintf("unable to respond to sent messages: %v", err), http.StatusBadRequest)
+			return
+		}
+		response = app_client.SendSessionMessagesResponse{}
+
 	default:
 		log.Errorw("unrecognized payload type", "command", payload.Command)
 		http.Error(w, fmt.Sprintf("Unrecognized payload type: %v", payload.Command), http.StatusBadRequest)

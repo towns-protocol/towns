@@ -190,6 +190,8 @@ func (s *Service) Register(
 		return nil, base.AsRiverError(err, Err_INTERNAL).Message("Error creating app in database")
 	}
 
+	logging.FromCtx(ctx).
+		Debugw("registration userInboxStream", "stream", shared.UserInboxStreamIdFromAddress(app), "app", app)
 	if err := s.streamsTracker.AddStream(ctx, shared.UserInboxStreamIdFromAddress(app)); err != nil {
 		return nil, base.AsRiverError(err, Err_INTERNAL).
 			Message("Error subscribing to app's user inbox stream to watch for keys")
