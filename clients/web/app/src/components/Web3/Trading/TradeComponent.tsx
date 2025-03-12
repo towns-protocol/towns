@@ -80,8 +80,8 @@ export const TradeComponent = (props: Props) => {
     )
 
     const [_amount, setAmount] = useState<bigint>()
-    const [customAmount, setCustomAmount] = useState<bigint>(0n)
-    const [customPercent, setCustomPercent] = useState<bigint>(0n)
+    const [customAmount, setCustomAmount] = useState<bigint | undefined>()
+    const [customPercent, setCustomPercent] = useState<bigint | undefined>()
     const [preselectedOption, setPreselectedOption] = useState<QuickSelectOption>()
 
     useEffect(() => {
@@ -120,7 +120,7 @@ export const TradeComponent = (props: Props) => {
         preselectedOption?.label === 'custom'
             ? mode === 'buy'
                 ? customAmount
-                : (currentTokenBalance * customPercent) / 100n
+                : (currentTokenBalance * (customPercent ?? 0n)) / 100n
             : _amount
 
     const cachedAmounts = useRef<Record<string, bigint | undefined>>({})
@@ -202,7 +202,7 @@ export const TradeComponent = (props: Props) => {
     }, [])
 
     const onCustomFieldSelect = useCallback(() => {
-        setPreselectedOption({ label: 'custom', value: customAmount, icon: undefined })
+        setPreselectedOption({ label: 'custom', value: customAmount ?? 0n, icon: undefined })
     }, [customAmount])
 
     const { data: coinData } = useCoinData({
