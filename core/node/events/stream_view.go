@@ -902,12 +902,12 @@ func (r *StreamView) GetStreamSince(
 	log := logging.FromCtx(ctx)
 	slot := cookie.MinipoolSlot
 	if slot < 0 {
-		return nil, RiverError(Err_BAD_SYNC_COOKIE, "bad slot", "cookie.MinipoolSlot", slot).Func("Stream.Sub")
+		return nil, RiverError(Err_BAD_SYNC_COOKIE, "bad slot", "cookie.MinipoolSlot", slot).Func("GetStreamSince")
 	}
 
 	if cookie.MinipoolGen == r.minipool.generation {
 		if slot > int64(r.minipool.events.Len()) {
-			return nil, RiverError(Err_BAD_SYNC_COOKIE, "Stream.Sub: bad slot")
+			return nil, RiverError(Err_BAD_SYNC_COOKIE, "GetStreamSince: bad slot")
 		}
 
 		envelopes := make([]*Envelope, 0, r.minipool.events.Len()-int(slot))
@@ -928,7 +928,7 @@ func (r *StreamView) GetStreamSince(
 		miniblockIndex, err := r.indexOfMiniblockWithNum(cookie.MinipoolGen)
 		if err != nil {
 			// The user's sync cookie is out of date. Send a sync reset and return an up-to-date StreamAndCookie.
-			log.Warnw("Stream.Sub: out of date cookie.MiniblockNum. Sending sync reset.",
+			log.Warnw("GetStreamSince: out of date cookie.MiniblockNum. Sending sync reset.",
 				"stream", r.streamId, "error", err.Error())
 
 			return &StreamAndCookie{
@@ -947,9 +947,9 @@ func (r *StreamView) GetStreamSince(
 			return true, nil
 		})
 		if err != nil {
-			// "Should never happen: Stream.Sub: forEachEvent failed: "
-			logging.FromCtx(ctx).Errorw("Stream.Sub: forEachEvent failed", "error", err)
-			return nil, RiverError(Err_INTERNAL, "Stream.Sub: forEachEvent failed", "error", err).Func("Stream.Sub")
+			// "Should never happen: GetStreamSince: forEachEvent failed: "
+			logging.FromCtx(ctx).Errorw("GetStreamSince: forEachEvent failed", "error", err)
+			return nil, RiverError(Err_INTERNAL, "GetStreamSince: forEachEvent failed", "error", err).Func("GetStreamSince")
 		}
 
 		// always send response, even if there are no events so that the client knows it's upToDate

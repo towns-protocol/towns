@@ -211,20 +211,19 @@ func (s *Service) getStreamImpl(
 			}
 		} else {
 			stub, err := s.nodeRegistry.GetStreamServiceClientForAddress(nodeAddress)
-			if err != nil {
-				return nil, AsRiverError(err).
-					Func("peerNodeRequestWithRetries").
-					Message("Could not get stream service client for address").
-					Tag("address", nodeAddress)
-			}
+			if err == nil {
 
-			ret, err := stub.GetStream(ctx, req)
-			if err != nil {
-				return nil, err
+				ret, err := stub.GetStream(ctx, req)
+				if err != nil {
+					return nil, err
+				}
+				return connect.NewResponse(ret.Msg), nil
 			}
-			return connect.NewResponse(ret.Msg), nil
+			// in the case were we couldn't get a stub for this node, fall through and try to get the stream from scratch
 		}
-	} else if view != nil {
+	}
+
+	if view != nil {
 		return s.localGetStream(ctx, view, req.Msg.SyncCookie)
 	} else {
 		return utils.PeerNodeRequestWithRetries(
