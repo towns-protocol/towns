@@ -6,10 +6,9 @@ import React, {
     useRef,
     useState,
 } from 'react'
-import { TSigner, TransactionStatus, useConnectivity } from 'use-towns-client'
+import { TSigner, TransactionStatus } from 'use-towns-client'
 import { useCoinData } from '@components/TradingChart/useCoinData'
 import { Box, FancyButton, IconName, Stack, Text } from '@ui'
-import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
 import { WalletReady } from 'privy/WalletReady'
 import { popupToast } from '@components/Notifications/popupToast'
 import { StandardToast } from '@components/Notifications/StandardToast'
@@ -17,10 +16,7 @@ import { NumberInputRadio } from './ui/NumberInputRadio'
 import { RadioButton } from './ui/RadioButton'
 import { ButtonSelection } from './ui/SelectButton'
 import { TabPanel } from './ui/TabPanel'
-import { useBalanceOnChain } from './useBalanceOnChain'
 import { useLifiQuote } from './useLifiQuote'
-import { useSolanaBalance } from './useSolanaBalance'
-import { useSolanaWallet } from './useSolanaWallet'
 import {
     EvmTransactionRequest,
     SolanaTransactionRequest,
@@ -32,6 +28,7 @@ import { isTradingChain, tradingChains } from './tradingConstants'
 import { useSendTradeTransaction } from './hooks/useTradeQuote'
 import { useTradeSettings } from './tradeSettingsStore'
 import { PercentInputRadio } from './ui/PercentInputRadio'
+import { useTradingWalletBalance } from './hooks/useTradingBalance'
 
 // const DISPLAY_QUOTE = false
 
@@ -97,22 +94,17 @@ export const TradeComponent = (props: Props) => {
 
     const chainConfig = isTradingChain(chainId) ? tradingChains[chainId] : tradingChains[1]
 
-    const { loggedInWalletAddress } = useConnectivity()
-
-    const { data: evmWalletAddress } = useAbstractAccountAddress({
-        rootKeyAddress: loggedInWalletAddress,
+    const { walletBalance, walletAddress } = useTradingWalletBalance({
+        chainId,
     })
 
-    const { data: ethBalance } = useBalanceOnChain(evmWalletAddress, 8453)
-    const { solanaWallet } = useSolanaWallet()
-    const { data: solanaBalance } = useSolanaBalance(solanaWallet?.address)
-    const { nativeTokenAddress } = chainConfig
-
     const isSolana = chainConfig.name === 'Solana'
-    const address = isSolana ? solanaWallet?.address : evmWalletAddress
+    const nativeTokenAddress = chainConfig.nativeTokenAddress
+
     const tokenBalance = useTokenBalance(chainId, tokenAddress ?? '')
-    const currentTokenBalance =
-        mode === 'buy' ? (isSolana ? solanaBalance : ethBalance) : tokenBalance
+
+    const currentTokenBalance = mode === 'buy' ? walletBalance : tokenBalance
+
     const fromTokenAddress = mode === 'buy' ? nativeTokenAddress : tokenAddress
     const toTokenAddress = mode === 'buy' ? tokenAddress : nativeTokenAddress
 
@@ -223,8 +215,8 @@ export const TradeComponent = (props: Props) => {
     const quote = useLifiQuote({
         fromToken: fromTokenAddress,
         toToken: toTokenAddress,
-        fromAddress: address ?? '',
-        toAddress: address ?? '',
+        fromAddress: walletAddress ?? '',
+        toAddress: walletAddress ?? '',
         fromAmount: amount?.toString() ?? '0',
         currentTokenBalance,
         fromChain: chainId,
@@ -282,7 +274,7 @@ export const TradeComponent = (props: Props) => {
                     fromTokenAddress: fromTokenAddress,
                     value: quoteData.transactionRequest.value ?? '0',
                 },
-                walletAddress: address ?? '',
+                walletAddress: walletAddress ?? '',
                 status: TransactionStatus.Pending,
                 threadInfo: threadInfo,
                 isBuy: mode === 'buy',
@@ -297,7 +289,7 @@ export const TradeComponent = (props: Props) => {
         tokenAddress,
         threadInfo,
         mode,
-        address,
+        walletAddress,
     ])
 
     const { sendTradeTransaction } = useSendTradeTransaction({

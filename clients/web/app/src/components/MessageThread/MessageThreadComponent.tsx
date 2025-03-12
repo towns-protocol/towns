@@ -5,7 +5,15 @@ import {
     isGDMChannelStreamId,
 } from '@river-build/sdk'
 import { isEqual } from 'lodash'
-import React, { FC, PropsWithChildren, useCallback, useMemo, useRef, useState } from 'react'
+import React, {
+    FC,
+    PropsWithChildren,
+    useCallback,
+    useEffect,
+    useMemo,
+    useRef,
+    useState,
+} from 'react'
 import { useEvent } from 'react-use-event-hook'
 import {
     SendMessageOptions,
@@ -16,6 +24,7 @@ import {
     useSpaceMembers,
 } from 'use-towns-client'
 import { AnimatePresence } from 'framer-motion'
+import { useSearchParams } from 'react-router-dom'
 import { getPostedMessageType, trackPostedMessage } from '@components/Analytics/postedMessage'
 import { useGatherSpaceDetailsAnalytics } from '@components/Analytics/useGatherSpaceDetailsAnalytics'
 import { MediaDropContextProvider } from '@components/MediaDropContext/MediaDropContext'
@@ -41,6 +50,10 @@ import { isTradingChain, tradingChains } from '@components/Web3/Trading/tradingC
 import { FadeInBox } from '@components/Transitions'
 import { EditSlippageButton } from '@components/Web3/Trading/EditSlippagePopover'
 import { formatCompactNumber } from '@components/Web3/Trading/tradingUtils'
+import { useTradingWalletBalance } from '@components/Web3/Trading/hooks/useTradingBalance'
+import { formatUnitsToFixedLength } from 'hooks/useBalance'
+import { useTokenBalance } from '@components/Web3/Trading/useTokenBalance'
+import { useCoinData } from '@components/TradingChart/useCoinData'
 import { getTickerAttachment } from './getTickerAttachment'
 import { TickerThreadContext } from './TickerThreadContext'
 
@@ -273,7 +286,32 @@ const ThreadEditor = (props: {
 
     const slippage = useTradeSettings((state) => state.slippage)
 
-    const mode = tradeData?.metaData.mode ?? quoteStatus?.mode
+    const [params] = useSearchParams()
+    const [mode, setMode] = useState<'buy' | 'sell'>(() => {
+        const mode = params.get('mode')
+        return mode === 'buy' ? 'buy' : 'sell'
+    })
+    useEffect(() => {
+        setMode(() => {
+            if (tradeData?.metaData) {
+                return tradeData.metaData.mode
+            }
+            if (quoteStatus) {
+                return quoteStatus.mode
+            }
+
+            const mode = params.get('mode')
+
+            if (mode === 'buy' || mode === 'sell') {
+                return mode
+            }
+            return 'buy'
+        })
+    }, [params, quoteStatus, tradeData])
+
+    const onModeChanged = useEvent((mode: 'buy' | 'sell') => {
+        setMode(mode)
+    })
 
     const renderSendButton = useCallback(
         (onSend: () => void) => {
@@ -326,10 +364,15 @@ const ThreadEditor = (props: {
         ],
     )
 
-    const renderTradingBottomBar =
-        mode && tradeData?.metaData ? (
-            <TradingBottomBar tradeData={tradeData?.metaData} mode={mode} />
-        ) : undefined
+    const renderTradingBottomBar = mode ? (
+        <TradingBottomBar
+            tokenAddress={tickerAttachment?.address}
+            mode={mode}
+            chainId={tickerAttachment?.chainId}
+        />
+    ) : (
+        <>nope</>
+    )
 
     const editor = (
         <TownsEditorContainer
@@ -363,12 +406,13 @@ const ThreadEditor = (props: {
                 <Box elevate rounded="md">
                     <Box padding="md" paddingBottom="xs">
                         <TradeComponent
-                            mode="buy"
+                            mode={mode}
                             tokenAddress={tickerAttachment.address}
                             chainId={tickerAttachment.chainId}
                             threadInfo={threadInfo}
                             resetRef={resetRef}
                             onQuoteStatusChanged={onQuoteStatusChanged}
+                            onModeChanged={onModeChanged}
                         />
                     </Box>
                     <Box>{editor}</Box>
@@ -428,31 +472,56 @@ const TransactionTooltip = (props: {
     )
 }
 
-const TradingBottomBar = (props: { tradeData?: QuoteMetaData; mode: 'buy' | 'sell' }) => {
-    const { tradeData, mode } = props
+const TradingBottomBar = (props: {
+    tokenAddress?: string
+    mode: 'buy' | 'sell'
+    chainId?: string
+}) => {
+    const { mode, chainId, tokenAddress } = props
 
-    const { value, symbol } = useMemo(() => {
-        return mode === 'buy'
-            ? {
-                  value: tradeData?.value?.value ?? '',
-                  symbol: tradeData?.value?.symbol ?? '',
-              }
-            : {
-                  value: tradeData?.valueAt?.value ?? '',
-                  symbol: tradeData?.valueAt?.symbol ?? '',
-              }
-    }, [mode, tradeData])
-
-    if (!tradeData) {
-        return null
+    if (!chainId) {
+        return
     }
 
     return (
         <Stack horizontal gap="sm" alignItems="center">
-            <TokenPrice value={value} symbol={symbol} />
+            {mode === 'buy' ? (
+                <TradingWalletBalance chainId={chainId} />
+            ) : tokenAddress ? (
+                <TokenBalance chainId={chainId} tokenAddress={tokenAddress} />
+            ) : null}
             <EditSlippageButton />
         </Stack>
     )
+}
+
+const TradingWalletBalance = (props: { chainId: string }) => {
+    const { chainId } = props
+    const chainConfig = isTradingChain(chainId) ? tradingChains[chainId] : tradingChains[1]
+    const { walletBalance } = useTradingWalletBalance({ chainId })
+    return (
+        <Box>
+            <TokenPrice
+                value={formatUnitsToFixedLength(walletBalance, chainConfig.decimals, 2)}
+                symbol={chainConfig.tokenSymbol}
+            />
+        </Box>
+    )
+}
+
+const TokenBalance = (props: { chainId: string; tokenAddress: string }) => {
+    const { chainId, tokenAddress } = props
+    const tokenBalance = useTokenBalance(chainId, tokenAddress)
+    const { data: tokenData } = useCoinData({ address: tokenAddress, chain: chainId })
+
+    return tokenData ? (
+        <Box>
+            <TokenPrice
+                value={formatUnitsToFixedLength(tokenBalance, tokenData.token.decimals, 2)}
+                symbol={tokenData.token.symbol}
+            />
+        </Box>
+    ) : null
 }
 
 const TokenPrice = (props: { value: string; symbol: string }) => {
