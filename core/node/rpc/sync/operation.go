@@ -153,6 +153,16 @@ func (syncOp *StreamSyncOperation) Run(
 			return context.Cause(syncOp.ctx)
 		case _, open := <-messages.Wait():
 			msgs = messages.GetBatch(msgs)
+
+			// nil msgs indicates the buffer is closed
+			if msgs == nil {
+				_ = res.Send(&SyncStreamsResponse{
+					SyncId: syncOp.SyncID,
+					SyncOp: SyncOp_SYNC_CLOSE,
+				})
+				return nil
+			}
+
 			for i, msg := range msgs {
 				msg.SyncId = syncOp.SyncID
 				if err := res.Send(msg); err != nil {
@@ -180,7 +190,8 @@ func (syncOp *StreamSyncOperation) Run(
 				}
 			}
 
-			// If the client sent a close message, stop sending messages to client from the buffer
+			// If the client sent a close message, stop sending messages to client from the buffer.
+			// In theory should not happen, but just in case.
 			if !open {
 				_ = res.Send(&SyncStreamsResponse{
 					SyncId: syncOp.SyncID,
