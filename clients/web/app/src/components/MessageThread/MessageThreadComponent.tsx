@@ -254,6 +254,7 @@ const ThreadEditor = (props: {
     const onQuoteStatusChanged = useEvent((status: QuoteStatus | undefined) => {
         setQuoteStatus(status)
         if (!status) {
+            setTradeData(undefined)
             return
         }
 
