@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"github.com/towns-protocol/towns/core/node/logging"
 	"os"
 	"time"
 
@@ -88,7 +89,14 @@ func initConfigAndLog() {
 		fmt.Println("Failed to initialize config, error=", err)
 		os.Exit(1)
 	}
-	InitLogFromConfig(&cmdConfig.Log)
+
+	logging.Init(
+		cmdConfig.Log.Level,
+		cmdConfig.Log.Console,
+		cmdConfig.Log.ConsoleLevel,
+		cmdConfig.Log.File,
+		cmdConfig.Log.FileLevel,
+	)
 }
 
 func init() {
