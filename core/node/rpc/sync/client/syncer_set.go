@@ -303,12 +303,12 @@ func (ss *SyncerSet) RemoveStream(ctx context.Context, streamID StreamId) error 
 
 // Modify splits the given request into add and remove operations and forwards them to the responsible syncers.
 func (ss *SyncerSet) Modify(ctx context.Context, req ModifyRequest) error {
+	ss.muSyncers.Lock()
+	defer ss.muSyncers.Unlock()
+
 	if len(req.ToAdd) > 0 && ss.stopped {
 		return RiverError(Err_CANCELED, "Sync operation stopped", "syncId", ss.syncID)
 	}
-
-	ss.muSyncers.Lock()
-	defer ss.muSyncers.Unlock()
 
 	modifySyncs := make(map[common.Address]*ModifySyncRequest)
 
