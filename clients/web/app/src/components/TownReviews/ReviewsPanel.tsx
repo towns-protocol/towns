@@ -321,6 +321,7 @@ export const ReviewsPanel = () => {
                                 >
                                     <ReviewItem
                                         showActions
+                                        clickableUser
                                         review={review}
                                         renderActions={(reviewId) =>
                                             isAuthor && (
