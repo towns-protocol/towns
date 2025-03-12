@@ -254,9 +254,6 @@ export function makeParsedEvent(
         hash,
         hashStr: bin_toHexString(hash),
         signature,
-        prevMiniblockHashStr: event.prevMiniblockHash
-            ? bin_toHexString(event.prevMiniblockHash)
-            : undefined,
         creatorUserId: userIdFromAddress(event.creatorAddress),
     } satisfies ParsedEvent
 }
