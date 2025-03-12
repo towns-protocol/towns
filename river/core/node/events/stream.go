@@ -835,7 +835,9 @@ func (s *Stream) Sub(ctx context.Context, cookie *SyncCookie, receiver SyncResul
 			return true, nil
 		})
 		if err != nil {
-			panic("Should never happen: Stream.Sub: forEachEvent failed: " + err.Error())
+			// "Should never happen: Stream.Sub: forEachEvent failed: "
+			logging.FromCtx(ctx).Errorw("Stream.Sub: forEachEvent failed", "error", err)
+			return RiverError(Err_INTERNAL, "Stream.Sub: forEachEvent failed", "error", err).Func("Stream.Sub")
 		}
 
 		// always send response, even if there are no events so that the client knows it's upToDate

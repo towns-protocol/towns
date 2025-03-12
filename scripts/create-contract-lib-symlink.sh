@@ -12,3 +12,4 @@ ln -s "${BASEDIR}/node_modules/forge-std" river/node_modules/forge-std
 ln -s "${BASEDIR}/node_modules/@prb" river/node_modules/@prb
 ln -s "${BASEDIR}/node_modules/solady" river/node_modules/solady
 ln -sf "${BASEDIR}/node_modules/@river-build/diamond" river/node_modules/@river-build/diamond
+ln -s "${BASEDIR}/node_modules/crypto-lib" river/node_modules/crypto-lib
