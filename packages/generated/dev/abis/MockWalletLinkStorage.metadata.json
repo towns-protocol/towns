@@ -19,7 +19,6 @@
   "settings": {
     "remappings": [
       "@openzeppelin/=node_modules/@openzeppelin/",
-      "@openzeppelin/contracts/=node_modules/@openzeppelin/contracts/",
       "@prb/math/=node_modules/@prb/math/src/",
       "@prb/test/=node_modules/@prb/test/src/",
       "@river-build/diamond/=node_modules/@river-build/diamond/",
@@ -47,10 +46,10 @@
   },
   "sources": {
     "contracts/src/factory/facets/wallet-link/IWalletLink.sol": {
-      "keccak256": "0xb37a03936a2f15ce5c94fb9925594627cc65cfdd186c14eaff32d299ec569b5f",
+      "keccak256": "0x340519781cc31761ba1ec5fa51948138951235d56d8ae7e552056ffc834ece6e",
       "urls": [
-        "bzz-raw://085ef4945195eae38879c2d84e70a5a2f3cb02e6ad53e8ae37e6dd2591379327",
-        "dweb:/ipfs/QmRP7RH7sX1MUXFDwacLABBcVdGDoyKm36JbSfDDwXy4EW"
+        "bzz-raw://e1a8d1940dc669e45d2d54f3d0bc1475e3be1ef7108a0628c9545367211422a9",
+        "dweb:/ipfs/QmeeK4w8F6ittuVxGmHWy2GXmwv391kRQXqzLhjW53DqL1"
       ],
       "license": "MIT"
     },
@@ -63,10 +62,10 @@
       "license": "MIT"
     },
     "contracts/test/mocks/MockWalletLink.sol": {
-      "keccak256": "0x9436bd6b1891fec0db60f7ef2b4741abb0b3fdcbf4a5e81d980bea698dff681b",
+      "keccak256": "0x4d6b86d0d7fffbbe4db80984a2ee456ec9e3810a3064f34964c0c78742d07675",
       "urls": [
-        "bzz-raw://d81c5329b623ca66f01ef810933b5e90891a1644530892dad7336dcc13ea4749",
-        "dweb:/ipfs/QmYejE9VfHz2FbP35Vd5dehSbPfTcfCNv5bbRhzMvLLF9M"
+        "bzz-raw://400e94c831a5c59ff546f2b5b642155467cce71c597563355ff50971b8331ae0",
+        "dweb:/ipfs/QmeyGYXNeqV1jrPzBu96BTmbZ4P6dSH3VKakABoeCkZuaF"
       ],
       "license": "Apache-2.0"
     },

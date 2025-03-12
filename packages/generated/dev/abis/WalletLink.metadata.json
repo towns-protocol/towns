@@ -618,7 +618,7 @@
       {
         "inputs": [
           {
-            "internalType": "struct IWalletLinkBase.LinkedWallet",
+            "internalType": "struct IWalletLinkBase.LinkRequest",
             "name": "rootWallet",
             "type": "tuple",
             "components": [
@@ -652,7 +652,7 @@
       {
         "inputs": [
           {
-            "internalType": "struct IWalletLinkBase.NonEVMLinkedWallet",
+            "internalType": "struct IWalletLinkBase.NonEVMLinkRequest",
             "name": "wallet",
             "type": "tuple",
             "components": [
@@ -715,7 +715,7 @@
       {
         "inputs": [
           {
-            "internalType": "struct IWalletLinkBase.LinkedWallet",
+            "internalType": "struct IWalletLinkBase.LinkRequest",
             "name": "wallet",
             "type": "tuple",
             "components": [
@@ -737,7 +737,7 @@
             ]
           },
           {
-            "internalType": "struct IWalletLinkBase.LinkedWallet",
+            "internalType": "struct IWalletLinkBase.LinkRequest",
             "name": "rootWallet",
             "type": "tuple",
             "components": [
@@ -782,7 +782,7 @@
             "type": "address"
           },
           {
-            "internalType": "struct IWalletLinkBase.LinkedWallet",
+            "internalType": "struct IWalletLinkBase.LinkRequest",
             "name": "rootWallet",
             "type": "tuple",
             "components": [
@@ -1051,7 +1051,6 @@
   "settings": {
     "remappings": [
       "@openzeppelin/=node_modules/@openzeppelin/",
-      "@openzeppelin/contracts/=node_modules/@openzeppelin/contracts/",
       "@prb/math/=node_modules/@prb/math/src/",
       "@prb/test/=node_modules/@prb/test/src/",
       "@river-build/diamond/=node_modules/@river-build/diamond/",
@@ -1079,26 +1078,26 @@
   },
   "sources": {
     "contracts/src/factory/facets/wallet-link/IWalletLink.sol": {
-      "keccak256": "0xb37a03936a2f15ce5c94fb9925594627cc65cfdd186c14eaff32d299ec569b5f",
+      "keccak256": "0x340519781cc31761ba1ec5fa51948138951235d56d8ae7e552056ffc834ece6e",
       "urls": [
-        "bzz-raw://085ef4945195eae38879c2d84e70a5a2f3cb02e6ad53e8ae37e6dd2591379327",
-        "dweb:/ipfs/QmRP7RH7sX1MUXFDwacLABBcVdGDoyKm36JbSfDDwXy4EW"
+        "bzz-raw://e1a8d1940dc669e45d2d54f3d0bc1475e3be1ef7108a0628c9545367211422a9",
+        "dweb:/ipfs/QmeeK4w8F6ittuVxGmHWy2GXmwv391kRQXqzLhjW53DqL1"
       ],
       "license": "MIT"
     },
     "contracts/src/factory/facets/wallet-link/WalletLink.sol": {
-      "keccak256": "0x57a8f7466025510e737d4b54ef4eaff2bcd8f48e758a62ac8f90a5ff13272acf",
+      "keccak256": "0xb940a6b1485d11a39bd7f088f4aadbdef2afb25a711c22ac95b119c2f2d40589",
       "urls": [
-        "bzz-raw://3f15e657bf76e543627b2f75992a89d84b801da6053b96e6fb0b622e1f3b9482",
-        "dweb:/ipfs/QmfQSpKDRYczvZKxJFWJnbAJxra5cY2sMxgLBzdfHzJ2h4"
+        "bzz-raw://7dd8eee8f5dbf8f544ed21a90dac74c91fb621ab52798f71737a10a913944767",
+        "dweb:/ipfs/QmWYZGk43Zhw3yAQg2xxJgmev1JvUAQWKjPEeRKskt7SQW"
       ],
       "license": "MIT"
     },
     "contracts/src/factory/facets/wallet-link/WalletLinkBase.sol": {
-      "keccak256": "0xa7d358aa0e4ad0641f44b4c9609b86f16063bd4e493366ab440a1ecfaa8b02b7",
+      "keccak256": "0xe6908943c7d75ab0fbaf3e0892261682a515964f2c0623d965bbb41f13050ed3",
       "urls": [
-        "bzz-raw://214853837f028da0881a284e5b16bbc8083f197e69b382046499ef4d58392953",
-        "dweb:/ipfs/QmbFpUpo7yQhh5EZTCb4L6c7ZPam3CXhdMLYVQQCWGAZX4"
+        "bzz-raw://fdf03d4f104fd6c7c6923a392f92db7c3293ba631d139f22cdfe1715b9969ad8",
+        "dweb:/ipfs/QmVpcm4Hhz8vumo3wVENgKN67iz2dNgXaXzYKDoa5yL9Z9"
       ],
       "license": "MIT"
     },

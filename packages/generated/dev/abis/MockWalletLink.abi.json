@@ -106,7 +106,7 @@
       {
         "name": "rootWallet",
         "type": "tuple",
-        "internalType": "struct IWalletLinkBase.LinkedWallet",
+        "internalType": "struct IWalletLinkBase.LinkRequest",
         "components": [
           {
             "name": "addr",
@@ -141,7 +141,7 @@
       {
         "name": "wallet",
         "type": "tuple",
-        "internalType": "struct IWalletLinkBase.LinkedWallet",
+        "internalType": "struct IWalletLinkBase.LinkRequest",
         "components": [
           {
             "name": "addr",
@@ -163,7 +163,7 @@
       {
         "name": "rootWallet",
         "type": "tuple",
-        "internalType": "struct IWalletLinkBase.LinkedWallet",
+        "internalType": "struct IWalletLinkBase.LinkRequest",
         "components": [
           {
             "name": "addr",

@@ -219,7 +219,7 @@ const _abi = [
       {
         name: "rootWallet",
         type: "tuple",
-        internalType: "struct IWalletLinkBase.LinkedWallet",
+        internalType: "struct IWalletLinkBase.LinkRequest",
         components: [
           {
             name: "addr",
@@ -254,7 +254,7 @@ const _abi = [
       {
         name: "wallet",
         type: "tuple",
-        internalType: "struct IWalletLinkBase.NonEVMLinkedWallet",
+        internalType: "struct IWalletLinkBase.NonEVMLinkRequest",
         components: [
           {
             name: "wallet",
@@ -318,7 +318,7 @@ const _abi = [
       {
         name: "wallet",
         type: "tuple",
-        internalType: "struct IWalletLinkBase.LinkedWallet",
+        internalType: "struct IWalletLinkBase.LinkRequest",
         components: [
           {
             name: "addr",
@@ -340,7 +340,7 @@ const _abi = [
       {
         name: "rootWallet",
         type: "tuple",
-        internalType: "struct IWalletLinkBase.LinkedWallet",
+        internalType: "struct IWalletLinkBase.LinkRequest",
         components: [
           {
             name: "addr",
@@ -387,7 +387,7 @@ const _abi = [
       {
         name: "rootWallet",
         type: "tuple",
-        internalType: "struct IWalletLinkBase.LinkedWallet",
+        internalType: "struct IWalletLinkBase.LinkRequest",
         components: [
           {
             name: "addr",

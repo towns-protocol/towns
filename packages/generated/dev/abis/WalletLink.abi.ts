@@ -229,7 +229,7 @@ export default [
       {
         "name": "rootWallet",
         "type": "tuple",
-        "internalType": "struct IWalletLinkBase.LinkedWallet",
+        "internalType": "struct IWalletLinkBase.LinkRequest",
         "components": [
           {
             "name": "addr",
@@ -264,7 +264,7 @@ export default [
       {
         "name": "wallet",
         "type": "tuple",
-        "internalType": "struct IWalletLinkBase.NonEVMLinkedWallet",
+        "internalType": "struct IWalletLinkBase.NonEVMLinkRequest",
         "components": [
           {
             "name": "wallet",
@@ -328,7 +328,7 @@ export default [
       {
         "name": "wallet",
         "type": "tuple",
-        "internalType": "struct IWalletLinkBase.LinkedWallet",
+        "internalType": "struct IWalletLinkBase.LinkRequest",
         "components": [
           {
             "name": "addr",
@@ -350,7 +350,7 @@ export default [
       {
         "name": "rootWallet",
         "type": "tuple",
-        "internalType": "struct IWalletLinkBase.LinkedWallet",
+        "internalType": "struct IWalletLinkBase.LinkRequest",
         "components": [
           {
             "name": "addr",
@@ -397,7 +397,7 @@ export default [
       {
         "name": "rootWallet",
         "type": "tuple",
-        "internalType": "struct IWalletLinkBase.LinkedWallet",
+        "internalType": "struct IWalletLinkBase.LinkRequest",
         "components": [
           {
             "name": "addr",
