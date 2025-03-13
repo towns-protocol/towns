@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
-	"gopkg.in/DataDog/dd-trace-go.v1/internal/log"
 
 	"github.com/towns-protocol/towns/core/config"
 	"github.com/towns-protocol/towns/core/contracts/base"
@@ -414,7 +413,7 @@ func (ca *chainAuth) IsEntitled(ctx context.Context, cfg *config.Config, args *C
 	)
 	if err != nil {
 		if args.kind == chainAuthKindIsSpaceMember {
-			log.Infow("Returning cached false IsEntitled result for IsSpaceMember", "args", args)
+			logging.FromCtx(ctx).Infow("Returning cached false IsEntitled result for IsSpaceMember", "args", args)
 		}
 		return false, AsRiverError(err).Func("IsEntitled")
 	}
