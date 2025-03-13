@@ -22,10 +22,10 @@ import {MockLegacyMembership} from "contracts/test/mocks/legacy/membership/MockL
 import {EntitlementTestUtils} from "contracts/test/utils/EntitlementTestUtils.sol";
 
 contract MembershipJoinSpaceTest is
-  MembershipBaseSetup,
-  EntitlementTestUtils,
+  IEntitlementGatedBase,
   IEntitlementCheckerBase,
-  IEntitlementGatedBase
+  EntitlementTestUtils,
+  MembershipBaseSetup
 {
   function test_joinSpaceOnly() external givenAliceHasMintedMembership {
     assertEq(membershipToken.balanceOf(alice), 1);
@@ -185,17 +185,16 @@ contract MembershipJoinSpaceTest is
 
     Vm.Log[] memory resultLogs = vm.getRecordedLogs(); // Retrieve the recorded logs
     // Check for posted result, and the emitted token mint event.
-    bool resultPosted = false;
-    bool tokenEmitted = false;
-    for (uint256 l; l < resultLogs.length; l++) {
-      if (resultLogs[l].topics[0] == RESULT_POSTED) {
-        resultPosted = true;
-      } else if (resultLogs[l].topics[0] == TOKEN_EMITTED) {
-        tokenEmitted = true;
-      }
-    }
-    assertTrue(resultPosted);
-    assertTrue(tokenEmitted);
+    assertGt(
+      _getMatchingLogCount(resultLogs, EntitlementCheckResultPosted.selector),
+      0,
+      "EntitlementCheckResultPosted should have been emitted"
+    );
+    assertGt(
+      _getMatchingLogCount(resultLogs, MembershipTokenIssued.selector),
+      0,
+      "MembershipTokenIssued should have been emitted"
+    );
 
     // Further node votes to the terminated transaction should cause reversion due to cleaned up txn.
     vm.expectRevert(
@@ -353,8 +352,6 @@ contract MembershipJoinSpaceTest is
     membership.joinSpace(bob);
     Vm.Log[] memory requestLogs = vm.getRecordedLogs(); // Retrieve the recorded logs
 
-    bool checkRequestedMatched = false;
-
     (
       ,
       ,
@@ -377,18 +374,16 @@ contract MembershipJoinSpaceTest is
         roleId,
         IEntitlementGatedBase.NodeVoteStatus.PASSED
       );
-
-      if (k == 2) {
-        Vm.Log[] memory resultLogs = vm.getRecordedLogs(); // Retrieve the recorded logs
-        for (uint256 l; l < resultLogs.length; l++) {
-          if (resultLogs[l].topics[0] == RESULT_POSTED) {
-            checkRequestedMatched = true;
-          }
-        }
-      }
     }
 
-    assertTrue(checkRequestedMatched);
+    assertGt(
+      _getMatchingLogCount(
+        vm.getRecordedLogs(),
+        EntitlementCheckResultPosted.selector
+      ),
+      0,
+      "EntitlementCheckResultPosted should have been emitted"
+    );
   }
 
   function test_reverWhen_joinSpaceLimitReached() external {
