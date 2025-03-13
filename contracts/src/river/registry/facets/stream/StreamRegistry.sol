@@ -45,7 +45,7 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
 
     emit StreamUpdated(
       StreamEventType.Allocate,
-      abi.encode(streamId, stream, genesisMiniblockHash, genesisMiniblock)
+      abi.encode(streamId, stream)
     );
 
     // deprecating
