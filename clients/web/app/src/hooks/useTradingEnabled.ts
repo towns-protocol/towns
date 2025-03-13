@@ -1,7 +1,6 @@
 import { useMemo } from 'react'
-import { SpaceAddressFromSpaceId, useTownsContext } from 'use-towns-client'
+import { SpaceAddressFromSpaceId, useChannelContext, useTownsContext } from 'use-towns-client'
 import { env } from '../utils/environment'
-import { useSpaceIdFromPathname } from './useSpaceInfoFromPathname'
 
 const useAllowedIds = () => {
     const allowedIds = useMemo(() => {
@@ -29,14 +28,14 @@ export const useShowWallet = () => {
 }
 
 export const useIsTradingEnabledInCurrentSpace = () => {
-    const currentSpaceId = useSpaceIdFromPathname()
+    const { spaceId } = useChannelContext()
     const { allowedIds } = useAllowedIds()
     const isTradingEnabled = useMemo(() => {
-        if (!currentSpaceId) {
+        if (!spaceId) {
             return false
         }
-        const spaceAddress = SpaceAddressFromSpaceId(currentSpaceId).toLowerCase()
+        const spaceAddress = SpaceAddressFromSpaceId(spaceId).toLowerCase()
         return allowedIds.has(spaceAddress)
-    }, [currentSpaceId, allowedIds])
+    }, [spaceId, allowedIds])
     return { isTradingEnabled: isTradingEnabled || env.DEV }
 }
