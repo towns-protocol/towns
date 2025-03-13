@@ -73,7 +73,7 @@ interface IWalletLinkBase {
 
   /// @notice Solana-specific wallet data
   /// @dev This will be encoded in extraData for Solana wallets with key being "extPubKey"
-  /// SolanaSpecificData memory solanaSpecificData = abi.decode(
+  /// SolanaSpecificData calldata solanaSpecificData = abi.decode(
   ///   nonEVMWallet.extraData[0].value,
   ///   (SolanaSpecificData)
   /// );
@@ -149,7 +149,7 @@ interface IWalletLink is IWalletLinkBase {
    * @param nonce a nonce used to prevent replay attacks, nonce must always be higher than previous nonce
    */
   function linkCallerToRootKey(
-    LinkedWalletData memory rootWallet,
+    LinkedWalletData calldata rootWallet,
     uint256 nonce
   ) external;
 
@@ -160,8 +160,8 @@ interface IWalletLink is IWalletLinkBase {
    * @param nonce a nonce used to prevent replay attacks, nonce must always be higher than previous nonce
    */
   function linkWalletToRootKey(
-    LinkedWalletData memory wallet,
-    LinkedWalletData memory rootWallet,
+    LinkedWalletData calldata wallet,
+    LinkedWalletData calldata rootWallet,
     uint256 nonce
   ) external;
 
@@ -184,7 +184,7 @@ interface IWalletLink is IWalletLinkBase {
    * @dev The function can only be called by an already linked wallet
    */
   function removeNonEVMWalletLink(
-    string memory addr,
+    string calldata addr,
     VirtualMachineType vmType,
     uint256 nonce
   ) external;
@@ -195,7 +195,7 @@ interface IWalletLink is IWalletLinkBase {
    */
   function removeLink(
     address wallet,
-    LinkedWalletData memory rootWallet,
+    LinkedWalletData calldata rootWallet,
     uint256 nonce
   ) external;
 
