@@ -146,7 +146,9 @@ abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
   ) internal {
     WalletLinkStorage.Layout storage ds = WalletLinkStorage.layout();
     address linkedWallet = msg.sender;
-    bytes32 walletHash = keccak256(abi.encode(nonEVMWallet.wallet));
+    bytes32 walletHash = keccak256(
+      abi.encode(nonEVMWallet.addr, nonEVMWallet.vmType)
+    );
 
     _validateNonEVMWalletInputs(ds, nonEVMWallet, walletHash);
 
@@ -155,10 +157,7 @@ abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
     WalletLib.RootWallet storage rootWallet = ds.rootWalletByRootKey[rootKey];
 
     if (rootWallet.exists(walletHash)) {
-      revert WalletLink__NonEVMWalletAlreadyLinked(
-        nonEVMWallet.wallet.addr,
-        rootKey
-      );
+      revert WalletLink__NonEVMWalletAlreadyLinked(nonEVMWallet.addr, rootKey);
     }
 
     // Check that we haven't reached the maximum number of linked wallets
@@ -166,8 +165,8 @@ abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
       revert WalletLink__MaxLinkedWalletsReached();
     }
 
-    if (nonEVMWallet.wallet.vmType == WalletLib.VirtualMachineType.SVM) {
-      _validateAddressFormatByVMType(nonEVMWallet.wallet);
+    if (nonEVMWallet.vmType == VirtualMachineType.SVM) {
+      _validateAddressFormatByVMType(nonEVMWallet.addr, nonEVMWallet.vmType);
       _verifySolanaWallet(nonEVMWallet);
     } else {
       CustomRevert.revertWith(
@@ -176,7 +175,7 @@ abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
     }
 
     ds.rootKeyByHash[walletHash] = rootKey;
-    rootWallet.addWallet(walletHash, nonEVMWallet.wallet);
+    rootWallet.addWallet(walletHash, nonEVMWallet.addr, nonEVMWallet.vmType);
 
     _useCheckedNonce(rootKey, nonce);
 
@@ -188,12 +187,13 @@ abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
 
   function _removeNonEVMWalletLink(
-    WalletLib.Wallet calldata wallet,
+    string memory addr,
+    VirtualMachineType vmType,
     uint256 nonce
   ) internal {
     WalletLinkStorage.Layout storage ds = WalletLinkStorage.layout();
     address linkedWallet = msg.sender;
-    bytes32 walletHash = keccak256(abi.encode(wallet));
+    bytes32 walletHash = keccak256(abi.encode(addr, vmType));
     address rootKey = ds.rootKeyByWallet[linkedWallet];
 
     if (rootKey == address(0)) {
@@ -203,7 +203,7 @@ abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
     WalletLib.RootWallet storage rootWallet = ds.rootWalletByRootKey[rootKey];
 
     if (!rootWallet.exists(walletHash)) {
-      revert WalletLink__NonEVMWalletNotLinked(wallet.addr, rootKey);
+      revert WalletLink__NonEVMWalletNotLinked(addr, rootKey);
     }
 
     // Check that the nonce is higher than the last nonce used
@@ -324,9 +324,12 @@ abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
       );
 
     // First pass: count total delegations add to totalCount
+    allDelegations = _getDelegationsForWallets(
+      IDelegateRegistry(delegateRegistry),
+      linkedWallets
+    );
+
     for (uint256 i; i < linkedWalletsLength; ++i) {
-      allDelegations[i] = IDelegateRegistry(delegateRegistry)
-        .getIncomingDelegations(linkedWallets[i]);
       IDelegateRegistry.Delegation[] memory delegations = allDelegations[i];
 
       uint256 delegationsLength = delegations.length;
@@ -372,41 +375,77 @@ abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
   function _explicitWalletsByRootKey(
     address rootKey,
     WalletQueryOptions calldata options
-  ) internal view returns (WalletLib.Wallet[] memory wallets) {
+  ) internal view returns (WalletData[] memory wallets) {
+    // Single storage read for layout
     WalletLinkStorage.Layout storage ds = WalletLinkStorage.layout();
-    WalletLib.RootWallet storage rootWallet = ds.rootWalletByRootKey[rootKey];
+    EnumerableSet.AddressSet storage linkedWalletsSet = ds.walletsByRootKey[
+      rootKey
+    ];
 
-    // Get all EVM linked wallets
-    address[] memory linkedWallets;
+    uint256 linkedWalletsLength = linkedWalletsSet.length();
+    if (linkedWalletsLength == 0) {
+      return new WalletData[](0);
+    }
+
+    // Get linked wallets and count total delegations
+    address[] memory linkedWallets = linkedWalletsSet.values();
+    uint256 totalCount = linkedWalletsLength;
+
+    IDelegateRegistry.Delegation[][] memory allDelegations;
+
     if (options.includeDelegations) {
-      linkedWallets = _getWalletsByRootKeyWithDelegations(rootKey);
-    } else {
-      linkedWallets = ds.walletsByRootKey[rootKey].values();
+      IDelegateRegistry delegateRegistry = IDelegateRegistry(
+        ds.dependencies[DELEGATE_REGISTRY_V2]
+      );
+      allDelegations = _getDelegationsForWallets(
+        delegateRegistry,
+        linkedWallets
+      );
+      for (uint256 i; i < linkedWalletsLength; ++i) {
+        IDelegateRegistry.Delegation[] memory delegations = allDelegations[i];
+        uint256 delegationsLength = delegations.length;
+        for (uint256 j; j < delegationsLength; ++j) {
+          if (delegations[j].type_ == IDelegateRegistry.DelegationType.ALL) {
+            ++totalCount;
+          }
+        }
+      }
     }
 
-    // Get all non-EVM linked wallets
-    bytes32[] memory nonEVMLinkedWallets = rootWallet.walletHashes.values();
+    wallets = new WalletData[](totalCount);
+    address defaultWallet = ds.rootWalletByRootKey[rootKey].defaultWallet;
 
-    // Calculate total length for combined array
-    uint256 evmLength = linkedWallets.length;
-    uint256 nonEVMLength = nonEVMLinkedWallets.length;
-    uint256 totalLength = evmLength + nonEVMLength;
+    uint256 currentIndex = 0;
 
-    wallets = new WalletLib.Wallet[](totalLength);
-
-    for (uint256 i; i < evmLength; ++i) {
-      wallets[i] = WalletLib.Wallet({
-        addr: LibString.toHexString(linkedWallets[i]),
-        vmType: WalletLib.VirtualMachineType.EVM
+    for (uint256 i; i < linkedWalletsLength; ++i) {
+      address wallet = linkedWallets[i];
+      wallets[currentIndex++] = WalletData({
+        addr: LibString.toHexString(wallet),
+        vmType: VirtualMachineType.EVM,
+        walletType: WalletType({
+          linked: true,
+          delegated: false,
+          defaultWallet: defaultWallet == wallet
+        })
       });
-    }
 
-    for (uint256 i; i < nonEVMLength; ++i) {
-      WalletLib.Wallet memory wallet = rootWallet.walletByHash[
-        nonEVMLinkedWallets[i]
-      ];
-      uint256 index = evmLength + i;
-      wallets[index] = wallet;
+      if (options.includeDelegations) {
+        IDelegateRegistry.Delegation[] memory delegations = allDelegations[i];
+        uint256 delegationsLength = delegations.length;
+        for (uint256 j; j < delegationsLength; ++j) {
+          if (delegations[j].type_ == IDelegateRegistry.DelegationType.ALL) {
+            wallets[currentIndex++] = WalletData({
+              addr: LibString.toHexString(delegations[j].from),
+              vmType: VirtualMachineType.EVM,
+              walletType: WalletType({
+                linked: false,
+                delegated: true,
+                defaultWallet: false
+              })
+            });
+          }
+        }
+      }
     }
   }
 
@@ -498,12 +537,12 @@ abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
     address caller = msg.sender;
 
     // Check that the wallet address string is not empty
-    if (bytes(nonEVMWallet.wallet.addr).length == 0) {
+    if (bytes(nonEVMWallet.addr).length == 0) {
       revert WalletLink__InvalidNonEVMAddress();
     }
 
     // Limit wallet address length
-    if (bytes(nonEVMWallet.wallet.addr).length > 100) {
+    if (bytes(nonEVMWallet.addr).length > 100) {
       revert WalletLink__InvalidNonEVMAddress();
     }
 
@@ -572,7 +611,7 @@ abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
     // Check that the extPubKey and the wallet address match
     if (
       !SolanaUtils.isValidSolanaAddress(
-        nonEVMWallet.wallet.addr,
+        nonEVMWallet.addr,
         solanaSpecificData.extPubKey
       )
     ) {
@@ -599,11 +638,12 @@ abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
   }
 
   function _validateAddressFormatByVMType(
-    WalletLib.Wallet calldata wallet
+    string memory addr,
+    VirtualMachineType vmType
   ) internal pure {
-    if (wallet.vmType == WalletLib.VirtualMachineType.SVM) {
+    if (vmType == VirtualMachineType.SVM) {
       // Validate Solana address format (base58, 32-44 chars)
-      if (bytes(wallet.addr).length < 32 || bytes(wallet.addr).length > 44) {
+      if (bytes(addr).length < 32 || bytes(addr).length > 44) {
         CustomRevert.revertWith(WalletLink__InvalidNonEVMAddress.selector);
       }
     }
@@ -626,5 +666,26 @@ abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
           nonce
         )
       );
+  }
+
+  function _getDelegationsForWallets(
+    IDelegateRegistry delegateRegistry,
+    address[] memory wallets
+  )
+    internal
+    view
+    returns (IDelegateRegistry.Delegation[][] memory delegations)
+  {
+    uint256 walletsLength = wallets.length;
+    IDelegateRegistry.Delegation[][]
+      memory allDelegations = new IDelegateRegistry.Delegation[][](
+        walletsLength
+      );
+
+    for (uint256 i; i < walletsLength; ++i) {
+      allDelegations[i] = delegateRegistry.getIncomingDelegations(wallets[i]);
+    }
+
+    return allDelegations;
   }
 }

@@ -128,11 +128,6 @@ contract WalletLinkTest is IWalletLinkBase, BaseSetup, DeployBase {
       consentMessage
     );
 
-    WalletLib.Wallet memory solanaWallet = WalletLib.Wallet({
-      addr: solanaAddress,
-      vmType: WalletLib.VirtualMachineType.SVM
-    });
-
     VMSpecificData[] memory extraData = new VMSpecificData[](1);
     extraData[0] = VMSpecificData({
       key: "extPubKey",
@@ -140,9 +135,10 @@ contract WalletLinkTest is IWalletLinkBase, BaseSetup, DeployBase {
     });
 
     NonEVMLinkedWallet memory nonEVMWallet = NonEVMLinkedWallet({
-      wallet: solanaWallet,
+      addr: solanaAddress,
       signature: abi.encodePacked(r, s),
       message: consentMessage,
+      vmType: VirtualMachineType.SVM,
       extraData: extraData
     });
 
@@ -168,12 +164,17 @@ contract WalletLinkTest is IWalletLinkBase, BaseSetup, DeployBase {
       bytes32(extPubKey[4])
     );
 
-    WalletLib.Wallet memory solanaWallet = WalletLib.Wallet({
+    NonEVMLinkedWallet memory nonEVMWallet = NonEVMLinkedWallet({
       addr: solanaAddress,
-      vmType: WalletLib.VirtualMachineType.SVM
+      signature: "",
+      message: "",
+      vmType: VirtualMachineType.SVM,
+      extraData: new VMSpecificData[](0)
     });
 
-    bytes32 walletHash = keccak256(abi.encode(solanaWallet));
+    bytes32 walletHash = keccak256(
+      abi.encode(nonEVMWallet.addr, nonEVMWallet.vmType)
+    );
 
     assertTrue(
       walletLink.checkIfNonEVMWalletLinked(rootWallet.addr, walletHash)
@@ -181,15 +182,11 @@ contract WalletLinkTest is IWalletLinkBase, BaseSetup, DeployBase {
   }
 
   function test_revertWhen_linkNonEVMWalletToRootKeyEmptyAddress() external {
-    WalletLib.Wallet memory solanaWallet = WalletLib.Wallet({
-      addr: "",
-      vmType: WalletLib.VirtualMachineType.SVM
-    });
-
     NonEVMLinkedWallet memory nonEVMWallet = NonEVMLinkedWallet({
-      wallet: solanaWallet,
+      addr: "",
       signature: "",
       message: "",
+      vmType: VirtualMachineType.SVM,
       extraData: new VMSpecificData[](0)
     });
 
@@ -202,15 +199,11 @@ contract WalletLinkTest is IWalletLinkBase, BaseSetup, DeployBase {
     string
       memory longAddress = "3p5wau6jqBV8sQswjN1HEeSZLjv5TB173zBgupGQD4we3p5wau6jqBV8sQswjN1HEeSZLjv5TB173zBgupGQD4we3p5wau6jqBV8sQswjN1HEeSZLjv5TB173zBgupGQD4we3p5wau6jqBV8sQswjN1HEeSZLjv5TB173zBgupGQD4we3p5wau6jqBV8sQswjN1HEeSZLjv5TB173zBgupGQD4we3p5wau6jqBV8sQswjN1HEeSZLjv5TB173zBgupGQD4we";
 
-    WalletLib.Wallet memory solanaWallet = WalletLib.Wallet({
-      addr: longAddress,
-      vmType: WalletLib.VirtualMachineType.SVM
-    });
-
     NonEVMLinkedWallet memory nonEVMWallet = NonEVMLinkedWallet({
-      wallet: solanaWallet,
+      addr: longAddress,
       signature: "",
       message: "",
+      vmType: VirtualMachineType.SVM,
       extraData: new VMSpecificData[](0)
     });
 
@@ -220,15 +213,11 @@ contract WalletLinkTest is IWalletLinkBase, BaseSetup, DeployBase {
   }
 
   function test_revertWhen_linkNonEVMWalletToRootKeyNotLinked() external {
-    WalletLib.Wallet memory solanaWallet = WalletLib.Wallet({
-      addr: SOLANA_WALLET_ADDRESS,
-      vmType: WalletLib.VirtualMachineType.SVM
-    });
-
     NonEVMLinkedWallet memory nonEVMWallet = NonEVMLinkedWallet({
-      wallet: solanaWallet,
+      addr: SOLANA_WALLET_ADDRESS,
       signature: "",
       message: "",
+      vmType: VirtualMachineType.SVM,
       extraData: new VMSpecificData[](0)
     });
 
@@ -283,11 +272,6 @@ contract WalletLinkTest is IWalletLinkBase, BaseSetup, DeployBase {
       consentMessage
     );
 
-    WalletLib.Wallet memory solanaWallet = WalletLib.Wallet({
-      addr: solanaAddress,
-      vmType: WalletLib.VirtualMachineType.SVM
-    });
-
     VMSpecificData[] memory extraData = new VMSpecificData[](1);
     extraData[0] = VMSpecificData({
       key: "extPubKey",
@@ -295,9 +279,10 @@ contract WalletLinkTest is IWalletLinkBase, BaseSetup, DeployBase {
     });
 
     NonEVMLinkedWallet memory nonEVMWallet = NonEVMLinkedWallet({
-      wallet: solanaWallet,
+      addr: solanaAddress,
       signature: abi.encodePacked(r, s),
       message: consentMessage,
+      vmType: VirtualMachineType.SVM,
       extraData: extraData
     });
 
@@ -343,7 +328,7 @@ contract WalletLinkTest is IWalletLinkBase, BaseSetup, DeployBase {
     vm.expectRevert(
       abi.encodeWithSelector(
         WalletLink__NonEVMWalletAlreadyLinked.selector,
-        nonEVMWallet.wallet.addr,
+        nonEVMWallet.addr,
         rootWallet.addr
       )
     );
@@ -383,7 +368,7 @@ contract WalletLinkTest is IWalletLinkBase, BaseSetup, DeployBase {
 
     uint256 nonce = walletLink.getLatestNonceForRootKey(rootWallet.addr);
 
-    nonEVMWallet.wallet.vmType = WalletLib.VirtualMachineType.UNKNOWN;
+    nonEVMWallet.vmType = VirtualMachineType.UNKNOWN;
 
     vm.prank(wallet.addr);
     vm.expectRevert(WalletLink__UnsupportedVMType.selector);
@@ -399,9 +384,7 @@ contract WalletLinkTest is IWalletLinkBase, BaseSetup, DeployBase {
       rootWallet.addr
     );
 
-    nonEVMWallet
-      .wallet
-      .addr = "3p5wau6jqBV8sQswjN1HEeSZLjv5TB173zBgupGQD4weinvalid";
+    nonEVMWallet.addr = "3p5wau6jqBV8sQswjN1HEeSZLjv5TB173zBgupGQD4weinvalid";
 
     vm.prank(wallet.addr);
     vm.expectRevert(WalletLink__InvalidNonEVMAddress.selector);
@@ -417,7 +400,7 @@ contract WalletLinkTest is IWalletLinkBase, BaseSetup, DeployBase {
       rootWallet.addr
     );
 
-    nonEVMWallet.wallet.addr = SOLANA_WALLET_ADDRESS;
+    nonEVMWallet.addr = SOLANA_WALLET_ADDRESS;
 
     vm.prank(wallet.addr);
     vm.expectRevert(WalletLink__AddressMismatch.selector);
@@ -1085,11 +1068,10 @@ contract WalletLinkTest is IWalletLinkBase, BaseSetup, DeployBase {
     vm.prank(coldWallet);
     mockDelegationRegistry.delegateAll(wallet.addr);
 
-    WalletLib.Wallet[] memory walletMetadata = walletLink
-      .explicitWalletsByRootKey(
-        rootWallet.addr,
-        WalletQueryOptions({includeDelegations: true})
-      );
+    WalletData[] memory walletMetadata = walletLink.explicitWalletsByRootKey(
+      rootWallet.addr,
+      WalletQueryOptions({includeDelegations: true})
+    );
 
     address[] memory wallets = new address[](walletMetadata.length);
     for (uint256 i; i < walletMetadata.length; ++i) {
@@ -1124,7 +1106,7 @@ contract WalletLinkTest is IWalletLinkBase, BaseSetup, DeployBase {
     walletLink.setDefaultWallet(address(simpleAccount));
     vm.stopPrank();
 
-    WalletLib.Wallet[] memory wallets = walletLink.explicitWalletsByRootKey(
+    WalletData[] memory wallets = walletLink.explicitWalletsByRootKey(
       rootWallet.addr,
       WalletQueryOptions({includeDelegations: false})
     );
@@ -1159,11 +1141,6 @@ contract WalletLinkTest is IWalletLinkBase, BaseSetup, DeployBase {
       consentMessage
     );
 
-    WalletLib.Wallet memory solanaWallet = WalletLib.Wallet({
-      addr: solanaAddress,
-      vmType: WalletLib.VirtualMachineType.SVM
-    });
-
     VMSpecificData[] memory extraData = new VMSpecificData[](1);
     extraData[0] = VMSpecificData({
       key: "extPubKey",
@@ -1171,9 +1148,10 @@ contract WalletLinkTest is IWalletLinkBase, BaseSetup, DeployBase {
     });
 
     NonEVMLinkedWallet memory nonEVMWallet = NonEVMLinkedWallet({
-      wallet: solanaWallet,
+      addr: solanaAddress,
       signature: abi.encodePacked(r, s),
       message: consentMessage,
+      vmType: VirtualMachineType.SVM,
       extraData: extraData
     });
 

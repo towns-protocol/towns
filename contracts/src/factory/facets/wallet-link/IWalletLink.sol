@@ -4,10 +4,19 @@ pragma solidity ^0.8.23;
 // interfaces
 
 // libraries
-import {WalletLib} from "./libraries/WalletLib.sol";
+
 // contracts
 
 interface IWalletLinkBase {
+  enum VirtualMachineType {
+    EVM, // Ethereum Virtual Machine (Ethereum, BSC, Polygon, etc.)
+    SVM, // Solana Virtual Machine
+    MOVE, // Move Virtual Machine (Aptos, Sui)
+    CVM, // Cosmos Virtual Machine
+    WASM, // WebAssembly VM (Polkadot, NEAR)
+    AVM, // Avalanche Virtual Machine
+    UNKNOWN // For future compatibility
+  }
   // =============================================================
   //                           Structs
   // =============================================================
@@ -19,17 +28,18 @@ interface IWalletLinkBase {
     string message;
   }
 
+  /// @notice Struct for non-EVM linked wallets
+  struct NonEVMLinkedWallet {
+    string addr;
+    bytes signature; // Signature in the VM's native format
+    string message; // Message that was signed
+    VirtualMachineType vmType;
+    VMSpecificData[] extraData; // Flexible array for VM-specific requirements
+  }
+
   struct VMSpecificData {
     string key;
     bytes value;
-  }
-
-  /// @notice Struct for non-EVM linked wallets
-  struct NonEVMLinkedWallet {
-    WalletLib.Wallet wallet;
-    bytes signature; // Signature in the VM's native format
-    string message; // Message that was signed
-    VMSpecificData[] extraData; // Flexible array for VM-specific requirements
   }
 
   /// @notice Struct for Solana wallet linking requirements
@@ -44,6 +54,18 @@ interface IWalletLinkBase {
 
   struct WalletQueryOptions {
     bool includeDelegations;
+  }
+
+  struct WalletType {
+    bool linked;
+    bool delegated;
+    bool defaultWallet;
+  }
+
+  struct WalletData {
+    string addr;
+    VirtualMachineType vmType;
+    WalletType walletType;
   }
 
   // =============================================================
@@ -134,12 +156,14 @@ interface IWalletLink is IWalletLinkBase {
 
   /**
    * @notice Remove a non-EVM wallet link from a root wallet
-   * @param wallet the wallet being removed from the root wallet
+   * @param addr the address of the wallet being removed from the root wallet
+   * @param vmType the type of VM the wallet belongs to
    * @param nonce a nonce used to prevent replay attacks, nonce must always be higher than previous nonce
    * @dev The function can only be called by an already linked wallet
    */
   function removeNonEVMWalletLink(
-    WalletLib.Wallet memory wallet,
+    string memory addr,
+    VirtualMachineType vmType,
     uint256 nonce
   ) external;
 
@@ -203,7 +227,7 @@ interface IWalletLink is IWalletLinkBase {
   function explicitWalletsByRootKey(
     address rootKey,
     WalletQueryOptions calldata options
-  ) external view returns (WalletLib.Wallet[] memory wallets);
+  ) external view returns (WalletData[] memory wallets);
 
   /**
    * @notice Returns the root key for a given wallet

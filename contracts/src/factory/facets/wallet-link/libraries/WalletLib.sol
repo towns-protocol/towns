@@ -2,28 +2,18 @@
 pragma solidity ^0.8.23;
 
 // interfaces
+import {IWalletLinkBase} from "../IWalletLink.sol";
 
 // libraries
-
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 // contracts
 
 library WalletLib {
   using EnumerableSet for EnumerableSet.Bytes32Set;
 
-  enum VirtualMachineType {
-    EVM, // Ethereum Virtual Machine (Ethereum, BSC, Polygon, etc.)
-    SVM, // Solana Virtual Machine
-    MOVE, // Move Virtual Machine (Aptos, Sui)
-    CVM, // Cosmos Virtual Machine
-    WASM, // WebAssembly VM (Polkadot, NEAR)
-    AVM, // Avalanche Virtual Machine
-    UNKNOWN // For future compatibility
-  }
-
   struct Wallet {
     string addr; // Base58/Bech32/etc. encoded address
-    VirtualMachineType vmType; // Type of VM this wallet belongs to
+    IWalletLinkBase.VirtualMachineType vmType; // Type of VM this wallet belongs to
   }
 
   struct RootWallet {
@@ -35,10 +25,11 @@ library WalletLib {
   function addWallet(
     RootWallet storage self,
     bytes32 walletHash,
-    Wallet calldata wallet
+    string memory addr,
+    IWalletLinkBase.VirtualMachineType vmType
   ) internal {
     self.walletHashes.add(walletHash);
-    self.walletByHash[walletHash] = wallet;
+    self.walletByHash[walletHash] = Wallet(addr, vmType);
   }
 
   function removeWallet(RootWallet storage self, bytes32 walletHash) internal {

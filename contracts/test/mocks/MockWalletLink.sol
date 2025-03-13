@@ -2,14 +2,14 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {IWalletLinkBase} from "contracts/src/factory/facets/wallet-link/IWalletLink.sol";
+import {IWalletLink} from "contracts/src/factory/facets/wallet-link/IWalletLink.sol";
 
 // libraries
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-
+import {LibString} from "solady/utils/LibString.sol";
 // contracts
 
-contract MockWalletLink is IWalletLinkBase {
+contract MockWalletLink is IWalletLink {
   using EnumerableSet for EnumerableSet.AddressSet;
 
   function linkCallerToRootKey(
@@ -66,6 +66,93 @@ contract MockWalletLink is IWalletLinkBase {
   function getLatestNonceForRootKey(address) external pure returns (uint256) {
     return 0;
   }
+
+  function removeCallerLink() external {
+    MockWalletLinkStorage.Layout storage ds = MockWalletLinkStorage.layout();
+    address wallet = msg.sender;
+    address rootKey = ds.rootKeyByWallet[wallet];
+    ds.walletsByRootKey[rootKey].remove(wallet);
+    ds.rootKeyByWallet[wallet] = address(0);
+  }
+
+  function linkNonEVMWalletToRootKey(
+    NonEVMLinkedWallet calldata wallet,
+    uint256
+  ) external {
+    MockWalletLinkStorage.Layout storage ds = MockWalletLinkStorage.layout();
+    address rootKey = ds.rootKeyByWallet[msg.sender];
+    bytes32 walletHash = keccak256(abi.encode(wallet.addr, wallet.vmType));
+    ds.nonEVMWallets[rootKey][walletHash] = true;
+  }
+
+  function checkIfNonEVMWalletLinked(
+    address rootKey,
+    bytes32 walletHash
+  ) external view returns (bool) {
+    return MockWalletLinkStorage.layout().nonEVMWallets[rootKey][walletHash];
+  }
+
+  function removeNonEVMWalletLink(
+    string memory addr,
+    VirtualMachineType vmType,
+    uint256
+  ) external {
+    MockWalletLinkStorage.Layout storage ds = MockWalletLinkStorage.layout();
+    address rootKey = ds.rootKeyByWallet[msg.sender];
+    bytes32 walletHash = keccak256(abi.encode(addr, vmType));
+    ds.nonEVMWallets[rootKey][walletHash] = false;
+  }
+
+  function removeLink(address wallet, LinkedWallet memory, uint256) external {
+    MockWalletLinkStorage.Layout storage ds = MockWalletLinkStorage.layout();
+    address rootKey = ds.rootKeyByWallet[msg.sender];
+    ds.walletsByRootKey[rootKey].remove(wallet);
+    ds.rootKeyByWallet[wallet] = address(0);
+  }
+
+  function explicitWalletsByRootKey(
+    address rootKey,
+    WalletQueryOptions calldata
+  ) external view returns (WalletData[] memory walletData) {
+    MockWalletLinkStorage.Layout storage ds = MockWalletLinkStorage.layout();
+
+    address[] memory wallets = ds.walletsByRootKey[rootKey].values();
+    walletData = new WalletData[](wallets.length);
+
+    for (uint256 i = 0; i < wallets.length; i++) {
+      walletData[i] = WalletData({
+        addr: LibString.toHexString(wallets[i]),
+        vmType: VirtualMachineType.SVM,
+        walletType: WalletType({
+          linked: true,
+          delegated: false,
+          defaultWallet: false
+        })
+      });
+    }
+    return walletData;
+  }
+
+  function setDefaultWallet(address defaultWallet) external {
+    MockWalletLinkStorage.Layout storage ds = MockWalletLinkStorage.layout();
+    ds.defaultWalletByRootKey[msg.sender] = defaultWallet;
+  }
+
+  function getDefaultWallet(address rootKey) external view returns (address) {
+    return MockWalletLinkStorage.layout().defaultWalletByRootKey[rootKey];
+  }
+
+  function setDependency(
+    bytes32 dependency,
+    address dependencyAddress
+  ) external {
+    MockWalletLinkStorage.Layout storage ds = MockWalletLinkStorage.layout();
+    ds.dependencies[dependency] = dependencyAddress;
+  }
+
+  function getDependency(bytes32 dependency) external view returns (address) {
+    return MockWalletLinkStorage.layout().dependencies[dependency];
+  }
 }
 
 library MockWalletLinkStorage {
@@ -78,6 +165,9 @@ library MockWalletLinkStorage {
     mapping(address => EnumerableSet.AddressSet) walletsByRootKey;
     // mapping Ethereum Wallets to RootKey is a 1 to 1 relationship, a wallet can only be linked to 1 root key
     mapping(address => address) rootKeyByWallet;
+    mapping(address => address) defaultWalletByRootKey;
+    mapping(address => mapping(bytes32 => bool)) nonEVMWallets;
+    mapping(bytes32 => address) dependencies;
   }
 
   function layout() internal pure returns (Layout storage s) {
