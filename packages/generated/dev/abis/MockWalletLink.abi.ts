@@ -58,15 +58,8 @@ export default [
       },
       {
         "name": "",
-        "type": "tuple",
-        "internalType": "struct IWalletLinkBase.WalletQueryOptions",
-        "components": [
-          {
-            "name": "includeDelegations",
-            "type": "bool",
-            "internalType": "bool"
-          }
-        ]
+        "type": "bool",
+        "internalType": "bool"
       }
     ],
     "outputs": [
@@ -87,25 +80,8 @@ export default [
           },
           {
             "name": "walletType",
-            "type": "tuple",
-            "internalType": "struct IWalletLinkBase.WalletType",
-            "components": [
-              {
-                "name": "linked",
-                "type": "bool",
-                "internalType": "bool"
-              },
-              {
-                "name": "delegated",
-                "type": "bool",
-                "internalType": "bool"
-              },
-              {
-                "name": "defaultWallet",
-                "type": "bool",
-                "internalType": "bool"
-              }
-            ]
+            "type": "uint8",
+            "internalType": "uint8"
           }
         ]
       }

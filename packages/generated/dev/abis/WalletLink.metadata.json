@@ -462,71 +462,6 @@
         "inputs": [
           {
             "internalType": "address",
-            "name": "rootKey",
-            "type": "address"
-          },
-          {
-            "internalType": "struct IWalletLinkBase.WalletQueryOptions",
-            "name": "options",
-            "type": "tuple",
-            "components": [
-              {
-                "internalType": "bool",
-                "name": "includeDelegations",
-                "type": "bool"
-              }
-            ]
-          }
-        ],
-        "stateMutability": "view",
-        "type": "function",
-        "name": "explicitWalletsByRootKey",
-        "outputs": [
-          {
-            "internalType": "struct IWalletLinkBase.WalletData[]",
-            "name": "wallets",
-            "type": "tuple[]",
-            "components": [
-              {
-                "internalType": "string",
-                "name": "addr",
-                "type": "string"
-              },
-              {
-                "internalType": "enum IWalletLinkBase.VirtualMachineType",
-                "name": "vmType",
-                "type": "uint8"
-              },
-              {
-                "internalType": "struct IWalletLinkBase.WalletType",
-                "name": "walletType",
-                "type": "tuple",
-                "components": [
-                  {
-                    "internalType": "bool",
-                    "name": "linked",
-                    "type": "bool"
-                  },
-                  {
-                    "internalType": "bool",
-                    "name": "delegated",
-                    "type": "bool"
-                  },
-                  {
-                    "internalType": "bool",
-                    "name": "defaultWallet",
-                    "type": "bool"
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "inputs": [
-          {
-            "internalType": "address",
             "name": "rootWallet",
             "type": "address"
           }
@@ -901,14 +836,6 @@
             "_0": "areLinked boolean if they are linked together"
           }
         },
-        "explicitWalletsByRootKey(address,(bool))": {
-          "params": {
-            "rootKey": "the public key of the users rootkey to find associated wallets for"
-          },
-          "returns": {
-            "wallets": "an array of wallets with their metadata"
-          }
-        },
         "getDefaultWallet(address)": {
           "params": {
             "rootKey": "the public key of the users rootkey to find associated wallets for"
@@ -1008,9 +935,6 @@
         "checkIfNonEVMWalletLinked(address,bytes32)": {
           "notice": "checks if a root key and non-EVM wallet are linked"
         },
-        "explicitWalletsByRootKey(address,(bool))": {
-          "notice": "Returns all wallets linked to a root key with their metadata"
-        },
         "getDefaultWallet(address)": {
           "notice": "Returns the default wallet for a root key"
         },
@@ -1088,26 +1012,26 @@
   },
   "sources": {
     "contracts/src/factory/facets/wallet-link/IWalletLink.sol": {
-      "keccak256": "0x8c2c12bddb442cdea9a0e6e12b88f64d9d5eab72c3e7b7d80aa8939d5eb3ab9a",
+      "keccak256": "0x1ad33f2e7f0c9489b95e6b7594018d1ea0ea407086fec997d1f367508c233282",
       "urls": [
-        "bzz-raw://affdafbedd75a2ca2a940d4e81c82e24aa9f78056e83d45aeebaf7f77f25d75e",
-        "dweb:/ipfs/QmUUEsows6sGcN7jffcfKmEER8iPDJ6GvMV4iPAuwFhLbA"
+        "bzz-raw://bc633b1767f93e59cd64bd9b6bedde7dece8bfe6d38155c9f4d0258116f246fa",
+        "dweb:/ipfs/QmZpCmijjGr4rgXT2RJywqCk5jy8CEmUfzAsnUBPx9GcyG"
       ],
       "license": "MIT"
     },
     "contracts/src/factory/facets/wallet-link/WalletLink.sol": {
-      "keccak256": "0x993b6f5d2d744df16329b942887fff2019a6ff9452ef20e32d8bda800e295cc4",
+      "keccak256": "0xacee4b7a2ef53233edd88e9fb5a916c17d03d7fd1b883f9d919d148206f0e4f3",
       "urls": [
-        "bzz-raw://b8e1669dbb8ec58fdae1392195fc7ce0bbe6116a1fe6153156c3bde4560884ef",
-        "dweb:/ipfs/Qmab7FC47LRFDzRiQjMrUQNPXgf3VpE8neFMD1LbA3fvSP"
+        "bzz-raw://9d53b67f8424dc18d482a45e4a1a6de03fd75b5451f3fc70231491495ce20676",
+        "dweb:/ipfs/QmTvF6EQ7QtsYJv8QXVsrXWqbdSb61LtLQt58dtLSRepeE"
       ],
       "license": "MIT"
     },
     "contracts/src/factory/facets/wallet-link/WalletLinkBase.sol": {
-      "keccak256": "0x4ad2997bdde50810888b03fc539434989e424a39d51bb3f727f0698d2d5d1855",
+      "keccak256": "0x97ee6e3a7d7d76edc6d3f48c6d85161d9a0005f1d7e0a6b971f381abb17208fd",
       "urls": [
-        "bzz-raw://b3c47e589148998a695a661fb44d98b676fd056b6a0267a5c470d7a4317a0267",
-        "dweb:/ipfs/QmT3as6RaYvJrafdgqBEF7tEK4fZEons3P41NPCY81ZExy"
+        "bzz-raw://9ff72d299cafa8c71272c7c80f779f0a316c7d8d83daed85d58f6a32a289c17c",
+        "dweb:/ipfs/QmT56zzvk5KY84YxUCYSyLrR2U5hfD6ZFfKMXM4vVdqucJ"
       ],
       "license": "MIT"
     },
@@ -1148,6 +1072,14 @@
       "urls": [
         "bzz-raw://687989ba3f567dce41e3de6c1f3f933743839d2d1f19b456ec00facbd69ab345",
         "dweb:/ipfs/QmXxResDrGciqa7PV9RTyUDmHDwXnSP3LwckhikQwk1ZpW"
+      ],
+      "license": "MIT"
+    },
+    "contracts/src/factory/facets/wallet-link/libraries/WalletLinkLib.sol": {
+      "keccak256": "0x95c464beec679d113c3a22ef161734a55937426b2d12b2224169f00eb589cf8b",
+      "urls": [
+        "bzz-raw://6cc7b5546627f4987d8f844e9f599a9b22530987058a84e1f412aadc01b1416e",
+        "dweb:/ipfs/QmW2riDPhWhcjDApbAGNKYHCBVpS4HdEzDcJVvERMUQSFw"
       ],
       "license": "MIT"
     },
