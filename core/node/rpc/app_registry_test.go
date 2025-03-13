@@ -302,12 +302,11 @@ func TestAppRegistry_ForwardsChannelEvents(t *testing.T) {
 	}
 	safeCreateUserStreams(t, tester.ctx, participant, client, &participantEncryptionDevice)
 
-	// participant creates a space and a channel
+	// The participant creates a space and a channel.
 	spaceId := testutils.FakeStreamId(STREAM_SPACE_BIN)
 	_, _, err := createSpace(tester.ctx, participant, client, spaceId, nil)
 	require.NoError(err)
 
-	// Create a channel in the space
 	channelId := StreamId{STREAM_CHANNEL_BIN}
 	copy(channelId[1:21], spaceId[1:21])
 	_, err = rand.Read(channelId[21:])
@@ -317,7 +316,7 @@ func TestAppRegistry_ForwardsChannelEvents(t *testing.T) {
 	require.NoError(err)
 	require.NotNil(channel)
 
-	// Bot adds self to channel
+	// Bot adds itself to channel
 	err = joinChannel(
 		tester.ctx,
 		wallet,
@@ -328,6 +327,8 @@ func TestAppRegistry_ForwardsChannelEvents(t *testing.T) {
 	)
 	require.NoError(err)
 
+	// Double-check that the bot is visibly a channel member.
+	// Messages sent to the channel after the bot becomes a member will be forwarded to the bot.
 	require.EventuallyWithT(func(c *assert.CollectT) {
 		res, err := client.GetStream(tester.ctx, &connect.Request[protocol.GetStreamRequest]{
 			Msg: &protocol.GetStreamRequest{
@@ -342,7 +343,9 @@ func TestAppRegistry_ForwardsChannelEvents(t *testing.T) {
 		assert.True(c, isMember)
 	}, 10*time.Second, 100*time.Millisecond, "Bot never became a channel member")
 
-	// Participant sends a test message to send to the channel with session id "session0"
+	// The participant sends a test message to send to the channel with session id "session0".
+	// The app registry service does not have a session key for this session and should prompt
+	// the bot to solicit keys in the channel.
 	testMessageText := "xyz"
 	testSession := "session0"
 	testCiphertexts := "ciphertext-device0-session0"
@@ -363,6 +366,7 @@ func TestAppRegistry_ForwardsChannelEvents(t *testing.T) {
 	require.NoError(err)
 	require.Nil(add.Msg.Error)
 
+	// Confirm that the bot server sent the key solicitation.
 	require.EventuallyWithT(func(c *assert.CollectT) {
 		res, err := client.GetStream(tester.ctx, &connect.Request[protocol.GetStreamRequest]{
 			Msg: &protocol.GetStreamRequest{
@@ -373,7 +377,7 @@ func TestAppRegistry_ForwardsChannelEvents(t *testing.T) {
 		assert.True(c, findKeySolicitation(c, res.Msg.Stream, testEncryptionDevice.DeviceKey, testSession))
 	}, 10*time.Second, 100*time.Millisecond, "App server did not send a key solicitation")
 
-	// Send solicitation response directly to the user inbox stream
+	// Have the participant send the solicitation response directly to the bot's user inbox stream.
 	appUserInboxStreamId := UserInboxStreamIdFromAddress(wallet.Address)
 	res, err := client.GetStream(tester.ctx, &connect.Request[protocol.GetStreamRequest]{
 		Msg: &protocol.GetStreamRequest{
@@ -382,7 +386,6 @@ func TestAppRegistry_ForwardsChannelEvents(t *testing.T) {
 	})
 	require.NoError(err)
 
-	logging.FromCtx(ctx).Debugw("user inbox stream in test", "stream", appUserInboxStreamId)
 	lastMiniblock := res.Msg.Stream.Miniblocks[len(res.Msg.Stream.Miniblocks)-1]
 	event, err = events.MakeEnvelopeWithPayload(
 		participant,
@@ -405,6 +408,9 @@ func TestAppRegistry_ForwardsChannelEvents(t *testing.T) {
 	require.NoError(err)
 	require.Nil(add.Msg.Error)
 
+	// Once the key material is posted to the app's user inbox stream, the app registry server should
+	// dequeue and forward the previously unsendable message to the bot, and the test bot server should
+	// reply with a specific format.
 	require.EventuallyWithT(func(c *assert.CollectT) {
 		res, err := client.GetStream(tester.ctx, &connect.Request[protocol.GetStreamRequest]{
 			Msg: &protocol.GetStreamRequest{

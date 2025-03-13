@@ -22,7 +22,6 @@ import (
 	"github.com/towns-protocol/towns/core/node/shared"
 	"github.com/towns-protocol/towns/core/node/testutils/testcert"
 	"github.com/towns-protocol/towns/core/node/utils"
-	"go.uber.org/zap"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -203,8 +202,9 @@ func (b *TestAppServer) respondToSendMessages(
 	ctx context.Context,
 	data *app_client.SendSessionMessagesRequestData,
 ) error {
-	log := zap.NewNop().Sugar()
-	// log := logging.DefaultZapLogger(zapcore.DebugLevel).With("func", "TestAppServer.rootHandler")
+	log := logging.FromCtx(ctx)
+	// Swap with above to enable debug logs
+	// log := logging.DefaultZapLogger(zapcore.DebugLevel)
 	log.Debugw(
 		"respondToSendMessages",
 		"numEvents",
@@ -215,7 +215,6 @@ func (b *TestAppServer) respondToSendMessages(
 		b.encryptionDevice.DeviceKey,
 	)
 
-	// streamBytes, err := proto.Marshal(event.Event)
 	for _, streamBytes := range data.StreamEvents {
 		var streamEvent protocol.StreamEvent
 		if err := proto.Unmarshal(streamBytes, &streamEvent); err != nil {

@@ -20,7 +20,7 @@ import (
 	. "github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/logging"
 	. "github.com/towns-protocol/towns/core/node/protocol"
-) 
+)
 
 const (
 	WALLET_PATH              = "./wallet"
@@ -60,7 +60,18 @@ func (h TownsHash) Hash(buffer []byte) common.Hash {
 	_, _ = hash.Write(h[:])
 	// Write length of the buffer as 64-bit little endian uint.
 	l := uint64(len(buffer))
-	_, _ = hash.Write([]byte{byte(l), byte(l >> 8), byte(l >> 16), byte(l >> 24), byte(l >> 32), byte(l >> 40), byte(l >> 48), byte(l >> 56)})
+	_, _ = hash.Write(
+		[]byte{
+			byte(l),
+			byte(l >> 8),
+			byte(l >> 16),
+			byte(l >> 24),
+			byte(l >> 32),
+			byte(l >> 40),
+			byte(l >> 48),
+			byte(l >> 56),
+		},
+	)
 	_, _ = hash.Write(HASH_SEPARATOR)
 	_, _ = hash.Write(buffer)
 	_, _ = hash.Write(HASH_FOOTER)
