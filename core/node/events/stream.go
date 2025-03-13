@@ -747,7 +747,6 @@ func (s *Stream) addEventLocked(ctx context.Context, event *ParsedEvent) (*Strea
 // Sub subscribes the reciever to the stream, sending all content between the cookie and the
 // current stream state. This method is thread-safe.
 func (s *Stream) Sub(ctx context.Context, cookie *SyncCookie, receiver SyncResultReceiver) error {
-	log := logging.FromCtx(ctx)
 	if !bytes.Equal(cookie.NodeAddress, s.params.Wallet.Address.Bytes()) {
 		return RiverError(
 			Err_BAD_SYNC_COOKIE,
@@ -768,10 +767,6 @@ func (s *Stream) Sub(ctx context.Context, cookie *SyncCookie, receiver SyncResul
 			s.streamId,
 		)
 	}
-	slot := cookie.MinipoolSlot
-	if slot < 0 {
-		return RiverError(Err_BAD_SYNC_COOKIE, "bad slot", "cookie.MinipoolSlot", slot).Func("Stream.Sub")
-	}
 
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -781,74 +776,19 @@ func (s *Stream) Sub(ctx context.Context, cookie *SyncCookie, receiver SyncResul
 
 	s.lastAccessedTime = time.Now()
 
-	if cookie.MinipoolGen == s.view().minipool.generation {
-		if slot > int64(s.view().minipool.events.Len()) {
-			return RiverError(Err_BAD_SYNC_COOKIE, "Stream.Sub: bad slot")
-		}
-
-		if s.local.receivers == nil {
-			s.local.receivers = mapset.NewSet[SyncResultReceiver]()
-		}
-		s.local.receivers.Add(receiver)
-
-		envelopes := make([]*Envelope, 0, s.view().minipool.events.Len()-int(slot))
-		if slot < int64(s.view().minipool.events.Len()) {
-			for _, e := range s.view().minipool.events.Values[slot:] {
-				envelopes = append(envelopes, e.Envelope)
-			}
-		}
-		// always send response, even if there are no events so that the client knows it's upToDate
-		receiver.OnUpdate(
-			&StreamAndCookie{
-				Events:         envelopes,
-				NextSyncCookie: s.view().SyncCookie(s.params.Wallet.Address),
-			},
-		)
-		return nil
-	} else {
-		if s.local.receivers == nil {
-			s.local.receivers = mapset.NewSet[SyncResultReceiver]()
-		}
-		s.local.receivers.Add(receiver)
-
-		miniblockIndex, err := s.view().indexOfMiniblockWithNum(cookie.MinipoolGen)
-		if err != nil {
-			// The user's sync cookie is out of date. Send a sync reset and return an up-to-date StreamAndCookie.
-			log.Warnw("Stream.Sub: out of date cookie.MiniblockNum. Sending sync reset.",
-				"stream", s.streamId, "error", err.Error())
-
-			receiver.OnUpdate(
-				&StreamAndCookie{
-					Events:         s.view().MinipoolEnvelopes(),
-					NextSyncCookie: s.view().SyncCookie(s.params.Wallet.Address),
-					Miniblocks:     s.view().MiniblocksFromLastSnapshot(),
-					SyncReset:      true,
-				},
-			)
-			return nil
-		}
-
-		// append events from blocks
-		envelopes := make([]*Envelope, 0, 16)
-		err = s.view().forEachEvent(miniblockIndex, func(e *ParsedEvent, minibockNum int64, eventNum int64) (bool, error) {
-			envelopes = append(envelopes, e.Envelope)
-			return true, nil
-		})
-		if err != nil {
-			// "Should never happen: Stream.Sub: forEachEvent failed: "
-			logging.FromCtx(ctx).Errorw("Stream.Sub: forEachEvent failed", "error", err)
-			return RiverError(Err_INTERNAL, "Stream.Sub: forEachEvent failed", "error", err).Func("Stream.Sub")
-		}
-
-		// always send response, even if there are no events so that the client knows it's upToDate
-		receiver.OnUpdate(
-			&StreamAndCookie{
-				Events:         envelopes,
-				NextSyncCookie: s.view().SyncCookie(s.params.Wallet.Address),
-			},
-		)
-		return nil
+	resp, err := s.view().GetStreamSince(ctx, s.params.Wallet.Address, cookie)
+	if err != nil {
+		return err
 	}
+
+	if s.local.receivers == nil {
+		s.local.receivers = mapset.NewSet[SyncResultReceiver]()
+	}
+	s.local.receivers.Add(receiver)
+
+	receiver.OnUpdate(resp)
+
+	return nil
 }
 
 // Unsub unsubscribes the receiver from sync. It's ok to unsub non-existing receiver.

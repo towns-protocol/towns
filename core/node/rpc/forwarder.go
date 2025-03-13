@@ -6,6 +6,7 @@ import (
 
 	"connectrpc.com/connect"
 
+	"github.com/ethereum/go-ethereum/common"
 	. "github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/logging"
 	. "github.com/towns-protocol/towns/core/node/nodes"
@@ -197,8 +198,34 @@ func (s *Service) getStreamImpl(
 		return nil, err
 	}
 
+	// if the user passed a sync cookie, we need to forward the request to the node that issued the cookie
+	if req.Msg.SyncCookie != nil {
+		nodeAddress := common.BytesToAddress(req.Msg.SyncCookie.GetNodeAddress())
+		if nodeAddress == s.wallet.Address {
+			if view != nil {
+				return s.localGetStream(ctx, view, req.Msg.SyncCookie)
+			} else {
+				return nil, RiverError(Err_BAD_SYNC_COOKIE, "Stream not found").
+					Func("service.getStreamImpl").
+					Tag("streamId", req.Msg.StreamId)
+			}
+		} else {
+			stub, err := s.nodeRegistry.GetStreamServiceClientForAddress(nodeAddress)
+			if err == nil {
+				ret, err := stub.GetStream(ctx, req)
+				if err != nil {
+					return nil, err
+				}
+				return connect.NewResponse(ret.Msg), nil
+			}
+			// in the case were we couldn't get a stub for this node, fall through and try to get the stream from scratch
+			// when nodes can exit the network this is a legitimate code path, for now it's an error
+			logging.FromCtx(ctx).Errorw("Node in sync cookie not found", "nodeAddress", nodeAddress, "streamId", req.Msg.StreamId)
+		}
+	}
+
 	if view != nil {
-		return s.localGetStream(view)
+		return s.localGetStream(ctx, view, req.Msg.SyncCookie)
 	} else {
 		return utils.PeerNodeRequestWithRetries(
 			ctx,
