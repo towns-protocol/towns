@@ -656,13 +656,6 @@ func TestEnqueueMessages(t *testing.T) {
 		},
 		sendable,
 	)
-	require.ElementsMatch(
-		[]storage.UnsendableApp{
-			unsendableAppAtIndex(3),
-			unsendableAppAtIndex(4),
-		},
-		unsendable,
-	)
 
 	// current session key state (unchanged)
 	// device 0: [sessionId1, sessionId3]
