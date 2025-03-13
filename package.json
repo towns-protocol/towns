@@ -52,7 +52,6 @@
         "prettier:check": "prettier --check .",
         "prettier:fix": "prettier --write .",
         "publish:local": "turbo publish:local",
-        "sampleapp:build": "turbo build --filter sample-app",
         "syncpack:check": "syncpack list-mismatches",
         "syncpack:fix": "syncpack fix-mismatches && syncpack format",
         "test": "turbo test $(yarn csb:list:exclude:filter) --filter=!@towns/userops --filter=!use-towns-client && yarn csb:turbo",
@@ -178,21 +177,6 @@
                 ],
                 "packages": [
                     "token-worker"
-                ],
-                "dependencyTypes": [
-                    "prod",
-                    "dev",
-                    "peer"
-                ]
-            },
-            {
-                "label": "Different versions in sample-app",
-                "dependencies": [
-                    "wagmi",
-                    "@privy-io/wagmi"
-                ],
-                "packages": [
-                    "sample-app"
                 ],
                 "dependencyTypes": [
                     "prod",

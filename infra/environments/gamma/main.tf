@@ -257,14 +257,6 @@ resource "cloudflare_record" "app_dns" {
   ttl     = 60
 }
 
-resource "cloudflare_record" "sample_app_dns" {
-  zone_id = data.cloudflare_zone.zone.id
-  name    = "sample-app.${terraform.workspace}"
-  value   = "sample-gamma.onrender.com"
-  type    = "CNAME"
-  ttl     = 60
-}
-
 locals {
   gcp_project_id = "hnt-live-${terraform.workspace}"
   gcp_region     = "us-east4"

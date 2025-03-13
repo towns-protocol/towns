@@ -1,9 +1,11 @@
 # Harmony Clients
 
-./governance-ui - A prototype governence contract
-
-./web/sample-app - A sample web client that uses our packages to talk to the River server and smart contracts.
+./web/app - the towns app
 
 ./web/lib - Common react hooks for towns.com
 
-./contract-debug-ui - Used to debug smart contracts
+./web/server - the towns server that serves the towns app
+
+./web/userops - the userops server
+
+./web/privy - custom privy integration for towns

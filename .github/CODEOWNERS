@@ -33,7 +33,6 @@
 /clients/web/app @ttillberg
 /clients/web/lib @texuf
 /clients/web/privy @salzbrenner
-/clients/web/sample-app @texuf
 /clients/web/server @ttillberg
 /clients/web/userops @salzbrenner
 /infra @mechanical-turk

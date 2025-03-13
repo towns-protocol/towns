@@ -70,6 +70,5 @@ mitmweb -p 8009 --mode reverse:http://localhost:8008/
 
 Then change all instances of http://localhost:8008/ in your app to http://localhost:8009/
 
-- for the sample app, change clients/web/sample-app/env.local
 - for the tests, change clients/web/lib/jest-setup.ts
 - for the app, change the app url in clients/web/app/src/App.tsk
