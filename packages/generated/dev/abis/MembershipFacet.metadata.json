@@ -1791,10 +1791,10 @@
       "license": "MIT"
     },
     "contracts/src/factory/facets/wallet-link/IWalletLink.sol": {
-      "keccak256": "0x8997ff1c6472c76d6f0ee3affa6115913bf80f425d5aaa8f28d26b5289900f40",
+      "keccak256": "0x8c2c12bddb442cdea9a0e6e12b88f64d9d5eab72c3e7b7d80aa8939d5eb3ab9a",
       "urls": [
-        "bzz-raw://26962e6be701b67b9ba7f34ece4574b3791924c8efd915a475e8f755f7fa33a9",
-        "dweb:/ipfs/QmcUsFYi5yhPVwJ2LjyMjuwp3vCeMShi4zLVTAAzPHCasN"
+        "bzz-raw://affdafbedd75a2ca2a940d4e81c82e24aa9f78056e83d45aeebaf7f77f25d75e",
+        "dweb:/ipfs/QmUUEsows6sGcN7jffcfKmEER8iPDJ6GvMV4iPAuwFhLbA"
       ],
       "license": "MIT"
     },

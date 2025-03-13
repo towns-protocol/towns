@@ -319,15 +319,10 @@ abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
     uint256 totalCount = linkedWalletsLength;
 
     IDelegateRegistry.Delegation[][]
-      memory allDelegations = new IDelegateRegistry.Delegation[][](
-        linkedWalletsLength
+      memory allDelegations = _getDelegationsForWallets(
+        IDelegateRegistry(delegateRegistry),
+        linkedWallets
       );
-
-    // First pass: count total delegations add to totalCount
-    allDelegations = _getDelegationsForWallets(
-      IDelegateRegistry(delegateRegistry),
-      linkedWallets
-    );
 
     for (uint256 i; i < linkedWalletsLength; ++i) {
       IDelegateRegistry.Delegation[] memory delegations = allDelegations[i];
@@ -674,13 +669,10 @@ abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
   )
     internal
     view
-    returns (IDelegateRegistry.Delegation[][] memory delegations)
+    returns (IDelegateRegistry.Delegation[][] memory allDelegations)
   {
     uint256 walletsLength = wallets.length;
-    IDelegateRegistry.Delegation[][]
-      memory allDelegations = new IDelegateRegistry.Delegation[][](
-        walletsLength
-      );
+    allDelegations = new IDelegateRegistry.Delegation[][](walletsLength);
 
     for (uint256 i; i < walletsLength; ++i) {
       allDelegations[i] = delegateRegistry.getIncomingDelegations(wallets[i]);
