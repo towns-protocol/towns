@@ -274,7 +274,6 @@ func (sr *SyncRunner) Run(
 
 		for streamUpdates.Receive() {
 			update := streamUpdates.Msg()
-			log.Debugw("syncRunner got update message", "updateOp", update.SyncOp)
 			switch update.GetSyncOp() {
 			case protocol.SyncOp_SYNC_UPDATE:
 				var (
@@ -303,7 +302,6 @@ func (sr *SyncRunner) Run(
 				}
 
 				if reset {
-					log.Debugw("reset - Creating tracked stream view")
 					trackedStream, err = newTrackedStreamView(syncCtx, streamID, onChainConfig, update.GetStream())
 					if err != nil {
 						syncCancel()
@@ -323,7 +321,6 @@ func (sr *SyncRunner) Run(
 
 				for _, block := range update.GetStream().GetMiniblocks() {
 					if !reset {
-						log.Debugw("Applying block", "blockHash", block.Header.Hash)
 						if err := trackedStream.ApplyBlock(block); err != nil {
 							log.Errorw("Unable to apply block", "err", err)
 						}
@@ -333,13 +330,6 @@ func (sr *SyncRunner) Run(
 					// for these miniblocks and events.
 					if applyHistoricalStreamContents {
 						// Send notifications for all events in all blocks.
-						log.Debugw(
-							"Sending notifications for block events",
-							"blockHash",
-							block.Header.Hash,
-							"streamId",
-							streamID,
-						)
 						for _, event := range block.GetEvents() {
 							if parsedEvent, err := events.ParseEvent(event); err == nil {
 								if err := trackedStream.SendEventNotification(syncCtx, parsedEvent); err != nil {
@@ -364,7 +354,6 @@ func (sr *SyncRunner) Run(
 					// will be silently skipped because they are already a part of the minipool.
 					if applyHistoricalStreamContents {
 						if parsedEvent, err := events.ParseEvent(event); err == nil {
-							log.Debugw("Sending notification for historical minipool event", "eventHash", event.Hash)
 							if err := trackedStream.SendEventNotification(syncCtx, parsedEvent); err != nil {
 								log.Errorw(
 									"Error sending notification for historical event",
@@ -376,7 +365,6 @@ func (sr *SyncRunner) Run(
 							}
 						}
 					} else {
-						log.Debugw("Applying event", "eventHash", event.Hash)
 						if err := trackedStream.ApplyEvent(syncCtx, event); err != nil {
 							log.Errorw("Unable to apply event", "err", err)
 						}

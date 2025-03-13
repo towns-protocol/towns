@@ -235,13 +235,7 @@ func overAllEvents(
 }
 
 func TestAppRegistry_ForwardsChannelEvents(t *testing.T) {
-	tester := newServiceTester(
-		t,
-		serviceTesterOpts{numNodes: 1, start: true, btcParams: &crypto.TestParams{
-			AutoMine:         true,
-			AutoMineInterval: 1 * time.Millisecond,
-		}},
-	)
+	tester := newServiceTester(t, serviceTesterOpts{numNodes: 1, start: true})
 	ctx := tester.ctx
 	// Uncomment to force logging only for the app registry service
 	// ctx := logging.CtxWithLog(tester.ctx, logging.DefaultZapLogger(zapcore.DebugLevel))
