@@ -114,6 +114,7 @@ func (q *CachedEncryptedMessageQueue) DispatchOrEnqueueMessages(
 	channelId shared.StreamId,
 	streamEventBytes []byte,
 ) (err error) {
+	// log := logging.FromCtx(ctx)
 	sendableApps, unsendableApps, err := q.store.EnqueueUnsendableMessages(
 		ctx,
 		appIds,
@@ -123,7 +124,6 @@ func (q *CachedEncryptedMessageQueue) DispatchOrEnqueueMessages(
 	if err != nil {
 		return err
 	}
-	// log := logging.FromCtx(ctx).With("func", "CachedEncryptedMessageQueue.EnqueueMessages")
 	// log.Debugw(
 	// 	"enqueue unsendable messages",
 	// 	"sendableApps",
@@ -137,11 +137,6 @@ func (q *CachedEncryptedMessageQueue) DispatchOrEnqueueMessages(
 	// )
 
 	if len(sendableApps)+len(unsendableApps) != len(appIds) {
-		// log.Errorw(
-		// 	"Unexpected return value from enqueue: sendable + unsendable does not equal original # of apps",
-		// 	"appIds",
-		// 	appIds,
-		// )
 		return base.AsRiverError(
 			fmt.Errorf(
 				"unexpected error: number of enqueued messages plus sendable devices does not equal the total number of devices",
@@ -152,13 +147,6 @@ func (q *CachedEncryptedMessageQueue) DispatchOrEnqueueMessages(
 
 	// Submit a single message for each sendable device
 	for _, sendableApp := range sendableApps {
-		// log.Debugw(
-		// 	"Send message",
-		// 	"sendableApp",
-		// 	sendableApp,
-		// 	"channelId",
-		// 	channelId,
-		// )
 		if err := q.appDispatcher.SubmitMessages(ctx, &SessionMessages{
 			AppId:                 sendableApp.AppId,
 			DeviceKey:             sendableApp.DeviceKey,

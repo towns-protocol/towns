@@ -12,7 +12,6 @@ import (
 	"time"
 
 	mapset "github.com/deckarep/golang-set/v2"
-	"go.uber.org/zap/zapcore"
 
 	"connectrpc.com/connect"
 
@@ -238,14 +237,14 @@ func overAllEvents(
 func TestAppRegistry_ForwardsChannelEvents(t *testing.T) {
 	tester := newServiceTester(
 		t,
-		serviceTesterOpts{numNodes: 1, start: true, printTestLogs: true, btcParams: &crypto.TestParams{
+		serviceTesterOpts{numNodes: 1, start: true, btcParams: &crypto.TestParams{
 			AutoMine:         true,
 			AutoMineInterval: 1 * time.Millisecond,
 		}},
 	)
-	// ctx := tester.ctx
+	ctx := tester.ctx
 	// Uncomment to force logging only for the app registry service
-	ctx := logging.CtxWithLog(tester.ctx, logging.DefaultZapLogger(zapcore.DebugLevel))
+	// ctx := logging.CtxWithLog(tester.ctx, logging.DefaultZapLogger(zapcore.DebugLevel))
 	service := initAppRegistryService(ctx, tester)
 
 	require := tester.require
@@ -351,9 +350,10 @@ func TestAppRegistry_ForwardsChannelEvents(t *testing.T) {
 
 	// Participant sends a test message to send to the channel with session id "session0"
 	testMessageText := "xyz"
+	testSession := "session0"
 	event, err := events.MakeEnvelopeWithPayload(
 		participant,
-		events.Make_ChannelPayload_Message_WithSession(testMessageText, "session0"),
+		events.Make_ChannelPayload_Message_WithSession(testMessageText, testSession),
 		&MiniblockRef{
 			Num:  channel.GetMinipoolGen() - 1,
 			Hash: common.Hash(channel.GetPrevMiniblockHash()),
@@ -375,7 +375,7 @@ func TestAppRegistry_ForwardsChannelEvents(t *testing.T) {
 			},
 		})
 		assert.NoError(c, err)
-		assert.True(c, findKeySolicitation(c, res.Msg.Stream, testEncryptionDevice.DeviceKey, "session0"))
+		assert.True(c, findKeySolicitation(c, res.Msg.Stream, testEncryptionDevice.DeviceKey, testSession))
 	}, 10*time.Second, 100*time.Millisecond, "App server did not send a key solicitation")
 
 	// Send solicitation response directly to the user inbox stream
@@ -392,8 +392,8 @@ func TestAppRegistry_ForwardsChannelEvents(t *testing.T) {
 	event, err = events.MakeEnvelopeWithPayload(
 		participant,
 		events.Make_UserInboxPayload_GroupEncryptionSessions(
-			appUserInboxStreamId,
-			[]string{"session0"},
+			channelId,
+			[]string{testSession},
 			map[string]string{"deviceKey": "ciphertext-device0-session0"},
 		),
 		&MiniblockRef{
@@ -417,7 +417,7 @@ func TestAppRegistry_ForwardsChannelEvents(t *testing.T) {
 			},
 		})
 		assert.NoError(c, err)
-		assert.True(c, findMessageReply(c, res.Msg.Stream, testMessageText, "session0"))
+		assert.True(c, findMessageReply(c, res.Msg.Stream, testMessageText, testSession))
 	}, 10*time.Second, 100*time.Millisecond, "App server did not respond to the participant sending keys")
 }
 

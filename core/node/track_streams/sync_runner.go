@@ -15,7 +15,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
 	"golang.org/x/sync/semaphore"
 
 	"github.com/towns-protocol/towns/core/node/crypto"
@@ -107,10 +106,8 @@ func (sr *SyncRunner) Run(
 
 	for {
 		var (
-			sticky = remotes.GetStickyPeer()
-			// log                 = logging.FromCtx(rootCtx).With("stream", stream.StreamId, "remote", sticky)
-			log = logging.DefaultZapLogger(zapcore.DebugLevel).
-				With("stream", stream.StreamId)
+			sticky              = remotes.GetStickyPeer()
+			log                 = logging.FromCtx(rootCtx).With("stream", stream.StreamId, "remote", sticky)
 			syncCtx, syncCancel = context.WithCancel(rootCtx)
 			lastReceivedPong    atomic.Int64
 			syncID              string
@@ -182,6 +179,7 @@ func (sr *SyncRunner) Run(
 		metrics.SyncSessionInFlight.Dec()
 
 		if err != nil {
+			log.Debugw("start sync err", "err", err)
 			remotes.AdvanceStickyPeer(remoteAddr)
 			syncCancel()
 			if !errors.Is(err, context.Canceled) {
@@ -222,6 +220,7 @@ func (sr *SyncRunner) Run(
 				}
 				continue
 			}
+			log.Debugw("Received SYNC_NEW")
 			syncID = firstMsg.GetSyncId()
 		}
 
@@ -305,7 +304,7 @@ func (sr *SyncRunner) Run(
 				}
 
 				if reset {
-					log.Debugw("Creating tracked stream view")
+					log.Debugw("reset - Creating tracked stream view")
 					trackedStream, err = newTrackedStreamView(syncCtx, streamID, onChainConfig, update.GetStream())
 					if err != nil {
 						syncCancel()

@@ -20,7 +20,7 @@ import (
 	. "github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/logging"
 	. "github.com/towns-protocol/towns/core/node/protocol"
-)
+) 
 
 const (
 	WALLET_PATH              = "./wallet"

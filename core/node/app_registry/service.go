@@ -192,7 +192,7 @@ func (s *Service) Register(
 
 	logging.FromCtx(ctx).
 		Debugw("registration userInboxStream", "stream", shared.UserInboxStreamIdFromAddress(app), "app", app)
-	if err := s.streamsTracker.AddStream(ctx, shared.UserInboxStreamIdFromAddress(app)); err != nil {
+	if err := s.streamsTracker.AddStream(shared.UserInboxStreamIdFromAddress(app)); err != nil {
 		return nil, base.AsRiverError(err, Err_INTERNAL).
 			Message("Error subscribing to app's user inbox stream to watch for keys")
 	}
