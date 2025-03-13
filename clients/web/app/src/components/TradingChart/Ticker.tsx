@@ -9,6 +9,7 @@ import { CHANNEL_INFO_PARAMS } from 'routes'
 import { MessageTimelineContext } from '@components/MessageTimeline/MessageTimelineContext'
 import { useOpenMessageThread } from 'hooks/useOpenThread'
 import { useSizeContext } from 'ui/hooks/useSizeContext'
+import { MessageAttachmentsContext } from '@components/MessageAttachments/MessageAttachmentsContext'
 import { useCoinData } from './useCoinData'
 import { TickerHeader } from './TickerInfoBox'
 import { TradingChart } from './TradingChart'
@@ -83,6 +84,8 @@ export const TradingChartTicker = (props: {
     const isTradeThreadContext = useContext(TickerThreadContext) !== undefined
     const timelineContext = useContext(MessageTimelineContext)
 
+    const attachmentContext = useContext(MessageAttachmentsContext)
+
     const onTradeClick = useCallback(
         (mode: 'buy' | 'sell') => {
             // if the user is not in a space, open the trade panel
@@ -130,7 +133,7 @@ export const TradingChartTicker = (props: {
                 disabled={!inView}
             />
 
-            {!isTradeThreadContext && (
+            {!isTradeThreadContext && !attachmentContext?.isMessageAttachementContext && (
                 <Stack horizontal paddingX paddingY="none" gap="sm">
                     <Button
                         grow
