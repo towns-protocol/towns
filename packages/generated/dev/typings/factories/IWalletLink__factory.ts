@@ -81,7 +81,7 @@ const _abi = [
       {
         name: "wallets",
         type: "tuple[]",
-        internalType: "struct WalletLib.Wallet[]",
+        internalType: "struct IWalletLinkBase.WalletData[]",
         components: [
           {
             name: "addr",
@@ -91,7 +91,29 @@ const _abi = [
           {
             name: "vmType",
             type: "uint8",
-            internalType: "enum WalletLib.VirtualMachineType",
+            internalType: "enum IWalletLinkBase.VirtualMachineType",
+          },
+          {
+            name: "walletType",
+            type: "tuple",
+            internalType: "struct IWalletLinkBase.WalletType",
+            components: [
+              {
+                name: "linked",
+                type: "bool",
+                internalType: "bool",
+              },
+              {
+                name: "delegated",
+                type: "bool",
+                internalType: "bool",
+              },
+              {
+                name: "defaultWallet",
+                type: "bool",
+                internalType: "bool",
+              },
+            ],
           },
         ],
       },
@@ -219,7 +241,7 @@ const _abi = [
       {
         name: "rootWallet",
         type: "tuple",
-        internalType: "struct IWalletLinkBase.LinkedWallet",
+        internalType: "struct IWalletLinkBase.LinkedWalletData",
         components: [
           {
             name: "addr",
@@ -254,24 +276,12 @@ const _abi = [
       {
         name: "wallet",
         type: "tuple",
-        internalType: "struct IWalletLinkBase.NonEVMLinkedWallet",
+        internalType: "struct IWalletLinkBase.NonEVMLinkedWalletData",
         components: [
           {
-            name: "wallet",
-            type: "tuple",
-            internalType: "struct WalletLib.Wallet",
-            components: [
-              {
-                name: "addr",
-                type: "string",
-                internalType: "string",
-              },
-              {
-                name: "vmType",
-                type: "uint8",
-                internalType: "enum WalletLib.VirtualMachineType",
-              },
-            ],
+            name: "addr",
+            type: "string",
+            internalType: "string",
           },
           {
             name: "signature",
@@ -282,6 +292,11 @@ const _abi = [
             name: "message",
             type: "string",
             internalType: "string",
+          },
+          {
+            name: "vmType",
+            type: "uint8",
+            internalType: "enum IWalletLinkBase.VirtualMachineType",
           },
           {
             name: "extraData",
@@ -318,7 +333,7 @@ const _abi = [
       {
         name: "wallet",
         type: "tuple",
-        internalType: "struct IWalletLinkBase.LinkedWallet",
+        internalType: "struct IWalletLinkBase.LinkedWalletData",
         components: [
           {
             name: "addr",
@@ -340,7 +355,7 @@ const _abi = [
       {
         name: "rootWallet",
         type: "tuple",
-        internalType: "struct IWalletLinkBase.LinkedWallet",
+        internalType: "struct IWalletLinkBase.LinkedWalletData",
         components: [
           {
             name: "addr",
@@ -387,7 +402,7 @@ const _abi = [
       {
         name: "rootWallet",
         type: "tuple",
-        internalType: "struct IWalletLinkBase.LinkedWallet",
+        internalType: "struct IWalletLinkBase.LinkedWalletData",
         components: [
           {
             name: "addr",
@@ -420,21 +435,14 @@ const _abi = [
     name: "removeNonEVMWalletLink",
     inputs: [
       {
-        name: "wallet",
-        type: "tuple",
-        internalType: "struct WalletLib.Wallet",
-        components: [
-          {
-            name: "addr",
-            type: "string",
-            internalType: "string",
-          },
-          {
-            name: "vmType",
-            type: "uint8",
-            internalType: "enum WalletLib.VirtualMachineType",
-          },
-        ],
+        name: "addr",
+        type: "string",
+        internalType: "string",
+      },
+      {
+        name: "vmType",
+        type: "uint8",
+        internalType: "enum IWalletLinkBase.VirtualMachineType",
       },
       {
         name: "nonce",

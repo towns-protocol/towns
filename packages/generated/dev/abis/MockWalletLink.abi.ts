@@ -25,6 +25,133 @@ export default [
   },
   {
     "type": "function",
+    "name": "checkIfNonEVMWalletLinked",
+    "inputs": [
+      {
+        "name": "rootKey",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "walletHash",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "bool",
+        "internalType": "bool"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "explicitWalletsByRootKey",
+    "inputs": [
+      {
+        "name": "rootKey",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "",
+        "type": "tuple",
+        "internalType": "struct IWalletLinkBase.WalletQueryOptions",
+        "components": [
+          {
+            "name": "includeDelegations",
+            "type": "bool",
+            "internalType": "bool"
+          }
+        ]
+      }
+    ],
+    "outputs": [
+      {
+        "name": "walletData",
+        "type": "tuple[]",
+        "internalType": "struct IWalletLinkBase.WalletData[]",
+        "components": [
+          {
+            "name": "addr",
+            "type": "string",
+            "internalType": "string"
+          },
+          {
+            "name": "vmType",
+            "type": "uint8",
+            "internalType": "enum IWalletLinkBase.VirtualMachineType"
+          },
+          {
+            "name": "walletType",
+            "type": "tuple",
+            "internalType": "struct IWalletLinkBase.WalletType",
+            "components": [
+              {
+                "name": "linked",
+                "type": "bool",
+                "internalType": "bool"
+              },
+              {
+                "name": "delegated",
+                "type": "bool",
+                "internalType": "bool"
+              },
+              {
+                "name": "defaultWallet",
+                "type": "bool",
+                "internalType": "bool"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "getDefaultWallet",
+    "inputs": [
+      {
+        "name": "rootKey",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "getDependency",
+    "inputs": [
+      {
+        "name": "dependency",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
     "name": "getLatestNonceForRootKey",
     "inputs": [
       {
@@ -106,7 +233,7 @@ export default [
       {
         "name": "rootWallet",
         "type": "tuple",
-        "internalType": "struct IWalletLinkBase.LinkedWallet",
+        "internalType": "struct IWalletLinkBase.LinkedWalletData",
         "components": [
           {
             "name": "addr",
@@ -136,12 +263,69 @@ export default [
   },
   {
     "type": "function",
+    "name": "linkNonEVMWalletToRootKey",
+    "inputs": [
+      {
+        "name": "wallet",
+        "type": "tuple",
+        "internalType": "struct IWalletLinkBase.NonEVMLinkedWalletData",
+        "components": [
+          {
+            "name": "addr",
+            "type": "string",
+            "internalType": "string"
+          },
+          {
+            "name": "signature",
+            "type": "bytes",
+            "internalType": "bytes"
+          },
+          {
+            "name": "message",
+            "type": "string",
+            "internalType": "string"
+          },
+          {
+            "name": "vmType",
+            "type": "uint8",
+            "internalType": "enum IWalletLinkBase.VirtualMachineType"
+          },
+          {
+            "name": "extraData",
+            "type": "tuple[]",
+            "internalType": "struct IWalletLinkBase.VMSpecificData[]",
+            "components": [
+              {
+                "name": "key",
+                "type": "string",
+                "internalType": "string"
+              },
+              {
+                "name": "value",
+                "type": "bytes",
+                "internalType": "bytes"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
     "name": "linkWalletToRootKey",
     "inputs": [
       {
         "name": "wallet",
         "type": "tuple",
-        "internalType": "struct IWalletLinkBase.LinkedWallet",
+        "internalType": "struct IWalletLinkBase.LinkedWalletData",
         "components": [
           {
             "name": "addr",
@@ -163,7 +347,7 @@ export default [
       {
         "name": "rootWallet",
         "type": "tuple",
-        "internalType": "struct IWalletLinkBase.LinkedWallet",
+        "internalType": "struct IWalletLinkBase.LinkedWalletData",
         "components": [
           {
             "name": "addr",
@@ -186,6 +370,107 @@ export default [
         "name": "",
         "type": "uint256",
         "internalType": "uint256"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "removeCallerLink",
+    "inputs": [],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "removeLink",
+    "inputs": [
+      {
+        "name": "wallet",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "",
+        "type": "tuple",
+        "internalType": "struct IWalletLinkBase.LinkedWalletData",
+        "components": [
+          {
+            "name": "addr",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "signature",
+            "type": "bytes",
+            "internalType": "bytes"
+          },
+          {
+            "name": "message",
+            "type": "string",
+            "internalType": "string"
+          }
+        ]
+      },
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "removeNonEVMWalletLink",
+    "inputs": [
+      {
+        "name": "addr",
+        "type": "string",
+        "internalType": "string"
+      },
+      {
+        "name": "vmType",
+        "type": "uint8",
+        "internalType": "enum IWalletLinkBase.VirtualMachineType"
+      },
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "setDefaultWallet",
+    "inputs": [
+      {
+        "name": "defaultWallet",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "setDependency",
+    "inputs": [
+      {
+        "name": "dependency",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      },
+      {
+        "name": "dependencyAddress",
+        "type": "address",
+        "internalType": "address"
       }
     ],
     "outputs": [],

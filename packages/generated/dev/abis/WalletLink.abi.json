@@ -91,7 +91,7 @@
       {
         "name": "wallets",
         "type": "tuple[]",
-        "internalType": "struct WalletLib.Wallet[]",
+        "internalType": "struct IWalletLinkBase.WalletData[]",
         "components": [
           {
             "name": "addr",
@@ -101,7 +101,29 @@
           {
             "name": "vmType",
             "type": "uint8",
-            "internalType": "enum WalletLib.VirtualMachineType"
+            "internalType": "enum IWalletLinkBase.VirtualMachineType"
+          },
+          {
+            "name": "walletType",
+            "type": "tuple",
+            "internalType": "struct IWalletLinkBase.WalletType",
+            "components": [
+              {
+                "name": "linked",
+                "type": "bool",
+                "internalType": "bool"
+              },
+              {
+                "name": "delegated",
+                "type": "bool",
+                "internalType": "bool"
+              },
+              {
+                "name": "defaultWallet",
+                "type": "bool",
+                "internalType": "bool"
+              }
+            ]
           }
         ]
       }
@@ -229,7 +251,7 @@
       {
         "name": "rootWallet",
         "type": "tuple",
-        "internalType": "struct IWalletLinkBase.LinkedWallet",
+        "internalType": "struct IWalletLinkBase.LinkedWalletData",
         "components": [
           {
             "name": "addr",
@@ -264,24 +286,12 @@
       {
         "name": "wallet",
         "type": "tuple",
-        "internalType": "struct IWalletLinkBase.NonEVMLinkedWallet",
+        "internalType": "struct IWalletLinkBase.NonEVMLinkedWalletData",
         "components": [
           {
-            "name": "wallet",
-            "type": "tuple",
-            "internalType": "struct WalletLib.Wallet",
-            "components": [
-              {
-                "name": "addr",
-                "type": "string",
-                "internalType": "string"
-              },
-              {
-                "name": "vmType",
-                "type": "uint8",
-                "internalType": "enum WalletLib.VirtualMachineType"
-              }
-            ]
+            "name": "addr",
+            "type": "string",
+            "internalType": "string"
           },
           {
             "name": "signature",
@@ -292,6 +302,11 @@
             "name": "message",
             "type": "string",
             "internalType": "string"
+          },
+          {
+            "name": "vmType",
+            "type": "uint8",
+            "internalType": "enum IWalletLinkBase.VirtualMachineType"
           },
           {
             "name": "extraData",
@@ -328,7 +343,7 @@
       {
         "name": "wallet",
         "type": "tuple",
-        "internalType": "struct IWalletLinkBase.LinkedWallet",
+        "internalType": "struct IWalletLinkBase.LinkedWalletData",
         "components": [
           {
             "name": "addr",
@@ -350,7 +365,7 @@
       {
         "name": "rootWallet",
         "type": "tuple",
-        "internalType": "struct IWalletLinkBase.LinkedWallet",
+        "internalType": "struct IWalletLinkBase.LinkedWalletData",
         "components": [
           {
             "name": "addr",
@@ -397,7 +412,7 @@
       {
         "name": "rootWallet",
         "type": "tuple",
-        "internalType": "struct IWalletLinkBase.LinkedWallet",
+        "internalType": "struct IWalletLinkBase.LinkedWalletData",
         "components": [
           {
             "name": "addr",
@@ -430,21 +445,14 @@
     "name": "removeNonEVMWalletLink",
     "inputs": [
       {
-        "name": "wallet",
-        "type": "tuple",
-        "internalType": "struct WalletLib.Wallet",
-        "components": [
-          {
-            "name": "addr",
-            "type": "string",
-            "internalType": "string"
-          },
-          {
-            "name": "vmType",
-            "type": "uint8",
-            "internalType": "enum WalletLib.VirtualMachineType"
-          }
-        ]
+        "name": "addr",
+        "type": "string",
+        "internalType": "string"
+      },
+      {
+        "name": "vmType",
+        "type": "uint8",
+        "internalType": "enum IWalletLinkBase.VirtualMachineType"
       },
       {
         "name": "nonce",

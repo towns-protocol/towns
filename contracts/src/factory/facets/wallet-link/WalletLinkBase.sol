@@ -27,7 +27,7 @@ abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                           Constants
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-  /// @dev `keccak256("LinkedWallet(string message,address userID,uint256 nonce)")`.
+  /// @dev `keccak256("LinkedWalletData(string message,address userID,uint256 nonce)")`.
   // https://eips.ethereum.org/EIPS/eip-712
   bytes32 private constant _LINKED_WALLET_TYPEHASH =
     0x6bb89d031fcd292ecd4c0e6855878b7165cebc3a2f35bc6bbac48c088dd8325c;
@@ -50,7 +50,7 @@ abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
   /// @param rootWallet the root wallet that the caller is linking to
   /// @param nonce a nonce used to prevent replay attacks, nonce must always be higher than previous nonce
   function _linkCallerToRootWallet(
-    LinkedWallet calldata rootWallet,
+    LinkedWalletData calldata rootWallet,
     uint256 nonce
   ) internal {
     WalletLinkStorage.Layout storage ds = WalletLinkStorage.layout();
@@ -94,8 +94,8 @@ abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
   /// The wallet signs a message containing the root wallet's address and nonce, while the root wallet signs a message
   /// containing the wallet's address and nonce. Both signatures must be valid for the link to be created.
   function _linkWalletToRootWallet(
-    LinkedWallet calldata wallet,
-    LinkedWallet calldata rootWallet,
+    LinkedWalletData calldata wallet,
+    LinkedWalletData calldata rootWallet,
     uint256 nonce
   ) internal {
     WalletLinkStorage.Layout storage ds = WalletLinkStorage.layout();
@@ -141,7 +141,7 @@ abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
   }
 
   function _linkNonEVMWalletToRootWalletViaCaller(
-    NonEVMLinkedWallet calldata nonEVMWallet,
+    NonEVMLinkedWalletData calldata nonEVMWallet,
     uint256 nonce
   ) internal {
     WalletLinkStorage.Layout storage ds = WalletLinkStorage.layout();
@@ -217,7 +217,7 @@ abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
 
   function _removeLink(
     address walletToRemove,
-    LinkedWallet calldata rootWallet,
+    LinkedWalletData calldata rootWallet,
     uint256 nonce
   ) internal {
     WalletLinkStorage.Layout storage ds = WalletLinkStorage.layout();
@@ -531,7 +531,7 @@ abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   function _validateNonEVMWalletInputs(
     WalletLinkStorage.Layout storage ds,
-    NonEVMLinkedWallet calldata nonEVMWallet,
+    NonEVMLinkedWalletData calldata nonEVMWallet,
     bytes32 walletHash
   ) internal view {
     address caller = msg.sender;
@@ -601,7 +601,7 @@ abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
   }
 
   function _verifySolanaWallet(
-    NonEVMLinkedWallet calldata nonEVMWallet
+    NonEVMLinkedWalletData calldata nonEVMWallet
   ) internal {
     SolanaSpecificData memory solanaSpecificData = abi.decode(
       nonEVMWallet.extraData[0].value,

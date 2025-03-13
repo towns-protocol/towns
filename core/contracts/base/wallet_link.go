@@ -29,18 +29,19 @@ var (
 	_ = abi.ConvertType
 )
 
-// IWalletLinkBaseLinkedWallet is an auto generated low-level Go binding around an user-defined struct.
-type IWalletLinkBaseLinkedWallet struct {
+// IWalletLinkBaseLinkedWalletData is an auto generated low-level Go binding around an user-defined struct.
+type IWalletLinkBaseLinkedWalletData struct {
 	Addr      common.Address
 	Signature []byte
 	Message   string
 }
 
-// IWalletLinkBaseNonEVMLinkedWallet is an auto generated low-level Go binding around an user-defined struct.
-type IWalletLinkBaseNonEVMLinkedWallet struct {
-	Wallet    WalletLibWallet
+// IWalletLinkBaseNonEVMLinkedWalletData is an auto generated low-level Go binding around an user-defined struct.
+type IWalletLinkBaseNonEVMLinkedWalletData struct {
+	Addr      string
 	Signature []byte
 	Message   string
+	VmType    uint8
 	ExtraData []IWalletLinkBaseVMSpecificData
 }
 
@@ -50,20 +51,28 @@ type IWalletLinkBaseVMSpecificData struct {
 	Value []byte
 }
 
+// IWalletLinkBaseWalletData is an auto generated low-level Go binding around an user-defined struct.
+type IWalletLinkBaseWalletData struct {
+	Addr       string
+	VmType     uint8
+	WalletType IWalletLinkBaseWalletType
+}
+
 // IWalletLinkBaseWalletQueryOptions is an auto generated low-level Go binding around an user-defined struct.
 type IWalletLinkBaseWalletQueryOptions struct {
 	IncludeDelegations bool
 }
 
-// WalletLibWallet is an auto generated low-level Go binding around an user-defined struct.
-type WalletLibWallet struct {
-	Addr   string
-	VmType uint8
+// IWalletLinkBaseWalletType is an auto generated low-level Go binding around an user-defined struct.
+type IWalletLinkBaseWalletType struct {
+	Linked        bool
+	Delegated     bool
+	DefaultWallet bool
 }
 
 // WalletLinkMetaData contains all meta data concerning the WalletLink contract.
 var WalletLinkMetaData = &bind.MetaData{
-	ABI: "[{\"type\":\"function\",\"name\":\"checkIfLinked\",\"inputs\":[{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"wallet\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"checkIfNonEVMWalletLinked\",\"inputs\":[{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"walletHash\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"explicitWalletsByRootKey\",\"inputs\":[{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"options\",\"type\":\"tuple\",\"internalType\":\"structIWalletLinkBase.WalletQueryOptions\",\"components\":[{\"name\":\"includeDelegations\",\"type\":\"bool\",\"internalType\":\"bool\"}]}],\"outputs\":[{\"name\":\"wallets\",\"type\":\"tuple[]\",\"internalType\":\"structWalletLib.Wallet[]\",\"components\":[{\"name\":\"addr\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"vmType\",\"type\":\"uint8\",\"internalType\":\"enumWalletLib.VirtualMachineType\"}]}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getDefaultWallet\",\"inputs\":[{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getDependency\",\"inputs\":[{\"name\":\"dependency\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getLatestNonceForRootKey\",\"inputs\":[{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getRootKeyForWallet\",\"inputs\":[{\"name\":\"wallet\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getWalletsByRootKey\",\"inputs\":[{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"wallets\",\"type\":\"address[]\",\"internalType\":\"address[]\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getWalletsByRootKeyWithDelegations\",\"inputs\":[{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"wallets\",\"type\":\"address[]\",\"internalType\":\"address[]\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"linkCallerToRootKey\",\"inputs\":[{\"name\":\"rootWallet\",\"type\":\"tuple\",\"internalType\":\"structIWalletLinkBase.LinkedWallet\",\"components\":[{\"name\":\"addr\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"signature\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"message\",\"type\":\"string\",\"internalType\":\"string\"}]},{\"name\":\"nonce\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"linkNonEVMWalletToRootKey\",\"inputs\":[{\"name\":\"wallet\",\"type\":\"tuple\",\"internalType\":\"structIWalletLinkBase.NonEVMLinkedWallet\",\"components\":[{\"name\":\"wallet\",\"type\":\"tuple\",\"internalType\":\"structWalletLib.Wallet\",\"components\":[{\"name\":\"addr\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"vmType\",\"type\":\"uint8\",\"internalType\":\"enumWalletLib.VirtualMachineType\"}]},{\"name\":\"signature\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"message\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"extraData\",\"type\":\"tuple[]\",\"internalType\":\"structIWalletLinkBase.VMSpecificData[]\",\"components\":[{\"name\":\"key\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"value\",\"type\":\"bytes\",\"internalType\":\"bytes\"}]}]},{\"name\":\"nonce\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"linkWalletToRootKey\",\"inputs\":[{\"name\":\"wallet\",\"type\":\"tuple\",\"internalType\":\"structIWalletLinkBase.LinkedWallet\",\"components\":[{\"name\":\"addr\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"signature\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"message\",\"type\":\"string\",\"internalType\":\"string\"}]},{\"name\":\"rootWallet\",\"type\":\"tuple\",\"internalType\":\"structIWalletLinkBase.LinkedWallet\",\"components\":[{\"name\":\"addr\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"signature\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"message\",\"type\":\"string\",\"internalType\":\"string\"}]},{\"name\":\"nonce\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"removeCallerLink\",\"inputs\":[],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"removeLink\",\"inputs\":[{\"name\":\"wallet\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"rootWallet\",\"type\":\"tuple\",\"internalType\":\"structIWalletLinkBase.LinkedWallet\",\"components\":[{\"name\":\"addr\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"signature\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"message\",\"type\":\"string\",\"internalType\":\"string\"}]},{\"name\":\"nonce\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"removeNonEVMWalletLink\",\"inputs\":[{\"name\":\"wallet\",\"type\":\"tuple\",\"internalType\":\"structWalletLib.Wallet\",\"components\":[{\"name\":\"addr\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"vmType\",\"type\":\"uint8\",\"internalType\":\"enumWalletLib.VirtualMachineType\"}]},{\"name\":\"nonce\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"setDefaultWallet\",\"inputs\":[{\"name\":\"defaultWallet\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"setDependency\",\"inputs\":[{\"name\":\"dependency\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"dependencyAddress\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"event\",\"name\":\"LinkNonEVMWalletToRootWallet\",\"inputs\":[{\"name\":\"walletHash\",\"type\":\"bytes32\",\"indexed\":true,\"internalType\":\"bytes32\"},{\"name\":\"rootKey\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"LinkWalletToRootKey\",\"inputs\":[{\"name\":\"wallet\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"rootKey\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"RemoveLink\",\"inputs\":[{\"name\":\"wallet\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"secondWallet\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"RemoveNonEVMWalletLink\",\"inputs\":[{\"name\":\"walletHash\",\"type\":\"bytes32\",\"indexed\":true,\"internalType\":\"bytes32\"},{\"name\":\"rootKey\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"SetDefaultWallet\",\"inputs\":[{\"name\":\"rootKey\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"defaultWallet\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"error\",\"name\":\"WalletLink__AddressMismatch\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"WalletLink__CannotLinkToRootWallet\",\"inputs\":[{\"name\":\"wallet\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"}]},{\"type\":\"error\",\"name\":\"WalletLink__CannotLinkToSelf\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"WalletLink__CannotRemoveDefaultWallet\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"WalletLink__CannotRemoveRootWallet\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"WalletLink__DefaultWalletAlreadySet\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"WalletLink__InvalidAddress\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"WalletLink__InvalidMessage\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"WalletLink__InvalidNonEVMAddress\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"WalletLink__InvalidSignature\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"WalletLink__InvalidVMSpecificData\",\"inputs\":[{\"name\":\"key\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"value\",\"type\":\"bytes\",\"internalType\":\"bytes\"}]},{\"type\":\"error\",\"name\":\"WalletLink__LinkAlreadyExists\",\"inputs\":[{\"name\":\"wallet\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"}]},{\"type\":\"error\",\"name\":\"WalletLink__LinkedToAnotherRootKey\",\"inputs\":[{\"name\":\"wallet\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"}]},{\"type\":\"error\",\"name\":\"WalletLink__MaxLinkedWalletsReached\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"WalletLink__NonEVMWalletAlreadyLinked\",\"inputs\":[{\"name\":\"wallet\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"}]},{\"type\":\"error\",\"name\":\"WalletLink__NonEVMWalletNotLinked\",\"inputs\":[{\"name\":\"wallet\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"}]},{\"type\":\"error\",\"name\":\"WalletLink__NotLinked\",\"inputs\":[{\"name\":\"wallet\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"}]},{\"type\":\"error\",\"name\":\"WalletLink__RootKeyMismatch\",\"inputs\":[{\"name\":\"callerRootKey\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"}]},{\"type\":\"error\",\"name\":\"WalletLink__UnsupportedVMType\",\"inputs\":[]}]",
+	ABI: "[{\"type\":\"function\",\"name\":\"checkIfLinked\",\"inputs\":[{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"wallet\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"checkIfNonEVMWalletLinked\",\"inputs\":[{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"walletHash\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"explicitWalletsByRootKey\",\"inputs\":[{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"options\",\"type\":\"tuple\",\"internalType\":\"structIWalletLinkBase.WalletQueryOptions\",\"components\":[{\"name\":\"includeDelegations\",\"type\":\"bool\",\"internalType\":\"bool\"}]}],\"outputs\":[{\"name\":\"wallets\",\"type\":\"tuple[]\",\"internalType\":\"structIWalletLinkBase.WalletData[]\",\"components\":[{\"name\":\"addr\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"vmType\",\"type\":\"uint8\",\"internalType\":\"enumIWalletLinkBase.VirtualMachineType\"},{\"name\":\"walletType\",\"type\":\"tuple\",\"internalType\":\"structIWalletLinkBase.WalletType\",\"components\":[{\"name\":\"linked\",\"type\":\"bool\",\"internalType\":\"bool\"},{\"name\":\"delegated\",\"type\":\"bool\",\"internalType\":\"bool\"},{\"name\":\"defaultWallet\",\"type\":\"bool\",\"internalType\":\"bool\"}]}]}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getDefaultWallet\",\"inputs\":[{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getDependency\",\"inputs\":[{\"name\":\"dependency\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getLatestNonceForRootKey\",\"inputs\":[{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getRootKeyForWallet\",\"inputs\":[{\"name\":\"wallet\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getWalletsByRootKey\",\"inputs\":[{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"wallets\",\"type\":\"address[]\",\"internalType\":\"address[]\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getWalletsByRootKeyWithDelegations\",\"inputs\":[{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"wallets\",\"type\":\"address[]\",\"internalType\":\"address[]\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"linkCallerToRootKey\",\"inputs\":[{\"name\":\"rootWallet\",\"type\":\"tuple\",\"internalType\":\"structIWalletLinkBase.LinkedWalletData\",\"components\":[{\"name\":\"addr\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"signature\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"message\",\"type\":\"string\",\"internalType\":\"string\"}]},{\"name\":\"nonce\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"linkNonEVMWalletToRootKey\",\"inputs\":[{\"name\":\"wallet\",\"type\":\"tuple\",\"internalType\":\"structIWalletLinkBase.NonEVMLinkedWalletData\",\"components\":[{\"name\":\"addr\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"signature\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"message\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"vmType\",\"type\":\"uint8\",\"internalType\":\"enumIWalletLinkBase.VirtualMachineType\"},{\"name\":\"extraData\",\"type\":\"tuple[]\",\"internalType\":\"structIWalletLinkBase.VMSpecificData[]\",\"components\":[{\"name\":\"key\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"value\",\"type\":\"bytes\",\"internalType\":\"bytes\"}]}]},{\"name\":\"nonce\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"linkWalletToRootKey\",\"inputs\":[{\"name\":\"wallet\",\"type\":\"tuple\",\"internalType\":\"structIWalletLinkBase.LinkedWalletData\",\"components\":[{\"name\":\"addr\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"signature\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"message\",\"type\":\"string\",\"internalType\":\"string\"}]},{\"name\":\"rootWallet\",\"type\":\"tuple\",\"internalType\":\"structIWalletLinkBase.LinkedWalletData\",\"components\":[{\"name\":\"addr\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"signature\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"message\",\"type\":\"string\",\"internalType\":\"string\"}]},{\"name\":\"nonce\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"removeCallerLink\",\"inputs\":[],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"removeLink\",\"inputs\":[{\"name\":\"wallet\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"rootWallet\",\"type\":\"tuple\",\"internalType\":\"structIWalletLinkBase.LinkedWalletData\",\"components\":[{\"name\":\"addr\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"signature\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"message\",\"type\":\"string\",\"internalType\":\"string\"}]},{\"name\":\"nonce\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"removeNonEVMWalletLink\",\"inputs\":[{\"name\":\"addr\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"vmType\",\"type\":\"uint8\",\"internalType\":\"enumIWalletLinkBase.VirtualMachineType\"},{\"name\":\"nonce\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"setDefaultWallet\",\"inputs\":[{\"name\":\"defaultWallet\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"setDependency\",\"inputs\":[{\"name\":\"dependency\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"dependencyAddress\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"event\",\"name\":\"LinkNonEVMWalletToRootWallet\",\"inputs\":[{\"name\":\"walletHash\",\"type\":\"bytes32\",\"indexed\":true,\"internalType\":\"bytes32\"},{\"name\":\"rootKey\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"LinkWalletToRootKey\",\"inputs\":[{\"name\":\"wallet\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"rootKey\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"RemoveLink\",\"inputs\":[{\"name\":\"wallet\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"secondWallet\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"RemoveNonEVMWalletLink\",\"inputs\":[{\"name\":\"walletHash\",\"type\":\"bytes32\",\"indexed\":true,\"internalType\":\"bytes32\"},{\"name\":\"rootKey\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"SetDefaultWallet\",\"inputs\":[{\"name\":\"rootKey\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"defaultWallet\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"error\",\"name\":\"WalletLink__AddressMismatch\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"WalletLink__CannotLinkToRootWallet\",\"inputs\":[{\"name\":\"wallet\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"}]},{\"type\":\"error\",\"name\":\"WalletLink__CannotLinkToSelf\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"WalletLink__CannotRemoveDefaultWallet\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"WalletLink__CannotRemoveRootWallet\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"WalletLink__DefaultWalletAlreadySet\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"WalletLink__InvalidAddress\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"WalletLink__InvalidMessage\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"WalletLink__InvalidNonEVMAddress\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"WalletLink__InvalidSignature\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"WalletLink__InvalidVMSpecificData\",\"inputs\":[{\"name\":\"key\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"value\",\"type\":\"bytes\",\"internalType\":\"bytes\"}]},{\"type\":\"error\",\"name\":\"WalletLink__LinkAlreadyExists\",\"inputs\":[{\"name\":\"wallet\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"}]},{\"type\":\"error\",\"name\":\"WalletLink__LinkedToAnotherRootKey\",\"inputs\":[{\"name\":\"wallet\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"}]},{\"type\":\"error\",\"name\":\"WalletLink__MaxLinkedWalletsReached\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"WalletLink__NonEVMWalletAlreadyLinked\",\"inputs\":[{\"name\":\"wallet\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"}]},{\"type\":\"error\",\"name\":\"WalletLink__NonEVMWalletNotLinked\",\"inputs\":[{\"name\":\"wallet\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"}]},{\"type\":\"error\",\"name\":\"WalletLink__NotLinked\",\"inputs\":[{\"name\":\"wallet\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"}]},{\"type\":\"error\",\"name\":\"WalletLink__RootKeyMismatch\",\"inputs\":[{\"name\":\"callerRootKey\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"}]},{\"type\":\"error\",\"name\":\"WalletLink__UnsupportedVMType\",\"inputs\":[]}]",
 }
 
 // WalletLinkABI is the input ABI used to generate the binding from.
@@ -276,16 +285,16 @@ func (_WalletLink *WalletLinkCallerSession) CheckIfNonEVMWalletLinked(rootKey co
 
 // ExplicitWalletsByRootKey is a free data retrieval call binding the contract method 0xf8aca11e.
 //
-// Solidity: function explicitWalletsByRootKey(address rootKey, (bool) options) view returns((string,uint8)[] wallets)
-func (_WalletLink *WalletLinkCaller) ExplicitWalletsByRootKey(opts *bind.CallOpts, rootKey common.Address, options IWalletLinkBaseWalletQueryOptions) ([]WalletLibWallet, error) {
+// Solidity: function explicitWalletsByRootKey(address rootKey, (bool) options) view returns((string,uint8,(bool,bool,bool))[] wallets)
+func (_WalletLink *WalletLinkCaller) ExplicitWalletsByRootKey(opts *bind.CallOpts, rootKey common.Address, options IWalletLinkBaseWalletQueryOptions) ([]IWalletLinkBaseWalletData, error) {
 	var out []interface{}
 	err := _WalletLink.contract.Call(opts, &out, "explicitWalletsByRootKey", rootKey, options)
 
 	if err != nil {
-		return *new([]WalletLibWallet), err
+		return *new([]IWalletLinkBaseWalletData), err
 	}
 
-	out0 := *abi.ConvertType(out[0], new([]WalletLibWallet)).(*[]WalletLibWallet)
+	out0 := *abi.ConvertType(out[0], new([]IWalletLinkBaseWalletData)).(*[]IWalletLinkBaseWalletData)
 
 	return out0, err
 
@@ -293,15 +302,15 @@ func (_WalletLink *WalletLinkCaller) ExplicitWalletsByRootKey(opts *bind.CallOpt
 
 // ExplicitWalletsByRootKey is a free data retrieval call binding the contract method 0xf8aca11e.
 //
-// Solidity: function explicitWalletsByRootKey(address rootKey, (bool) options) view returns((string,uint8)[] wallets)
-func (_WalletLink *WalletLinkSession) ExplicitWalletsByRootKey(rootKey common.Address, options IWalletLinkBaseWalletQueryOptions) ([]WalletLibWallet, error) {
+// Solidity: function explicitWalletsByRootKey(address rootKey, (bool) options) view returns((string,uint8,(bool,bool,bool))[] wallets)
+func (_WalletLink *WalletLinkSession) ExplicitWalletsByRootKey(rootKey common.Address, options IWalletLinkBaseWalletQueryOptions) ([]IWalletLinkBaseWalletData, error) {
 	return _WalletLink.Contract.ExplicitWalletsByRootKey(&_WalletLink.CallOpts, rootKey, options)
 }
 
 // ExplicitWalletsByRootKey is a free data retrieval call binding the contract method 0xf8aca11e.
 //
-// Solidity: function explicitWalletsByRootKey(address rootKey, (bool) options) view returns((string,uint8)[] wallets)
-func (_WalletLink *WalletLinkCallerSession) ExplicitWalletsByRootKey(rootKey common.Address, options IWalletLinkBaseWalletQueryOptions) ([]WalletLibWallet, error) {
+// Solidity: function explicitWalletsByRootKey(address rootKey, (bool) options) view returns((string,uint8,(bool,bool,bool))[] wallets)
+func (_WalletLink *WalletLinkCallerSession) ExplicitWalletsByRootKey(rootKey common.Address, options IWalletLinkBaseWalletQueryOptions) ([]IWalletLinkBaseWalletData, error) {
 	return _WalletLink.Contract.ExplicitWalletsByRootKey(&_WalletLink.CallOpts, rootKey, options)
 }
 
@@ -494,63 +503,63 @@ func (_WalletLink *WalletLinkCallerSession) GetWalletsByRootKeyWithDelegations(r
 // LinkCallerToRootKey is a paid mutator transaction binding the contract method 0x2f461453.
 //
 // Solidity: function linkCallerToRootKey((address,bytes,string) rootWallet, uint256 nonce) returns()
-func (_WalletLink *WalletLinkTransactor) LinkCallerToRootKey(opts *bind.TransactOpts, rootWallet IWalletLinkBaseLinkedWallet, nonce *big.Int) (*types.Transaction, error) {
+func (_WalletLink *WalletLinkTransactor) LinkCallerToRootKey(opts *bind.TransactOpts, rootWallet IWalletLinkBaseLinkedWalletData, nonce *big.Int) (*types.Transaction, error) {
 	return _WalletLink.contract.Transact(opts, "linkCallerToRootKey", rootWallet, nonce)
 }
 
 // LinkCallerToRootKey is a paid mutator transaction binding the contract method 0x2f461453.
 //
 // Solidity: function linkCallerToRootKey((address,bytes,string) rootWallet, uint256 nonce) returns()
-func (_WalletLink *WalletLinkSession) LinkCallerToRootKey(rootWallet IWalletLinkBaseLinkedWallet, nonce *big.Int) (*types.Transaction, error) {
+func (_WalletLink *WalletLinkSession) LinkCallerToRootKey(rootWallet IWalletLinkBaseLinkedWalletData, nonce *big.Int) (*types.Transaction, error) {
 	return _WalletLink.Contract.LinkCallerToRootKey(&_WalletLink.TransactOpts, rootWallet, nonce)
 }
 
 // LinkCallerToRootKey is a paid mutator transaction binding the contract method 0x2f461453.
 //
 // Solidity: function linkCallerToRootKey((address,bytes,string) rootWallet, uint256 nonce) returns()
-func (_WalletLink *WalletLinkTransactorSession) LinkCallerToRootKey(rootWallet IWalletLinkBaseLinkedWallet, nonce *big.Int) (*types.Transaction, error) {
+func (_WalletLink *WalletLinkTransactorSession) LinkCallerToRootKey(rootWallet IWalletLinkBaseLinkedWalletData, nonce *big.Int) (*types.Transaction, error) {
 	return _WalletLink.Contract.LinkCallerToRootKey(&_WalletLink.TransactOpts, rootWallet, nonce)
 }
 
-// LinkNonEVMWalletToRootKey is a paid mutator transaction binding the contract method 0xa5bbf480.
+// LinkNonEVMWalletToRootKey is a paid mutator transaction binding the contract method 0xc93ffd2a.
 //
-// Solidity: function linkNonEVMWalletToRootKey(((string,uint8),bytes,string,(string,bytes)[]) wallet, uint256 nonce) returns()
-func (_WalletLink *WalletLinkTransactor) LinkNonEVMWalletToRootKey(opts *bind.TransactOpts, wallet IWalletLinkBaseNonEVMLinkedWallet, nonce *big.Int) (*types.Transaction, error) {
+// Solidity: function linkNonEVMWalletToRootKey((string,bytes,string,uint8,(string,bytes)[]) wallet, uint256 nonce) returns()
+func (_WalletLink *WalletLinkTransactor) LinkNonEVMWalletToRootKey(opts *bind.TransactOpts, wallet IWalletLinkBaseNonEVMLinkedWalletData, nonce *big.Int) (*types.Transaction, error) {
 	return _WalletLink.contract.Transact(opts, "linkNonEVMWalletToRootKey", wallet, nonce)
 }
 
-// LinkNonEVMWalletToRootKey is a paid mutator transaction binding the contract method 0xa5bbf480.
+// LinkNonEVMWalletToRootKey is a paid mutator transaction binding the contract method 0xc93ffd2a.
 //
-// Solidity: function linkNonEVMWalletToRootKey(((string,uint8),bytes,string,(string,bytes)[]) wallet, uint256 nonce) returns()
-func (_WalletLink *WalletLinkSession) LinkNonEVMWalletToRootKey(wallet IWalletLinkBaseNonEVMLinkedWallet, nonce *big.Int) (*types.Transaction, error) {
+// Solidity: function linkNonEVMWalletToRootKey((string,bytes,string,uint8,(string,bytes)[]) wallet, uint256 nonce) returns()
+func (_WalletLink *WalletLinkSession) LinkNonEVMWalletToRootKey(wallet IWalletLinkBaseNonEVMLinkedWalletData, nonce *big.Int) (*types.Transaction, error) {
 	return _WalletLink.Contract.LinkNonEVMWalletToRootKey(&_WalletLink.TransactOpts, wallet, nonce)
 }
 
-// LinkNonEVMWalletToRootKey is a paid mutator transaction binding the contract method 0xa5bbf480.
+// LinkNonEVMWalletToRootKey is a paid mutator transaction binding the contract method 0xc93ffd2a.
 //
-// Solidity: function linkNonEVMWalletToRootKey(((string,uint8),bytes,string,(string,bytes)[]) wallet, uint256 nonce) returns()
-func (_WalletLink *WalletLinkTransactorSession) LinkNonEVMWalletToRootKey(wallet IWalletLinkBaseNonEVMLinkedWallet, nonce *big.Int) (*types.Transaction, error) {
+// Solidity: function linkNonEVMWalletToRootKey((string,bytes,string,uint8,(string,bytes)[]) wallet, uint256 nonce) returns()
+func (_WalletLink *WalletLinkTransactorSession) LinkNonEVMWalletToRootKey(wallet IWalletLinkBaseNonEVMLinkedWalletData, nonce *big.Int) (*types.Transaction, error) {
 	return _WalletLink.Contract.LinkNonEVMWalletToRootKey(&_WalletLink.TransactOpts, wallet, nonce)
 }
 
 // LinkWalletToRootKey is a paid mutator transaction binding the contract method 0x243a7134.
 //
 // Solidity: function linkWalletToRootKey((address,bytes,string) wallet, (address,bytes,string) rootWallet, uint256 nonce) returns()
-func (_WalletLink *WalletLinkTransactor) LinkWalletToRootKey(opts *bind.TransactOpts, wallet IWalletLinkBaseLinkedWallet, rootWallet IWalletLinkBaseLinkedWallet, nonce *big.Int) (*types.Transaction, error) {
+func (_WalletLink *WalletLinkTransactor) LinkWalletToRootKey(opts *bind.TransactOpts, wallet IWalletLinkBaseLinkedWalletData, rootWallet IWalletLinkBaseLinkedWalletData, nonce *big.Int) (*types.Transaction, error) {
 	return _WalletLink.contract.Transact(opts, "linkWalletToRootKey", wallet, rootWallet, nonce)
 }
 
 // LinkWalletToRootKey is a paid mutator transaction binding the contract method 0x243a7134.
 //
 // Solidity: function linkWalletToRootKey((address,bytes,string) wallet, (address,bytes,string) rootWallet, uint256 nonce) returns()
-func (_WalletLink *WalletLinkSession) LinkWalletToRootKey(wallet IWalletLinkBaseLinkedWallet, rootWallet IWalletLinkBaseLinkedWallet, nonce *big.Int) (*types.Transaction, error) {
+func (_WalletLink *WalletLinkSession) LinkWalletToRootKey(wallet IWalletLinkBaseLinkedWalletData, rootWallet IWalletLinkBaseLinkedWalletData, nonce *big.Int) (*types.Transaction, error) {
 	return _WalletLink.Contract.LinkWalletToRootKey(&_WalletLink.TransactOpts, wallet, rootWallet, nonce)
 }
 
 // LinkWalletToRootKey is a paid mutator transaction binding the contract method 0x243a7134.
 //
 // Solidity: function linkWalletToRootKey((address,bytes,string) wallet, (address,bytes,string) rootWallet, uint256 nonce) returns()
-func (_WalletLink *WalletLinkTransactorSession) LinkWalletToRootKey(wallet IWalletLinkBaseLinkedWallet, rootWallet IWalletLinkBaseLinkedWallet, nonce *big.Int) (*types.Transaction, error) {
+func (_WalletLink *WalletLinkTransactorSession) LinkWalletToRootKey(wallet IWalletLinkBaseLinkedWalletData, rootWallet IWalletLinkBaseLinkedWalletData, nonce *big.Int) (*types.Transaction, error) {
 	return _WalletLink.Contract.LinkWalletToRootKey(&_WalletLink.TransactOpts, wallet, rootWallet, nonce)
 }
 
@@ -578,43 +587,43 @@ func (_WalletLink *WalletLinkTransactorSession) RemoveCallerLink() (*types.Trans
 // RemoveLink is a paid mutator transaction binding the contract method 0x35d2fb64.
 //
 // Solidity: function removeLink(address wallet, (address,bytes,string) rootWallet, uint256 nonce) returns()
-func (_WalletLink *WalletLinkTransactor) RemoveLink(opts *bind.TransactOpts, wallet common.Address, rootWallet IWalletLinkBaseLinkedWallet, nonce *big.Int) (*types.Transaction, error) {
+func (_WalletLink *WalletLinkTransactor) RemoveLink(opts *bind.TransactOpts, wallet common.Address, rootWallet IWalletLinkBaseLinkedWalletData, nonce *big.Int) (*types.Transaction, error) {
 	return _WalletLink.contract.Transact(opts, "removeLink", wallet, rootWallet, nonce)
 }
 
 // RemoveLink is a paid mutator transaction binding the contract method 0x35d2fb64.
 //
 // Solidity: function removeLink(address wallet, (address,bytes,string) rootWallet, uint256 nonce) returns()
-func (_WalletLink *WalletLinkSession) RemoveLink(wallet common.Address, rootWallet IWalletLinkBaseLinkedWallet, nonce *big.Int) (*types.Transaction, error) {
+func (_WalletLink *WalletLinkSession) RemoveLink(wallet common.Address, rootWallet IWalletLinkBaseLinkedWalletData, nonce *big.Int) (*types.Transaction, error) {
 	return _WalletLink.Contract.RemoveLink(&_WalletLink.TransactOpts, wallet, rootWallet, nonce)
 }
 
 // RemoveLink is a paid mutator transaction binding the contract method 0x35d2fb64.
 //
 // Solidity: function removeLink(address wallet, (address,bytes,string) rootWallet, uint256 nonce) returns()
-func (_WalletLink *WalletLinkTransactorSession) RemoveLink(wallet common.Address, rootWallet IWalletLinkBaseLinkedWallet, nonce *big.Int) (*types.Transaction, error) {
+func (_WalletLink *WalletLinkTransactorSession) RemoveLink(wallet common.Address, rootWallet IWalletLinkBaseLinkedWalletData, nonce *big.Int) (*types.Transaction, error) {
 	return _WalletLink.Contract.RemoveLink(&_WalletLink.TransactOpts, wallet, rootWallet, nonce)
 }
 
-// RemoveNonEVMWalletLink is a paid mutator transaction binding the contract method 0x71926900.
+// RemoveNonEVMWalletLink is a paid mutator transaction binding the contract method 0x4d2bead6.
 //
-// Solidity: function removeNonEVMWalletLink((string,uint8) wallet, uint256 nonce) returns()
-func (_WalletLink *WalletLinkTransactor) RemoveNonEVMWalletLink(opts *bind.TransactOpts, wallet WalletLibWallet, nonce *big.Int) (*types.Transaction, error) {
-	return _WalletLink.contract.Transact(opts, "removeNonEVMWalletLink", wallet, nonce)
+// Solidity: function removeNonEVMWalletLink(string addr, uint8 vmType, uint256 nonce) returns()
+func (_WalletLink *WalletLinkTransactor) RemoveNonEVMWalletLink(opts *bind.TransactOpts, addr string, vmType uint8, nonce *big.Int) (*types.Transaction, error) {
+	return _WalletLink.contract.Transact(opts, "removeNonEVMWalletLink", addr, vmType, nonce)
 }
 
-// RemoveNonEVMWalletLink is a paid mutator transaction binding the contract method 0x71926900.
+// RemoveNonEVMWalletLink is a paid mutator transaction binding the contract method 0x4d2bead6.
 //
-// Solidity: function removeNonEVMWalletLink((string,uint8) wallet, uint256 nonce) returns()
-func (_WalletLink *WalletLinkSession) RemoveNonEVMWalletLink(wallet WalletLibWallet, nonce *big.Int) (*types.Transaction, error) {
-	return _WalletLink.Contract.RemoveNonEVMWalletLink(&_WalletLink.TransactOpts, wallet, nonce)
+// Solidity: function removeNonEVMWalletLink(string addr, uint8 vmType, uint256 nonce) returns()
+func (_WalletLink *WalletLinkSession) RemoveNonEVMWalletLink(addr string, vmType uint8, nonce *big.Int) (*types.Transaction, error) {
+	return _WalletLink.Contract.RemoveNonEVMWalletLink(&_WalletLink.TransactOpts, addr, vmType, nonce)
 }
 
-// RemoveNonEVMWalletLink is a paid mutator transaction binding the contract method 0x71926900.
+// RemoveNonEVMWalletLink is a paid mutator transaction binding the contract method 0x4d2bead6.
 //
-// Solidity: function removeNonEVMWalletLink((string,uint8) wallet, uint256 nonce) returns()
-func (_WalletLink *WalletLinkTransactorSession) RemoveNonEVMWalletLink(wallet WalletLibWallet, nonce *big.Int) (*types.Transaction, error) {
-	return _WalletLink.Contract.RemoveNonEVMWalletLink(&_WalletLink.TransactOpts, wallet, nonce)
+// Solidity: function removeNonEVMWalletLink(string addr, uint8 vmType, uint256 nonce) returns()
+func (_WalletLink *WalletLinkTransactorSession) RemoveNonEVMWalletLink(addr string, vmType uint8, nonce *big.Int) (*types.Transaction, error) {
+	return _WalletLink.Contract.RemoveNonEVMWalletLink(&_WalletLink.TransactOpts, addr, vmType, nonce)
 }
 
 // SetDefaultWallet is a paid mutator transaction binding the contract method 0xbaafda6b.

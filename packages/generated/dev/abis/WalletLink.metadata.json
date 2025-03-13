@@ -483,7 +483,7 @@
         "name": "explicitWalletsByRootKey",
         "outputs": [
           {
-            "internalType": "struct WalletLib.Wallet[]",
+            "internalType": "struct IWalletLinkBase.WalletData[]",
             "name": "wallets",
             "type": "tuple[]",
             "components": [
@@ -493,9 +493,31 @@
                 "type": "string"
               },
               {
-                "internalType": "enum WalletLib.VirtualMachineType",
+                "internalType": "enum IWalletLinkBase.VirtualMachineType",
                 "name": "vmType",
                 "type": "uint8"
+              },
+              {
+                "internalType": "struct IWalletLinkBase.WalletType",
+                "name": "walletType",
+                "type": "tuple",
+                "components": [
+                  {
+                    "internalType": "bool",
+                    "name": "linked",
+                    "type": "bool"
+                  },
+                  {
+                    "internalType": "bool",
+                    "name": "delegated",
+                    "type": "bool"
+                  },
+                  {
+                    "internalType": "bool",
+                    "name": "defaultWallet",
+                    "type": "bool"
+                  }
+                ]
               }
             ]
           }
@@ -618,7 +640,7 @@
       {
         "inputs": [
           {
-            "internalType": "struct IWalletLinkBase.LinkedWallet",
+            "internalType": "struct IWalletLinkBase.LinkedWalletData",
             "name": "rootWallet",
             "type": "tuple",
             "components": [
@@ -652,26 +674,14 @@
       {
         "inputs": [
           {
-            "internalType": "struct IWalletLinkBase.NonEVMLinkedWallet",
+            "internalType": "struct IWalletLinkBase.NonEVMLinkedWalletData",
             "name": "wallet",
             "type": "tuple",
             "components": [
               {
-                "internalType": "struct WalletLib.Wallet",
-                "name": "wallet",
-                "type": "tuple",
-                "components": [
-                  {
-                    "internalType": "string",
-                    "name": "addr",
-                    "type": "string"
-                  },
-                  {
-                    "internalType": "enum WalletLib.VirtualMachineType",
-                    "name": "vmType",
-                    "type": "uint8"
-                  }
-                ]
+                "internalType": "string",
+                "name": "addr",
+                "type": "string"
               },
               {
                 "internalType": "bytes",
@@ -682,6 +692,11 @@
                 "internalType": "string",
                 "name": "message",
                 "type": "string"
+              },
+              {
+                "internalType": "enum IWalletLinkBase.VirtualMachineType",
+                "name": "vmType",
+                "type": "uint8"
               },
               {
                 "internalType": "struct IWalletLinkBase.VMSpecificData[]",
@@ -715,7 +730,7 @@
       {
         "inputs": [
           {
-            "internalType": "struct IWalletLinkBase.LinkedWallet",
+            "internalType": "struct IWalletLinkBase.LinkedWalletData",
             "name": "wallet",
             "type": "tuple",
             "components": [
@@ -737,7 +752,7 @@
             ]
           },
           {
-            "internalType": "struct IWalletLinkBase.LinkedWallet",
+            "internalType": "struct IWalletLinkBase.LinkedWalletData",
             "name": "rootWallet",
             "type": "tuple",
             "components": [
@@ -782,7 +797,7 @@
             "type": "address"
           },
           {
-            "internalType": "struct IWalletLinkBase.LinkedWallet",
+            "internalType": "struct IWalletLinkBase.LinkedWalletData",
             "name": "rootWallet",
             "type": "tuple",
             "components": [
@@ -816,21 +831,14 @@
       {
         "inputs": [
           {
-            "internalType": "struct WalletLib.Wallet",
-            "name": "wallet",
-            "type": "tuple",
-            "components": [
-              {
-                "internalType": "string",
-                "name": "addr",
-                "type": "string"
-              },
-              {
-                "internalType": "enum WalletLib.VirtualMachineType",
-                "name": "vmType",
-                "type": "uint8"
-              }
-            ]
+            "internalType": "string",
+            "name": "addr",
+            "type": "string"
+          },
+          {
+            "internalType": "enum IWalletLinkBase.VirtualMachineType",
+            "name": "vmType",
+            "type": "uint8"
           },
           {
             "internalType": "uint256",
@@ -949,7 +957,7 @@
             "rootWallet": "the root wallet that the caller is linking to"
           }
         },
-        "linkNonEVMWalletToRootKey(((string,uint8),bytes,string,(string,bytes)[]),uint256)": {
+        "linkNonEVMWalletToRootKey((string,bytes,string,uint8,(string,bytes)[]),uint256)": {
           "details": "The function can only be called by an already linked wallet",
           "params": {
             "nonce": "a nonce used to prevent replay attacks, nonce must always be higher than previous nonce",
@@ -968,11 +976,12 @@
             "wallet": "the wallet being unlinked from the sending wallet"
           }
         },
-        "removeNonEVMWalletLink((string,uint8),uint256)": {
+        "removeNonEVMWalletLink(string,uint8,uint256)": {
           "details": "The function can only be called by an already linked wallet",
           "params": {
+            "addr": "the address of the wallet being removed from the root wallet",
             "nonce": "a nonce used to prevent replay attacks, nonce must always be higher than previous nonce",
-            "wallet": "the wallet being removed from the root wallet"
+            "vmType": "the type of VM the wallet belongs to"
           }
         },
         "setDefaultWallet(address)": {
@@ -1023,7 +1032,7 @@
         "linkCallerToRootKey((address,bytes,string),uint256)": {
           "notice": "Link caller wallet to a root wallet"
         },
-        "linkNonEVMWalletToRootKey(((string,uint8),bytes,string,(string,bytes)[]),uint256)": {
+        "linkNonEVMWalletToRootKey((string,bytes,string,uint8,(string,bytes)[]),uint256)": {
           "notice": "Link a non-EVM wallet to a root wallet"
         },
         "linkWalletToRootKey((address,bytes,string),(address,bytes,string),uint256)": {
@@ -1035,7 +1044,7 @@
         "removeLink(address,(address,bytes,string),uint256)": {
           "notice": "Called via the rootkey signing a message to a remove a wallet from itself"
         },
-        "removeNonEVMWalletLink((string,uint8),uint256)": {
+        "removeNonEVMWalletLink(string,uint8,uint256)": {
           "notice": "Remove a non-EVM wallet link from a root wallet"
         },
         "setDefaultWallet(address)": {
@@ -1079,26 +1088,26 @@
   },
   "sources": {
     "contracts/src/factory/facets/wallet-link/IWalletLink.sol": {
-      "keccak256": "0xb37a03936a2f15ce5c94fb9925594627cc65cfdd186c14eaff32d299ec569b5f",
+      "keccak256": "0x8997ff1c6472c76d6f0ee3affa6115913bf80f425d5aaa8f28d26b5289900f40",
       "urls": [
-        "bzz-raw://085ef4945195eae38879c2d84e70a5a2f3cb02e6ad53e8ae37e6dd2591379327",
-        "dweb:/ipfs/QmRP7RH7sX1MUXFDwacLABBcVdGDoyKm36JbSfDDwXy4EW"
+        "bzz-raw://26962e6be701b67b9ba7f34ece4574b3791924c8efd915a475e8f755f7fa33a9",
+        "dweb:/ipfs/QmcUsFYi5yhPVwJ2LjyMjuwp3vCeMShi4zLVTAAzPHCasN"
       ],
       "license": "MIT"
     },
     "contracts/src/factory/facets/wallet-link/WalletLink.sol": {
-      "keccak256": "0x57a8f7466025510e737d4b54ef4eaff2bcd8f48e758a62ac8f90a5ff13272acf",
+      "keccak256": "0x993b6f5d2d744df16329b942887fff2019a6ff9452ef20e32d8bda800e295cc4",
       "urls": [
-        "bzz-raw://3f15e657bf76e543627b2f75992a89d84b801da6053b96e6fb0b622e1f3b9482",
-        "dweb:/ipfs/QmfQSpKDRYczvZKxJFWJnbAJxra5cY2sMxgLBzdfHzJ2h4"
+        "bzz-raw://b8e1669dbb8ec58fdae1392195fc7ce0bbe6116a1fe6153156c3bde4560884ef",
+        "dweb:/ipfs/Qmab7FC47LRFDzRiQjMrUQNPXgf3VpE8neFMD1LbA3fvSP"
       ],
       "license": "MIT"
     },
     "contracts/src/factory/facets/wallet-link/WalletLinkBase.sol": {
-      "keccak256": "0xa7d358aa0e4ad0641f44b4c9609b86f16063bd4e493366ab440a1ecfaa8b02b7",
+      "keccak256": "0x4ad2997bdde50810888b03fc539434989e424a39d51bb3f727f0698d2d5d1855",
       "urls": [
-        "bzz-raw://214853837f028da0881a284e5b16bbc8083f197e69b382046499ef4d58392953",
-        "dweb:/ipfs/QmbFpUpo7yQhh5EZTCb4L6c7ZPam3CXhdMLYVQQCWGAZX4"
+        "bzz-raw://b3c47e589148998a695a661fb44d98b676fd056b6a0267a5c470d7a4317a0267",
+        "dweb:/ipfs/QmT3as6RaYvJrafdgqBEF7tEK4fZEons3P41NPCY81ZExy"
       ],
       "license": "MIT"
     },
@@ -1135,10 +1144,10 @@
       "license": "MIT"
     },
     "contracts/src/factory/facets/wallet-link/libraries/WalletLib.sol": {
-      "keccak256": "0x7fb08e8176be055adf49a1ce35e17f4cedb78c248c46c96e0583377a4e89b40b",
+      "keccak256": "0x852e91916fe599edaf4bdf0b9fcd59f5e4f60c169bab04da64a024c058ff8027",
       "urls": [
-        "bzz-raw://334911ec72def284ac7a61e04d5de12d7018421a756e265e2d0e411e62c097c1",
-        "dweb:/ipfs/QmbJzoE6Tv91psSSDz8RgcuQKtp7zxCKAhnD3TKWiyiqMP"
+        "bzz-raw://687989ba3f567dce41e3de6c1f3f933743839d2d1f19b456ec00facbd69ab345",
+        "dweb:/ipfs/QmXxResDrGciqa7PV9RTyUDmHDwXnSP3LwckhikQwk1ZpW"
       ],
       "license": "MIT"
     },

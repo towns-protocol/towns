@@ -13,7 +13,7 @@ contract MockWalletLink is IWalletLink {
   using EnumerableSet for EnumerableSet.AddressSet;
 
   function linkCallerToRootKey(
-    LinkedWallet memory rootWallet,
+    LinkedWalletData memory rootWallet,
     uint256
   ) external {
     MockWalletLinkStorage.Layout storage ds = MockWalletLinkStorage.layout();
@@ -27,8 +27,8 @@ contract MockWalletLink is IWalletLink {
   }
 
   function linkWalletToRootKey(
-    LinkedWallet memory wallet,
-    LinkedWallet memory rootWallet,
+    LinkedWalletData memory wallet,
+    LinkedWalletData memory rootWallet,
     uint256
   ) external {
     MockWalletLinkStorage.Layout storage ds = MockWalletLinkStorage.layout();
@@ -76,7 +76,7 @@ contract MockWalletLink is IWalletLink {
   }
 
   function linkNonEVMWalletToRootKey(
-    NonEVMLinkedWallet calldata wallet,
+    NonEVMLinkedWalletData calldata wallet,
     uint256
   ) external {
     MockWalletLinkStorage.Layout storage ds = MockWalletLinkStorage.layout();
@@ -103,7 +103,11 @@ contract MockWalletLink is IWalletLink {
     ds.nonEVMWallets[rootKey][walletHash] = false;
   }
 
-  function removeLink(address wallet, LinkedWallet memory, uint256) external {
+  function removeLink(
+    address wallet,
+    LinkedWalletData memory,
+    uint256
+  ) external {
     MockWalletLinkStorage.Layout storage ds = MockWalletLinkStorage.layout();
     address rootKey = ds.rootKeyByWallet[msg.sender];
     ds.walletsByRootKey[rootKey].remove(wallet);

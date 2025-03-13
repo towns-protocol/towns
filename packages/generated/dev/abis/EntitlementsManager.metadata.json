@@ -788,18 +788,10 @@
       "license": "MIT"
     },
     "contracts/src/factory/facets/wallet-link/IWalletLink.sol": {
-      "keccak256": "0xb37a03936a2f15ce5c94fb9925594627cc65cfdd186c14eaff32d299ec569b5f",
+      "keccak256": "0x8997ff1c6472c76d6f0ee3affa6115913bf80f425d5aaa8f28d26b5289900f40",
       "urls": [
-        "bzz-raw://085ef4945195eae38879c2d84e70a5a2f3cb02e6ad53e8ae37e6dd2591379327",
-        "dweb:/ipfs/QmRP7RH7sX1MUXFDwacLABBcVdGDoyKm36JbSfDDwXy4EW"
-      ],
-      "license": "MIT"
-    },
-    "contracts/src/factory/facets/wallet-link/libraries/WalletLib.sol": {
-      "keccak256": "0x7fb08e8176be055adf49a1ce35e17f4cedb78c248c46c96e0583377a4e89b40b",
-      "urls": [
-        "bzz-raw://334911ec72def284ac7a61e04d5de12d7018421a756e265e2d0e411e62c097c1",
-        "dweb:/ipfs/QmbJzoE6Tv91psSSDz8RgcuQKtp7zxCKAhnD3TKWiyiqMP"
+        "bzz-raw://26962e6be701b67b9ba7f34ece4574b3791924c8efd915a475e8f755f7fa33a9",
+        "dweb:/ipfs/QmcUsFYi5yhPVwJ2LjyMjuwp3vCeMShi4zLVTAAzPHCasN"
       ],
       "license": "MIT"
     },
