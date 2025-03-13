@@ -348,7 +348,7 @@ func (ss *SyncerSet) Modify(ctx context.Context, req ModifyRequest) error {
 	}
 
 	var errGrp errgroup.Group
-
+	var localMuSyncers sync.Mutex
 	for nodeAddress, modifySync := range modifySyncs {
 		// check if there is already a syncer that can sync the given stream -> add stream to the syncer
 		syncer, found := ss.syncers[nodeAddress]
@@ -402,9 +402,11 @@ func (ss *SyncerSet) Modify(ctx context.Context, req ModifyRequest) error {
 			for _, status := range addingFailures {
 				req.AddingFailureHandler(status)
 			}
+			localMuSyncers.Lock()
 			for _, cookie := range successfullyAdded {
 				ss.streamID2Syncer[StreamId(cookie.GetStreamId())] = syncer
 			}
+			localMuSyncers.Unlock()
 
 			removalFailures := resp.GetRemovals()
 			successfullyRemoved := slices.DeleteFunc(modifySync.GetRemoveStreams(), func(streamIdRaw []byte) bool {
@@ -416,6 +418,7 @@ func (ss *SyncerSet) Modify(ctx context.Context, req ModifyRequest) error {
 			for _, status := range resp.GetRemovals() {
 				req.RemovingFailureHandler(status)
 			}
+			localMuSyncers.Lock()
 			for _, streamIdRaw := range successfullyRemoved {
 				delete(ss.streamID2Syncer, StreamId(streamIdRaw))
 			}
@@ -423,6 +426,7 @@ func (ss *SyncerSet) Modify(ctx context.Context, req ModifyRequest) error {
 			if syncerStopped {
 				delete(ss.syncers, syncer.Address())
 			}
+			localMuSyncers.Unlock()
 
 			return nil
 		})
