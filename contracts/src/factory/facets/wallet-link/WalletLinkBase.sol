@@ -36,9 +36,6 @@ abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
   /// @dev Maximum number of linked wallets per root key
   uint256 internal constant MAX_LINKED_WALLETS = 10;
 
-  /// @dev Dependency name of SCL_EIP6565 verifier library
-  bytes32 internal constant SCL_EIP6565 = bytes32("SCL_EIP6565");
-
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                      External - Write
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -421,20 +418,6 @@ abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
   ) internal view returns (address defaultWallet) {
     return
       WalletLinkStorage.layout().rootWalletByRootKey[rootKey].defaultWallet;
-  }
-
-  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-  /*                      Dependencies Functions                */
-  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-  function _getDependency(bytes32 dependency) internal view returns (address) {
-    return WalletLinkStorage.layout().dependencies[dependency];
-  }
-
-  function _setDependency(
-    bytes32 dependency,
-    address dependencyAddress
-  ) internal {
-    WalletLinkStorage.layout().dependencies[dependency] = dependencyAddress;
   }
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/

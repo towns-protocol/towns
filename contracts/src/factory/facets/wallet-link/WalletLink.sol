@@ -18,8 +18,11 @@ contract WalletLink is IWalletLink, WalletLinkBase, OwnableBase, Facet {
     address sclEip6565
   ) external onlyInitializing {
     _addInterface(type(IWalletLink).interfaceId);
-    _setDependency(WalletLinkLib.DELEGATE_REGISTRY_V2, delegateRegistry);
-    _setDependency(SCL_EIP6565, sclEip6565);
+    WalletLinkLib.setDependency(
+      WalletLinkLib.DELEGATE_REGISTRY_V2,
+      delegateRegistry
+    );
+    WalletLinkLib.setDependency(WalletLinkLib.SCL_EIP6565, sclEip6565);
   }
 
   /// @inheritdoc IWalletLink
@@ -128,7 +131,7 @@ contract WalletLink is IWalletLink, WalletLinkBase, OwnableBase, Facet {
 
   /// @inheritdoc IWalletLink
   function getDependency(bytes32 dependency) external view returns (address) {
-    return _getDependency(dependency);
+    return WalletLinkLib.getDependency(dependency);
   }
 
   /// @inheritdoc IWalletLink
@@ -136,6 +139,6 @@ contract WalletLink is IWalletLink, WalletLinkBase, OwnableBase, Facet {
     bytes32 dependency,
     address dependencyAddress
   ) external onlyOwner {
-    _setDependency(dependency, dependencyAddress);
+    WalletLinkLib.setDependency(dependency, dependencyAddress);
   }
 }

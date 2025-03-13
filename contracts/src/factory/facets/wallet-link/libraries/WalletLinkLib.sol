@@ -48,7 +48,18 @@ library WalletLinkLib {
     return allDelegations;
   }
 
+  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+  /*                      Dependencies Functions                */
+  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
   function getDependency(bytes32 dependency) internal view returns (address) {
     return WalletLinkStorage.layout().dependencies[dependency];
+  }
+
+  function setDependency(
+    bytes32 dependency,
+    address dependencyAddress
+  ) internal {
+    WalletLinkStorage.layout().dependencies[dependency] = dependencyAddress;
   }
 }
