@@ -444,7 +444,7 @@ func (p *MessageToNotificationsProcessor) apnPayloadV2(
 func removeUnusedFieldsInPayloadForAPNS(payload IsStreamEvent_Payload) IsStreamEvent_Payload {
 	switch payload := payload.(type) {
 	case *StreamEvent_MemberPayload:
-		// clean out receipts for member payloads
+		// clean out receipts for member payloads — a receipt can easily be 7-8kb in size
 		switch content := payload.MemberPayload.Content.(type) {
 			case *MemberPayload_MemberBlockchainTransaction_:
 				content.MemberBlockchainTransaction.Transaction.Receipt = nil
