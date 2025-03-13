@@ -7,7 +7,6 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/towns-protocol/towns/core/node/base"
-	"github.com/towns-protocol/towns/core/node/logging"
 	"github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/shared"
 	"github.com/towns-protocol/towns/core/node/storage"
@@ -86,8 +85,6 @@ func (q *CachedEncryptedMessageQueue) PublishSessionKeys(
 	sessionIds []string,
 	ciphertexts string,
 ) (err error) {
-	log := logging.FromCtx(ctx)
-	log.Debugw("PublishSessionKeys", "streamId", streamId, "deviceKey", deviceKey, "sessionIds", sessionIds)
 	sendableMessages, err := q.store.PublishSessionKeys(ctx, streamId, deviceKey, sessionIds, ciphertexts)
 	if err != nil {
 		return err

@@ -164,14 +164,13 @@ func isChannelMessageReply(
 	event *events.ParsedEvent,
 	originalText string,
 	sessionId string,
+	cipherTexts string,
 ) bool {
 	if msg := event.GetChannelMessage(); msg != nil {
-		// log := logging.DefaultZapLogger(zapcore.DebugLevel)
-		// log.Debugw("Saw a message", "ciphertext", msg.Message.Ciphertext)
 		if msg.Message.SessionId != sessionId {
 			return false
 		}
-		if msg.Message.Ciphertext == fmt.Sprintf("%v %v reply", sessionId, originalText) {
+		if msg.Message.Ciphertext == fmt.Sprintf("%v %v reply (%v)", sessionId, originalText, cipherTexts) {
 			return true
 		}
 	}
@@ -198,12 +197,13 @@ func findMessageReply(
 	channel *protocol.StreamAndCookie,
 	originalText string,
 	sessionId string,
+	cipherTexts string,
 ) bool {
 	return overAllEvents(
 		c,
 		channel,
 		func(event *events.ParsedEvent) bool {
-			return isChannelMessageReply(event, originalText, sessionId)
+			return isChannelMessageReply(event, originalText, sessionId, cipherTexts)
 		},
 	)
 }
@@ -235,13 +235,7 @@ func overAllEvents(
 }
 
 func TestAppRegistry_ForwardsChannelEvents(t *testing.T) {
-	tester := newServiceTester(
-		t,
-		serviceTesterOpts{numNodes: 1, start: true, btcParams: &crypto.TestParams{
-			AutoMine:         true,
-			AutoMineInterval: 1 * time.Millisecond,
-		}},
-	)
+	tester := newServiceTester(t, serviceTesterOpts{numNodes: 1, start: true})
 	ctx := tester.ctx
 	// Uncomment to force logging only for the app registry service
 	// ctx := logging.CtxWithLog(tester.ctx, logging.DefaultZapLogger(zapcore.DebugLevel))
@@ -351,6 +345,7 @@ func TestAppRegistry_ForwardsChannelEvents(t *testing.T) {
 	// Participant sends a test message to send to the channel with session id "session0"
 	testMessageText := "xyz"
 	testSession := "session0"
+	testCiphertexts := "ciphertext-device0-session0"
 	event, err := events.MakeEnvelopeWithPayload(
 		participant,
 		events.Make_ChannelPayload_Message_WithSession(testMessageText, testSession),
@@ -394,7 +389,7 @@ func TestAppRegistry_ForwardsChannelEvents(t *testing.T) {
 		events.Make_UserInboxPayload_GroupEncryptionSessions(
 			channelId,
 			[]string{testSession},
-			map[string]string{"deviceKey": "ciphertext-device0-session0"},
+			map[string]string{testEncryptionDevice.DeviceKey: testCiphertexts},
 		),
 		&MiniblockRef{
 			Num:  res.Msg.Stream.NextSyncCookie.MinipoolGen - 1,
@@ -417,7 +412,7 @@ func TestAppRegistry_ForwardsChannelEvents(t *testing.T) {
 			},
 		})
 		assert.NoError(c, err)
-		assert.True(c, findMessageReply(c, res.Msg.Stream, testMessageText, testSession))
+		assert.True(c, findMessageReply(c, res.Msg.Stream, testMessageText, testSession, testCiphertexts))
 	}, 10*time.Second, 100*time.Millisecond, "App server did not respond to the participant sending keys")
 }
 

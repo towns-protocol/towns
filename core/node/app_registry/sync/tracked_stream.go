@@ -45,9 +45,9 @@ func (b *AppRegistryTrackedStreamView) processUserInboxMessage(ctx context.Conte
 
 func (b *AppRegistryTrackedStreamView) onNewEvent(ctx context.Context, view *StreamView, event *ParsedEvent) error {
 	streamId := view.StreamId()
-	// Uncomment to force logging here
+	// Uncomment to unconditionally enable logging here
 	// ctx = logging.CtxWithLog(ctx, logging.DefaultZapLogger(zapcore.DebugLevel))
-	log := logging.FromCtx(ctx).With("func", "AppRegistryTrackedStreamView.onNewEvent")
+	log := logging.FromCtx(ctx)
 
 	if streamId.Type() == shared.STREAM_USER_INBOX_BIN {
 		return b.processUserInboxMessage(ctx, event)

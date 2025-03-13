@@ -269,7 +269,12 @@ func (b *TestAppServer) respondToSendMessages(
 		envelope, err := events.MakeEnvelopeWithPayload(
 			b.appWallet,
 			events.Make_ChannelPayload_Message_WithSession(
-				fmt.Sprintf("%v %v reply", message.Message.SessionId, message.Message.Ciphertext),
+				fmt.Sprintf(
+					"%v %v reply (%v)",
+					message.Message.SessionId,
+					message.Message.Ciphertext,
+					data.CipherTexts,
+				),
 				message.Message.SessionId,
 			),
 			&shared.MiniblockRef{
@@ -306,7 +311,7 @@ func (b *TestAppServer) respondToSendMessages(
 func (b *TestAppServer) rootHandler(w http.ResponseWriter, r *http.Request) {
 	// Ensure that the request method is POST.
 	// Uncomment to unconditionally enable logging
-	// log := logging.DefaultZapLogger(zapcore.DebugLevel).With("func", "TestAppServer.rootHandler")
+	// log := logging.DefaultZapLogger(zapcore.DebugLevel)
 	log := logging.FromCtx(r.Context())
 	if r.Method != http.MethodPost {
 		log.Errorw("method not allowed", "method", r.Method)
