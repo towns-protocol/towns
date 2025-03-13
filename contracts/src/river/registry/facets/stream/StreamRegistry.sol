@@ -87,8 +87,7 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
 
     if (miniblockCount == 0) revert(RiverRegistryErrors.BAD_ARG);
 
-    bytes32[] memory streamIds = new bytes32[](miniblockCount);
-    Stream[] memory streams = new Stream[](miniblockCount);
+    SetMiniblock[] memory miniblockUpdates = new SetMiniblock[](miniblockCount);
     uint256 streamCount = 0;
 
     for (uint256 i; i < miniblockCount; ++i) {
@@ -147,21 +146,7 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
         stream.flags |= StreamFlags.SEALED;
       }
 
-      streamIds[streamCount] = miniblock.streamId;
-      Stream memory _stream = streams[streamCount];
-      (
-        _stream.lastMiniblockHash,
-        _stream.lastMiniblockNum,
-        _stream.reserved0,
-        _stream.flags
-      ) = (
-        miniblock.lastMiniblockHash,
-        miniblock.lastMiniblockNum,
-        stream.reserved0,
-        stream.flags
-      );
-      _stream.nodes = stream.nodes;
-      ++streamCount;
+      miniblockUpdates[streamCount++] = miniblock;
 
       // deprecating
       _emitStreamLastMiniblockUpdated(
@@ -172,15 +157,14 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
       );
     }
 
-    // overwrite the length of the arrays
+    // overwrite the length of the array
     assembly ("memory-safe") {
-      mstore(streamIds, streamCount)
-      mstore(streams, streamCount)
+      mstore(miniblockUpdates, streamCount)
     }
 
     emit StreamUpdated(
       StreamEventType.LastMiniblockBatchUpdated,
-      abi.encode(streamIds, streams)
+      abi.encode(miniblockUpdates)
     );
   }
 

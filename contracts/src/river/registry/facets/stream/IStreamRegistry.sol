@@ -27,11 +27,11 @@ interface IStreamRegistryBase {
   ///     case StreamEventType.Create:
   ///       (bytes32 streamId, Stream memory stream, bytes32 genesisMiniblockHash) = abi.decode(data, (bytes32, Stream, bytes32));
   ///     case StreamEventType.LastMiniblockBatchUpdated:
-  ///       (bytes32[] memory streamIds, Stream[] memory streams) = abi.decode(data, (bytes32[], Stream[]));
+  ///       (SetMiniblock[] memory miniBlockUpdates) = abi.decode(data, (SetMiniblock[]));
   ///   }
   /// @param eventType The type of stream event
   /// @param data The data of the stream event
-  event StreamUpdated(StreamEventType eventType, bytes data);
+  event StreamUpdated(StreamEventType indexed eventType, bytes data);
 
   event StreamAllocated(
     bytes32 streamId,
