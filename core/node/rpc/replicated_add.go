@@ -142,6 +142,7 @@ func (s *Service) replicatedAddMediaEventImpl(ctx context.Context, event *Parsed
 		PrevMiniblockHash: cc.PrevMiniblockHash,
 		Timestamp:         NextMiniblockTimestamp(nil),
 		EventHashes:       [][]byte{event.Hash[:]},
+		EventNumOffset:    cc.MiniblockNum + 1, // for media streams, each miniblock has only one event
 	}), event.MiniblockRef)
 	if err != nil {
 		return nil, err
