@@ -143,7 +143,7 @@ func (s *Service) start(opts *ServerStartOpts) error {
 		return AsRiverError(err).Message("Failed to init wallet").LogError(s.defaultLogger)
 	}
 
-	s.initTracing()
+	s.initTracing("river-stream", s.wallet.String())
 
 	// There is an order here to how components must be initialized.
 	// 1. The river chain is needed in order to read on-chain configuration for instantiating entitlements.
