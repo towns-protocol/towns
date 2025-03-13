@@ -412,6 +412,9 @@ func (ca *chainAuth) IsEntitled(ctx context.Context, cfg *config.Config, args *C
 		ca.checkEntitlement,
 	)
 	if err != nil {
+		if args.kind == chainAuthKindIsSpaceMember {
+			logging.FromCtx(ctx).Infow("Returning cached false IsEntitled result for IsSpaceMember", "args", args)
+		}
 		return false, AsRiverError(err).Func("IsEntitled")
 	}
 
@@ -1017,6 +1020,9 @@ func (ca *chainAuth) checkEntitlement(
 	}
 
 	args = args.withLinkedWallets(wallets)
+	if args.kind == chainAuthKindIsSpaceMember {
+		log.Infow("Checking linked wallets for IsSpaceMember", "args", args, "wallets", wallets)
+	}
 
 	isMemberCtx, isMemberCancel := context.WithCancel(ctx)
 	defer isMemberCancel()
@@ -1093,15 +1099,17 @@ func (ca *chainAuth) checkEntitlement(
 		} else {
 			// It is expected that some membership checks will fail when the user is legitimately
 			// not entitled, so this log statement is for debugging only.
-			log.Debugw(
-				"User is not a member of the space",
-				"userId",
-				args.principal,
-				"spaceId",
-				args.spaceId,
-				"wallets",
-				wallets,
-			)
+			if args.kind == chainAuthKindIsSpaceMember {
+				log.Infow(
+					"User is not a member of the space",
+					"userId",
+					args.principal,
+					"spaceId",
+					args.spaceId,
+					"wallets",
+					wallets,
+				)
+			}
 			return boolCacheResult(false), nil
 		}
 	}
