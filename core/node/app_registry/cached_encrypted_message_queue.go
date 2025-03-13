@@ -100,7 +100,7 @@ func (q *CachedEncryptedMessageQueue) PublishSessionKeys(
 	return q.appDispatcher.SubmitMessages(ctx, messages)
 }
 
-// EnqueueMessages will immediately send a message for each device that has session keys, and will
+// DispatchOrEnqueueMessages will immediately send a message for each device that has session keys, and will
 // enqueue unsendable messages and send them as soon as keys become available.
 func (q *CachedEncryptedMessageQueue) DispatchOrEnqueueMessages(
 	ctx context.Context,
