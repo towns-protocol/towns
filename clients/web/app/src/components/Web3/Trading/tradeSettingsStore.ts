@@ -8,7 +8,7 @@ export const useTradeSettings = create(
         setSlippage: (slippage: number) => void
     }>(
         (set) => ({
-            slippage: 0.01,
+            slippage: 0.06,
             setSlippage: (slippage: number) => set({ slippage }),
         }),
         {
