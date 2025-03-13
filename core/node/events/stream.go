@@ -641,6 +641,10 @@ func (s *Stream) GetMiniblocks(
 				Message("Failed to decode miniblock from bytes").
 				Func("GetMiniblocks")
 		}
+		err = ValidateMiniblockHashes(&pb)
+		if err != nil {
+			return nil, false, err
+		}
 		miniblocks[i] = &pb
 	}
 

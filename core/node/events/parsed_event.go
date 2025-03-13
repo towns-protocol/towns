@@ -33,6 +33,14 @@ func (e *ParsedEvent) GetEnvelopeBytes() ([]byte, error) {
 		Func("GetEnvelopeBytes")
 }
 
+func ValidateEnvelopeHash(envelope *Envelope) error {
+	hash := TownsHashForEvents.Hash(envelope.Event)
+	if !bytes.Equal(hash[:], envelope.Hash) {
+		return RiverError(Err_BAD_EVENT_HASH, "Bad envelope hash", "computed", hash, "got", envelope.Hash)
+	}
+	return nil
+}
+
 func ParseEvent(envelope *Envelope) (*ParsedEvent, error) {
 	hash := TownsHashForEvents.Hash(envelope.Event)
 	if !bytes.Equal(hash[:], envelope.Hash) {

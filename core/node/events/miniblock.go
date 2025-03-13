@@ -17,6 +17,20 @@ import (
 	"github.com/towns-protocol/towns/core/node/storage"
 )
 
+func ValidateMiniblockHashes(miniblock *Miniblock) error {
+	err := ValidateEnvelopeHash(miniblock.Header)
+	if err != nil {
+		return err
+	}
+	for _, event := range miniblock.Events {
+		err = ValidateEnvelopeHash(event)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func Make_GenesisMiniblockHeader(parsedEvents []*ParsedEvent) (*MiniblockHeader, error) {
 	if len(parsedEvents) <= 0 {
 		return nil, RiverError(Err_STREAM_EMPTY, "no events to make genisis miniblock header")
