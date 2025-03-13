@@ -206,7 +206,6 @@ func (b *TestAppServer) respondToSendMessages(
 	log := logging.FromCtx(ctx)
 	// Swap with above to enable debug logs
 	// log := logging.DefaultZapLogger(zapcore.DebugLevel)
-
 	log.Debugw(
 		"respondToSendMessages",
 		"numMessages",
