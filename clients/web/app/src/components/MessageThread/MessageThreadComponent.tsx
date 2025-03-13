@@ -372,7 +372,7 @@ const ThreadEditor = (props: {
     const editor = (
         <TownsEditorContainer
             isFullWidthOnTouch
-            background={background}
+            background={tickerAttachment ? 'inherit' : background}
             key={`${messageId}-${isChannelWritable ? '' : '-readonly'}`}
             editable={!!isChannelWritable}
             displayButtons={displayButtons ?? 'on-focus'}

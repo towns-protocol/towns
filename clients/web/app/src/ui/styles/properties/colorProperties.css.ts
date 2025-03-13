@@ -103,6 +103,16 @@ export const colorProperties = defineProperties({
                             '--background-hover': vars.color.background.level3Hover,
                         },
                     },
+                    // for trading threads inside thread view - we shall revisit
+                    // this, I don't think we should stack too many layers of background
+                    [`${elevateClass} ${elevateClass} &`]: {
+                        background: vars.color.background.level4,
+                        color: vars.color.text.gray1,
+                        vars: {
+                            '--background': vars.color.background.level4,
+                            '--background-hover': vars.color.background.level4Hover,
+                        },
+                    },
                     [`&${hoverableClass}:hover,&${hoverableClass}${hoverActiveClass}`]: {
                         '@media': {
                             '(hover: hover)': {
