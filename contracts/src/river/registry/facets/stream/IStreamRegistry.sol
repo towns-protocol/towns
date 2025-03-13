@@ -14,8 +14,6 @@ interface IStreamRegistryBase {
     Allocate,
     Create,
     PlacementUpdated,
-    LastMiniblockUpdated,
-    LastMiniblockUpdateFailed,
     LastMiniblockBatchUpdated
   }
 
@@ -24,14 +22,10 @@ interface IStreamRegistryBase {
   /// To decode:
   ///   switch (eventType) {
   ///     case StreamEventType.Allocate:
-  ///       (bytes32 streamId, Stream memory stream, bytes32 genesisMiniblockHash, bytes genesisMiniblock) = abi.decode(data, (bytes32, Stream, bytes32, bytes));
+  ///     case StreamEventType.PlacementUpdated:
+  ///       (bytes32 streamId, Stream memory stream) = abi.decode(data, (bytes32, Stream));
   ///     case StreamEventType.Create:
   ///       (bytes32 streamId, Stream memory stream, bytes32 genesisMiniblockHash) = abi.decode(data, (bytes32, Stream, bytes32));
-  ///     case StreamEventType.PlacementUpdated:
-  ///     case StreamEventType.LastMiniblockUpdated:
-  ///       (bytes32 streamId, Stream memory stream) = abi.decode(data, (bytes32, Stream));
-  ///     case StreamEventType.LastMiniblockUpdateFailed:
-  ///       (bytes32 streamId, bytes32 lastMiniblockHash, uint64 lastMiniblockNum, string reason) = abi.decode(data, (bytes32, bytes32, uint64, string));
   ///     case StreamEventType.LastMiniblockBatchUpdated:
   ///       (bytes32[] memory streamIds, Stream[] memory streams) = abi.decode(data, (bytes32[], Stream[]));
   ///   }
@@ -195,22 +189,4 @@ interface IStreamRegistry is IStreamRegistryBase {
   function getStreamWithGenesis(
     bytes32 streamId
   ) external view returns (Stream memory, bytes32, bytes memory);
-
-  /**
-   * @notice Update the last miniblock information for a stream
-   * @dev Only callable by registered nodes
-   * @param streamId The ID of the stream to update
-   * @param prevMiniblockHash The hash of the previous miniblock (currently unused)
-   * @param lastMiniblockHash The hash of the new last miniblock
-   * @param lastMiniblockNum The number of the new last miniblock
-   * @param isSealed Whether to mark the stream as sealed
-   * @custom:deprecated Deprecated in favor of setStreamLastMiniblockBatch
-   */
-  function setStreamLastMiniblock(
-    bytes32 streamId,
-    bytes32 prevMiniblockHash,
-    bytes32 lastMiniblockHash,
-    uint64 lastMiniblockNum,
-    bool isSealed
-  ) external;
 }

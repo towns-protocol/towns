@@ -43,10 +43,7 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
 
     _addStreamIdToNodes(streamId, nodes);
 
-    emit StreamUpdated(
-      StreamEventType.Allocate,
-      abi.encode(streamId, stream)
-    );
+    emit StreamUpdated(StreamEventType.Allocate, abi.encode(streamId, stream));
 
     // deprecating
     emit StreamAllocated(
@@ -184,52 +181,6 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
     emit StreamUpdated(
       StreamEventType.LastMiniblockBatchUpdated,
       abi.encode(streamIds, streams)
-    );
-  }
-
-  /// @inheritdoc IStreamRegistry
-  function setStreamLastMiniblock(
-    bytes32 streamId,
-    bytes32, // prevMiniblockHash
-    bytes32 lastMiniblockHash,
-    uint64 lastMiniblockNum,
-    bool isSealed
-  ) external onlyNode(msg.sender) onlyStream(streamId) {
-    Stream storage stream = ds.streamById[streamId];
-
-    // Check if the stream is already sealed using bitwise AND
-    if ((stream.flags & StreamFlags.SEALED) != 0) {
-      revert(RiverRegistryErrors.STREAM_SEALED);
-    }
-
-    // Ensure that the lastMiniblockNum is newer than the current head.
-    if (stream.lastMiniblockNum >= lastMiniblockNum) {
-      revert(RiverRegistryErrors.BAD_ARG);
-    }
-
-    // Delete genesis miniblock
-    delete ds.genesisMiniblockByStreamId[streamId];
-
-    // Update the stream information
-    stream.lastMiniblockHash = lastMiniblockHash;
-    stream.lastMiniblockNum = lastMiniblockNum;
-
-    // Set the sealed flag if requested
-    if (isSealed) {
-      stream.flags |= StreamFlags.SEALED;
-    }
-
-    emit StreamUpdated(
-      StreamEventType.LastMiniblockUpdated,
-      abi.encode(streamId, stream)
-    );
-
-    // deprecating
-    _emitStreamLastMiniblockUpdated(
-      streamId,
-      lastMiniblockHash,
-      lastMiniblockNum,
-      isSealed
     );
   }
 
