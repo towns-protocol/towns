@@ -8,10 +8,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ethereum/go-ethereum/common"
-
 	"connectrpc.com/connect"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
+
 	"github.com/towns-protocol/towns/core/node/crypto"
 	. "github.com/towns-protocol/towns/core/node/events"
 	"github.com/towns-protocol/towns/core/node/protocol"
@@ -398,8 +398,7 @@ func TestSyncWithManyStreams(t *testing.T) {
 	_, _, err = createSpace(ctx, wallet, syncClient0, spaceId, &protocol.StreamSettings{})
 	require.NoError(err)
 
-	var channelCookies []*protocol.SyncCookie
-	for range 500 {
+	produceChannel := func() (*protocol.SyncCookie, *MiniblockRef) {
 		channelId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 		channel, channelHash, err := createChannel(
 			ctx,
@@ -414,9 +413,15 @@ func TestSyncWithManyStreams(t *testing.T) {
 		b0ref, err := makeMiniblock(ctx, syncClient0, channelId, false, -1)
 		require.NoError(err)
 		require.Equal(int64(0), b0ref.Num)
+		return channel, channelHash
+	}
+
+	var channelCookies []*protocol.SyncCookie
+	for range 500 {
+		channel, channelHash := produceChannel()
 
 		// add 1 event to the channel
-		addMessageToChannel(ctx, syncClient0, wallet, "hello", channelId, channelHash, require)
+		addMessageToChannel(ctx, syncClient0, wallet, "hello", StreamId(channel.StreamId), channelHash, require)
 
 		channelCookies = append(channelCookies, channel)
 	}
@@ -430,23 +435,10 @@ func TestSyncWithManyStreams(t *testing.T) {
 	// create more streams and add them to the sync via the modify sync endpoint
 	var add []*protocol.SyncCookie
 	for range 500 {
-		channelId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
-		channel, channelHash, err := createChannel(
-			ctx,
-			wallet,
-			syncClient0,
-			spaceId,
-			channelId,
-			&protocol.StreamSettings{DisableMiniblockCreation: true},
-		)
-		require.NoError(err)
-		require.NotNil(channel)
-		b0ref, err := makeMiniblock(ctx, syncClient0, channelId, false, -1)
-		require.NoError(err)
-		require.Equal(int64(0), b0ref.Num)
+		channel, channelHash := produceChannel()
 
 		// add 1 event to the channel
-		addMessageToChannel(ctx, syncClient0, wallet, "hello", channelId, channelHash, require)
+		addMessageToChannel(ctx, syncClient0, wallet, "hello", StreamId(channel.StreamId), channelHash, require)
 
 		add = append(add, channel)
 	}
@@ -480,6 +472,42 @@ func TestSyncWithManyStreams(t *testing.T) {
 	syncClients.modifySync(t, ctx, add, remove)
 	syncClients.expectNUpdates(t, len(add)+len(channelCookies[len(channelCookies)/2:]), 30*time.Second, &updateOpts{events: 1, eventType: "ChannelPayload"})
 	testfmt.Printf(t, "Received second update for all %d streams in init sync session took: %s", len(channelCookies), time.Since(now))
+
+	// add two same streams in the modify sync request and expect error
+	t.Run("duplicate add streams", func(t *testing.T) {
+		channel, _ := produceChannel()
+		_, err = syncClient0.ModifySync(ctx, connect.NewRequest(&protocol.ModifySyncRequest{
+			SyncId:     syncClients.clients[0].syncId,
+			AddStreams: []*protocol.SyncCookie{channel, channel},
+		}))
+		require.Error(err)
+		require.Equal(connect.CodeAlreadyExists, connect.CodeOf(err))
+	})
+
+	// remove two same streams in the modify sync request and expect error
+	t.Run("duplicate remove streams", func(t *testing.T) {
+		_, err = syncClient0.ModifySync(ctx, connect.NewRequest(&protocol.ModifySyncRequest{
+			SyncId: syncClients.clients[0].syncId,
+			RemoveStreams: [][]byte{
+				channelCookies[len(channelCookies)-1].StreamId,
+				channelCookies[len(channelCookies)-1].StreamId,
+			},
+		}))
+		require.Error(err)
+		require.Equal(connect.CodeAlreadyExists, connect.CodeOf(err))
+	})
+
+	// passing the same stream in add and remove streams in the modify sync request and expect error
+	t.Run("same stream in remove and add", func(t *testing.T) {
+		channel, _ := produceChannel()
+		_, err = syncClient0.ModifySync(ctx, connect.NewRequest(&protocol.ModifySyncRequest{
+			SyncId:        syncClients.clients[0].syncId,
+			AddStreams:    []*protocol.SyncCookie{channel},
+			RemoveStreams: [][]byte{channel.StreamId},
+		}))
+		require.Error(err)
+		require.Equal(connect.CodeInvalidArgument, connect.CodeOf(err))
+	})
 
 	// finish testing
 	syncClients.cancelAll(t, ctx)

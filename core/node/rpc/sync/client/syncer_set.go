@@ -310,6 +310,17 @@ func (ss *SyncerSet) Modify(ctx context.Context, req ModifyRequest) error {
 		return RiverError(Err_CANCELED, "Sync operation stopped", "syncId", ss.syncID)
 	}
 
+	// Prevent passing the same stream to both add and remove operations
+	if slices.ContainsFunc(req.ToAdd, func(c *SyncCookie) bool {
+		return slices.ContainsFunc(req.ToRemove, func(streamId []byte) bool {
+			return StreamId(c.GetStreamId()) == StreamId(streamId)
+		})
+	}) {
+		return RiverError(Err_INVALID_ARGUMENT, "Found the same stream in both add and remove lists").
+			Tags("syncId", ss.syncID).
+			Func("SyncerSet.Modify")
+	}
+
 	modifySyncs := make(map[common.Address]*ModifySyncRequest)
 
 	// group cookies by node address
@@ -322,6 +333,16 @@ func (ss *SyncerSet) Modify(ctx context.Context, req ModifyRequest) error {
 		if _, ok := modifySyncs[nodeAddress]; !ok {
 			modifySyncs[nodeAddress] = &ModifySyncRequest{}
 		}
+
+		// avoid duplicates
+		if slices.ContainsFunc(modifySyncs[nodeAddress].AddStreams, func(c *SyncCookie) bool {
+			return StreamId(c.StreamId) == StreamId(cookie.GetStreamId())
+		}) {
+			return RiverError(Err_ALREADY_EXISTS, "Duplicate stream in add operation").
+				Tags("syncId", ss.syncID, "streamId", StreamId(cookie.StreamId)).
+				Func("SyncerSet.Modify")
+		}
+
 		modifySyncs[nodeAddress].AddStreams = append(modifySyncs[nodeAddress].AddStreams, cookie)
 	}
 
@@ -340,6 +361,16 @@ func (ss *SyncerSet) Modify(ctx context.Context, req ModifyRequest) error {
 		if _, ok := modifySyncs[syncer.Address()]; !ok {
 			modifySyncs[syncer.Address()] = &ModifySyncRequest{}
 		}
+
+		// avoid duplicates in the remove list
+		if slices.ContainsFunc(modifySyncs[syncer.Address()].RemoveStreams, func(s []byte) bool {
+			return StreamId(streamIDRaw) == StreamId(s)
+		}) {
+			return RiverError(Err_ALREADY_EXISTS, "Duplicate stream in remove operation").
+				Tags("syncId", ss.syncID, "streamId", StreamId(streamIDRaw)).
+				Func("SyncerSet.Modify")
+		}
+
 		modifySyncs[syncer.Address()].RemoveStreams = append(modifySyncs[syncer.Address()].RemoveStreams, streamIDRaw)
 	}
 
