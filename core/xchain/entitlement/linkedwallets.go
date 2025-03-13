@@ -8,11 +8,12 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/towns-protocol/towns/core/contracts/base"
+	"github.com/towns-protocol/towns/core/node/crypto"
 	"github.com/towns-protocol/towns/core/node/infra"
 	"github.com/towns-protocol/towns/core/node/logging"
 )
 
-func GetLinkedWallets(
+func getLinkedWallets(
 	ctx context.Context,
 	wallet common.Address,
 	walletLink *base.WalletLink,
@@ -85,5 +86,42 @@ func GetLinkedWallets(
 
 	log.Debugw("Linked wallets", "rootKey", rootKey.Hex(), "wallets", wallets)
 
+	return wallets, nil
+}
+
+func GetLinkedWallets(
+	ctx context.Context,
+	wallet common.Address,
+	walletLink *base.WalletLink,
+	callDurations *prometheus.HistogramVec,
+	getRootKeyForWalletCalls *infra.StatusCounterVec,
+	getWalletsByRootKeyCalls *infra.StatusCounterVec,
+) ([]common.Address, error) {
+	decoder, err := crypto.NewEVMErrorDecoder(
+		base.WalletLinkMetaData,
+		base.DiamondMetaData,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	wallets, err := getLinkedWallets(
+		ctx,
+		wallet,
+		walletLink,
+		callDurations,
+		getRootKeyForWalletCalls,
+		getWalletsByRootKeyCalls,
+	)
+	// Attempt to parse any contract errors
+	if err != nil {
+		ce, se, err := decoder.DecodeEVMError(err)
+		if ce != nil {
+			return nil, ce
+		} else if se != nil {
+			return nil, se
+		}
+		return nil, err
+	}
 	return wallets, nil
 }
