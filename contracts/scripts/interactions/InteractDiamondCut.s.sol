@@ -29,7 +29,6 @@ contract InteractDiamondCut is Interaction, DiamondHelper {
     helper.removeSelector(
       WalletLink.getWalletsByRootKeyWithDelegations.selector
     );
-    helper.removeSelector(WalletLink.explicitWalletsByRootKey.selector);
     helper.removeSelector(WalletLink.checkIfNonEVMWalletLinked.selector);
     helper.removeSelector(WalletLink.getDependency.selector);
     helper.removeSelector(WalletLink.setDependency.selector);
@@ -42,12 +41,11 @@ contract InteractDiamondCut is Interaction, DiamondHelper {
     selectors[0] = WalletLink.linkNonEVMWalletToRootKey.selector;
     selectors[1] = WalletLink.removeNonEVMWalletLink.selector;
     selectors[2] = WalletLink.getWalletsByRootKeyWithDelegations.selector;
-    selectors[3] = WalletLink.explicitWalletsByRootKey.selector;
-    selectors[4] = WalletLink.checkIfNonEVMWalletLinked.selector;
-    selectors[5] = WalletLink.getDependency.selector;
-    selectors[6] = WalletLink.setDependency.selector;
-    selectors[7] = WalletLink.setDefaultWallet.selector;
-    selectors[8] = WalletLink.getDefaultWallet.selector;
+    selectors[3] = WalletLink.checkIfNonEVMWalletLinked.selector;
+    selectors[4] = WalletLink.getDependency.selector;
+    selectors[5] = WalletLink.setDependency.selector;
+    selectors[6] = WalletLink.setDefaultWallet.selector;
+    selectors[7] = WalletLink.getDefaultWallet.selector;
 
     addCut(
       IDiamond.FacetCut({

@@ -9,8 +9,9 @@ import {IDelegateRegistry} from "./interfaces/IDelegateRegistry.sol";
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import {ECDSA} from "solady/utils/ECDSA.sol";
 import {WalletLinkStorage} from "./WalletLinkStorage.sol";
-import {ISCL_EIP6565} from "./interfaces/ISCL_EIP6565.sol";
-import {LibString} from "solady/utils/LibString.sol";
+
+import {WalletLinkLib} from "./libraries/WalletLinkLib.sol";
+
 import {WalletLib} from "./libraries/WalletLib.sol";
 import {CustomRevert} from "contracts/src/utils/libraries/CustomRevert.sol";
 import {SolanaUtils} from "./libraries/SolanaUtils.sol";
@@ -27,17 +28,13 @@ abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                           Constants
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-  /// @dev `keccak256("LinkedWalletData(string message,address userID,uint256 nonce)")`.
+  /// @dev `keccak256("LinkedWallet(string message,address userID,uint256 nonce)")`.
   // https://eips.ethereum.org/EIPS/eip-712
   bytes32 private constant _LINKED_WALLET_TYPEHASH =
     0x6bb89d031fcd292ecd4c0e6855878b7165cebc3a2f35bc6bbac48c088dd8325c;
 
   /// @dev Maximum number of linked wallets per root key
   uint256 internal constant MAX_LINKED_WALLETS = 10;
-
-  /// @dev Dependency name of delegate.xyz v2 registry
-  bytes32 internal constant DELEGATE_REGISTRY_V2 =
-    bytes32("DELEGATE_REGISTRY_V2");
 
   /// @dev Dependency name of SCL_EIP6565 verifier library
   bytes32 internal constant SCL_EIP6565 = bytes32("SCL_EIP6565");
@@ -304,7 +301,6 @@ abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
   ) internal view returns (address[] memory wallets) {
     // Single storage read for layout
     WalletLinkStorage.Layout storage ds = WalletLinkStorage.layout();
-    address delegateRegistry = ds.dependencies[DELEGATE_REGISTRY_V2];
     EnumerableSet.AddressSet storage linkedWalletsSet = ds.walletsByRootKey[
       rootKey
     ];
@@ -318,11 +314,8 @@ abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
     address[] memory linkedWallets = linkedWalletsSet.values();
     uint256 totalCount = linkedWalletsLength;
 
-    IDelegateRegistry.Delegation[][]
-      memory allDelegations = _getDelegationsForWallets(
-        IDelegateRegistry(delegateRegistry),
-        linkedWallets
-      );
+    IDelegateRegistry.Delegation[][] memory allDelegations = WalletLinkLib
+      .getDelegationsForWallets(linkedWallets);
 
     for (uint256 i; i < linkedWalletsLength; ++i) {
       IDelegateRegistry.Delegation[] memory delegations = allDelegations[i];
@@ -365,83 +358,6 @@ abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
     }
 
     return wallets;
-  }
-
-  function _explicitWalletsByRootKey(
-    address rootKey,
-    WalletQueryOptions calldata options
-  ) internal view returns (WalletData[] memory wallets) {
-    // Single storage read for layout
-    WalletLinkStorage.Layout storage ds = WalletLinkStorage.layout();
-    EnumerableSet.AddressSet storage linkedWalletsSet = ds.walletsByRootKey[
-      rootKey
-    ];
-
-    uint256 linkedWalletsLength = linkedWalletsSet.length();
-    if (linkedWalletsLength == 0) {
-      return new WalletData[](0);
-    }
-
-    // Get linked wallets and count total delegations
-    address[] memory linkedWallets = linkedWalletsSet.values();
-    uint256 totalCount = linkedWalletsLength;
-
-    IDelegateRegistry.Delegation[][] memory allDelegations;
-
-    if (options.includeDelegations) {
-      IDelegateRegistry delegateRegistry = IDelegateRegistry(
-        ds.dependencies[DELEGATE_REGISTRY_V2]
-      );
-      allDelegations = _getDelegationsForWallets(
-        delegateRegistry,
-        linkedWallets
-      );
-      for (uint256 i; i < linkedWalletsLength; ++i) {
-        IDelegateRegistry.Delegation[] memory delegations = allDelegations[i];
-        uint256 delegationsLength = delegations.length;
-        for (uint256 j; j < delegationsLength; ++j) {
-          if (delegations[j].type_ == IDelegateRegistry.DelegationType.ALL) {
-            ++totalCount;
-          }
-        }
-      }
-    }
-
-    wallets = new WalletData[](totalCount);
-    address defaultWallet = ds.rootWalletByRootKey[rootKey].defaultWallet;
-
-    uint256 currentIndex = 0;
-
-    for (uint256 i; i < linkedWalletsLength; ++i) {
-      address wallet = linkedWallets[i];
-      wallets[currentIndex++] = WalletData({
-        addr: LibString.toHexString(wallet),
-        vmType: VirtualMachineType.EVM,
-        walletType: WalletType({
-          linked: true,
-          delegated: false,
-          defaultWallet: defaultWallet == wallet
-        })
-      });
-
-      if (options.includeDelegations) {
-        IDelegateRegistry.Delegation[] memory delegations = allDelegations[i];
-        uint256 delegationsLength = delegations.length;
-        for (uint256 j; j < delegationsLength; ++j) {
-          if (delegations[j].type_ == IDelegateRegistry.DelegationType.ALL) {
-            wallets[currentIndex++] = WalletData({
-              addr: LibString.toHexString(delegations[j].from),
-              vmType: VirtualMachineType.EVM,
-              walletType: WalletType({
-                linked: false,
-                delegated: true,
-                defaultWallet: false
-              })
-            });
-          }
-        }
-      }
-    }
   }
 
   function _getRootKeyByWallet(
@@ -613,14 +529,12 @@ abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
       revert WalletLink__AddressMismatch();
     }
 
-    ISCL_EIP6565 sclEIP6565 = ISCL_EIP6565(_getDependency(SCL_EIP6565));
-
     (uint256 r, uint256 s) = abi.decode(
       nonEVMWallet.signature,
       (uint256, uint256)
     );
 
-    bool isValidSignature = sclEIP6565.Verify_LE(
+    bool isValidSignature = WalletLinkLib.verifySolanaSignature(
       nonEVMWallet.message,
       r,
       s,
@@ -661,23 +575,5 @@ abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
           nonce
         )
       );
-  }
-
-  function _getDelegationsForWallets(
-    IDelegateRegistry delegateRegistry,
-    address[] memory wallets
-  )
-    internal
-    view
-    returns (IDelegateRegistry.Delegation[][] memory allDelegations)
-  {
-    uint256 walletsLength = wallets.length;
-    allDelegations = new IDelegateRegistry.Delegation[][](walletsLength);
-
-    for (uint256 i; i < walletsLength; ++i) {
-      allDelegations[i] = delegateRegistry.getIncomingDelegations(wallets[i]);
-    }
-
-    return allDelegations;
   }
 }

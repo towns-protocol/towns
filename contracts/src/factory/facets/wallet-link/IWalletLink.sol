@@ -27,18 +27,11 @@ interface IWalletLinkBase {
   //                      Core Data Types
   // =============================================================
 
-  /// @notice Basic wallet type information
-  struct WalletType {
-    bool linked; // Whether this wallet is directly linked
-    bool delegated; // Whether this wallet is delegated
-    bool defaultWallet; // Whether this is the default wallet
-  }
-
   /// @notice Core wallet data structure
   struct WalletData {
     string addr;
     VirtualMachineType vmType;
-    WalletType walletType;
+    uint8 walletType;
   }
 
   // =============================================================
@@ -73,21 +66,13 @@ interface IWalletLinkBase {
 
   /// @notice Solana-specific wallet data
   /// @dev This will be encoded in extraData for Solana wallets with key being "extPubKey"
-  /// SolanaSpecificData calldata solanaSpecificData = abi.decode(
-  ///   nonEVMWallet.extraData[0].value,
-  ///   (SolanaSpecificData)
-  /// );
+  /// bytes calldata value = nonEVMWallet.extraData[0].value;
+  /// SolanaSpecificData calldata solanaSpecificData;
+  /// assembly {
+  ///   solanaSpecificData := value.offset
+  /// }
   struct SolanaSpecificData {
     uint256[5] extPubKey; // Extended public key for Solana
-  }
-
-  // =============================================================
-  //                    Query Options
-  // =============================================================
-
-  /// @notice Options for wallet queries
-  struct WalletQueryOptions {
-    bool includeDelegations;
   }
 
   // =============================================================
@@ -240,16 +225,6 @@ interface IWalletLink is IWalletLinkBase {
   function getWalletsByRootKeyWithDelegations(
     address rootKey
   ) external view returns (address[] memory wallets);
-
-  /**
-   * @notice Returns all wallets linked to a root key with their metadata
-   * @param rootKey the public key of the users rootkey to find associated wallets for
-   * @return wallets an array of wallets with their metadata
-   */
-  function explicitWalletsByRootKey(
-    address rootKey,
-    WalletQueryOptions calldata options
-  ) external view returns (WalletData[] memory wallets);
 
   /**
    * @notice Returns the root key for a given wallet

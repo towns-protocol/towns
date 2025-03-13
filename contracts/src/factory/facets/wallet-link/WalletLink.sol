@@ -5,6 +5,7 @@ pragma solidity ^0.8.23;
 import {IWalletLink} from "./IWalletLink.sol";
 
 // libraries
+import {WalletLinkLib} from "./libraries/WalletLinkLib.sol";
 
 // contracts
 import {Facet} from "@river-build/diamond/src/facets/Facet.sol";
@@ -17,7 +18,7 @@ contract WalletLink is IWalletLink, WalletLinkBase, OwnableBase, Facet {
     address sclEip6565
   ) external onlyInitializing {
     _addInterface(type(IWalletLink).interfaceId);
-    _setDependency(DELEGATE_REGISTRY_V2, delegateRegistry);
+    _setDependency(WalletLinkLib.DELEGATE_REGISTRY_V2, delegateRegistry);
     _setDependency(SCL_EIP6565, sclEip6565);
   }
 
@@ -93,14 +94,6 @@ contract WalletLink is IWalletLink, WalletLinkBase, OwnableBase, Facet {
     address rootKey
   ) external view returns (address[] memory wallets) {
     return _getWalletsByRootKeyWithDelegations(rootKey);
-  }
-
-  /// @inheritdoc IWalletLink
-  function explicitWalletsByRootKey(
-    address rootKey,
-    WalletQueryOptions calldata options
-  ) external view returns (WalletData[] memory wallets) {
-    return _explicitWalletsByRootKey(rootKey, options);
   }
 
   /// @inheritdoc IWalletLink

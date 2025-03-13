@@ -12,6 +12,7 @@ import {IArchitectBase} from "contracts/src/factory/facets/architect/IArchitect.
 import {IEntitlementChecker} from "contracts/src/base/registry/facets/checker/IEntitlementChecker.sol";
 import {IImplementationRegistry} from "contracts/src/factory/facets/registry/IImplementationRegistry.sol";
 import {IWalletLink} from "contracts/src/factory/facets/wallet-link/IWalletLink.sol";
+import {IWalletLinkQueryable} from "contracts/src/factory/facets/wallet-link/interfaces/IWalletLinkQueryable.sol";
 import {ISpaceOwner} from "contracts/src/spaces/facets/owner/ISpaceOwner.sol";
 import {IMainnetDelegation} from "contracts/src/base/registry/facets/mainnet/IMainnetDelegation.sol";
 import {INodeOperator} from "contracts/src/base/registry/facets/operator/INodeOperator.sol";
@@ -20,7 +21,6 @@ import {ICreateSpace} from "contracts/src/factory/facets/create/ICreateSpace.sol
 import {ITowns} from "contracts/src/tokens/towns/mainnet/ITowns.sol";
 
 // libraries
-import {MessageHashUtils} from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 import {TownsLib} from "contracts/src/tokens/towns/base/TownsLib.sol";
 
 // contracts
@@ -96,6 +96,7 @@ contract BaseSetup is TestUtils, EIP712Utils, SpaceHelper {
   IEntitlementChecker internal entitlementChecker;
   IImplementationRegistry internal implementationRegistry;
   IWalletLink internal walletLink;
+  IWalletLinkQueryable internal walletLinkQueryable;
   INodeOperator internal nodeOperator;
   EIP712Facet eip712Facet;
 
@@ -147,6 +148,7 @@ contract BaseSetup is TestUtils, EIP712Utils, SpaceHelper {
     tieredPricingModule = deploySpaceFactory.tieredLogPricingV3();
     fixedPricingModule = deploySpaceFactory.fixedPricing();
     walletLink = IWalletLink(spaceFactory);
+    walletLinkQueryable = IWalletLinkQueryable(spaceFactory);
     implementationRegistry = IImplementationRegistry(spaceFactory);
     eip712Facet = EIP712Facet(spaceFactory);
 

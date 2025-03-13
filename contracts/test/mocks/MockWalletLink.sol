@@ -12,6 +12,11 @@ import {LibString} from "solady/utils/LibString.sol";
 contract MockWalletLink is IWalletLink {
   using EnumerableSet for EnumerableSet.AddressSet;
 
+  /// @dev flags for wallet type
+  uint8 internal constant WALLET_TYPE_LINKED = 1 << 0;
+  uint8 internal constant WALLET_TYPE_DELEGATED = 1 << 1;
+  uint8 internal constant WALLET_TYPE_DEFAULT = 1 << 2;
+
   function linkCallerToRootKey(
     LinkedWalletData memory rootWallet,
     uint256
@@ -116,7 +121,7 @@ contract MockWalletLink is IWalletLink {
 
   function explicitWalletsByRootKey(
     address rootKey,
-    WalletQueryOptions calldata
+    bool
   ) external view returns (WalletData[] memory walletData) {
     MockWalletLinkStorage.Layout storage ds = MockWalletLinkStorage.layout();
 
@@ -127,11 +132,7 @@ contract MockWalletLink is IWalletLink {
       walletData[i] = WalletData({
         addr: LibString.toHexString(wallets[i]),
         vmType: VirtualMachineType.SVM,
-        walletType: WalletType({
-          linked: true,
-          delegated: false,
-          defaultWallet: false
-        })
+        walletType: WALLET_TYPE_LINKED
       });
     }
     return walletData;
