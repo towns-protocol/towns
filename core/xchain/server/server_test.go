@@ -307,13 +307,13 @@ func (st *serviceTester) linkWalletToRootWallet(
 	rootKeyNonce := big.NewInt(0)
 
 	// Create RootKey IWalletLinkLinkedWallet
-	rootKeyWallet := base.IWalletLinkBaseLinkedWallet{
+	rootKeyWallet := base.IWalletLinkBaseLinkedWalletData{
 		Addr:      rootWallet.Address,
 		Signature: []byte(""),
 	}
 
 	// Create Wallet IWalletLinkLinkedWallet
-	nodeWallet := base.IWalletLinkBaseLinkedWallet{
+	nodeWallet := base.IWalletLinkBaseLinkedWalletData{
 		Addr:      wallet.Address,
 		Signature: []byte(""),
 	}
