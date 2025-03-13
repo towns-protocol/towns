@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
-	"go.uber.org/zap/zapcore"
 
 	"github.com/towns-protocol/towns/core/contracts/river"
 	"github.com/towns-protocol/towns/core/node/base"
@@ -191,11 +190,8 @@ func (tracker *StreamsTrackerImpl) forwardStreamEventsFromInception(
 	streamId shared.StreamId,
 	nodes []common.Address,
 ) {
-	log := logging.DefaultZapLogger(zapcore.DebugLevel)
-	log.Debugw("forwardStreamEventsFromInception", "streamId", streamId)
 	_, loaded := tracker.tracked.LoadOrStore(streamId, struct{}{})
 	if !loaded {
-		log.Debugw("...starting sync for stream", "streamId", streamId)
 		go func() {
 			stream := &registries.GetStreamResult{
 				StreamId: streamId,
@@ -204,7 +200,7 @@ func (tracker *StreamsTrackerImpl) forwardStreamEventsFromInception(
 
 			idx := rand.Int63n(int64(len(tracker.nodeRegistries)))
 			tracker.syncRunner.Run(
-				logging.CtxWithLog(ctx, log),
+				ctx,
 				stream,
 				true,
 				tracker.nodeRegistries[idx],

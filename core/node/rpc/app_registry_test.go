@@ -12,7 +12,6 @@ import (
 	"time"
 
 	mapset "github.com/deckarep/golang-set/v2"
-	"go.uber.org/zap/zapcore"
 
 	"connectrpc.com/connect"
 
@@ -238,14 +237,14 @@ func overAllEvents(
 func TestAppRegistry_ForwardsChannelEvents(t *testing.T) {
 	tester := newServiceTester(
 		t,
-		serviceTesterOpts{numNodes: 1, start: true, printTestLogs: true, btcParams: &crypto.TestParams{
+		serviceTesterOpts{numNodes: 1, start: true, btcParams: &crypto.TestParams{
 			AutoMine:         true,
 			AutoMineInterval: 1 * time.Millisecond,
 		}},
 	)
-	// ctx := tester.ctx
+	ctx := tester.ctx
 	// Uncomment to force logging only for the app registry service
-	ctx := logging.CtxWithLog(tester.ctx, logging.DefaultZapLogger(zapcore.DebugLevel))
+	// ctx := logging.CtxWithLog(tester.ctx, logging.DefaultZapLogger(zapcore.DebugLevel))
 	service := initAppRegistryService(ctx, tester)
 
 	require := tester.require
