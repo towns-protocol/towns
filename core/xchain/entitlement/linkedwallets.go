@@ -89,6 +89,15 @@ func getLinkedWallets(
 	return wallets, nil
 }
 
+var decoder *crypto.EvmErrorDecoder
+
+func init() {
+	decoder, _ = crypto.NewEVMErrorDecoder(
+		base.WalletLinkMetaData,
+		base.DiamondMetaData,
+	)
+}
+
 func GetLinkedWallets(
 	ctx context.Context,
 	wallet common.Address,
@@ -97,14 +106,6 @@ func GetLinkedWallets(
 	getRootKeyForWalletCalls *infra.StatusCounterVec,
 	getWalletsByRootKeyCalls *infra.StatusCounterVec,
 ) ([]common.Address, error) {
-	decoder, err := crypto.NewEVMErrorDecoder(
-		base.WalletLinkMetaData,
-		base.DiamondMetaData,
-	)
-	if err != nil {
-		return nil, err
-	}
-
 	wallets, err := getLinkedWallets(
 		ctx,
 		wallet,
