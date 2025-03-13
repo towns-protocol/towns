@@ -3,7 +3,7 @@ import { z } from 'zod'
 import { useThrottledValue } from 'use-towns-client'
 import { useEffect, useState } from 'react'
 import { env } from 'utils'
-import { useIsHNTMember } from 'hooks/useIsHNTMember'
+import { useIsTradingEnabledInCurrentSpace } from 'hooks/useTradingEnabled'
 import { MINUTE_MS } from 'data/constants'
 import { TComboboxItemWithData, TMentionTicker } from './types'
 
@@ -79,14 +79,15 @@ export const useSearchTokens = ({
     searchString: string
     enabled: boolean
 }) => {
-    const { isHNTMember } = useIsHNTMember()
+    const { isTradingEnabled } = useIsTradingEnabledInCurrentSpace()
+
     const query = createQuery(searchString)
     const throttledQuery = useThrottledValue(query, 500)
 
     const [savedData, setSavedData] = useState<TComboboxItemWithData<TMentionTicker>[]>([])
 
     const { data, isLoading } = useQuery({
-        queryKey: ['searchTokens', throttledQuery],
+        queryKey: ['searchTokens', throttledQuery, isTradingEnabled],
         queryFn: async () => {
             const apiKey = env.VITE_CODEX_API_KEY
             if (!apiKey) {
@@ -104,7 +105,7 @@ export const useSearchTokens = ({
             const remapped = remapResponse(parsed)
             return remapped
         },
-        enabled: enabled && isHNTMember,
+        enabled: enabled && isTradingEnabled,
         gcTime: MINUTE_MS,
     })
 

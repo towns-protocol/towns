@@ -8,7 +8,7 @@ import { LogoSingleLetter } from '@components/Logo/Logo'
 import { MintAnimation } from '@components/MintAnimation/MintAnimation'
 import { useStore } from 'store/store'
 import { NodeStatusButton } from '@components/NodeConnectionStatusPanel/ConnectionStatusButton'
-import { useIsHNTMember } from 'hooks/useIsHNTMember'
+import { useShowWallet } from 'hooks/useTradingEnabled'
 import { WalletButton } from '@components/WalletButton/WalletButton'
 import { PointsButton } from './PointsButton'
 
@@ -17,7 +17,7 @@ export const TopBar = () => {
     const profileButtonRef = useRef<HTMLElement>(null)
     const location = useLocation()
     const noSearchBar = location.pathname === '/explore' || location.pathname === '/'
-    const { isHNTMember } = useIsHNTMember()
+    const { showWallet } = useShowWallet()
 
     return (
         <>
@@ -48,7 +48,7 @@ export const TopBar = () => {
 
                 <Stack horizontal gap="md" paddingRight="lg" alignItems="center">
                     <PointsButton />
-                    {isHNTMember && <WalletButton />}
+                    {showWallet && <WalletButton />}
                     <NodeStatusButton />
                     <BugReportButton />
                     <Box ref={profileButtonRef}>
