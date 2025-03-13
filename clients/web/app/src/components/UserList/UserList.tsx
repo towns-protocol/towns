@@ -13,7 +13,7 @@ type Props = {
     maxNames?: number
     userIds: string[]
     myUserId?: string
-    renderUser?: (user: { userId: string; displayName: string; key: string }) => void
+    renderUser?: (user: { userId: string; displayName: string; key: string }) => React.ReactNode
 }
 
 export const UserList = (props: Props) => {

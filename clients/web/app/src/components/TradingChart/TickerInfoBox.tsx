@@ -1,14 +1,14 @@
-import React, { useCallback, useMemo, useState } from 'react'
-import { useMyUserId, useUserLookupContext } from 'use-towns-client'
-import { Box, IconButton, Pill, Stack, Text } from '@ui'
+import React, { useCallback, useState } from 'react'
+import { useMyUserId } from 'use-towns-client'
+import { Box, IconButton, Paragraph, Pill, Stack, Text } from '@ui'
 import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
 import { formatCompactNumber } from '@components/Web3/Trading/tradingUtils'
 import { TokenPrice } from '@components/Web3/Trading/ui/TokenPrice'
 import { shimmerClass } from 'ui/styles/globals/shimmer.css'
 import { TokenIcon } from '@components/Web3/Trading/ui/TokenIcon'
-import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { Avatar } from '@components/Avatar/Avatar'
 import { isTradingChain } from '@components/Web3/Trading/tradingConstants'
+import { UserList } from '@components/UserList/UserList'
 import { GetCoinDataResponse } from './useCoinData'
 import { TickerChangeIndicator } from './TickerChangeIndicator'
 export const TickerInfoBox = (props: {
@@ -203,36 +203,7 @@ const TickerPills = ({
 }
 
 const TradingUserIds = ({ userIds }: { userIds: string[] }) => {
-    const { lookupUser } = useUserLookupContext()
     const myUserId = useMyUserId()
-
-    const summaryText = useMemo(() => {
-        if (userIds.length === 0) {
-            return ''
-        }
-        const getPrettyDisplayNameOrYou = (userId: string) => {
-            if (userId === myUserId) {
-                return 'you'
-            }
-            return getPrettyDisplayName(lookupUser(userId))
-        }
-        if (userIds.length === 1) {
-            return getPrettyDisplayNameOrYou(userIds[0]) + ' traded'
-        }
-        if (userIds.length === 2) {
-            return (
-                getPrettyDisplayNameOrYou(userIds[0]) +
-                ' and ' +
-                getPrettyDisplayNameOrYou(userIds[1]) +
-                ' traded'
-            )
-        }
-        const prefix =
-            getPrettyDisplayNameOrYou(userIds[0]) + ', ' + getPrettyDisplayNameOrYou(userIds[1])
-        return userIds.length == 3
-            ? prefix + ' and one other traded'
-            : prefix + ' and ' + (userIds.length - 2) + ' others traded'
-    }, [lookupUser, userIds, myUserId])
 
     return (
         <Stack horizontal gap="xs" alignItems="center" paddingLeft="sm">
@@ -245,9 +216,15 @@ const TradingUserIds = ({ userIds }: { userIds: string[] }) => {
                     </Box>
                 ))}
             </Stack>
-            <Text fontSize="sm" color="default">
-                {summaryText}
-            </Text>
+
+            <Paragraph color="gray1">
+                <UserList
+                    excludeSelf
+                    userIds={userIds}
+                    renderUser={(user) => (user.userId === myUserId ? 'You' : user.displayName)}
+                />{' '}
+                traded
+            </Paragraph>
         </Stack>
     )
 }
