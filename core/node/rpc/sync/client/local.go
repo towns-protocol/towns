@@ -5,13 +5,15 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/linkdata/deadlock"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
+
 	. "github.com/towns-protocol/towns/core/node/base"
 	. "github.com/towns-protocol/towns/core/node/events"
 	"github.com/towns-protocol/towns/core/node/logging"
 	. "github.com/towns-protocol/towns/core/node/protocol"
+	"github.com/towns-protocol/towns/core/node/rpc/sync/dynmsgbuf"
 	. "github.com/towns-protocol/towns/core/node/shared"
-	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/trace"
 )
 
 type localSyncer struct {
@@ -22,7 +24,7 @@ type localSyncer struct {
 
 	streamCache *StreamCache
 	cookies     []*SyncCookie
-	messages    chan<- *SyncStreamsResponse
+	messages    *dynmsgbuf.DynamicBuffer[*SyncStreamsResponse]
 	localAddr   common.Address
 
 	activeStreamsMu deadlock.Mutex
@@ -39,7 +41,7 @@ func newLocalSyncer(
 	localAddr common.Address,
 	streamCache *StreamCache,
 	cookies []*SyncCookie,
-	messages chan<- *SyncStreamsResponse,
+	messages *dynmsgbuf.DynamicBuffer[*SyncStreamsResponse],
 	otelTracer trace.Tracer,
 ) (*localSyncer, error) {
 	return &localSyncer{
@@ -114,6 +116,34 @@ func (s *localSyncer) RemoveStream(ctx context.Context, streamID StreamId) (bool
 	return len(s.activeStreams) == 0, nil
 }
 
+func (s *localSyncer) Modify(ctx context.Context, request *ModifySyncRequest) (*ModifySyncResponse, bool, error) {
+	var resp ModifySyncResponse
+
+	for _, cookie := range request.GetAddStreams() {
+		if err := s.addStream(ctx, StreamId(cookie.GetStreamId()), cookie); err != nil {
+			rvrErr := AsRiverError(err)
+			resp.Adds = append(resp.Adds, &SyncStreamOpStatus{
+				StreamId: cookie.GetStreamId(),
+				Code:     int32(rvrErr.Code),
+				Message:  rvrErr.GetMessage(),
+			})
+		}
+	}
+
+	s.activeStreamsMu.Lock()
+	defer s.activeStreamsMu.Unlock()
+
+	for _, streamID := range request.GetRemoveStreams() {
+		syncStream, found := s.activeStreams[StreamId(streamID)]
+		if found {
+			syncStream.Unsub(s)
+			delete(s.activeStreams, StreamId(streamID))
+		}
+	}
+
+	return &resp, len(s.activeStreams) == 0, nil
+}
+
 // OnUpdate is called each time a new cookie is available for a stream
 func (s *localSyncer) OnUpdate(r *StreamAndCookie) {
 	s.sendResponse(&SyncStreamsResponse{SyncOp: SyncOp_SYNC_UPDATE, Stream: r})
@@ -175,20 +205,20 @@ func (s *localSyncer) DebugDropStream(_ context.Context, streamID StreamId) (boo
 }
 
 // OnUpdate is called each time a new cookie is available for a stream
-func (s *localSyncer) sendResponse(r *SyncStreamsResponse) {
+func (s *localSyncer) sendResponse(msg *SyncStreamsResponse) {
 	select {
-	case s.messages <- r:
-		return
 	case <-s.syncStreamCtx.Done():
 		return
 	default:
-		err := RiverError(Err_BUFFER_FULL, "Client sync subscription message channel is full").
-			Tag("syncId", s.globalSyncOpID).
-			Tag("op", r.GetSyncOp()).
-			Func("localSyncer.sendResponse")
+		if err := s.messages.AddMessage(msg); err != nil {
+			err := AsRiverError(err).
+				Tag("syncId", s.globalSyncOpID).
+				Tag("op", msg.GetSyncOp()).
+				Func("localSyncer.sendResponse")
 
-		_ = err.LogError(logging.FromCtx(s.syncStreamCtx))
+			_ = err.LogError(logging.FromCtx(s.syncStreamCtx))
 
-		s.cancelGlobalSyncOp(err)
+			s.cancelGlobalSyncOp(err)
+		}
 	}
 }

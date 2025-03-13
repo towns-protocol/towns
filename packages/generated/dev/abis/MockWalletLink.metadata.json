@@ -6,6 +6,11 @@
   "output": {
     "abi": [
       {
+        "inputs": [],
+        "type": "error",
+        "name": "WalletLink__AddressMismatch"
+      },
+      {
         "inputs": [
           {
             "internalType": "address",
@@ -29,7 +34,17 @@
       {
         "inputs": [],
         "type": "error",
+        "name": "WalletLink__CannotRemoveDefaultWallet"
+      },
+      {
+        "inputs": [],
+        "type": "error",
         "name": "WalletLink__CannotRemoveRootWallet"
+      },
+      {
+        "inputs": [],
+        "type": "error",
+        "name": "WalletLink__DefaultWalletAlreadySet"
       },
       {
         "inputs": [],
@@ -39,7 +54,33 @@
       {
         "inputs": [],
         "type": "error",
+        "name": "WalletLink__InvalidMessage"
+      },
+      {
+        "inputs": [],
+        "type": "error",
+        "name": "WalletLink__InvalidNonEVMAddress"
+      },
+      {
+        "inputs": [],
+        "type": "error",
         "name": "WalletLink__InvalidSignature"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "string",
+            "name": "key",
+            "type": "string"
+          },
+          {
+            "internalType": "bytes",
+            "name": "value",
+            "type": "bytes"
+          }
+        ],
+        "type": "error",
+        "name": "WalletLink__InvalidVMSpecificData"
       },
       {
         "inputs": [
@@ -74,6 +115,43 @@
         "name": "WalletLink__LinkedToAnotherRootKey"
       },
       {
+        "inputs": [],
+        "type": "error",
+        "name": "WalletLink__MaxLinkedWalletsReached"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "string",
+            "name": "wallet",
+            "type": "string"
+          },
+          {
+            "internalType": "address",
+            "name": "rootKey",
+            "type": "address"
+          }
+        ],
+        "type": "error",
+        "name": "WalletLink__NonEVMWalletAlreadyLinked"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "string",
+            "name": "wallet",
+            "type": "string"
+          },
+          {
+            "internalType": "address",
+            "name": "rootKey",
+            "type": "address"
+          }
+        ],
+        "type": "error",
+        "name": "WalletLink__NonEVMWalletNotLinked"
+      },
+      {
         "inputs": [
           {
             "internalType": "address",
@@ -88,6 +166,46 @@
         ],
         "type": "error",
         "name": "WalletLink__NotLinked"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "callerRootKey",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "rootKey",
+            "type": "address"
+          }
+        ],
+        "type": "error",
+        "name": "WalletLink__RootKeyMismatch"
+      },
+      {
+        "inputs": [],
+        "type": "error",
+        "name": "WalletLink__UnsupportedVMType"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "bytes32",
+            "name": "walletHash",
+            "type": "bytes32",
+            "indexed": true
+          },
+          {
+            "internalType": "address",
+            "name": "rootKey",
+            "type": "address",
+            "indexed": true
+          }
+        ],
+        "type": "event",
+        "name": "LinkNonEVMWalletToRootWallet",
+        "anonymous": false
       },
       {
         "inputs": [
@@ -125,6 +243,44 @@
         ],
         "type": "event",
         "name": "RemoveLink",
+        "anonymous": false
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "bytes32",
+            "name": "walletHash",
+            "type": "bytes32",
+            "indexed": true
+          },
+          {
+            "internalType": "address",
+            "name": "rootKey",
+            "type": "address",
+            "indexed": true
+          }
+        ],
+        "type": "event",
+        "name": "RemoveNonEVMWalletLink",
+        "anonymous": false
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "rootKey",
+            "type": "address",
+            "indexed": true
+          },
+          {
+            "internalType": "address",
+            "name": "defaultWallet",
+            "type": "address",
+            "indexed": true
+          }
+        ],
+        "type": "event",
+        "name": "SetDefaultWallet",
         "anonymous": false
       },
       {
@@ -200,6 +356,25 @@
         "stateMutability": "view",
         "type": "function",
         "name": "getWalletsByRootKey",
+        "outputs": [
+          {
+            "internalType": "address[]",
+            "name": "wallets",
+            "type": "address[]"
+          }
+        ]
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "rootKey",
+            "type": "address"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function",
+        "name": "getWalletsByRootKeyWithDelegations",
         "outputs": [
           {
             "internalType": "address[]",
@@ -313,10 +488,13 @@
   "settings": {
     "remappings": [
       "@openzeppelin/=node_modules/@openzeppelin/",
+      "@openzeppelin/contracts/=node_modules/@openzeppelin/contracts/",
       "@prb/math/=node_modules/@prb/math/src/",
       "@prb/test/=node_modules/@prb/test/src/",
       "@river-build/diamond/=node_modules/@river-build/diamond/",
+      "@solidity/=node_modules/crypto-lib/src/",
       "account-abstraction/=node_modules/account-abstraction/contracts/",
+      "crypto-lib/=node_modules/crypto-lib/src/",
       "ds-test/=node_modules/ds-test/src/",
       "forge-std/=node_modules/forge-std/src/",
       "hardhat-deploy/=node_modules/hardhat-deploy/",
@@ -338,18 +516,26 @@
   },
   "sources": {
     "contracts/src/factory/facets/wallet-link/IWalletLink.sol": {
-      "keccak256": "0x5ed1537dfea0969be2cef70cfd3858695fa7c736a1df677db6c85c0180a0ea0c",
+      "keccak256": "0xb37a03936a2f15ce5c94fb9925594627cc65cfdd186c14eaff32d299ec569b5f",
       "urls": [
-        "bzz-raw://0305e0d8ba95c608fd848ce99c288bf80892cc61bc01d53bf8d6f79a4a6a550d",
-        "dweb:/ipfs/QmQoBXVdpRraU2BcA1Usw5HZB7e6cdnHvNyVhETKRUg4XC"
+        "bzz-raw://085ef4945195eae38879c2d84e70a5a2f3cb02e6ad53e8ae37e6dd2591379327",
+        "dweb:/ipfs/QmRP7RH7sX1MUXFDwacLABBcVdGDoyKm36JbSfDDwXy4EW"
+      ],
+      "license": "MIT"
+    },
+    "contracts/src/factory/facets/wallet-link/libraries/WalletLib.sol": {
+      "keccak256": "0x7fb08e8176be055adf49a1ce35e17f4cedb78c248c46c96e0583377a4e89b40b",
+      "urls": [
+        "bzz-raw://334911ec72def284ac7a61e04d5de12d7018421a756e265e2d0e411e62c097c1",
+        "dweb:/ipfs/QmbJzoE6Tv91psSSDz8RgcuQKtp7zxCKAhnD3TKWiyiqMP"
       ],
       "license": "MIT"
     },
     "contracts/test/mocks/MockWalletLink.sol": {
-      "keccak256": "0x6a1f6fedbee90c04a73f6243e359de6ecf4a9d1fd08fec5b87ca9392fa08499f",
+      "keccak256": "0x9436bd6b1891fec0db60f7ef2b4741abb0b3fdcbf4a5e81d980bea698dff681b",
       "urls": [
-        "bzz-raw://548494ef1d1c936da5907a518bd959fac7bf3783e65fd586fe934e7bd38181cf",
-        "dweb:/ipfs/QmaR4VJsZkPGisV4DYuZRutGXq4gmzgpuF7b8Wms226pCZ"
+        "bzz-raw://d81c5329b623ca66f01ef810933b5e90891a1644530892dad7336dcc13ea4749",
+        "dweb:/ipfs/QmYejE9VfHz2FbP35Vd5dehSbPfTcfCNv5bbRhzMvLLF9M"
       ],
       "license": "Apache-2.0"
     },
