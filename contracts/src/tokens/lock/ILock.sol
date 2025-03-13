@@ -10,43 +10,37 @@ pragma solidity ^0.8.23;
 interface ILockBase {
   error LockNotAuthorized();
 
+  /// @notice Emitted when the lock is updated.
+  /// @param account The account that was updated.
+  /// @param enabled Whether the lock is enabled.
+  /// @param expiration The expiration of the lock.
   event LockUpdated(
-    address indexed caller,
+    address indexed account,
     bool indexed enabled,
-    uint256 cooldown
+    uint256 expiration
   );
 }
 
 interface ILock is ILockBase {
-  /**
-   * @notice enable lock for the caller
-   * @param account address to enable lock for
-   */
+  /// @notice Enables the lock for the given account.
+  /// @param account The account to enable the lock for.
   function enableLock(address account) external;
 
-  /**
-   * @notice disable lock for the caller
-   * @param account address to disable lock for
-   */
+  /// @notice Disables the lock and starts the cooldown for the given account.
+  /// @param account The account to disable the lock for.
   function disableLock(address account) external;
 
-  /**
-   * @notice check if lock is enabled for an account
-   * @param account address to check
-   * @return true if lock is enabled
-   */
-  function isLockEnabled(address account) external view returns (bool);
+  /// @notice Returns whether the lock is active for the given account.
+  /// @param account The account to check the lock for.
+  /// @return true if the lock is active
+  function isLockActive(address account) external view returns (bool);
 
-  /**
-   * @notice get the lock cooldown for an account
-   * @param account address to check
-   * @return cooldown in seconds
-   */
-  function lockCooldown(address account) external view returns (uint256);
+  /// @notice Returns the expiration of the lock for the given account.
+  /// @param account The account to check the lock expiration for.
+  /// @return The expiration timestamp.
+  function lockExpiration(address account) external view returns (uint256);
 
-  /**
-   * @notice set the default lock cooldown
-   * @param cooldown cooldown in seconds
-   */
+  /// @notice Sets the default cooldown for the lock.
+  /// @param cooldown The cooldown in seconds.
   function setLockCooldown(uint256 cooldown) external;
 }

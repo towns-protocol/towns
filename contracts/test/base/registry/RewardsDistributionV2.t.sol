@@ -917,7 +917,7 @@ contract RewardsDistributionV2Test is BaseRegistryTest, IOwnableBase, IDiamond {
     uint256 depositId = test_initiateWithdraw();
 
     address proxy = rewardsDistributionFacet.delegationProxyById(depositId);
-    uint256 cd = towns.lockCooldown(proxy);
+    uint256 cd = towns.lockExpiration(proxy);
 
     vm.warp(cd - 1);
 
@@ -943,7 +943,7 @@ contract RewardsDistributionV2Test is BaseRegistryTest, IOwnableBase, IDiamond {
     );
 
     address proxy = rewardsDistributionFacet.delegationProxyById(depositId);
-    uint256 cd = towns.lockCooldown(proxy);
+    uint256 cd = towns.lockExpiration(proxy);
 
     vm.warp(cd);
 

@@ -612,7 +612,7 @@ contract DropFacetTest is
 
     vm.prank(bob);
     rewardsDistribution.initiateWithdraw(depositId);
-    uint256 lockCooldown = towns.lockCooldown(
+    uint256 lockCooldown = towns.lockExpiration(
       rewardsDistribution.delegationProxyById(depositId)
     );
     vm.warp(lockCooldown);
