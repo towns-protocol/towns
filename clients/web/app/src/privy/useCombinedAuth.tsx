@@ -134,6 +134,7 @@ function useCombinedAuthContext(): CombinedAuthContext {
         await privyLogout()
         resetAutoLoginState()
         await unsubscribeNotification()
+        window.location.href = '/'
     }, [privyLogout, resetAutoLoginState, unsubscribeNotification, riverLogout])
 
     return useMemo(
