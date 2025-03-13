@@ -45,7 +45,7 @@ export const useSpaceEnsLookup = ({
                 }
             }
             const _ensName = ensName as string
-            const linkedWallets = await townsClient?.getLinkedWallets(userId)
+            const linkedWallets = await townsClient?.getLinkedWalletsWithDelegations(userId)
             const isOwned = linkedWallets?.includes(ensAddress)
 
             return isOwned

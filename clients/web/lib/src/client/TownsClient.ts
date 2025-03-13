@@ -680,7 +680,7 @@ export class TownsClient
             if (spaceInfo.owner === user) {
                 return true
             } else {
-                const wallets = await this.getLinkedWallets(user)
+                const wallets = await this.getLinkedWalletsWithDelegations(user)
                 return wallets.includes(spaceInfo.owner)
             }
         }
@@ -1012,7 +1012,9 @@ export class TownsClient
     }
 
     public async walletAddressIsBanned(spaceId: string, walletAddress: string): Promise<boolean> {
-        const wallets = (await this.getLinkedWallets(walletAddress)).concat(walletAddress)
+        const wallets = (await this.getLinkedWalletsWithDelegations(walletAddress)).concat(
+            walletAddress,
+        )
         const promises = wallets.map((walletAddress) => {
             return this.spaceDapp
                 .walletAddressIsBanned(spaceId, walletAddress)
@@ -1202,7 +1204,7 @@ export class TownsClient
             throw new Error('Casablanca client not initialized, pass signer context')
         }
         const userId = await signer.getAddress()
-        const linkedWallets = await this.getLinkedWallets(userId)
+        const linkedWallets = await this.getLinkedWalletsWithDelegations(userId)
 
         // check membership nft first to avoid uncessary mint attempts on rejoins
         try {
@@ -1873,6 +1875,10 @@ export class TownsClient
 
     public async getLinkedWallets(walletAddress: string): Promise<string[]> {
         return this.baseTransactor.getLinkedWallets(walletAddress)
+    }
+
+    public async getLinkedWalletsWithDelegations(walletAddress: string): Promise<string[]> {
+        return this.baseTransactor.getLinkedWalletsWithDelegations(walletAddress)
     }
 
     public async waitWalletLinkTransaction(transactionContext: WalletLinkTransactionContext) {

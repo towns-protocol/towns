@@ -1318,7 +1318,9 @@ export class BaseTransactor {
         spaceId: string,
         walletAddress: string,
     ): Promise<string | undefined> {
-        const wallets = (await this.getLinkedWallets(walletAddress)).concat(walletAddress)
+        const wallets = (await this.getLinkedWalletsWithDelegations(walletAddress)).concat(
+            walletAddress,
+        )
         for (const walletAddress of wallets) {
             if (await this.spaceDapp.hasSpaceMembership(spaceId, walletAddress)) {
                 return walletAddress
@@ -1531,6 +1533,11 @@ export class BaseTransactor {
     public async getLinkedWallets(walletAddress: string): Promise<string[]> {
         const walletLink = this.spaceDapp.getWalletLink()
         return await walletLink.getLinkedWallets(walletAddress)
+    }
+
+    public async getLinkedWalletsWithDelegations(walletAddress: string): Promise<string[]> {
+        const walletLink = this.spaceDapp.getWalletLink()
+        return await walletLink.getLinkedWalletsWithDelegations(walletAddress)
     }
 
     public async getRootKeyFromLinkedWallet(walletAddress: string): Promise<string> {

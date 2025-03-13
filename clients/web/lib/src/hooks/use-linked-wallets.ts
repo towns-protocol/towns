@@ -220,7 +220,7 @@ export function useLinkedWalletsForWallet({
                 console.error('useLinkedWallets - no clientSingleton or logged in wallet address')
                 return []
             }
-            return clientSingleton.getLinkedWallets(walletAddress)
+            return clientSingleton.getLinkedWalletsWithDelegations(walletAddress)
         },
         {
             enabled: enabled && !!walletAddress && !!clientSingleton,
