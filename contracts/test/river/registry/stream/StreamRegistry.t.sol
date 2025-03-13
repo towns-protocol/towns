@@ -2,6 +2,7 @@
 pragma solidity ^0.8.23;
 
 // interfaces
+import {Vm} from "forge-std/Vm.sol";
 import {IOwnableBase} from "@river-build/diamond/src/facets/ownable/IERC173.sol";
 
 // libraries
@@ -9,11 +10,13 @@ import {Stream, StreamWithId, SetMiniblock} from "contracts/src/river/registry/l
 import {RiverRegistryErrors} from "contracts/src/river/registry/libraries/RegistryErrors.sol";
 import {IStreamRegistryBase} from "contracts/src/river/registry/facets/stream/IStreamRegistry.sol";
 import {StreamFlags} from "contracts/src/river/registry/facets/stream/StreamRegistry.sol";
+import {LogUtils} from "contracts/test/utils/LogUtils.sol";
 
 // deployments
 import {RiverRegistryBaseSetup} from "contracts/test/river/registry/RiverRegistryBaseSetup.t.sol";
 
 contract StreamRegistryTest is
+  LogUtils,
   RiverRegistryBaseSetup,
   IOwnableBase,
   IStreamRegistryBase
@@ -64,7 +67,7 @@ contract StreamRegistryTest is
       nodeAddresses[i] = nodes[i].node;
     }
 
-    vm.prank(nodes[0].node);
+    // expect the deprecated event
     vm.expectEmit(address(streamRegistry));
     emit StreamAllocated(
       testStream.streamId,
@@ -72,6 +75,10 @@ contract StreamRegistryTest is
       testStream.genesisMiniblockHash,
       testStream.genesisMiniblock
     );
+
+    vm.recordLogs();
+    vm.prank(nodes[0].node);
+
     streamRegistry.allocateStream(
       testStream.streamId,
       nodeAddresses,
@@ -79,14 +86,42 @@ contract StreamRegistryTest is
       testStream.genesisMiniblock
     );
 
+    // get logs and check for StreamUpdated event
+    Vm.Log memory streamUpdatedLog = _getFirstMatchingLog(
+      vm.getRecordedLogs(),
+      StreamUpdated.selector
+    );
+
+    // check event type (first topic should be the event signature, second is the indexed eventType)
+    assertEq(
+      uint8(uint256(streamUpdatedLog.topics[1])),
+      uint8(StreamEventType.Allocate)
+    );
+
+    // decode the event data
+    (bytes32 emittedStreamId, Stream memory emittedStream) = abi.decode(
+      // decode the encoded `data` arg from the log data
+      abi.decode(streamUpdatedLog.data, (bytes)),
+      (bytes32, Stream)
+    );
+
+    Stream memory expectedStream = Stream({
+      lastMiniblockHash: testStream.genesisMiniblockHash,
+      lastMiniblockNum: 0,
+      flags: 0,
+      reserved0: 0,
+      nodes: nodeAddresses
+    });
+
+    assertEq(emittedStreamId, testStream.streamId);
+    _assertEqStream(emittedStream, expectedStream);
+
     assertEq(streamRegistry.getStreamCount(), 1);
     assertEq(streamRegistry.getStreamCountOnNode(nodes[0].node), 1);
     assertTrue(streamRegistry.isStream(testStream.streamId));
 
     Stream memory stream = streamRegistry.getStream(testStream.streamId);
-    assertEq(stream.lastMiniblockHash, testStream.genesisMiniblockHash);
-    assertEq(stream.nodes.length, nodesLength);
-    assertContains(stream.nodes, nodes[0].node);
+    _assertEqStream(stream, expectedStream);
   }
 
   function test_fuzz_allocateStream_revertWhen_streamIdAlreadyExists(
@@ -212,27 +247,51 @@ contract StreamRegistryTest is
       nodes: nodeAddresses
     });
 
-    vm.prank(nodes[0].node);
     vm.expectEmit(address(streamRegistry));
     emit StreamCreated(
       testStream.streamId,
       testStream.genesisMiniblockHash,
       streamToCreate
     );
+
+    vm.recordLogs();
+    vm.prank(nodes[0].node);
+
     streamRegistry.addStream(
       testStream.streamId,
       testStream.genesisMiniblockHash,
       streamToCreate
     );
 
+    Vm.Log memory streamUpdatedLog = _getFirstMatchingLog(
+      vm.getRecordedLogs(),
+      StreamUpdated.selector
+    );
+
+    assertEq(
+      uint8(uint256(streamUpdatedLog.topics[1])),
+      uint8(StreamEventType.Create)
+    );
+
+    (
+      bytes32 emittedStreamId,
+      Stream memory emittedStream,
+      bytes32 emittedGenesisMiniblockHash
+    ) = abi.decode(
+        abi.decode(streamUpdatedLog.data, (bytes)),
+        (bytes32, Stream, bytes32)
+      );
+
+    assertEq(emittedStreamId, testStream.streamId);
+    _assertEqStream(emittedStream, streamToCreate);
+    assertEq(emittedGenesisMiniblockHash, testStream.genesisMiniblockHash);
+
     assertEq(streamRegistry.getStreamCount(), 1);
     assertEq(streamRegistry.getStreamCountOnNode(nodes[0].node), 1);
     assertTrue(streamRegistry.isStream(testStream.streamId));
 
     Stream memory stream = streamRegistry.getStream(testStream.streamId);
-    assertEq(stream.lastMiniblockHash, testStream.genesisMiniblockHash);
-    assertEq(stream.nodes.length, nodesLength);
-    assertContains(stream.nodes, nodes[0].node);
+    _assertEqStream(stream, streamToCreate);
   }
 
   function test_fuzz_addStream_revertWhen_streamIdAlreadyExists(
@@ -354,8 +413,32 @@ contract StreamRegistryTest is
       isSealed: false
     });
 
+    vm.expectEmit(address(streamRegistry));
+    emit StreamLastMiniblockUpdated(
+      miniblocks[0].streamId,
+      miniblocks[0].lastMiniblockHash,
+      miniblocks[0].lastMiniblockNum,
+      miniblocks[0].isSealed
+    );
+
+    vm.recordLogs();
     vm.prank(NODE);
     streamRegistry.setStreamLastMiniblockBatch(miniblocks);
+
+    Vm.Log memory streamUpdatedLog = _getFirstMatchingLog(
+      vm.getRecordedLogs(),
+      StreamUpdated.selector
+    );
+
+    assertEq(
+      uint8(uint256(streamUpdatedLog.topics[1])),
+      uint8(StreamEventType.LastMiniblockBatchUpdated)
+    );
+
+    assertEq(
+      abi.decode(streamUpdatedLog.data, (bytes)),
+      abi.encode(miniblocks)
+    );
   }
 
   /// forge-config: default.fuzz.runs = 64
@@ -390,14 +473,6 @@ contract StreamRegistryTest is
       _miniblocks[i] = miniblocks[i];
       _miniblocks[i].lastMiniblockNum = 1;
     }
-
-    vm.expectEmit(address(streamRegistry));
-    emit StreamLastMiniblockUpdated(
-      miniblocks[0].streamId,
-      miniblocks[0].lastMiniblockHash,
-      miniblocks[0].lastMiniblockNum,
-      miniblocks[0].isSealed
-    );
 
     vm.prank(node.node);
     streamRegistry.setStreamLastMiniblockBatch(_miniblocks);
@@ -512,13 +587,31 @@ contract StreamRegistryTest is
     vm.expectEmit(address(streamRegistry));
     emit StreamPlacementUpdated(SAMPLE_STREAM.streamId, newNode, true);
 
+    vm.recordLogs();
     vm.prank(newNode);
     streamRegistry.placeStreamOnNode(SAMPLE_STREAM.streamId, newNode);
 
-    assertEq(streamRegistry.getStreamCountOnNode(newNode), 1);
-    assertTrue(
-      streamRegistry.getStream(SAMPLE_STREAM.streamId).nodes[1] == newNode
+    Vm.Log memory streamUpdatedLog = _getFirstMatchingLog(
+      vm.getRecordedLogs(),
+      StreamUpdated.selector
     );
+
+    assertEq(
+      uint8(uint256(streamUpdatedLog.topics[1])),
+      uint8(StreamEventType.PlacementUpdated)
+    );
+
+    (bytes32 emittedStreamId, Stream memory emittedStream) = abi.decode(
+      abi.decode(streamUpdatedLog.data, (bytes)),
+      (bytes32, Stream)
+    );
+    assertEq(emittedStreamId, SAMPLE_STREAM.streamId);
+
+    Stream memory stream = streamRegistry.getStream(emittedStreamId);
+    _assertEqStream(emittedStream, stream);
+
+    assertEq(streamRegistry.getStreamCountOnNode(newNode), 1);
+    assertEq(stream.nodes[1], newNode);
   }
 
   /// @notice Validates that `removeStreamFromNode` reverts if the stream is not on the node.
@@ -542,13 +635,31 @@ contract StreamRegistryTest is
     vm.expectEmit(address(streamRegistry));
     emit StreamPlacementUpdated(SAMPLE_STREAM.streamId, NODE, false);
 
+    vm.recordLogs();
     vm.prank(NODE);
     streamRegistry.removeStreamFromNode(SAMPLE_STREAM.streamId, NODE);
 
-    assertEq(streamRegistry.getStreamCountOnNode(NODE), 0);
-    assertTrue(
-      streamRegistry.getStream(SAMPLE_STREAM.streamId).nodes.length == 0
+    Vm.Log memory streamUpdatedLog = _getFirstMatchingLog(
+      vm.getRecordedLogs(),
+      StreamUpdated.selector
     );
+
+    assertEq(
+      uint8(uint256(streamUpdatedLog.topics[1])),
+      uint8(StreamEventType.PlacementUpdated)
+    );
+
+    (bytes32 emittedStreamId, Stream memory emittedStream) = abi.decode(
+      abi.decode(streamUpdatedLog.data, (bytes)),
+      (bytes32, Stream)
+    );
+    assertEq(emittedStreamId, SAMPLE_STREAM.streamId);
+
+    Stream memory stream = streamRegistry.getStream(emittedStreamId);
+    _assertEqStream(emittedStream, stream);
+
+    assertEq(streamRegistry.getStreamCountOnNode(NODE), 0);
+    assertEq(stream.nodes.length, 0);
   }
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -627,5 +738,12 @@ contract StreamRegistryTest is
         streams[i]
       );
     }
+  }
+
+  function _assertEqStream(
+    Stream memory stream,
+    Stream memory expectedStream
+  ) internal pure {
+    assertEq(abi.encode(stream), abi.encode(expectedStream));
   }
 }
