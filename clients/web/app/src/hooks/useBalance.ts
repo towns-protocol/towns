@@ -108,10 +108,13 @@ export function parseUnits(value: string, decimals: number = 18): bigint {
     return BigInt(combinedValue)
 }
 
+const compactNumberFormatter = Intl.NumberFormat('en-US', { notation: 'compact' })
+
 export function formatUnitsToFixedLength(
     value: bigint,
     baseDecimals: number = 18,
     displayDecimals: number = 5,
+    options?: { compact?: boolean },
 ): string {
     // Calculate the scaling factor to shift decimal places correctly
     const scaleFactor = 10n ** BigInt(baseDecimals - displayDecimals)
@@ -130,5 +133,11 @@ export function formatUnitsToFixedLength(
         return `~${smallestDisplayableValue}`
     }
 
-    return formatUnits(roundedValue, displayDecimals)
+    const units = formatUnits(roundedValue, displayDecimals)
+
+    if (options?.compact) {
+        return compactNumberFormatter.format(Number(units))
+    }
+
+    return units
 }

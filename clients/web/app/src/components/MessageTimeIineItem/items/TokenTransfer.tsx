@@ -39,10 +39,9 @@ export const TokenTransferImpl = (props: TokenTransferImplProps) => {
             if (parsedAmount < 10n ** BigInt(coinData.token.decimals - 2)) {
                 return (Number(parsedAmount) / 10 ** coinData.token.decimals).toFixed(3)
             }
-            const preFormattedAmount = Number(
-                formatUnitsToFixedLength(parsedAmount, coinData?.token.decimals, 2),
-            )
-            return Intl.NumberFormat('en-US', { notation: 'compact' }).format(preFormattedAmount)
+            return formatUnitsToFixedLength(parsedAmount, coinData?.token.decimals, 2, {
+                compact: true,
+            })
         }
 
         const verb = isBuy ? 'Bought' : 'Sold'

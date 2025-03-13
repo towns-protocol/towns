@@ -49,7 +49,6 @@ import { TokenIcon } from '@components/Web3/Trading/ui/TokenIcon'
 import { isTradingChain, tradingChains } from '@components/Web3/Trading/tradingConstants'
 import { FadeInBox } from '@components/Transitions'
 import { EditSlippageButton } from '@components/Web3/Trading/EditSlippagePopover'
-import { formatCompactNumber } from '@components/Web3/Trading/tradingUtils'
 import { useTradingWalletBalance } from '@components/Web3/Trading/hooks/useTradingBalance'
 import { formatUnitsToFixedLength } from 'hooks/useBalance'
 import { useTokenBalance } from '@components/Web3/Trading/useTokenBalance'
@@ -453,13 +452,12 @@ const TransactionTooltip = (props: {
                             color={mode === 'buy' ? 'positive' : 'peach'}
                             whiteSpace="nowrap"
                         >
-                            {mode === 'buy' ? 'Buy' : 'Sell'}{' '}
-                            {formatCompactNumber(Number(tradeData.value.value))}{' '}
+                            {mode === 'buy' ? 'Buy' : 'Sell'} {tradeData.value.value}{' '}
                             {tradeData.value.symbol} {mode === 'buy' ? slippageText : ''}
                         </Paragraph>
                         <Paragraph color="gray1">
-                            For {formatCompactNumber(Number(tradeData.valueAt.value))}{' '}
-                            {tradeData.valueAt.symbol} {mode === 'sell' ? slippageText : ''}
+                            For {tradeData.valueAt.value} {tradeData.valueAt.symbol}{' '}
+                            {mode === 'sell' ? slippageText : ''}
                         </Paragraph>
                     </Stack>
                 </Stack>
@@ -513,7 +511,9 @@ const TokenBalance = (props: { chainId: string; tokenAddress: string }) => {
     return tokenData ? (
         <Box>
             <TokenPrice
-                value={formatUnitsToFixedLength(tokenBalance, tokenData.token.decimals, 2)}
+                value={formatUnitsToFixedLength(tokenBalance, tokenData.token.decimals, 2, {
+                    compact: true,
+                })}
                 symbol={tokenData.token.symbol}
             />
         </Box>
@@ -534,8 +534,7 @@ const TokenPrice = (props: { value: string; symbol: string }) => {
                     justifyContent="center"
                 >
                     <Paragraph size="sm" fontWeight="medium" color="gray2">
-                        {value.startsWith('~') ? value : formatCompactNumber(Number(value))}{' '}
-                        {symbol}
+                        {value} {symbol}
                     </Paragraph>
                 </FadeInBox>
             )}

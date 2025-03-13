@@ -1,9 +1,13 @@
+const usdNumberFormatter = Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' })
+
 export function formatCents(cents: number): string {
-    return Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(cents / 100)
+    return usdNumberFormatter.format(cents / 100)
 }
 
-export function formatCompactNumber(number: number): string {
-    return Intl.NumberFormat('en-US', { notation: 'compact' }).format(number)
+const compactNumberFormatter = Intl.NumberFormat('en-US', { notation: 'compact' })
+
+export function formatCompactNumber(value: string | number) {
+    return compactNumberFormatter.format(Number(value))
 }
 
 export function calculateTotalHoldingValueCents(

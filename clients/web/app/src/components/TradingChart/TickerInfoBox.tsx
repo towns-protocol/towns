@@ -2,12 +2,12 @@ import React, { useCallback, useState } from 'react'
 import { useMyUserId } from 'use-towns-client'
 import { Box, IconButton, Paragraph, Pill, Stack, Text } from '@ui'
 import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
-import { formatCompactNumber } from '@components/Web3/Trading/tradingUtils'
 import { TokenPrice } from '@components/Web3/Trading/ui/TokenPrice'
 import { shimmerClass } from 'ui/styles/globals/shimmer.css'
 import { TokenIcon } from '@components/Web3/Trading/ui/TokenIcon'
 import { Avatar } from '@components/Avatar/Avatar'
 import { isTradingChain } from '@components/Web3/Trading/tradingConstants'
+import { formatCompactNumber } from '@components/Web3/Trading/tradingUtils'
 import { UserList } from '@components/UserList/UserList'
 import { GetCoinDataResponse } from './useCoinData'
 import { TickerChangeIndicator } from './TickerChangeIndicator'
@@ -170,13 +170,13 @@ const TickerPills = ({
                 <Pill background="lightHover" color="inherit" whiteSpace="nowrap">
                     <Text fontSize="sm">
                         LIQ&#8201;$
-                        {formatCompactNumber(Number(coinData.liquidity))}
+                        {formatCompactNumber(coinData.liquidity)}
                     </Text>
                 </Pill>
                 <Pill background="lightHover" color="inherit" whiteSpace="nowrap">
                     <Text fontSize="sm">
                         VOL&#8201;$
-                        {formatCompactNumber(Number(coinData.volume24))}
+                        {formatCompactNumber(coinData.volume24)}
                     </Text>
                 </Pill>
                 <Pill background="lightHover" color="inherit" whiteSpace="nowrap">
@@ -194,7 +194,7 @@ const TickerPills = ({
                 <Pill background="lightHover" color="inherit" whiteSpace="nowrap">
                     <Text fontSize="sm">
                         FDV&#8201;$
-                        {formatCompactNumber(Number(coinData.marketCap))}
+                        {formatCompactNumber(coinData.marketCap)}
                     </Text>
                 </Pill>
             </Stack>

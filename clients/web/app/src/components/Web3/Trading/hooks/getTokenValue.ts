@@ -16,14 +16,18 @@ export const getTokenValueData = (props: {
     if (tokenAddress === chainConfig.nativeTokenAddress) {
         return {
             icon: chainConfig.icon,
-            value: formatUnitsToFixedLength(BigInt(amount), chainConfig.decimals, 5),
+            value: formatUnitsToFixedLength(BigInt(amount), chainConfig.decimals, 5, {
+                compact: true,
+            }),
             symbol: chainConfig.tokenSymbol,
             name: chainConfig.name,
         }
     }
 
     const imageUrl = tokenData?.token.info.imageThumbUrl
-    const formatedValue = formatUnitsToFixedLength(BigInt(amount), tokenData?.token.decimals, 5)
+    const formatedValue = formatUnitsToFixedLength(BigInt(amount), tokenData?.token.decimals, 5, {
+        compact: true,
+    })
 
     return {
         icon: imageUrl,
