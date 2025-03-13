@@ -13,7 +13,8 @@
         "snapshot": "make snapshot",
         "sync": "make update",
         "test": "yarn test:unit",
-        "test:unit": "make test"
+        "test:unit": "make test",
+        "typings": "wagmi generate"
     },
     "dependencies": {
         "@openzeppelin/contracts": "^5.2.0",
@@ -25,6 +26,7 @@
     },
     "devDependencies": {
         "@prb/test": "^0.6.4",
+        "@wagmi/cli": "^2.2.0",
         "account-abstraction": "github:eth-infinitism/account-abstraction",
         "forge-std": "github:foundry-rs/forge-std#v1.9.5",
         "prettier": "^2.8.8",
