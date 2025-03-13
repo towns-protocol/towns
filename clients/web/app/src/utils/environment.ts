@@ -99,8 +99,6 @@ const envSchema = z.object({
     VITE_TIPS_ENABLED: boolish.default(false),
     VITE_TIPS_IN_ETH: boolish.default(false),
     VITE_TOKEN_PRICES_API_URL: z.string().url().optional(),
-    // show the confirm v2 modal
-    VITE_ENABLE_CONFIRM_V2: boolish.default(false),
     // show the deposit button within the fund wallet modal
     VITE_ENABLE_CONFIRM_FUND_WALLET: boolish.default(false),
     // show custom decent components for funding wallet

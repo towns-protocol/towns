@@ -9,7 +9,6 @@ export function useValueLabel() {
         (s) => selectUserOpsByAddress(myAbstractAccountAddress, s)?.current?.decodedCallData,
     )
     const isJoinSpace = useIsJoinSpace()
-
     const valueLabel = useMemo(() => {
         if (isPrepayMembershipData(currOpDecodedCallData)) {
             const { supply } = currOpDecodedCallData.functionData

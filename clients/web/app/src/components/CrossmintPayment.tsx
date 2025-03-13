@@ -114,42 +114,28 @@ const CrossmintPaymentContent = ({
 
     const isDark = theme === 'dark'
 
-    const isConfirmV2 = env.VITE_ENABLE_CONFIRM_V2
-
     const backgroundPrimary = useMemo(() => {
-        if (isConfirmV2) {
-            return isDark
-                ? _isTouch
-                    ? Figma.DarkMode.Level1
-                    : Figma.DarkMode.Level3
-                : Figma.LightMode.Level2
-        }
-        return isDark ? Figma.DarkMode.Level2 : Figma.LightMode.Level2
-    }, [isDark, _isTouch, isConfirmV2])
+        return isDark
+            ? _isTouch
+                ? Figma.DarkMode.Level1
+                : Figma.DarkMode.Level3
+            : Figma.LightMode.Level2
+    }, [isDark, _isTouch])
 
     const border = useMemo(() => {
-        if (isConfirmV2) {
-            return isDark
-                ? _isTouch
-                    ? Figma.DarkMode.Level3
-                    : Figma.DarkMode.Level4
-                : Figma.LightMode.Level3
-        }
-        return isDark ? Figma.DarkMode.Level3 : Figma.LightMode.Level3
-    }, [isConfirmV2, isDark, _isTouch])
+        return isDark
+            ? _isTouch
+                ? Figma.DarkMode.Level3
+                : Figma.DarkMode.Level4
+            : Figma.LightMode.Level3
+    }, [isDark, _isTouch])
 
     if (!contractAddress || !townWalletAddress) {
         return null
     }
 
     return (
-        <Box
-            background={isConfirmV2 ? undefined : 'level1'}
-            paddingTop="sm"
-            position="relative"
-            minHeight="400"
-            width={isConfirmV2 ? undefined : !_isTouch ? '400' : undefined}
-        >
+        <Box paddingTop="sm" position="relative" minHeight="400">
             {isLoading ? (
                 <Stack centerContent height="250">
                     <Spinner />

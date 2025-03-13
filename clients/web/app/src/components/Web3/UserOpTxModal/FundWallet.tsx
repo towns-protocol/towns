@@ -3,15 +3,19 @@ import { Address, useTownsContext } from 'use-towns-client'
 import { popupToast } from '@components/Notifications/popupToast'
 import { StandardToast } from '@components/Notifications/StandardToast'
 import { FullPanelOverlay } from '@components/Web3/WalletLinkingPanel'
-import { DecentTransactionReceipt, Onboarding, getDecentScanLink } from '../../Decent/Onboarding'
+import {
+    DecentTransactionReceipt,
+    Onboarding,
+    getDecentScanLink,
+} from '@components/Web3/Decent/Onboarding'
 import {
     trackConnectWallet,
     trackFundWalletTx,
     trackFundWalletTxStart,
-} from '../../Wallet/fundWalletAnalytics'
+} from '@components/Web3/Wallet/fundWalletAnalytics'
 import { useUserOpTxModalContext } from './UserOpTxModalContext'
 import { useMyAbstractAccountAddress } from './hooks/useMyAbstractAccountAddress'
-import { useIsJoinSpace } from '../hooks/useIsJoinSpace'
+import { useIsJoinSpace } from './hooks/useIsJoinSpace'
 
 export const FundWallet = (props: { cost: bigint }) => {
     const { baseProvider } = useTownsContext()

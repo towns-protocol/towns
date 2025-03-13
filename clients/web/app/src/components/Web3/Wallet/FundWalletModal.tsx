@@ -11,7 +11,7 @@ import {
     trackFundWalletTx,
     trackFundWalletTxStart,
 } from './fundWalletAnalytics'
-import { ErrorContent } from '../UserOpTxModal/v2/UserOpTxModal'
+import { ErrorContent } from '../UserOpTxModal/UserOpTxModal'
 
 export const FundWalletModal = () => {
     const fundWalletModalOpen = useStore((state) => state.fundWalletModalOpen)

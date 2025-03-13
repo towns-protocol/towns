@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom'
 import { useConnectivity } from 'use-towns-client'
 import { BoxProps, Icon, MotionBox, Stack, Text } from '@ui'
 import useCopyToClipboard from 'hooks/useCopyToClipboard'
-import { env } from 'utils'
 import { openSeaBaseAssetUrl } from '../utils'
 
 const buttonStyle: Partial<BoxProps> = {
@@ -12,10 +11,10 @@ const buttonStyle: Partial<BoxProps> = {
     position: 'relative',
     cursor: 'pointer',
     as: 'button',
-    rounded: env.VITE_ENABLE_CONFIRM_V2 ? 'lg' : 'sm',
+    rounded: 'lg',
     width: '100%',
     height: 'x6',
-    color: env.VITE_ENABLE_CONFIRM_V2 ? 'cta1' : 'default',
+    color: 'cta1',
     background: 'level3',
     overflow: 'hidden',
 }

@@ -7,17 +7,9 @@ export function usePriceBreakdown(args: {
     preVerificationGas: BigNumberish
     verificationGasLimit: BigNumberish
     gasPrice: BigNumberish
-    balanceIsLessThanCost: boolean
     value?: BigNumberish
 }) {
-    const {
-        gasLimit,
-        preVerificationGas,
-        verificationGasLimit,
-        gasPrice,
-        value,
-        balanceIsLessThanCost,
-    } = args
+    const { gasLimit, preVerificationGas, verificationGasLimit, gasPrice, value } = args
     const gasCost = costOfGas({
         gasLimit: BigNumber.from(gasLimit).toBigInt(),
         preVerificationGas: BigNumber.from(preVerificationGas).toBigInt(),
@@ -39,7 +31,11 @@ export function usePriceBreakdown(args: {
         ? formatUnitsToFixedLength(BigNumber.from(value).toBigInt())
         : undefined
 
-    const totalInEth = formatUnitsToFixedLength(totalCost, 18, balanceIsLessThanCost ? 18 : 5)
+    const totalInEth = {
+        full: formatUnitsToFixedLength(totalCost, 18, 18),
+        truncated: formatUnitsToFixedLength(totalCost, 18, 5),
+        value: totalCost,
+    }
 
     return {
         gasCost,
