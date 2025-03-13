@@ -310,8 +310,18 @@ func (ss *SyncerSet) Modify(ctx context.Context, req ModifyRequest) error {
 		return RiverError(Err_CANCELED, "Sync operation stopped", "syncId", ss.syncID)
 	}
 
+	// Prevent passing the same stream to both add and remove operations
+	if slices.ContainsFunc(req.ToAdd, func(c *SyncCookie) bool {
+		return slices.ContainsFunc(req.ToRemove, func(streamId []byte) bool {
+			return StreamId(c.GetStreamId()) == StreamId(streamId)
+		})
+	}) {
+		return RiverError(Err_INVALID_ARGUMENT, "Found the same stream in both add and remove lists").
+			Tags("syncId", ss.syncID).
+			Func("SyncerSet.Modify")
+	}
+
 	modifySyncs := make(map[common.Address]*ModifySyncRequest)
-	duplicates := make(map[StreamId]struct{})
 
 	// group cookies by node address
 	for _, cookie := range req.ToAdd {
@@ -334,7 +344,6 @@ func (ss *SyncerSet) Modify(ctx context.Context, req ModifyRequest) error {
 		}
 
 		modifySyncs[nodeAddress].AddStreams = append(modifySyncs[nodeAddress].AddStreams, cookie)
-		duplicates[StreamId(cookie.GetStreamId())] = struct{}{}
 	}
 
 	// group streamIDs by node address
@@ -353,18 +362,11 @@ func (ss *SyncerSet) Modify(ctx context.Context, req ModifyRequest) error {
 			modifySyncs[syncer.Address()] = &ModifySyncRequest{}
 		}
 
-		// avoid duplicates in the same list
+		// avoid duplicates in the remove list
 		if slices.ContainsFunc(modifySyncs[syncer.Address()].RemoveStreams, func(s []byte) bool {
 			return StreamId(streamIDRaw) == StreamId(s)
 		}) {
 			return RiverError(Err_ALREADY_EXISTS, "Duplicate stream in remove operation").
-				Tags("syncId", ss.syncID, "streamId", StreamId(streamIDRaw)).
-				Func("SyncerSet.Modify")
-		}
-
-		// avoid duplicates in the add list
-		if _, found = duplicates[StreamId(streamIDRaw)]; found {
-			return RiverError(Err_ALREADY_EXISTS, "Stream in add and remove operation").
 				Tags("syncId", ss.syncID, "streamId", StreamId(streamIDRaw)).
 				Func("SyncerSet.Modify")
 		}
