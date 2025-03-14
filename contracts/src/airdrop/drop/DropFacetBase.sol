@@ -112,6 +112,33 @@ abstract contract DropFacetBase is IDropFacetBase {
     }
   }
 
+  function _lockToBoost(
+    ClaimCondition storage condition,
+    DropStorage.SupplyClaim storage claimed,
+    uint256 amount,
+    uint48 maxLockDuration,
+    uint48 lockDuration
+  ) internal returns (uint256 remaining) {
+    uint16 penaltyBps = condition.penaltyBps;
+    // linear decrease of penaltyBps according to lockDuration
+    penaltyBps = uint16(
+      (uint256(penaltyBps) * (maxLockDuration - lockDuration)) / maxLockDuration
+    );
+
+    remaining = amount;
+    if (penaltyBps != 0) {
+      unchecked {
+        uint256 penaltyAmount = BasisPoints.calculate(amount, penaltyBps);
+        remaining = amount - penaltyAmount;
+      }
+    }
+    // store timestamp of claim and lockDuration
+    (claimed.lockStart, claimed.lockDuration) = (
+      uint48(block.timestamp),
+      lockDuration
+    );
+  }
+
   function _verifyLockDuration(
     DropStorage.Layout storage ds,
     uint48 lockDuration

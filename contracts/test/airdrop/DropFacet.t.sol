@@ -182,7 +182,8 @@ contract DropFacetTest is
     address caller,
     address operator,
     address wallet,
-    uint256 amount
+    uint256 amount,
+    uint48 lockDuration
   ) {
     vm.assume(caller != address(0));
     vm.assume(amount > 0);
@@ -198,7 +199,7 @@ contract DropFacetTest is
     bytes memory signature = _signStake(operator, wallet, deadline);
 
     vm.prank(caller);
-    vm.expectEmit(address(dropFacet));
+    vm.expectEmit(true, true, true, false, address(dropFacet));
     emit DropFacet_Claimed_And_Staked(conditionId, caller, wallet, amount);
     dropFacet.claimAndStake(
       Claim({
@@ -208,7 +209,7 @@ contract DropFacetTest is
         proof: proof
       }),
       operator,
-      0
+      lockDuration
     );
     _;
   }
@@ -591,7 +592,8 @@ contract DropFacetTest is
       caller,
       operator,
       bob,
-      amounts[treeIndex[bob]]
+      amounts[treeIndex[bob]],
+      30 days
     )
   {
     uint256 conditionId = dropFacet.getActiveClaimConditionId();

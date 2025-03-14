@@ -36,9 +36,17 @@ contract DeployDropFacet is Deployer, FacetHelper {
   }
 
   function makeInitData(
-    address stakingContract
+    address stakingContract,
+    uint48 minLockDuration,
+    uint48 maxLockDuration
   ) public pure returns (bytes memory) {
-    return abi.encodeWithSelector(initializer(), stakingContract);
+    return
+      abi.encodeWithSelector(
+        initializer(),
+        stakingContract,
+        minLockDuration,
+        maxLockDuration
+      );
   }
 
   function facetInitHelper(
@@ -50,7 +58,10 @@ contract DeployDropFacet is Deployer, FacetHelper {
       IDiamond.FacetCutAction.Add
     );
     console.log("facetInitHelper: deployer", deployer);
-    return (facetCut, makeInitData(getDeployment("baseRegistry")));
+    return (
+      facetCut,
+      makeInitData(getDeployment("baseRegistry"), 30 days, 180 days)
+    );
   }
 
   function __deploy(address deployer) public override returns (address) {

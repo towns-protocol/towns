@@ -26,6 +26,8 @@ import {DeployMetadata} from "contracts/scripts/deployments/facets/DeployMetadat
 contract DeployRiverAirdrop is DiamondHelper, Deployer {
   address internal BASE_REGISTRY = address(0);
   address internal SPACE_FACTORY = address(0);
+  uint48 public minLockDuration = 30 days;
+  uint48 public maxLockDuration = 180 days;
 
   DeployMultiInit deployMultiInit = new DeployMultiInit();
   DeployDiamondCut diamondCutHelper = new DeployDiamondCut();
@@ -82,6 +84,14 @@ contract DeployRiverAirdrop is DiamondHelper, Deployer {
     return getDeployment("baseRegistry");
   }
 
+  function setLockDurations(
+    uint48 _minLockDuration,
+    uint48 _maxLockDuration
+  ) public {
+    minLockDuration = _minLockDuration;
+    maxLockDuration = _maxLockDuration;
+  }
+
   function addImmutableCuts(address deployer) internal {
     multiInit = deployMultiInit.deploy(deployer);
     diamondCut = diamondCutHelper.deploy(deployer);
@@ -121,7 +131,11 @@ contract DeployRiverAirdrop is DiamondHelper, Deployer {
     addFacet(
       dropHelper.makeCut(dropFacet, IDiamond.FacetCutAction.Add),
       dropFacet,
-      dropHelper.makeInitData(getBaseRegistry())
+      dropHelper.makeInitData(
+        getBaseRegistry(),
+        minLockDuration,
+        maxLockDuration
+      )
     );
     addFacet(
       pointsHelper.makeCut(pointsFacet, IDiamond.FacetCutAction.Add),

@@ -8,8 +8,8 @@ import {IRewardsDistribution} from "contracts/src/base/registry/facets/distribut
 // libraries
 import {SafeCastLib} from "solady/utils/SafeCastLib.sol";
 import {CustomRevert} from "contracts/src/utils/libraries/CustomRevert.sol";
-import {DropStorage} from "contracts/src/airdrop/drop/DropStorage.sol";
 import {CurrencyTransfer} from "contracts/src/utils/libraries/CurrencyTransfer.sol";
+import {DropStorage} from "contracts/src/airdrop/drop/DropStorage.sol";
 
 // contracts
 import {Facet} from "@river-build/diamond/src/facets/Facet.sol";
@@ -124,33 +124,22 @@ contract DropFacet is IDropFacet, DropFacetBase, OwnableBase, Facet {
       claim.conditionId,
       claim.account
     );
+    _verifyClaim(condition, claimed, claim);
 
-    amount = claim.quantity;
-    uint16 penaltyBps = condition.penaltyBps;
-    // linear decrease of penaltyBps according to lockDuration
-    uint48 maxLockDuration = ds.maxLockDuration;
-    penaltyBps = uint16(
-      (uint256(penaltyBps) * (maxLockDuration - lockDuration)) / maxLockDuration
+    amount = _lockToBoost(
+      condition,
+      claimed,
+      claim.quantity,
+      ds.maxLockDuration,
+      lockDuration
     );
 
-    uint256 remaining = amount;
-    if (penaltyBps != 0) {
-      unchecked {
-        uint256 penaltyAmount = BasisPoints.calculate(amount, penaltyBps);
-        remaining = amount - penaltyAmount;
-      }
-    }
-    // store timestamp of claim and lockDuration
-    ds.claimById[claim.conditionId].timestamp = block.timestamp;
-    ds.claimById[claim.conditionId].lockDuration = lockDuration;
-
-    _verifyClaim(condition, claimed, claim);
-    _updateClaim(condition, claimed, remaining);
-    _approveClaimToken(ds, condition, remaining);
+    _updateClaim(condition, claimed, amount);
+    _approveClaimToken(ds, condition, amount);
 
     uint256 depositId = IRewardsDistribution(ds.rewardsDistribution)
       .stakeOnBehalf(
-        SafeCastLib.toUint96(remaining),
+        SafeCastLib.toUint96(amount),
         delegatee,
         claim.account,
         address(this),
@@ -164,17 +153,16 @@ contract DropFacet is IDropFacet, DropFacetBase, OwnableBase, Facet {
       claim.conditionId,
       msg.sender,
       claim.account,
-      remaining
+      amount
     );
   }
 
-  function claimPrincipal(
-    Claim calldata claim,
-    address delegatee
-  ) external returns (uint256 amount) {
-    DropStorage.Layout storage ds = DropStorage.layout();
-    
-  }
+  //  function claimPrincipal(
+  //    Claim calldata claim,
+  //    address delegatee
+  //  ) external returns (uint256 amount) {
+  //    DropStorage.Layout storage ds = DropStorage.layout();
+  //  }
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                          GETTERS                           */
