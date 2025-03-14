@@ -639,9 +639,9 @@
                 "type": "tuple[]",
                 "components": [
                   {
-                    "internalType": "string",
+                    "internalType": "bytes32",
                     "name": "key",
-                    "type": "string"
+                    "type": "bytes32"
                   },
                   {
                     "internalType": "bytes",
@@ -884,7 +884,7 @@
             "rootWallet": "the root wallet that the caller is linking to"
           }
         },
-        "linkNonEVMWalletToRootKey((string,bytes,string,uint8,(string,bytes)[]),uint256)": {
+        "linkNonEVMWalletToRootKey((string,bytes,string,uint8,(bytes32,bytes)[]),uint256)": {
           "details": "The function can only be called by an already linked wallet",
           "params": {
             "nonce": "a nonce used to prevent replay attacks, nonce must always be higher than previous nonce",
@@ -956,7 +956,7 @@
         "linkCallerToRootKey((address,bytes,string),uint256)": {
           "notice": "Link caller wallet to a root wallet"
         },
-        "linkNonEVMWalletToRootKey((string,bytes,string,uint8,(string,bytes)[]),uint256)": {
+        "linkNonEVMWalletToRootKey((string,bytes,string,uint8,(bytes32,bytes)[]),uint256)": {
           "notice": "Link a non-EVM wallet to a root wallet"
         },
         "linkWalletToRootKey((address,bytes,string),(address,bytes,string),uint256)": {
@@ -984,7 +984,6 @@
   "settings": {
     "remappings": [
       "@openzeppelin/=node_modules/@openzeppelin/",
-      "@openzeppelin/contracts/=node_modules/@openzeppelin/contracts/",
       "@prb/math/=node_modules/@prb/math/src/",
       "@prb/test/=node_modules/@prb/test/src/",
       "@river-build/diamond/=node_modules/@river-build/diamond/",
@@ -1012,26 +1011,26 @@
   },
   "sources": {
     "contracts/src/factory/facets/wallet-link/IWalletLink.sol": {
-      "keccak256": "0x1ad33f2e7f0c9489b95e6b7594018d1ea0ea407086fec997d1f367508c233282",
+      "keccak256": "0x42c5e01a66b1da08750dfca97d5de63c7590572deb12f0eb43916af25cbe3888",
       "urls": [
-        "bzz-raw://bc633b1767f93e59cd64bd9b6bedde7dece8bfe6d38155c9f4d0258116f246fa",
-        "dweb:/ipfs/QmZpCmijjGr4rgXT2RJywqCk5jy8CEmUfzAsnUBPx9GcyG"
+        "bzz-raw://203e5e5ee739d6bd74b91085846972c0ddc076ffbce02e9b3261fb941bb6c6d1",
+        "dweb:/ipfs/QmXYLCEyyMobFgY8XkaBi5MEQtYpTpfQNeUujgxWzKXn6C"
       ],
       "license": "MIT"
     },
     "contracts/src/factory/facets/wallet-link/WalletLink.sol": {
-      "keccak256": "0x4202e14e1266ea4ffce7068076afa551d445a0fa97217207721fcd9b55895566",
+      "keccak256": "0x92c64e5d017eed568ed47ea1bea9d6bd527a1332c454113bd70f6107a9b5d8b3",
       "urls": [
-        "bzz-raw://4d2d7fa83addaa7cf38260540f221f7f3e3c6e7d58f37616eda13e8daeaf9ca1",
-        "dweb:/ipfs/QmfFvjyREqYzsQ69wCugTAeygXChsJK5ShbhLf7PZBVnbd"
+        "bzz-raw://b125b63735f6548d495e943d0d297872660e88d88dd919f98306a9448d04390c",
+        "dweb:/ipfs/QmVjeZEUQiNKkX8sBaMwRgGTReXweMCwTRDsESyNASdjGG"
       ],
       "license": "MIT"
     },
     "contracts/src/factory/facets/wallet-link/WalletLinkBase.sol": {
-      "keccak256": "0xdff4481f3defa2f3ac9c74bf0d52e2eb9ee50cb0ab30db925f0ea506af63fcf7",
+      "keccak256": "0x5522961f1430d196f0897fdd8fcab2a571cbfa155478405c3dfb24e3f26d69e6",
       "urls": [
-        "bzz-raw://9db969bc4c6513997eb838fb6dc36974602680a89c0ae5ecfe13ba92cca29da7",
-        "dweb:/ipfs/Qma9jbHFCYAcZqU71Fz9SEnRvLsiL5EqwoLnRwDkerPGGH"
+        "bzz-raw://8ca397c7351fd761238263067c10904db773cce61a1b46d028cfdfd2f5a258c9",
+        "dweb:/ipfs/QmNMhy9EuvZT99azD1Lu6E4Mnr8fNZDiYiRByTVHTtdZnp"
       ],
       "license": "MIT"
     },
@@ -1068,18 +1067,18 @@
       "license": "MIT"
     },
     "contracts/src/factory/facets/wallet-link/libraries/WalletLib.sol": {
-      "keccak256": "0x852e91916fe599edaf4bdf0b9fcd59f5e4f60c169bab04da64a024c058ff8027",
+      "keccak256": "0x66308eb75deed51fd0ce0c9fd305a5323b19adaace511961e7de25da45053662",
       "urls": [
-        "bzz-raw://687989ba3f567dce41e3de6c1f3f933743839d2d1f19b456ec00facbd69ab345",
-        "dweb:/ipfs/QmXxResDrGciqa7PV9RTyUDmHDwXnSP3LwckhikQwk1ZpW"
+        "bzz-raw://07ceeaf050e2dd05f6a47e8128cd6acd3dded2b7d942752c465b634b45760a09",
+        "dweb:/ipfs/QmWV8F6GfTME4wfntZoVXr6peGqstvKVnfw3bC5eiiDfbZ"
       ],
       "license": "MIT"
     },
     "contracts/src/factory/facets/wallet-link/libraries/WalletLinkLib.sol": {
-      "keccak256": "0x6e91fd839dd460ee470c79f9c1341fec634218bc74e4692170ded905e7ff8ab1",
+      "keccak256": "0x783f750442571473fcb9374683ec5d7bfd0fd73985116ba3002a4341837e2ffa",
       "urls": [
-        "bzz-raw://36272507db98c21f923b153c5f008aeed9fd69c287cd0a9e9a2335df5762fe1b",
-        "dweb:/ipfs/QmVJUtmNSpFxdDDx6qKCdXndawHe65fako5sgcwmxsZW2Z"
+        "bzz-raw://49b8bbd7be9c39233f9ff19752d4e2b40cdf5104b431b27fb50c15a751911c88",
+        "dweb:/ipfs/QmXymTovfRfEHbQMd4WgbWTbpmgFrdxoUmhBDxKR3qSuMi"
       ],
       "license": "MIT"
     },

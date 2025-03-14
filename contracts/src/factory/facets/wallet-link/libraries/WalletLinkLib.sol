@@ -6,7 +6,7 @@ import {IDelegateRegistry} from "contracts/src/factory/facets/wallet-link/interf
 import {ISCL_EIP6565} from "contracts/src/factory/facets/wallet-link/interfaces/ISCL_EIP6565.sol";
 
 // libraries
-import {WalletLinkStorage} from "contracts/src/factory/facets/wallet-link/WalletLinkStorage.sol";
+import {WalletLinkStorage} from "../WalletLinkStorage.sol";
 
 // contracts
 
@@ -44,8 +44,6 @@ library WalletLinkLib {
     for (uint256 i; i < walletsLength; ++i) {
       allDelegations[i] = delegateRegistry.getIncomingDelegations(wallets[i]);
     }
-
-    return allDelegations;
   }
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/

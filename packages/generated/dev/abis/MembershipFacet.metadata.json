@@ -1667,7 +1667,6 @@
   "settings": {
     "remappings": [
       "@openzeppelin/=node_modules/@openzeppelin/",
-      "@openzeppelin/contracts/=node_modules/@openzeppelin/contracts/",
       "@prb/math/=node_modules/@prb/math/src/",
       "@prb/test/=node_modules/@prb/test/src/",
       "@river-build/diamond/=node_modules/@river-build/diamond/",
@@ -1791,10 +1790,10 @@
       "license": "MIT"
     },
     "contracts/src/factory/facets/wallet-link/IWalletLink.sol": {
-      "keccak256": "0x1ad33f2e7f0c9489b95e6b7594018d1ea0ea407086fec997d1f367508c233282",
+      "keccak256": "0x42c5e01a66b1da08750dfca97d5de63c7590572deb12f0eb43916af25cbe3888",
       "urls": [
-        "bzz-raw://bc633b1767f93e59cd64bd9b6bedde7dece8bfe6d38155c9f4d0258116f246fa",
-        "dweb:/ipfs/QmZpCmijjGr4rgXT2RJywqCk5jy8CEmUfzAsnUBPx9GcyG"
+        "bzz-raw://203e5e5ee739d6bd74b91085846972c0ddc076ffbce02e9b3261fb941bb6c6d1",
+        "dweb:/ipfs/QmXYLCEyyMobFgY8XkaBi5MEQtYpTpfQNeUujgxWzKXn6C"
       ],
       "license": "MIT"
     },

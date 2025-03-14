@@ -60,7 +60,7 @@ interface IWalletLinkBase {
 
   /// @notice Generic structure for VM-specific data
   struct VMSpecificData {
-    string key;
+    bytes32 key;
     bytes value;
   }
 

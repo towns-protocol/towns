@@ -41,7 +41,7 @@ export declare namespace IWalletLinkBase {
   };
 
   export type VMSpecificDataStruct = {
-    key: PromiseOrValue<string>;
+    key: PromiseOrValue<BytesLike>;
     value: PromiseOrValue<BytesLike>;
   };
 
@@ -84,7 +84,7 @@ export interface IWalletLinkInterface extends utils.Interface {
     "getWalletsByRootKey(address)": FunctionFragment;
     "getWalletsByRootKeyWithDelegations(address)": FunctionFragment;
     "linkCallerToRootKey((address,bytes,string),uint256)": FunctionFragment;
-    "linkNonEVMWalletToRootKey((string,bytes,string,uint8,(string,bytes)[]),uint256)": FunctionFragment;
+    "linkNonEVMWalletToRootKey((string,bytes,string,uint8,(bytes32,bytes)[]),uint256)": FunctionFragment;
     "linkWalletToRootKey((address,bytes,string),(address,bytes,string),uint256)": FunctionFragment;
     "removeCallerLink()": FunctionFragment;
     "removeLink(address,(address,bytes,string),uint256)": FunctionFragment;

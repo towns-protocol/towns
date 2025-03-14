@@ -2,15 +2,16 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {IWalletLinkQueryable} from "contracts/src/factory/facets/wallet-link/interfaces/IWalletLinkQueryable.sol";
+import {IWalletLinkQueryable} from "./interfaces/IWalletLinkQueryable.sol";
 import {IDelegateRegistry} from "./interfaces/IDelegateRegistry.sol";
 
 // libraries
-import {WalletLinkStorage} from "contracts/src/factory/facets/wallet-link/WalletLinkStorage.sol";
-import {WalletLib} from "contracts/src/factory/facets/wallet-link/libraries/WalletLib.sol";
-import {WalletLinkLib} from "contracts/src/factory/facets/wallet-link/libraries/WalletLinkLib.sol";
-import {LibString} from "solady/utils/LibString.sol";
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import {LibString} from "solady/utils/LibString.sol";
+import {WalletLib} from "./libraries/WalletLib.sol";
+import {WalletLinkLib} from "./libraries/WalletLinkLib.sol";
+import {WalletLinkStorage} from "./WalletLinkStorage.sol";
+
 // contracts
 import {Facet} from "@river-build/diamond/src/facets/Facet.sol";
 
@@ -43,57 +44,52 @@ contract WalletLinkQueryable is IWalletLinkQueryable, Facet {
       IDelegateRegistry.Delegation[][] memory allDelegations
     ) = _getWalletsAndCount(ds, rootWallet, rootKey);
 
-    if (totalCount == 0) {
-      return new WalletData[](0);
-    }
+    if (totalCount == 0) return new WalletData[](0);
 
     wallets = new WalletData[](totalCount);
     uint256 currentIndex = _processNonEVMWallets(
-      wallets,
-      0,
       rootWallet,
-      nonEVMWallets
+      wallets,
+      nonEVMWallets,
+      0
     );
     _processLinkedAndDelegatedWallets(
       wallets,
-      currentIndex,
       linkedWallets,
       allDelegations,
-      ds.rootWalletByRootKey[rootKey].defaultWallet
+      ds.rootWalletByRootKey[rootKey].defaultWallet,
+      currentIndex
     );
-
-    return wallets;
   }
 
   function _processNonEVMWallets(
-    WalletData[] memory wallets,
-    uint256 startIndex,
     WalletLib.RootWallet storage rootWallet,
-    bytes32[] memory nonEVMWallets
-  ) private view returns (uint256) {
-    uint256 currentIndex = startIndex;
+    WalletData[] memory wallets,
+    bytes32[] memory nonEVMWallets,
+    uint256 startIndex
+  ) private view returns (uint256 currentIndex) {
+    currentIndex = startIndex;
     uint256 nonEVMWalletsLength = nonEVMWallets.length;
 
     for (uint256 i; i < nonEVMWalletsLength; ++i) {
       WalletLib.Wallet memory nonEVMWallet = rootWallet.walletByHash[
         nonEVMWallets[i]
       ];
-      wallets[currentIndex++] = WalletData({
-        addr: nonEVMWallet.addr,
-        vmType: nonEVMWallet.vmType,
-        walletType: WALLET_TYPE_NON_EVM
-      });
+      unchecked {
+        WalletData memory data = wallets[currentIndex++];
+        data.addr = nonEVMWallet.addr;
+        data.vmType = nonEVMWallet.vmType;
+        data.walletType = WALLET_TYPE_NON_EVM;
+      }
     }
-
-    return currentIndex;
   }
 
   function _processLinkedAndDelegatedWallets(
     WalletData[] memory wallets,
-    uint256 startIndex,
     address[] memory linkedWallets,
     IDelegateRegistry.Delegation[][] memory allDelegations,
-    address defaultWallet
+    address defaultWallet,
+    uint256 startIndex
   ) private pure {
     uint256 currentIndex = startIndex;
     uint256 linkedWalletsLength = linkedWallets.length;
@@ -107,15 +103,14 @@ contract WalletLinkQueryable is IWalletLinkQueryable, Facet {
       address wallet = linkedWallets[i];
 
       uint8 walletType = WALLET_TYPE_LINKED;
-      if (wallet == defaultWallet) {
-        walletType |= WALLET_TYPE_DEFAULT;
-      }
+      if (wallet == defaultWallet) walletType |= WALLET_TYPE_DEFAULT;
 
-      wallets[currentIndex++] = WalletData({
-        addr: LibString.toHexString(wallet),
-        vmType: VirtualMachineType.EVM,
-        walletType: walletType
-      });
+      unchecked {
+        WalletData memory data = wallets[currentIndex++];
+        data.addr = LibString.toHexString(wallet);
+        data.vmType = VirtualMachineType.EVM;
+        data.walletType = walletType;
+      }
 
       IDelegateRegistry.Delegation[] memory delegations = allDelegations[i];
       uint256 delegationsLength = delegations.length;
@@ -125,11 +120,12 @@ contract WalletLinkQueryable is IWalletLinkQueryable, Facet {
         ++j
       ) {
         if (delegations[j].type_ == IDelegateRegistry.DelegationType.ALL) {
-          wallets[currentIndex++] = WalletData({
-            addr: LibString.toHexString(delegations[j].from),
-            vmType: VirtualMachineType.EVM,
-            walletType: WALLET_TYPE_DELEGATED
-          });
+          unchecked {
+            WalletData memory data = wallets[currentIndex++];
+            data.addr = LibString.toHexString(delegations[j].from);
+            data.vmType = VirtualMachineType.EVM;
+            data.walletType = WALLET_TYPE_DELEGATED;
+          }
         }
       }
     }
@@ -154,43 +150,34 @@ contract WalletLinkQueryable is IWalletLinkQueryable, Facet {
     ];
     EnumerableSet.Bytes32Set storage nonEVMWalletsSet = rootWallet.walletHashes;
 
-    uint256 linkedWalletsLength = linkedWalletsSet.length();
-    uint256 nonEVMWalletsLength = nonEVMWalletsSet.length();
-
-    allDelegations = WalletLinkLib.getDelegationsForWallets(
-      linkedWalletsSet.values()
-    );
-
-    if (
-      linkedWalletsLength == 0 &&
-      nonEVMWalletsLength == 0 &&
-      allDelegations.length == 0
-    ) {
-      return (
-        0,
-        new address[](0),
-        new bytes32[](0),
-        new IDelegateRegistry.Delegation[][](0)
-      );
-    }
-
     linkedWallets = linkedWalletsSet.values();
     nonEVMWallets = nonEVMWalletsSet.values();
+    uint256 linkedWalletsLength = linkedWallets.length;
+    uint256 nonEVMWalletsLength = nonEVMWallets.length;
 
-    // Calculate total delegations that match ALL type
-    uint256 totalDelegations;
-    for (uint256 i = 0; i < allDelegations.length; i++) {
-      for (uint256 j = 0; j < allDelegations[i].length; j++) {
-        if (
-          allDelegations[i][j].type_ == IDelegateRegistry.DelegationType.ALL
-        ) {
-          totalDelegations++;
+    allDelegations = WalletLinkLib.getDelegationsForWallets(linkedWallets);
+    uint256 allDelegationsLength = allDelegations.length;
+
+    if (
+      !(linkedWalletsLength == 0 &&
+        nonEVMWalletsLength == 0 &&
+        allDelegationsLength == 0)
+    ) {
+      // Calculate total delegations that match ALL type
+      uint256 totalDelegations;
+      for (uint256 i; i < allDelegationsLength; ++i) {
+        IDelegateRegistry.Delegation[] memory delegations = allDelegations[i];
+        uint256 delegationsLength = delegations.length;
+        for (uint256 j; j < delegationsLength; ++j) {
+          if (delegations[j].type_ == IDelegateRegistry.DelegationType.ALL) {
+            unchecked {
+              ++totalDelegations;
+            }
+          }
         }
       }
+
+      totalCount = linkedWalletsLength + nonEVMWalletsLength + totalDelegations;
     }
-
-    totalCount = linkedWalletsLength + nonEVMWalletsLength + totalDelegations;
-
-    return (totalCount, linkedWallets, nonEVMWallets, allDelegations);
   }
 }

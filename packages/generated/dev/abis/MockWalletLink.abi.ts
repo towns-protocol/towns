@@ -273,8 +273,8 @@ export default [
             "components": [
               {
                 "name": "key",
-                "type": "string",
-                "internalType": "string"
+                "type": "bytes32",
+                "internalType": "bytes32"
               },
               {
                 "name": "value",

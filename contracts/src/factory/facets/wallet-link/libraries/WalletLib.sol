@@ -25,7 +25,7 @@ library WalletLib {
   function addWallet(
     RootWallet storage self,
     bytes32 walletHash,
-    string memory addr,
+    string calldata addr,
     IWalletLinkBase.VirtualMachineType vmType
   ) internal {
     self.walletHashes.add(walletHash);
