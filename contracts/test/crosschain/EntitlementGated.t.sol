@@ -18,10 +18,10 @@ import {BaseSetup} from "contracts/test/spaces/BaseSetup.sol";
 import {Vm} from "forge-std/Test.sol";
 
 contract EntitlementGatedTest is
-  EntitlementTestUtils,
-  BaseSetup,
   IEntitlementGatedBase,
-  IEntitlementCheckerBase
+  IEntitlementCheckerBase,
+  EntitlementTestUtils,
+  BaseSetup
 {
   MockEntitlementGated public gated;
 
