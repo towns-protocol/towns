@@ -8,6 +8,7 @@ export enum NotificationKind {
     ReplyTo = 'reply_to',
     Reaction = 'reaction',
     Tip = 'tip',
+    Trade = 'trade',
 }
 
 export type AppNotification = {

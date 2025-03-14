@@ -548,6 +548,29 @@ function generateTipTitle(
     }
 }
 
+function generateTradeTitle(
+    sender: string | undefined,
+    townName: string | undefined,
+    channelName: string | undefined,
+): string {
+    log('generateTradeTitle', 'sender', sender, 'townName', townName, 'channelName', channelName)
+    if (sender && townName && channelName) {
+        return `${sender} traded ${MIDDLE_DOT} #${channelName} ${MIDDLE_DOT} ${townName}`
+    } else if (sender && townName && !channelName) {
+        return `${sender} traded ${MIDDLE_DOT} ${townName}`
+    } else if (sender && !townName && channelName) {
+        return `${sender} traded ${MIDDLE_DOT} #${channelName}`
+    } else if (!sender && townName && channelName) {
+        return `#${channelName} ${MIDDLE_DOT} ${townName}`
+    } else if (!sender && townName && !channelName) {
+        return `Trade in ${townName}`
+    } else if (!sender && !townName && channelName) {
+        return `Trade in #${channelName}`
+    } else {
+        return 'Trade'
+    }
+}
+
 interface ReplyToMessageInput {
     kind: NotificationKind
     spaceId: string
@@ -632,6 +655,34 @@ function generateTipMessage(args: {
         ? `#${args.channelName}`
         : `a channel you're in`
     const body = `${senderText} tipped your post in ${formattedChannelName}`
+    return {
+        kind: args.kind,
+        spaceId: args.spaceId,
+        channelId: args.channelId,
+        threadId: args.threadId,
+        title,
+        body,
+        refEventId: args.refEventId,
+    }
+}
+
+function generateTradeMessage(args: {
+    kind: NotificationKind.Trade
+    spaceId: string
+    townName: string | undefined
+    channelId: string
+    channelName: string | undefined
+    senderId: string
+    senderName: string | undefined
+    threadId: string | undefined
+    refEventId: string | undefined
+}): NotificationContent {
+    const title = generateTradeTitle(args.senderName, args.townName, args.channelName)
+    const senderText = stringHasValue(args.senderName) ? `@${args.senderName}` : 'Someone'
+    const formattedChannelName = stringHasValue(args.channelName)
+        ? `#${args.channelName}`
+        : `a channel you're in`
+    const body = `${senderText} traded in ${formattedChannelName}`
     return {
         kind: args.kind,
         spaceId: args.spaceId,
@@ -752,6 +803,18 @@ async function getNotificationContent(
         })
     } else if (kind === NotificationKind.Tip) {
         return generateTipMessage({
+            kind,
+            spaceId,
+            townName,
+            channelId: notification.content.channelId,
+            channelName,
+            senderId: notification.content.senderId,
+            senderName,
+            threadId: notification.content.threadId,
+            refEventId: plaintext?.refEventId,
+        })
+    } else if (kind === NotificationKind.Trade) {
+        return generateTradeMessage({
             kind,
             spaceId,
             townName,

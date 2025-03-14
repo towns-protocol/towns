@@ -83,6 +83,11 @@ export function getSenderIdOverride(data?: StreamEvent): string | undefined {
                                 data.payload.value.content.value.fromUserAddress,
                             )
                         }
+                        case 'tokenTransfer': {
+                            return userIdFromAddress(
+                                data.payload.value.content.value.fromUserAddress,
+                            )
+                        }
                         default:
                             // ignoring other transaction content types
                             return undefined
