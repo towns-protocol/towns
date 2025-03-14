@@ -146,7 +146,7 @@ const AssetEntry = ({ asset }: { asset: AssetData }) => {
 
             <Stack gap="sm" alignItems="end" justifyContent="center">
                 <Text fontWeight="strong">{formatCents(asset.holdingValueCents)}</Text>
-                <Text color={asset.priceChange24h > 0 ? 'greenBlue' : 'error'}>
+                <Text color={asset.priceChange24h > 0 ? 'positive' : 'peach'}>
                     {formatCents(diff24h)}
                 </Text>
             </Stack>
