@@ -53,7 +53,7 @@ export const useTradingWallet = () => {
             const response = zTownsWalletResponse.safeParse(data)
             return response.success ? response.data : undefined
         },
-        gcTime: MINUTE_MS,
+        staleTime: MINUTE_MS,
     })
 
     return { data, isLoading }

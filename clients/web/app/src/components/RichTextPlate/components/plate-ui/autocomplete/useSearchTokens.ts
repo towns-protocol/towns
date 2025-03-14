@@ -106,7 +106,7 @@ export const useSearchTokens = ({
             return remapped
         },
         enabled: enabled && isTradingEnabled,
-        gcTime: MINUTE_MS,
+        staleTime: MINUTE_MS,
     })
 
     useEffect(() => {

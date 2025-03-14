@@ -60,7 +60,7 @@ export const useCoinBars = ({
             const json = await resp.json()
             return zGetBarsResponse.safeParse(json).data?.data.getBars
         },
-        gcTime: MINUTE_MS,
+        staleTime: MINUTE_MS,
         enabled: !disabled,
     })
 

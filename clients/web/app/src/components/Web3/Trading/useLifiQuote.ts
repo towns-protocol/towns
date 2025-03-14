@@ -128,7 +128,7 @@ export const useLifiQuote = (props: {
                 return undefined
             }
         },
-        gcTime: SECOND_MS * 30,
+        staleTime: SECOND_MS * 30,
     })
 
     return { data, isLoading, isError, error }

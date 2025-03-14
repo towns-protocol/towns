@@ -140,7 +140,7 @@ export const useTradingActivity = (walletAddress: string | undefined, chainId: s
             }
         },
         enabled: !!apiKey && !!walletAddress,
-        gcTime: MINUTE_MS,
+        staleTime: MINUTE_MS,
     })
 
     return { data: data ?? [], isLoading }

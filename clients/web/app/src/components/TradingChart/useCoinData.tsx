@@ -125,7 +125,7 @@ export const useCoinData = ({
             const parsed = zParsedTokenResponse.safeParse(json)
             return parsed.data?.data.filterTokens.results[0]
         },
-        gcTime: MINUTE_MS,
+        staleTime: MINUTE_MS,
         enabled: !disabled,
     })
 
