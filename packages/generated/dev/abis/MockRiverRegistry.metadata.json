@@ -448,6 +448,25 @@
       {
         "inputs": [
           {
+            "internalType": "enum IStreamRegistryBase.StreamEventType",
+            "name": "eventType",
+            "type": "uint8",
+            "indexed": true
+          },
+          {
+            "internalType": "bytes",
+            "name": "data",
+            "type": "bytes",
+            "indexed": false
+          }
+        ],
+        "type": "event",
+        "name": "StreamUpdated",
+        "anonymous": false
+      },
+      {
+        "inputs": [
+          {
             "internalType": "address[]",
             "name": "initialOperators",
             "type": "address[]"
@@ -1261,38 +1280,6 @@
       {
         "inputs": [
           {
-            "internalType": "bytes32",
-            "name": "streamId",
-            "type": "bytes32"
-          },
-          {
-            "internalType": "bytes32",
-            "name": "",
-            "type": "bytes32"
-          },
-          {
-            "internalType": "bytes32",
-            "name": "lastMiniblockHash",
-            "type": "bytes32"
-          },
-          {
-            "internalType": "uint64",
-            "name": "lastMiniblockNum",
-            "type": "uint64"
-          },
-          {
-            "internalType": "bool",
-            "name": "isSealed",
-            "type": "bool"
-          }
-        ],
-        "stateMutability": "nonpayable",
-        "type": "function",
-        "name": "setStreamLastMiniblock"
-      },
-      {
-        "inputs": [
-          {
             "internalType": "struct SetMiniblock[]",
             "name": "miniblocks",
             "type": "tuple[]",
@@ -1539,16 +1526,6 @@
             "value": "The setting value (value must be its ABI representation), can't be empty"
           }
         },
-        "setStreamLastMiniblock(bytes32,bytes32,bytes32,uint64,bool)": {
-          "details": "Only callable by registered nodes",
-          "params": {
-            "isSealed": "Whether to mark the stream as sealed",
-            "lastMiniblockHash": "The hash of the new last miniblock",
-            "lastMiniblockNum": "The number of the new last miniblock",
-            "prevMiniblockHash": "The hash of the previous miniblock (currently unused)",
-            "streamId": "The ID of the stream to update"
-          }
-        },
         "setStreamLastMiniblockBatch((bytes32,bytes32,bytes32,uint64,bool)[])": {
           "details": "Only callable by registered nodesThis function allows updating multiple streams' last miniblock data in a single transaction",
           "params": {
@@ -1633,9 +1610,6 @@
         "setConfiguration(bytes32,uint64,bytes)": {
           "notice": "Set a bytes setting for the given key"
         },
-        "setStreamLastMiniblock(bytes32,bytes32,bytes32,uint64,bool)": {
-          "notice": "Update the last miniblock information for a stream"
-        },
         "setStreamLastMiniblockBatch((bytes32,bytes32,bytes32,uint64,bool)[])": {
           "notice": "Set the last miniblock for multiple streams in a batch operation"
         },
@@ -1649,7 +1623,6 @@
   "settings": {
     "remappings": [
       "@openzeppelin/=node_modules/@openzeppelin/",
-      "@openzeppelin/contracts/=node_modules/@openzeppelin/contracts/",
       "@prb/math/=node_modules/@prb/math/src/",
       "@prb/test/=node_modules/@prb/test/src/",
       "@river-build/diamond/=node_modules/@river-build/diamond/",
@@ -1725,18 +1698,18 @@
       "license": "MIT"
     },
     "contracts/src/river/registry/facets/stream/IStreamRegistry.sol": {
-      "keccak256": "0x85011c1cea4c3269a9b885deb0ba61cd07cb81c23ddda95e44300860de08c415",
+      "keccak256": "0xee8534f549216f56caa50e621d1cb3615ddaa797cfd7ff4a506021aa03648438",
       "urls": [
-        "bzz-raw://5f251ee7f20a441a7a29c9bd4eeea4679950aaad61bbf04aeff45a7276c5378e",
-        "dweb:/ipfs/QmefpgU4w2T1vaMixzGX6Rcts2QiodHPrdKyQXW98xQbKR"
+        "bzz-raw://e36555cc219127e1e2f90d7739a2bb63e9fad0f8b035ad507825a0179963ab15",
+        "dweb:/ipfs/QmVfC6NUK9LSCD2FzBkyAEqeLogwsWoosRjjhegWkWHi49"
       ],
       "license": "MIT"
     },
     "contracts/src/river/registry/facets/stream/StreamRegistry.sol": {
-      "keccak256": "0x7c5d2ace5c2e3c0d862fefe95d2941d5d6bdc77f6eee0cb43b1646a002446712",
+      "keccak256": "0xa7047b711512e647c38e5ff59724e29255d5c5fd0906d2f6aba63827e5abae6e",
       "urls": [
-        "bzz-raw://08813c75f7bb2034b9de0375b757ca82ba0f95c561443e81eea43bd8f7b0b2ce",
-        "dweb:/ipfs/QmPVfjcp5MoguUMhKXUQPyUgEApjvecsGavHjcdDwd7Cx7"
+        "bzz-raw://2aba92dcddaadb79f09a856ad3c05c92ec6e2512eee30e48e45468971e66b79b",
+        "dweb:/ipfs/QmevVfqtVqk7SPUNhqdNPMhKQbQQq2QcyFa6GFccGYrBNd"
       ],
       "license": "MIT"
     },

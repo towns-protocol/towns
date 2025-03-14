@@ -388,7 +388,6 @@
   "settings": {
     "remappings": [
       "@openzeppelin/=node_modules/@openzeppelin/",
-      "@openzeppelin/contracts/=node_modules/@openzeppelin/contracts/",
       "@prb/math/=node_modules/@prb/math/src/",
       "@prb/test/=node_modules/@prb/test/src/",
       "@river-build/diamond/=node_modules/@river-build/diamond/",
@@ -664,10 +663,10 @@
       "license": "MIT"
     },
     "contracts/src/utils/StringSet.sol": {
-      "keccak256": "0xab225407d71e114941a9b9b1825937e40d767376ce82a6c525a4537ef0bdc509",
+      "keccak256": "0xb0e4cc06e77dc87c655f25fbe4c978ac6a9619648926f94d93a2bd0ef3b2d3b3",
       "urls": [
-        "bzz-raw://f18bea457886d6b8d784d9c2b3c4a71bc83d94947d3e13805c4b51f4a160b1b6",
-        "dweb:/ipfs/Qmbhyu4BXgAzZsLHtu5aCbTQNpd97xmPGg8PanhgbB5Vzq"
+        "bzz-raw://eadda67e48c15dd250193cbf27dd8e760360c9bfc63ab24156629999ed1b9b04",
+        "dweb:/ipfs/QmPibQwBDXsGXYQC9bVC6ppVDRCUXFtyLb4r26s5vZaZUr"
       ],
       "license": "MIT"
     },
