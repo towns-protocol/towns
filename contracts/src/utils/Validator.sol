@@ -9,7 +9,7 @@ pragma solidity ^0.8.23;
 error Validator__InvalidStringLength();
 error Validator__InvalidByteLength();
 error Validator__InvalidAddress();
-
+error Validator__InvalidLength();
 library Validator {
   function checkStringLength(string memory name) internal pure {
     bytes memory byteName = bytes(name);
@@ -27,5 +27,12 @@ library Validator {
 
   function checkAddress(address addr) internal pure {
     if (addr == address(0)) revert Validator__InvalidAddress();
+  }
+
+  function checkMaxArrayLength(
+    string[] memory array,
+    uint256 maxLength
+  ) internal pure {
+    if (array.length > maxLength) revert Validator__InvalidLength();
   }
 }
