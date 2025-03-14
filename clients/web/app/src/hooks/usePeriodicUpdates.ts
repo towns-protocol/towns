@@ -9,7 +9,7 @@ import { PATHS, PATHS_REGEX } from 'routes'
 const log = debug('app:updating')
 log.enabled = true
 
-const UPDATE_INTERVAL_MS = 10 * MINUTE_MS
+const UPDATE_INTERVAL_MS = 1 * MINUTE_MS
 
 export const usePeriodicUpdates = () => {
     const intervalRef = useRef<NodeJS.Timeout>()
@@ -30,6 +30,8 @@ export const usePeriodicUpdates = () => {
                 return
             }
 
+            let lastEtag: string | null = null
+
             const checkInterval = () => {
                 log('checking for updates...')
                 if (!(!registration.installing && navigator)) {
@@ -42,17 +44,21 @@ export const usePeriodicUpdates = () => {
                 const asyncUpdate = async () => {
                     try {
                         const resp = await fetch(swUrl, {
+                            method: 'HEAD',
                             cache: 'no-store',
                             headers: {
-                                cache: 'no-store',
                                 'cache-control': 'no-cache',
                             },
                         })
-                        if (resp?.status === 200) {
-                            log('status 200, updating...')
+
+                        const newEtag = resp.headers.get('ETag')
+
+                        if (newEtag && newEtag !== lastEtag) {
+                            lastEtag = newEtag
+                            log('updating...')
                             await registration.update()
                         } else {
-                            log('skip updating', resp?.status)
+                            log('skip updating etag', resp?.status)
                         }
                     } catch (error) {
                         console.error('sw: reload prompt, error checking for update', error)
