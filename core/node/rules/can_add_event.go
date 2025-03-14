@@ -20,7 +20,6 @@ import (
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/shared"
 	"github.com/towns-protocol/towns/core/xchain/bindings/erc20"
-	"go.uber.org/zap"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -2072,7 +2071,7 @@ func (params *aeParams) isValidNode(addressOrId []byte) bool {
 	return false
 }
 
-func (params *aeParams) log() *zap.SugaredLogger {
+func (params *aeParams) log() *logging.Log {
 	return logging.FromCtx(params.ctx)
 }
 

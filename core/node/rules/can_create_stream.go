@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"time"
 
-	"go.uber.org/zap"
-
 	"github.com/towns-protocol/towns/core/node/crypto"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -179,7 +177,7 @@ func CanCreateStream(
 	return builder.run()
 }
 
-func (ru *csParams) log() *zap.SugaredLogger {
+func (ru *csParams) log() *logging.Log {
 	return logging.FromCtx(ru.ctx)
 }
 
