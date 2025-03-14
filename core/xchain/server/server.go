@@ -7,28 +7,24 @@ import (
 	"math/big"
 	"time"
 
+	"github.com/ethereum/go-ethereum/accounts/abi"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/prometheus/client_golang/prometheus"
-	"go.uber.org/zap"
 
 	"github.com/towns-protocol/towns/core/config"
 	"github.com/towns-protocol/towns/core/contracts/base"
+	contract_types "github.com/towns-protocol/towns/core/contracts/types"
+	. "github.com/towns-protocol/towns/core/node/base"
+	"github.com/towns-protocol/towns/core/node/crypto"
+	"github.com/towns-protocol/towns/core/node/infra"
+	"github.com/towns-protocol/towns/core/node/logging"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/registries"
 	"github.com/towns-protocol/towns/core/xchain/contracts"
 	"github.com/towns-protocol/towns/core/xchain/entitlement"
 	"github.com/towns-protocol/towns/core/xchain/util"
-
-	"github.com/ethereum/go-ethereum/accounts/abi"
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/core/types"
-
-	. "github.com/towns-protocol/towns/core/node/base"
-	"github.com/towns-protocol/towns/core/node/crypto"
-	"github.com/towns-protocol/towns/core/node/infra"
-	"github.com/towns-protocol/towns/core/node/logging"
-
-	contract_types "github.com/towns-protocol/towns/core/contracts/types"
 )
 
 type (
@@ -276,7 +272,7 @@ func (x *xchain) Stop() {
 	}
 }
 
-func (x *xchain) Log(ctx context.Context) *zap.SugaredLogger {
+func (x *xchain) Log(ctx context.Context) *logging.ComponentsLogger {
 	return logging.FromCtx(ctx).
 		With("worker_id", x.workerID).
 		With("application", "xchain").
@@ -637,7 +633,7 @@ func (x *xchain) writeEntitlementCheckResults(ctx context.Context, checkResults 
 	}
 }
 
-func (x *xchain) handleContractError(log *zap.SugaredLogger, err error, msg string) error {
+func (x *xchain) handleContractError(log *logging.ComponentsLogger, err error, msg string) error {
 	ce, se, err := x.evmErrDecoder.DecodeEVMError(err)
 	switch {
 	case ce != nil:

@@ -14,7 +14,7 @@ import (
 // NewHttpLogger returns a logger that print TLS handshake errors on debug level
 // and everything else on warn level.
 func NewHttpLogger(ctx context.Context) *log.Logger {
-	l := logging.FromCtx(ctx)
+	l := logging.FromCtx(ctx).Default
 
 	return log.New(&handlerWriter{log: l.Named("http-logger")}, "", 0)
 }
@@ -32,7 +32,7 @@ func (w *handlerWriter) Write(buf []byte) (int, error) {
 	if w.log.Level() > level {
 		return 0, nil
 	}
-
+	
 	// Remove final newline.
 	origLen := len(buf) // Report that the entire buf was written.
 	if len(buf) > 0 && buf[len(buf)-1] == '\n' {
@@ -43,8 +43,8 @@ func (w *handlerWriter) Write(buf []byte) (int, error) {
 	return origLen, nil
 }
 
-func NewLevelLogger(logger *zap.SugaredLogger, level zapcore.Level) *log.Logger {
-	return log.New(&levelWriter{log: logger, level: level}, "", 0)
+func NewLevelLogger(logger *logging.ComponentsLogger, level zapcore.Level) *log.Logger {
+	return log.New(&levelWriter{log: logger.Default, level: level}, "", 0)
 }
 
 type levelWriter struct {
