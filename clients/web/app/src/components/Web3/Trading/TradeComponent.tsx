@@ -12,6 +12,7 @@ import { Box, FancyButton, IconName, Stack, Text } from '@ui'
 import { WalletReady } from 'privy/WalletReady'
 import { popupToast } from '@components/Notifications/popupToast'
 import { StandardToast } from '@components/Notifications/StandardToast'
+import { FadeInBox } from '@components/Transitions'
 import { NumberInputRadio } from './ui/NumberInputRadio'
 import { RadioButton } from './ui/RadioButton'
 import { ButtonSelection } from './ui/SelectButton'
@@ -164,9 +165,9 @@ export const TradeComponent = (props: Props) => {
         },
     }))
 
-    const onSetPreselectedAmount = useCallback((option: QuickSelectOption) => {
+    const onSetPreselectedAmount = useCallback((option: QuickSelectOption | undefined) => {
         setPreselectedOption(option)
-        setAmount(option.value)
+        setAmount(option?.value)
     }, [])
 
     const onCustomAmount = useCallback(
@@ -184,8 +185,12 @@ export const TradeComponent = (props: Props) => {
     }, [])
 
     const onCustomFieldSelect = useCallback(() => {
-        setPreselectedOption({ label: 'custom', value: customAmount ?? 0n, icon: undefined })
-    }, [customAmount])
+        if (preselectedOption?.label === 'custom') {
+            setPreselectedOption(undefined)
+        } else {
+            setPreselectedOption({ label: 'custom', value: customAmount ?? 0n, icon: undefined })
+        }
+    }, [customAmount, preselectedOption])
 
     const { data: coinData } = useCoinData({
         address: tokenAddress ?? '',
@@ -426,8 +431,9 @@ export const TradeComponent = (props: Props) => {
                                 onChange={onSetPreselectedAmount}
                             />
                         </Stack>
-
-                        {balanceIsInsufficient && <Text color="error">Insufficient balance</Text>}
+                        {balanceIsInsufficient && (
+                            <FadeInBox color="error">Insufficient balance</FadeInBox>
+                        )}
 
                         {/* if there's no threadInfo, we're inside the global trade panel,
                             show buy/sell button */}

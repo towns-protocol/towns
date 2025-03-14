@@ -9,16 +9,20 @@ type ButtonSelectionProps<O> = {
 export const ButtonSelection = <T,>(props: {
     value: T | undefined
     options: T[]
-    onChange: (value: T) => void
+    onChange: (value: T | undefined) => void
     selectFn: (v1: T | undefined, v2: T) => boolean
     renderItem: (props: ButtonSelectionProps<T>) => React.ReactNode
 }) => {
     const { value, options, renderItem } = props
     const onSelect = useCallback(
-        (value: T) => {
-            props.onChange(value)
+        (v: T) => {
+            if (value === v) {
+                props.onChange(undefined)
+            } else {
+                props.onChange(v)
+            }
         },
-        [props],
+        [props, value],
     )
     return options.map((option) =>
         renderItem({
