@@ -1,6 +1,6 @@
 import React, { useCallback, useRef } from 'react'
 
-import { Box, Text, TextField } from '@ui'
+import { Box, BoxProps, Text, TextField } from '@ui'
 
 const validateValue = (value: string) => {
     const parsed = Number(value)
@@ -13,7 +13,10 @@ const percent = (
     </Text>
 )
 
-export const PercentInputRadio = (props: { onChange: (value: number) => void }) => {
+export const PercentInputRadio = (props: {
+    color: BoxProps['color']
+    onChange: (value: number) => void
+}) => {
     const textRef = useRef<HTMLInputElement>(null)
     const onSelect = useCallback(() => {
         textRef.current?.focus()

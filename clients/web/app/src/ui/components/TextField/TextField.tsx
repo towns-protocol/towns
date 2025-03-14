@@ -24,6 +24,7 @@ type Props = {
     inputWidth?: BoxProps['width']
     inputLimit?: number
     borderRadius?: BoxProps['borderRadius']
+    color?: TextProps['color']
 } & FieldBaseProps &
     InputCallbackProps &
     InputHTMLAttributes<HTMLInputElement>
@@ -37,6 +38,7 @@ export const TextField = forwardRef<HTMLInputElement, Props>((props, ref) => {
         autoComplete,
         inputWidth,
         inputLimit,
+        color,
         ...fieldProps
     } = props
     return (
@@ -44,6 +46,7 @@ export const TextField = forwardRef<HTMLInputElement, Props>((props, ref) => {
             {(overlays, { className, ...inputProps }) => (
                 <>
                     <Box
+                        data-test-text={JSON.stringify(inputProps)}
                         ref={ref}
                         as="input"
                         {...inputProps}
@@ -55,6 +58,7 @@ export const TextField = forwardRef<HTMLInputElement, Props>((props, ref) => {
                         autoComplete={autoComplete || 'off'}
                         width={inputWidth}
                         maxLength={inputLimit}
+                        color={color}
                     />
                     {overlays}
                 </>

@@ -1,6 +1,6 @@
 import React, { ComponentProps, useCallback, useEffect, useRef, useState } from 'react'
 import useResizeObserver from '@react-hook/resize-observer'
-import { Box, Icon, IconName, TextField } from '@ui'
+import { Box, BoxProps, Icon, IconName, TextField } from '@ui'
 import { formatUnits, parseUnits } from 'hooks/useBalance'
 
 type Props = {
@@ -9,10 +9,11 @@ type Props = {
     value: bigint | undefined
     onChange: (value: bigint) => void
     onSelect?: () => void
+    color?: BoxProps['color']
 } & Omit<ComponentProps<typeof TextField>, 'onChange' | 'value'>
 
 export const NumberInputRadio = (props: Props) => {
-    const { icon, decimals, value: rawValue, onChange, ...inputProps } = props
+    const { icon, decimals, value: rawValue, onChange, color, ...inputProps } = props
     const [displayValue, setDisplayValue] = useState('')
 
     useEffect(() => {
@@ -70,6 +71,7 @@ export const NumberInputRadio = (props: Props) => {
                 height="x4"
                 style={{ width: 100, minWidth: !displayValue ? 55 : 33 }}
                 maxWidth="x20"
+                color={color}
                 onFocus={props.onSelect}
                 onChange={onTextFieldChanged}
                 {...inputProps}

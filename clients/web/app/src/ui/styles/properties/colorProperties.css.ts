@@ -314,7 +314,25 @@ export const colorProperties = defineProperties({
             },
         },
         color: {
-            ...vars.color.foreground,
+            ...(Object.fromEntries(
+                Object.entries(vars.color.foreground).map(([key, value]) => [
+                    key,
+                    {
+                        color: value,
+                        selectors: {
+                            [`${elevateClass} &`]: {
+                                color: value,
+                            },
+                        },
+                    },
+                ]),
+            ) as unknown as Record<
+                keyof typeof vars.color.foreground,
+                {
+                    color: string
+                    selectors: { [key: string]: { color: string } }
+                }
+            >),
             default: {
                 color: vars.color.foreground.default,
                 selectors: {
@@ -324,34 +342,32 @@ export const colorProperties = defineProperties({
                     },
                 },
             },
-            ...{
-                level1: {
-                    color: vars.color.background.level1,
-                    selectors: {
-                        [`${elevateClass} &`]: {
-                            color: vars.color.background.level2,
-                        },
+            level1: {
+                color: vars.color.background.level1,
+                selectors: {
+                    [`${elevateClass} &`]: {
+                        color: vars.color.background.level2,
                     },
                 },
-                level2: {
-                    color: vars.color.background.level2,
-                    selectors: {
-                        [`${elevateClass} &`]: {
-                            color: vars.color.background.level3,
-                        },
+            },
+            level2: {
+                color: vars.color.background.level2,
+                selectors: {
+                    [`${elevateClass} &`]: {
+                        color: vars.color.background.level3,
                     },
                 },
-                level3: {
-                    color: vars.color.background.level3,
-                    selectors: {
-                        [`${elevateClass} &`]: {
-                            color: vars.color.background.level4,
-                        },
+            },
+            level3: {
+                color: vars.color.background.level3,
+                selectors: {
+                    [`${elevateClass} &`]: {
+                        color: vars.color.background.level4,
                     },
                 },
-                level4: {
-                    color: vars.color.background.level4,
-                },
+            },
+            level4: {
+                color: vars.color.background.level4,
             },
         },
     },

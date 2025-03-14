@@ -402,10 +402,14 @@ export const TradeComponent = (props: Props) => {
                                                     decimals={currentBalanceDecimals}
                                                     value={customAmount}
                                                     placeholder="Custom"
+                                                    color="positive"
                                                     onChange={onCustomAmount}
                                                 />
                                             ) : (
-                                                <PercentInputRadio onChange={onCustomPercent} />
+                                                <PercentInputRadio
+                                                    color="peach"
+                                                    onChange={onCustomPercent}
+                                                />
                                             )}
                                         </Box>
                                     ) : (
