@@ -52,7 +52,7 @@ contract WalletLink is IWalletLink, WalletLinkBase, OwnableBase, Facet {
 
   /// @inheritdoc IWalletLink
   function removeNonEVMWalletLink(
-    string memory addr,
+    string calldata addr,
     VirtualMachineType vmType,
     uint256 nonce
   ) external {
