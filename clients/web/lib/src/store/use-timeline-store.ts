@@ -954,10 +954,13 @@ function getChannelMessageContent(event?: TimelineEvent): ChannelMessageEvent | 
 }
 
 function getMessageSenderId(event: TimelineEvent): string | undefined {
-    if (!getChannelMessageContent(event)) {
-        return undefined
+    if (
+        event.content?.kind === RiverTimelineEvent.ChannelMessage ||
+        event.content?.kind === RiverTimelineEvent.TokenTransfer
+    ) {
+        return event.sender.id
     }
-    return event.sender.id
+    return undefined
 }
 
 export function getEditsId(content: TimelineEvent_OneOf | undefined): string | undefined {
