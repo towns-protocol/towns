@@ -282,6 +282,7 @@ export const TradeComponent = (props: Props) => {
     const { sendTradeTransaction } = useSendTradeTransaction({
         request: request,
         chainId: chainId,
+        skipPendingToast: true,
     })
 
     const metaData = useMemo((): QuoteMetaData | undefined => {

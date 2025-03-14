@@ -156,7 +156,10 @@ export const TradingContextProvider = ({ children }: { children: React.ReactNode
                 })
 
                 transaction.signature = signature
-                setPendingSolanaTransaction(transaction)
+                setPendingSolanaTransaction({
+                    ...transaction,
+                    skipPendingToast: options?.skipPendingToast,
+                })
 
                 console.info('Solana Transaction sent:', signature)
 
