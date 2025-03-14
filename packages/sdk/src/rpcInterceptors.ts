@@ -364,7 +364,7 @@ export function errorContains(err: unknown, error: Err): boolean {
     return false
 }
 
-/// not great way to pull info out of the error messsage
+/// not great way to pull info out of the error message
 export function getRpcErrorProperty(err: unknown, prop: string): string | undefined {
     if (err !== null && typeof err === 'object' && 'message' in err) {
         const expected = `${prop} = `
