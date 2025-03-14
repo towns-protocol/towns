@@ -41,6 +41,7 @@ import { SpaceBannedUsers } from 'routes/SpaceBannedUsers'
 import { MutualTownsPanel } from '@components/MutualTownsPanel/MutualTownsPanel'
 import { PinsPanel } from '@components/PinsPanel/PinsPanel'
 import { ReviewsPanel } from '@components/TownReviews/ReviewsPanel'
+import { TipsLeaderboardPanel } from '@components/TipsLeaderboard/TipsLeaderboardPanel'
 
 export const usePanels = () => {
     const [searchParams] = useSearchParams()
@@ -213,6 +214,9 @@ export const usePanels = () => {
         }
         case CHANNEL_INFO_PARAMS.REVIEWS: {
             return <ReviewsPanel />
+        }
+        case CHANNEL_INFO_PARAMS.TIPS_LEADERBOARD: {
+            return <TipsLeaderboardPanel />
         }
     }
 

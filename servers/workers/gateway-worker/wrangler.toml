@@ -11,6 +11,7 @@ logpush = true
 kv_namespaces = [
     { binding = "USER", id = "825ab41e031d40e0a975bb29638c194e", preview_id = "9f43fa046a17415191d44c4aa0444234" },
     { binding = "SPACE", id = "ffd17fea5af143b8ba3cde0b7e15ef93", preview_id = "1080657b855c43b58d118c086122aa3b" },
+    { binding = "TIP_LEADERBOARD_KV", id = "0", preview_id = "0" },
 ]
 
 [dev]
@@ -57,6 +58,7 @@ vars = { ENVIRONMENT = "test-beta", CF_API = "https://api.cloudflare.com/client/
 kv_namespaces = [
     { binding = "USER", id = "bf4fb160bba4497fb49f4ce1383f5dbb" },
     { binding = "SPACE", id = "46e3556d43984c3fa028c3553794e740" },
+    { binding = "TIP_LEADERBOARD_KV", id = "8b69bc3f49d8491da31b5dcc8d866e0c" },
 ]
 
 # omega routes
@@ -70,6 +72,7 @@ vars = { ENVIRONMENT = "omega", CF_API = "https://api.cloudflare.com/client/v4/a
 kv_namespaces = [
     { binding = "USER", id = "689271de8bd34ebba01977f358dd2192" },
     { binding = "SPACE", id = "8f4405e70be64bc88c2d4c050d220b6a" },
+    { binding = "TIP_LEADERBOARD_KV", id = "74fcf4814fc84f28a1ed794f5e46d650" },
 ]
 
 # alpha routes
@@ -83,4 +86,5 @@ vars = { ENVIRONMENT = "alpha", CF_API = "https://api.cloudflare.com/client/v4/a
 kv_namespaces = [
     { binding = "USER", id = "1d41c88233224cf9a852dd06bde3e623" },
     { binding = "SPACE", id = "92055ed1c811409c8d4f94f0f77297d2" },
+    { binding = "TIP_LEADERBOARD_KV", id = "320d5ce390234476be07346ef4544d92" },
 ]

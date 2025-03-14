@@ -20,6 +20,7 @@ import {
 } from 'use-towns-client'
 import { isValidStreamId } from '@river-build/sdk'
 import { BigNumberish } from 'ethers'
+import { useQueryClient } from '@tanstack/react-query'
 import { isAddress } from '@components/Web3/Wallet/useGetWalletParam'
 import { UploadImageRequestConfig } from '@components/UploadImage/useOnImageChangeEvent'
 import { ModalContainer } from '@components/Modals/ModalContainer'
@@ -59,6 +60,10 @@ import { SpaceTotalTips } from '@components/MessageLayout/tips/SpaceTotalTips'
 import { env } from 'utils'
 import { TownReviews } from '@components/TownReviews/TownReviews'
 import { ReviewsPanel } from '@components/TownReviews/ReviewsPanel'
+import {
+    fetchTipLeaderboard,
+    queryKeyTipLeaderboard,
+} from '@components/TipsLeaderboard/useTipLeaderboard'
 import { PublicTownPageForAuthenticatedUser } from './PublicTownPage/PublicTownPage'
 import { usePanelActions } from './layouts/hooks/usePanelActions'
 
@@ -523,11 +528,28 @@ const TownTreasury = (props: ContractProps) => {
 
 const TownTips = (props: { spaceId: string | undefined }) => {
     const { spaceId } = props
+    const { openPanel } = usePanelActions()
+    const qc = useQueryClient()
+    const prefetchTipLeaderboard = useCallback(() => {
+        if (!spaceId || !qc) {
+            return
+        }
+        qc.prefetchQuery({
+            queryKey: queryKeyTipLeaderboard(spaceId),
+            queryFn: () => fetchTipLeaderboard(spaceId),
+        })
+    }, [spaceId, qc])
+
     if (!env.VITE_TIPS_ENABLED || !spaceId) {
         return null
     }
+
     return (
-        <PanelButton height={undefined}>
+        <PanelButton
+            height={undefined}
+            onClick={() => openPanel('tips-leaderboard')}
+            onMouseEnter={prefetchTipLeaderboard}
+        >
             <Stack gap="sm">
                 <Paragraph strong color="default">
                     Tips

@@ -23,6 +23,8 @@ export interface Env extends AuthEnv {
     USER_FEEDBACK_TOPIC_ARN: string
     CROSSMINT_API_KEY: string
     OPENAI_API_KEY: string
+    TIP_LEADERBOARD_KV: KVNamespace
+    ALCHEMY_RPC_URL: string
 }
 
 export default {

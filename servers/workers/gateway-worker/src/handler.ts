@@ -5,6 +5,8 @@ import { getLinearPayloadFromFormData } from './getLinearPayloadFromFormData'
 import { PrivyClient } from '@privy-io/server-auth'
 import { LinkedAccountType } from './types'
 import { OpenAI } from 'openai'
+import { getTipLeaderboard } from './getTipLeaderboard'
+import { Address } from 'viem'
 
 const router = Router()
 
@@ -352,6 +354,70 @@ router.post('/ai/moderate-review', async (request: WorkerRequest, env: Env) => {
     } catch (error) {
         console.error('AI validation error:', error)
         return new Response(JSON.stringify({ valid: true }), { status: 200 })
+    }
+})
+
+router.get('/tips/:spaceAddress/leaderboard', async (request: WorkerRequest, env: Env) => {
+    const spaceAddress = request.params?.spaceAddress as Address
+    if (!spaceAddress) {
+        return new Response(JSON.stringify({ error: 'Missing space address' }), {
+            status: 400,
+        })
+    }
+
+    try {
+        const cachedLeaderboard = await env.TIP_LEADERBOARD_KV.get<{
+            leaderboard: Record<string, string>
+            lastUpdatedAt: number
+        }>(spaceAddress)
+        if (cachedLeaderboard) {
+            return new Response(JSON.stringify(cachedLeaderboard), {
+                status: 200,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Cache-Control': 'public, max-age=60',
+                },
+            })
+        }
+
+        const leaderboard = await getTipLeaderboard(spaceAddress, env.ALCHEMY_RPC_URL)
+        const lastUpdatedAt = new Date().getTime()
+
+        if (leaderboard.length > 0) {
+            await env.TIP_LEADERBOARD_KV.put(
+                spaceAddress,
+                JSON.stringify({
+                    leaderboard: Object.fromEntries(
+                        leaderboard.map(({ sender, amount }) => [sender, amount]),
+                    ),
+                    lastUpdatedAt,
+                }),
+                {
+                    expirationTtl: 15 * 60,
+                },
+            )
+        }
+
+        return new Response(
+            JSON.stringify({
+                leaderboard: Object.fromEntries(
+                    leaderboard.map(({ sender, amount }) => [sender, amount]),
+                ),
+                lastUpdatedAt,
+            }),
+            {
+                status: 200,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Cache-Control': 'public, max-age=60',
+                },
+            },
+        )
+    } catch (error) {
+        console.error('Failed to fetch leaderboard:', error)
+        return new Response(JSON.stringify({ error: 'Failed to fetch leaderboard data' }), {
+            status: 500,
+        })
     }
 })
 
