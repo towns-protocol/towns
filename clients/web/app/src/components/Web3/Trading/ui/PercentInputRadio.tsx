@@ -25,7 +25,7 @@ export const PercentInputRadio = (props: { onChange: (value: number) => void }) 
 
     const onChange = useCallback(
         (e: React.ChangeEvent<HTMLInputElement>) => {
-            props.onChange(Number(e.target.value))
+            props.onChange(Number(validateValue(e.target.value)))
         },
         [props],
     )
