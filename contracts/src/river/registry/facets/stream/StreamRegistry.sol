@@ -43,7 +43,7 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
 
     _addStreamIdToNodes(streamId, nodes);
 
-    emit StreamUpdated(StreamEventType.Allocate, abi.encode(streamId, stream));
+    _emitStreamUpdated(StreamEventType.Allocate, abi.encode(streamId, stream));
 
     // deprecating
     emit StreamAllocated(
@@ -71,10 +71,7 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
 
     _addStreamIdToNodes(streamId, stream.nodes);
 
-    emit StreamUpdated(
-      StreamEventType.Create,
-      abi.encode(streamId, stream, genesisMiniblockHash)
-    );
+    _emitStreamUpdated(StreamEventType.Create, abi.encode(streamId, stream));
 
     // deprecating
     emit StreamCreated(streamId, genesisMiniblockHash, stream);
@@ -162,7 +159,7 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
       mstore(miniblockUpdates, streamCount)
     }
 
-    emit StreamUpdated(
+    _emitStreamUpdated(
       StreamEventType.LastMiniblockBatchUpdated,
       abi.encode(miniblockUpdates)
     );
@@ -187,7 +184,7 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
 
     nodes.push(nodeAddress);
 
-    emit StreamUpdated(
+    _emitStreamUpdated(
       StreamEventType.PlacementUpdated,
       abi.encode(streamId, stream)
     );
@@ -220,7 +217,7 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
 
     if (!found) revert(RiverRegistryErrors.NODE_NOT_FOUND);
 
-    emit StreamUpdated(
+    _emitStreamUpdated(
       StreamEventType.PlacementUpdated,
       abi.encode(streamId, stream)
     );
@@ -349,6 +346,23 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
   ) internal {
     for (uint256 i; i < nodes.length; ++i) {
       ds.streamIdsByNode[nodes[i]].add(streamId);
+    }
+  }
+
+  /// @dev Emits the StreamUpdated event without memory expansion
+  function _emitStreamUpdated(
+    StreamEventType eventType,
+    bytes memory data
+  ) internal {
+    bytes32 topic0 = StreamUpdated.selector;
+    assembly ("memory-safe") {
+      // cache the word before for abi encoding offset
+      let offset := sub(data, 0x20)
+      let cache := mload(offset)
+      // the event arg is encoded as | 0x20 | data length | data
+      mstore(offset, 0x20)
+      log2(offset, add(mload(data), 0x40), topic0, eventType)
+      mstore(offset, cache)
     }
   }
 

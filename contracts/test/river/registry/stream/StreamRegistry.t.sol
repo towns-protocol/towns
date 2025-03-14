@@ -273,18 +273,13 @@ contract StreamRegistryTest is
       uint8(StreamEventType.Create)
     );
 
-    (
-      bytes32 emittedStreamId,
-      Stream memory emittedStream,
-      bytes32 emittedGenesisMiniblockHash
-    ) = abi.decode(
-        abi.decode(streamUpdatedLog.data, (bytes)),
-        (bytes32, Stream, bytes32)
-      );
+    (bytes32 emittedStreamId, Stream memory emittedStream) = abi.decode(
+      abi.decode(streamUpdatedLog.data, (bytes)),
+      (bytes32, Stream)
+    );
 
     assertEq(emittedStreamId, testStream.streamId);
     _assertEqStream(emittedStream, streamToCreate);
-    assertEq(emittedGenesisMiniblockHash, testStream.genesisMiniblockHash);
 
     assertEq(streamRegistry.getStreamCount(), 1);
     assertEq(streamRegistry.getStreamCountOnNode(nodes[0].node), 1);

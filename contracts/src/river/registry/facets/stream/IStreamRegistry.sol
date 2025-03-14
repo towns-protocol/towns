@@ -22,10 +22,9 @@ interface IStreamRegistryBase {
   /// To decode:
   ///   switch (eventType) {
   ///     case StreamEventType.Allocate:
+  ///     case StreamEventType.Create:
   ///     case StreamEventType.PlacementUpdated:
   ///       (bytes32 streamId, Stream memory stream) = abi.decode(data, (bytes32, Stream));
-  ///     case StreamEventType.Create:
-  ///       (bytes32 streamId, Stream memory stream, bytes32 genesisMiniblockHash) = abi.decode(data, (bytes32, Stream, bytes32));
   ///     case StreamEventType.LastMiniblockBatchUpdated:
   ///       (SetMiniblock[] memory miniBlockUpdates) = abi.decode(data, (SetMiniblock[]));
   ///   }
