@@ -44,6 +44,12 @@ contract MockWalletLink is IWalletLinkBase {
     return MockWalletLinkStorage.layout().walletsByRootKey[rootKey].values();
   }
 
+  function getWalletsByRootKeyWithDelegations(
+    address rootKey
+  ) external view returns (address[] memory wallets) {
+    return MockWalletLinkStorage.layout().walletsByRootKey[rootKey].values();
+  }
+
   function getRootKeyForWallet(
     address wallet
   ) external view returns (address rootKey) {

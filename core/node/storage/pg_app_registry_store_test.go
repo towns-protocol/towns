@@ -19,6 +19,7 @@ import (
 	"github.com/towns-protocol/towns/core/node/crypto"
 	"github.com/towns-protocol/towns/core/node/infra"
 	"github.com/towns-protocol/towns/core/node/protocol"
+	"github.com/towns-protocol/towns/core/node/shared"
 	"github.com/towns-protocol/towns/core/node/storage"
 	"github.com/towns-protocol/towns/core/node/testutils/dbtestutils"
 )
@@ -217,6 +218,17 @@ func TestCreateApp(t *testing.T) {
 	require.True(base.IsRiverErrorCode(err, protocol.Err_NOT_FOUND))
 }
 
+func requireSendableMessagesEqual(t *testing.T, expected *storage.SendableMessages, actual *storage.SendableMessages) {
+	if expected == nil {
+		require.Nil(t, actual, "Expected nil SendableMessages")
+	} else {
+		require.Equal(t, expected.AppId, actual.AppId)
+		require.Equal(t, expected.EncryptedSharedSecret, actual.EncryptedSharedSecret)
+		require.Equal(t, expected.WebhookUrl, actual.WebhookUrl)
+		require.ElementsMatch(t, expected.StreamEvents, actual.StreamEvents)
+	}
+}
+
 func TestPublishSessionKeys(t *testing.T) {
 	params := setupAppRegistryStorageTest(t)
 	t.Cleanup(params.closer)
@@ -227,13 +239,16 @@ func TestPublishSessionKeys(t *testing.T) {
 	deviceKey := "deviceKey"
 	fallbackKey := "fallbackKey"
 	sessionId := "sessionId"
+	sessionId2 := "sessionId2"
+	sessionId3 := "sessionId3"
 
 	// Registering a session key for a non-existent device fails
-	messages, err := store.PublishSessionKey(
+	messages, err := store.PublishSessionKeys(
 		params.ctx,
+		shared.StreamId{},
 		deviceKey,
-		sessionId,
-		"ciphertext",
+		[]string{sessionId},
+		"ciphertexts-devicekey-sessionId",
 	)
 	require.Nil(messages)
 	require.ErrorContains(err, "app with device key is not registered")
@@ -256,54 +271,37 @@ func TestPublishSessionKeys(t *testing.T) {
 
 	// Now that an app is registered with the device key, publishing a session key
 	// should succeed
-	messages, err = store.PublishSessionKey(
+	messages, err = store.PublishSessionKeys(
 		params.ctx,
+		shared.StreamId{},
 		deviceKey,
-		sessionId,
-		"ciphertext",
+		[]string{sessionId},
+		"ciphertexts-devicekey-sessionId",
 	)
 	require.Empty(messages)
 	require.NoError(err)
 
-	// Publishing a session key that has already been registered will fail
-	// with the appropriate error code (Err_ALREADY_EXISTS)
-	messages, err = store.PublishSessionKey(
+	// Publishing a session key that has already been registered should be fine,
+	// as in reality a session key may come in multiple times
+	messages, err = store.PublishSessionKeys(
 		params.ctx,
+		shared.StreamId{},
 		deviceKey,
-		sessionId,
+		[]string{sessionId},
 		"ciphertext2",
 	)
 	require.Nil(messages)
-	require.ErrorContains(err, "session key for device already exists")
-	require.True(base.IsRiverErrorCode(err, protocol.Err_ALREADY_EXISTS))
-}
+	require.Nil(err)
 
-func TestIsRegistered(t *testing.T) {
-	params := setupAppRegistryStorageTest(t)
-	t.Cleanup(params.closer)
-
-	require := require.New(t)
-	store := params.pgAppRegistryStore
-
-	// Generate random addresses
-	app := safeAddress(t)
-
-	secretBytes, err := hex.DecodeString(testSecretHexString)
-	require.NoError(err)
-	secret := [32]byte(secretBytes)
-
-	err = store.CreateApp(params.ctx, safeAddress(t), app, secret)
-	require.NoError(err)
-	err = store.RegisterWebhook(params.ctx, app, "webhookUrl", "deviceKey", "fallbackKey")
-	require.NoError(err)
-
-	isRegistered, err := store.IsRegistered(params.ctx, "deviceKey")
-	require.NoError(err)
-	require.True(isRegistered)
-
-	isRegistered, err = store.IsRegistered(params.ctx, "unregisteredDeviceKey")
-	require.NoError(err)
-	require.False(isRegistered)
+	messages, err = store.PublishSessionKeys(
+		params.ctx,
+		shared.StreamId{},
+		deviceKey,
+		[]string{sessionId, sessionId2, sessionId3},
+		"ciphertext123",
+	)
+	require.Nil(messages)
+	require.Nil(err)
 }
 
 func nSafeWallets(t *testing.T, ctx context.Context, n int) []*crypto.Wallet {
@@ -314,36 +312,6 @@ func nSafeWallets(t *testing.T, ctx context.Context, n int) []*crypto.Wallet {
 		wallets[i] = wallet
 	}
 	return wallets
-}
-
-func requireSendableMessagesEqual(t *testing.T, expected *storage.SendableMessages, actual *storage.SendableMessages) {
-	if expected == nil {
-		require.Nil(t, actual, "Expected no messages to become sendable")
-	} else {
-		require.NotNil(t, actual, "Expected some messages to become sendable")
-		require.Equal(t, expected.AppId, actual.AppId, "Unexpected app id")
-		require.Equal(t, expected.EncryptedSharedSecret, actual.EncryptedSharedSecret, "Unexpected encrypted shared secret")
-		require.Equal(t, expected.WebhookUrl, actual.WebhookUrl, "Unexpected webhook url")
-		require.Len(t, actual.StreamEvents, len(expected.StreamEvents), "Unexpected count of sendable messages")
-		for i, message := range expected.StreamEvents {
-			require.Equal(t, message, expected.StreamEvents[i], "Message %d does not match", i)
-		}
-	}
-}
-
-func requireSendableDevicesEqual(t *testing.T, expected []storage.SendableDevice, actual []storage.SendableDevice) {
-	if expected == nil {
-		require.Nil(t, actual, "Expected no devices would be sendable")
-	} else {
-		require.NotNil(t, actual, "Expected some devices would be sendable")
-		require.Len(t, actual, len(expected), "Unexpected count of sendable devices")
-		for i, device := range expected {
-			require.Equal(t, device.DeviceKey, actual[i].DeviceKey, "Mismatched device keys")
-			require.Equal(t, device.AppId, actual[i].AppId, "Mismatched app ids")
-			require.Equal(t, device.SendMessageSecrets.CipherText, actual[i].SendMessageSecrets.CipherText, "Mismatched ciphertexts")
-			require.Equal(t, device.SendMessageSecrets.EncryptedSharedSecret, actual[i].SendMessageSecrets.EncryptedSharedSecret, "Mismatched encrypted shared secrets")
-		}
-	}
 }
 
 func TestEnqueueMessages(t *testing.T) {
@@ -371,28 +339,32 @@ func TestEnqueueMessages(t *testing.T) {
 		common.HexToHash("44444"),
 	}
 	fallbackKey := "fallbackKey"
+
 	sessionId1 := "sessionId1"
 	sessionId2 := "sessionId2"
+	sessionId3 := "sessionId3"
+	sessionId4 := "sessionId4"
+	sessionId5 := "sessionId5"
 
 	message1Bytes := []byte("message1")
 	message2Bytes := []byte("message2")
 	message3Bytes := []byte("message3")
 	message4Bytes := []byte("message4")
 	message5Bytes := []byte("message5")
+	message6Bytes := []byte("message6")
 
 	// Registering a session key for a non-existent device fails
-	sendableDevices, numEnqueued, err := store.EnqueueUnsendableMessages(
+	sendableApps, unsendableApps, err := store.EnqueueUnsendableMessages(
 		params.ctx,
-		[]string{deviceKeys[0]},
+		[]common.Address{apps[0].Address},
 		sessionId1,
 		message1Bytes,
 	)
-	require.Nil(sendableDevices)
-	require.Zero(numEnqueued)
+	require.Nil(sendableApps)
+	require.Nil(unsendableApps)
 
-	require.ErrorContains(err, "app with device key is not registered")
+	require.ErrorContains(err, "some app ids were not registered")
 	require.True(base.IsRiverErrorCode(err, protocol.Err_NOT_FOUND))
-	require.Equal(deviceKeys[0], base.AsRiverError(err).GetTag("deviceKey"))
 
 	err = store.CreateApp(params.ctx, owner.Address, apps[0].Address, secrets[0])
 	require.NoError(err)
@@ -404,65 +376,95 @@ func TestEnqueueMessages(t *testing.T) {
 	// Registering a session key for a non-existent device fails the entire
 	// transaction, even when the first key corresponds to a registered app.
 	// The tag on the error identifies the specific device key that failed.
-	sendableDevices, numEnqueued, err = store.EnqueueUnsendableMessages(
+	sendableApps, unsendableApps, err = store.EnqueueUnsendableMessages(
 		params.ctx,
-		[]string{deviceKeys[0], deviceKeys[1]},
+		[]common.Address{apps[0].Address, apps[1].Address},
 		sessionId1,
 		message1Bytes,
 	)
-	require.Nil(sendableDevices)
-	require.Zero(numEnqueued)
-	require.ErrorContains(err, "app with device key is not registered")
+	require.Nil(sendableApps)
+	require.Nil(unsendableApps)
+	require.ErrorContains(err, "some app ids were not registered")
 	require.True(base.IsRiverErrorCode(err, protocol.Err_NOT_FOUND))
-	require.Equal(deviceKeys[1], base.AsRiverError(err).GetTag("deviceKey"))
+
+	unsendableAppAtIndex := func(i int) storage.UnsendableApp {
+		return storage.UnsendableApp{
+			AppId:                 apps[i].Address,
+			DeviceKey:             deviceKeys[i],
+			WebhookUrl:            fmt.Sprintf("https://webhook.com/%d", i),
+			EncryptedSharedSecret: secrets[i],
+		}
+	}
 
 	// Enqueue a message for device 1 with a key that has not yet been published
-	sendableDevices, numEnqueued, err = store.EnqueueUnsendableMessages(
+	sendableApps, unsendableApps, err = store.EnqueueUnsendableMessages(
 		params.ctx,
-		[]string{deviceKeys[0]},
+		[]common.Address{apps[0].Address},
 		sessionId1,
 		message1Bytes,
 	)
+
 	require.NoError(err)
-	require.Len(sendableDevices, 0)
-	require.Equal(1, numEnqueued)
+	require.Len(sendableApps, 0)
+	require.ElementsMatch(
+		[]storage.UnsendableApp{
+			unsendableAppAtIndex(0),
+		},
+		unsendableApps,
+	)
+
+	sendableMessagesAtIndexWithEvents := func(i int, streamEvents [][]byte) *storage.SendableMessages {
+		return &storage.SendableMessages{
+			AppId:                 apps[i].Address,
+			EncryptedSharedSecret: secrets[i],
+			WebhookUrl:            fmt.Sprintf("https://webhook.com/%d", i),
+			StreamEvents:          streamEvents,
+		}
+	}
 
 	// Now, publish a key for this (device key, session id). We expect to get this
 	// message back.
-	messages, err := store.PublishSessionKey(
+	messages, err := store.PublishSessionKeys(
 		params.ctx,
+		shared.StreamId{},
 		deviceKeys[0],
-		sessionId1,
-		"ciphertext-device0-session1",
+		[]string{sessionId1, sessionId3},
+		"ciphertexts-device0-session1-session3",
 	)
 	require.NoError(err)
-	require.EqualValues(secrets[0], messages.EncryptedSharedSecret)
-	require.Len(messages.StreamEvents, 1)
-	require.Equal(message1Bytes, messages.StreamEvents[0])
+	requireSendableMessagesEqual(
+		t,
+		sendableMessagesAtIndexWithEvents(0, [][]byte{message1Bytes}),
+		messages,
+	)
 
 	// Register apps and webhooks for apps 2 through 5, to have all device keys registered
 	for i := range 4 {
-		err = store.CreateApp(params.ctx, owner.Address, apps[i+1].Address, secrets[i+1])
-		require.NoError(err)
-
+		require.NoError(store.CreateApp(params.ctx, owner.Address, apps[i+1].Address, secrets[i+1]))
 		webhook := fmt.Sprintf("https://webhook.com/%d", i+1)
-		err = store.RegisterWebhook(params.ctx, apps[i+1].Address, webhook, deviceKeys[i+1], fallbackKey)
-		require.NoError(err)
+		require.NoError(store.RegisterWebhook(params.ctx, apps[i+1].Address, webhook, deviceKeys[i+1], fallbackKey))
 	}
 
 	// Enqueue all messages (no devices have no session keys)
-	sendable, enqueued, err := store.EnqueueUnsendableMessages(
+	sendable, unsendable, err := store.EnqueueUnsendableMessages(
 		params.ctx,
-		[]string{deviceKeys[1], deviceKeys[3], deviceKeys[4]},
+		[]common.Address{apps[1].Address, apps[3].Address, apps[4].Address},
 		sessionId2,
 		message2Bytes,
 	)
 	require.NoError(err)
-	require.Equal(3, enqueued)
+	require.ElementsMatch(
+		[]storage.UnsendableApp{
+			unsendableAppAtIndex(1),
+			unsendableAppAtIndex(3),
+			unsendableAppAtIndex(4),
+		},
+		unsendable,
+	)
 	require.Empty(sendable)
 
 	// current session key state
-	// device 0: session id 1
+	// device 0: [sessionId1, sessionId3]
 
 	// Current enqueued message state
 	// device 1 - (session key 2, message 2)
@@ -471,30 +473,37 @@ func TestEnqueueMessages(t *testing.T) {
 
 	// Publish session keys for session 2 for device 1.
 	// Expect 1 message to become sendable.
-	messages, err = store.PublishSessionKey(
+	messages, err = store.PublishSessionKeys(
 		params.ctx,
+		shared.StreamId{},
 		deviceKeys[1],
-		sessionId2,
-		"ciphertext-device1-session2",
+		[]string{sessionId2, sessionId4},
+		"ciphertexts-device1-session2-session4",
 	)
 	require.NotNil(messages)
 	requireSendableMessagesEqual(
 		t,
-		&storage.SendableMessages{
-			AppId:                 apps[1].Address,
-			EncryptedSharedSecret: secrets[1],
-			WebhookUrl:            "https://webhook.com/1",
-			StreamEvents: [][]byte{
-				message2Bytes,
-			},
-		},
+		sendableMessagesAtIndexWithEvents(1, [][]byte{message2Bytes}),
 		messages,
 	)
 	require.NoError(err)
 
+	sendableAppWithSessionsAndCiphertexts := func(i int, sessionIds []string, ciphertexts string) storage.SendableApp {
+		return storage.SendableApp{
+			DeviceKey:  deviceKeys[i],
+			AppId:      apps[i].Address,
+			WebhookUrl: fmt.Sprintf("https://webhook.com/%d", i),
+			SendMessageSecrets: storage.SendMessageSecrets{
+				SessionIds:            sessionIds,
+				CipherTexts:           ciphertexts,
+				EncryptedSharedSecret: secrets[i],
+			},
+		}
+	}
+
 	// current session key state
-	// device 0: session id 1
-	// device 1: session id 2
+	// device 0: [sessionId1, sessionId3]
+	// device 1: [sessionId2, sessionId4]
 
 	// Current enqueued message state
 	// device 3 - (session id 2: message 2)
@@ -502,32 +511,35 @@ func TestEnqueueMessages(t *testing.T) {
 
 	// Enqueue more messages
 	// Expect 1 sendable message because device 1 already has session id 2 key
-	sendable, enqueued, err = store.EnqueueUnsendableMessages(
+	sendable, unsendable, err = store.EnqueueUnsendableMessages(
 		params.ctx,
-		[]string{deviceKeys[0], deviceKeys[1], deviceKeys[2], deviceKeys[3]},
+		[]common.Address{apps[0].Address, apps[1].Address, apps[2].Address, apps[3].Address},
 		sessionId2,
 		message3Bytes,
 	)
 	require.NoError(err)
-	require.Equal(3, enqueued)
-	requireSendableDevicesEqual(
-		t,
-		[]storage.SendableDevice{
-			{
-				DeviceKey: deviceKeys[1],
-				AppId:     apps[1].Address,
-				SendMessageSecrets: storage.SendMessageSecrets{
-					CipherText:            "ciphertext-device1-session2",
-					EncryptedSharedSecret: secrets[1],
-				},
-			},
+	require.ElementsMatch(
+		[]storage.SendableApp{
+			sendableAppWithSessionsAndCiphertexts(
+				1,
+				[]string{sessionId2, sessionId4},
+				"ciphertexts-device1-session2-session4",
+			),
 		},
 		sendable,
 	)
+	require.ElementsMatch(
+		[]storage.UnsendableApp{
+			unsendableAppAtIndex(0),
+			unsendableAppAtIndex(2),
+			unsendableAppAtIndex(3),
+		},
+		unsendable,
+	)
 
 	// current session key state
-	// device 0: session id 1
-	// device 1: session id 2
+	// device 0: [sessionId1, sessionId3]
+	// device 1: [sessionId2, sessionId4]
 
 	// Current enqueued message state
 	// device 0 - (session id 2: message 3)
@@ -536,54 +548,55 @@ func TestEnqueueMessages(t *testing.T) {
 	// device 4 - (session id 2: message 2)
 
 	// Add key for session 1 to device 1.
-	// Enqueue another message. Expect 2 device to be sendable because device 0 and 1 have a key
-	// for session 1.
-	messages, err = store.PublishSessionKey(
+	messages, err = store.PublishSessionKeys(
 		params.ctx,
+		shared.StreamId{},
 		deviceKeys[1],
-		sessionId1,
-		"ciphertext-device1-session1",
+		[]string{sessionId1, sessionId4},
+		"ciphertexts-device1-session1-session4",
 	)
 	require.Nil(messages)
 	require.NoError(err)
 
 	// current session key state
-	// device 0: session id 1
-	// device 1: session id 1, session id 2
+	// device 0: [sessionId1, sessionId3]
+	// device 1: [sessionId2, sessionId4], [sessionId1, sessionId4]
 
-	sendable, enqueued, err = store.EnqueueUnsendableMessages(
+	// Enqueue another message. Expect 2 device to be sendable because device 0 and 1 have a key
+	// for session 1.
+	sendable, unsendable, err = store.EnqueueUnsendableMessages(
 		params.ctx,
-		[]string{deviceKeys[0], deviceKeys[1], deviceKeys[3], deviceKeys[4]},
+		[]common.Address{apps[0].Address, apps[1].Address, apps[3].Address, apps[4].Address},
 		sessionId1,
 		message4Bytes,
 	)
 	require.NoError(err)
-	require.Equal(2, enqueued)
-	requireSendableDevicesEqual(
-		t,
-		[]storage.SendableDevice{
-			{
-				DeviceKey: deviceKeys[0],
-				AppId:     apps[0].Address,
-				SendMessageSecrets: storage.SendMessageSecrets{
-					CipherText:            "ciphertext-device0-session1",
-					EncryptedSharedSecret: secrets[0],
-				},
-			},
-			{
-				DeviceKey: deviceKeys[1],
-				AppId:     apps[1].Address,
-				SendMessageSecrets: storage.SendMessageSecrets{
-					CipherText:            "ciphertext-device1-session1",
-					EncryptedSharedSecret: secrets[1],
-				},
-			},
+	require.ElementsMatch(
+		[]storage.SendableApp{
+			sendableAppWithSessionsAndCiphertexts(
+				0,
+				[]string{sessionId1, sessionId3},
+				"ciphertexts-device0-session1-session3",
+			),
+			sendableAppWithSessionsAndCiphertexts(
+				1,
+				[]string{sessionId1, sessionId4},
+				"ciphertexts-device1-session1-session4",
+			),
 		},
 		sendable,
 	)
+	require.ElementsMatch(
+		[]storage.UnsendableApp{
+			unsendableAppAtIndex(3),
+			unsendableAppAtIndex(4),
+		},
+		unsendable,
+	)
+
 	// current session key state (unchanged)
-	// device 0: session id 1
-	// device 1: session id 1, session id 2
+	// device 0: [sessionId1, sessionId3]
+	// device 1: [sessionId2, sessionId4], [sessionId1, sessionId4]
 
 	// Current enqueued message state
 	// device 0 - (session id 2: message 3)
@@ -600,40 +613,60 @@ func TestEnqueueMessages(t *testing.T) {
 
 	// Enqueue another message. Expect 1 device to be sendable because only device 0 has a key
 	// for session 1.
-	sendable, enqueued, err = store.EnqueueUnsendableMessages(
+	sendable, unsendable, err = store.EnqueueUnsendableMessages(
 		params.ctx,
-		[]string{deviceKeys[0], deviceKeys[1], deviceKeys[3], deviceKeys[4]},
+		[]common.Address{apps[0].Address, apps[1].Address, apps[3].Address, apps[4].Address},
 		sessionId1,
 		message5Bytes,
 	)
 	require.NoError(err)
-	require.Equal(2, enqueued)
-	requireSendableDevicesEqual(
-		t,
-		[]storage.SendableDevice{
-			{
-				DeviceKey: deviceKeys[0],
-				AppId:     apps[0].Address,
-				SendMessageSecrets: storage.SendMessageSecrets{
-					CipherText:            "ciphertext-device0-session1",
-					EncryptedSharedSecret: secrets[0],
-				},
-			},
-			{
-				DeviceKey: deviceKeys[1],
-				AppId:     apps[1].Address,
-				SendMessageSecrets: storage.SendMessageSecrets{
-					CipherText:            "ciphertext-device1-session1",
-					EncryptedSharedSecret: secrets[1],
-				},
-			},
+	require.ElementsMatch(
+		[]storage.SendableApp{
+			sendableAppWithSessionsAndCiphertexts(
+				0,
+				[]string{sessionId1, sessionId3},
+				"ciphertexts-device0-session1-session3",
+			),
+			sendableAppWithSessionsAndCiphertexts(
+				1,
+				[]string{sessionId1, sessionId4},
+				"ciphertexts-device1-session1-session4",
+			),
+		},
+		sendable,
+	)
+	require.ElementsMatch(
+		[]storage.UnsendableApp{
+			unsendableAppAtIndex(3),
+			unsendableAppAtIndex(4),
+		},
+		unsendable,
+	)
+
+	// Send a session 4 message to device 1. Validate that exactly one SendableApp is returned,
+	// even though there are multiple key materials that could be used for device 1.
+	sendable, unsendable, err = store.EnqueueUnsendableMessages(
+		params.ctx,
+		[]common.Address{apps[1].Address},
+		sessionId4,
+		message1Bytes,
+	)
+	require.Nil(err)
+	require.Empty(unsendable)
+	require.ElementsMatch(
+		[]storage.SendableApp{
+			sendableAppWithSessionsAndCiphertexts(
+				1,
+				[]string{"sessionId1", "sessionId4"},
+				"ciphertexts-device1-session1-session4",
+			),
 		},
 		sendable,
 	)
 
 	// current session key state (unchanged)
-	// device 0: session id 1
-	// device 1: session 1, session id 2
+	// device 0: [sessionId1, sessionId3]
+	// device 1: [sessionId2, sessionId4], [sessionId1, sessionId4]
 
 	// Current enqueued message state
 	// device 0 - (session id 2: message 3)
@@ -648,51 +681,80 @@ func TestEnqueueMessages(t *testing.T) {
 	//     session id 2: message 2
 	// )
 
+	// Enqueue message 6 for devices 3 under session 5
+	sendable, unsendable, err = store.EnqueueUnsendableMessages(
+		params.ctx,
+		[]common.Address{apps[3].Address},
+		sessionId5,
+		message6Bytes,
+	)
+	require.Empty(sendable)
+	require.ElementsMatch(
+		[]storage.UnsendableApp{
+			unsendableAppAtIndex(3),
+		},
+		unsendable,
+	)
+	require.NoError(err)
+
+	// current session key state (unchanged)
+	// device 0: [sessionId1, sessionId3]
+	// device 1: [sessionId2, sessionId4], [sessionId1, sessionId4]
+
+	// Current enqueued message state
+	// device 0 - (session id 2: message 3)
+	// device 1 - ()
+	// device 2 - (session id 2: message 3)
+	// device 3 - (
+	//     session id 1: message 4, message 5
+	//     session id 2: message 2, message 3
+	//     session id 5: message 6
+	// )
+	// device 4 - (
+	//     session id 1: message 4, message 5
+	//     session id 2: message 2
+	// )
+
 	// Drain remaining messages
 	publishKeyTests := map[string]struct {
 		deviceIndex int
-		sessionKey  string
-		ciphertext  string
+		sessionKeys []string
 		messages    [][]byte
 	}{
 		"drain device 0": {
 			deviceIndex: 0,
-			sessionKey:  sessionId2,
+			sessionKeys: []string{sessionId2, sessionId5},
 			messages:    [][]byte{message3Bytes},
 		},
 		"drain device 2": {
 			deviceIndex: 2,
-			sessionKey:  sessionId2,
+			sessionKeys: []string{sessionId2},
 			messages:    [][]byte{message3Bytes},
 		},
-		"drain device 3 session 1": {
+		"drain device 3 pt 1": {
 			deviceIndex: 3,
-			sessionKey:  sessionId1,
-			messages:    [][]byte{message4Bytes, message5Bytes},
+			sessionKeys: []string{sessionId1, sessionId5},
+			messages:    [][]byte{message4Bytes, message5Bytes, message6Bytes},
 		},
-		"drain device 3 session 2": {
+		"drain device 3 pt 2": {
 			deviceIndex: 3,
-			sessionKey:  sessionId2,
+			sessionKeys: []string{sessionId2},
 			messages:    [][]byte{message2Bytes, message3Bytes},
 		},
-		"drain device 4 session 1": {
+		"drain device 4": {
 			deviceIndex: 4,
-			sessionKey:  sessionId1,
-			messages:    [][]byte{message4Bytes, message5Bytes},
-		},
-		"drain device 4 session 2": {
-			deviceIndex: 4,
-			sessionKey:  sessionId2,
-			messages:    [][]byte{message2Bytes},
+			sessionKeys: []string{sessionId1, sessionId2},
+			messages:    [][]byte{message2Bytes, message4Bytes, message5Bytes},
 		},
 	}
 	for name, tc := range publishKeyTests {
 		t.Run(name, func(t *testing.T) {
-			messages, err := store.PublishSessionKey(
+			messages, err := store.PublishSessionKeys(
 				params.ctx,
+				shared.StreamId{},
 				deviceKeys[tc.deviceIndex],
-				tc.sessionKey,
-				tc.ciphertext,
+				tc.sessionKeys,
+				hex.EncodeToString(safeAddress(t).Bytes()),
 			)
 			require.NoError(err)
 			if len(tc.messages) == 0 {
@@ -700,12 +762,7 @@ func TestEnqueueMessages(t *testing.T) {
 			} else {
 				requireSendableMessagesEqual(
 					t,
-					&storage.SendableMessages{
-						AppId:                 apps[tc.deviceIndex].Address,
-						EncryptedSharedSecret: secrets[tc.deviceIndex],
-						WebhookUrl:            fmt.Sprintf("https://webhook.com/%d", tc.deviceIndex),
-						StreamEvents:          tc.messages,
-					},
+					sendableMessagesAtIndexWithEvents(tc.deviceIndex, tc.messages),
 					messages,
 				)
 			}

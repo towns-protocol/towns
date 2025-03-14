@@ -36,10 +36,35 @@ type IWalletLinkBaseLinkedWallet struct {
 	Message   string
 }
 
+// IWalletLinkBaseNonEVMLinkedWallet is an auto generated low-level Go binding around an user-defined struct.
+type IWalletLinkBaseNonEVMLinkedWallet struct {
+	Wallet    WalletLibWallet
+	Signature []byte
+	Message   string
+	ExtraData []IWalletLinkBaseVMSpecificData
+}
+
+// IWalletLinkBaseVMSpecificData is an auto generated low-level Go binding around an user-defined struct.
+type IWalletLinkBaseVMSpecificData struct {
+	Key   string
+	Value []byte
+}
+
+// IWalletLinkBaseWalletQueryOptions is an auto generated low-level Go binding around an user-defined struct.
+type IWalletLinkBaseWalletQueryOptions struct {
+	IncludeDelegations bool
+}
+
+// WalletLibWallet is an auto generated low-level Go binding around an user-defined struct.
+type WalletLibWallet struct {
+	Addr   string
+	VmType uint8
+}
+
 // WalletLinkMetaData contains all meta data concerning the WalletLink contract.
 var WalletLinkMetaData = &bind.MetaData{
-	ABI: "[{\"type\":\"function\",\"name\":\"__WalletLink_init\",\"inputs\":[],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"checkIfLinked\",\"inputs\":[{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"wallet\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getLatestNonceForRootKey\",\"inputs\":[{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getRootKeyForWallet\",\"inputs\":[{\"name\":\"wallet\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getWalletsByRootKey\",\"inputs\":[{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"wallets\",\"type\":\"address[]\",\"internalType\":\"address[]\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"linkCallerToRootKey\",\"inputs\":[{\"name\":\"rootWallet\",\"type\":\"tuple\",\"internalType\":\"structIWalletLinkBase.LinkedWallet\",\"components\":[{\"name\":\"addr\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"signature\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"message\",\"type\":\"string\",\"internalType\":\"string\"}]},{\"name\":\"nonce\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"linkWalletToRootKey\",\"inputs\":[{\"name\":\"wallet\",\"type\":\"tuple\",\"internalType\":\"structIWalletLinkBase.LinkedWallet\",\"components\":[{\"name\":\"addr\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"signature\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"message\",\"type\":\"string\",\"internalType\":\"string\"}]},{\"name\":\"rootWallet\",\"type\":\"tuple\",\"internalType\":\"structIWalletLinkBase.LinkedWallet\",\"components\":[{\"name\":\"addr\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"signature\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"message\",\"type\":\"string\",\"internalType\":\"string\"}]},{\"name\":\"nonce\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"removeCallerLink\",\"inputs\":[],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"removeLink\",\"inputs\":[{\"name\":\"wallet\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"rootWallet\",\"type\":\"tuple\",\"internalType\":\"structIWalletLinkBase.LinkedWallet\",\"components\":[{\"name\":\"addr\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"signature\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"message\",\"type\":\"string\",\"internalType\":\"string\"}]},{\"name\":\"nonce\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"event\",\"name\":\"Initialized\",\"inputs\":[{\"name\":\"version\",\"type\":\"uint32\",\"indexed\":false,\"internalType\":\"uint32\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"InterfaceAdded\",\"inputs\":[{\"name\":\"interfaceId\",\"type\":\"bytes4\",\"indexed\":true,\"internalType\":\"bytes4\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"InterfaceRemoved\",\"inputs\":[{\"name\":\"interfaceId\",\"type\":\"bytes4\",\"indexed\":true,\"internalType\":\"bytes4\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"LinkWalletToRootKey\",\"inputs\":[{\"name\":\"wallet\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"rootKey\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"RemoveLink\",\"inputs\":[{\"name\":\"wallet\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"secondWallet\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"error\",\"name\":\"ECDSAInvalidSignature\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"ECDSAInvalidSignatureLength\",\"inputs\":[{\"name\":\"length\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"type\":\"error\",\"name\":\"ECDSAInvalidSignatureS\",\"inputs\":[{\"name\":\"s\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]},{\"type\":\"error\",\"name\":\"Initializable_InInitializingState\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"Initializable_NotInInitializingState\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"Introspection_AlreadySupported\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"Introspection_NotSupported\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidAccountNonce\",\"inputs\":[{\"name\":\"account\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"currentNonce\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"type\":\"error\",\"name\":\"WalletLink__CannotLinkToRootWallet\",\"inputs\":[{\"name\":\"wallet\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"}]},{\"type\":\"error\",\"name\":\"WalletLink__CannotLinkToSelf\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"WalletLink__CannotRemoveRootWallet\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"WalletLink__InvalidAddress\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"WalletLink__InvalidSignature\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"WalletLink__LinkAlreadyExists\",\"inputs\":[{\"name\":\"wallet\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"}]},{\"type\":\"error\",\"name\":\"WalletLink__LinkedToAnotherRootKey\",\"inputs\":[{\"name\":\"wallet\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"}]},{\"type\":\"error\",\"name\":\"WalletLink__NotLinked\",\"inputs\":[{\"name\":\"wallet\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"}]}]",
-	Bin: "0x608060405234801561001057600080fd5b5061001961001e565b6100c4565b7f59b501c3653afc186af7d48dda36cf6732bd21629a6295693664240a6ef520008054640100000000900460ff161561006a576040516366008a2d60e01b815260040160405180910390fd5b805463ffffffff90811610156100c157805463ffffffff191663ffffffff90811782556040519081527fe9c9b456cb2994b80aeef036cf59d26e9617df80f816a6ee5a5b4166e07e2f5c9060200160405180910390a15b50565b6115b5806100d36000396000f3fe608060405234801561001057600080fd5b50600436106100935760003560e01c80632f461453116100665780632f461453146100ff57806335d2fb641461011257806364899d9814610125578063912b97581461012d578063f82103981461015057600080fd5b806302345b981461009857806320a00ac8146100c1578063243a7134146100e2578063260a409d146100f7575b600080fd5b6100ab6100a6366004611204565b61017b565b6040516100b8919061121f565b60405180910390f35b6100d46100cf366004611204565b61018c565b6040519081526020016100b8565b6100f56100f03660046113cc565b6101c9565b005b6100f56101d9565b6100f561010d366004611439565b610235565b6100f561012036600461147e565b610243565b6100f561024e565b61014061013b3660046114c4565b610256565b60405190151581526020016100b8565b61016361015e366004611204565b61029f565b6040516001600160a01b0390911681526020016100b8565b6060610186826102e0565b92915050565b6001600160a01b03811660009081527fda5d6d87446d81938877f0ee239dac391146dd7466ea30567f72becf06773c006020526040812054610186565b6101d4838383610311565b505050565b7f59b501c3653afc186af7d48dda36cf6732bd21629a6295693664240a6ef5200054640100000000900460ff1661022357604051630ef4733760e31b815260040160405180910390fd5b6102336311b9c60b60e01b61049f565b565b61023f8282610578565b5050565b6101d4838383610696565b610233610861565b6001600160a01b0381811660009081527f19511ce7944c192b1007be99b82019218d1decfc513f05239612743360a0dc01602052604081205490918481169116145b9392505050565b6001600160a01b0380821660009081527f19511ce7944c192b1007be99b82019218d1decfc513f05239612743360a0dc016020526040812054909116610186565b6001600160a01b03811660009081526000805160206115958339815191526020526040902060609061018690610960565b82518251600080516020611595833981519152916103319183919061096d565b60006103468560400151866000015185610ade565b9050600061035382610b48565b905084600001516001600160a01b0316610371828760200151610b75565b6001600160a01b03161461039857604051632af0041d60e11b815260040160405180910390fd5b6103ab8560400151866000015186610ade565b915060006103b883610b48565b905086600001516001600160a01b03166103d6828960200151610b75565b6001600160a01b0316146103fd57604051632af0041d60e11b815260040160405180910390fd5b85516104099086610b9f565b865186516001600160a01b0316600090815260208690526040902061042d91610c11565b50855187516001600160a01b03908116600090815260018701602052604080822080546001600160a01b0319169484169490941790935588518a51935190831693909216917f64126824352170c4025060d1f6e215159635e4b08e649830695f26ef6d2b57219190a350505050505050565b6001600160e01b0319811660009081527f81088bbc801e045ea3e7620779ab349988f58afbdfba10dff983df3f33522b00602052604090205460ff16610527576001600160e01b0319811660009081527f81088bbc801e045ea3e7620779ab349988f58afbdfba10dff983df3f33522b0060205260409020805460ff19166001179055610540565b604051637967f77d60e11b815260040160405180910390fd5b6040516001600160e01b03198216907f78f84e5b1c5c05be2b5ad3800781dd404d6d6c6302bc755c0fe20f58a33a7f2290600090a250565b8151600080516020611595833981519152903390610599908390839061096d565b60006105aa85604001518386610ade565b905060006105b782610b48565b905085600001516001600160a01b03166105d5828860200151610b75565b6001600160a01b0316146105fc57604051632af0041d60e11b815260040160405180910390fd5b85516106089086610b9f565b85516001600160a01b0316600090815260208590526040902061062b9084610c11565b5085516001600160a01b03848116600081815260018801602052604080822080546001600160a01b0319169585169590951790945589519351939092169290917f64126824352170c4025060d1f6e215159635e4b08e649830695f26ef6d2b572191a3505050505050565b6000805160206115958339815191526001600160a01b03841615806106c3575082516001600160a01b0316155b156106e157604051636df3f5c360e01b815260040160405180910390fd5b82600001516001600160a01b0316846001600160a01b031603610717576040516333976e3b60e11b815260040160405180910390fd5b82516001600160a01b0385811660009081526001840160205260409020548116911614610772578251604051635e300c8360e01b81526001600160a01b03808716600483015290911660248201526044015b60405180910390fd5b600061078384604001518685610ade565b9050600061079082610b48565b905084600001516001600160a01b03166107ae828760200151610b75565b6001600160a01b0316146107d557604051632af0041d60e11b815260040160405180910390fd5b84516107e19085610b9f565b6001600160a01b038087166000908152600185016020908152604080832080546001600160a01b031916905588519093168252859052206108229087610c26565b5060405133906001600160a01b038816907f9a9d98629b39adf596077fc95a0712ba55c38f40a354e99d366a10f9c3e27da290600090a3505050505050565b3360008181527f19511ce7944c192b1007be99b82019218d1decfc513f05239612743360a0dc01602052604090205460008051602061159583398151915291906001600160a01b0316806108db57604051635e300c8360e01b81526001600160a01b03808416600483015282166024820152604401610769565b6001600160a01b038083166000908152600185016020908152604080832080546001600160a01b031916905592841682528590522061091a9083610c26565b50806001600160a01b0316826001600160a01b03167f9a9d98629b39adf596077fc95a0712ba55c38f40a354e99d366a10f9c3e27da260405160405180910390a3505050565b6060600061029883610c3b565b6001600160a01b038216158061098a57506001600160a01b038116155b156109a857604051636df3f5c360e01b815260040160405180910390fd5b806001600160a01b0316826001600160a01b0316036109da5760405163848ba26d60e01b815260040160405180910390fd5b6001600160a01b0382811660009081526001850160205260409020541615610a28576040516314790b7f60e01b81526001600160a01b03808416600483015282166024820152604401610769565b6001600160a01b0381811660009081526001850160205260409020541615610a8b576001600160a01b038181166000908152600185016020526040908190205490516347227b5d60e01b8152848316600482015291166024820152604401610769565b6001600160a01b0382166000908152602084905260408120610aac90610c97565b11156101d457604051637b815eed60e11b81526001600160a01b03808416600483015282166024820152604401610769565b8251602093840120604080517f6bb89d031fcd292ecd4c0e6855878b7165cebc3a2f35bc6bbac48c088dd8325c81870152808201929092526001600160a01b039390931660608201526080808201929092528251808203909201825260a001909152805191012090565b6000610186610b55610ca1565b8360405161190160f01b8152600281019290925260228201526042902090565b600080600080610b858686610cb0565b925092509250610b958282610cfd565b5090949350505050565b6001600160a01b03821660009081527fda5d6d87446d81938877f0ee239dac391146dd7466ea30567f72becf06773c00602052604090208054600181019091558181146101d4576040516301d4b62360e61b81526001600160a01b038416600482015260248101829052604401610769565b6000610298836001600160a01b038416610db6565b6000610298836001600160a01b038416610e05565b606081600001805480602002602001604051908101604052809291908181526020018280548015610c8b57602002820191906000526020600020905b815481526020019060010190808311610c77575b50505050509050919050565b6000610186825490565b6000610cab610ef8565b905090565b60008060008351604103610cea5760208401516040850151606086015160001a610cdc88828585610f6c565b955095509550505050610cf6565b50508151600091506002905b9250925092565b6000826003811115610d1157610d116114f7565b03610d1a575050565b6001826003811115610d2e57610d2e6114f7565b03610d4c5760405163f645eedf60e01b815260040160405180910390fd5b6002826003811115610d6057610d606114f7565b03610d815760405163fce698f760e01b815260048101829052602401610769565b6003826003811115610d9557610d956114f7565b0361023f576040516335e2f38360e21b815260048101829052602401610769565b6000818152600183016020526040812054610dfd57508154600181810184556000848152602080822090930184905584548482528286019093526040902091909155610186565b506000610186565b60008181526001830160205260408120548015610eee576000610e2960018361150d565b8554909150600090610e3d9060019061150d565b9050808214610ea2576000866000018281548110610e5d57610e5d61152e565b9060005260206000200154905080876000018481548110610e8057610e8061152e565b6000918252602080832090910192909255918252600188019052604090208390555b8554869080610eb357610eb3611544565b600190038181906000526020600020016000905590558560010160008681526020019081526020016000206000905560019350505050610186565b6000915050610186565b60007f8b73c3c69bb8fe3d512ecc4cf759cc79239f7b179b0ffacaa9a75d522b39400f610f2361103b565b610f2b6110b3565b60408051602081019490945283019190915260608201524660808201523060a082015260c00160405160208183030381529060405280519060200120905090565b600080807f7fffffffffffffffffffffffffffffff5d576e7357a4501ddfe92f46681b20a0841115610fa75750600091506003905082611031565b604080516000808252602082018084528a905260ff891692820192909252606081018790526080810186905260019060a0016020604051602081039080840390855afa158015610ffb573d6000803e3d6000fd5b5050604051601f1901519150506001600160a01b03811661102757506000925060019150829050611031565b9250600091508190505b9450945094915050565b600080611046611103565b80519091501561105d578051602090910120919050565b7f219639d1c7dec7d049ffb8dc11e39f070f052764b142bd61682a7811a502a60054801561108b5792915050565b7fc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a4709250505090565b6000806110be6111b7565b8051909150156110d5578051602090910120919050565b7f219639d1c7dec7d049ffb8dc11e39f070f052764b142bd61682a7811a502a60154801561108b5792915050565b60607f219639d1c7dec7d049ffb8dc11e39f070f052764b142bd61682a7811a502a60060020180546111349061155a565b80601f01602080910402602001604051908101604052809291908181526020018280546111609061155a565b80156111ad5780601f10611182576101008083540402835291602001916111ad565b820191906000526020600020905b81548152906001019060200180831161119057829003601f168201915b5050505050905090565b60607f219639d1c7dec7d049ffb8dc11e39f070f052764b142bd61682a7811a502a60060030180546111349061155a565b80356001600160a01b03811681146111ff57600080fd5b919050565b60006020828403121561121657600080fd5b610298826111e8565b6020808252825182820181905260009190848201906040850190845b818110156112605783516001600160a01b03168352928401929184019160010161123b565b50909695505050505050565b634e487b7160e01b600052604160045260246000fd5b6040516060810167ffffffffffffffff811182821017156112a5576112a561126c565b60405290565b600067ffffffffffffffff808411156112c6576112c661126c565b604051601f8501601f19908116603f011681019082821181831017156112ee576112ee61126c565b8160405280935085815286868601111561130757600080fd5b858560208301376000602087830101525050509392505050565b60006060828403121561133357600080fd5b61133b611282565b9050611346826111e8565b8152602082013567ffffffffffffffff8082111561136357600080fd5b818401915084601f83011261137757600080fd5b611386858335602085016112ab565b6020840152604084013591508082111561139f57600080fd5b508201601f810184136113b157600080fd5b6113c0848235602084016112ab565b60408301525092915050565b6000806000606084860312156113e157600080fd5b833567ffffffffffffffff808211156113f957600080fd5b61140587838801611321565b9450602086013591508082111561141b57600080fd5b5061142886828701611321565b925050604084013590509250925092565b6000806040838503121561144c57600080fd5b823567ffffffffffffffff81111561146357600080fd5b61146f85828601611321565b95602094909401359450505050565b60008060006060848603121561149357600080fd5b61149c846111e8565b9250602084013567ffffffffffffffff8111156114b857600080fd5b61142886828701611321565b600080604083850312156114d757600080fd5b6114e0836111e8565b91506114ee602084016111e8565b90509250929050565b634e487b7160e01b600052602160045260246000fd5b8181038181111561018657634e487b7160e01b600052601160045260246000fd5b634e487b7160e01b600052603260045260246000fd5b634e487b7160e01b600052603160045260246000fd5b600181811c9082168061156e57607f821691505b60208210810361158e57634e487b7160e01b600052602260045260246000fd5b5091905056fe19511ce7944c192b1007be99b82019218d1decfc513f05239612743360a0dc00",
+	ABI: "[{\"type\":\"function\",\"name\":\"__WalletLink_init\",\"inputs\":[{\"name\":\"delegateRegistry\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"sclEip6565\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"checkIfLinked\",\"inputs\":[{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"wallet\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"checkIfNonEVMWalletLinked\",\"inputs\":[{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"walletHash\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"explicitWalletsByRootKey\",\"inputs\":[{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"options\",\"type\":\"tuple\",\"internalType\":\"structIWalletLinkBase.WalletQueryOptions\",\"components\":[{\"name\":\"includeDelegations\",\"type\":\"bool\",\"internalType\":\"bool\"}]}],\"outputs\":[{\"name\":\"wallets\",\"type\":\"tuple[]\",\"internalType\":\"structWalletLib.Wallet[]\",\"components\":[{\"name\":\"addr\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"vmType\",\"type\":\"uint8\",\"internalType\":\"enumWalletLib.VirtualMachineType\"}]}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getDefaultWallet\",\"inputs\":[{\"name\":\"rootWallet\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getDependency\",\"inputs\":[{\"name\":\"dependency\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getLatestNonceForRootKey\",\"inputs\":[{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getRootKeyForWallet\",\"inputs\":[{\"name\":\"wallet\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getWalletsByRootKey\",\"inputs\":[{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"wallets\",\"type\":\"address[]\",\"internalType\":\"address[]\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getWalletsByRootKeyWithDelegations\",\"inputs\":[{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"wallets\",\"type\":\"address[]\",\"internalType\":\"address[]\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"linkCallerToRootKey\",\"inputs\":[{\"name\":\"rootWallet\",\"type\":\"tuple\",\"internalType\":\"structIWalletLinkBase.LinkedWallet\",\"components\":[{\"name\":\"addr\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"signature\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"message\",\"type\":\"string\",\"internalType\":\"string\"}]},{\"name\":\"nonce\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"linkNonEVMWalletToRootKey\",\"inputs\":[{\"name\":\"wallet\",\"type\":\"tuple\",\"internalType\":\"structIWalletLinkBase.NonEVMLinkedWallet\",\"components\":[{\"name\":\"wallet\",\"type\":\"tuple\",\"internalType\":\"structWalletLib.Wallet\",\"components\":[{\"name\":\"addr\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"vmType\",\"type\":\"uint8\",\"internalType\":\"enumWalletLib.VirtualMachineType\"}]},{\"name\":\"signature\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"message\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"extraData\",\"type\":\"tuple[]\",\"internalType\":\"structIWalletLinkBase.VMSpecificData[]\",\"components\":[{\"name\":\"key\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"value\",\"type\":\"bytes\",\"internalType\":\"bytes\"}]}]},{\"name\":\"nonce\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"linkWalletToRootKey\",\"inputs\":[{\"name\":\"wallet\",\"type\":\"tuple\",\"internalType\":\"structIWalletLinkBase.LinkedWallet\",\"components\":[{\"name\":\"addr\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"signature\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"message\",\"type\":\"string\",\"internalType\":\"string\"}]},{\"name\":\"rootWallet\",\"type\":\"tuple\",\"internalType\":\"structIWalletLinkBase.LinkedWallet\",\"components\":[{\"name\":\"addr\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"signature\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"message\",\"type\":\"string\",\"internalType\":\"string\"}]},{\"name\":\"nonce\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"removeCallerLink\",\"inputs\":[],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"removeLink\",\"inputs\":[{\"name\":\"wallet\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"rootWallet\",\"type\":\"tuple\",\"internalType\":\"structIWalletLinkBase.LinkedWallet\",\"components\":[{\"name\":\"addr\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"signature\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"message\",\"type\":\"string\",\"internalType\":\"string\"}]},{\"name\":\"nonce\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"removeNonEVMWalletLink\",\"inputs\":[{\"name\":\"wallet\",\"type\":\"tuple\",\"internalType\":\"structWalletLib.Wallet\",\"components\":[{\"name\":\"addr\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"vmType\",\"type\":\"uint8\",\"internalType\":\"enumWalletLib.VirtualMachineType\"}]},{\"name\":\"nonce\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"setDefaultWallet\",\"inputs\":[{\"name\":\"defaultWallet\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"setDependency\",\"inputs\":[{\"name\":\"dependency\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"dependencyAddress\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"event\",\"name\":\"Initialized\",\"inputs\":[{\"name\":\"version\",\"type\":\"uint32\",\"indexed\":false,\"internalType\":\"uint32\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"InterfaceAdded\",\"inputs\":[{\"name\":\"interfaceId\",\"type\":\"bytes4\",\"indexed\":true,\"internalType\":\"bytes4\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"InterfaceRemoved\",\"inputs\":[{\"name\":\"interfaceId\",\"type\":\"bytes4\",\"indexed\":true,\"internalType\":\"bytes4\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"LinkNonEVMWalletToRootWallet\",\"inputs\":[{\"name\":\"walletHash\",\"type\":\"bytes32\",\"indexed\":true,\"internalType\":\"bytes32\"},{\"name\":\"rootKey\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"LinkWalletToRootKey\",\"inputs\":[{\"name\":\"wallet\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"rootKey\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"OwnershipTransferred\",\"inputs\":[{\"name\":\"previousOwner\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"newOwner\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"RemoveLink\",\"inputs\":[{\"name\":\"wallet\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"secondWallet\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"RemoveNonEVMWalletLink\",\"inputs\":[{\"name\":\"walletHash\",\"type\":\"bytes32\",\"indexed\":true,\"internalType\":\"bytes32\"},{\"name\":\"rootKey\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"SetDefaultWallet\",\"inputs\":[{\"name\":\"rootKey\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"defaultWallet\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"error\",\"name\":\"Initializable_InInitializingState\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"Initializable_NotInInitializingState\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"Introspection_AlreadySupported\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"Introspection_NotSupported\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidAccountNonce\",\"inputs\":[{\"name\":\"account\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"currentNonce\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"type\":\"error\",\"name\":\"Ownable__NotOwner\",\"inputs\":[{\"name\":\"account\",\"type\":\"address\",\"internalType\":\"address\"}]},{\"type\":\"error\",\"name\":\"Ownable__ZeroAddress\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"WalletLink__AddressMismatch\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"WalletLink__CannotLinkToRootWallet\",\"inputs\":[{\"name\":\"wallet\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"}]},{\"type\":\"error\",\"name\":\"WalletLink__CannotLinkToSelf\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"WalletLink__CannotRemoveDefaultWallet\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"WalletLink__CannotRemoveRootWallet\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"WalletLink__DefaultWalletAlreadySet\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"WalletLink__InvalidAddress\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"WalletLink__InvalidMessage\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"WalletLink__InvalidNonEVMAddress\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"WalletLink__InvalidSignature\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"WalletLink__InvalidVMSpecificData\",\"inputs\":[{\"name\":\"key\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"value\",\"type\":\"bytes\",\"internalType\":\"bytes\"}]},{\"type\":\"error\",\"name\":\"WalletLink__LinkAlreadyExists\",\"inputs\":[{\"name\":\"wallet\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"}]},{\"type\":\"error\",\"name\":\"WalletLink__LinkedToAnotherRootKey\",\"inputs\":[{\"name\":\"wallet\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"}]},{\"type\":\"error\",\"name\":\"WalletLink__MaxLinkedWalletsReached\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"WalletLink__NonEVMWalletAlreadyLinked\",\"inputs\":[{\"name\":\"wallet\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"}]},{\"type\":\"error\",\"name\":\"WalletLink__NonEVMWalletNotLinked\",\"inputs\":[{\"name\":\"wallet\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"}]},{\"type\":\"error\",\"name\":\"WalletLink__NotLinked\",\"inputs\":[{\"name\":\"wallet\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"}]},{\"type\":\"error\",\"name\":\"WalletLink__RootKeyMismatch\",\"inputs\":[{\"name\":\"callerRootKey\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"}]},{\"type\":\"error\",\"name\":\"WalletLink__UnsupportedVMType\",\"inputs\":[]}]",
+	Bin: "0x60806040523480156200001157600080fd5b506200001c62000022565b620000ca565b7f59b501c3653afc186af7d48dda36cf6732bd21629a6295693664240a6ef520008054640100000000900460ff16156200006f576040516366008a2d60e01b815260040160405180910390fd5b805463ffffffff9081161015620000c757805463ffffffff191663ffffffff90811782556040519081527fe9c9b456cb2994b80aeef036cf59d26e9617df80f816a6ee5a5b4166e07e2f5c9060200160405180910390a15b50565b61327f80620000da6000396000f3fe608060405234801561001057600080fd5b50600436106101165760003560e01c80636aa40299116100a257806397d9a8491161007157806397d9a84914610255578063a5bbf48014610268578063baafda6b1461027b578063f82103981461028e578063f8aca11e146102a157600080fd5b80636aa40299146101f9578063719269001461020c5780637238695e1461021f578063912b97581461023257600080fd5b8063243a7134116100e9578063243a7134146101a35780632f461453146101b857806335d2fb64146101cb5780633d005eab146101de57806364899d98146101f157600080fd5b806302345b981461011b578063039dd19314610144578063101659b11461016f57806320a00ac814610182575b600080fd5b61012e61012936600461278d565b6102c1565b60405161013b91906127aa565b60405180910390f35b6101576101523660046127f7565b6102d2565b6040516001600160a01b03909116815260200161013b565b61015761017d36600461278d565b6102dd565b61019561019036600461278d565b610321565b60405190815260200161013b565b6101b66101b1366004612828565b61035e565b005b6101b66101c6366004612894565b61036e565b6101b66101d93660046128d8565b61037c565b61012e6101ec36600461278d565b610387565b6101b6610392565b6101b661020736600461291f565b61039c565b6101b661021a366004612958565b61042f565b6101b661022d3660046129a1565b610439565b61024561024036600461291f565b610494565b604051901515815260200161013b565b6102456102633660046129c6565b6104a7565b6101b66102763660046129e4565b6104e8565b6101b661028936600461278d565b6104f2565b61015761029c36600461278d565b6104ff565b6102b46102af366004612a1f565b61050a565b60405161013b9190612a98565b60606102cc82610516565b92915050565b60006102cc82610547565b6001600160a01b0380821660009081527f19511ce7944c192b1007be99b82019218d1decfc513f05239612743360a0dc0360205260408120600201549091166102cc565b6001600160a01b03811660009081527fda5d6d87446d81938877f0ee239dac391146dd7466ea30567f72becf06773c0060205260408120546102cc565b610369838383610581565b505050565b6103788282610864565b5050565b6103698383836109ec565b60606102cc82610c98565b61039a611003565b565b7f59b501c3653afc186af7d48dda36cf6732bd21629a6295693664240a6ef5200054640100000000900460ff166103e657604051630ef4733760e31b815260040160405180910390fd5b6103f6630267c9bb60e51b611135565b610417732222a622a3a0aa22afa922a3a4a9aa292cafab1960611b8361120e565b6103786a53434c5f4549503635363560a81b8261120e565b610378828261125b565b7f4675fa8241f86f37157864d3d49b85ad4b164352c516da28e1678a90470ae300546001600160a01b0316331461048a576040516365f4906560e01b81523360048201526024015b60405180910390fd5b610378828261120e565b60006104a0838361137d565b9392505050565b60008181527f19511ce7944c192b1007be99b82019218d1decfc513f05239612743360a0dc0460205260408120546001600160a01b038085169116146104a0565b61037882826113be565b6104fc3382611590565b50565b60006102cc82611700565b60606104a0838361173d565b6001600160a01b038116600090815260008051602061325f833981519152602052604090206060906102cc90611a0c565b60009081527f19511ce7944c192b1007be99b82019218d1decfc513f05239612743360a0dc0260205260409020546001600160a01b031690565b60008051602061325f8339815191526105b3816105a1602087018761278d565b6105ae602087018761278d565b611a19565b600061060d6105c56040870187612b4c565b8080601f01602080910402602001604051908101604052809392919081815260200183838082843760009201919091525061060792505050602088018861278d565b85611ba7565b9050600061061a82611c11565b9050610629602086018661278d565b6001600160a01b031661067d826106436020890189612b4c565b8080601f016020809104026020016040519081016040528093929190818152602001838380828437600092019190915250611c3e92505050565b6001600160a01b0316146106a457604051632af0041d60e11b815260040160405180910390fd5b6106fc6106b46040870187612b4c565b8080601f0160208091040260200160405190810160405280939291908181526020018383808284376000920191909152506106f692505050602088018861278d565b86611ba7565b9150600061070983611c11565b9050610718602088018861278d565b6001600160a01b03166107328261064360208b018b612b4c565b6001600160a01b03161461075957604051632af0041d60e11b815260040160405180910390fd5b61076f610769602088018861278d565b86611cd0565b6107ae61077f602089018961278d565b85600061078f60208b018b61278d565b6001600160a01b03168152602081019190915260400160002090611d42565b506107bc602087018761278d565b6001850160006107cf60208b018b61278d565b6001600160a01b039081168252602080830193909352604090910160002080546001600160a01b03191693909116929092179091556108109087018761278d565b6001600160a01b0316610826602089018961278d565b6001600160a01b03167f64126824352170c4025060d1f6e215159635e4b08e649830695f26ef6d2b572160405160405180910390a350505050505050565b60008051602061325f8339815191523361088682826105ae602088018861278d565b60006108d66108986040870187612b4c565b8080601f016020809104026020016040519081016040528093929190818152602001838380828437600092019190915250869250889150611ba79050565b905060006108e382611c11565b90506108f2602087018761278d565b6001600160a01b031661090c8261064360208a018a612b4c565b6001600160a01b03161461093357604051632af0041d60e11b815260040160405180910390fd5b610943610769602088018861278d565b6109578385600061078f60208b018b61278d565b50610965602087018761278d565b6001600160a01b038481166000908152600187016020908152604090912080546001600160a01b031916939092169290921790556109a59087018761278d565b6001600160a01b0316836001600160a01b03167f64126824352170c4025060d1f6e215159635e4b08e649830695f26ef6d2b572160405160405180910390a3505050505050565b60008051602061325f8339815191526001600160a01b0384161580610a2657506000610a1b602085018561278d565b6001600160a01b0316145b15610a4457604051636df3f5c360e01b815260040160405180910390fd5b610a51602084018461278d565b6001600160a01b0316846001600160a01b031603610a82576040516333976e3b60e11b815260040160405180910390fd5b610a8f602084018461278d565b6001600160a01b0385811660009081526001840160205260409020548116911614610add5783610ac2602085018561278d565b604051635e300c8360e01b8152600401610481929190612b99565b6001600160a01b038416600382016000610afa602087018761278d565b6001600160a01b0390811682526020820192909252604001600020600201541603610b385760405163d51f04c160e01b815260040160405180910390fd5b6000610b88610b4a6040860186612b4c565b8080601f016020809104026020016040519081016040528093929190818152602001838380828437600092019190915250899250879150611ba79050565b90506000610b9582611c11565b9050610ba4602086018661278d565b6001600160a01b0316610bbe826106436020890189612b4c565b6001600160a01b031614610be557604051632af0041d60e11b815260040160405180910390fd5b610bfb610bf5602087018761278d565b85611cd0565b6001600160a01b03861660009081526001840160209081526040822080546001600160a01b0319169055610c59918891869190610c3a908a018a61278d565b6001600160a01b03168152602081019190915260400160002090611d57565b5060405133906001600160a01b038816907f9a9d98629b39adf596077fc95a0712ba55c38f40a354e99d366a10f9c3e27da290600090a3505050505050565b7fe148878d3ec6f61c12b8793d2b906fa601bb48234edb57fec1c1d5ae779e45a4546001600160a01b03828116600090815260008051602061325f833981519152602081905260408220606094919390911691610cf482611d6c565b905080600003610d17575050604080516000815260208101909152949350505050565b6000610d2283611a0c565b9050816000816001600160401b03811115610d3f57610d3f612bb3565b604051908082528060200260200182016040528015610d7257816020015b6060815260200190600190039081610d5d5790505b50905060005b84811015610ebd57866001600160a01b03166342f87c25858381518110610da157610da1612bc9565b60200260200101516040518263ffffffff1660e01b8152600401610dd491906001600160a01b0391909116815260200190565b600060405180830381865afa158015610df1573d6000803e3d6000fd5b505050506040513d6000823e601f3d908101601f19168201604052610e199190810190612c69565b828281518110610e2b57610e2b612bc9565b60200260200101819052506000828281518110610e4a57610e4a612bc9565b6020026020010151905060008151905060005b81811015610eaf576001838281518110610e7957610e79612bc9565b6020026020010151600001516005811115610e9657610e96612a60565b03610ea757610ea486612d9d565b95505b600101610e5d565b505050806001019050610d78565b50816001600160401b03811115610ed657610ed6612bb3565b604051908082528060200260200182016040528015610eff578160200160208202803683370190505b50975060208801602084018560051b8083828460045afa5086925060009150505b85811015610ff5576000838281518110610f3c57610f3c612bc9565b6020026020010151905060008151905060005b81811015610fe7576000838281518110610f6b57610f6b612bc9565b6020026020010151905060016005811115610f8857610f88612a60565b81516005811115610f9b57610f9b612a60565b03610fde5780604001518e8780600101985081518110610fbd57610fbd612bc9565b60200260200101906001600160a01b031690816001600160a01b0316815250505b50600101610f4f565b505050806001019050610f20565b505050505050505050919050565b3360008181527f19511ce7944c192b1007be99b82019218d1decfc513f05239612743360a0dc01602052604090205460008051602061325f83398151915291906001600160a01b03168061106e578181604051635e300c8360e01b8152600401610481929190612b99565b6001600160a01b0381811660009081526003850160205260409020600201548184169116036110b05760405163d51f04c160e01b815260040160405180910390fd5b6001600160a01b038083166000908152600185016020908152604080832080546001600160a01b03191690559284168252859052206110ef9083611d57565b50806001600160a01b0316826001600160a01b03167f9a9d98629b39adf596077fc95a0712ba55c38f40a354e99d366a10f9c3e27da260405160405180910390a3505050565b6001600160e01b0319811660009081527f81088bbc801e045ea3e7620779ab349988f58afbdfba10dff983df3f33522b00602052604090205460ff166111bd576001600160e01b0319811660009081527f81088bbc801e045ea3e7620779ab349988f58afbdfba10dff983df3f33522b0060205260409020805460ff191660011790556111d6565b604051637967f77d60e11b815260040160405180910390fd5b6040516001600160e01b03198216907f78f84e5b1c5c05be2b5ad3800781dd404d6d6c6302bc755c0fe20f58a33a7f2290600090a250565b60009182527f19511ce7944c192b1007be99b82019218d1decfc513f05239612743360a0dc02602052604090912080546001600160a01b0319166001600160a01b03909216919091179055565b60405160008051602061325f833981519152903390600090611281908690602001612dec565b60408051601f1981840301815291815281516020928301206001600160a01b03808616600090815260018801909452919092205491925016806112db578281604051635e300c8360e01b8152600401610481929190612b99565b6001600160a01b038116600090815260038501602052604090206112ff8184611d76565b61132a5761130d8780612b4c565b83604051634e617b1b60e11b815260040161048193929190612e6c565b6113348287611cd0565b61133e8184611d82565b6040516001600160a01b0383169084907fbd9633f1d49d3b0a615e7eba9e46218c1bfc459278b5764c2aeee591b1b1230a90600090a350505050505050565b6001600160a01b0390811660009081527f19511ce7944c192b1007be99b82019218d1decfc513f05239612743360a0dc016020526040902054811691161490565b60008051602061325f8339815191523360006113da8580612e98565b6040516020016113ea9190612dec565b60405160208183030381529060405280519060200120905061140d838683611db8565b6001600160a01b038083166000908152600185016020908152604080832054909316808352600387019091529190206114468184611d76565b1561147c576114558780612e98565b61145f9080612b4c565b8360405163c7d36f2f60e01b815260040161048193929190612e6c565b600a61148782611d6c565b106114a557604051634c8780db60e01b815260040160405180910390fd5b60016114b18880612e98565b6114c2906040810190602001612eb8565b60068111156114d3576114d3612a60565b036114f8576114ea6114e58880612e98565b611ec9565b6114f387611f2b565b611508565b611508630cb73fbf60e11b6120d2565b6000838152600486016020526040902080546001600160a01b0319166001600160a01b0384161790556115478361153f8980612e98565b8391906120dc565b6115518287611cd0565b6040516001600160a01b0383169084907feb317a93636ebc39c613bf403c3fb4147a957dbf439fb47b4c9cc5c2b372f6bc90600090a350505050505050565b6001600160a01b0381166115b757604051636df3f5c360e01b815260040160405180910390fd5b60006115c282611700565b90506001600160a01b0381166115ef578181604051635e300c8360e01b8152600401610481929190612b99565b6115f9818461137d565b1580156116185750806001600160a01b0316836001600160a01b031614155b1561163a578281604051635e300c8360e01b8152600401610481929190612b99565b6001600160a01b0381811660009081527f19511ce7944c192b1007be99b82019218d1decfc513f05239612743360a0dc0360205260409020600281015460008051602061325f833981519152928581169116036116aa57604051632febf33760e01b815260040160405180910390fd5b6002810180546001600160a01b0319166001600160a01b0386811691821790925560405190918516907f63a3f19f9166855a56a40467088468f9ae049d32865102cf64b70444db55503690600090a35050505050565b6001600160a01b0390811660009081527f19511ce7944c192b1007be99b82019218d1decfc513f05239612743360a0dc0160205260409020541690565b6001600160a01b03821660009081527f19511ce7944c192b1007be99b82019218d1decfc513f05239612743360a0dc036020908152604090912060609160008051602061325f8339815191529190839061179990860186612ee3565b156117ae576117a786610c98565b90506117d2565b6001600160a01b03861660009081526020849052604090206117cf90611a0c565b90505b60006117dd83611a0c565b825181519192509060006117f18284612f00565b9050806001600160401b0381111561180b5761180b612bb3565b60405190808252806020026020018201604052801561185157816020015b6040805180820190915260608152600060208201528152602001906001900390816118295790505b50975060005b838110156118bb57604051806040016040528061188c88848151811061187f5761187f612bc9565b602002602001015161210a565b815260200160008152508982815181106118a8576118a8612bc9565b6020908102919091010152600101611857565b5060005b828110156119fe5760008760030160008784815181106118e1576118e1612bc9565b6020026020010151815260200190815260200160002060405180604001604052908160008201805461191290612f13565b80601f016020809104026020016040519081016040528092919081815260200182805461193e90612f13565b801561198b5780601f106119605761010080835404028352916020019161198b565b820191906000526020600020905b81548152906001019060200180831161196e57829003601f168201915b5050509183525050600182015460209091019060ff1660068111156119b2576119b2612a60565b60068111156119c3576119c3612a60565b905250905060006119d48387612f00565b9050818b82815181106119e9576119e9612bc9565b602090810291909101015250506001016118bf565b505050505050505092915050565b606060006104a08361212e565b6001600160a01b0382161580611a3657506001600160a01b038116155b15611a5457604051636df3f5c360e01b815260040160405180910390fd5b806001600160a01b0316826001600160a01b031603611a865760405163848ba26d60e01b815260040160405180910390fd5b6001600160a01b0382811660009081526001850160205260409020541615611ac55781816040516314790b7f60e01b8152600401610481929190612b99565b6001600160a01b0381811660009081526001850160205260409020541615611b21576001600160a01b038082166000908152600185016020526040908190205490516347227b5d60e01b81526104819285921690600401612b99565b6001600160a01b0382166000908152602084905260408120611b4290611d6c565b1115611b65578181604051637b815eed60e11b8152600401610481929190612b99565b6001600160a01b0381166000908152602084905260409020600a90611b8990611d6c565b1061036957604051634c8780db60e01b815260040160405180910390fd5b8251602093840120604080517f6bb89d031fcd292ecd4c0e6855878b7165cebc3a2f35bc6bbac48c088dd8325c81870152808201929092526001600160a01b039390931660608201526080808201929092528251808203909201825260a001909152805191012090565b60006102cc611c1e61218a565b8360405161190160f01b8152600281019290925260228201526042902090565b6000604051825160408114611c5b5760418114611c7c5750611cbb565b604084015160ff81901c601b016020526001600160ff1b0316606052611c90565b606084015160001a60205260408401516060525b50836000526020830151604052602060016080600060015afa5191506000606052806040523d611cc9575b638baa579f6000526004601cfd5b5092915050565b6001600160a01b03821660009081527fda5d6d87446d81938877f0ee239dac391146dd7466ea30567f72becf06773c0060205260409020805460018101909155818114610369576040516301d4b62360e61b81526001600160a01b038416600482015260248101829052604401610481565b60006104a0836001600160a01b038416612199565b60006104a0836001600160a01b0384166121e8565b60006102cc825490565b60006104a083836122db565b611d8c82826122f3565b506000818152600383016020526040812090611da8828261272e565b50600101805460ff191690555050565b33611dc38380612e98565b611dcd9080612b4c565b9050600003611def576040516301bb0eed60e51b815260040160405180910390fd5b6064611dfb8480612e98565b611e059080612b4c565b90501115611e26576040516301bb0eed60e51b815260040160405180910390fd5b3360009081526001850160205260409020546001600160a01b031680611e6457816000604051635e300c8360e01b8152600401610481929190612b99565b60008381526004860160205260409020546001600160a01b03168015801590611e9f5750816001600160a01b0316816001600160a01b031614155b15611ec1578181604051635760279b60e01b8152600401610481929190612b99565b505050505050565b6001611edb6040830160208401612eb8565b6006811115611eec57611eec612a60565b036104fc576020611efd8280612b4c565b90501080611f165750602c611f128280612b4c565b9050115b156104fc576104fc6301bb0eed60e51b6120d2565b6000611f3a6060830183612f47565b6000818110611f4b57611f4b612bc9565b9050602002810190611f5d9190612e98565b611f6b906020810190612b4c565b810190611f789190612f90565b9050611fce611f878380612e98565b611f919080612b4c565b8080601f01602080910402602001604051908101604052809392919081815260200183838082843760009201919091525050845191506122ff9050565b611feb5760405163d5ecf56b60e01b815260040160405180910390fd5b60006120046a53434c5f4549503635363560a81b610547565b90506000806120166020860186612b4c565b8101906120239190613018565b909250905060006001600160a01b03841663369b69216120466040890189612b4c565b88516040516001600160e01b031960e086901b16815261206f939291899189919060040161303a565b6020604051808303816000875af115801561208e573d6000803e3d6000fd5b505050506040513d601f19601f820116820180604052508101906120b29190613093565b905080611ec157604051632af0041d60e11b815260040160405180910390fd5b8060005260046000fd5b6120e68383612324565b506000828152600384016020526040902081906121038282613136565b5050505050565b606061211582612330565b8051613078825260020160011990910190815292915050565b60608160000180548060200260200160405190810160405280929190818152602001828054801561217e57602002820191906000526020600020905b81548152602001906001019080831161216a575b50505050509050919050565b600061219461239f565b905090565b60008181526001830160205260408120546121e0575081546001818101845560008481526020808220909301849055845484825282860190935260409020919091556102cc565b5060006102cc565b600081815260018301602052604081205480156122d157600061220c600183613235565b855490915060009061222090600190613235565b905080821461228557600086600001828154811061224057612240612bc9565b906000526020600020015490508087600001848154811061226357612263612bc9565b6000918252602080832090910192909255918252600188019052604090208390555b855486908061229657612296613248565b6001900381819060005260206000200160009055905585600101600086815260200190815260200160002060009055600193505050506102cc565b60009150506102cc565b600081815260018301602052604081205415156104a0565b60006104a083836121e8565b60006104a08361230e84612413565b8051602091820120825192909101919091201490565b60006104a08383612199565b60606040519050608081016040526f30313233343536373839616263646566600f526002810190506028815260208101600060288201528260601b925060005b808101820184821a600f81165160018301538060041c5182535050600181019060121901612370575050919050565b60007f8b73c3c69bb8fe3d512ecc4cf759cc79239f7b179b0ffacaa9a75d522b39400f6123ca612425565b6123d26124a1565b60408051602081019490945283019190915260608201524660808201523060a082015260c00160405160208183030381529060405280519060200120905090565b60606102cc82600460200201516124f1565b600080612430612649565b805190915015612447578051602090910120919050565b7f219639d1c7dec7d049ffb8dc11e39f070f052764b142bd61682a7811a502a6005480156124755792915050565b7fc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a4709250505090565b5090565b6000806124ac6126fd565b8051909150156124c3578051602090910120919050565b7f219639d1c7dec7d049ffb8dc11e39f070f052764b142bd61682a7811a502a6015480156124755792915050565b6060816000600382157ff8f9f9faf9fdfafbf9fdfcfdfafbfcfef9fafdfafcfcfbfefafafcfbffffffff6f8421084210842108cc6318c6db6d54be6fffffffffffffffffffffffffffffffff861160071b86811c6001600160401b031060061b1786811c63ffffffff1060051b1786811c61ffff1060041b1786811c60ff10851b1786811c9190911c601f169190911a180160408051602c808252606082019092529190921c9250604c01805b841561260a57603a8086049560001990920191067f5a6162636465666768696a6b6d6e6f707172737475767778797a000000000000602082107f6b5351575153515f51282828292b293739383838383827292b295455565758590218601f821681901a8353505061259e565b7f3131313131313131313131313131313131313131313131313131313131313131601f1980830191909152939003908190039201918252509392505050565b60607f219639d1c7dec7d049ffb8dc11e39f070f052764b142bd61682a7811a502a600600201805461267a90612f13565b80601f01602080910402602001604051908101604052809291908181526020018280546126a690612f13565b80156126f35780601f106126c8576101008083540402835291602001916126f3565b820191906000526020600020905b8154815290600101906020018083116126d657829003601f168201915b5050505050905090565b60607f219639d1c7dec7d049ffb8dc11e39f070f052764b142bd61682a7811a502a600600301805461267a90612f13565b50805461273a90612f13565b6000825580601f1061274a575050565b601f0160209004906000526020600020908101906104fc91905b8082111561249d5760008155600101612764565b6001600160a01b03811681146104fc57600080fd5b60006020828403121561279f57600080fd5b81356104a081612778565b6020808252825182820181905260009190848201906040850190845b818110156127eb5783516001600160a01b0316835292840192918401916001016127c6565b50909695505050505050565b60006020828403121561280957600080fd5b5035919050565b60006060828403121561282257600080fd5b50919050565b60008060006060848603121561283d57600080fd5b83356001600160401b038082111561285457600080fd5b61286087838801612810565b9450602086013591508082111561287657600080fd5b5061288386828701612810565b925050604084013590509250925092565b600080604083850312156128a757600080fd5b82356001600160401b038111156128bd57600080fd5b6128c985828601612810565b95602094909401359450505050565b6000806000606084860312156128ed57600080fd5b83356128f881612778565b925060208401356001600160401b0381111561291357600080fd5b61288386828701612810565b6000806040838503121561293257600080fd5b823561293d81612778565b9150602083013561294d81612778565b809150509250929050565b6000806040838503121561296b57600080fd5b82356001600160401b0381111561298157600080fd5b83016040818603121561299357600080fd5b946020939093013593505050565b600080604083850312156129b457600080fd5b82359150602083013561294d81612778565b600080604083850312156129d957600080fd5b823561299381612778565b600080604083850312156129f757600080fd5b82356001600160401b03811115612a0d57600080fd5b83016080818603121561299357600080fd5b6000808284036040811215612a3357600080fd5b8335612a3e81612778565b92506020601f1982011215612a5257600080fd5b506020830190509250929050565b634e487b7160e01b600052602160045260246000fd5b60078110612a9457634e487b7160e01b600052602160045260246000fd5b9052565b600060208083018184528085518083526040925060408601915060408160051b8701018488016000805b84811015612b3d57603f198a8503018652825180518886528051808a880152845b81811015612aff578281018c0151888201606001528b01612ae3565b5060609150848282890101528a8301519250612b1d8b880184612a76565b978a0197601f01601f191695909501909401935091870191600101612ac2565b50919998505050505050505050565b6000808335601e19843603018112612b6357600080fd5b8301803591506001600160401b03821115612b7d57600080fd5b602001915036819003821315612b9257600080fd5b9250929050565b6001600160a01b0392831681529116602082015260400190565b634e487b7160e01b600052604160045260246000fd5b634e487b7160e01b600052603260045260246000fd5b60405160e081016001600160401b0381118282101715612c0157612c01612bb3565b60405290565b60405160a081016001600160401b0381118282101715612c0157612c01612bb3565b604051601f8201601f191681016001600160401b0381118282101715612c5157612c51612bb3565b604052919050565b8051612c6481612778565b919050565b60006020808385031215612c7c57600080fd5b82516001600160401b0380821115612c9357600080fd5b818501915085601f830112612ca757600080fd5b815181811115612cb957612cb9612bb3565b612cc7848260051b01612c29565b818152848101925060e0918202840185019188831115612ce657600080fd5b938501935b82851015612d7b5780858a031215612d035760008081fd5b612d0b612bdf565b855160068110612d1b5760008081fd5b8152612d28868801612c59565b878201526040612d39818801612c59565b90820152606086810151908201526080612d54818801612c59565b9082015260a0868101519082015260c0808701519082015284529384019392850192612ceb565b50979650505050505050565b634e487b7160e01b600052601160045260246000fd5b600060018201612daf57612daf612d87565b5060010190565b81835281816020850137506000828201602090810191909152601f909101601f19169091010190565b600781106104fc57600080fd5b6020815260008235601e19843603018112612e0657600080fd5b83016020810190356001600160401b03811115612e2257600080fd5b803603821315612e3157600080fd5b60406020850152612e46606085018284612db6565b9150506020840135612e5781612ddf565b612e646040850182612a76565b509392505050565b604081526000612e80604083018587612db6565b905060018060a01b0383166020830152949350505050565b60008235603e19833603018112612eae57600080fd5b9190910192915050565b600060208284031215612eca57600080fd5b81356104a081612ddf565b80151581146104fc57600080fd5b600060208284031215612ef557600080fd5b81356104a081612ed5565b808201808211156102cc576102cc612d87565b600181811c90821680612f2757607f821691505b60208210810361282257634e487b7160e01b600052602260045260246000fd5b6000808335601e19843603018112612f5e57600080fd5b8301803591506001600160401b03821115612f7857600080fd5b6020019150600581901b3603821315612b9257600080fd5b600060a08284031215612fa257600080fd5b60405160208082018281106001600160401b0382111715612fc557612fc5612bb3565b604052601f84018513612fd757600080fd5b612fdf612c07565b8060a0860187811115612ff157600080fd5b865b8181101561300a5780358452928401928401612ff3565b505083525090949350505050565b6000806040838503121561302b57600080fd5b50508035926020909101359150565b600061010080835261304f818401888a612db6565b9150506020856020840152846040840152606083018460005b600581101561308557815183529183019190830190600101613068565b505050509695505050505050565b6000602082840312156130a557600080fd5b81516104a081612ed5565b601f821115610369576000816000526020600020601f850160051c810160208610156130d95750805b601f850160051c820191505b81811015611ec1578281556001016130e5565b600081356102cc81612ddf565b6007821061312357634e487b7160e01b600052602160045260246000fd5b60ff1981541660ff831681178255505050565b8135601e1983360301811261314a57600080fd5b820180356001600160401b0381111561316257600080fd5b6020813603818401131561317557600080fd5b613189826131838654612f13565b866130b0565b6000601f8311600181146131bf57600084156131a757508482018301355b600019600386901b1c1916600185901b17865561321c565b600086815260209020601f19851690835b828110156131f15787850186013582559385019360019091019085016131d0565b50858210156132105760001960f88760031b161c198585890101351681555b505060018460011b0186555b505061210361322c8287016130f8565b60018601613105565b818103818111156102cc576102cc612d87565b634e487b7160e01b600052603160045260246000fdfe19511ce7944c192b1007be99b82019218d1decfc513f05239612743360a0dc00",
 }
 
 // WalletLinkABI is the input ABI used to generate the binding from.
@@ -240,6 +265,130 @@ func (_WalletLink *WalletLinkCallerSession) CheckIfLinked(rootKey common.Address
 	return _WalletLink.Contract.CheckIfLinked(&_WalletLink.CallOpts, rootKey, wallet)
 }
 
+// CheckIfNonEVMWalletLinked is a free data retrieval call binding the contract method 0x97d9a849.
+//
+// Solidity: function checkIfNonEVMWalletLinked(address rootKey, bytes32 walletHash) view returns(bool)
+func (_WalletLink *WalletLinkCaller) CheckIfNonEVMWalletLinked(opts *bind.CallOpts, rootKey common.Address, walletHash [32]byte) (bool, error) {
+	var out []interface{}
+	err := _WalletLink.contract.Call(opts, &out, "checkIfNonEVMWalletLinked", rootKey, walletHash)
+
+	if err != nil {
+		return *new(bool), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(bool)).(*bool)
+
+	return out0, err
+
+}
+
+// CheckIfNonEVMWalletLinked is a free data retrieval call binding the contract method 0x97d9a849.
+//
+// Solidity: function checkIfNonEVMWalletLinked(address rootKey, bytes32 walletHash) view returns(bool)
+func (_WalletLink *WalletLinkSession) CheckIfNonEVMWalletLinked(rootKey common.Address, walletHash [32]byte) (bool, error) {
+	return _WalletLink.Contract.CheckIfNonEVMWalletLinked(&_WalletLink.CallOpts, rootKey, walletHash)
+}
+
+// CheckIfNonEVMWalletLinked is a free data retrieval call binding the contract method 0x97d9a849.
+//
+// Solidity: function checkIfNonEVMWalletLinked(address rootKey, bytes32 walletHash) view returns(bool)
+func (_WalletLink *WalletLinkCallerSession) CheckIfNonEVMWalletLinked(rootKey common.Address, walletHash [32]byte) (bool, error) {
+	return _WalletLink.Contract.CheckIfNonEVMWalletLinked(&_WalletLink.CallOpts, rootKey, walletHash)
+}
+
+// ExplicitWalletsByRootKey is a free data retrieval call binding the contract method 0xf8aca11e.
+//
+// Solidity: function explicitWalletsByRootKey(address rootKey, (bool) options) view returns((string,uint8)[] wallets)
+func (_WalletLink *WalletLinkCaller) ExplicitWalletsByRootKey(opts *bind.CallOpts, rootKey common.Address, options IWalletLinkBaseWalletQueryOptions) ([]WalletLibWallet, error) {
+	var out []interface{}
+	err := _WalletLink.contract.Call(opts, &out, "explicitWalletsByRootKey", rootKey, options)
+
+	if err != nil {
+		return *new([]WalletLibWallet), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new([]WalletLibWallet)).(*[]WalletLibWallet)
+
+	return out0, err
+
+}
+
+// ExplicitWalletsByRootKey is a free data retrieval call binding the contract method 0xf8aca11e.
+//
+// Solidity: function explicitWalletsByRootKey(address rootKey, (bool) options) view returns((string,uint8)[] wallets)
+func (_WalletLink *WalletLinkSession) ExplicitWalletsByRootKey(rootKey common.Address, options IWalletLinkBaseWalletQueryOptions) ([]WalletLibWallet, error) {
+	return _WalletLink.Contract.ExplicitWalletsByRootKey(&_WalletLink.CallOpts, rootKey, options)
+}
+
+// ExplicitWalletsByRootKey is a free data retrieval call binding the contract method 0xf8aca11e.
+//
+// Solidity: function explicitWalletsByRootKey(address rootKey, (bool) options) view returns((string,uint8)[] wallets)
+func (_WalletLink *WalletLinkCallerSession) ExplicitWalletsByRootKey(rootKey common.Address, options IWalletLinkBaseWalletQueryOptions) ([]WalletLibWallet, error) {
+	return _WalletLink.Contract.ExplicitWalletsByRootKey(&_WalletLink.CallOpts, rootKey, options)
+}
+
+// GetDefaultWallet is a free data retrieval call binding the contract method 0x101659b1.
+//
+// Solidity: function getDefaultWallet(address rootWallet) view returns(address)
+func (_WalletLink *WalletLinkCaller) GetDefaultWallet(opts *bind.CallOpts, rootWallet common.Address) (common.Address, error) {
+	var out []interface{}
+	err := _WalletLink.contract.Call(opts, &out, "getDefaultWallet", rootWallet)
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
+}
+
+// GetDefaultWallet is a free data retrieval call binding the contract method 0x101659b1.
+//
+// Solidity: function getDefaultWallet(address rootWallet) view returns(address)
+func (_WalletLink *WalletLinkSession) GetDefaultWallet(rootWallet common.Address) (common.Address, error) {
+	return _WalletLink.Contract.GetDefaultWallet(&_WalletLink.CallOpts, rootWallet)
+}
+
+// GetDefaultWallet is a free data retrieval call binding the contract method 0x101659b1.
+//
+// Solidity: function getDefaultWallet(address rootWallet) view returns(address)
+func (_WalletLink *WalletLinkCallerSession) GetDefaultWallet(rootWallet common.Address) (common.Address, error) {
+	return _WalletLink.Contract.GetDefaultWallet(&_WalletLink.CallOpts, rootWallet)
+}
+
+// GetDependency is a free data retrieval call binding the contract method 0x039dd193.
+//
+// Solidity: function getDependency(bytes32 dependency) view returns(address)
+func (_WalletLink *WalletLinkCaller) GetDependency(opts *bind.CallOpts, dependency [32]byte) (common.Address, error) {
+	var out []interface{}
+	err := _WalletLink.contract.Call(opts, &out, "getDependency", dependency)
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
+}
+
+// GetDependency is a free data retrieval call binding the contract method 0x039dd193.
+//
+// Solidity: function getDependency(bytes32 dependency) view returns(address)
+func (_WalletLink *WalletLinkSession) GetDependency(dependency [32]byte) (common.Address, error) {
+	return _WalletLink.Contract.GetDependency(&_WalletLink.CallOpts, dependency)
+}
+
+// GetDependency is a free data retrieval call binding the contract method 0x039dd193.
+//
+// Solidity: function getDependency(bytes32 dependency) view returns(address)
+func (_WalletLink *WalletLinkCallerSession) GetDependency(dependency [32]byte) (common.Address, error) {
+	return _WalletLink.Contract.GetDependency(&_WalletLink.CallOpts, dependency)
+}
+
 // GetLatestNonceForRootKey is a free data retrieval call binding the contract method 0x20a00ac8.
 //
 // Solidity: function getLatestNonceForRootKey(address rootKey) view returns(uint256)
@@ -333,25 +482,56 @@ func (_WalletLink *WalletLinkCallerSession) GetWalletsByRootKey(rootKey common.A
 	return _WalletLink.Contract.GetWalletsByRootKey(&_WalletLink.CallOpts, rootKey)
 }
 
-// WalletLinkInit is a paid mutator transaction binding the contract method 0x260a409d.
+// GetWalletsByRootKeyWithDelegations is a free data retrieval call binding the contract method 0x3d005eab.
 //
-// Solidity: function __WalletLink_init() returns()
-func (_WalletLink *WalletLinkTransactor) WalletLinkInit(opts *bind.TransactOpts) (*types.Transaction, error) {
-	return _WalletLink.contract.Transact(opts, "__WalletLink_init")
+// Solidity: function getWalletsByRootKeyWithDelegations(address rootKey) view returns(address[] wallets)
+func (_WalletLink *WalletLinkCaller) GetWalletsByRootKeyWithDelegations(opts *bind.CallOpts, rootKey common.Address) ([]common.Address, error) {
+	var out []interface{}
+	err := _WalletLink.contract.Call(opts, &out, "getWalletsByRootKeyWithDelegations", rootKey)
+
+	if err != nil {
+		return *new([]common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new([]common.Address)).(*[]common.Address)
+
+	return out0, err
+
 }
 
-// WalletLinkInit is a paid mutator transaction binding the contract method 0x260a409d.
+// GetWalletsByRootKeyWithDelegations is a free data retrieval call binding the contract method 0x3d005eab.
 //
-// Solidity: function __WalletLink_init() returns()
-func (_WalletLink *WalletLinkSession) WalletLinkInit() (*types.Transaction, error) {
-	return _WalletLink.Contract.WalletLinkInit(&_WalletLink.TransactOpts)
+// Solidity: function getWalletsByRootKeyWithDelegations(address rootKey) view returns(address[] wallets)
+func (_WalletLink *WalletLinkSession) GetWalletsByRootKeyWithDelegations(rootKey common.Address) ([]common.Address, error) {
+	return _WalletLink.Contract.GetWalletsByRootKeyWithDelegations(&_WalletLink.CallOpts, rootKey)
 }
 
-// WalletLinkInit is a paid mutator transaction binding the contract method 0x260a409d.
+// GetWalletsByRootKeyWithDelegations is a free data retrieval call binding the contract method 0x3d005eab.
 //
-// Solidity: function __WalletLink_init() returns()
-func (_WalletLink *WalletLinkTransactorSession) WalletLinkInit() (*types.Transaction, error) {
-	return _WalletLink.Contract.WalletLinkInit(&_WalletLink.TransactOpts)
+// Solidity: function getWalletsByRootKeyWithDelegations(address rootKey) view returns(address[] wallets)
+func (_WalletLink *WalletLinkCallerSession) GetWalletsByRootKeyWithDelegations(rootKey common.Address) ([]common.Address, error) {
+	return _WalletLink.Contract.GetWalletsByRootKeyWithDelegations(&_WalletLink.CallOpts, rootKey)
+}
+
+// WalletLinkInit is a paid mutator transaction binding the contract method 0x6aa40299.
+//
+// Solidity: function __WalletLink_init(address delegateRegistry, address sclEip6565) returns()
+func (_WalletLink *WalletLinkTransactor) WalletLinkInit(opts *bind.TransactOpts, delegateRegistry common.Address, sclEip6565 common.Address) (*types.Transaction, error) {
+	return _WalletLink.contract.Transact(opts, "__WalletLink_init", delegateRegistry, sclEip6565)
+}
+
+// WalletLinkInit is a paid mutator transaction binding the contract method 0x6aa40299.
+//
+// Solidity: function __WalletLink_init(address delegateRegistry, address sclEip6565) returns()
+func (_WalletLink *WalletLinkSession) WalletLinkInit(delegateRegistry common.Address, sclEip6565 common.Address) (*types.Transaction, error) {
+	return _WalletLink.Contract.WalletLinkInit(&_WalletLink.TransactOpts, delegateRegistry, sclEip6565)
+}
+
+// WalletLinkInit is a paid mutator transaction binding the contract method 0x6aa40299.
+//
+// Solidity: function __WalletLink_init(address delegateRegistry, address sclEip6565) returns()
+func (_WalletLink *WalletLinkTransactorSession) WalletLinkInit(delegateRegistry common.Address, sclEip6565 common.Address) (*types.Transaction, error) {
+	return _WalletLink.Contract.WalletLinkInit(&_WalletLink.TransactOpts, delegateRegistry, sclEip6565)
 }
 
 // LinkCallerToRootKey is a paid mutator transaction binding the contract method 0x2f461453.
@@ -373,6 +553,27 @@ func (_WalletLink *WalletLinkSession) LinkCallerToRootKey(rootWallet IWalletLink
 // Solidity: function linkCallerToRootKey((address,bytes,string) rootWallet, uint256 nonce) returns()
 func (_WalletLink *WalletLinkTransactorSession) LinkCallerToRootKey(rootWallet IWalletLinkBaseLinkedWallet, nonce *big.Int) (*types.Transaction, error) {
 	return _WalletLink.Contract.LinkCallerToRootKey(&_WalletLink.TransactOpts, rootWallet, nonce)
+}
+
+// LinkNonEVMWalletToRootKey is a paid mutator transaction binding the contract method 0xa5bbf480.
+//
+// Solidity: function linkNonEVMWalletToRootKey(((string,uint8),bytes,string,(string,bytes)[]) wallet, uint256 nonce) returns()
+func (_WalletLink *WalletLinkTransactor) LinkNonEVMWalletToRootKey(opts *bind.TransactOpts, wallet IWalletLinkBaseNonEVMLinkedWallet, nonce *big.Int) (*types.Transaction, error) {
+	return _WalletLink.contract.Transact(opts, "linkNonEVMWalletToRootKey", wallet, nonce)
+}
+
+// LinkNonEVMWalletToRootKey is a paid mutator transaction binding the contract method 0xa5bbf480.
+//
+// Solidity: function linkNonEVMWalletToRootKey(((string,uint8),bytes,string,(string,bytes)[]) wallet, uint256 nonce) returns()
+func (_WalletLink *WalletLinkSession) LinkNonEVMWalletToRootKey(wallet IWalletLinkBaseNonEVMLinkedWallet, nonce *big.Int) (*types.Transaction, error) {
+	return _WalletLink.Contract.LinkNonEVMWalletToRootKey(&_WalletLink.TransactOpts, wallet, nonce)
+}
+
+// LinkNonEVMWalletToRootKey is a paid mutator transaction binding the contract method 0xa5bbf480.
+//
+// Solidity: function linkNonEVMWalletToRootKey(((string,uint8),bytes,string,(string,bytes)[]) wallet, uint256 nonce) returns()
+func (_WalletLink *WalletLinkTransactorSession) LinkNonEVMWalletToRootKey(wallet IWalletLinkBaseNonEVMLinkedWallet, nonce *big.Int) (*types.Transaction, error) {
+	return _WalletLink.Contract.LinkNonEVMWalletToRootKey(&_WalletLink.TransactOpts, wallet, nonce)
 }
 
 // LinkWalletToRootKey is a paid mutator transaction binding the contract method 0x243a7134.
@@ -436,6 +637,69 @@ func (_WalletLink *WalletLinkSession) RemoveLink(wallet common.Address, rootWall
 // Solidity: function removeLink(address wallet, (address,bytes,string) rootWallet, uint256 nonce) returns()
 func (_WalletLink *WalletLinkTransactorSession) RemoveLink(wallet common.Address, rootWallet IWalletLinkBaseLinkedWallet, nonce *big.Int) (*types.Transaction, error) {
 	return _WalletLink.Contract.RemoveLink(&_WalletLink.TransactOpts, wallet, rootWallet, nonce)
+}
+
+// RemoveNonEVMWalletLink is a paid mutator transaction binding the contract method 0x71926900.
+//
+// Solidity: function removeNonEVMWalletLink((string,uint8) wallet, uint256 nonce) returns()
+func (_WalletLink *WalletLinkTransactor) RemoveNonEVMWalletLink(opts *bind.TransactOpts, wallet WalletLibWallet, nonce *big.Int) (*types.Transaction, error) {
+	return _WalletLink.contract.Transact(opts, "removeNonEVMWalletLink", wallet, nonce)
+}
+
+// RemoveNonEVMWalletLink is a paid mutator transaction binding the contract method 0x71926900.
+//
+// Solidity: function removeNonEVMWalletLink((string,uint8) wallet, uint256 nonce) returns()
+func (_WalletLink *WalletLinkSession) RemoveNonEVMWalletLink(wallet WalletLibWallet, nonce *big.Int) (*types.Transaction, error) {
+	return _WalletLink.Contract.RemoveNonEVMWalletLink(&_WalletLink.TransactOpts, wallet, nonce)
+}
+
+// RemoveNonEVMWalletLink is a paid mutator transaction binding the contract method 0x71926900.
+//
+// Solidity: function removeNonEVMWalletLink((string,uint8) wallet, uint256 nonce) returns()
+func (_WalletLink *WalletLinkTransactorSession) RemoveNonEVMWalletLink(wallet WalletLibWallet, nonce *big.Int) (*types.Transaction, error) {
+	return _WalletLink.Contract.RemoveNonEVMWalletLink(&_WalletLink.TransactOpts, wallet, nonce)
+}
+
+// SetDefaultWallet is a paid mutator transaction binding the contract method 0xbaafda6b.
+//
+// Solidity: function setDefaultWallet(address defaultWallet) returns()
+func (_WalletLink *WalletLinkTransactor) SetDefaultWallet(opts *bind.TransactOpts, defaultWallet common.Address) (*types.Transaction, error) {
+	return _WalletLink.contract.Transact(opts, "setDefaultWallet", defaultWallet)
+}
+
+// SetDefaultWallet is a paid mutator transaction binding the contract method 0xbaafda6b.
+//
+// Solidity: function setDefaultWallet(address defaultWallet) returns()
+func (_WalletLink *WalletLinkSession) SetDefaultWallet(defaultWallet common.Address) (*types.Transaction, error) {
+	return _WalletLink.Contract.SetDefaultWallet(&_WalletLink.TransactOpts, defaultWallet)
+}
+
+// SetDefaultWallet is a paid mutator transaction binding the contract method 0xbaafda6b.
+//
+// Solidity: function setDefaultWallet(address defaultWallet) returns()
+func (_WalletLink *WalletLinkTransactorSession) SetDefaultWallet(defaultWallet common.Address) (*types.Transaction, error) {
+	return _WalletLink.Contract.SetDefaultWallet(&_WalletLink.TransactOpts, defaultWallet)
+}
+
+// SetDependency is a paid mutator transaction binding the contract method 0x7238695e.
+//
+// Solidity: function setDependency(bytes32 dependency, address dependencyAddress) returns()
+func (_WalletLink *WalletLinkTransactor) SetDependency(opts *bind.TransactOpts, dependency [32]byte, dependencyAddress common.Address) (*types.Transaction, error) {
+	return _WalletLink.contract.Transact(opts, "setDependency", dependency, dependencyAddress)
+}
+
+// SetDependency is a paid mutator transaction binding the contract method 0x7238695e.
+//
+// Solidity: function setDependency(bytes32 dependency, address dependencyAddress) returns()
+func (_WalletLink *WalletLinkSession) SetDependency(dependency [32]byte, dependencyAddress common.Address) (*types.Transaction, error) {
+	return _WalletLink.Contract.SetDependency(&_WalletLink.TransactOpts, dependency, dependencyAddress)
+}
+
+// SetDependency is a paid mutator transaction binding the contract method 0x7238695e.
+//
+// Solidity: function setDependency(bytes32 dependency, address dependencyAddress) returns()
+func (_WalletLink *WalletLinkTransactorSession) SetDependency(dependency [32]byte, dependencyAddress common.Address) (*types.Transaction, error) {
+	return _WalletLink.Contract.SetDependency(&_WalletLink.TransactOpts, dependency, dependencyAddress)
 }
 
 // WalletLinkInitializedIterator is returned from FilterInitialized and is used to iterate over the raw logs and unpacked data for Initialized events raised by the WalletLink contract.
@@ -860,6 +1124,159 @@ func (_WalletLink *WalletLinkFilterer) ParseInterfaceRemoved(log types.Log) (*Wa
 	return event, nil
 }
 
+// WalletLinkLinkNonEVMWalletToRootWalletIterator is returned from FilterLinkNonEVMWalletToRootWallet and is used to iterate over the raw logs and unpacked data for LinkNonEVMWalletToRootWallet events raised by the WalletLink contract.
+type WalletLinkLinkNonEVMWalletToRootWalletIterator struct {
+	Event *WalletLinkLinkNonEVMWalletToRootWallet // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *WalletLinkLinkNonEVMWalletToRootWalletIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(WalletLinkLinkNonEVMWalletToRootWallet)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(WalletLinkLinkNonEVMWalletToRootWallet)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *WalletLinkLinkNonEVMWalletToRootWalletIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *WalletLinkLinkNonEVMWalletToRootWalletIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// WalletLinkLinkNonEVMWalletToRootWallet represents a LinkNonEVMWalletToRootWallet event raised by the WalletLink contract.
+type WalletLinkLinkNonEVMWalletToRootWallet struct {
+	WalletHash [32]byte
+	RootKey    common.Address
+	Raw        types.Log // Blockchain specific contextual infos
+}
+
+// FilterLinkNonEVMWalletToRootWallet is a free log retrieval operation binding the contract event 0xeb317a93636ebc39c613bf403c3fb4147a957dbf439fb47b4c9cc5c2b372f6bc.
+//
+// Solidity: event LinkNonEVMWalletToRootWallet(bytes32 indexed walletHash, address indexed rootKey)
+func (_WalletLink *WalletLinkFilterer) FilterLinkNonEVMWalletToRootWallet(opts *bind.FilterOpts, walletHash [][32]byte, rootKey []common.Address) (*WalletLinkLinkNonEVMWalletToRootWalletIterator, error) {
+
+	var walletHashRule []interface{}
+	for _, walletHashItem := range walletHash {
+		walletHashRule = append(walletHashRule, walletHashItem)
+	}
+	var rootKeyRule []interface{}
+	for _, rootKeyItem := range rootKey {
+		rootKeyRule = append(rootKeyRule, rootKeyItem)
+	}
+
+	logs, sub, err := _WalletLink.contract.FilterLogs(opts, "LinkNonEVMWalletToRootWallet", walletHashRule, rootKeyRule)
+	if err != nil {
+		return nil, err
+	}
+	return &WalletLinkLinkNonEVMWalletToRootWalletIterator{contract: _WalletLink.contract, event: "LinkNonEVMWalletToRootWallet", logs: logs, sub: sub}, nil
+}
+
+// WatchLinkNonEVMWalletToRootWallet is a free log subscription operation binding the contract event 0xeb317a93636ebc39c613bf403c3fb4147a957dbf439fb47b4c9cc5c2b372f6bc.
+//
+// Solidity: event LinkNonEVMWalletToRootWallet(bytes32 indexed walletHash, address indexed rootKey)
+func (_WalletLink *WalletLinkFilterer) WatchLinkNonEVMWalletToRootWallet(opts *bind.WatchOpts, sink chan<- *WalletLinkLinkNonEVMWalletToRootWallet, walletHash [][32]byte, rootKey []common.Address) (event.Subscription, error) {
+
+	var walletHashRule []interface{}
+	for _, walletHashItem := range walletHash {
+		walletHashRule = append(walletHashRule, walletHashItem)
+	}
+	var rootKeyRule []interface{}
+	for _, rootKeyItem := range rootKey {
+		rootKeyRule = append(rootKeyRule, rootKeyItem)
+	}
+
+	logs, sub, err := _WalletLink.contract.WatchLogs(opts, "LinkNonEVMWalletToRootWallet", walletHashRule, rootKeyRule)
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(WalletLinkLinkNonEVMWalletToRootWallet)
+				if err := _WalletLink.contract.UnpackLog(event, "LinkNonEVMWalletToRootWallet", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+// ParseLinkNonEVMWalletToRootWallet is a log parse operation binding the contract event 0xeb317a93636ebc39c613bf403c3fb4147a957dbf439fb47b4c9cc5c2b372f6bc.
+//
+// Solidity: event LinkNonEVMWalletToRootWallet(bytes32 indexed walletHash, address indexed rootKey)
+func (_WalletLink *WalletLinkFilterer) ParseLinkNonEVMWalletToRootWallet(log types.Log) (*WalletLinkLinkNonEVMWalletToRootWallet, error) {
+	event := new(WalletLinkLinkNonEVMWalletToRootWallet)
+	if err := _WalletLink.contract.UnpackLog(event, "LinkNonEVMWalletToRootWallet", log); err != nil {
+		return nil, err
+	}
+	event.Raw = log
+	return event, nil
+}
+
 // WalletLinkLinkWalletToRootKeyIterator is returned from FilterLinkWalletToRootKey and is used to iterate over the raw logs and unpacked data for LinkWalletToRootKey events raised by the WalletLink contract.
 type WalletLinkLinkWalletToRootKeyIterator struct {
 	Event *WalletLinkLinkWalletToRootKey // Event containing the contract specifics and raw log
@@ -1013,6 +1430,159 @@ func (_WalletLink *WalletLinkFilterer) ParseLinkWalletToRootKey(log types.Log) (
 	return event, nil
 }
 
+// WalletLinkOwnershipTransferredIterator is returned from FilterOwnershipTransferred and is used to iterate over the raw logs and unpacked data for OwnershipTransferred events raised by the WalletLink contract.
+type WalletLinkOwnershipTransferredIterator struct {
+	Event *WalletLinkOwnershipTransferred // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *WalletLinkOwnershipTransferredIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(WalletLinkOwnershipTransferred)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(WalletLinkOwnershipTransferred)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *WalletLinkOwnershipTransferredIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *WalletLinkOwnershipTransferredIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// WalletLinkOwnershipTransferred represents a OwnershipTransferred event raised by the WalletLink contract.
+type WalletLinkOwnershipTransferred struct {
+	PreviousOwner common.Address
+	NewOwner      common.Address
+	Raw           types.Log // Blockchain specific contextual infos
+}
+
+// FilterOwnershipTransferred is a free log retrieval operation binding the contract event 0x8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0.
+//
+// Solidity: event OwnershipTransferred(address indexed previousOwner, address indexed newOwner)
+func (_WalletLink *WalletLinkFilterer) FilterOwnershipTransferred(opts *bind.FilterOpts, previousOwner []common.Address, newOwner []common.Address) (*WalletLinkOwnershipTransferredIterator, error) {
+
+	var previousOwnerRule []interface{}
+	for _, previousOwnerItem := range previousOwner {
+		previousOwnerRule = append(previousOwnerRule, previousOwnerItem)
+	}
+	var newOwnerRule []interface{}
+	for _, newOwnerItem := range newOwner {
+		newOwnerRule = append(newOwnerRule, newOwnerItem)
+	}
+
+	logs, sub, err := _WalletLink.contract.FilterLogs(opts, "OwnershipTransferred", previousOwnerRule, newOwnerRule)
+	if err != nil {
+		return nil, err
+	}
+	return &WalletLinkOwnershipTransferredIterator{contract: _WalletLink.contract, event: "OwnershipTransferred", logs: logs, sub: sub}, nil
+}
+
+// WatchOwnershipTransferred is a free log subscription operation binding the contract event 0x8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0.
+//
+// Solidity: event OwnershipTransferred(address indexed previousOwner, address indexed newOwner)
+func (_WalletLink *WalletLinkFilterer) WatchOwnershipTransferred(opts *bind.WatchOpts, sink chan<- *WalletLinkOwnershipTransferred, previousOwner []common.Address, newOwner []common.Address) (event.Subscription, error) {
+
+	var previousOwnerRule []interface{}
+	for _, previousOwnerItem := range previousOwner {
+		previousOwnerRule = append(previousOwnerRule, previousOwnerItem)
+	}
+	var newOwnerRule []interface{}
+	for _, newOwnerItem := range newOwner {
+		newOwnerRule = append(newOwnerRule, newOwnerItem)
+	}
+
+	logs, sub, err := _WalletLink.contract.WatchLogs(opts, "OwnershipTransferred", previousOwnerRule, newOwnerRule)
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(WalletLinkOwnershipTransferred)
+				if err := _WalletLink.contract.UnpackLog(event, "OwnershipTransferred", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+// ParseOwnershipTransferred is a log parse operation binding the contract event 0x8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0.
+//
+// Solidity: event OwnershipTransferred(address indexed previousOwner, address indexed newOwner)
+func (_WalletLink *WalletLinkFilterer) ParseOwnershipTransferred(log types.Log) (*WalletLinkOwnershipTransferred, error) {
+	event := new(WalletLinkOwnershipTransferred)
+	if err := _WalletLink.contract.UnpackLog(event, "OwnershipTransferred", log); err != nil {
+		return nil, err
+	}
+	event.Raw = log
+	return event, nil
+}
+
 // WalletLinkRemoveLinkIterator is returned from FilterRemoveLink and is used to iterate over the raw logs and unpacked data for RemoveLink events raised by the WalletLink contract.
 type WalletLinkRemoveLinkIterator struct {
 	Event *WalletLinkRemoveLink // Event containing the contract specifics and raw log
@@ -1160,6 +1730,312 @@ func (_WalletLink *WalletLinkFilterer) WatchRemoveLink(opts *bind.WatchOpts, sin
 func (_WalletLink *WalletLinkFilterer) ParseRemoveLink(log types.Log) (*WalletLinkRemoveLink, error) {
 	event := new(WalletLinkRemoveLink)
 	if err := _WalletLink.contract.UnpackLog(event, "RemoveLink", log); err != nil {
+		return nil, err
+	}
+	event.Raw = log
+	return event, nil
+}
+
+// WalletLinkRemoveNonEVMWalletLinkIterator is returned from FilterRemoveNonEVMWalletLink and is used to iterate over the raw logs and unpacked data for RemoveNonEVMWalletLink events raised by the WalletLink contract.
+type WalletLinkRemoveNonEVMWalletLinkIterator struct {
+	Event *WalletLinkRemoveNonEVMWalletLink // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *WalletLinkRemoveNonEVMWalletLinkIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(WalletLinkRemoveNonEVMWalletLink)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(WalletLinkRemoveNonEVMWalletLink)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *WalletLinkRemoveNonEVMWalletLinkIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *WalletLinkRemoveNonEVMWalletLinkIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// WalletLinkRemoveNonEVMWalletLink represents a RemoveNonEVMWalletLink event raised by the WalletLink contract.
+type WalletLinkRemoveNonEVMWalletLink struct {
+	WalletHash [32]byte
+	RootKey    common.Address
+	Raw        types.Log // Blockchain specific contextual infos
+}
+
+// FilterRemoveNonEVMWalletLink is a free log retrieval operation binding the contract event 0xbd9633f1d49d3b0a615e7eba9e46218c1bfc459278b5764c2aeee591b1b1230a.
+//
+// Solidity: event RemoveNonEVMWalletLink(bytes32 indexed walletHash, address indexed rootKey)
+func (_WalletLink *WalletLinkFilterer) FilterRemoveNonEVMWalletLink(opts *bind.FilterOpts, walletHash [][32]byte, rootKey []common.Address) (*WalletLinkRemoveNonEVMWalletLinkIterator, error) {
+
+	var walletHashRule []interface{}
+	for _, walletHashItem := range walletHash {
+		walletHashRule = append(walletHashRule, walletHashItem)
+	}
+	var rootKeyRule []interface{}
+	for _, rootKeyItem := range rootKey {
+		rootKeyRule = append(rootKeyRule, rootKeyItem)
+	}
+
+	logs, sub, err := _WalletLink.contract.FilterLogs(opts, "RemoveNonEVMWalletLink", walletHashRule, rootKeyRule)
+	if err != nil {
+		return nil, err
+	}
+	return &WalletLinkRemoveNonEVMWalletLinkIterator{contract: _WalletLink.contract, event: "RemoveNonEVMWalletLink", logs: logs, sub: sub}, nil
+}
+
+// WatchRemoveNonEVMWalletLink is a free log subscription operation binding the contract event 0xbd9633f1d49d3b0a615e7eba9e46218c1bfc459278b5764c2aeee591b1b1230a.
+//
+// Solidity: event RemoveNonEVMWalletLink(bytes32 indexed walletHash, address indexed rootKey)
+func (_WalletLink *WalletLinkFilterer) WatchRemoveNonEVMWalletLink(opts *bind.WatchOpts, sink chan<- *WalletLinkRemoveNonEVMWalletLink, walletHash [][32]byte, rootKey []common.Address) (event.Subscription, error) {
+
+	var walletHashRule []interface{}
+	for _, walletHashItem := range walletHash {
+		walletHashRule = append(walletHashRule, walletHashItem)
+	}
+	var rootKeyRule []interface{}
+	for _, rootKeyItem := range rootKey {
+		rootKeyRule = append(rootKeyRule, rootKeyItem)
+	}
+
+	logs, sub, err := _WalletLink.contract.WatchLogs(opts, "RemoveNonEVMWalletLink", walletHashRule, rootKeyRule)
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(WalletLinkRemoveNonEVMWalletLink)
+				if err := _WalletLink.contract.UnpackLog(event, "RemoveNonEVMWalletLink", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+// ParseRemoveNonEVMWalletLink is a log parse operation binding the contract event 0xbd9633f1d49d3b0a615e7eba9e46218c1bfc459278b5764c2aeee591b1b1230a.
+//
+// Solidity: event RemoveNonEVMWalletLink(bytes32 indexed walletHash, address indexed rootKey)
+func (_WalletLink *WalletLinkFilterer) ParseRemoveNonEVMWalletLink(log types.Log) (*WalletLinkRemoveNonEVMWalletLink, error) {
+	event := new(WalletLinkRemoveNonEVMWalletLink)
+	if err := _WalletLink.contract.UnpackLog(event, "RemoveNonEVMWalletLink", log); err != nil {
+		return nil, err
+	}
+	event.Raw = log
+	return event, nil
+}
+
+// WalletLinkSetDefaultWalletIterator is returned from FilterSetDefaultWallet and is used to iterate over the raw logs and unpacked data for SetDefaultWallet events raised by the WalletLink contract.
+type WalletLinkSetDefaultWalletIterator struct {
+	Event *WalletLinkSetDefaultWallet // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *WalletLinkSetDefaultWalletIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(WalletLinkSetDefaultWallet)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(WalletLinkSetDefaultWallet)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *WalletLinkSetDefaultWalletIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *WalletLinkSetDefaultWalletIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// WalletLinkSetDefaultWallet represents a SetDefaultWallet event raised by the WalletLink contract.
+type WalletLinkSetDefaultWallet struct {
+	RootKey       common.Address
+	DefaultWallet common.Address
+	Raw           types.Log // Blockchain specific contextual infos
+}
+
+// FilterSetDefaultWallet is a free log retrieval operation binding the contract event 0x63a3f19f9166855a56a40467088468f9ae049d32865102cf64b70444db555036.
+//
+// Solidity: event SetDefaultWallet(address indexed rootKey, address indexed defaultWallet)
+func (_WalletLink *WalletLinkFilterer) FilterSetDefaultWallet(opts *bind.FilterOpts, rootKey []common.Address, defaultWallet []common.Address) (*WalletLinkSetDefaultWalletIterator, error) {
+
+	var rootKeyRule []interface{}
+	for _, rootKeyItem := range rootKey {
+		rootKeyRule = append(rootKeyRule, rootKeyItem)
+	}
+	var defaultWalletRule []interface{}
+	for _, defaultWalletItem := range defaultWallet {
+		defaultWalletRule = append(defaultWalletRule, defaultWalletItem)
+	}
+
+	logs, sub, err := _WalletLink.contract.FilterLogs(opts, "SetDefaultWallet", rootKeyRule, defaultWalletRule)
+	if err != nil {
+		return nil, err
+	}
+	return &WalletLinkSetDefaultWalletIterator{contract: _WalletLink.contract, event: "SetDefaultWallet", logs: logs, sub: sub}, nil
+}
+
+// WatchSetDefaultWallet is a free log subscription operation binding the contract event 0x63a3f19f9166855a56a40467088468f9ae049d32865102cf64b70444db555036.
+//
+// Solidity: event SetDefaultWallet(address indexed rootKey, address indexed defaultWallet)
+func (_WalletLink *WalletLinkFilterer) WatchSetDefaultWallet(opts *bind.WatchOpts, sink chan<- *WalletLinkSetDefaultWallet, rootKey []common.Address, defaultWallet []common.Address) (event.Subscription, error) {
+
+	var rootKeyRule []interface{}
+	for _, rootKeyItem := range rootKey {
+		rootKeyRule = append(rootKeyRule, rootKeyItem)
+	}
+	var defaultWalletRule []interface{}
+	for _, defaultWalletItem := range defaultWallet {
+		defaultWalletRule = append(defaultWalletRule, defaultWalletItem)
+	}
+
+	logs, sub, err := _WalletLink.contract.WatchLogs(opts, "SetDefaultWallet", rootKeyRule, defaultWalletRule)
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(WalletLinkSetDefaultWallet)
+				if err := _WalletLink.contract.UnpackLog(event, "SetDefaultWallet", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+// ParseSetDefaultWallet is a log parse operation binding the contract event 0x63a3f19f9166855a56a40467088468f9ae049d32865102cf64b70444db555036.
+//
+// Solidity: event SetDefaultWallet(address indexed rootKey, address indexed defaultWallet)
+func (_WalletLink *WalletLinkFilterer) ParseSetDefaultWallet(log types.Log) (*WalletLinkSetDefaultWallet, error) {
+	event := new(WalletLinkSetDefaultWallet)
+	if err := _WalletLink.contract.UnpackLog(event, "SetDefaultWallet", log); err != nil {
 		return nil, err
 	}
 	event.Raw = log

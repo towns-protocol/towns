@@ -41,6 +41,31 @@ func TestMain(m *testing.M) {
 	crypto.TestMainForLeaksIgnoreGeth()
 }
 
+func createUserInboxStream(
+	ctx context.Context,
+	wallet *crypto.Wallet,
+	client protocolconnect.StreamServiceClient,
+	streamSettings *protocol.StreamSettings,
+) (*protocol.SyncCookie, []byte, error) {
+	userInboxStreamId := UserInboxStreamIdFromAddress(wallet.Address)
+	inception, err := events.MakeEnvelopeWithPayload(
+		wallet,
+		events.Make_UserInboxPayload_Inception(userInboxStreamId, streamSettings),
+		nil,
+	)
+	if err != nil {
+		return nil, nil, err
+	}
+	res, err := client.CreateStream(ctx, connect.NewRequest(&protocol.CreateStreamRequest{
+		Events:   []*protocol.Envelope{inception},
+		StreamId: userInboxStreamId[:],
+	}))
+	if err != nil {
+		return nil, nil, err
+	}
+	return res.Msg.Stream.NextSyncCookie, inception.Hash, nil
+}
+
 func createUserMetadataStream(
 	ctx context.Context,
 	wallet *crypto.Wallet,
@@ -213,6 +238,49 @@ func createSpace(
 	}
 
 	return resspace.Msg.Stream.NextSyncCookie, joinSpace.Hash, nil
+}
+
+func joinChannel(
+	ctx context.Context,
+	wallet *crypto.Wallet,
+	userStreamSyncCookie *protocol.SyncCookie,
+	client protocolconnect.StreamServiceClient,
+	spaceId StreamId,
+	channelId StreamId,
+) error {
+	userJoin, err := events.MakeEnvelopeWithPayload(
+		wallet,
+		events.Make_UserPayload_Membership(
+			protocol.MembershipOp_SO_JOIN,
+			channelId,
+			nil,
+			spaceId[:],
+		),
+		&MiniblockRef{
+			Hash: common.BytesToHash(userStreamSyncCookie.PrevMiniblockHash),
+			Num:  userStreamSyncCookie.MinipoolGen - 1,
+		},
+	)
+	if err != nil {
+		return err
+	}
+
+	add, err := client.AddEvent(
+		ctx,
+		connect.NewRequest(
+			&protocol.AddEventRequest{
+				StreamId: userStreamSyncCookie.StreamId,
+				Event:    userJoin,
+			},
+		),
+	)
+	if err != nil {
+		return err
+	}
+	if add.Msg.Error != nil {
+		return fmt.Errorf("Could not add join event to user stream: %v", add.Msg.Error.Msg)
+	}
+	return nil
 }
 
 func createChannel(
@@ -442,29 +510,13 @@ func testMethodsWithClient(tester *serviceTester, client protocolconnect.StreamS
 	require.NotNil(channel, "nil sync cookie")
 
 	// user2 joins channel
-	userJoin, err := events.MakeEnvelopeWithPayload(
-		wallet2,
-		events.Make_UserPayload_Membership(
-			protocol.MembershipOp_SO_JOIN,
-			channelId,
-			nil,
-			spaceId[:],
-		),
-		&MiniblockRef{
-			Hash: common.BytesToHash(resuser.PrevMiniblockHash),
-			Num:  resuser.MinipoolGen - 1,
-		},
-	)
-	require.NoError(err)
-
-	_, err = client.AddEvent(
+	err = joinChannel(
 		ctx,
-		connect.NewRequest(
-			&protocol.AddEventRequest{
-				StreamId: resuser.StreamId,
-				Event:    userJoin,
-			},
-		),
+		wallet2,
+		resuser,
+		client,
+		spaceId,
+		channelId,
 	)
 	require.NoError(err)
 
@@ -1716,7 +1768,7 @@ func TestSyncSubscriptionWithTooSlowClient(t *testing.T) {
 	}
 
 	// send a bunch of messages and ensure that the sync op is cancelled because the client can't keep up
-	for i := range 2500 {
+	for i := range 10000 {
 		if syncOpStopped.Load() { // no need to send additional messages, sync op already cancelled
 			break
 		}
@@ -1781,10 +1833,10 @@ func TestGetMiniblocksRangeLimit(t *testing.T) {
 		crypto.ABIEncodeUint64(uint64(expectedLimit)),
 	)
 
-	alice := tt.newTestClient(0)
+	alice := tt.newTestClient(0, testClientOpts{})
 	_ = alice.createUserStream()
 	spaceId, _ := alice.createSpace()
-	channelId, _ := alice.createChannel(spaceId)
+	channelId, _, _ := alice.createChannel(spaceId)
 
 	// Here we create a miniblock for each message sent by Alice.
 	// Creating a bit more miniblocks than limit.
