@@ -117,7 +117,7 @@ export function formatUnitsToFixedLength(
     options?: { compact?: boolean },
 ): string {
     // Calculate the scaling factor to shift decimal places correctly
-    const scaleFactor = 10n ** BigInt(baseDecimals - displayDecimals)
+    const scaleFactor = 10n ** BigInt(Math.max(0, baseDecimals - displayDecimals))
 
     // Scale and round the BigInt value
     const roundedValue = (value + scaleFactor / 2n) / scaleFactor
