@@ -29,19 +29,8 @@ import { useSendTradeTransaction } from './hooks/useTradeQuote'
 import { useTradeSettings } from './tradeSettingsStore'
 import { PercentInputRadio } from './ui/PercentInputRadio'
 import { useTradingWalletBalance } from './hooks/useTradingBalance'
-
-// const DISPLAY_QUOTE = false
-
-export type QuoteStatus = (
-    | { status: 'loading' | 'error' | 'idle' }
-    | {
-          status: 'ready'
-          data: {
-              request: EvmTransactionRequest | SolanaTransactionRequest
-              metaData: QuoteMetaData
-          }
-      }
-) & { mode: 'buy' | 'sell' }
+import { QuoteMetaData, QuoteStatus } from './types'
+import { TransactionTooltip } from './TransactionTooltip'
 
 type QuickSelectOption = {
     label: string
@@ -57,13 +46,6 @@ type Props = {
     onQuoteStatusChanged?: (status: QuoteStatus | undefined) => void
     threadInfo: { channelId: string; messageId: string } | undefined
     resetRef?: React.RefObject<{ reset: () => void }>
-}
-
-export type QuoteMetaData = {
-    mode: 'buy' | 'sell'
-    symbol: string
-    value: ReturnType<typeof getTokenValueData>
-    valueAt: ReturnType<typeof getTokenValueData>
 }
 
 export const TradeComponent = (props: Props) => {
@@ -297,7 +279,7 @@ export const TradeComponent = (props: Props) => {
         chainId: chainId,
     })
 
-    const metaData = useMemo(() => {
+    const metaData = useMemo((): QuoteMetaData | undefined => {
         if (!quoteData) {
             return undefined
         }
@@ -445,10 +427,12 @@ export const TradeComponent = (props: Props) => {
 
                         {/* if there's no threadInfo, we're inside the global trade panel,
                             show buy/sell button */}
-                        {!threadInfo && sendTradeTransaction && (
+                        {!threadInfo && (
                             <BuySellButton
                                 mode={mode}
                                 chainId={chainId}
+                                metaData={metaData}
+                                isQuoteLoading={isQuoteLoading}
                                 onPressTrade={sendTradeTransaction}
                             />
                         )}
@@ -472,36 +456,55 @@ export const TradeComponent = (props: Props) => {
 }
 
 const BuySellButton = (props: {
-    onPressTrade: (getSigner: (() => Promise<TSigner | undefined>) | undefined) => Promise<void>
+    onPressTrade:
+        | undefined
+        | ((getSigner: (() => Promise<TSigner | undefined>) | undefined) => Promise<void>)
     mode: 'buy' | 'sell'
+    metaData: QuoteMetaData | undefined
+    isQuoteLoading: boolean
     chainId: string
 }) => {
     const tradingContext = useTradingContext()
-    const { onPressTrade, mode, chainId } = props
+    const { onPressTrade, mode, chainId, metaData, isQuoteLoading: isLoadingQuote } = props
     const isSolana = chainId === 'solana-mainnet'
     const isTransacting = isSolana
         ? tradingContext.pendingSolanaTransaction !== undefined
         : tradingContext.pendingEvmTransaction !== undefined
 
+    const slippage = useTradeSettings(({ slippage }) => slippage)
+
+    const tooltip = metaData ? (
+        <TransactionTooltip
+            mode={mode}
+            chainId={chainId}
+            tradeData={metaData}
+            slippage={slippage}
+        />
+    ) : undefined
+
     return (
-        <WalletReady>
-            {({ getSigner }) => (
-                <FancyButton
-                    compact="x4"
-                    gap="xxs"
-                    paddingLeft="sm"
-                    paddingRight="md"
-                    background={mode === 'buy' ? 'positive' : 'peach'}
-                    borderRadius="full"
-                    icon="lightning"
-                    iconSize="square_sm"
-                    disabled={isTransacting}
-                    spinner={isTransacting}
-                    onClick={() => onPressTrade(getSigner)}
-                >
-                    {mode === 'buy' ? 'Buy' : 'Sell'}
-                </FancyButton>
-            )}
-        </WalletReady>
+        <Box tooltip={tooltip} color="inverted">
+            <WalletReady>
+                {({ getSigner }) => (
+                    <FancyButton
+                        layoutRoot
+                        compact="x4"
+                        gap="xxs"
+                        paddingLeft="sm"
+                        paddingRight="md"
+                        background={mode === 'buy' ? 'positive' : 'peach'}
+                        borderRadius="full"
+                        icon="lightning"
+                        iconSize="square_sm"
+                        style={{ opacity: isTransacting || !onPressTrade ? 0.33 : 1 }}
+                        disabled={isTransacting || !onPressTrade}
+                        spinner={isLoadingQuote || isTransacting}
+                        onClick={() => onPressTrade?.(getSigner)}
+                    >
+                        {mode === 'buy' ? 'Buy' : 'Sell'}
+                    </FancyButton>
+                )}
+            </WalletReady>
+        </Box>
     )
 }

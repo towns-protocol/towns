@@ -296,7 +296,7 @@ export const colorProperties = defineProperties({
             },
             [ToneName.Peach]: {
                 background: vars.color.tone.peach,
-                color: vars.color.text.default,
+                color: vars.color.text.onTone,
                 vars: {
                     '--background': vars.color.tone.peach,
                 },

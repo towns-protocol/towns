@@ -433,6 +433,7 @@ const ChartComponent = (props: {
                     alignItems="center"
                     whiteSpace="nowrap"
                     position="topLeft"
+                    display="none"
                 >
                     <Text as="span" size="md" color="gray1" fontWeight="medium" />
                     <Text as="span" size="md" color="gray2" />

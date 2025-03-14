@@ -23,7 +23,6 @@ import {
     useMyProfile,
     useSpaceMembers,
 } from 'use-towns-client'
-import { AnimatePresence } from 'framer-motion'
 import { useSearchParams } from 'react-router-dom'
 import { getPostedMessageType, trackPostedMessage } from '@components/Analytics/postedMessage'
 import { useGatherSpaceDetailsAnalytics } from '@components/Analytics/useGatherSpaceDetailsAnalytics'
@@ -32,27 +31,22 @@ import { MessageTimeline } from '@components/MessageTimeline/MessageTimeline'
 import { MessageTimelineWrapper } from '@components/MessageTimeline/MessageTimelineContext'
 import { TownsEditorContainer } from '@components/RichTextPlate/TownsEditorContainer'
 import { useSendTradeTransaction } from '@components/Web3/Trading/hooks/useTradeQuote'
-import { QuoteMetaData, QuoteStatus, TradeComponent } from '@components/Web3/Trading/TradeComponent'
 import { useTradeSettings } from '@components/Web3/Trading/tradeSettingsStore'
 import {
     EvmTransactionRequest,
     SolanaTransactionRequest,
 } from '@components/Web3/Trading/TradingContextProvider'
-import { Box, BoxProps, FancyButton, Paragraph, Stack, Tooltip } from '@ui'
+import { Box, BoxProps, FancyButton, Stack } from '@ui'
 import { useDevice } from 'hooks/useDevice'
 import { useIsChannelReactable } from 'hooks/useIsChannelReactable'
 import { useIsChannelWritable } from 'hooks/useIsChannelWritable'
 import { useSendReply } from 'hooks/useSendReply'
 import { useSpaceChannels } from 'hooks/useSpaceChannels'
 import { WalletReady } from 'privy/WalletReady'
-import { TokenIcon } from '@components/Web3/Trading/ui/TokenIcon'
-import { isTradingChain, tradingChains } from '@components/Web3/Trading/tradingConstants'
-import { FadeInBox } from '@components/Transitions'
-import { EditSlippageButton } from '@components/Web3/Trading/EditSlippagePopover'
-import { useTradingWalletBalance } from '@components/Web3/Trading/hooks/useTradingBalance'
-import { formatUnitsToFixedLength } from 'hooks/useBalance'
-import { useTokenBalance } from '@components/Web3/Trading/useTokenBalance'
-import { useCoinData } from '@components/TradingChart/useCoinData'
+import { TradingBalanceAndSlippage } from '@components/Web3/Trading/TradingBalanceAndSlippage'
+import { TradeComponent } from '@components/Web3/Trading/TradeComponent'
+import { QuoteMetaData, QuoteStatus } from '@components/Web3/Trading/types'
+import { TransactionTooltip } from '@components/Web3/Trading/TransactionTooltip'
 import { getTickerAttachment } from './getTickerAttachment'
 import { TickerThreadContext } from './TickerThreadContext'
 
@@ -335,7 +329,7 @@ const ThreadEditor = (props: {
                             gap="xxs"
                             paddingLeft="sm"
                             paddingRight="md"
-                            background={mode === 'buy' ? 'positive' : 'negative'}
+                            background={mode === 'buy' ? 'positive' : 'peach'}
                             borderRadius="full"
                             icon="lightning"
                             spinner={quoteStatus?.status === 'loading' || isTradingProgress}
@@ -360,7 +354,7 @@ const ThreadEditor = (props: {
     )
 
     const renderTradingBottomBar = mode ? (
-        <TradingBottomBar
+        <TradingBalanceAndSlippage
             tokenAddress={tickerAttachment?.address}
             mode={mode}
             chainId={tickerAttachment?.chainId}
@@ -416,128 +410,5 @@ const ThreadEditor = (props: {
                 editor
             )}
         </>
-    )
-}
-
-const TransactionTooltip = (props: {
-    mode: 'buy' | 'sell'
-    chainId: string
-    tradeData: QuoteMetaData
-    slippage: number
-}) => {
-    const { mode, tradeData, slippage } = props
-
-    // a little workaround to cover the case where old tickers were posted
-    // a temp chainId for solana
-    const chainId = props.chainId === '1151111081099710' ? 'solana-mainnet' : props.chainId
-    const chainConfig = isTradingChain(chainId) ? tradingChains[chainId] : tradingChains[1]
-    const slippageText = slippage ? `(± ${slippage * 100}%)` : ''
-
-    return (
-        <FadeInBox padding="sm">
-            <Tooltip background="level2">
-                <Stack horizontal padding="sm" gap="sm">
-                    <Stack>
-                        <Box position="relative" alignSelf="start">
-                            <TokenIcon
-                                asset={{
-                                    imageUrl: tradeData.value.icon ?? '',
-                                    chain: chainConfig.chainId,
-                                }}
-                            />
-                        </Box>
-                    </Stack>
-                    <Stack gap="sm">
-                        <Paragraph
-                            color={mode === 'buy' ? 'positive' : 'peach'}
-                            whiteSpace="nowrap"
-                        >
-                            {mode === 'buy' ? 'Buy' : 'Sell'} {tradeData.value.value}{' '}
-                            {tradeData.value.symbol} {mode === 'buy' ? slippageText : ''}
-                        </Paragraph>
-                        <Paragraph color="gray1">
-                            For {tradeData.valueAt.value} {tradeData.valueAt.symbol}{' '}
-                            {mode === 'sell' ? slippageText : ''}
-                        </Paragraph>
-                    </Stack>
-                </Stack>
-            </Tooltip>
-        </FadeInBox>
-    )
-}
-
-const TradingBottomBar = (props: {
-    tokenAddress?: string
-    mode: 'buy' | 'sell'
-    chainId?: string
-}) => {
-    const { mode, chainId, tokenAddress } = props
-
-    if (!chainId) {
-        return
-    }
-
-    return (
-        <Stack horizontal gap="sm" alignItems="center">
-            {mode === 'buy' ? (
-                <TradingWalletBalance chainId={chainId} />
-            ) : tokenAddress ? (
-                <TokenBalance chainId={chainId} tokenAddress={tokenAddress} />
-            ) : null}
-            <EditSlippageButton />
-        </Stack>
-    )
-}
-
-const TradingWalletBalance = (props: { chainId: string }) => {
-    const { chainId } = props
-    const chainConfig = isTradingChain(chainId) ? tradingChains[chainId] : tradingChains[1]
-    const { walletBalance } = useTradingWalletBalance({ chainId })
-    return (
-        <Box>
-            <TokenPrice
-                value={formatUnitsToFixedLength(walletBalance, chainConfig.decimals, 2)}
-                symbol={chainConfig.tokenSymbol}
-            />
-        </Box>
-    )
-}
-
-const TokenBalance = (props: { chainId: string; tokenAddress: string }) => {
-    const { chainId, tokenAddress } = props
-    const tokenBalance = useTokenBalance(chainId, tokenAddress)
-    const { data: tokenData } = useCoinData({ address: tokenAddress, chain: chainId })
-
-    return tokenData ? (
-        <Box>
-            <TokenPrice
-                value={formatUnitsToFixedLength(tokenBalance, tokenData.token.decimals, 2, {
-                    compact: true,
-                })}
-                symbol={tokenData.token.symbol}
-            />
-        </Box>
-    ) : null
-}
-
-const TokenPrice = (props: { value: string; symbol: string }) => {
-    const { value, symbol } = props
-    return (
-        <AnimatePresence>
-            {!!value && (
-                <FadeInBox
-                    background="lightHover"
-                    paddingX="paragraph"
-                    paddingY="sm"
-                    borderRadius="md"
-                    height="height_md"
-                    justifyContent="center"
-                >
-                    <Paragraph size="sm" fontWeight="medium" color="gray2">
-                        {value} {symbol}
-                    </Paragraph>
-                </FadeInBox>
-            )}
-        </AnimatePresence>
     )
 }
