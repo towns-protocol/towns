@@ -162,6 +162,12 @@ Each contract follows the Diamond Pattern (EIP-2535) for upgradeability and impl
 5. Implement proper access control
 6. Follow upgrade best practices
 
+### Facet Rules
+1. avoid constructors when initializing a facet use an initialization function like the following:
+```solidity
+function __FacetName_init() external onlyInitializing
+```
+
 ### Diamond Facet Storage
 Every new facet or feature needs to follow the following storage pattern to avoid collision:
 
