@@ -21,6 +21,7 @@ require (
 	github.com/linkdata/deadlock v0.5.3
 	github.com/matoous/go-nanoid v1.5.1
 	github.com/mitchellh/mapstructure v1.5.0
+	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/prometheus/client_golang v1.20.5
 	github.com/puzpuzpuz/xsync/v3 v3.4.0
 	github.com/rs/cors v1.11.1

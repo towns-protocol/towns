@@ -135,7 +135,7 @@
         "use-towns-client": "workspace:^",
         "vanilla-classnames": "^0.1.0",
         "vfile": "^6.0.1",
-        "viem": "^2.21.49",
+        "viem": "^2.21.51",
         "wagmi": "^2.13.0",
         "yet-another-react-lightbox": "^3.21.7",
         "zod": "^3.21.4",
