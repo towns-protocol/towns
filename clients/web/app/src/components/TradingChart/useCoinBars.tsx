@@ -72,9 +72,9 @@ function createQuery(address: string, chain: string, timeframe: TimeFrame): stri
     const resolution = () => {
         switch (timeframe) {
             case '1h':
-                return '1'
+                return '15S'
             case '1d':
-                return '15'
+                return '5'
             case '7d':
                 return '60'
             case '30d':
