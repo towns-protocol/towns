@@ -27,26 +27,15 @@ export const TokenTransferImpl = (props: TokenTransferImplProps) => {
     const { data: coinData } = useCoinData({ address, chain: chainId })
 
     const text = useMemo(() => {
-        const parsedAmount = BigInt(amount)
-        const formattedAmount = () => {
-            // if the amount is less than 10^(decimals - 2)
-            // we need to show the amount in the smallest possible unit
-            // this mainly applies to super small quantities of tokens
-            // like 200 $WIF or (which has 6 decimals)
-            if (!coinData?.token.decimals) {
-                return ''
-            }
-            if (parsedAmount < 10n ** BigInt(coinData.token.decimals - 2)) {
-                return (Number(parsedAmount) / 10 ** coinData.token.decimals).toFixed(3)
-            }
-            return formatUnitsToFixedLength(parsedAmount, coinData?.token.decimals, 2, {
-                compact: true,
-            })
-        }
-
+        const formattedAmount = formatUnitsToFixedLength(
+            BigInt(amount),
+            2,
+            coinData?.token.decimals,
+            { compact: true },
+        )
         const verb = isBuy ? 'Bought' : 'Sold'
         const symbol = coinData?.token.symbol ?? ''
-        return `${verb} ${formattedAmount()} ${symbol}`
+        return `${verb} ${formattedAmount} ${symbol}`
     }, [amount, isBuy, coinData])
 
     return (
