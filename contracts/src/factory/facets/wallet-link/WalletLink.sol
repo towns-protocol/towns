@@ -5,7 +5,8 @@ pragma solidity ^0.8.23;
 import {IWalletLink} from "./IWalletLink.sol";
 
 // libraries
-import {WalletLib} from "./libraries/WalletLib.sol";
+import {WalletLinkLib} from "./libraries/WalletLinkLib.sol";
+
 // contracts
 import {Facet} from "@river-build/diamond/src/facets/Facet.sol";
 import {WalletLinkBase} from "./WalletLinkBase.sol";
@@ -17,13 +18,16 @@ contract WalletLink is IWalletLink, WalletLinkBase, OwnableBase, Facet {
     address sclEip6565
   ) external onlyInitializing {
     _addInterface(type(IWalletLink).interfaceId);
-    _setDependency(DELEGATE_REGISTRY_V2, delegateRegistry);
-    _setDependency(SCL_EIP6565, sclEip6565);
+    WalletLinkLib.setDependency(
+      WalletLinkLib.DELEGATE_REGISTRY_V2,
+      delegateRegistry
+    );
+    WalletLinkLib.setDependency(WalletLinkLib.SCL_EIP6565, sclEip6565);
   }
 
   /// @inheritdoc IWalletLink
   function linkCallerToRootKey(
-    LinkedWallet calldata rootWallet,
+    LinkedWalletData calldata rootWallet,
     uint256 nonce
   ) external {
     _linkCallerToRootWallet(rootWallet, nonce);
@@ -31,8 +35,8 @@ contract WalletLink is IWalletLink, WalletLinkBase, OwnableBase, Facet {
 
   /// @inheritdoc IWalletLink
   function linkWalletToRootKey(
-    LinkedWallet calldata wallet,
-    LinkedWallet calldata rootWallet,
+    LinkedWalletData calldata wallet,
+    LinkedWalletData calldata rootWallet,
     uint256 nonce
   ) external {
     _linkWalletToRootWallet(wallet, rootWallet, nonce);
@@ -40,7 +44,7 @@ contract WalletLink is IWalletLink, WalletLinkBase, OwnableBase, Facet {
 
   /// @inheritdoc IWalletLink
   function linkNonEVMWalletToRootKey(
-    NonEVMLinkedWallet calldata wallet,
+    NonEVMLinkedWalletData calldata wallet,
     uint256 nonce
   ) external {
     _linkNonEVMWalletToRootWalletViaCaller(wallet, nonce);
@@ -48,16 +52,17 @@ contract WalletLink is IWalletLink, WalletLinkBase, OwnableBase, Facet {
 
   /// @inheritdoc IWalletLink
   function removeNonEVMWalletLink(
-    WalletLib.Wallet calldata wallet,
+    string calldata addr,
+    VirtualMachineType vmType,
     uint256 nonce
   ) external {
-    _removeNonEVMWalletLink(wallet, nonce);
+    _removeNonEVMWalletLink(addr, vmType, nonce);
   }
 
   /// @inheritdoc IWalletLink
   function removeLink(
     address wallet,
-    LinkedWallet calldata rootWallet,
+    LinkedWalletData calldata rootWallet,
     uint256 nonce
   ) external {
     _removeLink(wallet, rootWallet, nonce);
@@ -95,14 +100,6 @@ contract WalletLink is IWalletLink, WalletLinkBase, OwnableBase, Facet {
   }
 
   /// @inheritdoc IWalletLink
-  function explicitWalletsByRootKey(
-    address rootKey,
-    WalletQueryOptions calldata options
-  ) external view returns (WalletLib.Wallet[] memory wallets) {
-    return _explicitWalletsByRootKey(rootKey, options);
-  }
-
-  /// @inheritdoc IWalletLink
   function getRootKeyForWallet(
     address wallet
   ) external view returns (address rootKey) {
@@ -134,7 +131,7 @@ contract WalletLink is IWalletLink, WalletLinkBase, OwnableBase, Facet {
 
   /// @inheritdoc IWalletLink
   function getDependency(bytes32 dependency) external view returns (address) {
-    return _getDependency(dependency);
+    return WalletLinkLib.getDependency(dependency);
   }
 
   /// @inheritdoc IWalletLink
@@ -142,6 +139,6 @@ contract WalletLink is IWalletLink, WalletLinkBase, OwnableBase, Facet {
     bytes32 dependency,
     address dependencyAddress
   ) external onlyOwner {
-    _setDependency(dependency, dependencyAddress);
+    WalletLinkLib.setDependency(dependency, dependencyAddress);
   }
 }
