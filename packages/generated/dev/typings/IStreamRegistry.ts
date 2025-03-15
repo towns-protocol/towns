@@ -94,7 +94,6 @@ export interface IStreamRegistryInterface extends utils.Interface {
     "isStream(bytes32)": FunctionFragment;
     "placeStreamOnNode(bytes32,address)": FunctionFragment;
     "removeStreamFromNode(bytes32,address)": FunctionFragment;
-    "setStreamLastMiniblock(bytes32,bytes32,bytes32,uint64,bool)": FunctionFragment;
     "setStreamLastMiniblockBatch((bytes32,bytes32,bytes32,uint64,bool)[])": FunctionFragment;
     "syncNodesOnStreams(uint256,uint256)": FunctionFragment;
   };
@@ -112,7 +111,6 @@ export interface IStreamRegistryInterface extends utils.Interface {
       | "isStream"
       | "placeStreamOnNode"
       | "removeStreamFromNode"
-      | "setStreamLastMiniblock"
       | "setStreamLastMiniblockBatch"
       | "syncNodesOnStreams"
   ): FunctionFragment;
@@ -171,16 +169,6 @@ export interface IStreamRegistryInterface extends utils.Interface {
     values: [PromiseOrValue<BytesLike>, PromiseOrValue<string>]
   ): string;
   encodeFunctionData(
-    functionFragment: "setStreamLastMiniblock",
-    values: [
-      PromiseOrValue<BytesLike>,
-      PromiseOrValue<BytesLike>,
-      PromiseOrValue<BytesLike>,
-      PromiseOrValue<BigNumberish>,
-      PromiseOrValue<boolean>
-    ]
-  ): string;
-  encodeFunctionData(
     functionFragment: "setStreamLastMiniblockBatch",
     values: [SetMiniblockStruct[]]
   ): string;
@@ -225,10 +213,6 @@ export interface IStreamRegistryInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "setStreamLastMiniblock",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
     functionFragment: "setStreamLastMiniblockBatch",
     data: BytesLike
   ): Result;
@@ -243,6 +227,7 @@ export interface IStreamRegistryInterface extends utils.Interface {
     "StreamLastMiniblockUpdateFailed(bytes32,bytes32,uint64,string)": EventFragment;
     "StreamLastMiniblockUpdated(bytes32,bytes32,uint64,bool)": EventFragment;
     "StreamPlacementUpdated(bytes32,address,bool)": EventFragment;
+    "StreamUpdated(uint8,bytes)": EventFragment;
   };
 
   getEvent(nameOrSignatureOrTopic: "StreamAllocated"): EventFragment;
@@ -252,6 +237,7 @@ export interface IStreamRegistryInterface extends utils.Interface {
   ): EventFragment;
   getEvent(nameOrSignatureOrTopic: "StreamLastMiniblockUpdated"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "StreamPlacementUpdated"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "StreamUpdated"): EventFragment;
 }
 
 export interface StreamAllocatedEventObject {
@@ -319,6 +305,17 @@ export type StreamPlacementUpdatedEvent = TypedEvent<
 
 export type StreamPlacementUpdatedEventFilter =
   TypedEventFilter<StreamPlacementUpdatedEvent>;
+
+export interface StreamUpdatedEventObject {
+  eventType: number;
+  data: string;
+}
+export type StreamUpdatedEvent = TypedEvent<
+  [number, string],
+  StreamUpdatedEventObject
+>;
+
+export type StreamUpdatedEventFilter = TypedEventFilter<StreamUpdatedEvent>;
 
 export interface IStreamRegistry extends BaseContract {
   connect(signerOrProvider: Signer | Provider | string): this;
@@ -411,15 +408,6 @@ export interface IStreamRegistry extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
-    setStreamLastMiniblock(
-      streamId: PromiseOrValue<BytesLike>,
-      prevMiniblockHash: PromiseOrValue<BytesLike>,
-      lastMiniblockHash: PromiseOrValue<BytesLike>,
-      lastMiniblockNum: PromiseOrValue<BigNumberish>,
-      isSealed: PromiseOrValue<boolean>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-
     setStreamLastMiniblockBatch(
       miniblocks: SetMiniblockStruct[],
       overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -491,15 +479,6 @@ export interface IStreamRegistry extends BaseContract {
   removeStreamFromNode(
     streamId: PromiseOrValue<BytesLike>,
     nodeAddress: PromiseOrValue<string>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  setStreamLastMiniblock(
-    streamId: PromiseOrValue<BytesLike>,
-    prevMiniblockHash: PromiseOrValue<BytesLike>,
-    lastMiniblockHash: PromiseOrValue<BytesLike>,
-    lastMiniblockNum: PromiseOrValue<BigNumberish>,
-    isSealed: PromiseOrValue<boolean>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
@@ -577,15 +556,6 @@ export interface IStreamRegistry extends BaseContract {
       overrides?: CallOverrides
     ): Promise<void>;
 
-    setStreamLastMiniblock(
-      streamId: PromiseOrValue<BytesLike>,
-      prevMiniblockHash: PromiseOrValue<BytesLike>,
-      lastMiniblockHash: PromiseOrValue<BytesLike>,
-      lastMiniblockNum: PromiseOrValue<BigNumberish>,
-      isSealed: PromiseOrValue<boolean>,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
     setStreamLastMiniblockBatch(
       miniblocks: SetMiniblockStruct[],
       overrides?: CallOverrides
@@ -659,6 +629,15 @@ export interface IStreamRegistry extends BaseContract {
       nodeAddress?: null,
       isAdded?: null
     ): StreamPlacementUpdatedEventFilter;
+
+    "StreamUpdated(uint8,bytes)"(
+      eventType?: PromiseOrValue<BigNumberish> | null,
+      data?: null
+    ): StreamUpdatedEventFilter;
+    StreamUpdated(
+      eventType?: PromiseOrValue<BigNumberish> | null,
+      data?: null
+    ): StreamUpdatedEventFilter;
   };
 
   estimateGas: {
@@ -721,15 +700,6 @@ export interface IStreamRegistry extends BaseContract {
     removeStreamFromNode(
       streamId: PromiseOrValue<BytesLike>,
       nodeAddress: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    setStreamLastMiniblock(
-      streamId: PromiseOrValue<BytesLike>,
-      prevMiniblockHash: PromiseOrValue<BytesLike>,
-      lastMiniblockHash: PromiseOrValue<BytesLike>,
-      lastMiniblockNum: PromiseOrValue<BigNumberish>,
-      isSealed: PromiseOrValue<boolean>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
@@ -805,15 +775,6 @@ export interface IStreamRegistry extends BaseContract {
     removeStreamFromNode(
       streamId: PromiseOrValue<BytesLike>,
       nodeAddress: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    setStreamLastMiniblock(
-      streamId: PromiseOrValue<BytesLike>,
-      prevMiniblockHash: PromiseOrValue<BytesLike>,
-      lastMiniblockHash: PromiseOrValue<BytesLike>,
-      lastMiniblockNum: PromiseOrValue<BigNumberish>,
-      isSealed: PromiseOrValue<boolean>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
