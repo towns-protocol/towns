@@ -5,6 +5,7 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/hex"
+	"fmt"
 	"slices"
 	"sync"
 	"testing"
@@ -159,17 +160,64 @@ func isKeySolicitation(
 	return false
 }
 
+func isChannelMessageReply(
+	event *events.ParsedEvent,
+	originalText string,
+	sessionId string,
+	cipherTexts string,
+) bool {
+	if msg := event.GetChannelMessage(); msg != nil {
+		if msg.Message.SessionId != sessionId {
+			return false
+		}
+		if msg.Message.Ciphertext == fmt.Sprintf("%v %v reply (%v)", sessionId, originalText, cipherTexts) {
+			return true
+		}
+	}
+	return false
+}
+
 func findKeySolicitation(
 	c *assert.CollectT,
 	channel *protocol.StreamAndCookie,
 	deviceKey string,
 	sessionId string,
 ) bool {
+	return overAllEvents(
+		c,
+		channel,
+		func(event *events.ParsedEvent) bool {
+			return isKeySolicitation(event, deviceKey, sessionId)
+		},
+	)
+}
+
+func findMessageReply(
+	c *assert.CollectT,
+	channel *protocol.StreamAndCookie,
+	originalText string,
+	sessionId string,
+	cipherTexts string,
+) bool {
+	return overAllEvents(
+		c,
+		channel,
+		func(event *events.ParsedEvent) bool {
+			return isChannelMessageReply(event, originalText, sessionId, cipherTexts)
+		},
+	)
+}
+
+func overAllEvents(
+	c *assert.CollectT,
+	channel *protocol.StreamAndCookie,
+	eventFilter func(*events.ParsedEvent) bool,
+) bool {
 	for _, block := range channel.Miniblocks {
 		events, err := events.ParseEvents(block.Events)
 		assert.NoError(c, err)
 		for _, event := range events {
-			if isKeySolicitation(event, deviceKey, sessionId) {
+			if eventFilter(event) {
 				return true
 			}
 		}
@@ -178,7 +226,7 @@ func findKeySolicitation(
 	for _, envelope := range channel.Events {
 		event, err := events.ParseEvent(envelope)
 		assert.NoError(c, err)
-		if isKeySolicitation(event, deviceKey, sessionId) {
+		if eventFilter(event) {
 			return true
 		}
 	}
@@ -220,7 +268,13 @@ func TestAppRegistry_ForwardsChannelEvents(t *testing.T) {
 	}()
 
 	// Create user_* streams for app and register the app and webhook
-	appUserStreamCookie := safeCreateUserStreams(t, tester.ctx, wallet, client, &testEncryptionDevice)
+	appUserStreamCookie := safeCreateUserStreams(
+		t,
+		tester.ctx,
+		wallet,
+		client,
+		&testEncryptionDevice,
+	)
 	sharedSecret := register(
 		tester.ctx,
 		require,
@@ -248,12 +302,11 @@ func TestAppRegistry_ForwardsChannelEvents(t *testing.T) {
 	}
 	safeCreateUserStreams(t, tester.ctx, participant, client, &participantEncryptionDevice)
 
-	// participant creates a space and a channel
+	// The participant creates a space and a channel.
 	spaceId := testutils.FakeStreamId(STREAM_SPACE_BIN)
 	_, _, err := createSpace(tester.ctx, participant, client, spaceId, nil)
 	require.NoError(err)
 
-	// Create a channel in the space
 	channelId := StreamId{STREAM_CHANNEL_BIN}
 	copy(channelId[1:21], spaceId[1:21])
 	_, err = rand.Read(channelId[21:])
@@ -263,7 +316,7 @@ func TestAppRegistry_ForwardsChannelEvents(t *testing.T) {
 	require.NoError(err)
 	require.NotNil(channel)
 
-	// Bot adds self to channel
+	// Bot adds itself to channel
 	err = joinChannel(
 		tester.ctx,
 		wallet,
@@ -274,6 +327,8 @@ func TestAppRegistry_ForwardsChannelEvents(t *testing.T) {
 	)
 	require.NoError(err)
 
+	// Double-check that the bot is visibly a channel member.
+	// Messages sent to the channel after the bot becomes a member will be forwarded to the bot.
 	require.EventuallyWithT(func(c *assert.CollectT) {
 		res, err := client.GetStream(tester.ctx, &connect.Request[protocol.GetStreamRequest]{
 			Msg: &protocol.GetStreamRequest{
@@ -288,11 +343,15 @@ func TestAppRegistry_ForwardsChannelEvents(t *testing.T) {
 		assert.True(c, isMember)
 	}, 10*time.Second, 100*time.Millisecond, "Bot never became a channel member")
 
-	// Participant sends a test message to send to the channel with session id "session0"
+	// The participant sends a test message to send to the channel with session id "session0".
+	// The app registry service does not have a session key for this session and should prompt
+	// the bot to solicit keys in the channel.
 	testMessageText := "xyz"
+	testSession := "session0"
+	testCiphertexts := "ciphertext-device0-session0"
 	event, err := events.MakeEnvelopeWithPayload(
 		participant,
-		events.Make_ChannelPayload_Message_WithSession(testMessageText, "session0"),
+		events.Make_ChannelPayload_Message_WithSession(testMessageText, testSession),
 		&MiniblockRef{
 			Num:  channel.GetMinipoolGen() - 1,
 			Hash: common.Hash(channel.GetPrevMiniblockHash()),
@@ -307,6 +366,7 @@ func TestAppRegistry_ForwardsChannelEvents(t *testing.T) {
 	require.NoError(err)
 	require.Nil(add.Msg.Error)
 
+	// Confirm that the bot server sent the key solicitation.
 	require.EventuallyWithT(func(c *assert.CollectT) {
 		res, err := client.GetStream(tester.ctx, &connect.Request[protocol.GetStreamRequest]{
 			Msg: &protocol.GetStreamRequest{
@@ -314,8 +374,52 @@ func TestAppRegistry_ForwardsChannelEvents(t *testing.T) {
 			},
 		})
 		assert.NoError(c, err)
-		assert.True(c, findKeySolicitation(c, res.Msg.Stream, testEncryptionDevice.DeviceKey, "session0"))
+		assert.True(c, findKeySolicitation(c, res.Msg.Stream, testEncryptionDevice.DeviceKey, testSession))
 	}, 10*time.Second, 100*time.Millisecond, "App server did not send a key solicitation")
+
+	// Have the participant send the solicitation response directly to the bot's user inbox stream.
+	appUserInboxStreamId := UserInboxStreamIdFromAddress(wallet.Address)
+	res, err := client.GetStream(tester.ctx, &connect.Request[protocol.GetStreamRequest]{
+		Msg: &protocol.GetStreamRequest{
+			StreamId: appUserInboxStreamId[:],
+		},
+	})
+	require.NoError(err)
+
+	lastMiniblock := res.Msg.Stream.Miniblocks[len(res.Msg.Stream.Miniblocks)-1]
+	event, err = events.MakeEnvelopeWithPayload(
+		participant,
+		events.Make_UserInboxPayload_GroupEncryptionSessions(
+			channelId,
+			[]string{testSession},
+			map[string]string{testEncryptionDevice.DeviceKey: testCiphertexts},
+		),
+		&MiniblockRef{
+			Num:  res.Msg.Stream.NextSyncCookie.MinipoolGen - 1,
+			Hash: common.Hash(lastMiniblock.Header.Hash),
+		},
+	)
+	require.NoError(err)
+
+	add, err = client.AddEvent(tester.ctx, connect.NewRequest(&protocol.AddEventRequest{
+		StreamId: appUserInboxStreamId[:],
+		Event:    event,
+	}))
+	require.NoError(err)
+	require.Nil(add.Msg.Error)
+
+	// Once the key material is posted to the app's user inbox stream, the app registry server should
+	// dequeue and forward the previously unsendable message to the bot, and the test bot server should
+	// reply with a specific format.
+	require.EventuallyWithT(func(c *assert.CollectT) {
+		res, err := client.GetStream(tester.ctx, &connect.Request[protocol.GetStreamRequest]{
+			Msg: &protocol.GetStreamRequest{
+				StreamId: channelId[:],
+			},
+		})
+		assert.NoError(c, err)
+		assert.True(c, findMessageReply(c, res.Msg.Stream, testMessageText, testSession, testCiphertexts))
+	}, 10*time.Second, 100*time.Millisecond, "App server did not respond to the participant sending keys")
 }
 
 // invalidAddressBytes is a slice of bytes that cannot be parsed into an address, because
