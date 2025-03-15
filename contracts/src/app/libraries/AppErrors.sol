@@ -8,7 +8,6 @@ pragma solidity ^0.8.23;
 // contracts
 
 library AppErrors {
-  error TooManyPermissions();
   error InvalidPermission();
   error CallerNotOwner();
   error InvalidStatus();

@@ -10,6 +10,8 @@ error Validator__InvalidStringLength();
 error Validator__InvalidByteLength();
 error Validator__InvalidAddress();
 error Validator__InvalidLength();
+error Validator__InvalidMaxLength(uint256 max);
+
 library Validator {
   function checkStringLength(string memory name) internal pure {
     bytes memory byteName = bytes(name);
@@ -19,6 +21,11 @@ library Validator {
   function checkLength(string memory name, uint256 min) internal pure {
     bytes memory byteName = bytes(name);
     if (byteName.length < min) revert Validator__InvalidStringLength();
+  }
+
+  function checkMaxLength(string memory name, uint256 max) internal pure {
+    bytes memory byteName = bytes(name);
+    if (byteName.length > max) revert Validator__InvalidMaxLength(max);
   }
 
   function checkByteLength(bytes memory name) internal pure {

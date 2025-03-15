@@ -7,8 +7,8 @@ pragma solidity ^0.8.23;
 import {Inputs, Registry} from "../types/AppTypes.sol";
 
 // contracts
-interface IAppRegistryBase {
-  event AppRegistered(
+interface IAppFactoryBase {
+  event AppCreated(
     uint256 indexed appId,
     address indexed app,
     address indexed owner,
@@ -27,7 +27,7 @@ interface IAppRegistryBase {
   event AppStatusUpdated(uint256 indexed appId, Registry.Status status);
 }
 
-interface IAppRegistry is IAppRegistryBase {
+interface IAppFactory is IAppFactoryBase {
   /**
    * @notice Retrieves the complete registration information for a specific app
    * @dev Returns both the app configuration and its associated permissions
@@ -49,7 +49,9 @@ interface IAppRegistry is IAppRegistryBase {
    *        - metadata: App metadata including URI, name, and symbol
    *        - permissions: Array of permission strings granted to the app
    */
-  function createApp(Inputs.CreateApp calldata params) external;
+  function createApp(
+    Inputs.CreateApp calldata params
+  ) external returns (uint256 appId);
 
   /**
    * @notice Updates an existing application's configuration

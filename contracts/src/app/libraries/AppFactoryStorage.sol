@@ -8,10 +8,10 @@ import {Registry} from "../types/AppTypes.sol";
 import {StringSet} from "contracts/src/utils/StringSet.sol";
 // contracts
 
-library AppRegistryStorage {
-  // keccak256(abi.encode(uint256(keccak256("app.facets.registry.storage")) - 1)) & ~bytes32(uint256(0xff))
+library AppFactoryStorage {
+  // keccak256(abi.encode(uint256(keccak256("app.facets.factory.storage")) - 1)) & ~bytes32(uint256(0xff))
   bytes32 constant STORAGE_SLOT =
-    0xdf7c5666ac6dae19cbbd26e4c45565a209a5c80d04468e41316d166dd7adf900;
+    0x1aae9eeeedd4a5127fb9f51b673ba56b6168ea1d2090b2d4267ae2d8099b0900;
 
   struct Layout {
     uint256 appId;

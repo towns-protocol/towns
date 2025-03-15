@@ -2,12 +2,12 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {IAppRegistry} from "../interfaces/IAppRegistry.sol";
+import {IAppFactory} from "../interfaces/IAppFactory.sol";
 
 // libraries
 import {Inputs, Registry} from "../types/AppTypes.sol";
-import {Helpers} from "../libraries/AppHelpers.sol";
-import {AppRegistryStorage} from "../libraries/AppRegistryStorage.sol";
+import {AppHelpers} from "../libraries/AppHelpers.sol";
+import {AppFactoryStorage} from "../libraries/AppFactoryStorage.sol";
 import {StringSet} from "contracts/src/utils/StringSet.sol";
 import {Validator} from "contracts/src/utils/Validator.sol";
 
@@ -15,16 +15,14 @@ import {Validator} from "contracts/src/utils/Validator.sol";
 import {OwnableBase} from "@river-build/diamond/src/facets/ownable/OwnableBase.sol";
 import {Facet} from "@river-build/diamond/src/facets/Facet.sol";
 
-contract AppRegistry is IAppRegistry, OwnableBase, Facet {
+contract AppFactory is IAppFactory, OwnableBase, Facet {
   using StringSet for StringSet.Set;
   using Validator for *;
 
   bytes32 internal constant MAX_PERMISSIONS = keccak256("MAX_PERMISSIONS");
 
-  function __AppRegistry_init(
-    uint256 maxPermissions
-  ) internal onlyInitializing {
-    AppRegistryStorage.Layout storage ds = AppRegistryStorage.getLayout();
+  function __AppFactory_init(uint256 maxPermissions) external onlyInitializing {
+    AppFactoryStorage.Layout storage ds = AppFactoryStorage.getLayout();
     ds.settings[MAX_PERMISSIONS] = abi.encode(maxPermissions);
   }
 
@@ -38,25 +36,42 @@ contract AppRegistry is IAppRegistry, OwnableBase, Facet {
     view
     returns (Registry.Config memory, string[] memory permissions)
   {
-    AppRegistryStorage.Layout storage ds = AppRegistryStorage.getLayout();
+    AppFactoryStorage.Layout storage ds = AppFactoryStorage.getLayout();
     return (ds.configByAppId[appId], ds.permissionsByAppId[appId].values());
+  }
+
+  function getAppByAddress(
+    address app
+  )
+    external
+    view
+    returns (Registry.Config memory, string[] memory permissions)
+  {
+    AppFactoryStorage.Layout storage ds = AppFactoryStorage.getLayout();
+
+    return (
+      ds.configByAppId[ds.appIdByAddress[app]],
+      ds.permissionsByAppId[ds.appIdByAddress[app]].values()
+    );
   }
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                           Writes                           */
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-  function createApp(Inputs.CreateApp calldata params) external {
-    AppRegistryStorage.Layout storage ds = AppRegistryStorage.getLayout();
+  function createApp(
+    Inputs.CreateApp calldata params
+  ) external returns (uint256 appId) {
+    AppFactoryStorage.Layout storage ds = AppFactoryStorage.getLayout();
 
     params.app.checkAddress();
     params.owner.checkAddress();
-    params.metadata.name.checkLength(32);
-    params.metadata.symbol.checkLength(6);
+    params.metadata.name.checkMaxLength(32);
+    params.metadata.symbol.checkMaxLength(6);
     params.permissions.checkMaxArrayLength(
       abi.decode(ds.settings[MAX_PERMISSIONS], (uint256))
     );
-    Helpers.checkCreateRegistration(
+    AppHelpers.checkCreateRegistration(
       ds,
       params.app,
       params.status,
@@ -64,11 +79,11 @@ contract AppRegistry is IAppRegistry, OwnableBase, Facet {
       params.permissions
     );
 
-    _register(ds, params);
+    return _register(ds, params);
   }
 
   function updateApp(uint256 appId, Inputs.UpdateApp calldata params) external {
-    AppRegistryStorage.Layout storage ds = AppRegistryStorage.getLayout();
+    AppFactoryStorage.Layout storage ds = AppFactoryStorage.getLayout();
 
     params.metadata.name.checkLength(32);
     params.metadata.symbol.checkLength(6);
@@ -78,8 +93,11 @@ contract AppRegistry is IAppRegistry, OwnableBase, Facet {
 
     Registry.Config storage config = ds.configByAppId[appId];
 
-    Helpers.checkOwnership(config.owner, msg.sender);
-    Helpers.checkInvalidPermissions(params.permissions, ds.invalidPermissions);
+    AppHelpers.checkOwnership(config.owner, msg.sender);
+    AppHelpers.checkInvalidPermissions(
+      params.permissions,
+      ds.invalidPermissions
+    );
 
     _update(ds, appId, params);
   }
@@ -88,7 +106,7 @@ contract AppRegistry is IAppRegistry, OwnableBase, Facet {
     uint256 appId,
     Registry.Status status
   ) external onlyOwner {
-    AppRegistryStorage.Layout storage ds = AppRegistryStorage.getLayout();
+    AppFactoryStorage.Layout storage ds = AppFactoryStorage.getLayout();
     Registry.Config storage config = ds.configByAppId[appId];
     config.status = status;
     emit AppStatusUpdated(appId, status);
@@ -99,7 +117,7 @@ contract AppRegistry is IAppRegistry, OwnableBase, Facet {
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
   function _update(
-    AppRegistryStorage.Layout storage ds,
+    AppFactoryStorage.Layout storage ds,
     uint256 appId,
     Inputs.UpdateApp calldata params
   ) internal {
@@ -125,10 +143,10 @@ contract AppRegistry is IAppRegistry, OwnableBase, Facet {
   }
 
   function _register(
-    AppRegistryStorage.Layout storage ds,
+    AppFactoryStorage.Layout storage ds,
     Inputs.CreateApp calldata params
-  ) internal {
-    uint256 appId = ++ds.appId;
+  ) internal returns (uint256 appId) {
+    appId = ++ds.appId;
     ds.appIdByAddress[params.app] = appId;
 
     Registry.Config storage config = ds.configByAppId[appId];
@@ -145,7 +163,7 @@ contract AppRegistry is IAppRegistry, OwnableBase, Facet {
       permissions.add(params.permissions[i]);
     }
 
-    emit AppRegistered(
+    emit AppCreated(
       appId,
       params.app,
       params.owner,

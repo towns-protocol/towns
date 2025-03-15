@@ -8,15 +8,15 @@ import {AppErrors} from "./AppErrors.sol";
 import {CustomRevert} from "contracts/src/utils/libraries/CustomRevert.sol";
 import {StringSet} from "contracts/src/utils/StringSet.sol";
 import {Registry} from "../types/AppTypes.sol";
-import {AppRegistryStorage} from "./AppRegistryStorage.sol";
+import {AppFactoryStorage} from "./AppFactoryStorage.sol";
 
 // contracts
 
-library Helpers {
+library AppHelpers {
   using StringSet for StringSet.Set;
 
   function checkCreateRegistration(
-    AppRegistryStorage.Layout storage ds,
+    AppFactoryStorage.Layout storage ds,
     address app,
     Registry.Status status,
     address owner,
