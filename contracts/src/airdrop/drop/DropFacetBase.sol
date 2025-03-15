@@ -2,14 +2,14 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {IDropFacetBase} from "./IDropFacet.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {IDropFacetBase} from "./IDropFacet.sol";
 
 // libraries
-import {DropStorage} from "./DropStorage.sol";
-import {CustomRevert} from "contracts/src/utils/libraries/CustomRevert.sol";
 import {MerkleProofLib} from "solady/utils/MerkleProofLib.sol";
 import {BasisPoints} from "contracts/src/utils/libraries/BasisPoints.sol";
+import {CustomRevert} from "contracts/src/utils/libraries/CustomRevert.sol";
+import {DropStorage} from "./DropStorage.sol";
 
 abstract contract DropFacetBase is IDropFacetBase {
   using DropStorage for DropStorage.Layout;
@@ -95,26 +95,58 @@ abstract contract DropFacetBase is IDropFacetBase {
 
   function _verifyPenaltyBps(
     ClaimCondition storage condition,
-    Claim calldata claim,
+    uint256 amount,
     uint16 expectedPenaltyBps
-  ) internal view returns (uint256 amount) {
+  ) internal view returns (uint256 remaining) {
     uint16 penaltyBps = condition.penaltyBps;
     if (penaltyBps != expectedPenaltyBps) {
       CustomRevert.revertWith(DropFacet__UnexpectedPenaltyBps.selector);
     }
 
-    amount = claim.quantity;
-    if (penaltyBps > 0) {
+    remaining = amount;
+    if (penaltyBps != 0) {
       unchecked {
-        uint256 penaltyAmount = BasisPoints.calculate(
-          claim.quantity,
-          penaltyBps
-        );
-        amount = claim.quantity - penaltyAmount;
+        uint256 penaltyAmount = BasisPoints.calculate(amount, penaltyBps);
+        remaining = amount - penaltyAmount;
       }
     }
+  }
 
-    return amount;
+  function _lockToBoost(
+    ClaimCondition storage condition,
+    DropStorage.SupplyClaim storage claimed,
+    uint256 amount,
+    uint48 maxLockDuration,
+    uint48 lockDuration
+  ) internal returns (uint256 remaining) {
+    uint16 penaltyBps = condition.penaltyBps;
+    // linear decrease of penaltyBps according to lockDuration
+    penaltyBps = uint16(
+      (uint256(penaltyBps) * (maxLockDuration - lockDuration)) / maxLockDuration
+    );
+
+    remaining = amount;
+    if (penaltyBps != 0) {
+      unchecked {
+        uint256 penaltyAmount = BasisPoints.calculate(amount, penaltyBps);
+        remaining = amount - penaltyAmount;
+      }
+    }
+    // store timestamp of claim and lockDuration
+    (claimed.lockStart, claimed.lockDuration) = (
+      uint48(block.timestamp),
+      lockDuration
+    );
+  }
+
+  function _verifyLockDuration(
+    DropStorage.Layout storage ds,
+    uint48 lockDuration
+  ) internal view {
+    if (lockDuration < ds.minLockDuration)
+      CustomRevert.revertWith(DropFacet__InvalidLockDuration.selector);
+    if (lockDuration > ds.maxLockDuration)
+      CustomRevert.revertWith(DropFacet__InvalidLockDuration.selector);
   }
 
   function _addClaimCondition(
@@ -267,17 +299,6 @@ abstract contract DropFacetBase is IDropFacetBase {
     uint256 amount
   ) internal {
     IERC20(condition.currency).approve(ds.rewardsDistribution, amount);
-  }
-
-  function _setRewardsDistribution(
-    DropStorage.Layout storage ds,
-    address rewardsDistribution
-  ) internal {
-    if (rewardsDistribution == address(0)) {
-      CustomRevert.revertWith(DropFacet__RewardsDistributionNotSet.selector);
-    }
-
-    ds.rewardsDistribution = rewardsDistribution;
   }
 
   // =============================================================
