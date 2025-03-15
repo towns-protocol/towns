@@ -219,6 +219,7 @@ jobs:
                   docker exec -i river_postgres_container bash << EOF
                     echo 'max_connections = 1000' >> /var/lib/postgresql/data/postgresql.conf
                     echo 'shared_buffers = 2GB' >> /var/lib/postgresql/data/postgresql.conf
+                    echo 'log_error_verbosity = verbose' >> /var/lib/postgresql/data/postgresql.conf
                   EOF
                   docker restart --time 0 river_postgres_container
                   sleep 5
@@ -371,6 +372,7 @@ jobs:
                   docker exec -i river_postgres_container bash << EOF
                     echo 'max_connections = 1000' >> /var/lib/postgresql/data/postgresql.conf
                     echo 'shared_buffers = 2GB' >> /var/lib/postgresql/data/postgresql.conf
+                    echo 'log_error_verbosity = verbose' >> /var/lib/postgresql/data/postgresql.conf
                   EOF
                   docker restart --time 0 river_postgres_container
                   sleep 5
@@ -519,6 +521,7 @@ jobs:
                   docker exec -i river_postgres_container bash << EOF
                     echo 'max_connections = 1000' >> /var/lib/postgresql/data/postgresql.conf
                     echo 'shared_buffers = 2GB' >> /var/lib/postgresql/data/postgresql.conf
+                    echo 'log_error_verbosity = verbose' >> /var/lib/postgresql/data/postgresql.conf
                   EOF
                   docker restart --time 0 river_postgres_container
                   sleep 5
@@ -661,6 +664,18 @@ jobs:
 
             - name: Install Binaries
               run: sudo apt update && sudo apt-get install -y postgresql-client zstd make gcc netcat libsecp256k1-dev
+
+            - name: Change Postgres log settings
+              run: |
+                  docker exec -i river_postgres_container bash << EOF
+                    echo 'log_error_verbosity = verbose' >> /var/lib/postgresql/data/postgresql.conf
+                    echo "shared_preload_libraries = 'auto_explain'" >> /var/lib/postgresql/data/postgresql.conf
+                    echo 'auto_explain.log_min_duration = 0  # Log all queries' >> /var/lib/postgresql/data/postgresql.conf
+                    echo 'auto_explain.log_analyze = on      # Include execution details' >> /var/lib/postgresql/data/postgresql.conf
+                    echo 'auto_explain.log_verbose = on      # More detail' >> /var/lib/postgresql/data/postgresql.conf
+                  EOF
+                  docker restart --time 0 river_postgres_container
+                  sleep 5
 
             - name: Install Rust Toolchain
               uses: actions-rust-lang/setup-rust-toolchain@v1

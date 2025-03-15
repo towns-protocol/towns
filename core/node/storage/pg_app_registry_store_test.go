@@ -96,7 +96,6 @@ func safeAddress(t *testing.T) common.Address {
 }
 
 func TestRegisterWebhook(t *testing.T) {
-	t.Skip("Disable due to deadlock likely arising from multiple tests using the same schema")
 	params := setupAppRegistryStorageTest(t)
 	t.Cleanup(params.closer)
 
@@ -165,7 +164,6 @@ func TestRegisterWebhook(t *testing.T) {
 }
 
 func TestCreateApp(t *testing.T) {
-	t.Skip("Disable due to deadlock likely arising from multiple tests using the same schema")
 	params := setupAppRegistryStorageTest(t)
 	t.Cleanup(params.closer)
 
@@ -232,7 +230,6 @@ func requireSendableMessagesEqual(t *testing.T, expected *storage.SendableMessag
 }
 
 func TestPublishSessionKeys(t *testing.T) {
-	t.Skip("Disable due to deadlock likely arising from multiple tests using the same schema")
 	params := setupAppRegistryStorageTest(t)
 	t.Cleanup(params.closer)
 
@@ -318,7 +315,6 @@ func nSafeWallets(t *testing.T, ctx context.Context, n int) []*crypto.Wallet {
 }
 
 func TestEnqueueMessages(t *testing.T) {
-	t.Skip("Disable due to deadlock likely arising from multiple tests using the same schema")
 	params := setupAppRegistryStorageTest(t)
 	t.Cleanup(params.closer)
 
