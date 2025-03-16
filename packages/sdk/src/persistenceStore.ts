@@ -426,7 +426,7 @@ function topLevelRenderableEventInMiniblock(miniblock: ParsedMiniblock): boolean
     return false
 }
 
-function eventIdsFromSnapshot(snapshot: Snapshot): string[] {
+export function eventIdsFromSnapshot(snapshot: Snapshot): string[] {
     const usernameEventIds =
         snapshot.members?.joined
             .filter((m) => isDefined(m.username))
