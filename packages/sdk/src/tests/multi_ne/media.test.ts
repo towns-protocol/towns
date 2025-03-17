@@ -94,15 +94,21 @@ describe('mediaTests', () => {
         spaceId: string,
         chunkCount: number,
         firstChunk?: Uint8Array,
+        key?: Uint8Array,
         iv?: Uint8Array,
     ): Promise<{ creationCookie: CreationCookie }> {
+        let data: Uint8Array | undefined
+        if (firstChunk) {
+            const { ciphertext } = await encryptAESGCM(firstChunk, key, iv)
+            data = ciphertext
+        }
         await expect(bobsClient.createSpace(spaceId)).resolves.not.toThrow()
         return await bobsClient.createMediaStream(
             undefined,
             spaceId,
             undefined,
             chunkCount,
-            firstChunk,
+            data,
             iv,
         )
     }
@@ -134,7 +140,7 @@ describe('mediaTests', () => {
         const { iv, key } = await deriveKeyAndIV(spaceId)
         const firstChunk = createTestMediaChunks(1)
         const secondChunk = createTestMediaChunks(1)
-        const mediaStreamInfo = await bobCreateSpaceMediaStream(spaceId, 3, firstChunk, iv)
+        const mediaStreamInfo = await bobCreateSpaceMediaStream(spaceId, 3, firstChunk, key, iv)
         await expect(
             bobSendEncryptedMediaPayload(
                 mediaStreamInfo.creationCookie,
@@ -152,17 +158,15 @@ describe('mediaTests', () => {
         const { iv, key } = await deriveKeyAndIV(spaceId)
         const firstChunk = createTestMediaChunks(1)
         const secondChunk = createTestMediaChunks(1)
-        const mediaStreamInfo = await bobCreateSpaceMediaStream(spaceId, 2, firstChunk, iv)
-        let creationCookie = mediaStreamInfo.creationCookie
-        creationCookie = await bobSendEncryptedMediaPayload(
-            creationCookie,
-            false,
+        const mediaStreamInfo = await bobCreateSpaceMediaStream(spaceId, 2, firstChunk, key, iv)
+        const creationCookie = await bobSendEncryptedMediaPayload(
+            mediaStreamInfo.creationCookie,
+            true,
             1,
             secondChunk,
             key,
             iv,
         )
-        await bobSendEncryptedMediaPayload(creationCookie, true, 1, secondChunk, key, iv)
         const decryptedChunks = await bobsClient.getMediaPayload(
             streamIdAsString(creationCookie.streamId),
             key,
