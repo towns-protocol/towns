@@ -2,6 +2,7 @@ package client
 
 import (
 	"context"
+	"fmt"
 	"slices"
 	"sync"
 
@@ -178,12 +179,12 @@ func (ss *SyncerSet) Run() {
 	ss.syncerTasks.Wait() // background syncers finished -> safe to close messages channel
 }
 
-func (ss *SyncerSet) AddStream(
-	ctx context.Context,
-	nodeAddress common.Address,
-	streamID StreamId,
-	cookie *SyncCookie,
-) error {
+func (ss *SyncerSet) AddStream(ctx context.Context, cookie *SyncCookie) error {
+	streamID, err := StreamIdFromBytes(cookie.GetStreamId())
+	if err != nil {
+		return err
+	}
+
 	if ss.otelTracer != nil {
 		_, span := ss.otelTracer.Start(ctx, "AddStream",
 			trace.WithAttributes(attribute.String("stream", streamID.String())),
@@ -202,57 +203,96 @@ func (ss *SyncerSet) AddStream(
 		return nil // stream is already part of sync operation
 	}
 
-	// check if there is already a syncer that can sync the given stream -> add stream to the syncer
-	if syncer, found := ss.syncers[nodeAddress]; found {
-		if err := syncer.AddStream(ctx, cookie); err != nil {
-			return err
-		}
-		ss.streamID2Syncer[streamID] = syncer
-		return nil
-	}
+	// Returns the target node address and a flag indicating if more nodes are available
+	var getNodeAddress func() (common.Address, *SyncCookie, bool)
 
-	// first stream to sync with remote -> create a new syncer instance
-	var (
-		syncer StreamsSyncer
-		err    error
-	)
-	if nodeAddress == ss.localNodeAddress {
-		var span trace.Span
-		if ss.otelTracer != nil {
-			_, span = ss.otelTracer.Start(ctx, "NewLocalSyncer",
-				trace.WithAttributes(attribute.String("stream", streamID.String())))
-		}
-
-		if syncer, err = ss.newLocalSyncer([]*SyncCookie{cookie}); err != nil {
-			if span != nil {
-				span.End()
-			}
-			return err
-		}
-		if span != nil {
-			span.End()
+	// Use the node address provided in the sync cookie if available, otherwise use the sticky peer of the stream
+	if nodeAddressRaw := cookie.GetNodeAddress(); len(nodeAddressRaw) > 0 {
+		getNodeAddress = func() (common.Address, *SyncCookie, bool) {
+			return common.BytesToAddress(nodeAddressRaw), cookie, false
 		}
 	} else {
-		var span trace.Span
-		if ss.otelTracer != nil {
-			_, span = ss.otelTracer.Start(ctx, "NewRemoteSyncer",
-				trace.WithAttributes(attribute.String("stream", streamID.String()),
-					attribute.String("remote", nodeAddress.String())))
-		}
-		if syncer, err = ss.newRemoteSyncer(nodeAddress, []*SyncCookie{cookie}); err != nil {
-			if span != nil {
-				span.End()
-			}
+		stream, err := ss.streamCache.GetStreamNoWait(ctx, streamID)
+		if err != nil {
 			return err
+		}
+
+		i := 0
+		remotes, useLocal := stream.GetRemotesAndIsLocal()
+		nodeAddress := stream.GetStickyPeer()
+		getNodeAddress = func() (common.Address, *SyncCookie, bool) {
+			cookie := &SyncCookie{
+				StreamId:          cookie.GetStreamId(),
+				MinipoolGen:       cookie.GetMinipoolGen(),
+				MinipoolSlot:      cookie.GetMinipoolSlot(),
+				PrevMiniblockHash: cookie.GetPrevMiniblockHash(),
+			}
+
+			// If the local node hosts the current stream, try it first
+			if i == 0 && useLocal {
+				useLocal = false
+				cookie.NodeAddress = ss.localNodeAddress.Bytes()
+				return ss.localNodeAddress, cookie, len(remotes) > 0
+			}
+
+			// Advance to the next peer if the current one does not work
+			if i > 0 {
+				nodeAddress = stream.AdvanceStickyPeer(nodeAddress)
+			}
+			i++
+			cookie.NodeAddress = nodeAddress.Bytes()
+			return nodeAddress, cookie, i < len(remotes)
+		}
+	}
+
+	for {
+		nodeAddress, cookie, more := getNodeAddress()
+
+		// check if there is already a syncer that can sync the given stream -> add stream to the syncer
+		if syncer, found := ss.syncers[nodeAddress]; found {
+			if err := syncer.AddStream(ctx, cookie); err != nil {
+				return err
+			}
+			ss.streamID2Syncer[streamID] = syncer
+			return nil
+		}
+
+		// first stream to sync with remote -> create a new syncer instance
+		var syncer StreamsSyncer
+		var span trace.Span
+		if nodeAddress == ss.localNodeAddress {
+			if ss.otelTracer != nil {
+				_, span = ss.otelTracer.Start(ctx, "NewLocalSyncer",
+					trace.WithAttributes(attribute.String("stream", streamID.String())))
+			}
+			syncer, err = ss.newLocalSyncer([]*SyncCookie{cookie})
+		} else {
+			if ss.otelTracer != nil {
+				_, span = ss.otelTracer.Start(ctx, "NewRemoteSyncer",
+					trace.WithAttributes(attribute.String("stream", streamID.String()),
+						attribute.String("remote", nodeAddress.String())))
+			}
+			syncer, err = ss.newRemoteSyncer(nodeAddress, []*SyncCookie{cookie})
 		}
 		if span != nil {
 			span.End()
 		}
-	}
+		if err != nil {
+			fmt.Println("err", err)
+			if !more {
+				return err
+			}
 
-	ss.syncers[nodeAddress] = syncer
-	ss.streamID2Syncer[streamID] = syncer
-	ss.startSyncer(syncer)
+			logging.FromCtx(ss.ctx).Errorw("Unable to create syncer, advancing the node", "err", err, "remoteNode", nodeAddress)
+			continue
+		}
+
+		ss.syncers[nodeAddress] = syncer
+		ss.streamID2Syncer[streamID] = syncer
+		ss.startSyncer(syncer)
+
+		break
+	}
 
 	return nil
 }
