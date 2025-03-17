@@ -28,28 +28,20 @@ import type {
 } from "./common";
 
 export declare namespace IWalletLinkBase {
-  export type WalletQueryOptionsStruct = {
-    includeDelegations: PromiseOrValue<boolean>;
-  };
-
-  export type WalletQueryOptionsStructOutput = [boolean] & {
-    includeDelegations: boolean;
-  };
-
-  export type LinkedWalletStruct = {
+  export type LinkedWalletDataStruct = {
     addr: PromiseOrValue<string>;
     signature: PromiseOrValue<BytesLike>;
     message: PromiseOrValue<string>;
   };
 
-  export type LinkedWalletStructOutput = [string, string, string] & {
+  export type LinkedWalletDataStructOutput = [string, string, string] & {
     addr: string;
     signature: string;
     message: string;
   };
 
   export type VMSpecificDataStruct = {
-    key: PromiseOrValue<string>;
+    key: PromiseOrValue<BytesLike>;
     value: PromiseOrValue<BytesLike>;
   };
 
@@ -58,35 +50,26 @@ export declare namespace IWalletLinkBase {
     value: string;
   };
 
-  export type NonEVMLinkedWalletStruct = {
-    wallet: WalletLib.WalletStruct;
+  export type NonEVMLinkedWalletDataStruct = {
+    addr: PromiseOrValue<string>;
     signature: PromiseOrValue<BytesLike>;
     message: PromiseOrValue<string>;
+    vmType: PromiseOrValue<BigNumberish>;
     extraData: IWalletLinkBase.VMSpecificDataStruct[];
   };
 
-  export type NonEVMLinkedWalletStructOutput = [
-    WalletLib.WalletStructOutput,
+  export type NonEVMLinkedWalletDataStructOutput = [
     string,
     string,
+    string,
+    number,
     IWalletLinkBase.VMSpecificDataStructOutput[]
   ] & {
-    wallet: WalletLib.WalletStructOutput;
+    addr: string;
     signature: string;
     message: string;
-    extraData: IWalletLinkBase.VMSpecificDataStructOutput[];
-  };
-}
-
-export declare namespace WalletLib {
-  export type WalletStruct = {
-    addr: PromiseOrValue<string>;
-    vmType: PromiseOrValue<BigNumberish>;
-  };
-
-  export type WalletStructOutput = [string, number] & {
-    addr: string;
     vmType: number;
+    extraData: IWalletLinkBase.VMSpecificDataStructOutput[];
   };
 }
 
@@ -94,7 +77,6 @@ export interface IWalletLinkInterface extends utils.Interface {
   functions: {
     "checkIfLinked(address,address)": FunctionFragment;
     "checkIfNonEVMWalletLinked(address,bytes32)": FunctionFragment;
-    "explicitWalletsByRootKey(address,(bool))": FunctionFragment;
     "getDefaultWallet(address)": FunctionFragment;
     "getDependency(bytes32)": FunctionFragment;
     "getLatestNonceForRootKey(address)": FunctionFragment;
@@ -102,11 +84,11 @@ export interface IWalletLinkInterface extends utils.Interface {
     "getWalletsByRootKey(address)": FunctionFragment;
     "getWalletsByRootKeyWithDelegations(address)": FunctionFragment;
     "linkCallerToRootKey((address,bytes,string),uint256)": FunctionFragment;
-    "linkNonEVMWalletToRootKey(((string,uint8),bytes,string,(string,bytes)[]),uint256)": FunctionFragment;
+    "linkNonEVMWalletToRootKey((string,bytes,string,uint8,(bytes32,bytes)[]),uint256)": FunctionFragment;
     "linkWalletToRootKey((address,bytes,string),(address,bytes,string),uint256)": FunctionFragment;
     "removeCallerLink()": FunctionFragment;
     "removeLink(address,(address,bytes,string),uint256)": FunctionFragment;
-    "removeNonEVMWalletLink((string,uint8),uint256)": FunctionFragment;
+    "removeNonEVMWalletLink(string,uint8,uint256)": FunctionFragment;
     "setDefaultWallet(address)": FunctionFragment;
     "setDependency(bytes32,address)": FunctionFragment;
   };
@@ -115,7 +97,6 @@ export interface IWalletLinkInterface extends utils.Interface {
     nameOrSignatureOrTopic:
       | "checkIfLinked"
       | "checkIfNonEVMWalletLinked"
-      | "explicitWalletsByRootKey"
       | "getDefaultWallet"
       | "getDependency"
       | "getLatestNonceForRootKey"
@@ -139,10 +120,6 @@ export interface IWalletLinkInterface extends utils.Interface {
   encodeFunctionData(
     functionFragment: "checkIfNonEVMWalletLinked",
     values: [PromiseOrValue<string>, PromiseOrValue<BytesLike>]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "explicitWalletsByRootKey",
-    values: [PromiseOrValue<string>, IWalletLinkBase.WalletQueryOptionsStruct]
   ): string;
   encodeFunctionData(
     functionFragment: "getDefaultWallet",
@@ -170,20 +147,23 @@ export interface IWalletLinkInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "linkCallerToRootKey",
-    values: [IWalletLinkBase.LinkedWalletStruct, PromiseOrValue<BigNumberish>]
+    values: [
+      IWalletLinkBase.LinkedWalletDataStruct,
+      PromiseOrValue<BigNumberish>
+    ]
   ): string;
   encodeFunctionData(
     functionFragment: "linkNonEVMWalletToRootKey",
     values: [
-      IWalletLinkBase.NonEVMLinkedWalletStruct,
+      IWalletLinkBase.NonEVMLinkedWalletDataStruct,
       PromiseOrValue<BigNumberish>
     ]
   ): string;
   encodeFunctionData(
     functionFragment: "linkWalletToRootKey",
     values: [
-      IWalletLinkBase.LinkedWalletStruct,
-      IWalletLinkBase.LinkedWalletStruct,
+      IWalletLinkBase.LinkedWalletDataStruct,
+      IWalletLinkBase.LinkedWalletDataStruct,
       PromiseOrValue<BigNumberish>
     ]
   ): string;
@@ -195,13 +175,17 @@ export interface IWalletLinkInterface extends utils.Interface {
     functionFragment: "removeLink",
     values: [
       PromiseOrValue<string>,
-      IWalletLinkBase.LinkedWalletStruct,
+      IWalletLinkBase.LinkedWalletDataStruct,
       PromiseOrValue<BigNumberish>
     ]
   ): string;
   encodeFunctionData(
     functionFragment: "removeNonEVMWalletLink",
-    values: [WalletLib.WalletStruct, PromiseOrValue<BigNumberish>]
+    values: [
+      PromiseOrValue<string>,
+      PromiseOrValue<BigNumberish>,
+      PromiseOrValue<BigNumberish>
+    ]
   ): string;
   encodeFunctionData(
     functionFragment: "setDefaultWallet",
@@ -218,10 +202,6 @@ export interface IWalletLinkInterface extends utils.Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "checkIfNonEVMWalletLinked",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "explicitWalletsByRootKey",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -393,16 +373,6 @@ export interface IWalletLink extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[boolean]>;
 
-    explicitWalletsByRootKey(
-      rootKey: PromiseOrValue<string>,
-      options: IWalletLinkBase.WalletQueryOptionsStruct,
-      overrides?: CallOverrides
-    ): Promise<
-      [WalletLib.WalletStructOutput[]] & {
-        wallets: WalletLib.WalletStructOutput[];
-      }
-    >;
-
     getDefaultWallet(
       rootKey: PromiseOrValue<string>,
       overrides?: CallOverrides
@@ -434,20 +404,20 @@ export interface IWalletLink extends BaseContract {
     ): Promise<[string[]] & { wallets: string[] }>;
 
     linkCallerToRootKey(
-      rootWallet: IWalletLinkBase.LinkedWalletStruct,
+      rootWallet: IWalletLinkBase.LinkedWalletDataStruct,
       nonce: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
     linkNonEVMWalletToRootKey(
-      wallet: IWalletLinkBase.NonEVMLinkedWalletStruct,
+      wallet: IWalletLinkBase.NonEVMLinkedWalletDataStruct,
       nonce: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
     linkWalletToRootKey(
-      wallet: IWalletLinkBase.LinkedWalletStruct,
-      rootWallet: IWalletLinkBase.LinkedWalletStruct,
+      wallet: IWalletLinkBase.LinkedWalletDataStruct,
+      rootWallet: IWalletLinkBase.LinkedWalletDataStruct,
       nonce: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
@@ -458,13 +428,14 @@ export interface IWalletLink extends BaseContract {
 
     removeLink(
       wallet: PromiseOrValue<string>,
-      rootWallet: IWalletLinkBase.LinkedWalletStruct,
+      rootWallet: IWalletLinkBase.LinkedWalletDataStruct,
       nonce: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
     removeNonEVMWalletLink(
-      wallet: WalletLib.WalletStruct,
+      addr: PromiseOrValue<string>,
+      vmType: PromiseOrValue<BigNumberish>,
       nonce: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
@@ -492,12 +463,6 @@ export interface IWalletLink extends BaseContract {
     walletHash: PromiseOrValue<BytesLike>,
     overrides?: CallOverrides
   ): Promise<boolean>;
-
-  explicitWalletsByRootKey(
-    rootKey: PromiseOrValue<string>,
-    options: IWalletLinkBase.WalletQueryOptionsStruct,
-    overrides?: CallOverrides
-  ): Promise<WalletLib.WalletStructOutput[]>;
 
   getDefaultWallet(
     rootKey: PromiseOrValue<string>,
@@ -530,20 +495,20 @@ export interface IWalletLink extends BaseContract {
   ): Promise<string[]>;
 
   linkCallerToRootKey(
-    rootWallet: IWalletLinkBase.LinkedWalletStruct,
+    rootWallet: IWalletLinkBase.LinkedWalletDataStruct,
     nonce: PromiseOrValue<BigNumberish>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
   linkNonEVMWalletToRootKey(
-    wallet: IWalletLinkBase.NonEVMLinkedWalletStruct,
+    wallet: IWalletLinkBase.NonEVMLinkedWalletDataStruct,
     nonce: PromiseOrValue<BigNumberish>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
   linkWalletToRootKey(
-    wallet: IWalletLinkBase.LinkedWalletStruct,
-    rootWallet: IWalletLinkBase.LinkedWalletStruct,
+    wallet: IWalletLinkBase.LinkedWalletDataStruct,
+    rootWallet: IWalletLinkBase.LinkedWalletDataStruct,
     nonce: PromiseOrValue<BigNumberish>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
@@ -554,13 +519,14 @@ export interface IWalletLink extends BaseContract {
 
   removeLink(
     wallet: PromiseOrValue<string>,
-    rootWallet: IWalletLinkBase.LinkedWalletStruct,
+    rootWallet: IWalletLinkBase.LinkedWalletDataStruct,
     nonce: PromiseOrValue<BigNumberish>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
   removeNonEVMWalletLink(
-    wallet: WalletLib.WalletStruct,
+    addr: PromiseOrValue<string>,
+    vmType: PromiseOrValue<BigNumberish>,
     nonce: PromiseOrValue<BigNumberish>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
@@ -588,12 +554,6 @@ export interface IWalletLink extends BaseContract {
       walletHash: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
     ): Promise<boolean>;
-
-    explicitWalletsByRootKey(
-      rootKey: PromiseOrValue<string>,
-      options: IWalletLinkBase.WalletQueryOptionsStruct,
-      overrides?: CallOverrides
-    ): Promise<WalletLib.WalletStructOutput[]>;
 
     getDefaultWallet(
       rootKey: PromiseOrValue<string>,
@@ -626,20 +586,20 @@ export interface IWalletLink extends BaseContract {
     ): Promise<string[]>;
 
     linkCallerToRootKey(
-      rootWallet: IWalletLinkBase.LinkedWalletStruct,
+      rootWallet: IWalletLinkBase.LinkedWalletDataStruct,
       nonce: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<void>;
 
     linkNonEVMWalletToRootKey(
-      wallet: IWalletLinkBase.NonEVMLinkedWalletStruct,
+      wallet: IWalletLinkBase.NonEVMLinkedWalletDataStruct,
       nonce: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<void>;
 
     linkWalletToRootKey(
-      wallet: IWalletLinkBase.LinkedWalletStruct,
-      rootWallet: IWalletLinkBase.LinkedWalletStruct,
+      wallet: IWalletLinkBase.LinkedWalletDataStruct,
+      rootWallet: IWalletLinkBase.LinkedWalletDataStruct,
       nonce: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<void>;
@@ -648,13 +608,14 @@ export interface IWalletLink extends BaseContract {
 
     removeLink(
       wallet: PromiseOrValue<string>,
-      rootWallet: IWalletLinkBase.LinkedWalletStruct,
+      rootWallet: IWalletLinkBase.LinkedWalletDataStruct,
       nonce: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<void>;
 
     removeNonEVMWalletLink(
-      wallet: WalletLib.WalletStruct,
+      addr: PromiseOrValue<string>,
+      vmType: PromiseOrValue<BigNumberish>,
       nonce: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<void>;
@@ -731,12 +692,6 @@ export interface IWalletLink extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
-    explicitWalletsByRootKey(
-      rootKey: PromiseOrValue<string>,
-      options: IWalletLinkBase.WalletQueryOptionsStruct,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
     getDefaultWallet(
       rootKey: PromiseOrValue<string>,
       overrides?: CallOverrides
@@ -768,20 +723,20 @@ export interface IWalletLink extends BaseContract {
     ): Promise<BigNumber>;
 
     linkCallerToRootKey(
-      rootWallet: IWalletLinkBase.LinkedWalletStruct,
+      rootWallet: IWalletLinkBase.LinkedWalletDataStruct,
       nonce: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
     linkNonEVMWalletToRootKey(
-      wallet: IWalletLinkBase.NonEVMLinkedWalletStruct,
+      wallet: IWalletLinkBase.NonEVMLinkedWalletDataStruct,
       nonce: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
     linkWalletToRootKey(
-      wallet: IWalletLinkBase.LinkedWalletStruct,
-      rootWallet: IWalletLinkBase.LinkedWalletStruct,
+      wallet: IWalletLinkBase.LinkedWalletDataStruct,
+      rootWallet: IWalletLinkBase.LinkedWalletDataStruct,
       nonce: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
@@ -792,13 +747,14 @@ export interface IWalletLink extends BaseContract {
 
     removeLink(
       wallet: PromiseOrValue<string>,
-      rootWallet: IWalletLinkBase.LinkedWalletStruct,
+      rootWallet: IWalletLinkBase.LinkedWalletDataStruct,
       nonce: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
     removeNonEVMWalletLink(
-      wallet: WalletLib.WalletStruct,
+      addr: PromiseOrValue<string>,
+      vmType: PromiseOrValue<BigNumberish>,
       nonce: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
@@ -828,12 +784,6 @@ export interface IWalletLink extends BaseContract {
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
-    explicitWalletsByRootKey(
-      rootKey: PromiseOrValue<string>,
-      options: IWalletLinkBase.WalletQueryOptionsStruct,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
     getDefaultWallet(
       rootKey: PromiseOrValue<string>,
       overrides?: CallOverrides
@@ -865,20 +815,20 @@ export interface IWalletLink extends BaseContract {
     ): Promise<PopulatedTransaction>;
 
     linkCallerToRootKey(
-      rootWallet: IWalletLinkBase.LinkedWalletStruct,
+      rootWallet: IWalletLinkBase.LinkedWalletDataStruct,
       nonce: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
     linkNonEVMWalletToRootKey(
-      wallet: IWalletLinkBase.NonEVMLinkedWalletStruct,
+      wallet: IWalletLinkBase.NonEVMLinkedWalletDataStruct,
       nonce: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
     linkWalletToRootKey(
-      wallet: IWalletLinkBase.LinkedWalletStruct,
-      rootWallet: IWalletLinkBase.LinkedWalletStruct,
+      wallet: IWalletLinkBase.LinkedWalletDataStruct,
+      rootWallet: IWalletLinkBase.LinkedWalletDataStruct,
       nonce: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
@@ -889,13 +839,14 @@ export interface IWalletLink extends BaseContract {
 
     removeLink(
       wallet: PromiseOrValue<string>,
-      rootWallet: IWalletLinkBase.LinkedWalletStruct,
+      rootWallet: IWalletLinkBase.LinkedWalletDataStruct,
       nonce: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
     removeNonEVMWalletLink(
-      wallet: WalletLib.WalletStruct,
+      addr: PromiseOrValue<string>,
+      vmType: PromiseOrValue<BigNumberish>,
       nonce: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;

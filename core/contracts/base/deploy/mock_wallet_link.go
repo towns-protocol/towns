@@ -29,10 +29,17 @@ var (
 	_	= abi.ConvertType
 )
 
+// IWalletLinkBaseWalletData is an auto generated low-level Go binding around an user-defined struct.
+type IWalletLinkBaseWalletData struct {
+	Addr		string
+	VmType		uint8
+	WalletType	uint8
+}
+
 // MockWalletLinkMetaData contains all meta data concerning the MockWalletLink contract.
 var MockWalletLinkMetaData = &bind.MetaData{
-	ABI:	"[{\"type\":\"function\",\"name\":\"checkIfLinked\",\"inputs\":[{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"wallet\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getLatestNonceForRootKey\",\"inputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"pure\"},{\"type\":\"function\",\"name\":\"getRootKeyForWallet\",\"inputs\":[{\"name\":\"wallet\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getWalletsByRootKey\",\"inputs\":[{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"wallets\",\"type\":\"address[]\",\"internalType\":\"address[]\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getWalletsByRootKeyWithDelegations\",\"inputs\":[{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"wallets\",\"type\":\"address[]\",\"internalType\":\"address[]\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"linkCallerToRootKey\",\"inputs\":[{\"name\":\"rootWallet\",\"type\":\"tuple\",\"internalType\":\"structIWalletLinkBase.LinkedWallet\",\"components\":[{\"name\":\"addr\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"signature\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"message\",\"type\":\"string\",\"internalType\":\"string\"}]},{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"linkWalletToRootKey\",\"inputs\":[{\"name\":\"wallet\",\"type\":\"tuple\",\"internalType\":\"structIWalletLinkBase.LinkedWallet\",\"components\":[{\"name\":\"addr\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"signature\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"message\",\"type\":\"string\",\"internalType\":\"string\"}]},{\"name\":\"rootWallet\",\"type\":\"tuple\",\"internalType\":\"structIWalletLinkBase.LinkedWallet\",\"components\":[{\"name\":\"addr\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"signature\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"message\",\"type\":\"string\",\"internalType\":\"string\"}]},{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"event\",\"name\":\"LinkNonEVMWalletToRootWallet\",\"inputs\":[{\"name\":\"walletHash\",\"type\":\"bytes32\",\"indexed\":true,\"internalType\":\"bytes32\"},{\"name\":\"rootKey\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"LinkWalletToRootKey\",\"inputs\":[{\"name\":\"wallet\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"rootKey\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"RemoveLink\",\"inputs\":[{\"name\":\"wallet\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"secondWallet\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"RemoveNonEVMWalletLink\",\"inputs\":[{\"name\":\"walletHash\",\"type\":\"bytes32\",\"indexed\":true,\"internalType\":\"bytes32\"},{\"name\":\"rootKey\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"SetDefaultWallet\",\"inputs\":[{\"name\":\"rootKey\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"defaultWallet\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"error\",\"name\":\"WalletLink__AddressMismatch\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"WalletLink__CannotLinkToRootWallet\",\"inputs\":[{\"name\":\"wallet\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"}]},{\"type\":\"error\",\"name\":\"WalletLink__CannotLinkToSelf\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"WalletLink__CannotRemoveDefaultWallet\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"WalletLink__CannotRemoveRootWallet\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"WalletLink__DefaultWalletAlreadySet\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"WalletLink__InvalidAddress\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"WalletLink__InvalidMessage\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"WalletLink__InvalidNonEVMAddress\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"WalletLink__InvalidSignature\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"WalletLink__InvalidVMSpecificData\",\"inputs\":[{\"name\":\"key\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"value\",\"type\":\"bytes\",\"internalType\":\"bytes\"}]},{\"type\":\"error\",\"name\":\"WalletLink__LinkAlreadyExists\",\"inputs\":[{\"name\":\"wallet\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"}]},{\"type\":\"error\",\"name\":\"WalletLink__LinkedToAnotherRootKey\",\"inputs\":[{\"name\":\"wallet\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"}]},{\"type\":\"error\",\"name\":\"WalletLink__MaxLinkedWalletsReached\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"WalletLink__NonEVMWalletAlreadyLinked\",\"inputs\":[{\"name\":\"wallet\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"}]},{\"type\":\"error\",\"name\":\"WalletLink__NonEVMWalletNotLinked\",\"inputs\":[{\"name\":\"wallet\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"}]},{\"type\":\"error\",\"name\":\"WalletLink__NotLinked\",\"inputs\":[{\"name\":\"wallet\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"}]},{\"type\":\"error\",\"name\":\"WalletLink__RootKeyMismatch\",\"inputs\":[{\"name\":\"callerRootKey\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"}]},{\"type\":\"error\",\"name\":\"WalletLink__UnsupportedVMType\",\"inputs\":[]}]",
-	Bin:	"0x608060405234801561001057600080fd5b506106a4806100206000396000f3fe608060405234801561001057600080fd5b506004361061007d5760003560e01c80632f4614531161005b5780632f461453146100e25780633d005eab14610082578063912b9758146100f5578063f82103981461015457600080fd5b806302345b981461008257806320a00ac8146100ab578063243a7134146100cd575b600080fd5b6100956100903660046103f7565b6101b7565b6040516100a29190610412565b60405180910390f35b6100bf6100b93660046103f7565b50600090565b6040519081526020016100a2565b6100e06100db3660046105bf565b610200565b005b6100e06100f036600461062c565b610285565b610144610103366004610671565b6001600160a01b0390811660009081527f53bdded980027e2c478b287c6d24ce77f39d36276f54116d9f518f7ecd94eb016020526040902054811691161490565b60405190151581526020016100a2565b61019f6101623660046103f7565b6001600160a01b0390811660009081527f53bdded980027e2c478b287c6d24ce77f39d36276f54116d9f518f7ecd94eb0160205260409020541690565b6040516001600160a01b0390911681526020016100a2565b6001600160a01b03811660009081527f53bdded980027e2c478b287c6d24ce77f39d36276f54116d9f518f7ecd94eb00602052604090206060906101fa90610307565b92915050565b825182516001600160a01b031660009081527f53bdded980027e2c478b287c6d24ce77f39d36276f54116d9f518f7ecd94eb00602081905260409091209091610249919061031b565b50915192516001600160a01b0390811660009081526001909301602052604090922080546001600160a01b031916929093169190911790915550565b81516001600160a01b031660009081527f53bdded980027e2c478b287c6d24ce77f39d36276f54116d9f518f7ecd94eb006020819052604090912033906102cc908261031b565b5092516001600160a01b039384166000908152600192909201602052604090912080546001600160a01b031916939091169290921790915550565b6060600061031483610330565b9392505050565b6000610314836001600160a01b03841661038c565b60608160000180548060200260200160405190810160405280929190818152602001828054801561038057602002820191906000526020600020905b81548152602001906001019080831161036c575b50505050509050919050565b60008181526001830160205260408120546103d3575081546001818101845560008481526020808220909301849055845484825282860190935260409020919091556101fa565b5060006101fa565b80356001600160a01b03811681146103f257600080fd5b919050565b60006020828403121561040957600080fd5b610314826103db565b6020808252825182820181905260009190848201906040850190845b818110156104535783516001600160a01b03168352928401929184019160010161042e565b50909695505050505050565b634e487b7160e01b600052604160045260246000fd5b6040516060810167ffffffffffffffff811182821017156104985761049861045f565b60405290565b600067ffffffffffffffff808411156104b9576104b961045f565b604051601f8501601f19908116603f011681019082821181831017156104e1576104e161045f565b816040528093508581528686860111156104fa57600080fd5b858560208301376000602087830101525050509392505050565b60006060828403121561052657600080fd5b61052e610475565b9050610539826103db565b8152602082013567ffffffffffffffff8082111561055657600080fd5b818401915084601f83011261056a57600080fd5b6105798583356020850161049e565b6020840152604084013591508082111561059257600080fd5b508201601f810184136105a457600080fd5b6105b38482356020840161049e565b60408301525092915050565b6000806000606084860312156105d457600080fd5b833567ffffffffffffffff808211156105ec57600080fd5b6105f887838801610514565b9450602086013591508082111561060e57600080fd5b5061061b86828701610514565b925050604084013590509250925092565b6000806040838503121561063f57600080fd5b823567ffffffffffffffff81111561065657600080fd5b61066285828601610514565b95602094909401359450505050565b6000806040838503121561068457600080fd5b61068d836103db565b915061069b602084016103db565b9050925092905056",
+	ABI:	"[{\"type\":\"function\",\"name\":\"checkIfLinked\",\"inputs\":[{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"wallet\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"checkIfNonEVMWalletLinked\",\"inputs\":[{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"walletHash\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"explicitWalletsByRootKey\",\"inputs\":[{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"outputs\":[{\"name\":\"walletData\",\"type\":\"tuple[]\",\"internalType\":\"structIWalletLinkBase.WalletData[]\",\"components\":[{\"name\":\"addr\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"vmType\",\"type\":\"uint8\",\"internalType\":\"enumIWalletLinkBase.VirtualMachineType\"},{\"name\":\"walletType\",\"type\":\"uint8\",\"internalType\":\"uint8\"}]}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getDefaultWallet\",\"inputs\":[{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getDependency\",\"inputs\":[{\"name\":\"dependency\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getLatestNonceForRootKey\",\"inputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"pure\"},{\"type\":\"function\",\"name\":\"getRootKeyForWallet\",\"inputs\":[{\"name\":\"wallet\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getWalletsByRootKey\",\"inputs\":[{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"wallets\",\"type\":\"address[]\",\"internalType\":\"address[]\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getWalletsByRootKeyWithDelegations\",\"inputs\":[{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"wallets\",\"type\":\"address[]\",\"internalType\":\"address[]\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"linkCallerToRootKey\",\"inputs\":[{\"name\":\"rootWallet\",\"type\":\"tuple\",\"internalType\":\"structIWalletLinkBase.LinkedWalletData\",\"components\":[{\"name\":\"addr\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"signature\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"message\",\"type\":\"string\",\"internalType\":\"string\"}]},{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"linkNonEVMWalletToRootKey\",\"inputs\":[{\"name\":\"wallet\",\"type\":\"tuple\",\"internalType\":\"structIWalletLinkBase.NonEVMLinkedWalletData\",\"components\":[{\"name\":\"addr\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"signature\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"message\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"vmType\",\"type\":\"uint8\",\"internalType\":\"enumIWalletLinkBase.VirtualMachineType\"},{\"name\":\"extraData\",\"type\":\"tuple[]\",\"internalType\":\"structIWalletLinkBase.VMSpecificData[]\",\"components\":[{\"name\":\"key\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"value\",\"type\":\"bytes\",\"internalType\":\"bytes\"}]}]},{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"linkWalletToRootKey\",\"inputs\":[{\"name\":\"wallet\",\"type\":\"tuple\",\"internalType\":\"structIWalletLinkBase.LinkedWalletData\",\"components\":[{\"name\":\"addr\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"signature\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"message\",\"type\":\"string\",\"internalType\":\"string\"}]},{\"name\":\"rootWallet\",\"type\":\"tuple\",\"internalType\":\"structIWalletLinkBase.LinkedWalletData\",\"components\":[{\"name\":\"addr\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"signature\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"message\",\"type\":\"string\",\"internalType\":\"string\"}]},{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"removeCallerLink\",\"inputs\":[],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"removeLink\",\"inputs\":[{\"name\":\"wallet\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"\",\"type\":\"tuple\",\"internalType\":\"structIWalletLinkBase.LinkedWalletData\",\"components\":[{\"name\":\"addr\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"signature\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"message\",\"type\":\"string\",\"internalType\":\"string\"}]},{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"removeNonEVMWalletLink\",\"inputs\":[{\"name\":\"addr\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"vmType\",\"type\":\"uint8\",\"internalType\":\"enumIWalletLinkBase.VirtualMachineType\"},{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"setDefaultWallet\",\"inputs\":[{\"name\":\"defaultWallet\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"setDependency\",\"inputs\":[{\"name\":\"dependency\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"dependencyAddress\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"event\",\"name\":\"LinkNonEVMWalletToRootWallet\",\"inputs\":[{\"name\":\"walletHash\",\"type\":\"bytes32\",\"indexed\":true,\"internalType\":\"bytes32\"},{\"name\":\"rootKey\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"LinkWalletToRootKey\",\"inputs\":[{\"name\":\"wallet\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"rootKey\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"RemoveLink\",\"inputs\":[{\"name\":\"wallet\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"secondWallet\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"RemoveNonEVMWalletLink\",\"inputs\":[{\"name\":\"walletHash\",\"type\":\"bytes32\",\"indexed\":true,\"internalType\":\"bytes32\"},{\"name\":\"rootKey\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"SetDefaultWallet\",\"inputs\":[{\"name\":\"rootKey\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"defaultWallet\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"error\",\"name\":\"WalletLink__AddressMismatch\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"WalletLink__CannotLinkToRootWallet\",\"inputs\":[{\"name\":\"wallet\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"}]},{\"type\":\"error\",\"name\":\"WalletLink__CannotLinkToSelf\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"WalletLink__CannotRemoveDefaultWallet\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"WalletLink__CannotRemoveRootWallet\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"WalletLink__DefaultWalletAlreadySet\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"WalletLink__InvalidAddress\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"WalletLink__InvalidMessage\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"WalletLink__InvalidNonEVMAddress\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"WalletLink__InvalidSignature\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"WalletLink__InvalidVMSpecificData\",\"inputs\":[{\"name\":\"key\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"value\",\"type\":\"bytes\",\"internalType\":\"bytes\"}]},{\"type\":\"error\",\"name\":\"WalletLink__LinkAlreadyExists\",\"inputs\":[{\"name\":\"wallet\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"}]},{\"type\":\"error\",\"name\":\"WalletLink__LinkedToAnotherRootKey\",\"inputs\":[{\"name\":\"wallet\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"}]},{\"type\":\"error\",\"name\":\"WalletLink__MaxLinkedWalletsReached\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"WalletLink__NonEVMWalletAlreadyLinked\",\"inputs\":[{\"name\":\"wallet\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"}]},{\"type\":\"error\",\"name\":\"WalletLink__NonEVMWalletNotLinked\",\"inputs\":[{\"name\":\"wallet\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"}]},{\"type\":\"error\",\"name\":\"WalletLink__NotLinked\",\"inputs\":[{\"name\":\"wallet\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"}]},{\"type\":\"error\",\"name\":\"WalletLink__RootKeyMismatch\",\"inputs\":[{\"name\":\"callerRootKey\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"}]},{\"type\":\"error\",\"name\":\"WalletLink__UnsupportedVMType\",\"inputs\":[]}]",
+	Bin:	"0x608060405234801561001057600080fd5b506111a3806100206000396000f3fe608060405234801561001057600080fd5b506004361061010b5760003560e01c806335d2fb64116100a25780637238695e116100715780637238695e1461028f578063912b9758146102ea57806397d9a84914610337578063baafda6b1461038f578063f8210398146103eb57600080fd5b806335d2fb64146102615780633d005eab146101105780634d2bead61461027457806364899d981461028757600080fd5b806320a00ac8116100de57806320a00ac8146101f9578063243a71341461021b5780632f4614531461022e57806334912e881461024157600080fd5b806302345b9814610110578063039dd19314610139578063101659b1146101995780631e4a838b146101e4575b600080fd5b61012361011e366004610b1e565b610424565b6040516101309190610b39565b60405180910390f35b610181610147366004610b86565b60009081527f53bdded980027e2c478b287c6d24ce77f39d36276f54116d9f518f7ecd94eb0460205260409020546001600160a01b031690565b6040516001600160a01b039091168152602001610130565b6101816101a7366004610b1e565b6001600160a01b0390811660009081527f53bdded980027e2c478b287c6d24ce77f39d36276f54116d9f518f7ecd94eb0260205260409020541690565b6101f76101f2366004610b9f565b61045b565b005b61020d610207366004610b1e565b50600090565b604051908152602001610130565b6101f7610229366004610d47565b61050a565b6101f761023c366004610db4565b61057d565b61025461024f366004610df9565b6105ed565b6040516101309190610e9d565b6101f761026f366004610f2c565b610706565b6101f7610282366004610f81565b610784565b6101f7610818565b6101f761029d366004610fd8565b60009182527f53bdded980027e2c478b287c6d24ce77f39d36276f54116d9f518f7ecd94eb04602052604090912080546001600160a01b0319166001600160a01b03909216919091179055565b6103276102f8366004611004565b6001600160a01b0390811660009081526000805160206111638339815191526020526040902054811691161490565b6040519015158152602001610130565b61032761034536600461102e565b6001600160a01b039190911660009081527f53bdded980027e2c478b287c6d24ce77f39d36276f54116d9f518f7ecd94eb0360209081526040808320938352929052205460ff1690565b6101f761039d366004610b1e565b3360009081527f53bdded980027e2c478b287c6d24ce77f39d36276f54116d9f518f7ecd94eb026020526040902080546001600160a01b0319166001600160a01b0392909216919091179055565b6101816103f9366004610b1e565b6001600160a01b03908116600090815260008051602061116383398151915260205260409020541690565b6001600160a01b03811660009081526000805160206111838339815191526020526040902060609061045590610893565b92915050565b3360009081526000805160206111638339815191526020526040812054600080516020611183833981519152916001600160a01b039091169061049e858061104a565b6104ae6080880160608901611098565b6040516020016104c0939291906110b3565b60408051601f1981840301815291815281516020928301206001600160a01b03909416600090815260039095018252808520938552929052509020805460ff191660011790555050565b825182516001600160a01b0316600090815260008051602061118383398151915260208190526040909120909161054191906108a7565b50915192516001600160a01b0390811660009081526001909301602052604090922080546001600160a01b031916929093169190911790915550565b81516001600160a01b031660009081526000805160206111838339815191526020819052604090912033906105b290826108a7565b5092516001600160a01b039384166000908152600192909201602052604090912080546001600160a01b031916939091169290921790915550565b6001600160a01b03821660009081526000805160206111838339815191526020819052604082206060929061062190610893565b9050805167ffffffffffffffff81111561063d5761063d610be9565b60405190808252806020026020018201604052801561068857816020015b604080516060808201835281526000602080830182905292820152825260001990920191018161065b5790505b50925060005b81518110156106fd5760405180606001604052806106c48484815181106106b7576106b76110f3565b60200260200101516108bc565b815260200160018152602001600160ff168152508482815181106106ea576106ea6110f3565b602090810291909101015260010161068e565b50505092915050565b33600090815260008051602061116383398151915260209081526040808320546001600160a01b031680845260008051602061118383398151915292839052922090919061075490866108e0565b50506001600160a01b039093166000908152600190930160205250506040902080546001600160a01b0319169055565b33600090815260008051602061116383398151915260209081526040808320549051600080516020611183833981519152936001600160a01b03909216926107d0918891889101611109565b60408051601f1981840301815291815281516020928301206001600160a01b03909416600090815260039095018252808520938552929052509020805460ff19169055505050565b33600081815260008051602061116383398151915260209081526040808320546001600160a01b03168084526000805160206111838339815191529283905292209092919061086790836108e0565b50506001600160a01b0316600090815260019091016020526040902080546001600160a01b0319169055565b606060006108a0836108f5565b9392505050565b60006108a0836001600160a01b038416610951565b60606108c7826109a0565b8051613078825260020160011990910190815292915050565b60006108a0836001600160a01b038416610a0f565b60608160000180548060200260200160405190810160405280929190818152602001828054801561094557602002820191906000526020600020905b815481526020019060010190808311610931575b50505050509050919050565b600081815260018301602052604081205461099857508154600181810184556000848152602080822090930184905584548482528286019093526040902091909155610455565b506000610455565b60606040519050608081016040526f30313233343536373839616263646566600f526002810190506028815260208101600060288201528260601b925060005b808101820184821a600f81165160018301538060041c51825350506001810190601219016109e0575050919050565b60008181526001830160205260408120548015610af8576000610a3360018361112b565b8554909150600090610a479060019061112b565b9050808214610aac576000866000018281548110610a6757610a676110f3565b9060005260206000200154905080876000018481548110610a8a57610a8a6110f3565b6000918252602080832090910192909255918252600188019052604090208390555b8554869080610abd57610abd61114c565b600190038181906000526020600020016000905590558560010160008681526020019081526020016000206000905560019350505050610455565b6000915050610455565b80356001600160a01b0381168114610b1957600080fd5b919050565b600060208284031215610b3057600080fd5b6108a082610b02565b6020808252825182820181905260009190848201906040850190845b81811015610b7a5783516001600160a01b031683529284019291840191600101610b55565b50909695505050505050565b600060208284031215610b9857600080fd5b5035919050565b60008060408385031215610bb257600080fd5b823567ffffffffffffffff811115610bc957600080fd5b830160a08186031215610bdb57600080fd5b946020939093013593505050565b634e487b7160e01b600052604160045260246000fd5b600067ffffffffffffffff80841115610c1a57610c1a610be9565b604051601f8501601f19908116603f01168101908282118183101715610c4257610c42610be9565b81604052809350858152868686011115610c5b57600080fd5b858560208301376000602087830101525050509392505050565b600082601f830112610c8657600080fd5b6108a083833560208501610bff565b600060608284031215610ca757600080fd5b6040516060810167ffffffffffffffff8282108183111715610ccb57610ccb610be9565b81604052829350610cdb85610b02565b83526020850135915080821115610cf157600080fd5b818501915085601f830112610d0557600080fd5b610d1486833560208501610bff565b60208401526040850135915080821115610d2d57600080fd5b50610d3a85828601610c75565b6040830152505092915050565b600080600060608486031215610d5c57600080fd5b833567ffffffffffffffff80821115610d7457600080fd5b610d8087838801610c95565b94506020860135915080821115610d9657600080fd5b50610da386828701610c95565b925050604084013590509250925092565b60008060408385031215610dc757600080fd5b823567ffffffffffffffff811115610dde57600080fd5b610dea85828601610c95565b95602094909401359450505050565b60008060408385031215610e0c57600080fd5b610e1583610b02565b915060208301358015158114610e2a57600080fd5b809150509250929050565b6000815180845260005b81811015610e5b57602081850181015186830182015201610e3f565b506000602082860101526020601f19601f83011685010191505092915050565b60078110610e9957634e487b7160e01b600052602160045260246000fd5b9052565b600060208083018184528085518083526040925060408601915060408160051b87010184880160005b83811015610f1e57603f19898403018552815160608151818652610eec82870182610e35565b91505088820151610eff8a870182610e7b565b509087015160ff16938701939093529386019390860190600101610ec6565b509098975050505050505050565b600080600060608486031215610f4157600080fd5b610f4a84610b02565b9250602084013567ffffffffffffffff811115610f6657600080fd5b610da386828701610c95565b803560078110610b1957600080fd5b600080600060608486031215610f9657600080fd5b833567ffffffffffffffff811115610fad57600080fd5b610fb986828701610c75565b935050610fc860208501610f72565b9150604084013590509250925092565b60008060408385031215610feb57600080fd5b82359150610ffb60208401610b02565b90509250929050565b6000806040838503121561101757600080fd5b61102083610b02565b9150610ffb60208401610b02565b6000806040838503121561104157600080fd5b610bdb83610b02565b6000808335601e1984360301811261106157600080fd5b83018035915067ffffffffffffffff82111561107c57600080fd5b60200191503681900382131561109157600080fd5b9250929050565b6000602082840312156110aa57600080fd5b6108a082610f72565b604081528260408201528284606083013760006060848301015260006060601f19601f86011683010190506110eb6020830184610e7b565b949350505050565b634e487b7160e01b600052603260045260246000fd5b60408152600061111c6040830185610e35565b90506108a06020830184610e7b565b8181038181111561045557634e487b7160e01b600052601160045260246000fd5b634e487b7160e01b600052603160045260246000fdfe53bdded980027e2c478b287c6d24ce77f39d36276f54116d9f518f7ecd94eb0153bdded980027e2c478b287c6d24ce77f39d36276f54116d9f518f7ecd94eb00",
 }
 
 // MockWalletLinkABI is the input ABI used to generate the binding from.
@@ -233,6 +240,130 @@ func (_MockWalletLink *MockWalletLinkCallerSession) CheckIfLinked(rootKey common
 	return _MockWalletLink.Contract.CheckIfLinked(&_MockWalletLink.CallOpts, rootKey, wallet)
 }
 
+// CheckIfNonEVMWalletLinked is a free data retrieval call binding the contract method 0x97d9a849.
+//
+// Solidity: function checkIfNonEVMWalletLinked(address rootKey, bytes32 walletHash) view returns(bool)
+func (_MockWalletLink *MockWalletLinkCaller) CheckIfNonEVMWalletLinked(opts *bind.CallOpts, rootKey common.Address, walletHash [32]byte) (bool, error) {
+	var out []interface{}
+	err := _MockWalletLink.contract.Call(opts, &out, "checkIfNonEVMWalletLinked", rootKey, walletHash)
+
+	if err != nil {
+		return *new(bool), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(bool)).(*bool)
+
+	return out0, err
+
+}
+
+// CheckIfNonEVMWalletLinked is a free data retrieval call binding the contract method 0x97d9a849.
+//
+// Solidity: function checkIfNonEVMWalletLinked(address rootKey, bytes32 walletHash) view returns(bool)
+func (_MockWalletLink *MockWalletLinkSession) CheckIfNonEVMWalletLinked(rootKey common.Address, walletHash [32]byte) (bool, error) {
+	return _MockWalletLink.Contract.CheckIfNonEVMWalletLinked(&_MockWalletLink.CallOpts, rootKey, walletHash)
+}
+
+// CheckIfNonEVMWalletLinked is a free data retrieval call binding the contract method 0x97d9a849.
+//
+// Solidity: function checkIfNonEVMWalletLinked(address rootKey, bytes32 walletHash) view returns(bool)
+func (_MockWalletLink *MockWalletLinkCallerSession) CheckIfNonEVMWalletLinked(rootKey common.Address, walletHash [32]byte) (bool, error) {
+	return _MockWalletLink.Contract.CheckIfNonEVMWalletLinked(&_MockWalletLink.CallOpts, rootKey, walletHash)
+}
+
+// ExplicitWalletsByRootKey is a free data retrieval call binding the contract method 0x34912e88.
+//
+// Solidity: function explicitWalletsByRootKey(address rootKey, bool ) view returns((string,uint8,uint8)[] walletData)
+func (_MockWalletLink *MockWalletLinkCaller) ExplicitWalletsByRootKey(opts *bind.CallOpts, rootKey common.Address, arg1 bool) ([]IWalletLinkBaseWalletData, error) {
+	var out []interface{}
+	err := _MockWalletLink.contract.Call(opts, &out, "explicitWalletsByRootKey", rootKey, arg1)
+
+	if err != nil {
+		return *new([]IWalletLinkBaseWalletData), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new([]IWalletLinkBaseWalletData)).(*[]IWalletLinkBaseWalletData)
+
+	return out0, err
+
+}
+
+// ExplicitWalletsByRootKey is a free data retrieval call binding the contract method 0x34912e88.
+//
+// Solidity: function explicitWalletsByRootKey(address rootKey, bool ) view returns((string,uint8,uint8)[] walletData)
+func (_MockWalletLink *MockWalletLinkSession) ExplicitWalletsByRootKey(rootKey common.Address, arg1 bool) ([]IWalletLinkBaseWalletData, error) {
+	return _MockWalletLink.Contract.ExplicitWalletsByRootKey(&_MockWalletLink.CallOpts, rootKey, arg1)
+}
+
+// ExplicitWalletsByRootKey is a free data retrieval call binding the contract method 0x34912e88.
+//
+// Solidity: function explicitWalletsByRootKey(address rootKey, bool ) view returns((string,uint8,uint8)[] walletData)
+func (_MockWalletLink *MockWalletLinkCallerSession) ExplicitWalletsByRootKey(rootKey common.Address, arg1 bool) ([]IWalletLinkBaseWalletData, error) {
+	return _MockWalletLink.Contract.ExplicitWalletsByRootKey(&_MockWalletLink.CallOpts, rootKey, arg1)
+}
+
+// GetDefaultWallet is a free data retrieval call binding the contract method 0x101659b1.
+//
+// Solidity: function getDefaultWallet(address rootKey) view returns(address)
+func (_MockWalletLink *MockWalletLinkCaller) GetDefaultWallet(opts *bind.CallOpts, rootKey common.Address) (common.Address, error) {
+	var out []interface{}
+	err := _MockWalletLink.contract.Call(opts, &out, "getDefaultWallet", rootKey)
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
+}
+
+// GetDefaultWallet is a free data retrieval call binding the contract method 0x101659b1.
+//
+// Solidity: function getDefaultWallet(address rootKey) view returns(address)
+func (_MockWalletLink *MockWalletLinkSession) GetDefaultWallet(rootKey common.Address) (common.Address, error) {
+	return _MockWalletLink.Contract.GetDefaultWallet(&_MockWalletLink.CallOpts, rootKey)
+}
+
+// GetDefaultWallet is a free data retrieval call binding the contract method 0x101659b1.
+//
+// Solidity: function getDefaultWallet(address rootKey) view returns(address)
+func (_MockWalletLink *MockWalletLinkCallerSession) GetDefaultWallet(rootKey common.Address) (common.Address, error) {
+	return _MockWalletLink.Contract.GetDefaultWallet(&_MockWalletLink.CallOpts, rootKey)
+}
+
+// GetDependency is a free data retrieval call binding the contract method 0x039dd193.
+//
+// Solidity: function getDependency(bytes32 dependency) view returns(address)
+func (_MockWalletLink *MockWalletLinkCaller) GetDependency(opts *bind.CallOpts, dependency [32]byte) (common.Address, error) {
+	var out []interface{}
+	err := _MockWalletLink.contract.Call(opts, &out, "getDependency", dependency)
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
+}
+
+// GetDependency is a free data retrieval call binding the contract method 0x039dd193.
+//
+// Solidity: function getDependency(bytes32 dependency) view returns(address)
+func (_MockWalletLink *MockWalletLinkSession) GetDependency(dependency [32]byte) (common.Address, error) {
+	return _MockWalletLink.Contract.GetDependency(&_MockWalletLink.CallOpts, dependency)
+}
+
+// GetDependency is a free data retrieval call binding the contract method 0x039dd193.
+//
+// Solidity: function getDependency(bytes32 dependency) view returns(address)
+func (_MockWalletLink *MockWalletLinkCallerSession) GetDependency(dependency [32]byte) (common.Address, error) {
+	return _MockWalletLink.Contract.GetDependency(&_MockWalletLink.CallOpts, dependency)
+}
+
 // GetLatestNonceForRootKey is a free data retrieval call binding the contract method 0x20a00ac8.
 //
 // Solidity: function getLatestNonceForRootKey(address ) pure returns(uint256)
@@ -360,43 +491,169 @@ func (_MockWalletLink *MockWalletLinkCallerSession) GetWalletsByRootKeyWithDeleg
 // LinkCallerToRootKey is a paid mutator transaction binding the contract method 0x2f461453.
 //
 // Solidity: function linkCallerToRootKey((address,bytes,string) rootWallet, uint256 ) returns()
-func (_MockWalletLink *MockWalletLinkTransactor) LinkCallerToRootKey(opts *bind.TransactOpts, rootWallet IWalletLinkBaseLinkedWallet, arg1 *big.Int) (*types.Transaction, error) {
+func (_MockWalletLink *MockWalletLinkTransactor) LinkCallerToRootKey(opts *bind.TransactOpts, rootWallet IWalletLinkBaseLinkedWalletData, arg1 *big.Int) (*types.Transaction, error) {
 	return _MockWalletLink.contract.Transact(opts, "linkCallerToRootKey", rootWallet, arg1)
 }
 
 // LinkCallerToRootKey is a paid mutator transaction binding the contract method 0x2f461453.
 //
 // Solidity: function linkCallerToRootKey((address,bytes,string) rootWallet, uint256 ) returns()
-func (_MockWalletLink *MockWalletLinkSession) LinkCallerToRootKey(rootWallet IWalletLinkBaseLinkedWallet, arg1 *big.Int) (*types.Transaction, error) {
+func (_MockWalletLink *MockWalletLinkSession) LinkCallerToRootKey(rootWallet IWalletLinkBaseLinkedWalletData, arg1 *big.Int) (*types.Transaction, error) {
 	return _MockWalletLink.Contract.LinkCallerToRootKey(&_MockWalletLink.TransactOpts, rootWallet, arg1)
 }
 
 // LinkCallerToRootKey is a paid mutator transaction binding the contract method 0x2f461453.
 //
 // Solidity: function linkCallerToRootKey((address,bytes,string) rootWallet, uint256 ) returns()
-func (_MockWalletLink *MockWalletLinkTransactorSession) LinkCallerToRootKey(rootWallet IWalletLinkBaseLinkedWallet, arg1 *big.Int) (*types.Transaction, error) {
+func (_MockWalletLink *MockWalletLinkTransactorSession) LinkCallerToRootKey(rootWallet IWalletLinkBaseLinkedWalletData, arg1 *big.Int) (*types.Transaction, error) {
 	return _MockWalletLink.Contract.LinkCallerToRootKey(&_MockWalletLink.TransactOpts, rootWallet, arg1)
+}
+
+// LinkNonEVMWalletToRootKey is a paid mutator transaction binding the contract method 0x1e4a838b.
+//
+// Solidity: function linkNonEVMWalletToRootKey((string,bytes,string,uint8,(bytes32,bytes)[]) wallet, uint256 ) returns()
+func (_MockWalletLink *MockWalletLinkTransactor) LinkNonEVMWalletToRootKey(opts *bind.TransactOpts, wallet IWalletLinkBaseNonEVMLinkedWalletData, arg1 *big.Int) (*types.Transaction, error) {
+	return _MockWalletLink.contract.Transact(opts, "linkNonEVMWalletToRootKey", wallet, arg1)
+}
+
+// LinkNonEVMWalletToRootKey is a paid mutator transaction binding the contract method 0x1e4a838b.
+//
+// Solidity: function linkNonEVMWalletToRootKey((string,bytes,string,uint8,(bytes32,bytes)[]) wallet, uint256 ) returns()
+func (_MockWalletLink *MockWalletLinkSession) LinkNonEVMWalletToRootKey(wallet IWalletLinkBaseNonEVMLinkedWalletData, arg1 *big.Int) (*types.Transaction, error) {
+	return _MockWalletLink.Contract.LinkNonEVMWalletToRootKey(&_MockWalletLink.TransactOpts, wallet, arg1)
+}
+
+// LinkNonEVMWalletToRootKey is a paid mutator transaction binding the contract method 0x1e4a838b.
+//
+// Solidity: function linkNonEVMWalletToRootKey((string,bytes,string,uint8,(bytes32,bytes)[]) wallet, uint256 ) returns()
+func (_MockWalletLink *MockWalletLinkTransactorSession) LinkNonEVMWalletToRootKey(wallet IWalletLinkBaseNonEVMLinkedWalletData, arg1 *big.Int) (*types.Transaction, error) {
+	return _MockWalletLink.Contract.LinkNonEVMWalletToRootKey(&_MockWalletLink.TransactOpts, wallet, arg1)
 }
 
 // LinkWalletToRootKey is a paid mutator transaction binding the contract method 0x243a7134.
 //
 // Solidity: function linkWalletToRootKey((address,bytes,string) wallet, (address,bytes,string) rootWallet, uint256 ) returns()
-func (_MockWalletLink *MockWalletLinkTransactor) LinkWalletToRootKey(opts *bind.TransactOpts, wallet IWalletLinkBaseLinkedWallet, rootWallet IWalletLinkBaseLinkedWallet, arg2 *big.Int) (*types.Transaction, error) {
+func (_MockWalletLink *MockWalletLinkTransactor) LinkWalletToRootKey(opts *bind.TransactOpts, wallet IWalletLinkBaseLinkedWalletData, rootWallet IWalletLinkBaseLinkedWalletData, arg2 *big.Int) (*types.Transaction, error) {
 	return _MockWalletLink.contract.Transact(opts, "linkWalletToRootKey", wallet, rootWallet, arg2)
 }
 
 // LinkWalletToRootKey is a paid mutator transaction binding the contract method 0x243a7134.
 //
 // Solidity: function linkWalletToRootKey((address,bytes,string) wallet, (address,bytes,string) rootWallet, uint256 ) returns()
-func (_MockWalletLink *MockWalletLinkSession) LinkWalletToRootKey(wallet IWalletLinkBaseLinkedWallet, rootWallet IWalletLinkBaseLinkedWallet, arg2 *big.Int) (*types.Transaction, error) {
+func (_MockWalletLink *MockWalletLinkSession) LinkWalletToRootKey(wallet IWalletLinkBaseLinkedWalletData, rootWallet IWalletLinkBaseLinkedWalletData, arg2 *big.Int) (*types.Transaction, error) {
 	return _MockWalletLink.Contract.LinkWalletToRootKey(&_MockWalletLink.TransactOpts, wallet, rootWallet, arg2)
 }
 
 // LinkWalletToRootKey is a paid mutator transaction binding the contract method 0x243a7134.
 //
 // Solidity: function linkWalletToRootKey((address,bytes,string) wallet, (address,bytes,string) rootWallet, uint256 ) returns()
-func (_MockWalletLink *MockWalletLinkTransactorSession) LinkWalletToRootKey(wallet IWalletLinkBaseLinkedWallet, rootWallet IWalletLinkBaseLinkedWallet, arg2 *big.Int) (*types.Transaction, error) {
+func (_MockWalletLink *MockWalletLinkTransactorSession) LinkWalletToRootKey(wallet IWalletLinkBaseLinkedWalletData, rootWallet IWalletLinkBaseLinkedWalletData, arg2 *big.Int) (*types.Transaction, error) {
 	return _MockWalletLink.Contract.LinkWalletToRootKey(&_MockWalletLink.TransactOpts, wallet, rootWallet, arg2)
+}
+
+// RemoveCallerLink is a paid mutator transaction binding the contract method 0x64899d98.
+//
+// Solidity: function removeCallerLink() returns()
+func (_MockWalletLink *MockWalletLinkTransactor) RemoveCallerLink(opts *bind.TransactOpts) (*types.Transaction, error) {
+	return _MockWalletLink.contract.Transact(opts, "removeCallerLink")
+}
+
+// RemoveCallerLink is a paid mutator transaction binding the contract method 0x64899d98.
+//
+// Solidity: function removeCallerLink() returns()
+func (_MockWalletLink *MockWalletLinkSession) RemoveCallerLink() (*types.Transaction, error) {
+	return _MockWalletLink.Contract.RemoveCallerLink(&_MockWalletLink.TransactOpts)
+}
+
+// RemoveCallerLink is a paid mutator transaction binding the contract method 0x64899d98.
+//
+// Solidity: function removeCallerLink() returns()
+func (_MockWalletLink *MockWalletLinkTransactorSession) RemoveCallerLink() (*types.Transaction, error) {
+	return _MockWalletLink.Contract.RemoveCallerLink(&_MockWalletLink.TransactOpts)
+}
+
+// RemoveLink is a paid mutator transaction binding the contract method 0x35d2fb64.
+//
+// Solidity: function removeLink(address wallet, (address,bytes,string) , uint256 ) returns()
+func (_MockWalletLink *MockWalletLinkTransactor) RemoveLink(opts *bind.TransactOpts, wallet common.Address, arg1 IWalletLinkBaseLinkedWalletData, arg2 *big.Int) (*types.Transaction, error) {
+	return _MockWalletLink.contract.Transact(opts, "removeLink", wallet, arg1, arg2)
+}
+
+// RemoveLink is a paid mutator transaction binding the contract method 0x35d2fb64.
+//
+// Solidity: function removeLink(address wallet, (address,bytes,string) , uint256 ) returns()
+func (_MockWalletLink *MockWalletLinkSession) RemoveLink(wallet common.Address, arg1 IWalletLinkBaseLinkedWalletData, arg2 *big.Int) (*types.Transaction, error) {
+	return _MockWalletLink.Contract.RemoveLink(&_MockWalletLink.TransactOpts, wallet, arg1, arg2)
+}
+
+// RemoveLink is a paid mutator transaction binding the contract method 0x35d2fb64.
+//
+// Solidity: function removeLink(address wallet, (address,bytes,string) , uint256 ) returns()
+func (_MockWalletLink *MockWalletLinkTransactorSession) RemoveLink(wallet common.Address, arg1 IWalletLinkBaseLinkedWalletData, arg2 *big.Int) (*types.Transaction, error) {
+	return _MockWalletLink.Contract.RemoveLink(&_MockWalletLink.TransactOpts, wallet, arg1, arg2)
+}
+
+// RemoveNonEVMWalletLink is a paid mutator transaction binding the contract method 0x4d2bead6.
+//
+// Solidity: function removeNonEVMWalletLink(string addr, uint8 vmType, uint256 ) returns()
+func (_MockWalletLink *MockWalletLinkTransactor) RemoveNonEVMWalletLink(opts *bind.TransactOpts, addr string, vmType uint8, arg2 *big.Int) (*types.Transaction, error) {
+	return _MockWalletLink.contract.Transact(opts, "removeNonEVMWalletLink", addr, vmType, arg2)
+}
+
+// RemoveNonEVMWalletLink is a paid mutator transaction binding the contract method 0x4d2bead6.
+//
+// Solidity: function removeNonEVMWalletLink(string addr, uint8 vmType, uint256 ) returns()
+func (_MockWalletLink *MockWalletLinkSession) RemoveNonEVMWalletLink(addr string, vmType uint8, arg2 *big.Int) (*types.Transaction, error) {
+	return _MockWalletLink.Contract.RemoveNonEVMWalletLink(&_MockWalletLink.TransactOpts, addr, vmType, arg2)
+}
+
+// RemoveNonEVMWalletLink is a paid mutator transaction binding the contract method 0x4d2bead6.
+//
+// Solidity: function removeNonEVMWalletLink(string addr, uint8 vmType, uint256 ) returns()
+func (_MockWalletLink *MockWalletLinkTransactorSession) RemoveNonEVMWalletLink(addr string, vmType uint8, arg2 *big.Int) (*types.Transaction, error) {
+	return _MockWalletLink.Contract.RemoveNonEVMWalletLink(&_MockWalletLink.TransactOpts, addr, vmType, arg2)
+}
+
+// SetDefaultWallet is a paid mutator transaction binding the contract method 0xbaafda6b.
+//
+// Solidity: function setDefaultWallet(address defaultWallet) returns()
+func (_MockWalletLink *MockWalletLinkTransactor) SetDefaultWallet(opts *bind.TransactOpts, defaultWallet common.Address) (*types.Transaction, error) {
+	return _MockWalletLink.contract.Transact(opts, "setDefaultWallet", defaultWallet)
+}
+
+// SetDefaultWallet is a paid mutator transaction binding the contract method 0xbaafda6b.
+//
+// Solidity: function setDefaultWallet(address defaultWallet) returns()
+func (_MockWalletLink *MockWalletLinkSession) SetDefaultWallet(defaultWallet common.Address) (*types.Transaction, error) {
+	return _MockWalletLink.Contract.SetDefaultWallet(&_MockWalletLink.TransactOpts, defaultWallet)
+}
+
+// SetDefaultWallet is a paid mutator transaction binding the contract method 0xbaafda6b.
+//
+// Solidity: function setDefaultWallet(address defaultWallet) returns()
+func (_MockWalletLink *MockWalletLinkTransactorSession) SetDefaultWallet(defaultWallet common.Address) (*types.Transaction, error) {
+	return _MockWalletLink.Contract.SetDefaultWallet(&_MockWalletLink.TransactOpts, defaultWallet)
+}
+
+// SetDependency is a paid mutator transaction binding the contract method 0x7238695e.
+//
+// Solidity: function setDependency(bytes32 dependency, address dependencyAddress) returns()
+func (_MockWalletLink *MockWalletLinkTransactor) SetDependency(opts *bind.TransactOpts, dependency [32]byte, dependencyAddress common.Address) (*types.Transaction, error) {
+	return _MockWalletLink.contract.Transact(opts, "setDependency", dependency, dependencyAddress)
+}
+
+// SetDependency is a paid mutator transaction binding the contract method 0x7238695e.
+//
+// Solidity: function setDependency(bytes32 dependency, address dependencyAddress) returns()
+func (_MockWalletLink *MockWalletLinkSession) SetDependency(dependency [32]byte, dependencyAddress common.Address) (*types.Transaction, error) {
+	return _MockWalletLink.Contract.SetDependency(&_MockWalletLink.TransactOpts, dependency, dependencyAddress)
+}
+
+// SetDependency is a paid mutator transaction binding the contract method 0x7238695e.
+//
+// Solidity: function setDependency(bytes32 dependency, address dependencyAddress) returns()
+func (_MockWalletLink *MockWalletLinkTransactorSession) SetDependency(dependency [32]byte, dependencyAddress common.Address) (*types.Transaction, error) {
+	return _MockWalletLink.Contract.SetDependency(&_MockWalletLink.TransactOpts, dependency, dependencyAddress)
 }
 
 // MockWalletLinkLinkNonEVMWalletToRootWalletIterator is returned from FilterLinkNonEVMWalletToRootWallet and is used to iterate over the raw logs and unpacked data for LinkNonEVMWalletToRootWallet events raised by the MockWalletLink contract.

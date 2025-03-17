@@ -19,7 +19,6 @@
   "settings": {
     "remappings": [
       "@openzeppelin/=node_modules/@openzeppelin/",
-      "@openzeppelin/contracts/=node_modules/@openzeppelin/contracts/",
       "@prb/math/=node_modules/@prb/math/src/",
       "@prb/test/=node_modules/@prb/test/src/",
       "@river-build/diamond/=node_modules/@river-build/diamond/",
@@ -47,26 +46,18 @@
   },
   "sources": {
     "contracts/src/factory/facets/wallet-link/IWalletLink.sol": {
-      "keccak256": "0xb37a03936a2f15ce5c94fb9925594627cc65cfdd186c14eaff32d299ec569b5f",
+      "keccak256": "0x42c5e01a66b1da08750dfca97d5de63c7590572deb12f0eb43916af25cbe3888",
       "urls": [
-        "bzz-raw://085ef4945195eae38879c2d84e70a5a2f3cb02e6ad53e8ae37e6dd2591379327",
-        "dweb:/ipfs/QmRP7RH7sX1MUXFDwacLABBcVdGDoyKm36JbSfDDwXy4EW"
-      ],
-      "license": "MIT"
-    },
-    "contracts/src/factory/facets/wallet-link/libraries/WalletLib.sol": {
-      "keccak256": "0x7fb08e8176be055adf49a1ce35e17f4cedb78c248c46c96e0583377a4e89b40b",
-      "urls": [
-        "bzz-raw://334911ec72def284ac7a61e04d5de12d7018421a756e265e2d0e411e62c097c1",
-        "dweb:/ipfs/QmbJzoE6Tv91psSSDz8RgcuQKtp7zxCKAhnD3TKWiyiqMP"
+        "bzz-raw://203e5e5ee739d6bd74b91085846972c0ddc076ffbce02e9b3261fb941bb6c6d1",
+        "dweb:/ipfs/QmXYLCEyyMobFgY8XkaBi5MEQtYpTpfQNeUujgxWzKXn6C"
       ],
       "license": "MIT"
     },
     "contracts/test/mocks/MockWalletLink.sol": {
-      "keccak256": "0x9436bd6b1891fec0db60f7ef2b4741abb0b3fdcbf4a5e81d980bea698dff681b",
+      "keccak256": "0x0de6a656141661760c318ef3048c4059751ac70b3a739b65b3e9e088308aac9a",
       "urls": [
-        "bzz-raw://d81c5329b623ca66f01ef810933b5e90891a1644530892dad7336dcc13ea4749",
-        "dweb:/ipfs/QmYejE9VfHz2FbP35Vd5dehSbPfTcfCNv5bbRhzMvLLF9M"
+        "bzz-raw://d509a2838131968464ca1aab66002be4f39e72558b6f7e497c033dc011a722a0",
+        "dweb:/ipfs/QmXHtiVK57ETDgSXNm3wAxGoduZmJ4MTB6av8wwuJkgpFT"
       ],
       "license": "Apache-2.0"
     },
@@ -75,6 +66,22 @@
       "urls": [
         "bzz-raw://821500c39d095eaa25b06f46e65f1d0e97c4c96b39227f79077dee7d9e84051f",
         "dweb:/ipfs/QmSTeGorKzSWF6HAmxo32uCZiEuKNvreQdUiX1AaYtUMTz"
+      ],
+      "license": "MIT"
+    },
+    "node_modules/solady/src/utils/LibBytes.sol": {
+      "keccak256": "0x0ce2f2607e6408787d6f66d73f1b6d5726a96403f66e5c4edfc6d8451f96537c",
+      "urls": [
+        "bzz-raw://e40e21b56aca96c72bd257f3bed95a41a0450de054eae1565f3079bbd913a8b5",
+        "dweb:/ipfs/QmcsCzJZn8zciFTxozK2aKjRT8egyD5fG71MBSXQVWbZ17"
+      ],
+      "license": "MIT"
+    },
+    "node_modules/solady/src/utils/LibString.sol": {
+      "keccak256": "0x6c922f48e2ecc1c8fd6581b3a1c16d24ca0f30e816e9a73d4e6a194b4df03e48",
+      "urls": [
+        "bzz-raw://e4e942ce2188a529e84b454ee78a657de9465dc8244da081dc706d01b30e4dae",
+        "dweb:/ipfs/QmX6WPTUZwNkUNKyUmJUW1jjf8Eh51Y2i1BdWyD8S16Mty"
       ],
       "license": "MIT"
     }

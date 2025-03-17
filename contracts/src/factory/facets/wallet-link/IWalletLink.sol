@@ -4,46 +4,75 @@ pragma solidity ^0.8.23;
 // interfaces
 
 // libraries
-import {WalletLib} from "./libraries/WalletLib.sol";
+
 // contracts
 
 interface IWalletLinkBase {
   // =============================================================
-  //                           Structs
+  //                           Enums
   // =============================================================
 
-  /// @notice Struct for EVM only linked wallets
-  struct LinkedWallet {
+  /// @notice Supported virtual machine types for wallet linking
+  enum VirtualMachineType {
+    EVM, // Ethereum Virtual Machine (Ethereum, BSC, Polygon, etc.)
+    SVM, // Solana Virtual Machine
+    MOVE, // Move Virtual Machine (Aptos, Sui)
+    CVM, // Cosmos Virtual Machine
+    WASM, // WebAssembly VM (Polkadot, NEAR)
+    AVM, // Avalanche Virtual Machine
+    UNKNOWN // For future compatibility
+  }
+
+  // =============================================================
+  //                      Core Data Types
+  // =============================================================
+
+  /// @notice Core wallet data structure
+  struct WalletData {
+    string addr;
+    VirtualMachineType vmType;
+    uint8 walletType;
+  }
+
+  // =============================================================
+  //                    Linking Data Types
+  // =============================================================
+
+  /// @notice Struct for EVM wallet linking operations
+  struct LinkedWalletData {
     address addr;
     bytes signature;
     string message;
   }
 
-  struct VMSpecificData {
-    string key;
-    bytes value;
-  }
-
-  /// @notice Struct for non-EVM linked wallets
-  struct NonEVMLinkedWallet {
-    WalletLib.Wallet wallet;
+  /// @notice Struct for non-EVM wallet linking operations
+  struct NonEVMLinkedWalletData {
+    string addr;
     bytes signature; // Signature in the VM's native format
     string message; // Message that was signed
+    VirtualMachineType vmType;
     VMSpecificData[] extraData; // Flexible array for VM-specific requirements
   }
 
-  /// @notice Struct for Solana wallet linking requirements
-  /// @dev This will be encoded in extraData for Solana wallets with key being "extPubKey"
-  /// SolanaSpecificData memory solanaSpecificData = abi.decode(
-  ///   nonEVMWallet.extraData[0].value,
-  ///   (SolanaSpecificData)
-  /// );
-  struct SolanaSpecificData {
-    uint256[5] extPubKey; // Extended public key for Solana
+  // =============================================================
+  //               VM-Specific Data Types
+  // =============================================================
+
+  /// @notice Generic structure for VM-specific data
+  struct VMSpecificData {
+    bytes32 key;
+    bytes value;
   }
 
-  struct WalletQueryOptions {
-    bool includeDelegations;
+  /// @notice Solana-specific wallet data
+  /// @dev This will be encoded in extraData for Solana wallets with key being "extPubKey"
+  /// bytes calldata value = nonEVMWallet.extraData[0].value;
+  /// SolanaSpecificData calldata solanaSpecificData;
+  /// assembly {
+  ///   solanaSpecificData := value.offset
+  /// }
+  struct SolanaSpecificData {
+    uint256[5] extPubKey; // Extended public key for Solana
   }
 
   // =============================================================
@@ -105,7 +134,7 @@ interface IWalletLink is IWalletLinkBase {
    * @param nonce a nonce used to prevent replay attacks, nonce must always be higher than previous nonce
    */
   function linkCallerToRootKey(
-    LinkedWallet memory rootWallet,
+    LinkedWalletData calldata rootWallet,
     uint256 nonce
   ) external;
 
@@ -116,8 +145,8 @@ interface IWalletLink is IWalletLinkBase {
    * @param nonce a nonce used to prevent replay attacks, nonce must always be higher than previous nonce
    */
   function linkWalletToRootKey(
-    LinkedWallet memory wallet,
-    LinkedWallet memory rootWallet,
+    LinkedWalletData calldata wallet,
+    LinkedWalletData calldata rootWallet,
     uint256 nonce
   ) external;
 
@@ -128,18 +157,20 @@ interface IWalletLink is IWalletLinkBase {
    * @dev The function can only be called by an already linked wallet
    */
   function linkNonEVMWalletToRootKey(
-    NonEVMLinkedWallet calldata wallet,
+    NonEVMLinkedWalletData calldata wallet,
     uint256 nonce
   ) external;
 
   /**
    * @notice Remove a non-EVM wallet link from a root wallet
-   * @param wallet the wallet being removed from the root wallet
+   * @param addr the address of the wallet being removed from the root wallet
+   * @param vmType the type of VM the wallet belongs to
    * @param nonce a nonce used to prevent replay attacks, nonce must always be higher than previous nonce
    * @dev The function can only be called by an already linked wallet
    */
   function removeNonEVMWalletLink(
-    WalletLib.Wallet memory wallet,
+    string calldata addr,
+    VirtualMachineType vmType,
     uint256 nonce
   ) external;
 
@@ -149,7 +180,7 @@ interface IWalletLink is IWalletLinkBase {
    */
   function removeLink(
     address wallet,
-    LinkedWallet memory rootWallet,
+    LinkedWalletData calldata rootWallet,
     uint256 nonce
   ) external;
 
@@ -194,16 +225,6 @@ interface IWalletLink is IWalletLinkBase {
   function getWalletsByRootKeyWithDelegations(
     address rootKey
   ) external view returns (address[] memory wallets);
-
-  /**
-   * @notice Returns all wallets linked to a root key with their metadata
-   * @param rootKey the public key of the users rootkey to find associated wallets for
-   * @return wallets an array of wallets with their metadata
-   */
-  function explicitWalletsByRootKey(
-    address rootKey,
-    WalletQueryOptions calldata options
-  ) external view returns (WalletLib.Wallet[] memory wallets);
 
   /**
    * @notice Returns the root key for a given wallet

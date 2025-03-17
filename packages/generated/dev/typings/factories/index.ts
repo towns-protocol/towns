@@ -33,6 +33,7 @@ export { IStreamRegistry__factory } from "./IStreamRegistry__factory";
 export { ITipping__factory } from "./ITipping__factory";
 export { ITownsPoints__factory } from "./ITownsPoints__factory";
 export { IWalletLink__factory } from "./IWalletLink__factory";
+export { IWalletLinkQueryable__factory } from "./IWalletLinkQueryable__factory";
 export { Member__factory } from "./Member__factory";
 export { MembershipFacet__factory } from "./MembershipFacet__factory";
 export { MockERC721A__factory } from "./MockERC721A__factory";

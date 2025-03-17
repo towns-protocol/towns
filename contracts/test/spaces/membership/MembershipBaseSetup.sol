@@ -153,7 +153,7 @@ contract MembershipBaseSetup is
     vm.expectEmit(address(wl));
     emit LinkWalletToRootKey(newWallet.addr, rootWallet.addr);
     wl.linkCallerToRootKey(
-      LinkedWallet(rootWallet.addr, signature, LINKED_WALLET_MESSAGE),
+      LinkedWalletData(rootWallet.addr, signature, LINKED_WALLET_MESSAGE),
       nonce
     );
     vm.stopPrank();
