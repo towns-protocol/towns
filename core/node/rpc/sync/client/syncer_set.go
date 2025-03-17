@@ -203,14 +203,11 @@ func (ss *SyncerSet) AddStream(ctx context.Context, cookie *SyncCookie) error {
 	}
 
 	// Returns the target node address and a flag indicating if more nodes are available
-	var getNodeAddress func() (common.Address, *SyncCookie, bool)
-
 	// Use the node address provided in the sync cookie if available, otherwise use the sticky peer of the stream
-	if nodeAddressRaw := cookie.GetNodeAddress(); len(nodeAddressRaw) > 0 {
-		getNodeAddress = func() (common.Address, *SyncCookie, bool) {
-			return common.BytesToAddress(nodeAddressRaw), cookie, false
-		}
-	} else {
+	getNodeAddress := func() (common.Address, *SyncCookie, bool) {
+		return common.BytesToAddress(cookie.GetNodeAddress()), cookie, false
+	}
+	if len(cookie.GetNodeAddress()) == 0 {
 		stream, err := ss.streamCache.GetStreamNoWait(ctx, streamID)
 		if err != nil {
 			return err
