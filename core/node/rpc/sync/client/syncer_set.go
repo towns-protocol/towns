@@ -4,6 +4,7 @@ import (
 	"context"
 	"slices"
 	"sync"
+	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/linkdata/deadlock"
@@ -204,40 +205,18 @@ func (ss *SyncerSet) AddStream(ctx context.Context, cookie *SyncCookie) error {
 
 	// Returns the target node address and a flag indicating if more nodes are available
 	// Use the node address provided in the sync cookie if available, otherwise use the sticky peer of the stream
-	getNodeAddress := func() (common.Address, *SyncCookie, bool) {
-		return common.BytesToAddress(cookie.GetNodeAddress()), cookie, false
-	}
-	if len(cookie.GetNodeAddress()) == 0 {
-		stream, err := ss.streamCache.GetStreamNoWait(ctx, streamID)
-		if err != nil {
-			return err
-		}
-
-		i := 0
-		remotes, useLocal := stream.GetRemotesAndIsLocal()
-		nodeAddress := stream.GetStickyPeer()
-		getNodeAddress = func() (common.Address, *SyncCookie, bool) {
-			// If the local node hosts the current stream, try it first
-			if i == 0 && useLocal {
-				useLocal = false
-				return ss.localNodeAddress, cookie.CopyWithAddr(ss.localNodeAddress), len(remotes) > 0
-			}
-
-			// Advance to the next peer if the current one does not work
-			if i > 0 {
-				nodeAddress = stream.AdvanceStickyPeer(nodeAddress)
-			}
-			i++
-			return nodeAddress, cookie.CopyWithAddr(nodeAddress), i < len(remotes)
-		}
+	stream, err := ss.streamCache.GetStreamNoWait(ctx, streamID)
+	if err != nil {
+		return err
 	}
 
-	for {
-		nodeAddress, cookie, more := getNodeAddress()
+	return stream.WithAvailableNode(cookie.GetNodeAddress(), func(nodeAddress common.Address) error {
+		ctx, cancel := context.WithTimeout(ctx, time.Second*5)
+		defer cancel()
 
 		// check if there is already a syncer that can sync the given stream -> add stream to the syncer
 		if syncer, found := ss.syncers[nodeAddress]; found {
-			if err := syncer.AddStream(ctx, cookie); err != nil {
+			if err := syncer.AddStream(ctx, cookie.CopyWithAddr(nodeAddress)); err != nil {
 				return err
 			}
 			ss.streamID2Syncer[streamID] = syncer
@@ -252,36 +231,30 @@ func (ss *SyncerSet) AddStream(ctx context.Context, cookie *SyncCookie) error {
 				_, span = ss.otelTracer.Start(ctx, "NewLocalSyncer",
 					trace.WithAttributes(attribute.String("stream", streamID.String())))
 			}
-			syncer, err = ss.newLocalSyncer([]*SyncCookie{cookie})
+			syncer, err = ss.newLocalSyncer([]*SyncCookie{cookie.CopyWithAddr(nodeAddress)})
 		} else {
 			if ss.otelTracer != nil {
 				_, span = ss.otelTracer.Start(ctx, "NewRemoteSyncer",
 					trace.WithAttributes(attribute.String("stream", streamID.String()),
 						attribute.String("remote", nodeAddress.String())))
 			}
-			syncer, err = ss.newRemoteSyncer(nodeAddress, []*SyncCookie{cookie})
+			syncer, err = ss.newRemoteSyncer(nodeAddress, []*SyncCookie{cookie.CopyWithAddr(nodeAddress)})
 		}
 		if span != nil {
 			span.End()
 		}
 		if err != nil {
-			if !more {
-				return err
-			}
-
-			logging.FromCtx(ss.ctx).Errorw("Unable to create syncer, advancing the node",
+			logging.FromCtx(ss.ctx).Errorw("Unable to create syncer",
 				"err", err, "remoteNode", nodeAddress, "streamId", streamID)
-			continue
+			return err
 		}
 
 		ss.syncers[nodeAddress] = syncer
 		ss.streamID2Syncer[streamID] = syncer
 		ss.startSyncer(syncer)
 
-		break
-	}
-
-	return nil
+		return nil
+	})
 }
 
 // caller must have ss.muSyncers claimed

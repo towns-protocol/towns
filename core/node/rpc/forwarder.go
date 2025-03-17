@@ -203,70 +203,37 @@ func (s *Service) getStreamImpl(
 	// if the user passed a sync cookie, we need to forward the request to the node that issued the cookie.
 	// if the node address is not specified, the sticky peer is used.
 	if cookie != nil {
-		getNodeAddress := func() (common.Address, *SyncCookie, bool) {
-			return common.BytesToAddress(cookie.GetNodeAddress()), cookie, false
-		}
-		if len(cookie.GetNodeAddress()) == 0 {
-			i := 0
-			remotes, useLocal := stream.GetRemotesAndIsLocal()
-			nodeAddress := stream.GetStickyPeer()
-			getNodeAddress = func() (common.Address, *SyncCookie, bool) {
-				if i == 0 && useLocal {
-					useLocal = false
-					return s.wallet.Address, cookie.CopyWithAddr(s.wallet.Address), len(remotes) > 0
-				}
-				if i > 0 {
-					nodeAddress = stream.AdvanceStickyPeer(nodeAddress)
-				}
-				i++
-				return nodeAddress, cookie.CopyWithAddr(nodeAddress), i < len(remotes)
-			}
-		}
+		var resp *connect.Response[GetStreamResponse]
+		if err = stream.WithAvailableNode(cookie.GetNodeAddress(), func(nodeAddress common.Address) error {
+			ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+			defer cancel()
 
-		getStream := func(nodeAddress common.Address, cookie *SyncCookie) (*connect.Response[GetStreamResponse], error) {
 			if nodeAddress == s.wallet.Address {
 				if view == nil {
-					return nil, RiverError(Err_BAD_SYNC_COOKIE, "Stream not found").
+					return RiverError(Err_BAD_SYNC_COOKIE, "Stream not found").
 						Func("service.getStreamImpl").
 						Tag("streamId", req.Msg.StreamId)
 				}
 
-				return s.localGetStream(ctx, view, cookie)
+				resp, err = s.localGetStream(ctx, view, cookie.CopyWithAddr(nodeAddress))
+				return err
 			}
 
 			stub, err := s.nodeRegistry.GetStreamServiceClientForAddress(nodeAddress)
 			if err != nil {
-				return nil, err
+				return err
 			}
 
-			ret, err := stub.GetStream(ctx, req)
-			if err != nil {
-				return nil, err
-			}
-
-			return connect.NewResponse(ret.Msg), nil
-		}
-
-		for {
-			nodeAddress, cookie, more := getNodeAddress()
-
-			resp, err := getStream(nodeAddress, cookie)
-			if err != nil {
-				if more {
-					logging.FromCtx(ctx).Errorw("Failed to get stream from node, trying next peer",
-						"nodeAddress", nodeAddress, "err", err)
-					continue
-				}
-				break
-			}
-
+			resp, err = stub.GetStream(ctx, req)
+			return err
+		}); err == nil {
 			return resp, nil
 		}
 
 		// In the case were we couldn't get a stream from all peers, fall through and try to get the stream from scratch
 		// when nodes can exit the network this is a legitimate code path, for now it's an error
 		logging.FromCtx(ctx).Errorw("Available sticky node for stream not found, trying to get the stream from scratch",
-			"streamId", req.Msg.StreamId)
+			"streamId", req.Msg.StreamId, "err", err)
 	}
 
 	if view != nil {
