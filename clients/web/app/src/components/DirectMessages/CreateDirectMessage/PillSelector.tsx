@@ -10,7 +10,7 @@ import React, {
 } from 'react'
 import { isEqual, isEqualWith } from 'lodash'
 import { useInView } from 'react-intersection-observer'
-import { Box, LazyList, Paragraph, Stack, TextField } from '@ui'
+import { Box, BoxProps, LazyList, Paragraph, Stack, TextField } from '@ui'
 import { useDevice } from 'hooks/useDevice'
 
 /** lazy display starts above this threshold */
@@ -60,6 +60,11 @@ type Props<T> = {
     inputContainerRef?: React.RefObject<HTMLDivElement>
     isError?: boolean
     fieldRefOverride?: React.RefObject<HTMLInputElement>
+    // default to "card" override to "none" to remove the shadow
+    boxShadow?: BoxProps['boxShadow']
+
+    // default to "default" override to 'none' to remove the border
+    border?: BoxProps['border']
 }
 
 export const PillSelector = <T,>(props: Props<T>) => {
@@ -83,6 +88,8 @@ export const PillSelector = <T,>(props: Props<T>) => {
         isError,
         fieldRefOverride,
         onBeforeOptionAdded,
+        boxShadow = 'card',
+        border = 'default',
     } = props
 
     const containerRef = useRef<HTMLDivElement>(null)
@@ -290,7 +297,7 @@ export const PillSelector = <T,>(props: Props<T>) => {
     // -------------------------------------------------------------------------
 
     return (
-        <Stack gap ref={containerRef}>
+        <Stack gap="sm" ref={containerRef}>
             {/* input container */}
             <Box
                 horizontal
@@ -302,9 +309,9 @@ export const PillSelector = <T,>(props: Props<T>) => {
                 rounded="sm"
                 flexWrap="wrap"
                 minHeight="x6"
-                boxShadow="card"
+                boxShadow={boxShadow}
                 overflow="hidden"
-                border={isError ? 'negative' : 'default'}
+                border={isError ? 'negative' : border}
                 onClick={() => {
                     fieldRef?.current?.focus()
                 }}
@@ -323,6 +330,7 @@ export const PillSelector = <T,>(props: Props<T>) => {
                     ),
                 )}
                 <TextField
+                    grow
                     data-testid="pill-selector-input"
                     autoFocus={autoFocus}
                     ref={fieldRef}
@@ -347,6 +355,7 @@ export const PillSelector = <T,>(props: Props<T>) => {
                     background="level2"
                     style={{ maxHeight: 380 }}
                     boxShadow="card"
+                    zIndex="above"
                 >
                     {props.cta}
                     {/* label */}
@@ -390,10 +399,12 @@ export const PillSelector = <T,>(props: Props<T>) => {
                     )}
                 </Box>
             ) : hideResultsWhenNotActive && !isInsideContainer ? null : (
-                props.emptySelectionElement?.({
-                    searchTerm,
-                    onAddItem: (customKey: string) => onAddItem(customKey),
-                })
+                <Box zIndex="above">
+                    {props.emptySelectionElement?.({
+                        searchTerm,
+                        onAddItem: (customKey: string) => onAddItem(customKey),
+                    })}
+                </Box>
             )}
         </Stack>
     )

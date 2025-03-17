@@ -12,7 +12,7 @@ type Props = {
 } & FieldBaseProps
 
 export const Dropdown = (props: Props) => {
-    const { defaultValue, options, onChange: delegatedOnChange, ...fieldProps } = props
+    const { defaultValue, options, onChange: delegatedOnChange, paddingX, ...fieldProps } = props
 
     const onChange = useCallback(
         (e: React.FormEvent) => {
@@ -23,12 +23,7 @@ export const Dropdown = (props: Props) => {
     )
 
     return (
-        <Field
-            {...fieldProps}
-            background={fieldProps.background ?? 'level2'}
-            paddingX="md"
-            paddingY="none"
-        >
+        <Field {...fieldProps} background={fieldProps.background ?? 'level2'} paddingX={paddingX}>
             {(overlays, { className, ...inputProps }) => (
                 <>
                     <Stack

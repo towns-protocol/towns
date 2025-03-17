@@ -121,10 +121,12 @@ export const TradingChart = (props: { address: string; chainId: string; disabled
                             onClick={onToggleChartType}
                         />
                         <Dropdown
+                            width="x10"
                             padding="none"
+                            paddingX="md"
+                            paddingY="none"
                             defaultValue={timeframe}
                             height="height_md"
-                            width="x9"
                             background="level4"
                             rounded="full"
                             options={[

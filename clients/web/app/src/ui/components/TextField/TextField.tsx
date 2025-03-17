@@ -23,7 +23,6 @@ type Props = {
     paddingX?: BoxProps['paddingX']
     inputWidth?: BoxProps['width']
     inputLimit?: number
-    borderRadius?: BoxProps['borderRadius']
     color?: TextProps['color']
 } & FieldBaseProps &
     InputCallbackProps &
@@ -46,7 +45,6 @@ export const TextField = forwardRef<HTMLInputElement, Props>((props, ref) => {
             {(overlays, { className, ...inputProps }) => (
                 <>
                     <Box
-                        data-test-text={JSON.stringify(inputProps)}
                         ref={ref}
                         as="input"
                         {...inputProps}

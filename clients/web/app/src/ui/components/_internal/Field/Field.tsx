@@ -19,7 +19,7 @@ export type FieldBaseProps = {
     /** label, or title of to display above the field */
     label?: string
     /** custom label renderer, overrides the default one */
-    renderLabel?: (label: string) => JSX.Element
+    renderLabel?: (label: string) => React.ReactNode
     /** content to display besides the label, e.g. `(required)`*/
     secondaryLabel?: string
     /** a longer description displaying between the label and the field */
@@ -62,6 +62,7 @@ export type FieldBaseProps = {
     minHeight?: BoxProps['minHeight']
     gap?: BoxProps['gap']
     zIndex?: BoxProps['zIndex']
+    grow?: boolean
 }
 
 type PassthroughProps = 'id' | 'name' | 'disabled' | 'autoComplete' | 'autoFocus' | 'maxLength'
@@ -104,7 +105,8 @@ export const Field = (props: Props) => {
         paddingY,
         paddingX = 'md',
         border,
-        rounded,
+        rounded = 'sm',
+        grow = false,
         ...inputProps
     } = props
 
@@ -113,7 +115,7 @@ export const Field = (props: Props) => {
     const id = props.id || props.name || label?.replace(/[^a-z]/gi, '_').toLowerCase() || ''
 
     return (
-        <Stack grow gap="md" width={width} borderRadius="sm" border={border}>
+        <Stack gap="paragraph" width={width} borderRadius="sm" border={border} grow={grow}>
             {label && renderLabel ? (
                 renderLabel(label)
             ) : (

@@ -45,6 +45,8 @@ export function SingleSelectionSelector<OptionType>(
             {(inputContainerRef) => (
                 <PillSelector
                     hideResultsWhenNotActive
+                    boxShadow="none"
+                    border="none"
                     autoFocus={onRemoveClickedRef.current}
                     placeholder={placeholder}
                     pillRenderer={() => <></>}
