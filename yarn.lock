@@ -13470,8 +13470,10 @@ __metadata:
 
 "crypto-lib@github:towns-protocol/crypto-lib":
   version: 1.0.0
-  resolution: "crypto-lib@https://github.com/towns-protocol/crypto-lib.git#commit=3d25508a054ef81019362afd0c9f31af18fd7ca3"
-  checksum: 12a598aea7b7ba7c3b4194b722e053553e9033c3334126330fa1583a6c988ac5a382adc28b7908970e1778fb18a24886aadcd0482f7c4398352c042e634fb105
+  resolution: "crypto-lib@https://github.com/towns-protocol/crypto-lib.git#commit=bcc1e3d0655372a023e3d9d667787ba081e35a30"
+  dependencies:
+    forge-std: "github:foundry-rs/forge-std#v1.9.6"
+  checksum: 8e3d20a18a3d15da0bfdb7c73b9fe1242247d6acd0289927c97aa804d3d19d6c6e18272a31407670c0268f36e1f34507e8338cd23b1697a9f856e47de42c92d4
   languageName: node
   linkType: hard
 
@@ -17096,6 +17098,13 @@ __metadata:
   version: 1.9.5
   resolution: "forge-std@https://github.com/foundry-rs/forge-std.git#commit=b93cf4bc34ff214c099dc970b153f85ade8c9f66"
   checksum: 71aead7ca70cc51b46f0336074a9721aa765ba85030080577460c76f2a824abfb26bd1f4a77811c8ffbbce2cb9788f95dc0340926b041a3e2477c9a624f3503b
+  languageName: node
+  linkType: hard
+
+"forge-std@github:foundry-rs/forge-std#v1.9.6":
+  version: 1.9.6
+  resolution: "forge-std@https://github.com/foundry-rs/forge-std.git#commit=3b20d60d14b343ee4f908cb8079495c07f5e8981"
+  checksum: 09083036e38d0f0cf5721f8788330b815b3c6c2369b84c4ee95e0047a5bff5d8a46ff59d3dd1aa89dfc97b3d85bb42579fb11b27d4f05b4ae416cf5b6f783bdc
   languageName: node
   linkType: hard
 
