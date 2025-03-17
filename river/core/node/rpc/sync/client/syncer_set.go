@@ -222,9 +222,8 @@ func (ss *SyncerSet) AddStream(
 			_, span = ss.otelTracer.Start(ctx, "NewLocalSyncer",
 				trace.WithAttributes(attribute.String("stream", streamID.String())))
 		}
-		if syncer, err = newLocalSyncer(
-			ss.ctx, ss.syncID, ss.globalSyncOpCtxCancel, ss.localNodeAddress,
-			ss.streamCache, []*SyncCookie{cookie}, ss.messages, ss.otelTracer); err != nil {
+
+		if syncer, err = ss.newLocalSyncer([]*SyncCookie{cookie}); err != nil {
 			if span != nil {
 				span.End()
 			}
@@ -234,19 +233,13 @@ func (ss *SyncerSet) AddStream(
 			span.End()
 		}
 	} else {
-		client, err := ss.nodeRegistry.GetStreamServiceClientForAddress(nodeAddress)
-		if err != nil {
-			return err
-		}
 		var span trace.Span
 		if ss.otelTracer != nil {
 			_, span = ss.otelTracer.Start(ctx, "NewRemoteSyncer",
 				trace.WithAttributes(attribute.String("stream", streamID.String()),
 					attribute.String("remote", nodeAddress.String())))
 		}
-		if syncer, err = newRemoteSyncer(
-			ss.ctx, ss.globalSyncOpCtxCancel, ss.syncID, nodeAddress, client,
-			[]*SyncCookie{cookie}, ss.rmStream, ss.messages, ss.otelTracer); err != nil {
+		if syncer, err = ss.newRemoteSyncer(nodeAddress, []*SyncCookie{cookie}); err != nil {
 			if span != nil {
 				span.End()
 			}
@@ -303,6 +296,13 @@ func (ss *SyncerSet) RemoveStream(ctx context.Context, streamID StreamId) error 
 
 // Modify splits the given request into add and remove operations and forwards them to the responsible syncers.
 func (ss *SyncerSet) Modify(ctx context.Context, req ModifyRequest) error {
+	if ss.otelTracer != nil {
+		var span trace.Span
+		ctx, span = ss.otelTracer.Start(ctx, "Modify",
+			trace.WithAttributes(attribute.String("syncID", ss.syncID)))
+		defer span.End()
+	}
+
 	ss.muSyncers.Lock()
 	defer ss.muSyncers.Unlock()
 
