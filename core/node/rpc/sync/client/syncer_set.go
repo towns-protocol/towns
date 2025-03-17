@@ -371,6 +371,7 @@ func (ss *SyncerSet) Modify(ctx context.Context, req ModifyRequest) error {
 			if _, isLocal := stream.GetRemotesAndIsLocal(); isLocal {
 				nodeAddress = ss.localNodeAddress
 			} else {
+				// TODO: Advance sticky peer if the current one does not work
 				nodeAddress = stream.GetStickyPeer()
 			}
 		}
