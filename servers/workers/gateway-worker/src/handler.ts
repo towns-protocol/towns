@@ -380,7 +380,11 @@ router.get('/tips/:spaceAddress/leaderboard', async (request: WorkerRequest, env
             })
         }
 
-        const leaderboard = await getTipLeaderboard(spaceAddress, env.ALCHEMY_RPC_URL)
+        const leaderboard = await getTipLeaderboard(
+            spaceAddress,
+            env.ALCHEMY_RPC_URL,
+            env.ENVIRONMENT,
+        )
         const lastUpdatedAt = new Date().getTime()
 
         if (leaderboard.length > 0) {

@@ -1,4 +1,4 @@
-import { Address, Permission } from '@river-build/web3'
+import { Address, Permission, SpaceAddressFromSpaceId } from '@river-build/web3'
 import React, { useCallback, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { useSearchParams } from 'react-router-dom'
@@ -534,9 +534,10 @@ const TownTips = (props: { spaceId: string | undefined }) => {
         if (!spaceId || !qc) {
             return
         }
+        const spaceAddress = SpaceAddressFromSpaceId(spaceId)
         qc.prefetchQuery({
-            queryKey: queryKeyTipLeaderboard(spaceId),
-            queryFn: () => fetchTipLeaderboard(spaceId),
+            queryKey: queryKeyTipLeaderboard(spaceAddress),
+            queryFn: () => fetchTipLeaderboard(spaceAddress),
         })
     }, [spaceId, qc])
 

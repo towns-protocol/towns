@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useMemo } from 'react'
 import {
     SpaceAddressFromSpaceId,
     useGetRootKeyFromLinkedWallet,
@@ -20,7 +20,12 @@ import { useTipLeaderboard } from './useTipLeaderboard'
 
 export const TipsLeaderboardPanel = () => {
     const space = useSpaceData()
-    const spaceAddress = SpaceAddressFromSpaceId(space?.id ?? '')
+    const spaceAddress = useMemo(() => {
+        if (!space?.id) {
+            return
+        }
+        return SpaceAddressFromSpaceId(space.id)
+    }, [space?.id])
     const { data, isLoading } = useTipLeaderboard(spaceAddress)
 
     const hasLeaderboard = data?.leaderboard && Object.keys(data.leaderboard).length > 0

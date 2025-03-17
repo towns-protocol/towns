@@ -13,10 +13,10 @@ export const fetchTipLeaderboard = async (spaceAddress: string) => {
     return data
 }
 
-export function useTipLeaderboard(spaceAddress: string) {
+export function useTipLeaderboard(spaceAddress: string | undefined) {
     return useQuery({
-        queryKey: queryKeyTipLeaderboard(spaceAddress),
-        queryFn: () => fetchTipLeaderboard(spaceAddress),
+        queryKey: queryKeyTipLeaderboard(spaceAddress!),
+        queryFn: () => fetchTipLeaderboard(spaceAddress!),
         staleTime: 1 * MINUTE_MS,
         enabled: !!spaceAddress,
     })

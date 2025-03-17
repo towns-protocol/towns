@@ -1,21 +1,34 @@
-import { createClient, http, parseAbiItem, Log, Address } from 'viem'
-import { base } from 'viem/chains'
+import { createClient, http, parseAbiItem, Address } from 'viem'
+import { base, baseSepolia } from 'viem/chains'
 import { getLogs } from 'viem/actions'
+import { Environment } from 'worker-common'
 
-const FIRST_TIP_BLOCK = 24707541n
+// 24707541 -> first tip on base
+// 19909596 -> first tip on base sepolia
+export const FIRST_TIP_BLOCK: Record<Environment, bigint> = {
+    omega: 24707541n,
+    alpha: 19909596n,
+    'test-beta': 19909596n,
+    development: 19909596n,
+    test: 19909596n,
+}
 
 const tipEventAbi = parseAbiItem(
     'event Tip(uint256 indexed tokenId, address indexed currency, address sender, address receiver, uint256 amount, bytes32 messageId, bytes32 channelId)',
 )
 
-export async function getTipLeaderboard(spaceAddress: Address, rpcUrl: string) {
+export async function getTipLeaderboard(
+    spaceAddress: Address,
+    rpcUrl: string,
+    environment: Environment,
+) {
     const client = createClient({
-        chain: base,
+        chain: environment === 'omega' ? base : baseSepolia,
         transport: http(rpcUrl),
     })
     const logs = await getLogs(client, {
         event: tipEventAbi,
-        fromBlock: FIRST_TIP_BLOCK,
+        fromBlock: FIRST_TIP_BLOCK[environment] || 0n,
         toBlock: 'latest',
         address: spaceAddress,
     })
