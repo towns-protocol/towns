@@ -23,13 +23,27 @@ library FeatureManager {
     mapping(bytes32 => FeatureCondition) conditions;
   }
 
-  function createFeatureCondition(
+  function setFeatureCondition(
     Layout storage self,
     bytes32 featureId,
     FeatureCondition memory condition
   ) internal {
     validateFeatureCondition(condition);
     self.conditions[featureId] = condition;
+  }
+
+  function getFeatureCondition(
+    Layout storage self,
+    bytes32 featureId
+  ) internal view returns (FeatureCondition memory) {
+    return self.conditions[featureId];
+  }
+
+  function removeFeatureCondition(
+    Layout storage self,
+    bytes32 featureId
+  ) internal {
+    delete self.conditions[featureId];
   }
 
   // Validation
