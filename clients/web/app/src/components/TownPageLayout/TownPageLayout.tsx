@@ -150,7 +150,7 @@ export const TownPageLayout = (props: TownPageLayoutProps) => {
                             <InteractiveTownsToken
                                 key={imageSrc}
                                 spaceId={spaceId}
-                                size="xl"
+                                size="lg"
                                 address={address}
                                 imageSrc={imageSrc ?? undefined}
                                 spaceName={name}
