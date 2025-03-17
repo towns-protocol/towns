@@ -52,7 +52,12 @@ function makeEnvironments(): TownsEnvironmentInfo[] {
         }
 
         // Account abstraction works on gamma, omega, or alpha
-        if (riverEnv === 'gamma' || riverEnv === 'omega' || riverEnv === 'alpha') {
+        if (
+            riverEnv === 'gamma' ||
+            riverEnv === 'omega' ||
+            riverEnv === 'alpha' ||
+            riverEnv == 'delta'
+        ) {
             envInfo.accountAbstractionConfig = {
                 aaRpcUrl: baseChain.rpcUrls.default.http[0],
                 bundlerUrl: env.VITE_AA_BUNDLER_URL,

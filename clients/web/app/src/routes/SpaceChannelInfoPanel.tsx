@@ -83,7 +83,7 @@ export const ChannelInfo = () => {
     )
     const { name: environmentName } = useEnvironment()
     const showEncryptionAlgorithmSettings =
-        environmentName === 'alpha' || environmentName === 'gamma'
+        environmentName === 'alpha' || environmentName === 'gamma' || environmentName === 'delta'
     const { hasSomeEntitlement } = useChannelEntitlements({
         spaceId: spaceData?.id,
         channelId: channel?.id,
