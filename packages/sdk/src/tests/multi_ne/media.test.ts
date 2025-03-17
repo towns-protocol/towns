@@ -83,13 +83,7 @@ describe('mediaTests', () => {
         chunkCount: number,
     ): Promise<{ creationCookie: CreationCookie }> {
         await expect(bobsClient.createSpace(spaceId)).resolves.not.toThrow()
-        const mediaInfo = await bobsClient.createMediaStream(
-            undefined,
-            spaceId,
-            undefined,
-            chunkCount,
-        )
-        return mediaInfo
+        return await bobsClient.createMediaStream(undefined, spaceId, undefined, chunkCount)
     }
 
     test('clientCanCreateMediaStream', async () => {
