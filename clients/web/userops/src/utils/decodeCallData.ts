@@ -1,8 +1,7 @@
-import { BytesLike, BigNumberish, utils, BigNumber } from 'ethers'
-import { Address, Space } from '@river-build/web3'
+import { Address } from '@river-build/web3'
 import { FunctionHash } from '../types'
 import { decodeTransferCallData } from './generateTransferCallData'
-import { Hex, isHex } from 'viem'
+import { decodeFunctionData, Hex, isHex } from 'viem'
 import { decodeExecuteAbi, decodeExecuteBatchAbi } from '../lib/permissionless/accounts/simple/abi'
 
 type SingleExecuteData = {
@@ -68,11 +67,10 @@ type TransferEthData = Omit<DecodedCallData<'transferEth'>, 'toAddress' | 'execu
 }
 
 export function decodeCallData<F extends FunctionHash>(args: {
-    callData: BytesLike
-    space?: Space | undefined
+    callData: Hex
     functionHash: F | undefined
 }) {
-    const { callData, space, functionHash } = args
+    const { callData, functionHash } = args
 
     let executeData: ExecuteData
     try {
@@ -88,11 +86,7 @@ export function decodeCallData<F extends FunctionHash>(args: {
                 decodedCallData: _dataBytes,
             }
         } else {
-            const ethersCallData = utils.hexlify(callData)
-            if (!isHex(ethersCallData)) {
-                throw new Error('callData is not a valid hex string')
-            }
-            const [_toAddress, _value, _dataBytes] = decodeExecuteAbi(ethersCallData).args
+            const [_toAddress, _value, _dataBytes] = decodeExecuteAbi(callData).args
             executeData = {
                 type: 'single',
                 toAddress: _toAddress,
@@ -102,11 +96,7 @@ export function decodeCallData<F extends FunctionHash>(args: {
         }
     } catch (error) {
         try {
-            const ethersCallData = utils.hexlify(callData)
-            if (!isHex(ethersCallData)) {
-                throw new Error('callData is not a valid hex string')
-            }
-            const [_toAddress, _dataBytes] = decodeExecuteBatchAbi(ethersCallData).args
+            const [_toAddress, _dataBytes] = decodeExecuteBatchAbi(callData).args
             executeData = {
                 type: 'batch',
                 toAddress: _toAddress as Address[],
@@ -142,19 +132,33 @@ export function decodeCallData<F extends FunctionHash>(args: {
     try {
         switch (functionHash) {
             case 'prepayMembership': {
-                if (!space) {
-                    break
-                }
                 if (executeData.type !== 'single') {
                     break
                 }
 
-                const decoded = space.Prepay.decodeFunctionData(
-                    'prepayMembership',
-                    executeData.decodedCallData,
-                )
+                const { args } = decodeFunctionData({
+                    // PrepayFacet.abi
+                    // defining the abi instead of passing around SpaceDapp/Space
+                    // alternative is to import @river-build/generated, but this is just simple and easy for now
+                    abi: [
+                        {
+                            type: 'function',
+                            name: 'prepayMembership',
+                            inputs: [
+                                {
+                                    name: 'supply',
+                                    type: 'uint256',
+                                    internalType: 'uint256',
+                                },
+                            ],
+                            outputs: [],
+                            stateMutability: 'payable',
+                        },
+                    ],
+                    data: executeData.decodedCallData,
+                })
 
-                const supply = decoded[0] as BigNumberish
+                const supply = args[0]
                 if (supply === undefined) {
                     break
                 }
@@ -162,7 +166,7 @@ export function decodeCallData<F extends FunctionHash>(args: {
                 return {
                     ...data,
                     functionData: {
-                        supply: BigNumber.from(supply).toBigInt(),
+                        supply,
                     },
                 } as PrepayMembershipData
             }
@@ -194,23 +198,37 @@ export function decodeCallData<F extends FunctionHash>(args: {
                 return data as TransferEthData
             }
             case 'withdraw': {
-                if (!space) {
-                    break
-                }
                 if (executeData.type !== 'single') {
                     break
                 }
-                const [to] = space.Membership.decodeFunctionData(
-                    'withdraw',
-                    executeData.decodedCallData,
-                )
+
+                const { args } = decodeFunctionData({
+                    // MembershipFacet.abi
+                    abi: [
+                        {
+                            type: 'function',
+                            name: 'withdraw',
+                            inputs: [
+                                {
+                                    name: 'account',
+                                    type: 'address',
+                                    internalType: 'address',
+                                },
+                            ],
+                            outputs: [],
+                            stateMutability: 'nonpayable',
+                        },
+                    ],
+                    data: executeData.decodedCallData,
+                })
+                const to = args[0]
                 if (!to) {
                     break
                 }
                 return {
                     ...data,
                     functionData: {
-                        recipient: to as Address,
+                        recipient: to,
                     },
                 } as WithdrawData
             }

@@ -10,10 +10,10 @@ import {
     waitForOpAndTx,
 } from './utils'
 import { expect, vi } from 'vitest'
-import { BigNumber } from 'ethers'
 import { userOpsStore } from '../src/store/userOpsStore'
 import * as encodeExecuteAbi from '../src/lib/permissionless/accounts/simple/abi'
 import { formatEther } from 'viem'
+import { decodeCallData } from '../src/utils/decodeCallData'
 
 test('permissionless: userops with different values are sent correctly', async () => {
     const alice = new LocalhostWeb3Provider(
@@ -27,11 +27,8 @@ test('permissionless: userops with different values are sent correctly', async (
         generatePrivyWalletIfKey(process.env.PRIVY_WALLET_PRIVATE_KEY_2),
     )
     await bob.ready
-    const { spaceDapp, userOps: userOpsAlice } = await createSpaceDappAndUserops(
-        alice,
-        'permissionless',
-    )
-    const { userOps: userOpsBob } = await createSpaceDappAndUserops(bob, 'permissionless')
+    const { spaceDapp, userOps: userOpsAlice } = await createSpaceDappAndUserops(alice)
+    const { userOps: userOpsBob } = await createSpaceDappAndUserops(bob)
 
     const aaAddress = await userOpsBob.getAbstractAccountAddress({
         rootKeyAddress: bob.wallet.address as Address,
@@ -74,32 +71,28 @@ test('permissionless: userops with different values are sent correctly', async (
     const executeSpy = vi.spyOn(encodeExecuteAbi, 'encodeExecuteAbi')
 
     const bobSenderAddress = bobSmartAccountClient.address
+    const bobsOpValue = () => {
+        const bobsOp = userOpsStore.getState().userOps[bobSenderAddress]?.current
+        return bobsOp?.op?.callData && bobsOp.functionHashForPaymasterProxy
+            ? decodeCallData({
+                  callData: bobsOp.op.callData,
+                  functionHash: bobsOp.functionHashForPaymasterProxy,
+              }).value
+            : undefined
+    }
 
-    expect(userOpsStore.getState().userOps[bobSenderAddress]?.current?.value).toBe(undefined)
+    expect(bobsOpValue()).toBe(undefined)
 
     // join space
     const joinOp1 = await userOpsBob.sendJoinSpaceOp([spaceId1, bob.wallet.address, bob.wallet])
     await waitForOpAndTx(joinOp1, bob)
     await sleepBetweenTxs()
 
-    const format = (val: bigint) => formatEther(val)
-    expect(format(executeSpy.mock.lastCall![0].value)).toBe('0.1')
+    expect(formatEther(executeSpy.mock.lastCall![0].value)).toBe('0.1')
 
-    expect(
-        format(
-            BigNumber.from(
-                userOpsStore.getState().userOps[bobSenderAddress].current.value!,
-            ).toBigInt(),
-        ),
-    ).toBe('0.1')
+    expect(formatEther(bobsOpValue()!)).toBe('0.1')
 
     await userOpsBob.sendJoinSpaceOp([spaceId2, bob.wallet.address, bob.wallet])
-    expect(format(executeSpy.mock.lastCall![0].value)).toBe('0.2')
-    expect(
-        format(
-            BigNumber.from(
-                userOpsStore.getState().userOps[bobSenderAddress].current.value!,
-            ).toBigInt(),
-        ),
-    ).toBe('0.2')
+    expect(formatEther(executeSpy.mock.lastCall![0].value)).toBe('0.2')
+    expect(formatEther(bobsOpValue()!)).toBe('0.2')
 })

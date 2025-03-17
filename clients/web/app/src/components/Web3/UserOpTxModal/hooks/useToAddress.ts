@@ -1,18 +1,9 @@
-import {
-    isTransferEthData,
-    isTransferTokensData,
-    isWithdrawData,
-    selectUserOpsByAddress,
-    userOpsStore,
-} from '@towns/userops'
+import { isTransferEthData, isTransferTokensData, isWithdrawData } from '@towns/userops'
 import { useMemo } from 'react'
-import { useMyAbstractAccountAddress } from './useMyAbstractAccountAddress'
+import { useDecodedCallData } from './useDecodedCallData'
 
 export function useToAddress() {
-    const myAbstractAccountAddress = useMyAbstractAccountAddress().data
-    const currOpDecodedCallData = userOpsStore(
-        (s) => selectUserOpsByAddress(myAbstractAccountAddress, s)?.current?.decodedCallData,
-    )
+    const currOpDecodedCallData = useDecodedCallData()
 
     const toAddress = useMemo(() => {
         if (isTransferEthData(currOpDecodedCallData)) {

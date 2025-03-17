@@ -1,11 +1,9 @@
-import { SpaceDapp } from '@river-build/web3'
 import { FunctionHash, TimeTrackerEvents } from '../../types'
 import { Signer } from 'ethers'
 import { Address, Hex } from 'viem'
 import { encodeExecuteAbi, encodeExecuteBatchAbi } from './accounts/simple/abi'
 import { selectUserOpsByAddress } from '../../store/userOpsStore'
 import { userOpsStore } from '../../store/userOpsStore'
-import { decodeCallData } from '../../utils/decodeCallData'
 import { getUserOperationReceipt } from '../getUserOperationReceipt'
 import { SendUserOperationReturnType } from '../types'
 import { sendUserOperationWithRetry } from '../sendUserOperationWithRetry'
@@ -33,10 +31,9 @@ export async function sendUseropWithPermissionless(
         retryCount?: number
         smartAccountClient: TSmartAccount
         sequenceName?: TimeTrackerEvents
-        spaceDapp: SpaceDapp | undefined
     },
 ): Promise<SendUserOperationReturnType> {
-    const { toAddress, callData, value, smartAccountClient, sequenceName, spaceDapp } = args
+    const { toAddress, callData, value, smartAccountClient, sequenceName } = args
     const sender = smartAccountClient.address
 
     if (!toAddress) {
@@ -84,18 +81,10 @@ export async function sendUseropWithPermissionless(
         console.log('[UserOperations] resetting user op store')
         const { setCurrent, reset, setSequenceName } = userOpsStore.getState()
         reset(sender)
-        const space = args.spaceId ? spaceDapp?.getSpace(args.spaceId) : undefined
-        const decodedCallData = decodeCallData({
-            callData: _callData,
-            functionHash: args.functionHashForPaymasterProxy,
-            space,
-        })
         setSequenceName(sender, sequenceName)
         setCurrent({
             sender,
             op: undefined,
-            value: args.value,
-            decodedCallData,
             functionHashForPaymasterProxy: args.functionHashForPaymasterProxy,
             spaceId: args.spaceId,
         })

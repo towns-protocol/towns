@@ -3,11 +3,10 @@ import { useMyAbstractAccountAddress } from './useMyAbstractAccountAddress'
 
 export function useIsJoinSpace() {
     const myAbstractAccountAddress = useMyAbstractAccountAddress().data
-    const currOpDecodedCallData = userOpsStore(
-        (s) => selectUserOpsByAddress(myAbstractAccountAddress, s)?.current?.decodedCallData,
+    const functionHash = userOpsStore(
+        (s) =>
+            selectUserOpsByAddress(myAbstractAccountAddress, s)?.current
+                ?.functionHashForPaymasterProxy,
     )
-    return (
-        currOpDecodedCallData?.functionHash === 'joinSpace' ||
-        currOpDecodedCallData?.functionHash === 'joinSpace_linkWallet'
-    )
+    return functionHash === 'joinSpace' || functionHash === 'joinSpace_linkWallet'
 }

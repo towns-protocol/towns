@@ -5,11 +5,12 @@ import { isUsingAlchemyBundler } from '../../../utils/isUsingAlchemyBundler'
 import { selectUserOpsByAddress, userOpsStore } from '../../../store/userOpsStore'
 import { estimateGasFeesWithReplacement } from './estimateGasFees'
 import { PrepareUserOperationRequest, UserOperation } from 'viem/account-abstraction'
-import { BigNumber, BigNumberish } from 'ethers'
+import { BigNumberish } from 'ethers'
 import { Hex, hexToBigInt, isHex, Client, toHex } from 'viem'
 import { getPrivyLoginMethodFromLocalStorage } from '../../../utils/privyLoginMethod'
 import { NON_SPONSORED_LOGIN_METHODS } from '../../../constants'
 import { NON_SPONSORED_FUNCTION_HASHES } from '../../../constants'
+import { decodeCallData } from '../../../utils/decodeCallData'
 
 type PaymasterProxyResponse = {
     data: {
@@ -90,7 +91,6 @@ export const paymasterProxyMiddleware = async (
     } = args
     const { current, pending } = selectUserOpsByAddress(args.userOp.sender)
 
-    const value = current.value
     const pendingHash = pending.hash
     const { functionHashForPaymasterProxy, spaceId } = current
 
@@ -101,11 +101,15 @@ export const paymasterProxyMiddleware = async (
         return
     }
 
-    if (value) {
-        const bigNumber = BigNumber.from(value)
-        if (bigNumber.gt(0) || bigNumber.isNegative()) {
-            return
-        }
+    const value = args.userOp.callData
+        ? decodeCallData({
+              callData: args.userOp.callData,
+              functionHash: functionHashForPaymasterProxy,
+          })?.value
+        : undefined
+
+    if (value !== undefined && (value < 0n || value > 0n)) {
+        return
     }
 
     const loginMethod = getPrivyLoginMethodFromLocalStorage()

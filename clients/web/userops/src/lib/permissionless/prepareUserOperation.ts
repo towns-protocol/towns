@@ -13,21 +13,17 @@ import { estimateGasFeesWithReplacement } from './middleware/estimateGasFees'
 import { isUsingAlchemyBundler } from '../../utils/isUsingAlchemyBundler'
 import { paymasterProxyMiddleware } from './middleware/paymaster'
 import { isSponsoredOp } from '../../utils/isSponsoredOp'
-import {
-    selectUserOpsByAddress,
-    userOpsStore,
-    viemOpDetailsToEthersOpDetails,
-} from '../../store/userOpsStore'
+import { selectUserOpsByAddress, userOpsStore } from '../../store/userOpsStore'
 import { estimateGasLimit } from './middleware/estimateGasLimit'
 import { totalCostOfUserOp } from './middleware/balance'
 import { promptUser } from '../../store/promptUser'
 import { InsufficientTipBalanceException } from '../../errors'
 import { getBalance } from 'viem/actions'
-import { BigNumber } from 'ethers'
 import { subtractGasFromBalance } from './middleware/substractGasFromValue'
 import { Call } from 'viem/types/calls'
 import { SmartAccountClient } from 'permissionless'
 import { ISpaceDapp } from '@river-build/web3'
+import { decodeCallData } from '../../utils/decodeCallData'
 
 const defaultParameters = ['factory', 'fees', 'gas', 'paymaster', 'nonce', 'signature'] as const
 
@@ -229,7 +225,7 @@ export const prepareUserOperation =
         // Fill User Operation with gas-related properties.
         ////////////////////////////////////////////////////////////////////////////////
         const { current } = selectUserOpsByAddress(account.address)
-        const { spaceId, functionHashForPaymasterProxy, value } = current
+        const { spaceId, functionHashForPaymasterProxy } = current
 
         if (properties.includes('gas')) {
             // If the Account has opinionated gas estimation logic, run the `estimateGas` hook and
@@ -278,13 +274,19 @@ export const prepareUserOperation =
         ////////////////////////////////////////////////////////////////////////////////
         userOpsStore.getState().setCurrent({
             sender: account.address,
-            op: viemOpDetailsToEthersOpDetails(fallbackRequest(request)),
+            op: fallbackRequest(request),
         })
 
         ////////////////////////////////////////////////////////////////////////////////
         // Prompt user if the paymaster rejected
         ////////////////////////////////////////////////////////////////////////////////
-        const valueBigInt = value ? BigNumber.from(value).toBigInt() : undefined
+        const valueBigInt = request.callData
+            ? decodeCallData({
+                  callData: request.callData,
+                  functionHash: functionHashForPaymasterProxy,
+              })?.value
+            : undefined
+
         if (!isSponsoredOp({ paymasterAndData: request.paymasterAndData })) {
             // tip is a special case
             // - it is not sponsored
@@ -352,7 +354,7 @@ export const prepareUserOperation =
         ////////////////////////////////////////////////////////////////////////////////
         userOpsStore.getState().setCurrent({
             sender: account.address,
-            op: viemOpDetailsToEthersOpDetails(fallbackRequest(request)),
+            op: fallbackRequest(request),
         })
         console.log('[UserOperations] Prepared UserOperation:', request)
 

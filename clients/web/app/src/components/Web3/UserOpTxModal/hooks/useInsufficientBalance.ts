@@ -1,8 +1,8 @@
 import {
+    FunctionHash,
     adjustValueRelativeToBalance,
     isNegativeValueException,
     totalCostOfUserOp,
-    userOpsStore,
 } from '@towns/userops'
 import { useMemo } from 'react'
 import { BigNumber, BigNumberish } from 'ethers'
@@ -13,9 +13,7 @@ export function useInsufficientBalance(args: {
     preVerificationGas: BigNumberish
     verificationGasLimit: BigNumberish
     gasPrice: BigNumberish
-    currOpDecodedCallData: ReturnType<
-        typeof userOpsStore.getState
-    >['userOps']['xxx']['current']['decodedCallData']
+    functionHash: FunctionHash | undefined
     value?: BigNumberish
 }): boolean {
     const {
@@ -25,10 +23,10 @@ export function useInsufficientBalance(args: {
         verificationGasLimit,
         gasPrice,
         value,
-        currOpDecodedCallData,
+        functionHash,
     } = args
 
-    const isTransferEth = currOpDecodedCallData?.functionHash === 'transferEth'
+    const isTransferEth = functionHash === 'transferEth'
 
     return useMemo(() => {
         if (isTransferEth && value && balance !== undefined) {

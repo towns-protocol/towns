@@ -267,15 +267,15 @@ test(
             callData: '0x',
             initCode: '0x',
             sender: aaAddress,
-            nonce: 0,
-            maxFeePerGas: '0x2540BE400',
-            maxPriorityFeePerGas: '0x2540BE400',
+            nonce: 0n,
+            maxFeePerGas: 10000000000n,
+            maxPriorityFeePerGas: 10000000000n,
             callGasLimit: 0n,
             verificationGasLimit: 0n,
             preVerificationGas: 0n,
             paymasterAndData: '0x',
             signature: '0x',
-        }
+        } satisfies UserOperation
 
         userOpsStore.setState((state) => {
             state.userOps[aaAddress] ??= {
@@ -286,13 +286,9 @@ test(
                 promptUser: false,
                 current: {
                     op: undefined,
-                    value: undefined,
-                    decodedCallData: undefined,
                 },
                 pending: {
                     op: storedOp,
-                    value: undefined,
-                    decodedCallData: undefined,
                     hash: '0x33b63588947990068dbccfbdc679d684d36c7ace2840cc95763bbc122baf7efe',
                 },
             }

@@ -34,6 +34,7 @@ import {
     useUserOpTxModalContext,
 } from './UserOpTxModalContext'
 import { RecipientText } from './RecipientText'
+import { useDecodedCallData } from './hooks/useDecodedCallData'
 
 export function StandardUseropTx({
     disableModalActions,
@@ -50,8 +51,9 @@ export function StandardUseropTx({
         })),
     )
     const currOp = current?.op
-    const currOpDecodedCallData = current?.decodedCallData
-    const currOpValue = current?.value
+    const currFunctionHash = current?.functionHashForPaymasterProxy
+    const currOpDecodedCallData = useDecodedCallData()
+    const currOpValue = currOpDecodedCallData?.value
 
     const { view, setView } = useUserOpTxModalContext()
 
@@ -87,7 +89,7 @@ export function StandardUseropTx({
         verificationGasLimit,
         gasPrice,
         value: currOpValue,
-        currOpDecodedCallData,
+        functionHash: currFunctionHash,
     })
 
     const { gasInEth, currOpValueInEth, totalInEth, gasCost } = usePriceBreakdown({
@@ -130,7 +132,7 @@ export function StandardUseropTx({
         }
     }
 
-    const isTransferEth = currOpDecodedCallData?.functionHash === 'transferEth'
+    const isTransferEth = currFunctionHash === 'transferEth'
     const _isTouch = isTouch()
 
     return (

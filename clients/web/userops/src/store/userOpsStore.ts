@@ -6,24 +6,21 @@ import superjson from 'superjson'
 import {
     migrations,
     V1PersistentState,
-    V2OpDetails,
     V2PersistentState,
-    V2State,
+    V3PersistentState,
+    V3OpDetails,
+    V3State,
 } from './userOpsStoreMigrations'
-import { Hex } from 'viem'
-import { UserOperation } from 'viem/account-abstraction/types/userOperation'
-import { Address } from 'viem'
-import { BigNumber } from 'ethers'
 
-type OpDetails = V2OpDetails
+type OpDetails = V3OpDetails
 
-type UserOpsState = V2State
+type UserOpsState = V3State
 
 type State = {
     userOps: { [sender: string]: UserOpsState }
 }
 
-type PersistentState = V2PersistentState
+type PersistentState = V3PersistentState
 
 type Actions = {
     setCurrent: (
@@ -56,22 +53,18 @@ const initialState = Object.freeze({
     sequenceName: undefined,
     current: {
         op: undefined,
-        value: undefined,
-        decodedCallData: undefined,
         functionHashForPaymasterProxy: undefined,
         spaceId: undefined,
     },
     pending: {
         op: undefined,
-        value: undefined,
-        decodedCallData: undefined,
         hash: undefined,
         functionHashForPaymasterProxy: undefined,
         spaceId: undefined,
     },
 } satisfies UserOpsState)
 
-const customStorage: PersistStorage<PersistentState> = {
+export const customStorage: PersistStorage<PersistentState> = {
     getItem: async (name) => {
         try {
             const item = localStorage.getItem(name)
@@ -116,20 +109,11 @@ export const userOpsStore = create<State & Actions>()(
                 setCurrent: (args: { sender: string } & Partial<OpDetails>) => {
                     set(
                         (state) => {
-                            const {
-                                sender,
-                                op,
-                                value,
-                                decodedCallData,
-                                functionHashForPaymasterProxy,
-                                spaceId,
-                            } = args
+                            const { sender, op, functionHashForPaymasterProxy, spaceId } = args
                             state.userOps[sender] ??= { ...initialState }
                             state.userOps[sender].current = {
                                 ...state.userOps[sender].current,
                                 ...(op && { op: structuredClone(op) }),
-                                ...(value !== undefined && { value }),
-                                ...(decodedCallData !== undefined && { decodedCallData }),
                                 ...(functionHashForPaymasterProxy !== undefined && {
                                     functionHashForPaymasterProxy,
                                 }),
@@ -219,11 +203,15 @@ export const userOpsStore = create<State & Actions>()(
             })),
             {
                 name: 'towns/user-ops',
-                version: 2,
+                version: 3,
                 storage: customStorage,
-                migrate: (persistedState, version) => {
-                    if (version === 1) {
-                        return migrations[1](persistedState as V1PersistentState)
+                migrate: (persistedState, previousVersion) => {
+                    if (previousVersion === 1) {
+                        const version2 = migrations[1](persistedState as V1PersistentState)
+                        return migrations[2](version2)
+                    }
+                    if (previousVersion === 2) {
+                        return migrations[2](persistedState as V2PersistentState)
                     }
                     return persistedState as PersistentState
                 },
@@ -259,34 +247,4 @@ export const userOpsStore = create<State & Actions>()(
 export const selectUserOpsByAddress = (address: string | undefined, state?: State) => {
     if (!address) return { ...initialState }
     return (state ?? userOpsStore.getState()).userOps[address] ?? { ...initialState }
-}
-
-type OpDetailsViem = UserOperation<'0.6'> | undefined
-
-export function ethersOpDetailsToViemOpDetails({ op }: { op: OpDetails['op'] }): OpDetailsViem {
-    if (!op) return
-    return {
-        sender: op.sender as Address,
-        nonce: BigNumber.from(op.nonce).toBigInt(),
-        initCode: op.initCode as Hex,
-        callData: op.callData as Hex,
-        callGasLimit: BigNumber.from(op.callGasLimit).toBigInt(),
-        verificationGasLimit: BigNumber.from(op.verificationGasLimit).toBigInt(),
-        preVerificationGas: BigNumber.from(op.preVerificationGas).toBigInt(),
-        maxFeePerGas: BigNumber.from(op.maxFeePerGas).toBigInt(),
-        maxPriorityFeePerGas: BigNumber.from(op.maxPriorityFeePerGas).toBigInt(),
-        paymasterAndData: op.paymasterAndData as Hex,
-        signature: op.signature as Hex,
-    }
-}
-
-export function viemOpDetailsToEthersOpDetails(
-    opDetails: OpDetailsViem,
-): OpDetails['op'] | undefined {
-    if (!opDetails) return
-    return {
-        ...opDetails,
-        initCode: opDetails.initCode ? opDetails.initCode : '0x',
-        paymasterAndData: opDetails.paymasterAndData ? opDetails.paymasterAndData : '0x',
-    }
 }

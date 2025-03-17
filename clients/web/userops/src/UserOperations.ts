@@ -35,8 +35,7 @@ import {
     TownsReviewParams,
 } from './operations'
 import { getAbstractAccountAddress } from './utils/getAbstractAccountAddress'
-import { isSingleData } from './utils/decodeCallData'
-import { isBatchData } from './utils/decodeCallData'
+import { isSingleData, isBatchData, decodeCallData } from './utils/decodeCallData'
 import { TSmartAccount } from './lib/permissionless/accounts/createSmartAccountClient'
 import {
     sendUseropWithPermissionless,
@@ -158,13 +157,11 @@ export class UserOps {
         if (Array.isArray(args.toAddress) && Array.isArray(args.callData)) {
             return sendUseropWithPermissionless({
                 ...args,
-                spaceDapp: this.spaceDapp,
                 smartAccountClient,
             })
         } else if (typeof args.toAddress === 'string' && typeof args.callData === 'string') {
             return sendUseropWithPermissionless({
                 ...args,
-                spaceDapp: this.spaceDapp,
                 smartAccountClient,
             })
         }
@@ -188,15 +185,16 @@ export class UserOps {
         if (!pending.functionHashForPaymasterProxy) {
             throw new Error('user op function hash for paymaster proxy not found')
         }
-        if (!pending.decodedCallData) {
-            throw new Error('user op decoded call data not found')
-        }
+        const pendingDecodedCallData = decodeCallData({
+            callData: pending.op.callData,
+            functionHash: pending.functionHashForPaymasterProxy,
+        })
 
         const spaceId = pending.spaceId
         const functionHashForPaymasterProxy = pending.functionHashForPaymasterProxy
 
-        if (isBatchData(pending.decodedCallData)) {
-            const { toAddress, value, executeData } = pending.decodedCallData
+        if (isBatchData(pendingDecodedCallData)) {
+            const { toAddress, value, executeData } = pendingDecodedCallData
             return this.sendUserOp({
                 toAddress,
                 callData: executeData,
@@ -205,8 +203,8 @@ export class UserOps {
                 functionHashForPaymasterProxy,
                 value,
             })
-        } else if (isSingleData(pending.decodedCallData)) {
-            const { toAddress, value, executeData } = pending.decodedCallData
+        } else if (isSingleData(pendingDecodedCallData)) {
+            const { toAddress, value, executeData } = pendingDecodedCallData
             return this.sendUserOp({
                 toAddress,
                 callData: executeData,

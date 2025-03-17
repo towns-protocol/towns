@@ -1,14 +1,11 @@
 import { MAX_MULTIPLIER } from '../../../constants'
-import { ethersOpDetailsToViemOpDetails, selectUserOpsByAddress } from '../../../store/userOpsStore'
+import { selectUserOpsByAddress } from '../../../store/userOpsStore'
 import { bigIntMax, bigIntMultiply } from '../../../utils/bigInt'
 import { Client, Hex, hexToBigInt } from 'viem'
 import { getBlock } from 'viem/actions'
 
 export async function estimateGasFeesWithReplacement(args: { sender: string; client: Client }) {
-    const _uoToDropEthers = selectUserOpsByAddress(args.sender).pending
-    const uoToDrop = {
-        op: ethersOpDetailsToViemOpDetails(_uoToDropEthers),
-    }
+    const uoToDrop = selectUserOpsByAddress(args.sender).pending
 
     if (!uoToDrop.op) {
         console.log(`[UserOperations] No user operation to drop, estimating gas fees...`)
