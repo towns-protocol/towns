@@ -99,9 +99,25 @@ export class SyncAgent {
         })
 
         this.user = new User(this.userId, this.store, this.riverConnection)
-        this.spaces = new Spaces(this.store, this.riverConnection, this.user.memberships, spaceDapp)
-        this.gdms = new Gdms(this.store, this.riverConnection, this.user.memberships)
-        this.dms = new Dms(this.store, this.riverConnection, this.user.memberships)
+        this.spaces = new Spaces(
+            this.store,
+            this.riverConnection,
+            this.user.memberships,
+            spaceDapp,
+            this.user.settings.readMarker,
+        )
+        this.gdms = new Gdms(
+            this.store,
+            this.riverConnection,
+            this.user.memberships,
+            this.user.settings.readMarker,
+        )
+        this.dms = new Dms(
+            this.store,
+            this.riverConnection,
+            this.user.memberships,
+            this.user.settings.readMarker,
+        )
         // flatten out the observables
         this.observables = {
             riverAuthStatus: this.riverConnection.authStatus,

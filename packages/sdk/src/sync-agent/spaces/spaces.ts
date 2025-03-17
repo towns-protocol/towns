@@ -13,6 +13,7 @@ import { CreateSpaceParams, SpaceDapp } from '@river-build/web3'
 import { makeDefaultMembershipInfo } from '../utils/spaceUtils'
 import { ethers } from 'ethers'
 import { check, dlogger } from '@river-build/dlog'
+import type { UserReadMarker } from '../user/models/readMarker'
 
 const logger = dlogger('csb:spaces')
 
@@ -30,6 +31,7 @@ export class Spaces extends PersistedObservable<SpacesModel> {
         private riverConnection: RiverConnection,
         private userMemberships: UserMemberships,
         private spaceDapp: SpaceDapp,
+        private fullyReadMarkers: UserReadMarker,
     ) {
         super({ id: '0', spaceIds: [] }, store, LoadPriority.high)
     }
@@ -51,6 +53,7 @@ export class Spaces extends PersistedObservable<SpacesModel> {
                 this.riverConnection,
                 this.store,
                 this.spaceDapp,
+                this.fullyReadMarkers,
             )
         }
         return this.spaces[spaceId]
@@ -74,6 +77,7 @@ export class Spaces extends PersistedObservable<SpacesModel> {
                     this.riverConnection,
                     this.store,
                     this.spaceDapp,
+                    this.fullyReadMarkers,
                 )
             }
         }

@@ -11,6 +11,7 @@ import type {
     PlainMessage,
 } from '@river-build/proto'
 import { MessageTimeline } from '../../timeline/timeline'
+import type { UserReadMarker } from '../../..'
 
 const logger = dlogger('csb:dm')
 
@@ -29,9 +30,19 @@ export interface DmModel extends Identifiable {
 export class Dm extends PersistedObservable<DmModel> {
     timeline: MessageTimeline
     members: Members
-    constructor(id: string, private riverConnection: RiverConnection, store: Store) {
+    constructor(
+        id: string,
+        private riverConnection: RiverConnection,
+        store: Store,
+        fullyReadMarkers: UserReadMarker,
+    ) {
         super({ id, isJoined: false, initialized: false }, store, LoadPriority.high)
-        this.timeline = new MessageTimeline(id, riverConnection.userId, riverConnection)
+        this.timeline = new MessageTimeline(
+            id,
+            riverConnection.userId,
+            riverConnection,
+            fullyReadMarkers,
+        )
         this.members = new Members(id, riverConnection, store)
     }
 

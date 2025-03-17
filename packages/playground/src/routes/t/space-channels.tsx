@@ -1,4 +1,4 @@
-import { useChannel, useSpace } from '@river-build/react-sdk'
+import { useChannel, useReadMarker, useSpace } from '@river-build/react-sdk'
 import { Link, Outlet, useNavigate, useParams } from 'react-router-dom'
 import { useCallback, useState } from 'react'
 import { ArrowLeftIcon, PlusIcon } from '@radix-ui/react-icons'
@@ -109,11 +109,13 @@ const ChannelInfo = ({
     onChannelChange: (channelId: string) => void
 }) => {
     const { data: channel } = useChannel(spaceId, channelId)
-
+    const { markers } = useReadMarker()
+    const marker = markers?.[channelId]
     return (
         <div>
             <Button variant="outline" onClick={() => onChannelChange(channelId)}>
                 {channel.metadata?.name ? `#${channel.metadata.name}` : 'Unnamed Channel'}
+                {marker?.room.isUnread && ` (new messages)`}
             </Button>
         </div>
     )

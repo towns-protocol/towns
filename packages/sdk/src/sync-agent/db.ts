@@ -14,6 +14,7 @@ import { Gdm } from './gdms/models/gdm'
 import { Member } from './members/models/member'
 import { Dms } from './dms/dms'
 import { Dm } from './dms/models/dm'
+import { UserReadMarker } from './user/models/readMarker'
 
 export const DB_VERSION = 1
 export const DB_MODELS = [
@@ -27,6 +28,7 @@ export const DB_MODELS = [
     UserInbox,
     UserMemberships,
     UserSettings,
+    UserReadMarker,
     Members,
     Member,
     Gdms,

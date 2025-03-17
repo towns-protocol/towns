@@ -11,6 +11,7 @@ import { RiverConnection } from '../river-connection/riverConnection'
 import { check } from '@river-build/dlog'
 import type { Client } from '../../client'
 import { Dm } from './models/dm'
+import type { UserReadMarker } from '../user/models/readMarker'
 
 export interface DmsModel extends Identifiable {
     id: '0' // single data blobs need a fixed key
@@ -25,6 +26,7 @@ export class Dms extends PersistedObservable<DmsModel> {
         store: Store,
         private riverConnection: RiverConnection,
         private userMemberships: UserMemberships,
+        private fullyReadMarkers: UserReadMarker,
     ) {
         super({ id: '0', streamIds: [] }, store, LoadPriority.high)
     }
@@ -41,7 +43,12 @@ export class Dms extends PersistedObservable<DmsModel> {
     getDm(streamId: string): Dm {
         check(isDMChannelStreamId(streamId), 'Invalid streamId')
         if (!this.dms[streamId]) {
-            this.dms[streamId] = new Dm(streamId, this.riverConnection, this.store)
+            this.dms[streamId] = new Dm(
+                streamId,
+                this.riverConnection,
+                this.store,
+                this.fullyReadMarkers,
+            )
         }
         return this.dms[streamId]
     }
@@ -62,7 +69,12 @@ export class Dms extends PersistedObservable<DmsModel> {
         this.setData({ streamIds })
         for (const streamId of streamIds) {
             if (!this.dms[streamId]) {
-                this.dms[streamId] = new Dm(streamId, this.riverConnection, this.store)
+                this.dms[streamId] = new Dm(
+                    streamId,
+                    this.riverConnection,
+                    this.store,
+                    this.fullyReadMarkers,
+                )
             }
         }
     }

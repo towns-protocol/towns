@@ -1,4 +1,6 @@
 import {
+    useMarkAsRead,
+    useMarkAsUnread,
     useMember,
     useReactions,
     useRedact,
@@ -68,14 +70,28 @@ type TimelineProps = {
 
 export const Timeline = ({ streamId, showThreadMessages, threads, events }: TimelineProps) => {
     const { scrollback, isPending } = useScrollback(streamId)
+    const { markAsRead, isPending: isMarkingAsRead } = useMarkAsRead()
+    const { markAsUnread, isPending: isMarkingAsUnread } = useMarkAsUnread()
+
     return (
         <div className="grid grid-rows-[auto,1fr] gap-2">
             <ScrollArea className="h-[calc(100dvh-172px)]">
                 <div className="flex flex-col gap-6">
                     {!showThreadMessages && (
-                        <Button disabled={isPending} variant="outline" onClick={scrollback}>
-                            {isPending ? 'Loading more...' : 'Scrollback'}
-                        </Button>
+                        <>
+                            <Button disabled={isPending} variant="outline" onClick={scrollback}>
+                                {isPending ? 'Loading more...' : 'Scrollback'}
+                            </Button>
+                            <Button disabled={isMarkingAsRead} onClick={() => markAsRead(streamId)}>
+                                {isMarkingAsRead ? 'Marking as read...' : 'Mark as read'}
+                            </Button>
+                            <Button
+                                disabled={isMarkingAsUnread}
+                                onClick={() => markAsUnread(streamId)}
+                            >
+                                {isMarkingAsUnread ? 'Marking as unread...' : 'Mark as unread'}
+                            </Button>
+                        </>
                     )}
                     {events.map((event) => {
                         if (event.content?.kind === RiverTimelineEvent.ChannelMessage) {

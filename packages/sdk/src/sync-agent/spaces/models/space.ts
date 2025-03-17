@@ -12,6 +12,7 @@ import { Channel } from './channel'
 import { ethers } from 'ethers'
 import { SpaceDapp, SpaceInfo } from '@river-build/web3'
 import { Members } from '../../members/members'
+import type { UserReadMarker } from '../../user/models/readMarker'
 
 const logger = dlogger('csb:space')
 
@@ -35,6 +36,7 @@ export class Space extends PersistedObservable<SpaceModel> {
         private riverConnection: RiverConnection,
         store: Store,
         private spaceDapp: SpaceDapp,
+        private fullyReadMarkers: UserReadMarker,
     ) {
         super({ id, channelIds: [], initialized: false }, store, LoadPriority.high)
         this.channels = {
@@ -44,6 +46,7 @@ export class Space extends PersistedObservable<SpaceModel> {
                 riverConnection,
                 spaceDapp,
                 store,
+                fullyReadMarkers,
             ),
         }
         this.members = new Members(id, riverConnection, store)
@@ -148,6 +151,7 @@ export class Space extends PersistedObservable<SpaceModel> {
                 this.riverConnection,
                 this.spaceDapp,
                 this.store,
+                this.fullyReadMarkers,
             )
         }
         return this.channels[channelId]
@@ -174,6 +178,7 @@ export class Space extends PersistedObservable<SpaceModel> {
                         this.riverConnection,
                         this.spaceDapp,
                         this.store,
+                        this.fullyReadMarkers,
                     )
                 }
             }
@@ -190,6 +195,7 @@ export class Space extends PersistedObservable<SpaceModel> {
                     this.riverConnection,
                     this.spaceDapp,
                     this.store,
+                    this.fullyReadMarkers,
                 )
             }
             if (!this.data.channelIds.includes(channelId)) {

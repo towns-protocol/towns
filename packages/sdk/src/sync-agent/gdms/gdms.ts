@@ -11,6 +11,7 @@ import { RiverConnection } from '../river-connection/riverConnection'
 import { check } from '@river-build/dlog'
 import type { Client } from '../../client'
 import { Gdm } from './models/gdm'
+import type { UserReadMarker } from '../user/models/readMarker'
 
 export interface GdmsModel extends Identifiable {
     id: '0' // single data blobs need a fixed key
@@ -25,6 +26,7 @@ export class Gdms extends PersistedObservable<GdmsModel> {
         store: Store,
         private riverConnection: RiverConnection,
         private userMemberships: UserMemberships,
+        private fullyReadMarkers: UserReadMarker,
     ) {
         super({ id: '0', streamIds: [] }, store, LoadPriority.high)
     }
@@ -41,7 +43,12 @@ export class Gdms extends PersistedObservable<GdmsModel> {
     getGdm(streamId: string): Gdm {
         check(isGDMChannelStreamId(streamId), 'Invalid streamId')
         if (!this.gdms[streamId]) {
-            this.gdms[streamId] = new Gdm(streamId, this.riverConnection, this.store)
+            this.gdms[streamId] = new Gdm(
+                streamId,
+                this.riverConnection,
+                this.store,
+                this.fullyReadMarkers,
+            )
         }
         return this.gdms[streamId]
     }
@@ -59,7 +66,12 @@ export class Gdms extends PersistedObservable<GdmsModel> {
 
         for (const streamId of streamIds) {
             if (!this.gdms[streamId]) {
-                this.gdms[streamId] = new Gdm(streamId, this.riverConnection, this.store)
+                this.gdms[streamId] = new Gdm(
+                    streamId,
+                    this.riverConnection,
+                    this.store,
+                    this.fullyReadMarkers,
+                )
             }
         }
     }

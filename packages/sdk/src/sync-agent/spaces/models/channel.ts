@@ -11,6 +11,7 @@ import { check, dlogger } from '@river-build/dlog'
 import { isDefined } from '../../../check'
 import { ChannelDetails, SpaceDapp } from '@river-build/web3'
 import { Members } from '../../members/members'
+import type { UserReadMarker } from '../../user/models/readMarker'
 
 const logger = dlogger('csb:channel')
 
@@ -35,9 +36,15 @@ export class Channel extends PersistedObservable<ChannelModel> {
         private riverConnection: RiverConnection,
         private spaceDapp: SpaceDapp,
         store: Store,
+        fullyReadMarkers: UserReadMarker,
     ) {
         super({ id, spaceId, isJoined: false }, store, LoadPriority.high)
-        this.timeline = new MessageTimeline(id, riverConnection.userId, riverConnection)
+        this.timeline = new MessageTimeline(
+            id,
+            riverConnection.userId,
+            riverConnection,
+            fullyReadMarkers,
+        )
         this.members = new Members(id, riverConnection, store)
     }
 

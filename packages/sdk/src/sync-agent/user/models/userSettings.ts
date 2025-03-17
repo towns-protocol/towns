@@ -6,6 +6,7 @@ import { makeUserSettingsStreamId } from '../../../id'
 import { IStreamStateView } from '../../../streamStateView'
 import { Client } from '../../../client'
 import { isDefined } from '../../../check'
+import { UserReadMarker } from './readMarker'
 
 const logger = dlogger('csb:userSettings')
 
@@ -17,12 +18,15 @@ export interface UserSettingsModel extends Identifiable {
 
 @persistedObservable({ tableName: 'userSettings' })
 export class UserSettings extends PersistedObservable<UserSettingsModel> {
+    readMarker: UserReadMarker
+
     constructor(id: string, store: Store, private riverConnection: RiverConnection) {
         super(
             { id, streamId: makeUserSettingsStreamId(id), initialized: false },
             store,
             LoadPriority.high,
         )
+        this.readMarker = new UserReadMarker(riverConnection, store)
     }
 
     protected override onLoaded() {
@@ -35,9 +39,15 @@ export class UserSettings extends PersistedObservable<UserSettingsModel> {
         if (streamView) {
             this.initialize(streamView)
         }
-        client.addListener('streamInitialized', this.onStreamInitialized)
+        client.on('streamInitialized', this.onStreamInitialized)
+        client.on('fullyReadMarkersUpdated', (_, fullyReadMarkers) =>
+            this.readMarker.onFullyReadMarkersUpdated(fullyReadMarkers),
+        )
         return () => {
-            client.removeListener('streamInitialized', this.onStreamInitialized)
+            client.off('streamInitialized', this.onStreamInitialized)
+            client.off('fullyReadMarkersUpdated', (_, fullyReadMarkers) =>
+                this.readMarker.onFullyReadMarkersUpdated(fullyReadMarkers),
+            )
         }
     }
 
@@ -46,6 +56,7 @@ export class UserSettings extends PersistedObservable<UserSettingsModel> {
             const streamView = this.riverConnection.client?.stream(this.data.streamId)?.view
             check(isDefined(streamView), 'streamView is not defined')
             this.initialize(streamView)
+            this.readMarker.onStreamInitialized(streamView)
         }
     }
 

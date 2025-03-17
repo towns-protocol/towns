@@ -11,6 +11,7 @@ import type {
     PlainMessage,
 } from '@river-build/proto'
 import { MessageTimeline } from '../../timeline/timeline'
+import type { UserReadMarker } from '../../user/models/readMarker'
 
 export interface GdmModel extends Identifiable {
     /** The id of the DM. */
@@ -27,9 +28,19 @@ export interface GdmModel extends Identifiable {
 export class Gdm extends PersistedObservable<GdmModel> {
     timeline: MessageTimeline
     members: Members
-    constructor(id: string, private riverConnection: RiverConnection, store: Store) {
+    constructor(
+        id: string,
+        private riverConnection: RiverConnection,
+        store: Store,
+        fullyReadMarkers: UserReadMarker,
+    ) {
         super({ id, isJoined: false, initialized: false }, store, LoadPriority.high)
-        this.timeline = new MessageTimeline(id, riverConnection.userId, riverConnection)
+        this.timeline = new MessageTimeline(
+            id,
+            riverConnection.userId,
+            riverConnection,
+            fullyReadMarkers,
+        )
         this.members = new Members(id, riverConnection, store)
     }
 

@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 import { SnapshotCaseType } from '@river-build/proto'
 import { Stream } from '../../stream'
 import { StreamChange } from '../../streamEvents'
@@ -18,6 +17,7 @@ import { ReplacedEvents } from './models/replacedEvents'
 import { ThreadStats } from './models/threadStats'
 import { Threads } from './models/threads'
 import type { RiverConnection } from '../river-connection/riverConnection'
+import type { UserReadMarker } from '../user/models/readMarker'
 
 export class MessageTimeline {
     events = new TimelineEvents()
@@ -38,6 +38,7 @@ export class MessageTimeline {
         private streamId: string,
         private userId: string,
         private riverConnection: RiverConnection,
+        private fullyReadMarkers: UserReadMarker,
     ) {
         //
     }
@@ -278,6 +279,42 @@ export class MessageTimeline {
                 this.replaceEvent(this.userId, updatingEventId, event)
             } else {
                 this.appendEvent(this.userId, event)
+            }
+        }
+
+        const marker = this.fullyReadMarkers.get(this.streamId)
+        if (event.sender.id === this.userId) {
+            return
+        }
+        if (event.eventNum > marker.room.eventNum) {
+            this.fullyReadMarkers.setData({
+                markers: {
+                    ...this.fullyReadMarkers.data.markers,
+                    [this.streamId]: {
+                        room: {
+                            ...marker.room,
+                            isUnread: true,
+                        },
+                        threads: marker.threads,
+                    },
+                },
+            })
+        }
+        if (event.threadParentId) {
+            const threadMarker = marker.threads?.[event.threadParentId]
+            if (threadMarker && event.eventNum > threadMarker.eventNum) {
+                this.fullyReadMarkers.setData({
+                    markers: {
+                        ...this.fullyReadMarkers.data.markers,
+                        [this.streamId]: {
+                            room: marker.room,
+                            threads: {
+                                ...marker.threads,
+                                [event.threadParentId]: { ...threadMarker, isUnread: true },
+                            },
+                        },
+                    },
+                })
             }
         }
     }
