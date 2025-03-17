@@ -36,6 +36,7 @@ export function useMyMembership(streamId?: string): Membership {
         return () => {
             userStream.off('userStreamMembershipChanged', updateMembership)
             userStream.off('streamInitialized', updateMembership)
+            setMembership(Membership.None)
         }
     }, [streamId, userStream])
 

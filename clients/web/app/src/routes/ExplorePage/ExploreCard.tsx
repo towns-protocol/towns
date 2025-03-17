@@ -1,6 +1,11 @@
 import React, { useCallback } from 'react'
-import { SpaceIdFromSpaceAddress, useContractSpaceInfoWithoutClient } from 'use-towns-client'
+import {
+    SpaceIdFromSpaceAddress,
+    useContractSpaceInfoWithoutClient,
+    useMyMembership,
+} from 'use-towns-client'
 import { useNavigate } from 'react-router-dom'
+import { Membership } from '@river-build/sdk'
 import { useReadableMembershipInfo } from '@components/TownPageLayout/useReadableMembershipInfo'
 import { InteractiveSpaceIcon } from '@components/SpaceIcon/SpaceIcon'
 import { Box, Heading, Icon, MotionBox, Paragraph, Pill, Stack, Text } from '@ui'
@@ -25,6 +30,7 @@ export const ExploreCard = ({ address, variant }: ExploreCardProps) => {
         useContractSpaceInfoWithoutClient(spaceId)
     const { data: memberInfo } = useReadableMembershipInfo(spaceId ?? '')
     const { data: entitlements } = useEntitlements(spaceId ?? '', minterRoleId)
+    const membership = useMyMembership(spaceId)
 
     const onClick = useCallback(() => {
         Analytics.getInstance().track('clicked town on explore', {
@@ -60,15 +66,19 @@ export const ExploreCard = ({ address, variant }: ExploreCardProps) => {
                 paddingY="md"
                 minWidth="100"
             >
-                <Text color="greenBlue">
-                    {entitlements.hasEntitlements
-                        ? 'Gated'
-                        : memberInfo?.price !== 'Free'
-                        ? `${formatUnitsToFixedLength(parseUnits(memberInfo?.price), 18, 3)} ${
-                              memberInfo?.currency
-                          }`
-                        : 'Free'}
-                </Text>
+                {membership !== Membership.Join ? (
+                    <Text color="greenBlue">
+                        {entitlements.hasEntitlements
+                            ? 'Gated'
+                            : memberInfo?.price !== 'Free'
+                            ? `${formatUnitsToFixedLength(parseUnits(memberInfo?.price), 18, 3)} ${
+                                  memberInfo?.currency
+                              }`
+                            : 'Free'}
+                    </Text>
+                ) : (
+                    <Text color="neutral">Member</Text>
+                )}
             </Pill>
         ) : null
 
