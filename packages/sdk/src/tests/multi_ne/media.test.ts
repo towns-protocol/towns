@@ -33,7 +33,13 @@ describe('mediaTests', () => {
             bobsClient.createChannel(spaceId, 'Channel', 'Topic', channelId),
         ).resolves.not.toThrow()
 
-        return bobsClient.createMediaStream(channelId, spaceId, undefined, chunkCount)
+        return bobsClient.createMediaStream(
+            channelId,
+            spaceId,
+            undefined,
+            chunkCount,
+            new Uint8Array(100),
+        )
     }
 
     async function bobSendMediaPayloads(
@@ -41,7 +47,7 @@ describe('mediaTests', () => {
         chunks: number,
     ): Promise<CreationCookie> {
         let cc: CreationCookie = create(CreationCookieSchema, creationCookie)
-        for (let i = 0; i < chunks; i++) {
+        for (let i = 1; i < chunks; i++) {
             const chunk = new Uint8Array(100)
             // Create novel chunk content for testing purposes
             chunk.fill(i, 0, 100)
