@@ -13,6 +13,9 @@ import {FacetHelper} from "contracts/test/diamond/Facet.t.sol";
 import {DropFacet} from "contracts/src/airdrop/drop/DropFacet.sol";
 
 contract DeployDropFacet is Deployer, FacetHelper {
+  uint48 internal minLockDuration;
+  uint48 internal maxLockDuration;
+
   // FacetHelper
   constructor() {
     addSelector(DropFacet.claimWithPenalty.selector);
@@ -28,6 +31,14 @@ contract DeployDropFacet is Deployer, FacetHelper {
     addSelector(DropFacet.getUnlockTime.selector);
   }
 
+  function setLockDurations(
+    uint48 _minLockDuration,
+    uint48 _maxLockDuration
+  ) external {
+    minLockDuration = _minLockDuration;
+    maxLockDuration = _maxLockDuration;
+  }
+
   // Deploying
   function versionName() public pure override returns (string memory) {
     return "dropFacet";
@@ -38,9 +49,7 @@ contract DeployDropFacet is Deployer, FacetHelper {
   }
 
   function makeInitData(
-    address stakingContract,
-    uint48 minLockDuration,
-    uint48 maxLockDuration
+    address stakingContract
   ) public pure returns (bytes memory) {
     return
       abi.encodeWithSelector(

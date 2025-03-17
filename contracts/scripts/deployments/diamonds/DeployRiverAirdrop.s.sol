@@ -84,14 +84,6 @@ contract DeployRiverAirdrop is DiamondHelper, Deployer {
     return getDeployment("baseRegistry");
   }
 
-  function setLockDurations(
-    uint48 _minLockDuration,
-    uint48 _maxLockDuration
-  ) public {
-    minLockDuration = _minLockDuration;
-    maxLockDuration = _maxLockDuration;
-  }
-
   function addImmutableCuts(address deployer) internal {
     multiInit = deployMultiInit.deploy(deployer);
     diamondCut = diamondCutHelper.deploy(deployer);
@@ -124,6 +116,7 @@ contract DeployRiverAirdrop is DiamondHelper, Deployer {
   function diamondInitParams(
     address deployer
   ) public returns (Diamond.InitParams memory) {
+    dropHelper.setLockDurations(minLockDuration, maxLockDuration);
     dropFacet = dropHelper.deploy(deployer);
     pointsFacet = pointsHelper.deploy(deployer);
     metadata = metadataHelper.deploy(deployer);
@@ -131,11 +124,7 @@ contract DeployRiverAirdrop is DiamondHelper, Deployer {
     addFacet(
       dropHelper.makeCut(dropFacet, IDiamond.FacetCutAction.Add),
       dropFacet,
-      dropHelper.makeInitData(
-        getBaseRegistry(),
-        minLockDuration,
-        maxLockDuration
-      )
+      dropHelper.makeInitData(getBaseRegistry())
     );
     addFacet(
       pointsHelper.makeCut(pointsFacet, IDiamond.FacetCutAction.Add),
