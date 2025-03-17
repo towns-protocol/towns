@@ -1,11 +1,8 @@
 # add your secret variables here for local development
 # for public variables, add them in wrangler.toml
 
-ERC4337_ENTRYPOINT_ADDRESS=0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789
-
-# STACKUP_PAYMASTER_RPC_URL is used for stackup's paymaster
-# as of 8.14.2024, this only needs to be set for development against local stackup devnet
-STACKUP_PAYMASTER_RPC_URL=
+# LOCAL_PAYMASTER_RPC_URL is used for local dev paymaster
+LOCAL_PAYMASTER_RPC_URL=
 
 # skips all verification checks for an operation
 SKIP_TOWNID_VERIFICATION=

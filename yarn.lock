@@ -36339,6 +36339,7 @@ __metadata:
     ts-jest: ^29.1.1
     typescript: ^5.1.6
     userop.js: ^0.3.7
+    viem: 2.23.2
     worker-common: "workspace:^"
     wrangler: ^3.58.0
   languageName: unknown

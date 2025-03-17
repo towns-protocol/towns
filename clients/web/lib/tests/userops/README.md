@@ -12,8 +12,6 @@ First setup the local stackup worker:
 1. in harmony/servers/workers/stackup-woker, create a `.dev.vars` file with the following values:
 
 ```
-ERC4337_ENTRYPOINT_ADDRESS=0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789
-STACKUP_API_TOKEN=<get from stackup dashboard>
 AUTH_SECRET=foo
 ENVIRONMENT=gamma
 

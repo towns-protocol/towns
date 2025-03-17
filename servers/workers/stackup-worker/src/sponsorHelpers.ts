@@ -1,6 +1,6 @@
 import { PrivyClient } from '@privy-io/server-auth'
 import { Env } from '.'
-import { isPaymasterResponse, TownsUserOperation } from './types'
+import { isPaymasterResponse, SponsorshipRequest } from './types'
 import {
     verifyCreateSpace,
     verifyJoinTown,
@@ -23,10 +23,11 @@ import { createErrorResponse, createSuccessResponse, ErrorCode } from './createR
 export async function handleVerifications(args: {
     request: WorkerRequest
     privyClient: PrivyClient
-    data: TownsUserOperation['data']
+    data: SponsorshipRequest<'0.6'>['data'] | SponsorshipRequest<'0.7'>['data']
     env: Env
 }) {
     const { functionHash, rootKeyAddress, townId, ...userOperation } = args.data
+
     const { request, privyClient, env } = args
 
     const endVerifyAuthTokenDuration = durationLogger('Verify Auth Token')

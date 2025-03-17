@@ -1,8 +1,19 @@
 import { IUserOperation } from 'userop.js'
 import { Request as IttyRequest } from 'itty-router'
-import { GasOverrides, isHexString } from './types'
+import {
+    GasOverrides,
+    isHexString,
+    isEntrypoinV06SponsorshipRequest,
+    isEntrypointV07SponsorshipRequest,
+    SponsorshipRequest,
+} from './types'
 import { Address } from '@river-build/web3'
 import { ApiErrorDetail, ErrorCode } from './createResponse'
+import {
+    entryPoint06Address,
+    entryPoint07Address,
+    RpcUserOperation,
+} from 'viem/account-abstraction'
 
 export type WorkerRequest = Request & IttyRequest
 
@@ -17,15 +28,24 @@ export const durationLogger = (step: string) => {
 }
 
 export function createPMSponsorUserOperationRequest(params: {
-    userOperation: IUserOperation
-    entryPoint: string
+    sponsorshipReq: SponsorshipRequest<'0.6'> | SponsorshipRequest<'0.7'>
 }): RequestInit {
+    const { sponsorshipReq } = params
+    const { data } = sponsorshipReq
+    const { gasOverrides, functionHash, rootKeyAddress, townId, ...userOp } = data
     const init = {
         body: JSON.stringify({
             jsonrpc: '2.0',
             id: 1,
             method: 'pm_sponsorUserOperation',
-            params: Object.values(params),
+            params: [
+                {
+                    ...userOp,
+                } satisfies RpcUserOperation,
+                isEntrypoinV06SponsorshipRequest(sponsorshipReq)
+                    ? entryPoint06Address
+                    : entryPoint07Address,
+            ],
         }),
         method: 'POST',
         headers: {
@@ -38,11 +58,10 @@ export function createPMSponsorUserOperationRequest(params: {
 
 export function createAlchemyRequestGasAndPaymasterDataRequest(args: {
     policyId: string
-    entryPoint: string
-    userOperation: IUserOperation
-    gasOverrides?: GasOverrides
+    sponsorshipReq: SponsorshipRequest<'0.6'> | SponsorshipRequest<'0.7'>
 }) {
-    const { policyId, entryPoint, userOperation, gasOverrides } = args
+    const { policyId, sponsorshipReq } = args
+    const { gasOverrides } = sponsorshipReq.data
 
     const fallbackMultiplier = 1.2
 
@@ -60,27 +79,67 @@ export function createAlchemyRequestGasAndPaymasterDataRequest(args: {
         },
     }
 
+    type AlchemyRequestGasAndPaymasterDataParams = [
+        {
+            policyId: string
+            entryPoint: string
+            dummySignature: string
+            userOperation: Record<string, string | undefined>
+            overrides: Record<string, string | { multiplier: number }>
+        },
+    ]
+
+    let params: AlchemyRequestGasAndPaymasterDataParams | undefined = undefined
+
+    if (isEntrypoinV06SponsorshipRequest(sponsorshipReq)) {
+        const { sender, nonce, initCode, callData, signature } = sponsorshipReq.data
+        params = [
+            {
+                policyId,
+                entryPoint: entryPoint06Address,
+                dummySignature: signature,
+                // don't add gas fields here
+                userOperation: {
+                    sender,
+                    nonce,
+                    initCode,
+                    callData,
+                },
+                overrides,
+            },
+        ]
+    } else if (isEntrypointV07SponsorshipRequest(sponsorshipReq)) {
+        const { sender, nonce, factory, factoryData, callData, signature } = sponsorshipReq.data
+
+        params = [
+            {
+                policyId,
+                entryPoint: entryPoint07Address,
+                dummySignature: signature,
+                // don't add gas fields here
+                userOperation: {
+                    sender,
+                    nonce,
+                    factory,
+                    factoryData,
+                    callData,
+                },
+                overrides,
+            },
+        ]
+    }
+
+    if (!params) {
+        throw new Error('Invalid user operation')
+    }
+
     // https://docs.alchemy.com/reference/alchemy-requestgasandpaymasteranddata
     const init = {
         body: JSON.stringify({
             jsonrpc: '2.0',
             id: 1,
             method: 'alchemy_requestGasAndPaymasterAndData',
-            params: [
-                {
-                    policyId,
-                    entryPoint,
-                    dummySignature: userOperation.signature,
-                    // don't add gas fields here
-                    userOperation: {
-                        sender: userOperation.sender,
-                        nonce: userOperation.nonce,
-                        initCode: userOperation.initCode,
-                        callData: userOperation.callData,
-                    },
-                    overrides,
-                },
-            ],
+            params,
         }),
         method: 'POST',
         headers: {
@@ -91,7 +150,7 @@ export function createAlchemyRequestGasAndPaymasterDataRequest(args: {
     return init
 }
 
-export async function getContentAsJson(request: WorkerRequest): Promise<object | null> {
+export async function getJson(request: WorkerRequest): Promise<object | null> {
     let content = {}
     try {
         content = await request.json()

@@ -198,6 +198,20 @@
                     "dev",
                     "peer"
                 ]
+            },
+            {
+                "label": "Different versions in stackup-worker",
+                "dependencies": [
+                    "viem"
+                ],
+                "packages": [
+                    "stackup-worker"
+                ],
+                "dependencyTypes": [
+                    "prod",
+                    "dev",
+                    "peer"
+                ]
             }
         ]
     },

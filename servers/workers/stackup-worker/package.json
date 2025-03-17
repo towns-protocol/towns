@@ -23,6 +23,7 @@
         "@river-build/web3": "workspace:^",
         "itty-router": "^2.6.6",
         "userop.js": "^0.3.7",
+        "viem": "2.23.2",
         "worker-common": "workspace:^"
     },
     "devDependencies": {

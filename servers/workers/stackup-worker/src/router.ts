@@ -1,20 +1,20 @@
 import { Router } from 'itty-router'
 import { Env } from '.'
 import {
-    isTownsUserOperation,
-    isPaymasterResponse,
     isOverrideOperation,
     Overrides,
     isWhitelistOperation,
     Whitelist,
     isTransactionLimitRequest,
+    isEntrypointV07SponsorshipRequest,
+    isEntrypoinV06SponsorshipRequest,
 } from './types'
 import { TRANSACTION_LIMIT_DEFAULTS_PER_DAY } from './useropVerification'
 
-import { isErrorType, Environment } from 'worker-common'
+import { isErrorType } from 'worker-common'
 import {
     WorkerRequest,
-    getContentAsJson,
+    getJson,
     durationLogger,
     createPMSponsorUserOperationRequest,
     createAlchemyRequestGasAndPaymasterDataRequest,
@@ -40,7 +40,7 @@ const router = Router()
  */
 router.post('/api/transaction-limits', async (request: WorkerRequest, env: Env) => {
     // check payload is IUserOperation with townId
-    const content = await getContentAsJson(request)
+    const content = await getJson(request)
     if (!content || !isTransactionLimitRequest(content)) {
         return createErrorResponse(400, 'Bad Request', ErrorCode.BAD_REQUEST)
     }
@@ -162,13 +162,16 @@ router.post('/api/sponsor-userop', async (request: WorkerRequest, env: Env, { pr
             ErrorCode.UNKNOWN_ERROR,
         )
     }
-    const content = await getContentAsJson(request)
-    if (!content || !isTownsUserOperation(content)) {
-        return createErrorResponse(400, 'Bad Request', ErrorCode.BAD_REQUEST)
-    }
-    const { data } = content
 
-    const { townId, functionHash, rootKeyAddress, gasOverrides, ...userOperation } = data
+    const sponsorshipReq = await getJson(request)
+
+    if (
+        !isEntrypoinV06SponsorshipRequest(sponsorshipReq) &&
+        !isEntrypointV07SponsorshipRequest(sponsorshipReq)
+    ) {
+        return createErrorResponse(400, 'Invalid User Operation', ErrorCode.INVALID_USER_OPERATION)
+    }
+    const { data } = sponsorshipReq
 
     const verificationErrorResponse = await handleVerifications({
         privyClient,
@@ -183,18 +186,17 @@ router.post('/api/sponsor-userop', async (request: WorkerRequest, env: Env, { pr
 
     // This endpoint does not support gas overrides
     const requestInit = createPMSponsorUserOperationRequest({
-        userOperation,
-        entryPoint: env.ERC4337_ENTRYPOINT_ADDRESS,
+        sponsorshipReq,
     })
     console.log('paymaster API request:', requestInit.body)
     const durationStackupApiRequest = durationLogger('paymaster API Request')
-    const responseFetched = await fetch(`${env.STACKUP_PAYMASTER_RPC_URL}`, requestInit)
+    const responseFetched = await fetch(`${env.LOCAL_PAYMASTER_RPC_URL}`, requestInit)
     durationStackupApiRequest()
 
     return handlePaymasterResponse({
         paymasterResponse: responseFetched,
         env,
-        townId,
+        townId: data.townId,
     })
     // proxy successful VerifyingPaymasterResult response to caller
 })
@@ -209,13 +211,15 @@ router.post(
                 ErrorCode.UNKNOWN_ERROR,
             )
         }
-        const content = await getContentAsJson(request)
-        if (!content || !isTownsUserOperation(content)) {
-            return createErrorResponse(400, 'Bad Request', ErrorCode.BAD_REQUEST)
+        const sponsorshipReq = await getJson(request)
+        if (
+            !isEntrypoinV06SponsorshipRequest(sponsorshipReq) &&
+            !isEntrypointV07SponsorshipRequest(sponsorshipReq)
+        ) {
+            return createErrorResponse(400, 'Bad Request', ErrorCode.INVALID_USER_OPERATION)
         }
-        const { data } = content
 
-        const { townId, functionHash, rootKeyAddress, gasOverrides, ...userOperation } = data
+        const { data } = sponsorshipReq
 
         const verificationErrorResponse = await handleVerifications({
             privyClient,
@@ -245,9 +249,7 @@ router.post(
 
         const requestInit = createAlchemyRequestGasAndPaymasterDataRequest({
             policyId: env.ALCHEMY_GM_POLICY_ID,
-            userOperation,
-            entryPoint: env.ERC4337_ENTRYPOINT_ADDRESS,
-            gasOverrides,
+            sponsorshipReq,
         })
         console.log('paymaster API request:', requestInit.body)
         const durationAlchemyApiRequest = durationLogger('paymaster API Request')
@@ -257,7 +259,7 @@ router.post(
         return handlePaymasterResponse({
             paymasterResponse: responseFetched,
             env,
-            townId,
+            townId: data.townId,
         })
     },
 )
@@ -272,9 +274,12 @@ router.post(
                 ErrorCode.UNKNOWN_ERROR,
             )
         }
-        const content = await getContentAsJson(request)
-        if (!content || !isTownsUserOperation(content)) {
-            return createErrorResponse(400, 'Bad Request', ErrorCode.BAD_REQUEST)
+        const sponsorshipReq = await getJson(request)
+        if (
+            !isEntrypoinV06SponsorshipRequest(sponsorshipReq) &&
+            !isEntrypointV07SponsorshipRequest(sponsorshipReq)
+        ) {
+            return createErrorResponse(400, 'Bad Request', ErrorCode.INVALID_USER_OPERATION)
         }
 
         const endVerifyAuthTokenDuration = durationLogger('Verify Auth Token')
@@ -293,7 +298,7 @@ router.post(
             )
         }
 
-        const { townId, ...userOperation } = content.data
+        const { townId, ...userOperation } = sponsorshipReq.data
 
         if (!env.ALCHEMY_GM_POLICY_ID_OPEN) {
             return createErrorResponse(
@@ -312,8 +317,7 @@ router.post(
 
         const requestInit = createAlchemyRequestGasAndPaymasterDataRequest({
             policyId: env.ALCHEMY_GM_POLICY_ID_OPEN,
-            userOperation,
-            entryPoint: env.ERC4337_ENTRYPOINT_ADDRESS,
+            sponsorshipReq,
         })
         console.log('paymaster API request:', requestInit.body)
         const durationAlchemyApiRequest = durationLogger('paymaster API Request')
@@ -330,7 +334,7 @@ router.post(
 router.post('/admin/api/add-override', async (request: WorkerRequest, env: Env) => {
     // authneticate and authorize caller here (HNT Labs)
 
-    const content = await getContentAsJson(request)
+    const content = await getJson(request)
     if (!content || !isOverrideOperation(content)) {
         return createErrorResponse(400, 'Bad Request', ErrorCode.BAD_REQUEST)
     }
@@ -368,7 +372,7 @@ router.post('/admin/api/add-override', async (request: WorkerRequest, env: Env) 
 router.post('/admin/api/add-to-whitelist', async (request: WorkerRequest, env: Env) => {
     // authneticate and authorize caller here (HNT Labs)
 
-    const content = await getContentAsJson(request)
+    const content = await getJson(request)
     if (!content || !isWhitelistOperation(content)) {
         return createErrorResponse(400, 'Bad Request', ErrorCode.BAD_REQUEST)
     }

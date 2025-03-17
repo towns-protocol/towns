@@ -20,7 +20,6 @@ local_protocol = "http"
 [vars]
 # VAR_NAME = "some_value"
 ENVIRONMENT = "development"
-ERC4337_ENTRYPOINT_ADDRESS = ""
 SKIP_TOWNID_VERIFICATION = "false"
 
 
@@ -47,7 +46,7 @@ SKIP_TOWNID_VERIFICATION = "false"
 routes = [
   { pattern = "stackup-worker-test-beta.towns.com", custom_domain = true },
 ]
-vars = { ENVIRONMENT = "test-beta", ERC4337_ENTRYPOINT_ADDRESS = "0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789", SKIP_TOWNID_VERIFICATION = "false" }
+vars = { ENVIRONMENT = "test-beta", SKIP_TOWNID_VERIFICATION = "false" }
 # created with
 # wrangler kv:namespace create "CREATE_TOWN"
 kv_namespaces = [
@@ -61,7 +60,7 @@ kv_namespaces = [
 
 [env.omega]
 routes = [{ pattern = "stackup-worker.towns.com", custom_domain = true }]
-vars = { ENVIRONMENT = "omega", ERC4337_ENTRYPOINT_ADDRESS = "0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789", SKIP_TOWNID_VERIFICATION = "false" }
+vars = { ENVIRONMENT = "omega", SKIP_TOWNID_VERIFICATION = "false" }
 # created with
 # wrangler kv:namespace create "CREATE_TOWN"
 kv_namespaces = [
@@ -75,7 +74,7 @@ kv_namespaces = [
 
 [env.alpha]
 routes = [{ pattern = "stackup-worker-alpha.towns.com", custom_domain = true }]
-vars = { ENVIRONMENT = "alpha", ERC4337_ENTRYPOINT_ADDRESS = "0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789", SKIP_TOWNID_VERIFICATION = "false" }
+vars = { ENVIRONMENT = "alpha", SKIP_TOWNID_VERIFICATION = "false" }
 # created with
 # wrangler kv:namespace create "CREATE_TOWN" --env alpha
 kv_namespaces = [

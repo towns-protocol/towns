@@ -7,11 +7,6 @@ import { createContractMap, isSpaceSpecificContract, spaceSpecificContracts } fr
 import { SpaceAddressFromSpaceId } from '@river-build/web3'
 import { durationLogger } from './utils'
 
-interface ContractDetails {
-    address: string | undefined
-    abi: ethers.ContractInterface
-}
-
 interface LogFilterResult {
     events: ethers.Event[] | null
     contractAddress: string

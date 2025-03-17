@@ -1,6 +1,7 @@
 import { IUserOperation } from 'userop.js'
 import { Environment } from 'worker-common'
 import { BigNumberish } from 'ethers'
+import { RpcUserOperation } from 'viem'
 // see https://github.com/stackup-wallet/userop.js/blob/1d9d0e034691cd384e194c9e8b3165680a334180/src/preset/middleware/paymaster.ts
 export interface VerifyingPaymasterResult {
     paymasterAndData: string
@@ -9,8 +10,8 @@ export interface VerifyingPaymasterResult {
     callGasLimit: string
 }
 
-export type TownsUserOperation = {
-    data: IUserOperation & {
+export type SponsorshipRequest<entryPointVersion extends '0.6' | '0.7'> = {
+    data: RpcUserOperation<entryPointVersion> & {
         townId?: string
         functionHash: (typeof FunctionHash)[keyof typeof FunctionHash]
         rootKeyAddress: string
@@ -64,28 +65,58 @@ function isFunctionHash(operation: string): operation is FunctionHash {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function isTownsUserOperation(obj: any): obj is TownsUserOperation {
+function commonChecks(obj: any) {
     if (!obj || typeof obj !== 'object') {
         return false
     }
     const { data } = obj
-    const dataCheck =
+
+    const townsData =
         typeof data.rootKeyAddress === 'string' &&
+        typeof data.functionHash === 'string' &&
+        isFunctionHash(data.functionHash)
+
+    const commonUserOpData =
         typeof data.sender === 'string' &&
         typeof data.nonce === 'string' &&
-        typeof data.initCode === 'string' &&
         typeof data.callData === 'string' &&
         typeof data.callGasLimit === 'string' &&
         typeof data.verificationGasLimit === 'string' &&
         typeof data.preVerificationGas === 'string' &&
         typeof data.maxFeePerGas === 'string' &&
         typeof data.maxPriorityFeePerGas === 'string' &&
-        typeof data.paymasterAndData === 'string' &&
-        typeof data.signature === 'string' &&
-        typeof data.functionHash === 'string' &&
-        isFunctionHash(data.functionHash)
+        typeof data.signature === 'string'
 
-    return dataCheck
+    return townsData && commonUserOpData
+}
+
+export function isEntrypoinV06SponsorshipRequest(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    obj: any,
+): obj is SponsorshipRequest<'0.6'> {
+    if (!obj || typeof obj !== 'object') {
+        return false
+    }
+    if (!commonChecks(obj)) {
+        return false
+    }
+    const { data } = obj
+    return typeof data.initCode === 'string'
+}
+
+export function isEntrypointV07SponsorshipRequest(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    obj: any,
+): obj is SponsorshipRequest<'0.7'> {
+    if (!obj || typeof obj !== 'object') {
+        return false
+    }
+    if (!commonChecks(obj)) {
+        return false
+    }
+    const { data } = obj
+
+    return typeof data.factory === 'string' && typeof data.factoryData === 'string'
 }
 
 export enum Overrides {
