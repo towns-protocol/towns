@@ -107,3 +107,14 @@ module "notification_service" {
   network                = module.gcp_network.vpc.network_name
   k8s_subnet_cidr        = module.gcp_network.k8s_subnet.ip_cidr_range
 }
+
+resource "google_compute_global_address" "metrics_aggregator_static_ip" {
+  provider = google-beta
+
+  project = var.project_id
+
+  name = "metrics-aggregator-static-ip"
+
+  address_type = "EXTERNAL"
+  ip_version   = "IPV4"
+}

@@ -63,82 +63,19 @@ module "vpc" {
   enable_dns_hostnames = true
 }
 
-
-module "river_alb" {
-  source = "../../modules/river-alb"
-
-  subnets = module.vpc.public_subnets
-  vpc_id  = module.vpc.vpc_id
-}
-
 resource "aws_ecs_cluster" "river_ecs_cluster" {
   name = "${terraform.workspace}-river-ecs-cluster"
   tags = module.global_constants.tags
 }
 
-module "river_db_post_stream_migration" {
-  source              = "../../modules/river-db-cluster"
-  database_subnets    = module.vpc.database_subnets
-  vpc_id              = module.vpc.vpc_id
-  cluster_name_suffix = "post-stream-migration"
-  migration_config    = local.river_node_migration_config
-}
-
-module "river_node_ssl_cert" {
-  source                       = "../../modules/river-node-ssl-cert"
-  subnet_ids                   = module.vpc.private_subnets
-  common_name                  = "*.nodes.${terraform.workspace}.towns.com"
-  challenge_dns_record_fq_name = "_acme-challenge.nodes.${terraform.workspace}.towns.com"
-}
-
-module "pgadmin" {
-  source          = "../../modules/pgadmin"
-  vpc_id          = module.vpc.vpc_id
-  public_subnets  = module.vpc.public_subnets
-  private_subnets = module.vpc.private_subnets
-
-  ecs_cluster = {
-    id   = aws_ecs_cluster.river_ecs_cluster.id
-    name = aws_ecs_cluster.river_ecs_cluster.name
-  }
-
-  alb_security_group_id  = module.river_alb.security_group_id
-  alb_dns_name           = module.river_alb.lb_dns_name
-  alb_https_listener_arn = module.river_alb.lb_https_listener_arn
-}
-
 locals {
   num_full_nodes      = 10
   num_archive_nodes   = 0
-  archive_enabled     = false
   global_remote_state = module.global_constants.global_remote_state.outputs
-  base_chain_id       = 84532
-  river_chain_id      = 6524490
-  scrub_duration      = 900000000000
-  river_node_migration_config = {
-    container_provider : "aws"
-    rds_public_access : true
-    delete_rds_instance : false
-  }
 }
 
 module "system_parameters" {
   source = "../../modules/river-system-parameters"
-}
-
-module "river_nlb" {
-  source  = "../../modules/river-nlb"
-  count   = local.num_full_nodes
-  subnets = module.vpc.public_subnets
-  vpc_id  = module.vpc.vpc_id
-  nlb_id  = tostring(count.index + 1)
-}
-
-module "node_metadata" {
-  source = "../../modules/river-node-metadata"
-
-  num_full_nodes    = local.num_full_nodes
-  num_archive_nodes = local.num_archive_nodes
 }
 
 module "stream_metadata" {
@@ -162,52 +99,6 @@ module "stream_metadata" {
 locals {
   river_database_isolation_level = "READ COMMITTED"
   river_max_db_connections       = 50
-}
-
-module "river_node" {
-  source = "../../modules/river-node"
-  count  = local.num_full_nodes
-
-  node_metadata = module.node_metadata.full_nodes[count.index]
-
-  enable_debug_endpoints  = true
-  migrate_stream_creation = true
-
-  river_node_ssl_cert_secret_arn = module.river_node_ssl_cert.river_node_ssl_cert_secret_arn
-
-  river_node_db = module.river_db_post_stream_migration
-
-  river_database_isolation_level = local.river_database_isolation_level
-  max_db_connections             = local.river_max_db_connections
-
-  public_subnets  = module.vpc.public_subnets
-  private_subnets = module.vpc.private_subnets
-  vpc_id          = module.vpc.vpc_id
-
-  system_parameters = module.system_parameters
-
-  base_chain_rpc_url_secret_arn  = local.global_remote_state.base_sepolia_rpc_url_secret.arn
-  river_chain_rpc_url_secret_arn = local.global_remote_state.river_sepolia_rpc_url_secret.arn
-  chainsstring_secret_arn        = local.global_remote_state.gamma_chainsstring_secret.arn
-
-  base_chain_id  = local.base_chain_id
-  river_chain_id = local.river_chain_id
-
-  scrub_duration = local.scrub_duration
-  enable_mls     = false
-  race           = true
-
-  ecs_cluster = {
-    id   = aws_ecs_cluster.river_ecs_cluster.id
-    name = aws_ecs_cluster.river_ecs_cluster.name
-  }
-
-  lb = module.river_nlb[count.index]
-
-  migration_config = local.river_node_migration_config
-
-  cpu    = 2048
-  memory = 4096
 }
 
 module "network_health_monitor" {

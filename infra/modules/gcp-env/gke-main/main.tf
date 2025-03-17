@@ -22,9 +22,9 @@ module "gke" {
   service_account = google_service_account.main.email
 
   cluster_autoscaling = {
-    enabled             = false # we don't want to autoscale the cluster. it creates problem node-pools
-    autoscaling_profile = "BALANCED"
-    min_cpu_cores       = 8
+    enabled             = true
+    autoscaling_profile = "OPTIMIZE_UTILIZATION"
+    min_cpu_cores       = 4
     max_cpu_cores       = 64
     min_memory_gb       = 8
     max_memory_gb       = 256
@@ -36,45 +36,26 @@ module "gke" {
 
   node_pools = [
     {
-      name               = "n2-standard-8-pool"
-      machine_type       = "n2-standard-8"
-      disk_size_gb       = 50
+      name               = "n2-standard-4-pool" # Switch to smaller instances
+      machine_type       = "n2-standard-4"
+      disk_size_gb       = 100
       disk_type          = "pd-standard"
-      min_count          = 1
-      max_count          = 100
+      min_count          = 1  # Keep at least one node
+      max_count          = 10 # Scale up only if necessary
       autoscaling        = true
-      initial_node_count = 0
+      initial_node_count = 1
     },
     {
-      name               = "n2-standard-16-pool"
-      machine_type       = "n2-standard-16"
-      disk_size_gb       = 50
+      # high mem (up to 128GB)
+      name               = "n2-highmem-16-pool"
+      machine_type       = "n2-highmem-16"
+      disk_size_gb       = 100
       disk_type          = "pd-standard"
       min_count          = 0
-      max_count          = 100
+      max_count          = 10
       autoscaling        = true
       initial_node_count = 0
-    },
-    {
-      name               = "n2-standard-32-pool"
-      machine_type       = "n2-standard-32"
-      disk_size_gb       = 50
-      disk_type          = "pd-standard"
-      min_count          = 0
-      max_count          = 100
-      autoscaling        = true
-      initial_node_count = 0
-    },
-    {
-      name               = "n2-standard-16-high-disk"
-      machine_type       = "n2-standard-16"
-      disk_size_gb       = 1000
-      disk_type          = "pd-standard"
-      min_count          = 1
-      max_count          = 100
-      autoscaling        = true
-      initial_node_count = 0
-    },
+    }
   ]
 }
 
