@@ -146,7 +146,6 @@ jobs:
                   make interact-any-explicit \
                     context=delta \
                     rpc=base_sepolia \
-                    # The script is agnostic to the context. It fetches the diamond addresses depending on the context.
                     contract=InteractAlphaSparse \
                     private_key=${{ env.ALPHA_BASE_SEPOLIA_DEPLOYER_PK }} \
                     etherscan=${{ env.BLOCKSCOUT_SEPOLIA_API_KEY }} \
@@ -168,10 +167,10 @@ jobs:
               env:
                   ETHERSCAN_API_KEY: ${{ env.RIVERSCAN_DEVNET_API_KEY }}
                   INTERACTION_INPUT_PATH: ${{ env.INTERACTION_INPUT_PATH }}
+              # The script is agnostic to the context. It fetches the diamond addresses depending on the context.
               run: make interact-any-explicit-blockscout \
                   context=delta \
                   rpc=river_devnet \
-                  # The script is agnostic to the context. It fetches the diamond addresses depending on the context.
                   contract=InteractRiverAlphaSparse \
                   private_key=${{ env.ALPHA_BASE_SEPOLIA_DEPLOYER_PK }} \
                   verifier=${{ env.RIVERSCAN_DEVNET_URL }}
@@ -218,10 +217,10 @@ jobs:
 
             - name: Run Base Sepolia Interaction
               id: base_sepolia_interaction
+              # The script is agnostic to the context. It fetches the diamond addresses depending on the context.
               run: make interact-any-explicit \
                   context=delta \
                   rpc=base_sepolia \
-                  # The script is agnostic to the context. It fetches the diamond addresses depending on the context.
                   contract=InteractBaseAlpha \
                   private_key=${{ env.ALPHA_BASE_SEPOLIA_DEPLOYER_PK }} \
                   etherscan=${{ env.BLOCKSCOUT_SEPOLIA_API_KEY }} \
@@ -232,10 +231,10 @@ jobs:
             - name: Run River Devnet Interaction
               env:
                   ETHERSCAN_API_KEY: ${{ env.RIVERSCAN_DEVNET_API_KEY }}
+              # The script is agnostic to the context. It fetches the diamond addresses depending on the context.
               run: make interact-any-explicit-blockscout \
                   context=delta \
                   rpc=river_devnet \
-                  # The script is agnostic to the context. It fetches the diamond addresses depending on the context.
                   contract=InteractRiverAlpha \
                   private_key=${{ env.ALPHA_BASE_SEPOLIA_DEPLOYER_PK }} \
                   verifier=${{ env.RIVERSCAN_DEVNET_URL }}
