@@ -10,7 +10,7 @@ export const getTickerAttachment = (event?: TimelineEvent) => {
     }
     const attachments = event.content?.attachments?.filter(isTickerAttachment)
 
-    if (attachments?.length === 1) {
+    if (attachments?.length) {
         return attachments[0]
     }
 
