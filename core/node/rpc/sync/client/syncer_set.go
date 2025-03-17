@@ -272,7 +272,8 @@ func (ss *SyncerSet) AddStream(ctx context.Context, cookie *SyncCookie) error {
 				return err
 			}
 
-			logging.FromCtx(ss.ctx).Errorw("Unable to create syncer, advancing the node", "err", err, "remoteNode", nodeAddress)
+			logging.FromCtx(ss.ctx).Errorw("Unable to create syncer, advancing the node",
+				"err", err, "remoteNode", nodeAddress, "streamId", streamID)
 			continue
 		}
 
@@ -354,8 +355,8 @@ func (ss *SyncerSet) Modify(ctx context.Context, req ModifyRequest) error {
 
 	// group cookies by node address
 	for _, cookie := range req.ToAdd {
-		streamId := StreamId(cookie.GetStreamId())
-		if _, found := ss.streamID2Syncer[streamId]; found {
+		streamID := StreamId(cookie.GetStreamId())
+		if _, found := ss.streamID2Syncer[streamID]; found {
 			continue
 		}
 
@@ -363,16 +364,31 @@ func (ss *SyncerSet) Modify(ctx context.Context, req ModifyRequest) error {
 		if nodeAddressRaw := cookie.GetNodeAddress(); len(nodeAddressRaw) > 0 {
 			nodeAddress = common.BytesToAddress(nodeAddressRaw)
 		} else {
-			stream, err := ss.streamCache.GetStreamNoWait(ctx, streamId)
+			stream, err := ss.streamCache.GetStreamNoWait(ctx, streamID)
 			if err != nil {
 				return err
 			}
 
-			if _, isLocal := stream.GetRemotesAndIsLocal(); isLocal {
+			if remotes, isLocal := stream.GetRemotesAndIsLocal(); isLocal {
 				nodeAddress = ss.localNodeAddress
 			} else {
-				// TODO: Advance sticky peer if the current one does not work
-				nodeAddress = stream.GetStickyPeer()
+				var found bool
+				for i := 0; i < len(remotes); i++ {
+					// Try to find a remote peer for the given stream that is available
+					nodeAddress = stream.GetStickyPeer()
+					if _, err = ss.nodeRegistry.GetStreamServiceClientForAddress(nodeAddress); err != nil {
+						logging.FromCtx(ss.ctx).Errorw("Failed to get sticky peer for stream",
+							"err", err, "nodeAddress", nodeAddress, "streamId", streamID)
+					} else {
+						found = true
+						break
+					}
+				}
+				if !found {
+					return RiverError(Err_UNAVAILABLE, "No remote node available to sync stream").
+						Tags("syncId", ss.syncID, "streamId", streamID).
+						Func("SyncerSet.Modify")
+				}
 			}
 		}
 
@@ -382,10 +398,10 @@ func (ss *SyncerSet) Modify(ctx context.Context, req ModifyRequest) error {
 
 		// avoid duplicates
 		if slices.ContainsFunc(modifySyncs[nodeAddress].AddStreams, func(c *SyncCookie) bool {
-			return StreamId(c.StreamId) == streamId
+			return StreamId(c.StreamId) == streamID
 		}) {
 			return RiverError(Err_ALREADY_EXISTS, "Duplicate stream in add operation").
-				Tags("syncId", ss.syncID, "streamId", streamId).
+				Tags("syncId", ss.syncID, "streamId", streamID).
 				Func("SyncerSet.Modify")
 		}
 
