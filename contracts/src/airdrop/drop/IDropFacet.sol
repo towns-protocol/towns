@@ -59,6 +59,11 @@ interface IDropFacetBase {
 
   event DropFacet_ClaimConditionAdded(ClaimCondition condition);
 
+  event DropFacet_Unlocked_Stake(
+    uint256 indexed conditionId,
+    address indexed account
+  );
+
   // =============================================================
   //                           Errors
   // =============================================================
@@ -77,6 +82,7 @@ interface IDropFacetBase {
   error DropFacet__RewardsDistributionNotSet();
   error DropFacet__InsufficientBalance();
   error DropFacet__InvalidLockDuration();
+  error DropFacet__StakeNotUnlocked();
 }
 
 interface IDropFacet is IDropFacetBase {
@@ -91,6 +97,30 @@ interface IDropFacet is IDropFacetBase {
   /// @notice Adds a new claim condition
   /// @param condition The ClaimCondition struct defining the condition
   function addClaimCondition(ClaimCondition calldata condition) external;
+
+  /// @notice Claims tokens with a penalty
+  /// @param claim The claim to process
+  /// @param expectedPenaltyBps The expected penalty in basis points
+  /// @return The amount of tokens claimed
+  function claimWithPenalty(
+    Claim calldata claim,
+    uint16 expectedPenaltyBps
+  ) external returns (uint256);
+
+  /// @notice Claims tokens and stakes them in the staking contract
+  /// @param claim The claim to process
+  /// @param delegatee The address of the delegatee
+  /// @return The amount of tokens claimed
+  function claimAndStake(
+    Claim calldata claim,
+    address delegatee,
+    uint48 lockDuration
+  ) external returns (uint256);
+
+  /// @notice Unlocks a stake
+  /// @dev This function can only be called by the account that claimed the tokens
+  /// @param conditionId The ID of the claim condition
+  function unlockStake(uint256 conditionId) external;
 
   /// @notice Gets the ID of the currently active claim condition
   /// @return The ID of the active claim condition
@@ -121,22 +151,12 @@ interface IDropFacet is IDropFacetBase {
     uint256 conditionId
   ) external view returns (uint256);
 
-  /// @notice Claims tokens with a penalty
-  /// @param claim The claim to process
-  /// @param expectedPenaltyBps The expected penalty in basis points
-  /// @return The amount of tokens claimed
-  function claimWithPenalty(
-    Claim calldata claim,
-    uint16 expectedPenaltyBps
-  ) external returns (uint256);
-
-  /// @notice Claims tokens and stakes them in the staking contract
-  /// @param claim The claim to process
-  /// @param delegatee The address of the delegatee
-  /// @return The amount of tokens claimed
-  function claimAndStake(
-    Claim calldata claim,
-    address delegatee,
-    uint48 lockDuration
-  ) external returns (uint256);
+  /// @notice Gets the unlock time for a specific wallet for a given condition
+  /// @param account The address of the wallet to check
+  /// @param conditionId The ID of the claim condition
+  /// @return The unlock time for the wallet for the specified condition
+  function getUnlockTime(
+    address account,
+    uint256 conditionId
+  ) external view returns (uint256);
 }

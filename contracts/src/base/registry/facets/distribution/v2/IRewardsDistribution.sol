@@ -37,6 +37,7 @@ interface IRewardsDistributionBase {
   error RewardsDistribution__NotActiveOperator();
   error RewardsDistribution__ExpiredDeadline();
   error RewardsDistribution__InvalidSignature();
+  error RewardsDistribution__CannotChangeOwnerFromSelf();
   error RewardsDistribution__CannotWithdrawFromSelf();
   error RewardsDistribution__NoPendingWithdrawal();
 
@@ -96,6 +97,11 @@ interface IRewardsDistributionBase {
   /// @param depositId The ID of the deposit
   /// @param delegatee The address of the delegatee
   event Redelegate(uint256 indexed depositId, address indexed delegatee);
+
+  /// @notice Emitted when the owner of a deposit is changed
+  /// @param depositId The ID of the deposit
+  /// @param newOwner The new owner of the deposit
+  event ChangeDepositOwner(uint256 indexed depositId, address newOwner);
 
   /// @notice Emitted when the beneficiary of a deposit is changed
   /// @param depositId The ID of the deposit
@@ -251,6 +257,12 @@ interface IRewardsDistribution is IRewardsDistributionBase {
   /// @param depositId The ID of the deposit
   /// @param delegatee The address of the new delegatee
   function redelegate(uint256 depositId, address delegatee) external;
+
+  /// @notice Changes the owner of a deposit
+  /// @dev The caller must be the owner of the deposit
+  /// @param depositId The ID of the deposit
+  /// @param newOwner The new owner of the deposit
+  function changeDepositOwner(uint256 depositId, address newOwner) external;
 
   /// @notice Changes the beneficiary of a deposit
   /// @dev The caller must be the owner of the deposit

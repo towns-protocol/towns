@@ -157,12 +157,25 @@ contract DropFacet is IDropFacet, DropFacetBase, OwnableBase, Facet {
     );
   }
 
-  //  function claimPrincipal(
-  //    Claim calldata claim,
-  //    address delegatee
-  //  ) external returns (uint256 amount) {
-  //    DropStorage.Layout storage ds = DropStorage.layout();
-  //  }
+  /// @inheritdoc IDropFacet
+  function unlockStake(uint256 conditionId) external {
+    DropStorage.Layout storage ds = DropStorage.layout();
+    DropStorage.SupplyClaim storage claimed = ds.getSupplyClaimedByWallet(
+      conditionId,
+      msg.sender
+    );
+    uint256 unlockTime = claimed.lockStart + claimed.lockDuration;
+    if (block.timestamp < unlockTime) {
+      CustomRevert.revertWith(DropFacet__StakeNotUnlocked.selector);
+    }
+
+    IRewardsDistribution(ds.rewardsDistribution).changeDepositOwner(
+      claimed.depositId,
+      msg.sender
+    );
+
+    emit DropFacet_Unlocked_Stake(conditionId, msg.sender);
+  }
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                          GETTERS                           */
@@ -217,5 +230,16 @@ contract DropFacet is IDropFacet, DropFacetBase, OwnableBase, Facet {
         .layout()
         .getSupplyClaimedByWallet(conditionId, account)
         .depositId;
+  }
+
+  /// @inheritdoc IDropFacet
+  function getUnlockTime(
+    address account,
+    uint256 conditionId
+  ) external view returns (uint256) {
+    DropStorage.SupplyClaim storage supplyClaim = DropStorage
+      .layout()
+      .getSupplyClaimedByWallet(conditionId, account);
+    return supplyClaim.lockStart + supplyClaim.lockDuration;
   }
 }
