@@ -65,12 +65,18 @@ describe('mediaTests', () => {
     async function bobSendEncryptedMediaPayload(
         creationCookie: CreationCookie,
         last: boolean,
+        chunkIndex: number,
         data: Uint8Array,
         key: Uint8Array,
         iv: Uint8Array,
     ): Promise<CreationCookie> {
         const { ciphertext } = await encryptAESGCM(data, key, iv)
-        const result = await bobsClient.sendMediaPayload(creationCookie, last, ciphertext, 0)
+        const result = await bobsClient.sendMediaPayload(
+            creationCookie,
+            last,
+            ciphertext,
+            chunkIndex,
+        )
         return result.creationCookie
     }
 
@@ -87,6 +93,7 @@ describe('mediaTests', () => {
     async function bobCreateSpaceMediaStream(
         spaceId: string,
         chunkCount: number,
+        firstChunk?: Uint8Array,
         iv?: Uint8Array,
     ): Promise<{ creationCookie: CreationCookie }> {
         await expect(bobsClient.createSpace(spaceId)).resolves.not.toThrow()
@@ -95,7 +102,7 @@ describe('mediaTests', () => {
             spaceId,
             undefined,
             chunkCount,
-            new Uint8Array(100),
+            firstChunk,
             iv,
         )
     }
@@ -125,27 +132,43 @@ describe('mediaTests', () => {
     test('clientCanSendEncryptedDerivedAesGmPayload', async () => {
         const spaceId = makeUniqueSpaceStreamId()
         const { iv, key } = await deriveKeyAndIV(spaceId)
-        const mediaStreamInfo = await bobCreateSpaceMediaStream(spaceId, 3, iv)
-        const data = createTestMediaChunks(2)
+        const firstChunk = createTestMediaChunks(1)
+        const secondChunk = createTestMediaChunks(1)
+        const mediaStreamInfo = await bobCreateSpaceMediaStream(spaceId, 3, firstChunk, iv)
         await expect(
-            bobSendEncryptedMediaPayload(mediaStreamInfo.creationCookie, false, data, key, iv),
+            bobSendEncryptedMediaPayload(
+                mediaStreamInfo.creationCookie,
+                false,
+                1,
+                secondChunk,
+                key,
+                iv,
+            ),
         ).resolves.not.toThrow()
     })
 
     test('clientCanDownloadEncryptedDerivedAesGmPayload', async () => {
         const spaceId = makeUniqueSpaceStreamId()
         const { iv, key } = await deriveKeyAndIV(spaceId)
-        const mediaStreamInfo = await bobCreateSpaceMediaStream(spaceId, 2, iv)
+        const firstChunk = createTestMediaChunks(1)
+        const secondChunk = createTestMediaChunks(1)
+        const mediaStreamInfo = await bobCreateSpaceMediaStream(spaceId, 2, firstChunk, iv)
         let creationCookie = mediaStreamInfo.creationCookie
-        const data = createTestMediaChunks(2)
-        creationCookie = await bobSendEncryptedMediaPayload(creationCookie, false, data, key, iv)
-        await bobSendEncryptedMediaPayload(creationCookie, true, data, key, iv)
+        creationCookie = await bobSendEncryptedMediaPayload(
+            creationCookie,
+            false,
+            1,
+            secondChunk,
+            key,
+            iv,
+        )
+        await bobSendEncryptedMediaPayload(creationCookie, true, 1, secondChunk, key, iv)
         const decryptedChunks = await bobsClient.getMediaPayload(
             streamIdAsString(creationCookie.streamId),
             key,
             iv,
         )
-        expect(decryptedChunks).toEqual(data)
+        expect(decryptedChunks).toEqual(new Uint8Array([...firstChunk, ...secondChunk]))
     })
 
     test('chunkIndexNeedsToBeWithinBounds', async () => {
