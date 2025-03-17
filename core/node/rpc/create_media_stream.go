@@ -48,6 +48,12 @@ func (s *Service) createMediaStream(ctx context.Context, req *CreateMediaStreamR
 		return nil, err
 	}
 
+	var firstChunkEvent *ParsedEvent
+	if len(parsedEvents) > 1 {
+		firstChunkEvent = parsedEvents[1]
+		parsedEvents = parsedEvents[:1]
+	}
+
 	log.Debugw("createStream", "parsedEvents", parsedEvents)
 
 	csRules, err := rules.CanCreateStream(
@@ -135,6 +141,40 @@ func (s *Service) createMediaStream(ctx context.Context, req *CreateMediaStreamR
 		if err != nil {
 			return nil, RiverError(Err_INTERNAL, "failed to add derived event", "err", err)
 		}
+	}
+
+	// add first media chunk if provided
+	if firstChunkEvent != nil {
+		chunk := firstChunkEvent.Event.GetMediaPayload().GetChunk()
+
+		// Make sure the given chunk index is 0 as it is the first chunk
+		if chunk.GetChunkIndex() != 0 {
+			return nil, RiverError(Err_INVALID_ARGUMENT, "initial chunk index must be zero").
+				Func("createMediaStream")
+		}
+
+		// Make sure the given chunk size does not exceed the maximum chunk size
+		if uint64(len(chunk.GetData())) > s.chainConfig.Get().MediaMaxChunkSize {
+			return nil, RiverError(
+				Err_INVALID_ARGUMENT,
+				"chunk size must be less than or equal to",
+				"s.chainConfig.Get().MediaMaxChunkSize",
+				s.chainConfig.Get().MediaMaxChunkSize).
+				Func("createMediaStream")
+		}
+
+		mbHash, err := s.replicatedAddMediaEvent(
+			ctx,
+			firstChunkEvent,
+			resp,
+			parsedEvents[0].Event.GetMediaPayload().GetInception().GetChunkCount() == 1,
+		)
+		if err != nil {
+			return nil, AsRiverError(err).Func("createMediaStream")
+		}
+
+		resp.MiniblockNum++
+		resp.PrevMiniblockHash = mbHash
 	}
 
 	return resp, nil
