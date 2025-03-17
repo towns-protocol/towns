@@ -68,9 +68,13 @@ contract AppFactory is IAppFactory, OwnableBase, Facet {
     params.owner.checkAddress();
     params.metadata.name.checkMaxLength(32);
     params.metadata.symbol.checkMaxLength(6);
-    params.permissions.checkMaxArrayLength(
-      abi.decode(ds.settings[MAX_PERMISSIONS], (uint256))
+
+    uint256 maxPermissions = abi.decode(
+      ds.settings[MAX_PERMISSIONS],
+      (uint256)
     );
+
+    params.permissions.checkMaxArrayLength(maxPermissions);
     AppHelpers.checkCreateRegistration(
       ds,
       params.app,
@@ -85,11 +89,14 @@ contract AppFactory is IAppFactory, OwnableBase, Facet {
   function updateApp(uint256 appId, Inputs.UpdateApp calldata params) external {
     AppFactoryStorage.Layout storage ds = AppFactoryStorage.getLayout();
 
-    params.metadata.name.checkLength(32);
-    params.metadata.symbol.checkLength(6);
-    params.permissions.checkMaxArrayLength(
-      abi.decode(ds.settings[MAX_PERMISSIONS], (uint256))
+    params.metadata.name.checkMaxLength(32);
+    params.metadata.symbol.checkMaxLength(6);
+
+    uint256 maxPermissions = abi.decode(
+      ds.settings[MAX_PERMISSIONS],
+      (uint256)
     );
+    params.permissions.checkMaxArrayLength(maxPermissions);
 
     Registry.Config storage config = ds.configByAppId[appId];
 
