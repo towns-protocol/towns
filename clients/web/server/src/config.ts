@@ -46,7 +46,7 @@ const PORT = Number(env.PORT) || 3000
 
 // TODO: update this to cover all environments, including alpha and localhost
 const PROVIDER_URL =
-    env.MODE === 'gamma' || env.MODE === 'alpha'
+    env.MODE === 'gamma' || env.MODE === 'alpha' || env.MODE === 'delta'
         ? env.VITE_BASE_SEPOLIA_RPC_URL
         : env.VITE_BASE_CHAIN_RPC_URL
 if (!PROVIDER_URL) {
