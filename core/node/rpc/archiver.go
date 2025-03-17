@@ -950,6 +950,7 @@ func (a *Archiver) startImpl(ctx context.Context, once bool, metrics infra.Metri
 			a.onStreamAdded,
 			a.onStreamLastMiniblockUpdated,
 			a.onStreamPlacementUpdated,
+			nil,
 		)
 		if err != nil {
 			return err

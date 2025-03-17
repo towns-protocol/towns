@@ -74,7 +74,7 @@ type StreamCache struct {
 
 	onlineSyncStreamTasksInProgressMu deadlock.Mutex
 	onlineSyncStreamTasksInProgress   mapset.Set[StreamId]
-	
+
 	onlineSyncWorkerPool *workerpool.WorkerPool
 
 	disableCallbacks bool

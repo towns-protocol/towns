@@ -30,7 +30,7 @@ interface IStreamRegistryBase {
   ///   }
   /// @param eventType The type of stream event
   /// @param data The data of the stream event
-  event StreamUpdated(StreamEventType indexed eventType, bytes data);
+      event StreamUpdated(StreamEventType indexed eventType, bytes data);
 
   event StreamAllocated(
     bytes32 streamId,

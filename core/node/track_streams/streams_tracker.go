@@ -89,6 +89,7 @@ func (tracker *StreamsTrackerImpl) Init(
 		tracker.OnStreamAdded,
 		tracker.OnStreamLastMiniblockUpdated,
 		tracker.OnStreamPlacementUpdated,
+		nil,
 	); err != nil {
 		return err
 	}

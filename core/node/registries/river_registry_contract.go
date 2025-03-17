@@ -179,6 +179,10 @@ func NewRiverRegistryContract(
 				river.Event_StreamPlacementUpdated,
 				func(log *types.Log) any { return &river.StreamRegistryV1StreamPlacementUpdated{Raw: *log} },
 			},
+			{
+				river.Event_StreamUpdated,
+				func(log *types.Log) any { return &river.StreamRegistryV1StreamUpdated{Raw: *log} },
+			},
 		},
 	)
 	if err != nil {
@@ -830,9 +834,9 @@ func (c *RiverRegistryContract) callOptsWithBlockNum(ctx context.Context, blockN
 
 type NodeEvents interface {
 	river.NodeRegistryV1NodeAdded |
-		river.NodeRegistryV1NodeRemoved |
-		river.NodeRegistryV1NodeStatusUpdated |
-		river.NodeRegistryV1NodeUrlUpdated
+	river.NodeRegistryV1NodeRemoved |
+	river.NodeRegistryV1NodeStatusUpdated |
+	river.NodeRegistryV1NodeUrlUpdated
 }
 
 func (c *RiverRegistryContract) GetNodeEventsForBlock(ctx context.Context, blockNum crypto.BlockNumber) ([]any, error) {
@@ -856,11 +860,15 @@ func (c *RiverRegistryContract) GetNodeEventsForBlock(ctx context.Context, block
 		if err != nil {
 			return nil, err
 		}
-		ret = append(ret, ee)
+		if ee != nil {
+			ret = append(ret, ee)
+		}
 	}
 	return ret, nil
 }
 
+// ParseEvent parses the given event into the corresponding event(s). Some raw log events can contain
+// multiple sub events that are combined into a single event. Therefor a slice of events is returned.
 func (c *RiverRegistryContract) ParseEvent(
 	ctx context.Context,
 	boundContract *bind.BoundContract,
@@ -874,6 +882,11 @@ func (c *RiverRegistryContract) ParseEvent(
 	if !ok {
 		return nil, RiverError(Err_INTERNAL, "Event not found", "id", log.Topics[0]).Func("ParseEvent")
 	}
+
+	if eventInfo.Name == "StreamUpdated" {
+		return nil, nil // TODO(UE) progress stream updated events when node migrates to the new eventing model
+	}
+
 	ee := eventInfo.Maker(log)
 	err := boundContract.UnpackLog(ee, eventInfo.Name, *log)
 	if err != nil {
@@ -893,6 +906,7 @@ func (c *RiverRegistryContract) OnStreamEvent(
 	added func(ctx context.Context, event *river.StreamRegistryV1StreamCreated),
 	lastMiniblockUpdated func(ctx context.Context, event *river.StreamRegistryV1StreamLastMiniblockUpdated),
 	placementUpdated func(ctx context.Context, event *river.StreamRegistryV1StreamPlacementUpdated),
+	streamUpdated func(ctx context.Context, event *river.StreamRegistryV1StreamUpdated),
 ) error {
 	c.Blockchain.ChainMonitor.OnContractWithTopicsEvent(
 		startBlockNumInclusive,
@@ -913,6 +927,8 @@ func (c *RiverRegistryContract) OnStreamEvent(
 				lastMiniblockUpdated(ctx, e)
 			case *river.StreamRegistryV1StreamPlacementUpdated:
 				placementUpdated(ctx, e)
+			case *river.StreamRegistryV1StreamUpdated:
+				return // TODO(UE) progress stream updated events when node migrates to the new eventing model
 			default:
 				logging.FromCtx(ctx).Errorw("Unknown event type", "event", e)
 			}
@@ -937,6 +953,9 @@ func (c *RiverRegistryContract) FilterStreamEvents(
 		}
 		withStreamId, ok := parsed.(river.EventWithStreamId)
 		if !ok {
+			if _, ok := parsed.(*river.StreamUpdated); ok { // TODO(UE) remove when node migrates to the new eventing model
+				continue
+			}
 			finalErrs = append(
 				finalErrs,
 				RiverError(Err_INTERNAL, "Event does not implement EventWithStreamId", "event", parsed),

@@ -240,6 +240,7 @@ func TestStreamEvents(t *testing.T) {
 	addedC := make(chan *river.StreamRegistryV1StreamCreated, 10)
 	lastMBC := make(chan *river.StreamRegistryV1StreamLastMiniblockUpdated, 10)
 	placementC := make(chan *river.StreamRegistryV1StreamPlacementUpdated, 10)
+	updatedC := make(chan *river.StreamRegistryV1StreamUpdated, 10)
 
 	err = rr1.OnStreamEvent(
 		ctx,
@@ -256,6 +257,9 @@ func TestStreamEvents(t *testing.T) {
 		func(ctx context.Context, event *river.StreamRegistryV1StreamPlacementUpdated) {
 			placementC <- event
 		},
+		func(ctx context.Context, event *river.StreamRegistryV1StreamUpdated) {
+			updatedC <- event
+		},
 	)
 	require.NoError(err)
 
@@ -268,13 +272,29 @@ func TestStreamEvents(t *testing.T) {
 	require.NoError(err)
 
 	allocated := <-allocatedC
+	update := <-updatedC
+
+	events, err := river.ParseStreamUpdatedEvent(update)
+	require.NoError(err)
+	streamAllocatedEvent := events[0].(*river.StreamState)
+
 	require.NotNil(allocated)
 	require.Equal(streamId, StreamId(allocated.StreamId))
 	require.Equal(addrs, allocated.Nodes)
 	require.Equal(genesisHash, common.Hash(allocated.GenesisMiniblockHash))
 	require.Equal(genesisMiniblock, allocated.GenesisMiniblock)
-	require.Len(lastMBC, 0)
-	require.Len(placementC, 0)
+
+	require.Equal(streamId, streamAllocatedEvent.StreamID)
+	require.EqualValues(river.StreamUpdatedEventTypeAllocate, streamAllocatedEvent.Reason)
+	require.Equal(streamId, streamAllocatedEvent.StreamID)
+	require.EqualValues(genesisHash, streamAllocatedEvent.LastMiniblockHash)
+	require.EqualValues(0, streamAllocatedEvent.LastMiniblockNum)
+	require.EqualValues(0, streamAllocatedEvent.Flags)
+	require.Equal(addrs, streamAllocatedEvent.Nodes)
+
+	require.Empty(lastMBC)
+	require.Empty(placementC)
+	require.Empty(updatedC)
 
 	// Update stream placement
 	tx, err := bc1.TxPool.Submit(ctx, "UpdateStreamPlacement",
@@ -289,12 +309,28 @@ func TestStreamEvents(t *testing.T) {
 	require.Equal(crypto.TransactionResultSuccess, receipt.Status)
 
 	placement := <-placementC
+	update = <-updatedC
+
+	events, err = river.ParseStreamUpdatedEvent(update)
+	require.NoError(err)
+	streamReplacedEvent := events[0].(*river.StreamState)
+
 	require.NotNil(placement)
+	require.NotNil(update)
 	require.Equal(streamId, StreamId(placement.StreamId))
 	require.Equal(nodeAddr2, placement.NodeAddress)
 	require.True(placement.IsAdded)
-	require.Len(allocatedC, 0)
-	require.Len(lastMBC, 0)
+
+	require.Equal(streamId, streamReplacedEvent.StreamID)
+	require.EqualValues(river.StreamUpdatedEventTypePlacementUpdated, streamReplacedEvent.Reason)
+	require.EqualValues(genesisHash, streamReplacedEvent.LastMiniblockHash)
+	require.EqualValues(0, streamReplacedEvent.LastMiniblockNum)
+	require.EqualValues(0, streamReplacedEvent.Flags)
+	require.Equal(append(addrs, nodeAddr2), streamReplacedEvent.Nodes)
+
+	require.Empty(allocatedC)
+	require.Empty(updatedC)
+	require.Empty(lastMBC)
 
 	// Update last miniblock
 	newMBHash := common.HexToHash("0x456")
@@ -314,13 +350,27 @@ func TestStreamEvents(t *testing.T) {
 	require.Empty(failed)
 
 	lastMB := <-lastMBC
+	update = <-updatedC
+
+	events, err = river.ParseStreamUpdatedEvent(update)
+	require.NoError(err)
+	streamNewMiniblock := events[0].(*river.StreamMiniblockUpdate)
+
 	require.NotNil(lastMB)
 	require.Equal(streamId, StreamId(lastMB.StreamId))
 	require.Equal(newMBHash, common.Hash(lastMB.LastMiniblockHash))
 	require.Equal(uint64(1), lastMB.LastMiniblockNum)
+	require.EqualValues(river.StreamUpdatedEventTypeLastMiniblockBatchUpdated, update.EventType)
+	require.EqualValues(lastMB.StreamId, streamNewMiniblock.StreamId)
+	require.EqualValues(genesisHash, streamNewMiniblock.PrevMiniBlockHash)
+	require.EqualValues(newMBHash, streamNewMiniblock.LastMiniblockHash)
+	require.EqualValues(1, streamNewMiniblock.LastMiniblockNum)
+	require.Equal(false, streamNewMiniblock.IsSealed)
+
 	require.False(lastMB.IsSealed)
-	require.Len(allocatedC, 0)
-	require.Len(placementC, 0)
+	require.Empty(allocatedC)
+	require.Empty(placementC)
+	require.Empty(updatedC)
 
 	newMBHash2 := common.HexToHash("0x789")
 	succeeded, invalidMiniblocks, failed, err = rr1.SetStreamLastMiniblockBatch(
@@ -339,13 +389,29 @@ func TestStreamEvents(t *testing.T) {
 	require.Empty(failed)
 
 	lastMB = <-lastMBC
+	update = <-updatedC
+
+	events, err = river.ParseStreamUpdatedEvent(update)
+	require.NoError(err)
+	streamNewMiniblock = events[0].(*river.StreamMiniblockUpdate)
+
 	require.NotNil(lastMB)
 	require.Equal(streamId, StreamId(lastMB.StreamId))
 	require.Equal(newMBHash2, common.Hash(lastMB.LastMiniblockHash))
+	require.Equal(river.StreamUpdatedEventTypeLastMiniblockBatchUpdatedTopic, update.Raw.Topics[1])
 	require.Equal(uint64(2), lastMB.LastMiniblockNum)
 	require.False(lastMB.IsSealed)
-	require.Len(allocatedC, 0)
-	require.Len(placementC, 0)
+
+	require.EqualValues(river.StreamUpdatedEventTypeLastMiniblockBatchUpdated, update.EventType)
+	require.EqualValues(lastMB.StreamId, streamNewMiniblock.StreamId)
+	require.EqualValues(newMBHash, streamNewMiniblock.PrevMiniBlockHash)
+	require.EqualValues(newMBHash2, streamNewMiniblock.LastMiniblockHash)
+	require.EqualValues(2, streamNewMiniblock.LastMiniblockNum)
+	require.Equal(false, streamNewMiniblock.IsSealed)
+
+	require.Empty(allocatedC)
+	require.Empty(placementC)
+	require.Empty(updatedC)
 
 	// Add stream
 	streamId = testutils.StreamIdFromBytes([]byte{0xa1, 0x02, 0x04})
@@ -357,11 +423,29 @@ func TestStreamEvents(t *testing.T) {
 	require.NoError(err)
 
 	added := <-addedC
+	update = <-updatedC
+
 	require.NotNil(added)
+	require.NotNil(update)
+
 	require.Equal(streamId, StreamId(added.StreamId))
 	require.Equal(addrs, added.Stream.Nodes)
 	require.Equal(genesisHash, common.Hash(added.GenesisMiniblockHash))
 	require.Equal(lastMiniblockHash, common.Hash(added.Stream.LastMiniblockHash))
 	require.Equal(lastMiniblockNum, int64(added.Stream.LastMiniblockNum))
 	require.True(added.Stream.Flags&uint64(StreamFlagSealed) != 0)
+
+	events, err = river.ParseStreamUpdatedEvent(update)
+	require.NoError(err)
+	streamAddEvent := events[0].(*river.StreamState)
+
+	require.Equal(streamId, streamAddEvent.StreamID)
+	require.EqualValues(river.StreamUpdatedEventTypeCreate, streamAddEvent.Reason)
+	require.EqualValues(lastMiniblockHash, streamAddEvent.LastMiniblockHash)
+	require.EqualValues(lastMiniblockNum, streamAddEvent.LastMiniblockNum)
+	require.EqualValues(StreamFlagSealed, streamAddEvent.Flags&uint64(StreamFlagSealed))
+	require.Equal(addrs, streamAddEvent.Nodes)
+
+	require.Empty(addedC)
+	require.Empty(updatedC)
 }
