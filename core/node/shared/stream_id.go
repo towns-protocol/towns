@@ -57,6 +57,7 @@ func StreamTypeToString(streamType byte) string {
 	case STREAM_USER_BIN:
 		return "user"
 	case STREAM_USER_SETTINGS_BIN:
+		return "user_settings"
 	}
 	return fmt.Sprintf("%02x", streamType)
 }
