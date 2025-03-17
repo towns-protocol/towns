@@ -3,7 +3,10 @@ import { useCallback, useEffect, useMemo } from 'react'
 import { Address, useTownsContext } from 'use-towns-client'
 import { BigNumber } from 'ethers'
 
-const queryKey = (address: Address | undefined) => ['useBalance', address ?? 'waitingForAddress']
+export const balanceQueryKey = (address: Address | undefined) => [
+    'useBalance',
+    address ?? 'waitingForAddress',
+]
 
 /**
  * Simple hook to replace wagmi's useBalance hook (wagmi)
@@ -27,7 +30,7 @@ export function useBalance({
 }) {
     const { baseProvider } = useTownsContext()
     const queryClient = useQueryClient()
-    const _queryKey = useMemo(() => queryKey(address), [address])
+    const _queryKey = useMemo(() => balanceQueryKey(address), [address])
 
     const onBlock = useCallback(
         () => queryClient.invalidateQueries({ queryKey: _queryKey }),

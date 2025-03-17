@@ -9,6 +9,7 @@ import { PanelButton } from '@components/Panel/PanelButton'
 import useCopyToClipboard from 'hooks/useCopyToClipboard'
 import { baseScanUrl } from '@components/Web3/utils'
 import { useEnvironment } from 'hooks/useEnvironmnet'
+import { useShowWallet } from 'hooks/useTradingEnabled'
 import { trackClickedAddFunds } from './fundWalletAnalytics'
 
 export function TownsWallet() {
@@ -53,6 +54,12 @@ export function TownsWallet() {
                 setTimeout(() => setCopied(false), 1000)
             }
         }
+    }
+
+    const isTradingEnabled = useShowWallet()
+
+    if (isTradingEnabled) {
+        return null
     }
 
     return (

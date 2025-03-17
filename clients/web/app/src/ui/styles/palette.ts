@@ -63,6 +63,7 @@ export const Figma = {
         Pink: '#FF25E9',
         Peach: '#FFA87D',
         PeachBackground: '#FFA87D0A',
+        WarningSubtle: 'hsla(36, 100%, 58%, 0.1)',
 
         White: '#F8F7FB',
         Black: '#151418',

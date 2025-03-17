@@ -3,9 +3,16 @@ import { Panel } from '@components/Panel/Panel'
 import { Box, Button, Icon, IconName, Stack, Text } from '@ui'
 import { shortAddress } from 'workers/utils'
 import useCopyToClipboard from 'hooks/useCopyToClipboard'
+import { useStore } from 'store/store'
 import { useTradingWalletAddresses } from './useTradingWalletAddresses'
+
 export const TradingDepositPanel = () => {
     const { evmWalletAddress, solanaWalletAddress } = useTradingWalletAddresses()
+
+    const setFundWalletModalOpen = useStore((state) => state.setFundWalletModalOpen)
+    const handleDeposit = () => {
+        setFundWalletModalOpen(true)
+    }
 
     return (
         <Panel padding label="Deposit">
@@ -13,7 +20,12 @@ export const TradingDepositPanel = () => {
                 <WalletRow walletAddress={solanaWalletAddress} name="Solana" iconName="solana" />
             )}
             {evmWalletAddress && (
-                <WalletRow walletAddress={evmWalletAddress} name="Base ETH" iconName="baseEth" />
+                <WalletRow
+                    walletAddress={evmWalletAddress}
+                    name="Base ETH"
+                    iconName="baseEth"
+                    onClickFundWallet={handleDeposit}
+                />
             )}
         </Panel>
     )
@@ -23,10 +35,12 @@ const WalletRow = ({
     walletAddress,
     name,
     iconName,
+    onClickFundWallet,
 }: {
     walletAddress: string
     name: string
     iconName: IconName
+    onClickFundWallet?: () => void
 }) => {
     const [copied, setCopied] = useState(false)
     const [, copy] = useCopyToClipboard()
@@ -52,6 +66,18 @@ const WalletRow = ({
                 <Text color="gray2">{shortAddress(walletAddress)}</Text>
             </Stack>
             <Box grow />
+            {onClickFundWallet && (
+                <Button
+                    icon="wallet"
+                    size="button_sm"
+                    rounded="full"
+                    color="cta1"
+                    onClick={onClickFundWallet}
+                >
+                    Add funds
+                </Button>
+            )}
+
             <Button icon="copy" size="button_sm" rounded="full" color="cta1" onClick={handleCopy}>
                 {copied ? 'Copied' : 'Copy'}
             </Button>

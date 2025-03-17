@@ -42,6 +42,7 @@ import { MutualTownsPanel } from '@components/MutualTownsPanel/MutualTownsPanel'
 import { PinsPanel } from '@components/PinsPanel/PinsPanel'
 import { ReviewsPanel } from '@components/TownReviews/ReviewsPanel'
 import { TipsLeaderboardPanel } from '@components/TipsLeaderboard/TipsLeaderboardPanel'
+import { TradingSendPanel } from '@components/Web3/Trading/TradingSendPanel'
 
 export const usePanels = () => {
     const [searchParams] = useSearchParams()
@@ -208,6 +209,9 @@ export const usePanels = () => {
         }
         case CHANNEL_INFO_PARAMS.TRADING_DEPOSIT: {
             return <TradingDepositPanel />
+        }
+        case CHANNEL_INFO_PARAMS.TRADING_SEND: {
+            return <TradingSendPanel />
         }
         case CHANNEL_INFO_PARAMS.TRADE_PANEL: {
             return <TradingPanel />

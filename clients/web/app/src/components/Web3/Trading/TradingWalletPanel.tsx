@@ -19,6 +19,10 @@ export function TradingWalletPanel() {
         openPanel(CHANNEL_INFO_PARAMS.TRADING_DEPOSIT)
     }, [openPanel])
 
+    const onClickSend = () => {
+        openPanel(CHANNEL_INFO_PARAMS.TRADING_SEND)
+    }
+
     const { evmWalletAddress } = useTradingWalletAddresses()
     const { data: chainWalletAssets, isLoading: isLoadingChainWalletAssets } = useTradingWallet()
     const totalHoldingValueCents = useMemo(() => {
@@ -75,7 +79,7 @@ export function TradingWalletPanel() {
 
                 <Stack horizontal gap padding>
                     <WalletActionButton iconName="plus" label="Deposit" onClick={onClickDeposit} />
-                    <WalletActionButton iconName="linkOut" label="Send" onClick={() => {}} />
+                    <WalletActionButton iconName="linkOut" label="Send" onClick={onClickSend} />
                 </Stack>
 
                 <Text fontSize="h4" textAlign="center" color="cta1" />

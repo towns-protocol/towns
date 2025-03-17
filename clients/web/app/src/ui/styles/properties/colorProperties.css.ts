@@ -308,6 +308,13 @@ export const colorProperties = defineProperties({
                     '--background': Figma.Colors.PeachBackground,
                 },
             },
+            [ToneName.WarningSubtle]: {
+                background: Figma.Colors.WarningSubtle,
+                color: vars.color.text.default,
+                vars: {
+                    '--background': Figma.Colors.WarningSubtle,
+                },
+            },
             modalContainer: {
                 background: 'rgba(0,0,0,0.3)',
                 backgdropFilter: 'blur(4px)',

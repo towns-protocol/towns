@@ -73,6 +73,7 @@ export const CHANNEL_INFO_PARAMS = {
     RIVER_POINTS: 'river-points',
     TRADING_WALLET: 'trading-wallet',
     TRADING_DEPOSIT: 'trading-deposit',
+    TRADING_SEND: 'trading-send',
 } as const
 
 export type CHANNEL_INFO_PARAMS_VALUES =
