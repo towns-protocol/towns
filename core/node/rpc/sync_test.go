@@ -578,7 +578,7 @@ func TestSyncWithEmptyNodeAddress(t *testing.T) {
 	testfmt.Printf(t, "Received first update for all %d streams in init sync session took: %s", len(channelCookies), time.Since(now))
 
 	// create more streams and add them to the sync via the modify sync endpoint
-	/*var add []*protocol.SyncCookie
+	var add []*protocol.SyncCookie
 	for range 50 {
 		channel, channelHash := produceChannel()
 		addMessageToChannel(ctx, syncClient0, wallet, "hello", StreamId(channel.StreamId), channelHash, require)
@@ -613,7 +613,7 @@ func TestSyncWithEmptyNodeAddress(t *testing.T) {
 	// send modify sync request
 	syncClients.modifySync(t, ctx, add, remove)
 	syncClients.expectNUpdates(t, len(add)+len(channelCookies[len(channelCookies)/2:]), 30*time.Second, &updateOpts{events: 1, eventType: "ChannelPayload"})
-	testfmt.Printf(t, "Received second update for all %d streams in init sync session took: %s", len(channelCookies), time.Since(now))*/
+	testfmt.Printf(t, "Received second update for all %d streams in init sync session took: %s", len(channelCookies), time.Since(now))
 
 	// finish testing
 	syncClients.cancelAll(t, ctx)

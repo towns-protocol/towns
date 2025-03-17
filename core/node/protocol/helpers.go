@@ -43,3 +43,14 @@ func (cc *CreationCookie) IsLocal(addr common.Address) bool {
 
 	return false
 }
+
+// CopyWithAddr returns a copy of the SyncCookie with the given address.
+func (sc *SyncCookie) CopyWithAddr(address common.Address) *SyncCookie {
+	return &SyncCookie{
+		NodeAddress:       address.Bytes(),
+		StreamId:          sc.GetStreamId(),
+		MinipoolGen:       sc.GetMinipoolGen(),
+		MinipoolSlot:      sc.GetMinipoolSlot(),
+		PrevMiniblockHash: sc.GetPrevMiniblockHash(),
+	}
+}

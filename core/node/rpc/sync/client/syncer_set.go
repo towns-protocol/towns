@@ -2,7 +2,6 @@ package client
 
 import (
 	"context"
-	"fmt"
 	"slices"
 	"sync"
 
@@ -221,18 +220,10 @@ func (ss *SyncerSet) AddStream(ctx context.Context, cookie *SyncCookie) error {
 		remotes, useLocal := stream.GetRemotesAndIsLocal()
 		nodeAddress := stream.GetStickyPeer()
 		getNodeAddress = func() (common.Address, *SyncCookie, bool) {
-			cookie := &SyncCookie{
-				StreamId:          cookie.GetStreamId(),
-				MinipoolGen:       cookie.GetMinipoolGen(),
-				MinipoolSlot:      cookie.GetMinipoolSlot(),
-				PrevMiniblockHash: cookie.GetPrevMiniblockHash(),
-			}
-
 			// If the local node hosts the current stream, try it first
 			if i == 0 && useLocal {
 				useLocal = false
-				cookie.NodeAddress = ss.localNodeAddress.Bytes()
-				return ss.localNodeAddress, cookie, len(remotes) > 0
+				return ss.localNodeAddress, cookie.CopyWithAddr(ss.localNodeAddress), len(remotes) > 0
 			}
 
 			// Advance to the next peer if the current one does not work
@@ -240,8 +231,7 @@ func (ss *SyncerSet) AddStream(ctx context.Context, cookie *SyncCookie) error {
 				nodeAddress = stream.AdvanceStickyPeer(nodeAddress)
 			}
 			i++
-			cookie.NodeAddress = nodeAddress.Bytes()
-			return nodeAddress, cookie, i < len(remotes)
+			return nodeAddress, cookie.CopyWithAddr(nodeAddress), i < len(remotes)
 		}
 	}
 
@@ -278,7 +268,6 @@ func (ss *SyncerSet) AddStream(ctx context.Context, cookie *SyncCookie) error {
 			span.End()
 		}
 		if err != nil {
-			fmt.Println("err", err)
 			if !more {
 				return err
 			}
@@ -365,25 +354,44 @@ func (ss *SyncerSet) Modify(ctx context.Context, req ModifyRequest) error {
 
 	// group cookies by node address
 	for _, cookie := range req.ToAdd {
-		if _, found := ss.streamID2Syncer[StreamId(cookie.GetStreamId())]; found {
+		streamId := StreamId(cookie.GetStreamId())
+		if _, found := ss.streamID2Syncer[streamId]; found {
 			continue
 		}
 
-		nodeAddress := common.BytesToAddress(cookie.GetNodeAddress())
+		var nodeAddress common.Address
+		if nodeAddressRaw := cookie.GetNodeAddress(); len(nodeAddressRaw) > 0 {
+			nodeAddress = common.BytesToAddress(nodeAddressRaw)
+		} else {
+			stream, err := ss.streamCache.GetStreamNoWait(ctx, streamId)
+			if err != nil {
+				return err
+			}
+
+			if _, isLocal := stream.GetRemotesAndIsLocal(); isLocal {
+				nodeAddress = ss.localNodeAddress
+			} else {
+				nodeAddress = stream.GetStickyPeer()
+			}
+		}
+
 		if _, ok := modifySyncs[nodeAddress]; !ok {
 			modifySyncs[nodeAddress] = &ModifySyncRequest{}
 		}
 
 		// avoid duplicates
 		if slices.ContainsFunc(modifySyncs[nodeAddress].AddStreams, func(c *SyncCookie) bool {
-			return StreamId(c.StreamId) == StreamId(cookie.GetStreamId())
+			return StreamId(c.StreamId) == streamId
 		}) {
 			return RiverError(Err_ALREADY_EXISTS, "Duplicate stream in add operation").
-				Tags("syncId", ss.syncID, "streamId", StreamId(cookie.StreamId)).
+				Tags("syncId", ss.syncID, "streamId", streamId).
 				Func("SyncerSet.Modify")
 		}
 
-		modifySyncs[nodeAddress].AddStreams = append(modifySyncs[nodeAddress].AddStreams, cookie)
+		modifySyncs[nodeAddress].AddStreams = append(
+			modifySyncs[nodeAddress].AddStreams,
+			cookie.CopyWithAddr(nodeAddress),
+		)
 	}
 
 	// group streamIDs by node address
