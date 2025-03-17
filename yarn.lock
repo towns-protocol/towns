@@ -7023,7 +7023,7 @@ __metadata:
     "@wagmi/cli": ^2.2.0
     account-abstraction: "github:eth-infinitism/account-abstraction"
     crypto-lib: "github:towns-protocol/crypto-lib"
-    forge-std: "github:foundry-rs/forge-std#v1.9.5"
+    forge-std: "github:foundry-rs/forge-std#v1.9.6"
     prettier: ^2.8.8
     prettier-plugin-solidity: ^1.4.2
     solady: ^0.1.2
@@ -17091,13 +17091,6 @@ __metadata:
     cross-spawn: ^7.0.0
     signal-exit: ^4.0.1
   checksum: 3e2e844d6003c96d70affe8ae98d7eaaba269a868c14d997620c088340a8775cd5d2d9043e6ceebae1928d8d9a874911c4d664b9a267e8995945df20337aebc0
-  languageName: node
-  linkType: hard
-
-"forge-std@github:foundry-rs/forge-std#v1.9.5":
-  version: 1.9.5
-  resolution: "forge-std@https://github.com/foundry-rs/forge-std.git#commit=b93cf4bc34ff214c099dc970b153f85ade8c9f66"
-  checksum: 71aead7ca70cc51b46f0336074a9721aa765ba85030080577460c76f2a824abfb26bd1f4a77811c8ffbbce2cb9788f95dc0340926b041a3e2477c9a624f3503b
   languageName: node
   linkType: hard
 

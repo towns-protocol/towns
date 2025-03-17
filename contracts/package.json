@@ -28,7 +28,7 @@
         "@prb/test": "^0.6.4",
         "@wagmi/cli": "^2.2.0",
         "account-abstraction": "github:eth-infinitism/account-abstraction",
-        "forge-std": "github:foundry-rs/forge-std#v1.9.5",
+        "forge-std": "github:foundry-rs/forge-std#v1.9.6",
         "prettier": "^2.8.8",
         "prettier-plugin-solidity": "^1.4.2",
         "solhint": "^5.0.5",
