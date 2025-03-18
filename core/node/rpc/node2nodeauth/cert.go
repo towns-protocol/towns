@@ -25,12 +25,13 @@ import (
 )
 
 const (
+	certTTL           = time.Hour
 	node2NodeCertName = "node2node"
 )
 
 var (
-	// node2NodeCertExtOID is the OID of the custom node-2-node client certificate extension.
-	node2NodeCertExtOID = asn1.ObjectIdentifier{1, 3, 6, 1, 4, 1, 50000, 1, 1}
+	// certExtOID is the OID of the custom node-2-node client certificate extension.
+	certExtOID = asn1.ObjectIdentifier{1, 3, 6, 1, 4, 1, 50000, 1, 1}
 )
 
 // VerifyPeerCertificate goes through the peer certificates and verifies the node-2-node client certificate.
@@ -82,7 +83,7 @@ func verifyCert(logger *zap.SugaredLogger, nodeRegistry nodes.NodeRegistry, cert
 	var certExt node2NodeCertExt
 	var found bool
 	for _, ext := range cert.Extensions {
-		if ext.Id.Equal(node2NodeCertExtOID) {
+		if ext.Id.Equal(certExtOID) {
 			if _, err := asn1.Unmarshal(ext.Value, &certExt); err != nil {
 				return AsRiverError(err, Err_UNAUTHENTICATED).Message("Failed to unmarshal extra extension").LogError(logger)
 			}
@@ -128,28 +129,26 @@ func verifyCert(logger *zap.SugaredLogger, nodeRegistry nodes.NodeRegistry, cert
 // CertGetter returns a GetClientCertFunc that provides a node-2-node client certificate.
 func CertGetter(logger *zap.SugaredLogger, wallet *crypto.Wallet) http_client.GetClientCertFunc {
 	const (
-		certTTL      = time.Hour * 24
 		certRenewGap = time.Minute
 	)
 
 	var (
 		lock sync.Mutex
 		cert *tls.Certificate
-		exp  time.Time
 	)
 
 	return func(info *tls.CertificateRequestInfo) (*tls.Certificate, error) {
 		lock.Lock()
 		defer lock.Unlock()
 
-		if cert == nil || time.Now().Add(certRenewGap).After(exp) {
+		// Create a new certificate if the current one is nil or about to expire
+		if cert == nil || time.Now().Add(certRenewGap).After(cert.Leaf.NotAfter) {
 			newCert, err := createCert(logger, wallet)
 			if err != nil {
 				return nil, err
 			}
 
 			cert = newCert
-			exp = time.Now().Add(certTTL)
 		}
 
 		return cert, nil
@@ -190,10 +189,10 @@ func createCert(logger *zap.SugaredLogger, wallet *crypto.Wallet) (*tls.Certific
 		SerialNumber:    big.NewInt(1),
 		Subject:         pkix.Name{CommonName: node2NodeCertName},
 		NotBefore:       time.Now(),
-		NotAfter:        time.Now().Add(time.Hour),
+		NotAfter:        time.Now().Add(certTTL),
 		KeyUsage:        x509.KeyUsageDigitalSignature,
 		ExtKeyUsage:     []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
-		ExtraExtensions: []pkix.Extension{{Id: node2NodeCertExtOID, Value: extensionValue}},
+		ExtraExtensions: []pkix.Extension{{Id: certExtOID, Value: extensionValue}},
 	}
 
 	certDER, err := x509.CreateCertificate(rand.Reader, template, template, privateKeyA.Public(), privateKeyA)

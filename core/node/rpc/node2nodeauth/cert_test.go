@@ -8,16 +8,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/towns-protocol/towns/core/contracts/river"
-
-	"github.com/towns-protocol/towns/core/node/nodes"
-
-	"github.com/towns-protocol/towns/core/node/testutils/mocks"
-
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
 
+	"github.com/towns-protocol/towns/core/contracts/river"
 	"github.com/towns-protocol/towns/core/node/crypto"
+	"github.com/towns-protocol/towns/core/node/nodes"
+	"github.com/towns-protocol/towns/core/node/testutils/mocks"
 )
 
 func TestCreateCert(t *testing.T) {
@@ -41,7 +38,7 @@ func TestCreateCert(t *testing.T) {
 	var certExt node2NodeCertExt
 	found := false
 	for _, ext := range x509Cert.Extensions {
-		if ext.Id.Equal(node2NodeCertExtOID) {
+		if ext.Id.Equal(certExtOID) {
 			_, err := asn1.Unmarshal(ext.Value, &certExt)
 			assert.NoError(t, err)
 			found = true
@@ -131,7 +128,7 @@ func TestVerifyCert(t *testing.T) {
 				Subject:    pkix.Name{CommonName: node2NodeCertName},
 				NotBefore:  time.Now().Add(-2 * time.Hour),
 				NotAfter:   time.Now().Add(-1 * time.Hour),
-				Extensions: []pkix.Extension{{Id: node2NodeCertExtOID, Value: x509Cert.Extensions[0].Value}},
+				Extensions: []pkix.Extension{{Id: certExtOID, Value: x509Cert.Extensions[0].Value}},
 			},
 			wantErr: true,
 		},
@@ -141,7 +138,7 @@ func TestVerifyCert(t *testing.T) {
 				Subject:    pkix.Name{CommonName: node2NodeCertName},
 				NotBefore:  time.Now(),
 				NotAfter:   time.Now().Add(time.Hour),
-				Extensions: []pkix.Extension{{Id: node2NodeCertExtOID, Value: []byte("invalid")}},
+				Extensions: []pkix.Extension{{Id: certExtOID, Value: []byte("invalid")}},
 			},
 			wantErr: true,
 		},
