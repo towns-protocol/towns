@@ -10,6 +10,7 @@ export const FIRST_TIP_BLOCK: Record<Environment, bigint> = {
     alpha: 19909596n,
     'test-beta': 19909596n,
     development: 19909596n,
+    delta: 19909596n,
     test: 19909596n,
 }
 

@@ -13,6 +13,7 @@ declare -a targets=(
   "https://fast-app.towns.com/|.deployment.env.fast-app"
   "https://app.alpha.towns.com/|.deployment.env.alpha"
   "https://app.gamma.towns.com/|.deployment.env.gamma"
+  "https://app.delta.towns.com/|.deployment.env.delta"
 )
 
 # Collect user-specified environments, if any

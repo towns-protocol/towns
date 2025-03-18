@@ -6,6 +6,7 @@ export function getAllowedOrigins(env: Environment): string[] {
         case 'test-beta':
         case 'development':
         case 'alpha':
+        case 'delta':
             /*
                 Everything except for production
             */

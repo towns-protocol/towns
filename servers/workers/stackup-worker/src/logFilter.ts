@@ -25,6 +25,7 @@ export const NetworkBlocksPerDay = new Map<Environment, number>([
     ['test-beta', BaseSepoliaBlocksPerDay],
     ['alpha', BaseSepoliaBlocksPerDay],
     ['omega', BaseMainnetBlocksPerDay],
+    ['delta', BaseMainnetBlocksPerDay],
 ])
 
 // map of contract method to emitted event name

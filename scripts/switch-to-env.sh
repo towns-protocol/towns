@@ -27,7 +27,7 @@ switch_env() {
 
 # Switch to the specified environment
 case "$1" in
-    "gamma" | "alpha" | "omega")
+    "gamma" | "alpha" | "omega" | "delta")
         switch_env "$1"
         ;;
     "localhost")

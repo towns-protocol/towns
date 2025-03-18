@@ -19,6 +19,7 @@ export const networkMap = new Map<Environment, Networks>([
     ['development', 'local'],
     ['test-beta', 'base_sepolia'],
     ['alpha', 'base_sepolia'],
+    ['delta', 'base_sepolia'],
     ['omega', 'base'],
 ])
 
@@ -27,6 +28,7 @@ export const riverEnvMap = new Map<Environment, string>([
     ['test-beta', 'gamma'],
     ['alpha', 'alpha'],
     ['omega', 'omega'],
+    ['delta', 'delta'],
 ])
 
 export function createStaticProvider(
