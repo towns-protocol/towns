@@ -7,7 +7,7 @@ import { makeTestClient, waitFor } from '../testUtils'
 import { genShortId } from '../../id'
 
 describe('syncedStream', () => {
-    test('clientRefreshesStreamOnBadSyncCookie', async () => {
+    test('clientRefreshesStreamOnOldSyncCookie', async () => {
         const bobDeviceId = genShortId()
         const bob = await makeTestClient({ deviceId: bobDeviceId })
         await bob.initializeUser()
@@ -51,32 +51,41 @@ describe('syncedStream', () => {
 
         // wait for new stream to trigger bad_sync_cookie and get a fresh view sent back
         await waitFor(
-            () => bobStreamFresh.view.miniblockInfo!.max > bobStreamCached.view.miniblockInfo!.max,
+            () =>
+                bobStreamFresh.view.miniblockSpan!.toExclusive >
+                bobStreamCached.view.miniblockSpan!.toExclusive,
         )
 
         // Backfill the entire stream
-        while (!bobStreamFresh.view.miniblockInfo!.terminusReached) {
+        //let terminus =
+        while (!bobStreamFresh.view.terminus) {
             await bob2.scrollback(streamId)
         }
 
         // Once Bob's stream is fully backfilled, the sync cookie should match Alice's
         await waitFor(
-            () => aliceStream.view.miniblockInfo!.max === bobStreamFresh.view.miniblockInfo!.max,
+            () =>
+                aliceStream.view.miniblockSpan!.toExclusive ===
+                bobStreamFresh.view.miniblockSpan!.toExclusive,
         )
 
-        // check that the events are the same
-        const aliceEvents = aliceStream.view.timeline.map((e) => e.hashStr)
-        const bobEvents = bobStreamFresh.view.timeline.map((e) => e.hashStr)
-        await waitFor(() => aliceEvents.sort() === bobEvents.sort())
+        // check that the events are the same, minus miniblock headers since they don't get loaded from cache
+        const aliceEvents = aliceStream.view.timeline
+            .filter((e) => e.remoteEvent?.event.payload.case !== 'miniblockHeader')
+            .map((e) => e.hashStr)
+        const bobEvents = bobStreamFresh.view.timeline
+            .filter((e) => e.remoteEvent?.event.payload.case !== 'miniblockHeader')
+            .map((e) => e.hashStr)
+        expect(aliceEvents.sort()).toEqual(bobEvents.sort())
 
-        const bobEventCount = bobEvents.length
+        const bobEventCount = bobStreamFresh.view.timeline.length
         // Alice sends another 5 messages
         for (let i = 0; i < 5; i++) {
             await alice.sendMessage(streamId, `'hello again ${i}`)
         }
 
         // Wait for Bob to sync the new messages to verify that sync still works
-        await waitFor(() => bobStreamFresh.view.timeline.length === bobEventCount + 5)
+        await waitFor(() => bobStreamFresh.view.timeline.length >= bobEventCount + 5)
 
         await bob2.stopSync()
         await alice.stopSync()

@@ -106,7 +106,7 @@ describe('dmsTests', () => {
         const { streamId } = await bobsClient.createDMChannel(alicesClient.userId)
         await expect(bobsClient.waitForStream(streamId)).resolves.not.toThrow()
         // stop syncing and remove stream from cache
-        await bobsClient.streams.removeStreamFromSync(streamId)
+        await bobsClient.streamsService.removeStreamFromSync(streamId)
         const { streamId: streamId2 } = await bobsClient.createDMChannel(alicesClient.userId)
         expect(streamId).toEqual(streamId2)
     })
@@ -180,9 +180,10 @@ describe('dmsTests', () => {
         )
 
         await expect(
-            alicesClient.rpcClient.createStream({
+            alicesClient.streamsService.createStream({
                 events: [inceptionEvent, joinEvent, inviteEvent],
                 streamId: channelId,
+                metadata: {},
             }),
         ).rejects.toThrow(new RegExp('creator must be first party for dm channel'))
     })

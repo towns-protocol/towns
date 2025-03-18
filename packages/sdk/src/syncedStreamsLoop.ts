@@ -60,9 +60,10 @@ export const stateConstraints: Record<SyncState, Set<SyncState>> = {
 }
 
 export interface ISyncedStream {
+    streamId: string
     syncCookie?: SyncCookie
     stop(): void
-    initializeFromResponse(response: ParsedStreamResponse): Promise<void>
+    reInitialize(response: ParsedStreamResponse): Promise<void>
     appendEvents(
         events: ParsedEvent[],
         nextSyncCookie: SyncCookie,
@@ -821,7 +822,7 @@ export class SyncedStreamsLoop {
                         this.logDebug('initStream from sync reset', streamId, 'RESET')
                         const response = await unpackStream(syncStream, this.unpackEnvelopeOpts)
                         streamRecord.syncCookie = response.streamAndCookie.nextSyncCookie
-                        await streamRecord.stream.initializeFromResponse(response)
+                        await streamRecord.stream.reInitialize(response)
                     } else {
                         const streamAndCookie = await unpackStreamAndCookie(
                             syncStream,

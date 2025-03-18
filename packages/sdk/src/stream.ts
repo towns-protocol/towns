@@ -1,12 +1,20 @@
-import { ChannelMessage, MembershipOp, Snapshot, SyncCookie } from '@towns-protocol/proto'
+import { ChannelMessage, MembershipOp, SyncCookie } from '@towns-protocol/proto'
 import { DLogger } from '@towns-protocol/dlog'
 import EventEmitter from 'events'
 import TypedEmitter from 'typed-emitter'
 import { IStreamStateView, StreamStateView } from './streamStateView'
-import { LocalEventStatus, ParsedEvent, ParsedMiniblock, isLocalEvent } from './types'
+import {
+    ConfirmedEvent,
+    LocalEventStatus,
+    ParsedEvent,
+    ParsedMiniblock,
+    isLocalEvent,
+} from './types'
 import { StreamEvents } from './streamEvents'
 import { DecryptedContent } from './encryptedContentTypes'
 import { DecryptionSessionError } from '@towns-protocol/encryption'
+import { LoadedStream2 } from './streamsService'
+import { MiniblockSpan } from './streamsServiceStore'
 
 export class Stream extends (EventEmitter as new () => TypedEmitter<StreamEvents>) {
     readonly clientEmitter: TypedEmitter<StreamEvents>
@@ -44,12 +52,7 @@ export class Stream extends (EventEmitter as new () => TypedEmitter<StreamEvents
      * on the new stream event and still access this object through Client.streams.
      */
     initialize(
-        nextSyncCookie: SyncCookie,
-        minipoolEvents: ParsedEvent[],
-        snapshot: Snapshot,
-        miniblocks: ParsedMiniblock[],
-        prependedMiniblocks: ParsedMiniblock[],
-        prevSnapshotMiniblockNum: bigint,
+        loadedStream: LoadedStream2,
         cleartexts: Record<string, Uint8Array | string> | undefined,
     ): void {
         // grab any local events from the previous view that haven't been processed
@@ -57,17 +60,7 @@ export class Stream extends (EventEmitter as new () => TypedEmitter<StreamEvents
             .filter(isLocalEvent)
             .filter((e) => e.hashStr.startsWith('~'))
         this._view = new StreamStateView(this.userId, this.streamId)
-        this._view.initialize(
-            nextSyncCookie,
-            minipoolEvents,
-            snapshot,
-            miniblocks,
-            prependedMiniblocks,
-            prevSnapshotMiniblockNum,
-            cleartexts,
-            localEvents,
-            this,
-        )
+        this._view.initialize(loadedStream, cleartexts, localEvents, this)
     }
 
     stop(): void {
@@ -83,12 +76,22 @@ export class Stream extends (EventEmitter as new () => TypedEmitter<StreamEvents
         this._view.appendEvents(events, nextSyncCookie, cleartexts, this)
     }
 
+    prependConfirmedEvents(
+        miniblockSpan: MiniblockSpan,
+        events: ConfirmedEvent[],
+        cleartexts: Record<string, Uint8Array | string> | undefined,
+        terminus: boolean,
+    ) {
+        this._view.prependConfirmedEvents(miniblockSpan, events, cleartexts, terminus, this, this)
+    }
+
     prependEvents(
+        miniblockSpan: MiniblockSpan,
         miniblocks: ParsedMiniblock[],
         cleartexts: Record<string, Uint8Array | string> | undefined,
         terminus: boolean,
     ) {
-        this._view.prependEvents(miniblocks, cleartexts, terminus, this, this)
+        this._view.prependEvents(miniblockSpan, miniblocks, cleartexts, terminus, this, this)
     }
 
     appendLocalEvent(channelMessage: ChannelMessage, status: LocalEventStatus) {

@@ -13,8 +13,7 @@ import { check, dlog, dlogError, DLogger } from '@towns-protocol/dlog'
 import { Stream } from './stream'
 import { ClientInitStatus } from './types'
 import pLimit from 'p-limit'
-import { IPersistenceStore, LoadedStream } from './persistenceStore'
-
+import { LoadedStream2, StreamsService } from './streamsService'
 interface StreamSyncItem {
     streamId: string
     priority: number
@@ -25,7 +24,7 @@ interface SyncedStreamsExtensionDelegate {
     initStream(
         streamId: string,
         allowGetStream: boolean,
-        persistedData?: LoadedStream,
+        persistedData?: LoadedStream2,
     ): Promise<Stream>
     emitClientInitStatus: (status: ClientInitStatus) => void
 }
@@ -68,7 +67,7 @@ export class SyncedStreamsExtension {
     constructor(
         highPriorityStreamIds: string[] | undefined,
         delegate: SyncedStreamsExtensionDelegate,
-        private persistenceStore: IPersistenceStore,
+        private streamsService: StreamsService,
         private logId: string,
     ) {
         this.log = dlog('csb:syncedStreamsExtension', { defaultEnabled: true }).extend(logId)
@@ -152,13 +151,15 @@ export class SyncedStreamsExtension {
     }
 
     private async loadStreamsFromPersistence() {
-        this.log('####loadingStreamsFromPersistence')
+        const before = performance.now()
+        await this.streamsService.openDb()
+        this.log('####Performance: opendb', performance.now() - before)
         const now = performance.now()
         // aellis it seems like it would be faster to pull the high priority streams first
         // then load the rest of the streams after, but it's not!
         // for 300ish streams,loading the rest of the streams after the application has started
         // going takes 30-50 seconds,doing it this way takes 4 seconds
-        const loadedStreams = await this.persistenceStore.loadStreams([
+        const loadedStreams = await this.streamsService.loadStreams([
             ...Array.from(this.highPriorityIds),
             ...Array.from(this.streamIds),
         ])
@@ -226,7 +227,7 @@ export class SyncedStreamsExtension {
 
     private async loadStreamFromPersistence(
         streamId: string,
-        persistedData: LoadedStream | undefined,
+        persistedData: LoadedStream2 | undefined,
     ) {
         const allowGetStream = this.highPriorityIds.has(streamId)
         try {

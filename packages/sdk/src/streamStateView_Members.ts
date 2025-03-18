@@ -12,7 +12,6 @@ import TypedEmitter from 'typed-emitter'
 import { StreamEncryptionEvents, StreamStateEvents } from './streamEvents'
 import {
     ConfirmedTimelineEvent,
-    ParsedEvent,
     RemoteTimelineEvent,
     StreamTimelineEvent,
     getEventSignature,
@@ -25,7 +24,7 @@ import { StreamStateView_Members_Solicitations } from './streamStateView_Members
 import { bin_toHexString, check, dlog } from '@towns-protocol/dlog'
 import { DecryptedContent } from './encryptedContentTypes'
 import { StreamStateView_MemberMetadata } from './streamStateView_MemberMetadata'
-import { KeySolicitationContent } from '@towns-protocol/encryption'
+import { EventSignatureBundle, KeySolicitationContent } from '@towns-protocol/encryption'
 import { makeParsedEvent } from './sign'
 import { StreamStateView_AbstractContent } from './streamStateView_AbstractContent'
 import { utils } from 'ethers'
@@ -91,8 +90,8 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
 
     // initialization
     applySnapshot(
-        event: ParsedEvent,
         snapshot: Snapshot,
+        snapshotSignature: EventSignatureBundle,
         cleartexts: Record<string, Uint8Array | string> | undefined,
         encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
     ): void {
@@ -165,11 +164,10 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
             cleartexts,
             encryptionEmitter,
         )
-        const sigBundle = getEventSignature(event)
         this.solicitHelper.initSolicitations(
-            event.hashStr,
+            bin_toHexString(snapshotSignature.hash),
             Array.from(this.joined.values()),
-            sigBundle,
+            snapshotSignature,
             encryptionEmitter,
         )
 

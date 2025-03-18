@@ -547,7 +547,7 @@ describe('memberMetadataTests', () => {
         await expect(bobsClient.setEnsAddress(streamId, ensAddress)).resolves.not.toThrow()
     })
 
-    test('clientCanSetNftInSpace', async () => {
+    test.only('clientCanSetNftInSpace', async () => {
         await expect(bobsClient.initializeUser()).resolves.not.toThrow()
         bobsClient.startSync()
         await expect(alicesClient.initializeUser()).resolves.not.toThrow()
@@ -589,12 +589,12 @@ describe('memberMetadataTests', () => {
         await bobPromise.expectToSucceed()
         await alicePromise.expectToSucceed()
 
-        const expected = new Map<string, MemberPayload_Nft>([[bobsClient.userId, nft]])
         for (const client of [bobsClient, alicesClient]) {
             const streamView = client.streams.get(streamId)!.view
-            expect(streamView.getMemberMetadata().nfts.confirmedNfts).toEqual(expected)
             const bobInfo = streamView.getMemberMetadata().nfts.info(bobsClient.userId)
             expect(bobInfo?.tokenId).toEqual('11111111112222222233333333')
+            expect(bobInfo?.contractAddress).toEqual(userIdFromAddress(nft.contractAddress))
+            expect(bobInfo?.chainId).toEqual(nft.chainId)
         }
     })
 

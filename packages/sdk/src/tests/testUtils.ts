@@ -19,12 +19,7 @@ import {
 import { Entitlements } from '../sync-agent/entitlements/entitlements'
 import { IStreamStateView } from '../streamStateView'
 import { Client, ClientOptions } from '../client'
-import {
-    makeBaseChainConfig,
-    makeRiverChainConfig,
-    makeRiverConfig,
-    useLegacySpaces,
-} from '../riverConfig'
+import { makeBaseChainConfig, makeRiverConfig, useLegacySpaces } from '../riverConfig'
 import {
     genId,
     makeSpaceStreamId,
@@ -94,16 +89,23 @@ import { isDefined } from '../check'
 
 const log = dlog('csb:test:util')
 
+let _config: ReturnType<typeof makeRiverConfig>
+const getConfig = () => {
+    if (!_config) {
+        _config = makeRiverConfig()
+    }
+    return _config
+}
+
 const initTestUrls = async (): Promise<{
     testUrls: string[]
     refreshNodeUrl?: () => Promise<string>
 }> => {
-    const config = makeRiverChainConfig()
-    const provider = new LocalhostWeb3Provider(config.rpcUrl)
-    const riverRegistry = createRiverRegistry(provider, config.chainConfig)
+    const provider = new LocalhostWeb3Provider(getConfig().river.rpcUrl)
+    const riverRegistry = createRiverRegistry(provider, getConfig().river.chainConfig)
     const urls = await riverRegistry.getOperationalNodeUrls()
     const refreshNodeUrl = () => riverRegistry.getOperationalNodeUrls()
-    log('initTestUrls, RIVER_TEST_CONNECT=', config, 'testUrls=', urls)
+    log('initTestUrls, RIVER_TEST_CONNECT=', getConfig(), 'testUrls=', urls)
     return { testUrls: urls.split(','), refreshNodeUrl }
 }
 
@@ -269,10 +271,11 @@ export interface TestClient extends Client {
     signerContext: SignerContextWithWallet
 }
 
-export interface TestClientOpts extends ClientOptions {
+export interface TestClientOpts extends Omit<ClientOptions, 'streamsServiceStoreName'> {
     context?: SignerContextWithWallet
     entitlementsDelegate?: EntitlementsDelegate
     deviceId?: string
+    streamsServiceStoreName?: string
 }
 
 export const cloneTestClient = async (client: TestClient): Promise<TestClient> => {
@@ -292,14 +295,17 @@ export const makeTestClient = async (opts?: TestClientOpts): Promise<TestClient>
     const deviceId = opts?.deviceId ? `-${opts.deviceId}` : `-${genId(5)}`
     const userId = userIdFromAddress(context.creatorAddress)
     const dbName = `database-${userId}${deviceId}`
-    const persistenceDbName = `persistence-${userId}${deviceId}`
+    const persistenceStoreName = opts?.persistenceStoreName ?? `persistence-${userId}${deviceId}`
+    const streamsServiceStoreName =
+        opts?.streamsServiceStoreName ?? `streamsService-${userId}${deviceId}`
 
     // create a new client with store(s)
     const cryptoStore = RiverDbManager.getCryptoDb(userId, dbName)
     const rpcClient = await makeTestRpcClient()
     const client = new Client(context, rpcClient, cryptoStore, entitlementsDelegate, {
         ...opts,
-        persistenceStoreName: persistenceDbName,
+        streamsServiceStoreName,
+        persistenceStoreName,
     }) as TestClient
     client.wallet = context.wallet
     client.deviceId = deviceId
@@ -336,7 +342,7 @@ export async function setupWalletsAndContexts() {
     const carolSpaceDapp = createSpaceDapp(carolProvider, baseConfig.chainConfig)
 
     // create a user
-    const riverConfig = makeRiverConfig()
+    const riverConfig = getConfig()
     const [alice, bob, carol] = await Promise.all([
         makeTestClient({
             context: alicesContext,
@@ -707,7 +713,7 @@ export async function expectUserCanJoin(
     await client.initializeUser({ spaceId })
     client.startSync()
 
-    await waitFor(() => expect(client.streams.syncState).toBe(SyncState.Syncing))
+    await waitFor(() => expect(client.streamsService.syncState).toBe(SyncState.Syncing))
 
     await expect(client.joinStream(spaceId)).resolves.not.toThrow()
     await expect(client.joinStream(channelId)).resolves.not.toThrow()

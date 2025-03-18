@@ -10,6 +10,7 @@ import {
 } from '@towns-protocol/proto'
 import TypedEmitter from 'typed-emitter'
 import {
+    ConfirmedEvent,
     ConfirmedTimelineEvent,
     LocalEventStatus,
     LocalTimelineEvent,
@@ -51,11 +52,14 @@ import { StreamStateView_MemberMetadata } from './streamStateView_MemberMetadata
 import { StreamStateView_ChannelMetadata } from './streamStateView_ChannelMetadata'
 import { StreamEvents, StreamEncryptionEvents, StreamStateEvents } from './streamEvents'
 import isEqual from 'lodash/isEqual'
-import { DecryptionSessionError } from '@towns-protocol/encryption'
+import { DecryptionSessionError, EventSignatureBundle } from '@towns-protocol/encryption'
 import { migrateSnapshot } from './migrations/migrateSnapshot'
+import { LoadedStream2 } from './streamsService'
+import { MiniblockSpan } from './streamsServiceStore'
 
 const log = dlog('csb:streams')
 const logError = dlogError('csb:streams:error')
+const logWarning = dlog('csb:streams:warning', { defaultEnabled: true })
 
 // it's very important that the Stream is the emitter for all events
 // for any mutations, go through the stream
@@ -68,11 +72,11 @@ export interface IStreamStateView {
     isInitialized: boolean
     prevMiniblockHash?: Uint8Array
     lastEventNum: bigint
-    prevSnapshotMiniblockNum: bigint
-    miniblockInfo?: { max: bigint; min: bigint; terminusReached: boolean }
     syncCookie?: SyncCookie
     saveSnapshots?: boolean
     membershipContent: StreamStateView_Members
+    miniblockSpan?: MiniblockSpan
+    terminus?: boolean
     get spaceContent(): StreamStateView_Space
     get channelContent(): StreamStateView_Channel
     get dmChannelContent(): StreamStateView_DMChannel
@@ -100,10 +104,10 @@ export class StreamStateView implements IStreamStateView {
     isInitialized = false
     prevMiniblockHash?: Uint8Array
     lastEventNum = 0n
-    prevSnapshotMiniblockNum: bigint
-    miniblockInfo?: { max: bigint; min: bigint; terminusReached: boolean }
     syncCookie?: SyncCookie
-    saveSnapshots?: boolean
+    saveSnapshots?: boolean // todo: remove
+    miniblockSpan?: MiniblockSpan
+    terminus?: boolean
     private _snapshot?: Snapshot
     snapshot(): Snapshot | undefined {
         check(this.saveSnapshots === true, 'snapshots are not enabled')
@@ -223,13 +227,12 @@ export class StreamStateView implements IStreamStateView {
             throw new Error(`Stream doesn't have a content kind ${streamId}`)
         }
 
-        this.prevSnapshotMiniblockNum = 0n
         this.membershipContent = new StreamStateView_Members(streamId)
     }
 
     private applySnapshot(
-        event: ParsedEvent,
         inSnapshot: Snapshot,
+        snapshotSignature: EventSignatureBundle,
         cleartexts: Record<string, Uint8Array | string> | undefined,
         encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
     ) {
@@ -296,7 +299,12 @@ export class StreamStateView implements IStreamStateView {
             default:
                 logNever(snapshot.content)
         }
-        this.membershipContent.applySnapshot(event, snapshot, cleartexts, encryptionEmitter)
+        this.membershipContent.applySnapshot(
+            snapshot,
+            snapshotSignature,
+            cleartexts,
+            encryptionEmitter,
+        )
     }
 
     private appendStreamAndCookie(
@@ -363,16 +371,10 @@ export class StreamStateView implements IStreamStateView {
         try {
             switch (payload.case) {
                 case 'miniblockHeader':
-                    check(
-                        (this.miniblockInfo?.max ?? -1n) < payload.value.miniblockNum,
-                        `Miniblock number out of order ${payload.value.miniblockNum} > ${this.miniblockInfo?.max}`,
-                        Err.STREAM_BAD_EVENT,
-                    )
                     if (this.saveSnapshots && payload.value.snapshot) {
                         this._snapshot = payload.value.snapshot
                     }
                     this.prevMiniblockHash = event.hash
-                    this.updateMiniblockInfo(payload.value, { max: payload.value.miniblockNum })
                     timelineEvent.confirmedEventNum =
                         payload.value.eventNumOffset + BigInt(payload.value.eventHashes.length)
                     timelineEvent.miniblockNum = payload.value.miniblockNum
@@ -427,18 +429,33 @@ export class StreamStateView implements IStreamStateView {
             event.miniblockNum = header.miniblockNum
             event.confirmedEventNum = header.eventNumOffset + BigInt(i)
             check(isConfirmedEvent(event), `Event is not confirmed ${eventId}`)
-            switch (event.remoteEvent.event.payload.case) {
-                case 'memberPayload':
-                    this.membershipContent.onConfirmedEvent(event, stateEmitter, encryptionEmitter)
-                    break
-                case undefined:
-                    break
-                default:
-                    this.getContent().onConfirmedEvent(event, stateEmitter, encryptionEmitter)
-            }
+            console.log(
+                'syn####processMiniblockHeader: processConfirmedEvent',
+                this.streamId,
+                eventId,
+                event.confirmedEventNum,
+                event.miniblockNum,
+            )
+            this.processConfirmedEvent(event, stateEmitter, encryptionEmitter)
             confirmed.push(event)
         }
         return confirmed
+    }
+
+    private processConfirmedEvent(
+        event: ConfirmedTimelineEvent,
+        stateEmitter: TypedEmitter<StreamStateEvents> | undefined,
+        encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
+    ): void {
+        switch (event.remoteEvent.event.payload.case) {
+            case 'memberPayload':
+                this.membershipContent.onConfirmedEvent(event, stateEmitter, encryptionEmitter)
+                break
+            case undefined:
+                break
+            default:
+                this.getContent().onConfirmedEvent(event, stateEmitter, encryptionEmitter)
+        }
     }
 
     private processPrependedEvent(
@@ -459,8 +476,6 @@ export class StreamStateView implements IStreamStateView {
         try {
             switch (payload.case) {
                 case 'miniblockHeader':
-                    this.updateMiniblockInfo(payload.value, { min: payload.value.miniblockNum })
-                    this.prevSnapshotMiniblockNum = payload.value.prevSnapshotMiniblockNum
                     break
                 case 'memberPayload':
                     this.membershipContent.prependEvent(
@@ -489,29 +504,6 @@ export class StreamStateView implements IStreamStateView {
                 `StreamStateView::Error prepending stream ${this.streamId} event ${event.hashStr}`,
                 e,
             )
-        }
-    }
-
-    private updateMiniblockInfo(value: MiniblockHeader, update: { max?: bigint; min?: bigint }) {
-        if (!this.miniblockInfo) {
-            this.miniblockInfo = {
-                max: value.miniblockNum,
-                min: value.miniblockNum,
-                terminusReached: value.miniblockNum === 0n,
-            }
-            return
-        }
-
-        if (update.max && update.max > this.miniblockInfo.max) {
-            this.miniblockInfo.max = update.max
-        }
-
-        if (update.min && update.min < this.miniblockInfo.min) {
-            this.miniblockInfo.min = update.min
-        }
-
-        if (this.miniblockInfo.min === 0n || this.miniblockInfo.max === 0n) {
-            this.miniblockInfo.terminusReached = true
         }
     }
 
@@ -558,84 +550,49 @@ export class StreamStateView implements IStreamStateView {
     }
 
     initialize(
-        nextSyncCookie: SyncCookie,
-        minipoolEvents: ParsedEvent[],
-        snapshot: Snapshot,
-        miniblocks: ParsedMiniblock[],
-        prependedMiniblocks: ParsedMiniblock[],
-        prevSnapshotMiniblockNum: bigint,
+        loadedStream: LoadedStream2,
         cleartexts: Record<string, Uint8Array | string> | undefined,
         localEvents: LocalTimelineEvent[],
         emitter: TypedEmitter<StreamEvents> | undefined,
     ): void {
-        check(miniblocks.length > 0, `Stream has no miniblocks ${this.streamId}`, Err.STREAM_EMPTY)
         // parse the blocks
-        const miniblockHeaderEvent = miniblocks[0].events.at(-1)
-        check(
-            isDefined(miniblockHeaderEvent),
-            `Miniblock header event not found ${this.streamId}`,
-            Err.STREAM_EMPTY,
+        this.miniblockSpan = { ...loadedStream.manifest.miniblockSpan }
+        this.terminus = loadedStream.manifest.terminus
+        // initialize from snapshot data, this gets all memberships and channel data, etc
+        this.applySnapshot(
+            loadedStream.snapshot,
+            loadedStream.snapshotSignature,
+            cleartexts,
+            emitter,
         )
 
-        // initialize from snapshot data, this gets all memberships and channel data, etc
-        this.applySnapshot(miniblockHeaderEvent, snapshot, cleartexts, emitter)
-        // initialize from miniblocks, the first minblock is the snapshot block, it's events are accounted for
-        const block0Events = miniblocks[0].events.map((parsedEvent, i) => {
-            const eventNum = miniblocks[0].header.eventNumOffset + BigInt(i)
+        const confirmedEvents = loadedStream.timelineEvents.map((e) => {
             return makeRemoteTimelineEvent({
-                parsedEvent,
-                eventNum,
-                miniblockNum: miniblocks[0].header.miniblockNum,
-                confirmedEventNum: eventNum,
+                parsedEvent: e.event,
+                eventNum: e.eventNum,
+                miniblockNum: e.miniblockNum,
+                confirmedEventNum: e.eventNum,
             })
         })
-        // the rest need to be added to the timeline
-        const rest = miniblocks.slice(1).flatMap((mb) =>
-            mb.events.map((parsedEvent, i) => {
-                const eventNum = mb.header.eventNumOffset + BigInt(i)
-                return makeRemoteTimelineEvent({
-                    parsedEvent,
-                    eventNum,
-                    miniblockNum: mb.header.miniblockNum,
-                    confirmedEventNum: eventNum,
-                })
-            }),
-        )
-        // initialize our event hashes
-        check(block0Events.length > 0)
+
         // prepend the snapshotted block in reverse order
-        this.timeline.push(
-            ...block0Events.filter((e) => e.remoteEvent.event.payload.case !== 'miniblockHeader'),
-        )
-        for (let i = block0Events.length - 1; i >= 0; i--) {
-            const event = block0Events[i]
+        this.timeline.push(...confirmedEvents)
+        for (let i = confirmedEvents.length - 1; i >= 0; i--) {
+            const event = confirmedEvents[i]
             this.processPrependedEvent(event, cleartexts?.[event.hashStr], emitter, undefined)
         }
-        // append the new block events
-        this.timeline.push(
-            ...rest.filter((e) => e.remoteEvent.event.payload.case !== 'miniblockHeader'),
-        )
-        for (const event of rest) {
-            this.processAppendedEvent(event, cleartexts?.[event.hashStr], emitter, undefined)
-        }
         // initialize the lastEventNum
-        const lastBlock = miniblocks[miniblocks.length - 1]
-        this.lastEventNum = lastBlock.header.eventNumOffset + BigInt(lastBlock.events.length)
+        this.lastEventNum = loadedStream.manifest.lastEventNum
         // and the prev miniblock has (if there were more than 1 miniblocks, this should already be set)
-        this.prevMiniblockHash = lastBlock.hash
+        this.prevMiniblockHash = loadedStream.manifest.syncCookie.prevMiniblockHash
         // append the minipool events
-        this.appendStreamAndCookie(nextSyncCookie, minipoolEvents, cleartexts, emitter, undefined)
-        this.prevSnapshotMiniblockNum = prevSnapshotMiniblockNum
-
-        if (prependedMiniblocks.length > 0) {
-            this.prependEvents(
-                prependedMiniblocks,
-                cleartexts,
-                prependedMiniblocks[0].header.miniblockNum === 0n,
-                emitter,
-                undefined,
-            )
-        }
+        this.appendStreamAndCookie(
+            loadedStream.manifest.syncCookie,
+            loadedStream.manifest.minipool,
+            cleartexts,
+            emitter,
+            undefined,
+        )
 
         for (const localEvent of localEvents) {
             localEvent.eventNum = this.lastEventNum++
@@ -655,6 +612,21 @@ export class StreamStateView implements IStreamStateView {
         cleartexts: Record<string, Uint8Array | string> | undefined,
         emitter: TypedEmitter<StreamEvents>,
     ) {
+        check(
+            isDefined(this.miniblockSpan),
+            'StreamStateView::appendEvents: miniblockSpan is not set',
+        )
+        if (nextSyncCookie.minipoolGen < this.miniblockSpan.toExclusive) {
+            logError(
+                'StreamStateView::appendEvents: miniblockSpan is before the current miniblockSpan, ignoring',
+                {
+                    minipoolGen: nextSyncCookie.minipoolGen,
+                    currentMiniblockSpan: this.miniblockSpan,
+                },
+            )
+            return
+        }
+        this.miniblockSpan.toExclusive = nextSyncCookie.minipoolGen
         const { appended, updated, confirmed } = this.appendStreamAndCookie(
             nextSyncCookie,
             events,
@@ -669,7 +641,33 @@ export class StreamStateView implements IStreamStateView {
         })
     }
 
+    prependConfirmedEvents(
+        miniblockSpan: MiniblockSpan,
+        events: ConfirmedEvent[],
+        cleartexts: Record<string, Uint8Array | string> | undefined,
+        terminus: boolean,
+        encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
+        stateEmitter: TypedEmitter<StreamStateEvents> | undefined,
+    ) {
+        const prependedFull = events.map((e) =>
+            makeRemoteTimelineEvent({
+                parsedEvent: e.event,
+                eventNum: e.eventNum,
+                miniblockNum: e.miniblockNum,
+            }),
+        )
+        this._prependEvents(
+            miniblockSpan,
+            prependedFull,
+            cleartexts,
+            terminus,
+            encryptionEmitter,
+            stateEmitter,
+        )
+    }
+
     prependEvents(
+        miniblockSpan: MiniblockSpan,
         miniblocks: ParsedMiniblock[],
         cleartexts: Record<string, Uint8Array | string> | undefined,
         terminus: boolean,
@@ -686,7 +684,49 @@ export class StreamStateView implements IStreamStateView {
                 }),
             ),
         )
+        this._prependEvents(
+            miniblockSpan,
+            prependedFull,
+            cleartexts,
+            terminus,
+            encryptionEmitter,
+            stateEmitter,
+        )
+    }
 
+    private _prependEvents(
+        miniblockSpan: MiniblockSpan,
+        prependedFull: RemoteTimelineEvent[],
+        cleartexts: Record<string, Uint8Array | string> | undefined,
+        terminus: boolean,
+        encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
+        stateEmitter: TypedEmitter<StreamStateEvents> | undefined,
+    ) {
+        check(
+            isDefined(this.miniblockSpan),
+            'StreamStateView::prependConfirmedEvents: miniblockSpan is not set',
+        )
+        if (miniblockSpan.fromInclusive >= this.miniblockSpan.fromInclusive) {
+            logError(
+                'StreamStateView::prependConfirmedEvents: miniblockSpan is after the current miniblockSpan',
+                {
+                    miniblockSpan,
+                    currentMiniblockSpan: this.miniblockSpan,
+                },
+            )
+            return
+        }
+        if (miniblockSpan.toExclusive > this.miniblockSpan.fromInclusive) {
+            logWarning(
+                'StreamStateView::prependConfirmedEvents: miniblockSpan overlapps the current miniblockSpan',
+                {
+                    miniblockSpan,
+                    currentMiniblockSpan: this.miniblockSpan,
+                },
+            )
+        }
+        this.miniblockSpan.fromInclusive = miniblockSpan.fromInclusive
+        this.terminus = terminus
         // aellis 11/23 I don't know why we're getting dupes on scrollback,
         // but this prevents us from throwing an error
         const prepended = prependedFull.filter((e) => !this.events.has(e.hashStr))
@@ -710,10 +750,6 @@ export class StreamStateView implements IStreamStateView {
                 encryptionEmitter,
                 stateEmitter,
             )
-        }
-
-        if (this.miniblockInfo && terminus) {
-            this.miniblockInfo.terminusReached = true
         }
 
         stateEmitter?.emit('streamUpdated', this.streamId, this.contentKind, { prepended })

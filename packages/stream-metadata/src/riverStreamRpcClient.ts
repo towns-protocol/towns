@@ -13,6 +13,7 @@ import { filetypemime } from 'magic-bytes.js'
 import { FastifyBaseLogger } from 'fastify'
 import { LRUCache } from 'lru-cache'
 import { errors } from 'ethers'
+import { toLoadedStreamFromResponse } from '@towns-protocol/sdk/dist/streamsService'
 
 import { MediaContent } from './types'
 import { getNodeForStream } from './streamRegistry'
@@ -72,18 +73,10 @@ function streamViewFromUnpackedResponse(
 	streamId: string | Uint8Array,
 	unpackedResponse: ParsedStreamResponse,
 ): StreamStateView {
-	const streamView = new StreamStateView('userId', streamIdAsString(streamId))
-	streamView.initialize(
-		unpackedResponse.streamAndCookie.nextSyncCookie,
-		unpackedResponse.streamAndCookie.events,
-		unpackedResponse.snapshot,
-		unpackedResponse.streamAndCookie.miniblocks,
-		[],
-		unpackedResponse.prevSnapshotMiniblockNum,
-		undefined,
-		[],
-		undefined,
-	)
+	const streamIdStr = streamIdAsString(streamId)
+	const streamView = new StreamStateView('userId', streamIdStr)
+	const loadedStream = toLoadedStreamFromResponse(streamIdStr, unpackedResponse)
+	streamView.initialize(loadedStream, undefined, [], undefined)
 	return streamView
 }
 

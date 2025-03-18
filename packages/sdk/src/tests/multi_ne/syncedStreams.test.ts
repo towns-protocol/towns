@@ -3,10 +3,14 @@
  */
 
 import { makeEvent, unpackStream } from '../../sign'
-import { SyncedStreams } from '../../syncedStreams'
 import { SyncState, stateConstraints } from '../../syncedStreamsLoop'
 import { makeDonePromise, makeRandomUserContext, makeTestRpcClient, waitFor } from '../testUtils'
-import { makeUserInboxStreamId, streamIdToBytes, userIdFromAddress } from '../../id'
+import {
+    makeUserInboxStreamId,
+    streamIdAsString,
+    streamIdToBytes,
+    userIdFromAddress,
+} from '../../id'
 import { make_UserInboxPayload_Ack, make_UserInboxPayload_Inception } from '../../types'
 import { dlog, shortenHexString } from '@towns-protocol/dlog'
 import TypedEmitter from 'typed-emitter'
@@ -16,6 +20,7 @@ import { SyncedStream } from '../../syncedStream'
 import { StubPersistenceStore } from '../../persistenceStore'
 import { Envelope, StreamEvent, PlainMessage } from '@towns-protocol/proto'
 import { nanoid } from 'nanoid'
+import { StreamsService, toLoadedStreamFromResponse } from '../../streamsService'
 
 const log = dlog('csb:test:syncedStreams')
 
@@ -56,12 +61,21 @@ describe('syncStreams', () => {
         const rpcClient = await makeTestRpcClient()
         const alicesContext = await makeRandomUserContext()
         const alicesUserId = userIdFromAddress(alicesContext.creatorAddress)
-        const alicesSyncedStreams = new SyncedStreams(
-            alicesUserId,
+        // const alicesSyncedStreams = new SyncedStreams(
+        //     alicesUserId,
+        //     rpcClient,
+        //     mockClientEmitter,
+        //     undefined,
+        //     shortenHexString(alicesUserId),
+        // )
+        const alicesSyncedStreams = new StreamsService(
             rpcClient,
             mockClientEmitter,
-            undefined,
-            shortenHexString(alicesUserId),
+            stubPersistenceStore,
+            {
+                dbName: alicesUserId,
+                logId: shortenHexString(alicesUserId),
+            },
         )
 
         // some helper functions
@@ -71,7 +85,10 @@ describe('syncStreams', () => {
                 streamId,
             })
             const response = await unpackStream(streamResponse.stream, undefined)
-            return response
+            return {
+                response,
+                loadedStream: toLoadedStreamFromResponse(streamIdAsString(streamId), response),
+            }
         }
 
         // user inbox stream setup
@@ -92,16 +109,12 @@ describe('syncStreams', () => {
             log,
             stubPersistenceStore,
         )
-        await userInboxStream.initializeFromResponse(userInboxStreamResponse)
+        await userInboxStream.initializeFromResponse(userInboxStreamResponse.loadedStream)
 
-        alicesSyncedStreams.startSyncStreams()
+        alicesSyncedStreams.startSyncStreams([])
         await done1.promise
 
-        alicesSyncedStreams.set(alicesUserInboxStreamIdStr, userInboxStream)
-        alicesSyncedStreams.addStreamToSync(
-            alicesUserInboxStreamIdStr,
-            userInboxStream.view.syncCookie!,
-        )
+        alicesSyncedStreams.syncStream(userInboxStream, userInboxStream.view.syncCookie!)
 
         // some helper functions
         const addEvent = async (payload: PlainMessage<StreamEvent>['payload']) => {
@@ -110,7 +123,7 @@ describe('syncStreams', () => {
                 event: await makeEvent(
                     alicesContext,
                     payload,
-                    userInboxStreamResponse.streamAndCookie.miniblocks[0].hash,
+                    userInboxStreamResponse.response.streamAndCookie.miniblocks[0].hash,
                 ),
             })
         }
@@ -203,7 +216,7 @@ describe('syncStreams', () => {
             ).toBeDefined(),
         )
 
-        await alicesSyncedStreams.stopSync()
+        await alicesSyncedStreams.stop()
     })
 })
 //     /***** WARNING: This is a MANUAL test case ***** */

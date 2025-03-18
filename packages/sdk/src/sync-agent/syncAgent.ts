@@ -24,7 +24,7 @@ import type { EncryptionDeviceInitOpts } from '@towns-protocol/encryption'
 import { Gdms, type GdmsModel } from './gdms/gdms'
 import { Dms, DmsModel } from './dms/dms'
 import { UnpackEnvelopeOpts } from '../sign'
-import { dlog, DLogger, shortenHexString } from '@towns-protocol/dlog'
+import { dlog, DLogger, isTestEnv, shortenHexString } from '@towns-protocol/dlog'
 
 export interface SyncAgentConfig {
     context: SignerContext
@@ -38,6 +38,7 @@ export interface SyncAgentConfig {
     encryptionDevice?: EncryptionDeviceInitOpts
     onTokenExpired?: () => void
     unpackEnvelopeOpts?: UnpackEnvelopeOpts
+    streamsServiceStoreName?: string
     logId?: string
 }
 
@@ -86,6 +87,7 @@ export class SyncAgent {
             cryptoStore: RiverDbManager.getCryptoDb(this.userId, this.cryptoDbName()),
             entitlementsDelegate: new Entitlements(this.config.riverConfig, spaceDapp),
             opts: {
+                streamsServiceStoreName: this.streamsServiceStoreName(),
                 persistenceStoreName:
                     config.disablePersistenceStore !== true ? this.persistenceDbName() : undefined,
                 logNamespaceFilter: undefined,
@@ -146,6 +148,13 @@ export class SyncAgent {
 
     cryptoDbName(): string {
         return this.dbName('database')
+    }
+
+    streamsServiceStoreName(): string {
+        if (this.config.streamsServiceStoreName) {
+            return this.config.streamsServiceStoreName
+        }
+        return this.dbName('streamsService')
     }
 
     dbName(db: string): string {

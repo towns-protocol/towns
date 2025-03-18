@@ -41,6 +41,7 @@
         "ethereum-cryptography": "^1.2.0",
         "ethers": "^5.7.2",
         "lodash": "^4.17.21",
+        "lru-cache": "^11.0.1",
         "nanoid": "^4.0.0",
         "p-limit": "^6.1.0",
         "vitest": "3.0.5"

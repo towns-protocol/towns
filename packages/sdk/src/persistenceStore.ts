@@ -3,6 +3,7 @@ import {
     PersistedSyncedStream,
     PersistedSyncedStreamSchema,
     Snapshot,
+    StreamEvent,
 } from '@towns-protocol/proto'
 import Dexie, { Table } from 'dexie'
 import { ParsedMiniblock } from './types'
@@ -416,17 +417,24 @@ function hasTopLevelRenderableEvent(miniblocks: ParsedMiniblock[]): boolean {
 
 function topLevelRenderableEventInMiniblock(miniblock: ParsedMiniblock): boolean {
     for (const e of miniblock.events) {
-        switch (e.event.payload.case) {
-            case 'channelPayload':
-            case 'gdmChannelPayload':
-            case 'dmChannelPayload':
-                switch (e.event.payload.value.content.case) {
-                    case 'message':
-                        if (!e.event.payload.value.content.value.refEventId) {
-                            return true
-                        }
-                }
+        if (isTopLevelRenderableEvent(e.event)) {
+            return true
         }
+    }
+    return false
+}
+
+export function isTopLevelRenderableEvent(event: StreamEvent): boolean {
+    switch (event.payload.case) {
+        case 'channelPayload':
+        case 'gdmChannelPayload':
+        case 'dmChannelPayload':
+            switch (event.payload.value.content.case) {
+                case 'message':
+                    if (!event.payload.value.content.value.refEventId) {
+                        return true
+                    }
+            }
     }
     return false
 }

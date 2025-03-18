@@ -132,7 +132,7 @@ export class StressClient {
             clientIndex,
             userId,
             logId: this.logId,
-            rpcUrl: this.streamsClient.rpcClient.url,
+            rpcUrl: this.streamsClient.url,
         })
     }
 

@@ -301,7 +301,7 @@ describe('mediaTests', () => {
         // Send a series of media chunks
         await bobSendMediaPayloads(creationCookie, 10)
         // Force server to flush minipool events into a block
-        await bobsClient.rpcClient.info(
+        await bobsClient.streamsService.info(
             create(InfoRequestSchema, {
                 debug: ['make_miniblock', streamId],
             }),

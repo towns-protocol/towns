@@ -6,6 +6,7 @@ import { UnpackEnvelopeOpts, unpackStream } from './sign'
 import { StreamStateView } from './streamStateView'
 import { ParsedMiniblock, StreamTimelineEvent } from './types'
 import { streamIdAsString, streamIdAsBytes, userIdFromAddress, makeUserStreamId } from './id'
+import { toLoadedStreamFromResponse } from './streamsService'
 
 const SCROLLBACK_MAX_COUNT = 20
 const SCROLLBACK_MULTIPLIER = 4n
@@ -74,23 +75,13 @@ export class UnauthenticatedClient {
                 isDefined(response.stream) && hasElements(response.stream.miniblocks),
                 'got bad stream',
             )
-            const { streamAndCookie, snapshot, prevSnapshotMiniblockNum } = await unpackStream(
-                response.stream,
-                this.unpackEnvelopeOpts,
+            const unpackedResponse = await unpackStream(response.stream, this.unpackEnvelopeOpts)
+            const loadedStream = toLoadedStreamFromResponse(
+                streamIdAsString(streamId),
+                unpackedResponse,
             )
             const streamView = new StreamStateView(this.userId, streamIdAsString(streamId))
-
-            streamView.initialize(
-                streamAndCookie.nextSyncCookie,
-                streamAndCookie.events,
-                snapshot,
-                streamAndCookie.miniblocks,
-                [],
-                prevSnapshotMiniblockNum,
-                undefined,
-                [],
-                undefined,
-            )
+            streamView.initialize(loadedStream, undefined, [], undefined)
             return streamView
         } catch (err) {
             this.logCall('getStream', streamId, 'ERROR', err)
@@ -144,21 +135,22 @@ export class UnauthenticatedClient {
             firstEvent?: StreamTimelineEvent
         }> => {
             check(
-                isDefined(streamView.miniblockInfo),
+                isDefined(streamView.miniblockSpan),
                 `stream not initialized: ${streamView.streamId}`,
             )
-            if (streamView.miniblockInfo.terminusReached) {
+            if (streamView.terminus) {
                 this.logCall('scrollback', streamView.streamId, 'terminus reached')
                 return { terminus: true, firstEvent: streamView.timeline.at(0) }
             }
-            check(streamView.miniblockInfo.min >= streamView.prevSnapshotMiniblockNum)
+            const toExclusive = streamView.miniblockSpan.fromInclusive
+            const fromInclusive = toExclusive > 100n ? toExclusive - 100n : 0n
+
             this.logCall('scrollback', {
                 streamId: streamView.streamId,
-                miniblockInfo: streamView.miniblockInfo,
-                prevSnapshotMiniblockNum: streamView.prevSnapshotMiniblockNum,
+                miniblockSpan: streamView.miniblockSpan,
+                fromInclusive,
+                toExclusive,
             })
-            const toExclusive = streamView.miniblockInfo.min
-            const fromInclusive = streamView.prevSnapshotMiniblockNum
             const span = toExclusive - fromInclusive
             let fromInclusiveNew = toExclusive - span * SCROLLBACK_MULTIPLIER
             fromInclusiveNew = fromInclusiveNew < 0n ? 0n : fromInclusiveNew
@@ -168,19 +160,15 @@ export class UnauthenticatedClient {
                 toExclusive,
             )
 
-            // a race may occur here: if the state view has been reinitialized during the scrollback
-            // request, we need to discard the new miniblocks.
-            if ((streamView.miniblockInfo?.min ?? -1n) === toExclusive) {
-                streamView.prependEvents(
-                    response.miniblocks,
-                    undefined,
-                    response.terminus,
-                    undefined,
-                    undefined,
-                )
-                return { terminus: response.terminus, firstEvent: streamView.timeline.at(0) }
-            }
-            return { terminus: false, firstEvent: streamView.timeline.at(0) }
+            streamView.prependEvents(
+                { fromInclusive: fromInclusiveNew, toExclusive },
+                response.miniblocks,
+                undefined,
+                response.terminus,
+                undefined,
+                undefined,
+            )
+            return { terminus: response.terminus, firstEvent: streamView.timeline.at(0) }
         }
 
         try {

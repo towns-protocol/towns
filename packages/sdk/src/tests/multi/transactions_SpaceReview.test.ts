@@ -14,6 +14,7 @@ import { StreamTimelineEvent } from '../../types'
 import { waitFor } from '../testUtils'
 import { BlockchainTransaction_SpaceReview_Action } from '@towns-protocol/proto'
 import { UnauthenticatedClient } from '../../unauthenticatedClient'
+import { makeStreamRpcClient } from '../../makeStreamRpcClient'
 
 const base_log = dlog('csb:test:transaction_SpaceReview')
 
@@ -372,10 +373,13 @@ describe('transaction_SpaceReview', () => {
         expect(streamView).toBeDefined()
         // after the snapshot, we no longer see the review
         expect(streamView.membershipContent.spaceReviews.length).toBe(0)
-        // do some scrollback
-        const unauthenticatedClient = new UnauthenticatedClient(
-            alice.riverConnection.client!.rpcClient,
+        const rpcClient = makeStreamRpcClient(
+            alice.riverConnection.client!.url,
+            undefined,
+            alice.riverConnection.client!.rpcClientOpts,
         )
+        // do some scrollback
+        const unauthenticatedClient = new UnauthenticatedClient(rpcClient)
         await unauthenticatedClient.scrollbackByMs(streamView, 5000)
         expect(streamView.membershipContent.spaceReviews.length).toBe(1)
     })

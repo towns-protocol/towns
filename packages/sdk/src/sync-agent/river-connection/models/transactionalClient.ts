@@ -12,7 +12,7 @@ export class TransactionalClient extends Client {
         rpcClient: StreamRpcClient,
         cryptoStore: CryptoStore,
         entitlementsDelegate: EntitlementsDelegate,
-        opts?: ClientOptions,
+        opts: ClientOptions,
     ) {
         super(signerContext, rpcClient, cryptoStore, entitlementsDelegate, opts)
         this.store = store

@@ -1,20 +1,13 @@
 import TypedEmitter from 'typed-emitter'
-import {
-    MiniblockHeader,
-    Snapshot,
-    SyncCookie,
-    PersistedSyncedStreamSchema,
-} from '@towns-protocol/proto'
+import { SyncCookie } from '@towns-protocol/proto'
 import { Stream } from './stream'
-import { ParsedMiniblock, ParsedEvent, ParsedStreamResponse } from './types'
-import { DLogger, bin_toHexString, dlog } from '@towns-protocol/dlog'
-import { isDefined } from './check'
-import { IPersistenceStore, LoadedStream } from './persistenceStore'
+import { ParsedEvent } from './types'
+import { DLogger, dlog } from '@towns-protocol/dlog'
+import { eventIdsFromSnapshot, IPersistenceStore } from './persistenceStore'
 import { StreamEvents } from './streamEvents'
-import { ISyncedStream } from './syncedStreamsLoop'
-import { create } from '@bufbuild/protobuf'
+import { LoadedStream2 } from './streamsService'
 
-export class SyncedStream extends Stream implements ISyncedStream {
+export class SyncedStream extends Stream {
     log: DLogger
     isUpToDate = false
     readonly persistenceStore: IPersistenceStore
@@ -30,23 +23,16 @@ export class SyncedStream extends Stream implements ISyncedStream {
         this.persistenceStore = persistenceStore
     }
 
-    async initializeFromPersistence(persistedData?: LoadedStream): Promise<boolean> {
-        const loadedStream =
-            persistedData ?? (await this.persistenceStore.loadStream(this.streamId))
-        if (!loadedStream) {
-            this.log('No persisted data found for stream', this.streamId, persistedData)
-            return false
-        }
+    async initializeFromPersistence(loadedStream: LoadedStream2): Promise<boolean> {
+        const eventIds = [
+            ...loadedStream.manifest.minipool.map((x) => x.hashStr),
+            ...loadedStream.timelineEvents.map((x) => x.event.hashStr),
+            ...eventIdsFromSnapshot(loadedStream.snapshot),
+        ]
+        const cleartexts = await this.persistenceStore.getCleartexts(eventIds)
+
         try {
-            super.initialize(
-                loadedStream.persistedSyncedStream.syncCookie,
-                loadedStream.persistedSyncedStream.minipoolEvents,
-                loadedStream.snapshot,
-                loadedStream.miniblocks,
-                loadedStream.prependedMiniblocks,
-                loadedStream.miniblocks[0].header.prevSnapshotMiniblockNum,
-                loadedStream.cleartexts,
-            )
+            super.initialize(loadedStream, cleartexts)
         } catch (e) {
             this.log('Error initializing from persistence', this.streamId, e)
             return false
@@ -57,47 +43,24 @@ export class SyncedStream extends Stream implements ISyncedStream {
     // TODO: possibly a bug. Stream interface expects a non promise initialize.
     // eslint-disable-next-line @typescript-eslint/no-misused-promises
     async initialize(
-        nextSyncCookie: SyncCookie,
-        events: ParsedEvent[],
-        snapshot: Snapshot,
-        miniblocks: ParsedMiniblock[],
-        prependedMiniblocks: ParsedMiniblock[],
-        prevSnapshotMiniblockNum: bigint,
+        loadedStream: LoadedStream2,
         cleartexts: Record<string, Uint8Array | string> | undefined,
     ): Promise<void> {
-        super.initialize(
-            nextSyncCookie,
-            events,
-            snapshot,
-            miniblocks,
-            prependedMiniblocks,
-            prevSnapshotMiniblockNum,
-            cleartexts,
-        )
+        super.initialize(loadedStream, cleartexts)
 
-        const cachedSyncedStream = create(PersistedSyncedStreamSchema, {
-            syncCookie: nextSyncCookie,
-            lastSnapshotMiniblockNum: miniblocks[0].header.miniblockNum,
-            minipoolEvents: events,
-            lastMiniblockNum: miniblocks[miniblocks.length - 1].header.miniblockNum,
-        })
-        await this.persistenceStore.saveSyncedStream(this.streamId, cachedSyncedStream)
-        await this.persistenceStore.saveMiniblocks(this.streamId, miniblocks, 'forward')
         this.markUpToDate()
     }
 
-    async initializeFromResponse(response: ParsedStreamResponse) {
+    async initializeFromResponse(loadedStream: LoadedStream2) {
         this.log('initializing from response', this.streamId)
-        const cleartexts = await this.persistenceStore.getCleartexts(response.eventIds)
-        await this.initialize(
-            response.streamAndCookie.nextSyncCookie,
-            response.streamAndCookie.events,
-            response.snapshot,
-            response.streamAndCookie.miniblocks,
-            [],
-            response.prevSnapshotMiniblockNum,
-            cleartexts,
-        )
+        const eventIds = [
+            ...loadedStream.manifest.minipool.map((x) => x.hashStr),
+            ...loadedStream.timelineEvents.map((x) => x.event.hashStr),
+            ...eventIdsFromSnapshot(loadedStream.snapshot),
+        ]
+        const cleartexts = await this.persistenceStore.getCleartexts(eventIds)
+
+        await this.initialize(loadedStream, cleartexts)
         this.markUpToDate()
     }
 
@@ -107,69 +70,7 @@ export class SyncedStream extends Stream implements ISyncedStream {
         cleartexts: Record<string, Uint8Array | string> | undefined,
     ): Promise<void> {
         await super.appendEvents(events, nextSyncCookie, cleartexts)
-        for (const event of events) {
-            const payload = event.event.payload
-            switch (payload.case) {
-                case 'miniblockHeader': {
-                    await this.onMiniblockHeader(payload.value, event, event.hash)
-                    break
-                }
-                default:
-                    break
-            }
-        }
         this.markUpToDate()
-    }
-
-    private async onMiniblockHeader(
-        miniblockHeader: MiniblockHeader,
-        miniblockEvent: ParsedEvent,
-        hash: Uint8Array,
-    ) {
-        this.log(
-            'Received miniblock header',
-            miniblockHeader.miniblockNum.toString(),
-            this.streamId,
-        )
-
-        const eventHashes = miniblockHeader.eventHashes.map(bin_toHexString)
-        const events = eventHashes
-            .map((hash) => this.view.events.get(hash)?.remoteEvent)
-            .filter(isDefined)
-
-        if (events.length !== eventHashes.length) {
-            throw new Error("Couldn't find event for hash in miniblock")
-        }
-
-        const miniblock: ParsedMiniblock = {
-            hash: hash,
-            header: miniblockHeader,
-            events: [...events, miniblockEvent],
-        }
-        await this.persistenceStore.saveMiniblock(this.streamId, miniblock)
-
-        const syncCookie = this.view.syncCookie
-        if (!syncCookie) {
-            return
-        }
-
-        const minipoolEvents = this.view.timeline
-            .filter((e) => e.confirmedEventNum === undefined)
-            .map((e) => e.remoteEvent)
-            .filter(isDefined)
-
-        const lastSnapshotMiniblockNum =
-            miniblock.header.snapshot !== undefined
-                ? miniblock.header.miniblockNum
-                : miniblock.header.prevSnapshotMiniblockNum
-
-        const cachedSyncedStream = create(PersistedSyncedStreamSchema, {
-            syncCookie: syncCookie,
-            lastSnapshotMiniblockNum: lastSnapshotMiniblockNum,
-            minipoolEvents: minipoolEvents,
-            lastMiniblockNum: miniblock.header.miniblockNum,
-        })
-        await this.persistenceStore.saveSyncedStream(this.streamId, cachedSyncedStream)
     }
 
     private markUpToDate(): void {

@@ -55,7 +55,7 @@ const Profile = () => {
                     </div>
                     <pre className="overflow-auto whitespace-pre-wrap text-sm">{status}</pre>
                     <pre className="overflow-auto whitespace-pre-wrap text-sm">
-                        {sync.riverConnection.client?.rpcClient.url}
+                        {sync.riverConnection.client?.url}
                     </pre>
                 </div>
                 {(spaceId || (spaceId && channelId)) && (

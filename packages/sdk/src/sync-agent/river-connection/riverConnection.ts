@@ -24,7 +24,7 @@ export interface ClientParams {
     signerContext: SignerContext
     cryptoStore: CryptoStore
     entitlementsDelegate: EntitlementsDelegate
-    opts?: ClientOptions
+    opts: ClientOptions
     encryptionDevice?: EncryptionDeviceInitOpts
     onTokenExpired?: () => void
     rpcRetryParams?: RetryParams

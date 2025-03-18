@@ -61,6 +61,12 @@ export interface ParsedEvent {
     creatorUserId: string
 }
 
+export interface ConfirmedEvent {
+    event: ParsedEvent // todo call this parsedEvent
+    eventNum: bigint
+    miniblockNum: bigint
+}
+
 export interface StreamTimelineEvent {
     hashStr: string
     creatorUserId: string

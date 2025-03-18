@@ -45,7 +45,7 @@ export function isPersistedEvent(event: ParsedEvent, direction: 'forward' | 'bac
         case 'userSettingsPayload':
             return direction === 'forward' ? true : false
         case 'miniblockHeader':
-            return true
+            return direction === 'forward' ? true : false
         case 'userMetadataPayload':
             return direction === 'forward' ? true : false
         case 'memberPayload': {
@@ -55,6 +55,8 @@ export function isPersistedEvent(event: ParsedEvent, direction: 'forward' | 'bac
                 case 'keyFulfillment':
                     return direction === 'forward' ? true : false
                 case 'memberBlockchainTransaction':
+                    return true
+                case 'membership':
                     return true
                 case undefined:
                     return false
@@ -111,7 +113,7 @@ export function parsedMiniblockToPersistedMiniblock(
         hash: miniblock.hash,
         header: miniblock.header,
         events: miniblock.events
-            .filter((event) => isPersistedEvent(event, direction))
+            .filter((event) => event && isPersistedEvent(event, direction))
             .map(parsedEventToPersistedEvent),
     })
 }

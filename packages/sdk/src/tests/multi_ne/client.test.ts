@@ -219,7 +219,7 @@ describe('clientTest', () => {
 
         const generator = createMockSyncGenerator(() => syncOpCount++ < 2)
         const spy = vi
-            .spyOn(alicesClient.rpcClient, 'syncStreams')
+            .spyOn(alicesClient.streamsService['rpcClient'], 'syncStreams')
             .mockImplementation(
                 (
                     _request: MessageInitShape<typeof SyncStreamsRequestSchema>,
@@ -238,7 +238,7 @@ describe('clientTest', () => {
 
         await expect(done.expectToSucceed()).resolves.not.toThrow()
         const cancelSyncSpy = vi
-            .spyOn(alicesClient.rpcClient, 'cancelSync')
+            .spyOn(alicesClient.streamsService['rpcClient'], 'cancelSync')
             .mockImplementation(
                 (
                     request: MessageInitShape<typeof CancelSyncRequestSchema>,
@@ -266,7 +266,7 @@ describe('clientTest', () => {
             () => syncOpCount++,
         )
         const spy = vi
-            .spyOn(alicesClient.rpcClient, 'syncStreams')
+            .spyOn(alicesClient.streamsService['rpcClient'], 'syncStreams')
             .mockImplementation(
                 (
                     _request: MessageInitShape<typeof SyncStreamsRequestSchema>,
@@ -285,7 +285,7 @@ describe('clientTest', () => {
 
         await expect(done.expectToSucceed()).resolves.not.toThrow()
         const cancelSyncSpy = vi
-            .spyOn(alicesClient.rpcClient, 'cancelSync')
+            .spyOn(alicesClient.streamsService['rpcClient'], 'cancelSync')
             .mockImplementation(
                 (
                     request: MessageInitShape<typeof CancelSyncRequestSchema>,
