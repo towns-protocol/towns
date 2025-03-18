@@ -369,7 +369,7 @@ router.get('/tips/:spaceAddress/leaderboard', async (request: WorkerRequest, env
         const cachedLeaderboard = await env.TIP_LEADERBOARD_KV.get<{
             leaderboard: Record<string, string>
             lastUpdatedAt: number
-        }>(spaceAddress)
+        }>(spaceAddress, 'json')
         if (cachedLeaderboard) {
             return new Response(JSON.stringify(cachedLeaderboard), {
                 status: 200,
