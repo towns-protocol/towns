@@ -39,6 +39,8 @@ export const useUploadAttachment = () => {
                 spaceId,
                 userId,
                 chunkCount,
+                undefined,
+                undefined,
                 window.townsNewMediaEncryptionFlag,
             )
             if (!mediaStreamInfo) {

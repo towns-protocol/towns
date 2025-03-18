@@ -655,7 +655,9 @@ export class TownsClient
         spaceId: string | Uint8Array | undefined,
         userId: string | undefined,
         chunkCount: number,
-        perChunkEncryption?: boolean,
+        firstChunk?: Uint8Array | undefined,
+        firstChunkIv?: Uint8Array | undefined,
+        perChunkEncryption?: boolean | undefined,
     ): Promise<{ creationCookie: CreationCookie }> {
         if (!this.casablancaClient) {
             throw new Error("Casablanca client doesn't exist")
@@ -665,6 +667,8 @@ export class TownsClient
             spaceId,
             userId,
             chunkCount,
+            firstChunk,
+            firstChunkIv,
             undefined,
             perChunkEncryption,
         )
