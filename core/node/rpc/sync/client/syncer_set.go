@@ -4,7 +4,6 @@ import (
 	"context"
 	"slices"
 	"sync"
-	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/linkdata/deadlock"
@@ -203,16 +202,34 @@ func (ss *SyncerSet) AddStream(ctx context.Context, cookie *SyncCookie) error {
 		return nil // stream is already part of sync operation
 	}
 
-	// Returns the target node address and a flag indicating if more nodes are available
 	// Use the node address provided in the sync cookie if available, otherwise use the sticky peer of the stream
-	stream, err := ss.streamCache.GetStreamNoWait(ctx, streamID)
-	if err != nil {
-		return err
+	getNodeAddress := func() (common.Address, bool) {
+		return common.BytesToAddress(cookie.GetNodeAddress()), false
+	}
+	if len(cookie.GetNodeAddress()) == 0 {
+		stream, err := ss.streamCache.GetStreamNoWait(ctx, streamID)
+		if err != nil {
+			return err
+		}
+
+		i := 0
+		remotes, useLocal := stream.GetRemotesAndIsLocal()
+		nodeAddress := stream.GetStickyPeer()
+		getNodeAddress = func() (common.Address, bool) {
+			if i == 0 && useLocal {
+				useLocal = false
+				return ss.localNodeAddress, len(remotes) > 0
+			}
+			if i > 0 {
+				nodeAddress = stream.AdvanceStickyPeer(nodeAddress)
+			}
+			i++
+			return nodeAddress, i < len(remotes)
+		}
 	}
 
-	return stream.WithAvailableNode(cookie.GetNodeAddress(), func(nodeAddress common.Address) error {
-		ctx, cancel := context.WithTimeout(ctx, time.Second*5)
-		defer cancel()
+	for {
+		nodeAddress, more := getNodeAddress()
 
 		// check if there is already a syncer that can sync the given stream -> add stream to the syncer
 		if syncer, found := ss.syncers[nodeAddress]; found {
@@ -244,17 +261,23 @@ func (ss *SyncerSet) AddStream(ctx context.Context, cookie *SyncCookie) error {
 			span.End()
 		}
 		if err != nil {
-			logging.FromCtx(ss.ctx).Errorw("Unable to create syncer",
+			if !more {
+				return err
+			}
+
+			logging.FromCtx(ss.ctx).Errorw("Unable to create syncer, advancing the node",
 				"err", err, "remoteNode", nodeAddress, "streamId", streamID)
-			return err
+			continue
 		}
 
 		ss.syncers[nodeAddress] = syncer
 		ss.streamID2Syncer[streamID] = syncer
 		ss.startSyncer(syncer)
 
-		return nil
-	})
+		break
+	}
+
+	return nil
 }
 
 // caller must have ss.muSyncers claimed
