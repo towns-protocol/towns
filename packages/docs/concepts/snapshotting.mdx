@@ -1,33 +1,32 @@
 ---
-title: Snapshotting
-description: ""
+title: "Snapshotting"
 ---
 
 ### Event Ordering
 
-Towns nodes are responsible for assembling events from the stream's `minipool` into `miniblocks` that are sealed blocks of event hashes pointing to the previous block hash.
+Towns nodes assemble events from the stream's `minipool` into `miniblocks`— sealed blocks of event hashes that point to the previous block hash.
 
-Coarse ordering of events in a given stream is achieved due to the sequential nature of block production. However, for certain events, such as a stream's membership roster, strict ordering is required.
+While the sequential nature of block production provides basic event ordering, certain events like membership rosters require strict ordering.
 
-As a concrete example, take the case where Alice `joins` a space at local time `t1` then `leaves` the space at time `t2`. We should expect a read of the membership roster after the `leave` event to exclude Alice. We should also expect Alice to have been a member in the coarse grained time interval `t2 - t1` between when the `join` and `leave` events were included by a node each in a mini-block. Since different Towns Nodes may have seen the `join` and `leave` events, there is no way to guarrantee that they would be included in mini-blocks with a temporal sequence equivalent to the sequence in which the actions were taken.
+Consider this example: Alice `joins` a space at time `t1` and `leaves` at time `t2`. A membership roster read after the `leave` event should exclude Alice. She should appear as a member only during the interval `t2 - t1`, when the `join` and `leave` events were included in mini-blocks. However, since different Towns Nodes may observe these events independently, there's no guarantee they'll be included in mini-blocks in the same temporal sequence as the original actions.
 
-Therefore, to achieve strict ordering under the Towns protocol a technique called **Snapshotting** is undertaken at the block boundary for each stream. A positive side effect of Snapshotting is that disk utilisation is reduced for nodes as snapshots are updated in-place.
+To enforce strict ordering in the Towns protocol, we use **Snapshotting** at each stream's block boundary. This approach has the added benefit of reducing node disk usage since snapshots are updated in-place.
 
-### Snapshot Production
+### **Snapshot Production**
 
-Snapshots are taken every N events at the block boundary, which occurs when a node that is elected by `RANDDAO` to propose the next block creates and appends a new signed `miniblock` to the stream's `minichain`.
+Snapshots occur every N events at the block boundary. This happens when a node, elected by `RANDDAO`, proposes the next block by creating and appending a new signed `miniblock` to the stream's `minichain`.
 
-> Though miniblocks are comprised of event hashes, snapshot data is stored unhashed in miniblock to allow for fast client syncs of `state` events from miniblock which is rolled up onto Towns Chain.
+> Though miniblocks contain event hashes, snapshot data remains unhashed in the miniblock to enable fast client syncs of state events from miniblock when rolled up onto Towns Chain.
 
 ![Snapshotting](../images/snapshotting.png)
 
 ### Data Schema
 
-Each payload type described in the protocol may be subject to snapshotting. Nodes stand ready to snapshot events for streams they are assigned to when they are elected as block proposers. Clients can be assured of strict ordering of `state` events and other events that would benefit from strict ordering at the block boundary and data compaction.
+Any payload type in the protocol may undergo snapshotting. When elected as block proposers, nodes prepare to snapshot events for their assigned streams. This ensures strict ordering of `state` events and other events that require it at the block boundary and data compaction.
 
-Typically, `maps` are used to store snapshot data in nodes as the data itself is amenable to `key -> value` pairs.
+Nodes typically store snapshot data in `maps`, as the data naturally fits a `key -> value` structure.
 
-Below is the `Snapshot` messages defined in the protocol protobuf that nodes adhere to.
+Here is the `Snapshot` message definition from the protocol protobuf that nodes follow:
 
 ```protobuf
 /**
@@ -52,9 +51,9 @@ message Snapshot {
 }
 ```
 
-Take `SpacePayload.Snapshot` for example. It defines 4 maps and an inception event, which is an immutable singleton for each Space stream. Every time a node is tasked with proposing a block for a stream, if enough events have accrued (controlled on a stream-by-stream setting in the inception payload of each stream, `MinEventsPerSnapshot`), a snapshot will be taken as part of miniblock construction potentially updating all 4 maps in place and including the mutated snapshot object in the miniblock.
+For example, `SpacePayload.Snapshot` defines four maps and an inception event—an immutable singleton for each Space stream. When a node proposes a block for a stream and enough events have accumulated (determined by `MinEventsPerSnapshot` in the stream's inception payload), it creates a snapshot during miniblock construction, updating all four maps and including the modified snapshot object in the miniblock.
 
-> The reason snapshots take place after at least `MinEventsPerSnapshot` events have been seen by the node since the last snapshot is that taking a snapshot is a global memory intensive operation for a node. Updating the snapshot for every event would increase memory complexity of miniblock creation to the complexity of including message events. By doing so periodically in batches, strict ordering latency is traded for node memory efficiency.
+> Snapshots occur after accumulating MinEventsPerSnapshot events since the last snapshot because snapshotting is memory-intensive for nodes. Taking snapshots for every event would make miniblock creation as complex as including message events. This batch approach trades strict ordering latency for better node memory efficiency.
 
 ```protobuf
 message SpacePayload {
