@@ -121,11 +121,11 @@ export const useLifiQuote = (props: {
                     },
                 })
                 if (!result.data) {
-                    return undefined
+                    return null
                 }
                 return zLifiQuote.parse(result.data)
             } catch (e) {
-                return undefined
+                return null
             }
         },
         staleTime: SECOND_MS * 30,

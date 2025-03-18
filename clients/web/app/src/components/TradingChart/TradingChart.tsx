@@ -423,9 +423,10 @@ const ChartComponent = (props: {
 
     return (
         <Box height="200" ref={chartContainerRef}>
-            <Box absoluteFill zIndex="above" pointerEvents="none">
+            <Box absoluteFill zIndex="tooltips" pointerEvents="none">
                 <Box
                     horizontal
+                    border
                     ref={crosshairRef}
                     background="level3"
                     rounded="md"

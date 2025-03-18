@@ -199,7 +199,12 @@ export const TradeComponent = (props: Props) => {
 
     const slippage = useTradeSettings(({ slippage }) => slippage)
 
-    const quote = useLifiQuote({
+    const {
+        data: quoteData,
+        isLoading: isQuoteLoading,
+        isError: isQuoteError,
+        error: quoteError,
+    } = useLifiQuote({
         fromToken: fromTokenAddress,
         toToken: toTokenAddress,
         fromAddress: walletAddress ?? '',
@@ -210,13 +215,6 @@ export const TradeComponent = (props: Props) => {
         toChain: chainId,
         slippage,
     })
-
-    const {
-        data: quoteData,
-        isLoading: isQuoteLoading,
-        isError: isQuoteError,
-        error: quoteError,
-    } = quote
 
     const onQuoteStatusChangedRef = useRef(onQuoteStatusChanged)
     onQuoteStatusChangedRef.current = onQuoteStatusChanged

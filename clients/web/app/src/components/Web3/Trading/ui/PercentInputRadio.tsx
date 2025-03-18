@@ -36,6 +36,8 @@ export const PercentInputRadio = (props: {
     return (
         <Box horizontal color="peach" onClick={onSelect}>
             <TextField
+                grow
+                style={{ minWidth: '55px' }}
                 min={0}
                 max={100}
                 step={1}
