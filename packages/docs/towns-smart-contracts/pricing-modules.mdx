@@ -1,40 +1,37 @@
 ---
-title: Pricing Modules
-description: ""
+title: "Pricing Modules"
 ---
 
 ## Custom Pricing Modules in Spaces
 
-### Overview
+### **Overview**
 
-In the Towns ecosystem, Spaces have the flexibility to define their own pricing strategies through custom pricing modules. These modules are smart contracts that comply with the `IPricingModule` Interface and are responsible for determining the price of memberships based on various attributes.
+Spaces in the Towns ecosystem can define custom pricing strategies through pricing modules. These smart contracts follow the `IPricingModule` Interface to determine membership prices based on various attributes.
 
-### Implementation of Custom Pricing Modules
+### **Implementation of Custom Pricing Modules**
 
-To implement a custom pricing module, a contract must adhere to the `IPricingModule` Interface. This interface includes the `getPrice` function, which can be programmed to calculate prices based on different criteria, such as the total number of memberships minted or other programmable attributes. See more examples in [Recipes].
+Custom pricing modules must implement the `IPricingModule` Interface. The interface's `getPrice` function calculates prices using criteria like total memberships minted or other programmable attributes. See \[Recipes\] for examples.
 
-### Default Pricing Modules in Every Space
+### **Default Pricing Modules in Every Space**
 
-Every newly deployed Space in the Towns ecosystem is equipped with two default pricing modules:
+Each new Space comes with two default pricing modules:
 
 1. **Dynamic Pricing Module** (default setting):
-
-   - **Pricing Strategy**: This module adopts a dynamic pricing approach, where the price is influenced by the number of members in the Space.
-   - **Price Calculation**: The price logarithmically approaches \$10 USD as membership reaches 1,000, and then again increases logarithmically to approach \$100 USD as membership reaches 10,000.
-   - **Price Cap**: Membership prices never exceed $100 USD.
-   - **Initial Offer**: The first 100 memberships are offered for free.
-   - **Payment Method**: Accepts ETH as payment.
-   - **Reference**: For more details, see `DynamicPricing.sol`.
-
+   - **Pricing Strategy**: Prices adjust based on member count
+   - **Price Calculation**: Price increases logarithmically—approaching $10 USD at 1,000 members, then $100 USD at 10,000 members
+   - **Price Cap**: Maximum price is $100 USD
+   - **Initial Offer**: First 100 memberships are free
+   - **Payment Method**: Accepts ETH
+   - **Reference**: See `DynamicPricing.sol` for details
 2. **Flat Fee Price**:
-   - **Fixed Pricing**: This module implements a straightforward fixed pricing strategy.
-   - **Minimum Price**: Sets a minimum price of $10 USD for a membership.
-   - **Payment Method**: Also accepts ETH as payment.
+   - **Fixed Pricing**: Simple fixed-price strategy
+   - **Minimum Price**: $10 USD per membership
+   - **Payment Method**: Accepts ETH
 
-### Transaction Fee Distribution
+### **Transaction Fee Distribution**
 
-An essential aspect of the pricing modules is the distribution of fees from transactions. These fees are split among key stakeholders:
+Transaction fees are distributed among three key stakeholders:
 
-- **Space Owner**: A portion of the fees is allocated to the SpaceOwner, providing an incentive for maintaining and growing the Space.
-- **Towns DAO**: A share of the fees contribute to the Towns Lodge, supporting the overall development and sustainability of the ecosystem.
-- **Referrers**: Referrers, if any, are also rewarded, encouraging community growth and engagement. Referrers can be set for both members of a Space as well as for the client being used to interact with the protocol.
+- **Space Owner**: Receives a portion of fees as incentive for Space management and growth
+- **Towns DAO**: Receives a share to support Towns Lodge development and sustainability
+- **Referrers**: Earn rewards for bringing in new members, available for both Space members and client referrals
