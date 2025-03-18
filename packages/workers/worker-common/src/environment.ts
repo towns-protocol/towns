@@ -1,1 +1,1 @@
-export type Environment = 'development' | 'gamma' | 'omega' | 'alpha'
+export type Environment = 'development' | 'gamma' | 'omega' | 'alpha' | 'delta'
