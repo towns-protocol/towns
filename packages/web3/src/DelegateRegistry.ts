@@ -72,16 +72,26 @@ export async function computeDelegatorsForProvider(
     wallets: string[],
 ): Promise<string[]> {
     const contract = newDelegateContract(provider)
-    const delegators: string[] = []
-    for (const wallet of wallets) {
-        const delegations = (await contract.callStatic.getDelegationsByDelegate(
-            wallet,
-        )) as DelegationInfo[]
-        for (const delegation of delegations) {
-            if (delegation.type_ == delegationTypeAll) {
-                delegators.push(delegation.vault)
-            }
-        }
-    }
-    return delegators
+    const delegatorWallets = (
+        await Promise.all(
+            wallets.map(async (wallet) => {
+                return (
+                    (
+                        (await contract.callStatic.getDelegationsByDelegate(
+                            wallet,
+                        )) as DelegationInfo[]
+                    )
+                        // Keep only delegations that cede the entire wallet
+                        .filter((info) => info.type_ == delegationTypeAll)
+                        // The 'vault' is the delegator wallet that cedes to one of wallets
+                        // passed in via the parameters
+                        .map((info) => info.vault)
+                )
+            }),
+        )
+    ).reduce((left, right) => [...left, ...right])
+
+    // Return de-duped list of wallets, in case delegate wallets occur >1x across
+    // ethereum mainnet and testnets.
+    return [...new Set(delegatorWallets)]
 }
