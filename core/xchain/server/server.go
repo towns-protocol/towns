@@ -670,7 +670,7 @@ func (x *xchain) getLinkedWallets(ctx context.Context, wallet common.Address) ([
 		return nil, x.handleContractError(log, err, "Failed to create IWalletLink")
 	}
 
-	wallets, err := entitlement.GetLinkedWallets(
+	wallets, err := x.evaluator.GetLinkedWallets(
 		ctx,
 		wallet,
 		iWalletLink,
