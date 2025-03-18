@@ -10,6 +10,7 @@ import (
 type BlockchainInfo struct {
 	ChainId uint64
 	Name    string
+<<<<<<< HEAD
 	// IsEtherNative is true for chains that use Ether as the currency for fees.
 	IsEtherNative bool
 	// IsEthereumNetwork applies to ethereum mainnet and all testnets. This setting is
@@ -20,6 +21,16 @@ type BlockchainInfo struct {
 	// all Ethereum networks will use Ether as a native currency.
 	IsEthereumNetwork bool
 	Blocktime         time.Duration
+=======
+	// IsEtherBased is true for chains that use Ether as the currency for fees.
+	IsEtherBased bool
+	// IsEthereum applies to ethereum mainnet and all testnets. This setting is
+	// mainly used for testing features on our test networks, as towns mainnet
+	// should not have any test networks configured and only mainnet ethereum
+	// should qualify.
+	IsEthereum bool
+	Blocktime  time.Duration
+>>>>>>> 196f1f3b4 (V2 delegate.cash implementation - pulls from V1 registry on ethereum.)
 }
 
 func GetEtherNativeBlockchains(
@@ -56,9 +67,27 @@ func GetEthereumNetworkBlockchains(
 	return etherBasedChains
 }
 
+func GetEthereumBlockchains(
+	ctx context.Context,
+	chains []uint64,
+	defaultBlockchainInfo map[uint64]BlockchainInfo,
+) []uint64 {
+	log := logging.FromCtx(ctx)
+	etherBasedChains := make([]uint64, 0, len(chains))
+	for _, chainId := range chains {
+		if info, ok := defaultBlockchainInfo[chainId]; ok && info.IsEthereum {
+			etherBasedChains = append(etherBasedChains, chainId)
+		} else if !ok {
+			log.Errorw("Missing BlockchainInfo for chain", "chainId", chainId)
+		}
+	}
+	return etherBasedChains
+}
+
 func GetDefaultBlockchainInfo() map[uint64]BlockchainInfo {
 	return map[uint64]BlockchainInfo{
 		1: {
+<<<<<<< HEAD
 			ChainId:           1,
 			Name:              "Ethereum Mainnet",
 			Blocktime:         12 * time.Second,
@@ -71,6 +100,20 @@ func GetDefaultBlockchainInfo() map[uint64]BlockchainInfo {
 			Blocktime:         12 * time.Second,
 			IsEtherNative:     true,
 			IsEthereumNetwork: true,
+=======
+			ChainId:      1,
+			Name:         "Ethereum Mainnet",
+			Blocktime:    12 * time.Second,
+			IsEtherBased: true,
+			IsEthereum:   true,
+		},
+		11155111: {
+			ChainId:      11155111,
+			Name:         "Ethereum Sepolia",
+			Blocktime:    12 * time.Second,
+			IsEtherBased: true,
+			IsEthereum:   true,
+>>>>>>> 196f1f3b4 (V2 delegate.cash implementation - pulls from V1 registry on ethereum.)
 		},
 		550: {
 			ChainId:   550,
