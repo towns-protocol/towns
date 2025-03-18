@@ -1256,10 +1256,10 @@ async function findProviderFromChainId(xchainConfig: XchainConfig, chainId: bigi
 async function findEtherChainProviders(xchainConfig: XchainConfig) {
     const etherChainProviders = []
     for (const chainId of xchainConfig.etherBasedChains) {
-        if (!(Number(chainId) in xchainConfig.supportedRpcUrls)) {
+        if (!(chainId in xchainConfig.supportedRpcUrls)) {
             log.info(`(WARN) findEtherChainProviders: No supported RPC URL for chain id ${chainId}`)
         } else {
-            const url = xchainConfig.supportedRpcUrls[Number(chainId)]
+            const url = xchainConfig.supportedRpcUrls[chainId]
             etherChainProviders.push(new ethers.providers.StaticJsonRpcProvider(url))
         }
     }
@@ -1270,10 +1270,10 @@ async function findEtherChainProviders(xchainConfig: XchainConfig) {
 export async function findEthereumProviders(xchainConfig: XchainConfig) {
     const ethereumProviders = []
     for (const chainId of xchainConfig.ethereumChains) {
-        if (!(Number(chainId) in xchainConfig.supportedRpcUrls)) {
+        if (!(chainId in xchainConfig.supportedRpcUrls)) {
             log.error(`findEthereumProviders: No supported RPC URL for chain id ${chainId}`)
         } else {
-            const url = xchainConfig.supportedRpcUrls[Number(chainId)]
+            const url = xchainConfig.supportedRpcUrls[chainId]
             ethereumProviders.push(new ethers.providers.StaticJsonRpcProvider(url))
         }
     }
