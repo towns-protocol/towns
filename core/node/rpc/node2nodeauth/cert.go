@@ -188,8 +188,11 @@ func createCert(logger *zap.SugaredLogger, wallet *crypto.Wallet) (*tls.Certific
 	}
 
 	template := &x509.Certificate{
-		SerialNumber:    big.NewInt(1),
-		Subject:         pkix.Name{CommonName: certName},
+		SerialNumber: big.NewInt(1),
+		Subject: pkix.Name{
+			CommonName:   certName,
+			Organization: []string{"towns"},
+		},
 		NotBefore:       time.Now().Add(-certDurationBuffer), // Add a small buffer to avoid issues with time differences
 		NotAfter:        time.Now().Add(certTTL),
 		KeyUsage:        x509.KeyUsageDigitalSignature,
