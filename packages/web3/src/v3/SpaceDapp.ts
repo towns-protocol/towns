@@ -759,7 +759,7 @@ export class SpaceDapp implements ISpaceDapp {
         const linkedWallets = await this.getLinkedWallets(wallet)
         const allWallets = new Set(linkedWallets)
         const delegators = await this.getMainnetDelegationsForLinkedWallets(linkedWallets, config)
-        return [...allWallets.union(delegators)]
+        return [...new Set([...allWallets, ...delegators])]
     }
 
     private async evaluateEntitledWallet(
