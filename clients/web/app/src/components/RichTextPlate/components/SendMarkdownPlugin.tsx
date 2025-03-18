@@ -31,8 +31,7 @@ export const SendMarkdownPlugin = (props: {
     return (
         <AnimatePresence>
             <Box
-                paddingY={verticalButtons ? undefined : 'sm'}
-                paddingBottom={verticalButtons ? 'sm' : undefined}
+                paddingBottom={verticalButtons ? 'sm' : { touch: 'xs', default: 'none' }}
                 paddingRight="xs"
                 flexBasis={verticalButtons ? '100%' : 'auto'}
             >

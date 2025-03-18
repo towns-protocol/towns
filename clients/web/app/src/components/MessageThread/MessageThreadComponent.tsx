@@ -325,7 +325,7 @@ const ThreadEditor = (props: {
                         }
                     >
                         <FancyButton
-                            compact="x4"
+                            compact={{ touch: 'x5', default: 'x4' }}
                             gap="xxs"
                             paddingLeft="sm"
                             paddingRight="md"
@@ -392,7 +392,7 @@ const ThreadEditor = (props: {
     return (
         <>
             {tickerAttachment ? (
-                <Box elevate rounded="md">
+                <Box elevate rounded={{ touch: 'none', default: 'md' }}>
                     <Box padding="md" paddingBottom="xs">
                         <TradeComponent
                             mode={mode}

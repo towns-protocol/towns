@@ -117,19 +117,21 @@ export const EditMessageButtons = (props: {
                     </Button>
                 </>
             ) : isTouch ? (
-                <MotionIconButton
-                    whileHover={
-                        disabled
-                            ? {}
-                            : {
-                                  opacity: 0.8,
-                              }
-                    }
-                    data-testid="submit"
-                    icon={disabled ? 'touchSendDisabled' : 'touchSendEnabled'}
-                    size="square_lg"
-                    onMouseDown={disabled ? cancelButtonPressed : saveButtonPressed}
-                />
+                (onSave && renderSendButton?.(onSave)) || (
+                    <MotionIconButton
+                        whileHover={
+                            disabled
+                                ? {}
+                                : {
+                                      opacity: 0.8,
+                                  }
+                        }
+                        data-testid="submit"
+                        icon={disabled ? 'touchSendDisabled' : 'touchSendEnabled'}
+                        size="square_lg"
+                        onMouseDown={disabled ? cancelButtonPressed : saveButtonPressed}
+                    />
+                )
             ) : (
                 <>
                     {(onSave && renderSendButton?.(onSave)) || (

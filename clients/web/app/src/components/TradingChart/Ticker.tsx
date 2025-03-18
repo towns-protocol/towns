@@ -10,6 +10,7 @@ import { MessageTimelineContext } from '@components/MessageTimeline/MessageTimel
 import { useOpenMessageThread } from 'hooks/useOpenThread'
 import { useSizeContext } from 'ui/hooks/useSizeContext'
 import { MessageAttachmentsContext } from '@components/MessageAttachments/MessageAttachmentsContext'
+import { useDevice } from 'hooks/useDevice'
 import { useCoinData } from './useCoinData'
 import { TickerHeader } from './TickerInfoBox'
 import { TradingChart } from './TradingChart'
@@ -114,6 +115,14 @@ export const TradingChartTicker = (props: {
 
     const { containerWidth } = useSizeContext()
 
+    const isTouch = useDevice()
+
+    // prevent context menut to open when interacting with the component
+    const onPreventTouchClick = useCallback((e: React.MouseEvent) => {
+        e.preventDefault()
+        e.stopPropagation()
+    }, [])
+
     return (
         <Stack
             gap="paragraph"
@@ -126,6 +135,7 @@ export const TradingChartTicker = (props: {
             ref={ref}
             overflow="hidden"
             paddingBottom="md"
+            onClick={isTouch ? onPreventTouchClick : undefined}
         >
             <TradingChart
                 address={props.attachment.address}

@@ -320,6 +320,7 @@ export const TouchHome = () => {
                                 >
                                     {!isLoadingChannels && space && (
                                         <TextField
+                                            grow
                                             placeholder="Jump to..."
                                             height="x5"
                                             background="level2"
