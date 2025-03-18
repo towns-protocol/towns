@@ -321,18 +321,24 @@ export const colorProperties = defineProperties({
             },
         },
         color: {
+            // write default colors first
+            ...vars.color.foreground,
+            // fix precedence issues caused by background elevation
             ...(Object.fromEntries(
-                Object.entries(vars.color.foreground).map(([key, value]) => [
-                    key,
-                    {
-                        color: value,
-                        selectors: {
-                            [`${elevateClass} &`]: {
-                                color: value,
+                Object.entries(vars.color.foreground)
+                    // prevent complex style objects to get overriden (e.g. gradients)
+                    .filter(([, value]) => typeof value === 'string')
+                    .map(([key, value]) => [
+                        key,
+                        {
+                            color: value,
+                            selectors: {
+                                [`${elevateClass} &`]: {
+                                    color: value,
+                                },
                             },
                         },
-                    },
-                ]),
+                    ]),
             ) as unknown as Record<
                 keyof typeof vars.color.foreground,
                 {
