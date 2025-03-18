@@ -7,10 +7,10 @@ pragma solidity ^0.8.23;
 
 // contracts
 
-interface IFeatureFacetBase {
+interface IFeatureManagerFacetBase {
   error InvalidThreshold();
   error InvalidTotalSupply();
   error ConditionNotActive();
 }
 
-interface IFeatureFacet is IFeatureFacetBase {}
+interface IFeatureManagerFacet is IFeatureManagerFacetBase {}

@@ -8,11 +8,11 @@ import {FeatureManager} from "contracts/src/base/registry/facets/feature/Feature
 
 // contracts
 import {BaseSetup} from "contracts/test/spaces/BaseSetup.sol";
-import {FeatureFacet} from "contracts/src/base/registry/facets/feature/FeatureFacet.sol";
+import {FeatureManagerFacet} from "contracts/src/base/registry/facets/feature/FeatureManagerFacet.sol";
 import {Towns} from "contracts/src/tokens/towns/base/Towns.sol";
 
 contract FeatureManagerTest is BaseSetup {
-  FeatureFacet featureFacet;
+  FeatureManagerFacet featureManagerFacet;
   Towns towns;
 
   bytes32 constant TEST_FEATURE_ID = keccak256("test.feature");
@@ -20,7 +20,7 @@ contract FeatureManagerTest is BaseSetup {
 
   function setUp() public override {
     super.setUp();
-    featureFacet = FeatureFacet(baseRegistry);
+    featureManagerFacet = FeatureManagerFacet(baseRegistry);
     towns = Towns(townsToken);
   }
 
@@ -41,7 +41,7 @@ contract FeatureManagerTest is BaseSetup {
     towns.mint(to, amount);
 
     vm.prank(deployer);
-    featureFacet.setFeatureCondition(featureId, condition);
+    featureManagerFacet.setFeatureCondition(featureId, condition);
     _;
   }
 
@@ -60,7 +60,7 @@ contract FeatureManagerTest is BaseSetup {
       deployer
     )
   {
-    FeatureManager.Condition memory condition = featureFacet
+    FeatureManager.Condition memory condition = featureManagerFacet
       .getFeatureCondition(TEST_FEATURE_ID);
     assertEq(
       condition.threshold,
@@ -81,7 +81,7 @@ contract FeatureManagerTest is BaseSetup {
       to
     )
   {
-    bool isFeatureActive = featureFacet.checkFeatureCondition(
+    bool isFeatureActive = featureManagerFacet.checkFeatureCondition(
       TEST_FEATURE_ID,
       everyoneSpace
     );
@@ -90,7 +90,7 @@ contract FeatureManagerTest is BaseSetup {
     vm.prank(to);
     towns.delegate(address(everyoneSpace));
 
-    isFeatureActive = featureFacet.checkFeatureCondition(
+    isFeatureActive = featureManagerFacet.checkFeatureCondition(
       TEST_FEATURE_ID,
       everyoneSpace
     );

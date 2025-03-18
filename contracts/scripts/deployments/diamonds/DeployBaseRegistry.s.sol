@@ -181,7 +181,7 @@ contract DeployBaseRegistry is DiamondHelper, Deployer {
     addFacet(
       featureManagerHelper.makeCut(featureManager, IDiamond.FacetCutAction.Add),
       featureManager,
-      featureManagerHelper.makeInitData(riverToken)
+      featureManagerHelper.makeInitData("")
     );
 
     return

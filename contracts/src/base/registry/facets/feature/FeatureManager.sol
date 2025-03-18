@@ -4,7 +4,7 @@ pragma solidity ^0.8.23;
 // interfaces
 import {IVotes} from "@openzeppelin/contracts/governance/utils/IVotes.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {IFeatureFacetBase} from "./IFeatureFacet.sol";
+import {IFeatureManagerFacetBase} from "./IFeatureManagerFacet.sol";
 
 // libraries
 import {CustomRevert} from "contracts/src/utils/libraries/CustomRevert.sol";
@@ -36,10 +36,14 @@ library FeatureManager {
     // validate interface ids
 
     if (totalSupply == 0)
-      CustomRevert.revertWith(IFeatureFacetBase.InvalidTotalSupply.selector);
+      CustomRevert.revertWith(
+        IFeatureManagerFacetBase.InvalidTotalSupply.selector
+      );
 
     if (condition.threshold > totalSupply)
-      CustomRevert.revertWith(IFeatureFacetBase.InvalidThreshold.selector);
+      CustomRevert.revertWith(
+        IFeatureManagerFacetBase.InvalidThreshold.selector
+      );
 
     self.conditions[featureId] = condition;
   }
@@ -51,11 +55,11 @@ library FeatureManager {
     return self.conditions[featureId];
   }
 
-  function removeFeatureCondition(
+  function disableFeatureCondition(
     Layout storage self,
     bytes32 featureId
   ) internal {
-    delete self.conditions[featureId];
+    self.conditions[featureId].active = false;
   }
 
   function meetsThreshold(
