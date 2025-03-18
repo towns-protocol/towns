@@ -1,12 +1,17 @@
-import React, { useCallback, useState } from 'react'
-import { Address } from 'use-towns-client'
-import { isAddress } from 'ethers/lib/utils'
+import React, { useCallback, useMemo, useState } from 'react'
+import {
+    Address,
+    useGetRootKeyFromLinkedWallet,
+    useSpaceMembers,
+    useUserLookupArray,
+} from 'use-towns-client'
+import { isAddress } from 'viem'
 import { Box, BoxProps, Button, Stack, Text, TextField } from '@ui'
 import { CSVUploader } from '@components/CSVUploader/CSVUploader'
-import { useLookupUsersWithAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { shortAddress } from 'ui/utils/utils'
 import { useDevice } from 'hooks/useDevice'
+import { Avatar } from '@components/Avatar/Avatar'
 import { WalletMemberList } from './WalletMemberList'
 
 type Props = {
@@ -18,7 +23,8 @@ type Props = {
 
 export const WalletMemberSelector = (props: Props) => {
     const { walletMembers, onChange, isValidationError, isRole } = props
-    const { data: users } = useLookupUsersWithAbstractAccountAddress()
+    const { memberIds } = useSpaceMembers()
+    const users = useUserLookupArray(memberIds)
     const [searchTerm, setSearchTerm] = useState('')
     const { isTouch } = useDevice()
 
@@ -69,21 +75,30 @@ export const WalletMemberSelector = (props: Props) => {
                     getPrettyDisplayName(user).toLowerCase().includes(searchTerm.toLowerCase()),
                 )
                 if (user) {
-                    handleAddAddress(user.abstractAccountAddress)
+                    handleAddAddress(user.userId as Address)
                 }
             }
         }
     }
 
-    const filteredUsers =
-        users?.filter(
-            (user) =>
-                getPrettyDisplayName(user).toLowerCase().includes(searchTerm.toLowerCase()) ||
-                user.abstractAccountAddress.toLowerCase().includes(searchTerm.toLowerCase()),
-        ) || []
+    const { data: rootKeyFromSearchTerm } = useGetRootKeyFromLinkedWallet({
+        walletAddress: searchTerm as Address | undefined,
+    })
+
+    const filteredUsers = useMemo(() => {
+        return (
+            users?.filter(
+                (user) =>
+                    getPrettyDisplayName(user).toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    (rootKeyFromSearchTerm &&
+                        user.userId.toLowerCase().includes(rootKeyFromSearchTerm.toLowerCase())),
+            ) || []
+        )
+    }, [users, searchTerm, rootKeyFromSearchTerm])
 
     return (
         <Stack gap data-testid="user-search">
+            {JSON.stringify(walletMembers)}
             <Stack gap="sm">
                 <Box position="relative">
                     <Box horizontal gap="sm" alignItems="center">
@@ -119,14 +134,18 @@ export const WalletMemberSelector = (props: Props) => {
                                 {filteredUsers.length > 0 ? (
                                     filteredUsers.map((user) => (
                                         <Button
-                                            data-testid={`address-selection-option-${user.abstractAccountAddress}`}
-                                            key={user.abstractAccountAddress}
+                                            data-testid={`address-selection-option-${user.userId}`}
+                                            key={user.userId}
                                             onClick={() =>
-                                                handleAddAddress(user.abstractAccountAddress)
+                                                handleAddAddress(
+                                                    isAddress(searchTerm)
+                                                        ? searchTerm
+                                                        : (user.userId as Address),
+                                                )
                                             }
                                         >
-                                            {getPrettyDisplayName(user)} (
-                                            {shortAddress(user.abstractAccountAddress)})
+                                            <Avatar size="avatar_sm" userId={user.userId} />
+                                            {getPrettyDisplayName(user)}
                                         </Button>
                                     ))
                                 ) : isAddress(searchTerm) ? (

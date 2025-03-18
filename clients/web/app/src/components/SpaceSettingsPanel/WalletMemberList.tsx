@@ -1,9 +1,8 @@
 import React, { useMemo } from 'react'
-import { Address } from 'use-towns-client'
+import { Address, useSpaceMembers, useUserLookupArray } from 'use-towns-client'
 import { Box } from '@ui'
 import { MultipleAddresses } from '@components/AddressSelection/MultipleAddresses'
 import { AddressSelectionDisplay } from '@components/AddressSelection/AddressSelectionDisplay'
-import { useLookupUsersWithAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
 
 type Props = {
     walletMembers: Address[]
@@ -18,6 +17,8 @@ type Props = {
       }
 )
 
+const displayLimit = 15
+
 export const WalletMemberList: React.FC<Props> = ({
     walletMembers,
     isRole,
@@ -27,11 +28,12 @@ export const WalletMemberList: React.FC<Props> = ({
     const onRemove = !readOnly && 'onRemove' in props ? props.onRemove : undefined
     const onRemoveAll = !readOnly && 'onRemoveAll' in props ? props.onRemoveAll : undefined
 
-    const { data: users } = useLookupUsersWithAbstractAccountAddress()
+    const { memberIds } = useSpaceMembers()
+    const users = useUserLookupArray(memberIds)
 
     const { selectedAddresses, unselectedAddresses } = useMemo(() => {
         if (isRole) {
-            const usersAddresses = users?.map((user) => user.abstractAccountAddress) || []
+            const usersAddresses = users?.map((user) => user.userId) || []
             const selectedAddresses = walletMembers.filter((address) =>
                 usersAddresses.includes(address),
             )
@@ -52,7 +54,7 @@ export const WalletMemberList: React.FC<Props> = ({
 
     return (
         <Box gap="sm">
-            {selectedAddresses.length <= 15 ? (
+            {selectedAddresses.length <= displayLimit ? (
                 <>
                     {selectedAddresses.map((address) => (
                         <AddressSelectionDisplay
@@ -62,7 +64,7 @@ export const WalletMemberList: React.FC<Props> = ({
                         />
                     ))}
                     {selectedAddresses.length === 0 &&
-                        walletMembers.length <= 15 &&
+                        walletMembers.length <= displayLimit &&
                         unselectedAddresses.map((address) => (
                             <AddressSelectionDisplay
                                 key={address}
@@ -72,7 +74,7 @@ export const WalletMemberList: React.FC<Props> = ({
                         ))}
                 </>
             ) : null}
-            {walletMembers.length > 15 && (
+            {walletMembers.length > displayLimit && (
                 <MultipleAddresses
                     walletMembers={walletMembers}
                     selectedAddresses={selectedAddresses}

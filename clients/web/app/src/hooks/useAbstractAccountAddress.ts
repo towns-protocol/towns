@@ -1,14 +1,11 @@
-import { useQueries, useQuery } from '@tanstack/react-query'
-import { useCallback, useMemo } from 'react'
+import { useQuery } from '@tanstack/react-query'
+import { useCallback } from 'react'
 import {
     Address,
-    LookupUser,
     queryClient,
     staleTime24Hours,
     useOfflineStore,
-    useSpaceMembers,
     useTownsContext,
-    useUserLookupContext,
 } from 'use-towns-client'
 import { AccountAbstractionConfig, UserOps } from '@towns/userops'
 import { useEnvironment } from './useEnvironmnet'
@@ -110,58 +107,6 @@ export function useGetAbstractAccountAddressAsync() {
         },
         [userOpsInstance, accountAbstractionConfig, setOfflineWalletAddress],
     )
-}
-
-export type LookupUserWithAbstractAccountAddress = LookupUser & {
-    abstractAccountAddress: Address
-}
-// TODO: we should move this into zustand - with lookupUser as a selector this
-// won't
-export function useLookupUsersWithAbstractAccountAddress() {
-    const { accountAbstractionConfig } = useEnvironment()
-
-    const userOpsInstance = useUserOps()
-    const { memberIds } = useSpaceMembers()
-    const setOfflineWalletAddress = useOfflineStore((s) => s.setOfflineWalletAddress)
-
-    const { lookupUser } = useUserLookupContext()
-    const queries = useMemo(() => {
-        return memberIds.map((userId) => {
-            const cachedAddress = getCachedAddress({
-                rootKeyAddress: userId,
-            })
-            return {
-                ...querySetup({
-                    accountAbstractionConfig,
-                    rootKeyAddress: userId as `0x${string}` | undefined,
-                    userOpsInstance,
-                    cachedAddress,
-                    setOfflineWalletAddress,
-                }),
-            }
-        })
-    }, [accountAbstractionConfig, memberIds, setOfflineWalletAddress, userOpsInstance])
-    return useQueries({
-        queries: queries,
-        combine: (results) => {
-            return {
-                data: results
-                    .map((r, i): LookupUserWithAbstractAccountAddress => {
-                        const user = lookupUser(memberIds[i])
-                        return {
-                            ...user,
-                            abstractAccountAddress: r.data as `0x${string}`,
-                        }
-                    })
-                    .filter(
-                        (r): r is LookupUserWithAbstractAccountAddress =>
-                            r.abstractAccountAddress !== undefined,
-                    ),
-
-                isLoading: results.some((r) => r.isLoading),
-            }
-        },
-    })
 }
 
 export function isAbstractAccountAddress({
