@@ -8,6 +8,7 @@ import (
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/asn1"
+	"fmt"
 	"math/big"
 	"sync"
 	"time"
@@ -27,7 +28,7 @@ import (
 const (
 	certTTL            = time.Hour
 	certDurationBuffer = time.Second * 30
-	certName           = "node2node"
+	certNameFmt        = "%s.towns"
 )
 
 var (
@@ -39,20 +40,16 @@ var (
 // Returns nil if the certificate is valid or not found.
 func VerifyPeerCertificate(logger *zap.SugaredLogger, nodeRegistry nodes.NodeRegistry) func([][]byte, [][]*x509.Certificate) error {
 	return func(rawCerts [][]byte, _ [][]*x509.Certificate) error {
-		for _, rawCert := range rawCerts {
-			peerCert, err := x509.ParseCertificate(rawCert)
-			if err != nil {
-				return err
-			}
-
-			if peerCert.Subject.CommonName == certName {
-				if err = verifyCert(logger, nodeRegistry, peerCert); err != nil {
-					return err
-				}
-			}
+		if len(rawCerts) != 1 {
+			return RiverError(Err_UNAUTHENTICATED, "Unexpected number of peer certificates").LogError(logger)
 		}
 
-		return nil
+		cert, err := x509.ParseCertificate(rawCerts[0])
+		if err != nil {
+			return err
+		}
+
+		return verifyCert(logger, nodeRegistry, cert)
 	}
 }
 
@@ -70,10 +67,6 @@ type node2NodeCertExt struct {
 func verifyCert(logger *zap.SugaredLogger, nodeRegistry nodes.NodeRegistry, cert *x509.Certificate) error {
 	if cert == nil {
 		return RiverError(Err_UNAUTHENTICATED, "No node-2-node client certificate provided").LogError(logger)
-	}
-
-	if cert.Subject.CommonName != certName {
-		return RiverError(Err_UNAUTHENTICATED, "Unexpected node-2-node client certificate name").LogError(logger)
 	}
 
 	now := time.Now()
@@ -190,7 +183,7 @@ func createCert(logger *zap.SugaredLogger, wallet *crypto.Wallet) (*tls.Certific
 	template := &x509.Certificate{
 		SerialNumber: big.NewInt(1),
 		Subject: pkix.Name{
-			CommonName:   certName,
+			CommonName:   fmt.Sprintf(certNameFmt, wallet.Address.Hex()),
 			Organization: []string{"towns"},
 		},
 		NotBefore:       time.Now().Add(-certDurationBuffer), // Add a small buffer to avoid issues with time differences
