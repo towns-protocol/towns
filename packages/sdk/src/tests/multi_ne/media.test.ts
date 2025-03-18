@@ -120,7 +120,7 @@ describe('mediaTests', () => {
 
     test('clientCanSendSpaceMediaPayload', async () => {
         const spaceId = makeUniqueSpaceStreamId()
-        const mediaStreamInfo = await bobCreateSpaceMediaStream(spaceId, 10)
+        const mediaStreamInfo = await bobCreateSpaceMediaStream(spaceId, 10, new Uint8Array(100))
         await expect(
             bobSendMediaPayloads(mediaStreamInfo.creationCookie, 10),
         ).resolves.not.toThrow()
