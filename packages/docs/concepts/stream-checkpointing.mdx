@@ -1,32 +1,31 @@
 ---
-title: Stream Checkpointing
-description: ""
+title: "Stream Checkpointing"
 ---
 
-Stream Checkpointing is how Towns Protocol ensures data integrity of a stream on a secure L2 blockchain. This guide provides an in-depth understanding of the process, focusing on the mini block headers, their structure, and their role in the Towns Protocol.
+Stream Checkpointing ensures data integrity in the Towns Protocol by recording stream data on a secure L2 blockchain. This guide explains the process, with a focus on mini block headers and their role in the protocol.
 
-## Mini Block Headers
+## **Mini Block Headers**
 
-Mini block headers serve as a compact summary of a mini block's contents, providing essential information needed to verify the integrity and finality of transactions within the Towns Protocol.
+Mini block headers provide a compact summary of block contents, containing the key information needed to verify transaction integrity and finality.
 
-### Components of a Mini Block Header
+### **Components of a Mini Block Header**
 
-A mini block header is an event that encapsulates several critical pieces of information:
+Each mini block header is an event containing these essential elements:
 
-1. **Hash of Previous Mini Block Header**: This links mini blocks in a chain, ensuring continuity and traceability.
-2. **Hashes of Events**: These are references to the events included in the current mini block, acting as a summary of the block's content.
-3. **Snapshots (0-1)**: Optional snapshots may be included for additional context or state information. [see Snapshotting]
-4. **Vote Proof**: Evidence of consensus from participating nodes, confirming the validity of the mini block's contents.
-5. **Signature**: The entire event is signed by the elected leader node, adding an additional layer of security and authenticity.
+1. **Hash of Previous Mini Block Header**: Creates a chain of linked blocks for continuity and traceability.
+2. **Hashes of Events**: References to the current mini block's events, summarizing its contents.
+3. **Snapshots (0-1)**: Optional snapshots that provide additional context or state information \[see Snapshotting\].
+4. **Vote Proof**: Consensus evidence from participating nodes that confirms the mini block's validity.
+5. **Signature**: The leader node's signature of the entire event, ensuring security and authenticity.
 
-### Storage and Distribution
+### **Storage and Distribution**
 
-- **Local Storage by Nodes**: Each node participating in the Towns Protocol stores the mini block headers locally. This storage plays a critical role in maintaining the network's integrity and redundancy.
-- **Sent to Clients**: Mini block headers are also transmitted to clients, providing them with the necessary information to verify transaction finality and integrity.
+- **Local Storage by Nodes**: All participating nodes store mini block headers locally to maintain network integrity and redundancy.
+- **Sent to Clients**: Clients receive mini block headers to verify transaction finality and integrity.
 
-## Finality and Verification
+## **Finality and Verification**
 
-Understanding the finality of transactions within the Towns Protocol is crucial for maintaining trust in the system. The mini block header plays a central role in this process:
+Transaction finality in the Towns Protocol is essential for system trust, with mini block headers playing a key role:
 
-- **Transaction Finality**: If a client or node possesses a mini block header and observes a transaction on the Towns Chain with the same header hash, the transaction can be considered final.
-- **Verification Process**: The interconnected nature of the mini block headers, along with the consensus proof and node signatures, allows for a robust verification process, ensuring the authenticity and integrity of the data within the Towns Protocol.
+- **Transaction Finality**: A transaction is final when a client or node has both the mini block header and matching header hash on the Towns Chain.
+- **Verification Process**: Mini block headers form an interconnected chain that, combined with consensus proofs and node signatures, enables thorough verification of data integrity.
