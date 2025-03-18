@@ -11,7 +11,6 @@ import {
     RoleDetails,
     VersionedRuleData,
 } from '../ContractTypes'
-import { findEthereumProviders } from '../entitlement'
 import { computeDelegatorsForProvider } from '../DelegateRegistry'
 import { BytesLike, ContractReceipt, ContractTransaction, ethers } from 'ethers'
 import {
@@ -49,6 +48,7 @@ import {
     XchainConfig,
     evaluateOperationsForEntitledWallet,
     ruleDataToOperations,
+    findEthereumProviders,
 } from '../entitlement'
 import { RuleEntitlementShim } from './RuleEntitlementShim'
 import { PlatformRequirements } from './PlatformRequirements'

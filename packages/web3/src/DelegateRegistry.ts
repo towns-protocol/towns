@@ -59,6 +59,14 @@ function newDelegateContract(provider: ethers.providers.BaseProvider): ethers.Co
     return new ethers.Contract(v1RegistryContractAddress, humanReadableAbi, provider)
 }
 
+interface DelegationInfo {
+    type_: number
+    vault: string
+    delegate: string
+    contract_: string
+    tokenId: bigint
+}
+
 export async function computeDelegatorsForProvider(
     provider: ethers.providers.BaseProvider,
     wallets: string[],
@@ -66,10 +74,12 @@ export async function computeDelegatorsForProvider(
     const contract = newDelegateContract(provider)
     const delegators: string[] = []
     for (const wallet of wallets) {
-        const delegations = await contract.callStatic.getDelegationsByDelegate(wallet)
+        const delegations = (await contract.callStatic.getDelegationsByDelegate(
+            wallet,
+        )) as DelegationInfo[]
         for (const delegation of delegations) {
-            if (delegation[0] == delegationTypeAll) {
-                delegators.push(delegation[1])
+            if (delegation.type_ == delegationTypeAll) {
+                delegators.push(delegation.vault)
             }
         }
     }
