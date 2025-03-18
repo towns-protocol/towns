@@ -781,10 +781,10 @@ message WrappedEncryptedData {
 }
 
 message SyncCookie  {
+    reserved 4;
     bytes node_address = 1;
     bytes stream_id = 2;
     int64 minipool_gen = 3;
-    int64 minipool_slot = 4;
     bytes prev_miniblock_hash = 5;
 }
 
