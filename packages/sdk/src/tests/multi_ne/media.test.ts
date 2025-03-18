@@ -68,12 +68,7 @@ describe('mediaTests', () => {
         chunkIndex: number,
         data: Uint8Array,
     ): Promise<CreationCookie> {
-        const result = await bobsClient.sendMediaPayload(
-            creationCookie,
-            last,
-            data,
-            chunkIndex,
-        )
+        const result = await bobsClient.sendMediaPayload(creationCookie, last, data, chunkIndex)
         return result.creationCookie
     }
 
