@@ -27,6 +27,7 @@ import {
     EncodedNoopRuleData,
     DecodedCheckOperationBuilder,
     evaluateOperationsForEntitledWallet,
+    findEthereumProviders,
 } from './entitlement'
 import {
     MOCK_ADDRESS,
@@ -41,6 +42,7 @@ import { convertRuleDataV2ToV1 } from './ConvertersEntitlements'
 import { IRuleEntitlementV2Base } from './v3/IRuleEntitlementV2Shim'
 
 import debug from 'debug'
+import { computeDelegatorsForProvider } from './DelegateRegistry'
 
 const log = debug('test')
 
@@ -191,6 +193,7 @@ const xchainConfig: XchainConfig = {
         [Number(baseSepoliaChainId)]: 'https://sepolia.base.org',
     },
     etherBasedChains: [Number(ethereumSepoliaChainId), Number(baseSepoliaChainId)],
+    ethereumChains: [Number(ethereumSepoliaChainId)],
 }
 
 const minimalEtherChainsConfig: XchainConfig = {
@@ -199,6 +202,7 @@ const minimalEtherChainsConfig: XchainConfig = {
         [Number(baseSepoliaChainId)]: 'https://sepolia.base.org',
     },
     etherBasedChains: [Number(ethereumSepoliaChainId)],
+    ethereumChains: [Number(ethereumSepoliaChainId)],
 }
 
 const nftCases = [
@@ -958,6 +962,19 @@ it.concurrent.each(slowAndCases)('slowAndOperation', async (props) => {
 
     expect(result).toBe(expectedResult)
     expect(timeTaken).toBeCloseTo(expectedTime, -2)
+})
+
+const hotWallet = '0x10F0ABcC19f37CE6131809b105D4d7Ac5343F77D'
+const coldWallet = '0xF2BcBF25fA8fE28D755f1C6e1630A09a1E23457f'
+
+it.concurrent('computeDelegatorsForProvider', async () => {
+    const providers = await findEthereumProviders(xchainConfig)
+    expect(providers.length).toBe(1)
+
+    const provider = providers[0]
+    const delegated = await computeDelegatorsForProvider(provider, [hotWallet])
+    expect(delegated.length).toBe(1)
+    expect(delegated[0]).toEqual(coldWallet)
 })
 
 it('empty', async () => {

@@ -22,6 +22,10 @@ export type XchainConfig = {
     // The chain ids for supported chains that use ether as the native currency.
     // These chains will be used to determine a user's cumulative ether balance.
     etherBasedChains: number[]
+    // The chain ids for ethereum chains. For towns mainnet, this will include
+    // ethereum mainnet only. For test networks, this will also include ethereum
+    // sepolia.
+    ethereumChains: number[]
 }
 
 const zeroAddress = ethers.constants.AddressZero
@@ -1261,6 +1265,20 @@ async function findEtherChainProviders(xchainConfig: XchainConfig) {
     }
     await Promise.all(etherChainProviders.map((p) => p.ready))
     return etherChainProviders
+}
+
+export async function findEthereumProviders(xchainConfig: XchainConfig) {
+    const ethereumProviders = []
+    for (const chainId of xchainConfig.ethereumChains) {
+        if (!(Number(chainId) in xchainConfig.supportedRpcUrls)) {
+            log.error(`findEthereumProviders: No supported RPC URL for chain id ${chainId}`)
+        } else {
+            const url = xchainConfig.supportedRpcUrls[Number(chainId)]
+            ethereumProviders.push(new ethers.providers.StaticJsonRpcProvider(url))
+        }
+    }
+    await Promise.all(ethereumProviders.map((p) => p.ready))
+    return ethereumProviders
 }
 
 function isValidAddress(value: unknown): value is Address {

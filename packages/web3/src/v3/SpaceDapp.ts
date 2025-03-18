@@ -11,6 +11,8 @@ import {
     RoleDetails,
     VersionedRuleData,
 } from '../ContractTypes'
+import { findEthereumProviders } from '../entitlement'
+import { computeDelegatorsForProvider } from '../DelegateRegistry'
 import { BytesLike, ContractReceipt, ContractTransaction, ethers } from 'ethers'
 import {
     CreateLegacySpaceParams,
@@ -148,6 +150,7 @@ function ensureHexPrefix(value: string): string {
 const EmptyXchainConfig: XchainConfig = {
     supportedRpcUrls: {},
     etherBasedChains: [],
+    ethereumChains: [],
 }
 
 type EntitledWallet = string | undefined
@@ -733,17 +736,30 @@ export class SpaceDapp implements ISpaceDapp {
         return [wallet, ...linkedWallets]
     }
 
-    public async getLinkedWalletsWithDelegations(wallet: string): Promise<string[]> {
-        let linkedWallets = await this.walletLink.getLinkedWalletsWithDelegations(wallet)
-        // If there are no linked wallets, consider that the wallet may be linked to another root key.
-        if (linkedWallets.length === 0) {
-            const possibleRoot = await this.walletLink.getRootKeyForWallet(wallet)
-            if (possibleRoot !== INVALID_ADDRESS) {
-                linkedWallets = await this.walletLink.getLinkedWalletsWithDelegations(possibleRoot)
-                return [possibleRoot, ...linkedWallets]
+    private async getMainnetDelegationsForLinkedWallets(
+        linkedWallets: string[],
+        config: XchainConfig,
+    ): Promise<Set<string>> {
+        const delegatorSet: Set<string> = new Set()
+        const ethProviders = await findEthereumProviders(config)
+
+        for (const provider of ethProviders) {
+            const delegators = await computeDelegatorsForProvider(provider, linkedWallets)
+            for (const delegator of delegators) {
+                delegatorSet.add(delegator)
             }
         }
-        return [wallet, ...linkedWallets]
+        return delegatorSet
+    }
+
+    public async getLinkedWalletsWithDelegations(
+        wallet: string,
+        config: XchainConfig,
+    ): Promise<string[]> {
+        const linkedWallets = await this.getLinkedWallets(wallet)
+        const allWallets = new Set(linkedWallets)
+        const delegators = await this.getMainnetDelegationsForLinkedWallets(linkedWallets, config)
+        return [...allWallets.union(delegators)]
     }
 
     private async evaluateEntitledWallet(
@@ -842,7 +858,7 @@ export class SpaceDapp implements ISpaceDapp {
         rootKey: string,
         xchainConfig: XchainConfig,
     ): Promise<EntitledWallet> {
-        const allWallets = await this.getLinkedWalletsWithDelegations(rootKey)
+        const allWallets = await this.getLinkedWalletsWithDelegations(rootKey, xchainConfig)
 
         const space = this.getSpace(spaceId)
         if (!space) {
@@ -939,7 +955,7 @@ export class SpaceDapp implements ISpaceDapp {
 
         const channelId = ensureHexPrefix(channelNetworkId)
 
-        const linkedWallets = await this.getLinkedWalletsWithDelegations(user)
+        const linkedWallets = await this.getLinkedWalletsWithDelegations(user, xchainConfig)
 
         const owner = await space.Ownable.read.owner()
 
@@ -1687,7 +1703,7 @@ export class SpaceDapp implements ISpaceDapp {
         if (!space) {
             throw new Error(`Space with spaceId "${spaceId}" is not found.`)
         }
-        const linkedWallets = await this.getLinkedWalletsWithDelegations(owner)
+        const linkedWallets = await this.getLinkedWallets(owner)
         const tokenIds = await space.getTokenIdsOfOwner(linkedWallets)
         return tokenIds[0]
     }
