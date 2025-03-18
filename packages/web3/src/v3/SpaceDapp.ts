@@ -149,8 +149,8 @@ function ensureHexPrefix(value: string): string {
 
 const EmptyXchainConfig: XchainConfig = {
     supportedRpcUrls: {},
-    etherBasedChains: [],
-    ethereumChains: [],
+    etherNativeNetworkIds: [],
+    ethereumNetworkIds: [],
 }
 
 type EntitledWallet = string | undefined

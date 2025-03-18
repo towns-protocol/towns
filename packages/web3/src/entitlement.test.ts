@@ -192,8 +192,8 @@ const xchainConfig: XchainConfig = {
         [Number(ethereumSepoliaChainId)]: 'https://ethereum-sepolia-rpc.publicnode.com',
         [Number(baseSepoliaChainId)]: 'https://sepolia.base.org',
     },
-    etherBasedChains: [Number(ethereumSepoliaChainId), Number(baseSepoliaChainId)],
-    ethereumChains: [Number(ethereumSepoliaChainId)],
+    etherNativeNetworkIds: [Number(ethereumSepoliaChainId), Number(baseSepoliaChainId)],
+    ethereumNetworkIds: [Number(ethereumSepoliaChainId)],
 }
 
 const minimalEtherChainsConfig: XchainConfig = {
@@ -201,8 +201,8 @@ const minimalEtherChainsConfig: XchainConfig = {
         [Number(ethereumSepoliaChainId)]: 'https://ethereum-sepolia-rpc.publicnode.com',
         [Number(baseSepoliaChainId)]: 'https://sepolia.base.org',
     },
-    etherBasedChains: [Number(ethereumSepoliaChainId)],
-    ethereumChains: [Number(ethereumSepoliaChainId)],
+    etherNativeNetworkIds: [Number(ethereumSepoliaChainId)],
+    ethereumNetworkIds: [Number(ethereumSepoliaChainId)],
 }
 
 const nftCases = [
