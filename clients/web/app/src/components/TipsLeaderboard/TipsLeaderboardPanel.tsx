@@ -32,7 +32,7 @@ export const TipsLeaderboardPanel = () => {
     const hasLeaderboard = data?.leaderboard && Object.keys(data.leaderboard).length > 0
 
     return (
-        <Panel label="Tip Leaderboard" padding="none" paddingX="none">
+        <Panel label="Top Tippers" padding="none" paddingX="none">
             <Stack paddingY="sm" gap="xs" height="100%">
                 {isLoading &&
                     // eslint-disable-next-line react/no-array-index-key
