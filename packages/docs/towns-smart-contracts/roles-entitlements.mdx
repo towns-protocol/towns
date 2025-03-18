@@ -1,53 +1,45 @@
 ---
-title: Roles and Entitlements
-description: ""
+title: "Roles and Entitlements"
 ---
 
-## Understanding Roles, Entitlements, and Permissions in Towns Protocol
+## **Understanding Roles, Entitlements, and Permissions in Towns Protocol**
 
-### Overview of Permissions
+### **Overview of Permissions**
 
-In the Towns ecosystem, `Permissions` are defined actions that users can undertake within a `Space`. These permissions are fundamental to governing user interactions and activities within the ecosystem. The Towns system includes a range of permissions, each tailored to specific functionalities:
+In the Towns ecosystem, `Permissions` define specific actions users can take within a `Space`. These permissions govern all user interactions and activities. Here are the key permissions:
 
-- `ModifyChannels`: This permission allows those who hold to create, delete, edit, and assign roles to a given channel within a Space.
-- `ModifyRoles`: This permission enables users to create and modify roles and entitlements within a Space.
-- `MintMembership`: The `Mint` permission grants users the ability to mint a membership token for a given Space.
-- `Read`: The `Read` permission allows users to access and view message content within a Space.
-- `Write`: With the `Write` permission, users can create and modify message content within a Space.
+- `ModifyChannels`: Allows holders to create, delete, edit, and assign roles to channels within a Space.
+- `ModifyRoles`: Enables users to create and modify roles and entitlements within a Space.
+- `MintMembership`: Grants users the ability to mint membership tokens for a Space.
+- `Read`: Allows users to access and view messages within a Space.
+- `Write`: Enables users to create and modify messages within a Space.
 
-### Concept of Roles
+### **Concept of Roles**
 
-`Roles` in the Towns system are aggregations of the aforementioned `Permissions`. By combining different permissions into distinct roles, the system simplifies the management of user capabilities and access within a Space.
+`Roles` bundle multiple `Permissions` together, making it easier to manage user access and capabilities within a Space.
 
-### Functionality of Entitlements
+### **Functionality of Entitlements**
 
-`Entitlements` play a crucial role in determining user eligibility for different Roles. They dictate how users qualify for certain Roles and can be specific to different Channels or the Space itself.
+`Entitlements` determine which users are eligible for different Roles. These can apply to specific Channels or the entire Space.
 
-### Implementation of Entitlement Modules
+### **Implementation of Entitlement Modules**
 
-`Entitlement Modules` are instrumental in defining the requirements for Entitlements. These modules are akin to pricing modules, allowing for the deployment of bespoke smart contracts on the chain. To be incorporated into the Towns system, these contracts must adhere to the `IEntitlement` Interface and be deployed to Base, with their settings adjusted for each Space.
+`Entitlement Modules` define the requirements for Entitlements. Like pricing modules, they allow custom smart contracts on the chain. These contracts must follow the `IEntitlement` Interface and deploy to Base, with configurable settings for each Space.
 
-### Default Settings in Spaces
+### **Default Settings in Spaces**
 
-Upon the minting of a new Space, the Towns system automatically deploys two standard Entitlement Modules:
+When a new Space is minted, it comes with two standard Entitlement Modules:
 
-1. **UserEntitlementModule**: This module enables the assignment of Roles based on specific addresses or ENS. For instance, "vitalik.eth" could be assigned the Moderator Role, while "0x44..ccbb" might receive a Read-Only Role.
-2. **TokenEntitlementModule**: It facilitates the assignment of Roles based on the ownership of certain assets on-chain. An example would be assigning a Special Role to users holding a Cryptopunk or a Whale Role to those with at least .1 ETH.
+1. **UserEntitlementModule**: Assigns Roles based on specific addresses or ENS names—for example, you could give "vitalik.eth" a Moderator Role or "0x44..ccbb" a Read-Only Role.
+2. **TokenEntitlementModule**: Assigns Roles based on on-chain asset ownership—for example, you could give a Special Role to Cryptopunk holders or a Whale Role to users with at least 0.1 ETH.
 
-### Default Roles in Newly Minted Spaces
+### **Default Roles in Newly Minted Spaces**
 
-Each newly minted Space in the Towns system is initialized with two predefined Roles:
+Every new Space starts with two predefined Roles:
 
 - Owner:
-
-  - Assigned automatically to the address holding the Owner NFT through the Token Entitlement Module.
-  - This Role encompasses all permissions within the Space and is irrevocable.
-
+  - Assigned automatically to the Owner NFT holder through the Token Entitlement Module.
+  - This Role includes all permissions and cannot be revoked.
 - Member:
-  - Granted to any address holding a Member NFT.
-  - By default, this Role includes "Read" and "Write" Permissions, allowing for basic interaction within the Space.
-
-– Minter:
-– Granted implicitly to any address that meets the requirements for minting a Membership NFT.
-
-- This Role only include the 'MintMembership' permission.
+  - Granted to any Member NFT holder.
+  - Includes basic "Read" and "Write" Permissions by default.
