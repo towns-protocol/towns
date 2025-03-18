@@ -977,7 +977,7 @@ describe('computeDelegatorsForProvider', () => {
         expect(providers.length).toBe(1)
 
         const provider = providers[0]
-        let delegated = await computeDelegatorsForProvider(provider, [hotWallet])
+        const delegated = await computeDelegatorsForProvider(provider, [hotWallet])
         expect(delegated).toHaveLength(1)
         expect(delegated).toEqual(expect.arrayContaining([coldWallet]))
     })
@@ -987,7 +987,7 @@ describe('computeDelegatorsForProvider', () => {
         expect(providers.length).toBe(1)
 
         const provider = providers[0]
-        let delegated = await computeDelegatorsForProvider(provider, [hotWallet2])
+        const delegated = await computeDelegatorsForProvider(provider, [hotWallet2])
         expect(delegated).toHaveLength(2)
         expect(delegated).toEqual(expect.arrayContaining([coldWallet2, coldWallet3]))
     })
@@ -997,7 +997,7 @@ describe('computeDelegatorsForProvider', () => {
         expect(providers.length).toBe(1)
 
         const provider = providers[0]
-        let delegated = await computeDelegatorsForProvider(provider, [hotWallet, hotWallet2])
+        const delegated = await computeDelegatorsForProvider(provider, [hotWallet, hotWallet2])
         expect(delegated).toHaveLength(3)
         expect(delegated).toEqual(expect.arrayContaining([coldWallet, coldWallet2, coldWallet3]))
     })
