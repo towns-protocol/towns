@@ -25,8 +25,9 @@ import (
 )
 
 const (
-	certTTL  = time.Hour
-	certName = "node2node"
+	certTTL            = time.Hour
+	certDurationBuffer = time.Second * 30
+	certName           = "node2node"
 )
 
 var (
@@ -128,10 +129,6 @@ func verifyCert(logger *zap.SugaredLogger, nodeRegistry nodes.NodeRegistry, cert
 
 // CertGetter returns a GetClientCertFunc that provides a node-2-node client certificate.
 func CertGetter(logger *zap.SugaredLogger, wallet *crypto.Wallet) http_client.GetClientCertFunc {
-	const (
-		certRenewGap = time.Minute
-	)
-
 	var (
 		lock    sync.Mutex
 		tlsCert *tls.Certificate
@@ -143,7 +140,7 @@ func CertGetter(logger *zap.SugaredLogger, wallet *crypto.Wallet) http_client.Ge
 		defer lock.Unlock()
 
 		// Create a new certificate if the current one is nil or about to expire
-		if cert == nil || time.Now().Add(certRenewGap).After(cert.NotAfter) {
+		if cert == nil || time.Now().Add(certDurationBuffer).After(cert.NotAfter) {
 			newCert, err := createCert(logger, wallet)
 			if err != nil {
 				return nil, err
@@ -193,7 +190,7 @@ func createCert(logger *zap.SugaredLogger, wallet *crypto.Wallet) (*tls.Certific
 	template := &x509.Certificate{
 		SerialNumber:    big.NewInt(1),
 		Subject:         pkix.Name{CommonName: certName},
-		NotBefore:       time.Now(),
+		NotBefore:       time.Now().Add(-certDurationBuffer), // Add a small buffer to avoid issues with time differences
 		NotAfter:        time.Now().Add(certTTL),
 		KeyUsage:        x509.KeyUsageDigitalSignature,
 		ExtKeyUsage:     []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
