@@ -48,12 +48,6 @@ func (s *Service) createMediaStream(ctx context.Context, req *CreateMediaStreamR
 		return nil, err
 	}
 
-	var firstChunkEvent *ParsedEvent
-	if len(parsedEvents) > 1 {
-		firstChunkEvent = parsedEvents[1]
-		parsedEvents = parsedEvents[:1]
-	}
-
 	log.Debugw("createStream", "parsedEvents", parsedEvents)
 
 	csRules, err := rules.CanCreateStream(
@@ -130,7 +124,7 @@ func (s *Service) createMediaStream(ctx context.Context, req *CreateMediaStreamR
 	}
 
 	// create the stream
-	resp, err := s.createReplicatedMediaStream(ctx, streamId, parsedEvents)
+	resp, err := s.createReplicatedMediaStream(ctx, streamId, []*ParsedEvent{parsedEvents[0]})
 	if err != nil && AsRiverError(err).Code != Err_ALREADY_EXISTS {
 		return nil, err
 	}
@@ -144,8 +138,8 @@ func (s *Service) createMediaStream(ctx context.Context, req *CreateMediaStreamR
 	}
 
 	// add first media chunk if provided
-	if firstChunkEvent != nil {
-		chunk := firstChunkEvent.Event.GetMediaPayload().GetChunk()
+	if len(parsedEvents) > 1 {
+		chunk := parsedEvents[1].Event.GetMediaPayload().GetChunk()
 
 		// Make sure the given chunk index is 0 as it is the first chunk
 		if chunk.GetChunkIndex() != 0 {
@@ -165,7 +159,7 @@ func (s *Service) createMediaStream(ctx context.Context, req *CreateMediaStreamR
 
 		mbHash, err := s.replicatedAddMediaEvent(
 			ctx,
-			firstChunkEvent,
+			parsedEvents[1],
 			resp,
 			parsedEvents[0].Event.GetMediaPayload().GetInception().GetChunkCount() == 1,
 		)

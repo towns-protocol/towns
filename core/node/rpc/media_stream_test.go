@@ -65,6 +65,43 @@ func TestCreateMediaStream(t *testing.T) {
 		return csResp.Msg.GetNextCreationCookie()
 	}
 
+	t.Run("CreateMediaStream failed for unexpected events count", func(t *testing.T) {
+		mediaStreamId := testutils.FakeStreamId(STREAM_MEDIA_BIN)
+
+		// Create inception event
+		var trueVal = true
+		inception, err := events.MakeEnvelopeWithPayload(
+			alice.wallet,
+			events.Make_MediaPayload_Inception(&protocol.MediaPayload_Inception{
+				StreamId:           mediaStreamId[:],
+				ChannelId:          channelId[:],
+				SpaceId:            spaceId[:],
+				UserId:             alice.userId[:],
+				ChunkCount:         chunks,
+				PerChunkEncryption: &trueVal,
+			}),
+			nil,
+		)
+		tt.require.NoError(err)
+
+		// Create chunk events
+		mp1 := events.Make_MediaPayload_Chunk([]byte("chunk 0"), 0, iv)
+		chunk1, err := events.MakeEnvelopeWithPayload(alice.wallet, mp1, nil)
+		tt.require.NoError(err)
+		mp2 := events.Make_MediaPayload_Chunk([]byte("chunk 1"), 1, iv)
+		chunk2, err := events.MakeEnvelopeWithPayload(alice.wallet, mp2, nil)
+		tt.require.NoError(err)
+
+		// Create media stream
+		csResp, err := alice.client.CreateMediaStream(alice.ctx, connect.NewRequest(&protocol.CreateMediaStreamRequest{
+			Events:   []*protocol.Envelope{inception, chunk1, chunk2},
+			StreamId: mediaStreamId[:],
+		}))
+		tt.require.Nil(csResp)
+		tt.require.Error(err)
+		tt.require.Equal(connect.CodePermissionDenied, connect.CodeOf(err))
+	})
+
 	// Make sure AddEvent does not work for ephemeral streams.
 	// On-chain registration of ephemeral streams happen after the last chunk is uploaded.
 	// At this time, the stream does not exist on-chain so AddEvent should fail.
