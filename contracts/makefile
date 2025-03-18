@@ -4,13 +4,11 @@
 
 all: clean install build
 
-clean  :; forge clean
+clean :; forge clean
 
-install:; forge install
+update :; forge update
 
-update:; forge update
-
-build:; forge build
+build :; forge build
 
 test :; forge test --ffi --nmc Fork --fuzz-runs 4096
 

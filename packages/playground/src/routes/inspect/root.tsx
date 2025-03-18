@@ -49,6 +49,8 @@ const buildStreamMetadataUrl = (
             return `https://gamma.river.delivery`
         case 'alpha':
             return `https://alpha.river.delivery`
+        case 'delta':
+            return `https://delta.river.delivery`
         default:
             return `http://localhost:3002`
     }
