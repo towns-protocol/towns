@@ -171,7 +171,7 @@ describe.skip('CreateChannelForm', () => {
         render(<Wrapper />)
 
         const memberCheckbox = await screen.findByRole('checkbox', { name: /member/i })
-        const submitButton = screen.getByRole('button', { name: /save on chain/i })
+        const submitButton = screen.getByRole('button', { name: /save onchain/i })
 
         // remove member role
         memberCheckbox.click()
@@ -224,7 +224,7 @@ describe.skip('CreateChannelForm', () => {
 
             const everyoneCheckbox = await screen.findByRole('checkbox', { name: /everyone/i })
             const memberCheckbox = await screen.findByRole('checkbox', { name: /member/i })
-            const submitButton = screen.getByRole('button', { name: /save on chain/i })
+            const submitButton = screen.getByRole('button', { name: /save onchain/i })
 
             await waitFor(() => {
                 expect(memberCheckbox).toBeChecked()

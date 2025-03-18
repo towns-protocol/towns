@@ -139,7 +139,7 @@ export function CreateChannelSubmit(props: {
                     popupToast(({ toast }) => (
                         <StandardToast.Success
                             toast={toast}
-                            message={`#${name} was created and saved on chain.`}
+                            message={`#${name} was created and saved onchain.`}
                         />
                     ))
                     onCreateChannel(channelId)

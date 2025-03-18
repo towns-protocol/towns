@@ -8,7 +8,7 @@ import {
     useUpdateSpaceInfoTransaction,
 } from 'use-towns-client'
 import { z } from 'zod'
-import { Box, Button, ErrorMessage, FormRender, Heading, Stack, TextField } from '@ui'
+import { Box, Button, ErrorMessage, FormRender, Heading, Stack, Text, TextField } from '@ui'
 import { TransactionButton } from '@components/TransactionButton'
 import { ModalContainer } from '@components/Modals/ModalContainer'
 import { TransactionUIState, toTransactionUIStates } from 'hooks/TransactionUIState'
@@ -38,8 +38,8 @@ type FormState = {
 
 export const schema = z.object({
     [FormStateKeys.name]: z.string().min(1, 'Please enter a town name'),
-    [FormStateKeys.motto]: z.string().optional(),
-    [FormStateKeys.about]: z.string().optional(),
+    [FormStateKeys.motto]: z.string().max(50, 'Town motto cannot exceed 50 characters'),
+    [FormStateKeys.about]: z.string().max(5000, 'Town description cannot exceed 5000 characters'),
 })
 
 export const TownInfoModal = React.memo((props: Props) => {
@@ -150,7 +150,7 @@ export const TownInfoModalWithoutAuth = (props: Props) => {
                         {({ register, formState, watch, handleSubmit }) => {
                             watch()
                             return (
-                                <Stack grow>
+                                <Stack grow gap="sm">
                                     <Stack>
                                         <TextField
                                             autoFocus
@@ -167,13 +167,12 @@ export const TownInfoModalWithoutAuth = (props: Props) => {
                                             {...register(FormStateKeys.name)}
                                         />
                                     </Stack>
-                                    <Stack paddingTop="xs" alignContent="start">
+                                    <Stack alignContent="start">
                                         <TextField
                                             background="level2"
                                             label="Town Motto"
                                             placeholder="Add town motto"
-                                            maxLength={32}
-                                            height="x5"
+                                            maxLength={50}
                                             message={
                                                 <ErrorMessage
                                                     errors={formState.errors}
@@ -181,23 +180,37 @@ export const TownInfoModalWithoutAuth = (props: Props) => {
                                                 />
                                             }
                                             disabled={hasPendingTx}
-                                            {...register(FormStateKeys.motto)}
+                                            {...register(FormStateKeys.motto, {
+                                                required: true,
+                                                maxLength: 50,
+                                            })}
                                         />
                                     </Stack>
-                                    <Stack paddingTop="sm">
-                                        <TextField
+                                    <Stack>
+                                        <Text strong>About</Text>
+                                        <Box
+                                            as="textarea"
                                             background="level2"
-                                            label="About"
+                                            color="default"
+                                            padding="md"
+                                            rounded="sm"
+                                            marginTop="md"
+                                            style={{
+                                                width: '100%',
+                                                minHeight: '120px',
+                                                resize: 'vertical',
+                                            }}
+                                            maxLength={5000}
                                             placeholder="Add town description"
-                                            maxLength={255}
-                                            message={
-                                                <ErrorMessage
-                                                    errors={formState.errors}
-                                                    fieldName={FormStateKeys.about}
-                                                />
-                                            }
                                             disabled={hasPendingTx}
-                                            {...register(FormStateKeys.about)}
+                                            {...register(FormStateKeys.about, {
+                                                required: true,
+                                                maxLength: 5000,
+                                            })}
+                                        />
+                                        <ErrorMessage
+                                            errors={formState.errors}
+                                            fieldName={FormStateKeys.about}
                                         />
                                     </Stack>
 
