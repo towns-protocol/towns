@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react'
+import React, { useCallback, useMemo } from 'react'
 import {
     SpaceAddressFromSpaceId,
     useGetRootKeyFromLinkedWallet,
@@ -16,6 +16,7 @@ import { useDevice } from 'hooks/useDevice'
 import { shimmerClass } from 'ui/styles/globals/shimmer.css'
 import { useEthToUsdFormatted } from '@components/Web3/useEthPrice'
 import { MINUTE_MS } from 'data/constants'
+import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
 import { useTipLeaderboard } from './useTipLeaderboard'
 
 export const TipsLeaderboardPanel = () => {
@@ -69,6 +70,13 @@ const Row = ({
     })
     const userId = rootKeyAddress ? userIdFromAddress(bin_fromHexString(rootKeyAddress)) : undefined
     const globalUser = userId ? lookupUser(userId) : undefined
+    const { openPanel } = usePanelActions()
+
+    const openProfile = useCallback(() => {
+        if (userAbstractAccountAddress) {
+            openPanel('profile', { profileId: userAbstractAccountAddress })
+        }
+    }, [openPanel, userAbstractAccountAddress])
 
     if (!userId) {
         return null
@@ -94,6 +102,7 @@ const Row = ({
                         overflow="hidden"
                         paddingY="xs"
                         insetY="xxs"
+                        onClick={openProfile}
                     >
                         <Box
                             centerContent
