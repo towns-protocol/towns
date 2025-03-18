@@ -13,6 +13,7 @@ const providerMap = new Map<Environment, string>([
     ['test-beta', `${BASE_SEPOLIA_RPC_URL}`],
     ['alpha', `${BASE_SEPOLIA_RPC_URL}`],
     ['omega', `${BASE_RPC_URL}`],
+    ['delta', `${BASE_SEPOLIA_RPC_URL}`],
 ])
 
 export const networkMap = new Map<Environment, Networks>([
