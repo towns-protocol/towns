@@ -25,15 +25,6 @@ type (
 
 	// LogLevels represents the set of log levels for each component.
 	LogLevels map[Component]zapcore.Level
-
-	// CoreWithLevels is a zapcore.Core that supports custom log levels per component.
-	CoreWithLevels struct {
-		zapcore.Core
-		Levels LogLevels
-	}
-
-	// MultiCores combines multiple cores into one.
-	MultiCores []zapcore.Core
 )
 
 // Component represents the supported logging components enum.
