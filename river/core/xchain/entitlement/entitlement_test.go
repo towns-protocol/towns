@@ -937,13 +937,13 @@ var singleEtherChainBlockChainInfo = map[uint64]config.BlockchainInfo{
 		ChainId:      examples.EthSepoliaChainId.Uint64(),
 		Name:         "Ethereum Seplia",
 		Blocktime:    12000,
-		IsEtherBased: true,
+		IsEtherNative: true,
 	},
 	examples.BaseSepoliaChainId.Uint64(): {
 		ChainId:      examples.BaseSepoliaChainId.Uint64(),
 		Name:         "Base Sepolia",
 		Blocktime:    2000,
-		IsEtherBased: false, // for the sake of testing
+		IsEtherNative: false, // for the sake of testing
 	},
 }
 
