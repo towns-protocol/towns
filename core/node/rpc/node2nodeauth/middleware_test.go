@@ -18,7 +18,7 @@ func TestRequireCertMiddleware(t *testing.T) {
 		{
 			name: "Valid certificate",
 			peerCerts: []*x509.Certificate{{
-				Subject: pkix.Name{CommonName: node2NodeCertName},
+				Subject: pkix.Name{CommonName: certName},
 			}},
 			expectedStatus: http.StatusOK,
 		},

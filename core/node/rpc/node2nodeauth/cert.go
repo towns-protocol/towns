@@ -25,8 +25,8 @@ import (
 )
 
 const (
-	certTTL           = time.Hour
-	node2NodeCertName = "node2node"
+	certTTL  = time.Hour
+	certName = "node2node"
 )
 
 var (
@@ -44,7 +44,7 @@ func VerifyPeerCertificate(logger *zap.SugaredLogger, nodeRegistry nodes.NodeReg
 				return err
 			}
 
-			if peerCert.Subject.CommonName == node2NodeCertName {
+			if peerCert.Subject.CommonName == certName {
 				if err = verifyCert(logger, nodeRegistry, peerCert); err != nil {
 					return err
 				}
@@ -71,7 +71,7 @@ func verifyCert(logger *zap.SugaredLogger, nodeRegistry nodes.NodeRegistry, cert
 		return RiverError(Err_UNAUTHENTICATED, "No node-2-node client certificate provided").LogError(logger)
 	}
 
-	if cert.Subject.CommonName != node2NodeCertName {
+	if cert.Subject.CommonName != certName {
 		return RiverError(Err_UNAUTHENTICATED, "Unexpected node-2-node client certificate name").LogError(logger)
 	}
 
@@ -133,8 +133,9 @@ func CertGetter(logger *zap.SugaredLogger, wallet *crypto.Wallet) http_client.Ge
 	)
 
 	var (
-		lock sync.Mutex
-		cert *tls.Certificate
+		lock    sync.Mutex
+		tlsCert *tls.Certificate
+		cert    *x509.Certificate
 	)
 
 	return func(info *tls.CertificateRequestInfo) (*tls.Certificate, error) {
@@ -142,16 +143,20 @@ func CertGetter(logger *zap.SugaredLogger, wallet *crypto.Wallet) http_client.Ge
 		defer lock.Unlock()
 
 		// Create a new certificate if the current one is nil or about to expire
-		if cert == nil || time.Now().Add(certRenewGap).After(cert.Leaf.NotAfter) {
+		if cert == nil || time.Now().Add(certRenewGap).After(cert.NotAfter) {
 			newCert, err := createCert(logger, wallet)
 			if err != nil {
 				return nil, err
 			}
+			tlsCert = newCert
 
-			cert = newCert
+			cert, err = x509.ParseCertificate(tlsCert.Certificate[0])
+			if err != nil {
+				return nil, AsRiverError(err, Err_INTERNAL).Message("Failed to parse certificate").LogError(logger)
+			}
 		}
 
-		return cert, nil
+		return tlsCert, nil
 	}
 }
 
@@ -187,7 +192,7 @@ func createCert(logger *zap.SugaredLogger, wallet *crypto.Wallet) (*tls.Certific
 
 	template := &x509.Certificate{
 		SerialNumber:    big.NewInt(1),
-		Subject:         pkix.Name{CommonName: node2NodeCertName},
+		Subject:         pkix.Name{CommonName: certName},
 		NotBefore:       time.Now(),
 		NotAfter:        time.Now().Add(certTTL),
 		KeyUsage:        x509.KeyUsageDigitalSignature,

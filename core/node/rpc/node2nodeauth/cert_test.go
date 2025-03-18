@@ -30,7 +30,7 @@ func TestCreateCert(t *testing.T) {
 	// Check certificate fields
 	x509Cert, err := x509.ParseCertificate(cert.Certificate[0])
 	assert.NoError(t, err)
-	assert.Equal(t, node2NodeCertName, x509Cert.Subject.CommonName)
+	assert.Equal(t, certName, x509Cert.Subject.CommonName)
 	assert.True(t, x509Cert.NotBefore.Before(time.Now()))
 	assert.True(t, x509Cert.NotAfter.After(time.Now()))
 
@@ -66,7 +66,7 @@ func TestCertGetter(t *testing.T) {
 	// Check certificate fields
 	x509Cert, err := x509.ParseCertificate(cert.Certificate[0])
 	assert.NoError(t, err)
-	assert.Equal(t, node2NodeCertName, x509Cert.Subject.CommonName)
+	assert.Equal(t, certName, x509Cert.Subject.CommonName)
 	assert.True(t, x509Cert.NotBefore.Before(time.Now()))
 	assert.True(t, x509Cert.NotAfter.After(time.Now()))
 
@@ -79,7 +79,7 @@ func TestCertGetter(t *testing.T) {
 	// Check renewed certificate fields
 	x509Cert, err = x509.ParseCertificate(cert.Certificate[0])
 	assert.NoError(t, err)
-	assert.Equal(t, node2NodeCertName, x509Cert.Subject.CommonName)
+	assert.Equal(t, certName, x509Cert.Subject.CommonName)
 	assert.True(t, x509Cert.NotBefore.Before(time.Now()))
 	assert.True(t, x509Cert.NotAfter.After(time.Now()))
 }
@@ -125,7 +125,7 @@ func TestVerifyCert(t *testing.T) {
 		{
 			name: "Expired certificate",
 			cert: &x509.Certificate{
-				Subject:    pkix.Name{CommonName: node2NodeCertName},
+				Subject:    pkix.Name{CommonName: certName},
 				NotBefore:  time.Now().Add(-2 * time.Hour),
 				NotAfter:   time.Now().Add(-1 * time.Hour),
 				Extensions: []pkix.Extension{{Id: certExtOID, Value: x509Cert.Extensions[0].Value}},
@@ -135,7 +135,7 @@ func TestVerifyCert(t *testing.T) {
 		{
 			name: "Invalid extension",
 			cert: &x509.Certificate{
-				Subject:    pkix.Name{CommonName: node2NodeCertName},
+				Subject:    pkix.Name{CommonName: certName},
 				NotBefore:  time.Now(),
 				NotAfter:   time.Now().Add(time.Hour),
 				Extensions: []pkix.Extension{{Id: certExtOID, Value: []byte("invalid")}},

@@ -11,7 +11,7 @@ func RequireCertMiddleware(next http.Handler) http.Handler { //nolint:unused
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var found bool
 		for _, cert := range r.TLS.PeerCertificates {
-			if cert.Subject.CommonName == node2NodeCertName {
+			if cert.Subject.CommonName == certName {
 				found = true
 				break
 			}
