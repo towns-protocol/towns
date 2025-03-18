@@ -1701,7 +1701,7 @@ export class SpaceDapp implements ISpaceDapp {
     public async getTokenIdOfOwner(
         spaceId: string,
         owner: string,
-        config: XchainConfig,
+        config: XchainConfig = EmptyXchainConfig,
     ): Promise<string | undefined> {
         const space = this.getSpace(spaceId)
         if (!space) {
