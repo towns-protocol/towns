@@ -1698,12 +1698,16 @@ export class SpaceDapp implements ISpaceDapp {
      * @param owner - The owner
      * @returns The token id
      */
-    public async getTokenIdOfOwner(spaceId: string, owner: string): Promise<string | undefined> {
+    public async getTokenIdOfOwner(
+        spaceId: string,
+        owner: string,
+        config: XchainConfig,
+    ): Promise<string | undefined> {
         const space = this.getSpace(spaceId)
         if (!space) {
             throw new Error(`Space with spaceId "${spaceId}" is not found.`)
         }
-        const linkedWallets = await this.getLinkedWallets(owner)
+        const linkedWallets = await this.getLinkedWalletsWithDelegations(owner, config)
         const tokenIds = await space.getTokenIdsOfOwner(linkedWallets)
         return tokenIds[0]
     }

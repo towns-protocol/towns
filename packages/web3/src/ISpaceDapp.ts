@@ -363,8 +363,12 @@ export interface ISpaceDapp {
         signer: SignerType,
     ) => Promise<TransactionType>
     getLinkedWallets: (wallet: string) => Promise<string[]>
-    getLinkedWalletsWithDelegations(wallet: string, config: XchainConfig): Promise<string[]>
-    getTokenIdOfOwner: (spaceId: string, owner: string) => Promise<string | undefined>
+    getLinkedWalletsWithDelegations: (wallet: string, config: XchainConfig) => Promise<string[]>
+    getTokenIdOfOwner: (
+        spaceId: string,
+        owner: string,
+        config: XchainConfig,
+    ) => Promise<string | undefined>
     getTipEvent: (
         spaceId: string,
         receipt: ContractReceipt,
