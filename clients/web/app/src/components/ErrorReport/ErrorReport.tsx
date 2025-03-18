@@ -40,6 +40,7 @@ import { useConnectionStatus } from '@components/NodeConnectionStatusPanel/hooks
 import { NodeData, useNodeData } from '@components/NodeConnectionStatusPanel/hooks/useNodeData'
 import { getNodeStatusFromNodeData } from '@components/NodeConnectionStatusPanel/NodeStatusPill'
 import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
+import { useSolanaWallet } from '@components/Web3/Trading/useSolanaWallet'
 import * as fieldStyles from '../../ui/components/_internal/Field/Field.css'
 import { BugSubmittedToast } from './BugSubmittedToast'
 
@@ -142,6 +143,7 @@ async function postCustomError(
         nodeConnections: NodeData[]
         loggedInWalletAddress: string | undefined
         abstractAccountAddress: string | undefined
+        solanaWalletAddress: string | undefined
     },
 ) {
     Analytics.getInstance().track('submitting bug report')
@@ -188,6 +190,7 @@ async function postCustomError(
     deviceInfo += `* Local Storage Usage: ${localStorageUsage.usagePercentage}% (${localStorageUsage.totalUsage} used of ${localStorageUsage.totalQuota})\n`
     deviceInfo += `* Logged In Wallet Address: ${info.loggedInWalletAddress ?? 'undefined'}\n`
     deviceInfo += `* Abstract Account Address: ${info.abstractAccountAddress ?? 'undefined'}\n`
+    deviceInfo += `* Solana Wallet Address: ${info.solanaWalletAddress ?? 'undefined'}\n`
     deviceInfo += `* Node Connection Status: ${info.connectionStatus}\n`
     deviceInfo += `* Node URL: ${info.nodeUrl ?? 'undefined'}\n`
     deviceInfo += `* Node Connections:\n ${info.nodeConnections
@@ -266,6 +269,7 @@ const _ErrorReportForm = (props: { onHide?: () => void; excludeDebugInfo?: boole
     const { connectionStatus, nodeUrl } = useConnectionStatus()
     const nodeConnections = useNodeData(nodeUrl)
     const { loggedInWalletAddress } = useConnectivity()
+    const { solanaWallet } = useSolanaWallet()
     const { data: abstractAccountAddress } = useAbstractAccountAddress({
         rootKeyAddress: loggedInWalletAddress,
     })
@@ -278,9 +282,17 @@ const _ErrorReportForm = (props: { onHide?: () => void; excludeDebugInfo?: boole
                 nodeConnections,
                 loggedInWalletAddress,
                 abstractAccountAddress,
+                solanaWalletAddress: solanaWallet?.address,
             })
         },
-        [connectionStatus, nodeUrl, nodeConnections, loggedInWalletAddress, abstractAccountAddress],
+        [
+            connectionStatus,
+            nodeUrl,
+            nodeConnections,
+            loggedInWalletAddress,
+            abstractAccountAddress,
+            solanaWallet?.address,
+        ],
     )
 
     const { mutate: doCustomError, isPending: isLoading } = useMutation({
