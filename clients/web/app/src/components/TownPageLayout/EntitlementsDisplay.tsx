@@ -86,7 +86,7 @@ const UsersIcon = ({ index, isCentered, totalIcons }: EntitlementIconProps) => (
     <StackedIcon index={index} isCentered={isCentered} totalIcons={totalIcons}>
         <Box
             tooltip="Specific wallet addresses"
-            background="level1"
+            background="level2"
             borderRadius="sm"
             style={{ padding: '3px', marginTop: '-1px' }}
         >
@@ -99,7 +99,7 @@ const EthBalanceIcon = ({ index, isCentered, totalIcons }: EntitlementIconProps)
     <StackedIcon index={index} isCentered={isCentered} totalIcons={totalIcons}>
         <Box
             tooltip="ETH Balance requirement"
-            background="level1"
+            background="level2"
             borderRadius="sm"
             style={{ padding: '3px', marginTop: '-1px' }}
         >
@@ -172,14 +172,7 @@ export const EntitlementsDisplay = ({
 
     return (
         <Box horizontal gap="xs" alignItems="center" justifyContent="center" width="100%">
-            <Box
-                position="relative"
-                width="x3"
-                aspectRatio="1/1"
-                style={{
-                    flexDirection: 'row-reverse',
-                }}
-            >
+            <Box position="relative" width="x3" aspectRatio="1/1" flexDirection="rowReverse">
                 {icons}
             </Box>
         </Box>

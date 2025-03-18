@@ -50,8 +50,7 @@ export const TownInfoSection = ({ spaceId }: TownInfoSectionProps) => {
             horizontal
             rounded="md"
             paddingX="none"
-            paddingY="sm"
-            justifyContent="spaceBetween"
+            paddingY="xs"
             alignItems="center"
             width="100%"
             style={{
@@ -62,19 +61,8 @@ export const TownInfoSection = ({ spaceId }: TownInfoSectionProps) => {
         >
             {/* Reviews Section */}
             {isReviewsEnabled && (
-                <Stack
-                    grow
-                    alignItems="center"
-                    position="relative"
-                    style={{ flex: 1, height: '100px' }}
-                    gap="sm"
-                >
-                    <Box
-                        display="flex"
-                        justifyContent="center"
-                        alignItems="center"
-                        height="height_lg"
-                    >
+                <Stack grow alignItems="center" position="relative" style={{ flex: 1 }} gap="sm">
+                    <Box justifyContent="center" height="height_lg">
                         <Text
                             size="sm"
                             color="gray2"
@@ -89,7 +77,7 @@ export const TownInfoSection = ({ spaceId }: TownInfoSectionProps) => {
                             {totalReviews !== 1 && 's'}
                         </Text>
                     </Box>
-                    <Box width="100%" display="flex" justifyContent="center" alignItems="center">
+                    <Box>
                         {isReviewsLoading ? (
                             <Box width="x6" height="x3" className={shimmerClass} rounded="xs" />
                         ) : (
@@ -103,12 +91,7 @@ export const TownInfoSection = ({ spaceId }: TownInfoSectionProps) => {
                             </Text>
                         )}
                     </Box>
-                    <Box
-                        display="flex"
-                        justifyContent="center"
-                        alignItems="center"
-                        height="height_lg"
-                    >
+                    <Box justifyContent="center" height="height_lg">
                         {isReviewsLoading ? (
                             <Box width="x12" height="x3" className={shimmerClass} rounded="xs" />
                         ) : (
@@ -122,19 +105,13 @@ export const TownInfoSection = ({ spaceId }: TownInfoSectionProps) => {
             <Box
                 style={{
                     width: '1px',
-                    height: '88px',
+                    height: '85%',
                     background: 'rgba(255, 255, 255, 0.10)',
                 }}
             />
 
-            <Stack
-                grow
-                alignItems="center"
-                position="relative"
-                style={{ flex: 1, height: '100px' }}
-                gap="sm"
-            >
-                <Box display="flex" justifyContent="center" alignItems="center" height="height_lg">
+            <Stack grow alignItems="center" position="relative" style={{ flex: 1 }} gap="sm">
+                <Box justifyContent="center" height="height_lg">
                     <Text
                         size="sm"
                         color="gray2"
@@ -148,11 +125,18 @@ export const TownInfoSection = ({ spaceId }: TownInfoSectionProps) => {
                         Entry
                     </Text>
                 </Box>
-                <Box width="100%" display="flex" justifyContent="center" alignItems="center">
+                <Box width="100%" justifyContent="center">
                     {isMembershipInfoLoading || isEntitlementsLoading ? (
                         <Box width="x8" height="x2" className={shimmerClass} rounded="xs" />
                     ) : entitlements.hasEntitlements ? (
-                        <EntitlementsDisplay entitlements={entitlements} />
+                        <Box
+                            style={{
+                                marginTop: '-10px',
+                                marginBottom: '-14px',
+                            }}
+                        >
+                            <EntitlementsDisplay isCentered entitlements={entitlements} />
+                        </Box>
                     ) : (
                         <Text
                             size="lg"
@@ -164,22 +148,11 @@ export const TownInfoSection = ({ spaceId }: TownInfoSectionProps) => {
                         </Text>
                     )}
                 </Box>
-                <Box
-                    width="100%"
-                    display="flex"
-                    justifyContent="center"
-                    alignItems="center"
-                    height="height_lg"
-                >
+                <Box justifyContent="center" height="height_lg">
                     {isEntitlementsLoading || isMembershipInfoLoading ? (
                         <Box width="x8" height="x2" className={shimmerClass} rounded="xs" />
                     ) : (
-                        <Box
-                            display="flex"
-                            justifyContent="center"
-                            alignItems="center"
-                            height="height_lg"
-                        >
+                        <Box justifyContent="center" height="height_lg">
                             <Text size="sm" color="gray2">
                                 {entitlements.hasEntitlements
                                     ? 'Gated'
@@ -195,19 +168,14 @@ export const TownInfoSection = ({ spaceId }: TownInfoSectionProps) => {
             <Box
                 style={{
                     width: '1px',
-                    height: '88px',
+                    height: '85%',
                     background: 'rgba(255, 255, 255, 0.10)',
                 }}
             />
 
             {/* Tips Section */}
-            <Stack
-                grow
-                alignItems="center"
-                position="relative"
-                style={{ flex: 1, height: '100px' }}
-            >
-                <Box display="flex" justifyContent="center" alignItems="center" height="height_lg">
+            <Stack grow alignItems="center" position="relative" style={{ flex: 1 }}>
+                <Box justifyContent="center" height="height_lg">
                     <Text
                         size="sm"
                         color="gray2"
@@ -220,7 +188,7 @@ export const TownInfoSection = ({ spaceId }: TownInfoSectionProps) => {
                         Tips
                     </Text>
                 </Box>
-                <Box width="100%" display="flex" justifyContent="center" alignItems="center">
+                <Box width="100%" alignItems="center">
                     {isTipsLoading ? (
                         <Stack horizontal alignItems="center" gap="xs">
                             <Box width="x3" height="x3" className={shimmerClass} rounded="full" />
@@ -240,7 +208,7 @@ export const TownInfoSection = ({ spaceId }: TownInfoSectionProps) => {
                         </Stack>
                     )}
                 </Box>
-                <Box display="flex" justifyContent="center" alignItems="center" height="height_lg">
+                <Box justifyContent="center" height="height_lg">
                     {isTipsLoading ? (
                         <Box width="x8" height="x2" className={shimmerClass} rounded="xs" />
                     ) : (
