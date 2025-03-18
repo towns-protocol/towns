@@ -965,16 +965,42 @@ it.concurrent.each(slowAndCases)('slowAndOperation', async (props) => {
 })
 
 const hotWallet = '0x10F0ABcC19f37CE6131809b105D4d7Ac5343F77D'
+const hotWallet2 = '0xca477fFcD9baa0E56B6fa5d7221D99f981A135C7'
+
 const coldWallet = '0xF2BcBF25fA8fE28D755f1C6e1630A09a1E23457f'
+const coldWallet2 = '0x32e52d188600F27d12A65120160aA28b1108C050'
+const coldWallet3 = '0xBda05058243FEf202FB4925b3877373396A08768'
 
-it.concurrent('computeDelegatorsForProvider', async () => {
-    const providers = await findEthereumProviders(xchainConfig)
-    expect(providers.length).toBe(1)
+describe('computeDelegatorsForProvider', () => {
+    it.concurrent('single hot wallet maps to single cold wallet', async () => {
+        const providers = await findEthereumProviders(xchainConfig)
+        expect(providers.length).toBe(1)
 
-    const provider = providers[0]
-    const delegated = await computeDelegatorsForProvider(provider, [hotWallet])
-    expect(delegated.length).toBe(1)
-    expect(delegated[0]).toEqual(coldWallet)
+        const provider = providers[0]
+        let delegated = await computeDelegatorsForProvider(provider, [hotWallet])
+        expect(delegated).toHaveLength(1)
+        expect(delegated).toEqual(expect.arrayContaining([coldWallet]))
+    })
+
+    it.concurrent('single hot wallet maps to multiple cold wallets', async () => {
+        const providers = await findEthereumProviders(xchainConfig)
+        expect(providers.length).toBe(1)
+
+        const provider = providers[0]
+        let delegated = await computeDelegatorsForProvider(provider, [hotWallet2])
+        expect(delegated).toHaveLength(2)
+        expect(delegated).toEqual(expect.arrayContaining([coldWallet2, coldWallet3]))
+    })
+
+    it.concurrent('multiple hot wallets map to multiple cold wallets', async () => {
+        const providers = await findEthereumProviders(xchainConfig)
+        expect(providers.length).toBe(1)
+
+        const provider = providers[0]
+        let delegated = await computeDelegatorsForProvider(provider, [hotWallet, hotWallet2])
+        expect(delegated).toHaveLength(3)
+        expect(delegated).toEqual(expect.arrayContaining([coldWallet, coldWallet2, coldWallet3]))
+    })
 })
 
 it('empty', async () => {
