@@ -2,11 +2,12 @@ package node2nodeauth_test
 
 import (
 	"context"
+	"math/big"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 
 	"github.com/towns-protocol/towns/core/contracts/river"
@@ -25,13 +26,14 @@ func TestEndToEnd(t *testing.T) {
 
 	// Create a wallet
 	wallet, err := crypto.NewWallet(context.Background())
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	// Add the node to the registry
-	nodeRegistry.On("GetNode", wallet.Address).Return(
-		nodes.NewNodeRecord(wallet.Address, wallet.Address, "", river.NodeStatus_Operational, false, nil, nil),
-		nil,
-	)
+	nodeRegistry.On("GetNode", wallet.Address).
+		Return(
+			nodes.NewNodeRecord(wallet.Address, wallet.Address, "", river.NodeStatus_Operational, false, nil, nil),
+			nil,
+		)
 
 	// Set up the HTTP server
 	server := httptest.NewUnstartedServer(
@@ -44,20 +46,24 @@ func TestEndToEnd(t *testing.T) {
 	defer server.Close()
 
 	// Create client with mTLS setup
-	client, err := testcert.GetHttp2LocalhostTLSClientWithCert(context.Background(), nil, node2nodeauth.CertGetter(logger, wallet))
-	assert.NoError(t, err)
+	client, err := testcert.GetHttp2LocalhostTLSClientWithCert(
+		context.Background(), nil, node2nodeauth.CertGetter(logger, wallet, big.NewInt(1)),
+	)
+	require.NoError(t, err)
 
 	// Perform a request to the server
 	resp, err := client.Get(server.URL)
-	assert.NoError(t, err)
-	assert.Equal(t, http.StatusOK, resp.StatusCode)
+	require.NoError(t, err)
+	require.Equal(t, http.StatusOK, resp.StatusCode)
 
 	// Create a client without mTLS
 	client, err = testcert.GetHttp2LocalhostTLSClient(context.Background(), nil)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	// Perform a request to the server
 	resp, err = client.Get(server.URL)
-	assert.NoError(t, err)
-	assert.Equal(t, http.StatusUnauthorized, resp.StatusCode)
+	require.NoError(t, err)
+	require.Equal(t, http.StatusUnauthorized, resp.StatusCode)
+
+	nodeRegistry.AssertExpectations(t)
 }

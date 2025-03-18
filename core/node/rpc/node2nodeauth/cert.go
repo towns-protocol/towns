@@ -28,7 +28,9 @@ import (
 const (
 	certTTL            = time.Hour
 	certDurationBuffer = time.Second * 30
-	certNameFmt        = "%s.towns"
+	// certNameFmt is the format for the node-2-node client certificate name.
+	// The format is: <chain_id>.<node-address>.towns
+	certNameFmt = "%s.%s.towns"
 )
 
 var (
@@ -39,9 +41,15 @@ var (
 // VerifyPeerCertificate goes through the peer certificates and verifies the node-2-node client certificate.
 // Returns nil if the certificate is valid or not found.
 func VerifyPeerCertificate(logger *zap.SugaredLogger, nodeRegistry nodes.NodeRegistry) func([][]byte, [][]*x509.Certificate) error {
-	return func(rawCerts [][]byte, _ [][]*x509.Certificate) error {
+	return func(rawCerts [][]byte, certs [][]*x509.Certificate) error {
+		if len(rawCerts) == 0 {
+			return nil
+		}
+
 		if len(rawCerts) != 1 {
-			return RiverError(Err_UNAUTHENTICATED, "Unexpected number of peer certificates").LogError(logger)
+			return RiverError(Err_UNAUTHENTICATED, "Unexpected number of peer certificates").
+				Tags("expected", 1, "actual", len(rawCerts)).
+				LogError(logger)
 		}
 
 		cert, err := x509.ParseCertificate(rawCerts[0])
@@ -121,7 +129,11 @@ func verifyCert(logger *zap.SugaredLogger, nodeRegistry nodes.NodeRegistry, cert
 }
 
 // CertGetter returns a GetClientCertFunc that provides a node-2-node client certificate.
-func CertGetter(logger *zap.SugaredLogger, wallet *crypto.Wallet) http_client.GetClientCertFunc {
+func CertGetter(
+	logger *zap.SugaredLogger,
+	wallet *crypto.Wallet,
+	riverChainId *big.Int,
+) http_client.GetClientCertFunc {
 	var (
 		lock    sync.Mutex
 		tlsCert *tls.Certificate
@@ -133,15 +145,14 @@ func CertGetter(logger *zap.SugaredLogger, wallet *crypto.Wallet) http_client.Ge
 		defer lock.Unlock()
 
 		// Create a new certificate if the current one is nil or about to expire
-		if cert == nil || time.Now().Add(certDurationBuffer).After(cert.NotAfter) {
-			newCert, err := createCert(logger, wallet)
+		if tlsCert == nil || time.Now().Add(certDurationBuffer).After(cert.NotAfter) {
+			newCert, err := createCert(logger, wallet, riverChainId)
 			if err != nil {
 				return nil, err
 			}
 			tlsCert = newCert
 
-			cert, err = x509.ParseCertificate(tlsCert.Certificate[0])
-			if err != nil {
+			if cert, err = x509.ParseCertificate(tlsCert.Certificate[0]); err != nil {
 				return nil, AsRiverError(err, Err_INTERNAL).Message("Failed to parse certificate").LogError(logger)
 			}
 		}
@@ -152,7 +163,7 @@ func CertGetter(logger *zap.SugaredLogger, wallet *crypto.Wallet) http_client.Ge
 
 // createCert creates a node-2-node client certificate.
 // The certificate contains a custom extension with the node's address and a signature of the cert's public key.
-func createCert(logger *zap.SugaredLogger, wallet *crypto.Wallet) (*tls.Certificate, error) {
+func createCert(logger *zap.SugaredLogger, wallet *crypto.Wallet, riverChainId *big.Int) (*tls.Certificate, error) {
 	if wallet == nil {
 		return nil, RiverError(Err_INTERNAL, "No wallet provided").LogError(logger)
 	}
@@ -183,8 +194,7 @@ func createCert(logger *zap.SugaredLogger, wallet *crypto.Wallet) (*tls.Certific
 	template := &x509.Certificate{
 		SerialNumber: big.NewInt(1),
 		Subject: pkix.Name{
-			CommonName:   fmt.Sprintf(certNameFmt, wallet.Address.Hex()),
-			Organization: []string{"towns"},
+			CommonName: fmt.Sprintf(certNameFmt, riverChainId, wallet.Address.Hex()),
 		},
 		NotBefore:       time.Now().Add(-certDurationBuffer), // Add a small buffer to avoid issues with time differences
 		NotAfter:        time.Now().Add(certTTL),

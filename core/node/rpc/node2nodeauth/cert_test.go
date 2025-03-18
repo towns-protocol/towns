@@ -5,10 +5,12 @@ import (
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/asn1"
+	"fmt"
+	"math/big"
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 
 	"github.com/towns-protocol/towns/core/contracts/river"
@@ -21,18 +23,18 @@ func TestCreateCert(t *testing.T) {
 	logger := zap.NewNop().Sugar()
 
 	wallet, err := crypto.NewWallet(context.Background())
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
-	cert, err := createCert(logger, wallet)
-	assert.NoError(t, err)
-	assert.NotNil(t, cert)
+	cert, err := createCert(logger, wallet, big.NewInt(1))
+	require.NoError(t, err)
+	require.NotNil(t, cert)
 
 	// Check certificate fields
 	x509Cert, err := x509.ParseCertificate(cert.Certificate[0])
-	assert.NoError(t, err)
-	assert.Equal(t, certName, x509Cert.Subject.CommonName)
-	assert.True(t, x509Cert.NotBefore.Before(time.Now()))
-	assert.True(t, x509Cert.NotAfter.After(time.Now()))
+	require.NoError(t, err)
+	require.Equal(t, fmt.Sprintf("1.%s.towns", wallet.Address.Hex()), x509Cert.Subject.CommonName)
+	require.True(t, x509Cert.NotBefore.Before(time.Now()))
+	require.True(t, x509Cert.NotAfter.After(time.Now()))
 
 	// Check custom extension
 	var certExt node2NodeCertExt
@@ -40,48 +42,48 @@ func TestCreateCert(t *testing.T) {
 	for _, ext := range x509Cert.Extensions {
 		if ext.Id.Equal(certExtOID) {
 			_, err := asn1.Unmarshal(ext.Value, &certExt)
-			assert.NoError(t, err)
+			require.NoError(t, err)
 			found = true
 			break
 		}
 	}
-	assert.True(t, found)
-	assert.Equal(t, wallet.Address.Hex(), certExt.Address)
-	assert.NotEmpty(t, certExt.Signature)
+	require.True(t, found)
+	require.Equal(t, wallet.Address.Hex(), certExt.Address)
+	require.NotEmpty(t, certExt.Signature)
 }
 
 func TestCertGetter(t *testing.T) {
 	logger := zap.NewNop().Sugar()
 
 	wallet, err := crypto.NewWallet(context.Background())
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
-	getCertFunc := CertGetter(logger, wallet)
+	getCertFunc := CertGetter(logger, wallet, big.NewInt(1))
 
 	// Test initial certificate creation
 	cert, err := getCertFunc(nil)
-	assert.NoError(t, err)
-	assert.NotNil(t, cert)
+	require.NoError(t, err)
+	require.NotNil(t, cert)
 
 	// Check certificate fields
 	x509Cert, err := x509.ParseCertificate(cert.Certificate[0])
-	assert.NoError(t, err)
-	assert.Equal(t, certName, x509Cert.Subject.CommonName)
-	assert.True(t, x509Cert.NotBefore.Before(time.Now()))
-	assert.True(t, x509Cert.NotAfter.After(time.Now()))
+	require.NoError(t, err)
+	require.Equal(t, fmt.Sprintf("1.%s.towns", wallet.Address.Hex()), x509Cert.Subject.CommonName)
+	require.True(t, x509Cert.NotBefore.Before(time.Now()))
+	require.True(t, x509Cert.NotAfter.After(time.Now()))
 
 	// Test certificate renewal
 	time.Sleep(time.Second * 2) // Simulate time passing
 	cert, err = getCertFunc(nil)
-	assert.NoError(t, err)
-	assert.NotNil(t, cert)
+	require.NoError(t, err)
+	require.NotNil(t, cert)
 
 	// Check renewed certificate fields
 	x509Cert, err = x509.ParseCertificate(cert.Certificate[0])
-	assert.NoError(t, err)
-	assert.Equal(t, certName, x509Cert.Subject.CommonName)
-	assert.True(t, x509Cert.NotBefore.Before(time.Now()))
-	assert.True(t, x509Cert.NotAfter.After(time.Now()))
+	require.NoError(t, err)
+	require.Equal(t, fmt.Sprintf("1.%s.towns", wallet.Address.Hex()), x509Cert.Subject.CommonName)
+	require.True(t, x509Cert.NotBefore.Before(time.Now()))
+	require.True(t, x509Cert.NotAfter.After(time.Now()))
 }
 
 func TestVerifyCert(t *testing.T) {
@@ -89,14 +91,14 @@ func TestVerifyCert(t *testing.T) {
 
 	// Create test wallet
 	wallet, err := crypto.NewWallet(context.Background())
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
-	cert, err := createCert(logger, wallet)
-	assert.NoError(t, err)
-	assert.NotNil(t, cert)
+	cert, err := createCert(logger, wallet, big.NewInt(1))
+	require.NoError(t, err)
+	require.NotNil(t, cert)
 
 	x509Cert, err := x509.ParseCertificate(cert.Certificate[0])
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	// Mock node registry
 	nodeRegistry := mocks.NewMockNodeRegistry(t)
@@ -116,16 +118,8 @@ func TestVerifyCert(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "Invalid certificate name",
-			cert: &x509.Certificate{
-				Subject: pkix.Name{CommonName: "invalid-name"},
-			},
-			wantErr: true,
-		},
-		{
 			name: "Expired certificate",
 			cert: &x509.Certificate{
-				Subject:    pkix.Name{CommonName: certName},
 				NotBefore:  time.Now().Add(-2 * time.Hour),
 				NotAfter:   time.Now().Add(-1 * time.Hour),
 				Extensions: []pkix.Extension{{Id: certExtOID, Value: x509Cert.Extensions[0].Value}},
@@ -135,7 +129,6 @@ func TestVerifyCert(t *testing.T) {
 		{
 			name: "Invalid extension",
 			cert: &x509.Certificate{
-				Subject:    pkix.Name{CommonName: certName},
 				NotBefore:  time.Now(),
 				NotAfter:   time.Now().Add(time.Hour),
 				Extensions: []pkix.Extension{{Id: certExtOID, Value: []byte("invalid")}},

@@ -360,7 +360,9 @@ func (s *Service) initRiverChain() error {
 		return err
 	}
 
-	httpClientWithCert, err := s.httpClientMakerWithCert(ctx, s.config, node2nodeauth.CertGetter(s.defaultLogger, s.wallet))
+	httpClientWithCert, err := s.httpClientMakerWithCert(
+		ctx, s.config, node2nodeauth.CertGetter(s.defaultLogger, s.wallet, s.riverChain.ChainId),
+	)
 	if err != nil {
 		return err
 	}

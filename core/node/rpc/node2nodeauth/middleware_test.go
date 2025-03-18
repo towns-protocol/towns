@@ -3,7 +3,6 @@ package node2nodeauth
 import (
 	"crypto/tls"
 	"crypto/x509"
-	"crypto/x509/pkix"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -16,22 +15,8 @@ func TestRequireCertMiddleware(t *testing.T) {
 		expectedStatus int
 	}{
 		{
-			name: "Valid certificate",
-			peerCerts: []*x509.Certificate{{
-				Subject: pkix.Name{CommonName: certName},
-			}},
-			expectedStatus: http.StatusOK,
-		},
-		{
 			name:           "No certificates",
 			peerCerts:      []*x509.Certificate{},
-			expectedStatus: http.StatusUnauthorized,
-		},
-		{
-			name: "Invalid certificate",
-			peerCerts: []*x509.Certificate{{
-				Subject: pkix.Name{CommonName: "another-cert"},
-			}},
 			expectedStatus: http.StatusUnauthorized,
 		},
 	}
