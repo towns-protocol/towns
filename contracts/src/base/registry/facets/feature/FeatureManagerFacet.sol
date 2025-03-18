@@ -7,7 +7,6 @@ import {IFeatureManagerFacet} from "./IFeatureManagerFacet.sol";
 // libraries
 import {FeatureManager} from "./FeatureManager.sol";
 import {FeatureManagerStorage} from "./FeatureManagerStorage.sol";
-
 // contracts
 import {OwnableBase} from "@river-build/diamond/src/facets/ownable/OwnableBase.sol";
 import {Facet} from "@river-build/diamond/src/facets/Facet.sol";
@@ -22,19 +21,19 @@ contract FeatureManagerFacet is IFeatureManagerFacet, OwnableBase, Facet {
     bytes32 featureId,
     FeatureManager.Condition memory condition
   ) external onlyOwner {
-    FeatureManagerStorage.layout().setFeatureCondition(featureId, condition);
+    FeatureManagerStorage.getLayout().setFeatureCondition(featureId, condition);
   }
 
   function getFeatureCondition(
     bytes32 featureId
   ) external view returns (FeatureManager.Condition memory) {
-    return FeatureManagerStorage.layout().getFeatureCondition(featureId);
+    return FeatureManagerStorage.getLayout().getFeatureCondition(featureId);
   }
 
   function checkFeatureCondition(
     bytes32 featureId,
     address space
   ) external view returns (bool) {
-    return FeatureManagerStorage.layout().meetsThreshold(featureId, space);
+    return FeatureManagerStorage.getLayout().meetsThreshold(featureId, space);
   }
 }

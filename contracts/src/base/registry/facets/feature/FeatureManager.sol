@@ -9,10 +9,6 @@ import {IFeatureManagerFacetBase} from "./IFeatureManagerFacet.sol";
 // libraries
 import {CustomRevert} from "contracts/src/utils/libraries/CustomRevert.sol";
 
-// debuggging
-
-// contracts
-
 library FeatureManager {
   struct Condition {
     address token; // token to be used to check the threshold
@@ -21,6 +17,7 @@ library FeatureManager {
     bytes extraData; // Additional parameters for specific features
   }
 
+  /// @custom:storage-location erc7201:towns.storage.FeatureManager
   struct Layout {
     // Feature ID => Condition
     mapping(bytes32 => Condition) conditions;

@@ -2,15 +2,23 @@
 pragma solidity ^0.8.23;
 
 // interfaces
+
+// libraries
 import {FeatureManager} from "./FeatureManager.sol";
+
 // contracts
 
 library FeatureManagerStorage {
-  // keccak256(abi.encode(uint256(keccak256("base.registry.facets.feature.manager.storage")) - 1)) & ~bytes32(uint256(0xff))
+  // keccak256(abi.encode(uint256(keccak256("towns.storage.FeatureManager")) - 1)) & ~bytes32(uint256(0xff))
   bytes32 constant STORAGE_SLOT =
-    0xf272e760cd685bcdbbfb402f9e88b4094614cd4d33ce331129e4bfa1be6e5000;
+    0xbf0291a9764d4152828d672b8fee3b84a943cf12027e2908bad1a29d55a8f400;
 
-  function layout() internal pure returns (FeatureManager.Layout storage self) {
+  // Internal functions
+  function getLayout()
+    internal
+    pure
+    returns (FeatureManager.Layout storage self)
+  {
     assembly {
       self.slot := STORAGE_SLOT
     }
