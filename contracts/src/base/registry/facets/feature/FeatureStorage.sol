@@ -2,10 +2,7 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-
-// libraries
 import {FeatureManager} from "./FeatureManager.sol";
-import {FeatureSettings} from "./FeatureSettings.sol";
 // contracts
 
 library FeatureStorage {
@@ -13,12 +10,7 @@ library FeatureStorage {
   bytes32 constant STORAGE_SLOT =
     0x4db766a152b44ca1b06c255217c80ffe82b4d84659a2a9cc46df4788e7d78300;
 
-  struct Layout {
-    FeatureManager.Layout featureManager;
-    FeatureSettings.Layout featureSettings;
-  }
-
-  function layout() internal pure returns (Layout storage self) {
+  function layout() internal pure returns (FeatureManager.Layout storage self) {
     assembly {
       self.slot := STORAGE_SLOT
     }

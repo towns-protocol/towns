@@ -28,6 +28,8 @@ import {DeployERC721ANonTransferable} from "contracts/scripts/deployments/facets
 import {DeployMockMessenger} from "contracts/scripts/deployments/facets/DeployMockMessenger.s.sol";
 import {DeployEIP712Facet} from "contracts/scripts/deployments/facets/DeployEIP712Facet.s.sol";
 import {DeployXChain} from "contracts/scripts/deployments/facets/DeployXChain.s.sol";
+import {DeployFeatureManager} from "contracts/scripts/deployments/facets/DeployFeatureManager.s.sol";
+
 contract DeployBaseRegistry is DiamondHelper, Deployer {
   DeployERC721ANonTransferable deployNFT = new DeployERC721ANonTransferable();
 
@@ -48,6 +50,8 @@ contract DeployBaseRegistry is DiamondHelper, Deployer {
   DeployMockMessenger messengerHelper = new DeployMockMessenger();
   DeployEIP712Facet eip712Helper = new DeployEIP712Facet();
   DeployXChain xchainHelper = new DeployXChain();
+  DeployFeatureManager featureManagerHelper = new DeployFeatureManager();
+
   address multiInit;
   address diamondCut;
   address diamondLoupe;
@@ -64,6 +68,7 @@ contract DeployBaseRegistry is DiamondHelper, Deployer {
   address spaceDelegation;
   address mainnetDelegation;
   address xchain;
+  address featureManager;
   address public messenger;
 
   address riverToken = 0x9172852305F32819469bf38A3772f29361d7b768;
@@ -119,6 +124,7 @@ contract DeployBaseRegistry is DiamondHelper, Deployer {
     messenger = messengerHelper.deploy(deployer);
     eip712 = eip712Helper.deploy(deployer);
     xchain = xchainHelper.deploy(deployer);
+    featureManager = featureManagerHelper.deploy(deployer);
     addFacet(
       deployNFT.makeCut(nft, IDiamond.FacetCutAction.Add),
       nft,
@@ -171,6 +177,11 @@ contract DeployBaseRegistry is DiamondHelper, Deployer {
       xchainHelper.makeCut(xchain, IDiamond.FacetCutAction.Add),
       xchain,
       xchainHelper.makeInitData("")
+    );
+    addFacet(
+      featureManagerHelper.makeCut(featureManager, IDiamond.FacetCutAction.Add),
+      featureManager,
+      featureManagerHelper.makeInitData(riverToken)
     );
 
     return
