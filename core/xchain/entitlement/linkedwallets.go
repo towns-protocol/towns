@@ -105,7 +105,7 @@ func (e *Evaluator) getMainnetDelegators(
 ) (delegators []common.Address, err error) {
 	uniqueDelegatorWallets := map[string]struct{}{}
 	log := logging.FromCtx(ctx)
-	for _, chainId := range e.ethereumChainIds {
+	for _, chainId := range e.ethereumNetworkIds {
 		log.Debugw("Fetching delegate.xyz V1 delegators for wallets", "chainID", chainId, "wallets", wallets)
 		client, err := e.clients.Get(chainId)
 		if err != nil {

@@ -16,12 +16,13 @@ import (
 type Evaluator struct {
 	clients        BlockchainClientPool
 	evalHistrogram *prometheus.HistogramVec
-	// etherBasedChainIds includes any chain that uses ethereum as a native currency.
-	etherBasedChainIds []uint64
-	// ethereumChainIds refers to the list of actual ethereum mainnet and testnets
-	// this network is configured to support.
-	ethereumChainIds []uint64
-	decoder          *crypto.EvmErrorDecoder
+	// etherNativeChainIds includes any chain that uses ethereum as a native currency.
+	etherNativeChainIds []uint64
+	// ethereumNetworkIds refers to the list of actual ethereum mainnet and testnets
+	// this network is configured to support. Note that the set of ethereum network ids
+	// will necessarily be a subset of etherNativeChainIds.
+	ethereumNetworkIds []uint64
+	decoder            *crypto.EvmErrorDecoder
 }
 
 func NewEvaluatorFromConfig(
@@ -69,12 +70,12 @@ func NewEvaluatorFromConfigWithBlockchainInfo(
 			infra.DefaultRpcDurationBucketsSeconds,
 			"operation",
 		),
-		etherBasedChainIds: config.GetEtherBasedBlockchains(
+		etherNativeChainIds: config.GetEtherNativeBlockchains(
 			ctx,
 			onChainCfg.Get().XChain.Blockchains,
 			blockChainInfo,
 		),
-		ethereumChainIds: config.GetEthereumBlockchains(
+		ethereumNetworkIds: config.GetEthereumNetworkBlockchains(
 			ctx,
 			onChainCfg.Get().XChain.Blockchains,
 			blockChainInfo,
@@ -82,7 +83,7 @@ func NewEvaluatorFromConfigWithBlockchainInfo(
 		decoder: decoder,
 	}
 	logging.FromCtx(ctx).
-		Infow("Configuring the entitlement evaluator with the following ethereum chains", "chainIds", evaluator.ethereumChainIds)
+		Infow("Configuring the entitlement evaluator with the following ethereum chains", "chainIds", evaluator.ethereumNetworkIds)
 	return &evaluator, nil
 }
 
