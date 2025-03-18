@@ -246,11 +246,7 @@ func (e *Evaluator) evaluateEthBalanceOperation(
 	// Accumulator for the total balance across all chains.
 	total := big.NewInt(0)
 
-<<<<<<< HEAD
 	for _, chainID := range e.etherNativeChainIds {
-=======
-	for _, chainID := range e.etherBasedChainIds {
->>>>>>> 196f1f3b4 (V2 delegate.cash implementation - pulls from V1 registry on ethereum.)
 		log.Infow("Evaluating ETH balance on chain", "chainID", chainID, "wallets", linkedWallets)
 		client, err := e.clients.Get(chainID)
 		if err != nil {
