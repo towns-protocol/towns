@@ -198,61 +198,49 @@ func (s *Service) getStreamImpl(
 		return nil, err
 	}
 
-	cookie := req.Msg.GetSyncCookie()
-
-	// if the user passed a sync cookie, we need to forward the request to the node that issued the cookie.
-	// if the node address is not specified, the sticky peer is used.
-	if cookie != nil {
-		var resp *connect.Response[GetStreamResponse]
-		if err = stream.WithAvailableNode(cookie.GetNodeAddress(), func(nodeAddress common.Address) error {
-			ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
-			defer cancel()
-
-			if nodeAddress == s.wallet.Address {
-				if view == nil {
-					return RiverError(Err_BAD_SYNC_COOKIE, "Stream not found").
-						Func("service.getStreamImpl").
-						Tag("streamId", req.Msg.StreamId)
-				}
-
-				resp, err = s.localGetStream(ctx, view, cookie.CopyWithAddr(nodeAddress))
-				return err
+	// if the user passed a sync cookie, we need to forward the request to the node that issued the cookie
+	if req.Msg.SyncCookie != nil {
+		nodeAddress := common.BytesToAddress(req.Msg.SyncCookie.GetNodeAddress())
+		if nodeAddress == s.wallet.Address {
+			if view != nil {
+				return s.localGetStream(ctx, view, req.Msg.SyncCookie)
+			} else {
+				return nil, RiverError(Err_BAD_SYNC_COOKIE, "Stream not found").
+					Func("service.getStreamImpl").
+					Tag("streamId", req.Msg.StreamId)
 			}
-
+		} else {
 			stub, err := s.nodeRegistry.GetStreamServiceClientForAddress(nodeAddress)
-			if err != nil {
-				return err
-			}
-
-			resp, err = stub.GetStream(ctx, req)
-			return err
-		}); err == nil {
-			return resp, nil
-		}
-
-		// In the case were we couldn't get a stream from all peers, fall through and try to get the stream from scratch
-		// when nodes can exit the network this is a legitimate code path, for now it's an error
-		logging.FromCtx(ctx).Errorw("Available sticky node for stream not found, trying to get the stream from scratch",
-			"streamId", req.Msg.StreamId, "err", err)
-	}
-
-	if view != nil {
-		return s.localGetStream(ctx, view, cookie)
-	} else {
-		return utils.PeerNodeRequestWithRetries(
-			ctx,
-			stream,
-			func(ctx context.Context, stub StreamServiceClient) (*connect.Response[GetStreamResponse], error) {
+			if err == nil {
 				ret, err := stub.GetStream(ctx, req)
 				if err != nil {
 					return nil, err
 				}
 				return connect.NewResponse(ret.Msg), nil
-			},
-			s.config.Network.NumRetries,
-			s.nodeRegistry,
-		)
+			}
+			// in the case were we couldn't get a stub for this node, fall through and try to get the stream from scratch
+			// when nodes can exit the network this is a legitimate code path, for now it's an error
+			logging.FromCtx(ctx).Errorw("Node in sync cookie not found", "nodeAddress", nodeAddress, "streamId", req.Msg.StreamId)
+		}
 	}
+
+	if view != nil {
+		return s.localGetStream(ctx, view, req.Msg.SyncCookie)
+	}
+
+	return utils.PeerNodeRequestWithRetries(
+		ctx,
+		stream,
+		func(ctx context.Context, stub StreamServiceClient) (*connect.Response[GetStreamResponse], error) {
+			ret, err := stub.GetStream(ctx, req)
+			if err != nil {
+				return nil, err
+			}
+			return connect.NewResponse(ret.Msg), nil
+		},
+		s.config.Network.NumRetries,
+		s.nodeRegistry,
+	)
 }
 
 func (s *Service) getStreamExImpl(
