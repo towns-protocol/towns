@@ -56,7 +56,8 @@ export function TownsWallet() {
         }
     }
 
-    const isTradingEnabled = useShowWallet()
+    // if trading wallet is enabled, we can hide the legacy wallet and vice versa
+    const isTradingEnabled = useShowWallet().showWallet
 
     if (isTradingEnabled) {
         return null
