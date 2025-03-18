@@ -12,7 +12,12 @@ type BlockchainInfo struct {
 	Name    string
 	// IsEtherBased is true for chains that use Ether as the currency for fees.
 	IsEtherBased bool
-	Blocktime    time.Duration
+	// IsEthereum applies to ethereum mainnet and all testnets. This setting is
+	// mainly used for testing features on our test networks, as towns mainnet
+	// should not have any test networks configured and only mainnet ethereum
+	// should qualify.
+	IsEthereum bool
+	Blocktime  time.Duration
 }
 
 func GetEtherBasedBlockchains(
@@ -32,6 +37,23 @@ func GetEtherBasedBlockchains(
 	return etherBasedChains
 }
 
+func GetEthereumBlockchains(
+	ctx context.Context,
+	chains []uint64,
+	defaultBlockchainInfo map[uint64]BlockchainInfo,
+) []uint64 {
+	log := logging.FromCtx(ctx)
+	etherBasedChains := make([]uint64, 0, len(chains))
+	for _, chainId := range chains {
+		if info, ok := defaultBlockchainInfo[chainId]; ok && info.IsEthereum {
+			etherBasedChains = append(etherBasedChains, chainId)
+		} else if !ok {
+			log.Errorw("Missing BlockchainInfo for chain", "chainId", chainId)
+		}
+	}
+	return etherBasedChains
+}
+
 func GetDefaultBlockchainInfo() map[uint64]BlockchainInfo {
 	return map[uint64]BlockchainInfo{
 		1: {
@@ -39,12 +61,14 @@ func GetDefaultBlockchainInfo() map[uint64]BlockchainInfo {
 			Name:         "Ethereum Mainnet",
 			Blocktime:    12 * time.Second,
 			IsEtherBased: true,
+			IsEthereum:   true,
 		},
 		11155111: {
 			ChainId:      11155111,
 			Name:         "Ethereum Sepolia",
 			Blocktime:    12 * time.Second,
 			IsEtherBased: true,
+			IsEthereum:   true,
 		},
 		550: {
 			ChainId:   550,

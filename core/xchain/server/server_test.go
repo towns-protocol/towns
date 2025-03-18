@@ -150,7 +150,6 @@ func (st *serviceTester) deployXchainTestContracts() {
 	// Commit all deploys
 	st.btc.Commit(st.ctx)
 
-	log = logging.FromCtx(st.ctx)
 	log.Infow(
 		"Contracts deployed",
 		"entitlementChecker",
