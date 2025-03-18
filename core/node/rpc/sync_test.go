@@ -556,7 +556,6 @@ func TestSyncWithEmptyNodeAddress(t *testing.T) {
 
 		// do not specify the node address to force the sync service to use sticky peer
 		return &protocol.SyncCookie{
-			// NodeAddress:       channel.GetNodeAddress(),
 			StreamId:          channel.GetStreamId(),
 			MinipoolGen:       channel.GetMinipoolGen(),
 			MinipoolSlot:      channel.GetMinipoolSlot(),

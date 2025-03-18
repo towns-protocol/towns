@@ -4,6 +4,7 @@ import (
 	"context"
 	"slices"
 	"sync"
+	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/linkdata/deadlock"
@@ -202,94 +203,39 @@ func (ss *SyncerSet) AddStream(ctx context.Context, cookie *SyncCookie) error {
 		return nil // stream is already part of sync operation
 	}
 
-	// Use the node address provided in the sync cookie if available, otherwise use the sticky peer of the stream
-	getNodeAddress := func() (common.Address, bool) {
-		return common.BytesToAddress(cookie.GetNodeAddress()), false
-	}
-	if len(cookie.GetNodeAddress()) == 0 {
-		stream, err := ss.streamCache.GetStreamNoWait(ctx, streamID)
-		if err != nil {
-			return err
-		}
-
-		i := 0
-		remotes, useLocal := stream.GetRemotesAndIsLocal()
-		nodeAddress := stream.GetStickyPeer()
-		getNodeAddress = func() (common.Address, bool) {
-			if i == 0 && useLocal {
-				useLocal = false
-				return ss.localNodeAddress, len(remotes) > 0
-			}
-			if i > 0 {
-				nodeAddress = stream.AdvanceStickyPeer(nodeAddress)
-			}
-			i++
-			return nodeAddress, i < len(remotes)
-		}
-	}
-
-	for {
-		nodeAddress, more := getNodeAddress()
-
-		// check if there is already a syncer that can sync the given stream -> add stream to the syncer
-		if syncer, found := ss.syncers[nodeAddress]; found {
-			if err := syncer.AddStream(ctx, cookie.CopyWithAddr(nodeAddress)); err != nil {
-				return err
-			}
-			ss.streamID2Syncer[streamID] = syncer
+	// Try node from the cookie first
+	nodeAddress := common.BytesToAddress(cookie.GetNodeAddress())
+	if nodeAddress.Cmp(common.Address{}) != 0 {
+		if err = ss.attemptAddStream(ctx, nodeAddress, cookie, streamID); err == nil {
 			return nil
 		}
-
-		// first stream to sync with remote -> create a new syncer instance
-		var syncer StreamsSyncer
-		var span trace.Span
-		if nodeAddress == ss.localNodeAddress {
-			if ss.otelTracer != nil {
-				_, span = ss.otelTracer.Start(ctx, "NewLocalSyncer",
-					trace.WithAttributes(attribute.String("stream", streamID.String())))
-			}
-			syncer, err = ss.newLocalSyncer([]*SyncCookie{cookie.CopyWithAddr(nodeAddress)})
-		} else {
-			if ss.otelTracer != nil {
-				_, span = ss.otelTracer.Start(ctx, "NewRemoteSyncer",
-					trace.WithAttributes(attribute.String("stream", streamID.String()),
-						attribute.String("remote", nodeAddress.String())))
-			}
-			syncer, err = ss.newRemoteSyncer(nodeAddress, []*SyncCookie{cookie.CopyWithAddr(nodeAddress)})
-		}
-		if span != nil {
-			span.End()
-		}
-		if err != nil {
-			if !more {
-				return err
-			}
-
-			logging.FromCtx(ss.ctx).Errorw("Unable to create syncer, advancing the node",
-				"err", err, "remoteNode", nodeAddress, "streamId", streamID)
-			continue
-		}
-
-		ss.syncers[nodeAddress] = syncer
-		ss.streamID2Syncer[streamID] = syncer
-		ss.startSyncer(syncer)
-
-		break
+		// If forwarding fails, proceed to load stream and retry
 	}
 
-	return nil
-}
+	stream, err := ss.streamCache.GetStreamNoWait(ctx, streamID)
+	if err != nil {
+		return err
+	}
 
-// caller must have ss.muSyncers claimed
-func (ss *SyncerSet) startSyncer(syncer StreamsSyncer) {
-	ss.syncerTasks.Add(1)
-	go func() {
-		syncer.Run()
-		ss.syncerTasks.Done()
-		ss.muSyncers.Lock()
-		delete(ss.syncers, syncer.Address())
-		ss.muSyncers.Unlock()
-	}()
+	// Try using the local node if the stream is local
+	remotes, useLocal := stream.GetRemotesAndIsLocal()
+	if useLocal {
+		nodeAddress = ss.localNodeAddress
+		if err = ss.attemptAddStream(ctx, nodeAddress, cookie, streamID); err == nil {
+			return nil
+		}
+	}
+
+	// Try using the remote nodes
+	stickyNode := stream.GetStickyPeer()
+	for range remotes {
+		if err = ss.attemptAddStream(ctx, stickyNode, cookie, streamID); err == nil {
+			return nil
+		}
+		stickyNode = stream.AdvanceStickyPeer(stickyNode)
+	}
+
+	return RiverError(Err_UNAVAILABLE, "Unable to create syncer for stream", "streamId", streamID)
 }
 
 func (ss *SyncerSet) RemoveStream(ctx context.Context, streamID StreamId) error {
@@ -353,44 +299,72 @@ func (ss *SyncerSet) Modify(ctx context.Context, req ModifyRequest) error {
 			continue
 		}
 
-		var nodeAddress common.Address
-		if nodeAddressRaw := cookie.GetNodeAddress(); len(nodeAddressRaw) > 0 {
-			nodeAddress = common.BytesToAddress(nodeAddressRaw)
-		} else {
-			stream, err := ss.streamCache.GetStreamNoWait(ctx, streamID)
-			if err != nil {
-				return err
-			}
+		var (
+			selectedNode  common.Address
+			nodeAvailable bool
+		)
 
-			if remotes, isLocal := stream.GetRemotesAndIsLocal(); isLocal {
-				nodeAddress = ss.localNodeAddress
+		// Try node from the cookie first
+		if addrRaw := cookie.GetNodeAddress(); len(addrRaw) > 0 {
+			selectedNode = common.BytesToAddress(addrRaw)
+			if selectedNode.Cmp(ss.localNodeAddress) == 0 {
+				nodeAvailable = true
 			} else {
-				var found bool
-				for i := 0; i < len(remotes); i++ {
-					// Try to find a remote peer for the given stream that is available
-					nodeAddress = stream.GetStickyPeer()
-					if _, err = ss.nodeRegistry.GetStreamServiceClientForAddress(nodeAddress); err != nil {
-						logging.FromCtx(ss.ctx).Errorw("Failed to get sticky peer for stream",
-							"err", err, "nodeAddress", nodeAddress, "streamId", streamID)
-					} else {
-						found = true
-						break
-					}
-				}
-				if !found {
-					return RiverError(Err_UNAVAILABLE, "No remote node available to sync stream").
-						Tags("syncId", ss.syncID, "streamId", streamID).
-						Func("SyncerSet.Modify")
+				if _, err := ss.nodeRegistry.GetStreamServiceClientForAddress(selectedNode); err == nil {
+					nodeAvailable = true
 				}
 			}
 		}
 
-		if _, ok := modifySyncs[nodeAddress]; !ok {
-			modifySyncs[nodeAddress] = &ModifySyncRequest{}
+		// Fallback only if cookie-provided node is unavailable
+		if !nodeAvailable {
+			stream, err := ss.streamCache.GetStreamNoWait(ctx, streamID)
+			if err != nil {
+				rvrErr := AsRiverError(err)
+				req.AddingFailureHandler(&SyncStreamOpStatus{
+					StreamId: streamID[:],
+					Code:     int32(rvrErr.Code),
+					Message:  rvrErr.GetMessage(),
+				})
+				continue
+			}
+
+			remotes, isLocal := stream.GetRemotesAndIsLocal()
+
+			// Try using the local node if the stream is local
+			if isLocal {
+				selectedNode = ss.localNodeAddress
+				nodeAvailable = true
+			}
+
+			// Try using the remote nodes
+			if !nodeAvailable && len(remotes) > 0 {
+				selectedNode = stream.GetStickyPeer()
+				for range remotes {
+					if _, err = ss.nodeRegistry.GetStreamServiceClientForAddress(selectedNode); err == nil {
+						nodeAvailable = true
+						break
+					}
+					selectedNode = stream.AdvanceStickyPeer(selectedNode)
+				}
+			}
+		}
+
+		if !nodeAvailable {
+			req.AddingFailureHandler(&SyncStreamOpStatus{
+				StreamId: streamID[:],
+				Code:     int32(Err_UNAVAILABLE),
+				Message:  "No available node to sync stream",
+			})
+			continue
+		}
+
+		if _, ok := modifySyncs[selectedNode]; !ok {
+			modifySyncs[selectedNode] = &ModifySyncRequest{}
 		}
 
 		// avoid duplicates
-		if slices.ContainsFunc(modifySyncs[nodeAddress].AddStreams, func(c *SyncCookie) bool {
+		if slices.ContainsFunc(modifySyncs[selectedNode].AddStreams, func(c *SyncCookie) bool {
 			return StreamId(c.StreamId) == streamID
 		}) {
 			return RiverError(Err_ALREADY_EXISTS, "Duplicate stream in add operation").
@@ -398,9 +372,9 @@ func (ss *SyncerSet) Modify(ctx context.Context, req ModifyRequest) error {
 				Func("SyncerSet.Modify")
 		}
 
-		modifySyncs[nodeAddress].AddStreams = append(
-			modifySyncs[nodeAddress].AddStreams,
-			cookie.CopyWithAddr(nodeAddress),
+		modifySyncs[selectedNode].AddStreams = append(
+			modifySyncs[selectedNode].AddStreams,
+			cookie.CopyWithAddr(selectedNode),
 		)
 	}
 
@@ -560,6 +534,51 @@ func (ss *SyncerSet) rmStream(streamID StreamId) {
 	ss.muSyncers.Unlock()
 }
 
+func (ss *SyncerSet) attemptAddStream(ctx context.Context, nodeAddress common.Address, cookie *SyncCookie, streamID StreamId) error {
+	ctx, cancel := context.WithTimeout(ctx, time.Second*5)
+	defer cancel()
+
+	if syncer, found := ss.syncers[nodeAddress]; found {
+		if err := syncer.AddStream(ctx, cookie.CopyWithAddr(nodeAddress)); err != nil {
+			return err
+		}
+		ss.streamID2Syncer[streamID] = syncer
+		return nil
+	}
+
+	var (
+		syncer StreamsSyncer
+		span   trace.Span
+		err    error
+	)
+	if nodeAddress == ss.localNodeAddress {
+		if ss.otelTracer != nil {
+			_, span = ss.otelTracer.Start(ctx, "NewLocalSyncer",
+				trace.WithAttributes(attribute.String("stream", streamID.String())))
+		}
+		syncer, err = ss.newLocalSyncer([]*SyncCookie{cookie.CopyWithAddr(nodeAddress)})
+	} else {
+		if ss.otelTracer != nil {
+			_, span = ss.otelTracer.Start(ctx, "NewRemoteSyncer",
+				trace.WithAttributes(attribute.String("stream", streamID.String()),
+					attribute.String("remote", nodeAddress.String())))
+		}
+		syncer, err = ss.newRemoteSyncer(nodeAddress, []*SyncCookie{cookie.CopyWithAddr(nodeAddress)})
+	}
+	if span != nil {
+		span.End()
+	}
+	if err != nil {
+		return err
+	}
+
+	ss.syncers[nodeAddress] = syncer
+	ss.streamID2Syncer[streamID] = syncer
+	ss.startSyncer(syncer)
+
+	return nil
+}
+
 func (ss *SyncerSet) newLocalSyncer(cookies []*SyncCookie) (*localSyncer, error) {
 	return newLocalSyncer(
 		ss.ctx, ss.syncID, ss.globalSyncOpCtxCancel, ss.localNodeAddress,
@@ -575,4 +594,16 @@ func (ss *SyncerSet) newRemoteSyncer(addr common.Address, cookies []*SyncCookie)
 	return newRemoteSyncer(
 		ss.ctx, ss.globalSyncOpCtxCancel, ss.syncID, addr, client,
 		cookies, ss.rmStream, ss.messages, ss.otelTracer)
+}
+
+// caller must have ss.muSyncers claimed
+func (ss *SyncerSet) startSyncer(syncer StreamsSyncer) {
+	ss.syncerTasks.Add(1)
+	go func() {
+		syncer.Run()
+		ss.syncerTasks.Done()
+		ss.muSyncers.Lock()
+		delete(ss.syncers, syncer.Address())
+		ss.muSyncers.Unlock()
+	}()
 }
