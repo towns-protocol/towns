@@ -85,3 +85,17 @@ kv_namespaces = [
   { binding = "EMAIL_WHITELIST", id = "2c8323695f35412a8085d3578742ab7f" },
   { binding = "TOWN_WHITELIST", id = "4cc893654ea646f6b70cd195d80a77de" },
 ]
+
+[env.delta]
+routes = [{ pattern = "stackup-worker-delta.towns.com", custom_domain = true }]
+vars = { ENVIRONMENT = "delta", ERC4337_ENTRYPOINT_ADDRESS = "0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789", SKIP_TOWNID_VERIFICATION = "false" }
+# created with
+# wrangler kv:namespace create "CREATE_TOWN" --env delta
+kv_namespaces = [
+  { binding = "CREATE_TOWN", id = "544bea2884dd43e1959007b8727b3fce" },
+  { binding = "OVERRIDES", id = "032a2544b56c4c58b375e26afe7e1e71" },
+  { binding = "JOIN_TOWN", id = "8f3eb9a857244fc396f02d39f0309ba6" },
+  { binding = "LINK_WALLET_TO_ROOT_KEY", id = "a17828fee45d4b729b2586f8ecc041af" },
+  { binding = "EMAIL_WHITELIST", id = "d503cdec6a3146caa039e60f70983b6f" },
+  { binding = "TOWN_WHITELIST", id = "4b5ebb9efa124cf1af51b669b7134f0b" },
+]

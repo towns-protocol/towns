@@ -9,9 +9,9 @@ logpush = true
 # created with wrangler kv:namespace create "USER" AND wrangler kv:namespace create "USER" --preview
 # each entry needs an `id` and `preview_id` for wrangler to work
 kv_namespaces = [
-    { binding = "USER", id = "825ab41e031d40e0a975bb29638c194e", preview_id = "9f43fa046a17415191d44c4aa0444234" },
-    { binding = "SPACE", id = "ffd17fea5af143b8ba3cde0b7e15ef93", preview_id = "1080657b855c43b58d118c086122aa3b" },
-    { binding = "TIP_LEADERBOARD_KV", id = "0", preview_id = "0" },
+  { binding = "USER", id = "825ab41e031d40e0a975bb29638c194e", preview_id = "9f43fa046a17415191d44c4aa0444234" },
+  { binding = "SPACE", id = "ffd17fea5af143b8ba3cde0b7e15ef93", preview_id = "1080657b855c43b58d118c086122aa3b" },
+  { binding = "TIP_LEADERBOARD_KV", id = "0", preview_id = "0" },
 ]
 
 [dev]
@@ -49,16 +49,16 @@ LINEAR_GRAPHQL_URL = "https://api.linear.app/graphql"
 # CF_ENV=test-beta yarn publish
 [env.test-beta]
 routes = [
-    { pattern = "gateway-worker-test-beta.towns.com", custom_domain = true },
+  { pattern = "gateway-worker-test-beta.towns.com", custom_domain = true },
 ]
 vars = { ENVIRONMENT = "test-beta", CF_API = "https://api.cloudflare.com/client/v4/accounts", ACCOUNT_ID = "9840f8a36a817b103e00e29a0e2bad6f", LINEAR_TEAM_ID = "2de99085-cb4a-4fd2-89c7-a892c91c0383", LINEAR_USER_FEEDBACK_PROJECT_ID = "56801874-57ba-42e7-a9ae-5052b27500eb", LINEAR_REPORT_CONTENT_PROJECT_ID = "ef3bd21e-0c26-4f76-9f1c-700cc76a514e", LINEAR_GRAPHQL_URL = "https://api.linear.app/graphql" } # [vars] access, not secrets
 
 # created with wrangler kv:namespace create "USER" --env test-beta
 # created with wrangler kv:namespace create "SPACE" --env test-beta
 kv_namespaces = [
-    { binding = "USER", id = "bf4fb160bba4497fb49f4ce1383f5dbb" },
-    { binding = "SPACE", id = "46e3556d43984c3fa028c3553794e740" },
-    { binding = "TIP_LEADERBOARD_KV", id = "8b69bc3f49d8491da31b5dcc8d866e0c" },
+  { binding = "USER", id = "bf4fb160bba4497fb49f4ce1383f5dbb" },
+  { binding = "SPACE", id = "46e3556d43984c3fa028c3553794e740" },
+  { binding = "TIP_LEADERBOARD_KV", id = "8b69bc3f49d8491da31b5dcc8d866e0c" },
 ]
 
 # omega routes
@@ -70,9 +70,9 @@ vars = { ENVIRONMENT = "omega", CF_API = "https://api.cloudflare.com/client/v4/a
 # created with wrangler kv:namespace create "USER" --env omega
 # created with wrangler kv:namespace create "SPACE" --env omega
 kv_namespaces = [
-    { binding = "USER", id = "689271de8bd34ebba01977f358dd2192" },
-    { binding = "SPACE", id = "8f4405e70be64bc88c2d4c050d220b6a" },
-    { binding = "TIP_LEADERBOARD_KV", id = "74fcf4814fc84f28a1ed794f5e46d650" },
+  { binding = "USER", id = "689271de8bd34ebba01977f358dd2192" },
+  { binding = "SPACE", id = "8f4405e70be64bc88c2d4c050d220b6a" },
+  { binding = "TIP_LEADERBOARD_KV", id = "74fcf4814fc84f28a1ed794f5e46d650" },
 ]
 
 # alpha routes
@@ -84,7 +84,21 @@ vars = { ENVIRONMENT = "alpha", CF_API = "https://api.cloudflare.com/client/v4/a
 # created with wrangler kv:namespace create "USER" --env alpha
 # created with wrangler kv:namespace create "SPACE" --env alpha
 kv_namespaces = [
-    { binding = "USER", id = "1d41c88233224cf9a852dd06bde3e623" },
-    { binding = "SPACE", id = "92055ed1c811409c8d4f94f0f77297d2" },
-    { binding = "TIP_LEADERBOARD_KV", id = "320d5ce390234476be07346ef4544d92" },
+  { binding = "USER", id = "1d41c88233224cf9a852dd06bde3e623" },
+  { binding = "SPACE", id = "92055ed1c811409c8d4f94f0f77297d2" },
+  { binding = "TIP_LEADERBOARD_KV", id = "320d5ce390234476be07346ef4544d92" },
+]
+
+# delta routes
+# CF_ENV=delta yarn publish
+[env.delta]
+routes = [{ pattern = "gateway-worker-delta.towns.com", custom_domain = true }]
+vars = { ENVIRONMENT = "delta", CF_API = "https://api.cloudflare.com/client/v4/accounts", ACCOUNT_ID = "9840f8a36a817b103e00e29a0e2bad6f", LINEAR_TEAM_ID = "2de99085-cb4a-4fd2-89c7-a892c91c0383", LINEAR_USER_FEEDBACK_PROJECT_ID = "56801874-57ba-42e7-a9ae-5052b27500eb", LINEAR_REPORT_CONTENT_PROJECT_ID = "ef3bd21e-0c26-4f76-9f1c-700cc76a514e", LINEAR_GRAPHQL_URL = "https://api.linear.app/graphql" } # [vars] access, not secrets
+
+# created with wrangler kv:namespace create "USER" --env delta
+# created with wrangler kv:namespace create "SPACE" --env delta
+kv_namespaces = [
+  { binding = "USER", id = "531a30eeced948b392b2778441c0610d" },
+  { binding = "SPACE", id = "540af1c862e749c38c6e11895f8a0a44" },
+  { binding = "TIP_LEADERBOARD_KV", id = "1f6ff44e15e844119b57080705ddb415" },
 ]

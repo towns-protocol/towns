@@ -17,6 +17,7 @@ on:
                     - 'test-beta'
                     - 'omega'
                     - 'alpha'
+                    - 'delta'
                 default: 'test-beta'
 
     workflow_call:

@@ -34,7 +34,7 @@ vars = { ENVIRONMENT = "omega" }
 # CF_ENV=test-beta yarn publish
 [env.test-beta]
 routes = [
-    { pattern = "token-worker-test-beta.towns.com", custom_domain = true },
+  { pattern = "token-worker-test-beta.towns.com", custom_domain = true },
 ]
 vars = { ENVIRONMENT = "test-beta" }
 
@@ -43,3 +43,9 @@ vars = { ENVIRONMENT = "test-beta" }
 [env.alpha]
 routes = [{ pattern = "token-worker-alpha.towns.com", custom_domain = true }]
 vars = { ENVIRONMENT = "alpha" }
+
+# delta route
+# CF_ENV=delta yarn publish
+[env.delta]
+routes = [{ pattern = "token-worker-delta.towns.com", custom_domain = true }]
+vars = { ENVIRONMENT = "delta" }

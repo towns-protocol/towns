@@ -32,7 +32,7 @@ ENVIRONMENT = "development"
 # CF_ENV=test-beta yarn publish
 [env.test-beta]
 routes = [
-    { pattern = "unfurl-worker-test-beta.towns.com", custom_domain = true },
+  { pattern = "unfurl-worker-test-beta.towns.com", custom_domain = true },
 ]
 vars = { ENVIRONMENT = "test-beta" }
 
@@ -47,3 +47,9 @@ vars = { ENVIRONMENT = "omega" }
 [env.alpha]
 routes = [{ pattern = "unfurl-worker-alpha.towns.com", custom_domain = true }]
 vars = { ENVIRONMENT = "alpha" }
+
+# delta routes
+# CF_ENV=delta yarn publish
+[env.delta]
+routes = [{ pattern = "unfurl-worker-delta.towns.com", custom_domain = true }]
+vars = { ENVIRONMENT = "delta" }
