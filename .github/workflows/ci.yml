@@ -7,8 +7,8 @@ env:
     BASE_RPC_URL: ${{ secrets.BASE_RPC_URL }}
     BASE_SEPOLIA_RPC_URL: ${{ secrets.BASE_SEPOLIA_RPC_URL }}
     ETH_RPC_URL: ${{ secrets.ETH_RPC_URL }}
-    ETH_SEPOLIA_RPC_URL: ${{ secrets.ETH_RPC_URL }}
-    CHAINS: '31337:http://localhost:8545,31338:http://localhost:8546,84532:${{ secrets.BASE_SEPOLIA_RPC_URL }},11155111:${{ secrets.ETH_RPC_URL }}'
+    ETH_SEPOLIA_RPC_URL: ${{ secrets.ETH_SEPOLIA_RPC_URL }}
+    CHAINS: '31337:http://localhost:8545,31338:http://localhost:8546,84532:${{ secrets.BASE_SEPOLIA_RPC_URL }},11155111:${{ secrets.ETH_SEPOLIA_RPC_URL }}'
 on:
     schedule:
         # Run every hour
