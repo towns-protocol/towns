@@ -14,7 +14,7 @@ import {IRuleEntitlementBase} from "contracts/src/spaces/entitlements/rule/IRule
 import {IEntitlement} from "contracts/src/spaces/entitlements/IEntitlement.sol";
 import {IPlatformRequirements} from "contracts/src/factory/facets/platform/requirements/IPlatformRequirements.sol";
 import {IPrepay} from "contracts/src/spaces/facets/prepay/IPrepay.sol";
-import {IERC173} from "@river-build/diamond/src/facets/ownable/IERC173.sol";
+import {IERC173} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
 
 // libraries
 import {Permissions} from "contracts/src/spaces/facets/Permissions.sol";

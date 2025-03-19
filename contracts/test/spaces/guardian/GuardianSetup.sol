@@ -2,14 +2,14 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {IDiamond, Diamond} from "@river-build/diamond/src/Diamond.sol";
+import {IDiamond, Diamond} from "@towns-protocol/diamond/src/Diamond.sol";
 
 // libraries
 
 // helpers
 import {FacetTest} from "contracts/test/diamond/Facet.t.sol";
 import {GuardianFacet} from "contracts/src/spaces/facets/guardian/GuardianFacet.sol";
-import {MultiInit} from "@river-build/diamond/src/initializers/MultiInit.sol";
+import {MultiInit} from "@towns-protocol/diamond/src/initializers/MultiInit.sol";
 import {DeployGuardianFacet} from "contracts/scripts/deployments/facets/DeployGuardianFacet.s.sol";
 
 abstract contract GuardianSetup is FacetTest {

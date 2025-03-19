@@ -2,11 +2,11 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {IDiamondCut} from "@river-build/diamond/src/facets/cut/IDiamondCut.sol";
+import {IDiamondCut} from "@towns-protocol/diamond/src/facets/cut/IDiamondCut.sol";
 import {IDiamondInitHelper} from "contracts/test/diamond/Diamond.t.sol";
 
-import {Diamond} from "@river-build/diamond/src/Diamond.sol";
-import {DiamondHelper} from "@river-build/diamond/scripts/common/helpers/DiamondHelper.s.sol";
+import {Diamond} from "@towns-protocol/diamond/src/Diamond.sol";
+import {DiamondHelper} from "@towns-protocol/diamond/scripts/common/helpers/DiamondHelper.s.sol";
 
 // libraries
 import {stdJson} from "forge-std/StdJson.sol";

@@ -6,9 +6,9 @@ pragma solidity ^0.8.23;
 //libraries
 
 //contracts
-import {FacetHelper} from "@river-build/diamond/scripts/common/helpers/FacetHelper.s.sol";
+import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
 import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
-import {OwnablePendingFacet} from "@river-build/diamond/src/facets/ownable/pending/OwnablePendingFacet.sol";
+import {OwnablePendingFacet} from "@towns-protocol/diamond/src/facets/ownable/pending/OwnablePendingFacet.sol";
 
 contract DeployOwnablePendingFacet is FacetHelper, Deployer {
   constructor() {
