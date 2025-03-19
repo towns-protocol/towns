@@ -1,6 +1,5 @@
 import React, { useCallback } from 'react'
 import {
-    Address,
     BlockchainTransactionType,
     useBannedWalletAddresses,
     useIsTransactionPending,
@@ -14,9 +13,6 @@ import { Box, Button, Paragraph, Stack } from '@ui'
 import { Avatar } from '@components/Avatar/Avatar'
 import { useDevice } from 'hooks/useDevice'
 import { ProfileHoverCard } from '@components/ProfileHoverCard/ProfileHoverCard'
-import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
-import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
-import { shortAddress } from 'workers/utils'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { ConfirmBanUnbanModal } from '@components/ConfirmBanUnbanModal/ConfirmBanUnbanModal'
 import { createPrivyNotAuthenticatedNotification } from '@components/Notifications/utils'
@@ -119,9 +115,6 @@ const BannedUserRow = (props: {
     const { lookupUser } = useUserLookupContext()
     const globalUser = lookupUser(userId)
     const { isTouch } = useDevice()
-    const { data: abstractAccountAddress } = useAbstractAccountAddress({
-        rootKeyAddress: userId as Address | undefined,
-    })
 
     return (
         <Stack
@@ -143,12 +136,6 @@ const BannedUserRow = (props: {
                     <Paragraph truncate color="default">
                         {getPrettyDisplayName(globalUser)}
                     </Paragraph>
-                    {abstractAccountAddress && (
-                        <ClipboardCopy
-                            label={shortAddress(abstractAccountAddress)}
-                            clipboardContent={abstractAccountAddress}
-                        />
-                    )}
                 </Stack>
                 {transactionInProgress ? (
                     <ButtonSpinner />

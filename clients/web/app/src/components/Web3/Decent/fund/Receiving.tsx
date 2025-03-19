@@ -1,7 +1,7 @@
 import React from 'react'
 import { Stack, Text } from '@ui'
 import { shortAddress } from 'ui/utils/utils'
-import { useMyAbstractAccountAddress } from '@components/Web3/UserOpTxModal/hooks/useMyAbstractAccountAddress'
+import { useMyAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
 import { Section } from './Section'
 import { useFundContext } from './FundContext'
 import { NetworkLogo } from '../NetworkLogo'

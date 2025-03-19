@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useMemo } from 'react'
 import { UseFormReturn } from 'react-hook-form'
 import {
-    Address,
     Permission,
     useChannelData,
     useHasPermission,
@@ -20,7 +19,6 @@ import {
 import { Box, Button, FormRender, Paragraph, Stack } from '@ui'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
 import { mapToErrorMessage } from '@components/Web3/utils'
-import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
 import { DeleteChannelButton } from './DeleteChannelButton'
 export type FormState = z.infer<typeof schema>
 
@@ -43,14 +41,10 @@ export function ChannelRiverMetadataSettingsForm(): JSX.Element {
 
     const userId = useMyUserId()
 
-    const { data: walletAddress } = useAbstractAccountAddress({
-        rootKeyAddress: userId as Address,
-    })
-
     const { hasPermission: hasRemoveChannelPermission } = useHasPermission({
         permission: Permission.AddRemoveChannels,
         spaceId,
-        walletAddress,
+        walletAddress: userId,
     })
 
     const onSubmit = useCallback(

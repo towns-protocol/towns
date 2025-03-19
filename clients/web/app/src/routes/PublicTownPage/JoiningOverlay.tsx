@@ -9,7 +9,7 @@ import { AppProgressState } from '@components/AppProgressOverlay/AppProgressStat
 import { AppProgressOverlayTrigger } from '@components/AppProgressOverlay/AppProgressOverlayTrigger'
 import { useAppProgressStore } from '@components/AppProgressOverlay/store/appProgressStore'
 import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
-import { useMyAbstractAccountAddress } from '@components/Web3/UserOpTxModal/hooks/useMyAbstractAccountAddress'
+import { useMyAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
 
 // 1. logging in
 // 2. joining - animation

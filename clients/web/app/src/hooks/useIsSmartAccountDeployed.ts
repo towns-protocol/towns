@@ -1,14 +1,11 @@
-import { Address, useMyUserId, useSpaceDapp, useTownsContext } from 'use-towns-client'
+import { useSpaceDapp, useTownsContext } from 'use-towns-client'
 import { useQuery } from '@tanstack/react-query'
-import { useAbstractAccountAddress } from './useAbstractAccountAddress'
+import { useMyAbstractAccountAddress } from './useAbstractAccountAddress'
 
 const queryKey = 'isSmartAccountDeployed'
 
 export function useIsSmartAccountDeployed() {
-    const userId = useMyUserId()
-    const { data: abstractAccountAddress } = useAbstractAccountAddress({
-        rootKeyAddress: userId as Address | undefined,
-    })
+    const { data: abstractAccountAddress } = useMyAbstractAccountAddress()
     const { baseProvider: provider, baseConfig: config } = useTownsContext()
     const spaceDapp = useSpaceDapp({
         provider,

@@ -26,7 +26,7 @@ import { useBalance } from 'hooks/useBalance'
 const log = debug('app:DebugBar')
 const anvilKey = '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80'
 
-import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
+import { useMyAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
 
 type ModalProps = {
     platform: string
@@ -151,9 +151,7 @@ const DebugModal = ({ environment }: ModalProps) => {
     const { loggedInWalletAddress } = useConnectivity()
     const { clearEnvironment } = environment
 
-    const { data: abstractAccountAddress } = useAbstractAccountAddress({
-        rootKeyAddress: loggedInWalletAddress,
-    })
+    const { data: abstractAccountAddress } = useMyAbstractAccountAddress()
 
     const walletToFund = abstractAccountAddress ?? loggedInWalletAddress
 

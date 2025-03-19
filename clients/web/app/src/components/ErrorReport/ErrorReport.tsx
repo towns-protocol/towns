@@ -39,8 +39,8 @@ import { Analytics } from 'hooks/useAnalytics'
 import { useConnectionStatus } from '@components/NodeConnectionStatusPanel/hooks/useConnectionStatus'
 import { NodeData, useNodeData } from '@components/NodeConnectionStatusPanel/hooks/useNodeData'
 import { getNodeStatusFromNodeData } from '@components/NodeConnectionStatusPanel/NodeStatusPill'
-import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
 import { useSolanaWallet } from '@components/Web3/Trading/useSolanaWallet'
+import { useMyAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
 import * as fieldStyles from '../../ui/components/_internal/Field/Field.css'
 import { BugSubmittedToast } from './BugSubmittedToast'
 
@@ -270,9 +270,7 @@ const _ErrorReportForm = (props: { onHide?: () => void; excludeDebugInfo?: boole
     const nodeConnections = useNodeData(nodeUrl)
     const { loggedInWalletAddress } = useConnectivity()
     const { solanaWallet } = useSolanaWallet()
-    const { data: abstractAccountAddress } = useAbstractAccountAddress({
-        rootKeyAddress: loggedInWalletAddress,
-    })
+    const { data: abstractAccountAddress } = useMyAbstractAccountAddress()
 
     const doPostCustomError = useCallback(
         (result: FormState) => {

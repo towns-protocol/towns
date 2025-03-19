@@ -14,7 +14,7 @@ import {
 import { Button, IconButton, MotionBox, Paragraph, Stack, Text } from '@ui'
 import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
 import { Entitlements, useEntitlements } from 'hooks/useEntitlements'
-import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
+import { useMyAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
 import { Analytics } from 'hooks/useAnalytics'
 import { popupToast } from '@components/Notifications/popupToast'
@@ -39,13 +39,10 @@ type Props = {
 
 export function GatedTownModal({ onHide, spaceId }: Props) {
     const { data: linkedWallets } = useLinkedWallets()
-    const { loggedInWalletAddress } = useConnectivity()
     const { data: entitlements } = useEntitlements(spaceId, minterRoleId)
     const tokensLength = entitlements?.tokens.length ?? 0
     const maxWidth = tokensLength > 2 ? 'auto' : '400'
-    const { data: aaAddress } = useAbstractAccountAddress({
-        rootKeyAddress: loggedInWalletAddress,
-    })
+    const { data: aaAddress } = useMyAbstractAccountAddress()
 
     const isTokenGated = useMemo(() => entitlements?.tokens.length > 0, [entitlements])
     const isUserGated = useMemo(

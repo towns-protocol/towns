@@ -3,7 +3,6 @@ import { matchRoutes, useLocation, useNavigate } from 'react-router'
 import { useSearchParams } from 'react-router-dom'
 import { useEvent } from 'react-use-event-hook'
 import {
-    Address,
     BASE_SEPOLIA,
     BlockchainTransactionType,
     LOCALHOST_CHAIN_ID,
@@ -11,7 +10,6 @@ import {
     SpaceData,
     useBanTransaction,
     useConnectivity,
-    useGetRootKeyFromLinkedWallet,
     useHasPermission,
     useIsTransactionPending,
     useMyProfile,
@@ -36,7 +34,7 @@ import { useCreateLink } from 'hooks/useCreateLink'
 import { useDevice } from 'hooks/useDevice'
 import { ModalContainer } from '@components/Modals/ModalContainer'
 import { WalletLinkingPanel } from '@components/Web3/WalletLinkingPanel'
-import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
+import { useMyAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
 import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
 import { shortAddress } from 'workers/utils'
@@ -71,26 +69,13 @@ enum ModalType {
 
 const SpaceProfileWithoutAuth = () => {
     const { client } = useTownsClient()
-    const isAccountAbstractionEnabled = client?.isAccountAbstractionEnabled()
     const [search] = useSearchParams()
     const space = useSpaceData()
     const { baseChain } = useEnvironment()
     const cameFromSpaceInfoPanel = search.get('spaceInfo') !== null
     const [searchParams] = useSearchParams()
     const profileIdFromPath = searchParams.get('profileId') || 'me'
-    const { data: rootKeyAddress, isLoading: isLoadingRootKey } = useGetRootKeyFromLinkedWallet({
-        walletAddress: profileIdFromPath,
-    })
-    // when account abstraction is off (Developing against anvil), we can use the profileIdFromPath directly
-    // the profileIdFromPath is the userId
-    // when account abstraction is on, profileIdFromPath is the abstract account address
-    // so we need to use the derived rootKeyAddress to get the userId
-    const userId = useMemo(() => {
-        if (!isAccountAbstractionEnabled) {
-            return profileIdFromPath
-        }
-        return profileIdFromPath === 'me' ? profileIdFromPath : rootKeyAddress
-    }, [isAccountAbstractionEnabled, profileIdFromPath, rootKeyAddress])
+    const userId = profileIdFromPath
 
     const [modal, setModal] = useState<ModalType | undefined>(undefined)
 
@@ -166,13 +151,7 @@ const SpaceProfileWithoutAuth = () => {
 
     const isValid = !!user
 
-    const { data: userAbstractAccountAddress } = useAbstractAccountAddress({
-        rootKeyAddress: user?.userId as Address | undefined,
-    })
-
-    const { data: loggedInAbstractAccountAddress } = useAbstractAccountAddress({
-        rootKeyAddress: loggedInWalletAddress,
-    })
+    const { data: loggedInAbstractAccountAddress } = useMyAbstractAccountAddress()
 
     const { isBanned, isLoading: isLoadingBanStatus } = useWalletAddressIsBanned(
         space?.id,
@@ -187,7 +166,7 @@ const SpaceProfileWithoutAuth = () => {
 
     const { data: userBio } = useGetUserBio(user?.userId)
 
-    const canEdit = !!client && loggedInAbstractAccountAddress === userAbstractAccountAddress
+    const canEdit = !!client && loggedInAbstractAccountAddress === userId
 
     const toggleTheme = useStore(({ toggleTheme }) => toggleTheme)
 
@@ -225,14 +204,6 @@ const SpaceProfileWithoutAuth = () => {
         dmChannels,
     })
 
-    if (isLoadingRootKey) {
-        return (
-            <Stack centerContent grow>
-                <ButtonSpinner />
-            </Stack>
-        )
-    }
-
     return (
         <Stack gap>
             {isValid ? (
@@ -240,7 +211,6 @@ const SpaceProfileWithoutAuth = () => {
                     center
                     key={user.userId}
                     userId={user.userId}
-                    abstractAccountAddress={userAbstractAccountAddress}
                     displayName={getPrettyDisplayName(user)}
                     userBio={userBio}
                     canEdit={canEdit}
@@ -418,17 +388,13 @@ const SpaceProfileWithoutAuth = () => {
                     <TownNotificationsButton type="dm" channelId={matchingDM.id} />
                 )}
 
-                {!isCurrentUser &&
-                    canBan &&
-                    space &&
-                    !isLoadingBanStatus &&
-                    userAbstractAccountAddress && (
-                        <BanPanelButton
-                            walletAddress={user?.userId ?? ''}
-                            isBanned={isBanned}
-                            space={space}
-                        />
-                    )}
+                {!isCurrentUser && canBan && space && !isLoadingBanStatus && (
+                    <BanPanelButton
+                        walletAddress={user?.userId ?? ''}
+                        isBanned={isBanned}
+                        space={space}
+                    />
+                )}
                 {!isCurrentUser && userId && (
                     <BlockPanelButton userId={userId} isBlocked={isBlocked} />
                 )}

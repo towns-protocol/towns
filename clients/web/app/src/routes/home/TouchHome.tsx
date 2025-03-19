@@ -3,7 +3,6 @@ import fuzzysort from 'fuzzysort'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate, useOutlet } from 'react-router'
 import {
-    Address,
     ChannelContextProvider,
     DMChannelContextUserLookupProvider,
     Permission,
@@ -60,7 +59,6 @@ import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { DMChannelMenuItem, MixedChannelMenuItem, useSortedChannels } from 'hooks/useSortedChannels'
 import { notUndefined } from 'ui/utils/utils'
 import { ShakeToReport } from '@components/BugReportButton/ShakeToReport'
-import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
 import { ReloadPrompt } from '@components/ReloadPrompt/ReloadPrompt'
 import { env } from 'utils'
 import { useUnseenChannelIds } from 'hooks/useUnseenChannelIdsCount'
@@ -607,11 +605,8 @@ const UserList = (props: { members: TownsStreamMember[] }) => {
 
 export const TouchUserResultRow = (props: { member: TownsStreamMember }) => {
     const { member } = props
-    const { data: abstractAccountAddress } = useAbstractAccountAddress({
-        rootKeyAddress: member.userId as Address | undefined,
-    })
     const { createLink } = useCreateLink()
-    const link = createLink({ profileId: abstractAccountAddress })
+    const link = createLink({ profileId: member.userId })
 
     return (
         <NavItem to={link} height="x6" padding="none">

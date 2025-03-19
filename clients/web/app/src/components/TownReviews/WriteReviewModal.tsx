@@ -1,7 +1,6 @@
 import React, { useState } from 'react'
 import {
     BlockchainTransactionType,
-    useConnectivity,
     useIsTransactionPending,
     useReviewTransaction,
     useSpaceData,
@@ -13,7 +12,7 @@ import { GetSigner, WalletReady } from 'privy/WalletReady'
 import { createPrivyNotAuthenticatedNotification } from '@components/Notifications/utils'
 import { popupToast } from '@components/Notifications/popupToast'
 import { StandardToast } from '@components/Notifications/StandardToast'
-import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
+import { useMyAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
 import { useEnvironment } from 'hooks/useEnvironmnet'
 import { baseScanUrl } from '@components/Web3/utils'
 import { Analytics } from 'hooks/useAnalytics'
@@ -50,10 +49,7 @@ export const WriteReviewModal = ({
     const [isValidating, setIsValidating] = useState(false)
     const spaceData = useSpaceData()
     const spaceDetails = useGatherSpaceDetailsAnalytics({ spaceId: spaceData?.id })
-    const { loggedInWalletAddress } = useConnectivity()
-    const { data: myAbstractAccount } = useAbstractAccountAddress({
-        rootKeyAddress: loggedInWalletAddress,
-    })
+    const { data: myAbstractAccount } = useMyAbstractAccountAddress()
     const { review, isLoading: isSubmitting } = useReviewTransaction()
     const reviewPending = useIsTransactionPending(BlockchainTransactionType.Review)
     const { baseChain } = useEnvironment()

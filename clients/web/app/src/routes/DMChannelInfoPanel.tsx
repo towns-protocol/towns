@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router'
 import {
-    Address,
     DMChannelContextUserLookupProvider,
     DMChannelIdentifier,
     useChannelData,
@@ -22,7 +21,6 @@ import { useCreateLink } from 'hooks/useCreateLink'
 import { SetUsernameDisplayName } from '@components/SetUsernameDisplayName/SetUsernameDisplayName'
 import { PanelButton } from '@components/Panel/PanelButton'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
-import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
 import { Analytics } from 'hooks/useAnalytics'
 import { TownNotificationsButton } from '@components/NotificationSettings/NotificationsSettingsButton'
 import { ChannelMembersModal } from '../components/ChannelMembersPanel/ChannelMembersPanel'
@@ -208,11 +206,8 @@ const ProfilePanelButton = (props: {
 }) => {
     const { member } = props
     const { createLink } = useCreateLink()
-    const { data: abstractAccountAddress } = useAbstractAccountAddress({
-        rootKeyAddress: member.userId as Address | undefined,
-    })
 
-    const profileLink = createLink({ profileId: abstractAccountAddress })
+    const profileLink = createLink({ profileId: member.userId })
     const navigate = useNavigate()
     const onClick = useCallback(() => {
         if (profileLink) {

@@ -1,12 +1,10 @@
 import { selectUserOpsByAddress, userOpsStore } from '@towns/userops'
 import React, { useCallback, useState } from 'react'
 import { useShallow } from 'zustand/react/shallow'
-import { useConnectivity, useContractSpaceInfoWithoutClient } from 'use-towns-client'
-import { Address } from 'viem'
+import { useContractSpaceInfoWithoutClient } from 'use-towns-client'
 import { AnimatePresence } from 'framer-motion'
 import { usePublicPageLoginFlow } from 'routes/PublicTownPage/usePublicPageLoginFlow'
 import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
-import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
 import { formatUnits, useBalance } from 'hooks/useBalance'
 import { Box, IconButton, Text } from '@ui'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
@@ -15,6 +13,7 @@ import { useIsSmartAccountDeployed } from 'hooks/useIsSmartAccountDeployed'
 import { useJoinFunnelAnalytics } from '@components/Analytics/useJoinFunnelAnalytics'
 import { FadeInBox } from '@components/Transitions'
 import { isTouch } from 'hooks/useDevice'
+import { useMyAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
 import { useInsufficientBalance } from './hooks/useInsufficientBalance'
 import { usePriceBreakdown } from './hooks/usePriceBreakdown'
 import { useToAddress } from './hooks/useToAddress'
@@ -25,7 +24,6 @@ import { GasTooLowMessage } from './GasTooLowMessage'
 import { RejectedSponsorshipMessage } from './RejectSponsorshipMessage'
 import { InsufficientBalanceForPayWithEth } from './InsufficientBalanceForPayWithEth'
 import { ChargesSummary } from './ChargesSummary'
-import { useMyAbstractAccountAddress } from './hooks/useMyAbstractAccountAddress'
 import { FundWallet } from './FundWallet'
 import {
     isDepositEth,
@@ -64,11 +62,7 @@ export function StandardUseropTx({
 
     const toAddress = useToAddress()
 
-    const { loggedInWalletAddress } = useConnectivity()
-
-    const { data: smartAccountAddress } = useAbstractAccountAddress({
-        rootKeyAddress: loggedInWalletAddress as Address,
-    })
+    const { data: smartAccountAddress } = useMyAbstractAccountAddress()
 
     const { data: balanceData } = useBalance({
         address: smartAccountAddress,

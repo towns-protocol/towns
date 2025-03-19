@@ -3,6 +3,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useEvent } from 'react-use-event-hook'
 import { Nft, isDefined } from '@river-build/sdk'
 import { AnimatePresence, MotionConfig } from 'framer-motion'
+import { Address } from 'viem'
 import {
     Box,
     Button,
@@ -39,6 +40,9 @@ import { useUploadAttachment } from '@components/MediaDropContext/useUploadAttac
 import { UploadImageRequestConfig } from '@components/UploadImage/useOnImageChangeEvent'
 import { UserRoles } from '@components/UserRoles/UserRoles'
 import { TownsWallet } from '@components/Web3/Wallet/TownsWallet'
+// this is the one place in the app you can see another user's abstract account address
+// eslint-disable-next-line
+import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
 import { UserWalletContent } from './UserWalletContent'
 
 type Props = {
@@ -48,7 +52,6 @@ type Props = {
     userBio?: string
     userId?: string
     canEdit?: boolean
-    abstractAccountAddress?: string
 }
 
 enum InputId {
@@ -56,11 +59,14 @@ enum InputId {
 }
 
 export const UserProfile = (props: Props) => {
-    const { userId, canEdit, center, info, userBio, abstractAccountAddress } = props
+    const { userId, canEdit, center, info, userBio } = props
     const memberOf = useMemberOf(userId)
     const user = useUserLookup(userId ?? '')
     const [showNftProfilePicture, setShowNftProfilePicture] = useState(false)
     const [isRemovingNft, setIsRemovingNft] = useState(false)
+    const { data: abstractAccountAddress } = useAbstractAccountAddress({
+        rootKeyAddress: userId as Address | undefined,
+    })
 
     const { setNft } = useSetNftProfilePicture()
     const streamId = useCurrentStreamID()

@@ -2,7 +2,6 @@ import { isGDMChannelStreamId } from '@river-build/sdk'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { Sheet } from 'react-modal-sheet'
 import {
-    Address,
     useChannelData,
     useChannelId,
     useMyUserId,
@@ -11,20 +10,17 @@ import {
 } from 'use-towns-client'
 import { useInView } from 'react-intersection-observer'
 import { Avatar } from '@components/Avatar/Avatar'
-import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
 import { ModalContainer } from '@components/Modals/ModalContainer'
 import { NoMatches } from '@components/NoMatches/NoMatches'
 import { Panel } from '@components/Panel/Panel'
 import { ProfileHoverCard } from '@components/ProfileHoverCard/ProfileHoverCard'
 import { TableCell } from '@components/TableCell/TableCell'
 import { Box, Button, Icon, Paragraph, Stack, Text, TextField } from '@ui'
-import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
 import { useDevice } from 'hooks/useDevice'
 import { useFuzzySearchByProperty } from 'hooks/useFuzzySearchByProperty'
 import { CHANNEL_INFO_PARAMS } from 'routes'
 import { atoms } from 'ui/styles/atoms.css'
 import { modalSheetClass } from 'ui/styles/globals/sheet.css'
-import { shortAddress } from 'ui/utils/utils'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { useChannelHeaderMembers } from 'hooks/useChannelHeaderMembers'
 import { ChannelInviteModal } from '../../routes/ChannelInvitePanel'
@@ -307,14 +303,12 @@ const ChannelMemberRow = (props: ChannelMemberRowProps) => {
     const [isHeaderHovering, setIsHeaderHovering] = useState(false)
     const { lookupUser } = useUserLookupContext()
     const user = lookupUser(userId)
-    const { data: abstractAccountAddress } = useAbstractAccountAddress({
-        rootKeyAddress: userId as Address | undefined,
-    })
+
     const { openPanel } = usePanelActions()
     const { isTouch } = useDevice()
     const onClick = useCallback(() => {
-        openPanel(CHANNEL_INFO_PARAMS.PROFILE, { profileId: abstractAccountAddress })
-    }, [openPanel, abstractAccountAddress])
+        openPanel(CHANNEL_INFO_PARAMS.PROFILE, { profileId: userId })
+    }, [openPanel, userId])
 
     const globalUser = lookupUser(userId) ?? user
 
@@ -336,10 +330,6 @@ const ChannelMemberRow = (props: ChannelMemberRowProps) => {
         [onRemoveMember, userId],
     )
 
-    if (!abstractAccountAddress) {
-        return null
-    }
-
     return (
         <Stack paddingX="sm">
             <Stack
@@ -354,23 +344,14 @@ const ChannelMemberRow = (props: ChannelMemberRowProps) => {
                 onPointerEnter={isTouch ? undefined : onPointerEnter}
                 onPointerLeave={isTouch ? undefined : onPointerLeave}
             >
-                <Stack horizontal gap width="100%">
-                    <Box
-                        centerContent
-                        tooltip={!isTouch ? <ProfileHoverCard userId={userId} /> : undefined}
-                    >
+                <Stack horizontal gap width="100%" alignItems="center">
+                    <Box tooltip={!isTouch ? <ProfileHoverCard userId={userId} /> : undefined}>
                         <Avatar userId={userId} size="avatar_x4" />
                     </Box>
                     <Stack grow gap="paragraph" overflow="hidden" paddingY="xs" insetY="xxs">
                         <Paragraph truncate color="default">
                             {getPrettyDisplayName(globalUser)}
                         </Paragraph>
-                        {abstractAccountAddress && (
-                            <ClipboardCopy
-                                label={shortAddress(abstractAccountAddress)}
-                                clipboardContent={abstractAccountAddress}
-                            />
-                        )}
                     </Stack>
                 </Stack>
                 {onRemoveMember && isHeaderHovering && (

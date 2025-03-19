@@ -13,8 +13,8 @@ import {
     trackFundWalletTx,
     trackFundWalletTxStart,
 } from '@components/Web3/Wallet/fundWalletAnalytics'
+import { useMyAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
 import { useUserOpTxModalContext } from './UserOpTxModalContext'
-import { useMyAbstractAccountAddress } from './hooks/useMyAbstractAccountAddress'
 import { useIsJoinSpace } from './hooks/useIsJoinSpace'
 
 export const FundWallet = (props: { cost: bigint }) => {

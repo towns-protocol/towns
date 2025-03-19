@@ -8,8 +8,8 @@ import { useDevice } from 'hooks/useDevice'
 import { Box, Icon, IconButton, Paragraph } from '@ui'
 import { ErrorBoundary } from '@components/ErrorBoundary/ErrorBoundary'
 import { AppBugReportButton } from '@components/AppBugReport/AppBugReportButton'
+import { useMyAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
 import { StandardUseropTx } from './StandardUseropTx'
-import { useMyAbstractAccountAddress } from './hooks/useMyAbstractAccountAddress'
 import { UserOpTxModalProvider } from './UserOpTxModalContext'
 
 export function UserOpTxModal() {

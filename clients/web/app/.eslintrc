@@ -96,6 +96,11 @@
           {
             "name": "react-error-boundary",
             "message": "Use our dd-wrapped error boundary instead, via @components/ErrorBoundary/ErrorBoundary"
+          },
+          {
+            "name": "hooks/useAbstractAccountAddress",
+            "importNames": ["useAbstractAccountAddress"],
+            "message": "For fetching current user abstract account address, use useMyAbstractAccountAddress instead. If you really need to use this, then add a comment why (but you should have a good reason :))."
           }
         ]
       }

@@ -1,5 +1,5 @@
 import { selectUserOpsByAddress, userOpsStore } from '@towns/userops'
-import { useMyAbstractAccountAddress } from './useMyAbstractAccountAddress'
+import { useMyAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
 
 export function useIsJoinSpace() {
     const myAbstractAccountAddress = useMyAbstractAccountAddress().data

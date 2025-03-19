@@ -6,8 +6,8 @@ import { useGatherSpaceDetailsAnalytics } from '@components/Analytics/useGatherS
 import { getSpaceNameFromCache } from '@components/Analytics/getSpaceNameFromCache'
 import { Box, Button, Icon } from '@ui'
 import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
+import { useMyAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
 import { PayWithCardButton } from './PayWithCardButton'
-import { useMyAbstractAccountAddress } from './hooks/useMyAbstractAccountAddress'
 import { useUserOpTxModalContext } from './UserOpTxModalContext'
 import { useIsJoinSpace } from './hooks/useIsJoinSpace'
 

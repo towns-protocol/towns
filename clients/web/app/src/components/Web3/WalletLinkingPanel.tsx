@@ -15,7 +15,7 @@ import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
 import { ModalContainer } from '@components/Modals/ModalContainer'
 import {
     isAbstractAccountAddress,
-    useAbstractAccountAddress,
+    useMyAbstractAccountAddress,
 } from 'hooks/useAbstractAccountAddress'
 import { createPrivyNotAuthenticatedNotification } from '@components/Notifications/utils'
 import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
@@ -53,9 +53,7 @@ function WalletLinkingPanelWithoutAuth() {
     const { linkEOAToRootKeyTransaction } = useLinkEOAToRootKeyTransaction()
     const { unlinkWalletTransaction } = useUnlinkWalletTransaction()
 
-    const { data: aaAddress } = useAbstractAccountAddress({
-        rootKeyAddress: loggedInWalletAddress,
-    })
+    const { data: aaAddress } = useMyAbstractAccountAddress()
 
     const { data: _linkedWallets } = useLinkedWallets()
     const linkedWallets = useMemo(

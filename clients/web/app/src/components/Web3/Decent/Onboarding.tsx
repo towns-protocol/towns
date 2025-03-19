@@ -2,10 +2,10 @@ import React from 'react'
 import { BoxThemeProvider, OnboardingModal } from '@decent.xyz/the-box'
 import { ClientRendered } from '@decent.xyz/box-ui'
 import { TokenInfo, getNativeTokenInfo } from '@decent.xyz/box-common'
-import { Address, useConnectivity } from 'use-towns-client'
+import { Address } from 'use-towns-client'
 import { env } from 'utils'
 import { chainIds, wagmiConfig } from 'wagmiConfig'
-import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
+import { useMyAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
 import { Icon, Stack, Text } from '@ui'
 import { Analytics } from 'hooks/useAnalytics'
 import { decentTheme } from './decentTheme'
@@ -19,11 +19,7 @@ import { ConnectAndSetActive } from './ConnectAndSetActive'
 import { FundWalletCallbacks } from './fund/types'
 
 export function Onboarding(props: FundWalletCallbacks = {}) {
-    const { loggedInWalletAddress } = useConnectivity()
-
-    const { data: address, isLoading } = useAbstractAccountAddress({
-        rootKeyAddress: loggedInWalletAddress as Address,
-    })
+    const { data: address, isLoading } = useMyAbstractAccountAddress()
 
     if (isLoading) {
         return <></>

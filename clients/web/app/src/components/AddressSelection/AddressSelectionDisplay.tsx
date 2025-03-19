@@ -1,9 +1,8 @@
 import React from 'react'
-import { Address, useGetRootKeyFromLinkedWallet, useUserLookupContext } from 'use-towns-client'
+import { Address, useUserLookupContext } from 'use-towns-client'
 import { constants } from 'ethers'
 import { Box, BoxProps, IconButton, Text } from '@ui'
 import { Avatar } from '@components/Avatar/Avatar'
-import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { shortAddress } from 'workers/utils'
 
@@ -14,8 +13,7 @@ type Props = {
 
 export const AddressSelectionDisplay = ({ address, onRemove, ...boxProps }: Props) => {
     const { lookupUser } = useUserLookupContext()
-    const { data: rootKey } = useGetRootKeyFromLinkedWallet({ walletAddress: address })
-    const user = lookupUser(rootKey || address)
+    const user = lookupUser(address)
 
     const name =
         (user && user.userId === constants.AddressZero) || !user
@@ -40,7 +38,6 @@ export const AddressSelectionDisplay = ({ address, onRemove, ...boxProps }: Prop
                     <Box tooltip={address}>
                         <Text>{name}</Text>
                     </Box>
-                    <ClipboardCopy clipboardContent={address} />
                 </Box>
             </Box>
             {onRemove && (

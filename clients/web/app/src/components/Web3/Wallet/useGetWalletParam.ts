@@ -1,6 +1,6 @@
 import { useSearchParams } from 'react-router-dom'
-import { Address, useMyUserId } from 'use-towns-client'
-import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
+import { Address } from 'use-towns-client'
+import { useMyAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
 
 export function useGetAssetSourceParam() {
     const [searchParams] = useSearchParams()
@@ -9,10 +9,7 @@ export function useGetAssetSourceParam() {
 
 export function useIsAAWallet() {
     const currentWallet = useGetAssetSourceParam()
-    const userId = useMyUserId()
-    const { data: aaAdress } = useAbstractAccountAddress({
-        rootKeyAddress: userId as Address,
-    })
+    const { data: aaAdress } = useMyAbstractAccountAddress()
     return currentWallet === aaAdress
 }
 

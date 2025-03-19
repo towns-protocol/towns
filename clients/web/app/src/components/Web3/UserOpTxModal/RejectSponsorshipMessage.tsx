@@ -1,8 +1,8 @@
 import React from 'react'
 import { selectUserOpsByAddress, userOpsStore } from '@towns/userops'
 import { Box, Icon, Text } from '@ui'
+import { useMyAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
 import { useRejectionMessage } from './hooks/useRejectionMessage'
-import { useMyAbstractAccountAddress } from './hooks/useMyAbstractAccountAddress'
 
 export function RejectedSponsorshipMessage() {
     const myAbstractAccountAddress = useMyAbstractAccountAddress().data

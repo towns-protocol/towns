@@ -1,7 +1,6 @@
 import { useSolanaWallets } from '@privy-io/react-auth'
 import { useMemo } from 'react'
-import { useConnectivity } from 'use-towns-client'
-import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
+import { useMyAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
 
 export const useTradingWalletAddresses = () => {
     const { wallets: solanaWallets } = useSolanaWallets()
@@ -10,10 +9,7 @@ export const useTradingWalletAddresses = () => {
         [solanaWallets],
     )
 
-    const { loggedInWalletAddress } = useConnectivity()
-    const { data: evmWalletAddress } = useAbstractAccountAddress({
-        rootKeyAddress: loggedInWalletAddress,
-    })
+    const { data: evmWalletAddress } = useMyAbstractAccountAddress()
 
     return { evmWalletAddress, solanaWalletAddress }
 }

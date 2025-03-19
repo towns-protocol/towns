@@ -15,7 +15,6 @@ import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { Box, Paragraph, Stack, TextField } from '@ui'
 import { NoMatches } from '@components/NoMatches/NoMatches'
 import { Avatar } from '@components/Avatar/Avatar'
-import { shortAddress } from 'ui/utils/utils'
 import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
 import { isModeratorPermission } from '@components/Web3/utils'
 
@@ -125,6 +124,7 @@ const TownMembers = (props: { memberIds: string[] }) => {
                                     <Stack
                                         horizontal
                                         hoverable
+                                        alignItems="center"
                                         borderRadius="xs"
                                         background="level1"
                                         key={user.userId}
@@ -134,7 +134,7 @@ const TownMembers = (props: { memberIds: string[] }) => {
                                         insetY="xxs"
                                         cursor="pointer"
                                         onClick={() => {
-                                            onOpenProfile(offlineWalletAddressMap[user.userId])
+                                            onOpenProfile(user.userId)
                                         }}
                                     >
                                         <Box>
@@ -142,9 +142,6 @@ const TownMembers = (props: { memberIds: string[] }) => {
                                         </Box>
                                         <Box grow gap="sm">
                                             <Paragraph>{getPrettyDisplayName(user)}</Paragraph>
-                                            <Paragraph color="gray2">
-                                                {shortAddress(user.userId)}
-                                            </Paragraph>
                                         </Box>
                                     </Stack>
                                 ))}

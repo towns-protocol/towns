@@ -1,8 +1,7 @@
 import React, { useCallback } from 'react'
-import { Address, LookupUserFn } from 'use-towns-client'
+import { LookupUserFn } from 'use-towns-client'
 import { Box } from '@ui'
 import { ProfileHoverCard } from '@components/ProfileHoverCard/ProfileHoverCard'
-import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
 
@@ -20,15 +19,12 @@ type UserWithTooltipProps = {
 export const UserWithTooltip = (props: UserWithTooltipProps) => {
     const { userId, displayName, lookupUser } = props
     const { openPanel } = usePanelActions()
-    const { data: abstractAccountAddress } = useAbstractAccountAddress({
-        rootKeyAddress: userId as Address,
-    })
 
     let userDisplayName = displayName
     if (!userDisplayName && lookupUser) {
         userDisplayName = getPrettyDisplayName(
             lookupUser(userId) ?? {
-                userId: abstractAccountAddress as string,
+                userId,
                 displayName: '',
             },
         )
@@ -37,8 +33,8 @@ export const UserWithTooltip = (props: UserWithTooltipProps) => {
     }
 
     const onClick = useCallback(() => {
-        openPanel('profile', { profileId: abstractAccountAddress })
-    }, [abstractAccountAddress, openPanel])
+        openPanel('profile', { profileId: userId })
+    }, [userId, openPanel])
 
     return (
         <Box

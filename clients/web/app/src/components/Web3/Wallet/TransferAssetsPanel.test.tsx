@@ -93,6 +93,12 @@ vi.mock('use-towns-client', async () => {
     const actual = (await vi.importActual('use-towns-client')) as typeof Lib
     return {
         ...actual,
+        useConnectivity: () => {
+            return {
+                ...actual.useConnectivity(),
+                loggedInWalletAddress: '0xdeadbeef',
+            }
+        },
         useTownsContext: () => {
             return {
                 ...actual.useTownsContext(),

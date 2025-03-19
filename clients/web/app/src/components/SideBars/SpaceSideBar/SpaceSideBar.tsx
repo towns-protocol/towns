@@ -23,7 +23,7 @@ import { useShortcut } from 'hooks/useShortcut'
 import { useSortedChannels } from 'hooks/useSortedChannels'
 import { useReviewStore } from 'store/reviewStore'
 import { useReviews } from 'hooks/useReviews'
-import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
+import { useMyAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
 import { CHANNEL_INFO_PARAMS, PATHS } from 'routes'
 import { ReloadPrompt } from '@components/ReloadPrompt/ReloadPrompt'
 import { env } from 'utils'
@@ -145,9 +145,7 @@ export const SpaceSideBar = (props: Props) => {
 
     const { dismissReview, hasReviewBeenDismissed } = useReviewStore()
     const { reviews } = useReviews(space.id)
-    const { data: aaAddress } = useAbstractAccountAddress({
-        rootKeyAddress: loggedInWalletAddress,
-    })
+    const { data: aaAddress } = useMyAbstractAccountAddress()
 
     const hasUserReviewed = aaAddress
         ? reviews.some((review) => review.author === aaAddress)

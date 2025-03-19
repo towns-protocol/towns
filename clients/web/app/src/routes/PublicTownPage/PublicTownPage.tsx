@@ -13,7 +13,7 @@ import { TownPageLayout } from '@components/TownPageLayout/TownPageLayout'
 import { FadeInBox } from '@components/Transitions'
 import { ImageVariants, useImageSource } from '@components/UploadImage/useImageSource'
 import { Box, BoxProps, Button, Heading, Icon, IconButton, Paragraph, Stack } from '@ui'
-import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
+import { useMyAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
 import { Analytics } from 'hooks/useAnalytics'
 import { useDevice } from 'hooks/useDevice'
 import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
@@ -223,10 +223,7 @@ const LoggedUserAvatar = () => {
 
 const LoggedUserMenu = () => {
     const { logout } = useCombinedAuth()
-    const { loggedInWalletAddress } = useConnectivity()
-    const { data: abstractAccountAddress } = useAbstractAccountAddress({
-        rootKeyAddress: loggedInWalletAddress,
-    })
+    const { data: abstractAccountAddress } = useMyAbstractAccountAddress()
     const onLogOut = useCallback(() => {
         logout()
     }, [logout])

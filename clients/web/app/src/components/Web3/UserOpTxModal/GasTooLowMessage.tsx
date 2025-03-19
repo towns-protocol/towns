@@ -1,7 +1,7 @@
 import React from 'react'
 import { selectUserOpsByAddress, userOpsStore } from '@towns/userops'
 import { Box, Icon, Text } from '@ui'
-import { useMyAbstractAccountAddress } from './hooks/useMyAbstractAccountAddress'
+import { useMyAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
 
 export function GasTooLowMessage() {
     const myAbstractAccountAddress = useMyAbstractAccountAddress().data

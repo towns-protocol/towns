@@ -1,32 +1,29 @@
 import { useQuery } from '@tanstack/react-query'
-import { useCallback } from 'react'
 import {
     Address,
-    queryClient,
     staleTime24Hours,
+    useConnectivity,
     useOfflineStore,
     useTownsContext,
 } from 'use-towns-client'
-import { AccountAbstractionConfig, UserOps } from '@towns/userops'
+import { useMemo } from 'react'
 import { useEnvironment } from './useEnvironmnet'
 
 const queryKey = 'smartAccountAddress'
 
-function querySetup({
+export function useAbstractAccountAddress({
     rootKeyAddress,
-    userOpsInstance,
-    cachedAddress,
-    setOfflineWalletAddress,
-    accountAbstractionConfig,
 }: {
     rootKeyAddress: Address | undefined
-    userOpsInstance: UserOps | undefined
-    cachedAddress: Address | undefined
-    setOfflineWalletAddress: (userId: string, abstractAccountAddress: string) => void
-    accountAbstractionConfig: AccountAbstractionConfig | undefined
 }) {
+    const { accountAbstractionConfig } = useEnvironment()
+    const userOpsInstance = useUserOps()
+    const setOfflineWalletAddress = useOfflineStore((s) => s.setOfflineWalletAddress)
+
+    const cachedAddress = useCachedAddress(rootKeyAddress)
     const isAccountAbstractionEnabled = accountAbstractionConfig !== undefined
-    return {
+
+    const { data, isLoading, isError } = useQuery({
         queryKey: [queryKey, { isAccountAbstractionEnabled, rootKeyAddress }],
         queryFn: async () => {
             // if account abstraction is not enabled, we're using the root key address
@@ -59,54 +56,15 @@ function querySetup({
         refetchOnMount: false,
         refetchOnReconnect: false,
         staleTime: staleTime24Hours,
-    }
-}
-
-export function useAbstractAccountAddress({
-    rootKeyAddress,
-}: {
-    rootKeyAddress: Address | undefined
-}) {
-    const { accountAbstractionConfig } = useEnvironment()
-    const userOpsInstance = useUserOps()
-    const setOfflineWalletAddress = useOfflineStore((s) => s.setOfflineWalletAddress)
-
-    const cachedAddress = useCachedAddress(rootKeyAddress)
-    return useQuery({
-        ...querySetup({
-            rootKeyAddress,
-            userOpsInstance,
-            accountAbstractionConfig,
-            cachedAddress,
-            setOfflineWalletAddress,
-        }),
     })
-}
 
-export function useGetAbstractAccountAddressAsync() {
-    const { accountAbstractionConfig } = useEnvironment()
-    const userOpsInstance = useUserOps()
-    const setOfflineWalletAddress = useOfflineStore((s) => s.setOfflineWalletAddress)
-
-    return useCallback(
-        ({ rootKeyAddress }: { rootKeyAddress: Address | undefined }) => {
-            const cachedAddress = getCachedAddress({
-                rootKeyAddress,
-            })
-            const qs = querySetup({
-                rootKeyAddress,
-                userOpsInstance,
-                accountAbstractionConfig,
-                cachedAddress,
-                setOfflineWalletAddress,
-            })
-            return queryClient.fetchQuery({
-                queryKey: qs.queryKey,
-                queryFn: qs.queryFn,
-            })
-        },
-        [userOpsInstance, accountAbstractionConfig, setOfflineWalletAddress],
-    )
+    return useMemo(() => {
+        return {
+            data,
+            isLoading,
+            isError,
+        }
+    }, [data, isLoading, isError])
 }
 
 export function isAbstractAccountAddress({
@@ -135,4 +93,11 @@ function getCachedAddress(args: { rootKeyAddress: string | undefined }) {
     }
     const offlineWalletAddressMap = useOfflineStore.getState().offlineWalletAddressMap
     return offlineWalletAddressMap[rootKeyAddress] as Address
+}
+
+export function useMyAbstractAccountAddress() {
+    const { loggedInWalletAddress } = useConnectivity()
+    return useAbstractAccountAddress({
+        rootKeyAddress: loggedInWalletAddress,
+    })
 }

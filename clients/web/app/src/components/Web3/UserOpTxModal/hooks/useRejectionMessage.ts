@@ -1,6 +1,6 @@
 import { PaymasterErrorCode, selectUserOpsByAddress, userOpsStore } from '@towns/userops'
 import { useMemo } from 'react'
-import { useMyAbstractAccountAddress } from './useMyAbstractAccountAddress'
+import { useMyAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
 
 export function useRejectionMessage() {
     const myAbstractAccountAddress = useMyAbstractAccountAddress().data

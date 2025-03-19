@@ -3,7 +3,7 @@ import { SpaceInfo, useTownsClient } from 'use-towns-client'
 import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
 import { usePublicPageLoginFlow } from 'routes/PublicTownPage/usePublicPageLoginFlow'
 import { useStore } from 'store/store'
-import { useMyAbstractAccountAddress } from './useMyAbstractAccountAddress'
+import { useMyAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
 import { useUserOpTxModalContext } from '../UserOpTxModalContext'
 
 export function useCrossmintHandlers(args: {

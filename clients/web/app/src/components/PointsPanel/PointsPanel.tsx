@@ -1,10 +1,5 @@
 import React, { Suspense, useCallback, useEffect, useRef, useState } from 'react'
-import {
-    useConnectivity,
-    useRiverPoints,
-    useRiverPointsCheckIn,
-    useSpaceId,
-} from 'use-towns-client'
+import { useRiverPoints, useRiverPointsCheckIn, useSpaceId } from 'use-towns-client'
 import { AnimatePresence } from 'framer-motion'
 import { Signer } from 'ethers'
 import { popupToast } from '@components/Notifications/popupToast'
@@ -17,7 +12,7 @@ import { GetSigner, WalletReady } from 'privy/WalletReady'
 import { FadeInBox } from '@components/Transitions'
 import { useCombinedAuth } from 'privy/useCombinedAuth'
 import { ButtonSpinner } from '@components/Login/LoginButton/Spinner/ButtonSpinner'
-import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
+import { useMyAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
 import { Analytics } from 'hooks/useAnalytics'
 import { CountdownPill, RiverPointsPill, StreakPill } from './PointsPanelPills'
 
@@ -30,10 +25,7 @@ const PixelFontLoader = React.lazy(() =>
 )
 
 export const RiverPointsPanel = () => {
-    const { loggedInWalletAddress: wallet } = useConnectivity()
-    const { data: abstractAccountAddress } = useAbstractAccountAddress({
-        rootKeyAddress: wallet,
-    })
+    const { data: abstractAccountAddress } = useMyAbstractAccountAddress()
 
     const { checkIn, data, isSubmitting, isPointsSuccess } = useHandleCheckin(
         abstractAccountAddress as `0x${string}`,

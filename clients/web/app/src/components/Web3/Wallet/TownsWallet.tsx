@@ -1,7 +1,6 @@
 import React, { useState } from 'react'
-import { useConnectivity } from 'use-towns-client'
 import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
-import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
+import { useMyAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
 import { Box, Icon, Text, TextButton } from '@ui'
 import { useBalance } from 'hooks/useBalance'
 import { useStore } from 'store/store'
@@ -13,10 +12,7 @@ import { useShowWallet } from 'hooks/useTradingEnabled'
 import { trackClickedAddFunds } from './fundWalletAnalytics'
 
 export function TownsWallet() {
-    const { loggedInWalletAddress } = useConnectivity()
-    const { data: aaAddress } = useAbstractAccountAddress({
-        rootKeyAddress: loggedInWalletAddress,
-    })
+    const { data: aaAddress } = useMyAbstractAccountAddress()
     const { baseChain } = useEnvironment()
     const setFundWalletModalOpen = useStore((state) => state.setFundWalletModalOpen)
     const balance = useBalance({

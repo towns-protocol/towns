@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo } from 'react'
-import { Address, useMemberOf, useMyUserId, useTownsContext, useUserLookup } from 'use-towns-client'
+import { useMemberOf, useMyUserId, useTownsContext, useUserLookup } from 'use-towns-client'
 import { useNavigate } from 'react-router'
 import { Panel } from '@components/Panel/Panel'
 import { Avatar } from '@components/Avatar/Avatar'
@@ -9,7 +9,6 @@ import { ImageVariants } from '@components/UploadImage/useImageSource'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
 import { PATHS } from 'routes'
-import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
 import { addressFromSpaceId } from 'ui/utils/utils'
 
 export const MutualTownsPanel = (props: { userId: string }) => {
@@ -26,15 +25,12 @@ export const MutualTownsPanel = (props: { userId: string }) => {
     const navigate = useNavigate()
 
     const { openPanel } = usePanelActions()
-    const { data: abstractAccountAddress } = useAbstractAccountAddress({
-        rootKeyAddress: userId as Address | undefined,
-    })
 
     const onUserClick = useCallback(() => {
         if (userId) {
-            openPanel('profile', { profileId: abstractAccountAddress })
+            openPanel('profile', { profileId: userId })
         }
-    }, [abstractAccountAddress, openPanel, userId])
+    }, [openPanel, userId])
 
     const onTownClick = useCallback(
         (spaceId: string) => {

@@ -1,7 +1,6 @@
 import { format, formatDistance } from 'date-fns'
 import React, { MouseEventHandler, useCallback, useEffect, useRef, useState } from 'react'
 import {
-    Address,
     LookupUser,
     MessageTips,
     Permission,
@@ -27,7 +26,6 @@ import { useDevice } from 'hooks/useDevice'
 import { useFocused } from 'hooks/useFocused'
 import { ZChannelMessageRedactedEvent } from '@components/MessageTimeline/util/getEventsByDate'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
-import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
 import { useResolveNft } from 'hooks/useNfts'
 import { env } from 'utils'
 import { MessageContextMenu } from './MessageContextMenu'
@@ -158,10 +156,7 @@ export const MessageLayout = (props: Props) => {
     )
 
     const { createLink } = useCreateLink()
-    const { data: abstractAccountAddress } = useAbstractAccountAddress({
-        rootKeyAddress: senderId as Address | undefined,
-    })
-    const profileLink = createLink({ profileId: abstractAccountAddress })
+    const profileLink = createLink({ profileId: senderId })
     const messageOwner = useUserLookup(senderId ?? '')
 
     const hasReplies = replies && replies.replyEventIds.size > 0 && eventId

@@ -1,6 +1,5 @@
 import React, { useCallback, useContext, useMemo } from 'react'
 import {
-    Address,
     useChannelMembers,
     useChannelWithId,
     useDMData,
@@ -30,7 +29,6 @@ import { useFavoriteChannels } from 'hooks/useFavoriteChannels'
 import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
 import { useChannelHeaderMembers } from 'hooks/useChannelHeaderMembers'
 import { Analytics } from 'hooks/useAnalytics'
-import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
 import { TouchPanelContext } from '@components/Panel/Panel'
 import { useChannelEntitlements } from 'hooks/useChannelEntitlements'
 
@@ -435,15 +433,11 @@ const useChannelInfoButton = (type: CHANNEL_INFO_PARAMS_VALUES, channelId: strin
         return isPersonalSpace ? memberIds[0] : memberIds.find((u) => u !== myUserId)
     }, [memberIds, myUserId])
 
-    const { data: abstractAccountAddress } = useAbstractAccountAddress({
-        rootKeyAddress: friendDM as Address | undefined,
-    })
-
     return useCallback(() => {
-        if (type === 'dm' && abstractAccountAddress) {
-            openPanel('profile', { profileId: abstractAccountAddress })
+        if (type === 'dm' && friendDM) {
+            openPanel('profile', { profileId: friendDM })
         } else {
             openPanel(type, { channelId, stackId: searchParams.get('stackId') ?? '' })
         }
-    }, [abstractAccountAddress, channelId, openPanel, searchParams, type])
+    }, [channelId, friendDM, openPanel, searchParams, type])
 }

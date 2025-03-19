@@ -1,19 +1,16 @@
 import React, { useCallback } from 'react'
-import { useConnectivity, useRiverPoints } from 'use-towns-client'
+import { useRiverPoints } from 'use-towns-client'
 import clsx from 'clsx'
 import { Box, Paragraph } from '@ui'
 import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
 import { CHANNEL_INFO_PARAMS } from 'routes'
 import { shimmerClass } from 'ui/styles/globals/shimmer.css'
-import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
+import { useMyAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
 import { BeaverHead } from './BeaverHead/BeaverHead'
 
 export const PointsButton = () => {
     const { openPanel, closePanel, isPanelOpen } = usePanelActions()
-    const { loggedInWalletAddress: wallet } = useConnectivity()
-    const { data: abstractAccountAddress } = useAbstractAccountAddress({
-        rootKeyAddress: wallet,
-    })
+    const { data: abstractAccountAddress } = useMyAbstractAccountAddress()
     const { data, isLoading } = useRiverPoints(abstractAccountAddress as `0x${string}`)
     const onClick = useCallback(() => {
         isPanelOpen(CHANNEL_INFO_PARAMS.RIVER_POINTS)

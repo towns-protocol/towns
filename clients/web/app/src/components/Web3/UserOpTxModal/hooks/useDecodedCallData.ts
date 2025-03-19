@@ -1,6 +1,5 @@
 import { decodeCallData, selectUserOpsByAddress, userOpsStore } from '@towns/userops'
-
-import { useMyAbstractAccountAddress } from './useMyAbstractAccountAddress'
+import { useMyAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
 
 export function useDecodedCallData() {
     const myAbstractAccountAddress = useMyAbstractAccountAddress().data

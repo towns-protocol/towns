@@ -5,7 +5,6 @@ import {
     Address,
     BlockchainTransactionType,
     SpaceAddressFromSpaceId,
-    useConnectivity,
     useIsTransactionPending,
     useLinkedWallets,
     useTransferAssetTransaction,
@@ -19,9 +18,9 @@ import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
 import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
 import { popupToast } from '@components/Notifications/popupToast'
 import { StandardToast } from '@components/Notifications/StandardToast'
-import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
 import { GetSigner, WalletReady } from 'privy/WalletReady'
 import { Token } from '@components/Tokens/TokenSelector/tokenSchemas'
+import { useMyAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
 import { useGetAssetSourceParam, useIsAAWallet } from './useGetWalletParam'
 import { TransferSchema, transferSchema } from './transferAssetsSchema'
 import { WalletSelector } from './WalletSelector'
@@ -68,10 +67,7 @@ function TransferAssets() {
     const isPendingTransferAsset =
         isPendingTransferBaseEth || isPendingTransferNft || isPendingWithdrawTreasury
 
-    const { loggedInWalletAddress } = useConnectivity()
-    const { data: aaAddress } = useAbstractAccountAddress({
-        rootKeyAddress: loggedInWalletAddress,
-    })
+    const { data: aaAddress } = useMyAbstractAccountAddress()
 
     const { nfts, isFetching: isFetchingNfts } = useBaseNftsForTransfer({
         walletAddress: source,

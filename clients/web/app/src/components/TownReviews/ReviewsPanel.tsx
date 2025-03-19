@@ -1,7 +1,6 @@
 import React, { useCallback, useMemo, useState } from 'react'
 import {
     BlockchainTransactionType,
-    useConnectivity,
     useContractSpaceInfo,
     useIsTransactionPending,
     useReviewTransaction,
@@ -15,7 +14,7 @@ import { popupToast } from '@components/Notifications/popupToast'
 import { StandardToast } from '@components/Notifications/StandardToast'
 import { createPrivyNotAuthenticatedNotification } from '@components/Notifications/utils'
 import { useReviews } from 'hooks/useReviews'
-import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
+import { useMyAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
 import { useContainerWidth } from 'ui/hooks/useContainerWidth'
 import { Analytics } from 'hooks/useAnalytics'
 import { useGatherSpaceDetailsAnalytics } from '@components/Analytics/useGatherSpaceDetailsAnalytics'
@@ -29,11 +28,7 @@ const actionButtonsAnimation = {
 }
 
 export const ReviewsPanel = () => {
-    const { loggedInWalletAddress } = useConnectivity()
-
-    const { data: aaAddress } = useAbstractAccountAddress({
-        rootKeyAddress: loggedInWalletAddress,
-    })
+    const { data: aaAddress } = useMyAbstractAccountAddress()
 
     const space = useSpaceData()
     const spaceDetails = useGatherSpaceDetailsAnalytics({ spaceId: space?.id })

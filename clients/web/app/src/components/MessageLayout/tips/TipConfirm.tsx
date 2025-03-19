@@ -5,7 +5,6 @@ import {
     ETH_ADDRESS,
     LookupUser,
     useChannelData,
-    useConnectivity,
     useContractSpaceInfoWithoutClient,
     useIsTransactionPending,
     useTipTransaction,
@@ -16,7 +15,12 @@ import { GetSigner, WalletReady } from 'privy/WalletReady'
 import { calculateEthAmountFromUsd, useEthPrice } from '@components/Web3/useEthPrice'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
 import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
-import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
+import {
+    // We need useAbstractAccountAddress in order to grab the tip recipient's abstract account address so we can send the tip there!!
+    // eslint-disable-next-line
+    useAbstractAccountAddress,
+    useMyAbstractAccountAddress,
+} from 'hooks/useAbstractAccountAddress'
 import { createPrivyNotAuthenticatedNotification } from '@components/Notifications/utils'
 import { popupToast } from '@components/Notifications/popupToast'
 import { StandardToast } from '@components/Notifications/StandardToast'
@@ -54,7 +58,6 @@ export function TipConfirm(props: {
     const spaceId = useSpaceIdFromPathname()
     const channelData = useChannelData()
     const channelId = channelData?.channelId
-    const { loggedInWalletAddress } = useConnectivity()
     const {
         data: tokenId,
         isLoading: isLoadingTokenId,
@@ -66,9 +69,7 @@ export function TipConfirm(props: {
         rootKeyAddress: messageOwner.userId as Address,
     })
 
-    const { data: myAbstractAccount } = useAbstractAccountAddress({
-        rootKeyAddress: loggedInWalletAddress as Address,
-    })
+    const { data: myAbstractAccount } = useMyAbstractAccountAddress()
 
     const { data: balance } = useBalance({
         address: myAbstractAccount,

@@ -19,7 +19,6 @@ import { Box } from '@ui'
 import { useHandleReaction } from 'hooks/useReactions'
 import { useSpaceChannels } from 'hooks/useSpaceChannels'
 import { useCreateLink } from 'hooks/useCreateLink'
-import { useGetAbstractAccountAddressAsync } from 'hooks/useAbstractAccountAddress'
 import { StandardToast } from '@components/Notifications/StandardToast'
 import { useTimelineMessageEditing } from './hooks/useTimelineMessageEditing'
 import { useTimelineRecorder } from './hooks/useTimelineRecorder'
@@ -93,7 +92,6 @@ export const MessageTimelineWrapper = (props: {
     const isChannelEncrypted = true
 
     const { memberIds } = useSpaceMembers()
-    const getAbstractAccountAddress = useGetAbstractAccountAddressAsync()
 
     const navigate = useNavigate()
     const { createLink } = useCreateLink()
@@ -106,10 +104,7 @@ export const MessageTimelineWrapper = (props: {
                 return
             }
             try {
-                const abstractAccountAddress = await getAbstractAccountAddress({
-                    rootKeyAddress: userId as `0x${string}`,
-                })
-                const link = createLink({ profileId: abstractAccountAddress })
+                const link = createLink({ profileId: userId })
                 if (link) {
                     navigate(link)
                 }
@@ -125,7 +120,7 @@ export const MessageTimelineWrapper = (props: {
                 })
             }
         },
-        [createLink, getAbstractAccountAddress, navigate],
+        [createLink, navigate],
     )
     const channelTips = useTimelineTips(channelId)
 
