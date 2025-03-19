@@ -13,7 +13,7 @@ import {CustomRevert} from "contracts/src/utils/libraries/CustomRevert.sol";
 /// @title FeatureManager
 library FeatureManager {
   // keccak256(abi.encode(uint256(keccak256("towns.storage.FeatureManager")) - 1)) & ~bytes32(uint256(0xff))
-  bytes32 constant STORAGE_SLOT =
+  bytes32 constant DEFAULT_STORAGE_SLOT =
     0xbf0291a9764d4152828d672b8fee3b84a943cf12027e2908bad1a29d55a8f400;
 
   /// @notice Condition struct for feature conditions
@@ -117,12 +117,20 @@ library FeatureManager {
     return IVotes(condition.token).getVotes(space) >= condition.threshold;
   }
 
-  /// @notice Returns the layout for the FeatureManager
+  /// @notice Retrieves the layout for the FeatureManager at the default storage slot
   /// @dev This is accessed by the facet contract
-  /// @return self The layout storage pointer
-  function getLayout() internal pure returns (Layout storage self) {
+  /// @return $ The layout storage pointer
+  function getLayout() internal pure returns (Layout storage $) {
+    return getLayout(DEFAULT_STORAGE_SLOT);
+  }
+
+  /// @notice Retrieves the layout for the FeatureManager at a custom storage slot
+  /// @dev This function is used to access the storage layout for a given slot
+  /// @param slot The storage slot to retrieve the layout for
+  /// @return $ The storage layout pointer
+  function getLayout(bytes32 slot) internal pure returns (Layout storage $) {
     assembly {
-      self.slot := STORAGE_SLOT
+      $.slot := slot
     }
   }
 }
