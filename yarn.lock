@@ -7022,7 +7022,7 @@ __metadata:
     "@river-build/diamond": "github:river-build/diamond#552c970ed60cf452d28e7713b00a95c7bd10a5d9"
     "@wagmi/cli": ^2.2.0
     account-abstraction: "github:eth-infinitism/account-abstraction"
-    crypto-lib: "github:towns-protocol/crypto-lib"
+    crypto-lib: "github:towns-protocol/crypto-lib#f40c5f6944a55583a687b672ba680db3bfabb0ef"
     forge-std: "github:foundry-rs/forge-std#v1.9.5"
     prettier: ^2.8.8
     prettier-plugin-solidity: ^1.4.2
@@ -13468,10 +13468,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"crypto-lib@github:towns-protocol/crypto-lib":
+"crypto-lib@github:towns-protocol/crypto-lib#f40c5f6944a55583a687b672ba680db3bfabb0ef":
   version: 1.0.0
-  resolution: "crypto-lib@https://github.com/towns-protocol/crypto-lib.git#commit=3d25508a054ef81019362afd0c9f31af18fd7ca3"
-  checksum: 12a598aea7b7ba7c3b4194b722e053553e9033c3334126330fa1583a6c988ac5a382adc28b7908970e1778fb18a24886aadcd0482f7c4398352c042e634fb105
+  resolution: "crypto-lib@https://github.com/towns-protocol/crypto-lib.git#commit=f40c5f6944a55583a687b672ba680db3bfabb0ef"
+  dependencies:
+    forge-std: "github:foundry-rs/forge-std#v1.9.5"
+  checksum: 4626d553772dbcbce89bc5d0b394bc200702e61ffc8fdee80f651e65c3fe7ab3ed95d9d3c3cd2500c3fa3450022a77a515208e68967547af7f600490ed506e76
   languageName: node
   linkType: hard
 

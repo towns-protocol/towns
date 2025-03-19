@@ -53,7 +53,8 @@ generate_go base base IReview space_review
 generate_go base base IRoles i_roles
 generate_go base base ITipping tipping
 generate_go base base XChain xchain
-
+generate_go base base IDiamond diamond
+generate_go base base IDelegateRegistryV1 IDelegateRegistryV1
 
 # Full Base (and other) contracts for deployment from tests
 generate_go base/deploy deploy MockCrossChainEntitlement mock_cross_chain_entitlement
