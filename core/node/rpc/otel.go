@@ -18,7 +18,7 @@ import (
 	"github.com/towns-protocol/towns/core/river_node/version"
 )
 
-func (s *Service) initTracing() {
+func (s *Service) initTracing(serviceName, instanceID string) {
 	if !s.config.PerformanceTracking.TracingEnabled {
 		return
 	}
@@ -98,8 +98,8 @@ func (s *Service) initTracing() {
 	res, err := resource.New(
 		s.serverCtx,
 		resource.WithAttributes(
-			semconv.ServiceName("river-stream"),
-			semconv.ServiceInstanceID(s.wallet.String()),
+			semconv.ServiceName(serviceName),
+			semconv.ServiceInstanceID(instanceID),
 			semconv.ServiceVersion(version.GetFullVersion()),
 		),
 	)

@@ -33,18 +33,21 @@ func NewDynamicBuffer[T any]() *DynamicBuffer[T] {
 // AddMessage adds a new item to the buffer.
 func (db *DynamicBuffer[T]) AddMessage(item T) error {
 	db.mu.Lock()
-	defer db.mu.Unlock()
 
 	if db.buffer == nil {
+		db.mu.Unlock()
 		return RiverError(Err_UNAVAILABLE, "Message buffer is closed").
 			Func("DynamicBuffer.AddMessage")
 	}
 
 	if len(db.buffer) >= MaxBufferSize {
+		db.mu.Unlock()
 		return RiverError(Err_BUFFER_FULL, "Message buffer is full").
 			Func("DynamicBuffer.AddMessage")
 	}
+
 	db.buffer = append(db.buffer, item)
+	db.mu.Unlock()
 
 	// Non-blocking signal (only if empty, avoids duplicate wake-ups)
 	select {
@@ -58,6 +61,7 @@ func (db *DynamicBuffer[T]) AddMessage(item T) error {
 // GetBatch returns a batch of messages from the buffer.
 // Using a previous slice is optional, but can be used to reduce allocations.
 // The caller is expected not to use prev anymore and only use the returned buffer after calling this function.
+// Returns nil if the buffer is CLOSED.
 func (db *DynamicBuffer[T]) GetBatch(prev []T) []T {
 	// Reset if capacity is unused
 	if prev == nil || (cap(prev) > MinBufferSize*2 && len(prev) < cap(prev)/2) {
@@ -71,9 +75,13 @@ func (db *DynamicBuffer[T]) GetBatch(prev []T) []T {
 		prev = prev[:0]
 	}
 
+	var ret []T
+
 	db.mu.Lock()
-	ret := db.buffer
-	db.buffer = prev
+	if db.buffer != nil {
+		ret = db.buffer
+		db.buffer = prev
+	}
 	db.mu.Unlock()
 
 	return ret
@@ -96,6 +104,11 @@ func (db *DynamicBuffer[T]) Wait() <-chan struct{} {
 func (db *DynamicBuffer[T]) Close() {
 	db.mu.Lock()
 	db.buffer = nil
-	close(db.signalChan)
 	db.mu.Unlock()
+
+	// Signal to any waiting goroutines that the buffer is closed
+	select {
+	case db.signalChan <- struct{}{}:
+	default:
+	}
 }

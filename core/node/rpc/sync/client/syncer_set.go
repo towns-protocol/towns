@@ -2,12 +2,14 @@ package client
 
 import (
 	"context"
+	"slices"
 	"sync"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/linkdata/deadlock"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
+	"golang.org/x/sync/errgroup"
 
 	. "github.com/towns-protocol/towns/core/node/base"
 	. "github.com/towns-protocol/towns/core/node/events"
@@ -24,10 +26,18 @@ type (
 		Address() common.Address
 		AddStream(ctx context.Context, cookie *SyncCookie) error
 		RemoveStream(ctx context.Context, streamID StreamId) (bool, error)
+		Modify(ctx context.Context, request *ModifySyncRequest) (*ModifySyncResponse, bool, error)
 	}
 
 	DebugStreamsSyncer interface {
 		DebugDropStream(ctx context.Context, streamID StreamId) (bool, error)
+	}
+
+	ModifyRequest struct {
+		ToAdd                  []*SyncCookie
+		ToRemove               [][]byte
+		AddingFailureHandler   func(status *SyncStreamOpStatus)
+		RemovingFailureHandler func(status *SyncStreamOpStatus)
 	}
 
 	// SyncerSet is the set of StreamsSyncers that are used for a sync operation.
@@ -132,32 +142,19 @@ func NewSyncers(
 	// instantiate background syncers for sync operation
 	for nodeAddress, cookieSet := range cookies {
 		if nodeAddress == localNodeAddress { // stream managed by this node
-			syncer, err := newLocalSyncer(
-				ctx, syncID, globalSyncOpCtxCancel, localNodeAddress,
-				streamCache, cookieSet.AsSlice(), messages, ss.otelTracer)
+			syncer, err := ss.newLocalSyncer(cookieSet.AsSlice())
 			if err != nil {
 				return nil, nil, err
 			}
 			syncers[nodeAddress] = syncer
 		} else {
-			client, err := nodeRegistry.GetStreamServiceClientForAddress(nodeAddress)
+			syncer, err := ss.newRemoteSyncer(nodeAddress, cookieSet.AsSlice())
 			if err != nil {
-				log.Warnw("Unable to find client for remote stream sync",
+				log.Warnw("Unable to create remote syncer",
 					"err", err, "remoteNode", nodeAddress)
 				go unavailableRemote(cookieSet)
 				continue
 			}
-
-			syncer, err := newRemoteSyncer(
-				ctx, globalSyncOpCtxCancel, syncID, nodeAddress, client, cookieSet.AsSlice(),
-				ss.rmStream, messages, ss.otelTracer)
-			if err != nil {
-				log.Warnw("Unable to connect to remote stream when starting stream sync",
-					"err", err, "remoteNode", nodeAddress)
-				go unavailableRemote(cookieSet)
-				continue
-			}
-
 			syncers[nodeAddress] = syncer
 		}
 
@@ -225,9 +222,8 @@ func (ss *SyncerSet) AddStream(
 			_, span = ss.otelTracer.Start(ctx, "NewLocalSyncer",
 				trace.WithAttributes(attribute.String("stream", streamID.String())))
 		}
-		if syncer, err = newLocalSyncer(
-			ss.ctx, ss.syncID, ss.globalSyncOpCtxCancel, ss.localNodeAddress,
-			ss.streamCache, []*SyncCookie{cookie}, ss.messages, ss.otelTracer); err != nil {
+
+		if syncer, err = ss.newLocalSyncer([]*SyncCookie{cookie}); err != nil {
 			if span != nil {
 				span.End()
 			}
@@ -237,19 +233,13 @@ func (ss *SyncerSet) AddStream(
 			span.End()
 		}
 	} else {
-		client, err := ss.nodeRegistry.GetStreamServiceClientForAddress(nodeAddress)
-		if err != nil {
-			return err
-		}
 		var span trace.Span
 		if ss.otelTracer != nil {
 			_, span = ss.otelTracer.Start(ctx, "NewRemoteSyncer",
 				trace.WithAttributes(attribute.String("stream", streamID.String()),
 					attribute.String("remote", nodeAddress.String())))
 		}
-		if syncer, err = newRemoteSyncer(
-			ss.ctx, ss.globalSyncOpCtxCancel, ss.syncID, nodeAddress, client,
-			[]*SyncCookie{cookie}, ss.rmStream, ss.messages, ss.otelTracer); err != nil {
+		if syncer, err = ss.newRemoteSyncer(nodeAddress, []*SyncCookie{cookie}); err != nil {
 			if span != nil {
 				span.End()
 			}
@@ -304,6 +294,178 @@ func (ss *SyncerSet) RemoveStream(ctx context.Context, streamID StreamId) error 
 	return nil
 }
 
+// Modify splits the given request into add and remove operations and forwards them to the responsible syncers.
+func (ss *SyncerSet) Modify(ctx context.Context, req ModifyRequest) error {
+	if ss.otelTracer != nil {
+		var span trace.Span
+		ctx, span = ss.otelTracer.Start(ctx, "Modify",
+			trace.WithAttributes(attribute.String("syncID", ss.syncID)))
+		defer span.End()
+	}
+
+	ss.muSyncers.Lock()
+	defer ss.muSyncers.Unlock()
+
+	if len(req.ToAdd) > 0 && ss.stopped {
+		return RiverError(Err_CANCELED, "Sync operation stopped", "syncId", ss.syncID)
+	}
+
+	// Prevent passing the same stream to both add and remove operations
+	if slices.ContainsFunc(req.ToAdd, func(c *SyncCookie) bool {
+		return slices.ContainsFunc(req.ToRemove, func(streamId []byte) bool {
+			return StreamId(c.GetStreamId()) == StreamId(streamId)
+		})
+	}) {
+		return RiverError(Err_INVALID_ARGUMENT, "Found the same stream in both add and remove lists").
+			Tags("syncId", ss.syncID).
+			Func("SyncerSet.Modify")
+	}
+
+	modifySyncs := make(map[common.Address]*ModifySyncRequest)
+
+	// group cookies by node address
+	for _, cookie := range req.ToAdd {
+		if _, found := ss.streamID2Syncer[StreamId(cookie.GetStreamId())]; found {
+			continue
+		}
+
+		nodeAddress := common.BytesToAddress(cookie.GetNodeAddress())
+		if _, ok := modifySyncs[nodeAddress]; !ok {
+			modifySyncs[nodeAddress] = &ModifySyncRequest{}
+		}
+
+		// avoid duplicates
+		if slices.ContainsFunc(modifySyncs[nodeAddress].AddStreams, func(c *SyncCookie) bool {
+			return StreamId(c.StreamId) == StreamId(cookie.GetStreamId())
+		}) {
+			return RiverError(Err_ALREADY_EXISTS, "Duplicate stream in add operation").
+				Tags("syncId", ss.syncID, "streamId", StreamId(cookie.StreamId)).
+				Func("SyncerSet.Modify")
+		}
+
+		modifySyncs[nodeAddress].AddStreams = append(modifySyncs[nodeAddress].AddStreams, cookie)
+	}
+
+	// group streamIDs by node address
+	for _, streamIDRaw := range req.ToRemove {
+		syncer, found := ss.streamID2Syncer[StreamId(streamIDRaw)]
+		if !found {
+			req.RemovingFailureHandler(&SyncStreamOpStatus{
+				StreamId: streamIDRaw,
+				Code:     int32(Err_NOT_FOUND),
+				Message:  "Stream not part of sync operation",
+			})
+			continue
+		}
+
+		if _, ok := modifySyncs[syncer.Address()]; !ok {
+			modifySyncs[syncer.Address()] = &ModifySyncRequest{}
+		}
+
+		// avoid duplicates in the remove list
+		if slices.ContainsFunc(modifySyncs[syncer.Address()].RemoveStreams, func(s []byte) bool {
+			return StreamId(streamIDRaw) == StreamId(s)
+		}) {
+			return RiverError(Err_ALREADY_EXISTS, "Duplicate stream in remove operation").
+				Tags("syncId", ss.syncID, "streamId", StreamId(streamIDRaw)).
+				Func("SyncerSet.Modify")
+		}
+
+		modifySyncs[syncer.Address()].RemoveStreams = append(modifySyncs[syncer.Address()].RemoveStreams, streamIDRaw)
+	}
+
+	if len(modifySyncs) == 0 {
+		return nil
+	}
+
+	var errGrp errgroup.Group
+	var localMuSyncers sync.Mutex
+	for nodeAddress, modifySync := range modifySyncs {
+		// check if there is already a syncer that can sync the given stream -> add stream to the syncer
+		syncer, found := ss.syncers[nodeAddress]
+		if !found {
+			// first stream to sync with remote -> create a new syncer instance
+			var err error
+			if nodeAddress == ss.localNodeAddress {
+				syncer, err = ss.newLocalSyncer(nil)
+			} else {
+				syncer, err = ss.newRemoteSyncer(nodeAddress, nil)
+			}
+			if err != nil {
+				rvrErr := AsRiverError(err)
+
+				for _, cookie := range modifySync.GetAddStreams() {
+					req.AddingFailureHandler(&SyncStreamOpStatus{
+						StreamId: cookie.GetStreamId(),
+						Code:     int32(rvrErr.Code),
+						Message:  rvrErr.GetMessage(),
+					})
+				}
+
+				for _, streamIDRaw := range modifySync.GetRemoveStreams() {
+					req.RemovingFailureHandler(&SyncStreamOpStatus{
+						StreamId: streamIDRaw,
+						Code:     int32(rvrErr.Code),
+						Message:  rvrErr.GetMessage(),
+					})
+				}
+
+				continue
+			}
+
+			ss.syncers[nodeAddress] = syncer
+			ss.startSyncer(syncer)
+		}
+
+		errGrp.Go(func() error {
+			resp, syncerStopped, err := syncer.Modify(ctx, modifySync)
+			if err != nil {
+				return err
+			}
+
+			addingFailures := resp.GetAdds()
+			successfullyAdded := slices.DeleteFunc(modifySync.GetAddStreams(), func(cookie *SyncCookie) bool {
+				return slices.ContainsFunc(addingFailures, func(status *SyncStreamOpStatus) bool {
+					return StreamId(status.StreamId) == StreamId(cookie.GetStreamId())
+				})
+			})
+
+			for _, status := range addingFailures {
+				req.AddingFailureHandler(status)
+			}
+			localMuSyncers.Lock()
+			for _, cookie := range successfullyAdded {
+				ss.streamID2Syncer[StreamId(cookie.GetStreamId())] = syncer
+			}
+			localMuSyncers.Unlock()
+
+			removalFailures := resp.GetRemovals()
+			successfullyRemoved := slices.DeleteFunc(modifySync.GetRemoveStreams(), func(streamIdRaw []byte) bool {
+				return slices.ContainsFunc(removalFailures, func(status *SyncStreamOpStatus) bool {
+					return StreamId(status.StreamId) == StreamId(streamIdRaw)
+				})
+			})
+
+			for _, status := range resp.GetRemovals() {
+				req.RemovingFailureHandler(status)
+			}
+			localMuSyncers.Lock()
+			for _, streamIdRaw := range successfullyRemoved {
+				delete(ss.streamID2Syncer, StreamId(streamIdRaw))
+			}
+
+			if syncerStopped {
+				delete(ss.syncers, syncer.Address())
+			}
+			localMuSyncers.Unlock()
+
+			return nil
+		})
+	}
+
+	return errGrp.Wait()
+}
+
 func (ss *SyncerSet) DebugDropStream(ctx context.Context, streamID StreamId) error {
 	ss.muSyncers.Lock()
 	defer ss.muSyncers.Unlock()
@@ -334,30 +496,25 @@ func (ss *SyncerSet) DebugDropStream(ctx context.Context, streamID StreamId) err
 	return nil
 }
 
-// ValidateAndGroupSyncCookies validates the given syncCookies and groups them by node address/streamID.
-func ValidateAndGroupSyncCookies(syncCookies []*SyncCookie) (StreamCookieSetGroupedByNodeAddress, error) {
-	cookies := make(StreamCookieSetGroupedByNodeAddress)
-	for _, cookie := range syncCookies {
-		if err := SyncCookieValidate(cookie); err != nil {
-			return nil, err
-		}
-
-		streamID, err := StreamIdFromBytes(cookie.GetStreamId())
-		if err != nil {
-			return nil, err
-		}
-
-		nodeAddr := common.BytesToAddress(cookie.NodeAddress)
-		if cookies[nodeAddr] == nil {
-			cookies[nodeAddr] = make(map[StreamId]*SyncCookie)
-		}
-		cookies[nodeAddr][streamID] = cookie
-	}
-	return cookies, nil
-}
-
 func (ss *SyncerSet) rmStream(streamID StreamId) {
 	ss.muSyncers.Lock()
 	delete(ss.streamID2Syncer, streamID)
 	ss.muSyncers.Unlock()
+}
+
+func (ss *SyncerSet) newLocalSyncer(cookies []*SyncCookie) (*localSyncer, error) {
+	return newLocalSyncer(
+		ss.ctx, ss.syncID, ss.globalSyncOpCtxCancel, ss.localNodeAddress,
+		ss.streamCache, cookies, ss.messages, ss.otelTracer)
+}
+
+func (ss *SyncerSet) newRemoteSyncer(addr common.Address, cookies []*SyncCookie) (*remoteSyncer, error) {
+	client, err := ss.nodeRegistry.GetStreamServiceClientForAddress(addr)
+	if err != nil {
+		return nil, err
+	}
+
+	return newRemoteSyncer(
+		ss.ctx, ss.globalSyncOpCtxCancel, ss.syncID, addr, client,
+		cookies, ss.rmStream, ss.messages, ss.otelTracer)
 }

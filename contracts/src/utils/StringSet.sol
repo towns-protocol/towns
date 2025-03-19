@@ -20,6 +20,13 @@ library StringSet {
   }
 
   /**
+   * @dev A reference to a string value in storage to allow assignment and deletion.
+   */
+  struct StringWrapper {
+    string inner;
+  }
+
+  /**
    * @dev Returns the storage reference for the length of the values array.
    */
   function _valuesLengthRef(
@@ -36,7 +43,7 @@ library StringSet {
   function _at(
     Set storage set,
     uint256 index
-  ) private pure returns (string storage ref) {
+  ) private pure returns (StringWrapper storage ref) {
     assembly ("memory-safe") {
       mstore(0, set.slot)
       ref.slot := add(keccak256(0, 0x20), index)
@@ -63,39 +70,6 @@ library StringSet {
   }
 
   /**
-   * @dev Deletes a string from storage.
-   *
-   * The `delete` keyword is not applicable to local string storage references.
-   */
-  function _delete(string storage $) internal {
-    // https://docs.soliditylang.org/en/latest/internals/layout_in_storage.html#bytes-and-string
-    assembly ("memory-safe") {
-      let packed := sload($.slot)
-      let is_long_string := and(packed, 1)
-      for {} 1 {} {
-        sstore($.slot, 0)
-        if iszero(is_long_string) {
-          break
-        }
-        let len := shr(1, packed)
-        // the number of words used to store the string
-        let words := shr(5, add(len, 0x1f))
-        mstore(0, $.slot)
-        let ptr := keccak256(0, 0x20)
-        let end := add(ptr, words)
-        for {} 1 {} {
-          if iszero(lt(ptr, end)) {
-            break
-          }
-          sstore(ptr, 0)
-          ptr := add(ptr, 1)
-        }
-        break
-      }
-    }
-  }
-
-  /**
    * @dev Add a value to a set. O(1).
    *
    * Returns true if the value was added to the set, that is if it was not
@@ -116,7 +90,7 @@ library StringSet {
       }
       // equivalent: set._values.push(value);
       lengthRef.value = newLen;
-      set._values[len] = value;
+      _at(set, len).inner = value;
       // The value is stored at length-1, but we add 1 to all indexes
       // and use 0 as a sentinel value
       // equivalent: set._indexes[value] = set._values.length;
@@ -151,12 +125,12 @@ library StringSet {
         lastIndex = len - 1;
       }
 
-      string storage lastRef = _at(set, lastIndex);
+      StringWrapper storage lastRef = _at(set, lastIndex);
       if (len != valueIndex) {
-        string memory lastValue = lastRef;
+        string memory lastValue = lastRef.inner;
         unchecked {
           // Move the last value to the index where the value to delete is
-          set._values[valueIndex - 1] = lastValue;
+          _at(set, valueIndex - 1).inner = lastValue;
         }
         // Update the index for the moved value
         _indexRef(set, lastValue).value = valueIndex;
@@ -164,7 +138,7 @@ library StringSet {
 
       // Delete the slot where the moved value was stored
       // equivalent: set._values.pop();
-      _delete(lastRef);
+      delete lastRef.inner;
       lengthRef.value = lastIndex;
 
       // Delete the index for the deleted slot
@@ -179,9 +153,9 @@ library StringSet {
     Uint256Ref storage lengthRef = _valuesLengthRef(set);
     uint256 len = lengthRef.value;
     for (uint256 i; i < len; ++i) {
-      string storage valueRef = _at(set, i);
-      _indexRef(set, valueRef).value = 0;
-      _delete(valueRef);
+      StringWrapper storage valueRef = _at(set, i);
+      _indexRef(set, valueRef.inner).value = 0;
+      delete valueRef.inner;
     }
     lengthRef.value = 0;
   }

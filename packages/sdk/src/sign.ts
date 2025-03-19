@@ -29,6 +29,7 @@ import { SignerContext, checkDelegateSig } from './signerContext'
 import { keccak256 } from 'ethereum-cryptography/keccak'
 import { createHash } from 'crypto'
 import { create, fromBinary, toBinary } from '@bufbuild/protobuf'
+import { eventIdsFromSnapshot } from './persistenceStore'
 
 export interface UnpackEnvelopeOpts {
     // the client recreates the hash from the event bytes in the envelope
@@ -131,6 +132,7 @@ export const unpackStream = async (
             (mb) => mb.events.map((e) => e.hashStr),
             streamAndCookie.events.map((e) => e.hashStr),
         ),
+        ...eventIdsFromSnapshot(snapshot),
     ]
 
     return {
@@ -254,9 +256,6 @@ export function makeParsedEvent(
         hash,
         hashStr: bin_toHexString(hash),
         signature,
-        prevMiniblockHashStr: event.prevMiniblockHash
-            ? bin_toHexString(event.prevMiniblockHash)
-            : undefined,
         creatorUserId: userIdFromAddress(event.creatorAddress),
     } satisfies ParsedEvent
 }
