@@ -5,7 +5,12 @@ import { env } from '../utils/environment'
 const useAllowedIds = () => {
     const allowedIds = useMemo(() => {
         const ids = env.VITE_TRADING_TOWNS ?? ''
-        return new Set(ids.replaceAll(' ', '').split(','))
+        return new Set(
+            ids
+                .replaceAll(' ', '')
+                .split(',')
+                .map((id) => id.toLowerCase()),
+        )
     }, [])
     return { allowedIds }
 }
