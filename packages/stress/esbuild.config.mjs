@@ -5,6 +5,7 @@ build({
     entryPoints: {
         start: './src/start.ts',
         demo: './src/demo.ts',
+        stress: './src/stressRun.ts',
     },
     bundle: true,
     sourcemap: 'inline',
