@@ -115,7 +115,7 @@ export const TickerHeader = (
                         {coinData.priceUSD}
                     </TokenPrice>
                     <Stack horizontal gap="sm" alignItems="end">
-                        <TickerChangeIndicator change={Number(coinData.change24)} />
+                        <TickerChangeIndicator change={Number(coinData.change24) * 100} />
                         {!minimal && (
                             <Text color="gray2" size="sm">
                                 Past day
