@@ -16,6 +16,7 @@ contract DeployFeatureManager is Deployer, FacetHelper {
     addSelector(FeatureManagerFacet.setFeatureCondition.selector);
     addSelector(FeatureManagerFacet.getFeatureCondition.selector);
     addSelector(FeatureManagerFacet.checkFeatureCondition.selector);
+    addSelector(FeatureManagerFacet.disableFeatureCondition.selector);
   }
 
   // Deploying

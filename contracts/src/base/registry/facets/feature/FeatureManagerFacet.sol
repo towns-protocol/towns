@@ -22,6 +22,13 @@ contract FeatureManagerFacet is IFeatureManagerFacet, OwnableBase, Facet {
     FeatureManager.Condition memory condition
   ) external onlyOwner {
     FeatureManager.getLayout().setFeatureCondition(featureId, condition);
+    emit FeatureConditionSet(featureId, condition);
+  }
+
+  /// @inheritdoc IFeatureManagerFacet
+  function disableFeatureCondition(bytes32 featureId) external onlyOwner {
+    FeatureManager.getLayout().disableFeatureCondition(featureId);
+    emit FeatureConditionDisabled(featureId);
   }
 
   /// @inheritdoc IFeatureManagerFacet

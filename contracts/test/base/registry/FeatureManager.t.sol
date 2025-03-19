@@ -5,13 +5,17 @@ pragma solidity ^0.8.23;
 
 // libraries
 import {FeatureManager} from "contracts/src/base/registry/facets/feature/FeatureManager.sol";
+import {IFeatureManagerFacetBase} from "contracts/src/base/registry/facets/feature/IFeatureManagerFacet.sol";
 
 // contracts
 import {BaseSetup} from "contracts/test/spaces/BaseSetup.sol";
 import {FeatureManagerFacet} from "contracts/src/base/registry/facets/feature/FeatureManagerFacet.sol";
 import {Towns} from "contracts/src/tokens/towns/base/Towns.sol";
 
-contract FeatureManagerTest is BaseSetup {
+// mocks
+import {MockERC20} from "contracts/test/mocks/MockERC20.sol";
+
+contract FeatureManagerTest is BaseSetup, IFeatureManagerFacetBase {
   FeatureManagerFacet featureManagerFacet;
   Towns towns;
 
@@ -25,76 +29,172 @@ contract FeatureManagerTest is BaseSetup {
   }
 
   modifier givenFeatureConditionIsSet(
-    uint256 threshold,
     bytes32 featureId,
-    uint256 amount,
-    address to
+    FeatureManager.Condition memory condition,
+    address to,
+    uint256 amount
   ) {
-    FeatureManager.Condition memory condition = FeatureManager.Condition({
-      token: address(townsToken),
-      threshold: threshold,
-      active: true,
-      extraData: ""
-    });
+    vm.assume(amount > 0 && amount < type(uint256).max);
+    vm.assume(condition.threshold > 0 && condition.threshold < amount);
+
+    condition.token = address(townsToken);
 
     vm.prank(bridge);
     towns.mint(to, amount);
 
     vm.prank(deployer);
+    vm.expectEmit(address(featureManagerFacet));
+    emit FeatureConditionSet(featureId, condition);
     featureManagerFacet.setFeatureCondition(featureId, condition);
     _;
   }
 
-  modifier givenTokensAreMinted(uint256 amount, address to) {
+  modifier givenTokensAreMinted(address to, uint256 amount) {
+    vm.assume(amount > 0 && amount < type(uint256).max);
     vm.prank(bridge);
     towns.mint(to, amount);
     _;
   }
 
-  function test_setFeatureCondition()
+  function test_featureCondition(
+    bytes32 featureId,
+    FeatureManager.Condition memory condition,
+    address to,
+    uint256 amount
+  ) external givenFeatureConditionIsSet(featureId, condition, to, amount) {
+    FeatureManager.Condition memory currentCondition = featureManagerFacet
+      .getFeatureCondition(featureId);
+    assertEq(currentCondition.token, address(townsToken));
+    assertEq(currentCondition.threshold, condition.threshold);
+    assertEq(currentCondition.active, condition.active);
+  }
+
+  function test_revertWith_setFeatureCondition_invalidToken() external {
+    FeatureManager.Condition memory condition = FeatureManager.Condition({
+      token: address(0),
+      threshold: TEST_THRESHOLD,
+      active: true,
+      extraData: ""
+    });
+
+    vm.prank(deployer);
+    vm.expectRevert(InvalidToken.selector);
+    featureManagerFacet.setFeatureCondition(TEST_FEATURE_ID, condition);
+  }
+
+  function test_revertWith_setFeatureCondition_invalidInterface() external {
+    MockERC20 mockToken = new MockERC20("Mock Token", "MTK");
+
+    FeatureManager.Condition memory condition = FeatureManager.Condition({
+      token: address(mockToken),
+      threshold: TEST_THRESHOLD,
+      active: true,
+      extraData: ""
+    });
+
+    vm.prank(deployer);
+    vm.expectRevert(InvalidInterface.selector);
+    featureManagerFacet.setFeatureCondition(TEST_FEATURE_ID, condition);
+  }
+
+  function test_revertWith_setFeatureCondition_invalidTotalSupply() external {
+    FeatureManager.Condition memory condition = FeatureManager.Condition({
+      token: address(townsToken),
+      threshold: TEST_THRESHOLD,
+      active: true,
+      extraData: ""
+    });
+
+    vm.prank(deployer);
+    vm.expectRevert(InvalidTotalSupply.selector);
+    featureManagerFacet.setFeatureCondition(TEST_FEATURE_ID, condition);
+  }
+
+  function test_revertWith_setFeatureCondition_invalidThreshold()
     external
-    givenFeatureConditionIsSet(
-      TEST_THRESHOLD,
-      TEST_FEATURE_ID,
-      TEST_THRESHOLD,
-      deployer
-    )
+    givenTokensAreMinted(deployer, TEST_THRESHOLD - 10 ether)
   {
-    FeatureManager.Condition memory condition = featureManagerFacet
-      .getFeatureCondition(TEST_FEATURE_ID);
-    assertEq(
-      condition.threshold,
-      TEST_THRESHOLD,
-      "Threshold should be 100 ether"
-    );
-    assertEq(condition.active, true, "Feature should be active");
+    FeatureManager.Condition memory condition = FeatureManager.Condition({
+      token: address(townsToken),
+      threshold: TEST_THRESHOLD,
+      active: true,
+      extraData: ""
+    });
+
+    vm.prank(deployer);
+    vm.expectRevert(InvalidThreshold.selector);
+    featureManagerFacet.setFeatureCondition(TEST_FEATURE_ID, condition);
+  }
+
+  function test_disableFeatureCondition(
+    bytes32 featureId,
+    FeatureManager.Condition memory condition,
+    address to,
+    uint256 amount
+  ) external givenFeatureConditionIsSet(featureId, condition, to, amount) {
+    vm.assume(condition.active == true);
+
+    vm.prank(deployer);
+    vm.expectEmit(address(featureManagerFacet));
+    emit FeatureConditionDisabled(featureId);
+    featureManagerFacet.disableFeatureCondition(featureId);
+
+    FeatureManager.Condition memory currentCondition = featureManagerFacet
+      .getFeatureCondition(featureId);
+    assertFalse(currentCondition.active);
+  }
+
+  function test_revertWith_disableFeatureCondition_featureNotActive() external {
+    vm.prank(deployer);
+    vm.expectRevert(FeatureNotActive.selector);
+    featureManagerFacet.disableFeatureCondition(TEST_FEATURE_ID);
   }
 
   function test_checkFeatureCondition(
-    address to
-  )
-    external
-    givenFeatureConditionIsSet(
-      TEST_THRESHOLD,
-      TEST_FEATURE_ID,
-      TEST_THRESHOLD,
-      to
-    )
-  {
-    bool isFeatureActive = featureManagerFacet.checkFeatureCondition(
-      TEST_FEATURE_ID,
-      everyoneSpace
-    );
-    assertFalse(isFeatureActive, "Feature should not be active");
+    bytes32 featureId,
+    FeatureManager.Condition memory condition,
+    address to,
+    uint256 amount,
+    address space
+  ) external givenFeatureConditionIsSet(featureId, condition, to, amount) {
+    vm.assume(condition.active == true);
+    vm.assume(space != address(0));
+
+    vm.assertFalse(featureManagerFacet.checkFeatureCondition(featureId, space));
 
     vm.prank(to);
-    towns.delegate(address(everyoneSpace));
+    towns.delegate(space);
 
-    isFeatureActive = featureManagerFacet.checkFeatureCondition(
-      TEST_FEATURE_ID,
-      everyoneSpace
+    vm.assertTrue(featureManagerFacet.checkFeatureCondition(featureId, space));
+  }
+
+  function test_checkFeatureCondition_featureNotActive(
+    address space
+  ) external view {
+    vm.assume(space != address(0));
+    vm.assertFalse(
+      featureManagerFacet.checkFeatureCondition(TEST_FEATURE_ID, space)
     );
+  }
 
-    assertTrue(isFeatureActive, "Feature should be active");
+  function test_checkFeatureCondition_noThreshold(address space) external {
+    vm.assume(space != address(0));
+
+    FeatureManager.Condition memory condition = FeatureManager.Condition({
+      token: address(townsToken),
+      threshold: 0,
+      active: true,
+      extraData: ""
+    });
+
+    vm.prank(bridge);
+    towns.mint(deployer, TEST_THRESHOLD);
+
+    vm.prank(deployer);
+    featureManagerFacet.setFeatureCondition(TEST_FEATURE_ID, condition);
+
+    vm.assertTrue(
+      featureManagerFacet.checkFeatureCondition(TEST_FEATURE_ID, space)
+    );
   }
 }

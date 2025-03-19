@@ -8,11 +8,36 @@ import {FeatureManager} from "./FeatureManager.sol";
 
 // contracts
 
+/// @title IFeatureManagerFacetBase
+/// @notice Base interface for the FeatureManager facet defining errors and events
+/// @dev Used by the FeatureManager facet and any other facets that need to access feature conditions
 interface IFeatureManagerFacetBase {
+  /// @notice Error thrown when a threshold exceeds the token's total supply
   error InvalidThreshold();
+
+  /// @notice Error thrown when a token has zero total supply
   error InvalidTotalSupply();
+
+  /// @notice Error thrown when an invalid token address is provided (zero address or non-IVotes token)
   error InvalidToken();
-  error ConditionNotActive();
+
+  /// @notice Error thrown when an invalid token interface is provided
+  error InvalidInterface();
+
+  /// @notice Error thrown when a feature condition is not active
+  error FeatureNotActive();
+
+  /// @notice Emitted when a feature condition is set or updated
+  /// @param featureId The unique identifier for the feature whose condition was set
+  /// @param condition The condition parameters that were set for the feature
+  event FeatureConditionSet(
+    bytes32 indexed featureId,
+    FeatureManager.Condition condition
+  );
+
+  /// @notice Emitted when a feature condition is disabled
+  /// @param featureId The unique identifier for the feature whose condition was disabled
+  event FeatureConditionDisabled(bytes32 indexed featureId);
 }
 
 interface IFeatureManagerFacet is IFeatureManagerFacetBase {
@@ -24,6 +49,11 @@ interface IFeatureManagerFacet is IFeatureManagerFacetBase {
     bytes32 featureId,
     FeatureManager.Condition memory condition
   ) external;
+
+  /// @notice Disables a feature condition
+  /// @param featureId The unique identifier for the feature
+  /// @dev Only callable by the contract owner
+  function disableFeatureCondition(bytes32 featureId) external;
 
   /// @notice Gets the condition for a feature
   /// @param featureId The unique identifier for the feature
