@@ -6,6 +6,8 @@ env:
     RIVER_SEPOLIA_RPC_URL: ${{ secrets.RIVER_RPC_URL }}
     BASE_RPC_URL: ${{ secrets.BASE_RPC_URL }}
     BASE_SEPOLIA_RPC_URL: ${{ secrets.BASE_SEPOLIA_RPC_URL }}
+    ETH_RPC_URL: ${{ secrets.ETH_RPC_URL }}
+    ETH_SEPOLIA_RPC_URL: ${{ secrets.ETH_RPC_URL }}
 on:
     schedule:
         # Run every hour
