@@ -45,6 +45,13 @@ export async function sendUseropWithPermissionless(
 
     let _callData: Hex
 
+    console.log(`[UserOperations] debug::callData`, {
+        sender,
+        toAddress,
+        callData,
+        value,
+    })
+
     if (Array.isArray(toAddress)) {
         if (!Array.isArray(callData)) {
             throw new Error('callData must be an array if toAddress is an array')
