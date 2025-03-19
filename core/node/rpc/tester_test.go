@@ -1245,12 +1245,6 @@ func (tcs testClients) compareNowImpl(
 				"different minipool gen, 0 and %d",
 				i+1,
 			)
-			success = success && assert.Equal(
-				first.NextSyncCookie.MinipoolSlot,
-				stream.NextSyncCookie.MinipoolSlot,
-				"different minipool slot, 0 and %d",
-				i+1,
-			)
 		}
 	}
 
@@ -1311,14 +1305,6 @@ func (tcs testClients) compareNowImpl(
 					i+1, j,
 					first.GetStream().GetNextSyncCookie().GetMinipoolGen(),
 					clientUpdate.GetStream().GetNextSyncCookie().GetMinipoolGen())
-
-				success = success && assert.Equal(
-					first.GetStream().GetNextSyncCookie().GetMinipoolSlot(),
-					clientUpdate.GetStream().GetNextSyncCookie().GetMinipoolSlot(),
-					"minipool slot differs [%d:%d]: %d / %d",
-					i+1, j,
-					first.GetStream().GetNextSyncCookie().GetMinipoolSlot(),
-					clientUpdate.GetStream().GetNextSyncCookie().GetMinipoolSlot())
 
 				success = success && assert.Equal(
 					first.GetStream().GetNextSyncCookie().GetPrevMiniblockHash(),

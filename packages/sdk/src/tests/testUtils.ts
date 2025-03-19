@@ -171,7 +171,8 @@ export const getXchainConfigForTesting = (): XchainConfig => {
             31337: 'http://127.0.0.1:8545',
             31338: 'http://127.0.0.1:8546',
         },
-        etherBasedChains: [31337, 31338],
+        etherNativeNetworkIds: [31337, 31338],
+        ethereumNetworkIds: [],
     }
 }
 

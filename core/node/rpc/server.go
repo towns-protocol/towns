@@ -280,7 +280,7 @@ func (s *Service) initWallet() error {
 	if !s.config.Log.Simplify {
 		s.defaultLogger = s.defaultLogger.With("nodeAddress", wallet.Address.Hex())
 		s.serverCtx = logging.CtxWithLog(ctx, s.defaultLogger)
-		zap.ReplaceGlobals(s.defaultLogger.Desugar())
+		zap.ReplaceGlobals(s.defaultLogger.Logger)
 	}
 
 	return nil

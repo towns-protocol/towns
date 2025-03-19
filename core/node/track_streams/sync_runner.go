@@ -166,7 +166,6 @@ func (sr *SyncRunner) Run(
 			NodeAddress:       sticky[:],
 			StreamId:          stream.StreamId[:],
 			MinipoolGen:       math.MaxInt64, // force sync reset
-			MinipoolSlot:      0,
 			PrevMiniblockHash: common.Hash{}.Bytes(),
 		}}
 
@@ -193,7 +192,7 @@ func (sr *SyncRunner) Run(
 		// ensure that the first message is received within 30 seconds.
 		// if not cancel the sync session and restart a new one.
 		syncIDCtx, syncIDGot := context.WithTimeout(syncCtx, time.Minute)
-		go func(log *zap.SugaredLogger) {
+		go func(log *logging.Log) {
 			select {
 			case <-time.After(30 * time.Second):
 				log.Debugw("Didn't receive sync id within 30s, cancel sync session", "stream", stream.StreamId)

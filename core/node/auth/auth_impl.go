@@ -833,7 +833,7 @@ func (ca *chainAuth) getLinkedWalletsUncached(
 ) (CacheResult, error) {
 	log := logging.FromCtx(ctx)
 
-	wallets, err := entitlement.GetLinkedWallets(ctx, args.principal, ca.walletLinkContract, nil, nil, nil)
+	wallets, err := ca.evaluator.GetLinkedWallets(ctx, args.principal, ca.walletLinkContract, nil, nil, nil)
 	if err != nil {
 		log.Errorw("Failed to get linked wallets", "err", err, "wallet", args.principal.Hex())
 		return nil, err
