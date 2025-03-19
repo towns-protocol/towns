@@ -11,7 +11,7 @@ import {CustomRevert} from "contracts/src/utils/libraries/CustomRevert.sol";
 import {ReviewStorage} from "./ReviewStorage.sol";
 
 // contracts
-import {Facet} from "@river-build/diamond/src/facets/Facet.sol";
+import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
 import {Entitled} from "contracts/src/spaces/facets/Entitled.sol";
 
 contract ReviewFacet is IReview, Entitled, Facet {

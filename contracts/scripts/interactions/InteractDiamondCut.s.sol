@@ -2,10 +2,11 @@
 pragma solidity ^0.8.23;
 
 //interfaces
-import {IDiamondCut} from "@river-build/diamond/src/facets/cut/IDiamondCut.sol";
-import {IDiamond} from "@river-build/diamond/src/Diamond.sol";
+import {IDiamondCut} from "@towns-protocol/diamond/src/facets/cut/IDiamondCut.sol";
+import {IDiamond} from "@towns-protocol/diamond/src/Diamond.sol";
 
 //libraries
+import {console} from "forge-std/console.sol";
 
 //contracts
 import {Interaction} from "../common/Interaction.s.sol";
@@ -14,8 +15,6 @@ import {DiamondHelper} from "contracts/test/diamond/Diamond.t.sol";
 // facet
 import {DeployWalletLink} from "contracts/scripts/deployments/facets/DeployWalletLink.s.sol";
 import {WalletLink} from "contracts/src/factory/facets/wallet-link/WalletLink.sol";
-
-import {console} from "forge-std/console.sol";
 
 contract InteractDiamondCut is Interaction, DiamondHelper {
   DeployWalletLink helper = new DeployWalletLink();

@@ -13,8 +13,8 @@ import {TownsPointsStorage} from "./TownsPointsStorage.sol";
 import {CheckIn} from "./CheckIn.sol";
 
 // contracts
-import {Facet} from "@river-build/diamond/src/facets/Facet.sol";
-import {OwnableBase} from "@river-build/diamond/src/facets/ownable/OwnableBase.sol";
+import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
+import {OwnableBase} from "@towns-protocol/diamond/src/facets/ownable/OwnableBase.sol";
 
 contract TownsPoints is IERC20Metadata, ITownsPoints, OwnableBase, Facet {
   function __TownsPoints_init(address spaceFactory) external onlyInitializing {

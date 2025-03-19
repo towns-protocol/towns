@@ -12,7 +12,7 @@ import {NodeOperatorStorage, NodeOperatorStatus} from "contracts/src/base/regist
 import {XChainLib} from "contracts/src/base/registry/facets/xchain/XChainLib.sol";
 
 // contracts
-import {Facet} from "@river-build/diamond/src/facets/Facet.sol";
+import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
 
 contract EntitlementChecker is IEntitlementChecker, Facet {
   using EnumerableSet for EnumerableSet.AddressSet;

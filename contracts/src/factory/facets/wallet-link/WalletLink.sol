@@ -7,9 +7,9 @@ import {IWalletLink} from "./IWalletLink.sol";
 // libraries
 import {WalletLib} from "./libraries/WalletLib.sol";
 // contracts
-import {Facet} from "@river-build/diamond/src/facets/Facet.sol";
+import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
 import {WalletLinkBase} from "./WalletLinkBase.sol";
-import {OwnableBase} from "@river-build/diamond/src/facets/ownable/OwnableBase.sol";
+import {OwnableBase} from "@towns-protocol/diamond/src/facets/ownable/OwnableBase.sol";
 
 contract WalletLink is IWalletLink, WalletLinkBase, OwnableBase, Facet {
   function __WalletLink_init(
