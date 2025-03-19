@@ -817,8 +817,10 @@ export class Client
         spaceId: string | Uint8Array | undefined,
         userId: string | undefined,
         chunkCount: number,
-        streamSettings?: PlainMessage<StreamSettings>,
-        perChunkEncryption?: boolean,
+        firstChunk?: Uint8Array | undefined,
+        firstChunkIv?: Uint8Array | undefined,
+        streamSettings?: PlainMessage<StreamSettings> | undefined,
+        perChunkEncryption?: boolean | undefined,
     ): Promise<{ creationCookie: CreationCookie }> {
         assert(this.userStreamId !== undefined, 'userStreamId must be set')
         if (!channelId && !spaceId && !userId) {
@@ -840,23 +842,41 @@ export class Client
         }
 
         const streamId = makeUniqueMediaStreamId()
-
+        const events: Envelope[] = []
         this.logCall('createMedia', channelId ?? spaceId, userId, streamId)
-        const inceptionEvent = await makeEvent(
-            this.signerContext,
-            make_MediaPayload_Inception({
-                streamId: streamIdAsBytes(streamId),
-                channelId: channelId ? streamIdAsBytes(channelId) : undefined,
-                spaceId: spaceId ? streamIdAsBytes(spaceId) : undefined,
-                userId: userId ? addressFromUserId(userId) : undefined,
-                chunkCount,
-                settings: streamSettings,
-                perChunkEncryption: perChunkEncryption,
-            }),
+
+        // Prepare inception event
+        events.push(
+            await makeEvent(
+                this.signerContext,
+                make_MediaPayload_Inception({
+                    streamId: streamIdAsBytes(streamId),
+                    channelId: channelId ? streamIdAsBytes(channelId) : undefined,
+                    spaceId: spaceId ? streamIdAsBytes(spaceId) : undefined,
+                    userId: userId ? addressFromUserId(userId) : undefined,
+                    chunkCount,
+                    settings: streamSettings,
+                    perChunkEncryption: perChunkEncryption,
+                }),
+            ),
         )
 
+        // Prepare first chunk event
+        if (firstChunk && firstChunk.length > 0) {
+            events.push(
+                await makeEvent(
+                    this.signerContext,
+                    make_MediaPayload_Chunk({
+                        data: firstChunk,
+                        chunkIndex: 0,
+                        iv: firstChunkIv,
+                    }),
+                ),
+            )
+        }
+
         const response = await this.rpcClient.createMediaStream({
-            events: [inceptionEvent],
+            events: events,
             streamId: streamIdAsBytes(streamId),
         })
 
