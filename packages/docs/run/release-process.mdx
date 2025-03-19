@@ -1,29 +1,33 @@
 ---
-title: Release Process
-description: Towns protocol releases process and guidelines for node operators.
+title: "Release Process"
+description: "Release Process and Guidelines for Towns Protocol Node Operators"
 ---
 
-
-Towns protocol releases follow a weekly cadence for both testnet and mainnet. Release artifacts, stream node images, are built and published to the [Towns Docker ECR](https://public.ecr.aws/h5v6m2x1/river),
-and communicated in the #releases channel of the [Towns Operator Town](https://app.towns.com/t/102896074d32072c35f1462fdc45a9f59185fe981f0000000000000000000000/?invite).
+Towns protocol follows a weekly release schedule for both testnet and mainnet environments. Stream node images are built and published to the [**Towns Docker ECR**](https://public.ecr.aws/h5v6m2x1/river), with announcements made in the #releases channel of the [**Towns Operator Town**](/9185fe981f0000000000000000000000).
 
 ## Release Process
 
 <Steps>
-<Step title="Testnet Upgrade">
-    Every Monday (by 11pm UTC), a new testnet release is cut from the latest alpha release candidate tag and published to the Towns Docker ECR. The release is tagged with the testnet version number in the form, `testnet/YYYY-MM-DD-##`.
-    The docker image is built and doubly tagged with `testnet` (mutable) and the commit sha (immutable).
+  <Step title="Testnet Upgrade">
+    Each Monday by 11pm UTC, we release a new testnet version from the latest alpha release candidate tag to the Towns Docker ECR. The release uses the version format **testnet/YYYY-MM-DD-##**. Each docker image receives two tags: a mutable **testnet** tag and an immutable commit sha tag.
+
     <br />
-    <Note>Operators are encouraged to monitor the river [repo](https://github.com/river-build/river) for `testnet*` prefixed tags to upgrade nodes running in testnet.</Note>
-</Step>
-<Step title="Mainnet Upgrade">
-    Every Tuesday (by 11pm UTC), a new mainnet release is cut from the latest alpha release candidate tag and published to the Towns Docker ECR using the commit sha that was deployed to `testnet` last as the release branch. The release is tagged with the mainnet version number in the form, `mainnet/YYYY-MM-DD-##`.
-    The docker image is built and doubly tagged with `mainnet` (mutable) and the commit sha (immutable).
+
+    <Note>
+      Operators are encouraged to monitor the river [repo](https://github.com/river-build/river) for `testnet*` prefixed tags to upgrade nodes running in testnet.
+    </Note>
+  </Step>
+  <Step title="Mainnet Upgrade">
+    Each Tuesday by 11pm UTC, we deploy a new mainnet release using the same commit sha from the previous day's testnet deployment. The release uses the version format **mainnet/YYYY-MM-DD-##**. Each docker image receives two tags: a mutable **mainnet** tag and an immutable commit sha tag.
+
     <br />
-    <Note>Operators are asked to ensure mainnet images are upgraded by eod Tuesday to ensure homogeneity of software versions running in mainnet.</Note>
-</Step>
-<Step title="Hotfix">
-    Occasionally, an urgent hotfix will be required to address critical issues. In such cases, the hotfix will be cut and published to the Towns Docker ECR with a `hotfix` tag, a `mainnet` tag, a `testnet` tag and commit sha tag.
+
+    <Note>
+      Operators are asked to ensure mainnet images are upgraded by eod Tuesday to ensure homogeneity of software versions running in mainnet.
+    </Note>
+  </Step>
+  <Step title="Hotfix">
+    For critical issues, we release hotfixes to the Towns Docker ECR with four tags: **hotfix**, **mainnet**, **testnet**, and the commit sha.
     Hotfixes will be explicitly communicated to operators to upgrade their nodes in the Towns Operator Town, `testnet` nodes first followed by `mainnet`.
-</Step>
+  </Step>
 </Steps>
