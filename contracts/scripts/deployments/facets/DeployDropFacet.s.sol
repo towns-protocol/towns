@@ -13,6 +13,9 @@ import {FacetHelper} from "contracts/test/diamond/Facet.t.sol";
 import {DropFacet} from "contracts/src/airdrop/drop/DropFacet.sol";
 
 contract DeployDropFacet is Deployer, FacetHelper {
+  uint48 internal minLockDuration = 30 days;
+  uint48 internal maxLockDuration = 180 days;
+
   // FacetHelper
   constructor() {
     addSelector(DropFacet.claimWithPenalty.selector);
@@ -28,6 +31,14 @@ contract DeployDropFacet is Deployer, FacetHelper {
     addSelector(DropFacet.getUnlockTime.selector);
   }
 
+  function setLockDurations(
+    uint48 _minLockDuration,
+    uint48 _maxLockDuration
+  ) external {
+    minLockDuration = _minLockDuration;
+    maxLockDuration = _maxLockDuration;
+  }
+
   // Deploying
   function versionName() public pure override returns (string memory) {
     return "dropFacet";
@@ -38,10 +49,8 @@ contract DeployDropFacet is Deployer, FacetHelper {
   }
 
   function makeInitData(
-    address stakingContract,
-    uint48 minLockDuration,
-    uint48 maxLockDuration
-  ) public pure returns (bytes memory) {
+    address stakingContract
+  ) public view returns (bytes memory) {
     return
       abi.encodeWithSelector(
         initializer(),
@@ -60,10 +69,7 @@ contract DeployDropFacet is Deployer, FacetHelper {
       IDiamond.FacetCutAction.Add
     );
     console.log("facetInitHelper: deployer", deployer);
-    return (
-      facetCut,
-      makeInitData(getDeployment("baseRegistry"), 30 days, 180 days)
-    );
+    return (facetCut, makeInitData(getDeployment("baseRegistry")));
   }
 
   function __deploy(address deployer) public override returns (address) {
