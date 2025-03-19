@@ -840,39 +840,6 @@ export default [
   },
   {
     "type": "function",
-    "name": "setStreamLastMiniblock",
-    "inputs": [
-      {
-        "name": "streamId",
-        "type": "bytes32",
-        "internalType": "bytes32"
-      },
-      {
-        "name": "",
-        "type": "bytes32",
-        "internalType": "bytes32"
-      },
-      {
-        "name": "lastMiniblockHash",
-        "type": "bytes32",
-        "internalType": "bytes32"
-      },
-      {
-        "name": "lastMiniblockNum",
-        "type": "uint64",
-        "internalType": "uint64"
-      },
-      {
-        "name": "isSealed",
-        "type": "bool",
-        "internalType": "bool"
-      }
-    ],
-    "outputs": [],
-    "stateMutability": "nonpayable"
-  },
-  {
-    "type": "function",
     "name": "setStreamLastMiniblockBatch",
     "inputs": [
       {
@@ -1354,6 +1321,25 @@ export default [
         "type": "bool",
         "indexed": false,
         "internalType": "bool"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "StreamUpdated",
+    "inputs": [
+      {
+        "name": "eventType",
+        "type": "uint8",
+        "indexed": true,
+        "internalType": "enum IStreamRegistryBase.StreamEventType"
+      },
+      {
+        "name": "data",
+        "type": "bytes",
+        "indexed": false,
+        "internalType": "bytes"
       }
     ],
     "anonymous": false
