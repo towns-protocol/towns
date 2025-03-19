@@ -10,7 +10,6 @@ import (
 	"connectrpc.com/otelconnect"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/trace"
-	"go.uber.org/zap"
 
 	"github.com/towns-protocol/towns/core/config"
 	"github.com/towns-protocol/towns/core/node/app_registry"
@@ -18,6 +17,7 @@ import (
 	"github.com/towns-protocol/towns/core/node/crypto"
 	. "github.com/towns-protocol/towns/core/node/events"
 	"github.com/towns-protocol/towns/core/node/infra"
+	"github.com/towns-protocol/towns/core/node/logging"
 	"github.com/towns-protocol/towns/core/node/nodes"
 	"github.com/towns-protocol/towns/core/node/notifications"
 	. "github.com/towns-protocol/towns/core/node/protocol/protocolconnect"
@@ -35,7 +35,7 @@ type Service struct {
 	serverCtxCancel context.CancelFunc
 	config          *config.Config
 	instanceId      string
-	defaultLogger   *zap.SugaredLogger
+	defaultLogger   *logging.Log
 	wallet          *crypto.Wallet
 	startTime       time.Time
 	mode            string

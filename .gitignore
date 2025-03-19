@@ -50,6 +50,7 @@ tsconfig.tsbuildinfo
 /contracts/deployments/alpha/base_anvil
 /contracts/deployments/alpha/river_anvil
 /contracts/deployments/local*
+/contracts/typings
 /broadcast
 
 
@@ -84,3 +85,7 @@ go.work.sum
 /packages/stress/*/.env*
 
 .idea
+
+# Ponder
+packages/subgraph/.ponder
+packages/subgraph/generated

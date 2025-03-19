@@ -802,6 +802,7 @@ func (a *Archiver) processScrubReports(ctx context.Context) {
 
 				log.Errorw("Corrupt stream detected",
 					"streamId", as.streamId,
+					"streamType", StreamTypeToString(as.streamId.Type()),
 					"corruptBlock", report.FirstCorruptBlock,
 					"error", report.ScrubError,
 					"lastBlockScrubbed", report.LatestBlockScrubbed,

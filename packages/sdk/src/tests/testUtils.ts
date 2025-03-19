@@ -18,7 +18,7 @@ import {
 } from '@river-build/proto'
 import { Entitlements } from '../sync-agent/entitlements/entitlements'
 import { IStreamStateView } from '../streamStateView'
-import { Client } from '../client'
+import { Client, ClientOptions } from '../client'
 import {
     makeBaseChainConfig,
     makeRiverChainConfig,
@@ -171,7 +171,8 @@ export const getXchainConfigForTesting = (): XchainConfig => {
             31337: 'http://127.0.0.1:8545',
             31338: 'http://127.0.0.1:8546',
         },
-        etherBasedChains: [31337, 31338],
+        etherNativeNetworkIds: [31337, 31338],
+        ethereumNetworkIds: [],
     }
 }
 
@@ -268,7 +269,7 @@ export interface TestClient extends Client {
     signerContext: SignerContextWithWallet
 }
 
-export interface TestClientOpts {
+export interface TestClientOpts extends ClientOptions {
     context?: SignerContextWithWallet
     entitlementsDelegate?: EntitlementsDelegate
     deviceId?: string
@@ -276,6 +277,7 @@ export interface TestClientOpts {
 
 export const cloneTestClient = async (client: TestClient): Promise<TestClient> => {
     return makeTestClient({
+        ...client.opts,
         context: {
             ...client.signerContext,
             wallet: client.wallet,
@@ -295,13 +297,10 @@ export const makeTestClient = async (opts?: TestClientOpts): Promise<TestClient>
     // create a new client with store(s)
     const cryptoStore = RiverDbManager.getCryptoDb(userId, dbName)
     const rpcClient = await makeTestRpcClient()
-    const client = new Client(
-        context,
-        rpcClient,
-        cryptoStore,
-        entitlementsDelegate,
-        persistenceDbName,
-    ) as TestClient
+    const client = new Client(context, rpcClient, cryptoStore, entitlementsDelegate, {
+        ...opts,
+        persistenceStoreName: persistenceDbName,
+    }) as TestClient
     client.wallet = context.wallet
     client.deviceId = deviceId
     return client

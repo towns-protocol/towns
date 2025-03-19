@@ -157,3 +157,24 @@ func (e *ParsedEvent) GetChannelMessage() *ChannelPayload_Message {
 	}
 	return nil
 }
+
+func (e *ParsedEvent) GetEncryptedMessage() *EncryptedData {
+	switch payload := e.Event.Payload.(type) {
+	case *StreamEvent_ChannelPayload:
+		switch cp := payload.ChannelPayload.Content.(type) {
+		case *ChannelPayload_Message:
+			return cp.Message
+		}
+	case *StreamEvent_DmChannelPayload:
+		switch cp := payload.DmChannelPayload.Content.(type) {
+		case *DmChannelPayload_Message:
+			return cp.Message
+		}
+	case *StreamEvent_GdmChannelPayload:
+		switch cp := payload.GdmChannelPayload.Content.(type) {
+		case *GdmChannelPayload_Message:
+			return cp.Message
+		}
+	}
+	return nil
+}

@@ -143,7 +143,7 @@ func (s *Service) start(opts *ServerStartOpts) error {
 		return AsRiverError(err).Message("Failed to init wallet").LogError(s.defaultLogger)
 	}
 
-	s.initTracing()
+	s.initTracing("river-stream", s.wallet.String())
 
 	// There is an order here to how components must be initialized.
 	// 1. The river chain is needed in order to read on-chain configuration for instantiating entitlements.
@@ -280,7 +280,7 @@ func (s *Service) initWallet() error {
 	if !s.config.Log.Simplify {
 		s.defaultLogger = s.defaultLogger.With("nodeAddress", wallet.Address.Hex())
 		s.serverCtx = logging.CtxWithLog(ctx, s.defaultLogger)
-		zap.ReplaceGlobals(s.defaultLogger.Desugar())
+		zap.ReplaceGlobals(s.defaultLogger.Logger)
 	}
 
 	return nil

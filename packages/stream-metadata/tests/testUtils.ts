@@ -78,23 +78,27 @@ export async function encryptAndSendMediaPayload(
 		spaceId,
 		undefined,
 		chunkCount,
+		ciphertext.slice(0, chunkSize),
 	)
 
 	if (!mediaStreamInfo) {
 		throw new Error('Failed to create media stream')
 	}
 
-	let cc: CreationCookie = create(CreationCookieSchema, mediaStreamInfo.creationCookie)
-	for (let i = 0, index = 0; i < ciphertext.length; i += chunkSize, index++) {
-		const chunk = ciphertext.slice(i, i + chunkSize)
-		const last = ciphertext.length - i <= chunkSize
-		const { creationCookie } = await client.sendMediaPayload(cc, last, chunk, index)
+	// Add the rest of chunks if there are more than one which is passed in the creation request
+	if (chunkCount > 1) {
+		let cc: CreationCookie = create(CreationCookieSchema, mediaStreamInfo.creationCookie)
+		for (let i = chunkSize, index = 1; i < ciphertext.length; i += chunkSize, index++) {
+			const chunk = ciphertext.slice(i, i + chunkSize)
+			const last = ciphertext.length - i <= chunkSize
+			const { creationCookie } = await client.sendMediaPayload(cc, last, chunk, index)
 
-		cc = create(CreationCookieSchema, {
-			...cc,
-			prevMiniblockHash: new Uint8Array(creationCookie.prevMiniblockHash),
-			miniblockNum: creationCookie.miniblockNum,
-		})
+			cc = create(CreationCookieSchema, {
+				...cc,
+				prevMiniblockHash: new Uint8Array(creationCookie.prevMiniblockHash),
+				miniblockNum: creationCookie.miniblockNum,
+			})
+		}
 	}
 
 	const chunkedMedia = create(ChunkedMediaSchema, {

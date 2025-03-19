@@ -26,7 +26,6 @@ export type StreamRpcClient = Client<typeof StreamService> & {
     url: string
     opts: StreamRpcClientOptions
 }
-export type MakeRpcClientType = typeof makeStreamRpcClient
 
 export function makeStreamRpcClient(
     dest: string,

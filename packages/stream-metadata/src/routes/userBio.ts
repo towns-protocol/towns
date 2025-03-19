@@ -33,7 +33,7 @@ export async function fetchUserBio(request: FastifyRequest, reply: FastifyReply)
 
 	logger.info({ userId }, 'Fetching user bio')
 
-	let stream: StreamStateView
+	let stream: StreamStateView | undefined
 	try {
 		const userMetadataStreamId = makeStreamId(StreamPrefix.UserMetadata, userId)
 		stream = await getStream(logger, userMetadataStreamId)
@@ -45,6 +45,10 @@ export async function fetchUserBio(request: FastifyRequest, reply: FastifyReply)
 			},
 			'Failed to get stream',
 		)
+		return reply.code(500).send('Failed to get stream')
+	}
+
+	if (!stream) {
 		return reply.code(404).header('Cache-Control', CACHE_CONTROL[404]).send('Stream not found')
 	}
 

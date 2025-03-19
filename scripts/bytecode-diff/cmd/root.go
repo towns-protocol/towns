@@ -13,7 +13,7 @@ import (
 )
 
 var (
-	supportedEnvironments = []string{"alpha", "gamma", "omega"}
+	supportedEnvironments = []string{"alpha", "gamma", "omega", "delta"}
 	baseRpcUrl            string
 	riverRpcUrl           string
 	riverDevnetRpcUrl     string

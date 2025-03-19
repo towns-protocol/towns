@@ -23,15 +23,16 @@ import {DeployProxyBatchDelegation} from "contracts/scripts/deployments/utils/De
 import {DeployRiverAirdrop} from "contracts/scripts/deployments/diamonds/DeployRiverAirdrop.s.sol";
 
 contract InteractPostDeploy is Interaction {
-  DeploySpaceOwner deploySpaceOwner = new DeploySpaceOwner();
-  DeploySpaceFactory deploySpaceFactory = new DeploySpaceFactory();
-  DeployBaseRegistry deployBaseRegistry = new DeployBaseRegistry();
-  DeployTownsBase deployTownsBase = new DeployTownsBase();
-  DeployProxyBatchDelegation deployProxyDelegation =
-    new DeployProxyBatchDelegation();
-  DeployRiverAirdrop deployRiverAirdrop = new DeployRiverAirdrop();
-
   function __interact(address deployer) internal override {
+    vm.pauseGasMetering();
+
+    DeploySpaceOwner deploySpaceOwner = new DeploySpaceOwner();
+    DeploySpaceFactory deploySpaceFactory = new DeploySpaceFactory();
+    DeployBaseRegistry deployBaseRegistry = new DeployBaseRegistry();
+    DeployTownsBase deployTownsBase = new DeployTownsBase();
+    DeployProxyBatchDelegation deployProxyDelegation = new DeployProxyBatchDelegation();
+    DeployRiverAirdrop deployRiverAirdrop = new DeployRiverAirdrop();
+
     address spaceOwner = deploySpaceOwner.deploy(deployer);
     address spaceFactory = deploySpaceFactory.deploy(deployer);
     address baseRegistry = deployBaseRegistry.deploy(deployer);

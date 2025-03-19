@@ -49,7 +49,9 @@
     "@prb/math/=node_modules/@prb/math/src/",
     "@prb/test/=node_modules/@prb/test/src/",
     "solady/=node_modules/solady/src/",
-    "@river-build/diamond/=node_modules/@river-build/diamond/"
+    "@river-build/diamond/=node_modules/@river-build/diamond/",
+    "crypto-lib/=node_modules/crypto-lib/src/",
+    "@solidity/=node_modules/crypto-lib/src/"
   ],
   "vitest.maximumConfigs": 15,
   "vitest.disableWorkspaceWarning": true

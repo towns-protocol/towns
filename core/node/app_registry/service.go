@@ -37,7 +37,7 @@ type (
 	Service struct {
 		authentication.AuthServiceMixin
 		cfg                           config.AppRegistryConfig
-		store                         storage.AppRegistryStore
+		store                         *CachedEncryptedMessageQueue
 		streamsTracker                track_streams.StreamsTracker
 		sharedSecretDataEncryptionKey [32]byte
 		appClient                     *app_client.AppClient
@@ -65,10 +65,32 @@ func NewService(
 			"App registry service initialized with insufficient node registries",
 		)
 	}
+	sharedSecretDataEncryptionKey, err := hex.DecodeString(cfg.SharedSecretDataEncryptionKey)
+	if err != nil || len(sharedSecretDataEncryptionKey) != 32 {
+		return nil, base.AsRiverError(err, Err_INVALID_ARGUMENT).
+			Message("AppRegistryConfig SharedSecretDataEncryptionKey must be a 32-byte key encoded as hex")
+	}
+	fixedWidthDataEncryptionKey := [32]byte(sharedSecretDataEncryptionKey)
+
 	streamTrackerNodeRegistries := nodes
 	if len(nodes) > 1 {
 		streamTrackerNodeRegistries = nodes[1:]
 	}
+	appClient := app_client.NewAppClient(httpClient, cfg.AllowInsecureWebhooks)
+	cache, err := NewCachedEncryptedMessageQueue(
+		ctx,
+		store,
+		NewAppDispatcher(ctx, &cfg, appClient, fixedWidthDataEncryptionKey),
+	)
+	if err != nil {
+		return nil, base.AsRiverError(err, Err_INTERNAL).
+			Message("Unable to create CachedEncryptedMessageQueue")
+	}
+
+	if listener == nil {
+		listener = NewAppMessageProcessor(ctx, cache)
+	}
+
 	tracker, err := sync.NewAppRegistryStreamsTracker(
 		ctx,
 		cfg,
@@ -77,24 +99,18 @@ func NewService(
 		streamTrackerNodeRegistries,
 		metrics,
 		listener,
-		store,
+		cache,
 	)
 	if err != nil {
 		return nil, err
 	}
 
-	sharedSecretDataEncryptionKey, err := hex.DecodeString(cfg.SharedSecretDataEncryptionKey)
-	if err != nil || len(sharedSecretDataEncryptionKey) != 32 {
-		return nil, base.AsRiverError(err, Err_INVALID_ARGUMENT).
-			Message("AppRegistryConfig SharedSecretDataEncryptionKey must be a 32-byte key encoded as hex")
-	}
-
 	s := &Service{
 		cfg:                           cfg,
-		store:                         store,
+		store:                         cache,
 		streamsTracker:                tracker,
-		sharedSecretDataEncryptionKey: [32]byte(sharedSecretDataEncryptionKey),
-		appClient:                     app_client.NewAppClient(httpClient, cfg.AllowInsecureWebhooks),
+		sharedSecretDataEncryptionKey: fixedWidthDataEncryptionKey,
+		appClient:                     appClient,
 		riverRegistry:                 riverRegistry,
 		nodeRegistry:                  nodes[0],
 	}
@@ -106,7 +122,7 @@ func NewService(
 }
 
 func (s *Service) Start(ctx context.Context) {
-	log := logging.FromCtx(ctx)
+	log := logging.FromCtx(ctx).With("func", "AppRegistryService.Start")
 
 	go func() {
 		for {
@@ -171,7 +187,12 @@ func (s *Service) Register(
 	}
 
 	if err := s.store.CreateApp(ctx, owner, app, encrypted); err != nil {
-		return nil, base.AsRiverError(err, Err_INTERNAL).Func("Register")
+		return nil, base.AsRiverError(err, Err_INTERNAL).Message("Error creating app in database")
+	}
+
+	if err := s.streamsTracker.AddStream(ctx, shared.UserInboxStreamIdFromAddress(app)); err != nil {
+		return nil, base.AsRiverError(err, Err_INTERNAL).
+			Message("Error subscribing to app's user inbox stream to watch for keys")
 	}
 
 	return &connect.Response[RegisterResponse]{
@@ -189,6 +210,7 @@ func (s *Service) waitForAppEncryptionDevice(
 	ctx context.Context,
 	appId common.Address,
 ) (*storage.EncryptionDevice, error) {
+	log := logging.FromCtx(ctx).With("func", "AppRegistryService.waitForEncryptionDevice")
 	ctx, cancel := context.WithTimeout(ctx, time.Second*10)
 	userMetadataStreamId := shared.UserMetadataStreamIdFromAddress(appId)
 	defer cancel()
@@ -196,8 +218,12 @@ func (s *Service) waitForAppEncryptionDevice(
 	var delay time.Duration
 	var encryptionDevices []*UserMetadataPayload_EncryptionDevice
 	var loopExitErr error
+	var view *events.StreamView
 waitLoop:
 	for {
+		if view != nil {
+			break
+		}
 		delay = max(2*delay, 20*time.Millisecond)
 		select {
 		case <-ctx.Done():
@@ -230,9 +256,9 @@ waitLoop:
 				s.nodeRegistry,
 			)
 			if err != nil {
+				log.Warnw("Error fetching user metadata stream for app", "error", err, "streamId", userMetadataStreamId, "appId", appId)
 				continue
 			}
-			var view *events.StreamView
 			view, loopExitErr = events.MakeRemoteStreamView(ctx, streamResponse.Msg.Stream)
 			if loopExitErr != nil {
 				break waitLoop
@@ -245,6 +271,7 @@ waitLoop:
 	}
 
 	if len(encryptionDevices) == 0 {
+		log.Errorw("no usermetadata stream available for app", "appId", appId, "stream", userMetadataStreamId)
 		return nil, base.AsRiverError(loopExitErr, Err_NOT_FOUND).
 			Message("encryption device for app not found").
 			Tag("appId", appId).
@@ -307,9 +334,9 @@ func (s *Service) RegisterWebhook(
 	webhook := req.Msg.WebhookUrl
 	serverEncryptionDevice, err := s.appClient.InitializeWebhook(
 		ctx,
-		webhook,
 		app,
 		decryptedSecret,
+		webhook,
 	)
 	if err != nil {
 		return nil, base.WrapRiverError(Err_UNKNOWN, err).Message("Unable to initialize app service")

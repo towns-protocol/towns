@@ -57,7 +57,14 @@ export async function fetchMedia(request: FastifyRequest, reply: FastifyReply) {
 	logger.info({ mediaStreamId, key, iv }, 'Fetching media stream content')
 
 	try {
-		const { data, mimeType } = await getMediaStreamContent(logger, mediaStreamId, key, iv)
+		const mediaContent = await getMediaStreamContent(logger, mediaStreamId, key, iv)
+		if (!mediaContent) {
+			return reply
+				.code(404)
+				.header('Cache-Control', CACHE_CONTROL['4xx'])
+				.send('Media content not found')
+		}
+		const { data, mimeType } = mediaContent
 		if (!data || !mimeType) {
 			logger.error(
 				{

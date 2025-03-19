@@ -21,6 +21,7 @@ import { fromBinary, toBinary } from '@bufbuild/protobuf'
 const MAX_CACHED_SCROLLBACK_COUNT = 3
 const DEFAULT_RETRY_COUNT = 2
 const log = dlog('csb:persistence', { defaultEnabled: false })
+const logWarn = dlog('csb:persistence:warn', { defaultEnabled: true })
 const logError = dlogError('csb:persistence:error')
 
 export interface LoadedStream {
@@ -41,7 +42,7 @@ async function fnReadRetryer<T>(
     while (retryCounter > 0) {
         try {
             if (retryCounter < retries) {
-                log('retrying...', `${retryCounter}/${retries} retries left`)
+                logWarn('retrying...', `${retryCounter}/${retries} retries left`)
                 retryCounter--
                 // wait a bit before retrying
                 await new Promise((resolve) => setTimeout(resolve, 100))
@@ -425,7 +426,7 @@ function topLevelRenderableEventInMiniblock(miniblock: ParsedMiniblock): boolean
     return false
 }
 
-function eventIdsFromSnapshot(snapshot: Snapshot): string[] {
+export function eventIdsFromSnapshot(snapshot: Snapshot): string[] {
     const usernameEventIds =
         snapshot.members?.joined
             .filter((m) => isDefined(m.username))

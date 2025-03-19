@@ -745,7 +745,8 @@ func (r *StreamView) ValidateNextEvent(
 	// make sure we're recent
 	// if the user isn't adding the latest block, allow it if the block after was recently created
 	// if time is zero, disable recency check - this is used for replicated add after ValidateNextEvent was already called as part of CanAddEvent
-	if !currentTime.IsZero() && foundBlockAt < len(r.blocks)-1 && !r.isRecentBlock(cfg, r.blocks[foundBlockAt+1], currentTime) {
+	if !currentTime.IsZero() && foundBlockAt < len(r.blocks)-1 &&
+		!r.isRecentBlock(cfg, r.blocks[foundBlockAt+1], currentTime) {
 		return RiverError(
 			Err_BAD_PREV_MINIBLOCK_HASH,
 			"referenced block is not recent",
@@ -890,5 +891,71 @@ func (r *StreamView) AllEvents() iter.Seq[*ParsedEvent] {
 				return
 			}
 		}
+	}
+}
+
+func (r *StreamView) GetStreamSince(
+	ctx context.Context,
+	localNodeAddress common.Address,
+	cookie *SyncCookie,
+) (*StreamAndCookie, error) {
+	log := logging.FromCtx(ctx)
+	slot := cookie.MinipoolSlot
+	if slot < 0 {
+		return nil, RiverError(Err_BAD_SYNC_COOKIE, "bad slot", "cookie.MinipoolSlot", slot).Func("GetStreamSince")
+	}
+
+	if cookie.MinipoolGen == r.minipool.generation {
+		if slot > int64(r.minipool.events.Len()) {
+			return nil, RiverError(Err_BAD_SYNC_COOKIE, "GetStreamSince: bad slot")
+		}
+
+		envelopes := make([]*Envelope, 0, r.minipool.events.Len()-int(slot))
+		if slot < int64(r.minipool.events.Len()) {
+			for _, e := range r.minipool.events.Values[slot:] {
+				envelopes = append(envelopes, e.Envelope)
+			}
+		}
+		// always send response, even if there are no events so that the client knows it's upToDate
+
+		return &StreamAndCookie{
+			Events:         envelopes,
+			NextSyncCookie: r.SyncCookie(localNodeAddress),
+		}, nil
+
+	} else {
+
+		miniblockIndex, err := r.indexOfMiniblockWithNum(cookie.MinipoolGen)
+		if err != nil {
+			// The user's sync cookie is out of date. Send a sync reset and return an up-to-date StreamAndCookie.
+			log.Warnw("GetStreamSince: out of date cookie.MiniblockNum. Sending sync reset.",
+				"stream", r.streamId, "error", err.Error())
+
+			return &StreamAndCookie{
+				Events:         r.MinipoolEnvelopes(),
+				NextSyncCookie: r.SyncCookie(localNodeAddress),
+				Miniblocks:     r.MiniblocksFromLastSnapshot(),
+				SyncReset:      true,
+			}, nil
+
+		}
+
+		// append events from blocks
+		envelopes := make([]*Envelope, 0, 16)
+		err = r.forEachEvent(miniblockIndex, func(e *ParsedEvent, minibockNum int64, eventNum int64) (bool, error) {
+			envelopes = append(envelopes, e.Envelope)
+			return true, nil
+		})
+		if err != nil {
+			// "Should never happen: GetStreamSince: forEachEvent failed: "
+			logging.FromCtx(ctx).Errorw("GetStreamSince: forEachEvent failed", "error", err)
+			return nil, RiverError(Err_INTERNAL, "GetStreamSince: forEachEvent failed", "error", err).Func("GetStreamSince")
+		}
+
+		// always send response, even if there are no events so that the client knows it's upToDate
+		return &StreamAndCookie{
+			Events:         envelopes,
+			NextSyncCookie: r.SyncCookie(localNodeAddress),
+		}, nil
 	}
 }

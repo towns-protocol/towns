@@ -19,4 +19,4 @@ wait_for_process() {
 ./scripts/start-local-riverchain.sh &
 
 
-echo "STARTED ALL CHAINS AND BUILT ALL CONTRACTS, BLOCK_TIME=${RIVER_BLOCK_TIME}"
+echo "STARTED ALL CHAINS, BLOCK_TIME=${RIVER_BLOCK_TIME}"

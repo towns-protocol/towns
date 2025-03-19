@@ -13,8 +13,14 @@ import (
 func NewTestContext() (context.Context, context.CancelFunc) {
 	logLevel := os.Getenv("RIVER_TEST_LOG")
 	if logLevel == "" {
+		nop := zap.NewNop().Sugar()
 		//lint:ignore LE0000 context.Background() used correctly
-		ctx := logging.CtxWithLog(context.Background(), zap.NewNop().Sugar())
+		ctx := logging.CtxWithLog(context.Background(), &logging.Log{
+			Default:   nop.Named(string(logging.Default)),
+			Rpc:       nop.Named(string(logging.Rpc)),
+			Miniblock: nop.Named(string(logging.Miniblock)),
+		})
+
 		return context.WithCancel(ctx)
 	} else {
 		return NewTestContextWithLogging(logLevel)

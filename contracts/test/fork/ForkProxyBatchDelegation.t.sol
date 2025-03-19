@@ -2,7 +2,7 @@
 pragma solidity ^0.8.19;
 
 // utils
-import {Vm} from "forge-std/Vm.sol";
+import {LogUtils} from "contracts/test/utils/LogUtils.sol";
 import {TestUtils} from "contracts/test/utils/TestUtils.sol";
 
 //interfaces
@@ -17,7 +17,7 @@ import {ProxyBatchDelegation} from "contracts/src/tokens/mainnet/delegation/Prox
 import {MockMessenger} from "contracts/test/mocks/MockMessenger.sol";
 
 // Mainnet
-contract ForkProxyBatchDelegationTest is TestUtils {
+contract ForkProxyBatchDelegationTest is LogUtils, TestUtils {
   // event SentMessage(address indexed target, address sender, bytes message, uint256 messageNonce, uint256 gasLimit);
   bytes32 internal constant SENT_MESSAGE_TOPIC =
     keccak256("SentMessage(address,address,bytes,uint256,uint256)");
@@ -51,19 +51,10 @@ contract ForkProxyBatchDelegationTest is TestUtils {
 
     bytes memory encodedMsgs = proxyBatchDelegation.getEncodedMsgs();
 
-    Vm.Log[] memory logs = vm.getRecordedLogs();
-    bytes memory message;
-    for (uint256 i; i < logs.length; ++i) {
-      if (
-        logs[i].topics.length > 0 && logs[i].topics[0] == SENT_MESSAGE_TOPIC
-      ) {
-        (, message, , ) = abi.decode(
-          logs[i].data,
-          (address, bytes, uint256, uint256)
-        );
-        break;
-      }
-    }
+    (, bytes memory message, , ) = abi.decode(
+      _getFirstMatchingLog(vm.getRecordedLogs(), SENT_MESSAGE_TOPIC).data,
+      (address, bytes, uint256, uint256)
+    );
     assertGt(message.length, 0, "message not found");
 
     // switch to the base fork

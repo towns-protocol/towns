@@ -687,9 +687,15 @@ func TestMainForLeaksIgnoreGeth() {
 	ignorePgxPoolHealthCheck := goleak.IgnoreAnyFunction(
 		"github.com/jackc/pgx/v5/pgxpool.(*Pool).triggerHealthCheck.func1",
 	)
+	// The go-cache cache implementation uses a janitor process whose lifetime is managed by
+	// lifecycle methods internally. Instead of relying on garbage collection hacks, let's
+	// just ignore all leaked janitor goroutines.
+	ignoreGoCacheJanitor := goleak.IgnoreAnyFunction(
+		"github.com/patrickmn/go-cache.(*janitor).Run",
+	)
 
 	now := time.Now()
-	err := goleak.Find(ignorePgxPoolHealthCheck)
+	err := goleak.Find(ignorePgxPoolHealthCheck, ignoreGoCacheJanitor)
 	elapsed := time.Since(now)
 	if err != nil {
 		msg := err.Error()

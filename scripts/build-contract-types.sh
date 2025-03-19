@@ -23,6 +23,9 @@ done
 
 ./scripts/gen-river-node-bindings.sh
 
+# Remove *.bin and *.json except *.abi.json
+find $ABI_DIR -type f \( -name "*.bin" -o -name "*.json" ! -name "*.abi.json" \) -exec rm -f {} +
+
 DIFF_GLOB="$ABI_DIR/*.ts"
 
 # Using the $FROZEN flag and git diff, we can check if this script generates any new files

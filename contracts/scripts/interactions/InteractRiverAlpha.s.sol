@@ -15,7 +15,8 @@ contract InteractRiverAlpha is AlphaHelper {
   DeployRiverRegistry deployRiverRegistry = new DeployRiverRegistry();
 
   function __interact(address deployer) internal override {
-    address riverRegistry = deployRiverRegistry.deploy(deployer);
+    vm.setEnv("OVERRIDE_DEPLOYMENTS", "1");
+    address riverRegistry = getDeployment("riverRegistry");
 
     removeRemoteFacets(deployer, riverRegistry);
     FacetCut[] memory newCuts;
