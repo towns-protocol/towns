@@ -228,7 +228,6 @@ export class StreamStateView implements IStreamStateView {
     }
 
     private applySnapshot(
-        eventHash: string,
         event: ParsedEvent,
         inSnapshot: Snapshot,
         cleartexts: Record<string, Uint8Array | string> | undefined,
@@ -298,7 +297,6 @@ export class StreamStateView implements IStreamStateView {
                 logNever(snapshot.content)
         }
         this.membershipContent.applySnapshot(
-            eventHash,
             event,
             snapshot,
             cleartexts,
@@ -586,7 +584,6 @@ export class StreamStateView implements IStreamStateView {
 
         // initialize from snapshot data, this gets all memberships and channel data, etc
         this.applySnapshot(
-            bin_toHexString(miniblocks[0].hash),
             miniblockHeaderEvent,
             snapshot,
             cleartexts,
