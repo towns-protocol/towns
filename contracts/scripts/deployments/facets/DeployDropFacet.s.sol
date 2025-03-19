@@ -13,10 +13,14 @@ import {FacetHelper} from "contracts/test/diamond/Facet.t.sol";
 import {DropFacet} from "contracts/src/airdrop/drop/DropFacet.sol";
 
 contract DeployDropFacet is Deployer, FacetHelper {
+  uint48 internal minLockDuration = 30 days;
+  uint48 internal maxLockDuration = 180 days;
+
   // FacetHelper
   constructor() {
     addSelector(DropFacet.claimWithPenalty.selector);
     addSelector(DropFacet.claimAndStake.selector);
+    addSelector(DropFacet.unlockStake.selector);
     addSelector(DropFacet.setClaimConditions.selector);
     addSelector(DropFacet.addClaimCondition.selector);
     addSelector(DropFacet.getActiveClaimConditionId.selector);
@@ -24,6 +28,15 @@ contract DeployDropFacet is Deployer, FacetHelper {
     addSelector(DropFacet.getSupplyClaimedByWallet.selector);
     addSelector(DropFacet.getDepositIdByWallet.selector);
     addSelector(DropFacet.getClaimConditions.selector);
+    addSelector(DropFacet.getUnlockTime.selector);
+  }
+
+  function setLockDurations(
+    uint48 _minLockDuration,
+    uint48 _maxLockDuration
+  ) external {
+    minLockDuration = _minLockDuration;
+    maxLockDuration = _maxLockDuration;
   }
 
   // Deploying
@@ -37,8 +50,14 @@ contract DeployDropFacet is Deployer, FacetHelper {
 
   function makeInitData(
     address stakingContract
-  ) public pure returns (bytes memory) {
-    return abi.encodeWithSelector(initializer(), stakingContract);
+  ) public view returns (bytes memory) {
+    return
+      abi.encodeWithSelector(
+        initializer(),
+        stakingContract,
+        minLockDuration,
+        maxLockDuration
+      );
   }
 
   function facetInitHelper(

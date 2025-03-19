@@ -21,6 +21,7 @@ contract DeployRewardsDistributionV2 is Deployer, FacetHelper {
     addSelector(RewardsDistribution.increaseStake.selector);
     addSelector(RewardsDistribution.permitAndIncreaseStake.selector);
     addSelector(RewardsDistribution.redelegate.selector);
+    addSelector(RewardsDistribution.changeDepositOwner.selector);
     addSelector(RewardsDistribution.changeBeneficiary.selector);
     addSelector(RewardsDistribution.initiateWithdraw.selector);
     addSelector(RewardsDistribution.withdraw.selector);

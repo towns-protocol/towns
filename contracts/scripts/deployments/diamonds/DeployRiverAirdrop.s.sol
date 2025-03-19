@@ -26,6 +26,8 @@ import {DeployMetadata} from "contracts/scripts/deployments/facets/DeployMetadat
 contract DeployRiverAirdrop is DiamondHelper, Deployer {
   address internal BASE_REGISTRY = address(0);
   address internal SPACE_FACTORY = address(0);
+  uint48 public minLockDuration = 30 days;
+  uint48 public maxLockDuration = 180 days;
 
   DeployMultiInit deployMultiInit = new DeployMultiInit();
   DeployDiamondCut diamondCutHelper = new DeployDiamondCut();
@@ -114,6 +116,7 @@ contract DeployRiverAirdrop is DiamondHelper, Deployer {
   function diamondInitParams(
     address deployer
   ) public returns (Diamond.InitParams memory) {
+    dropHelper.setLockDurations(minLockDuration, maxLockDuration);
     dropFacet = dropHelper.deploy(deployer);
     pointsFacet = pointsHelper.deploy(deployer);
     metadata = metadataHelper.deploy(deployer);

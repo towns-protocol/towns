@@ -10,12 +10,14 @@ import {IDropFacetBase} from "./IDropFacet.sol";
 
 library DropStorage {
   // keccak256(abi.encode(uint256(keccak256("diamond.facets.drop.storage")) - 1)) & ~bytes32(uint256(0xff))
-  bytes32 constant STORAGE_SLOT =
+  bytes32 internal constant STORAGE_SLOT =
     0xeda6a1e2ce6f1639b6d3066254ca87a2daf51c4f0ad5038d408bbab6cc2cab00;
 
   struct SupplyClaim {
     uint256 claimed;
     uint256 depositId;
+    uint48 lockStart;
+    uint48 lockDuration;
   }
 
   struct Layout {
@@ -24,6 +26,8 @@ library DropStorage {
     uint48 conditionCount;
     mapping(uint256 conditionId => mapping(address => SupplyClaim)) supplyClaimedByWallet;
     mapping(uint256 conditionId => IDropFacetBase.ClaimCondition) conditionById;
+    uint48 minLockDuration;
+    uint48 maxLockDuration;
   }
 
   function layout() internal pure returns (Layout storage l) {
