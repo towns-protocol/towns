@@ -241,7 +241,7 @@ contract ForkRewardsDistributionTest is
     depositId = test_fuzz_initiateWithdraw(amount, beneficiary, seed);
 
     address proxy = rewardsDistributionFacet.delegationProxyById(depositId);
-    uint256 cd = towns.lockCooldown(proxy);
+    uint256 cd = towns.lockExpiration(proxy);
 
     vm.warp(cd);
 

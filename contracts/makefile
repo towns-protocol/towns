@@ -123,7 +123,7 @@ fork-any :;
 
 verify-any :;
 	@echo "Verifying $(contract) on a remote network"
-	@forge verify-contract ${address} ${contract}	--rpc-url ${rpc}
+	@forge verify-contract ${address} ${contract} --rpc-url ${rpc}
 
 explicit-verify-any :;
 	@echo "Verifying $(contract) on a remote network"
