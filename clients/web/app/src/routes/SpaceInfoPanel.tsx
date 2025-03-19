@@ -541,23 +541,28 @@ const TownTips = (props: { spaceId: string | undefined }) => {
         })
     }, [spaceId, qc])
 
+    const onViewAll = useCallback(() => {
+        openPanel('tips-leaderboard')
+    }, [openPanel])
+
     if (!env.VITE_TIPS_ENABLED || !spaceId) {
         return null
     }
 
     return (
-        <PanelButton
-            height={undefined}
-            onClick={() => openPanel('tips-leaderboard')}
-            onMouseEnter={prefetchTipLeaderboard}
-        >
-            <Stack gap="sm">
+        <Stack gap="sm" padding="md" background="level2" rounded="sm">
+            <Stack horizontal justifyContent="spaceBetween">
                 <Paragraph strong color="default">
                     Tips
                 </Paragraph>
-                <SpaceTotalTips spaceId={spaceId} />
+                <TextButton onClick={onViewAll} onMouseEnter={prefetchTipLeaderboard}>
+                    View All
+                </TextButton>
             </Stack>
-        </PanelButton>
+            <Box cursor="pointer" width="fit-content" onClick={onViewAll}>
+                <SpaceTotalTips spaceId={spaceId} />
+            </Box>
+        </Stack>
     )
 }
 
