@@ -74,7 +74,20 @@ This makes it easy to:
 -> anvil
 
 # perform the deployment to a local network
--> make deploy-any-local contract=DeployMockERC721A
+-> make deploy-any-local contract=DeployMockERC721A type=facets
+```
+
+## How to deploy to a testnet or mainnet
+
+```bash
+# To deploy a contract to Base Sepolia in the "gamma" deployment context:
+-> make deploy-base-sepolia contract=DeployWalletLink type=facets context=gamma
+
+# To deploy with a ledger hardware wallet to Base mainnet:
+-> make deploy-base contract=DeploySpaceFactory type=diamonds context=omega
+
+# To redeploy a contract to Base Sepolia in the "gamma" deployment context:
+-> OVERRIDE_DEPLOYMENTS=1 make deploy-base-sepolia contract=DeployWalletLink type=facets context=gamma
 ```
 
 ## How to script (interact with deployed contracts through foundry)
@@ -83,52 +96,9 @@ This makes it easy to:
 # say you want to mint from MockERC721A
 
 # deploy a local implementation of MockERC721A by calling DeployMockERC721A
--> make deploy-any-local rpc=base_anvil contract=DeployMockERC721A
+-> make deploy-any-local rpc=base_anvil contract=DeployMockERC721A type=facets
 
 # next we'll call the script InteractMockERC721A
 # This will grab new and existing deployment addresses from our deployments cache and use those to interact with each other
 -> make interact-any-local rpc=base_anvil contract=InteractMockERC721A
-```
-
-# How to deploy predeterministic contracts?
-
-```
-// SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
-
-//interfaces
-
-//libraries
-
-//contracts
-import {Deployer} from "./utils/Deployer.s.sol";
-import {Hello} from "src/hello/Hello.sol";
-
-// debuggging
-import {console} from "forge-std/console.sol";
-
-contract DeployHello is Deployer {
-  function versionName() public pure override returns (string memory) {
-    return "hello";
-  }
-
-  function __deploy(address deployer) public override returns (address) {
-    bytes32 salt = bytes32(uint256(deployer)); // create a salt from address
-
-    bytes32 initCodeHash = hashInitCode(
-      type(Hello).creationCode,
-      abi.encode("Hello, World!") // encode any parameters that will go in the constructor
-    );
-
-    address predeterminedAddress = computeCreate2Address(salt, initCodeHash);
-
-    vm.startBroadcast(deployerPK);
-    Hello hello = new Hello{salt: salt}("Hello, World!");
-    vm.stopBroadcast();
-
-    require(address(hello) == predeterminedAddress, "DeployHello: address mismatch");
-
-    return address(hello);
-  }
-}
 ```
