@@ -1,11 +1,11 @@
 ---
-title: Local Towns Stream Node
-description: Towns Stream Nodes can run remotely or locally depending on the operator's preferences. The following guide illustrates how to build and run a Towns Stream Node locally for development purposes. Diagnostic tools to gauge the health of local and remote nodes are also discussed here. It is assumed that the node is free standing and therefore not connected to the Towns protocol remote node registry on Base.
+title: "Local Towns Stream Node"
+description: "Towns Stream Nodes can be run either remotely or locally based on operator preference. This guide shows you how to build and run a Towns Stream Node locally for development. We'll also cover diagnostic tools for monitoring the health of both local and remote nodes. Note that this guide assumes a standalone node not connected to the Towns protocol remote node registry on Base."
 ---
 
 ## Running a Towns Stream Node in Development
 
-Running a Towns Stream Node from source is easy to do with [Go](https://go.dev/doc/install), [Docker](https://docs.docker.com/engine/install/), and [Foundry](https://github.com/foundry-rs/foundry) Ethereum toolkit installed. The following tutorial will show you how to run a Towns Stream Node with a Postgres backend.
+Running a Towns Stream Node from source is easy to do with [Go](https://go.dev/doc/install), [Docker](https://docs.docker.com/engine/install/), and [Foundry](https://github.com/foundry-rs/foundry) Ethereum toolkit installed. This tutorial guides you through running a Towns Stream Node with a Postgres backend.
 
 ### Requirements
 
@@ -18,7 +18,7 @@ Running a Towns Stream Node from source is easy to do with [Go](https://go.dev/d
 
 ### Setup
 
-Once you've installed Docker, Go, protobuf, Anvil, and buf, you can proceed to setup your environment as follows.
+Once you've installed Docker, Go, protobuf, Anvil, and buf, setup your environment as follows:
 
 ```bash
 # clone monorepo
@@ -32,16 +32,36 @@ There's a VSCode task in [tasks.json](https://github.com/river-build/river/blob/
 Running `~Start Local Dev~` command from the river repo in VSCode will do the following in order:
 
 <Steps>
-<Step title="Check dependency versions"></Step>
-<Step title="Upgrade Foundry toolkit"></Step>
-<Step title="Run yarn install"></Step>
-<Step title="Build protobufs"></Step>
-<Step title="Start Base Chain in anvil"></Step>
-<Step title="Start Towns Chain in anvil"></Step>
-<Step title="Configure stream nodes"></Step>
-<Step title="Start stream nodes with and without entitlements (on separate ports)"></Step>
-<Step title="Start xchain binary"></Step>
-<Step title="Start protobuf and typescript package watcher"></Step>
+  <Step title="Check dependency versions">
+    
+  </Step>
+  <Step title="Upgrade Foundry toolkit">
+    
+  </Step>
+  <Step title="Run yarn install">
+    
+  </Step>
+  <Step title="Build protobufs">
+    
+  </Step>
+  <Step title="Start Base Chain in anvil">
+    
+  </Step>
+  <Step title="Start Towns Chain in anvil">
+    
+  </Step>
+  <Step title="Configure stream nodes">
+    
+  </Step>
+  <Step title="Start stream nodes with and without entitlements (on separate ports)">
+    
+  </Step>
+  <Step title="Start xchain binary">
+    
+  </Step>
+  <Step title="Start protobuf and typescript package watcher">
+    
+  </Step>
 </Steps>
 
 After the command completes, pick a `river_node` process running from localhost and run `/status` check to see if the node is running in a healthy manner. The following should be returned if the node is healthy:
@@ -187,11 +207,11 @@ You can also ping health of nodes using `/debug/multi` and `/debug/multi/json` e
 "26ms"
 ```
 
-
 ### Run a Towns Stream Node in Info Mode against testnet or mainnet
 
-<Note>To run a stream node within the remote testnet or mainnet networks, the node needs to be first registered on Towns Chain. See onboarding instructions [here](/run/node-operator/system-requirements-installation).</Note>
-
+<Note>
+  Before running a stream node on the remote testnet or mainnet networks, you must register it on Towns Chain. See onboarding instructions [**here**](https://docs.towns.com/run/node-operator/system-requirements-installation).
+</Note>
 
 ### Running a stream node in info mode to obtain diagnostics
 
