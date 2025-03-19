@@ -11,10 +11,6 @@ import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import {CustomRevert} from "contracts/src/utils/libraries/CustomRevert.sol";
 
 /// @title FeatureManager
-/// @author Towns Protocol
-/// @notice Library for managing feature conditions and their activation thresholds
-/// @dev Follows diamond storage pattern and implements token-based feature gating
-/// @custom:security-contact security@towns.com
 library FeatureManager {
   // keccak256(abi.encode(uint256(keccak256("towns.storage.FeatureManager")) - 1)) & ~bytes32(uint256(0xff))
   bytes32 constant STORAGE_SLOT =
