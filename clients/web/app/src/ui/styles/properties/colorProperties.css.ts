@@ -61,6 +61,7 @@ export const colorProperties = defineProperties({
                 background: vars.color.background.level1,
                 vars: {
                     '--background': vars.color.background.level1,
+                    '--background-above': vars.color.background.level2,
                     '--background-hover': vars.color.background.level1Hover,
                 },
                 selectors: {
@@ -68,6 +69,7 @@ export const colorProperties = defineProperties({
                         background: vars.color.background.readability,
                         vars: {
                             '--background': vars.color.background.readability,
+                            '--background-above': vars.color.background.level2,
                             '--background-hover': vars.color.background.readabilityHover,
                         },
                     },
@@ -75,6 +77,7 @@ export const colorProperties = defineProperties({
                         background: vars.color.background.level2,
                         vars: {
                             '--background': vars.color.background.level2,
+                            '--background-above': vars.color.background.level3,
                             '--background-hover': vars.color.background.level2Hover,
                         },
                     },
@@ -92,6 +95,7 @@ export const colorProperties = defineProperties({
                 color: vars.color.text.gray1,
                 vars: {
                     '--background': vars.color.background.level2,
+                    '--background-above': vars.color.background.level3,
                     '--background-hover': vars.color.background.level2Hover,
                 },
                 selectors: {
@@ -100,6 +104,7 @@ export const colorProperties = defineProperties({
                         color: vars.color.text.gray1,
                         vars: {
                             '--background': vars.color.background.level3,
+                            '--background-above': vars.color.background.level4,
                             '--background-hover': vars.color.background.level3Hover,
                         },
                     },
@@ -110,6 +115,7 @@ export const colorProperties = defineProperties({
                         color: vars.color.text.gray1,
                         vars: {
                             '--background': vars.color.background.level4,
+                            '--background-above': vars.color.background.level4Hover,
                             '--background-hover': vars.color.background.level4Hover,
                         },
                     },
@@ -317,7 +323,7 @@ export const colorProperties = defineProperties({
             },
             modalContainer: {
                 background: 'rgba(0,0,0,0.3)',
-                backgdropFilter: 'blur(4px)',
+                backdropFilter: 'blur(4px)',
             },
         },
         color: {

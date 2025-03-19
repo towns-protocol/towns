@@ -1,7 +1,8 @@
-import React, { useCallback, useEffect } from 'react'
+import React, { useCallback, useContext, useEffect } from 'react'
 import { Button, Stack } from '@ui'
 import { MotionIconButton } from 'ui/components/Motion/MotionComponents'
 import { useDevice } from 'hooks/useDevice'
+import { TickerThreadContext } from '@components/MessageThread/TickerThreadContext'
 import { dispatchMockEnterEvent } from '../utils/helpers'
 
 export const EditMessageButtons = (props: {
@@ -94,13 +95,16 @@ export const EditMessageButtons = (props: {
         },
     }
 
+    const isTradingContext = !!useContext(TickerThreadContext)
+
     return (
         <Stack
             horizontal
             gap="sm"
             data-testid="editor-cta-buttons"
             justifyContent={verticalButtons ? 'start' : 'end'}
-            paddingX={isTouch ? 'none' : 'xs'}
+            paddingBottom="xs"
+            paddingX="xs"
         >
             {isEditing ? (
                 <>
@@ -129,6 +133,7 @@ export const EditMessageButtons = (props: {
                         data-testid="submit"
                         icon={disabled ? 'touchSendDisabled' : 'touchSendEnabled'}
                         size="square_lg"
+                        padding="none"
                         onMouseDown={disabled ? cancelButtonPressed : saveButtonPressed}
                     />
                 )
@@ -145,7 +150,8 @@ export const EditMessageButtons = (props: {
                             }
                             data-testid="submit"
                             icon={disabled ? 'touchSendDisabled' : 'touchSendEnabled'}
-                            size="square_md"
+                            size={isTradingContext ? 'square_lg' : 'square_md'}
+                            padding="none"
                             onClick={disabled ? undefined : saveButtonPressed}
                         />
                     )}

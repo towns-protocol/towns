@@ -31,15 +31,15 @@ export const SendMarkdownPlugin = (props: {
     return (
         <AnimatePresence>
             <Box
-                paddingBottom={verticalButtons ? 'sm' : { touch: 'xs', default: 'none' }}
+                paddingBottom={verticalButtons ? 'sm' : 'xs'}
                 paddingRight="xs"
                 flexBasis={verticalButtons ? '100%' : 'auto'}
             >
-                {shouldDisplayButtons && (
+                {shouldDisplayButtons ? (
                     <MotionBox
-                        initial={isTouch ? { height: 0, opacity: 0 } : undefined}
-                        exit={isTouch ? { height: 0, opacity: 0 } : undefined}
-                        animate={isTouch ? { height: 'auto', opacity: 1 } : undefined}
+                        initial={isTouch ? { opacity: 0 } : undefined}
+                        exit={isTouch ? { opacity: 0 } : undefined}
+                        animate={isTouch ? { opacity: 1 } : undefined}
                     >
                         <EditMessageButtons
                             isEditing={props.isEditing}
@@ -52,6 +52,8 @@ export const SendMarkdownPlugin = (props: {
                             onSave={sendMessage}
                         />
                     </MotionBox>
+                ) : (
+                    <></>
                 )}
             </Box>
         </AnimatePresence>

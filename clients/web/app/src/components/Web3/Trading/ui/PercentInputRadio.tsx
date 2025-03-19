@@ -16,6 +16,7 @@ const percent = (
 export const PercentInputRadio = (props: {
     color: BoxProps['color']
     onChange: (value: number) => void
+    compact?: boolean
 }) => {
     const textRef = useRef<HTMLInputElement>(null)
     const onSelect = useCallback(() => {

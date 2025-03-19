@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import axios from 'axios'
+import axios, { AxiosError } from 'axios'
 import { parseInt } from 'lodash'
 import { z } from 'zod'
 import { env } from 'utils'
@@ -121,11 +121,24 @@ export const useLifiQuote = (props: {
                     },
                 })
                 if (!result.data) {
-                    return null
+                    throw new Error('No data')
                 }
                 return zLifiQuote.parse(result.data)
             } catch (e) {
-                return null
+                console.error(e)
+                if (e instanceof AxiosError) {
+                    switch (e.response?.data?.code) {
+                        case 1003:
+                            throw new Error('Token not found')
+                        default:
+                            if (e.response?.data?.message) {
+                                throw new Error(e.response?.data?.message)
+                            } else {
+                                throw new Error('No route found')
+                            }
+                    }
+                }
+                throw e
             }
         },
         staleTime: SECOND_MS * 30,

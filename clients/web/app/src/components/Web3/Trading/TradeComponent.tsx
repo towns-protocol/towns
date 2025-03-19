@@ -13,6 +13,7 @@ import { WalletReady } from 'privy/WalletReady'
 import { popupToast } from '@components/Notifications/popupToast'
 import { StandardToast } from '@components/Notifications/StandardToast'
 import { FadeInBox } from '@components/Transitions'
+import { useSizeContext } from 'ui/hooks/useSizeContext'
 import { NumberInputRadio } from './ui/NumberInputRadio'
 import { RadioButton } from './ui/RadioButton'
 import { ButtonSelection } from './ui/SelectButton'
@@ -186,6 +187,7 @@ export const TradeComponent = (props: Props) => {
 
     const onCustomFieldSelect = useCallback(() => {
         if (preselectedOption?.label === 'custom') {
+            setAmount(undefined)
             setPreselectedOption(undefined)
         } else {
             setPreselectedOption({ label: 'custom', value: customAmount ?? 0n, icon: undefined })
@@ -283,6 +285,8 @@ export const TradeComponent = (props: Props) => {
         skipPendingToast: true,
     })
 
+    const isNarrow = useSizeContext().lessThan(400)
+
     const metaData = useMemo((): QuoteMetaData | undefined => {
         if (!quoteData) {
             return undefined
@@ -378,7 +382,12 @@ export const TradeComponent = (props: Props) => {
             >
                 <Stack paddingTop="md" gap="md">
                     <Stack gap="sm">
-                        <Stack horizontal justifyContent="spaceBetween" display="flex" gap="sm">
+                        <Stack
+                            horizontal
+                            justifyContent="spaceBetween"
+                            display="flex"
+                            gap={isNarrow ? 'xxs' : 'sm'}
+                        >
                             <ButtonSelection
                                 value={quickSelectValues.find((option) =>
                                     selectFn(preselectedOption, option),
@@ -407,17 +416,20 @@ export const TradeComponent = (props: Props) => {
                                                     value={customAmount}
                                                     placeholder="Custom"
                                                     color="positive"
+                                                    compact={isNarrow}
                                                     onChange={onCustomAmount}
                                                 />
                                             ) : (
                                                 <PercentInputRadio
                                                     color="peach"
+                                                    compact={isNarrow}
                                                     onChange={onCustomPercent}
                                                 />
                                             )}
                                         </Box>
                                     ) : (
                                         <RadioButton
+                                            compact={isNarrow}
                                             key={option.label}
                                             label={option.label}
                                             color={mode === 'buy' ? 'positive' : 'peach'}
@@ -433,6 +445,12 @@ export const TradeComponent = (props: Props) => {
                         {balanceIsInsufficient && (
                             <FadeInBox color="error">Insufficient balance</FadeInBox>
                         )}
+
+                        {/* {quoteError && (
+                            <FadeInBox color="error" padding="sm" rounded="xs">
+                                {quoteError?.message}
+                            </FadeInBox>
+                        )} */}
 
                         {/* if there's no threadInfo, we're inside the global trade panel,
                             show buy/sell button */}

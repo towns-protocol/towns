@@ -486,15 +486,6 @@ export const RichTextEditor = ({
                         />
                         <Box grow />
                         {isEditing && sendButtons}
-                        {!editable && (
-                            <Box
-                                absoluteFill
-                                borderRadius="sm"
-                                background="level2"
-                                opacity="0.7"
-                                pointerEvents="all"
-                            />
-                        )}
                         {renderTradingBottomBar}
                     </Stack>
                 </Stack>

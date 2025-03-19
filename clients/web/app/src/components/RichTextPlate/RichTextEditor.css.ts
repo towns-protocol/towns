@@ -25,7 +25,7 @@ export const contentEditable = style([
 
 export const contentEditablePWA = style([
     {
-        minHeight: `${baseline * 6}px`,
+        minHeight: `${baseline * 5}px`,
     },
 ])
 

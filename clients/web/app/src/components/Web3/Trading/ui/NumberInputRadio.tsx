@@ -10,6 +10,7 @@ type Props = {
     onChange: (value: bigint) => void
     onSelect?: () => void
     color?: BoxProps['color']
+    compact?: boolean
 } & Omit<ComponentProps<typeof TextField>, 'onChange' | 'value'>
 
 export const NumberInputRadio = (props: Props) => {
@@ -64,9 +65,17 @@ export const NumberInputRadio = (props: Props) => {
             <TextField
                 ref={textRef}
                 background="level2"
-                paddingX="md"
+                paddingX={props.compact ? 'md' : 'md'}
                 rounded="full"
-                before={icon ? <Icon type={icon} size="square_xs" /> : undefined}
+                before={
+                    icon ? (
+                        <Icon
+                            type={icon}
+                            size={props.compact ? 'square_xxs' : 'square_xs'}
+                            insetX="xxs"
+                        />
+                    ) : undefined
+                }
                 value={displayValue}
                 height="x4"
                 style={{ width: 100, minWidth: !displayValue ? 55 : 33 }}

@@ -171,7 +171,7 @@ export const FancyButton = React.forwardRef<HTMLButtonElement, FancyButtonProps>
                 color="inherit"
             >
                 {before ? (
-                    <Box centerContent square="square_inline">
+                    <Box centerContent square={iconSize ? undefined : 'square_inline'}>
                         <MotionBox
                             layout="position"
                             key={spinner ? 'spinner' : icon}

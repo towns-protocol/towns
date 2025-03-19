@@ -7,6 +7,7 @@ export const RadioButton = (props: {
     selected: boolean
     icon?: IconName
     color?: TextSprinkles['color']
+    compact?: boolean
     onClick: () => void
 }) => {
     return (
@@ -28,9 +29,10 @@ export const RadioButton = (props: {
                     compact="x4"
                     borderRadius="full"
                     icon={props.icon}
-                    iconSize="square_xs"
-                    gap="none"
-                    paddingX="sm"
+                    iconSize={props.compact ? 'square_xxs' : 'square_xs'}
+                    gap={props.compact ? 'xxs' : 'sm'}
+                    paddingX={props.compact ? 'xxs' : 'sm'}
+                    paddingRight="sm"
                     color={props.color}
                     background="level2"
                     onClick={props.onClick}

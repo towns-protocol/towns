@@ -304,12 +304,15 @@ const ThreadEditor = (props: {
 
     const renderSendButton = useCallback(
         (onSend: () => void) => {
-            return getSigner && quoteStatus && typeof mode === 'string' ? (
+            return getSigner &&
+                quoteStatus &&
+                quoteStatus?.status !== 'error' &&
+                typeof mode === 'string' ? (
                 <Stack horizontal gap="sm" alignItems="center">
                     <Box
                         centerContent
                         tooltip={
-                            quoteStatus.status === 'error' || !tradeData?.metaData?.value.value ? (
+                            !tradeData?.metaData?.value.value ? (
                                 ``
                             ) : (
                                 <TransactionTooltip
@@ -325,7 +328,7 @@ const ThreadEditor = (props: {
                         }
                     >
                         <FancyButton
-                            compact={{ touch: 'x5', default: 'x4' }}
+                            compact="x4"
                             gap="xxs"
                             paddingLeft="sm"
                             paddingRight="md"
@@ -363,6 +366,8 @@ const ThreadEditor = (props: {
         <>nope</>
     )
 
+    const placeholder = tradeData?.request ? 'Add an optional message...' : 'Reply...'
+
     const editor = (
         <TownsEditorContainer
             isFullWidthOnTouch
@@ -370,7 +375,7 @@ const ThreadEditor = (props: {
             key={`${messageId}-${isChannelWritable ? '' : '-readonly'}`}
             editable={!!isChannelWritable}
             displayButtons={displayButtons ?? 'on-focus'}
-            placeholder={tickerAttachment ? 'Add an optional message...' : 'Reply...'}
+            placeholder={placeholder}
             storageId={`${channelId}-${messageId}`}
             threadId={messageId}
             channels={channels}
