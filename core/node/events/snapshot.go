@@ -164,7 +164,7 @@ func Update_Snapshot(iSnapshot *Snapshot, event *ParsedEvent, miniblockNum int64
 	iSnapshot = migrations.MigrateSnapshot(iSnapshot)
 	switch payload := event.Event.Payload.(type) {
 	case *StreamEvent_SpacePayload:
-		return update_Snapshot_Space(iSnapshot, payload.SpacePayload, event.Event.CreatorAddress, eventNum)
+		return update_Snapshot_Space(iSnapshot, payload.SpacePayload, event.Event.CreatorAddress, eventNum, event.Hash.Bytes())
 	case *StreamEvent_ChannelPayload:
 		return update_Snapshot_Channel(iSnapshot, payload.ChannelPayload)
 	case *StreamEvent_DmChannelPayload:
@@ -193,6 +193,7 @@ func update_Snapshot_Space(
 	spacePayload *SpacePayload,
 	creatorAddress []byte,
 	eventNum int64,
+	eventHash []byte,
 ) error {
 	snapshot := iSnapshot.Content.(*Snapshot_SpaceContent)
 	if snapshot == nil {
@@ -249,6 +250,8 @@ func update_Snapshot_Space(
 		snapshot.SpaceContent.SpaceImage = &SpacePayload_SnappedSpaceImage{
 			Data:           content.SpaceImage,
 			CreatorAddress: creatorAddress,
+			EventNum:       eventNum,
+			EventHash:      eventHash,
 		}
 		return nil
 	default:

@@ -261,6 +261,8 @@ message SpacePayload {
     message SnappedSpaceImage {
         bytes creator_address = 1;
         EncryptedData data = 2;
+        int64 event_num = 3;
+        bytes event_hash = 4;
     }
     
     message Inception {
