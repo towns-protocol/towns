@@ -1090,14 +1090,10 @@ export class BaseTransactor {
             const abortController = new AbortController()
 
             if (this.isAccountAbstractionEnabled()) {
-                // i.e. when a non gated town is joined
                 // recipients should always be the smart account address
-                let recipient: string | undefined = entitledWallet
-                if (recipient.toLowerCase() === rootWallet.toLowerCase()) {
-                    recipient = await this.getAbstractAccountAddress({
-                        rootKeyAddress: recipient as Address,
-                    })
-                }
+                const recipient = await this.getAbstractAccountAddress({
+                    rootKeyAddress: rootWallet as Address,
+                })
                 if (!recipient) {
                     throw new Error('Abstract account address not found')
                 }
@@ -1109,7 +1105,7 @@ export class BaseTransactor {
                 transaction = await this.userOps?.sendJoinSpaceOp([spaceId, recipient, signer])
             } else {
                 // joinSpace when called directly sets up the membershipListener
-                membershipListener = this.spaceDapp.joinSpace(spaceId, entitledWallet, signer)
+                membershipListener = this.spaceDapp.joinSpace(spaceId, rootWallet, signer)
             }
 
             const membershipOrTimeout = waitForTimeoutOrMembership({
