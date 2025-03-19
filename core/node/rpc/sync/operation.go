@@ -213,13 +213,7 @@ func (syncOp *StreamSyncOperation) runCommandsProcessing(
 			return
 		case cmd := <-syncOp.commands:
 			if cmd.AddStreamReq != nil {
-				nodeAddress := common.BytesToAddress(cmd.AddStreamReq.Msg.GetSyncPos().GetNodeAddress())
-				streamID, err := shared.StreamIdFromBytes(cmd.AddStreamReq.Msg.GetSyncPos().GetStreamId())
-				if err != nil {
-					cmd.Reply(err)
-					continue
-				}
-				cmd.Reply(syncers.AddStream(cmd.Ctx, nodeAddress, streamID, cmd.AddStreamReq.Msg.GetSyncPos()))
+				cmd.Reply(syncers.AddStream(cmd.Ctx, cmd.AddStreamReq.Msg.GetSyncPos()))
 			} else if cmd.RmStreamReq != nil {
 				streamID, err := shared.StreamIdFromBytes(cmd.RmStreamReq.Msg.GetStreamId())
 				if err != nil {

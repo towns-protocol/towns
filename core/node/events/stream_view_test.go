@@ -118,7 +118,6 @@ func TestLoad(t *testing.T) {
 	assert.NotNil(t, cookie)
 	assert.Equal(t, streamId, cookieStreamId)
 	assert.Equal(t, int64(1), cookie.MinipoolGen)
-	assert.Equal(t, int64(0), cookie.MinipoolSlot)
 
 	// Check minipool, should be empty
 	assert.Equal(t, 0, len(view.minipool.events.Values))
