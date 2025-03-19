@@ -41,17 +41,14 @@ Important: Complete your [**Node Operator registration**](https://docs.towns.com
 
 <Steps>
   <Step title="Start Stream Node in Info Mode">
-    Operator should start the stream node process in info mode and additionally ensure DNS, TLS, and network are configured correctly.
+    Launch the stream node process in [**info**](https://github.com/river-build/river/tree/main/core/node#checking-on-gamma-status-from-local-host) mode and verify DNS, TLS, and network configurations.
   </Step>
-  
   <Step title="Register Node in Towns Chain">
-    Operator calls registerNode on the RiverRegistry diamond contract deployed on Towns Chain once health checks pass.
+    Once health checks pass, call [**registerNode**](https://github.com/river-build/river/blob/main/contracts/src/river/registry/facets/node/NodeRegistry.sol) on the [**RiverRegistry**](https://github.com/river-build/river/blob/main/contracts/deployments/gamma/river/addresses/riverRegistry.json) diamond contract on Towns Chain.
   </Step>
-  
   <Step title="Register Node in Base">
     Operator calls registerNode on the BaseRegistry diamond contract to support cross-chain checks.
   </Step>
-  
   <Step title="Start Stream Node">
     Operator starts the stream node by running the docker image to enter Towns Chain network once registered.
   </Step>
@@ -72,14 +69,12 @@ Once a node is setup, attached to postgres storage, network configured with a pu
 Registering a node on Towns Chain, can be accomplished by calling the `registerNode(address,string,uint8)` method on the RiverRegistry diamond contract.
 
 <Warning>
-  Registering a node and operating a stream node in general requires that the
-  node wallet has Eth for the target network (Sepolia Eth for testnet, Eth for mainnet) to pay for gas.
-  On testnet, sepolia eth can be obtained from a
-  [faucet](https://towns-devnet.hub.caldera.xyz/).
-  Stream nodes should also have a wallet on Base with Base Eth (mainnet) or Base Sepolia Eth (testnet) to pay for gas when committing cross-chain transactions.
+  Registering a node and operating a stream node in general requires that the node wallet has ETH for the target network (Sepolia ETH for testnet, ETH for mainnet) to pay for gas. On testnet, Sepolia ETH can be obtained from a [faucet](https://towns-devnet.hub.caldera.xyz/). 
+
+  Stream nodes should also have a wallet on Base with Base ETH (mainnet) or Base Sepolia ETH (testnet) to pay for gas when committing cross-chain transactions.
 </Warning>
 
-The below steps describe how to register a new node URL in `Operational` status using `cast`, a command-line tool that is part of Foundry for reading / writing to EVM chains over RPC url's.
+The steps below describe how to register a new node URL in `Operational` status using `cast`, a command-line tool that is part of Foundry for reading / writing to EVM chains over RPC URL's.
 
 <Note>
   Setting a Node to `Operational` status will allow the node to begin accepting stream writes and signal to the network that the node is healthy and ready to be connected to by clients. See all possible node statuses that a node can assume in [RegistryStorage](https://github.com/river-build/river/blob/main/contracts/src/river/registry/libraries/RegistryStorage.sol#L30).
@@ -111,7 +106,7 @@ The below steps describe how to register a new node URL in `Operational` status 
     <br />
 
     <Warning>
-      Private Key needed for cast call is Node Operator's not Node FE's. It is up to Node Operator how they decide to secure this key and make it available to perform cast calls to register nodes.
+      The Private Key needed for cast call is Node Operator's not Node FE's. Node Operators are responsible for securing this key and making sure it's available to perform cast calls to register nodes.
     </Warning>
   </Step>
   <Step title="Register Node on Base and Towns Chain">
@@ -159,16 +154,14 @@ The below steps describe how to register a new node URL in `Operational` status 
     ```
 
     <Warning>
-      When registering node, make sure you pass in the node url including the schema of the url, which must be https://. For example, for node referenced by domain name, river-operator-1.xyz, you would pass in the node url to registerNode call as https://river-operator-1.xyz.
-      Therefore, prior to calling registerNode using Operational status, you must ensure the node url resolves from the public internet.
+      When registering node, make sure you pass in the node url including the schema of the url, which must be https://. For example, for node referenced by domain name, towns-operator-1.xyz, you would pass in the node url to registerNode call as [https://towns-operator-1.xyz](https://river-operator-1.xyz). Therefore, prior to calling registerNode using Operational status, you must ensure the node url resolves from the public internet.
     </Warning>
-    
     When the above transactions succeed and have been mined in a block on Towns Chain, you can re-run `getNode(address)` to confirm the node now exists in the network.
   </Step>
   <Step title="Check Node Health from Debug Multi Dashboard">
     To check that your node is included in the network and healthy, you can navigate to:
     `$NODE_URL/debug/multi` in a browser to see the node's http1/2, grpc ping status and related health metrics.
 
-    As an example, see https://ohare-3.staking.production.figment.io/debug/multi.
+    For reference, check out this example dashboard: [**https://ohare-3.staking.production.figment.io/debug/multi**](https://ohare-3.staking.production.figment.io/debug/multi).
   </Step>
 </Steps>
