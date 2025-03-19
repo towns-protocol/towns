@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react'
+import React, { useCallback, useMemo, useState } from 'react'
 import { useMyUserId } from 'use-towns-client'
 import { Box, IconButton, Paragraph, Pill, Stack, Text } from '@ui'
 import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
@@ -204,6 +204,11 @@ const TickerPills = ({
 
 const TradingUserIds = ({ userIds }: { userIds: string[] }) => {
     const myUserId = useMyUserId()
+    const sortedUserIds = useMemo(() => {
+        return userIds.sort((a, b) => {
+            return a === myUserId ? 1 : b === myUserId ? -1 : 0
+        })
+    }, [userIds, myUserId])
 
     return (
         <Stack horizontal gap="xs" alignItems="center" paddingLeft="sm">
@@ -220,8 +225,8 @@ const TradingUserIds = ({ userIds }: { userIds: string[] }) => {
             <Paragraph color="gray1">
                 <UserList
                     excludeSelf
-                    userIds={userIds}
-                    renderUser={(user) => (user.userId === myUserId ? 'You' : user.displayName)}
+                    userIds={sortedUserIds}
+                    renderUser={(user) => (user.userId === myUserId ? 'you' : user.displayName)}
                 />{' '}
                 traded
             </Paragraph>
