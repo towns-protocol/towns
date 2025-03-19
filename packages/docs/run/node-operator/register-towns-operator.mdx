@@ -28,34 +28,27 @@ Detailed instructions with specific calling signatures are provided in the [**No
 
 <Steps>
   <Step title="Register Node Operator in Base">
-    Operators starts the onboarding process calling registerOperator on the BaseRegistry diamond contract deployed on Base.
+    Operators start the onboarding process calling registerOperator on the BaseRegistry diamond contract deployed on Base.
   </Step>
-  
   <Step title="Set Commission Rate in Base">
-    Operator sets commission rate for rewards in Base calling setCommissionRate on the BaseRegistry diamond contract with the desired commission rate in basis points.
+    Set your rewards commission rate by calling [**setCommissionRate**](https://github.com/river-build/river/blob/main/contracts/src/base/registry/facets/operator/NodeOperatorFacet.sol) on the BaseRegistry diamond contract with your desired rate in basis points.
   </Step>
-  
   <Step title="DAO approves operator">
-    DAO approves operator in Base and RiverChain via governance once 100mm delegations of RVR token are received to the operator
+    The DAO approves your operator status in Base and RiverChain via governance once you receive 100mm TOWNS token delegations.
   </Step>
-  
   <Step title="DAO activates operator to start reward clock">
-    Once a node is running and in a healthy state as observed by the network (see check node health from debug multi dashboard), DAO will activate operator which begins the clock for inclusion in the next reward distribution.
+    Once your node is running and healthy (verify through the [**debug multi dashboard**](https://docs.towns.com/run/node-operator/register-towns-operator#check-node-health-from-debug-multi-dashboard)), the DAO activates your operator status, starting your reward distribution clock.
   </Step>
 </Steps>
 
 #### Node Operator Registration
 
-1. Node Operator must call `registerOperator(address)` on the BaseRegistry diamond contract deployed
-   on Base with the address of the wallet that they wish to claim rewards with. Note that the claimer wallet can differ from the operator wallet.
+1. Node Operator must call `registerOperator(address)` on the BaseRegistry diamond contract deployed on Base with the address of the wallet that they wish to claim rewards with. Note that the claimer wallet can differ from the operator wallet.
 
 <Info>
   Node operators can update the claimer address for receiving rewards from distribution by calling `setClaimAddressForOperator(claimer address, operator address) onlyClaimer` on the BaseRegistry contract with the desired wallet from the Node Operator wallet in Base. This is useful in separating concerns between the claim wallet that accrues rewards and the operator wallet which needs to be warm to facilitate node operations.
 </Info>
 
-1. Node Operator can begin soliciting delegation after
-   being registered.
+1. After registration, you can begin soliciting delegations.
 2. Node Operator should call `setCommissionRate(uint256)` on the BaseRegistry contract to set the commission rate for the operator. Ensure the commission rate is passed in using basis point notation (e.g. 10000 for 100%). Conversely, Node Operator can call the view, `getCommissionRate(address)` passing in their operator address to check their current commission rate.
-3. After Node Operator receives at least `100m` RVR tokens delegated,
-   the DAO can approve it to enter into Towns Chain. The same address will be added
-   to River Registry on Towns Chain in order to begin configuring Nodes.
+3. Once you receive at least **100m** TOWNS token delegations, the DAO can approve your entry into Towns Chain. Your address will be added to River Registry on Towns Chain for node configuration.
