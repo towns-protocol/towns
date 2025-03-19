@@ -19,9 +19,13 @@ const log = dlogger('csb:entitlement')
 
 export type XchainConfig = {
     supportedRpcUrls: { [chainId: number]: string }
-    // The chain ids for supported chains that use ether as the native currency.
+    // The chain ids for all supported chains that use ether as the native currency.
     // These chains will be used to determine a user's cumulative ether balance.
-    etherBasedChains: number[]
+    etherNativeNetworkIds: number[]
+    // The chain ids for ethereum chains. For towns mainnet, this will include
+    // ethereum mainnet only. For test networks, this will also include ethereum
+    // sepolia.
+    ethereumNetworkIds: number[]
 }
 
 const zeroAddress = ethers.constants.AddressZero
@@ -1251,16 +1255,30 @@ async function findProviderFromChainId(xchainConfig: XchainConfig, chainId: bigi
 
 async function findEtherChainProviders(xchainConfig: XchainConfig) {
     const etherChainProviders = []
-    for (const chainId of xchainConfig.etherBasedChains) {
-        if (!(Number(chainId) in xchainConfig.supportedRpcUrls)) {
+    for (const chainId of xchainConfig.etherNativeNetworkIds) {
+        if (!(chainId in xchainConfig.supportedRpcUrls)) {
             log.info(`(WARN) findEtherChainProviders: No supported RPC URL for chain id ${chainId}`)
         } else {
-            const url = xchainConfig.supportedRpcUrls[Number(chainId)]
+            const url = xchainConfig.supportedRpcUrls[chainId]
             etherChainProviders.push(new ethers.providers.StaticJsonRpcProvider(url))
         }
     }
     await Promise.all(etherChainProviders.map((p) => p.ready))
     return etherChainProviders
+}
+
+export async function findEthereumProviders(xchainConfig: XchainConfig) {
+    const ethereumProviders = []
+    for (const chainId of xchainConfig.ethereumNetworkIds) {
+        if (!(chainId in xchainConfig.supportedRpcUrls)) {
+            log.error(`findEthereumProviders: No supported RPC URL for chain id ${chainId}`)
+        } else {
+            const url = xchainConfig.supportedRpcUrls[chainId]
+            ethereumProviders.push(new ethers.providers.StaticJsonRpcProvider(url))
+        }
+    }
+    await Promise.all(ethereumProviders.map((p) => p.ready))
+    return ethereumProviders
 }
 
 function isValidAddress(value: unknown): value is Address {

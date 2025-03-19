@@ -67,7 +67,7 @@ const failedMetadataCalls = new Map<string, boolean>()
 export function useTokenMetadataAcrossNetworks(tokenAddress: string) {
     const _address = tokenAddress.toLowerCase()
     // const queryClient = useQueryClient()
-    const { data: supportedXChainIds } = useSupportedXChainIds()
+    const supportedXChainIds = useSupportedXChainIds()
 
     return useQuery({
         queryKey: [queryKeyAcrossNetworks, _address],
@@ -167,7 +167,7 @@ function singleTokenQuerySetup(args: {
 
 export function useTokenMetadataForChainId(tokenAddress: string, chainId: number) {
     const queryClient = useQueryClient()
-    const { data: supportedXChainIds } = useSupportedXChainIds()
+    const supportedXChainIds = useSupportedXChainIds()
 
     return useQuery({
         ...singleTokenQuerySetup({
@@ -181,7 +181,7 @@ export function useTokenMetadataForChainId(tokenAddress: string, chainId: number
 
 export function useTokensWithMetadata(tokens: TokenWithBigInt[] | undefined) {
     const queryClient = useQueryClient()
-    const { data: supportedXChainIds } = useSupportedXChainIds()
+    const supportedXChainIds = useSupportedXChainIds()
 
     return useQueries({
         queries: (tokens ?? []).map((token) => {

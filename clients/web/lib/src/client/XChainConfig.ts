@@ -1,7 +1,7 @@
 import { BASE_MAINNET, BASE_SEPOLIA, XchainConfig } from '@river-build/web3'
 import { isDefined } from '@river-build/sdk'
 
-const defaultXChainIds = [
+const DEFAULT_XCHAIN_IDs = [
     // ethereum
     1,
     // polygon
@@ -16,31 +16,32 @@ const defaultXChainIds = [
 
 type BlockchainInfo = {
     chainId: number
-    isEtherChain: boolean
+    isEtherNative: boolean
+    isEthereumNetwork: boolean
 }
 
 // List of chains used across various deployment environments, and chain metadata.
 // These settings are shared with the stream node.
-const defaultBlockchainInfo: { [chainId: number]: BlockchainInfo } = {
-    1: { chainId: 1, isEtherChain: true }, // Eth mainnet
-    11155111: { chainId: 11155111, isEtherChain: true }, // Eth Sepolia
+const DEFAULT_BLOCKCHAIN_INFO: { [chainId: number]: BlockchainInfo } = {
+    1: { chainId: 1, isEtherNative: true, isEthereumNetwork: true }, // Eth mainnet
+    11155111: { chainId: 11155111, isEtherNative: true, isEthereumNetwork: true }, // Eth Sepolia
 
-    137: { chainId: 137, isEtherChain: false }, // Polygon currency is MATIC
-    42161: { chainId: 42161, isEtherChain: true }, // Arb
-    10: { chainId: 10, isEtherChain: true }, // Optimism
+    137: { chainId: 137, isEtherNative: false, isEthereumNetwork: false }, // Polygon currency is MATIC
+    42161: { chainId: 42161, isEtherNative: true, isEthereumNetwork: false }, // Arb
+    10: { chainId: 10, isEtherNative: true, isEthereumNetwork: false }, // Optimism
 
-    8453: { chainId: 8453, isEtherChain: true }, // Base
-    84532: { chainId: 84532, isEtherChain: true }, // Base Sepolia
+    8453: { chainId: 8453, isEtherNative: true, isEthereumNetwork: false }, // Base
+    84532: { chainId: 84532, isEtherNative: true, isEthereumNetwork: false }, // Base Sepolia
 
-    31337: { chainId: 31337, isEtherChain: true }, // Anvil base
-    31338: { chainId: 31338, isEtherChain: true }, // Anvil river
+    31337: { chainId: 31337, isEtherNative: true, isEthereumNetwork: false }, // Anvil base
+    31338: { chainId: 31338, isEtherNative: true, isEthereumNetwork: false }, // Anvil river
 
-    100: { chainId: 100, isEtherChain: false }, // Gnosis mainnet - uses XDai
-    10200: { chainId: 10200, isEtherChain: false }, // Gnosis Chiado Testnet
+    100: { chainId: 100, isEtherNative: false, isEthereumNetwork: false }, // Gnosis mainnet - uses XDai
+    10200: { chainId: 10200, isEtherNative: false, isEthereumNetwork: false }, // Gnosis Chiado Testnet
 }
 
 export function getDefaultXChainIds(baseChainId: number): number[] {
-    const ids = [...defaultXChainIds]
+    const ids = [...DEFAULT_XCHAIN_IDs]
 
     // if we're not on base mainnet, add the testnet chains
     if (baseChainId !== BASE_MAINNET) {
@@ -53,7 +54,7 @@ export function getDefaultXChainIds(baseChainId: number): number[] {
 export function marshallXChainConfig(
     supportedXChainIds: number[],
     supportedXChainRpcMapping: { [chainId: number]: string },
-    chainInfo = defaultBlockchainInfo,
+    chainInfo = DEFAULT_BLOCKCHAIN_INFO,
 ): XchainConfig {
     const filteredByRiverSupported = Object.entries(supportedXChainRpcMapping ?? {}).filter(
         ([chainId, rpcUrl]) => isDefined(rpcUrl) && supportedXChainIds.includes(+chainId),
@@ -73,12 +74,25 @@ export function marshallXChainConfig(
         {},
     )
 
-    const etherBasedChains: number[] = Object.keys(supportedRpcUrls)
-        .filter((key) => +key in chainInfo && chainInfo[+key].isEtherChain)
+    const etherNativeNetworkIds: number[] = Object.keys(supportedRpcUrls)
+        .filter((key) => +key in chainInfo && chainInfo[+key].isEtherNative)
+        .reduce<number[]>((acc, key) => [...acc, +key], [])
+
+    const ethereumNetworkIds: number[] = Object.keys(supportedRpcUrls)
+        .filter((key) => +key in chainInfo && chainInfo[+key].isEthereumNetwork)
         .reduce<number[]>((acc, key) => [...acc, +key], [])
 
     return {
         supportedRpcUrls,
-        etherBasedChains,
+        etherNativeNetworkIds,
+        ethereumNetworkIds,
     }
+}
+
+export function getXchainConfig(
+    baseChainId: number,
+    supportedXChainRpcMapping: { [chainId: number]: string },
+): XchainConfig {
+    const xChainIds = getDefaultXChainIds(baseChainId)
+    return marshallXChainConfig(xChainIds, supportedXChainRpcMapping)
 }

@@ -84,8 +84,12 @@ export class TownsTestClient extends TownsClient {
                 riverProvider: provider.riverChainProvider,
                 eventHandlers: props?.eventHandlers,
                 accountAbstractionConfig: props?.accountAbstractionConfig,
-                supportedXChainRpcMapping: {
-                    [foundry.id]: String(foundry.rpcUrls.default.http),
+                xchainConfig: {
+                    supportedRpcUrls: {
+                        [foundry.id]: String(foundry.rpcUrls.default.http),
+                    },
+                    etherNativeNetworkIds: [],
+                    ethereumNetworkIds: [],
                 },
                 verbose: true,
                 createLegacySpaces: process.env.CREATE_LEGACY_SPACES === 'true',
@@ -143,10 +147,6 @@ export class TownsTestClient extends TownsClient {
         }
         // Something went wrong. Don't return a room identifier.
         throw new Error('createSpaceTransaction failed')
-    }
-
-    public override getSupportedXChainIds(): Promise<number[]> {
-        return Promise.resolve([foundry.id])
     }
 
     public override async joinTown(

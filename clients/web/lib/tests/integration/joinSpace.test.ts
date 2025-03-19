@@ -151,7 +151,7 @@ test('create space, and have user that already has membership NFT join ', async 
     await alice.baseTransactor.mintMembershipTransaction({
         spaceId,
         signer: alice.wallet,
-        xchainConfig: await alice.getXchainConfig(),
+        xchainConfig: alice.opts.xchainConfig,
     })
     // alice joins the space
     await alice.joinTown(spaceId, alice.wallet)

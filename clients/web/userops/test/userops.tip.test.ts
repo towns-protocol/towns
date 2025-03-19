@@ -71,7 +71,11 @@ test('can send tip to space member', async () => {
     const channelId = '0x' + '2'.repeat(64)
     const space = spaceDapp.getSpace(spaceId)
 
-    const tokenId = await spaceDapp.getTokenIdOfOwner(spaceId, bobAAAddress!)
+    const tokenId = await spaceDapp.getTokenIdOfOwner(spaceId, bobAAAddress!, {
+        supportedRpcUrls: [],
+        etherNativeNetworkIds: [],
+        ethereumNetworkIds: [],
+    })
 
     const tipOp = await userOpsAlice.sendTipOp([
         {
@@ -126,7 +130,11 @@ test('can send tip to space member', async () => {
 
     // now tip bob again - to his metamask
     await fundWallet(aliceAAAddress!, alice)
-    const tokenId2 = await spaceDapp.getTokenIdOfOwner(spaceId, bobAAAddress!)
+    const tokenId2 = await spaceDapp.getTokenIdOfOwner(spaceId, bobAAAddress!, {
+        supportedRpcUrls: [],
+        etherNativeNetworkIds: [],
+        ethereumNetworkIds: [],
+    })
 
     // specify metamask as receiver
     const tipOp2 = await userOpsAlice.sendTipOp([
@@ -155,7 +163,11 @@ test('can send tip to space member', async () => {
 
     // tip bob again. The membership NFT is in his metamask, but we want to tip his AA address
     await fundWallet(aliceAAAddress!, alice)
-    const tokenId3 = await spaceDapp.getTokenIdOfOwner(spaceId, bobAAAddress!)
+    const tokenId3 = await spaceDapp.getTokenIdOfOwner(spaceId, bobAAAddress!, {
+        supportedRpcUrls: [],
+        etherNativeNetworkIds: [],
+        ethereumNetworkIds: [],
+    })
 
     const tipOp3 = await userOpsAlice.sendTipOp([
         {

@@ -1,10 +1,8 @@
-import { useQuery } from '../query/queryClient'
-import { useTownsClient } from './use-towns-client'
-import { blockchainKeys } from '../query/query-keys'
+import { useTownsContext } from '../components/TownsContextProvider'
+import { getDefaultXChainIds } from '../client/XChainConfig'
+import { useMemo } from 'react'
 
 export function useSupportedXChainIds() {
-    const client = useTownsClient()
-    return useQuery(blockchainKeys.supportedXChainIds(), client.getSupportedXChainIds, {
-        staleTime: Infinity,
-    })
+    const { baseChain } = useTownsContext()
+    return useMemo(() => getDefaultXChainIds(baseChain.id), [baseChain.id])
 }

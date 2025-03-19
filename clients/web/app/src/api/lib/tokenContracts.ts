@@ -76,7 +76,7 @@ export function useCollectionsForAddressesAcrossNetworks({
     wallets: string[]
     enabled: boolean
 }) {
-    const { data: supportedXChainIds } = useSupportedXChainIds()
+    const supportedXChainIds = useSupportedXChainIds()
 
     const queries = wallets.map((wallet) => {
         return {
@@ -119,22 +119,22 @@ export function useNftMetadata(
           }
         | undefined,
 ) {
-    const { data: supportedChainIds } = useSupportedXChainIds()
+    const supportedXChainIds = useSupportedXChainIds()
     return useQuery({
         queryKey: ['getNftMetadata', info?.contractAddress],
         queryFn: () => {
-            if (!info || !supportedChainIds) {
+            if (!info || !supportedXChainIds) {
                 return
             }
             return getNftMetadata(
                 info?.chainId ?? 0,
                 info?.tokenId ?? '',
                 info?.contractAddress ?? '',
-                supportedChainIds,
+                supportedXChainIds,
             )
         },
         staleTime: 1000 * 60 * 5,
-        enabled: !!info && !!supportedChainIds,
+        enabled: !!info && !!supportedXChainIds,
     })
 }
 

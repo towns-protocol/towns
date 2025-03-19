@@ -4,7 +4,7 @@ import { blockchainKeys } from '../query/query-keys'
 import { useTownsContext } from '../components/TownsContextProvider'
 
 export function useTokenIdOfOwner(spaceId: string | undefined, ownerAddress: string) {
-    const { baseProvider: provider, baseConfig: config } = useTownsContext()
+    const { baseProvider: provider, baseConfig: config, xchainConfig } = useTownsContext()
 
     const spaceDapp = useSpaceDapp({
         config,
@@ -17,7 +17,7 @@ export function useTokenIdOfOwner(spaceId: string | undefined, ownerAddress: str
             if (!spaceDapp || !spaceId || !ownerAddress) {
                 return
             }
-            return spaceDapp.getTokenIdOfOwner(spaceId, ownerAddress)
+            return spaceDapp.getTokenIdOfOwner(spaceId, ownerAddress, xchainConfig)
         },
         {
             enabled: !!spaceDapp && !!spaceId && !!ownerAddress,

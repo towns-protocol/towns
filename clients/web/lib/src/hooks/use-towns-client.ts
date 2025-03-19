@@ -211,7 +211,6 @@ interface TownsClientImpl {
     getIsUsernameAvailable: (streamId: string, username: string) => Promise<boolean | undefined>
     getIsWalletRegisteredWithCasablanca: () => Promise<boolean>
     getServerVersions: () => Promise<ITownsServerVersions | undefined>
-    getSupportedXChainIds: () => Promise<number[] | undefined>
     getUserProfileImage: (userId: string) => Promise<ChunkedMedia | undefined>
     updateUserBlock: (userId: string, isBlocked: boolean) => Promise<void>
     inviteUser: (roomId: string, userId: string) => Promise<void>
@@ -515,7 +514,6 @@ export function useTownsClient(): TownsClientImpl {
         unlinkViaCaller: useWithCatch(clientSingleton?.unlinkViaCaller),
         getLinkedWallets: useWithCatch(clientSingleton?.getLinkedWallets),
         waitWalletLinkTransaction: useWithCatch(clientSingleton?.waitWalletLinkTransaction),
-        getSupportedXChainIds: useWithCatch(clientSingleton?.getSupportedXChainIds),
         prepayMembershipTransaction: useWithCatch(clientSingleton?.prepayMembershipTransaction),
         waitForPrepayMembershipTransaction: useWithCatch(
             clientSingleton?.waitForPrepayMembershipTransaction,

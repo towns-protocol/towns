@@ -1,7 +1,7 @@
 import { BigNumberish, ContractReceipt } from 'ethers'
 import { SendMessageOptions, UpdateChannelInfo } from '../types/towns-types'
 import { RoleIdentifier, TProvider, TransactionOrUserOperation } from '../types/web3-types'
-import { Address, BaseChainConfig, RiverChainConfig } from '@river-build/web3'
+import { Address, BaseChainConfig, RiverChainConfig, XchainConfig } from '@river-build/web3'
 import { AccountAbstractionConfig } from '@towns/userops'
 import { TownsAnalytics } from 'types/TownsAnalytics'
 import { UnpackEnvelopeOpts } from '@river-build/sdk'
@@ -14,11 +14,9 @@ export interface TownsOpts {
     baseProvider: TProvider
     riverChainId: number
     riverConfig: RiverChainConfig
+    xchainConfig: XchainConfig
     riverProvider?: TProvider
     eventHandlers?: TownsClientEventHandlers
-    supportedXChainRpcMapping?: {
-        [chainId: number]: string
-    }
     logNamespaceFilter?: string
     verbose?: boolean
     accountAbstractionConfig?: AccountAbstractionConfig

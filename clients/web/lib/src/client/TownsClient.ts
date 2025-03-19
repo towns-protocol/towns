@@ -16,7 +16,7 @@ import {
     SolanaTransactionReceipt,
 } from '@river-build/sdk'
 import { EntitlementsDelegate } from '@river-build/encryption'
-import { IRuleEntitlementV2Base, XchainConfig, ISpaceDapp, SpaceDapp } from '@river-build/web3'
+import { IRuleEntitlementV2Base, ISpaceDapp, SpaceDapp } from '@river-build/web3'
 import {
     AddEventResponse_Error,
     ChunkedMedia,
@@ -59,7 +59,6 @@ import {
     UpdateChannelInfo,
 } from '../types/towns-types'
 import { toMembership, Membership, SignerContext, MessageType } from '@river-build/sdk'
-import { getDefaultXChainIds, marshallXChainConfig } from './XChainConfig'
 import { addCategoryToError, SignerUndefinedError } from '../types/error-types'
 import { makeSpaceStreamId, makeDefaultChannelStreamId } from '@river-build/sdk'
 import { retryOperation, staticAssertNever } from '../utils/towns-utils'
@@ -318,8 +317,7 @@ export class TownsClient
             userId: this.casablancaClient.userId,
         })
 
-        const xChainRpcUrls = await this.getXchainConfig()
-        this.log('xChainRpcUrls', xChainRpcUrls)
+        this.log('xChainRpcUrls', this.opts.xchainConfig.supportedRpcUrls)
 
         this.casablancaClient.startSync()
         this.emit('onCasablancaClientCreated', this.casablancaClient)
@@ -708,7 +706,7 @@ export class TownsClient
                 channelId,
                 user,
                 permission,
-                await this.getXchainConfig(),
+                this.opts.xchainConfig,
             )
         } else if (spaceId) {
             if (permission === Permission.JoinSpace) {
@@ -733,37 +731,15 @@ export class TownsClient
         return isEntitled
     }
 
-    // this is eventually going to be read from river, hence the induced async type
-    public async getSupportedXChainIds(): Promise<number[]> {
-        if (!this.supportedXChainIds) {
-            this.supportedXChainIds = getDefaultXChainIds(this.opts.baseChainId)
-        }
-        return await Promise.resolve(this.supportedXChainIds)
-    }
-
-    /**
-     *
-     * @returns a list of ethers providers for the supported xchains plus the base provider
-     */
-    public async getXchainConfig(): Promise<XchainConfig> {
-        const xChainIds = await this.getSupportedXChainIds()
-        const xchainConfig = marshallXChainConfig(
-            xChainIds,
-            this.opts.supportedXChainRpcMapping ?? {},
-        )
-        return Promise.resolve(xchainConfig)
-    }
-
     private async isEntitledToJoinSpace(spaceId: string | undefined, rootKey: string) {
         if (!spaceId) {
             throw new Error('spaceId is required for permission JoinSpace')
         }
 
-        const supportedXChainRpcUrls = await this.getXchainConfig()
         const entitledWallet = await this.spaceDapp.getEntitledWalletForJoiningSpace(
             spaceId,
             rootKey,
-            supportedXChainRpcUrls,
+            this.opts.xchainConfig,
         )
 
         this.log(`[isEntitledToJoinSpace] is user entitlted for Permission.JoinSpace`, {
@@ -1244,7 +1220,7 @@ export class TownsClient
             await this.baseTransactor.mintMembershipTransaction({
                 spaceId,
                 signer,
-                xchainConfig: await this.getXchainConfig(),
+                xchainConfig: this.opts.xchainConfig,
             })
             this.log('[joinTown] minted membership')
             onJoinFlowStatus?.(JoinFlowStatus.MembershipMinted)

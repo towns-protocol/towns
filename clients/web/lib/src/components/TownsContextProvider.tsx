@@ -26,7 +26,7 @@ import { Chain } from 'viem/chains'
 import { IChainConfig, TProvider } from '../types/web3-types'
 import { SnapshotCaseType } from '@river-build/proto'
 import { makeProviderFromChain, makeProviderFromConfig } from '../utils/provider-utils'
-import { BaseChainConfig, RiverChainConfig } from '@river-build/web3'
+import { BaseChainConfig, RiverChainConfig, XchainConfig } from '@river-build/web3'
 import { AccountAbstractionConfig } from '@towns/userops'
 import { useUserLookupUpdater } from '../hooks/use-user-lookup-updater'
 import { TownsAnalytics } from '../types/TownsAnalytics'
@@ -36,6 +36,7 @@ import { useSpaceRollups } from '../hooks/use-space-data'
 import { useCalculateSpaceThreadRoots } from '../hooks/use-space-thread-roots'
 import { useCalculateSpaceMentions } from '../hooks/use-space-mentions'
 import { dlogger } from '@river-build/dlog'
+import { getXchainConfig } from '../client/XChainConfig'
 
 export type InitialSyncSortPredicate = (a: string, b: string) => number
 
@@ -64,6 +65,7 @@ export interface ITownsContext {
     dmUnreadChannelIds: Set<string> // dmChannelId -> set of channelIds with unreads
     clientStatus: ReturnType<typeof useClientInitStatus>
     blockedUserIds: Set<string>
+    xchainConfig: XchainConfig
 }
 
 export const TownsContext = createContext<ITownsContext | undefined>(undefined)
@@ -147,6 +149,10 @@ const TownsContextImpl = (props: TownsContextProviderProps): JSX.Element => {
         return makeProviderFromConfig(riverChain)
     }, [riverChain])
 
+    const xchainConfig = useMemo(() => {
+        return getXchainConfig(baseChain.id, props.supportedXChainRpcMapping ?? {})
+    }, [baseChain.id, props.supportedXChainRpcMapping])
+
     const townsOpts = useMemo(() => {
         return {
             environmentId,
@@ -156,31 +162,31 @@ const TownsContextImpl = (props: TownsContextProviderProps): JSX.Element => {
             riverChainId: riverChain.chainId,
             riverConfig,
             riverProvider,
+            xchainConfig,
             accountAbstractionConfig: props.accountAbstractionConfig,
             highPriorityStreamIds: props.highPriorityStreamIds,
             unpackEnvelopeOpts: props.unpackEnvelopeOpts,
-            supportedXChainRpcMapping: props.supportedXChainRpcMapping,
             ethMainnetRpcUrl: props.ethMainnetRpcUrl,
             analytics: props.analytics,
             createLegacySpaces: props.createLegacySpaces,
             useModifySync: props.useModifySync,
         } satisfies TownsOpts
     }, [
+        environmentId,
         baseChain.id,
         baseConfig,
         baseProvider,
-        environmentId,
-        props.accountAbstractionConfig,
-        props.ethMainnetRpcUrl,
-        props.highPriorityStreamIds,
-        props.unpackEnvelopeOpts,
-        props.supportedXChainRpcMapping,
-        props.analytics,
-        props.createLegacySpaces,
-        props.useModifySync,
         riverChain.chainId,
         riverConfig,
         riverProvider,
+        xchainConfig,
+        props.accountAbstractionConfig,
+        props.highPriorityStreamIds,
+        props.unpackEnvelopeOpts,
+        props.ethMainnetRpcUrl,
+        props.analytics,
+        props.createLegacySpaces,
+        props.useModifySync,
     ])
 
     const { client, clientSingleton, casablancaClient, signerContext } =
@@ -245,7 +251,8 @@ const TownsContextImpl = (props: TownsContextProviderProps): JSX.Element => {
             clientStatus,
             blockedUserIds,
             signerContext,
-        }
+            xchainConfig,
+        } satisfies ITownsContext
 
         return newValue
     }, [
@@ -271,6 +278,7 @@ const TownsContextImpl = (props: TownsContextProviderProps): JSX.Element => {
         clientStatus,
         blockedUserIds,
         signerContext,
+        xchainConfig,
     ])
 
     const valueRef = useRef<ITownsContext>()

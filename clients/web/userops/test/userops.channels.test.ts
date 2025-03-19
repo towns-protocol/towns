@@ -193,7 +193,8 @@ test('can create a channel with permission overrides', async () => {
         Permission.PinMessage,
         {
             supportedRpcUrls: [],
-            etherBasedChains: [],
+            etherNativeNetworkIds: [],
+            ethereumNetworkIds: [],
         },
     )
     expect(hasPermission).toBe(true)
@@ -205,7 +206,8 @@ test('can create a channel with permission overrides', async () => {
         Permission.Write,
         {
             supportedRpcUrls: [],
-            etherBasedChains: [],
+            etherNativeNetworkIds: [],
+            ethereumNetworkIds: [],
         },
     )
     expect(hasPermission).toBe(false)
@@ -273,7 +275,8 @@ test('can create a channel with permission overrides', async () => {
         Permission.Write,
         {
             supportedRpcUrls: [],
-            etherBasedChains: [],
+            etherNativeNetworkIds: [],
+            ethereumNetworkIds: [],
         },
     )
     expect(hasPermission).toBe(false)
