@@ -50,7 +50,6 @@ func (sc *SyncCookie) CopyWithAddr(address common.Address) *SyncCookie {
 		NodeAddress:       address.Bytes(),
 		StreamId:          sc.GetStreamId(),
 		MinipoolGen:       sc.GetMinipoolGen(),
-		MinipoolSlot:      sc.GetMinipoolSlot(),
 		PrevMiniblockHash: sc.GetPrevMiniblockHash(),
 	}
 }

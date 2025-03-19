@@ -558,7 +558,6 @@ func TestSyncWithEmptyNodeAddress(t *testing.T) {
 		return &protocol.SyncCookie{
 			StreamId:          channel.GetStreamId(),
 			MinipoolGen:       channel.GetMinipoolGen(),
-			MinipoolSlot:      channel.GetMinipoolSlot(),
 			PrevMiniblockHash: channel.GetPrevMiniblockHash(),
 		}, channelHash
 	}
