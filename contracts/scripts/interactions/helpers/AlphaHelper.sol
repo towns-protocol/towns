@@ -2,18 +2,17 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {IDiamondLoupe, IDiamondLoupeBase} from "@river-build/diamond/src/facets/loupe/IDiamondLoupe.sol";
-import {IDiamondCut} from "@river-build/diamond/src/facets/cut/IDiamondCut.sol";
+import {IDiamondLoupe, IDiamondLoupeBase} from "@towns-protocol/diamond/src/facets/loupe/IDiamondLoupe.sol";
+import {IDiamondCut} from "@towns-protocol/diamond/src/facets/cut/IDiamondCut.sol";
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
-import {IERC173} from "@river-build/diamond/src/facets/ownable/IERC173.sol";
-import {IOwnablePending} from "@river-build/diamond/src/facets/ownable/pending/IOwnablePending.sol";
-
-import {Diamond} from "@river-build/diamond/src/Diamond.sol";
-import {DiamondHelper} from "@river-build/diamond/scripts/common/helpers/DiamondHelper.s.sol";
+import {IERC173} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
+import {IOwnablePending} from "@towns-protocol/diamond/src/facets/ownable/pending/IOwnablePending.sol";
 
 // libraries
 
 // contracts
+import {Diamond} from "@towns-protocol/diamond/src/Diamond.sol";
+import {DiamondHelper} from "@towns-protocol/diamond/scripts/common/helpers/DiamondHelper.s.sol";
 import {Interaction} from "contracts/scripts/common/Interaction.s.sol";
 
 /// @dev note: struct fields must be in alphabetical order for the json parser to work

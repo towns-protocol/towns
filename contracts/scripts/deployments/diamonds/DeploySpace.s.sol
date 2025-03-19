@@ -2,7 +2,7 @@
 pragma solidity ^0.8.23;
 
 //interfaces
-import {IDiamond, Diamond} from "@river-build/diamond/src/Diamond.sol";
+import {IDiamond, Diamond} from "@towns-protocol/diamond/src/Diamond.sol";
 import {IERC721A} from "contracts/src/diamond/facets/token/ERC721A/IERC721A.sol";
 
 //libraries
@@ -12,7 +12,7 @@ import {DiamondHelper} from "contracts/test/diamond/Diamond.t.sol";
 import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
 
 // Facets
-import {MultiInit} from "@river-build/diamond/src/initializers/MultiInit.sol";
+import {MultiInit} from "@towns-protocol/diamond/src/initializers/MultiInit.sol";
 
 import {DeployDiamondCut} from "contracts/scripts/deployments/facets/DeployDiamondCut.s.sol";
 import {DeployDiamondLoupe} from "contracts/scripts/deployments/facets/DeployDiamondLoupe.s.sol";

@@ -8,10 +8,10 @@ import {RewardsVerifier} from "../base/registry/RewardsVerifier.t.sol";
 import {DeployRewardsDistributionV2} from "contracts/scripts/deployments/facets/DeployRewardsDistributionV2.s.sol";
 
 //interfaces
-import {IDiamondCut} from "@river-build/diamond/src/facets/cut/IDiamondCut.sol";
-import {IDiamondLoupe} from "@river-build/diamond/src/facets/loupe/IDiamondLoupe.sol";
-import {IDiamond} from "@river-build/diamond/src/Diamond.sol";
-import {IERC173} from "@river-build/diamond/src/facets/ownable/IERC173.sol";
+import {IDiamondCut} from "@towns-protocol/diamond/src/facets/cut/IDiamondCut.sol";
+import {IDiamondLoupe} from "@towns-protocol/diamond/src/facets/loupe/IDiamondLoupe.sol";
+import {IDiamond} from "@towns-protocol/diamond/src/Diamond.sol";
+import {IERC173} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
 import {INodeOperator} from "contracts/src/base/registry/facets/operator/INodeOperator.sol";
 import {IMainnetDelegationBase, IMainnetDelegation} from "contracts/src/base/registry/facets/mainnet/IMainnetDelegation.sol";
 import {ICrossDomainMessenger} from "contracts/src/base/registry/facets/mainnet/ICrossDomainMessenger.sol";

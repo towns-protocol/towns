@@ -4,9 +4,9 @@ pragma solidity ^0.8.23;
 // interfaces
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IVotes} from "@openzeppelin/contracts/governance/utils/IVotes.sol";
-import {IDiamond} from "@river-build/diamond/src/IDiamond.sol";
-import {IDiamondCut} from "@river-build/diamond/src/facets/cut/IDiamondCut.sol";
-import {IOwnableBase} from "@river-build/diamond/src/facets/ownable/IERC173.sol";
+import {IDiamond} from "@towns-protocol/diamond/src/IDiamond.sol";
+import {IDiamondCut} from "@towns-protocol/diamond/src/facets/cut/IDiamondCut.sol";
+import {IOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
 
 // libraries
 import {stdError} from "forge-std/StdError.sol";

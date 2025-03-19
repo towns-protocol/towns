@@ -17,7 +17,7 @@ import {CustomRevert} from "contracts/src/utils/libraries/CustomRevert.sol";
 import {TownsLib} from "./TownsLib.sol";
 
 // contracts
-import {IntrospectionBase} from "@river-build/diamond/src/facets/introspection/IntrospectionBase.sol";
+import {IntrospectionBase} from "@towns-protocol/diamond/src/facets/introspection/IntrospectionBase.sol";
 import {Ownable} from "solady/auth/Ownable.sol";
 import {Initializable} from "solady/utils/Initializable.sol";
 import {UUPSUpgradeable} from "solady/utils/UUPSUpgradeable.sol";

@@ -3,7 +3,7 @@ pragma solidity ^0.8.23;
 
 // interfaces
 import {Vm} from "forge-std/Vm.sol";
-import {IOwnableBase} from "@river-build/diamond/src/facets/ownable/IERC173.sol";
+import {IOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
 
 // libraries
 import {Stream, StreamWithId, SetMiniblock} from "contracts/src/river/registry/libraries/RegistryStorage.sol";
