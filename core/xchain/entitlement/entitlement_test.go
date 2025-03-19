@@ -589,7 +589,6 @@ func TestCheckOperation(t *testing.T) {
 
 // Disable this test case, which is relying on a public rpc endpoint.
 func TestCheckOperation_Untimed(t *testing.T) {
-	t.Skip("Disabling this test due to dependence on public endpoints")
 	testCases := map[string]struct {
 		op          Operation
 		wallets     []common.Address
@@ -957,7 +956,6 @@ var singleEtherChainBlockChainInfo = map[uint64]config.BlockchainInfo{
 
 // Disable this test case, which is relying on a public rpc endpoint.
 func Test_evaluateEthBalance_withConfig(t *testing.T) {
-	t.Skip("Disabling this test due to dependence on public endpoints")
 	tests := map[string]struct {
 		op          Operation
 		wallets     []common.Address
