@@ -2,10 +2,10 @@
 pragma solidity ^0.8.23;
 
 // interfaces
+import {IFeatureManagerFacetBase} from "contracts/src/base/registry/facets/feature/IFeatureManagerFacet.sol";
 
 // libraries
 import {FeatureManager} from "contracts/src/base/registry/facets/feature/FeatureManager.sol";
-import {IFeatureManagerFacetBase} from "contracts/src/base/registry/facets/feature/IFeatureManagerFacet.sol";
 
 // contracts
 import {BaseSetup} from "contracts/test/spaces/BaseSetup.sol";

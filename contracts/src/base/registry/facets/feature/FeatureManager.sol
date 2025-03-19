@@ -47,7 +47,7 @@ library FeatureManager {
   function setFeatureCondition(
     Layout storage self,
     bytes32 featureId,
-    Condition memory condition
+    Condition calldata condition
   ) internal {
     if (condition.token == address(0))
       CustomRevert.revertWith(IFeatureManagerFacetBase.InvalidToken.selector);
