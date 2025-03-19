@@ -1,42 +1,45 @@
 ---
-title: Best Practices
-description: The following guide describes high level best practices for running a Stream Node as a node operator.
+title: "Best Practices"
+description: "This guide outlines best practices for operating a Stream Node."
 ---
-
-
 
 ## Node Operations Best Practices
 
-Whether operating nodes in the public cloud or on-premise, the following best practices are recommended to ensure availability and reliability of your Stream Nodes.
-
+Follow these recommended practices to ensure your Stream Nodes remain available and reliable, whether running in the cloud or on-premise.
 
 ### Maintenance
 
 <Steps>
-
-<Step title="Regular Updates">
+  <Step title="Regular Updates">
     - Keep your node software up to date with the latest security patches and feature updates. Regularly check for new releases.
     - Using the deployment scripts, you can bring a new instance of a FE up into validation mode, and once you are confident it is passing health checks, you can switch it to be your new Running node and de-provision your prior FE.
     - Storage schema updates are performed via db migrations using [golang-migrate](https://github.com/golang-migrate/migrate) and are performed automatically within releases as part of Node FE upgrades.
     - You are encouraged to set `STANDBYONSTART` to true in your environment variables if you are running blue green deployments behind a proxy or network load balancer. This will allow you to bring up a new instance of the FE in standby mode, and once it is passing health checks, it will automatically switch to primary.
+
     <br />
-    <Note>If your node operator has not yet been fully registered or your node has not yet been registered, you can test running an unattached Node Fe to ensure health checks pass by setting `STANDBYONSTART=true`. A node started in this manner will not attach to Storage layer or shutdown if it is not registered yet on the Towns Chain.</Note>
-</Step>
-<Step title="Backups">
-    - Implement routine backups of your Node Storage to prevent data loss. 
-    - Establish an operating procedure for automated or manual data restoration from backups in the event of an outage.
+
+    <Note>
+      If your node operator has not yet been fully registered or your node has not yet been registered, you can test running an unattached Node Fe to ensure health checks pass by setting `STANDBYONSTART=true`. A node started in this manner will not attach to Storage layer or shutdown if it is not registered yet on the Towns Chain.
+    </Note>
+  </Step>
+  <Step title="Backups">
+    - Perform regular Node Storage backups to prevent data loss.
+    - Create procedures for automated or manual data restoration from backups during outages.
     - Use monitoring tools to track your node's performance and health.
     - If your node storage crashes, you can restore a backup, and recover/catchup from the peers responsible for the same chunks of data.
 
-    <Warning>As of October 2024, stream replication has not yet been implemented. Until stream replication is implemented, data recovery cannot be achieved from peers. Therefore, it is important that node operators backup their node storage regularly and ensure high availability through their cloud provider database setup. </Warning>
-
-</Step>
-<Step title="Monitoring">
+    <Warning>
+      As of October 2024, stream replication has not yet been implemented. Until stream replication is implemented, data recovery cannot be achieved from peers. Therefore, it is important that node operators backup their node storage regularly and ensure high availability through their cloud provider database setup. 
+    </Warning>
+  </Step>
+  <Step title="Monitoring">
     - Regularly review your node's performance. Use logs, metrics, and profiling tools exposed by node to tune your observability stack.
     - Adjust resource allocation and network settings as needed to optimize for throughput and reliability.
 
-    <Note>By settings `METRICS__ENABLED=true` in your node's environment, you can enable detailed metrics collection for your node. Metrics are instrumented using [Open Telemetry](https://opentelemetry.io/docs/specs/otel/metrics/) and can be used to monitor your node's performance and health by navigating to the metrics endpoint at `https://<node-hostname>/metrics`. See [node observability](/run/node-operator/node-observability) for more information.</Note>
-</Step>
+    <Note>
+      By settings `METRICS__ENABLED=true` in your node's environment, you can enable detailed metrics collection for your node. Metrics are instrumented using [Open Telemetry](https://opentelemetry.io/docs/specs/otel/metrics/) and can be used to monitor your node's performance and health by navigating to the metrics endpoint at `https://<node-hostname>/metrics`. See [node observability](/run/node-operator/node-observability) for more information.
+    </Note>
+  </Step>
 </Steps>
 
 ### Troubleshooting
@@ -47,29 +50,28 @@ If there's a new bug or security vulnerability found, please file an issue on th
 
 <Steps>
   <Step title="Common Issues">
-    - Address typical problems such as connectivity issues, slow transaction
-    processing, or database errors with targeted troubleshooting steps provided
-    in the network's documentation.
+    - Resolve typical problems like connectivity issues, slow transactions, or database errors using the network documentation's troubleshooting guides.
   </Step>
   <Step title="Diagnostic Tools">
-    - Utilize built-in diagnostic tools and logs to identify issues. Follow
-    systematic troubleshooting procedures to resolve operational problems.
+    - Use built-in diagnostic tools and logs systematically to identify and fix operational issues.
   </Step>
 </Steps>
+
 ### Security
+
 <Steps>
   <Step title="Access Control">
     - Implement strict access controls for administrative operations. Use secure
-    authentication methods to protect against unauthorized access.
+      authentication methods to protect against unauthorized access.
   </Step>
   <Step title="Encryption and Network Security">
     - Secure data in transit and at rest using encryption. Apply network
-    security best practices, such as firewalls and secure protocols, to protect
-    against external attacks.
+      security best practices, such as firewalls and secure protocols, to protect
+      against external attacks.
   </Step>
   <Step title="Regular Security Audits">
     - Conduct regular security audits to identify and mitigate potential
-    vulnerabilities. Stay informed about the latest security threats and apply
-    recommended countermeasures.
+      vulnerabilities. Stay informed about the latest security threats and apply
+      recommended countermeasures.
   </Step>
 </Steps>
