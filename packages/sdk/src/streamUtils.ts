@@ -104,6 +104,9 @@ export function parsedMiniblockToPersistedMiniblock(
     miniblock: ParsedMiniblock,
     direction: 'forward' | 'backward',
 ) {
+    if (direction === 'backward') {
+        miniblock.header.snapshot = undefined
+    }
     return create(PersistedMiniblockSchema, {
         hash: miniblock.hash,
         header: miniblock.header,
