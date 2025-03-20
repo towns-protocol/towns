@@ -23,7 +23,7 @@ import {UpgradeableBeaconBase} from "contracts/src/diamond/facets/beacon/Upgrade
 import {RewardsDistribution} from "contracts/src/base/registry/facets/distribution/v2/RewardsDistribution.sol";
 import {BaseRegistryTest} from "./BaseRegistry.t.sol";
 
-contract RewardsDistributionV2Test is BaseRegistryTest, IOwnableBase, IDiamond {
+contract RewardsDistributionV2Test is BaseRegistryTest, IOwnableBase {
   using FixedPointMathLib for uint256;
 
   bytes32 internal constant STAKE_TYPEHASH =
@@ -90,11 +90,11 @@ contract RewardsDistributionV2Test is BaseRegistryTest, IOwnableBase, IDiamond {
     address newTowns = deployTokenBase.deploy(deployer);
 
     address implementation = address(new RewardsDistribution());
-    FacetCut memory cut = distributionV2Helper.makeCut(
+    IDiamond.FacetCut memory cut = distributionV2Helper.makeCut(
       implementation,
-      FacetCutAction.Replace
+      IDiamond.FacetCutAction.Replace
     );
-    FacetCut[] memory cuts = new FacetCut[](1);
+    IDiamond.FacetCut[] memory cuts = new IDiamond.FacetCut[](1);
     cuts[0] = cut;
     bytes memory initData = distributionV2Helper.makeInitData(
       newTowns,

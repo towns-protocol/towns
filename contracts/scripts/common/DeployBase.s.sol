@@ -125,12 +125,12 @@ contract DeployBase is Context, DeployHelpers, Script {
     createChainIdFile(networkDirPath());
 
     // Get directory from version name if it contains a "/"
-    string memory typeDir = getDirectoryFromVersion(versionName);
-    if (bytes(typeDir).length > 0) {
-      createDir(
-        string.concat(networkDirPath(), "/", "addresses", "/", typeDir)
-      );
-    }
+    // string memory typeDir = getDirectoryFromVersion(versionName);
+    // if (bytes(typeDir).length > 0) {
+    //   createDir(
+    //     string.concat(networkDirPath(), "/", "addresses", "/", typeDir)
+    //   );
+    // }
 
     // get deployment path
     string memory path = addressesPath(versionName);
