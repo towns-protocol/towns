@@ -6,7 +6,7 @@ pragma solidity ^0.8.0;
 //libraries
 
 //contracts
-import {IDiamond, Diamond} from "@river-build/diamond/src/Diamond.sol";
+import {IDiamond, Diamond} from "@towns-protocol/diamond/src/Diamond.sol";
 
 interface IDiamondInitHelper is IDiamond {
   function diamondInitHelper(

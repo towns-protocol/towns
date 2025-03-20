@@ -189,8 +189,10 @@ const nftMultiCheckHighThresholdBaseSepolia: CheckOperationV2 = {
 
 const xchainConfig: XchainConfig = {
     supportedRpcUrls: {
-        [Number(ethereumSepoliaChainId)]: 'https://ethereum-sepolia-rpc.publicnode.com',
-        [Number(baseSepoliaChainId)]: 'https://sepolia.base.org',
+        [Number(ethereumSepoliaChainId)]:
+            process.env.ETH_SEPOLIA_RPC_URL ?? 'https://ethereum-sepolia-rpc.publicnode.com',
+        [Number(baseSepoliaChainId)]:
+            process.env.BASE_SEPOLIA_RPC_URL ?? 'https://sepolia.base.org',
     },
     etherNativeNetworkIds: [Number(ethereumSepoliaChainId), Number(baseSepoliaChainId)],
     ethereumNetworkIds: [Number(ethereumSepoliaChainId)],
@@ -198,8 +200,10 @@ const xchainConfig: XchainConfig = {
 
 const minimalEtherChainsConfig: XchainConfig = {
     supportedRpcUrls: {
-        [Number(ethereumSepoliaChainId)]: 'https://ethereum-sepolia-rpc.publicnode.com',
-        [Number(baseSepoliaChainId)]: 'https://sepolia.base.org',
+        [Number(ethereumSepoliaChainId)]:
+            process.env.ETH_SEPOLIA_RPC_URL ?? 'https://ethereum-sepolia-rpc.publicnode.com',
+        [Number(baseSepoliaChainId)]:
+            process.env.BASE_SEPOLIA_RPC_URL ?? 'https://sepolia.base.org',
     },
     etherNativeNetworkIds: [Number(ethereumSepoliaChainId)],
     ethereumNetworkIds: [Number(ethereumSepoliaChainId)],

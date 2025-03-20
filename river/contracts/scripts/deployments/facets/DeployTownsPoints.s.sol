@@ -2,7 +2,7 @@
 pragma solidity ^0.8.23;
 
 //interfaces
-import {IDiamond} from "@river-build/diamond/src/IDiamond.sol";
+import {IDiamond} from "@towns-protocol/diamond/src/IDiamond.sol";
 
 //libraries
 import "forge-std/console.sol";

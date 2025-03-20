@@ -166,11 +166,10 @@ func (sr *SyncRunner) Run(
 			NodeAddress:       sticky[:],
 			StreamId:          stream.StreamId[:],
 			MinipoolGen:       math.MaxInt64, // force sync reset
-			MinipoolSlot:      0,
 			PrevMiniblockHash: common.Hash{}.Bytes(),
 		}}
 
-		log.Debugw("Start sync stream session")
+		log.Debugw("Start sync stream session", "node", sticky)
 
 		streamUpdates, err := client.SyncStreams(syncCtx, connect.NewRequest(&protocol.SyncStreamsRequest{
 			SyncPos: syncPos,
@@ -179,6 +178,7 @@ func (sr *SyncRunner) Run(
 		metrics.SyncSessionInFlight.Dec()
 
 		if err != nil {
+			log.Debugw("start sync err", "err", err)
 			remotes.AdvanceStickyPeer(remoteAddr)
 			syncCancel()
 			if !errors.Is(err, context.Canceled) {
@@ -219,6 +219,7 @@ func (sr *SyncRunner) Run(
 				}
 				continue
 			}
+			log.Debugw("Received SYNC_NEW")
 			syncID = firstMsg.GetSyncId()
 		}
 
@@ -321,7 +322,7 @@ func (sr *SyncRunner) Run(
 				for _, block := range update.GetStream().GetMiniblocks() {
 					if !reset {
 						if err := trackedStream.ApplyBlock(block); err != nil {
-							log.Debugw("Unable to apply block", "stream", streamID, "err", err)
+							log.Errorw("Unable to apply block", "err", err)
 						}
 					}
 					// If the stream was just allocated, process the miniblocks and events for notifications.
@@ -331,7 +332,17 @@ func (sr *SyncRunner) Run(
 						// Send notifications for all events in all blocks.
 						for _, event := range block.GetEvents() {
 							if parsedEvent, err := events.ParseEvent(event); err == nil {
-								_ = trackedStream.SendEventNotification(syncCtx, parsedEvent)
+								if err := trackedStream.SendEventNotification(syncCtx, parsedEvent); err != nil {
+									log.Errorw(
+										"Error sending event notification",
+										"error",
+										err,
+										"streamId",
+										streamID,
+										"eventHash",
+										event.Hash,
+									)
+								}
 							}
 						}
 					}
@@ -344,7 +355,7 @@ func (sr *SyncRunner) Run(
 					if applyHistoricalStreamContents {
 						if parsedEvent, err := events.ParseEvent(event); err == nil {
 							if err := trackedStream.SendEventNotification(syncCtx, parsedEvent); err != nil {
-								log.Debugw(
+								log.Errorw(
 									"Error sending notification for historical event",
 									"hash",
 									parsedEvent.Hash,
@@ -355,7 +366,7 @@ func (sr *SyncRunner) Run(
 						}
 					} else {
 						if err := trackedStream.ApplyEvent(syncCtx, event); err != nil {
-							log.Errorw("Unable to apply event", "stream", streamID, "err", err)
+							log.Errorw("Unable to apply event", "err", err)
 						}
 					}
 				}

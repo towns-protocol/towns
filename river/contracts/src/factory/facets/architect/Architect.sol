@@ -13,10 +13,10 @@ import {ISpaceProxyInitializer} from "contracts/src/spaces/facets/proxy/ISpacePr
 
 // contracts
 import {ArchitectBase} from "./ArchitectBase.sol";
-import {OwnableBase} from "@river-build/diamond/src/facets/ownable/OwnableBase.sol";
+import {OwnableBase} from "@towns-protocol/diamond/src/facets/ownable/OwnableBase.sol";
 import {ReentrancyGuard} from "solady/utils/ReentrancyGuard.sol";
-import {PausableBase} from "@river-build/diamond/src/facets/pausable/PausableBase.sol";
-import {Facet} from "@river-build/diamond/src/facets/Facet.sol";
+import {PausableBase} from "@towns-protocol/diamond/src/facets/pausable/PausableBase.sol";
+import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
 
 contract Architect is
   IArchitect,

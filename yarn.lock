@@ -10359,28 +10359,18 @@ __metadata:
     "@openzeppelin/contracts-upgradeable": ^5.2.0
     "@prb/math": ^4.1.0
     "@prb/test": ^0.6.4
-    "@river-build/diamond": "github:river-build/diamond#552c970ed60cf452d28e7713b00a95c7bd10a5d9"
+    "@towns-protocol/diamond": ^0.1.0
     "@wagmi/cli": ^2.2.0
     account-abstraction: "github:eth-infinitism/account-abstraction"
     crypto-lib: "github:towns-protocol/crypto-lib#f40c5f6944a55583a687b672ba680db3bfabb0ef"
     forge-std: "github:foundry-rs/forge-std#v1.9.5"
     prettier: ^2.8.8
     prettier-plugin-solidity: ^1.4.2
-    solady: ^0.1.2
+    solady: ^0.1.12
     solhint: ^5.0.5
     turbo: ^2.0.12
   languageName: unknown
   linkType: soft
-
-"@river-build/diamond@github:river-build/diamond#552c970ed60cf452d28e7713b00a95c7bd10a5d9":
-  version: 1.2.0
-  resolution: "@river-build/diamond@https://github.com/river-build/diamond.git#commit=552c970ed60cf452d28e7713b00a95c7bd10a5d9"
-  dependencies:
-    "@openzeppelin/contracts": ^5.2.0
-    solady: ^0.1.2
-  checksum: ddd2585da9c20eafac400fad4751abbc5a7d4377ea166b7712d9f559b7075f69ccfc5b08bb57f1340c7e11ac14b174a0533a5b384a2ad4245f8afe5125b1725e
-  languageName: node
-  linkType: hard
 
 "@river-build/dlog@workspace:^, @river-build/dlog@workspace:river/packages/dlog":
   version: 0.0.0-use.local
@@ -13583,6 +13573,16 @@ __metadata:
   version: 2.0.0
   resolution: "@tootallnate/once@npm:2.0.0"
   checksum: ad87447820dd3f24825d2d947ebc03072b20a42bfc96cbafec16bff8bbda6c1a81fcb0be56d5b21968560c5359a0af4038a68ba150c3e1694fe4c109a063bed8
+  languageName: node
+  linkType: hard
+
+"@towns-protocol/diamond@npm:^0.1.0":
+  version: 0.1.0
+  resolution: "@towns-protocol/diamond@npm:0.1.0"
+  dependencies:
+    "@openzeppelin/contracts": ^5.2.0
+    solady: ^0.1.12
+  checksum: 617ffa15a5c5b632dcb1ccff7f397a27fb53aac994f6503e6c60eb7c8b2a54f468f285d036df1370decb88b1516755ae380952a97ebb28b0daf96521bc3f712c
   languageName: node
   linkType: hard
 
@@ -20114,7 +20114,7 @@ __metadata:
   resolution: "crypto-lib@https://github.com/towns-protocol/crypto-lib.git#commit=f40c5f6944a55583a687b672ba680db3bfabb0ef"
   dependencies:
     forge-std: "github:foundry-rs/forge-std#v1.9.5"
-  checksum: 3c532fcdf54bf202dea49afad7e96dc90653635169cd51694344d83a568806554c7e734f3a73fa5892e10cd69f33ae4805e75cecc53c79dd9f2b9c96d6f81d4b
+  checksum: 4626d553772dbcbce89bc5d0b394bc200702e61ffc8fdee80f651e65c3fe7ab3ed95d9d3c3cd2500c3fa3450022a77a515208e68967547af7f600490ed506e76
   languageName: node
   linkType: hard
 
@@ -35977,10 +35977,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"solady@npm:^0.1.2":
-  version: 0.1.6
-  resolution: "solady@npm:0.1.6"
-  checksum: 12d48717d6fdd834da973c23ca900e10c1f8e21bc34f8fb4387af19fe54c25ce713c7166a72d42e06c21fd698338a89c94e33fb09a7e1b2f1669f71ba6b3b609
+"solady@npm:^0.1.12":
+  version: 0.1.12
+  resolution: "solady@npm:0.1.12"
+  checksum: 1d2ffb9de7bd649018390d67c31fce42364432acdd68fc0aab55dae37a2468905b626431f152535beaa864f5a1c89c8678e4cd13a29024a6b1cda81852468e2b
   languageName: node
   linkType: hard
 
