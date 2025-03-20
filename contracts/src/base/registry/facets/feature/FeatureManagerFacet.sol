@@ -8,8 +8,8 @@ import {IFeatureManagerFacet} from "./IFeatureManagerFacet.sol";
 import {FeatureManagerLib, ConditionLib} from "./FeatureManagerLib.sol";
 
 // contracts
-import {OwnableBase} from "@river-build/diamond/src/facets/ownable/OwnableBase.sol";
-import {Facet} from "@river-build/diamond/src/facets/Facet.sol";
+import {OwnableBase} from "@towns-protocol/diamond/src/facets/ownable/OwnableBase.sol";
+import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
 
 /// @title FeatureManagerFacet
 /// @notice Manages feature conditions and checks for spaces
