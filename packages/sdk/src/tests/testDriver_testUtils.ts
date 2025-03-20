@@ -209,7 +209,7 @@ export const converse = async (conversation: string[][], testName: string): Prom
             await Promise.all(
                 conv.map(async (msg, msg_idx) => {
                     log(`conversation step before send conv: ${conv_idx} msg: ${msg_idx}`, msg)
-                    // expect to recieve everyone elses messages (don't worry about your own, they render locally)
+                    // expect to receive everyone elses messages (don't worry about your own, they render locally)
                     const expected = new Set(
                         [...conv.slice(0, msg_idx), ...conv.slice(msg_idx + 1)].filter(
                             (s) => s !== '',

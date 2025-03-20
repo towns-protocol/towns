@@ -452,7 +452,7 @@ export async function* iterableWrapper<T>(
 //        getUserPayload_Membership,
 //    )
 //
-// to get user memebrship payload from a last event containing it, or undefined if not found.
+// to get user membership payload from a last event containing it, or undefined if not found.
 export const lastEventFiltered = <T extends (a: ParsedEvent) => any>(
     events: ParsedEvent[],
     f: T,
