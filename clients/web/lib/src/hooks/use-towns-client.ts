@@ -316,6 +316,7 @@ interface TownsClientImpl {
     unlinkViaCaller: (caller: TSigner) => Promise<WalletLinkTransactionContext | undefined>
 
     getLinkedWallets: (rootKey: string) => Promise<string[] | undefined>
+    getLinkedWalletsWithDelegations: (rootKey: string) => Promise<string[] | undefined>
     waitWalletLinkTransaction: (
         transactionContext: WalletLinkTransactionContext,
     ) => Promise<WalletLinkTransactionContext | undefined>
@@ -513,6 +514,9 @@ export function useTownsClient(): TownsClientImpl {
         unlinkViaRootKey: useWithCatch(clientSingleton?.unlinkViaRootKey),
         unlinkViaCaller: useWithCatch(clientSingleton?.unlinkViaCaller),
         getLinkedWallets: useWithCatch(clientSingleton?.getLinkedWallets),
+        getLinkedWalletsWithDelegations: useWithCatch(
+            clientSingleton?.getLinkedWalletsWithDelegations,
+        ),
         waitWalletLinkTransaction: useWithCatch(clientSingleton?.waitWalletLinkTransaction),
         prepayMembershipTransaction: useWithCatch(clientSingleton?.prepayMembershipTransaction),
         waitForPrepayMembershipTransaction: useWithCatch(

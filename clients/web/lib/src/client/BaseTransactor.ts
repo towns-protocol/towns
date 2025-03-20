@@ -77,6 +77,7 @@ export class BaseTransactor {
     public spaceDapp: SpaceDapp
     public baseProvider: TProvider
     public baseConfig: BaseChainConfig
+    public xchainConfig: XchainConfig
 
     constructor(args: {
         accountAbstractionConfig: AccountAbstractionConfig | undefined
@@ -85,6 +86,7 @@ export class BaseTransactor {
         spaceDapp: SpaceDapp
         analytics: TownsAnalytics | undefined
         createLegacySpaces: boolean
+        xchainConfig: XchainConfig
     }) {
         const {
             accountAbstractionConfig,
@@ -93,6 +95,7 @@ export class BaseTransactor {
             spaceDapp,
             analytics,
             createLegacySpaces,
+            xchainConfig,
         } = args
         this.blockchainTransactionStore = new BlockchainTransactionStore(spaceDapp)
 
@@ -111,6 +114,7 @@ export class BaseTransactor {
         this.spaceDapp = spaceDapp
         this.baseProvider = baseProvider
         this.baseConfig = baseConfig
+        this.xchainConfig = xchainConfig
     }
 
     /************************************************
@@ -1314,7 +1318,9 @@ export class BaseTransactor {
         spaceId: string,
         walletAddress: string,
     ): Promise<string | undefined> {
-        const wallets = (await this.getLinkedWallets(walletAddress)).concat(walletAddress)
+        const wallets = (await this.getLinkedWalletsWithDelegations(walletAddress)).concat(
+            walletAddress,
+        )
         for (const walletAddress of wallets) {
             if (await this.spaceDapp.hasSpaceMembership(spaceId, walletAddress)) {
                 return walletAddress
@@ -1527,6 +1533,13 @@ export class BaseTransactor {
     public async getLinkedWallets(walletAddress: string): Promise<string[]> {
         const walletLink = this.spaceDapp.getWalletLink()
         return await walletLink.getLinkedWallets(walletAddress)
+    }
+
+    public async getLinkedWalletsWithDelegations(walletAddress: string): Promise<string[]> {
+        return await this.spaceDapp.getLinkedWalletsWithDelegations(
+            walletAddress,
+            this.xchainConfig,
+        )
     }
 
     public async getRootKeyFromLinkedWallet(walletAddress: string): Promise<string> {
