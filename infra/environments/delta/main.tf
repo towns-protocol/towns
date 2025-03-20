@@ -63,6 +63,11 @@ module "vpc" {
   enable_dns_hostnames = true
 }
 
+resource "aws_ecs_cluster" "river_ecs_cluster" {
+  name = "${terraform.workspace}-river-ecs-cluster"
+  tags = module.global_constants.tags
+}
+
 locals {
   num_full_nodes      = 10
   num_archive_nodes   = 0
@@ -73,24 +78,23 @@ module "system_parameters" {
   source = "../../modules/river-system-parameters"
 }
 
+module "stream_metadata" {
+  source    = "../../modules/stream-metadata"
+  river_env = terraform.workspace
 
-# module "stream_metadata" {
-#   source    = "../../modules/stream-metadata"
-#   river_env = terraform.workspace
+  vpc_id = module.vpc.vpc_id
 
-#   vpc_id = module.vpc.vpc_id
+  ecs_cluster = {
+    id   = aws_ecs_cluster.river_ecs_cluster.id
+    name = aws_ecs_cluster.river_ecs_cluster.name
+  }
 
-#   ecs_cluster = {
-#     id   = aws_ecs_cluster.river_ecs_cluster.id
-#     name = aws_ecs_cluster.river_ecs_cluster.name
-#   }
+  river_chain_rpc_url_secret_arn = local.global_remote_state.river_sepolia_rpc_url_secret.arn
+  base_chain_rpc_url_secret_arn  = local.global_remote_state.base_sepolia_rpc_url_secret.arn
 
-#   river_chain_rpc_url_secret_arn = local.global_remote_state.river_sepolia_rpc_url_secret.arn
-#   base_chain_rpc_url_secret_arn  = local.global_remote_state.base_sepolia_rpc_url_secret.arn
-
-#   private_subnets = module.vpc.private_subnets
-#   public_subnets  = module.vpc.public_subnets
-# }
+  private_subnets = module.vpc.private_subnets
+  public_subnets  = module.vpc.public_subnets
+}
 
 locals {
   river_database_isolation_level = "READ COMMITTED"
@@ -109,17 +113,17 @@ module "network_health_monitor" {
   river_chain_rpc_url_secret_arn = local.global_remote_state.river_sepolia_rpc_url_secret.arn
 }
 
-# data "cloudflare_zone" "zone" {
-#   name = module.global_constants.primary_hosted_zone_name
-# }
+data "cloudflare_zone" "zone" {
+  name = module.global_constants.primary_hosted_zone_name
+}
 
-# resource "cloudflare_record" "app_dns" {
-#   zone_id = data.cloudflare_zone.zone.id
-#   name    = "app.${terraform.workspace}"
-#   value   = "towns-server-delta.onrender.com"
-#   type    = "CNAME"
-#   ttl     = 60
-# }
+resource "cloudflare_record" "app_dns" {
+  zone_id = data.cloudflare_zone.zone.id
+  name    = "app.${terraform.workspace}"
+  value   = "towns-server-delta.onrender.com"
+  type    = "CNAME"
+  ttl     = 60
+}
 
 locals {
   gcp_project_id = "hnt-live-${terraform.workspace}"
