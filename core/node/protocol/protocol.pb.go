@@ -757,7 +757,7 @@ type Envelope struct {
 	// *
 	// Signature.
 	// For the event to be valid, signature must match event.creator_address
-	// or be signed by the address from evant.delegate_sig.
+	// or be signed by the address from event.delegate_sig.
 	Signature []byte `protobuf:"bytes,2,opt,name=signature,proto3" json:"signature,omitempty"`
 	Event     []byte `protobuf:"bytes,3,opt,name=event,proto3" json:"event,omitempty"`
 }

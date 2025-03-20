@@ -2,6 +2,9 @@ syntax = "proto3";
 package river;
 option go_package = "github.com/towns-protocol/towns/core/node/protocol";
 
+import "google/protobuf/empty.proto";
+import "protocol.proto";
+
 // AppRegistryService allows apps and app owners to register apps, and set app-related preferences for messages added
 // to channels the app has membership in.
 //
@@ -67,3 +70,26 @@ message GetStatusResponse {
     // version info returned by the webhook
     string version_info = 3;
 }
+
+message AppServiceRequest {
+    repeated Envelope messages = 1;
+    repeated Envelope group_encryption_sessions_messages = 2;
+
+    oneof action {
+        google.protobuf.Empty initialize = 101;
+        google.protobuf.Empty solicit = 102;
+    }
+}
+
+message AppServiceResponse {
+    optional UserMetadataPayload.EncryptionDevice encryption_device = 1; 
+
+    message Status {
+        int32 framework_version = 1;
+        string device_key = 2;
+        string fallback_key = 3;
+    }
+    optional Status status = 2;
+}
+
+
