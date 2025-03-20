@@ -7,10 +7,10 @@ import {
     type StreamResponse,
     Code,
 } from '@connectrpc/connect'
-import { Err } from '@river-build/proto'
+import { Err } from '@towns-protocol/proto'
 import { genShortId, streamIdAsString } from './id'
 import { isBaseUrlIncluded, isIConnectError } from './utils'
-import { dlog, dlogError, check } from '@river-build/dlog'
+import { dlog, dlogError, check } from '@towns-protocol/dlog'
 import cloneDeep from 'lodash/cloneDeep'
 
 export const DEFAULT_RETRY_PARAMS: RetryParams = {

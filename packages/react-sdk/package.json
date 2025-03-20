@@ -1,5 +1,5 @@
 {
-    "name": "@river-build/react-sdk",
+    "name": "@towns-protocol/react-sdk",
     "description": "React Hooks for River SDK",
     "version": "0.0.189",
     "type": "module",
@@ -18,7 +18,7 @@
         "watch": "yarn build -w"
     },
     "dependencies": {
-        "@river-build/sdk": "workspace:^",
+        "@towns-protocol/sdk": "workspace:^",
         "ethers": "^5.7.2"
     },
     "devDependencies": {

@@ -13,11 +13,11 @@ import {
     SpacePayload_UpdateChannelAutojoin,
     SpacePayload_UpdateChannelHideUserJoinLeaveEvents,
     ChunkedMediaSchema,
-} from '@river-build/proto'
+} from '@towns-protocol/proto'
 import { StreamEncryptionEvents, StreamEvents, StreamStateEvents } from './streamEvents'
 import { StreamStateView_AbstractContent } from './streamStateView_AbstractContent'
 import { DecryptedContent } from './encryptedContentTypes'
-import { check, throwWithCode } from '@river-build/dlog'
+import { check, throwWithCode } from '@towns-protocol/dlog'
 import { logNever } from './check'
 import { contractAddressFromSpaceId, isDefaultChannelId, streamIdAsString } from './id'
 import { fromBinary } from '@bufbuild/protobuf'

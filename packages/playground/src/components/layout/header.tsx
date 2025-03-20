@@ -3,7 +3,7 @@ import {
     useRiver,
     useRiverAuthStatus,
     useSyncAgent,
-} from '@river-build/react-sdk'
+} from '@towns-protocol/react-sdk'
 import { useLocation, useParams } from 'react-router-dom'
 import { useState } from 'react'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'

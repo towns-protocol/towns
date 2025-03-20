@@ -1,6 +1,6 @@
 'use client'
 import { useEffect, useMemo, useSyncExternalStore } from 'react'
-import { type Observable, type PersistedModel } from '@river-build/sdk'
+import { type Observable, type PersistedModel } from '@towns-protocol/sdk'
 import { isPersistedModel } from './internals/utils'
 
 // eslint-disable-next-line @typescript-eslint/no-namespace

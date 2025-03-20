@@ -1,4 +1,4 @@
-import { Snapshot } from '@river-build/proto'
+import { Snapshot } from '@towns-protocol/proto'
 import { snapshotMigration0000 } from './snapshotMigration0000'
 import { snapshotMigration0001 } from './snapshotMigration0001'
 import { snapshotMigration0002 } from './snapshotMigration0002'

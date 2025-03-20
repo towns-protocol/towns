@@ -6,14 +6,14 @@ Hook to get the group dm streams of the current user.
 ## Imports
 
 ```ts
-import { useUserGdms } from '@river-build/react-sdk'
+import { useUserGdms } from '@towns-protocol/react-sdk'
 ```
 
 ## Examples
 
 You can combine this hook with the `useGdm` hook to get all group dm streams of the current user and render them:
 ```tsx
-import { useUserGdms, useGdm } from '@river-build/react-sdk'
+import { useUserGdms, useGdm } from '@towns-protocol/react-sdk'
 
 const AllGdms = () => {
     const { streamIds } = useUserGdms()

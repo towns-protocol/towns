@@ -1,5 +1,5 @@
 {
-    "name": "@river-build/prettier-config",
+    "name": "@towns-protocol/prettier-config",
     "version": "0.0.189",
     "license": "MIT",
     "main": "config.js",

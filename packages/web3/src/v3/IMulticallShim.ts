@@ -1,9 +1,9 @@
 import {
     IMulticall as LocalhostContract,
     IMulticallInterface as LocalhostInterface,
-} from '@river-build/generated/dev/typings/IMulticall'
+} from '@towns-protocol/generated/dev/typings/IMulticall'
 
-import LocalhostAbi from '@river-build/generated/dev/abis/IMulticall.abi.json' assert { type: 'json' }
+import LocalhostAbi from '@towns-protocol/generated/dev/abis/IMulticall.abi.json' assert { type: 'json' }
 
 import { ethers } from 'ethers'
 import { BaseContractShim } from './BaseContractShim'

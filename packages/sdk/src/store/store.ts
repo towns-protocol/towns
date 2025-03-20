@@ -1,4 +1,4 @@
-import { check, dlog } from '@river-build/dlog'
+import { check, dlog } from '@towns-protocol/dlog'
 import Dexie from 'dexie'
 
 const log = dlog('csb:dataStore')

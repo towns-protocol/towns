@@ -35,7 +35,7 @@ By default, this will create a new app using the River Playground template - a f
 If you prefer to add the React SDK to an existing project, install the required dependencies:
 
 ```bash
-yarn add @river-build/react-sdk @river-build/sdk vite-plugin-node-polyfills
+yarn add @towns-protocol/react-sdk @towns-protocol/sdk vite-plugin-node-polyfills
 ```
 
 Then, add the `vite-plugin-node-polyfills` to your `vite.config.ts`:
@@ -65,7 +65,7 @@ River requires a few providers to be set up at the root of your application:
 Here's how to set them up:
 
 ```tsx App.tsx
-import { RiverSyncProvider } from "@river-build/react-sdk";
+import { RiverSyncProvider } from "@towns-protocol/react-sdk";
 import { base, baseSepolia } from 'viem/chains'
 import { WagmiConfig, createConfig } from "wagmi";
 import { createPublicClient, http } from 'viem'
@@ -109,8 +109,8 @@ You can use other gamma clients like [Towns (gamma)](https://app.gamma.towns.com
 ### Using a Web3 Wallet
 
 ```tsx
-import { useAgentConnection } from "@river-build/react-sdk";
-import { makeRiverConfig } from "@river-build/sdk";
+import { useAgentConnection } from "@towns-protocol/react-sdk";
+import { makeRiverConfig } from "@towns-protocol/sdk";
 import { getEthersSigner } from "./utils/viem-to-ethers";
 import { wagmiConfig } from "./config/wagmi";
 
@@ -150,8 +150,8 @@ If you have a Towns account, you can get your bearer token from there. Type `/be
 </Note>
 
 ```tsx
-import { useAgentConnection } from "@river-build/react-sdk";
-import { makeRiverConfig } from "@river-build/sdk";
+import { useAgentConnection } from "@towns-protocol/react-sdk";
+import { makeRiverConfig } from "@towns-protocol/sdk";
 
 const riverConfig = makeRiverConfig("gamma");
 
@@ -186,7 +186,7 @@ You can only create a space with a Web3 wallet. If you're using a bearer token, 
 </Note>
 
 ```tsx
-import { useCreateSpace } from "@river-build/react-sdk";
+import { useCreateSpace } from "@towns-protocol/react-sdk";
 import { getEthersSigner } from "@/utils/viem-to-ethers";
 import { wagmiConfig } from "@/config/wagmi";
 
@@ -234,8 +234,8 @@ import {
   useSpace,
   useTimeline,
   useUserSpaces,
-} from '@river-build/react-sdk'
-import { RiverTimelineEvent } from '@river-build/sdk'
+} from '@towns-protocol/react-sdk'
+import { RiverTimelineEvent } from '@towns-protocol/sdk'
 import { useState } from 'react'
 
 // Form to send a message to a channel

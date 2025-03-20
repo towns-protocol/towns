@@ -2,9 +2,9 @@
  * @group with-entitlements
  */
 
-import { dlog } from '@river-build/dlog'
+import { dlog } from '@towns-protocol/dlog'
 import { BigNumber, ethers } from 'ethers'
-import { ETH_ADDRESS, LocalhostWeb3Provider } from '@river-build/web3'
+import { ETH_ADDRESS, LocalhostWeb3Provider } from '@towns-protocol/web3'
 import { makeRiverConfig } from '../../riverConfig'
 import { SyncAgent } from '../../sync-agent/syncAgent'
 import { Bot } from '../../sync-agent/utils/bot'
@@ -12,7 +12,7 @@ import { waitFor } from '../testUtils'
 import { StreamTimelineEvent } from '../../types'
 import { userIdFromAddress, makeUniqueChannelStreamId } from '../../id'
 import { randomBytes } from 'crypto'
-import { TipEventObject } from '@river-build/generated/dev/typings/ITipping'
+import { TipEventObject } from '@towns-protocol/generated/dev/typings/ITipping'
 import { deepCopy } from 'ethers/lib/utils'
 import { cloneDeep } from 'lodash'
 

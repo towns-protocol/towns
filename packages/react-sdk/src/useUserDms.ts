@@ -1,4 +1,4 @@
-import type { Dms } from '@river-build/sdk'
+import type { Dms } from '@towns-protocol/sdk'
 import type { ObservableConfig } from './useObservable'
 import { useRiver } from './useRiver'
 
@@ -11,7 +11,7 @@ import { useRiver } from './useRiver'
  * You can combine this hook with the `useDm`, `useMemberList` and `useMember` hooks to get all direct messages of the current user and render them, showing the name of the other user in the dm:
  *
  * ```tsx
- * import { useDm, useMyMember, useMemberList, useMember } from '@river-build/react-sdk'
+ * import { useDm, useMyMember, useMemberList, useMember } from '@towns-protocol/react-sdk'
  *
  * const AllDms = () => {
  *     const { streamIds } = useUserDms()

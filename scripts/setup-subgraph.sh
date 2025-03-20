@@ -122,7 +122,7 @@ done
 # Generating typings if not exists
 if [ ! -f "contracts/typings/index.ts" ]; then
   echo "Generating contract typings..."
-  yarn workspace @river-build/contracts typings
+  yarn workspace @towns-protocol/contracts typings
 fi
 
 # Now update the ponder.config.ts file to use the environment variables

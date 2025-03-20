@@ -6,7 +6,7 @@ Hook to redact your own message in a channel stream.
 ## Imports
 
 ```ts
-import { useRedact } from '@river-build/react-sdk'
+import { useRedact } from '@towns-protocol/react-sdk'
 ```
 
 ## Examples
@@ -15,7 +15,7 @@ import { useRedact } from '@river-build/react-sdk'
 
 You can use `redact` to redact a message in a stream.
 ```ts
-import { useRedact } from '@river-build/react-sdk'
+import { useRedact } from '@towns-protocol/react-sdk'
 
 const { redact } = useRedact(streamId)
 redact({ eventId: messageEventId })
@@ -24,7 +24,7 @@ redact({ eventId: messageEventId })
 
 You can also use `redact` to redact a message reaction in a stream.
 ```ts
-import { useRedact } from '@river-build/react-sdk'
+import { useRedact } from '@towns-protocol/react-sdk'
 
 const { redact } = useRedact(streamId)
 redact({ eventId: reactionEventId })
