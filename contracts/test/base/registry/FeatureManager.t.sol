@@ -78,7 +78,7 @@ contract FeatureManagerTest is BaseSetup, IFeatureManagerFacetBase {
       length
     );
 
-    for (uint256 i; i < length; ++i) {
+    for (uint256 i; i < length; i++) {
       conditions[i] = ConditionLib.Condition({
         token: address(townsToken),
         threshold: 0,
@@ -93,7 +93,7 @@ contract FeatureManagerTest is BaseSetup, IFeatureManagerFacetBase {
     ConditionLib.Condition[] memory currentConditions = featureManagerFacet
       .getFeatureConditions();
 
-    for (uint256 i; i < length; ++i) {
+    for (uint256 i; i < length; i++) {
       ConditionLib.Condition memory currentCondition = currentConditions[i];
       assertEq(currentCondition.token, address(townsToken));
       assertEq(currentCondition.threshold, conditions[i].threshold);
