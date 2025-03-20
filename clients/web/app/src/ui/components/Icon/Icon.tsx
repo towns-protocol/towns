@@ -2438,6 +2438,312 @@ export const WarningIcon = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) 
     </svg>
 ))
 
+const GoldMedal = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) => (
+    <svg
+        width="20"
+        height="20"
+        viewBox="0 0 20 20"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        {...props}
+        ref={ref}
+    >
+        <g filter="url(#filter0_i_31971_99196)">
+            <path
+                fillRule="evenodd"
+                clipRule="evenodd"
+                d="M7.17044 18.0002C7.06097 17.6902 6.6411 17.5163 6.34451 17.6581C5.22925 18.1912 3.8528 17.9959 2.92897 17.072C2.00514 16.1482 1.80979 14.7718 2.34292 13.6565C2.4847 13.3599 2.31077 12.94 2.00079 12.8306C0.835185 12.4189 0 11.3075 0 10.001C0 8.69445 0.835202 7.58299 2.00083 7.17139C2.31086 7.06191 2.48483 6.64188 2.343 6.34525C1.80972 5.22995 2.00504 3.85336 2.92894 2.92946C3.85282 2.00558 5.22936 1.81026 6.34464 2.34348C6.64121 2.48527 7.06104 2.31141 7.17053 2.00146C7.58223 0.836015 8.6936 0.000976562 10 0.000976562C11.3065 0.000976562 12.4179 0.83615 12.8296 2.00174C12.939 2.31173 13.3589 2.48565 13.6555 2.34386C14.7708 1.81071 16.1473 2.00606 17.0711 2.9299C17.995 3.85375 18.1903 5.23022 17.6571 6.34548C17.5154 6.64207 17.6893 7.06195 17.9993 7.17142C19.1648 7.58305 20 8.69448 20 10.001C20 11.3075 19.1649 12.4189 17.9993 12.8305C17.6894 12.94 17.5155 13.3597 17.6572 13.6563C18.1902 14.7715 17.9949 16.1478 17.0711 17.0716C16.1473 17.9954 14.7709 18.1908 13.6557 17.6577C13.359 17.5159 12.9391 17.6899 12.8297 17.9999C12.4181 19.1657 11.3066 20.001 10 20.001C8.6935 20.001 7.58206 19.1658 7.17044 18.0002Z"
+                fill="url(#paint0_linear_31971_99196)"
+            />
+        </g>
+        <path
+            opacity="0.17"
+            fillRule="evenodd"
+            clipRule="evenodd"
+            d="M2.34242 13.6566C6.94139 13.5939 14.2237 11.9732 16.5288 2.81211C16.3246 2.62806 16.115 2.42283 15.8999 2.20399C15.1674 1.96009 14.3594 2.00639 13.6555 2.34289C13.3589 2.48468 12.939 2.31075 12.8296 2.00077C12.4179 0.835174 11.3065 0 10 0C8.6935 0 7.58206 0.835166 7.17044 2.00075C7.06097 2.31073 6.64109 2.48465 6.3445 2.34286C5.22924 1.80972 3.85278 2.00507 2.92894 2.92891C2.0051 3.85275 1.80975 5.22922 2.34289 6.34448C2.48468 6.64108 2.31075 7.06097 2.00077 7.17044C0.835175 7.58205 0 8.69349 0 10C0 11.3065 0.835185 12.418 2.00079 12.8296C2.31077 12.939 2.4847 13.3589 2.34292 13.6555C2.34275 13.6559 2.34258 13.6562 2.34242 13.6566Z"
+            fill="url(#paint1_linear_31971_99196)"
+        />
+        <g filter="url(#filter1_i_31971_99196)">
+            <path
+                d="M10.0713 14.7271C9.37939 14.7271 8.90967 14.2764 8.90967 13.5781V7.47803H8.86523L7.72266 8.27148C7.51318 8.41748 7.37354 8.46826 7.15137 8.46826C6.70068 8.46826 6.36426 8.13184 6.36426 7.66211C6.36426 7.32568 6.49756 7.06543 6.82764 6.83691L8.56055 5.65625C9.04932 5.32617 9.44287 5.27539 9.8999 5.27539C10.7378 5.27539 11.2266 5.77686 11.2266 6.57666V13.5781C11.2266 14.2764 10.7632 14.7271 10.0713 14.7271Z"
+                fill="#B9860F"
+            />
+        </g>
+        <defs>
+            <filter
+                id="filter0_i_31971_99196"
+                x="0"
+                y="0.000976562"
+                width="20"
+                height="20"
+                filterUnits="userSpaceOnUse"
+                colorInterpolationFilters="sRGB"
+            >
+                <feFlood floodOpacity="0" result="BackgroundImageFix" />
+                <feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape" />
+                <feColorMatrix
+                    in="SourceAlpha"
+                    type="matrix"
+                    values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"
+                    result="hardAlpha"
+                />
+                <feOffset dx="0.2" dy="0.2" />
+                <feComposite in2="hardAlpha" operator="arithmetic" k2="-1" k3="1" />
+                <feColorMatrix type="matrix" values="0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.4 0" />
+                <feBlend mode="normal" in2="shape" result="effect1_innerShadow_31971_99196" />
+            </filter>
+            <filter
+                id="filter1_i_31971_99196"
+                x="6.36426"
+                y="5.27539"
+                width="4.8623"
+                height="9.45117"
+                filterUnits="userSpaceOnUse"
+                colorInterpolationFilters="sRGB"
+            >
+                <feFlood floodOpacity="0" result="BackgroundImageFix" />
+                <feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape" />
+                <feColorMatrix
+                    in="SourceAlpha"
+                    type="matrix"
+                    values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"
+                    result="hardAlpha"
+                />
+                <feOffset dx="0.2" dy="0.2" />
+                <feComposite in2="hardAlpha" operator="arithmetic" k2="-1" k3="1" />
+                <feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.25 0" />
+                <feBlend mode="normal" in2="shape" result="effect1_innerShadow_31971_99196" />
+            </filter>
+            <linearGradient
+                id="paint0_linear_31971_99196"
+                x1="10"
+                y1="0.346184"
+                x2="10"
+                y2="20.0425"
+                gradientUnits="userSpaceOnUse"
+            >
+                <stop stopColor="#F4CD27" />
+                <stop offset="1" stopColor="#E3A010" />
+            </linearGradient>
+            <linearGradient
+                id="paint1_linear_31971_99196"
+                x1="6.75766"
+                y1="5.08943"
+                x2="11.7825"
+                y2="13.0966"
+                gradientUnits="userSpaceOnUse"
+            >
+                <stop stopColor="white" />
+                <stop offset="1" stopColor="white" stopOpacity="0" />
+            </linearGradient>
+        </defs>
+    </svg>
+))
+
+const SilverMedal = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) => (
+    <svg
+        width="20"
+        height="20"
+        viewBox="0 0 20 20"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        {...props}
+        ref={ref}
+    >
+        <g filter="url(#filter0_i_31971_99216)">
+            <path
+                fillRule="evenodd"
+                clipRule="evenodd"
+                d="M7.17044 17.9992C7.06097 17.6893 6.6411 17.5153 6.34451 17.6571C5.22925 18.1902 3.8528 17.9949 2.92897 17.0711C2.00514 16.1472 1.80979 14.7708 2.34292 13.6555C2.4847 13.3589 2.31077 12.939 2.00079 12.8296C0.835185 12.418 0 11.3065 0 10C0 8.69349 0.835175 7.58205 2.00077 7.17044C2.31075 7.06097 2.48468 6.64108 2.34289 6.34448C1.80975 5.22922 2.0051 3.85275 2.92894 2.92891C3.85278 2.00507 5.22924 1.80972 6.3445 2.34286C6.64109 2.48465 7.06097 2.31073 7.17044 2.00075C7.58206 0.835166 8.6935 0 10 0C11.3065 0 12.4179 0.835174 12.8296 2.00077C12.939 2.31075 13.3589 2.48468 13.6555 2.34289C14.7708 1.80974 16.1473 2.00508 17.0711 2.92893C17.995 3.85277 18.1903 5.22924 17.6571 6.3445C17.5154 6.64109 17.6893 7.06097 17.9993 7.17044C19.1648 7.58207 20 8.6935 20 10C20 11.3065 19.1648 12.4179 17.9992 12.8296C17.6893 12.939 17.5153 13.3589 17.6571 13.6555C18.1903 14.7708 17.9949 16.1472 17.0711 17.071C16.1472 17.9949 14.7708 18.1902 13.6555 17.6571C13.3589 17.5153 12.939 17.6892 12.8296 17.9992C12.418 19.1648 11.3065 20 10 20C8.6935 20 7.58206 19.1648 7.17044 17.9992Z"
+                fill="url(#paint0_linear_31971_99216)"
+            />
+        </g>
+        <path
+            opacity="0.17"
+            fillRule="evenodd"
+            clipRule="evenodd"
+            d="M2.34242 13.6566C6.94137 13.594 14.2239 11.9733 16.529 2.81211C16.3249 2.6281 16.1153 2.42291 15.9003 2.20411C15.1676 1.96007 14.3595 2.00633 13.6555 2.34289C13.3589 2.48468 12.939 2.31075 12.8296 2.00077C12.4179 0.835174 11.3065 0 10 0C8.6935 0 7.58206 0.835166 7.17044 2.00075C7.06097 2.31073 6.64109 2.48465 6.3445 2.34286C5.22924 1.80972 3.85278 2.00507 2.92894 2.92891C2.0051 3.85275 1.80975 5.22922 2.34289 6.34448C2.48468 6.64108 2.31075 7.06097 2.00077 7.17044C0.835175 7.58205 0 8.69349 0 10C0 11.3065 0.835185 12.418 2.00079 12.8296C2.31077 12.939 2.4847 13.3589 2.34292 13.6555C2.34275 13.6559 2.34258 13.6562 2.34242 13.6566Z"
+            fill="url(#paint1_linear_31971_99216)"
+        />
+        <g filter="url(#filter1_i_31971_99216)">
+            <path
+                d="M7.54004 14.6938C6.79102 14.6938 6.44824 14.2749 6.44824 13.6973C6.44824 13.2593 6.63232 12.9482 7.08936 12.5547L9.70459 10.1807C10.7773 9.20312 11.0693 8.78418 11.0693 8.1875C11.0693 7.52734 10.5615 7.05762 9.83154 7.05762C9.22852 7.05762 8.81592 7.34961 8.47949 7.95898C8.1875 8.40967 7.91455 8.59375 7.44482 8.59375C6.8418 8.59375 6.47998 8.24463 6.47998 7.67334C6.47998 7.49561 6.50537 7.33057 6.5752 7.16553C6.9751 6.11182 8.19385 5.30566 9.86328 5.30566C11.9517 5.30566 13.3228 6.4165 13.3228 8.03516C13.3228 9.20947 12.7261 9.88232 11.2725 11.1963L9.45068 12.8594V12.9038H12.6182C13.2085 12.9038 13.5513 13.2529 13.5513 13.7988C13.5513 14.332 13.2085 14.6938 12.6182 14.6938H7.54004Z"
+                fill="#696B6C"
+            />
+        </g>
+        <defs>
+            <filter
+                id="filter0_i_31971_99216"
+                x="0"
+                y="0"
+                width="20"
+                height="20"
+                filterUnits="userSpaceOnUse"
+                colorInterpolationFilters="sRGB"
+            >
+                <feFlood floodOpacity="0" result="BackgroundImageFix" />
+                <feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape" />
+                <feColorMatrix
+                    in="SourceAlpha"
+                    type="matrix"
+                    values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"
+                    result="hardAlpha"
+                />
+                <feOffset dx="0.2" dy="0.2" />
+                <feComposite in2="hardAlpha" operator="arithmetic" k2="-1" k3="1" />
+                <feColorMatrix type="matrix" values="0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.4 0" />
+                <feBlend mode="normal" in2="shape" result="effect1_innerShadow_31971_99216" />
+            </filter>
+            <filter
+                id="filter1_i_31971_99216"
+                x="6.44824"
+                y="5.30566"
+                width="7.10303"
+                height="9.3877"
+                filterUnits="userSpaceOnUse"
+                colorInterpolationFilters="sRGB"
+            >
+                <feFlood floodOpacity="0" result="BackgroundImageFix" />
+                <feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape" />
+                <feColorMatrix
+                    in="SourceAlpha"
+                    type="matrix"
+                    values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"
+                    result="hardAlpha"
+                />
+                <feOffset dx="0.2" dy="0.2" />
+                <feComposite in2="hardAlpha" operator="arithmetic" k2="-1" k3="1" />
+                <feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.25 0" />
+                <feBlend mode="normal" in2="shape" result="effect1_innerShadow_31971_99216" />
+            </filter>
+            <linearGradient
+                id="paint0_linear_31971_99216"
+                x1="10"
+                y1="0.344966"
+                x2="10"
+                y2="20.0419"
+                gradientUnits="userSpaceOnUse"
+            >
+                <stop stopColor="#DEE4E4" />
+                <stop offset="1" stopColor="#969A9B" />
+            </linearGradient>
+            <linearGradient
+                id="paint1_linear_31971_99216"
+                x1="6.75776"
+                y1="5.08943"
+                x2="11.7825"
+                y2="13.0967"
+                gradientUnits="userSpaceOnUse"
+            >
+                <stop stopColor="white" />
+                <stop offset="1" stopColor="white" stopOpacity="0" />
+            </linearGradient>
+        </defs>
+    </svg>
+))
+
+const BronzeMedal = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) => (
+    <svg
+        width="20"
+        height="20"
+        viewBox="0 0 20 20"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        {...props}
+        ref={ref}
+    >
+        <g filter="url(#filter0_i_31971_99234)">
+            <path
+                fillRule="evenodd"
+                clipRule="evenodd"
+                d="M7.17044 18.0002C7.06097 17.6902 6.6411 17.5163 6.34451 17.6581C5.22925 18.1912 3.8528 17.9959 2.92897 17.072C2.00514 16.1482 1.80979 14.7718 2.34292 13.6565C2.4847 13.3599 2.31077 12.94 2.00079 12.8306C0.835185 12.4189 0 11.3075 0 10.001C0 8.69447 0.835175 7.58303 2.00077 7.17141C2.31075 7.06194 2.48468 6.64205 2.34289 6.34546C1.80975 5.2302 2.0051 3.85373 2.92894 2.92989C3.85278 2.00605 5.22924 1.8107 6.3445 2.34384C6.64109 2.48563 7.06097 2.31171 7.17044 2.00173C7.58206 0.836143 8.6935 0.000976562 10 0.000976562C11.3065 0.000976562 12.4179 0.83615 12.8296 2.00174C12.939 2.31173 13.3589 2.48565 13.6555 2.34386C14.7708 1.81071 16.1473 2.00606 17.0711 2.9299C17.995 3.85375 18.1903 5.23022 17.6571 6.34548C17.5154 6.64207 17.6893 7.06195 17.9993 7.17142C19.1648 7.58305 20 8.69448 20 10.001C20 11.3075 19.1648 12.4189 17.9992 12.8305C17.6893 12.94 17.5153 13.3599 17.6571 13.6565C18.1903 14.7717 17.9949 16.1482 17.0711 17.072C16.1472 17.9959 14.7708 18.1912 13.6555 17.6581C13.3589 17.5163 12.939 17.6902 12.8296 18.0002C12.418 19.1658 11.3065 20.001 10 20.001C8.6935 20.001 7.58206 19.1658 7.17044 18.0002Z"
+                fill="url(#paint0_linear_31971_99234)"
+            />
+        </g>
+        <path
+            opacity="0.17"
+            fillRule="evenodd"
+            clipRule="evenodd"
+            d="M2.34242 13.6566C6.94137 13.594 14.2239 11.9733 16.529 2.81211C16.3249 2.6281 16.1153 2.42291 15.9003 2.20411C15.1676 1.96007 14.3595 2.00633 13.6555 2.34289C13.3589 2.48468 12.939 2.31075 12.8296 2.00077C12.4179 0.835174 11.3065 0 10 0C8.6935 0 7.58206 0.835166 7.17044 2.00075C7.06097 2.31073 6.64109 2.48465 6.3445 2.34286C5.22924 1.80972 3.85278 2.00507 2.92894 2.92891C2.0051 3.85275 1.80975 5.22922 2.34289 6.34448C2.48468 6.64108 2.31075 7.06097 2.00077 7.17044C0.835175 7.58205 0 8.69349 0 10C0 11.3065 0.835185 12.418 2.00079 12.8296C2.31077 12.939 2.4847 13.3589 2.34292 13.6555C2.34275 13.6559 2.34258 13.6562 2.34242 13.6566Z"
+            fill="url(#paint1_linear_31971_99234)"
+        />
+        <g filter="url(#filter1_i_31971_99234)">
+            <path
+                d="M9.88574 14.8091C7.93701 14.8091 6.81982 13.9204 6.45166 13.0317C6.37549 12.854 6.3374 12.6636 6.3374 12.4985C6.3374 11.9146 6.72461 11.5464 7.35938 11.5464C7.80371 11.5464 8.08936 11.7051 8.31787 12.0732C8.6543 12.6445 9.06689 12.981 9.93652 12.981C10.7363 12.981 11.2949 12.5112 11.2949 11.8511C11.2949 11.083 10.7236 10.6704 9.70801 10.6704H9.48584C8.93359 10.6704 8.6416 10.353 8.6416 9.87695C8.6416 9.41357 8.93359 9.08984 9.48584 9.08984H9.69531C10.5903 9.08984 11.1362 8.65186 11.1362 7.98535C11.1362 7.33789 10.6792 6.92529 9.88574 6.92529C9.23193 6.92529 8.80664 7.19189 8.52734 7.73779C8.26709 8.22656 7.98779 8.41064 7.47363 8.41064C6.83887 8.41064 6.51514 8.02979 6.51514 7.49658C6.51514 7.2998 6.54688 7.14111 6.62939 6.94434C6.99121 6.05566 8.07031 5.19238 9.87305 5.19238C11.8662 5.19238 13.3008 6.1001 13.3008 7.65527C13.3008 8.82959 12.4502 9.57861 11.4028 9.78809V9.83252C12.7866 9.97217 13.6626 10.7529 13.6626 11.9907C13.6626 13.7046 12.1836 14.8091 9.88574 14.8091Z"
+                fill="#CC4F1C"
+            />
+        </g>
+        <defs>
+            <filter
+                id="filter0_i_31971_99234"
+                x="0"
+                y="0.000976562"
+                width="20"
+                height="20"
+                filterUnits="userSpaceOnUse"
+                colorInterpolationFilters="sRGB"
+            >
+                <feFlood floodOpacity="0" result="BackgroundImageFix" />
+                <feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape" />
+                <feColorMatrix
+                    in="SourceAlpha"
+                    type="matrix"
+                    values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"
+                    result="hardAlpha"
+                />
+                <feOffset dx="0.2" dy="0.2" />
+                <feComposite in2="hardAlpha" operator="arithmetic" k2="-1" k3="1" />
+                <feColorMatrix type="matrix" values="0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.4 0" />
+                <feBlend mode="normal" in2="shape" result="effect1_innerShadow_31971_99234" />
+            </filter>
+            <filter
+                id="filter1_i_31971_99234"
+                x="6.3374"
+                y="5.19238"
+                width="7.3252"
+                height="9.61621"
+                filterUnits="userSpaceOnUse"
+                colorInterpolationFilters="sRGB"
+            >
+                <feFlood floodOpacity="0" result="BackgroundImageFix" />
+                <feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape" />
+                <feColorMatrix
+                    in="SourceAlpha"
+                    type="matrix"
+                    values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"
+                    result="hardAlpha"
+                />
+                <feOffset dx="0.2" dy="0.2" />
+                <feComposite in2="hardAlpha" operator="arithmetic" k2="-1" k3="1" />
+                <feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.25 0" />
+                <feBlend mode="normal" in2="shape" result="effect1_innerShadow_31971_99234" />
+            </filter>
+            <linearGradient
+                id="paint0_linear_31971_99234"
+                x1="10"
+                y1="0.000976562"
+                x2="10"
+                y2="20.001"
+                gradientUnits="userSpaceOnUse"
+            >
+                <stop stopColor="#F3A855" />
+                <stop offset="1" stopColor="#EE902F" />
+            </linearGradient>
+            <linearGradient
+                id="paint1_linear_31971_99234"
+                x1="6.75776"
+                y1="5.08943"
+                x2="11.7825"
+                y2="13.0967"
+                gradientUnits="userSpaceOnUse"
+            >
+                <stop stopColor="white" />
+                <stop offset="1" stopColor="white" stopOpacity="0" />
+            </linearGradient>
+        </defs>
+    </svg>
+))
+
 const iconMap = {
     alert: Alert,
     all: AllIcon,
@@ -2585,6 +2891,9 @@ const iconMap = {
     farcaster: Farcaster,
     twitter: Twitter,
     warning: WarningIcon,
+    goldMedal: GoldMedal,
+    bronzeMedal: BronzeMedal,
+    silverMedal: SilverMedal,
 } as const
 
 // this export breaks fast-refresh

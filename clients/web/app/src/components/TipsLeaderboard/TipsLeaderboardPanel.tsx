@@ -39,11 +39,12 @@ export const TipsLeaderboardPanel = () => {
                     Array.from({ length: 20 }).map((_, index) => <SkeletonRow key={index} />)}
                 {!isLoading && !hasLeaderboard && <EmptyState />}
                 {hasLeaderboard &&
-                    Object.entries(data.leaderboard).map(([userAddress, totalTippedWei]) => (
+                    data?.leaderboard.map(({ userAddress, totalTipped, rank }) => (
                         <Row
                             key={userAddress}
                             userAbstractAccountAddress={userAddress}
-                            totalTipped={totalTippedWei}
+                            totalTipped={totalTipped}
+                            rank={rank}
                         />
                     ))}
             </Stack>
@@ -54,9 +55,11 @@ export const TipsLeaderboardPanel = () => {
 const Row = ({
     userAbstractAccountAddress,
     totalTipped,
+    rank,
 }: {
     userAbstractAccountAddress: string
     totalTipped: string
+    rank: number
 }) => {
     const { isTouch } = useDevice()
     const { lookupUser } = useUserLookupContext()
@@ -89,31 +92,39 @@ const Row = ({
                 borderRadius="xs"
                 background={{ hover: 'level2', default: undefined }}
                 cursor="pointer"
-                paddingX="md"
-                paddingY="sm"
+                padding="sm"
                 alignItems="center"
             >
                 <Stack horizontal gap width="100%">
-                    <Stack
-                        horizontal
-                        grow
-                        alignItems="center"
-                        gap="sm"
-                        overflow="hidden"
-                        paddingY="xs"
-                        insetY="xxs"
-                        onClick={openProfile}
-                    >
-                        <Box
-                            centerContent
-                            tooltip={!isTouch ? <ProfileHoverCard userId={userId} /> : undefined}
-                        >
-                            <Avatar userId={userId} size="avatar_x4" />
+                    <Stack horizontal alignItems="center" gap="sm">
+                        <Box centerContent width="x3" height="x3">
+                            <Medal rank={rank} />
                         </Box>
-                        <Paragraph truncate color="default">
-                            {getPrettyDisplayName(globalUser)}
-                        </Paragraph>
+                        <Stack
+                            horizontal
+                            grow
+                            alignItems="center"
+                            gap="sm"
+                            overflow="hidden"
+                            paddingY="xs"
+                            insetY="xxs"
+                            onClick={openProfile}
+                        >
+                            <Box
+                                centerContent
+                                tooltip={
+                                    !isTouch ? <ProfileHoverCard userId={userId} /> : undefined
+                                }
+                            >
+                                <Avatar userId={userId} size="avatar_x4" />
+                            </Box>
+                            <Paragraph truncate color="default">
+                                {getPrettyDisplayName(globalUser)}
+                            </Paragraph>
+                        </Stack>
                     </Stack>
+                    <Stack grow />
+
                     <Stack justifyContent="center">
                         <Paragraph
                             truncate
@@ -132,22 +143,28 @@ const Row = ({
 function SkeletonRow() {
     return (
         <Stack padding="sm">
-            <Stack horizontal borderRadius="xs" paddingX="md" paddingY="sm" alignItems="center">
+            <Stack horizontal borderRadius="xs" padding="sm" alignItems="center">
                 <Stack horizontal gap width="100%">
-                    <Stack
-                        horizontal
-                        grow
-                        alignItems="center"
-                        gap="sm"
-                        overflow="hidden"
-                        paddingY="xs"
-                        insetY="xxs"
-                    >
-                        <Box centerContent>
-                            <Box square="square_lg" rounded="full" className={shimmerClass} />
+                    <Stack horizontal alignItems="center" gap="sm">
+                        <Box centerContent width="x3" height="x3">
+                            <Box square="square_md" rounded="full" className={shimmerClass} />
                         </Box>
-                        <Box width="150" height="x2" className={shimmerClass} rounded="xs" />
+                        <Stack
+                            horizontal
+                            grow
+                            alignItems="center"
+                            gap="sm"
+                            overflow="hidden"
+                            paddingY="xs"
+                            insetY="xxs"
+                        >
+                            <Box centerContent>
+                                <Box square="square_lg" rounded="full" className={shimmerClass} />
+                            </Box>
+                            <Box width="150" height="x2" className={shimmerClass} rounded="xs" />
+                        </Stack>
                     </Stack>
+                    <Stack grow />
                     <Stack justifyContent="center">
                         <Box width="x10" height="x2" className={shimmerClass} rounded="xs" />
                     </Stack>
@@ -166,5 +183,29 @@ function EmptyState() {
                 Be the first to tip in this space!
             </Paragraph>
         </Stack>
+    )
+}
+
+function Medal({ rank }: { rank: number }) {
+    if (rank === 1) {
+        return <Icon type="goldMedal" />
+    }
+    if (rank === 2) {
+        return <Icon type="silverMedal" />
+    }
+    if (rank === 3) {
+        return <Icon type="bronzeMedal" />
+    }
+    return (
+        <Box centerContent width="x4" height="x3">
+            <Paragraph
+                width="x3"
+                textAlign="center"
+                style={{ fontVariantNumeric: 'tabular-nums' }}
+                color="gray2"
+            >
+                {rank}
+            </Paragraph>
+        </Box>
     )
 }
