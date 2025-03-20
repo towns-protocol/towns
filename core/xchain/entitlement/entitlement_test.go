@@ -941,10 +941,11 @@ func TestCheckOperation_Untimed(t *testing.T) {
 
 var singleEtherChainBlockChainInfo = map[uint64]config.BlockchainInfo{
 	examples.EthSepoliaChainId.Uint64(): {
-		ChainId:       examples.EthSepoliaChainId.Uint64(),
-		Name:          "Ethereum Seplia",
-		Blocktime:     12000,
-		IsEtherNative: true,
+		ChainId:           examples.EthSepoliaChainId.Uint64(),
+		Name:              "Ethereum Seplia",
+		Blocktime:         12000,
+		IsEtherNative:     true,
+		IsEthereumNetwork: true,
 	},
 	examples.BaseSepoliaChainId.Uint64(): {
 		ChainId:       examples.BaseSepoliaChainId.Uint64(),
@@ -954,7 +955,6 @@ var singleEtherChainBlockChainInfo = map[uint64]config.BlockchainInfo{
 	},
 }
 
-// Disable this test case, which is relying on a public rpc endpoint.
 func Test_evaluateEthBalance_withConfig(t *testing.T) {
 	tests := map[string]struct {
 		op          Operation
@@ -980,9 +980,11 @@ func Test_evaluateEthBalance_withConfig(t *testing.T) {
 
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
+			ctx, cancel := test.NewTestContext()
+			defer cancel()
 			require := require.New(t)
 			customEvaluator, err := NewEvaluatorFromConfigWithBlockchainInfo(
-				context.Background(),
+				ctx,
 				cfg,
 				allSepoliaChains_onChainConfig,
 				singleEtherChainBlockChainInfo,
@@ -991,7 +993,7 @@ func Test_evaluateEthBalance_withConfig(t *testing.T) {
 			)
 			require.NoError(err)
 
-			result, err := customEvaluator.evaluateOp(context.Background(), tc.op, tc.wallets)
+			result, err := customEvaluator.evaluateOp(ctx, tc.op, tc.wallets)
 			if tc.expectedErr == nil {
 				require.NoError(err)
 			} else {
