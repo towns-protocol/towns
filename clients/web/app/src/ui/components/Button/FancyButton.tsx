@@ -153,6 +153,7 @@ export const FancyButton = React.forwardRef<HTMLButtonElement, FancyButtonProps>
                 {ripple && (
                     <MotionBox
                         absoluteFill
+                        pointerEvents="none"
                         borderRadius={borderRadius}
                         key={`ripple-${ripple.key}`}
                         initial={{ scale: 0.97 }}
