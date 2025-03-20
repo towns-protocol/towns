@@ -5,9 +5,9 @@ pragma solidity ^0.8.23;
 import {IPricingModules} from "./IPricingModules.sol";
 
 // contracts
-import {OwnableBase} from "@river-build/diamond/src/facets/ownable/OwnableBase.sol";
+import {OwnableBase} from "@towns-protocol/diamond/src/facets/ownable/OwnableBase.sol";
 import {PricingModulesBase} from "./PricingModulesBase.sol";
-import {Facet} from "@river-build/diamond/src/facets/Facet.sol";
+import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
 
 contract PricingModulesFacet is IPricingModules, OwnableBase, Facet {
   function __PricingModulesFacet_init(

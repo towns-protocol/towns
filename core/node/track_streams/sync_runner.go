@@ -166,7 +166,6 @@ func (sr *SyncRunner) Run(
 			NodeAddress:       sticky[:],
 			StreamId:          stream.StreamId[:],
 			MinipoolGen:       math.MaxInt64, // force sync reset
-			MinipoolSlot:      0,
 			PrevMiniblockHash: common.Hash{}.Bytes(),
 		}}
 

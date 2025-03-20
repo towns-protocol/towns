@@ -6,7 +6,7 @@ import {LogUtils} from "contracts/test/utils/LogUtils.sol";
 import {TestUtils} from "contracts/test/utils/TestUtils.sol";
 
 //interfaces
-import {IERC173} from "@river-build/diamond/src/facets/ownable/IERC173.sol";
+import {IERC173} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
 import {IMainnetDelegation} from "contracts/src/base/registry/facets/mainnet/IMainnetDelegation.sol";
 import {IRewardsDistribution} from "contracts/src/base/registry/facets/distribution/v2/IRewardsDistribution.sol";
 

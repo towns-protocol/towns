@@ -19,7 +19,7 @@ import {VotesEnumerableLib} from "contracts/src/diamond/facets/governance/votes/
 import {CustomRevert} from "contracts/src/utils/libraries/CustomRevert.sol";
 
 // contracts
-import {IntrospectionBase} from "@river-build/diamond/src/facets/introspection/IntrospectionBase.sol";
+import {IntrospectionBase} from "@towns-protocol/diamond/src/facets/introspection/IntrospectionBase.sol";
 import {VotesEnumerable} from "contracts/src/diamond/facets/governance/votes/enumerable/VotesEnumerable.sol";
 import {ERC20Votes} from "solady/tokens/ERC20Votes.sol";
 

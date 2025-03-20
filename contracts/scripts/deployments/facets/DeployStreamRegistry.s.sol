@@ -9,7 +9,7 @@ import {console} from "forge-std/console.sol";
 //contracts
 import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
 import {FacetHelper} from "contracts/test/diamond/Facet.t.sol";
-import {IDiamond} from "@river-build/diamond/src/Diamond.sol";
+import {IDiamond} from "@towns-protocol/diamond/src/Diamond.sol";
 
 import {StreamRegistry} from "contracts/src/river/registry/facets/stream/StreamRegistry.sol";
 

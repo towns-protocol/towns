@@ -20,9 +20,13 @@ enum NodeVoteStatus {
 type PostResultSummary = { [roleId: number]: RoleResultSummary }
 type RoleResultSummary = { [nodeAddress: string]: boolean }
 
+type CheckRequestVersion = 'v1' | 'v2'
+
 export interface XChainRequest {
-    callerAddress: Address
-    contractAddress: Address
+    walletAddress: Address
+    resolverAddress: Address
+    spaceAddress: Address
+    version: CheckRequestVersion
     transactionId: Hex
     blockNumber: bigint
     requestedNodes: { [roleId: number]: Address[] }
@@ -159,6 +163,126 @@ async function scanForPostResults(
     return summary
 }
 
+async function scanForResponsesAndResults(
+    requestDetails: {
+        roleId: number
+        transactionId: Address
+        selectedNodes: Address[]
+        blockNumber: bigint
+        walletAddress: Address
+        resolverAddress: Address
+        spaceAddress: Address
+        version: CheckRequestVersion
+        txHash: Hex
+    },
+    requests: { [transactionId: Hex]: XChainRequest },
+    publicClient: PublicClientType,
+) {
+    const {
+        roleId,
+        transactionId,
+        selectedNodes,
+        blockNumber,
+        walletAddress,
+        resolverAddress,
+        spaceAddress,
+        version,
+        txHash,
+    } = requestDetails
+    var result: boolean | undefined
+
+    const responseLogs = await publicClient.getContractEvents({
+        address: spaceAddress,
+        abi: EntitlementGatedAbi,
+        eventName: 'EntitlementCheckResultPosted',
+        fromBlock: blockNumber,
+        toBlock: blockNumber + BigInt(config.transactionValidBlocks),
+        args: {
+            transactionId,
+        },
+        strict: true,
+    })
+
+    if (responseLogs.length > 1) {
+        logger.error(
+            'Multiple results posted for the same entitlement request',
+            'transactionId',
+            transactionId,
+            'resolverAddress',
+            resolverAddress,
+            'walletAddress',
+            walletAddress,
+        )
+    }
+    if (responseLogs.length >= 1) {
+        // Just take the first response if more than one exists - this should not happen
+        // and will cause an error log
+        const response = responseLogs[0]
+        if (response.args.result === NodeVoteStatus.Passed) {
+            result = true
+        } else if (response.args.result === NodeVoteStatus.Failed) {
+            result = false
+        } else {
+            logger.error(
+                'Entitlement Check Response has malformed node vote',
+                'transactionHash',
+                response.transactionHash,
+                'requestTransactionId',
+                transactionId,
+                'requestBlockNumber',
+                blockNumber,
+                'responseBlockNumber',
+                response.blockNumber,
+            )
+        }
+    }
+
+    var request: XChainRequest
+
+    // If we've seen this request issued before, validate that we have not yet seen this
+    // role id and add the expected nodes for it.
+    if (transactionId in requests) {
+        request = requests[transactionId]
+        if (roleId in request.requestedNodes) {
+            logger.error(
+                {
+                    roleId,
+                    transactionId,
+                },
+                'a request for the same roleId and transaction id was already emitted',
+            )
+        }
+        request.requestedNodes[roleId] = selectedNodes
+        request.txHashes[roleId] = txHash
+    } else {
+        request = {
+            walletAddress,
+            resolverAddress,
+            spaceAddress,
+            transactionId,
+            version,
+            requestedNodes: { [roleId]: selectedNodes },
+            txHashes: { [roleId]: txHash },
+            blockNumber,
+            responses: await scanForPostResults(
+                publicClient,
+                resolverAddress,
+                transactionId,
+                blockNumber,
+            ),
+            checkResult: result,
+        }
+        requests[transactionId] = request
+    }
+    // TODO:
+    // - Validate that role ids appearing in responses match role ids in expectedNodes, emit error
+    // if not.
+    // - Validate that set of selected nodes for each roleId response is a subset of the set of
+    // expectedNodes for that roleId
+    // - Validate that results for each role id are consistent (all PASS or all FAIL), emit warning
+    // if not.
+}
+
 // scanBlockchainForXchainEvents looks at blocks [initialBlockNum, initialBlockNum + blocksToScan)
 // and returns all XChain requests found in that interval, along with all response information.
 // scanBlockchainForXchainEvents looks at config.transactionValidBlocks number of blocks ahead of
@@ -172,9 +296,14 @@ export async function scanBlockchainForXchainEvents(
     // Reset block cache
     blockCache = {}
 
+    // Keep a map of requests organized by transactionId since a single transaction id
+    // can be associated with many EntitlementCheckRequested events if there are multiple
+    // role ids to check.
+    const requests: { [transactionId: Hex]: XChainRequest } = {}
+
     const publicClient = createCustomPublicClient()
 
-    const requestLogs = await publicClient.getContractEvents({
+    const v1RequestLogs = await publicClient.getContractEvents({
         address: config.web3Config.base.addresses.baseRegistry,
         abi: EntitlementCheckerAbi,
         eventName: 'EntitlementCheckRequested',
@@ -183,11 +312,7 @@ export async function scanBlockchainForXchainEvents(
         strict: true,
     })
 
-    // Keep a map of requests organized by transactionId since a single transaction id
-    // can be associated with many EntitlementCheckRequested events if there are multiple
-    // role ids to check.
-    const requests: { [transactionId: Hex]: XChainRequest } = {}
-    for (const log of requestLogs) {
+    for (const log of v1RequestLogs) {
         // Dump cache when it reaches the size limit
         // TODO: replace this with a real, fixed-size cache
         if (Object.keys(blockCache).length > maxCacheSize) {
@@ -200,96 +325,72 @@ export async function scanBlockchainForXchainEvents(
         const transactionId = log.args.transactionId
         const selectedNodes = [...log.args.selectedNodes]
         const blockNumber = log.blockNumber
-        var result: boolean | undefined
+        const walletAddress = log.args.callerAddress
+        const resolverAddress = log.args.contractAddress
+        const spaceAddress = log.args.contractAddress
+        const version = 'v1'
+        const txHash = log.transactionHash
 
-        const responseLogs = await publicClient.getContractEvents({
-            address: log.args.contractAddress,
-            abi: EntitlementGatedAbi,
-            eventName: 'EntitlementCheckResultPosted',
-            fromBlock: log.blockNumber,
-            toBlock: log.blockNumber + BigInt(config.transactionValidBlocks),
-            args: {
+        await scanForResponsesAndResults(
+            {
+                roleId,
                 transactionId,
-            },
-            strict: true,
-        })
-
-        if (responseLogs.length > 1) {
-            logger.error(
-                'Multiple results posted for the same entitlement request',
-                'transactionId',
-                transactionId,
-                'resolverContract',
-                log.args.contractAddress,
-                'callerAddress',
-                log.args.callerAddress,
-            )
-        }
-        if (responseLogs.length >= 1) {
-            // Just take the first response if more than one exists - this should not happen
-            // and will cause an error log
-            const response = responseLogs[0]
-            if (response.args.result === NodeVoteStatus.Passed) {
-                result = true
-            } else if (response.args.result === NodeVoteStatus.Failed) {
-                result = false
-            } else {
-                logger.error(
-                    'Entitlement Check Response has malformatted node vote',
-                    'transactionHash',
-                    response.transactionHash,
-                    'requestTransactionId',
-                    transactionId,
-                    'requestBlockNumber',
-                    blockNumber,
-                    'responseBlockNumber',
-                    response.blockNumber,
-                )
-            }
-        }
-
-        var request: XChainRequest
-
-        // If we've seen this request issued before, validate that we have not yet seen this
-        // role id and add the expected nodes for it.
-        if (transactionId in requests) {
-            request = requests[transactionId]
-            if (roleId in request.requestedNodes) {
-                logger.error(
-                    {
-                        roleId,
-                        transactionId,
-                    },
-                    'request for the same roleId already emitted',
-                )
-            }
-            request.requestedNodes[roleId] = selectedNodes
-            request.txHashes[roleId] = log.transactionHash
-        } else {
-            request = {
-                callerAddress: log.args.callerAddress,
-                contractAddress: log.args.contractAddress,
-                transactionId: transactionId,
-                requestedNodes: { [roleId]: selectedNodes },
-                txHashes: { [roleId]: log.transactionHash },
+                selectedNodes,
                 blockNumber,
-                responses: await scanForPostResults(
-                    publicClient,
-                    log.args.contractAddress,
-                    transactionId,
-                    blockNumber,
-                ),
-                checkResult: result,
-            }
-            requests[transactionId] = request
+                walletAddress,
+                resolverAddress,
+                spaceAddress,
+                version,
+                txHash,
+            },
+            requests,
+            publicClient,
+        )
+    }
+
+    const v2RequestLogs = await publicClient.getContractEvents({
+        address: config.web3Config.base.addresses.baseRegistry,
+        abi: EntitlementCheckerAbi,
+        eventName: 'EntitlementCheckRequestedV2',
+        fromBlock: initialBlockNum.valueOf(),
+        toBlock: initialBlockNum.valueOf() + BigInt(blocksToScan),
+        strict: true,
+    })
+
+    for (const log of v2RequestLogs) {
+        // Dump cache when it reaches the size limit
+        // TODO: replace this with a real, fixed-size cache
+        if (Object.keys(blockCache).length > maxCacheSize) {
+            blockCache = {}
         }
-        // TODO:
-        // - Validate that role ids appearing in responses match role ids in expectedNodes, emit error
-        // if not.
-        // - Validate that set of selected nodes for each roleId response is a subset of the set of
-        // expectedNodes for that roleId
-        // - Validate that results for each role id are consistent (all PASS or all FAIL), emit warning
-        // if not.
+
+        // We can cast as a number here because these start from 0 and it's unlikely that a
+        // space will have very big role ids.
+        const roleId = Number(log.args.roleId)
+        const transactionId = log.args.transactionId
+        const selectedNodes = [...log.args.selectedNodes]
+        const blockNumber = log.blockNumber
+        const walletAddress = log.args.walletAddress
+        const resolverAddress = log.args.resolverAddress
+        const spaceAddress = log.args.spaceAddress
+        const version = 'v2'
+        const txHash = log.transactionHash
+
+        await scanForResponsesAndResults(
+            {
+                roleId,
+                transactionId,
+                selectedNodes,
+                blockNumber,
+                walletAddress,
+                resolverAddress,
+                spaceAddress,
+                version,
+                txHash,
+            },
+            requests,
+            publicClient,
+        )
     }
 
     return Object.values(requests)

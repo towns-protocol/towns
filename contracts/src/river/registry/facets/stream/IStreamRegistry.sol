@@ -7,10 +7,31 @@ import {Stream, StreamWithId, SetMiniblock} from "contracts/src/river/registry/l
 // libraries
 
 // contracts
+
 interface IStreamRegistryBase {
-  // =============================================================
-  //                           Events
-  // =============================================================
+  /// @notice The type of stream event
+  enum StreamEventType {
+    Allocate,
+    Create,
+    PlacementUpdated,
+    LastMiniblockBatchUpdated
+  }
+
+  /// @notice The event emitted when a stream is updated
+  /// @dev One event to rule them all
+  /// To decode:
+  ///   switch (eventType) {
+  ///     case StreamEventType.Allocate:
+  ///     case StreamEventType.Create:
+  ///     case StreamEventType.PlacementUpdated:
+  ///       (bytes32 streamId, Stream memory stream) = abi.decode(data, (bytes32, Stream));
+  ///     case StreamEventType.LastMiniblockBatchUpdated:
+  ///       (SetMiniblock[] memory miniBlockUpdates) = abi.decode(data, (SetMiniblock[]));
+  ///   }
+  /// @param eventType The type of stream event
+  /// @param data The data of the stream event
+  event StreamUpdated(StreamEventType indexed eventType, bytes data);
+
   event StreamAllocated(
     bytes32 streamId,
     address[] nodes,
@@ -46,10 +67,6 @@ interface IStreamRegistryBase {
 }
 
 interface IStreamRegistry is IStreamRegistryBase {
-  // =============================================================
-  //                           Streams
-  // =============================================================
-
   /**
    * @notice Check if a stream exists in the registry
    * @param streamId The ID of the stream to check
@@ -171,22 +188,4 @@ interface IStreamRegistry is IStreamRegistryBase {
   function getStreamWithGenesis(
     bytes32 streamId
   ) external view returns (Stream memory, bytes32, bytes memory);
-
-  /**
-   * @notice Update the last miniblock information for a stream
-   * @dev Only callable by registered nodes
-   * @param streamId The ID of the stream to update
-   * @param prevMiniblockHash The hash of the previous miniblock (currently unused)
-   * @param lastMiniblockHash The hash of the new last miniblock
-   * @param lastMiniblockNum The number of the new last miniblock
-   * @param isSealed Whether to mark the stream as sealed
-   * @custom:deprecated Deprecated in favor of setStreamLastMiniblockBatch
-   */
-  function setStreamLastMiniblock(
-    bytes32 streamId,
-    bytes32 prevMiniblockHash,
-    bytes32 lastMiniblockHash,
-    uint64 lastMiniblockNum,
-    bool isSealed
-  ) external;
 }

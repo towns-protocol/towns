@@ -8,9 +8,9 @@ import {ICrossDomainMessenger} from "contracts/src/base/registry/facets/mainnet/
 // libraries
 
 // contracts
-import {OwnableBase} from "@river-build/diamond/src/facets/ownable/OwnableBase.sol";
+import {OwnableBase} from "@towns-protocol/diamond/src/facets/ownable/OwnableBase.sol";
 import {MainnetDelegationBase} from "contracts/src/base/registry/facets/mainnet/MainnetDelegationBase.sol";
-import {Facet} from "@river-build/diamond/src/facets/Facet.sol";
+import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
 
 contract MainnetDelegation is
   IMainnetDelegation,
