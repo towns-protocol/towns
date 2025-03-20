@@ -772,7 +772,7 @@ func (s *Service) initCacheAndSync(opts *ServerStartOpts) error {
 }
 
 func (s *Service) initHandlers() {
-	ii := []connect.Interceptor{}
+	ii := []connect.Interceptor{NewRecoverHandlerInterceptor()}
 	if s.otelConnectIterceptor != nil {
 		ii = append(ii, s.otelConnectIterceptor)
 	}

@@ -2,8 +2,10 @@ package cmd
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"os/signal"
+	"runtime/debug"
 	"sync"
 	"syscall"
 
@@ -17,7 +19,34 @@ import (
 	"github.com/towns-protocol/towns/core/xchain/server"
 )
 
+func handleSignals(ctx context.Context) {
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, syscall.SIGINT, syscall.SIGTERM, syscall.SIGSEGV, syscall.SIGABRT)
+
+	go func() {
+		fmt.Println("Signal handler started")
+		for sig := range c {
+			fmt.Printf("Got signal: %v\n", sig)
+			debug.PrintStack() // Print stack trace for debugging
+			os.Exit(1)         // Exit after logging
+		}
+	}()
+}
+
 func runServices(ctx context.Context, cfg *config.Config, stream bool, xchain bool) error {
+	// Defer to recover from panics and log debug information
+	defer func() {
+		fmt.Println("Defer function called for panic recovery")
+		if r := recover(); r != nil {
+			fmt.Printf("Panic occurred: %v\n", r)
+			debug.PrintStack() // Print the stack trace
+			panic(r)
+		}
+	}()
+
+	// Handle signals
+	handleSignals(ctx)
+
 	var err error
 	err = setupProfiler("river-node", cfg)
 	if err != nil {
