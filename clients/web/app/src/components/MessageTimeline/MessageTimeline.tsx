@@ -571,7 +571,11 @@ export const MessageTimeline = (props: Props) => {
     }, [])
 
     return displaySimpleList ? (
-        <Box paddingY="md">{listItems.map((item) => itemRenderer(item))}</Box>
+        <Box paddingY="md">
+            {listItems.map((item) => (
+                <React.Fragment key={item.key}>{itemRenderer(item)}</React.Fragment>
+            ))}
+        </Box>
     ) : (
         <SizeBox grow position="relative" justifyContent="end">
             <VList
