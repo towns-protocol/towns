@@ -74,16 +74,20 @@ contract DeployBase is Context, DeployHelpers, Script {
   }
 
   function addressesPath(
-    string memory contractName
+    string memory versionName
   ) internal returns (string memory path) {
-    path = string.concat(
-      networkDirPath(),
-      "/",
-      "addresses",
-      "/",
-      contractName,
-      ".json"
-    );
+    string memory baseDir = string.concat(networkDirPath(), "/", "addresses");
+
+    // If version name contains a /, create the full path with subdirectory
+    bytes memory versionBytes = bytes(versionName);
+    for (uint i = 0; i < versionBytes.length; i++) {
+      if (versionBytes[i] == bytes1("/")) {
+        return string.concat(baseDir, "/", versionName, ".json");
+      }
+    }
+
+    // If no /, just put it in the base addresses directory
+    return string.concat(baseDir, "/", versionName, ".json");
   }
 
   function getDeployment(string memory versionName) internal returns (address) {
@@ -105,6 +109,22 @@ contract DeployBase is Context, DeployHelpers, Script {
     return vm.parseJsonAddress(data, ".address");
   }
 
+  function getDirectoryFromVersion(
+    string memory versionName
+  ) internal pure returns (string memory) {
+    bytes memory versionBytes = bytes(versionName);
+    for (uint i = 0; i < versionBytes.length; i++) {
+      if (versionBytes[i] == bytes1("/")) {
+        bytes memory dirBytes = new bytes(i);
+        for (uint j = 0; j < i; j++) {
+          dirBytes[j] = versionBytes[j];
+        }
+        return string(dirBytes);
+      }
+    }
+    return ""; // Return empty string if no "/" found
+  }
+
   function saveDeployment(
     string memory versionName,
     address contractAddr
@@ -117,6 +137,14 @@ contract DeployBase is Context, DeployHelpers, Script {
     // create addresses directory
     createDir(string.concat(networkDirPath(), "/", "addresses"));
     createChainIdFile(networkDirPath());
+
+    // Get directory from version name if it contains a "/"
+    string memory typeDir = getDirectoryFromVersion(versionName);
+    if (bytes(typeDir).length > 0) {
+      createDir(
+        string.concat(networkDirPath(), "/", "addresses", "/", typeDir)
+      );
+    }
 
     // get deployment path
     string memory path = addressesPath(versionName);
