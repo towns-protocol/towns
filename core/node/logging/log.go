@@ -17,7 +17,7 @@ var (
 )
 
 func init() {
-	globalLogger = DefaultZapLogger(zapcore.InfoLevel)
+	globalLogger = DefaultLogger(zapcore.InfoLevel)
 }
 
 // Init must be called before this package can be used.
@@ -163,7 +163,7 @@ func DefaultZapEncoderConfig() zapcore.EncoderConfig {
 	}
 }
 
-func DefaultZapLogger(level zapcore.Level) *Log {
+func DefaultLogger(level zapcore.Level) *Log {
 	encoder := NewJSONEncoder(DefaultZapEncoderConfig())
 
 	core := zapcore.NewCore(encoder, DefaultLogOut, level)
@@ -176,6 +176,16 @@ func DefaultZapLogger(level zapcore.Level) *Log {
 		Default:   sugar.Named(string(Default)),
 		Miniblock: sugar.Named(string(Miniblock)),
 		Rpc:       sugar.Named(string(Rpc)),
+	}
+}
+
+func NoopLogger() *Log {
+	nop := zap.NewNop().Sugar()
+	return &Log{
+		Logger:    nop.Desugar(),
+		Default:   nop.Named(string(Default)),
+		Rpc:       nop.Named(string(Rpc)),
+		Miniblock: nop.Named(string(Miniblock)),
 	}
 }
 
