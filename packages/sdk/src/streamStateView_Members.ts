@@ -86,7 +86,6 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
 
     // initialization
     applySnapshot(
-        eventId: string,
         event: ParsedEvent,
         snapshot: Snapshot,
         cleartexts: Record<string, Uint8Array | string> | undefined,
@@ -109,7 +108,6 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
                             fallbackKey: s.fallbackKey,
                             isNewDevice: s.isNewDevice,
                             sessionIds: [...s.sessionIds],
-                            srcEventId: eventId,
                         } satisfies KeySolicitationContent),
                 ),
                 encryptedUsername: member.username,
@@ -160,6 +158,7 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
         )
         const sigBundle = getEventSignature(event)
         this.solicitHelper.initSolicitations(
+            event.hashStr,
             Array.from(this.joined.values()),
             sigBundle,
             encryptionEmitter,
@@ -316,7 +315,6 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
                     this.solicitHelper.applyFulfillment(
                         stateMember,
                         payload.content.value,
-                        getEventSignature(event.remoteEvent),
                         encryptionEmitter,
                     )
                 }
