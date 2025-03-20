@@ -40,7 +40,7 @@ module "webapp_dns" {
   source               = "../../modules/webapp-dns"
   dns_name             = "app"
   dns_value            = "towns-server-omega.onrender.com"
-  proxied              = true
+  proxied              = false
   cloudflare_api_token = var.cloudflare_terraform_api_token
 }
 
