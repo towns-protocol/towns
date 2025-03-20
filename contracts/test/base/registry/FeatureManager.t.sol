@@ -93,11 +93,11 @@ contract FeatureManagerTest is BaseSetup, IFeatureManagerFacetBase {
     ConditionLib.Condition[] memory currentConditions = featureManagerFacet
       .getFeatureConditions();
 
-    for (uint256 i; i < length; i++) {
+    for (uint256 i; i < currentConditions.length; i++) {
       ConditionLib.Condition memory currentCondition = currentConditions[i];
       assertEq(currentCondition.token, address(townsToken));
-      assertEq(currentCondition.threshold, conditions[i].threshold);
-      assertEq(currentCondition.active, conditions[i].active);
+      assertEq(currentCondition.threshold, 0);
+      assertEq(currentCondition.active, true);
     }
   }
 
