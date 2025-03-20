@@ -2,7 +2,7 @@
  * @group with-entitlements
  */
 
-import { MembershipStruct, convertRuleDataV1ToV2, encodeRuleDataV2 } from '@river-build/web3'
+import { MembershipStruct, convertRuleDataV1ToV2, encodeRuleDataV2 } from '@towns-protocol/web3'
 import { setupWalletsAndContexts, everyoneMembershipStruct } from '../testUtils'
 
 describe('Legacy Space Detection', () => {

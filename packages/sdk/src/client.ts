@@ -4,7 +4,7 @@ import {
     SpaceAddressFromSpaceId,
     SpaceReviewAction,
     SpaceReviewEventObject,
-} from '@river-build/web3'
+} from '@towns-protocol/web3'
 import {
     PlainMessage,
     MembershipOp,
@@ -54,7 +54,7 @@ import {
     SolanaBlockchainTransactionReceipt,
     SessionKeysSchema,
     EnvelopeSchema,
-} from '@river-build/proto'
+} from '@towns-protocol/proto'
 import {
     bin_fromHexString,
     bin_toHexString,
@@ -64,7 +64,7 @@ import {
     dlog,
     dlogError,
     bin_fromString,
-} from '@river-build/dlog'
+} from '@towns-protocol/dlog'
 import {
     AES_GCM_DERIVED_ALGORITHM,
     BaseDecryptionExtensions,
@@ -79,7 +79,7 @@ import {
     UserDeviceCollection,
     makeSessionKeys,
     type EncryptionDeviceInitOpts,
-} from '@river-build/encryption'
+} from '@towns-protocol/encryption'
 import { getMaxTimeoutMs, StreamRpcClient, getMiniblocks } from './makeStreamRpcClient'
 import { errorContains, getRpcErrorProperty } from './rpcInterceptors'
 import { assert, isDefined } from './check'
@@ -175,7 +175,7 @@ import { SyncedStreamsExtension } from './syncedStreamsExtension'
 import { SignerContext } from './signerContext'
 import { decryptAESGCM, deriveKeyAndIV, encryptAESGCM, uint8ArrayToBase64 } from './crypto_utils'
 import { makeTags, makeTipTags, makeTransferTags } from './tags'
-import { TipEventObject } from '@river-build/generated/dev/typings/ITipping'
+import { TipEventObject } from '@towns-protocol/generated/dev/typings/ITipping'
 
 export type ClientEvents = StreamEvents & DecryptionEvents
 

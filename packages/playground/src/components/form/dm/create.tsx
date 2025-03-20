@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useCreateDm } from '@river-build/react-sdk'
+import { useCreateDm } from '@towns-protocol/react-sdk'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import {

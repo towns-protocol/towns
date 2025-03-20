@@ -1,6 +1,6 @@
 import { useAccount, useConnect } from 'wagmi'
 import { useEffect, useState } from 'react'
-import { useAgentConnection } from '@river-build/react-sdk'
+import { useAgentConnection } from '@towns-protocol/react-sdk'
 import { useNavigate } from 'react-router-dom'
 import { GitHubLogoIcon } from '@radix-ui/react-icons'
 import { Book, ExternalLink } from 'lucide-react'

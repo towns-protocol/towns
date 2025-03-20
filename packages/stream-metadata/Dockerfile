@@ -35,7 +35,7 @@ COPY ./packages/stream-metadata /river/packages/stream-metadata
 RUN apk add --no-cache git curl
 RUN corepack enable
 RUN yarn install
-RUN yarn run turbo build --filter @river-build/stream-metadata
+RUN yarn run turbo build --filter @towns-protocol/stream-metadata
 
 # create runner image with only the necessary files
 FROM node:lts-alpine3.20 as runner

@@ -1,5 +1,5 @@
 /* eslint-disable no-console */
-import { SnapshotCaseType } from '@river-build/proto'
+import { SnapshotCaseType } from '@towns-protocol/proto'
 import { Stream } from '../../stream'
 import { StreamChange } from '../../streamEvents'
 import {

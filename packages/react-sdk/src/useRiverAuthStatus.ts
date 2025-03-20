@@ -1,6 +1,6 @@
 'use client'
 
-import { AuthStatus } from '@river-build/sdk'
+import { AuthStatus } from '@towns-protocol/sdk'
 import { useRiver } from './useRiver'
 import type { ObservableConfig } from './useObservable'
 

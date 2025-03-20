@@ -5,11 +5,11 @@ import {
     ChannelMessage_Post_Attachment,
     ChannelMessage_Post_Mention,
     PlainMessage,
-} from '@river-build/proto'
+} from '@towns-protocol/proto'
 import { MessageTimeline } from '../../timeline/timeline'
-import { check, dlogger } from '@river-build/dlog'
+import { check, dlogger } from '@towns-protocol/dlog'
 import { isDefined } from '../../../check'
-import { ChannelDetails, SpaceDapp } from '@river-build/web3'
+import { ChannelDetails, SpaceDapp } from '@towns-protocol/web3'
 import { Members } from '../../members/members'
 
 const logger = dlogger('csb:channel')

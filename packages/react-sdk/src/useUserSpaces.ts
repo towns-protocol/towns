@@ -1,4 +1,4 @@
-import type { Spaces } from '@river-build/sdk'
+import type { Spaces } from '@towns-protocol/sdk'
 import type { ObservableConfig } from './useObservable'
 import { useRiver } from './useRiver'
 
@@ -10,7 +10,7 @@ import { useRiver } from './useRiver'
  * You can combine this hook with the `useSpace` hook to get all spaces of the current user and render them:
  *
  * ```tsx
- * import { useUserSpaces, useSpace } from '@river-build/react-sdk'
+ * import { useUserSpaces, useSpace } from '@towns-protocol/react-sdk'
  *
  * const AllSpaces = () => {
  *     const { spaceIds } = useUserSpaces()

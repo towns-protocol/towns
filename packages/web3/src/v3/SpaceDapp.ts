@@ -42,7 +42,7 @@ import {
     UserEntitlementShim,
 } from './index'
 import { PricingModules } from './PricingModules'
-import { dlogger, isTestEnv } from '@river-build/dlog'
+import { dlogger, isTestEnv } from '@towns-protocol/dlog'
 import { EVERYONE_ADDRESS, stringifyChannelMetadataJSON, NoEntitledWalletError } from '../Utils'
 import {
     XchainConfig,
@@ -55,7 +55,7 @@ import { PlatformRequirements } from './PlatformRequirements'
 import { EntitlementDataStructOutput } from './IEntitlementDataQueryableShim'
 import { CacheResult, EntitlementCache, Keyable } from '../EntitlementCache'
 import { RuleEntitlementV2Shim } from './RuleEntitlementV2Shim'
-import { TipEventObject } from '@river-build/generated/dev/typings/ITipping'
+import { TipEventObject } from '@towns-protocol/generated/dev/typings/ITipping'
 
 const logger = dlogger('csb:SpaceDapp:debug')
 

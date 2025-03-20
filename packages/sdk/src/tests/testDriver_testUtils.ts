@@ -1,8 +1,8 @@
 import { Client } from '../client'
-import { DLogger, check, dlog } from '@river-build/dlog'
+import { DLogger, check, dlog } from '@towns-protocol/dlog'
 import { makeTestClient, makeUniqueSpaceStreamId } from './testUtils'
 import { makeUniqueChannelStreamId } from '../id'
-import { SnapshotCaseType } from '@river-build/proto'
+import { SnapshotCaseType } from '@towns-protocol/proto'
 import { DecryptedTimelineEvent } from '../types'
 
 class TestDriver {

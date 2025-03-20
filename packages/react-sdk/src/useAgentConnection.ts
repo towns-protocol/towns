@@ -1,4 +1,4 @@
-import type { SyncAgentConfig } from '@river-build/sdk'
+import type { SyncAgentConfig } from '@towns-protocol/sdk'
 import { useCallback, useMemo, useState } from 'react'
 import type { ethers } from 'ethers'
 import { connectRiverWithBearerToken, signAndConnect } from './connectRiver'
@@ -13,8 +13,8 @@ type AgentConnectConfig = Omit<SyncAgentConfig, 'context' | 'onTokenExpired'>
  *
  * ### Bearer Token
  * ```tsx
- * import { useAgentConnection } from '@river-build/react-sdk'
- * import { makeRiverConfig } from '@river-build/sdk'
+ * import { useAgentConnection } from '@towns-protocol/react-sdk'
+ * import { makeRiverConfig } from '@towns-protocol/sdk'
  * import { useState } from 'react'
  *
  * const riverConfig = makeRiverConfig('gamma')
@@ -41,8 +41,8 @@ type AgentConnectConfig = Omit<SyncAgentConfig, 'context' | 'onTokenExpired'>
  * If you're using Wagmi and Viem, you can use the [`useEthersSigner`](https://wagmi.sh/react/guides/ethers#usage-1) hook to get an ethers.js v5 Signer from a Viem Wallet Client.
  *
  * ```tsx
- * import { useAgentConnection } from '@river-build/react-sdk'
- * import { makeRiverConfig } from '@river-build/sdk'
+ * import { useAgentConnection } from '@towns-protocol/react-sdk'
+ * import { makeRiverConfig } from '@towns-protocol/sdk'
  * import { useEthersSigner } from './utils/viem-to-ethers'
  *
  * const riverConfig = makeRiverConfig('gamma')

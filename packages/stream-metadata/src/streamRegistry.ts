@@ -1,6 +1,6 @@
 import { BigNumber } from 'ethers'
 import { FastifyBaseLogger } from 'fastify'
-import { streamIdAsBytes } from '@river-build/sdk'
+import { streamIdAsBytes } from '@towns-protocol/sdk'
 
 import { getRiverRegistry } from './evmRpcClient'
 
