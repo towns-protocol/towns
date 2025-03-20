@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net"
 	"net/http"
 	"strings"
@@ -13,6 +14,7 @@ import (
 	"connectrpc.com/connect"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/golang-jwt/jwt/v4"
+	"go.uber.org/zap/zapcore"
 	"google.golang.org/protobuf/proto"
 
 	"github.com/towns-protocol/towns/core/node/app_registry/app_client"
@@ -199,9 +201,28 @@ func (b *TestAppServer) solicitKeys(ctx context.Context, data app_client.KeySoli
 	return nil
 }
 
+func parseEncryptionEnvelope(envelope *protocol.Envelope) (*protocol.UserInboxPayload_GroupEncryptionSessions, error) {
+	event, err := events.ParseEvent(envelope)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing encryption envelope: %w", err)
+	}
+
+	payload := event.Event.GetUserInboxPayload()
+	if payload == nil {
+		return nil, fmt.Errorf("forwarded encryption event was not a user inbox event")
+	}
+
+	encryptionSessions := payload.GetGroupEncryptionSessions()
+	if encryptionSessions == nil {
+		return nil, fmt.Errorf("forwarded encryption event did not have a group encryption sessions payload")
+	}
+
+	return encryptionSessions, nil
+}
+
 func (b *TestAppServer) respondToSendMessages(
 	ctx context.Context,
-	data *app_client.SendSessionMessagesRequestData,
+	data *protocol.AppServiceRequest,
 ) error {
 	log := logging.FromCtx(ctx)
 	// Swap with above to enable debug logs
@@ -209,53 +230,32 @@ func (b *TestAppServer) respondToSendMessages(
 	log.Debugw(
 		"respondToSendMessages",
 		"numMessages",
-		len(data.MessageEnvelopes),
-		"messageEnvelopes",
-		data.MessageEnvelopes,
-		"encryptionBytes",
-		data.EncryptionEnvelope,
+		len(data.Messages),
+		"numEncryptionMessages",
+		len(data.GroupEncryptionSessionsMessages),
 		"botDeviceKey",
 		b.encryptionDevice.DeviceKey,
 	)
 
-	var envelope protocol.Envelope
-	if err := proto.Unmarshal(data.EncryptionEnvelope, &envelope); err != nil {
-		log.Errorw("Error unmarshalling encryption envelope", "err", err)
-		return err
-	}
-
-	event, err := events.ParseEvent(&envelope)
-	if err != nil {
-		log.Errorw("Error parsing event", "err", err)
-		return err
-	}
-
-	payload := event.Event.GetUserInboxPayload()
-	if payload == nil {
-		log.Errorw("payload is not user inbox")
-		return fmt.Errorf("forwarded encryption event was not a user inbox event")
-	}
-
-	encryptionSessions := payload.GetGroupEncryptionSessions()
-	if encryptionSessions == nil {
-		log.Errorw("User inbox payload content is not group encryption sessions")
-		return fmt.Errorf("forwarded encryption event did not have a group encryption sessions payload")
-	}
-
-	for _, envelopeBytes := range data.MessageEnvelopes {
-		log.Debugw("Sending event...", "streamEvent", envelopeBytes)
-		var messageEnvelope protocol.Envelope
-		if err := proto.Unmarshal(envelopeBytes, &messageEnvelope); err != nil {
-			log.Errorw("Could not unmarshal stream event", "error", err)
-			return fmt.Errorf("could not unmarshal stream event: %w", err)
-		}
-
-		parsedEvent, err := events.ParseEvent(&messageEnvelope)
+	sessionIdToEncryptionMaterial := make(map[string]*protocol.UserInboxPayload_GroupEncryptionSessions)
+	for i, envelopeBytes := range data.GroupEncryptionSessionsMessages {
+		sessions, err := parseEncryptionEnvelope(envelopeBytes)
 		if err != nil {
-			log.Errorw("Could not parse message envelope", "err", err)
+			return fmt.Errorf("error parsing encryption envelope %d: %w", i, err)
+		}
+		for _, sessionId := range sessions.GetSessionIds() {
+			sessionIdToEncryptionMaterial[sessionId] = sessions
+		}
+	}
+
+	for _, envelope := range data.Messages {
+		parsedEvent, err := events.ParseEvent(envelope)
+		if err != nil {
+			log.Errorw("ould not parse message envelope", "err", err)
 			return fmt.Errorf("could not parse message envelope: %w", err)
 		}
 		streamEvent := parsedEvent.Event
+		log.Infow("streamEvent", "streamEvent", parsedEvent.Event)
 		payload, ok := streamEvent.Payload.(*protocol.StreamEvent_ChannelPayload)
 		if !ok {
 			log.Errorw("Could not cast channel stream payload")
@@ -271,9 +271,22 @@ func (b *TestAppServer) respondToSendMessages(
 			continue
 		}
 
-		streamIdBytes, err := shared.StreamIdFromBytes(encryptionSessions.StreamId)
+		sessions, ok := sessionIdToEncryptionMaterial[message.Message.SessionId]
+		if !ok {
+			log.Errorw(
+				"Did not find sessionId in group encryption sessions for sent messages",
+				"sessionId",
+				message.Message.SessionId,
+			)
+			return fmt.Errorf(
+				"did not find sessionId %v in group encryption sessions for sent messages",
+				message.Message.SessionId,
+			)
+		}
+
+		streamIdBytes, err := shared.StreamIdFromBytes(sessions.StreamId)
 		if err != nil {
-			log.Errorw("Could not parse stream id", "error", err)
+			log.Errorw("Could not parse stream id", "error", err, "raw", sessions.StreamId)
 			return fmt.Errorf("could not parse stream id: %w", err)
 		}
 
@@ -307,7 +320,7 @@ func (b *TestAppServer) respondToSendMessages(
 					"%v %v reply (%v)",
 					message.Message.SessionId,
 					message.Message.Ciphertext,
-					encryptionSessions.Ciphertexts[b.encryptionDevice.DeviceKey],
+					sessions.Ciphertexts[b.encryptionDevice.DeviceKey],
 				),
 				message.Message.SessionId,
 			),
@@ -345,8 +358,9 @@ func (b *TestAppServer) respondToSendMessages(
 func (b *TestAppServer) rootHandler(w http.ResponseWriter, r *http.Request) {
 	// Ensure that the request method is POST.
 	// Uncomment to unconditionally enable logging
-	// log := logging.DefaultZapLogger(zapcore.DebugLevel)
-	log := logging.FromCtx(r.Context())
+	log := logging.DefaultZapLogger(zapcore.DebugLevel)
+	// log := logging.FromCtx(r.Context())
+	ctx := logging.CtxWithLog(r.Context(), log)
 	if r.Method != http.MethodPost {
 		log.Errorw("method not allowed", "method", r.Method)
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -358,14 +372,66 @@ func (b *TestAppServer) rootHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "JWT Signature Invalid", http.StatusForbidden)
 	}
 
-	// Check that the Content-Type is application/json.
-	if r.Header.Get("Content-Type") != "application/json" {
+	if r.Header.Get("Content-Type") == "application/x-protobuf" {
+		log.Infow("Received request")
+		var request protocol.AppServiceRequest
+		data, err := io.ReadAll(r.Body)
+		if err != nil {
+			log.Errorw("could not read request body", "error", err)
+			http.Error(w, "could not read request body", http.StatusInternalServerError)
+			return
+		}
+		if err := proto.Unmarshal(data, &request); err != nil {
+			log.Errorw("could not marshal protobuf request", "error", err)
+			http.Error(w, "could not marshal protobuf request", http.StatusBadRequest)
+			return
+		}
+		var response protocol.AppServiceResponse
+		if request.Action != nil {
+			switch request.Action.(type) {
+			case *protocol.AppServiceRequest_Initialize:
+				log.Infow("initialize...")
+				response.EncryptionDevice = &protocol.UserMetadataPayload_EncryptionDevice{
+					DeviceKey:   b.encryptionDevice.DeviceKey,
+					FallbackKey: b.encryptionDevice.FallbackKey,
+				}
+
+			default:
+				log.Errorw("unrecognized action type", "action", request.Action)
+				http.Error(w, "unrecognized payload type", http.StatusBadRequest)
+				return
+			}
+		}
+
+		log.Infow("send_messages...", "numMessages", len(request.GetMessages()))
+		if err := b.respondToSendMessages(ctx, &request); err != nil {
+			http.Error(w, fmt.Sprintf("unable to respond to sent messages: %v", err), http.StatusBadRequest)
+			return
+		}
+
+		// Marshal the response message to binary format.
+		respData, err := proto.Marshal(&response)
+		if err != nil {
+			log.Errorw("failed to marshal response message", "err", err)
+			http.Error(w, "Failed to marshal response message", http.StatusInternalServerError)
+			return
+		}
+
+		// Set the appropriate response header.
+		w.Header().Set("Content-Type", "application/x-protobuf")
+		// Write the protobuf data to the response.
+		if _, err = w.Write(respData); err != nil {
+			log.Errorw("Error writing response", "error", err)
+		}
+		log.Info("done with protobuf response")
+		return
+	} else if r.Header.Get("Content-Type") != "application/json" {
 		log.Errorw("wrong content type", "ct", r.Header.Get("Content-Type"))
 		http.Error(w, "Content-Type must be application/json", http.StatusUnsupportedMediaType)
 		return
 	}
 
-	// Decode the JSON request body into the Envelop struct.
+	// Decode the JSON request body into the Envelope struct.
 	var payload AppServiceRequestEnvelope
 	decoder := json.NewDecoder(r.Body)
 	defer r.Body.Close() // Ensure the body is closed once we're done.
@@ -382,13 +448,6 @@ func (b *TestAppServer) rootHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	var response any
 	switch payload.Command {
-	case "initialize":
-		response = app_client.InitializeResponse{
-			DefaultEncryptionDevice: app_client.EncryptionDevice{
-				DeviceKey:   b.encryptionDevice.DeviceKey,
-				FallbackKey: b.encryptionDevice.FallbackKey,
-			},
-		}
 	case "solicit":
 		var data app_client.KeySolicitationData
 		if err := json.Unmarshal(payload.Data, &data); err != nil {
@@ -407,24 +466,6 @@ func (b *TestAppServer) rootHandler(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, fmt.Sprintf("TestAppServer unable to solicit keys: %v", err), http.StatusBadRequest)
 		}
 		response = app_client.KeySolicitationResponse{}
-	case "messages":
-		var data app_client.SendSessionMessagesRequestData
-		if err := json.Unmarshal(payload.Data, &data); err != nil {
-			log.Errorw(
-				"Unable to unmarshal payload data into send session messages request data",
-				"error",
-				err,
-				"payloadData",
-				payload.Data,
-			)
-			http.Error(w, fmt.Sprintf("unable to unmarshal message data: %v", err), http.StatusBadRequest)
-			return
-		}
-		if err := b.respondToSendMessages(r.Context(), &data); err != nil {
-			http.Error(w, fmt.Sprintf("unable to respond to sent messages: %v", err), http.StatusBadRequest)
-			return
-		}
-		response = app_client.SendSessionMessagesResponse{}
 
 	default:
 		log.Errorw("unrecognized payload type", "command", payload.Command)
