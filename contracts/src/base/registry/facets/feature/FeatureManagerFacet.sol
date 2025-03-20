@@ -5,37 +5,57 @@ pragma solidity ^0.8.23;
 import {IFeatureManagerFacet} from "./IFeatureManagerFacet.sol";
 
 // libraries
-import {FeatureManager} from "./FeatureManager.sol";
+import {FeatureManagerLib, ConditionLib} from "./FeatureManagerLib.sol";
 
 // contracts
 import {OwnableBase} from "@river-build/diamond/src/facets/ownable/OwnableBase.sol";
 import {Facet} from "@river-build/diamond/src/facets/Facet.sol";
 
+/// @title FeatureManagerFacet
+/// @notice Manages feature conditions and checks for spaces
+/// @dev This facet is responsible for managing feature conditions and checking if a space meets the condition for a feature to be enabled
 contract FeatureManagerFacet is IFeatureManagerFacet, OwnableBase, Facet {
-  using FeatureManager for FeatureManager.Layout;
+  using FeatureManagerLib for FeatureManagerLib.Layout;
+  using ConditionLib for ConditionLib.Condition;
 
   function __FeatureManagerFacet_init() external onlyInitializing {}
 
   /// @inheritdoc IFeatureManagerFacet
   function setFeatureCondition(
     bytes32 featureId,
-    FeatureManager.Condition calldata condition
+    ConditionLib.Condition calldata condition
   ) external onlyOwner {
-    FeatureManager.getLayout().setFeatureCondition(featureId, condition);
+    FeatureManagerLib.getLayout().setFeatureCondition(featureId, condition);
     emit FeatureConditionSet(featureId, condition);
-  }
-
-  /// @inheritdoc IFeatureManagerFacet
-  function disableFeatureCondition(bytes32 featureId) external onlyOwner {
-    FeatureManager.getLayout().disableFeatureCondition(featureId);
-    emit FeatureConditionDisabled(featureId);
   }
 
   /// @inheritdoc IFeatureManagerFacet
   function getFeatureCondition(
     bytes32 featureId
-  ) external view returns (FeatureManager.Condition memory) {
-    return FeatureManager.getLayout().getFeatureCondition(featureId);
+  ) external view returns (ConditionLib.Condition memory) {
+    return FeatureManagerLib.getLayout().getFeatureCondition(featureId);
+  }
+
+  /// @inheritdoc IFeatureManagerFacet
+  function getFeatureConditions()
+    external
+    view
+    returns (ConditionLib.Condition[] memory)
+  {
+    return FeatureManagerLib.getLayout().getFeatureConditions();
+  }
+
+  /// @inheritdoc IFeatureManagerFacet
+  function getFeatureConditionsForSpace(
+    address space
+  ) external view returns (ConditionLib.Condition[] memory) {
+    return FeatureManagerLib.getLayout().getFeatureConditionsForSpace(space);
+  }
+
+  /// @inheritdoc IFeatureManagerFacet
+  function disableFeatureCondition(bytes32 featureId) external onlyOwner {
+    FeatureManagerLib.getLayout().disableFeatureCondition(featureId);
+    emit FeatureConditionDisabled(featureId);
   }
 
   /// @inheritdoc IFeatureManagerFacet
@@ -43,6 +63,11 @@ contract FeatureManagerFacet is IFeatureManagerFacet, OwnableBase, Facet {
     bytes32 featureId,
     address space
   ) external view returns (bool) {
-    return FeatureManager.getLayout().meetsThreshold(featureId, space);
+    ConditionLib.Condition storage condition = FeatureManagerLib
+      .getLayout()
+      .conditions[featureId];
+    if (!condition.isValid()) return false;
+    uint256 votes = condition.getVotes(space);
+    return condition.meetsThreshold(votes);
   }
 }

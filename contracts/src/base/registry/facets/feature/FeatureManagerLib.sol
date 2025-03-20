@@ -4,36 +4,31 @@ pragma solidity ^0.8.23;
 // interfaces
 import {IVotes} from "@openzeppelin/contracts/governance/utils/IVotes.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {IFeatureManagerFacetBase} from "./IFeatureManagerFacet.sol";
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
+import {IFeatureManagerFacetBase} from "./IFeatureManagerFacet.sol";
 
 // libraries
+import {ConditionLib} from "./ConditionLib.sol";
+import {EnumerableSetLib} from "solady/utils/EnumerableSetLib.sol";
 import {CustomRevert} from "contracts/src/utils/libraries/CustomRevert.sol";
 
 /// @title FeatureManager
-library FeatureManager {
+library FeatureManagerLib {
+  using EnumerableSetLib for EnumerableSetLib.Bytes32Set;
+  using ConditionLib for ConditionLib.Condition;
+
   // keccak256(abi.encode(uint256(keccak256("towns.storage.FeatureManager")) - 1)) & ~bytes32(uint256(0xff))
   bytes32 constant DEFAULT_STORAGE_SLOT =
     0xbf0291a9764d4152828d672b8fee3b84a943cf12027e2908bad1a29d55a8f400;
-
-  /// @notice Condition struct for feature conditions
-  /// @param token The token to be used to check the threshold
-  /// @param threshold The amount of tokens needed to activate the feature
-  /// @param active If this feature is currently active
-  /// @param extraData Additional parameters for specific features
-  struct Condition {
-    address token;
-    uint256 threshold;
-    bool active;
-    bytes extraData;
-  }
 
   /// @notice Storage layout for the FeatureManager
   /// @dev Maps feature IDs to their activation conditions
   /// @custom:storage-location erc7201:towns.storage.FeatureManager
   struct Layout {
+    // Feature IDs
+    EnumerableSetLib.Bytes32Set featureIds;
     // Feature ID => Condition
-    mapping(bytes32 featureId => Condition condition) conditions;
+    mapping(bytes32 featureId => ConditionLib.Condition condition) conditions;
   }
 
   /// @notice Sets the condition for a specific feature
@@ -47,7 +42,7 @@ library FeatureManager {
   function setFeatureCondition(
     Layout storage self,
     bytes32 featureId,
-    Condition calldata condition
+    ConditionLib.Condition calldata condition
   ) internal {
     if (condition.token == address(0))
       CustomRevert.revertWith(IFeatureManagerFacetBase.InvalidToken.selector);
@@ -69,6 +64,7 @@ library FeatureManager {
         IFeatureManagerFacetBase.InvalidThreshold.selector
       );
 
+    self.featureIds.add(featureId);
     self.conditions[featureId] = condition;
   }
 
@@ -80,8 +76,60 @@ library FeatureManager {
   function getFeatureCondition(
     Layout storage self,
     bytes32 featureId
-  ) internal view returns (Condition memory) {
+  ) internal view returns (ConditionLib.Condition memory) {
     return self.conditions[featureId];
+  }
+
+  /// @notice Retrieves all feature conditions
+  /// @dev Returns an array of all feature conditions
+  /// @param self The storage layout pointer
+  /// @return Condition[] An array of all feature conditions
+  function getFeatureConditions(
+    Layout storage self
+  ) internal view returns (ConditionLib.Condition[] memory) {
+    uint256 featureCount = self.featureIds.length();
+
+    ConditionLib.Condition[] memory conditions = new ConditionLib.Condition[](
+      featureCount
+    );
+    for (uint256 i; i < featureCount; ++i) {
+      conditions[i] = self.conditions[self.featureIds.at(i)];
+    }
+    return conditions;
+  }
+
+  /// @notice Retrieves all feature conditions for a specific space
+  /// @dev Returns an array of all feature conditions that are active for the space
+  /// @param self The storage layout pointer
+  /// @param space The address of the space to check conditions for
+  /// @return Condition[] An array of all feature conditions that are active for the space
+  function getFeatureConditionsForSpace(
+    Layout storage self,
+    address space
+  ) internal view returns (ConditionLib.Condition[] memory) {
+    uint256 featureCount = self.featureIds.length();
+
+    ConditionLib.Condition[] memory conditions = new ConditionLib.Condition[](
+      featureCount
+    );
+    uint256 index;
+
+    for (uint256 i; i < featureCount; ++i) {
+      ConditionLib.Condition storage condition = self.conditions[
+        self.featureIds.at(i)
+      ];
+      uint256 votes = condition.getVotes(space);
+
+      if (condition.meetsThreshold(votes)) {
+        conditions[index++] = condition;
+      }
+    }
+
+    assembly {
+      mstore(conditions, index)
+    }
+
+    return conditions;
   }
 
   /// @notice Disables a feature by setting its active flag to false
@@ -92,29 +140,12 @@ library FeatureManager {
     Layout storage self,
     bytes32 featureId
   ) internal {
-    Condition memory condition = self.conditions[featureId];
+    ConditionLib.Condition memory condition = self.conditions[featureId];
     if (!condition.active)
       CustomRevert.revertWith(
         IFeatureManagerFacetBase.FeatureNotActive.selector
       );
     self.conditions[featureId].active = false;
-  }
-
-  /// @notice Checks if a space meets the threshold for a specific feature
-  /// @dev Evaluates token voting power against the required threshold
-  /// @param self The storage layout pointer
-  /// @param featureId The unique identifier for the feature
-  /// @param space The address of the space to check for threshold
-  /// @return bool True if the space meets the threshold, false otherwise
-  function meetsThreshold(
-    Layout storage self,
-    bytes32 featureId,
-    address space
-  ) internal view returns (bool) {
-    Condition memory condition = self.conditions[featureId];
-    if (!condition.active) return false;
-    if (condition.threshold == 0) return true;
-    return IVotes(condition.token).getVotes(space) >= condition.threshold;
   }
 
   /// @notice Retrieves the layout for the FeatureManager at the default storage slot
@@ -127,7 +158,7 @@ library FeatureManager {
   /// @notice Retrieves the layout for the FeatureManager at a custom storage slot
   /// @dev This function is used to access the storage layout for a given slot
   /// @param slot The storage slot to retrieve the layout for
-  /// @return $ The storage layout pointer
+  /// @return $ The layout storage pointer
   function getLayout(bytes32 slot) internal pure returns (Layout storage $) {
     assembly {
       $.slot := slot

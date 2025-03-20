@@ -4,7 +4,7 @@ pragma solidity ^0.8.23;
 // interfaces
 
 // libraries
-import {FeatureManager} from "./FeatureManager.sol";
+import {ConditionLib} from "./ConditionLib.sol";
 
 // contracts
 
@@ -32,7 +32,7 @@ interface IFeatureManagerFacetBase {
   /// @param condition The condition parameters that were set for the feature
   event FeatureConditionSet(
     bytes32 indexed featureId,
-    FeatureManager.Condition condition
+    ConditionLib.Condition condition
   );
 
   /// @notice Emitted when a feature condition is disabled
@@ -47,20 +47,34 @@ interface IFeatureManagerFacet is IFeatureManagerFacetBase {
   /// @dev Only callable by the contract owner
   function setFeatureCondition(
     bytes32 featureId,
-    FeatureManager.Condition memory condition
+    ConditionLib.Condition memory condition
   ) external;
-
-  /// @notice Disables a feature condition
-  /// @param featureId The unique identifier for the feature
-  /// @dev Only callable by the contract owner
-  function disableFeatureCondition(bytes32 featureId) external;
 
   /// @notice Gets the condition for a feature
   /// @param featureId The unique identifier for the feature
   /// @return The condition struct for the specified feature
   function getFeatureCondition(
     bytes32 featureId
-  ) external view returns (FeatureManager.Condition memory);
+  ) external view returns (ConditionLib.Condition memory);
+
+  /// @notice Retrieves all feature conditions
+  /// @return An array of all feature conditions
+  function getFeatureConditions()
+    external
+    view
+    returns (ConditionLib.Condition[] memory);
+
+  /// @notice Retrieves all feature conditions for a specific space
+  /// @param space The address of the space to check conditions for
+  /// @return An array of all feature conditions that are active for the space
+  function getFeatureConditionsForSpace(
+    address space
+  ) external view returns (ConditionLib.Condition[] memory);
+
+  /// @notice Disables a feature condition
+  /// @param featureId The unique identifier for the feature
+  /// @dev Only callable by the contract owner
+  function disableFeatureCondition(bytes32 featureId) external;
 
   /// @notice Checks if a space meets the condition for a feature
   /// @param featureId The unique identifier for the feature

@@ -5,7 +5,7 @@ pragma solidity ^0.8.23;
 import {IFeatureManagerFacetBase} from "contracts/src/base/registry/facets/feature/IFeatureManagerFacet.sol";
 
 // libraries
-import {FeatureManager} from "contracts/src/base/registry/facets/feature/FeatureManager.sol";
+import {ConditionLib} from "contracts/src/base/registry/facets/feature/ConditionLib.sol";
 
 // contracts
 import {BaseSetup} from "contracts/test/spaces/BaseSetup.sol";
@@ -30,7 +30,7 @@ contract FeatureManagerTest is BaseSetup, IFeatureManagerFacetBase {
 
   modifier givenFeatureConditionIsSet(
     bytes32 featureId,
-    FeatureManager.Condition memory condition,
+    ConditionLib.Condition memory condition,
     address to,
     uint256 amount
   ) {
@@ -56,21 +56,53 @@ contract FeatureManagerTest is BaseSetup, IFeatureManagerFacetBase {
     _;
   }
 
-  function test_featureCondition(
+  function test_setFeatureCondition(
     bytes32 featureId,
-    FeatureManager.Condition memory condition,
+    ConditionLib.Condition memory condition,
     address to,
     uint256 amount
   ) external givenFeatureConditionIsSet(featureId, condition, to, amount) {
-    FeatureManager.Condition memory currentCondition = featureManagerFacet
+    ConditionLib.Condition memory currentCondition = featureManagerFacet
       .getFeatureCondition(featureId);
     assertEq(currentCondition.token, address(townsToken));
     assertEq(currentCondition.threshold, condition.threshold);
     assertEq(currentCondition.active, condition.active);
   }
 
+  function test_getFeatureConditions(
+    bytes32[10] memory featureIds
+  ) external givenTokensAreMinted(deployer, TEST_THRESHOLD) {
+    uint256 length = featureIds.length;
+
+    ConditionLib.Condition[] memory conditions = new ConditionLib.Condition[](
+      length
+    );
+
+    for (uint256 i; i < length; ++i) {
+      conditions[i] = ConditionLib.Condition({
+        token: address(townsToken),
+        threshold: 0,
+        active: true,
+        extraData: ""
+      });
+
+      vm.prank(deployer);
+      featureManagerFacet.setFeatureCondition(featureIds[i], conditions[i]);
+    }
+
+    ConditionLib.Condition[] memory currentConditions = featureManagerFacet
+      .getFeatureConditions();
+
+    for (uint256 i; i < length; ++i) {
+      ConditionLib.Condition memory currentCondition = currentConditions[i];
+      assertEq(currentCondition.token, address(townsToken));
+      assertEq(currentCondition.threshold, conditions[i].threshold);
+      assertEq(currentCondition.active, conditions[i].active);
+    }
+  }
+
   function test_revertWith_setFeatureCondition_invalidToken() external {
-    FeatureManager.Condition memory condition = FeatureManager.Condition({
+    ConditionLib.Condition memory condition = ConditionLib.Condition({
       token: address(0),
       threshold: TEST_THRESHOLD,
       active: true,
@@ -85,7 +117,7 @@ contract FeatureManagerTest is BaseSetup, IFeatureManagerFacetBase {
   function test_revertWith_setFeatureCondition_invalidInterface() external {
     MockERC20 mockToken = new MockERC20("Mock Token", "MTK");
 
-    FeatureManager.Condition memory condition = FeatureManager.Condition({
+    ConditionLib.Condition memory condition = ConditionLib.Condition({
       token: address(mockToken),
       threshold: TEST_THRESHOLD,
       active: true,
@@ -98,7 +130,7 @@ contract FeatureManagerTest is BaseSetup, IFeatureManagerFacetBase {
   }
 
   function test_revertWith_setFeatureCondition_invalidTotalSupply() external {
-    FeatureManager.Condition memory condition = FeatureManager.Condition({
+    ConditionLib.Condition memory condition = ConditionLib.Condition({
       token: address(townsToken),
       threshold: TEST_THRESHOLD,
       active: true,
@@ -114,7 +146,7 @@ contract FeatureManagerTest is BaseSetup, IFeatureManagerFacetBase {
     external
     givenTokensAreMinted(deployer, TEST_THRESHOLD - 10 ether)
   {
-    FeatureManager.Condition memory condition = FeatureManager.Condition({
+    ConditionLib.Condition memory condition = ConditionLib.Condition({
       token: address(townsToken),
       threshold: TEST_THRESHOLD,
       active: true,
@@ -128,7 +160,7 @@ contract FeatureManagerTest is BaseSetup, IFeatureManagerFacetBase {
 
   function test_disableFeatureCondition(
     bytes32 featureId,
-    FeatureManager.Condition memory condition,
+    ConditionLib.Condition memory condition,
     address to,
     uint256 amount
   ) external givenFeatureConditionIsSet(featureId, condition, to, amount) {
@@ -139,7 +171,7 @@ contract FeatureManagerTest is BaseSetup, IFeatureManagerFacetBase {
     emit FeatureConditionDisabled(featureId);
     featureManagerFacet.disableFeatureCondition(featureId);
 
-    FeatureManager.Condition memory currentCondition = featureManagerFacet
+    ConditionLib.Condition memory currentCondition = featureManagerFacet
       .getFeatureCondition(featureId);
     assertFalse(currentCondition.active);
   }
@@ -152,7 +184,7 @@ contract FeatureManagerTest is BaseSetup, IFeatureManagerFacetBase {
 
   function test_checkFeatureCondition(
     bytes32 featureId,
-    FeatureManager.Condition memory condition,
+    ConditionLib.Condition memory condition,
     address to,
     uint256 amount,
     address space
@@ -168,6 +200,42 @@ contract FeatureManagerTest is BaseSetup, IFeatureManagerFacetBase {
     vm.assertTrue(featureManagerFacet.checkFeatureCondition(featureId, space));
   }
 
+  function test_getFeatureConditionsForSpace(
+    bytes32 featureId,
+    ConditionLib.Condition memory condition,
+    address user,
+    uint256 amount,
+    address space
+  ) external givenFeatureConditionIsSet(featureId, condition, user, amount) {
+    vm.assume(user != address(0));
+    vm.assume(space != address(0));
+    vm.assume(user != space);
+    vm.assume(condition.active == true);
+
+    // get feature conditions for space
+    ConditionLib.Condition[] memory conditions = featureManagerFacet
+      .getFeatureConditionsForSpace(space);
+
+    // no conditions since we haven't delegated
+    assertEq(conditions.length, 0);
+
+    // delegate to space
+    vm.prank(user);
+    towns.delegate(space);
+
+    // get feature conditions for space
+    conditions = featureManagerFacet.getFeatureConditionsForSpace(space);
+    assertEq(conditions.length, 1);
+
+    // disable feature condition
+    vm.prank(deployer);
+    featureManagerFacet.disableFeatureCondition(featureId);
+
+    // get feature conditions for space
+    conditions = featureManagerFacet.getFeatureConditionsForSpace(space);
+    assertEq(conditions.length, 0);
+  }
+
   function test_checkFeatureCondition_featureNotActive(
     address space
   ) external view {
@@ -180,7 +248,7 @@ contract FeatureManagerTest is BaseSetup, IFeatureManagerFacetBase {
   function test_checkFeatureCondition_noThreshold(address space) external {
     vm.assume(space != address(0));
 
-    FeatureManager.Condition memory condition = FeatureManager.Condition({
+    ConditionLib.Condition memory condition = ConditionLib.Condition({
       token: address(townsToken),
       threshold: 0,
       active: true,
