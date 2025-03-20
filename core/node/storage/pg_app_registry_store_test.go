@@ -248,7 +248,7 @@ func TestPublishSessionKeys(t *testing.T) {
 		shared.StreamId{},
 		deviceKey,
 		[]string{sessionId},
-		"ciphertexts-devicekey-sessionId",
+		[]byte("ciphertexts"),
 	)
 	require.Nil(messages)
 	require.ErrorContains(err, "app with device key is not registered")
@@ -276,7 +276,7 @@ func TestPublishSessionKeys(t *testing.T) {
 		shared.StreamId{},
 		deviceKey,
 		[]string{sessionId},
-		"ciphertexts-devicekey-sessionId",
+		[]byte("ciphertexts"),
 	)
 	require.Empty(messages)
 	require.NoError(err)
@@ -288,7 +288,7 @@ func TestPublishSessionKeys(t *testing.T) {
 		shared.StreamId{},
 		deviceKey,
 		[]string{sessionId},
-		"ciphertext2",
+		[]byte("ciphertexts2"),
 	)
 	require.Nil(messages)
 	require.Nil(err)
@@ -298,7 +298,7 @@ func TestPublishSessionKeys(t *testing.T) {
 		shared.StreamId{},
 		deviceKey,
 		[]string{sessionId, sessionId2, sessionId3},
-		"ciphertext123",
+		[]byte("ciphertexts123"),
 	)
 	require.Nil(messages)
 	require.Nil(err)
@@ -429,7 +429,7 @@ func TestEnqueueMessages(t *testing.T) {
 		shared.StreamId{},
 		deviceKeys[0],
 		[]string{sessionId1, sessionId3},
-		"ciphertexts-device0-session1-session3",
+		[]byte("ciphertextsDevice0Session1Session3"),
 	)
 	require.NoError(err)
 	requireSendableMessagesEqual(
@@ -478,7 +478,7 @@ func TestEnqueueMessages(t *testing.T) {
 		shared.StreamId{},
 		deviceKeys[1],
 		[]string{sessionId2, sessionId4},
-		"ciphertexts-device1-session2-session4",
+		[]byte("ciphertextsDevice1Session2Session4"),
 	)
 	require.NotNil(messages)
 	requireSendableMessagesEqual(
@@ -488,14 +488,13 @@ func TestEnqueueMessages(t *testing.T) {
 	)
 	require.NoError(err)
 
-	sendableAppWithSessionsAndCiphertexts := func(i int, sessionIds []string, ciphertexts string) storage.SendableApp {
+	sendableAppWithSessionsAndCiphertexts := func(i int, encryptionEnvelope []byte) storage.SendableApp {
 		return storage.SendableApp{
 			DeviceKey:  deviceKeys[i],
 			AppId:      apps[i].Address,
 			WebhookUrl: fmt.Sprintf("https://webhook.com/%d", i),
 			SendMessageSecrets: storage.SendMessageSecrets{
-				SessionIds:            sessionIds,
-				CipherTexts:           ciphertexts,
+				EncryptionEnvelope:    encryptionEnvelope,
 				EncryptedSharedSecret: secrets[i],
 			},
 		}
@@ -522,8 +521,7 @@ func TestEnqueueMessages(t *testing.T) {
 		[]storage.SendableApp{
 			sendableAppWithSessionsAndCiphertexts(
 				1,
-				[]string{sessionId2, sessionId4},
-				"ciphertexts-device1-session2-session4",
+				[]byte("ciphertextsDevice1Session2Session4"),
 			),
 		},
 		sendable,
@@ -553,7 +551,7 @@ func TestEnqueueMessages(t *testing.T) {
 		shared.StreamId{},
 		deviceKeys[1],
 		[]string{sessionId1, sessionId4},
-		"ciphertexts-device1-session1-session4",
+		[]byte("ciphertextsDevice1Session1Session4"),
 	)
 	require.Nil(messages)
 	require.NoError(err)
@@ -575,13 +573,11 @@ func TestEnqueueMessages(t *testing.T) {
 		[]storage.SendableApp{
 			sendableAppWithSessionsAndCiphertexts(
 				0,
-				[]string{sessionId1, sessionId3},
-				"ciphertexts-device0-session1-session3",
+				[]byte("ciphertextsDevice0Session1Session3"),
 			),
 			sendableAppWithSessionsAndCiphertexts(
 				1,
-				[]string{sessionId1, sessionId4},
-				"ciphertexts-device1-session1-session4",
+				[]byte("ciphertextsDevice1Session1Session4"),
 			),
 		},
 		sendable,
@@ -624,13 +620,11 @@ func TestEnqueueMessages(t *testing.T) {
 		[]storage.SendableApp{
 			sendableAppWithSessionsAndCiphertexts(
 				0,
-				[]string{sessionId1, sessionId3},
-				"ciphertexts-device0-session1-session3",
+				[]byte("ciphertextsDevice0Session1Session3"),
 			),
 			sendableAppWithSessionsAndCiphertexts(
 				1,
-				[]string{sessionId1, sessionId4},
-				"ciphertexts-device1-session1-session4",
+				[]byte("ciphertextsDevice1Session1Session4"),
 			),
 		},
 		sendable,
@@ -657,8 +651,7 @@ func TestEnqueueMessages(t *testing.T) {
 		[]storage.SendableApp{
 			sendableAppWithSessionsAndCiphertexts(
 				1,
-				[]string{"sessionId1", "sessionId4"},
-				"ciphertexts-device1-session1-session4",
+				[]byte("ciphertextsDevice1Session1Session4"),
 			),
 		},
 		sendable,
@@ -754,7 +747,7 @@ func TestEnqueueMessages(t *testing.T) {
 				shared.StreamId{},
 				deviceKeys[tc.deviceIndex],
 				tc.sessionKeys,
-				hex.EncodeToString(safeAddress(t).Bytes()),
+				safeAddress(t).Bytes(),
 			)
 			require.NoError(err)
 			if len(tc.messages) == 0 {
