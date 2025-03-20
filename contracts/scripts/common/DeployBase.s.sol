@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 //interfaces
 
 //libraries
+import {LibString} from "solady/utils/LibString.sol";
 
 //contracts
 import {Script} from "forge-std/Script.sol";
@@ -76,17 +77,8 @@ contract DeployBase is Context, DeployHelpers, Script {
   function addressesPath(
     string memory versionName
   ) internal returns (string memory path) {
+    require(bytes(versionName).length > 0, "Version name cannot be empty");
     string memory baseDir = string.concat(networkDirPath(), "/", "addresses");
-
-    // If version name contains a /, create the full path with subdirectory
-    bytes memory versionBytes = bytes(versionName);
-    for (uint i = 0; i < versionBytes.length; i++) {
-      if (versionBytes[i] == bytes1("/")) {
-        return string.concat(baseDir, "/", versionName, ".json");
-      }
-    }
-
-    // If no /, just put it in the base addresses directory
     return string.concat(baseDir, "/", versionName, ".json");
   }
 
@@ -112,17 +104,11 @@ contract DeployBase is Context, DeployHelpers, Script {
   function getDirectoryFromVersion(
     string memory versionName
   ) internal pure returns (string memory) {
-    bytes memory versionBytes = bytes(versionName);
-    for (uint i = 0; i < versionBytes.length; i++) {
-      if (versionBytes[i] == bytes1("/")) {
-        bytes memory dirBytes = new bytes(i);
-        for (uint j = 0; j < i; j++) {
-          dirBytes[j] = versionBytes[j];
-        }
-        return string(dirBytes);
-      }
+    uint256 slashIndex = LibString.indexOf(versionName, "/");
+    if (slashIndex == LibString.NOT_FOUND) {
+      return "";
     }
-    return ""; // Return empty string if no "/" found
+    return LibString.slice(versionName, 0, slashIndex);
   }
 
   function saveDeployment(
