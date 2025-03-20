@@ -63,7 +63,7 @@
     },
     "repository": {
         "type": "git",
-        "url": "https://github.com/river-build/river.git",
+        "url": "https://github.com/towns-protocol/towns.git",
         "directory": "packages/react"
     },
     "sideEffects": false,

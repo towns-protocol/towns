@@ -47,7 +47,7 @@ RUN yarn add dd-trace@^5.19.0
 # run the service
 ARG GIT_SHA
 
-ENV DD_GIT_REPOSITORY_URL="https://github.com/river-build/river" \
+ENV DD_GIT_REPOSITORY_URL="https://github.com/towns-protocol/towns" \
     DD_GIT_COMMIT_SHA=${GIT_SHA} \
     NODE_ENV=production
 

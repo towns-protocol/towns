@@ -70,7 +70,7 @@ export const AuthRoute = () => {
                                 variant: 'outline',
                                 className: 'mt-4 w-full',
                             })}
-                            href="https://github.com/river-build/river/tree/main/packages/playground"
+                            href="https://github.com/towns-protocol/towns/tree/main/packages/playground"
                             target="_blank"
                         >
                             View Repository <ExternalLink className="ml-2 size-4" />
