@@ -136,14 +136,23 @@ func (s *Service) onClose(f any) {
 func (s *Service) start(opts *ServerStartOpts) error {
 	s.startTime = time.Now()
 
-	s.initInstance(ServerModeFull, opts)
+	log := logging.FromCtx(s.serverCtx)
+	if log == nil {
+		panic("log nil")
+	}
 
+	log.Debug("init instance")
+	s.initInstance(ServerModeFull, opts)
+	log.Debug("instance initialized")
+
+	log.Debug("test s.defaultLogger", "loggerIsNil", s.defaultLogger == nil)
+
+	log.Debug("init wallet")
 	err := s.initWallet()
+	log.Debug("wallet init", "err", err)
 	if err != nil {
 		return AsRiverError(err).Message("Failed to init wallet").LogError(s.defaultLogger)
 	}
-
-	log := logging.FromCtx(s.serverCtx)
 
 	log.Debug("init tracing")
 	s.initTracing("river-stream", s.wallet.String())
