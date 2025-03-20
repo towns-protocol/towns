@@ -136,6 +136,11 @@ export class PersistenceStore extends Dexie implements IPersistenceStore {
             return tx.table('cleartexts').toCollection().delete()
         })
 
+        // Version 5: changed how we store scrollback miniblocs, drop all saved miniblocks
+        this.version(5).upgrade((tx) => {
+            return tx.table('miniblocks').toCollection().delete()
+        })
+
         this.requestPersistentStorage()
         this.logPersistenceStats()
     }

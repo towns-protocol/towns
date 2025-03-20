@@ -35,6 +35,7 @@ export type StreamEncryptionEvents = {
     newEncryptedContent: (streamId: string, eventId: string, content: EncryptedContent) => void
     newKeySolicitation: (
         streamId: string,
+        eventHashStr: string,
         fromUserId: string,
         fromUserAddress: Uint8Array,
         event: KeySolicitationContent,
@@ -42,6 +43,7 @@ export type StreamEncryptionEvents = {
     ) => void
     updatedKeySolicitation: (
         streamId: string,
+        eventHashStr: string,
         fromUserId: string,
         fromUserAddress: Uint8Array,
         event: KeySolicitationContent,
@@ -49,6 +51,7 @@ export type StreamEncryptionEvents = {
     ) => void
     initKeySolicitations: (
         streamId: string,
+        eventHashStr: string,
         members: {
             userId: string
             userAddress: Uint8Array

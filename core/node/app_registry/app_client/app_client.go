@@ -36,9 +36,12 @@ type KeySolicitationResponse struct{}
 // command: "messages"
 type SendSessionMessagesRequestData struct {
 	SessionIds   []string `json:"sessionId"`
+	StreamId     string   `json:"streamId"`
 	CipherTexts  string   `json:"cipherTexts"`
 	StreamEvents [][]byte `json:"streamEvents"`
 }
+
+type SendSessionMessagesResponse struct{}
 
 type AppServiceRequestPayload struct {
 	Command string `json:"command"`
@@ -196,6 +199,7 @@ func (b *AppClient) SendSessionMessages(
 	ctx context.Context,
 	appId common.Address,
 	hs256SharedSecret [32]byte,
+	streamId shared.StreamId,
 	sessionIds []string,
 	cipherTexts string,
 	webhookUrl string,
@@ -209,6 +213,7 @@ func (b *AppClient) SendSessionMessages(
 			Command: "messages",
 			Data: SendSessionMessagesRequestData{
 				SessionIds:   sessionIds,
+				StreamId:     streamId.String(),
 				CipherTexts:  cipherTexts,
 				StreamEvents: streamEvents,
 			},
