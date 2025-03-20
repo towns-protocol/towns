@@ -163,6 +163,8 @@ export const TradeComponent = (props: Props) => {
         reset: () => {
             setPreselectedOption(undefined)
             setAmount(0n)
+            setCustomAmount(undefined)
+            setCustomPercent(undefined)
         },
     }))
 
@@ -413,7 +415,7 @@ export const TradeComponent = (props: Props) => {
                                                 <NumberInputRadio
                                                     icon={chainConfig.icon}
                                                     decimals={currentBalanceDecimals}
-                                                    value={customAmount}
+                                                    defaultValue={customAmount}
                                                     placeholder="Custom"
                                                     color="positive"
                                                     compact={isNarrow}
