@@ -1,46 +1,35 @@
 ---
-title: Mini Blocks
-description: ""
+title: "Mini Blocks"
 ---
 
 # Mini Block Production
 
-Similar to traditional blockchain building, mini blocks are used to achieve ensure data integrity and achieve consensus for the ordering of valid events in a given stream.
+Similar to traditional blockchain building, mini blocks ensure data integrity and achieve consensus for ordering valid events in a stream.
 
-The following is a detailed description of each step in the process:
+Here's how the process works:
 
-1. **Election of Responsible Node**: A responsible node is elected to construct the mini block. This election is based on the block number and incorporates an element of randomness, utilizing `randdao`.
+ 1. **Election of Responsible Node**: A node is elected to construct the mini block based on block number and randomness from `randdao`.
+ 2. **Initiation of Voting Process**: The elected leader starts voting, where nodes submit hashes of events from their mini-pools.
+ 3. **Combination of Votes**: The leader selects events present in the majority of mini-pools.
+ 4. **Authority of the Leader**: The leader determines the order of events within the mini block.
+ 5. **Formation of Mini Block**: The selected events are combined into the mini block.
+ 6. **Mini Block Header Creation**: The responsible node generates and signs a header for the mini block.
+ 7. **Integration into Towns Chain**: The mini block header is integrated into Towns chain and shared with all nodes.
+ 8. **Request for Missing Events**: Nodes request any missing events they don't have from the mini block.
+ 9. **Local Storage Update**: Nodes update their storage with the new mini block and remove included mini-pools.
+10. **Formation of New Mini-Pool**: Unused events form a new mini-pool for the next round.
+11. **Event Effectuation at Block Boundaries**: Events like joins and leaves take effect only at block boundaries to maintain consistent ordering.
 
-2. **Initiation of Voting Process**: The elected leader initiates a voting process. In this stage, each participating node contributes by sending hashes of the events present in their mini-pool.
+This process ensures reliable and transparent mini block production, vital to the protocol's stability.
 
-3. **Combination of Votes**: The leader combines these votes and selects events that are present in the majority of the mini-pools.
+## **Active Minipool Reconciliation**
 
-4. **Authority of the Leader**: The leader has the discretion to determine the order of events within the mini block.
+The system actively propagates events across stream nodes. When a valid event reaches most nodes, it's almost certain to be included in the block. During StreamService.AddEvent operations, events are forwarded to other stream nodes. If a node sees it's missing an event referenced in a NodeToNode.NewEventInPool message, it fetches it from the sending node.
 
-5. **Formation of Mini Block**: The events chosen are then combined to form the mini block.
+A node fetches missing events when:
 
-6. **Mini Block Header Creation**: A header for the mini block is generated and subsequently signed by the responsible node.
+It receives an event hash through NodeToNode.NewEventInPool RPC but doesn't receive the NodeToNode.NewEventReceived RPC after a brief delay.
 
-7. **Integration into Towns Chain**: This mini block header is then integrated into the Towns chain and disseminated to all participating nodes.
+It receives a miniblock header containing hashes of events missing from its local minipool.
 
-8. **Request for Missing Events**: If a node does not possess all the events in the newly received mini block, it must proactively request these missing events from other participating nodes.
-
-9. **Local Storage Update**: Participating nodes update their local storage to reflect the new mini block. They also remove old mini-pools that were included in that mini block.
-
-10. **Formation of New Mini-Pool**: Events not included in the current mini block form the basis of a new mini-pool for the next generation.
-
-11. **Event Effectuation at Block Boundaries**: Certain events, such as joins and leaves, are only effectuated at block boundaries. This is to maintain consistent ordering across the network.
-
-This procedure ensures a transparent and efficient process for mini block production, critical to the stability and reliability of the protocol.
-
-## Active Minipool Reconciliation
-
-The system is designed to actively propagate events across stream nodes. Once a valid event reaches a majority of nodes, it is virtually guaranteed to end up in the block. Therefore, during an StreamService.AddEvent operation, the event is actively forwarded to other stream nodes. If a stream node notices that it lacks an event referenced in a NodeToNode.NewEventInPool message, it proactively attempts to fetch it from the node that sent this message.
-
-A node actively fetches missing events if one of the following conditions occurs:
-
-The hash of an event is received through the NodeToNode.NewEventInPool RPC, but the NodeToNode.NewEventReceived RPC for the same hash is not received after a short delay.
-
-A miniblock header is received that contains hashes of events missing from the local minipool.
-
-Once such an event is fetched from the node containing it, the NodeToNode.NewEventReceived server-side workflow is executed.
+After fetching an event, the node executes the NodeToNode.NewEventReceived server-side workflow.

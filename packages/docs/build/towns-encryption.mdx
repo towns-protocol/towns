@@ -1,39 +1,25 @@
 ---
-title: Towns Encryption Protocol
-description: "How the Towns encryption and decryption protocol works."
+title: "Towns Encryption Protocol"
+description: "Understanding the Towns Encryption and Decryption Protocol"
 ---
 
 ### What is the Towns Encryption Protocol?
 
-The Towns protocol supports end-to-end encryption and decryption between
-a group of user devices. When a user (Bob) wants to send a new message to a
-group of users, Bob's device first creates a new group session. Using the
-outbound session key, it encrypts the message. Then the encrypted message is
-sent to the group.
+The Towns protocol enables end-to-end encryption between groups of user devices. Here's how it works: When a user (Bob) wants to send a message to a group, his device creates a new group session and encrypts the message using an outbound session key before sending it.
 
 When a recipient (Alice) gets the encrypted message, her device will start a
 new group session to import the inbound session key, and then use it to decrypt
 the message.
 
-But how does Alice's device gets the inbound session key in the first place?
+How does Alice's device get the inbound session key?
 
-The following section describes the inner workings of the group encryption
-protocol.  It explains how Alice's device makes a **`key solicitation request`**
-to get missing session keys. It also covers how other devices in the group can
-**`share session keys`** in a process called **`key fulfillment`**
-after checking that Bob is a group member.
+The group encryption protocol works through several key mechanisms. Alice's device sends a `key solicitation request` to obtain any missing session keys. Other group devices can then `share session keys` through `key fulfillment` after verifying Bob's group membership.
 
-Before diving into the `key solicitation`, `key fulfillment`, and `key sharing`
-algorithms, let's first take a look at the core entities in the group encryption
-protocol.
+Let's examine the core components of the group encryption protocol before exploring the `key solicitation`, `key fulfillment`, and `key sharing` algorithms in detail.
 
-### Core entities in the Towns Encryption Protocol
+### Core Entities in the Towns Encryption Protocol
 
-**`GroupEncryptionCrypto`** : The main interface of the protocol. It
-initializes the **`EncryptionDelegate`**. This class "delegates" the
-encryption and decryption operations to the
-[`olm` library from the Matrix.org foundation](<https://www.npmjs.com/package/@matrix-org/olm>).
-This library implements the Double Ratchet algorithm. See notes on [supported algorithm](#supported-algorithm) for future plans.
+` GroupEncryptionCrypto`: The main interface of the protocol. It initializes the `EncryptionDelegate`. This class "delegates" the encryption and decryption operations to the` olm `[**library from the **](https://www.npmjs.com/package/@matrix-org/olm) [**Matrix.org**](http://Matrix.org)[** foundation**](https://www.npmjs.com/package/@matrix-org/olm). This library implements the Double Ratchet algorithm. See notes on [**supported algorithm**](https://docs.towns.com/build/towns-encryption#supported-algorithm) for future plans.
 
 The Towns Encryption Protocol uses this library to create a group session, and
 perform device-to-device encryption using the session keys.
@@ -54,13 +40,9 @@ erDiagram
     GroupEncryptionCrypto ||--|| CryptoStore : "has reference to"
 ```
 
-- **`GroupEncryption`** : handles group encryption using session keys. Outgoing
-messages are encrypted with outbound session keys.
-- **`GroupDecryption`** : handles group decryption using session keys. Incoming
-messages are decrypted with inbound session keys.
-- **`EncryptionDevice`** : interfaces with the `EncryptionDelegate` to perform
-cryptographic operations. It also uses the `CryptoStore` to get and save the
-inbound / outbound session keys.
+- `GroupEncryption`: Manages group encryption with session keys, encrypting outgoing messages using outbound session keys.
+- `GroupDecryption`: Manages group decryption with session keys, decrypting incoming messages using inbound session keys.
+- `EncryptionDevice`: Interfaces with the `EncryptionDelegate` for cryptographic operations and uses the `CryptoStore` to manage inbound and outbound session keys.
 
 ```mermaid
 erDiagram
@@ -122,7 +104,7 @@ flowchart TB
     sendKeyFulfillment --> encryptAndShareSession("encrypt and share the session keys with the requester")
 ```
 
-Thus, Alice's device is able to get the required session keys for decryption.
+Through this process, Alice's device obtains the required session keys for decryption.
 
 ## Build
 
@@ -136,10 +118,10 @@ npm package.
 ### Supported algorithm
 
 > The Towns Encryption Protocol is designed to support new algorithms. There is
-an `algorithm` field in the protocol definition. The current value is
-`r.group-encryption.v1.aes-sha2`. This means that the protocol is using the
-`olm` Double Ratchet library for device-to-device session encryption.
-This field can be set to new algorithms to support future needs.
+> an `algorithm` field in the protocol definition. The current value is
+> `r.group-encryption.v1.aes-sha2`. This means that the protocol is using the
+> `olm` Double Ratchet library for device-to-device session encryption.
+> This field can be set to new algorithms to support future needs.
 
 ```protobuf
 // protocol.proto

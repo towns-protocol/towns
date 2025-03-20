@@ -2,26 +2,22 @@
 title: "Utility"
 ---
 
-## Overview
+## **Overview**
 
-Towns Token serve multiple purposes that include delegation to Node Operators, Space address delegation, and governance participation.
+The Towns Token has three main functions: delegation to Node Operators, Space address delegation, and governance participation.
 
-## Delegation to Node Operators
+## **Delegation to Node Operators**
 
-- **Node Operator Delegation**: Towns Tokens are delegated to Node Operators, who are essential for the network's operation. To be approved by the DAO and operate, Node Operators must secure a minimum delegation amount, ensuring they have sufficient stake in the network's success and security.
+- **Node Operator Delegation**: Node Operators must receive a minimum delegation of Towns Tokens to operate on the network. This requirement ensures operators have a meaningful stake in the network's success and security.
+- **Delegation Period**: When tokens are delegated, they enter a 60-day lock-in period after calling the `undelegate()` function. This cooling-off period maintains network stability by giving nodes time to rebalance their stream data if delegated tokens fall below requirements.
 
-- **Delegation Period**: Once delegated, Towns Tokens become non-transferable for a 60-day cooling-off period. This lock-in period starts from the moment the `undelegate()` function is called. This restriction is in place to maintain network stability, allowing adequate time for nodes to rebalance their stream data following a reduction in their delegated tokens below the minimum requirement, leading to their potential exit from the network.
+## **Space Address Delegation**
 
-## Space Address Delegation
+- **Direct and Space Delegations**: Users can delegate tokens to either Node Operators or Space addresses. Spaces can then redirect their delegated tokens to specific Nodes, creating flexible delegation options.
+- **Voting Power and Delegation**: When delegating to a Space, the Space retains governance voting power while still supporting Node Operators. Direct delegation to Node Operators transfers both operational stake and governance power.
+- **Enhanced Features**: Spaces that receive sufficient token delegation unlock additional protocol features, including increased data storage and custom pricing modules that enable free member access.
 
-- **Direct and Space Delegations**: Delegation can be directed either to the Node Operator's address or to any valid Space address within the network. Spaces, in turn, can redirect their delegated tokens to any specific Node, providing flexibility in delegation strategies.
+## **Governance Participation**
 
-- **Voting Power and Delegation**: Delegating tokens to a Space allows the Space to retain its voting power in governance decisions while still contributing to a Node Operator's required delegation. Conversely, tokens directly delegated to a Node Operator not only count towards their operational stake but also transfer governance power to them.
-
-- **Enhanced Features**: Spaces with enough delegation will unlock enhanced features at the protocol level. Spaces can get additional storage retention of their data or set custom pricing modules that can allow members to join for free by having enough tokens delegated to them.
-
-## Governance Participation
-
-- **Voting with Towns Tokens**: In addition to their role in delegation and network operation, Towns Tokens are instrumental in the governance of Towns DAO. Token holders can participate in decision-making processes, influencing the direction and policies of the DAO.
-
-- **Balancing Delegation and Governance**: The dual utility of Towns Tokens in both delegation and governance allows for a balanced ecosystem where token holders can support network operations while actively engaging in its democratic processes.
+- **Voting with Towns Tokens**: Beyond delegation, Towns Tokens enable participation in Towns DAO governance. Token holders help shape the DAO's policies and direction through voting.
+- **Balancing Delegation and Governance**: Towns Tokens create a balanced ecosystem by serving dual purposes: supporting network operations and enabling democratic participation.

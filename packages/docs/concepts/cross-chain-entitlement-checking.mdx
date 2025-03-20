@@ -1,27 +1,26 @@
 ---
-title: Cross Chain Entitlements
-description: ""
+title: "Cross Chain Entitlements"
 ---
 
-### Overview
+### **Overview**
 
-Cross Chain Entitlement Checking is a key feature in Towns Protocol, enabling the verification of entitlements that are stored on blockchains other than Base. Initially this set is restricted to other EVM chains Ethereum Mainnet, Optimism, Arbitrum, and Polygon. Other chains are planned to be added in the future.
+Cross Chain Entitlement Checking allows Towns Protocol to verify entitlements stored on blockchains beyond Base. Currently, this includes the EVM chains Ethereum Mainnet, Optimism, Arbitrum, and Polygon, with plans to add more chains in the future.
 
-### Use Cases
+### **Use Cases**
 
-1. **Asset Requirements Across Chains:** For instance, a Space might necessitate members to hold a Crypto Punk on Ethereum Mainnet and a Degod on Polygon.
-2. **Asset Quantity Requirements:** Another example could be a Space that allows entry only to users who possess over 5 ETH across their linked wallets.
+1. **Asset Requirements Across Chains:** A Space can require members to hold specific assets on different chains—for example, a Crypto Punk on Ethereum Mainnet and a Degod on Polygon.
+2. **Asset Quantity Requirements:** A Space can require users to hold a minimum amount of assets—for example, more than 5 ETH across their linked wallets.
 
-### Entitlement Checks for Permissions
+### **Entitlement Checks for Permissions**
 
-Cross Chain Entitlement Checks can be utilized for specific permissions such as Read, Write, or Mint. However, it's important to note that permissions requiring direct contract transactions, like channel creation or role assignment, must rely solely on entitlements based on assets stored on the Base Chain.
+Cross Chain Entitlement Checks control permissions like Read, Write, or Mint. However, permissions that require direct contract transactions, like channel creation or role assignment, must use entitlements based on Base Chain assets only.
 
-### Process for Minting a Member NFT
+### **Process for Minting a Member NFT**
 
-1. **Join Request:** A user initiates a request to join a Space through the smart contract.
-2. **Membership Fee Verification:** The contract verifies whether the user has paid the necessary membership fee, if applicable.
-3. **Cross-Chain Requirement Assessment:** The contract determines if joining the Space requires a cross-chain entitlement check.
-4. **Broadcasting the Request:** If a cross-chain check is needed, the request is broadcast as an event from the smart contract, targeting a randomly selected NodeID from the active nodes in the node registry.
-5. **Node Processing:** The designated node picks up the request and retrieves the entry requirements for the Space, which are defined in the contract.
-6. **Wallet Link and Evaluation:** The node accesses all linked wallets of the user and assesses if the user fulfills the Space's entry criteria.
-7. **Minting Member NFT:** Upon successful verification, the node sends a positive response back to the smart contract, triggering the automatic minting of the Member NFT for that Space to the user's address.
+1. **Join Request:** A user requests to join a Space through the smart contract.
+2. **Membership Fee Verification:** The contract checks if the user has paid any required membership fee.
+3. **Cross-Chain Requirement Assessment:** The contract checks if the Space requires cross-chain entitlement verification.
+4. **Broadcasting the Request:** For cross-chain checks, the contract broadcasts an event to a randomly selected node from the active node registry.
+5. **Node Processing:** The selected node retrieves the Space's entry requirements from the contract.
+6. **Wallet Link and Evaluation:** The node checks all of the user's linked wallets to verify they meet the Space's criteria.
+7. **Minting Member NFT:** After successful verification, the node signals the smart contract to mint the Space's Member NFT to the user's address.

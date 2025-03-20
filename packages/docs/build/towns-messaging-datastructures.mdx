@@ -1,15 +1,14 @@
 ---
-title: Messaging Data Structures
-description: ""
+title: "Messaging Data Structures"
 ---
 
 ### Messaging Data Structures
 
-The core application supported by Towns Protocol is messaging. Towns Stream Nodes are tasked with serving stream events, which are represented as data using protobufs. Stream events themselves may contain message-like events or metadata to support event validation.
+Messaging is the core application of Towns Protocol. Towns Stream Nodes serve stream events, which use protobufs to represent data. These stream events can contain both message-like events and validation metadata.
 
 ### Protocol Messaging Protobuf
 
-The data schema of the Towns protocol can be defined declaratively by [protobuf.proto](https://github.com/river-build/river/blob/main/protocol/protocol.proto). Below is an elided snapshot of `protocol.proto` as of January 2024 containing only schema definitions used in a messaging context within the Towns protocol.
+The data schema of the Towns protocol can be defined declaratively by [protobuf.proto](https://github.com/river-build/river/blob/main/protocol/protocol.proto). Below is a simplified version of **protocol.proto** from January 2024, showing only the schema definitions relevant to messaging.
 
 ```proto
 syntax = "proto3";
@@ -283,7 +282,6 @@ enum ChannelOp {
 }
 ```
 
-
 #### SpacePayload
 
 `StreamEvent` messages encapsulate all message types handled by Towns Nodes. The primary unit of account for messaging is described in `SpacePayload`. A newly minted Space is represented on-chain with the SpaceFactory contract as well of in Towns Nodes and the Towns Chain, which stores the `streamId` of the Space.
@@ -294,13 +292,13 @@ There exists a 1-to-many relation between Spaces as defined in data by the `Spac
 
 ### Channel messages
 
-Channel messages are the primary messages used to facilitate group chat within Spaces. They are defined in `ChannelPayload` in `protocol.proto`. Each `ChannelPayload` message is typed as `EncryptedData`, which is a message that defines the payload of ciphertext.
+Channel messages enable group chat within Spaces. They are defined in `ChannelPayload` in `protocol.proto`. Each `ChannelPayload` message is typed as `EncryptedData`, which is a message that defines the payload of ciphertext.
 
 > Remember, Towns nodes never see plain text of messages. The protocol defines any message-like event or event that requires encryption with an `EncryptedData` or `WrappedEncryptedData` message type in `protocol.proto`.
 
 ### DM Channel messages
 
-Direct messages are the second messaging primitive supported by the Towns protocol. The data structure representing direct messaging is defined by the `DmChannelPayload` protobuf. Each DM is created with the pair of users privy to the DM conversation. Note that just like with channel messages, DM's are `EncryptedData` messages from the node's vantage point.
+Direct messages are another key messaging feature in the Towns protocol. The data structure representing direct messaging is defined by the `DmChannelPayload` protobuf. Each DM is created with the pair of users privy to the DM conversation. Note that just like with channel messages, DM's are `EncryptedData` messages from the node's vantage point.
 
 ### GDM Channel messages
 
@@ -312,4 +310,4 @@ Group direct message messages are supported by the Towns protocol as their own s
 
 Media files are supported as separate streams in Towns protocol associated with a parent `channel_id`. Messages added to a Towns node containing media must pass validation criteria that proves the `creator` is a member of that `channel_id` to prevent man-in-the-middle type attacks.
 
-Media files can be quite large in size and as such are chunked in byte arrays on nodes and therefore support pagination by clients.
+Media files are chunked into byte arrays on nodes and support client-side pagination due to their potentially large size.

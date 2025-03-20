@@ -1,30 +1,31 @@
 ---
-title: Distribution 
-description: Token reward distribution is a key component of the Towns Network to align incentives between Node Operators and the goals of the network.
+title: "Distribution"
 ---
 
+Token reward distribution is a key component of the Towns Network, aligning incentives between Node Operators and network goals.
 
+## **Inflation Schedule**
 
-## Inflation Schedule
+The first year's inflation of Towns token comes from the existing supply. In subsequent years, inflation occurs annually, starting at 8% and gradually decreasing to 2% over 20 years, following the predefined inflation [**schedule**](https://github.com/river-build/river/blob/main/contracts/scripts/deployments/DeployTownsMainnet.s.sol#L27-L35).
 
-The first year's inflation of Towns token derives from the existing supply. Subsequent inflation occurs annually, starting at 8% and tapering to 2% after 20 years, per the predefined inflation [schedule](https://github.com/river-build/river/blob/main/contracts/scripts/deployments/DeployTownsMainnet.s.sol#L27-L35).
+## **Token Inflation**
 
-## Token Inflation
+Inflation is facilitated through the `createInflation()` function, which the DAO can call on Ethereum Mainnet once per year. This function mints the annual token allocation and sends it to a designated contract on Ethereum Mainnet.
 
-Inflation is faciliated thorugh the `createInflation()` function callable by the DAO on Ethereum Mainnet up to once a year. This function mints the annual allocation of tokens and send them a designated contract on Ethereum Mainnet.
+## **Token Bridging**
 
-## Token Bridging
+The designated contract automatically bridges these tokens to Base using the `bridgeERC20To()` function, with the Distribution contract address on Base as the destination.
 
-The aforementioned designated contract automatically bridges the tokens yielded by calling `createInflation()` to Base using `bridgeERC20To()` function, specifying the Distribution contract address on Base as the destination. 
+## **Periodic Distribution**
 
-## Periodic Distribution
+The Distribution contract collects annual rewards and distributes them every two weeks. Each distribution represents 1/26 of the annual supply and is allocated to active operators and delegators through the `distribute()` function.
 
-The Distribution contract accumulates the annual rewards and distributes them every two weeks. The distribution, representing 1/26 of the annual supply, is allocated to active operators and delegators from that period via the `distribute()` function.
+## **Allocation**
 
-## Allocation
+At launch, distributions are split equally among all approved active Node Operators. Each operator receives their specified commission, as set in the Node Operator Registry contract.
 
-At launch, distributions will be allocated equally amongst all approved active Node Operators. Each operator will receive their commission they specified when registering in the Node Operator Registry contract. 
+The remaining tokens, after commission, are distributed proportionally among delegators who have delegated to that operator for the entire period.
 
-The remainder net of commission will be divided pro-rata amongst all the delegators who delegating to that operator for the entire period. 
-
-<Note>Delegators entering in the middle of a period will not be eligible for rewards until the following period.</Note>
+<Note>
+  Delegators entering in the middle of a period will not be eligible for rewards until the following period.
+</Note>

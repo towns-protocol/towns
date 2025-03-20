@@ -1,30 +1,19 @@
 ---
-title: Event Lifecycle
-description: ""
+title: "Event Lifecycle"
 ---
 
 # User Event Lifecycle
 
-This section outlines the lifecycle of a user event within the protocol. Each step is crucial in ensuring a seamless and secure transmission of data.
+This section outlines how user events flow through the protocol, with each step ensuring secure and reliable data transmission.
 
-1. **Initiation of Event**: The lifecycle of an event initiates with a user action. e.g. sending a message, joining a channel, etc.
-
-2. **Payload Construction**: Following the user action, a payload is constructed that describes the desired action. For specific payload types, such as messages, encryption is applied.
-
-3. **Reference to Previous Mini Block Hash**: Each payload includes a reference to the hash of the preceding mini block, establishing a link in the chain of events.
-
-4. **Signing the Event**: The user signs the payload, thereby converting it into an event. This step is crucial for validating the authenticity of the event.
-
-5. **Transmission via RPC**: The event is then transmitted to a client-connected node using Remote Procedure Call (RPC) protocols.
-
-6. **Routing Event Based on StreamId**: Upon receipt, the node routes the event to a responsible node. This is determined through a Stream Registry lookup of the specific StreamID associated with the event.
-
-7. **Validation by Responsible Node**: The responsible node performs several checks: it validates the event signature, verifies entitlements, and conducts other consistency checks, including verifying the reference to the recent mini block hash, as dictated by the protocol settings.
-
-8. **Propagation or Rejection**: If the event passes all checks, the responsible node propagates it to other nodes associated with the same StreamId. If the event fails any check, it is rejected.
-
-9. **Reception and Verification by Other Nodes**: Other nodes receiving the propagated event repeat the validation checks. Future updates may allow for the postponement of these checks when a validation gadget is active.
-
-10. **Local Commitment and Mini-Pool Placement**: Each node commits the event to its local storage and places it in the mini-pool data structure for the respective stream. The order of events in mini pools may vary across responsible nodes, with reconciliation occurring at the time of mini block creation.
-
-11. **Mini Block Creation**: In sync with the river chain block time, open mini pools are visited to produce a mini block. This process is integral to maintaining the continuity
+ 1. **Initiation of Event**: An event begins when a user takes action-- such as sending a message or joining a channel.
+ 2. **Payload Construction**: The system builds a payload describing the action. For messages and other sensitive data, encryption is applied.
+ 3. **Reference to Previous Mini Block Hash**: The payload includes the previous mini block's hash to maintain the event chain.
+ 4. **Signing the Event**: The user signs the payload to create an event, establishing its authenticity.
+ 5. **Transmission via RPC**: The event travels to a connected node through Remote Procedure Call protocols.
+ 6. **Routing Event Based on StreamId**: The receiving node routes the event to a responsible node using Stream Registry lookups.
+ 7. **Validation by Responsible Node**: The responsible node checks the event signature, entitlements, and consistency-- including verification of the mini block hash reference.
+ 8. **Propagation or Rejection**: Valid events are shared with other nodes in the same StreamId; invalid events are rejected.
+ 9. **Reception and Verification by Other Nodes**: Receiving nodes perform validation checks, with potential future options to delay checks when using a validation gadget.
+10. **Local Commitment and Mini-Pool Placement**: Nodes store the event locally and add it to their mini-pools, with final event ordering determined during mini block creation.
+11. **Mini Block Creation**: Mini-pools are processed into mini blocks in sync with the Towns Chain, maintaining system continuity.

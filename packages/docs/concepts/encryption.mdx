@@ -1,28 +1,27 @@
 ---
-title: Encryption
-description: ""
+title: "Encryption"
 ---
 
 ### End-to-End Message Encryption in Towns Protocol
 
-All messages in the context of the communication modalities that Towns Protocol supports are encrypted. Nodes are only privy to ciphertext and clients manage their device encryption keys.
+All messages in Towns Protocol's communication systems are encrypted. Nodes only see encrypted data (ciphertext), while clients manage their own device encryption keys.
 
-Two related cryptographic ratcheting algorithms are used by Towns to encrypt messages. Towns employs an implementation of the [Double Ratchet](https://signal.org/docs/specifications/doubleratchet/) cryptographic ratchet described by Signal to encrypt peer to peer messages. Towns also employs an AES-based cryptographic ratched optimized for group messaging.
+Towns uses two cryptographic ratcheting algorithms for encryption. For peer-to-peer messages, it implements the [**Double Ratchet**](https://signal.org/docs/specifications/doubleratchet/) algorithm from Signal. For group messaging, it uses an optimized AES-based cryptographic ratchet.
 
-### Devices
+### **Devices**
 
-To facilitate end to end encryption in Towns, each `(user, client instance)` tuple is associated with a `deviceId`, which identifies that device and is used to establish peer-to-peer encrypted sessions for the purpose of sharing group message encryption keys.
+For end-to-end encryption, each `(user, client instance)` pair has a unique `deviceId`. This identifier helps establish peer-to-peer encrypted sessions for sharing group message encryption keys.
 
-Devices are objects storing key material created on the client and stored in the Towns Node on the user's `UserDeviceKey` stream containing the following pair of keys:
+Devices are objects that store key material, created on the client and stored in the Towns Node on the user's `UserDeviceKey` stream. Each device contains two key pairs:
 
-1. **Curve25519 peer-to-peer encryption key** - A long-lived Curve25519 asymmetric key pair is created with a new device of a user. The private portion of this key never leaves the device, while the public portion is stored in the user's `UserDeviceKey` stream. This key along with the following key are used by other user's to establish secure and ephemeral p2p sessions.
-2. **Curve25519 fallback key** - A second Curve25519 key pair is created using the encryption key and published to a user's UserDeviceKey stream. For Alice to establish a new secure p2p encrypted session with Bob, Alice would use her encryption key along with Bob's public key portion of his encryption key and fallback key.
+1. **Curve25519 peer-to-peer encryption key** - An asymmetric key pair created with each new device. The private key stays on the device, while the public key is stored in the user's `UserDeviceKey` stream. This key, along with the fallback key, enables secure and ephemeral p2p sessions.
+2. **Curve25519 fallback key** - A second key pair created using the encryption key and published to the UserDeviceKey stream. To establish a secure p2p session with Bob, Alice uses her encryption key plus Bob's public encryption and fallback keys.
 
-> Device lifecycle is outside of the purview of the Towns protocol and managed entirely by client implementations. However, given it is expected under the protocol that there exists a 1-1 relation between `(user, client instance)` tuples and `devices`, the Towns Node performs periodic compaction criteria to stem the uncontrolled growth of user's device key stream in storage.
+> Device lifecycle management is handled by client implementations, not the Towns protocol. Since the protocol expects a one-to-one relationship between (user, client instance) pairs and devices, the Towns Node regularly compacts the device key stream to prevent unlimited growth.
 
-### Encryption Data Schemas
+### **Encryption Data Schemas**
 
-Encrypted data originating from messages or metadata, such as usernames, is described in the protocol with a protobuf message as follows.
+The protocol defines encrypted data (messages or metadata like usernames) using this protobuf message:
 
 ```protobuf
 message EncryptedData {
@@ -50,10 +49,9 @@ message EncryptedData {
 }
 ```
 
-The `session_id` is used to identify the keys associated with the ciphertext, which can be used to decrypt the same message multiple times. This is particularly useful in a group messaging application as it avoids the need to re-establish peer-to-peer encrypted sessions
-for each message.
+The `session_id` identifies the keys for the ciphertext, enabling multiple decryptions of the same message. This is especially useful in group messaging, as it eliminates the need to create new peer-to-peer encrypted sessions for each message.
 
-Peer to peer encryption sessions are only used to transmit session keys corresponding to message events and are described by the following protobuf in the protocol.
+Peer-to-peer encryption sessions, used only for transmitting session keys for message events, are defined by this protobuf:
 
 ```protobuf
     message GroupEncryptionSessions {
@@ -65,35 +63,35 @@ Peer to peer encryption sessions are only used to transmit session keys correspo
     }
 ```
 
-A map is used to index ciphertext by the intended user's deviceKey since peer-to-peer encrypted payloads are only able to be decrypted by the deviceKey that the `outbound` sender's session was created for. In general, peer-to-peer encrypted messages are encrypted in a per device basis.
+The ciphertext is mapped by deviceKey since peer-to-peer encrypted payloads can only be decrypted by the deviceKey for which the `outbound` sender's session was created. Peer-to-peer messages are encrypted on a per-device basis.
 
-### Encryption Lifecycle
+### **Encryption Lifecycle**
 
-Below is an example of the encryption lifecycle between Alice and Bob who are co-members of a channel within a space.
+Here's how encryption works between Alice and Bob, who share a channel in a space:
 
 1. Alice logs in to her client, creates a new `device`, and joins a Space.
-2. Bob who is already logged in and a member of the Space sees a `KeySolicitation` message with a `device_key` corresponding to Alice's device.
-3. Bob validates that Alice `isEntitled` to decryption keys for the channel stream that the solicitation event appeared in and creates a new p2p encrypted `outbound` session using Alice's device key and fallback key to transmit the keys requested from his local cache.
-4. Bob sends an `ack` to the stream to notify other co-members of the channel that Alice's request is being worked on.
-5. Alice sees Bob's message on her `UserToDevice` key stream and created a new `inbound` session with Bob's device key and fallback key obtained from his `UserDeviceKey` stream.
-6. Alice decrypts Bob's message and extracts the key material storing it in her local cache.
-7. Alice attempts re-decrypting the channel messages that share the `session_id` of the keys she now has in her possession.
+2. Bob, already logged in and a Space member, sees a `KeySolicitation` message with Alice's `device_key`.
+3. Bob verifies Alice is `isEntitled` to the channel's decryption keys and creates a new p2p encrypted `outbound` session using Alice's device and fallback keys to send the requested keys from his cache.
+4. Bob sends an `ack` to notify other channel members that he's handling Alice's request.
+5. Alice sees Bob's message in her `UserToDevice` key stream and creates an `inbound` session using Bob's device and fallback keys from his `UserDeviceKey` stream.
+6. Alice decrypts Bob's message and stores the key material in her local cache.
+7. Alice decrypts channel messages that share the `session_id` of her newly acquired keys.
 
-> Peer-to-peer encryption in Towns requires distinct sessions `outbound`, `inbound` for encryption and decryption, respectively. Moreover, each message can only be decrypted once per established session.
+> Towns requires separate outbound and inbound sessions for encryption and decryption. Each message can be decrypted only once per established session.
 
-### Key Sharing
+### **Key Sharing**
 
-#### Active Sharing
+### **Active Sharing**
 
-Session keys to encrypt message events and metadata in Towns are created on an as-needed basis by clients. If a user is joining a channel and decides to subsequently send a message for the first time, they will create a new outbound session key to encrypt the message and send it to the member roster of the channel along with the message. The same key can be used as an inbound session key by other members to decrypt the message encrypted with that session.
+Clients create session keys for message encryption as needed. When a user first joins a channel and sends a message, they create a new outbound session key to encrypt it and share this with all channel members. Other members can use this same key as an inbound session key to decrypt the message.
 
-#### Passive Sharing
+### **Passive Sharing**
 
-The above contrasts with passive key sharing, which is used to transmit keys that users are entitled to but do not have locally. When joining a channel for the first time, a user will sync stream events, but will need session keys to decrypt message events. The protocol supports an efficient key sharing scheme that has users place an `KeySolicitation` event on the stream, which any online member of the stream will see and conditionally service if the solicitator is an entitled member of the stream.
+Passive key sharing helps users obtain keys they're entitled to but don't have locally. When joining a channel, a user needs session keys to decrypt existing messages. The protocol provides an efficient sharing system where users place a `KeySolicitation` event on the stream. Any online member can fulfill this request if the requester has proper entitlements.
 
-#### Data
+### **Data**
 
-The protocol allows for any stream to support key sharing by way of `KeySolicitation`, and `KeyFulfillment` messages. Since fulfilling a solicitation requires creating a peer-to-peer encrypted session with the solicitator, the `device_key` and `fallback_key` are added to the payload to save a lookup against the `UserDeviceKey` stream. Fulfillments are synced by members of the same stream to avoid the worst case behavior of every member fulfilling every request in a duplicative manner.
+Any stream can support key sharing through `KeySolicitation` and `KeyFulfillment` messages. When fulfilling a request, the `device_key` and `fallback_key` are included in the payload to avoid querying the `UserDeviceKey` stream. Members sync fulfillments to prevent duplicate responses to the same request.
 
 ```protobuf
 

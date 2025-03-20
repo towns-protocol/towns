@@ -1,42 +1,33 @@
 ---
-title: Stream Allocation
-description: ""
+title: "Stream Allocation"
 ---
 
 # Stream Allocation on Towns Protocol
 
-Stream Allocation is a core component of the Towns Protocol, providing a robust and efficient mechanism for managing streams. This document outlines the key principles and processes that govern stream allocation within the Towns ecosystem.
+Stream Allocation is a fundamental component of the Towns Protocol that manages streams efficiently and reliably. This doc explains the key principles and processes governing stream allocation in the Towns ecosystem.
 
-## Principles of Stream Allocation
+## **Principles of Stream Allocation**
 
 1. **Base Mainnet and Towns Chain Authority**
-
-   - **Base Mainnet Authority**: Base Mainnet is the authoritative layer for channels and spaces.
-   - **Towns Chain Authority**: The Stream Registry on the Towns Chain serves as the authority for the allocation of other streams.
-
+   - **Base Mainnet Authority**: Base Mainnet controls channels and spaces.
+   - **Towns Chain Authority**: The Stream Registry on Towns Chain manages all other stream allocations.
 2. **User Stream Creation and Verification**
-
-   - **User Stream Inception**: User streams are initiated with a verifiable signature from the user. This ensures that each stream is securely linked to the initiating user.
-   - **Channel Stream Inception**: Channel streams are initiated by a client but verified by the existence of the channel already having been created on Base in the Space contract.
-   - **Signature Requirement**: A verifiable signature from the user is mandatory to create a direct message (DM) stream for them.
-
+   - **User Stream Inception**: Each user stream starts with a verifiable user signature, linking it securely to its creator.
+   - **Channel Stream Inception**: Clients initiate channel streams, which are then verified against existing channels in the Space contract on Base.
+   - **Signature Requirement**: Creating a direct message (DM) stream requires the user's verifiable signature.
 3. **Stream Allocation Process**
-
-   - **Deterministic Allocation**: Stream allocation is deterministic, based on the Towns Chain block number, randomness, and the list of active nodes.
-   - **Replication Standard**: Streams are replicated to the default protocol replication setting of 5. This ensures redundancy and reliability in stream data.
-
+   - **Deterministic Allocation**: Streams are allocated based on three factors: Towns Chain block number, randomness, and active node list.
+   - **Replication Standard**: The protocol maintains five replicas of each stream for redundancy and reliability.
 4. **Workload Equality Among Nodes**
-
-   - **Equal Work Distribution**: Over time, each node is expected to perform roughly the same total amount of work, despite operating on different individual streams.
-   - **Adaptive Workload**: The system adjusts the allocation of streams to maintain workload equality among nodes.
-
+   - **Equal Work Distribution**: Each node handles a similar workload over time, regardless of which streams they manage.
+   - **Adaptive Workload**: Stream allocation adjusts automatically to maintain equal work across nodes.
 5. **Stream Rebalancing**
-   - **Rebalancing on Node Joining/Leaving**: Streams are rebalanced when nodes join or leave the network.
-   - **Adding New Nodes**: Some stream replicas are added to new nodes to ensure they become equal participants in the system.
-   - **Handling Node Departure**: Similarly, stream replicas are adjusted when nodes leave to maintain the balance and integrity of the system.
+   - **Rebalancing on Node Joining/Leaving**: The system redistributes streams when network composition changes.
+   - **Adding New Nodes**: New nodes receive stream replicas to integrate them as equal participants.
+   - **Handling Node Departure**: When nodes leave, their streams are redistributed to maintain system balance.
 
-## Implementation Guidelines
+## **Implementation Guidelines**
 
-- **Ensuring Fair Distribution**: Implement mechanisms to monitor and adjust the distribution of streams among nodes to ensure fairness and efficiency.
-- **Secure Signature Verification**: Implement robust methods for verifying user signatures during stream creation, especially for DM streams.
-- **Dynamic Rebalancing Logic**: Develop and integrate dynamic rebalancing logic that responds to changes in the network, such as nodes joining or leaving.
+- **Ensuring Fair Distribution**: Monitor and adjust stream distribution to maintain node fairness and efficiency.
+- **Secure Signature Verification**: Use robust verification methods for user signatures, particularly for DM streams.
+- **Dynamic Rebalancing Logic**: Implement responsive rebalancing systems that adapt to network changes.

@@ -2,21 +2,21 @@
 title: "Mechanics"
 ---
 
-## Deployment and Initial Supply
+## **Deployment and Initial Supply**
 
-TOWNS is deployed as an ERC20 token on the Ethereum Mainnet with an initial supply of 10 billion tokens.
+$TOWNS is deployed as an ERC20 token on the Ethereum Mainnet with an initial supply of 10 billion tokens.
 
-## Inflation Process
+## **Inflation Process**
 
-- **Annual Inflation**: TOWNS's supply is inflated once per year through a publicly callable function, ensuring a predictable increase in token supply.
-- **Minting**: This inflation process involves minting new tokens, with the total amount being that one years value of inflation.
+- **Annual Inflation**: The TOWNS supply increases once per year through a publicly callable function, providing predictable token inflation.
+- **Minting**: The inflation process mints new tokens equal to that year's designated inflation amount.
 
-## Distribution on Base
+## **Distribution on Base**
 
-- **Bridging to Base**: TOWNS tokens are distributed on the Base blockchain. This involves either sending TOWNS tokens to a bridge protocol with the final destination being the distribution contract on Base or using a multisig wallet to bridge the tokens over to Base and then forward them to the distribution contract.
-- **Distribution Contract**: The distribution contract on Base must be invoked once per claim cycle. This contract is responsible for allocating rewards based on various factors, including the active Node Operators, their set percentage fees, and the distribution of delegated tokens.
+- **Bridging to Base**: TOWNS tokens are distributed on the Base blockchain through either a bridge protocol or a multisig wallet, with the distribution contract on Base as the final destination.
+- **Distribution Contract**: This contract on Base handles reward allocation each claim cycle, factoring in active Node Operators, percentage fees, and delegated token distribution.
 
-## Reward Allocation and Claiming
+## **Reward Allocation and Claiming**
 
-- **Claim Cycles**: Tokens are claimable via the distribution contract at the end of each epoch, aligning reward distribution with the network's operational cycles.
-- **Signaling and Reward Adjustment**: The protocol incorporates a signaling mechanism for bad node behavior. Reports from other nodes and the DAO regarding misconduct or underperformance are considered in the reward allocation process, ensuring that rewards are distributed fairly and incentivize good behavior.
+- **Claim Cycles**: At the end of each epoch, tokens become claimable through the distribution contract, synchronizing rewards with network operations.
+- **Signaling and Reward Adjustment**: The protocol uses a signaling system to monitor node behavior. The DAO and other nodes can report misconduct, which affects reward allocation to ensure fair distribution and incentivize proper operation.
