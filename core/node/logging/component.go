@@ -2,8 +2,9 @@ package logging
 
 import (
 	"fmt"
-	"go.uber.org/zap"
 	"strings"
+
+	"go.uber.org/zap"
 
 	"go.uber.org/zap/zapcore"
 )
@@ -39,6 +40,7 @@ const (
 
 func (l *Log) With(args ...interface{}) *Log {
 	return &Log{
+		Logger:    l.Logger,
 		Default:   l.Default.With(args...),
 		Miniblock: l.Miniblock.With(args...),
 		Rpc:       l.Rpc.With(args...),
@@ -48,6 +50,7 @@ func (l *Log) With(args ...interface{}) *Log {
 // Named returns a new Log with child loggers that are named with the given name.
 func (l *Log) Named(name string) *Log {
 	return &Log{
+		Logger:    l.Logger,
 		Default:   l.Default.Named(name),
 		Miniblock: l.Miniblock.Named(name),
 		Rpc:       l.Rpc.Named(name),
