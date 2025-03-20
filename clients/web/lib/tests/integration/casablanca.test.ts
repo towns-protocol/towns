@@ -11,14 +11,14 @@ import {
     makeSignerContext,
     RiverTimelineEvent,
     ChannelMessageEvent,
-} from '@river-build/sdk'
+} from '@towns-protocol/sdk'
 import { ethers } from 'ethers'
 import {
     createTestChannelWithSpaceRoles,
     createTestSpaceGatedByTownNft,
     registerAndStartClients,
 } from './helpers/TestUtils'
-import { Permission, createRiverRegistry } from '@river-build/web3'
+import { Permission, createRiverRegistry } from '@towns-protocol/web3'
 import debug from 'debug'
 import { TownsTestWeb3Provider } from './helpers/TownsTestWeb3Provider'
 

@@ -23,8 +23,8 @@ import {
     convertRuleDataV2ToV1,
     convertRuleDataV1ToV2,
     ISpaceDapp,
-} from '@river-build/web3'
-import { makeRiverConfig } from '@river-build/sdk'
+} from '@towns-protocol/web3'
+import { makeRiverConfig } from '@towns-protocol/sdk'
 
 export const EVERYONE_ADDRESS = '0x0000000000000000000000000000000000000001'
 

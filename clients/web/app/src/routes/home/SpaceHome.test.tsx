@@ -4,7 +4,7 @@ import { describe, expect, test, vi } from 'vitest'
 // eslint-disable-next-line no-restricted-imports
 import * as Lib from 'use-towns-client'
 import * as Router from 'react-router'
-import { Membership } from '@river-build/sdk'
+import { Membership } from '@towns-protocol/sdk'
 import { PATHS } from 'routes'
 import { TestApp } from 'test/testUtils'
 import { addressFromSpaceId } from 'ui/utils/utils'

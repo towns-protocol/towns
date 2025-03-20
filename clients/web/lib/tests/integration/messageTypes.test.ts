@@ -3,7 +3,7 @@
  * @group core
  */
 import { SendImageMessageOptions } from '../../src/types/towns-types'
-import { MessageType } from '@river-build/sdk'
+import { MessageType } from '@towns-protocol/sdk'
 import {
     createTestSpaceGatedByTownsNfts,
     makeUniqueName,
@@ -13,10 +13,10 @@ import {
     waitForWithRetries,
 } from './helpers/TestUtils'
 
-import { Permission } from '@river-build/web3'
+import { Permission } from '@towns-protocol/web3'
 import { TestConstants } from './helpers/TestConstants'
 import { waitFor } from '@testing-library/dom'
-import { check } from '@river-build/dlog'
+import { check } from '@towns-protocol/dlog'
 
 describe('messageTypes', () => {
     test('send a m.gm message to test message types', async () => {

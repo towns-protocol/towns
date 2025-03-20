@@ -9,7 +9,7 @@
         "start": "wrangler dev"
     },
     "dependencies": {
-        "@river-build/generated": "workspace:^",
+        "@towns-protocol/generated": "workspace:^",
         "zod": "^3.21.4"
     },
     "devDependencies": {

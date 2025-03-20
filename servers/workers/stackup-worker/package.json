@@ -19,8 +19,8 @@
     },
     "dependencies": {
         "@privy-io/server-auth": "^1.9.1",
-        "@river-build/generated": "workspace:^",
-        "@river-build/web3": "workspace:^",
+        "@towns-protocol/generated": "workspace:^",
+        "@towns-protocol/web3": "workspace:^",
         "itty-router": "^2.6.6",
         "userop.js": "^0.3.7",
         "viem": "2.23.2",

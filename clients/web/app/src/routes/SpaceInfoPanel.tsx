@@ -1,4 +1,4 @@
-import { Address, Permission, SpaceAddressFromSpaceId } from '@river-build/web3'
+import { Address, Permission, SpaceAddressFromSpaceId } from '@towns-protocol/web3'
 import React, { useCallback, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { useSearchParams } from 'react-router-dom'
@@ -18,7 +18,7 @@ import {
     useTownsContext,
     useUser,
 } from 'use-towns-client'
-import { isValidStreamId } from '@river-build/sdk'
+import { isValidStreamId } from '@towns-protocol/sdk'
 import { BigNumberish } from 'ethers'
 import { useQueryClient } from '@tanstack/react-query'
 import { isAddress } from '@components/Web3/Wallet/useGetWalletParam'

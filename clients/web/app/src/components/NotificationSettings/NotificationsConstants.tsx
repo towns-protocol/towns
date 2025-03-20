@@ -4,7 +4,7 @@ import {
     DmChannelSettingValue,
     GdmChannelSettingValue,
     SpaceChannelSettingValue,
-} from '@river-build/proto'
+} from '@towns-protocol/proto'
 import { staticAssertNever } from 'use-towns-client'
 import { IconName } from '@ui'
 

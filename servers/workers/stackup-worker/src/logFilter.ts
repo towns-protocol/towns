@@ -4,7 +4,7 @@ import { createStaticProvider as createProvider } from './provider'
 import { Env } from '.'
 import { ContractName, EventName, FunctionName, Networks } from './types'
 import { createContractMap, isSpaceSpecificContract, spaceSpecificContracts } from './contractsMap'
-import { SpaceAddressFromSpaceId } from '@river-build/web3'
+import { SpaceAddressFromSpaceId } from '@towns-protocol/web3'
 import { durationLogger } from './utils'
 
 interface LogFilterResult {

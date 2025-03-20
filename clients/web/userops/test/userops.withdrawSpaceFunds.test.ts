@@ -1,4 +1,4 @@
-import { Address, LocalhostWeb3Provider, Permission } from '@river-build/web3'
+import { Address, LocalhostWeb3Provider, Permission } from '@towns-protocol/web3'
 import {
     createFixedPriceSpace,
     createSpaceDappAndUserops,

@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo } from 'react'
 import { Channel } from 'use-towns-client'
-import { ChannelMessageEvent, EventStatus, TimelineEvent } from '@river-build/sdk'
+import { ChannelMessageEvent, EventStatus, TimelineEvent } from '@towns-protocol/sdk'
 import { RichTextPreview as PlateRichTextPreview } from '@components/RichTextPlate/RichTextPreview'
 import { getMessageBody } from 'utils/ztevent_util'
 import { useDevice } from 'hooks/useDevice'

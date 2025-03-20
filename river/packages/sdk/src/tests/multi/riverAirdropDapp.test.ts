@@ -2,9 +2,9 @@
  * @group with-entitlements
  */
 
-import { dlog } from '@river-build/dlog'
+import { dlog } from '@towns-protocol/dlog'
 import { makeRiverConfig } from '../../riverConfig'
-import { LocalhostWeb3Provider, RiverAirdropDapp } from '@river-build/web3'
+import { LocalhostWeb3Provider, RiverAirdropDapp } from '@towns-protocol/web3'
 import { ethers } from 'ethers'
 
 const log = dlog('test:riverAirdropDapp')

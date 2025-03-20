@@ -1,4 +1,4 @@
-import { Address, LocalhostWeb3Provider } from '@river-build/web3'
+import { Address, LocalhostWeb3Provider } from '@towns-protocol/web3'
 import { Wallet } from 'ethers'
 import { createSpaceDappAndUserops } from './utils'
 // this private key is fine for testing, it's from a test privy account

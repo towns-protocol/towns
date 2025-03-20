@@ -4,7 +4,7 @@ import { isPrivyApiSearchResponse, searchPrivyForUserByDid, verifyPrivyAuthToken
 import { Overrides, isWhitelistStoredOperation, IOverrideOperation } from './types'
 import { TRANSACTION_LIMIT_DEFAULTS_PER_DAY } from './useropVerification'
 import { durationLogger } from './utils'
-//import { Permission } from '@river-build/web3'
+//import { Permission } from '@towns-protocol/web3'
 
 export type IVerificationResult =
     | {

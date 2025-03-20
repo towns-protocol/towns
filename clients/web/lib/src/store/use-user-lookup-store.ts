@@ -4,7 +4,7 @@ import Dexie from 'dexie'
 import { LookupUser } from 'types/user-lookup'
 import { shallow } from 'zustand/shallow'
 
-import { dlogger } from '@river-build/dlog'
+import { dlogger } from '@towns-protocol/dlog'
 import { createWithEqualityFn } from 'zustand/traditional'
 import isEqual from 'lodash/isEqual'
 

@@ -8,8 +8,8 @@ import {
     publicKeyToAddress,
     recoverPublicKeyFromDelegateSig,
     riverRecoverPubKey,
-} from '@river-build/sdk'
-import { bin_equal, bin_toHexString } from '@river-build/dlog'
+} from '@towns-protocol/sdk'
+import { bin_equal, bin_toHexString } from '@towns-protocol/dlog'
 import { Panel } from '@components/Panel/Panel'
 import { Paragraph } from '@ui'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'

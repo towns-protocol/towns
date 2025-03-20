@@ -1,4 +1,4 @@
-import { SpaceDapp, stringifyChannelMetadataJSON } from '@river-build/web3'
+import { SpaceDapp, stringifyChannelMetadataJSON } from '@towns-protocol/web3'
 import { UserOps } from '../UserOperations'
 import { getFunctionSigHash } from '../utils/getFunctionSigHash'
 

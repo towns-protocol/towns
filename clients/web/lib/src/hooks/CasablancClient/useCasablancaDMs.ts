@@ -2,10 +2,10 @@ import {
     Client as CasablancaClient,
     isDMChannelStreamId,
     isGDMChannelStreamId,
-} from '@river-build/sdk'
+} from '@towns-protocol/sdk'
 import { useEffect, useState } from 'react'
-import { Stream } from '@river-build/sdk'
-import { MembershipOp } from '@river-build/proto'
+import { Stream } from '@towns-protocol/sdk'
+import { MembershipOp } from '@towns-protocol/proto'
 import isEqual from 'lodash/isEqual'
 import { DMChannelIdentifier } from '../../types/dm-channel-identifier'
 import debounce from 'lodash/debounce'

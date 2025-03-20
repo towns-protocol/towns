@@ -2,8 +2,8 @@ import React, { useCallback, useContext, useMemo, useRef, useState } from 'react
 import { ThreadStatsData, staticAssertNever, useTownsClient, useUserLookup } from 'use-towns-client'
 import { useSearchParams } from 'react-router-dom'
 import { AnimatePresence } from 'framer-motion'
-import { MessageType, Pin, RiverTimelineEvent, TimelineEvent } from '@river-build/sdk'
-import { bin_toString } from '@river-build/dlog'
+import { MessageType, Pin, RiverTimelineEvent, TimelineEvent } from '@towns-protocol/sdk'
+import { bin_toString } from '@towns-protocol/dlog'
 import {
     MessageLayout,
     MessageLayoutProps,

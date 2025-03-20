@@ -1,4 +1,4 @@
-import { Address } from '@river-build/web3'
+import { Address } from '@towns-protocol/web3'
 import { ContractTransaction } from 'ethers'
 import { isUserOpResponse } from './isUserOpResponse'
 import { SendUserOperationResponse } from '../lib/types'

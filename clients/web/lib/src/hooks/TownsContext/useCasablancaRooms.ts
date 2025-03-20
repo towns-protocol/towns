@@ -5,7 +5,7 @@ import {
     isDMChannelStreamId,
     isGDMChannelStreamId,
     toMembership,
-} from '@river-build/sdk'
+} from '@towns-protocol/sdk'
 import { useEffect } from 'react'
 import { Room } from '../../types/towns-types'
 import isEqual from 'lodash/isEqual'

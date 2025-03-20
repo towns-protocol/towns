@@ -1,4 +1,4 @@
-import { TimelineEvent, Pin } from '@river-build/sdk'
+import { TimelineEvent, Pin } from '@towns-protocol/sdk'
 import { useTownsContext } from '../components/TownsContextProvider'
 import isEqual from 'lodash/isEqual'
 import { useEffect, useState } from 'react'

@@ -4,9 +4,9 @@
  */
 import { createTestSpaceGatedByTownNft, registerAndStartClients } from './helpers/TestUtils'
 
-import { Permission } from '@river-build/web3'
+import { Permission } from '@towns-protocol/web3'
 import { waitFor } from '@testing-library/dom'
-import { Membership } from '@river-build/sdk'
+import { Membership } from '@towns-protocol/sdk'
 
 describe('inviteUser', () => {
     // test:

@@ -11,7 +11,7 @@ import { useCallback, useMemo, useRef, useState } from 'react'
 import { useTownsClient } from './use-towns-client'
 import { getTransactionHashOrUserOpHash } from '@towns/userops'
 import { TipParams } from '../types/towns-types'
-import { TipEventObject } from '@river-build/generated/dev/typings/ITipping'
+import { TipEventObject } from '@towns-protocol/generated/dev/typings/ITipping'
 
 /**
  * Hook to create a role with a transaction.

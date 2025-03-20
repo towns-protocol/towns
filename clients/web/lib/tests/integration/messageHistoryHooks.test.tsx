@@ -18,9 +18,9 @@ import { TownsTestWeb3Provider } from './helpers/TownsTestWeb3Provider'
 import { useChannelTimeline } from '../../src/hooks/use-channel-timeline'
 import { useTownsClient } from '../../src/hooks/use-towns-client'
 import { TestConstants } from './helpers/TestConstants'
-import { Permission } from '@river-build/web3'
+import { Permission } from '@towns-protocol/web3'
 import { TSigner } from '../../src/types/web3-types'
-import { RiverTimelineEvent, Membership } from '@river-build/sdk'
+import { RiverTimelineEvent, Membership } from '@towns-protocol/sdk'
 
 // TODO Zustand https://docs.pmnd.rs/zustand/testing
 

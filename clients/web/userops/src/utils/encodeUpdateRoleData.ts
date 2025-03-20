@@ -4,7 +4,7 @@ import {
     UpdateRoleParams,
     createLegacyEntitlementStruct,
     LegacyUpdateRoleParams,
-} from '@river-build/web3'
+} from '@towns-protocol/web3'
 import { getFunctionSigHash } from './getFunctionSigHash'
 
 export async function encodeUpdateRoleData({

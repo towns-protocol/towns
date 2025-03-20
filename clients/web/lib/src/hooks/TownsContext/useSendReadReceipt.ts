@@ -1,5 +1,5 @@
 import { useCallback } from 'react'
-import { FullyReadMarker } from '@river-build/proto'
+import { FullyReadMarker } from '@towns-protocol/proto'
 import { useFullyReadMarkerStore } from '../../store/use-fully-read-marker-store'
 import { TownsClient } from '../../client/TownsClient'
 

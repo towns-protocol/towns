@@ -1,6 +1,6 @@
 import React, { useCallback, useContext, useMemo } from 'react'
 import { uniq } from 'lodash'
-import { RiverTimelineEvent } from '@river-build/sdk'
+import { RiverTimelineEvent } from '@towns-protocol/sdk'
 import { Box, Icon, Paragraph, Stack } from '@ui'
 import { CopySpaceLink } from '@components/CopySpaceLink/CopySpaceLink'
 import { MessageTimelineContext } from '@components/MessageTimeline/MessageTimelineContext'

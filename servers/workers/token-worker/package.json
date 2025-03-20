@@ -14,8 +14,8 @@
         "test:unit": "yarn node --experimental-vm-modules $(yarn bin jest)"
     },
     "dependencies": {
-        "@river-build/generated": "workspace:^",
         "@solana/web3.js": "^1.98.0",
+        "@towns-protocol/generated": "workspace:^",
         "alchemy-sdk": "^2.2.4",
         "itty-router": "^2.6.6",
         "viem": "^1.18.2",

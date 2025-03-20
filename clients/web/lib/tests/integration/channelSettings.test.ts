@@ -17,7 +17,7 @@ import {
     NoopRuleData,
     Permission,
     createOperationsTree,
-} from '@river-build/web3'
+} from '@towns-protocol/web3'
 
 // TODO: this test uses createTestSpaceGatedByTownNfts. skipping for now b/c createTestSpaceGatedByTownNfts needs more xchain work
 // https://linear.app/hnt-labs/issue/HNT-5149/fix-channelsettingstest-and-joinchanneltest

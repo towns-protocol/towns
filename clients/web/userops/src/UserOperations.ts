@@ -1,4 +1,4 @@
-import { Address, SpaceDapp, UpdateRoleParams, LegacyUpdateRoleParams } from '@river-build/web3'
+import { Address, SpaceDapp, UpdateRoleParams, LegacyUpdateRoleParams } from '@towns-protocol/web3'
 import { ethers } from 'ethers'
 import { UserOpsConfig, FunctionHash, TimeTracker, TimeTrackerEvents } from './types'
 import { selectUserOpsByAddress, userOpsStore } from './store/userOpsStore'

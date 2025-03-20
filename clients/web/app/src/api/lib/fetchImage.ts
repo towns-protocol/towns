@@ -1,4 +1,4 @@
-import { contractAddressFromSpaceId, isSpaceStreamId, isUserId } from '@river-build/sdk'
+import { contractAddressFromSpaceId, isSpaceStreamId, isUserId } from '@towns-protocol/sdk'
 
 import { axiosClient } from 'api/apiClient'
 import { env } from 'utils'

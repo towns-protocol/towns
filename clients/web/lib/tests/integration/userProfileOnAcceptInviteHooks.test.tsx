@@ -2,12 +2,12 @@
 /**
  * @group dendrite
  */
-import { Membership } from '@river-build/sdk'
+import { Membership } from '@towns-protocol/sdk'
 import { createTestSpaceGatedByTownNft, registerAndStartClients } from './helpers/TestUtils'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 
 import { LoginWithWallet } from './helpers/TestComponents'
-import { Permission } from '@river-build/web3'
+import { Permission } from '@towns-protocol/web3'
 import React from 'react'
 import { TownsTestApp } from './helpers/TownsTestApp'
 import { useMyMembership } from '../../src/hooks/use-my-membership'

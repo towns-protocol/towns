@@ -1,6 +1,6 @@
 'use client'
 
-import { type MessageTimeline, Space, assert } from '@river-build/sdk'
+import { type MessageTimeline, Space, assert } from '@towns-protocol/sdk'
 import { useMemo } from 'react'
 import { type ActionConfig, useAction } from './internals/useAction'
 import { useSyncAgent } from './useSyncAgent'

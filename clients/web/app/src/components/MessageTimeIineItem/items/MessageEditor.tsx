@@ -1,7 +1,7 @@
 import React, { useCallback, useContext } from 'react'
 import { SendTextMessageOptions, useMyProfile, useSpaceMembers } from 'use-towns-client'
 import { createPortal } from 'react-dom'
-import { Attachment, ChannelMessageEvent } from '@river-build/sdk'
+import { Attachment, ChannelMessageEvent } from '@towns-protocol/sdk'
 import { Box, Stack, useZLayerContext } from '@ui'
 import { TownsEditorContainer } from '@components/RichTextPlate/TownsEditorContainer'
 import { useEditMessage } from 'hooks/useEditMessage'

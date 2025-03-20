@@ -1,9 +1,9 @@
 import {
     MockERC721A as LocalhostContract,
     MockERC721AInterface as LocalhostInterface,
-} from '@river-build/generated/dev/typings/MockERC721A'
+} from '@towns-protocol/generated/dev/typings/MockERC721A'
 
-import LocalhostAbi from '@river-build/generated/dev/abis/MockERC721A.abi.json' assert { type: 'json' }
+import LocalhostAbi from '@towns-protocol/generated/dev/abis/MockERC721A.abi.json' assert { type: 'json' }
 
 import { ethers } from 'ethers'
 import { BaseContractShim } from './BaseContractShim'

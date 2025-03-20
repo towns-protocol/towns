@@ -18,7 +18,7 @@ import {
     createExternalNFTStruct,
     getTestGatingNftAddress,
     NoopRuleData,
-} from '@river-build/web3'
+} from '@towns-protocol/web3'
 import { RoleIdentifier } from '../../src/types/web3-types'
 
 describe('channel with roles and permissions', () => {

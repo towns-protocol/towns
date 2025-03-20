@@ -8,7 +8,7 @@ import {
     TimelineEvent_OneOf,
     getFallbackContent,
     MessageType,
-} from '@river-build/sdk'
+} from '@towns-protocol/sdk'
 import {
     getIsMentioned,
     getReactionParentId,
@@ -16,9 +16,9 @@ import {
 } from '../../../src/store/use-timeline-store'
 import { hexToBytes } from 'viem'
 import { randomBytes } from 'crypto'
-import { ETH_ADDRESS } from '@river-build/web3'
-import { BlockchainTransaction_Tip, PlainMessage } from '@river-build/proto'
-import { EventStatus, RiverTimelineEvent } from '@river-build/sdk'
+import { ETH_ADDRESS } from '@towns-protocol/web3'
+import { BlockchainTransaction_Tip, PlainMessage } from '@towns-protocol/proto'
+import { EventStatus, RiverTimelineEvent } from '@towns-protocol/sdk'
 
 export class ConversationBuilder {
     events: TimelineEvent[] = []

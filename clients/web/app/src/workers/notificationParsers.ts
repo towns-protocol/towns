@@ -1,12 +1,12 @@
 import * as z from 'zod'
-import { StreamEventSchema } from '@river-build/proto'
-import { bin_fromHexString } from '@river-build/dlog'
+import { StreamEventSchema } from '@towns-protocol/proto'
+import { bin_fromHexString } from '@towns-protocol/dlog'
 import {
     isChannelStreamId,
     isDMChannelStreamId,
     isGDMChannelStreamId,
     spaceIdFromChannelId,
-} from '@river-build/sdk'
+} from '@towns-protocol/sdk'
 import { fromBinary } from '@bufbuild/protobuf'
 import { NotificationClicked } from 'store/notificationCurrentUser'
 import { PATHS } from '../routes'

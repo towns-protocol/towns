@@ -1,7 +1,7 @@
 import { useThrottledTimelineStore, useTownsContext, useUserLookupStore } from 'use-towns-client'
 import { isEqual } from 'lodash'
 import { useCallback, useRef } from 'react'
-import { EmbeddedMessageAttachment, RiverTimelineEvent } from '@river-build/sdk'
+import { EmbeddedMessageAttachment, RiverTimelineEvent } from '@towns-protocol/sdk'
 import { notUndefined } from 'ui/utils/utils'
 import { useExtractInternalLinks } from './useExtractInternalLinks'
 

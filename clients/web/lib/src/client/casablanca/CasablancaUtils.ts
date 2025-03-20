@@ -1,4 +1,4 @@
-import { Membership, Stream, StreamMember } from '@river-build/sdk'
+import { Membership, Stream, StreamMember } from '@towns-protocol/sdk'
 import { TownsStreamMember, StreamView } from '../../types/towns-types'
 
 export function toStreamView(stream: Stream, membership: Membership): StreamView {

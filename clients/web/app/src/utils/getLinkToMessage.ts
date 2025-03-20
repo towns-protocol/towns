@@ -1,4 +1,4 @@
-import { isDMChannelStreamId, isGDMChannelStreamId } from '@river-build/sdk'
+import { isDMChannelStreamId, isGDMChannelStreamId } from '@towns-protocol/sdk'
 import { PATHS } from 'routes'
 import { addressFromSpaceId } from 'ui/utils/utils'
 

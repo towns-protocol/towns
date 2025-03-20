@@ -5,14 +5,14 @@ import {
     SpaceOwner,
     SpaceDapp,
     ISpaceOwnerBase,
-} from '@river-build/web3'
+} from '@towns-protocol/web3'
 import { ethers } from 'ethers'
 import { Ping as Pinger } from './pinger'
 import { getWalletBalances } from './wallet-balance'
-import { NodeStructOutput } from '@river-build/generated/dev/typings/INodeRegistry'
+import { NodeStructOutput } from '@towns-protocol/generated/dev/typings/INodeRegistry'
 import { Unpromisify } from './utils'
 import { MetricsIntegrator } from './metrics-integrator'
-import { IERC721ABase } from '@river-build/generated/dev/typings/IERC721AQueryable'
+import { IERC721ABase } from '@towns-protocol/generated/dev/typings/IERC721AQueryable'
 
 const NUM_RETRIES = 3
 const THROTTLE_LIMIT = 250 // num requests

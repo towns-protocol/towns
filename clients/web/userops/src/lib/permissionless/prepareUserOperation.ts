@@ -22,7 +22,7 @@ import { getBalance } from 'viem/actions'
 import { subtractGasFromBalance } from './middleware/substractGasFromValue'
 import { Call } from 'viem/types/calls'
 import { SmartAccountClient } from 'permissionless'
-import { ISpaceDapp } from '@river-build/web3'
+import { ISpaceDapp } from '@towns-protocol/web3'
 import { decodeCallData } from '../../utils/decodeCallData'
 
 const defaultParameters = ['factory', 'fees', 'gas', 'paymaster', 'nonce', 'signature'] as const

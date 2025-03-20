@@ -4,10 +4,10 @@
  */
 import React, { useCallback, useMemo } from 'react'
 import { setTimeout } from 'timers/promises'
-import { FullyReadMarker } from '@river-build/proto'
-import { Permission } from '@river-build/web3'
+import { FullyReadMarker } from '@towns-protocol/proto'
+import { Permission } from '@towns-protocol/web3'
 import { ThreadResult, ThreadStatsData } from '../../src/types/timeline-types'
-import { ChannelMessageEvent, TimelineEvent } from '@river-build/sdk'
+import { ChannelMessageEvent, TimelineEvent } from '@towns-protocol/sdk'
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import {
     createTestChannelWithSpaceRoles,
@@ -30,7 +30,7 @@ import { useTownsClient } from '../../src/hooks/use-towns-client'
 import { useTimeline } from '../../src/hooks/use-timeline'
 import { TestConstants } from './helpers/TestConstants'
 import { TSigner } from '../../src/types/web3-types'
-import { RiverTimelineEvent } from '@river-build/sdk'
+import { RiverTimelineEvent } from '@towns-protocol/sdk'
 
 // TODO Zustand https://docs.pmnd.rs/zustand/testing
 

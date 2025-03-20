@@ -1,4 +1,4 @@
-import { ISpaceDapp, createSpaceDapp, getWeb3Deployment } from '@river-build/web3'
+import { ISpaceDapp, createSpaceDapp, getWeb3Deployment } from '@towns-protocol/web3'
 import { ethers } from 'ethers'
 import { Environment } from 'worker-common'
 import { Env } from './index'

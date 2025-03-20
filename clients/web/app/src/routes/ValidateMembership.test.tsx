@@ -4,7 +4,7 @@ import { describe, expect, test, vi } from 'vitest'
 // eslint-disable-next-line no-restricted-imports
 import * as Lib from 'use-towns-client'
 import { Route, Routes } from 'react-router'
-import { Membership } from '@river-build/sdk'
+import { Membership } from '@towns-protocol/sdk'
 import { TestApp } from 'test/testUtils'
 import { PATHS } from 'routes'
 import { spaceRoomIdentifier } from 'test/testMocks'

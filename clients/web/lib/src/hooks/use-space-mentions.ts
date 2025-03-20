@@ -3,7 +3,7 @@ import { useFullyReadMarkerStore } from '../store/use-fully-read-marker-store'
 import { TimelineStore, useRawTimelineStore } from '../store/use-timeline-store'
 import isEqual from 'lodash/isEqual'
 import debounce from 'lodash/debounce'
-import { isChannelStreamId, MentionResult, spaceIdFromChannelId } from '@river-build/sdk'
+import { isChannelStreamId, MentionResult, spaceIdFromChannelId } from '@towns-protocol/sdk'
 import { create } from 'zustand'
 import { TownsOpts } from 'client/TownsClientTypes'
 

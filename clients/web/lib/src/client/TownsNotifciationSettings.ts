@@ -14,7 +14,7 @@ import {
     GdmChannelSettingSchema,
     SpaceSettingSchema,
     SpaceChannelSettingSchema,
-} from '@river-build/proto'
+} from '@towns-protocol/proto'
 import {
     SignerContext,
     NotificationService,
@@ -28,11 +28,11 @@ import {
     streamIdAsString,
     isDMChannelStreamId,
     isGDMChannelStreamId,
-} from '@river-build/sdk'
+} from '@towns-protocol/sdk'
 import { create, DescMessage, fromBinary, MessageShape, toBinary, toJson } from '@bufbuild/protobuf'
 import { useCallback, useEffect, useMemo, useSyncExternalStore } from 'react'
 import { useTownsContext } from '../components/TownsContextProvider'
-import { bin_fromBase64, bin_toBase64 } from '@river-build/dlog'
+import { bin_fromBase64, bin_toBase64 } from '@towns-protocol/dlog'
 import cloneDeep from 'lodash/cloneDeep'
 
 export interface INotificationStore {

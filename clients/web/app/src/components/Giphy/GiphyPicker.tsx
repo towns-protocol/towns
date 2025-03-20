@@ -8,7 +8,7 @@ import {
     useTimelineThread,
     useTownsClient,
 } from 'use-towns-client'
-import { MessageType } from '@river-build/sdk'
+import { MessageType } from '@towns-protocol/sdk'
 import { Spinner } from '@components/Spinner'
 import { ReplyToMessageContext } from '@components/ReplyToMessageContext/ReplyToMessageContext'
 import { Box } from '@ui'

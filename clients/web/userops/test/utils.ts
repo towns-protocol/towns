@@ -23,7 +23,7 @@ import {
     Space,
     TIERED_PRICING_ORACLE_V2,
     TIERED_PRICING_ORACLE_V3,
-} from '@river-build/web3'
+} from '@towns-protocol/web3'
 import { userOpsStore } from '../src/store/userOpsStore'
 import { SendUserOperationReturnType } from '../src/lib/types'
 import * as encodeUpdateRoleDataHelpers from '../src/utils/encodeUpdateRoleData'

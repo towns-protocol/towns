@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useHotkeys } from 'react-hotkeys-hook'
-import { TimelineEvent } from '@river-build/sdk'
+import { TimelineEvent } from '@towns-protocol/sdk'
 import debug from 'debug'
 
 type TimelineRecorderCue = {

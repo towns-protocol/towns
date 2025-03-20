@@ -14,7 +14,7 @@ import {
     ThreadStatsData,
     TimelineEvent,
     TokenTransferEvent,
-} from '@river-build/sdk'
+} from '@towns-protocol/sdk'
 import { ExperimentsState } from 'store/experimentsStore'
 import { MINUTE_MS } from 'data/constants'
 

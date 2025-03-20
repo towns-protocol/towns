@@ -12,7 +12,7 @@ import {
     SpaceDapp,
     UpdateChannelParams,
     XchainConfig,
-} from '@river-build/web3'
+} from '@towns-protocol/web3'
 import {
     CreateChannelInfo,
     CreateSpaceInfo,
@@ -65,7 +65,7 @@ import {
 } from '../types/error-types'
 import { ContractReceipt, ContractTransaction } from 'ethers'
 import { toUtf8String } from 'ethers/lib/utils'
-import { makeSpaceStreamId, makeUniqueChannelStreamId } from '@river-build/sdk'
+import { makeSpaceStreamId, makeUniqueChannelStreamId } from '@towns-protocol/sdk'
 import { waitForTimeoutOrMembership } from '../utils/waitForTimeoutOrMembershipEvent'
 import { logTxnResult } from './TownsClientTypes'
 

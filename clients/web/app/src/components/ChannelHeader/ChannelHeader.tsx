@@ -11,7 +11,7 @@ import {
 } from 'use-towns-client'
 import { AnimatePresence } from 'framer-motion'
 import { useSearchParams } from 'react-router-dom'
-import { isDefined } from '@river-build/sdk'
+import { isDefined } from '@towns-protocol/sdk'
 import { ChannelUsersPill } from '@components/ChannelUserPill/ChannelUserPill'
 import { TouchNavBar } from '@components/TouchNavBar/TouchNavBar'
 import { useUserList } from '@components/UserList/UserList'

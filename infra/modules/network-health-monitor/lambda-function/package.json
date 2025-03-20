@@ -17,8 +17,8 @@
     "dependencies": {
         "@aws-sdk/client-secrets-manager": "3.460.0",
         "@datadog/datadog-api-client": "^1.22.0",
-        "@river-build/generated": "workspace:^",
-        "@river-build/web3": "workspace:^",
+        "@towns-protocol/generated": "workspace:^",
+        "@towns-protocol/web3": "workspace:^",
         "d3-array": "^3.2.4",
         "ethers": "^5.7.2",
         "json-2-csv": "^5.5.6",

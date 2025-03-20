@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { FullyReadMarker } from '@river-build/proto'
+import { FullyReadMarker } from '@towns-protocol/proto'
 import {
     Client as CasablancaClient,
     RiverTimelineEvent,
@@ -9,10 +9,10 @@ import {
     isDMChannelStreamId,
     isDefined,
     isGDMChannelStreamId,
-} from '@river-build/sdk'
+} from '@towns-protocol/sdk'
 import { useFullyReadMarkerStore } from '../../store/use-fully-read-marker-store'
 import { TimelineStore, useRawTimelineStore } from '../../store/use-timeline-store'
-import { check } from '@river-build/dlog'
+import { check } from '@towns-protocol/dlog'
 
 export function useContentAwareTimelineDiffCasablanca(casablancaClient?: CasablancaClient) {
     useEffect(() => {

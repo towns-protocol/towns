@@ -8,7 +8,7 @@ import {
     MessageType,
     RiverTimelineEvent,
     TimelineEvent,
-} from '@river-build/sdk'
+} from '@towns-protocol/sdk'
 import { TestApp } from 'test/testUtils'
 import { image, normal, twitter } from '../../../mocks/unfurl/data'
 import {

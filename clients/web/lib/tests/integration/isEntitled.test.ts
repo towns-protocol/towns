@@ -16,7 +16,7 @@ import {
     getTestGatingNftAddress,
     NoopRuleData,
     Permission,
-} from '@river-build/web3'
+} from '@towns-protocol/web3'
 import { TownsTestWeb3Provider } from './helpers/TownsTestWeb3Provider'
 import { getTransactionHashFromTransactionOrUserOp } from '@towns/userops'
 

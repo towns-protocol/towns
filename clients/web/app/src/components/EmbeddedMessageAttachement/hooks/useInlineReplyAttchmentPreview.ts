@@ -1,6 +1,6 @@
 import { useCallback, useContext, useEffect, useMemo, useRef } from 'react'
 import { useChannelId, useRawTimelineStore, useUserLookupContext } from 'use-towns-client'
-import { RiverTimelineEvent } from '@river-build/sdk'
+import { RiverTimelineEvent } from '@towns-protocol/sdk'
 import { ReplyToMessageContext } from '@components/ReplyToMessageContext/ReplyToMessageContext'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 

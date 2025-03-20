@@ -1,7 +1,7 @@
 import { useCallback } from 'react'
 import { useTownsClient } from './use-towns-client'
 import { blockchainKeys } from '../query/query-keys'
-import { ETH_ADDRESS } from '@river-build/web3'
+import { ETH_ADDRESS } from '@towns-protocol/web3'
 import { useQuery } from '../query/queryClient'
 
 export function useSpaceTips(args: { spaceId: string }) {

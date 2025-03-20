@@ -16,7 +16,7 @@ import {
     createExternalNFTStruct,
     getTestGatingNftAddress,
     NoopRuleData,
-} from '@river-build/web3'
+} from '@towns-protocol/web3'
 import { TestConstants } from './helpers/TestConstants'
 import { waitFor } from '@testing-library/dom'
 

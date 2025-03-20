@@ -1,4 +1,4 @@
-import { ChannelMetadata, SpaceInfo } from '@river-build/web3'
+import { ChannelMetadata, SpaceInfo } from '@towns-protocol/web3'
 import isEqual from 'lodash/isEqual'
 import { create } from 'zustand'
 import { createJSONStorage, persist } from 'zustand/middleware'

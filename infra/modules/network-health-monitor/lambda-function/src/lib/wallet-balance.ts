@@ -1,4 +1,4 @@
-import { NodeStructOutput } from '@river-build/generated/dev/typings/INodeRegistry'
+import { NodeStructOutput } from '@towns-protocol/generated/dev/typings/INodeRegistry'
 import { ethers } from 'ethers'
 
 export interface RiverNodeWalletBalance {

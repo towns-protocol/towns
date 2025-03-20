@@ -1,7 +1,7 @@
-import { BlockchainTransaction_TokenTransfer, PlainMessage } from '@river-build/proto'
+import { BlockchainTransaction_TokenTransfer, PlainMessage } from '@towns-protocol/proto'
 import { ContractReceipt as EthersContractReceipt } from 'ethers'
-import { ContractReceipt } from '@river-build/sdk'
-import { bin_fromHexString } from '@river-build/dlog'
+import { ContractReceipt } from '@towns-protocol/sdk'
+import { bin_fromHexString } from '@towns-protocol/dlog'
 import { extractTransferAmountFromLogs } from './erc20-utils'
 
 export function createSendTokenTransferDataEVM(

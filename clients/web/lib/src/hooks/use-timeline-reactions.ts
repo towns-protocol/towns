@@ -1,4 +1,4 @@
-import { MessageReactions } from '@river-build/sdk'
+import { MessageReactions } from '@towns-protocol/sdk'
 import { TimelineStoreStates, useRawTimelineStore } from '../store/use-timeline-store'
 
 const EMPTY_REACTIONS: Record<string, MessageReactions> = {}

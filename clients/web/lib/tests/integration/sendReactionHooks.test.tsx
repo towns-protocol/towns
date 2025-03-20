@@ -17,7 +17,7 @@ import {
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 
 import { ChannelContextProvider } from '../../src/components/ChannelContextProvider'
-import { Permission } from '@river-build/web3'
+import { Permission } from '@towns-protocol/web3'
 import { RegisterAndJoinSpace } from './helpers/TestComponents'
 import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
 import { TownsTestApp } from './helpers/TownsTestApp'
@@ -28,7 +28,7 @@ import { useChannelTimeline } from '../../src/hooks/use-channel-timeline'
 import { useTownsClient } from '../../src/hooks/use-towns-client'
 import { TestConstants } from './helpers/TestConstants'
 import { TSigner } from '../../src/types/web3-types'
-import { RiverTimelineEvent, Membership, TimelineEvent } from '@river-build/sdk'
+import { RiverTimelineEvent, Membership, TimelineEvent } from '@towns-protocol/sdk'
 
 describe('sendReactionHooks', () => {
     test('user can join a room, see messages, and send messages', async () => {

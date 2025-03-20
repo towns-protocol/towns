@@ -1,6 +1,6 @@
 import { useCallback } from 'react'
 import { useTownsContext } from 'use-towns-client'
-import { Attachment, isDefined, transformAttachments } from '@river-build/sdk'
+import { Attachment, isDefined, transformAttachments } from '@towns-protocol/sdk'
 import { SECOND_MS } from 'data/constants'
 import { FileUpload, FileUploadFileContent } from './mediaDropTypes'
 import { useUploadAttachment } from './useUploadAttachment'

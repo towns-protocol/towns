@@ -1,4 +1,9 @@
-import { Attachment, RiverTimelineEvent, TickerAttachment, TimelineEvent } from '@river-build/sdk'
+import {
+    Attachment,
+    RiverTimelineEvent,
+    TickerAttachment,
+    TimelineEvent,
+} from '@towns-protocol/sdk'
 
 const isTickerAttachment = (attachment: Attachment): attachment is TickerAttachment => {
     return attachment.type === 'ticker'

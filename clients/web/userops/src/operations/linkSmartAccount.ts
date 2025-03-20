@@ -1,4 +1,4 @@
-import { Address, SpaceDapp } from '@river-build/web3'
+import { Address, SpaceDapp } from '@towns-protocol/web3'
 import { ethers } from 'ethers'
 import { UserOps } from '../UserOperations'
 import { TimeTracker, TimeTrackerEvents } from '../types'

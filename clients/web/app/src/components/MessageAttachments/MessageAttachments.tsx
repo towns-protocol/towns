@@ -15,7 +15,7 @@ import {
     MessageType,
     TickerAttachment,
     UnfurledLinkAttachment,
-} from '@river-build/sdk'
+} from '@towns-protocol/sdk'
 import { isUrl } from 'utils/isUrl'
 import { ChunkedFile } from '@components/ChunkedFile/ChunkedFile'
 import { EmbeddedMessage } from '@components/EmbeddedMessageAttachement/EmbeddedMessage'

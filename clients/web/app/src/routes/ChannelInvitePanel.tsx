@@ -6,7 +6,7 @@ import {
     useUserLookupArray,
 } from 'use-towns-client'
 import { Toast, toast as headlessToast } from 'react-hot-toast/headless'
-import { isGDMChannelStreamId } from '@river-build/sdk'
+import { isGDMChannelStreamId } from '@towns-protocol/sdk'
 import { Panel } from '@components/Panel/Panel'
 import { Box, Button, Icon, IconButton, Stack, Text } from '@ui'
 import { InviteUserList } from '@components/InviteUserList/InviteUserList'

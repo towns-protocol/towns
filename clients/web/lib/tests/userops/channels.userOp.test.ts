@@ -1,4 +1,4 @@
-import { NoopRuleData, Permission } from '@river-build/web3'
+import { NoopRuleData, Permission } from '@towns-protocol/web3'
 import { registerAndStartClient, waitForWithRetries } from '../integration/helpers/TestUtils'
 import {
     createUngatedSpace,

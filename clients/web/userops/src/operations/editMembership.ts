@@ -7,7 +7,7 @@ import {
     Space,
     SpaceDapp,
     UpdateRoleParams,
-} from '@river-build/web3'
+} from '@towns-protocol/web3'
 import { ethers } from 'ethers'
 import { getDetailsForEditingMembershipSettings } from '../utils/getDetailsForEditingMembershipSettings'
 import { encodeLegacyUpdateRoleData, encodeUpdateRoleData } from '../utils/encodeUpdateRoleData'

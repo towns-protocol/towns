@@ -1,5 +1,5 @@
 import React from 'react'
-import { ChannelMessageEncryptedEvent } from '@river-build/sdk'
+import { ChannelMessageEncryptedEvent } from '@towns-protocol/sdk'
 import { Paragraph, Stack } from '@ui'
 import { MESSAGING_IN_TOWNS_LINK } from 'data/links'
 import { atoms } from 'ui/styles/atoms.css'

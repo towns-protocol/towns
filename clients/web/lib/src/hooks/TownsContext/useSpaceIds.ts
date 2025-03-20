@@ -1,7 +1,7 @@
-import { Client as CasablancaClient, isSpaceStreamId } from '@river-build/sdk'
+import { Client as CasablancaClient, isSpaceStreamId } from '@towns-protocol/sdk'
 import { useEffect, useState } from 'react'
 import isEqual from 'lodash/isEqual'
-import { MembershipOp, SnapshotCaseType } from '@river-build/proto'
+import { MembershipOp, SnapshotCaseType } from '@towns-protocol/proto'
 import debounce from 'lodash/debounce'
 
 /// returns a stable list of space ids (if the networkId is the same, the object reference should stay the same)

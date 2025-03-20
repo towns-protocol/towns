@@ -14,7 +14,7 @@ import {
     EmbeddedMessageAttachment,
     TickerAttachment,
     UnfurledLinkAttachment,
-} from '@river-build/sdk'
+} from '@towns-protocol/sdk'
 import { useMediaDropContext } from '@components/MediaDropContext/MediaDropContext'
 import { ErrorBoundary } from '@components/ErrorBoundary/ErrorBoundary'
 import { Box, BoxProps, Stack } from '@ui'

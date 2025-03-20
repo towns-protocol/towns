@@ -69,7 +69,7 @@ function SignIn({ signer }: { signer: TSigner }) {
     )
 }
 
-// this is easier than trying to figure out ESM module mocking of river-build/sdk with jest
+// this is easier than trying to figure out ESM module mocking of towns-protocol/sdk with jest
 class ErrorSigner extends ethers.Signer {
     constructor(private readonly _signer: ethers.Signer) {
         super()

@@ -1,4 +1,4 @@
-import { LocalhostWeb3Provider } from '@river-build/web3'
+import { LocalhostWeb3Provider } from '@towns-protocol/web3'
 import { createSpaceDappAndUserops, generatePrivyWalletIfKey } from './utils'
 import { Address } from 'viem'
 

@@ -7,7 +7,7 @@ import {
     useTownsClient,
     useUserLookupStore,
 } from 'use-towns-client'
-import { isDMChannelStreamId, isGDMChannelStreamId } from '@river-build/sdk'
+import { isDMChannelStreamId, isGDMChannelStreamId } from '@towns-protocol/sdk'
 import { toast } from 'react-hot-toast/headless'
 import { Box, Button, Divider, IconButton, Stack, Text, TextButton } from '@ui'
 import { validateDisplayName, validateUsername } from '@components/SetUsernameForm/validateUsername'

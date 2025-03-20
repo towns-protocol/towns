@@ -10,7 +10,7 @@ import {
     createTestChannelWithSpaceRoles,
 } from 'use-towns-client/tests/integration/helpers/TestUtils'
 
-import { Permission } from '@river-build/web3'
+import { Permission } from '@towns-protocol/web3'
 import { TestConstants } from './helpers/TestConstants'
 import { TownsTestClient } from './helpers/TownsTestClient'
 import { sleep } from '../../src/utils/towns-utils'

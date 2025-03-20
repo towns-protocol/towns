@@ -13,11 +13,11 @@ import {
     waitForWithRetries,
 } from './helpers/TestUtils'
 
-import { Permission } from '@river-build/web3'
+import { Permission } from '@towns-protocol/web3'
 import { waitFor } from '@testing-library/dom'
-import { check } from '@river-build/dlog'
-import { DecryptedTimelineEvent } from '@river-build/sdk'
-import { SnapshotCaseType } from '@river-build/proto'
+import { check } from '@towns-protocol/dlog'
+import { DecryptedTimelineEvent } from '@towns-protocol/sdk'
+import { SnapshotCaseType } from '@towns-protocol/proto'
 
 describe('sendAMessage', () => {
     test('create room, invite user, accept invite, and send encrypted message', async () => {

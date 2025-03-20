@@ -6,7 +6,7 @@ import {
     useMyUserId,
     useUserLookupArray,
 } from 'use-towns-client'
-import { isDMChannelStreamId, isGDMChannelStreamId } from '@river-build/sdk'
+import { isDMChannelStreamId, isGDMChannelStreamId } from '@towns-protocol/sdk'
 import { Box, Icon, Paragraph, Pill, Text, Tooltip } from '@ui'
 import { useStore } from 'store/store'
 import { atoms } from 'ui/styles/atoms.css'

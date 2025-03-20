@@ -7,7 +7,7 @@ import {
     isEntrypointV07SponsorshipRequest,
     SponsorshipRequest,
 } from './types'
-import { Address } from '@river-build/web3'
+import { Address } from '@towns-protocol/web3'
 import { ApiErrorDetail, ErrorCode } from './createResponse'
 import {
     entryPoint06Address,

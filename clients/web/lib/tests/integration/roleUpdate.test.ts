@@ -11,7 +11,7 @@ import {
 } from 'use-towns-client/tests/integration/helpers/TestUtils'
 import { TestConstants } from './helpers/TestConstants'
 import { RoleDetails } from '../../src/types/web3-types'
-import { getFilteredRolesFromSpace, Permission, NoopRuleData } from '@river-build/web3'
+import { getFilteredRolesFromSpace, Permission, NoopRuleData } from '@towns-protocol/web3'
 
 describe('update role', () => {
     test('Update Everyone role with multicall', async () => {

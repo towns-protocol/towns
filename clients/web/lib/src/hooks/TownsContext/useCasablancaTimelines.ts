@@ -51,7 +51,7 @@ import {
     TickerAttachment,
     SpaceReviewEvent,
     TokenTransferEvent,
-} from '@river-build/sdk'
+} from '@towns-protocol/sdk'
 import {
     ChannelMessage_Post,
     UserPayload,
@@ -65,7 +65,7 @@ import {
     ChannelMessage,
     ChannelMessage_Post_Attachment,
     MemberPayload,
-} from '@river-build/proto'
+} from '@towns-protocol/proto'
 import { useEffect } from 'react'
 import {
     getIsMentioned,
@@ -75,8 +75,8 @@ import {
     useRawTimelineStore,
 } from '../../store/use-timeline-store'
 import { useCallback } from 'react'
-import { bin_toHexString, check } from '@river-build/dlog'
-import { getSpaceReviewEventDataBin } from '@river-build/web3'
+import { bin_toHexString, check } from '@towns-protocol/dlog'
+import { getSpaceReviewEventDataBin } from '@towns-protocol/web3'
 
 type SuccessResult = {
     content: TimelineEvent_OneOf

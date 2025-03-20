@@ -20,7 +20,7 @@ import {
     CheckOperationType,
     createOperationsTree,
     NoopRuleData,
-} from '@river-build/web3'
+} from '@towns-protocol/web3'
 
 describe('get role details', () => {
     test('get details of a role that no channel uses', async () => {

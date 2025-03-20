@@ -4,7 +4,7 @@ import {
     useCasablancaStore,
 } from 'use-towns-client'
 
-import { Permission, WalletAlreadyLinkedError, WalletNotLinkedError } from '@river-build/web3'
+import { Permission, WalletAlreadyLinkedError, WalletNotLinkedError } from '@towns-protocol/web3'
 
 import {
     ENTITLEMENT_NOT_ALLOWED,

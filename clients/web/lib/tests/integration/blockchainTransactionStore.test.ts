@@ -8,7 +8,7 @@ import {
     getFreeSpacePricingSetup,
 } from './helpers/TestUtils'
 
-import { MembershipStruct, EncodedNoopRuleData, Permission } from '@river-build/web3'
+import { MembershipStruct, EncodedNoopRuleData, Permission } from '@towns-protocol/web3'
 import { waitFor } from '@testing-library/dom'
 import { ethers } from 'ethers'
 

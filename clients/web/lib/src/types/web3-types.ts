@@ -2,7 +2,7 @@ import {
     RoleEntitlements as R_RoleEntitlements,
     RoleDetails as R_RoleDetails,
     ISpaceDapp as R_ISpaceDapp,
-} from '@river-build/web3'
+} from '@towns-protocol/web3'
 import { SendUserOperationReturnType } from '@towns/userops'
 import { ContractReceipt, ContractTransaction, Signer, providers } from 'ethers'
 

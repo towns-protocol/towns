@@ -9,7 +9,7 @@ import {
     CreationCookie,
     BlockchainTransaction_TokenTransfer,
     PlainMessage,
-} from '@river-build/proto'
+} from '@towns-protocol/proto'
 import {
     BanUnbanWalletTransactionContext,
     ChannelTransactionContext,
@@ -46,14 +46,14 @@ import {
     useCasablancaWalletSignIn,
 } from './use-casablanca-wallet-signin'
 import { create } from 'zustand'
-import { MembershipStruct, Permission, IRuleEntitlementV2Base } from '@river-build/web3'
+import { MembershipStruct, Permission, IRuleEntitlementV2Base } from '@towns-protocol/web3'
 import { BlockchainTransactionType, TSigner } from 'types/web3-types'
 import {
     SignerContext,
     ChannelMessageEvent,
     ContractReceipt,
     SolanaTransactionReceipt,
-} from '@river-build/sdk'
+} from '@towns-protocol/sdk'
 import { UserOps } from '@towns/userops'
 
 export type TownsErrorStoreState = {

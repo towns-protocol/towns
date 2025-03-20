@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react'
 import { useInView } from 'react-intersection-observer'
-import { FullyReadMarker } from '@river-build/proto'
+import { FullyReadMarker } from '@towns-protocol/proto'
 import { useStore } from 'store/store'
 import { Box, BoxProps } from '@ui'
 

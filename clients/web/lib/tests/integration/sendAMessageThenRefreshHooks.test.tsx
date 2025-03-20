@@ -1,7 +1,7 @@
 /**
  * @group core
  */
-import { Permission } from '@river-build/web3'
+import { Permission } from '@towns-protocol/web3'
 import {
     createTestChannelWithSpaceRoles,
     createTestSpaceGatedByTownNft,
@@ -20,7 +20,7 @@ import { render, screen, waitFor } from '@testing-library/react'
 import { TestConstants } from './helpers/TestConstants'
 import { useMyMembership } from '../../src/hooks/use-my-membership'
 import { TSigner } from '../../src/types/web3-types'
-import { RiverTimelineEvent, Membership, TimelineEvent } from '@river-build/sdk'
+import { RiverTimelineEvent, Membership, TimelineEvent } from '@towns-protocol/sdk'
 
 describe('sendAMessageThenRefresh.hooks', () => {
     // test that when loading a user that is participating in a channel, the existing channel messages decrypt and render properly

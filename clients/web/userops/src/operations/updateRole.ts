@@ -1,4 +1,4 @@
-import { SpaceDapp } from '@river-build/web3'
+import { SpaceDapp } from '@towns-protocol/web3'
 import { UserOps } from '../UserOperations'
 import { encodeLegacyUpdateRoleData, encodeUpdateRoleData } from '../utils/encodeUpdateRoleData'
 

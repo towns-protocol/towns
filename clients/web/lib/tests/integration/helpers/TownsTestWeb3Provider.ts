@@ -3,10 +3,10 @@
 import { Wallet, ethers } from 'ethers'
 
 import { fundWallet } from './TestUtils'
-import { MockERC721AShim } from '@river-build/web3'
-import { RiverConfig, makeRiverConfig } from '@river-build/sdk'
-import { userIdFromAddress } from '@river-build/sdk'
-import { bin_fromHexString } from '@river-build/dlog'
+import { MockERC721AShim } from '@towns-protocol/web3'
+import { RiverConfig, makeRiverConfig } from '@towns-protocol/sdk'
+import { userIdFromAddress } from '@towns-protocol/sdk'
+import { bin_fromHexString } from '@towns-protocol/dlog'
 
 // the towns test web3 provider wraps all the configuration needed to run a test and is also a ethers provider
 export class TownsTestWeb3Provider extends ethers.providers.JsonRpcProvider {

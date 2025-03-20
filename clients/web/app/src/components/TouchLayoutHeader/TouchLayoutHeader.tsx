@@ -6,7 +6,7 @@ import {
     useSpaceData,
     useSpaceMembers,
 } from 'use-towns-client'
-import { Membership } from '@river-build/sdk'
+import { Membership } from '@towns-protocol/sdk'
 import { Box, Dot, Icon, IconButton, Paragraph, Stack, Text } from '@ui'
 import { useShowHasUnreadBadgeForOtherSpaces } from 'hooks/useSpaceUnreadsIgnoreMuted'
 import { BugReportButton } from '@components/BugReportButton/BugReportButton'

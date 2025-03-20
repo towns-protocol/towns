@@ -1,4 +1,4 @@
-import { UnpackEnvelopeOpts } from '@river-build/sdk'
+import { UnpackEnvelopeOpts } from '@towns-protocol/sdk'
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 

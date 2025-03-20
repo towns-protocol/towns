@@ -2,11 +2,11 @@
  * @group main
  */
 
-import { Err, InfoRequestSchema, InfoResponse } from '@river-build/proto'
+import { Err, InfoRequestSchema, InfoResponse } from '@towns-protocol/proto'
 import { makeTestRpcClient } from '../testUtils'
 import { DEFAULT_RETRY_PARAMS, errorContains } from '../../rpcInterceptors'
 import { makeRiverRpcClient } from '../../makeRiverRpcClient'
-import { LocalhostWeb3Provider } from '@river-build/web3'
+import { LocalhostWeb3Provider } from '@towns-protocol/web3'
 import { makeRiverChainConfig } from '../../riverConfig'
 import { create } from '@bufbuild/protobuf'
 

@@ -11,18 +11,18 @@ import {
     KeySolicitationData,
     KeySolicitationItem,
     UserDevice,
-} from '@river-build/encryption'
+} from '@towns-protocol/encryption'
 import {
     AddEventResponse_Error,
     EncryptedData,
     UserInboxPayload_GroupEncryptionSessions,
-} from '@river-build/proto'
+} from '@towns-protocol/proto'
 import { make_MemberPayload_KeyFulfillment, make_MemberPayload_KeySolicitation } from './types'
 
 import { Client } from './client'
 import { EncryptedContent } from './encryptedContentTypes'
-import { Permission } from '@river-build/web3'
-import { check } from '@river-build/dlog'
+import { Permission } from '@towns-protocol/web3'
+import { check } from '@towns-protocol/dlog'
 import chunk from 'lodash/chunk'
 import { isDefined } from './check'
 import { isMobileSafari } from './utils'

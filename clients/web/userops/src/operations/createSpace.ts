@@ -1,6 +1,6 @@
-import { SpaceDapp } from '@river-build/web3/dist/v3/SpaceDapp'
+import { SpaceDapp } from '@towns-protocol/web3/dist/v3/SpaceDapp'
 import { UserOps } from '../UserOperations'
-import { IArchitectBase, LegacySpaceInfoStruct } from '@river-build/web3'
+import { IArchitectBase, LegacySpaceInfoStruct } from '@towns-protocol/web3'
 import { TimeTracker, TimeTrackerEvents } from '../types'
 import { getAbstractAccountAddress } from '../utils/getAbstractAccountAddress'
 import { getSignerAddress } from '../utils/getSignerAddress'

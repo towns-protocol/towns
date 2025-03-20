@@ -1,10 +1,10 @@
-import BanningAbi from '@river-build/generated/dev/abis/IBanning.abi.json' assert { type: 'json' }
-import ChannelsAbi from '@river-build/generated/dev/abis/Channels.abi.json' assert { type: 'json' }
-import RolesAbi from '@river-build/generated/dev/abis/Roles.abi.json' assert { type: 'json' }
-import PrepayAbi from '@river-build/generated/dev/abis/PrepayFacet.abi.json' assert { type: 'json' }
-import MembershipAbi from '@river-build/generated/dev/abis/MembershipFacet.abi.json' assert { type: 'json' }
-import SpaceOwnerAbi from '@river-build/generated/dev/abis/SpaceOwner.abi.json' assert { type: 'json' }
-import WalletLinkAbi from '@river-build/generated/dev/abis/WalletLink.abi.json' assert { type: 'json' }
+import BanningAbi from '@towns-protocol/generated/dev/abis/IBanning.abi.json' assert { type: 'json' }
+import ChannelsAbi from '@towns-protocol/generated/dev/abis/Channels.abi.json' assert { type: 'json' }
+import RolesAbi from '@towns-protocol/generated/dev/abis/Roles.abi.json' assert { type: 'json' }
+import PrepayAbi from '@towns-protocol/generated/dev/abis/PrepayFacet.abi.json' assert { type: 'json' }
+import MembershipAbi from '@towns-protocol/generated/dev/abis/MembershipFacet.abi.json' assert { type: 'json' }
+import SpaceOwnerAbi from '@towns-protocol/generated/dev/abis/SpaceOwner.abi.json' assert { type: 'json' }
+import WalletLinkAbi from '@towns-protocol/generated/dev/abis/WalletLink.abi.json' assert { type: 'json' }
 
 import { ContractName, Networks } from './types'
 import { ethers } from 'ethers'
@@ -55,13 +55,13 @@ export const createContractMap = async (
     if (network === 'base_sepolia') {
         try {
             spaceOwner = await import(
-                '@river-build/generated/deployments/gamma/base/addresses/spaceOwner.json',
+                '@towns-protocol/generated/deployments/gamma/base/addresses/spaceOwner.json',
                 {
                     assert: { type: 'json' },
                 }
             )
             spaceFactory = await import(
-                '@river-build/generated/deployments/gamma/base/addresses/spaceFactory.json',
+                '@towns-protocol/generated/deployments/gamma/base/addresses/spaceFactory.json',
                 {
                     assert: { type: 'json' },
                 }
@@ -72,13 +72,13 @@ export const createContractMap = async (
     } else if (network === 'base') {
         try {
             spaceOwner = await import(
-                '@river-build/generated/deployments/omega/base/addresses/spaceOwner.json',
+                '@towns-protocol/generated/deployments/omega/base/addresses/spaceOwner.json',
                 {
                     assert: { type: 'json' },
                 }
             )
             spaceFactory = await import(
-                '@river-build/generated/deployments/omega/base/addresses/spaceFactory.json',
+                '@towns-protocol/generated/deployments/omega/base/addresses/spaceFactory.json',
                 {
                     assert: { type: 'json' },
                 }
@@ -95,7 +95,7 @@ export const createContractMap = async (
             spaceOwner = await import(
                 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
                 // @ts-ignore
-                '@river-build/generated/deployments/local_multi/base/addresses/spaceOwner.json',
+                '@towns-protocol/generated/deployments/local_multi/base/addresses/spaceOwner.json',
                 {
                     assert: { type: 'json' },
                 }
@@ -103,7 +103,7 @@ export const createContractMap = async (
             spaceFactory = await import(
                 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
                 // @ts-ignore
-                '@river-build/generated/deployments/local_multi/base/addresses/spaceFactory.json',
+                '@towns-protocol/generated/deployments/local_multi/base/addresses/spaceFactory.json',
                 {
                     assert: { type: 'json' },
                 }

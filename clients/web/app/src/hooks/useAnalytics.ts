@@ -6,7 +6,7 @@ import {
     RudderAnalytics,
 } from '@rudderstack/analytics-js'
 import { keccak256 } from 'ethers/lib/utils'
-import { isChannelStreamId, isDMChannelStreamId, isGDMChannelStreamId } from '@river-build/sdk'
+import { isChannelStreamId, isDMChannelStreamId, isGDMChannelStreamId } from '@towns-protocol/sdk'
 import { TownsAnalytics } from 'use-towns-client'
 import { datadogLogs } from '@datadog/browser-logs'
 import { getPrivyLoginMethodFromLocalStorage } from '@towns/userops'

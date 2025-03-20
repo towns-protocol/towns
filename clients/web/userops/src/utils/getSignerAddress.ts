@@ -1,4 +1,4 @@
-import { Address } from '@river-build/web3'
+import { Address } from '@towns-protocol/web3'
 import { Signer } from 'ethers'
 
 export async function getSignerAddress(signer: Signer): Promise<Address> {

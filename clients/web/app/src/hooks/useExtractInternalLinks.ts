@@ -1,7 +1,7 @@
 import { isEqual, isEqualWith, uniq, uniqBy } from 'lodash'
 import { useMemo, useRef } from 'react'
 import { matchPath } from 'react-router'
-import { UnfurledLinkAttachment } from '@river-build/sdk'
+import { UnfurledLinkAttachment } from '@towns-protocol/sdk'
 import { useUnfurlContent } from 'api/lib/unfurl'
 import { PATHS } from 'routes'
 import { notUndefined } from 'ui/utils/utils'

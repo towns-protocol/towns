@@ -1,5 +1,5 @@
 import { UserOps } from '../src/UserOperations'
-import { LOCALHOST_CHAIN_ID } from '@river-build/web3'
+import { LOCALHOST_CHAIN_ID } from '@towns-protocol/web3'
 
 export class TestUserOps extends UserOps {
     private isAnvil() {

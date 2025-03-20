@@ -1,6 +1,6 @@
 import { useCallback } from 'react'
 import { useFullyReadMarker, useMyUserId } from 'use-towns-client'
-import { TimelineEvent } from '@river-build/sdk'
+import { TimelineEvent } from '@towns-protocol/sdk'
 import { markAsUnreadStore } from '@components/MessageTimeline/hooks/usePersistedUnreadMarkers'
 export const useCreateUnreadMarker = (params: {
     eventId: string

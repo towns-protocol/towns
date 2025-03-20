@@ -6,7 +6,7 @@ import {
     useChannelData,
     useIsTransactionPending,
 } from 'use-towns-client'
-import { isDMChannelStreamId, isGDMChannelStreamId } from '@river-build/sdk'
+import { isDMChannelStreamId, isGDMChannelStreamId } from '@towns-protocol/sdk'
 import { useQueryClient } from '@tanstack/react-query'
 import { Box, BoxProps, CardOpener, CardOpenerTriggerProps, IconButton } from '@ui'
 import { useShortcut } from 'hooks/useShortcut'

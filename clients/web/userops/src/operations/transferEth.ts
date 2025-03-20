@@ -1,6 +1,6 @@
 import { BigNumber, Signer, BigNumberish } from 'ethers'
 import { getAbstractAccountAddress } from '../utils/getAbstractAccountAddress'
-import { SpaceDapp } from '@river-build/web3'
+import { SpaceDapp } from '@towns-protocol/web3'
 import { getSignerAddress } from '../utils/getSignerAddress'
 import { UserOps } from '../UserOperations'
 

@@ -9,7 +9,7 @@ import {
 } from 'use-towns-client/tests/integration/helpers/TestUtils'
 
 import { RoleIdentifier } from '../../src/types/web3-types'
-import { Permission, NoopRuleData } from '@river-build/web3'
+import { Permission, NoopRuleData } from '@towns-protocol/web3'
 
 import { TestConstants } from './helpers/TestConstants'
 

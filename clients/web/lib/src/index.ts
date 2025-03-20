@@ -184,5 +184,5 @@ if (typeof window !== 'undefined' && !window.Buffer) {
     window.Buffer = Buffer
 }
 
-export * from '@river-build/web3'
+export * from '@towns-protocol/web3'
 export * from './types/notification-types'

@@ -10,7 +10,7 @@ import {
     isDMChannelStreamId,
     isGDMChannelStreamId,
     isSpaceStreamId,
-} from '@river-build/sdk'
+} from '@towns-protocol/sdk'
 import { NotificationCurrentUser } from 'store/notificationCurrentUser'
 import { PanelStack } from '@components/Panel/PanelContext'
 import { SECOND_MS } from 'data/constants'

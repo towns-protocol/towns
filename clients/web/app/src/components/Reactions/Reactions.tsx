@@ -1,5 +1,5 @@
 import React, { Suspense, useCallback } from 'react'
-import { MessageReactions } from '@river-build/sdk'
+import { MessageReactions } from '@towns-protocol/sdk'
 import { TooltipBox as Box } from 'ui/components/Box/TooltipBox'
 import { Text } from 'ui/components/Text/Text'
 import { EmojiPickerButton } from '@components/EmojiPickerButton'

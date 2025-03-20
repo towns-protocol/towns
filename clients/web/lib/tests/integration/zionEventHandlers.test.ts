@@ -16,7 +16,7 @@ import {
     MembershipStruct,
     EncodedNoopRuleData,
     Permission,
-} from '@river-build/web3'
+} from '@towns-protocol/web3'
 import { ethers } from 'ethers'
 
 describe('Towns event handlers test', () => {

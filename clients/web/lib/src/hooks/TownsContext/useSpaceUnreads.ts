@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState, useSyncExternalStore } from 'react'
-import { FullyReadMarker } from '@river-build/proto'
+import { FullyReadMarker } from '@towns-protocol/proto'
 import { TownsClient } from '../../client/TownsClient'
 import { useFullyReadMarkerStore } from '../../store/use-fully-read-marker-store'
 import { ThreadStatsMap, useRawTimelineStore } from '../../store/use-timeline-store'
 import isEqual from 'lodash/isEqual'
 import debounce from 'lodash/debounce'
-import { isChannelStreamId, spaceIdFromChannelId } from '@river-build/sdk'
+import { isChannelStreamId, spaceIdFromChannelId } from '@towns-protocol/sdk'
 import {
     getMutedChannelIds,
     NotificationSettingsClient,

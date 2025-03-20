@@ -1,6 +1,6 @@
 import React, { useCallback } from 'react'
 import { TimelinePin, toMessageInfo, useMyUserId, useUserLookup } from 'use-towns-client'
-import { RiverTimelineEvent } from '@river-build/sdk'
+import { RiverTimelineEvent } from '@towns-protocol/sdk'
 import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
 import { Box, Icon, Paragraph } from '@ui'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'

@@ -1,6 +1,6 @@
 import { useConnectivity, useMyMemberships, useSpaceDataStore } from 'use-towns-client'
 import { useEffect } from 'react'
-import { Membership } from '@river-build/sdk'
+import { Membership } from '@towns-protocol/sdk'
 import { SECOND_MS } from 'data/constants'
 import { JoinStep, usePublicPageLoginFlow } from './usePublicPageLoginFlow'
 

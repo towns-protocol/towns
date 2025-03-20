@@ -1,5 +1,5 @@
-import { EVERYONE_ADDRESS, LocalhostWeb3Provider, NoopRuleData } from '@river-build/web3'
-import { Permission } from '@river-build/web3'
+import { EVERYONE_ADDRESS, LocalhostWeb3Provider, NoopRuleData } from '@towns-protocol/web3'
+import { Permission } from '@towns-protocol/web3'
 import {
     createSpaceDappAndUserops,
     createUngatedSpace,

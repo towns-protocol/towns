@@ -1,4 +1,4 @@
-import { Membership, Stream } from '@river-build/sdk'
+import { Membership, Stream } from '@towns-protocol/sdk'
 import { useEffect, useState } from 'react'
 import { useCasablancaStream } from './useCasablancaStream'
 

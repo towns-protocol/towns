@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { FullyReadMarker } from '@river-build/proto'
+import { FullyReadMarker } from '@towns-protocol/proto'
 import { useRawTimelineStore } from '../store/use-timeline-store'
 import { ThreadResult, ThreadStatsData } from '../types/timeline-types'
 import { useFullyReadMarkerStore } from '../store/use-fully-read-marker-store'

@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useTownsContext } from '../components/TownsContextProvider'
-import { Membership, toMembership } from '@river-build/sdk'
+import { Membership, toMembership } from '@towns-protocol/sdk'
 import { useCasablancaStream } from './CasablancClient/useCasablancaStream'
-import { UserPayload_UserMembership } from '@river-build/proto'
+import { UserPayload_UserMembership } from '@towns-protocol/proto'
 import isEqual from 'lodash/isEqual'
 
 export function useMyMemberships(): Record<string, Membership> {

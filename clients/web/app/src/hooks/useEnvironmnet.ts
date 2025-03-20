@@ -6,7 +6,7 @@ import {
     RiverChainConfig,
     getWeb3Deployment,
     getWeb3Deployments,
-} from '@river-build/web3'
+} from '@towns-protocol/web3'
 import { AccountAbstractionConfig } from '@towns/userops'
 import { retryGetAccessToken } from '@towns/privy'
 import { env } from 'utils'

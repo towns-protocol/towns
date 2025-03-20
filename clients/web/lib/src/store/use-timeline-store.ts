@@ -15,7 +15,7 @@ import {
     TimelineEventConfirmation,
     TimelineEvent_OneOf,
     getFallbackContent,
-} from '@river-build/sdk'
+} from '@towns-protocol/sdk'
 import { useEffect } from 'react'
 import { useState } from 'react'
 import { useRef } from 'react'

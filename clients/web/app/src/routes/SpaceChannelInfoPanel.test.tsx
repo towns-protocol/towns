@@ -4,7 +4,7 @@ import { render, screen } from '@testing-library/react'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 // eslint-disable-next-line no-restricted-imports
 import * as Lib from 'use-towns-client'
-import { genId, makeSpaceStreamId, makeUniqueChannelStreamId } from '@river-build/sdk'
+import { genId, makeSpaceStreamId, makeUniqueChannelStreamId } from '@towns-protocol/sdk'
 import { TestApp } from 'test/testUtils'
 import { roleDataWithBothRolesAssignedToChannel } from 'test/testMocks'
 import { ChannelInfoPanel } from './SpaceChannelInfoPanel'

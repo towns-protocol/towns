@@ -13,7 +13,7 @@ import {
     RiverTimelineEvent,
     SignerContext,
     UnpackEnvelopeOpts,
-} from '@river-build/sdk'
+} from '@towns-protocol/sdk'
 import { useCasablancaTimelines } from '../hooks/TownsContext/useCasablancaTimelines'
 import { useCasablancaRooms } from '../hooks/TownsContext/useCasablancaRooms'
 import { useCasablancaDMs } from '../hooks/CasablancClient/useCasablancaDMs'
@@ -24,9 +24,9 @@ import { useClientInitStatus } from '../hooks/TownsContext/useClientInitStatus'
 import { TownsOpts } from '../client/TownsClientTypes'
 import { Chain } from 'viem/chains'
 import { IChainConfig, TProvider } from '../types/web3-types'
-import { SnapshotCaseType } from '@river-build/proto'
+import { SnapshotCaseType } from '@towns-protocol/proto'
 import { makeProviderFromChain, makeProviderFromConfig } from '../utils/provider-utils'
-import { BaseChainConfig, RiverChainConfig, XchainConfig } from '@river-build/web3'
+import { BaseChainConfig, RiverChainConfig, XchainConfig } from '@towns-protocol/web3'
 import { AccountAbstractionConfig } from '@towns/userops'
 import { useUserLookupUpdater } from '../hooks/use-user-lookup-updater'
 import { TownsAnalytics } from '../types/TownsAnalytics'
@@ -35,7 +35,7 @@ import { NotificationSettingsClient } from '../client/TownsNotifciationSettings'
 import { useSpaceRollups } from '../hooks/use-space-data'
 import { useCalculateSpaceThreadRoots } from '../hooks/use-space-thread-roots'
 import { useCalculateSpaceMentions } from '../hooks/use-space-mentions'
-import { dlogger } from '@river-build/dlog'
+import { dlogger } from '@towns-protocol/dlog'
 import { getXchainConfig } from '../client/XChainConfig'
 
 export type InitialSyncSortPredicate = (a: string, b: string) => number

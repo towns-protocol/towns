@@ -3,7 +3,7 @@ import {
     LocalhostWeb3Provider,
     NoopRuleData,
     Permission,
-} from '@river-build/web3'
+} from '@towns-protocol/web3'
 import {
     createSpaceDappAndUserops,
     createUngatedSpace,
@@ -14,7 +14,7 @@ import {
     sendCreateRoleOp,
     sendUpdateRoleOp,
 } from './utils'
-import { makeUniqueChannelStreamId } from '@river-build/sdk'
+import { makeUniqueChannelStreamId } from '@towns-protocol/sdk'
 import { TestConstants } from 'use-towns-client/tests/integration/helpers/TestConstants'
 
 // run this test with script/run-stackup-worker.sh -l

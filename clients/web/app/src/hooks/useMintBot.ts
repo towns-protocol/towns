@@ -6,7 +6,7 @@ import {
     makeSignerContext,
     makeStreamRpcClient,
     userIdFromAddress,
-} from '@river-build/sdk'
+} from '@towns-protocol/sdk'
 import { ethers } from 'ethers'
 import { useCallback } from 'react'
 import { useChannelId, useSpaceId, useTownsClient, useTownsContext } from 'use-towns-client'

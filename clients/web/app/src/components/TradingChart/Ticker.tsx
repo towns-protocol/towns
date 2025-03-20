@@ -1,4 +1,4 @@
-import { TickerAttachment } from '@river-build/sdk'
+import { TickerAttachment } from '@towns-protocol/sdk'
 import React, { useCallback, useContext } from 'react'
 import { useInView } from 'react-intersection-observer'
 import { shimmerClass } from 'ui/styles/globals/shimmer.css'

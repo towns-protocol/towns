@@ -13,7 +13,7 @@ import {
 import { datadogLogs } from '@datadog/browser-logs'
 import { userOperationEventAbi } from '../../userOperationEvent'
 import { getChain } from '../utils/getChain'
-import { ISpaceDapp } from '@river-build/web3'
+import { ISpaceDapp } from '@towns-protocol/web3'
 import { SendUserOperationReturnType } from '../../types'
 import { SmartAccount as ViemSmartAccount } from 'viem/account-abstraction'
 

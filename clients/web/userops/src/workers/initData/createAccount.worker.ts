@@ -1,4 +1,4 @@
-import { Address } from '@river-build/web3'
+import { Address } from '@towns-protocol/web3'
 import { entryPoint06Abi, entryPoint06Address } from 'viem/account-abstraction'
 import {
     concatHex,

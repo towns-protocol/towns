@@ -1,4 +1,4 @@
-import { Address } from '@river-build/web3'
+import { Address } from '@towns-protocol/web3'
 import { getInitData } from '../workers'
 import { ERC4337 } from '../constants'
 

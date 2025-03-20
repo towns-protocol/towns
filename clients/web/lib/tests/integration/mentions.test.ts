@@ -3,13 +3,13 @@
  * @group core
  */
 import { waitFor } from '@testing-library/dom'
-import { Permission } from '@river-build/web3'
+import { Permission } from '@towns-protocol/web3'
 import {
     createTestChannelWithSpaceRoles,
     createTestSpaceGatedByTownNft,
     registerAndStartClients,
 } from './helpers/TestUtils'
-import { RiverTimelineEvent } from '@river-build/sdk'
+import { RiverTimelineEvent } from '@towns-protocol/sdk'
 
 describe('mentions', () => {
     test('send and receive a mention', async () => {

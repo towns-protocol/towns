@@ -1,7 +1,7 @@
-import { SpacePayload_ChannelSettings, StreamSettings, PlainMessage } from '@river-build/proto'
-import { Permission } from '@river-build/web3'
+import { SpacePayload_ChannelSettings, StreamSettings, PlainMessage } from '@towns-protocol/proto'
+import { Permission } from '@towns-protocol/web3'
 import { TSigner } from './web3-types'
-import { MessageType, Attachment, Membership, Nft } from '@river-build/sdk'
+import { MessageType, Attachment, Membership, Nft } from '@towns-protocol/sdk'
 
 export interface ChannelData {
     spaceId: string | undefined

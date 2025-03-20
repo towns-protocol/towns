@@ -20,8 +20,8 @@
         "watch": "tsc --watch"
     },
     "dependencies": {
-        "@river-build/generated": "workspace:^",
-        "@river-build/web3": "workspace:^",
+        "@towns-protocol/generated": "workspace:^",
+        "@towns-protocol/web3": "workspace:^",
         "ethers": "^5.7.2"
     },
     "devDependencies": {

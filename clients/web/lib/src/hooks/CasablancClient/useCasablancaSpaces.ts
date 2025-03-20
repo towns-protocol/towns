@@ -1,4 +1,4 @@
-import { Client as CasablancaClient } from '@river-build/sdk'
+import { Client as CasablancaClient } from '@towns-protocol/sdk'
 import { useMemo } from 'react'
 import { SpaceItem } from '../../types/towns-types'
 import { useContractSpaceInfos } from '../../hooks/use-space-data'

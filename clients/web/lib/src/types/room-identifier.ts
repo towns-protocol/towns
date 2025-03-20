@@ -1,4 +1,4 @@
-import { isValidStreamId as isValidCasablancaStreamId } from '@river-build/sdk'
+import { isValidStreamId as isValidCasablancaStreamId } from '@towns-protocol/sdk'
 
 export function toRoomIdentifier(slugOrId: string | undefined) {
     if (!slugOrId) {

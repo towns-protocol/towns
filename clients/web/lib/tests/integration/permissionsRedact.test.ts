@@ -11,8 +11,8 @@ import {
 } from 'use-towns-client/tests/integration/helpers/TestUtils'
 
 import { waitFor } from '@testing-library/dom'
-import { NoopRuleData, Permission } from '@river-build/web3'
-import { RiverTimelineEvent } from '@river-build/sdk'
+import { NoopRuleData, Permission } from '@towns-protocol/web3'
+import { RiverTimelineEvent } from '@towns-protocol/sdk'
 
 const EveryoneRoleName = 'Everyone'
 const MemberRoleName = 'Member'

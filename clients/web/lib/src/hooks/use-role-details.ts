@@ -5,7 +5,7 @@ import { useCallback, useEffect } from 'react'
 import { useSpaceDapp } from './use-space-dapp'
 import { RoleDetails } from '../types/web3-types'
 import { useTownsContext } from '../components/TownsContextProvider'
-import { ISpaceDapp } from '@river-build/web3'
+import { ISpaceDapp } from '@towns-protocol/web3'
 /**
  * Convience function to get space role details.
  */

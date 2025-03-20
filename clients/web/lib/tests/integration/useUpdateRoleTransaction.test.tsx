@@ -35,7 +35,7 @@ import {
     convertRuleDataV1ToV2,
     Operation,
     decodeThresholdParams,
-} from '@river-build/web3'
+} from '@towns-protocol/web3'
 import { TSigner } from '../../src/types/web3-types'
 import { useTownsClient } from '../../src/hooks/use-towns-client'
 

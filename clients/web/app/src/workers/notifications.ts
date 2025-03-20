@@ -1,14 +1,14 @@
 import * as emoji from 'node-emoji'
 
-import { dlog, dlogError } from '@river-build/dlog'
-import { EncryptedData } from '@river-build/proto'
+import { dlog, dlogError } from '@towns-protocol/dlog'
+import { EncryptedData } from '@towns-protocol/proto'
 
 import {
     EncryptedContent,
     isDMChannelStreamId,
     isGDMChannelStreamId,
     spaceIdFromChannelId,
-} from '@river-build/sdk'
+} from '@towns-protocol/sdk'
 import { UserRecord } from 'store/notificationSchema'
 import { getDDLogApiURL } from '../datadog'
 import {

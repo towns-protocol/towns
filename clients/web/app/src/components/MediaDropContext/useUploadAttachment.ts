@@ -1,8 +1,13 @@
 import { chunkSize, encryptAESGCM, encryptChunkedAESGCM, useTownsClient } from 'use-towns-client'
 import { useCallback } from 'react'
 import imageCompression from 'browser-image-compression'
-import { ChunkedMediaSchema, CreationCookie, CreationCookieSchema } from '@river-build/proto'
-import { Attachment, ChunkedMediaAttachment, MediaInfo, streamIdAsString } from '@river-build/sdk'
+import { ChunkedMediaSchema, CreationCookie, CreationCookieSchema } from '@towns-protocol/proto'
+import {
+    Attachment,
+    ChunkedMediaAttachment,
+    MediaInfo,
+    streamIdAsString,
+} from '@towns-protocol/sdk'
 import { create } from '@bufbuild/protobuf'
 import { refreshSpaceCache, refreshUserImageCache } from 'api/lib/fetchImage'
 import { isImageMimeType } from 'utils/isMediaMimeType'

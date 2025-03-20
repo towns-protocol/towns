@@ -99,20 +99,20 @@ jobs:
             - name: Syncpack
               run: yarn syncpack:check
 
-            # Build all packages except for the river-build packages, unless they are a dependency of another required package
+            # Build all packages except for the towns-protocol packages, unless they are a dependency of another required package
             - name: Build
-              run: yarn run turbo build --filter='!@river-build/*'
+              run: yarn run turbo build --filter='!@towns-protocol/*'
 
             - name: Prettier
               run: yarn prettier:check
 
-            # Lint all packages except for the river-build packages
+            # Lint all packages except for the towns-protocol packages
             - name: Lint
-              run: yarn run turbo lint --filter='!@river-build/*'
+              run: yarn run turbo lint --filter='!@towns-protocol/*'
 
-            # Run unit tests for all packages except for the river-build packages
+            # Run unit tests for all packages except for the towns-protocol packages
             - name: Unit Tests
-              run: yarn run turbo test:unit --filter='!@river-build/*'
+              run: yarn run turbo test:unit --filter='!@towns-protocol/*'
 
     Multinode_Ent:
         permissions: write-all

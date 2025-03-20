@@ -1,7 +1,7 @@
 import React, { useCallback, useMemo } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { Lightbox, ViewCallbackProps } from 'yet-another-react-lightbox'
-import { Attachment, RiverTimelineEvent, TimelineEvent, isDefined } from '@river-build/sdk'
+import { Attachment, RiverTimelineEvent, TimelineEvent, isDefined } from '@towns-protocol/sdk'
 import { QUERY_PARAMS } from 'routes'
 import { atoms } from 'ui/styles/atoms.css'
 import { Icon } from '@ui'

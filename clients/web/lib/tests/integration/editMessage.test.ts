@@ -10,8 +10,8 @@ import {
 } from './helpers/TestUtils'
 
 import { waitFor } from '@testing-library/dom'
-import { ChannelMessageEvent } from '@river-build/sdk'
-import { Permission } from '@river-build/web3'
+import { ChannelMessageEvent } from '@towns-protocol/sdk'
+import { Permission } from '@towns-protocol/web3'
 
 describe('editMessage', () => {
     // test: editMessage

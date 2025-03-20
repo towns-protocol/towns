@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { useTownsContext } from '../components/TownsContextProvider'
-import { userIdFromAddress } from '@river-build/sdk'
+import { userIdFromAddress } from '@towns-protocol/sdk'
 
 export const useMyUserId = (): string | undefined => {
     const { signerContext } = useTownsContext()

@@ -1,5 +1,5 @@
 import { useSpaceDataStore } from 'use-towns-client'
-import { MessageType } from '@river-build/sdk'
+import { MessageType } from '@towns-protocol/sdk'
 import { Analytics, getChannelType } from 'hooks/useAnalytics'
 import { isEmoji } from 'utils/isEmoji'
 import { getExternalLinks } from 'hooks/useExtractInternalLinks'

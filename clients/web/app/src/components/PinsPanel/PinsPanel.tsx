@@ -9,7 +9,7 @@ import {
     useUserLookup,
 } from 'use-towns-client'
 import { useLocation, useNavigate } from 'react-router'
-import { isDMChannelStreamId, isGDMChannelStreamId } from '@river-build/sdk'
+import { isDMChannelStreamId, isGDMChannelStreamId } from '@towns-protocol/sdk'
 import { MessageLayout } from '@components/MessageLayout'
 import { Panel } from '@components/Panel/Panel'
 import { RichTextPreview } from '@components/RichTextPlate/RichTextPreview'

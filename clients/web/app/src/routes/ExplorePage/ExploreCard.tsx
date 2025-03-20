@@ -5,7 +5,7 @@ import {
     useMyMembership,
 } from 'use-towns-client'
 import { useNavigate } from 'react-router-dom'
-import { Membership } from '@river-build/sdk'
+import { Membership } from '@towns-protocol/sdk'
 import { useReadableMembershipInfo } from '@components/TownPageLayout/useReadableMembershipInfo'
 import { InteractiveSpaceIcon } from '@components/SpaceIcon/SpaceIcon'
 import { Box, Heading, Icon, MotionBox, Paragraph, Pill, Stack, Text } from '@ui'

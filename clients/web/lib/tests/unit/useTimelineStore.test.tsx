@@ -4,7 +4,7 @@
 
 import { useRawTimelineStore } from '../../src/store/use-timeline-store'
 import { ThreadStatsData, MessageTips } from '../../src/types/timeline-types'
-import { ChannelMessageEvent, TimelineEvent } from '@river-build/sdk'
+import { ChannelMessageEvent, TimelineEvent } from '@towns-protocol/sdk'
 import { ConversationBuilder } from './helpers/ConversationBuilder'
 
 export {}

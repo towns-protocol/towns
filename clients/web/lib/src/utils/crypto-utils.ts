@@ -7,7 +7,11 @@
  * Secret key + IV are automatically generated and returned along
  * with the ciphertext if none are provided.
  */
-import { generateNewAesGcmKey, exportAesGsmKeyBytes, encryptAesGcm } from '@river-build/encryption'
+import {
+    generateNewAesGcmKey,
+    exportAesGsmKeyBytes,
+    encryptAesGcm,
+} from '@towns-protocol/encryption'
 
 export type EncryptedChunk = {
     ciphertext: Uint8Array

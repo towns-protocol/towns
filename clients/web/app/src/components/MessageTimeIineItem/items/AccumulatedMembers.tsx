@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react'
 import uniq from 'lodash/uniq'
 import { useUserLookupContext } from 'use-towns-client'
-import { Membership } from '@river-build/sdk'
+import { Membership } from '@towns-protocol/sdk'
 import { Paragraph, Stack, Tooltip } from '@ui'
 import { notUndefined } from 'ui/utils/utils'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'

@@ -4,8 +4,8 @@ import {
     DmChannelSettingValue,
     GdmChannelSettingValue,
     SpaceChannelSettingValue,
-} from '@river-build/proto'
-import { spaceIdFromChannelId } from '@river-build/sdk'
+} from '@towns-protocol/proto'
+import { spaceIdFromChannelId } from '@towns-protocol/sdk'
 import { Box, Icon, Paragraph, PopupMenu, Stack } from '@ui'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
 import {

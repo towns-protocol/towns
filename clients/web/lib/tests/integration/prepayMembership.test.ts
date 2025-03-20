@@ -1,4 +1,4 @@
-import { Permission } from '@river-build/web3'
+import { Permission } from '@towns-protocol/web3'
 import { createPaidTestSpaceGatedByTownNft, registerAndStartClients } from './helpers/TestUtils'
 import { assert } from 'console'
 import { TransactionStatus } from '../../src/client/TownsClientTypes'

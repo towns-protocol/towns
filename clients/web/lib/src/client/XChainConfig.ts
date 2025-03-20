@@ -1,5 +1,5 @@
-import { BASE_MAINNET, BASE_SEPOLIA, XchainConfig } from '@river-build/web3'
-import { isDefined } from '@river-build/sdk'
+import { BASE_MAINNET, BASE_SEPOLIA, XchainConfig } from '@towns-protocol/web3'
+import { isDefined } from '@towns-protocol/sdk'
 
 const DEFAULT_XCHAIN_IDs = [
     // ethereum

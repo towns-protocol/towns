@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react'
 import { useNavigate } from 'react-router'
 import { AuthStatus, useConnectivity, useTownsClient, useTownsContext } from 'use-towns-client'
-import { Membership } from '@river-build/sdk'
+import { Membership } from '@towns-protocol/sdk'
 import { PATHS } from 'routes'
 import { useDevice } from 'hooks/useDevice'
 import { useStore } from 'store/store'

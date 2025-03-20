@@ -18,7 +18,7 @@ import { sleep } from '../../src/utils/towns-utils'
 import { CREDENTIAL_STORE_NAME, useCredentialStore } from '../../src/store/use-credential-store'
 import { useCasablancaStore } from '../../src/store/use-casablanca-store'
 import { useTownsContext } from '../../src/components/TownsContextProvider'
-import { Permission } from '@river-build/web3'
+import { Permission } from '@towns-protocol/web3'
 
 const initialCasablanacStoreState = useCasablancaStore.getState()
 console.log('$$$$ ', { initialCasablanacStoreState })

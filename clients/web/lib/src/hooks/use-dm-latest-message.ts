@@ -11,7 +11,7 @@ import {
     ChannelMessageEncryptedEvent,
     MessageType,
     TimelineEvent,
-} from '@river-build/sdk'
+} from '@towns-protocol/sdk'
 
 export type MostRecentMessageInfo_OneOf =
     | MostRecentMessageInfoImage

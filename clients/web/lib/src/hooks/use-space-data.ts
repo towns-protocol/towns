@@ -8,10 +8,10 @@ import {
     isSpaceStreamId,
     Membership,
     toMembership,
-} from '@river-build/sdk'
+} from '@towns-protocol/sdk'
 import isEqual from 'lodash/isEqual'
 import { useSpaceDapp } from './use-space-dapp'
-import { ISpaceDapp, SpaceInfo } from '@river-build/web3'
+import { ISpaceDapp, SpaceInfo } from '@towns-protocol/web3'
 import { useQuery, useQueries, defaultStaleTime } from '../query/queryClient'
 import { blockchainKeys } from '../query/query-keys'
 import { isDefined } from '../utils/isDefined'

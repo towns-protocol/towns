@@ -1,4 +1,4 @@
-import { Space, SpaceDapp } from '@river-build/web3'
+import { Space, SpaceDapp } from '@towns-protocol/web3'
 
 export async function getDetailsForEditingMembershipSettings(params: {
     spaceDapp: SpaceDapp | undefined

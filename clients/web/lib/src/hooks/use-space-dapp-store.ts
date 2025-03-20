@@ -1,5 +1,5 @@
 import { createStore, StoreApi } from 'zustand'
-import { BaseChainConfig, SpaceDapp } from '@river-build/web3'
+import { BaseChainConfig, SpaceDapp } from '@towns-protocol/web3'
 import { TProvider } from '../types/web3-types'
 
 // Define the store

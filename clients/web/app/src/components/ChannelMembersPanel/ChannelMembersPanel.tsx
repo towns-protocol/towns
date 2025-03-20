@@ -1,4 +1,4 @@
-import { isGDMChannelStreamId } from '@river-build/sdk'
+import { isGDMChannelStreamId } from '@towns-protocol/sdk'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { Sheet } from 'react-modal-sheet'
 import {

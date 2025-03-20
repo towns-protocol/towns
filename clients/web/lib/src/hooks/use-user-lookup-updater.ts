@@ -4,12 +4,12 @@ import {
     isDMChannelStreamId,
     isGDMChannelStreamId,
     isSpaceStreamId,
-} from '@river-build/sdk'
+} from '@towns-protocol/sdk'
 import { useUserLookupStore } from '../store/use-user-lookup-store'
 import { LookupUser } from '../types/user-lookup'
 import { useEffect, useCallback, useRef } from 'react'
-import { dlogger } from '@river-build/dlog'
-import { SnapshotCaseType } from '@river-build/proto'
+import { dlogger } from '@towns-protocol/dlog'
+import { SnapshotCaseType } from '@towns-protocol/proto'
 import { TownsOpts } from '../client/TownsClientTypes'
 import { useSpaceEnsLookup } from './use-ens-lookup'
 import { TownsClient } from 'client/TownsClient'

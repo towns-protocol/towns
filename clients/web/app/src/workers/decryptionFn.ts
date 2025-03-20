@@ -7,10 +7,10 @@ import {
     GroupEncryptionAlgorithmId,
     HybridGroupDecryption,
     parseGroupEncryptionAlgorithmId,
-} from '@river-build/encryption'
+} from '@towns-protocol/encryption'
 
-import { EncryptedData, EncryptedDataVersion } from '@river-build/proto'
-import { EncryptedContent, logNever, toDecryptedContent } from '@river-build/sdk'
+import { EncryptedData, EncryptedDataVersion } from '@towns-protocol/proto'
+import { EncryptedContent, logNever, toDecryptedContent } from '@towns-protocol/sdk'
 
 // OlmLib fails initialization if this is not initialized
 globalThis.OLM_OPTIONS = {}

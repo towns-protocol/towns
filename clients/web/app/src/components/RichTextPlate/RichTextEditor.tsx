@@ -8,7 +8,7 @@ import {
     MessageType,
     TickerAttachment,
     UnfurledLinkAttachment,
-} from '@river-build/sdk'
+} from '@towns-protocol/sdk'
 import {
     TickerAttachmentPreview,
     UnfurledLinkAttachmentPreview,

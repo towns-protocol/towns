@@ -6,13 +6,13 @@ import {
     isRemoteEvent,
     makeRiverRpcClient,
     userIdFromAddress,
-} from '@river-build/sdk'
+} from '@towns-protocol/sdk'
 import { useEffect } from 'react'
 import { AuthStatus, makeProviderFromConfig, useConnectivity } from 'use-towns-client'
 import { create } from 'zustand'
 import { createJSONStorage, persist } from 'zustand/middleware'
 import { useShallow } from 'zustand/react/shallow'
-import { MembershipOp } from '@river-build/proto'
+import { MembershipOp } from '@towns-protocol/proto'
 import { immer } from 'zustand/middleware/immer'
 import { useEnvironment } from 'hooks/useEnvironmnet'
 import { DAY_MS, WEEK_MS } from 'data/constants'

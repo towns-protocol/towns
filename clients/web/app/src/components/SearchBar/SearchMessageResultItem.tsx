@@ -7,7 +7,7 @@ import {
     MentionResult as MessageResult,
     isDMChannelStreamId,
     isGDMChannelStreamId,
-} from '@river-build/sdk'
+} from '@towns-protocol/sdk'
 import { RichTextPreview } from '@components/RichTextPlate/RichTextPreview'
 import { Box, BoxProps, Stack, Text } from '@ui'
 import { useSpaceChannels } from 'hooks/useSpaceChannels'

@@ -1,4 +1,4 @@
-import { RiverTimelineEvent } from '@river-build/sdk'
+import { RiverTimelineEvent } from '@towns-protocol/sdk'
 import { create } from 'zustand'
 
 export type TimelineFilterStates = {

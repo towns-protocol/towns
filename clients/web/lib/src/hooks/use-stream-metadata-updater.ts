@@ -1,5 +1,5 @@
-import { bin_toHexString } from '@river-build/dlog'
-import { Client as RiverClient, getUserIdFromStreamId } from '@river-build/sdk'
+import { bin_toHexString } from '@towns-protocol/dlog'
+import { Client as RiverClient, getUserIdFromStreamId } from '@towns-protocol/sdk'
 import { TownsClient } from 'client/TownsClient'
 import { useEffect } from 'react'
 import { useImageStore } from '../store/use-image-store'

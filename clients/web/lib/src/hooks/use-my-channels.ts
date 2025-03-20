@@ -2,8 +2,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTownsContext } from '../components/TownsContextProvider'
 import { Channel, SpaceData } from '../types/towns-types'
 import isEqual from 'lodash/isEqual'
-import { isUserStreamId, streamIdAsString } from '@river-build/sdk'
-import { MembershipOp } from '@river-build/proto'
+import { isUserStreamId, streamIdAsString } from '@towns-protocol/sdk'
+import { MembershipOp } from '@towns-protocol/proto'
 import { useCasablancaStream } from './CasablancClient/useCasablancaStream'
 
 export function useMyChannels(space?: SpaceData) {

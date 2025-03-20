@@ -4,8 +4,8 @@ import {
     errorContains,
     SignerContext,
     userIdFromAddress,
-} from '@river-build/sdk'
-import { check } from '@river-build/dlog'
+} from '@towns-protocol/sdk'
+import { check } from '@towns-protocol/dlog'
 import { AuthStatus } from './login'
 import { TownsClient } from '../client/TownsClient'
 import { TownsOpts } from '../client/TownsClientTypes'
@@ -21,7 +21,7 @@ import { staticAssertNever } from '../utils/towns-utils'
 import { useNetworkStatus } from './use-network-status'
 import { useSpaceDapp } from './use-space-dapp'
 import { useOfflineStore } from '../store/use-offline-store'
-import { Err } from '@river-build/proto'
+import { Err } from '@towns-protocol/proto'
 
 export const useTownsClientListener = (opts: TownsOpts) => {
     const { setAuthStatus: setCasablancaAuthStatus, setAuthError: setCasablancaAuthError } =

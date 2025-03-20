@@ -1,5 +1,5 @@
-import { NodeStructOutput } from '@river-build/generated/dev/typings/INodeRegistry'
-import { BaseOperator, BaseNodeWithOperator } from '@river-build/web3'
+import { NodeStructOutput } from '@towns-protocol/generated/dev/typings/INodeRegistry'
+import { BaseOperator, BaseNodeWithOperator } from '@towns-protocol/web3'
 
 export type CombinedOperator = {
     operatorAddress: string

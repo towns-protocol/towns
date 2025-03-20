@@ -1,4 +1,4 @@
-import { check } from '@river-build/dlog'
+import { check } from '@towns-protocol/dlog'
 import { isDefined } from '../../../check'
 import { PersistedObservable, persistedObservable } from '../../../observable/persistedObservable'
 import { Identifiable, LoadPriority, Store } from '../../../store/store'
@@ -9,7 +9,7 @@ import type {
     ChannelMessage_Post_Mention,
     ChannelProperties,
     PlainMessage,
-} from '@river-build/proto'
+} from '@towns-protocol/proto'
 import { MessageTimeline } from '../../timeline/timeline'
 
 export interface GdmModel extends Identifiable {

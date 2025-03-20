@@ -2,7 +2,7 @@ import {
     createEntitlementStruct,
     createLegacyEntitlementStruct,
     SpaceDapp,
-} from '@river-build/web3'
+} from '@towns-protocol/web3'
 import { UserOps } from '../UserOperations'
 import { getFunctionSigHash } from '../utils/getFunctionSigHash'
 

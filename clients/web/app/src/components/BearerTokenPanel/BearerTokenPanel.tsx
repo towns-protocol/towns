@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from 'react'
-import { makeBearerToken } from '@river-build/sdk'
+import { makeBearerToken } from '@towns-protocol/sdk'
 import { z } from 'zod'
 import { Panel } from '@components/Panel/Panel'
 import { Box, Button, Dropdown, Paragraph } from '@ui'

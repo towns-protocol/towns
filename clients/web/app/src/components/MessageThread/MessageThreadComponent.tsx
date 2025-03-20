@@ -3,7 +3,7 @@ import {
     TimelineEvent,
     isDMChannelStreamId,
     isGDMChannelStreamId,
-} from '@river-build/sdk'
+} from '@towns-protocol/sdk'
 import { isEqual } from 'lodash'
 import React, {
     FC,

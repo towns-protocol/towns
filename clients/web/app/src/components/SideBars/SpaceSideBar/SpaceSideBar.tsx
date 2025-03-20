@@ -10,7 +10,7 @@ import {
     useSpaceUnreadThreadMentions,
 } from 'use-towns-client'
 import { LayoutGroup } from 'framer-motion'
-import { genId } from '@river-build/sdk'
+import { genId } from '@towns-protocol/sdk'
 import { useInView } from 'react-intersection-observer'
 import { ModalContainer } from '@components/Modals/ModalContainer'
 import { ActionNavItem } from '@components/NavItem/ActionNavItem'

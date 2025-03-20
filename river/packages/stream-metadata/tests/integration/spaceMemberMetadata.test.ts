@@ -1,7 +1,7 @@
 import axios from 'axios'
-import { dlog } from '@river-build/dlog'
+import { dlog } from '@towns-protocol/dlog'
 import { ethers } from 'ethers'
-import { makeTestClient, TestClient } from '@river-build/sdk'
+import { makeTestClient, TestClient } from '@towns-protocol/sdk'
 
 import {
 	getTestServerUrl,

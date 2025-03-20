@@ -3,7 +3,7 @@ import {
     NoopRuleData,
     Permission,
     getDynamicPricingModule,
-} from '@river-build/web3'
+} from '@towns-protocol/web3'
 import { TownsTestClient } from '../integration/helpers/TownsTestClient'
 import { CreateSpaceInfo } from '../../src/types/towns-types'
 import { ethers } from 'ethers'

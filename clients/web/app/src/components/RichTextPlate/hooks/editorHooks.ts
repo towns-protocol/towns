@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import uniq from 'lodash/uniq'
 import { Channel, useChannelMembers, useUserLookupArray } from 'use-towns-client'
-import { isDMChannelStreamId, isGDMChannelStreamId } from '@river-build/sdk'
+import { isDMChannelStreamId, isGDMChannelStreamId } from '@towns-protocol/sdk'
 import { notUndefined } from 'ui/utils/utils'
 import { convertUserToCombobox, getUserHashMap } from '../components/plate-ui/autocomplete/helpers'
 import {

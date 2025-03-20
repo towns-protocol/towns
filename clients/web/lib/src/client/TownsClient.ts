@@ -14,9 +14,9 @@ import {
     transformAttachments,
     ContractReceipt,
     SolanaTransactionReceipt,
-} from '@river-build/sdk'
-import { EntitlementsDelegate } from '@river-build/encryption'
-import { IRuleEntitlementV2Base, ISpaceDapp, SpaceDapp } from '@river-build/web3'
+} from '@towns-protocol/sdk'
+import { EntitlementsDelegate } from '@towns-protocol/encryption'
+import { IRuleEntitlementV2Base, ISpaceDapp, SpaceDapp } from '@towns-protocol/web3'
 import {
     AddEventResponse_Error,
     ChunkedMedia,
@@ -26,7 +26,7 @@ import {
     BlockchainTransaction_TokenTransfer,
     PlainMessage,
     ChannelMessage_Post_MentionSchema,
-} from '@river-build/proto'
+} from '@towns-protocol/proto'
 import {
     ChannelTransactionContext,
     ChannelUpdateTransactionContext,
@@ -58,18 +58,18 @@ import {
     TipParams,
     UpdateChannelInfo,
 } from '../types/towns-types'
-import { toMembership, Membership, SignerContext, MessageType } from '@river-build/sdk'
+import { toMembership, Membership, SignerContext, MessageType } from '@towns-protocol/sdk'
 import { addCategoryToError, SignerUndefinedError } from '../types/error-types'
-import { makeSpaceStreamId, makeDefaultChannelStreamId } from '@river-build/sdk'
+import { makeSpaceStreamId, makeDefaultChannelStreamId } from '@towns-protocol/sdk'
 import { retryOperation, staticAssertNever } from '../utils/towns-utils'
 import { toStreamView } from './casablanca/CasablancaUtils'
 import { RoleIdentifier, BlockchainTransactionType, Address, TSigner } from '../types/web3-types'
-import { MembershipStruct, Permission, SpaceInfo } from '@river-build/web3'
+import { MembershipStruct, Permission, SpaceInfo } from '@towns-protocol/web3'
 import { TimeTrackerEvents, getTimeTracker } from '../SequenceTimeTracker'
 import { TownsAnalytics } from '../types/TownsAnalytics'
 import { BaseTransactor } from './BaseTransactor'
 import { UserOps } from '@towns/userops'
-import { getSpaceReviewEventData } from '@river-build/web3'
+import { getSpaceReviewEventData } from '@towns-protocol/web3'
 import { create } from '@bufbuild/protobuf'
 
 /***

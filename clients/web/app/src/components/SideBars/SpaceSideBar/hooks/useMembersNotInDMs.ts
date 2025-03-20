@@ -1,7 +1,7 @@
 import { useRawTimelineStore, useTownsContext } from 'use-towns-client'
 import { useEffect, useMemo, useState } from 'react'
 import debounce from 'lodash/debounce'
-import { isDMChannelStreamId, isGDMChannelStreamId } from '@river-build/sdk'
+import { isDMChannelStreamId, isGDMChannelStreamId } from '@towns-protocol/sdk'
 import { DMChannelMenuItem } from 'hooks/useSortedChannels'
 import { createInlineWorker } from 'utils/createInlineWebWorker'
 

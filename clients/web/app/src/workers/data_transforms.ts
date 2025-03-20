@@ -1,7 +1,7 @@
-import { EncryptedData, StreamEvent } from '@river-build/proto'
+import { EncryptedData, StreamEvent } from '@towns-protocol/proto'
 import { convert } from 'html-to-text'
-import { EncryptedContent, userIdFromAddress } from '@river-build/sdk'
-import { bin_toHexString } from '@river-build/dlog'
+import { EncryptedContent, userIdFromAddress } from '@towns-protocol/sdk'
+import { bin_toHexString } from '@towns-protocol/dlog'
 import { PlaintextDetails } from './decryptionFn'
 
 export function getEncryptedData(

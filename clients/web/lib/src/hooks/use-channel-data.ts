@@ -7,7 +7,7 @@ import {
     isDMChannelStreamId,
     isGDMChannelStreamId,
     spaceIdFromChannelId,
-} from '@river-build/sdk'
+} from '@towns-protocol/sdk'
 
 export function useChannelData(): ChannelData {
     const { channelId, spaceId } = useChannelContext()

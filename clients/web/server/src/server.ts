@@ -17,8 +17,8 @@ import {
     SpaceInfo,
     SpaceOwner,
     SpaceAddressFromSpaceId,
-} from '@river-build/web3'
-import { makeSpaceStreamId } from '@river-build/sdk/src/id'
+} from '@towns-protocol/web3'
+import { makeSpaceStreamId } from '@towns-protocol/sdk/src/id'
 
 const { PROVIDER_URL, MODE, PORT, VITE_RIVER_ENV } = config
 

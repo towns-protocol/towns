@@ -16,8 +16,8 @@ import {
     waitForWithRetries,
 } from './helpers/TestUtils'
 
-import { Permission } from '@river-build/web3'
-import { RiverTimelineEvent, ReactionEvent, ChannelMessageEvent } from '@river-build/sdk'
+import { Permission } from '@towns-protocol/web3'
+import { RiverTimelineEvent, ReactionEvent, ChannelMessageEvent } from '@towns-protocol/sdk'
 
 describe('sendReaction', () => {
     // test:

@@ -1,4 +1,4 @@
-import { Address, LocalhostWeb3Provider } from '@river-build/web3'
+import { Address, LocalhostWeb3Provider } from '@towns-protocol/web3'
 import { createSpaceDappAndUserops, generatePrivyWalletIfKey, waitForOpAndTx } from './utils'
 import { Wallet, utils } from 'ethers'
 import * as balancePermissionless from '../src/lib/permissionless/middleware/balance'

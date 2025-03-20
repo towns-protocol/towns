@@ -1,5 +1,5 @@
 import { useQuery } from '../query/queryClient'
-import { Permission } from '@river-build/web3'
+import { Permission } from '@towns-protocol/web3'
 import { useCallback } from 'react'
 import { useTownsContext } from '../components/TownsContextProvider'
 import { blockchainKeys } from '../query/query-keys'

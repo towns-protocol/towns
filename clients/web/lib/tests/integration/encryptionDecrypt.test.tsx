@@ -4,12 +4,12 @@
  */
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import React, { useState } from 'react'
-import { Permission } from '@river-build/web3'
+import { Permission } from '@towns-protocol/web3'
 import { ChannelContextProvider } from '../../src/components/ChannelContextProvider'
 import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
 import { useChannelTimeline } from '../../src/hooks/use-channel-timeline'
 import { useTownsClient } from '../../src/hooks/use-towns-client'
-import { Membership, TimelineEvent } from '@river-build/sdk'
+import { Membership, TimelineEvent } from '@towns-protocol/sdk'
 import { LoginWithWallet, RegisterAndJoinSpace } from './helpers/TestComponents'
 import {
     createTestChannelWithSpaceRoles,

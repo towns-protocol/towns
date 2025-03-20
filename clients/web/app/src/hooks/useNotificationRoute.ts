@@ -1,4 +1,4 @@
-import { isDMChannelStreamId, isGDMChannelStreamId } from '@river-build/sdk'
+import { isDMChannelStreamId, isGDMChannelStreamId } from '@towns-protocol/sdk'
 import { useCallback, useEffect, useRef } from 'react'
 
 import { PATHS } from 'routes'

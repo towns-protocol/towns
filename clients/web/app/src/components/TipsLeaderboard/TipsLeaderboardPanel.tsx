@@ -5,8 +5,8 @@ import {
     useSpaceData,
     useUserLookupContext,
 } from 'use-towns-client'
-import { userIdFromAddress } from '@river-build/sdk'
-import { bin_fromHexString } from '@river-build/dlog'
+import { userIdFromAddress } from '@towns-protocol/sdk'
+import { bin_fromHexString } from '@towns-protocol/dlog'
 import { Box, Icon, Paragraph, Stack } from '@ui'
 import { Panel } from '@components/Panel/Panel'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'

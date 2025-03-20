@@ -6,7 +6,7 @@ import { useCasablancaStore } from '../store/use-casablanca-store'
 import { AuthStatus } from './login'
 import { TSigner, Address } from '../types/web3-types'
 import { SignerUndefinedError } from '../types/error-types'
-import { makeSignerContext, SignerContext } from '@river-build/sdk'
+import { makeSignerContext, SignerContext } from '@towns-protocol/sdk'
 
 export type CasablancaSignInCallbacks = {
     onSuccess?: (args: {

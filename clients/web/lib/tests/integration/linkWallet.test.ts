@@ -3,7 +3,7 @@
  */
 import { createTestSpaceGatedByTownsNfts, registerAndStartClients } from './helpers/TestUtils'
 import { TownsTestWeb3Provider } from './helpers/TownsTestWeb3Provider'
-import { Permission } from '@river-build/web3'
+import { Permission } from '@towns-protocol/web3'
 import { TestConstants } from './helpers/TestConstants'
 import { getTransactionHashFromTransactionOrUserOp } from '@towns/userops'
 

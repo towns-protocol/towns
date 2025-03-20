@@ -1,4 +1,4 @@
-import { makeSpaceStreamId } from '@river-build/sdk'
+import { makeSpaceStreamId } from '@towns-protocol/sdk'
 import { PATHS, PATHS_REGEX } from 'routes'
 import { isTownsAppUrl } from './isTownsAppUrl'
 

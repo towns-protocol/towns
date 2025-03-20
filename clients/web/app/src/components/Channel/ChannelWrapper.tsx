@@ -1,6 +1,6 @@
 import { ChannelContextProvider } from 'use-towns-client'
 import { useParams } from 'react-router'
-import { isDMChannelStreamId, isGDMChannelStreamId } from '@river-build/sdk'
+import { isDMChannelStreamId, isGDMChannelStreamId } from '@towns-protocol/sdk'
 import React from 'react'
 import { ReplyContextProvider } from '@components/ReplyToMessageContext/ReplyToMessageProvider'
 

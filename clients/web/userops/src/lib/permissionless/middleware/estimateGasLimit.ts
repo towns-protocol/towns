@@ -9,7 +9,7 @@ import {
 } from 'viem/account-abstraction'
 import { getAction } from 'viem/utils'
 import { Client, parseEther } from 'viem'
-import { ISpaceDapp } from '@river-build/web3'
+import { ISpaceDapp } from '@towns-protocol/web3'
 import { doubleGasIfLocalAnvil } from '../../../utils/anvilGasLimit'
 
 export async function estimateGasLimit(args: {

@@ -9,7 +9,7 @@ import { useCallback, useMemo, useRef, useState } from 'react'
 import { TSigner } from '../types/web3-types'
 import { blockchainKeys } from '../query/query-keys'
 import { useQueryClient } from '../query/queryClient'
-import { Permission, IRuleEntitlementV2Base } from '@river-build/web3'
+import { Permission, IRuleEntitlementV2Base } from '@towns-protocol/web3'
 import { useTownsClient } from './use-towns-client'
 import { getTransactionHashOrUserOpHash } from '@towns/userops'
 

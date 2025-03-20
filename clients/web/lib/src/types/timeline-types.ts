@@ -1,6 +1,11 @@
-import { FullyReadMarker } from '@river-build/proto'
+import { FullyReadMarker } from '@towns-protocol/proto'
 import { Channel } from './towns-types'
-import { ChannelMessageEvent, RiverTimelineEvent, TimelineEvent, TipEvent } from '@river-build/sdk'
+import {
+    ChannelMessageEvent,
+    RiverTimelineEvent,
+    TimelineEvent,
+    TipEvent,
+} from '@towns-protocol/sdk'
 
 export interface ThreadStatsData {
     /// Thread Parent

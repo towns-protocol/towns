@@ -3,8 +3,8 @@ import isEqual from 'lodash/isEqual'
 import { Address } from '../types/web3-types'
 import { create, StateCreator } from 'zustand'
 import { createJSONStorage, persist, PersistOptions } from 'zustand/middleware'
-import { SignerContext } from '@river-build/sdk'
-import { bin_fromHexString, bin_toHexString } from '@river-build/dlog'
+import { SignerContext } from '@towns-protocol/sdk'
+import { bin_fromHexString, bin_toHexString } from '@towns-protocol/dlog'
 
 export type CasablancaCredentials = {
     // TODO(HNT-1380): replace with function, so if object is logged, private key is not printed.

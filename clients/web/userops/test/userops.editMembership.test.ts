@@ -8,8 +8,8 @@ import {
     TIERED_PRICING_ORACLE_V2,
     convertRuleDataV1ToV2,
     findFixedPricingModule,
-} from '@river-build/web3'
-import { Permission } from '@river-build/web3'
+} from '@towns-protocol/web3'
+import { Permission } from '@towns-protocol/web3'
 import {
     boredApeRuleData,
     createFixedPriceSpace,

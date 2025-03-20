@@ -1,4 +1,4 @@
-import { Attachment } from '@river-build/sdk'
+import { Attachment } from '@towns-protocol/sdk'
 
 export type FileUploadFileContent = {
     kind: 'file'

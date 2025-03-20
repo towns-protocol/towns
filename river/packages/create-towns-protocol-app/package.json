@@ -1,5 +1,5 @@
 {
-    "name": "create-river-build-app",
+    "name": "create-towns-protocol-app",
     "version": "0.0.189",
     "bin": "index.js",
     "engines": {

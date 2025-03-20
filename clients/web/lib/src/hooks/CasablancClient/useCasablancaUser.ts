@@ -1,4 +1,4 @@
-import { Client as CasablancaClient } from '@river-build/sdk'
+import { Client as CasablancaClient } from '@towns-protocol/sdk'
 import { TownsStreamMember } from '../../types/towns-types'
 
 export function useCasablancaUser(

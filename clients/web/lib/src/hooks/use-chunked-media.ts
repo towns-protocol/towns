@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useTownsContext } from '../components/TownsContextProvider'
 import { decryptAESGCM } from '../utils/crypto-utils'
-import { Client, streamIdAsBytes, unpackMiniblock } from '@river-build/sdk'
-import { MediaPayload } from '@river-build/proto'
+import { Client, streamIdAsBytes, unpackMiniblock } from '@towns-protocol/sdk'
+import { MediaPayload } from '@towns-protocol/proto'
 
 export const chunkSize = 500_000
 

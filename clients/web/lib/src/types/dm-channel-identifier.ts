@@ -1,4 +1,4 @@
-import { ChannelProperties } from '@river-build/proto'
+import { ChannelProperties } from '@towns-protocol/proto'
 
 export type DMChannelIdentifier = {
     id: string

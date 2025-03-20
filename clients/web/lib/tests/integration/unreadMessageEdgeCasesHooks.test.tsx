@@ -3,7 +3,7 @@
  * @group core
  */
 import React, { useCallback, useEffect } from 'react'
-import { ChannelMessageEvent, TimelineEvent } from '@river-build/sdk'
+import { ChannelMessageEvent, TimelineEvent } from '@towns-protocol/sdk'
 import {
     createTestChannelWithSpaceRoles,
     createTestSpaceGatedByTownNft,
@@ -12,7 +12,7 @@ import {
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 
 import { ChannelContextProvider } from '../../src/components/ChannelContextProvider'
-import { Permission } from '@river-build/web3'
+import { Permission } from '@towns-protocol/web3'
 import { RegisterAndJoinSpace } from './helpers/TestComponents'
 import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
 import { TownsTestApp } from './helpers/TownsTestApp'
@@ -22,7 +22,7 @@ import { useTownsClient } from '../../src/hooks/use-towns-client'
 import { useTownsContext } from '../../src/components/TownsContextProvider'
 import { TestConstants } from './helpers/TestConstants'
 import { TSigner } from '../../src/types/web3-types'
-import { RiverTimelineEvent } from '@river-build/sdk'
+import { RiverTimelineEvent } from '@towns-protocol/sdk'
 
 // make sure things like deleting messages don't cause the unread count to go bad
 describe('unreadMessageCountEdgeCases', () => {

@@ -1,7 +1,7 @@
 import { isEqual, uniqBy } from 'lodash'
 import React, { useCallback, useMemo, useRef, useState } from 'react'
 import { useChannelData } from 'use-towns-client'
-import { MessageType, RiverTimelineEvent, TimelineEvent } from '@river-build/sdk'
+import { MessageType, RiverTimelineEvent, TimelineEvent } from '@towns-protocol/sdk'
 import { MessageTimelineItem } from '@components/MessageTimeIineItem/TimelineItem'
 import { useVisualViewportContext } from '@components/VisualViewportContext/VisualViewportContext'
 import { Box, Divider, Paragraph, SizeBox } from '@ui'

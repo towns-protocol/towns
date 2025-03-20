@@ -11,7 +11,7 @@ import {
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 
 import { ChannelContextProvider } from '../../src/components/ChannelContextProvider'
-import { Permission } from '@river-build/web3'
+import { Permission } from '@towns-protocol/web3'
 import { RegisterWallet } from './helpers/TestComponents'
 import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
 import { TownsTestApp } from './helpers/TownsTestApp'
@@ -23,7 +23,7 @@ import { useTownsClient } from '../../src/hooks/use-towns-client'
 import { useTownsContext } from '../../src/components/TownsContextProvider'
 import { TSigner } from '../../src/types/web3-types'
 import { TestConstants } from './helpers/TestConstants'
-import { RiverTimelineEvent, Membership, TimelineEvent } from '@river-build/sdk'
+import { RiverTimelineEvent, Membership, TimelineEvent } from '@towns-protocol/sdk'
 
 describe('unreadMessageCountHooks', () => {
     test('user can join a room, see messages, and send messages', async () => {

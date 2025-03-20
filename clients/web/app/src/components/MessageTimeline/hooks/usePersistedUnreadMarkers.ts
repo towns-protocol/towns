@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useFullyReadMarker, useTownsClient } from 'use-towns-client'
-import { FullyReadMarker } from '@river-build/proto'
+import { FullyReadMarker } from '@towns-protocol/proto'
 import { create } from 'zustand'
 import { useStore } from 'store/store'
 import { SECOND_MS } from 'data/constants'

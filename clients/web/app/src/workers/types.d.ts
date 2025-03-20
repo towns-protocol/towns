@@ -1,4 +1,4 @@
-import { StreamEvent } from '@river-build/proto'
+import { StreamEvent } from '@towns-protocol/proto'
 
 export enum NotificationKind {
     AtChannel = '@channel',

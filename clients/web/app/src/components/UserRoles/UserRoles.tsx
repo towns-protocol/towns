@@ -1,4 +1,4 @@
-import { isDefined } from '@river-build/sdk'
+import { isDefined } from '@towns-protocol/sdk'
 import React, { useMemo } from 'react'
 import {
     EVERYONE_ADDRESS,

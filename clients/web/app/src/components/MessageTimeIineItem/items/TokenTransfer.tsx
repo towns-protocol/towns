@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react'
-import { TokenTransferEvent } from '@river-build/sdk'
-import { bin_toHexString, bin_toString } from '@river-build/dlog'
+import { TokenTransferEvent } from '@towns-protocol/sdk'
+import { bin_toHexString, bin_toString } from '@towns-protocol/dlog'
 import { Box, Stack, Text } from '@ui'
 import { useCoinData } from '@components/TradingChart/useCoinData'
 import { formatUnitsToFixedLength } from 'hooks/useBalance'

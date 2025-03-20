@@ -3,7 +3,7 @@ import { useMemo } from 'react'
 import { z } from 'zod'
 import { Color } from 'three'
 import { createRiverRegistry } from 'use-towns-client'
-import { dlogger } from '@river-build/dlog'
+import { dlogger } from '@towns-protocol/dlog'
 import { SECOND_MS } from 'data/constants'
 import { useSafeTownsContext } from './useSafeTownsContext'
 

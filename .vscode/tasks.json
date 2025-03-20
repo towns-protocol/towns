@@ -603,7 +603,7 @@
     {
       "label": "StreamMetadataService",
       "type": "shell",
-      "command": "yarn workspace @river-build/stream-metadata dev:local_multi",
+      "command": "yarn workspace @towns-protocol/stream-metadata dev:local_multi",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {

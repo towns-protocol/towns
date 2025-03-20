@@ -1,4 +1,4 @@
-import { Permission } from '@river-build/web3'
+import { Permission } from '@towns-protocol/web3'
 
 export const channelPermissionDescriptions: {
     [key in Permission]?: {

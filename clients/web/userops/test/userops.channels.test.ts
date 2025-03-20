@@ -1,5 +1,5 @@
-import { Address, LocalhostWeb3Provider, NoopRuleData } from '@river-build/web3'
-import { Permission } from '@river-build/web3'
+import { Address, LocalhostWeb3Provider, NoopRuleData } from '@towns-protocol/web3'
+import { Permission } from '@towns-protocol/web3'
 import {
     sendCreateRoleOp,
     createSpaceDappAndUserops,
@@ -9,7 +9,7 @@ import {
     sleepBetweenTxs,
     waitForOpAndTx,
 } from './utils'
-import { makeUniqueChannelStreamId } from '@river-build/sdk'
+import { makeUniqueChannelStreamId } from '@towns-protocol/sdk'
 
 const TEST_CHANNEL_NAME = 'test_channel'
 const NEW_ROLE_NAME = 'new_role_name'

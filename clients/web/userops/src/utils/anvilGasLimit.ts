@@ -1,4 +1,4 @@
-import { LOCALHOST_CHAIN_ID } from '@river-build/web3'
+import { LOCALHOST_CHAIN_ID } from '@towns-protocol/web3'
 
 // w/ pimlico alto bundler it doesn't estimate high enough, why? quick fix
 export function doubleGasIfLocalAnvil(chainId: number | undefined, gas: bigint) {

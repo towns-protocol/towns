@@ -3,7 +3,7 @@ import { UserLookupContext } from '../components/UserLookupContext'
 import { useUserLookupStore, userLookupFn } from '../store/use-user-lookup-store'
 import React, { useCallback } from 'react'
 import memoize from 'lodash/memoize'
-import { isChannelStreamId, isSpaceStreamId, spaceIdFromChannelId } from '@river-build/sdk'
+import { isChannelStreamId, isSpaceStreamId, spaceIdFromChannelId } from '@towns-protocol/sdk'
 
 export type LookupUserFn = (userId: string) => LookupUser
 

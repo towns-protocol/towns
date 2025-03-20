@@ -1,6 +1,6 @@
 import { useChannelId } from 'use-towns-client'
 import { useMemo } from 'react'
-import { isChannelStreamId } from '@river-build/sdk'
+import { isChannelStreamId } from '@towns-protocol/sdk'
 import { CHANNEL_INFO_PARAMS } from 'routes'
 import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
 

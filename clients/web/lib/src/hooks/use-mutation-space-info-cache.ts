@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '../query/queryClient'
 
-import { SpaceInfo } from '@river-build/web3'
+import { SpaceInfo } from '@towns-protocol/web3'
 import { blockchainKeys } from '../query/query-keys'
 import { useOfflineStore } from '../store/use-offline-store'
 

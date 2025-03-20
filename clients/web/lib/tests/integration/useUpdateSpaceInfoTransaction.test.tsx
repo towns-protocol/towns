@@ -21,7 +21,7 @@ import { useUpdateSpaceInfoTransaction } from '../../src/hooks/use-update-space-
 import { useCreateSpaceTransactionWithRetries } from '../../src/hooks/use-create-space-transaction'
 import { TestConstants } from './helpers/TestConstants'
 import { TransactionStatus } from '../../src/client/TownsClientTypes'
-import { EncodedNoopRuleData, getTestGatingNftAddress } from '@river-build/web3'
+import { EncodedNoopRuleData, getTestGatingNftAddress } from '@towns-protocol/web3'
 import { useContractSpaceInfo } from '../../src/hooks/use-space-data'
 import { TSigner } from '../../src/types/web3-types'
 import { useTownsClient } from '../../src/hooks/use-towns-client'

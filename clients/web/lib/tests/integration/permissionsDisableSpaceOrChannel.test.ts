@@ -8,7 +8,7 @@ import {
     registerAndStartClients,
 } from 'use-towns-client/tests/integration/helpers/TestUtils'
 
-import { Permission } from '@river-build/web3'
+import { Permission } from '@towns-protocol/web3'
 
 // https://linear.app/hnt-labs/issue/HNT-2046/testsintegrationpermissionsdisablespaceorchanneltestts
 describe.skip('disable channel', () => {

@@ -3,7 +3,7 @@ import {
     MessageType,
     isDMChannelStreamId,
     isGDMChannelStreamId,
-} from '@river-build/sdk'
+} from '@towns-protocol/sdk'
 import React, { useCallback } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useChannelWithId, useUserLookupContext } from 'use-towns-client'

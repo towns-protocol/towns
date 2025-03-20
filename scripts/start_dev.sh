@@ -147,7 +147,7 @@ commands=(
     "worker_gateway:cd servers/workers/gateway-worker && yarn dev:local"
     #"notification_service:sleep 4 && ./scripts/start-local-notification-service.sh"
     "$(if [ -n "${ENABLE_4337}" ]; then echo 'worker_stackup:sh ./scripts/run-stackup-worker-development.sh'; else echo 'worker_stackup:cd servers/workers/stackup-worker && yarn dev:local'; fi)"
-    "river_stream_metadata_multi:yarn workspace @river-build/stream-metadata dev:local_multi"
+    "river_stream_metadata_multi:yarn workspace @towns-protocol/stream-metadata dev:local_multi"
     "core:(cd ./river/core && just RUN_ENV=multi start)"    
 )
 

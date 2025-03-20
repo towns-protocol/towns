@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { balanceOfMockNFT } from '@river-build/web3'
+import { balanceOfMockNFT } from '@towns-protocol/web3'
 import { Address, useTownsContext } from 'use-towns-client'
 
 const QUERY_KEY = 'balanceOfMockNFT'

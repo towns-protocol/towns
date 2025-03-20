@@ -4,7 +4,7 @@ import {
     RiverTimelineEvent,
     TimelineEvent,
     isDefined,
-} from '@river-build/sdk'
+} from '@towns-protocol/sdk'
 import React, { PropsWithChildren, useMemo } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { firstBy } from 'thenby'

@@ -6,7 +6,7 @@ import { createTestSpaceGatedByTownNft, registerAndStartClients } from './helper
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 
 import { ChannelContextProvider } from '../../src/components/ChannelContextProvider'
-import { Permission } from '@river-build/web3'
+import { Permission } from '@towns-protocol/web3'
 import { LoginWithWallet } from './helpers/TestComponents'
 import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
 import { TownsTestApp } from './helpers/TownsTestApp'

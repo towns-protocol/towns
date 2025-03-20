@@ -1,4 +1,4 @@
-import { BASE_MAINNET, BASE_SEPOLIA } from '@river-build/web3'
+import { BASE_MAINNET, BASE_SEPOLIA } from '@towns-protocol/web3'
 import { Signer } from 'ethers'
 import { base, baseSepolia, foundry } from 'viem/chains'
 

@@ -29,7 +29,7 @@ export default defineConfig({
         },
         server: {
             deps: {
-                inline: ['@river-build/mls-rs-wasm'],
+                inline: ['@towns-protocol/mls-rs-wasm'],
             },
         },
     },

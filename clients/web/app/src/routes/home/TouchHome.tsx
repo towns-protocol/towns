@@ -18,7 +18,7 @@ import {
     useSpaceUnreadThreadMentions,
     useUserLookupContext,
 } from 'use-towns-client'
-import { Membership, genId } from '@river-build/sdk'
+import { Membership, genId } from '@towns-protocol/sdk'
 import { Avatar } from '@components/Avatar/Avatar'
 import {
     DirectMessageIcon,

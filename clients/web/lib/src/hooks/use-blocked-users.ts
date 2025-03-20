@@ -1,7 +1,12 @@
 import { useEffect, useState } from 'react'
-import { Client as CasablancaClient, Stream, isDefined, userIdFromAddress } from '@river-build/sdk'
-import { check } from '@river-build/dlog'
-import { UserSettingsPayload_UserBlock } from '@river-build/proto'
+import {
+    Client as CasablancaClient,
+    Stream,
+    isDefined,
+    userIdFromAddress,
+} from '@towns-protocol/sdk'
+import { check } from '@towns-protocol/dlog'
+import { UserSettingsPayload_UserBlock } from '@towns-protocol/proto'
 
 export function useBlockedUsers(casablancaClient?: CasablancaClient) {
     const [blockedUserIds, setBlockedUserIds] = useState<Set<string>>(new Set<string>())

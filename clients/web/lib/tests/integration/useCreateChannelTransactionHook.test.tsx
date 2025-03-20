@@ -25,7 +25,7 @@ import { useRoles } from '../../src/hooks/use-roles'
 import { useSpacesFromContract } from '../../src/hooks/use-spaces-from-contract'
 import { useTransactionStore } from '../../src/store/use-transactions-store'
 import { useSpaceData } from '../../src/hooks/use-space-data'
-import { getTestGatingNftAddress, EncodedNoopRuleData, Permission } from '@river-build/web3'
+import { getTestGatingNftAddress, EncodedNoopRuleData, Permission } from '@towns-protocol/web3'
 import { TSigner } from '../../src/types/web3-types'
 import { useTownsClient } from '../../src/hooks/use-towns-client'
 

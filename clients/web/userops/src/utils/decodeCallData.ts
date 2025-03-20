@@ -1,4 +1,4 @@
-import { Address } from '@river-build/web3'
+import { Address } from '@towns-protocol/web3'
 import { FunctionHash } from '../types'
 import { decodeTransferCallData } from './generateTransferCallData'
 import { decodeFunctionData, Hex, isHex } from 'viem'
@@ -139,7 +139,7 @@ export function decodeCallData<F extends FunctionHash>(args: {
                 const { args } = decodeFunctionData({
                     // PrepayFacet.abi
                     // defining the abi instead of passing around SpaceDapp/Space
-                    // alternative is to import @river-build/generated, but this is just simple and easy for now
+                    // alternative is to import @towns-protocol/generated, but this is just simple and easy for now
                     abi: [
                         {
                             type: 'function',

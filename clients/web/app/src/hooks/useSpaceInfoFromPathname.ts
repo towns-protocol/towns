@@ -1,4 +1,4 @@
-import { makeSpaceStreamId } from '@river-build/sdk'
+import { makeSpaceStreamId } from '@towns-protocol/sdk'
 import { useMemo } from 'react'
 import { matchPath, useLocation } from 'react-router'
 import { PATHS } from 'routes'

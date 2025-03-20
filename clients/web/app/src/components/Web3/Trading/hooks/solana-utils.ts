@@ -1,7 +1,7 @@
-import { BlockchainTransaction_TokenTransfer, PlainMessage } from '@river-build/proto'
-import { SolanaTransactionReceipt } from '@river-build/sdk'
+import { BlockchainTransaction_TokenTransfer, PlainMessage } from '@towns-protocol/proto'
+import { SolanaTransactionReceipt } from '@towns-protocol/sdk'
 import { ConfirmedTransactionMeta, VersionedTransactionResponse } from '@solana/web3.js'
-import { bin_fromHexString, bin_fromString } from '@river-build/dlog'
+import { bin_fromHexString, bin_fromString } from '@towns-protocol/dlog'
 
 /**
  * Extracts the token transfer amount from a Solana transaction metadata.

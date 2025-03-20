@@ -1,4 +1,4 @@
-import { isTestEnv } from '@river-build/dlog'
+import { isTestEnv } from '@towns-protocol/dlog'
 // eslint-disable-next-line no-restricted-imports
 import {
     QueryClient,

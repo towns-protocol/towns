@@ -1,4 +1,4 @@
-import { UserInfo } from '@river-build/sdk'
+import { UserInfo } from '@towns-protocol/sdk'
 import { useEffect, useRef } from 'react'
 import { useMyUserId, useSpaceId, useTownsContext, useUserLookupStore } from 'use-towns-client'
 

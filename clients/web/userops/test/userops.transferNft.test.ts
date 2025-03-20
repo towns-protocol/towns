@@ -1,4 +1,4 @@
-import { Address, LocalhostWeb3Provider } from '@river-build/web3'
+import { Address, LocalhostWeb3Provider } from '@towns-protocol/web3'
 import { createSpaceDappAndUserops, generatePrivyWalletIfKey, waitForOpAndTx } from './utils'
 import {
     Wallet,
@@ -8,8 +8,8 @@ import {
     ContractReceipt,
     BigNumberish,
 } from 'ethers'
-import { MockERC721a } from '@river-build/web3/src/MockERC721A'
-import { MockERC1155 } from '@river-build/web3/src/MockERC1155'
+import { MockERC721a } from '@towns-protocol/web3/src/MockERC721A'
+import { MockERC1155 } from '@towns-protocol/web3/src/MockERC1155'
 import { vi } from 'vitest'
 import * as tokenTypes from '../src/utils/tokenTypes'
 

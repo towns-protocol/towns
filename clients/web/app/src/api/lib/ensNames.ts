@@ -1,4 +1,4 @@
-import { isDefined } from '@river-build/sdk'
+import { isDefined } from '@towns-protocol/sdk'
 import { createPublicClient, http } from 'viem'
 import { mainnet } from 'viem/chains'
 import { useQueries, useQuery } from '@tanstack/react-query'

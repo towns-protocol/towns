@@ -35,7 +35,7 @@
                         "message": "Please use react-query exports from query/queryClient instead"
                     },
                     {
-                        "group": ["@river-build/contracts"],
+                        "group": ["@towns-protocol/contracts"],
                         "message": "Please use import { Foo } from client/web3/shims/... instead"
                     }
                 ],

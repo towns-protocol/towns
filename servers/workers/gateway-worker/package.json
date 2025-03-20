@@ -16,7 +16,7 @@
     },
     "dependencies": {
         "@privy-io/server-auth": "^1.9.1",
-        "@river-build/generated": "workspace:^",
+        "@towns-protocol/generated": "workspace:^",
         "aws-sdk": "^2.1339.0",
         "buffer": "^6.0.3",
         "itty-router": "^2.6.6",

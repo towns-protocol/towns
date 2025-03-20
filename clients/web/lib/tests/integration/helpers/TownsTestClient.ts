@@ -4,7 +4,7 @@ import {
     ChannelMessageEvent,
     TimelineEvent,
     TimelineEvent_OneOf,
-} from '@river-build/sdk'
+} from '@towns-protocol/sdk'
 import {
     TransactionStatus,
     TownsClientEventHandlers,
@@ -26,14 +26,14 @@ import {
     makeRiverRpcClient,
     makeSignerContext,
     userIdFromAddress,
-} from '@river-build/sdk'
+} from '@towns-protocol/sdk'
 import {
     Permission,
     MembershipStruct,
     IRuleEntitlementV2Base,
     createSpaceDapp,
-} from '@river-build/web3'
-import { bin_fromHexString } from '@river-build/dlog'
+} from '@towns-protocol/web3'
+import { bin_fromHexString } from '@towns-protocol/dlog'
 
 import { foundry } from 'viem/chains'
 

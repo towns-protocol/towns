@@ -1,4 +1,4 @@
-import { ClearChannelPermissionOverridesParams, Space } from '@river-build/web3'
+import { ClearChannelPermissionOverridesParams, Space } from '@towns-protocol/web3'
 import { getFunctionSigHash } from './getFunctionSigHash'
 
 export function encodeClearChannelRoleOverrides(params: {

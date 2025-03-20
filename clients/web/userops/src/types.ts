@@ -1,4 +1,4 @@
-import { BaseChainConfig, SpaceDapp } from '@river-build/web3'
+import { BaseChainConfig, SpaceDapp } from '@towns-protocol/web3'
 import { BigNumberish, BytesLike } from 'ethers'
 
 export type AccountAbstractionConfig = Omit<UserOpsConfig, 'chainId' | 'provider' | 'config'>

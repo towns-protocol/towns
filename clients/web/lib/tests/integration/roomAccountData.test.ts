@@ -12,9 +12,9 @@ import {
     waitForWithRetries,
 } from './helpers/TestUtils'
 
-import { Permission } from '@river-build/web3'
+import { Permission } from '@towns-protocol/web3'
 import { waitFor } from '@testing-library/dom'
-import { FullyReadMarker } from '@river-build/proto'
+import { FullyReadMarker } from '@towns-protocol/proto'
 
 // we store fully read markers in the room account data
 // required to show the "new" banner in channels and threads

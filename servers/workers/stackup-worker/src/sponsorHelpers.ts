@@ -51,7 +51,7 @@ export async function handleVerifications(args: {
           3. check total number of link actions per wallet
         */
 
-        // todo: all other on-chain write functions exposed in app (see @river-build/web3 for list)
+        // todo: all other on-chain write functions exposed in app (see @towns-protocol/web3 for list)
         switch (functionHash) {
             // client only allows transferring assets out of "Towns wallet", we can sponsor this
             case 'withdraw':

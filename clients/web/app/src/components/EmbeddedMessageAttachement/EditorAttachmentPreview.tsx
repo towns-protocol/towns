@@ -6,7 +6,7 @@ import {
     OTWMention,
     TickerAttachment,
     UnfurledLinkAttachment,
-} from '@river-build/sdk'
+} from '@towns-protocol/sdk'
 import { Box, IconButton, Paragraph, Stack, Text } from '@ui'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { MessageAttachments } from '@components/MessageAttachments/MessageAttachments'
