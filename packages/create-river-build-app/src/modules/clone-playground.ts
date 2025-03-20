@@ -53,7 +53,7 @@ const cloneRepo = async (cfg: CreateRiverBuildAppConfig) => {
             '--sparse',
             '--branch',
             latestSdkTag,
-            'https://github.com/river-build/river.git',
+            'https://github.com/towns-protocol/towns.git',
             tempDir,
         ],
         { stdio: 'inherit' },
@@ -144,7 +144,7 @@ const fixTsConfig = async (cfg: CreateRiverBuildAppConfig) => {
 function getLatestSdkTag(): string | null {
     const tagsResult = spawn.sync(
         'git',
-        ['ls-remote', '--tags', 'https://github.com/river-build/river.git', 'sdk-*'],
+        ['ls-remote', '--tags', 'https://github.com/towns-protocol/towns.git', 'sdk-*'],
         { encoding: 'utf8' },
     )
 
