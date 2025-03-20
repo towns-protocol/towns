@@ -238,7 +238,6 @@ export class StreamStateView implements IStreamStateView {
         switch (snapshot.content.case) {
             case 'spaceContent':
                 this.spaceContent.applySnapshot(
-                    eventHash,
                     snapshot,
                     snapshot.content.value,
                     cleartexts,
