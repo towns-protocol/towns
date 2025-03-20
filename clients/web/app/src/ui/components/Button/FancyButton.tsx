@@ -20,6 +20,7 @@ type FancyButtonProps = {
     onClickDisabled?: () => void
     iconSize?: IconAtoms['size']
     layoutRoot?: boolean
+    noLayout?: boolean
 } & Omit<
     ButtonHTMLAttributes<HTMLButtonElement>,
     'onDrag' | 'onDragEnd' | 'onDragStart' | 'onAnimationStart' | 'size' | 'color'
@@ -54,6 +55,7 @@ export const FancyButton = React.forwardRef<HTMLButtonElement, FancyButtonProps>
         iconSize,
         color,
         layoutRoot,
+        noLayout,
         ...buttonProps
     } = props
 
@@ -102,9 +104,9 @@ export const FancyButton = React.forwardRef<HTMLButtonElement, FancyButtonProps>
 
     return (
         <MotionBox
-            layout
             horizontal
             centerContent
+            layout={!noLayout}
             layoutRoot={layoutRoot}
             ref={ref}
             whileTap="tap"
@@ -174,7 +176,7 @@ export const FancyButton = React.forwardRef<HTMLButtonElement, FancyButtonProps>
                 {before ? (
                     <Box centerContent square={iconSize ? undefined : 'square_inline'}>
                         <MotionBox
-                            layout="position"
+                            layout={!noLayout ? 'position' : undefined}
                             key={spinner ? 'spinner' : icon}
                             variants={{
                                 hide: {
@@ -218,7 +220,7 @@ export const FancyButton = React.forwardRef<HTMLButtonElement, FancyButtonProps>
                     exit="hide"
                     animate="show"
                     key={children}
-                    layout="position"
+                    layout={!noLayout ? 'position' : undefined}
                     fontWeight="medium"
                     color={color ?? 'inherit'}
                     transition={{

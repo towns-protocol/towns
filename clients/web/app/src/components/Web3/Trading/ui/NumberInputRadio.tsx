@@ -78,7 +78,7 @@ export const NumberInputRadio = (props: Props) => {
                 }
                 value={displayValue}
                 height="x4"
-                style={{ width: 100, minWidth: !displayValue ? 55 : 33 }}
+                style={{ width: 100, minWidth: 55 }}
                 maxWidth="x20"
                 color={color}
                 onFocus={props.onSelect}

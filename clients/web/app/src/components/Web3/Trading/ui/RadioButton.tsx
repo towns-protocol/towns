@@ -25,7 +25,7 @@ export const RadioButton = (props: {
                 }}
             >
                 <FancyButton
-                    layoutRoot
+                    noLayout
                     compact="x4"
                     borderRadius="full"
                     icon={props.icon}
