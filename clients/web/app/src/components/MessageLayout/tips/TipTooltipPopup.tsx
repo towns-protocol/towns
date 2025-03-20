@@ -2,14 +2,17 @@ import React, { useCallback, useState } from 'react'
 import {
     BlockchainTransactionType,
     LookupUser,
+    TipParams,
     useChannelData,
     useIsTransactionPending,
 } from 'use-towns-client'
 import { isDMChannelStreamId, isGDMChannelStreamId } from '@river-build/sdk'
+import { useQueryClient } from '@tanstack/react-query'
 import { Box, BoxProps, CardOpener, CardOpenerTriggerProps, IconButton } from '@ui'
 import { useShortcut } from 'hooks/useShortcut'
 import { useCardOpenerContext } from 'ui/components/Overlay/CardOpenerContext'
 import { isInputFocused } from '@components/RichTextPlate/utils/helpers'
+import { optimisticallyUpdateTipLeaderboard } from '@components/TipsLeaderboard/useTipLeaderboard'
 import { TipMenu } from './TipMenu'
 import { TipOption } from './types'
 import { TipConfirm } from './TipConfirm'
@@ -37,6 +40,7 @@ export function TipTooltipPopup(props: {
     const channelId = channelData?.channelId
     const isDmOrGDM =
         !!channelId && (isDMChannelStreamId(channelId) || isGDMChannelStreamId(channelId))
+    const qc = useQueryClient()
 
     if (!channelId || isDmOrGDM) {
         return null
@@ -55,8 +59,9 @@ export function TipTooltipPopup(props: {
         setTipValue(undefined)
     }
 
-    const handleSend = () => {
+    const handleSend = (tip: TipParams) => {
         handleClose()
+        optimisticallyUpdateTipLeaderboard(qc, tip)
     }
 
     const handleCancel = () => {
@@ -121,7 +126,7 @@ export function TipConfirmWithCardContext(props: {
     setTipValue: (tipValue: TipOption | undefined) => void
     messageOwner: LookupUser
     eventId: string
-    onSend?: () => void
+    onSend?: (tip: TipParams) => void
     onCancel?: () => void
 }) {
     const { tipValue, setTipValue, messageOwner, eventId, onSend, onCancel } = props
@@ -135,9 +140,9 @@ export function TipConfirmWithCardContext(props: {
             setTipValue={setTipValue}
             messageOwner={messageOwner}
             eventId={eventId}
-            onTip={() => {
+            onTip={(tip) => {
                 closeCard()
-                onSend?.()
+                onSend?.(tip)
             }}
             onCancel={onCancel}
         />

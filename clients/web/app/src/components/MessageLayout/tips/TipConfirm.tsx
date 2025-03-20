@@ -4,6 +4,7 @@ import {
     BlockchainTransactionType,
     ETH_ADDRESS,
     LookupUser,
+    TipParams,
     useChannelData,
     useContractSpaceInfoWithoutClient,
     useIsTransactionPending,
@@ -38,7 +39,7 @@ export function TipConfirm(props: {
     setTipValue: (tipValue: TipOption | undefined) => void
     messageOwner: LookupUser
     eventId: string
-    onTip?: () => void
+    onTip?: (tip: TipParams) => void
     onInsufficientBalance?: () => void
     onCancel?: () => void
 }) {
@@ -132,35 +133,34 @@ export function TipConfirm(props: {
             return
         }
 
-        await tip(
-            {
-                spaceId,
-                receiverTokenId: tokenId,
-                receiverUserId: messageOwner.userId,
-                receiverUsername: messageOwner.username,
-                receiverAddress: messageOwnerAbstractAccount,
-                senderAddress: myAbstractAccount,
-                messageId: eventId,
-                channelId,
-                currency: ETH_ADDRESS,
-                amount: ethAmount.value,
-                signer,
+        const tipParams = {
+            spaceId,
+            receiverTokenId: tokenId,
+            receiverUserId: messageOwner.userId,
+            receiverUsername: messageOwner.username,
+            receiverAddress: messageOwnerAbstractAccount,
+            senderAddress: myAbstractAccount,
+            messageId: eventId,
+            channelId,
+            currency: ETH_ADDRESS,
+            amount: ethAmount.value,
+            signer,
+        } satisfies TipParams
+
+        await tip(tipParams, {
+            onSuccess: (tipEvent) => {
+                trackPostedTip({
+                    cents: tipValue.amountInCents,
+                    tipAmount: ethAmount.formatted,
+                    receipient: tipEvent.receiver,
+                    spaceName: spaceInfo?.name ?? '',
+                    spaceId,
+                    isGated: spaceDetailsAnalytics.gatedSpace,
+                    pricingModule: spaceDetailsAnalytics.pricingModule,
+                })
+                onTip?.(tipParams)
             },
-            {
-                onSuccess: (tipEvent) => {
-                    trackPostedTip({
-                        cents: tipValue.amountInCents,
-                        tipAmount: ethAmount.formatted,
-                        receipient: tipEvent.receiver,
-                        spaceName: spaceInfo?.name ?? '',
-                        spaceId,
-                        isGated: spaceDetailsAnalytics.gatedSpace,
-                        pricingModule: spaceDetailsAnalytics.pricingModule,
-                    })
-                    onTip?.()
-                },
-            },
-        )
+        })
     }
 
     if (!tipValue) {

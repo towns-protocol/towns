@@ -1,6 +1,8 @@
-import React, { PropsWithChildren, useState } from 'react'
-import { LookupUser } from 'use-towns-client'
+import React, { PropsWithChildren, useCallback, useState } from 'react'
+import { LookupUser, TipParams } from 'use-towns-client'
+import { useQueryClient } from '@tanstack/react-query'
 import { ModalContainer } from '@components/Modals/ModalContainer'
+import { optimisticallyUpdateTipLeaderboard } from '@components/TipsLeaderboard/useTipLeaderboard'
 import { TipOption } from './types'
 import { TipMenu } from './TipMenu'
 import { TipConfirm } from './TipConfirm'
@@ -13,6 +15,14 @@ export function TipSheet(
     } & PropsWithChildren,
 ) {
     const [tipValue, setTipValue] = useState<TipOption | undefined>()
+    const qc = useQueryClient()
+    const onTip = useCallback(
+        (tip: TipParams) => {
+            props.onCloseTip({ closeMessageMenu: true })
+            optimisticallyUpdateTipLeaderboard(qc, tip)
+        },
+        [props, qc],
+    )
 
     return (
         <ModalContainer asSheet onHide={() => props.onCloseTip({ closeMessageMenu: false })}>
@@ -26,7 +36,7 @@ export function TipSheet(
                         setTipValue={setTipValue}
                         messageOwner={props.messageOwner}
                         eventId={props.eventId}
-                        onTip={() => props.onCloseTip({ closeMessageMenu: true })}
+                        onTip={onTip}
                         onInsufficientBalance={() => {
                             props.onCloseTip({ closeMessageMenu: true })
                         }}
