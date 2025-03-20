@@ -83,6 +83,7 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
 
         const onKeySolicitation = (
             streamId: string,
+            eventHashStr: string,
             fromUserId: string,
             fromUserAddress: Uint8Array,
             keySolicitation: KeySolicitationContent,
@@ -90,6 +91,7 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
         ) =>
             this.enqueueKeySolicitation(
                 streamId,
+                eventHashStr,
                 fromUserId,
                 fromUserAddress,
                 keySolicitation,
@@ -98,13 +100,14 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
 
         const onInitKeySolicitations = (
             streamId: string,
+            eventHashStr: string,
             members: {
                 userId: string
                 userAddress: Uint8Array
                 solicitations: KeySolicitationContent[]
             }[],
             sigBundle: EventSignatureBundle,
-        ) => this.enqueueInitKeySolicitations(streamId, members, sigBundle)
+        ) => this.enqueueInitKeySolicitations(streamId, eventHashStr, members, sigBundle)
 
         const onStreamInitialized = (streamId: string) => {
             if (isUserInboxStreamId(streamId)) {
@@ -229,7 +232,7 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
         if (this.unpackEnvelopeOpts?.disableSignatureValidation !== true) {
             return { isValid: true }
         }
-        const eventId = item.solicitation.srcEventId
+        const eventId = item.hashStr
         const sigBundle = item.sigBundle
         if (!sigBundle) {
             return { isValid: false, reason: 'event not found' }

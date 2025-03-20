@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 //interfaces
 
 //libraries
+import {LibString} from "solady/utils/LibString.sol";
 
 //contracts
 import {Script} from "forge-std/Script.sol";
@@ -74,16 +75,11 @@ contract DeployBase is Context, DeployHelpers, Script {
   }
 
   function addressesPath(
-    string memory contractName
+    string memory versionName
   ) internal returns (string memory path) {
-    path = string.concat(
-      networkDirPath(),
-      "/",
-      "addresses",
-      "/",
-      contractName,
-      ".json"
-    );
+    require(bytes(versionName).length > 0, "Version name cannot be empty");
+    string memory baseDir = string.concat(networkDirPath(), "/", "addresses");
+    return string.concat(baseDir, "/", versionName, ".json");
   }
 
   function getDeployment(string memory versionName) internal returns (address) {
@@ -105,6 +101,16 @@ contract DeployBase is Context, DeployHelpers, Script {
     return vm.parseJsonAddress(data, ".address");
   }
 
+  function getDirectoryFromVersion(
+    string memory versionName
+  ) internal pure returns (string memory) {
+    uint256 slashIndex = LibString.indexOf(versionName, "/");
+    if (slashIndex == LibString.NOT_FOUND) {
+      return "";
+    }
+    return LibString.slice(versionName, 0, slashIndex);
+  }
+
   function saveDeployment(
     string memory versionName,
     address contractAddr
@@ -117,6 +123,14 @@ contract DeployBase is Context, DeployHelpers, Script {
     // create addresses directory
     createDir(string.concat(networkDirPath(), "/", "addresses"));
     createChainIdFile(networkDirPath());
+
+    // Get directory from version name if it contains a "/"
+    string memory typeDir = getDirectoryFromVersion(versionName);
+    if (bytes(typeDir).length > 0) {
+      createDir(
+        string.concat(networkDirPath(), "/", "addresses", "/", typeDir)
+      );
+    }
 
     // get deployment path
     string memory path = addressesPath(versionName);

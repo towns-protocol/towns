@@ -160,7 +160,8 @@ Each contract follows the Diamond Pattern (EIP-2535) for upgradeability and impl
 3. Validate all inputs
 4. Use safe math operations
 5. Implement proper access control
-6. Follow upgrade best practices
+6. Use `for (uint256 i; i < length; ++i)` for loops
+7. Follow upgrade best practices
 
 ### Diamond Facet Storage
 Every new facet or feature needs to follow the following storage pattern to avoid collision:
@@ -183,9 +184,8 @@ library FacetStorage {
 
   // function to fetch the storage slot to do reads/write in the future
   function layout() internal pure returns (Layout storage ds) {
-    bytes32 slot = STORAGE_SLOT;
     assembly {
-      ds.slot := slot
+      ds.slot := STORAGE_SLOT
     }
   }
 }

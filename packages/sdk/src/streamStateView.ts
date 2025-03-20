@@ -228,7 +228,6 @@ export class StreamStateView implements IStreamStateView {
     }
 
     private applySnapshot(
-        eventHash: string,
         event: ParsedEvent,
         inSnapshot: Snapshot,
         cleartexts: Record<string, Uint8Array | string> | undefined,
@@ -238,7 +237,6 @@ export class StreamStateView implements IStreamStateView {
         switch (snapshot.content.case) {
             case 'spaceContent':
                 this.spaceContent.applySnapshot(
-                    eventHash,
                     snapshot,
                     snapshot.content.value,
                     cleartexts,
@@ -298,13 +296,7 @@ export class StreamStateView implements IStreamStateView {
             default:
                 logNever(snapshot.content)
         }
-        this.membershipContent.applySnapshot(
-            eventHash,
-            event,
-            snapshot,
-            cleartexts,
-            encryptionEmitter,
-        )
+        this.membershipContent.applySnapshot(event, snapshot, cleartexts, encryptionEmitter)
     }
 
     private appendStreamAndCookie(
@@ -586,13 +578,7 @@ export class StreamStateView implements IStreamStateView {
         )
 
         // initialize from snapshot data, this gets all memberships and channel data, etc
-        this.applySnapshot(
-            bin_toHexString(miniblocks[0].hash),
-            miniblockHeaderEvent,
-            snapshot,
-            cleartexts,
-            emitter,
-        )
+        this.applySnapshot(miniblockHeaderEvent, snapshot, cleartexts, emitter)
         // initialize from miniblocks, the first minblock is the snapshot block, it's events are accounted for
         const block0Events = miniblocks[0].events.map((parsedEvent, i) => {
             const eventNum = miniblocks[0].header.eventNumOffset + BigInt(i)
