@@ -14,8 +14,8 @@ yarn add @towns-protocol/react-sdk
 
 ## Connect to River
 
-`@towns-protocol/react-sdk` suggests you to use Wagmi to connect to River.
-Wrap your app with `RiverSyncProvider` and use the `useAgentConnection` hook to connect to River.
+`@towns-protocol/react-sdk` suggests you to use Wagmi to connect to Towns Protocol.
+Wrap your app with `TownsSyncProvider` and use the `useAgentConnection` hook to connect to Towns Protocol.
 
 > [!NOTE]
 > You'll need to use `useEthersSigner` to get the signer from viem wallet client.
@@ -23,7 +23,7 @@ Wrap your app with `RiverSyncProvider` and use the `useAgentConnection` hook to 
 
 ```tsx
 import {
-  RiverSyncProvider,
+  TownsSyncProvider,
   useAgentConnection,
 } from "@towns-protocol/react-sdk";
 import { makeRiverConfig } from "@towns-protocol/sdk";
@@ -36,12 +36,12 @@ const riverConfig = makeRiverConfig("gamma");
 const App = ({ children }: { children: React.ReactNode }) => {
   return (
     <WagmiProvider config={wagmiConfig}>
-      <RiverSyncProvider>{children}</RiverSyncProvider>
+      <TownsSyncProvider>{children}</TownsSyncProvider>
     </WagmiProvider>
   );
 };
 
-const ConnectRiver = () => {
+const ConnectTowns = () => {
   const { connect, isConnecting, isConnected } = useAgentConnection();
   const signer = useEthersSigner();
 

@@ -1,7 +1,7 @@
 import { RouterProvider } from 'react-router-dom'
 import { WagmiProvider } from 'wagmi'
 
-import { RiverSyncProvider, connectRiver } from '@towns-protocol/react-sdk'
+import { TownsSyncProvider, connectTowns } from '@towns-protocol/react-sdk'
 
 import { useEffect, useState } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
@@ -17,7 +17,7 @@ function App() {
 
     useEffect(() => {
         if (persistedAuth) {
-            connectRiver(persistedAuth.signerContext, {
+            connectTowns(persistedAuth.signerContext, {
                 riverConfig: persistedAuth.riverConfig,
             }).then((syncAgent) => setSyncAgent(syncAgent))
         }
@@ -26,7 +26,7 @@ function App() {
     return (
         <WagmiProvider config={wagmiConfig}>
             <QueryClientProvider client={queryClient}>
-                <RiverSyncProvider
+                <TownsSyncProvider
                     syncAgent={syncAgent}
                     config={{
                         onTokenExpired: () => router.navigate('/auth'),
@@ -40,7 +40,7 @@ function App() {
                     ) : (
                         <></>
                     )}
-                </RiverSyncProvider>
+                </TownsSyncProvider>
             </QueryClientProvider>
         </WagmiProvider>
     )
