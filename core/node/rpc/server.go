@@ -143,37 +143,52 @@ func (s *Service) start(opts *ServerStartOpts) error {
 		return AsRiverError(err).Message("Failed to init wallet").LogError(s.defaultLogger)
 	}
 
+	log := logging.FromCtx(s.serverCtx)
+
+	log.Debug("init tracing")
 	s.initTracing("river-stream", s.wallet.String())
+	log.Debug("tracing initialized")
 
 	// There is an order here to how components must be initialized.
 	// 1. The river chain is needed in order to read on-chain configuration for instantiating entitlements.
 	// 2. Entitlements need to be initialized in order to initialize the chain auth module when initializing
 	// the base chain.
+	log.Debug("init river chain")
 	err = s.initRiverChain()
 	if err != nil {
 		return AsRiverError(err).Message("Failed to init river chain").LogError(s.defaultLogger)
 	}
+	log.Debug("river chain initialized")
 
+	log.Debug("init entitlements")
 	err = s.initEntitlements()
 	if err != nil {
 		return AsRiverError(err).Message("Failed to init entitlements").LogError(s.defaultLogger)
 	}
+	log.Debug("entitlements initialized")
+
+	log.Debug("init base chain")
 	err = s.initBaseChain()
 	if err != nil {
 		return AsRiverError(err).Message("Failed to init base chain").LogError(s.defaultLogger)
 	}
+	log.Debug("base chain initialized")
 
 	s.initEthBalanceMetrics()
 
+	log.Debug("init storage")
 	err = s.prepareStore()
 	if err != nil {
 		return AsRiverError(err).Message("Failed to prepare store").LogError(s.defaultLogger)
 	}
+	log.Debug("storage initialized")
 
+	log.Debug("start http server")
 	err = s.runHttpServer()
 	if err != nil {
 		return AsRiverError(err).Message("Failed to run http server").LogError(s.defaultLogger)
 	}
+	log.Debug("http server started")
 
 	if s.config.StandByOnStart {
 		err = s.standby()
@@ -182,17 +197,23 @@ func (s *Service) start(opts *ServerStartOpts) error {
 		}
 	}
 
+	log.Debug("init store")
 	err = s.initStore()
 	if err != nil {
 		return AsRiverError(err).Message("Failed to init store").LogError(s.defaultLogger)
 	}
+	log.Debug("store initialized")
 
+	log.Debug("init cache and sync")
 	err = s.initCacheAndSync(opts)
 	if err != nil {
 		return AsRiverError(err).Message("Failed to init cache and sync").LogError(s.defaultLogger)
 	}
+	log.Debug("cache and sync initialized")
 
+	log.Debug("init handlers")
 	s.initHandlers()
+	log.Debug("handlers initialized")
 
 	s.SetStatus("OK")
 
