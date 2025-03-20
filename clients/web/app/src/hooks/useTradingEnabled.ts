@@ -19,8 +19,8 @@ export const useShowWallet = () => {
     const { spaces } = useTownsContext()
     const { allowedIds } = useAllowedIds()
     const showWallet = useMemo(() => {
-        if (env.VITE_RIVER_ENV === 'omega') {
-            return true
+        if (env.VITE_RIVER_ENV !== 'omega') {
+            return false
         }
         const spaceIds = new Set(
             spaces.map((space) => SpaceAddressFromSpaceId(space.id).toLowerCase()),
