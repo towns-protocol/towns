@@ -115,10 +115,12 @@ contract BaseSetup is TestUtils, EIP712Utils, SpaceHelper {
 
     // River Token
     townsToken = deployTokenBase.deploy(deployer);
+    vm.label(townsToken, "Towns Token");
 
     // Base Registry
     deployBaseRegistry.setDependencies({riverToken_: townsToken});
     baseRegistry = deployBaseRegistry.deploy(deployer);
+    vm.label(baseRegistry, "Base Registry");
     entitlementChecker = IEntitlementChecker(baseRegistry);
     nodeOperator = INodeOperator(baseRegistry);
 
@@ -149,12 +151,12 @@ contract BaseSetup is TestUtils, EIP712Utils, SpaceHelper {
     walletLink = IWalletLink(spaceFactory);
     implementationRegistry = IImplementationRegistry(spaceFactory);
     eip712Facet = EIP712Facet(spaceFactory);
-
+    vm.label(spaceFactory, "Space Factory");
     // River Airdrop
     deployRiverAirdrop.setBaseRegistry(baseRegistry);
     deployRiverAirdrop.setSpaceFactory(spaceFactory);
     riverAirdrop = deployRiverAirdrop.deploy(deployer);
-
+    vm.label(riverAirdrop, "River Airdrop");
     // Base Registry Diamond
     bridge = TownsLib.L2_STANDARD_BRIDGE;
 

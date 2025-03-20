@@ -36,6 +36,9 @@ contract FeatureManagerTest is BaseSetup, IFeatureManagerFacetBase {
   ) {
     vm.assume(amount > 0 && amount < type(uint256).max);
     vm.assume(condition.threshold > 0 && condition.threshold < amount);
+    vm.assume(to != ZERO_SENTINEL);
+    vm.assume(to != address(0));
+    vm.assume(featureId != ZERO_SENTINEL_BYTES32);
 
     condition.token = address(townsToken);
 
@@ -77,6 +80,8 @@ contract FeatureManagerTest is BaseSetup, IFeatureManagerFacetBase {
     FeatureCondition[] memory conditions = new FeatureCondition[](length);
 
     for (uint256 i; i < length; i++) {
+      vm.assume(featureIds[i] != ZERO_SENTINEL_BYTES32);
+
       conditions[i] = FeatureCondition({
         token: address(townsToken),
         threshold: 0,
