@@ -133,16 +133,14 @@ module "stress_tests" {
   channel_ids         = "20a38bcf15ab6b94d404c201dee9f67c6428c0ecb14c8601d7f529814cebe12c,20a38bcf15ab6b94d404c201dee9f67c6428c0ecb1826ef52f48e2e904844cff"
 }
 
-data "cloudflare_zone" "zone" {
-  name = module.global_constants.primary_hosted_zone_name
-}
+module "webapp_dns" {
+  source               = "../../modules/webapp-dns"
+  cloudflare_api_token = var.cloudflare_terraform_api_token
 
-resource "cloudflare_record" "app_dns" {
-  zone_id = data.cloudflare_zone.zone.id
-  name    = "app.${terraform.workspace}"
-  value   = "gamma-rw7y.onrender.com"
-  type    = "CNAME"
-  ttl     = 60
+  dns_name           = "app.${terraform.workspace}"
+  dns_value          = "gamma-rw7y.onrender.com"
+  proxied            = true
+  enable_cnd_caching = true
 }
 
 locals {

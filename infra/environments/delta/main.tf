@@ -113,16 +113,12 @@ module "network_health_monitor" {
   river_chain_rpc_url_secret_arn = local.global_remote_state.river_sepolia_rpc_url_secret.arn
 }
 
-data "cloudflare_zone" "zone" {
-  name = module.global_constants.primary_hosted_zone_name
-}
-
-resource "cloudflare_record" "app_dns" {
-  zone_id = data.cloudflare_zone.zone.id
-  name    = "app.${terraform.workspace}"
-  value   = "towns-server-delta.onrender.com"
-  type    = "CNAME"
-  ttl     = 60
+module "webapp_dns" {
+  source               = "../../modules/webapp-dns"
+  dns_name             = "app.${terraform.workspace}"
+  dns_value            = "towns-server-delta.onrender.com"
+  proxied              = true
+  cloudflare_api_token = var.cloudflare_terraform_api_token
 }
 
 locals {

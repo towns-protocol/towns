@@ -1,0 +1,72 @@
+terraform {
+  required_providers {
+    cloudflare = {
+      source  = "cloudflare/cloudflare"
+      version = "~> 4.0"
+    }
+  }
+
+  backend "s3" {}
+
+  required_version = ">= 1.0.3"
+}
+
+provider "cloudflare" {
+  api_token = var.cloudflare_api_token
+}
+
+variable "dns_name" {
+  description = "The DNS name for the application"
+  type        = string
+}
+
+variable "dns_value" {
+  description = "The DNS value for the application"
+  type        = string
+}
+
+variable "proxied" {
+  description = "Whether the DNS record should be proxied through Cloudflare"
+  type        = bool
+  default     = false
+}
+
+variable "cloudflare_api_token" {
+  description = "Cloudflare API token"
+  type        = string
+  sensitive   = true
+}
+
+variable "enable_cnd_caching" {
+  description = "Enable CDN caching for the application"
+  type        = bool
+  default     = false
+}
+
+data "cloudflare_zone" "zone" {
+  name = module.global_constants.primary_hosted_zone_name
+}
+
+module "global_constants" {
+  source = "../global-constants"
+}
+
+
+resource "cloudflare_record" "app_dns" {
+  zone_id = data.cloudflare_zone.zone.id
+  name    = var.dns_name
+  value   = var.dns_value
+  type    = "CNAME"
+  ttl     = var.proxied ? 1 : 60
+  proxied = var.proxied
+}
+
+resource "cloudflare_page_rule" "cdn_cache" {
+  count   = var.enable_cnd_caching ? 1 : 0
+  zone_id = data.cloudflare_zone.zone.id
+  target  = "${var.dns_name}.${module.global_constants.primary_hosted_zone_name}/assets/*"
+  actions {
+    cache_level    = "cache_everything"
+    edge_cache_ttl = 604800 # 1 week
+  }
+}

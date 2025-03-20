@@ -36,6 +36,23 @@ module "global_constants" {
   source = "../../modules/global-constants"
 }
 
+module "webapp_dns" {
+  source               = "../../modules/webapp-dns"
+  dns_name             = "app"
+  dns_value            = "towns-server-omega.onrender.com"
+  proxied              = true
+  cloudflare_api_token = var.cloudflare_terraform_api_token
+}
+
+module "webapp_dns_fastapp" {
+  source               = "../../modules/webapp-dns"
+  dns_name             = "fast-app"
+  dns_value            = "fastapp-omega.onrender.com"
+  proxied              = true
+  cloudflare_api_token = var.cloudflare_terraform_api_token
+  enable_cnd_caching   = true
+}
+
 module "vpc" {
   source = "terraform-aws-modules/vpc/aws"
 

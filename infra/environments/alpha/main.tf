@@ -36,6 +36,14 @@ module "global_constants" {
   source = "../../modules/global-constants"
 }
 
+module "webapp_dns" {
+  source               = "../../modules/webapp-dns"
+  dns_name             = "app.${terraform.workspace}"
+  dns_value            = "towns-server-alpha.onrender.com"
+  proxied              = false
+  cloudflare_api_token = var.cloudflare_terraform_api_token
+}
+
 module "vpc" {
   source = "terraform-aws-modules/vpc/aws"
 
@@ -128,17 +136,6 @@ module "stress_tests" {
   channel_ids         = "209bd136d3155316d5d6dfcd4f87d5ee1a3ea8f22dcc16da7e96af829d8d73be,209bd136d3155316d5d6dfcd4f87d5ee1a3ea8f22d56888a483afd0412ddb85c"
 }
 
-data "cloudflare_zone" "zone" {
-  name = module.global_constants.primary_hosted_zone_name
-}
-
-resource "cloudflare_record" "app_dns" {
-  zone_id = data.cloudflare_zone.zone.id
-  name    = "app.${terraform.workspace}"
-  value   = "towns-server-alpha.onrender.com"
-  type    = "CNAME"
-  ttl     = 60
-}
 
 locals {
   gcp_project_id = "hnt-live-${terraform.workspace}"

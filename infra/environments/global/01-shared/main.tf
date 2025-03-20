@@ -28,7 +28,6 @@ provider "aws" {
   profile = "harmony-github-actions"
 }
 
-
 provider "cloudflare" {
   api_token = var.cloudflare_terraform_api_token
 }
