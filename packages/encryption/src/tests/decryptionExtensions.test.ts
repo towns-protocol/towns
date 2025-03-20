@@ -83,12 +83,12 @@ describe.concurrent('TestDecryptionExtensions', () => {
                 fallbackKey: aliceDex.userDevice.fallbackKey,
                 isNewDevice: true,
                 sessionIds: [sessionId],
-                srcEventId: '',
             }
             const keySolicitation = aliceClient.sendKeySolicitation(keySolicitationData)
             // pretend bob receives a key solicitation request from alice, and starts processing it.
             await bobDex.handleKeySolicitationRequest(
                 streamId,
+                '',
                 alice,
                 aliceUserAddress,
                 keySolicitationData,
@@ -328,6 +328,7 @@ class MockDecryptionExtensions extends BaseDecryptionExtensions {
 
     public async handleKeySolicitationRequest(
         streamId: string,
+        eventHashStr: string,
         fromUserId: string,
         fromUserAddress: Uint8Array,
         keySolicitation: KeySolicitationContent,
@@ -344,6 +345,7 @@ class MockDecryptionExtensions extends BaseDecryptionExtensions {
             // start processing the request
             this.enqueueKeySolicitation(
                 streamId,
+                eventHashStr,
                 fromUserId,
                 fromUserAddress,
                 keySolicitation,

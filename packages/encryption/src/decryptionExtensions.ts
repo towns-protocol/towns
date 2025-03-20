@@ -63,7 +63,6 @@ export interface KeySolicitationContent {
     fallbackKey: string
     isNewDevice: boolean
     sessionIds: string[]
-    srcEventId: string
 }
 
 // paired down from StreamEvent, required for signature validation
@@ -84,6 +83,7 @@ export interface KeySolicitationItem {
     solicitation: KeySolicitationContent
     respondAfter: number // ms since epoch
     sigBundle: EventSignatureBundle
+    hashStr: string
 }
 
 export interface KeySolicitationData {
@@ -317,6 +317,7 @@ export abstract class BaseDecryptionExtensions {
 
     public enqueueInitKeySolicitations(
         streamId: string,
+        eventHashStr: string,
         members: {
             userId: string
             userAddress: Uint8Array
@@ -350,6 +351,7 @@ export abstract class BaseDecryptionExtensions {
                     respondAfter:
                         Date.now() + this.getRespondDelayMSForKeySolicitation(streamId, fromUserId),
                     sigBundle,
+                    hashStr: eventHashStr,
                 } satisfies KeySolicitationItem)
             }
         }
@@ -359,6 +361,7 @@ export abstract class BaseDecryptionExtensions {
 
     public enqueueKeySolicitation(
         streamId: string,
+        eventHashStr: string,
         fromUserId: string,
         fromUserAddress: Uint8Array,
         keySolicitation: KeySolicitationContent,
@@ -392,6 +395,7 @@ export abstract class BaseDecryptionExtensions {
                 respondAfter:
                     Date.now() + this.getRespondDelayMSForKeySolicitation(streamId, fromUserId),
                 sigBundle,
+                hashStr: eventHashStr,
             } satisfies KeySolicitationItem)
             this.checkStartTicking()
         } else if (index > -1) {
@@ -823,7 +827,7 @@ export abstract class BaseDecryptionExtensions {
         if (!isValid) {
             this.log.error('processing key solicitation: invalid event id', {
                 streamId,
-                eventId: item.solicitation.srcEventId,
+                eventId: item.hashStr,
                 reason,
             })
             return
