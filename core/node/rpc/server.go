@@ -145,7 +145,7 @@ func (s *Service) start(opts *ServerStartOpts) error {
 	s.initInstance(ServerModeFull, opts)
 	log.Debug("instance initialized")
 
-	log.Debug("test s.defaultLogger", "loggerIsNil", s.defaultLogger == nil)
+	log.Debugw("test s.defaultLogger", "loggerIsNil", s.defaultLogger == nil)
 
 	log.Debug("init wallet")
 	err := s.initWallet()
