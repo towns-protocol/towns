@@ -6,10 +6,10 @@ import {DeployBase} from "contracts/scripts/common/DeployBase.s.sol";
 import {DeployStreamRegistry} from "contracts/scripts/deployments/facets/DeployStreamRegistry.s.sol";
 
 //interfaces
-import {IDiamond} from "@river-build/diamond/src/Diamond.sol";
-import {IDiamondCut} from "@river-build/diamond/src/facets/cut/IDiamondCut.sol";
-import {IDiamondLoupe} from "@river-build/diamond/src/facets/loupe/IDiamondLoupe.sol";
-import {IERC173} from "@river-build/diamond/src/facets/ownable/IERC173.sol";
+import {IDiamond} from "@towns-protocol/diamond/src/Diamond.sol";
+import {IDiamondCut} from "@towns-protocol/diamond/src/facets/cut/IDiamondCut.sol";
+import {IDiamondLoupe} from "@towns-protocol/diamond/src/facets/loupe/IDiamondLoupe.sol";
+import {IERC173} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
 import {IStreamRegistry} from "contracts/src/river/registry/facets/stream/IStreamRegistry.sol";
 
 //libraries

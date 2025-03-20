@@ -178,7 +178,7 @@ func CreateEthereumClients(
 	for _, env := range []string{sourceEnvironment, targetEnvironment} {
 		var baseRpcUrl string
 		var riverRpcUrl string
-		if env == "alpha" || env == "gamma" {
+		if env == "alpha" || env == "gamma" || env == "delta" {
 			baseRpcUrl = chainConfig.BaseSepoliaRpcUrl
 			riverRpcUrl = chainConfig.RiverTestnetRpcUrl
 		} else {

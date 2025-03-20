@@ -2,8 +2,8 @@
 pragma solidity ^0.8.23;
 
 import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
-import {MultiInit} from "@river-build/diamond/src/initializers/MultiInit.sol";
-import {FacetHelper} from "@river-build/diamond/scripts/common/helpers/FacetHelper.s.sol";
+import {MultiInit} from "@towns-protocol/diamond/src/initializers/MultiInit.sol";
+import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
 
 contract DeployMultiInit is Deployer, FacetHelper {
   function versionName() public pure override returns (string memory) {

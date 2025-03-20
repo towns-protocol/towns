@@ -2,23 +2,10 @@
 pragma solidity ^0.8.23;
 
 import {Vm} from "forge-std/Vm.sol";
+import {IEntitlementCheckerBase} from "contracts/src/base/registry/facets/checker/IEntitlementChecker.sol";
+import {LogUtils} from "./LogUtils.sol";
 
-abstract contract EntitlementTestUtils {
-  bytes32 internal constant RESULT_POSTED =
-    keccak256("EntitlementCheckResultPosted(bytes32,uint8)");
-  bytes32 internal constant TOKEN_EMITTED =
-    keccak256("MembershipTokenIssued(address,uint256)");
-
-  bytes32 internal constant CHECK_REQUESTED =
-    keccak256(
-      "EntitlementCheckRequested(address,address,bytes32,uint256,address[])"
-    );
-
-  bytes32 internal constant CHECK_REQUESTED_V2 =
-    keccak256(
-      "EntitlementCheckRequestedV2(address,address,address,bytes32,uint256,address[])"
-    );
-
+abstract contract EntitlementTestUtils is IEntitlementCheckerBase, LogUtils {
   struct EntitlementCheckRequestEvent {
     address walletAddress;
     address spaceAddress;
@@ -41,72 +28,45 @@ abstract contract EntitlementTestUtils {
       address[] memory selectedNodes
     )
   {
-    for (uint256 i; i < requestLogs.length; ++i) {
-      if (
-        requestLogs[i].topics.length > 0 &&
-        requestLogs[i].topics[0] == CHECK_REQUESTED
-      ) {
-        (, contractAddress, transactionId, roleId, selectedNodes) = abi.decode(
-          requestLogs[i].data,
-          (address, address, bytes32, uint256, address[])
-        );
-        return (contractAddress, transactionId, roleId, selectedNodes);
-      }
-    }
-    revert("Entitlement check request not found");
+    (, contractAddress, transactionId, roleId, selectedNodes) = abi.decode(
+      _getFirstMatchingLog(requestLogs, EntitlementCheckRequested.selector)
+        .data,
+      (address, address, bytes32, uint256, address[])
+    );
   }
 
   function _getRequestV2EventCount(
     Vm.Log[] memory logs
-  ) internal pure returns (uint256 count) {
-    for (uint256 i = 0; i < logs.length; i++) {
-      if (logs[i].topics[0] == CHECK_REQUESTED_V2) {
-        count++;
-      }
-    }
+  ) internal pure returns (uint256) {
+    return _getMatchingLogCount(logs, EntitlementCheckRequestedV2.selector);
   }
 
   function _getRequestV2Events(
     Vm.Log[] memory requestLogs
-  ) internal pure returns (EntitlementCheckRequestEvent[] memory) {
-    uint256 numRequests = _getRequestV2EventCount(requestLogs);
-
-    EntitlementCheckRequestEvent[]
-      memory entitlementCheckRequests = new EntitlementCheckRequestEvent[](
-        numRequests
-      );
-    for (uint256 i; i < requestLogs.length; ++i) {
-      address walletAddress;
-      address spaceAddress;
-      address resolverAddress;
-      bytes32 transactionId;
-      uint256 roleId;
-      address[] memory selectedNodes;
-
-      if (requestLogs[i].topics[0] == CHECK_REQUESTED_V2) {
-        (
-          walletAddress,
-          spaceAddress,
-          resolverAddress,
-          transactionId,
-          roleId,
-          selectedNodes
-        ) = abi.decode(
-          requestLogs[i].data,
-          (address, address, address, bytes32, uint256, address[])
-        );
-
-        entitlementCheckRequests[i] = EntitlementCheckRequestEvent(
-          walletAddress,
-          spaceAddress,
-          resolverAddress,
-          transactionId,
-          roleId,
-          selectedNodes
-        );
+  )
+    internal
+    pure
+    returns (EntitlementCheckRequestEvent[] memory entitlementCheckRequests)
+  {
+    Vm.Log[] memory logs = _getMatchingLogs(
+      requestLogs,
+      EntitlementCheckRequestedV2.selector
+    );
+    entitlementCheckRequests = new EntitlementCheckRequestEvent[](logs.length);
+    for (uint256 i; i < logs.length; ++i) {
+      bytes memory data = logs[i].data;
+      // in-place abi decoding, or magic
+      // similar to: entitlementCheckRequests[i] = abi.decode(data, (EntitlementCheckRequestEvent));
+      // except it doesn't work
+      EntitlementCheckRequestEvent memory req;
+      // memory safe as long as data isn't reused
+      assembly ("memory-safe") {
+        mstore(0x40, req)
+        req := add(data, 0x20)
+        mstore(add(req, 0xa0), add(req, 0xc0))
       }
+      entitlementCheckRequests[i] = req;
     }
-    return entitlementCheckRequests;
   }
 
   function _getRequestV2EventData(
@@ -123,23 +83,11 @@ abstract contract EntitlementTestUtils {
       address[] memory selectedNodes
     )
   {
-    for (uint256 i = 0; i < requestLogs.length; i++) {
-      if (
-        requestLogs[i].topics.length > 0 &&
-        requestLogs[i].topics[0] == CHECK_REQUESTED_V2
-      ) {
-        (
-          walletAddress,
-          spaceAddress,
-          resolverAddress,
-          transactionId,
-          roleId,
-          selectedNodes
-        ) = abi.decode(
-          requestLogs[i].data,
-          (address, address, address, bytes32, uint256, address[])
-        );
-      }
-    }
+    return
+      abi.decode(
+        _getFirstMatchingLog(requestLogs, EntitlementCheckRequestedV2.selector)
+          .data,
+        (address, address, address, bytes32, uint256, address[])
+      );
   }
 }

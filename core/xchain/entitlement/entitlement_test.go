@@ -291,15 +291,23 @@ var nftMultiCheckHighThresholdBaseSepolia = CheckOperation{
 	Params:          encodeThresholdParams(big.NewInt(10)),
 }
 
+func getFromEnv(envVar string, defaultValue string) string {
+	value := os.Getenv(envVar)
+	if value == "" {
+		return defaultValue
+	}
+	return value
+}
+
 var cfg = &config.Config{
 	ChainConfigs: map[uint64]*config.ChainConfig{
 		examples.EthSepoliaChainIdUint64: {
-			NetworkUrl:  "https://ethereum-sepolia-rpc.publicnode.com",
+			NetworkUrl:  getFromEnv("ETH_SEPOLIA_RPC_URL", "https://ethereum-sepolia-rpc.publicnode.com"),
 			ChainId:     examples.EthSepoliaChainIdUint64,
 			BlockTimeMs: 12000,
 		},
 		examples.BaseSepoliaChainIdUint64: {
-			NetworkUrl:  "https://sepolia.base.org",
+			NetworkUrl:  getFromEnv("BASE_SEPOLIA_RPC_URL", "https://sepolia.base.org"),
 			ChainId:     examples.BaseSepoliaChainIdUint64,
 			BlockTimeMs: 2000,
 		},
@@ -934,16 +942,16 @@ func TestCheckOperation_Untimed(t *testing.T) {
 
 var singleEtherChainBlockChainInfo = map[uint64]config.BlockchainInfo{
 	examples.EthSepoliaChainId.Uint64(): {
-		ChainId:      examples.EthSepoliaChainId.Uint64(),
-		Name:         "Ethereum Seplia",
-		Blocktime:    12000,
-		IsEtherBased: true,
+		ChainId:       examples.EthSepoliaChainId.Uint64(),
+		Name:          "Ethereum Seplia",
+		Blocktime:     12000,
+		IsEtherNative: true,
 	},
 	examples.BaseSepoliaChainId.Uint64(): {
-		ChainId:      examples.BaseSepoliaChainId.Uint64(),
-		Name:         "Base Sepolia",
-		Blocktime:    2000,
-		IsEtherBased: false, // for the sake of testing
+		ChainId:       examples.BaseSepoliaChainId.Uint64(),
+		Name:          "Base Sepolia",
+		Blocktime:     2000,
+		IsEtherNative: false, // for the sake of testing
 	},
 }
 

@@ -4,13 +4,11 @@
 
 all: clean install build
 
-clean  :; forge clean
+clean :; forge clean
 
-install:; forge install
+update :; forge update
 
-update:; forge update
-
-build:; forge build
+build :; forge build
 
 test :; forge test --ffi --nmc Fork --fuzz-runs 4096
 
@@ -125,7 +123,7 @@ fork-any :;
 
 verify-any :;
 	@echo "Verifying $(contract) on a remote network"
-	@forge verify-contract ${address} ${contract}	--rpc-url ${rpc}
+	@forge verify-contract ${address} ${contract} --rpc-url ${rpc}
 
 explicit-verify-any :;
 	@echo "Verifying $(contract) on a remote network"

@@ -6,13 +6,13 @@ import {TestUtils} from "contracts/test/utils/TestUtils.sol";
 
 //interfaces
 import {IArchitect, IArchitectBase} from "contracts/src/factory/facets/architect/IArchitect.sol";
-import {IDiamond, Diamond} from "@river-build/diamond/src/Diamond.sol";
+import {IDiamond, Diamond} from "@towns-protocol/diamond/src/Diamond.sol";
 import {ISpaceOwnerBase} from "contracts/src/spaces/facets/owner/ISpaceOwner.sol";
 
 //libraries
 
 //contracts
-import {DiamondCutFacet} from "@river-build/diamond/src/facets/cut/DiamondCutFacet.sol";
+import {DiamondCutFacet} from "@towns-protocol/diamond/src/facets/cut/DiamondCutFacet.sol";
 import {SpaceHelper} from "contracts/test/spaces/SpaceHelper.sol";
 import {DeploySpaceOwnerFacet, SpaceOwner} from "contracts/scripts/deployments/facets/DeploySpaceOwnerFacet.s.sol";
 import {DeployArchitect} from "contracts/scripts/deployments/facets/DeployArchitect.s.sol";

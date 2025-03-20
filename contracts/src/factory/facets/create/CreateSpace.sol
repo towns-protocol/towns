@@ -8,8 +8,8 @@ import {ICreateSpace} from "contracts/src/factory/facets/create/ICreateSpace.sol
 import {CreateSpaceLib} from "contracts/src/factory/facets/create/CreateSpaceLib.sol";
 
 // contracts
-import {Facet} from "@river-build/diamond/src/facets/Facet.sol";
-import {PausableBase} from "@river-build/diamond/src/facets/pausable/PausableBase.sol";
+import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
+import {PausableBase} from "@towns-protocol/diamond/src/facets/pausable/PausableBase.sol";
 import {ReentrancyGuard} from "solady/utils/ReentrancyGuard.sol";
 
 /// @title CreateSpaceFacet
