@@ -4,7 +4,7 @@ pragma solidity ^0.8.23;
 // interfaces
 
 // libraries
-import {ConditionLib} from "./ConditionLib.sol";
+import {FeatureCondition} from "./FeatureConditionLib.sol";
 
 // contracts
 
@@ -32,7 +32,7 @@ interface IFeatureManagerFacetBase {
   /// @param condition The condition parameters that were set for the feature
   event FeatureConditionSet(
     bytes32 indexed featureId,
-    ConditionLib.Condition condition
+    FeatureCondition condition
   );
 
   /// @notice Emitted when a feature condition is disabled
@@ -47,7 +47,7 @@ interface IFeatureManagerFacet is IFeatureManagerFacetBase {
   /// @dev Only callable by the contract owner
   function setFeatureCondition(
     bytes32 featureId,
-    ConditionLib.Condition memory condition
+    FeatureCondition memory condition
   ) external;
 
   /// @notice Gets the condition for a feature
@@ -55,21 +55,21 @@ interface IFeatureManagerFacet is IFeatureManagerFacetBase {
   /// @return The condition struct for the specified feature
   function getFeatureCondition(
     bytes32 featureId
-  ) external view returns (ConditionLib.Condition memory);
+  ) external view returns (FeatureCondition memory);
 
   /// @notice Retrieves all feature conditions
   /// @return An array of all feature conditions
   function getFeatureConditions()
     external
     view
-    returns (ConditionLib.Condition[] memory);
+    returns (FeatureCondition[] memory);
 
   /// @notice Retrieves all feature conditions for a specific space
   /// @param space The address of the space to check conditions for
   /// @return An array of all feature conditions that are active for the space
   function getFeatureConditionsForSpace(
     address space
-  ) external view returns (ConditionLib.Condition[] memory);
+  ) external view returns (FeatureCondition[] memory);
 
   /// @notice Disables a feature condition
   /// @param featureId The unique identifier for the feature

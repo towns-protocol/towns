@@ -8,14 +8,14 @@ import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import {IFeatureManagerFacetBase} from "./IFeatureManagerFacet.sol";
 
 // libraries
-import {ConditionLib} from "./ConditionLib.sol";
+import {FeatureCondition, FeatureConditionLib} from "./FeatureConditionLib.sol";
 import {EnumerableSetLib} from "solady/utils/EnumerableSetLib.sol";
 import {CustomRevert} from "contracts/src/utils/libraries/CustomRevert.sol";
 
 /// @title FeatureManager
 library FeatureManagerLib {
   using EnumerableSetLib for EnumerableSetLib.Bytes32Set;
-  using ConditionLib for ConditionLib.Condition;
+  using FeatureConditionLib for FeatureCondition;
 
   // keccak256(abi.encode(uint256(keccak256("towns.storage.FeatureManager")) - 1)) & ~bytes32(uint256(0xff))
   bytes32 constant DEFAULT_STORAGE_SLOT =
@@ -28,7 +28,7 @@ library FeatureManagerLib {
     // Feature IDs
     EnumerableSetLib.Bytes32Set featureIds;
     // Feature ID => Condition
-    mapping(bytes32 featureId => ConditionLib.Condition condition) conditions;
+    mapping(bytes32 featureId => FeatureCondition condition) conditions;
   }
 
   /// @notice Sets the condition for a specific feature
@@ -42,7 +42,7 @@ library FeatureManagerLib {
   function setFeatureCondition(
     Layout storage self,
     bytes32 featureId,
-    ConditionLib.Condition calldata condition
+    FeatureCondition calldata condition
   ) internal {
     if (condition.token == address(0))
       CustomRevert.revertWith(IFeatureManagerFacetBase.InvalidToken.selector);
@@ -76,7 +76,7 @@ library FeatureManagerLib {
   function getFeatureCondition(
     Layout storage self,
     bytes32 featureId
-  ) internal view returns (ConditionLib.Condition memory) {
+  ) internal view returns (FeatureCondition memory) {
     return self.conditions[featureId];
   }
 
@@ -86,12 +86,10 @@ library FeatureManagerLib {
   /// @return Condition[] An array of all feature conditions
   function getFeatureConditions(
     Layout storage self
-  ) internal view returns (ConditionLib.Condition[] memory) {
+  ) internal view returns (FeatureCondition[] memory) {
     uint256 featureCount = self.featureIds.length();
 
-    ConditionLib.Condition[] memory conditions = new ConditionLib.Condition[](
-      featureCount
-    );
+    FeatureCondition[] memory conditions = new FeatureCondition[](featureCount);
     for (uint256 i; i < featureCount; ++i) {
       conditions[i] = self.conditions[self.featureIds.at(i)];
     }
@@ -106,16 +104,14 @@ library FeatureManagerLib {
   function getFeatureConditionsForSpace(
     Layout storage self,
     address space
-  ) internal view returns (ConditionLib.Condition[] memory) {
+  ) internal view returns (FeatureCondition[] memory) {
     uint256 featureCount = self.featureIds.length();
 
-    ConditionLib.Condition[] memory conditions = new ConditionLib.Condition[](
-      featureCount
-    );
+    FeatureCondition[] memory conditions = new FeatureCondition[](featureCount);
     uint256 index;
 
     for (uint256 i; i < featureCount; ++i) {
-      ConditionLib.Condition storage condition = self.conditions[
+      FeatureCondition storage condition = self.conditions[
         self.featureIds.at(i)
       ];
       uint256 votes = condition.getVotes(space);
@@ -140,7 +136,7 @@ library FeatureManagerLib {
     Layout storage self,
     bytes32 featureId
   ) internal {
-    ConditionLib.Condition memory condition = self.conditions[featureId];
+    FeatureCondition memory condition = self.conditions[featureId];
     if (!condition.active)
       CustomRevert.revertWith(
         IFeatureManagerFacetBase.FeatureNotActive.selector
