@@ -1,13 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-// interfaces
-
-// libraries
-
 import {Checkpoints} from "./Checkpoints.sol";
-
-// contracts
 
 library VotesStorage {
   bytes32 internal constant STORAGE_SLOT =
