@@ -42,8 +42,8 @@ export const Dropdown = (props: Props) => {
                                 {String(o.label)}
                             </option>
                         ))}
-                        {overlays}
                     </Stack>
+                    {overlays}
                     <Icon type="arrowDown" pointerEvents="none" position="absolute" right="sm" />
                 </>
             )}
