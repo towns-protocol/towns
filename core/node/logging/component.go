@@ -13,8 +13,8 @@ import (
 // Log level can be configured per component.
 type (
 	Log struct {
-		// Logger is the global logger from with all other loggers are a descendant.
-		Logger *zap.Logger
+		// RootLogger is the global logger from with all other loggers are a descendant.
+		RootLogger *zap.Logger
 		// Default represents the global logger that uses the default log level.
 		// Logging that directly written on Log uses this logger by default.
 		Default *zap.SugaredLogger
@@ -40,20 +40,20 @@ const (
 
 func (l *Log) With(args ...interface{}) *Log {
 	return &Log{
-		Logger:    l.Logger,
-		Default:   l.Default.With(args...),
-		Miniblock: l.Miniblock.With(args...),
-		Rpc:       l.Rpc.With(args...),
+		RootLogger: l.RootLogger,
+		Default:    l.Default.With(args...),
+		Miniblock:  l.Miniblock.With(args...),
+		Rpc:        l.Rpc.With(args...),
 	}
 }
 
 // Named returns a new Log with child loggers that are named with the given name.
 func (l *Log) Named(name string) *Log {
 	return &Log{
-		Logger:    l.Logger,
-		Default:   l.Default.Named(name),
-		Miniblock: l.Miniblock.Named(name),
-		Rpc:       l.Rpc.Named(name),
+		RootLogger: l.RootLogger,
+		Default:    l.Default.Named(name),
+		Miniblock:  l.Miniblock.Named(name),
+		Rpc:        l.Rpc.Named(name),
 	}
 }
 

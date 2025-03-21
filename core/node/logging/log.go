@@ -112,39 +112,42 @@ func Init(
 		}
 
 		if len(defaultCores) > 1 {
-			defaultLogger := zap.New(zapcore.NewTee(defaultCores...)).Sugar()
-			miniblockLogger := zap.New(zapcore.NewTee(miniblockCores...)).Sugar()
-			rpcLogger := zap.New(zapcore.NewTee(rpcCores...)).Sugar()
+			defaultLogger := zap.New(zapcore.NewTee(defaultCores...))
+			miniblockLogger := zap.New(zapcore.NewTee(miniblockCores...))
+			rpcLogger := zap.New(zapcore.NewTee(rpcCores...))
 
-			zap.ReplaceGlobals(defaultLogger.Desugar())
+			zap.ReplaceGlobals(defaultLogger)
 
 			globalLogger = &Log{
-				Default:   defaultLogger,
-				Miniblock: miniblockLogger,
-				Rpc:       rpcLogger,
+				RootLogger: defaultLogger,
+				Default:    defaultLogger.Sugar(),
+				Miniblock:  miniblockLogger.Sugar(),
+				Rpc:        rpcLogger.Sugar(),
 			}
 
 		} else if len(defaultCores) == 1 {
-			defaultLogger := zap.New(defaultCores[0]).Sugar()
-			miniblockLogger := zap.New(miniblockCores[0]).Sugar()
-			rpcLogger := zap.New(rpcCores[0]).Sugar()
+			defaultLogger := zap.New(defaultCores[0])
+			miniblockLogger := zap.New(miniblockCores[0])
+			rpcLogger := zap.New(rpcCores[0])
 
-			zap.ReplaceGlobals(defaultLogger.Desugar())
+			zap.ReplaceGlobals(defaultLogger)
 
 			globalLogger = &Log{
-				Default:   defaultLogger,
-				Miniblock: miniblockLogger,
-				Rpc:       rpcLogger,
+				RootLogger: defaultLogger,
+				Default:    defaultLogger.Sugar(),
+				Miniblock:  miniblockLogger.Sugar(),
+				Rpc:        rpcLogger.Sugar(),
 			}
 		} else {
-			logger := zap.NewNop().Sugar()
+			logger := zap.NewNop()
 
-			zap.ReplaceGlobals(logger.Desugar())
+			zap.ReplaceGlobals(logger)
 
 			globalLogger = &Log{
-				Default:   logger,
-				Miniblock: logger,
-				Rpc:       logger,
+				RootLogger: logger,
+				Default:    logger.Sugar(),
+				Miniblock:  logger.Sugar(),
+				Rpc:        logger.Sugar(),
 			}
 		}
 	})
@@ -172,20 +175,20 @@ func DefaultLogger(level zapcore.Level) *Log {
 	sugar := logger.Sugar()
 
 	return &Log{
-		Logger:    logger,
-		Default:   sugar.Named(string(Default)),
-		Miniblock: sugar.Named(string(Miniblock)),
-		Rpc:       sugar.Named(string(Rpc)),
+		RootLogger: logger,
+		Default:    sugar.Named(string(Default)),
+		Miniblock:  sugar.Named(string(Miniblock)),
+		Rpc:        sugar.Named(string(Rpc)),
 	}
 }
 
 func NoopLogger() *Log {
 	nop := zap.NewNop().Sugar()
 	return &Log{
-		Logger:    nop.Desugar(),
-		Default:   nop.Named(string(Default)),
-		Rpc:       nop.Named(string(Rpc)),
-		Miniblock: nop.Named(string(Miniblock)),
+		RootLogger: nop.Desugar(),
+		Default:    nop.Named(string(Default)),
+		Rpc:        nop.Named(string(Rpc)),
+		Miniblock:  nop.Named(string(Miniblock)),
 	}
 }
 
