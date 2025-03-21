@@ -170,7 +170,13 @@ export const CardOpener = (props: Props) => {
     const onCloseRef = useRef(onClose)
     onCloseRef.current = onClose
 
+    const activeRef = useRef(active)
+
     useEffect(() => {
+        if (activeRef.current === active) {
+            return
+        }
+        activeRef.current = active
         if (!active && onCloseRef.current) {
             onCloseRef.current()
         }
