@@ -2154,6 +2154,7 @@ export class Client
         streamId: string | Uint8Array,
         fromInclusive: bigint,
         toExclusive: bigint,
+        omitSnapshots: boolean,
     ): Promise<{ miniblocks: ParsedMiniblock[]; terminus: boolean }> {
         const cachedMiniblocks: ParsedMiniblock[] = []
         try {
@@ -2186,6 +2187,7 @@ export class Client
             streamId,
             fromInclusive,
             toExclusive,
+            omitSnapshots,
             this.opts?.unpackEnvelopeOpts,
         )
 
@@ -2246,7 +2248,7 @@ export class Client
             })
             const toExclusive = stream.view.miniblockInfo.min
             const fromInclusive = stream.view.prevSnapshotMiniblockNum
-            const response = await this.getMiniblocks(streamId, fromInclusive, toExclusive)
+            const response = await this.getMiniblocks(streamId, fromInclusive, toExclusive, true)
             const eventIds = response.miniblocks.flatMap((m) => m.events.map((e) => e.hashStr))
             const cleartexts = await this.persistenceStore.getCleartexts(eventIds)
 
@@ -2339,6 +2341,7 @@ export class Client
                 this.userInboxStreamId,
                 fromInclusive,
                 toExclusive,
+                false,
             )
             const eventIds = response.miniblocks.flatMap((m) => m.events.map((e) => e.hashStr))
             const cleartexts = await this.persistenceStore.getCleartexts(eventIds)

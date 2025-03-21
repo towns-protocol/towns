@@ -78,6 +78,7 @@ export async function getMiniblocks(
     streamId: string | Uint8Array,
     fromInclusive: bigint,
     toExclusive: bigint,
+    omitSnapshots: boolean,
     unpackEnvelopeOpts: UnpackEnvelopeOpts | undefined,
 ): Promise<{ miniblocks: ParsedMiniblock[]; terminus: boolean }> {
     const allMiniblocks: ParsedMiniblock[] = []
@@ -90,6 +91,7 @@ export async function getMiniblocks(
             streamId,
             currentFromInclusive,
             toExclusive,
+            omitSnapshots,
             unpackEnvelopeOpts,
         )
 
@@ -119,12 +121,14 @@ async function fetchMiniblocksFromRpc(
     streamId: string | Uint8Array,
     fromInclusive: bigint,
     toExclusive: bigint,
+    omitSnapshots: boolean,
     unpackEnvelopeOpts: UnpackEnvelopeOpts | undefined,
 ) {
     const response = await client.getMiniblocks({
         streamId: streamIdAsBytes(streamId),
         fromInclusive,
         toExclusive,
+        omitSnapshots,
     })
 
     const miniblocks: ParsedMiniblock[] = []
