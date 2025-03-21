@@ -7,7 +7,7 @@ import {IGuardian} from "contracts/src/spaces/facets/guardian/IGuardian.sol";
 //libraries
 
 //contracts
-import {FacetHelper} from "contracts/test/diamond/Facet.t.sol";
+import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
 import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
 import {GuardianFacet} from "contracts/src/spaces/facets/guardian/GuardianFacet.sol";
 
