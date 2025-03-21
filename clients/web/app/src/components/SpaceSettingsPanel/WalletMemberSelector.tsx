@@ -98,7 +98,6 @@ export const WalletMemberSelector = (props: Props) => {
 
     return (
         <Stack gap data-testid="user-search">
-            {JSON.stringify(walletMembers)}
             <Stack gap="sm">
                 <Box position="relative">
                     <Box horizontal gap="sm" alignItems="center">
