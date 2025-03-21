@@ -390,7 +390,7 @@ func (st *serviceTester) testClientForUrl(url string) protocolconnect.StreamServ
 
 func (st *serviceTester) testNode2NodeClientForUrl(url string, i int) protocolconnect.NodeToNodeClient {
 	httpClient, _ := testcert.GetHttp2LocalhostTLSClientWithCert(
-		st.ctx, st.getConfig(), node2nodeauth.CertGetter(nil, st.btc.Wallets[i]),
+		st.ctx, st.getConfig(), node2nodeauth.CertGetter(nil, st.btc.Wallets[i], st.btc.ChainId),
 	)
 	return protocolconnect.NewNodeToNodeClient(httpClient, url, connect.WithGRPCWeb())
 }

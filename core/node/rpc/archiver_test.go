@@ -348,7 +348,7 @@ func TestArchiveOneStream(t *testing.T) {
 	require.NoError(err)
 
 	httpClient, _ := testcert.GetHttp2LocalhostTLSClient(ctx, nil)
-	httpClientWithCert, _ := testcert.GetHttp2LocalhostTLSClientWithCert(ctx, nil, node2nodeauth.CertGetter(nil, wallet))
+	httpClientWithCert, _ := testcert.GetHttp2LocalhostTLSClientWithCert(ctx, nil, node2nodeauth.CertGetter(nil, wallet, tester.btc.ChainId))
 	var nodeRegistry nodes.NodeRegistry
 	nodeRegistry, err = nodes.LoadNodeRegistry(
 		ctx,
