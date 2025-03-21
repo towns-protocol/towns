@@ -109,6 +109,7 @@ contract StreamRegistryTest is
       lastMiniblockHash: testStream.genesisMiniblockHash,
       lastMiniblockNum: 0,
       flags: 0,
+      replicationFactor: uint8(nodeAddresses.length),
       reserved0: 0,
       nodes: nodeAddresses
     });
@@ -210,6 +211,7 @@ contract StreamRegistryTest is
     Stream memory streamToCreate = Stream({
       lastMiniblockHash: SAMPLE_STREAM.genesisMiniblockHash,
       lastMiniblockNum: 1,
+      replicationFactor: 1,
       flags: StreamFlags.SEALED,
       reserved0: 0,
       nodes: nodeAddresses
@@ -242,6 +244,7 @@ contract StreamRegistryTest is
     Stream memory streamToCreate = Stream({
       lastMiniblockHash: testStream.genesisMiniblockHash,
       lastMiniblockNum: 1,
+      replicationFactor: 1,
       flags: StreamFlags.SEALED,
       reserved0: 0,
       nodes: nodeAddresses
@@ -302,6 +305,7 @@ contract StreamRegistryTest is
     Stream memory streamToCreate = Stream({
       lastMiniblockHash: testStream.genesisMiniblockHash,
       lastMiniblockNum: 1,
+      replicationFactor: 1,
       flags: StreamFlags.SEALED,
       reserved0: 0,
       nodes: nodes
@@ -333,6 +337,7 @@ contract StreamRegistryTest is
     Stream memory streamToCreate = Stream({
       lastMiniblockHash: testStream.genesisMiniblockHash,
       lastMiniblockNum: 1,
+      replicationFactor: 1,
       flags: StreamFlags.SEALED,
       reserved0: 0,
       nodes: nodes
@@ -365,6 +370,7 @@ contract StreamRegistryTest is
     Stream memory streamToCreate = Stream({
       lastMiniblockHash: testStream.genesisMiniblockHash,
       lastMiniblockNum: 1,
+      replicationFactor: 1,
       flags: StreamFlags.SEALED,
       reserved0: 0,
       nodes: nodes
@@ -721,6 +727,7 @@ contract StreamRegistryTest is
       streams[i] = Stream({
         lastMiniblockHash: bytes32(uint256(i)),
         lastMiniblockNum: 1,
+        replicationFactor: 1,
         flags: StreamFlags.SEALED,
         reserved0: 0,
         nodes: new address[](1)
