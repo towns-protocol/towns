@@ -35,10 +35,6 @@ abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
   /// @dev Maximum number of linked wallets per root key
   uint256 internal constant MAX_LINKED_WALLETS = 10;
 
-  /// @dev Dependency name of delegate.xyz v2 registry
-  bytes32 internal constant DELEGATE_REGISTRY_V2 =
-    bytes32("DELEGATE_REGISTRY_V2");
-
   /// @dev Dependency name of SCL_EIP6565 verifier library
   bytes32 internal constant SCL_EIP6565 = bytes32("SCL_EIP6565");
 
@@ -299,90 +295,14 @@ abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
     return WalletLinkStorage.layout().walletsByRootKey[rootKey].values();
   }
 
-  function _getWalletsByRootKeyWithDelegations(
+  function _getAllWalletsByRootKey(
     address rootKey
-  ) internal view returns (address[] memory wallets) {
-    // Single storage read for layout
-    WalletLinkStorage.Layout storage ds = WalletLinkStorage.layout();
-    address delegateRegistry = ds.dependencies[DELEGATE_REGISTRY_V2];
-    EnumerableSet.AddressSet storage linkedWalletsSet = ds.walletsByRootKey[
-      rootKey
-    ];
-
-    uint256 linkedWalletsLength = linkedWalletsSet.length();
-    if (linkedWalletsLength == 0) {
-      return new address[](0);
-    }
-
-    // Get linked wallets and count total delegations
-    address[] memory linkedWallets = linkedWalletsSet.values();
-    uint256 totalCount = linkedWalletsLength;
-
-    IDelegateRegistry.Delegation[][]
-      memory allDelegations = new IDelegateRegistry.Delegation[][](
-        linkedWalletsLength
-      );
-
-    // First pass: count total delegations add to totalCount
-    for (uint256 i; i < linkedWalletsLength; ++i) {
-      allDelegations[i] = IDelegateRegistry(delegateRegistry)
-        .getIncomingDelegations(linkedWallets[i]);
-      IDelegateRegistry.Delegation[] memory delegations = allDelegations[i];
-
-      uint256 delegationsLength = delegations.length;
-      for (uint256 j; j < delegationsLength; ++j) {
-        if (delegations[j].type_ == IDelegateRegistry.DelegationType.ALL) {
-          ++totalCount;
-        }
-      }
-    }
-
-    // Initialize result array
-    wallets = new address[](totalCount);
-
-    assembly ("memory-safe") {
-      // Copy linked wallets to result array
-      let walletsPtr := add(wallets, 0x20)
-      let linkedWalletsPtr := add(linkedWallets, 0x20)
-      let size := shl(5, linkedWalletsLength)
-
-      // Copy linked wallets data
-      pop(staticcall(gas(), 4, linkedWalletsPtr, size, walletsPtr, size))
-    }
-
-    // Second pass: add delegators
-    uint256 currentIndex = linkedWalletsLength;
-
-    for (uint256 i; i < linkedWalletsLength; ++i) {
-      IDelegateRegistry.Delegation[] memory delegations = allDelegations[i];
-      uint256 delegationsLength = delegations.length;
-      for (uint256 j; j < delegationsLength; ++j) {
-        IDelegateRegistry.Delegation memory delegation = delegations[j];
-        if (delegation.type_ == IDelegateRegistry.DelegationType.ALL) {
-          unchecked {
-            wallets[currentIndex++] = delegation.from;
-          }
-        }
-      }
-    }
-
-    return wallets;
-  }
-
-  function _explicitWalletsByRootKey(
-    address rootKey,
-    WalletQueryOptions calldata options
   ) internal view returns (WalletLib.Wallet[] memory wallets) {
     WalletLinkStorage.Layout storage ds = WalletLinkStorage.layout();
     WalletLib.RootWallet storage rootWallet = ds.rootWalletByRootKey[rootKey];
 
     // Get all EVM linked wallets
-    address[] memory linkedWallets;
-    if (options.includeDelegations) {
-      linkedWallets = _getWalletsByRootKeyWithDelegations(rootKey);
-    } else {
-      linkedWallets = ds.walletsByRootKey[rootKey].values();
-    }
+    address[] memory linkedWallets = ds.walletsByRootKey[rootKey].values();
 
     // Get all non-EVM linked wallets
     bytes32[] memory nonEVMLinkedWallets = rootWallet.walletHashes.values();

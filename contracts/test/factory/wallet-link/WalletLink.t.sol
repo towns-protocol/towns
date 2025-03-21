@@ -1066,41 +1066,6 @@ contract WalletLinkTest is IWalletLinkBase, BaseSetup, DeployBase {
   }
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-  /*                           Delegations                      */
-  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-  /*
-   * @dev This test checks that a cold wallet can delegate to a linked wallet
-   *      and that the linked wallet and the cold wallet are both included in
-   *      the returned array
-   */
-  function test_getWalletsByRootKeyWithDelegations()
-    external
-    givenWalletIsLinkedViaCaller
-  {
-    address coldWallet = vm.createWallet("coldWallet").addr;
-
-    // As a cold wallet, delegate to a linked wallet
-    // This is what delegate.xyz v2 does
-    vm.prank(coldWallet);
-    mockDelegationRegistry.delegateAll(wallet.addr);
-
-    WalletLib.Wallet[] memory walletMetadata = walletLink
-      .explicitWalletsByRootKey(
-        rootWallet.addr,
-        WalletQueryOptions({includeDelegations: true})
-      );
-
-    address[] memory wallets = new address[](walletMetadata.length);
-    for (uint256 i; i < walletMetadata.length; ++i) {
-      wallets[i] = vm.parseAddress(walletMetadata[i].addr);
-    }
-
-    assertContains(wallets, coldWallet);
-    assertContains(wallets, wallet.addr);
-  }
-
-  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                          Metadata                          */
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
@@ -1124,9 +1089,8 @@ contract WalletLinkTest is IWalletLinkBase, BaseSetup, DeployBase {
     walletLink.setDefaultWallet(address(simpleAccount));
     vm.stopPrank();
 
-    WalletLib.Wallet[] memory wallets = walletLink.explicitWalletsByRootKey(
-      rootWallet.addr,
-      WalletQueryOptions({includeDelegations: false})
+    WalletLib.Wallet[] memory wallets = walletLink.getAllWalletsByRootKey(
+      rootWallet.addr
     );
     uint256 walletLen = wallets.length;
 
