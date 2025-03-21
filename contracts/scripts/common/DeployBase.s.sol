@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 //interfaces
 
 //libraries
+import {LibString} from "solady/utils/LibString.sol";
 
 //contracts
 import {Script} from "forge-std/Script.sol";
@@ -11,8 +12,6 @@ import {DeployHelpers} from "./DeployHelpers.s.sol";
 import {Context} from "./Context.sol";
 
 contract DeployBase is Context, DeployHelpers, Script {
-  string internal constant DEPLOYMENT_CACHE_PATH = "contracts/deployments";
-
   constructor() {
     // set up chains
     setChain(
@@ -50,44 +49,32 @@ contract DeployBase is Context, DeployHelpers, Script {
     string memory chainAlias = block.chainid == 31337
       ? "base_anvil"
       : getChain(block.chainid).chainAlias;
-
-    return getInitialStringFromUnderscore(chainAlias);
+    return getInitialStringFromChar(chainAlias, "_", chainAlias);
   }
 
   function networkDirPath() internal returns (string memory path) {
-    string memory context = vm.envOr("DEPLOYMENT_CONTEXT", string(""));
+    string memory context = getDeploymentContext();
+    string memory chainAlias = chainIdAlias();
 
     // if no context is provided, use the default path
     if (bytes(context).length == 0) {
-      context = string.concat(DEPLOYMENT_CACHE_PATH, "/", chainIdAlias());
+      context = string.concat(DEPLOYMENT_CACHE_PATH, "/", chainAlias);
     } else {
       context = string.concat(
         DEPLOYMENT_CACHE_PATH,
         "/",
         context,
         "/",
-        chainIdAlias()
+        chainAlias
       );
     }
 
     path = string.concat(vm.projectRoot(), "/", context);
   }
 
-  function addressesPath(
-    string memory contractName
-  ) internal returns (string memory path) {
-    path = string.concat(
-      networkDirPath(),
-      "/",
-      "addresses",
-      "/",
-      contractName,
-      ".json"
-    );
-  }
-
   function getDeployment(string memory versionName) internal returns (address) {
-    string memory path = addressesPath(versionName);
+    string memory networkDir = networkDirPath();
+    string memory path = addressesPath(versionName, networkDir);
 
     if (!exists(path)) {
       debug(
@@ -109,17 +96,25 @@ contract DeployBase is Context, DeployHelpers, Script {
     string memory versionName,
     address contractAddr
   ) internal {
-    if (vm.envOr("SAVE_DEPLOYMENTS", uint256(0)) == 0) {
+    if (!shouldSaveDeployments()) {
       debug("(set SAVE_DEPLOYMENTS=1 to save deployments to file)");
       return;
     }
 
+    string memory networkDir = networkDirPath();
+
     // create addresses directory
-    createDir(string.concat(networkDirPath(), "/", "addresses"));
-    createChainIdFile(networkDirPath());
+    createDir(string.concat(networkDir, "/", "addresses"));
+    createChainIdFile(networkDir);
+
+    // Get directory from version name if it contains a "/"
+    string memory typeDir = getInitialStringFromChar(versionName, "/", "");
+    if (bytes(typeDir).length > 0) {
+      createDir(string.concat(networkDir, "/", "addresses", "/", typeDir));
+    }
 
     // get deployment path
-    string memory path = addressesPath(versionName);
+    string memory path = addressesPath(versionName, networkDir);
 
     // save deployment
     string memory contractJson = vm.serializeAddress(
@@ -132,12 +127,15 @@ contract DeployBase is Context, DeployHelpers, Script {
   }
 
   // Utils
+  function addressesPath(
+    string memory versionName,
+    string memory networkDir
+  ) internal pure returns (string memory path) {
+    return string.concat(networkDir, "/addresses/", versionName, ".json");
+  }
+
   function createChainIdFile(string memory networkDir) internal {
-    string memory chainIdFilePath = string.concat(
-      networkDir,
-      "/",
-      "chainId.json"
-    );
+    string memory chainIdFilePath = string.concat(networkDir, "/chainId.json");
 
     if (!exists(chainIdFilePath)) {
       debug("creating chain id file: ", chainIdFilePath);
@@ -146,28 +144,15 @@ contract DeployBase is Context, DeployHelpers, Script {
     }
   }
 
-  function getInitialStringFromUnderscore(
-    string memory fullString
+  function getInitialStringFromChar(
+    string memory fullString,
+    string memory char,
+    string memory replacement
   ) internal pure returns (string memory) {
-    bytes memory fullStringBytes = bytes(fullString);
-    uint256 underscoreIndex = 0;
-
-    for (uint256 i = 0; i < fullStringBytes.length; i++) {
-      if (fullStringBytes[i] == "_") {
-        underscoreIndex = i;
-        break;
-      }
+    uint256 charIndex = LibString.indexOf(fullString, char);
+    if (charIndex == LibString.NOT_FOUND) {
+      return replacement;
     }
-
-    if (underscoreIndex == 0) {
-      return fullString;
-    }
-
-    bytes memory result = new bytes(underscoreIndex);
-    for (uint256 i = 0; i < underscoreIndex; i++) {
-      result[i] = fullStringBytes[i];
-    }
-
-    return string(result);
+    return LibString.slice(fullString, 0, charIndex);
   }
 }

@@ -6,7 +6,7 @@ import fs from 'node:fs'
 import * as jsoncParser from 'jsonc-parser'
 
 export const clonePlayground = async (cfg: CreateRiverBuildAppConfig) => {
-    console.log(picocolors.blue('\nCloning River Build Playground...'))
+    console.log(picocolors.blue('\nCloning Towns Protocol Playground...'))
 
     const result = await cloneRepo(cfg)
     if (!result) return
@@ -53,7 +53,7 @@ const cloneRepo = async (cfg: CreateRiverBuildAppConfig) => {
             '--sparse',
             '--branch',
             latestSdkTag,
-            'https://github.com/river-build/river.git',
+            'https://github.com/towns-protocol/towns.git',
             tempDir,
         ],
         { stdio: 'inherit' },
@@ -99,18 +99,18 @@ const cloneRepo = async (cfg: CreateRiverBuildAppConfig) => {
 const updateDependencies = async (cfg: CreateRiverBuildAppConfig) => {
     const { projectDir } = cfg
 
-    // Update package.json with latest River Build dependencies
+    // Update package.json with latest Towns Protocol dependencies
     await addDependencies(projectDir, (json) => {
-        const allRiverBuildDeps = Object.keys(json.dependencies).filter((dep) =>
-            dep.startsWith('@river-build'),
+        const allTownsProtocolDeps = Object.keys(json.dependencies).filter((dep) =>
+            dep.startsWith('@towns-protocol'),
         )
-        const allRiverBuildDevDeps = Object.keys(json.devDependencies).filter((dep) =>
-            dep.startsWith('@river-build'),
+        const allTownsProtocolDevDeps = Object.keys(json.devDependencies).filter((dep) =>
+            dep.startsWith('@towns-protocol'),
         )
         return {
-            dependencies: allRiverBuildDeps,
+            dependencies: allTownsProtocolDeps,
             devDependencies: [
-                ...allRiverBuildDevDeps,
+                ...allTownsProtocolDevDeps,
                 // hardcoded for now. if we add ^ in front of the version (e.g. ^5.1.6)
                 // it will make npm install to get the latest 5.x.x
                 ['typescript', '5.1.6'],
@@ -144,7 +144,7 @@ const fixTsConfig = async (cfg: CreateRiverBuildAppConfig) => {
 function getLatestSdkTag(): string | null {
     const tagsResult = spawn.sync(
         'git',
-        ['ls-remote', '--tags', 'https://github.com/river-build/river.git', 'sdk-*'],
+        ['ls-remote', '--tags', 'https://github.com/towns-protocol/towns.git', 'sdk-*'],
         { encoding: 'utf8' },
     )
 

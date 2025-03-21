@@ -7,10 +7,10 @@ import {
     type StreamResponse,
     Code,
 } from '@connectrpc/connect'
-import { Err } from '@river-build/proto'
+import { Err } from '@towns-protocol/proto'
 import { genShortId, streamIdAsString } from './id'
 import { isBaseUrlIncluded, isIConnectError } from './utils'
-import { dlog, dlogError, check } from '@river-build/dlog'
+import { dlog, dlogError, check } from '@towns-protocol/dlog'
 import cloneDeep from 'lodash/cloneDeep'
 
 export const DEFAULT_RETRY_PARAMS: RetryParams = {
@@ -364,7 +364,7 @@ export function errorContains(err: unknown, error: Err): boolean {
     return false
 }
 
-/// not great way to pull info out of the error messsage
+/// not great way to pull info out of the error message
 export function getRpcErrorProperty(err: unknown, prop: string): string | undefined {
     if (err !== null && typeof err === 'object' && 'message' in err) {
         const expected = `${prop} = `

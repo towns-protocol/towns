@@ -1,5 +1,5 @@
 {
-    "name": "@river-build/subgraph",
+    "name": "@towns-protocol/subgraph",
     "type": "module",
     "packageManager": "yarn@3.8.0",
     "scripts": {
@@ -20,7 +20,7 @@
         "viem": "^2.21.51"
     },
     "devDependencies": {
-        "@river-build/prettier-config": "workspace:^",
+        "@towns-protocol/prettier-config": "workspace:^",
         "@types/node": "^20.5.0",
         "eslint": "^8.53.0",
         "eslint-config-ponder": "^0.9.27",

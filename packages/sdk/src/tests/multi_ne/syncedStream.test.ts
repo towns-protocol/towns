@@ -2,7 +2,7 @@
  * @group main
  */
 
-import { MembershipOp } from '@river-build/proto'
+import { MembershipOp } from '@towns-protocol/proto'
 import { makeTestClient, waitFor } from '../testUtils'
 import { genShortId } from '../../id'
 

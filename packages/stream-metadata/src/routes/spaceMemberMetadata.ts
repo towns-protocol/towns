@@ -1,6 +1,6 @@
 import { FastifyReply, FastifyRequest, type FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
-import { StreamPrefix, makeStreamId } from '@river-build/sdk'
+import { StreamPrefix, makeStreamId } from '@towns-protocol/sdk'
 
 import { config } from '../environment'
 import { isValidEthereumAddress } from '../validators'

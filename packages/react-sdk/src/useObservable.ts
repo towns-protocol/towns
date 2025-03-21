@@ -1,6 +1,6 @@
 'use client'
 import { useEffect, useMemo, useSyncExternalStore } from 'react'
-import { type Observable, type PersistedModel } from '@river-build/sdk'
+import { type Observable, type PersistedModel } from '@towns-protocol/sdk'
 import { isPersistedModel } from './internals/utils'
 
 // eslint-disable-next-line @typescript-eslint/no-namespace
@@ -29,7 +29,7 @@ export declare namespace ObservableConfig {
               fireImmediately?: boolean
               /** Callback function to be called when the data is updated. */
               onUpdate?: (data: UnwrappedData) => void
-              // TODO: when an error occurs? store errors? river error?
+              // TODO: when an error occurs? store errors? RPC error?
               /** Callback function to be called when an error occurs. */
               onError?: (error: Error) => void
           }
@@ -41,14 +41,14 @@ export declare namespace ObservableConfig {
               fireImmediately?: boolean
               /** Callback function to be called when the data is updated. */
               onUpdate?: (data: Data) => void
-              // TODO: when an error occurs? store errors? river error?
+              // TODO: when an error occurs? store errors? RPC error?
               /** Callback function to be called when an error occurs. */
               onError?: (error: Error) => void
           }
 }
 
 /**
- * River SyncAgent models are wrapped in a PersistedModel when they are persisted.
+ * SyncAgent models are wrapped in a PersistedModel when they are persisted.
  * This type is used to extract the actual data from the model.
  */
 type ObservableValue<Data> = Data extends PersistedModel<infer UnwrappedData>

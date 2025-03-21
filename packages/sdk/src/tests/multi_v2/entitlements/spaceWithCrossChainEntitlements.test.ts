@@ -12,8 +12,8 @@ import {
     createTownWithRequirements,
     expectUserCannotJoinSpace,
 } from '../../testUtils'
-import { dlog } from '@river-build/dlog'
-import { TestCrossChainEntitlement, Address, treeToRuleData } from '@river-build/web3'
+import { dlog } from '@towns-protocol/dlog'
+import { TestCrossChainEntitlement, Address, treeToRuleData } from '@towns-protocol/web3'
 
 const log = dlog('csb:test:spaceWithCrossChainEntitlements')
 

@@ -1,4 +1,4 @@
-import { check } from '@river-build/dlog'
+import { check } from '@towns-protocol/dlog'
 import { Observable } from './observable'
 import { LoadPriority, Store, Identifiable } from '../store/store'
 import { isDefined } from '../check'

@@ -5,7 +5,7 @@ import {
     EncryptedData,
     EncryptedDataVersion,
     ChannelPropertiesSchema,
-} from '@river-build/proto'
+} from '@towns-protocol/proto'
 import { fromBinary, fromJsonString } from '@bufbuild/protobuf'
 import { checkNever, logNever } from './check'
 

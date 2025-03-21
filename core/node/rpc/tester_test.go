@@ -110,7 +110,7 @@ func newServiceTester(t *testing.T, opts serviceTesterOpts) *serviceTester {
 	var ctx context.Context
 	var ctxCancel func()
 	if opts.printTestLogs {
-		ctx, ctxCancel = test.NewTestContextWithLogging("debug")
+		ctx, ctxCancel = test.NewTestContextWithLogging("info")
 	} else {
 		ctx, ctxCancel = test.NewTestContext()
 	}
@@ -413,7 +413,7 @@ func (st *serviceTester) compareStreamDataInStorage(
 	var data []*storage.DebugReadStreamDataResult
 	for _, n := range st.nodes {
 		// TODO: occasionally n.service.storage.DebugReadStreamData crashes due to nil pointer dereference,
-		// example: https://github.com/river-build/river/actions/runs/10127906870/job/28006223317#step:18:113
+		// example: https://github.com/towns-protocol/towns/actions/runs/10127906870/job/28006223317#step:18:113
 		// the stack trace doesn't provide context which deref fails, therefore deref field by field.
 		svc := n.service
 		str := svc.storage

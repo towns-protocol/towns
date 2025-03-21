@@ -1,5 +1,5 @@
-import EntitlementCheckerAbi from '@river-build/generated/dev/abis/IEntitlementChecker.abi'
-import EntitlementGatedAbi from '@river-build/generated/dev/abis/IEntitlementGated.abi'
+import EntitlementCheckerAbi from '@towns-protocol/generated/dev/abis/IEntitlementChecker.abi'
+import EntitlementGatedAbi from '@towns-protocol/generated/dev/abis/IEntitlementGated.abi'
 import { Address, Hex, decodeFunctionData } from 'viem'
 import { config } from './environment'
 import { getLogger } from './logger'

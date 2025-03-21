@@ -1,4 +1,4 @@
-import { check, dlogger } from '@river-build/dlog'
+import { check, dlogger } from '@towns-protocol/dlog'
 import { isDefined } from '../../../check'
 import {
     isChannelStreamId,
@@ -10,7 +10,7 @@ import { Identifiable, LoadPriority, Store } from '../../../store/store'
 import { RiverConnection } from '../../river-connection/riverConnection'
 import { Channel } from './channel'
 import { ethers } from 'ethers'
-import { SpaceDapp, SpaceInfo } from '@river-build/web3'
+import { SpaceDapp, SpaceInfo } from '@towns-protocol/web3'
 import { Members } from '../../members/members'
 
 const logger = dlogger('csb:space')

@@ -16,7 +16,7 @@ import {
     expectUserCanJoinChannel,
     expectUserCannotJoinChannel,
 } from '../../testUtils'
-import { dlog } from '@river-build/dlog'
+import { dlog } from '@towns-protocol/dlog'
 import {
     Address,
     Permission,
@@ -27,7 +27,7 @@ import {
     CheckOperationType,
     treeToRuleData,
     encodeThresholdParams,
-} from '@river-build/web3'
+} from '@towns-protocol/web3'
 
 const log = dlog('csb:test:channelsWithComplexEntitlements')
 

@@ -316,11 +316,11 @@ jobs:
 
             - name: Run Stream Metadata Nodes
               run: |
-                  yarn workspace @river-build/stream-metadata dev:local_multi_ne &
+                  yarn workspace @towns-protocol/stream-metadata dev:local_multi_ne &
                   yarn wait-on http://localhost:3003/health --timeout=120000 --i=5000 --verbose
 
             - name: Run Stream Metadata Tests (without entitlements)
-              run: yarn turbo run test:integration --filter=@river-build/stream-metadata
+              run: yarn turbo run test:integration --filter=@towns-protocol/stream-metadata
 
             - name: Archive River Node Logs and Settings
               if: always()
@@ -462,10 +462,10 @@ jobs:
               run: yarn csb:turbo-no-sdk
 
             - name: Run River Tests (with entitlements)
-              run: yarn turbo run test:ci:multi:ent --filter=@river-build/sdk
+              run: yarn turbo run test:ci:multi:ent --filter=@towns-protocol/sdk
 
             - name: Run Stress Test Tests (yarn) (with entitlements)
-              run: yarn turbo run test:ci:multi:ent --filter=@river-build/stress
+              run: yarn turbo run test:ci:multi:ent --filter=@towns-protocol/stress
 
             - name: Run Stress Test Demo (node) (with entitlements)
               run: ./packages/stress/scripts/localhost_demo.sh
@@ -610,7 +610,7 @@ jobs:
               run: yarn csb:turbo-no-sdk
 
             - name: Run River Tests Against Legacy Spaces (with entitlements)
-              run: yarn turbo run test:ci:multi:ent:legacy --filter=@river-build/sdk
+              run: yarn turbo run test:ci:multi:ent:legacy --filter=@towns-protocol/sdk
 
             - name: Archive River Node Logs and Settings
               if: always()

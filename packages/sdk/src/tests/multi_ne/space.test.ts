@@ -4,10 +4,10 @@
 
 import { isEncryptedData, makeTestClient, makeUniqueSpaceStreamId, waitFor } from '../testUtils'
 import { Client } from '../../client'
-import { dlog } from '@river-build/dlog'
-import { AES_GCM_DERIVED_ALGORITHM } from '@river-build/encryption'
+import { dlog } from '@towns-protocol/dlog'
+import { AES_GCM_DERIVED_ALGORITHM } from '@towns-protocol/encryption'
 import { makeUniqueChannelStreamId, makeUniqueMediaStreamId } from '../../id'
-import { ChunkedMedia, MediaInfoSchema, MembershipOp, PlainMessage } from '@river-build/proto'
+import { ChunkedMedia, MediaInfoSchema, MembershipOp, PlainMessage } from '@towns-protocol/proto'
 import { deriveKeyAndIV } from '../../crypto_utils'
 import { nanoid } from 'nanoid'
 import { create } from '@bufbuild/protobuf'

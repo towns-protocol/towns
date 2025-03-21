@@ -11,7 +11,7 @@ import {
 import { Client } from '../../client'
 
 import { makeUniqueChannelStreamId } from '../../id'
-import { bin_toHexString } from '@river-build/dlog'
+import { bin_toHexString } from '@towns-protocol/dlog'
 
 describe('channelsTests', () => {
     let bobsClient: Client

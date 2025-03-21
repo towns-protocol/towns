@@ -1,5 +1,5 @@
 {
-    "name": "@river-build/stress",
+    "name": "@towns-protocol/stress",
     "version": "0.0.1",
     "private": true,
     "packageManager": "yarn@3.8.0",
@@ -16,11 +16,11 @@
     "dependencies": {
         "@babel/node": "^7.23.9",
         "@bufbuild/protobuf": "^2.2.2",
-        "@river-build/dlog": "workspace:^",
-        "@river-build/encryption": "workspace:^",
-        "@river-build/proto": "workspace:^",
-        "@river-build/sdk": "workspace:^",
-        "@river-build/web3": "workspace:^",
+        "@towns-protocol/dlog": "workspace:^",
+        "@towns-protocol/encryption": "workspace:^",
+        "@towns-protocol/proto": "workspace:^",
+        "@towns-protocol/sdk": "workspace:^",
+        "@towns-protocol/web3": "workspace:^",
         "esbuild-plugin-pino": "^2.2.0",
         "ethers": "^5.7.2",
         "fake-indexeddb": "^4.0.1",

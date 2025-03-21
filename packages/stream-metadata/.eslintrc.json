@@ -1,7 +1,7 @@
 {
 	"root": true,
 	"extends": [
-		"@river-build/eslint-config/typescript",
+		"@towns-protocol/eslint-config/typescript",
 		"eslint:recommended",
 		"plugin:import/recommended",
 		"plugin:import/typescript",

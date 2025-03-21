@@ -7,7 +7,7 @@ import {
     MemberPayload_MemberBlockchainTransaction,
     BlockchainTransaction_TokenTransfer,
     WrappedEncryptedDataSchema,
-} from '@river-build/proto'
+} from '@towns-protocol/proto'
 import TypedEmitter from 'typed-emitter'
 import { StreamEncryptionEvents, StreamStateEvents } from './streamEvents'
 import {
@@ -22,15 +22,15 @@ import { isDefined, logNever } from './check'
 import { userIdFromAddress } from './id'
 import { StreamStateView_Members_Membership } from './streamStateView_Members_Membership'
 import { StreamStateView_Members_Solicitations } from './streamStateView_Members_Solicitations'
-import { bin_toHexString, check, dlog } from '@river-build/dlog'
+import { bin_toHexString, check, dlog } from '@towns-protocol/dlog'
 import { DecryptedContent } from './encryptedContentTypes'
 import { StreamStateView_MemberMetadata } from './streamStateView_MemberMetadata'
-import { KeySolicitationContent } from '@river-build/encryption'
+import { KeySolicitationContent } from '@towns-protocol/encryption'
 import { makeParsedEvent } from './sign'
 import { StreamStateView_AbstractContent } from './streamStateView_AbstractContent'
 import { utils } from 'ethers'
 import { create } from '@bufbuild/protobuf'
-import { getSpaceReviewEventDataBin, SpaceReviewEventObject } from '@river-build/web3'
+import { getSpaceReviewEventDataBin, SpaceReviewEventObject } from '@towns-protocol/web3'
 
 const log = dlog('csb:streamStateView_Members')
 
@@ -86,7 +86,6 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
 
     // initialization
     applySnapshot(
-        eventId: string,
         event: ParsedEvent,
         snapshot: Snapshot,
         cleartexts: Record<string, Uint8Array | string> | undefined,
@@ -109,7 +108,6 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
                             fallbackKey: s.fallbackKey,
                             isNewDevice: s.isNewDevice,
                             sessionIds: [...s.sessionIds],
-                            srcEventId: eventId,
                         } satisfies KeySolicitationContent),
                 ),
                 encryptedUsername: member.username,
@@ -160,6 +158,7 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
         )
         const sigBundle = getEventSignature(event)
         this.solicitHelper.initSolicitations(
+            event.hashStr,
             Array.from(this.joined.values()),
             sigBundle,
             encryptionEmitter,
@@ -316,7 +315,6 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
                     this.solicitHelper.applyFulfillment(
                         stateMember,
                         payload.content.value,
-                        getEventSignature(event.remoteEvent),
                         encryptionEmitter,
                     )
                 }

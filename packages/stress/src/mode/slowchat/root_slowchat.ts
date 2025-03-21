@@ -1,4 +1,4 @@
-import { RiverConfig } from '@river-build/sdk'
+import { RiverConfig } from '@towns-protocol/sdk'
 import { Wallet } from 'ethers'
 import { getChatConfig } from '../common/common'
 import { makeStressClient } from '../../utils/stressClient'

@@ -8,7 +8,7 @@ import {
     PlainMessage,
     StreamEventSchema,
     ChannelMessageSchema,
-} from '@river-build/proto'
+} from '@towns-protocol/proto'
 import { makeTags } from '../../tags'
 import { IStreamStateView, StreamStateView } from '../../streamStateView'
 import {
@@ -22,7 +22,7 @@ import { makeUniqueSpaceStreamId } from '../testUtils'
 import { makeSignerContext, SignerContext } from '../../signerContext'
 import { makeParsedEvent } from '../../sign'
 import { makeRemoteTimelineEvent } from '../../types'
-import { bin_fromHexString, bin_toHexString } from '@river-build/dlog'
+import { bin_fromHexString, bin_toHexString } from '@towns-protocol/dlog'
 import { create } from '@bufbuild/protobuf'
 
 // Mock the IStreamStateView interface

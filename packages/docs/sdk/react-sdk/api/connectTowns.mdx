@@ -1,26 +1,26 @@
 ---
-title: connectRiver
+title: connectTowns
 ---
-Connect to River using a SignerContext
+Connect to Towns using a SignerContext
 
-Useful for server side code: you can persist the signer context and use it to auth with River later
+Useful for server side code, allowing you to persist the signer context and use it to auth with Towns later
 
 ## Imports
 
 ```ts
-import { connectRiver } from '@river-build/react-sdk'
+import { connectTowns } from '@towns-protocol/react-sdk'
 ```
 
 ## Definition
 
 ```ts
-function connectRiver(
+function connectTowns(
   signerContext: SignerContext,
   config: Omit<SyncAgentConfig, 'context'>,
 ): Promise<SyncAgent>
 ```
 
-**Source:** [connectRiver](https://github.com/river-build/river/blob/main/packages/react-sdk/src/connectRiver.ts)
+**Source:** [connectTowns](https://github.com/towns-protocol/towns/blob/main/packages/react-sdk/src/connectTowns.ts)
 
 ## Parameters
 
