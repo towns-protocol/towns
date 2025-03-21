@@ -1,4 +1,4 @@
-import type { Member, Myself, SyncAgent } from '@river-build/sdk'
+import type { Member, Myself, SyncAgent } from '@towns-protocol/sdk'
 import { useMemo } from 'react'
 import { type ActionConfig, useAction } from './internals/useAction'
 import { type ObservableConfig, useObservable } from './useObservable'

@@ -1,6 +1,6 @@
 {
-    "name": "@river-build/react-sdk",
-    "description": "React Hooks for River SDK",
+    "name": "@towns-protocol/react-sdk",
+    "description": "React Hooks for Towns Protocol SDK",
     "version": "0.0.189",
     "type": "module",
     "main": "./dist/esm/index.js",
@@ -18,7 +18,7 @@
         "watch": "yarn build -w"
     },
     "dependencies": {
-        "@river-build/sdk": "workspace:^",
+        "@towns-protocol/sdk": "workspace:^",
         "ethers": "^5.7.2"
     },
     "devDependencies": {
@@ -63,7 +63,7 @@
     },
     "repository": {
         "type": "git",
-        "url": "https://github.com/river-build/river.git",
+        "url": "https://github.com/towns-protocol/towns.git",
         "directory": "packages/react"
     },
     "sideEffects": false,

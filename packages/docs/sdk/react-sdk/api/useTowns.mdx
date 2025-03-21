@@ -1,5 +1,5 @@
 ---
-title: useRiver
+title: useTowns
 ---
 Hook to get an observable from the sync agent.
 
@@ -8,13 +8,13 @@ An alternative of our premade hooks, allowing the creation of custom abstraction
 ## Imports
 
 ```ts
-import { useRiver } from '@river-build/react-sdk'
+import { useTowns } from '@towns-protocol/react-sdk'
 ```
 
 ## Definition
 
 ```ts
-function useRiver<T>(
+function useTowns<T>(
   selector: (sync: SyncSelector) => Observable<T>,
   config?: ObservableConfig.FromData<T>,
 ): T extends PersistedModel<infer UnwrappedData> ? {
@@ -34,7 +34,7 @@ function useRiver<T>(
 }
 ```
 
-**Source:** [useRiver](https://github.com/river-build/river/blob/main/packages/react-sdk/src/useRiver.ts)
+**Source:** [useTowns](https://github.com/towns-protocol/towns/blob/main/packages/react-sdk/src/useTowns.ts)
 
 ## Parameters
 

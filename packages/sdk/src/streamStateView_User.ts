@@ -6,10 +6,10 @@ import {
     UserPayload,
     UserPayload_Snapshot,
     UserPayload_UserMembership,
-} from '@river-build/proto'
+} from '@towns-protocol/proto'
 import { StreamEncryptionEvents, StreamEvents, StreamStateEvents } from './streamEvents'
 import { StreamStateView_AbstractContent } from './streamStateView_AbstractContent'
-import { bin_toHexString, check } from '@river-build/dlog'
+import { bin_toHexString, check } from '@towns-protocol/dlog'
 import { logNever } from './check'
 import { streamIdFromBytes } from './id'
 import { utils } from 'ethers'

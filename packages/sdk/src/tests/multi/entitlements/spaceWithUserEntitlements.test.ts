@@ -10,8 +10,8 @@ import {
     expectUserCanJoin,
     linkWallets,
 } from '../../testUtils'
-import { dlog } from '@river-build/dlog'
-import { NoopRuleData } from '@river-build/web3'
+import { dlog } from '@towns-protocol/dlog'
+import { NoopRuleData } from '@towns-protocol/web3'
 
 const log = dlog('csb:test:spaceWithUserEntitlements')
 

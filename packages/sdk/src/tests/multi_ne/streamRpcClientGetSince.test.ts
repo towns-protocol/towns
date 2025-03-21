@@ -1,4 +1,4 @@
-import { StreamAndCookie, SyncCookie } from '@river-build/proto'
+import { StreamAndCookie, SyncCookie } from '@towns-protocol/proto'
 import {
     makeUserSettingsStreamId,
     streamIdAsString,

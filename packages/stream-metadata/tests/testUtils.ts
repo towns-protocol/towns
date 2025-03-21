@@ -8,8 +8,8 @@ import {
 	CreationCookieSchema,
 	MediaInfo,
 	MediaInfoSchema,
-} from '@river-build/proto'
-import { Client, encryptAESGCM, streamIdAsString } from '@river-build/sdk'
+} from '@towns-protocol/proto'
+import { Client, encryptAESGCM, streamIdAsString } from '@towns-protocol/sdk'
 import {
 	CreateLegacySpaceParams,
 	ETH_ADDRESS,
@@ -19,7 +19,7 @@ import {
 	NoopRuleData,
 	Permission,
 	SpaceDapp,
-} from '@river-build/web3'
+} from '@towns-protocol/web3'
 import { create } from '@bufbuild/protobuf'
 
 import { config } from '../src/environment'

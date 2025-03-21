@@ -10,8 +10,8 @@ import {
     expectUserCannotJoinChannel,
     linkWallets,
 } from '../../testUtils'
-import { dlog } from '@river-build/dlog'
-import { Address, treeToRuleData, TestERC1155 } from '@river-build/web3'
+import { dlog } from '@towns-protocol/dlog'
+import { Address, treeToRuleData, TestERC1155 } from '@towns-protocol/web3'
 
 const log = dlog('csb:test:channelsWithErc1155Entitlements')
 const test1155Name = 'TestERC1155'
