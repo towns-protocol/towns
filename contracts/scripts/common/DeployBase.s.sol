@@ -12,8 +12,6 @@ import {DeployHelpers} from "./DeployHelpers.s.sol";
 import {Context} from "./Context.sol";
 
 contract DeployBase is Context, DeployHelpers, Script {
-  string internal constant DEPLOYMENT_CACHE_PATH = "contracts/deployments";
-
   constructor() {
     // set up chains
     setChain(
@@ -55,7 +53,7 @@ contract DeployBase is Context, DeployHelpers, Script {
   }
 
   function networkDirPath() internal returns (string memory path) {
-    string memory context = vm.envOr("DEPLOYMENT_CONTEXT", string(""));
+    string memory context = getDeploymentContext();
     string memory chainAlias = chainIdAlias();
 
     // if no context is provided, use the default path
@@ -98,7 +96,7 @@ contract DeployBase is Context, DeployHelpers, Script {
     string memory versionName,
     address contractAddr
   ) internal {
-    if (vm.envOr("SAVE_DEPLOYMENTS", uint256(0)) == 0) {
+    if (!shouldSaveDeployments()) {
       debug("(set SAVE_DEPLOYMENTS=1 to save deployments to file)");
       return;
     }
@@ -156,9 +154,5 @@ contract DeployBase is Context, DeployHelpers, Script {
       return replacement;
     }
     return LibString.slice(fullString, 0, charIndex);
-  }
-
-  function isTesting() internal view virtual returns (bool) {
-    return vm.envOr("IN_TESTING", false);
   }
 }
