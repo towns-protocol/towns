@@ -3,7 +3,7 @@ pragma solidity ^0.8.23;
 
 // utils
 import {TestUtils} from "contracts/test/utils/TestUtils.sol";
-import {EIP712Utils} from "contracts/test/utils/EIP712Utils.sol";
+import {EIP712Utils} from "@towns-protocol/diamond/test/facets/signature/EIP712Utils.sol";
 import {SimpleAccountFactory} from "account-abstraction/samples/SimpleAccountFactory.sol";
 import {SimpleAccount} from "account-abstraction/samples/SimpleAccount.sol";
 
