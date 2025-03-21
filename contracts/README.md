@@ -87,6 +87,16 @@ replace the `[Facet]` part with the contract you want to deploy, you can see all
 in [this](./scripts/deployments/facets) part of the project.
 
 <b>To deploy our contracts to a live network</b>\
-from within the `contracts/` folder you can run `make deploy-base-sepolia contract=Deploy[Facet] type=facets context=[context]` you will
-replace the `[Facet]` part with the contract you want to deploy, you can see all the facets available for deployment
-in [this](./scripts/deployments/facets) part of the project.
+from within the `contracts/` folder you can run:
+
+```shell
+make deploy-base-sepolia contract=Deploy[Contract] type=[type] context=[context]
+```
+
+For example, to deploy the WalletLink facet to Base Sepolia with a deployment context of "gamma":
+
+```shell
+make deploy-base-sepolia contract=DeployWalletLink type=facets context=gamma
+```
+
+You can see all the contracts available for deployment in the [deployments](./scripts/deployments) directory.
