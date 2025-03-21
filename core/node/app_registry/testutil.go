@@ -91,7 +91,7 @@ func NewTestAppServer(
 	appWallet *crypto.Wallet,
 	client protocolconnect.StreamServiceClient,
 ) *TestAppServer {
-	listener, url := testcert.MakeTestListener(t)
+	listener, url := testcert.MakeTestListener(t, nil)
 
 	b := &TestAppServer{
 		t:         t,
