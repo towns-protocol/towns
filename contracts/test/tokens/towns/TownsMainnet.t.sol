@@ -16,7 +16,7 @@ import {TokenInflationLib} from "contracts/src/tokens/towns/mainnet/libs/TokenIn
 //contracts
 import {DeployTownsMainnet} from "contracts/scripts/deployments/utils/DeployTownsMainnet.s.sol";
 import {Towns} from "contracts/src/tokens/towns/mainnet/Towns.sol";
-import {EIP712Utils} from "contracts/test/utils/EIP712Utils.sol";
+import {EIP712Utils} from "@towns-protocol/diamond/test/facets/signature/EIP712Utils.sol";
 
 contract TownsMainnetTests is TestUtils, ITownsBase, EIP712Utils {
   DeployTownsMainnet internal deployTownsMainnet = new DeployTownsMainnet();

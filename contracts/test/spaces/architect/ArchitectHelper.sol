@@ -5,7 +5,7 @@ pragma solidity ^0.8.23;
 
 // contracts
 import {Architect} from "contracts/src/factory/facets/architect/Architect.sol";
-import {FacetHelper} from "contracts/test/diamond/Facet.t.sol";
+import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
 
 contract ArchitectHelper is FacetHelper {
   constructor() {
