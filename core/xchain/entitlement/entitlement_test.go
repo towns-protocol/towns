@@ -986,8 +986,6 @@ func Test_evaluateEthBalance_withConfig(t *testing.T) {
 			ctx, cancel := test.NewTestContext()
 			defer cancel()
 			require := require.New(t)
-			ctx, cancel := test.NewTestContext()
-			defer cancel()
 			customEvaluator, err := NewEvaluatorFromConfigWithBlockchainInfo(
 				ctx,
 				cfg,
