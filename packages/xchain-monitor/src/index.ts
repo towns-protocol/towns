@@ -48,7 +48,7 @@ async function main() {
             }
         }
         blockOffset += BigInt(config.blockScanChunkSize)
-        await saveLastScannedBlock(blockOffset-1n)
+        await saveLastScannedBlock(blockOffset - 1n)
     }
     const maxScannedBlock = blockOffset - 1n
     logger.info(
@@ -59,7 +59,7 @@ async function main() {
             blockScanChunkSize: config.blockScanChunkSize,
             lookAheadBlocksNeeded: config.transactionValidBlocks,
         },
-        "Monitor has caught up, shutting down."
+        'Monitor has caught up, shutting down.',
     )
 }
 

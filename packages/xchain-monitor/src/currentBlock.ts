@@ -17,7 +17,7 @@ export async function saveLastScannedBlock(blockNum: bigint) {
                 fileName,
                 lastScannedBlock: blockNum,
             },
-            "Saving last scanned block to file"
+            'Saving last scanned block to file',
         )
     } catch (err) {
         logger.error(
@@ -42,7 +42,7 @@ export async function getFirstUnscannedBlock(): Promise<bigint> {
                 fileName,
                 currentBlock,
             },
-            "Reading current block from file"
+            'Reading current block from file',
         )
 
         return currentBlock
@@ -55,6 +55,6 @@ export async function getFirstUnscannedBlock(): Promise<bigint> {
             'Unable to read current block number from file',
         )
     }
-    logger.info("Unable to read current block from disk, falling back to config.initialBlockNum")
+    logger.info('Unable to read current block from disk, falling back to config.initialBlockNum')
     return config.initialBlockNum
 }
