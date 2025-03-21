@@ -176,10 +176,27 @@ export class Supervisor {
         // Process 0 is for supervisor
         for (let i = 1; i < this.opts.processCount; i++) {
             const driver = new StressDriver(i, this.opts)
-            if (!skipFunding) {
-                await driver.fund(this.rootWallet)
-            }
             this.drivers.push(driver)
+        }
+
+        if (!skipFunding) {
+            this.logger.info('Funding drivers')
+            let nonce = await this.rootWallet.getTransactionCount('pending')
+            const txs = await Promise.all(
+                this.drivers.map((d) => {
+                    const wallet = Wallet.fromMnemonic(
+                        this.opts.mnemonic,
+                        walletPathForIndex(d.index),
+                    )
+                    return this.rootWallet.sendTransaction({
+                        to: wallet.address,
+                        value: ethers.utils.parseEther('0.01'), // Transfer 0.01 ETH
+                        nonce: nonce++,
+                    })
+                }),
+            )
+            await Promise.all(txs.map(async (tx) => (await tx).wait()))
+            this.logger.info('Funded drivers')
         }
     }
 
