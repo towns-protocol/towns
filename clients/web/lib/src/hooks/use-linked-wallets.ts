@@ -238,6 +238,7 @@ export function useLinkedWalletsForWallet({
         },
         {
             enabled: enabled && !!walletAddress && !!clientSingleton,
+            staleTime: 60 * 1000 * 5,
             // b/c this query is only invalidated if the transaction hooks await the transaction to be mined (component could be unmounted before that)
             // we need to refetch on mount to make sure we have the latest data
             refetchOnMount: true,

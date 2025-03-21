@@ -30,6 +30,7 @@ export function useChannelSettings(spaceId: string, channelId: string) {
             // query will not execute until the flag is true.
             enabled: isEnabled,
             refetchOnMount: true,
+            staleTime: 1000 * 60 * 5,
         },
     )
 

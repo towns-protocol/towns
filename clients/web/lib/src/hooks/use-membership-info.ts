@@ -1,5 +1,5 @@
 import { useSpaceDapp } from './use-space-dapp'
-import { useCallback } from 'react'
+import { useCallback, useMemo } from 'react'
 import { useQuery } from '../query/queryClient'
 import { blockchainKeys } from '../query/query-keys'
 import { useTownsContext } from '../components/TownsContextProvider'
@@ -15,7 +15,9 @@ export function useMembershipInfo(spaceId: string) {
         provider,
     })
 
-    const isEnabled = spaceDapp && spaceId.length > 0
+    const queryKey = useMemo(() => blockchainKeys.membershipInfo(spaceId), [spaceId])
+
+    const isEnabled = useMemo(() => Boolean(spaceDapp && spaceId.length > 0), [spaceDapp, spaceId])
 
     const getMembershipInfo = useCallback(() => {
         if (!spaceDapp || !isEnabled) {
@@ -24,7 +26,8 @@ export function useMembershipInfo(spaceId: string) {
         return spaceDapp.getMembershipInfo(spaceId)
     }, [spaceDapp, isEnabled, spaceId])
 
-    return useQuery(blockchainKeys.membershipInfo(spaceId), getMembershipInfo, {
+    return useQuery(queryKey, getMembershipInfo, {
         enabled: isEnabled,
+        staleTime: 5 * 60 * 1000, // 5 minutes in milliseconds
     })
 }

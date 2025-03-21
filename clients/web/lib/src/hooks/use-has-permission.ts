@@ -18,6 +18,21 @@ function querySetup(
     clientSingleton: ReturnType<typeof useTownsClient>['clientSingleton'],
 ) {
     const { spaceId, channelId, walletAddress, permission } = props
+
+    // Calculate staleTime based on permission type
+    const staleTime = (() => {
+        switch (permission) {
+            case Permission.Read:
+                return 30 * 60 * 1000 // 30 minutes
+            case Permission.Write:
+            case Permission.JoinSpace:
+                return 1 * 60 * 1000
+            default:
+                // covers all other permissions
+                return 5 * 60 * 1000
+        }
+    })()
+
     return {
         queryKey: blockchainKeys.hasPermission(props),
         queryFn: async () => {
@@ -28,22 +43,11 @@ function querySetup(
                     walletAddress,
                     permission,
                 )
-                // console.debug(
-                //     '[useHasPermission]',
-                //     'getHasPermission() from network',
-                //     new Date().toString(),
-                //     {
-                //         spaceId,
-                //         channelId,
-                //         walletAddress,
-                //         permission,
-                //     },
-                //     isEntitled,
-                // )
                 return isEntitled
             }
             return false
         },
+        staleTime,
     }
 }
 
@@ -52,7 +56,7 @@ export function useHasPermission(props: Props) {
     const { walletAddress } = props
     const queryClient = useQueryClient()
 
-    const { queryFn, queryKey } = querySetup(props, clientSingleton)
+    const { queryFn, queryKey, staleTime } = querySetup(props, clientSingleton)
 
     const invalidate = useCallback(() => {
         return queryClient.invalidateQueries({ queryKey })
@@ -78,7 +82,7 @@ export function useHasPermission(props: Props) {
         {
             enabled: clientSingleton !== undefined && !!walletAddress && isAddress(walletAddress),
             refetchOnMount: true,
-            // inherits default staleTime of 15 secs
+            staleTime,
             // server strictly enforces permissions in real time.
             // client side caching of permissions is only for UX purposes.
             // test the UX for stale time and cache time before setting them.

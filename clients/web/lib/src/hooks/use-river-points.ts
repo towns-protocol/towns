@@ -64,8 +64,9 @@ export function useRiverPoints(loggedInWalletAddress: `0x${string}`) {
         },
         {
             enabled: !!dapp && !!loggedInWalletAddress,
-            staleTime: HOUR_MS * 4,
-            refetchOnWindowFocus: 'always',
+            staleTime: SECONDS_MS * 60 * 5,
+            refetchOnWindowFocus: true,
+            refetchOnMount: true,
         },
     )
 
