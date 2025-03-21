@@ -12,6 +12,13 @@ export async function saveLastScannedBlock(blockNum: bigint) {
     const fileName = path.join(config.persistentStorageDir, 'currentBlock')
     try {
         await fs.promises.writeFile(fileName, `${blockNum + 1n}`, 'utf8')
+        logger.info(
+            {
+                fileName,
+                lastScannedBlock: blockNum,
+            },
+            "Saving last scanned block to file"
+        )
     } catch (err) {
         logger.error(
             {
@@ -29,7 +36,16 @@ export async function getFirstUnscannedBlock(): Promise<bigint> {
     }
     const fileName = path.join(config.persistentStorageDir, 'currentBlock')
     try {
-        return BigInt((await fs.promises.readFile(fileName)).toString('utf8').trim())
+        const currentBlock = BigInt((await fs.promises.readFile(fileName)).toString('utf8').trim())
+        logger.info(
+            {
+                fileName,
+                currentBlock,
+            },
+            "Reading current block from file"
+        )
+
+        return currentBlock
     } catch (err) {
         logger.error(
             {
