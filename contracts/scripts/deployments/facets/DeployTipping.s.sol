@@ -8,7 +8,7 @@ pragma solidity ^0.8.24;
 //contracts
 import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
 import {TippingFacet} from "contracts/src/spaces/facets/tipping/TippingFacet.sol";
-import {FacetHelper} from "contracts/test/diamond/Facet.t.sol";
+import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
 
 contract DeployTipping is FacetHelper, Deployer {
   constructor() {

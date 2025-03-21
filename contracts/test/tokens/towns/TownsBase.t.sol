@@ -8,7 +8,7 @@ import {TestUtils} from "contracts/test/utils/TestUtils.sol";
 import {ILockBase} from "contracts/src/tokens/lock/ILock.sol";
 
 //libraries
-import {EIP712Utils} from "contracts/test/utils/EIP712Utils.sol";
+import {EIP712Utils} from "@towns-protocol/diamond/test/facets/signature/EIP712Utils.sol";
 import {TownsLib} from "contracts/src/tokens/towns/base/TownsLib.sol";
 import {LockStorage} from "contracts/src/tokens/lock/LockStorage.sol";
 
@@ -20,6 +20,9 @@ import {ERC20} from "solady/tokens/ERC20.sol";
 import {ERC20Votes} from "solady/tokens/ERC20Votes.sol";
 
 contract TownsBaseTest is TestUtils, EIP712Utils, ILockBase {
+  address internal constant PERMIT2 =
+    0x000000000022D473030F116dDEE9F6B43aC78BA3;
+
   DeployTownsBase internal deployTownsBase = new DeployTownsBase();
   Towns towns;
 

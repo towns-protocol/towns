@@ -2,7 +2,7 @@
 pragma solidity ^0.8.23;
 
 import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
-import {FacetHelper} from "contracts/test/diamond/Facet.t.sol";
+import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
 import {EntitlementChecker} from "contracts/src/base/registry/facets/checker/EntitlementChecker.sol";
 
 contract DeployEntitlementChecker is Deployer, FacetHelper {

@@ -12,8 +12,7 @@ import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 
 // contracts
 import {Nonces} from "@towns-protocol/diamond/src/utils/Nonces.sol";
-import {Context} from "contracts/src/diamond/utils/Context.sol";
-import {EIP712} from "@towns-protocol/diamond/src/utils/cryptography/EIP712.sol";
+import {EIP712Base} from "@towns-protocol/diamond/src/utils/cryptography/EIP712Base.sol";
 
 /**
  * @dev This is a base abstract contract that tracks voting units, which are a measure of voting power that can be
@@ -34,7 +33,7 @@ import {EIP712} from "@towns-protocol/diamond/src/utils/cryptography/EIP712.sol"
  * previous example, it would be included in {ERC721-_beforeTokenTransfer}).
  *
  */
-abstract contract VotesBase is IERC5805, Context, EIP712, Nonces {
+abstract contract VotesBase is IERC5805, EIP712Base, Nonces {
   using VotesStorage for VotesStorage.Layout;
   using Checkpoints for Checkpoints.Trace224;
 

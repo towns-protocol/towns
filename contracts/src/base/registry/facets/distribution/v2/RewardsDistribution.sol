@@ -15,7 +15,7 @@ import {RewardsDistributionStorage} from "./RewardsDistributionStorage.sol";
 import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
 import {OwnableBase} from "@towns-protocol/diamond/src/facets/ownable/OwnableBase.sol";
 import {Nonces} from "@towns-protocol/diamond/src/utils/Nonces.sol";
-import {EIP712Base} from "@towns-protocol/diamond/src/utils/cryptography/signature/EIP712Base.sol";
+import {EIP712Base} from "@towns-protocol/diamond/src/utils/cryptography/EIP712Base.sol";
 import {MainnetDelegationBase} from "contracts/src/base/registry/facets/mainnet/MainnetDelegationBase.sol";
 import {UpgradeableBeaconBase} from "contracts/src/diamond/facets/beacon/UpgradeableBeacon.sol";
 import {DelegationProxy} from "./DelegationProxy.sol";

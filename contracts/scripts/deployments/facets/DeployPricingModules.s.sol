@@ -8,7 +8,7 @@ pragma solidity ^0.8.23;
 //contracts
 import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
 import {PricingModulesFacet} from "contracts/src/factory/facets/architect/pricing/PricingModulesFacet.sol";
-import {FacetHelper} from "contracts/test/diamond/Facet.t.sol";
+import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
 
 contract DeployPricingModules is FacetHelper, Deployer {
   constructor() {
