@@ -35,7 +35,7 @@ type (
 	// When this is returned, caller already has access to the device key,
 	// group encryption sessions envelope. They can combine these with the returned
 	// information here to form the following tuple needed for sending each message
-	// (webhookUrl, encryption_envelope, encryptedSharedSecret, streamEvent)
+	// (webhookUrl, encryption_envelope, encryptedSharedSecret, messageEnvelope)
 	// where:
 	// - webhookUrl is the address of the bot service
 	// - encryption_envelope is binary of the envelope of the group encryption sessions
@@ -45,12 +45,12 @@ type (
 	//   to sign jwt tokens for authentication of origination of webhook calls, after it
 	//   has been encrypted with the app registry service's in-memory data encryption key,
 	//   and
-	// - StreamEvents is an array of serialized channel message payload stream event envelopes
+	// - messageEnvelopes is an array of serialized channel message payload stream event envelopes
 	SendableMessages struct {
 		AppId                 common.Address // included here for logging / metrics
 		EncryptedSharedSecret [32]byte
 		WebhookUrl            string
-		StreamEvents          [][]byte
+		MessageEnvelopes      [][]byte
 	}
 
 	// When SendableApp is returned, the caller has access to the session id and
@@ -130,7 +130,7 @@ type (
 			ctx context.Context,
 			appIds []common.Address,
 			sessionId string,
-			streamEventBytes []byte,
+			envelopeBytes []byte,
 		) (sendableDevices []SendableApp, unsendableDevices []UnsendableApp, err error)
 	}
 )
@@ -482,7 +482,7 @@ func (s *PostgresAppRegistryStore) publishSessionKeys(
 		rows,
 		[]any{&message},
 		func() error {
-			messages.StreamEvents = append(messages.StreamEvents, message)
+			messages.MessageEnvelopes = append(messages.MessageEnvelopes, message)
 			return nil
 		},
 	); err != nil {
@@ -491,7 +491,7 @@ func (s *PostgresAppRegistryStore) publishSessionKeys(
 			err,
 		).Message("unable to scan from sendable messages")
 	}
-	if len(messages.StreamEvents) == 0 {
+	if len(messages.MessageEnvelopes) == 0 {
 		return nil, nil
 	}
 
@@ -526,7 +526,7 @@ func (s *PostgresAppRegistryStore) EnqueueUnsendableMessages(
 	ctx context.Context,
 	appIds []common.Address,
 	sessionId string,
-	streamEventBytes []byte,
+	envelopeBytes []byte,
 ) (sendableDevices []SendableApp, unsendableDevices []UnsendableApp, err error) {
 	if err = s.txRunner(
 		ctx,
@@ -534,7 +534,7 @@ func (s *PostgresAppRegistryStore) EnqueueUnsendableMessages(
 		pgx.ReadWrite,
 		func(ctx context.Context, tx pgx.Tx) error {
 			var err error
-			sendableDevices, unsendableDevices, err = s.enqueueUnsendableMessages(ctx, appIds, sessionId, streamEventBytes, tx)
+			sendableDevices, unsendableDevices, err = s.enqueueUnsendableMessages(ctx, appIds, sessionId, envelopeBytes, tx)
 			return err
 		},
 		nil,
@@ -558,7 +558,7 @@ func (s *PostgresAppRegistryStore) enqueueUnsendableMessages(
 	ctx context.Context,
 	appIds []common.Address,
 	sessionId string,
-	streamEventBytes []byte,
+	envelopeBytes []byte,
 	tx pgx.Tx,
 ) (sendableApps []SendableApp, unsendableApps []UnsendableApp, err error) {
 	appIdStrings := make([]string, len(appIds))
@@ -666,7 +666,7 @@ func (s *PostgresAppRegistryStore) enqueueUnsendableMessages(
 				return nil, nil
 			}
 
-			row := []interface{}{unsendableApps[nextRow].DeviceKey, sessionId, streamEventBytes}
+			row := []interface{}{unsendableApps[nextRow].DeviceKey, sessionId, envelopeBytes}
 			nextRow++
 			return row, nil
 		}),

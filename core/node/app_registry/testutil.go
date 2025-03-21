@@ -208,10 +208,10 @@ func (b *TestAppServer) respondToSendMessages(
 
 	log.Debugw(
 		"respondToSendMessages",
-		"numEvents",
-		len(data.StreamEvents),
-		"events",
-		data.StreamEvents,
+		"numMessages",
+		len(data.MessageEnvelopes),
+		"messageEnvelopes",
+		data.MessageEnvelopes,
 		"encryptionBytes",
 		data.EncryptionEnvelope,
 		"botDeviceKey",
@@ -233,22 +233,29 @@ func (b *TestAppServer) respondToSendMessages(
 	payload := event.Event.GetUserInboxPayload()
 	if payload == nil {
 		log.Errorw("payload is not user inbox")
-		return fmt.Errorf("Forwarded encryption event was not a user inbox event")
+		return fmt.Errorf("forwarded encryption event was not a user inbox event")
 	}
 
 	encryptionSessions := payload.GetGroupEncryptionSessions()
 	if encryptionSessions == nil {
 		log.Errorw("User inbox payload content is not group encryption sessions")
-		return fmt.Errorf("Forwarded encryption event did not have a group encryption sessions payload")
+		return fmt.Errorf("forwarded encryption event did not have a group encryption sessions payload")
 	}
 
-	for _, streamBytes := range data.StreamEvents {
-		log.Debugw("Sending event...", "streamEvent", streamBytes)
-		var streamEvent protocol.StreamEvent
-		if err := proto.Unmarshal(streamBytes, &streamEvent); err != nil {
+	for _, envelopeBytes := range data.MessageEnvelopes {
+		log.Debugw("Sending event...", "streamEvent", envelopeBytes)
+		var messageEnvelope protocol.Envelope
+		if err := proto.Unmarshal(envelopeBytes, &messageEnvelope); err != nil {
 			log.Errorw("Could not unmarshal stream event", "error", err)
 			return fmt.Errorf("could not unmarshal stream event: %w", err)
 		}
+
+		parsedEvent, err := events.ParseEvent(&messageEnvelope)
+		if err != nil {
+			log.Errorw("Could not parse message envelope", "err", err)
+			return fmt.Errorf("could not parse message envelope: %w", err)
+		}
+		streamEvent := parsedEvent.Event
 		payload, ok := streamEvent.Payload.(*protocol.StreamEvent_ChannelPayload)
 		if !ok {
 			log.Errorw("Could not cast channel stream payload")

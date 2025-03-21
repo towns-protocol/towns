@@ -21,7 +21,7 @@ type SessionMessages struct {
 	EncryptedSharedSecret [32]byte
 	EncryptionEnvelope    []byte
 	WebhookUrl            string
-	StreamEvents          [][]byte
+	MessageEnvelopes      [][]byte
 }
 
 // CachedEncryptedMessageQueue enqueues and dispatches messages to app servers according
@@ -93,7 +93,7 @@ func (q *CachedEncryptedMessageQueue) PublishSessionKeys(
 		DeviceKey:             deviceKey,
 		EncryptionEnvelope:    encryptionEnvelope,
 		WebhookUrl:            sendableMessages.WebhookUrl,
-		StreamEvents:          sendableMessages.StreamEvents,
+		MessageEnvelopes:      sendableMessages.MessageEnvelopes,
 	}
 	return q.appDispatcher.SubmitMessages(ctx, messages)
 }
@@ -105,14 +105,14 @@ func (q *CachedEncryptedMessageQueue) DispatchOrEnqueueMessages(
 	appIds []common.Address,
 	sessionId string,
 	channelId shared.StreamId,
-	streamEventBytes []byte,
+	envelopeBytes []byte,
 ) (err error) {
 	// log := logging.FromCtx(ctx)
 	sendableApps, unsendableApps, err := q.store.EnqueueUnsendableMessages(
 		ctx,
 		appIds,
 		sessionId,
-		streamEventBytes,
+		envelopeBytes,
 	)
 	if err != nil {
 		return err
@@ -146,7 +146,7 @@ func (q *CachedEncryptedMessageQueue) DispatchOrEnqueueMessages(
 			EncryptedSharedSecret: sendableApp.SendMessageSecrets.EncryptedSharedSecret,
 			EncryptionEnvelope:    sendableApp.SendMessageSecrets.EncryptionEnvelope,
 			WebhookUrl:            sendableApp.WebhookUrl,
-			StreamEvents:          [][]byte{streamEventBytes},
+			MessageEnvelopes:      [][]byte{envelopeBytes},
 		}); err != nil {
 			return err
 		}

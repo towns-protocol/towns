@@ -225,7 +225,7 @@ func requireSendableMessagesEqual(t *testing.T, expected *storage.SendableMessag
 		require.Equal(t, expected.AppId, actual.AppId)
 		require.Equal(t, expected.EncryptedSharedSecret, actual.EncryptedSharedSecret)
 		require.Equal(t, expected.WebhookUrl, actual.WebhookUrl)
-		require.ElementsMatch(t, expected.StreamEvents, actual.StreamEvents)
+		require.ElementsMatch(t, expected.MessageEnvelopes, actual.MessageEnvelopes)
 	}
 }
 
@@ -418,7 +418,7 @@ func TestEnqueueMessages(t *testing.T) {
 			AppId:                 apps[i].Address,
 			EncryptedSharedSecret: secrets[i],
 			WebhookUrl:            fmt.Sprintf("https://webhook.com/%d", i),
-			StreamEvents:          streamEvents,
+			MessageEnvelopes:          streamEvents,
 		}
 	}
 

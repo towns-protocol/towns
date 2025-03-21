@@ -35,8 +35,8 @@ type KeySolicitationResponse struct{}
 
 // command: "messages"
 type SendSessionMessagesRequestData struct {
-	EncryptionEnvelope []byte   `json:"encryptionEvent"`
-	StreamEvents       [][]byte `json:"streamEvents"`
+	EncryptionEnvelope []byte   `json:"encryptionEnvelope"`
+	MessageEnvelopes   [][]byte `json:"messageEnvelopes"`
 }
 
 type SendSessionMessagesResponse struct{}
@@ -199,7 +199,7 @@ func (b *AppClient) SendSessionMessages(
 	hs256SharedSecret [32]byte,
 	encryptionEnvelope []byte,
 	webhookUrl string,
-	streamEvents [][]byte,
+	messageEnvelopes [][]byte,
 ) error {
 	resp, err := b.marshalAndPost(
 		ctx,
@@ -209,7 +209,7 @@ func (b *AppClient) SendSessionMessages(
 			Command: "messages",
 			Data: SendSessionMessagesRequestData{
 				EncryptionEnvelope: encryptionEnvelope,
-				StreamEvents:       streamEvents,
+				MessageEnvelopes:   messageEnvelopes,
 			},
 		},
 		webhookUrl,
