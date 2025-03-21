@@ -16,14 +16,15 @@ import {MerkleTree} from "contracts/test/utils/MerkleTree.sol";
 import {DropFacet} from "contracts/src/airdrop/drop/DropFacet.sol";
 import {RewardsDistribution} from "contracts/src/base/registry/facets/distribution/v2/RewardsDistribution.sol";
 import {BasisPoints} from "contracts/src/utils/libraries/BasisPoints.sol";
-import {DropStorage} from "contracts/src/airdrop/drop/DropStorage.sol";
 import {NodeOperatorStatus} from "contracts/src/base/registry/facets/operator/NodeOperatorStorage.sol";
+import {DropFacetLib} from "contracts/src/airdrop/drop/DropFacetLib.sol";
+import {DropClaimLib} from "contracts/src/airdrop/drop/DropClaimLib.sol";
 
 // contracts
 import {BaseSetup} from "contracts/test/spaces/BaseSetup.sol";
 import {Towns} from "contracts/src/tokens/towns/base/Towns.sol";
 import {NodeOperatorFacet} from "contracts/src/base/registry/facets/operator/NodeOperatorFacet.sol";
-import {EIP712Facet} from "@towns-protocol/diamond/src/utils/cryptography/signature/EIP712Facet.sol";
+import {EIP712Facet} from "@towns-protocol/diamond/src/utils/cryptography/EIP712Facet.sol";
 import {StakingRewards} from "contracts/src/base/registry/facets/distribution/v2/StakingRewards.sol";
 
 contract DropFacetTest is
@@ -117,7 +118,8 @@ contract DropFacetTest is
   }
 
   modifier givenClaimConditionSet(uint16 penaltyBps) {
-    ClaimCondition[] memory conditions = new ClaimCondition[](1);
+    DropClaimLib.ClaimCondition[]
+      memory conditions = new DropClaimLib.ClaimCondition[](1);
     conditions[0] = _createClaimCondition(
       block.timestamp,
       root,
@@ -133,9 +135,8 @@ contract DropFacetTest is
   modifier givenWalletHasClaimedWithPenalty(address wallet, address caller) {
     uint256 conditionId = dropFacet.getActiveClaimConditionId();
 
-    ClaimCondition memory condition = dropFacet.getClaimConditionById(
-      conditionId
-    );
+    DropClaimLib.ClaimCondition memory condition = dropFacet
+      .getClaimConditionById(conditionId);
     uint16 penaltyBps = condition.penaltyBps;
     uint256 merkleAmount = amounts[treeIndex[wallet]];
     uint256 penaltyAmount = BasisPoints.calculate(merkleAmount, penaltyBps);
@@ -151,7 +152,7 @@ contract DropFacetTest is
       expectedAmount
     );
     dropFacet.claimWithPenalty(
-      Claim({
+      DropClaimLib.Claim({
         conditionId: conditionId,
         account: wallet,
         quantity: merkleAmount,
@@ -201,7 +202,7 @@ contract DropFacetTest is
     vm.expectEmit(address(dropFacet));
     emit DropFacet_Claimed_And_Staked(conditionId, caller, wallet, amount);
     dropFacet.claimAndStake(
-      Claim({
+      DropClaimLib.Claim({
         conditionId: conditionId,
         account: wallet,
         quantity: amount,
@@ -223,7 +224,8 @@ contract DropFacetTest is
     external
     givenTokensMinted(TOTAL_TOKEN_AMOUNT * 3)
   {
-    ClaimCondition[] memory conditions = new ClaimCondition[](3);
+    DropClaimLib.ClaimCondition[]
+      memory conditions = new DropClaimLib.ClaimCondition[](3);
     conditions[0] = _createClaimCondition(
       block.timestamp - 100,
       root,
@@ -266,9 +268,8 @@ contract DropFacetTest is
     givenTokensMinted(TOTAL_TOKEN_AMOUNT)
     givenClaimConditionSet(penaltyBps)
   {
-    ClaimCondition memory condition = dropFacet.getClaimConditionById(
-      dropFacet.getActiveClaimConditionId()
-    );
+    DropClaimLib.ClaimCondition memory condition = dropFacet
+      .getClaimConditionById(dropFacet.getActiveClaimConditionId());
     assertEq(condition.startTimestamp, block.timestamp);
     assertEq(condition.maxClaimableSupply, TOTAL_TOKEN_AMOUNT);
     assertEq(condition.supplyClaimed, 0);
@@ -300,8 +301,9 @@ contract DropFacetTest is
 
     (root, tree) = merkleTree.constructTree(claimers, claimAmounts);
 
-    ClaimCondition[] memory conditions = new ClaimCondition[](1);
-    conditions[0] = ClaimCondition({
+    DropClaimLib.ClaimCondition[]
+      memory conditions = new DropClaimLib.ClaimCondition[](1);
+    conditions[0] = DropClaimLib.ClaimCondition({
       startTimestamp: uint40(block.timestamp),
       endTimestamp: 0,
       maxClaimableSupply: totalAmount,
@@ -315,9 +317,8 @@ contract DropFacetTest is
     dropFacet.setClaimConditions(conditions);
 
     uint256 conditionId = dropFacet.getActiveClaimConditionId();
-    ClaimCondition memory condition = dropFacet.getClaimConditionById(
-      conditionId
-    );
+    DropClaimLib.ClaimCondition memory condition = dropFacet
+      .getClaimConditionById(conditionId);
 
     for (uint256 i = 0; i < claimData.length; i++) {
       address claimer = claimData[i].claimer;
@@ -342,7 +343,7 @@ contract DropFacetTest is
         expectedAmount
       );
       dropFacet.claimWithPenalty(
-        Claim({
+        DropClaimLib.Claim({
           conditionId: conditionId,
           account: claimer,
           quantity: amount,
@@ -372,7 +373,8 @@ contract DropFacetTest is
     external
     givenTokensMinted(TOTAL_TOKEN_AMOUNT)
   {
-    ClaimCondition[] memory conditions = new ClaimCondition[](1);
+    DropClaimLib.ClaimCondition[]
+      memory conditions = new DropClaimLib.ClaimCondition[](1);
     conditions[0] = _createClaimCondition(
       block.timestamp,
       bytes32(0),
@@ -386,7 +388,7 @@ contract DropFacetTest is
 
     vm.expectRevert(DropFacet__MerkleRootNotSet.selector);
     dropFacet.claimWithPenalty(
-      Claim({
+      DropClaimLib.Claim({
         conditionId: conditionId,
         account: bob,
         quantity: 100,
@@ -400,7 +402,8 @@ contract DropFacetTest is
     external
     givenTokensMinted(TOTAL_TOKEN_AMOUNT)
   {
-    ClaimCondition[] memory conditions = new ClaimCondition[](1);
+    DropClaimLib.ClaimCondition[]
+      memory conditions = new DropClaimLib.ClaimCondition[](1);
     conditions[0] = _createClaimCondition(
       block.timestamp,
       root,
@@ -414,7 +417,7 @@ contract DropFacetTest is
 
     vm.expectRevert(DropFacet__QuantityMustBeGreaterThanZero.selector);
     dropFacet.claimWithPenalty(
-      Claim({
+      DropClaimLib.Claim({
         conditionId: conditionId,
         account: bob,
         quantity: 0,
@@ -428,7 +431,8 @@ contract DropFacetTest is
     external
     givenTokensMinted(TOTAL_TOKEN_AMOUNT)
   {
-    ClaimCondition[] memory conditions = new ClaimCondition[](1);
+    DropClaimLib.ClaimCondition[]
+      memory conditions = new DropClaimLib.ClaimCondition[](1);
     conditions[0] = _createClaimCondition(
       block.timestamp,
       root,
@@ -443,7 +447,7 @@ contract DropFacetTest is
 
     vm.expectRevert(DropFacet__ExceedsMaxClaimableSupply.selector);
     dropFacet.claimWithPenalty(
-      Claim({
+      DropClaimLib.Claim({
         conditionId: conditionId,
         account: bob,
         quantity: 101,
@@ -457,7 +461,8 @@ contract DropFacetTest is
     external
     givenTokensMinted(TOTAL_TOKEN_AMOUNT)
   {
-    ClaimCondition[] memory conditions = new ClaimCondition[](1);
+    DropClaimLib.ClaimCondition[]
+      memory conditions = new DropClaimLib.ClaimCondition[](1);
     conditions[0] = _createClaimCondition(
       block.timestamp,
       root,
@@ -476,7 +481,7 @@ contract DropFacetTest is
     vm.prank(bob);
     vm.expectRevert(DropFacet__ClaimHasNotStarted.selector);
     dropFacet.claimWithPenalty(
-      Claim({
+      DropClaimLib.Claim({
         conditionId: conditionId,
         account: bob,
         quantity: amounts[treeIndex[bob]],
@@ -490,7 +495,8 @@ contract DropFacetTest is
     external
     givenTokensMinted(TOTAL_TOKEN_AMOUNT)
   {
-    ClaimCondition[] memory conditions = new ClaimCondition[](1);
+    DropClaimLib.ClaimCondition[]
+      memory conditions = new DropClaimLib.ClaimCondition[](1);
     conditions[0] = _createClaimCondition(
       block.timestamp,
       root,
@@ -509,7 +515,7 @@ contract DropFacetTest is
 
     vm.expectRevert(DropFacet__ClaimHasEnded.selector);
     dropFacet.claimWithPenalty(
-      Claim({
+      DropClaimLib.Claim({
         conditionId: conditionId,
         account: bob,
         quantity: amounts[treeIndex[bob]],
@@ -523,7 +529,8 @@ contract DropFacetTest is
     external
     givenTokensMinted(TOTAL_TOKEN_AMOUNT)
   {
-    ClaimCondition[] memory conditions = new ClaimCondition[](1);
+    DropClaimLib.ClaimCondition[]
+      memory conditions = new DropClaimLib.ClaimCondition[](1);
     conditions[0] = _createClaimCondition(
       block.timestamp,
       root,
@@ -538,7 +545,7 @@ contract DropFacetTest is
     bytes32[] memory proof = merkleTree.getProof(tree, treeIndex[bob]);
 
     dropFacet.claimWithPenalty(
-      Claim({
+      DropClaimLib.Claim({
         conditionId: conditionId,
         account: bob,
         quantity: amounts[treeIndex[bob]],
@@ -549,7 +556,7 @@ contract DropFacetTest is
 
     vm.expectRevert(DropFacet__AlreadyClaimed.selector);
     dropFacet.claimWithPenalty(
-      Claim({
+      DropClaimLib.Claim({
         conditionId: conditionId,
         account: bob,
         quantity: amounts[treeIndex[bob]],
@@ -568,7 +575,7 @@ contract DropFacetTest is
 
     vm.expectRevert(DropFacet__InvalidProof.selector);
     dropFacet.claimWithPenalty(
-      Claim({
+      DropClaimLib.Claim({
         conditionId: conditionId,
         account: bob,
         quantity: amounts[treeIndex[bob]],
@@ -628,7 +635,8 @@ contract DropFacetTest is
     external
     givenTokensMinted(TOTAL_TOKEN_AMOUNT)
   {
-    ClaimCondition[] memory conditions = new ClaimCondition[](1);
+    DropClaimLib.ClaimCondition[]
+      memory conditions = new DropClaimLib.ClaimCondition[](1);
     conditions[0] = _createClaimCondition(
       block.timestamp,
       root,
@@ -658,7 +666,8 @@ contract DropFacetTest is
 
     vm.warp(block.timestamp + 100);
 
-    ClaimCondition[] memory conditions = new ClaimCondition[](1);
+    DropClaimLib.ClaimCondition[]
+      memory conditions = new DropClaimLib.ClaimCondition[](1);
     conditions[0] = _createClaimCondition(
       block.timestamp,
       root,
@@ -679,14 +688,15 @@ contract DropFacetTest is
 
     vm.prank(caller);
     vm.expectRevert(abi.encodeWithSelector(Ownable__NotOwner.selector, caller));
-    dropFacet.setClaimConditions(new ClaimCondition[](0));
+    dropFacet.setClaimConditions(new DropClaimLib.ClaimCondition[](0));
   }
 
   function test_revertWhen_setClaimConditions_notInAscendingOrder()
     external
     givenTokensMinted(TOTAL_TOKEN_AMOUNT)
   {
-    ClaimCondition[] memory conditions = new ClaimCondition[](2);
+    DropClaimLib.ClaimCondition[]
+      memory conditions = new DropClaimLib.ClaimCondition[](2);
     conditions[0] = _createClaimCondition(
       block.timestamp,
       root,
@@ -708,7 +718,8 @@ contract DropFacetTest is
     givenTokensMinted(TOTAL_TOKEN_AMOUNT)
   {
     // Create a single claim condition
-    ClaimCondition[] memory conditions = new ClaimCondition[](1);
+    DropClaimLib.ClaimCondition[]
+      memory conditions = new DropClaimLib.ClaimCondition[](1);
     conditions[0] = _createClaimCondition(block.timestamp, root, 100);
 
     // Set the claim conditions as the deployer
@@ -724,7 +735,7 @@ contract DropFacetTest is
     // Simulate Bob claiming tokens
     vm.prank(bob);
     dropFacet.claimWithPenalty(
-      Claim({
+      DropClaimLib.Claim({
         conditionId: conditionId,
         account: bob,
         quantity: amounts[treeIndex[bob]],
@@ -749,10 +760,12 @@ contract DropFacetTest is
   function test_getClaimConditions(
     uint16 penaltyBps
   ) external givenTokensMinted(TOTAL_TOKEN_AMOUNT) {
-    ClaimCondition[] memory currentConditions = dropFacet.getClaimConditions();
+    DropClaimLib.ClaimCondition[] memory currentConditions = dropFacet
+      .getClaimConditions();
     assertEq(currentConditions.length, 0);
 
-    ClaimCondition[] memory conditions = new ClaimCondition[](1);
+    DropClaimLib.ClaimCondition[]
+      memory conditions = new DropClaimLib.ClaimCondition[](1);
     conditions[0] = _createClaimCondition(
       block.timestamp,
       root,
@@ -781,7 +794,7 @@ contract DropFacetTest is
     external
     givenTokensMinted(TOTAL_TOKEN_AMOUNT)
   {
-    ClaimCondition memory condition = _createClaimCondition(
+    DropClaimLib.ClaimCondition memory condition = _createClaimCondition(
       block.timestamp,
       root,
       TOTAL_TOKEN_AMOUNT
@@ -798,7 +811,7 @@ contract DropFacetTest is
     external
     givenTokensMinted(TOTAL_TOKEN_AMOUNT)
   {
-    ClaimCondition memory condition = _createClaimCondition(
+    DropClaimLib.ClaimCondition memory condition = _createClaimCondition(
       block.timestamp,
       root,
       TOTAL_TOKEN_AMOUNT
@@ -806,7 +819,7 @@ contract DropFacetTest is
 
     vm.prank(deployer);
     vm.expectEmit(address(dropFacet));
-    emit DropFacet_ClaimConditionAdded(condition);
+    emit DropFacet_ClaimConditionAdded(0, condition);
     dropFacet.addClaimCondition(condition);
 
     vm.prank(deployer);
@@ -853,7 +866,8 @@ contract DropFacetTest is
     external
     givenTokensMinted(TOTAL_TOKEN_AMOUNT * 2)
   {
-    ClaimCondition[] memory conditions = new ClaimCondition[](2);
+    DropClaimLib.ClaimCondition[]
+      memory conditions = new DropClaimLib.ClaimCondition[](2);
     conditions[0] = _createClaimCondition(
       block.timestamp,
       root,
@@ -877,7 +891,7 @@ contract DropFacetTest is
     bytes32[] memory proof = merkleTree.getProof(tree, bobIndex);
     vm.prank(bob);
     dropFacet.claimWithPenalty(
-      Claim({
+      DropClaimLib.Claim({
         conditionId: conditionId,
         account: bob,
         quantity: amounts[bobIndex],
@@ -899,7 +913,7 @@ contract DropFacetTest is
     proof = merkleTree.getProof(tree, aliceIndex);
     vm.prank(alice);
     dropFacet.claimWithPenalty(
-      Claim({
+      DropClaimLib.Claim({
         conditionId: conditionId,
         account: alice,
         quantity: amounts[aliceIndex],
@@ -919,7 +933,7 @@ contract DropFacetTest is
     vm.expectRevert(DropFacet__ClaimHasEnded.selector);
     vm.prank(bob);
     dropFacet.claimWithPenalty(
-      Claim({
+      DropClaimLib.Claim({
         conditionId: conditionId,
         account: bob,
         quantity: amounts[bobIndex],
@@ -932,7 +946,7 @@ contract DropFacetTest is
     conditionId = dropFacet.getActiveClaimConditionId();
     vm.prank(alice);
     dropFacet.claimWithPenalty(
-      Claim({
+      DropClaimLib.Claim({
         conditionId: conditionId,
         account: alice,
         quantity: amounts[aliceIndex],
@@ -950,7 +964,7 @@ contract DropFacetTest is
     bytes32 slot = keccak256(
       abi.encode(uint256(keccak256("diamond.facets.drop.storage")) - 1)
     ) & ~bytes32(uint256(0xff));
-    assertEq(slot, DropStorage.STORAGE_SLOT, "slot");
+    assertEq(slot, DropFacetLib.STORAGE_SLOT, "slot");
   }
 
   function test_resetClaimConditions()
@@ -958,7 +972,8 @@ contract DropFacetTest is
     givenTokensMinted(TOTAL_TOKEN_AMOUNT * 3)
   {
     // Setup initial conditions
-    ClaimCondition[] memory initialConditions = new ClaimCondition[](3);
+    DropClaimLib.ClaimCondition[]
+      memory initialConditions = new DropClaimLib.ClaimCondition[](3);
     initialConditions[0] = _createClaimCondition(
       block.timestamp,
       root,
@@ -987,7 +1002,7 @@ contract DropFacetTest is
     vm.warp(block.timestamp + 2 days + 1);
     vm.prank(bob);
     dropFacet.claimWithPenalty(
-      Claim({
+      DropClaimLib.Claim({
         conditionId: 2,
         account: bob,
         quantity: amounts[bobIndex],
@@ -1001,7 +1016,8 @@ contract DropFacetTest is
     assertGt(supplyClaimed, 0, "Bob succesfully claimed");
 
     // Set new conditions without resetting eligibility
-    ClaimCondition[] memory intermediateConditions = new ClaimCondition[](2);
+    DropClaimLib.ClaimCondition[]
+      memory intermediateConditions = new DropClaimLib.ClaimCondition[](2);
     intermediateConditions[0] = _createClaimCondition(
       block.timestamp + 3 days,
       root,
@@ -1016,7 +1032,8 @@ contract DropFacetTest is
     dropFacet.setClaimConditions(intermediateConditions);
 
     // Verify that condition 2 was deleted after setting intermediateConditions
-    ClaimCondition memory condition = dropFacet.getClaimConditionById(2);
+    DropClaimLib.ClaimCondition memory condition = dropFacet
+      .getClaimConditionById(2);
     assertEq(condition.merkleRoot, bytes32(0), "Condition should be empty");
     assertEq(condition.supplyClaimed, 0, "Condition should be empty");
     assertEq(condition.maxClaimableSupply, 0, "Condition should be empty");
@@ -1034,9 +1051,9 @@ contract DropFacetTest is
     uint256 _startTime,
     bytes32 _merkleRoot,
     uint256 _maxClaimableSupply
-  ) internal view returns (ClaimCondition memory) {
+  ) internal view returns (DropClaimLib.ClaimCondition memory) {
     return
-      ClaimCondition({
+      DropClaimLib.ClaimCondition({
         startTimestamp: uint40(_startTime),
         endTimestamp: 0,
         maxClaimableSupply: _maxClaimableSupply,
@@ -1050,9 +1067,8 @@ contract DropFacetTest is
   function _calculateExpectedAmount(
     address _account
   ) internal view returns (uint256) {
-    ClaimCondition memory condition = dropFacet.getClaimConditionById(
-      dropFacet.getActiveClaimConditionId()
-    );
+    DropClaimLib.ClaimCondition memory condition = dropFacet
+      .getClaimConditionById(dropFacet.getActiveClaimConditionId());
     uint256 penaltyBps = condition.penaltyBps;
     uint256 amount = amounts[treeIndex[_account]];
     uint256 penaltyAmount = BasisPoints.calculate(amount, penaltyBps);

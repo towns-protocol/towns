@@ -5,7 +5,7 @@ pragma solidity ^0.8.19;
 import {IPricingModules} from "contracts/src/factory/facets/architect/pricing/IPricingModules.sol";
 
 // helpers
-import {FacetHelper} from "contracts/test/diamond/Facet.t.sol";
+import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
 
 // contracts
 import {PricingModulesFacet} from "contracts/src/factory/facets/architect/pricing/PricingModulesFacet.sol";
@@ -16,10 +16,6 @@ contract PricingModulesHelper is FacetHelper {
     addSelector(IPricingModules.isPricingModule.selector);
     addSelector(IPricingModules.removePricingModule.selector);
     addSelector(IPricingModules.listPricingModules.selector);
-  }
-
-  function facet() public pure override returns (address) {
-    return address(0);
   }
 
   function initializer() public pure override returns (bytes4) {

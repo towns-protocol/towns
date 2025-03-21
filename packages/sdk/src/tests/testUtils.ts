@@ -15,7 +15,7 @@ import {
     EncryptedDataVersion,
     PlainMessage,
     BlockchainTransaction_TokenTransfer,
-} from '@river-build/proto'
+} from '@towns-protocol/proto'
 import { Entitlements } from '../sync-agent/entitlements/entitlements'
 import { IStreamStateView } from '../streamStateView'
 import { Client, ClientOptions } from '../client'
@@ -35,8 +35,8 @@ import {
 } from '../id'
 import { ParsedEvent, DecryptedTimelineEvent, StreamTimelineEvent } from '../types'
 import { getPublicKey, utils } from 'ethereum-cryptography/secp256k1'
-import { EntitlementsDelegate } from '@river-build/encryption'
-import { bin_fromHexString, check, dlog } from '@river-build/dlog'
+import { EntitlementsDelegate } from '@towns-protocol/encryption'
+import { bin_fromHexString, check, dlog } from '@towns-protocol/dlog'
 import { ethers, ContractTransaction } from 'ethers'
 import { RiverDbManager } from '../riverDbManager'
 import { StreamRpcClient, makeStreamRpcClient } from '../makeStreamRpcClient'
@@ -83,7 +83,7 @@ import {
     UpdateRoleParams,
     getFixedPricingModule,
     getDynamicPricingModule,
-} from '@river-build/web3'
+} from '@towns-protocol/web3'
 import {
     RiverTimelineEvent,
     type TimelineEvent,
@@ -452,7 +452,7 @@ export async function* iterableWrapper<T>(
 //        getUserPayload_Membership,
 //    )
 //
-// to get user memebrship payload from a last event containing it, or undefined if not found.
+// to get user membership payload from a last event containing it, or undefined if not found.
 export const lastEventFiltered = <T extends (a: ParsedEvent) => any>(
     events: ParsedEvent[],
     f: T,

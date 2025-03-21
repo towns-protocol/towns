@@ -6,14 +6,14 @@ import {
     useSendMessage,
     useSendReaction,
     useSyncAgent,
-} from '@river-build/react-sdk'
+} from '@towns-protocol/react-sdk'
 import {
     type MessageReactions,
     RiverTimelineEvent,
     type TimelineEvent,
     isChannelStreamId,
     spaceIdFromChannelId,
-} from '@river-build/sdk'
+} from '@towns-protocol/sdk'
 import { useCallback, useState } from 'react'
 import { z } from 'zod'
 import { useForm } from 'react-hook-form'

@@ -26,7 +26,7 @@ import {
 import { PricingModules } from './v3/PricingModules'
 import { BaseChainConfig } from './IStaticContractsInfo'
 import { PlatformRequirements } from './v3/PlatformRequirements'
-import { TipEventObject } from '@river-build/generated/dev/typings/ITipping'
+import { TipEventObject } from '@towns-protocol/generated/dev/typings/ITipping'
 
 export type SignerType = ethers.Signer
 

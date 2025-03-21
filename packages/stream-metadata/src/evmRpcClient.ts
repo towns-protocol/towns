@@ -1,4 +1,4 @@
-import { RiverRegistry } from '@river-build/web3'
+import { RiverRegistry } from '@towns-protocol/web3'
 import { ethers } from 'ethers'
 
 import { config } from './environment'

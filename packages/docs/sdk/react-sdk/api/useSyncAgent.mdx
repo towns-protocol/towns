@@ -1,16 +1,16 @@
 ---
 title: useSyncAgent
 ---
-Hook to get the sync agent from the RiverSyncProvider.
+Hook to get the sync agent from the TownsSyncProvider.
 
 You can use it to interact with the sync agent for more advanced usage.
 
-Throws an error if no sync agent is set in the RiverSyncProvider.
+Throws an error if no sync agent is set in the TownsSyncProvider.
 
 ## Imports
 
 ```ts
-import { useSyncAgent } from '@river-build/react-sdk'
+import { useSyncAgent } from '@towns-protocol/react-sdk'
 ```
 
 ## Definition
@@ -19,11 +19,11 @@ import { useSyncAgent } from '@river-build/react-sdk'
 function useSyncAgent(): SyncAgent
 ```
 
-**Source:** [useSyncAgent](https://github.com/river-build/river/blob/main/packages/react-sdk/src/useSyncAgent.tsx)
+**Source:** [useSyncAgent](https://github.com/towns-protocol/towns/blob/main/packages/react-sdk/src/useSyncAgent.tsx)
 
 ## Return Type
 
-The sync agent in use, set in RiverSyncProvider.
+The sync agent in use, set in TownsSyncProvider.
 
 ```ts
 SyncAgent

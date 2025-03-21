@@ -4,7 +4,7 @@ import {
     useSetEnsAddress,
     useSetNft,
     useSetUsername,
-} from '@river-build/react-sdk'
+} from '@towns-protocol/react-sdk'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'

@@ -9,12 +9,12 @@ The core application supported by Towns Protocol is messaging. Towns Stream Node
 
 ### Protocol Messaging Protobuf
 
-The data schema of the Towns protocol can be defined declaratively by [protobuf.proto](https://github.com/river-build/river/blob/main/protocol/protocol.proto). Below is an elided snapshot of `protocol.proto` as of January 2024 containing only schema definitions used in a messaging context within the Towns protocol.
+The data schema of the Towns protocol can be defined declaratively by [protobuf.proto](https://github.com/towns-protocol/towns/blob/main/protocol/protocol.proto). Below is an elided snapshot of `protocol.proto` as of January 2024 containing only schema definitions used in a messaging context within the Towns protocol.
 
 ```proto
 syntax = "proto3";
 package river;
-option go_package = "github.com/river-build/river/protocol";
+option go_package = "github.com/towns-protocol/towns/protocol";
 
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/empty.proto";

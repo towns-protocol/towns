@@ -10,11 +10,11 @@ import {
     UserBio,
     ChunkedMediaSchema,
     UserBioSchema,
-} from '@river-build/proto'
+} from '@towns-protocol/proto'
 import { StreamStateView_AbstractContent } from './streamStateView_AbstractContent'
-import { check } from '@river-build/dlog'
+import { check } from '@towns-protocol/dlog'
 import { logNever } from './check'
-import { UserDevice } from '@river-build/encryption'
+import { UserDevice } from '@towns-protocol/encryption'
 import { StreamEncryptionEvents, StreamStateEvents } from './streamEvents'
 import { getUserIdFromStreamId } from './id'
 import { decryptDerivedAESGCM } from './crypto_utils'

@@ -1,5 +1,5 @@
 {
-    "name": "@river-build/playground",
+    "name": "@towns-protocol/playground",
     "version": "0.0.0",
     "private": true,
     "type": "module",
@@ -21,10 +21,10 @@
         "@radix-ui/react-slot": "^1.0.2",
         "@radix-ui/react-switch": "^1.0.3",
         "@radix-ui/react-tooltip": "^1.1.4",
-        "@river-build/react-sdk": "workspace:^",
-        "@river-build/sdk": "workspace:^",
-        "@river-build/web3": "workspace:^",
         "@tanstack/react-query": "^5.51.15",
+        "@towns-protocol/react-sdk": "workspace:^",
+        "@towns-protocol/sdk": "workspace:^",
+        "@towns-protocol/web3": "workspace:^",
         "class-variance-authority": "^0.7.0",
         "clsx": "^2.1.1",
         "ethers": "^5.7.2",
@@ -43,8 +43,8 @@
         "zod": "^3.21.4"
     },
     "devDependencies": {
-        "@river-build/eslint-config": "workspace:^",
-        "@river-build/prettier-config": "workspace:^",
+        "@towns-protocol/eslint-config": "workspace:^",
+        "@towns-protocol/prettier-config": "workspace:^",
         "@types/node": "^20.5.0",
         "@types/react": "^18.2.11",
         "@types/react-dom": "^18.2.4",

@@ -4,10 +4,10 @@ import {
     Snapshot,
     SyncCookie,
     PersistedSyncedStreamSchema,
-} from '@river-build/proto'
+} from '@towns-protocol/proto'
 import { Stream } from './stream'
 import { ParsedMiniblock, ParsedEvent, ParsedStreamResponse } from './types'
-import { DLogger, bin_toHexString, dlog } from '@river-build/dlog'
+import { DLogger, bin_toHexString, dlog } from '@towns-protocol/dlog'
 import { isDefined } from './check'
 import { IPersistenceStore, LoadedStream } from './persistenceStore'
 import { StreamEvents } from './streamEvents'

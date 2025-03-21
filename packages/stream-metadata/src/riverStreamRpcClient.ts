@@ -8,7 +8,7 @@ import {
 	streamIdAsBytes,
 	streamIdAsString,
 	unpackStream,
-} from '@river-build/sdk'
+} from '@towns-protocol/sdk'
 import { filetypemime } from 'magic-bytes.js'
 import { FastifyBaseLogger } from 'fastify'
 import { LRUCache } from 'lru-cache'

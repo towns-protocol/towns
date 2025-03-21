@@ -35,12 +35,9 @@ contract InteractDiamondCut is Interaction, AlphaHelper {
     address deployedAddr = helper.deploy(deployer);
 
     // add the new facet to the diamond
-    addCut(helper.makeCut(walletLink, IDiamond.FacetCutAction.Add));
+    addCut(helper.makeCut(deployedAddr, IDiamond.FacetCutAction.Add));
 
-    bytes memory initData = helper.makeInitData(
-      0x00000000000000447e69651d841bD8D104Bed493,
-      0xE84cE54cd1Bd71D671A6FB1C8B4329BCBA410092
-    );
+    bytes memory initData = "";
 
     vm.broadcast(deployer);
     IDiamondCut(diamond).diamondCut(

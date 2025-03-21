@@ -1,4 +1,4 @@
-import { CryptoStore, EntitlementsDelegate } from '@river-build/encryption'
+import { CryptoStore, EntitlementsDelegate } from '@towns-protocol/encryption'
 import { Client, ClientEvents, ClientOptions } from '../../../client'
 import { StreamRpcClient } from '../../../makeStreamRpcClient'
 import { SignerContext } from '../../../signerContext'

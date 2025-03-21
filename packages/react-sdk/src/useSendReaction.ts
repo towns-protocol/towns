@@ -1,6 +1,6 @@
 'use client'
 
-import { type Channel, Space, assert } from '@river-build/sdk'
+import { type Channel, Space, assert } from '@towns-protocol/sdk'
 import { type ActionConfig, useAction } from './internals/useAction'
 import { useSyncAgent } from './useSyncAgent'
 import { getRoom } from './utils'
@@ -12,7 +12,7 @@ import { getRoom } from './utils'
  *
  * @example
  * ```ts
- * import { useSendReaction } from '@river-build/react-sdk'
+ * import { useSendReaction } from '@towns-protocol/react-sdk'
  *
  * const { sendReaction } = useSendReaction('stream-id')
  * sendReaction(messageEventId, '🔥')

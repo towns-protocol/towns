@@ -2,42 +2,13 @@
 pragma solidity ^0.8.23;
 
 // interfaces
+import {DropClaimLib} from "./DropClaimLib.sol";
 
 // libraries
 
 // contracts
 
 interface IDropFacetBase {
-  /// @notice A struct representing a claim
-  /// @param conditionId The ID of the claim condition
-  /// @param account The address of the account that claimed
-  /// @param quantity The quantity of tokens claimed
-  /// @param proof The proof of the claim
-  struct Claim {
-    uint256 conditionId;
-    address account;
-    uint256 quantity;
-    bytes32[] proof;
-  }
-
-  /// @notice A struct representing a claim condition
-  /// @param currency The currency to claim in
-  /// @param startTimestamp The timestamp at which the claim condition starts
-  /// @param endTimestamp The timestamp at which the claim condition ends
-  /// @param penaltyBps The penalty in basis points for early withdrawal
-  /// @param maxClaimableSupply The maximum claimable supply for the claim condition
-  /// @param supplyClaimed The supply already claimed for the claim condition
-  /// @param merkleRoot The merkle root for the claim condition
-  struct ClaimCondition {
-    address currency;
-    uint40 startTimestamp;
-    uint40 endTimestamp;
-    uint16 penaltyBps;
-    uint256 maxClaimableSupply;
-    uint256 supplyClaimed;
-    bytes32 merkleRoot;
-  }
-
   // =============================================================
   //                           Events
   // =============================================================
@@ -55,9 +26,15 @@ interface IDropFacetBase {
     uint256 amount
   );
 
-  event DropFacet_ClaimConditionsUpdated(ClaimCondition[] conditions);
+  event DropFacet_ClaimConditionsUpdated(
+    uint256 indexed conditionId,
+    DropClaimLib.ClaimCondition[] conditions
+  );
 
-  event DropFacet_ClaimConditionAdded(ClaimCondition condition);
+  event DropFacet_ClaimConditionAdded(
+    uint256 indexed conditionId,
+    DropClaimLib.ClaimCondition condition
+  );
 
   // =============================================================
   //                           Errors
@@ -81,15 +58,22 @@ interface IDropFacetBase {
 interface IDropFacet is IDropFacetBase {
   /// @notice Gets all claim conditions
   /// @return An array of ClaimCondition structs
-  function getClaimConditions() external view returns (ClaimCondition[] memory);
+  function getClaimConditions()
+    external
+    view
+    returns (DropClaimLib.ClaimCondition[] memory);
 
   /// @notice Sets the claim conditions for the drop
   /// @param conditions An array of ClaimCondition structs defining the conditions
-  function setClaimConditions(ClaimCondition[] calldata conditions) external;
+  function setClaimConditions(
+    DropClaimLib.ClaimCondition[] calldata conditions
+  ) external;
 
   /// @notice Adds a new claim condition
   /// @param condition The ClaimCondition struct defining the condition
-  function addClaimCondition(ClaimCondition calldata condition) external;
+  function addClaimCondition(
+    DropClaimLib.ClaimCondition calldata condition
+  ) external;
 
   /// @notice Gets the ID of the currently active claim condition
   /// @return The ID of the active claim condition
@@ -100,7 +84,7 @@ interface IDropFacet is IDropFacetBase {
   /// @return The ClaimCondition struct for the specified ID
   function getClaimConditionById(
     uint256 conditionId
-  ) external view returns (ClaimCondition memory);
+  ) external view returns (DropClaimLib.ClaimCondition memory);
 
   /// @notice Gets the amount of tokens claimed by a specific wallet for a given condition
   /// @param account The address of the wallet to check
@@ -125,7 +109,7 @@ interface IDropFacet is IDropFacetBase {
   /// @param expectedPenaltyBps The expected penalty in basis points
   /// @return The amount of tokens claimed
   function claimWithPenalty(
-    Claim calldata claim,
+    DropClaimLib.Claim calldata claim,
     uint16 expectedPenaltyBps
   ) external returns (uint256);
 
@@ -136,7 +120,7 @@ interface IDropFacet is IDropFacetBase {
   /// @param signature The signature of the delegatee
   /// @return The amount of tokens claimed
   function claimAndStake(
-    Claim calldata claim,
+    DropClaimLib.Claim calldata claim,
     address delegatee,
     uint256 deadline,
     bytes calldata signature

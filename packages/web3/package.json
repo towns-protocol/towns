@@ -1,5 +1,5 @@
 {
-    "name": "@river-build/web3",
+    "name": "@towns-protocol/web3",
     "version": "0.0.189",
     "packageManager": "yarn@3.8.0",
     "type": "module",
@@ -19,8 +19,8 @@
     },
     "dependencies": {
         "@isaacs/ttlcache": "^1.4.1",
-        "@river-build/dlog": "workspace:^",
-        "@river-build/generated": "workspace:^",
+        "@towns-protocol/dlog": "workspace:^",
+        "@towns-protocol/generated": "workspace:^",
         "abitype": "^0.9.10",
         "debug": "^4.3.4",
         "ethers": "^5.7.2",
