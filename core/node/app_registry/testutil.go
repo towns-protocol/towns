@@ -205,22 +205,57 @@ func (b *TestAppServer) respondToSendMessages(
 	log := logging.FromCtx(ctx)
 	// Swap with above to enable debug logs
 	// log := logging.DefaultZapLogger(zapcore.DebugLevel)
+
 	log.Debugw(
 		"respondToSendMessages",
-		"numEvents",
-		len(data.StreamEvents),
-		"sessionIds",
-		data.SessionIds,
+		"numMessages",
+		len(data.MessageEnvelopes),
+		"messageEnvelopes",
+		data.MessageEnvelopes,
+		"encryptionBytes",
+		data.EncryptionEnvelope,
 		"botDeviceKey",
 		b.encryptionDevice.DeviceKey,
 	)
 
-	for _, streamBytes := range data.StreamEvents {
-		var streamEvent protocol.StreamEvent
-		if err := proto.Unmarshal(streamBytes, &streamEvent); err != nil {
+	var envelope protocol.Envelope
+	if err := proto.Unmarshal(data.EncryptionEnvelope, &envelope); err != nil {
+		log.Errorw("Error unmarshalling encryption envelope", "err", err)
+		return err
+	}
+
+	event, err := events.ParseEvent(&envelope)
+	if err != nil {
+		log.Errorw("Error parsing event", "err", err)
+		return err
+	}
+
+	payload := event.Event.GetUserInboxPayload()
+	if payload == nil {
+		log.Errorw("payload is not user inbox")
+		return fmt.Errorf("forwarded encryption event was not a user inbox event")
+	}
+
+	encryptionSessions := payload.GetGroupEncryptionSessions()
+	if encryptionSessions == nil {
+		log.Errorw("User inbox payload content is not group encryption sessions")
+		return fmt.Errorf("forwarded encryption event did not have a group encryption sessions payload")
+	}
+
+	for _, envelopeBytes := range data.MessageEnvelopes {
+		log.Debugw("Sending event...", "streamEvent", envelopeBytes)
+		var messageEnvelope protocol.Envelope
+		if err := proto.Unmarshal(envelopeBytes, &messageEnvelope); err != nil {
 			log.Errorw("Could not unmarshal stream event", "error", err)
 			return fmt.Errorf("could not unmarshal stream event: %w", err)
 		}
+
+		parsedEvent, err := events.ParseEvent(&messageEnvelope)
+		if err != nil {
+			log.Errorw("Could not parse message envelope", "err", err)
+			return fmt.Errorf("could not parse message envelope: %w", err)
+		}
+		streamEvent := parsedEvent.Event
 		payload, ok := streamEvent.Payload.(*protocol.StreamEvent_ChannelPayload)
 		if !ok {
 			log.Errorw("Could not cast channel stream payload")
@@ -236,7 +271,7 @@ func (b *TestAppServer) respondToSendMessages(
 			continue
 		}
 
-		streamIdBytes, err := shared.StreamIdFromString(data.StreamId)
+		streamIdBytes, err := shared.StreamIdFromBytes(encryptionSessions.StreamId)
 		if err != nil {
 			log.Errorw("Could not parse stream id", "error", err)
 			return fmt.Errorf("could not parse stream id: %w", err)
@@ -272,7 +307,7 @@ func (b *TestAppServer) respondToSendMessages(
 					"%v %v reply (%v)",
 					message.Message.SessionId,
 					message.Message.Ciphertext,
-					data.CipherTexts,
+					encryptionSessions.Ciphertexts[b.encryptionDevice.DeviceKey],
 				),
 				message.Message.SessionId,
 			),
