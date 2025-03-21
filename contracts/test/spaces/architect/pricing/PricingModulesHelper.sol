@@ -18,10 +18,6 @@ contract PricingModulesHelper is FacetHelper {
     addSelector(IPricingModules.listPricingModules.selector);
   }
 
-  function facet() public pure override returns (address) {
-    return address(0);
-  }
-
   function initializer() public pure override returns (bytes4) {
     return PricingModulesFacet.__PricingModulesFacet_init.selector;
   }
