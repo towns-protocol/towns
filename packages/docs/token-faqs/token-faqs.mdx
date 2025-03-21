@@ -1,0 +1,119 @@
+---
+title: "$TOWNS Token FAQ"
+description: "Description of your new file."
+---
+
+## **General**
+
+**What is $TOWNS?**
+
+$TOWNS is the native utility and governance token of the Towns Protocol, a decentralized platform for building real-time messaging applications. The token facilitates network operations by providing security via a proof-of-stake system, incentivizes node operators, enables governance participation, and enhances functionality for Spaces (programmable communication environments).
+
+**What is the Contract Address for the TOWNS token?**
+
+The $TOWNS token is available on multiple networks:
+
+- Ethereum Mainnet: 0x53319181e003E7f86fB79f794649a2aB680Db244
+- Base: 0x00000000A22C618fd6b4D7E9A335C4B96B189a38
+
+Always verify these addresses on official Towns Protocol channels before interacting with the token.
+
+**Where can I learn more about the $TOWNS token?**
+
+You can learn more about the $TOWNS token through official Towns Protocol resources:
+
+- Official documentation: [docs.towns.com/towns-token](https://docs.towns.com/towns-token)
+- Towns Protocol Twitter: [@townsprotocol](https://twitter.com/townsprotocol)
+- Towns Protocol GitHub: [github.com/towns-protocol](http://github.com/towns-protocol)
+
+**What is the utility of $TOWNS?**
+
+$TOWNS serves three primary functions:
+
+**Network Security** – $TOWNS tokens are staked by validators to secure Towns proof-of-stake network
+
+**Governance** –  $TOWNS holders can participate in on-chain governance decisions, including upgrades, economic parameter changes, and protocol improvements.
+
+**Protocol Utility** – $TOWNS tokens can be delegated by members allowing Spaces to unlock additional protocol features
+
+**How is $TOWNS distributed?**
+
+$TOWNS was deployed with an initial supply of 10 billion tokens on Ethereum Mainnet. Additional tokens are minted starting after year 1 according to a predetermined inflation schedule and distributed bi-weekly to active Node Operators and their Delegators.
+
+**Where is $TOWNS available?**
+
+$TOWNS is available on Ethereum Mainnet and Base blockchain. The token can be bridged between these networks through the official Towns bridge or other cross-chain solutions.
+
+**What is the inflation schedule for $TOWNS?**
+
+$TOWNS follows a gradually decreasing inflation model:
+
+- Beginning at 8% annually
+- Decreasing linearly over 20 years
+- Eventually reaching and stabilizing at 2% annual inflation
+- Inflation schedule can be lowered by token holder vote
+
+**How often are $TOWNS rewards distributed?**
+
+Rewards are accrued every block and distributed every two weeks (bi-weekly). Each distribution represents 1/26 of the annual supply and is allocated to active operators and delegators from that period.
+
+**How are $TOWNS rewards allocated?**
+
+Rewards are allocated pro-rata to operators according to how much total delegation they have received.
+
+### **Staking**
+
+**What is token staking?**
+
+Staking allows $TOWNS holders to assign their tokens to Node Operators or Spaces without transferring ownership. This helps secure the network by providing the stake needed for Node Operators to function, while delegators earn rewards.
+
+1. **Network Security**: Contribution to overall Towns Protocol security and decentralization
+2. **Space Features**: Enhanced capabilities for Spaces you delegate to, including increased message storage and custom pricing models
+3. **Network Rewards**: Your share of protocol inflation rewards
+
+**How do I stake my $TOWNS tokens?**
+
+You can delegate your $TOWNS tokens by:
+
+1. Visiting https://towns.com/delegate
+2. Connecting your wallet
+3. Entering the Node Operator or Space address you wish to delegate to
+4. Confirming the transaction
+
+**Is there a minimum amount required to delegate?**
+
+There is no minimum amount required for individual delegators. However, Node Operators need between 100 million and 500 million $TOWNS tokens delegated to them collectively before they can join the Towns Network.
+
+**Can I un-delegate my $TOWNS tokens?**
+
+Yes, you can un-delegate your tokens at any time by calling the **undelegate()** function. However, tokens enter a 30-day cooling-off period during which they remain non-transferable. This ensures network stability and allows nodes time to rebalance if they fall below minimum requirements.
+
+### **Rewards & Claiming**
+
+**How do I earn rewards with $TOWNS?**
+
+You can earn rewards by delegating your $TOWNS tokens to Node Operators. Rewards are distributed continuously , and your share is proportional to your delegation amount, minus the Node Operator's commission fee.
+
+**How does $TOWNS staking yield work?**
+
+The yield for staking (delegating) $TOWNS tokens comes from the protocol's inflation, which is distributed to active Node Operators and their delegators. Your effective yield depends on several factors:
+
+1. **Inflation Rate**: Begins at 8% annually and decreases linearly to 2% over 20 years
+2. **Node Operator Commission**: Each operator sets their own commission rate which is deducted from rewards
+3. **Delegation Amount**: Operator and delegator share of the rewards is proportional to your delegation amount
+
+**Benefits of staking (delegating) $TOWNS:**
+
+- **Earn Rewards**: Receive a share of protocol inflation based on delegation amount
+- **Support Network Security**: Help secure the Towns Protocol infrastructure
+- **Governance Rights**: Maintain voting power when delegating to Spaces
+- **Enhanced Space Features**: Unlock additional capabilities for Spaces you delegate to
+- **Ecosystem Growth**: Contribute to the sustainability and expansion of the Towns Protocol
+
+**How do I claim my $TOWNS rewards?**
+
+You can claim your rewards by:
+
+1. Visiting https://towns.com/claim
+2. Connecting the wallet that delegated tokens or an authorized claimer wallet
+3. Calling the claimReward(address beneficiary, address recipient) function on the RewardsDistribution contract
