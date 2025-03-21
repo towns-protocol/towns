@@ -117,7 +117,7 @@ explicit-verify-any :;
 	@forge verify-contract ${address} ${contract} --verifier ${verifier} --verifier-url ${verifier-url} ${args}
 
 verify-on-blockscout :;
-	@$(MAKE) explicit-verify-any rpc=$(rpc) verifier=blockscout verifier-url=$(blockscout_url) args=$(if $(blockscout_key),--etherscan-api-key $(blockscout_key),)
+	@$(MAKE) explicit-verify-any rpc=$(rpc) verifier=blockscout verifier-url=$(blockscout_url) args="$(if $(blockscout_key),--etherscan-api-key $(blockscout_key),)"
 
 verify-on-etherscan :;
 	@$(MAKE) explicit-verify-any rpc=$(rpc) verifier=etherscan verifier-url=$(etherscan_url) args="--etherscan-api-key $(etherscan_key)"
@@ -125,6 +125,11 @@ verify-on-etherscan :;
 # ===========================
 # 					Ledger
 # ===========================
+
+# Helper function to ensure HD path has proper quoting when calling nested make commands
+define format_hd_path
+"$(subst ",,$(1))"
+endef
 
 deploy-any-local-ledger :;
 	@echo "Running $(contract) on local chain"
@@ -146,8 +151,8 @@ deploy-verify-both :;
 	@$(MAKE) resume-any rpc=$(rpc) private_key=$(private_key) verifier-url=$(etherscan_url) etherscan=$(etherscan_key)
 
 deploy-ledger-verify-both :;
-	@$(MAKE) deploy-any-ledger rpc=$(rpc) hd_path=$(hd_path) sender=$(sender) verifier=blockscout verifier-url=$(blockscout_url) etherscan=$(blockscout_key)
-	@$(MAKE) resume-any-ledger rpc=$(rpc) hd_path=$(hd_path) sender=$(sender) verifier=etherscan verifier-url=$(etherscan_url) etherscan=$(etherscan_key)
+	@$(MAKE) deploy-any-ledger rpc=$(rpc) hd_path=$(call format_hd_path,$(hd_path)) sender=$(sender) verifier=blockscout verifier-url=$(blockscout_url) etherscan=$(blockscout_key)
+	@$(MAKE) resume-any-ledger rpc=$(rpc) hd_path=$(call format_hd_path,$(hd_path)) sender=$(sender) verifier=etherscan verifier-url=$(etherscan_url) etherscan=$(etherscan_key)
 
 resume-any-ledger :;
 	@forge script scripts/deployments/${type}/${contract}.s.sol:${contract} \
@@ -174,7 +179,7 @@ deploy-base-anvil :;
 
 # THIS IS FOR TESTING ONLY
 deploy-base-anvil-ledger :;
-	@$(MAKE) deploy-any-local-ledger context=local_multi rpc=base_anvil hd_path=${HD_PATH} sender=${SENDER_ADDRESS}
+	@$(MAKE) deploy-any-local-ledger context=local_multi rpc=base_anvil hd_path=$(call format_hd_path,$(HD_PATH)) sender=${SENDER_ADDRESS}
 
 interact-base-anvil :;
 	@$(MAKE) interact-any-local context=local_multi rpc=base_anvil
@@ -198,7 +203,7 @@ interact-river-anvil :;
 # ===========================
 
 deploy-ledger-river-testnet :;
-	@$(MAKE) deploy-any-ledger rpc=river_devnet hd_path=${HD_PATH} sender=${SENDER_ADDRESS} verifier=blockscout verifier-url=${RIVERSCAN_DEVNET_URL}
+	@$(MAKE) deploy-any-ledger rpc=river_devnet hd_path=$(call format_hd_path,$(HD_PATH)) sender=${SENDER_ADDRESS} verifier=blockscout verifier-url=${RIVERSCAN_DEVNET_URL}
 
 deploy-river-testnet :;
 	@$(MAKE) deploy-any rpc=river_devnet private_key=${TESTNET_PRIVATE_KEY} verifier=blockscout verifier-url=${RIVERSCAN_DEVNET_URL}
@@ -217,7 +222,7 @@ verify-river-testnet :;
 # ===========================
 
 deploy-ledger-base-sepolia :;
-	@$(MAKE) deploy-ledger-verify-both rpc=base_sepolia hd_path=${HD_PATH} sender=${SENDER_ADDRESS} \
+	@$(MAKE) deploy-ledger-verify-both rpc=base_sepolia hd_path=$(call format_hd_path,$(HD_PATH)) sender=${SENDER_ADDRESS} \
 		blockscout_url=${BLOCKSCOUT_SEPOLIA_URL} blockscout_key=${BLOCKSCOUT_SEPOLIA_API_KEY} \
 		etherscan_url=${BASESCAN_SEPOLIA_URL} etherscan_key=${BASESCAN_API_KEY}
 
@@ -260,21 +265,21 @@ verify-sepolia :;
 # ===========================
 
 deploy-river :;
-	@$(MAKE) deploy-any-ledger rpc=river hd_path=${HD_PATH} sender=${SENDER_ADDRESS} verifier=blockscout verifier-url=${RIVERSCAN_URL}
+	@$(MAKE) deploy-any-ledger rpc=river hd_path=$(call format_hd_path,$(HD_PATH)) sender=${SENDER_ADDRESS} verifier=blockscout verifier-url=${RIVERSCAN_URL}
 
 interact-river :;
-	@$(MAKE) interact-any-ledger rpc=river hd_path=${HD_PATH} sender=${SENDER_ADDRESS}
+	@$(MAKE) interact-any-ledger rpc=river hd_path=$(call format_hd_path,$(HD_PATH)) sender=${SENDER_ADDRESS}
 
 # ===========================
 # 				 		Base
 # ===========================
 deploy-base :;
-	@$(MAKE) deploy-ledger-verify-both rpc=base hd_path=${HD_PATH} sender=${SENDER_ADDRESS} \
+	@$(MAKE) deploy-ledger-verify-both rpc=base hd_path=$(call format_hd_path,$(HD_PATH)) sender=${SENDER_ADDRESS} \
 		blockscout_url=${BLOCKSCOUT_BASE_URL} blockscout_key=${BLOCKSCOUT_BASE_API_KEY} \
 		etherscan_url=${BASESCAN_URL} etherscan_key=${BASESCAN_API_KEY}
 
 interact-base :;
-	@$(MAKE) interact-any-ledger rpc=base hd_path=${HD_PATH} sender=${SENDER_ADDRESS}
+	@$(MAKE) interact-any-ledger rpc=base hd_path=$(call format_hd_path,$(HD_PATH)) sender=${SENDER_ADDRESS}
 
 fork-base :;
 	@$(MAKE) fork-any rpc=base private_key=${TESTNET_PRIVATE_KEY}
@@ -287,10 +292,10 @@ verify-base :;
 # 				Mainnet
 # ===========================
 deploy-mainnet :;
-	@$(MAKE) deploy-any-ledger rpc=mainnet hd_path=${HD_PATH} sender=${SENDER_ADDRESS}
+	@$(MAKE) deploy-any-ledger rpc=mainnet hd_path=$(call format_hd_path,$(HD_PATH)) sender=${SENDER_ADDRESS}
 
 interact-mainnet :;
-	@$(MAKE) interact-any-ledger rpc=mainnet hd_path=${HD_PATH} sender=${SENDER_ADDRESS}
+	@$(MAKE) interact-any-ledger rpc=mainnet hd_path=$(call format_hd_path,$(HD_PATH)) sender=${SENDER_ADDRESS}
 
 fork-mainnet :;
 	@$(MAKE) fork-any rpc=mainnet private_key=${TESTNET_PRIVATE_KEY}
