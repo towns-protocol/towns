@@ -74,7 +74,7 @@ type StreamCache struct {
 
 	onlineSyncStreamTasksInProgressMu deadlock.Mutex
 	onlineSyncStreamTasksInProgress   mapset.Set[StreamId]
-	
+
 	onlineSyncWorkerPool *workerpool.WorkerPool
 
 	disableCallbacks bool
@@ -185,34 +185,54 @@ func (s *StreamCache) onBlockWithLogs(ctx context.Context, blockNum crypto.Block
 		logging.FromCtx(ctx).Errorw("Failed to parse stream event", "err", err)
 	}
 
-	// TODO: parallel processing?
-	for streamId, events := range streamEvents {
-		switch event := events[0].(type) {
-		case *river.StreamAllocated:
-			s.onStreamAllocated(ctx, event, events[1:], blockNum)
-			continue
-		case *river.StreamCreated:
-			s.onStreamCreated(ctx, event, blockNum)
-			continue
-		default:
-			stream, ok := s.cache.Load(streamId)
-			if !ok {
-				continue
+	wp := workerpool.New(16)
+
+	for streamID, events := range streamEvents {
+		wp.Submit(func() {
+			switch events[0].Reason() {
+			case river.StreamUpdatedEventTypeAllocate:
+				streamState := events[0].(*river.StreamState)
+				s.onStreamAllocated(ctx, streamState, events[1:], blockNum)
+			case river.StreamUpdatedEventTypeCreate:
+				streamState := events[0].(*river.StreamState)
+				s.onStreamCreated(ctx, streamState, blockNum)
+			case river.StreamUpdatedEventTypePlacementUpdated: // linter
+				fallthrough
+			case river.StreamUpdatedEventTypeLastMiniblockBatchUpdated:
+				fallthrough
+			default:
+				stream, ok := s.cache.Load(streamID)
+				if !ok {
+					return
+				}
+				stream.applyStreamEvents(ctx, events, blockNum)
 			}
-			stream.applyStreamEvents(ctx, events, blockNum)
-		}
+		})
 	}
+
+	wp.StopWait()
 
 	s.appliedBlockNum.Store(uint64(blockNum))
 }
 
 func (s *StreamCache) onStreamAllocated(
 	ctx context.Context,
-	event *river.StreamAllocated,
-	otherEvents []river.EventWithStreamId,
+	event *river.StreamState,
+	otherEvents []river.StreamUpdatedEvent,
 	blockNum crypto.BlockNumber,
 ) {
 	if !slices.Contains(event.Nodes, s.params.Wallet.Address) {
+		return
+	}
+
+	_, genesisHash, genesisMB, _, err := s.params.Registry.GetStreamWithGenesis(ctx, event.StreamID)
+	if err != nil {
+		logging.FromCtx(ctx).Errorw("Failed to get genesis block for allocated stream", "err", err)
+		return
+	}
+
+	if event.LastMiniblockHash != genesisHash {
+		logging.FromCtx(ctx).Errorw("Unexpected genesis miniblock hash on allocated stream")
 		return
 	}
 
@@ -224,7 +244,7 @@ func (s *StreamCache) onStreamAllocated(
 		local:               &localStreamState{},
 	}
 	stream.nodesLocked.Reset(event.Nodes, s.params.Wallet.Address)
-	stream, created, err := s.createStreamStorage(ctx, stream, event.GenesisMiniblock)
+	stream, created, err := s.createStreamStorage(ctx, stream, genesisMB)
 	if err != nil {
 		logging.FromCtx(ctx).Errorw("Failed to allocate stream", "err", err, "streamId", event.GetStreamId())
 	}

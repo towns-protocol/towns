@@ -994,7 +994,7 @@ func (s *Stream) getLastMiniblockNumSkipLoad(ctx context.Context) (int64, error)
 // applyStreamEvents is thread-safe.
 func (s *Stream) applyStreamEvents(
 	ctx context.Context,
-	events []river.EventWithStreamId,
+	events []river.StreamUpdatedEvent,
 	blockNum crypto.BlockNumber,
 ) {
 	if len(events) == 0 {
@@ -1014,22 +1014,29 @@ func (s *Stream) applyStreamEvents(
 	}
 
 	for _, e := range events {
-		switch event := e.(type) {
-		case *river.StreamLastMiniblockUpdated:
+		switch e.Reason() {
+		case river.StreamUpdatedEventTypePlacementUpdated:
+			s.nodesLocked.Reset(e.(*river.StreamState).Nodes, s.params.Wallet.Address)
+		case river.StreamUpdatedEventTypeLastMiniblockBatchUpdated:
+			event := e.(*river.StreamMiniblockUpdate)
 			err := s.promoteCandidateLocked(ctx, &MiniblockRef{
 				Hash: event.LastMiniblockHash,
 				Num:  int64(event.LastMiniblockNum),
 			})
+
 			if err != nil {
 				logging.FromCtx(ctx).Errorw("onStreamLastMiniblockUpdated: failed to promote candidate", "err", err)
 			}
-		case *river.StreamPlacementUpdated:
-			err := s.nodesLocked.Update(event, s.params.Wallet.Address)
-			if err != nil {
-				logging.FromCtx(ctx).Errorw("applyStreamEvents: failed to update nodes", "err", err, "streamId", s.streamId)
-			}
+		case river.StreamUpdatedEventTypeAllocate:
+			logging.FromCtx(ctx).Errorw("applyStreamEvents: unexpected stream allocation event",
+				"event", e, "streamId", s.streamId)
+			continue
+		case river.StreamUpdatedEventTypeCreate:
+			logging.FromCtx(ctx).Errorw("applyStreamEvents: unexpected stream creation event",
+				"event", e, "streamId", s.streamId)
+			continue
 		default:
-			logging.FromCtx(ctx).Errorw("applyStreamEvents: unknown event", "event", event, "streamId", s.streamId)
+			logging.FromCtx(ctx).Errorw("applyStreamEvents: unknown event", "event", e, "streamId", s.streamId)
 		}
 	}
 
@@ -1073,6 +1080,9 @@ func (s *Stream) AdvanceStickyPeer(currentPeer common.Address) common.Address {
 	return s.nodesLocked.AdvanceStickyPeer(currentPeer)
 }
 
-func (s *Stream) Update(event *river.StreamPlacementUpdated, localNode common.Address) error {
-	return RiverError(Err_INTERNAL, "Can't update nodes on the streamImpl")
+func (s *Stream) Reset(nodes []common.Address, localNode common.Address) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	s.nodesLocked.Reset(nodes, localNode)
 }

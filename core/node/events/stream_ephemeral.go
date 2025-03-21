@@ -18,7 +18,7 @@ import (
 
 func (s *StreamCache) onStreamCreated(
 	ctx context.Context,
-	event *river.StreamCreated,
+	event *river.StreamState,
 	blockNum crypto.BlockNumber,
 ) {
 	if !slices.Contains(event.Stream.Nodes, s.params.Wallet.Address) {
