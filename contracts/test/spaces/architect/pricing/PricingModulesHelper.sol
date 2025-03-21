@@ -5,7 +5,7 @@ pragma solidity ^0.8.19;
 import {IPricingModules} from "contracts/src/factory/facets/architect/pricing/IPricingModules.sol";
 
 // helpers
-import {FacetHelper} from "contracts/test/diamond/Facet.t.sol";
+import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
 
 // contracts
 import {PricingModulesFacet} from "contracts/src/factory/facets/architect/pricing/PricingModulesFacet.sol";

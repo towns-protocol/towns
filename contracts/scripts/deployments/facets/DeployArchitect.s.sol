@@ -8,7 +8,7 @@ import {IArchitect} from "contracts/src/factory/facets/architect/IArchitect.sol"
 //contracts
 import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
 import {Architect} from "contracts/src/factory/facets/architect/Architect.sol";
-import {FacetHelper} from "contracts/test/diamond/Facet.t.sol";
+import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
 
 contract DeployArchitect is FacetHelper, Deployer {
   constructor() {
