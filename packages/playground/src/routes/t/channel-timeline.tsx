@@ -1,5 +1,5 @@
 import { useParams } from 'react-router-dom'
-import { useChannel, useSyncAgent, useThreads, useTimeline } from '@river-build/react-sdk'
+import { useChannel, useSyncAgent, useThreads, useTimeline } from '@towns-protocol/react-sdk'
 import { useState } from 'react'
 import { Timeline } from '@/components/blocks/timeline'
 import { ChannelProvider } from '@/hooks/current-channel'

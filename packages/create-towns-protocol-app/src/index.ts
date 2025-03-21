@@ -16,9 +16,9 @@ const argv = minimist<{
 
 // prettier-ignore
 const helpMessage = `\
-Usage: create-river-build-app [OPTION]... [DIRECTORY]
+Usage: create-towns-protocol-app [OPTION]... [DIRECTORY]
 
-Create a new River Build app.
+Create a new Towns Protocol app.
 With no arguments, creates a new app in the current directory.
 
 Options:

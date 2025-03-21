@@ -1,5 +1,5 @@
 {
-    "name": "@river-build/dlog",
+    "name": "@towns-protocol/dlog",
     "version": "0.0.189",
     "packageManager": "yarn@3.8.0",
     "type": "module",
@@ -19,7 +19,7 @@
     },
     "dependencies": {
         "@bufbuild/protobuf": "^2.2.2",
-        "@river-build/proto": "workspace:^",
+        "@towns-protocol/proto": "workspace:^",
         "browser-or-node": "^3.0.0",
         "debug": "^4.3.4",
         "ethereum-cryptography": "^1.2.0"

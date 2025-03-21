@@ -1,13 +1,13 @@
 'use client'
-import type { SyncAgent } from '@river-build/sdk'
+import type { SyncAgent } from '@towns-protocol/sdk'
 import { useEffect, useState } from 'react'
-import { RiverSyncContext } from './internals/RiverSyncContext'
+import { TownsSyncContext } from './internals/TownsSyncContext'
 
 /**
- * Provides the sync agent to all hooks usage that interacts with the River network.
+ * Provides the sync agent to all hooks usage that interacts with the Towns Protocol.
  *
  * - If you want to interact with the sync agent directly, you can use the `useSyncAgent` hook.
- * - If you want to interact with the River network using hooks provided by this SDK, you should wrap your App with this provider.
+ * - If you want to interact with the Towns Protocol using hooks provided by this SDK, you should wrap your App with this provider.
  *
  * You can pass an initial sync agent instance to the provider.
  * This can be useful for persisting authentication.
@@ -15,7 +15,7 @@ import { RiverSyncContext } from './internals/RiverSyncContext'
  * @param props - The props for the provider
  * @returns The provider
  */
-export const RiverSyncProvider = (props: {
+export const TownsSyncProvider = (props: {
     /** A initial sync agent instance. Useful for persisting authentication. */
     syncAgent?: SyncAgent
     config?: {
@@ -42,7 +42,7 @@ export const RiverSyncProvider = (props: {
     }, [syncAgent])
 
     return (
-        <RiverSyncContext.Provider
+        <TownsSyncContext.Provider
             value={{
                 config: props.config,
                 syncAgent,
@@ -50,6 +50,6 @@ export const RiverSyncProvider = (props: {
             }}
         >
             {props.children}
-        </RiverSyncContext.Provider>
+        </TownsSyncContext.Provider>
     )
 }

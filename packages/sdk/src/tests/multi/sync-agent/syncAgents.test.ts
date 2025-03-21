@@ -1,11 +1,11 @@
 /**
  * @group with-entitlements
  */
-import { dlogger } from '@river-build/dlog'
+import { dlogger } from '@towns-protocol/dlog'
 import { SyncAgent } from '../../../sync-agent/syncAgent'
 import { Bot } from '../../../sync-agent/utils/bot'
 import { findMessageByText, waitFor } from '../../testUtils'
-import { NoopRuleData, Permission } from '@river-build/web3'
+import { NoopRuleData, Permission } from '@towns-protocol/web3'
 
 const logger = dlogger('csb:test:syncAgents')
 

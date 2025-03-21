@@ -7011,427 +7011,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@river-build/contracts@workspace:contracts":
-  version: 0.0.0-use.local
-  resolution: "@river-build/contracts@workspace:contracts"
-  dependencies:
-    "@openzeppelin/contracts": ^5.2.0
-    "@openzeppelin/contracts-upgradeable": ^5.2.0
-    "@prb/math": ^4.1.0
-    "@prb/test": ^0.6.4
-    "@towns-protocol/diamond": ^0.1.0
-    "@wagmi/cli": ^2.2.0
-    account-abstraction: "github:eth-infinitism/account-abstraction"
-    crypto-lib: "github:towns-protocol/crypto-lib#f40c5f6944a55583a687b672ba680db3bfabb0ef"
-    forge-std: "github:foundry-rs/forge-std#v1.9.5"
-    prettier: ^2.8.8
-    prettier-plugin-solidity: ^1.4.2
-    solady: ^0.1.12
-    solhint: ^5.0.5
-    turbo: ^2.0.12
-  languageName: unknown
-  linkType: soft
-
-"@river-build/dlog@workspace:^, @river-build/dlog@workspace:packages/dlog":
-  version: 0.0.0-use.local
-  resolution: "@river-build/dlog@workspace:packages/dlog"
-  dependencies:
-    "@bufbuild/protobuf": ^2.2.2
-    "@river-build/proto": "workspace:^"
-    "@types/debug": ^4.1.8
-    "@typescript-eslint/eslint-plugin": ^6.10.0
-    "@typescript-eslint/parser": ^7.14.1
-    browser-or-node: ^3.0.0
-    debug: ^4.3.4
-    eslint: ^8.53.0
-    eslint-import-resolver-typescript: ^3.5.5
-    eslint-plugin-import: ^2.27.5
-    ethereum-cryptography: ^1.2.0
-    ts-node: ^10.9.1
-    typescript: ^5.1.6
-    vitest: 3.0.5
-  languageName: unknown
-  linkType: soft
-
-"@river-build/docs@workspace:packages/docs":
-  version: 0.0.0-use.local
-  resolution: "@river-build/docs@workspace:packages/docs"
-  dependencies:
-    cspell: ^8.8.1
-    mintlify: 4.0.274
-  languageName: unknown
-  linkType: soft
-
-"@river-build/encryption@workspace:^, @river-build/encryption@workspace:packages/encryption":
-  version: 0.0.0-use.local
-  resolution: "@river-build/encryption@workspace:packages/encryption"
-  dependencies:
-    "@bufbuild/protobuf": ^2.2.2
-    "@ethereumjs/util": ^8.0.1
-    "@matrix-org/olm": ^3.2.15
-    "@river-build/dlog": "workspace:^"
-    "@river-build/proto": "workspace:^"
-    "@river-build/web3": "workspace:^"
-    "@types/lodash": ^4.14.186
-    "@types/node": ^20.5.0
-    "@typescript-eslint/eslint-plugin": ^6.10.0
-    "@typescript-eslint/parser": ^7.14.1
-    debug: ^4.3.4
-    dexie: ^4.0.7
-    eslint: ^8.53.0
-    eslint-import-resolver-typescript: ^3.5.5
-    eslint-plugin-import: ^2.27.5
-    ethers: ^5.7.2
-    fake-indexeddb: ^4.0.1
-    lru-cache: ^11.0.1
-    nanoid: ^4.0.0
-    ts-node: ^10.9.1
-    typed-emitter: ^2.1.0
-    typescript: ^5.1.6
-    vitest: 3.0.5
-  languageName: unknown
-  linkType: soft
-
-"@river-build/eslint-config@workspace:^, @river-build/eslint-config@workspace:packages/eslint-config":
-  version: 0.0.0-use.local
-  resolution: "@river-build/eslint-config@workspace:packages/eslint-config"
-  languageName: unknown
-  linkType: soft
-
-"@river-build/generated@workspace:^, @river-build/generated@workspace:packages/generated":
-  version: 0.0.0-use.local
-  resolution: "@river-build/generated@workspace:packages/generated"
-  languageName: unknown
-  linkType: soft
-
-"@river-build/metrics-discovery@workspace:packages/metrics-discovery":
-  version: 0.0.0-use.local
-  resolution: "@river-build/metrics-discovery@workspace:packages/metrics-discovery"
-  dependencies:
-    "@river-build/generated": "workspace:^"
-    "@river-build/web3": "workspace:^"
-    esbuild: ^0.21.5
-    eslint: ^8.53.0
-    ethers: ^5.7.2
-    prettier: ^2.8.8
-    typescript: ^5.1.6
-    zod: ^3.21.4
-  languageName: unknown
-  linkType: soft
-
-"@river-build/playground@workspace:packages/playground":
-  version: 0.0.0-use.local
-  resolution: "@river-build/playground@workspace:packages/playground"
-  dependencies:
-    "@emoji-mart/data": ^1.1.2
-    "@hookform/resolvers": ^3.6.0
-    "@radix-ui/react-dialog": ^1.1.1
-    "@radix-ui/react-hover-card": ^1.1.1
-    "@radix-ui/react-icons": ^1.3.0
-    "@radix-ui/react-label": ^2.0.2
-    "@radix-ui/react-scroll-area": ^1.1.0
-    "@radix-ui/react-select": ^2.0.0
-    "@radix-ui/react-slot": ^1.0.2
-    "@radix-ui/react-switch": ^1.0.3
-    "@radix-ui/react-tooltip": ^1.1.4
-    "@river-build/eslint-config": "workspace:^"
-    "@river-build/prettier-config": "workspace:^"
-    "@river-build/react-sdk": "workspace:^"
-    "@river-build/sdk": "workspace:^"
-    "@river-build/web3": "workspace:^"
-    "@tanstack/react-query": ^5.51.15
-    "@types/node": ^20.5.0
-    "@types/react": ^18.2.11
-    "@types/react-dom": ^18.2.4
-    "@typescript-eslint/eslint-plugin": ^6.10.0
-    "@typescript-eslint/parser": ^7.14.1
-    "@vitejs/plugin-react": ^4.3.1
-    autoprefixer: ^10.4.19
-    class-variance-authority: ^0.7.0
-    clsx: ^2.1.1
-    eslint: ^8.53.0
-    eslint-import-resolver-typescript: ^3.5.5
-    eslint-plugin-import: ^2.27.5
-    eslint-plugin-react: ^7.32.2
-    eslint-plugin-react-hooks: ^4.6.0
-    ethers: ^5.7.2
-    lucide-react: ^0.460.0
-    postcss: ^8.4.38
-    prettier: ^2.8.8
-    prettier-plugin-tailwindcss: ^0.4.1
-    react: ^18.2.0
-    react-dom: ^18.2.0
-    react-hook-form: ^7.38.0
-    react-router-dom: ^6.4.2
-    superjson: ^2.2.1
-    suspend-react: ^0.1.3
-    tailwind-merge: ^2.3.0
-    tailwindcss: ^3.4.4
-    tailwindcss-animate: ^1.0.7
-    typescript: ^5.1.6
-    viem: ^2.21.51
-    vite: ^6.1.0
-    vite-plugin-checker: ^0.8.0
-    vite-plugin-node-polyfills: ^0.22.0
-    vite-plugin-replace: ^0.1.1
-    vite-plugin-wasm: ^3.4.1
-    vite-tsconfig-paths: ^5.1.3
-    wagmi: ^2.13.0
-    zod: ^3.21.4
-  languageName: unknown
-  linkType: soft
-
-"@river-build/prettier-config@workspace:^, @river-build/prettier-config@workspace:packages/prettier-config":
-  version: 0.0.0-use.local
-  resolution: "@river-build/prettier-config@workspace:packages/prettier-config"
-  peerDependencies:
-    prettier: ^2.8.8
-  languageName: unknown
-  linkType: soft
-
-"@river-build/proto-source@workspace:^, @river-build/proto-source@workspace:protocol":
-  version: 0.0.0-use.local
-  resolution: "@river-build/proto-source@workspace:protocol"
-  languageName: unknown
-  linkType: soft
-
-"@river-build/proto@workspace:^, @river-build/proto@workspace:packages/proto":
-  version: 0.0.0-use.local
-  resolution: "@river-build/proto@workspace:packages/proto"
-  dependencies:
-    "@bufbuild/buf": ^1.32.0
-    "@bufbuild/protobuf": ^2.2.2
-    "@bufbuild/protoc-gen-es": ^2.2.2
-    "@river-build/proto-source": "workspace:^"
-    "@types/node": ^20.5.0
-    lodash.debounce: ^4.0.8
-    ts-node: ^10.9.1
-    typescript: ^5.1.6
-    vitest: 3.0.5
-  languageName: unknown
-  linkType: soft
-
-"@river-build/react-sdk@workspace:^, @river-build/react-sdk@workspace:packages/react-sdk":
-  version: 0.0.0-use.local
-  resolution: "@river-build/react-sdk@workspace:packages/react-sdk"
-  dependencies:
-    "@microsoft/api-extractor": ^7.47.7
-    "@microsoft/api-extractor-model": ^7.29.6
-    "@microsoft/tsdoc": ^0.15.0
-    "@microsoft/tsdoc-config": ^0.17.0
-    "@river-build/sdk": "workspace:^"
-    "@testing-library/react": ^14.2.1
-    "@types/node": ^20.5.0
-    "@types/react": ^18.2.11
-    "@types/react-dom": ^18.2.4
-    "@typescript-eslint/eslint-plugin": ^6.10.0
-    "@typescript-eslint/parser": ^7.14.1
-    eslint: ^8.53.0
-    eslint-plugin-import: ^2.27.5
-    eslint-plugin-react: ^7.32.2
-    eslint-plugin-react-hooks: ^4.6.0
-    eslint-plugin-tsdoc: ^0.3.0
-    ethers: ^5.7.2
-    react: ^18.2.0
-    react-dom: ^18.2.0
-    ts-morph: ^24.0.0
-    tsx: ^4.7.1
-    typescript: ^5.1.6
-  peerDependencies:
-    react: ^18.2.0
-    typescript: ^5.1.6
-  languageName: unknown
-  linkType: soft
-
-"@river-build/sdk@workspace:^, @river-build/sdk@workspace:packages/sdk":
-  version: 0.0.0-use.local
-  resolution: "@river-build/sdk@workspace:packages/sdk"
-  dependencies:
-    "@bufbuild/protobuf": ^2.2.2
-    "@connectrpc/connect": ^2.0.0
-    "@connectrpc/connect-node": ^2.0.0
-    "@connectrpc/connect-web": ^2.0.0
-    "@ethereumjs/util": ^8.0.1
-    "@river-build/dlog": "workspace:^"
-    "@river-build/encryption": "workspace:^"
-    "@river-build/generated": "workspace:^"
-    "@river-build/proto": "workspace:^"
-    "@river-build/web3": "workspace:^"
-    "@testing-library/react": ^14.2.1
-    "@types/debug": ^4.1.8
-    "@types/lodash": ^4.14.186
-    "@types/node": ^20.5.0
-    "@types/seedrandom": ^3.0.4
-    "@typescript-eslint/eslint-plugin": ^6.10.0
-    "@typescript-eslint/parser": ^7.14.1
-    browser-or-node: ^3.0.0
-    debug: ^4.3.4
-    dexie: ^4.0.7
-    eslint: ^8.53.0
-    eslint-import-resolver-typescript: ^3.5.5
-    eslint-plugin-import: ^2.27.5
-    eslint-plugin-tsdoc: ^0.3.0
-    ethereum-cryptography: ^1.2.0
-    ethers: ^5.7.2
-    fake-indexeddb: ^4.0.1
-    happy-dom: ^15.11.7
-    ioredis: ^5.3.2
-    lodash: ^4.17.21
-    msgpackr: ^1.10.1
-    nanoid: ^4.0.0
-    p-limit: ^6.1.0
-    seedrandom: ^3.0.5
-    typed-emitter: ^2.1.0
-    typescript: ^5.1.6
-    vite-plugin-wasm: ^3.4.1
-    vitest: 3.0.5
-    vitest-fetch-mock: ^0.4.3
-  languageName: unknown
-  linkType: soft
-
-"@river-build/stream-metadata@workspace:packages/stream-metadata":
-  version: 0.0.0-use.local
-  resolution: "@river-build/stream-metadata@workspace:packages/stream-metadata"
-  dependencies:
-    "@aws-sdk/client-cloudfront": ^3.645.0
-    "@bufbuild/buf": ^1.32.0
-    "@bufbuild/protobuf": ^2.2.2
-    "@fastify/cors": ^9.0.1
-    "@river-build/dlog": "workspace:^"
-    "@river-build/encryption": "workspace:^"
-    "@river-build/eslint-config": "workspace:^"
-    "@river-build/generated": "workspace:^"
-    "@river-build/prettier-config": "workspace:^"
-    "@river-build/proto": "workspace:^"
-    "@river-build/sdk": "workspace:^"
-    "@river-build/web3": "workspace:^"
-    "@types/node": ^20.5.0
-    "@types/uuid": ^10.0.0
-    "@typescript-eslint/parser": ^7.14.1
-    axios: ^1.2.6
-    dd-trace: ^5.19.0
-    dotenv: ^16.4.5
-    esbuild: ^0.21.5
-    esbuild-plugin-pino: ^2.2.0
-    eslint: ^8.53.0
-    eslint-config-prettier: ^8.8.0
-    eslint-import-resolver-typescript: ^3.5.5
-    eslint-plugin-prettier: ^4.2.1
-    ethers: ^5.7.2
-    fake-indexeddb: ^4.0.1
-    fastify: ^4.28.1
-    lru-cache: ^11.0.1
-    magic-bytes.js: ^1.10.0
-    pino: ^8.17.1
-    pino-pretty: ^13.0.0
-    prettier: ^2.8.8
-    typescript: ^5.1.6
-    uuid: ^8.3.2
-    vitest: 3.0.5
-    zod: ^3.21.4
-  languageName: unknown
-  linkType: soft
-
-"@river-build/stress@workspace:packages/stress":
-  version: 0.0.0-use.local
-  resolution: "@river-build/stress@workspace:packages/stress"
-  dependencies:
-    "@babel/node": ^7.23.9
-    "@bufbuild/protobuf": ^2.2.2
-    "@river-build/dlog": "workspace:^"
-    "@river-build/encryption": "workspace:^"
-    "@river-build/proto": "workspace:^"
-    "@river-build/sdk": "workspace:^"
-    "@river-build/web3": "workspace:^"
-    "@types/debug": ^4.1.8
-    "@types/lodash": ^4.14.186
-    "@types/node": ^20.5.0
-    "@typescript-eslint/eslint-plugin": ^6.10.0
-    "@typescript-eslint/parser": ^7.14.1
-    esbuild: ^0.21.5
-    esbuild-plugin-pino: ^2.2.0
-    eslint: ^8.53.0
-    eslint-import-resolver-typescript: ^3.5.5
-    eslint-plugin-import: ^2.27.5
-    eslint-plugin-jest: ^27.2.3
-    ethers: ^5.7.2
-    fake-indexeddb: ^4.0.1
-    ioredis: ^5.3.2
-    msgpackr: ^1.10.1
-    pino: ^8.17.1
-    pino-pretty: ^13.0.0
-    typed-emitter: ^2.1.0
-    typescript: ^5.1.6
-    vitest: 3.0.5
-  languageName: unknown
-  linkType: soft
-
-"@river-build/subgraph@workspace:packages/subgraph":
-  version: 0.0.0-use.local
-  resolution: "@river-build/subgraph@workspace:packages/subgraph"
-  dependencies:
-    "@river-build/prettier-config": "workspace:^"
-    "@types/node": ^20.5.0
-    eslint: ^8.53.0
-    eslint-config-ponder: ^0.9.27
-    eslint-import-resolver-typescript: ^3.5.5
-    eslint-plugin-prettier: ^4.2.1
-    hono: ^4.5.0
-    ponder: ^0.9.27
-    prettier: ^2.8.8
-    tsx: ^4.7.1
-    typescript: ^5.1.6
-    viem: ^2.21.51
-  languageName: unknown
-  linkType: soft
-
-"@river-build/web3@workspace:^, @river-build/web3@workspace:packages/web3":
-  version: 0.0.0-use.local
-  resolution: "@river-build/web3@workspace:packages/web3"
-  dependencies:
-    "@isaacs/ttlcache": ^1.4.1
-    "@river-build/dlog": "workspace:^"
-    "@river-build/generated": "workspace:^"
-    "@types/lodash": ^4.14.186
-    "@types/node": ^20.5.0
-    "@typescript-eslint/eslint-plugin": ^6.10.0
-    "@typescript-eslint/parser": ^7.14.1
-    abitype: ^0.9.10
-    debug: ^4.3.4
-    eslint: ^8.53.0
-    eslint-import-resolver-typescript: ^3.5.5
-    eslint-plugin-import: ^2.27.5
-    ethers: ^5.7.2
-    lodash: ^4.17.21
-    lru-cache: ^11.0.1
-    nanoid: ^4.0.0
-    typed-emitter: ^2.1.0
-    typescript: ^5.1.6
-    viem: ^2.21.51
-    vitest: 3.0.5
-    zod: ^3.21.4
-  languageName: unknown
-  linkType: soft
-
-"@river-build/xchain-monitor@workspace:packages/xchain-monitor":
-  version: 0.0.0-use.local
-  resolution: "@river-build/xchain-monitor@workspace:packages/xchain-monitor"
-  dependencies:
-    "@river-build/generated": "workspace:^"
-    "@river-build/web3": "workspace:^"
-    "@types/uuid": ^10.0.0
-    dotenv: ^16.4.5
-    esbuild-plugin-pino: ^2.2.0
-    pino: ^8.17.1
-    pino-pretty: ^13.0.0
-    tsx: ^4.7.1
-    typescript: ^5.1.6
-    uuid: ^8.3.2
-    viem: ^2.21.51
-    zod: ^3.21.4
-  languageName: unknown
-  linkType: soft
-
 "@rollup/plugin-inject@npm:^5.0.5":
   version: 5.0.5
   resolution: "@rollup/plugin-inject@npm:5.0.5"
@@ -9010,6 +8589,27 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@towns-protocol/contracts@workspace:contracts":
+  version: 0.0.0-use.local
+  resolution: "@towns-protocol/contracts@workspace:contracts"
+  dependencies:
+    "@openzeppelin/contracts": ^5.2.0
+    "@openzeppelin/contracts-upgradeable": ^5.2.0
+    "@prb/math": ^4.1.0
+    "@prb/test": ^0.6.4
+    "@towns-protocol/diamond": ^0.1.0
+    "@wagmi/cli": ^2.2.0
+    account-abstraction: "github:eth-infinitism/account-abstraction"
+    crypto-lib: "github:towns-protocol/crypto-lib#f40c5f6944a55583a687b672ba680db3bfabb0ef"
+    forge-std: "github:foundry-rs/forge-std#v1.9.5"
+    prettier: ^2.8.8
+    prettier-plugin-solidity: ^1.4.2
+    solady: ^0.1.12
+    solhint: ^5.0.5
+    turbo: ^2.0.12
+  languageName: unknown
+  linkType: soft
+
 "@towns-protocol/diamond@npm:^0.1.0":
   version: 0.1.0
   resolution: "@towns-protocol/diamond@npm:0.1.0"
@@ -9019,6 +8619,406 @@ __metadata:
   checksum: 617ffa15a5c5b632dcb1ccff7f397a27fb53aac994f6503e6c60eb7c8b2a54f468f285d036df1370decb88b1516755ae380952a97ebb28b0daf96521bc3f712c
   languageName: node
   linkType: hard
+
+"@towns-protocol/dlog@workspace:^, @towns-protocol/dlog@workspace:packages/dlog":
+  version: 0.0.0-use.local
+  resolution: "@towns-protocol/dlog@workspace:packages/dlog"
+  dependencies:
+    "@bufbuild/protobuf": ^2.2.2
+    "@towns-protocol/proto": "workspace:^"
+    "@types/debug": ^4.1.8
+    "@typescript-eslint/eslint-plugin": ^6.10.0
+    "@typescript-eslint/parser": ^7.14.1
+    browser-or-node: ^3.0.0
+    debug: ^4.3.4
+    eslint: ^8.53.0
+    eslint-import-resolver-typescript: ^3.5.5
+    eslint-plugin-import: ^2.27.5
+    ethereum-cryptography: ^1.2.0
+    ts-node: ^10.9.1
+    typescript: ^5.1.6
+    vitest: 3.0.5
+  languageName: unknown
+  linkType: soft
+
+"@towns-protocol/docs@workspace:packages/docs":
+  version: 0.0.0-use.local
+  resolution: "@towns-protocol/docs@workspace:packages/docs"
+  dependencies:
+    cspell: ^8.8.1
+    mintlify: 4.0.274
+  languageName: unknown
+  linkType: soft
+
+"@towns-protocol/encryption@workspace:^, @towns-protocol/encryption@workspace:packages/encryption":
+  version: 0.0.0-use.local
+  resolution: "@towns-protocol/encryption@workspace:packages/encryption"
+  dependencies:
+    "@bufbuild/protobuf": ^2.2.2
+    "@ethereumjs/util": ^8.0.1
+    "@matrix-org/olm": ^3.2.15
+    "@towns-protocol/dlog": "workspace:^"
+    "@towns-protocol/proto": "workspace:^"
+    "@towns-protocol/web3": "workspace:^"
+    "@types/lodash": ^4.14.186
+    "@types/node": ^20.5.0
+    "@typescript-eslint/eslint-plugin": ^6.10.0
+    "@typescript-eslint/parser": ^7.14.1
+    debug: ^4.3.4
+    dexie: ^4.0.7
+    eslint: ^8.53.0
+    eslint-import-resolver-typescript: ^3.5.5
+    eslint-plugin-import: ^2.27.5
+    ethers: ^5.7.2
+    fake-indexeddb: ^4.0.1
+    lru-cache: ^11.0.1
+    nanoid: ^4.0.0
+    ts-node: ^10.9.1
+    typed-emitter: ^2.1.0
+    typescript: ^5.1.6
+    vitest: 3.0.5
+  languageName: unknown
+  linkType: soft
+
+"@towns-protocol/eslint-config@workspace:^, @towns-protocol/eslint-config@workspace:packages/eslint-config":
+  version: 0.0.0-use.local
+  resolution: "@towns-protocol/eslint-config@workspace:packages/eslint-config"
+  languageName: unknown
+  linkType: soft
+
+"@towns-protocol/generated@workspace:^, @towns-protocol/generated@workspace:packages/generated":
+  version: 0.0.0-use.local
+  resolution: "@towns-protocol/generated@workspace:packages/generated"
+  languageName: unknown
+  linkType: soft
+
+"@towns-protocol/metrics-discovery@workspace:packages/metrics-discovery":
+  version: 0.0.0-use.local
+  resolution: "@towns-protocol/metrics-discovery@workspace:packages/metrics-discovery"
+  dependencies:
+    "@towns-protocol/generated": "workspace:^"
+    "@towns-protocol/web3": "workspace:^"
+    esbuild: ^0.21.5
+    eslint: ^8.53.0
+    ethers: ^5.7.2
+    prettier: ^2.8.8
+    typescript: ^5.1.6
+    zod: ^3.21.4
+  languageName: unknown
+  linkType: soft
+
+"@towns-protocol/playground@workspace:packages/playground":
+  version: 0.0.0-use.local
+  resolution: "@towns-protocol/playground@workspace:packages/playground"
+  dependencies:
+    "@emoji-mart/data": ^1.1.2
+    "@hookform/resolvers": ^3.6.0
+    "@radix-ui/react-dialog": ^1.1.1
+    "@radix-ui/react-hover-card": ^1.1.1
+    "@radix-ui/react-icons": ^1.3.0
+    "@radix-ui/react-label": ^2.0.2
+    "@radix-ui/react-scroll-area": ^1.1.0
+    "@radix-ui/react-select": ^2.0.0
+    "@radix-ui/react-slot": ^1.0.2
+    "@radix-ui/react-switch": ^1.0.3
+    "@radix-ui/react-tooltip": ^1.1.4
+    "@tanstack/react-query": ^5.51.15
+    "@towns-protocol/eslint-config": "workspace:^"
+    "@towns-protocol/prettier-config": "workspace:^"
+    "@towns-protocol/react-sdk": "workspace:^"
+    "@towns-protocol/sdk": "workspace:^"
+    "@towns-protocol/web3": "workspace:^"
+    "@types/node": ^20.5.0
+    "@types/react": ^18.2.11
+    "@types/react-dom": ^18.2.4
+    "@typescript-eslint/eslint-plugin": ^6.10.0
+    "@typescript-eslint/parser": ^7.14.1
+    "@vitejs/plugin-react": ^4.3.1
+    autoprefixer: ^10.4.19
+    class-variance-authority: ^0.7.0
+    clsx: ^2.1.1
+    eslint: ^8.53.0
+    eslint-import-resolver-typescript: ^3.5.5
+    eslint-plugin-import: ^2.27.5
+    eslint-plugin-react: ^7.32.2
+    eslint-plugin-react-hooks: ^4.6.0
+    ethers: ^5.7.2
+    lucide-react: ^0.460.0
+    postcss: ^8.4.38
+    prettier: ^2.8.8
+    prettier-plugin-tailwindcss: ^0.4.1
+    react: ^18.2.0
+    react-dom: ^18.2.0
+    react-hook-form: ^7.38.0
+    react-router-dom: ^6.4.2
+    superjson: ^2.2.1
+    suspend-react: ^0.1.3
+    tailwind-merge: ^2.3.0
+    tailwindcss: ^3.4.4
+    tailwindcss-animate: ^1.0.7
+    typescript: ^5.1.6
+    viem: ^2.21.51
+    vite: ^6.1.0
+    vite-plugin-checker: ^0.8.0
+    vite-plugin-node-polyfills: ^0.22.0
+    vite-plugin-replace: ^0.1.1
+    vite-plugin-wasm: ^3.4.1
+    vite-tsconfig-paths: ^5.1.3
+    wagmi: ^2.13.0
+    zod: ^3.21.4
+  languageName: unknown
+  linkType: soft
+
+"@towns-protocol/prettier-config@workspace:^, @towns-protocol/prettier-config@workspace:packages/prettier-config":
+  version: 0.0.0-use.local
+  resolution: "@towns-protocol/prettier-config@workspace:packages/prettier-config"
+  peerDependencies:
+    prettier: ^2.8.8
+  languageName: unknown
+  linkType: soft
+
+"@towns-protocol/proto-source@workspace:^, @towns-protocol/proto-source@workspace:protocol":
+  version: 0.0.0-use.local
+  resolution: "@towns-protocol/proto-source@workspace:protocol"
+  languageName: unknown
+  linkType: soft
+
+"@towns-protocol/proto@workspace:^, @towns-protocol/proto@workspace:packages/proto":
+  version: 0.0.0-use.local
+  resolution: "@towns-protocol/proto@workspace:packages/proto"
+  dependencies:
+    "@bufbuild/buf": ^1.32.0
+    "@bufbuild/protobuf": ^2.2.2
+    "@bufbuild/protoc-gen-es": ^2.2.2
+    "@towns-protocol/proto-source": "workspace:^"
+    "@types/node": ^20.5.0
+    lodash.debounce: ^4.0.8
+    ts-node: ^10.9.1
+    typescript: ^5.1.6
+    vitest: 3.0.5
+  languageName: unknown
+  linkType: soft
+
+"@towns-protocol/react-sdk@workspace:^, @towns-protocol/react-sdk@workspace:packages/react-sdk":
+  version: 0.0.0-use.local
+  resolution: "@towns-protocol/react-sdk@workspace:packages/react-sdk"
+  dependencies:
+    "@microsoft/api-extractor": ^7.47.7
+    "@microsoft/api-extractor-model": ^7.29.6
+    "@microsoft/tsdoc": ^0.15.0
+    "@microsoft/tsdoc-config": ^0.17.0
+    "@testing-library/react": ^14.2.1
+    "@towns-protocol/sdk": "workspace:^"
+    "@types/node": ^20.5.0
+    "@types/react": ^18.2.11
+    "@types/react-dom": ^18.2.4
+    "@typescript-eslint/eslint-plugin": ^6.10.0
+    "@typescript-eslint/parser": ^7.14.1
+    eslint: ^8.53.0
+    eslint-plugin-import: ^2.27.5
+    eslint-plugin-react: ^7.32.2
+    eslint-plugin-react-hooks: ^4.6.0
+    eslint-plugin-tsdoc: ^0.3.0
+    ethers: ^5.7.2
+    react: ^18.2.0
+    react-dom: ^18.2.0
+    ts-morph: ^24.0.0
+    tsx: ^4.7.1
+    typescript: ^5.1.6
+  peerDependencies:
+    react: ^18.2.0
+    typescript: ^5.1.6
+  languageName: unknown
+  linkType: soft
+
+"@towns-protocol/sdk@workspace:^, @towns-protocol/sdk@workspace:packages/sdk":
+  version: 0.0.0-use.local
+  resolution: "@towns-protocol/sdk@workspace:packages/sdk"
+  dependencies:
+    "@bufbuild/protobuf": ^2.2.2
+    "@connectrpc/connect": ^2.0.0
+    "@connectrpc/connect-node": ^2.0.0
+    "@connectrpc/connect-web": ^2.0.0
+    "@ethereumjs/util": ^8.0.1
+    "@testing-library/react": ^14.2.1
+    "@towns-protocol/dlog": "workspace:^"
+    "@towns-protocol/encryption": "workspace:^"
+    "@towns-protocol/generated": "workspace:^"
+    "@towns-protocol/proto": "workspace:^"
+    "@towns-protocol/web3": "workspace:^"
+    "@types/debug": ^4.1.8
+    "@types/lodash": ^4.14.186
+    "@types/node": ^20.5.0
+    "@types/seedrandom": ^3.0.4
+    "@typescript-eslint/eslint-plugin": ^6.10.0
+    "@typescript-eslint/parser": ^7.14.1
+    browser-or-node: ^3.0.0
+    debug: ^4.3.4
+    dexie: ^4.0.7
+    eslint: ^8.53.0
+    eslint-import-resolver-typescript: ^3.5.5
+    eslint-plugin-import: ^2.27.5
+    eslint-plugin-tsdoc: ^0.3.0
+    ethereum-cryptography: ^1.2.0
+    ethers: ^5.7.2
+    fake-indexeddb: ^4.0.1
+    happy-dom: ^15.11.7
+    ioredis: ^5.3.2
+    lodash: ^4.17.21
+    msgpackr: ^1.10.1
+    nanoid: ^4.0.0
+    p-limit: ^6.1.0
+    seedrandom: ^3.0.5
+    typed-emitter: ^2.1.0
+    typescript: ^5.1.6
+    vite-plugin-wasm: ^3.4.1
+    vitest: 3.0.5
+    vitest-fetch-mock: ^0.4.3
+  languageName: unknown
+  linkType: soft
+
+"@towns-protocol/stream-metadata@workspace:packages/stream-metadata":
+  version: 0.0.0-use.local
+  resolution: "@towns-protocol/stream-metadata@workspace:packages/stream-metadata"
+  dependencies:
+    "@aws-sdk/client-cloudfront": ^3.645.0
+    "@bufbuild/buf": ^1.32.0
+    "@bufbuild/protobuf": ^2.2.2
+    "@fastify/cors": ^9.0.1
+    "@towns-protocol/dlog": "workspace:^"
+    "@towns-protocol/encryption": "workspace:^"
+    "@towns-protocol/eslint-config": "workspace:^"
+    "@towns-protocol/generated": "workspace:^"
+    "@towns-protocol/prettier-config": "workspace:^"
+    "@towns-protocol/proto": "workspace:^"
+    "@towns-protocol/sdk": "workspace:^"
+    "@towns-protocol/web3": "workspace:^"
+    "@types/node": ^20.5.0
+    "@types/uuid": ^10.0.0
+    "@typescript-eslint/parser": ^7.14.1
+    axios: ^1.2.6
+    dd-trace: ^5.19.0
+    dotenv: ^16.4.5
+    esbuild: ^0.21.5
+    esbuild-plugin-pino: ^2.2.0
+    eslint: ^8.53.0
+    eslint-config-prettier: ^8.8.0
+    eslint-import-resolver-typescript: ^3.5.5
+    eslint-plugin-prettier: ^4.2.1
+    ethers: ^5.7.2
+    fake-indexeddb: ^4.0.1
+    fastify: ^4.28.1
+    lru-cache: ^11.0.1
+    magic-bytes.js: ^1.10.0
+    pino: ^8.17.1
+    pino-pretty: ^13.0.0
+    prettier: ^2.8.8
+    typescript: ^5.1.6
+    uuid: ^8.3.2
+    vitest: 3.0.5
+    zod: ^3.21.4
+  languageName: unknown
+  linkType: soft
+
+"@towns-protocol/stress@workspace:packages/stress":
+  version: 0.0.0-use.local
+  resolution: "@towns-protocol/stress@workspace:packages/stress"
+  dependencies:
+    "@babel/node": ^7.23.9
+    "@bufbuild/protobuf": ^2.2.2
+    "@towns-protocol/dlog": "workspace:^"
+    "@towns-protocol/encryption": "workspace:^"
+    "@towns-protocol/proto": "workspace:^"
+    "@towns-protocol/sdk": "workspace:^"
+    "@towns-protocol/web3": "workspace:^"
+    "@types/debug": ^4.1.8
+    "@types/lodash": ^4.14.186
+    "@types/node": ^20.5.0
+    "@typescript-eslint/eslint-plugin": ^6.10.0
+    "@typescript-eslint/parser": ^7.14.1
+    esbuild: ^0.21.5
+    esbuild-plugin-pino: ^2.2.0
+    eslint: ^8.53.0
+    eslint-import-resolver-typescript: ^3.5.5
+    eslint-plugin-import: ^2.27.5
+    eslint-plugin-jest: ^27.2.3
+    ethers: ^5.7.2
+    fake-indexeddb: ^4.0.1
+    ioredis: ^5.3.2
+    msgpackr: ^1.10.1
+    pino: ^8.17.1
+    pino-pretty: ^13.0.0
+    typed-emitter: ^2.1.0
+    typescript: ^5.1.6
+    vitest: 3.0.5
+  languageName: unknown
+  linkType: soft
+
+"@towns-protocol/subgraph@workspace:packages/subgraph":
+  version: 0.0.0-use.local
+  resolution: "@towns-protocol/subgraph@workspace:packages/subgraph"
+  dependencies:
+    "@towns-protocol/prettier-config": "workspace:^"
+    "@types/node": ^20.5.0
+    eslint: ^8.53.0
+    eslint-config-ponder: ^0.9.27
+    eslint-import-resolver-typescript: ^3.5.5
+    eslint-plugin-prettier: ^4.2.1
+    hono: ^4.5.0
+    ponder: ^0.9.27
+    prettier: ^2.8.8
+    tsx: ^4.7.1
+    typescript: ^5.1.6
+    viem: ^2.21.51
+  languageName: unknown
+  linkType: soft
+
+"@towns-protocol/web3@workspace:^, @towns-protocol/web3@workspace:packages/web3":
+  version: 0.0.0-use.local
+  resolution: "@towns-protocol/web3@workspace:packages/web3"
+  dependencies:
+    "@isaacs/ttlcache": ^1.4.1
+    "@towns-protocol/dlog": "workspace:^"
+    "@towns-protocol/generated": "workspace:^"
+    "@types/lodash": ^4.14.186
+    "@types/node": ^20.5.0
+    "@typescript-eslint/eslint-plugin": ^6.10.0
+    "@typescript-eslint/parser": ^7.14.1
+    abitype: ^0.9.10
+    debug: ^4.3.4
+    eslint: ^8.53.0
+    eslint-import-resolver-typescript: ^3.5.5
+    eslint-plugin-import: ^2.27.5
+    ethers: ^5.7.2
+    lodash: ^4.17.21
+    lru-cache: ^11.0.1
+    nanoid: ^4.0.0
+    typed-emitter: ^2.1.0
+    typescript: ^5.1.6
+    viem: ^2.21.51
+    vitest: 3.0.5
+    zod: ^3.21.4
+  languageName: unknown
+  linkType: soft
+
+"@towns-protocol/xchain-monitor@workspace:packages/xchain-monitor":
+  version: 0.0.0-use.local
+  resolution: "@towns-protocol/xchain-monitor@workspace:packages/xchain-monitor"
+  dependencies:
+    "@towns-protocol/generated": "workspace:^"
+    "@towns-protocol/web3": "workspace:^"
+    "@types/uuid": ^10.0.0
+    dotenv: ^16.4.5
+    esbuild-plugin-pino: ^2.2.0
+    pino: ^8.17.1
+    pino-pretty: ^13.0.0
+    tsx: ^4.7.1
+    typescript: ^5.1.6
+    uuid: ^8.3.2
+    viem: ^2.21.51
+    zod: ^3.21.4
+  languageName: unknown
+  linkType: soft
 
 "@ts-morph/common@npm:~0.25.0":
   version: 0.25.0
@@ -13369,9 +13369,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"create-river-build-app@workspace:packages/create-river-build-app":
+"create-towns-protocol-app@workspace:packages/create-towns-protocol-app":
   version: 0.0.0-use.local
-  resolution: "create-river-build-app@workspace:packages/create-river-build-app"
+  resolution: "create-towns-protocol-app@workspace:packages/create-towns-protocol-app"
   dependencies:
     "@types/cross-spawn": ^6.0.6
     "@types/minimist": ^1.2.5
@@ -13384,7 +13384,7 @@ __metadata:
     tsup: ^8.3.5
     typescript: ^5.1.6
   bin:
-    create-river-build-app: index.js
+    create-towns-protocol-app: index.js
   languageName: unknown
   linkType: soft
 
@@ -27612,35 +27612,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"river-build@workspace:.":
-  version: 0.0.0-use.local
-  resolution: "river-build@workspace:."
-  dependencies:
-    "@arethetypeswrong/cli": ^0.15.3
-    "@typechain/ethers-v5": ^10.1.1
-    "@types/node": ^20.5.0
-    eslint: ^8.53.0
-    eslint-config-prettier: ^8.8.0
-    eslint-plugin-mocha: ^10.1.0
-    eslint-plugin-n: ^16.0.0
-    eslint-plugin-prettier: ^4.2.1
-    husky: ^9.1.4
-    lerna: ^8.1.3
-    lint-staged: ^13.1.2
-    pino-pretty: ^13.0.0
-    prettier: ^2.8.8
-    publint: ^0.2.8
-    solidity-docgen: ^0.6.0-beta.29
-    syncpack: ^10.7.3
-    ts-node: ^10.9.1
-    turbo: ^2.0.12
-    typechain: ^8.1.1
-    typescript: ^5.1.6
-    vitest: 3.0.5
-    wait-on: ^7.0.1
-  languageName: unknown
-  linkType: soft
-
 "rlp@npm:^2.2.4":
   version: 2.2.7
   resolution: "rlp@npm:2.2.7"
@@ -29966,6 +29937,35 @@ __metadata:
   checksum: 5815059f014c31179a303c673f753f7899a6fce94ac93712c88ea5f3c26e0c042b5f0c7a599a00f8e0feeca4615dba75c3dffc54f3c1a489978aa8205e09307c
   languageName: node
   linkType: hard
+
+"towns-protocol@workspace:.":
+  version: 0.0.0-use.local
+  resolution: "towns-protocol@workspace:."
+  dependencies:
+    "@arethetypeswrong/cli": ^0.15.3
+    "@typechain/ethers-v5": ^10.1.1
+    "@types/node": ^20.5.0
+    eslint: ^8.53.0
+    eslint-config-prettier: ^8.8.0
+    eslint-plugin-mocha: ^10.1.0
+    eslint-plugin-n: ^16.0.0
+    eslint-plugin-prettier: ^4.2.1
+    husky: ^9.1.4
+    lerna: ^8.1.3
+    lint-staged: ^13.1.2
+    pino-pretty: ^13.0.0
+    prettier: ^2.8.8
+    publint: ^0.2.8
+    solidity-docgen: ^0.6.0-beta.29
+    syncpack: ^10.7.3
+    ts-node: ^10.9.1
+    turbo: ^2.0.12
+    typechain: ^8.1.1
+    typescript: ^5.1.6
+    vitest: 3.0.5
+    wait-on: ^7.0.1
+  languageName: unknown
+  linkType: soft
 
 "tr46@npm:^1.0.1":
   version: 1.0.1
@@ -32496,8 +32496,8 @@ __metadata:
   resolution: "worker-common@workspace:packages/workers/worker-common"
   dependencies:
     "@cloudflare/workers-types": ^4.20241022.0
-    "@river-build/generated": "workspace:^"
-    "@river-build/web3": "workspace:^"
+    "@towns-protocol/generated": "workspace:^"
+    "@towns-protocol/web3": "workspace:^"
     "@types/jest": ^29.5.3
     "@typescript-eslint/eslint-plugin": ^6.10.0
     "@typescript-eslint/parser": ^7.14.1

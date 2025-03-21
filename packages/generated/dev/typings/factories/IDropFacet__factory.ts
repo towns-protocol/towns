@@ -14,7 +14,7 @@ const _abi = [
       {
         name: "condition",
         type: "tuple",
-        internalType: "struct IDropFacetBase.ClaimCondition",
+        internalType: "struct DropClaimLib.ClaimCondition",
         components: [
           {
             name: "currency",
@@ -64,7 +64,7 @@ const _abi = [
       {
         name: "claim",
         type: "tuple",
-        internalType: "struct IDropFacetBase.Claim",
+        internalType: "struct DropClaimLib.Claim",
         components: [
           {
             name: "conditionId",
@@ -120,7 +120,7 @@ const _abi = [
       {
         name: "claim",
         type: "tuple",
-        internalType: "struct IDropFacetBase.Claim",
+        internalType: "struct DropClaimLib.Claim",
         components: [
           {
             name: "conditionId",
@@ -186,7 +186,7 @@ const _abi = [
       {
         name: "",
         type: "tuple",
-        internalType: "struct IDropFacetBase.ClaimCondition",
+        internalType: "struct DropClaimLib.ClaimCondition",
         components: [
           {
             name: "currency",
@@ -236,7 +236,7 @@ const _abi = [
       {
         name: "",
         type: "tuple[]",
-        internalType: "struct IDropFacetBase.ClaimCondition[]",
+        internalType: "struct DropClaimLib.ClaimCondition[]",
         components: [
           {
             name: "currency",
@@ -333,7 +333,7 @@ const _abi = [
       {
         name: "conditions",
         type: "tuple[]",
-        internalType: "struct IDropFacetBase.ClaimCondition[]",
+        internalType: "struct DropClaimLib.ClaimCondition[]",
         components: [
           {
             name: "currency",
@@ -381,10 +381,16 @@ const _abi = [
     name: "DropFacet_ClaimConditionAdded",
     inputs: [
       {
+        name: "conditionId",
+        type: "uint256",
+        indexed: true,
+        internalType: "uint256",
+      },
+      {
         name: "condition",
         type: "tuple",
         indexed: false,
-        internalType: "struct IDropFacetBase.ClaimCondition",
+        internalType: "struct DropClaimLib.ClaimCondition",
         components: [
           {
             name: "currency",
@@ -431,10 +437,16 @@ const _abi = [
     name: "DropFacet_ClaimConditionsUpdated",
     inputs: [
       {
+        name: "conditionId",
+        type: "uint256",
+        indexed: true,
+        internalType: "uint256",
+      },
+      {
         name: "conditions",
         type: "tuple[]",
         indexed: false,
-        internalType: "struct IDropFacetBase.ClaimCondition[]",
+        internalType: "struct DropClaimLib.ClaimCondition[]",
         components: [
           {
             name: "currency",

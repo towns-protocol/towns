@@ -1,4 +1,4 @@
-import { dlogger } from '@river-build/dlog'
+import { dlogger } from '@towns-protocol/dlog'
 
 const logger = dlogger('csb:promisequeue')
 

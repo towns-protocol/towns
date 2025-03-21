@@ -2,7 +2,7 @@
 title: Getting Started
 ---
 
-This guide will help you get started with Towns Protocol React SDK, called River. You'll learn how to:
+This guide will help you get started with Towns Protocol React SDK. You'll learn how to:
 1. [Install the React SDK](#installation)
 2. [Set up the necessary providers](#setting-up-providers)
 3. [Connect to Towns](#connecting-to-towns-protocol)
@@ -11,7 +11,7 @@ This guide will help you get started with Towns Protocol React SDK, called River
 
 ## Installation
 
-You can start a new River project in two ways:
+You can start a new Towns project in two ways:
 
 ### Using create-river-build-app (Recommended)
 
@@ -28,14 +28,14 @@ yarn create river-build-app my-app
 pnpm create river-build-app my-app
 ```
 
-By default, this will create a new app using the River Playground template - a full-featured example application that demonstrates River's capabilities.
+By default, this will create a new app using the Towns Playground template - a full-featured example application that demonstrates Towns's Protocol capabilities.
 
 ### Manual Installation
 
 If you prefer to add the React SDK to an existing project, install the required dependencies:
 
 ```bash
-yarn add @river-build/react-sdk @river-build/sdk vite-plugin-node-polyfills
+yarn add @towns-protocol/react-sdk @towns-protocol/sdk vite-plugin-node-polyfills
 ```
 
 Then, add the `vite-plugin-node-polyfills` to your `vite.config.ts`:
@@ -57,15 +57,15 @@ export default defineConfig({
 
 ## Setting Up Providers
 
-River requires a few providers to be set up at the root of your application:
+Towns requires a few providers to be set up at the root of your application:
 
 1. `WagmiProvider` - For Web3 wallet connection (recommended)
-2. `RiverSyncProvider` - For interacting with River Network
+2. `TownsSyncProvider` - For interacting with Towns Protocol
 
 Here's how to set them up:
 
 ```tsx App.tsx
-import { RiverSyncProvider } from "@river-build/react-sdk";
+import { TownsSyncProvider } from "@towns-protocol/react-sdk";
 import { base, baseSepolia } from 'viem/chains'
 import { WagmiConfig, createConfig } from "wagmi";
 import { createPublicClient, http } from 'viem'
@@ -82,9 +82,9 @@ export const wagmiConfig = createConfig({
 function App() {
   return (
     <WagmiConfig config={wagmiConfig}>
-      <RiverSyncProvider>
+      <TownsSyncProvider>
         {/* Your app content */}
-      </RiverSyncProvider>
+      </TownsSyncProvider>
     </WagmiConfig>
   );
 }
@@ -103,14 +103,14 @@ Towns has three networks:
 If you're not sure which network to use, `gamma` is a good starting point.
 
 <Note>
-You can use other gamma clients like [Towns (gamma)](https://app.gamma.towns.com) or the [River Playground](https://river-sample-app.vercel.app) to help you inspect messages on the `gamma` network.
+You can use other gamma clients like [Towns (gamma)](https://app.gamma.towns.com) or the [Towns Playground](https://river-sample-app.vercel.app) to help you inspect messages on the `gamma` network.
 </Note>
 
 ### Using a Web3 Wallet
 
 ```tsx
-import { useAgentConnection } from "@river-build/react-sdk";
-import { makeRiverConfig } from "@river-build/sdk";
+import { useAgentConnection } from "@towns-protocol/react-sdk";
+import { makeRiverConfig } from "@towns-protocol/sdk";
 import { getEthersSigner } from "./utils/viem-to-ethers";
 import { wagmiConfig } from "./config/wagmi";
 
@@ -135,14 +135,14 @@ function ConnectButton() {
 
 <Note>
 You'll need to use `getEthersSigner` to get the signer from viem wallet client. 
-River SDK uses ethers under the hood, so you'll need to convert the viem wallet client to an ethers signer.
+Towns SDK uses ethers under the hood, so you'll need to convert the viem wallet client to an ethers signer.
 
 You can get the `getEthersSigner` function from [Wagmi docs](https://wagmi.sh/core/guides/ethers#usage-1).
 </Note>
 
 ### Using a Bearer Token
 
-You can connect to River using a pre-existing identity.
+You can connect to Towns using a pre-existing identity.
 This allows you to read and send messages, but you won't be able to create spaces or channels (on-chain actions).
 
 <Note>
@@ -150,8 +150,8 @@ If you have a Towns account, you can get your bearer token from there. Type `/be
 </Note>
 
 ```tsx
-import { useAgentConnection } from "@river-build/react-sdk";
-import { makeRiverConfig } from "@river-build/sdk";
+import { useAgentConnection } from "@towns-protocol/react-sdk";
+import { makeRiverConfig } from "@towns-protocol/sdk";
 
 const riverConfig = makeRiverConfig("gamma");
 
@@ -179,14 +179,14 @@ function ConnectButton() {
 
 ## Creating a Space
 
-Once connected, you can start interacting with River. Here's how to create a space:
+Once connected, you can start interacting with Towns. Here's how to create a space:
 
 <Note>
 You can only create a space with a Web3 wallet. If you're using a bearer token, you can't create spaces.
 </Note>
 
 ```tsx
-import { useCreateSpace } from "@river-build/react-sdk";
+import { useCreateSpace } from "@towns-protocol/react-sdk";
 import { getEthersSigner } from "@/utils/viem-to-ethers";
 import { wagmiConfig } from "@/config/wagmi";
 
@@ -234,8 +234,8 @@ import {
   useSpace,
   useTimeline,
   useUserSpaces,
-} from '@river-build/react-sdk'
-import { RiverTimelineEvent } from '@river-build/sdk'
+} from '@towns-protocol/react-sdk'
+import { RiverTimelineEvent } from '@towns-protocol/sdk'
 import { useState } from 'react'
 
 // Form to send a message to a channel

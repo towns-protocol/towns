@@ -1,5 +1,5 @@
 import { FastifyReply, FastifyRequest } from 'fastify'
-import { StreamPrefix, StreamStateView, makeStreamId } from '@river-build/sdk'
+import { StreamPrefix, StreamStateView, makeStreamId } from '@towns-protocol/sdk'
 import { z } from 'zod'
 
 import { getStream } from '../riverStreamRpcClient'

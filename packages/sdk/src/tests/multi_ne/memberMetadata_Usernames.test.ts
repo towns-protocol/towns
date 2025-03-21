@@ -2,7 +2,7 @@
  * @group main
  */
 
-import { EncryptedDataSchema } from '@river-build/proto'
+import { EncryptedDataSchema } from '@towns-protocol/proto'
 import { MemberMetadata_Usernames } from '../../memberMetadata_Usernames'
 import { usernameChecksum } from '../../utils'
 import { create } from '@bufbuild/protobuf'
