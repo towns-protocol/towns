@@ -31,6 +31,7 @@ const (
 	// certNameFmt is the format for the node-2-node client certificate name.
 	// The format is: <chain_id>.<node-address>.towns
 	certNameFmt = "%s.%s.towns"
+	certIssuer  = "towns"
 )
 
 var (
@@ -42,22 +43,22 @@ var (
 // Returns nil if the certificate is valid or not found.
 func VerifyPeerCertificate(logger *logging.Log, nodeRegistry nodes.NodeRegistry) func([][]byte, [][]*x509.Certificate) error {
 	return func(rawCerts [][]byte, certs [][]*x509.Certificate) error {
-		if len(rawCerts) == 0 {
-			return nil
+		for _, raw := range rawCerts {
+			cert, err := x509.ParseCertificate(raw)
+			if err != nil {
+				return err
+			}
+
+			// The given function is applicable for both internode and stream services.
+			// The given certificate is provided for the internode service only.
+			if len(cert.Subject.Organization) == 1 && cert.Subject.Organization[0] == certIssuer {
+				if err = verifyCert(logger, nodeRegistry, cert); err != nil {
+					return err
+				}
+			}
 		}
 
-		if len(rawCerts) != 1 {
-			return RiverError(Err_UNAUTHENTICATED, "Unexpected number of peer certificates").
-				Tags("expected", 1, "actual", len(rawCerts)).
-				LogError(logger)
-		}
-
-		cert, err := x509.ParseCertificate(rawCerts[0])
-		if err != nil {
-			return err
-		}
-
-		return verifyCert(logger, nodeRegistry, cert)
+		return nil
 	}
 }
 
@@ -75,6 +76,13 @@ type node2NodeCertExt struct {
 func verifyCert(logger *logging.Log, nodeRegistry nodes.NodeRegistry, cert *x509.Certificate) error {
 	if cert == nil {
 		return RiverError(Err_UNAUTHENTICATED, "No node-2-node client certificate provided").LogError(logger)
+	}
+
+	if len(cert.Subject.Organization) != 1 || cert.Subject.Organization[0] != certIssuer {
+		return RiverError(Err_UNAUTHENTICATED, "Unexpected node-2-node certificate provided").
+			Tag("expectedOrg", certIssuer).
+			Tag("org", cert.Issuer.CommonName).
+			LogError(logger)
 	}
 
 	now := time.Now()
@@ -194,7 +202,8 @@ func createCert(logger *logging.Log, wallet *crypto.Wallet, riverChainId *big.In
 	template := &x509.Certificate{
 		SerialNumber: big.NewInt(1),
 		Subject: pkix.Name{
-			CommonName: fmt.Sprintf(certNameFmt, riverChainId, wallet.Address.Hex()),
+			Organization: []string{certIssuer},
+			CommonName:   fmt.Sprintf(certNameFmt, riverChainId, wallet.Address.Hex()),
 		},
 		NotBefore:       time.Now().Add(-certDurationBuffer), // Add a small buffer to avoid issues with time differences
 		NotAfter:        time.Now().Add(certTTL),

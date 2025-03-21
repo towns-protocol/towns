@@ -11,8 +11,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/towns-protocol/towns/core/node/rpc/node2nodeauth"
-
 	"connectrpc.com/connect"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/prometheus/client_golang/prometheus"
@@ -34,6 +32,7 @@ import (
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/protocol/protocolconnect"
 	"github.com/towns-protocol/towns/core/node/registries"
+	"github.com/towns-protocol/towns/core/node/rpc/node2nodeauth"
 	"github.com/towns-protocol/towns/core/node/rpc/sync"
 	"github.com/towns-protocol/towns/core/node/scrub"
 	"github.com/towns-protocol/towns/core/node/storage"

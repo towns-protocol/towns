@@ -121,6 +121,7 @@ func TestVerifyCert(t *testing.T) {
 		{
 			name: "Expired certificate",
 			cert: &x509.Certificate{
+				Subject:    pkix.Name{Organization: []string{"towns"}},
 				NotBefore:  time.Now().Add(-2 * time.Hour),
 				NotAfter:   time.Now().Add(-1 * time.Hour),
 				Extensions: []pkix.Extension{{Id: certExtOID, Value: x509Cert.Extensions[0].Value}},
@@ -130,6 +131,7 @@ func TestVerifyCert(t *testing.T) {
 		{
 			name: "Invalid extension",
 			cert: &x509.Certificate{
+				Subject:    pkix.Name{Organization: []string{"towns"}},
 				NotBefore:  time.Now(),
 				NotAfter:   time.Now().Add(time.Hour),
 				Extensions: []pkix.Extension{{Id: certExtOID, Value: []byte("invalid")}},
