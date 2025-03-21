@@ -1,5 +1,5 @@
 import { Worker } from 'bullmq'
-import { isDefined, makeRiverConfig } from '@river-build/sdk'
+import { isDefined, makeRiverConfig, spaceIdFromChannelId } from '@river-build/sdk'
 import { getLogger } from './utils/logger'
 import { makeStressClient, StressClient } from './utils/stressClient'
 import {
@@ -12,6 +12,8 @@ import {
     walletPathForIndex,
     queueNameForIndex,
     JoinTask,
+    SendMessagesTask,
+    ExpectMessagesTask,
 } from './stressTypes'
 import { Wallet } from 'ethers'
 import { check } from '@river-build/dlog'
@@ -108,6 +110,7 @@ export class StressRunner {
         if (task.spaceId) {
             await this.client.joinSpace(task.spaceId)
         }
+        // TODO: join channels
         // if (task.channelIds) {
         //     await Promise.all(task.channelIds.map((channelId) => this.client.(channelId)))
         // }
@@ -116,19 +119,56 @@ export class StressRunner {
 
     async sendMessages(job: StressJob): Promise<StressResult> {
         check(isDefined(this.client))
+        check(job.data.name === 'send_messages')
+        const task = job.data as SendMessagesTask
 
-        const channelIdForMessages = process.env.CHANNEL_ID
-        if (!channelIdForMessages) throw new Error('Missing channel ID')
+        const spaceId = spaceIdFromChannelId(task.channelId)
+        const space = this.client.agent.spaces.getSpace(spaceId)
+        const channel = space.getChannel(task.channelId)
 
-        await this.client.sendMessage(
-            channelIdForMessages,
-            `Test message from worker ${this.runOpts.processIndex}`,
-        )
+        for (let i = 0; i < task.count; i++) {
+            await channel.sendMessage(`${task.prefix}===${this.workerName}===${i}`)
+
+            // Report progress every 10th message
+            if (i > 0 && i % 10 === 0) {
+                await job.updateProgress({ sent: i, total: task.count });
+            }
+        }
         return { name: 'send_messages' }
     }
 
     async expectMessages(job: StressJob): Promise<StressResult> {
-        throw new Error('Not implemented')
+        check(isDefined(this.client))
+        check(job.data.name === 'expect_messages')
+        const task = job.data as ExpectMessagesTask
+
+        const spaceId = spaceIdFromChannelId(task.channelId)
+        const space = this.client.agent.spaces.getSpace(spaceId)
+        const channel = space.getChannel(task.channelId)
+
+        var lastCount = 0
+        for (let i = 0; i < 10; i++) {
+            lastCount = 0
+            await channel.timeline.events.value.forEach((e) => {
+                if (
+                    e.content?.kind === 'm.channel.message' &&
+                    e.content.body.startsWith(task.prefix)
+                ) {
+                    lastCount++
+                }
+            })
+
+            if (lastCount === task.count) {
+                return { name: 'expect_messages' }
+            }
+
+            await job.updateProgress({ iterations: i, count: lastCount })
+
+            await new Promise((resolve) => setTimeout(resolve, 1000))
+        }
+        throw new Error(
+            `Timeout waiting messages, expected ${task.count}, got ${lastCount}, prefix: ${task.prefix}`,
+        )
     }
 
     async shutdown(job: StressJob): Promise<StressResult> {

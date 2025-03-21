@@ -27,10 +27,15 @@ export interface JoinTask {
 export interface SendMessagesTask {
     name: 'send_messages'
     channelId: string
+    count: number
+    prefix: string
 }
 
 export interface ExpectMessagesTask {
     name: 'expect_messages'
+    channelId: string
+    count: number
+    prefix: string
 }
 
 export interface ShutdownTask {
