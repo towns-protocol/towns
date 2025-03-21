@@ -72,30 +72,6 @@ export class StressDriver {
         this.scheduledJobs++
     }
 
-    async fund(rootWallet: Wallet) {
-        const wallet = Wallet.fromMnemonic(this.opts.mnemonic, walletPathForIndex(this.index))
-        // Transfer funds from root wallet to worker wallet
-        this.logger.info(`Transferring funds from root wallet to worker wallet ${wallet.address}`)
-
-        try {
-            // Create a transaction to transfer a small amount of ETH
-            const tx = await rootWallet.sendTransaction({
-                to: wallet.address,
-                value: ethers.utils.parseEther('0.01'), // Transfer 0.01 ETH
-            })
-
-            // Wait for the transaction to be mined
-            await tx.wait()
-
-            this.logger.info(`Successfully funded worker wallet ${wallet.address}`, {
-                txHash: tx.hash,
-            })
-        } catch (error) {
-            this.logger.error(`Failed to fund worker wallet ${wallet.address}`, { error })
-            throw error
-        }
-    }
-
     async close() {
         await this.queue.close()
         await this.queueEvents.close()
@@ -195,7 +171,8 @@ export class Supervisor {
                     })
                 }),
             )
-            await Promise.all(txs.map(async (tx) => (await tx).wait()))
+            this.logger.info('Transactions sent, waiting for them to be mined')
+            await txs[txs.length - 1].wait()
             this.logger.info('Funded drivers')
         }
     }

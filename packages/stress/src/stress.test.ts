@@ -6,7 +6,7 @@ describe('stress', () => {
     test('runEnvBasic', async () => {
         const env = {
             PROCESS_INDEX: '-1',
-            PROCESS_COUNT: '5',
+            PROCESS_COUNT: '15',
             SESSION_ID: genShortId(),
             STRESS_MODE: 'short_chat',
             RIVER_ENV: 'local_multi',
