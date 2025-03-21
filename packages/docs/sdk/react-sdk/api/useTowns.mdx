@@ -20,7 +20,7 @@ function useTowns<T>(
 ): T extends PersistedModel<infer UnwrappedData> ? {
     data: UnwrappedData;
     error: Error | undefined;
-    status: "loading" | "loaded" | "error";
+    status: "error" | "loading" | "loaded";
     isLoading: boolean;
     isError: boolean;
     isLoaded: boolean;
@@ -82,7 +82,7 @@ The data from the selected observable.
 T extends PersistedModel<infer UnwrappedData> ? {
     data: UnwrappedData;
     error: Error | undefined;
-    status: "loading" | "loaded" | "error";
+    status: "error" | "loading" | "loaded";
     isLoading: boolean;
     isError: boolean;
     isLoaded: boolean;
