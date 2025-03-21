@@ -34,7 +34,6 @@ import { useCreateLink } from 'hooks/useCreateLink'
 import { useDevice } from 'hooks/useDevice'
 import { ModalContainer } from '@components/Modals/ModalContainer'
 import { WalletLinkingPanel } from '@components/Web3/WalletLinkingPanel'
-import { useMyAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
 import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
 import { shortAddress } from 'workers/utils'
@@ -151,8 +150,6 @@ const SpaceProfileWithoutAuth = () => {
 
     const isValid = !!user
 
-    const { data: loggedInAbstractAccountAddress } = useMyAbstractAccountAddress()
-
     const { isBanned, isLoading: isLoadingBanStatus } = useWalletAddressIsBanned(
         space?.id,
         user?.userId,
@@ -166,7 +163,7 @@ const SpaceProfileWithoutAuth = () => {
 
     const { data: userBio } = useGetUserBio(user?.userId)
 
-    const canEdit = !!client && loggedInAbstractAccountAddress === userId
+    const canEdit = !!client && user?.userId === loggedInWalletAddress
 
     const toggleTheme = useStore(({ toggleTheme }) => toggleTheme)
 
