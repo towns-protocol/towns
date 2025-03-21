@@ -128,7 +128,14 @@ func (s *StreamCache) normalizeEphemeralStream(
 			// If the processing breaks in the middle, the rest of missing miniblocks will be fetched from the next sticky peer.
 			var toNextPeer bool
 			for resp.Receive() {
-				mbInfo, err := NewMiniblockInfoFromProto(resp.Msg().GetMiniblock(), NewParsedMiniblockInfoOpts())
+				msg := resp.Msg()
+				if msg == nil {
+					_ = resp.Close()
+					toNextPeer = len(missingMbs) > 0
+					break
+				}
+
+				mbInfo, err := NewMiniblockInfoFromProto(msg.GetMiniblock(), NewParsedMiniblockInfoOpts())
 				if err != nil {
 					logging.FromCtx(ctx).Errorw("Failed to parse miniblock info", "err", err, "streamId", stream.streamId)
 					_ = resp.Close()
@@ -158,7 +165,7 @@ func (s *StreamCache) normalizeEphemeralStream(
 
 				// Delete the processed miniblock from the missingMbs slice
 				i := 0
-				mbNum := resp.Msg().GetNum()
+				mbNum := msg.GetNum()
 				for _, v := range missingMbs {
 					if v != mbNum {
 						missingMbs[i] = v
