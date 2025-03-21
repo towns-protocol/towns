@@ -20,7 +20,7 @@ function useMember(
   config?: ObservableConfig.FromObservable<Member>,
 ): {
     error: Error | undefined;
-    status: "loading" | "loaded" | "error";
+    status: "error" | "loading" | "loaded";
     isLoading: boolean;
     isError: boolean;
     isLoaded: boolean;
@@ -37,7 +37,7 @@ function useMember(
     membership: MembershipOp | undefined;
 } | {
     error: Error | undefined;
-    status: "loading" | "loaded" | "error";
+    status: "error" | "loading" | "loaded";
     isLoading: boolean;
     isError: boolean;
     isLoaded: boolean;
@@ -54,7 +54,7 @@ function useMember(
     membership: MembershipOp | undefined;
 } | {
     error: Error | undefined;
-    status: "loading" | "loaded" | "error";
+    status: "error" | "loading" | "loaded";
     isLoading: boolean;
     isError: boolean;
     isLoaded: boolean;
@@ -99,7 +99,7 @@ The Member data.
 ```ts
 {
     error: Error | undefined;
-    status: "loading" | "loaded" | "error";
+    status: "error" | "loading" | "loaded";
     isLoading: boolean;
     isError: boolean;
     isLoaded: boolean;
@@ -116,7 +116,7 @@ The Member data.
     membership: MembershipOp | undefined;
 } | {
     error: Error | undefined;
-    status: "loading" | "loaded" | "error";
+    status: "error" | "loading" | "loaded";
     isLoading: boolean;
     isError: boolean;
     isLoaded: boolean;
@@ -133,7 +133,7 @@ The Member data.
     membership: MembershipOp | undefined;
 } | {
     error: Error | undefined;
-    status: "loading" | "loaded" | "error";
+    status: "error" | "loading" | "loaded";
     isLoading: boolean;
     isError: boolean;
     isLoaded: boolean;
