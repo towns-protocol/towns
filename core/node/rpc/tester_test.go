@@ -111,7 +111,7 @@ func newServiceTester(t *testing.T, opts serviceTesterOpts) *serviceTester {
 	var ctx context.Context
 	var ctxCancel func()
 	if opts.printTestLogs {
-		ctx, ctxCancel = test.NewTestContextWithLogging("debug")
+		ctx, ctxCancel = test.NewTestContextWithLogging("info")
 	} else {
 		ctx, ctxCancel = test.NewTestContext()
 	}
@@ -417,7 +417,7 @@ func (st *serviceTester) compareStreamDataInStorage(
 	var data []*storage.DebugReadStreamDataResult
 	for _, n := range st.nodes {
 		// TODO: occasionally n.service.storage.DebugReadStreamData crashes due to nil pointer dereference,
-		// example: https://github.com/river-build/river/actions/runs/10127906870/job/28006223317#step:18:113
+		// example: https://github.com/towns-protocol/towns/actions/runs/10127906870/job/28006223317#step:18:113
 		// the stack trace doesn't provide context which deref fails, therefore deref field by field.
 		svc := n.service
 		str := svc.storage
@@ -1249,12 +1249,6 @@ func (tcs testClients) compareNowImpl(
 				"different minipool gen, 0 and %d",
 				i+1,
 			)
-			success = success && assert.Equal(
-				first.NextSyncCookie.MinipoolSlot,
-				stream.NextSyncCookie.MinipoolSlot,
-				"different minipool slot, 0 and %d",
-				i+1,
-			)
 		}
 	}
 
@@ -1315,14 +1309,6 @@ func (tcs testClients) compareNowImpl(
 					i+1, j,
 					first.GetStream().GetNextSyncCookie().GetMinipoolGen(),
 					clientUpdate.GetStream().GetNextSyncCookie().GetMinipoolGen())
-
-				success = success && assert.Equal(
-					first.GetStream().GetNextSyncCookie().GetMinipoolSlot(),
-					clientUpdate.GetStream().GetNextSyncCookie().GetMinipoolSlot(),
-					"minipool slot differs [%d:%d]: %d / %d",
-					i+1, j,
-					first.GetStream().GetNextSyncCookie().GetMinipoolSlot(),
-					clientUpdate.GetStream().GetNextSyncCookie().GetMinipoolSlot())
 
 				success = success && assert.Equal(
 					first.GetStream().GetNextSyncCookie().GetPrevMiniblockHash(),

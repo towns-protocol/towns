@@ -1,5 +1,5 @@
 {
-    "name": "@river-build/generated",
+    "name": "@towns-protocol/generated",
     "version": "0.0.189",
     "packageManager": "yarn@3.8.0",
     "scripts": {

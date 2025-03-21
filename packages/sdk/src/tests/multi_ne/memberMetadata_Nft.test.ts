@@ -2,10 +2,10 @@
  * @group main
  */
 
-import { MemberPayload_NftSchema } from '@river-build/proto'
+import { MemberPayload_NftSchema } from '@towns-protocol/proto'
 import { MemberMetadata_Nft } from '../../memberMetadata_Nft'
 import { makeRandomUserAddress } from '../testUtils'
-import { bin_fromString } from '@river-build/dlog'
+import { bin_fromString } from '@towns-protocol/dlog'
 import { create } from '@bufbuild/protobuf'
 
 describe('memberMetadata_NftTests', () => {

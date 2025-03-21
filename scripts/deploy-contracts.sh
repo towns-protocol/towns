@@ -33,7 +33,7 @@ set +a
 
 
 if [ "${1-}" != "nobuild" ]; then
-    yarn turbo build --filter=@river-build/contracts
+    yarn turbo build --filter=@towns-protocol/contracts
 fi
 
 # Account Abstraction is not supported on anvil

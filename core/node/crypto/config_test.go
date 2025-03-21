@@ -310,7 +310,12 @@ func noColorLogger() *zap.SugaredLogger {
 func TestDecoder(t *testing.T) {
 	require := require.New(t)
 	ctx, cancel := test.NewTestContext()
-	ctx = logging.CtxWithLog(ctx, noColorLogger())
+	ncl := noColorLogger()
+	ctx = logging.CtxWithLog(ctx, &logging.Log{
+		Default:   ncl.Named(string(logging.Default)),
+		Rpc:       ncl.Named(string(logging.Rpc)),
+		Miniblock: ncl.Named(string(logging.Miniblock)),
+	})
 	defer cancel()
 
 	configMap := make(map[string]interface{})

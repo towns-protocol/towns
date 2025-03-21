@@ -1,12 +1,12 @@
 'use client'
-import { SyncAgent } from '@river-build/sdk'
+import { SyncAgent } from '@towns-protocol/sdk'
 import { createContext } from 'react'
 
-type SpaceContextProps = {
+type TownsSyncContextProps = {
     syncAgent: SyncAgent | undefined
     setSyncAgent: (syncAgent: SyncAgent | undefined) => void
     config?: {
         onTokenExpired?: () => void
     }
 }
-export const RiverSyncContext = createContext<SpaceContextProps | undefined>(undefined)
+export const TownsSyncContext = createContext<TownsSyncContextProps | undefined>(undefined)

@@ -1,14 +1,14 @@
-import { RiverRegistry, SpaceDapp } from '@river-build/web3'
+import { RiverRegistry, SpaceDapp } from '@towns-protocol/web3'
 import { makeStreamRpcClient } from '../../makeStreamRpcClient'
 import { RiverChain } from './models/riverChain'
 import { Identifiable, LoadPriority, Store } from '../../store/store'
-import { check, dlogger, shortenHexString } from '@river-build/dlog'
+import { check, dlogger, shortenHexString } from '@towns-protocol/dlog'
 import { PromiseQueue } from '../utils/promiseQueue'
 import {
     CryptoStore,
     EntitlementsDelegate,
     type EncryptionDeviceInitOpts,
-} from '@river-build/encryption'
+} from '@towns-protocol/encryption'
 import { Client, ClientOptions } from '../../client'
 import { SignerContext } from '../../signerContext'
 import { PersistedObservable, persistedObservable } from '../../observable/persistedObservable'

@@ -226,21 +226,21 @@ func (s *Service) getStreamImpl(
 
 	if view != nil {
 		return s.localGetStream(ctx, view, req.Msg.SyncCookie)
-	} else {
-		return utils.PeerNodeRequestWithRetries(
-			ctx,
-			stream,
-			func(ctx context.Context, stub StreamServiceClient) (*connect.Response[GetStreamResponse], error) {
-				ret, err := stub.GetStream(ctx, req)
-				if err != nil {
-					return nil, err
-				}
-				return connect.NewResponse(ret.Msg), nil
-			},
-			s.config.Network.NumRetries,
-			s.nodeRegistry,
-		)
 	}
+
+	return utils.PeerNodeRequestWithRetries(
+		ctx,
+		stream,
+		func(ctx context.Context, stub StreamServiceClient) (*connect.Response[GetStreamResponse], error) {
+			ret, err := stub.GetStream(ctx, req)
+			if err != nil {
+				return nil, err
+			}
+			return connect.NewResponse(ret.Msg), nil
+		},
+		s.config.Network.NumRetries,
+		s.nodeRegistry,
+	)
 }
 
 func (s *Service) getStreamExImpl(

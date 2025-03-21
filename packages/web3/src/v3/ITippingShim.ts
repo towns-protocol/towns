@@ -2,12 +2,12 @@ import {
     ITipping,
     ITippingInterface,
     TipEventObject,
-} from '@river-build/generated/dev/typings/ITipping'
+} from '@towns-protocol/generated/dev/typings/ITipping'
 
 import { ContractReceipt, ethers } from 'ethers'
 import { BaseContractShim } from './BaseContractShim'
 
-import DevAbi from '@river-build/generated/dev/abis/ITipping.abi.json' assert { type: 'json' }
+import DevAbi from '@towns-protocol/generated/dev/abis/ITipping.abi.json' assert { type: 'json' }
 
 export class ITippingShim extends BaseContractShim<ITipping, ITippingInterface> {
     constructor(address: string, provider: ethers.providers.Provider | undefined) {

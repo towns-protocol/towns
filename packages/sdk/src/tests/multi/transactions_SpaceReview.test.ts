@@ -1,4 +1,4 @@
-import { dlog } from '@river-build/dlog'
+import { dlog } from '@towns-protocol/dlog'
 import { makeRiverConfig } from '../../riverConfig'
 import { Bot } from '../../sync-agent/utils/bot'
 import { SyncAgent } from '../../sync-agent/syncAgent'
@@ -9,10 +9,10 @@ import {
     getSpaceReviewEventDataBin,
     SpaceReviewAction,
     SpaceReviewEventObject,
-} from '@river-build/web3'
+} from '@towns-protocol/web3'
 import { StreamTimelineEvent } from '../../types'
 import { waitFor } from '../testUtils'
-import { BlockchainTransaction_SpaceReview_Action } from '@river-build/proto'
+import { BlockchainTransaction_SpaceReview_Action } from '@towns-protocol/proto'
 import { UnauthenticatedClient } from '../../unauthenticatedClient'
 
 const base_log = dlog('csb:test:transaction_SpaceReview')

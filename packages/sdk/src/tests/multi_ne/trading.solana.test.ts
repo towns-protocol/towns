@@ -7,9 +7,9 @@ import {
     waitFor,
 } from '../testUtils'
 import { makeUniqueChannelStreamId } from '../../id'
-import { BlockchainTransaction_TokenTransfer, PlainMessage } from '@river-build/proto'
+import { BlockchainTransaction_TokenTransfer, PlainMessage } from '@towns-protocol/proto'
 import { SolanaTransactionReceipt } from '../../types'
-import { bin_fromHexString, bin_fromString, bin_toString } from '@river-build/dlog'
+import { bin_fromHexString, bin_fromString, bin_toString } from '@towns-protocol/dlog'
 
 describe('Trading Solana', () => {
     let bobClient: Client

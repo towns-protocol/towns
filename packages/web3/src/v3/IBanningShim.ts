@@ -1,12 +1,12 @@
 import {
     IBanning as LocalhostContract,
     IBanningInterface as LocalhostInterface,
-} from '@river-build/generated/dev/typings/IBanning'
+} from '@towns-protocol/generated/dev/typings/IBanning'
 
 import { ethers } from 'ethers'
 import { BaseContractShim } from './BaseContractShim'
 
-import LocalhostAbi from '@river-build/generated/dev/abis/IBanning.abi.json' assert { type: 'json' }
+import LocalhostAbi from '@towns-protocol/generated/dev/abis/IBanning.abi.json' assert { type: 'json' }
 
 export class IBanningShim extends BaseContractShim<LocalhostContract, LocalhostInterface> {
     constructor(address: string, provider: ethers.providers.Provider | undefined) {
