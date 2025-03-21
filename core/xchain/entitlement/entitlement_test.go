@@ -1,7 +1,6 @@
 package entitlement
 
 import (
-	"context"
 	"fmt"
 	"math/big"
 	"os"
@@ -344,8 +343,10 @@ var evaluator *Evaluator
 
 func TestMain(m *testing.M) {
 	var err error
+	ctx, cancel := test.NewTestContext()
+	defer cancel()
 	evaluator, err = NewEvaluatorFromConfig(
-		context.Background(),
+		ctx,
 		cfg,
 		allSepoliaChains_onChainConfig,
 		infra.NewMetricsFactory(nil, "", ""),
@@ -926,7 +927,9 @@ func TestCheckOperation_Untimed(t *testing.T) {
 
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
-			result, err := evaluator.evaluateOp(context.Background(), tc.op, tc.wallets)
+			ctx, cancel := test.NewTestContext()
+			defer cancel()
+			result, err := evaluator.evaluateOp(ctx, tc.op, tc.wallets)
 			if tc.expectedErr == nil {
 				require.NoError(t, err)
 			} else {
