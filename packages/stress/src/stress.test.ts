@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { runWithEnv } from './stress'
-import { genShortId } from '@river-build/sdk'
+import { genShortId } from '@towns-protocol/sdk'
 
 describe('stress', () => {
     test('runEnvBasic', async () => {

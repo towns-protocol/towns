@@ -18,9 +18,9 @@ import {
     CreateTownResult,
 } from './stressTypes'
 import { ethers, Wallet } from 'ethers'
-import { makeRiverConfig } from '@river-build/sdk'
+import { makeRiverConfig } from '@towns-protocol/sdk'
 import { runShortChat } from './scenarioShortChat'
-import { check } from '@river-build/dlog'
+import { check } from '@towns-protocol/dlog'
 
 export class StressDriver {
     readonly queueName: string

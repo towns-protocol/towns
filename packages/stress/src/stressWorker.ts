@@ -1,5 +1,5 @@
 import { Worker } from 'bullmq'
-import { isDefined, makeRiverConfig, spaceIdFromChannelId } from '@river-build/sdk'
+import { isDefined, makeRiverConfig, spaceIdFromChannelId } from '@towns-protocol/sdk'
 import { getLogger } from './utils/logger'
 import { makeStressClient, StressClient } from './utils/stressClient'
 import {
@@ -16,7 +16,7 @@ import {
     ExpectMessagesTask,
 } from './stressTypes'
 import { Wallet } from 'ethers'
-import { check } from '@river-build/dlog'
+import { check } from '@towns-protocol/dlog'
 
 export class StressRunner {
     readonly index: number
