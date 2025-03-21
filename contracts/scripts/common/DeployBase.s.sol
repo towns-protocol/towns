@@ -51,39 +51,32 @@ contract DeployBase is Context, DeployHelpers, Script {
     string memory chainAlias = block.chainid == 31337
       ? "base_anvil"
       : getChain(block.chainid).chainAlias;
-
-    return getInitialStringFromUnderscore(chainAlias);
+    return getInitialStringFromChar(chainAlias, "_", chainAlias);
   }
 
   function networkDirPath() internal returns (string memory path) {
     string memory context = vm.envOr("DEPLOYMENT_CONTEXT", string(""));
+    string memory chainAlias = chainIdAlias();
 
     // if no context is provided, use the default path
     if (bytes(context).length == 0) {
-      context = string.concat(DEPLOYMENT_CACHE_PATH, "/", chainIdAlias());
+      context = string.concat(DEPLOYMENT_CACHE_PATH, "/", chainAlias);
     } else {
       context = string.concat(
         DEPLOYMENT_CACHE_PATH,
         "/",
         context,
         "/",
-        chainIdAlias()
+        chainAlias
       );
     }
 
     path = string.concat(vm.projectRoot(), "/", context);
   }
 
-  function addressesPath(
-    string memory versionName
-  ) internal returns (string memory path) {
-    require(bytes(versionName).length > 0, "Version name cannot be empty");
-    string memory baseDir = string.concat(networkDirPath(), "/", "addresses");
-    return string.concat(baseDir, "/", versionName, ".json");
-  }
-
   function getDeployment(string memory versionName) internal returns (address) {
-    string memory path = addressesPath(versionName);
+    string memory networkDir = networkDirPath();
+    string memory path = addressesPath(versionName, networkDir);
 
     if (!exists(path)) {
       debug(
@@ -101,16 +94,6 @@ contract DeployBase is Context, DeployHelpers, Script {
     return vm.parseJsonAddress(data, ".address");
   }
 
-  function getDirectoryFromVersion(
-    string memory versionName
-  ) internal pure returns (string memory) {
-    uint256 slashIndex = LibString.indexOf(versionName, "/");
-    if (slashIndex == LibString.NOT_FOUND) {
-      return "";
-    }
-    return LibString.slice(versionName, 0, slashIndex);
-  }
-
   function saveDeployment(
     string memory versionName,
     address contractAddr
@@ -120,20 +103,20 @@ contract DeployBase is Context, DeployHelpers, Script {
       return;
     }
 
+    string memory networkDir = networkDirPath();
+
     // create addresses directory
-    createDir(string.concat(networkDirPath(), "/", "addresses"));
-    createChainIdFile(networkDirPath());
+    createDir(string.concat(networkDir, "/", "addresses"));
+    createChainIdFile(networkDir);
 
     // Get directory from version name if it contains a "/"
-    string memory typeDir = getDirectoryFromVersion(versionName);
+    string memory typeDir = getInitialStringFromChar(versionName, "/", "");
     if (bytes(typeDir).length > 0) {
-      createDir(
-        string.concat(networkDirPath(), "/", "addresses", "/", typeDir)
-      );
+      createDir(string.concat(networkDir, "/", "addresses", "/", typeDir));
     }
 
     // get deployment path
-    string memory path = addressesPath(versionName);
+    string memory path = addressesPath(versionName, networkDir);
 
     // save deployment
     string memory contractJson = vm.serializeAddress(
@@ -146,12 +129,15 @@ contract DeployBase is Context, DeployHelpers, Script {
   }
 
   // Utils
+  function addressesPath(
+    string memory versionName,
+    string memory networkDir
+  ) internal pure returns (string memory path) {
+    return string.concat(networkDir, "/addresses/", versionName, ".json");
+  }
+
   function createChainIdFile(string memory networkDir) internal {
-    string memory chainIdFilePath = string.concat(
-      networkDir,
-      "/",
-      "chainId.json"
-    );
+    string memory chainIdFilePath = string.concat(networkDir, "/chainId.json");
 
     if (!exists(chainIdFilePath)) {
       debug("creating chain id file: ", chainIdFilePath);
@@ -160,28 +146,19 @@ contract DeployBase is Context, DeployHelpers, Script {
     }
   }
 
-  function getInitialStringFromUnderscore(
-    string memory fullString
+  function getInitialStringFromChar(
+    string memory fullString,
+    string memory char,
+    string memory replacement
   ) internal pure returns (string memory) {
-    bytes memory fullStringBytes = bytes(fullString);
-    uint256 underscoreIndex = 0;
-
-    for (uint256 i = 0; i < fullStringBytes.length; i++) {
-      if (fullStringBytes[i] == "_") {
-        underscoreIndex = i;
-        break;
-      }
+    uint256 charIndex = LibString.indexOf(fullString, char);
+    if (charIndex == LibString.NOT_FOUND) {
+      return replacement;
     }
+    return LibString.slice(fullString, 0, charIndex);
+  }
 
-    if (underscoreIndex == 0) {
-      return fullString;
-    }
-
-    bytes memory result = new bytes(underscoreIndex);
-    for (uint256 i = 0; i < underscoreIndex; i++) {
-      result[i] = fullStringBytes[i];
-    }
-
-    return string(result);
+  function isTesting() internal view virtual returns (bool) {
+    return vm.envOr("IN_TESTING", false);
   }
 }
