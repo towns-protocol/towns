@@ -9,7 +9,8 @@ import {RiverRegistryErrors} from "contracts/src/river/registry/libraries/Regist
 struct Stream {
   bytes32 lastMiniblockHash; // 32 bytes, slot 0
   uint64 lastMiniblockNum; // 8 bytes, part of slot 1
-  uint64 reserved0; // 8 bytes, part of slot 1
+  uint8 replicationFactor; // 1 byte, part of slot 1
+  uint56 reserved0; // 7 bytes, part of slot 1
   uint64 flags; // 8 bytes, part of slot 1
   address[] nodes; // Dynamic array, starts at a new slot
 }

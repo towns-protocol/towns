@@ -188,4 +188,15 @@ interface IStreamRegistry is IStreamRegistryBase {
   function getStreamWithGenesis(
     bytes32 streamId
   ) external view returns (Stream memory, bytes32, bytes memory);
+
+  /**
+   * @notice Set the replication factor for 1 or more streams
+   * @param streamIds The IDs of the streams to update
+   * @param nodes The new list of nodes
+   * @dev Only callable by configuration managers
+   */
+  function setStreamReplicationFactor(
+    bytes32[] calldata streamIds,
+    address[] calldata nodes
+  ) external;
 }

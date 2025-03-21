@@ -35,7 +35,11 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
   {
     // Add the stream to the registry
     Stream storage stream = ds.streamById[streamId];
-    (stream.lastMiniblockHash, stream.nodes) = (genesisMiniblockHash, nodes);
+    (stream.lastMiniblockHash, stream.nodes, stream.replicationFactor) = (
+      genesisMiniblockHash,
+      nodes,
+      uint8(nodes.length)
+    );
 
     ds.streams.add(streamId);
     ds.genesisMiniblockByStreamId[streamId] = genesisMiniblock;
@@ -183,6 +187,7 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
     }
 
     nodes.push(nodeAddress);
+    stream.replicationFactor = stream.replicationFactor + 1;
 
     _emitStreamUpdated(
       StreamEventType.PlacementUpdated,
@@ -216,6 +221,8 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
     }
 
     if (!found) revert(RiverRegistryErrors.NODE_NOT_FOUND);
+
+    stream.replicationFactor = stream.replicationFactor - 1;
 
     _emitStreamUpdated(
       StreamEventType.PlacementUpdated,
@@ -338,6 +345,26 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
     }
 
     return (streams, stop >= streamCount);
+  }
+
+  /// @inheritdoc IStreamRegistry
+  function setStreamReplicationFactor(
+    bytes32[] calldata streamIds,
+    address[] calldata nodes
+  ) external onlyConfigurationManager(msg.sender) {
+    if (nodes.length == 0) revert(RiverRegistryErrors.BAD_ARG);
+
+    uint256 streamsCount = streamIds.length;
+
+    if (streamsCount == 0) revert(RiverRegistryErrors.BAD_ARG);
+
+    for (uint256 i; i < streamsCount; ++i) {
+      bytes32 streamId = streamIds[i];
+      _verifyStreamIdExists(streamId);
+      Stream storage stream = ds.streamById[streamId];
+      // TODO: emit StreamPlacementUpdated?
+      (stream.nodes, stream.replicationFactor) = (nodes, uint8(nodes.length));
+    }
   }
 
   function _addStreamIdToNodes(
