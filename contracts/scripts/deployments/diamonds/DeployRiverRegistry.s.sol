@@ -11,7 +11,7 @@ import "forge-std/console.sol";
 import {DiamondHelper} from "contracts/test/diamond/Diamond.t.sol";
 import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
 import {Diamond} from "@towns-protocol/diamond/src/Diamond.sol";
-import {FacetHelper} from "contracts/test/diamond/Facet.t.sol";
+import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
 import {DeployDiamondCut} from "contracts/scripts/deployments/facets/DeployDiamondCut.s.sol";
 import {DeployDiamondLoupe} from "contracts/scripts/deployments/facets/DeployDiamondLoupe.s.sol";
 import {DeployIntrospection} from "contracts/scripts/deployments/facets/DeployIntrospection.s.sol";

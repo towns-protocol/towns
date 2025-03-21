@@ -8,7 +8,7 @@ import {IERC721A} from "contracts/src/diamond/facets/token/ERC721A/IERC721A.sol"
 
 //contracts
 import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
-import {FacetHelper} from "contracts/test/diamond/Facet.t.sol";
+import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
 import {ERC721ANonTransferable} from "contracts/src/diamond/facets/token/ERC721A/ERC721ANonTransferable.sol";
 import {ERC721A} from "contracts/src/diamond/facets/token/ERC721A/ERC721A.sol";
 

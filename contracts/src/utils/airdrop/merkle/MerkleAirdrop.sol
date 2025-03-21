@@ -12,7 +12,7 @@ import {SafeTransferLib} from "solady/utils/SafeTransferLib.sol";
 import {MerkleAirdropStorage} from "./MerkleAirdropStorage.sol";
 
 // contracts
-import {EIP712Base} from "@towns-protocol/diamond/src/utils/cryptography/signature/EIP712Base.sol";
+import {EIP712Base} from "@towns-protocol/diamond/src/utils/cryptography/EIP712Base.sol";
 import {CustomRevert} from "contracts/src/utils/libraries/CustomRevert.sol";
 import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
 
