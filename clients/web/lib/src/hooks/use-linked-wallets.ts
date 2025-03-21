@@ -200,9 +200,23 @@ function useLinkTransactionBuilder({
     }
 }
 
+/**
+ * Returns the linked wallets for the logged in wallet, excluding the logged in wallet address
+ * This hook historically never returned the logged in wallet address, so we're filtering it out here in case the data source changes
+ */
 export function useLinkedWallets({ enabled = true } = {}) {
     const { loggedInWalletAddress } = useConnectivity()
-    return useLinkedWalletsForWallet({ walletAddress: loggedInWalletAddress, enabled })
+    const { data, isLoading, error } = useLinkedWalletsForWallet({
+        walletAddress: loggedInWalletAddress,
+        enabled,
+    })
+    return useMemo(() => {
+        return {
+            data: data?.filter((w) => w.toLowerCase() !== loggedInWalletAddress?.toLowerCase()),
+            isLoading,
+            error,
+        }
+    }, [data, isLoading, error, loggedInWalletAddress])
 }
 
 export function useLinkedWalletsForWallet({
