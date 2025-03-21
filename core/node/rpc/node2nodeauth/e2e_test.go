@@ -12,6 +12,7 @@ import (
 
 	"github.com/towns-protocol/towns/core/contracts/river"
 	"github.com/towns-protocol/towns/core/node/crypto"
+	"github.com/towns-protocol/towns/core/node/logging"
 	"github.com/towns-protocol/towns/core/node/nodes"
 	"github.com/towns-protocol/towns/core/node/rpc/node2nodeauth"
 	"github.com/towns-protocol/towns/core/node/testutils/mocks"
@@ -19,7 +20,7 @@ import (
 )
 
 func TestEndToEnd(t *testing.T) {
-	logger := zap.NewNop().Sugar()
+	logger := logging.DefaultZapLogger(zap.DebugLevel)
 
 	// Mock node registry
 	nodeRegistry := mocks.NewMockNodeRegistry(t)

@@ -15,12 +15,12 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	ethcrypto "github.com/ethereum/go-ethereum/crypto"
-	"go.uber.org/zap"
 
 	"github.com/towns-protocol/towns/core/contracts/river"
 	. "github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/crypto"
 	"github.com/towns-protocol/towns/core/node/http_client"
+	"github.com/towns-protocol/towns/core/node/logging"
 	"github.com/towns-protocol/towns/core/node/nodes"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 )
@@ -40,7 +40,7 @@ var (
 
 // VerifyPeerCertificate goes through the peer certificates and verifies the node-2-node client certificate.
 // Returns nil if the certificate is valid or not found.
-func VerifyPeerCertificate(logger *zap.SugaredLogger, nodeRegistry nodes.NodeRegistry) func([][]byte, [][]*x509.Certificate) error {
+func VerifyPeerCertificate(logger *logging.Log, nodeRegistry nodes.NodeRegistry) func([][]byte, [][]*x509.Certificate) error {
 	return func(rawCerts [][]byte, certs [][]*x509.Certificate) error {
 		if len(rawCerts) == 0 {
 			return nil
@@ -72,7 +72,7 @@ type node2NodeCertExt struct {
 
 // verifyCert verifies the node-2-node client certificate.
 // The certificate must have a custom node2nodeCertExt extension.
-func verifyCert(logger *zap.SugaredLogger, nodeRegistry nodes.NodeRegistry, cert *x509.Certificate) error {
+func verifyCert(logger *logging.Log, nodeRegistry nodes.NodeRegistry, cert *x509.Certificate) error {
 	if cert == nil {
 		return RiverError(Err_UNAUTHENTICATED, "No node-2-node client certificate provided").LogError(logger)
 	}
@@ -130,7 +130,7 @@ func verifyCert(logger *zap.SugaredLogger, nodeRegistry nodes.NodeRegistry, cert
 
 // CertGetter returns a GetClientCertFunc that provides a node-2-node client certificate.
 func CertGetter(
-	logger *zap.SugaredLogger,
+	logger *logging.Log,
 	wallet *crypto.Wallet,
 	riverChainId *big.Int,
 ) http_client.GetClientCertFunc {
@@ -163,7 +163,7 @@ func CertGetter(
 
 // createCert creates a node-2-node client certificate.
 // The certificate contains a custom extension with the node's address and a signature of the cert's public key.
-func createCert(logger *zap.SugaredLogger, wallet *crypto.Wallet, riverChainId *big.Int) (*tls.Certificate, error) {
+func createCert(logger *logging.Log, wallet *crypto.Wallet, riverChainId *big.Int) (*tls.Certificate, error) {
 	if wallet == nil {
 		return nil, RiverError(Err_INTERNAL, "No wallet provided").LogError(logger)
 	}

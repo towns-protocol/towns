@@ -15,12 +15,13 @@ import (
 
 	"github.com/towns-protocol/towns/core/contracts/river"
 	"github.com/towns-protocol/towns/core/node/crypto"
+	"github.com/towns-protocol/towns/core/node/logging"
 	"github.com/towns-protocol/towns/core/node/nodes"
 	"github.com/towns-protocol/towns/core/node/testutils/mocks"
 )
 
 func TestCreateCert(t *testing.T) {
-	logger := zap.NewNop().Sugar()
+	logger := logging.DefaultZapLogger(zap.DebugLevel)
 
 	wallet, err := crypto.NewWallet(context.Background())
 	require.NoError(t, err)
@@ -53,7 +54,7 @@ func TestCreateCert(t *testing.T) {
 }
 
 func TestCertGetter(t *testing.T) {
-	logger := zap.NewNop().Sugar()
+	logger := logging.DefaultZapLogger(zap.DebugLevel)
 
 	wallet, err := crypto.NewWallet(context.Background())
 	require.NoError(t, err)
@@ -87,7 +88,7 @@ func TestCertGetter(t *testing.T) {
 }
 
 func TestVerifyCert(t *testing.T) {
-	logger := zap.NewNop().Sugar()
+	logger := logging.DefaultZapLogger(zap.DebugLevel)
 
 	// Create test wallet
 	wallet, err := crypto.NewWallet(context.Background())
