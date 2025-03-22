@@ -4,7 +4,6 @@ import (
 	"context"
 	"os"
 
-	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 
 	"github.com/towns-protocol/towns/core/node/logging"
@@ -13,13 +12,8 @@ import (
 func NewTestContext() (context.Context, context.CancelFunc) {
 	logLevel := os.Getenv("RIVER_TEST_LOG")
 	if logLevel == "" {
-		nop := zap.NewNop().Sugar()
 		//lint:ignore LE0000 context.Background() used correctly
-		ctx := logging.CtxWithLog(context.Background(), &logging.Log{
-			Default:   nop.Named(string(logging.Default)),
-			Rpc:       nop.Named(string(logging.Rpc)),
-			Miniblock: nop.Named(string(logging.Miniblock)),
-		})
+		ctx := logging.CtxWithLog(context.Background(), logging.NoopLogger())
 
 		return context.WithCancel(ctx)
 	} else {
@@ -35,6 +29,6 @@ func NewTestContextWithLogging(logLevel string) (context.Context, context.Cancel
 	}
 
 	//lint:ignore LE0000 context.Background() used correctly
-	ctx := logging.CtxWithLog(context.Background(), logging.DefaultZapLogger(level))
+	ctx := logging.CtxWithLog(context.Background(), logging.DefaultLogger(level))
 	return context.WithCancel(ctx)
 }
