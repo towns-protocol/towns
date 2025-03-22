@@ -34,7 +34,7 @@ export function getWeb3Deployment(riverEnv: string): Web3Deployment {
     if (!deployments[riverEnv]) {
         throw new Error(
             `Deployment ${riverEnv} not found, available environments: ${Object.keys(
-                DeploymentsJson
+                DeploymentsJson,
             ).join(', ')}`,
         )
     }
