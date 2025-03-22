@@ -7,7 +7,7 @@ import {RuleEntitlement} from "contracts/src/spaces/entitlements/rule/RuleEntitl
 
 contract DeployRuleEntitlement is Deployer {
   function versionName() public pure override returns (string memory) {
-    return "ruleEntitlement";
+    return "utils/ruleEntitlement";
   }
 
   function __deploy(address deployer) public override returns (address) {

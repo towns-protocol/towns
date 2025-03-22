@@ -28,7 +28,7 @@ contract DeploySpaceFactoryInit is Deployer, FacetHelper {
   }
 
   function versionName() public pure override returns (string memory) {
-    return "spaceFactoryInit";
+    return "facets/spaceFactoryInit";
   }
 
   function __deploy(address deployer) public override returns (address) {

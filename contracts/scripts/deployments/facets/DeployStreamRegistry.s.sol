@@ -31,7 +31,7 @@ contract DeployStreamRegistry is FacetHelper, Deployer {
   }
 
   function versionName() public pure override returns (string memory) {
-    return "streamRegistryFacet";
+    return "facets/streamRegistryFacet";
   }
 
   function facetInitHelper(

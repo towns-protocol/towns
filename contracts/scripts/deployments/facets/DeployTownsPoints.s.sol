@@ -32,7 +32,7 @@ contract DeployTownsPoints is Deployer, FacetHelper {
 
   // Deploying
   function versionName() public pure override returns (string memory) {
-    return "pointsFacet";
+    return "facets/pointsFacet";
   }
 
   function initializer() public pure override returns (bytes4) {
@@ -48,7 +48,7 @@ contract DeployTownsPoints is Deployer, FacetHelper {
   function facetInitHelper(
     address deployer,
     address facetAddress
-  ) external override returns (FacetCut memory, bytes memory) {
+  ) external returns (FacetCut memory, bytes memory) {
     IDiamond.FacetCut memory facetCut = this.makeCut(
       facetAddress,
       IDiamond.FacetCutAction.Add

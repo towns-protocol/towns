@@ -36,7 +36,7 @@ contract DeployCreateSpace is FacetHelper, Deployer {
   }
 
   function versionName() public pure override returns (string memory) {
-    return "createSpaceFacet";
+    return "facets/createSpaceFacet";
   }
 
   function __deploy(address deployer) public override returns (address) {

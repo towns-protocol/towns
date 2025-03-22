@@ -7,7 +7,7 @@ import {MockDelegationRegistry} from "contracts/test/mocks/MockDelegationRegistr
 
 contract DeployMockDelegationRegistry is Deployer {
   function versionName() public pure override returns (string memory) {
-    return "mockDelegationRegistry";
+    return "utils/mockDelegationRegistry";
   }
 
   function __deploy(address deployer) public override returns (address) {
