@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"connectrpc.com/connect"
-	"go.uber.org/zap/zapcore"
 
 	"github.com/ethereum/go-ethereum/common"
 
@@ -332,8 +331,6 @@ func (s *Service) RegisterWebhook(
 			Tag("appId", app)
 	}
 
-	log := logging.DefaultZapLogger(zapcore.InfoLevel)
-	log.Infow("About to initialize webhook")
 	webhook := req.Msg.WebhookUrl
 	serverEncryptionDevice, err := s.appClient.InitializeWebhook(
 		ctx,
@@ -342,10 +339,8 @@ func (s *Service) RegisterWebhook(
 		webhook,
 	)
 	if err != nil {
-		log.Errorw("Failed to initialize webhook", "error", err)
 		return nil, base.WrapRiverError(Err_UNKNOWN, err).Message("Unable to initialize app service")
 	}
-	log.Infow("made it thru init")
 
 	if serverEncryptionDevice.DeviceKey != defaultEncryptionDevice.DeviceKey ||
 		serverEncryptionDevice.FallbackKey != defaultEncryptionDevice.FallbackKey {
