@@ -14,7 +14,6 @@ import (
 	"connectrpc.com/connect"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/golang-jwt/jwt/v4"
-	"go.uber.org/zap/zapcore"
 	"google.golang.org/protobuf/proto"
 
 	"github.com/towns-protocol/towns/core/node/app_registry/app_client"
@@ -128,26 +127,26 @@ func (b *TestAppServer) Close() {
 	}
 }
 
-func (b *TestAppServer) solicitKeys(ctx context.Context, data app_client.KeySolicitationData) error {
+func (b *TestAppServer) solicitKeys(ctx context.Context, data *protocol.AppServiceRequest_SolicitKeys) error {
 	log := logging.FromCtx(ctx).With("func", "TestAppServer.solicitKeys")
-	log.Debugw("soliciting keys for channel", "channeL", data.ChannelId, "sessionId", data.SessionId)
-	streamBytes, err := hex.DecodeString(data.ChannelId)
+	streamId, err := shared.StreamIdFromBytes(data.StreamId)
 	if err != nil {
-		log.Errorw("failed to decode channel id", "error", err, "channelId", data.ChannelId)
-		return fmt.Errorf("failed to solicit keys: %w", err)
+		log.Errorw("Failed tot parse stream id for key solicitation", "error", err, "streamId", data.StreamId)
+		return fmt.Errorf("Failed to parse stream for key solicitation: %w", err)
 	}
-	log.Debugw("streamBytes", "streamBytes", streamBytes, "encoded", hex.EncodeToString(streamBytes))
+
+	log.Debugw("soliciting keys for channel", "streamId", streamId, "sessionIds", data.SessionIds)
 	resp, err := b.client.GetLastMiniblockHash(
 		ctx,
 		&connect.Request[protocol.GetLastMiniblockHashRequest]{
 			Msg: &protocol.GetLastMiniblockHashRequest{
-				StreamId: streamBytes,
+				StreamId: data.StreamId,
 			},
 		},
 	)
 	if err != nil {
-		log.Errorw("failed to get last miniblock for stream", "streamId", data.ChannelId)
-		return fmt.Errorf("failed to get last miniblock hash for stream %v: %w", data.ChannelId, err)
+		log.Errorw("failed to get last miniblock for stream", "streamId", streamId)
+		return fmt.Errorf("failed to get last miniblock hash for stream %v: %w", streamId, err)
 	}
 
 	envelope, err := events.MakeEnvelopeWithPayload(
@@ -159,9 +158,7 @@ func (b *TestAppServer) solicitKeys(ctx context.Context, data app_client.KeySoli
 						DeviceKey:   b.encryptionDevice.DeviceKey,
 						FallbackKey: b.encryptionDevice.FallbackKey,
 						IsNewDevice: false,
-						SessionIds: []string{
-							data.SessionId,
-						},
+						SessionIds:  data.SessionIds,
 					},
 				},
 			},
@@ -180,7 +177,7 @@ func (b *TestAppServer) solicitKeys(ctx context.Context, data app_client.KeySoli
 		ctx,
 		&connect.Request[protocol.AddEventRequest]{
 			Msg: &protocol.AddEventRequest{
-				StreamId: streamBytes,
+				StreamId: data.StreamId,
 				Event:    envelope,
 			},
 		},
@@ -358,8 +355,8 @@ func (b *TestAppServer) respondToSendMessages(
 func (b *TestAppServer) rootHandler(w http.ResponseWriter, r *http.Request) {
 	// Ensure that the request method is POST.
 	// Uncomment to unconditionally enable logging
-	log := logging.DefaultZapLogger(zapcore.DebugLevel)
-	// log := logging.FromCtx(r.Context())
+	// log := logging.DefaultZapLogger(zapcore.DebugLevel)
+	log := logging.FromCtx(r.Context())
 	ctx := logging.CtxWithLog(r.Context(), log)
 	if r.Method != http.MethodPost {
 		log.Errorw("method not allowed", "method", r.Method)
@@ -372,110 +369,68 @@ func (b *TestAppServer) rootHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "JWT Signature Invalid", http.StatusForbidden)
 	}
 
-	if r.Header.Get("Content-Type") == "application/x-protobuf" {
-		log.Infow("Received request")
-		var request protocol.AppServiceRequest
-		data, err := io.ReadAll(r.Body)
-		if err != nil {
-			log.Errorw("could not read request body", "error", err)
-			http.Error(w, "could not read request body", http.StatusInternalServerError)
-			return
-		}
-		if err := proto.Unmarshal(data, &request); err != nil {
-			log.Errorw("could not marshal protobuf request", "error", err)
-			http.Error(w, "could not marshal protobuf request", http.StatusBadRequest)
-			return
-		}
-		var response protocol.AppServiceResponse
-		if request.Action != nil {
-			switch request.Action.(type) {
-			case *protocol.AppServiceRequest_Initialize:
-				log.Infow("initialize...")
-				response.EncryptionDevice = &protocol.UserMetadataPayload_EncryptionDevice{
-					DeviceKey:   b.encryptionDevice.DeviceKey,
-					FallbackKey: b.encryptionDevice.FallbackKey,
-				}
+	if r.Header.Get("Content-Type") != "application/x-protobuf" {
+		log.Errorw("Wrong content type", "contentType", r.Header.Get("Content-Type"))
+		http.Error(w, "Wrong content type", http.StatusBadRequest)
+		return
+	}
 
-			default:
-				log.Errorw("unrecognized action type", "action", request.Action)
-				http.Error(w, "unrecognized payload type", http.StatusBadRequest)
+	log.Infow("Received request")
+	var request protocol.AppServiceRequest
+	data, err := io.ReadAll(r.Body)
+	if err != nil {
+		log.Errorw("could not read request body", "error", err)
+		http.Error(w, "could not read request body", http.StatusInternalServerError)
+		return
+	}
+	if err := proto.Unmarshal(data, &request); err != nil {
+		log.Errorw("could not marshal protobuf request", "error", err)
+		http.Error(w, "could not marshal protobuf request", http.StatusBadRequest)
+		return
+	}
+	var response protocol.AppServiceResponse
+	if request.Action != nil {
+		switch request.Action.(type) {
+		case *protocol.AppServiceRequest_Initialize:
+			log.Infow("initialize...")
+			response.EncryptionDevice = &protocol.UserMetadataPayload_EncryptionDevice{
+				DeviceKey:   b.encryptionDevice.DeviceKey,
+				FallbackKey: b.encryptionDevice.FallbackKey,
+			}
+
+		case *protocol.AppServiceRequest_Solicit:
+			if err := b.solicitKeys(logging.CtxWithLog(r.Context(), log), request.GetSolicit()); err != nil {
+				log.Errorw("solicit keys request failed", "error", err, "data", data)
+				http.Error(w, fmt.Sprintf("TestAppServer unable to solicit keys: %v", err), http.StatusBadRequest)
 				return
 			}
-		}
 
-		log.Infow("send_messages...", "numMessages", len(request.GetMessages()))
-		if err := b.respondToSendMessages(ctx, &request); err != nil {
-			http.Error(w, fmt.Sprintf("unable to respond to sent messages: %v", err), http.StatusBadRequest)
+		default:
+			log.Errorw("unrecognized action type", "action", request.Action)
+			http.Error(w, "unrecognized payload type", http.StatusBadRequest)
 			return
 		}
+	}
 
-		// Marshal the response message to binary format.
-		respData, err := proto.Marshal(&response)
-		if err != nil {
-			log.Errorw("failed to marshal response message", "err", err)
-			http.Error(w, "Failed to marshal response message", http.StatusInternalServerError)
-			return
-		}
-
-		// Set the appropriate response header.
-		w.Header().Set("Content-Type", "application/x-protobuf")
-		// Write the protobuf data to the response.
-		if _, err = w.Write(respData); err != nil {
-			log.Errorw("Error writing response", "error", err)
-		}
-		log.Info("done with protobuf response")
-		return
-	} else if r.Header.Get("Content-Type") != "application/json" {
-		log.Errorw("wrong content type", "ct", r.Header.Get("Content-Type"))
-		http.Error(w, "Content-Type must be application/json", http.StatusUnsupportedMediaType)
+	log.Infow("send_messages...", "numMessages", len(request.GetMessages()))
+	if err := b.respondToSendMessages(ctx, &request); err != nil {
+		http.Error(w, fmt.Sprintf("unable to respond to sent messages: %v", err), http.StatusBadRequest)
 		return
 	}
 
-	// Decode the JSON request body into the Envelope struct.
-	var payload AppServiceRequestEnvelope
-	decoder := json.NewDecoder(r.Body)
-	defer r.Body.Close() // Ensure the body is closed once we're done.
-
-	if err := decoder.Decode(&payload); err != nil {
-		log.Errorw("error decoding json", "err", err)
-		http.Error(w, fmt.Sprintf("Error decoding JSON: %v", err), http.StatusBadRequest)
+	// Marshal the response message to binary format.
+	respData, err := proto.Marshal(&response)
+	if err != nil {
+		log.Errorw("failed to marshal response message", "err", err)
+		http.Error(w, "Failed to marshal response message", http.StatusInternalServerError)
 		return
 	}
 
-	log.Debugw("received payload", "payload", payload, "command", payload.Command)
-
-	// Send a response back.
-	w.Header().Set("Content-Type", "application/json")
-	var response any
-	switch payload.Command {
-	case "solicit":
-		var data app_client.KeySolicitationData
-		if err := json.Unmarshal(payload.Data, &data); err != nil {
-			log.Errorw(
-				"Unable to unmarshal payload data into key solicitation data",
-				"error",
-				err,
-				"payloadData",
-				payload.Data,
-			)
-			http.Error(w, fmt.Sprintf("unable to solicit keys: %v", err), http.StatusBadRequest)
-			return
-		}
-		if err := b.solicitKeys(logging.CtxWithLog(r.Context(), log), data); err != nil {
-			log.Errorw("solicit keys request failed", "error", err, "data", data)
-			http.Error(w, fmt.Sprintf("TestAppServer unable to solicit keys: %v", err), http.StatusBadRequest)
-		}
-		response = app_client.KeySolicitationResponse{}
-
-	default:
-		log.Errorw("unrecognized payload type", "command", payload.Command)
-		http.Error(w, fmt.Sprintf("Unrecognized payload type: %v", payload.Command), http.StatusBadRequest)
-		return
-	}
-
-	if err := json.NewEncoder(w).Encode(response); err != nil {
-		log.Errorw("error encoding app service response", "error", err)
-		b.t.Errorf("Error encoding app service response: %v", err)
+	// Set the appropriate response header.
+	w.Header().Set("Content-Type", "application/x-protobuf")
+	// Write the protobuf data to the response.
+	if _, err = w.Write(respData); err != nil {
+		log.Errorw("Error writing response", "error", err)
 	}
 }
 

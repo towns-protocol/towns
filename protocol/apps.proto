@@ -75,9 +75,14 @@ message AppServiceRequest {
     repeated Envelope messages = 1;
     repeated Envelope group_encryption_sessions_messages = 2;
 
+    message SolicitKeys {
+        repeated string session_ids = 1;
+        bytes stream_id = 2;
+    }
+
     oneof action {
         google.protobuf.Empty initialize = 101;
-        google.protobuf.Empty solicit = 102;
+        SolicitKeys solicit = 102;
     }
 }
 

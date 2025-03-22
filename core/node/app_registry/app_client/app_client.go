@@ -3,7 +3,6 @@ package app_client
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"io"
 	"net/http"
 
@@ -117,68 +116,6 @@ func (b *AppClient) marshalAndPostProto(
 	return resp, nil
 }
 
-func (b *AppClient) marshalAndPost(
-	ctx context.Context,
-	appId common.Address,
-	hs256SharedSecret [32]byte,
-	payload *AppServiceRequestPayload,
-	webhookUrl string,
-) (*http.Response, error) {
-	jsonData, err := json.Marshal(payload)
-	if err != nil {
-		return nil, base.WrapRiverError(protocol.Err_INTERNAL, err).
-			Message("Error constructing messages payload").
-			Tag("appId", appId).
-			Tag("webhookUrl", webhookUrl)
-	}
-
-	req, err := http.NewRequestWithContext(ctx, "POST", webhookUrl, bytes.NewBuffer(jsonData))
-	if err != nil {
-		return nil, base.WrapRiverError(protocol.Err_INTERNAL, err).
-			Message("Error constructing http request").
-			Tag("appId", appId).
-			Tag("webhookUrl", webhookUrl)
-	}
-
-	// Add authorization header based on the shared secret for this app.
-	if err := signRequest(req, hs256SharedSecret[:], appId); err != nil {
-		return nil, base.WrapRiverError(protocol.Err_INTERNAL, err).
-			Message("Error signing request").
-			Tag("appId", appId).
-			Tag("webhookUrl", webhookUrl)
-	}
-
-	req.Header.Set("Content-Type", "application/json")
-
-	resp, err := b.httpClient.Do(req)
-	if err != nil {
-		return nil, base.WrapRiverError(protocol.Err_CANNOT_CALL_WEBHOOK, err).
-			Message("Unable to send request to webhook").
-			Tag("appId", appId).
-			Tag("webhookUrl", webhookUrl)
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, base.RiverError(protocol.Err_CANNOT_CALL_WEBHOOK, "webhook response non-OK status").
-			Tag("appId", appId).
-			Tag("webhookUrl", webhookUrl)
-	}
-
-	// Sanity check
-	if resp == nil {
-		return nil, base.RiverError(protocol.Err_INTERNAL, "unexpected error: http library returned an empty error and response").
-			Tag("appId", appId).
-			Tag("webhookUrl", webhookUrl)
-	}
-
-	return resp, nil
-}
-
-type MsgPtrConstraint[R any] interface {
-	*R
-	proto.Message
-}
-
 func sendRequestAndParseResponse(
 	client *AppClient,
 	ctx context.Context,
@@ -232,7 +169,6 @@ func (b *AppClient) InitializeWebhook(
 	hs256SharedSecret [32]byte,
 	webhookUrl string,
 ) (*EncryptionDevice, error) {
-	log := logging.DefaultZapLogger(zapcore.DebugLevel)
 	resp, err := sendRequestAndParseResponse(
 		b,
 		ctx,
@@ -243,7 +179,6 @@ func (b *AppClient) InitializeWebhook(
 			Action: &protocol.AppServiceRequest_Initialize{},
 		},
 	)
-	log.Infow("initialize response", "resp", resp, "err", err)
 	if err != nil {
 		return nil, err
 	}
@@ -268,28 +203,25 @@ func (b *AppClient) RequestSolicitation(
 	channelId shared.StreamId,
 	sessionId string,
 ) error {
-	resp, err := b.marshalAndPost(
+	request := &protocol.AppServiceRequest{
+		Action: &protocol.AppServiceRequest_Solicit{
+			Solicit: &protocol.AppServiceRequest_SolicitKeys{
+				SessionIds: []string{sessionId},
+				StreamId:   channelId[:],
+			},
+		},
+	}
+
+	_, err := sendRequestAndParseResponse(
+		b,
 		ctx,
 		appId,
 		hs256SharedSecret,
-		&AppServiceRequestPayload{
-			Command: "solicit",
-			Data: KeySolicitationData{
-				SessionId: sessionId,
-				ChannelId: channelId.String(),
-			},
-		},
 		webhookUrl,
+		request,
 	)
-	if err != nil {
-		return base.AsRiverError(err).
-			Message("Unable to request a key solicitation").
-			Tag("channelId", channelId).
-			Tag("sessionId", sessionId)
-	}
-	defer resp.Body.Close()
 
-	return nil
+	return err
 }
 
 func (b *AppClient) SendSessionMessages(
