@@ -10,6 +10,6 @@ dist/
 foundry_artifacts/
 scripts/accumulator-cli
 tsconfig.tsbuildinfo
-deployments/{alpha,omega,gamma,delta}/base/addresses/facets/
+deployments/*/base/addresses/facets/
 
 
