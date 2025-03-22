@@ -132,6 +132,8 @@ func LoadNodeRegistry(
 	return ret, nil
 }
 
+// addNodeIfNotExist adds a node to the registry if it does not exist.
+// This is the thread-safe function.
 func (n *nodeRegistryImpl) addNodeIfNotExist(
 	addr common.Address,
 	url string,
