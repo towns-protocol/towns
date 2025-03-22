@@ -24,7 +24,7 @@ import {DropClaimLib} from "contracts/src/airdrop/drop/DropClaimLib.sol";
 import {BaseSetup} from "contracts/test/spaces/BaseSetup.sol";
 import {Towns} from "contracts/src/tokens/towns/base/Towns.sol";
 import {NodeOperatorFacet} from "contracts/src/base/registry/facets/operator/NodeOperatorFacet.sol";
-import {EIP712Facet} from "@towns-protocol/diamond/src/utils/cryptography/signature/EIP712Facet.sol";
+import {EIP712Facet} from "@towns-protocol/diamond/src/utils/cryptography/EIP712Facet.sol";
 import {StakingRewards} from "contracts/src/base/registry/facets/distribution/v2/StakingRewards.sol";
 
 contract DropFacetTest is

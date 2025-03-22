@@ -9,7 +9,7 @@ import "forge-std/console.sol";
 
 //contracts
 import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
-import {FacetHelper} from "contracts/test/diamond/Facet.t.sol";
+import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
 import {TownsPoints} from "contracts/src/airdrop/points/TownsPoints.sol";
 
 contract DeployTownsPoints is Deployer, FacetHelper {

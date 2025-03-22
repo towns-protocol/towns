@@ -33,8 +33,12 @@ func (b *AppRegistryTrackedStreamView) processUserInboxMessage(ctx context.Conte
 			if err != nil {
 				return err
 			}
-			for deviceKey, cipherTexts := range deviceCipherTexts {
-				if err := b.queue.PublishSessionKeys(ctx, streamId, deviceKey, sessionIds, cipherTexts); err != nil {
+			envelopeBytes, err := event.GetEnvelopeBytes()
+			if err != nil {
+				return err
+			}
+			for deviceKey := range deviceCipherTexts {
+				if err := b.queue.PublishSessionKeys(ctx, streamId, deviceKey, sessionIds, envelopeBytes); err != nil {
 					return err
 				}
 			}
@@ -45,12 +49,14 @@ func (b *AppRegistryTrackedStreamView) processUserInboxMessage(ctx context.Conte
 
 func (b *AppRegistryTrackedStreamView) onNewEvent(ctx context.Context, view *StreamView, event *ParsedEvent) error {
 	streamId := view.StreamId()
-	// Uncomment to unconditionally enable logging here
-	// ctx = logging.CtxWithLog(ctx, logging.DefaultZapLogger(zapcore.DebugLevel))
-	log := logging.FromCtx(ctx)
+	log := logging.FromCtx(ctx).With("func", "AppRegistryTrackedStreamView.onNewEvent", "streamId", view.StreamId())
 
 	if streamId.Type() == shared.STREAM_USER_INBOX_BIN {
-		return b.processUserInboxMessage(ctx, event)
+		if err := b.processUserInboxMessage(ctx, event); err != nil {
+			log.Errorw("Error processing user inbox message", "err", err)
+			return err
+		}
+		return nil
 	}
 
 	members, err := view.GetChannelMembers()
