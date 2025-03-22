@@ -48,7 +48,6 @@ import {DeployMockLegacyArchitect} from "contracts/scripts/deployments/facets/De
 import {DeploySpaceProxyInitializer} from "contracts/scripts/deployments/utils/DeploySpaceProxyInitializer.s.sol";
 import {DeploySpaceFactoryInit} from "contracts/scripts/deployments/facets/DeploySpaceFactoryInit.s.sol";
 import {DeploySLCEIP6565} from "contracts/scripts/deployments/utils/DeploySLCEIP6565.s.sol";
-import {DeployMockDelegationRegistry} from "contracts/scripts/deployments/utils/DeployMockDelegationRegistry.s.sol";
 
 contract DeploySpaceFactory is DiamondHelper, Deployer {
   // diamond helpers
@@ -97,9 +96,6 @@ contract DeploySpaceFactory is DiamondHelper, Deployer {
 
   DeploySpaceFactoryInit deploySpaceFactoryInit = new DeploySpaceFactoryInit();
 
-  DeployMockDelegationRegistry deployMockDelegationRegistry =
-    new DeployMockDelegationRegistry();
-
   // helpers
   address multiInit;
 
@@ -136,7 +132,6 @@ contract DeploySpaceFactory is DiamondHelper, Deployer {
   address public fixedPricing;
 
   address public sclEip6565;
-  address public mockDelegationRegistry;
   address[] pricingModules;
 
   // init
@@ -219,9 +214,6 @@ contract DeploySpaceFactory is DiamondHelper, Deployer {
 
     if (isAnvil()) {
       legacyArchitect = deployMockLegacyArchitect.deploy(deployer);
-      mockDelegationRegistry = deployMockDelegationRegistry.deploy(deployer);
-    } else {
-      mockDelegationRegistry = 0x00000000000000447e69651d841bD8D104Bed493;
     }
 
     addFacet(
@@ -293,7 +285,7 @@ contract DeploySpaceFactory is DiamondHelper, Deployer {
     addFacet(
       walletLinkHelper.makeCut(walletLink, IDiamond.FacetCutAction.Add),
       walletLink,
-      walletLinkHelper.makeInitData(mockDelegationRegistry, sclEip6565)
+      walletLinkHelper.makeInitData(sclEip6565)
     );
     addFacet(
       eip712Helper.makeCut(eip712, IDiamond.FacetCutAction.Add),
@@ -418,11 +410,11 @@ contract DeploySpaceFactory is DiamondHelper, Deployer {
       } else if (facetNameHash == keccak256(abi.encodePacked("WalletLink"))) {
         walletLink = walletLinkHelper.deploy(deployer);
         sclEip6565 = deployVerifierLib.deploy(deployer);
-        mockDelegationRegistry = 0x00000000000000447e69651d841bD8D104Bed493;
+
         addFacet(
           walletLinkHelper.makeCut(walletLink, IDiamond.FacetCutAction.Add),
           walletLink,
-          walletLinkHelper.makeInitData(mockDelegationRegistry, sclEip6565)
+          walletLinkHelper.makeInitData(sclEip6565)
         );
       } else if (facetNameHash == keccak256(abi.encodePacked("EIP712Facet"))) {
         eip712 = eip712Helper.deploy(deployer);

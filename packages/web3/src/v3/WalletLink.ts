@@ -248,7 +248,7 @@ export class WalletLink {
     }
 
     public async getLinkedWalletsWithDelegations(rootKey: string): Promise<string[]> {
-        return this.walletLinkShim.read.getWalletsByRootKeyWithDelegations(rootKey)
+        return this.walletLinkShim.read.getWalletsByRootKey(rootKey)
     }
 
     public getRootKeyForWallet(wallet: string): Promise<string> {

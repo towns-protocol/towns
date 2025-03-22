@@ -187,22 +187,12 @@ interface IWalletLink is IWalletLinkBase {
   ) external view returns (address[] memory wallets);
 
   /**
-   * @notice Returns all wallets linked to a root key with their delegations
-   * @param rootKey the public key of the users rootkey to find associated wallets for
-   * @return wallets an array of ethereum wallets linked to this root key
-   */
-  function getWalletsByRootKeyWithDelegations(
-    address rootKey
-  ) external view returns (address[] memory wallets);
-
-  /**
    * @notice Returns all wallets linked to a root key with their metadata
    * @param rootKey the public key of the users rootkey to find associated wallets for
    * @return wallets an array of wallets with their metadata
    */
-  function explicitWalletsByRootKey(
-    address rootKey,
-    WalletQueryOptions calldata options
+  function getAllWalletsByRootKey(
+    address rootKey
   ) external view returns (WalletLib.Wallet[] memory wallets);
 
   /**
