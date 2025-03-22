@@ -75,6 +75,23 @@ func LoadNodeRegistry(
 		connectOpts:      connectOpts,
 	}
 
+	localFound := false
+	for _, node := range nodes {
+		nn := ret.addNode(node.NodeAddress, node.Url, node.Status, node.Operator)
+		localFound = localFound || nn.local
+	}
+
+	if localNodeAddress != (common.Address{}) && !localFound {
+		return nil, RiverError(
+			Err_UNKNOWN_NODE,
+			"Local node not found in registry",
+			"blockNum",
+			appliedBlockNum,
+			"localAddress",
+			localNodeAddress,
+		).LogError(log)
+	}
+
 	chainMonitor.OnContractWithTopicsEvent(
 		appliedBlockNum+1,
 		contract.Address,
@@ -99,23 +116,6 @@ func LoadNodeRegistry(
 		[][]common.Hash{{contract.NodeRegistryAbi.Events["NodeUrlUpdated"].ID}},
 		ret.OnNodeUrlUpdated,
 	)
-
-	localFound := false
-	for _, node := range nodes {
-		nn := ret.addNode(node.NodeAddress, node.Url, node.Status, node.Operator)
-		localFound = localFound || nn.local
-	}
-
-	if localNodeAddress != (common.Address{}) && !localFound {
-		return nil, RiverError(
-			Err_UNKNOWN_NODE,
-			"Local node not found in registry",
-			"blockNum",
-			appliedBlockNum,
-			"localAddress",
-			localNodeAddress,
-		).LogError(log)
-	}
 
 	if config.UseDetailedLog(ctx) {
 		log.Infow(
