@@ -9,7 +9,7 @@ import {SpaceProxyInitializer} from "contracts/src/spaces/facets/proxy/SpaceProx
 
 contract DeploySpaceProxyInitializer is Deployer {
   function versionName() public pure override returns (string memory) {
-    return "spaceProxyInitializer";
+    return "utils/spaceProxyInitializer";
   }
 
   function __deploy(address deployer) public override returns (address) {

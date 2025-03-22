@@ -19,7 +19,7 @@ contract DeployERC721AQueryable is FacetHelper, Deployer {
   }
 
   function versionName() public pure override returns (string memory) {
-    return "erc721AQueryableFacet";
+    return "facets/erc721AQueryableFacet";
   }
 
   function __deploy(address deployer) public override returns (address) {

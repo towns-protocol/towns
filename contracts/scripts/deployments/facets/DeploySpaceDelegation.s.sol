@@ -33,7 +33,7 @@ contract DeploySpaceDelegation is Deployer, FacetHelper {
   }
 
   function versionName() public pure override returns (string memory) {
-    return "spaceDelegationFacet";
+    return "facets/spaceDelegationFacet";
   }
 
   function __deploy(address deployer) public override returns (address) {

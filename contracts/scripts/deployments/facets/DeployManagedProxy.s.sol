@@ -21,7 +21,7 @@ contract DeployManagedProxy is FacetHelper, Deployer {
   }
 
   function versionName() public pure override returns (string memory) {
-    return "managedProxyFacet";
+    return "facets/managedProxyFacet";
   }
 
   function __deploy(address deployer) public override returns (address) {

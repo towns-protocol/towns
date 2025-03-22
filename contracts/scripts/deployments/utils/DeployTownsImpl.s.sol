@@ -11,7 +11,7 @@ import {Towns} from "contracts/src/tokens/towns/base/Towns.sol";
 
 contract DeployTownsImpl is Deployer {
   function versionName() public pure override returns (string memory) {
-    return "townsImpl";
+    return "utils/townsImpl";
   }
 
   function __deploy(address deployer) public override returns (address) {

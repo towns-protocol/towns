@@ -18,7 +18,7 @@ contract DeployReviewFacet is Deployer, FacetHelper {
   }
 
   function versionName() public pure override returns (string memory) {
-    return "reviewFacet";
+    return "facets/reviewFacet";
   }
 
   function initializer() public pure override returns (bytes4) {

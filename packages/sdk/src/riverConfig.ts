@@ -86,8 +86,10 @@ function makeWeb3Deployment(environmentId: string): Web3Deployment {
                 baseRegistry: process.env.BASE_REGISTRY_ADDRESS! as Address,
                 spaceFactory: process.env.SPACE_FACTORY_ADDRESS! as Address,
                 spaceOwner: process.env.SPACE_OWNER_ADDRESS! as Address,
-                mockNFT: process.env.MOCK_NFT_ADDRESS as Address | undefined,
-                member: process.env.MEMBER_ADDRESS as Address | undefined,
+                utils: {
+                    mockNFT: process.env.MOCK_NFT_ADDRESS as Address | undefined,
+                    member: process.env.MEMBER_ADDRESS as Address | undefined,
+                },
             },
         } satisfies BaseChainConfig,
         river: {

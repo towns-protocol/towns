@@ -12,7 +12,7 @@ import {MockEntitlementGated} from "contracts/test/mocks/MockEntitlementGated.so
 
 contract DeployEntitlementGatedExample is Deployer {
   function versionName() public pure override returns (string memory) {
-    return "entitlementGatedExample";
+    return "utils/entitlementGatedExample";
   }
 
   function __deploy(address deployer) public override returns (address) {

@@ -27,7 +27,7 @@ contract DeployDiamond is DiamondHelper, Deployer {
   DeployOwnable private ownableHelper = new DeployOwnable();
 
   function versionName() public pure override returns (string memory) {
-    return "diamond";
+    return "utils/diamond";
   }
 
   function diamondInitParams(

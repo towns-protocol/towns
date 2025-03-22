@@ -34,7 +34,7 @@ contract DeployERC721A is FacetHelper, Deployer {
   }
 
   function versionName() public pure override returns (string memory) {
-    return "erc721aFacet";
+    return "facets/erc721aFacet";
   }
 
   function makeInitData(

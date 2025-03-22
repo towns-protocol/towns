@@ -7,7 +7,7 @@ import {SCL_EIP6565} from "crypto-lib/lib/libSCL_EIP6565.sol";
 
 contract DeploySLCEIP6565 is Deployer {
   function versionName() public pure override returns (string memory) {
-    return "sclEip6565";
+    return "utils/sclEip6565";
   }
 
   function __deploy(address deployer) public override returns (address) {

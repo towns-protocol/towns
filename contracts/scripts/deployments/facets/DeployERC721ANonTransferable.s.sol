@@ -40,7 +40,7 @@ contract DeployERC721ANonTransferable is FacetHelper, Deployer {
   }
 
   function versionName() public pure override returns (string memory) {
-    return "erc721ANonTransferableFacet";
+    return "facets/erc721ANonTransferableFacet";
   }
 
   function __deploy(address deployer) public override returns (address) {

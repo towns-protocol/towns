@@ -35,7 +35,7 @@ contract DeployMembershipToken is FacetHelper, Deployer {
   }
 
   function versionName() public pure override returns (string memory) {
-    return "membershipTokenFacet";
+    return "facets/membershipTokenFacet";
   }
 
   function makeInitData(

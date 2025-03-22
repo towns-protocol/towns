@@ -17,7 +17,7 @@ contract DeployMockLegacyMembership is Deployer, FacetHelper {
   }
 
   function versionName() public pure override returns (string memory) {
-    return "mockLegacyMembership";
+    return "utils/mockLegacyMembership";
   }
 
   function __deploy(address deployer) public override returns (address) {

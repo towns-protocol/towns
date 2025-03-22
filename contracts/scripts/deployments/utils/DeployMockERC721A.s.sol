@@ -11,7 +11,7 @@ contract DeployMockERC721A is Deployer, FacetHelper {
   DeployERC721A deployERC721A = new DeployERC721A();
 
   function versionName() public pure override returns (string memory) {
-    return "mockERC721A";
+    return "utils/mockERC721A";
   }
 
   constructor() {

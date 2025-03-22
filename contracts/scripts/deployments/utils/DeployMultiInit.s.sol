@@ -7,7 +7,7 @@ import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetH
 
 contract DeployMultiInit is Deployer, FacetHelper {
   function versionName() public pure override returns (string memory) {
-    return "multiInit";
+    return "utils/multiInit";
   }
 
   function __deploy(address deployer) public override returns (address) {

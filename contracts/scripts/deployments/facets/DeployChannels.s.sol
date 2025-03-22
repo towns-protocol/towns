@@ -24,7 +24,7 @@ contract DeployChannels is FacetHelper, Deployer {
   }
 
   function versionName() public pure override returns (string memory) {
-    return "channelsFacet";
+    return "facets/channelsFacet";
   }
 
   function __deploy(address deployer) public override returns (address) {

@@ -12,7 +12,7 @@ import {TieredLogPricing} from "contracts/scripts/deployments/utils/pricing/Tier
 
 contract DeployTieredLogPricingV3 is TieredLogPricing {
   function versionName() public pure override returns (string memory) {
-    return "tieredLogPricingV3";
+    return "utils/tieredLogPricingV3";
   }
 
   function __deploy(address deployer) public override returns (address) {

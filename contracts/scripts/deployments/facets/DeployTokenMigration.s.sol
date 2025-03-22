@@ -23,7 +23,7 @@ contract DeployTokenMigration is FacetHelper, Deployer {
   }
 
   function versionName() public pure override returns (string memory) {
-    return "tokenMigrationFacet";
+    return "facets/tokenMigrationFacet";
   }
 
   function makeInitData(

@@ -7,7 +7,7 @@ import {RuleEntitlementV2} from "contracts/src/spaces/entitlements/rule/RuleEnti
 
 contract DeployRuleEntitlementV2 is Deployer {
   function versionName() public pure override returns (string memory) {
-    return "ruleEntitlementV2";
+    return "utils/ruleEntitlementV2";
   }
 
   function __deploy(address deployer) public override returns (address) {

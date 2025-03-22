@@ -7,7 +7,7 @@ import {MockERC20} from "contracts/test/mocks/MockERC20.sol";
 
 contract DeployMockERC20 is Deployer {
   function versionName() public pure override returns (string memory) {
-    return "mockERC20";
+    return "utils/mockERC20";
   }
 
   function __deploy(address deployer) public override returns (address) {

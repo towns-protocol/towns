@@ -17,7 +17,7 @@ contract DeployOwnable is FacetHelper, Deployer {
   }
 
   function versionName() public pure override returns (string memory) {
-    return "ownableFacet";
+    return "facets/ownableFacet";
   }
 
   function __deploy(address deployer) public override returns (address) {

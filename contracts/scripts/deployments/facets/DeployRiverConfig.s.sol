@@ -35,7 +35,7 @@ contract DeployRiverConfig is FacetHelper, Deployer {
   }
 
   function versionName() public pure override returns (string memory) {
-    return "riverConfigFacet";
+    return "facets/riverConfigFacet";
   }
 
   function facetInitHelper(

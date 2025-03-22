@@ -7,7 +7,7 @@ import {UserEntitlement} from "contracts/src/spaces/entitlements/user/UserEntitl
 
 contract DeployUserEntitlement is Deployer {
   function versionName() public pure override returns (string memory) {
-    return "userEntitlement";
+    return "utils/userEntitlement";
   }
 
   function __deploy(address deployer) public override returns (address) {

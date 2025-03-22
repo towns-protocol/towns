@@ -24,7 +24,7 @@ contract DeployPartnerRegistry is FacetHelper, Deployer {
   }
 
   function versionName() public pure override returns (string memory) {
-    return "partnerRegistryFacet";
+    return "facets/partnerRegistryFacet";
   }
 
   function __deploy(address deployer) public override returns (address) {

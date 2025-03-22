@@ -34,7 +34,7 @@ contract DeployMockNFT is DiamondHelper, Deployer {
   address erc721aMock;
 
   function versionName() public pure override returns (string memory) {
-    return "mockNFT";
+    return "utils/mockNFT";
   }
 
   function diamondInitParams(

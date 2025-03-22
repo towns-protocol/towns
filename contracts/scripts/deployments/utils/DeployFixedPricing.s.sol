@@ -11,7 +11,7 @@ import {FixedPricing} from "contracts/src/spaces/facets/membership/pricing/fixed
 
 contract DeployFixedPricing is Deployer {
   function versionName() public pure override returns (string memory) {
-    return "fixedPricing";
+    return "utils/fixedPricing";
   }
 
   function __deploy(address deployer) public override returns (address) {

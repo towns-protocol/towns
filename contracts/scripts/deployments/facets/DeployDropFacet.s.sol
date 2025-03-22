@@ -28,7 +28,7 @@ contract DeployDropFacet is Deployer, FacetHelper {
 
   // Deploying
   function versionName() public pure override returns (string memory) {
-    return "dropFacet";
+    return "facets/dropFacet";
   }
 
   function initializer() public pure override returns (bytes4) {

@@ -39,7 +39,7 @@ contract DeployRewardsDistribution is Deployer, FacetHelper {
   }
 
   function versionName() public pure override returns (string memory) {
-    return "rewardsDistributionFacet";
+    return "facets/rewardsDistributionFacet";
   }
 
   function __deploy(address deployer) public override returns (address) {

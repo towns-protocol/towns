@@ -27,7 +27,7 @@ contract DeployNodeRegistry is FacetHelper, Deployer {
   }
 
   function versionName() public pure override returns (string memory) {
-    return "nodeRegistryFacet";
+    return "facets/nodeRegistryFacet";
   }
 
   function facetInitHelper(
