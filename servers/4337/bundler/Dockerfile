@@ -4,7 +4,7 @@ FROM node:20-alpine
 RUN apk add --no-cache bash curl git gettext
 
 # Clone the specific release of the repository
-RUN git clone --depth 1 --branch v1.2.2 https://github.com/pimlicolabs/alto.git /app
+RUN git clone --depth 1 --branch v1.2.3 https://github.com/pimlicolabs/alto.git /app
 
 EXPOSE 4337
 

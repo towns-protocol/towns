@@ -25,6 +25,13 @@ services:
     depends_on:
       contracts:
         condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD-SHELL", "netstat -an | grep 4337 > /dev/null; if [ 0 != $? ]; then exit 1; fi;"]
+      start_interval: 250ms
+      start_period: 10s
+      interval: 5s
+      timeout: 5s
+      retries: 50
 
   mock-paymaster:
     build:
@@ -36,6 +43,6 @@ services:
       - ANVIL_RPC=${ANVIL_RPC:-http://host.docker.internal:8545}
     depends_on:
       bundler:
-        condition: service_started
+        condition: service_healthy
       contracts:
         condition: service_completed_successfully

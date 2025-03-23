@@ -28,6 +28,8 @@ import {
 	KERNEL_V07_ACCOUNT_V3_1_LOGIC_CREATECALL,
 	KERNEL_V07_FACTORY_V3_1_CREATECALL,
 	LIGHT_ACCOUNT_FACTORY_V110_CREATECALL,
+	LIGHT_ACCOUNT_FACTORY_V200_CREATECALL,
+	MODULAR_ACCOUNT_FACTORY_V200_CREATECALL,
 	SAFE_MULTI_SEND_CALL_ONLY_CREATECALL,
 	SAFE_MULTI_SEND_CREATECALL,
 	SAFE_PROXY_FACTORY_CREATECALL,
@@ -39,6 +41,17 @@ import {
 	SAFE_V07_MODULE_SETUP_CREATECALL,
 	SIMPLE_ACCOUNT_FACTORY_V06_CREATECALL,
 	SIMPLE_ACCOUNT_FACTORY_V07_CREATECALL,
+	MODULAR_ACCOUNT_V200_CREATECALL,
+	SEMI_MODULAR_ACCOUNT_BYTECODE_V200_CREATECALL,
+	SEMI_MODULAR_ACCOUNT_7702_IMPL_V200_CREATECALL,
+	SEMI_MODULAR_ACCOUNT_STORAGE_ONLY_V200_CREATCALL,
+	EXECUTION_INSTALL_DELEGATE_V200_CREATCALL,
+	SINGLE_SIGNER_VALIDATION_MODULE_V200_CREATCALL,
+	WEB_AUTHN_VALIDATION_MODULE_V200_CREATCALL,
+	ALLOW_LIST_MODULE_V200_CREATCALL,
+	NATIVE_TOKEN_LIMIT_MODULE_V200_CREATCALL,
+	PAYMASTER_GUARD_MODULE_V200_CREATCALL,
+	TIME_RANGE_MODULE_V200_CREATCALL,
 } from "./constants";
 
 const DETERMINISTIC_DEPLOYER = "0x4e59b44847b379578588920ca78fbf26c0b4956c";
@@ -378,6 +391,150 @@ const main = async () => {
 			console.log("[LIGHT ACCOUNT] Deploying v1.1.0 LightAccount Factory"),
 		);
 
+	walletClient
+		.sendTransaction({
+			to: DETERMINISTIC_DEPLOYER,
+			data: LIGHT_ACCOUNT_FACTORY_V200_CREATECALL,
+			gas: 15_000_000n,
+			nonce: nonce++,
+		})
+		.then(() =>
+			console.log("[LIGHT ACCOUNT] Deploying v2.0.0 LightAccount Factory"),
+		);
+
+	walletClient
+		.sendTransaction({
+			to: DETERMINISTIC_DEPLOYER,
+			data: MODULAR_ACCOUNT_FACTORY_V200_CREATECALL,
+			gas: 15_000_000n,
+			nonce: nonce++,
+		})
+		.then(() =>
+			console.log("[MODULAR ACCOUNT] Deploying v2.0.0 ModularAccount Factory"),
+		);
+
+	walletClient
+		.sendTransaction({
+			to: DETERMINISTIC_DEPLOYER,
+			data: MODULAR_ACCOUNT_V200_CREATECALL,
+			gas: 15_000_000n,
+			nonce: nonce++,
+		})
+		.then(() =>
+			console.log("[MODULAR ACCOUNT] Deploying v2.0.0 ModularAccount"),
+		);
+
+	walletClient
+		.sendTransaction({
+			to: DETERMINISTIC_DEPLOYER,
+			data: SEMI_MODULAR_ACCOUNT_BYTECODE_V200_CREATECALL,
+			gas: 15_000_000n,
+			nonce: nonce++,
+		})
+		.then(() =>
+			console.log("[MODULAR ACCOUNT] Deploying v2.0.0 SemiModularAccountByteCode"),
+		);
+
+	walletClient
+		.sendTransaction({
+			to: DETERMINISTIC_DEPLOYER,
+			data: SEMI_MODULAR_ACCOUNT_7702_IMPL_V200_CREATECALL,
+			gas: 15_000_000n,
+			nonce: nonce++,
+		})
+		.then(() =>
+			console.log("[MODULAR ACCOUNT] Deploying v2.0.0 SemiModularAccount7702"),
+		);
+
+	walletClient
+		.sendTransaction({
+			to: DETERMINISTIC_DEPLOYER,
+			data: SEMI_MODULAR_ACCOUNT_STORAGE_ONLY_V200_CREATCALL,
+			gas: 15_000_000n,
+			nonce: nonce++,
+		})
+		.then(() =>
+			console.log("[MODULAR ACCOUNT] Deploying v2.0.0 SemiModularAccountStorageOnly"),
+		);
+
+	walletClient
+		.sendTransaction({
+			to: DETERMINISTIC_DEPLOYER,
+			data: EXECUTION_INSTALL_DELEGATE_V200_CREATCALL,
+			gas: 15_000_000n,
+			nonce: nonce++,
+		})
+		.then(() =>
+			console.log("[MODULAR ACCOUNT] Deploying v2.0.0 ExecutionInstallDelegate"),
+		);
+
+	walletClient
+		.sendTransaction({
+			to: DETERMINISTIC_DEPLOYER,
+			data: SINGLE_SIGNER_VALIDATION_MODULE_V200_CREATCALL,
+			gas: 15_000_000n,
+			nonce: nonce++,
+		})
+		.then(() =>
+			console.log("[MODULAR ACCOUNT] Deploying v2.0.0 SingleSignerValidationModule"),
+		);
+
+	walletClient
+		.sendTransaction({
+			to: DETERMINISTIC_DEPLOYER,
+			data: WEB_AUTHN_VALIDATION_MODULE_V200_CREATCALL,
+			gas: 15_000_000n,
+			nonce: nonce++,
+		})
+		.then(() =>
+			console.log("[MODULAR ACCOUNT] Deploying v2.0.0 WebAuthnValidationModule"),
+		);
+
+	walletClient
+		.sendTransaction({
+			to: DETERMINISTIC_DEPLOYER,
+			data: ALLOW_LIST_MODULE_V200_CREATCALL,
+			gas: 15_000_000n,
+			nonce: nonce++,
+		})
+		.then(() =>
+			console.log("[MODULAR ACCOUNT] Deploying v2.0.0 AllowListModule"),
+		);
+	
+	walletClient
+		.sendTransaction({
+			to: DETERMINISTIC_DEPLOYER,
+			data: NATIVE_TOKEN_LIMIT_MODULE_V200_CREATCALL,
+			gas: 15_000_000n,
+			nonce: nonce++,
+		})
+		.then(() =>
+			console.log("[MODULAR ACCOUNT] Deploying v2.0.0 NativeTokenLimitModule"),
+		);
+
+	walletClient
+		.sendTransaction({
+			to: DETERMINISTIC_DEPLOYER,
+			data: PAYMASTER_GUARD_MODULE_V200_CREATCALL,
+			gas: 15_000_000n,
+			nonce: nonce++,	
+		})
+		.then(() =>
+			console.log("[MODULAR ACCOUNT] Deploying v2.0.0 PaymasterGuardModule"),
+		);
+
+	walletClient
+		.sendTransaction({
+			to: DETERMINISTIC_DEPLOYER,
+			data: TIME_RANGE_MODULE_V200_CREATCALL,
+			gas: 15_000_000n,
+			nonce: nonce++,
+		})
+		.then(() =>
+			console.log("[MODULAR ACCOUNT] Deploying v2.0.0 TimeRangeModule"),
+		);
+	
+	
 	let onchainNonce = 0;
 	do {
 		onchainNonce = await client.getTransactionCount({
@@ -429,6 +586,7 @@ const main = async () => {
 	});
 
 	// ==== SETUP ALCHEMY LIGHT ACCOUNT CONTRACTS ==== //
+	// this account owns light account v2.0.0 factory and ModularAccount v2.0.0 factory
 	const alchemyLightClientOwner = "0xDdF32240B4ca3184De7EC8f0D5Aba27dEc8B7A5C";
 	await anvilClient.setBalance({
 		address: alchemyLightClientOwner,
@@ -439,10 +597,20 @@ const main = async () => {
 		address: alchemyLightClientOwner,
 	});
 
+	// stake
 	await sendTransaction(walletClient, {
 		account: alchemyLightClientOwner,
 		to: "0x0000000000400CdFef5E2714E63d8040b700BC24" /* light account v2.0.0 factory */,
 		data: "0xfbb1c3d40000000000000000000000000000000000000000000000000000000000015180000000000000000000000000000000000000000000000000016345785d8a0000",
+		value: parseEther("0.1"),
+	});
+
+
+	// stake
+	await sendTransaction(walletClient, {
+		account: alchemyLightClientOwner,
+		to: "0x00000000000017c61b5bEe81050EC8eFc9c6fecd" /* modular account v2.0.0 factory */,
+		data: "0x0396cb600000000000000000000000000000000000000000000000000000000000015180",
 		value: parseEther("0.1"),
 	});
 
@@ -483,6 +651,23 @@ const main = async () => {
 		"0xd703aaE79538628d27099B8c4f621bE4CCd142d5", // Kernel v0.3.1 Meta Factory
 		"0x00004EC70002a32400f8ae005A26081065620D20", // LightAccountFactory v1.1.0
 		"0xae8c656ad28F2B59a196AB61815C16A0AE1c3cba", // LightAccount v1.1.0 implementation
+		"0x0000000000400CdFef5E2714E63d8040b700BC24", // LightAccountFactory v2.0.0
+		"0x8E8e658E22B12ada97B402fF0b044D6A325013C7", // LightAccount v2.0.0 implementation
+		"0x00000000000017c61b5bEe81050EC8eFc9c6fecd", // ModularAccountFactory v2.0.0
+		"0x00000000000002377B26b1EdA7b0BC371C60DD4f", // ModularAccount v2.0.0
+		"0x000000000000c5A9089039570Dd36455b5C07383", // SemiModularAccountByteCode v2.0.0 
+		"0x69007702764179f14F51cdce752f4f775d74E139", // SemiModularAccount7702Impl v2.0.0
+
+
+		"0x0000000000006E2f9d80CaEc0Da6500f005EB25A", // SemiModularAccountStorageOnly v2.0.0
+		"0x0000000000008e6a39E03C7156e46b238C9E2036", // ExecutionInstallDelegate v2.0.0
+		"0x00000000000099DE0BF6fA90dEB851E2A2df7d83", // SingleSignerValidationModule v2.0.0
+		"0x0000000000001D9d34E07D9834274dF9ae575217", // WebAuthnValidationModule v2.0.0		
+		"0x0000000000002311EEE9A2B887af1F144dbb4F6e", // AllowlistModule v2.0.0
+		"0x00000000000001e541f0D090868FBe24b59Fbe06", // NativeTokenLimitModule v2.0.0
+		"0x0000000000001aA7A7F7E29abe0be06c72FD42A1", // PaymasterGuardModule v2.0.0	
+		"0x00000000000082B8e2012be914dFA4f62A0573eA", // TimeRangeModule v2.0.0
+
 	]);
 };
 
