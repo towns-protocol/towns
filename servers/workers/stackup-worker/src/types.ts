@@ -116,7 +116,9 @@ export function isEntrypointV07SponsorshipRequest(
     }
     const { data } = obj
 
-    return typeof data.factory === 'string' && typeof data.factoryData === 'string'
+    // these are only passed when account needs to be created
+    // return typeof data.factory === 'string' && typeof data.factoryData === 'string'
+    return true
 }
 
 export enum Overrides {
