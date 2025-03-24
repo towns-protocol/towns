@@ -1,8 +1,6 @@
 package river
 
 import (
-	"encoding/json"
-
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -28,7 +26,8 @@ type (
 		StreamID StreamId
 		// Reason contains the reason why the stream state was updated/created.
 		reason StreamUpdatedEventType
-		// raw is the raw event log that triggered the state change and this stream state was parsed from.
+		// raw is the raw event log that was emitted after the state change and this stream state was parsed from.
+		// it provides information about which transaction caused the state change and at which block number and index.
 		raw types.Log
 	}
 
@@ -36,9 +35,8 @@ type (
 	StreamMiniblockUpdate struct {
 		// SetMiniblock contains the stream updated data.
 		SetMiniblock
-		// StreamID identifies the stream
-		StreamID StreamId
-		// raw is the raw event log that triggered the state change and this stream state was parsed from.
+		// raw is the raw event log that was emitted after the state change and this stream state was parsed from.
+		// it provides information about which transaction caused the state change and at which block number and index.
 		raw types.Log
 	}
 
@@ -105,7 +103,7 @@ func (ss *StreamState) Raw() types.Log {
 
 // GetStreamId implements the EventWithStreamId interface.
 func (smu *StreamMiniblockUpdate) GetStreamId() StreamId {
-	return smu.StreamID
+	return smu.StreamId
 }
 
 func (smu *StreamMiniblockUpdate) Reason() StreamUpdatedEventType {
@@ -180,18 +178,13 @@ func parseSetMiniblocksFromSolABIEncoded(event *StreamRegistryV1StreamUpdated) (
 			Func("parseSetMiniblocksFromSolcABIEncoded")
 	}
 
-	// TODO: workaround for abi.ConvertType(unpacked[1], make([]*SetMiniblock, 0)).([]*SetMiniblock) that panics
-	serialized, _ := json.Marshal(unpacked[0])
-	var setMiniblocks []*SetMiniblock
-	if err := json.Unmarshal(serialized, &setMiniblocks); err != nil {
-		return nil, err
-	}
+	parsed := make([]SetMiniblock, 0)
+	_ = abi.ConvertType(unpacked[0], &parsed)
 
-	results := make([]StreamUpdatedEvent, len(setMiniblocks))
-	for i, setMiniblock := range setMiniblocks {
+	results := make([]StreamUpdatedEvent, len(parsed))
+	for i, setMiniblock := range parsed {
 		results[i] = &StreamMiniblockUpdate{
-			SetMiniblock: *setMiniblock,
-			StreamID:     setMiniblock.StreamId,
+			SetMiniblock: setMiniblock,
 			raw:          event.Raw,
 		}
 	}
