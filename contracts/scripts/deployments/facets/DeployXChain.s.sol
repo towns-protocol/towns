@@ -19,7 +19,7 @@ contract DeployXChain is Deployer, FacetHelper {
 
   // Deploying
   function versionName() public pure override returns (string memory) {
-    return "xchainFacet";
+    return "facets/xchainFacet";
   }
 
   function initializer() public pure override returns (bytes4) {

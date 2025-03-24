@@ -7,7 +7,7 @@ import {PoapEntitlement} from "contracts/src/spaces/entitlements/poap/PoapEntitl
 
 contract DeployPoapEntitlement is Deployer {
   function versionName() public pure override returns (string memory) {
-    return "poapEntitlement";
+    return "utils/poapEntitlement";
   }
 
   function __deploy(address deployer) public override returns (address) {

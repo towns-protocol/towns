@@ -7,7 +7,7 @@ import {Airdrop} from "contracts/src/utils/Airdrop.sol";
 
 contract DeployAirdrop is Deployer {
   function versionName() public pure override returns (string memory) {
-    return "airdrop";
+    return "utils/airdrop";
   }
 
   function __deploy(address deployer) public override returns (address) {

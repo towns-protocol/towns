@@ -23,7 +23,7 @@ contract DeployReferrals is Deployer, FacetHelper {
   }
 
   function versionName() public pure override returns (string memory) {
-    return "referralsFacet";
+    return "facets/referralsFacet";
   }
 
   function initializer() public pure override returns (bytes4) {

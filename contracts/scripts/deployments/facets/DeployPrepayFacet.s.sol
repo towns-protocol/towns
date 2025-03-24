@@ -22,7 +22,7 @@ contract DeployPrepayFacet is FacetHelper, Deployer {
   }
 
   function versionName() public pure override returns (string memory) {
-    return "prepayFacet";
+    return "facets/prepayFacet";
   }
 
   function __deploy(address deployer) public override returns (address) {
