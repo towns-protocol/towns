@@ -19,7 +19,7 @@ contract DeploySpaceEntitlementGated is FacetHelper, Deployer {
   }
 
   function versionName() public pure override returns (string memory) {
-    return "spaceEntitlementGatedFacet";
+    return "facets/spaceEntitlementGatedFacet";
   }
 
   function __deploy(address deployer) public override returns (address) {

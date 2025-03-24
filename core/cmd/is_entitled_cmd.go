@@ -27,7 +27,7 @@ func isEntitledForSpaceAndChannel(
 	userId string,
 ) error {
 	metricsFactory := infra.NewMetricsFactory(prometheus.NewRegistry(), "", "")
-	ctx = logging.CtxWithLog(ctx, logging.DefaultZapLogger(zapcore.InfoLevel))
+	ctx = logging.CtxWithLog(ctx, logging.DefaultLogger(zapcore.InfoLevel))
 	baseChain, err := crypto.NewBlockchain(
 		ctx,
 		&cfg.BaseChain,

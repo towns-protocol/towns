@@ -15,7 +15,6 @@ import (
 	"github.com/towns-protocol/towns/core/node/base/test"
 	"github.com/towns-protocol/towns/core/node/crypto"
 	. "github.com/towns-protocol/towns/core/node/protocol"
-	. "github.com/towns-protocol/towns/core/node/shared"
 	"github.com/towns-protocol/towns/core/node/testutils"
 )
 
@@ -236,24 +235,24 @@ func TestStreamEvents(t *testing.T) {
 	)
 	require.NoError(err)
 
-	allocatedC := make(chan *river.StreamRegistryV1StreamAllocated, 10)
-	addedC := make(chan *river.StreamRegistryV1StreamCreated, 10)
-	lastMBC := make(chan *river.StreamRegistryV1StreamLastMiniblockUpdated, 10)
-	placementC := make(chan *river.StreamRegistryV1StreamPlacementUpdated, 10)
+	allocatedC := make(chan *river.StreamState, 10)
+	addedC := make(chan *river.StreamState, 10)
+	lastMBC := make(chan *river.StreamMiniblockUpdate, 10)
+	placementC := make(chan *river.StreamState, 10)
 
 	err = rr1.OnStreamEvent(
 		ctx,
 		bc1.InitialBlockNum+1,
-		func(ctx context.Context, event *river.StreamRegistryV1StreamAllocated) {
+		func(ctx context.Context, event *river.StreamState) {
 			allocatedC <- event
 		},
-		func(ctx context.Context, event *river.StreamRegistryV1StreamCreated) {
+		func(ctx context.Context, event *river.StreamState) {
 			addedC <- event
 		},
-		func(ctx context.Context, event *river.StreamRegistryV1StreamLastMiniblockUpdated) {
+		func(ctx context.Context, event *river.StreamMiniblockUpdate) {
 			lastMBC <- event
 		},
-		func(ctx context.Context, event *river.StreamRegistryV1StreamPlacementUpdated) {
+		func(ctx context.Context, event *river.StreamState) {
 			placementC <- event
 		},
 	)
@@ -268,13 +267,18 @@ func TestStreamEvents(t *testing.T) {
 	require.NoError(err)
 
 	allocated := <-allocatedC
+	require.Empty(allocatedC)
+	require.Empty(addedC)
+	require.Empty(lastMBC)
+	require.Empty(placementC)
+
 	require.NotNil(allocated)
-	require.Equal(streamId, StreamId(allocated.StreamId))
+	require.Equal(streamId, allocated.StreamID)
+	require.EqualValues(river.StreamUpdatedEventTypeAllocate, allocated.Reason())
+	require.Equal(genesisHash, common.Hash(allocated.LastMiniblockHash))
+	require.EqualValues(0, allocated.LastMiniblockNum)
 	require.Equal(addrs, allocated.Nodes)
-	require.Equal(genesisHash, common.Hash(allocated.GenesisMiniblockHash))
-	require.Equal(genesisMiniblock, allocated.GenesisMiniblock)
-	require.Len(lastMBC, 0)
-	require.Len(placementC, 0)
+	require.EqualValues(0, allocated.Flags)
 
 	// Update stream placement
 	tx, err := bc1.TxPool.Submit(ctx, "UpdateStreamPlacement",
@@ -289,12 +293,18 @@ func TestStreamEvents(t *testing.T) {
 	require.Equal(crypto.TransactionResultSuccess, receipt.Status)
 
 	placement := <-placementC
+	require.Empty(allocatedC)
+	require.Empty(addedC)
+	require.Empty(lastMBC)
+	require.Empty(placementC)
+
 	require.NotNil(placement)
-	require.Equal(streamId, StreamId(placement.StreamId))
-	require.Equal(nodeAddr2, placement.NodeAddress)
-	require.True(placement.IsAdded)
-	require.Len(allocatedC, 0)
-	require.Len(lastMBC, 0)
+	require.Equal(streamId, placement.StreamID)
+	require.EqualValues(river.StreamUpdatedEventTypePlacementUpdated, placement.Reason())
+	require.EqualValues(genesisHash, placement.LastMiniblockHash)
+	require.EqualValues(0, placement.LastMiniblockNum)
+	require.Equal(append(addrs, nodeAddr2), placement.Nodes)
+	require.EqualValues(0, allocated.Flags)
 
 	// Update last miniblock
 	newMBHash := common.HexToHash("0x456")
@@ -314,13 +324,18 @@ func TestStreamEvents(t *testing.T) {
 	require.Empty(failed)
 
 	lastMB := <-lastMBC
+	require.Empty(allocatedC)
+	require.Empty(addedC)
+	require.Empty(lastMBC)
+	require.Empty(placementC)
+
 	require.NotNil(lastMB)
-	require.Equal(streamId, StreamId(lastMB.StreamId))
-	require.Equal(newMBHash, common.Hash(lastMB.LastMiniblockHash))
-	require.Equal(uint64(1), lastMB.LastMiniblockNum)
+	require.Equal(streamId, lastMB.GetStreamId())
+	require.EqualValues(newMBHash, lastMB.LastMiniblockHash)
+	require.EqualValues(1, lastMB.LastMiniblockNum)
+	require.EqualValues(genesisHash, lastMB.PrevMiniBlockHash)
+	require.EqualValues(river.StreamUpdatedEventTypeLastMiniblockBatchUpdated, lastMB.Reason())
 	require.False(lastMB.IsSealed)
-	require.Len(allocatedC, 0)
-	require.Len(placementC, 0)
 
 	newMBHash2 := common.HexToHash("0x789")
 	succeeded, invalidMiniblocks, failed, err = rr1.SetStreamLastMiniblockBatch(
@@ -339,13 +354,18 @@ func TestStreamEvents(t *testing.T) {
 	require.Empty(failed)
 
 	lastMB = <-lastMBC
+	require.Empty(allocatedC)
+	require.Empty(addedC)
+	require.Empty(lastMBC)
+	require.Empty(placementC)
+
 	require.NotNil(lastMB)
-	require.Equal(streamId, StreamId(lastMB.StreamId))
+	require.Equal(streamId, lastMB.GetStreamId())
+	require.EqualValues(river.StreamUpdatedEventTypeLastMiniblockBatchUpdated, lastMB.Reason())
+	require.EqualValues(newMBHash, lastMB.PrevMiniBlockHash)
 	require.Equal(newMBHash2, common.Hash(lastMB.LastMiniblockHash))
-	require.Equal(uint64(2), lastMB.LastMiniblockNum)
+	require.EqualValues(2, lastMB.LastMiniblockNum)
 	require.False(lastMB.IsSealed)
-	require.Len(allocatedC, 0)
-	require.Len(placementC, 0)
 
 	// Add stream
 	streamId = testutils.StreamIdFromBytes([]byte{0xa1, 0x02, 0x04})
@@ -357,11 +377,17 @@ func TestStreamEvents(t *testing.T) {
 	require.NoError(err)
 
 	added := <-addedC
+	require.Empty(allocatedC)
+	require.Empty(addedC)
+	require.Empty(lastMBC)
+	require.Empty(placementC)
+
 	require.NotNil(added)
-	require.Equal(streamId, StreamId(added.StreamId))
+
+	require.Equal(streamId, added.StreamID)
 	require.Equal(addrs, added.Stream.Nodes)
-	require.Equal(genesisHash, common.Hash(added.GenesisMiniblockHash))
-	require.Equal(lastMiniblockHash, common.Hash(added.Stream.LastMiniblockHash))
-	require.Equal(lastMiniblockNum, int64(added.Stream.LastMiniblockNum))
-	require.True(added.Stream.Flags&uint64(StreamFlagSealed) != 0)
+	require.EqualValues(river.StreamUpdatedEventTypeCreate, added.Reason())
+	require.EqualValues(lastMiniblockHash, added.LastMiniblockHash)
+	require.EqualValues(lastMiniblockNum, added.LastMiniblockNum)
+	require.EqualValues(StreamFlagSealed, added.Flags&uint64(StreamFlagSealed))
 }
