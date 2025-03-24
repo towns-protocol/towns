@@ -76,10 +76,10 @@ const Row = ({
     const { openPanel } = usePanelActions()
 
     const openProfile = useCallback(() => {
-        if (userAbstractAccountAddress) {
-            openPanel('profile', { profileId: userAbstractAccountAddress })
+        if (userId) {
+            openPanel('profile', { profileId: userId })
         }
-    }, [openPanel, userAbstractAccountAddress])
+    }, [openPanel, userId])
 
     if (!userId) {
         return null
