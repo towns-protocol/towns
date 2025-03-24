@@ -16,7 +16,6 @@ import {SolanaUtils} from "contracts/src/factory/facets/wallet-link/libraries/So
 import {DeployBase} from "contracts/scripts/common/DeployBase.s.sol";
 import {BaseSetup} from "contracts/test/spaces/BaseSetup.sol";
 import {Nonces} from "@towns-protocol/diamond/src/utils/Nonces.sol";
-import {MockDelegationRegistry} from "contracts/test/mocks/MockDelegationRegistry.sol";
 import {SimpleAccount} from "account-abstraction/samples/SimpleAccount.sol";
 
 contract WalletLinkTest is IWalletLinkBase, BaseSetup, DeployBase {
@@ -27,11 +26,7 @@ contract WalletLinkTest is IWalletLinkBase, BaseSetup, DeployBase {
   Vm.Wallet internal secondRootWallet;
   Vm.Wallet internal secondLinkedWallet;
 
-  MockDelegationRegistry public mockDelegationRegistry;
-
   uint256 private constant MAX_LINKED_WALLETS = 10;
-  bytes32 private constant DELEGATE_REGISTRY_V2 =
-    bytes32("DELEGATE_REGISTRY_V2");
   string private constant SOLANA_WALLET_ADDRESS =
     "3p5wau6jqBV8sQswjN1HEeSZLjv5TB173zBgupGQD4we";
 
@@ -47,10 +42,6 @@ contract WalletLinkTest is IWalletLinkBase, BaseSetup, DeployBase {
 
     secondRootWallet = vm.createWallet("secondRootKey");
     secondLinkedWallet = vm.createWallet("secondLinkedWallet");
-
-    mockDelegationRegistry = MockDelegationRegistry(
-      walletLink.getDependency(DELEGATE_REGISTRY_V2)
-    );
   }
 
   // =============================================================
