@@ -6,9 +6,6 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/linkdata/deadlock"
-	"github.com/towns-protocol/towns/core/contracts/river"
-	. "github.com/towns-protocol/towns/core/node/base"
-	. "github.com/towns-protocol/towns/core/node/protocol"
 )
 
 type StreamNodes interface {
@@ -27,9 +24,8 @@ type StreamNodes interface {
 	// If the current sticky peer is the last node, it shuffles the nodes and resets the sticky peer to the first node.
 	AdvanceStickyPeer(currentPeer common.Address) common.Address
 
-	// Update updates the list of nodes.
-	// If the node is already in the list, it returns an error.
-	Update(event *river.StreamPlacementUpdated, localNode common.Address) error
+	// Reset the list of nodes to the given nodes and local node
+	Reset(nodes []common.Address, localNode common.Address)
 }
 
 type StreamNodesWithoutLock struct {
@@ -115,32 +111,6 @@ func (s *StreamNodesWithoutLock) AdvanceStickyPeer(currentPeer common.Address) c
 	return s.remotes[s.stickyPeerIndex]
 }
 
-func (s *StreamNodesWithoutLock) Update(event *river.StreamPlacementUpdated, localNode common.Address) error {
-	var newNodes []common.Address
-	if event.IsAdded {
-		if slices.Contains(s.nodes, event.NodeAddress) {
-			return RiverError(
-				Err_INTERNAL,
-				"StreamNodes.Update(add): node already exists in stream nodes",
-				"nodes",
-				s.nodes,
-				"node",
-				event.NodeAddress,
-			)
-		}
-		newNodes = append(s.nodes, event.NodeAddress)
-	} else {
-		index := slices.Index(s.nodes, event.NodeAddress)
-		if index < 0 {
-			return RiverError(Err_INTERNAL, "StreamNodes.Update(delete): node does not exist in stream nodes", "nodes", s.nodes, "node", event.NodeAddress)
-		}
-		newNodes = slices.Concat(s.nodes[:index], s.nodes[index+1:])
-	}
-
-	s.Reset(newNodes, localNode)
-	return nil
-}
-
 type StreamNodesWithLock struct {
 	n  StreamNodesWithoutLock
 	mu deadlock.RWMutex
@@ -179,8 +149,8 @@ func (s *StreamNodesWithLock) AdvanceStickyPeer(currentPeer common.Address) comm
 	return s.n.AdvanceStickyPeer(currentPeer)
 }
 
-func (s *StreamNodesWithLock) Update(event *river.StreamPlacementUpdated, localNode common.Address) error {
+func (s *StreamNodesWithLock) Reset(nodes []common.Address, localNode common.Address) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	return s.n.Update(event, localNode)
+	s.n.Reset(nodes, localNode)
 }
