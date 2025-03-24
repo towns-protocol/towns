@@ -243,7 +243,6 @@ func GetRiverNetworkStatus(
 	riverChain *crypto.Blockchain,
 	baseChain *crypto.Blockchain,
 	connectOtelIterceptor *otelconnect.Interceptor,
-	storagePoolInfo *storage.PgxPoolInfo,
 ) (*statusinfo.RiverStatus, error) {
 	startTime := time.Now()
 
@@ -306,17 +305,6 @@ func GetRiverNetworkStatus(
 			wg.Add(1)
 			go getEthBalance(ctx, &r.BaseEthBalance, baseChain, n.Address(), &wg)
 		}
-
-		// Report PostgresStatusResult for local node only iff storage debug endpoint is enabled
-		if n.Address() == riverChain.Wallet.Address &&
-			storagePoolInfo != nil &&
-			cfg.EnableDebugEndpoints &&
-			cfg.DebugEndpoints.EnableStorageEndpoint {
-			wg.Add(1)
-
-			r.PostgresStatus = &storage.PostgresStatusResult{}
-			go getPgxPoolStatus(ctx, r.PostgresStatus, storagePoolInfo, &wg)
-		}
 	}
 
 	wg.Wait()
@@ -364,7 +352,6 @@ func (s *Service) handleDebugMulti(w http.ResponseWriter, r *http.Request) {
 		s.riverChain,
 		s.baseChain,
 		s.otelConnectIterceptor,
-		s.storagePoolInfo,
 	)
 	if err == nil {
 		err = render.ExecuteAndWrite(&render.DebugMultiData{Status: status}, w)
@@ -396,7 +383,6 @@ func (s *Service) handleDebugMultiJson(w http.ResponseWriter, r *http.Request) {
 		s.riverChain,
 		s.baseChain,
 		s.otelConnectIterceptor,
-		s.storagePoolInfo,
 	)
 	if err == nil {
 		// Write status as json
