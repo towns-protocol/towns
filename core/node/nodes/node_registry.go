@@ -102,7 +102,7 @@ func LoadNodeRegistry(
 
 	localFound := false
 	for _, node := range nodes {
-		nn, _ := ret.addNodeIfNotExist(node.NodeAddress, node.Url, node.Status, node.Operator)
+		nn, _ := ret.addNode(node.NodeAddress, node.Url, node.Status, node.Operator)
 		localFound = localFound || nn.local
 	}
 
@@ -132,9 +132,9 @@ func LoadNodeRegistry(
 	return ret, nil
 }
 
-// addNodeIfNotExist adds a node to the registry if it does not exist.
+// addNode adds a node to the registry if it does not exist.
 // This is the thread-safe function.
-func (n *nodeRegistryImpl) addNodeIfNotExist(
+func (n *nodeRegistryImpl) addNode(
 	addr common.Address,
 	url string,
 	status uint8,
@@ -160,9 +160,7 @@ func (n *nodeRegistryImpl) addNodeIfNotExist(
 		nn.streamServiceClient = NewStreamServiceClient(n.httpClient, url, n.connectOpts...)
 		nn.nodeToNodeClient = NewNodeToNodeClient(n.httpClient, url, n.connectOpts...)
 	}
-
 	n.nodes[addr] = nn
-
 	return nn, true
 }
 
@@ -176,7 +174,7 @@ func (n *nodeRegistryImpl) OnNodeAdded(ctx context.Context, event types.Log) {
 		return
 	}
 
-	nodeRecord, added := n.addNodeIfNotExist(e.NodeAddress, e.Url, e.Status, e.Operator)
+	nodeRecord, added := n.addNode(e.NodeAddress, e.Url, e.Status, e.Operator)
 	if added {
 		// TODO: add operator to NodeAdded event
 		log.Infow(
