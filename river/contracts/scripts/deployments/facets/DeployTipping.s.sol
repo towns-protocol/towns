@@ -24,7 +24,7 @@ contract DeployTipping is FacetHelper, Deployer {
   }
 
   function versionName() public pure override returns (string memory) {
-    return "tippingFacet";
+    return "facets/tippingFacet";
   }
 
   function __deploy(address deployer) public override returns (address) {

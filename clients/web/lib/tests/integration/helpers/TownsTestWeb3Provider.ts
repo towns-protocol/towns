@@ -47,7 +47,7 @@ export class TownsTestWeb3Provider extends ethers.providers.JsonRpcProvider {
      */
     public async mintMockNFT() {
         await this.ready
-        const mockNFTAddress = this.config.base.chainConfig.addresses.mockNFT
+        const mockNFTAddress = this.config.base.chainConfig.addresses.utils.mockNFT
         if (!mockNFTAddress) {
             throw new Error('mockNFTAddress not found in config')
         }

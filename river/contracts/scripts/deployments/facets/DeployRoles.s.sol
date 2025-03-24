@@ -30,7 +30,7 @@ contract DeployRoles is FacetHelper, Deployer {
   }
 
   function versionName() public pure override returns (string memory) {
-    return "rolesFacet";
+    return "facets/rolesFacet";
   }
 
   function __deploy(address deployer) public override returns (address) {
