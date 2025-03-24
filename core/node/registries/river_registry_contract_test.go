@@ -360,7 +360,7 @@ func TestStreamEvents(t *testing.T) {
 	require.Empty(placementC)
 
 	require.NotNil(lastMB)
-	require.Equal(streamId, lastMB.GetStreamId)
+	require.Equal(streamId, lastMB.GetStreamId())
 	require.EqualValues(river.StreamUpdatedEventTypeLastMiniblockBatchUpdated, lastMB.Reason())
 	require.EqualValues(newMBHash, lastMB.PrevMiniBlockHash)
 	require.Equal(newMBHash2, common.Hash(lastMB.LastMiniblockHash))
