@@ -24,7 +24,7 @@ contract DeployEntitlementDataQueryable is Deployer, FacetHelper {
 
   // Deploying
   function versionName() public pure override returns (string memory) {
-    return "entitlementDataQueryableFacet";
+    return "facets/entitlementDataQueryableFacet";
   }
 
   function __deploy(address deployer) public override returns (address) {

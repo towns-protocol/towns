@@ -28,7 +28,7 @@ contract DeployNodeOperator is Deployer, FacetHelper {
   }
 
   function versionName() public pure override returns (string memory) {
-    return "nodeOperatorFacet";
+    return "facets/nodeOperatorFacet";
   }
 
   function __deploy(address deployer) public override returns (address) {

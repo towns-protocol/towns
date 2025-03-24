@@ -18,7 +18,7 @@ contract DeployEIP712Facet is FacetHelper, Deployer {
   }
 
   function versionName() public pure override returns (string memory) {
-    return "eip712Facet";
+    return "facets/eip712Facet";
   }
 
   function initializer() public pure override returns (bytes4) {

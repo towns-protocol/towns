@@ -32,7 +32,7 @@ contract DeployTownsPoints is Deployer, FacetHelper {
 
   // Deploying
   function versionName() public pure override returns (string memory) {
-    return "pointsFacet";
+    return "facets/pointsFacet";
   }
 
   function initializer() public pure override returns (bytes4) {

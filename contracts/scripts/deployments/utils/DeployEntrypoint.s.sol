@@ -11,7 +11,7 @@ import {EntryPoint} from "account-abstraction/core/EntryPoint.sol";
 
 contract DeployEntrypoint is Deployer {
   function versionName() public pure override returns (string memory) {
-    return "entrypoint";
+    return "utils/entrypoint";
   }
 
   function __deploy(address deployer) public override returns (address) {

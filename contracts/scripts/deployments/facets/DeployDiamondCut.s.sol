@@ -20,7 +20,7 @@ contract DeployDiamondCut is FacetHelper, Deployer {
   }
 
   function versionName() public pure override returns (string memory) {
-    return "diamondCutFacet";
+    return "facets/diamondCutFacet";
   }
 
   function __deploy(address deployer) public override returns (address) {

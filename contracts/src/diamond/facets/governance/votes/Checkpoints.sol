@@ -4,8 +4,8 @@
 
 pragma solidity ^0.8.0;
 
-import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
-import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
+import {FixedPointMathLib} from "solady/utils/FixedPointMathLib.sol";
+import {SafeCastLib} from "solady/utils/SafeCastLib.sol";
 
 /**
  * @dev This library defines the `History` struct, for checkpointing values as they change at different points in
@@ -36,7 +36,7 @@ library Checkpoints {
     uint256 blockNumber
   ) internal view returns (uint256) {
     require(blockNumber < block.number, "Checkpoints: block not yet mined");
-    uint32 key = SafeCast.toUint32(blockNumber);
+    uint32 key = SafeCastLib.toUint32(blockNumber);
 
     uint256 len = self._checkpoints.length;
     uint256 pos = _upperBinaryLookup(self._checkpoints, key, 0, len);
@@ -54,7 +54,7 @@ library Checkpoints {
     uint256 blockNumber
   ) internal view returns (uint256) {
     require(blockNumber < block.number, "Checkpoints: block not yet mined");
-    uint32 key = SafeCast.toUint32(blockNumber);
+    uint32 key = SafeCastLib.toUint32(blockNumber);
 
     uint256 len = self._checkpoints.length;
 
@@ -62,7 +62,7 @@ library Checkpoints {
     uint256 high = len;
 
     if (len > 5) {
-      uint256 mid = len - Math.sqrt(len);
+      uint256 mid = len - FixedPointMathLib.sqrt(len);
       if (key < _unsafeAccess(self._checkpoints, mid)._blockNumber) {
         high = mid;
       } else {
@@ -87,8 +87,8 @@ library Checkpoints {
     return
       _insert(
         self._checkpoints,
-        SafeCast.toUint32(block.number),
-        SafeCast.toUint224(value)
+        SafeCastLib.toUint32(block.number),
+        SafeCastLib.toUint224(value)
       );
   }
 
@@ -181,7 +181,7 @@ library Checkpoints {
     uint256 high
   ) private view returns (uint256) {
     while (low < high) {
-      uint256 mid = Math.average(low, high);
+      uint256 mid = FixedPointMathLib.avg(low, high);
       if (_unsafeAccess(self, mid)._blockNumber > key) {
         high = mid;
       } else {
@@ -204,7 +204,7 @@ library Checkpoints {
     uint256 high
   ) private view returns (uint256) {
     while (low < high) {
-      uint256 mid = Math.average(low, high);
+      uint256 mid = FixedPointMathLib.avg(low, high);
       if (_unsafeAccess(self, mid)._blockNumber < key) {
         low = mid + 1;
       } else {
@@ -288,7 +288,7 @@ library Checkpoints {
     uint256 high = len;
 
     if (len > 5) {
-      uint256 mid = len - Math.sqrt(len);
+      uint256 mid = len - FixedPointMathLib.sqrt(len);
       if (key < _unsafeAccess(self._checkpoints, mid)._key) {
         high = mid;
       } else {
@@ -376,7 +376,7 @@ library Checkpoints {
     uint256 high
   ) private view returns (uint256) {
     while (low < high) {
-      uint256 mid = Math.average(low, high);
+      uint256 mid = FixedPointMathLib.avg(low, high);
       if (_unsafeAccess(self, mid)._key > key) {
         high = mid;
       } else {
@@ -399,7 +399,7 @@ library Checkpoints {
     uint256 high
   ) private view returns (uint256) {
     while (low < high) {
-      uint256 mid = Math.average(low, high);
+      uint256 mid = FixedPointMathLib.avg(low, high);
       if (_unsafeAccess(self, mid)._key < key) {
         low = mid + 1;
       } else {
@@ -483,7 +483,7 @@ library Checkpoints {
     uint256 high = len;
 
     if (len > 5) {
-      uint256 mid = len - Math.sqrt(len);
+      uint256 mid = len - FixedPointMathLib.sqrt(len);
       if (key < _unsafeAccess(self._checkpoints, mid)._key) {
         high = mid;
       } else {
@@ -571,7 +571,7 @@ library Checkpoints {
     uint256 high
   ) private view returns (uint256) {
     while (low < high) {
-      uint256 mid = Math.average(low, high);
+      uint256 mid = FixedPointMathLib.avg(low, high);
       if (_unsafeAccess(self, mid)._key > key) {
         high = mid;
       } else {
@@ -594,7 +594,7 @@ library Checkpoints {
     uint256 high
   ) private view returns (uint256) {
     while (low < high) {
-      uint256 mid = Math.average(low, high);
+      uint256 mid = FixedPointMathLib.avg(low, high);
       if (_unsafeAccess(self, mid)._key < key) {
         low = mid + 1;
       } else {

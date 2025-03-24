@@ -31,7 +31,7 @@ contract DeployOperatorRegistry is FacetHelper, Deployer {
   }
 
   function versionName() public pure override returns (string memory) {
-    return "operatorRegistryFacet";
+    return "facets/operatorRegistryFacet";
   }
 
   function facetInitHelper(

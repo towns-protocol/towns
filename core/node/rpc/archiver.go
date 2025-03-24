@@ -960,43 +960,43 @@ func (a *Archiver) startImpl(ctx context.Context, once bool, metrics infra.Metri
 	return nil
 }
 
-func (a *Archiver) onStreamAllocated(ctx context.Context, event *river.StreamRegistryV1StreamAllocated) {
+func (a *Archiver) onStreamAllocated(ctx context.Context, event *river.StreamState) {
 	a.newStreamAllocated.Add(1)
-	id := StreamId(event.StreamId)
+	id := event.StreamID
 	a.addNewStream(ctx, id, &event.Nodes, 0)
 	a.tasks <- id
 }
 
-func (a *Archiver) onStreamAdded(ctx context.Context, event *river.StreamRegistryV1StreamCreated) {
+func (a *Archiver) onStreamAdded(ctx context.Context, event *river.StreamState) {
 	a.newStreamAllocated.Add(1)
-	id := StreamId(event.StreamId)
+	id := event.StreamID
 	a.addNewStream(ctx, id, &event.Stream.Nodes, 0)
 	a.tasks <- id
 }
 
 func (a *Archiver) onStreamPlacementUpdated(
 	ctx context.Context,
-	event *river.StreamRegistryV1StreamPlacementUpdated,
+	event *river.StreamState,
 ) {
 	a.streamPlacementUpdated.Add(1)
 
-	id := StreamId(event.StreamId)
+	id := event.StreamID
 	record, loaded := a.streams.Load(id)
 	if !loaded {
 		logging.FromCtx(ctx).Errorw("onStreamPlacementUpdated: Stream not found in map", "streamId", id)
 		return
 	}
 	stream := record.(*ArchiveStream)
-	_ = stream.nodes.Update(event, common.Address{})
+	stream.nodes.Reset(event.Nodes, common.Address{})
 }
 
 func (a *Archiver) onStreamLastMiniblockUpdated(
 	ctx context.Context,
-	event *river.StreamRegistryV1StreamLastMiniblockUpdated,
+	event *river.StreamMiniblockUpdate,
 ) {
 	a.streamLastMiniblockUpdated.Add(1)
 
-	id := StreamId(event.StreamId)
+	id := event.GetStreamId()
 	record, loaded := a.streams.Load(id)
 	if !loaded {
 		logging.FromCtx(ctx).Errorw("onStreamLastMiniblockUpdated: Stream not found in map", "streamId", id)
