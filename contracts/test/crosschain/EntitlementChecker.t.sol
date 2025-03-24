@@ -124,6 +124,7 @@ contract EntitlementCheckerTest is BaseSetup, IEntitlementCheckerBase {
     uint256 nodeLen = nodes.length;
 
     // validate no nodes are repeating
+    assertEq(nodes.length, 5);
     for (uint256 i = 0; i < nodeLen; i++) {
       for (uint256 j = i + 1; j < nodeLen; j++) {
         assertNotEq(nodes[i], nodes[j]);

@@ -218,21 +218,29 @@ contract EntitlementChecker is IEntitlementChecker, Facet {
     }
 
     address[] memory randomNodes = new address[](count);
-    uint256[] memory indices = new uint256[](nodeCount);
-
-    for (uint256 i; i < nodeCount; ++i) {
-      indices[i] = i;
-    }
+    uint256[] memory indices = new uint256[](count);
 
     unchecked {
+      // Initialize only the indices we need
       for (uint256 i; i < count; ++i) {
-        // Adjust random function to generate within range 0 to n-1
-        uint256 rand = _pseudoRandom(i, nodeCount);
-        randomNodes[i] = layout.nodes.at(indices[rand]);
-        // Move the last element to the used slot and reduce the pool size
-        indices[rand] = indices[--nodeCount];
+        indices[i] = i;
+      }
+
+      uint256 remainingPool = nodeCount;
+      for (uint256 i; i < count; ++i) {
+        uint256 rand = _pseudoRandom(i, remainingPool);
+        if (rand < count) {
+          // Use and update tracked index
+          randomNodes[i] = layout.nodes.at(indices[rand]);
+          indices[rand] = remainingPool - 1;
+        } else {
+          // Use large index directly
+          randomNodes[i] = layout.nodes.at(rand);
+        }
+        --remainingPool;
       }
     }
+
     return randomNodes;
   }
 
