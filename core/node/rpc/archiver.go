@@ -996,7 +996,7 @@ func (a *Archiver) onStreamLastMiniblockUpdated(
 ) {
 	a.streamLastMiniblockUpdated.Add(1)
 
-	id := event.StreamID
+	id := event.GetStreamId()
 	record, loaded := a.streams.Load(id)
 	if !loaded {
 		logging.FromCtx(ctx).Errorw("onStreamLastMiniblockUpdated: Stream not found in map", "streamId", id)
