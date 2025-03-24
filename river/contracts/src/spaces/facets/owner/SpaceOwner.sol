@@ -9,9 +9,9 @@ import {IMembershipMetadata} from "contracts/src/spaces/facets/membership/metada
 // libraries
 
 // contracts
+import {OwnableBase} from "@towns-protocol/diamond/src/facets/ownable/OwnableBase.sol";
 import {ERC721A} from "contracts/src/diamond/facets/token/ERC721A/ERC721A.sol";
 import {SpaceOwnerBase} from "./SpaceOwnerBase.sol";
-import {OwnableBase} from "@towns-protocol/diamond/src/facets/ownable/OwnableBase.sol";
 import {GuardianBase} from "contracts/src/spaces/facets/guardian/GuardianBase.sol";
 import {Votes} from "contracts/src/diamond/facets/governance/votes/Votes.sol";
 import {SpaceOwnerUriBase} from "./SpaceOwnerUriBase.sol";
@@ -27,11 +27,9 @@ contract SpaceOwner is
 {
   function __SpaceOwner_init(
     string memory name,
-    string memory symbol,
-    string memory version
+    string memory symbol
   ) external initializer {
     __ERC721A_init_unchained(name, symbol);
-    __EIP712_init(name, version);
   }
 
   // =============================================================
@@ -94,14 +92,6 @@ contract SpaceOwner is
     IMembershipMetadata(space).refreshMetadata();
 
     emit IERC4906.MetadataUpdate(_getTokenId(space));
-  }
-
-  function nonces(address owner) external view returns (uint256 result) {
-    return _latestNonce(owner);
-  }
-
-  function DOMAIN_SEPARATOR() external view returns (bytes32 result) {
-    return _domainSeparatorV4();
   }
 
   // =============================================================

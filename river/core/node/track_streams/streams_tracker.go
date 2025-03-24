@@ -230,9 +230,9 @@ func (tracker *StreamsTrackerImpl) AddStream(streamId shared.StreamId) error {
 // responsible for it.
 func (tracker *StreamsTrackerImpl) OnStreamAllocated(
 	ctx context.Context,
-	event *river.StreamRegistryV1StreamAllocated,
+	event *river.StreamState,
 ) {
-	streamID := shared.StreamId(event.StreamId)
+	streamID := event.StreamID
 	if !tracker.filter.TrackStream(streamID) {
 		return
 	}
@@ -245,9 +245,9 @@ func (tracker *StreamsTrackerImpl) OnStreamAllocated(
 // responsible for it.
 func (tracker *StreamsTrackerImpl) OnStreamAdded(
 	ctx context.Context,
-	event *river.StreamRegistryV1StreamCreated,
+	event *river.StreamState,
 ) {
-	streamID := shared.StreamId(event.StreamId)
+	streamID := event.StreamID
 	if !tracker.filter.TrackStream(streamID) {
 		return
 	}
@@ -257,14 +257,14 @@ func (tracker *StreamsTrackerImpl) OnStreamAdded(
 
 func (tracker *StreamsTrackerImpl) OnStreamLastMiniblockUpdated(
 	context.Context,
-	*river.StreamRegistryV1StreamLastMiniblockUpdated,
+	*river.StreamMiniblockUpdate,
 ) {
 	// miniblocks are processed when a stream event with a block header is received for the stream
 }
 
 func (tracker *StreamsTrackerImpl) OnStreamPlacementUpdated(
 	context.Context,
-	*river.StreamRegistryV1StreamPlacementUpdated,
+	*river.StreamState,
 ) {
 	// reserved when replacements are introduced
 	// 1. stop existing sync operation

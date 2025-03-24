@@ -5,7 +5,6 @@ import (
 
 	mapset "github.com/deckarep/golang-set/v2"
 	"github.com/ethereum/go-ethereum/common"
-	"google.golang.org/protobuf/proto"
 
 	"github.com/towns-protocol/towns/core/node/events"
 	"github.com/towns-protocol/towns/core/node/logging"
@@ -45,9 +44,9 @@ func (p *MessageToAppProcessor) OnMessageEvent(
 
 		return false
 	})
-	streamBytes, err := proto.Marshal(event.Event)
+	streamEnvelope, err := event.GetEnvelopeBytes()
 	if err != nil {
-		log.Errorw("Error marshalling stream event", "event", event, "streamId", channelId, "spaceId", spaceId)
+		log.Errorw("Error marshalling stream envelope", "event", event, "streamId", channelId, "spaceId", spaceId)
 		return
 	}
 
@@ -56,7 +55,7 @@ func (p *MessageToAppProcessor) OnMessageEvent(
 	message := event.GetEncryptedMessage()
 	// Ignore membership changes, etc, and focus only on channel content.
 	if message != nil {
-		if err := p.cache.DispatchOrEnqueueMessages(ctx, appIds, message.SessionId, channelId, streamBytes); err != nil {
+		if err := p.cache.DispatchOrEnqueueMessages(ctx, appIds, message.SessionId, channelId, streamEnvelope); err != nil {
 			log.Errorw(
 				"Error enqueueing messages for stream event",
 				"event",

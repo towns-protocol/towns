@@ -13172,7 +13172,7 @@ __metadata:
     "@openzeppelin/contracts-upgradeable": ^5.2.0
     "@prb/math": ^4.1.0
     "@prb/test": ^0.6.4
-    "@towns-protocol/diamond": ^0.1.0
+    "@towns-protocol/diamond": ^0.2.0
     "@wagmi/cli": ^2.2.0
     account-abstraction: "github:eth-infinitism/account-abstraction"
     crypto-lib: "github:towns-protocol/crypto-lib#f40c5f6944a55583a687b672ba680db3bfabb0ef"
@@ -13185,13 +13185,13 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@towns-protocol/diamond@npm:^0.1.0":
-  version: 0.1.0
-  resolution: "@towns-protocol/diamond@npm:0.1.0"
+"@towns-protocol/diamond@npm:^0.2.0":
+  version: 0.2.0
+  resolution: "@towns-protocol/diamond@npm:0.2.0"
   dependencies:
     "@openzeppelin/contracts": ^5.2.0
     solady: ^0.1.12
-  checksum: 617ffa15a5c5b632dcb1ccff7f397a27fb53aac994f6503e6c60eb7c8b2a54f468f285d036df1370decb88b1516755ae380952a97ebb28b0daf96521bc3f712c
+  checksum: 3a6aa5453e1ecfeade47374fd840e7c5f4e8d780584f1bab956f26de9a3aa346d934dc2fcf8a5638da503cf1077996ad9edcd54162124b9feccc3de370257c80
   languageName: node
   linkType: hard
 
