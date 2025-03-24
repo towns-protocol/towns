@@ -9,9 +9,7 @@
 <br/>
 <p align="center">
   <a href="https://docs.towns.com"><img src="https://img.shields.io/badge/docs-read_the_docs-blue" alt="Read Towns Docs"></a>
-   <a href="https://gov.towns.com/"><img src="https://img.shields.io/badge/governance-purple" alt="Towns Governance"></a>
-    <a href="https://docs.towns.com/grants/grants-program"><img src="https://img.shields.io/badge/grant-apply_for_funding-green" alt="Towns Grant"></a>
-    <a href="https://docs.towns.com/run/introduction"><img src="https://img.shields.io/badge/host_a_node-white" alt="Host a Towns Stream Node"></a>
+  <a href="https://gov.towns.com/"><img src="https://img.shields.io/badge/governance-purple" alt="Towns Governance"></a>
 </p>
 <br/>
 
