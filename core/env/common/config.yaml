@@ -13,8 +13,6 @@ log:
 debugEndpoints:
     pprof: true
     privateDebugServerAddress: ':8080'
-    MemProfileDir: '/tmp/mem_profiles'
-    MemProfileInterval: 2s
 
 # Notifications setting when node is run in notification mode
 notifications:
