@@ -38,7 +38,7 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
     (stream.lastMiniblockHash, stream.nodes, stream.reserved0) = (
       genesisMiniblockHash,
       nodes,
-        _calculateStreamReserved0(stream.reserved0, uint8(nodes.length))
+      _calculateStreamReserved0(stream.reserved0, uint8(nodes.length))
     );
 
     ds.streams.add(streamId);
@@ -427,14 +427,13 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
     }
   }
 
-  uint64 internal constant STREAM_REPL_FACTOR_MASK = 0x00000000000000FF;
+  uint64 internal constant STREAM_REPL_FACTOR_MASK = 0xFF;
 
   /// @dev helper function to calculate the reserved0 field for the stream with the given reserved0 and replication factor
   function _calculateStreamReserved0(
     uint64 reserved0,
     uint8 replFactor
   ) internal pure returns (uint64) {
-    return
-      (reserved0 & ~STREAM_REPL_FACTOR_MASK) | uint64(replFactor);
+    return (reserved0 & ~STREAM_REPL_FACTOR_MASK) | uint64(replFactor);
   }
 }
