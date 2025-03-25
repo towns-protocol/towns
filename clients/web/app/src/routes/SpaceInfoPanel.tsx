@@ -537,7 +537,7 @@ const TownTips = (props: { spaceId: string | undefined }) => {
         const spaceAddress = SpaceAddressFromSpaceId(spaceId)
         qc.prefetchQuery({
             queryKey: queryKeyTipLeaderboard(spaceAddress),
-            queryFn: () => fetchTipLeaderboard(spaceAddress),
+            queryFn: () => fetchTipLeaderboard(spaceAddress, qc),
         })
     }, [spaceId, qc])
 

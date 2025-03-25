@@ -1,4 +1,4 @@
-import { QueryClient, useQuery } from '@tanstack/react-query'
+import { QueryClient, useQuery, useQueryClient } from '@tanstack/react-query'
 import { ETH_ADDRESS, SpaceAddressFromSpaceId, TipParams } from 'use-towns-client'
 import { axiosClient } from 'api/apiClient'
 import { MINUTE_MS } from 'data/constants'
@@ -20,7 +20,15 @@ export const optimisticallyUpdateTipLeaderboard = (qc: QueryClient, tip: TipPara
     const spaceAddress = SpaceAddressFromSpaceId(spaceId)
     return qc.setQueryData(
         queryKeyTipLeaderboard(spaceAddress, currency),
-        (old: TipLeaderboardData) => {
+        (old: TipLeaderboardData | undefined) => {
+            if (!old) {
+                return {
+                    leaderboard: {
+                        [userAddress]: amount.toString(),
+                    },
+                    lastUpdatedAt: Date.now(),
+                }
+            }
             return {
                 ...old,
                 leaderboard: {
@@ -29,6 +37,7 @@ export const optimisticallyUpdateTipLeaderboard = (qc: QueryClient, tip: TipPara
                         BigInt(old.leaderboard[userAddress] || '0') + amount
                     ).toString(),
                 },
+                lastUpdatedAt: Date.now(),
             }
         },
     )
@@ -60,23 +69,38 @@ const buildRankedLeaderboard = (
     })
 }
 
-export const fetchTipLeaderboard = async (spaceAddress: string) => {
+export const fetchTipLeaderboard = async (spaceAddress: string, qc: QueryClient) => {
     const { data } = await axiosClient.get<{
         leaderboard: Record<string, string>
         lastUpdatedAt: number
     }>(`${env.VITE_GATEWAY_URL}/tips/${spaceAddress}/leaderboard`)
+    const cachedData = qc.getQueryData<TipLeaderboardData>(queryKeyTipLeaderboard(spaceAddress))
+    if (cachedData && cachedData.lastUpdatedAt >= data.lastUpdatedAt) {
+        const mergedLeaderboard = { ...data.leaderboard }
+        Object.entries(cachedData.leaderboard).forEach(([userAddress, cachedAmount]) => {
+            const serverAmount = mergedLeaderboard[userAddress]
+            if (!serverAmount || BigInt(cachedAmount) > BigInt(serverAmount)) {
+                mergedLeaderboard[userAddress] = cachedAmount
+            }
+        })
+        return {
+            leaderboard: mergedLeaderboard,
+            lastUpdatedAt: cachedData.lastUpdatedAt,
+        }
+    }
     return data
 }
 
 export function useTipLeaderboard(spaceAddress: string | undefined) {
+    const queryClient = useQueryClient()
+
     return useQuery({
         queryKey: queryKeyTipLeaderboard(spaceAddress!),
-        queryFn: () => fetchTipLeaderboard(spaceAddress!),
+        queryFn: () => fetchTipLeaderboard(spaceAddress!, queryClient),
         staleTime: 1 * MINUTE_MS,
         select: (data) => ({
             ...data,
             leaderboard: buildRankedLeaderboard(data.leaderboard),
         }),
-        enabled: !!spaceAddress,
     })
 }
