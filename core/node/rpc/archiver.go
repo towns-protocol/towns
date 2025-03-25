@@ -598,9 +598,6 @@ func isContinuousDownloadStream(stream *ArchiveStream) bool {
 func (a *Archiver) ArchiveStream(ctx context.Context, stream *ArchiveStream) (err error) {
 	log := logging.FromCtx(ctx)
 
-	if !isContinuousDownloadStream(stream) {
-		return
-	}
 
 	defer func() {
 		if err != nil {
