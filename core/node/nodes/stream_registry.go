@@ -3,6 +3,7 @@ package nodes
 import (
 	"context"
 	"hash/fnv"
+	"slices"
 
 	"github.com/ethereum/go-ethereum/common"
 
@@ -102,8 +103,9 @@ func (sr *streamRegistryImpl) ChooseStreamNodes(streamId StreamId) ([]common.Add
 	allNodes := sr.nodeRegistry.GetAllNodes()
 	nodes := make([]*NodeRecord, 0, len(allNodes))
 
+	nodeBlocklist := sr.onChainConfig.Get().NodeBlocklist
 	for _, n := range allNodes {
-		if n.Status() == river.NodeStatus_Operational {
+		if n.Status() == river.NodeStatus_Operational && !slices.Contains(nodeBlocklist, n.Address()) {
 			nodes = append(nodes, n)
 		}
 	}
