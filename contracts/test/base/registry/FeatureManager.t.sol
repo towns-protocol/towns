@@ -2,14 +2,14 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {IFeatureManagerFacetBase} from "contracts/src/base/registry/facets/feature/IFeatureManagerFacet.sol";
+import {IFeatureManagerFacetBase} from "contracts/src/factory/facets/feature/IFeatureManagerFacet.sol";
 
 // libraries
-import {FeatureCondition} from "contracts/src/base/registry/facets/feature/FeatureConditionLib.sol";
+import {FeatureCondition} from "contracts/src/factory/facets/feature/FeatureConditionLib.sol";
 
 // contracts
 import {BaseSetup} from "contracts/test/spaces/BaseSetup.sol";
-import {FeatureManagerFacet} from "contracts/src/base/registry/facets/feature/FeatureManagerFacet.sol";
+import {FeatureManagerFacet} from "contracts/src/factory/facets/feature/FeatureManagerFacet.sol";
 import {Towns} from "contracts/src/tokens/towns/base/Towns.sol";
 
 // mocks
@@ -24,7 +24,7 @@ contract FeatureManagerTest is BaseSetup, IFeatureManagerFacetBase {
 
   function setUp() public override {
     super.setUp();
-    featureManagerFacet = FeatureManagerFacet(baseRegistry);
+    featureManagerFacet = FeatureManagerFacet(spaceFactory);
     towns = Towns(townsToken);
   }
 

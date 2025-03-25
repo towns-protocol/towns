@@ -23,7 +23,6 @@ contract TestUtils is Context, Test {
     0x0000000000000000000000fbb67FDa52D4Bfb8Bf;
   bytes32 public constant ZERO_SENTINEL_BYTES32 =
     0x0000000000000000000000000000000000000000000000fbb67fda52d4bfb8bf;
-  address public constant PERMIT2 = 0x000000000022D473030F116dDEE9F6B43aC78BA3;
 
   bytes4 private constant RANDOM_ADDRESS_SIG =
     bytes4(keccak256("randomAddress()"));

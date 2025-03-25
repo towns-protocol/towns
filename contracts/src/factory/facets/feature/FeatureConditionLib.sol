@@ -7,7 +7,7 @@ import {IVotes} from "@openzeppelin/contracts/governance/utils/IVotes.sol";
 /// @notice Represents a condition for feature activation
 /// @dev Used to determine if a feature should be enabled based on token voting power
 /// @param token The address of the token used for voting (must implement IVotes)
-/// @param threshold The minimum number of votes required to activate the feature
+/// @param threshold The minimum number of delegations required to activate the feature
 /// @param active Whether the condition is currently active
 /// @param extraData Additional data that might be used for specialized condition logic
 struct FeatureCondition {
