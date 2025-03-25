@@ -41,8 +41,9 @@ func getPartitionName(table string, streamId string, numPartitions int) string {
 }
 
 type dbInfo struct {
-	url    string
-	schema string
+	url        string
+	schema     string
+	isArchiver bool
 }
 
 func getDbPool(
@@ -83,7 +84,7 @@ func getSourceDbPool(ctx context.Context, requireSchema bool) (*pgxpool.Pool, *d
 	var info dbInfo
 	info.url = viper.GetString("RIVER_DB_SOURCE_URL")
 	if info.url == "" {
-		return nil, nil, errors.New("source database URL is not set: --source_db or RIVER_DB_SOURCE")
+		return nil, nil, errors.New("source database URL is not set: --source_db or RIVER_DB_SOURCE_URL")
 	}
 	password := viper.GetString("RIVER_DB_SOURCE_PASSWORD")
 	info.schema = viper.GetString("RIVER_DB_SCHEMA")
@@ -100,7 +101,7 @@ func getTargetDbPool(ctx context.Context, requireSchema bool) (*pgxpool.Pool, *d
 	var info dbInfo
 	info.url = viper.GetString("RIVER_DB_TARGET_URL")
 	if info.url == "" {
-		return nil, nil, errors.New("target database URL is not set: --target_db or RIVER_DB_TARGET")
+		return nil, nil, errors.New("target database URL is not set: --target_db or RIVER_DB_TARGET_URL")
 	}
 	password := viper.GetString("RIVER_DB_TARGET_PASSWORD")
 	info.schema = viper.GetString("RIVER_DB_SCHEMA")
@@ -1138,6 +1139,43 @@ func tableExists(
 	return exists, nil
 }
 
+func insertMinipoolsPlaceholder(
+	ctx context.Context,
+	source *pgxpool.Conn,
+	tx pgx.Tx,
+	streamId string,
+	targetSchemaMetadata schemaMetadata,
+) error {
+	srcMiniblocks := getPartitionName("miniblocks", streamId, 256)
+	targetMinipools := getPartitionName("minipools", streamId, targetSchemaMetadata.numPartitions)
+
+	if verbose {
+		fmt.Printf(
+			"Querying %v to determine generation for creating placeholder in %v for stream %v...\n",
+			srcMiniblocks,
+			targetMinipools,
+			streamId,
+		)
+	}
+
+	var lastMbNumInStorage *int64
+	if err := source.QueryRow(
+		ctx,
+		fmt.Sprintf("SELECT MAX(seq_num) FROM %v WHERE stream_id = $1", srcMiniblocks),
+		streamId,
+	).Scan(&lastMbNumInStorage); err != nil {
+		return err
+	}
+
+	_, err := tx.Exec(
+		ctx,
+		fmt.Sprintf("INSERT INTO %v (stream_id, generation, slot_num) VALUES ($1, $2, -1)", targetMinipools),
+		streamId,
+		*lastMbNumInStorage+1,
+	)
+	return err
+}
+
 func copyPart(
 	ctx context.Context,
 	source *pgxpool.Conn,
@@ -1263,17 +1301,30 @@ func copyStream(
 		return wrapError("Failed to insert into es for stream "+streamId, err)
 	}
 
-	err = copyPart(ctx, source, tx, streamId, "minipools", force, sourceInfo, targetSchemaMetadata)
-	if err != nil {
-		return err
+	// Archival nodes do not have minipool records. In this case, we will want to insert a placeholder
+	// into the minipools table manually for this stream at the current generation.
+	if sourceInfo.isArchiver {
+		if err = insertMinipoolsPlaceholder(ctx, source, tx, streamId, targetSchemaMetadata); err != nil {
+			return err
+		}
+	} else {
+		err = copyPart(ctx, source, tx, streamId, "minipools", force, sourceInfo, targetSchemaMetadata)
+		if err != nil {
+			return err
+		}
 	}
+
 	err = copyPart(ctx, source, tx, streamId, "miniblocks", force, sourceInfo, targetSchemaMetadata)
 	if err != nil {
 		return err
 	}
-	err = copyPart(ctx, source, tx, streamId, "miniblock_candidates", force, sourceInfo, targetSchemaMetadata)
-	if err != nil {
-		return err
+
+	// Archiver nodes do not contain candidates, so we can go ahead and skip this.
+	if !sourceInfo.isArchiver {
+		err = copyPart(ctx, source, tx, streamId, "miniblock_candidates", force, sourceInfo, targetSchemaMetadata)
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -1416,8 +1467,9 @@ func copyData(
 }
 
 var (
-	copyCmdForce bool
-	copyCmd      = &cobra.Command{
+	copyCmdForce        bool
+	copyCmdFromArchiver bool
+	copyCmd             = &cobra.Command{
 		Use:   "copy",
 		Short: "Copy data from source to target database",
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -1430,6 +1482,7 @@ var (
 			if err != nil {
 				return err
 			}
+			sourceInfo.isArchiver = copyCmdFromArchiver
 
 			targetPool, targetInfo, err := getTargetDbPool(ctx, true)
 			if err != nil {
@@ -1447,6 +1500,8 @@ var (
 
 func init() {
 	rootCmd.AddCommand(copyCmd)
+	copyCmd.Flags().
+		BoolVar(&copyCmdFromArchiver, "from-archiver", false, "Mark the source database as an archiver backup and force the creation of minipool entries")
 	copyCmd.Flags().BoolVar(&copyCmdForce, "force", false, "Force copy even if target already has data")
 	copyCmd.Flags().BoolVar(&copyBypass, "bypass", false, "Bypass reading data into memory (another copy method)")
 }
