@@ -256,7 +256,8 @@ func (c *RiverRegistryContract) AddStream(
 				opts, streamId, genesisMiniblockHash, river.Stream{
 					LastMiniblockHash: lastMiniblockHash,
 					LastMiniblockNum:  uint64(lastMiniblockNum),
-					Reserved0:         0,
+					ReplicationFactor: uint8(len(addresses)),
+					Reserved0:         big.NewInt(0),
 					Flags:             uint64(flags),
 					Nodes:             addresses,
 				})
@@ -303,6 +304,7 @@ type GetStreamResult struct {
 	StreamId          StreamId
 	Nodes             []common.Address
 	LastMiniblockHash common.Hash
+	ReplicationFactor uint8
 	LastMiniblockNum  uint64
 	IsSealed          bool
 }
@@ -312,6 +314,7 @@ func makeGetStreamResult(streamId StreamId, stream *river.Stream) *GetStreamResu
 		StreamId:          streamId,
 		Nodes:             stream.Nodes,
 		LastMiniblockHash: stream.LastMiniblockHash,
+		ReplicationFactor: stream.ReplicationFactor,
 		LastMiniblockNum:  stream.LastMiniblockNum,
 		IsSealed:          stream.Flags&1 != 0, // TODO: constants for flags
 	}
@@ -818,9 +821,9 @@ func (c *RiverRegistryContract) callOptsWithBlockNum(ctx context.Context, blockN
 
 type NodeEvents interface {
 	river.NodeRegistryV1NodeAdded |
-		river.NodeRegistryV1NodeRemoved |
-		river.NodeRegistryV1NodeStatusUpdated |
-		river.NodeRegistryV1NodeUrlUpdated
+	river.NodeRegistryV1NodeRemoved |
+	river.NodeRegistryV1NodeStatusUpdated |
+	river.NodeRegistryV1NodeUrlUpdated
 }
 
 func (c *RiverRegistryContract) GetNodeEventsForBlock(ctx context.Context, blockNum crypto.BlockNumber) ([]any, error) {
