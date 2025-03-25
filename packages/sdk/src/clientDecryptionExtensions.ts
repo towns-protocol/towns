@@ -11,18 +11,18 @@ import {
     KeySolicitationData,
     KeySolicitationItem,
     UserDevice,
-} from '@river-build/encryption'
+} from '@towns-protocol/encryption'
 import {
     AddEventResponse_Error,
     EncryptedData,
     UserInboxPayload_GroupEncryptionSessions,
-} from '@river-build/proto'
+} from '@towns-protocol/proto'
 import { make_MemberPayload_KeyFulfillment, make_MemberPayload_KeySolicitation } from './types'
 
 import { Client } from './client'
 import { EncryptedContent } from './encryptedContentTypes'
-import { Permission } from '@river-build/web3'
-import { check } from '@river-build/dlog'
+import { Permission } from '@towns-protocol/web3'
+import { check } from '@towns-protocol/dlog'
 import chunk from 'lodash/chunk'
 import { isDefined } from './check'
 import { isMobileSafari } from './utils'
@@ -83,6 +83,7 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
 
         const onKeySolicitation = (
             streamId: string,
+            eventHashStr: string,
             fromUserId: string,
             fromUserAddress: Uint8Array,
             keySolicitation: KeySolicitationContent,
@@ -90,6 +91,7 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
         ) =>
             this.enqueueKeySolicitation(
                 streamId,
+                eventHashStr,
                 fromUserId,
                 fromUserAddress,
                 keySolicitation,
@@ -98,13 +100,14 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
 
         const onInitKeySolicitations = (
             streamId: string,
+            eventHashStr: string,
             members: {
                 userId: string
                 userAddress: Uint8Array
                 solicitations: KeySolicitationContent[]
             }[],
             sigBundle: EventSignatureBundle,
-        ) => this.enqueueInitKeySolicitations(streamId, members, sigBundle)
+        ) => this.enqueueInitKeySolicitations(streamId, eventHashStr, members, sigBundle)
 
         const onStreamInitialized = (streamId: string) => {
             if (isUserInboxStreamId(streamId)) {
@@ -229,7 +232,7 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
         if (this.unpackEnvelopeOpts?.disableSignatureValidation !== true) {
             return { isValid: true }
         }
-        const eventId = item.solicitation.srcEventId
+        const eventId = item.hashStr
         const sigBundle = item.sigBundle
         if (!sigBundle) {
             return { isValid: false, reason: 'event not found' }

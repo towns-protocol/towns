@@ -1,0 +1,45 @@
+---
+title: connectTowns
+---
+Connect to Towns using a SignerContext
+
+Useful for server side code, allowing you to persist the signer context and use it to auth with Towns later
+
+## Imports
+
+```ts
+import { connectTowns } from '@towns-protocol/react-sdk'
+```
+
+## Definition
+
+```ts
+function connectTowns(
+  signerContext: SignerContext,
+  config: Omit<SyncAgentConfig, 'context'>,
+): Promise<SyncAgent>
+```
+
+**Source:** [connectTowns](https://github.com/towns-protocol/towns/blob/main/packages/react-sdk/src/connectTowns.ts)
+
+## Parameters
+
+### signerContext
+
+- **Type:** `SignerContext`
+
+The signer context to use
+
+### config
+
+- **Type:** `Omit<SyncAgentConfig, 'context'>`
+
+The configuration for the sync agent
+
+## Return Type
+
+The sync agent
+
+```ts
+Promise<SyncAgent>
+```

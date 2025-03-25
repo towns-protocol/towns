@@ -22,6 +22,7 @@ import (
 	"github.com/towns-protocol/towns/core/node/shared"
 	"github.com/towns-protocol/towns/core/node/testutils/testcert"
 	"github.com/towns-protocol/towns/core/node/utils"
+	"google.golang.org/protobuf/proto"
 )
 
 type AppServiceRequestEnvelope struct {
@@ -197,14 +198,157 @@ func (b *TestAppServer) solicitKeys(ctx context.Context, data app_client.KeySoli
 	return nil
 }
 
+func (b *TestAppServer) respondToSendMessages(
+	ctx context.Context,
+	data *app_client.SendSessionMessagesRequestData,
+) error {
+	log := logging.FromCtx(ctx)
+	// Swap with above to enable debug logs
+	// log := logging.DefaultZapLogger(zapcore.DebugLevel)
+
+	log.Debugw(
+		"respondToSendMessages",
+		"numMessages",
+		len(data.MessageEnvelopes),
+		"messageEnvelopes",
+		data.MessageEnvelopes,
+		"encryptionBytes",
+		data.EncryptionEnvelope,
+		"botDeviceKey",
+		b.encryptionDevice.DeviceKey,
+	)
+
+	var envelope protocol.Envelope
+	if err := proto.Unmarshal(data.EncryptionEnvelope, &envelope); err != nil {
+		log.Errorw("Error unmarshalling encryption envelope", "err", err)
+		return err
+	}
+
+	event, err := events.ParseEvent(&envelope)
+	if err != nil {
+		log.Errorw("Error parsing event", "err", err)
+		return err
+	}
+
+	payload := event.Event.GetUserInboxPayload()
+	if payload == nil {
+		log.Errorw("payload is not user inbox")
+		return fmt.Errorf("forwarded encryption event was not a user inbox event")
+	}
+
+	encryptionSessions := payload.GetGroupEncryptionSessions()
+	if encryptionSessions == nil {
+		log.Errorw("User inbox payload content is not group encryption sessions")
+		return fmt.Errorf("forwarded encryption event did not have a group encryption sessions payload")
+	}
+
+	for _, envelopeBytes := range data.MessageEnvelopes {
+		log.Debugw("Sending event...", "streamEvent", envelopeBytes)
+		var messageEnvelope protocol.Envelope
+		if err := proto.Unmarshal(envelopeBytes, &messageEnvelope); err != nil {
+			log.Errorw("Could not unmarshal stream event", "error", err)
+			return fmt.Errorf("could not unmarshal stream event: %w", err)
+		}
+
+		parsedEvent, err := events.ParseEvent(&messageEnvelope)
+		if err != nil {
+			log.Errorw("Could not parse message envelope", "err", err)
+			return fmt.Errorf("could not parse message envelope: %w", err)
+		}
+		streamEvent := parsedEvent.Event
+		payload, ok := streamEvent.Payload.(*protocol.StreamEvent_ChannelPayload)
+		if !ok {
+			log.Errorw("Could not cast channel stream payload")
+			return fmt.Errorf("could not cast channel stream payload")
+		}
+		message, ok := payload.ChannelPayload.GetContent().(*protocol.ChannelPayload_Message)
+		if !ok {
+			log.Errorw("Could not extract message from channel payload")
+			return fmt.Errorf("could not extract message from channel payload")
+		}
+		if message.Message.SenderKey == b.encryptionDevice.DeviceKey {
+			log.Debugw("detected message from this sender, ignoring...")
+			continue
+		}
+
+		streamIdBytes, err := shared.StreamIdFromBytes(encryptionSessions.StreamId)
+		if err != nil {
+			log.Errorw("Could not parse stream id", "error", err)
+			return fmt.Errorf("could not parse stream id: %w", err)
+		}
+
+		log.Debugw(
+			"respondToSendMessages message details",
+			"m.m.SenderKey",
+			message.Message.SenderKey,
+			"m.m.SessionId",
+			message.Message.SessionId,
+			"m.m.Ciphertext",
+			message.Message.Ciphertext,
+		)
+
+		resp, err := b.client.GetLastMiniblockHash(
+			ctx,
+			&connect.Request[protocol.GetLastMiniblockHashRequest]{
+				Msg: &protocol.GetLastMiniblockHashRequest{
+					StreamId: streamIdBytes[:],
+				},
+			},
+		)
+		if err != nil {
+			log.Errorw("Could not get last miniblock hash of stream in order to post a response", "error", err)
+			return fmt.Errorf("could not get last miniblock hash of stream in order to post a response: %w", err)
+		}
+
+		envelope, err := events.MakeEnvelopeWithPayload(
+			b.appWallet,
+			events.Make_ChannelPayload_Message_WithSession(
+				fmt.Sprintf(
+					"%v %v reply (%v)",
+					message.Message.SessionId,
+					message.Message.Ciphertext,
+					encryptionSessions.Ciphertexts[b.encryptionDevice.DeviceKey],
+				),
+				message.Message.SessionId,
+			),
+			&shared.MiniblockRef{
+				Hash: common.Hash(resp.Msg.Hash),
+				Num:  resp.Msg.MiniblockNum,
+			},
+		)
+		if err != nil {
+			log.Errorw("Could not construct envelope of message reply", "error", err)
+			return fmt.Errorf("could not construct envelope of message reply: %w", err)
+		}
+
+		addResp, err := b.client.AddEvent(
+			ctx,
+			&connect.Request[protocol.AddEventRequest]{
+				Msg: &protocol.AddEventRequest{
+					StreamId: streamIdBytes[:],
+					Event:    envelope,
+				},
+			},
+		)
+		if err != nil {
+			log.Errorw("AddEvent failed for reply", "error", err)
+			return fmt.Errorf("AddEvent failed for reply: %w", err)
+		}
+		if addResp.Msg.Error != nil {
+			log.Errorw("AddEvent failed for reply", "error", addResp.Msg.Error.Msg)
+			return fmt.Errorf("AddEvent failed for reply: %v", addResp.Msg.Error.Msg)
+		}
+	}
+	return nil
+}
+
 func (b *TestAppServer) rootHandler(w http.ResponseWriter, r *http.Request) {
 	// Ensure that the request method is POST.
 	// Uncomment to unconditionally enable logging
-	// log := logging.DefaultZapLogger(zapcore.DebugLevel).With("func", "TestAppServer.rootHandler")
+	// log := logging.DefaultZapLogger(zapcore.DebugLevel)
 	log := logging.FromCtx(r.Context())
-	log.Debug("TestAppServer rootHandler called!")
 	if r.Method != http.MethodPost {
-		log.Errorw("method not allowed")
+		log.Errorw("method not allowed", "method", r.Method)
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
@@ -239,7 +383,6 @@ func (b *TestAppServer) rootHandler(w http.ResponseWriter, r *http.Request) {
 	var response any
 	switch payload.Command {
 	case "initialize":
-		log.Debugw("initialize request detected")
 		response = app_client.InitializeResponse{
 			DefaultEncryptionDevice: app_client.EncryptionDevice{
 				DeviceKey:   b.encryptionDevice.DeviceKey,
@@ -247,7 +390,6 @@ func (b *TestAppServer) rootHandler(w http.ResponseWriter, r *http.Request) {
 			},
 		}
 	case "solicit":
-		log.Debugw("solicitation request detected")
 		var data app_client.KeySolicitationData
 		if err := json.Unmarshal(payload.Data, &data); err != nil {
 			log.Errorw(
@@ -260,12 +402,30 @@ func (b *TestAppServer) rootHandler(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, fmt.Sprintf("unable to solicit keys: %v", err), http.StatusBadRequest)
 			return
 		}
-		log.Debugw("proceeding with solicitation request...", "data", data)
 		if err := b.solicitKeys(logging.CtxWithLog(r.Context(), log), data); err != nil {
 			log.Errorw("solicit keys request failed", "error", err, "data", data)
 			http.Error(w, fmt.Sprintf("TestAppServer unable to solicit keys: %v", err), http.StatusBadRequest)
 		}
 		response = app_client.KeySolicitationResponse{}
+	case "messages":
+		var data app_client.SendSessionMessagesRequestData
+		if err := json.Unmarshal(payload.Data, &data); err != nil {
+			log.Errorw(
+				"Unable to unmarshal payload data into send session messages request data",
+				"error",
+				err,
+				"payloadData",
+				payload.Data,
+			)
+			http.Error(w, fmt.Sprintf("unable to unmarshal message data: %v", err), http.StatusBadRequest)
+			return
+		}
+		if err := b.respondToSendMessages(r.Context(), &data); err != nil {
+			http.Error(w, fmt.Sprintf("unable to respond to sent messages: %v", err), http.StatusBadRequest)
+			return
+		}
+		response = app_client.SendSessionMessagesResponse{}
+
 	default:
 		log.Errorw("unrecognized payload type", "command", payload.Command)
 		http.Error(w, fmt.Sprintf("Unrecognized payload type: %v", payload.Command), http.StatusBadRequest)

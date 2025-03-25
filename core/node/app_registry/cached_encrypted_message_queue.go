@@ -19,10 +19,9 @@ type SessionMessages struct {
 	AppId                 common.Address // included for logging / metrics
 	DeviceKey             string
 	EncryptedSharedSecret [32]byte
-	SessionIds            []string
-	CipherTexts           string
+	EncryptionEnvelope    []byte
 	WebhookUrl            string
-	StreamEvents          [][]byte
+	MessageEnvelopes      [][]byte
 }
 
 // CachedEncryptedMessageQueue enqueues and dispatches messages to app servers according
@@ -82,9 +81,9 @@ func (q *CachedEncryptedMessageQueue) PublishSessionKeys(
 	streamId shared.StreamId,
 	deviceKey string,
 	sessionIds []string,
-	ciphertexts string,
+	encryptionEnvelope []byte,
 ) (err error) {
-	sendableMessages, err := q.store.PublishSessionKeys(ctx, streamId, deviceKey, sessionIds, ciphertexts)
+	sendableMessages, err := q.store.PublishSessionKeys(ctx, streamId, deviceKey, sessionIds, encryptionEnvelope)
 	if err != nil {
 		return err
 	}
@@ -92,10 +91,9 @@ func (q *CachedEncryptedMessageQueue) PublishSessionKeys(
 		AppId:                 sendableMessages.AppId,
 		EncryptedSharedSecret: sendableMessages.EncryptedSharedSecret,
 		DeviceKey:             deviceKey,
-		SessionIds:            sessionIds,
-		CipherTexts:           ciphertexts,
+		EncryptionEnvelope:    encryptionEnvelope,
 		WebhookUrl:            sendableMessages.WebhookUrl,
-		StreamEvents:          sendableMessages.StreamEvents,
+		MessageEnvelopes:      sendableMessages.MessageEnvelopes,
 	}
 	return q.appDispatcher.SubmitMessages(ctx, messages)
 }
@@ -107,18 +105,18 @@ func (q *CachedEncryptedMessageQueue) DispatchOrEnqueueMessages(
 	appIds []common.Address,
 	sessionId string,
 	channelId shared.StreamId,
-	streamEventBytes []byte,
+	envelopeBytes []byte,
 ) (err error) {
+	// log := logging.FromCtx(ctx)
 	sendableApps, unsendableApps, err := q.store.EnqueueUnsendableMessages(
 		ctx,
 		appIds,
 		sessionId,
-		streamEventBytes,
+		envelopeBytes,
 	)
 	if err != nil {
 		return err
 	}
-	// log := logging.FromCtx(ctx).With("func", "CachedEncryptedMessageQueue.EnqueueMessages")
 	// log.Debugw(
 	// 	"enqueue unsendable messages",
 	// 	"sendableApps",
@@ -132,11 +130,6 @@ func (q *CachedEncryptedMessageQueue) DispatchOrEnqueueMessages(
 	// )
 
 	if len(sendableApps)+len(unsendableApps) != len(appIds) {
-		// log.Errorw(
-		// 	"Unexpected return value from enqueue: sendable + unsendable does not equal original # of apps",
-		// 	"appIds",
-		// 	appIds,
-		// )
 		return base.AsRiverError(
 			fmt.Errorf(
 				"unexpected error: number of enqueued messages plus sendable devices does not equal the total number of devices",
@@ -147,20 +140,13 @@ func (q *CachedEncryptedMessageQueue) DispatchOrEnqueueMessages(
 
 	// Submit a single message for each sendable device
 	for _, sendableApp := range sendableApps {
-		// log.Debugw(
-		// 	"Send message",
-		// 	"sendableApp",
-		// 	sendableApp,
-		// 	"channelId",
-		// 	channelId,
-		// )
 		if err := q.appDispatcher.SubmitMessages(ctx, &SessionMessages{
 			AppId:                 sendableApp.AppId,
 			DeviceKey:             sendableApp.DeviceKey,
 			EncryptedSharedSecret: sendableApp.SendMessageSecrets.EncryptedSharedSecret,
-			CipherTexts:           sendableApp.SendMessageSecrets.CipherTexts,
+			EncryptionEnvelope:    sendableApp.SendMessageSecrets.EncryptionEnvelope,
 			WebhookUrl:            sendableApp.WebhookUrl,
-			StreamEvents:          [][]byte{streamEventBytes},
+			MessageEnvelopes:      [][]byte{envelopeBytes},
 		}); err != nil {
 			return err
 		}

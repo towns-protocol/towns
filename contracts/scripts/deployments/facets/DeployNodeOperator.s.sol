@@ -7,7 +7,7 @@ pragma solidity ^0.8.23;
 
 //contracts
 import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
-import {FacetHelper} from "contracts/test/diamond/Facet.t.sol";
+import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
 import {NodeOperatorFacet} from "contracts/src/base/registry/facets/operator/NodeOperatorFacet.sol";
 
 contract DeployNodeOperator is Deployer, FacetHelper {
@@ -28,7 +28,7 @@ contract DeployNodeOperator is Deployer, FacetHelper {
   }
 
   function versionName() public pure override returns (string memory) {
-    return "nodeOperatorFacet";
+    return "facets/nodeOperatorFacet";
   }
 
   function __deploy(address deployer) public override returns (address) {

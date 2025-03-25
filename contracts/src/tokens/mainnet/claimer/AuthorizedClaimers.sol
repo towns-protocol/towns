@@ -5,14 +5,13 @@ pragma solidity ^0.8.23;
 import {IAuthorizedClaimers} from "./IAuthorizedClaimers.sol";
 
 // libraries
+import {ECDSA} from "solady/utils/ECDSA.sol";
 import {AuthorizedClaimerStorage} from "./AuthorizedClaimerStorage.sol";
-import {EIP712} from "@river-build/diamond/src/utils/cryptography/EIP712.sol";
-import {Nonces} from "@river-build/diamond/src/utils/Nonces.sol";
-import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 
 // contracts
+import {EIP712Facet} from "@towns-protocol/diamond/src/utils/cryptography/EIP712Facet.sol";
 
-contract AuthorizedClaimers is IAuthorizedClaimers, EIP712, Nonces {
+contract AuthorizedClaimers is IAuthorizedClaimers, EIP712Facet {
   // keccak256("Authorize(address owner,address claimer,uint256 nonce,uint256 expiry)")
   bytes32 private constant _AUTHORIZE_TYPEHASH =
     0x496b440527e20b246a460857dca887b9c1f290387cfc6ac9aa91bb6554be05ac;
@@ -64,14 +63,6 @@ contract AuthorizedClaimers is IAuthorizedClaimers, EIP712, Nonces {
     address authorizer
   ) external view returns (address) {
     return AuthorizedClaimerStorage.layout().authorizedClaimers[authorizer];
-  }
-
-  function nonces(address owner) external view returns (uint256 result) {
-    return _latestNonce(owner);
-  }
-
-  function DOMAIN_SEPARATOR() external view returns (bytes32 result) {
-    return _domainSeparatorV4();
   }
 
   // =============================================================

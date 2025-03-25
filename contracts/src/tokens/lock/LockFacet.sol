@@ -8,7 +8,7 @@ import {ILock} from "./ILock.sol";
 
 // contracts
 import {LockBase} from "contracts/src/tokens/lock/LockBase.sol";
-import {Facet} from "@river-build/diamond/src/facets/Facet.sol";
+import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
 
 abstract contract LockFacet is ILock, LockBase, Facet {
   function __LockFacet_init(uint256 cooldown) external onlyInitializing {
@@ -17,14 +17,15 @@ abstract contract LockFacet is ILock, LockBase, Facet {
   }
 
   /// @inheritdoc ILock
-  function isLockEnabled(address account) external view virtual returns (bool) {
-    return _lockEnabled(account);
+  function isLockActive(address account) external view virtual returns (bool) {
+    return _isLockActive(account);
   }
 
-  function lockCooldown(
+  /// @inheritdoc ILock
+  function lockExpiration(
     address account
   ) external view virtual returns (uint256) {
-    return _lockCooldown(account);
+    return _lockExpiration(account);
   }
 
   /// @inheritdoc ILock

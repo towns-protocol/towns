@@ -43,6 +43,9 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
 
     _addStreamIdToNodes(streamId, nodes);
 
+    _emitStreamUpdated(StreamEventType.Allocate, abi.encode(streamId, stream));
+
+    // deprecating
     emit StreamAllocated(
       streamId,
       nodes,
@@ -68,6 +71,9 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
 
     _addStreamIdToNodes(streamId, stream.nodes);
 
+    _emitStreamUpdated(StreamEventType.Create, abi.encode(streamId, stream));
+
+    // deprecating
     emit StreamCreated(streamId, genesisMiniblockHash, stream);
   }
 
@@ -77,6 +83,9 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
     uint256 miniblockCount = miniblocks.length;
 
     if (miniblockCount == 0) revert(RiverRegistryErrors.BAD_ARG);
+
+    SetMiniblock[] memory miniblockUpdates = new SetMiniblock[](miniblockCount);
+    uint256 streamCount = 0;
 
     for (uint256 i; i < miniblockCount; ++i) {
       SetMiniblock calldata miniblock = miniblocks[i];
@@ -106,11 +115,7 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
 
       // Check if the lastMiniblockNum is the next expected miniblock and
       // the prevMiniblockHash is correct
-      if (
-        // stream.lastMiniblockNum + 1 != miniblock.lastMiniblockNum ||
-        // stream.lastMiniblockHash != miniblock.prevMiniBlockHash
-        stream.lastMiniblockNum >= miniblock.lastMiniblockNum
-      ) {
+      if (stream.lastMiniblockNum >= miniblock.lastMiniblockNum) {
         emit StreamLastMiniblockUpdateFailed(
           miniblock.streamId,
           miniblock.lastMiniblockHash,
@@ -134,6 +139,9 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
         stream.flags |= StreamFlags.SEALED;
       }
 
+      miniblockUpdates[streamCount++] = miniblock;
+
+      // deprecating
       _emitStreamLastMiniblockUpdated(
         miniblock.streamId,
         miniblock.lastMiniblockHash,
@@ -141,45 +149,15 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
         miniblock.isSealed
       );
     }
-  }
 
-  /// @inheritdoc IStreamRegistry
-  function setStreamLastMiniblock(
-    bytes32 streamId,
-    bytes32, // prevMiniblockHash
-    bytes32 lastMiniblockHash,
-    uint64 lastMiniblockNum,
-    bool isSealed
-  ) external onlyNode(msg.sender) onlyStream(streamId) {
-    Stream storage stream = ds.streamById[streamId];
-
-    // Check if the stream is already sealed using bitwise AND
-    if ((stream.flags & StreamFlags.SEALED) != 0) {
-      revert(RiverRegistryErrors.STREAM_SEALED);
+    // overwrite the length of the array
+    assembly ("memory-safe") {
+      mstore(miniblockUpdates, streamCount)
     }
 
-    // Ensure that the lastMiniblockNum is newer than the current head.
-    if (stream.lastMiniblockNum >= lastMiniblockNum) {
-      revert(RiverRegistryErrors.BAD_ARG);
-    }
-
-    // Delete genesis miniblock
-    delete ds.genesisMiniblockByStreamId[streamId];
-
-    // Update the stream information
-    stream.lastMiniblockHash = lastMiniblockHash;
-    stream.lastMiniblockNum = lastMiniblockNum;
-
-    // Set the sealed flag if requested
-    if (isSealed) {
-      stream.flags |= StreamFlags.SEALED;
-    }
-
-    _emitStreamLastMiniblockUpdated(
-      streamId,
-      lastMiniblockHash,
-      lastMiniblockNum,
-      isSealed
+    _emitStreamUpdated(
+      StreamEventType.LastMiniblockBatchUpdated,
+      abi.encode(miniblockUpdates)
     );
   }
 
@@ -202,6 +180,12 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
 
     nodes.push(nodeAddress);
 
+    _emitStreamUpdated(
+      StreamEventType.PlacementUpdated,
+      abi.encode(streamId, stream)
+    );
+
+    // deprecating
     emit StreamPlacementUpdated(streamId, nodeAddress, true);
   }
 
@@ -229,6 +213,12 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
 
     if (!found) revert(RiverRegistryErrors.NODE_NOT_FOUND);
 
+    _emitStreamUpdated(
+      StreamEventType.PlacementUpdated,
+      abi.encode(streamId, stream)
+    );
+
+    // deprecating
     emit StreamPlacementUpdated(streamId, nodeAddress, false);
   }
 
@@ -352,6 +342,23 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
   ) internal {
     for (uint256 i; i < nodes.length; ++i) {
       ds.streamIdsByNode[nodes[i]].add(streamId);
+    }
+  }
+
+  /// @dev Emits the StreamUpdated event without memory expansion
+  function _emitStreamUpdated(
+    StreamEventType eventType,
+    bytes memory data
+  ) internal {
+    bytes32 topic0 = StreamUpdated.selector;
+    assembly ("memory-safe") {
+      // cache the word before for abi encoding offset
+      let offset := sub(data, 0x20)
+      let cache := mload(offset)
+      // the event arg is encoded as | 0x20 | data length | data
+      mstore(offset, 0x20)
+      log2(offset, add(mload(data), 0x40), topic0, eventType)
+      mstore(offset, cache)
     }
   }
 

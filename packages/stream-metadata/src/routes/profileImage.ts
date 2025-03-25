@@ -1,8 +1,8 @@
 import { FastifyReply, FastifyRequest } from 'fastify'
-import { ChunkedMedia } from '@river-build/proto'
-import { StreamPrefix, StreamStateView, makeStreamId } from '@river-build/sdk'
+import { ChunkedMedia } from '@towns-protocol/proto'
+import { StreamPrefix, StreamStateView, makeStreamId } from '@towns-protocol/sdk'
 import { z } from 'zod'
-import { bin_toHexString } from '@river-build/dlog'
+import { bin_toHexString } from '@towns-protocol/dlog'
 
 import { getStream } from '../riverStreamRpcClient'
 import { isValidEthereumAddress } from '../validators'

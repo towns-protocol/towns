@@ -7,7 +7,7 @@ IGNORED="${1:-}"
 FROZEN="${2:-}"
 ABI_DIR="packages/generated/dev/abis"
 
-yarn turbo build --filter=@river-build/contracts
+yarn turbo build --filter=@towns-protocol/contracts
 
 CONTRACT_INTERFACES="(IDiamond|IDiamondCut|IArchitect|ILegacyArchitect|IProxyManager|IPausable|IEntitlementsManager|IChannel|IRoles|IMulticall|IRuleEntitlement|IRuleEntitlementV2|IWalletLink|INodeRegistry|IOperatorRegistry|IStreamRegistry|OwnableFacet|TokenPausableFacet|UserEntitlement|ISpaceOwner|MockERC721A|MembershipFacet|IMembershipMetadata|Member|IBanning|IPricingModules|ICrossChainEntitlement|MockEntitlementGated|PrepayFacet|IERC721AQueryable|IEntitlementDataQueryable|PlatformRequirementsFacet|IERC721A|INodeOperator|ISpaceDelegation|IEntitlementChecker|IERC5267|ICreateSpace|IDropFacet|ITownsPoints|ITipping|IReview)"
 
@@ -22,6 +22,9 @@ for file in $ABI_DIR/*.abi.json; do
 done
 
 ./scripts/gen-river-node-bindings.sh
+
+# Remove *.bin and *.json except *.abi.json
+find $ABI_DIR -type f \( -name "*.bin" -o -name "*.json" ! -name "*.abi.json" \) -exec rm -f {} +
 
 DIFF_GLOB="$ABI_DIR/*.ts"
 

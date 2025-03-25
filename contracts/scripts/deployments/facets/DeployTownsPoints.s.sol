@@ -2,14 +2,14 @@
 pragma solidity ^0.8.23;
 
 //interfaces
-import {IDiamond} from "@river-build/diamond/src/IDiamond.sol";
+import {IDiamond} from "@towns-protocol/diamond/src/IDiamond.sol";
 
 //libraries
 import "forge-std/console.sol";
 
 //contracts
 import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
-import {FacetHelper} from "contracts/test/diamond/Facet.t.sol";
+import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
 import {TownsPoints} from "contracts/src/airdrop/points/TownsPoints.sol";
 
 contract DeployTownsPoints is Deployer, FacetHelper {
@@ -32,7 +32,7 @@ contract DeployTownsPoints is Deployer, FacetHelper {
 
   // Deploying
   function versionName() public pure override returns (string memory) {
-    return "pointsFacet";
+    return "facets/pointsFacet";
   }
 
   function initializer() public pure override returns (bytes4) {

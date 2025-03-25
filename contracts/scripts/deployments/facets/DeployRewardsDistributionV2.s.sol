@@ -6,7 +6,7 @@ pragma solidity ^0.8.23;
 // libraries
 
 // helpers
-import {FacetHelper} from "contracts/test/diamond/Facet.t.sol";
+import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
 import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
 import {RewardsDistribution} from "contracts/src/base/registry/facets/distribution/v2/RewardsDistribution.sol";
 
@@ -60,7 +60,7 @@ contract DeployRewardsDistributionV2 is Deployer, FacetHelper {
   }
 
   function versionName() public pure override returns (string memory) {
-    return "rewardsDistributionV2Facet";
+    return "facets/rewardsDistributionV2Facet";
   }
 
   function __deploy(address deployer) public override returns (address) {

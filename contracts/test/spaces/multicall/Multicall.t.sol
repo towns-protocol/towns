@@ -42,7 +42,7 @@ contract MulticallTest is BaseSetup {
     assertEq(results[2].length, 0);
   }
 
-  function test_revert_multicall() external {
+  function test_multicall_revertWithData() external {
     bytes32 channelId = "my-cool-channel";
 
     bytes[] memory data = new bytes[](1);

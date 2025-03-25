@@ -4,7 +4,7 @@ import {
     bin_fromHexString,
     bin_toHexString,
     check,
-} from '@river-build/dlog'
+} from '@towns-protocol/dlog'
 import { isDefined, assert, hasElements } from './check'
 import {
     Envelope,
@@ -20,7 +20,7 @@ import {
     StreamAndCookieSchema,
     SyncCookieSchema,
     EventRefSchema,
-} from '@river-build/proto'
+} from '@towns-protocol/proto'
 import { assertBytes } from 'ethereum-cryptography/utils'
 import { recoverPublicKey, signSync, verify } from 'ethereum-cryptography/secp256k1'
 import { genIdBlob, streamIdAsBytes, streamIdAsString, userIdFromAddress } from './id'
@@ -29,6 +29,7 @@ import { SignerContext, checkDelegateSig } from './signerContext'
 import { keccak256 } from 'ethereum-cryptography/keccak'
 import { createHash } from 'crypto'
 import { create, fromBinary, toBinary } from '@bufbuild/protobuf'
+import { eventIdsFromSnapshot } from './persistenceStore'
 
 export interface UnpackEnvelopeOpts {
     // the client recreates the hash from the event bytes in the envelope
@@ -131,6 +132,7 @@ export const unpackStream = async (
             (mb) => mb.events.map((e) => e.hashStr),
             streamAndCookie.events.map((e) => e.hashStr),
         ),
+        ...eventIdsFromSnapshot(snapshot),
     ]
 
     return {

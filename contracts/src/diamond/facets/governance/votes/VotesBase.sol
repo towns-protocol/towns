@@ -2,18 +2,17 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {IERC5805} from "@openzeppelin/contracts/interfaces/IERC5805.sol";
+import {IVotes} from "@openzeppelin/contracts/governance/utils/IVotes.sol";
 
 // libraries
-import {VotesStorage} from "./VotesStorage.sol";
+import {ECDSA} from "solady/utils/ECDSA.sol";
+import {SafeCastLib} from "solady/utils/SafeCastLib.sol";
 import {Checkpoints} from "./Checkpoints.sol";
-import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
-import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import {VotesStorage} from "./VotesStorage.sol";
 
 // contracts
-import {Nonces} from "@river-build/diamond/src/utils/Nonces.sol";
-import {Context} from "contracts/src/diamond/utils/Context.sol";
-import {EIP712} from "@river-build/diamond/src/utils/cryptography/EIP712.sol";
+import {Nonces} from "@towns-protocol/diamond/src/utils/Nonces.sol";
+import {EIP712Base} from "@towns-protocol/diamond/src/utils/cryptography/EIP712Base.sol";
 
 /**
  * @dev This is a base abstract contract that tracks voting units, which are a measure of voting power that can be
@@ -34,7 +33,7 @@ import {EIP712} from "@river-build/diamond/src/utils/cryptography/EIP712.sol";
  * previous example, it would be included in {ERC721-_beforeTokenTransfer}).
  *
  */
-abstract contract VotesBase is IERC5805, Context, EIP712, Nonces {
+abstract contract VotesBase is EIP712Base, Nonces {
   using VotesStorage for VotesStorage.Layout;
   using Checkpoints for Checkpoints.Trace224;
 
@@ -54,7 +53,7 @@ abstract contract VotesBase is IERC5805, Context, EIP712, Nonces {
    * checkpoints (and voting), in which case {CLOCK_MODE} should be overridden as well to match.
    */
   function _clock() internal view returns (uint48) {
-    return SafeCast.toUint48(block.number);
+    return SafeCastLib.toUint48(block.number);
   }
 
   /**
@@ -93,7 +92,7 @@ abstract contract VotesBase is IERC5805, Context, EIP712, Nonces {
     require(timepoint < _clock(), "Votes: future lookup");
     return
       VotesStorage.layout()._delegateCheckpoints[account].upperLookupRecent(
-        SafeCast.toUint32(timepoint)
+        SafeCastLib.toUint32(timepoint)
       );
   }
 
@@ -115,7 +114,7 @@ abstract contract VotesBase is IERC5805, Context, EIP712, Nonces {
     require(timepoint < _clock(), "Votes: future lookup");
     return
       VotesStorage.layout()._totalCheckpoints.upperLookupRecent(
-        SafeCast.toUint32(timepoint)
+        SafeCastLib.toUint32(timepoint)
       );
   }
 
@@ -178,7 +177,7 @@ abstract contract VotesBase is IERC5805, Context, EIP712, Nonces {
     address oldDelegate = _delegates(account);
     VotesStorage.layout()._delegation[account] = delegatee;
 
-    emit DelegateChanged(account, oldDelegate, delegatee);
+    emit IVotes.DelegateChanged(account, oldDelegate, delegatee);
     _moveDelegateVotes(oldDelegate, delegatee, _getVotingUnits(account));
 
     _afterDelegate(account, delegatee);
@@ -197,14 +196,14 @@ abstract contract VotesBase is IERC5805, Context, EIP712, Nonces {
       _push(
         VotesStorage.layout()._totalCheckpoints,
         _add,
-        SafeCast.toUint224(amount)
+        SafeCastLib.toUint224(amount)
       );
     }
     if (to == address(0)) {
       _push(
         VotesStorage.layout()._totalCheckpoints,
         _subtract,
-        SafeCast.toUint224(amount)
+        SafeCastLib.toUint224(amount)
       );
     }
     _moveDelegateVotes(_delegates(from), _delegates(to), amount);
@@ -223,17 +222,17 @@ abstract contract VotesBase is IERC5805, Context, EIP712, Nonces {
         (uint256 oldValue, uint256 newValue) = _push(
           VotesStorage.layout()._delegateCheckpoints[from],
           _subtract,
-          SafeCast.toUint224(amount)
+          SafeCastLib.toUint224(amount)
         );
-        emit DelegateVotesChanged(from, oldValue, newValue);
+        emit IVotes.DelegateVotesChanged(from, oldValue, newValue);
       }
       if (to != address(0)) {
         (uint256 oldValue, uint256 newValue) = _push(
           VotesStorage.layout()._delegateCheckpoints[to],
           _add,
-          SafeCast.toUint224(amount)
+          SafeCastLib.toUint224(amount)
         );
-        emit DelegateVotesChanged(to, oldValue, newValue);
+        emit IVotes.DelegateVotesChanged(to, oldValue, newValue);
       }
     }
   }
@@ -243,7 +242,8 @@ abstract contract VotesBase is IERC5805, Context, EIP712, Nonces {
     function(uint224, uint224) view returns (uint224) op,
     uint224 delta
   ) private returns (uint224, uint224) {
-    return store.push(SafeCast.toUint32(_clock()), op(store.latest(), delta));
+    return
+      store.push(SafeCastLib.toUint32(_clock()), op(store.latest(), delta));
   }
 
   function _add(uint224 a, uint224 b) private pure returns (uint224) {

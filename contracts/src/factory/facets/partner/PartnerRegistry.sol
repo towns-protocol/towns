@@ -8,8 +8,8 @@ import {IPartnerRegistry} from "./IPartnerRegistry.sol";
 
 // contracts
 import {PartnerRegistryBase} from "./PartnerRegistryBase.sol";
-import {Facet} from "@river-build/diamond/src/facets/Facet.sol";
-import {OwnableBase} from "@river-build/diamond/src/facets/ownable/OwnableBase.sol";
+import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
+import {OwnableBase} from "@towns-protocol/diamond/src/facets/ownable/OwnableBase.sol";
 
 contract PartnerRegistry is
   PartnerRegistryBase,

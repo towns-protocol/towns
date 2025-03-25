@@ -1,6 +1,6 @@
-import { check, dlogger } from '@river-build/dlog'
+import { check, dlogger } from '@towns-protocol/dlog'
 import { Identifiable, LoadPriority, Store } from '../../../store/store'
-import { UserInboxPayload_Snapshot_DeviceSummary } from '@river-build/proto'
+import { UserInboxPayload_Snapshot_DeviceSummary } from '@towns-protocol/proto'
 import { PersistedObservable, persistedObservable } from '../../../observable/persistedObservable'
 import { makeUserInboxStreamId } from '../../../id'
 import { RiverConnection } from '../../river-connection/riverConnection'

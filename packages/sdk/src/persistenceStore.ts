@@ -3,7 +3,7 @@ import {
     PersistedSyncedStream,
     PersistedSyncedStreamSchema,
     Snapshot,
-} from '@river-build/proto'
+} from '@towns-protocol/proto'
 import Dexie, { Table } from 'dexie'
 import { ParsedMiniblock } from './types'
 import {
@@ -13,7 +13,7 @@ import {
     ParsedPersistedSyncedStream,
 } from './streamUtils'
 
-import { bin_toHexString, dlog, dlogError } from '@river-build/dlog'
+import { bin_toHexString, dlog, dlogError } from '@towns-protocol/dlog'
 import { isDefined } from './check'
 import { isChannelStreamId, isDMChannelStreamId, isGDMChannelStreamId } from './id'
 import { fromBinary, toBinary } from '@bufbuild/protobuf'
@@ -21,6 +21,7 @@ import { fromBinary, toBinary } from '@bufbuild/protobuf'
 const MAX_CACHED_SCROLLBACK_COUNT = 3
 const DEFAULT_RETRY_COUNT = 2
 const log = dlog('csb:persistence', { defaultEnabled: false })
+const logWarn = dlog('csb:persistence:warn', { defaultEnabled: true })
 const logError = dlogError('csb:persistence:error')
 
 export interface LoadedStream {
@@ -41,7 +42,7 @@ async function fnReadRetryer<T>(
     while (retryCounter > 0) {
         try {
             if (retryCounter < retries) {
-                log('retrying...', `${retryCounter}/${retries} retries left`)
+                logWarn('retrying...', `${retryCounter}/${retries} retries left`)
                 retryCounter--
                 // wait a bit before retrying
                 await new Promise((resolve) => setTimeout(resolve, 100))
@@ -133,6 +134,11 @@ export class PersistenceStore extends Dexie implements IPersistenceStore {
         // Version 4: added a option to have a data_type field to the encrypted data, drop all saved cleartexts
         this.version(4).upgrade((tx) => {
             return tx.table('cleartexts').toCollection().delete()
+        })
+
+        // Version 5: changed how we store scrollback miniblocs, drop all saved miniblocks
+        this.version(5).upgrade((tx) => {
+            return tx.table('miniblocks').toCollection().delete()
         })
 
         this.requestPersistentStorage()
@@ -425,7 +431,7 @@ function topLevelRenderableEventInMiniblock(miniblock: ParsedMiniblock): boolean
     return false
 }
 
-function eventIdsFromSnapshot(snapshot: Snapshot): string[] {
+export function eventIdsFromSnapshot(snapshot: Snapshot): string[] {
     const usernameEventIds =
         snapshot.members?.joined
             .filter((m) => isDefined(m.username))

@@ -8,7 +8,7 @@ import {IERC721A} from "contracts/src/diamond/facets/token/ERC721A/IERC721A.sol"
 // contracts
 import {ERC721A} from "contracts/src/diamond/facets/token/ERC721A/ERC721A.sol";
 import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
-import {FacetHelper} from "contracts/test/diamond/Facet.t.sol";
+import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
 
 contract DeployERC721A is FacetHelper, Deployer {
   constructor() {
@@ -34,7 +34,7 @@ contract DeployERC721A is FacetHelper, Deployer {
   }
 
   function versionName() public pure override returns (string memory) {
-    return "erc721aFacet";
+    return "facets/erc721aFacet";
   }
 
   function makeInitData(

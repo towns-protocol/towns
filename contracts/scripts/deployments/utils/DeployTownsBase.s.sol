@@ -22,7 +22,7 @@ contract DeployTownsBase is Deployer {
   bytes32 public proxySalt;
 
   function versionName() public pure override returns (string memory) {
-    return "towns";
+    return "utils/towns";
   }
 
   function __deploy(address deployer) public override returns (address) {

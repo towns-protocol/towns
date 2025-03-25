@@ -2,7 +2,7 @@
 pragma solidity ^0.8.24;
 
 // interface
-import {IDiamond, Diamond} from "@river-build/diamond/src/Diamond.sol";
+import {IDiamond, Diamond} from "@towns-protocol/diamond/src/Diamond.sol";
 
 // libraries
 
@@ -14,6 +14,7 @@ import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
 import {DeployOwnable} from "contracts/scripts/deployments/facets/DeployOwnable.s.sol";
 import {DeployDiamondCut} from "contracts/scripts/deployments/facets/DeployDiamondCut.s.sol";
 import {DeployDiamondLoupe} from "contracts/scripts/deployments/facets/DeployDiamondLoupe.s.sol";
+import {DeployEIP712Facet} from "contracts/scripts/deployments/facets/DeployEIP712Facet.s.sol";
 import {DeployIntrospection} from "contracts/scripts/deployments/facets/DeployIntrospection.s.sol";
 import {DeployMetadata} from "contracts/scripts/deployments/facets/DeployMetadata.s.sol";
 import {DeploySpaceOwnerFacet} from "contracts/scripts/deployments/facets/DeploySpaceOwnerFacet.s.sol";
@@ -24,6 +25,7 @@ contract DeploySpaceOwner is DiamondHelper, Deployer {
   DeployDiamondCut diamondCutHelper = new DeployDiamondCut();
   DeployDiamondLoupe diamondLoupeHelper = new DeployDiamondLoupe();
   DeployOwnable ownableHelper = new DeployOwnable();
+  DeployEIP712Facet eip712Helper = new DeployEIP712Facet();
   DeployIntrospection introspectionHelper = new DeployIntrospection();
   DeploySpaceOwnerFacet spaceOwnerHelper = new DeploySpaceOwnerFacet();
   DeployMetadata metadataHelper = new DeployMetadata();
@@ -33,6 +35,7 @@ contract DeploySpaceOwner is DiamondHelper, Deployer {
   address multiInit;
   address diamondCut;
   address diamondLoupe;
+  address eip712;
   address introspection;
   address ownable;
 
@@ -80,19 +83,23 @@ contract DeploySpaceOwner is DiamondHelper, Deployer {
     metadata = metadataHelper.deploy(deployer);
     spaceOwner = spaceOwnerHelper.deploy(deployer);
     guardian = guardianHelper.deploy(deployer);
+    eip712 = eip712Helper.deploy(deployer);
 
     addFacet(
       spaceOwnerHelper.makeCut(spaceOwner, IDiamond.FacetCutAction.Add),
       spaceOwner,
-      spaceOwnerHelper.makeInitData("Space Owner", "OWNER", "1")
+      spaceOwnerHelper.makeInitData("Space Owner", "OWNER")
     );
-
+    addFacet(
+      eip712Helper.makeCut(eip712, IDiamond.FacetCutAction.Add),
+      eip712,
+      eip712Helper.makeInitData("Space Owner", "1")
+    );
     addFacet(
       guardianHelper.makeCut(guardian, IDiamond.FacetCutAction.Add),
       guardian,
       guardianHelper.makeInitData(7 days)
     );
-
     addFacet(
       metadataHelper.makeCut(metadata, IDiamond.FacetCutAction.Add),
       metadata,
@@ -130,7 +137,14 @@ contract DeploySpaceOwner is DiamondHelper, Deployer {
         addFacet(
           spaceOwnerHelper.makeCut(spaceOwner, IDiamond.FacetCutAction.Add),
           spaceOwner,
-          spaceOwnerHelper.makeInitData("Space Owner", "OWNER", "1")
+          spaceOwnerHelper.makeInitData("Space Owner", "OWNER")
+        );
+      } else if (facetNameHash == keccak256(abi.encodePacked("EIP712Facet"))) {
+        eip712 = eip712Helper.deploy(deployer);
+        addFacet(
+          eip712Helper.makeCut(eip712, IDiamond.FacetCutAction.Add),
+          eip712,
+          eip712Helper.makeInitData("Space Owner", "1")
         );
       } else if (
         facetNameHash == keccak256(abi.encodePacked("GuardianFacet"))

@@ -15,7 +15,7 @@ import {SolanaUtils} from "contracts/src/factory/facets/wallet-link/libraries/So
 // contracts
 import {DeployBase} from "contracts/scripts/common/DeployBase.s.sol";
 import {BaseSetup} from "contracts/test/spaces/BaseSetup.sol";
-import {Nonces} from "@river-build/diamond/src/utils/Nonces.sol";
+import {Nonces} from "@towns-protocol/diamond/src/utils/Nonces.sol";
 import {MockDelegationRegistry} from "contracts/test/mocks/MockDelegationRegistry.sol";
 import {SimpleAccount} from "account-abstraction/samples/SimpleAccount.sol";
 

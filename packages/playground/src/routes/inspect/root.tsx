@@ -9,11 +9,11 @@ import {
     isUserSettingsStreamId,
     isUserStreamId,
     isValidStreamId,
-} from '@river-build/sdk'
+} from '@towns-protocol/sdk'
 import { useMemo, useState } from 'react'
-import { useAgentConnection, useSyncAgent } from '@river-build/react-sdk'
+import { useAgentConnection, useSyncAgent } from '@towns-protocol/react-sdk'
 import { useQuery } from '@tanstack/react-query'
-import { SpaceAddressFromSpaceId } from '@river-build/web3'
+import { SpaceAddressFromSpaceId } from '@towns-protocol/web3'
 import { Input } from '@/components/ui/input'
 import { GridSidePanel } from '@/components/layout/grid-side-panel'
 import { jsonStringify } from '@/utils/json-stringify'
@@ -49,6 +49,8 @@ const buildStreamMetadataUrl = (
             return `https://gamma.river.delivery`
         case 'alpha':
             return `https://alpha.river.delivery`
+        case 'delta':
+            return `https://delta.river.delivery`
         default:
             return `http://localhost:3002`
     }

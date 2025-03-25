@@ -1,4 +1,4 @@
-import { dlog, dlogError, bin_toHexString, check } from '@river-build/dlog'
+import { dlog, dlogError, bin_toHexString, check } from '@towns-protocol/dlog'
 import { isDefined, logNever } from './check'
 import {
     ChannelMessage,
@@ -7,7 +7,7 @@ import {
     SyncCookie,
     Snapshot,
     MiniblockHeader,
-} from '@river-build/proto'
+} from '@towns-protocol/proto'
 import TypedEmitter from 'typed-emitter'
 import {
     ConfirmedTimelineEvent,
@@ -51,7 +51,7 @@ import { StreamStateView_MemberMetadata } from './streamStateView_MemberMetadata
 import { StreamStateView_ChannelMetadata } from './streamStateView_ChannelMetadata'
 import { StreamEvents, StreamEncryptionEvents, StreamStateEvents } from './streamEvents'
 import isEqual from 'lodash/isEqual'
-import { DecryptionSessionError } from '@river-build/encryption'
+import { DecryptionSessionError } from '@towns-protocol/encryption'
 import { migrateSnapshot } from './migrations/migrateSnapshot'
 
 const log = dlog('csb:streams')
@@ -228,7 +228,6 @@ export class StreamStateView implements IStreamStateView {
     }
 
     private applySnapshot(
-        eventHash: string,
         event: ParsedEvent,
         inSnapshot: Snapshot,
         cleartexts: Record<string, Uint8Array | string> | undefined,
@@ -238,7 +237,6 @@ export class StreamStateView implements IStreamStateView {
         switch (snapshot.content.case) {
             case 'spaceContent':
                 this.spaceContent.applySnapshot(
-                    eventHash,
                     snapshot,
                     snapshot.content.value,
                     cleartexts,
@@ -298,13 +296,7 @@ export class StreamStateView implements IStreamStateView {
             default:
                 logNever(snapshot.content)
         }
-        this.membershipContent.applySnapshot(
-            eventHash,
-            event,
-            snapshot,
-            cleartexts,
-            encryptionEmitter,
-        )
+        this.membershipContent.applySnapshot(event, snapshot, cleartexts, encryptionEmitter)
     }
 
     private appendStreamAndCookie(
@@ -586,13 +578,7 @@ export class StreamStateView implements IStreamStateView {
         )
 
         // initialize from snapshot data, this gets all memberships and channel data, etc
-        this.applySnapshot(
-            bin_toHexString(miniblocks[0].hash),
-            miniblockHeaderEvent,
-            snapshot,
-            cleartexts,
-            emitter,
-        )
+        this.applySnapshot(miniblockHeaderEvent, snapshot, cleartexts, emitter)
         // initialize from miniblocks, the first minblock is the snapshot block, it's events are accounted for
         const block0Events = miniblocks[0].events.map((parsedEvent, i) => {
             const eventNum = miniblocks[0].header.eventNumOffset + BigInt(i)

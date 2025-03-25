@@ -172,7 +172,7 @@ func NewMiniblockFromBytesWithOpts(bytes []byte, opts *ParsedMiniblockInfoOpts) 
 	if err != nil {
 		return nil, AsRiverError(err, Err_INVALID_ARGUMENT).
 			Message("Failed to decode miniblock from bytes").
-			Func("NewMiniblockInfoFromBytes")
+			Func("NewMiniblockFromBytesWithOpts")
 	}
 
 	return NewMiniblockInfoFromProto(&pb, opts)

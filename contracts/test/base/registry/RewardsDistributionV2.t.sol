@@ -4,9 +4,9 @@ pragma solidity ^0.8.23;
 // interfaces
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IVotes} from "@openzeppelin/contracts/governance/utils/IVotes.sol";
-import {IDiamond} from "@river-build/diamond/src/IDiamond.sol";
-import {IDiamondCut} from "@river-build/diamond/src/facets/cut/IDiamondCut.sol";
-import {IOwnableBase} from "@river-build/diamond/src/facets/ownable/IERC173.sol";
+import {IDiamond} from "@towns-protocol/diamond/src/IDiamond.sol";
+import {IDiamondCut} from "@towns-protocol/diamond/src/facets/cut/IDiamondCut.sol";
+import {IOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
 
 // libraries
 import {stdError} from "forge-std/StdError.sol";
@@ -31,8 +31,12 @@ contract RewardsDistributionV2Test is BaseRegistryTest, IOwnableBase, IDiamond {
       "Stake(uint96 amount,address delegatee,address beneficiary,address owner,uint256 nonce,uint256 deadline)"
     );
 
-  DeployRewardsDistributionV2 internal distributionV2Helper =
-    new DeployRewardsDistributionV2();
+  DeployRewardsDistributionV2 internal distributionV2Helper;
+
+  function setUp() public virtual override {
+    super.setUp();
+    distributionV2Helper = new DeployRewardsDistributionV2();
+  }
 
   function test_storageSlot() public pure {
     bytes32 slot = keccak256(
@@ -917,7 +921,7 @@ contract RewardsDistributionV2Test is BaseRegistryTest, IOwnableBase, IDiamond {
     uint256 depositId = test_initiateWithdraw();
 
     address proxy = rewardsDistributionFacet.delegationProxyById(depositId);
-    uint256 cd = towns.lockCooldown(proxy);
+    uint256 cd = towns.lockExpiration(proxy);
 
     vm.warp(cd - 1);
 
@@ -943,7 +947,7 @@ contract RewardsDistributionV2Test is BaseRegistryTest, IOwnableBase, IDiamond {
     );
 
     address proxy = rewardsDistributionFacet.delegationProxyById(depositId);
-    uint256 cd = towns.lockCooldown(proxy);
+    uint256 cd = towns.lockExpiration(proxy);
 
     vm.warp(cd);
 

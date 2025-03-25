@@ -2,17 +2,14 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-
-import {IDiamondCut} from "@river-build/diamond/src/facets/cut/IDiamondCut.sol";
-
-import {Diamond} from "@river-build/diamond/src/Diamond.sol";
+import {IDiamondCut} from "@towns-protocol/diamond/src/facets/cut/IDiamondCut.sol";
 
 // libraries
 import "forge-std/console.sol";
 
 // contracts
+import {Diamond} from "@towns-protocol/diamond/src/Diamond.sol";
 import {AlphaHelper} from "contracts/scripts/interactions/helpers/AlphaHelper.sol";
-
 import {DeploySpace} from "contracts/scripts/deployments/diamonds/DeploySpace.s.sol";
 import {DeploySpaceFactory} from "contracts/scripts/deployments/diamonds/DeploySpaceFactory.s.sol";
 import {DeployBaseRegistry} from "contracts/scripts/deployments/diamonds/DeployBaseRegistry.s.sol";

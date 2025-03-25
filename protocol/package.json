@@ -1,5 +1,5 @@
 {
-    "name": "@river-build/proto-source",
+    "name": "@towns-protocol/proto-source",
     "version": "0.0.189",
     "packageManager": "yarn@3.8.0",
     "files": [

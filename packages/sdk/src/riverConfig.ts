@@ -5,9 +5,9 @@ import {
     Web3Deployment,
     getWeb3Deployment,
     getWeb3Deployments,
-} from '@river-build/web3'
+} from '@towns-protocol/web3'
 import { isDefined } from './check'
-import { check } from '@river-build/dlog'
+import { check } from '@towns-protocol/dlog'
 
 function getEnvironmentId(): string {
     if (typeof process === 'object') {
@@ -86,8 +86,10 @@ function makeWeb3Deployment(environmentId: string): Web3Deployment {
                 baseRegistry: process.env.BASE_REGISTRY_ADDRESS! as Address,
                 spaceFactory: process.env.SPACE_FACTORY_ADDRESS! as Address,
                 spaceOwner: process.env.SPACE_OWNER_ADDRESS! as Address,
-                mockNFT: process.env.MOCK_NFT_ADDRESS as Address | undefined,
-                member: process.env.MEMBER_ADDRESS as Address | undefined,
+                utils: {
+                    mockNFT: process.env.MOCK_NFT_ADDRESS as Address | undefined,
+                    member: process.env.MEMBER_ADDRESS as Address | undefined,
+                },
             },
         } satisfies BaseChainConfig,
         river: {

@@ -7,7 +7,7 @@ pragma solidity ^0.8.23;
 
 // helpers
 import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
-import {FacetHelper} from "contracts/test/diamond/Facet.t.sol";
+import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
 import {SpaceDelegationFacet} from "contracts/src/base/registry/facets/delegation/SpaceDelegationFacet.sol";
 
 contract DeploySpaceDelegation is Deployer, FacetHelper {
@@ -33,7 +33,7 @@ contract DeploySpaceDelegation is Deployer, FacetHelper {
   }
 
   function versionName() public pure override returns (string memory) {
-    return "spaceDelegationFacet";
+    return "facets/spaceDelegationFacet";
   }
 
   function __deploy(address deployer) public override returns (address) {

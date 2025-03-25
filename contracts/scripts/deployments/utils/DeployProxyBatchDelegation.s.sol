@@ -28,7 +28,7 @@ contract DeployProxyBatchDelegation is Deployer {
   address public vault;
 
   function versionName() public pure override returns (string memory) {
-    return "proxyBatchDelegation";
+    return "utils/proxyBatchDelegation";
   }
 
   function setDependencies(

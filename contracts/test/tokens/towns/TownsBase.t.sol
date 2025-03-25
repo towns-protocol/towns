@@ -8,8 +8,9 @@ import {TestUtils} from "contracts/test/utils/TestUtils.sol";
 import {ILockBase} from "contracts/src/tokens/lock/ILock.sol";
 
 //libraries
-import {EIP712Utils} from "contracts/test/utils/EIP712Utils.sol";
+import {EIP712Utils} from "@towns-protocol/diamond/test/facets/signature/EIP712Utils.sol";
 import {TownsLib} from "contracts/src/tokens/towns/base/TownsLib.sol";
+import {LockStorage} from "contracts/src/tokens/lock/LockStorage.sol";
 
 //contracts
 import {DeployTownsBase} from "contracts/scripts/deployments/utils/DeployTownsBase.s.sol";
@@ -19,6 +20,9 @@ import {ERC20} from "solady/tokens/ERC20.sol";
 import {ERC20Votes} from "solady/tokens/ERC20Votes.sol";
 
 contract TownsBaseTest is TestUtils, EIP712Utils, ILockBase {
+  address internal constant PERMIT2 =
+    0x000000000022D473030F116dDEE9F6B43aC78BA3;
+
   DeployTownsBase internal deployTownsBase = new DeployTownsBase();
   Towns towns;
 
@@ -53,6 +57,11 @@ contract TownsBaseTest is TestUtils, EIP712Utils, ILockBase {
     assertEq(towns.name(), "Towns");
     assertEq(towns.symbol(), "TOWNS");
     assertEq(towns.decimals(), 18);
+  }
+
+  function test_storageSlot() public pure {
+    bytes32 slot = keccak256("river.tokens.lock.storage");
+    assertEq(slot, LockStorage.STORAGE_SLOT, "slot");
   }
 
   // Permit and Permit with Signature
@@ -159,7 +168,7 @@ contract TownsBaseTest is TestUtils, EIP712Utils, ILockBase {
     givenCallerHasBridgedTokens(alice, amount)
     givenCallerDelegates(alice, space)
   {
-    assertEq(towns.isLockEnabled(alice), true);
+    assertEq(towns.isLockActive(alice), true);
 
     vm.expectEmit(address(towns));
     emit LockUpdated(alice, false, block.timestamp + 30 days);
@@ -167,12 +176,12 @@ contract TownsBaseTest is TestUtils, EIP712Utils, ILockBase {
     vm.prank(alice);
     towns.delegate(address(0));
 
-    assertEq(towns.isLockEnabled(alice), true);
+    assertEq(towns.isLockActive(alice), true);
 
-    uint256 cd = towns.lockCooldown(alice);
+    uint256 cd = towns.lockExpiration(alice);
     vm.warp(cd);
 
-    assertEq(towns.isLockEnabled(alice), false);
+    assertEq(towns.isLockActive(alice), false);
   }
 
   function test_revertWhen_delegateToZeroAddress(address alice) external {
@@ -180,6 +189,21 @@ contract TownsBaseTest is TestUtils, EIP712Utils, ILockBase {
     vm.expectRevert(Towns.DelegateeSameAsCurrent.selector);
     towns.delegate(address(0));
     assertEq(towns.delegates(alice), address(0));
+  }
+
+  function test_revertWhen_undelegate_twice(
+    address alice,
+    address space,
+    uint256 amount
+  )
+    external
+    givenCallerHasBridgedTokens(alice, amount)
+    givenCallerDelegates(alice, space)
+  {
+    vm.startPrank(alice);
+    towns.delegate(address(0));
+    vm.expectRevert(Towns.DelegateeSameAsCurrent.selector);
+    towns.delegate(address(0));
   }
 
   function test_delegate_redelegate(
@@ -233,11 +257,11 @@ contract TownsBaseTest is TestUtils, EIP712Utils, ILockBase {
     vm.startPrank(alice);
     towns.delegate(address(0));
 
-    assertEq(towns.isLockEnabled(alice), true);
+    assertEq(towns.isLockActive(alice), true);
 
     towns.delegate(space);
 
-    uint256 cd = towns.lockCooldown(alice);
+    uint256 cd = towns.lockExpiration(alice);
     vm.warp(cd);
 
     vm.expectRevert(Towns.TransferLockEnabled.selector);

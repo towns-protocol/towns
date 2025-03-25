@@ -7,7 +7,7 @@ pragma solidity ^0.8.23;
 
 //contracts
 import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
-import {FacetHelper} from "contracts/test/diamond/Facet.t.sol";
+import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
 import {XChain} from "contracts/src/base/registry/facets/xchain/XChain.sol";
 
 contract DeployXChain is Deployer, FacetHelper {
@@ -19,7 +19,7 @@ contract DeployXChain is Deployer, FacetHelper {
 
   // Deploying
   function versionName() public pure override returns (string memory) {
-    return "xchainFacet";
+    return "facets/xchainFacet";
   }
 
   function initializer() public pure override returns (bytes4) {

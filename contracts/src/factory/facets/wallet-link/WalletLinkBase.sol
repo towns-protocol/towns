@@ -16,8 +16,8 @@ import {CustomRevert} from "contracts/src/utils/libraries/CustomRevert.sol";
 import {SolanaUtils} from "./libraries/SolanaUtils.sol";
 
 // contracts
-import {Nonces} from "@river-build/diamond/src/utils/Nonces.sol";
-import {EIP712Base} from "@river-build/diamond/src/utils/cryptography/signature/EIP712Base.sol";
+import {Nonces} from "@towns-protocol/diamond/src/utils/Nonces.sol";
+import {EIP712Base} from "@towns-protocol/diamond/src/utils/cryptography/EIP712Base.sol";
 
 abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
   using EnumerableSet for EnumerableSet.AddressSet;
