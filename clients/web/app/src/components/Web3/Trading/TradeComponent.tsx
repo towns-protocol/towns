@@ -33,6 +33,7 @@ import { PercentInputRadio } from './ui/PercentInputRadio'
 import { useTradingWalletBalance } from './hooks/useTradingBalance'
 import { QuoteMetaData, QuoteStatus } from './types'
 import { TransactionTooltip } from './TransactionTooltip'
+import { useTradeAnalytics } from './useTradeAnalytics'
 
 type QuickSelectOption = {
     label: string
@@ -281,28 +282,23 @@ export const TradeComponent = (props: Props) => {
         walletAddress,
     ])
 
-    const { sendTradeTransaction } = useSendTradeTransaction({
-        request: request,
-        chainId: chainId,
-        skipPendingToast: true,
-    })
-
     const isNarrow = useSizeContext().lessThan(400)
 
     const metaData = useMemo((): QuoteMetaData | undefined => {
         if (!quoteData) {
             return undefined
         }
+        const { estimate } = quoteData
         const value =
             mode === 'buy'
                 ? getTokenValueData({
-                      amount: quoteData.estimate.toAmount ?? '0',
+                      amount: estimate.toAmount ?? '0',
                       tokenAddress: toTokenAddress,
                       chainConfig,
                       tokenData: coinData,
                   })
                 : getTokenValueData({
-                      amount: quoteData.estimate.fromAmount ?? '0',
+                      amount: estimate.fromAmount ?? '0',
                       tokenAddress: fromTokenAddress,
                       chainConfig,
                       tokenData: coinData,
@@ -311,13 +307,13 @@ export const TradeComponent = (props: Props) => {
         const valueAt =
             mode === 'buy'
                 ? getTokenValueData({
-                      amount: quoteData.estimate.fromAmount ?? '0',
+                      amount: estimate.fromAmount ?? '0',
                       tokenAddress: fromTokenAddress,
                       chainConfig,
                       tokenData: coinData,
                   })
                 : getTokenValueData({
-                      amount: quoteData.estimate.toAmount ?? '0',
+                      amount: estimate.toAmount ?? '0',
                       tokenAddress: toTokenAddress,
                       chainConfig,
                       tokenData: coinData,
@@ -327,8 +323,60 @@ export const TradeComponent = (props: Props) => {
             symbol: coinData?.token.symbol ?? '',
             value,
             valueAt,
+            analytics: {
+                tokenName: coinData?.token.name ?? '',
+                tokenNetwork: chainConfig.analyticName,
+                amount: value.value,
+                amountUSD: mode === 'buy' ? estimate.fromAmountUSD : estimate.toAmountUSD,
+            },
         } satisfies QuoteMetaData
     }, [quoteData, mode, toTokenAddress, chainConfig, coinData, fromTokenAddress])
+
+    const { sendTradeTransaction } = useSendTradeTransaction({
+        request: request,
+        chainId: chainId,
+        skipPendingToast: true,
+    })
+
+    const { trackTradeSubmitted, trackTradeSuccess, trackTradeFailed } = useTradeAnalytics({
+        chainId,
+        address: tokenAddress,
+    })
+
+    const onPressTrade = useMemo(
+        () =>
+            sendTradeTransaction
+                ? async (getSigner: (() => Promise<TSigner | undefined>) | undefined) => {
+                      const tradeTokenAnalytics = {
+                          entryPoint: 'wallet' as const,
+                          tradeAction: mode,
+                          tradeAmount: metaData?.analytics.amount ?? '',
+                          tradeValueUSD: metaData?.analytics.amountUSD ?? '',
+                          messageAdded: threadInfo !== undefined,
+                      }
+                      trackTradeSubmitted(tradeTokenAnalytics)
+
+                      try {
+                          await sendTradeTransaction(getSigner)
+                          trackTradeSuccess(tradeTokenAnalytics)
+                      } catch (error) {
+                          trackTradeFailed({
+                              ...tradeTokenAnalytics,
+                              reason: error instanceof Error ? error.message : 'Unknown error',
+                          })
+                      }
+                  }
+                : undefined,
+        [
+            metaData,
+            mode,
+            sendTradeTransaction,
+            threadInfo,
+            trackTradeFailed,
+            trackTradeSubmitted,
+            trackTradeSuccess,
+        ],
+    )
 
     useEffect(() => {
         if (isQuoteError) {
@@ -462,7 +510,7 @@ export const TradeComponent = (props: Props) => {
                                 chainId={chainId}
                                 metaData={metaData}
                                 isQuoteLoading={isQuoteLoading}
-                                onPressTrade={sendTradeTransaction}
+                                onPressTrade={onPressTrade}
                             />
                         )}
                     </Stack>

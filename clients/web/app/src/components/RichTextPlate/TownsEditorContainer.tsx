@@ -25,6 +25,7 @@ import {
 import { useInlineReplyAttchmentPreview } from '@components/EmbeddedMessageAttachement/hooks/useInlineReplyAttchmentPreview'
 import { LoadingUnfurledLinkAttachment } from 'hooks/useExtractInternalLinks'
 import { SECOND_MS } from 'data/constants'
+import { useTokenTrackingData } from '@components/Web3/Trading/useTradeAnalytics'
 import { RichTextEditor } from './RichTextEditor'
 import { useEditorChannelData, useEditorMemberData } from './hooks/editorHooks'
 import { getChannelNames } from './utils/helpers'
@@ -37,6 +38,7 @@ type Props = {
         value: string,
         options: SendTextMessageOptions | undefined,
         filesCount?: number,
+        tickerAnalytics?: ReturnType<typeof useTokenTrackingData>,
     ) => void
     onCancel?: () => void
     autoFocus?: boolean
@@ -153,6 +155,11 @@ const TownsTextEditorWithoutBoundary = ({
 
     const { casablancaClient } = useTownsContext()
 
+    const tickerAnalytics = useTokenTrackingData({
+        chainId: tickerAttachments[0]?.chainId,
+        address: tickerAttachments[0]?.address,
+    })
+
     const sendMessage = useCallback(
         async (message: string, options: SendTextMessageOptions) => {
             if (!onSend) {
@@ -214,18 +221,19 @@ const TownsTextEditorWithoutBoundary = ({
                 deferredRef.resolve?.()
             }
 
-            onSend(message, options, files?.length)
+            onSend(message, options, files?.length, tickerAnalytics)
             setTickerAttachments([])
         },
         [
             onSend,
             embeddedMessageAttachments,
             unfurledLinkAttachments,
-            uploadFiles,
+            tickerAttachments,
             files?.length,
+            tickerAnalytics,
+            uploadFiles,
             casablancaClient?.streams,
             channelId,
-            tickerAttachments,
         ],
     )
 

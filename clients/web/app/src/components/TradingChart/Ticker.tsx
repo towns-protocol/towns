@@ -11,6 +11,7 @@ import { useOpenMessageThread } from 'hooks/useOpenThread'
 import { useSizeContext } from 'ui/hooks/useSizeContext'
 import { MessageAttachmentsContext } from '@components/MessageAttachments/MessageAttachmentsContext'
 import { useDevice } from 'hooks/useDevice'
+import { useTradeAnalytics } from '@components/Web3/Trading/useTradeAnalytics'
 import { useCoinData } from './useCoinData'
 import { TickerHeader } from './TickerInfoBox'
 import { TradingChart } from './TradingChart'
@@ -87,6 +88,11 @@ export const TradingChartTicker = (props: {
 
     const attachmentContext = useContext(MessageAttachmentsContext)
 
+    const { trackClickTokenMessage } = useTradeAnalytics({
+        chainId: attachment.chainId,
+        address: attachment.address,
+    })
+
     const onTradeClick = useCallback(
         (mode: 'buy' | 'sell') => {
             // if the user is not in a space, open the trade panel
@@ -94,6 +100,9 @@ export const TradingChartTicker = (props: {
             if (eventId && timelineContext?.spaceId) {
                 onOpenMessageThread(eventId, {
                     mode,
+                })
+                trackClickTokenMessage({
+                    tradeAction: mode,
                 })
             } else {
                 openPanel(CHANNEL_INFO_PARAMS.TRADE_PANEL, {
@@ -105,11 +114,12 @@ export const TradingChartTicker = (props: {
         },
         [
             eventId,
+            timelineContext?.spaceId,
             onOpenMessageThread,
+            trackClickTokenMessage,
             openPanel,
             attachment.address,
             remappedChain,
-            timelineContext,
         ],
     )
 
@@ -137,11 +147,7 @@ export const TradingChartTicker = (props: {
             paddingBottom="md"
             onClick={isTouch ? onPreventTouchClick : undefined}
         >
-            <TradingChart
-                address={props.attachment.address}
-                chainId={remappedChain}
-                disabled={!inView}
-            />
+            <TradingChart address={attachment.address} chainId={remappedChain} disabled={!inView} />
 
             {!isTradeThreadContext && !attachmentContext?.isMessageAttachementContext && (
                 <Stack horizontal paddingX paddingY="none" gap="sm">

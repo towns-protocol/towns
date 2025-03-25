@@ -8,13 +8,22 @@ import { useGatherSpaceDetailsAnalytics } from './useGatherSpaceDetailsAnalytics
 export type PostedMessageOptions = {
     messageType?: MessageType | 'emoji reaction' | 'gif' | 'redacted' | 'admin redacted' | 'edited'
     filesCount?: number
+    hasTicker?: boolean
 }
 
 export function getPostedMessageType(
     value: string,
-    { messageType, filesCount = 0 }: PostedMessageOptions,
+    { messageType, filesCount = 0, hasTicker = false }: PostedMessageOptions,
 ) {
-    return isEmoji(value) ? 'emoji' : isUrl(value) ? 'link' : filesCount > 0 ? 'file' : messageType // last option
+    return hasTicker
+        ? 'token'
+        : isEmoji(value)
+        ? 'emoji'
+        : isUrl(value)
+        ? 'link'
+        : filesCount > 0
+        ? 'file'
+        : messageType // last option
 }
 
 export type PostedMessage = {

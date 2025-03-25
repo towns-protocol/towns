@@ -7,7 +7,11 @@ export type {
 } from './client/TownsClientTypes'
 export { TransactionStatus, CreateSpaceFlowStatus } from './client/TownsClientTypes'
 export * from './client/TownsNotifciationSettings'
-export { ChannelContextProvider, useChannelContext } from './components/ChannelContextProvider'
+export {
+    ChannelContextProvider,
+    useChannelContext,
+    ChannelContext,
+} from './components/ChannelContextProvider'
 export { QueryProvider } from './components/QueryProvider'
 export * from './components/SpaceContextProvider'
 export {

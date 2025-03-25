@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { z } from 'zod'
+import { useMemo } from 'react'
 import { env } from 'utils'
 import { MINUTE_MS } from 'data/constants'
 
@@ -73,10 +74,10 @@ export const useCoinData = ({
     chain: string
     disabled?: boolean
 }) => {
-    const networkId = chain === 'solana-mainnet' ? 1399811149 : Number(chain)
-    const remappedAddress = remapAddressToCodexFormat(networkId, address)
-
-    const query = `
+    const query = useMemo(() => {
+        const networkId = chain === 'solana-mainnet' ? 1399811149 : Number(chain)
+        const remappedAddress = remapAddressToCodexFormat(networkId, address)
+        return `
      {
         filterTokens(
             filters: {}
@@ -106,9 +107,10 @@ export const useCoinData = ({
         }
     }
     `
+    }, [address, chain])
 
     const { data, isLoading, isError, error } = useQuery({
-        queryKey: ['searchTokens', query],
+        queryKey: ['searchTokens', address, chain],
         queryFn: async () => {
             const apiKey = env.VITE_CODEX_API_KEY
             if (!apiKey) {

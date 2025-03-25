@@ -47,6 +47,7 @@ import { TradingBalanceAndSlippage } from '@components/Web3/Trading/TradingBalan
 import { TradeComponent } from '@components/Web3/Trading/TradeComponent'
 import { QuoteMetaData, QuoteStatus } from '@components/Web3/Trading/types'
 import { TransactionTooltip } from '@components/Web3/Trading/TransactionTooltip'
+import { useTradeAnalytics } from '@components/Web3/Trading/useTradeAnalytics'
 import { getTickerAttachment } from './getTickerAttachment'
 import { TickerThreadContext } from './TickerThreadContext'
 
@@ -211,14 +212,38 @@ const ThreadEditor = (props: {
 
     const [isTradingProgress, setIsTradingProgress] = useState(false)
 
+    const { trackTradeSubmitted, trackTradeSuccess, trackTradeFailed } = useTradeAnalytics({
+        chainId: tickerAttachment?.chainId ?? '',
+        address: tickerAttachment?.address ?? '',
+    })
+
     const onSend = useCallback(
         async (value: string, options: SendMessageOptions | undefined) => {
             if (tradeData && onSendTrade && getSigner) {
+                const emptyMessage = options && 'emptyMessage' in options && !!options?.emptyMessage
+                const tradeTokenAnalytics = {
+                    entryPoint: 'channel_thread' as const,
+                    messageAdded: !emptyMessage,
+                    tradeAction: tradeData.metaData.mode,
+                    tradeAmount: tradeData.metaData.analytics.amount,
+                    tradeValueUSD: tradeData.metaData.analytics.amountUSD,
+                }
+                trackTradeSubmitted(tradeTokenAnalytics)
+
                 setIsTradingProgress(true)
-                await onSendTrade?.(getSigner)
-                resetRef.current?.reset()
-                setIsTradingProgress(false)
-                if (options && 'emptyMessage' in options && !!options?.emptyMessage) {
+                try {
+                    await onSendTrade?.(getSigner)
+                    trackTradeSuccess(tradeTokenAnalytics)
+                } catch (error) {
+                    trackTradeFailed({
+                        ...tradeTokenAnalytics,
+                        reason: error instanceof Error ? error.message : 'Unknown error',
+                    })
+                } finally {
+                    resetRef.current?.reset()
+                    setIsTradingProgress(false)
+                }
+                if (emptyMessage) {
                     return
                 }
             }
@@ -244,10 +269,14 @@ const ThreadEditor = (props: {
             channelId,
             getSigner,
             onSendTrade,
-            threadData,
             sendReply,
             spaceDetailsAnalytics,
             spaceId,
+            threadData?.parentEvent,
+            threadData?.userIds,
+            trackTradeFailed,
+            trackTradeSubmitted,
+            trackTradeSuccess,
             tradeData,
         ],
     )

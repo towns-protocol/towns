@@ -7,6 +7,7 @@ export type ChainConfig = {
     decimals: number
     chainId: string
     tokenSymbol: string
+    analyticName: 'Solana' | 'ETH'
 }
 
 export const tradingChains = {
@@ -17,6 +18,7 @@ export const tradingChains = {
         decimals: 9,
         chainId: 'solana-mainnet',
         tokenSymbol: 'SOL',
+        analyticName: 'Solana',
     },
     '8453': {
         name: 'Base',
@@ -25,6 +27,7 @@ export const tradingChains = {
         decimals: 18,
         chainId: '8453',
         tokenSymbol: 'ETH',
+        analyticName: 'ETH',
     },
     '1': {
         name: 'Ethereum',
@@ -33,6 +36,7 @@ export const tradingChains = {
         decimals: 18,
         chainId: '1',
         tokenSymbol: 'ETH',
+        analyticName: 'ETH',
     },
 } as const satisfies Record<string, ChainConfig>
 

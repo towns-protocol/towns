@@ -25,6 +25,22 @@ export function calculateTotalHoldingValueCents(
     }, 0)
 }
 
+export function calculateHoldingByChainValueCents(
+    chainWalletAssets: ChainWalletAssets[] | undefined,
+): Record<string, number> {
+    if (!chainWalletAssets) {
+        return {}
+    }
+    return chainWalletAssets.reduce((acc, chainWalletAsset) => {
+        const cents =
+            chainWalletAsset.nativeAsset.holdingValueCents +
+            chainWalletAsset.tokens.reduce((acc, token) => acc + token.holdingValueCents, 0)
+        acc[chainWalletAsset.chain] = cents
+
+        return acc
+    }, {} as Record<string, number>)
+}
+
 export type TokenAsset = {
     chain: string
     tokenAddress: string

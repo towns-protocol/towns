@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react'
+import React, { useCallback, useEffect, useMemo } from 'react'
 
 import { useBalanceOnChain } from '@components/Web3/Trading/useBalanceOnChain'
 import { useSolanaBalance } from '@components/Web3/Trading/useSolanaBalance'
@@ -9,8 +9,15 @@ import { formatUnitsToFixedLength } from 'hooks/useBalance'
 import { CHANNEL_INFO_PARAMS } from 'routes'
 import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
 
-import { calculateTotalHoldingValueCents, formatCents } from '@components/Web3/Trading/tradingUtils'
+import {
+    calculateHoldingByChainValueCents,
+    calculateTotalHoldingValueCents,
+    formatCents,
+} from '@components/Web3/Trading/tradingUtils'
 import { useTradingWallet } from '@components/Web3/Trading/useTradingWallet'
+import { tradingChains } from '@components/Web3/Trading/tradingConstants'
+
+let appStart = true
 
 export const WalletButton = () => {
     const { closePanel, openPanel, isPanelOpen } = usePanelActions()
@@ -19,6 +26,27 @@ export const WalletButton = () => {
     const { data: chainWalletAssets } = useTradingWallet()
     const totalHoldingValueCents = useMemo(() => {
         return calculateTotalHoldingValueCents(chainWalletAssets)
+    }, [chainWalletAssets])
+
+    useEffect(() => {
+        if (chainWalletAssets && appStart) {
+            appStart = false
+            try {
+                const centsByChain = calculateHoldingByChainValueCents(chainWalletAssets)
+                Analytics.getInstance().track(
+                    'wallet loaded',
+                    centsByChain
+                        ? Object.entries(centsByChain).reduce((acc, [chain, cents]) => {
+                              acc[tradingChains[chain as keyof typeof tradingChains].analyticName] =
+                                  (cents / 100).toFixed(2)
+                              return acc
+                          }, {} as Record<string, string>)
+                        : {},
+                )
+            } catch (error) {
+                console.error(error)
+            }
+        }
     }, [chainWalletAssets])
 
     const onWalletClick = useCallback(() => {

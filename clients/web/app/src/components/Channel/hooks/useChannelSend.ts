@@ -4,6 +4,7 @@ import { ReplyToMessageContext } from '@components/ReplyToMessageContext/ReplyTo
 import { useSlashCommand } from 'hooks/useSlashCommand'
 import { getPostedMessageType, trackPostedMessage } from '@components/Analytics/postedMessage'
 import { useGatherSpaceDetailsAnalytics } from '@components/Analytics/useGatherSpaceDetailsAnalytics'
+import { useTokenTrackingData } from '@components/Web3/Trading/useTradeAnalytics'
 
 export const useChannelSend = (params: {
     channelId: string
@@ -20,7 +21,12 @@ export const useChannelSend = (params: {
     })
 
     const onSend = useCallback(
-        (value: string, options: SendMessageOptions | undefined, filesCount: number = 0) => {
+        (
+            value: string,
+            options: SendMessageOptions | undefined,
+            filesCount: number = 0,
+            tickerAnalytics?: ReturnType<typeof useTokenTrackingData>,
+        ) => {
             if (!channelId) {
                 return
             }
@@ -38,8 +44,10 @@ export const useChannelSend = (params: {
                 messageType: getPostedMessageType(value, {
                     messageType: options?.messageType,
                     filesCount,
+                    hasTicker: !!tickerAnalytics,
                 }),
                 ...spaceDetailsAnalytics,
+                ...tickerAnalytics,
             })
 
             // TODO: need to pass participants to sendReply in case of thread ?

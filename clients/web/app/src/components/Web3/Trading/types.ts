@@ -6,6 +6,12 @@ export type QuoteMetaData = {
     symbol: string
     value: ReturnType<typeof getTokenValueData>
     valueAt: ReturnType<typeof getTokenValueData>
+    analytics: {
+        tokenName: string
+        tokenNetwork: 'Solana' | 'ETH'
+        amount: string
+        amountUSD: string
+    }
 }
 
 export type QuoteStatus = (
