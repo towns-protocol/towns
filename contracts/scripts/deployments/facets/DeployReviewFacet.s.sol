@@ -7,7 +7,7 @@ pragma solidity ^0.8.19;
 
 //contracts
 import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
-import {FacetHelper} from "contracts/test/diamond/Facet.t.sol";
+import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
 import {ReviewFacet} from "contracts/src/spaces/facets/review/ReviewFacet.sol";
 
 contract DeployReviewFacet is Deployer, FacetHelper {
@@ -18,7 +18,7 @@ contract DeployReviewFacet is Deployer, FacetHelper {
   }
 
   function versionName() public pure override returns (string memory) {
-    return "reviewFacet";
+    return "facets/reviewFacet";
   }
 
   function initializer() public pure override returns (bytes4) {

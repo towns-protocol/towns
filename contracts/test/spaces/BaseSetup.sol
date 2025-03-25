@@ -3,7 +3,7 @@ pragma solidity ^0.8.23;
 
 // utils
 import {TestUtils} from "contracts/test/utils/TestUtils.sol";
-import {EIP712Utils} from "contracts/test/utils/EIP712Utils.sol";
+import {EIP712Utils} from "@towns-protocol/diamond/test/facets/signature/EIP712Utils.sol";
 import {SimpleAccountFactory} from "account-abstraction/samples/SimpleAccountFactory.sol";
 import {SimpleAccount} from "account-abstraction/samples/SimpleAccount.sol";
 
@@ -24,7 +24,7 @@ import {MessageHashUtils} from "@openzeppelin/contracts/utils/cryptography/Messa
 import {TownsLib} from "contracts/src/tokens/towns/base/TownsLib.sol";
 
 // contracts
-import {EIP712Facet} from "@towns-protocol/diamond/src/utils/cryptography/signature/EIP712Facet.sol";
+import {EIP712Facet} from "@towns-protocol/diamond/src/utils/cryptography/EIP712Facet.sol";
 import {NodeOperatorStatus} from "contracts/src/base/registry/facets/operator/NodeOperatorStorage.sol";
 import {MockMessenger} from "contracts/test/mocks/MockMessenger.sol";
 
@@ -53,12 +53,11 @@ contract BaseSetup is TestUtils, EIP712Utils, SpaceHelper {
   bytes32 private constant _LINKED_WALLET_TYPEHASH =
     0x6bb89d031fcd292ecd4c0e6855878b7165cebc3a2f35bc6bbac48c088dd8325c;
 
-  DeployBaseRegistry internal deployBaseRegistry = new DeployBaseRegistry();
-  DeploySpaceFactory internal deploySpaceFactory = new DeploySpaceFactory();
-  DeployTownsBase internal deployTokenBase = new DeployTownsBase();
-  DeployProxyBatchDelegation internal deployProxyBatchDelegation =
-    new DeployProxyBatchDelegation();
-  DeployRiverAirdrop internal deployRiverAirdrop = new DeployRiverAirdrop();
+  DeployBaseRegistry internal deployBaseRegistry;
+  DeploySpaceFactory internal deploySpaceFactory;
+  DeployTownsBase internal deployTokenBase;
+  DeployProxyBatchDelegation internal deployProxyBatchDelegation;
+  DeployRiverAirdrop internal deployRiverAirdrop;
 
   address[] internal operators;
   address[] internal nodes;
@@ -104,6 +103,7 @@ contract BaseSetup is TestUtils, EIP712Utils, SpaceHelper {
   // @notice - This function is called before each test function
   // @dev - It will create a new diamond contract and set the spaceFactory variable to the address of the "diamond" variable
   function setUp() public virtual {
+    vm.pauseGasMetering();
     deployer = getDeployer();
 
     operators = _createAccounts(10);
@@ -112,6 +112,12 @@ contract BaseSetup is TestUtils, EIP712Utils, SpaceHelper {
     simpleAccountFactory = new SimpleAccountFactory(
       IEntryPoint(_randomAddress())
     );
+
+    deployBaseRegistry = new DeployBaseRegistry();
+    deploySpaceFactory = new DeploySpaceFactory();
+    deployTokenBase = new DeployTownsBase();
+    deployProxyBatchDelegation = new DeployProxyBatchDelegation();
+    deployRiverAirdrop = new DeployRiverAirdrop();
 
     // River Token
     townsToken = deployTokenBase.deploy(deployer);
@@ -194,6 +200,7 @@ contract BaseSetup is TestUtils, EIP712Utils, SpaceHelper {
     space = ICreateSpace(spaceFactory).createSpace(spaceInfo);
     everyoneSpace = ICreateSpace(spaceFactory).createSpace(everyoneSpaceInfo);
     vm.stopPrank();
+    vm.resumeGasMetering();
   }
 
   function _registerOperators() internal {

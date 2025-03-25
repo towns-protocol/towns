@@ -31,8 +31,12 @@ contract RewardsDistributionV2Test is BaseRegistryTest, IOwnableBase {
       "Stake(uint96 amount,address delegatee,address beneficiary,address owner,uint256 nonce,uint256 deadline)"
     );
 
-  DeployRewardsDistributionV2 internal distributionV2Helper =
-    new DeployRewardsDistributionV2();
+  DeployRewardsDistributionV2 internal distributionV2Helper;
+
+  function setUp() public virtual override {
+    super.setUp();
+    distributionV2Helper = new DeployRewardsDistributionV2();
+  }
 
   function test_storageSlot() public pure {
     bytes32 slot = keccak256(

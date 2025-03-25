@@ -7,7 +7,7 @@ pragma solidity ^0.8.23;
 
 //contracts
 import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
-import {FacetHelper} from "contracts/test/diamond/Facet.t.sol";
+import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
 import {EntitlementDataQueryable} from "contracts/src/spaces/facets/entitlements/extensions/EntitlementDataQueryable.sol";
 
 contract DeployEntitlementDataQueryable is Deployer, FacetHelper {
@@ -24,7 +24,7 @@ contract DeployEntitlementDataQueryable is Deployer, FacetHelper {
 
   // Deploying
   function versionName() public pure override returns (string memory) {
-    return "entitlementDataQueryableFacet";
+    return "facets/entitlementDataQueryableFacet";
   }
 
   function __deploy(address deployer) public override returns (address) {

@@ -9,7 +9,7 @@ import {IERC721A} from "contracts/src/diamond/facets/token/ERC721A/IERC721A.sol"
 import {ERC721A} from "contracts/src/diamond/facets/token/ERC721A/ERC721A.sol";
 import {MembershipToken} from "contracts/src/spaces/facets/membership/token/MembershipToken.sol";
 import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
-import {FacetHelper} from "contracts/test/diamond/Facet.t.sol";
+import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
 
 contract DeployMembershipToken is FacetHelper, Deployer {
   constructor() {
@@ -35,7 +35,7 @@ contract DeployMembershipToken is FacetHelper, Deployer {
   }
 
   function versionName() public pure override returns (string memory) {
-    return "membershipTokenFacet";
+    return "facets/membershipTokenFacet";
   }
 
   function makeInitData(

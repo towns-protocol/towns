@@ -15,7 +15,7 @@ contract DeployMember is Deployer {
   MerkleTree private merkle;
 
   function versionName() public pure override returns (string memory) {
-    return "member";
+    return "utils/member";
   }
 
   function __deploy(address deployer) public override returns (address) {

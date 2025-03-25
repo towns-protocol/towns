@@ -8,7 +8,7 @@ pragma solidity ^0.8.23;
 //contracts
 import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
 import {RiverConfig} from "contracts/src/river/registry/facets/config/RiverConfig.sol";
-import {FacetHelper} from "contracts/test/diamond/Facet.t.sol";
+import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
 import {IDiamond} from "@towns-protocol/diamond/src/Diamond.sol";
 
 contract DeployRiverConfig is FacetHelper, Deployer {
@@ -35,7 +35,7 @@ contract DeployRiverConfig is FacetHelper, Deployer {
   }
 
   function versionName() public pure override returns (string memory) {
-    return "riverConfigFacet";
+    return "facets/riverConfigFacet";
   }
 
   function facetInitHelper(

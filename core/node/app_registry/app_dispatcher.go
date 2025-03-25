@@ -125,11 +125,9 @@ func (d *AppDispatcher) SubmitMessages(
 				ctx,
 				messages.AppId,
 				sharedSecret,
-				messages.StreamId,
-				messages.SessionIds,
-				messages.CipherTexts,
+				messages.EncryptionEnvelope,
 				messages.WebhookUrl,
-				messages.StreamEvents,
+				messages.MessageEnvelopes,
 			); err != nil {
 				// TODO: retry logic?
 				logging.FromCtx(ctx).Errorw(

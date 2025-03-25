@@ -18,7 +18,7 @@ contract DeployTokenPausable is FacetHelper, Deployer {
   }
 
   function versionName() public pure override returns (string memory) {
-    return "tokenPausableFacet";
+    return "facets/tokenPausableFacet";
   }
 
   function __deploy(address deployer) public override returns (address) {

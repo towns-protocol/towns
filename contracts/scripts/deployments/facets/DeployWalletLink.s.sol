@@ -3,7 +3,7 @@ pragma solidity ^0.8.23;
 
 //contracts
 import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
-import {FacetHelper} from "contracts/test/diamond/Facet.t.sol";
+import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
 import {WalletLink} from "contracts/src/factory/facets/wallet-link/WalletLink.sol";
 
 contract DeployWalletLink is FacetHelper, Deployer {
@@ -40,7 +40,7 @@ contract DeployWalletLink is FacetHelper, Deployer {
   }
 
   function versionName() public pure override returns (string memory) {
-    return "walletLinkFacet";
+    return "facets/walletLinkFacet";
   }
 
   function __deploy(address deployer) public override returns (address) {

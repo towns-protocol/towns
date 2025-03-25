@@ -7,7 +7,7 @@ pragma solidity ^0.8.23;
 
 // contracts
 import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
-import {FacetHelper} from "contracts/test/diamond/Facet.t.sol";
+import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
 
 import {ProxyManager} from "@towns-protocol/diamond/src/proxy/manager/ProxyManager.sol";
 
@@ -32,7 +32,7 @@ contract DeployProxyManager is Deployer, FacetHelper {
   }
 
   function versionName() public pure override returns (string memory) {
-    return "proxyManagerFacet";
+    return "facets/proxyManagerFacet";
   }
 
   function __deploy(address deployer) public override returns (address) {

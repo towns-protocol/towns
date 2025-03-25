@@ -2,13 +2,14 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {IVotes} from "@openzeppelin/contracts/governance/utils/IVotes.sol";
+import {IERC5805} from "@openzeppelin/contracts/interfaces/IERC5805.sol";
 import {IERC6372} from "@openzeppelin/contracts/interfaces/IERC6372.sol";
+import {IVotes} from "@openzeppelin/contracts/governance/utils/IVotes.sol";
 
 // contracts
 import {VotesBase} from "./VotesBase.sol";
 
-abstract contract Votes is VotesBase {
+abstract contract Votes is VotesBase, IERC5805 {
   /// @inheritdoc IERC6372
   function clock() public view virtual returns (uint48) {
     return _clock();

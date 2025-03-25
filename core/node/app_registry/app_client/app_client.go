@@ -35,10 +35,8 @@ type KeySolicitationResponse struct{}
 
 // command: "messages"
 type SendSessionMessagesRequestData struct {
-	SessionIds   []string `json:"sessionId"`
-	StreamId     string   `json:"streamId"`
-	CipherTexts  string   `json:"cipherTexts"`
-	StreamEvents [][]byte `json:"streamEvents"`
+	EncryptionEnvelope []byte   `json:"encryptionEnvelope"`
+	MessageEnvelopes   [][]byte `json:"messageEnvelopes"`
 }
 
 type SendSessionMessagesResponse struct{}
@@ -199,11 +197,9 @@ func (b *AppClient) SendSessionMessages(
 	ctx context.Context,
 	appId common.Address,
 	hs256SharedSecret [32]byte,
-	streamId shared.StreamId,
-	sessionIds []string,
-	cipherTexts string,
+	encryptionEnvelope []byte,
 	webhookUrl string,
-	streamEvents [][]byte,
+	messageEnvelopes [][]byte,
 ) error {
 	resp, err := b.marshalAndPost(
 		ctx,
@@ -212,10 +208,8 @@ func (b *AppClient) SendSessionMessages(
 		&AppServiceRequestPayload{
 			Command: "messages",
 			Data: SendSessionMessagesRequestData{
-				SessionIds:   sessionIds,
-				StreamId:     streamId.String(),
-				CipherTexts:  cipherTexts,
-				StreamEvents: streamEvents,
+				EncryptionEnvelope: encryptionEnvelope,
+				MessageEnvelopes:   messageEnvelopes,
 			},
 		},
 		webhookUrl,
@@ -227,8 +221,7 @@ func (b *AppClient) SendSessionMessages(
 
 	if resp.StatusCode != http.StatusOK {
 		return base.RiverError(protocol.Err_CANNOT_CALL_WEBHOOK, "webhook response non-OK status").
-			Tag("appId", appId).
-			Tag("sessionIds", sessionIds)
+			Tag("appId", appId)
 	}
 	return nil
 }

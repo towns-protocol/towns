@@ -9,7 +9,7 @@ import {IMembership} from "contracts/src/spaces/facets/membership/IMembership.so
 //contracts
 import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
 import {MembershipFacet} from "contracts/src/spaces/facets/membership/MembershipFacet.sol";
-import {FacetHelper} from "contracts/test/diamond/Facet.t.sol";
+import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
 
 contract DeployMembership is Deployer, FacetHelper {
   constructor() {
@@ -57,7 +57,7 @@ contract DeployMembership is Deployer, FacetHelper {
   }
 
   function versionName() public pure override returns (string memory) {
-    return "membershipFacet";
+    return "facets/membershipFacet";
   }
 
   function __deploy(address deployer) public override returns (address) {

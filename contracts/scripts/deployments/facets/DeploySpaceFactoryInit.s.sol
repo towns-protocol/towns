@@ -8,7 +8,7 @@ pragma solidity ^0.8.19;
 //contracts
 import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
 import {SpaceFactoryInit} from "contracts/src/factory/SpaceFactoryInit.sol";
-import {FacetHelper} from "contracts/test/diamond/Facet.t.sol";
+import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
 
 // helpers
 
@@ -28,7 +28,7 @@ contract DeploySpaceFactoryInit is Deployer, FacetHelper {
   }
 
   function versionName() public pure override returns (string memory) {
-    return "spaceFactoryInit";
+    return "facets/spaceFactoryInit";
   }
 
   function __deploy(address deployer) public override returns (address) {

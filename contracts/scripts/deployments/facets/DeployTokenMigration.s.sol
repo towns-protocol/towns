@@ -9,7 +9,7 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 //contracts
 import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
 import {TokenMigrationFacet} from "contracts/src/tokens/migration/TokenMigration.sol";
-import {FacetHelper} from "contracts/test/diamond/Facet.t.sol";
+import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
 
 contract DeployTokenMigration is FacetHelper, Deployer {
   constructor() {
@@ -23,7 +23,7 @@ contract DeployTokenMigration is FacetHelper, Deployer {
   }
 
   function versionName() public pure override returns (string memory) {
-    return "tokenMigrationFacet";
+    return "facets/tokenMigrationFacet";
   }
 
   function makeInitData(

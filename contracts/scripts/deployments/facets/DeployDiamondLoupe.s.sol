@@ -23,7 +23,7 @@ contract DeployDiamondLoupe is FacetHelper, Deployer {
   }
 
   function versionName() public pure override returns (string memory) {
-    return "diamondLoupeFacet";
+    return "facets/diamondLoupeFacet";
   }
 
   function __deploy(address deployer) public override returns (address) {

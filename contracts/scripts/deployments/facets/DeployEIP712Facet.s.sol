@@ -8,7 +8,7 @@ pragma solidity ^0.8.23;
 //contracts
 import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
 import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
-import {EIP712Facet} from "@towns-protocol/diamond/src/utils/cryptography/signature/EIP712Facet.sol";
+import {EIP712Facet} from "@towns-protocol/diamond/src/utils/cryptography/EIP712Facet.sol";
 
 contract DeployEIP712Facet is FacetHelper, Deployer {
   constructor() {
@@ -18,7 +18,7 @@ contract DeployEIP712Facet is FacetHelper, Deployer {
   }
 
   function versionName() public pure override returns (string memory) {
-    return "eip712Facet";
+    return "facets/eip712Facet";
   }
 
   function initializer() public pure override returns (bytes4) {
