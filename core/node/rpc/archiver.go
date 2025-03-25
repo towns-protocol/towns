@@ -578,11 +578,15 @@ func init() {
 }
 
 func (a *Archiver) rescheduleIfAxol3(stream *ArchiveStream) {
-	if slices.Contains(stream.nodes.GetNodes(), axol3Address) {
+	if isAxol3Stream(stream) {
 		time.AfterFunc(10*time.Second, func() {
 			a.tasks <- stream.streamId
 		})
 	}
+}
+
+func isAxol3Stream(stream *ArchiveStream) bool {
+	return slices.Contains(stream.nodes.GetNodes(), axol3Address)
 }
 
 // ArchiveStream attempts to add all new miniblocks seen, according to the registry contract,
@@ -655,8 +659,13 @@ func (a *Archiver) ArchiveStream(ctx context.Context, stream *ArchiveStream) (er
 		return err
 	}
 
-	for mbsInDb < mbsInContract {
-		toBlock := min(mbsInDb+int64(a.config.GetReadMiniblocksSize()), mbsInContract)
+	maximumBlock := mbsInContract
+	if isAxol3Stream(stream) {
+		maximumBlock += 50
+	}
+
+	for mbsInDb < maximumBlock {
+		toBlock := min(mbsInDb+int64(a.config.GetReadMiniblocksSize()), maximumBlock)
 
 		resp, err := stub.GetMiniblocks(
 			ctx,
@@ -682,6 +691,13 @@ func (a *Archiver) ArchiveStream(ctx context.Context, stream *ArchiveStream) (er
 		}
 
 		if (err != nil && AsRiverError(err).Code == Err_NOT_FOUND) || resp.Msg == nil || len(resp.Msg.Miniblocks) == 0 {
+			// This is here for axol 3 streams. We would like to avoid reporting a failure if they don't
+			// have any additional blocks available past what is in the contract, but still try to download
+			// them if possible.
+			if mbsInDb >= mbsInContract {
+				break
+			}
+
 			// If the stream is unable to fully update, consider this attempt to archive the stream as
 			// a failure, even though we do not return an error.
 			stream.corrupt.RecordBlockUpdateFailure(
@@ -736,6 +752,7 @@ func (a *Archiver) ArchiveStream(ctx context.Context, stream *ArchiveStream) (er
 
 		err = a.storage.WriteArchiveMiniblocks(ctx, stream.streamId, mbsInDb, serialized)
 		if err != nil {
+			// Reschedule on storage error, this is retryable.
 			a.rescheduleIfAxol3(stream)
 			return err
 		}
@@ -750,12 +767,6 @@ func (a *Archiver) ArchiveStream(ctx context.Context, stream *ArchiveStream) (er
 	stream.corrupt.ReportBlockUpdateSuccess(ctx)
 	if a.successfulDownloads != nil {
 		a.successfulDownloads.With(prometheus.Labels{"node_address": nodeAddr.String()}).Inc()
-	}
-
-	if slices.Contains(stream.nodes.GetNodes(), axol3Address) {
-		time.AfterFunc(10*time.Second, func() {
-			a.tasks <- stream.streamId
-		})
 	}
 
 	a.rescheduleIfAxol3(stream)
