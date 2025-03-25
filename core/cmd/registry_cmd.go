@@ -20,6 +20,7 @@ import (
 	"github.com/towns-protocol/towns/core/node/events"
 	"github.com/towns-protocol/towns/core/node/http_client"
 	"github.com/towns-protocol/towns/core/node/infra"
+	"github.com/towns-protocol/towns/core/node/logging"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	. "github.com/towns-protocol/towns/core/node/protocol/protocolconnect"
 	"github.com/towns-protocol/towns/core/node/registries"
@@ -400,9 +401,9 @@ func getStreamsForNode(ctx context.Context, node common.Address) error {
 	if err != nil {
 		return err
 	}
-	fmt.Printf("Using current block number: %d, node address %v\n", blockNum, node)
-	fmt.Printf("Streams:\n")
-	fmt.Printf("========")
+	fmt.Printf("#Using current block number: %d, node address %v\n", blockNum, node)
+	fmt.Printf("#Streams:\n")
+	fmt.Printf("#========\n")
 
 	if err := registryContract.ForAllStreams(ctx, blockNum, func(result *registries.GetStreamResult) bool {
 		if slices.Contains(result.Nodes, node) {
@@ -454,7 +455,10 @@ func init() {
 				return fmt.Errorf("invalid argument 0: node-address")
 			}
 
-			return getStreamsForNode(cmd.Context(), nodeAddress)
+			return getStreamsForNode(
+				logging.CtxWithLog(context.Background(), logging.NoopLogger()),
+				nodeAddress,
+			)
 		},
 	}
 	srCmd.AddCommand(allStreamsCmd)
