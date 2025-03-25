@@ -49,24 +49,26 @@ const buildRankedLeaderboard = (
     let currentRank = 0
     let lastUserTotalTipped = ''
 
-    return Object.entries(leaderboard).map(([userAddress, totalTipped]) => {
-        // If its a tie with the previous user, dont increment the rank
-        if (totalTipped === lastUserTotalTipped) {
+    return Object.entries(leaderboard)
+        .sort(([, totalTippedA], [, totalTippedB]) => Number(totalTippedB) - Number(totalTippedA))
+        .map(([userAddress, totalTipped]) => {
+            // If its a tie with the previous user, dont increment the rank
+            if (totalTipped === lastUserTotalTipped) {
+                return {
+                    userAddress,
+                    totalTipped,
+                    rank: currentRank,
+                }
+            }
+            currentRank++
+            lastUserTotalTipped = totalTipped
+
             return {
                 userAddress,
                 totalTipped,
                 rank: currentRank,
             }
-        }
-        currentRank++
-        lastUserTotalTipped = totalTipped
-
-        return {
-            userAddress,
-            totalTipped,
-            rank: currentRank,
-        }
-    })
+        })
 }
 
 export const fetchTipLeaderboard = async (spaceAddress: string, qc: QueryClient) => {
