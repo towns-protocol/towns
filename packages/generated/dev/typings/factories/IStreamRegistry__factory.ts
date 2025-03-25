@@ -40,14 +40,9 @@ const _abi = [
             internalType: "uint64",
           },
           {
-            name: "replicationFactor",
-            type: "uint8",
-            internalType: "uint8",
-          },
-          {
             name: "reserved0",
-            type: "uint56",
-            internalType: "uint56",
+            type: "uint64",
+            internalType: "uint64",
           },
           {
             name: "flags",
@@ -135,14 +130,9 @@ const _abi = [
                 internalType: "uint64",
               },
               {
-                name: "replicationFactor",
-                type: "uint8",
-                internalType: "uint8",
-              },
-              {
                 name: "reserved0",
-                type: "uint56",
-                internalType: "uint56",
+                type: "uint64",
+                internalType: "uint64",
               },
               {
                 name: "flags",
@@ -213,14 +203,9 @@ const _abi = [
                 internalType: "uint64",
               },
               {
-                name: "replicationFactor",
-                type: "uint8",
-                internalType: "uint8",
-              },
-              {
                 name: "reserved0",
-                type: "uint56",
-                internalType: "uint56",
+                type: "uint64",
+                internalType: "uint64",
               },
               {
                 name: "flags",
@@ -266,14 +251,9 @@ const _abi = [
             internalType: "uint64",
           },
           {
-            name: "replicationFactor",
-            type: "uint8",
-            internalType: "uint8",
-          },
-          {
             name: "reserved0",
-            type: "uint56",
-            internalType: "uint56",
+            type: "uint64",
+            internalType: "uint64",
           },
           {
             name: "flags",
@@ -349,14 +329,9 @@ const _abi = [
             internalType: "uint64",
           },
           {
-            name: "replicationFactor",
-            type: "uint8",
-            internalType: "uint8",
-          },
-          {
             name: "reserved0",
-            type: "uint56",
-            internalType: "uint56",
+            type: "uint64",
+            internalType: "uint64",
           },
           {
             name: "flags",
@@ -583,14 +558,9 @@ const _abi = [
             internalType: "uint64",
           },
           {
-            name: "replicationFactor",
-            type: "uint8",
-            internalType: "uint8",
-          },
-          {
             name: "reserved0",
-            type: "uint56",
-            internalType: "uint56",
+            type: "uint64",
+            internalType: "uint64",
           },
           {
             name: "flags",

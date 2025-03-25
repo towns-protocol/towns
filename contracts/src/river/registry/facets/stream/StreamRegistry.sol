@@ -35,10 +35,10 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
   {
     // Add the stream to the registry
     Stream storage stream = ds.streamById[streamId];
-    (stream.lastMiniblockHash, stream.nodes, stream.replicationFactor) = (
+    (stream.lastMiniblockHash, stream.nodes, stream.reserved0) = (
       genesisMiniblockHash,
       nodes,
-      uint8(nodes.length)
+        _calculateStreamReserved0(stream.reserved0, uint8(nodes.length))
     );
 
     ds.streams.add(streamId);
@@ -183,7 +183,10 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
     }
 
     nodes.push(nodeAddress);
-    stream.replicationFactor = stream.replicationFactor + 1;
+    stream.reserved0 = _calculateStreamReserved0(
+      stream.reserved0,
+      uint8(nodes.length)
+    );
 
     _emitStreamUpdated(
       StreamEventType.PlacementUpdated,
@@ -218,7 +221,10 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
 
     if (!found) revert(RiverRegistryErrors.NODE_NOT_FOUND);
 
-    stream.replicationFactor = stream.replicationFactor - 1;
+    stream.reserved0 = _calculateStreamReserved0(
+      stream.reserved0,
+      uint8(nodes.length)
+    );
 
     _emitStreamUpdated(
       StreamEventType.PlacementUpdated,
@@ -359,7 +365,12 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
       bytes32 streamId = streamIds[i];
       _verifyStreamIdExists(streamId);
       Stream storage stream = ds.streamById[streamId];
-      (stream.nodes, stream.replicationFactor) = (nodes, replicationFactor);
+      stream.reserved0 = _calculateStreamReserved0(
+        stream.reserved0,
+        replicationFactor
+      );
+
+      stream.nodes = nodes;
 
       _emitStreamUpdated(
         StreamEventType.PlacementUpdated,
@@ -414,5 +425,17 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
       mstore(0x40, fmp)
       mstore(0x60, 0)
     }
+  }
+
+  uint64 internal constant STREAM_REPL_FACTOR_MASK = 0x00000000000000FF;
+
+  /// @dev helper function to calculate the reserved0 field for the stream with the given reserved0 and replication factor
+  function _calculateStreamReserved0(
+    uint64 reserved0,
+    uint8 replFactor
+  ) internal pure returns (uint64) {
+    return
+      (reserved0 & ~STREAM_REPL_FACTOR_MASK) |
+      (uint64(replFactor) & STREAM_REPL_FACTOR_MASK);
   }
 }

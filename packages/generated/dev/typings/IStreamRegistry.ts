@@ -30,7 +30,6 @@ import type {
 export type StreamStruct = {
   lastMiniblockHash: PromiseOrValue<BytesLike>;
   lastMiniblockNum: PromiseOrValue<BigNumberish>;
-  replicationFactor: PromiseOrValue<BigNumberish>;
   reserved0: PromiseOrValue<BigNumberish>;
   flags: PromiseOrValue<BigNumberish>;
   nodes: PromiseOrValue<string>[];
@@ -39,14 +38,12 @@ export type StreamStruct = {
 export type StreamStructOutput = [
   string,
   BigNumber,
-  number,
   BigNumber,
   BigNumber,
   string[]
 ] & {
   lastMiniblockHash: string;
   lastMiniblockNum: BigNumber;
-  replicationFactor: number;
   reserved0: BigNumber;
   flags: BigNumber;
   nodes: string[];
@@ -86,7 +83,7 @@ export type SetMiniblockStructOutput = [
 
 export interface IStreamRegistryInterface extends utils.Interface {
   functions: {
-    "addStream(bytes32,bytes32,(bytes32,uint64,uint8,uint56,uint64,address[]))": FunctionFragment;
+    "addStream(bytes32,bytes32,(bytes32,uint64,uint64,uint64,address[]))": FunctionFragment;
     "allocateStream(bytes32,address[],bytes32,bytes)": FunctionFragment;
     "getPaginatedStreams(uint256,uint256)": FunctionFragment;
     "getPaginatedStreamsOnNode(address,uint256,uint256)": FunctionFragment;

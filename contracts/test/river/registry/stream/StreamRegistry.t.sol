@@ -122,8 +122,7 @@ contract StreamRegistryTest is
       lastMiniblockHash: testStream.genesisMiniblockHash,
       lastMiniblockNum: 0,
       flags: 0,
-      replicationFactor: uint8(nodeAddresses.length),
-      reserved0: 0,
+      reserved0: uint64(nodeAddresses.length),
       nodes: nodeAddresses
     });
 
@@ -224,9 +223,8 @@ contract StreamRegistryTest is
     Stream memory streamToCreate = Stream({
       lastMiniblockHash: SAMPLE_STREAM.genesisMiniblockHash,
       lastMiniblockNum: 1,
-      replicationFactor: 1,
       flags: StreamFlags.SEALED,
-      reserved0: 0,
+      reserved0: 1,
       nodes: nodeAddresses
     });
 
@@ -257,9 +255,8 @@ contract StreamRegistryTest is
     Stream memory streamToCreate = Stream({
       lastMiniblockHash: testStream.genesisMiniblockHash,
       lastMiniblockNum: 1,
-      replicationFactor: 1,
       flags: StreamFlags.SEALED,
-      reserved0: 0,
+      reserved0: 1,
       nodes: nodeAddresses
     });
 
@@ -318,9 +315,8 @@ contract StreamRegistryTest is
     Stream memory streamToCreate = Stream({
       lastMiniblockHash: testStream.genesisMiniblockHash,
       lastMiniblockNum: 1,
-      replicationFactor: 1,
       flags: StreamFlags.SEALED,
-      reserved0: 0,
+      reserved0: 1,
       nodes: nodes
     });
 
@@ -350,9 +346,8 @@ contract StreamRegistryTest is
     Stream memory streamToCreate = Stream({
       lastMiniblockHash: testStream.genesisMiniblockHash,
       lastMiniblockNum: 1,
-      replicationFactor: 1,
       flags: StreamFlags.SEALED,
-      reserved0: 0,
+      reserved0: 1,
       nodes: nodes
     });
 
@@ -383,9 +378,8 @@ contract StreamRegistryTest is
     Stream memory streamToCreate = Stream({
       lastMiniblockHash: testStream.genesisMiniblockHash,
       lastMiniblockNum: 1,
-      replicationFactor: 1,
       flags: StreamFlags.SEALED,
-      reserved0: 0,
+      reserved0: 1,
       nodes: nodes
     });
 
@@ -687,7 +681,7 @@ contract StreamRegistryTest is
     address[] memory newNodes = new address[](1);
     newNodes[0] = makeAddr("anotherNode");
     stream.nodes = newNodes;
-    stream.replicationFactor = 1;
+    stream.reserved0 = 1;
 
     // set replication factor
     bytes32[] memory streamIds = new bytes32[](1);
@@ -695,11 +689,7 @@ contract StreamRegistryTest is
 
     vm.recordLogs();
     vm.prank(configManager);
-    streamRegistry.setStreamReplicationFactor(
-      streamIds,
-      newNodes,
-      stream.replicationFactor
-    );
+    streamRegistry.setStreamReplicationFactor(streamIds, newNodes, 1);
 
     Vm.Log memory streamUpdatedLog = _getFirstMatchingLog(
       vm.getRecordedLogs(),
@@ -731,7 +721,7 @@ contract StreamRegistryTest is
     stream.nodes[2] = makeAddr("anotherNode2");
     stream.nodes[3] = makeAddr("anotherNode3");
     stream.nodes[4] = makeAddr("anotherNode4");
-    stream.replicationFactor = 5;
+    stream.reserved0 = 5;
 
     // set replication factor
     bytes32[] memory streamIds = new bytes32[](1);
@@ -739,11 +729,7 @@ contract StreamRegistryTest is
 
     vm.recordLogs();
     vm.prank(configManager);
-    streamRegistry.setStreamReplicationFactor(
-      streamIds,
-      stream.nodes,
-      stream.replicationFactor
-    );
+    streamRegistry.setStreamReplicationFactor(streamIds, stream.nodes, 5);
 
     Vm.Log memory streamUpdatedLog = _getFirstMatchingLog(
       vm.getRecordedLogs(),
@@ -825,9 +811,8 @@ contract StreamRegistryTest is
       streams[i] = Stream({
         lastMiniblockHash: bytes32(uint256(i)),
         lastMiniblockNum: 1,
-        replicationFactor: 1,
         flags: StreamFlags.SEALED,
-        reserved0: 0,
+        reserved0: 1,
         nodes: new address[](1)
       });
       streams[i].nodes[0] = NODE;
