@@ -691,8 +691,11 @@ contract StreamRegistryTest is
     vm.prank(configManager);
     streamRegistry.setStreamReplicationFactor(streamIds, newNodes, 1);
 
+    Vm.Log[] memory logs = vm.getRecordedLogs();
+
+    // Verify StreamUpdated event
     Vm.Log memory streamUpdatedLog = _getFirstMatchingLog(
-      vm.getRecordedLogs(),
+      logs,
       StreamUpdated.selector
     );
 
@@ -705,6 +708,39 @@ contract StreamRegistryTest is
       abi.decode(streamUpdatedLog.data, (bytes)),
       abi.encode(SAMPLE_STREAM.streamId, stream)
     );
+
+    // Verify StreamPlacementUpdated events
+    // First verify removal of old nodes
+    {
+      Vm.Log memory removalLog = _getMatchingLogAtIndex(
+        logs,
+        StreamPlacementUpdated.selector,
+        0
+      );
+      (bytes32 streamId, address node, bool added) = abi.decode(
+        removalLog.data,
+        (bytes32, address, bool)
+      );
+      assertEq(streamId, SAMPLE_STREAM.streamId);
+      assertEq(node, NODE);
+      assertFalse(added);
+    }
+
+    // Then verify addition of new nodes
+    {
+      Vm.Log memory additionLog = _getMatchingLogAtIndex(
+        logs,
+        StreamPlacementUpdated.selector,
+        1
+      );
+      (bytes32 streamId, address node, bool added) = abi.decode(
+        additionLog.data,
+        (bytes32, address, bool)
+      );
+      assertEq(streamId, SAMPLE_STREAM.streamId);
+      assertEq(node, newNodes[0]);
+      assertTrue(added);
+    }
   }
 
   function test_setStreamReplicationFactor_5(
