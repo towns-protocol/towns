@@ -1169,6 +1169,14 @@ func insertMinipoolsPlaceholder(
 		return err
 	}
 
+	// Some streams may have no miniblocks in storage. In that case, just insert a placeholder for
+	// generation 0.
+	if lastMbNumInStorage == nil {
+		mb := int64(-1)
+		lastMbNumInStorage = &mb
+		fmt.Printf("WARNING: no miniblocks in storage found for stream %v\n", streamId)
+	}
+
 	_, err := tx.Exec(
 		ctx,
 		fmt.Sprintf("INSERT INTO %v (stream_id, generation, slot_num) VALUES ($1, $2, -1)", targetMinipools),
