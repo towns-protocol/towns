@@ -13,6 +13,7 @@ import (
 	"connectrpc.com/connect"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/prometheus/client_golang/prometheus"
+	"go.uber.org/zap/zapcore"
 
 	"github.com/towns-protocol/towns/core/config"
 	"github.com/towns-protocol/towns/core/contracts/river"
@@ -570,23 +571,25 @@ func (a *Archiver) advanceNodeAndRetryWithDelay(stream *ArchiveStream, delay tim
 	})
 }
 
-var axol3Address common.Address
+var continuousDownloadNodeAddress common.Address
 
 func init() {
-	axol3Bytes, _ := hex.DecodeString("C6CF68A1BCD3B9285fe1d13c128953a14Dd1Bb60")
-	axol3Address = common.BytesToAddress(axol3Bytes)
+	continuousDownloadNodeAddressBytes, _ := hex.DecodeString("C6CF68A1BCD3B9285fe1d13c128953a14Dd1Bb60")
+	continuousDownloadNodeAddress = common.BytesToAddress(continuousDownloadNodeAddressBytes)
 }
 
-func (a *Archiver) rescheduleIfAxol3(stream *ArchiveStream) {
-	if isAxol3Stream(stream) {
+func (a *Archiver) rescheduleIfContinuousDownloadNode(stream *ArchiveStream) {
+	if isContinuousDownloadStream(stream) {
+		logging.DefaultLogger(zapcore.InfoLevel).
+			Infow("Rescheduling continuous download stream", "stream", stream.streamId)
 		time.AfterFunc(10*time.Second, func() {
 			a.tasks <- stream.streamId
 		})
 	}
 }
 
-func isAxol3Stream(stream *ArchiveStream) bool {
-	return slices.Contains(stream.nodes.GetNodes(), axol3Address)
+func isContinuousDownloadStream(stream *ArchiveStream) bool {
+	return slices.Contains(stream.nodes.GetNodes(), continuousDownloadNodeAddress)
 }
 
 // ArchiveStream attempts to add all new miniblocks seen, according to the registry contract,
@@ -594,6 +597,10 @@ func isAxol3Stream(stream *ArchiveStream) bool {
 // streams that have not yet been seen.
 func (a *Archiver) ArchiveStream(ctx context.Context, stream *ArchiveStream) (err error) {
 	log := logging.FromCtx(ctx)
+
+	if !isContinuousDownloadStream(stream) {
+		return
+	}
 
 	defer func() {
 		if err != nil {
@@ -619,7 +626,7 @@ func (a *Archiver) ArchiveStream(ctx context.Context, stream *ArchiveStream) (er
 		if err != nil && AsRiverError(err).Code == Err_NOT_FOUND {
 			err = a.storage.CreateStreamArchiveStorage(ctx, stream.streamId)
 			if err != nil {
-				a.rescheduleIfAxol3(stream)
+				a.rescheduleIfContinuousDownloadNode(stream)
 				return err
 			}
 			a.streamsCreated.Add(1)
@@ -635,7 +642,7 @@ func (a *Archiver) ArchiveStream(ctx context.Context, stream *ArchiveStream) (er
 	}
 
 	mbsInContract := stream.numBlocksInContract.Load()
-	if mbsInDb >= mbsInContract && !slices.Contains(stream.nodes.GetNodes(), axol3Address) {
+	if mbsInDb >= mbsInContract && !slices.Contains(stream.nodes.GetNodes(), continuousDownloadNodeAddress) {
 		a.streamsUpToDate.Add(1)
 		stream.corrupt.ReportBlockUpdateSuccess(ctx)
 		return nil
@@ -660,7 +667,7 @@ func (a *Archiver) ArchiveStream(ctx context.Context, stream *ArchiveStream) (er
 	}
 
 	maximumBlock := mbsInContract
-	if isAxol3Stream(stream) {
+	if isContinuousDownloadStream(stream) {
 		maximumBlock += 50
 	}
 
@@ -691,7 +698,7 @@ func (a *Archiver) ArchiveStream(ctx context.Context, stream *ArchiveStream) (er
 		}
 
 		if (err != nil && AsRiverError(err).Code == Err_NOT_FOUND) || resp.Msg == nil || len(resp.Msg.Miniblocks) == 0 {
-			// This is here for axol 3 streams. We would like to avoid reporting a failure if they don't
+			// This is here for streams we want to continuously download. We would like to avoid reporting a failure if they don't
 			// have any additional blocks available past what is in the contract, but still try to download
 			// them if possible.
 			if mbsInDb >= mbsInContract {
@@ -753,7 +760,7 @@ func (a *Archiver) ArchiveStream(ctx context.Context, stream *ArchiveStream) (er
 		err = a.storage.WriteArchiveMiniblocks(ctx, stream.streamId, mbsInDb, serialized)
 		if err != nil {
 			// Reschedule on storage error, this is retryable.
-			a.rescheduleIfAxol3(stream)
+			a.rescheduleIfContinuousDownloadNode(stream)
 			return err
 		}
 		mbsInDb += int64(len(serialized))
@@ -769,7 +776,7 @@ func (a *Archiver) ArchiveStream(ctx context.Context, stream *ArchiveStream) (er
 		a.successfulDownloads.With(prometheus.Labels{"node_address": nodeAddr.String()}).Inc()
 	}
 
-	a.rescheduleIfAxol3(stream)
+	a.rescheduleIfContinuousDownloadNode(stream)
 	return nil
 }
 
