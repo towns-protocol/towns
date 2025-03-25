@@ -376,12 +376,24 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
         replicationFactor
       );
 
+      // emit the event for removal
+      address[] storage existingNodes = stream.nodes;
+      uint256 nodeCount = existingNodes.length;
+      for (uint256 j; j < nodeCount; ++j) {
+        emit StreamPlacementUpdated(streamId, existingNodes[j], false);
+      }
+
       stream.nodes = nodes;
 
       _emitStreamUpdated(
         StreamEventType.PlacementUpdated,
         abi.encode(streamId, stream)
       );
+
+      // emit the deprecating event
+      for (uint256 j; j < nodes.length; ++j) {
+        emit StreamPlacementUpdated(streamId, nodes[j], true);
+      }
     }
   }
 
