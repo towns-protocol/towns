@@ -10,7 +10,7 @@ import {IFeatureManagerFacetBase} from "./IFeatureManagerFacet.sol";
 // libraries
 import {FeatureCondition, FeatureConditionLib} from "./FeatureConditionLib.sol";
 import {EnumerableSetLib} from "solady/utils/EnumerableSetLib.sol";
-import {CustomRevert} from "contracts/src/utils/libraries/CustomRevert.sol";
+import {CustomRevert} from "../../../utils/libraries/CustomRevert.sol";
 
 /// @title FeatureManager
 library FeatureManagerLib {

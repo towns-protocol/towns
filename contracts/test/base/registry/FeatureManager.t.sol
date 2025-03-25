@@ -19,7 +19,9 @@ contract FeatureManagerTest is BaseSetup, IFeatureManagerFacetBase {
   FeatureManagerFacet featureManagerFacet;
   Towns towns;
 
-  bytes32 constant TEST_FEATURE_ID = keccak256("test.feature");
+  // keccak256("test.feature")
+  bytes32 constant TEST_FEATURE_ID =
+    0x69ee5871a65c89c042656feb37c9971ee294380d6b43c379eed8a7bfa140c5e7;
   uint256 constant TEST_THRESHOLD = 100 ether;
 
   function setUp() public override {

@@ -18,7 +18,9 @@ contract FeatureManagerFacet is IFeatureManagerFacet, OwnableBase, Facet {
   using FeatureManagerLib for FeatureManagerLib.Layout;
   using FeatureConditionLib for FeatureCondition;
 
-  function __FeatureManagerFacet_init() external onlyInitializing {}
+  function __FeatureManagerFacet_init() external onlyInitializing {
+    _addInterface(type(IFeatureManagerFacet).interfaceId);
+  }
 
   /// @inheritdoc IFeatureManagerFacet
   function setFeatureCondition(
