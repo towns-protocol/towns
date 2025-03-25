@@ -8,6 +8,7 @@ import {Stream, StreamWithId, SetMiniblock} from "contracts/src/river/registry/l
 // libraries
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import {FixedPointMathLib} from "solady/utils/FixedPointMathLib.sol";
+import {CustomRevert} from "contracts/src/utils/libraries/CustomRevert.sol";
 import {RiverRegistryErrors} from "contracts/src/river/registry/libraries/RegistryErrors.sol";
 
 // contracts
@@ -20,6 +21,7 @@ library StreamFlags {
 contract StreamRegistry is IStreamRegistry, RegistryModifiers {
   using EnumerableSet for EnumerableSet.Bytes32Set;
   using EnumerableSet for EnumerableSet.AddressSet;
+  using CustomRevert for string;
 
   /// @inheritdoc IStreamRegistry
   function allocateStream(
@@ -86,7 +88,7 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
   ) external onlyNode(msg.sender) {
     uint256 miniblockCount = miniblocks.length;
 
-    if (miniblockCount == 0) revert(RiverRegistryErrors.BAD_ARG);
+    if (miniblockCount == 0) RiverRegistryErrors.BAD_ARG.revertWith();
 
     SetMiniblock[] memory miniblockUpdates = new SetMiniblock[](miniblockCount);
     uint256 streamCount = 0;
@@ -179,7 +181,8 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
     uint256 nodeCount = nodes.length;
 
     for (uint256 i; i < nodeCount; ++i) {
-      if (nodes[i] == nodeAddress) revert(RiverRegistryErrors.ALREADY_EXISTS);
+      if (nodes[i] == nodeAddress)
+        RiverRegistryErrors.ALREADY_EXISTS.revertWith();
     }
 
     nodes.push(nodeAddress);
@@ -219,7 +222,7 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
       }
     }
 
-    if (!found) revert(RiverRegistryErrors.NODE_NOT_FOUND);
+    if (!found) RiverRegistryErrors.NODE_NOT_FOUND.revertWith();
 
     stream.reserved0 = _calculateStreamReserved0(
       stream.reserved0,
@@ -355,16 +358,19 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
     address[] calldata nodes,
     uint8 replicationFactor
   ) external onlyConfigurationManager(msg.sender) {
-    if (nodes.length == 0) revert(RiverRegistryErrors.BAD_ARG);
-    if (replicationFactor > nodes.length) revert(RiverRegistryErrors.BAD_ARG);
+    if (nodes.length == 0) RiverRegistryErrors.BAD_ARG.revertWith();
+    if (replicationFactor > nodes.length)
+      RiverRegistryErrors.BAD_ARG.revertWith();
 
     uint256 streamsCount = streamIds.length;
-    if (streamsCount == 0) revert(RiverRegistryErrors.BAD_ARG);
+    if (streamsCount == 0) RiverRegistryErrors.BAD_ARG.revertWith();
 
     for (uint256 i; i < streamsCount; ++i) {
       bytes32 streamId = streamIds[i];
-      _verifyStreamIdExists(streamId);
       Stream storage stream = ds.streamById[streamId];
+      if (uint256(stream.lastMiniblockHash) == 0) {
+        RiverRegistryErrors.NOT_FOUND.revertWith();
+      }
       stream.reserved0 = _calculateStreamReserved0(
         stream.reserved0,
         replicationFactor

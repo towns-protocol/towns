@@ -3,7 +3,7 @@ pragma solidity ^0.8.23;
 
 // libraries
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-
+import {CustomRevert} from "contracts/src/utils/libraries/CustomRevert.sol";
 import {RiverRegistryErrors} from "contracts/src/river/registry/libraries/RegistryErrors.sol";
 
 struct Stream {
@@ -91,12 +91,14 @@ library RiverRegistryStorage {
 abstract contract RegistryModifiers {
   using EnumerableSet for EnumerableSet.AddressSet;
   using EnumerableSet for EnumerableSet.Bytes32Set;
+  using CustomRevert for string;
 
   AppStorage internal ds;
 
   modifier onlyNode(address node) {
-    if (ds.nodeByAddress[node].nodeAddress == address(0))
-      revert(RiverRegistryErrors.NODE_NOT_FOUND);
+    if (ds.nodeByAddress[node].nodeAddress == address(0)) {
+      RiverRegistryErrors.NODE_NOT_FOUND.revertWith();
+    }
     _;
   }
 
@@ -106,7 +108,9 @@ abstract contract RegistryModifiers {
   }
 
   modifier onlyOperator(address operator) {
-    if (!ds.operators.contains(operator)) revert(RiverRegistryErrors.BAD_AUTH);
+    if (!ds.operators.contains(operator)) {
+      RiverRegistryErrors.BAD_AUTH.revertWith();
+    }
     _;
   }
 
@@ -121,40 +125,47 @@ abstract contract RegistryModifiers {
   }
 
   modifier onlyNodeOperator(address node, address operator) {
-    if (ds.nodeByAddress[node].operator != operator)
-      revert(RiverRegistryErrors.BAD_AUTH);
+    if (ds.nodeByAddress[node].operator != operator) {
+      RiverRegistryErrors.BAD_AUTH.revertWith();
+    }
     _;
   }
 
   modifier configKeyExists(bytes32 key) {
-    if (!ds.configurationKeys.contains(key))
-      revert(RiverRegistryErrors.NOT_FOUND);
+    if (!ds.configurationKeys.contains(key)) {
+      RiverRegistryErrors.NOT_FOUND.revertWith();
+    }
     _;
   }
 
   modifier onlyConfigurationManager(address manager) {
-    if (!ds.configurationManagers.contains(manager))
-      revert(RiverRegistryErrors.BAD_AUTH);
+    if (!ds.configurationManagers.contains(manager)) {
+      RiverRegistryErrors.BAD_AUTH.revertWith();
+    }
     _;
   }
 
   /// @dev Verifies that the streamId is in the registry
   function _verifyStreamIdExists(bytes32 streamId) internal view {
-    if (!ds.streams.contains(streamId)) revert(RiverRegistryErrors.NOT_FOUND);
+    if (!ds.streams.contains(streamId)) {
+      RiverRegistryErrors.NOT_FOUND.revertWith();
+    }
   }
 
   /// @dev Verifies that the streamId is not in the registry
   function _verifyStreamIdNotExists(bytes32 streamId) internal view {
-    if (ds.streams.contains(streamId))
-      revert(RiverRegistryErrors.ALREADY_EXISTS);
+    if (ds.streams.contains(streamId)) {
+      RiverRegistryErrors.ALREADY_EXISTS.revertWith();
+    }
   }
 
   /// @dev Verifies that the nodes are in the registry
   function _verifyNodes(address[] calldata nodes) internal view {
     uint256 nodeCount = nodes.length;
     for (uint256 i; i < nodeCount; ++i) {
-      if (!ds.nodes.contains(nodes[i]))
-        revert(RiverRegistryErrors.NODE_NOT_FOUND);
+      if (!ds.nodes.contains(nodes[i])) {
+        RiverRegistryErrors.NODE_NOT_FOUND.revertWith();
+      }
     }
   }
 }
