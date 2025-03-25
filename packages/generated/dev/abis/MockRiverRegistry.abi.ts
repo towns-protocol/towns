@@ -66,9 +66,14 @@ export default [
             "internalType": "uint64"
           },
           {
+            "name": "replicationFactor",
+            "type": "uint8",
+            "internalType": "uint8"
+          },
+          {
             "name": "reserved0",
-            "type": "uint64",
-            "internalType": "uint64"
+            "type": "uint56",
+            "internalType": "uint56"
           },
           {
             "name": "flags",
@@ -413,9 +418,14 @@ export default [
                 "internalType": "uint64"
               },
               {
+                "name": "replicationFactor",
+                "type": "uint8",
+                "internalType": "uint8"
+              },
+              {
                 "name": "reserved0",
-                "type": "uint64",
-                "internalType": "uint64"
+                "type": "uint56",
+                "internalType": "uint56"
               },
               {
                 "name": "flags",
@@ -486,9 +496,14 @@ export default [
                 "internalType": "uint64"
               },
               {
+                "name": "replicationFactor",
+                "type": "uint8",
+                "internalType": "uint8"
+              },
+              {
                 "name": "reserved0",
-                "type": "uint64",
-                "internalType": "uint64"
+                "type": "uint56",
+                "internalType": "uint56"
               },
               {
                 "name": "flags",
@@ -534,9 +549,14 @@ export default [
             "internalType": "uint64"
           },
           {
+            "name": "replicationFactor",
+            "type": "uint8",
+            "internalType": "uint8"
+          },
+          {
             "name": "reserved0",
-            "type": "uint64",
-            "internalType": "uint64"
+            "type": "uint56",
+            "internalType": "uint56"
           },
           {
             "name": "flags",
@@ -612,9 +632,14 @@ export default [
             "internalType": "uint64"
           },
           {
+            "name": "replicationFactor",
+            "type": "uint8",
+            "internalType": "uint8"
+          },
+          {
             "name": "reserved0",
-            "type": "uint64",
-            "internalType": "uint64"
+            "type": "uint56",
+            "internalType": "uint56"
           },
           {
             "name": "flags",
@@ -873,6 +898,29 @@ export default [
             "internalType": "bool"
           }
         ]
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "setStreamReplicationFactor",
+    "inputs": [
+      {
+        "name": "streamIds",
+        "type": "bytes32[]",
+        "internalType": "bytes32[]"
+      },
+      {
+        "name": "nodes",
+        "type": "address[]",
+        "internalType": "address[]"
+      },
+      {
+        "name": "replicationFactor",
+        "type": "uint8",
+        "internalType": "uint8"
       }
     ],
     "outputs": [],
@@ -1219,9 +1267,14 @@ export default [
             "internalType": "uint64"
           },
           {
+            "name": "replicationFactor",
+            "type": "uint8",
+            "internalType": "uint8"
+          },
+          {
             "name": "reserved0",
-            "type": "uint64",
-            "internalType": "uint64"
+            "type": "uint56",
+            "internalType": "uint56"
           },
           {
             "name": "flags",

@@ -15,6 +15,15 @@ struct Stream {
   address[] nodes; // Dynamic array, starts at a new slot
 }
 
+// OldStream is a temporary struct used to read old stream data from storage
+struct OldStream {
+    bytes32 lastMiniblockHash; // 32 bytes, slot 0
+    uint64 lastMiniblockNum; // 8 bytes, part of slot 1
+    uint64 reserved0; // 7 bytes, part of slot 1
+    uint64 flags; // 8 bytes, part of slot 1
+    address[] nodes; // Dynamic array, starts at a new slot
+}
+
 struct StreamWithId {
   bytes32 id; // 32 bytes, slot 0
   Stream stream;
