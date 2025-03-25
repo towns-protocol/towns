@@ -24,6 +24,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
+	"github.com/towns-protocol/towns/core/node/events"
 	"github.com/towns-protocol/towns/core/node/shared"
 	"github.com/towns-protocol/towns/core/node/storage"
 )
@@ -1599,6 +1600,157 @@ func init() {
 	copyCmd.Flags().BoolVar(&copyBypass, "bypass", false, "Bypass reading data into memory (another copy method)")
 	copyCmd.Flags().
 		StringVar(&copyCmdFilterStreamsFile, "filter-streams-file", "", "File with the subset of streams to copy from the archiver in order to restore a node. If the copy is from an archiver, this must be a valid file with stream ids.")
+}
+
+func lastSnapshotIndexFromMiniblocks(
+	ctx context.Context,
+	target *pgxpool.Pool,
+	streamId string,
+) (int64, error) {
+	table := getPartitionName("miniblocks", streamId, 256)
+	rows, err := target.Query(
+		ctx,
+		fmt.Sprintf("SELECT seq_num, blockdata from %s WHERE stream_id = $1 ORDER BY seq_num DESC LIMIT 101", table),
+		streamId,
+	)
+	if err != nil {
+		return int64(0), fmt.Errorf("Error reading miniblocks from stream: %w", err)
+	}
+
+	noError := fmt.Errorf("no error - terminate pgx.ForEachRow as soon as result is found")
+	var seqNum int64
+	var blockData []byte
+
+	var printMaxSeqNum bool
+	if _, err := pgx.ForEachRow(
+		rows,
+		[]any{&seqNum, &blockData},
+		func() error {
+			mbInfo, err := events.NewMiniblockInfoFromBytesWithOpts(blockData, events.NewParsedMiniblockInfoOpts().WithDoNotParseEvents(true))
+			if err != nil {
+				return fmt.Errorf("Could not parse miniblock for stream %v: %w", streamId, err)
+			}
+
+			if seqNum > 0 && !printMaxSeqNum && verbose {
+				fmt.Printf("debug -- stream %s max seq_num %d\n", streamId, seqNum)
+				printMaxSeqNum = true
+			}
+
+			if mbInfo.IsSnapshot() {
+				if verbose && seqNum != 0 {
+					fmt.Printf("debug -- saw a snapshot for stream %s, seq_num %d\n", streamId, seqNum)
+				}
+				return noError
+			}
+			return nil
+		},
+	); err != nil && err != noError {
+		return int64(0), err
+	}
+
+	return seqNum, nil
+}
+
+func writeLastSnapshotMiniblock(
+	ctx context.Context,
+	target *pgxpool.Pool,
+	streamIds []string,
+	progressCounter *atomic.Int64,
+) error {
+	tx, err := target.BeginTx(ctx, pgx.TxOptions{
+		IsoLevel:   pgx.ReadCommitted,
+		AccessMode: pgx.ReadWrite,
+	})
+	if err != nil {
+		return wrapError("Failed to begin transaction", err)
+	}
+	defer rollbackTx(ctx, tx)
+
+	for _, streamId := range streamIds {
+		lastSnapshotIndex, err := lastSnapshotIndexFromMiniblocks(ctx, target, streamId)
+		if err != nil {
+			return fmt.Errorf("Failed to determine last snapshot miniblock index for stream %v: %w", streamId, err)
+		}
+
+		if _, err := tx.Exec(
+			ctx,
+			"UPDATE es SET latest_snapshot_miniblock = $1 WHERE stream_id = $2",
+			lastSnapshotIndex,
+			streamId,
+		); err != nil {
+			return fmt.Errorf(
+				"Failed to update snapshot index of stream %v to %d: %w",
+				streamId,
+				lastSnapshotIndex,
+				err,
+			)
+		}
+	}
+
+	err = tx.Commit(ctx)
+	if err != nil {
+		return wrapError("Failed to commit transaction", err)
+	}
+
+	progressCounter.Add(int64(len(streamIds)))
+	return nil
+}
+
+func restoreSnapshotIndices(
+	ctx context.Context,
+	target *pgxpool.Pool,
+) error {
+	streamIds, _, _, err := getStreamIds(ctx, target)
+	if err != nil {
+		return fmt.Errorf("Unable to get existing stream ids: %w", err)
+	}
+
+	numWorkers := viper.GetInt("RIVER_DB_NUM_WORKERS")
+	txSize := viper.GetInt("RIVER_DB_TX_SIZE")
+	if txSize <= 0 {
+		txSize = 1
+	}
+
+	workerPool := workerpool.New(numWorkers)
+	workItems := chunk2(streamIds, txSize)
+
+	var progressCounter atomic.Int64
+	for _, workItem := range workItems {
+		workerPool.Submit(func() {
+			err := writeLastSnapshotMiniblock(ctx, target, workItem, &progressCounter)
+			if err != nil {
+				fmt.Println("ERROR:", err)
+				fmt.Println("Streams that were not updated: ", workItem)
+			}
+		})
+	}
+
+	go reportProgress("Streams updated:", &progressCounter)
+
+	workerPool.StopWait()
+	return nil
+}
+
+var restoreSnapshotIndicesCmd = &cobra.Command{
+	Use:   "restore-snapshot-indices",
+	Short: "Restore snapshot indices to data that was copied from an archiver backup",
+	RunE: func(cmd *cobra.Command, args []string) error {
+		ctx := cmd.Context()
+		targetPool, targetInfo, err := getTargetDbPool(ctx, true)
+		if err != nil {
+			return err
+		}
+		err = testDbConnection(ctx, targetPool, targetInfo)
+		if err != nil {
+			return err
+		}
+
+		return restoreSnapshotIndices(ctx, targetPool)
+	},
+}
+
+func init() {
+	targetCmd.AddCommand(restoreSnapshotIndicesCmd)
 }
 
 func compareTableCounts(
