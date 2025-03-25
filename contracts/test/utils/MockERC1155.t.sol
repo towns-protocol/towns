@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import {TestUtils} from "./TestUtils.sol";
+import {TestUtils} from "@towns-protocol/diamond/test/TestUtils.sol";
 import {MockERC1155} from "contracts/test/mocks/MockERC1155.sol";
 
 contract MockERC1155Test is TestUtils {

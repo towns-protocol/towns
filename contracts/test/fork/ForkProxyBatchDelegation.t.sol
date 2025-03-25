@@ -3,7 +3,7 @@ pragma solidity ^0.8.19;
 
 // utils
 import {LogUtils} from "contracts/test/utils/LogUtils.sol";
-import {TestUtils} from "contracts/test/utils/TestUtils.sol";
+import {TestUtils} from "@towns-protocol/diamond/test/TestUtils.sol";
 
 //interfaces
 import {IERC173} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";

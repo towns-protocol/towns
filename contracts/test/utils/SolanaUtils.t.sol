@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import {TestUtils} from "contracts/test/utils/TestUtils.sol";
+import {TestUtils} from "@towns-protocol/diamond/test/TestUtils.sol";
 import {LibBytes} from "solady/utils/LibBytes.sol";
 import {SolanaUtils} from "contracts/src/factory/facets/wallet-link/libraries/SolanaUtils.sol";
 import {SCL_EIP6565_UTILS} from "crypto-lib/lib/libSCL_eddsaUtils.sol";

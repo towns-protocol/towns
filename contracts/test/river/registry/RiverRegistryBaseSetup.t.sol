@@ -12,7 +12,7 @@ import {IRiverConfig} from "contracts/src/river/registry/facets/config/IRiverCon
 // libraries
 
 // contracts
-import {TestUtils} from "contracts/test/utils/TestUtils.sol";
+import {TestUtils} from "@towns-protocol/diamond/test/TestUtils.sol";
 
 // deployments
 import {DeployRiverRegistry} from "contracts/scripts/deployments/diamonds/DeployRiverRegistry.s.sol";

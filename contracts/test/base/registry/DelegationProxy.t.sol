@@ -8,7 +8,7 @@ import {UpgradeableBeacon} from "solady/utils/UpgradeableBeacon.sol";
 import {Initializable_AlreadyInitialized} from "@towns-protocol/diamond/src/facets/initializable/Initializable.sol";
 import {DeployTownsBase} from "contracts/scripts/deployments/utils/DeployTownsBase.s.sol";
 import {DelegationProxy} from "contracts/src/base/registry/facets/distribution/v2/DelegationProxy.sol";
-import {TestUtils} from "contracts/test/utils/TestUtils.sol";
+import {TestUtils} from "@towns-protocol/diamond/test/TestUtils.sol";
 
 contract DelegationProxyTest is TestUtils {
   DeployTownsBase internal deployTownsTokenBase = new DeployTownsBase();

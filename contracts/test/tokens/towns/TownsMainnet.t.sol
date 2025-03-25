@@ -2,7 +2,7 @@
 pragma solidity ^0.8.19;
 
 // utils
-import {TestUtils} from "contracts/test/utils/TestUtils.sol";
+import {TestUtils} from "@towns-protocol/diamond/test/TestUtils.sol";
 
 //interfaces
 import {IERC20} from "@openzeppelin/contracts/interfaces/IERC20.sol";

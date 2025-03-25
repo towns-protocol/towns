@@ -3,7 +3,7 @@ pragma solidity ^0.8.23;
 
 import {stdError} from "forge-std/StdError.sol";
 import {StringSet} from "contracts/src/utils/StringSet.sol";
-import {TestUtils} from "./TestUtils.sol";
+import {TestUtils} from "@towns-protocol/diamond/test/TestUtils.sol";
 
 contract StringSetTest is TestUtils {
   using StringSet for StringSet.Set;
