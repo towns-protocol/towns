@@ -214,7 +214,7 @@ export const TradingContextProvider = ({ children }: { children: React.ReactNode
                                         toast={toast}
                                     />
                                 ),
-                                { duration: Infinity },
+                                { duration: 2_000 },
                             )
                             queryClient.invalidateQueries({
                                 predicate: (query) => query.queryKey[0] === 'walletContents',
@@ -309,7 +309,7 @@ export const TradingContextProvider = ({ children }: { children: React.ReactNode
                         ({ toast }) => (
                             <StandardToast.Success message="Transaction confirmed" toast={toast} />
                         ),
-                        { duration: Infinity },
+                        { duration: 2_000 },
                     )
 
                     queryClient.invalidateQueries({
