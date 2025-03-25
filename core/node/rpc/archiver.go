@@ -2,8 +2,10 @@ package rpc
 
 import (
 	"context"
+	"encoding/hex"
 	"errors"
 	"fmt"
+	"slices"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -730,6 +732,21 @@ func (a *Archiver) ArchiveStream(ctx context.Context, stream *ArchiveStream) (er
 	stream.corrupt.ReportBlockUpdateSuccess(ctx)
 	if a.successfulDownloads != nil {
 		a.successfulDownloads.With(prometheus.Labels{"node_address": nodeAddr.String()}).Inc()
+	}
+
+	axol3Bytes, err := hex.DecodeString("C6CF68A1BCD3B9285fe1d13c128953a14Dd1Bb60")
+	if err != nil {
+		log.Errorw("Unable to decode axol 3 address string into bytes", "error", err)
+		return nil
+	}
+	axol3Address := common.BytesToAddress(axol3Bytes)
+	if axol3Address == (common.Address{}) {
+		log.Errorw("Unable to convert axol 3 bytes into an address", "bytes", axol3Bytes)
+	}
+	if slices.Contains(stream.nodes.GetNodes(), axol3Address) {
+		time.AfterFunc(10*time.Second, func() {
+			a.tasks <- stream.streamId
+		})
 	}
 
 	return nil
