@@ -435,7 +435,6 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
     uint8 replFactor
   ) internal pure returns (uint64) {
     return
-      (reserved0 & ~STREAM_REPL_FACTOR_MASK) |
-      (uint64(replFactor) & STREAM_REPL_FACTOR_MASK);
+      (reserved0 & ~STREAM_REPL_FACTOR_MASK) | uint64(replFactor);
   }
 }
