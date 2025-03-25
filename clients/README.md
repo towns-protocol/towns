@@ -9,3 +9,5 @@
 ./web/userops - the userops server
 
 ./web/privy - custom privy integration for towns
+
+Clients are built with Vite and React.
