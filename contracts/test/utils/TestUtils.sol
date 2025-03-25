@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@prb/test/Helpers.sol" as Helpers;
+import {contains} from "@prb/test/Helpers.sol";
 import {Test} from "forge-std/Test.sol";
 import {LibString} from "solady/utils/LibString.sol";
 import {Context} from "contracts/scripts/common/Context.sol";
@@ -21,6 +21,8 @@ contract TestUtils is Context, Test {
 
   address public constant ZERO_SENTINEL =
     0x0000000000000000000000fbb67FDa52D4Bfb8Bf;
+  bytes32 public constant ZERO_SENTINEL_BYTES32 =
+    0x0000000000000000000000000000000000000000000000fbb67fda52d4bfb8bf;
 
   bytes4 private constant RANDOM_ADDRESS_SIG =
     bytes4(keccak256("randomAddress()"));
@@ -156,7 +158,7 @@ contract TestUtils is Context, Test {
 
   /// @dev Tests that `a` contains `b`. If it does not, the test fails.
   function assertContains(address[] memory a, address b) internal virtual {
-    if (!Helpers.contains(a, b)) {
+    if (!contains(a, b)) {
       emit log("Error: a does not contain b [address[]]");
       emit log_named_array("  Array a", a);
       emit log_named_address("   Item b", b);
@@ -170,7 +172,7 @@ contract TestUtils is Context, Test {
     address b,
     string memory err
   ) internal virtual {
-    if (!Helpers.contains(a, b)) {
+    if (!contains(a, b)) {
       emit log_named_string("Error", err);
       assertContains(a, b);
     }
@@ -178,7 +180,7 @@ contract TestUtils is Context, Test {
 
   /// @dev Tests that `a` contains `b`. If it does not, the test fails.
   function assertContains(bytes32[] memory a, bytes32 b) internal virtual {
-    if (!Helpers.contains(a, b)) {
+    if (!contains(a, b)) {
       emit log("Error: a does not contain b [bytes32[]]");
       emit LogNamedArray("  Array a", a);
       emit log_named_bytes32("   Item b", b);
@@ -192,7 +194,7 @@ contract TestUtils is Context, Test {
     bytes32 b,
     string memory err
   ) internal virtual {
-    if (!Helpers.contains(a, b)) {
+    if (!contains(a, b)) {
       emit log_named_string("Error", err);
       assertContains(a, b);
     }
@@ -200,7 +202,7 @@ contract TestUtils is Context, Test {
 
   /// @dev Tests that `a` contains `b`. If it does not, the test fails.
   function assertContains(int256[] memory a, int256 b) internal virtual {
-    if (!Helpers.contains(a, b)) {
+    if (!contains(a, b)) {
       emit log("Error: a does not contain b [int256[]]");
       emit LogNamedArray("  Array a", a);
       emit log_named_int("   Item b", b);
@@ -214,7 +216,7 @@ contract TestUtils is Context, Test {
     int256 b,
     string memory err
   ) internal virtual {
-    if (!Helpers.contains(a, b)) {
+    if (!contains(a, b)) {
       emit log_named_string("Error", err);
       assertContains(a, b);
     }
@@ -222,7 +224,7 @@ contract TestUtils is Context, Test {
 
   /// @dev Tests that `a` contains `b`. If it does not, the test fails.
   function assertContains(string[] memory a, string memory b) internal virtual {
-    if (!Helpers.contains(a, b)) {
+    if (!contains(a, b)) {
       emit log("Error: a does not contain b [string[]]");
       emit LogNamedArray("  Array a", a);
       emit log_named_string("   Item b", b);
@@ -236,7 +238,7 @@ contract TestUtils is Context, Test {
     string memory b,
     string memory err
   ) internal virtual {
-    if (!Helpers.contains(a, b)) {
+    if (!contains(a, b)) {
       emit log_named_string("Error", err);
       assertContains(a, b);
     }
@@ -244,7 +246,7 @@ contract TestUtils is Context, Test {
 
   /// @dev Tests that `a` contains `b`. If it does not, the test fails.
   function assertContains(uint256[] memory a, uint256 b) internal virtual {
-    if (!Helpers.contains(a, b)) {
+    if (!contains(a, b)) {
       emit log("Error: a does not contain b [uint256[]]");
       emit LogNamedArray("  Array a", a);
       emit log_named_uint("   Item b", b);
@@ -258,7 +260,7 @@ contract TestUtils is Context, Test {
     uint256 b,
     string memory err
   ) internal virtual {
-    if (!Helpers.contains(a, b)) {
+    if (!contains(a, b)) {
       emit log_named_string("Error", err);
       assertContains(a, b);
     }
