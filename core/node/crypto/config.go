@@ -49,6 +49,7 @@ const (
 	XChainBlockchainsConfigKey                      = "xchain.blockchains"
 	StreamMiniblockRegistrationFrequencyKey         = "stream.miniblockRegistrationFrequency"
 	StreamEphemeralStreamTTLMsKey                   = "stream.ephemeralStreamTTLMs"
+	NodeBlocklistConfigKey                          = "node.blocklist"
 )
 
 var (
@@ -71,8 +72,16 @@ func AllKnownOnChainSettingKeys() map[string]string {
 				continue
 			}
 			t := reflect.TypeOf(v).String()
+			array := false
 			if strings.HasPrefix(t, "[]") {
-				t = t[2:] + "[]"
+				t = t[2:]
+				array = true
+			}
+			if t == "common.Address" {
+				t = "address"
+			}
+			if array {
+				t = t + "[]"
 			}
 			knownOnChainSettingKeys[k] = t
 		}
@@ -109,6 +118,8 @@ type OnChainSettings struct {
 	MembershipLimits MembershipLimitsSettings `mapstructure:",squash"`
 
 	XChain XChainSettings `mapstructure:",squash"`
+
+	NodeBlocklist []common.Address `mapstructure:"node.blocklist"`
 }
 
 type XChainSettings struct {
@@ -510,11 +521,13 @@ func (occ *onChainConfiguration) applyEvent(ctx context.Context, event *river.Ri
 }
 
 var (
-	AbiTypeName_Int64       = "int64"
-	AbiTypeName_Uint64      = "uint64"
-	AbiTypeName_Uint64Array = "uint64[]"
-	AbiTypeName_Uint256     = "uint256"
-	AbiTypeName_String      = "string"
+	AbiTypeName_Int64        = "int64"
+	AbiTypeName_Uint64       = "uint64"
+	AbiTypeName_Uint64Array  = "uint64[]"
+	AbiTypeName_Uint256      = "uint256"
+	AbiTypeName_String       = "string"
+	AbiTypeName_Address      = "address"
+	AbiTypeName_AddressArray = "address[]"
 
 	AbiTypeName_All = []string{
 		AbiTypeName_Int64,
@@ -522,13 +535,17 @@ var (
 		AbiTypeName_Uint64Array,
 		AbiTypeName_Uint256,
 		AbiTypeName_String,
+		AbiTypeName_Address,
+		AbiTypeName_AddressArray,
 	}
 
-	int64Type, _              = abi.NewType(AbiTypeName_Int64, "", nil)
-	uint64Type, _             = abi.NewType(AbiTypeName_Uint64, "", nil)
-	uint64DynamicArrayType, _ = abi.NewType(AbiTypeName_Uint64Array, "", nil)
-	uint256Type, _            = abi.NewType(AbiTypeName_Uint256, "", nil)
-	stringType, _             = abi.NewType(AbiTypeName_String, "", nil)
+	int64Type, _               = abi.NewType(AbiTypeName_Int64, "", nil)
+	uint64Type, _              = abi.NewType(AbiTypeName_Uint64, "", nil)
+	uint64DynamicArrayType, _  = abi.NewType(AbiTypeName_Uint64Array, "", nil)
+	uint256Type, _             = abi.NewType(AbiTypeName_Uint256, "", nil)
+	stringType, _              = abi.NewType(AbiTypeName_String, "", nil)
+	addressType, _             = abi.NewType(AbiTypeName_Address, "", nil)
+	addressDynamicArrayType, _ = abi.NewType(AbiTypeName_AddressArray, "", nil)
 )
 
 // ABIEncodeInt64 returns Solidity abi.encode(i)
@@ -600,6 +617,35 @@ func ABIDecodeString(data []byte) (string, error) {
 	return args[0].(string), nil
 }
 
+func ABIEncodeAddress(address common.Address) []byte {
+	value, _ := abi.Arguments{{Type: addressType}}.Pack(address)
+	return value
+}
+
+func ABIDecodeAddress(data []byte) (common.Address, error) {
+	args, err := abi.Arguments{{Type: addressType}}.Unpack(data)
+	if err != nil {
+		return common.Address{}, err
+	}
+	return args[0].(common.Address), nil
+}
+
+func ABIEncodeAddressArray(addresses []common.Address) []byte {
+	value, _ := abi.Arguments{{Type: addressDynamicArrayType}}.Pack(addresses)
+	return value
+}
+
+func ABIDecodeAddressArray(data []byte) ([]common.Address, error) {
+	args, err := abi.Arguments{{Type: addressDynamicArrayType}}.Unpack(data)
+	if err != nil {
+		return []common.Address{}, err
+	}
+	return args[0].([]common.Address), nil
+}
+
+var commonAddressType = reflect.TypeOf(common.Address{})
+var commonAddressArrayType = reflect.TypeOf([]common.Address{})
+
 func abiBytesToTypeDecoder(ctx context.Context) mapstructure.DecodeHookFuncValue {
 	log := logging.FromCtx(ctx)
 	return func(from reflect.Value, to reflect.Value) (interface{}, error) {
@@ -659,6 +705,18 @@ func abiBytesToTypeDecoder(ctx context.Context) mapstructure.DecodeHookFuncValue
 					return v, nil
 				}
 				log.Errorw("failed to decode []uint64", "err", err, "bytes", from.Bytes())
+			} else if to.Type() == commonAddressType {
+				v, err := ABIDecodeAddress(from.Bytes())
+				if err == nil {
+					return v, nil
+				}
+				log.Errorw("failed to decode []address", "err", err, "bytes", from.Bytes())
+			} else if to.Type() == commonAddressArrayType {
+				v, err := ABIDecodeAddressArray(from.Bytes())
+				if err == nil {
+					return v, nil
+				}
+				log.Errorw("failed to decode []address", "err", err, "bytes", from.Bytes())
 			} else {
 				log.Errorw("unsupported type for setting decoding", "type", to.Kind(), "bytes", from.Bytes())
 			}
