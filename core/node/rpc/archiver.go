@@ -570,16 +570,32 @@ func (a *Archiver) advanceNodeAndRetryWithDelay(stream *ArchiveStream, delay tim
 	})
 }
 
+var axol3Address common.Address
+
+func init() {
+	axol3Bytes, _ := hex.DecodeString("C6CF68A1BCD3B9285fe1d13c128953a14Dd1Bb60")
+	axol3Address = common.BytesToAddress(axol3Bytes)
+}
+
+func (a *Archiver) rescheduleIfAxol3(stream *ArchiveStream) {
+	if slices.Contains(stream.nodes.GetNodes(), axol3Address) {
+		time.AfterFunc(10*time.Second, func() {
+			a.tasks <- stream.streamId
+		})
+	}
+}
+
 // ArchiveStream attempts to add all new miniblocks seen, according to the registry contract,
 // since the last time the stream was archived into storage.  It creates a new stream for
 // streams that have not yet been seen.
 func (a *Archiver) ArchiveStream(ctx context.Context, stream *ArchiveStream) (err error) {
+	log := logging.FromCtx(ctx)
+
 	defer func() {
 		if err != nil {
 			stream.corrupt.RecordBlockUpdateFailure(ctx, err)
 		}
 	}()
-	log := logging.FromCtx(ctx)
 
 	if !stream.mu.TryLock() {
 		// Reschedule with delay.
@@ -599,6 +615,7 @@ func (a *Archiver) ArchiveStream(ctx context.Context, stream *ArchiveStream) (er
 		if err != nil && AsRiverError(err).Code == Err_NOT_FOUND {
 			err = a.storage.CreateStreamArchiveStorage(ctx, stream.streamId)
 			if err != nil {
+				a.rescheduleIfAxol3(stream)
 				return err
 			}
 			a.streamsCreated.Add(1)
@@ -614,7 +631,7 @@ func (a *Archiver) ArchiveStream(ctx context.Context, stream *ArchiveStream) (er
 	}
 
 	mbsInContract := stream.numBlocksInContract.Load()
-	if mbsInDb >= mbsInContract {
+	if mbsInDb >= mbsInContract && !slices.Contains(stream.nodes.GetNodes(), axol3Address) {
 		a.streamsUpToDate.Add(1)
 		stream.corrupt.ReportBlockUpdateSuccess(ctx)
 		return nil
@@ -719,6 +736,7 @@ func (a *Archiver) ArchiveStream(ctx context.Context, stream *ArchiveStream) (er
 
 		err = a.storage.WriteArchiveMiniblocks(ctx, stream.streamId, mbsInDb, serialized)
 		if err != nil {
+			a.rescheduleIfAxol3(stream)
 			return err
 		}
 		mbsInDb += int64(len(serialized))
@@ -734,21 +752,13 @@ func (a *Archiver) ArchiveStream(ctx context.Context, stream *ArchiveStream) (er
 		a.successfulDownloads.With(prometheus.Labels{"node_address": nodeAddr.String()}).Inc()
 	}
 
-	axol3Bytes, err := hex.DecodeString("C6CF68A1BCD3B9285fe1d13c128953a14Dd1Bb60")
-	if err != nil {
-		log.Errorw("Unable to decode axol 3 address string into bytes", "error", err)
-		return nil
-	}
-	axol3Address := common.BytesToAddress(axol3Bytes)
-	if axol3Address == (common.Address{}) {
-		log.Errorw("Unable to convert axol 3 bytes into an address", "bytes", axol3Bytes)
-	}
 	if slices.Contains(stream.nodes.GetNodes(), axol3Address) {
 		time.AfterFunc(10*time.Second, func() {
 			a.tasks <- stream.streamId
 		})
 	}
 
+	a.rescheduleIfAxol3(stream)
 	return nil
 }
 
