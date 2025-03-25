@@ -7,6 +7,7 @@ import {NodeStatus, Node} from "contracts/src/river/registry/libraries/RegistryS
 
 // libraries
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import {CustomRevert} from "contracts/src/utils/libraries/CustomRevert.sol";
 import {RiverRegistryErrors} from "contracts/src/river/registry/libraries/RegistryErrors.sol";
 
 // contracts
@@ -14,6 +15,7 @@ import {RegistryModifiers} from "contracts/src/river/registry/libraries/Registry
 
 contract NodeRegistry is INodeRegistry, RegistryModifiers {
   using EnumerableSet for EnumerableSet.AddressSet;
+  using CustomRevert for string;
 
   function isNode(address nodeAddress) public view returns (bool) {
     return ds.nodeByAddress[nodeAddress].nodeAddress != address(0);
@@ -25,8 +27,9 @@ contract NodeRegistry is INodeRegistry, RegistryModifiers {
     NodeStatus status
   ) external onlyOperator(msg.sender) {
     // validate that the node is not already in the registry
-    if (ds.nodeByAddress[nodeAddress].nodeAddress != address(0))
-      revert(RiverRegistryErrors.ALREADY_EXISTS);
+    if (ds.nodeByAddress[nodeAddress].nodeAddress != address(0)) {
+      RiverRegistryErrors.ALREADY_EXISTS.revertWith();
+    }
 
     Node memory newNode = Node({
       nodeAddress: nodeAddress,
@@ -45,11 +48,11 @@ contract NodeRegistry is INodeRegistry, RegistryModifiers {
     address nodeAddress
   ) external onlyNodeOperator(nodeAddress, msg.sender) {
     if (ds.nodeByAddress[nodeAddress].nodeAddress == address(0)) {
-      revert(RiverRegistryErrors.NODE_NOT_FOUND);
+      RiverRegistryErrors.NODE_NOT_FOUND.revertWith();
     }
 
     if (ds.nodeByAddress[nodeAddress].status != NodeStatus.Deleted) {
-      revert(RiverRegistryErrors.NODE_STATE_NOT_ALLOWED);
+      RiverRegistryErrors.NODE_STATE_NOT_ALLOWED.revertWith();
     }
 
     ds.nodes.remove(nodeAddress);
@@ -88,7 +91,7 @@ contract NodeRegistry is INodeRegistry, RegistryModifiers {
 
     if (
       keccak256(abi.encodePacked(node.url)) == keccak256(abi.encodePacked(url))
-    ) revert(RiverRegistryErrors.BAD_ARG);
+    ) RiverRegistryErrors.BAD_ARG.revertWith();
 
     node.url = url;
     emit NodeUrlUpdated(node.nodeAddress, url);
@@ -96,8 +99,9 @@ contract NodeRegistry is INodeRegistry, RegistryModifiers {
 
   function getNode(address nodeAddress) external view returns (Node memory) {
     // validate that the node is in the registry
-    if (!ds.nodes.contains(nodeAddress))
-      revert(RiverRegistryErrors.NODE_NOT_FOUND);
+    if (!ds.nodes.contains(nodeAddress)) {
+      RiverRegistryErrors.NODE_NOT_FOUND.revertWith();
+    }
 
     return ds.nodeByAddress[nodeAddress];
   }
@@ -136,6 +140,6 @@ contract NodeRegistry is INodeRegistry, RegistryModifiers {
     ) {
       return;
     }
-    revert(RiverRegistryErrors.NODE_STATE_NOT_ALLOWED);
+    RiverRegistryErrors.NODE_STATE_NOT_ALLOWED.revertWith();
   }
 }

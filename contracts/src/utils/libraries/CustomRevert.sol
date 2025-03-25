@@ -32,4 +32,15 @@ library CustomRevert {
       revert(0, 0x24)
     }
   }
+
+  /// @dev Reverts with the legacy error message without additional allocation
+  function revertWith(string memory message) internal pure {
+    assembly ("memory-safe") {
+      mstore(sub(message, 0x40), 0x08c379a0) // Error(string)
+      mstore(sub(message, 0x20), 0x20) // abi encoding offset
+      // round up to multiple of 32
+      let len := and(add(mload(message), 0x1f), not(0x1f))
+      revert(sub(message, 0x24), add(len, 0x44))
+    }
+  }
 }
