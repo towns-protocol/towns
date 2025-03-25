@@ -26,7 +26,7 @@ Note: shutdown node process connected to source DB during migration process belo
     ./river_migrate_db copy  # copy data from source to target
 
     # Alternatively, to copy from an archival node
-    ./river_migrate_db copy --from-archiver --filter-stream-file=/path/to/file.txt # copy data from source archival db to target, copying only the subset of streams listed in file.txt
+    ./river_migrate_db copy --from-archiver --filter-streams-file=/path/to/file.txt # copy data from source archival db to target, copying only the subset of streams listed in file.txt
 
 
     # Inspect specific stream content
