@@ -1,11 +1,13 @@
 package main
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"log"
 	"os"
 	"slices"
 	"strings"
@@ -1383,16 +1385,57 @@ func copyStreams(
 	return nil
 }
 
+func filterStreamList(original []string, filtered []shared.StreamId) []string {
+	filteredStreamUsed := make(map[string]bool)
+	for _, id := range filtered {
+		filteredStreamUsed[id.String()] = false
+	}
+
+	outputList := make([]string, 0, len(filtered))
+	for _, id := range original {
+		if _, ok := filteredStreamUsed[id]; ok {
+			filteredStreamUsed[id] = true
+			outputList = append(outputList, id)
+		}
+	}
+
+	for id, used := range filteredStreamUsed {
+		if !used {
+			log.Printf("WARNING: stream %v is in filter list, but does not exist in the source DB", id)
+		}
+	}
+
+	return outputList
+}
+
 func copyData(
 	ctx context.Context,
 	source *pgxpool.Pool,
 	target *pgxpool.Pool,
 	force bool,
 	sourceInfo *dbInfo,
+	filterStreamIds []shared.StreamId,
 ) error {
 	sourceStreamIds, _, _, err := getStreamIds(ctx, source)
 	if err != nil {
 		return wrapError("Failed to get stream ids from source", err)
+	}
+
+	if len(filterStreamIds) > 0 {
+		if verbose {
+			fmt.Printf(
+				"Filtering stream list, %d streams total, %d to copy\n",
+				len(sourceStreamIds),
+				len(filterStreamIds),
+			)
+		}
+		sourceStreamIds = filterStreamList(sourceStreamIds, filterStreamIds)
+		if verbose {
+			fmt.Printf(
+				"Filtered stream list length is %d\n",
+				len(sourceStreamIds),
+			)
+		}
 	}
 
 	existingStreamIds, _, _, err := getStreamIds(ctx, target)
@@ -1466,10 +1509,45 @@ func copyData(
 	return nil
 }
 
+func readStreamIdFile(path string) []shared.StreamId {
+	file, err := os.Open(path)
+	if err != nil {
+		log.Fatalf("failed opening file: %s", err)
+	}
+	defer file.Close()
+
+	// Create a scanner to read the file line by line
+	scanner := bufio.NewScanner(file)
+	streamIds := make([]shared.StreamId, 0, 34000)
+
+	for scanner.Scan() {
+		line := scanner.Text()
+		// Ignore commented lines
+		if len(line) > 0 && line[0] == '#' {
+			continue
+		}
+
+		streamId, err := shared.StreamIdFromString(line)
+		if err != nil {
+			log.Printf("Error: Unable to parse '%v' as a streamId", line)
+			continue
+		}
+
+		streamIds = append(streamIds, streamId)
+	}
+
+	if err := scanner.Err(); err != nil {
+		log.Fatalf("Scanner error: %s", err)
+	}
+
+	return streamIds
+}
+
 var (
-	copyCmdForce        bool
-	copyCmdFromArchiver bool
-	copyCmd             = &cobra.Command{
+	copyCmdForce             bool
+	copyCmdFromArchiver      bool
+	copyCmdFilterStreamsFile string
+	copyCmd                  = &cobra.Command{
 		Use:   "copy",
 		Short: "Copy data from source to target database",
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -1483,6 +1561,13 @@ var (
 				return err
 			}
 			sourceInfo.isArchiver = copyCmdFromArchiver
+			var filteredStreamIds []shared.StreamId
+			if sourceInfo.isArchiver {
+				if copyCmdFilterStreamsFile == "" {
+					log.Fatalf("Error: if copy source is archival, a file to filter stream ids is required")
+				}
+				filteredStreamIds = readStreamIdFile(copyCmdFilterStreamsFile)
+			}
 
 			targetPool, targetInfo, err := getTargetDbPool(ctx, true)
 			if err != nil {
@@ -1493,7 +1578,7 @@ var (
 				return err
 			}
 
-			return copyData(ctx, sourcePool, targetPool, copyCmdForce, sourceInfo)
+			return copyData(ctx, sourcePool, targetPool, copyCmdForce, sourceInfo, filteredStreamIds)
 		},
 	}
 )
@@ -1504,6 +1589,8 @@ func init() {
 		BoolVar(&copyCmdFromArchiver, "from-archiver", false, "Mark the source database as an archiver backup and force the creation of minipool entries")
 	copyCmd.Flags().BoolVar(&copyCmdForce, "force", false, "Force copy even if target already has data")
 	copyCmd.Flags().BoolVar(&copyBypass, "bypass", false, "Bypass reading data into memory (another copy method)")
+	copyCmd.Flags().
+		StringVar(&copyCmdFilterStreamsFile, "filter-streams-file", "", "File with the subset of streams to copy from the archiver in order to restore a node. If the copy is from an archiver, this must be a valid file with stream ids.")
 }
 
 func compareTableCounts(
