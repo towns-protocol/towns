@@ -15,6 +15,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/rs/cors"
+	"go.uber.org/zap"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
 
@@ -276,12 +277,11 @@ func (s *Service) initWallet() error {
 	s.wallet = wallet
 
 	// Add node address info to the logger
-	// TODO: FIX: change it to add node address to all loggers
-	// if !s.config.Log.Simplify {
-	// 	s.defaultLogger = s.defaultLogger.With("nodeAddress", wallet.Address.Hex())
-	// 	s.serverCtx = logging.CtxWithLog(ctx, s.defaultLogger)
-	// 	zap.ReplaceGlobals(s.defaultLogger.Logger)
-	// }
+	if !s.config.Log.Simplify {
+		s.defaultLogger = s.defaultLogger.With("nodeAddress", wallet.Address.Hex())
+		s.serverCtx = logging.CtxWithLog(ctx, s.defaultLogger)
+		zap.ReplaceGlobals(s.defaultLogger.RootLogger)
+	}
 
 	return nil
 }

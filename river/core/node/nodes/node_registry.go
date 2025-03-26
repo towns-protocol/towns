@@ -102,7 +102,7 @@ func LoadNodeRegistry(
 
 	localFound := false
 	for _, node := range nodes {
-		nn := ret.addNode(node.NodeAddress, node.Url, node.Status, node.Operator)
+		nn, _ := ret.addNode(node.NodeAddress, node.Url, node.Status, node.Operator)
 		localFound = localFound || nn.local
 	}
 
@@ -132,7 +132,21 @@ func LoadNodeRegistry(
 	return ret, nil
 }
 
-func (n *nodeRegistryImpl) addNode(addr common.Address, url string, status uint8, operator common.Address) *NodeRecord {
+// addNode adds a node to the registry if it does not exist.
+// This is the thread-safe function.
+func (n *nodeRegistryImpl) addNode(
+	addr common.Address,
+	url string,
+	status uint8,
+	operator common.Address,
+) (*NodeRecord, bool) {
+	n.mu.Lock()
+	defer n.mu.Unlock()
+
+	if existingNode, ok := n.nodes[addr]; ok {
+		return existingNode, false
+	}
+
 	// Lock should be taken by the caller
 	nn := &NodeRecord{
 		address:  addr,
@@ -147,7 +161,7 @@ func (n *nodeRegistryImpl) addNode(addr common.Address, url string, status uint8
 		nn.nodeToNodeClient = NewNodeToNodeClient(n.httpClient, url, n.connectOpts...)
 	}
 	n.nodes[addr] = nn
-	return nn
+	return nn, true
 }
 
 // OnNodeAdded can apply INodeRegistry::NodeAdded event against the in-memory node registry.
@@ -160,12 +174,9 @@ func (n *nodeRegistryImpl) OnNodeAdded(ctx context.Context, event types.Log) {
 		return
 	}
 
-	n.mu.Lock()
-	defer n.mu.Unlock()
-
-	if _, exists := n.nodes[e.NodeAddress]; !exists {
+	nodeRecord, added := n.addNode(e.NodeAddress, e.Url, e.Status, e.Operator)
+	if added {
 		// TODO: add operator to NodeAdded event
-		nodeRecord := n.addNode(e.NodeAddress, e.Url, e.Status, e.Operator)
 		log.Infow(
 			"NodeRegistry: NodeAdded",
 			"node",

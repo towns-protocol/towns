@@ -25,11 +25,13 @@ contract MockRiverRegistry is
   // Constructor is used for tests that deploy contract directly
   // since owner is not set in this case.
   // Regular deployment scripts pass empty array to the constructor.
-  constructor(address[] memory approvedOperators) {
+  constructor(address[] memory approvedOperators) payable {
     _transferOwnership(msg.sender);
-    for (uint256 i = 0; i < approvedOperators.length; ++i) {
-      _approveOperator(approvedOperators[i]);
-      _approveConfigurationManager(approvedOperators[i]);
+    uint256 length = approvedOperators.length;
+    for (uint256 i; i < length; ++i) {
+      address approvedOperator = approvedOperators[i];
+      _approveOperator(approvedOperator);
+      _approveConfigurationManager(approvedOperator);
     }
   }
 }
