@@ -14,6 +14,7 @@ interface IPlatformRequirementsBase {
   error Platform__InvalidMembershipMintLimit();
   error Platform__InvalidMembershipDuration();
   error Platform__InvalidMembershipMinPrice();
+  error Platform__InvalidSwapFeeBps();
 
   // Events
   event PlatformFeeRecipientSet(address indexed recipient);

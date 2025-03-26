@@ -198,10 +198,10 @@ contract PlatformRequirementsTest is
 
   function test_setSwapFees_revertIf_bpsExceedsMax() public {
     vm.startPrank(deployer);
-    vm.expectRevert(Platform__InvalidMembershipBps.selector);
+    vm.expectRevert(Platform__InvalidSwapFeeBps.selector);
     platformReqs.setSwapFees(10_001, 100);
 
-    vm.expectRevert(Platform__InvalidMembershipBps.selector);
+    vm.expectRevert(Platform__InvalidSwapFeeBps.selector);
     platformReqs.setSwapFees(100, 10_001);
     vm.stopPrank();
   }
