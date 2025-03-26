@@ -1877,3 +1877,26 @@ func TestGetMiniblocksRangeLimit(t *testing.T) {
 		return true
 	}, 20*time.Second, 100*time.Millisecond)
 }
+
+func TestSyncWithWrongCookie(t *testing.T) {
+	tt := newServiceTester(t, serviceTesterOpts{numNodes: 2, start: true})
+
+	alice := tt.newTestClient(0, testClientOpts{enableSync: true})
+	cookie := alice.createUserStreamGetCookie()
+
+	alice.startSync()
+
+	// Replace node address in the cookie with the address of the other node
+	if common.BytesToAddress(cookie.NodeAddress) == tt.nodes[0].address {
+		cookie.NodeAddress = tt.nodes[1].address.Bytes()
+	} else {
+		cookie.NodeAddress = tt.nodes[0].address.Bytes()
+	}
+
+	testfmt.Print(t, "Modifying sync with wrong cookie")
+	_, err := alice.client.ModifySync(alice.ctx, connect.NewRequest(&protocol.ModifySyncRequest{
+		SyncId:     alice.SyncID(),
+		AddStreams: []*protocol.SyncCookie{cookie},
+	}))
+	tt.require.NoError(err)
+}
