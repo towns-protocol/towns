@@ -1929,20 +1929,6 @@ func TestAddStreamToSyncWithWrongCookie(t *testing.T) {
 	}))
 	tt.require.NoError(err)
 	testfmt.Print(t, "AddStreamToSync with wrong node address in cookie done")
-
-	// tt.require.Eventually(func() bool {
-	// 	loaded, _ := alice.updates.Load(channelId)
-	// 	if loaded == nil {
-	// 		return false
-	// 	}
-
-	// 	updates := loaded.Clone()
-	// 	testfmt.Print(t, "updates", updates)
-	// 	tt.require.Len(updates, 1)
-	// 	tt.require.Equal(updates[0].GetStreamId(), channelId[:])
-
-	// 	return true
-	// }, 20*time.Second, 100*time.Millisecond)
 }
 
 func TestStartSyncWithWrongCookie(t *testing.T) {
