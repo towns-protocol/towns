@@ -145,12 +145,12 @@ const _abi = [
     inputs: [],
     outputs: [
       {
-        name: "posterBps",
+        name: "treasuryBps",
         type: "uint16",
         internalType: "uint16",
       },
       {
-        name: "treasuryBps",
+        name: "posterBps",
         type: "uint16",
         internalType: "uint16",
       },
@@ -277,12 +277,12 @@ const _abi = [
     name: "setSwapFees",
     inputs: [
       {
-        name: "posterBps",
+        name: "treasuryBps",
         type: "uint16",
         internalType: "uint16",
       },
       {
-        name: "treasuryBps",
+        name: "posterBps",
         type: "uint16",
         internalType: "uint16",
       },

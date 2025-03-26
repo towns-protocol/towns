@@ -442,7 +442,7 @@ export interface PlatformRequirementsFacet extends BaseContract {
 
     getSwapFees(
       overrides?: CallOverrides
-    ): Promise<[number, number] & { posterBps: number; treasuryBps: number }>;
+    ): Promise<[number, number] & { treasuryBps: number; posterBps: number }>;
 
     isRouterWhitelisted(
       router: PromiseOrValue<string>,
@@ -486,8 +486,8 @@ export interface PlatformRequirementsFacet extends BaseContract {
     ): Promise<ContractTransaction>;
 
     setSwapFees(
-      posterBps: PromiseOrValue<BigNumberish>,
       treasuryBps: PromiseOrValue<BigNumberish>,
+      posterBps: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
   };
@@ -518,7 +518,7 @@ export interface PlatformRequirementsFacet extends BaseContract {
 
   getSwapFees(
     overrides?: CallOverrides
-  ): Promise<[number, number] & { posterBps: number; treasuryBps: number }>;
+  ): Promise<[number, number] & { treasuryBps: number; posterBps: number }>;
 
   isRouterWhitelisted(
     router: PromiseOrValue<string>,
@@ -562,8 +562,8 @@ export interface PlatformRequirementsFacet extends BaseContract {
   ): Promise<ContractTransaction>;
 
   setSwapFees(
-    posterBps: PromiseOrValue<BigNumberish>,
     treasuryBps: PromiseOrValue<BigNumberish>,
+    posterBps: PromiseOrValue<BigNumberish>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
@@ -594,7 +594,7 @@ export interface PlatformRequirementsFacet extends BaseContract {
 
     getSwapFees(
       overrides?: CallOverrides
-    ): Promise<[number, number] & { posterBps: number; treasuryBps: number }>;
+    ): Promise<[number, number] & { treasuryBps: number; posterBps: number }>;
 
     isRouterWhitelisted(
       router: PromiseOrValue<string>,
@@ -638,8 +638,8 @@ export interface PlatformRequirementsFacet extends BaseContract {
     ): Promise<void>;
 
     setSwapFees(
-      posterBps: PromiseOrValue<BigNumberish>,
       treasuryBps: PromiseOrValue<BigNumberish>,
+      posterBps: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<void>;
   };
@@ -797,8 +797,8 @@ export interface PlatformRequirementsFacet extends BaseContract {
     ): Promise<BigNumber>;
 
     setSwapFees(
-      posterBps: PromiseOrValue<BigNumberish>,
       treasuryBps: PromiseOrValue<BigNumberish>,
+      posterBps: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
   };
@@ -878,8 +878,8 @@ export interface PlatformRequirementsFacet extends BaseContract {
     ): Promise<PopulatedTransaction>;
 
     setSwapFees(
-      posterBps: PromiseOrValue<BigNumberish>,
       treasuryBps: PromiseOrValue<BigNumberish>,
+      posterBps: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
   };
