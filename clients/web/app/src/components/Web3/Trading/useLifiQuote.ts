@@ -114,7 +114,8 @@ export const useLifiQuote = (props: {
                         fromAmount,
                         fromAddress,
                         slippage,
-                        // toAddress,
+                        integrator: env.VITE_LIFI_INTEGRATOR_ID,
+                        fee: env.VITE_LIFI_INTEGRATOR_ID ? env.VITE_LIFI_FEE : undefined, // The percent of the integrator's fee that is taken from every transaction. 0.02 represents 2%. The maximum fee amount is 10%.
                     },
                     headers: {
                         'x-lifi-api-key': env.VITE_LIFI_API_KEY,
