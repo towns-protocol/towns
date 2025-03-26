@@ -1,22 +1,27 @@
 package cmd
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"encoding/hex"
 	"fmt"
 	"net/http"
+	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"connectrpc.com/connect"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/gammazero/workerpool"
 	"github.com/spf13/cobra"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 
 	"github.com/towns-protocol/towns/core/node/crypto"
 	"github.com/towns-protocol/towns/core/node/events"
+	"github.com/towns-protocol/towns/core/node/http_client"
 	"github.com/towns-protocol/towns/core/node/infra"
 	"github.com/towns-protocol/towns/core/node/nodes"
 	"github.com/towns-protocol/towns/core/node/protocol"
@@ -675,6 +680,82 @@ func runStreamPartitionCmd(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
+func runStreamCheckCmd(cmd *cobra.Command, args []string) error {
+	ctx := context.Background() // lint:ignore context.Background() is fine here
+
+	blockchain, err := crypto.NewBlockchain(
+		ctx,
+		&cmdConfig.RiverChain,
+		nil,
+		infra.NewMetricsFactory(nil, "river", "cmdline"),
+		nil,
+	)
+	if err != nil {
+		return err
+	}
+
+	registryContract, err := registries.NewRiverRegistryContract(
+		ctx,
+		blockchain,
+		&cmdConfig.RegistryContract,
+		&cmdConfig.RiverRegistry,
+	)
+	if err != nil {
+		return err
+	}
+
+	httpClient, err := http_client.GetHttpClient(ctx, cmdConfig)
+	if err != nil {
+		return err
+	}
+
+	workerPool := workerpool.New(24)
+	defer workerPool.StopWait()
+
+	scanner := bufio.NewScanner(os.Stdin)
+	for scanner.Scan() {
+		line := strings.TrimSpace(scanner.Text())
+		if line == "" {
+			continue
+		}
+
+		streamID, err := shared.StreamIdFromString(line)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error parsing stream ID %s: %v\n", line, err)
+			continue
+		}
+
+		workerPool.Submit(func() {
+			streamRecord, err := registryContract.StreamRegistry.GetStream(nil, streamID)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "Error checking stream %s: %v\n", streamID, err)
+				return
+			}
+
+			remote, err := registryContract.NodeRegistry.GetNode(nil, streamRecord.Nodes[0])
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "Error checking stream %s: %v\n", streamID, err)
+				return
+			}
+
+			remoteClient := protocolconnect.NewStreamServiceClient(httpClient, remote.Url)
+
+			_, err = remoteClient.GetStream(ctx, connect.NewRequest(&protocol.GetStreamRequest{
+				StreamId: streamID[:],
+				Optional: false,
+			}))
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "Error checking stream %s: %v\n", streamID, err)
+			}
+		})
+	}
+	if err := scanner.Err(); err != nil {
+		return fmt.Errorf("error reading from stdin: %v", err)
+	}
+
+	return nil
+}
+
 func init() {
 	cmdStream := &cobra.Command{
 		Use:   "stream",
@@ -731,12 +812,19 @@ max-block-range is optional and limits the number of blocks to consider (default
 		Args:  cobra.ExactArgs(1),
 		RunE:  runStreamGetCmd,
 	}
+
 	cmdStreamGetPartition := &cobra.Command{
 		Use:   "part <stream-id>",
 		Short: "Get stream stream database partition",
 		Long:  `Get partition in database where the stream is stored (assuming 256 total partitions)`,
 		Args:  cobra.RangeArgs(1, 1),
 		RunE:  runStreamPartitionCmd,
+	}
+
+	cmdStreamCheck := &cobra.Command{
+		Use:   "check",
+		Short: "Read stream ids from stdin and check if stream is available, print errors if not",
+		RunE:  runStreamCheckCmd,
 	}
 
 	cmdStream.AddCommand(cmdStreamGetMiniblock)
@@ -746,5 +834,6 @@ max-block-range is optional and limits the number of blocks to consider (default
 	cmdStream.AddCommand(cmdStreamNodeDump)
 	cmdStream.AddCommand(cmdStreamGet)
 	cmdStream.AddCommand(cmdStreamGetPartition)
+	cmdStream.AddCommand(cmdStreamCheck)
 	rootCmd.AddCommand(cmdStream)
 }
