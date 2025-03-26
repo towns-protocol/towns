@@ -126,7 +126,7 @@ func (b *MiniblockInfo) lastEvent() *ParsedEvent {
 }
 
 func (b *MiniblockInfo) IsSnapshot() bool {
-	return b.Header().GetSnapshot() != nil
+	return b.Header().GetSnapshot() != nil || len(b.Header().GetSnapshotHash()) > 0
 }
 
 func (b *MiniblockInfo) asStorageMb() (*storage.WriteMiniblockData, error) {
