@@ -13,7 +13,6 @@ import (
 	"connectrpc.com/connect"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/prometheus/client_golang/prometheus"
-	"go.uber.org/zap/zapcore"
 
 	"github.com/towns-protocol/towns/core/config"
 	"github.com/towns-protocol/towns/core/contracts/river"
@@ -571,25 +570,45 @@ func (a *Archiver) advanceNodeAndRetryWithDelay(stream *ArchiveStream, delay tim
 	})
 }
 
-var continuousDownloadNodeAddress common.Address
+var continuousDownloadNodeAddresses []common.Address
 
 func init() {
 	continuousDownloadNodeAddressBytes, _ := hex.DecodeString("C6CF68A1BCD3B9285fe1d13c128953a14Dd1Bb60")
-	continuousDownloadNodeAddress = common.BytesToAddress(continuousDownloadNodeAddressBytes)
+	continuousDownloadNodeAddresses = append(
+		continuousDownloadNodeAddresses,
+		common.BytesToAddress(continuousDownloadNodeAddressBytes),
+	)
+
+	continuousDownloadNodeAddressBytes, _ = hex.DecodeString("a7f7D83843aB78706344D3Ae882b1d4f9404F254")
+	continuousDownloadNodeAddresses = append(
+		continuousDownloadNodeAddresses,
+		common.BytesToAddress(continuousDownloadNodeAddressBytes),
+	)
+
+	continuousDownloadNodeAddressBytes, _ = hex.DecodeString("01A7dCd51409758f220c171c209eF3E1C8b10F1E")
+	continuousDownloadNodeAddresses = append(
+		continuousDownloadNodeAddresses,
+		common.BytesToAddress(continuousDownloadNodeAddressBytes),
+	)
 }
 
 func (a *Archiver) rescheduleIfContinuousDownloadNode(stream *ArchiveStream) {
 	if isContinuousDownloadStream(stream) {
-		logging.DefaultLogger(zapcore.InfoLevel).
-			Infow("Rescheduling continuous download stream", "stream", stream.streamId)
-		time.AfterFunc(10*time.Second, func() {
+		// logging.DefaultLogger(zapcore.InfoLevel).
+		// 	Infow("Rescheduling continuous download stream", "stream", stream.streamId, "contractBlock", stream.numBlocksInContract, "blocksInDb", stream.numBlocksInDb)
+		time.AfterFunc(5*time.Second, func() {
 			a.tasks <- stream.streamId
 		})
 	}
 }
 
 func isContinuousDownloadStream(stream *ArchiveStream) bool {
-	return slices.Contains(stream.nodes.GetNodes(), continuousDownloadNodeAddress)
+	for _, continuousDownloadNodeAddress := range continuousDownloadNodeAddresses {
+		if slices.Contains(stream.nodes.GetNodes(), continuousDownloadNodeAddress) {
+			return true
+		}
+	}
+	return false
 }
 
 // ArchiveStream attempts to add all new miniblocks seen, according to the registry contract,
@@ -639,7 +658,7 @@ func (a *Archiver) ArchiveStream(ctx context.Context, stream *ArchiveStream) (er
 	}
 
 	mbsInContract := stream.numBlocksInContract.Load()
-	if mbsInDb >= mbsInContract && !slices.Contains(stream.nodes.GetNodes(), continuousDownloadNodeAddress) {
+	if mbsInDb >= mbsInContract && !isContinuousDownloadStream(stream) {
 		a.streamsUpToDate.Add(1)
 		stream.corrupt.ReportBlockUpdateSuccess(ctx)
 		return nil
