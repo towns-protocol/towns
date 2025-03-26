@@ -20,6 +20,7 @@ export const useSizeContext = () => {
     return useMemo(() => {
         return {
             lessThan: (value: number) => isDefinedWidth && containerWidth < value,
+            moreThan: (value: number) => isDefinedWidth && containerWidth > value,
             aspectRatio: width && height ? width / height : 0,
             containerWidth,
             containerHeight,

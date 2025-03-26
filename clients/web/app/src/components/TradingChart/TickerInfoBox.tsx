@@ -9,6 +9,7 @@ import { Avatar } from '@components/Avatar/Avatar'
 import { isTradingChain } from '@components/Web3/Trading/tradingConstants'
 import { formatCompactNumber } from '@components/Web3/Trading/tradingUtils'
 import { UserList } from '@components/UserList/UserList'
+import { useSizeContext } from 'ui/hooks/useSizeContext'
 import { GetCoinDataResponse } from './useCoinData'
 import { TickerChangeIndicator } from './TickerChangeIndicator'
 export const TickerInfoBox = (props: {
@@ -73,7 +74,10 @@ export const TickerHeader = (
         onToggleExpanded?: () => void
     },
 ) => {
-    const { minimal, expanded, coinData, address, chainId, onToggleExpanded, expandable } = props
+    const { expanded, coinData, address, chainId, onToggleExpanded, expandable } = props
+
+    const minimal = useSizeContext().moreThan(420) && props.minimal
+
     return (
         <Stack horizontal={minimal} gap="paragraph">
             <Stack horizontal gap="sm" alignItems="center" insetY="xxs">
