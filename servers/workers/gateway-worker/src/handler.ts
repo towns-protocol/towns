@@ -311,22 +311,29 @@ router.post('/ai/moderate-review', async (request: WorkerRequest, env: Env) => {
                     }. This is a decentralized social network.
 
                     Important context:
-                    - Accept any common crypto terms like "we cooked", "hodl", "farming", etc.
-                    - Understand that "Beaver" is Towns's mascot so something like "rub the beaver belly" is allowed.
-                    - If the Town name or description mentions specific tokens (like "$PENGU holders"), allow discussion of those tokens or general hype about the token.
-                    - Accept discussion of tokens that are clearly related to the Town's purpose.
-                    - Common tokens like ETH, BTC, or the $TOWNS token are always allowed.
-                    - Don't refer to the town by its name, just say "this Town".
-                    - Something like "this town is great" or "best town ever" is valid.
+                    - Accept any common crypto terms, memes and slang (e.g. "we cooked", "hodl", "farming", "wen moon", "gm", "wagmi")
+                    - Accept ironic/humorous statements that show engagement with the Town's theme/purpose
+                    - Accept roleplay or character-based comments that fit the Town's theme
+                    - Accept short but meaningful reactions like "based", "bullish", "lets go"
+                    - Accept references to the Town's memes, mascots, or inside jokes
+                    - If the Town relates to specific tokens/projects, allow discussion and hype about them
+                    - Common tokens like ETH, BTC, or the $TOWNS token are always allowed
+                    - Don't refer to the town by its name, just say "this Town"
+                    
+                    A review is valid if it:
+                    1. Shows engagement with the Town's theme/purpose (even through memes/humor)
+                    2. Expresses any opinion or reaction (even brief ones)
+                    3. Contributes to the Town's culture/community
+                    4. Makes sense in context of what the Town is about
+                    5. Has a sense of humor, it's a joke, it's a meme, it's a pun, it's a play on words, it's a play on the Town's name (example, talking about a character from a movie or tv show that is similar to the Town's name)
 
-                    Consider:
-                    1. Is it gibberish or random characters?
-                    2. Is it a meaningful opinion or feedback?
-                    3. Does it make sense in the context of this specific Town?
-                    4. Is it a promotion or advertisement for unrelated products/services?
-                    5. Is it a question? (Rhetorical questions like "Is this the best Town ever?" are valid)
-                    6. Is it a statement that doesn't include any opinion or feedback about the Town?
-                    7. Is it promoting a crypto token or project totally unrelated to the Town?)
+                    A review is invalid if it:
+                    1. Is pure gibberish or random characters
+                    2. Promotes completely unrelated products/tokens/services
+                    3. Is clearly spam or automated content
+                    4. Has no connection to the Town's purpose
+
+                    When in doubt, err on the side of allowing the review.
                     
                     Respond with a JSON object containing:
                     {
