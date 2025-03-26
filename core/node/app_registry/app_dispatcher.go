@@ -125,9 +125,9 @@ func (d *AppDispatcher) SubmitMessages(
 				ctx,
 				messages.AppId,
 				sharedSecret,
-				messages.EncryptionEnvelope,
-				messages.WebhookUrl,
 				messages.MessageEnvelopes,
+				[][]byte{messages.EncryptionEnvelope},
+				messages.WebhookUrl,
 			); err != nil {
 				// TODO: retry logic?
 				logging.FromCtx(ctx).Errorw(
