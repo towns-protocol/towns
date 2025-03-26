@@ -26,7 +26,7 @@ export async function makeStressClient(
     clientIndex: number,
     inWallet: Wallet | undefined,
     globalPersistedStore: IStorage | undefined,
-) {
+): Promise<StressClient> {
     const bot = new Bot(inWallet, config)
     const storageKey = `stressclient_${bot.userId}_${config.environmentId}`
     const logId = `client${clientIndex}:${shortenHexString(bot.userId)}`
