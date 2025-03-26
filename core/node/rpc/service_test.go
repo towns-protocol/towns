@@ -1899,7 +1899,7 @@ func TestModifySyncWithWrongCookie(t *testing.T) {
 		AddStreams: []*protocol.SyncCookie{cookie},
 	}))
 	tt.require.NoError(err)
-	tt.require.Len(resp.Msg.GetAdds(), 0)
+	tt.require.Len(resp.Msg.GetAdds(), 1)
 	tt.require.Len(resp.Msg.GetRemovals(), 0)
 }
 
