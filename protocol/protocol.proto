@@ -112,6 +112,7 @@ message StreamEvent {
         MediaPayload media_payload = 108;
         DmChannelPayload dm_channel_payload = 109;
         GdmChannelPayload gdm_channel_payload = 110;
+        Snapshot snapshot = 111;
     }
 }
 
@@ -604,7 +605,6 @@ message MediaPayload {
 * Snapshot contains a summary of all state events up to the most recent miniblock
 */
 message Snapshot {
-    
     MemberPayload.Snapshot members = 1;
     int32 snapshot_version = 2;
     

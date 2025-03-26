@@ -709,7 +709,7 @@ func (s *PostgresStreamStore) readStreamFromLastSnapshotTx(
 	miniblocksRow, err := tx.Query(
 		ctx,
 		s.sqlForStream(
-			"SELECT blockdata, seq_num FROM {{miniblocks}} WHERE seq_num >= $1 AND stream_id = $2 ORDER BY seq_num",
+			"SELECT blockdata, seq_num, snapshot FROM {{miniblocks}} WHERE seq_num >= $1 AND stream_id = $2 ORDER BY seq_num",
 			streamId,
 		),
 		startSeqNum,
@@ -720,14 +720,16 @@ func (s *PostgresStreamStore) readStreamFromLastSnapshotTx(
 	}
 
 	var miniblocks [][]byte
+	var snapshot []byte
 	var counter int64 = 0
 	var readFirstSeqNum int64
 
 	var blockdata []byte
 	var readLastSeqNum int64
+	var lastReadSnapshot []byte
 	if _, err := pgx.ForEachRow(
 		miniblocksRow,
-		[]any{&blockdata, &readLastSeqNum},
+		[]any{&blockdata, &readLastSeqNum, &lastReadSnapshot},
 		func() error {
 			if counter == 0 {
 				readFirstSeqNum = readLastSeqNum
@@ -739,6 +741,9 @@ func (s *PostgresStreamStore) readStreamFromLastSnapshotTx(
 					"ExpectedSeqNum", readFirstSeqNum+counter)
 			}
 			miniblocks = append(miniblocks, blockdata)
+			if len(lastReadSnapshot) > 0 && snapshot == nil {
+				snapshot = lastReadSnapshot
+			}
 			counter++
 			return nil
 		},
@@ -805,6 +810,7 @@ func (s *PostgresStreamStore) readStreamFromLastSnapshotTx(
 	return &ReadStreamFromLastSnapshotResult{
 		StartMiniblockNumber:    readFirstSeqNum,
 		SnapshotMiniblockOffset: int(snapshotMiniblockIndex - readFirstSeqNum),
+		Snapshot:                snapshot,
 		Miniblocks:              miniblocks,
 		MinipoolEnvelopes:       envelopes,
 	}, nil

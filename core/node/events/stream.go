@@ -150,10 +150,11 @@ func (s *Stream) loadInternal(ctx context.Context) error {
 		return err
 	}
 
-	view, err := MakeStreamView(ctx, streamData)
+	view, err := MakeStreamView(streamData)
 	if err != nil {
 		logging.FromCtx(ctx).
-			Errorw("Stream.loadInternal: Failed to parse stream data loaded from storage", "error", err, "streamId", s.streamId)
+			Errorw("Stream.loadInternal: Failed to parse stream data loaded from storage",
+				"error", err, "streamId", s.streamId)
 		return err
 	}
 
@@ -435,7 +436,6 @@ func (s *Stream) initFromGenesis(
 	s.lastAppliedBlockNum = blockNum
 
 	view, err := MakeStreamView(
-		ctx,
 		&storage.ReadStreamFromLastSnapshotResult{
 			StartMiniblockNumber: 0,
 			Miniblocks:           [][]byte{genesisBytes},
@@ -488,7 +488,6 @@ func (s *Stream) initFromBlockchain(ctx context.Context) error {
 
 	// Successfully put data into storage, init stream view.
 	view, err := MakeStreamView(
-		ctx,
 		&storage.ReadStreamFromLastSnapshotResult{
 			StartMiniblockNumber: 0,
 			Miniblocks:           [][]byte{mb},

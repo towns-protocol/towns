@@ -180,8 +180,7 @@ func NewMiniblockFromBytesWithOpts(bytes []byte, opts *ParsedMiniblockInfoOpts) 
 
 func NewMiniblockInfoFromBytes(bytes []byte, expectedBlockNumber int64) (*MiniblockInfo, error) {
 	var pb Miniblock
-	err := proto.Unmarshal(bytes, &pb)
-	if err != nil {
+	if err := proto.Unmarshal(bytes, &pb); err != nil {
 		return nil, AsRiverError(err, Err_INVALID_ARGUMENT).
 			Message("Failed to decode miniblock from bytes").
 			Func("NewMiniblockInfoFromBytes")

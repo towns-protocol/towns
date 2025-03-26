@@ -64,7 +64,6 @@ func TestLoad(t *testing.T) {
 	assert.NoError(t, err)
 
 	view, err := MakeStreamView(
-		ctx,
 		&storage.ReadStreamFromLastSnapshotResult{
 			Miniblocks: [][]byte{miniblockProtoBytes},
 		},
@@ -293,7 +292,6 @@ func TestMbHashConstraints(t *testing.T) {
 	}
 
 	view, err := MakeStreamView(
-		ctx,
 		&storage.ReadStreamFromLastSnapshotResult{
 			Miniblocks: mbBytes,
 		},

@@ -28,12 +28,18 @@ type StreamViewStats struct {
 	TotalEventsEver       int // This is total number of events in the stream ever, not in the cache.
 }
 
-func MakeStreamView(
-	ctx context.Context,
-	streamData *storage.ReadStreamFromLastSnapshotResult,
-) (*StreamView, error) {
+func MakeStreamView(streamData *storage.ReadStreamFromLastSnapshotResult) (*StreamView, error) {
 	if len(streamData.Miniblocks) <= 0 {
 		return nil, RiverError(Err_STREAM_EMPTY, "no blocks").Func("MakeStreamView")
+	}
+
+	// Newer miniblock version contains snapshot in a separate database column.
+	var snapshot *Snapshot
+	if len(streamData.Snapshot) > 0 {
+		var err error
+		if snapshot, err = NewSnapshotFromBytes(streamData.Snapshot); err != nil {
+			return nil, err
+		}
 	}
 
 	miniblocks := make([]*MiniblockInfo, len(streamData.Miniblocks))
@@ -46,7 +52,7 @@ func MakeStreamView(
 		}
 		miniblocks[i] = miniblock
 		lastMiniblockNumber = miniblock.Header().MiniblockNum
-		if snapshotIndex == -1 && miniblock.Header().Snapshot != nil {
+		if snapshotIndex == -1 && (miniblock.Header().Snapshot != nil || snapshot != nil) {
 			snapshotIndex = i
 		}
 	}
@@ -55,10 +61,16 @@ func MakeStreamView(
 		return nil, RiverError(Err_STREAM_BAD_EVENT, "no snapshot").Func("MakeStreamView")
 	}
 
-	snapshot := miniblocks[snapshotIndex].headerEvent.Event.GetMiniblockHeader().GetSnapshot()
+	// The legacy miniblock header contains a full snapshot inside.
+	// Trying to retrieve it from there if this is the case.
+	if snapshot == nil {
+		snapshot = miniblocks[snapshotIndex].headerEvent.Event.GetMiniblockHeader().GetSnapshot()
+	}
+
 	if snapshot == nil {
 		return nil, RiverError(Err_STREAM_BAD_EVENT, "no snapshot").Func("MakeStreamView")
 	}
+
 	streamId, err := StreamIdFromBytes(snapshot.GetInceptionPayload().GetStreamId())
 	if err != nil {
 		return nil, RiverError(Err_STREAM_BAD_EVENT, "bad streamId").Func("MakeStreamView")

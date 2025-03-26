@@ -448,7 +448,6 @@ func (s *StreamCache) createStreamStorage(
 
 		// Successfully put data into storage, init stream view.
 		view, err := MakeStreamView(
-			ctx,
 			&storage.ReadStreamFromLastSnapshotResult{
 				StartMiniblockNumber: 0,
 				Miniblocks:           [][]byte{mb},
