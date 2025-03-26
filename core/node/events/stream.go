@@ -744,9 +744,20 @@ func (s *Stream) addEventLocked(ctx context.Context, event *ParsedEvent) (*Strea
 	return newSV, nil
 }
 
-// Sub subscribes the reciever to the stream, sending all content between the cookie and the
-// current stream state. This method is thread-safe.
+// Sub subscribes to the stream, sending all content between the cookie and the current stream state.
+// This method is thread-safe.
+// Only local streams are allowed to subscribe.
 func (s *Stream) Sub(ctx context.Context, cookie *SyncCookie, receiver SyncResultReceiver) error {
+	if !s.IsLocal() {
+		return RiverError(
+			Err_NOT_FOUND,
+			"stream not found",
+			"cookie.StreamId",
+			cookie.StreamId,
+			"s.streamId",
+			s.streamId,
+		)
+	}
 	if !bytes.Equal(cookie.NodeAddress, s.params.Wallet.Address.Bytes()) {
 		return RiverError(
 			Err_BAD_SYNC_COOKIE,
@@ -770,6 +781,7 @@ func (s *Stream) Sub(ctx context.Context, cookie *SyncCookie, receiver SyncResul
 
 	s.mu.Lock()
 	defer s.mu.Unlock()
+
 	if err := s.loadInternal(ctx); err != nil {
 		return err
 	}

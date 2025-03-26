@@ -1894,11 +1894,13 @@ func TestModifySyncWithWrongCookie(t *testing.T) {
 	}
 
 	testfmt.Print(t, "Modifying sync with wrong cookie")
-	_, err := alice.client.ModifySync(alice.ctx, connect.NewRequest(&protocol.ModifySyncRequest{
+	resp, err := alice.client.ModifySync(alice.ctx, connect.NewRequest(&protocol.ModifySyncRequest{
 		SyncId:     alice.SyncID(),
 		AddStreams: []*protocol.SyncCookie{cookie},
 	}))
 	tt.require.NoError(err)
+	tt.require.Len(resp.Msg.GetAdds(), 0)
+	tt.require.Len(resp.Msg.GetRemovals(), 0)
 }
 
 func TestAddStreamToSyncWithWrongCookie(t *testing.T) {
@@ -1971,7 +1973,8 @@ func TestStartSyncWithWrongCookie(t *testing.T) {
 
 	for updates.Receive() {
 		msg := updates.Msg()
-		if msg.GetSyncOp() == protocol.SyncOp_SYNC_UPDATE && testutils.StreamIdFromBytes(msg.GetStream().GetNextSyncCookie().GetStreamId()) == channelId {
+		if msg.GetSyncOp() == protocol.SyncOp_SYNC_UPDATE &&
+			testutils.StreamIdFromBytes(msg.GetStream().GetNextSyncCookie().GetStreamId()) == channelId {
 			syncCancel()
 		}
 	}
