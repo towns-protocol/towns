@@ -1942,3 +1942,38 @@ func TestAddStreamToSyncWithWrongCookie(t *testing.T) {
 	// 	return true
 	// }, 20*time.Second, 100*time.Millisecond)
 }
+
+func TestStartSyncWithWrongCookie(t *testing.T) {
+	tt := newServiceTester(t, serviceTesterOpts{numNodes: 2, start: true})
+
+	alice := tt.newTestClient(0, testClientOpts{enableSync: false})
+	_ = alice.createUserStreamGetCookie()
+	spaceId, _ := alice.createSpace()
+	channelId, _, cookie := alice.createChannel(spaceId)
+
+	// Replace node address in the cookie with the address of the other node
+	if common.BytesToAddress(cookie.NodeAddress) == tt.nodes[0].address {
+		cookie.NodeAddress = tt.nodes[1].address.Bytes()
+	} else {
+		cookie.NodeAddress = tt.nodes[0].address.Bytes()
+	}
+
+	alice.say(channelId, "hello from Alice")
+
+	testfmt.Print(t, "StartSync with wrong cookie")
+	syncCtx, syncCancel := context.WithTimeout(alice.ctx, 10*time.Second)
+	defer syncCancel()
+	updates, err := alice.client.SyncStreams(syncCtx, connect.NewRequest(&protocol.SyncStreamsRequest{
+		SyncPos: []*protocol.SyncCookie{cookie},
+	}))
+	tt.require.NoError(err)
+	testfmt.Print(t, "StartSync with wrong cookie done")
+
+	for updates.Receive() {
+		msg := updates.Msg()
+		if msg.GetSyncOp() == protocol.SyncOp_SYNC_UPDATE && testutils.StreamIdFromBytes(msg.GetStream().GetNextSyncCookie().GetStreamId()) == channelId {
+			syncCancel()
+		}
+	}
+	tt.require.ErrorIs(updates.Err(), context.Canceled)
+}
