@@ -41,7 +41,7 @@ contract PlatformRequirementsTest is
     platformReqs.setFeeRecipient(newFeeRecipient);
 
     vm.prank(deployer);
-    vm.expectEmit(true, true, true, true);
+    vm.expectEmit(spaceFactory);
     emit PlatformFeeRecipientSet(newFeeRecipient);
     platformReqs.setFeeRecipient(newFeeRecipient);
 
@@ -69,7 +69,7 @@ contract PlatformRequirementsTest is
     platformReqs.setMembershipBps(10_001);
 
     vm.prank(deployer);
-    vm.expectEmit(true, true, true, true);
+    vm.expectEmit(spaceFactory);
     emit PlatformMembershipBpsSet(newMembershipBps);
     platformReqs.setMembershipBps(newMembershipBps);
 
@@ -97,7 +97,7 @@ contract PlatformRequirementsTest is
     platformReqs.setMembershipFee(newMembershipFee);
 
     vm.prank(deployer);
-    vm.expectEmit(true, true, true, true);
+    vm.expectEmit(spaceFactory);
     emit PlatformMembershipFeeSet(newMembershipFee);
     platformReqs.setMembershipFee(newMembershipFee);
 
@@ -124,7 +124,7 @@ contract PlatformRequirementsTest is
     platformReqs.setMembershipMintLimit(0);
 
     vm.prank(deployer);
-    vm.expectEmit(true, true, true, true);
+    vm.expectEmit(spaceFactory);
     emit PlatformMembershipMintLimitSet(newMembershipMintLimit);
     platformReqs.setMembershipMintLimit(newMembershipMintLimit);
 
@@ -152,7 +152,7 @@ contract PlatformRequirementsTest is
     platformReqs.setMembershipDuration(0);
 
     vm.prank(deployer);
-    vm.expectEmit(true, true, true, true);
+    vm.expectEmit(spaceFactory);
     emit PlatformMembershipDurationSet(newMembershipDuration);
     platformReqs.setMembershipDuration(newMembershipDuration);
 
@@ -174,11 +174,73 @@ contract PlatformRequirementsTest is
     platformReqs.setMembershipMinPrice(0);
 
     vm.prank(deployer);
-    vm.expectEmit(address(spaceFactory));
+    vm.expectEmit(spaceFactory);
     emit PlatformMembershipMinPriceSet(newMembershipMinPrice);
     platformReqs.setMembershipMinPrice(newMembershipMinPrice);
 
     uint256 membershipMinPrice = platformReqs.getMembershipMinPrice();
     assertEq(membershipMinPrice, newMembershipMinPrice);
+  }
+
+  // Swap Fees
+  function test_getSwapFees() public view {
+    (uint16 treasuryBps, uint16 posterBps) = platformReqs.getSwapFees();
+    assertEq(treasuryBps, 0);
+    assertEq(posterBps, 0);
+  }
+
+  function test_setSwapFees_revertIf_notOwner() public {
+    vm.expectRevert(
+      abi.encodeWithSelector(Ownable__NotOwner.selector, address(this))
+    );
+    platformReqs.setSwapFees(100, 200);
+  }
+
+  function test_setSwapFees_revertIf_bpsExceedsMax() public {
+    vm.startPrank(deployer);
+    vm.expectRevert(Platform__InvalidMembershipBps.selector);
+    platformReqs.setSwapFees(10_001, 100);
+
+    vm.expectRevert(Platform__InvalidMembershipBps.selector);
+    platformReqs.setSwapFees(100, 10_001);
+    vm.stopPrank();
+  }
+
+  function test_fuzz_setSwapFees(uint16 treasuryBps, uint16 posterBps) public {
+    treasuryBps = uint16(bound(treasuryBps, 0, 10_000));
+    posterBps = uint16(bound(posterBps, 0, 10_000));
+
+    vm.prank(deployer);
+    vm.expectEmit(spaceFactory);
+    emit PlatformSwapFeesSet(treasuryBps, posterBps);
+    platformReqs.setSwapFees(treasuryBps, posterBps);
+
+    (uint16 newTreasuryBps, uint16 newPosterBps) = platformReqs.getSwapFees();
+    assertEq(newTreasuryBps, treasuryBps);
+    assertEq(newPosterBps, posterBps);
+  }
+
+  // Router Whitelist
+  function test_isRouterWhitelisted() public view {
+    address router = _randomAddress();
+    assertFalse(platformReqs.isRouterWhitelisted(router));
+  }
+
+  function test_setRouterWhitelisted_revertIf_notOwner() public {
+    vm.expectRevert(
+      abi.encodeWithSelector(Ownable__NotOwner.selector, address(this))
+    );
+    platformReqs.setRouterWhitelisted(address(1), true);
+  }
+
+  function test_fuzz_setRouterWhitelisted(
+    address router,
+    bool whitelisted
+  ) public {
+    vm.prank(deployer);
+    vm.expectEmit(spaceFactory);
+    emit RouterWhitelistUpdated(router, whitelisted);
+    platformReqs.setRouterWhitelisted(router, whitelisted);
+    assertEq(platformReqs.isRouterWhitelisted(router), whitelisted);
   }
 }

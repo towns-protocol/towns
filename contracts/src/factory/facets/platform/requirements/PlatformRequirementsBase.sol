@@ -7,19 +7,23 @@ import {IPlatformRequirementsBase} from "./IPlatformRequirements.sol";
 // libraries
 import {PlatformRequirementsStorage} from "./PlatformRequirementsStorage.sol";
 import {BasisPoints} from "contracts/src/utils/libraries/BasisPoints.sol";
+import {CustomRevert} from "contracts/src/utils/libraries/CustomRevert.sol";
 
 // contracts
 
 abstract contract PlatformRequirementsBase is IPlatformRequirementsBase {
-  // Denominator
+  using CustomRevert for bytes4;
 
+  // Denominator
   function _getDenominator() internal pure virtual returns (uint256) {
     return 10_000;
   }
 
   // Fee Recipient
   function _setFeeRecipient(address recipient) internal {
-    if (recipient == address(0)) revert Platform__InvalidFeeRecipient();
+    if (recipient == address(0)) {
+      Platform__InvalidFeeRecipient.selector.revertWith();
+    }
 
     PlatformRequirementsStorage.layout().feeRecipient = recipient;
 
@@ -32,7 +36,10 @@ abstract contract PlatformRequirementsBase is IPlatformRequirementsBase {
 
   // Membership BPS
   function _setMembershipBps(uint16 bps) internal {
-    if (bps > BasisPoints.MAX_BPS) revert Platform__InvalidMembershipBps();
+    if (bps > BasisPoints.MAX_BPS) {
+      Platform__InvalidMembershipBps.selector.revertWith();
+    }
+
     PlatformRequirementsStorage.layout().membershipBps = bps;
     emit PlatformMembershipBpsSet(bps);
   }
@@ -53,7 +60,8 @@ abstract contract PlatformRequirementsBase is IPlatformRequirementsBase {
 
   // Membership Mint Limit
   function _setMembershipMintLimit(uint256 limit) internal {
-    if (limit == 0) revert Platform__InvalidMembershipMintLimit();
+    if (limit == 0) Platform__InvalidMembershipMintLimit.selector.revertWith();
+
     PlatformRequirementsStorage.layout().membershipMintLimit = limit;
     emit PlatformMembershipMintLimitSet(limit);
   }
@@ -64,7 +72,10 @@ abstract contract PlatformRequirementsBase is IPlatformRequirementsBase {
 
   // Membership Duration
   function _setMembershipDuration(uint64 duration) internal {
-    if (duration == 0) revert Platform__InvalidMembershipDuration();
+    if (duration == 0) {
+      Platform__InvalidMembershipDuration.selector.revertWith();
+    }
+
     PlatformRequirementsStorage.layout().membershipDuration = duration;
     emit PlatformMembershipDurationSet(duration);
   }
@@ -75,7 +86,9 @@ abstract contract PlatformRequirementsBase is IPlatformRequirementsBase {
 
   // Membership Min Price
   function _setMembershipMinPrice(uint256 minPrice) internal {
-    if (minPrice == 0) revert Platform__InvalidMembershipMinPrice();
+    if (minPrice == 0) {
+      Platform__InvalidMembershipMinPrice.selector.revertWith();
+    }
 
     PlatformRequirementsStorage.layout().membershipMinPrice = minPrice;
     emit PlatformMembershipMinPriceSet(minPrice);
@@ -83,5 +96,36 @@ abstract contract PlatformRequirementsBase is IPlatformRequirementsBase {
 
   function _getMembershipMinPrice() internal view returns (uint256) {
     return PlatformRequirementsStorage.layout().membershipMinPrice;
+  }
+
+  function _setSwapFees(uint16 treasuryBps, uint16 posterBps) internal {
+    if (posterBps > BasisPoints.MAX_BPS || treasuryBps > BasisPoints.MAX_BPS) {
+      Platform__InvalidMembershipBps.selector.revertWith();
+    }
+    PlatformRequirementsStorage.Layout storage $ = PlatformRequirementsStorage
+      .layout();
+    ($.swapTreasuryBps, $.swapPosterBps) = (treasuryBps, posterBps);
+    emit PlatformSwapFeesSet(treasuryBps, posterBps);
+  }
+
+  function _getSwapFees()
+    internal
+    view
+    returns (uint16 treasuryBps, uint16 posterBps)
+  {
+    PlatformRequirementsStorage.Layout storage $ = PlatformRequirementsStorage
+      .layout();
+    return ($.swapTreasuryBps, $.swapPosterBps);
+  }
+
+  function _setRouterWhitelisted(address router, bool whitelisted) internal {
+    PlatformRequirementsStorage.Layout storage $ = PlatformRequirementsStorage
+      .layout();
+    $.whitelistedRouters[router] = whitelisted;
+    emit RouterWhitelistUpdated(router, whitelisted);
+  }
+
+  function _isRouterWhitelisted(address router) internal view returns (bool) {
+    return PlatformRequirementsStorage.layout().whitelistedRouters[router];
   }
 }

@@ -7,9 +7,9 @@ import {IPlatformRequirements} from "./IPlatformRequirements.sol";
 // libraries
 
 // contracts
-import {PlatformRequirementsBase} from "./PlatformRequirementsBase.sol";
-import {OwnableBase} from "@towns-protocol/diamond/src/facets/ownable/OwnableBase.sol";
 import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
+import {OwnableBase} from "@towns-protocol/diamond/src/facets/ownable/OwnableBase.sol";
+import {PlatformRequirementsBase} from "./PlatformRequirementsBase.sol";
 
 contract PlatformRequirementsFacet is
   IPlatformRequirements,
@@ -97,5 +97,35 @@ contract PlatformRequirementsFacet is
   /// @inheritdoc IPlatformRequirements
   function getDenominator() external pure returns (uint256) {
     return _getDenominator();
+  }
+
+  /// @inheritdoc IPlatformRequirements
+  function getSwapFees()
+    external
+    view
+    returns (uint16 posterBps, uint16 treasuryBps)
+  {
+    return _getSwapFees();
+  }
+
+  /// @inheritdoc IPlatformRequirements
+  function setSwapFees(
+    uint16 posterBps,
+    uint16 treasuryBps
+  ) external onlyOwner {
+    _setSwapFees(posterBps, treasuryBps);
+  }
+
+  /// @inheritdoc IPlatformRequirements
+  function isRouterWhitelisted(address router) external view returns (bool) {
+    return _isRouterWhitelisted(router);
+  }
+
+  /// @inheritdoc IPlatformRequirements
+  function setRouterWhitelisted(
+    address router,
+    bool whitelisted
+  ) external onlyOwner {
+    _setRouterWhitelisted(router, whitelisted);
   }
 }
