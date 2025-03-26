@@ -196,7 +196,7 @@ export default [
     "inputs": [],
     "outputs": [
       {
-        "name": "",
+        "name": "settings",
         "type": "tuple[]",
         "internalType": "struct Setting[]",
         "components": [
