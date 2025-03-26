@@ -7,6 +7,7 @@ import {Setting} from "contracts/src/river/registry/libraries/RegistryStorage.so
 
 // libraries
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import {CustomRevert} from "contracts/src/utils/libraries/CustomRevert.sol";
 import {RiverRegistryErrors} from "contracts/src/river/registry/libraries/RegistryErrors.sol";
 
 // contracts
@@ -17,6 +18,7 @@ import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
 contract RiverConfig is IRiverConfig, RegistryModifiers, OwnableBase, Facet {
   using EnumerableSet for EnumerableSet.AddressSet;
   using EnumerableSet for EnumerableSet.Bytes32Set;
+  using CustomRevert for string;
 
   // =============================================================
   //                         Initialization
@@ -46,8 +48,10 @@ contract RiverConfig is IRiverConfig, RegistryModifiers, OwnableBase, Facet {
     uint64 blockNumber,
     bytes calldata value
   ) external onlyConfigurationManager(msg.sender) {
-    if (blockNumber == type(uint64).max) revert(RiverRegistryErrors.BAD_ARG);
-    if (value.length == 0) revert(RiverRegistryErrors.BAD_ARG);
+    if (blockNumber == type(uint64).max) {
+      RiverRegistryErrors.BAD_ARG.revertWith();
+    }
+    if (value.length == 0) RiverRegistryErrors.BAD_ARG.revertWith();
 
     if (!ds.configurationKeys.contains(key)) {
       ds.configurationKeys.add(key);
@@ -99,7 +103,7 @@ contract RiverConfig is IRiverConfig, RegistryModifiers, OwnableBase, Facet {
       }
     }
 
-    if (!found) revert(RiverRegistryErrors.NOT_FOUND);
+    if (!found) RiverRegistryErrors.NOT_FOUND.revertWith();
 
     emit ConfigurationChanged(key, blockNumber, "", true);
   }
@@ -159,10 +163,11 @@ contract RiverConfig is IRiverConfig, RegistryModifiers, OwnableBase, Facet {
   /// Remove a configuration manager
   /// @inheritdoc IRiverConfig
   function removeConfigurationManager(address manager) external onlyOwner {
-    if (manager == address(0)) revert(RiverRegistryErrors.BAD_ARG);
+    if (manager == address(0)) RiverRegistryErrors.BAD_ARG.revertWith();
 
-    if (!ds.configurationManagers.remove(manager))
-      revert(RiverRegistryErrors.NOT_FOUND);
+    if (!ds.configurationManagers.remove(manager)) {
+      RiverRegistryErrors.NOT_FOUND.revertWith();
+    }
 
     emit ConfigurationManagerRemoved(manager);
   }
@@ -174,10 +179,11 @@ contract RiverConfig is IRiverConfig, RegistryModifiers, OwnableBase, Facet {
   /// Internal function to approve a configuration manager, doesn't do any
   /// validation
   function _approveConfigurationManager(address manager) internal {
-    if (manager == address(0)) revert(RiverRegistryErrors.BAD_ARG);
+    if (manager == address(0)) RiverRegistryErrors.BAD_ARG.revertWith();
 
-    if (!ds.configurationManagers.add(manager))
-      revert(RiverRegistryErrors.ALREADY_EXISTS);
+    if (!ds.configurationManagers.add(manager)) {
+      RiverRegistryErrors.ALREADY_EXISTS.revertWith();
+    }
 
     emit ConfigurationManagerAdded(manager);
   }

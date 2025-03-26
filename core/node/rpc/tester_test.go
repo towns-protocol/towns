@@ -612,15 +612,22 @@ func (tc *testClient) withRequireFor(t require.TestingT) *testClient {
 	return &tcc
 }
 
-func (tc *testClient) createUserStream(
+func (tc *testClient) createUserStreamGetCookie(
 	streamSettings ...*StreamSettings,
-) *MiniblockRef {
+) *SyncCookie {
 	var ss *StreamSettings
 	if len(streamSettings) > 0 {
 		ss = streamSettings[0]
 	}
 	cookie, _, err := createUser(tc.ctx, tc.wallet, tc.client, ss)
 	tc.require.NoError(err)
+	return cookie
+}
+
+func (tc *testClient) createUserStream(
+	streamSettings ...*StreamSettings,
+) *MiniblockRef {
+	cookie := tc.createUserStreamGetCookie(streamSettings...)
 	return &MiniblockRef{
 		Hash: common.BytesToHash(cookie.PrevMiniblockHash),
 		Num:  cookie.MinipoolGen - 1,
@@ -691,12 +698,15 @@ func (tc *testClient) startSync() {
 }
 
 func (tc *testClient) SyncID() string {
-	for {
+	for range 50 {
 		if syncID := tc.syncID.Load(); syncID != "" {
 			return syncID
 		}
-		time.Sleep(5 * time.Millisecond)
+		err := SleepWithContext(tc.ctx, 100*time.Millisecond)
+		tc.require.NoError(err, "Failed to get sync ID")
 	}
+	tc.require.Fail("Failed to get sync ID")
+	return ""
 }
 
 func (tc *testClient) createSpace(

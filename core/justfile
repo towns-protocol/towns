@@ -70,7 +70,7 @@ _anvil-start $NAME $PORT $CHAIN_ID:
         ../scripts/wait-for-port.sh ${PORT} anvil_${NAME}
     fi
 
-anvil-base: 
+anvil-base:
     #!/usr/bin/env -S bash {{BASH_OPTS}}
     if [ "${BASE_EXECUTION_CLIENT}" != "geth_dev" ]; then
         just _anvil-start "base" "8545" "31337"
@@ -126,7 +126,7 @@ deploy-contracts: _require_run_env anvils
     echo "RIVER_ARCHITECTCONTRACT_ADDRESS=$(jq -r '.address' ${CONTRACTS_DIR}/base/addresses/spaceFactory.json)" >> ${RUN_BASE}/contracts.env
     echo "RIVER_ENTITLEMENT_CONTRACT_ADDRESS=$(jq -r '.address' ${CONTRACTS_DIR}/base/addresses/baseRegistry.json)" >> ${RUN_BASE}/contracts.env
     echo "RIVER_REGISTRYCONTRACT_ADDRESS=$(jq -r '.address' ${CONTRACTS_DIR}/river/addresses/riverRegistry.json)" >> ${RUN_BASE}/contracts.env
-    echo "RIVER_TEST_CONTRACT_ADDRESS=$(jq -r '.address' ${CONTRACTS_DIR}/base/addresses/entitlementGatedExample.json)" >> ${RUN_BASE}/contracts.env
+    echo "RIVER_TEST_CONTRACT_ADDRESS=$(jq -r '.address' ${CONTRACTS_DIR}/base/addresses/utils/entitlementGatedExample.json)" >> ${RUN_BASE}/contracts.env
 
 _config-instance $INSTANCE_NUM $INSTANCE_DIR: _require_run_env
     #!/usr/bin/env -S bash {{BASH_OPTS}}
@@ -227,7 +227,7 @@ run-go-inst $INSTANCE_NUM *args: _require_run_env
 
 # Run node from source with go run with for each instance
 [positional-arguments]
-run-go-all *args: _require_run_env 
+run-go-all *args: _require_run_env
     #!/usr/bin/env -S bash {{BASH_OPTS}}
     just _loop-instances-seq-args _run-go-inst "$@"
 
@@ -541,10 +541,10 @@ t *args: (_test-from-dir invocation_directory() "-v" args "./...")
 
 # Run go tests with info logging and test printing from current directory
 [positional-arguments]
-t-debug *args: 
+t-debug *args:
     RIVER_TEST_LOG=info RIVER_TEST_PRINT=1 just _test-from-dir {{invocation_directory()}} -v -count 1 "$@" ./...
 
 # Run go tests with debug logging and test printing from current directory
 [positional-arguments]
-t-debug-debug *args: 
+t-debug-debug *args:
     RIVER_TEST_LOG=debug RIVER_TEST_PRINT=1 just _test-from-dir {{invocation_directory()}} -v -count 1 "$@" ./...

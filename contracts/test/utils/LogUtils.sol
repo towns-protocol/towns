@@ -18,6 +18,27 @@ abstract contract LogUtils {
     revert("Log not found");
   }
 
+  /// @dev Returns the Nth log (zero-indexed) that matches the topic0, where N is the provided index.
+  /// For example, index=0 returns the first matching log, index=1 returns the second matching log, etc.
+  /// @param logs Array of logs to search through
+  /// @param topic The topic0 to match against
+  /// @param index The Nth occurrence to find (0-based)
+  /// @return log The matching log
+  function _getMatchingLogAtIndex(
+    Vm.Log[] memory logs,
+    bytes32 topic,
+    uint256 index
+  ) internal pure returns (Vm.Log memory log) {
+    uint256 currentIndex;
+    for (uint256 i; i < logs.length; ++i) {
+      log = logs[i];
+      if (log.topics[0] == topic) {
+        if (currentIndex++ == index) return log;
+      }
+    }
+    revert("Log not found at index");
+  }
+
   /// @dev Returns the count of logs that match the topic0
   function _getMatchingLogCount(
     Vm.Log[] memory logs,
