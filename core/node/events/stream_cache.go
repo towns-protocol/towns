@@ -68,7 +68,7 @@ type StreamCache struct {
 	streamCacheSizeGauge     prometheus.Gauge
 	streamCacheUnloadedGauge prometheus.Gauge
 	streamCacheRemoteGauge   prometheus.Gauge
-	loadStreamRecordDuration prometheus.Observer
+	loadStreamRecordDuration prometheus.Histogram
 	loadStreamRecordCounter  *infra.StatusCounterVec
 
 	stoppedMu sync.RWMutex
@@ -107,23 +107,15 @@ func NewStreamCache(params *StreamCacheParams) *StreamCache {
 			params.RiverChain.ChainId.String(),
 			params.Wallet.Address.String(),
 		),
-		loadStreamRecordDuration: params.Metrics.NewHistogramVecEx(
+		loadStreamRecordDuration: params.Metrics.NewHistogramEx(
 			"stream_cache_load_duration_seconds",
 			"Load stream record duration",
 			infra.DefaultRpcDurationBucketsSeconds,
-			"chain_id", "address",
-		).WithLabelValues(
-			params.RiverChain.ChainId.String(),
-			params.Wallet.Address.String(),
 		),
 		loadStreamRecordCounter: params.Metrics.NewStatusCounterVecEx(
 			"stream_cache_load_counter",
 			"Number of stream record loads",
-			"chain_id", "address",
-		).MustCurryWith(prometheus.Labels{
-			"chain_id": params.RiverChain.ChainId.String(),
-			"address":  params.Wallet.Address.String(),
-		}),
+		),
 		chainConfig:                     params.ChainConfig,
 		onlineSyncWorkerPool:            workerpool.New(params.Config.StreamReconciliation.OnlineWorkerPoolSize),
 		disableCallbacks:                params.disableCallbacks,
