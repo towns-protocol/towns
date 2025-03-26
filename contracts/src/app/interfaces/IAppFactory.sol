@@ -2,6 +2,7 @@
 pragma solidity ^0.8.23;
 
 // interfaces
+import {ITownsApp} from "./ITownsApp.sol";
 
 // libraries
 import {Inputs, Registry} from "../types/AppTypes.sol";
@@ -42,16 +43,9 @@ interface IAppFactory is IAppFactoryBase {
   /**
    * @notice Registers a new application in the registry
    * @dev Creates a new app entry with the provided configuration and permissions
-   * @param params The CreateApp struct containing all necessary app information:
-   *        - app: Address of the app contract
-   *        - status: Initial status of the app (Pending, Active, Disabled)
-   *        - owner: Address of the app owner
-   *        - metadata: App metadata including URI, name, and symbol
-   *        - permissions: Array of permission strings granted to the app
+   * @param app The app contract
    */
-  function createApp(
-    Inputs.CreateApp calldata params
-  ) external returns (uint256 appId);
+  function register(ITownsApp app) external returns (uint256 appId);
 
   /**
    * @notice Updates an existing application's configuration
