@@ -8,6 +8,7 @@ import {Stream, StreamWithId, SetMiniblock} from "contracts/src/river/registry/l
 // libraries
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import {FixedPointMathLib} from "solady/utils/FixedPointMathLib.sol";
+import {CustomRevert} from "contracts/src/utils/libraries/CustomRevert.sol";
 import {RiverRegistryErrors} from "contracts/src/river/registry/libraries/RegistryErrors.sol";
 
 // contracts
@@ -20,6 +21,7 @@ library StreamFlags {
 contract StreamRegistry is IStreamRegistry, RegistryModifiers {
   using EnumerableSet for EnumerableSet.Bytes32Set;
   using EnumerableSet for EnumerableSet.AddressSet;
+  using CustomRevert for string;
 
   /// @inheritdoc IStreamRegistry
   function allocateStream(
@@ -35,7 +37,11 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
   {
     // Add the stream to the registry
     Stream storage stream = ds.streamById[streamId];
-    (stream.lastMiniblockHash, stream.nodes) = (genesisMiniblockHash, nodes);
+    (stream.lastMiniblockHash, stream.nodes, stream.reserved0) = (
+      genesisMiniblockHash,
+      nodes,
+      _calculateStreamReserved0(stream.reserved0, uint8(nodes.length))
+    );
 
     ds.streams.add(streamId);
     ds.genesisMiniblockByStreamId[streamId] = genesisMiniblock;
@@ -82,7 +88,7 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
   ) external onlyNode(msg.sender) {
     uint256 miniblockCount = miniblocks.length;
 
-    if (miniblockCount == 0) revert(RiverRegistryErrors.BAD_ARG);
+    if (miniblockCount == 0) RiverRegistryErrors.BAD_ARG.revertWith();
 
     SetMiniblock[] memory miniblockUpdates = new SetMiniblock[](miniblockCount);
     uint256 streamCount = 0;
@@ -175,10 +181,15 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
     uint256 nodeCount = nodes.length;
 
     for (uint256 i; i < nodeCount; ++i) {
-      if (nodes[i] == nodeAddress) revert(RiverRegistryErrors.ALREADY_EXISTS);
+      if (nodes[i] == nodeAddress)
+        RiverRegistryErrors.ALREADY_EXISTS.revertWith();
     }
 
     nodes.push(nodeAddress);
+    stream.reserved0 = _calculateStreamReserved0(
+      stream.reserved0,
+      uint8(nodes.length)
+    );
 
     _emitStreamUpdated(
       StreamEventType.PlacementUpdated,
@@ -211,7 +222,12 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
       }
     }
 
-    if (!found) revert(RiverRegistryErrors.NODE_NOT_FOUND);
+    if (!found) RiverRegistryErrors.NODE_NOT_FOUND.revertWith();
+
+    stream.reserved0 = _calculateStreamReserved0(
+      stream.reserved0,
+      uint8(nodes.length)
+    );
 
     _emitStreamUpdated(
       StreamEventType.PlacementUpdated,
@@ -336,6 +352,51 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
     return (streams, stop >= streamCount);
   }
 
+  /// @inheritdoc IStreamRegistry
+  function setStreamReplicationFactor(
+    bytes32[] calldata streamIds,
+    address[] calldata nodes,
+    uint8 replicationFactor
+  ) external onlyConfigurationManager(msg.sender) {
+    if (nodes.length == 0) RiverRegistryErrors.BAD_ARG.revertWith();
+    if (replicationFactor > nodes.length)
+      RiverRegistryErrors.BAD_ARG.revertWith();
+
+    uint256 streamsCount = streamIds.length;
+    if (streamsCount == 0) RiverRegistryErrors.BAD_ARG.revertWith();
+
+    for (uint256 i; i < streamsCount; ++i) {
+      bytes32 streamId = streamIds[i];
+      Stream storage stream = ds.streamById[streamId];
+      if (uint256(stream.lastMiniblockHash) == 0) {
+        RiverRegistryErrors.NOT_FOUND.revertWith();
+      }
+      stream.reserved0 = _calculateStreamReserved0(
+        stream.reserved0,
+        replicationFactor
+      );
+
+      // emit the event for removal
+      address[] storage existingNodes = stream.nodes;
+      uint256 nodeCount = existingNodes.length;
+      for (uint256 j; j < nodeCount; ++j) {
+        emit StreamPlacementUpdated(streamId, existingNodes[j], false);
+      }
+
+      stream.nodes = nodes;
+
+      _emitStreamUpdated(
+        StreamEventType.PlacementUpdated,
+        abi.encode(streamId, stream)
+      );
+
+      // emit the deprecating event
+      for (uint256 j; j < nodes.length; ++j) {
+        emit StreamPlacementUpdated(streamId, nodes[j], true);
+      }
+    }
+  }
+
   function _addStreamIdToNodes(
     bytes32 streamId,
     address[] calldata nodes
@@ -382,5 +443,15 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
       mstore(0x40, fmp)
       mstore(0x60, 0)
     }
+  }
+
+  uint64 internal constant STREAM_REPL_FACTOR_MASK = 0xFF;
+
+  /// @dev helper function to calculate the reserved0 field for the stream with the given reserved0 and replication factor
+  function _calculateStreamReserved0(
+    uint64 reserved0,
+    uint8 replFactor
+  ) internal pure returns (uint64) {
+    return (reserved0 & ~STREAM_REPL_FACTOR_MASK) | uint64(replFactor);
   }
 }
