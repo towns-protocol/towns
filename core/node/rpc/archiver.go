@@ -2,8 +2,10 @@ package rpc
 
 import (
 	"context"
+	"encoding/hex"
 	"errors"
 	"fmt"
+	"slices"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -568,16 +570,62 @@ func (a *Archiver) advanceNodeAndRetryWithDelay(stream *ArchiveStream, delay tim
 	})
 }
 
+var continuousDownloadNodeAddresses []common.Address
+
+func init() {
+	continuousDownloadNodeAddressBytes, _ := hex.DecodeString("C6CF68A1BCD3B9285fe1d13c128953a14Dd1Bb60")
+	continuousDownloadNodeAddresses = append(
+		continuousDownloadNodeAddresses,
+		common.BytesToAddress(continuousDownloadNodeAddressBytes),
+	)
+
+	continuousDownloadNodeAddressBytes, _ = hex.DecodeString("a7f7D83843aB78706344D3Ae882b1d4f9404F254")
+	continuousDownloadNodeAddresses = append(
+		continuousDownloadNodeAddresses,
+		common.BytesToAddress(continuousDownloadNodeAddressBytes),
+	)
+
+	continuousDownloadNodeAddressBytes, _ = hex.DecodeString("01A7dCd51409758f220c171c209eF3E1C8b10F1E")
+	continuousDownloadNodeAddresses = append(
+		continuousDownloadNodeAddresses,
+		common.BytesToAddress(continuousDownloadNodeAddressBytes),
+	)
+}
+
+func (a *Archiver) rescheduleIfContinuousDownloadNode(stream *ArchiveStream) {
+	if isContinuousDownloadStream(stream) {
+		// logging.DefaultLogger(zapcore.InfoLevel).
+		// 	Infow("Rescheduling continuous download stream", "stream", stream.streamId, "contractBlock", stream.numBlocksInContract, "blocksInDb", stream.numBlocksInDb)
+		time.AfterFunc(5*time.Second, func() {
+			a.tasks <- stream.streamId
+		})
+	}
+}
+
+func isContinuousDownloadStream(stream *ArchiveStream) bool {
+	for _, continuousDownloadNodeAddress := range continuousDownloadNodeAddresses {
+		if slices.Contains(stream.nodes.GetNodes(), continuousDownloadNodeAddress) {
+			return true
+		}
+	}
+	return false
+}
+
 // ArchiveStream attempts to add all new miniblocks seen, according to the registry contract,
 // since the last time the stream was archived into storage.  It creates a new stream for
 // streams that have not yet been seen.
 func (a *Archiver) ArchiveStream(ctx context.Context, stream *ArchiveStream) (err error) {
+	log := logging.FromCtx(ctx)
+
+	if !isContinuousDownloadStream(stream) {
+		return nil
+	}
+
 	defer func() {
 		if err != nil {
 			stream.corrupt.RecordBlockUpdateFailure(ctx, err)
 		}
 	}()
-	log := logging.FromCtx(ctx)
 
 	if !stream.mu.TryLock() {
 		// Reschedule with delay.
@@ -597,6 +645,7 @@ func (a *Archiver) ArchiveStream(ctx context.Context, stream *ArchiveStream) (er
 		if err != nil && AsRiverError(err).Code == Err_NOT_FOUND {
 			err = a.storage.CreateStreamArchiveStorage(ctx, stream.streamId)
 			if err != nil {
+				a.rescheduleIfContinuousDownloadNode(stream)
 				return err
 			}
 			a.streamsCreated.Add(1)
@@ -612,11 +661,6 @@ func (a *Archiver) ArchiveStream(ctx context.Context, stream *ArchiveStream) (er
 	}
 
 	mbsInContract := stream.numBlocksInContract.Load()
-	if mbsInDb >= mbsInContract {
-		a.streamsUpToDate.Add(1)
-		stream.corrupt.ReportBlockUpdateSuccess(ctx)
-		return nil
-	}
 
 	log.Debugw(
 		"Archiving stream",
@@ -636,8 +680,9 @@ func (a *Archiver) ArchiveStream(ctx context.Context, stream *ArchiveStream) (er
 		return err
 	}
 
-	for mbsInDb < mbsInContract {
-		toBlock := min(mbsInDb+int64(a.config.GetReadMiniblocksSize()), mbsInContract)
+	maximumBlock := mbsInContract + 50
+	for mbsInDb < maximumBlock {
+		toBlock := min(mbsInDb+int64(a.config.GetReadMiniblocksSize()), maximumBlock)
 
 		resp, err := stub.GetMiniblocks(
 			ctx,
@@ -663,6 +708,13 @@ func (a *Archiver) ArchiveStream(ctx context.Context, stream *ArchiveStream) (er
 		}
 
 		if (err != nil && AsRiverError(err).Code == Err_NOT_FOUND) || resp.Msg == nil || len(resp.Msg.Miniblocks) == 0 {
+			// This is here for streams we want to continuously download. We would like to avoid reporting a failure if they don't
+			// have any additional blocks available past what is in the contract, but still try to download
+			// them if possible.
+			if mbsInDb >= mbsInContract {
+				break
+			}
+
 			// If the stream is unable to fully update, consider this attempt to archive the stream as
 			// a failure, even though we do not return an error.
 			stream.corrupt.RecordBlockUpdateFailure(
@@ -686,7 +738,7 @@ func (a *Archiver) ArchiveStream(ctx context.Context, stream *ArchiveStream) (er
 			)
 
 			// Advance node
-			a.advanceNodeAndRetryWithDelay(stream, 10*time.Second)
+			a.advanceNodeAndRetryWithDelay(stream, 5*time.Second)
 			return nil
 		}
 
@@ -717,6 +769,8 @@ func (a *Archiver) ArchiveStream(ctx context.Context, stream *ArchiveStream) (er
 
 		err = a.storage.WriteArchiveMiniblocks(ctx, stream.streamId, mbsInDb, serialized)
 		if err != nil {
+			// Reschedule on storage error, this is retryable.
+			a.rescheduleIfContinuousDownloadNode(stream)
 			return err
 		}
 		mbsInDb += int64(len(serialized))
@@ -732,6 +786,7 @@ func (a *Archiver) ArchiveStream(ctx context.Context, stream *ArchiveStream) (er
 		a.successfulDownloads.With(prometheus.Labels{"node_address": nodeAddr.String()}).Inc()
 	}
 
+	a.rescheduleIfContinuousDownloadNode(stream)
 	return nil
 }
 
