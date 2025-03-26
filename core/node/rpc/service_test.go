@@ -1878,11 +1878,15 @@ func TestGetMiniblocksRangeLimit(t *testing.T) {
 	}, 20*time.Second, 100*time.Millisecond)
 }
 
-func TestSyncWithWrongCookie(t *testing.T) {
+func TestAddStreamToSyncWithWrongCookie(t *testing.T) {
 	tt := newServiceTester(t, serviceTesterOpts{numNodes: 2, start: true})
 
 	alice := tt.newTestClient(0, testClientOpts{enableSync: true})
-	cookie := alice.createUserStreamGetCookie()
+	_ = alice.createUserStreamGetCookie()
+	spaceId, _ := alice.createSpace()
+	channelId, _, cookie := alice.createChannel(spaceId)
+
+	alice.say(channelId, "hello from Alice")
 
 	alice.startSync()
 
@@ -1893,10 +1897,25 @@ func TestSyncWithWrongCookie(t *testing.T) {
 		cookie.NodeAddress = tt.nodes[0].address.Bytes()
 	}
 
-	testfmt.Print(t, "Modifying sync with wrong cookie")
-	_, err := alice.client.ModifySync(alice.ctx, connect.NewRequest(&protocol.ModifySyncRequest{
-		SyncId:     alice.SyncID(),
-		AddStreams: []*protocol.SyncCookie{cookie},
+	testfmt.Print(t, "AddStreamToSync with wrong node address in cookie")
+	_, err := alice.client.AddStreamToSync(alice.ctx, connect.NewRequest(&protocol.AddStreamToSyncRequest{
+		SyncId:  alice.SyncID(),
+		SyncPos: cookie,
 	}))
 	tt.require.NoError(err)
+	testfmt.Print(t, "AddStreamToSync with wrong node address in cookie done")
+
+	// tt.require.Eventually(func() bool {
+	// 	loaded, _ := alice.updates.Load(channelId)
+	// 	if loaded == nil {
+	// 		return false
+	// 	}
+
+	// 	updates := loaded.Clone()
+	// 	testfmt.Print(t, "updates", updates)
+	// 	tt.require.Len(updates, 1)
+	// 	tt.require.Equal(updates[0].GetStreamId(), channelId[:])
+
+	// 	return true
+	// }, 20*time.Second, 100*time.Millisecond)
 }
