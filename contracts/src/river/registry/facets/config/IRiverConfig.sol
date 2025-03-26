@@ -5,9 +5,9 @@ pragma solidity ^0.8.23;
 import {Setting} from "contracts/src/river/registry/libraries/RegistryStorage.sol";
 
 interface IRiverConfigBase {
-  // =============================================================
-  //                           Events
-  // =============================================================
+  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+  /*                           EVENTS                           */
+  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
   /**
    * @notice Emitted when a setting is changed
@@ -42,12 +42,21 @@ interface IRiverConfigBase {
  * @notice The interface for the RiverConfig facet
  */
 interface IRiverConfig is IRiverConfigBase {
+  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+  /*                       ADMIN FUNCTIONS                      */
+  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
   /**
-   * @notice Indication if one or more settings exists for the given key
-   * @param key The setting key
-   * @return True if the setting exists
+   * @notice Add a configuration manager
+   * @param manager The address to add
    */
-  function configurationExists(bytes32 key) external view returns (bool);
+  function approveConfigurationManager(address manager) external;
+
+  /**
+   * @notice Remove a configuration manager
+   * @param manager The address to remove
+   */
+  function removeConfigurationManager(address manager) external;
 
   /**
    * @notice Set a bytes setting for the given key
@@ -77,6 +86,17 @@ interface IRiverConfig is IRiverConfigBase {
    */
   function deleteConfigurationOnBlock(bytes32 key, uint64 blockNumber) external;
 
+  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+  /*                          GETTERS                           */
+  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+  /**
+   * @notice Indication if one or more settings exists for the given key
+   * @param key The setting key
+   * @return True if the setting exists
+   */
+  function configurationExists(bytes32 key) external view returns (bool);
+
   /**
    * @notice Get settings for the given key
    * @dev Note that the returned list isn't ordered by block number
@@ -100,16 +120,4 @@ interface IRiverConfig is IRiverConfigBase {
    * @return True if the address is a configuration manager
    */
   function isConfigurationManager(address manager) external view returns (bool);
-
-  /**
-   * @notice Add a configuration manager
-   * @param manager The address to add
-   */
-  function approveConfigurationManager(address manager) external;
-
-  /**
-   * @notice Remove a configuration manager
-   * @param manager The address to remove
-   */
-  function removeConfigurationManager(address manager) external;
 }
