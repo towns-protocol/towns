@@ -661,11 +661,6 @@ func (a *Archiver) ArchiveStream(ctx context.Context, stream *ArchiveStream) (er
 	}
 
 	mbsInContract := stream.numBlocksInContract.Load()
-	if mbsInDb >= mbsInContract && !isContinuousDownloadStream(stream) {
-		a.streamsUpToDate.Add(1)
-		stream.corrupt.ReportBlockUpdateSuccess(ctx)
-		return nil
-	}
 
 	log.Debugw(
 		"Archiving stream",
@@ -685,11 +680,7 @@ func (a *Archiver) ArchiveStream(ctx context.Context, stream *ArchiveStream) (er
 		return err
 	}
 
-	maximumBlock := mbsInContract
-	if isContinuousDownloadStream(stream) {
-		maximumBlock += 50
-	}
-
+	maximumBlock := mbsInContract + 50
 	for mbsInDb < maximumBlock {
 		toBlock := min(mbsInDb+int64(a.config.GetReadMiniblocksSize()), maximumBlock)
 
@@ -747,7 +738,7 @@ func (a *Archiver) ArchiveStream(ctx context.Context, stream *ArchiveStream) (er
 			)
 
 			// Advance node
-			a.advanceNodeAndRetryWithDelay(stream, 10*time.Second)
+			a.advanceNodeAndRetryWithDelay(stream, 5*time.Second)
 			return nil
 		}
 
