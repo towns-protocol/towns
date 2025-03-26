@@ -23,6 +23,10 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
   using EnumerableSet for EnumerableSet.AddressSet;
   using CustomRevert for string;
 
+  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+  /*                          STREAMS                           */
+  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
   /// @inheritdoc IStreamRegistry
   function allocateStream(
     bytes32 streamId,
@@ -262,6 +266,60 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
   }
 
   /// @inheritdoc IStreamRegistry
+  function setStreamReplicationFactor(
+    bytes32[] calldata streamIds,
+    address[] calldata nodes,
+    uint8 replicationFactor
+  ) external onlyConfigurationManager(msg.sender) {
+    if (nodes.length == 0) RiverRegistryErrors.BAD_ARG.revertWith();
+    if (replicationFactor > nodes.length)
+      RiverRegistryErrors.BAD_ARG.revertWith();
+
+    uint256 streamsCount = streamIds.length;
+    if (streamsCount == 0) RiverRegistryErrors.BAD_ARG.revertWith();
+
+    for (uint256 i; i < streamsCount; ++i) {
+      bytes32 streamId = streamIds[i];
+      Stream storage stream = ds.streamById[streamId];
+      if (uint256(stream.lastMiniblockHash) == 0) {
+        RiverRegistryErrors.NOT_FOUND.revertWith();
+      }
+      stream.reserved0 = _calculateStreamReserved0(
+        stream.reserved0,
+        replicationFactor
+      );
+
+      // emit the event for removal
+      address[] storage existingNodes = stream.nodes;
+      uint256 nodeCount = existingNodes.length;
+      for (uint256 j; j < nodeCount; ++j) {
+        emit StreamPlacementUpdated(streamId, existingNodes[j], false);
+      }
+
+      stream.nodes = nodes;
+
+      _emitStreamUpdated(
+        StreamEventType.PlacementUpdated,
+        abi.encode(streamId, stream)
+      );
+
+      // emit the deprecating event
+      for (uint256 j; j < nodes.length; ++j) {
+        emit StreamPlacementUpdated(streamId, nodes[j], true);
+      }
+    }
+  }
+
+  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+  /*                          GETTERS                           */
+  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+  /// @inheritdoc IStreamRegistry
+  function isStream(bytes32 streamId) external view returns (bool) {
+    return ds.streams.contains(streamId);
+  }
+
+  /// @inheritdoc IStreamRegistry
   function getStream(
     bytes32 streamId
   ) external view returns (Stream memory stream) {
@@ -273,11 +331,6 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
     }
     _verifyStreamIdExists(streamId);
     stream = ds.streamById[streamId];
-  }
-
-  /// @inheritdoc IStreamRegistry
-  function isStream(bytes32 streamId) external view returns (bool) {
-    return ds.streams.contains(streamId);
   }
 
   /// @inheritdoc IStreamRegistry
@@ -352,50 +405,9 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
     return (streams, stop >= streamCount);
   }
 
-  /// @inheritdoc IStreamRegistry
-  function setStreamReplicationFactor(
-    bytes32[] calldata streamIds,
-    address[] calldata nodes,
-    uint8 replicationFactor
-  ) external onlyConfigurationManager(msg.sender) {
-    if (nodes.length == 0) RiverRegistryErrors.BAD_ARG.revertWith();
-    if (replicationFactor > nodes.length)
-      RiverRegistryErrors.BAD_ARG.revertWith();
-
-    uint256 streamsCount = streamIds.length;
-    if (streamsCount == 0) RiverRegistryErrors.BAD_ARG.revertWith();
-
-    for (uint256 i; i < streamsCount; ++i) {
-      bytes32 streamId = streamIds[i];
-      Stream storage stream = ds.streamById[streamId];
-      if (uint256(stream.lastMiniblockHash) == 0) {
-        RiverRegistryErrors.NOT_FOUND.revertWith();
-      }
-      stream.reserved0 = _calculateStreamReserved0(
-        stream.reserved0,
-        replicationFactor
-      );
-
-      // emit the event for removal
-      address[] storage existingNodes = stream.nodes;
-      uint256 nodeCount = existingNodes.length;
-      for (uint256 j; j < nodeCount; ++j) {
-        emit StreamPlacementUpdated(streamId, existingNodes[j], false);
-      }
-
-      stream.nodes = nodes;
-
-      _emitStreamUpdated(
-        StreamEventType.PlacementUpdated,
-        abi.encode(streamId, stream)
-      );
-
-      // emit the deprecating event
-      for (uint256 j; j < nodes.length; ++j) {
-        emit StreamPlacementUpdated(streamId, nodes[j], true);
-      }
-    }
-  }
+  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+  /*                          INTERNAL                          */
+  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
   function _addStreamIdToNodes(
     bytes32 streamId,
