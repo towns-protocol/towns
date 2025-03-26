@@ -18,7 +18,7 @@ import {Stream, StreamWithId, SetMiniblock} from "contracts/src/river/registry/l
 
 //contracts
 import {StreamRegistry} from "contracts/src/river/registry/facets/stream/StreamRegistry.sol";
-import {TestUtils} from "../utils/TestUtils.sol";
+import {TestUtils} from "@towns-protocol/diamond/test/TestUtils.sol";
 
 contract ForkStreamRegistry is DeployBase, TestUtils, IDiamond {
   using EnumerableSet for EnumerableSet.AddressSet;

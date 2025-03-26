@@ -3,7 +3,7 @@ pragma solidity ^0.8.19;
 
 // utils
 import {DeployBase} from "contracts/scripts/common/DeployBase.s.sol";
-import {TestUtils} from "../utils/TestUtils.sol";
+import {TestUtils} from "@towns-protocol/diamond/test/TestUtils.sol";
 import {RewardsVerifier} from "../base/registry/RewardsVerifier.t.sol";
 import {DeployRewardsDistributionV2} from "contracts/scripts/deployments/facets/DeployRewardsDistributionV2.s.sol";
 

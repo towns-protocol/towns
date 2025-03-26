@@ -9,7 +9,7 @@ import {LibString} from "solady/utils/LibString.sol";
 //contracts
 import {Script} from "forge-std/Script.sol";
 import {DeployHelpers} from "./DeployHelpers.s.sol";
-import {Context} from "./Context.sol";
+import {Context} from "@towns-protocol/diamond/scripts/common/Context.sol";
 
 contract DeployBase is Context, DeployHelpers, Script {
   constructor() {
@@ -55,18 +55,13 @@ contract DeployBase is Context, DeployHelpers, Script {
   function networkDirPath() internal returns (string memory path) {
     string memory context = getDeploymentContext();
     string memory chainAlias = chainIdAlias();
+    string memory deploymentContext = getDeploymentContext();
 
     // if no context is provided, use the default path
     if (bytes(context).length == 0) {
-      context = string.concat(DEPLOYMENT_CACHE_PATH, "/", chainAlias);
+      context = string.concat(deploymentContext, "/", chainAlias);
     } else {
-      context = string.concat(
-        DEPLOYMENT_CACHE_PATH,
-        "/",
-        context,
-        "/",
-        chainAlias
-      );
+      context = string.concat(deploymentContext, "/", context, "/", chainAlias);
     }
 
     path = string.concat(vm.projectRoot(), "/", context);
