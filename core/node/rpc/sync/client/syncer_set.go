@@ -272,6 +272,64 @@ func (ss *SyncerSet) Modify(ctx context.Context, req ModifyRequest) error {
 		defer span.End()
 	}
 
+	addingFailuresLock := sync.Mutex{}
+	addingFailures := make([]*SyncStreamOpStatus, 0, len(req.ToAdd))
+	mr := ModifyRequest{
+		ToAdd:    req.ToAdd,
+		ToRemove: req.ToRemove,
+		AddingFailureHandler: func(status *SyncStreamOpStatus) {
+			if status.GetCode() != int32(Err_NOT_FOUND) && status.GetCode() != int32(Err_INTERNAL) {
+				req.AddingFailureHandler(status)
+				return
+			}
+
+			addingFailuresLock.Lock()
+			addingFailures = append(addingFailures, status)
+			addingFailuresLock.Unlock()
+		},
+		RemovingFailureHandler: req.RemovingFailureHandler,
+	}
+
+	if err := ss.modify(ctx, mr); err != nil {
+		return err
+	}
+
+	// If a stream was failed to add, try to fix the cookies and send the modify sync again.
+	// There could be a case when a client specifies a wrong node address which leads to errors.
+	// This case should be properly handled by resetting the node address and retrying the operation.
+	if len(addingFailures) == 0 {
+		return nil
+	}
+
+	mr = ModifyRequest{
+		ToAdd:                make([]*SyncCookie, 0, len(addingFailures)),
+		AddingFailureHandler: req.AddingFailureHandler,
+	}
+
+	// Remove node addresses from failed to add streams
+	for _, status := range addingFailures {
+		if status.GetCode() != int32(Err_NOT_FOUND) && status.GetCode() != int32(Err_INTERNAL) {
+			continue
+		}
+
+		preparedSyncCookie := &SyncCookie{
+			StreamId: status.StreamId,
+		}
+		for _, cookie := range req.ToAdd {
+			if StreamId(cookie.GetStreamId()) == StreamId(status.StreamId) {
+				preparedSyncCookie = cookie
+				break
+			}
+		}
+		preparedSyncCookie.NodeAddress = nil
+		mr.ToAdd = append(mr.ToAdd, preparedSyncCookie)
+	}
+
+	return ss.modify(ctx, mr)
+}
+
+// modify splits the given request into add and remove operations and forwards them to the responsible syncers.
+func (ss *SyncerSet) modify(ctx context.Context, req ModifyRequest) error {
 	ss.muSyncers.Lock()
 	defer ss.muSyncers.Unlock()
 
@@ -280,14 +338,16 @@ func (ss *SyncerSet) Modify(ctx context.Context, req ModifyRequest) error {
 	}
 
 	// Prevent passing the same stream to both add and remove operations
-	if slices.ContainsFunc(req.ToAdd, func(c *SyncCookie) bool {
-		return slices.ContainsFunc(req.ToRemove, func(streamId []byte) bool {
-			return StreamId(c.GetStreamId()) == StreamId(streamId)
-		})
-	}) {
-		return RiverError(Err_INVALID_ARGUMENT, "Found the same stream in both add and remove lists").
-			Tags("syncId", ss.syncID).
-			Func("SyncerSet.Modify")
+	if len(req.ToAdd) > 0 && len(req.ToRemove) > 0 {
+		if slices.ContainsFunc(req.ToAdd, func(c *SyncCookie) bool {
+			return slices.ContainsFunc(req.ToRemove, func(streamId []byte) bool {
+				return StreamId(c.GetStreamId()) == StreamId(streamId)
+			})
+		}) {
+			return RiverError(Err_INVALID_ARGUMENT, "Found the same stream in both add and remove lists").
+				Tags("syncId", ss.syncID).
+				Func("SyncerSet.Modify")
+		}
 	}
 
 	modifySyncs := make(map[common.Address]*ModifySyncRequest)
@@ -461,15 +521,9 @@ func (ss *SyncerSet) Modify(ctx context.Context, req ModifyRequest) error {
 					return StreamId(status.StreamId) == StreamId(cookie.GetStreamId())
 				})
 			})
-
 			for _, status := range addingFailures {
 				req.AddingFailureHandler(status)
 			}
-			localMuSyncers.Lock()
-			for _, cookie := range successfullyAdded {
-				ss.streamID2Syncer[StreamId(cookie.GetStreamId())] = syncer
-			}
-			localMuSyncers.Unlock()
 
 			removalFailures := resp.GetRemovals()
 			successfullyRemoved := slices.DeleteFunc(modifySync.GetRemoveStreams(), func(streamIdRaw []byte) bool {
@@ -477,15 +531,17 @@ func (ss *SyncerSet) Modify(ctx context.Context, req ModifyRequest) error {
 					return StreamId(status.StreamId) == StreamId(streamIdRaw)
 				})
 			})
-
-			for _, status := range resp.GetRemovals() {
+			for _, status := range removalFailures {
 				req.RemovingFailureHandler(status)
 			}
+
 			localMuSyncers.Lock()
+			for _, cookie := range successfullyAdded {
+				ss.streamID2Syncer[StreamId(cookie.GetStreamId())] = syncer
+			}
 			for _, streamIdRaw := range successfullyRemoved {
 				delete(ss.streamID2Syncer, StreamId(streamIdRaw))
 			}
-
 			if syncerStopped {
 				delete(ss.syncers, syncer.Address())
 			}

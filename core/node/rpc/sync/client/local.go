@@ -23,7 +23,6 @@ type localSyncer struct {
 	cancelGlobalSyncOp context.CancelCauseFunc
 
 	streamCache *StreamCache
-	cookies     []*SyncCookie
 	messages    *dynmsgbuf.DynamicBuffer[*SyncStreamsResponse]
 	localAddr   common.Address
 
@@ -44,28 +43,28 @@ func newLocalSyncer(
 	messages *dynmsgbuf.DynamicBuffer[*SyncStreamsResponse],
 	otelTracer trace.Tracer,
 ) (*localSyncer, error) {
-	return &localSyncer{
+	s := &localSyncer{
 		globalSyncOpID:     globalSyncOpID,
 		syncStreamCtx:      ctx,
 		cancelGlobalSyncOp: cancelGlobalSyncOp,
 		streamCache:        streamCache,
 		localAddr:          localAddr,
-		cookies:            cookies,
 		messages:           messages,
 		activeStreams:      make(map[StreamId]*Stream),
 		otelTracer:         otelTracer,
-	}, nil
-}
+	}
 
-func (s *localSyncer) Run() {
-	log := logging.FromCtx(s.syncStreamCtx)
-	for _, cookie := range s.cookies {
+	for _, cookie := range cookies {
 		streamID, _ := StreamIdFromBytes(cookie.GetStreamId())
 		if err := s.addStream(s.syncStreamCtx, streamID, cookie); err != nil {
-			log.Errorw("Unable to add local sync stream", "stream", streamID, "err", err)
+			return nil, err
 		}
 	}
 
+	return s, nil
+}
+
+func (s *localSyncer) Run() {
 	<-s.syncStreamCtx.Done()
 
 	s.activeStreamsMu.Lock()
