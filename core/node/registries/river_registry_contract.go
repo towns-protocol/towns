@@ -340,7 +340,7 @@ func (c *RiverRegistryContract) GetStreamOnLatestBlock(
 	return makeGetStreamResult(streamId, &stream), nil
 }
 
-// Returns stream, genesis miniblock hash, genesis miniblock, error
+// GetStreamWithGenesis returns stream, genesis miniblock hash, genesis miniblock, error
 func (c *RiverRegistryContract) GetStreamWithGenesis(
 	ctx context.Context,
 	streamId StreamId,
