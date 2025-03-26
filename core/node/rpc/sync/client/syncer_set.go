@@ -294,7 +294,9 @@ func (ss *SyncerSet) Modify(ctx context.Context, req ModifyRequest) error {
 		return err
 	}
 
-	// If a stream was failed to add, try to fix the cookies and send the modify sync again
+	// If a stream was failed to add, try to fix the cookies and send the modify sync again.
+	// There could be a case when a client specifies a wrong node address which leads to errors.
+	// This case should be properly handled by resetting the node address and retrying the operation.
 	if len(addingFailures) == 0 {
 		return nil
 	}
