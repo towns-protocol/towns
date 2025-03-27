@@ -14,6 +14,7 @@ interface IPlatformRequirementsBase {
   error Platform__InvalidMembershipMintLimit();
   error Platform__InvalidMembershipDuration();
   error Platform__InvalidMembershipMinPrice();
+  error Platform__InvalidSwapFeeBps();
 
   // Events
   event PlatformFeeRecipientSet(address indexed recipient);
@@ -22,6 +23,8 @@ interface IPlatformRequirementsBase {
   event PlatformMembershipMintLimitSet(uint256 limit);
   event PlatformMembershipDurationSet(uint256 duration);
   event PlatformMembershipMinPriceSet(uint256 minPrice);
+  event PlatformSwapFeesSet(uint16 treasuryBps, uint16 posterBps);
+  event RouterWhitelistUpdated(address indexed router, bool whitelisted);
 }
 
 interface IPlatformRequirements is IPlatformRequirementsBase {
@@ -109,4 +112,35 @@ interface IPlatformRequirements is IPlatformRequirementsBase {
    * @return The denominator
    */
   function getDenominator() external pure returns (uint256);
+
+  /**
+   * @notice Get the swap fees in basis points
+   * @return treasuryBps Basis points for treasury fee
+   * @return posterBps Basis points for poster fee
+   */
+  function getSwapFees()
+    external
+    view
+    returns (uint16 treasuryBps, uint16 posterBps);
+
+  /**
+   * @notice Set the swap fees in basis points
+   * @param treasuryBps Basis points for treasury fee
+   * @param posterBps Basis points for poster fee
+   */
+  function setSwapFees(uint16 treasuryBps, uint16 posterBps) external;
+
+  /**
+   * @notice Check if a router is whitelisted
+   * @param router Address of the router to check
+   * @return bool True if router is whitelisted
+   */
+  function isRouterWhitelisted(address router) external view returns (bool);
+
+  /**
+   * @notice Add or remove a router from whitelist
+   * @param router Address of the router
+   * @param whitelisted True to whitelist, false to remove
+   */
+  function setRouterWhitelisted(address router, bool whitelisted) external;
 }

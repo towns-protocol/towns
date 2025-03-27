@@ -196,7 +196,7 @@
     "inputs": [],
     "outputs": [
       {
-        "name": "",
+        "name": "settings",
         "type": "tuple[]",
         "internalType": "struct Setting[]",
         "components": [
@@ -883,19 +883,26 @@
     "name": "setStreamReplicationFactor",
     "inputs": [
       {
-        "name": "streamIds",
-        "type": "bytes32[]",
-        "internalType": "bytes32[]"
-      },
-      {
-        "name": "nodes",
-        "type": "address[]",
-        "internalType": "address[]"
-      },
-      {
-        "name": "replicationFactor",
-        "type": "uint8",
-        "internalType": "uint8"
+        "name": "requests",
+        "type": "tuple[]",
+        "internalType": "struct SetStreamReplicationFactor[]",
+        "components": [
+          {
+            "name": "streamId",
+            "type": "bytes32",
+            "internalType": "bytes32"
+          },
+          {
+            "name": "nodes",
+            "type": "address[]",
+            "internalType": "address[]"
+          },
+          {
+            "name": "replicationFactor",
+            "type": "uint8",
+            "internalType": "uint8"
+          }
+        ]
       }
     ],
     "outputs": [],
