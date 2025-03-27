@@ -2,7 +2,7 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {Stream, StreamWithId, SetMiniblock} from "contracts/src/river/registry/libraries/RegistryStorage.sol";
+import {Stream, StreamWithId, SetMiniblock, SetStreamReplicationFactor} from "contracts/src/river/registry/libraries/RegistryStorage.sol";
 
 // libraries
 
@@ -129,19 +129,16 @@ interface IStreamRegistry is IStreamRegistryBase {
   function removeStreamFromNode(bytes32 streamId, address nodeAddress) external;
 
   /**
-   * @notice Set the replication factor for 1 or more streams
-   * @param streamIds The IDs of the streams to update
-   * @param nodes The new list of nodes
+   * @notice Set the replication factor for existing streams
+   * @param requests list with streams to set replication factor for
    * @dev Only callable by configuration managers
-   * @param replicationFactor the new replication factor
    *
-   * @dev This function is for migrating existing non-replicated streams to replicated streams.
-   * It doesn't require the number of nodes to match the replication factor during this migration process.
+   * @dev This function is to migrate existing non-replicated streams to replicated streams.
+   * If the replication factor is less than the number of nodes it indicates that only the first "replicationFactor"
+   * nodes participate in reaching quorum. The remaining nodes only sync the stream data.
    */
   function setStreamReplicationFactor(
-    bytes32[] calldata streamIds,
-    address[] calldata nodes,
-    uint8 replicationFactor
+    SetStreamReplicationFactor[] calldata requests
   ) external;
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/

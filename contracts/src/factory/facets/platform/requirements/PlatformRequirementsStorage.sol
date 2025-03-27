@@ -13,12 +13,21 @@ library PlatformRequirementsStorage {
     0xb29a817dd0719f30ad87abc8dff26e6354077e5b46bf38f34d5ac48732860d00;
 
   struct Layout {
+    // slot 0
     uint256 membershipFee;
+    // slot 1
     uint256 membershipMintLimit;
+    // slot 2
     address feeRecipient;
     uint64 membershipDuration;
     uint16 membershipBps;
+    // slot 3
     uint256 membershipMinPrice;
+    // slot 4
+    uint16 swapTreasuryBps;
+    uint16 swapPosterBps;
+    // slot 5
+    mapping(address => bool) whitelistedRouters;
   }
 
   function layout() internal pure returns (Layout storage l) {

@@ -81,6 +81,18 @@ export type SetMiniblockStructOutput = [
   isSealed: boolean;
 };
 
+export type SetStreamReplicationFactorStruct = {
+  streamId: PromiseOrValue<BytesLike>;
+  nodes: PromiseOrValue<string>[];
+  replicationFactor: PromiseOrValue<BigNumberish>;
+};
+
+export type SetStreamReplicationFactorStructOutput = [
+  string,
+  string[],
+  number
+] & { streamId: string; nodes: string[]; replicationFactor: number };
+
 export interface IStreamRegistryInterface extends utils.Interface {
   functions: {
     "addStream(bytes32,bytes32,(bytes32,uint64,uint64,uint64,address[]))": FunctionFragment;
@@ -95,7 +107,7 @@ export interface IStreamRegistryInterface extends utils.Interface {
     "placeStreamOnNode(bytes32,address)": FunctionFragment;
     "removeStreamFromNode(bytes32,address)": FunctionFragment;
     "setStreamLastMiniblockBatch((bytes32,bytes32,bytes32,uint64,bool)[])": FunctionFragment;
-    "setStreamReplicationFactor(bytes32[],address[],uint8)": FunctionFragment;
+    "setStreamReplicationFactor((bytes32,address[],uint8)[])": FunctionFragment;
     "syncNodesOnStreams(uint256,uint256)": FunctionFragment;
   };
 
@@ -176,11 +188,7 @@ export interface IStreamRegistryInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "setStreamReplicationFactor",
-    values: [
-      PromiseOrValue<BytesLike>[],
-      PromiseOrValue<string>[],
-      PromiseOrValue<BigNumberish>
-    ]
+    values: [SetStreamReplicationFactorStruct[]]
   ): string;
   encodeFunctionData(
     functionFragment: "syncNodesOnStreams",
@@ -428,9 +436,7 @@ export interface IStreamRegistry extends BaseContract {
     ): Promise<ContractTransaction>;
 
     setStreamReplicationFactor(
-      streamIds: PromiseOrValue<BytesLike>[],
-      nodes: PromiseOrValue<string>[],
-      replicationFactor: PromiseOrValue<BigNumberish>,
+      requests: SetStreamReplicationFactorStruct[],
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
@@ -509,9 +515,7 @@ export interface IStreamRegistry extends BaseContract {
   ): Promise<ContractTransaction>;
 
   setStreamReplicationFactor(
-    streamIds: PromiseOrValue<BytesLike>[],
-    nodes: PromiseOrValue<string>[],
-    replicationFactor: PromiseOrValue<BigNumberish>,
+    requests: SetStreamReplicationFactorStruct[],
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
@@ -590,9 +594,7 @@ export interface IStreamRegistry extends BaseContract {
     ): Promise<void>;
 
     setStreamReplicationFactor(
-      streamIds: PromiseOrValue<BytesLike>[],
-      nodes: PromiseOrValue<string>[],
-      replicationFactor: PromiseOrValue<BigNumberish>,
+      requests: SetStreamReplicationFactorStruct[],
       overrides?: CallOverrides
     ): Promise<void>;
 
@@ -744,9 +746,7 @@ export interface IStreamRegistry extends BaseContract {
     ): Promise<BigNumber>;
 
     setStreamReplicationFactor(
-      streamIds: PromiseOrValue<BytesLike>[],
-      nodes: PromiseOrValue<string>[],
-      replicationFactor: PromiseOrValue<BigNumberish>,
+      requests: SetStreamReplicationFactorStruct[],
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
@@ -826,9 +826,7 @@ export interface IStreamRegistry extends BaseContract {
     ): Promise<PopulatedTransaction>;
 
     setStreamReplicationFactor(
-      streamIds: PromiseOrValue<BytesLike>[],
-      nodes: PromiseOrValue<string>[],
-      replicationFactor: PromiseOrValue<BigNumberish>,
+      requests: SetStreamReplicationFactorStruct[],
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 

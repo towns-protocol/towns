@@ -25,6 +25,10 @@ contract DeployPlatformRequirements is FacetHelper, Deployer {
     addSelector(PlatformRequirementsFacet.setMembershipMinPrice.selector);
     addSelector(PlatformRequirementsFacet.getMembershipMinPrice.selector);
     addSelector(PlatformRequirementsFacet.getDenominator.selector);
+    addSelector(PlatformRequirementsFacet.setSwapFees.selector);
+    addSelector(PlatformRequirementsFacet.getSwapFees.selector);
+    addSelector(PlatformRequirementsFacet.setRouterWhitelisted.selector);
+    addSelector(PlatformRequirementsFacet.isRouterWhitelisted.selector);
   }
 
   function versionName() public pure override returns (string memory) {
