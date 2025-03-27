@@ -43,13 +43,18 @@ type StreamStorage interface {
 	) (*ReadStreamFromLastSnapshotResult, error)
 
 	// ReadMiniblocks returns miniblocks with miniblockNum or "generation" from fromInclusive, to toExlusive.
-	ReadMiniblocks(ctx context.Context, streamId StreamId, fromInclusive int64, toExclusive int64) ([][]byte, error)
+	ReadMiniblocks(
+		ctx context.Context,
+		streamId StreamId,
+		fromInclusive int64,
+		toExclusive int64,
+	) ([]*MiniblockDescriptor, error)
 
 	// ReadMiniblocksByStream calls onEachMb for each selected miniblock
 	ReadMiniblocksByStream(
 		ctx context.Context,
 		streamId StreamId,
-		onEachMb func(blockdata []byte, seqNum int64) error,
+		onEachMb func(blockdata []byte, seqNum int64, snapshot []byte) error,
 	) error
 
 	// ReadMiniblocksByIds calls onEachMb for each specified miniblock
@@ -57,7 +62,7 @@ type StreamStorage interface {
 		ctx context.Context,
 		streamId StreamId,
 		mbs []int64,
-		onEachMb func(blockdata []byte, seqNum int64) error,
+		onEachMb func(blockdata []byte, seqNum int64, snapshot []byte) error,
 	) error
 
 	// ReadEphemeralMiniblockNums returns the list of ephemeral miniblock numbers for the given ephemeral stream.
@@ -78,9 +83,7 @@ type StreamStorage interface {
 	WriteMiniblockCandidate(
 		ctx context.Context,
 		streamId StreamId,
-		blockHash common.Hash,
-		blockNumber int64,
-		miniblock []byte,
+		miniblock *WriteMiniblockData,
 	) error
 
 	ReadMiniblockCandidate(
@@ -88,7 +91,7 @@ type StreamStorage interface {
 		streamId StreamId,
 		blockHash common.Hash,
 		blockNumber int64,
-	) ([]byte, error)
+	) (*MiniblockDescriptor, error)
 
 	// WriteMiniblocks writes miniblocks to the stream storage and creates new minipool.
 	//
@@ -115,10 +118,7 @@ type StreamStorage interface {
 
 	// CreateStreamArchiveStorage creates a new archive storage for the given stream.
 	// Unlike regular CreateStreamStorage, only entry in es table and partition table for miniblocks are created.
-	CreateStreamArchiveStorage(
-		ctx context.Context,
-		streamId StreamId,
-	) error
+	CreateStreamArchiveStorage(ctx context.Context, streamId StreamId) error
 
 	// GetMaxArchivedMiniblockNumber returns the maximum miniblock number that has been archived for the given stream.
 	// If stream record is created, but no miniblocks are archived, returns -1.
@@ -131,18 +131,12 @@ type StreamStorage interface {
 		ctx context.Context,
 		streamId StreamId,
 		startMiniblockNum int64,
-		miniblocks [][]byte,
+		miniblocks []*WriteMiniblockData,
 	) error
 
-	DebugReadStreamData(
-		ctx context.Context,
-		streamId StreamId,
-	) (*DebugReadStreamDataResult, error)
+	DebugReadStreamData(ctx context.Context, streamId StreamId) (*DebugReadStreamDataResult, error)
 
-	DebugReadStreamStatistics(
-		ctx context.Context,
-		streamId StreamId,
-	) (*DebugReadStreamStatisticsResult, error)
+	DebugReadStreamStatistics(ctx context.Context, streamId StreamId) (*DebugReadStreamStatisticsResult, error)
 
 	// GetLastMiniblockNumber returns the last miniblock number for the given stream from storage.
 	GetLastMiniblockNumber(ctx context.Context, streamID StreamId) (int64, error)
@@ -164,16 +158,11 @@ type WriteMiniblockData struct {
 	Data     []byte
 }
 
-type MiniblockData struct {
-	StreamID      StreamId
-	Number        int64
-	MiniBlockInfo []byte
-}
-
 type MiniblockDescriptor struct {
 	MiniblockNumber int64
 	Data            []byte
 	Hash            common.Hash // Only set for miniblock candidates
+	Snapshot        []byte
 }
 
 type EventDescriptor struct {
