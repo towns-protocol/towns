@@ -513,5 +513,10 @@ export default [
     "type": "error",
     "name": "Platform__InvalidMembershipMintLimit",
     "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "Platform__InvalidSwapFeeBps",
+    "inputs": []
   }
 ] as const
