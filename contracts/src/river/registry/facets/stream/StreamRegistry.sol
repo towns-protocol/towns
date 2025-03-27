@@ -3,7 +3,7 @@ pragma solidity ^0.8.23;
 
 // interfaces
 import {IStreamRegistry} from "./IStreamRegistry.sol";
-import {Stream, StreamWithId, SetMiniblock} from "contracts/src/river/registry/libraries/RegistryStorage.sol";
+import {Stream, StreamWithId, SetMiniblock, SetStreamReplicationFactor} from "contracts/src/river/registry/libraries/RegistryStorage.sol";
 
 // libraries
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
@@ -267,46 +267,43 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
 
   /// @inheritdoc IStreamRegistry
   function setStreamReplicationFactor(
-    bytes32[] calldata streamIds,
-    address[] calldata nodes,
-    uint8 replicationFactor
+    SetStreamReplicationFactor[] calldata requests
   ) external onlyConfigurationManager(msg.sender) {
-    if (nodes.length == 0) RiverRegistryErrors.BAD_ARG.revertWith();
-    if (replicationFactor > nodes.length)
-      RiverRegistryErrors.BAD_ARG.revertWith();
+    uint256 requestsCount = requests.length;
 
-    uint256 streamsCount = streamIds.length;
-    if (streamsCount == 0) RiverRegistryErrors.BAD_ARG.revertWith();
+    if (requestsCount == 0) RiverRegistryErrors.BAD_ARG.revertWith();
 
-    for (uint256 i; i < streamsCount; ++i) {
-      bytes32 streamId = streamIds[i];
-      Stream storage stream = ds.streamById[streamId];
-      if (uint256(stream.lastMiniblockHash) == 0) {
-        RiverRegistryErrors.NOT_FOUND.revertWith();
+    for (uint256 i; i < requestsCount; ++i) {
+      SetStreamReplicationFactor calldata req = requests[i];
+
+      if (
+        req.replicationFactor == 0 || req.replicationFactor > req.nodes.length
+      ) RiverRegistryErrors.BAD_ARG.revertWith();
+
+      _verifyStreamIdExists(req.streamId);
+      Stream storage stream = ds.streamById[req.streamId];
+
+      // remove the stream from the existing set of nodes
+      uint256 oldStreamNodesLength = stream.nodes.length;
+      for (uint j; j < oldStreamNodesLength; ++j) {
+        ds.streamIdsByNode[stream.nodes[j]].remove(req.streamId);
       }
-      stream.reserved0 = _calculateStreamReserved0(
-        stream.reserved0,
-        replicationFactor
+
+      // place stream on the new set of nodes
+      uint256 newStreamNodesLength = req.nodes.length;
+      for (uint j; j < newStreamNodesLength; ++j) {
+        ds.streamIdsByNode[req.nodes[j]].add(req.streamId);
+      }
+
+      (stream.nodes, stream.reserved0) = (
+        req.nodes,
+        _calculateStreamReserved0(stream.reserved0, req.replicationFactor)
       );
-
-      // emit the event for removal
-      address[] storage existingNodes = stream.nodes;
-      uint256 nodeCount = existingNodes.length;
-      for (uint256 j; j < nodeCount; ++j) {
-        emit StreamPlacementUpdated(streamId, existingNodes[j], false);
-      }
-
-      stream.nodes = nodes;
 
       _emitStreamUpdated(
         StreamEventType.PlacementUpdated,
-        abi.encode(streamId, stream)
+        abi.encode(req.streamId, stream)
       );
-
-      // emit the deprecating event
-      for (uint256 j; j < nodes.length; ++j) {
-        emit StreamPlacementUpdated(streamId, nodes[j], true);
-      }
     }
   }
 
