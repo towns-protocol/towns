@@ -102,7 +102,8 @@ abstract contract PlatformRequirementsBase is IPlatformRequirementsBase {
     if (posterBps > BasisPoints.MAX_BPS || treasuryBps > BasisPoints.MAX_BPS) {
       Platform__InvalidSwapFeeBps.selector.revertWith();
     }
-    PlatformRequirementsStorage.Layout storage $ = PlatformRequirementsStorage.layout();
+    PlatformRequirementsStorage.Layout storage $ = PlatformRequirementsStorage
+      .layout();
     ($.swapTreasuryBps, $.swapPosterBps) = (treasuryBps, posterBps);
     emit PlatformSwapFeesSet(treasuryBps, posterBps);
   }
