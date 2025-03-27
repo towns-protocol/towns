@@ -50,6 +50,7 @@ GATEWAY_WORKER_PATH="servers/workers/gateway-worker"
 TOKEN_WORKER_PATH="servers/workers/token-worker"
 UNFURL_WORKER_PATH="servers/workers/unfurl-worker"
 STACKUP_WORKER_PATH="servers/workers/stackup-worker"
+MERKLE_WORKER_PATH="servers/workers/merkle-worker"
 
 declare -a WORKER_PATHS=(
     $TOKEN_WORKER_PATH

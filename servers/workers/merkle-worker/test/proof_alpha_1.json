@@ -1,0 +1,9 @@
+{
+    "conditionId": "1",
+    "merkleRoot": "0xbde37a356ea58bca4b7623130086f06c7adce874cf8504121823b31f268d7e95",
+    "proof": [
+        "0x8893303e567aefe4a4442b858c71feb8b796bb81667e3e45de7ab8eb2229bdb3",
+        "0xf3a1fd950f1ce22098bf82228c022dc15d17ab3e86776dcc2c662d4dd3760ce8"
+    ],
+    "leaf": ["0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266", "1000000000000000000"]
+}

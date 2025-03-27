@@ -1,0 +1,30 @@
+{
+    "txHash": "0xf7097a4610ca3433db07974b488f13d5f81385e08a7ff3bfc2ac20070f7d19e8",
+    "conditionId": "1",
+    "claims": [
+        {
+            "address": "0x5E38d087315217D5E1791553D8C3101A820C7E40",
+            "amount": "1000000000000000000"
+        },
+        {
+            "address": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+            "amount": "1000000000000000000"
+        },
+        {
+            "address": "0x2FaC60B7bCcEc9b234A2f07448D3B2a045d621B9",
+            "amount": "1000000000000000000"
+        },
+        {
+            "address": "0xd2ABa91375eC2C3f021525FeD8FAFdcd2bC08460",
+            "amount": "1000000000000000000"
+        },
+        {
+            "address": "0xCe3827fFDC199d8EDce73de2517cdE8fbE79837E",
+            "amount": "1000000000000000000"
+        },
+        {
+            "address": "0x669a0Ce817227375368F054109BF9bf5D6174eD3",
+            "amount": "1000000000000000000"
+        }
+    ]
+}

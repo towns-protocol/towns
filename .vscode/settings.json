@@ -19,6 +19,7 @@
     "./servers/workers/gateway-worker",
     "./servers/workers/unfurl-worker",
     "./servers/workers/stackup-worker",
+    "./servers/workers/merkle-worker"
   ],
   "[solidity]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
