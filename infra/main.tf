@@ -49,7 +49,7 @@ module "runner-gke" {
   gh_app_id              = "1104256"
   gh_app_installation_id = "59239016"
   gh_app_private_key     = var.gh_app_private_key
-  gh_config_url          = "https://github.com/river-build"
+  gh_config_url          = "https://github.com/towns-protocol"
   arc_container_mode     = "dind"
 
   min_node_count = 1
