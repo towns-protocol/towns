@@ -28,27 +28,43 @@ type Props = {
 }
 
 export function TipReaction({ tips, eventId, messageOwner, isTippable, streamId }: Props) {
-    if (!tips || !Object.keys(tips).length) {
-        return null
-    }
-    return (
-        <TipReactionInner
-            tips={tips}
-            eventId={eventId}
-            messageOwner={messageOwner}
-            isTippable={isTippable}
-            streamId={streamId}
-        />
-    )
-}
-
-function TipReactionInner({ tips, eventId, messageOwner, isTippable, streamId }: Props) {
     const tippers = useTippers(tips ?? emptyTips, streamId)
+    const myUserId = useMyUserId()
+    const isTippedByMe = tippers.some((t) => t.userId === myUserId)
+    const hasNoTips = !tips || !tips.length
     const theme = useStore((state) => state.getTheme())
     const amount = useTipAmount(tips ?? emptyTips)
     const ref = useRef<HTMLDivElement>(null)
-    const color = theme === 'light' ? 'default' : isTippable ? 'inverted' : 'cta1'
-    const iconColor = !isTippable ? 'cta1' : undefined
+
+    const color = useMemo(() => {
+        if (isTippedByMe && theme === 'dark') {
+            return 'inverted'
+        }
+        if (isTippedByMe && theme === 'light') {
+            return 'default'
+        }
+        if (hasNoTips) {
+            return 'gray2'
+        }
+        return 'positive'
+    }, [isTippedByMe, theme, hasNoTips])
+
+    const borderColor = useMemo(() => {
+        if (isTippedByMe) {
+            return
+        }
+        if (hasNoTips) {
+            return 'level3'
+        }
+        return 'positive'
+    }, [isTippedByMe, hasNoTips])
+
+    const backgroundColor = useMemo(() => {
+        if (isTippedByMe) {
+            return 'cta1'
+        }
+        return 'level2'
+    }, [isTippedByMe])
     const [isMobileSheetOpen, setIsMobileSheetOpen] = useState(false)
     const { isTouch } = useDevice()
     const channelData = useChannelData()
@@ -56,7 +72,7 @@ function TipReactionInner({ tips, eventId, messageOwner, isTippable, streamId }:
     const isDmOrGDM =
         !!channelId && (isDMChannelStreamId(channelId) || isGDMChannelStreamId(channelId))
 
-    if (!channelId || isDmOrGDM || !tippers.length) {
+    if (!channelId || isDmOrGDM || (messageOwner.userId === myUserId && hasNoTips)) {
         return null
     }
 
@@ -76,8 +92,9 @@ function TipReactionInner({ tips, eventId, messageOwner, isTippable, streamId }:
                                 <Pill
                                     horizontal
                                     centerContent
-                                    background={isTippable ? 'cta1' : 'level3'}
-                                    border={!isTippable ? 'textDefault' : undefined}
+                                    background={backgroundColor}
+                                    border={borderColor}
+                                    style={{ borderWidth: '1px' }}
                                     position="relative"
                                     rounded="lg"
                                     gap="xs"
@@ -95,11 +112,11 @@ function TipReactionInner({ tips, eventId, messageOwner, isTippable, streamId }:
                                         }
                                     }}
                                     {...rest}
-                                    cursor={!isTippable ? 'default' : 'pointer'}
+                                    cursor={isTippable ? 'pointer' : 'default'}
                                 >
-                                    <Icon color={iconColor} type="dollar" size="square_xs" />
+                                    <Icon type="dollar" size="square_xs" />
                                     <Text fontWeight="medium" size="sm">
-                                        {`${tippers.length}`}
+                                        {hasNoTips ? 'Tip' : `${tippers.length}`}
                                     </Text>
                                 </Pill>
                             )
