@@ -132,11 +132,14 @@ export const useTokenTrackingData = (tokenProps?: { chainId: string; address?: s
     })
 
     return useMemo(
-        () => ({
-            tokenName: coinData?.token.name ?? '',
-            tokenNetwork: chainConfig?.analyticName ?? '',
-        }),
-        [coinData, chainConfig],
+        () =>
+            coinDataDisabled
+                ? undefined
+                : {
+                      tokenName: coinData?.token.name ?? '',
+                      tokenNetwork: chainConfig?.analyticName ?? '',
+                  },
+        [coinDataDisabled, coinData?.token.name, chainConfig?.analyticName],
     )
 }
 
