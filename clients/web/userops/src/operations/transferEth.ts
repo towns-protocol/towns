@@ -3,6 +3,7 @@ import { getAbstractAccountAddress } from '../utils/getAbstractAccountAddress'
 import { SpaceDapp } from '@towns-protocol/web3'
 import { getSignerAddress } from '../utils/getSignerAddress'
 import { UserOps } from '../UserOperations'
+import { TSmartAccount } from '../lib/permissionless/accounts/createSmartAccountClient'
 
 export async function transferEth(params: {
     transferData: {
@@ -15,13 +16,15 @@ export async function transferEth(params: {
     factoryAddress: string | undefined
     entryPointAddress: string | undefined
     sendUserOp: UserOps['sendUserOp']
+    smartAccount: TSmartAccount
 }) {
-    const { transferData, signer, aaRpcUrl, sendUserOp } = params
+    const { transferData, signer, aaRpcUrl, sendUserOp, smartAccount } = params
     const { recipient, value } = transferData
 
     const aaAddress = await getAbstractAccountAddress({
         rootKeyAddress: await getSignerAddress(signer),
         aaRpcUrl,
+        newAccountImplementationType: smartAccount.type,
     })
 
     if (!aaAddress) {

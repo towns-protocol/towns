@@ -1,29 +1,21 @@
 import { Address } from '@towns-protocol/web3'
-import { getInitData } from '../workers'
-import { ERC4337 } from '../constants'
-
+import { determineSmartAccount } from '../lib/permissionless/accounts/determineSmartAccount'
+import { SmartAccountType } from '../types'
 export const abstractAddressMap = new Map<Address, Address>()
 
 export async function getAbstractAccountAddress({
     rootKeyAddress,
     aaRpcUrl,
+    newAccountImplementationType,
 }: {
     rootKeyAddress: Address
     aaRpcUrl: string
+    newAccountImplementationType: SmartAccountType
 }): Promise<Address | undefined> {
-    if (abstractAddressMap.get(rootKeyAddress)) {
-        return abstractAddressMap.get(rootKeyAddress)
-    }
-
-    // TODO: gonna have to figure out how to do this while migrating accounts to 0.7
-    // internally this calls entyrpoint w/ initcode
-    // so we probably need to determine what version of entrypoint this address is using
-    const result = await getInitData({
-        factoryAddress: ERC4337.SimpleAccount.Factory,
-        signerAddress: rootKeyAddress,
+    const result = await determineSmartAccount({
+        ownerAddress: rootKeyAddress,
         rpcUrl: aaRpcUrl,
+        newAccountImplementationType,
     })
-
-    abstractAddressMap.set(rootKeyAddress, result.addr)
-    return result.addr
+    return result.address
 }

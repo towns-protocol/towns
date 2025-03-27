@@ -36,6 +36,8 @@ import {
 } from 'viem/account-abstraction'
 import { getAction, parseAccount } from 'viem/utils'
 import { AccountNotFoundError, SmartAccountClient } from 'permissionless'
+import { getAbstractAccountAddress } from '../src/utils/getAbstractAccountAddress'
+import { SmartAccountType } from '../src/types'
 
 export const fundWallet = async (address: string, provider: LocalhostWeb3Provider) => {
     const wallet = new ethers.Wallet(
@@ -64,7 +66,13 @@ export const boredApeRuleData = createOperationsTree([
     },
 ])
 
-export const UserOps = ({ spaceDapp }: { spaceDapp: SpaceDapp }) => {
+export const UserOps = ({
+    spaceDapp,
+    newAccountImplementationType,
+}: {
+    spaceDapp: SpaceDapp
+    newAccountImplementationType: SmartAccountType
+}) => {
     return new TestUserOps({
         provider: spaceDapp.provider,
         config: spaceDapp.config,
@@ -76,6 +84,7 @@ export const UserOps = ({ spaceDapp }: { spaceDapp: SpaceDapp }) => {
         factoryAddress: process.env.AA_FACTORY_ADDRESS,
         paymasterProxyAuthSecret: process.env.AA_PAYMASTER_PROXY_AUTH_SECRET!,
         fetchAccessTokenFn: undefined,
+        newAccountImplementationType,
     })
 }
 
@@ -448,16 +457,29 @@ export function generatePrivyWalletIfKey(privateKey?: string) {
     }
 }
 
-export const createSpaceDappAndUserops = async (provider: LocalhostWeb3Provider) => {
+export const createSpaceDappAndUserops = async (
+    provider: LocalhostWeb3Provider,
+    newAccountImplementationType?: SmartAccountType,
+) => {
     const baseConfig = getWeb3Deployment(process.env.RIVER_ENV as string).base // see util.test.ts for loading from env
     const spaceDapp = new SpaceDapp(baseConfig, provider)
 
+    const _newAccountImplementationType =
+        newAccountImplementationType ?? process.env.AA_NEW_ACCOUNT_IMPLEMENTATION_TYPE
+
+    if (_newAccountImplementationType !== 'simple' && _newAccountImplementationType !== 'modular') {
+        throw new Error('Invalid new account implementation type')
+    }
+
     const userOpsInstance = UserOps({
         spaceDapp,
+        newAccountImplementationType: _newAccountImplementationType,
     })
 
-    const aaAddress = await userOpsInstance.getAbstractAccountAddress({
+    const aaAddress = await getAbstractAccountAddress({
         rootKeyAddress: (await provider.wallet.getAddress()) as Address,
+        aaRpcUrl: process.env.AA_RPC_URL!,
+        newAccountImplementationType: _newAccountImplementationType,
     })
 
     if (!aaAddress) {

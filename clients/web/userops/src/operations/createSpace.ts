@@ -1,13 +1,12 @@
-import { SpaceDapp } from '@towns-protocol/web3/dist/v3/SpaceDapp'
 import { UserOps } from '../UserOperations'
-import { IArchitectBase, LegacySpaceInfoStruct } from '@towns-protocol/web3'
+import { IArchitectBase, LegacySpaceInfoStruct, SpaceDapp } from '@towns-protocol/web3'
 import { TimeTracker, TimeTrackerEvents } from '../types'
 import { getAbstractAccountAddress } from '../utils/getAbstractAccountAddress'
 import { getSignerAddress } from '../utils/getSignerAddress'
 import { getFunctionSigHash } from '../utils/getFunctionSigHash'
 import { encodeDataForLinkingSmartAccount } from '../utils/encodeDataForLinkingSmartAccount'
 import { linkSmartAccountAndWaitForReceipt } from './linkSmartAccount'
-
+import { TSmartAccount } from '../lib/permissionless/accounts/createSmartAccountClient'
 type Common = {
     spaceDapp: SpaceDapp | undefined
 }
@@ -20,9 +19,10 @@ export async function createSpace(
         factoryAddress: string | undefined
         aaRpcUrl: string
         fnArgs: Parameters<SpaceDapp['createSpace']>
+        smartAccount: TSmartAccount
     },
 ) {
-    const { spaceDapp, timeTracker, fnArgs, aaRpcUrl, sendUserOp } = params
+    const { spaceDapp, timeTracker, fnArgs, aaRpcUrl, sendUserOp, smartAccount } = params
     if (!spaceDapp) {
         throw new Error('spaceDapp is required')
     }
@@ -53,6 +53,7 @@ export async function createSpace(
     const abstractAccountAddress = await getAbstractAccountAddress({
         rootKeyAddress: await getSignerAddress(signer),
         aaRpcUrl,
+        newAccountImplementationType: smartAccount.type,
     })
 
     endGetAA?.()
@@ -159,9 +160,10 @@ export async function createLegacySpace(
         factoryAddress: string | undefined
         aaRpcUrl: string
         fnArgs: Parameters<SpaceDapp['createLegacySpace']>
+        smartAccount: TSmartAccount
     },
 ) {
-    const { spaceDapp, fnArgs, aaRpcUrl, sendUserOp } = params
+    const { spaceDapp, fnArgs, aaRpcUrl, sendUserOp, smartAccount } = params
     if (!spaceDapp) {
         throw new Error('spaceDapp is required')
     }
@@ -181,6 +183,7 @@ export async function createLegacySpace(
     const abstractAccountAddress = await getAbstractAccountAddress({
         rootKeyAddress: await getSignerAddress(signer),
         aaRpcUrl,
+        newAccountImplementationType: smartAccount.type,
     })
 
     if (!abstractAccountAddress) {

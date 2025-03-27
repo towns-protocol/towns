@@ -1,8 +1,15 @@
 import { Address } from '@towns-protocol/web3'
 import { FunctionHash } from '../types'
 import { decodeTransferCallData } from './generateTransferCallData'
-import { decodeFunctionData, Hex, isHex } from 'viem'
-import { decodeExecuteAbi, decodeExecuteBatchAbi } from '../lib/permissionless/accounts/simple/abi'
+import { decodeFunctionData, Hex } from 'viem'
+import {
+    decodeExecuteAbi as simpleDecodeExecuteAbi,
+    decodeExecuteBatchAbi as simpleDecodeExecuteBatchAbi,
+} from '../lib/permissionless/accounts/simple/abi'
+import {
+    modularDecodeExecute,
+    modularDecodeExecuteBatch,
+} from '../lib/permissionless/accounts/modular/utils'
 
 type SingleExecuteData = {
     type: 'single'
@@ -15,7 +22,7 @@ type BatchExecuteData = {
     type: 'batch'
     toAddress: Address[]
     decodedCallData: Hex[]
-    value?: never
+    value: bigint[]
 }
 
 type ExecuteData = SingleExecuteData | BatchExecuteData
@@ -74,36 +81,44 @@ export function decodeCallData<F extends FunctionHash>(args: {
 
     let executeData: ExecuteData
     try {
-        if (typeof callData === 'string') {
-            if (!isHex(callData)) {
-                throw new Error('callData is not a valid hex string')
-            }
-            const [_toAddress, _value, _dataBytes] = decodeExecuteAbi(callData).args
-            executeData = {
-                type: 'single',
-                toAddress: _toAddress,
-                value: _value,
-                decodedCallData: _dataBytes,
-            }
-        } else {
-            const [_toAddress, _value, _dataBytes] = decodeExecuteAbi(callData).args
-            executeData = {
-                type: 'single',
-                toAddress: _toAddress,
-                value: _value,
-                decodedCallData: _dataBytes,
-            }
+        const [_toAddress, _value, _dataBytes] = simpleDecodeExecuteAbi(callData).args
+        executeData = {
+            type: 'single',
+            toAddress: _toAddress,
+            value: _value,
+            decodedCallData: _dataBytes,
         }
     } catch (error) {
         try {
-            const [_toAddress, _dataBytes] = decodeExecuteBatchAbi(callData).args
+            const [_toAddress, _value, _dataBytes] = modularDecodeExecute(callData).args
             executeData = {
-                type: 'batch',
-                toAddress: _toAddress as Address[],
-                decodedCallData: _dataBytes as Hex[],
+                type: 'single',
+                toAddress: _toAddress,
+                value: _value,
+                decodedCallData: _dataBytes,
             }
-        } catch (error) {
-            throw new Error('failed to decode call data')
+        } catch {
+            try {
+                const [_toAddress, _dataBytes] = simpleDecodeExecuteBatchAbi(callData).args
+                executeData = {
+                    type: 'batch',
+                    toAddress: _toAddress as Address[],
+                    value: _toAddress.map(() => 0n),
+                    decodedCallData: _dataBytes as Hex[],
+                }
+            } catch {
+                try {
+                    const [args] = modularDecodeExecuteBatch(callData).args
+                    executeData = {
+                        type: 'batch',
+                        toAddress: args.map((arg) => arg.target),
+                        value: args.map((arg) => arg.value),
+                        decodedCallData: args.map((arg) => arg.data),
+                    }
+                } catch {
+                    throw new Error('failed to decode call data')
+                }
+            }
         }
     }
 
@@ -139,7 +154,7 @@ export function decodeCallData<F extends FunctionHash>(args: {
                 const { args } = decodeFunctionData({
                     // PrepayFacet.abi
                     // defining the abi instead of passing around SpaceDapp/Space
-                    // alternative is to import @towns-protocol/generated, but this is just simple and easy for now
+                    // alternative is to import @river-build/generated, but this is just simple and easy for now
                     abi: [
                         {
                             type: 'function',

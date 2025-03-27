@@ -14,12 +14,22 @@ import { Wallet, utils } from 'ethers'
 import { BigNumber } from 'ethers'
 import { TestUserOps } from './TestUserOps'
 import { BaseError, Hex, hexToBigInt, RpcUserOperation } from 'viem'
-import { entryPoint06Address, getUserOperationError, UserOperation } from 'viem/account-abstraction'
-import { PaymasterProxyPostData } from '../src/lib/permissionless/middleware/paymaster'
+import {
+    entryPoint06Address,
+    entryPoint07Address,
+    getUserOperationError,
+    UserOperation,
+} from 'viem/account-abstraction'
+import { PaymasterRequest } from '../src/lib/permissionless/middleware/paymaster'
 
 afterEach(() => {
     vi.clearAllMocks()
 })
+
+const entrypointAddress =
+    process.env.AA_NEW_ACCOUNT_IMPLEMENTATION_TYPE === 'modular'
+        ? entryPoint07Address
+        : entryPoint06Address
 
 test(
     'a sponsored userop should be replaced',
@@ -94,7 +104,7 @@ test(
         // and that the op was sent to the payamster with gas overrides that are going to replace the old userop
         const hasExpectedGasOverrides = sponsorUserOpCalls.some((call) => {
             const requestBody = JSON.parse(call[1]!.body as string) as {
-                data: PaymasterProxyPostData
+                data: PaymasterRequest
             }
 
             const actualMaxFeePerGas = requestBody.data.gasOverrides?.maxFeePerGas as Hex
@@ -174,7 +184,7 @@ test(
                     return await smartAccountClient.client.request(
                         {
                             method: 'eth_sendUserOperation',
-                            params: [rpcParameters, entryPoint06Address],
+                            params: [rpcParameters, entrypointAddress],
                         },
                         { retryCount: 0 },
                     )
@@ -313,7 +323,7 @@ test(
                     return await smartAccountClient.client.request(
                         {
                             method: 'eth_sendUserOperation',
-                            params: [rpcParameters, entryPoint06Address],
+                            params: [rpcParameters, entrypointAddress],
                         },
                         { retryCount: 0 },
                     )

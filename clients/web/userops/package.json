@@ -11,8 +11,9 @@
         "lint:fix": "yarn lint --fix",
         "watch": "tsc --watch",
         "test:userops:paymaster-limits": "DOTENV_CONFIG_PATH=.env.test-sample vitest run --project limits",
-        "test:userops": "DOTENV_CONFIG_PATH=.env.test-sample vitest run --project main",
-        "test:userops:legacy": "DOTENV_CONFIG_PATH=.env.test-sample CREATE_LEGACY_SPACES=true vitest run --project legacy"
+        "test:userops": "DOTENV_CONFIG_PATH=.env.test-sample vitest run --project simple",
+        "test:userops:legacy": "DOTENV_CONFIG_PATH=.env.test-sample CREATE_LEGACY_SPACES=true vitest run --project legacy",
+        "test:userops:modular": "DOTENV_CONFIG_PATH=.env.test-sample vitest run --project modular"
     },
     "dependencies": {
         "@towns-protocol/web3": "workspace:^",

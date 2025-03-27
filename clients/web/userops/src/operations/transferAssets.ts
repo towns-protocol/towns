@@ -4,6 +4,7 @@ import { getSignerAddress } from '../utils/getSignerAddress'
 import { Signer } from 'ethers'
 import { UserOps } from '../UserOperations'
 import { PublicClient } from 'viem'
+import { TSmartAccount } from '../lib/permissionless/accounts/createSmartAccountClient'
 
 export async function transferAssets(params: {
     transferData: {
@@ -14,14 +15,16 @@ export async function transferAssets(params: {
     }
     signer: Signer
     aaRpcUrl: string
+    smartAccount: TSmartAccount
     sendUserOp: UserOps['sendUserOp']
     client: PublicClient
 }) {
-    const { transferData, signer, aaRpcUrl, sendUserOp, client } = params
+    const { transferData, signer, aaRpcUrl, sendUserOp, client, smartAccount } = params
     const { recipient, contractAddress, tokenId, quantity } = transferData
     const fromAddress = await getAbstractAccountAddress({
         rootKeyAddress: await getSignerAddress(signer),
         aaRpcUrl,
+        newAccountImplementationType: smartAccount.type,
     })
     if (!fromAddress) {
         throw new Error('Failed to get from address')

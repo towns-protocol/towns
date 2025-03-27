@@ -2,8 +2,7 @@ import {
     createSmartAccountClient as permissionlessCreateSmartAccountClient,
     SmartAccountClient,
 } from 'permissionless'
-import { http, Hex, Address, createPublicClient, PublicClient } from 'viem'
-import { ethers } from 'ethers'
+import { http, Hex, Address, PublicClient } from 'viem'
 import { prepareUserOperation } from '../prepareUserOperation'
 import { getBlock } from 'viem/actions'
 import {
@@ -12,65 +11,64 @@ import {
 } from '../../getUserOperationReceipt'
 import { datadogLogs } from '@datadog/browser-logs'
 import { userOperationEventAbi } from '../../userOperationEvent'
-import { getChain } from '../utils/getChain'
-import { ISpaceDapp } from '@towns-protocol/web3'
+import { SpaceDapp } from '@towns-protocol/web3'
 import { SendUserOperationReturnType } from '../../types'
 import { SmartAccount as ViemSmartAccount } from 'viem/account-abstraction'
+import { SmartAccountType } from '../../../types'
+import { LocalAccount } from 'viem'
+import { ERC4337 } from '../../../constants'
 
-export type CreateSmartAccountClientArgs<entryPointVersion extends '0.6' | '0.7'> = {
-    signer: ethers.Signer
+export type TownsSmartAccountImplementation = ViemSmartAccount & {
+    encodeExecute: (args: { to: Address; value: bigint; data: Hex }) => Promise<Hex>
+    encodeExecuteBatch: (args: { to: Address[]; value: bigint[]; data: Hex[] }) => Promise<Hex>
+}
+
+export type CreateSmartAccountClientArgs = {
+    owner: LocalAccount
     rpcUrl: string
     bundlerUrl: string
     paymasterProxyUrl: string
     paymasterProxyAuthSecret: string
-    spaceDapp: ISpaceDapp | undefined
+    spaceDapp: SpaceDapp | undefined
     fetchAccessTokenFn: (() => Promise<string | null>) | undefined
-    smartAccountImpl: (args: { publicClient: PublicClient }) => Promise<ViemSmartAccount>
+    publicRpcClient: PublicClient
+    smartAccountImpl: TownsSmartAccountImplementation
     entrypointAddress: Address
-    entrypointVersion: entryPointVersion
     factoryAddress: Address
-    type: 'simple' | 'light'
-    nonceKey?: bigint
 }
 
 export type TSmartAccount = {
     address: Address
-    type: 'simple' | 'light'
     client: SmartAccountClient
     publicRpcClient: PublicClient
     factoryAddress: Address
     entrypointAddress: Address
+    type: SmartAccountType
     sendUserOperation: (args: { callData: Hex }) => Promise<SendUserOperationReturnType>
     setWaitTimeoutMs: (timeoutMs: number) => void
     setWaitIntervalMs: (intervalMs: number) => void
+    encodeExecute: TownsSmartAccountImplementation['encodeExecute']
+    encodeExecuteBatch: TownsSmartAccountImplementation['encodeExecuteBatch']
 }
 
-export async function createSmartAccountClient<entryPointVersion extends '0.6' | '0.7'>(
-    args: CreateSmartAccountClientArgs<entryPointVersion>,
+export async function createSmartAccountClient(
+    args: CreateSmartAccountClientArgs,
 ): Promise<TSmartAccount> {
     const {
-        signer,
-        rpcUrl,
+        owner,
         bundlerUrl,
         paymasterProxyUrl,
         paymasterProxyAuthSecret,
         spaceDapp,
         entrypointAddress,
-        type,
+        publicRpcClient,
         factoryAddress,
         smartAccountImpl,
         fetchAccessTokenFn,
     } = args
 
-    const chain = await getChain(signer)
-
-    const publicRpcClient = createPublicClient({
-        transport: http(rpcUrl),
-        chain,
-    }) as PublicClient
-
     const smartAccountClient = permissionlessCreateSmartAccountClient({
-        account: await smartAccountImpl({ publicClient: publicRpcClient }),
+        account: smartAccountImpl,
         client: publicRpcClient,
         bundlerTransport: http(bundlerUrl),
         userOperation: {
@@ -80,7 +78,7 @@ export async function createSmartAccountClient<entryPointVersion extends '0.6' |
                 paymasterProxyAuthSecret,
                 spaceDapp,
                 fetchAccessTokenFn,
-                rootKeyAddress: await signer.getAddress(),
+                rootKeyAddress: owner.address,
             }),
         },
     })
@@ -109,9 +107,9 @@ export async function createSmartAccountClient<entryPointVersion extends '0.6' |
     }
 
     return {
-        address: smartAccountClient.account.address,
+        address: await smartAccountImpl.getAddress(),
         client: smartAccountClient,
-        type,
+        type: factoryAddress === ERC4337.SimpleAccount.Factory ? 'simple' : 'modular',
         factoryAddress,
         entrypointAddress,
         publicRpcClient: publicRpcClient,
@@ -197,5 +195,9 @@ export async function createSmartAccountClient<entryPointVersion extends '0.6' |
         setWaitIntervalMs: (intervalMs: number) => {
             waitIntervalMs = intervalMs
         },
+        encodeExecute: async (args: { to: Address; value: bigint; data: Hex }) =>
+            smartAccountImpl.encodeExecute(args),
+        encodeExecuteBatch: async (args: { to: Address[]; value: bigint[]; data: Hex[] }) =>
+            smartAccountImpl.encodeExecuteBatch(args),
     }
 }

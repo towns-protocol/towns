@@ -10,6 +10,7 @@ import {
     waitForOpAndTx,
 } from './utils'
 import { parseEther } from 'viem'
+import { ERC4337 } from '../src/constants'
 
 test('can join an ungated space', async () => {
     const alice = new LocalhostWeb3Provider(
@@ -26,6 +27,15 @@ test('can join an ungated space', async () => {
 
     const { spaceDapp, userOps: userOpsAlice } = await createSpaceDappAndUserops(alice)
     const { userOps: userOpsBob } = await createSpaceDappAndUserops(bob)
+
+    const smClient = await userOpsAlice.getSmartAccountClient({ signer: alice.wallet })
+    if (process.env.AA_NEW_ACCOUNT_IMPLEMENTATION_TYPE === 'modular') {
+        expect(smClient.type).toBe('modular')
+        expect(smClient.factoryAddress).toBe(ERC4337.ModularAccount.Factory)
+    } else if (process.env.AA_NEW_ACCOUNT_IMPLEMENTATION_TYPE === 'simple') {
+        expect(smClient.type).toBe('simple')
+        expect(smClient.factoryAddress).toBe(ERC4337.SimpleAccount.Factory)
+    }
 
     const createSpaceOp = await createUngatedSpace({
         userOps: userOpsAlice,

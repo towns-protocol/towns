@@ -20,8 +20,23 @@ export default defineWorkspace([
             include: ['**/test/**.test.ts'],
             // don't run limits tests by default
             exclude: ['**/test/userops.limits.test.ts'],
-            name: 'main',
+            name: 'simple',
             ...commonConfig,
+            env: {
+                AA_NEW_ACCOUNT_IMPLEMENTATION_TYPE: 'simple',
+            },
+        },
+    },
+    {
+        test: {
+            include: ['**/test/**.test.ts'],
+            // don't run limits tests by default
+            exclude: ['**/test/userops.limits.test.ts'],
+            name: 'modular',
+            ...commonConfig,
+            env: {
+                AA_NEW_ACCOUNT_IMPLEMENTATION_TYPE: 'modular',
+            },
         },
     },
     {
@@ -29,6 +44,9 @@ export default defineWorkspace([
             include: ['**/test/userops.limits.test.ts'],
             name: 'limits',
             ...commonConfig,
+            env: {
+                AA_NEW_ACCOUNT_IMPLEMENTATION_TYPE: 'simple',
+            },
         },
     },
     {
@@ -40,6 +58,9 @@ export default defineWorkspace([
             ],
             name: 'legacy',
             ...commonConfig,
+            env: {
+                AA_NEW_ACCOUNT_IMPLEMENTATION_TYPE: 'simple',
+            },
         },
     },
 ])

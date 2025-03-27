@@ -99,3 +99,33 @@ export const createAccountAbi = [
         type: 'function',
     },
 ] as const
+
+export const upgradeAbi = [
+    {
+        inputs: [{ internalType: 'address', name: 'newImplementation', type: 'address' }],
+        name: 'upgradeTo',
+        outputs: [],
+        stateMutability: 'nonpayable',
+        type: 'function',
+    },
+    {
+        inputs: [
+            { internalType: 'address', name: 'newImplementation', type: 'address' },
+            { internalType: 'bytes', name: 'data', type: 'bytes' },
+        ],
+        name: 'upgradeToAndCall',
+        outputs: [],
+        stateMutability: 'payable',
+        type: 'function',
+    },
+] as const
+
+export const ownerAbi = [
+    {
+        inputs: [],
+        name: 'owner',
+        outputs: [{ internalType: 'address', name: '', type: 'address' }],
+        stateMutability: 'view',
+        type: 'function',
+    },
+] as const

@@ -4,36 +4,68 @@ import { CodeException } from '../../../errors'
 import { isUsingAlchemyBundler } from '../../../utils/isUsingAlchemyBundler'
 import { selectUserOpsByAddress, userOpsStore } from '../../../store/userOpsStore'
 import { estimateGasFeesWithReplacement } from './estimateGasFees'
-import { PrepareUserOperationRequest, UserOperation } from 'viem/account-abstraction'
-import { BigNumberish } from 'ethers'
-import { Hex, hexToBigInt, isHex, Client, toHex } from 'viem'
+import {
+    formatUserOperationRequest,
+    PrepareUserOperationRequest,
+    UserOperation,
+} from 'viem/account-abstraction'
+import { Hex, hexToBigInt, isHex, Client, toHex, RpcUserOperationRequest } from 'viem'
 import { getPrivyLoginMethodFromLocalStorage } from '../../../utils/privyLoginMethod'
 import { NON_SPONSORED_LOGIN_METHODS } from '../../../constants'
 import { NON_SPONSORED_FUNCTION_HASHES } from '../../../constants'
 import { decodeCallData } from '../../../utils/decodeCallData'
 
+type Paymaster06Response = {
+    paymasterAndData: Hex
+    preVerificationGas: Hex
+    verificationGasLimit: Hex
+    callGasLimit: Hex
+    maxPriorityFeePerGas?: Hex
+    maxFeePerGas?: Hex
+}
+
+type Paymaster07Response = {
+    preVerificationGas: Hex
+    callGasLimit: Hex
+    paymasterVerificationGasLimit: Hex
+    paymasterPostOpGasLimit: Hex
+    verificationGasLimit: Hex
+    paymaster: Hex
+    paymasterData: Hex
+    maxPriorityFeePerGas?: Hex
+    maxFeePerGas?: Hex
+}
+
 type PaymasterProxyResponse = {
-    data: {
-        paymasterAndData: Hex
-        preVerificationGas: Hex
-        verificationGasLimit: Hex
-        callGasLimit: Hex
-        maxPriorityFeePerGas?: Hex
-        maxFeePerGas?: Hex
-    }
+    data: Paymaster06Response | Paymaster07Response
 }
 
 const zAddress = z.custom<Hex>((val) => typeof val === 'string' && isHex(val))
 
+// Create Zod schemas based on the TypeScript types
+const zPaymaster06Response: z.ZodType<Paymaster06Response> = z.object({
+    paymasterAndData: zAddress,
+    preVerificationGas: zAddress,
+    verificationGasLimit: zAddress,
+    callGasLimit: zAddress,
+    maxPriorityFeePerGas: zAddress.optional(),
+    maxFeePerGas: zAddress.optional(),
+})
+
+const zPaymaster07Response: z.ZodType<Paymaster07Response> = z.object({
+    preVerificationGas: zAddress,
+    callGasLimit: zAddress,
+    paymasterVerificationGasLimit: zAddress,
+    paymasterPostOpGasLimit: zAddress,
+    verificationGasLimit: zAddress,
+    paymaster: zAddress,
+    paymasterData: zAddress,
+    maxPriorityFeePerGas: zAddress.optional(),
+    maxFeePerGas: zAddress.optional(),
+})
+
 const zSuccessSchema: z.ZodType<PaymasterProxyResponse> = z.object({
-    data: z.object({
-        paymasterAndData: zAddress,
-        preVerificationGas: zAddress,
-        verificationGasLimit: zAddress,
-        callGasLimit: zAddress,
-        maxPriorityFeePerGas: zAddress.optional(),
-        maxFeePerGas: zAddress.optional(),
-    }),
+    data: z.union([zPaymaster06Response, zPaymaster07Response]),
 })
 
 const zErrorSchema: z.ZodType<{ errorDetail: { code: PaymasterErrorCode } }> = z.object({
@@ -42,35 +74,21 @@ const zErrorSchema: z.ZodType<{ errorDetail: { code: PaymasterErrorCode } }> = z
     }),
 })
 
-export type PaymasterProxyPostData = Omit<
-    UserOperation<'0.6'>,
-    | 'nonce'
-    | 'callGasLimit'
-    | 'verificationGasLimit'
-    | 'preVerificationGas'
-    | 'maxFeePerGas'
-    | 'maxPriorityFeePerGas'
-> & {
+export type PaymasterRequest = RpcUserOperationRequest & {
     rootKeyAddress: string
     functionHash: string
     townId: string | undefined
     gasOverrides: GasOverrides
-    nonce: BigNumberish
-    callGasLimit: BigNumberish
-    verificationGasLimit: BigNumberish
-    preVerificationGas: BigNumberish
-    maxFeePerGas: BigNumberish
-    maxPriorityFeePerGas: BigNumberish
 }
 
 type Multiplier = number
 
 export type GasOverrides = {
-    callGasLimit?: BigNumberish | Multiplier
-    maxFeePerGas?: BigNumberish | Multiplier
-    maxPriorityFeePerGas?: BigNumberish | Multiplier
-    preVerificationGas?: BigNumberish | Multiplier
-    verificationGasLimit?: BigNumberish | Multiplier
+    callGasLimit?: Hex | Multiplier
+    maxFeePerGas?: Hex | Multiplier
+    maxPriorityFeePerGas?: Hex | Multiplier
+    preVerificationGas?: Hex | Multiplier
+    verificationGasLimit?: Hex | Multiplier
 }
 
 export const paymasterProxyMiddleware = async (
@@ -118,8 +136,8 @@ export const paymasterProxyMiddleware = async (
         return
     }
 
-    let maxFeePerGas: bigint | undefined
-    let maxPriorityFeePerGas: bigint | undefined
+    let maxFeePerGasOverride: bigint | undefined
+    let maxPriorityFeePerGasOverride: bigint | undefined
 
     if (pendingHash && args.userOp.sender) {
         // get the gas values
@@ -127,8 +145,8 @@ export const paymasterProxyMiddleware = async (
             sender: args.userOp.sender,
             client: args.client,
         })
-        maxFeePerGas = result.maxFeePerGas
-        maxPriorityFeePerGas = result.maxPriorityFeePerGas
+        maxFeePerGasOverride = result.maxFeePerGas
+        maxPriorityFeePerGasOverride = result.maxPriorityFeePerGas
     }
 
     try {
@@ -171,25 +189,15 @@ export const paymasterProxyMiddleware = async (
             throw new Error('Invalid user operation')
         }
 
-        const data: PaymasterProxyPostData = {
-            callData: op.callData,
-            callGasLimit: toHex(op.callGasLimit),
-            initCode: op.initCode,
-            maxFeePerGas: toHex(op.maxFeePerGas),
-            maxPriorityFeePerGas: toHex(op.maxPriorityFeePerGas),
-            nonce: toHex(op.nonce),
-            preVerificationGas: toHex(op.preVerificationGas),
-            sender: op.sender,
-            signature: op.signature,
-            verificationGasLimit: toHex(op.verificationGasLimit),
+        const rpcRequest: PaymasterRequest = {
+            ...formatUserOperationRequest(op as UserOperation),
             functionHash: functionHashForPaymasterProxy,
-            rootKeyAddress: rootKeyAddress,
+            rootKeyAddress,
             townId: spaceId,
-            paymasterAndData: '0x',
             gasOverrides: {
-                maxFeePerGas: maxFeePerGas ? toHex(maxFeePerGas) : undefined,
-                maxPriorityFeePerGas: maxPriorityFeePerGas
-                    ? toHex(maxPriorityFeePerGas)
+                maxFeePerGas: maxFeePerGasOverride ? toHex(maxFeePerGasOverride) : undefined,
+                maxPriorityFeePerGas: maxPriorityFeePerGasOverride
+                    ? toHex(maxPriorityFeePerGasOverride)
                     : undefined,
             },
         }
@@ -215,7 +223,7 @@ export const paymasterProxyMiddleware = async (
         const response = await fetch(sponsorUserOpUrl, {
             method: 'POST',
             body: JSON.stringify({
-                data,
+                data: rpcRequest,
             }),
             headers: {
                 'Content-Type': 'application/json',
@@ -261,13 +269,63 @@ export const paymasterProxyMiddleware = async (
         // then you'll likely encounter an invalid paymaster signature error
         // https://docs.stackup.sh/reference/pm-sponsoruseroperation
         // being explicity here instead of spreading the parseResult.data, for clarity
-        const gas = {
-            paymasterAndData: parsedData.paymasterAndData,
+        type PaymasterUseropData = {
+            preVerificationGas: bigint
+            verificationGasLimit: bigint
+            callGasLimit: bigint
+            // 06
+            paymasterAndData: Hex | undefined
+
+            // 07
+            paymasterVerificationGasLimit: bigint | undefined
+            paymasterPostOpGasLimit: bigint | undefined
+            paymaster: Hex | undefined
+            paymasterData: Hex | undefined
+
+            // alchemy
+            maxPriorityFeePerGas?: bigint
+            maxFeePerGas?: bigint
+        }
+        const gas: PaymasterUseropData = {
             preVerificationGas: hexToBigInt(parsedData.preVerificationGas),
             verificationGasLimit: hexToBigInt(parsedData.verificationGasLimit),
             callGasLimit: hexToBigInt(parsedData.callGasLimit),
+            paymasterAndData: undefined,
+            paymasterData: undefined,
+            paymaster: undefined,
+            paymasterVerificationGasLimit: undefined,
+            paymasterPostOpGasLimit: undefined,
         }
 
+        //////////////////////////////////////////////////////////////////
+        // Add 06 fields
+        //////////////////////////////////////////////////////////////////
+        if ('paymasterAndData' in parsedData) {
+            gas.paymasterAndData = parsedData.paymasterAndData
+        }
+
+        //////////////////////////////////////////////////////////////////
+        // Add 07 fields
+        //////////////////////////////////////////////////////////////////
+        if ('paymaster' in parsedData) {
+            gas.paymaster = parsedData.paymaster
+        }
+        if ('paymasterData' in parsedData) {
+            gas.paymasterData = parsedData.paymasterData
+        }
+
+        if ('paymasterVerificationGasLimit' in parsedData) {
+            gas.paymasterVerificationGasLimit = hexToBigInt(
+                parsedData.paymasterVerificationGasLimit,
+            )
+        }
+        if ('paymasterPostOpGasLimit' in parsedData) {
+            gas.paymasterPostOpGasLimit = hexToBigInt(parsedData.paymasterPostOpGasLimit)
+        }
+
+        //////////////////////////////////////////////////////////////////
+        // Add alchemy fields
+        //////////////////////////////////////////////////////////////////
         if (parsedData.maxFeePerGas && parsedData.maxPriorityFeePerGas) {
             // alchemy returns these as well, so we need to set them here
             // https://docs.alchemy.com/reference/alchemy-requestgasandpaymasteranddata

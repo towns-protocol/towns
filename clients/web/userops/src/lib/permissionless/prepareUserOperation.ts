@@ -200,8 +200,10 @@ export const prepareUserOperation =
         }
 
         // 0.6 requires paymasterAndData to be provided
-        if (!request.paymasterAndData) {
-            request.paymasterAndData = '0x'
+        if (account.entryPoint.version === '0.6') {
+            if (!request.paymasterAndData) {
+                request.paymasterAndData = '0x'
+            }
         }
 
         ////////////////////////////////////////////////////////////////////////////////

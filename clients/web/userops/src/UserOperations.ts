@@ -41,7 +41,8 @@ import {
     sendUseropWithPermissionless,
     UserOpParamsPermissionless,
 } from './lib/permissionless/sendUseropWithPermissionless'
-import { simpleSmartAccount } from './lib/permissionless/accounts/simple/client'
+import { setupSmartAccount } from './lib/permissionless/accounts/setupSmartAccount'
+import { SmartAccountType } from './types'
 
 export class UserOps {
     private bundlerUrl: string
@@ -52,6 +53,7 @@ export class UserOps {
     private timeTracker: TimeTracker | undefined
     private fetchAccessTokenFn: (() => Promise<string | null>) | undefined
     private smartAccount: Promise<TSmartAccount> | undefined
+    private newAccountImplementationType: SmartAccountType
 
     constructor(
         config: UserOpsConfig & {
@@ -59,6 +61,10 @@ export class UserOps {
             timeTracker?: TimeTracker
         },
     ) {
+        if (!config.newAccountImplementationType) {
+            throw new Error('newAccountImplementationType is required')
+        }
+
         this.bundlerUrl = config.bundlerUrl ?? ''
         this.aaRpcUrl = config.aaRpcUrl
         this.paymasterProxyUrl = config.paymasterProxyUrl
@@ -66,6 +72,7 @@ export class UserOps {
         this.spaceDapp = config.spaceDapp
         this.timeTracker = config.timeTracker
         this.fetchAccessTokenFn = config.fetchAccessTokenFn
+        this.newAccountImplementationType = config.newAccountImplementationType
     }
 
     public async getAbstractAccountAddress({
@@ -76,6 +83,7 @@ export class UserOps {
         return getAbstractAccountAddress({
             ...this.commonParams(),
             rootKeyAddress,
+            newAccountImplementationType: this.newAccountImplementationType,
         })
     }
 
@@ -88,16 +96,51 @@ export class UserOps {
         },
         sequenceName?: TimeTrackerEvents,
     ): Promise<SendUserOperationReturnType> {
-        const { functionHashForPaymasterProxy, spaceId, retryCount, ...rest } = args
-        return this.sendUserOpWithPermissionless(
-            {
+        const {
+            functionHashForPaymasterProxy,
+            spaceId,
+            retryCount,
+            signer,
+            toAddress,
+            callData,
+            value,
+        } = args
+
+        const timeTracker = this.timeTracker
+
+        let endInitClient: (() => void) | undefined
+        if (sequenceName) {
+            endInitClient = timeTracker?.startMeasurement(sequenceName, 'userops_init_client')
+        }
+        const smartAccountClient = await this.getSmartAccountClient({ signer })
+        endInitClient?.()
+
+        if (Array.isArray(toAddress) && Array.isArray(callData)) {
+            const _value = Array.isArray(value) ? value : toAddress.map(() => value ?? 0n)
+            return sendUseropWithPermissionless({
+                value: _value,
+                toAddress,
+                callData,
                 functionHashForPaymasterProxy,
                 spaceId,
                 retryCount,
-                ...(rest as UserOpParamsPermissionless),
-            },
-            sequenceName,
-        )
+                smartAccountClient,
+                signer,
+            })
+        } else if (typeof toAddress === 'string' && typeof callData === 'string') {
+            const _value = typeof value === 'bigint' ? value : undefined
+            return sendUseropWithPermissionless({
+                value: _value,
+                toAddress,
+                callData,
+                functionHashForPaymasterProxy,
+                spaceId,
+                retryCount,
+                smartAccountClient,
+                signer,
+            })
+        }
+        throw new Error('[UserOperations.sendUserOpWithPermissionless]::Invalid arguments')
     }
 
     public async getSmartAccountClient(args: { signer: ethers.Signer }) {
@@ -109,7 +152,9 @@ export class UserOps {
                 throw new Error('paymasterProxyAuthSecret is required')
             }
             const { signer } = args
-            this.smartAccount = simpleSmartAccount({
+
+            this.smartAccount = setupSmartAccount({
+                newAccountImplementationType: this.newAccountImplementationType,
                 signer: signer,
                 rpcUrl: this.aaRpcUrl,
                 bundlerUrl: this.bundlerUrl,
@@ -135,37 +180,6 @@ export class UserOps {
         if (sender) {
             userOpsStore.getState().reset(sender)
         }
-    }
-
-    private async sendUserOpWithPermissionless(
-        args: UserOpParamsPermissionless & {
-            functionHashForPaymasterProxy: FunctionHash
-            spaceId: string | undefined
-            retryCount?: number
-        },
-        sequenceName?: TimeTrackerEvents,
-    ): Promise<SendUserOperationReturnType> {
-        const timeTracker = this.timeTracker
-
-        let endInitClient: (() => void) | undefined
-        if (sequenceName) {
-            endInitClient = timeTracker?.startMeasurement(sequenceName, 'userops_init_client')
-        }
-        const smartAccountClient = await this.getSmartAccountClient({ signer: args.signer })
-        endInitClient?.()
-
-        if (Array.isArray(args.toAddress) && Array.isArray(args.callData)) {
-            return sendUseropWithPermissionless({
-                ...args,
-                smartAccountClient,
-            })
-        } else if (typeof args.toAddress === 'string' && typeof args.callData === 'string') {
-            return sendUseropWithPermissionless({
-                ...args,
-                smartAccountClient,
-            })
-        }
-        throw new Error('[UserOperations.sendUserOpWithPermissionless]::Invalid arguments')
     }
 
     public async dropAndReplace(hash: string, signer: ethers.Signer) {
@@ -227,6 +241,7 @@ export class UserOps {
             factoryAddress: smartAccountClient.factoryAddress,
             entryPointAddress: smartAccountClient.entrypointAddress,
             fnArgs: args,
+            smartAccount: smartAccountClient,
         })
     }
 
@@ -239,6 +254,7 @@ export class UserOps {
             factoryAddress: smartAccountClient.factoryAddress,
             entryPointAddress: smartAccountClient.entrypointAddress,
             fnArgs: args,
+            smartAccount: smartAccountClient,
         })
     }
 
@@ -254,6 +270,7 @@ export class UserOps {
             factoryAddress: smartAccountClient.factoryAddress,
             entryPointAddress: smartAccountClient.entrypointAddress,
             fnArgs: args,
+            smartAccount: smartAccountClient,
         })
     }
 
@@ -463,6 +480,7 @@ export class UserOps {
             signer,
             factoryAddress: smartAccountClient.factoryAddress,
             entryPointAddress: smartAccountClient.entrypointAddress,
+            smartAccount: smartAccountClient,
         })
     }
 
@@ -488,6 +506,7 @@ export class UserOps {
             transferData,
             signer,
             client: smartAccountClient.publicRpcClient,
+            smartAccount: smartAccountClient,
         })
     }
 
@@ -525,11 +544,32 @@ export class UserOps {
             signer: ethers.Signer
         } & ({ callData: string; toAddress: string } | { callData: string[]; toAddress: string[] }),
     ) {
-        return this.sendUserOp({
-            ...args,
-            spaceId: undefined,
-            functionHashForPaymasterProxy: 'trading',
-        })
+        if (Array.isArray(args.callData) && Array.isArray(args.toAddress)) {
+            // TODO: trading maybe wants to use this?
+            const value = Array.isArray(args.value) ? args.value : args.toAddress.map(() => 0n)
+            return this.sendUserOp({
+                callData: args.callData,
+                toAddress: args.toAddress,
+                value,
+                signer: args.signer,
+                spaceId: undefined,
+                functionHashForPaymasterProxy: 'trading',
+            })
+        } else if (
+            typeof args.callData === 'string' &&
+            typeof args.toAddress === 'string' &&
+            typeof args.value === 'bigint'
+        ) {
+            return this.sendUserOp({
+                callData: args.callData,
+                toAddress: args.toAddress,
+                value: args.value,
+                signer: args.signer,
+                spaceId: undefined,
+                functionHashForPaymasterProxy: 'trading',
+            })
+        }
+        throw new Error('Invalid arguments')
     }
 
     /**

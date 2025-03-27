@@ -6,6 +6,7 @@ export type AccountAbstractionConfig = Omit<UserOpsConfig, 'chainId' | 'provider
 export type UserOpsConfig = {
     provider: SpaceDapp['provider']
     config: BaseChainConfig
+    newAccountImplementationType: SmartAccountType
     /**
      * Node RPC url for user operations
      */
@@ -122,3 +123,5 @@ export interface IUserOperation {
     paymasterAndData: BytesLike
     signature: BytesLike
 }
+
+export type SmartAccountType = 'simple' | 'modular'

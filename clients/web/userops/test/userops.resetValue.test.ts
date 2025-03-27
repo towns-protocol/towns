@@ -11,7 +11,6 @@ import {
 } from './utils'
 import { expect, vi } from 'vitest'
 import { userOpsStore } from '../src/store/userOpsStore'
-import * as encodeExecuteAbi from '../src/lib/permissionless/accounts/simple/abi'
 import { formatEther } from 'viem'
 import { decodeCallData } from '../src/utils/decodeCallData'
 
@@ -68,7 +67,7 @@ test('permissionless: userops with different values are sent correctly', async (
     const spaceId2 = await getSpaceId(spaceDapp, spReceipt2, alice.wallet.address, userOpsAlice)
 
     const bobSmartAccountClient = await userOpsBob.getSmartAccountClient({ signer: bob.wallet })
-    const executeSpy = vi.spyOn(encodeExecuteAbi, 'encodeExecuteAbi')
+    const executeSpy = vi.spyOn(bobSmartAccountClient, 'encodeExecute')
 
     const bobSenderAddress = bobSmartAccountClient.address
     const bobsOpValue = () => {

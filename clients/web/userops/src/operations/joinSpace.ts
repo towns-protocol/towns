@@ -5,7 +5,7 @@ import { getAbstractAccountAddress } from '../utils/getAbstractAccountAddress'
 import { getSignerAddress } from '../utils/getSignerAddress'
 import { getFunctionSigHash } from '../utils/getFunctionSigHash'
 import { linkSmartAccountAndWaitForReceipt } from './linkSmartAccount'
-
+import { TSmartAccount } from '../lib/permissionless/accounts/createSmartAccountClient'
 /**
  * Join a space, potentially linking a wallet if necessary
  */
@@ -16,9 +16,10 @@ export async function joinSpace(params: {
     entryPointAddress: string | undefined
     factoryAddress: string | undefined
     aaRpcUrl: string
+    smartAccount: TSmartAccount
     fnArgs: Parameters<SpaceDapp['joinSpace']>
 }) {
-    const { spaceDapp, sendUserOp, timeTracker, aaRpcUrl, fnArgs } = params
+    const { spaceDapp, sendUserOp, timeTracker, aaRpcUrl, fnArgs, smartAccount } = params
     if (!spaceDapp) {
         throw new Error('spaceDapp is required')
     }
@@ -37,6 +38,7 @@ export async function joinSpace(params: {
     const abstractAccountAddress = await getAbstractAccountAddress({
         rootKeyAddress: await getSignerAddress(signer),
         aaRpcUrl,
+        newAccountImplementationType: smartAccount.type,
     })
     endGetAA?.()
     if (!abstractAccountAddress) {
