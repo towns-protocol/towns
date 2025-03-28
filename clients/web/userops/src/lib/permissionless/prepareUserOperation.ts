@@ -211,7 +211,11 @@ export const prepareUserOperation =
         ////////////////////////////////////////////////////////////////////////////////
         if (
             isUsingAlchemyBundler(bundlerUrl) &&
-            !isSponsoredOp({ paymasterAndData: request.paymasterAndData })
+            !isSponsoredOp({
+                entryPointVersion: account.entryPoint.version,
+                paymasterAndData: request.paymasterAndData,
+                paymasterData: request.paymasterData,
+            })
         ) {
             const fees = await estimateGasFeesWithReplacement({
                 sender: account.address,
@@ -289,7 +293,13 @@ export const prepareUserOperation =
               })?.value
             : undefined
 
-        if (!isSponsoredOp({ paymasterAndData: request.paymasterAndData })) {
+        if (
+            !isSponsoredOp({
+                entryPointVersion: account.entryPoint.version,
+                paymasterAndData: request.paymasterAndData,
+                paymasterData: request.paymasterData,
+            })
+        ) {
             // tip is a special case
             // - it is not sponsored
             // - it will make tx without prompting user
