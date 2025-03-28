@@ -72,59 +72,39 @@ fi
 # Create a new tmux session
 tmux new-session -d -s $SESSION_NAME
 
-# Start contract build in background
-pushd river/contracts
-set -a
-. .env.localhost
-set +a
-make build & BUILD_PID=$!
-popd
+export RIVER_BLOCK_TIME=0.1
+export RIVER_ENV=local_multi
 
 
-# Start chains and Postgres in separate panes of the same window
+# Start
+tmux new-window -t $SESSION_NAME -n 'BlockChains'
+tmux send-keys -t $SESSION_NAME:1 "RIVER_BLOCK_TIME=$RIVER_BLOCK_TIME ./river/scripts/start-local-basechain.sh" C-m
+
+# Start 4337 in a new window
 tmux new-window -t $SESSION_NAME -n '4337'
-tmux send-keys -t $SESSION_NAME:1 "./scripts/start-4337.sh" C-m
-tmux split-window -v
-tmux send-keys -t $SESSION_NAME:1 "./river/scripts/start-local-riverchain.sh" C-m
-
-# Function to wait for a specific port
-wait_for_port() {
-    local port=$1
-    echo "Waiting for process to listen on TCP $port..."
-
-    while ! nc -z localhost $port; do   
-        echo "Waiting for TCP $port..."
-        sleep 1
-    done
-
-    echo "TCP $port is now open."
-}
-
-
-# Wait for River
-wait_for_port 8546
+tmux send-keys -t $SESSION_NAME:2 "./scripts/start-4337.sh" C-m
+sh ./scripts/wait-for-4337.sh
 
 # wait for base and 4337 contracts
 sh ./scripts/wait-for-4337.sh
 
-echo "Geth node running and 4337 contracts deployed, deploying Base contracts"
+echo "Anvil running and 4337 contracts deployed, deploying Base contracts"
 
-# Wait for build to finish
-wait_for_process "$BUILD_PID" "build"
+# Now deploy base contracts
 
-echo "STARTED ALL CHAINS AND DEPLOYED ALL CONTRACTS"
+rm -rf river/contracts/deployments/${RIVER_ENV}
+rm -rf river/packages/generated/deployments/${RIVER_ENV}
 
-# Now generate the core server config
-BASE_EXECUTION_CLIENT="geth_dev" (cd ./river/core && just RUN_ENV=multi config)
-./scripts/fund_multi_for_geth.sh
+sh ./scripts/deploy-config-base-only.sh
 
 # Continue with rest of the script
 echo "Continuing with the rest of the script..."
 
 # Array of commands from the VS Code tasks
 commands=(
+    "watch_web3:cd river/packages/web3 && yarn watch"
     "worker_stackup: sh ./scripts/run-stackup-worker-development.sh"
-    "userops: cd clients/web/userops && yarn test:userops:random-wallet"
+    "userops: cd clients/web/userops && yarn test:userops"
 )
 
 # Create a Tmux window for each command

@@ -1,7 +1,7 @@
 name: 'Run Userops Tests'
 env:
     FOUNDRY_VERSION: stable
-    RIVER_BLOCK_TIME: 2
+    RIVER_BLOCK_TIME: 0.1
 
 on:
     pull_request:
@@ -51,10 +51,7 @@ jobs:
             - name: Build workers
               run: yarn workers:build
 
-            # - name: Start Base blockchain
-            #   run: ./river/scripts/start-local-basechain.sh &
-
-            - name: Start 4337
+            - name: Start Anvil and setup 4337
               env:
                   STACKUP_CONTRACTS_GIT_TOKEN: ${{ secrets.STACKUP_CONTRACTS_GIT_TOKEN }}
                   ANVIL_RPC: http://localhost:8545
@@ -64,20 +61,8 @@ jobs:
               timeout-minutes: 5
               run: ./scripts/wait-for-4337.sh
 
-            - name: Start River blockchain
-              run: ./river/scripts/start-local-riverchain.sh &
-
-            - name: Setup River CA for testing certificates
-              run: ./scripts/register-ca.sh
-              working-directory: river/core
-
-            - name: Set up Custom CA Certificate for Node.js
-              run: |
-                  echo "NODE_EXTRA_CA_CERTS=$HOME/river-ca-cert.pem" >> $GITHUB_ENV
-
-            - name: Configure multi
-              run: just RUN_ENV=multi config
-              working-directory: river/core
+            - name: Deploy base contracts and config deployments
+              run: ./scripts/deploy-config-base-only.sh
 
             - name: Spin up stackup worker with fake privy verification that skips limit checks
               working-directory: ./servers/workers/stackup-worker

@@ -66,28 +66,6 @@ export const boredApeRuleData = createOperationsTree([
     },
 ])
 
-export const UserOps = ({
-    spaceDapp,
-    newAccountImplementationType,
-}: {
-    spaceDapp: SpaceDapp
-    newAccountImplementationType: SmartAccountType
-}) => {
-    return new TestUserOps({
-        provider: spaceDapp.provider,
-        config: spaceDapp.config,
-        spaceDapp,
-        bundlerUrl: process.env.AA_BUNDLER_URL,
-        paymasterProxyUrl: process.env.AA_PAYMASTER_PROXY_URL,
-        aaRpcUrl: process.env.AA_RPC_URL!,
-        entryPointAddress: process.env.AA_ENTRY_POINT_ADDRESS,
-        factoryAddress: process.env.AA_FACTORY_ADDRESS,
-        paymasterProxyAuthSecret: process.env.AA_PAYMASTER_PROXY_AUTH_SECRET!,
-        fetchAccessTokenFn: undefined,
-        newAccountImplementationType,
-    })
-}
-
 function getSpaceAndChannelName(signerAddress: string) {
     return {
         spaceName: `USEROPS_TESTS__TOWN__${signerAddress}__${new Date().getTime()}`,
@@ -471,8 +449,17 @@ export const createSpaceDappAndUserops = async (
         throw new Error('Invalid new account implementation type')
     }
 
-    const userOpsInstance = UserOps({
+    const userOpsInstance = new TestUserOps({
+        provider: spaceDapp.provider,
+        config: spaceDapp.config,
         spaceDapp,
+        bundlerUrl: process.env.AA_BUNDLER_URL,
+        paymasterProxyUrl: process.env.AA_PAYMASTER_PROXY_URL,
+        aaRpcUrl: process.env.AA_RPC_URL!,
+        entryPointAddress: process.env.AA_ENTRY_POINT_ADDRESS,
+        factoryAddress: process.env.AA_FACTORY_ADDRESS,
+        paymasterProxyAuthSecret: process.env.AA_PAYMASTER_PROXY_AUTH_SECRET!,
+        fetchAccessTokenFn: undefined,
         newAccountImplementationType: _newAccountImplementationType,
     })
 
@@ -552,7 +539,7 @@ export async function isSmartAccountDeployed(signer: ethers.Signer, userOps: Tes
  * So this is a hack to slow down the time between userops
  * @param sleepTime
  */
-export async function sleepBetweenTxs(sleepTime = 2_000) {
+export async function sleepBetweenTxs(sleepTime = 100) {
     return new Promise((resolve) => setTimeout(resolve, sleepTime))
 }
 

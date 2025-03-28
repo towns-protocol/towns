@@ -10,6 +10,8 @@ import {
     waitForOpAndTx,
 } from './utils'
 
+console.log('what')
+
 test('space ownercan ban and unban', async () => {
     const alice = new LocalhostWeb3Provider(
         process.env.AA_RPC_URL as string,

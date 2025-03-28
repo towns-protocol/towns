@@ -15,7 +15,7 @@ import {
     sendUpdateRoleOp,
 } from './utils'
 import { makeUniqueChannelStreamId } from '@towns-protocol/sdk'
-import { TestConstants } from 'use-towns-client/tests/integration/helpers/TestConstants'
+import { Wallet } from 'ethers'
 
 // run this test with script/run-stackup-worker.sh -l
 // the limit for each userop will be 1
@@ -297,9 +297,9 @@ test('will reject wallet link operations if beyond the limit', async () => {
     ////////////////////////////////////////
     // link wallet
     ////////////////////////////////////////
-    const metamaskWallet = await TestConstants.getUnfundedWallet()
+    const metamaskWallet = Wallet.createRandom().connect(alice)
 
-    const metamaskWallet2 = await TestConstants.getUnfundedWallet()
+    const metamaskWallet2 = Wallet.createRandom().connect(alice)
 
     const linkWalletTx = await userOps.sendLinkEOAToRootKeyOp([alice.wallet, metamaskWallet])
     const linkReceipt = await waitForOpAndTx(linkWalletTx, alice, 'link wallet')

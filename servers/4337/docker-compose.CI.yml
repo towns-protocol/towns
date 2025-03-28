@@ -3,7 +3,7 @@ services:
   anvil:
       image: ghcr.io/foundry-rs/foundry
       ports: [ "8545:8545" ]
-      entrypoint: [ "anvil", "--host", "0.0.0.0", "--block-time", "${RIVER_BLOCK_TIME:-2}", "--silent"]
+      entrypoint: [ "anvil", "--host", "0.0.0.0", "--block-time", "${RIVER_BLOCK_TIME:-0.1}", "--silent"]
       platform: linux/amd64/v8
       healthcheck:
         test: ["CMD-SHELL", "cast rpc web3_clientVersion | grep -c anvil > /dev/null "]
