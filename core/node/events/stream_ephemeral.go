@@ -13,7 +13,6 @@ import (
 	"github.com/towns-protocol/towns/core/node/logging"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/registries"
-	"github.com/towns-protocol/towns/core/node/storage"
 )
 
 func (s *StreamCache) onStreamCreated(
@@ -143,7 +142,7 @@ func (s *StreamCache) normalizeEphemeralStream(
 					break
 				}
 
-				mbBytes, err := mbInfo.ToBytes()
+				storageMb, err := mbInfo.AsStorageMb()
 				if err != nil {
 					logging.FromCtx(ctx).Errorw("Failed to serialize miniblock", "err", err, "streamId", stream.streamId)
 					_ = resp.Close()
@@ -151,12 +150,7 @@ func (s *StreamCache) normalizeEphemeralStream(
 					break
 				}
 
-				if err = s.params.Storage.WriteEphemeralMiniblock(ctx, stream.streamId, &storage.WriteMiniblockData{
-					Number:   mbInfo.Ref.Num,
-					Hash:     mbInfo.Ref.Hash,
-					Snapshot: mbInfo.IsSnapshot(),
-					Data:     mbBytes,
-				}); err != nil {
+				if err = s.params.Storage.WriteEphemeralMiniblock(ctx, stream.streamId, storageMb); err != nil {
 					logging.FromCtx(ctx).Errorw("Failed to write miniblock to storage", "err", err, "streamId", stream.streamId)
 					_ = resp.Close()
 					toNextPeer = true

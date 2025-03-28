@@ -5,15 +5,25 @@ import (
 	"fmt"
 	"slices"
 
-	"google.golang.org/protobuf/proto"
-
 	"github.com/ethereum/go-ethereum/common"
+	"google.golang.org/protobuf/proto"
 
 	. "github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/events/migrations"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/shared"
 )
+
+// NewSnapshotFromBytes decodes a snapshot from bytes.
+func NewSnapshotFromBytes(data []byte) (*Snapshot, error) {
+	var pb Snapshot
+	if err := proto.Unmarshal(data, &pb); err != nil {
+		return nil, AsRiverError(err, Err_INVALID_ARGUMENT).
+			Message("Failed to decode snapshot from bytes").
+			Func("NewSnapshotFromBytes")
+	}
+	return &pb, nil
+}
 
 func Make_GenesisSnapshot(events []*ParsedEvent) (*Snapshot, error) {
 	if len(events) == 0 {

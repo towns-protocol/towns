@@ -11,7 +11,6 @@ import (
 	. "github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/logging"
 	. "github.com/towns-protocol/towns/core/node/protocol"
-	"github.com/towns-protocol/towns/core/node/storage"
 )
 
 // mbJos tracks single miniblock production attempt for a single stream.
@@ -305,20 +304,12 @@ func (j *mbJob) saveCandidate(ctx context.Context) error {
 	)
 
 	qp.AddTask(func(ctx context.Context) error {
-		miniblockBytes, err := j.candidate.ToBytes()
+		mb, err := j.candidate.AsStorageMb()
 		if err != nil {
 			return err
 		}
 
-		return j.cache.Params().Storage.WriteMiniblockCandidate(
-			ctx,
-			j.stream.streamId,
-			&storage.WriteMiniblockData{
-				Number: j.candidate.Ref.Num,
-				Hash:   j.candidate.Ref.Hash,
-				Data:   miniblockBytes,
-			},
-		)
+		return j.cache.Params().Storage.WriteMiniblockCandidate(ctx, j.stream.streamId, mb)
 	})
 
 	qp.AddNodeTasks(j.remoteNodes, func(ctx context.Context, node common.Address) error {

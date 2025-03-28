@@ -2,8 +2,9 @@ package rpc
 
 import (
 	"context"
-	"github.com/ethereum/go-ethereum/common"
 	"time"
+
+	"github.com/ethereum/go-ethereum/common"
 
 	"connectrpc.com/connect"
 	"google.golang.org/protobuf/proto"
@@ -12,7 +13,6 @@ import (
 	. "github.com/towns-protocol/towns/core/node/events"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	. "github.com/towns-protocol/towns/core/node/shared"
-	"github.com/towns-protocol/towns/core/node/storage"
 	"github.com/towns-protocol/towns/core/node/utils"
 )
 
@@ -85,19 +85,14 @@ func (s *Service) saveEphemeralMiniblock(ctx context.Context, req *SaveEphemeral
 		return err
 	}
 
-	mbBytes, err := mbInfo.ToBytes()
+	storageMb, err := mbInfo.AsStorageMb()
 	if err != nil {
 		return err
 	}
 
 	// Save the ephemeral miniblock.
 	// Here we are sure that the record of the stream exists in the storage.
-	err = s.storage.WriteEphemeralMiniblock(ctx, streamId, &storage.WriteMiniblockData{
-		Number:   mbInfo.Ref.Num,
-		Hash:     mbInfo.Ref.Hash,
-		Snapshot: mbInfo.IsSnapshot(),
-		Data:     mbBytes,
-	})
+	err = s.storage.WriteEphemeralMiniblock(ctx, streamId, storageMb)
 	if err != nil {
 		return err
 	}

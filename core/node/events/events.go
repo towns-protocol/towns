@@ -100,6 +100,27 @@ func MakeDelegatedStreamEvent(
 	return event, nil
 }
 
+func MakeEnvelopeWithSnapshot(wallet *crypto.Wallet, snapshot *Snapshot) (*Envelope, error) {
+	snapshotBytes, err := proto.Marshal(snapshot)
+	if err != nil {
+		return nil, AsRiverError(err, Err_INTERNAL).
+			Message("Failed to serialize snapshot to bytes").
+			Func("MakeEnvelopeWithSnapshot")
+	}
+
+	hash := crypto.TownsHashForEvents.Hash(snapshotBytes)
+	signature, err := wallet.SignHash(hash)
+	if err != nil {
+		return nil, err
+	}
+
+	return &Envelope{
+		Event:     snapshotBytes,
+		Signature: signature,
+		Hash:      hash[:],
+	}, nil
+}
+
 func MakeEnvelopeWithEvent(wallet *crypto.Wallet, streamEvent *StreamEvent) (*Envelope, error) {
 	eventBytes, err := proto.Marshal(streamEvent)
 	if err != nil {
