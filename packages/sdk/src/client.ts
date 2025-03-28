@@ -2201,24 +2201,6 @@ export class Client
         }
     }
 
-    async getMiniblockHeader(
-        streamId: string,
-        miniblockNum: bigint,
-        unpackOpts: UnpackEnvelopeOpts | undefined = undefined,
-    ): Promise<MiniblockHeader> {
-        const response = await this.rpcClient.getMiniblockHeader({
-            streamId: streamIdAsBytes(streamId),
-            miniblockNum: miniblockNum,
-        })
-        check(isDefined(response.header), `header not found: ${streamId}`)
-        const header = await unpackEnvelope(response.header, unpackOpts)
-        check(
-            header.event.payload.case === 'miniblockHeader',
-            `bad miniblock header: wrong case received: ${header.event.payload.case}`,
-        )
-        return header.event.payload.value
-    }
-
     async scrollback(
         streamId: string,
     ): Promise<{ terminus: boolean; firstEvent?: StreamTimelineEvent }> {
