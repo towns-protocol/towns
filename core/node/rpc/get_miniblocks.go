@@ -46,6 +46,7 @@ func (s *Service) localGetMiniblocks(
 		Terminus:      terminus,
 		FromInclusive: fromInclusive,
 		Limit:         limit,
+		OmitSnapshot:  req.Msg.GetOmitSnapshot(), // TODO: Implement
 	}
 
 	return connect.NewResponse(resp), nil
