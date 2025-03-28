@@ -18,7 +18,6 @@ const (
 type ReadStreamFromLastSnapshotResult struct {
 	StartMiniblockNumber    int64
 	SnapshotMiniblockOffset int
-	Snapshot                []byte
 	Miniblocks              [][]byte
 	MinipoolEnvelopes       [][]byte
 }
@@ -54,7 +53,7 @@ type StreamStorage interface {
 	ReadMiniblocksByStream(
 		ctx context.Context,
 		streamId StreamId,
-		onEachMb func(blockdata []byte, seqNum int64, snapshot []byte) error,
+		onEachMb func(blockdata []byte, seqNum int64) error,
 	) error
 
 	// ReadMiniblocksByIds calls onEachMb for each specified miniblock
@@ -62,7 +61,7 @@ type StreamStorage interface {
 		ctx context.Context,
 		streamId StreamId,
 		mbs []int64,
-		onEachMb func(blockdata []byte, seqNum int64, snapshot []byte) error,
+		onEachMb func(blockdata []byte, seqNum int64) error,
 	) error
 
 	// ReadEphemeralMiniblockNums returns the list of ephemeral miniblock numbers for the given ephemeral stream.
@@ -134,10 +133,6 @@ type StreamStorage interface {
 		miniblocks []*WriteMiniblockData,
 	) error
 
-	DebugReadStreamData(ctx context.Context, streamId StreamId) (*DebugReadStreamDataResult, error)
-
-	DebugReadStreamStatistics(ctx context.Context, streamId StreamId) (*DebugReadStreamStatisticsResult, error)
-
 	// GetLastMiniblockNumber returns the last miniblock number for the given stream from storage.
 	GetLastMiniblockNumber(ctx context.Context, streamID StreamId) (int64, error)
 
@@ -148,13 +143,20 @@ type StreamStorage interface {
 	// IsStreamEphemeral returns true if the stream is ephemeral.
 	IsStreamEphemeral(ctx context.Context, streamId StreamId) (bool, error)
 
+	// DebugReadStreamData returns details for debugging about the stream.
+	DebugReadStreamData(ctx context.Context, streamId StreamId) (*DebugReadStreamDataResult, error)
+
+	// DebugReadStreamStatistics returns statistics for debugging about the stream.
+	DebugReadStreamStatistics(ctx context.Context, streamId StreamId) (*DebugReadStreamStatisticsResult, error)
+
+	// Close closes the storage.
 	Close(ctx context.Context)
 }
 
 type WriteMiniblockData struct {
 	Number   int64
 	Hash     common.Hash
-	Snapshot []byte
+	Snapshot bool
 	Data     []byte
 }
 
@@ -162,7 +164,6 @@ type MiniblockDescriptor struct {
 	MiniblockNumber int64
 	Data            []byte
 	Hash            common.Hash // Only set for miniblock candidates
-	Snapshot        []byte
 }
 
 type EventDescriptor struct {

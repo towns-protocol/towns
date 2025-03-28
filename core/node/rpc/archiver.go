@@ -694,7 +694,7 @@ func (a *Archiver) ArchiveStream(ctx context.Context, stream *ArchiveStream) (er
 
 		// Validate miniblocks are sequential.
 		// TODO: validate miniblock signatures.
-		var serialized [][]byte
+		var serialized []*storage.WriteMiniblockData
 		for i, mb := range msg.Miniblocks {
 			// Parse header
 			info, err := events.NewMiniblockInfoFromProto(
@@ -710,7 +710,9 @@ func (a *Archiver) ArchiveStream(ctx context.Context, stream *ArchiveStream) (er
 			if err != nil {
 				return err
 			}
-			serialized = append(serialized, bb)
+			serialized = append(serialized, &storage.WriteMiniblockData{
+				Data: bb,
+			})
 		}
 
 		log.Debugw("Writing miniblocks to storage", "streamId", stream.streamId, "numBlocks", len(serialized))

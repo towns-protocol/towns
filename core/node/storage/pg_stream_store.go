@@ -1243,7 +1243,10 @@ func (s *PostgresStreamStore) readMiniblockCandidateTx(
 		return nil, err
 	}
 
-	var miniblock MiniblockDescriptor
+	miniblock := &MiniblockDescriptor{
+		MiniblockNumber: blockNumber,
+		Hash:            blockHash,
+	}
 	if err := tx.QueryRow(
 		ctx,
 		s.sqlForStream(

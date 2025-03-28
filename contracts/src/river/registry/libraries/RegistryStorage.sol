@@ -27,6 +27,12 @@ struct SetMiniblock {
   bool isSealed;
 }
 
+struct SetStreamReplicationFactor {
+  bytes32 streamId;
+  address[] nodes;
+  uint8 replicationFactor;
+}
+
 enum NodeStatus {
   NotInitialized, // Initial entry, node is not contacted in any way
   RemoteOnly, // Node proxies data, does not store any data
