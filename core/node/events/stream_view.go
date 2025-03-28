@@ -28,10 +28,7 @@ type StreamViewStats struct {
 	TotalEventsEver       int // This is total number of events in the stream ever, not in the cache.
 }
 
-func MakeStreamView(
-	ctx context.Context,
-	streamData *storage.ReadStreamFromLastSnapshotResult,
-) (*StreamView, error) {
+func MakeStreamView(streamData *storage.ReadStreamFromLastSnapshotResult) (*StreamView, error) {
 	if len(streamData.Miniblocks) <= 0 {
 		return nil, RiverError(Err_STREAM_EMPTY, "no blocks").Func("MakeStreamView")
 	}
@@ -39,8 +36,8 @@ func MakeStreamView(
 	miniblocks := make([]*MiniblockInfo, len(streamData.Miniblocks))
 	lastMiniblockNumber := int64(-2)
 	snapshotIndex := -1
-	for i, binMiniblock := range streamData.Miniblocks {
-		miniblock, err := NewMiniblockInfoFromBytes(binMiniblock, lastMiniblockNumber+1)
+	for i, mb := range streamData.Miniblocks {
+		miniblock, err := NewMiniblockInfoFromBytes(mb.Data, lastMiniblockNumber+1)
 		if err != nil {
 			return nil, err
 		}
