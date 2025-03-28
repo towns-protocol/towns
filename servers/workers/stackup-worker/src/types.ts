@@ -296,6 +296,7 @@ const FunctionHash = {
     joinSpace_linkWallet: 'joinSpace_linkWallet',
     editMembershipSettings: 'editMembershipSettings',
     refreshMetadata: 'refreshMetadata',
+    upgradeToAndCall: 'upgradeToAndCall',
 } as const
 
 type FunctionHash = (typeof FunctionHash)[keyof typeof FunctionHash]

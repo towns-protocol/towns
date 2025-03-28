@@ -55,6 +55,7 @@ export async function handleVerifications(args: {
         switch (functionHash) {
             // client only allows transferring assets out of "Towns wallet", we can sponsor this
             case 'withdraw':
+            case 'upgradeToAndCall':
             case 'transferTokens': {
                 break
             }
