@@ -812,9 +812,9 @@ func (s *PostgresStreamStore) readStreamFromLastSnapshotTx(
 	return &ReadStreamFromLastSnapshotResult{
 		StartMiniblockNumber:    readFirstSeqNum,
 		SnapshotMiniblockOffset: int(snapshotMiniblockIndex - readFirstSeqNum),
-		Snapshot:                snapshot,
 		Miniblocks:              miniblocks,
 		MinipoolEnvelopes:       envelopes,
+		Snapshot:                snapshot,
 	}, nil
 }
 
@@ -1262,7 +1262,7 @@ func (s *PostgresStreamStore) readMiniblockCandidateTx(
 		}
 		return nil, err
 	}
-	return &miniblock, nil
+	return miniblock, nil
 }
 
 func (s *PostgresStreamStore) WriteMiniblocks(

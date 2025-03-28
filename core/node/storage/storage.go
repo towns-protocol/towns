@@ -20,6 +20,7 @@ type ReadStreamFromLastSnapshotResult struct {
 	SnapshotMiniblockOffset int
 	Miniblocks              [][]byte
 	MinipoolEnvelopes       [][]byte
+	Snapshot                []byte
 }
 
 type StreamStorage interface {
@@ -53,7 +54,7 @@ type StreamStorage interface {
 	ReadMiniblocksByStream(
 		ctx context.Context,
 		streamId StreamId,
-		onEachMb func(blockdata []byte, seqNum int64) error,
+		onEachMb func(blockdata []byte, seqNum int64, snapshot []byte) error,
 	) error
 
 	// ReadMiniblocksByIds calls onEachMb for each specified miniblock
@@ -61,7 +62,7 @@ type StreamStorage interface {
 		ctx context.Context,
 		streamId StreamId,
 		mbs []int64,
-		onEachMb func(blockdata []byte, seqNum int64) error,
+		onEachMb func(blockdata []byte, seqNum int64, snapshot []byte) error,
 	) error
 
 	// ReadEphemeralMiniblockNums returns the list of ephemeral miniblock numbers for the given ephemeral stream.
@@ -156,7 +157,7 @@ type StreamStorage interface {
 type WriteMiniblockData struct {
 	Number   int64
 	Hash     common.Hash
-	Snapshot bool
+	Snapshot []byte
 	Data     []byte
 }
 
@@ -164,6 +165,7 @@ type MiniblockDescriptor struct {
 	MiniblockNumber int64
 	Data            []byte
 	Hash            common.Hash // Only set for miniblock candidates
+	Snapshot        []byte
 }
 
 type EventDescriptor struct {
