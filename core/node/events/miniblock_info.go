@@ -155,7 +155,7 @@ func NewMiniblocksInfoFromProtos(pbs []*Miniblock, opts *ParsedMiniblockInfoOpts
 	return mbs, nil
 }
 
-func NewMiniblockInfoFromParsed(headerEvent *ParsedEvent, events []*ParsedEvent) (*MiniblockInfo, error) {
+func NewMiniblockInfoFromParsed(headerEvent *ParsedEvent, events []*ParsedEvent, snapshot *Envelope) (*MiniblockInfo, error) {
 	if headerEvent.Event.GetMiniblockHeader() == nil {
 		return nil, RiverError(Err_BAD_EVENT, "header event must be a block header")
 	}
@@ -173,8 +173,9 @@ func NewMiniblockInfoFromParsed(headerEvent *ParsedEvent, events []*ParsedEvent)
 		headerEvent:        headerEvent,
 		useGetterForEvents: events,
 		Proto: &Miniblock{
-			Header: headerEvent.Envelope,
-			Events: envelopes,
+			Header:   headerEvent.Envelope,
+			Events:   envelopes,
+			Snapshot: snapshot,
 		},
 	}, nil
 }
@@ -183,6 +184,7 @@ func NewMiniblockInfoFromHeaderAndParsed(
 	wallet *crypto.Wallet,
 	header *MiniblockHeader,
 	events []*ParsedEvent,
+	snapshot *Envelope,
 ) (*MiniblockInfo, error) {
 	headerEvent, err := MakeParsedEventWithPayload(
 		wallet,
@@ -196,7 +198,7 @@ func NewMiniblockInfoFromHeaderAndParsed(
 		return nil, err
 	}
 
-	return NewMiniblockInfoFromParsed(headerEvent, events)
+	return NewMiniblockInfoFromParsed(headerEvent, events, snapshot)
 }
 
 func NewMiniblockInfoFromDescriptor(mb *storage.MiniblockDescriptor) (*MiniblockInfo, error) {
@@ -306,7 +308,10 @@ func (b *MiniblockInfo) forEachEvent(
 	return true, nil
 }
 
-func (b *MiniblockInfo) ToBytes() ([]byte, error) {
+// ToBytes serializes the MiniblockInfo to bytes.
+// Returns miniblock bytes and snapshot bytes.
+func (b *MiniblockInfo) ToBytes() ([]byte, []byte, error) {
+
 	serialized, err := proto.Marshal(b.Proto)
 	if err == nil {
 		return serialized, nil

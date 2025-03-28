@@ -276,11 +276,11 @@ func (s *Stream) importMiniblocksLocked(
 // applyMiniblockImplLocked should be called with a lock held.
 func (s *Stream) applyMiniblockImplLocked(
 	ctx context.Context,
-	miniblock *MiniblockInfo,
-	miniblockBytes []byte,
+	info *MiniblockInfo,
+	miniblock *storage.MiniblockDescriptor,
 ) error {
 	// Check if the miniblock is already applied.
-	if miniblock.Ref.Num <= s.view().LastBlock().Ref.Num {
+	if info.Ref.Num <= s.view().LastBlock().Ref.Num {
 		return nil
 	}
 
@@ -289,7 +289,7 @@ func (s *Stream) applyMiniblockImplLocked(
 
 	// Lets see if this miniblock can be applied.
 	prevSV := s.view()
-	newSV, newEvents, err := prevSV.copyAndApplyBlock(miniblock, s.params.ChainConfig.Get())
+	newSV, newEvents, err := prevSV.copyAndApplyBlock(info, s.params.ChainConfig.Get())
 	if err != nil {
 		return err
 	}
@@ -299,9 +299,13 @@ func (s *Stream) applyMiniblockImplLocked(
 		return err
 	}
 
-	if miniblockBytes == nil {
-		miniblockBytes, err = miniblock.ToBytes()
-		if err != nil {
+	var miniblockBytes []byte
+	var snapshotBytes []byte
+	if miniblock != nil {
+		miniblockBytes = miniblock.Data
+		snapshotBytes = miniblock.Snapshot
+	} else {
+		if miniblockBytes, err = info.ToBytes(); err != nil {
 			return err
 		}
 	}
@@ -309,7 +313,7 @@ func (s *Stream) applyMiniblockImplLocked(
 	err = s.params.Storage.WriteMiniblocks(
 		ctx,
 		s.streamId,
-		[]*storage.WriteMiniblockData{miniblock.asStorageMbWithData(miniblockBytes)},
+		[]*storage.WriteMiniblockData{info.asStorageMbWithData(miniblockBytes)},
 		newSV.minipool.generation,
 		newMinipool,
 		prevSV.minipool.generation,
@@ -322,7 +326,7 @@ func (s *Stream) applyMiniblockImplLocked(
 	s.setView(newSV)
 	newSyncCookie := s.view().SyncCookie(s.params.Wallet.Address)
 
-	newEvents = append(newEvents, miniblock.headerEvent.Envelope)
+	newEvents = append(newEvents, info.headerEvent.Envelope)
 	s.notifySubscribersLocked(newEvents, newSyncCookie)
 	return nil
 }
@@ -382,7 +386,7 @@ func (s *Stream) promoteCandidateLocked(ctx context.Context, mb *MiniblockRef) e
 		return err
 	}
 
-	return s.applyMiniblockImplLocked(ctx, miniblock, miniblockCandidate.Data)
+	return s.applyMiniblockImplLocked(ctx, miniblock, miniblockCandidate)
 }
 
 // schedulePromotionLocked should be called with a lock held.

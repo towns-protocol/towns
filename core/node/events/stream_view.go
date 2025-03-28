@@ -361,9 +361,21 @@ func (r *StreamView) makeMiniblockCandidate(
 		miniblockNumOfPrevSnapshot = last.Header().MiniblockNum
 	}
 
-	var snapshot *Snapshot
+	header := &MiniblockHeader{
+		MiniblockNum:             nextMiniblockNum,
+		Timestamp:                NextMiniblockTimestamp(last.Header().Timestamp),
+		EventHashes:              hashes,
+		PrevMiniblockHash:        last.headerEvent.Hash[:],
+		EventNumOffset:           eventNumOffset,
+		PrevSnapshotMiniblockNum: miniblockNumOfPrevSnapshot,
+		Content: &MiniblockHeader_None{
+			None: &emptypb.Empty{},
+		},
+	}
+
+	var snapshotEnvelop *Envelope
 	if proposal.shouldSnapshot {
-		snapshot = proto.Clone(r.snapshot).(*Snapshot)
+		snapshot := proto.Clone(r.snapshot).(*Snapshot)
 
 		// Apply all events in blocks since last snapshot
 		for i := r.snapshotIndex + 1; i < len(r.blocks); i++ {
@@ -393,22 +405,15 @@ func (r *StreamView) makeMiniblockCandidate(
 				)
 			}
 		}
+
+		var err error
+		if snapshotEnvelop, err = MakeEnvelopeWithSnapshot(params.Wallet, snapshot); err != nil {
+			return nil, err
+		}
+		header.SnapshotHash = snapshotEnvelop.GetHash()
 	}
 
-	header := &MiniblockHeader{
-		MiniblockNum:             nextMiniblockNum,
-		Timestamp:                NextMiniblockTimestamp(last.Header().Timestamp),
-		EventHashes:              hashes,
-		PrevMiniblockHash:        last.headerEvent.Hash[:],
-		Snapshot:                 snapshot,
-		EventNumOffset:           eventNumOffset,
-		PrevSnapshotMiniblockNum: miniblockNumOfPrevSnapshot,
-		Content: &MiniblockHeader_None{
-			None: &emptypb.Empty{},
-		},
-	}
-
-	return NewMiniblockInfoFromHeaderAndParsed(params.Wallet, header, events)
+	return NewMiniblockInfoFromHeaderAndParsed(params.Wallet, header, events, snapshotEnvelop)
 }
 
 // copyAndApplyBlock copies the current view and applies the given miniblock to it.
