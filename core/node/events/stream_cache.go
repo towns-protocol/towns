@@ -237,7 +237,7 @@ func (s *StreamCache) onStreamAllocated(
 		return
 	}
 
-	_, genesisHash, genesisMB, genesisNum, err := s.params.Registry.GetStreamWithGenesis(ctx, event.StreamID)
+	_, genesisHash, genesisMB, genesisMbNum, err := s.params.Registry.GetStreamWithGenesis(ctx, event.StreamID)
 	if err != nil {
 		logging.FromCtx(ctx).Errorw("Failed to get genesis block for allocated stream", "err", err)
 		return
@@ -256,7 +256,7 @@ func (s *StreamCache) onStreamAllocated(
 		local:               &localStreamState{},
 	}
 	stream.nodesLocked.Reset(event.Nodes, s.params.Wallet.Address)
-	stream, created, err := s.createStreamStorage(ctx, stream, genesisMB, genesisNum, genesisHash)
+	stream, created, err := s.createStreamStorage(ctx, stream, genesisMB, genesisMbNum, genesisHash)
 	if err != nil {
 		logging.FromCtx(ctx).Errorw("Failed to allocate stream", "err", err, "streamId", event.GetStreamId())
 	}

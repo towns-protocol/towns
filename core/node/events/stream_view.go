@@ -37,7 +37,11 @@ func MakeStreamView(streamData *storage.ReadStreamFromLastSnapshotResult) (*Stre
 	lastMiniblockNumber := int64(-2)
 	snapshotIndex := -1
 	for i, mb := range streamData.Miniblocks {
-		miniblock, err := NewMiniblockInfoFromBytes(mb.Data, lastMiniblockNumber+1)
+		miniblock, err := NewMiniblockInfoFromDescriptor(&storage.MiniblockDescriptor{
+			Number: lastMiniblockNumber + 1,
+			Data:   mb.Data,
+			Hash:   mb.Hash,
+		})
 		if err != nil {
 			return nil, err
 		}
@@ -96,7 +100,7 @@ func MakeStreamView(streamData *storage.ReadStreamFromLastSnapshotResult) (*Stre
 	}, nil
 }
 
-func MakeRemoteStreamView(ctx context.Context, stream *StreamAndCookie) (*StreamView, error) {
+func MakeRemoteStreamView(stream *StreamAndCookie) (*StreamView, error) {
 	if stream == nil {
 		return nil, RiverError(Err_STREAM_EMPTY, "no stream").Func("MakeStreamViewFromRemote")
 	}
@@ -109,7 +113,7 @@ func MakeRemoteStreamView(ctx context.Context, stream *StreamAndCookie) (*Stream
 	snapshotIndex := 0
 	for i, binMiniblock := range stream.Miniblocks {
 		opts := NewParsedMiniblockInfoOpts()
-		// Ignore block number of first block, but enforce afterwards
+		// Ignore block number of first block, but enforce afterward
 		if i > 0 {
 			opts = opts.WithExpectedBlockNumber(lastMiniblockNumber + 1)
 		}
@@ -551,7 +555,7 @@ func (r *StreamView) blockWithNum(mininblockNum int64) (*MiniblockInfo, error) {
 	return r.blocks[index], nil
 }
 
-// iterate over events starting at startBlock including events in the minipool
+// ForEachEvent iterates over events starting at startBlock including events in the minipool
 func (r *StreamView) ForEachEvent(
 	startBlock int,
 	op func(e *ParsedEvent, minibockNum int64, eventNum int64) (bool, error),

@@ -49,7 +49,7 @@ func (ts *TrackedStreamViewImpl) Init(
 	stream *StreamAndCookie,
 	onNewEvent func(ctx context.Context, view *StreamView, event *ParsedEvent) error,
 ) (*StreamView, error) {
-	view, err := MakeRemoteStreamView(ctx, stream)
+	view, err := MakeRemoteStreamView(stream)
 	if err != nil {
 		return nil, err
 	}
