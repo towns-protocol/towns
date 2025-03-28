@@ -437,9 +437,9 @@ func (s *Stream) initFromGenesis(
 	view, err := MakeStreamView(
 		&storage.ReadStreamFromLastSnapshotResult{
 			Miniblocks: []*storage.MiniblockDescriptor{{
-				Data:            genesisBytes,
-				MiniblockNumber: genesisInfo.Ref.Num,
-				Hash:            genesisInfo.Ref.Hash,
+				Data:   genesisBytes,
+				Number: genesisInfo.Ref.Num,
+				Hash:   genesisInfo.Ref.Hash,
 			}},
 		},
 	)
@@ -492,9 +492,9 @@ func (s *Stream) initFromBlockchain(ctx context.Context) error {
 	view, err := MakeStreamView(
 		&storage.ReadStreamFromLastSnapshotResult{
 			Miniblocks: []*storage.MiniblockDescriptor{{
-				Data:            mb,
-				MiniblockNumber: blockNum.AsBigInt().Int64(),
-				Hash:            hash,
+				Data:   mb,
+				Number: blockNum.AsBigInt().Int64(),
+				Hash:   hash,
 			}},
 		},
 	)

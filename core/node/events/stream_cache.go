@@ -453,9 +453,9 @@ func (s *StreamCache) createStreamStorage(
 		view, err := MakeStreamView(
 			&storage.ReadStreamFromLastSnapshotResult{
 				Miniblocks: []*storage.MiniblockDescriptor{{
-					Data:            data,
-					MiniblockNumber: num.AsBigInt().Int64(),
-					Hash:            hash,
+					Data:   data,
+					Number: num.AsBigInt().Int64(),
+					Hash:   hash,
 				}},
 			},
 		)

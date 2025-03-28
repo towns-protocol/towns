@@ -21,6 +21,46 @@ type ReadStreamFromLastSnapshotResult struct {
 	MinipoolEnvelopes       [][]byte
 }
 
+type WriteMiniblockData struct {
+	Number   int64
+	Hash     common.Hash
+	Snapshot bool
+	Data     []byte
+}
+
+type MiniblockDescriptor struct {
+	Number int64
+	Data   []byte
+	Hash   common.Hash // Only set for miniblock candidates
+}
+
+type EventDescriptor struct {
+	Generation int64
+	Slot       int64
+	Data       []byte
+}
+
+type DebugReadStreamDataResult struct {
+	StreamId                   StreamId
+	LatestSnapshotMiniblockNum int64
+	Miniblocks                 []MiniblockDescriptor
+	Events                     []EventDescriptor
+	MbCandidates               []MiniblockDescriptor
+}
+
+type MiniblockCandidateStatisticsResult struct {
+	Hash     string
+	BlockNum int64
+}
+
+type DebugReadStreamStatisticsResult struct {
+	StreamId                   string
+	LatestMiniblockNum         int64
+	CurrentMiniblockCandidates []MiniblockCandidateStatisticsResult
+	NumMinipoolEvents          int64
+	LatestSnapshotMiniblockNum int64
+}
+
 type StreamStorage interface {
 	// CreateStreamStorage creates a new stream with the given genesis miniblock at index 0.
 	// Last snapshot minblock index is set to 0.
@@ -29,6 +69,10 @@ type StreamStorage interface {
 
 	// CreateEphemeralStreamStorage same as CreateStreamStorage but marks the stream as ephemeral.
 	CreateEphemeralStreamStorage(ctx context.Context, streamId StreamId, genesisMiniblock []byte) error
+
+	// CreateStreamArchiveStorage creates a new archive storage for the given stream.
+	// Unlike regular CreateStreamStorage, only entry in es table and partition table for miniblocks are created.
+	CreateStreamArchiveStorage(ctx context.Context, streamId StreamId) error
 
 	// ReadStreamFromLastSnapshot reads last stream miniblocks and guarantees that last snapshot miniblock is included.
 	// It attempts to read at least numToRead miniblocks, but may return less if there are not enough miniblocks in storage,
@@ -39,6 +83,13 @@ type StreamStorage interface {
 		streamId StreamId,
 		numToRead int,
 	) (*ReadStreamFromLastSnapshotResult, error)
+
+	// NormalizeEphemeralStream normalizes the given ephemeral stream.
+	// Returns the hash of the first and last miniblock of the normalized stream.
+	NormalizeEphemeralStream(ctx context.Context, streamId StreamId) (common.Hash, error)
+
+	// IsStreamEphemeral returns true if the stream is ephemeral.
+	IsStreamEphemeral(ctx context.Context, streamId StreamId) (bool, error)
 
 	// ReadMiniblocks returns miniblocks with miniblockNum or "generation" from fromInclusive, to toExlusive.
 	ReadMiniblocks(
@@ -65,17 +116,6 @@ type StreamStorage interface {
 
 	// ReadEphemeralMiniblockNums returns the list of ephemeral miniblock numbers for the given ephemeral stream.
 	ReadEphemeralMiniblockNums(ctx context.Context, streamId StreamId) ([]int, error)
-
-	// WriteEvent adds event to the given minipool.
-	// Current generation of minipool should match minipoolGeneration,
-	// and there should be exactly minipoolSlot events in the minipool.
-	WriteEvent(
-		ctx context.Context,
-		streamId StreamId,
-		minipoolGeneration int64,
-		minipoolSlot int,
-		envelope []byte,
-	) error
 
 	// WriteMiniblockCandidate adds a proposal candidate for future miniblock.
 	WriteMiniblockCandidate(
@@ -114,10 +154,6 @@ type StreamStorage interface {
 	// Stream with the given ID must be ephemeral.
 	WriteEphemeralMiniblock(ctx context.Context, streamId StreamId, miniblock *WriteMiniblockData) error
 
-	// CreateStreamArchiveStorage creates a new archive storage for the given stream.
-	// Unlike regular CreateStreamStorage, only entry in es table and partition table for miniblocks are created.
-	CreateStreamArchiveStorage(ctx context.Context, streamId StreamId) error
-
 	// GetMaxArchivedMiniblockNumber returns the maximum miniblock number that has been archived for the given stream.
 	// If stream record is created, but no miniblocks are archived, returns -1.
 	GetMaxArchivedMiniblockNumber(ctx context.Context, streamId StreamId) (int64, error)
@@ -135,12 +171,16 @@ type StreamStorage interface {
 	// GetLastMiniblockNumber returns the last miniblock number for the given stream from storage.
 	GetLastMiniblockNumber(ctx context.Context, streamID StreamId) (int64, error)
 
-	// NormalizeEphemeralStream normalizes the given ephemeral stream.
-	// Returns the hash of the first and last miniblock of the normalized stream.
-	NormalizeEphemeralStream(ctx context.Context, streamId StreamId) (common.Hash, error)
-
-	// IsStreamEphemeral returns true if the stream is ephemeral.
-	IsStreamEphemeral(ctx context.Context, streamId StreamId) (bool, error)
+	// WriteEvent adds event to the given minipool.
+	// Current generation of minipool should match minipoolGeneration,
+	// and there should be exactly minipoolSlot events in the minipool.
+	WriteEvent(
+		ctx context.Context,
+		streamId StreamId,
+		minipoolGeneration int64,
+		minipoolSlot int,
+		envelope []byte,
+	) error
 
 	// DebugReadStreamData returns details for debugging about the stream.
 	DebugReadStreamData(ctx context.Context, streamId StreamId) (*DebugReadStreamDataResult, error)
@@ -150,44 +190,4 @@ type StreamStorage interface {
 
 	// Close closes the storage.
 	Close(ctx context.Context)
-}
-
-type WriteMiniblockData struct {
-	Number   int64
-	Hash     common.Hash
-	Snapshot bool
-	Data     []byte
-}
-
-type MiniblockDescriptor struct {
-	MiniblockNumber int64
-	Data            []byte
-	Hash            common.Hash // Only set for miniblock candidates
-}
-
-type EventDescriptor struct {
-	Generation int64
-	Slot       int64
-	Data       []byte
-}
-
-type DebugReadStreamDataResult struct {
-	StreamId                   StreamId
-	LatestSnapshotMiniblockNum int64
-	Miniblocks                 []MiniblockDescriptor
-	Events                     []EventDescriptor
-	MbCandidates               []MiniblockDescriptor
-}
-
-type MiniblockCandidateStatisticsResult struct {
-	Hash     string
-	BlockNum int64
-}
-
-type DebugReadStreamStatisticsResult struct {
-	StreamId                   string
-	LatestMiniblockNum         int64
-	CurrentMiniblockCandidates []MiniblockCandidateStatisticsResult
-	NumMinipoolEvents          int64
-	LatestSnapshotMiniblockNum int64
 }

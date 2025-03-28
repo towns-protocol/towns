@@ -281,9 +281,9 @@ func TestMbHashConstraints(t *testing.T) {
 
 	genMb := MakeGenesisMiniblockForUserSettingsStream(t, userWallet, nodeWallet, streamId)
 	mbBytes = append(mbBytes, &storage.MiniblockDescriptor{
-		Data:            toBytes(t, genMb),
-		MiniblockNumber: genMb.Ref.Num,
-		Hash:            genMb.Ref.Hash,
+		Data:   toBytes(t, genMb),
+		Number: genMb.Ref.Num,
+		Hash:   genMb.Ref.Hash,
 	})
 	mbs = append(mbs, genMb)
 
@@ -291,9 +291,9 @@ func TestMbHashConstraints(t *testing.T) {
 	for range 10 {
 		mb := MakeTestBlockForUserSettingsStream(t, userWallet, nodeWallet, prevMb)
 		mbBytes = append(mbBytes, &storage.MiniblockDescriptor{
-			Data:            toBytes(t, mb),
-			MiniblockNumber: mb.Ref.Num,
-			Hash:            mb.Ref.Hash,
+			Data:   toBytes(t, mb),
+			Number: mb.Ref.Num,
+			Hash:   mb.Ref.Hash,
 		})
 		mbs = append(mbs, mb)
 		prevMb = mb

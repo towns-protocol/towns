@@ -475,7 +475,7 @@ func (st *serviceTester) compareStreamDataInStorage(
 				)
 				for j, mb := range data[i].Miniblocks {
 					exp := data[0].Miniblocks[j]
-					_ = assert.EqualValues(t, exp.MiniblockNumber, mb.MiniblockNumber, "Bad mb num in node %d", i) &&
+					_ = assert.EqualValues(t, exp.Number, mb.Number, "Bad mb num in node %d", i) &&
 						assert.EqualValues(t, exp.Hash, mb.Hash, "Bad mb hash in node %d", i) &&
 						assert.Equal(
 							t,
