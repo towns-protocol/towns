@@ -271,21 +271,31 @@ func (b *MiniblockInfo) IsSnapshot() bool {
 	return b.Header().GetSnapshot() != nil || len(b.Header().GetSnapshotHash()) > 0
 }
 
-func (b *MiniblockInfo) asStorageMb() (*storage.WriteMiniblockData, error) {
-	data, err := b.ToBytes()
+// AsStorageMb returns a storage miniblock with the data from the MiniblockInfo.
+func (b *MiniblockInfo) AsStorageMb() (*storage.WriteMiniblockData, error) {
+	serializedMb, err := proto.Marshal(&Miniblock{
+		Events: b.Proto.Events,
+		Header: b.Proto.Header,
+	})
 	if err != nil {
-		return nil, err
+		return nil, AsRiverError(err, Err_INTERNAL).
+			Message("Failed to serialize miniblock info to bytes").
+			Func("AsStorageMb")
 	}
-	return b.asStorageMbWithData(data), nil
-}
 
-func (b *MiniblockInfo) asStorageMbWithData(bytes []byte) *storage.WriteMiniblockData {
+	serializedSnapshot, err := proto.Marshal(b.Proto.Snapshot)
+	if err != nil {
+		return nil, AsRiverError(err, Err_INTERNAL).
+			Message("Failed to serialize miniblock snapshot to bytes").
+			Func("AsStorageMb")
+	}
+
 	return &storage.WriteMiniblockData{
 		Number:   b.Ref.Num,
 		Hash:     b.Ref.Hash,
-		Snapshot: b.IsSnapshot(),
-		Data:     bytes,
-	}
+		Snapshot: serializedSnapshot,
+		Data:     serializedMb,
+	}, nil
 }
 
 func (b *MiniblockInfo) forEachEvent(
@@ -306,19 +316,6 @@ func (b *MiniblockInfo) forEachEvent(
 		return false, err
 	}
 	return true, nil
-}
-
-// ToBytes serializes the MiniblockInfo to bytes.
-// Returns miniblock bytes and snapshot bytes.
-func (b *MiniblockInfo) ToBytes() ([]byte, []byte, error) {
-
-	serialized, err := proto.Marshal(b.Proto)
-	if err == nil {
-		return serialized, nil
-	}
-	return nil, AsRiverError(err, Err_INTERNAL).
-		Message("Failed to serialize miniblockinfo to bytes").
-		Func("ToBytes")
 }
 
 type ParsedMiniblockInfoOpts struct {

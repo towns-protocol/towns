@@ -43,10 +43,10 @@ func Test_StreamCache_normalizeEphemeralStream(t *testing.T) {
 			leaderInstance.params.Wallet,
 			&MediaPayload_Inception{StreamId: streamId[:], ChannelId: channelId[:], ChunkCount: chunks},
 		)
-		mbBytes, err := mb.ToBytes()
+		storageMb, err := mb.AsStorageMb()
 		tc.require.NoError(err)
 
-		err = leaderInstance.params.Storage.CreateEphemeralStreamStorage(ctx, streamId, mbBytes)
+		err = leaderInstance.params.Storage.CreateEphemeralStreamStorage(ctx, streamId, storageMb.Data)
 		tc.require.NoError(err)
 
 		mbRef := *mb.Ref
@@ -104,10 +104,10 @@ func Test_StreamCache_normalizeEphemeralStream(t *testing.T) {
 			leaderInstance.params.Wallet,
 			&MediaPayload_Inception{StreamId: streamId[:], ChannelId: channelId[:], ChunkCount: chunks},
 		)
-		mbBytes, err := mb.ToBytes()
+		storageMb, err := mb.AsStorageMb()
 		tc.require.NoError(err)
 
-		err = leaderInstance.params.Storage.CreateEphemeralStreamStorage(ctx, streamId, mbBytes)
+		err = leaderInstance.params.Storage.CreateEphemeralStreamStorage(ctx, streamId, storageMb.Data)
 		tc.require.NoError(err)
 
 		mbRef := *mb.Ref
@@ -158,7 +158,7 @@ func Test_StreamCache_normalizeEphemeralStream(t *testing.T) {
 					ctx,
 					streamId,
 					req.Msg.GetMiniblockIds(),
-					func(blockdata []byte, seqNum int64) error {
+					func(blockdata []byte, seqNum int64, snapshot []byte) error {
 						var mb Miniblock
 						if err = proto.Unmarshal(blockdata, &mb); err != nil {
 							return WrapRiverError(Err_BAD_BLOCK, err).Message("Unable to unmarshal miniblock")

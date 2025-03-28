@@ -201,7 +201,7 @@ func (s *Stream) importMiniblocksLocked(
 		if miniblock.Ref.Num != firstMbNum+int64(i) {
 			return RiverError(Err_INTERNAL, "miniblock numbers are not sequential").Func("importMiniblocks")
 		}
-		mb, err := miniblock.asStorageMb()
+		mb, err := miniblock.AsStorageMb()
 		if err != nil {
 			return err
 		}
@@ -299,13 +299,15 @@ func (s *Stream) applyMiniblockImplLocked(
 		return err
 	}
 
-	var miniblockBytes []byte
-	var snapshotBytes []byte
+	storageMb := &storage.WriteMiniblockData{
+		Number: info.Ref.Num,
+		Hash:   info.Ref.Hash,
+	}
 	if miniblock != nil {
-		miniblockBytes = miniblock.Data
-		snapshotBytes = miniblock.Snapshot
+		storageMb.Data = miniblock.Data
+		storageMb.Snapshot = miniblock.Snapshot
 	} else {
-		if miniblockBytes, err = info.ToBytes(); err != nil {
+		if storageMb, err = info.AsStorageMb(); err != nil {
 			return err
 		}
 	}
@@ -313,7 +315,7 @@ func (s *Stream) applyMiniblockImplLocked(
 	err = s.params.Storage.WriteMiniblocks(
 		ctx,
 		s.streamId,
-		[]*storage.WriteMiniblockData{info.asStorageMbWithData(miniblockBytes)},
+		[]*storage.WriteMiniblockData{storageMb},
 		newSV.minipool.generation,
 		newMinipool,
 		prevSV.minipool.generation,
@@ -897,20 +899,12 @@ func (s *Stream) SaveMiniblockCandidate(ctx context.Context, mb *Miniblock) erro
 		return nil
 	}
 
-	serialized, err := mbInfo.ToBytes()
+	storageMb, err := mbInfo.AsStorageMb()
 	if err != nil {
 		return err
 	}
 
-	return s.params.Storage.WriteMiniblockCandidate(
-		ctx,
-		s.streamId,
-		&storage.WriteMiniblockData{
-			Number: mbInfo.Ref.Num,
-			Hash:   mbInfo.Ref.Hash,
-			Data:   serialized,
-		},
-	)
+	return s.params.Storage.WriteMiniblockCandidate(ctx, s.streamId, storageMb)
 }
 
 // tryApplyCandidate tries to apply the miniblock candidate to the stream. It will apply iff

@@ -224,7 +224,7 @@ func TestLoad(t *testing.T) {
 		view.LastBlock().Ref,
 	)
 	assert.NoError(t, err)
-	miniblock, err := NewMiniblockInfoFromParsed(miniblockHeaderEvent, mbCandidate.Events())
+	miniblock, err := NewMiniblockInfoFromParsed(miniblockHeaderEvent, mbCandidate.Events(), nil)
 	assert.NoError(t, err)
 	// with 5 generations (5 blocks kept in memory)
 	newSV1, newEvents, err := view.copyAndApplyBlock(miniblock, cfg)
@@ -264,9 +264,9 @@ func TestLoad(t *testing.T) {
 }
 
 func toBytes(t *testing.T, mb *MiniblockInfo) []byte {
-	mbBytes, err := mb.ToBytes()
+	storageMb, err := mb.AsStorageMb()
 	require.NoError(t, err)
-	return mbBytes
+	return storageMb.Data
 }
 
 func TestMbHashConstraints(t *testing.T) {
