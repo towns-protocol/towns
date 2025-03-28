@@ -59,9 +59,9 @@ func TestArchive(t *testing.T) {
 	require.NoError(err)
 	require.Len(readMBs, 3)
 	require.Equal([]*MiniblockDescriptor{
-		{MiniblockNumber: 0, Data: data[0].Data},
-		{MiniblockNumber: 1, Data: data[1].Data},
-		{MiniblockNumber: 2, Data: data[2].Data},
+		{Number: 0, Data: data[0].Data},
+		{Number: 1, Data: data[1].Data},
+		{Number: 2, Data: data[2].Data},
 	}, readMBs)
 
 	data2 := []*WriteMiniblockData{
@@ -86,12 +86,12 @@ func TestArchive(t *testing.T) {
 	readMBs, err = pgStreamStore.ReadMiniblocks(ctx, streamId1, 0, 8)
 	require.NoError(err)
 	require.Equal([]*MiniblockDescriptor{
-		{MiniblockNumber: 0, Data: data[0].Data},
-		{MiniblockNumber: 1, Data: data[1].Data},
-		{MiniblockNumber: 2, Data: data[2].Data},
-		{MiniblockNumber: 3, Data: data2[0].Data},
-		{MiniblockNumber: 4, Data: data2[1].Data},
-		{MiniblockNumber: 5, Data: data2[2].Data},
+		{Number: 0, Data: data[0].Data},
+		{Number: 1, Data: data[1].Data},
+		{Number: 2, Data: data[2].Data},
+		{Number: 3, Data: data2[0].Data},
+		{Number: 4, Data: data2[1].Data},
+		{Number: 5, Data: data2[2].Data},
 	}, readMBs)
 
 	bn, err = pgStreamStore.GetMaxArchivedMiniblockNumber(ctx, streamId1)

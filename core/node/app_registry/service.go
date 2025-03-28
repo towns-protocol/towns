@@ -259,7 +259,7 @@ waitLoop:
 				log.Warnw("Error fetching user metadata stream for app", "error", err, "streamId", userMetadataStreamId, "appId", appId)
 				continue
 			}
-			view, loopExitErr = events.MakeRemoteStreamView(ctx, streamResponse.Msg.Stream)
+			view, loopExitErr = events.MakeRemoteStreamView(streamResponse.Msg.Stream)
 			if loopExitErr != nil {
 				break waitLoop
 			}

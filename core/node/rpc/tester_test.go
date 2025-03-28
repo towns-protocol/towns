@@ -475,7 +475,7 @@ func (st *serviceTester) compareStreamDataInStorage(
 				)
 				for j, mb := range data[i].Miniblocks {
 					exp := data[0].Miniblocks[j]
-					_ = assert.EqualValues(t, exp.MiniblockNumber, mb.MiniblockNumber, "Bad mb num in node %d", i) &&
+					_ = assert.EqualValues(t, exp.Number, mb.Number, "Bad mb num in node %d", i) &&
 						assert.EqualValues(t, exp.Hash, mb.Hash, "Bad mb hash in node %d", i) &&
 						assert.Equal(
 							t,
@@ -974,7 +974,7 @@ func (tc *testClient) getStreamAndView(
 	stream := tc.getStream(streamId)
 	var view *StreamView
 	var err error
-	view, err = MakeRemoteStreamView(tc.ctx, stream)
+	view, err = MakeRemoteStreamView(stream)
 	tc.require.NoError(err)
 	tc.require.NotNil(view)
 
@@ -1010,7 +1010,7 @@ func (tc *testClient) maybeDumpStream(stream *StreamAndCookie) {
 			tc.name,
 			"Dumping stream",
 			"\n",
-			dumpevents.DumpStream(tc.ctx, stream, dumpevents.DumpOpts{EventContent: true, TestMessages: true}),
+			dumpevents.DumpStream(stream, dumpevents.DumpOpts{EventContent: true, TestMessages: true}),
 		)
 	}
 }
