@@ -1135,12 +1135,10 @@ func (m *dataMaker) events(n int) [][]byte {
 func requireSnapshotResult(
 	t *testing.T,
 	result *ReadStreamFromLastSnapshotResult,
-	startMiniblockNumber int64,
 	snapshotOffset int,
 	miniblocks [][]byte,
 	minipoolEnvelopes [][]byte,
 ) {
-	require.EqualValues(t, startMiniblockNumber, result.StartMiniblockNumber, "StartMiniblockNumber")
 	require.EqualValues(t, snapshotOffset, result.SnapshotMiniblockOffset, "SnapshotMiniblockOffset")
 	require.Equal(t, len(result.Miniblocks), len(miniblocks), "len of miniblocks")
 	require.EqualValues(t, miniblocks, result.Miniblocks)
@@ -1183,7 +1181,7 @@ func TestReadStreamFromLastSnapshot(t *testing.T) {
 
 	streamData, err := store.ReadStreamFromLastSnapshot(ctx, streamId, 10)
 	require.NoError(err)
-	requireSnapshotResult(t, streamData, 0, 0, mbs, eventPool1)
+	requireSnapshotResult(t, streamData, 0, mbs, eventPool1)
 
 	mb2, h2 := dataMaker.mb()
 	mbs = append(mbs, mb2)
@@ -1203,7 +1201,7 @@ func TestReadStreamFromLastSnapshot(t *testing.T) {
 
 	streamData, err = store.ReadStreamFromLastSnapshot(ctx, streamId, 10)
 	require.NoError(err)
-	requireSnapshotResult(t, streamData, 0, 2, mbs, eventPool2)
+	requireSnapshotResult(t, streamData, 2, mbs, eventPool2)
 
 	var lastEvents [][]byte
 	for i := range 12 {
@@ -1220,7 +1218,7 @@ func TestReadStreamFromLastSnapshot(t *testing.T) {
 
 	streamData, err = store.ReadStreamFromLastSnapshot(ctx, streamId, 14)
 	require.NoError(err)
-	requireSnapshotResult(t, streamData, 1, 1, mbs[1:], lastEvents)
+	requireSnapshotResult(t, streamData, 1, mbs[1:], lastEvents)
 
 	mb, h := dataMaker.mb()
 	mbs = append(mbs, mb)
@@ -1235,7 +1233,7 @@ func TestReadStreamFromLastSnapshot(t *testing.T) {
 
 	streamData, err = store.ReadStreamFromLastSnapshot(ctx, streamId, 6)
 	require.NoError(err)
-	requireSnapshotResult(t, streamData, 10, 5, mbs[10:], lastEvents)
+	requireSnapshotResult(t, streamData, 5, mbs[10:], lastEvents)
 }
 
 func TestQueryPlan(t *testing.T) {

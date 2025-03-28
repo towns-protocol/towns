@@ -182,8 +182,8 @@ func compareStreamMiniblocks(
 	}
 
 	for i, mb := range miniblocks {
-		info, err := events.NewMiniblockInfoFromBytesWithOpts(
-			mb.Data,
+		info, err := events.NewMiniblockInfoFromDescriptorWithOpts(
+			mb,
 			events.NewParsedMiniblockInfoOpts().
 				WithExpectedBlockNumber(int64(i)).
 				WithDoNotParseEvents(true),
@@ -564,7 +564,7 @@ func createCorruptStreams(
 	streamIds := make([]StreamId, len(corruptionFuncs))
 	for i, corruptMb := range corruptionFuncs {
 		streamId, mb1, blocks := createMultiblockChannelStream(ctx, require, client, store)
-		blocks[1] = corruptMb(require, wallet, blocks[1])
+		blocks[1].Data = corruptMb(require, wallet, blocks[1].Data)
 		writeStreamBackToStore(ctx, require, store, streamId, mb1, blocks)
 		streamIds[i] = streamId
 	}

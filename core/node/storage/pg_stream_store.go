@@ -721,45 +721,39 @@ func (s *PostgresStreamStore) readStreamFromLastSnapshotTx(
 		return nil, err
 	}
 
-	var miniblocks [][]byte
-	var snapshot []byte
-	var counter int64 = 0
-	var readFirstSeqNum int64
-
+	var miniblocks []*MiniblockDescriptor
 	var blockdata []byte
-	var readLastSeqNum int64
-	var lastReadSnapshot []byte
+	var seqNum int64
+	var snapshot []byte
 	if _, err := pgx.ForEachRow(
 		miniblocksRow,
-		[]any{&blockdata, &readLastSeqNum, &lastReadSnapshot},
+		[]any{&blockdata, &seqNum, &snapshot},
 		func() error {
-			if counter == 0 {
-				readFirstSeqNum = readLastSeqNum
-			} else if readLastSeqNum != readFirstSeqNum+counter {
+			if len(miniblocks) > 0 && seqNum != miniblocks[0].MiniblockNumber+int64(len(miniblocks)) {
 				return RiverError(
 					Err_INTERNAL,
 					"Miniblocks consistency violation - miniblocks are not sequential in db",
-					"ActualSeqNum", readLastSeqNum,
-					"ExpectedSeqNum", readFirstSeqNum+counter)
+					"ActualSeqNum", seqNum,
+					"ExpectedSeqNum", miniblocks[0].MiniblockNumber+int64(len(miniblocks)))
 			}
-			miniblocks = append(miniblocks, blockdata)
-			if len(lastReadSnapshot) > 0 && snapshot == nil {
-				snapshot = lastReadSnapshot
-			}
-			counter++
+			miniblocks = append(miniblocks, &MiniblockDescriptor{
+				MiniblockNumber: seqNum,
+				Data:            blockdata,
+				Snapshot:        snapshot,
+			})
 			return nil
 		},
 	); err != nil {
 		return nil, err
 	}
 
-	if !(readFirstSeqNum <= snapshotMiniblockIndex && snapshotMiniblockIndex <= readLastSeqNum) {
+	if !(miniblocks[0].MiniblockNumber <= snapshotMiniblockIndex && snapshotMiniblockIndex <= seqNum) {
 		return nil, RiverError(
 			Err_INTERNAL,
 			"Miniblocks consistency violation - snapshotMiniblockIndex is out of range",
 			"snapshotMiniblockIndex", snapshotMiniblockIndex,
-			"readFirstSeqNum", readFirstSeqNum,
-			"readLastSeqNum", readLastSeqNum)
+			"readFirstSeqNum", miniblocks[0].MiniblockNumber,
+			"readLastSeqNum", seqNum)
 	}
 
 	rows, err := tx.Query(
@@ -775,7 +769,7 @@ func (s *PostgresStreamStore) readStreamFromLastSnapshotTx(
 	}
 
 	var envelopes [][]byte
-	var expectedGeneration int64 = readLastSeqNum + 1
+	var expectedGeneration = seqNum + 1
 	var expectedSlot int64 = -1
 
 	// Scan variables
@@ -810,11 +804,9 @@ func (s *PostgresStreamStore) readStreamFromLastSnapshotTx(
 	}
 
 	return &ReadStreamFromLastSnapshotResult{
-		StartMiniblockNumber:    readFirstSeqNum,
-		SnapshotMiniblockOffset: int(snapshotMiniblockIndex - readFirstSeqNum),
+		SnapshotMiniblockOffset: int(snapshotMiniblockIndex - miniblocks[0].MiniblockNumber),
 		Miniblocks:              miniblocks,
 		MinipoolEnvelopes:       envelopes,
-		Snapshot:                snapshot,
 	}, nil
 }
 

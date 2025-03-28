@@ -16,11 +16,9 @@ const (
 )
 
 type ReadStreamFromLastSnapshotResult struct {
-	StartMiniblockNumber    int64
 	SnapshotMiniblockOffset int
-	Miniblocks              [][]byte
+	Miniblocks              []*MiniblockDescriptor
 	MinipoolEnvelopes       [][]byte
-	Snapshot                []byte
 }
 
 type StreamStorage interface {

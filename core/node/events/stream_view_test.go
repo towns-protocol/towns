@@ -65,7 +65,9 @@ func TestLoad(t *testing.T) {
 
 	view, err := MakeStreamView(
 		&storage.ReadStreamFromLastSnapshotResult{
-			Miniblocks: [][]byte{miniblockProtoBytes},
+			Miniblocks: []*storage.MiniblockDescriptor{
+				{Data: miniblockProtoBytes},
+			},
 		},
 	)
 
@@ -276,24 +278,28 @@ func TestMbHashConstraints(t *testing.T) {
 	streamId := UserSettingStreamIdFromAddr(userWallet.Address)
 
 	timeNow := time.Now()
-	var mbBytes [][]byte
+	var mbDescriptors []*storage.MiniblockDescriptor
 	var mbs []*MiniblockInfo
 
 	genMb := MakeGenesisMiniblockForUserSettingsStream(t, userWallet, nodeWallet, streamId)
-	mbBytes = append(mbBytes, toBytes(t, genMb))
+	mbDescriptors = append(mbDescriptors, &storage.MiniblockDescriptor{
+		Data: toBytes(t, genMb),
+	})
 	mbs = append(mbs, genMb)
 
 	prevMb := genMb
 	for range 10 {
 		mb := MakeTestBlockForUserSettingsStream(t, userWallet, nodeWallet, prevMb)
-		mbBytes = append(mbBytes, toBytes(t, mb))
+		mbDescriptors = append(mbDescriptors, &storage.MiniblockDescriptor{
+			Data: toBytes(t, mb),
+		})
 		mbs = append(mbs, mb)
 		prevMb = mb
 	}
 
 	view, err := MakeStreamView(
 		&storage.ReadStreamFromLastSnapshotResult{
-			Miniblocks: mbBytes,
+			Miniblocks: mbDescriptors,
 		},
 	)
 	require.NoError(err)
