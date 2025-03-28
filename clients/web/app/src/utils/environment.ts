@@ -125,6 +125,9 @@ const envSchema = z.object({
     VITE_ENABLE_MSW_BROWSER: boolish.default(false),
     // Enable replacement underpriced error for eth_sendUserOperation
     VITE_RESPOND_REPLACEMENT_UNDERPRICED: boolish.default(false),
+    // Controls the type of smart account implementation to use for new users
+    // if set to 'modular', existing users with simple smart accounts will be migrated to modular
+    VITE_NEW_SMART_ACCOUNT_IMPLEMENTATION_TYPE: z.enum(['simple', 'modular']).default('simple'),
 })
 
 const parsed = envSchema.safeParse(import.meta.env)

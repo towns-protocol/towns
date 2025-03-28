@@ -66,7 +66,7 @@ function makeEnvironments(): TownsEnvironmentInfo[] {
                 factoryAddress: env.VITE_AA_FACTORY_ADDRESS,
                 paymasterProxyAuthSecret: env.VITE_AUTH_WORKER_HEADER_SECRET,
                 fetchAccessTokenFn,
-                newAccountImplementationType: 'simple',
+                newAccountImplementationType: env.VITE_NEW_SMART_ACCOUNT_IMPLEMENTATION_TYPE,
             }
         }
         // Account abstraction only works on local nodes if running geth, not anvil
@@ -79,7 +79,7 @@ function makeEnvironments(): TownsEnvironmentInfo[] {
                 factoryAddress: undefined, // uses default userop.js address
                 paymasterProxyAuthSecret: env.VITE_AUTH_WORKER_HEADER_SECRET,
                 fetchAccessTokenFn,
-                newAccountImplementationType: 'simple',
+                newAccountImplementationType: env.VITE_NEW_SMART_ACCOUNT_IMPLEMENTATION_TYPE,
             }
         }
 
