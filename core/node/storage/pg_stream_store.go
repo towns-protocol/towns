@@ -1006,7 +1006,7 @@ func (s *PostgresStreamStore) readMiniblocksTx(
 func (s *PostgresStreamStore) ReadMiniblocksByStream(
 	ctx context.Context,
 	streamId StreamId,
-	onEachMb func(blockdata []byte, seqNum int64) error,
+	onEachMb MiniblockHandlerFunc,
 ) error {
 	return s.txRunner(
 		ctx,
@@ -1024,7 +1024,7 @@ func (s *PostgresStreamStore) readMiniblocksByStreamTx(
 	ctx context.Context,
 	tx pgx.Tx,
 	streamId StreamId,
-	onEachMb func(blockdata []byte, seqNum int64) error,
+	onEachMb MiniblockHandlerFunc,
 ) error {
 	if _, err := s.lockStream(ctx, tx, streamId, false); err != nil {
 		return err
@@ -1065,7 +1065,7 @@ func (s *PostgresStreamStore) ReadMiniblocksByIds(
 	ctx context.Context,
 	streamId StreamId,
 	mbs []int64,
-	onEachMb func(blockdata []byte, seqNum int64) error,
+	onEachMb MiniblockHandlerFunc,
 ) error {
 	return s.txRunner(
 		ctx,
@@ -1085,7 +1085,7 @@ func (s *PostgresStreamStore) readMiniblocksByIdsTx(
 	tx pgx.Tx,
 	streamId StreamId,
 	mbs []int64,
-	onEachMb func(blockdata []byte, seqNum int64) error,
+	onEachMb MiniblockHandlerFunc,
 ) error {
 	_, err := s.lockStream(ctx, tx, streamId, false)
 	if err != nil {
