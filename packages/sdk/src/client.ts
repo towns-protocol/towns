@@ -34,7 +34,6 @@ import {
     UserBio,
     Tags,
     BlockchainTransaction,
-    MiniblockHeader,
     GetStreamResponse,
     CreateStreamResponse,
     ChannelProperties,
@@ -106,7 +105,7 @@ import {
     contractAddressFromSpaceId,
     isUserId,
 } from './id'
-import { makeEvent, unpackEnvelope, UnpackEnvelopeOpts, unpackStream, unpackStreamEx } from './sign'
+import { makeEvent, UnpackEnvelopeOpts, unpackStream, unpackStreamEx } from './sign'
 import { StreamEvents } from './streamEvents'
 import { IStreamStateView, StreamStateView } from './streamStateView'
 import {
