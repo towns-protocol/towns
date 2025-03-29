@@ -418,7 +418,7 @@ func (pool *pendingTransactionPool) checkPendingTransactions(ctx context.Context
 }
 
 // NewTransactionPoolWithPoliciesFromConfig creates an in-memory transaction pool that tracks transactions that are
-// submitted through it. Pending transactions checked on each block if they are eligable to be replaced (through the
+// submitted through it. Pending transactions checked on each block if they are eligible to be replaced (through the
 // replacement policy). If the pending transaction must be replaced is uses the price policy to determine the new gas
 // fees for the replacement transaction. The pool then submits the replacement policy. It keeps track of the old pending
 // transactions in case the original transaction was included in the chain.
@@ -456,7 +456,7 @@ func NewTransactionPoolWithPoliciesFromConfig(
 }
 
 // NewTransactionPoolWithPolicies creates an in-memory transaction pool that tracks transactions that are submitted
-// through it. Pending transactions checked on each block if they are eligable to be replaced. This is determined with
+// through it. Pending transactions checked on each block if they are eligible to be replaced. This is determined with
 // the given replacePolicy. If the pending transaction must be replaced the given pricePolicy is used to determine the
 // fees for the replacement transaction. The pool than submits the replacement policy. It keeps track of the old pending
 // transactions in case the original transaction was included in the chain.
