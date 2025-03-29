@@ -9,7 +9,8 @@ import React, {
 } from 'react'
 import { matchPath, useLocation } from 'react-router'
 import {
-    useSpaceData,
+    useSpaceContext,
+    useSpaceDataStore,
     useSpaceId,
     useSpaceMembers,
     useThrottledTimelineStore,
@@ -27,10 +28,15 @@ import { ResultItem } from './SearchResultItem'
 import { CombinedResult } from './types'
 
 export const SearchBar = () => {
-    const spaceData = useSpaceData()
+    const { spaceId } = useSpaceContext()
+
+    const spaceName = useSpaceDataStore((state) =>
+        spaceId ? state.spaceDataMap?.[spaceId]?.name : undefined,
+    )
+
     const location = useLocation()
     const isMessages = matchPath(`/${PATHS.MESSAGES}/*`, location.pathname)
-    const searchLabel = isMessages ? `Search messages` : `Search ${spaceData?.name ?? 'Town'}`
+    const searchLabel = isMessages ? `Search messages` : `Search ${spaceName ?? 'Town'}`
 
     const [isSearchActive, setIsSearchActive] = useState(false)
     const [value, setValue] = useState('')
@@ -163,9 +169,7 @@ const SearchResults = (props: { onHide: () => void; searchResults: CombinedResul
     const { dmChannels: dmChannelIds } = useTownsContext()
 
     const members = useSpaceMembers()
-    const { threadsStats } = useThrottledTimelineStore(({ threadsStats }) => ({
-        threadsStats,
-    }))
+    const threadsStats = useThrottledTimelineStore((state) => state.threadsStats)
 
     const miscProps = useMemo(
         () => ({
