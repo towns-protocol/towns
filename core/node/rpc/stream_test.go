@@ -178,7 +178,7 @@ func TestMiniBlockProductionFrequency(t *testing.T) {
 		if err != nil {
 			return false
 		}
-		listener = tls.NewListener(listener, testcert.GetHttp2LocalhostTLSConfig())
+		listener = tls.NewListener(listener, testcert.GetHttp2LocalhostTLSConfig(nil))
 
 		return true
 	}, 20*time.Second, 25*time.Millisecond)
