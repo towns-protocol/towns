@@ -1,5 +1,9 @@
 # Contributing to Towns Protocol
 
+## Project Overview
+
+Towns Protocol is a blockchain-based space management and permission system. The project is organized as a monorepo, containing multiple packages that interact with each other to provide a comprehensive solution for decentralized community spaces.
+
 ## Prerequisites
 
 - **Go**: [https://go.dev/](https://go.dev/)
@@ -12,11 +16,16 @@
 
 ## Setup
 
-1. Run `yarn install && yarn prepare` from the root of the repository
+1. Clone the repository: `git clone https://github.com/towns-protocol/towns-protocol.git`
 
-1. Create `.env.local` files:
+2. Run `yarn install && yarn prepare` from the root of the repository
 
-1. Create a Certificate Authority. Run `./core/scripts/register-ca.sh` from the root of the repository. This will create the required `$HOME/river-ca-cert.pem` and `$HOME/river-ca-key.pem` files.
+3. Create `.env.local` files:
+   - Copy `.env.example` to `.env.local` in each package directory where required
+   - Set up your local environment variables according to the comments in the example files
+   - Common environment variables include database connections, API keys, and network configurations
+
+4. Create a Certificate Authority. Run `./core/scripts/register-ca.sh` from the root of the repository. This will create the required `$HOME/river-ca-cert.pem` and `$HOME/river-ca-key.pem` files.
 
 ## Running everything locally
 
@@ -48,17 +57,25 @@ CI will gate PR merges via unit tests. However, failing e2e tests won't gate mer
 
 We use turborepo to maintain our monorepos CI setup. Since maintaining CI in monorepos are a bit more complex than conventional repos, we depend on this tool for housekeeping. It figures out the dependency graph by reading package.jsons and understands which builds and tests should be run first.
 
-If you have a package in the monorepo, and
-a) you want it to be built on CI, add a `"build"` script
-b) you want it to be linted on CI, add a `"lint"` script
-c) you want its unit tests to be run on CI, add a `"test:unit"` script
-
-Sincerely,
-The team
-d) you want its e2e tests to be run on CI, add a `"test:e2e"` script
-e) you want a single script to run all tests within the package, add `"test: yarn test:unit && yarn test:e2e"` script to its package.json
+If you have a package in the monorepo, and:
+- a) you want it to be built on CI, add a `"build"` script
+- b) you want it to be linted on CI, add a `"lint"` script
+- c) you want its unit tests to be run on CI, add a `"test:unit"` script
+- d) you want its e2e tests to be run on CI, add a `"test:e2e"` script
+- e) you want a single script to run all tests within the package, add `"test: yarn test:unit && yarn test:e2e"` script to its package.json
 
 Similarly, if you edit or delete these scripts, be aware that you may be removing those scripts from CI.
+
+## Contributing Workflow
+
+1. Fork the repository and create a branch for your feature or bugfix
+2. Write code and tests that fulfill the intent of your feature or bugfix
+3. Ensure all tests pass locally with `yarn test`
+4. Create a pull request against the `main` branch
+5. Address any feedback from code reviews
+6. Once approved, your PR will be merged to `main`
+
+Please follow our code style guidelines and write meaningful commit messages using conventional commits format.
 
 ## Publishing to npm
 
