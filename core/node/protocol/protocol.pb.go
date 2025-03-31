@@ -689,9 +689,8 @@ type Miniblock struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Events   []*Envelope `protobuf:"bytes,1,rep,name=events,proto3" json:"events,omitempty"`
-	Header   *Envelope   `protobuf:"bytes,2,opt,name=header,proto3" json:"header,omitempty"`
-	Snapshot *Envelope   `protobuf:"bytes,3,opt,name=snapshot,proto3,oneof" json:"snapshot,omitempty"`
+	Events []*Envelope `protobuf:"bytes,1,rep,name=events,proto3" json:"events,omitempty"`
+	Header *Envelope   `protobuf:"bytes,2,opt,name=header,proto3" json:"header,omitempty"`
 }
 
 func (x *Miniblock) Reset() {
@@ -736,13 +735,6 @@ func (x *Miniblock) GetEvents() []*Envelope {
 func (x *Miniblock) GetHeader() *Envelope {
 	if x != nil {
 		return x.Header
-	}
-	return nil
-}
-
-func (x *Miniblock) GetSnapshot() *Envelope {
-	if x != nil {
-		return x.Snapshot
 	}
 	return nil
 }
@@ -3341,8 +3333,7 @@ type StreamAndCookie struct {
 
 	Events         []*Envelope `protobuf:"bytes,1,rep,name=events,proto3" json:"events,omitempty"`
 	NextSyncCookie *SyncCookie `protobuf:"bytes,2,opt,name=next_sync_cookie,json=nextSyncCookie,proto3" json:"next_sync_cookie,omitempty"`
-	// if non-empty, contains all blocks since the latest snapshot (miniblocks[0])
-	// if miniblocks[0].header.snapshot_hash is not empty, use miniblocks[0].snapshot, otherwise miniblocks[0].header.snapshot
+	// if non-empty, contains all blocks since the latest snapshot, miniblocks[0].header is the latest snapshot
 	Miniblocks []*Miniblock `protobuf:"bytes,3,rep,name=miniblocks,proto3" json:"miniblocks,omitempty"`
 	SyncReset  bool         `protobuf:"varint,4,opt,name=sync_reset,json=syncReset,proto3" json:"sync_reset,omitempty"`
 }
@@ -9115,17 +9106,13 @@ var file_protocol_proto_rawDesc = []byte{
 	0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x75, 0x66, 0x2f, 0x74, 0x69, 0x6d, 0x65, 0x73, 0x74, 0x61,
 	0x6d, 0x70, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x1a, 0x1b, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65,
 	0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x75, 0x66, 0x2f, 0x65, 0x6d, 0x70, 0x74, 0x79, 0x2e,
-	0x70, 0x72, 0x6f, 0x74, 0x6f, 0x22, 0x9c, 0x01, 0x0a, 0x09, 0x4d, 0x69, 0x6e, 0x69, 0x62, 0x6c,
-	0x6f, 0x63, 0x6b, 0x12, 0x27, 0x0a, 0x06, 0x65, 0x76, 0x65, 0x6e, 0x74, 0x73, 0x18, 0x01, 0x20,
-	0x03, 0x28, 0x0b, 0x32, 0x0f, 0x2e, 0x72, 0x69, 0x76, 0x65, 0x72, 0x2e, 0x45, 0x6e, 0x76, 0x65,
-	0x6c, 0x6f, 0x70, 0x65, 0x52, 0x06, 0x65, 0x76, 0x65, 0x6e, 0x74, 0x73, 0x12, 0x27, 0x0a, 0x06,
-	0x68, 0x65, 0x61, 0x64, 0x65, 0x72, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x0f, 0x2e, 0x72,
-	0x69, 0x76, 0x65, 0x72, 0x2e, 0x45, 0x6e, 0x76, 0x65, 0x6c, 0x6f, 0x70, 0x65, 0x52, 0x06, 0x68,
-	0x65, 0x61, 0x64, 0x65, 0x72, 0x12, 0x30, 0x0a, 0x08, 0x73, 0x6e, 0x61, 0x70, 0x73, 0x68, 0x6f,
-	0x74, 0x18, 0x03, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x0f, 0x2e, 0x72, 0x69, 0x76, 0x65, 0x72, 0x2e,
-	0x45, 0x6e, 0x76, 0x65, 0x6c, 0x6f, 0x70, 0x65, 0x48, 0x00, 0x52, 0x08, 0x73, 0x6e, 0x61, 0x70,
-	0x73, 0x68, 0x6f, 0x74, 0x88, 0x01, 0x01, 0x42, 0x0b, 0x0a, 0x09, 0x5f, 0x73, 0x6e, 0x61, 0x70,
-	0x73, 0x68, 0x6f, 0x74, 0x22, 0x52, 0x0a, 0x08, 0x45, 0x6e, 0x76, 0x65, 0x6c, 0x6f, 0x70, 0x65,
+	0x70, 0x72, 0x6f, 0x74, 0x6f, 0x22, 0x5d, 0x0a, 0x09, 0x4d, 0x69, 0x6e, 0x69, 0x62, 0x6c, 0x6f,
+	0x63, 0x6b, 0x12, 0x27, 0x0a, 0x06, 0x65, 0x76, 0x65, 0x6e, 0x74, 0x73, 0x18, 0x01, 0x20, 0x03,
+	0x28, 0x0b, 0x32, 0x0f, 0x2e, 0x72, 0x69, 0x76, 0x65, 0x72, 0x2e, 0x45, 0x6e, 0x76, 0x65, 0x6c,
+	0x6f, 0x70, 0x65, 0x52, 0x06, 0x65, 0x76, 0x65, 0x6e, 0x74, 0x73, 0x12, 0x27, 0x0a, 0x06, 0x68,
+	0x65, 0x61, 0x64, 0x65, 0x72, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x0f, 0x2e, 0x72, 0x69,
+	0x76, 0x65, 0x72, 0x2e, 0x45, 0x6e, 0x76, 0x65, 0x6c, 0x6f, 0x70, 0x65, 0x52, 0x06, 0x68, 0x65,
+	0x61, 0x64, 0x65, 0x72, 0x22, 0x52, 0x0a, 0x08, 0x45, 0x6e, 0x76, 0x65, 0x6c, 0x6f, 0x70, 0x65,
 	0x12, 0x12, 0x0a, 0x04, 0x68, 0x61, 0x73, 0x68, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0c, 0x52, 0x04,
 	0x68, 0x61, 0x73, 0x68, 0x12, 0x1c, 0x0a, 0x09, 0x73, 0x69, 0x67, 0x6e, 0x61, 0x74, 0x75, 0x72,
 	0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0c, 0x52, 0x09, 0x73, 0x69, 0x67, 0x6e, 0x61, 0x74, 0x75,
@@ -10794,214 +10781,213 @@ var file_protocol_proto_goTypes = []interface{}{
 var file_protocol_proto_depIdxs = []int32{
 	9,   // 0: river.Miniblock.events:type_name -> river.Envelope
 	9,   // 1: river.Miniblock.header:type_name -> river.Envelope
-	9,   // 2: river.Miniblock.snapshot:type_name -> river.Envelope
-	35,  // 3: river.StreamEvent.tags:type_name -> river.Tags
-	11,  // 4: river.StreamEvent.miniblock_header:type_name -> river.MiniblockHeader
-	12,  // 5: river.StreamEvent.member_payload:type_name -> river.MemberPayload
-	13,  // 6: river.StreamEvent.space_payload:type_name -> river.SpacePayload
-	14,  // 7: river.StreamEvent.channel_payload:type_name -> river.ChannelPayload
-	17,  // 8: river.StreamEvent.user_payload:type_name -> river.UserPayload
-	19,  // 9: river.StreamEvent.user_settings_payload:type_name -> river.UserSettingsPayload
-	20,  // 10: river.StreamEvent.user_metadata_payload:type_name -> river.UserMetadataPayload
-	18,  // 11: river.StreamEvent.user_inbox_payload:type_name -> river.UserInboxPayload
-	21,  // 12: river.StreamEvent.media_payload:type_name -> river.MediaPayload
-	15,  // 13: river.StreamEvent.dm_channel_payload:type_name -> river.DmChannelPayload
-	16,  // 14: river.StreamEvent.gdm_channel_payload:type_name -> river.GdmChannelPayload
-	134, // 15: river.MiniblockHeader.timestamp:type_name -> google.protobuf.Timestamp
-	22,  // 16: river.MiniblockHeader.snapshot:type_name -> river.Snapshot
-	135, // 17: river.MiniblockHeader.none:type_name -> google.protobuf.Empty
-	68,  // 18: river.MemberPayload.membership:type_name -> river.MemberPayload.Membership
-	69,  // 19: river.MemberPayload.key_solicitation:type_name -> river.MemberPayload.KeySolicitation
-	70,  // 20: river.MemberPayload.key_fulfillment:type_name -> river.MemberPayload.KeyFulfillment
-	28,  // 21: river.MemberPayload.username:type_name -> river.EncryptedData
-	28,  // 22: river.MemberPayload.display_name:type_name -> river.EncryptedData
-	71,  // 23: river.MemberPayload.nft:type_name -> river.MemberPayload.Nft
-	73,  // 24: river.MemberPayload.pin:type_name -> river.MemberPayload.Pin
-	74,  // 25: river.MemberPayload.unpin:type_name -> river.MemberPayload.Unpin
-	76,  // 26: river.MemberPayload.member_blockchain_transaction:type_name -> river.MemberPayload.MemberBlockchainTransaction
-	75,  // 27: river.MemberPayload.encryption_algorithm:type_name -> river.MemberPayload.EncryptionAlgorithm
-	81,  // 28: river.SpacePayload.inception:type_name -> river.SpacePayload.Inception
-	84,  // 29: river.SpacePayload.channel:type_name -> river.SpacePayload.ChannelUpdate
-	28,  // 30: river.SpacePayload.space_image:type_name -> river.EncryptedData
-	85,  // 31: river.SpacePayload.update_channel_autojoin:type_name -> river.SpacePayload.UpdateChannelAutojoin
-	86,  // 32: river.SpacePayload.update_channel_hide_user_join_leave_events:type_name -> river.SpacePayload.UpdateChannelHideUserJoinLeaveEvents
-	88,  // 33: river.ChannelPayload.inception:type_name -> river.ChannelPayload.Inception
-	28,  // 34: river.ChannelPayload.message:type_name -> river.EncryptedData
-	89,  // 35: river.ChannelPayload.redaction:type_name -> river.ChannelPayload.Redaction
-	91,  // 36: river.DmChannelPayload.inception:type_name -> river.DmChannelPayload.Inception
-	28,  // 37: river.DmChannelPayload.message:type_name -> river.EncryptedData
-	93,  // 38: river.GdmChannelPayload.inception:type_name -> river.GdmChannelPayload.Inception
-	28,  // 39: river.GdmChannelPayload.message:type_name -> river.EncryptedData
-	28,  // 40: river.GdmChannelPayload.channel_properties:type_name -> river.EncryptedData
-	95,  // 41: river.UserPayload.inception:type_name -> river.UserPayload.Inception
-	96,  // 42: river.UserPayload.user_membership:type_name -> river.UserPayload.UserMembership
-	97,  // 43: river.UserPayload.user_membership_action:type_name -> river.UserPayload.UserMembershipAction
-	23,  // 44: river.UserPayload.blockchain_transaction:type_name -> river.BlockchainTransaction
-	98,  // 45: river.UserPayload.received_blockchain_transaction:type_name -> river.UserPayload.ReceivedBlockchainTransaction
-	102, // 46: river.UserInboxPayload.inception:type_name -> river.UserInboxPayload.Inception
-	104, // 47: river.UserInboxPayload.ack:type_name -> river.UserInboxPayload.Ack
-	103, // 48: river.UserInboxPayload.group_encryption_sessions:type_name -> river.UserInboxPayload.GroupEncryptionSessions
-	109, // 49: river.UserSettingsPayload.inception:type_name -> river.UserSettingsPayload.Inception
-	111, // 50: river.UserSettingsPayload.fully_read_markers:type_name -> river.UserSettingsPayload.FullyReadMarkers
-	112, // 51: river.UserSettingsPayload.user_block:type_name -> river.UserSettingsPayload.UserBlock
-	116, // 52: river.UserMetadataPayload.inception:type_name -> river.UserMetadataPayload.Inception
-	117, // 53: river.UserMetadataPayload.encryption_device:type_name -> river.UserMetadataPayload.EncryptionDevice
-	28,  // 54: river.UserMetadataPayload.profile_image:type_name -> river.EncryptedData
-	28,  // 55: river.UserMetadataPayload.bio:type_name -> river.EncryptedData
-	119, // 56: river.MediaPayload.inception:type_name -> river.MediaPayload.Inception
-	120, // 57: river.MediaPayload.chunk:type_name -> river.MediaPayload.Chunk
-	66,  // 58: river.Snapshot.members:type_name -> river.MemberPayload.Snapshot
-	79,  // 59: river.Snapshot.space_content:type_name -> river.SpacePayload.Snapshot
-	87,  // 60: river.Snapshot.channel_content:type_name -> river.ChannelPayload.Snapshot
-	94,  // 61: river.Snapshot.user_content:type_name -> river.UserPayload.Snapshot
-	108, // 62: river.Snapshot.user_settings_content:type_name -> river.UserSettingsPayload.Snapshot
-	115, // 63: river.Snapshot.user_metadata_content:type_name -> river.UserMetadataPayload.Snapshot
-	118, // 64: river.Snapshot.media_content:type_name -> river.MediaPayload.Snapshot
-	90,  // 65: river.Snapshot.dm_channel_content:type_name -> river.DmChannelPayload.Snapshot
-	92,  // 66: river.Snapshot.gdm_channel_content:type_name -> river.GdmChannelPayload.Snapshot
-	101, // 67: river.Snapshot.user_inbox_content:type_name -> river.UserInboxPayload.Snapshot
-	24,  // 68: river.BlockchainTransaction.receipt:type_name -> river.BlockchainTransactionReceipt
-	25,  // 69: river.BlockchainTransaction.solana_receipt:type_name -> river.SolanaBlockchainTransactionReceipt
-	121, // 70: river.BlockchainTransaction.tip:type_name -> river.BlockchainTransaction.Tip
-	122, // 71: river.BlockchainTransaction.token_transfer:type_name -> river.BlockchainTransaction.TokenTransfer
-	123, // 72: river.BlockchainTransaction.space_review:type_name -> river.BlockchainTransaction.SpaceReview
-	126, // 73: river.BlockchainTransactionReceipt.logs:type_name -> river.BlockchainTransactionReceipt.Log
-	127, // 74: river.SolanaBlockchainTransactionReceipt.transaction:type_name -> river.SolanaBlockchainTransactionReceipt.Transaction
-	128, // 75: river.SolanaBlockchainTransactionReceipt.meta:type_name -> river.SolanaBlockchainTransactionReceipt.Meta
-	5,   // 76: river.EncryptedData.version:type_name -> river.EncryptedDataVersion
-	28,  // 77: river.WrappedEncryptedData.data:type_name -> river.EncryptedData
-	9,   // 78: river.StreamAndCookie.events:type_name -> river.Envelope
-	30,  // 79: river.StreamAndCookie.next_sync_cookie:type_name -> river.SyncCookie
-	8,   // 80: river.StreamAndCookie.miniblocks:type_name -> river.Miniblock
-	9,   // 81: river.Minipool.events:type_name -> river.Envelope
-	3,   // 82: river.Tags.message_interaction_type:type_name -> river.MessageInteractionType
-	4,   // 83: river.Tags.group_mention_types:type_name -> river.GroupMentionType
-	8,   // 84: river.GetStreamExResponse.miniblock:type_name -> river.Miniblock
-	34,  // 85: river.GetStreamExResponse.minipool:type_name -> river.Minipool
-	9,   // 86: river.CreateStreamRequest.events:type_name -> river.Envelope
-	131, // 87: river.CreateStreamRequest.metadata:type_name -> river.CreateStreamRequest.MetadataEntry
-	32,  // 88: river.CreateStreamResponse.stream:type_name -> river.StreamAndCookie
-	26,  // 89: river.CreateStreamResponse.derived_events:type_name -> river.EventRef
-	9,   // 90: river.CreateMediaStreamRequest.events:type_name -> river.Envelope
-	132, // 91: river.CreateMediaStreamRequest.metadata:type_name -> river.CreateMediaStreamRequest.MetadataEntry
-	31,  // 92: river.CreateMediaStreamResponse.next_creation_cookie:type_name -> river.CreationCookie
-	30,  // 93: river.GetStreamRequest.sync_cookie:type_name -> river.SyncCookie
-	32,  // 94: river.GetStreamResponse.stream:type_name -> river.StreamAndCookie
-	8,   // 95: river.GetMiniblocksResponse.miniblocks:type_name -> river.Miniblock
-	9,   // 96: river.AddEventRequest.event:type_name -> river.Envelope
-	133, // 97: river.AddEventResponse.error:type_name -> river.AddEventResponse.Error
-	26,  // 98: river.AddEventResponse.new_events:type_name -> river.EventRef
-	9,   // 99: river.AddMediaEventRequest.event:type_name -> river.Envelope
-	31,  // 100: river.AddMediaEventRequest.creation_cookie:type_name -> river.CreationCookie
-	31,  // 101: river.AddMediaEventResponse.creation_cookie:type_name -> river.CreationCookie
-	30,  // 102: river.SyncStreamsRequest.sync_pos:type_name -> river.SyncCookie
-	0,   // 103: river.SyncStreamsResponse.sync_op:type_name -> river.SyncOp
-	32,  // 104: river.SyncStreamsResponse.stream:type_name -> river.StreamAndCookie
-	30,  // 105: river.AddStreamToSyncRequest.sync_pos:type_name -> river.SyncCookie
-	30,  // 106: river.ModifySyncRequest.add_streams:type_name -> river.SyncCookie
-	58,  // 107: river.ModifySyncResponse.adds:type_name -> river.SyncStreamOpStatus
-	58,  // 108: river.ModifySyncResponse.removals:type_name -> river.SyncStreamOpStatus
-	134, // 109: river.InfoResponse.start_time:type_name -> google.protobuf.Timestamp
-	77,  // 110: river.MemberPayload.Snapshot.joined:type_name -> river.MemberPayload.Snapshot.Member
-	72,  // 111: river.MemberPayload.Snapshot.pins:type_name -> river.MemberPayload.SnappedPin
-	75,  // 112: river.MemberPayload.Snapshot.encryption_algorithm:type_name -> river.MemberPayload.EncryptionAlgorithm
-	78,  // 113: river.MemberPayload.Snapshot.tips:type_name -> river.MemberPayload.Snapshot.TipsEntry
-	1,   // 114: river.MemberPayload.Membership.op:type_name -> river.MembershipOp
-	73,  // 115: river.MemberPayload.SnappedPin.pin:type_name -> river.MemberPayload.Pin
-	10,  // 116: river.MemberPayload.Pin.event:type_name -> river.StreamEvent
-	23,  // 117: river.MemberPayload.MemberBlockchainTransaction.transaction:type_name -> river.BlockchainTransaction
-	69,  // 118: river.MemberPayload.Snapshot.Member.solicitations:type_name -> river.MemberPayload.KeySolicitation
-	29,  // 119: river.MemberPayload.Snapshot.Member.username:type_name -> river.WrappedEncryptedData
-	29,  // 120: river.MemberPayload.Snapshot.Member.display_name:type_name -> river.WrappedEncryptedData
-	71,  // 121: river.MemberPayload.Snapshot.Member.nft:type_name -> river.MemberPayload.Nft
-	81,  // 122: river.SpacePayload.Snapshot.inception:type_name -> river.SpacePayload.Inception
-	83,  // 123: river.SpacePayload.Snapshot.channels:type_name -> river.SpacePayload.ChannelMetadata
-	80,  // 124: river.SpacePayload.Snapshot.space_image:type_name -> river.SpacePayload.SnappedSpaceImage
-	28,  // 125: river.SpacePayload.SnappedSpaceImage.data:type_name -> river.EncryptedData
-	27,  // 126: river.SpacePayload.Inception.settings:type_name -> river.StreamSettings
-	2,   // 127: river.SpacePayload.ChannelMetadata.op:type_name -> river.ChannelOp
-	26,  // 128: river.SpacePayload.ChannelMetadata.origin_event:type_name -> river.EventRef
-	82,  // 129: river.SpacePayload.ChannelMetadata.settings:type_name -> river.SpacePayload.ChannelSettings
-	2,   // 130: river.SpacePayload.ChannelUpdate.op:type_name -> river.ChannelOp
-	26,  // 131: river.SpacePayload.ChannelUpdate.origin_event:type_name -> river.EventRef
-	82,  // 132: river.SpacePayload.ChannelUpdate.settings:type_name -> river.SpacePayload.ChannelSettings
-	88,  // 133: river.ChannelPayload.Snapshot.inception:type_name -> river.ChannelPayload.Inception
-	27,  // 134: river.ChannelPayload.Inception.settings:type_name -> river.StreamSettings
-	82,  // 135: river.ChannelPayload.Inception.channel_settings:type_name -> river.SpacePayload.ChannelSettings
-	91,  // 136: river.DmChannelPayload.Snapshot.inception:type_name -> river.DmChannelPayload.Inception
-	27,  // 137: river.DmChannelPayload.Inception.settings:type_name -> river.StreamSettings
-	93,  // 138: river.GdmChannelPayload.Snapshot.inception:type_name -> river.GdmChannelPayload.Inception
-	29,  // 139: river.GdmChannelPayload.Snapshot.channel_properties:type_name -> river.WrappedEncryptedData
-	28,  // 140: river.GdmChannelPayload.Inception.channel_properties:type_name -> river.EncryptedData
-	27,  // 141: river.GdmChannelPayload.Inception.settings:type_name -> river.StreamSettings
-	95,  // 142: river.UserPayload.Snapshot.inception:type_name -> river.UserPayload.Inception
-	96,  // 143: river.UserPayload.Snapshot.memberships:type_name -> river.UserPayload.UserMembership
-	99,  // 144: river.UserPayload.Snapshot.tips_sent:type_name -> river.UserPayload.Snapshot.TipsSentEntry
-	100, // 145: river.UserPayload.Snapshot.tips_received:type_name -> river.UserPayload.Snapshot.TipsReceivedEntry
-	27,  // 146: river.UserPayload.Inception.settings:type_name -> river.StreamSettings
-	1,   // 147: river.UserPayload.UserMembership.op:type_name -> river.MembershipOp
-	1,   // 148: river.UserPayload.UserMembershipAction.op:type_name -> river.MembershipOp
-	23,  // 149: river.UserPayload.ReceivedBlockchainTransaction.transaction:type_name -> river.BlockchainTransaction
-	102, // 150: river.UserInboxPayload.Snapshot.inception:type_name -> river.UserInboxPayload.Inception
-	106, // 151: river.UserInboxPayload.Snapshot.device_summary:type_name -> river.UserInboxPayload.Snapshot.DeviceSummaryEntry
-	27,  // 152: river.UserInboxPayload.Inception.settings:type_name -> river.StreamSettings
-	107, // 153: river.UserInboxPayload.GroupEncryptionSessions.ciphertexts:type_name -> river.UserInboxPayload.GroupEncryptionSessions.CiphertextsEntry
-	105, // 154: river.UserInboxPayload.Snapshot.DeviceSummaryEntry.value:type_name -> river.UserInboxPayload.Snapshot.DeviceSummary
-	109, // 155: river.UserSettingsPayload.Snapshot.inception:type_name -> river.UserSettingsPayload.Inception
-	111, // 156: river.UserSettingsPayload.Snapshot.fully_read_markers:type_name -> river.UserSettingsPayload.FullyReadMarkers
-	113, // 157: river.UserSettingsPayload.Snapshot.user_blocks_list:type_name -> river.UserSettingsPayload.Snapshot.UserBlocks
-	27,  // 158: river.UserSettingsPayload.Inception.settings:type_name -> river.StreamSettings
-	110, // 159: river.UserSettingsPayload.FullyReadMarkers.content:type_name -> river.UserSettingsPayload.MarkerContent
-	114, // 160: river.UserSettingsPayload.Snapshot.UserBlocks.blocks:type_name -> river.UserSettingsPayload.Snapshot.UserBlocks.Block
-	116, // 161: river.UserMetadataPayload.Snapshot.inception:type_name -> river.UserMetadataPayload.Inception
-	117, // 162: river.UserMetadataPayload.Snapshot.encryption_devices:type_name -> river.UserMetadataPayload.EncryptionDevice
-	29,  // 163: river.UserMetadataPayload.Snapshot.profile_image:type_name -> river.WrappedEncryptedData
-	29,  // 164: river.UserMetadataPayload.Snapshot.bio:type_name -> river.WrappedEncryptedData
-	27,  // 165: river.UserMetadataPayload.Inception.settings:type_name -> river.StreamSettings
-	119, // 166: river.MediaPayload.Snapshot.inception:type_name -> river.MediaPayload.Inception
-	27,  // 167: river.MediaPayload.Inception.settings:type_name -> river.StreamSettings
-	124, // 168: river.BlockchainTransaction.Tip.event:type_name -> river.BlockchainTransaction.Tip.Event
-	7,   // 169: river.BlockchainTransaction.SpaceReview.action:type_name -> river.BlockchainTransaction.SpaceReview.Action
-	125, // 170: river.BlockchainTransaction.SpaceReview.event:type_name -> river.BlockchainTransaction.SpaceReview.Event
-	129, // 171: river.SolanaBlockchainTransactionReceipt.Meta.pre_token_balances:type_name -> river.SolanaBlockchainTransactionReceipt.Meta.TokenBalance
-	129, // 172: river.SolanaBlockchainTransactionReceipt.Meta.post_token_balances:type_name -> river.SolanaBlockchainTransactionReceipt.Meta.TokenBalance
-	130, // 173: river.SolanaBlockchainTransactionReceipt.Meta.TokenBalance.amount:type_name -> river.SolanaBlockchainTransactionReceipt.Meta.TokenBalance.UITokenAmount
-	6,   // 174: river.AddEventResponse.Error.code:type_name -> river.Err
-	37,  // 175: river.StreamService.CreateStream:input_type -> river.CreateStreamRequest
-	39,  // 176: river.StreamService.CreateMediaStream:input_type -> river.CreateMediaStreamRequest
-	41,  // 177: river.StreamService.GetStream:input_type -> river.GetStreamRequest
-	33,  // 178: river.StreamService.GetStreamEx:input_type -> river.GetStreamExRequest
-	43,  // 179: river.StreamService.GetMiniblocks:input_type -> river.GetMiniblocksRequest
-	45,  // 180: river.StreamService.GetLastMiniblockHash:input_type -> river.GetLastMiniblockHashRequest
-	47,  // 181: river.StreamService.AddEvent:input_type -> river.AddEventRequest
-	49,  // 182: river.StreamService.AddMediaEvent:input_type -> river.AddMediaEventRequest
-	51,  // 183: river.StreamService.SyncStreams:input_type -> river.SyncStreamsRequest
-	53,  // 184: river.StreamService.AddStreamToSync:input_type -> river.AddStreamToSyncRequest
-	57,  // 185: river.StreamService.ModifySync:input_type -> river.ModifySyncRequest
-	60,  // 186: river.StreamService.CancelSync:input_type -> river.CancelSyncRequest
-	55,  // 187: river.StreamService.RemoveStreamFromSync:input_type -> river.RemoveStreamFromSyncRequest
-	64,  // 188: river.StreamService.Info:input_type -> river.InfoRequest
-	62,  // 189: river.StreamService.PingSync:input_type -> river.PingSyncRequest
-	38,  // 190: river.StreamService.CreateStream:output_type -> river.CreateStreamResponse
-	40,  // 191: river.StreamService.CreateMediaStream:output_type -> river.CreateMediaStreamResponse
-	42,  // 192: river.StreamService.GetStream:output_type -> river.GetStreamResponse
-	36,  // 193: river.StreamService.GetStreamEx:output_type -> river.GetStreamExResponse
-	44,  // 194: river.StreamService.GetMiniblocks:output_type -> river.GetMiniblocksResponse
-	46,  // 195: river.StreamService.GetLastMiniblockHash:output_type -> river.GetLastMiniblockHashResponse
-	48,  // 196: river.StreamService.AddEvent:output_type -> river.AddEventResponse
-	50,  // 197: river.StreamService.AddMediaEvent:output_type -> river.AddMediaEventResponse
-	52,  // 198: river.StreamService.SyncStreams:output_type -> river.SyncStreamsResponse
-	54,  // 199: river.StreamService.AddStreamToSync:output_type -> river.AddStreamToSyncResponse
-	59,  // 200: river.StreamService.ModifySync:output_type -> river.ModifySyncResponse
-	61,  // 201: river.StreamService.CancelSync:output_type -> river.CancelSyncResponse
-	56,  // 202: river.StreamService.RemoveStreamFromSync:output_type -> river.RemoveStreamFromSyncResponse
-	65,  // 203: river.StreamService.Info:output_type -> river.InfoResponse
-	63,  // 204: river.StreamService.PingSync:output_type -> river.PingSyncResponse
-	190, // [190:205] is the sub-list for method output_type
-	175, // [175:190] is the sub-list for method input_type
-	175, // [175:175] is the sub-list for extension type_name
-	175, // [175:175] is the sub-list for extension extendee
-	0,   // [0:175] is the sub-list for field type_name
+	35,  // 2: river.StreamEvent.tags:type_name -> river.Tags
+	11,  // 3: river.StreamEvent.miniblock_header:type_name -> river.MiniblockHeader
+	12,  // 4: river.StreamEvent.member_payload:type_name -> river.MemberPayload
+	13,  // 5: river.StreamEvent.space_payload:type_name -> river.SpacePayload
+	14,  // 6: river.StreamEvent.channel_payload:type_name -> river.ChannelPayload
+	17,  // 7: river.StreamEvent.user_payload:type_name -> river.UserPayload
+	19,  // 8: river.StreamEvent.user_settings_payload:type_name -> river.UserSettingsPayload
+	20,  // 9: river.StreamEvent.user_metadata_payload:type_name -> river.UserMetadataPayload
+	18,  // 10: river.StreamEvent.user_inbox_payload:type_name -> river.UserInboxPayload
+	21,  // 11: river.StreamEvent.media_payload:type_name -> river.MediaPayload
+	15,  // 12: river.StreamEvent.dm_channel_payload:type_name -> river.DmChannelPayload
+	16,  // 13: river.StreamEvent.gdm_channel_payload:type_name -> river.GdmChannelPayload
+	134, // 14: river.MiniblockHeader.timestamp:type_name -> google.protobuf.Timestamp
+	22,  // 15: river.MiniblockHeader.snapshot:type_name -> river.Snapshot
+	135, // 16: river.MiniblockHeader.none:type_name -> google.protobuf.Empty
+	68,  // 17: river.MemberPayload.membership:type_name -> river.MemberPayload.Membership
+	69,  // 18: river.MemberPayload.key_solicitation:type_name -> river.MemberPayload.KeySolicitation
+	70,  // 19: river.MemberPayload.key_fulfillment:type_name -> river.MemberPayload.KeyFulfillment
+	28,  // 20: river.MemberPayload.username:type_name -> river.EncryptedData
+	28,  // 21: river.MemberPayload.display_name:type_name -> river.EncryptedData
+	71,  // 22: river.MemberPayload.nft:type_name -> river.MemberPayload.Nft
+	73,  // 23: river.MemberPayload.pin:type_name -> river.MemberPayload.Pin
+	74,  // 24: river.MemberPayload.unpin:type_name -> river.MemberPayload.Unpin
+	76,  // 25: river.MemberPayload.member_blockchain_transaction:type_name -> river.MemberPayload.MemberBlockchainTransaction
+	75,  // 26: river.MemberPayload.encryption_algorithm:type_name -> river.MemberPayload.EncryptionAlgorithm
+	81,  // 27: river.SpacePayload.inception:type_name -> river.SpacePayload.Inception
+	84,  // 28: river.SpacePayload.channel:type_name -> river.SpacePayload.ChannelUpdate
+	28,  // 29: river.SpacePayload.space_image:type_name -> river.EncryptedData
+	85,  // 30: river.SpacePayload.update_channel_autojoin:type_name -> river.SpacePayload.UpdateChannelAutojoin
+	86,  // 31: river.SpacePayload.update_channel_hide_user_join_leave_events:type_name -> river.SpacePayload.UpdateChannelHideUserJoinLeaveEvents
+	88,  // 32: river.ChannelPayload.inception:type_name -> river.ChannelPayload.Inception
+	28,  // 33: river.ChannelPayload.message:type_name -> river.EncryptedData
+	89,  // 34: river.ChannelPayload.redaction:type_name -> river.ChannelPayload.Redaction
+	91,  // 35: river.DmChannelPayload.inception:type_name -> river.DmChannelPayload.Inception
+	28,  // 36: river.DmChannelPayload.message:type_name -> river.EncryptedData
+	93,  // 37: river.GdmChannelPayload.inception:type_name -> river.GdmChannelPayload.Inception
+	28,  // 38: river.GdmChannelPayload.message:type_name -> river.EncryptedData
+	28,  // 39: river.GdmChannelPayload.channel_properties:type_name -> river.EncryptedData
+	95,  // 40: river.UserPayload.inception:type_name -> river.UserPayload.Inception
+	96,  // 41: river.UserPayload.user_membership:type_name -> river.UserPayload.UserMembership
+	97,  // 42: river.UserPayload.user_membership_action:type_name -> river.UserPayload.UserMembershipAction
+	23,  // 43: river.UserPayload.blockchain_transaction:type_name -> river.BlockchainTransaction
+	98,  // 44: river.UserPayload.received_blockchain_transaction:type_name -> river.UserPayload.ReceivedBlockchainTransaction
+	102, // 45: river.UserInboxPayload.inception:type_name -> river.UserInboxPayload.Inception
+	104, // 46: river.UserInboxPayload.ack:type_name -> river.UserInboxPayload.Ack
+	103, // 47: river.UserInboxPayload.group_encryption_sessions:type_name -> river.UserInboxPayload.GroupEncryptionSessions
+	109, // 48: river.UserSettingsPayload.inception:type_name -> river.UserSettingsPayload.Inception
+	111, // 49: river.UserSettingsPayload.fully_read_markers:type_name -> river.UserSettingsPayload.FullyReadMarkers
+	112, // 50: river.UserSettingsPayload.user_block:type_name -> river.UserSettingsPayload.UserBlock
+	116, // 51: river.UserMetadataPayload.inception:type_name -> river.UserMetadataPayload.Inception
+	117, // 52: river.UserMetadataPayload.encryption_device:type_name -> river.UserMetadataPayload.EncryptionDevice
+	28,  // 53: river.UserMetadataPayload.profile_image:type_name -> river.EncryptedData
+	28,  // 54: river.UserMetadataPayload.bio:type_name -> river.EncryptedData
+	119, // 55: river.MediaPayload.inception:type_name -> river.MediaPayload.Inception
+	120, // 56: river.MediaPayload.chunk:type_name -> river.MediaPayload.Chunk
+	66,  // 57: river.Snapshot.members:type_name -> river.MemberPayload.Snapshot
+	79,  // 58: river.Snapshot.space_content:type_name -> river.SpacePayload.Snapshot
+	87,  // 59: river.Snapshot.channel_content:type_name -> river.ChannelPayload.Snapshot
+	94,  // 60: river.Snapshot.user_content:type_name -> river.UserPayload.Snapshot
+	108, // 61: river.Snapshot.user_settings_content:type_name -> river.UserSettingsPayload.Snapshot
+	115, // 62: river.Snapshot.user_metadata_content:type_name -> river.UserMetadataPayload.Snapshot
+	118, // 63: river.Snapshot.media_content:type_name -> river.MediaPayload.Snapshot
+	90,  // 64: river.Snapshot.dm_channel_content:type_name -> river.DmChannelPayload.Snapshot
+	92,  // 65: river.Snapshot.gdm_channel_content:type_name -> river.GdmChannelPayload.Snapshot
+	101, // 66: river.Snapshot.user_inbox_content:type_name -> river.UserInboxPayload.Snapshot
+	24,  // 67: river.BlockchainTransaction.receipt:type_name -> river.BlockchainTransactionReceipt
+	25,  // 68: river.BlockchainTransaction.solana_receipt:type_name -> river.SolanaBlockchainTransactionReceipt
+	121, // 69: river.BlockchainTransaction.tip:type_name -> river.BlockchainTransaction.Tip
+	122, // 70: river.BlockchainTransaction.token_transfer:type_name -> river.BlockchainTransaction.TokenTransfer
+	123, // 71: river.BlockchainTransaction.space_review:type_name -> river.BlockchainTransaction.SpaceReview
+	126, // 72: river.BlockchainTransactionReceipt.logs:type_name -> river.BlockchainTransactionReceipt.Log
+	127, // 73: river.SolanaBlockchainTransactionReceipt.transaction:type_name -> river.SolanaBlockchainTransactionReceipt.Transaction
+	128, // 74: river.SolanaBlockchainTransactionReceipt.meta:type_name -> river.SolanaBlockchainTransactionReceipt.Meta
+	5,   // 75: river.EncryptedData.version:type_name -> river.EncryptedDataVersion
+	28,  // 76: river.WrappedEncryptedData.data:type_name -> river.EncryptedData
+	9,   // 77: river.StreamAndCookie.events:type_name -> river.Envelope
+	30,  // 78: river.StreamAndCookie.next_sync_cookie:type_name -> river.SyncCookie
+	8,   // 79: river.StreamAndCookie.miniblocks:type_name -> river.Miniblock
+	9,   // 80: river.Minipool.events:type_name -> river.Envelope
+	3,   // 81: river.Tags.message_interaction_type:type_name -> river.MessageInteractionType
+	4,   // 82: river.Tags.group_mention_types:type_name -> river.GroupMentionType
+	8,   // 83: river.GetStreamExResponse.miniblock:type_name -> river.Miniblock
+	34,  // 84: river.GetStreamExResponse.minipool:type_name -> river.Minipool
+	9,   // 85: river.CreateStreamRequest.events:type_name -> river.Envelope
+	131, // 86: river.CreateStreamRequest.metadata:type_name -> river.CreateStreamRequest.MetadataEntry
+	32,  // 87: river.CreateStreamResponse.stream:type_name -> river.StreamAndCookie
+	26,  // 88: river.CreateStreamResponse.derived_events:type_name -> river.EventRef
+	9,   // 89: river.CreateMediaStreamRequest.events:type_name -> river.Envelope
+	132, // 90: river.CreateMediaStreamRequest.metadata:type_name -> river.CreateMediaStreamRequest.MetadataEntry
+	31,  // 91: river.CreateMediaStreamResponse.next_creation_cookie:type_name -> river.CreationCookie
+	30,  // 92: river.GetStreamRequest.sync_cookie:type_name -> river.SyncCookie
+	32,  // 93: river.GetStreamResponse.stream:type_name -> river.StreamAndCookie
+	8,   // 94: river.GetMiniblocksResponse.miniblocks:type_name -> river.Miniblock
+	9,   // 95: river.AddEventRequest.event:type_name -> river.Envelope
+	133, // 96: river.AddEventResponse.error:type_name -> river.AddEventResponse.Error
+	26,  // 97: river.AddEventResponse.new_events:type_name -> river.EventRef
+	9,   // 98: river.AddMediaEventRequest.event:type_name -> river.Envelope
+	31,  // 99: river.AddMediaEventRequest.creation_cookie:type_name -> river.CreationCookie
+	31,  // 100: river.AddMediaEventResponse.creation_cookie:type_name -> river.CreationCookie
+	30,  // 101: river.SyncStreamsRequest.sync_pos:type_name -> river.SyncCookie
+	0,   // 102: river.SyncStreamsResponse.sync_op:type_name -> river.SyncOp
+	32,  // 103: river.SyncStreamsResponse.stream:type_name -> river.StreamAndCookie
+	30,  // 104: river.AddStreamToSyncRequest.sync_pos:type_name -> river.SyncCookie
+	30,  // 105: river.ModifySyncRequest.add_streams:type_name -> river.SyncCookie
+	58,  // 106: river.ModifySyncResponse.adds:type_name -> river.SyncStreamOpStatus
+	58,  // 107: river.ModifySyncResponse.removals:type_name -> river.SyncStreamOpStatus
+	134, // 108: river.InfoResponse.start_time:type_name -> google.protobuf.Timestamp
+	77,  // 109: river.MemberPayload.Snapshot.joined:type_name -> river.MemberPayload.Snapshot.Member
+	72,  // 110: river.MemberPayload.Snapshot.pins:type_name -> river.MemberPayload.SnappedPin
+	75,  // 111: river.MemberPayload.Snapshot.encryption_algorithm:type_name -> river.MemberPayload.EncryptionAlgorithm
+	78,  // 112: river.MemberPayload.Snapshot.tips:type_name -> river.MemberPayload.Snapshot.TipsEntry
+	1,   // 113: river.MemberPayload.Membership.op:type_name -> river.MembershipOp
+	73,  // 114: river.MemberPayload.SnappedPin.pin:type_name -> river.MemberPayload.Pin
+	10,  // 115: river.MemberPayload.Pin.event:type_name -> river.StreamEvent
+	23,  // 116: river.MemberPayload.MemberBlockchainTransaction.transaction:type_name -> river.BlockchainTransaction
+	69,  // 117: river.MemberPayload.Snapshot.Member.solicitations:type_name -> river.MemberPayload.KeySolicitation
+	29,  // 118: river.MemberPayload.Snapshot.Member.username:type_name -> river.WrappedEncryptedData
+	29,  // 119: river.MemberPayload.Snapshot.Member.display_name:type_name -> river.WrappedEncryptedData
+	71,  // 120: river.MemberPayload.Snapshot.Member.nft:type_name -> river.MemberPayload.Nft
+	81,  // 121: river.SpacePayload.Snapshot.inception:type_name -> river.SpacePayload.Inception
+	83,  // 122: river.SpacePayload.Snapshot.channels:type_name -> river.SpacePayload.ChannelMetadata
+	80,  // 123: river.SpacePayload.Snapshot.space_image:type_name -> river.SpacePayload.SnappedSpaceImage
+	28,  // 124: river.SpacePayload.SnappedSpaceImage.data:type_name -> river.EncryptedData
+	27,  // 125: river.SpacePayload.Inception.settings:type_name -> river.StreamSettings
+	2,   // 126: river.SpacePayload.ChannelMetadata.op:type_name -> river.ChannelOp
+	26,  // 127: river.SpacePayload.ChannelMetadata.origin_event:type_name -> river.EventRef
+	82,  // 128: river.SpacePayload.ChannelMetadata.settings:type_name -> river.SpacePayload.ChannelSettings
+	2,   // 129: river.SpacePayload.ChannelUpdate.op:type_name -> river.ChannelOp
+	26,  // 130: river.SpacePayload.ChannelUpdate.origin_event:type_name -> river.EventRef
+	82,  // 131: river.SpacePayload.ChannelUpdate.settings:type_name -> river.SpacePayload.ChannelSettings
+	88,  // 132: river.ChannelPayload.Snapshot.inception:type_name -> river.ChannelPayload.Inception
+	27,  // 133: river.ChannelPayload.Inception.settings:type_name -> river.StreamSettings
+	82,  // 134: river.ChannelPayload.Inception.channel_settings:type_name -> river.SpacePayload.ChannelSettings
+	91,  // 135: river.DmChannelPayload.Snapshot.inception:type_name -> river.DmChannelPayload.Inception
+	27,  // 136: river.DmChannelPayload.Inception.settings:type_name -> river.StreamSettings
+	93,  // 137: river.GdmChannelPayload.Snapshot.inception:type_name -> river.GdmChannelPayload.Inception
+	29,  // 138: river.GdmChannelPayload.Snapshot.channel_properties:type_name -> river.WrappedEncryptedData
+	28,  // 139: river.GdmChannelPayload.Inception.channel_properties:type_name -> river.EncryptedData
+	27,  // 140: river.GdmChannelPayload.Inception.settings:type_name -> river.StreamSettings
+	95,  // 141: river.UserPayload.Snapshot.inception:type_name -> river.UserPayload.Inception
+	96,  // 142: river.UserPayload.Snapshot.memberships:type_name -> river.UserPayload.UserMembership
+	99,  // 143: river.UserPayload.Snapshot.tips_sent:type_name -> river.UserPayload.Snapshot.TipsSentEntry
+	100, // 144: river.UserPayload.Snapshot.tips_received:type_name -> river.UserPayload.Snapshot.TipsReceivedEntry
+	27,  // 145: river.UserPayload.Inception.settings:type_name -> river.StreamSettings
+	1,   // 146: river.UserPayload.UserMembership.op:type_name -> river.MembershipOp
+	1,   // 147: river.UserPayload.UserMembershipAction.op:type_name -> river.MembershipOp
+	23,  // 148: river.UserPayload.ReceivedBlockchainTransaction.transaction:type_name -> river.BlockchainTransaction
+	102, // 149: river.UserInboxPayload.Snapshot.inception:type_name -> river.UserInboxPayload.Inception
+	106, // 150: river.UserInboxPayload.Snapshot.device_summary:type_name -> river.UserInboxPayload.Snapshot.DeviceSummaryEntry
+	27,  // 151: river.UserInboxPayload.Inception.settings:type_name -> river.StreamSettings
+	107, // 152: river.UserInboxPayload.GroupEncryptionSessions.ciphertexts:type_name -> river.UserInboxPayload.GroupEncryptionSessions.CiphertextsEntry
+	105, // 153: river.UserInboxPayload.Snapshot.DeviceSummaryEntry.value:type_name -> river.UserInboxPayload.Snapshot.DeviceSummary
+	109, // 154: river.UserSettingsPayload.Snapshot.inception:type_name -> river.UserSettingsPayload.Inception
+	111, // 155: river.UserSettingsPayload.Snapshot.fully_read_markers:type_name -> river.UserSettingsPayload.FullyReadMarkers
+	113, // 156: river.UserSettingsPayload.Snapshot.user_blocks_list:type_name -> river.UserSettingsPayload.Snapshot.UserBlocks
+	27,  // 157: river.UserSettingsPayload.Inception.settings:type_name -> river.StreamSettings
+	110, // 158: river.UserSettingsPayload.FullyReadMarkers.content:type_name -> river.UserSettingsPayload.MarkerContent
+	114, // 159: river.UserSettingsPayload.Snapshot.UserBlocks.blocks:type_name -> river.UserSettingsPayload.Snapshot.UserBlocks.Block
+	116, // 160: river.UserMetadataPayload.Snapshot.inception:type_name -> river.UserMetadataPayload.Inception
+	117, // 161: river.UserMetadataPayload.Snapshot.encryption_devices:type_name -> river.UserMetadataPayload.EncryptionDevice
+	29,  // 162: river.UserMetadataPayload.Snapshot.profile_image:type_name -> river.WrappedEncryptedData
+	29,  // 163: river.UserMetadataPayload.Snapshot.bio:type_name -> river.WrappedEncryptedData
+	27,  // 164: river.UserMetadataPayload.Inception.settings:type_name -> river.StreamSettings
+	119, // 165: river.MediaPayload.Snapshot.inception:type_name -> river.MediaPayload.Inception
+	27,  // 166: river.MediaPayload.Inception.settings:type_name -> river.StreamSettings
+	124, // 167: river.BlockchainTransaction.Tip.event:type_name -> river.BlockchainTransaction.Tip.Event
+	7,   // 168: river.BlockchainTransaction.SpaceReview.action:type_name -> river.BlockchainTransaction.SpaceReview.Action
+	125, // 169: river.BlockchainTransaction.SpaceReview.event:type_name -> river.BlockchainTransaction.SpaceReview.Event
+	129, // 170: river.SolanaBlockchainTransactionReceipt.Meta.pre_token_balances:type_name -> river.SolanaBlockchainTransactionReceipt.Meta.TokenBalance
+	129, // 171: river.SolanaBlockchainTransactionReceipt.Meta.post_token_balances:type_name -> river.SolanaBlockchainTransactionReceipt.Meta.TokenBalance
+	130, // 172: river.SolanaBlockchainTransactionReceipt.Meta.TokenBalance.amount:type_name -> river.SolanaBlockchainTransactionReceipt.Meta.TokenBalance.UITokenAmount
+	6,   // 173: river.AddEventResponse.Error.code:type_name -> river.Err
+	37,  // 174: river.StreamService.CreateStream:input_type -> river.CreateStreamRequest
+	39,  // 175: river.StreamService.CreateMediaStream:input_type -> river.CreateMediaStreamRequest
+	41,  // 176: river.StreamService.GetStream:input_type -> river.GetStreamRequest
+	33,  // 177: river.StreamService.GetStreamEx:input_type -> river.GetStreamExRequest
+	43,  // 178: river.StreamService.GetMiniblocks:input_type -> river.GetMiniblocksRequest
+	45,  // 179: river.StreamService.GetLastMiniblockHash:input_type -> river.GetLastMiniblockHashRequest
+	47,  // 180: river.StreamService.AddEvent:input_type -> river.AddEventRequest
+	49,  // 181: river.StreamService.AddMediaEvent:input_type -> river.AddMediaEventRequest
+	51,  // 182: river.StreamService.SyncStreams:input_type -> river.SyncStreamsRequest
+	53,  // 183: river.StreamService.AddStreamToSync:input_type -> river.AddStreamToSyncRequest
+	57,  // 184: river.StreamService.ModifySync:input_type -> river.ModifySyncRequest
+	60,  // 185: river.StreamService.CancelSync:input_type -> river.CancelSyncRequest
+	55,  // 186: river.StreamService.RemoveStreamFromSync:input_type -> river.RemoveStreamFromSyncRequest
+	64,  // 187: river.StreamService.Info:input_type -> river.InfoRequest
+	62,  // 188: river.StreamService.PingSync:input_type -> river.PingSyncRequest
+	38,  // 189: river.StreamService.CreateStream:output_type -> river.CreateStreamResponse
+	40,  // 190: river.StreamService.CreateMediaStream:output_type -> river.CreateMediaStreamResponse
+	42,  // 191: river.StreamService.GetStream:output_type -> river.GetStreamResponse
+	36,  // 192: river.StreamService.GetStreamEx:output_type -> river.GetStreamExResponse
+	44,  // 193: river.StreamService.GetMiniblocks:output_type -> river.GetMiniblocksResponse
+	46,  // 194: river.StreamService.GetLastMiniblockHash:output_type -> river.GetLastMiniblockHashResponse
+	48,  // 195: river.StreamService.AddEvent:output_type -> river.AddEventResponse
+	50,  // 196: river.StreamService.AddMediaEvent:output_type -> river.AddMediaEventResponse
+	52,  // 197: river.StreamService.SyncStreams:output_type -> river.SyncStreamsResponse
+	54,  // 198: river.StreamService.AddStreamToSync:output_type -> river.AddStreamToSyncResponse
+	59,  // 199: river.StreamService.ModifySync:output_type -> river.ModifySyncResponse
+	61,  // 200: river.StreamService.CancelSync:output_type -> river.CancelSyncResponse
+	56,  // 201: river.StreamService.RemoveStreamFromSync:output_type -> river.RemoveStreamFromSyncResponse
+	65,  // 202: river.StreamService.Info:output_type -> river.InfoResponse
+	63,  // 203: river.StreamService.PingSync:output_type -> river.PingSyncResponse
+	189, // [189:204] is the sub-list for method output_type
+	174, // [174:189] is the sub-list for method input_type
+	174, // [174:174] is the sub-list for extension type_name
+	174, // [174:174] is the sub-list for extension extendee
+	0,   // [0:174] is the sub-list for field type_name
 }
 
 func init() { file_protocol_proto_init() }
@@ -12439,7 +12425,6 @@ func file_protocol_proto_init() {
 			}
 		}
 	}
-	file_protocol_proto_msgTypes[0].OneofWrappers = []interface{}{}
 	file_protocol_proto_msgTypes[2].OneofWrappers = []interface{}{
 		(*StreamEvent_MiniblockHeader)(nil),
 		(*StreamEvent_MemberPayload)(nil),
