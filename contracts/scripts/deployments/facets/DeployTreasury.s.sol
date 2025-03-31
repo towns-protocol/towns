@@ -14,6 +14,9 @@ contract DeployTreasury is Deployer, FacetHelper {
   constructor() {
     // Funds
     addSelector(Treasury.withdraw.selector);
+    addSelector(Treasury.onERC721Received.selector);
+    addSelector(Treasury.onERC1155Received.selector);
+    addSelector(Treasury.onERC1155BatchReceived.selector);
   }
 
   function versionName() public pure override returns (string memory) {

@@ -3,6 +3,8 @@ pragma solidity ^0.8.23;
 
 // interfaces
 import {IMembershipBase} from "contracts/src/spaces/facets/membership/IMembership.sol";
+import {ITreasury} from "contracts/src/spaces/facets/treasury/ITreasury.sol";
+import {IERC1155Receiver} from "@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol";
 
 // libraries
 import {CurrencyTransfer} from "contracts/src/utils/libraries/CurrencyTransfer.sol";
@@ -14,36 +16,12 @@ import {CustomRevert} from "contracts/src/utils/libraries/CustomRevert.sol";
 import {MembershipStorage} from "contracts/src/spaces/facets/membership/MembershipStorage.sol";
 import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
 
-contract Treasury is TokenOwnableBase, ReentrancyGuard, Facet {
-  function onERC721Received(
-    address,
-    address,
-    uint256,
-    bytes memory
-  ) external pure returns (bytes4) {
-    return this.onERC721Received.selector;
+contract Treasury is TokenOwnableBase, ReentrancyGuard, Facet, ITreasury {
+  function __Treasury_init() external onlyInitializing {
+    _addInterface(type(IERC1155Receiver).interfaceId);
   }
 
-  function onERC1155Received(
-    address,
-    address,
-    uint256,
-    uint256,
-    bytes memory
-  ) external pure returns (bytes4) {
-    return this.onERC1155Received.selector;
-  }
-
-  function onERC1155BatchReceived(
-    address,
-    address,
-    uint256[] memory,
-    uint256[] memory,
-    bytes memory
-  ) external pure returns (bytes4) {
-    return this.onERC1155BatchReceived.selector;
-  }
-
+  ///@inheritdoc ITreasury
   function withdraw(address account) external onlyOwner nonReentrant {
     if (account == address(0))
       CustomRevert.revertWith(
@@ -67,5 +45,43 @@ contract Treasury is TokenOwnableBase, ReentrancyGuard, Facet {
       account,
       balance
     );
+
+    emit IMembershipBase.MembershipWithdrawal(account, balance);
+  }
+
+  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+  /*                           Hooks                            */
+  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+  ///@inheritdoc ITreasury
+  function onERC721Received(
+    address,
+    address,
+    uint256,
+    bytes memory
+  ) external pure returns (bytes4) {
+    return this.onERC721Received.selector;
+  }
+
+  ///@inheritdoc ITreasury
+  function onERC1155Received(
+    address,
+    address,
+    uint256,
+    uint256,
+    bytes memory
+  ) external pure returns (bytes4) {
+    return this.onERC1155Received.selector;
+  }
+
+  ///@inheritdoc ITreasury
+  function onERC1155BatchReceived(
+    address,
+    address,
+    uint256[] memory,
+    uint256[] memory,
+    bytes memory
+  ) external pure returns (bytes4) {
+    return this.onERC1155BatchReceived.selector;
   }
 }
