@@ -9,6 +9,7 @@ import { env } from 'utils'
 import { shimmerClass } from 'ui/styles/globals/shimmer.css'
 import { useEntitlements } from 'hooks/useEntitlements'
 import { minterRoleId } from '@components/SpaceSettingsPanel/rolePermissions.const'
+import { useIsSpaceCurrentlyFree } from '@components/SpaceSettingsPanel/hooks'
 import { EntitlementsDisplay } from './EntitlementsDisplay'
 import { useReadableMembershipInfo } from './useReadableMembershipInfo'
 import { getPriceText } from './townPageUtils'
@@ -32,6 +33,7 @@ export const TownInfoSection = ({ spaceId }: TownInfoSectionProps) => {
         spaceId ?? '',
     )
     const isMobile = useMobile()
+    const isSpaceFree = useIsSpaceCurrentlyFree({ spaceId })
 
     const hasReviews = totalReviews > 0
     const isReviewsEnabled = env.VITE_REVIEWS_ENABLED
@@ -144,7 +146,7 @@ export const TownInfoSection = ({ spaceId }: TownInfoSectionProps) => {
                             textAlign="center"
                             style={{ lineHeight: 0.5 }}
                         >
-                            {price}
+                            {isSpaceFree ? 'Free' : price}
                         </Text>
                     )}
                 </Box>
@@ -158,6 +160,8 @@ export const TownInfoSection = ({ spaceId }: TownInfoSectionProps) => {
                                     ? 'Gated'
                                     : price === 'Free'
                                     ? 'Membership'
+                                    : isSpaceFree
+                                    ? `${price} ETH Fee`
                                     : 'ETH'}
                             </Text>
                         </Box>

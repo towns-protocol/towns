@@ -183,6 +183,7 @@ export const ExploreCard = ({ address, variant }: ExploreCardProps) => {
                                     display: '-webkit-box',
                                     WebkitLineClamp: 1,
                                     WebkitBoxOrient: 'vertical',
+                                    paddingBottom: '4px',
                                 }}
                             >
                                 {spaceInfo?.shortDescription}
