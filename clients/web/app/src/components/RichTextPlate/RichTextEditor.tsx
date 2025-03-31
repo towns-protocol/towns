@@ -429,7 +429,9 @@ export const RichTextEditor = ({
                         editor={editor}
                         onFocusChange={onFocusChange}
                     />
-                    <CaptureLinkAttachmentsPlugin onUpdate={onMessageLinksUpdated} />
+                    {!isEditing && (
+                        <CaptureLinkAttachmentsPlugin onUpdate={onMessageLinksUpdated} />
+                    )}
                     <RememberInputPlugin storageId={storageId.current} />
                     {!isEditing && sendButtons}
                 </Stack>

@@ -9,6 +9,7 @@ import { MessageTimelineContext } from '@components/MessageTimeline/MessageTimel
 import { useSpaceChannels } from 'hooks/useSpaceChannels'
 import { useDevice } from 'hooks/useDevice'
 import { MediaDropContextProvider } from '@components/MediaDropContext/MediaDropContext'
+import { useMessageEditContext } from './MessageEditContext'
 type Props = {
     eventId: string
     latestEventId: string
@@ -25,15 +26,26 @@ export const TimelineMessageEditor = (props: Props) => {
     const { timelineActions } = useContext(MessageTimelineContext) ?? {}
     const { editChannelMessage } = useEditMessage({ channelId, spaceId })
 
+    const removedAttachmentIds = useMessageEditContext()?.removedAttachmentIds
+
     const onSend = useCallback(
-        (value: string, options: SendTextMessageOptions | undefined) => {
-            if (options) {
-                options.attachments = mergeAttachments(attachments, options.attachments)
-            }
+        (value: string, options: SendTextMessageOptions = {}) => {
+            options.attachments = mergeAttachments(
+                attachments?.filter((a) => !removedAttachmentIds.includes(a.id)),
+                options.attachments,
+            )
+
             editChannelMessage({ eventId, value }, eventContent, options)
             timelineActions?.onCancelEditingMessage?.()
         },
-        [editChannelMessage, eventId, eventContent, timelineActions, attachments],
+        [
+            attachments,
+            editChannelMessage,
+            eventId,
+            eventContent,
+            timelineActions,
+            removedAttachmentIds,
+        ],
     )
 
     const onCancel = useCallback(() => {

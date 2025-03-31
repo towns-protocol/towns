@@ -37,6 +37,7 @@ import { minterRoleId } from '@components/SpaceSettingsPanel/rolePermissions.con
 import { useSizeContext } from 'ui/hooks/useSizeContext'
 
 import { Ticker } from '@components/TradingChart/Ticker'
+import { useMessageEditContext } from '@components/MessageTimeIineItem/items/MessageEditContext'
 import { MessageAttachmentsContext } from './MessageAttachmentsContext'
 
 const emptyArray: never[] = []
@@ -48,7 +49,13 @@ export const MessageAttachments = (props: {
     eventId: string | undefined
     threadParentId?: string
 }) => {
-    const { onAttachmentClick, attachments, onClick, eventId, threadParentId } = props
+    const { onAttachmentClick, onClick, eventId, threadParentId } = props
+
+    const filteredAttachments = useMessageEditContext()?.removedAttachmentIds
+
+    const attachments = filteredAttachments
+        ? props.attachments?.filter((a) => !filteredAttachments.includes(a.id))
+        : props.attachments
 
     // prevent recursive rendering of message attachments
     const isMessageAttachementContext =
@@ -69,53 +76,61 @@ export const MessageAttachments = (props: {
     return (
         <>
             {mediaAttachments.length > 0 && (
-                <Stack horizontal gap="sm" flexWrap="wrap" onClick={onClick}>
+                <Box horizontal flexWrap="wrap" gap="sm" onClick={onClick}>
                     {mediaAttachments.map((attachment) => (
-                        <ChunkedFile
+                        <EditAttachmentContainer
                             key={attachment.streamId}
-                            mimetype={attachment.info.mimetype}
-                            width={attachment.info.widthPixels}
-                            height={attachment.info.heightPixels}
-                            filename={attachment.info.filename}
-                            streamId={attachment.streamId}
-                            iv={attachment.encryption.iv}
-                            secretKey={attachment.encryption.secretKey}
-                            thumbnail={attachment.thumbnail?.content}
-                            onClick={
-                                onAttachmentClick
-                                    ? (e) => {
-                                          e.preventDefault()
-                                          e.stopPropagation()
-                                          onAttachmentClick?.(attachment.id)
-                                      }
-                                    : undefined
-                            }
-                        />
+                            attachmentId={attachment.id}
+                        >
+                            <ChunkedFile
+                                mimetype={attachment.info.mimetype}
+                                width={attachment.info.widthPixels}
+                                height={attachment.info.heightPixels}
+                                filename={attachment.info.filename}
+                                streamId={attachment.streamId}
+                                iv={attachment.encryption.iv}
+                                secretKey={attachment.encryption.secretKey}
+                                thumbnail={attachment.thumbnail?.content}
+                                onClick={
+                                    onAttachmentClick
+                                        ? (e) => {
+                                              e.preventDefault()
+                                              e.stopPropagation()
+                                              onAttachmentClick?.(attachment.id)
+                                          }
+                                        : undefined
+                                }
+                            />
+                        </EditAttachmentContainer>
                     ))}
-                </Stack>
+                </Box>
             )}
             {fileAttachments.length > 0 && (
                 <Stack horizontal gap="sm" flexWrap="wrap">
                     {fileAttachments.map((attachment) => (
-                        <ChunkedFile
+                        <EditAttachmentContainer
                             key={attachment.streamId}
-                            mimetype={attachment.info.mimetype}
-                            width={attachment.info.widthPixels}
-                            height={attachment.info.heightPixels}
-                            filename={attachment.info.filename}
-                            streamId={attachment.streamId}
-                            iv={attachment.encryption.iv}
-                            secretKey={attachment.encryption.secretKey}
-                            onClick={
-                                onAttachmentClick
-                                    ? (e) => {
-                                          e.preventDefault()
-                                          e.stopPropagation()
-                                          onAttachmentClick?.(attachment.id)
-                                      }
-                                    : undefined
-                            }
-                        />
+                            attachmentId={attachment.id}
+                        >
+                            <ChunkedFile
+                                mimetype={attachment.info.mimetype}
+                                width={attachment.info.widthPixels}
+                                height={attachment.info.heightPixels}
+                                filename={attachment.info.filename}
+                                streamId={attachment.streamId}
+                                iv={attachment.encryption.iv}
+                                secretKey={attachment.encryption.secretKey}
+                                onClick={
+                                    onAttachmentClick
+                                        ? (e) => {
+                                              e.preventDefault()
+                                              e.stopPropagation()
+                                              onAttachmentClick?.(attachment.id)
+                                          }
+                                        : undefined
+                                }
+                            />
+                        </EditAttachmentContainer>
                     ))}
                 </Stack>
             )}
@@ -123,20 +138,23 @@ export const MessageAttachments = (props: {
             {messageAttachments?.length > 0 && (
                 <Stack gap="sm">
                     {messageAttachments.map((attachment) => (
-                        <EmbeddedMessageContainer
-                            key={attachment.id}
-                            attachment={attachment}
-                            eventId={eventId}
-                            onAttachmentClick={onAttachmentClick}
-                            onClick={onClick}
-                        />
+                        <EditAttachmentContainer key={attachment.id} attachmentId={attachment.id}>
+                            <EmbeddedMessageContainer
+                                attachment={attachment}
+                                eventId={eventId}
+                                onAttachmentClick={onAttachmentClick}
+                                onClick={onClick}
+                            />
+                        </EditAttachmentContainer>
                     ))}
                 </Stack>
             )}
             {unfurledLinkAttachments.length > 0 && (
                 <Box horizontal gap="sm" flexWrap="wrap" width="100%">
                     {unfurledLinkAttachments.map((attachment) => (
-                        <UnfurledLinkAttachmentContainer key={attachment.id} {...attachment} />
+                        <EditAttachmentContainer key={attachment.id} attachmentId={attachment.id}>
+                            <UnfurledLinkAttachmentContainer attachment={attachment} />
+                        </EditAttachmentContainer>
                     ))}
                 </Box>
             )}
@@ -232,19 +250,27 @@ const EmbeddedMessageContainer = (props: {
     )
 }
 
-const UnfurledLinkAttachmentContainer = (
-    props: UnfurledLinkAttachment | LoadingUnfurledLinkAttachment,
-) => {
-    const townData = getTownParamsFromUrl(props.url)
+const UnfurledLinkAttachmentContainer = (props: {
+    attachment: UnfurledLinkAttachment | LoadingUnfurledLinkAttachment
+}) => {
+    const { attachment } = props
+    const { url } = attachment
+    const townData = getTownParamsFromUrl(url)
 
     return (
-        <ErrorBoundary FallbackComponent={() => <UnfurlErrorContainer url={props.url} />}>
+        <ErrorBoundary FallbackComponent={() => <UnfurlErrorContainer url={url} />}>
             {townData?.townId && townData?.townPath ? (
                 <TownsContent {...townData} />
             ) : (
-                <a href={props.url} rel="noopener noreferrer" target="_blank">
-                    <GenericContent {...props} />
-                </a>
+                <Box
+                    as="a"
+                    href={url}
+                    rel="noopener noreferrer"
+                    target="_blank"
+                    position="relative"
+                >
+                    <GenericContent {...attachment} />
+                </Box>
             )}
         </ErrorBoundary>
     )
@@ -508,3 +534,39 @@ const UnfurlErrorContainer = (props: { url: string }) => (
         </Box>
     </Box>
 )
+
+const EditAttachmentContainer = (
+    props: {
+        children: React.ReactNode
+        attachmentId: string
+    } & BoxProps,
+) => {
+    const { children, attachmentId, ...boxProps } = props
+    const removeAttachment = useMessageEditContext()?.removeAttachmentId
+    return (
+        <Box position="relative" {...boxProps}>
+            {children}
+            {removeAttachment && (
+                <RemoveAttachmentButton onClick={() => removeAttachment?.(attachmentId)} />
+            )}
+        </Box>
+    )
+}
+
+const RemoveAttachmentButton = (props: { onClick: () => void }) => {
+    const onClick = useCallback(
+        (e: React.MouseEvent) => {
+            e.preventDefault()
+            e.stopPropagation()
+            props.onClick()
+        },
+        [props],
+    )
+    return (
+        <Box padding="sm" position="absolute" right="none" cursor="pointer" onClick={onClick}>
+            <Box hoverable padding="xxs" background="level2" borderRadius="full">
+                <Icon type="close" size="square_xxs" boxShadow="card" />
+            </Box>
+        </Box>
+    )
+}

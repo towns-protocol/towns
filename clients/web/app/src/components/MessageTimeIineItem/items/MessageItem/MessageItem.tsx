@@ -42,6 +42,7 @@ import { TimelineMessageEditor } from '../MessageEditor'
 import { MessageBody } from './MessageBody/MessageBody'
 import { QuotedMessage } from './QuotedMessage'
 import { TokenTransfer } from '../TokenTransfer'
+import { MessageEditContextProvider } from '../MessageEditContext'
 
 type ItemDataType =
     | MessageRenderEvent
@@ -327,7 +328,7 @@ const MessageWrapper = React.memo((props: MessageWrapperProps) => {
         (p) => p.event.hashStr === event.eventId || p.event.hashStr === event.latestEventId,
     )
 
-    return !event ? null : (
+    const messageLayout = !event ? null : (
         <MessageLayout
             avatarSize="avatar_x4"
             editing={isEditing}
@@ -384,6 +385,12 @@ const MessageWrapper = React.memo((props: MessageWrapperProps) => {
             )}
         </MessageLayout>
     )
+
+    if (isEditing) {
+        return <MessageEditContextProvider>{messageLayout}</MessageEditContextProvider>
+    } else {
+        return messageLayout
+    }
 })
 
 function getItemContentKey(itemData: ItemDataType): string {
