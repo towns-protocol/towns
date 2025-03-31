@@ -142,7 +142,7 @@ const Row = ({
 
 function SkeletonRow() {
     return (
-        <Stack padding="sm">
+        <Stack paddingX="sm" paddingY="xxs">
             <Stack horizontal borderRadius="xs" padding="sm" alignItems="center">
                 <Stack horizontal gap width="100%">
                     <Stack horizontal alignItems="center" gap="sm">
