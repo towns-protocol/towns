@@ -68,6 +68,8 @@ type StreamCache struct {
 	streamCacheSizeGauge     prometheus.Gauge
 	streamCacheUnloadedGauge prometheus.Gauge
 	streamCacheRemoteGauge   prometheus.Gauge
+	loadStreamRecordDuration prometheus.Histogram
+	loadStreamRecordCounter  *infra.StatusCounterVec
 
 	stoppedMu sync.RWMutex
 	stopped   bool
@@ -104,6 +106,15 @@ func NewStreamCache(params *StreamCacheParams) *StreamCache {
 		).WithLabelValues(
 			params.RiverChain.ChainId.String(),
 			params.Wallet.Address.String(),
+		),
+		loadStreamRecordDuration: params.Metrics.NewHistogramEx(
+			"stream_cache_load_duration_seconds",
+			"Load stream record duration",
+			infra.DefaultRpcDurationBucketsSeconds,
+		),
+		loadStreamRecordCounter: params.Metrics.NewStatusCounterVecEx(
+			"stream_cache_load_counter",
+			"Number of stream record loads",
 		),
 		chainConfig:                     params.ChainConfig,
 		onlineSyncWorkerPool:            workerpool.New(params.Config.StreamReconciliation.OnlineWorkerPoolSize),
@@ -330,6 +341,8 @@ func (s *StreamCache) tryLoadStreamRecord(
 		defer span.End()
 	}
 
+	defer prometheus.NewTimer(s.loadStreamRecordDuration).ObserveDuration()
+
 	// For GetStream the fact that record is not in cache means that there is race to get it during creation:
 	// Blockchain record is already created, but this fact is not reflected yet in local storage.
 	// This may happen if somebody observes record allocation on blockchain and tries to get stream
@@ -337,6 +350,7 @@ func (s *StreamCache) tryLoadStreamRecord(
 	record, _, mb, blockNum, err := s.params.Registry.GetStreamWithGenesis(ctx, streamId)
 	if err != nil {
 		if !waitForLocal {
+			s.loadStreamRecordCounter.IncFail()
 			return nil, err
 		}
 
@@ -350,10 +364,12 @@ func (s *StreamCache) tryLoadStreamRecord(
 		for {
 			select {
 			case <-ctx.Done():
+				s.loadStreamRecordCounter.IncFail()
 				return nil, AsRiverError(ctx.Err(), Err_INTERNAL).Message("Timeout waiting for cache record to be created")
 			case <-time.After(delay):
 				stream, _ := s.cache.Load(streamId)
 				if stream != nil {
+					s.loadStreamRecordCounter.IncPass()
 					return stream, nil
 				}
 				record, _, mb, blockNum, err = s.params.Registry.GetStreamWithGenesis(ctx, streamId)
@@ -375,12 +391,14 @@ func (s *StreamCache) tryLoadStreamRecord(
 
 	if !stream.nodesLocked.IsLocal() {
 		stream, _ = s.cache.LoadOrStore(streamId, stream)
+		s.loadStreamRecordCounter.IncPass()
 		return stream, nil
 	}
 
 	stream.local = &localStreamState{}
 
 	if record.LastMiniblockNum > 0 {
+		s.loadStreamRecordCounter.IncFail()
 		// TODO: reconcile from other nodes.
 		return nil, RiverError(
 			Err_INTERNAL,
@@ -393,7 +411,13 @@ func (s *StreamCache) tryLoadStreamRecord(
 	}
 
 	stream, _, err = s.createStreamStorage(ctx, stream, mb)
-	return stream, err
+	if err != nil {
+		s.loadStreamRecordCounter.IncFail()
+		return nil, err
+	}
+
+	s.loadStreamRecordCounter.IncPass()
+	return stream, nil
 }
 
 func (s *StreamCache) createStreamStorage(

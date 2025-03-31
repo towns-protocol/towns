@@ -168,7 +168,7 @@ func createMultiblockChannelStream(
 ) (
 	streamId StreamId,
 	mb1 *events.MiniblockInfo,
-	blocks [][]byte,
+	data [][]byte,
 ) {
 	wallet, _ := crypto.NewWallet(ctx)
 
@@ -221,17 +221,22 @@ func createMultiblockChannelStream(
 	require.NoError(err)
 	require.Equal(int64(2), b2ref.Num)
 
-	blocks, err = store.ReadMiniblocks(ctx, channelId, 0, 3)
+	blocks, err := store.ReadMiniblocks(ctx, channelId, 0, 3)
 	require.NoError(err)
 	require.Len(blocks, 3)
 
 	require.NoError(store.(*storage.PostgresStreamStore).DeleteStream(ctx, channelId))
 
-	mb1, err = events.NewMiniblockInfoFromBytes(blocks[1], 1)
+	mb1, err = events.NewMiniblockInfoFromBytes(blocks[1].Data, 1)
 	require.NoError(err)
 	require.NotNil(mb1)
 
-	return channelId, mb1, blocks
+	data = make([][]byte, len(blocks))
+	for i, block := range blocks {
+		data[i] = block.Data
+	}
+
+	return channelId, mb1, data
 }
 
 func writeStreamBackToStore(

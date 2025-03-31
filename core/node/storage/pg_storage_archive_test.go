@@ -12,8 +12,10 @@ import (
 	"github.com/towns-protocol/towns/core/node/testutils"
 )
 
-func mbDataForNumb(n int64) []byte {
-	return []byte(fmt.Sprintf("data-%d", n))
+func mbDataForNumb(n int64) *WriteMiniblockData {
+	return &WriteMiniblockData{
+		Data: []byte(fmt.Sprintf("data-%d", n)),
+	}
 }
 
 func TestArchive(t *testing.T) {
@@ -41,7 +43,7 @@ func TestArchive(t *testing.T) {
 	require.NoError(err)
 	require.Equal(int64(-1), bn)
 
-	data := [][]byte{
+	data := []*WriteMiniblockData{
 		mbDataForNumb(0),
 		mbDataForNumb(1),
 		mbDataForNumb(2),
@@ -56,9 +58,13 @@ func TestArchive(t *testing.T) {
 	readMBs, err := pgStreamStore.ReadMiniblocks(ctx, streamId1, 0, 3)
 	require.NoError(err)
 	require.Len(readMBs, 3)
-	require.Equal(data, readMBs)
+	require.Equal([]*MiniblockDescriptor{
+		{MiniblockNumber: 0, Data: data[0].Data},
+		{MiniblockNumber: 1, Data: data[1].Data},
+		{MiniblockNumber: 2, Data: data[2].Data},
+	}, readMBs)
 
-	data2 := [][]byte{
+	data2 := []*WriteMiniblockData{
 		mbDataForNumb(3),
 		mbDataForNumb(4),
 		mbDataForNumb(5),
@@ -79,7 +85,14 @@ func TestArchive(t *testing.T) {
 
 	readMBs, err = pgStreamStore.ReadMiniblocks(ctx, streamId1, 0, 8)
 	require.NoError(err)
-	require.Equal(append(data, data2...), readMBs)
+	require.Equal([]*MiniblockDescriptor{
+		{MiniblockNumber: 0, Data: data[0].Data},
+		{MiniblockNumber: 1, Data: data[1].Data},
+		{MiniblockNumber: 2, Data: data[2].Data},
+		{MiniblockNumber: 3, Data: data2[0].Data},
+		{MiniblockNumber: 4, Data: data2[1].Data},
+		{MiniblockNumber: 5, Data: data2[2].Data},
+	}, readMBs)
 
 	bn, err = pgStreamStore.GetMaxArchivedMiniblockNumber(ctx, streamId1)
 	require.NoError(err)

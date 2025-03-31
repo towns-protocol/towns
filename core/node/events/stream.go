@@ -368,7 +368,7 @@ func (s *Stream) promoteCandidateLocked(ctx context.Context, mb *MiniblockRef) e
 		return s.schedulePromotionLocked(mb)
 	}
 
-	miniblockBytes, err := s.params.Storage.ReadMiniblockCandidate(ctx, s.streamId, mb.Hash, mb.Num)
+	miniblockCandidate, err := s.params.Storage.ReadMiniblockCandidate(ctx, s.streamId, mb.Hash, mb.Num)
 	if err != nil {
 		if IsRiverErrorCode(err, Err_NOT_FOUND) {
 			return s.schedulePromotionLocked(mb)
@@ -376,12 +376,12 @@ func (s *Stream) promoteCandidateLocked(ctx context.Context, mb *MiniblockRef) e
 		return err
 	}
 
-	miniblock, err := NewMiniblockInfoFromBytes(miniblockBytes, mb.Num)
+	miniblock, err := NewMiniblockInfoFromBytes(miniblockCandidate.Data, mb.Num)
 	if err != nil {
 		return err
 	}
 
-	return s.applyMiniblockImplLocked(ctx, miniblock, miniblockBytes)
+	return s.applyMiniblockImplLocked(ctx, miniblock, miniblockCandidate.Data)
 }
 
 // schedulePromotionLocked should be called with a lock held.
@@ -632,8 +632,8 @@ func (s *Stream) GetMiniblocks(
 
 	miniblocks := make([]*Miniblock, len(blocks))
 	startMiniblockNumber := int64(-1)
-	for i, binMiniblock := range blocks {
-		miniblock, err := NewMiniblockInfoFromBytes(binMiniblock, startMiniblockNumber+int64(i))
+	for i, block := range blocks {
+		miniblock, err := NewMiniblockInfoFromBytes(block.Data, startMiniblockNumber+int64(i))
 		if err != nil {
 			return nil, false, err
 		}
@@ -744,9 +744,20 @@ func (s *Stream) addEventLocked(ctx context.Context, event *ParsedEvent) (*Strea
 	return newSV, nil
 }
 
-// Sub subscribes the reciever to the stream, sending all content between the cookie and the
-// current stream state. This method is thread-safe.
+// Sub subscribes to the stream, sending all content between the cookie and the current stream state.
+// This method is thread-safe.
+// Only local streams are allowed to subscribe.
 func (s *Stream) Sub(ctx context.Context, cookie *SyncCookie, receiver SyncResultReceiver) error {
+	if !s.IsLocal() {
+		return RiverError(
+			Err_NOT_FOUND,
+			"stream not found",
+			"cookie.StreamId",
+			cookie.StreamId,
+			"s.streamId",
+			s.streamId,
+		)
+	}
 	if !bytes.Equal(cookie.NodeAddress, s.params.Wallet.Address.Bytes()) {
 		return RiverError(
 			Err_BAD_SYNC_COOKIE,
@@ -770,6 +781,7 @@ func (s *Stream) Sub(ctx context.Context, cookie *SyncCookie, receiver SyncResul
 
 	s.mu.Lock()
 	defer s.mu.Unlock()
+
 	if err := s.loadInternal(ctx); err != nil {
 		return err
 	}
@@ -892,9 +904,11 @@ func (s *Stream) SaveMiniblockCandidate(ctx context.Context, mb *Miniblock) erro
 	return s.params.Storage.WriteMiniblockCandidate(
 		ctx,
 		s.streamId,
-		mbInfo.Ref.Hash,
-		mbInfo.Ref.Num,
-		serialized,
+		&storage.WriteMiniblockData{
+			Number: mbInfo.Ref.Num,
+			Hash:   mbInfo.Ref.Hash,
+			Data:   serialized,
+		},
 	)
 }
 
@@ -957,9 +971,9 @@ func (s *Stream) tryApplyCandidate(ctx context.Context, mb *MiniblockInfo) (bool
 // tryReadAndApplyCandidateLocked searches for the candidate in storage and applies it if it exists.
 // tryReadAndApplyCandidateLocked is not thread-safe.
 func (s *Stream) tryReadAndApplyCandidateLocked(ctx context.Context, mbRef *MiniblockRef) bool {
-	miniblockBytes, err := s.params.Storage.ReadMiniblockCandidate(ctx, s.streamId, mbRef.Hash, mbRef.Num)
+	miniblockCandidate, err := s.params.Storage.ReadMiniblockCandidate(ctx, s.streamId, mbRef.Hash, mbRef.Num)
 	if err == nil {
-		miniblock, err := NewMiniblockInfoFromBytes(miniblockBytes, mbRef.Num)
+		miniblock, err := NewMiniblockInfoFromBytes(miniblockCandidate.Data, mbRef.Num)
 		if err == nil {
 			err = s.importMiniblocksLocked(ctx, []*MiniblockInfo{miniblock})
 			if err == nil {
