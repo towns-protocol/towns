@@ -310,7 +310,7 @@ func NewArchiveStream(
 ) *ArchiveStream {
 	stream := &ArchiveStream{
 		streamId: streamId,
-		nodes:    nodes.NewStreamNodesWithLock(*nn, common.Address{}),
+		nodes:    nodes.NewStreamNodesWithLock(len(*nn), *nn, common.Address{}),
 		corrupt:  NewStreamCorruptionTracker(maxConsecutiveFailedUpdates),
 	}
 	stream.numBlocksInContract.Store(int64(lastKnownMiniblock + 1))
@@ -989,7 +989,7 @@ func (a *Archiver) onStreamPlacementUpdated(
 		return
 	}
 	stream := record.(*ArchiveStream)
-	stream.nodes.Reset(event.Nodes, common.Address{})
+	stream.nodes.Reset(event.StreamReplicationFactor(), event.Nodes, common.Address{})
 }
 
 func (a *Archiver) onStreamLastMiniblockUpdated(

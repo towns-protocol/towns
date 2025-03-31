@@ -602,6 +602,25 @@ func (c *BlockchainTestContext) BlockNum(ctx context.Context) BlockNumber {
 	return BlockNumber(blockNum)
 }
 
+func (c *BlockchainTestContext) SetStreamReplicationFactor(
+	t *testing.T,
+	ctx context.Context,
+	requests []river.SetStreamReplicationFactor,
+) {
+	pendingTx, err := c.DeployerBlockchain.TxPool.Submit(
+		ctx,
+		"SetStreamReplicationFactor",
+		func(opts *bind.TransactOpts) (*types.Transaction, error) {
+			return c.StreamRegistry.SetStreamReplicationFactor(opts, requests)
+		},
+	)
+
+	require.NoError(t, err)
+	receipt, err := pendingTx.Wait(ctx)
+	require.NoError(t, err)
+	require.Equal(t, TransactionResultSuccess, receipt.Status)
+}
+
 func (c *BlockchainTestContext) SetConfigValue(t *testing.T, ctx context.Context, key string, value []byte) {
 	blockNum := c.BlockNum(ctx)
 

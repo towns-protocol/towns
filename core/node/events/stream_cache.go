@@ -150,7 +150,7 @@ func (s *StreamCache) Start(ctx context.Context) error {
 			lastAppliedBlockNum: s.params.AppliedBlockNum,
 			local:               &localStreamState{},
 		}
-		stream.nodesLocked.Reset(streamRecord.Nodes, s.params.Wallet.Address)
+		stream.nodesLocked.Reset(streamRecord.StreamReplicationFactor(), streamRecord.Nodes, s.params.Wallet.Address)
 		s.cache.Store(streamRecord.StreamId, stream)
 		if s.params.Config.StreamReconciliation.InitialWorkerPoolSize > 0 {
 			s.submitSyncStreamTaskToPool(
@@ -207,16 +207,34 @@ func (s *StreamCache) onBlockWithLogs(ctx context.Context, blockNum crypto.Block
 			case river.StreamUpdatedEventTypeCreate:
 				streamState := events[0].(*river.StreamState)
 				s.onStreamCreated(ctx, streamState, blockNum)
-			case river.StreamUpdatedEventTypePlacementUpdated: // linter
-				fallthrough
+			case river.StreamUpdatedEventTypePlacementUpdated:
+				streamState := events[0].(*river.StreamState)
+				s.onStreamReplaced(ctx, streamState, blockNum) // TODO: determine what needs to be done for events[1:]
 			case river.StreamUpdatedEventTypeLastMiniblockBatchUpdated:
-				fallthrough
-			default:
 				stream, ok := s.cache.Load(streamID)
 				if !ok {
 					return
 				}
-				stream.applyStreamEvents(ctx, events, blockNum)
+
+				if stream.nodesLocked.IsLocal() && stream.nodesLocked.IsQuorum() {
+					stream.applyStreamEvents(ctx, events, blockNum)
+				}
+
+				// migrate stream to repl
+				if stream.nodesLocked.IsLocal() && !stream.nodesLocked.IsQuorum() {
+					// determine if stream update contains newer miniblock than currently in storage.
+					if mb, err := stream.getLastMiniblockNumSkipLoad(ctx); err == nil {
+						latestMb := int64(0)
+						for _, event := range events {
+							if ev, ok := event.(*river.StreamState); ok {
+								latestMb = max(latestMb, int64(ev.LastMiniblockNum))
+							}
+						}
+						if mb > latestMb {
+							s.SubmitSyncStreamTask(ctx, stream)
+						}
+					}
+				}
 			}
 		})
 	}
@@ -224,6 +242,35 @@ func (s *StreamCache) onBlockWithLogs(ctx context.Context, blockNum crypto.Block
 	wp.StopWait()
 
 	s.appliedBlockNum.Store(uint64(blockNum))
+}
+
+func (s *StreamCache) onStreamReplaced(
+	ctx context.Context,
+	event *river.StreamState,
+	blockNum crypto.BlockNumber,
+) {
+	if !slices.Contains(event.Nodes, s.params.Wallet.Address) {
+		// TODO: if stream is removed from this node cleanup stream storage/cache.
+		return
+	}
+
+	stream := &Stream{
+		streamId:            event.GetStreamId(),
+		lastAppliedBlockNum: blockNum,
+		params:              s.params,
+		local:               &localStreamState{},
+	}
+
+	stream, _ = s.cache.LoadOrStore(event.GetStreamId(), stream)
+	stream.nodesLocked.Reset(event.StreamReplicationFactor(), event.Nodes, s.params.Wallet.Address)
+
+	stream.mu.Lock()
+	if stream.local == nil {
+		stream.local = &localStreamState{}
+	}
+	stream.mu.Unlock()
+
+	s.SubmitSyncStreamTask(ctx, stream)
 }
 
 func (s *StreamCache) onStreamAllocated(
@@ -254,7 +301,7 @@ func (s *StreamCache) onStreamAllocated(
 		lastAccessedTime:    time.Now(),
 		local:               &localStreamState{},
 	}
-	stream.nodesLocked.Reset(event.Nodes, s.params.Wallet.Address)
+	stream.nodesLocked.Reset(event.StreamReplicationFactor(), event.Nodes, s.params.Wallet.Address)
 	stream, created, err := s.createStreamStorage(ctx, stream, genesisMB)
 	if err != nil {
 		logging.FromCtx(ctx).Errorw("Failed to allocate stream", "err", err, "streamId", event.GetStreamId())
@@ -387,7 +434,7 @@ func (s *StreamCache) tryLoadStreamRecord(
 		lastAppliedBlockNum: blockNum,
 		lastAccessedTime:    time.Now(),
 	}
-	stream.nodesLocked.Reset(record.Nodes, s.params.Wallet.Address)
+	stream.nodesLocked.Reset(record.StreamReplicationFactor(), record.Nodes, s.params.Wallet.Address)
 
 	if !stream.nodesLocked.IsLocal() {
 		stream, _ = s.cache.LoadOrStore(streamId, stream)

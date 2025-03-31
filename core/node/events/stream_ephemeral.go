@@ -32,7 +32,7 @@ func (s *StreamCache) onStreamCreated(
 		lastAccessedTime:    time.Now(),
 		local:               &localStreamState{},
 	}
-	stream.nodesLocked.Reset(event.Stream.Nodes, s.params.Wallet.Address)
+	stream.nodesLocked.Reset(event.StreamReplicationFactor(), event.Stream.Nodes, s.params.Wallet.Address)
 
 	go func() {
 		if err := s.normalizeEphemeralStream(

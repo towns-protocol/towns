@@ -48,6 +48,7 @@ func TestStreamNodes(t *testing.T) {
 				nodeAddrs = slices.Clone(remotes)
 			}
 			streamNodes := nodes.NewStreamNodesWithLock(
+				len(nodeAddrs),
 				nodeAddrs,
 				local,
 			)

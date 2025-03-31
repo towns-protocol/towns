@@ -191,3 +191,11 @@ func parseSetMiniblocksFromSolABIEncoded(event *StreamRegistryV1StreamUpdated) (
 
 	return results, nil
 }
+
+// StreamReplicationFactor returns on how many nodes the stream is replicated.
+func (s *Stream) StreamReplicationFactor() int {
+	// if s.Reserved0 & 0xFF is 0 it indicates this is an old stream that was created before the replication factor was
+	// added and the migration to replicated stream hasn't started. Use a replication factor of 1. This ensures that
+	// the first node in the streams node list is used as primary and ensures both backwards and forwards compatability.
+	return max(1, int(s.Reserved0&0xFF))
+}

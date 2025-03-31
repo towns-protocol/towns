@@ -457,7 +457,7 @@ func (s *Stream) initFromBlockchain(ctx context.Context) error {
 		return err
 	}
 
-	s.nodesLocked.Reset(record.Nodes, s.params.Wallet.Address)
+	s.nodesLocked.Reset(record.StreamReplicationFactor(), record.Nodes, s.params.Wallet.Address)
 	if !s.nodesLocked.IsLocal() {
 		return RiverError(
 			Err_INTERNAL,
@@ -542,7 +542,7 @@ func (s *Stream) GetView(ctx context.Context) (*StreamView, error) {
 func (s *Stream) tryGetView() (*StreamView, bool) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
-	isLocal := s.local != nil
+	isLocal := s.nodesLocked.IsQuorum() && s.local != nil
 	if isLocal && s.view() != nil {
 		s.maybeScrubLocked()
 		return s.view(), true
@@ -1030,7 +1030,8 @@ func (s *Stream) applyStreamEvents(
 	for _, e := range events {
 		switch e.Reason() {
 		case river.StreamUpdatedEventTypePlacementUpdated:
-			s.nodesLocked.Reset(e.(*river.StreamState).Nodes, s.params.Wallet.Address)
+			ev := e.(*river.StreamState)
+			s.nodesLocked.Reset(ev.StreamReplicationFactor(), ev.Nodes, s.params.Wallet.Address)
 		case river.StreamUpdatedEventTypeLastMiniblockBatchUpdated:
 			event := e.(*river.StreamMiniblockUpdate)
 			err := s.promoteCandidateLocked(ctx, &MiniblockRef{
@@ -1094,9 +1095,23 @@ func (s *Stream) AdvanceStickyPeer(currentPeer common.Address) common.Address {
 	return s.nodesLocked.AdvanceStickyPeer(currentPeer)
 }
 
-func (s *Stream) Reset(nodes []common.Address, localNode common.Address) {
+func (s *Stream) Reset(replicationFactor int, nodes []common.Address, localNode common.Address) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	s.nodesLocked.Reset(nodes, localNode)
+	s.nodesLocked.Reset(replicationFactor, nodes, localNode)
+}
+
+func (s *Stream) GetSyncNodes() []common.Address {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	return s.nodesLocked.GetSyncNodes()
+}
+
+func (s *Stream) IsQuorum() bool {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	return s.nodesLocked.IsQuorum()
 }

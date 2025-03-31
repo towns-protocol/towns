@@ -107,6 +107,7 @@ func (s *StreamCache) syncStreamFromPeersImpl(
 
 	remote := stream.GetStickyPeer()
 	var nextFromInclusive int64
+
 	for range remotes {
 		nextFromInclusive, err = s.syncStreamFromSinglePeer(ctx, stream, remote, fromInclusive, toExclusive)
 		if err == nil && nextFromInclusive >= toExclusive {
