@@ -597,7 +597,7 @@ func (s *PostgresStreamStore) WriteArchiveMiniblocks(
 	ctx context.Context,
 	streamId StreamId,
 	startMiniblockNum int64,
-	miniblocks [][]byte,
+	miniblocks []*WriteMiniblockData,
 ) error {
 	return s.txRunner(
 		ctx,
@@ -618,7 +618,7 @@ func (s *PostgresStreamStore) writeArchiveMiniblocksTx(
 	tx pgx.Tx,
 	streamId StreamId,
 	startMiniblockNum int64,
-	miniblocks [][]byte,
+	miniblocks []*WriteMiniblockData,
 ) error {
 	if _, err := s.lockStream(ctx, tx, streamId, true); err != nil {
 		return err
@@ -648,7 +648,8 @@ func (s *PostgresStreamStore) writeArchiveMiniblocksTx(
 			),
 			streamId,
 			startMiniblockNum+int64(i),
-			miniblock); err != nil {
+			miniblock.Data,
+		); err != nil {
 			return err
 		}
 	}
@@ -929,8 +930,8 @@ func (s *PostgresStreamStore) ReadMiniblocks(
 	streamId StreamId,
 	fromInclusive int64,
 	toExclusive int64,
-) ([][]byte, error) {
-	var miniblocks [][]byte
+) ([]*MiniblockDescriptor, error) {
+	var miniblocks []*MiniblockDescriptor
 	if err := s.txRunner(
 		ctx,
 		"ReadMiniblocks",
@@ -957,7 +958,7 @@ func (s *PostgresStreamStore) readMiniblocksTx(
 	streamId StreamId,
 	fromInclusive int64,
 	toExclusive int64,
-) ([][]byte, error) {
+) ([]*MiniblockDescriptor, error) {
 	if _, err := s.lockStream(ctx, tx, streamId, false); err != nil {
 		return nil, err
 	}
@@ -977,20 +978,24 @@ func (s *PostgresStreamStore) readMiniblocksTx(
 	}
 
 	// Retrieve miniblocks starting from the latest miniblock with snapshot
-	miniblocks := make([][]byte, 0, toExclusive-fromInclusive)
+	miniblocks := make([]*MiniblockDescriptor, 0, toExclusive-fromInclusive)
 
 	var prevSeqNum int = -1 // There is no negative generation, so we use it as a flag on the first step of the loop during miniblocks sequence check
 	var blockdata []byte
-	var seq_num int
-
-	if _, err := pgx.ForEachRow(miniblocksRow, []any{&blockdata, &seq_num}, func() error {
-		if (prevSeqNum != -1) && (seq_num != prevSeqNum+1) {
+	var seqNum int
+	if _, err = pgx.ForEachRow(miniblocksRow, []any{&blockdata, &seqNum}, func() error {
+		if prevSeqNum != -1 && seqNum != prevSeqNum+1 {
 			// There is a gap in sequence numbers
 			return RiverError(Err_MINIBLOCKS_STORAGE_FAILURE, "Miniblocks consistency violation").
-				Tag("ActualBlockNumber", seq_num).Tag("ExpectedBlockNumber", prevSeqNum+1).Tag("streamId", streamId)
+				Tag("ActualBlockNumber", seqNum).
+				Tag("ExpectedBlockNumber", prevSeqNum+1).
+				Tag("streamId", streamId)
 		}
-		prevSeqNum = seq_num
-		miniblocks = append(miniblocks, blockdata)
+		prevSeqNum = seqNum
+		miniblocks = append(miniblocks, &MiniblockDescriptor{
+			MiniblockNumber: int64(seqNum),
+			Data:            blockdata,
+		})
 		return nil
 	}); err != nil {
 		return nil, err
@@ -1118,21 +1123,19 @@ func (s *PostgresStreamStore) readMiniblocksByIdsTx(
 func (s *PostgresStreamStore) WriteMiniblockCandidate(
 	ctx context.Context,
 	streamId StreamId,
-	blockHash common.Hash,
-	blockNumber int64,
-	miniblock []byte,
+	miniblock *WriteMiniblockData,
 ) error {
 	return s.txRunner(
 		ctx,
 		"WriteMiniblockCandidate",
 		pgx.ReadWrite,
 		func(ctx context.Context, tx pgx.Tx) error {
-			return s.writeMiniblockCandidateTx(ctx, tx, streamId, blockHash, blockNumber, miniblock)
+			return s.writeMiniblockCandidateTx(ctx, tx, streamId, miniblock)
 		},
 		nil,
 		"streamId", streamId,
-		"blockHash", blockHash,
-		"blockNumber", blockNumber,
+		"blockHash", miniblock.Hash,
+		"blockNumber", miniblock.Number,
 	)
 }
 
@@ -1142,9 +1145,7 @@ func (s *PostgresStreamStore) writeMiniblockCandidateTx(
 	ctx context.Context,
 	tx pgx.Tx,
 	streamId StreamId,
-	blockHash common.Hash,
-	blockNumber int64,
-	miniblock []byte,
+	miniblock *WriteMiniblockData,
 ) error {
 	if _, err := s.lockStream(ctx, tx, streamId, true); err != nil {
 		return err
@@ -1167,9 +1168,9 @@ func (s *PostgresStreamStore) writeMiniblockCandidateTx(
 	}
 
 	// Candidate block number should be greater than the last block number in storage.
-	if blockNumber <= *seqNum {
+	if miniblock.Number <= *seqNum {
 		return RiverError(Err_MINIBLOCKS_STORAGE_FAILURE, "Candidate is too old").
-			Tag("LastBlockInStorage", *seqNum).Tag("CandidateBlockNumber", blockNumber)
+			Tag("LastBlockInStorage", *seqNum).Tag("CandidateBlockNumber", miniblock.Number)
 	}
 
 	// insert miniblock proposal into miniblock_candidates table
@@ -1180,9 +1181,9 @@ func (s *PostgresStreamStore) writeMiniblockCandidateTx(
 			streamId,
 		),
 		streamId,
-		blockNumber,
-		hex.EncodeToString(blockHash.Bytes()), // avoid leading '0x'
-		miniblock,
+		miniblock.Number,
+		hex.EncodeToString(miniblock.Hash.Bytes()), // avoid leading '0x'
+		miniblock.Data,
 	); err != nil {
 		if isPgError(err, pgerrcode.UniqueViolation) {
 			return RiverError(Err_ALREADY_EXISTS, "Miniblock candidate already exists")
@@ -1197,8 +1198,8 @@ func (s *PostgresStreamStore) ReadMiniblockCandidate(
 	streamId StreamId,
 	blockHash common.Hash,
 	blockNumber int64,
-) ([]byte, error) {
-	var miniblock []byte
+) (*MiniblockDescriptor, error) {
+	var miniblock *MiniblockDescriptor
 	err := s.txRunner(
 		ctx,
 		"ReadMiniblockCandidate",
@@ -1225,12 +1226,15 @@ func (s *PostgresStreamStore) readMiniblockCandidateTx(
 	streamId StreamId,
 	blockHash common.Hash,
 	blockNumber int64,
-) ([]byte, error) {
+) (*MiniblockDescriptor, error) {
 	if _, err := s.lockStream(ctx, tx, streamId, false); err != nil {
 		return nil, err
 	}
 
-	var miniblock []byte
+	miniblock := &MiniblockDescriptor{
+		MiniblockNumber: blockNumber,
+		Hash:            blockHash,
+	}
 	if err := tx.QueryRow(
 		ctx,
 		s.sqlForStream(
@@ -1240,7 +1244,7 @@ func (s *PostgresStreamStore) readMiniblockCandidateTx(
 		streamId,
 		blockNumber,
 		hex.EncodeToString(blockHash.Bytes()), // avoid leading '0x'
-	).Scan(&miniblock); err != nil {
+	).Scan(&miniblock.Data); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, RiverError(Err_NOT_FOUND, "Miniblock candidate not found")
 		}
