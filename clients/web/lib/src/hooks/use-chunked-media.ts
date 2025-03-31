@@ -3,6 +3,7 @@ import { useTownsContext } from '../components/TownsContextProvider'
 import { decryptAESGCM } from '../utils/crypto-utils'
 import { Client, streamIdAsBytes, unpackMiniblock } from '@towns-protocol/sdk'
 import { MediaPayload } from '@towns-protocol/proto'
+import { useImageStore } from '../store/use-image-store'
 
 export const chunkSize = 500_000
 
@@ -135,7 +136,15 @@ async function getObjectURL(
 export function useChunkedMedia(props: Props) {
     const { streamId } = props
     const { casablancaClient } = useTownsContext()
-    const [objectURL, setObjectURL] = useState<string | undefined>(undefined)
+
+    const optimisticObjectUrl = useImageStore(({ loadedResource }) =>
+        streamId ? loadedResource[streamId]?.imageUrl : undefined,
+    )
+
+    const [objectURL, setObjectURL] = useState(optimisticObjectUrl)
+
+    // used to prevent flashes of happening when retrieving the objectURL of images that are already cached
+    const setLoadedResource = useImageStore(({ setLoadedResource }) => setLoadedResource)
 
     useEffect(() => {
         if (!casablancaClient) {
@@ -153,11 +162,12 @@ export function useChunkedMedia(props: Props) {
         download
             .then((objectURL) => {
                 setObjectURL(objectURL)
+                setLoadedResource(streamId, { imageUrl: objectURL })
             })
             .catch((err) => {
                 console.log(err)
             })
-    }, [casablancaClient, setObjectURL, streamId, props.iv, props.secretKey, props.mimetype])
+    }, [casablancaClient, props.iv, props.mimetype, props.secretKey, setLoadedResource, streamId])
 
     return { objectURL }
 }
