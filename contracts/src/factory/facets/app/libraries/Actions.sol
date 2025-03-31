@@ -3,6 +3,7 @@ pragma solidity ^0.8.23;
 
 // interfaces
 import {ISpaceApp} from "../interface/ISpaceApp.sol";
+import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
 // libraries
 import {AppKey} from "./AppId.sol";
@@ -72,8 +73,10 @@ library Actions {
   // validations
   function isValidAction(ISpaceApp self) internal view returns (bool) {
     if (address(self) == address(0)) return false;
-    if (self.getExecutor() == address(0)) return false;
+    if (self.getTargetsWithSelectors().length == 0) return false;
     if (self.getPermissions().length == 0) return false;
+    if (!IERC165(address(self)).supportsInterface(type(ISpaceApp).interfaceId))
+      return false;
     return true;
   }
 

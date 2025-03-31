@@ -9,6 +9,11 @@ import {AppKey} from "../libraries/AppId.sol";
 // contracts
 
 interface ISpaceApp {
+  struct TargetWithSelectors {
+    address target;
+    bytes4[] selectors;
+  }
+
   // Metadata
   function name() external view returns (string memory);
   function description() external view returns (string memory);
@@ -16,8 +21,11 @@ interface ISpaceApp {
   function version() external view returns (uint256);
 
   // App
-  function getExecutor() external view returns (address);
   function getPermissions() external view returns (string[] memory);
+  function getTargetsWithSelectors()
+    external
+    view
+    returns (TargetWithSelectors[] memory);
 
   // Hooks
   function onRegister(

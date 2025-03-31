@@ -4,6 +4,7 @@ pragma solidity ^0.8.23;
 // interfaces
 import {IAppRegistry} from "./IAppRegistry.sol";
 import {ISpaceApp} from "./interface/ISpaceApp.sol";
+import {IERC721} from "@openzeppelin/contracts/interfaces/IERC721.sol";
 
 // libraries
 import {AppKey, AppId} from "./libraries/AppId.sol";
@@ -40,10 +41,7 @@ contract AppRegistry is IAppRegistry, Facet, OwnableBase {
 
     appId = appKey.toId();
 
-    getLayout().apps[appId].initialize(
-      appKey.space,
-      appKey.app.getPermissions()
-    );
+    getLayout().apps[appId].initialize(appKey.app, appKey.space);
 
     emit Registered(appId, App.Status.Pending, appKey.app);
 
@@ -71,9 +69,16 @@ contract AppRegistry is IAppRegistry, Facet, OwnableBase {
 
   // validations
   function validateSpace(address space) internal view {
+    uint256 tokenId = ArchitectStorage.layout().tokenIdBySpace[space];
+
+    // space must be valid
     if (space == address(0)) revert InvalidSpace();
-    if (ArchitectStorage.layout().tokenIdBySpace[space] == 0)
-      revert InvalidSpace();
+
+    // space must exist in architect storage
+    if (tokenId == 0) revert InvalidSpace();
+
+    // only owner of the space can register an app
+    if (IERC721(space).ownerOf(tokenId) != msg.sender) revert InvalidSpace();
   }
 
   // storage
