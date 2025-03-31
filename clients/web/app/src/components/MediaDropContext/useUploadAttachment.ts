@@ -157,12 +157,18 @@ export const useUploadAttachment = () => {
                   })
                 : file
 
-            const thumbnail = shouldCompressFile(file)
-                ? await imageCompression(file, {
-                      maxSizeMB: MAX_THUMBNAIL_SIZE,
-                      maxWidthOrHeight: MAX_THUMBNAIL_WIDTH,
-                  })
-                : undefined
+            let thumbnail: File | undefined
+            try {
+                thumbnail = shouldCompressFile(file)
+                    ? await imageCompression(file, {
+                          maxSizeMB: MAX_THUMBNAIL_SIZE,
+                          maxWidthOrHeight: MAX_THUMBNAIL_WIDTH,
+                          alwaysKeepResolution: true,
+                      })
+                    : undefined
+            } catch (e) {
+                console.error('Error compressing thumbnail', e)
+            }
 
             const { width, height } = await imageSize(compressed)
             const buffer = await compressed.arrayBuffer()
