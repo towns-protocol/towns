@@ -35,7 +35,7 @@ import {DeployMembershipToken} from "contracts/scripts/deployments/facets/Deploy
 import {DeploySpaceEntitlementGated} from "contracts/scripts/deployments/facets/DeploySpaceEntitlementGated.s.sol";
 import {DeployTipping} from "contracts/scripts/deployments/facets/DeployTipping.s.sol";
 import {DeployMultiInit} from "contracts/scripts/deployments/utils/DeployMultiInit.s.sol";
-
+import {DeployTreasury} from "contracts/scripts/deployments/facets/DeployTreasury.s.sol";
 // Test Facets
 import {DeployMockLegacyMembership} from "contracts/scripts/deployments/utils/DeployMockLegacyMembership.s.sol";
 
@@ -68,7 +68,7 @@ contract DeploySpace is DiamondHelper, Deployer {
     new DeploySpaceEntitlementGated();
   DeployMultiInit deployMultiInit = new DeployMultiInit();
   DeployTipping tippingHelper = new DeployTipping();
-
+  DeployTreasury treasuryHelper = new DeployTreasury();
   // Test Facets
   DeployMockLegacyMembership mockLegacyMembershipHelper =
     new DeployMockLegacyMembership();
@@ -95,6 +95,7 @@ contract DeploySpace is DiamondHelper, Deployer {
   address review;
   address tipping;
   address multiInit;
+  address treasury;
 
   // Test Facets
   address mockLegacyMembership;
@@ -150,6 +151,7 @@ contract DeploySpace is DiamondHelper, Deployer {
     review = reviewHelper.deploy(deployer);
     entitlementGated = entitlementGatedHelper.deploy(deployer);
     tipping = tippingHelper.deploy(deployer);
+    treasury = treasuryHelper.deploy(deployer);
     membershipTokenHelper.removeSelector(IERC721A.tokenURI.selector);
 
     if (isAnvil()) {
@@ -201,7 +203,7 @@ contract DeploySpace is DiamondHelper, Deployer {
     addCut(referralsHelper.makeCut(referrals, IDiamond.FacetCutAction.Add));
     addCut(reviewHelper.makeCut(review, IDiamond.FacetCutAction.Add));
     addCut(tippingHelper.makeCut(tipping, IDiamond.FacetCutAction.Add));
-
+    addCut(treasuryHelper.makeCut(treasury, IDiamond.FacetCutAction.Add));
     if (isAnvil()) {
       addCut(
         mockLegacyMembershipHelper.makeCut(
@@ -325,6 +327,9 @@ contract DeploySpace is DiamondHelper, Deployer {
             IDiamond.FacetCutAction.Add
           )
         );
+      } else if (facetNameHash == keccak256(abi.encodePacked("Treasury"))) {
+        treasury = treasuryHelper.deploy(deployer);
+        addCut(treasuryHelper.makeCut(treasury, IDiamond.FacetCutAction.Add));
       }
     }
   }

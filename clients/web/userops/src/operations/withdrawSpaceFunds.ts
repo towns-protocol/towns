@@ -14,7 +14,7 @@ export async function withdrawSpaceFunds(params: {
         throw new Error(`Space with spaceId "${spaceId}" is not found.`)
     }
 
-    const callData = space.Membership.encodeFunctionData('withdraw', [recipient])
+    const callData = space.Treasury.encodeFunctionData('withdraw', [recipient])
 
     return sendUserOp({
         toAddress: space.Membership.address,
