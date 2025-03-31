@@ -1,5 +1,10 @@
 import React from 'react'
-import { useMyProfile, useSpaceId, useSpaceMentions } from 'use-towns-client'
+import {
+    ChannelContextProvider,
+    useMyProfile,
+    useSpaceId,
+    useSpaceMentions,
+} from 'use-towns-client'
 import { ButtonSpinner } from '@components/Login/LoginButton/Spinner/ButtonSpinner'
 import { NoJoinedChannelsFallback } from '@components/NoJoinedChannelsFallback'
 import { IsolatedMessageItem } from '@components/ResultItem/IsolatedMessageItem'
@@ -55,15 +60,19 @@ export const SpaceMentions = () => {
                             {mentions.map((m) => {
                                 return (
                                     m.type === 'mention' && (
-                                        <IsolatedMessageItem
-                                            hoverable
-                                            result={m}
+                                        <ChannelContextProvider
+                                            channelId={m.channelId}
                                             key={m.event.eventId}
-                                            userId={userId}
-                                            padding="md"
-                                            borderRadius="md"
-                                            background="readability"
-                                        />
+                                        >
+                                            <IsolatedMessageItem
+                                                hoverable
+                                                result={m}
+                                                userId={userId}
+                                                padding="md"
+                                                borderRadius="md"
+                                                background="readability"
+                                            />
+                                        </ChannelContextProvider>
                                     )
                                 )
                             })}
