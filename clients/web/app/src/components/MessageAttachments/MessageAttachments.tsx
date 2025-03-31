@@ -479,6 +479,12 @@ const GenericContent = (props: {
     const [isImageLoaded, setIsImageLoaded] = useState(false)
     const { containerHeight, aspectRatio: containerAspectRatio } = useSizeContext()
     const { isGridContext: isGrid } = useContext(MessageAttachmentPresentationContext)
+
+    const { image } = props
+
+    const aspectRatio =
+        image?.width && image?.height ? `${image?.width}/${image?.height}` : undefined
+
     return (
         <LinkContainer>
             {!isImageLoaded && validateImage(props.image) ? (
@@ -491,9 +497,10 @@ const GenericContent = (props: {
                     objectPosition="center"
                     style={{
                         width: '100%',
+                        aspectRatio: aspectRatio,
                         maxHeight: isGrid
                             ? 150
-                            : `min(${!isProfileImage(props.image?.url) ? '290px' : '150px'}, ${
+                            : `min(${!isProfileImage(image?.url) ? '290px' : '150px'}, ${
                                   containerAspectRatio > 1
                                       ? containerHeight * 0.5
                                       : containerHeight * 0.5
