@@ -6,7 +6,7 @@ const domainRegex = /\.towns\.com$/
 
 const hostname = import.meta.env.DEV
     ? // shortcut for debugging, mapping this to ENVs would add unnecessary overhead on production
-      'app.gamma.towns.com'
+      'app.towns.com'
     : new URL(window.location.href).hostname
 
 export const isTownsAppUrl = (url: string) => {

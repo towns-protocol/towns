@@ -52,7 +52,7 @@ export const useExtractExternalLinks = (
         isError,
         isLoading,
     } = useUnfurlContent({
-        urlsArray: cleanLinks.map((l) => l.href),
+        urlsArray: Array.from(new Set(cleanLinks.map((l) => l.href))),
         enabled: cleanLinks.length > 0,
     })
 
@@ -83,26 +83,26 @@ export const useExtractExternalLinks = (
     return { attachments: unfurledLinks, isLoading }
 }
 
-function getTownsLinks(text: string) {
-    const urls = Array.from(text.matchAll(/https:\/\/[^\s]+/g))
-        .map((url) => {
-            const u = url?.[0]
-            if (u) {
-                return parseUrl(u)
-            }
-        })
-        .filter(notUndefined)
+const matchTextLinks =
+    /\[[^\]]+\]\((?<mdLink>https:\/\/[^\s)]+)\)|(?<simpleLink>https:\/\/[^\s)]+)/g
 
-    return urls
+function getTownsLinks(text: string) {
+    return getExternalLinks(text)
+        .filter((u) => isTownsAppUrl(u.href))
+        .map(parseTownLink)
+        .filter(notUndefined)
 }
 
 export function getExternalLinks(text: string) {
-    const urls = Array.from(text.matchAll(/https:\/\/[^\s]+/g))
+    const urls = Array.from(text.matchAll(matchTextLinks))
         .map((u) => {
             if (u) {
                 try {
-                    const url = new URL(u[0])
-                    return url
+                    const link = u.groups?.mdLink || u.groups?.simpleLink
+                    if (link) {
+                        const url = new URL(link)
+                        return url
+                    }
                 } catch (e) {
                     // ignore, trivial error
                 }
@@ -111,16 +111,6 @@ export function getExternalLinks(text: string) {
         .filter(notUndefined)
 
     return urls
-}
-
-const parseUrl = (url: string) => {
-    if (isTownsAppUrl(url)) {
-        try {
-            return parseTownLink(new URL(url))
-        } catch (e) {
-            // ignore, trivial error
-        }
-    }
 }
 
 const parseTownLink = (url: URL) => {

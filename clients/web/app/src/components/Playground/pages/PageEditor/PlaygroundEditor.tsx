@@ -1,5 +1,4 @@
 import React, { useCallback, useRef } from 'react'
-import { TPlateEditor } from '@udecode/plate-common/react'
 import { ChannelContextProvider, LookupUserFn, SendTextMessageOptions } from 'use-towns-client'
 import { RichTextEditor } from '@components/RichTextPlate/RichTextEditor'
 import { useEditorChannelData } from '@components/RichTextPlate/hooks/editorHooks'
@@ -12,7 +11,6 @@ import {
 import { channels, streamMembers } from './data'
 
 type Props = {
-    onChange: (editor: TPlateEditor) => void
     setMarkdown: React.Dispatch<React.SetStateAction<string>>
     setIsEditing: React.Dispatch<React.SetStateAction<boolean>>
     setAttachments: React.Dispatch<React.SetStateAction<FileUpload[]>>
@@ -24,7 +22,6 @@ export const PlaygroundEditor = ({
     initialValue,
     isEditing = false,
     lookupUser,
-    onChange,
     setMarkdown,
     setAttachments,
     setIsEditing,
@@ -62,7 +59,6 @@ export const PlaygroundEditor = ({
                 fileCount={files.length}
                 channels={channels}
                 lookupUser={lookupUser}
-                onChange={onChange}
                 onSend={onSend}
                 onCancel={onCancel}
             />

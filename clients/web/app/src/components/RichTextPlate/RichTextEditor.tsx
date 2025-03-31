@@ -119,7 +119,6 @@ export const RichTextEditor = ({
     onRemoveTicker = noop,
     onCancel = noop,
     onSend = noop,
-    onChange = noop,
     renderSendButton,
     renderTradingBottomBar,
     allowEmptyMessage = false,
@@ -240,15 +239,13 @@ export const RichTextEditor = ({
          * on any manual input change. The reconciliation of the actual editor text is completed later
          */
         if (editor) {
-            onChange(editor)
-            const text = toPlainText(editor.children)
-            const currentTextEmpty = text.trim().length === 0
             startTransition(() => {
+                const text = toPlainText(editor.children)
                 setEditorText(text)
-                setIsEditorEmpty(currentTextEmpty)
+                setIsEditorEmpty(text.length === 0)
             })
         }
-    }, [editor, onChange])
+    }, [editor])
 
     const sendMessage = useCallback(async () => {
         if (!editor) {
