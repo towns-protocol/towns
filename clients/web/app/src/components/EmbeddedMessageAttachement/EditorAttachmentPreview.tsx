@@ -10,7 +10,7 @@ import {
 import { Box, IconButton, Paragraph, Stack, Text } from '@ui'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { MessageAttachments } from '@components/MessageAttachments/MessageAttachments'
-import { MessageAttachmentsContext } from '@components/MessageAttachments/MessageAttachmentsContext'
+import { EmbeddedAttachmentsContext } from '@components/MessageAttachments/MessageAttachmentsContext'
 import { FadeInBox } from '@components/Transitions'
 import { RichTextPreview } from '@components/RichTextPlate/RichTextPreview'
 import { LoadingUnfurledLinkAttachment } from 'hooks/useExtractInternalLinks'
@@ -42,7 +42,7 @@ export const MessageAttachmentPreview = (props: MessageAttachmentPreviewProps) =
     const displayName = getPrettyDisplayName(lookupUser(attachment.info.userId))
 
     return (
-        <MessageAttachmentsContext.Provider value={{ isMessageAttachementContext: true }}>
+        <EmbeddedAttachmentsContext.Provider value={{ isMessageAttachementContext: true }}>
             <EditorAttachmentPreview
                 type="forward"
                 attachments={channelMessageEvent.attachments}
@@ -51,7 +51,7 @@ export const MessageAttachmentPreview = (props: MessageAttachmentPreviewProps) =
                 mentions={channelMessageEvent.mentions}
                 onRemoveClick={onRemoveClick}
             />
-        </MessageAttachmentsContext.Provider>
+        </EmbeddedAttachmentsContext.Provider>
     )
 }
 
@@ -62,9 +62,9 @@ type UnfurledLinkAttachmentPreviewProps = {
 
 export const UnfurledLinkAttachmentPreview = (props: UnfurledLinkAttachmentPreviewProps) => {
     return (
-        <MessageAttachmentsContext.Provider value={{ isMessageAttachementContext: true }}>
+        <EmbeddedAttachmentsContext.Provider value={{ isMessageAttachementContext: true }}>
             <UnfurledLinkPreview attachment={props.attachment} onRemove={props.onRemove} />
-        </MessageAttachmentsContext.Provider>
+        </EmbeddedAttachmentsContext.Provider>
     )
 }
 
@@ -75,9 +75,9 @@ type TickerAttachmentPreviewProps = {
 
 export const TickerAttachmentPreview = (props: TickerAttachmentPreviewProps) => {
     return (
-        <MessageAttachmentsContext.Provider value={{ isMessageAttachementContext: true }}>
+        <EmbeddedAttachmentsContext.Provider value={{ isMessageAttachementContext: true }}>
             <TickerPreview attachment={props.attachment} onRemove={props.onRemove} />
-        </MessageAttachmentsContext.Provider>
+        </EmbeddedAttachmentsContext.Provider>
     )
 }
 

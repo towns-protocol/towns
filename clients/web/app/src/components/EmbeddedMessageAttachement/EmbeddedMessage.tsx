@@ -7,7 +7,7 @@ import {
 import React, { useCallback } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useChannelWithId, useUserLookupContext } from 'use-towns-client'
-import { MessageAttachmentsContext } from '@components/MessageAttachments/MessageAttachmentsContext'
+import { EmbeddedAttachmentsContext } from '@components/MessageAttachments/MessageAttachmentsContext'
 import { RichTextPreview } from '@components/RichTextPlate/RichTextPreview'
 import { Box, Paragraph, Stack, Text } from '@ui'
 import { shortAddress } from 'ui/utils/utils'
@@ -73,7 +73,7 @@ export const EmbeddedMessage = (props: {
     }
 
     return (
-        <MessageAttachmentsContext.Provider value={{ isMessageAttachementContext: true }}>
+        <EmbeddedAttachmentsContext.Provider value={{ isMessageAttachementContext: true }}>
             <Box gap padding background="level2" rounded="sm">
                 <Stack
                     horizontal
@@ -166,6 +166,6 @@ export const EmbeddedMessage = (props: {
                     )}
                 </Stack>
             </Box>
-        </MessageAttachmentsContext.Provider>
+        </EmbeddedAttachmentsContext.Provider>
     )
 } // https://localhost:3000/t//channels/883694f664c498beb7f2424337f3b8182c130c73cbdf42ecb089c1459e570f10#e241f9471d14095577513ec73a9c7a4eb59989f950cf8c7116910772a7c34978

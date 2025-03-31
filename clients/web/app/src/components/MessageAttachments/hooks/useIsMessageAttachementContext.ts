@@ -1,9 +1,9 @@
 import { useContext } from 'react'
-import { MessageAttachmentsContext } from '../MessageAttachmentsContext'
+import { EmbeddedAttachmentsContext } from '../MessageAttachmentsContext'
 
 export const useIsMessageAttachementContext = () => {
     return {
-        isMessageAttachementContext:
-            useContext(MessageAttachmentsContext)?.isMessageAttachementContext,
+        isMessageAttachementContext: useContext(EmbeddedAttachmentsContext)
+            ?.isMessageAttachementContext,
     }
 }

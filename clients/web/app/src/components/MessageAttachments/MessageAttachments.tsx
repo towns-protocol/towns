@@ -35,10 +35,13 @@ import { ErrorBoundary } from '@components/ErrorBoundary/ErrorBoundary'
 import { addressFromSpaceId } from 'ui/utils/utils'
 import { minterRoleId } from '@components/SpaceSettingsPanel/rolePermissions.const'
 import { useSizeContext } from 'ui/hooks/useSizeContext'
-
 import { Ticker } from '@components/TradingChart/Ticker'
 import { useMessageEditContext } from '@components/MessageTimeIineItem/items/MessageEditContext'
-import { MessageAttachmentsContext } from './MessageAttachmentsContext'
+import { useDevice } from 'hooks/useDevice'
+import {
+    EmbeddedAttachmentsContext,
+    MessageAttachmentPresentationContext,
+} from './MessageAttachmentsContext'
 
 const emptyArray: never[] = []
 
@@ -58,8 +61,11 @@ export const MessageAttachments = (props: {
         : props.attachments
 
     // prevent recursive rendering of message attachments
-    const isMessageAttachementContext =
-        useContext(MessageAttachmentsContext)?.isMessageAttachementContext
+    const isMessageAttachementContext = useContext(
+        EmbeddedAttachmentsContext,
+    )?.isMessageAttachementContext
+
+    const isWideContainer = useSizeContext().moreThan(420)
 
     if (!attachments) {
         return null
@@ -76,34 +82,41 @@ export const MessageAttachments = (props: {
     return (
         <>
             {mediaAttachments.length > 0 && (
-                <Box horizontal flexWrap="wrap" gap="sm" onClick={onClick}>
-                    {mediaAttachments.map((attachment) => (
-                        <EditAttachmentContainer
-                            key={attachment.streamId}
-                            attachmentId={attachment.id}
-                        >
-                            <ChunkedFile
-                                mimetype={attachment.info.mimetype}
-                                width={attachment.info.widthPixels}
-                                height={attachment.info.heightPixels}
-                                filename={attachment.info.filename}
-                                streamId={attachment.streamId}
-                                iv={attachment.encryption.iv}
-                                secretKey={attachment.encryption.secretKey}
-                                thumbnail={attachment.thumbnail?.content}
-                                onClick={
-                                    onAttachmentClick
-                                        ? (e) => {
-                                              e.preventDefault()
-                                              e.stopPropagation()
-                                              onAttachmentClick?.(attachment.id)
-                                          }
-                                        : undefined
-                                }
-                            />
-                        </EditAttachmentContainer>
-                    ))}
-                </Box>
+                <MessageAttachmentPresentationContext.Provider
+                    value={{
+                        isGridContext: mediaAttachments.length > 1 && isWideContainer,
+                        gridRowHeight: 250,
+                    }}
+                >
+                    <Box horizontal flexWrap="wrap" gap="sm" onClick={onClick}>
+                        {mediaAttachments.map((attachment) => (
+                            <EditAttachmentContainer
+                                key={attachment.streamId}
+                                attachmentId={attachment.id}
+                            >
+                                <ChunkedFile
+                                    mimetype={attachment.info.mimetype}
+                                    width={attachment.info.widthPixels}
+                                    height={attachment.info.heightPixels}
+                                    filename={attachment.info.filename}
+                                    streamId={attachment.streamId}
+                                    iv={attachment.encryption.iv}
+                                    secretKey={attachment.encryption.secretKey}
+                                    thumbnail={attachment.thumbnail?.content}
+                                    onClick={
+                                        onAttachmentClick
+                                            ? (e) => {
+                                                  e.preventDefault()
+                                                  e.stopPropagation()
+                                                  onAttachmentClick?.(attachment.id)
+                                              }
+                                            : undefined
+                                    }
+                                />
+                            </EditAttachmentContainer>
+                        ))}
+                    </Box>
+                </MessageAttachmentPresentationContext.Provider>
             )}
             {fileAttachments.length > 0 && (
                 <Stack horizontal gap="sm" flexWrap="wrap">
@@ -150,13 +163,23 @@ export const MessageAttachments = (props: {
                 </Stack>
             )}
             {unfurledLinkAttachments.length > 0 && (
-                <Box horizontal gap="sm" flexWrap="wrap" width="100%">
-                    {unfurledLinkAttachments.map((attachment) => (
-                        <EditAttachmentContainer key={attachment.id} attachmentId={attachment.id}>
-                            <UnfurledLinkAttachmentContainer attachment={attachment} />
-                        </EditAttachmentContainer>
-                    ))}
-                </Box>
+                <MessageAttachmentPresentationContext.Provider
+                    value={{
+                        isGridContext: unfurledLinkAttachments.length > 1 && isWideContainer,
+                        gridRowHeight: 250,
+                    }}
+                >
+                    <Box horizontal gap="sm" flexWrap="wrap" width="100%">
+                        {unfurledLinkAttachments.map((attachment) => (
+                            <EditAttachmentContainer
+                                key={attachment.id}
+                                attachmentId={attachment.id}
+                            >
+                                <UnfurledLinkAttachmentContainer attachment={attachment} />
+                            </EditAttachmentContainer>
+                        ))}
+                    </Box>
+                </MessageAttachmentPresentationContext.Provider>
             )}
             {/* show ticker attachments in vertical stack */}
             {tickerAttachments.length > 0 && (
@@ -455,9 +478,10 @@ const GenericContent = (props: {
 }) => {
     const [isImageLoaded, setIsImageLoaded] = useState(false)
     const { containerHeight, aspectRatio: containerAspectRatio } = useSizeContext()
+    const { isGridContext: isGrid } = useContext(MessageAttachmentPresentationContext)
     return (
         <LinkContainer>
-            {!isImageLoaded && validateImage(props.image) && (
+            {!isImageLoaded && validateImage(props.image) ? (
                 <Box
                     roundedTop="md"
                     as="img"
@@ -467,12 +491,27 @@ const GenericContent = (props: {
                     objectPosition="center"
                     style={{
                         width: '100%',
-                        maxHeight: `min(${!isProfileImage(props.image?.url) ? '290px' : '150px'}, ${
-                            containerAspectRatio > 1 ? containerHeight * 0.5 : containerHeight * 0.5
-                        }px)`,
+                        maxHeight: isGrid
+                            ? 150
+                            : `min(${!isProfileImage(props.image?.url) ? '290px' : '150px'}, ${
+                                  containerAspectRatio > 1
+                                      ? containerHeight * 0.5
+                                      : containerHeight * 0.5
+                              }px)`,
                     }}
                     onError={() => setIsImageLoaded(true)}
                 />
+            ) : isGrid ? (
+                <Box
+                    centerContent
+                    roundedTop="md"
+                    width="100%"
+                    height="150"
+                    background="level2"
+                    onError={() => setIsImageLoaded(true)}
+                />
+            ) : (
+                <></>
             )}
             <Stack padding gap="paragraph">
                 {props.title && !isUrl(props.title) && (
@@ -491,7 +530,7 @@ const GenericContent = (props: {
                             color="gray2"
                             style={{
                                 display: '-webkit-box',
-                                WebkitLineClamp: 5,
+                                WebkitLineClamp: isGrid ? 1 : 5,
                                 WebkitBoxOrient: 'vertical',
                                 overflow: 'hidden',
                             }}
@@ -543,10 +582,19 @@ const EditAttachmentContainer = (
 ) => {
     const { children, attachmentId, ...boxProps } = props
     const removeAttachment = useMessageEditContext()?.removeAttachmentId
+
+    const { isTouch } = useDevice()
+    const [hovering, setHovering] = useState(isTouch)
+
     return (
-        <Box position="relative" {...boxProps}>
+        <Box
+            position="relative"
+            {...boxProps}
+            onMouseOver={() => setHovering(true)}
+            onMouseLeave={() => setHovering(false)}
+        >
             {children}
-            {removeAttachment && (
+            {removeAttachment && hovering && (
                 <RemoveAttachmentButton onClick={() => removeAttachment?.(attachmentId)} />
             )}
         </Box>

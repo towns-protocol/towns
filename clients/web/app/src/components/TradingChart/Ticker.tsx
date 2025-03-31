@@ -9,7 +9,7 @@ import { CHANNEL_INFO_PARAMS } from 'routes'
 import { MessageTimelineContext } from '@components/MessageTimeline/MessageTimelineContext'
 import { useOpenMessageThread } from 'hooks/useOpenThread'
 import { useSizeContext } from 'ui/hooks/useSizeContext'
-import { MessageAttachmentsContext } from '@components/MessageAttachments/MessageAttachmentsContext'
+import { EmbeddedAttachmentsContext } from '@components/MessageAttachments/MessageAttachmentsContext'
 import { useDevice } from 'hooks/useDevice'
 import { useTradeAnalytics } from '@components/Web3/Trading/useTradeAnalytics'
 import { useCoinData } from './useCoinData'
@@ -86,7 +86,7 @@ export const TradingChartTicker = (props: {
     const isTradeThreadContext = useContext(TickerThreadContext) !== undefined
     const timelineContext = useContext(MessageTimelineContext)
 
-    const attachmentContext = useContext(MessageAttachmentsContext)
+    const attachmentContext = useContext(EmbeddedAttachmentsContext)
 
     const { trackClickTokenMessage } = useTradeAnalytics({
         chainId: attachment.chainId,

@@ -10,7 +10,7 @@ import { useCreateLink } from 'hooks/useCreateLink'
 import { htmlToText } from 'workers/data_transforms'
 import { isChannelMessage } from '@components/MessageTimeline/util/getEventsByDate'
 import { MessageAttachments } from '@components/MessageAttachments/MessageAttachments'
-import { MessageAttachmentsContext } from '@components/MessageAttachments/MessageAttachmentsContext'
+import { EmbeddedAttachmentsContext } from '@components/MessageAttachments/MessageAttachmentsContext'
 
 type Props = {
     eventId: string
@@ -71,13 +71,13 @@ export const QuotedMessage = (props: Props) => {
                             {htmlToText(event.content.body)}
                         </Text>
                     </Box>
-                    <MessageAttachmentsContext.Provider
+                    <EmbeddedAttachmentsContext.Provider
                         value={{ isMessageAttachementContext: true }}
                     >
                         {attachments && attachments.length > 0 && (
                             <MessageAttachments attachments={attachments} eventId={eventId} />
                         )}
-                    </MessageAttachmentsContext.Provider>
+                    </EmbeddedAttachmentsContext.Provider>
                 </Box>
             </Link>
         </Box>

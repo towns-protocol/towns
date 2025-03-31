@@ -11,7 +11,7 @@ import {
 } from '@components/MessageLayout/MessageLayout'
 import { RatioedBackgroundImage } from '@components/RatioedBackgroundImage'
 import { useDevice } from 'hooks/useDevice'
-import { Box, TooltipRenderer } from '@ui'
+import { Box, Stack, TooltipRenderer } from '@ui'
 import { ProfileHoverCard } from '@components/ProfileHoverCard/ProfileHoverCard'
 import { QUERY_PARAMS } from 'routes'
 import { SendStatus } from '@components/MessageLayout/SendStatusIndicator'
@@ -372,17 +372,23 @@ const MessageWrapper = React.memo((props: MessageWrapperProps) => {
             pin={pin}
             onReaction={handleReaction}
         >
-            {props.children}
+            {/* default: show message above attachments */}
+            {!isEditing && props.children}
 
             {attachments && attachments.length > 0 && (
-                <MessageAttachments
-                    eventId={event.eventId}
-                    attachments={attachments}
-                    threadParentId={threadParentId}
-                    onAttachmentClick={onAttachmentClick}
-                    onClick={isTouch && selectable ? onMediaClick : undefined}
-                />
+                <Stack gap="sm">
+                    <MessageAttachments
+                        eventId={event.eventId}
+                        attachments={attachments}
+                        threadParentId={threadParentId}
+                        onAttachmentClick={onAttachmentClick}
+                        onClick={isTouch && selectable ? onMediaClick : undefined}
+                    />
+                </Stack>
             )}
+
+            {/*  when editing: show attachemts above message */}
+            {isEditing && props.children}
         </MessageLayout>
     )
 

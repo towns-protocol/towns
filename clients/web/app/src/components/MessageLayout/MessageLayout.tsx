@@ -92,7 +92,6 @@ export const MessageLayout = (props: Props) => {
         highlight: isHighlight,
         isChannelWritable = true,
         isChannelReactable,
-
         selectable: isSelectable,
         isEncryptedMessage,
         listView: isListView,

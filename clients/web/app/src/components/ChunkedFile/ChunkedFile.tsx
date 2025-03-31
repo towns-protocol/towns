@@ -1,5 +1,5 @@
 import { useMutation } from '@tanstack/react-query'
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { useChunkedMedia, useDownloadFile } from 'use-towns-client'
 import { Box, Button, Icon, IconButton, Stack, Text } from '@ui'
 import { useDevice } from 'hooks/useDevice'
@@ -7,6 +7,7 @@ import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
 import { useSizeContext } from 'ui/hooks/useSizeContext'
 import { useIsMessageAttachementContext } from '@components/MessageAttachments/hooks/useIsMessageAttachementContext'
 import { isImageMimeType, isVideoMimeType } from 'utils/isMediaMimeType'
+import { MessageAttachmentPresentationContext } from '@components/MessageAttachments/MessageAttachmentsContext'
 
 type Props = {
     streamId: string
@@ -141,6 +142,11 @@ const ChunkedImageMedia = (
 ) => {
     const { width, height, thumbnail, onClick, onDownloadClicked } = props
 
+    const { containerWidth, containerHeight } = useSizeContext()
+    const { isGridContext, gridRowHeight: rowHeight } = useContext(
+        MessageAttachmentPresentationContext,
+    )
+
     const { isMessageAttachementContext } = useIsMessageAttachementContext()
     const { isTouch } = useDevice()
 
@@ -152,7 +158,8 @@ const ChunkedImageMedia = (
         setIsHovering(false)
     }, [])
 
-    const { objectURL } = useChunkedMedia(props)
+    const objectURL = useChunkedMedia(props).objectURL
+
     const [thumbnailURL] = useState<string | undefined>(() => {
         if (thumbnail) {
             const blob = new Blob([thumbnail])
@@ -161,7 +168,7 @@ const ChunkedImageMedia = (
         return undefined
     })
     const src = objectURL ?? thumbnailURL ?? ''
-    const applyBlur = !objectURL
+    const applyBlur = !objectURL && !thumbnailURL
 
     const touchButton = useMemo(() => {
         return (
@@ -178,8 +185,6 @@ const ChunkedImageMedia = (
         )
     }, [isTouch, onClick])
 
-    const { containerWidth, containerHeight } = useSizeContext()
-
     const safeArea = useMemo(() => {
         // slightly arbitrary, the margin around the container (avatars, textbox, etc)
         const marginX = 85
@@ -194,29 +199,43 @@ const ChunkedImageMedia = (
         const vph = containerHeight - marginY
         const ca = vpw / vph
 
-        return {
-            // - never larger than the viewport
-            // - never larger than the image itself
-            // - for stretched landscape (text) downscale 66% otherwise 50%
-            width: Math.min(vpw, imageMaxWidth, width / height > 3 ? width * 0.66 : width * 0.5),
+        return isGridContext
+            ? {
+                  width: rowHeight,
+                  height: rowHeight,
+              }
+            : {
+                  // - never larger than the viewport
+                  // - never larger than the image itself
+                  // - for stretched landscape (text) downscale 66% otherwise 50%
+                  width: Math.min(
+                      vpw,
+                      imageMaxWidth,
+                      width / height > 3 ? width * 0.66 : width * 0.5,
+                  ),
 
-            // - never larger than the imageMaxHeight
-            // - if the image is landscape, never larger than 75% of the viewport height
-            // - if the image is portrait, never larger than 50% of the viewport height
-            // - for stretched landscape (text) downscale 66% otherwise 50%
-            // - but never smaller than 300px height
-            height: Math.max(
-                300,
-                Math.min(
-                    imageMaxHeight,
-                    ca > 1 ? vph * 0.75 : vph * 0.66,
-                    height / width > 3 ? height * 0.66 : height * 0.5,
-                ),
-            ),
-        }
-    }, [containerHeight, containerWidth, height, width])
+                  // - never larger than the imageMaxHeight
+                  // - if the image is landscape, never larger than 75% of the viewport height
+                  // - if the image is portrait, never larger than 50% of the viewport height
+                  // - for stretched landscape (text) downscale 66% otherwise 50%
+                  // - but never smaller than 300px height
+                  height: Math.max(
+                      300,
+                      Math.min(
+                          imageMaxHeight,
+                          ca > 1 ? vph * 0.75 : vph * 0.66,
+                          height / width > 3 ? height * 0.66 : height * 0.5,
+                      ),
+                  ),
+              }
+    }, [containerHeight, containerWidth, rowHeight, height, isGridContext, width])
 
-    const direction = width / height > safeArea.width / safeArea.height ? 'h' : 'v'
+    const direction =
+        isGridContext || !safeArea.width || !safeArea.height
+            ? undefined
+            : width / height > safeArea.width / safeArea.height
+            ? 'h'
+            : 'v'
 
     return isMessageAttachementContext ? (
         <Box
@@ -250,10 +269,8 @@ const ChunkedImageMedia = (
                 width={width}
                 height={height}
                 style={{
-                    height: '100%',
-                    width: '100%',
-                    objectFit: 'contain',
-                    objectPosition: 'top left',
+                    height: isGridContext && rowHeight ? rowHeight : '100%',
+                    width: isGridContext && rowHeight ? rowHeight * (width / height) : '100%',
                     filter: applyBlur ? 'blur(10px) brightness(80%)' : undefined,
                 }}
                 onClick={isTouch ? undefined : onClick}
