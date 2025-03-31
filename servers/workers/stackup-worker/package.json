@@ -15,29 +15,32 @@
         "publish": "wrangler deploy --env $CF_ENV",
         "tail": "wrangler tail stackup-worker --env $CF_ENV",
         "test": "yarn test:unit",
-        "test:unit": "yarn node --experimental-vm-modules $(yarn bin jest)"
+        "test:smart-account": "vitest run --project smart-account",
+        "test:unit": "vitest run --project router"
     },
     "dependencies": {
         "@privy-io/server-auth": "^1.9.1",
         "@towns-protocol/generated": "workspace:^",
         "@towns-protocol/web3": "workspace:^",
+        "ethers": "^5.7.2",
         "itty-router": "^2.6.6",
+        "permissionless": "^0.2.33",
         "userop.js": "^0.3.7",
         "viem": "2.23.2",
         "worker-common": "workspace:^"
     },
     "devDependencies": {
+        "@cloudflare/vitest-pool-workers": "^0.7.5",
         "@cloudflare/workers-types": "^4.20240529.0",
         "@types/jest": "^29.5.3",
         "@typescript-eslint/eslint-plugin": "^6.10.0",
         "@typescript-eslint/parser": "^7.14.1",
         "eslint": "^8.53.0",
-        "jest": "^29.6.2",
-        "jest-environment-miniflare": "^2.14.2",
+        "eslint-plugin-vitest": "^0.5.4",
         "miniflare": "^3.20240524.1",
         "prettier": "^2.8.8",
-        "ts-jest": "^29.1.1",
         "typescript": "^5.1.6",
-        "wrangler": "^3.58.0"
+        "vitest": "~3.0.7",
+        "wrangler": "^4.6.0"
     }
 }

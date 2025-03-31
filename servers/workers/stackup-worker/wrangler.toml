@@ -1,8 +1,8 @@
 main = "./src/index.ts"
 name = "stackup-worker"
-compatibility_date = "2024-05-24"
+compatibility_date = "2024-09-23"
 logpush = true
-node_compat = true
+compatibility_flags = [ "nodejs_compat" ]
 account_id = "9840f8a36a817b103e00e29a0e2bad6f"
 
 kv_namespaces = [

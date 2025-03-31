@@ -8,7 +8,7 @@ const LOCALHOST_RPC_URL = 'http://127.0.0.1:8545'
 const BASE_SEPOLIA_RPC_URL = 'https://base-sepolia.g.alchemy.com/v2/'
 const BASE_RPC_URL = 'https://base-mainnet.g.alchemy.com/v2/'
 
-const providerMap = new Map<Environment, string>([
+export const providerMap = new Map<Environment, string>([
     ['development', LOCALHOST_RPC_URL],
     ['test-beta', `${BASE_SEPOLIA_RPC_URL}`],
     ['alpha', `${BASE_SEPOLIA_RPC_URL}`],

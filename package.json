@@ -202,7 +202,9 @@
             {
                 "label": "Different versions in stackup-worker",
                 "dependencies": [
-                    "viem"
+                    "viem",
+                    "vitest",
+                    "wrangler"
                 ],
                 "packages": [
                     "stackup-worker"

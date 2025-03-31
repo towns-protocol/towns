@@ -8,6 +8,7 @@ import {
     isTransactionLimitRequest,
     isEntrypointV07SponsorshipRequest,
     isEntrypoinV06SponsorshipRequest,
+    isSmartAccountRequest,
 } from './types'
 import { TRANSACTION_LIMIT_DEFAULTS_PER_DAY } from './useropVerification'
 
@@ -26,6 +27,7 @@ import { verifyPrivyAuthToken } from './privy'
 import { PrivyClient } from '@privy-io/server-auth'
 import { handlePaymasterResponse, handleVerifications } from './sponsorHelpers'
 import { createErrorResponse, createSuccessResponse, ErrorCode } from './createResponse'
+import { determineSmartAccount } from './determineSmartAccount'
 
 const router = Router()
 
@@ -403,6 +405,43 @@ router.post('/admin/api/add-to-whitelist', async (request: WorkerRequest, env: E
             )
     }
     return createSuccessResponse(200, 'Ok')
+})
+
+/**
+ * Determine the smart account address for a given owner address and new account implementation type
+ *
+ * @param request - The request object
+ * @param request.params.ownerAddress - The owner address
+ * @param request.query.newAccountImplementationType - The type of smart accounts for new users. Note this does not mean the returned smart account will be of this type.
+ * @param env - The environment object
+ * @returns A success response with the smart account address and the current account type (simple or modular)
+ * { address: '0x1234567890123456789012345678901234567890', accountType: 'simple' }
+ *
+ * @example
+ *  /api/smart-account/0x1234567890123456789012345678901234567890?newAccountImplementationType=simple'
+ *
+ */
+router.get('/api/smart-account/:ownerAddress', async (request: WorkerRequest, env: Env) => {
+    const { query, params } = request
+
+    const content = {
+        newAccountImplementationType: query?.newAccountImplementationType,
+        ownerAddress: params?.ownerAddress,
+    }
+    if (!content || !isSmartAccountRequest(content)) {
+        return createErrorResponse(400, 'Bad Request', ErrorCode.BAD_REQUEST)
+    }
+    const { newAccountImplementationType, ownerAddress } = content
+    const smartAccount = await determineSmartAccount({
+        newAccountImplementationType,
+        ownerAddress,
+        environment: env.ENVIRONMENT,
+        env,
+    })
+    return createSuccessResponse(200, 'Ok', {
+        address: smartAccount.address,
+        accountType: smartAccount.accountType,
+    })
 })
 
 router.get('*', () => createErrorResponse(404, 'Not Found', ErrorCode.NOT_FOUND))

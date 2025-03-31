@@ -78,6 +78,11 @@ jobs:
             - name: Wait for stackup worker with limits enforced to be up on 8989
               run: PORT=8989 yarn worker:wait:stackup
 
+            - name: Run stackup-worker determine smart account tests
+              timeout-minutes: 3
+              working-directory: ./servers/workers/stackup-worker
+              run: yarn test:smart-account
+
             - name: Run @towns/userop package tests
               timeout-minutes: 10
               env:

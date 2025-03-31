@@ -1,17 +1,8 @@
-# this is for tests, so it gets used even though wrangler CLI says otherwise
-[miniflare]
-cache_persist = false
+compatibility_flags = [ "export_commonjs_default" ]
 
-[vars]
-AUTH_SECRET="foo"
-ENVIRONMENT="development"
-SKIP_TOWNID_VERIFICATION="true"
-SKIP_PRIVY_VERIFICATION="true"
-LOCAL_PAYMASTER_RPC_URL="http://fake.com"
-ALCHEMY_GM_POLICY_ID="fake"
-ALCHEMY_PAYMASTER_RPC_URL="http://fake.com"
-PRIVY_APP_KEY=""
-PRIVY_APP_ID=""
+# !IMPORTANT: IF YOU DON"T CREATE AN EMPTY .dev.vars.test file, these vars are overwritten by .dev.vars wtf
+[env.test]
+vars = { AUTH_SECRET="foo", ENVIRONMENT="development", SKIP_TOWNID_VERIFICATION="true", SKIP_PRIVY_VERIFICATION="true", LOCAL_PAYMASTER_RPC_URL="http://fake.com", ALCHEMY_GM_POLICY_ID="fake", ALCHEMY_PAYMASTER_RPC_URL="http://fake.com", PRIVY_APP_KEY="", PRIVY_APP_ID="" }
 
 kv_namespaces = [
   { binding = "OVERRIDES", id = "<ignored>", preview_id = "<ignored>" },

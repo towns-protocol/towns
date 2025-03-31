@@ -1,21 +1,35 @@
 import { Env, worker } from '../src/index'
 import { toJson } from '../src/utils'
 import { createSpaceFakeRequest, joinTownFakeRequest, linkWalletFakeRequest } from './test_utils'
-import { jest } from '@jest/globals'
+import { env, createExecutionContext, waitOnExecutionContext, fetchMock } from 'cloudflare:test'
+import { describe, it, expect, test, vi, beforeAll, afterEach } from 'vitest'
 
-const FAKE_SERVER_URL = 'http:/server.com'
+const FAKE_SERVER_URL = 'http://fake.com'
 const AUTH_TOKEN = 'Zm9v'
+
+const IncomingRequest = Request<unknown, IncomingRequestCfProperties>
 
 function generateRequest(
     route: string,
     method = 'GET',
     headers = {},
     body?: BodyInit,
-    env?: Env,
+    envOverride?: Env,
 ): [Request, Env] {
     const url = `${FAKE_SERVER_URL}/${route}`
-    return [new Request(url, { method, headers, body }), env ?? getMiniflareBindings()]
+    return [new IncomingRequest(url, { method, headers, body }), (envOverride ?? env) as Env]
 }
+
+const typedEnv = env as Env
+
+beforeAll(() => {
+    // Enable outbound request mocking...
+    fetchMock.activate()
+    // ...and throw errors if an outbound request isn't mocked
+    fetchMock.disableNetConnect()
+})
+// Ensure we matched every mock we defined
+afterEach(() => fetchMock.assertNoPendingInterceptors())
 
 describe('http router', () => {
     test('pass wildcard route', async () => {
@@ -24,9 +38,7 @@ describe('http router', () => {
                 Authorization: `Bearer ${AUTH_TOKEN}`,
             }),
         )
-
         expect(result.status).toBe(404)
-
         const text = await result.text()
         expect(text).toContain('Not Found')
     })
@@ -34,8 +46,6 @@ describe('http router', () => {
     // TODO: this test should mock/intercept anvil RPC calls
     // if anvil not running, you get  KV returned error: could not detect network (event="noNetwork", code=NETWORK_ERROR, version=providers/5.7.2)
     test.skip('verify createSpace without skip townId verification', async () => {
-        const env = getMiniflareBindings()
-        env.SKIP_TOWNID_VERIFICATION = 'false'
         const result = await worker.fetch(
             ...generateRequest(
                 'api/sponsor-userop',
@@ -46,7 +56,10 @@ describe('http router', () => {
                 toJson({
                     data: JSON.parse(createSpaceFakeRequest),
                 }) as BodyInit,
-                env,
+                {
+                    ...typedEnv,
+                    SKIP_TOWNID_VERIFICATION: 'false',
+                },
             ),
         )
         expect(result.status).toBe(401)
@@ -56,12 +69,9 @@ describe('http router', () => {
     })
 
     test('verify createSpace with mocked fetch to Alchemy api', async () => {
-        const fetchMock = getMiniflareFetchMock()
-        fetchMock.disableNetConnect()
-        const env = getMiniflareBindings()
-        const url = new URL(env.LOCAL_PAYMASTER_RPC_URL)
+        const url = new URL(typedEnv.ALCHEMY_PAYMASTER_RPC_URL as string)
+
         const origin = fetchMock.get(url.origin)
-        env.SKIP_TOWNID_VERIFICATION = 'true'
 
         const resultError = {
             id: 1,
@@ -75,7 +85,7 @@ describe('http router', () => {
             })
             .reply(400, resultError)
 
-        const spy = jest.spyOn(globalThis, 'fetch')
+        const spy = vi.spyOn(globalThis, 'fetch')
 
         await worker.fetch(
             ...generateRequest(
@@ -87,7 +97,10 @@ describe('http router', () => {
                 toJson({
                     data: JSON.parse(createSpaceFakeRequest),
                 }) as BodyInit,
-                env,
+                {
+                    ...typedEnv,
+                    SKIP_TOWNID_VERIFICATION: 'true',
+                },
             ),
         )
 
@@ -110,12 +123,8 @@ describe('http router', () => {
     })
 
     test('verify createSpace with gas overrides', async () => {
-        const fetchMock = getMiniflareFetchMock()
-        fetchMock.disableNetConnect()
-        const env = getMiniflareBindings()
-        const url = new URL(env.LOCAL_PAYMASTER_RPC_URL)
+        const url = new URL(typedEnv.ALCHEMY_PAYMASTER_RPC_URL as string)
         const origin = fetchMock.get(url.origin)
-        env.SKIP_TOWNID_VERIFICATION = 'true'
 
         const resultError = {
             id: 1,
@@ -129,7 +138,7 @@ describe('http router', () => {
             })
             .reply(400, resultError)
 
-        const spy = jest.spyOn(globalThis, 'fetch')
+        const spy = vi.spyOn(globalThis, 'fetch')
         const gasOverrides = {
             maxFeePerGas: '0x1234',
             maxPriorityFeePerGas: '0x1234',
@@ -149,7 +158,10 @@ describe('http router', () => {
                 toJson({
                     data,
                 }) as BodyInit,
-                env,
+                {
+                    ...typedEnv,
+                    SKIP_TOWNID_VERIFICATION: 'true',
+                },
             ),
         )
 
@@ -170,12 +182,9 @@ describe('http router', () => {
     })
 
     test('verify joinTown with mocked fetch to Stackup api', async () => {
-        const fetchMock = getMiniflareFetchMock()
-        fetchMock.disableNetConnect()
-        const env = getMiniflareBindings()
-        const url = new URL(env.LOCAL_PAYMASTER_RPC_URL)
+        const url = new URL(typedEnv.LOCAL_PAYMASTER_RPC_URL)
         const origin = fetchMock.get(url.origin)
-        env.SKIP_TOWNID_VERIFICATION = 'true'
+
         const resultErrorStackup = {
             id: 1,
             jsonrpc: '2.0',
@@ -198,7 +207,10 @@ describe('http router', () => {
                 toJson({
                     data: JSON.parse(joinTownFakeRequest),
                 }) as BodyInit,
-                env,
+                {
+                    ...typedEnv,
+                    SKIP_TOWNID_VERIFICATION: 'true',
+                },
             ),
         )
         expect(result.status).toBe(400)
@@ -208,12 +220,9 @@ describe('http router', () => {
     })
 
     test('verify walletLink with skipped verification', async () => {
-        const fetchMock = getMiniflareFetchMock()
-        fetchMock.disableNetConnect()
-        const env = getMiniflareBindings()
-        const url = new URL(env.LOCAL_PAYMASTER_RPC_URL)
+        const url = new URL(typedEnv.LOCAL_PAYMASTER_RPC_URL)
         const origin = fetchMock.get(url.origin)
-        env.SKIP_TOWNID_VERIFICATION = 'true'
+
         const resultErrorStackup = {
             id: 1,
             jsonrpc: '2.0',
@@ -236,7 +245,10 @@ describe('http router', () => {
                 toJson({
                     data: JSON.parse(linkWalletFakeRequest),
                 }) as BodyInit,
-                env,
+                {
+                    ...typedEnv,
+                    SKIP_TOWNID_VERIFICATION: 'true',
+                },
             ),
         )
         expect(result.status).toBe(400)

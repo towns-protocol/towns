@@ -1,7 +1,7 @@
 import { IUserOperation } from 'userop.js'
 import { Environment } from 'worker-common'
 import { BigNumberish } from 'ethers'
-import { RpcUserOperation } from 'viem'
+import { Address, isAddress, RpcUserOperation } from 'viem'
 // see https://github.com/stackup-wallet/userop.js/blob/1d9d0e034691cd384e194c9e8b3165680a334180/src/preset/middleware/paymaster.ts
 export interface VerifyingPaymasterResult {
     paymasterAndData: string
@@ -152,6 +152,29 @@ export function isOverrideOperation(obj: any): obj is IOverrideOperation {
         Object.values(Overrides).includes(obj.operation) &&
         typeof obj.enabled === 'boolean' &&
         (typeof obj.n === 'number' || obj.n === undefined)
+    )
+}
+
+export function isSmartAccountRequest(obj: unknown): obj is {
+    newAccountImplementationType: 'simple' | 'modular'
+    ownerAddress: Address
+} {
+    if (typeof obj !== 'object' || obj === null) {
+        return false
+    }
+    if (
+        !('newAccountImplementationType' in obj) ||
+        typeof obj.newAccountImplementationType !== 'string'
+    ) {
+        return false
+    }
+    if (!('ownerAddress' in obj) || typeof obj.ownerAddress !== 'string') {
+        return false
+    }
+    return (
+        (obj.newAccountImplementationType === 'simple' ||
+            obj.newAccountImplementationType === 'modular') &&
+        isAddress(obj.ownerAddress)
     )
 }
 
