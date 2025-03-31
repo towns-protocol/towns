@@ -35,6 +35,7 @@ import { ErrorBoundary } from '@components/ErrorBoundary/ErrorBoundary'
 import { addressFromSpaceId } from 'ui/utils/utils'
 import { minterRoleId } from '@components/SpaceSettingsPanel/rolePermissions.const'
 import { useSizeContext } from 'ui/hooks/useSizeContext'
+import { isTownBanned } from 'utils'
 import { Ticker } from '@components/TradingChart/Ticker'
 import { useMessageEditContext } from '@components/MessageTimeIineItem/items/MessageEditContext'
 import { useDevice } from 'hooks/useDevice'
@@ -320,24 +321,27 @@ const TownsContent = (props: { townPath: string; townId: string; channelId?: str
 
     const { channelSettings } = useChannelSettings(townId, channelId ?? '')
 
+    // Check if the town is banned
+    const isBanned = isTownBanned(townId)
+
     return (
         <LinkContainer
             horizontal
-            hoverable
+            hoverable={!isBanned}
             padding="sm"
             minWidth={{ mobile: '300', default: '150' }}
             gap="sm"
             maxWidth={{ mobile: '300', default: '400' }}
             width="100%"
-            cursor="pointer"
-            onClick={onClick}
+            cursor={isBanned ? 'default' : 'pointer'}
+            onClick={isBanned ? undefined : onClick}
         >
             <InteractiveSpaceIcon
                 reduceMotion
-                spaceId={townId}
-                address={spaceInfo?.address}
+                spaceId={isBanned ? undefined : townId}
+                address={isBanned ? undefined : spaceInfo?.address}
                 size="xs"
-                spaceName={spaceInfo?.name}
+                spaceName={isBanned ? undefined : spaceInfo?.name}
             />
             <Box gap="paragraph" paddingY="sm" paddingRight="sm" overflow="hidden">
                 <Stack gap="paragraph">
@@ -346,21 +350,31 @@ const TownsContent = (props: { townPath: string; townId: string; channelId?: str
                             #{channelSettings?.name}
                         </Paragraph>
                     )}
-                    <Heading level={3} color="default" whiteSpace="normal">
-                        {spaceInfo?.name}
+                    <Heading
+                        level={3}
+                        color={isBanned ? 'negative' : 'default'}
+                        whiteSpace="normal"
+                    >
+                        {isBanned ? 'Banned Town' : spaceInfo?.name}
                     </Heading>
-                    {spaceInfo?.shortDescription && (
-                        <Paragraph color="gray2">{spaceInfo?.shortDescription}</Paragraph>
+                    {isBanned ? (
+                        <Paragraph color="gray2">
+                            This town has been banned and is no longer accessible.
+                        </Paragraph>
+                    ) : (
+                        spaceInfo?.shortDescription && (
+                            <Paragraph color="gray2">{spaceInfo?.shortDescription}</Paragraph>
+                        )
                     )}
                 </Stack>
-                {!!spaceInfo?.longDescription && (
+                {!isBanned && !!spaceInfo?.longDescription && (
                     <Stack>
                         <Paragraph color="gray2" size="sm">
                             {spaceInfo?.longDescription}
                         </Paragraph>
                     </Stack>
                 )}
-                {!!spaceInfo?.owner && (
+                {!isBanned && !!spaceInfo?.owner && (
                     <Stack horizontal gap="sm" alignItems="center">
                         <Paragraph size="sm" color="gray2">
                             By
@@ -368,7 +382,7 @@ const TownsContent = (props: { townPath: string; townId: string; channelId?: str
                         <OwnerPill userId={spaceInfo?.owner} />
                     </Stack>
                 )}
-                {!isLoading && (
+                {!isBanned && !isLoading && (
                     <Stack horizontal flexWrap="wrap" gap="sm">
                         {(memberInfo?.totalSupply ?? 0 > 1) && (
                             <Pill>

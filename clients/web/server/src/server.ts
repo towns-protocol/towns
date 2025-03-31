@@ -112,6 +112,10 @@ server.setNotFoundHandler(async (request, reply) => {
         return reply.header('Content-Type', 'text/json').send({
             exploreTowns: config.VITE_EXPLORE_TOWNS,
         })
+    } else if (urlPath === '/data/banned-towns') {
+        return reply.header('Content-Type', 'text/json').send({
+            bannedTowns: config.VITE_BANNED_TOWNS,
+        })
     }
 
     const html = await updateTemplate({ host })

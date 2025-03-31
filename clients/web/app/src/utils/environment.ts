@@ -92,6 +92,7 @@ const envSchema = z.object({
 
     VITE_XCHAIN_CONFIG: z.string().optional(),
     VITE_EXPLORE_TOWNS: z.string().optional(),
+    VITE_BANNED_TOWNS: z.string().optional(),
 
     VITE_DECENT_API_KEY: z.string().optional(),
     VITE_CROSSMINT_CLIENT_API_KEY: z.string().optional(),

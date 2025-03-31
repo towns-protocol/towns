@@ -12,6 +12,7 @@ import { useDevice } from 'hooks/useDevice'
 import { env } from 'utils/environment'
 import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
 import { addressFromSpaceId } from 'ui/utils/utils'
+import { isTownBanned } from 'utils/isTownBanned'
 
 export interface RouteParams {
     spaceId?: string
@@ -49,6 +50,8 @@ const SpaceContext = () => {
     const setTitle = useSetDocTitle()
     const path = useSpaceRouteMatcher(space)
     const spaceName = space?.name || chainSpace?.name
+    const townAddress = space ? addressFromSpaceId(space.id) : ''
+    const isBanned = townAddress ? isTownBanned(townAddress) : false
 
     useEffect(() => {
         console.log('[SpaceContextRoute][route]', 'route', {
@@ -99,6 +102,10 @@ const SpaceContext = () => {
     }, [isTouch, location.pathname, path, setTownRouteBookmark, spaceSlug])
 
     const title = useMemo(() => {
+        if (isBanned) {
+            return 'Banned Town - Towns'
+        }
+
         if (!path) {
             return createSpaceTitle()
         } else if (path.type === 'channel') {
@@ -112,7 +119,7 @@ const SpaceContext = () => {
         } else {
             return createSpaceTitle(spaceName)
         }
-    }, [path, spaceName])
+    }, [path, spaceName, isBanned])
 
     useEffect(() => {
         setTitle(title)

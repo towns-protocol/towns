@@ -1,6 +1,6 @@
 import { Allotment, AllotmentHandle } from 'allotment'
 import React, { useEffect, useRef, useState } from 'react'
-import { Outlet, useMatch } from 'react-router'
+import { Outlet, useMatch, useParams } from 'react-router'
 import { useSpaceData } from 'use-towns-client'
 import { DirectMessagesPanel } from '@components/DirectMessages/DirectMessages'
 import { ShortcutModal } from '@components/Shortcuts/ShortcutModal'
@@ -15,6 +15,7 @@ import { ErrorBoundary } from '@components/ErrorBoundary/ErrorBoundary'
 import { PATHS } from 'routes'
 import { AppStoreBanner } from '@components/AppStoreBanner/AppStoreBanner'
 import { useMobile } from 'hooks/useMobile'
+import { isTownBanned } from 'utils'
 import { usePanels } from './hooks/usePanels'
 
 const config = ['spaces', 'primary-menu', 'secondary-menu', 'content']
@@ -24,6 +25,7 @@ export const AppPanelLayout = () => {
     const messageRoute = useMatch({ path: `/${PATHS.MESSAGES}`, end: false })
     const homeRoute = useMatch({ path: '/home', end: true })
     const spacesNewRoute = useMatch({ path: `/${PATHS.SPACES}/new`, end: true })
+    const { spaceSlug } = useParams<{ spaceSlug: string }>()
 
     const space = useSpaceData()
 
@@ -31,11 +33,14 @@ export const AppPanelLayout = () => {
 
     const isMessagesRoute = !!messageRoute
 
+    const isTownBannedStatus = spaceSlug ? isTownBanned(spaceSlug) : false
+
     // we still want to show town drawer event when space is loading, so we
     // can't rely on `space` being defined
     const hasTownRoute = !!useSpaceIdFromPathname() || space !== undefined
 
-    const displaySpacePanel = hasTownRoute && (!(spacesNewRoute || homeRoute) || isMessagesRoute)
+    const displaySpacePanel =
+        !isTownBannedStatus && hasTownRoute && (!(spacesNewRoute || homeRoute) || isMessagesRoute)
 
     return (
         <>

@@ -12,9 +12,21 @@ import { PublicSupportPage } from 'routes/PublicSupportPage/PublicSupportPage'
 import { PublicTownPageForUnauthenticatedRoute } from 'routes/PublicTownPage/PublicTownPage'
 import { WelcomeRoute } from 'routes/Welcome'
 import { mobileAppClass } from 'ui/styles/globals/utils.css'
-import { env } from 'utils'
+import { env, isTownBanned } from 'utils'
 import { AppStoreBanner } from '@components/AppStoreBanner/AppStoreBanner'
 import { ExploreMobile, ExplorePage } from 'routes/ExplorePage/ExplorePage'
+import { BannedTownPage } from '@components/BannedTownPage/BannedTownPage'
+import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
+
+const BannedTownCheck = () => {
+    const spaceId = useSpaceIdFromPathname()
+
+    if (spaceId && isTownBanned(spaceId)) {
+        return <BannedTownPage townAddress={spaceId} />
+    }
+
+    return <PublicTownPageForUnauthenticatedRoute />
+}
 
 export const AllRoutes = React.memo(() => {
     const { isAuthenticated } = useConnectivity()
@@ -36,7 +48,7 @@ export const AllRoutes = React.memo(() => {
                                     />
                                     <Route
                                         path={`${PATHS.SPACES}/:spaceSlug/*`}
-                                        element={<PublicTownPageForUnauthenticatedRoute />}
+                                        element={<BannedTownCheck />}
                                     />
                                     <Route
                                         path={PATHS.EXPLORE}

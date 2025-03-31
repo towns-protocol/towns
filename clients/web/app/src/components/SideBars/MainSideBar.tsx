@@ -15,12 +15,21 @@ import { NavItem } from '@components/NavItem/_NavItem'
 import { Analytics } from 'hooks/useAnalytics'
 import { useUserStore } from 'store/userSettingsStore'
 import { addressFromSpaceId } from 'ui/utils/utils'
+import { isTownBanned } from 'utils'
 
 export const MainSideBar = () => {
     const { isTouch } = useDevice()
     const { spaces } = useTownsContext()
     const { spaceId } = useSpaceContext()
     const { dmUnreadChannelIds } = useTownsContext()
+
+    // Filter out banned towns from spaces list
+    const filteredSpaces = useMemo(() => {
+        return spaces.filter((space) => {
+            const address = addressFromSpaceId(space.id)
+            return address ? !isTownBanned(address) : true
+        })
+    }, [spaces])
 
     const onShowCreateSpace = useEvent(() => {
         Analytics.getInstance().track('clicked new town', {}, () => {
@@ -81,7 +90,7 @@ export const MainSideBar = () => {
                 />
             </TransitionItem>
 
-            <SpaceList spaces={spaces} spaceId={spaceId} />
+            <SpaceList spaces={filteredSpaces} spaceId={spaceId} />
         </Card>
     )
 }

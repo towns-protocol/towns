@@ -11,6 +11,12 @@ import { PublicExploreLayout } from './PublicExploreLayout'
 const exploreTowns =
     env.VITE_EXPLORE_TOWNS?.split(',').map((townAddress) => townAddress.trim()) ?? []
 
+const bannedTowns = env.VITE_BANNED_TOWNS?.split(',').map((townAddress) => townAddress.trim()) ?? []
+
+const filteredExploreTowns = exploreTowns.filter(
+    (townAddress) => !bannedTowns.includes(townAddress),
+)
+
 const ExplorePageContent = () => {
     const isMobile = useMobile()
     const { isAuthenticated } = useConnectivity()
@@ -21,11 +27,11 @@ const ExplorePageContent = () => {
         })
     }, [isAuthenticated])
 
-    if (exploreTowns.length === 0) {
+    if (filteredExploreTowns.length === 0) {
         return <Box padding="x4">Cannot find any towns</Box>
     }
 
-    const smallCardTowns = isMobile ? exploreTowns : exploreTowns.slice(2, 11)
+    const smallCardTowns = isMobile ? filteredExploreTowns : filteredExploreTowns.slice(2, 11)
 
     return (
         <Box padding={{ mobile: 'xs', desktop: 'lg' }} data-testid="explore-page">
@@ -39,7 +45,7 @@ const ExplorePageContent = () => {
             <Stack gap="lg">
                 {!isMobile && (
                     <Grid autoFit columnMinSize="400px">
-                        {exploreTowns.slice(0, 2).map((town, index) => (
+                        {filteredExploreTowns.slice(0, 2).map((town, index) => (
                             <ExploreCard key={town} address={town} variant="big" />
                         ))}
                     </Grid>

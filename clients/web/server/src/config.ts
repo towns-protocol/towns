@@ -37,6 +37,12 @@ const envSchema = z.object({
         .transform((value) =>
             (value?.split(/[\n,\s]/g) ?? []).filter((a) => a.match(/^0x[a-f0-9]{40}$/i)),
         ),
+    VITE_BANNED_TOWNS: z
+        .string()
+        .optional()
+        .transform((value) =>
+            (value?.split(/[\n,\s]/g) ?? []).filter((a) => a.match(/^0x[a-f0-9]{40}$/i)),
+        ),
 })
 
 // eslint-disable-next-line no-process-env -- This is the only place we should access process.env

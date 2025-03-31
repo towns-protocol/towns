@@ -8,7 +8,7 @@ import { LetterStylesVariantProps } from '@components/IconInitials/IconInitials.
 import { IconInitials } from '@components/IconInitials/IconInitials'
 
 type Props = {
-    spaceId: string
+    spaceId?: string
     firstLetterOfSpaceName: string
     letterFontSize?: LetterStylesVariantProps
     variant?: ImageVariant
@@ -32,7 +32,7 @@ export const SpaceIcon = (props: Props) => {
         ...boxProps
     } = props
 
-    const { imageSrc, onLoad, onError, isError, isLoaded } = useImageSource(spaceId, variant)
+    const { imageSrc, onLoad, onError, isError, isLoaded } = useImageSource(spaceId ?? '', variant)
 
     return (
         <>
@@ -82,7 +82,7 @@ export const InteractiveSpaceIcon = (
 
     // todo: we probably need a x600 too
     const imageVariant = size === 'sm' ? ImageVariants.thumbnail300 : ImageVariants.thumbnail600
-    const { imageSrc } = useImageSource(props.spaceId, imageVariant)
+    const { imageSrc } = useImageSource(props.spaceId ?? '', imageVariant)
     return (
         <InteractiveTownsToken
             spaceId={props.spaceId}

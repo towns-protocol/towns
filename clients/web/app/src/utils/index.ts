@@ -1,6 +1,7 @@
 import sortBy from 'lodash/sortBy'
 export * from './environment'
 export * from './debug'
+export { isTownBanned } from './isTownBanned'
 
 export const EVERYONE_ADDRESS = '0x0000000000000000000000000000000000000001'
 

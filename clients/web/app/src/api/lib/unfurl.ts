@@ -1,7 +1,8 @@
 import { useQuery } from '@tanstack/react-query'
 import { z } from 'zod'
-import { env } from 'utils'
+import { env, isTownBanned } from 'utils'
 import { MONTH_MS, SECOND_MS } from 'data/constants'
+import { getTownParamsFromUrl } from 'utils/getTownParamsFromUrl'
 import { axiosClient } from '../apiClient'
 
 const DEBUG_LATENCY = import.meta.env.DEV && false
@@ -30,7 +31,20 @@ export async function getUnfurlContent(urlsArray: string[]) {
         await new Promise((resolve) => setTimeout(resolve, SECOND_MS * 2))
     }
 
-    const encodedUrls = urlsArray.map((url) => `&url=${encodeURIComponent(url)}`)
+    // Filter out URLs for banned towns
+    const filteredUrls = urlsArray.filter((url) => {
+        const townData = getTownParamsFromUrl(url)
+        if (townData?.townId && isTownBanned(townData.townId)) {
+            return false
+        }
+        return true
+    })
+
+    if (filteredUrls.length === 0) {
+        return { data: [] }
+    }
+
+    const encodedUrls = filteredUrls.map((url) => `&url=${encodeURIComponent(url)}`)
     const response = await axiosClient.get(`${UNFURL_SERVER_URL}?${encodedUrls.join('')}`)
     const parsed = unfurledLinkResponseSchema.safeParse(response)
 
