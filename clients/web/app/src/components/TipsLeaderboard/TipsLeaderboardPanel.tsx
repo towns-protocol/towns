@@ -33,7 +33,7 @@ export const TipsLeaderboardPanel = () => {
 
     return (
         <Panel label="Top Tippers" padding="none" paddingX="none">
-            <Stack paddingY="sm" gap="xs" height="100%">
+            <Stack paddingY="sm" gap="xxs" height="100%">
                 {isLoading &&
                     // eslint-disable-next-line react/no-array-index-key
                     Array.from({ length: 20 }).map((_, index) => <SkeletonRow key={index} />)}
@@ -86,7 +86,7 @@ const Row = ({
     }
 
     return (
-        <Stack padding="sm">
+        <Stack paddingX="sm" paddingY="xxs">
             <Stack
                 horizontal
                 borderRadius="xs"
