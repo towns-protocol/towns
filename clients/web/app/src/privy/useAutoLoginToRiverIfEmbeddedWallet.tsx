@@ -32,12 +32,10 @@ export function useAutoLoginToRiverIfEmbeddedWallet({
     riverLogin,
     riverAuthError,
     isRiverAuthencticated,
-    defaultUsername,
 }: {
     riverLogin: UseConnectivtyReturnValue['login']
     riverAuthError: UseConnectivtyReturnValue['authError']
     isRiverAuthencticated: UseConnectivtyReturnValue['isAuthenticated']
-    defaultUsername?: string
 }) {
     const { baseChain } = useEnvironment()
     const getSigner = useGetSignerWithTimeout({ chainId: baseChain.id })
@@ -150,7 +148,6 @@ export function useAutoLoginToRiverIfEmbeddedWallet({
                                                 clientSingleton,
                                                 signerContext: casablancaContext,
                                                 source: 'auto login to river',
-                                                defaultUsername,
                                                 analyticsData: {
                                                     spaceName: spaceInfo?.name ?? '',
                                                 },

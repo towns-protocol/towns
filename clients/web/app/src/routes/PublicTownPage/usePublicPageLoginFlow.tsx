@@ -1,7 +1,7 @@
 import React, { useCallback, useMemo } from 'react'
 import { create } from 'zustand'
 import { useShallow } from 'zustand/react/shallow'
-import { TSigner, useTownsClient, useTownsContext } from 'use-towns-client'
+import { TSigner, useMyDefaultUsernames, useTownsClient, useTownsContext } from 'use-towns-client'
 import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
 import { useStore } from 'store/store'
 import { mapToErrorMessage } from '@components/Web3/utils'
@@ -47,20 +47,20 @@ export function usePublicPageLoginFlow() {
         })),
     )
 
+    const defaultUsername = useMyDefaultUsernames()?.at(0)
+
     const joinTown = useCallback(
         async ({
             signer,
             clientSingleton,
             signerContext,
             source,
-            defaultUsername,
             analyticsData,
         }: {
             signer: TSigner
             clientSingleton: TClientSingleton
             signerContext: TSignerContext
             source: string
-            defaultUsername?: string
             analyticsData: {
                 spaceName: string | undefined
             }
@@ -157,6 +157,7 @@ export function usePublicPageLoginFlow() {
             spaceId,
             joiningTown,
             end,
+            defaultUsername,
             setRecentlyMintedSpaceToken,
             joinedTown,
             gatedSpace,
@@ -181,14 +182,12 @@ export function usePublicPageLoginFlow() {
             clientSingleton,
             signerContext,
             source,
-            defaultUsername,
             analyticsData,
         }: {
             signer: TSigner
             clientSingleton: TClientSingleton
             signerContext: TSignerContext
             source: string
-            defaultUsername?: string
             analyticsData: {
                 spaceName: string
             }
@@ -209,7 +208,6 @@ export function usePublicPageLoginFlow() {
                     clientSingleton,
                     signerContext,
                     source,
-                    defaultUsername,
                     analyticsData,
                 })
                 setDisableJoinUi(false)

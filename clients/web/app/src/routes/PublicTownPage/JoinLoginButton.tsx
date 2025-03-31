@@ -5,7 +5,6 @@ import {
     useConnectivity,
     useContractSpaceInfoWithoutClient,
     useHasPermission,
-    useMyDefaultUsernames,
     useTownsContext,
 } from 'use-towns-client'
 import { Box, BoxProps, FancyButton, Icon, IconProps, Text } from '@ui'
@@ -66,7 +65,6 @@ export function JoinLoginButton({
             permission: Permission.JoinSpace,
         })
 
-    const defaultUsername = useMyDefaultUsernames()?.[0]
     const { clickedJoinTownOnTownPage: clickedJoinTown, viewedGatedTownRequirementsModal } =
         useJoinFunnelAnalytics()
 
@@ -102,7 +100,6 @@ export function JoinLoginButton({
                     clientSingleton,
                     signerContext,
                     source: 'public pagejoin click',
-                    defaultUsername,
                     analyticsData: {
                         spaceName: spaceInfo?.name ?? '',
                     },
@@ -125,7 +122,6 @@ export function JoinLoginButton({
             startJoinMeetsRequirements,
             clientSingleton,
             signerContext,
-            defaultUsername,
             spaceInfo?.name,
             viewedGatedTownRequirementsModal,
             startJoinDoesNotMeetRequirements,
