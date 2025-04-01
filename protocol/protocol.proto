@@ -821,6 +821,16 @@ message Tags {
     optional bytes thread_id = 5;
 }
 
+message InfoRequest {
+    repeated string debug = 1;
+}
+
+message InfoResponse {
+    string graffiti = 1;
+    google.protobuf.Timestamp start_time = 2;
+    string version = 3;
+}
+
 message GetStreamExRequest {
     bytes stream_id = 1;
 }
@@ -1013,16 +1023,6 @@ message PingSyncRequest {
 }
 
 message PingSyncResponse {}
-
-message InfoRequest {
-    repeated string debug = 1;
-}
-
-message InfoResponse {
-    string graffiti = 1;
-    google.protobuf.Timestamp start_time = 2;
-    string version = 3;
-}
 
 service StreamService {
     rpc Info(InfoRequest) returns (InfoResponse);
