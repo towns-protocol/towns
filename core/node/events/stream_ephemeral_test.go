@@ -158,7 +158,7 @@ func Test_StreamCache_normalizeEphemeralStream(t *testing.T) {
 					ctx,
 					streamId,
 					req.Msg.GetMiniblockIds(),
-					func(blockdata []byte, seqNum int64) error {
+					func(blockdata []byte, seqNum int64, _ []byte) error {
 						var mb Miniblock
 						if err = proto.Unmarshal(blockdata, &mb); err != nil {
 							return WrapRiverError(Err_BAD_BLOCK, err).Message("Unable to unmarshal miniblock")

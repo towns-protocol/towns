@@ -200,18 +200,11 @@ func NewMiniblockInfoFromHeaderAndParsed(
 }
 
 func NewMiniblockInfoFromDescriptor(mb *storage.MiniblockDescriptor) (*MiniblockInfo, error) {
-	var pb Miniblock
-	if err := proto.Unmarshal(mb.Data, &pb); err != nil {
-		return nil, AsRiverError(err, Err_INVALID_ARGUMENT).
-			Message("Failed to decode miniblock from bytes").
-			Func("NewMiniblockInfoFromDescriptor")
-	}
-
 	opts := NewParsedMiniblockInfoOpts()
 	if mb.Number > -1 {
 		opts = opts.WithExpectedBlockNumber(mb.Number)
 	}
-	return NewMiniblockInfoFromProto(&pb, opts)
+	return NewMiniblockInfoFromDescriptorWithOpts(mb, opts)
 }
 
 func NewMiniblockInfoFromDescriptorWithOpts(mb *storage.MiniblockDescriptor, opts *ParsedMiniblockInfoOpts) (*MiniblockInfo, error) {
