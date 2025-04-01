@@ -28,6 +28,9 @@ COPY packages/subgraph ./packages/subgraph/
 COPY packages/prettier-config ./packages/prettier-config/
 COPY contracts ./contracts/
 
+# Add entrypoint script
+RUN chmod +x ./packages/subgraph/docker-entrypoint.sh
+
 # Install dependencies
 RUN yarn install
 
@@ -44,5 +47,5 @@ EXPOSE 42069
 ENV NODE_ENV=production
 ENV DATABASE_SCHEMA=public
 
-# Start Ponder
-CMD ["yarn", "ponder", "start"]
+# Use entrypoint script
+ENTRYPOINT ["./docker-entrypoint.sh"]

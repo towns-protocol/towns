@@ -16,7 +16,7 @@ services:
         ports:
             - '5432:5432'
         volumes:
-            - db:/var/lib/postgresql/data
+            - subgraph-db:/var/lib/postgresql/data
 
     subgraph:
         build:
@@ -30,7 +30,7 @@ services:
         environment:
             - NODE_ENV=production
             - DATABASE_SCHEMA=public
-            - DATABASE_URL=postgresql://postgres:postgres@db:5432/ponder
+            - DATABASE_URL=postgresql://postgres:postgres@subgraph-db:5432/ponder
         ports:
             - '42069:42069'
 
