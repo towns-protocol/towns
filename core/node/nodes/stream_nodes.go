@@ -19,7 +19,7 @@ type StreamNodes interface {
 	GetSyncNodes() []common.Address
 
 	// IsQuorum returns an indication if the local node is part of the quorum.
-	IsQuorum() bool
+	IsLocalInQuorum() bool
 
 	// GetRemotesAndIsLocal returns all remote nodes and true if the local node is in the list of nodes.
 	GetRemotesAndIsLocal() ([]common.Address, bool)
@@ -46,8 +46,11 @@ type StreamNodes interface {
 }
 
 type StreamNodesWithoutLock struct {
-	isLocal  bool
-	isQuorum bool
+	// isLocal is true when the local node is in the list of nodes.
+	// Note: this doesn't mean that the local node is part of the stream quorum.
+	isLocal bool
+	// isLocalInQuorum is true when the local node is part of the quorum.
+	isLocalInQuorum bool
 
 	// nodes contains all streams nodes in the same order as in contract.
 	nodes []common.Address
@@ -77,7 +80,7 @@ func (s *StreamNodesWithoutLock) Reset(replicationFactor int, nodes []common.Add
 	s.nodes = slices.Clone(nodes[:replicationFactor])
 	s.syncNodes = slices.Clone(nodes[replicationFactor:])
 	s.isLocal = slices.Contains(nodes, localNode)
-	s.isQuorum = slices.Contains(nodes[:replicationFactor], localNode)
+	s.isLocalInQuorum = slices.Contains(nodes[:replicationFactor], localNode)
 
 	nodes = nodes[:replicationFactor]
 
@@ -114,8 +117,8 @@ func (s *StreamNodesWithoutLock) GetSyncNodes() []common.Address {
 	return s.syncNodes
 }
 
-func (s *StreamNodesWithoutLock) IsQuorum() bool {
-	return s.isQuorum
+func (s *StreamNodesWithoutLock) IsLocalInQuorum() bool {
+	return s.isLocalInQuorum
 }
 
 func (s *StreamNodesWithoutLock) GetRemotesAndIsLocal() ([]common.Address, bool) {
@@ -191,11 +194,11 @@ func (s *StreamNodesWithLock) GetSyncNodes() []common.Address {
 	return s.n.GetSyncNodes()
 }
 
-func (s *StreamNodesWithLock) IsQuorum() bool {
+func (s *StreamNodesWithLock) IsLocalInQuorum() bool {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	return s.n.IsQuorum()
+	return s.n.IsLocalInQuorum()
 }
 
 func (s *StreamNodesWithLock) GetStickyPeer() common.Address {

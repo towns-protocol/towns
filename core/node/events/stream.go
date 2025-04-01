@@ -546,7 +546,7 @@ func (s *Stream) GetView(ctx context.Context) (*StreamView, error) {
 func (s *Stream) tryGetView() (*StreamView, bool) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
-	isLocal := s.nodesLocked.IsQuorum() && s.local != nil
+	isLocal := s.nodesLocked.IsLocalInQuorum() && s.local != nil
 	if isLocal && s.view() != nil {
 		s.maybeScrubLocked()
 		return s.view(), true
@@ -1126,9 +1126,9 @@ func (s *Stream) GetSyncNodes() []common.Address {
 	return s.nodesLocked.GetSyncNodes()
 }
 
-func (s *Stream) IsQuorum() bool {
+func (s *Stream) IsLocalInQuorum() bool {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	return s.nodesLocked.IsQuorum()
+	return s.nodesLocked.IsLocalInQuorum()
 }

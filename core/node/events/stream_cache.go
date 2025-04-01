@@ -216,12 +216,12 @@ func (s *StreamCache) onBlockWithLogs(ctx context.Context, blockNum crypto.Block
 					return
 				}
 
-				if stream.nodesLocked.IsLocal() && stream.nodesLocked.IsQuorum() {
+				if stream.nodesLocked.IsLocal() && stream.nodesLocked.IsLocalInQuorum() {
 					stream.applyStreamEvents(ctx, events, blockNum)
 				}
 
 				// migrate stream to repl
-				if stream.nodesLocked.IsLocal() && !stream.nodesLocked.IsQuorum() {
+				if stream.nodesLocked.IsLocal() && !stream.nodesLocked.IsLocalInQuorum() {
 					// determine if stream update contains newer miniblock than currently in storage.
 					if mb, err := stream.getLastMiniblockNumSkipLoad(ctx); err == nil {
 						latestMb := int64(0)
