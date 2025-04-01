@@ -46,8 +46,9 @@
         top: 100%;
         left: 50%;
         transform: translateX(-50%);
-        white-space: pre-wrap;
+        white-space: pre;
         margin-top: 5px;
+        min-width: max-content;
       }
 
       .tooltip:hover .tooltiptext {
@@ -96,7 +97,7 @@
       <td>
         <div class="tooltip">
           {{.Uptime}}
-          <span class="tooltiptext">Start time: {{.StartTime}}&#10;UTC: {{.StartTime}}</span>
+          <span class="tooltiptext">Start time: <span class="timeconvert">{{.StartTime}}</span>&#10;UTC: {{.StartTime}}</span>
         </div>
       </td>
       {{end}}
