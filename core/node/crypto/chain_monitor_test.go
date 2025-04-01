@@ -182,7 +182,7 @@ func TestChainMonitorEvents(t *testing.T) {
 		nodeRegistryABI, _ = abi.JSON(strings.NewReader(river.NodeRegistryV1ABI))
 
 		urls  = []string{"https://river0.test"}
-		addrs = []common.Address{tc.Wallets[0].Address}
+		addrs = []common.Address{tc.GetBlockchain(ctx, 0).Wallet.Address}
 	)
 
 	tc.DeployerBlockchain.ChainMonitor.OnBlock(onBlockCallback)
