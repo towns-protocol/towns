@@ -802,7 +802,7 @@ message CreationCookie {
 message StreamAndCookie {
     repeated Envelope events = 1;
     SyncCookie next_sync_cookie = 2;
-    // if non-empty, contains all blocks since the latest snapshot, miniblocks[0].header is the latest snapshot
+    // if non-empty, contains all blocks since the latest snapshot
     repeated Miniblock miniblocks = 3;
     bool sync_reset = 4;
     // if non-empty, contains the latest snapshot of the stream
