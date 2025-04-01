@@ -77,33 +77,31 @@ message GetStatusResponse {
 // represented here. For webhook calls regarding channel content, the payload may contain one or
 // more of these events.
 message EventPayload {
-    // A MessagesPayload represents a group of user messages in a channel that qualifies for the app
+    // A Messages payload represents a group of user messages in a channel that qualifies for the app
     // to be notified. The included set of group encryption sessions in this message should have
     // all the needed ciphertexts to decrypt the set of messages sent in the same payload.
-    message MessagesPayload {
-        repeated Envelope messages = 1;
-        repeated Envelope group_encryption_sessions_messages = 2;
+    message Messages {
+        bytes stream_id = 1;
+        repeated Envelope messages = 2;
+        repeated Envelope group_encryption_sessions_messages = 3;
     }
 
-    // SolicitKeys represents one or more messages in the same channel that cannot be forwarded to the
-    // app because the app does not have keys available to decrypt it. In this case, the app must send
-    // a message to the stream to solicit keys for it's device for the session ids that cannot yet be
-    // decrypted.
-    message SolicitKeysPayload {
-        repeated string session_ids = 1;
-        bytes stream_id = 2;
+    // A SolicitKeys request is sent when one or more messages in the same channel cannot be forwarded
+    // to the app because the app does not have keys available to decrypt it in it's user inbox stream.
+    // In this case, the app must be prompted to send a message to the stream to solicit the missing
+    // session keys so that all queued messages can be forwarded.
+    message SolicitKeys {
+        bytes stream_id = 1;
+        repeated string session_ids = 2;
     }
 
     oneof payload {
-        MessagesPayload messages = 1;
-        SolicitKeysPayload solicitation = 2;
+        Messages messages = 1;
+        SolicitKeys solicitation = 2;
     }
 }
 
-// The BatchEventsPayload will have a single set of messages and overlapping group encryption sessions
-// messages, or a set of key solicitations for session ids in the same channel. The BatchEventsPayload allows
-// many such groups to be combined into a single request in order to reduce webhook call frequency.
-message BatchEventsPayload {
+message EventsPayload {
     repeated EventPayload events = 1;
 }
 
@@ -111,7 +109,7 @@ message AppServiceRequest {
     oneof payload {
         google.protobuf.Empty initialize = 101;
         google.protobuf.Empty status = 102;
-        BatchEventsPayload events = 103;
+        EventsPayload events = 103;
     }
 }
 

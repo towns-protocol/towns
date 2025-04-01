@@ -204,11 +204,11 @@ func (b *AppClient) RequestSolicitation(
 ) error {
 	request := &protocol.AppServiceRequest{
 		Payload: &protocol.AppServiceRequest_Events{
-			Events: &protocol.BatchEventsPayload{
+			Events: &protocol.EventsPayload{
 				Events: []*protocol.EventPayload{
 					{
 						Payload: &protocol.EventPayload_Solicitation{
-							Solicitation: &protocol.EventPayload_SolicitKeysPayload{
+							Solicitation: &protocol.EventPayload_SolicitKeys{
 								SessionIds: []string{sessionId},
 								StreamId:   channelId[:],
 							},
@@ -233,13 +233,16 @@ func (b *AppClient) RequestSolicitation(
 
 func (b *AppClient) SendSessionMessages(
 	ctx context.Context,
+	streamId shared.StreamId,
 	appId common.Address,
 	hs256SharedSecret [32]byte,
 	messageEnvelopes [][]byte,
 	encryptionEnvelopes [][]byte,
 	webhookUrl string,
 ) error {
-	messages := &protocol.EventPayload_MessagesPayload{}
+	messages := &protocol.EventPayload_Messages{
+		StreamId: streamId[:],
+	}
 	for _, envelopeBytes := range messageEnvelopes {
 		var envelope protocol.Envelope
 		if err := proto.Unmarshal(envelopeBytes, &envelope); err != nil {
@@ -266,10 +269,10 @@ func (b *AppClient) SendSessionMessages(
 		webhookUrl,
 		&protocol.AppServiceRequest{
 			Payload: &protocol.AppServiceRequest_Events{
-				Events: &protocol.BatchEventsPayload{
+				Events: &protocol.EventsPayload{
 					Events: []*protocol.EventPayload{
 						{
-							Payload: &protocol.EventPayload_Messages{
+							Payload: &protocol.EventPayload_Messages_{
 								Messages: messages,
 							},
 						},

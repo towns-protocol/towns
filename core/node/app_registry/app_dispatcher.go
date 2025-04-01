@@ -123,6 +123,7 @@ func (d *AppDispatcher) SubmitMessages(
 		func() {
 			if err := d.appClient.SendSessionMessages(
 				ctx,
+				messages.StreamId,
 				messages.AppId,
 				sharedSecret,
 				messages.MessageEnvelopes,
@@ -138,6 +139,8 @@ func (d *AppDispatcher) SubmitMessages(
 					messages.DeviceKey,
 					"webHookUrl",
 					messages.WebhookUrl,
+					"streamId",
+					messages.StreamId,
 					"error",
 					err,
 				)
