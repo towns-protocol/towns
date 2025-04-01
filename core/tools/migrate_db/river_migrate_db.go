@@ -1614,7 +1614,7 @@ func lastSnapshotIndexFromMiniblocks(
 		streamId,
 	)
 	if err != nil {
-		return int64(0), fmt.Errorf("Error reading miniblocks from stream: %w", err)
+		return int64(0), fmt.Errorf("error reading miniblocks from stream: %w", err)
 	}
 
 	noError := fmt.Errorf("no error - terminate pgx.ForEachRow as soon as result is found")
@@ -1628,7 +1628,7 @@ func lastSnapshotIndexFromMiniblocks(
 		func() error {
 			mbInfo, err := events.NewMiniblockInfoFromBytesWithOpts(blockData, events.NewParsedMiniblockInfoOpts().WithDoNotParseEvents(true))
 			if err != nil {
-				return fmt.Errorf("Could not parse miniblock for stream %v: %w", streamId, err)
+				return fmt.Errorf("could not parse miniblock for stream %v: %w", streamId, err)
 			}
 
 			if seqNum > 0 && !printMaxSeqNum && verbose {
@@ -1662,14 +1662,14 @@ func writeLastSnapshotMiniblock(
 		AccessMode: pgx.ReadWrite,
 	})
 	if err != nil {
-		return wrapError("Failed to begin transaction", err)
+		return wrapError("failed to begin transaction", err)
 	}
 	defer rollbackTx(ctx, tx)
 
 	for _, streamId := range streamIds {
 		lastSnapshotIndex, err := lastSnapshotIndexFromMiniblocks(ctx, target, streamId)
 		if err != nil {
-			return fmt.Errorf("Failed to determine last snapshot miniblock index for stream %v: %w", streamId, err)
+			return fmt.Errorf("failed to determine last snapshot miniblock index for stream %v: %w", streamId, err)
 		}
 
 		if _, err := tx.Exec(
@@ -1679,7 +1679,7 @@ func writeLastSnapshotMiniblock(
 			streamId,
 		); err != nil {
 			return fmt.Errorf(
-				"Failed to update snapshot index of stream %v to %d: %w",
+				"failed to update snapshot index of stream %v to %d: %w",
 				streamId,
 				lastSnapshotIndex,
 				err,
@@ -1702,7 +1702,7 @@ func restoreSnapshotIndices(
 ) error {
 	streamIds, _, _, err := getStreamIds(ctx, target)
 	if err != nil {
-		return fmt.Errorf("Unable to get existing stream ids: %w", err)
+		return fmt.Errorf("unable to get existing stream ids: %w", err)
 	}
 
 	numWorkers := viper.GetInt("RIVER_DB_NUM_WORKERS")
