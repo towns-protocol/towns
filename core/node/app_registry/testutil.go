@@ -132,8 +132,7 @@ func (b *TestAppServer) solicitKeys(ctx context.Context, data *protocol.EventPay
 	log := logging.FromCtx(ctx).With("func", "TestAppServer.solicitKeys")
 	streamId, err := shared.StreamIdFromBytes(data.StreamId)
 	if err != nil {
-		log.Errorw("Failed to parse stream id for key solicitation", "error", err, "streamId", data.StreamId)
-		return fmt.Errorf("failed to parse stream for key solicitation: %w", err)
+		return logAndReturnErr(log, fmt.Errorf("failed to parse stream for key solicitation: %w", err))
 	}
 
 	log.Debugw("soliciting keys for channel", "streamId", streamId, "sessionIds", data.SessionIds)
@@ -146,8 +145,7 @@ func (b *TestAppServer) solicitKeys(ctx context.Context, data *protocol.EventPay
 		},
 	)
 	if err != nil {
-		log.Errorw("failed to get last miniblock for stream", "streamId", streamId)
-		return fmt.Errorf("failed to get last miniblock hash for stream %v: %w", streamId, err)
+		return logAndReturnErr(log, fmt.Errorf("failed to get last miniblock hash for stream %v: %w", streamId, err))
 	}
 
 	envelope, err := events.MakeEnvelopeWithPayload(
@@ -170,8 +168,7 @@ func (b *TestAppServer) solicitKeys(ctx context.Context, data *protocol.EventPay
 		},
 	)
 	if err != nil {
-		log.Errorw("failed to construct key soliciation stream event", "error", err)
-		return fmt.Errorf("failed to construct key solicitation stream event: %w", err)
+		return logAndReturnErr(log, fmt.Errorf("failed to construct key solicitation stream event: %w", err))
 	}
 
 	addEventResp, err := b.client.AddEvent(
@@ -184,16 +181,17 @@ func (b *TestAppServer) solicitKeys(ctx context.Context, data *protocol.EventPay
 		},
 	)
 	if err != nil {
-		log.Errorw("Failed to add key solicitation event to stream", "err", err)
-		return fmt.Errorf("error adding key solicitation event to stream: %w", err)
+		return logAndReturnErr(log, fmt.Errorf("error adding key solicitation event to stream: %w", err))
 	}
 	if addErr := addEventResp.Msg.GetError(); addErr != nil {
-		log.Errorw("Failed to add key solicitation event to stream", "err", addErr)
-		return fmt.Errorf(
-			"failed to add key solicitation event to stream: %v, %v, %v",
-			addErr.Msg,
-			addErr.Code,
-			addErr.Funcs,
+		return logAndReturnErr(
+			log,
+			fmt.Errorf(
+				"failed to add key solicitation event to stream: %v, %v, %v",
+				addErr.Msg,
+				addErr.Code,
+				addErr.Funcs,
+			),
 		)
 	}
 	return nil
