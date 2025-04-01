@@ -6,6 +6,9 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/linkdata/deadlock"
+
+	"github.com/towns-protocol/towns/core/contracts/river"
+	"github.com/towns-protocol/towns/core/node/registries"
 )
 
 type StreamNodes interface {
@@ -32,6 +35,12 @@ type StreamNodes interface {
 	// If the current sticky peer is the last node, it shuffles the nodes and resets the sticky peer to the first node.
 	AdvanceStickyPeer(currentPeer common.Address) common.Address
 
+	// ResetFromStreamState the list of nodes from the given stream state.
+	ResetFromStreamState(state *river.StreamState, localNode common.Address)
+
+	// ResetFromStreamResult the list of nodes from the given stream result.
+	ResetFromStreamResult(result *registries.GetStreamResult, localNode common.Address)
+
 	// Reset the list of nodes to the given nodes and local node. The nodes in range Nodes[0:replicationFactor] take
 	// part in the quorum. The nodes in range Nodes[replicationFactor:] are the nodes that sync the stream into local
 	// storage but don't take part in quorum.
@@ -56,6 +65,14 @@ type StreamNodesWithoutLock struct {
 }
 
 var _ StreamNodes = (*StreamNodesWithoutLock)(nil)
+
+func (s *StreamNodesWithoutLock) ResetFromStreamState(state *river.StreamState, localNode common.Address) {
+	s.Reset(state.StreamReplicationFactor(), state.Nodes, localNode)
+}
+
+func (s *StreamNodesWithoutLock) ResetFromStreamResult(result *registries.GetStreamResult, localNode common.Address) {
+	s.Reset(result.StreamReplicationFactor(), result.Nodes, localNode)
+}
 
 func (s *StreamNodesWithoutLock) Reset(replicationFactor int, nodes []common.Address, localNode common.Address) {
 	// for the migration of non-replicated streams to replicated streams a node needs to sync the stream to local
@@ -200,4 +217,18 @@ func (s *StreamNodesWithLock) Reset(replicationFactor int, nodes []common.Addres
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.n.Reset(replicationFactor, nodes, localNode)
+}
+
+func (s *StreamNodesWithLock) ResetFromStreamState(state *river.StreamState, localNode common.Address) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	s.n.ResetFromStreamState(state, localNode)
+}
+
+func (s *StreamNodesWithLock) ResetFromStreamResult(result *registries.GetStreamResult, localNode common.Address) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	s.n.ResetFromStreamResult(result, localNode)
 }

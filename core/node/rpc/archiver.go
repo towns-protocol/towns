@@ -989,7 +989,7 @@ func (a *Archiver) onStreamPlacementUpdated(
 		return
 	}
 	stream := record.(*ArchiveStream)
-	stream.nodes.Reset(event.StreamReplicationFactor(), event.Nodes, common.Address{})
+	stream.nodes.ResetFromStreamState(event, common.Address{})
 }
 
 func (a *Archiver) onStreamLastMiniblockUpdated(

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"github.com/towns-protocol/towns/core/node/registries"
 	"slices"
 	"strings"
 	"time"
@@ -11,6 +12,7 @@ import (
 	mapset "github.com/deckarep/golang-set/v2"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/linkdata/deadlock"
+
 	"github.com/towns-protocol/towns/core/contracts/river"
 	. "github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/crypto"
@@ -76,6 +78,8 @@ type Stream struct {
 	// local is not nil if stream is local to current node. local and all fields of local are protected by mu.
 	local *localStreamState
 }
+
+var _ nodes.StreamNodes = (*Stream)(nil)
 
 type localStreamState struct {
 	// useGetterAndSetterToGetView contains pointer to current immutable view, if loaded, nil otherwise.
@@ -457,7 +461,7 @@ func (s *Stream) initFromBlockchain(ctx context.Context) error {
 		return err
 	}
 
-	s.nodesLocked.Reset(record.StreamReplicationFactor(), record.Nodes, s.params.Wallet.Address)
+	s.nodesLocked.ResetFromStreamResult(record, s.params.Wallet.Address)
 	if !s.nodesLocked.IsLocal() {
 		return RiverError(
 			Err_INTERNAL,
@@ -1031,14 +1035,13 @@ func (s *Stream) applyStreamEvents(
 		switch e.Reason() {
 		case river.StreamUpdatedEventTypePlacementUpdated:
 			ev := e.(*river.StreamState)
-			s.nodesLocked.Reset(ev.StreamReplicationFactor(), ev.Nodes, s.params.Wallet.Address)
+			s.nodesLocked.ResetFromStreamState(ev, s.params.Wallet.Address)
 		case river.StreamUpdatedEventTypeLastMiniblockBatchUpdated:
 			event := e.(*river.StreamMiniblockUpdate)
 			err := s.promoteCandidateLocked(ctx, &MiniblockRef{
 				Hash: event.LastMiniblockHash,
 				Num:  int64(event.LastMiniblockNum),
 			})
-
 			if err != nil {
 				logging.FromCtx(ctx).Errorw("onStreamLastMiniblockUpdated: failed to promote candidate", "err", err)
 			}
@@ -1093,6 +1096,20 @@ func (s *Stream) AdvanceStickyPeer(currentPeer common.Address) common.Address {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	return s.nodesLocked.AdvanceStickyPeer(currentPeer)
+}
+
+func (s *Stream) ResetFromStreamState(state *river.StreamState, localNode common.Address) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	s.nodesLocked.ResetFromStreamState(state, localNode)
+}
+
+func (s *Stream) ResetFromStreamResult(result *registries.GetStreamResult, localNode common.Address) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	s.nodesLocked.ResetFromStreamResult(result, localNode)
 }
 
 func (s *Stream) Reset(replicationFactor int, nodes []common.Address, localNode common.Address) {
