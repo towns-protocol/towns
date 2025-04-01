@@ -54,7 +54,7 @@ func TestStreamNodes(t *testing.T) {
 			)
 			rr, isLocal := streamNodes.GetRemotesAndIsLocal()
 			require.Equal(t, tc.hasLocal, isLocal)
-			require.ElementsMatch(t, nodeAddrs, streamNodes.GetNodes())
+			require.ElementsMatch(t, nodeAddrs, streamNodes.GetQuorumNodes())
 			require.ElementsMatch(
 				t,
 				remotes,

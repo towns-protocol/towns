@@ -262,9 +262,8 @@ func (s *StreamCache) onStreamReplaced(
 	}
 
 	stream, _ = s.cache.LoadOrStore(event.GetStreamId(), stream)
-	stream.nodesLocked.ResetFromStreamState(event, s.params.Wallet.Address)
-
 	stream.mu.Lock()
+	stream.nodesLocked.ResetFromStreamState(event, s.params.Wallet.Address)
 	if stream.local == nil {
 		stream.local = &localStreamState{}
 	}

@@ -1061,12 +1061,12 @@ func (s *Stream) applyStreamEvents(
 	s.lastAppliedBlockNum = blockNum
 }
 
-// GetNodes returns the list of nodes this stream resides on according to the stream
-// registry. GetNodes is thread-safe.
-func (s *Stream) GetNodes() []common.Address {
+// GetQuorumNodes returns the list of nodes this stream resides on according to the stream
+// registry. GetQuorumNodes is thread-safe.
+func (s *Stream) GetQuorumNodes() []common.Address {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
-	return slices.Clone(s.nodesLocked.GetNodes())
+	return slices.Clone(s.nodesLocked.GetQuorumNodes())
 }
 
 // GetRemotesAndIsLocal returns

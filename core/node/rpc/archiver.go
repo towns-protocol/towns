@@ -508,7 +508,7 @@ func (a *Archiver) GetCorruptStreams(ctx context.Context) []scrub.CorruptStreamR
 					}
 					record := scrub.CorruptStreamRecord{
 						StreamId:             stream.streamId,
-						Nodes:                stream.nodes.GetNodes(),
+						Nodes:                stream.nodes.GetQuorumNodes(),
 						MostRecentBlock:      stream.numBlocksInContract.Load(),
 						MostRecentLocalBlock: stream.numBlocksInDb.Load(),
 						FirstCorruptBlock:    stream.corrupt.firstCorruptBlock,

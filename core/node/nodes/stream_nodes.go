@@ -12,13 +12,13 @@ import (
 )
 
 type StreamNodes interface {
-	// GetNodes returns all nodes in the same order as in contract.
-	GetNodes() []common.Address
+	// GetQuorumNodes returns all nodes in the same order as in contract that participate in the streams quorum.
+	GetQuorumNodes() []common.Address
 
 	// GetSyncNodes returns the nodes that don't take part in the quorum but sync the stream in local storage.
 	GetSyncNodes() []common.Address
 
-	// IsQuorum returns an indication if the local node is part of the quorum.
+	// IsLocalInQuorum returns an indication if the local node is part of the quorum.
 	IsLocalInQuorum() bool
 
 	// GetRemotesAndIsLocal returns all remote nodes and true if the local node is in the list of nodes.
@@ -52,8 +52,8 @@ type StreamNodesWithoutLock struct {
 	// isLocalInQuorum is true when the local node is part of the quorum.
 	isLocalInQuorum bool
 
-	// nodes contains all streams nodes in the same order as in contract.
-	nodes []common.Address
+	// quorumNodes contains all streams nodes that participate in the streams quorum in the same order as the contract.
+	quorumNodes []common.Address
 
 	// syncNodes contains the nodes that sync the stream into local storage but don't take part in quorum.
 	syncNodes []common.Address
@@ -77,7 +77,7 @@ func (s *StreamNodesWithoutLock) ResetFromStreamResult(result *registries.GetStr
 func (s *StreamNodesWithoutLock) Reset(replicationFactor int, nodes []common.Address, localNode common.Address) {
 	// for the migration of non-replicated streams to replicated streams a node needs to sync the stream to local
 	// storage first before it can participate in the quorum. This is a temporary solution during this migration.
-	s.nodes = slices.Clone(nodes[:replicationFactor])
+	s.quorumNodes = slices.Clone(nodes[:replicationFactor])
 	s.syncNodes = slices.Clone(nodes[replicationFactor:])
 	s.isLocal = slices.Contains(nodes, localNode)
 	s.isLocalInQuorum = slices.Contains(nodes[:replicationFactor], localNode)
@@ -109,8 +109,8 @@ func (s *StreamNodesWithoutLock) Reset(replicationFactor int, nodes []common.Add
 	}
 }
 
-func (s *StreamNodesWithoutLock) GetNodes() []common.Address {
-	return s.nodes
+func (s *StreamNodesWithoutLock) GetQuorumNodes() []common.Address {
+	return s.quorumNodes
 }
 
 func (s *StreamNodesWithoutLock) GetSyncNodes() []common.Address {
@@ -174,10 +174,10 @@ func NewStreamNodesWithLock(replFactor int, nodes []common.Address, localNode co
 	return ret
 }
 
-func (s *StreamNodesWithLock) GetNodes() []common.Address {
+func (s *StreamNodesWithLock) GetQuorumNodes() []common.Address {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
-	return slices.Clone(s.n.GetNodes())
+	return slices.Clone(s.n.GetQuorumNodes())
 }
 
 func (s *StreamNodesWithLock) GetRemotesAndIsLocal() ([]common.Address, bool) {
