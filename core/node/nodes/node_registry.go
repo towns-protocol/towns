@@ -33,6 +33,8 @@ type NodeRegistry interface {
 
 	// TODO: refactor to provide IsValidNodeAddress(address common.Address) bool functions instead of copying the whole list
 	GetValidNodeAddresses() []common.Address
+
+	ChooseStreamNodes(ctx context.Context, streamId StreamId, replFactor int) ([]common.Address, error)
 }
 
 type nodeRegistryImpl struct {
