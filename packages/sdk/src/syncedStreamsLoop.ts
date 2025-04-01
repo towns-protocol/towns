@@ -267,6 +267,10 @@ export class SyncedStreamsLoop {
             this.log('stream already in pending delete', streamId)
             return
         }
+        if (this.inFlightSyncCookies.has(streamId)) {
+            this.log('stream is in flight', streamId)
+            return
+        }
         if (this.syncState === SyncState.Starting || this.syncState === SyncState.Retrying) {
             await this.waitForSyncingState()
         }
