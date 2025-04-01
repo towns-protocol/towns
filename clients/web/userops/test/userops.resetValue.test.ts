@@ -6,13 +6,13 @@ import {
     fundWallet,
     generatePrivyWalletIfKey,
     getSpaceId,
-    sleepBetweenTxs,
     waitForOpAndTx,
 } from './utils'
 import { expect, vi } from 'vitest'
 import { userOpsStore } from '../src/store/userOpsStore'
 import { formatEther } from 'viem'
 import { decodeCallData } from '../src/utils/decodeCallData'
+import * as sendUseropWithPermissionless from '../src/lib/permissionless/sendUseropWithPermissionless'
 
 test('permissionless: userops with different values are sent correctly', async () => {
     const alice = new LocalhostWeb3Provider(
@@ -67,7 +67,7 @@ test('permissionless: userops with different values are sent correctly', async (
     const spaceId2 = await getSpaceId(spaceDapp, spReceipt2, alice.wallet.address, userOpsAlice)
 
     const bobSmartAccountClient = await userOpsBob.getSmartAccountClient({ signer: bob.wallet })
-    const executeSpy = vi.spyOn(bobSmartAccountClient, 'encodeExecute')
+    const sendUserOpSpy = vi.spyOn(sendUseropWithPermissionless, 'sendUseropWithPermissionless')
 
     const bobSenderAddress = bobSmartAccountClient.address
     const bobsOpValue = () => {
@@ -85,13 +85,20 @@ test('permissionless: userops with different values are sent correctly', async (
     // join space
     const joinOp1 = await userOpsBob.sendJoinSpaceOp([spaceId1, bob.wallet.address, bob.wallet])
     await waitForOpAndTx(joinOp1, bob)
-    await sleepBetweenTxs()
 
-    expect(formatEther(executeSpy.mock.lastCall![0].value)).toBe('0.1')
+    // first join space will batch userops for modular accounts
+    let lastCallValue: bigint
+    if (process.env.AA_NEW_ACCOUNT_IMPLEMENTATION_TYPE === 'modular') {
+        lastCallValue = (sendUserOpSpy.mock.lastCall![0].value as bigint[]).find((v) => v) as bigint
+    } else {
+        lastCallValue = sendUserOpSpy.mock.lastCall![0].value as bigint
+    }
+
+    expect(formatEther(lastCallValue!)).toBe('0.1')
 
     expect(formatEther(bobsOpValue()!)).toBe('0.1')
 
     await userOpsBob.sendJoinSpaceOp([spaceId2, bob.wallet.address, bob.wallet])
-    expect(formatEther(executeSpy.mock.lastCall![0].value)).toBe('0.2')
+    expect(formatEther(sendUserOpSpy.mock.lastCall![0].value! as bigint)).toBe('0.2')
     expect(formatEther(bobsOpValue()!)).toBe('0.2')
 })

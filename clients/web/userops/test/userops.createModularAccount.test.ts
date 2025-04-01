@@ -23,8 +23,9 @@ test('can create modular smart account', async () => {
 
     const smartAccount = await determineSmartAccount({
         ownerAddress: owner.address,
-        rpcUrl: process.env.AA_RPC_URL as string,
         newAccountImplementationType: 'modular',
+        paymasterProxyUrl: process.env.AA_PAYMASTER_PROXY_URL as string,
+        paymasterProxyAuthSecret: process.env.AA_PAYMASTER_PROXY_AUTH_SECRET as string,
     })
 
     const modularAccount = await toModularSmartAccount({

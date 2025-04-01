@@ -7,7 +7,13 @@ export const ERC4337 = {
     },
     ModularAccount: {
         Factory: '0x00000000000017c61b5bEe81050EC8eFc9c6fecd',
-        Implementation: '0x000000000000c5A9089039570Dd36455b5C07383', // Semi modular smart account bytecode
+        // Semi modular smart account bytecode for new accounts
+        // new accounts get this address as their implementation
+        Implementation: '0x000000000000c5A9089039570Dd36455b5C07383',
+        // https://github.com/alchemyplatform/modular-account/blob/develop/src/account/SemiModularAccountStorageOnly.sol
+        // Storage only smart account bytecode for existing accounts
+        // Upgraded accounts get this address as their implementation
+        StorageOnly: '0x0000000000006E2f9d80CaEc0Da6500f005EB25A',
     },
     LightAccount: {
         Factory: '0x0000000000400CdFef5E2714E63d8040b700BC24',

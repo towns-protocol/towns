@@ -163,6 +163,7 @@ export const paymasterProxyMiddleware = async (
             'removeLink',
             'transferTokens',
             'withdraw',
+            'upgradeToAndCall',
         ]
 
         if (!spaceId && !doNotRequireSpaceId.includes(functionHashForPaymasterProxy)) {

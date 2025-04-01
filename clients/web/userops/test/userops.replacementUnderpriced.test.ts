@@ -96,9 +96,13 @@ test(
         }
 
         // ensure that the userop was sent to the paymaster
-        const sponsorUserOpCalls = fetchSpy.mock.calls.filter((call) =>
-            (call[0] as string).includes('/api/sponsor-userop'),
-        )
+        const sponsorUserOpCalls = fetchSpy.mock.calls.filter((call) => {
+            if (typeof call[0] !== 'string') {
+                return false
+            }
+            return call[0].includes('/api/sponsor-userop')
+        })
+
         expect(sponsorUserOpCalls.length).toBeGreaterThanOrEqual(1)
 
         // and that the op was sent to the payamster with gas overrides that are going to replace the old userop

@@ -17,14 +17,26 @@ export async function transferEth(params: {
     entryPointAddress: string | undefined
     sendUserOp: UserOps['sendUserOp']
     smartAccount: TSmartAccount
+    paymasterProxyUrl: string
+    paymasterProxyAuthSecret: string
 }) {
-    const { transferData, signer, aaRpcUrl, sendUserOp, smartAccount } = params
+    const {
+        transferData,
+        signer,
+        aaRpcUrl,
+        sendUserOp,
+        smartAccount,
+        paymasterProxyUrl,
+        paymasterProxyAuthSecret,
+    } = params
     const { recipient, value } = transferData
 
     const aaAddress = await getAbstractAccountAddress({
         rootKeyAddress: await getSignerAddress(signer),
         aaRpcUrl,
         newAccountImplementationType: smartAccount.type,
+        paymasterProxyUrl,
+        paymasterProxyAuthSecret,
     })
 
     if (!aaAddress) {

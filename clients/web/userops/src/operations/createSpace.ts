@@ -20,9 +20,20 @@ export async function createSpace(
         aaRpcUrl: string
         fnArgs: Parameters<SpaceDapp['createSpace']>
         smartAccount: TSmartAccount
+        paymasterProxyUrl: string
+        paymasterProxyAuthSecret: string
     },
 ) {
-    const { spaceDapp, timeTracker, fnArgs, aaRpcUrl, sendUserOp, smartAccount } = params
+    const {
+        spaceDapp,
+        timeTracker,
+        fnArgs,
+        aaRpcUrl,
+        sendUserOp,
+        smartAccount,
+        paymasterProxyUrl,
+        paymasterProxyAuthSecret,
+    } = params
     if (!spaceDapp) {
         throw new Error('spaceDapp is required')
     }
@@ -54,6 +65,8 @@ export async function createSpace(
         rootKeyAddress: await getSignerAddress(signer),
         aaRpcUrl,
         newAccountImplementationType: smartAccount.type,
+        paymasterProxyUrl,
+        paymasterProxyAuthSecret,
     })
 
     endGetAA?.()
@@ -124,7 +137,9 @@ export async function createSpace(
             },
             TimeTrackerEvents.CREATE_SPACE,
         )
-    } else {
+    }
+    // this only applies when doing prepaid seats and creating a town, which we don't support in the UI currently (we used to)
+    else {
         await linkSmartAccountAndWaitForReceipt({
             abstractAccountAddress,
             sequenceName: TimeTrackerEvents.CREATE_SPACE,
@@ -161,9 +176,19 @@ export async function createLegacySpace(
         aaRpcUrl: string
         fnArgs: Parameters<SpaceDapp['createLegacySpace']>
         smartAccount: TSmartAccount
+        paymasterProxyUrl: string
+        paymasterProxyAuthSecret: string
     },
 ) {
-    const { spaceDapp, fnArgs, aaRpcUrl, sendUserOp, smartAccount } = params
+    const {
+        spaceDapp,
+        fnArgs,
+        aaRpcUrl,
+        sendUserOp,
+        smartAccount,
+        paymasterProxyUrl,
+        paymasterProxyAuthSecret,
+    } = params
     if (!spaceDapp) {
         throw new Error('spaceDapp is required')
     }
@@ -184,6 +209,8 @@ export async function createLegacySpace(
         rootKeyAddress: await getSignerAddress(signer),
         aaRpcUrl,
         newAccountImplementationType: smartAccount.type,
+        paymasterProxyUrl,
+        paymasterProxyAuthSecret,
     })
 
     if (!abstractAccountAddress) {

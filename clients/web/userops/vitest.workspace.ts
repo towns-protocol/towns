@@ -14,12 +14,17 @@ const commonConfig = {
     },
 }
 
+const upgradeTests = [
+    '**/test/userops.upgradeToModular.test.ts',
+    '**/test/userops.upgradePure.test.ts',
+]
+
 export default defineWorkspace([
     {
         test: {
             include: ['**/test/**.test.ts'],
             // don't run limits tests by default
-            exclude: ['**/test/userops.limits.test.ts'],
+            exclude: ['**/test/userops.limits.test.ts', ...upgradeTests],
             name: 'simple',
             ...commonConfig,
             env: {
@@ -31,7 +36,7 @@ export default defineWorkspace([
         test: {
             include: ['**/test/**.test.ts'],
             // don't run limits tests by default
-            exclude: ['**/test/userops.limits.test.ts'],
+            exclude: ['**/test/userops.limits.test.ts', ...upgradeTests],
             name: 'modular',
             ...commonConfig,
             env: {
@@ -60,6 +65,16 @@ export default defineWorkspace([
             ...commonConfig,
             env: {
                 AA_NEW_ACCOUNT_IMPLEMENTATION_TYPE: 'simple',
+            },
+        },
+    },
+    {
+        test: {
+            include: upgradeTests,
+            name: 'upgrade',
+            ...commonConfig,
+            env: {
+                AA_NEW_ACCOUNT_IMPLEMENTATION_TYPE: 'modular',
             },
         },
     },

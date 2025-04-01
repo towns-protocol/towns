@@ -18,13 +18,26 @@ export async function transferAssets(params: {
     smartAccount: TSmartAccount
     sendUserOp: UserOps['sendUserOp']
     client: PublicClient
+    paymasterProxyUrl: string
+    paymasterProxyAuthSecret: string
 }) {
-    const { transferData, signer, aaRpcUrl, sendUserOp, client, smartAccount } = params
+    const {
+        transferData,
+        signer,
+        aaRpcUrl,
+        sendUserOp,
+        client,
+        smartAccount,
+        paymasterProxyUrl,
+        paymasterProxyAuthSecret,
+    } = params
     const { recipient, contractAddress, tokenId, quantity } = transferData
     const fromAddress = await getAbstractAccountAddress({
         rootKeyAddress: await getSignerAddress(signer),
         aaRpcUrl,
         newAccountImplementationType: smartAccount.type,
+        paymasterProxyUrl,
+        paymasterProxyAuthSecret,
     })
     if (!fromAddress) {
         throw new Error('Failed to get from address')

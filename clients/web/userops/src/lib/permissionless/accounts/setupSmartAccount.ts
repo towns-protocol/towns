@@ -18,6 +18,7 @@ export const setupSmartAccount = async (args: {
     paymasterProxyAuthSecret: string
     spaceDapp: SpaceDapp | undefined
     fetchAccessTokenFn: (() => Promise<string | null>) | undefined
+    forceModular?: boolean
 }) => {
     const {
         newAccountImplementationType,
@@ -28,6 +29,7 @@ export const setupSmartAccount = async (args: {
         paymasterProxyAuthSecret,
         spaceDapp,
         fetchAccessTokenFn,
+        forceModular,
     } = args
 
     const owner = await ethersSignerToAccount(signer)
@@ -35,14 +37,30 @@ export const setupSmartAccount = async (args: {
 
     const { address, accountType } = await determineSmartAccount({
         ownerAddress: owner.address,
-        rpcUrl,
         newAccountImplementationType,
+        paymasterProxyUrl,
+        paymasterProxyAuthSecret,
     })
 
     const publicRpcClient = createPublicClient({
         transport: http(args.rpcUrl),
         chain,
     }) as PublicClient
+
+    if (forceModular || accountType === 'modular') {
+        return modularSmartAccount({
+            publicRpcClient,
+            owner,
+            rpcUrl,
+            chain,
+            address,
+            bundlerUrl,
+            paymasterProxyUrl,
+            paymasterProxyAuthSecret,
+            spaceDapp,
+            fetchAccessTokenFn,
+        })
+    }
 
     if (accountType === 'simple') {
         return simpleSmartAccount({
@@ -59,19 +77,5 @@ export const setupSmartAccount = async (args: {
         })
     }
 
-    if (accountType === 'modular') {
-        return modularSmartAccount({
-            publicRpcClient,
-            owner,
-            rpcUrl,
-            chain,
-            address,
-            bundlerUrl,
-            paymasterProxyUrl,
-            paymasterProxyAuthSecret,
-            spaceDapp,
-            fetchAccessTokenFn,
-        })
-    }
     throw new Error(`Unsupported account type`)
 }

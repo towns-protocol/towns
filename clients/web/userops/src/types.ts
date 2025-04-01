@@ -72,6 +72,8 @@ export const FunctionHash = {
     trading: 'trading',
     // unsponsored user ops
     unsponsored: 'unsponsored',
+
+    upgradeToAndCall: 'upgradeToAndCall',
 } as const
 
 export type FunctionHash = keyof typeof FunctionHash

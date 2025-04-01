@@ -29,7 +29,7 @@ type ExecuteData = SingleExecuteData | BatchExecuteData
 
 type DecodedSingleCallData<F extends FunctionHash> = {
     toAddress: Address
-    value: bigint | undefined
+    value: bigint
     executeData: Hex
     functionHash: F | undefined
     functionData?: unknown
@@ -39,7 +39,8 @@ type DecodedSingleCallData<F extends FunctionHash> = {
 type DecodedBatchCallData<F extends FunctionHash> = {
     toAddress: Address[]
     executeData: Hex[]
-    value?: never
+    // single value that represents the sum of all values in the batch
+    value: bigint
     functionHash: F | undefined
     functionData?: unknown
     executeType: 'batch'
@@ -47,13 +48,19 @@ type DecodedBatchCallData<F extends FunctionHash> = {
 
 type DecodedCallData<F extends FunctionHash> = DecodedSingleCallData<F> | DecodedBatchCallData<F>
 
-type PrepayMembershipData = DecodedCallData<'prepayMembership'> & {
+type PrepayMembershipData = {
+    toAddress: Address
+    value: bigint
+    functionHash: 'prepayMembership'
     functionData: {
         supply: bigint
     }
 }
 
-type TransferTokensData = DecodedCallData<'transferTokens'> & {
+type TransferTokensData = {
+    toAddress: Address
+    value: bigint
+    functionHash: 'transferTokens'
     functionData: {
         fromAddress: Address
         recipient: Address
@@ -61,16 +68,19 @@ type TransferTokensData = DecodedCallData<'transferTokens'> & {
     }
 }
 
-type WithdrawData = DecodedCallData<'withdraw'> & {
+type WithdrawData = {
+    toAddress: Address
+    value: bigint
+    functionHash: 'withdraw'
     functionData: {
         recipient: Address
     }
 }
 
-type TransferEthData = Omit<DecodedCallData<'transferEth'>, 'toAddress' | 'executeData'> & {
+type TransferEthData = {
     toAddress: Address
-    executeData: Hex
-    executeType: 'single'
+    value: bigint
+    functionHash: 'transferEth'
 }
 
 export function decodeCallData<F extends FunctionHash>(args: {
@@ -123,11 +133,15 @@ export function decodeCallData<F extends FunctionHash>(args: {
     }
 
     let data: DecodedCallData<F>
+    const summedValue =
+        executeData.type === 'single'
+            ? executeData.value
+            : executeData.value.reduce((acc, curr) => acc + curr, 0n)
 
     if (executeData.type === 'single') {
         data = {
             toAddress: executeData.toAddress,
-            value: executeData.value,
+            value: summedValue,
             executeData: executeData.decodedCallData,
             functionHash,
             executeType: 'single',
@@ -137,7 +151,7 @@ export function decodeCallData<F extends FunctionHash>(args: {
             toAddress: executeData.toAddress,
             executeData: executeData.decodedCallData,
             functionHash,
-            value: undefined,
+            value: summedValue,
             executeType: 'batch',
         }
     } else {
@@ -147,105 +161,125 @@ export function decodeCallData<F extends FunctionHash>(args: {
     try {
         switch (functionHash) {
             case 'prepayMembership': {
+                let supply: bigint | undefined
+                let toAddress: Address | undefined
                 if (executeData.type !== 'single') {
-                    break
+                    for (let i = 0; i < executeData.decodedCallData.length; i++) {
+                        try {
+                            supply = decodePrepayMembership(executeData.decodedCallData[i])[0]
+                            toAddress = executeData.toAddress[i]
+                        } catch (error) {
+                            // noop
+                        }
+                    }
+                } else {
+                    supply = decodePrepayMembership(executeData.decodedCallData)[0]
                 }
 
-                const { args } = decodeFunctionData({
-                    // PrepayFacet.abi
-                    // defining the abi instead of passing around SpaceDapp/Space
-                    // alternative is to import @river-build/generated, but this is just simple and easy for now
-                    abi: [
-                        {
-                            type: 'function',
-                            name: 'prepayMembership',
-                            inputs: [
-                                {
-                                    name: 'supply',
-                                    type: 'uint256',
-                                    internalType: 'uint256',
-                                },
-                            ],
-                            outputs: [],
-                            stateMutability: 'payable',
-                        },
-                    ],
-                    data: executeData.decodedCallData,
-                })
-
-                const supply = args[0]
-                if (supply === undefined) {
+                if (supply === undefined || toAddress === undefined) {
                     break
                 }
 
                 return {
-                    ...data,
+                    toAddress,
+                    value: summedValue,
+                    functionHash,
                     functionData: {
                         supply,
                     },
-                } as PrepayMembershipData
+                } satisfies PrepayMembershipData
             }
             case 'transferTokens': {
+                let fromAddress: Address | undefined
+                let recipient: Address | undefined
+                let tokenId: bigint | undefined
+                let toAddress: Address | undefined
                 if (executeData.type !== 'single') {
-                    break
+                    for (let i = 0; i < executeData.decodedCallData.length; i++) {
+                        try {
+                            ;[fromAddress, recipient, tokenId] = decodeTransferCallData(
+                                executeData.decodedCallData[i],
+                            ).args
+                            toAddress = executeData.toAddress[i]
+                        } catch (error) {
+                            // noop
+                        }
+                    }
+                } else {
+                    ;[fromAddress, recipient, tokenId] = decodeTransferCallData(
+                        executeData.decodedCallData,
+                    ).args
+                    toAddress = executeData.toAddress
                 }
 
-                const [fromAddress, recipient, tokenId] = decodeTransferCallData(
-                    executeData.decodedCallData,
-                ).args
-
-                if (!fromAddress || !recipient || !tokenId) {
+                if (
+                    fromAddress === undefined ||
+                    recipient === undefined ||
+                    tokenId === undefined ||
+                    toAddress === undefined
+                ) {
                     break
                 }
                 return {
-                    ...data,
+                    toAddress,
+                    value: summedValue,
+                    functionHash,
                     functionData: {
                         fromAddress: fromAddress,
                         recipient: recipient,
                         tokenId: tokenId.toString(),
                     },
-                } as TransferTokensData
+                } satisfies TransferTokensData
             }
             case 'transferEth': {
                 if (executeData.type !== 'single') {
+                    for (let i = 0; i < executeData.decodedCallData.length; i++) {
+                        const callData = executeData.decodedCallData[i]
+                        const toAddress = executeData.toAddress[i]
+                        if (callData === '0x') {
+                            return {
+                                toAddress,
+                                value: summedValue,
+                                functionHash,
+                            } satisfies TransferEthData
+                        }
+                    }
                     break
+                } else {
+                    return {
+                        toAddress: executeData.toAddress,
+                        functionHash,
+                        value: summedValue,
+                    } satisfies TransferEthData
                 }
-                return data as TransferEthData
             }
             case 'withdraw': {
+                let recipient: Address | undefined
+                let toAddress: Address | undefined
                 if (executeData.type !== 'single') {
-                    break
+                    for (let i = 0; i < executeData.decodedCallData.length; i++) {
+                        try {
+                            recipient = decodeWithdraw(executeData.decodedCallData[i])[0]
+                            toAddress = executeData.toAddress[i]
+                        } catch (error) {
+                            // noop
+                        }
+                    }
+                } else {
+                    recipient = decodeWithdraw(executeData.decodedCallData)[0]
+                    toAddress = executeData.toAddress
                 }
-
-                const { args } = decodeFunctionData({
-                    // MembershipFacet.abi
-                    abi: [
-                        {
-                            type: 'function',
-                            name: 'withdraw',
-                            inputs: [
-                                {
-                                    name: 'account',
-                                    type: 'address',
-                                    internalType: 'address',
-                                },
-                            ],
-                            outputs: [],
-                            stateMutability: 'nonpayable',
-                        },
-                    ],
-                    data: executeData.decodedCallData,
-                })
-                const to = args[0]
-                if (!to) {
+                if (recipient === undefined || toAddress === undefined) {
                     break
                 }
                 return {
-                    ...data,
+                    toAddress,
+                    value: summedValue,
+                    functionHash,
                     functionData: {
-                        recipient: to,
+                        recipient,
                     },
-                } as WithdrawData
+                } satisfies WithdrawData
             }
             default: {
                 return data
@@ -258,51 +292,111 @@ export function decodeCallData<F extends FunctionHash>(args: {
     return data
 }
 
-export function isPrepayMembershipData(
-    decodedCallData: DecodedCallData<FunctionHash> | undefined,
-): decodedCallData is PrepayMembershipData {
+function decodePrepayMembership(_c: Hex) {
+    const { args } = decodeFunctionData({
+        // PrepayFacet.abi
+        // defining the abi instead of passing around SpaceDapp/Space
+        // alternative is to import @river-build/generated, but this is just simple and easy for now
+        abi: [
+            {
+                type: 'function',
+                name: 'prepayMembership',
+                inputs: [
+                    {
+                        name: 'supply',
+                        type: 'uint256',
+                        internalType: 'uint256',
+                    },
+                ],
+                outputs: [],
+                stateMutability: 'payable',
+            },
+        ],
+        data: _c,
+    })
+    return args
+}
+
+function decodeWithdraw(_c: Hex) {
+    const { args } = decodeFunctionData({
+        // MembershipFacet.abi
+        abi: [
+            {
+                type: 'function',
+                name: 'withdraw',
+                inputs: [
+                    {
+                        name: 'account',
+                        type: 'address',
+                        internalType: 'address',
+                    },
+                ],
+                outputs: [],
+                stateMutability: 'nonpayable',
+            },
+        ],
+        data: _c,
+    })
+    return args
+}
+
+export function isPrepayMembershipData(data: unknown): data is PrepayMembershipData {
+    if (typeof data !== 'object' || data === null) {
+        return false
+    }
     return (
-        decodedCallData?.functionHash === 'prepayMembership' &&
-        !!decodedCallData?.functionData &&
-        typeof decodedCallData.functionData === 'object' &&
-        'supply' in decodedCallData.functionData
+        'functionHash' in data &&
+        data.functionHash === 'prepayMembership' &&
+        'functionData' in data &&
+        typeof data.functionData === 'object' &&
+        data.functionData !== null &&
+        'supply' in data.functionData &&
+        'toAddress' in data &&
+        'value' in data
     )
 }
 
-export function isTransferEthData(
-    decodedCallData: DecodedCallData<FunctionHash> | undefined,
-): decodedCallData is TransferEthData {
+export function isTransferEthData(data: unknown): data is TransferEthData {
+    if (typeof data !== 'object' || data === null) {
+        return false
+    }
     return (
-        decodedCallData?.functionHash === 'transferEth' &&
-        !!decodedCallData?.functionData &&
-        typeof decodedCallData.functionData === 'object' &&
-        'toAddress' in decodedCallData.functionData &&
-        'executeData' in decodedCallData &&
-        'executeType' in decodedCallData
+        'functionHash' in data &&
+        data.functionHash === 'transferEth' &&
+        'toAddress' in data &&
+        'value' in data
     )
 }
 
-export function isTransferTokensData(
-    decodedCallData: DecodedCallData<FunctionHash> | undefined,
-): decodedCallData is TransferTokensData {
+export function isTransferTokensData(data: unknown): data is TransferTokensData {
+    if (typeof data !== 'object' || data === null) {
+        return false
+    }
     return (
-        decodedCallData?.functionHash === 'transferTokens' &&
-        !!decodedCallData?.functionData &&
-        typeof decodedCallData.functionData === 'object' &&
-        'fromAddress' in decodedCallData.functionData &&
-        'recipient' in decodedCallData.functionData &&
-        'tokenId' in decodedCallData.functionData
+        'functionHash' in data &&
+        data.functionHash === 'transferTokens' &&
+        'functionData' in data &&
+        typeof data.functionData === 'object' &&
+        data.functionData !== null &&
+        'fromAddress' in data.functionData &&
+        'recipient' in data.functionData &&
+        'tokenId' in data.functionData &&
+        'toAddress' in data &&
+        'value' in data
     )
 }
 
-export function isWithdrawData(
-    decodedCallData: DecodedCallData<FunctionHash> | undefined,
-): decodedCallData is WithdrawData {
+export function isWithdrawData(data: unknown): data is WithdrawData {
+    if (typeof data !== 'object' || data === null) {
+        return false
+    }
     return (
-        decodedCallData?.functionHash === 'withdraw' &&
-        !!decodedCallData?.functionData &&
-        typeof decodedCallData.functionData === 'object' &&
-        'recipient' in decodedCallData.functionData
+        'functionHash' in data &&
+        data.functionHash === 'withdraw' &&
+        'functionData' in data &&
+        typeof data.functionData === 'object' &&
+        data.functionData !== null &&
+        'recipient' in data.functionData
     )
 }
 

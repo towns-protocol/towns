@@ -1,11 +1,13 @@
 import { SpaceDapp } from '@towns-protocol/web3'
 import { UserOps } from '../UserOperations'
-import { TimeTracker, TimeTrackerEvents } from '../types'
+import { SmartAccountType, TimeTracker, TimeTrackerEvents } from '../types'
 import { getAbstractAccountAddress } from '../utils/getAbstractAccountAddress'
 import { getSignerAddress } from '../utils/getSignerAddress'
 import { getFunctionSigHash } from '../utils/getFunctionSigHash'
 import { linkSmartAccountAndWaitForReceipt } from './linkSmartAccount'
 import { TSmartAccount } from '../lib/permissionless/accounts/createSmartAccountClient'
+import { encodeDataForLinkingSmartAccount } from '../utils/encodeDataForLinkingSmartAccount'
+
 /**
  * Join a space, potentially linking a wallet if necessary
  */
@@ -17,9 +19,22 @@ export async function joinSpace(params: {
     factoryAddress: string | undefined
     aaRpcUrl: string
     smartAccount: TSmartAccount
+    newAccountImplementationType: SmartAccountType
     fnArgs: Parameters<SpaceDapp['joinSpace']>
+    paymasterProxyUrl: string
+    paymasterProxyAuthSecret: string
 }) {
-    const { spaceDapp, sendUserOp, timeTracker, aaRpcUrl, fnArgs, smartAccount } = params
+    const {
+        spaceDapp,
+        sendUserOp,
+        timeTracker,
+        aaRpcUrl,
+        fnArgs,
+        smartAccount,
+        newAccountImplementationType,
+        paymasterProxyUrl,
+        paymasterProxyAuthSecret,
+    } = params
     if (!spaceDapp) {
         throw new Error('spaceDapp is required')
     }
@@ -39,6 +54,8 @@ export async function joinSpace(params: {
         rootKeyAddress: await getSignerAddress(signer),
         aaRpcUrl,
         newAccountImplementationType: smartAccount.type,
+        paymasterProxyUrl,
+        paymasterProxyAuthSecret,
     })
     endGetAA?.()
     if (!abstractAccountAddress) {
@@ -53,6 +70,9 @@ export async function joinSpace(params: {
         'userops_check_if_linked',
     )
 
+    //////////////////////////////////////////////////////////////
+    // Check if user has already deployed + linked smart account
+    //////////////////////////////////////////////////////////////
     if (await spaceDapp.walletLink.checkIfLinked(signer, abstractAccountAddress)) {
         endCheckLink?.()
         // they already have a linked wallet, just join the space
@@ -63,19 +83,13 @@ export async function joinSpace(params: {
             functionName,
         )
 
-        // TODO: determine if this simulation causes an additional signature in UX
-        // try {
-        //     // simulate the tx - throws an error second time you run it!
-        //     await space.Membership.write(signer).callStatic.joinSpace(recipient)
-        // } catch (error) {
-        //     throw this.parseSpaceError(spaceId, error)
-        // }
+        const price = membershipPrice.toBigInt()
 
         return sendUserOp(
             {
                 toAddress: space.Address,
                 callData: callDataJoinSpace,
-                value: membershipPrice.toBigInt(),
+                value: price,
                 signer,
                 spaceId: space.SpaceId,
                 functionHashForPaymasterProxy,
@@ -85,32 +99,60 @@ export async function joinSpace(params: {
     }
     endCheckLink?.()
 
-    // if the user does not have a linked wallet, we need to link their smart account first b/c that is where the memberhship NFT will be minted
-    // joinSpace might require a value, if the space has a fixed membership cost
-    //
-    // But SimpleAccount does not support executeBatch with values
-    // A new user who is joining a paid space will encounter this scenario
-    //
-    // Therefore, we need to link the wallet first, then join the space
-    // Another smart account contract should support this and allow for a single user operation
-    await linkSmartAccountAndWaitForReceipt({
-        abstractAccountAddress,
-        sequenceName: TimeTrackerEvents.JOIN_SPACE,
-        sendUserOp,
-        spaceDapp,
-        timeTracker,
-        signer,
-    })
+    //////////////////////////////////////////////////////////////
+    // New users, have not deployed + linked smart account yet
+    //////////////////////////////////////////////////////////////
 
-    return sendUserOp(
-        {
-            toAddress: space.Address,
-            value: membershipPrice.toBigInt(),
-            callData: callDataJoinSpace,
+    // new users w/ simple accounts
+    if (newAccountImplementationType === 'simple') {
+        // if the user does not have a linked wallet, we need to link their smart account first b/c that is where the memberhship NFT will be minted
+        // joinSpace might require a value, if the space has a fixed membership cost
+        //
+        // But SimpleAccount does not support executeBatch with values
+        // A new user who is joining a paid space will encounter this scenario
+        //
+        // Therefore, we need to link the wallet first, then join the space
+        // Another smart account contract should support this and allow for a single user operation
+        await linkSmartAccountAndWaitForReceipt({
+            abstractAccountAddress,
+            sequenceName: TimeTrackerEvents.JOIN_SPACE,
+            sendUserOp,
+            spaceDapp,
+            timeTracker,
             signer,
-            spaceId: space.SpaceId,
-            functionHashForPaymasterProxy: 'joinSpace',
-        },
-        TimeTrackerEvents.JOIN_SPACE,
-    )
+        })
+
+        return sendUserOp(
+            {
+                toAddress: space.Address,
+                value: membershipPrice.toBigInt(),
+                callData: callDataJoinSpace,
+                signer,
+                spaceId: space.SpaceId,
+                functionHashForPaymasterProxy: 'joinSpace',
+            },
+            TimeTrackerEvents.JOIN_SPACE,
+        )
+    }
+    // new users w/ modular accounts
+    else if (newAccountImplementationType === 'modular') {
+        const callDataForLinkingSmartAccount = await encodeDataForLinkingSmartAccount(
+            spaceDapp,
+            signer,
+            abstractAccountAddress,
+        )
+        return sendUserOp(
+            {
+                toAddress: [spaceDapp.walletLink.address, space.Address],
+                value: [0n, membershipPrice.toBigInt()],
+                callData: [callDataForLinkingSmartAccount, callDataJoinSpace],
+                signer,
+                spaceId: space.SpaceId,
+                functionHashForPaymasterProxy: 'joinSpace',
+            },
+            TimeTrackerEvents.JOIN_SPACE,
+        )
+    } else {
+        throw new Error('Invalid account implementation type')
+    }
 }

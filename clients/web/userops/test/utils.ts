@@ -467,6 +467,8 @@ export const createSpaceDappAndUserops = async (
         rootKeyAddress: (await provider.wallet.getAddress()) as Address,
         aaRpcUrl: process.env.AA_RPC_URL!,
         newAccountImplementationType: _newAccountImplementationType,
+        paymasterProxyUrl: process.env.AA_PAYMASTER_PROXY_URL!,
+        paymasterProxyAuthSecret: process.env.AA_PAYMASTER_PROXY_AUTH_SECRET!,
     })
 
     if (!aaAddress) {

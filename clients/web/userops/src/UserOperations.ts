@@ -1,7 +1,7 @@
 import { Address, SpaceDapp, UpdateRoleParams, LegacyUpdateRoleParams } from '@towns-protocol/web3'
 import { ethers } from 'ethers'
 import { UserOpsConfig, FunctionHash, TimeTracker, TimeTrackerEvents } from './types'
-import { selectUserOpsByAddress, userOpsStore } from './store/userOpsStore'
+import { userOpsStore } from './store/userOpsStore'
 import { SendUserOperationReturnType } from './lib/types'
 import {
     removeLink,
@@ -33,9 +33,10 @@ import {
     checkIn,
     review,
     TownsReviewParams,
+    upgradeToAndCall,
 } from './operations'
 import { getAbstractAccountAddress } from './utils/getAbstractAccountAddress'
-import { isSingleData, isBatchData, decodeCallData } from './utils/decodeCallData'
+// import { isSingleData, isBatchData, decodeCallData } from './utils/decodeCallData'
 import { TSmartAccount } from './lib/permissionless/accounts/createSmartAccountClient'
 import {
     sendUseropWithPermissionless,
@@ -43,6 +44,7 @@ import {
 } from './lib/permissionless/sendUseropWithPermissionless'
 import { setupSmartAccount } from './lib/permissionless/accounts/setupSmartAccount'
 import { SmartAccountType } from './types'
+import { needsUpgrade } from './utils/needsUpgrade'
 
 export class UserOps {
     private bundlerUrl: string
@@ -80,6 +82,9 @@ export class UserOps {
     }: {
         rootKeyAddress: Address
     }): Promise<Address | undefined> {
+        if (!this.paymasterProxyUrl || !this.paymasterProxyAuthSecret) {
+            throw new Error('paymasterProxyUrl and paymasterProxyAuthSecret are required')
+        }
         return getAbstractAccountAddress({
             ...this.commonParams(),
             rootKeyAddress,
@@ -112,12 +117,50 @@ export class UserOps {
         if (sequenceName) {
             endInitClient = timeTracker?.startMeasurement(sequenceName, 'userops_init_client')
         }
-        const smartAccountClient = await this.getSmartAccountClient({ signer })
+        let smartAccountClient = await this.getSmartAccountClient({ signer })
         endInitClient?.()
+
+        if (!this.bundlerUrl) {
+            throw new Error('bundlerUrl is required')
+        }
+        if (!this.aaRpcUrl) {
+            throw new Error('aaRpcUrl is required')
+        }
+        if (!this.paymasterProxyUrl) {
+            throw new Error('paymasterProxyUrl is required')
+        }
+        if (!this.paymasterProxyAuthSecret) {
+            throw new Error('paymasterProxyAuthSecret is required')
+        }
+        if (!this.spaceDapp) {
+            throw new Error('spaceDapp is required')
+        }
+
+        let result: SendUserOperationReturnType & { didUpgrade?: boolean }
+        const _needsUpgrade = needsUpgrade(this.newAccountImplementationType, smartAccountClient)
+
+        if (
+            _needsUpgrade &&
+            ((typeof value === 'bigint' && value > 0n) ||
+                (Array.isArray(value) && value.some((v) => v > 0n)))
+        ) {
+            // most userops can be batched with the upgrade op.
+            // but if the op is passing a value (tipping, joining a paid space, etc), we can't encodeExecuteBatch with values on a simple account, so we need to upgrade first
+            const upgradeOp = await this.sendUpgradeToAndCallOp({ signer })
+            const receipt = await upgradeOp.getUserOperationReceipt()
+            if (!receipt) {
+                throw new Error('Upgrade to waiting for receipt timed out')
+            }
+            if (!receipt.success) {
+                throw new Error('Upgrade to failed')
+            }
+            this.smartAccount = undefined
+            smartAccountClient = await this.getSmartAccountClient({ signer })
+        }
 
         if (Array.isArray(toAddress) && Array.isArray(callData)) {
             const _value = Array.isArray(value) ? value : toAddress.map(() => value ?? 0n)
-            return sendUseropWithPermissionless({
+            result = await sendUseropWithPermissionless({
                 value: _value,
                 toAddress,
                 callData,
@@ -126,10 +169,11 @@ export class UserOps {
                 retryCount,
                 smartAccountClient,
                 signer,
+                newAccountImplementationType: this.newAccountImplementationType,
             })
         } else if (typeof toAddress === 'string' && typeof callData === 'string') {
             const _value = typeof value === 'bigint' ? value : undefined
-            return sendUseropWithPermissionless({
+            result = await sendUseropWithPermissionless({
                 value: _value,
                 toAddress,
                 callData,
@@ -138,9 +182,17 @@ export class UserOps {
                 retryCount,
                 smartAccountClient,
                 signer,
+                newAccountImplementationType: this.newAccountImplementationType,
             })
+        } else {
+            throw new Error('[UserOperations.sendUserOpWithPermissionless]::Invalid arguments')
         }
-        throw new Error('[UserOperations.sendUserOpWithPermissionless]::Invalid arguments')
+
+        if (result.didUpgrade) {
+            this.smartAccount = undefined
+        }
+
+        return result
     }
 
     public async getSmartAccountClient(args: { signer: ethers.Signer }) {
@@ -168,10 +220,15 @@ export class UserOps {
     }
 
     private commonParams() {
+        if (!this.paymasterProxyUrl || !this.paymasterProxyAuthSecret) {
+            throw new Error('paymasterProxyUrl and paymasterProxyAuthSecret are required')
+        }
         return {
             spaceDapp: this.spaceDapp,
             timeTracker: this.timeTracker,
             aaRpcUrl: this.aaRpcUrl,
+            paymasterProxyUrl: this.paymasterProxyUrl,
+            paymasterProxyAuthSecret: this.paymasterProxyAuthSecret,
             sendUserOp: this.sendUserOp.bind(this),
         }
     }
@@ -182,54 +239,63 @@ export class UserOps {
         }
     }
 
-    public async dropAndReplace(hash: string, signer: ethers.Signer) {
-        const sender = (await this.getSmartAccountClient({ signer })).address
-        const userOpState = selectUserOpsByAddress(sender, userOpsStore.getState())
-        if (!userOpState) {
-            throw new Error('current user op not found')
-        }
-        const pending = userOpState.pending
+    // public async dropAndReplace(hash: string, signer: ethers.Signer) {
+    //     const sender = (await this.getSmartAccountClient({ signer })).address
+    //     const userOpState = selectUserOpsByAddress(sender, userOpsStore.getState())
+    //     if (!userOpState) {
+    //         throw new Error('current user op not found')
+    //     }
+    //     const pending = userOpState.pending
 
-        if (!pending.op?.callData) {
-            throw new Error('user op call data not found')
-        }
-        if (pending.hash !== hash) {
-            throw new Error('user op hash does not match')
-        }
-        if (!pending.functionHashForPaymasterProxy) {
-            throw new Error('user op function hash for paymaster proxy not found')
-        }
-        const pendingDecodedCallData = decodeCallData({
-            callData: pending.op.callData,
-            functionHash: pending.functionHashForPaymasterProxy,
+    //     if (!pending.op?.callData) {
+    //         throw new Error('user op call data not found')
+    //     }
+    //     if (pending.hash !== hash) {
+    //         throw new Error('user op hash does not match')
+    //     }
+    //     if (!pending.functionHashForPaymasterProxy) {
+    //         throw new Error('user op function hash for paymaster proxy not found')
+    //     }
+    //     const pendingDecodedCallData = decodeCallData({
+    //         callData: pending.op.callData,
+    //         functionHash: pending.functionHashForPaymasterProxy,
+    //     })
+
+    //     const spaceId = pending.spaceId
+    //     const functionHashForPaymasterProxy = pending.functionHashForPaymasterProxy
+
+    //     if (isBatchData(pendingDecodedCallData)) {
+    //         const { toAddress, value, executeData } = pendingDecodedCallData
+    //         return this.sendUserOp({
+    //             toAddress,
+    //             callData: executeData,
+    //             signer,
+    //             spaceId,
+    //             functionHashForPaymasterProxy,
+    //             value,
+    //         })
+    //     } else if (isSingleData(pendingDecodedCallData)) {
+    //         const { toAddress, value, executeData } = pendingDecodedCallData
+    //         return this.sendUserOp({
+    //             toAddress,
+    //             callData: executeData,
+    //             signer,
+    //             spaceId,
+    //             functionHashForPaymasterProxy,
+    //             value,
+    //         })
+    //     } else {
+    //         throw new Error('mismatch in format of toAddress and callData')
+    //     }
+    // }
+
+    public async sendUpgradeToAndCallOp(args: { signer: ethers.Signer }) {
+        const smartAccountClient = await this.getSmartAccountClient({ signer: args.signer })
+        return upgradeToAndCall({
+            ...this.commonParams(),
+            smartAccountClient,
+            signer: args.signer,
         })
-
-        const spaceId = pending.spaceId
-        const functionHashForPaymasterProxy = pending.functionHashForPaymasterProxy
-
-        if (isBatchData(pendingDecodedCallData)) {
-            const { toAddress, value, executeData } = pendingDecodedCallData
-            return this.sendUserOp({
-                toAddress,
-                callData: executeData,
-                signer,
-                spaceId,
-                functionHashForPaymasterProxy,
-                value,
-            })
-        } else if (isSingleData(pendingDecodedCallData)) {
-            const { toAddress, value, executeData } = pendingDecodedCallData
-            return this.sendUserOp({
-                toAddress,
-                callData: executeData,
-                signer,
-                spaceId,
-                functionHashForPaymasterProxy,
-                value,
-            })
-        } else {
-            throw new Error('mismatch in format of toAddress and callData')
-        }
     }
 
     public async sendCreateLegacySpaceOp(
@@ -271,6 +337,7 @@ export class UserOps {
             entryPointAddress: smartAccountClient.entrypointAddress,
             fnArgs: args,
             smartAccount: smartAccountClient,
+            newAccountImplementationType: this.newAccountImplementationType,
         })
     }
 

@@ -83,7 +83,7 @@ jobs:
               working-directory: ./servers/workers/stackup-worker
               run: yarn test:smart-account
 
-            - name: Run @towns/userop package tests
+            - name: Run @towns/userop SIMPLE ACCOUNT package tests
               timeout-minutes: 10
               env:
                   AA_PAYMASTER_PROXY_URL: http://127.0.0.1:8787
@@ -94,6 +94,30 @@ jobs:
 
               working-directory: ./clients/web/userops
               run: yarn test:userops
+
+            - name: Run @towns/userop MODULAR ACCOUNT package tests
+              timeout-minutes: 10
+              env:
+                  AA_PAYMASTER_PROXY_URL: http://127.0.0.1:8787
+                  AA_PAYMASTER_PROXY_AUTH_SECRET: Zm9v
+                  AA_RPC_URL: http://localhost:8545
+                  AA_BUNDLER_URL: http://localhost:43370
+                  RIVER_ENV: local_multi
+
+              working-directory: ./clients/web/userops
+              run: yarn test:userops:modular
+
+            - name: Run @towns/userop UPGRADE package tests
+              timeout-minutes: 10
+              env:
+                  AA_PAYMASTER_PROXY_URL: http://127.0.0.1:8787
+                  AA_PAYMASTER_PROXY_AUTH_SECRET: Zm9v
+                  AA_RPC_URL: http://localhost:8545
+                  AA_BUNDLER_URL: http://localhost:43370
+                  RIVER_ENV: local_multi
+
+              working-directory: ./clients/web/userops
+              run: yarn test:userops:upgrade
 
             - name: Run @towns/userop package tests with max daily limits of 1
               timeout-minutes: 10
