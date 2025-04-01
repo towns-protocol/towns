@@ -286,7 +286,6 @@ export class SyncedStreamsLoop {
                 { streamId, syncState: this.syncState },
             )
         }
-        this.inFlightSyncCookies.delete(streamId)
     }
 
     public setHighPriorityStreams(streamIds: string[]) {
