@@ -71,30 +71,63 @@ message GetStatusResponse {
     string version_info = 3;
 }
 
-message AppServiceRequest {
-    repeated Envelope messages = 1;
-    repeated Envelope group_encryption_sessions_messages = 2;
+// As a performance optimization, we may wish to bundle together many key solicitation requests
+// and channel messages for the bot to respond to in a single webhook call.
+message EventPayload {
+    // A MessagesPayload represents a group of user messages in a channel that qualifies for the app
+    // to be notified. The included set of group encryption sessions in this message should have
+    // all the needed ciphertexts to decrypt the set of messages sent in the same payload.
+    message MessagesPayload {
+        repeated Envelope messages = 1;
+        repeated Envelope group_encryption_sessions_messages = 2;
+    }
 
-    message SolicitKeys {
+    // SolicitKeys represents one or more messages in the same channel that cannot be forwarded to the
+    // app because the app does not have keys available to decrypt it. In this case, the app must send
+    // a message to the stream to solicit keys for it's device for the session ids that cannot yet be
+    // decrypted.
+    message SolicitKeysPayload {
         repeated string session_ids = 1;
         bytes stream_id = 2;
     }
 
-    oneof action {
-        google.protobuf.Empty initialize = 101;
-        SolicitKeys solicit = 102;
+    oneof payload {
+        MessagesPayload messages = 1;
+        SolicitKeysPayload solicitation = 2;
     }
 }
 
-message AppServiceResponse {
-    optional UserMetadataPayload.EncryptionDevice encryption_device = 1; 
+// The BatchEventsPayload will have a single set of messages and overlapping group encryption sessions
+// messages, or a set of key solicitations for session ids in the same channel. The BatchEventsPayload allows
+// many such groups to be combined into a single request in order to reduce webhook call frequency.
+message BatchEventsPayload {
+    repeated EventPayload events = 1;
+}
 
-    message Status {
+message AppServiceRequest {
+    oneof payload {
+        google.protobuf.Empty initialize = 101;
+        google.protobuf.Empty status = 102;
+        BatchEventsPayload events = 103;
+    }
+}
+
+
+message AppServiceResponse {
+    message InitializeResponse {
+        UserMetadataPayload.EncryptionDevice encryption_device = 1; 
+    }
+
+    message StatusResponse {
         int32 framework_version = 1;
         string device_key = 2;
         string fallback_key = 3;
     }
-    optional Status status = 2;
+
+    oneof payload {
+        InitializeResponse initialize = 101;
+        StatusResponse status = 102;
+    }
 }
 
 

@@ -8,7 +8,6 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 
-	"go.uber.org/zap/zapcore"
 	"google.golang.org/protobuf/proto"
 
 	"github.com/towns-protocol/towns/core/node/base"
@@ -124,7 +123,7 @@ func sendRequestAndParseResponse(
 	webhookUrl string,
 	request *protocol.AppServiceRequest,
 ) (*protocol.AppServiceResponse, error) {
-	log := logging.DefaultZapLogger(zapcore.DebugLevel)
+	log := logging.FromCtx(ctx)
 	resp, err := client.marshalAndPostProto(
 		ctx,
 		appId,
@@ -176,13 +175,13 @@ func (b *AppClient) InitializeWebhook(
 		hs256SharedSecret,
 		webhookUrl,
 		&protocol.AppServiceRequest{
-			Action: &protocol.AppServiceRequest_Initialize{},
+			Payload: &protocol.AppServiceRequest_Initialize{},
 		},
 	)
 	if err != nil {
 		return nil, err
 	}
-	if resp.GetEncryptionDevice() == nil {
+	if resp.GetInitialize() == nil || resp.GetInitialize().GetEncryptionDevice() == nil {
 		return nil, base.RiverError(
 			protocol.Err_MALFORMED_WEBHOOK_RESPONSE,
 			"Response is missing encryption device",
@@ -190,8 +189,8 @@ func (b *AppClient) InitializeWebhook(
 	}
 
 	return &EncryptionDevice{
-		DeviceKey:   resp.EncryptionDevice.DeviceKey,
-		FallbackKey: resp.EncryptionDevice.FallbackKey,
+		DeviceKey:   resp.GetInitialize().EncryptionDevice.DeviceKey,
+		FallbackKey: resp.GetInitialize().EncryptionDevice.FallbackKey,
 	}, nil
 }
 
@@ -204,10 +203,18 @@ func (b *AppClient) RequestSolicitation(
 	sessionId string,
 ) error {
 	request := &protocol.AppServiceRequest{
-		Action: &protocol.AppServiceRequest_Solicit{
-			Solicit: &protocol.AppServiceRequest_SolicitKeys{
-				SessionIds: []string{sessionId},
-				StreamId:   channelId[:],
+		Payload: &protocol.AppServiceRequest_Events{
+			Events: &protocol.BatchEventsPayload{
+				Events: []*protocol.EventPayload{
+					{
+						Payload: &protocol.EventPayload_Solicitation{
+							Solicitation: &protocol.EventPayload_SolicitKeysPayload{
+								SessionIds: []string{sessionId},
+								StreamId:   channelId[:],
+							},
+						},
+					},
+				},
 			},
 		},
 	}
@@ -232,14 +239,14 @@ func (b *AppClient) SendSessionMessages(
 	encryptionEnvelopes [][]byte,
 	webhookUrl string,
 ) error {
-	request := &protocol.AppServiceRequest{}
+	messages := &protocol.EventPayload_MessagesPayload{}
 	for _, envelopeBytes := range messageEnvelopes {
 		var envelope protocol.Envelope
 		if err := proto.Unmarshal(envelopeBytes, &envelope); err != nil {
 			return base.RiverError(protocol.Err_BAD_EVENT, "Could not parse bytes as Envelope").
 				Tag("appId", appId)
 		}
-		request.Messages = append(request.Messages, &envelope)
+		messages.Messages = append(messages.Messages, &envelope)
 	}
 
 	for _, envelopeBytes := range encryptionEnvelopes {
@@ -248,7 +255,7 @@ func (b *AppClient) SendSessionMessages(
 			return base.RiverError(protocol.Err_BAD_EVENT, "Could not parse bytes as Envelope").
 				Tag("appId", appId)
 		}
-		request.GroupEncryptionSessionsMessages = append(request.GroupEncryptionSessionsMessages, &envelope)
+		messages.GroupEncryptionSessionsMessages = append(messages.GroupEncryptionSessionsMessages, &envelope)
 	}
 
 	_, err := sendRequestAndParseResponse(
@@ -257,7 +264,19 @@ func (b *AppClient) SendSessionMessages(
 		appId,
 		hs256SharedSecret,
 		webhookUrl,
-		request,
+		&protocol.AppServiceRequest{
+			Payload: &protocol.AppServiceRequest_Events{
+				Events: &protocol.BatchEventsPayload{
+					Events: []*protocol.EventPayload{
+						{
+							Payload: &protocol.EventPayload_Messages{
+								Messages: messages,
+							},
+						},
+					},
+				},
+			},
+		},
 	)
 	return err
 }

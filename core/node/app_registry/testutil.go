@@ -127,12 +127,12 @@ func (b *TestAppServer) Close() {
 	}
 }
 
-func (b *TestAppServer) solicitKeys(ctx context.Context, data *protocol.AppServiceRequest_SolicitKeys) error {
+func (b *TestAppServer) solicitKeys(ctx context.Context, data *protocol.EventPayload_SolicitKeysPayload) error {
 	log := logging.FromCtx(ctx).With("func", "TestAppServer.solicitKeys")
 	streamId, err := shared.StreamIdFromBytes(data.StreamId)
 	if err != nil {
-		log.Errorw("Failed tot parse stream id for key solicitation", "error", err, "streamId", data.StreamId)
-		return fmt.Errorf("Failed to parse stream for key solicitation: %w", err)
+		log.Errorw("Failed to parse stream id for key solicitation", "error", err, "streamId", data.StreamId)
+		return fmt.Errorf("failed to parse stream for key solicitation: %w", err)
 	}
 
 	log.Debugw("soliciting keys for channel", "streamId", streamId, "sessionIds", data.SessionIds)
@@ -219,7 +219,7 @@ func parseEncryptionEnvelope(envelope *protocol.Envelope) (*protocol.UserInboxPa
 
 func (b *TestAppServer) respondToSendMessages(
 	ctx context.Context,
-	data *protocol.AppServiceRequest,
+	data *protocol.EventPayload_MessagesPayload,
 ) error {
 	log := logging.FromCtx(ctx)
 	// Swap with above to enable debug logs
@@ -389,33 +389,45 @@ func (b *TestAppServer) rootHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var response protocol.AppServiceResponse
-	if request.Action != nil {
-		switch request.Action.(type) {
+	if request.Payload != nil {
+		switch request.Payload.(type) {
 		case *protocol.AppServiceRequest_Initialize:
 			log.Infow("initialize...")
-			response.EncryptionDevice = &protocol.UserMetadataPayload_EncryptionDevice{
-				DeviceKey:   b.encryptionDevice.DeviceKey,
-				FallbackKey: b.encryptionDevice.FallbackKey,
+
+			response.Payload = &protocol.AppServiceResponse_Initialize{
+				Initialize: &protocol.AppServiceResponse_InitializeResponse{
+					EncryptionDevice: &protocol.UserMetadataPayload_EncryptionDevice{
+						DeviceKey:   b.encryptionDevice.DeviceKey,
+						FallbackKey: b.encryptionDevice.FallbackKey,
+					},
+				},
 			}
 
-		case *protocol.AppServiceRequest_Solicit:
-			if err := b.solicitKeys(logging.CtxWithLog(r.Context(), log), request.GetSolicit()); err != nil {
-				log.Errorw("solicit keys request failed", "error", err, "data", data)
-				http.Error(w, fmt.Sprintf("TestAppServer unable to solicit keys: %v", err), http.StatusBadRequest)
-				return
+		case *protocol.AppServiceRequest_Events:
+			for _, event := range request.GetEvents().GetEvents() {
+				switch event.Payload.(type) {
+				case *protocol.EventPayload_Messages:
+					log.Infow("request includes messages...", "numMessages", len(event.GetMessages().Messages))
+					if err := b.respondToSendMessages(ctx, event.GetMessages()); err != nil {
+						http.Error(w, fmt.Sprintf("unable to respond to sent messages: %v", err), http.StatusBadRequest)
+						return
+					}
+
+				case *protocol.EventPayload_Solicitation:
+					log.Infow("request includes solicitation", "sessionIds", event.GetSolicitation().SessionIds, "streamId", event.GetSolicitation().StreamId)
+					if err := b.solicitKeys(logging.CtxWithLog(r.Context(), log), event.GetSolicitation()); err != nil {
+						log.Errorw("solicit keys request failed", "error", err, "data", data)
+						http.Error(w, fmt.Sprintf("TestAppServer unable to solicit keys: %v", err), http.StatusBadRequest)
+						return
+					}
+				}
 			}
 
 		default:
-			log.Errorw("unrecognized action type", "action", request.Action)
+			log.Errorw("unrecognized action type", "payload", request.Payload)
 			http.Error(w, "unrecognized payload type", http.StatusBadRequest)
 			return
 		}
-	}
-
-	log.Infow("send_messages...", "numMessages", len(request.GetMessages()))
-	if err := b.respondToSendMessages(ctx, &request); err != nil {
-		http.Error(w, fmt.Sprintf("unable to respond to sent messages: %v", err), http.StatusBadRequest)
-		return
 	}
 
 	// Marshal the response message to binary format.
