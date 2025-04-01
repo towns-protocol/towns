@@ -200,38 +200,41 @@ func (s *StreamCache) onBlockWithLogs(ctx context.Context, blockNum crypto.Block
 
 	for streamID, events := range streamEvents {
 		wp.Submit(func() {
-			switch events[0].Reason() {
-			case river.StreamUpdatedEventTypeAllocate:
-				streamState := events[0].(*river.StreamState)
-				s.onStreamAllocated(ctx, streamState, events[1:], blockNum)
-			case river.StreamUpdatedEventTypeCreate:
-				streamState := events[0].(*river.StreamState)
-				s.onStreamCreated(ctx, streamState, blockNum)
-			case river.StreamUpdatedEventTypePlacementUpdated:
-				streamState := events[0].(*river.StreamState)
-				s.onStreamReplaced(ctx, streamState, blockNum) // TODO: determine what needs to be done for events[1:]
-			case river.StreamUpdatedEventTypeLastMiniblockBatchUpdated:
-				stream, ok := s.cache.Load(streamID)
-				if !ok {
-					return
-				}
+			eventsChains := s.splitStreamEventsOnReplacements(events)
+			for _, events := range eventsChains {
+				switch events[0].Reason() {
+				case river.StreamUpdatedEventTypeAllocate:
+					streamState := events[0].(*river.StreamState)
+					s.onStreamAllocated(ctx, streamState, events[1:], blockNum)
+				case river.StreamUpdatedEventTypeCreate:
+					streamState := events[0].(*river.StreamState)
+					s.onStreamCreated(ctx, streamState, blockNum)
+				case river.StreamUpdatedEventTypePlacementUpdated:
+					streamState := events[0].(*river.StreamState)
+					s.onStreamReplaced(ctx, streamState, blockNum) // TODO: determine what needs to be done for events[1:]
+				case river.StreamUpdatedEventTypeLastMiniblockBatchUpdated:
+					stream, ok := s.cache.Load(streamID)
+					if !ok {
+						return
+					}
 
-				if stream.nodesLocked.IsLocal() && stream.nodesLocked.IsLocalInQuorum() {
-					stream.applyStreamEvents(ctx, events, blockNum)
-				}
+					if stream.nodesLocked.IsLocal() && stream.nodesLocked.IsLocalInQuorum() {
+						stream.applyStreamEvents(ctx, events, blockNum)
+					}
 
-				// migrate stream to repl
-				if stream.nodesLocked.IsLocal() && !stream.nodesLocked.IsLocalInQuorum() {
-					// determine if stream update contains newer miniblock than currently in storage.
-					if mb, err := stream.getLastMiniblockNumSkipLoad(ctx); err == nil {
-						latestMb := int64(0)
-						for _, event := range events {
-							if ev, ok := event.(*river.StreamState); ok {
-								latestMb = max(latestMb, int64(ev.LastMiniblockNum))
+					// migrate stream to repl
+					if stream.nodesLocked.IsLocal() && !stream.nodesLocked.IsLocalInQuorum() {
+						// determine if stream update contains newer miniblock than currently in storage.
+						if mb, err := stream.getLastMiniblockNumSkipLoad(ctx); err == nil {
+							latestMb := int64(0)
+							for _, event := range events {
+								if ev, ok := event.(*river.StreamState); ok {
+									latestMb = max(latestMb, int64(ev.LastMiniblockNum))
+								}
 							}
-						}
-						if mb > latestMb {
-							s.SubmitSyncStreamTask(ctx, stream)
+							if mb > latestMb {
+								s.SubmitSyncStreamTask(ctx, stream)
+							}
 						}
 					}
 				}
@@ -242,6 +245,33 @@ func (s *StreamCache) onBlockWithLogs(ctx context.Context, blockNum crypto.Block
 	wp.StopWait()
 
 	s.appliedBlockNum.Store(uint64(blockNum))
+}
+
+// splitStreamEvents splits the given events on replacement updates.
+// It guarantees that placement updates are the first event in a chain.
+func (s *StreamCache) splitStreamEventsOnReplacements(events []river.StreamUpdatedEvent) [][]river.StreamUpdatedEvent {
+	var (
+		results = make([][]river.StreamUpdatedEvent, 1)
+		index   = 0
+	)
+
+	for _, e := range events {
+		results[index] = append(results[index], e)
+		if e.Reason() == river.StreamUpdatedEventTypePlacementUpdated {
+			results = append(results, []river.StreamUpdatedEvent{})
+			index++
+			results[index] = append(results[index], e)
+		} else {
+			results[index] = append(results[index], e)
+		}
+	}
+
+	// strip last events chain if last event was a stream replacement
+	if len(results[0]) == 0 {
+		results = results[1:]
+	}
+
+	return results
 }
 
 func (s *StreamCache) onStreamReplaced(
