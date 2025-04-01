@@ -17,12 +17,7 @@ interface IRiverConfigBase {
    * @param value The new setting value
    * @param deleted True if the setting is deleted (value is empty in this case)
    */
-  event ConfigurationChanged(
-    bytes32 key,
-    uint64 block,
-    bytes value,
-    bool deleted
-  );
+  event ConfigurationChanged(bytes32 key, uint64 block, bytes value, bool deleted);
 
   /**
    * @notice Emitted when a configuration manager is added
@@ -50,33 +45,37 @@ interface IRiverConfig is IRiverConfigBase {
    * @notice Add a configuration manager
    * @param manager The address to add
    */
-  function approveConfigurationManager(address manager) external;
+  function approveConfigurationManager(
+    address manager
+  ) external;
 
   /**
    * @notice Remove a configuration manager
    * @param manager The address to remove
    */
-  function removeConfigurationManager(address manager) external;
+  function removeConfigurationManager(
+    address manager
+  ) external;
 
   /**
    * @notice Set a bytes setting for the given key
    * @dev Emits ConfigurationChanged event
    * @param key The keccak256 hash of the setting name
-   * @param blockNumber The block number on which the setting becomes active, can't be max value of uint64
+   * @param blockNumber The block number on which the setting becomes active, can't be max value of
+   * uint64
    * @param value The setting value (value must be its ABI representation), can't be empty
    */
-  function setConfiguration(
-    bytes32 key,
-    uint64 blockNumber,
-    bytes calldata value
-  ) external;
+  function setConfiguration(bytes32 key, uint64 blockNumber, bytes calldata value) external;
 
   /**
    * @notice Deletes the setting for the given key on all blocks
-   * @dev Emits ConfigurationChanged event with deleted flag set to true and block number set to max value of uint64
+   * @dev Emits ConfigurationChanged event with deleted flag set to true and block number set to max
+   * value of uint64
    * @param key The setting key
    */
-  function deleteConfiguration(bytes32 key) external;
+  function deleteConfiguration(
+    bytes32 key
+  ) external;
 
   /**
    * @notice Deletes the setting for the given key at the given block
@@ -95,7 +94,9 @@ interface IRiverConfig is IRiverConfigBase {
    * @param key The setting key
    * @return True if the setting exists
    */
-  function configurationExists(bytes32 key) external view returns (bool);
+  function configurationExists(
+    bytes32 key
+  ) external view returns (bool);
 
   /**
    * @notice Get settings for the given key
@@ -119,5 +120,7 @@ interface IRiverConfig is IRiverConfigBase {
    * @param manager The address to check
    * @return True if the address is a configuration manager
    */
-  function isConfigurationManager(address manager) external view returns (bool);
+  function isConfigurationManager(
+    address manager
+  ) external view returns (bool);
 }

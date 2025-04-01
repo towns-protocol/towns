@@ -15,24 +15,10 @@ contract ReferralsFacet_registerReferral is ReferralsFacetTest {
     Referral memory referral
   ) external givenReferralCodeIsRegistered(referral) {
     // Assert
-    Referral memory storedReferral = referralsFacet.referralInfo(
-      referral.referralCode
-    );
-    assertEq(
-      storedReferral.referralCode,
-      referral.referralCode,
-      "Referral code should match"
-    );
-    assertEq(
-      storedReferral.basisPoints,
-      referral.basisPoints,
-      "Basis points should match"
-    );
-    assertEq(
-      storedReferral.recipient,
-      referral.recipient,
-      "Recipient should match"
-    );
+    Referral memory storedReferral = referralsFacet.referralInfo(referral.referralCode);
+    assertEq(storedReferral.referralCode, referral.referralCode, "Referral code should match");
+    assertEq(storedReferral.basisPoints, referral.basisPoints, "Basis points should match");
+    assertEq(storedReferral.recipient, referral.recipient, "Recipient should match");
 
     // Attempt to register the same referral code again (should fail)
     vm.prank(founder);

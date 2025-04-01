@@ -31,7 +31,9 @@ contract DeploySpaceFactoryInit is Deployer, FacetHelper {
     return "facets/spaceFactoryInit";
   }
 
-  function __deploy(address deployer) public override returns (address) {
+  function __deploy(
+    address deployer
+  ) public override returns (address) {
     vm.startBroadcast(deployer);
     SpaceFactoryInit spaceFactoryInit = new SpaceFactoryInit();
     vm.stopBroadcast();

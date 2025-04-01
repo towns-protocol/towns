@@ -21,10 +21,7 @@ contract MerkleAirdrop is IMerkleAirdrop, EIP712Base, Facet {
   bytes32 private constant MESSAGE_TYPEHASH =
     0x0770323f1f7513b8a3d8df16b4b8fd506e7a76eaf71c03c687683b8d52979b5c;
 
-  function __MerkleAirdrop_init(
-    bytes32 merkleRoot,
-    IERC20 token
-  ) external initializer {
+  function __MerkleAirdrop_init(bytes32 merkleRoot, IERC20 token) external initializer {
     _addInterface(type(IMerkleAirdrop).interfaceId);
     __MerkleAirdrop_init_unchained(merkleRoot, token);
   }
@@ -45,12 +42,9 @@ contract MerkleAirdrop is IMerkleAirdrop, EIP712Base, Facet {
     uint256 amount,
     address receiver
   ) public view returns (bytes32) {
-    return
-      _hashTypedDataV4(
-        keccak256(
-          abi.encode(MESSAGE_TYPEHASH, AirdropClaim(account, amount, receiver))
-        )
-      );
+    return _hashTypedDataV4(
+      keccak256(abi.encode(MESSAGE_TYPEHASH, AirdropClaim(account, amount, receiver)))
+    );
   }
 
   /// @inheritdoc IMerkleAirdrop
@@ -67,11 +61,7 @@ contract MerkleAirdrop is IMerkleAirdrop, EIP712Base, Facet {
       CustomRevert.revertWith(MerkleAirdrop__AlreadyClaimed.selector);
     }
 
-    _validateSignature(
-      account,
-      getMessageHash(account, amount, receiver),
-      signature
-    );
+    _validateSignature(account, getMessageHash(account, amount, receiver), signature);
 
     // verify merkle proof
     bytes32 leaf = _createLeaf(account, amount);
@@ -90,10 +80,7 @@ contract MerkleAirdrop is IMerkleAirdrop, EIP712Base, Facet {
   // =============================================================
   //                           Internal
   // =============================================================
-  function __MerkleAirdrop_init_unchained(
-    bytes32 merkleRoot,
-    IERC20 token
-  ) internal {
+  function __MerkleAirdrop_init_unchained(bytes32 merkleRoot, IERC20 token) internal {
     MerkleAirdropStorage.Layout storage ds = MerkleAirdropStorage.layout();
     ds.merkleRoot = merkleRoot;
     ds.token = token;
@@ -110,10 +97,7 @@ contract MerkleAirdrop is IMerkleAirdrop, EIP712Base, Facet {
     }
   }
 
-  function _createLeaf(
-    address account,
-    uint256 amount
-  ) internal pure returns (bytes32 leaf) {
+  function _createLeaf(address account, uint256 amount) internal pure returns (bytes32 leaf) {
     assembly ("memory-safe") {
       // Store the account address at memory location 0
       mstore(0, account)
@@ -121,7 +105,8 @@ contract MerkleAirdrop is IMerkleAirdrop, EIP712Base, Facet {
       mstore(0x20, amount)
       // Compute the keccak256 hash of the account and amount, and store it at memory location 0
       mstore(0, keccak256(0, 0x40))
-      // Compute the keccak256 hash of the previous hash (stored at memory location 0) and store it in the leaf variable
+      // Compute the keccak256 hash of the previous hash (stored at memory location 0) and store it
+      // in the leaf variable
       leaf := keccak256(0, 0x20)
     }
   }

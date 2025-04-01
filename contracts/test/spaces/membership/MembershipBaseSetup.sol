@@ -6,13 +6,19 @@ import {IMembershipBase} from "contracts/src/spaces/facets/membership/IMembershi
 import {IEntitlementBase} from "contracts/src/spaces/entitlements/IEntitlement.sol";
 import {IERC721ABase, IERC721A} from "contracts/src/diamond/facets/token/ERC721A/IERC721A.sol";
 import {IArchitectBase} from "contracts/src/factory/facets/architect/IArchitect.sol";
-import {IPlatformRequirements} from "contracts/src/factory/facets/platform/requirements/IPlatformRequirements.sol";
+import {IPlatformRequirements} from
+  "contracts/src/factory/facets/platform/requirements/IPlatformRequirements.sol";
 import {IOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
-import {IEntitlementsManager, IEntitlementsManagerBase} from "contracts/src/spaces/facets/entitlements/IEntitlementsManager.sol";
+import {
+  IEntitlementsManager,
+  IEntitlementsManagerBase
+} from "contracts/src/spaces/facets/entitlements/IEntitlementsManager.sol";
 import {IRoles, IRolesBase} from "contracts/src/spaces/facets/roles/IRoles.sol";
 import {IEntitlement} from "contracts/src/spaces/entitlements/IEntitlement.sol";
 import {IPrepay} from "contracts/src/spaces/facets/prepay/IPrepay.sol";
-import {IWalletLink, IWalletLinkBase} from "contracts/src/factory/facets/wallet-link/IWalletLink.sol";
+import {
+  IWalletLink, IWalletLinkBase
+} from "contracts/src/factory/facets/wallet-link/IWalletLink.sol";
 import {IPartnerRegistry} from "contracts/src/factory/facets/partner/IPartnerRegistry.sol";
 import {IReferrals} from "contracts/src/spaces/facets/referrals/IReferrals.sol";
 import {ITownsPointsBase, ITownsPoints} from "contracts/src/airdrop/points/ITownsPoints.sol";
@@ -40,8 +46,8 @@ contract MembershipBaseSetup is
   IWalletLinkBase,
   BaseSetup
 {
-  int256 internal constant EXCHANGE_RATE = 222616000000;
-  uint256 internal constant MAX_BPS = 10000; // 100%
+  int256 internal constant EXCHANGE_RATE = 222_616_000_000;
+  uint256 internal constant MAX_BPS = 10_000; // 100%
   uint256 constant REFERRAL_CODE = 999;
   uint16 constant REFERRAL_BPS = 1000; // 10%
   uint256 constant MEMBERSHIP_PRICE = 1 ether;
@@ -87,17 +93,13 @@ contract MembershipBaseSetup is
     allowedUsers[0] = alice;
     allowedUsers[1] = charlie;
 
-    IArchitectBase.SpaceInfo memory userSpaceInfo = _createUserSpaceInfo(
-      "MembershipSpace",
-      allowedUsers
-    );
+    IArchitectBase.SpaceInfo memory userSpaceInfo =
+      _createUserSpaceInfo("MembershipSpace", allowedUsers);
     userSpaceInfo.membership.settings.pricingModule = fixedPricingModule;
     userSpaceInfo.membership.settings.freeAllocation = FREE_ALLOCATION;
 
-    IArchitectBase.SpaceInfo memory dynamicSpaceInfo = _createUserSpaceInfo(
-      "DynamicSpace",
-      allowedUsers
-    );
+    IArchitectBase.SpaceInfo memory dynamicSpaceInfo =
+      _createUserSpaceInfo("DynamicSpace", allowedUsers);
     dynamicSpaceInfo.membership.settings.pricingModule = pricingModule;
 
     vm.startPrank(founder);
@@ -138,43 +140,34 @@ contract MembershipBaseSetup is
     _;
   }
 
-  modifier givenWalletIsLinked(
-    Vm.Wallet memory rootWallet,
-    Vm.Wallet memory newWallet
-  ) {
+  modifier givenWalletIsLinked(Vm.Wallet memory rootWallet, Vm.Wallet memory newWallet) {
     IWalletLink wl = IWalletLink(spaceFactory);
 
     uint256 nonce = wl.getLatestNonceForRootKey(newWallet.addr);
 
-    bytes memory signature = _signWalletLink(
-      rootWallet.privateKey,
-      newWallet.addr,
-      nonce
-    );
+    bytes memory signature = _signWalletLink(rootWallet.privateKey, newWallet.addr, nonce);
 
     vm.startPrank(newWallet.addr);
     vm.expectEmit(address(wl));
     emit LinkWalletToRootKey(newWallet.addr, rootWallet.addr);
-    wl.linkCallerToRootKey(
-      LinkedWallet(rootWallet.addr, signature, LINKED_WALLET_MESSAGE),
-      nonce
-    );
+    wl.linkCallerToRootKey(LinkedWallet(rootWallet.addr, signature, LINKED_WALLET_MESSAGE), nonce);
     vm.stopPrank();
     _;
   }
 
   modifier givenJoinspaceHasAdditionalCrosschainEntitlements() {
     vm.startPrank(founder);
-    IEntitlementsManagerBase.Entitlement[]
-      memory entitlements = IEntitlementsManager(userSpace).getEntitlements();
+    IEntitlementsManagerBase.Entitlement[] memory entitlements =
+      IEntitlementsManager(userSpace).getEntitlements();
     IEntitlement ruleEntitlement = IEntitlement(entitlements[1].moduleAddress);
 
-    // IRuleEntitlements only allow one entitlement per role, so create 2 roles to add 2 rule entitlements that need to
+    // IRuleEntitlements only allow one entitlement per role, so create 2 roles to add 2 rule
+    // entitlements that need to
     // be checked for the joinSpace permission.
-    IRolesBase.CreateEntitlement[]
-      memory createEntitlements1 = new IRolesBase.CreateEntitlement[](1);
-    IRolesBase.CreateEntitlement[]
-      memory createEntitlements2 = new IRolesBase.CreateEntitlement[](1);
+    IRolesBase.CreateEntitlement[] memory createEntitlements1 =
+      new IRolesBase.CreateEntitlement[](1);
+    IRolesBase.CreateEntitlement[] memory createEntitlements2 =
+      new IRolesBase.CreateEntitlement[](1);
 
     createEntitlements1[0] = IRolesBase.CreateEntitlement({
       module: ruleEntitlement,
@@ -189,14 +182,10 @@ contract MembershipBaseSetup is
     permissions[0] = Permissions.JoinSpace;
 
     IRoles(userSpace).createRole(
-      "joinspace-crosschain-multi-entitlement-1",
-      permissions,
-      createEntitlements1
+      "joinspace-crosschain-multi-entitlement-1", permissions, createEntitlements1
     );
     IRoles(userSpace).createRole(
-      "joinspace-crosschain-multi-entitlement-2",
-      permissions,
-      createEntitlements2
+      "joinspace-crosschain-multi-entitlement-2", permissions, createEntitlements2
     );
     vm.stopPrank();
     _;
@@ -207,11 +196,10 @@ contract MembershipBaseSetup is
     _;
   }
 
-  function _getPoints(uint256 price) internal view returns (uint256) {
+  function _getPoints(
+    uint256 price
+  ) internal view returns (uint256) {
     return
-      ITownsPoints(riverAirdrop).getPoints(
-        ITownsPointsBase.Action.JoinSpace,
-        abi.encode(price)
-      );
+      ITownsPoints(riverAirdrop).getPoints(ITownsPointsBase.Action.JoinSpace, abi.encode(price));
   }
 }

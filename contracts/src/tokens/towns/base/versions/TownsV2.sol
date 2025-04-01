@@ -9,7 +9,9 @@ pragma solidity ^0.8.23;
 import {Towns} from "../Towns.sol";
 
 contract TownsV2 is Towns {
-  function updateCoolDown(uint256 newCoolDown) external onlyOwner {
+  function updateCoolDown(
+    uint256 newCoolDown
+  ) external onlyOwner {
     _setDefaultCooldown(newCoolDown);
   }
 }

@@ -2,7 +2,8 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {IRewardsDistributionBase} from "contracts/src/base/registry/facets/distribution/v2/IRewardsDistribution.sol";
+import {IRewardsDistributionBase} from
+  "contracts/src/base/registry/facets/distribution/v2/IRewardsDistribution.sol";
 
 // libraries
 import {FixedPointMathLib} from "solady/utils/FixedPointMathLib.sol";
@@ -11,7 +12,8 @@ import {StakingRewards} from "contracts/src/base/registry/facets/distribution/v2
 // contracts
 import {StdAssertions} from "forge-std/StdAssertions.sol";
 import {Towns} from "contracts/src/tokens/towns/base/Towns.sol";
-import {RewardsDistribution} from "contracts/src/base/registry/facets/distribution/v2/RewardsDistribution.sol";
+import {RewardsDistribution} from
+  "contracts/src/base/registry/facets/distribution/v2/RewardsDistribution.sol";
 
 abstract contract RewardsVerifier is StdAssertions, IRewardsDistributionBase {
   using FixedPointMathLib for uint256;
@@ -28,15 +30,10 @@ abstract contract RewardsVerifier is StdAssertions, IRewardsDistributionBase {
     address beneficiary
   ) internal view {
     if (depositor != address(rewardsDistributionFacet)) {
-      assertEq(
-        rewardsDistributionFacet.stakedByDepositor(depositor),
-        amount,
-        "stakedByDepositor"
-      );
+      assertEq(rewardsDistributionFacet.stakedByDepositor(depositor), amount, "stakedByDepositor");
     }
 
-    StakingRewards.Deposit memory deposit = rewardsDistributionFacet
-      .depositById(depositId);
+    StakingRewards.Deposit memory deposit = rewardsDistributionFacet.depositById(depositId);
     assertEq(deposit.amount, amount, "amount");
     assertEq(deposit.owner, depositor, "owner");
     assertEq(deposit.delegatee, delegatee, "delegatee");
@@ -44,16 +41,14 @@ abstract contract RewardsVerifier is StdAssertions, IRewardsDistributionBase {
     assertEq(deposit.beneficiary, beneficiary, "beneficiary");
     assertApproxEqAbs(
       deposit.commissionEarningPower,
-      (amount * commissionRate) / 10000,
+      (amount * commissionRate) / 10_000,
       1,
       "commissionEarningPower"
     );
 
     assertEq(
-      deposit.commissionEarningPower +
-        rewardsDistributionFacet
-          .treasureByBeneficiary(beneficiary)
-          .earningPower,
+      deposit.commissionEarningPower
+        + rewardsDistributionFacet.treasureByBeneficiary(beneficiary).earningPower,
       amount,
       "earningPower"
     );
@@ -79,15 +74,10 @@ abstract contract RewardsVerifier is StdAssertions, IRewardsDistributionBase {
     address operator,
     address beneficiary
   ) internal view {
-    assertEq(
-      rewardsDistributionFacet.stakedByDepositor(depositor),
-      0,
-      "stakedByDepositor"
-    );
+    assertEq(rewardsDistributionFacet.stakedByDepositor(depositor), 0, "stakedByDepositor");
     assertEq(towns.balanceOf(depositor), withdrawAmount, "withdrawAmount");
 
-    StakingRewards.Deposit memory deposit = rewardsDistributionFacet
-      .depositById(depositId);
+    StakingRewards.Deposit memory deposit = rewardsDistributionFacet.depositById(depositId);
     assertEq(deposit.amount, 0, "depositAmount");
     assertEq(deposit.owner, depositor, "owner");
     assertEq(deposit.commissionEarningPower, 0, "commissionEarningPower");
@@ -96,9 +86,7 @@ abstract contract RewardsVerifier is StdAssertions, IRewardsDistributionBase {
     assertEq(deposit.beneficiary, beneficiary, "beneficiary");
 
     assertEq(
-      rewardsDistributionFacet.treasureByBeneficiary(beneficiary).earningPower,
-      0,
-      "earningPower"
+      rewardsDistributionFacet.treasureByBeneficiary(beneficiary).earningPower, 0, "earningPower"
     );
 
     assertEq(
@@ -126,14 +114,11 @@ abstract contract RewardsVerifier is StdAssertions, IRewardsDistributionBase {
     assertEq(towns.balanceOf(claimer), reward, "reward balance");
 
     StakingState memory state = rewardsDistributionFacet.stakingState();
-    uint256 earningPower = rewardsDistributionFacet
-      .treasureByBeneficiary(beneficiary)
-      .earningPower;
+    uint256 earningPower = rewardsDistributionFacet.treasureByBeneficiary(beneficiary).earningPower;
 
     assertEq(
       state.rewardRate.fullMulDiv(timeLapse, state.totalStaked).fullMulDiv(
-        earningPower,
-        StakingRewards.SCALE_FACTOR
+        earningPower, StakingRewards.SCALE_FACTOR
       ),
       reward,
       "expected reward"
@@ -148,22 +133,16 @@ abstract contract RewardsVerifier is StdAssertions, IRewardsDistributionBase {
     uint256 timeLapse
   ) internal view {
     StakingState memory state = rewardsDistributionFacet.stakingState();
-    StakingRewards.Treasure memory spaceTreasure = rewardsDistributionFacet
-      .treasureByBeneficiary(space);
+    StakingRewards.Treasure memory spaceTreasure =
+      rewardsDistributionFacet.treasureByBeneficiary(space);
 
-    assertEq(spaceTreasure.earningPower, (amount * commissionRate) / 10000);
-    assertEq(
-      spaceTreasure.rewardPerTokenAccumulated,
-      state.rewardPerTokenAccumulated
-    );
+    assertEq(spaceTreasure.earningPower, (amount * commissionRate) / 10_000);
+    assertEq(spaceTreasure.rewardPerTokenAccumulated, state.rewardPerTokenAccumulated);
     assertEq(spaceTreasure.unclaimedRewardSnapshot, 0);
 
     assertEq(
-      rewardsDistributionFacet
-        .treasureByBeneficiary(operator)
-        .unclaimedRewardSnapshot,
-      spaceTreasure.earningPower *
-        state.rewardRate.fullMulDiv(timeLapse, state.totalStaked)
+      rewardsDistributionFacet.treasureByBeneficiary(operator).unclaimedRewardSnapshot,
+      spaceTreasure.earningPower * state.rewardRate.fullMulDiv(timeLapse, state.totalStaked)
     );
   }
 }

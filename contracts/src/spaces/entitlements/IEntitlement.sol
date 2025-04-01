@@ -17,7 +17,9 @@ interface IEntitlementBase {
 
 interface IEntitlement is IEntitlementBase {
   /// @notice initializes the entitlement module
-  function initialize(address space) external;
+  function initialize(
+    address space
+  ) external;
 
   /// @notice The name of the entitlement module
   function name() external view returns (string memory);
@@ -31,14 +33,13 @@ interface IEntitlement is IEntitlementBase {
   /// @notice sets a new entitlement
   /// @param roleId id of the role to gate
   /// @param entitlementData abi encoded array of data necessary to set the entitlement
-  function setEntitlement(
-    uint256 roleId,
-    bytes calldata entitlementData
-  ) external;
+  function setEntitlement(uint256 roleId, bytes calldata entitlementData) external;
 
   /// @notice removes an entitlement
   /// @param roleId id of the role to remove
-  function removeEntitlement(uint256 roleId) external;
+  function removeEntitlement(
+    uint256 roleId
+  ) external;
 
   /// @notice fetches the entitlement data for a roleId
   /// @param roleId the roleId to fetch the entitlement data for
@@ -47,7 +48,8 @@ interface IEntitlement is IEntitlementBase {
     uint256 roleId
   ) external view returns (bytes memory);
 
-  /// @notice some entitlements require cross chain evaluation and may not be executed directly from other contracts
+  /// @notice some entitlements require cross chain evaluation and may not be executed directly from
+  /// other contracts
   /// @return whether this entitlement will require crosschain evaluation
   function isCrosschain() external view returns (bool);
 

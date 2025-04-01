@@ -4,7 +4,8 @@ pragma solidity ^0.8.23;
 // interfaces
 import {IEntitlementGated} from "./IEntitlementGated.sol";
 import {IRuleEntitlement} from "contracts/src/spaces/entitlements/rule/IRuleEntitlement.sol";
-import {IEntitlementChecker} from "contracts/src/base/registry/facets/checker/IEntitlementChecker.sol";
+import {IEntitlementChecker} from
+  "contracts/src/base/registry/facets/checker/IEntitlementChecker.sol";
 
 // libraries
 
@@ -13,12 +14,7 @@ import {EntitlementGatedBase} from "./EntitlementGatedBase.sol";
 import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
 import {ReentrancyGuard} from "solady/utils/ReentrancyGuard.sol";
 
-contract EntitlementGated is
-  IEntitlementGated,
-  EntitlementGatedBase,
-  ReentrancyGuard,
-  Facet
-{
+contract EntitlementGated is IEntitlementGated, EntitlementGatedBase, ReentrancyGuard, Facet {
   function __EntitlementGated_init(
     IEntitlementChecker entitlementChecker
   ) external onlyInitializing {

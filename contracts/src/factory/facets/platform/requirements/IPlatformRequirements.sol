@@ -33,7 +33,9 @@ interface IPlatformRequirements is IPlatformRequirementsBase {
    * @dev This is the address that will receive the platform fees
    * @param recipient The address of the fee recipient
    */
-  function setFeeRecipient(address recipient) external;
+  function setFeeRecipient(
+    address recipient
+  ) external;
 
   /**
    * @notice Get the fee recipient address
@@ -45,7 +47,9 @@ interface IPlatformRequirements is IPlatformRequirementsBase {
    * @notice Set the membership basis points
    * @param bps The membership basis points
    */
-  function setMembershipBps(uint16 bps) external;
+  function setMembershipBps(
+    uint16 bps
+  ) external;
 
   /**
    * @notice Get the membership basis points
@@ -58,7 +62,9 @@ interface IPlatformRequirements is IPlatformRequirementsBase {
    * @notice Set the membership flat fee
    * @param fee The membership fee
    */
-  function setMembershipFee(uint256 fee) external;
+  function setMembershipFee(
+    uint256 fee
+  ) external;
 
   /**
    * @notice Get the membership flat fee
@@ -71,7 +77,9 @@ interface IPlatformRequirements is IPlatformRequirementsBase {
    * @notice Set the membership mint limit
    * @param limit The membership mint limit
    */
-  function setMembershipMintLimit(uint256 limit) external;
+  function setMembershipMintLimit(
+    uint256 limit
+  ) external;
 
   /**
    * @notice Get the membership mint limit
@@ -84,7 +92,9 @@ interface IPlatformRequirements is IPlatformRequirementsBase {
    * @notice Set the membership duration
    * @param duration The membership duration
    */
-  function setMembershipDuration(uint64 duration) external;
+  function setMembershipDuration(
+    uint64 duration
+  ) external;
 
   /**
    * @notice Get the membership duration
@@ -104,7 +114,9 @@ interface IPlatformRequirements is IPlatformRequirementsBase {
    * @notice Set the minimum price for a membership
    * @param minPrice The minimum price for a membership
    */
-  function setMembershipMinPrice(uint256 minPrice) external;
+  function setMembershipMinPrice(
+    uint256 minPrice
+  ) external;
 
   /**
    * @notice Get the denominator
@@ -118,10 +130,7 @@ interface IPlatformRequirements is IPlatformRequirementsBase {
    * @return treasuryBps Basis points for treasury fee
    * @return posterBps Basis points for poster fee
    */
-  function getSwapFees()
-    external
-    view
-    returns (uint16 treasuryBps, uint16 posterBps);
+  function getSwapFees() external view returns (uint16 treasuryBps, uint16 posterBps);
 
   /**
    * @notice Set the swap fees in basis points
@@ -135,7 +144,9 @@ interface IPlatformRequirements is IPlatformRequirementsBase {
    * @param router Address of the router to check
    * @return bool True if router is whitelisted
    */
-  function isRouterWhitelisted(address router) external view returns (bool);
+  function isRouterWhitelisted(
+    address router
+  ) external view returns (bool);
 
   /**
    * @notice Add or remove a router from whitelist

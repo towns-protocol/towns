@@ -14,13 +14,16 @@ import {AlphaHelper} from "./helpers/AlphaHelper.sol";
 
 // facet
 import {DeployEIP712Facet} from "contracts/scripts/deployments/facets/DeployEIP712Facet.s.sol";
-import {DeploySpaceOwnerFacet} from "contracts/scripts/deployments/facets/DeploySpaceOwnerFacet.s.sol";
+import {DeploySpaceOwnerFacet} from
+  "contracts/scripts/deployments/facets/DeploySpaceOwnerFacet.s.sol";
 
 contract InteractDiamondCut is Interaction, AlphaHelper {
   DeployEIP712Facet eip712Helper = new DeployEIP712Facet();
   DeploySpaceOwnerFacet spaceOwnerHelper = new DeploySpaceOwnerFacet();
 
-  function __interact(address deployer) internal override {
+  function __interact(
+    address deployer
+  ) internal override {
     address diamond = getDeployment("spaceOwner");
     //    address spaceOwnerFacet = getDeployment("spaceOwnerFacet");
     //    address eip712Facet = getDeployment("eip712Facet");

@@ -27,36 +27,30 @@ interface IAirdropERC721 {
   }
 
   /// @notice Returns all airdrop payments set up --- pending, processed or failed
-  function getAllAirdropPayments()
-    external
-    view
-    returns (Airdrop[] memory airdrops);
+  function getAllAirdropPayments() external view returns (Airdrop[] memory airdrops);
 
   /// @notice Returns all pending airdrop payments
-  function getallAirdropPaymentsPending()
-    external
-    view
-    returns (Airdrop[] memory airdrops);
+  function getallAirdropPaymentsPending() external view returns (Airdrop[] memory airdrops);
 
   /// @notice Returns all pending airdrop payments processed
-  function getallAirdropPaymentsProcessed()
-    external
-    view
-    returns (Airdrop[] memory airdrops);
+  function getallAirdropPaymentsProcessed() external view returns (Airdrop[] memory airdrops);
 
   /// @notice Returns all pending airdrop payments failed
-  function getallAirdropPaymentsFailed()
-    external
-    view
-    returns (Airdrop[] memory airdrops);
+  function getallAirdropPaymentsFailed() external view returns (Airdrop[] memory airdrops);
 
   /// @notice Lets contract owner set up and airdrop of ERC721 tokens to a list of recipients
-  /// @dev The token-owner should approve target tokens to Airdrop contract, which acts as operator for the tokens.
+  /// @dev The token-owner should approve target tokens to Airdrop contract, which acts as operator
+  /// for the tokens.
   /// @param airdrops The list of airdrop recipients, tokenIds to airdrop
-  function addAirdropRecipients(Airdrop[] calldata airdrops) external;
+  function addAirdropRecipients(
+    Airdrop[] calldata airdrops
+  ) external;
 
   /// @notice Lets contract owner set up an airdrop of ERC721 tokens to a list of recipients
-  /// @dev The token-owner should approve target tokens to Airdrop contract, which acts as operator of the tokens.
+  /// @dev The token-owner should approve target tokens to Airdrop contract, which acts as operator
+  /// of the tokens.
   /// @param paymentsToProcess The number of airdrop payments to process
-  function airdrop(uint256 paymentsToProcess) external;
+  function airdrop(
+    uint256 paymentsToProcess
+  ) external;
 }

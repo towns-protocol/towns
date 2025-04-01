@@ -11,10 +11,13 @@ import {IClaimCondition} from "./IClaimCondition.sol";
 interface IClaimConditionMultiPhase is IClaimCondition {
   /// @notice A list of all claim conditions
   /// @dev Claim Phase ID = [currentStartId, currentStartId + claimConditions.length - 1]
-  /// @param currentStartId The uid for the first claim condition in the list. The uid for the next claim condition is one more than the previous claim condition's uid.
+  /// @param currentStartId The uid for the first claim condition in the list. The uid for the next
+  /// claim condition is one more than the previous claim condition's uid.
   /// @param count The total number of phases / claim conditions in the list
-  /// @param conditions The claim conditions at a given uid. Claim conditions are ordered in ascending order by their `startTimestamp`.
-  /// @param supplyClaimedByWallet Map from a claim condition uid and account to supply claimed by an account.
+  /// @param conditions The claim conditions at a given uid. Claim conditions are ordered in
+  /// ascending order by their `startTimestamp`.
+  /// @param supplyClaimedByWallet Map from a claim condition uid and account to supply claimed by
+  /// an account.
   struct ClaimConditionList {
     uint256 currentStartId;
     uint256 count;

@@ -32,9 +32,7 @@ contract PartnerRegistry_removePartner is PartnerRegistrySetup, IOwnableBase {
     vm.assume(notOwner != deployer);
 
     vm.prank(notOwner);
-    vm.expectRevert(
-      abi.encodeWithSelector(Ownable__NotOwner.selector, notOwner)
-    );
+    vm.expectRevert(abi.encodeWithSelector(Ownable__NotOwner.selector, notOwner));
     partnerRegistry.removePartner(partner.account);
   }
 
@@ -43,10 +41,7 @@ contract PartnerRegistry_removePartner is PartnerRegistrySetup, IOwnableBase {
   ) external {
     vm.prank(deployer);
     vm.expectRevert(
-      abi.encodeWithSelector(
-        PartnerRegistry__PartnerNotRegistered.selector,
-        nonExistentPartner
-      )
+      abi.encodeWithSelector(PartnerRegistry__PartnerNotRegistered.selector, nonExistentPartner)
     );
     partnerRegistry.removePartner(nonExistentPartner);
   }

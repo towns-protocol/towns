@@ -2,7 +2,11 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {INodeRegistry, INodeRegistryBase, NodeStatus} from "contracts/src/river/registry/facets/node/INodeRegistry.sol";
+import {
+  INodeRegistry,
+  INodeRegistryBase,
+  NodeStatus
+} from "contracts/src/river/registry/facets/node/INodeRegistry.sol";
 import {IOperatorRegistry} from "contracts/src/river/registry/facets/operator/IOperatorRegistry.sol";
 import {IStreamRegistry} from "contracts/src/river/registry/facets/stream/IStreamRegistry.sol";
 import {IRiverConfig} from "contracts/src/river/registry/facets/config/IRiverConfig.sol";
@@ -49,12 +53,16 @@ contract RiverRegistryBaseSetup is TestUtils {
     riverConfig = IRiverConfig(diamond);
   }
 
-  modifier givenNodeOperatorIsApproved(address nodeOperator) {
+  modifier givenNodeOperatorIsApproved(
+    address nodeOperator
+  ) {
     _approveNodeOperator(nodeOperator);
     _;
   }
 
-  function _approveNodeOperator(address nodeOperator) internal {
+  function _approveNodeOperator(
+    address nodeOperator
+  ) internal {
     vm.assume(nodeOperator != address(0));
     vm.assume(operatorRegistry.isOperator(nodeOperator) == false);
 
@@ -64,19 +72,12 @@ contract RiverRegistryBaseSetup is TestUtils {
     operatorRegistry.approveOperator(nodeOperator);
   }
 
-  modifier givenNodeIsRegistered(
-    address nodeOperator,
-    address node,
-    string memory url
-  ) {
+  modifier givenNodeIsRegistered(address nodeOperator, address node, string memory url) {
     _registerNode(nodeOperator, node, url);
     _;
   }
 
-  modifier givenNodesAreRegistered(
-    address nodeOperator,
-    TestNode[100] memory nodes
-  ) {
+  modifier givenNodesAreRegistered(address nodeOperator, TestNode[100] memory nodes) {
     uint256 nodesLength = nodes.length;
     for (uint256 i; i < nodesLength; ++i) {
       vm.assume(nodeRegistry.isNode(nodes[i].node) == false);
@@ -85,22 +86,13 @@ contract RiverRegistryBaseSetup is TestUtils {
     _;
   }
 
-  function _registerNode(
-    address nodeOperator,
-    address node,
-    string memory url
-  ) internal {
+  function _registerNode(address nodeOperator, address node, string memory url) internal {
     vm.assume(node != address(0));
     vm.assume(nodeOperator != address(0));
 
     vm.prank(nodeOperator);
     vm.expectEmit(address(nodeRegistry));
-    emit INodeRegistryBase.NodeAdded(
-      node,
-      nodeOperator,
-      url,
-      NodeStatus.NotInitialized
-    );
+    emit INodeRegistryBase.NodeAdded(node, nodeOperator, url, NodeStatus.NotInitialized);
     nodeRegistry.registerNode(node, url, NodeStatus.NotInitialized);
   }
 }

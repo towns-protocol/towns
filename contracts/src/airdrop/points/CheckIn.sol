@@ -8,7 +8,8 @@ pragma solidity ^0.8.24;
 // contracts
 
 library CheckIn {
-  // keccak256(abi.encode(uint256(keccak256("river.tokens.checkin.storage")) - 1)) & ~bytes32(uint256(0xff))
+  // keccak256(abi.encode(uint256(keccak256("river.tokens.checkin.storage")) - 1)) &
+  // ~bytes32(uint256(0xff))
   bytes32 internal constant STORAGE_SLOT =
     0x62755009e737dbac2f30b2876987ec999edfaa30486a87d0930a58dbf1ec6800;
 
@@ -48,23 +49,25 @@ library CheckIn {
     }
 
     // Update streak based on timing
-    bool isWithinForgiveness = currentTime <=
-      lastCheckIn + CHECK_IN_FORGIVENESS_PERIOD;
+    bool isWithinForgiveness = currentTime <= lastCheckIn + CHECK_IN_FORGIVENESS_PERIOD;
     uint256 newStreak = isWithinForgiveness ? currentStreak + 1 : 1;
 
     // Calculate points based on new streak
-    pointsToAward = newStreak > MAX_STREAK_PER_CHECKIN
-      ? MAX_POINTS_PER_CHECKIN
-      : newStreak * 1 ether;
+    pointsToAward =
+      newStreak > MAX_STREAK_PER_CHECKIN ? MAX_POINTS_PER_CHECKIN : newStreak * 1 ether;
 
     return (pointsToAward, newStreak);
   }
 
-  function getCurrentStreak(address user) internal view returns (uint256) {
+  function getCurrentStreak(
+    address user
+  ) internal view returns (uint256) {
     return layout().checkInsByAddress[user].streak;
   }
 
-  function getLastCheckIn(address user) internal view returns (uint256) {
+  function getLastCheckIn(
+    address user
+  ) internal view returns (uint256) {
     return layout().checkInsByAddress[user].lastCheckIn;
   }
 }

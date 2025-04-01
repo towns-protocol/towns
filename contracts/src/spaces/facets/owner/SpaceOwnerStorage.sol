@@ -8,7 +8,8 @@ pragma solidity ^0.8.23;
 // contracts
 
 library SpaceOwnerStorage {
-  // keccak256(abi.encode(uint256(keccak256("spaces.facets.owner.storage")) - 1)) & ~bytes32(uint256(0xff))
+  // keccak256(abi.encode(uint256(keccak256("spaces.facets.owner.storage")) - 1)) &
+  // ~bytes32(uint256(0xff))
   bytes32 internal constant STORAGE_SLOT =
     0x7fc24c9500f4388b797f8975c0991ad4ffd0338c2cbf5335b2bf5b7fe5747700;
 

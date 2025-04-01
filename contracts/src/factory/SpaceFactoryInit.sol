@@ -5,12 +5,15 @@ pragma solidity ^0.8.23;
 import {ISpaceProxyInitializer} from "contracts/src/spaces/facets/proxy/ISpaceProxyInitializer.sol";
 
 // libraries
-import {ImplementationStorage} from "contracts/src/factory/facets/architect/ImplementationStorage.sol";
+import {ImplementationStorage} from
+  "contracts/src/factory/facets/architect/ImplementationStorage.sol";
 
 // contracts
 
 contract SpaceFactoryInit {
-  function initialize(address proxyInitializer) external {
+  function initialize(
+    address proxyInitializer
+  ) external {
     ImplementationStorage.Layout storage ds = ImplementationStorage.layout();
     ds.proxyInitializer = ISpaceProxyInitializer(proxyInitializer);
   }

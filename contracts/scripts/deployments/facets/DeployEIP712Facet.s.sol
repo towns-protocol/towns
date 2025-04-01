@@ -32,7 +32,9 @@ contract DeployEIP712Facet is FacetHelper, Deployer {
     return abi.encodeWithSelector(initializer(), name, version);
   }
 
-  function __deploy(address deployer) public override returns (address) {
+  function __deploy(
+    address deployer
+  ) public override returns (address) {
     vm.startBroadcast(deployer);
     EIP712Facet facet = new EIP712Facet();
     vm.stopBroadcast();

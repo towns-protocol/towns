@@ -13,12 +13,7 @@ import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
 import {ReentrancyGuard} from "solady/utils/ReentrancyGuard.sol";
 import {MembershipJoin} from "./join/MembershipJoin.sol";
 
-contract MembershipFacet is
-  IMembership,
-  MembershipJoin,
-  ReentrancyGuard,
-  Facet
-{
+contract MembershipFacet is IMembership, MembershipJoin, ReentrancyGuard, Facet {
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                            FUNDS                           */
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -33,7 +28,9 @@ contract MembershipFacet is
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
   /// @inheritdoc IMembership
-  function joinSpace(address receiver) external payable nonReentrant {
+  function joinSpace(
+    address receiver
+  ) external payable nonReentrant {
     _joinSpace(receiver);
   }
 
@@ -50,22 +47,23 @@ contract MembershipFacet is
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
   /// @inheritdoc IMembership
-  function renewMembership(uint256 tokenId) external payable nonReentrant {
+  function renewMembership(
+    uint256 tokenId
+  ) external payable nonReentrant {
     address receiver = _ownerOf(tokenId);
 
-    if (receiver == address(0))
+    if (receiver == address(0)) {
       CustomRevert.revertWith(Membership__InvalidAddress.selector);
+    }
 
     // validate if the current expiration is 365 or more
     uint256 expiration = _expiresAt(tokenId);
-    if (expiration - block.timestamp >= _getMembershipDuration())
+    if (expiration - block.timestamp >= _getMembershipDuration()) {
       CustomRevert.revertWith(Membership__NotExpired.selector);
+    }
 
     // allocate protocol and membership fees
-    uint256 membershipPrice = _getMembershipRenewalPrice(
-      tokenId,
-      _totalSupply()
-    );
+    uint256 membershipPrice = _getMembershipRenewalPrice(tokenId, _totalSupply());
 
     if (membershipPrice > 0) {
       uint256 protocolFee = _collectProtocolFee(receiver, membershipPrice);
@@ -77,7 +75,9 @@ contract MembershipFacet is
   }
 
   /// @inheritdoc IMembership
-  function expiresAt(uint256 tokenId) external view returns (uint256) {
+  function expiresAt(
+    uint256 tokenId
+  ) external view returns (uint256) {
     return _expiresAt(tokenId);
   }
 
@@ -112,7 +112,9 @@ contract MembershipFacet is
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
   /// @inheritdoc IMembership
-  function setMembershipPrice(uint256 newPrice) external onlyOwner {
+  function setMembershipPrice(
+    uint256 newPrice
+  ) external onlyOwner {
     _verifyPrice(newPrice);
     IMembershipPricing(_getPricingModule()).setPrice(newPrice);
   }
@@ -146,8 +148,9 @@ contract MembershipFacet is
     uint256 currentSupplyLimit = _getMembershipSupplyLimit();
 
     // verify newLimit is not more than the max supply limit
-    if (currentSupplyLimit != 0 && newAllocation > currentSupplyLimit)
+    if (currentSupplyLimit != 0 && newAllocation > currentSupplyLimit) {
       CustomRevert.revertWith(Membership__InvalidFreeAllocation.selector);
+    }
 
     // verify newLimit is not more than the allowed platform limit
     _verifyFreeAllocation(newAllocation);
@@ -164,7 +167,9 @@ contract MembershipFacet is
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
   /// @inheritdoc IMembership
-  function setMembershipLimit(uint256 newLimit) external onlyOwner {
+  function setMembershipLimit(
+    uint256 newLimit
+  ) external onlyOwner {
     _verifyMaxSupply(newLimit, _totalSupply());
     _setMembershipSupplyLimit(newLimit);
   }
@@ -187,7 +192,9 @@ contract MembershipFacet is
   /*                            IMAGE                           */
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-  function setMembershipImage(string calldata newImage) external onlyOwner {
+  function setMembershipImage(
+    string calldata newImage
+  ) external onlyOwner {
     _setMembershipImage(newImage);
   }
 

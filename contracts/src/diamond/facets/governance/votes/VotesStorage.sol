@@ -4,8 +4,7 @@ pragma solidity ^0.8.23;
 import {Checkpoints} from "./Checkpoints.sol";
 
 library VotesStorage {
-  bytes32 internal constant STORAGE_SLOT =
-    keccak256("diamond.facets.governance.votes.storage");
+  bytes32 internal constant STORAGE_SLOT = keccak256("diamond.facets.governance.votes.storage");
 
   struct Layout {
     mapping(address => address) _delegation;

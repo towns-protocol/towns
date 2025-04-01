@@ -28,7 +28,9 @@ contract PartnerRegistrySetup is IPartnerRegistryBase, BaseSetup {
     vm.stopPrank();
   }
 
-  modifier givenPartnerIsRegistered(Partner memory partner) {
+  modifier givenPartnerIsRegistered(
+    Partner memory partner
+  ) {
     partner.fee = bound(partner.fee, 0, MAX_PARTNER_FEE);
     vm.assume(partner.recipient != address(0));
     vm.deal(partner.account, REGISTRY_FEE);
@@ -44,7 +46,9 @@ contract PartnerRegistrySetup is IPartnerRegistryBase, BaseSetup {
   // Admin
   // =============================================================
 
-  function test_setMaxPartnerFee(uint256 newMaxFee) external {
+  function test_setMaxPartnerFee(
+    uint256 newMaxFee
+  ) external {
     vm.prank(deployer);
     vm.expectEmit(address(partnerRegistry));
     emit MaxPartnerFeeSet(newMaxFee);
@@ -53,7 +57,9 @@ contract PartnerRegistrySetup is IPartnerRegistryBase, BaseSetup {
     assertEq(partnerRegistry.maxPartnerFee(), newMaxFee);
   }
 
-  function test_setRegistryFee(uint256 newRegistryFee) external {
+  function test_setRegistryFee(
+    uint256 newRegistryFee
+  ) external {
     vm.prank(deployer);
     vm.expectEmit(address(partnerRegistry));
     emit RegistryFeeSet(newRegistryFee);

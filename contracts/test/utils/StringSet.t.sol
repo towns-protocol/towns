@@ -15,11 +15,7 @@ contract StringSetTest is TestUtils {
     // Test adding unique strings
     bool added = this.add("value1");
     assertTrue(added, "Expected to add 'value1' successfully");
-    assertEq(
-      this.at(0),
-      "value1",
-      "Expected 'value1' to be at index 0 after addition"
-    );
+    assertEq(this.at(0), "value1", "Expected 'value1' to be at index 0 after addition");
 
     // Test adding duplicate string
     added = this.add("value1");
@@ -34,11 +30,7 @@ contract StringSetTest is TestUtils {
     // Test successful removal
     bool removed = this.remove("value1");
     assertTrue(removed, "Expected to remove 'value1' successfully");
-    assertEq(
-      this.at(0),
-      "value2",
-      "Expected 'value2' to be at index 0 after removal"
-    );
+    assertEq(this.at(0), "value2", "Expected 'value2' to be at index 0 after removal");
 
     removed = this.remove("value2");
     assertTrue(removed, "Expected to remove 'value2' successfully");
@@ -161,11 +153,15 @@ contract StringSetTest is TestUtils {
     assertFalse(this.contains("value3"), "Expected 'value3' to be removed");
   }
 
-  function add(string memory value) external returns (bool) {
+  function add(
+    string memory value
+  ) external returns (bool) {
     return mockSet.add(value);
   }
 
-  function remove(string memory value) external returns (bool) {
+  function remove(
+    string memory value
+  ) external returns (bool) {
     return mockSet.remove(value);
   }
 
@@ -173,7 +169,9 @@ contract StringSetTest is TestUtils {
     mockSet.clear();
   }
 
-  function contains(string memory value) external view returns (bool) {
+  function contains(
+    string memory value
+  ) external view returns (bool) {
     return mockSet.contains(value);
   }
 
@@ -181,7 +179,9 @@ contract StringSetTest is TestUtils {
     return mockSet.length();
   }
 
-  function at(uint256 index) external view returns (string memory) {
+  function at(
+    uint256 index
+  ) external view returns (string memory) {
     return mockSet.at(index);
   }
 

@@ -14,7 +14,9 @@ contract DeployTownsImpl is Deployer {
     return "utils/townsImpl";
   }
 
-  function __deploy(address deployer) public override returns (address) {
+  function __deploy(
+    address deployer
+  ) public override returns (address) {
     vm.startBroadcast(deployer);
     address impl = address(new Towns());
     vm.stopBroadcast();

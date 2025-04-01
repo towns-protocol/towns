@@ -25,10 +25,7 @@ interface IERC20Staking {
   event RewardRateUpdated(uint256 oldRewardRate, uint256 newRewardRate);
 
   /// @notice Emitted when reward duration is updated
-  event RewardDurationUpdated(
-    uint256 oldRewardDuration,
-    uint256 newRewardDuration
-  );
+  event RewardDurationUpdated(uint256 oldRewardDuration, uint256 newRewardDuration);
 
   event RewardTokensDeposited(address indexed user, uint256 amount);
 

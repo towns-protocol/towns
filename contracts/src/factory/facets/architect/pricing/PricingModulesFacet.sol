@@ -25,15 +25,21 @@ contract PricingModulesFacet is IPricingModules, OwnableBase, Facet {
     }
   }
 
-  function addPricingModule(address pricingModule) external onlyOwner {
+  function addPricingModule(
+    address pricingModule
+  ) external onlyOwner {
     PricingModulesBase.addPricingModule(pricingModule);
   }
 
-  function isPricingModule(address module) external view returns (bool) {
+  function isPricingModule(
+    address module
+  ) external view returns (bool) {
     return PricingModulesBase.isPricingModule(module);
   }
 
-  function removePricingModule(address module) external onlyOwner {
+  function removePricingModule(
+    address module
+  ) external onlyOwner {
     PricingModulesBase.removePricingModule(module);
   }
 

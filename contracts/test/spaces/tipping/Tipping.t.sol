@@ -4,10 +4,12 @@ pragma solidity ^0.8.23;
 // interfaces
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {ITippingBase} from "contracts/src/spaces/facets/tipping/ITipping.sol";
-import {IERC721AQueryable} from "contracts/src/diamond/facets/token/ERC721A/extensions/IERC721AQueryable.sol";
+import {IERC721AQueryable} from
+  "contracts/src/diamond/facets/token/ERC721A/extensions/IERC721AQueryable.sol";
 import {IERC721ABase} from "contracts/src/diamond/facets/token/ERC721A/IERC721A.sol";
 import {ITownsPoints, ITownsPointsBase} from "contracts/src/airdrop/points/ITownsPoints.sol";
-import {IPlatformRequirements} from "contracts/src/factory/facets/platform/requirements/IPlatformRequirements.sol";
+import {IPlatformRequirements} from
+  "contracts/src/factory/facets/platform/requirements/IPlatformRequirements.sol";
 
 // libraries
 import {CurrencyTransfer} from "contracts/src/utils/libraries/CurrencyTransfer.sol";
@@ -15,10 +17,13 @@ import {BasisPoints} from "contracts/src/utils/libraries/BasisPoints.sol";
 
 // contracts
 import {TippingFacet} from "contracts/src/spaces/facets/tipping/TippingFacet.sol";
-import {IntrospectionFacet} from "@towns-protocol/diamond/src/facets/introspection/IntrospectionFacet.sol";
+import {IntrospectionFacet} from
+  "@towns-protocol/diamond/src/facets/introspection/IntrospectionFacet.sol";
 import {MembershipFacet} from "contracts/src/spaces/facets/membership/MembershipFacet.sol";
 
-import {DeployMockERC20, MockERC20} from "contracts/scripts/deployments/utils/DeployMockERC20.s.sol";
+import {
+  DeployMockERC20, MockERC20
+} from "contracts/scripts/deployments/utils/DeployMockERC20.s.sol";
 
 // helpers
 import {BaseSetup} from "contracts/test/spaces/BaseSetup.sol";
@@ -84,15 +89,7 @@ contract TippingTest is BaseSetup, ITippingBase, IERC721ABase {
 
     hoax(sender, amount);
     vm.expectEmit(address(tipping));
-    emit Tip(
-      tokenId,
-      CurrencyTransfer.NATIVE_TOKEN,
-      sender,
-      receiver,
-      amount,
-      messageId,
-      channelId
-    );
+    emit Tip(tokenId, CurrencyTransfer.NATIVE_TOKEN, sender, receiver, amount, messageId, channelId);
     vm.startSnapshotGas("tipEth");
     tipping.tip{value: amount}(
       TipRequest({
@@ -114,15 +111,9 @@ contract TippingTest is BaseSetup, ITippingBase, IERC721ABase {
       (protocolFee * 2_000_000) / 3,
       "points minted"
     );
-    assertEq(
-      tipping.tipsByCurrencyAndTokenId(tokenId, CurrencyTransfer.NATIVE_TOKEN),
-      tipAmount
-    );
+    assertEq(tipping.tipsByCurrencyAndTokenId(tokenId, CurrencyTransfer.NATIVE_TOKEN), tipAmount);
     assertEq(tipping.totalTipsByCurrency(CurrencyTransfer.NATIVE_TOKEN), 1);
-    assertEq(
-      tipping.tipAmountByCurrency(CurrencyTransfer.NATIVE_TOKEN),
-      tipAmount
-    );
+    assertEq(tipping.tipAmountByCurrency(CurrencyTransfer.NATIVE_TOKEN), tipAmount);
     assertContains(tipping.tippingCurrencies(), CurrencyTransfer.NATIVE_TOKEN);
   }
 
@@ -143,15 +134,7 @@ contract TippingTest is BaseSetup, ITippingBase, IERC721ABase {
     vm.startPrank(sender);
     mockERC20.approve(address(tipping), amount);
     vm.expectEmit(address(tipping));
-    emit Tip(
-      tokenId,
-      address(mockERC20),
-      sender,
-      receiver,
-      amount,
-      messageId,
-      channelId
-    );
+    emit Tip(tokenId, address(mockERC20), sender, receiver, amount, messageId, channelId);
     vm.startSnapshotGas("tipERC20");
     tipping.tip(
       TipRequest({
@@ -169,10 +152,7 @@ contract TippingTest is BaseSetup, ITippingBase, IERC721ABase {
     assertLt(gasUsed, 300_000);
     assertEq(mockERC20.balanceOf(sender), 0);
     assertEq(mockERC20.balanceOf(receiver), amount);
-    assertEq(
-      tipping.tipsByCurrencyAndTokenId(tokenId, address(mockERC20)),
-      amount
-    );
+    assertEq(tipping.tipsByCurrencyAndTokenId(tokenId, address(mockERC20)), amount);
     assertEq(tipping.totalTipsByCurrency(address(mockERC20)), 1);
     assertEq(tipping.tipAmountByCurrency(address(mockERC20)), amount);
     assertContains(tipping.tippingCurrencies(), address(mockERC20));

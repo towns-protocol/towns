@@ -2,12 +2,15 @@
 pragma solidity ^0.8.24;
 
 /// @title Claim condition interface
-/// @notice A claim condition is a set of criteria that must be met for a claim to be valid. At any moment there is only one claim condition active.
+/// @notice A claim condition is a set of criteria that must be met for a claim to be valid. At any
+/// moment there is only one claim condition active.
 interface IClaimCondition {
   /// @notice Criteria for a claim to be valid
   /// @param startTimestamp The unix timestamp after which the claim is valid
-  /// @param maxClaimableSupply The maximum total number of tokens that can be claimed under the claim condition
-  /// @param supplyClaimed At any point, the number of tokens that have been claimed under the claim condition
+  /// @param maxClaimableSupply The maximum total number of tokens that can be claimed under the
+  /// claim condition
+  /// @param supplyClaimed At any point, the number of tokens that have been claimed under the claim
+  /// condition
   /// @param limitPerWallet The maximum number of tokens that can be claimed by a wallet
   /// @param merkleRoot The allowlist of addresses that can claim tokens under this condition
   /// @param pricePerToken The price required to pay per token claimed

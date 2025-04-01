@@ -26,7 +26,9 @@ contract DeployDiamondLoupe is FacetHelper, Deployer {
     return "facets/diamondLoupeFacet";
   }
 
-  function __deploy(address deployer) public override returns (address) {
+  function __deploy(
+    address deployer
+  ) public override returns (address) {
     vm.startBroadcast(deployer);
     DiamondLoupeFacet facet = new DiamondLoupeFacet();
     vm.stopBroadcast();

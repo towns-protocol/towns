@@ -12,7 +12,8 @@ import {CurrencyTransfer} from "contracts/src/utils/libraries/CurrencyTransfer.s
 library TippingBase {
   using EnumerableSet for EnumerableSet.AddressSet;
 
-  // keccak256(abi.encode(uint256(keccak256("spaces.facets.tipping.storage")) - 1)) & ~bytes32(uint256(0xff))
+  // keccak256(abi.encode(uint256(keccak256("spaces.facets.tipping.storage")) - 1)) &
+  // ~bytes32(uint256(0xff))
   bytes32 internal constant STORAGE_SLOT =
     0xb6cb334a9eea0cca2581db4520b45ac6f03de8e3927292302206bb82168be300;
 

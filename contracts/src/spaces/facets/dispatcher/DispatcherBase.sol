@@ -23,15 +23,14 @@ abstract contract DispatcherBase is IDispatcherBase {
     return ds.transactionData[transactionId];
   }
 
-  function _captureValue(bytes32 transactionId) internal {
+  function _captureValue(
+    bytes32 transactionId
+  ) internal {
     DispatcherStorage.Layout storage ds = DispatcherStorage.layout();
     ds.transactionBalance[transactionId] += msg.value;
   }
 
-  function _releaseCapturedValue(
-    bytes32 transactionId,
-    uint256 value
-  ) internal {
+  function _releaseCapturedValue(bytes32 transactionId, uint256 value) internal {
     DispatcherStorage.Layout storage ds = DispatcherStorage.layout();
     ds.transactionBalance[transactionId] -= value;
   }
@@ -43,12 +42,16 @@ abstract contract DispatcherBase is IDispatcherBase {
     return ds.transactionBalance[transactionId];
   }
 
-  function _dispatchNonce(bytes32 keyHash) internal view returns (uint256) {
+  function _dispatchNonce(
+    bytes32 keyHash
+  ) internal view returns (uint256) {
     DispatcherStorage.Layout storage ds = DispatcherStorage.layout();
     return ds.transactionNonce[keyHash];
   }
 
-  function _useDispatchNonce(bytes32 keyHash) internal returns (uint256) {
+  function _useDispatchNonce(
+    bytes32 keyHash
+  ) internal returns (uint256) {
     DispatcherStorage.Layout storage ds = DispatcherStorage.layout();
     return ds.transactionNonce[keyHash]++;
   }
@@ -61,10 +64,7 @@ abstract contract DispatcherBase is IDispatcherBase {
     return uint256(keccak256(abi.encode(keyHash, requester, nonce)));
   }
 
-  function _makeDispatchId(
-    bytes32 keyHash,
-    uint256 inputSeed
-  ) internal pure returns (bytes32) {
+  function _makeDispatchId(bytes32 keyHash, uint256 inputSeed) internal pure returns (bytes32) {
     return keccak256(abi.encodePacked(keyHash, inputSeed));
   }
 
@@ -74,10 +74,8 @@ abstract contract DispatcherBase is IDispatcherBase {
   ) internal returns (bytes32 transactionId) {
     bytes32 keyHash = keccak256(abi.encodePacked(sender, block.number));
 
-    transactionId = _makeDispatchId(
-      keyHash,
-      _makeDispatchInputSeed(keyHash, sender, _useDispatchNonce(keyHash))
-    );
+    transactionId =
+      _makeDispatchId(keyHash, _makeDispatchInputSeed(keyHash, sender, _useDispatchNonce(keyHash)));
 
     // revert if the transaction already exists
     if (_getCapturedData(transactionId).length > 0) {

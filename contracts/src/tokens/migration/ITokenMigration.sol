@@ -17,18 +17,16 @@ interface ITokenMigrationBase {
 
   // Events
   event TokensMigrated(address indexed account, uint256 amount);
-  event EmergencyWithdraw(
-    address indexed token,
-    address indexed to,
-    uint256 amount
-  );
+  event EmergencyWithdraw(address indexed token, address indexed to, uint256 amount);
 }
 
 interface ITokenMigration is ITokenMigrationBase {
   /// @notice Migrates tokens from old token to new token for the specified account
   /// @param account The address of the account to migrate tokens for
   /// @dev The account must have a non-zero balance of old tokens and have approved this contract
-  function migrate(address account) external;
+  function migrate(
+    address account
+  ) external;
 
   /// @notice Allows the owner to withdraw tokens from the contract
   /// @dev Only callable by contract owner

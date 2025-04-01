@@ -33,12 +33,16 @@ contract RiverConfig is IRiverConfig, RegistryModifiers, OwnableBase, Facet {
   }
 
   /// @inheritdoc IRiverConfig
-  function approveConfigurationManager(address manager) external onlyOwner {
+  function approveConfigurationManager(
+    address manager
+  ) external onlyOwner {
     _approveConfigurationManager(manager);
   }
 
   /// @inheritdoc IRiverConfig
-  function removeConfigurationManager(address manager) external onlyOwner {
+  function removeConfigurationManager(
+    address manager
+  ) external onlyOwner {
     if (manager == address(0)) RiverRegistryErrors.BAD_ARG.revertWith();
 
     if (!ds.configurationManagers.remove(manager)) {
@@ -117,7 +121,9 @@ contract RiverConfig is IRiverConfig, RegistryModifiers, OwnableBase, Facet {
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
   /// @inheritdoc IRiverConfig
-  function configurationExists(bytes32 key) external view returns (bool) {
+  function configurationExists(
+    bytes32 key
+  ) external view returns (bool) {
     return ds.configurationKeys.contains(key);
   }
 
@@ -129,11 +135,7 @@ contract RiverConfig is IRiverConfig, RegistryModifiers, OwnableBase, Facet {
   }
 
   /// @inheritdoc IRiverConfig
-  function getAllConfiguration()
-    external
-    view
-    returns (Setting[] memory settings)
-  {
+  function getAllConfiguration() external view returns (Setting[] memory settings) {
     uint256 settingCount = 0;
 
     uint256 configurationLen = ds.configurationKeys.length();
@@ -169,7 +171,9 @@ contract RiverConfig is IRiverConfig, RegistryModifiers, OwnableBase, Facet {
 
   /// @dev Internal function to approve a configuration manager, doesn't do any
   /// validation
-  function _approveConfigurationManager(address manager) internal {
+  function _approveConfigurationManager(
+    address manager
+  ) internal {
     if (manager == address(0)) RiverRegistryErrors.BAD_ARG.revertWith();
 
     if (!ds.configurationManagers.add(manager)) {

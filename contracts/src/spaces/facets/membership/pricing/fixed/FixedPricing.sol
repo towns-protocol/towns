@@ -2,13 +2,15 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {IMembershipPricing} from "contracts/src/spaces/facets/membership/pricing/IMembershipPricing.sol";
+import {IMembershipPricing} from
+  "contracts/src/spaces/facets/membership/pricing/IMembershipPricing.sol";
 
 // libraries
 import {FixedPricingStorage} from "./FixedPricingStorage.sol";
 
 // contracts
-import {IntrospectionFacet} from "@towns-protocol/diamond/src/facets/introspection/IntrospectionFacet.sol";
+import {IntrospectionFacet} from
+  "@towns-protocol/diamond/src/facets/introspection/IntrospectionFacet.sol";
 
 contract FixedPricing is IMembershipPricing, IntrospectionFacet {
   string public name = "FixedPricing";
@@ -19,7 +21,9 @@ contract FixedPricing is IMembershipPricing, IntrospectionFacet {
     _addInterface(type(IMembershipPricing).interfaceId);
   }
 
-  function setPrice(uint256 price) external {
+  function setPrice(
+    uint256 price
+  ) external {
     FixedPricingStorage.layout().priceBySpace[msg.sender] = price;
   }
 

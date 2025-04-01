@@ -12,7 +12,9 @@ import {IPrepayBase} from "contracts/src/spaces/facets/prepay/IPrepay.sol";
 import {MembershipBaseSetup} from "contracts/test/spaces/membership/MembershipBaseSetup.sol";
 
 contract PrepayFacetTest is MembershipBaseSetup, IPrepayBase {
-  modifier givenFounderHasPrepaid(uint256 amount) {
+  modifier givenFounderHasPrepaid(
+    uint256 amount
+  ) {
     uint256 membershipFee = prepayFacet.calculateMembershipPrepayFee(amount);
 
     vm.deal(founder, membershipFee);
@@ -22,11 +24,7 @@ contract PrepayFacetTest is MembershipBaseSetup, IPrepayBase {
     _;
   }
 
-  function test_prepayMembership()
-    external
-    givenMembershipHasPrice
-    givenFounderHasPrepaid(2)
-  {
+  function test_prepayMembership() external givenMembershipHasPrice givenFounderHasPrepaid(2) {
     assertEq(prepayFacet.prepaidMembershipSupply(), 2);
 
     uint256 membershipFee = prepayFacet.calculateMembershipPrepayFee(2);
@@ -44,10 +42,7 @@ contract PrepayFacetTest is MembershipBaseSetup, IPrepayBase {
     prepayFacet.prepayMembership(0);
   }
 
-  function test_revertWhen_msgValueIsNotEqualToCost()
-    external
-    givenMembershipHasPrice
-  {
+  function test_revertWhen_msgValueIsNotEqualToCost() external givenMembershipHasPrice {
     vm.prank(founder);
     vm.expectRevert(Prepay__InvalidAmount.selector);
     prepayFacet.prepayMembership(1);
@@ -63,10 +58,7 @@ contract PrepayFacetTest is MembershipBaseSetup, IPrepayBase {
    *  - Alice mints a membership
    *  - Bob tries to mint a membership but fails
    */
-  function test_integration_prepayMembership()
-    external
-    givenFounderHasPrepaid(1)
-  {
+  function test_integration_prepayMembership() external givenFounderHasPrepaid(1) {
     vm.startPrank(founder);
     membership.setMembershipPrice(MEMBERSHIP_PRICE);
     membership.setMembershipFreeAllocation(0);

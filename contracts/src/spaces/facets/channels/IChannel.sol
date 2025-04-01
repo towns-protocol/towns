@@ -28,16 +28,8 @@ interface IChannelBase {
   event ChannelCreated(address indexed caller, bytes32 channelId);
   event ChannelUpdated(address indexed caller, bytes32 channelId);
   event ChannelRemoved(address indexed caller, bytes32 channelId);
-  event ChannelRoleAdded(
-    address indexed caller,
-    bytes32 channelId,
-    uint256 roleId
-  );
-  event ChannelRoleRemoved(
-    address indexed caller,
-    bytes32 channelId,
-    uint256 roleId
-  );
+  event ChannelRoleAdded(address indexed caller, bytes32 channelId, uint256 roleId);
+  event ChannelRoleRemoved(address indexed caller, bytes32 channelId, uint256 roleId);
 }
 
 interface IChannel is IChannelBase {
@@ -76,15 +68,13 @@ interface IChannel is IChannelBase {
   /// @param channelId the channelId to update
   /// @param metadata the new metadata of the channel
   /// @param disabled whether or not the channel is disabled
-  function updateChannel(
-    bytes32 channelId,
-    string memory metadata,
-    bool disabled
-  ) external;
+  function updateChannel(bytes32 channelId, string memory metadata, bool disabled) external;
 
   /// @notice removes a channel
   /// @param channelId the channelId to remove
-  function removeChannel(bytes32 channelId) external;
+  function removeChannel(
+    bytes32 channelId
+  ) external;
 
   /// @notice gets all roles for a channel
   /// @param channelId the channelId to get the roles for

@@ -9,7 +9,9 @@ contract DeployMockERC1155 is Deployer {
     return "utils/mockERC1155";
   }
 
-  function __deploy(address deployer) public override returns (address) {
+  function __deploy(
+    address deployer
+  ) public override returns (address) {
     bytes32 salt = bytes32(uint256(uint160(deployer))); // create a salt from address
 
     bytes32 initCodeHash = hashInitCode(type(MockERC1155).creationCode);

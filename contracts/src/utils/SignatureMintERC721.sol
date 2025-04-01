@@ -12,10 +12,9 @@ abstract contract SignatureMintERC721 is EIP712, ISignatureMintERC721 {
   using ECDSA for bytes32;
 
   /* solhint-disable */
-  bytes32 private constant TYPEHASH =
-    keccak256(
-      "MintRequest(address to,address royaltyReceiver,uint256 royaltyValue,address primarySaleReceiver,string uri,uint256 quantity,uint256 pricePerToken,address currency,uint128 validityStartTimestamp,uint128 validityEndTimestamp,bytes32 uid)"
-    );
+  bytes32 private constant TYPEHASH = keccak256(
+    "MintRequest(address to,address royaltyReceiver,uint256 royaltyValue,address primarySaleReceiver,string uri,uint256 quantity,uint256 pricePerToken,address currency,uint128 validityStartTimestamp,uint128 validityEndTimestamp,bytes32 uid)"
+  );
   /* solhint-enable */
 
   /// @dev mapping from mint request uid => whether the mint request is processed
@@ -54,16 +53,13 @@ abstract contract SignatureMintERC721 is EIP712, ISignatureMintERC721 {
     }
 
     if (
-      mintRequest.validityStartTimestamp > block.timestamp ||
-      block.timestamp > mintRequest.validityEndTimestamp
+      mintRequest.validityStartTimestamp > block.timestamp
+        || block.timestamp > mintRequest.validityEndTimestamp
     ) {
       revert("SignatureMintERC721: mint request is expired");
     }
 
-    require(
-      mintRequest.to != address(0),
-      "SignatureMintERC721: invalid to address"
-    );
+    require(mintRequest.to != address(0), "SignatureMintERC721: invalid to address");
     require(mintRequest.quantity > 0, "SignatureMintERC721: invalid quantity");
 
     minted[mintRequest.uid] = true;
@@ -74,30 +70,26 @@ abstract contract SignatureMintERC721 is EIP712, ISignatureMintERC721 {
     MintRequest calldata mintRequest,
     bytes calldata signature
   ) internal view returns (address) {
-    return
-      _hashTypedDataV4(keccak256(_encodeRequest(mintRequest))).recover(
-        signature
-      );
+    return _hashTypedDataV4(keccak256(_encodeRequest(mintRequest))).recover(signature);
   }
 
   /// @dev Resolves `stack too deep` error in `_recoverAddress`
   function _encodeRequest(
     MintRequest calldata mintRequest
   ) internal pure returns (bytes memory) {
-    return
-      abi.encode(
-        TYPEHASH,
-        mintRequest.to,
-        mintRequest.royaltyReceiver,
-        mintRequest.royaltyValue,
-        mintRequest.primarySaleReceiver,
-        keccak256(bytes(mintRequest.uri)),
-        mintRequest.quantity,
-        mintRequest.pricePerToken,
-        mintRequest.currency,
-        mintRequest.validityStartTimestamp,
-        mintRequest.validityEndTimestamp,
-        mintRequest.uid
-      );
+    return abi.encode(
+      TYPEHASH,
+      mintRequest.to,
+      mintRequest.royaltyReceiver,
+      mintRequest.royaltyValue,
+      mintRequest.primarySaleReceiver,
+      keccak256(bytes(mintRequest.uri)),
+      mintRequest.quantity,
+      mintRequest.pricePerToken,
+      mintRequest.currency,
+      mintRequest.validityStartTimestamp,
+      mintRequest.validityEndTimestamp,
+      mintRequest.uid
+    );
   }
 }

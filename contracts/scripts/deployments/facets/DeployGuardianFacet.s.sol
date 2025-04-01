@@ -29,11 +29,15 @@ contract DeployGuardianFacet is FacetHelper, Deployer {
     return GuardianFacet.__GuardianFacet_init.selector;
   }
 
-  function makeInitData(uint256 cooldown) public pure returns (bytes memory) {
+  function makeInitData(
+    uint256 cooldown
+  ) public pure returns (bytes memory) {
     return abi.encodeWithSelector(initializer(), cooldown);
   }
 
-  function __deploy(address deployer) public override returns (address) {
+  function __deploy(
+    address deployer
+  ) public override returns (address) {
     vm.startBroadcast(deployer);
     GuardianFacet facet = new GuardianFacet();
     vm.stopBroadcast();

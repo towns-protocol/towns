@@ -41,7 +41,9 @@ contract GuardianTest is BaseSetup, IGuardianBase {
     assertFalse(guardian.isGuardianEnabled(wallet));
   }
 
-  function test_enableGuardian(address user) external {
+  function test_enableGuardian(
+    address user
+  ) external {
     SimpleAccount account = _createSimpleAccount(user);
     address wallet = address(account);
 

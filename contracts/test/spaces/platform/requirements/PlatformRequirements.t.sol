@@ -4,20 +4,18 @@ pragma solidity ^0.8.23;
 // utils
 
 //interfaces
-import {IPlatformRequirementsBase} from "contracts/src/factory/facets/platform/requirements/IPlatformRequirements.sol";
+import {IPlatformRequirementsBase} from
+  "contracts/src/factory/facets/platform/requirements/IPlatformRequirements.sol";
 import {IOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
 
 //libraries
 
 //contracts
 import {BaseSetup} from "contracts/test/spaces/BaseSetup.sol";
-import {PlatformRequirementsFacet} from "contracts/src/factory/facets/platform/requirements/PlatformRequirementsFacet.sol";
+import {PlatformRequirementsFacet} from
+  "contracts/src/factory/facets/platform/requirements/PlatformRequirementsFacet.sol";
 
-contract PlatformRequirementsTest is
-  BaseSetup,
-  IPlatformRequirementsBase,
-  IOwnableBase
-{
+contract PlatformRequirementsTest is BaseSetup, IPlatformRequirementsBase, IOwnableBase {
   PlatformRequirementsFacet internal platformReqs;
 
   function setUp() public override {
@@ -35,9 +33,7 @@ contract PlatformRequirementsTest is
   function test_setFeeRecipient() public {
     address newFeeRecipient = _randomAddress();
 
-    vm.expectRevert(
-      abi.encodeWithSelector(Ownable__NotOwner.selector, address(this))
-    );
+    vm.expectRevert(abi.encodeWithSelector(Ownable__NotOwner.selector, address(this)));
     platformReqs.setFeeRecipient(newFeeRecipient);
 
     vm.prank(deployer);
@@ -57,11 +53,9 @@ contract PlatformRequirementsTest is
   }
 
   function test_setMembershipBps() public {
-    uint16 newMembershipBps = 1_000;
+    uint16 newMembershipBps = 1000;
 
-    vm.expectRevert(
-      abi.encodeWithSelector(Ownable__NotOwner.selector, address(this))
-    );
+    vm.expectRevert(abi.encodeWithSelector(Ownable__NotOwner.selector, address(this)));
     platformReqs.setMembershipBps(newMembershipBps);
 
     vm.expectRevert(Platform__InvalidMembershipBps.selector);
@@ -89,11 +83,9 @@ contract PlatformRequirementsTest is
   }
 
   function test_setMembershipFee() public {
-    uint256 newMembershipFee = 1_000;
+    uint256 newMembershipFee = 1000;
 
-    vm.expectRevert(
-      abi.encodeWithSelector(Ownable__NotOwner.selector, address(this))
-    );
+    vm.expectRevert(abi.encodeWithSelector(Ownable__NotOwner.selector, address(this)));
     platformReqs.setMembershipFee(newMembershipFee);
 
     vm.prank(deployer);
@@ -108,15 +100,13 @@ contract PlatformRequirementsTest is
   // Membership Mint Limit
   function test_getMembershipMintLimit() public view {
     uint256 membershipMintLimit = platformReqs.getMembershipMintLimit();
-    assertEq(membershipMintLimit, 1_000);
+    assertEq(membershipMintLimit, 1000);
   }
 
   function test_setMembershipMintLimit() public {
-    uint256 newMembershipMintLimit = 2_000;
+    uint256 newMembershipMintLimit = 2000;
 
-    vm.expectRevert(
-      abi.encodeWithSelector(Ownable__NotOwner.selector, address(this))
-    );
+    vm.expectRevert(abi.encodeWithSelector(Ownable__NotOwner.selector, address(this)));
     platformReqs.setMembershipMintLimit(newMembershipMintLimit);
 
     vm.expectRevert(Platform__InvalidMembershipMintLimit.selector);
@@ -142,9 +132,7 @@ contract PlatformRequirementsTest is
   function test_setMembershipDuration() public {
     uint64 newMembershipDuration = 1 days;
 
-    vm.expectRevert(
-      abi.encodeWithSelector(Ownable__NotOwner.selector, address(this))
-    );
+    vm.expectRevert(abi.encodeWithSelector(Ownable__NotOwner.selector, address(this)));
     platformReqs.setMembershipDuration(newMembershipDuration);
 
     vm.expectRevert(Platform__InvalidMembershipDuration.selector);
@@ -164,9 +152,7 @@ contract PlatformRequirementsTest is
   function test_setMembershipMinPrice() external {
     uint256 newMembershipMinPrice = 0.001 ether;
 
-    vm.expectRevert(
-      abi.encodeWithSelector(Ownable__NotOwner.selector, address(this))
-    );
+    vm.expectRevert(abi.encodeWithSelector(Ownable__NotOwner.selector, address(this)));
     platformReqs.setMembershipMinPrice(newMembershipMinPrice);
 
     vm.expectRevert(Platform__InvalidMembershipMinPrice.selector);
@@ -190,9 +176,7 @@ contract PlatformRequirementsTest is
   }
 
   function test_setSwapFees_revertIf_notOwner() public {
-    vm.expectRevert(
-      abi.encodeWithSelector(Ownable__NotOwner.selector, address(this))
-    );
+    vm.expectRevert(abi.encodeWithSelector(Ownable__NotOwner.selector, address(this)));
     platformReqs.setSwapFees(100, 200);
   }
 
@@ -227,16 +211,11 @@ contract PlatformRequirementsTest is
   }
 
   function test_setRouterWhitelisted_revertIf_notOwner() public {
-    vm.expectRevert(
-      abi.encodeWithSelector(Ownable__NotOwner.selector, address(this))
-    );
+    vm.expectRevert(abi.encodeWithSelector(Ownable__NotOwner.selector, address(this)));
     platformReqs.setRouterWhitelisted(address(1), true);
   }
 
-  function test_fuzz_setRouterWhitelisted(
-    address router,
-    bool whitelisted
-  ) public {
+  function test_fuzz_setRouterWhitelisted(address router, bool whitelisted) public {
     vm.prank(deployer);
     vm.expectEmit(spaceFactory);
     emit RouterWhitelistUpdated(router, whitelisted);

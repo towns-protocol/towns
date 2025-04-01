@@ -26,7 +26,9 @@ contract InteractClaimCondition is IDropFacetBase, Interaction {
     amounts.push(1 ether); // equivalent to 1 token
   }
 
-  function __interact(address deployer) internal override {
+  function __interact(
+    address deployer
+  ) internal override {
     vm.pauseGasMetering();
 
     DeployRiverAirdrop deployRiverAirdrop = new DeployRiverAirdrop();
@@ -35,10 +37,9 @@ contract InteractClaimCondition is IDropFacetBase, Interaction {
 
     address riverAirdrop = deployRiverAirdrop.deploy(deployer);
     address townsBase = deployTownsBase.deploy(deployer);
-    (bytes32 root, ) = merkleTree.constructTree(wallets, amounts);
+    (bytes32 root,) = merkleTree.constructTree(wallets, amounts);
 
-    DropClaimLib.ClaimCondition[]
-      memory conditions = new DropClaimLib.ClaimCondition[](1);
+    DropClaimLib.ClaimCondition[] memory conditions = new DropClaimLib.ClaimCondition[](1);
     conditions[0] = DropClaimLib.ClaimCondition({
       startTimestamp: uint40(block.timestamp),
       endTimestamp: 0,

@@ -38,10 +38,7 @@ interface IEntitlementGatedBase {
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                           EVENTS                           */
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-  event EntitlementCheckResultPosted(
-    bytes32 indexed transactionId,
-    NodeVoteStatus result
-  );
+  event EntitlementCheckResultPosted(bytes32 indexed transactionId, NodeVoteStatus result);
 }
 
 interface IEntitlementGated is IEntitlementGatedBase {

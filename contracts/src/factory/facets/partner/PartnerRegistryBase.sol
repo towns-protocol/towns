@@ -13,10 +13,7 @@ import {PartnerRegistryStorage} from "./PartnerRegistryStorage.sol";
 abstract contract PartnerRegistryBase is IPartnerRegistryBase {
   using EnumerableSet for EnumerableSet.AddressSet;
 
-  function __PartnerRegistryBase_init(
-    uint256 registryFee,
-    uint256 maxPartnerFee
-  ) internal {
+  function __PartnerRegistryBase_init(uint256 registryFee, uint256 maxPartnerFee) internal {
     PartnerRegistryStorage.Layout storage ds = PartnerRegistryStorage.layout();
 
     ds.partnerSettings = PartnerRegistryStorage.PartnerSettings({
@@ -25,19 +22,24 @@ abstract contract PartnerRegistryBase is IPartnerRegistryBase {
     });
   }
 
-  function _registerPartner(Partner memory partner) internal {
+  function _registerPartner(
+    Partner memory partner
+  ) internal {
     PartnerRegistryStorage.Layout storage ds = PartnerRegistryStorage.layout();
 
     PartnerRegistryStorage.PartnerSettings memory settings = ds.partnerSettings;
 
-    if (msg.value != settings.registryFee)
+    if (msg.value != settings.registryFee) {
       revert PartnerRegistry__RegistryFeeNotPaid(settings.registryFee);
+    }
 
-    if (partner.fee > settings.maxPartnerFee)
+    if (partner.fee > settings.maxPartnerFee) {
       revert PartnerRegistry__InvalidPartnerFee(partner.fee);
+    }
 
-    if (!ds.partners.add(partner.account))
+    if (!ds.partners.add(partner.account)) {
       revert PartnerRegistry__PartnerAlreadyRegistered(partner.account);
+    }
 
     ds.partnerByAccount[partner.account] = PartnerRegistryStorage.Partner({
       recipient: partner.recipient,
@@ -49,22 +51,28 @@ abstract contract PartnerRegistryBase is IPartnerRegistryBase {
     emit PartnerRegistered(partner.account);
   }
 
-  function _updatePartner(Partner memory partner) internal {
-    if (partner.account != msg.sender)
+  function _updatePartner(
+    Partner memory partner
+  ) internal {
+    if (partner.account != msg.sender) {
       revert PartnerRegistry__NotPartnerAccount(msg.sender);
+    }
 
-    if (partner.recipient == address(0))
+    if (partner.recipient == address(0)) {
       revert PartnerRegistry__InvalidRecipient();
+    }
 
     PartnerRegistryStorage.Layout storage ds = PartnerRegistryStorage.layout();
 
-    if (!ds.partners.contains(partner.account))
+    if (!ds.partners.contains(partner.account)) {
       revert PartnerRegistry__PartnerNotRegistered(partner.account);
+    }
 
     PartnerRegistryStorage.PartnerSettings memory settings = ds.partnerSettings;
 
-    if (partner.fee > settings.maxPartnerFee)
+    if (partner.fee > settings.maxPartnerFee) {
       revert PartnerRegistry__InvalidPartnerFee(partner.fee);
+    }
 
     ds.partnerByAccount[partner.account].recipient = partner.recipient;
     ds.partnerByAccount[partner.account].fee = partner.fee;
@@ -73,11 +81,14 @@ abstract contract PartnerRegistryBase is IPartnerRegistryBase {
     emit PartnerUpdated(partner.account);
   }
 
-  function _removePartner(address account) internal {
+  function _removePartner(
+    address account
+  ) internal {
     PartnerRegistryStorage.Layout storage ds = PartnerRegistryStorage.layout();
 
-    if (!ds.partners.remove(account))
+    if (!ds.partners.remove(account)) {
       revert PartnerRegistry__PartnerNotRegistered(account);
+    }
 
     delete ds.partnerByAccount[account];
 
@@ -97,7 +108,9 @@ abstract contract PartnerRegistryBase is IPartnerRegistryBase {
     });
   }
 
-  function _partnerFee(address account) internal view returns (uint256 fee) {
+  function _partnerFee(
+    address account
+  ) internal view returns (uint256 fee) {
     PartnerRegistryStorage.Layout storage ds = PartnerRegistryStorage.layout();
     fee = ds.partnerByAccount[account].fee;
   }
@@ -107,7 +120,9 @@ abstract contract PartnerRegistryBase is IPartnerRegistryBase {
     fee = ds.partnerSettings.maxPartnerFee;
   }
 
-  function _setMaxPartnerFee(uint256 fee) internal {
+  function _setMaxPartnerFee(
+    uint256 fee
+  ) internal {
     PartnerRegistryStorage.Layout storage ds = PartnerRegistryStorage.layout();
     ds.partnerSettings.maxPartnerFee = fee;
 
@@ -119,7 +134,9 @@ abstract contract PartnerRegistryBase is IPartnerRegistryBase {
     fee = ds.partnerSettings.registryFee;
   }
 
-  function _setRegistryFee(uint256 fee) internal {
+  function _setRegistryFee(
+    uint256 fee
+  ) internal {
     PartnerRegistryStorage.Layout storage ds = PartnerRegistryStorage.layout();
     ds.partnerSettings.registryFee = fee;
 

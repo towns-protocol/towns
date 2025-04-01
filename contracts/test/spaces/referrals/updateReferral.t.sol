@@ -24,28 +24,16 @@ contract ReferralsFacet_updateReferral is ReferralsFacetTest {
     vm.prank(founder);
     vm.expectEmit(address(userSpace));
     emit ReferralUpdated(
-      keccak256(bytes(referral.referralCode)),
-      referral.basisPoints,
-      referral.recipient
+      keccak256(bytes(referral.referralCode)), referral.basisPoints, referral.recipient
     );
     referralsFacet.updateReferral(referral);
 
     // Assert
-    Referral memory storedReferral = referralsFacet.referralInfo(
-      referral.referralCode
-    );
+    Referral memory storedReferral = referralsFacet.referralInfo(referral.referralCode);
 
-    assertEq(
-      storedReferral.basisPoints,
-      referral.basisPoints,
-      "Basis points should match"
-    );
+    assertEq(storedReferral.basisPoints, referral.basisPoints, "Basis points should match");
 
-    assertEq(
-      storedReferral.recipient,
-      referral.recipient,
-      "Recipient should match"
-    );
+    assertEq(storedReferral.recipient, referral.recipient, "Recipient should match");
   }
 
   function test_revertWhen_updateReferralWithInvalidRecipient(

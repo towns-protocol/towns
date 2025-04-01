@@ -11,13 +11,17 @@ import {LockBase} from "contracts/src/tokens/lock/LockBase.sol";
 import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
 
 abstract contract LockFacet is ILock, LockBase, Facet {
-  function __LockFacet_init(uint256 cooldown) external onlyInitializing {
+  function __LockFacet_init(
+    uint256 cooldown
+  ) external onlyInitializing {
     __LockBase_init(cooldown);
     _addInterface(type(ILock).interfaceId);
   }
 
   /// @inheritdoc ILock
-  function isLockActive(address account) external view virtual returns (bool) {
+  function isLockActive(
+    address account
+  ) external view virtual returns (bool) {
     return _isLockActive(account);
   }
 
@@ -29,17 +33,23 @@ abstract contract LockFacet is ILock, LockBase, Facet {
   }
 
   /// @inheritdoc ILock
-  function enableLock(address account) external virtual onlyAllowed {
+  function enableLock(
+    address account
+  ) external virtual onlyAllowed {
     _enableLock(account);
   }
 
   /// @inheritdoc ILock
-  function disableLock(address account) external virtual onlyAllowed {
+  function disableLock(
+    address account
+  ) external virtual onlyAllowed {
     _disableLock(account);
   }
 
   /// @inheritdoc ILock
-  function setLockCooldown(uint256 cooldown) external virtual onlyAllowed {
+  function setLockCooldown(
+    uint256 cooldown
+  ) external virtual onlyAllowed {
     _setDefaultCooldown(cooldown);
   }
 }

@@ -2,7 +2,8 @@
 pragma solidity ^0.8.23;
 
 import {Vm} from "forge-std/Vm.sol";
-import {IEntitlementCheckerBase} from "contracts/src/base/registry/facets/checker/IEntitlementChecker.sol";
+import {IEntitlementCheckerBase} from
+  "contracts/src/base/registry/facets/checker/IEntitlementChecker.sol";
 import {LogUtils} from "./LogUtils.sol";
 
 abstract contract EntitlementTestUtils is IEntitlementCheckerBase, LogUtils {
@@ -29,8 +30,7 @@ abstract contract EntitlementTestUtils is IEntitlementCheckerBase, LogUtils {
     )
   {
     (, contractAddress, transactionId, roleId, selectedNodes) = abi.decode(
-      _getFirstMatchingLog(requestLogs, EntitlementCheckRequested.selector)
-        .data,
+      _getFirstMatchingLog(requestLogs, EntitlementCheckRequested.selector).data,
       (address, address, bytes32, uint256, address[])
     );
   }
@@ -43,15 +43,8 @@ abstract contract EntitlementTestUtils is IEntitlementCheckerBase, LogUtils {
 
   function _getRequestV2Events(
     Vm.Log[] memory requestLogs
-  )
-    internal
-    pure
-    returns (EntitlementCheckRequestEvent[] memory entitlementCheckRequests)
-  {
-    Vm.Log[] memory logs = _getMatchingLogs(
-      requestLogs,
-      EntitlementCheckRequestedV2.selector
-    );
+  ) internal pure returns (EntitlementCheckRequestEvent[] memory entitlementCheckRequests) {
+    Vm.Log[] memory logs = _getMatchingLogs(requestLogs, EntitlementCheckRequestedV2.selector);
     entitlementCheckRequests = new EntitlementCheckRequestEvent[](logs.length);
     for (uint256 i; i < logs.length; ++i) {
       bytes memory data = logs[i].data;
@@ -83,11 +76,9 @@ abstract contract EntitlementTestUtils is IEntitlementCheckerBase, LogUtils {
       address[] memory selectedNodes
     )
   {
-    return
-      abi.decode(
-        _getFirstMatchingLog(requestLogs, EntitlementCheckRequestedV2.selector)
-          .data,
-        (address, address, address, bytes32, uint256, address[])
-      );
+    return abi.decode(
+      _getFirstMatchingLog(requestLogs, EntitlementCheckRequestedV2.selector).data,
+      (address, address, address, bytes32, uint256, address[])
+    );
   }
 }

@@ -8,7 +8,10 @@ import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IER
 import {IERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol";
 import {IERC6372} from "@openzeppelin/contracts/interfaces/IERC6372.sol";
 import {IVotes} from "@openzeppelin/contracts/governance/utils/IVotes.sol";
-import {IOptimismMintableERC20, ILegacyMintableERC20} from "contracts/src/tokens/towns/base/IOptimismMintableERC20.sol";
+import {
+  IOptimismMintableERC20,
+  ILegacyMintableERC20
+} from "contracts/src/tokens/towns/base/IOptimismMintableERC20.sol";
 import {ISemver} from "contracts/src/tokens/towns/base/ISemver.sol";
 import {IERC7802} from "contracts/src/tokens/towns/base/IERC7802.sol";
 
@@ -17,7 +20,8 @@ import {CustomRevert} from "contracts/src/utils/libraries/CustomRevert.sol";
 import {TownsLib} from "./TownsLib.sol";
 
 // contracts
-import {IntrospectionBase} from "@towns-protocol/diamond/src/facets/introspection/IntrospectionBase.sol";
+import {IntrospectionBase} from
+  "@towns-protocol/diamond/src/facets/introspection/IntrospectionBase.sol";
 import {Ownable} from "solady/auth/Ownable.sol";
 import {Initializable} from "solady/utils/Initializable.sol";
 import {UUPSUpgradeable} from "solady/utils/UUPSUpgradeable.sol";
@@ -83,10 +87,7 @@ contract Towns is
     _disableInitializers();
   }
 
-  function initialize(
-    address _remoteToken,
-    address _owner
-  ) external initializer {
+  function initialize(address _remoteToken, address _owner) external initializer {
     // set the owner
     _initializeOwner(_owner);
 
@@ -150,10 +151,7 @@ contract Towns is
   /// @notice Allows the SuperchainTokenBridge to mint tokens.
   /// @param _to     Address to mint tokens to.
   /// @param _amount Amount of tokens to mint.
-  function crosschainMint(
-    address _to,
-    uint256 _amount
-  ) external onlyL2SuperChainBridge {
+  function crosschainMint(address _to, uint256 _amount) external onlyL2SuperChainBridge {
     _mint(_to, _amount);
     emit CrosschainMint(_to, _amount, msg.sender);
   }
@@ -161,10 +159,7 @@ contract Towns is
   /// @notice Allows the SuperchainTokenBridge to burn tokens.
   /// @param _from   Address to burn tokens from.
   /// @param _amount Amount of tokens to burn.
-  function crosschainBurn(
-    address _from,
-    uint256 _amount
-  ) external onlyL2SuperChainBridge {
+  function crosschainBurn(address _from, uint256 _amount) external onlyL2SuperChainBridge {
     _burn(_from, _amount);
     emit CrosschainBurn(_from, _amount, msg.sender);
   }
@@ -184,7 +179,9 @@ contract Towns is
   /*                           Lock                               */
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-  function isLockActive(address account) external view virtual returns (bool) {
+  function isLockActive(
+    address account
+  ) external view virtual returns (bool) {
     return _isLockActive(account);
   }
 
@@ -245,11 +242,7 @@ contract Towns is
   /*                     Internal Overrides                     */
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-  function _beforeTokenTransfer(
-    address from,
-    address to,
-    uint256 amount
-  ) internal override {
+  function _beforeTokenTransfer(address from, address to, uint256 amount) internal override {
     if (from != address(0) && _isLockActive(from)) {
       // allow transferring at minting time
       CustomRevert.revertWith(TransferLockEnabled.selector);
@@ -262,8 +255,9 @@ contract Towns is
     address currentDelegatee = delegates(account);
 
     // revert if the delegatee is the same as the current delegatee
-    if (currentDelegatee == delegatee)
+    if (currentDelegatee == delegatee) {
       CustomRevert.revertWith(DelegateeSameAsCurrent.selector);
+    }
 
     // if the delegatee is the zero address, initialize disable lock
     if (delegatee == address(0)) {
@@ -281,12 +275,7 @@ contract Towns is
   }
 
   /// @dev This allows Permit2 to be used without prior approval.
-  function _givePermit2InfiniteAllowance()
-    internal
-    pure
-    override
-    returns (bool)
-  {
+  function _givePermit2InfiniteAllowance() internal pure override returns (bool) {
     return true;
   }
 

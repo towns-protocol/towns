@@ -10,7 +10,9 @@ contract DeployMultiInit is Deployer, FacetHelper {
     return "utils/multiInit";
   }
 
-  function __deploy(address deployer) public override returns (address) {
+  function __deploy(
+    address deployer
+  ) public override returns (address) {
     vm.broadcast(deployer);
     return address(new MultiInit());
   }
@@ -19,11 +21,6 @@ contract DeployMultiInit is Deployer, FacetHelper {
     address[] memory initAddresses,
     bytes[] memory initDatas
   ) public pure returns (bytes memory) {
-    return
-      abi.encodeWithSelector(
-        MultiInit.multiInit.selector,
-        initAddresses,
-        initDatas
-      );
+    return abi.encodeWithSelector(MultiInit.multiInit.selector, initAddresses, initDatas);
   }
 }

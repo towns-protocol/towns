@@ -14,19 +14,15 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {Validator__InvalidAddress} from "contracts/src/utils/Validator.sol";
 
 //contracts
-import {DeployRiverMigration} from "contracts/scripts/deployments/diamonds/DeployRiverMigration.s.sol";
+import {DeployRiverMigration} from
+  "contracts/scripts/deployments/diamonds/DeployRiverMigration.s.sol";
 import {MockERC20} from "contracts/test/mocks/MockERC20.sol";
 
 // facets
 import {TokenMigrationFacet} from "contracts/src/tokens/migration/TokenMigration.sol";
 import {PausableFacet} from "@towns-protocol/diamond/src/facets/pausable/PausableFacet.sol";
 
-contract TokenMigrationTest is
-  TestUtils,
-  IPausableBase,
-  ITokenMigrationBase,
-  IOwnableBase
-{
+contract TokenMigrationTest is TestUtils, IPausableBase, ITokenMigrationBase, IOwnableBase {
   DeployRiverMigration internal riverMigrationHelper;
   MockERC20 internal oldToken;
   MockERC20 internal newToken;
@@ -62,7 +58,9 @@ contract TokenMigrationTest is
     _;
   }
 
-  modifier givenContractHasNewTokens(uint256 amount) {
+  modifier givenContractHasNewTokens(
+    uint256 amount
+  ) {
     vm.prank(deployer);
     newToken.mint(address(tokenMigration), amount);
     _;
@@ -126,12 +124,7 @@ contract TokenMigrationTest is
   function test_revertWhen_invalidAllowance(
     address account,
     uint256 amount
-  )
-    external
-    givenContractIsUnpaused
-    assumeEOA(account)
-    givenAccountHasOldTokens(account, amount)
-  {
+  ) external givenContractIsUnpaused assumeEOA(account) givenAccountHasOldTokens(account, amount) {
     vm.expectRevert(TokenMigration__InvalidAllowance.selector);
     tokenMigration.migrate(account);
   }
@@ -165,12 +158,7 @@ contract TokenMigrationTest is
     address randomAddress = _randomAddress();
 
     vm.prank(randomAddress);
-    vm.expectRevert(
-      abi.encodeWithSelector(
-        IOwnableBase.Ownable__NotOwner.selector,
-        randomAddress
-      )
-    );
+    vm.expectRevert(abi.encodeWithSelector(IOwnableBase.Ownable__NotOwner.selector, randomAddress));
     tokenMigration.emergencyWithdraw(IERC20(address(oldToken)), deployer);
   }
 }

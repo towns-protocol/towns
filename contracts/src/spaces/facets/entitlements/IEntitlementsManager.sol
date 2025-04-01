@@ -24,16 +24,15 @@ interface IEntitlementsManagerBase {
 interface IEntitlementsManager is IEntitlementsManagerBase {
   /// @notice Allows the space owner to add immutable entitlements to the space
   /// @param entitlements The entitlements to add
-  function addImmutableEntitlements(address[] calldata entitlements) external;
+  function addImmutableEntitlements(
+    address[] calldata entitlements
+  ) external;
 
   /// @notice Checks if a user is entitled to a permission in the space
   /// @param user The user to check
   /// @param permission The permission to check
   /// @return True if the user is entitled to the permission, false otherwise
-  function isEntitledToSpace(
-    address user,
-    string calldata permission
-  ) external view returns (bool);
+  function isEntitledToSpace(address user, string calldata permission) external view returns (bool);
 
   /// @notice Checks if a user is entitled to a permission in a channel
   /// @param channelId The channel to check
@@ -48,11 +47,15 @@ interface IEntitlementsManager is IEntitlementsManagerBase {
 
   /// @notice Adds an entitlement to the space
   /// @param entitlement The entitlement to add
-  function addEntitlementModule(address entitlement) external;
+  function addEntitlementModule(
+    address entitlement
+  ) external;
 
   /// @notice Removes an entitlement from the space
   /// @param entitlement The entitlement to remove
-  function removeEntitlementModule(address entitlement) external;
+  function removeEntitlementModule(
+    address entitlement
+  ) external;
 
   /// @notice Gets an entitlement from the space
   /// @param entitlement The entitlement to get
@@ -63,8 +66,5 @@ interface IEntitlementsManager is IEntitlementsManagerBase {
 
   /// @notice Gets all entitlements from the space
   /// @return entitlements The entitlement modules
-  function getEntitlements()
-    external
-    view
-    returns (Entitlement[] memory entitlements);
+  function getEntitlements() external view returns (Entitlement[] memory entitlements);
 }

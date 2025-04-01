@@ -4,18 +4,24 @@ pragma solidity ^0.8.23;
 // interfaces
 import {IOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
 import {IERC721ABase} from "contracts/src/diamond/facets/token/ERC721A/IERC721A.sol";
-import {INodeOperator, INodeOperatorBase} from "contracts/src/base/registry/facets/operator/INodeOperator.sol";
-import {ISpaceDelegationBase} from "contracts/src/base/registry/facets/delegation/ISpaceDelegation.sol";
+import {
+  INodeOperator,
+  INodeOperatorBase
+} from "contracts/src/base/registry/facets/operator/INodeOperator.sol";
+import {ISpaceDelegationBase} from
+  "contracts/src/base/registry/facets/delegation/ISpaceDelegation.sol";
 
 // libraries
 
 // structs
-import {NodeOperatorStatus} from "contracts/src/base/registry/facets/operator/NodeOperatorStorage.sol";
+import {NodeOperatorStatus} from
+  "contracts/src/base/registry/facets/operator/NodeOperatorStorage.sol";
 
 // contracts
 import {BaseSetup} from "contracts/test/spaces/BaseSetup.sol";
 import {OwnableFacet} from "@towns-protocol/diamond/src/facets/ownable/OwnableFacet.sol";
-import {IntrospectionFacet} from "@towns-protocol/diamond/src/facets/introspection/IntrospectionFacet.sol";
+import {IntrospectionFacet} from
+  "@towns-protocol/diamond/src/facets/introspection/IntrospectionFacet.sol";
 import {ERC721A} from "contracts/src/diamond/facets/token/ERC721A/ERC721A.sol";
 import {Towns} from "contracts/src/tokens/towns/base/Towns.sol";
 
@@ -47,15 +53,15 @@ contract NodeOperatorFacetTest is
   }
 
   function test_initialization() public view {
-    assertTrue(
-      introspection.supportsInterface(type(INodeOperator).interfaceId)
-    );
+    assertTrue(introspection.supportsInterface(type(INodeOperator).interfaceId));
   }
 
   // =============================================================
   //                           registerOperator
   // =============================================================
-  modifier givenOperatorIsRegistered(address _operator) {
+  modifier givenOperatorIsRegistered(
+    address _operator
+  ) {
     vm.assume(_operator != address(0));
     vm.assume(_operator != ZERO_SENTINEL);
     vm.assume(!nodeOperator.isOperator(_operator));
@@ -79,10 +85,7 @@ contract NodeOperatorFacetTest is
   function test_registerOperatorWithValidAddress(
     address randomOperator
   ) public givenOperatorIsRegistered(randomOperator) {
-    assertTrue(
-      nodeOperator.getOperatorStatus(randomOperator) ==
-        NodeOperatorStatus.Standby
-    );
+    assertTrue(nodeOperator.getOperatorStatus(randomOperator) == NodeOperatorStatus.Standby);
   }
 
   function test_getOperatorsAfterRegisterOperator(
@@ -136,9 +139,7 @@ contract NodeOperatorFacetTest is
     address randomOwner = _randomAddress();
 
     vm.prank(randomOwner);
-    vm.expectRevert(
-      abi.encodeWithSelector(Ownable__NotOwner.selector, randomOwner)
-    );
+    vm.expectRevert(abi.encodeWithSelector(Ownable__NotOwner.selector, randomOwner));
     nodeOperator.setOperatorStatus(randomOperator, NodeOperatorStatus.Approved);
   }
 
@@ -147,10 +148,7 @@ contract NodeOperatorFacetTest is
     _;
   }
 
-  function test_revertWhen_setOperatorStatusIsCalledWithZeroAddress()
-    public
-    whenCalledByDeployer
-  {
+  function test_revertWhen_setOperatorStatusIsCalledWithZeroAddress() public whenCalledByDeployer {
     vm.expectRevert(NodeOperator__InvalidAddress.selector);
     nodeOperator.setOperatorStatus(address(0), NodeOperatorStatus.Approved);
   }
@@ -160,10 +158,7 @@ contract NodeOperatorFacetTest is
   ) public whenCalledByDeployer {
     vm.assume(notRegisteredOperator != address(0));
     vm.expectRevert(NodeOperator__NotRegistered.selector);
-    nodeOperator.setOperatorStatus(
-      notRegisteredOperator,
-      NodeOperatorStatus.Approved
-    );
+    nodeOperator.setOperatorStatus(notRegisteredOperator, NodeOperatorStatus.Approved);
   }
 
   function test_revertWhen_setOperatorStatusWithStatusNotChanged(
@@ -223,10 +218,7 @@ contract NodeOperatorFacetTest is
     _;
   }
 
-  modifier givenOperatorHasSetClaimAddress(
-    address _operator,
-    address _claimAddress
-  ) {
+  modifier givenOperatorHasSetClaimAddress(address _operator, address _claimAddress) {
     vm.assume(_claimAddress != address(0));
     vm.assume(_operator != address(0));
     vm.assume(_operator != _claimAddress);
@@ -265,18 +257,12 @@ contract NodeOperatorFacetTest is
     givenCallerHasBridgedTokens(delegator, amount)
     givenOperatorIsRegistered(randomOperator)
     givenNodeOperatorHasStake(delegator, randomOperator)
-    whenSetOperatorStatusIsCalledByTheOwner(
-      randomOperator,
-      NodeOperatorStatus.Approved
-    )
+    whenSetOperatorStatusIsCalledByTheOwner(randomOperator, NodeOperatorStatus.Approved)
   {
     vm.assume(randomOperator != address(0));
     vm.assume(randomOperator != ZERO_SENTINEL);
 
-    assertTrue(
-      nodeOperator.getOperatorStatus(randomOperator) ==
-        NodeOperatorStatus.Approved
-    );
+    assertTrue(nodeOperator.getOperatorStatus(randomOperator) == NodeOperatorStatus.Approved);
   }
 
   function test_revertWhen_setOperatorStatusIsCalledFromApprovedToStandby(
@@ -288,10 +274,7 @@ contract NodeOperatorFacetTest is
     givenCallerHasBridgedTokens(delegator, amount)
     givenOperatorIsRegistered(randomOperator)
     givenNodeOperatorHasStake(delegator, randomOperator)
-    whenSetOperatorStatusIsCalledByTheOwner(
-      randomOperator,
-      NodeOperatorStatus.Approved
-    )
+    whenSetOperatorStatusIsCalledByTheOwner(randomOperator, NodeOperatorStatus.Approved)
   {
     vm.prank(deployer);
     vm.expectRevert(NodeOperator__InvalidStatusTransition.selector);
@@ -307,14 +290,8 @@ contract NodeOperatorFacetTest is
     givenCallerHasBridgedTokens(delegator, amount)
     givenOperatorIsRegistered(randomOperator)
     givenNodeOperatorHasStake(delegator, randomOperator)
-    whenSetOperatorStatusIsCalledByTheOwner(
-      randomOperator,
-      NodeOperatorStatus.Approved
-    )
-    whenSetOperatorStatusIsCalledByTheOwner(
-      randomOperator,
-      NodeOperatorStatus.Exiting
-    )
+    whenSetOperatorStatusIsCalledByTheOwner(randomOperator, NodeOperatorStatus.Approved)
+    whenSetOperatorStatusIsCalledByTheOwner(randomOperator, NodeOperatorStatus.Exiting)
   {
     vm.assume(randomOperator != address(0));
     vm.assume(randomOperator != ZERO_SENTINEL);
@@ -333,22 +310,13 @@ contract NodeOperatorFacetTest is
     givenCallerHasBridgedTokens(delegator, amount)
     givenOperatorIsRegistered(randomOperator)
     givenNodeOperatorHasStake(delegator, randomOperator)
-    whenSetOperatorStatusIsCalledByTheOwner(
-      randomOperator,
-      NodeOperatorStatus.Approved
-    )
-    whenSetOperatorStatusIsCalledByTheOwner(
-      randomOperator,
-      NodeOperatorStatus.Exiting
-    )
+    whenSetOperatorStatusIsCalledByTheOwner(randomOperator, NodeOperatorStatus.Approved)
+    whenSetOperatorStatusIsCalledByTheOwner(randomOperator, NodeOperatorStatus.Exiting)
   {
     vm.assume(randomOperator != address(0));
     vm.assume(randomOperator != ZERO_SENTINEL);
 
-    assertTrue(
-      nodeOperator.getOperatorStatus(randomOperator) ==
-        NodeOperatorStatus.Exiting
-    );
+    assertTrue(nodeOperator.getOperatorStatus(randomOperator) == NodeOperatorStatus.Exiting);
 
     // assertEq(totalApprovedOperators, 0);
   }
@@ -361,19 +329,13 @@ contract NodeOperatorFacetTest is
     address randomOperator
   ) public view {
     vm.assume(!nodeOperator.isOperator(randomOperator));
-    assertTrue(
-      nodeOperator.getOperatorStatus(randomOperator) ==
-        NodeOperatorStatus.Exiting
-    );
+    assertTrue(nodeOperator.getOperatorStatus(randomOperator) == NodeOperatorStatus.Exiting);
   }
 
   function test_getOperatorStatus_registeredOperator(
     address randomOperator
   ) public givenOperatorIsRegistered(randomOperator) {
-    assertTrue(
-      nodeOperator.getOperatorStatus(randomOperator) ==
-        NodeOperatorStatus.Standby
-    );
+    assertTrue(nodeOperator.getOperatorStatus(randomOperator) == NodeOperatorStatus.Standby);
   }
 
   function test_getOperatorStatus_whenStatusIsApproved(
@@ -385,15 +347,9 @@ contract NodeOperatorFacetTest is
     givenCallerHasBridgedTokens(delegator, amount)
     givenOperatorIsRegistered(randomOperator)
     givenNodeOperatorHasStake(delegator, randomOperator)
-    whenSetOperatorStatusIsCalledByTheOwner(
-      randomOperator,
-      NodeOperatorStatus.Approved
-    )
+    whenSetOperatorStatusIsCalledByTheOwner(randomOperator, NodeOperatorStatus.Approved)
   {
-    assertTrue(
-      nodeOperator.getOperatorStatus(randomOperator) ==
-        NodeOperatorStatus.Approved
-    );
+    assertTrue(nodeOperator.getOperatorStatus(randomOperator) == NodeOperatorStatus.Approved);
   }
 
   function test_getOperatorStatus_whenStatusIsExiting(
@@ -405,19 +361,10 @@ contract NodeOperatorFacetTest is
     givenCallerHasBridgedTokens(delegator, amount)
     givenOperatorIsRegistered(randomOperator)
     givenNodeOperatorHasStake(delegator, randomOperator)
-    whenSetOperatorStatusIsCalledByTheOwner(
-      randomOperator,
-      NodeOperatorStatus.Approved
-    )
-    whenSetOperatorStatusIsCalledByTheOwner(
-      randomOperator,
-      NodeOperatorStatus.Exiting
-    )
+    whenSetOperatorStatusIsCalledByTheOwner(randomOperator, NodeOperatorStatus.Approved)
+    whenSetOperatorStatusIsCalledByTheOwner(randomOperator, NodeOperatorStatus.Exiting)
   {
-    assertTrue(
-      nodeOperator.getOperatorStatus(randomOperator) ==
-        NodeOperatorStatus.Exiting
-    );
+    assertTrue(nodeOperator.getOperatorStatus(randomOperator) == NodeOperatorStatus.Exiting);
   }
 
   // =============================================================
@@ -441,10 +388,7 @@ contract NodeOperatorFacetTest is
     givenOperatorIsRegistered(randomOperator)
     givenOperatorHasSetClaimAddress(randomOperator, randomClaimer)
   {
-    assertEq(
-      nodeOperator.getClaimAddressForOperator(randomOperator),
-      randomClaimer
-    );
+    assertEq(nodeOperator.getClaimAddressForOperator(randomOperator), randomClaimer);
   }
 
   // =============================================================
@@ -454,7 +398,7 @@ contract NodeOperatorFacetTest is
     address randomOperator,
     uint256 rate
   ) external givenOperatorIsRegistered(randomOperator) {
-    rate = bound(rate, 0, 10000);
+    rate = bound(rate, 0, 10_000);
 
     vm.prank(randomOperator);
     vm.expectEmit(address(nodeOperator));
@@ -470,7 +414,7 @@ contract NodeOperatorFacetTest is
   ) external {
     vm.assume(randomOperator != address(0));
     vm.assume(!nodeOperator.isOperator(randomOperator));
-    rate = bound(rate, 0, 10000);
+    rate = bound(rate, 0, 10_000);
 
     vm.expectRevert(NodeOperator__NotRegistered.selector);
     vm.prank(randomOperator);
@@ -589,9 +533,7 @@ contract NodeOperatorFacetTest is
     for (uint256 i = 0; i < totalOperators; i++) {
       address operatorAddress = erc721.ownerOf(i);
 
-      NodeOperatorStatus currentStatus = nodeOperator.getOperatorStatus(
-        operatorAddress
-      );
+      NodeOperatorStatus currentStatus = nodeOperator.getOperatorStatus(operatorAddress);
 
       if (currentStatus == status) {
         expectedOperators[i] = operatorAddress;

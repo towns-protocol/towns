@@ -10,7 +10,9 @@ import {IRiverConfig} from "contracts/src/river/registry/facets/config/IRiverCon
 import {Interaction} from "contracts/scripts/common/Interaction.s.sol";
 
 contract InteractRiverRegistrySetFreq is Interaction {
-  function __interact(address deployer) internal override {
+  function __interact(
+    address deployer
+  ) internal override {
     address riverRegistry = getDeployment("riverRegistry");
 
     address[] memory value = new address[](3);
@@ -20,9 +22,7 @@ contract InteractRiverRegistrySetFreq is Interaction {
 
     vm.startBroadcast(deployer);
     IRiverConfig(riverRegistry).setConfiguration(
-      keccak256("node.blocklist"),
-      13396808,
-      abi.encode(value)
+      keccak256("node.blocklist"), 13_396_808, abi.encode(value)
     );
     vm.stopBroadcast();
   }

@@ -9,16 +9,15 @@ interface IAuthorizedClaimersBase {
   error AuthorizedClaimers_ExpiredSignature();
 
   // Events
-  event AuthorizedClaimerChanged(
-    address indexed authorizer,
-    address indexed claimer
-  );
+  event AuthorizedClaimerChanged(address indexed authorizer, address indexed claimer);
   event AuthorizedClaimerRemoved(address indexed authorizer);
 }
 
 interface IAuthorizedClaimers is IAuthorizedClaimersBase {
   // Authorize a claimer to claim rewards on the callers behalf
-  function authorizeClaimer(address claimer) external;
+  function authorizeClaimer(
+    address claimer
+  ) external;
 
   // Authorize a claimer to claim rewards on the authorizer's behalf
   function authorizeClaimerBySig(

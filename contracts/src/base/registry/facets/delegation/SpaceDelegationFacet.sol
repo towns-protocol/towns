@@ -6,28 +6,30 @@ import {ISpaceDelegation} from "contracts/src/base/registry/facets/delegation/IS
 import {IMainnetDelegation} from "contracts/src/base/registry/facets/mainnet/IMainnetDelegation.sol";
 import {IERC173} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {IVotesEnumerable} from "contracts/src/diamond/facets/governance/votes/enumerable/IVotesEnumerable.sol";
+import {IVotesEnumerable} from
+  "contracts/src/diamond/facets/governance/votes/enumerable/IVotesEnumerable.sol";
 import {IArchitect} from "contracts/src/factory/facets/architect/IArchitect.sol";
-import {IRewardsDistributionBase} from "contracts/src/base/registry/facets/distribution/v2/IRewardsDistribution.sol";
+import {IRewardsDistributionBase} from
+  "contracts/src/base/registry/facets/distribution/v2/IRewardsDistribution.sol";
 
 // libraries
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-import {SpaceDelegationStorage} from "contracts/src/base/registry/facets/delegation/SpaceDelegationStorage.sol";
+import {SpaceDelegationStorage} from
+  "contracts/src/base/registry/facets/delegation/SpaceDelegationStorage.sol";
 import {CustomRevert} from "contracts/src/utils/libraries/CustomRevert.sol";
-import {NodeOperatorStorage, NodeOperatorStatus} from "contracts/src/base/registry/facets/operator/NodeOperatorStorage.sol";
+import {
+  NodeOperatorStorage,
+  NodeOperatorStatus
+} from "contracts/src/base/registry/facets/operator/NodeOperatorStorage.sol";
 import {StakingRewards} from "contracts/src/base/registry/facets/distribution/v2/StakingRewards.sol";
-import {RewardsDistributionStorage} from "contracts/src/base/registry/facets/distribution/v2/RewardsDistributionStorage.sol";
+import {RewardsDistributionStorage} from
+  "contracts/src/base/registry/facets/distribution/v2/RewardsDistributionStorage.sol";
 
 // contracts
 import {OwnableBase} from "@towns-protocol/diamond/src/facets/ownable/OwnableBase.sol";
 import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
 
-contract SpaceDelegationFacet is
-  ISpaceDelegation,
-  IRewardsDistributionBase,
-  OwnableBase,
-  Facet
-{
+contract SpaceDelegationFacet is ISpaceDelegation, IRewardsDistributionBase, OwnableBase, Facet {
   using EnumerableSet for EnumerableSet.AddressSet;
   using StakingRewards for StakingRewards.Layout;
 
@@ -38,7 +40,9 @@ contract SpaceDelegationFacet is
     ds.riverToken = riverToken_;
   }
 
-  modifier onlySpaceOwner(address space) {
+  modifier onlySpaceOwner(
+    address space
+  ) {
     if (!_isValidSpaceOwner(space)) {
       CustomRevert.revertWith(SpaceDelegation__InvalidSpace.selector);
     }
@@ -46,30 +50,30 @@ contract SpaceDelegationFacet is
   }
 
   /// @inheritdoc ISpaceDelegation
-  function addSpaceDelegation(
-    address space,
-    address operator
-  ) external onlySpaceOwner(space) {
-    if (operator == address(0))
+  function addSpaceDelegation(address space, address operator) external onlySpaceOwner(space) {
+    if (operator == address(0)) {
       CustomRevert.revertWith(SpaceDelegation__InvalidAddress.selector);
+    }
 
     SpaceDelegationStorage.Layout storage ds = SpaceDelegationStorage.layout();
 
     address currentOperator = ds.operatorBySpace[space];
 
-    if (currentOperator == operator)
+    if (currentOperator == operator) {
       CustomRevert.revertWith(SpaceDelegation__AlreadyDelegated.selector);
+    }
 
-    NodeOperatorStorage.Layout storage nodeOperatorDs = NodeOperatorStorage
-      .layout();
+    NodeOperatorStorage.Layout storage nodeOperatorDs = NodeOperatorStorage.layout();
 
     // check if the operator is valid
-    if (!nodeOperatorDs.operators.contains(operator))
+    if (!nodeOperatorDs.operators.contains(operator)) {
       CustomRevert.revertWith(SpaceDelegation__InvalidOperator.selector);
+    }
 
     // check if operator is not exiting
-    if (nodeOperatorDs.statusByOperator[operator] == NodeOperatorStatus.Exiting)
+    if (nodeOperatorDs.statusByOperator[operator] == NodeOperatorStatus.Exiting) {
       CustomRevert.revertWith(SpaceDelegation__InvalidOperator.selector);
+    }
 
     _sweepSpaceRewardsIfNecessary(space, currentOperator);
 
@@ -86,9 +90,12 @@ contract SpaceDelegationFacet is
   }
 
   /// @inheritdoc ISpaceDelegation
-  function removeSpaceDelegation(address space) external onlySpaceOwner(space) {
-    if (space == address(0))
+  function removeSpaceDelegation(
+    address space
+  ) external onlySpaceOwner(space) {
+    if (space == address(0)) {
       CustomRevert.revertWith(SpaceDelegation__InvalidAddress.selector);
+    }
 
     SpaceDelegationStorage.Layout storage ds = SpaceDelegationStorage.layout();
 
@@ -108,7 +115,9 @@ contract SpaceDelegationFacet is
   }
 
   /// @inheritdoc ISpaceDelegation
-  function getSpaceDelegation(address space) external view returns (address) {
+  function getSpaceDelegation(
+    address space
+  ) external view returns (address) {
     SpaceDelegationStorage.Layout storage ds = SpaceDelegationStorage.layout();
     return ds.operatorBySpace[space];
   }
@@ -126,9 +135,12 @@ contract SpaceDelegationFacet is
   // =============================================================
 
   /// @inheritdoc ISpaceDelegation
-  function setRiverToken(address newToken) external onlyOwner {
-    if (newToken == address(0))
+  function setRiverToken(
+    address newToken
+  ) external onlyOwner {
+    if (newToken == address(0)) {
       CustomRevert.revertWith(SpaceDelegation__InvalidAddress.selector);
+    }
 
     SpaceDelegationStorage.Layout storage ds = SpaceDelegationStorage.layout();
 
@@ -147,9 +159,12 @@ contract SpaceDelegationFacet is
   // =============================================================
 
   /// @inheritdoc ISpaceDelegation
-  function setMainnetDelegation(address newDelegation) external onlyOwner {
-    if (newDelegation == address(0))
+  function setMainnetDelegation(
+    address newDelegation
+  ) external onlyOwner {
+    if (newDelegation == address(0)) {
       CustomRevert.revertWith(SpaceDelegation__InvalidAddress.selector);
+    }
 
     SpaceDelegationStorage.layout().mainnetDelegation = newDelegation;
     emit MainnetDelegationChanged(newDelegation);
@@ -172,11 +187,12 @@ contract SpaceDelegationFacet is
   }
 
   /// @inheritdoc ISpaceDelegation
-  function setStakeRequirement(uint256 newRequirement) external onlyOwner {
-    if (newRequirement == 0)
-      CustomRevert.revertWith(
-        SpaceDelegation__InvalidStakeRequirement.selector
-      );
+  function setStakeRequirement(
+    uint256 newRequirement
+  ) external onlyOwner {
+    if (newRequirement == 0) {
+      CustomRevert.revertWith(SpaceDelegation__InvalidStakeRequirement.selector);
+    }
 
     SpaceDelegationStorage.layout().stakeRequirement = newRequirement;
     emit StakeRequirementChanged(newRequirement);
@@ -192,9 +208,12 @@ contract SpaceDelegationFacet is
   // =============================================================
 
   /// @inheritdoc ISpaceDelegation
-  function setSpaceFactory(address spaceFactory) external onlyOwner {
-    if (spaceFactory == address(0))
+  function setSpaceFactory(
+    address spaceFactory
+  ) external onlyOwner {
+    if (spaceFactory == address(0)) {
       CustomRevert.revertWith(SpaceDelegation__InvalidAddress.selector);
+    }
 
     SpaceDelegationStorage.layout().spaceFactory = spaceFactory;
     emit SpaceFactoryChanged(spaceFactory);
@@ -210,15 +229,9 @@ contract SpaceDelegationFacet is
   // =============================================================
 
   /// @dev Sweeps the rewards in the space delegation to the operator if necessary
-  function _sweepSpaceRewardsIfNecessary(
-    address space,
-    address currentOperator
-  ) internal {
-    StakingRewards.Layout storage staking = RewardsDistributionStorage
-      .layout()
-      .staking;
-    StakingRewards.Treasure storage spaceTreasure = staking
-      .treasureByBeneficiary[space];
+  function _sweepSpaceRewardsIfNecessary(address space, address currentOperator) internal {
+    StakingRewards.Layout storage staking = RewardsDistributionStorage.layout().staking;
+    StakingRewards.Treasure storage spaceTreasure = staking.treasureByBeneficiary[space];
 
     staking.updateGlobalReward();
     staking.updateReward(spaceTreasure);
@@ -228,8 +241,8 @@ contract SpaceDelegationFacet is
 
     // forfeit the rewards if the space has undelegated
     if (currentOperator != address(0)) {
-      StakingRewards.Treasure storage operatorTreasure = staking
-        .treasureByBeneficiary[currentOperator];
+      StakingRewards.Treasure storage operatorTreasure =
+        staking.treasureByBeneficiary[currentOperator];
       operatorTreasure.unclaimedRewardSnapshot += reward;
     }
     spaceTreasure.unclaimedRewardSnapshot = 0;
@@ -241,19 +254,16 @@ contract SpaceDelegationFacet is
     address operator
   ) internal view returns (uint256) {
     SpaceDelegationStorage.Layout storage ds = SpaceDelegationStorage.layout();
-    (address riverToken_, address mainnetDelegation_) = (
-      ds.riverToken,
-      ds.mainnetDelegation
-    );
+    (address riverToken_, address mainnetDelegation_) = (ds.riverToken, ds.mainnetDelegation);
     if (riverToken_ == address(0) || mainnetDelegation_ == address(0)) return 0;
 
     // get the delegation from the mainnet delegation
-    uint256 delegation = IMainnetDelegation(mainnetDelegation_)
-      .getDelegatedStakeByOperator(operator);
+    uint256 delegation =
+      IMainnetDelegation(mainnetDelegation_).getDelegatedStakeByOperator(operator);
 
     // get the delegation from the base delegation
-    address[] memory baseDelegators = IVotesEnumerable(riverToken_)
-      .getDelegatorsByDelegatee(operator);
+    address[] memory baseDelegators =
+      IVotesEnumerable(riverToken_).getDelegatorsByDelegatee(operator);
     for (uint256 i; i < baseDelegators.length; ++i) {
       delegation += IERC20(riverToken_).balanceOf(baseDelegators[i]);
     }
@@ -261,8 +271,8 @@ contract SpaceDelegationFacet is
     address[] memory spaces = ds.spacesByOperator[operator].values();
 
     for (uint256 i; i < spaces.length; ++i) {
-      address[] memory usersDelegatingToSpace = IVotesEnumerable(riverToken_)
-        .getDelegatorsByDelegatee(spaces[i]);
+      address[] memory usersDelegatingToSpace =
+        IVotesEnumerable(riverToken_).getDelegatorsByDelegatee(spaces[i]);
 
       for (uint256 j; j < usersDelegatingToSpace.length; ++j) {
         delegation += IERC20(riverToken_).balanceOf(usersDelegatingToSpace[j]);
@@ -272,9 +282,10 @@ contract SpaceDelegationFacet is
     return delegation;
   }
 
-  function _isValidSpaceOwner(address space) internal view returns (bool) {
-    return
-      IArchitect(getSpaceFactory()).getTokenIdBySpace(space) > 0 &&
-      IERC173(space).owner() == msg.sender;
+  function _isValidSpaceOwner(
+    address space
+  ) internal view returns (bool) {
+    return IArchitect(getSpaceFactory()).getTokenIdBySpace(space) > 0
+      && IERC173(space).owner() == msg.sender;
   }
 }

@@ -3,21 +3,19 @@ pragma solidity ^0.8.23;
 
 // interfaces
 import {IOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
-import {ISpaceDelegationBase} from "contracts/src/base/registry/facets/delegation/ISpaceDelegation.sol";
+import {ISpaceDelegationBase} from
+  "contracts/src/base/registry/facets/delegation/ISpaceDelegation.sol";
 
 // libraries
 import {FixedPointMathLib} from "solady/utils/FixedPointMathLib.sol";
 import {StakingRewards} from "contracts/src/base/registry/facets/distribution/v2/StakingRewards.sol";
 
 // contracts
-import {SpaceDelegationFacet} from "contracts/src/base/registry/facets/delegation/SpaceDelegationFacet.sol";
+import {SpaceDelegationFacet} from
+  "contracts/src/base/registry/facets/delegation/SpaceDelegationFacet.sol";
 import {BaseRegistryTest} from "./BaseRegistry.t.sol";
 
-contract SpaceDelegationTest is
-  BaseRegistryTest,
-  IOwnableBase,
-  ISpaceDelegationBase
-{
+contract SpaceDelegationTest is BaseRegistryTest, IOwnableBase, ISpaceDelegationBase {
   using FixedPointMathLib for uint256;
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -70,11 +68,8 @@ contract SpaceDelegationTest is
     uint256 timeLapse
   ) public givenOperator(operators[1], commissionRates[1]) {
     vm.assume(operators[0] != operators[1]);
-    commissionRates[0] = bound(commissionRates[0], 1, 10000);
-    address space = test_fuzz_addSpaceDelegation(
-      operators[0],
-      commissionRates[0]
-    );
+    commissionRates[0] = bound(commissionRates[0], 1, 10_000);
+    address space = test_fuzz_addSpaceDelegation(operators[0], commissionRates[0]);
 
     rewardAmount = boundReward(rewardAmount);
     bridgeTokensForUser(address(rewardsDistributionFacet), rewardAmount);
@@ -107,7 +102,7 @@ contract SpaceDelegationTest is
     uint256 timeLapse
   ) public {
     vm.assume(operator != OPERATOR);
-    commissionRate = bound(commissionRate, 1, 10000);
+    commissionRate = bound(commissionRate, 1, 10_000);
     address space = test_fuzz_addSpaceDelegation(operator, commissionRate);
 
     rewardAmount = boundReward(rewardAmount);
@@ -135,29 +130,16 @@ contract SpaceDelegationTest is
     spaceDelegationFacet.addSpaceDelegation(space, OPERATOR);
 
     StakingState memory state = rewardsDistributionFacet.stakingState();
-    StakingRewards.Treasure memory spaceTreasure = rewardsDistributionFacet
-      .treasureByBeneficiary(space);
+    StakingRewards.Treasure memory spaceTreasure =
+      rewardsDistributionFacet.treasureByBeneficiary(space);
 
     // verify forfeited rewards
-    assertEq(spaceTreasure.earningPower, (amount * commissionRate) / 10000);
-    assertEq(
-      spaceTreasure.rewardPerTokenAccumulated,
-      state.rewardPerTokenAccumulated
-    );
+    assertEq(spaceTreasure.earningPower, (amount * commissionRate) / 10_000);
+    assertEq(spaceTreasure.rewardPerTokenAccumulated, state.rewardPerTokenAccumulated);
     assertEq(spaceTreasure.unclaimedRewardSnapshot, 0);
 
-    assertEq(
-      rewardsDistributionFacet
-        .treasureByBeneficiary(operator)
-        .unclaimedRewardSnapshot,
-      0
-    );
-    assertEq(
-      rewardsDistributionFacet
-        .treasureByBeneficiary(OPERATOR)
-        .unclaimedRewardSnapshot,
-      0
-    );
+    assertEq(rewardsDistributionFacet.treasureByBeneficiary(operator).unclaimedRewardSnapshot, 0);
+    assertEq(rewardsDistributionFacet.treasureByBeneficiary(OPERATOR).unclaimedRewardSnapshot, 0);
   }
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -175,7 +157,7 @@ contract SpaceDelegationTest is
     uint256 rewardAmount,
     uint256 timeLapse
   ) public {
-    commissionRate = bound(commissionRate, 1, 10000);
+    commissionRate = bound(commissionRate, 1, 10_000);
     address space = test_fuzz_addSpaceDelegation(operator, commissionRate);
 
     rewardAmount = boundReward(rewardAmount);
@@ -199,9 +181,7 @@ contract SpaceDelegationTest is
     vm.prank(deployer);
     spaceDelegationFacet.removeSpaceDelegation(space);
 
-    address afterRemovalOperator = spaceDelegationFacet.getSpaceDelegation(
-      space
-    );
+    address afterRemovalOperator = spaceDelegationFacet.getSpaceDelegation(space);
     assertEq(afterRemovalOperator, address(0), "Space removal failed");
 
     verifySweep(space, operator, amount, commissionRate, timeLapse);
@@ -211,12 +191,13 @@ contract SpaceDelegationTest is
   /*                           GETTERS                          */
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-  function test_fuzz_getSpaceDelegationsByOperator(address operator) public {
+  function test_fuzz_getSpaceDelegationsByOperator(
+    address operator
+  ) public {
     address space1 = test_fuzz_addSpaceDelegation(operator, 0);
     address space2 = test_fuzz_addSpaceDelegation(operator, 0);
 
-    address[] memory spaces = spaceDelegationFacet
-      .getSpaceDelegationsByOperator(operator);
+    address[] memory spaces = spaceDelegationFacet.getSpaceDelegationsByOperator(operator);
 
     assertEq(spaces.length, 2);
     assertEq(spaces[0], space1);
@@ -228,13 +209,13 @@ contract SpaceDelegationTest is
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
   function test_setRiverToken_revertIf_notOwner() public {
-    vm.expectRevert(
-      abi.encodeWithSelector(Ownable__NotOwner.selector, address(this))
-    );
+    vm.expectRevert(abi.encodeWithSelector(Ownable__NotOwner.selector, address(this)));
     spaceDelegationFacet.setRiverToken(address(0));
   }
 
-  function test_fuzz_setRiverToken(address newToken) public {
+  function test_fuzz_setRiverToken(
+    address newToken
+  ) public {
     vm.assume(newToken != address(0));
 
     vm.expectEmit(address(spaceDelegationFacet));
@@ -248,13 +229,13 @@ contract SpaceDelegationTest is
   }
 
   function test_fuzz_setSpaceFactory_revertIf_notOwner() public {
-    vm.expectRevert(
-      abi.encodeWithSelector(Ownable__NotOwner.selector, address(this))
-    );
+    vm.expectRevert(abi.encodeWithSelector(Ownable__NotOwner.selector, address(this)));
     spaceDelegationFacet.setSpaceFactory(address(0));
   }
 
-  function test_fuzz_setSpaceFactory(address newSpaceFactory) public {
+  function test_fuzz_setSpaceFactory(
+    address newSpaceFactory
+  ) public {
     vm.assume(newSpaceFactory != address(0));
 
     vm.prank(deployer);

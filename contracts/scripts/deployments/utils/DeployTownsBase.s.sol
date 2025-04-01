@@ -25,16 +25,13 @@ contract DeployTownsBase is Deployer {
     return "utils/towns";
   }
 
-  function __deploy(address deployer) public override returns (address) {
+  function __deploy(
+    address deployer
+  ) public override returns (address) {
     (implSalt, proxySalt) = _getSalts();
 
     address vault = _getVault(deployer);
-    address proxy = _proxyAddress(
-      _implAddress(implSalt),
-      proxySalt,
-      l1Token,
-      vault
-    );
+    address proxy = _proxyAddress(_implAddress(implSalt), proxySalt, l1Token, vault);
 
     vm.startBroadcast(deployer);
     if (isAnvil()) {
@@ -47,12 +44,11 @@ contract DeployTownsBase is Deployer {
     return proxy;
   }
 
-  function _implAddress(bytes32 salt) internal view returns (address impl) {
+  function _implAddress(
+    bytes32 salt
+  ) internal view returns (address impl) {
     if (isAnvil()) {
-      impl = Create2Utils.computeCreate2Address(
-        salt,
-        type(MockTowns).creationCode
-      );
+      impl = Create2Utils.computeCreate2Address(salt, type(MockTowns).creationCode);
     } else {
       impl = Create2Utils.computeCreate2Address(salt, type(Towns).creationCode);
     }
@@ -66,13 +62,7 @@ contract DeployTownsBase is Deployer {
   ) internal pure returns (address proxy) {
     bytes memory byteCode = abi.encodePacked(
       type(ERC1967Proxy).creationCode,
-      abi.encode(
-        impl,
-        abi.encodePacked(
-          Towns.initialize.selector,
-          abi.encode(remoteToken, owner)
-        )
-      )
+      abi.encode(impl, abi.encodePacked(Towns.initialize.selector, abi.encode(remoteToken, owner)))
     );
 
     proxy = Create2Utils.computeCreate2Address(salt, byteCode);
@@ -83,7 +73,9 @@ contract DeployTownsBase is Deployer {
     proxySalt = proxy;
   }
 
-  function _getVault(address deployer) internal view returns (address) {
+  function _getVault(
+    address deployer
+  ) internal view returns (address) {
     if (isAnvil()) {
       return deployer;
     } else {

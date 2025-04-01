@@ -39,7 +39,9 @@ contract DeployCreateSpace is FacetHelper, Deployer {
     return "facets/createSpaceFacet";
   }
 
-  function __deploy(address deployer) public override returns (address) {
+  function __deploy(
+    address deployer
+  ) public override returns (address) {
     vm.startBroadcast(deployer);
     CreateSpaceFacet facet = new CreateSpaceFacet();
     vm.stopBroadcast();

@@ -2,7 +2,10 @@
 pragma solidity ^0.8.23;
 
 import "forge-std/Test.sol";
-import {PolymarketEntitlement, IGnosisSafeProxyFactory} from "contracts/src/spaces/entitlements/PolymarketEntitlement.sol";
+import {
+  PolymarketEntitlement,
+  IGnosisSafeProxyFactory
+} from "contracts/src/spaces/entitlements/PolymarketEntitlement.sol";
 import {IERC1155} from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 
 contract PolyMarketEntitlementTest is Test {
@@ -23,13 +26,9 @@ contract PolyMarketEntitlementTest is Test {
     proxy2 = address(0x2002);
 
     // Set the proxyFactory and mainnet token contract addresses
-    proxyFactory = IGnosisSafeProxyFactory(
-      address(0xaacFeEa03eb1561C4e67d661e40682Bd20E3541b)
-    );
+    proxyFactory = IGnosisSafeProxyFactory(address(0xaacFeEa03eb1561C4e67d661e40682Bd20E3541b));
 
-    tokenContract = IERC1155(
-      address(0x4D97DCd97eC945f40cF65F87097ACe5EA0476045)
-    );
+    tokenContract = IERC1155(address(0x4D97DCd97eC945f40cF65F87097ACe5EA0476045));
 
     // Mock the proxyFactory and tokenContract for testing
     entitlement = new PolymarketEntitlement();
@@ -122,10 +121,7 @@ contract PolyMarketEntitlementTest is Test {
 
     // Assert
     console.log("Entitled result:", entitled);
-    assertTrue(
-      entitled,
-      "Users should be entitled with sufficient aggregate balance"
-    );
+    assertTrue(entitled, "Users should be entitled with sufficient aggregate balance");
   }
 
   function testSingleUserWithInsufficientBalance() public {
@@ -163,9 +159,6 @@ contract PolyMarketEntitlementTest is Test {
 
     // Assert
     console.log("Entitled result:", entitled);
-    assertFalse(
-      entitled,
-      "User should not be entitled with insufficient balance"
-    );
+    assertFalse(entitled, "User should not be entitled with insufficient balance");
   }
 }

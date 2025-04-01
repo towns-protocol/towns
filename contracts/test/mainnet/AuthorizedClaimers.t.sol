@@ -7,11 +7,11 @@ import {IAuthorizedClaimersBase} from "contracts/src/tokens/mainnet/claimer/IAut
 //contracts
 import {TestUtils} from "contracts/test/utils/TestUtils.sol";
 import {AuthorizedClaimers} from "contracts/src/tokens/mainnet/claimer/AuthorizedClaimers.sol";
-import {DeployAuthorizedClaimers} from "contracts/scripts/deployments/utils/DeployAuthorizedClaimers.s.sol";
+import {DeployAuthorizedClaimers} from
+  "contracts/scripts/deployments/utils/DeployAuthorizedClaimers.s.sol";
 
 contract AuthorizedClaimersTest is TestUtils, IAuthorizedClaimersBase {
-  DeployAuthorizedClaimers internal deployAuthorizedClaimers =
-    new DeployAuthorizedClaimers();
+  DeployAuthorizedClaimers internal deployAuthorizedClaimers = new DeployAuthorizedClaimers();
   AuthorizedClaimers internal authorizedClaimers;
 
   bytes32 private constant _AUTHORIZE_TYPEHASH =
@@ -24,27 +24,18 @@ contract AuthorizedClaimersTest is TestUtils, IAuthorizedClaimersBase {
   function test_fuzz_authorizeClaimer(address signer, address claimer) public {
     vm.prank(signer);
     authorizedClaimers.authorizeClaimer(claimer);
-    assertEq(
-      authorizedClaimers.getAuthorizedClaimer(signer),
-      claimer,
-      "authorized claimer not set"
-    );
+    assertEq(authorizedClaimers.getAuthorizedClaimer(signer), claimer, "authorized claimer not set");
   }
 
   function test_authorizeClaimerChanged() public {
     test_fuzz_authorizeClaimerChanged(address(1), address(3));
   }
 
-  function test_fuzz_authorizeClaimerChanged(
-    address claimer,
-    address newClaimer
-  ) public {
+  function test_fuzz_authorizeClaimerChanged(address claimer, address newClaimer) public {
     vm.assume(claimer != newClaimer);
     authorizedClaimers.authorizeClaimer(claimer);
     assertEq(
-      authorizedClaimers.getAuthorizedClaimer(address(this)),
-      claimer,
-      "authorized claimer not set"
+      authorizedClaimers.getAuthorizedClaimer(address(this)), claimer, "authorized claimer not set"
     );
     authorizedClaimers.authorizeClaimer(newClaimer);
     assertEq(
@@ -58,7 +49,9 @@ contract AuthorizedClaimersTest is TestUtils, IAuthorizedClaimersBase {
     test_fuzz_removeAuthorizedClaimer(address(1));
   }
 
-  function test_fuzz_removeAuthorizedClaimer(address claimer) public {
+  function test_fuzz_removeAuthorizedClaimer(
+    address claimer
+  ) public {
     authorizedClaimers.authorizeClaimer(claimer);
     authorizedClaimers.removeAuthorizedClaimer();
     assertEq(
@@ -81,9 +74,7 @@ contract AuthorizedClaimersTest is TestUtils, IAuthorizedClaimersBase {
     address signer
   ) public view {
     assertEq(
-      authorizedClaimers.getAuthorizedClaimer(signer),
-      address(0),
-      "authorized claimer not set"
+      authorizedClaimers.getAuthorizedClaimer(signer), address(0), "authorized claimer not set"
     );
   }
 
@@ -98,48 +89,23 @@ contract AuthorizedClaimersTest is TestUtils, IAuthorizedClaimersBase {
     authorizedClaimers.authorizeClaimer(claimer);
 
     assertEq(
-      authorizedClaimers.getAuthorizedClaimer(address(this)),
-      claimer,
-      "authorized claimer not set"
+      authorizedClaimers.getAuthorizedClaimer(address(this)), claimer, "authorized claimer not set"
     );
   }
 
-  function test_fuzz_authorizeClaimerBySig(
-    uint256 privateKey,
-    address claimer
-  ) public {
-    privateKey = bound(
-      privateKey,
-      1,
-      0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364140
-    );
+  function test_fuzz_authorizeClaimerBySig(uint256 privateKey, address claimer) public {
+    privateKey =
+      bound(privateKey, 1, 0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364140);
     address owner = vm.addr(privateKey);
 
     uint256 deadline = 0;
     uint256 nonce = authorizedClaimers.nonces(owner);
 
-    (uint8 v, bytes32 r, bytes32 s) = _signAuthorizedClaimer(
-      privateKey,
-      owner,
-      claimer,
-      deadline
-    );
+    (uint8 v, bytes32 r, bytes32 s) = _signAuthorizedClaimer(privateKey, owner, claimer, deadline);
 
-    authorizedClaimers.authorizeClaimerBySig(
-      owner,
-      claimer,
-      nonce,
-      deadline,
-      v,
-      r,
-      s
-    );
+    authorizedClaimers.authorizeClaimerBySig(owner, claimer, nonce, deadline, v, r, s);
 
-    assertEq(
-      authorizedClaimers.getAuthorizedClaimer(owner),
-      claimer,
-      "authorized claimer not set"
-    );
+    assertEq(authorizedClaimers.getAuthorizedClaimer(owner), claimer, "authorized claimer not set");
   }
 
   // =============================================================
@@ -154,13 +120,9 @@ contract AuthorizedClaimersTest is TestUtils, IAuthorizedClaimersBase {
     bytes32 domainSeparator = authorizedClaimers.DOMAIN_SEPARATOR();
     uint256 nonce = authorizedClaimers.nonces(signer);
 
-    bytes32 structHash = keccak256(
-      abi.encode(_AUTHORIZE_TYPEHASH, signer, claimer, nonce, expiry)
-    );
+    bytes32 structHash = keccak256(abi.encode(_AUTHORIZE_TYPEHASH, signer, claimer, nonce, expiry));
 
-    bytes32 typeDataHash = keccak256(
-      abi.encodePacked("\x19\x01", domainSeparator, structHash)
-    );
+    bytes32 typeDataHash = keccak256(abi.encodePacked("\x19\x01", domainSeparator, structHash));
 
     (v, r, s) = vm.sign(privateKey, typeDataHash);
   }

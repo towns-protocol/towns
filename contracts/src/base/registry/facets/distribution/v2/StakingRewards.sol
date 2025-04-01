@@ -10,14 +10,15 @@ import {CustomRevert} from "contracts/src/utils/libraries/CustomRevert.sol";
 
 // contracts
 
-/// @notice Staking rewards library that encapsulates the minimal logic for staking and rewards distribution with
+/// @notice Staking rewards library that encapsulates the minimal logic for staking and rewards
+/// distribution with
 /// delegation commission
 /// @dev The library does not handle the transfer of stakeToken and rewardToken.
 /// @dev The library is designed to be compatible with ERC-7201.
 /// @dev The data structures should be modified with caution.
 library StakingRewards {
   uint256 internal constant SCALE_FACTOR = 1e36;
-  uint256 internal constant MAX_COMMISSION_RATE = 10000;
+  uint256 internal constant MAX_COMMISSION_RATE = 10_000;
 
   /// @notice The deposit information
   /// @param amount The amount of stakeToken that is staked
@@ -37,7 +38,8 @@ library StakingRewards {
 
   /// @notice The account information for a beneficiary
   /// @param earningPower The amount of stakeToken that is yielding rewards
-  /// @param rewardPerTokenAccumulated The scaled amount of rewardToken that has been accumulated per staked token
+  /// @param rewardPerTokenAccumulated The scaled amount of rewardToken that has been accumulated
+  /// per staked token
   /// @param unclaimedRewardSnapshot The snapshot of the unclaimed reward scaled
   struct Treasure {
     uint96 earningPower;
@@ -53,9 +55,11 @@ library StakingRewards {
   /// @param rewardEndTime The time at which the reward distribution ends
   /// @param lastUpdateTime The time at which the reward was last updated
   /// @param rewardRate The scaled rate of reward distributed per second
-  /// @param rewardPerTokenAccumulated The scaled amount of rewardToken that has been accumulated per staked token
+  /// @param rewardPerTokenAccumulated The scaled amount of rewardToken that has been accumulated
+  /// per staked token
   /// @param nextDepositId The next deposit ID that will be used
-  /// @param stakedByDepositor The mapping of the amount of stakeToken that is staked by a particular depositor
+  /// @param stakedByDepositor The mapping of the amount of stakeToken that is staked by a
+  /// particular depositor
   /// @param treasureByBeneficiary The mapping of the account information for a beneficiary
   /// @param depositById The mapping of the information for a deposit
   struct Layout {
@@ -101,12 +105,7 @@ library StakingRewards {
       uint256 lastUpdateTime,
       uint256 rewardRate,
       uint256 rewardPerTokenAccumulated
-    ) = (
-        self.totalStaked,
-        self.lastUpdateTime,
-        self.rewardRate,
-        self.rewardPerTokenAccumulated
-      );
+    ) = (self.totalStaked, self.lastUpdateTime, self.rewardRate, self.rewardPerTokenAccumulated);
     if (totalStaked == 0) return rewardPerTokenAccumulated;
 
     uint256 elapsedTime;
@@ -114,8 +113,7 @@ library StakingRewards {
       elapsedTime = lastTimeRewardDistributed(self) - lastUpdateTime;
     }
     return
-      rewardPerTokenAccumulated +
-      FixedPointMathLib.fullMulDiv(rewardRate, elapsedTime, totalStaked);
+      rewardPerTokenAccumulated + FixedPointMathLib.fullMulDiv(rewardRate, elapsedTime, totalStaked);
   }
 
   function currentRewardScaled(
@@ -125,12 +123,10 @@ library StakingRewards {
     uint256 rewardPerTokenGrowth;
     unchecked {
       rewardPerTokenGrowth =
-        currentRewardPerTokenAccumulated(self) -
-        treasure.rewardPerTokenAccumulated;
+        currentRewardPerTokenAccumulated(self) - treasure.rewardPerTokenAccumulated;
     }
     return
-      treasure.unclaimedRewardSnapshot +
-      (uint256(treasure.earningPower) * rewardPerTokenGrowth);
+      treasure.unclaimedRewardSnapshot + (uint256(treasure.earningPower) * rewardPerTokenGrowth);
   }
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -138,16 +134,15 @@ library StakingRewards {
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
   /// @dev Must be called before any storage updates.
-  function updateGlobalReward(Layout storage self) internal {
+  function updateGlobalReward(
+    Layout storage self
+  ) internal {
     self.rewardPerTokenAccumulated = currentRewardPerTokenAccumulated(self);
     self.lastUpdateTime = lastTimeRewardDistributed(self);
   }
 
   /// @dev Must be called after `updateGlobalReward` and before changing the earning power.
-  function updateReward(
-    Layout storage self,
-    Treasure storage treasure
-  ) internal {
+  function updateReward(Layout storage self, Treasure storage treasure) internal {
     treasure.unclaimedRewardSnapshot = currentRewardScaled(self, treasure);
     treasure.rewardPerTokenAccumulated = self.rewardPerTokenAccumulated;
   }
@@ -171,21 +166,9 @@ library StakingRewards {
     Deposit storage deposit = self.depositById[depositId];
 
     // batch storage writes
-    (deposit.owner, deposit.beneficiary, deposit.delegatee) = (
-      owner,
-      beneficiary,
-      delegatee
-    );
+    (deposit.owner, deposit.beneficiary, deposit.delegatee) = (owner, beneficiary, delegatee);
 
-    increaseStake(
-      self,
-      deposit,
-      owner,
-      amount,
-      delegatee,
-      beneficiary,
-      commissionRate
-    );
+    increaseStake(self, deposit, owner, amount, delegatee, beneficiary, commissionRate);
   }
 
   function increaseStake(
@@ -199,9 +182,7 @@ library StakingRewards {
   ) internal {
     updateGlobalReward(self);
 
-    Treasure storage beneficiaryTreasure = self.treasureByBeneficiary[
-      beneficiary
-    ];
+    Treasure storage beneficiaryTreasure = self.treasureByBeneficiary[beneficiary];
     updateReward(self, beneficiaryTreasure);
 
     self.totalStaked += amount;
@@ -211,14 +192,7 @@ library StakingRewards {
       self.stakedByDepositor[owner] += amount;
       deposit.amount += amount;
     }
-    _increaseEarningPower(
-      self,
-      deposit,
-      beneficiaryTreasure,
-      amount,
-      delegatee,
-      commissionRate
-    );
+    _increaseEarningPower(self, deposit, beneficiaryTreasure, amount, delegatee, commissionRate);
   }
 
   function redelegate(
@@ -229,20 +203,13 @@ library StakingRewards {
   ) internal {
     updateGlobalReward(self);
 
-    Treasure storage beneficiaryTreasure = self.treasureByBeneficiary[
-      deposit.beneficiary
-    ];
+    Treasure storage beneficiaryTreasure = self.treasureByBeneficiary[deposit.beneficiary];
     updateReward(self, beneficiaryTreasure);
 
     _decreaseEarningPower(self, deposit, beneficiaryTreasure);
 
     _increaseEarningPower(
-      self,
-      deposit,
-      beneficiaryTreasure,
-      deposit.amount,
-      newDelegatee,
-      commissionRate
+      self, deposit, beneficiaryTreasure, deposit.amount, newDelegatee, commissionRate
     );
 
     deposit.delegatee = newDelegatee;
@@ -260,11 +227,8 @@ library StakingRewards {
 
     updateGlobalReward(self);
 
-    (uint96 amount, address oldBeneficiary, address delegatee) = (
-      deposit.amount,
-      deposit.beneficiary,
-      deposit.delegatee
-    );
+    (uint96 amount, address oldBeneficiary, address delegatee) =
+      (deposit.amount, deposit.beneficiary, deposit.delegatee);
     deposit.beneficiary = newBeneficiary;
 
     Treasure storage oldTreasure = self.treasureByBeneficiary[oldBeneficiary];
@@ -275,25 +239,13 @@ library StakingRewards {
     Treasure storage newTreasure = self.treasureByBeneficiary[newBeneficiary];
     updateReward(self, newTreasure);
 
-    _increaseEarningPower(
-      self,
-      deposit,
-      newTreasure,
-      amount,
-      delegatee,
-      commissionRate
-    );
+    _increaseEarningPower(self, deposit, newTreasure, amount, delegatee, commissionRate);
   }
 
-  function withdraw(
-    Layout storage self,
-    Deposit storage deposit
-  ) internal returns (uint96) {
+  function withdraw(Layout storage self, Deposit storage deposit) internal returns (uint96) {
     updateGlobalReward(self);
 
-    Treasure storage beneficiaryTreasure = self.treasureByBeneficiary[
-      deposit.beneficiary
-    ];
+    Treasure storage beneficiaryTreasure = self.treasureByBeneficiary[deposit.beneficiary];
     updateReward(self, beneficiaryTreasure);
 
     // cache storage reads
@@ -307,18 +259,11 @@ library StakingRewards {
     }
     _decreaseEarningPower(self, deposit, beneficiaryTreasure);
 
-    (deposit.amount, deposit.delegatee, deposit.pendingWithdrawal) = (
-      0,
-      address(0),
-      amount
-    );
+    (deposit.amount, deposit.delegatee, deposit.pendingWithdrawal) = (0, address(0), amount);
     return amount;
   }
 
-  function claimReward(
-    Layout storage self,
-    address beneficiary
-  ) internal returns (uint256 reward) {
+  function claimReward(Layout storage self, address beneficiary) internal returns (uint256 reward) {
     updateGlobalReward(self);
 
     Treasure storage treasure = self.treasureByBeneficiary[beneficiary];
@@ -336,43 +281,29 @@ library StakingRewards {
     self.rewardPerTokenAccumulated = currentRewardPerTokenAccumulated(self);
 
     // cache storage reads
-    (uint256 rewardDuration, uint256 rewardEndTime) = (
-      self.rewardDuration,
-      self.rewardEndTime
-    );
+    (uint256 rewardDuration, uint256 rewardEndTime) = (self.rewardDuration, self.rewardEndTime);
 
-    uint256 rewardRate = FixedPointMathLib.fullMulDiv(
-      reward,
-      SCALE_FACTOR,
-      rewardDuration
-    );
+    uint256 rewardRate = FixedPointMathLib.fullMulDiv(reward, SCALE_FACTOR, rewardDuration);
     // if the reward period hasn't ended, add the remaining reward to the reward rate
     if (rewardEndTime > block.timestamp) {
       uint256 remainingTime;
       unchecked {
         remainingTime = rewardEndTime - block.timestamp;
       }
-      rewardRate += FixedPointMathLib.fullMulDiv(
-        self.rewardRate,
-        remainingTime,
-        rewardDuration
-      );
+      rewardRate += FixedPointMathLib.fullMulDiv(self.rewardRate, remainingTime, rewardDuration);
     }
 
     // batch storage writes
-    (self.rewardEndTime, self.lastUpdateTime, self.rewardRate) = (
-      block.timestamp + rewardDuration,
-      block.timestamp,
-      rewardRate
-    );
+    (self.rewardEndTime, self.lastUpdateTime, self.rewardRate) =
+      (block.timestamp + rewardDuration, block.timestamp, rewardRate);
 
     if (rewardRate < SCALE_FACTOR) {
       CustomRevert.revertWith(StakingRewards__InvalidRewardRate.selector);
     }
 
     if (
-      FixedPointMathLib.fullMulDiv(rewardRate, rewardDuration, SCALE_FACTOR) >
-      IERC20(self.rewardToken).balanceOf(address(this))
+      FixedPointMathLib.fullMulDiv(rewardRate, rewardDuration, SCALE_FACTOR)
+        > IERC20(self.rewardToken).balanceOf(address(this))
     ) {
       CustomRevert.revertWith(StakingRewards__InsufficientReward.selector);
     }
@@ -382,7 +313,8 @@ library StakingRewards {
   /*                         ACCOUNTING                         */
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-  /// @dev Increases the earning power of the beneficiary and the delegatee, taking into account the commission rate
+  /// @dev Increases the earning power of the beneficiary and the delegatee, taking into account the
+  /// commission rate
   /// @dev Must be called after `updateReward(self, beneficiaryTreasure)`
   function _increaseEarningPower(
     Layout storage self,
@@ -396,22 +328,20 @@ library StakingRewards {
       if (commissionRate == 0) {
         beneficiaryTreasure.earningPower += amount;
       } else {
-        uint96 commissionEarningPower = uint96(
-          (uint256(amount) * commissionRate) / MAX_COMMISSION_RATE
-        );
+        uint96 commissionEarningPower =
+          uint96((uint256(amount) * commissionRate) / MAX_COMMISSION_RATE);
         deposit.commissionEarningPower += commissionEarningPower;
         beneficiaryTreasure.earningPower += amount - commissionEarningPower;
 
-        Treasure storage delegateeTreasure = self.treasureByBeneficiary[
-          delegatee
-        ];
+        Treasure storage delegateeTreasure = self.treasureByBeneficiary[delegatee];
         updateReward(self, delegateeTreasure);
         delegateeTreasure.earningPower += commissionEarningPower;
       }
     }
   }
 
-  /// @dev Decreases the earning power of the beneficiary and the delegatee, taking into account the commission rate
+  /// @dev Decreases the earning power of the beneficiary and the delegatee, taking into account the
+  /// commission rate
   /// @dev Must be called after `updateReward(self, beneficiaryTreasure)`
   function _decreaseEarningPower(
     Layout storage self,
@@ -419,20 +349,15 @@ library StakingRewards {
     Treasure storage beneficiaryTreasure
   ) private {
     unchecked {
-      (uint96 amount, uint96 commissionEarningPower, address delegatee) = (
-        deposit.amount,
-        deposit.commissionEarningPower,
-        deposit.delegatee
-      );
+      (uint96 amount, uint96 commissionEarningPower, address delegatee) =
+        (deposit.amount, deposit.commissionEarningPower, deposit.delegatee);
       if (commissionEarningPower == 0) {
         beneficiaryTreasure.earningPower -= amount;
       } else {
         deposit.commissionEarningPower = 0;
         beneficiaryTreasure.earningPower -= amount - commissionEarningPower;
 
-        Treasure storage delegateeTreasure = self.treasureByBeneficiary[
-          delegatee
-        ];
+        Treasure storage delegateeTreasure = self.treasureByBeneficiary[delegatee];
         updateReward(self, delegateeTreasure);
         delegateeTreasure.earningPower -= commissionEarningPower;
       }

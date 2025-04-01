@@ -9,11 +9,7 @@ import {IEntitlementBase} from "contracts/src/spaces/entitlements/IEntitlement.s
 import {IRuleEntitlementBase} from "contracts/src/spaces/entitlements/rule/IRuleEntitlement.sol";
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
-contract RuleEntitlementTest is
-  TestUtils,
-  IEntitlementBase,
-  IRuleEntitlementBase
-{
+contract RuleEntitlementTest is TestUtils, IEntitlementBase, IRuleEntitlementBase {
   uint256 internal constant ENTITLEMENTS_SLOT = 0;
 
   RuleEntitlement internal ruleEntitlement;
@@ -27,10 +23,7 @@ contract RuleEntitlementTest is
     vm.startPrank(deployer);
     RuleEntitlement implementation = new RuleEntitlement();
     entitlement = address(
-      new ERC1967Proxy(
-        address(implementation),
-        abi.encodeCall(RuleEntitlement.initialize, (space))
-      )
+      new ERC1967Proxy(address(implementation), abi.encodeCall(RuleEntitlement.initialize, (space)))
     );
     vm.stopPrank();
 
@@ -53,20 +46,11 @@ contract RuleEntitlementTest is
     LogicalOperation[] memory logicalOperations = new LogicalOperation[](1);
 
     // for the first check operation, we are checking ERC20 balance of 100 on chain 31337
-    checkOperations[0] = CheckOperation(
-      CheckOperationType.ERC20,
-      chainId,
-      erc20Contract,
-      threshold
-    );
+    checkOperations[0] = CheckOperation(CheckOperationType.ERC20, chainId, erc20Contract, threshold);
 
     // for the second check operation, we are checking ERC721 balance of 100 on chain 31337
-    checkOperations[1] = CheckOperation(
-      CheckOperationType.ERC721,
-      chainId,
-      erc721Contract,
-      threshold
-    );
+    checkOperations[1] =
+      CheckOperation(CheckOperationType.ERC721, chainId, erc721Contract, threshold);
 
     // we are combining the two check operations with an AND operation so both must pass
     logicalOperations[0] = LogicalOperation(LogicalOperationType.AND, 0, 1);
@@ -81,11 +65,7 @@ contract RuleEntitlementTest is
     operations[2] = Operation(CombinedOperationType.LOGICAL, 0);
 
     // we are combining all the operations into a rule data struct
-    RuleData memory ruleData = RuleData(
-      operations,
-      checkOperations,
-      logicalOperations
-    );
+    RuleData memory ruleData = RuleData(operations, checkOperations, logicalOperations);
 
     encodedData = abi.encode(ruleData);
 
@@ -104,18 +84,12 @@ contract RuleEntitlementTest is
     vm.prank(space);
     ruleEntitlement.removeEntitlement(roleId);
 
-    RuleData memory emptyRuleData = RuleData(
-      new Operation[](0),
-      new CheckOperation[](0),
-      new LogicalOperation[](0)
-    );
+    RuleData memory emptyRuleData =
+      RuleData(new Operation[](0), new CheckOperation[](0), new LogicalOperation[](0));
     RuleData memory ruleData = ruleEntitlement.getRuleData(roleId);
     assertEq(abi.encode(ruleData), abi.encode(emptyRuleData));
 
-    assertEq(
-      ruleEntitlement.getEntitlementDataByRoleId(roleId),
-      abi.encode(emptyRuleData)
-    );
+    assertEq(ruleEntitlement.getEntitlementDataByRoleId(roleId), abi.encode(emptyRuleData));
 
     bytes32 slot = getMappingValueSlot(roleId, ENTITLEMENTS_SLOT);
     bytes32 grantedBy = vm.load(entitlement, slot);
@@ -142,18 +116,8 @@ contract RuleEntitlementTest is
     Operation[] memory operations = new Operation[](4);
     CheckOperation[] memory checkOperations = new CheckOperation[](2);
     LogicalOperation[] memory logicalOperations = new LogicalOperation[](2);
-    checkOperations[0] = CheckOperation(
-      CheckOperationType.ERC20,
-      31337,
-      address(0x12),
-      100
-    );
-    checkOperations[1] = CheckOperation(
-      CheckOperationType.ERC721,
-      31337,
-      address(0x21),
-      100
-    );
+    checkOperations[0] = CheckOperation(CheckOperationType.ERC20, 31_337, address(0x12), 100);
+    checkOperations[1] = CheckOperation(CheckOperationType.ERC721, 31_337, address(0x21), 100);
     // This operation is referring to a parent so will revert
     logicalOperations[0] = LogicalOperation(LogicalOperationType.AND, 0, 3);
     logicalOperations[1] = LogicalOperation(LogicalOperationType.AND, 0, 1);
@@ -162,24 +126,16 @@ contract RuleEntitlementTest is
     operations[2] = Operation(CombinedOperationType.LOGICAL, 0);
     operations[3] = Operation(CombinedOperationType.LOGICAL, 1);
 
-    RuleData memory ruleData = RuleData(
-      operations,
-      checkOperations,
-      logicalOperations
-    );
+    RuleData memory ruleData = RuleData(operations, checkOperations, logicalOperations);
 
     bytes memory encodedData = abi.encode(ruleData);
 
-    vm.expectRevert(
-      abi.encodeWithSelector(InvalidRightOperationIndex.selector, 3, 2)
-    );
+    vm.expectRevert(abi.encodeWithSelector(InvalidRightOperationIndex.selector, 3, 2));
 
     vm.prank(space);
     ruleEntitlement.setEntitlement(0, encodedData);
 
-    Operation[] memory ruleOperations = ruleEntitlement
-      .getRuleData(0)
-      .operations;
+    Operation[] memory ruleOperations = ruleEntitlement.getRuleData(0).operations;
     assertEq(ruleOperations.length, 0);
   }
 }

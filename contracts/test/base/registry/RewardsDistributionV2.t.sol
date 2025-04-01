@@ -13,23 +13,26 @@ import {stdError} from "forge-std/StdError.sol";
 import {FixedPointMathLib} from "solady/utils/FixedPointMathLib.sol";
 import {SafeTransferLib} from "solady/utils/SafeTransferLib.sol";
 import {StakingRewards} from "contracts/src/base/registry/facets/distribution/v2/StakingRewards.sol";
-import {RewardsDistributionStorage} from "contracts/src/base/registry/facets/distribution/v2/RewardsDistributionStorage.sol";
+import {RewardsDistributionStorage} from
+  "contracts/src/base/registry/facets/distribution/v2/RewardsDistributionStorage.sol";
 
 // contracts
-import {DeployRewardsDistributionV2} from "contracts/scripts/deployments/facets/DeployRewardsDistributionV2.s.sol";
+import {DeployRewardsDistributionV2} from
+  "contracts/scripts/deployments/facets/DeployRewardsDistributionV2.s.sol";
 import {Towns} from "contracts/src/tokens/towns/base/Towns.sol";
-import {DelegationProxy} from "contracts/src/base/registry/facets/distribution/v2/DelegationProxy.sol";
+import {DelegationProxy} from
+  "contracts/src/base/registry/facets/distribution/v2/DelegationProxy.sol";
 import {UpgradeableBeaconBase} from "contracts/src/diamond/facets/beacon/UpgradeableBeacon.sol";
-import {RewardsDistribution} from "contracts/src/base/registry/facets/distribution/v2/RewardsDistribution.sol";
+import {RewardsDistribution} from
+  "contracts/src/base/registry/facets/distribution/v2/RewardsDistribution.sol";
 import {BaseRegistryTest} from "./BaseRegistry.t.sol";
 
 contract RewardsDistributionV2Test is BaseRegistryTest, IOwnableBase, IDiamond {
   using FixedPointMathLib for uint256;
 
-  bytes32 internal constant STAKE_TYPEHASH =
-    keccak256(
-      "Stake(uint96 amount,address delegatee,address beneficiary,address owner,uint256 nonce,uint256 deadline)"
-    );
+  bytes32 internal constant STAKE_TYPEHASH = keccak256(
+    "Stake(uint96 amount,address delegatee,address beneficiary,address owner,uint256 nonce,uint256 deadline)"
+  );
 
   DeployRewardsDistributionV2 internal distributionV2Helper;
 
@@ -40,10 +43,7 @@ contract RewardsDistributionV2Test is BaseRegistryTest, IOwnableBase, IDiamond {
 
   function test_storageSlot() public pure {
     bytes32 slot = keccak256(
-      abi.encode(
-        uint256(keccak256("facets.registry.rewards.distribution.v2.storage")) -
-          1
-      )
+      abi.encode(uint256(keccak256("facets.registry.rewards.distribution.v2.storage")) - 1)
     ) & ~bytes32(uint256(0xff));
     assertEq(slot, RewardsDistributionStorage.STORAGE_SLOT, "slot");
   }
@@ -59,10 +59,7 @@ contract RewardsDistributionV2Test is BaseRegistryTest, IOwnableBase, IDiamond {
     rewardsDistributionFacet.setRewardNotifier(caller, true);
   }
 
-  function test_fuzz_setRewardNotifier(
-    address notifier,
-    bool isRewardNotifier
-  ) public {
+  function test_fuzz_setRewardNotifier(address notifier, bool isRewardNotifier) public {
     vm.expectEmit(address(rewardsDistributionFacet));
     emit RewardNotifierSet(notifier, isRewardNotifier);
 
@@ -77,7 +74,9 @@ contract RewardsDistributionV2Test is BaseRegistryTest, IOwnableBase, IDiamond {
     rewardsDistributionFacet.setPeriodRewardAmount(1);
   }
 
-  function test_fuzz_setPeriodRewardAmount(uint256 reward) public {
+  function test_fuzz_setPeriodRewardAmount(
+    uint256 reward
+  ) public {
     vm.expectEmit(address(rewardsDistributionFacet));
     emit PeriodRewardAmountSet(reward);
 
@@ -94,17 +93,10 @@ contract RewardsDistributionV2Test is BaseRegistryTest, IOwnableBase, IDiamond {
     address newTowns = deployTokenBase.deploy(deployer);
 
     address implementation = address(new RewardsDistribution());
-    FacetCut memory cut = distributionV2Helper.makeCut(
-      implementation,
-      FacetCutAction.Replace
-    );
+    FacetCut memory cut = distributionV2Helper.makeCut(implementation, FacetCutAction.Replace);
     FacetCut[] memory cuts = new FacetCut[](1);
     cuts[0] = cut;
-    bytes memory initData = distributionV2Helper.makeInitData(
-      newTowns,
-      newTowns,
-      14 days
-    );
+    bytes memory initData = distributionV2Helper.makeInitData(newTowns, newTowns, 14 days);
 
     vm.prank(deployer);
     IDiamondCut(baseRegistry).diamondCut(cuts, implementation, initData);
@@ -114,10 +106,7 @@ contract RewardsDistributionV2Test is BaseRegistryTest, IOwnableBase, IDiamond {
     assertEq(DelegationProxy(proxy).factory(), baseRegistry);
     assertEq(DelegationProxy(proxy).stakeToken(), newTowns);
     assertEq(IVotes(newTowns).delegates(proxy), OPERATOR);
-    assertEq(
-      IERC20(newTowns).allowance(proxy, baseRegistry),
-      type(uint256).max
-    );
+    assertEq(IERC20(newTowns).allowance(proxy, baseRegistry), type(uint256).max);
   }
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -131,7 +120,9 @@ contract RewardsDistributionV2Test is BaseRegistryTest, IOwnableBase, IDiamond {
     rewardsDistributionFacet.upgradeDelegationProxy(address(this));
   }
 
-  function test_fuzz_upgradeDelegationProxy(address newImplementation) public {
+  function test_fuzz_upgradeDelegationProxy(
+    address newImplementation
+  ) public {
     assumeNotPrecompile(newImplementation);
     vm.assume(newImplementation.code.length == 0);
     vm.etch(newImplementation, type(DelegationProxy).runtimeCode);
@@ -175,13 +166,7 @@ contract RewardsDistributionV2Test is BaseRegistryTest, IOwnableBase, IDiamond {
   }
 
   function test_stake() public returns (uint256 depositId) {
-    depositId = test_fuzz_stake(
-      address(this),
-      1 ether,
-      OPERATOR,
-      0,
-      address(this)
-    );
+    depositId = test_fuzz_stake(address(this), 1 ether, OPERATOR, 0, address(this));
   }
 
   function test_fuzz_stake(
@@ -194,7 +179,7 @@ contract RewardsDistributionV2Test is BaseRegistryTest, IOwnableBase, IDiamond {
     vm.assume(depositor != address(rewardsDistributionFacet));
     vm.assume(beneficiary != address(0) && beneficiary != operator);
     vm.assume(amount > 0);
-    commissionRate = bound(commissionRate, 0, 10000);
+    commissionRate = bound(commissionRate, 0, 10_000);
 
     bridgeTokensForUser(depositor, amount);
 
@@ -207,14 +192,7 @@ contract RewardsDistributionV2Test is BaseRegistryTest, IOwnableBase, IDiamond {
     depositId = rewardsDistributionFacet.stake(amount, operator, beneficiary);
     vm.stopPrank();
 
-    verifyStake(
-      depositor,
-      depositId,
-      amount,
-      operator,
-      commissionRate,
-      beneficiary
-    );
+    verifyStake(depositor, depositId, amount, operator, commissionRate, beneficiary);
   }
 
   function test_fuzz_stake_toSpace(
@@ -230,13 +208,9 @@ contract RewardsDistributionV2Test is BaseRegistryTest, IOwnableBase, IDiamond {
     returns (uint256 depositId)
   {
     vm.assume(depositor != address(rewardsDistributionFacet));
-    vm.assume(
-      beneficiary != address(0) &&
-        beneficiary != operator &&
-        beneficiary != space
-    );
+    vm.assume(beneficiary != address(0) && beneficiary != operator && beneficiary != space);
     vm.assume(amount > 0);
-    commissionRate = bound(commissionRate, 0, 10000);
+    commissionRate = bound(commissionRate, 0, 10_000);
 
     bridgeTokensForUser(depositor, amount);
 
@@ -249,14 +223,7 @@ contract RewardsDistributionV2Test is BaseRegistryTest, IOwnableBase, IDiamond {
     depositId = rewardsDistributionFacet.stake(amount, space, beneficiary);
     vm.stopPrank();
 
-    verifyStake(
-      depositor,
-      depositId,
-      amount,
-      space,
-      commissionRate,
-      beneficiary
-    );
+    verifyStake(depositor, depositId, amount, space, commissionRate, beneficiary);
   }
 
   function test_fuzz_permitAndStake(
@@ -269,35 +236,22 @@ contract RewardsDistributionV2Test is BaseRegistryTest, IOwnableBase, IDiamond {
   ) public givenOperator(operator, commissionRate) {
     vm.assume(beneficiary != address(0) && beneficiary != operator);
     vm.assume(amount > 0);
-    commissionRate = bound(commissionRate, 0, 10000);
+    commissionRate = bound(commissionRate, 0, 10_000);
     deadline = bound(deadline, block.timestamp, type(uint256).max);
 
     privateKey = boundPrivateKey(privateKey);
     address user = vm.addr(privateKey);
     bridgeTokensForUser(user, amount);
 
-    (uint8 v, bytes32 r, bytes32 s) = signPermit(
-      privateKey,
-      townsToken,
-      user,
-      address(rewardsDistributionFacet),
-      amount,
-      deadline
-    );
+    (uint8 v, bytes32 r, bytes32 s) =
+      signPermit(privateKey, townsToken, user, address(rewardsDistributionFacet), amount, deadline);
 
     vm.expectEmit(true, true, true, false, address(rewardsDistributionFacet));
     emit Stake(user, operator, beneficiary, 0, amount);
 
     vm.prank(user);
-    uint256 depositId = rewardsDistributionFacet.permitAndStake(
-      amount,
-      operator,
-      beneficiary,
-      deadline,
-      v,
-      r,
-      s
-    );
+    uint256 depositId =
+      rewardsDistributionFacet.permitAndStake(amount, operator, beneficiary, deadline, v, r, s);
 
     verifyStake(user, depositId, amount, operator, commissionRate, beneficiary);
   }
@@ -339,7 +293,7 @@ contract RewardsDistributionV2Test is BaseRegistryTest, IOwnableBase, IDiamond {
   ) public givenOperator(operator, commissionRate) returns (uint256 depositId) {
     vm.assume(beneficiary != address(0) && beneficiary != operator);
     vm.assume(amount > 0);
-    commissionRate = bound(commissionRate, 0, 10000);
+    commissionRate = bound(commissionRate, 0, 10_000);
     deadline = bound(deadline, block.timestamp, type(uint256).max);
 
     privateKey = boundPrivateKey(privateKey);
@@ -351,20 +305,10 @@ contract RewardsDistributionV2Test is BaseRegistryTest, IOwnableBase, IDiamond {
     {
       bytes32 structHash = keccak256(
         abi.encode(
-          STAKE_TYPEHASH,
-          amount,
-          operator,
-          beneficiary,
-          owner,
-          eip712Facet.nonces(owner),
-          deadline
+          STAKE_TYPEHASH, amount, operator, beneficiary, owner, eip712Facet.nonces(owner), deadline
         )
       );
-      (uint8 v, bytes32 r, bytes32 s) = signIntent(
-        privateKey,
-        address(eip712Facet),
-        structHash
-      );
+      (uint8 v, bytes32 r, bytes32 s) = signIntent(privateKey, address(eip712Facet), structHash);
       signature = abi.encodePacked(r, s, v);
     }
 
@@ -374,22 +318,10 @@ contract RewardsDistributionV2Test is BaseRegistryTest, IOwnableBase, IDiamond {
     emit Stake(owner, operator, beneficiary, 0, amount);
 
     depositId = rewardsDistributionFacet.stakeOnBehalf(
-      amount,
-      operator,
-      beneficiary,
-      owner,
-      deadline,
-      signature
+      amount, operator, beneficiary, owner, deadline, signature
     );
 
-    verifyStake(
-      owner,
-      depositId,
-      amount,
-      operator,
-      commissionRate,
-      beneficiary
-    );
+    verifyStake(owner, depositId, amount, operator, commissionRate, beneficiary);
   }
 
   function test_increaseStake_revertIf_notDepositor() public {
@@ -414,30 +346,19 @@ contract RewardsDistributionV2Test is BaseRegistryTest, IOwnableBase, IDiamond {
     vm.assume(beneficiary != address(0) && beneficiary != operator);
     amount0 = uint96(bound(amount0, 1, type(uint96).max));
     amount1 = uint96(bound(amount1, 0, type(uint96).max - amount0));
-    commissionRate = bound(commissionRate, 0, 10000);
+    commissionRate = bound(commissionRate, 0, 10_000);
 
     uint96 totalAmount = amount0 + amount1;
     bridgeTokensForUser(address(this), totalAmount);
     towns.approve(address(rewardsDistributionFacet), totalAmount);
-    uint256 depositId = rewardsDistributionFacet.stake(
-      amount0,
-      operator,
-      beneficiary
-    );
+    uint256 depositId = rewardsDistributionFacet.stake(amount0, operator, beneficiary);
 
     vm.expectEmit(address(rewardsDistributionFacet));
     emit IncreaseStake(depositId, amount1);
 
     rewardsDistributionFacet.increaseStake(depositId, amount1);
 
-    verifyStake(
-      address(this),
-      depositId,
-      totalAmount,
-      operator,
-      commissionRate,
-      beneficiary
-    );
+    verifyStake(address(this), depositId, totalAmount, operator, commissionRate, beneficiary);
   }
 
   function test_fuzz_permitAndIncreaseStake(
@@ -452,7 +373,7 @@ contract RewardsDistributionV2Test is BaseRegistryTest, IOwnableBase, IDiamond {
     vm.assume(beneficiary != address(0) && beneficiary != operator);
     amount0 = uint96(bound(amount0, 1, type(uint96).max));
     amount1 = uint96(bound(amount1, 0, type(uint96).max - amount0));
-    commissionRate = bound(commissionRate, 0, 10000);
+    commissionRate = bound(commissionRate, 0, 10_000);
     deadline = bound(deadline, block.timestamp, type(uint256).max);
 
     privateKey = boundPrivateKey(privateKey);
@@ -464,22 +385,11 @@ contract RewardsDistributionV2Test is BaseRegistryTest, IOwnableBase, IDiamond {
     towns.approve(address(rewardsDistributionFacet), amount0);
 
     vm.prank(user);
-    uint256 depositId = rewardsDistributionFacet.stake(
-      amount0,
-      operator,
-      beneficiary
-    );
+    uint256 depositId = rewardsDistributionFacet.stake(amount0, operator, beneficiary);
 
     _permitAndIncreaseStake(depositId, amount1, privateKey, user, deadline);
 
-    verifyStake(
-      user,
-      depositId,
-      totalAmount,
-      operator,
-      commissionRate,
-      beneficiary
-    );
+    verifyStake(user, depositId, totalAmount, operator, commissionRate, beneficiary);
   }
 
   function _permitAndIncreaseStake(
@@ -489,27 +399,14 @@ contract RewardsDistributionV2Test is BaseRegistryTest, IOwnableBase, IDiamond {
     address user,
     uint256 deadline
   ) internal {
-    (uint8 v, bytes32 r, bytes32 s) = signPermit(
-      privateKey,
-      townsToken,
-      user,
-      address(rewardsDistributionFacet),
-      amount,
-      deadline
-    );
+    (uint8 v, bytes32 r, bytes32 s) =
+      signPermit(privateKey, townsToken, user, address(rewardsDistributionFacet), amount, deadline);
 
     vm.expectEmit(true, true, true, false, address(rewardsDistributionFacet));
     emit IncreaseStake(depositId, amount);
 
     vm.prank(user);
-    rewardsDistributionFacet.permitAndIncreaseStake(
-      depositId,
-      amount,
-      deadline,
-      v,
-      r,
-      s
-    );
+    rewardsDistributionFacet.permitAndIncreaseStake(depositId, amount, deadline, v, r, s);
   }
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -539,13 +436,8 @@ contract RewardsDistributionV2Test is BaseRegistryTest, IOwnableBase, IDiamond {
     address operator,
     uint256 commissionRate
   ) public {
-    uint256 depositId = test_fuzz_stake(
-      address(this),
-      amount,
-      operator,
-      commissionRate,
-      address(this)
-    );
+    uint256 depositId =
+      test_fuzz_stake(address(this), amount, operator, commissionRate, address(this));
 
     vm.expectRevert(Towns.DelegateeSameAsCurrent.selector);
     rewardsDistributionFacet.redelegate(depositId, operator);
@@ -560,34 +452,19 @@ contract RewardsDistributionV2Test is BaseRegistryTest, IOwnableBase, IDiamond {
   ) public givenOperator(operator1, commissionRate1) {
     vm.assume(operator0 != operator1);
     vm.assume(operator1 != address(this));
-    commissionRate1 = bound(commissionRate1, 0, 10000);
+    commissionRate1 = bound(commissionRate1, 0, 10_000);
 
-    uint256 depositId = test_fuzz_stake(
-      address(this),
-      amount,
-      operator0,
-      commissionRate0,
-      address(this)
-    );
+    uint256 depositId =
+      test_fuzz_stake(address(this), amount, operator0, commissionRate0, address(this));
 
     vm.expectEmit(address(rewardsDistributionFacet));
     emit Redelegate(depositId, operator1);
 
     rewardsDistributionFacet.redelegate(depositId, operator1);
 
-    assertEq(
-      rewardsDistributionFacet.treasureByBeneficiary(operator0).earningPower,
-      0
-    );
+    assertEq(rewardsDistributionFacet.treasureByBeneficiary(operator0).earningPower, 0);
 
-    verifyStake(
-      address(this),
-      depositId,
-      amount,
-      operator1,
-      commissionRate1,
-      address(this)
-    );
+    verifyStake(address(this), depositId, amount, operator1, commissionRate1, address(this));
   }
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -620,29 +497,17 @@ contract RewardsDistributionV2Test is BaseRegistryTest, IOwnableBase, IDiamond {
     address beneficiary
   ) public {
     vm.assume(beneficiary != address(0) && beneficiary != operator);
-    commissionRate = bound(commissionRate, 0, 10000);
+    commissionRate = bound(commissionRate, 0, 10_000);
 
-    uint256 depositId = test_fuzz_stake(
-      address(this),
-      amount,
-      operator,
-      commissionRate,
-      address(this)
-    );
+    uint256 depositId =
+      test_fuzz_stake(address(this), amount, operator, commissionRate, address(this));
 
     vm.expectEmit(address(rewardsDistributionFacet));
     emit ChangeBeneficiary(depositId, beneficiary);
 
     rewardsDistributionFacet.changeBeneficiary(depositId, beneficiary);
 
-    verifyStake(
-      address(this),
-      depositId,
-      amount,
-      operator,
-      commissionRate,
-      beneficiary
-    );
+    verifyStake(address(this), depositId, amount, operator, commissionRate, beneficiary);
   }
 
   function test_fuzz_changeBeneficiary_sameBeneficiary(
@@ -653,15 +518,10 @@ contract RewardsDistributionV2Test is BaseRegistryTest, IOwnableBase, IDiamond {
     address beneficiary
   ) public {
     vm.assume(beneficiary != address(0) && beneficiary != operator);
-    commissionRate1 = bound(commissionRate1, 0, 10000);
+    commissionRate1 = bound(commissionRate1, 0, 10_000);
 
-    uint256 depositId = test_fuzz_stake(
-      address(this),
-      amount,
-      operator,
-      commissionRate0,
-      beneficiary
-    );
+    uint256 depositId =
+      test_fuzz_stake(address(this), amount, operator, commissionRate0, beneficiary);
 
     resetOperatorCommissionRate(operator, commissionRate1);
 
@@ -670,14 +530,7 @@ contract RewardsDistributionV2Test is BaseRegistryTest, IOwnableBase, IDiamond {
 
     rewardsDistributionFacet.changeBeneficiary(depositId, beneficiary);
 
-    verifyStake(
-      address(this),
-      depositId,
-      amount,
-      operator,
-      commissionRate1,
-      beneficiary
-    );
+    verifyStake(address(this), depositId, amount, operator, commissionRate1, beneficiary);
   }
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -702,13 +555,7 @@ contract RewardsDistributionV2Test is BaseRegistryTest, IOwnableBase, IDiamond {
     uint256 commissionRate,
     address beneficiary
   ) public returns (uint256 depositId) {
-    depositId = test_fuzz_stake(
-      address(this),
-      amount,
-      operator,
-      commissionRate,
-      beneficiary
-    );
+    depositId = test_fuzz_stake(address(this), amount, operator, commissionRate, beneficiary);
 
     vm.expectEmit(address(rewardsDistributionFacet));
     emit InitiateWithdraw(address(this), depositId, amount);
@@ -725,31 +572,15 @@ contract RewardsDistributionV2Test is BaseRegistryTest, IOwnableBase, IDiamond {
     uint256 timeLapse
   ) public {
     vm.assume(depositors[0] != depositors[1]);
-    vm.assume(
-      operator != OPERATOR &&
-        operator != depositors[0] &&
-        operator != depositors[1]
-    );
+    vm.assume(operator != OPERATOR && operator != depositors[0] && operator != depositors[1]);
     vm.assume(OPERATOR != depositors[0] && OPERATOR != depositors[1]);
     amounts[1] = uint96(bound(amounts[1], 0, type(uint96).max - amounts[0]));
     timeLapse = bound(timeLapse, 0, rewardDuration);
 
     test_notifyRewardAmount();
 
-    uint256 depositId0 = test_fuzz_stake(
-      depositors[0],
-      amounts[0],
-      operator,
-      0,
-      depositors[0]
-    );
-    uint256 depositId1 = test_fuzz_stake(
-      depositors[1],
-      amounts[1],
-      OPERATOR,
-      0,
-      depositors[1]
-    );
+    uint256 depositId0 = test_fuzz_stake(depositors[0], amounts[0], operator, 0, depositors[0]);
+    uint256 depositId1 = test_fuzz_stake(depositors[1], amounts[1], OPERATOR, 0, depositors[1]);
 
     // immediately initiate withdraw for the first depositor
     vm.prank(depositors[0]);
@@ -761,9 +592,7 @@ contract RewardsDistributionV2Test is BaseRegistryTest, IOwnableBase, IDiamond {
     vm.prank(depositors[1]);
     rewardsDistributionFacet.increaseStake(depositId1, 0);
 
-    uint256 currentReward = rewardsDistributionFacet.currentReward(
-      depositors[1]
-    );
+    uint256 currentReward = rewardsDistributionFacet.currentReward(depositors[1]);
 
     StakingState memory state = rewardsDistributionFacet.stakingState();
     uint256 rewardRate = state.rewardRate;
@@ -776,9 +605,7 @@ contract RewardsDistributionV2Test is BaseRegistryTest, IOwnableBase, IDiamond {
       "rewardPerTokenAccumulated"
     );
     assertEq(
-      currentReward,
-      rewardRate.fullMulDiv(timeLapse, StakingRewards.SCALE_FACTOR),
-      "currentReward"
+      currentReward, rewardRate.fullMulDiv(timeLapse, StakingRewards.SCALE_FACTOR), "currentReward"
     );
   }
 
@@ -805,25 +632,13 @@ contract RewardsDistributionV2Test is BaseRegistryTest, IOwnableBase, IDiamond {
     address beneficiary
   ) public givenOperator(operator, commissionRate) {
     vm.assume(operator != beneficiary && operator != OPERATOR);
-    commissionRate = bound(commissionRate, 0, 10000);
+    commissionRate = bound(commissionRate, 0, 10_000);
 
-    uint256 depositId = test_fuzz_initiateWithdraw(
-      amount,
-      OPERATOR,
-      0,
-      beneficiary
-    );
+    uint256 depositId = test_fuzz_initiateWithdraw(amount, OPERATOR, 0, beneficiary);
 
     rewardsDistributionFacet.redelegate(depositId, operator);
 
-    verifyStake(
-      address(this),
-      depositId,
-      amount,
-      operator,
-      commissionRate,
-      beneficiary
-    );
+    verifyStake(address(this), depositId, amount, operator, commissionRate, beneficiary);
   }
 
   function test_initiateWithdraw_revertIf_changeBeneficiary() public {
@@ -844,13 +659,8 @@ contract RewardsDistributionV2Test is BaseRegistryTest, IOwnableBase, IDiamond {
     timeLapse = bound(timeLapse, 0, rewardDuration);
 
     test_notifyRewardAmount();
-    uint256 depositId = test_fuzz_stake(
-      address(this),
-      amount,
-      operator,
-      commissionRate,
-      beneficiary
-    );
+    uint256 depositId =
+      test_fuzz_stake(address(this), amount, operator, commissionRate, beneficiary);
 
     skip(timeLapse);
 
@@ -865,10 +675,7 @@ contract RewardsDistributionV2Test is BaseRegistryTest, IOwnableBase, IDiamond {
     emit ClaimReward(beneficiary, beneficiary, currentReward);
 
     vm.prank(beneficiary);
-    uint256 reward = rewardsDistributionFacet.claimReward(
-      beneficiary,
-      beneficiary
-    );
+    uint256 reward = rewardsDistributionFacet.claimReward(beneficiary, beneficiary);
 
     assertEq(reward, currentReward, "reward");
   }
@@ -879,22 +686,13 @@ contract RewardsDistributionV2Test is BaseRegistryTest, IOwnableBase, IDiamond {
 
     test_notifyRewardAmount();
     test_stake();
-    uint256 depositId = test_fuzz_stake(
-      depositor,
-      1 ether,
-      makeAddr("OPERATOR2"),
-      0,
-      depositor
-    );
+    uint256 depositId = test_fuzz_stake(depositor, 1 ether, makeAddr("OPERATOR2"), 0, depositor);
 
     // Step 2: Verify earnings are accumulating before the initiation of withdrawal
     vm.warp(block.timestamp + rewardDuration / 2);
 
     vm.prank(depositor);
-    uint256 initialRewards = rewardsDistributionFacet.claimReward(
-      depositor,
-      depositor
-    );
+    uint256 initialRewards = rewardsDistributionFacet.claimReward(depositor, depositor);
     assertTrue(initialRewards > 0);
 
     // Step 3: Initiate withdrawal
@@ -903,9 +701,7 @@ contract RewardsDistributionV2Test is BaseRegistryTest, IOwnableBase, IDiamond {
 
     // Step 4: Verify that no new rewards are accumulating after the withdrawal is initiated
     vm.warp(block.timestamp + rewardDuration / 2);
-    uint256 postWithdrawRewards = rewardsDistributionFacet.currentReward(
-      depositor
-    );
+    uint256 postWithdrawRewards = rewardsDistributionFacet.currentReward(depositor);
     assertEq(postWithdrawRewards, 0);
   }
 
@@ -939,12 +735,7 @@ contract RewardsDistributionV2Test is BaseRegistryTest, IOwnableBase, IDiamond {
     uint256 commissionRate,
     address beneficiary
   ) public returns (uint256 depositId) {
-    depositId = test_fuzz_initiateWithdraw(
-      amount,
-      operator,
-      commissionRate,
-      beneficiary
-    );
+    depositId = test_fuzz_initiateWithdraw(amount, operator, commissionRate, beneficiary);
 
     address proxy = rewardsDistributionFacet.delegationProxyById(depositId);
     uint256 cd = towns.lockExpiration(proxy);
@@ -1006,7 +797,9 @@ contract RewardsDistributionV2Test is BaseRegistryTest, IOwnableBase, IDiamond {
     test_fuzz_notifyRewardAmount(1 ether);
   }
 
-  function test_fuzz_notifyRewardAmount(uint256 reward) public {
+  function test_fuzz_notifyRewardAmount(
+    uint256 reward
+  ) public {
     reward = boundReward(reward);
     bridgeTokensForUser(address(rewardsDistributionFacet), reward);
 
@@ -1018,16 +811,10 @@ contract RewardsDistributionV2Test is BaseRegistryTest, IOwnableBase, IDiamond {
 
     StakingState memory state = rewardsDistributionFacet.stakingState();
 
-    assertEq(
-      state.rewardEndTime,
-      block.timestamp + rewardDuration,
-      "rewardEndTime"
-    );
+    assertEq(state.rewardEndTime, block.timestamp + rewardDuration, "rewardEndTime");
     assertEq(state.lastUpdateTime, block.timestamp, "lastUpdateTime");
     assertEq(
-      state.rewardRate,
-      reward.fullMulDiv(StakingRewards.SCALE_FACTOR, rewardDuration),
-      "rewardRate"
+      state.rewardRate, reward.fullMulDiv(StakingRewards.SCALE_FACTOR, rewardDuration), "rewardRate"
     );
   }
 
@@ -1046,11 +833,7 @@ contract RewardsDistributionV2Test is BaseRegistryTest, IOwnableBase, IDiamond {
   function test_fuzz_claimReward_revertIf_notOperatorClaimer(
     address claimer,
     address operator
-  )
-    public
-    givenOperator(operator, 0)
-    givenSpaceHasPointedToOperator(space, operator)
-  {
+  ) public givenOperator(operator, 0) givenSpaceHasPointedToOperator(space, operator) {
     vm.assume(address(this) != claimer && address(this) != operator);
     setOperatorClaimAddress(operator, claimer);
 
@@ -1082,16 +865,11 @@ contract RewardsDistributionV2Test is BaseRegistryTest, IOwnableBase, IDiamond {
     uint256 rewardAmount,
     uint256 timeLapse
   ) public {
-    vm.assume(
-      depositor != address(this) &&
-        depositor != address(rewardsDistributionFacet)
-    );
+    vm.assume(depositor != address(this) && depositor != address(rewardsDistributionFacet));
     vm.assume(operator != OPERATOR && operator != address(this));
     vm.assume(
-      beneficiary != operator &&
-        beneficiary != OPERATOR &&
-        beneficiary != address(this) &&
-        beneficiary != address(rewardsDistributionFacet)
+      beneficiary != operator && beneficiary != OPERATOR && beneficiary != address(this)
+        && beneficiary != address(rewardsDistributionFacet)
     );
     amount = uint96(bound(amount, 1, type(uint96).max - 1 ether));
     timeLapse = bound(timeLapse, 0, rewardDuration);
@@ -1108,10 +886,7 @@ contract RewardsDistributionV2Test is BaseRegistryTest, IOwnableBase, IDiamond {
     emit ClaimReward(beneficiary, beneficiary, currentReward);
 
     vm.prank(beneficiary);
-    uint256 reward = rewardsDistributionFacet.claimReward(
-      beneficiary,
-      beneficiary
-    );
+    uint256 reward = rewardsDistributionFacet.claimReward(beneficiary, beneficiary);
 
     verifyClaim(beneficiary, beneficiary, reward, currentReward, timeLapse);
   }
@@ -1136,11 +911,7 @@ contract RewardsDistributionV2Test is BaseRegistryTest, IOwnableBase, IDiamond {
 
       vm.startPrank(depositors[i]);
       towns.approve(address(rewardsDistributionFacet), amounts[i]);
-      rewardsDistributionFacet.stake(
-        uint96(amounts[i]),
-        OPERATOR,
-        depositors[i]
-      );
+      rewardsDistributionFacet.stake(uint96(amounts[i]), OPERATOR, depositors[i]);
       vm.stopPrank();
     }
 
@@ -1152,10 +923,7 @@ contract RewardsDistributionV2Test is BaseRegistryTest, IOwnableBase, IDiamond {
     emit ClaimReward(beneficiary, beneficiary, currentReward);
 
     vm.prank(beneficiary);
-    uint256 reward = rewardsDistributionFacet.claimReward(
-      beneficiary,
-      beneficiary
-    );
+    uint256 reward = rewardsDistributionFacet.claimReward(beneficiary, beneficiary);
 
     verifyClaim(beneficiary, beneficiary, reward, currentReward, timeLapse);
   }
@@ -1167,20 +935,12 @@ contract RewardsDistributionV2Test is BaseRegistryTest, IOwnableBase, IDiamond {
     uint256 rewardAmount,
     uint256 timeLapse
   ) public {
-    vm.assume(
-      operator != address(this) && operator != address(rewardsDistributionFacet)
-    );
+    vm.assume(operator != address(this) && operator != address(rewardsDistributionFacet));
     timeLapse = bound(timeLapse, 0, rewardDuration);
     amount = uint96(bound(amount, 1 ether, type(uint96).max));
 
     test_fuzz_notifyRewardAmount(rewardAmount);
-    test_fuzz_stake(
-      address(this),
-      amount,
-      operator,
-      commissionRate,
-      address(this)
-    );
+    test_fuzz_stake(address(this), amount, operator, commissionRate, address(this));
 
     skip(timeLapse);
 
@@ -1202,20 +962,12 @@ contract RewardsDistributionV2Test is BaseRegistryTest, IOwnableBase, IDiamond {
     uint256 rewardAmount,
     uint256 timeLapse
   ) public {
-    vm.assume(
-      operator != address(this) && operator != address(rewardsDistributionFacet)
-    );
+    vm.assume(operator != address(this) && operator != address(rewardsDistributionFacet));
     timeLapse = bound(timeLapse, 0, rewardDuration);
     amount = uint96(bound(amount, 1 ether, type(uint96).max));
 
     test_fuzz_notifyRewardAmount(rewardAmount);
-    test_fuzz_stake_toSpace(
-      address(this),
-      amount,
-      operator,
-      commissionRate,
-      address(this)
-    );
+    test_fuzz_stake_toSpace(address(this), amount, operator, commissionRate, address(this));
 
     skip(timeLapse);
 
@@ -1235,16 +987,16 @@ contract RewardsDistributionV2Test is BaseRegistryTest, IOwnableBase, IDiamond {
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
   /// forge-config: default.fuzz.runs = 64
-  function test_fuzz_getDepositsByDepositor(uint8 count) public {
+  function test_fuzz_getDepositsByDepositor(
+    uint8 count
+  ) public {
     vm.assume(count != 0);
     bridgeTokensForUser(address(this), 1 ether * uint256(count));
     towns.approve(address(rewardsDistributionFacet), type(uint256).max);
     for (uint256 i; i < count; ++i) {
       rewardsDistributionFacet.stake(1 ether, OPERATOR, address(this));
     }
-    uint256[] memory deposits = rewardsDistributionFacet.getDepositsByDepositor(
-      address(this)
-    );
+    uint256[] memory deposits = rewardsDistributionFacet.getDepositsByDepositor(address(this));
     assertEq(deposits.length, count, "length");
     for (uint256 i; i < count; ++i) {
       assertEq(deposits[i], i, "depositId");
@@ -1256,7 +1008,9 @@ contract RewardsDistributionV2Test is BaseRegistryTest, IOwnableBase, IDiamond {
   }
 
   /// forge-config: default.fuzz.runs = 64
-  function test_fuzz_currentSpaceDelegationReward(uint8 count) public {
+  function test_fuzz_currentSpaceDelegationReward(
+    uint8 count
+  ) public {
     vm.assume(count != 0);
     uint256 commissionRate = 1000;
     resetOperatorCommissionRate(OPERATOR, commissionRate);
@@ -1278,8 +1032,7 @@ contract RewardsDistributionV2Test is BaseRegistryTest, IOwnableBase, IDiamond {
 
     assertApproxEqRel(
       rewardsDistributionFacet.currentSpaceDelegationReward(OPERATOR),
-      (rewardRate.fullMulDiv(rewardDuration, StakingRewards.SCALE_FACTOR) *
-        commissionRate) / 10000,
+      (rewardRate.fullMulDiv(rewardDuration, StakingRewards.SCALE_FACTOR) * commissionRate) / 10_000,
       1e15
     );
   }

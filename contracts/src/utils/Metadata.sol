@@ -12,12 +12,16 @@ abstract contract Metadata is IMetadata {
   string public override contractURI;
 
   /// inheritdoc IMetadata
-  function setContractURI(string calldata _uri) external override {
+  function setContractURI(
+    string calldata _uri
+  ) external override {
     if (!_canSetContractURI()) revert("Metadata: not authorized");
     _setContractURI(_uri);
   }
 
-  function _setContractURI(string memory _uri) internal {
+  function _setContractURI(
+    string memory _uri
+  ) internal {
     string memory prevURI = contractURI;
     contractURI = _uri;
 

@@ -4,7 +4,8 @@ pragma solidity ^0.8.23;
 // interfaces
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import {IPricingModulesBase} from "./IPricingModules.sol";
-import {IMembershipPricing} from "contracts/src/spaces/facets/membership/pricing/IMembershipPricing.sol";
+import {IMembershipPricing} from
+  "contracts/src/spaces/facets/membership/pricing/IMembershipPricing.sol";
 
 // libraries
 import {PricingModulesStorage} from "./PricingModulesStorage.sol";
@@ -16,33 +17,28 @@ import {CustomRevert} from "contracts/src/utils/libraries/CustomRevert.sol";
 library PricingModulesBase {
   using EnumerableSet for EnumerableSet.AddressSet;
 
-  function isPricingModule(address module) internal view returns (bool) {
+  function isPricingModule(
+    address module
+  ) internal view returns (bool) {
     PricingModulesStorage.Layout storage ds = PricingModulesStorage.layout();
     return ds.pricingModules.contains(module);
   }
 
-  function addPricingModule(address module) internal {
+  function addPricingModule(
+    address module
+  ) internal {
     PricingModulesStorage.Layout storage ds = PricingModulesStorage.layout();
 
     if (module == address(0)) {
-      CustomRevert.revertWith(
-        IPricingModulesBase.InvalidPricingModule.selector,
-        module
-      );
+      CustomRevert.revertWith(IPricingModulesBase.InvalidPricingModule.selector, module);
     }
 
     if (!verifyInterface(module)) {
-      CustomRevert.revertWith(
-        IPricingModulesBase.InvalidPricingModule.selector,
-        module
-      );
+      CustomRevert.revertWith(IPricingModulesBase.InvalidPricingModule.selector, module);
     }
 
     if (ds.pricingModules.contains(module)) {
-      CustomRevert.revertWith(
-        IPricingModulesBase.InvalidPricingModule.selector,
-        module
-      );
+      CustomRevert.revertWith(IPricingModulesBase.InvalidPricingModule.selector, module);
     }
 
     ds.pricingModules.add(module);
@@ -50,22 +46,18 @@ library PricingModulesBase {
     emit IPricingModulesBase.PricingModuleAdded(module);
   }
 
-  function removePricingModule(address module) internal {
+  function removePricingModule(
+    address module
+  ) internal {
     PricingModulesStorage.Layout storage ds = PricingModulesStorage.layout();
 
     if (module == address(0)) {
-      CustomRevert.revertWith(
-        IPricingModulesBase.InvalidPricingModule.selector,
-        module
-      );
+      CustomRevert.revertWith(IPricingModulesBase.InvalidPricingModule.selector, module);
     }
 
     // verify module exists
     if (!ds.pricingModules.contains(module)) {
-      CustomRevert.revertWith(
-        IPricingModulesBase.InvalidPricingModule.selector,
-        module
-      );
+      CustomRevert.revertWith(IPricingModulesBase.InvalidPricingModule.selector, module);
     }
 
     ds.pricingModules.remove(module);
@@ -73,15 +65,11 @@ library PricingModulesBase {
     emit IPricingModulesBase.PricingModuleRemoved(module);
   }
 
-  function listPricingModules()
-    internal
-    view
-    returns (IPricingModulesBase.PricingModule[] memory)
-  {
+  function listPricingModules() internal view returns (IPricingModulesBase.PricingModule[] memory) {
     PricingModulesStorage.Layout storage ds = PricingModulesStorage.layout();
     uint256 length = ds.pricingModules.length();
-    IPricingModulesBase.PricingModule[]
-      memory pricingModules = new IPricingModulesBase.PricingModule[](length);
+    IPricingModulesBase.PricingModule[] memory pricingModules =
+      new IPricingModulesBase.PricingModule[](length);
     for (uint256 i = 0; i < length; i++) {
       address moduleAddress = ds.pricingModules.at(i);
       IMembershipPricing module = IMembershipPricing(moduleAddress);
@@ -97,8 +85,9 @@ library PricingModulesBase {
   // =============================================================
   //                           Internal
   // =============================================================
-  function verifyInterface(address module) internal view returns (bool) {
-    return
-      IERC165(module).supportsInterface(type(IMembershipPricing).interfaceId);
+  function verifyInterface(
+    address module
+  ) internal view returns (bool) {
+    return IERC165(module).supportsInterface(type(IMembershipPricing).interfaceId);
   }
 }

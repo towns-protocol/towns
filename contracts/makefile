@@ -16,8 +16,6 @@ fork-test :; forge test --ffi --mc Fork
 
 snapshot :; forge snapshot --isolate
 
-format :; yarn prettier --write .
-
 lint :; yarn solhint "{scripts,src,test}/**/*.sol"
 
 anvil :; anvil -m 'test test test test test test test test test test test junk'

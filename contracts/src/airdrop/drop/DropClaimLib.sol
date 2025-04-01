@@ -81,49 +81,34 @@ library DropClaimLib {
     Claim calldata claim
   ) internal view {
     if (condition.merkleRoot == bytes32(0)) {
-      CustomRevert.revertWith(
-        IDropFacetBase.DropFacet__MerkleRootNotSet.selector
-      );
+      CustomRevert.revertWith(IDropFacetBase.DropFacet__MerkleRootNotSet.selector);
     }
 
     if (claim.quantity == 0) {
-      CustomRevert.revertWith(
-        IDropFacetBase.DropFacet__QuantityMustBeGreaterThanZero.selector
-      );
+      CustomRevert.revertWith(IDropFacetBase.DropFacet__QuantityMustBeGreaterThanZero.selector);
     }
 
     if (condition.currency == address(0)) {
-      CustomRevert.revertWith(
-        IDropFacetBase.DropFacet__CurrencyNotSet.selector
-      );
+      CustomRevert.revertWith(IDropFacetBase.DropFacet__CurrencyNotSet.selector);
     }
 
-    // Check if the total claimed supply (including the current claim) exceeds the maximum claimable supply
-    if (
-      condition.supplyClaimed + claim.quantity > condition.maxClaimableSupply
-    ) {
-      CustomRevert.revertWith(
-        IDropFacetBase.DropFacet__ExceedsMaxClaimableSupply.selector
-      );
+    // Check if the total claimed supply (including the current claim) exceeds the maximum claimable
+    // supply
+    if (condition.supplyClaimed + claim.quantity > condition.maxClaimableSupply) {
+      CustomRevert.revertWith(IDropFacetBase.DropFacet__ExceedsMaxClaimableSupply.selector);
     }
 
     if (block.timestamp < condition.startTimestamp) {
-      CustomRevert.revertWith(
-        IDropFacetBase.DropFacet__ClaimHasNotStarted.selector
-      );
+      CustomRevert.revertWith(IDropFacetBase.DropFacet__ClaimHasNotStarted.selector);
     }
 
-    if (
-      condition.endTimestamp > 0 && block.timestamp >= condition.endTimestamp
-    ) {
+    if (condition.endTimestamp > 0 && block.timestamp >= condition.endTimestamp) {
       CustomRevert.revertWith(IDropFacetBase.DropFacet__ClaimHasEnded.selector);
     }
 
     // check if already claimed
     if (claimed.claimed > 0) {
-      CustomRevert.revertWith(
-        IDropFacetBase.DropFacet__AlreadyClaimed.selector
-      );
+      CustomRevert.revertWith(IDropFacetBase.DropFacet__AlreadyClaimed.selector);
     }
 
     bytes32 leaf = createLeaf(claim.account, claim.quantity);
@@ -139,18 +124,13 @@ library DropClaimLib {
   ) internal view returns (uint256 amount) {
     uint16 penaltyBps = self.penaltyBps;
     if (penaltyBps != expectedPenaltyBps) {
-      CustomRevert.revertWith(
-        IDropFacetBase.DropFacet__UnexpectedPenaltyBps.selector
-      );
+      CustomRevert.revertWith(IDropFacetBase.DropFacet__UnexpectedPenaltyBps.selector);
     }
 
     amount = claim.quantity;
     if (penaltyBps > 0) {
       unchecked {
-        uint256 penaltyAmount = BasisPoints.calculate(
-          claim.quantity,
-          penaltyBps
-        );
+        uint256 penaltyAmount = BasisPoints.calculate(claim.quantity, penaltyBps);
         amount = claim.quantity - penaltyAmount;
       }
     }
@@ -158,10 +138,7 @@ library DropClaimLib {
     return amount;
   }
 
-  function createLeaf(
-    address account,
-    uint256 amount
-  ) internal pure returns (bytes32 leaf) {
+  function createLeaf(address account, uint256 amount) internal pure returns (bytes32 leaf) {
     assembly ("memory-safe") {
       // Store the account address at memory location 0
       mstore(0, account)
@@ -169,7 +146,8 @@ library DropClaimLib {
       mstore(0x20, amount)
       // Compute the keccak256 hash of the account and amount, and store it at memory location 0
       mstore(0, keccak256(0, 0x40))
-      // Compute the keccak256 hash of the previous hash (stored at memory location 0) and store it in the leaf variable
+      // Compute the keccak256 hash of the previous hash (stored at memory location 0) and store it
+      // in the leaf variable
       leaf := keccak256(0, 0x20)
     }
   }

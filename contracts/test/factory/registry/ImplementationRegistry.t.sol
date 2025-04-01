@@ -4,7 +4,8 @@ pragma solidity ^0.8.19;
 // utils
 
 //interfaces
-import {IImplementationRegistryBase} from "contracts/src/factory/facets/registry/IImplementationRegistry.sol";
+import {IImplementationRegistryBase} from
+  "contracts/src/factory/facets/registry/IImplementationRegistry.sol";
 
 //libraries
 
@@ -30,14 +31,8 @@ contract ImplementationRegistryTest is IImplementationRegistryBase, BaseSetup {
   }
 
   function test_addImplementation() external givenImplementationIsRegistered {
-    address implementation = implementationRegistry.getLatestImplementation(
-      "MockImplementation"
-    );
-    assertEq(
-      implementation,
-      mockImplementation,
-      "Implementation should be registered"
-    );
+    address implementation = implementationRegistry.getLatestImplementation("MockImplementation");
+    assertEq(implementation, mockImplementation, "Implementation should be registered");
   }
 }
 

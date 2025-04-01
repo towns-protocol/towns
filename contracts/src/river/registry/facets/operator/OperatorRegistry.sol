@@ -14,12 +14,7 @@ import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
 import {OwnableBase} from "@towns-protocol/diamond/src/facets/ownable/OwnableBase.sol";
 import {RegistryModifiers} from "contracts/src/river/registry/libraries/RegistryStorage.sol";
 
-contract OperatorRegistry is
-  IOperatorRegistry,
-  RegistryModifiers,
-  OwnableBase,
-  Facet
-{
+contract OperatorRegistry is IOperatorRegistry, RegistryModifiers, OwnableBase, Facet {
   using EnumerableSet for EnumerableSet.AddressSet;
   using CustomRevert for string;
 
@@ -36,12 +31,16 @@ contract OperatorRegistry is
   }
 
   /// @inheritdoc IOperatorRegistry
-  function approveOperator(address operator) external onlyOwner {
+  function approveOperator(
+    address operator
+  ) external onlyOwner {
     _approveOperator(operator);
   }
 
   /// @inheritdoc IOperatorRegistry
-  function removeOperator(address operator) external onlyOwner {
+  function removeOperator(
+    address operator
+  ) external onlyOwner {
     if (!isOperator(operator)) {
       RiverRegistryErrors.OPERATOR_NOT_FOUND.revertWith();
     }
@@ -64,7 +63,9 @@ contract OperatorRegistry is
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
   /// @inheritdoc IOperatorRegistry
-  function isOperator(address operator) public view returns (bool) {
+  function isOperator(
+    address operator
+  ) public view returns (bool) {
     return ds.operators.contains(operator);
   }
 
@@ -77,7 +78,9 @@ contract OperatorRegistry is
   /*                          INTERNAL                          */
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-  function _approveOperator(address operator) internal {
+  function _approveOperator(
+    address operator
+  ) internal {
     // Validate operator address
     if (operator == address(0)) RiverRegistryErrors.BAD_ARG.revertWith();
 

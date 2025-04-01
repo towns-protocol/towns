@@ -21,15 +21,14 @@ abstract contract Votes is VotesBase, IERC5805 {
   }
 
   /// @inheritdoc IVotes
-  function getVotes(address account) public view virtual returns (uint256) {
+  function getVotes(
+    address account
+  ) public view virtual returns (uint256) {
     return _getVotes(account);
   }
 
   /// @inheritdoc IVotes
-  function getPastVotes(
-    address account,
-    uint256 timepoint
-  ) public view virtual returns (uint256) {
+  function getPastVotes(address account, uint256 timepoint) public view virtual returns (uint256) {
     return _getPastVotes(account, timepoint);
   }
 
@@ -41,12 +40,16 @@ abstract contract Votes is VotesBase, IERC5805 {
   }
 
   /// @inheritdoc IVotes
-  function delegates(address account) public view virtual returns (address) {
+  function delegates(
+    address account
+  ) public view virtual returns (address) {
     return _delegates(account);
   }
 
   /// @inheritdoc IVotes
-  function delegate(address delegatee) public virtual {
+  function delegate(
+    address delegatee
+  ) public virtual {
     _delegate(msg.sender, delegatee);
   }
 

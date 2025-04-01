@@ -20,7 +20,9 @@ contract DeployOwnable is FacetHelper, Deployer {
     return "facets/ownableFacet";
   }
 
-  function __deploy(address deployer) public override returns (address) {
+  function __deploy(
+    address deployer
+  ) public override returns (address) {
     vm.startBroadcast(deployer);
     OwnableFacet facet = new OwnableFacet();
     vm.stopBroadcast();
@@ -31,7 +33,9 @@ contract DeployOwnable is FacetHelper, Deployer {
     return OwnableFacet.__Ownable_init.selector;
   }
 
-  function makeInitData(address owner) public pure returns (bytes memory) {
+  function makeInitData(
+    address owner
+  ) public pure returns (bytes memory) {
     return abi.encodeWithSelector(OwnableFacet.__Ownable_init.selector, owner);
   }
 }

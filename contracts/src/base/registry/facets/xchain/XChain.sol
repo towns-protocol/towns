@@ -26,24 +26,20 @@ contract XChain is IXChain, ReentrancyGuard, Facet {
   }
 
   /// @inheritdoc IXChain
-  function isCheckCompleted(
-    bytes32 transactionId,
-    uint256 requestId
-  ) external view returns (bool) {
+  function isCheckCompleted(bytes32 transactionId, uint256 requestId) external view returns (bool) {
     return XChainLib.layout().checks[transactionId].voteCompleted[requestId];
   }
 
   /// @inheritdoc IXChain
   function requestRefund() external {
     XChainLib.Layout storage layout = XChainLib.layout();
-    EnumerableSet.Bytes32Set storage senderRequests = layout.requestsBySender[
-      msg.sender
-    ];
+    EnumerableSet.Bytes32Set storage senderRequests = layout.requestsBySender[msg.sender];
 
     bytes32[] memory transactionIds = senderRequests.values();
 
-    if (transactionIds.length == 0)
+    if (transactionIds.length == 0) {
       revert EntitlementChecker_NoPendingRequests();
+    }
 
     uint256 totalRefund;
 
@@ -52,8 +48,9 @@ contract XChain is IXChain, ReentrancyGuard, Facet {
         bytes32 transactionId = transactionIds[i];
         XChainLib.Request storage request = layout.requests[transactionId];
 
-        if (request.completed || block.number - request.blockNumber <= 900)
+        if (request.completed || block.number - request.blockNumber <= 900) {
           continue;
+        }
 
         totalRefund += request.value;
         request.completed = true;
@@ -62,15 +59,13 @@ contract XChain is IXChain, ReentrancyGuard, Facet {
     }
 
     if (totalRefund == 0) revert EntitlementChecker_NoRefundsAvailable();
-    if (address(this).balance < totalRefund)
+    if (address(this).balance < totalRefund) {
       revert EntitlementChecker_InsufficientFunds();
+    }
 
     // Single transfer for all eligible refunds
     CurrencyTransfer.transferCurrency(
-      CurrencyTransfer.NATIVE_TOKEN,
-      address(this),
-      msg.sender,
-      totalRefund
+      CurrencyTransfer.NATIVE_TOKEN, address(this), msg.sender, totalRefund
     );
   }
 
@@ -80,9 +75,7 @@ contract XChain is IXChain, ReentrancyGuard, Facet {
     uint256 requestId,
     NodeVoteStatus result
   ) external nonReentrant {
-    XChainLib.Request storage request = XChainLib.layout().requests[
-      transactionId
-    ];
+    XChainLib.Request storage request = XChainLib.layout().requests[transactionId];
 
     if (request.completed) {
       revert EntitlementGated_TransactionCheckAlreadyCompleted();
@@ -99,9 +92,7 @@ contract XChain is IXChain, ReentrancyGuard, Facet {
     }
 
     if (check.voteCompleted[requestId]) {
-      CustomRevert.revertWith(
-        EntitlementGated_TransactionCheckAlreadyCompleted.selector
-      );
+      CustomRevert.revertWith(EntitlementGated_TransactionCheckAlreadyCompleted.selector);
     }
 
     bool found;
@@ -135,24 +126,19 @@ contract XChain is IXChain, ReentrancyGuard, Facet {
       revert EntitlementGated_NodeNotFound();
     }
 
-    if (
-      passed > transactionNodesLength / 2 || failed > transactionNodesLength / 2
-    ) {
+    if (passed > transactionNodesLength / 2 || failed > transactionNodesLength / 2) {
       check.voteCompleted[requestId] = true;
-      NodeVoteStatus finalStatusForRole = passed > failed
-        ? NodeVoteStatus.PASSED
-        : NodeVoteStatus.FAILED;
+      NodeVoteStatus finalStatusForRole =
+        passed > failed ? NodeVoteStatus.PASSED : NodeVoteStatus.FAILED;
 
       bool allRoleIdsCompleted = _checkAllRequestsCompleted(transactionId);
 
       if (finalStatusForRole == NodeVoteStatus.PASSED || allRoleIdsCompleted) {
         request.completed = true;
-        XChainLib.layout().requestsBySender[request.caller].remove(
-          transactionId
+        XChainLib.layout().requestsBySender[request.caller].remove(transactionId);
+        EntitlementGated(request.caller).postEntitlementCheckResultV2{value: request.value}(
+          transactionId, 0, finalStatusForRole
         );
-        EntitlementGated(request.caller).postEntitlementCheckResultV2{
-          value: request.value
-        }(transactionId, 0, finalStatusForRole);
       }
     }
   }

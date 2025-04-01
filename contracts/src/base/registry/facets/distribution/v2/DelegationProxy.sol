@@ -25,10 +25,7 @@ contract DelegationProxy is Initializable {
   /// @dev Must be called by the factory upon deployment
   /// @param stakeToken_ The address of the stake token
   /// @param delegatee The address to delegate the stake token to
-  function initialize(
-    address stakeToken_,
-    address delegatee
-  ) external payable initializer {
+  function initialize(address stakeToken_, address delegatee) external payable initializer {
     factory = msg.sender;
     stakeToken = stakeToken_;
     IVotes(stakeToken_).delegate(delegatee);
@@ -44,14 +41,17 @@ contract DelegationProxy is Initializable {
     address currentDelegatee = IVotes(stakeToken).delegates(address(this));
     stakeToken = stakeToken_;
     IERC20(stakeToken_).approve(msg.sender, type(uint256).max);
-    if (currentDelegatee != address(0))
+    if (currentDelegatee != address(0)) {
       IVotes(stakeToken_).delegate(currentDelegatee);
+    }
   }
 
   /// @notice Delegates the stake token to the given address
   /// @dev Must be called by the factory
   /// @param delegatee The address to delegate the stake token to
-  function redelegate(address delegatee) external payable onlyFactory {
+  function redelegate(
+    address delegatee
+  ) external payable onlyFactory {
     IVotes(stakeToken).delegate(delegatee);
   }
 }

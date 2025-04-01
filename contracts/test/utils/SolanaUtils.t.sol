@@ -19,7 +19,7 @@ contract SolanaUtilsTest is TestUtils {
   function setUp() public {
     // Set up test data with known values
     // This is a sample extended public key (5 elements)
-    (validExtPubKey, ) = SCL_EIP6565_UTILS.SetKey(_randomUint256());
+    (validExtPubKey,) = SCL_EIP6565_UTILS.SetKey(_randomUint256());
 
     // The compressed key is the 5th element of the extended key
     validCompressedKey = bytes32(validExtPubKey[4]);
@@ -28,16 +28,15 @@ contract SolanaUtilsTest is TestUtils {
     knownBase58ForZero = "11111111111111111111111111111111";
 
     // Known input bytes and their expected Base58 encoding
-    knownBytes = bytes32(
-      uint256(
-        0x850f2d6e02a47af824d09ab69dc42d70cb28cbfa249fb7ee57b9d256c12762ef
-      )
-    );
+    knownBytes =
+      bytes32(uint256(0x850f2d6e02a47af824d09ab69dc42d70cb28cbfa249fb7ee57b9d256c12762ef));
     // This is the actual Base58 encoding of knownBytes, computed externally
     knownBase58ForKnownBytes = "9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin";
   }
 
-  function test_fuzz_isBase58(bytes1 char) public pure {
+  function test_fuzz_isBase58(
+    bytes1 char
+  ) public pure {
     assertEq(
       (SolanaUtils.BASE58_MAP >> uint8(char)) & 1 != 0,
       LibBytes.contains(SolanaUtils.ALPHABET, bytes.concat(char))
@@ -69,17 +68,13 @@ contract SolanaUtilsTest is TestUtils {
     // Test with a known value and its pre-computed Base58 encoding
     string memory knownResult = this.callToBase58String(knownBytes);
     assertEq(
-      knownResult,
-      knownBase58ForKnownBytes,
-      "Base58 encoding should match the pre-computed value"
+      knownResult, knownBase58ForKnownBytes, "Base58 encoding should match the pre-computed value"
     );
   }
 
   // Test getCompressedPublicKeyAsString
   function testGetCompressedPublicKeyAsString() public view {
-    string memory result = this.callGetCompressedPublicKeyAsString(
-      validExtPubKey
-    );
+    string memory result = this.callGetCompressedPublicKeyAsString(validExtPubKey);
 
     // Verify that the result matches what we'd get from the direct method
     string memory directResult = this.callToBase58String(validCompressedKey);
@@ -92,9 +87,7 @@ contract SolanaUtilsTest is TestUtils {
 
   // Test getSolanaAddressFromCompressedKey
   function testGetSolanaAddressFromCompressedKey() public view {
-    string memory result = this.callGetSolanaAddressFromCompressedKey(
-      validExtPubKey[4]
-    );
+    string memory result = this.callGetSolanaAddressFromCompressedKey(validExtPubKey[4]);
 
     // Verify that the result matches what we'd get from the direct method
     string memory directResult = this.callToBase58String(validCompressedKey);
@@ -107,9 +100,7 @@ contract SolanaUtilsTest is TestUtils {
 
   // Test getSolanaAddressFromFixedExtPubKey
   function testGetSolanaAddressFromFixedExtPubKey() public view {
-    string memory result = this.callGetSolanaAddressFromFixedExtPubKey(
-      validExtPubKey
-    );
+    string memory result = this.callGetSolanaAddressFromFixedExtPubKey(validExtPubKey);
 
     // Verify that the result matches what we'd get from the direct method
     string memory directResult = this.callToBase58String(validCompressedKey);
@@ -125,47 +116,29 @@ contract SolanaUtilsTest is TestUtils {
     // Generate the Solana address directly
     string memory expectedAddress = this.callToBase58String(validCompressedKey);
 
-    bool result = this.callIsValidSolanaAddress(
-      expectedAddress,
-      validExtPubKey
-    );
-    assertTrue(
-      result,
-      "Valid Solana address should be validated against matching pubkey"
-    );
+    bool result = this.callIsValidSolanaAddress(expectedAddress, validExtPubKey);
+    assertTrue(result, "Valid Solana address should be validated against matching pubkey");
 
     // Test with incorrect address
-    string
-      memory incorrectAddress = "3Myn3St4YQgL4WQvZxPdMaBWH1EvkzzpkLX8oVK3c7T4"; // Random valid-looking address
-    bool incorrectResult = this.callIsValidSolanaAddress(
-      incorrectAddress,
-      validExtPubKey
-    );
-    assertFalse(
-      incorrectResult,
-      "Incorrect Solana address should not validate against pubkey"
-    );
+    string memory incorrectAddress = "3Myn3St4YQgL4WQvZxPdMaBWH1EvkzzpkLX8oVK3c7T4"; // Random
+      // valid-looking address
+    bool incorrectResult = this.callIsValidSolanaAddress(incorrectAddress, validExtPubKey);
+    assertFalse(incorrectResult, "Incorrect Solana address should not validate against pubkey");
   }
 
   // Test isValidSolanaAddress (string only)
   function testIsValidSolanaAddress() external view {
     // Generate a valid Solana address
-    string memory validSolanaAddress = this.callToBase58String(
-      validCompressedKey
-    );
+    string memory validSolanaAddress = this.callToBase58String(validCompressedKey);
 
     // Test with valid address format
     bool result = this.callIsValidSolanaAddress(validSolanaAddress);
     assertTrue(result, "Valid Solana address format should be validated");
 
     // Test with another valid-looking address
-    string
-      memory anotherValidAddress = "3Myn3St4YQgL4WQvZxPdMaBWH1EvkzzpkLX8oVK3c7T4";
+    string memory anotherValidAddress = "3Myn3St4YQgL4WQvZxPdMaBWH1EvkzzpkLX8oVK3c7T4";
     bool anotherResult = this.callIsValidSolanaAddress(anotherValidAddress);
-    assertTrue(
-      anotherResult,
-      "Another valid Solana address format should be validated"
-    );
+    assertTrue(anotherResult, "Another valid Solana address format should be validated");
 
     // Test with invalid addresses
 
@@ -175,8 +148,7 @@ contract SolanaUtilsTest is TestUtils {
     assertFalse(tooShortResult, "Too short address should not be validated");
 
     // Too long
-    string
-      memory tooLongAddress = "3Myn3St4YQgL4WQvZxPdMaBWH1EvkzzpkLX8oVK3c7T4ABCDEFGHIJKLMN";
+    string memory tooLongAddress = "3Myn3St4YQgL4WQvZxPdMaBWH1EvkzzpkLX8oVK3c7T4ABCDEFGHIJKLMN";
     bool tooLongResult = this.callIsValidSolanaAddress(tooLongAddress);
     assertFalse(tooLongResult, "Too long address should not be validated");
 
@@ -205,16 +177,12 @@ contract SolanaUtilsTest is TestUtils {
   // Test with edge cases for Base58 encoding
   function testBase58EdgeCases() public view {
     // Test with leading zeros
-    bytes32 leadingZeros = bytes32(
-      uint256(
-        0x0000000000000000000000000000000000000000000000000000000000000123
-      )
-    );
+    bytes32 leadingZeros =
+      bytes32(uint256(0x0000000000000000000000000000000000000000000000000000000000000123));
     string memory leadingZerosResult = this.callToBase58String(leadingZeros);
 
     // Expected result for leading zeros (computed externally)
-    string
-      memory expectedLeadingZerosResult = "11111111111111111111111111111162";
+    string memory expectedLeadingZerosResult = "11111111111111111111111111111162";
     assertEq(
       leadingZerosResult,
       expectedLeadingZerosResult,
@@ -225,9 +193,7 @@ contract SolanaUtilsTest is TestUtils {
     bytes32 allZeros = bytes32(0);
     string memory allZerosResult = this.callToBase58String(allZeros);
     assertEq(
-      allZerosResult,
-      knownBase58ForZero,
-      "Base58 encoding of all zeros should match expected value"
+      allZerosResult, knownBase58ForZero, "Base58 encoding of all zeros should match expected value"
     );
 
     // Test with max value
@@ -235,8 +201,7 @@ contract SolanaUtilsTest is TestUtils {
     string memory maxValueResult = this.callToBase58String(maxValue);
 
     // Expected result for max value (computed externally)
-    string
-      memory expectedMaxValueResult = "JEKNVnkbo3jma5nREBBJCDoXFVeKkD56V3xKrvRmWxFG";
+    string memory expectedMaxValueResult = "JEKNVnkbo3jma5nREBBJCDoXFVeKkD56V3xKrvRmWxFG";
     assertEq(
       maxValueResult,
       expectedMaxValueResult,
@@ -246,26 +211,12 @@ contract SolanaUtilsTest is TestUtils {
 
   // Test consistency between different methods
   function testConsistencyBetweenMethods() public view {
-    string memory method1 = this.callGetCompressedPublicKeyAsString(
-      validExtPubKey
-    );
-    string memory method2 = this.callGetSolanaAddressFromCompressedKey(
-      validExtPubKey[4]
-    );
-    string memory method3 = this.callGetSolanaAddressFromFixedExtPubKey(
-      validExtPubKey
-    );
+    string memory method1 = this.callGetCompressedPublicKeyAsString(validExtPubKey);
+    string memory method2 = this.callGetSolanaAddressFromCompressedKey(validExtPubKey[4]);
+    string memory method3 = this.callGetSolanaAddressFromFixedExtPubKey(validExtPubKey);
 
-    assertEq(
-      method1,
-      method2,
-      "Different methods should produce consistent results"
-    );
-    assertEq(
-      method2,
-      method3,
-      "Different methods should produce consistent results"
-    );
+    assertEq(method1, method2, "Different methods should produce consistent results");
+    assertEq(method2, method3, "Different methods should produce consistent results");
   }
 
   // Add a separate test for invalid characters in Solana addresses
@@ -273,19 +224,12 @@ contract SolanaUtilsTest is TestUtils {
     // Create a test for a clearly invalid address with special characters
     string memory invalidAddress1 = "!@#$%^&*()";
     bool result1 = this.callIsValidSolanaAddress(invalidAddress1);
-    assertFalse(
-      result1,
-      "Address with special characters should not be validated"
-    );
+    assertFalse(result1, "Address with special characters should not be validated");
 
     // Try another approach with a mix of valid and invalid characters
-    string
-      memory invalidAddress2 = "9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin!";
+    string memory invalidAddress2 = "9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin!";
     bool result2 = this.callIsValidSolanaAddress(invalidAddress2);
-    assertFalse(
-      result2,
-      "Address with trailing invalid character should not be validated"
-    );
+    assertFalse(result2, "Address with trailing invalid character should not be validated");
   }
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/

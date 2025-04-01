@@ -9,9 +9,12 @@ pragma solidity ^0.8.23;
 
 interface ITreasury {
   /// @notice Withdraw funds from the treasury to a specified account
-  /// @dev Can only be called by the owner of the contract. Will revert if account is zero address or if balance is 0
+  /// @dev Can only be called by the owner of the contract. Will revert if account is zero address
+  /// or if balance is 0
   /// @param account The address to withdraw funds to
-  function withdraw(address account) external;
+  function withdraw(
+    address account
+  ) external;
 
   /// @notice Handle the receipt of a single ERC721 token
   /// @dev Implements the IERC721Receiver interface to safely receive ERC721 tokens
@@ -50,7 +53,8 @@ interface ITreasury {
   /// @param ids An array containing ids of each token being transferred
   /// @param values An array containing amounts of each token being transferred
   /// @param data Additional data with no specified format
-  /// @return bytes4 `bytes4(keccak256("onERC1155BatchReceived(address,address,uint256[],uint256[],bytes)"))`
+  /// @return bytes4
+  /// `bytes4(keccak256("onERC1155BatchReceived(address,address,uint256[],uint256[],bytes)"))`
   function onERC1155BatchReceived(
     address operator,
     address from,

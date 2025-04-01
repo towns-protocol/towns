@@ -8,15 +8,14 @@ pragma solidity ^0.8.23;
 // helpers
 import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
 import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
-import {RewardsDistribution} from "contracts/src/base/registry/facets/distribution/v1/RewardsDistribution.sol";
+import {RewardsDistribution} from
+  "contracts/src/base/registry/facets/distribution/v1/RewardsDistribution.sol";
 
 contract DeployRewardsDistribution is Deployer, FacetHelper {
   constructor() {
     addSelector(RewardsDistribution.getClaimableAmountForOperator.selector);
     addSelector(RewardsDistribution.getClaimableAmountForDelegator.selector);
-    addSelector(
-      RewardsDistribution.getClaimableAmountForAuthorizedClaimer.selector
-    );
+    addSelector(RewardsDistribution.getClaimableAmountForAuthorizedClaimer.selector);
     addSelector(RewardsDistribution.operatorClaim.selector);
     addSelector(RewardsDistribution.delegatorClaim.selector);
     addSelector(RewardsDistribution.mainnetClaim.selector);
@@ -42,7 +41,9 @@ contract DeployRewardsDistribution is Deployer, FacetHelper {
     return "facets/rewardsDistributionFacet";
   }
 
-  function __deploy(address deployer) public override returns (address) {
+  function __deploy(
+    address deployer
+  ) public override returns (address) {
     vm.startBroadcast(deployer);
     RewardsDistribution facet = new RewardsDistribution();
     vm.stopBroadcast();

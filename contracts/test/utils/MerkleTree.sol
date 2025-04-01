@@ -10,10 +10,7 @@ contract MerkleTree {
     address[] memory members,
     uint256[] memory claimAmounts
   ) external pure returns (bytes32 root, bytes32[][] memory tree) {
-    require(
-      members.length != 0 && members.length == claimAmounts.length,
-      "invalid input"
-    );
+    require(members.length != 0 && members.length == claimAmounts.length, "invalid input");
     // Determine tree height.
     uint256 height = 0;
     {
@@ -73,10 +70,7 @@ contract MerkleTree {
     }
   }
 
-  function _createLeaf(
-    address member,
-    uint256 amount
-  ) internal pure returns (bytes32) {
+  function _createLeaf(address member, uint256 amount) internal pure returns (bytes32) {
     bytes32 leaf;
     assembly ("memory-safe") {
       // Store the member address at memory location 0
@@ -85,7 +79,8 @@ contract MerkleTree {
       mstore(0x20, amount)
       // Compute the keccak256 hash of the account and amount, and store it at memory location 0
       mstore(0, keccak256(0, 0x40))
-      // Compute the keccak256 hash of the previous hash (stored at memory location 0) and store it in the leaf variable
+      // Compute the keccak256 hash of the previous hash (stored at memory location 0) and store it
+      // in the leaf variable
       leaf := keccak256(0, 0x20)
     }
     return leaf;

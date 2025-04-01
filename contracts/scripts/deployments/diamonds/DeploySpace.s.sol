@@ -17,27 +17,35 @@ import {MultiInit} from "@towns-protocol/diamond/src/initializers/MultiInit.sol"
 import {DeployDiamondCut} from "contracts/scripts/deployments/facets/DeployDiamondCut.s.sol";
 import {DeployDiamondLoupe} from "contracts/scripts/deployments/facets/DeployDiamondLoupe.s.sol";
 import {DeployIntrospection} from "contracts/scripts/deployments/facets/DeployIntrospection.s.sol";
-import {DeployERC721AQueryable} from "contracts/scripts/deployments/facets/DeployERC721AQueryable.s.sol";
+import {DeployERC721AQueryable} from
+  "contracts/scripts/deployments/facets/DeployERC721AQueryable.s.sol";
 import {DeployBanning} from "contracts/scripts/deployments/facets/DeployBanning.s.sol";
-import {DeployMembershipMetadata} from "contracts/scripts/deployments/facets/DeployMembershipMetadata.s.sol";
+import {DeployMembershipMetadata} from
+  "contracts/scripts/deployments/facets/DeployMembershipMetadata.s.sol";
 import {DeployMembership} from "contracts/scripts/deployments/facets/DeployMembership.s.sol";
-import {DeployEntitlementDataQueryable} from "contracts/scripts/deployments/facets/DeployEntitlementDataQueryable.s.sol";
-import {DeployOwnablePendingFacet} from "contracts/scripts/deployments/facets/DeployOwnablePendingFacet.s.sol";
+import {DeployEntitlementDataQueryable} from
+  "contracts/scripts/deployments/facets/DeployEntitlementDataQueryable.s.sol";
+import {DeployOwnablePendingFacet} from
+  "contracts/scripts/deployments/facets/DeployOwnablePendingFacet.s.sol";
 import {DeployTokenOwnable} from "contracts/scripts/deployments/facets/DeployTokenOwnable.s.sol";
-import {DeployEntitlementsManager} from "contracts/scripts/deployments/facets/DeployEntitlementsManager.s.sol";
+import {DeployEntitlementsManager} from
+  "contracts/scripts/deployments/facets/DeployEntitlementsManager.s.sol";
 import {DeployRoles} from "contracts/scripts/deployments/facets/DeployRoles.s.sol";
 import {DeployChannels} from "contracts/scripts/deployments/facets/DeployChannels.s.sol";
 import {DeployTokenPausable} from "contracts/scripts/deployments/facets/DeployTokenPausable.s.sol";
 import {DeployPrepayFacet} from "contracts/scripts/deployments/facets/DeployPrepayFacet.s.sol";
 import {DeployReferrals} from "contracts/scripts/deployments/facets/DeployReferrals.s.sol";
 import {DeployReviewFacet} from "contracts/scripts/deployments/facets/DeployReviewFacet.s.sol";
-import {DeployMembershipToken} from "contracts/scripts/deployments/facets/DeployMembershipToken.s.sol";
-import {DeploySpaceEntitlementGated} from "contracts/scripts/deployments/facets/DeploySpaceEntitlementGated.s.sol";
+import {DeployMembershipToken} from
+  "contracts/scripts/deployments/facets/DeployMembershipToken.s.sol";
+import {DeploySpaceEntitlementGated} from
+  "contracts/scripts/deployments/facets/DeploySpaceEntitlementGated.s.sol";
 import {DeployTipping} from "contracts/scripts/deployments/facets/DeployTipping.s.sol";
 import {DeployMultiInit} from "contracts/scripts/deployments/utils/DeployMultiInit.s.sol";
 import {DeployTreasury} from "contracts/scripts/deployments/facets/DeployTreasury.s.sol";
 // Test Facets
-import {DeployMockLegacyMembership} from "contracts/scripts/deployments/utils/DeployMockLegacyMembership.s.sol";
+import {DeployMockLegacyMembership} from
+  "contracts/scripts/deployments/utils/DeployMockLegacyMembership.s.sol";
 
 contract DeploySpace is DiamondHelper, Deployer {
   DeployDiamondCut diamondCutHelper = new DeployDiamondCut();
@@ -46,15 +54,12 @@ contract DeploySpace is DiamondHelper, Deployer {
   DeployERC721AQueryable erc721aQueryableHelper = new DeployERC721AQueryable();
   DeployBanning banningHelper = new DeployBanning();
   DeployMembership membershipHelper = new DeployMembership();
-  DeployMembershipMetadata membershipMetadataHelper =
-    new DeployMembershipMetadata();
+  DeployMembershipMetadata membershipMetadataHelper = new DeployMembershipMetadata();
   DeployEntitlementDataQueryable entitlementDataQueryableHelper =
     new DeployEntitlementDataQueryable();
-  DeployOwnablePendingFacet ownablePendingHelper =
-    new DeployOwnablePendingFacet();
+  DeployOwnablePendingFacet ownablePendingHelper = new DeployOwnablePendingFacet();
   DeployTokenOwnable tokenOwnableHelper = new DeployTokenOwnable();
-  DeployEntitlementsManager entitlementsHelper =
-    new DeployEntitlementsManager();
+  DeployEntitlementsManager entitlementsHelper = new DeployEntitlementsManager();
 
   DeployRoles rolesHelper = new DeployRoles();
   DeployChannels channelsHelper = new DeployChannels();
@@ -64,14 +69,12 @@ contract DeploySpace is DiamondHelper, Deployer {
   DeployReferrals referralsHelper = new DeployReferrals();
   DeployReviewFacet reviewHelper = new DeployReviewFacet();
   DeployMembershipToken membershipTokenHelper = new DeployMembershipToken();
-  DeploySpaceEntitlementGated entitlementGatedHelper =
-    new DeploySpaceEntitlementGated();
+  DeploySpaceEntitlementGated entitlementGatedHelper = new DeploySpaceEntitlementGated();
   DeployMultiInit deployMultiInit = new DeployMultiInit();
   DeployTipping tippingHelper = new DeployTipping();
   DeployTreasury treasuryHelper = new DeployTreasury();
   // Test Facets
-  DeployMockLegacyMembership mockLegacyMembershipHelper =
-    new DeployMockLegacyMembership();
+  DeployMockLegacyMembership mockLegacyMembershipHelper = new DeployMockLegacyMembership();
 
   address tokenOwnable;
   address diamondCut;
@@ -104,7 +107,9 @@ contract DeploySpace is DiamondHelper, Deployer {
     return "space";
   }
 
-  function addImmutableCuts(address deployer) internal {
+  function addImmutableCuts(
+    address deployer
+  ) internal {
     multiInit = deployMultiInit.deploy(deployer);
     diamondCut = diamondCutHelper.deploy(deployer);
     diamondLoupe = diamondLoupeHelper.deploy(deployer);
@@ -113,18 +118,10 @@ contract DeploySpace is DiamondHelper, Deployer {
     tokenOwnable = tokenOwnableHelper.deploy(deployer);
 
     addCut(diamondCutHelper.makeCut(diamondCut, IDiamond.FacetCutAction.Add));
-    addCut(
-      diamondLoupeHelper.makeCut(diamondLoupe, IDiamond.FacetCutAction.Add)
-    );
-    addCut(
-      introspectionHelper.makeCut(introspection, IDiamond.FacetCutAction.Add)
-    );
-    addCut(
-      ownablePendingHelper.makeCut(ownablePending, IDiamond.FacetCutAction.Add)
-    );
-    addCut(
-      tokenOwnableHelper.makeCut(tokenOwnable, IDiamond.FacetCutAction.Add)
-    );
+    addCut(diamondLoupeHelper.makeCut(diamondLoupe, IDiamond.FacetCutAction.Add));
+    addCut(introspectionHelper.makeCut(introspection, IDiamond.FacetCutAction.Add));
+    addCut(ownablePendingHelper.makeCut(ownablePending, IDiamond.FacetCutAction.Add));
+    addCut(tokenOwnableHelper.makeCut(tokenOwnable, IDiamond.FacetCutAction.Add));
 
     addInit(diamondCut, diamondCutHelper.makeInitData(""));
     addInit(diamondLoupe, diamondLoupeHelper.makeInitData(""));
@@ -158,46 +155,19 @@ contract DeploySpace is DiamondHelper, Deployer {
       mockLegacyMembership = mockLegacyMembershipHelper.deploy(deployer);
     }
 
-    addCut(
-      entitlementsHelper.makeCut(entitlements, IDiamond.FacetCutAction.Add)
-    );
+    addCut(entitlementsHelper.makeCut(entitlements, IDiamond.FacetCutAction.Add));
     addCut(rolesHelper.makeCut(roles, IDiamond.FacetCutAction.Add));
-    addCut(
-      tokenPausableHelper.makeCut(tokenPausable, IDiamond.FacetCutAction.Add)
-    );
+    addCut(tokenPausableHelper.makeCut(tokenPausable, IDiamond.FacetCutAction.Add));
     addCut(channelsHelper.makeCut(channels, IDiamond.FacetCutAction.Add));
-    addCut(
-      membershipTokenHelper.makeCut(
-        membershipToken,
-        IDiamond.FacetCutAction.Add
-      )
-    );
+    addCut(membershipTokenHelper.makeCut(membershipToken, IDiamond.FacetCutAction.Add));
     addCut(membershipHelper.makeCut(membership, IDiamond.FacetCutAction.Add));
 
     addCut(banningHelper.makeCut(banning, IDiamond.FacetCutAction.Add));
+    addCut(membershipMetadataHelper.makeCut(membershipMetadata, IDiamond.FacetCutAction.Add));
+    addCut(entitlementGatedHelper.makeCut(entitlementGated, IDiamond.FacetCutAction.Add));
+    addCut(erc721aQueryableHelper.makeCut(erc721aQueryable, IDiamond.FacetCutAction.Add));
     addCut(
-      membershipMetadataHelper.makeCut(
-        membershipMetadata,
-        IDiamond.FacetCutAction.Add
-      )
-    );
-    addCut(
-      entitlementGatedHelper.makeCut(
-        entitlementGated,
-        IDiamond.FacetCutAction.Add
-      )
-    );
-    addCut(
-      erc721aQueryableHelper.makeCut(
-        erc721aQueryable,
-        IDiamond.FacetCutAction.Add
-      )
-    );
-    addCut(
-      entitlementDataQueryableHelper.makeCut(
-        entitlementDataQueryable,
-        IDiamond.FacetCutAction.Add
-      )
+      entitlementDataQueryableHelper.makeCut(entitlementDataQueryable, IDiamond.FacetCutAction.Add)
     );
     addCut(prepayHelper.makeCut(prepay, IDiamond.FacetCutAction.Add));
     addCut(referralsHelper.makeCut(referrals, IDiamond.FacetCutAction.Add));
@@ -205,128 +175,67 @@ contract DeploySpace is DiamondHelper, Deployer {
     addCut(tippingHelper.makeCut(tipping, IDiamond.FacetCutAction.Add));
     addCut(treasuryHelper.makeCut(treasury, IDiamond.FacetCutAction.Add));
     if (isAnvil()) {
-      addCut(
-        mockLegacyMembershipHelper.makeCut(
-          mockLegacyMembership,
-          IDiamond.FacetCutAction.Add
-        )
-      );
+      addCut(mockLegacyMembershipHelper.makeCut(mockLegacyMembership, IDiamond.FacetCutAction.Add));
     }
 
-    return
-      Diamond.InitParams({
-        baseFacets: baseFacets(),
-        init: multiInit,
-        initData: abi.encodeWithSelector(
-          MultiInit.multiInit.selector,
-          _initAddresses,
-          _initDatas
-        )
-      });
+    return Diamond.InitParams({
+      baseFacets: baseFacets(),
+      init: multiInit,
+      initData: abi.encodeWithSelector(MultiInit.multiInit.selector, _initAddresses, _initDatas)
+    });
   }
 
-  function diamondInitParamsFromFacets(
-    address deployer,
-    string[] memory facets
-  ) public {
+  function diamondInitParamsFromFacets(address deployer, string[] memory facets) public {
     for (uint256 i = 0; i < facets.length; i++) {
       bytes32 facetNameHash = keccak256(abi.encodePacked(facets[i]));
 
       if (facetNameHash == keccak256(abi.encodePacked("MembershipToken"))) {
         membershipToken = membershipTokenHelper.deploy(deployer);
         membershipTokenHelper.removeSelector(IERC721A.tokenURI.selector);
-        addCut(
-          membershipTokenHelper.makeCut(
-            membershipToken,
-            IDiamond.FacetCutAction.Add
-          )
-        );
-      } else if (
-        facetNameHash == keccak256(abi.encodePacked("ERC721AQueryable"))
-      ) {
+        addCut(membershipTokenHelper.makeCut(membershipToken, IDiamond.FacetCutAction.Add));
+      } else if (facetNameHash == keccak256(abi.encodePacked("ERC721AQueryable"))) {
         erc721aQueryable = erc721aQueryableHelper.deploy(deployer);
-        addCut(
-          erc721aQueryableHelper.makeCut(
-            erc721aQueryable,
-            IDiamond.FacetCutAction.Add
-          )
-        );
+        addCut(erc721aQueryableHelper.makeCut(erc721aQueryable, IDiamond.FacetCutAction.Add));
       } else if (facetNameHash == keccak256(abi.encodePacked("Banning"))) {
         banning = banningHelper.deploy(deployer);
         addCut(banningHelper.makeCut(banning, IDiamond.FacetCutAction.Add));
-      } else if (
-        facetNameHash == keccak256(abi.encodePacked("MembershipFacet"))
-      ) {
+      } else if (facetNameHash == keccak256(abi.encodePacked("MembershipFacet"))) {
         membership = membershipHelper.deploy(deployer);
-        addCut(
-          membershipHelper.makeCut(membership, IDiamond.FacetCutAction.Add)
-        );
-      } else if (
-        facetNameHash == keccak256(abi.encodePacked("MembershipMetadata"))
-      ) {
+        addCut(membershipHelper.makeCut(membership, IDiamond.FacetCutAction.Add));
+      } else if (facetNameHash == keccak256(abi.encodePacked("MembershipMetadata"))) {
         membershipMetadata = membershipMetadataHelper.deploy(deployer);
-        addCut(
-          membershipMetadataHelper.makeCut(
-            membershipMetadata,
-            IDiamond.FacetCutAction.Add
-          )
-        );
-      } else if (
-        facetNameHash == keccak256(abi.encodePacked("EntitlementDataQueryable"))
-      ) {
-        entitlementDataQueryable = entitlementDataQueryableHelper.deploy(
-          deployer
-        );
+        addCut(membershipMetadataHelper.makeCut(membershipMetadata, IDiamond.FacetCutAction.Add));
+      } else if (facetNameHash == keccak256(abi.encodePacked("EntitlementDataQueryable"))) {
+        entitlementDataQueryable = entitlementDataQueryableHelper.deploy(deployer);
         addCut(
           entitlementDataQueryableHelper.makeCut(
-            entitlementDataQueryable,
-            IDiamond.FacetCutAction.Add
+            entitlementDataQueryable, IDiamond.FacetCutAction.Add
           )
         );
-      } else if (
-        facetNameHash == keccak256(abi.encodePacked("EntitlementsManager"))
-      ) {
+      } else if (facetNameHash == keccak256(abi.encodePacked("EntitlementsManager"))) {
         entitlements = entitlementsHelper.deploy(deployer);
-        addCut(
-          entitlementsHelper.makeCut(entitlements, IDiamond.FacetCutAction.Add)
-        );
+        addCut(entitlementsHelper.makeCut(entitlements, IDiamond.FacetCutAction.Add));
       } else if (facetNameHash == keccak256(abi.encodePacked("Roles"))) {
         roles = rolesHelper.deploy(deployer);
         addCut(rolesHelper.makeCut(roles, IDiamond.FacetCutAction.Add));
       } else if (facetNameHash == keccak256(abi.encodePacked("Channels"))) {
         channels = channelsHelper.deploy(deployer);
         addCut(channelsHelper.makeCut(channels, IDiamond.FacetCutAction.Add));
-      } else if (
-        facetNameHash == keccak256(abi.encodePacked("TokenPausableFacet"))
-      ) {
+      } else if (facetNameHash == keccak256(abi.encodePacked("TokenPausableFacet"))) {
         tokenPausable = tokenPausableHelper.deploy(deployer);
-        addCut(
-          tokenPausableHelper.makeCut(
-            tokenPausable,
-            IDiamond.FacetCutAction.Add
-          )
-        );
+        addCut(tokenPausableHelper.makeCut(tokenPausable, IDiamond.FacetCutAction.Add));
       } else if (facetNameHash == keccak256(abi.encodePacked("PrepayFacet"))) {
         prepay = prepayHelper.deploy(deployer);
         addCut(prepayHelper.makeCut(prepay, IDiamond.FacetCutAction.Add));
-      } else if (
-        facetNameHash == keccak256(abi.encodePacked("ReferralsFacet"))
-      ) {
+      } else if (facetNameHash == keccak256(abi.encodePacked("ReferralsFacet"))) {
         referrals = referralsHelper.deploy(deployer);
         addCut(referralsHelper.makeCut(referrals, IDiamond.FacetCutAction.Add));
       } else if (facetNameHash == keccak256(abi.encodePacked("ReviewFacet"))) {
         review = reviewHelper.deploy(deployer);
         addCut(reviewHelper.makeCut(review, IDiamond.FacetCutAction.Add));
-      } else if (
-        facetNameHash == keccak256(abi.encodePacked("SpaceEntitlementGated"))
-      ) {
+      } else if (facetNameHash == keccak256(abi.encodePacked("SpaceEntitlementGated"))) {
         entitlementGated = entitlementGatedHelper.deploy(deployer);
-        addCut(
-          entitlementGatedHelper.makeCut(
-            entitlementGated,
-            IDiamond.FacetCutAction.Add
-          )
-        );
+        addCut(entitlementGatedHelper.makeCut(entitlementGated, IDiamond.FacetCutAction.Add));
       } else if (facetNameHash == keccak256(abi.encodePacked("Treasury"))) {
         treasury = treasuryHelper.deploy(deployer);
         addCut(treasuryHelper.makeCut(treasury, IDiamond.FacetCutAction.Add));
@@ -342,7 +251,9 @@ contract DeploySpace is DiamondHelper, Deployer {
     return this.getCuts();
   }
 
-  function __deploy(address deployer) public override returns (address) {
+  function __deploy(
+    address deployer
+  ) public override returns (address) {
     addImmutableCuts(deployer);
 
     Diamond.InitParams memory initDiamondCut = diamondInitParams(deployer);

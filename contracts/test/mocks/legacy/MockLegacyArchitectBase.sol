@@ -8,7 +8,8 @@ import {IUserEntitlement} from "contracts/src/spaces/entitlements/user/IUserEnti
 import {IRuleEntitlement} from "contracts/src/spaces/entitlements/rule/IRuleEntitlement.sol";
 import {IRoles, IRolesBase} from "contracts/src/spaces/facets/roles/IRoles.sol";
 import {IChannel} from "contracts/src/spaces/facets/channels/IChannel.sol";
-import {IEntitlementsManager} from "contracts/src/spaces/facets/entitlements/IEntitlementsManager.sol";
+import {IEntitlementsManager} from
+  "contracts/src/spaces/facets/entitlements/IEntitlementsManager.sol";
 import {IProxyManager} from "@towns-protocol/diamond/src/proxy/manager/IProxyManager.sol";
 import {ITokenOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/token/ITokenOwnable.sol";
 import {IManagedProxyBase} from "@towns-protocol/diamond/src/proxy/managed/IManagedProxy.sol";
@@ -21,7 +22,8 @@ import {StringSet} from "contracts/src/utils/StringSet.sol";
 import {Validator} from "contracts/src/utils/Validator.sol";
 import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 import {ArchitectStorage} from "contracts/src/factory/facets/architect/ArchitectStorage.sol";
-import {ImplementationStorage} from "contracts/src/factory/facets/architect/ImplementationStorage.sol";
+import {ImplementationStorage} from
+  "contracts/src/factory/facets/architect/ImplementationStorage.sol";
 import {Permissions} from "contracts/src/spaces/facets/Permissions.sol";
 
 // contracts
@@ -43,11 +45,15 @@ abstract contract LegacyArchitectBase is ILegacyArchitectBase {
   // =============================================================
   //                           Spaces
   // =============================================================
-  function _getTokenIdBySpace(address space) internal view returns (uint256) {
+  function _getTokenIdBySpace(
+    address space
+  ) internal view returns (uint256) {
     return ArchitectStorage.layout().tokenIdBySpace[space];
   }
 
-  function _getSpaceByTokenId(uint256 tokenId) internal view returns (address) {
+  function _getSpaceByTokenId(
+    uint256 tokenId
+  ) internal view returns (address) {
     return ArchitectStorage.layout().spaceByTokenId[tokenId];
   }
 
@@ -80,14 +86,12 @@ abstract contract LegacyArchitectBase is ILegacyArchitectBase {
     );
 
     // deploy user entitlement
-    IUserEntitlement userEntitlement = IUserEntitlement(
-      _deployEntitlement(ims.userEntitlement, spaceAddress)
-    );
+    IUserEntitlement userEntitlement =
+      IUserEntitlement(_deployEntitlement(ims.userEntitlement, spaceAddress));
 
     // deploy token entitlement
-    IRuleEntitlement ruleEntitlement = IRuleEntitlement(
-      _deployEntitlement(ims.legacyRuleEntitlement, spaceAddress)
-    );
+    IRuleEntitlement ruleEntitlement =
+      IRuleEntitlement(_deployEntitlement(ims.legacyRuleEntitlement, spaceAddress));
 
     address[] memory entitlements = new address[](2);
     entitlements[0] = address(userEntitlement);
@@ -98,10 +102,7 @@ abstract contract LegacyArchitectBase is ILegacyArchitectBase {
 
     // create minter role with requirements
     _createMinterEntitlement(
-      spaceAddress,
-      userEntitlement,
-      ruleEntitlement,
-      spaceInfo.membership.requirements
+      spaceAddress, userEntitlement, ruleEntitlement, spaceInfo.membership.requirements
     );
 
     // create member role with membership as the requirement
@@ -116,11 +117,7 @@ abstract contract LegacyArchitectBase is ILegacyArchitectBase {
     _createDefaultChannel(spaceAddress, memberRoleId, spaceInfo.channel);
 
     // transfer nft to sender
-    IERC721A(address(ims.spaceOwnerToken)).safeTransferFrom(
-      address(this),
-      msg.sender,
-      spaceTokenId
-    );
+    IERC721A(address(ims.spaceOwnerToken)).safeTransferFrom(address(this), msg.sender, spaceTokenId);
 
     // emit event
     emit SpaceCreated(msg.sender, spaceTokenId, spaceAddress);
@@ -130,7 +127,9 @@ abstract contract LegacyArchitectBase is ILegacyArchitectBase {
   //                           Implementations
   // =============================================================
 
-  function _setLegacyRuleEntitlement(IRuleEntitlement entitlement) internal {
+  function _setLegacyRuleEntitlement(
+    IRuleEntitlement entitlement
+  ) internal {
     ImplementationStorage.Layout storage ds = ImplementationStorage.layout();
     ds.legacyRuleEntitlement = entitlement;
   }
@@ -147,15 +146,9 @@ abstract contract LegacyArchitectBase is ILegacyArchitectBase {
     uint256[] memory roleIds = new uint256[](1);
     roleIds[0] = roleId;
 
-    bytes32 defaultChannelId = bytes32(
-      bytes.concat(CHANNEL_PREFIX, bytes20(space))
-    );
+    bytes32 defaultChannelId = bytes32(bytes.concat(CHANNEL_PREFIX, bytes20(space)));
 
-    IChannel(space).createChannel(
-      defaultChannelId,
-      channelInfo.metadata,
-      roleIds
-    );
+    IChannel(space).createChannel(defaultChannelId, channelInfo.metadata, roleIds);
   }
 
   // =============================================================
@@ -172,9 +165,7 @@ abstract contract LegacyArchitectBase is ILegacyArchitectBase {
     joinPermissions[0] = Permissions.JoinSpace;
 
     roleId = IRoles(spaceAddress).createRole(
-      MINTER_ROLE,
-      joinPermissions,
-      new IRolesBase.CreateEntitlement[](0)
+      MINTER_ROLE, joinPermissions, new IRolesBase.CreateEntitlement[](0)
     );
 
     if (requirements.everyone) {
@@ -182,16 +173,12 @@ abstract contract LegacyArchitectBase is ILegacyArchitectBase {
       users[0] = EVERYONE_ADDRESS;
 
       IRoles(spaceAddress).addRoleToEntitlement(
-        roleId,
-        IRolesBase.CreateEntitlement({
-          module: userEntitlement,
-          data: abi.encode(users)
-        })
+        roleId, IRolesBase.CreateEntitlement({module: userEntitlement, data: abi.encode(users)})
       );
     } else {
       if (requirements.users.length != 0) {
         // validate users
-        for (uint256 i = 0; i < requirements.users.length; ) {
+        for (uint256 i = 0; i < requirements.users.length;) {
           Validator.checkAddress(requirements.users[i]);
           unchecked {
             i++;
@@ -229,16 +216,11 @@ abstract contract LegacyArchitectBase is ILegacyArchitectBase {
     address[] memory users = new address[](1);
     users[0] = EVERYONE_ADDRESS;
 
-    IRolesBase.CreateEntitlement[]
-      memory entitlements = new IRolesBase.CreateEntitlement[](1);
+    IRolesBase.CreateEntitlement[] memory entitlements = new IRolesBase.CreateEntitlement[](1);
     entitlements[0].module = userEntitlement;
     entitlements[0].data = abi.encode(users);
 
-    roleId = IRoles(spaceAddress).createRole(
-      memberName,
-      memberPermissions,
-      entitlements
-    );
+    roleId = IRoles(spaceAddress).createRole(memberName, memberPermissions, entitlements);
   }
 
   // =============================================================
@@ -250,10 +232,7 @@ abstract contract LegacyArchitectBase is ILegacyArchitectBase {
     Membership memory membership
   ) internal returns (address space) {
     // get deployment info
-    (bytes memory initCode, bytes32 salt) = _getSpaceDeploymentInfo(
-      spaceTokenId,
-      membership
-    );
+    (bytes memory initCode, bytes32 salt) = _getSpaceDeploymentInfo(spaceTokenId, membership);
     return Factory.deploy(initCode, salt);
   }
 
@@ -264,10 +243,7 @@ abstract contract LegacyArchitectBase is ILegacyArchitectBase {
     // calculate init code
     bytes memory initCode = abi.encodePacked(
       type(ERC1967Proxy).creationCode,
-      abi.encode(
-        entitlement,
-        abi.encodeCall(IEntitlement.initialize, (spaceAddress))
-      )
+      abi.encode(entitlement, abi.encodeCall(IEntitlement.initialize, (spaceAddress)))
     );
 
     return Factory.deploy(initCode);

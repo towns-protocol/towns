@@ -8,7 +8,8 @@ pragma solidity ^0.8.23;
 // contracts
 import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
 import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
-import {TokenOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/token/TokenOwnableBase.sol";
+import {TokenOwnableBase} from
+  "@towns-protocol/diamond/src/facets/ownable/token/TokenOwnableBase.sol";
 import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
 
 interface IMockFacet {
@@ -16,7 +17,9 @@ interface IMockFacet {
 
   function anotherMockFunction() external pure returns (uint256);
 
-  function setValue(uint256 value_) external;
+  function setValue(
+    uint256 value_
+  ) external;
 
   function getValue() external view returns (uint256);
 
@@ -24,8 +27,7 @@ interface IMockFacet {
 }
 
 library MockFacetStorage {
-  bytes32 internal constant MOCK_FACET_STORAGE_POSITION =
-    keccak256("mock.facet.storage.position");
+  bytes32 internal constant MOCK_FACET_STORAGE_POSITION = keccak256("mock.facet.storage.position");
 
   struct Layout {
     uint256 value;
@@ -42,7 +44,9 @@ library MockFacetStorage {
 contract MockFacet is IMockFacet, TokenOwnableBase, Facet {
   using MockFacetStorage for MockFacetStorage.Layout;
 
-  function __MockFacet_init(uint256 value) external onlyInitializing {
+  function __MockFacet_init(
+    uint256 value
+  ) external onlyInitializing {
     MockFacetStorage.layout().value = value;
   }
 
@@ -58,7 +62,9 @@ contract MockFacet is IMockFacet, TokenOwnableBase, Facet {
     return 43;
   }
 
-  function setValue(uint256 value_) external onlyOwner {
+  function setValue(
+    uint256 value_
+  ) external onlyOwner {
     MockFacetStorage.layout().value = value_;
   }
 
@@ -80,7 +86,9 @@ contract DeployMockFacet is Deployer, FacetHelper {
     return MockFacet.__MockFacet_init.selector;
   }
 
-  function makeInitData(uint256 value) public pure returns (bytes memory) {
+  function makeInitData(
+    uint256 value
+  ) public pure returns (bytes memory) {
     return abi.encodeWithSelector(MockFacet.__MockFacet_init.selector, value);
   }
 
@@ -88,7 +96,9 @@ contract DeployMockFacet is Deployer, FacetHelper {
     return "mockFacet";
   }
 
-  function __deploy(address deployer) public override returns (address) {
+  function __deploy(
+    address deployer
+  ) public override returns (address) {
     vm.startBroadcast(deployer);
     MockFacet facet = new MockFacet();
     vm.stopBroadcast();

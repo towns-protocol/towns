@@ -15,19 +15,19 @@ contract InteractAirdrop is Interaction {
     uint256 amount;
     string label;
   }
+
   struct InputData {
     address airdrop;
     address token;
     Wallet[] wallets;
   }
 
-  function __interact(address deployer) internal override {
+  function __interact(
+    address deployer
+  ) internal override {
     // Read JSON file and parse wallet data
     string memory root = vm.projectRoot();
-    string memory path = string.concat(
-      root,
-      "/contracts/in/airdrop-input-data.json"
-    );
+    string memory path = string.concat(root, "/contracts/in/airdrop-input-data.json");
 
     string memory json = vm.readFile(path);
     bytes memory parsedJson = vm.parseJson(json);

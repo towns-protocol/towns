@@ -2,11 +2,15 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {IDiamondLoupe, IDiamondLoupeBase} from "@towns-protocol/diamond/src/facets/loupe/IDiamondLoupe.sol";
+import {
+  IDiamondLoupe,
+  IDiamondLoupeBase
+} from "@towns-protocol/diamond/src/facets/loupe/IDiamondLoupe.sol";
 import {IDiamondCut} from "@towns-protocol/diamond/src/facets/cut/IDiamondCut.sol";
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import {IERC173} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
-import {IOwnablePending} from "@towns-protocol/diamond/src/facets/ownable/pending/IOwnablePending.sol";
+import {IOwnablePending} from
+  "@towns-protocol/diamond/src/facets/ownable/pending/IOwnablePending.sol";
 
 // libraries
 
@@ -39,19 +43,11 @@ abstract contract AlphaHelper is Interaction, DiamondHelper, IDiamondLoupeBase {
   ) internal view returns (address[] memory coreFacets) {
     coreFacets = new address[](5);
 
-    coreFacets[0] = IDiamondLoupe(diamond).facetAddress(
-      IDiamondCut.diamondCut.selector
-    );
-    coreFacets[1] = IDiamondLoupe(diamond).facetAddress(
-      IDiamondLoupe.facets.selector
-    );
-    coreFacets[2] = IDiamondLoupe(diamond).facetAddress(
-      IERC165.supportsInterface.selector
-    );
+    coreFacets[0] = IDiamondLoupe(diamond).facetAddress(IDiamondCut.diamondCut.selector);
+    coreFacets[1] = IDiamondLoupe(diamond).facetAddress(IDiamondLoupe.facets.selector);
+    coreFacets[2] = IDiamondLoupe(diamond).facetAddress(IERC165.supportsInterface.selector);
     coreFacets[3] = IDiamondLoupe(diamond).facetAddress(IERC173.owner.selector);
-    coreFacets[4] = IDiamondLoupe(diamond).facetAddress(
-      IOwnablePending.currentOwner.selector
-    );
+    coreFacets[4] = IDiamondLoupe(diamond).facetAddress(IOwnablePending.currentOwner.selector);
   }
 
   /// @notice Check if an address is a core facet that should not be removed
@@ -122,10 +118,7 @@ abstract contract AlphaHelper is Interaction, DiamondHelper, IDiamondLoupeBase {
   /// @notice Add the facet cuts to remove from a diamond
   /// @param diamond The diamond contract address
   /// @param facetAddresses Array of facet addresses to remove
-  function addCutsToRemove(
-    address diamond,
-    address[] memory facetAddresses
-  ) internal {
+  function addCutsToRemove(address diamond, address[] memory facetAddresses) internal {
     Facet[] memory facets = IDiamondLoupe(diamond).facets();
     address[] memory coreFacets = getCoreFacetAddresses(diamond);
 

@@ -84,7 +84,9 @@ contract TownsMainnetTests is TestUtils, ITownsBase, EIP712Utils {
   /*                       INITIAL SUPPLY                       */
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-  function test_mintInitialSupply(address to) external {
+  function test_mintInitialSupply(
+    address to
+  ) external {
     vm.assume(to != address(0));
     vm.assume(to != ZERO_SENTINEL);
 
@@ -132,14 +134,8 @@ contract TownsMainnetTests is TestUtils, ITownsBase, EIP712Utils {
 
     uint256 deadline = block.timestamp + 1 days;
 
-    (uint8 v, bytes32 r, bytes32 s) = signPermit(
-      alicePrivateKey,
-      address(towns),
-      alice,
-      bob,
-      amount,
-      deadline
-    );
+    (uint8 v, bytes32 r, bytes32 s) =
+      signPermit(alicePrivateKey, address(towns), alice, bob, amount, deadline);
 
     vm.prank(bob);
     towns.permit(alice, bob, amount, deadline, v, r, s);
@@ -156,15 +152,9 @@ contract TownsMainnetTests is TestUtils, ITownsBase, EIP712Utils {
     skip(365 days);
 
     uint256 inflationRateBPS = towns.currentInflationRate();
-    assertEq(
-      inflationRateBPS,
-      TokenInflationLib.getCurrentInflationRateBPS(INITIAL_MINT_TIME)
-    );
+    assertEq(inflationRateBPS, TokenInflationLib.getCurrentInflationRateBPS(INITIAL_MINT_TIME));
 
-    uint256 inflationAmount = BasisPoints.calculate(
-      towns.totalSupply(),
-      inflationRateBPS
-    );
+    uint256 inflationAmount = BasisPoints.calculate(towns.totalSupply(), inflationRateBPS);
 
     vm.prank(vault);
     towns.createInflation();
@@ -185,15 +175,9 @@ contract TownsMainnetTests is TestUtils, ITownsBase, EIP712Utils {
       vm.warp(towns.lastMintTime() + 365 days);
       uint256 inflationRateBPS = towns.currentInflationRate();
       uint256 totalSupply = towns.totalSupply();
-      uint256 inflationAmount = BasisPoints.calculate(
-        totalSupply,
-        inflationRateBPS
-      );
+      uint256 inflationAmount = BasisPoints.calculate(totalSupply, inflationRateBPS);
 
-      assertEq(
-        inflationRateBPS,
-        TokenInflationLib.getCurrentInflationRateBPS(INITIAL_MINT_TIME)
-      );
+      assertEq(inflationRateBPS, TokenInflationLib.getCurrentInflationRateBPS(INITIAL_MINT_TIME));
 
       uint256 totalMinted = totalSupply + inflationAmount;
 
@@ -204,10 +188,7 @@ contract TownsMainnetTests is TestUtils, ITownsBase, EIP712Utils {
     }
   }
 
-  function test_revertWhen_createInflation_mintingTooSoon()
-    external
-    givenMintedInitialSupply
-  {
+  function test_revertWhen_createInflation_mintingTooSoon() external givenMintedInitialSupply {
     vm.prank(vault);
     vm.expectRevert(MintingTooSoon.selector);
     towns.createInflation();
@@ -215,34 +196,22 @@ contract TownsMainnetTests is TestUtils, ITownsBase, EIP712Utils {
 
   function test_currentInflationRate() external givenMintedInitialSupply {
     uint256 currentInflationRate = towns.currentInflationRate();
-    assertEq(
-      currentInflationRate,
-      TokenInflationLib.getCurrentInflationRateBPS(INITIAL_MINT_TIME)
-    );
+    assertEq(currentInflationRate, TokenInflationLib.getCurrentInflationRateBPS(INITIAL_MINT_TIME));
 
     // wait 2 years
     skip(2 * 365 days);
     currentInflationRate = towns.currentInflationRate();
-    assertEq(
-      currentInflationRate,
-      TokenInflationLib.getCurrentInflationRateBPS(INITIAL_MINT_TIME)
-    );
+    assertEq(currentInflationRate, TokenInflationLib.getCurrentInflationRateBPS(INITIAL_MINT_TIME));
 
     // wait 10 years
     skip(10 * 365 days);
     currentInflationRate = towns.currentInflationRate();
-    assertEq(
-      currentInflationRate,
-      TokenInflationLib.getCurrentInflationRateBPS(INITIAL_MINT_TIME)
-    );
+    assertEq(currentInflationRate, TokenInflationLib.getCurrentInflationRateBPS(INITIAL_MINT_TIME));
 
     // wait 20 years
     skip(20 * 365 days);
     currentInflationRate = towns.currentInflationRate();
-    assertEq(
-      currentInflationRate,
-      TokenInflationLib.getCurrentInflationRateBPS(INITIAL_MINT_TIME)
-    );
+    assertEq(currentInflationRate, TokenInflationLib.getCurrentInflationRateBPS(INITIAL_MINT_TIME));
   }
 
   function test_setOverrideInflation() external givenMintedInitialSupply {
@@ -335,10 +304,7 @@ contract TownsMainnetTests is TestUtils, ITownsBase, EIP712Utils {
     uint256 delegatorsCount = towns.getDelegatorsCount();
     assertEq(delegatorsCount, test.length);
 
-    (address[] memory delegators, uint256 next) = towns.getPaginatedDelegators(
-      0,
-      5
-    );
+    (address[] memory delegators, uint256 next) = towns.getPaginatedDelegators(0, 5);
     assertEq(delegators.length, 5);
     assertEq(next, 5);
 
@@ -347,14 +313,8 @@ contract TownsMainnetTests is TestUtils, ITownsBase, EIP712Utils {
     assertEq(next, 0);
   }
 
-  function test_getPaginatedDelegators_whenNoMoreDelegators()
-    external
-    givenMintedInitialSupply
-  {
-    (address[] memory delegators, uint256 next) = towns.getPaginatedDelegators(
-      0,
-      10
-    );
+  function test_getPaginatedDelegators_whenNoMoreDelegators() external givenMintedInitialSupply {
+    (address[] memory delegators, uint256 next) = towns.getPaginatedDelegators(0, 10);
     assertEq(delegators.length, 0);
     assertEq(next, 0);
   }

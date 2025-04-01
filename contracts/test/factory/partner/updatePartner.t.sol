@@ -14,11 +14,7 @@ contract PartnerRegistry_updatePartner is PartnerRegistrySetup {
     Partner memory updatedPartner
   ) external givenPartnerIsRegistered(partner) {
     vm.assume(updatedPartner.recipient != address(0));
-    updatedPartner.fee = bound(
-      updatedPartner.fee,
-      0,
-      partnerRegistry.maxPartnerFee()
-    );
+    updatedPartner.fee = bound(updatedPartner.fee, 0, partnerRegistry.maxPartnerFee());
 
     updatedPartner.account = partner.account;
 
@@ -27,9 +23,7 @@ contract PartnerRegistry_updatePartner is PartnerRegistrySetup {
     emit PartnerUpdated(updatedPartner.account);
     partnerRegistry.updatePartner(updatedPartner);
 
-    Partner memory partnerInfo = partnerRegistry.partnerInfo(
-      updatedPartner.account
-    );
+    Partner memory partnerInfo = partnerRegistry.partnerInfo(updatedPartner.account);
 
     assertEq(partnerInfo.recipient, updatedPartner.recipient);
     assertEq(partnerInfo.fee, updatedPartner.fee);
@@ -44,10 +38,7 @@ contract PartnerRegistry_updatePartner is PartnerRegistrySetup {
 
     vm.prank(nonPartnerAccount);
     vm.expectRevert(
-      abi.encodeWithSelector(
-        PartnerRegistry__NotPartnerAccount.selector,
-        nonPartnerAccount
-      )
+      abi.encodeWithSelector(PartnerRegistry__NotPartnerAccount.selector, nonPartnerAccount)
     );
     partnerRegistry.updatePartner(partner);
   }
@@ -66,17 +57,12 @@ contract PartnerRegistry_updatePartner is PartnerRegistrySetup {
     Partner memory unregisteredPartner
   ) external {
     vm.assume(unregisteredPartner.recipient != address(0));
-    unregisteredPartner.fee = bound(
-      unregisteredPartner.fee,
-      0,
-      partnerRegistry.maxPartnerFee()
-    );
+    unregisteredPartner.fee = bound(unregisteredPartner.fee, 0, partnerRegistry.maxPartnerFee());
 
     vm.prank(unregisteredPartner.account);
     vm.expectRevert(
       abi.encodeWithSelector(
-        PartnerRegistry__PartnerNotRegistered.selector,
-        unregisteredPartner.account
+        PartnerRegistry__PartnerNotRegistered.selector, unregisteredPartner.account
       )
     );
     partnerRegistry.updatePartner(unregisteredPartner);
@@ -89,10 +75,7 @@ contract PartnerRegistry_updatePartner is PartnerRegistrySetup {
 
     vm.prank(partner.account);
     vm.expectRevert(
-      abi.encodeWithSelector(
-        PartnerRegistry__InvalidPartnerFee.selector,
-        partner.fee
-      )
+      abi.encodeWithSelector(PartnerRegistry__InvalidPartnerFee.selector, partner.fee)
     );
     partnerRegistry.updatePartner(partner);
   }

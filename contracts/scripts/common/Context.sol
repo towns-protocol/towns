@@ -7,11 +7,11 @@ abstract contract Context is CommonBase {
   string internal constant DEPLOYMENT_CACHE_PATH = "contracts/deployments";
 
   function isAnvil() internal view virtual returns (bool) {
-    return block.chainid == 31337 || block.chainid == 31338;
+    return block.chainid == 31_337 || block.chainid == 31_338;
   }
 
   function isRiver() internal view returns (bool) {
-    return block.chainid == 6524490;
+    return block.chainid == 6_524_490;
   }
 
   function getDeploymentContext() internal view returns (string memory) {

@@ -2,7 +2,8 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {NodeOperatorStatus} from "contracts/src/base/registry/facets/operator/NodeOperatorStorage.sol";
+import {NodeOperatorStatus} from
+  "contracts/src/base/registry/facets/operator/NodeOperatorStorage.sol";
 
 // libraries
 
@@ -14,21 +15,24 @@ import {NodeOperatorFacet} from "contracts/src/base/registry/facets/operator/Nod
 import {console} from "forge-std/console.sol";
 
 contract InteractNodeOperators is Interaction {
-  function __interact(address) internal override {
+  function __interact(
+    address
+  ) internal override {
     address baseRegistry = getDeployment("baseRegistry");
 
     address[] memory operators = NodeOperatorFacet(baseRegistry).getOperators();
 
     for (uint256 i = 0; i < operators.length; i++) {
       address operator = operators[i];
-      NodeOperatorStatus status = NodeOperatorFacet(baseRegistry)
-        .getOperatorStatus(operator);
+      NodeOperatorStatus status = NodeOperatorFacet(baseRegistry).getOperatorStatus(operator);
       console.log("Operator:", operator);
       _logStatus(status);
     }
   }
 
-  function _logStatus(NodeOperatorStatus status) internal pure {
+  function _logStatus(
+    NodeOperatorStatus status
+  ) internal pure {
     if (status == NodeOperatorStatus.Exiting) {
       console.log("Exiting");
     } else if (status == NodeOperatorStatus.Standby) {

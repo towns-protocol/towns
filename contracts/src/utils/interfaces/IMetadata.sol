@@ -9,5 +9,7 @@ interface IMetadata {
   function contractURI() external view returns (string memory);
 
   /// @dev Sets the contract URI.
-  function setContractURI(string calldata _uri) external;
+  function setContractURI(
+    string calldata _uri
+  ) external;
 }

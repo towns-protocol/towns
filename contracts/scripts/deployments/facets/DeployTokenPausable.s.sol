@@ -8,7 +8,8 @@ pragma solidity ^0.8.23;
 //contracts
 import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
 import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
-import {TokenPausableFacet} from "@towns-protocol/diamond/src/facets/pausable/token/TokenPausableFacet.sol";
+import {TokenPausableFacet} from
+  "@towns-protocol/diamond/src/facets/pausable/token/TokenPausableFacet.sol";
 
 contract DeployTokenPausable is FacetHelper, Deployer {
   constructor() {
@@ -21,7 +22,9 @@ contract DeployTokenPausable is FacetHelper, Deployer {
     return "facets/tokenPausableFacet";
   }
 
-  function __deploy(address deployer) public override returns (address) {
+  function __deploy(
+    address deployer
+  ) public override returns (address) {
     vm.startBroadcast(deployer);
     TokenPausableFacet facet = new TokenPausableFacet();
     vm.stopBroadcast();

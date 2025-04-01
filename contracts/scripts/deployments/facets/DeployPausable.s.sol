@@ -25,7 +25,9 @@ contract DeployPausable is FacetHelper, Deployer {
     return PausableFacet.__Pausable_init.selector;
   }
 
-  function __deploy(address deployer) public override returns (address) {
+  function __deploy(
+    address deployer
+  ) public override returns (address) {
     vm.startBroadcast(deployer);
     PausableFacet facet = new PausableFacet();
     vm.stopBroadcast();

@@ -5,7 +5,8 @@ pragma solidity ^0.8.19;
 import {MembershipBaseSetup} from "../MembershipBaseSetup.sol";
 
 //interfaces
-import {IPlatformRequirements} from "contracts/src/factory/facets/platform/requirements/IPlatformRequirements.sol";
+import {IPlatformRequirements} from
+  "contracts/src/factory/facets/platform/requirements/IPlatformRequirements.sol";
 
 //libraries
 import {BasisPoints} from "contracts/src/utils/libraries/BasisPoints.sol";
@@ -24,15 +25,10 @@ contract MembershipTreasuryTest is MembershipBaseSetup {
     test1155 = new MockERC1155();
   }
 
-  function test_withdraw()
-    external
-    givenMembershipHasPrice
-    givenAliceHasPaidMembership
-  {
+  function test_withdraw() external givenMembershipHasPrice givenAliceHasPaidMembership {
     address multisig = _randomAddress();
     uint256 protocolFee = BasisPoints.calculate(
-      MEMBERSHIP_PRICE,
-      IPlatformRequirements(spaceFactory).getMembershipBps()
+      MEMBERSHIP_PRICE, IPlatformRequirements(spaceFactory).getMembershipBps()
     );
 
     uint256 expectedRevenue = MEMBERSHIP_PRICE - protocolFee;
@@ -47,16 +43,11 @@ contract MembershipTreasuryTest is MembershipBaseSetup {
   }
 
   function test_revertWhen_withdrawNotOwner() external {
-    vm.expectRevert(
-      abi.encodeWithSelector(Ownable__NotOwner.selector, address(this))
-    );
+    vm.expectRevert(abi.encodeWithSelector(Ownable__NotOwner.selector, address(this)));
     treasury.withdraw(alice);
   }
 
-  function test_revertWhen_withdrawInvalidAddress()
-    external
-    givenFounderIsCaller
-  {
+  function test_revertWhen_withdrawInvalidAddress() external givenFounderIsCaller {
     vm.expectRevert(Membership__InvalidAddress.selector);
     treasury.withdraw(address(0));
   }
@@ -68,17 +59,12 @@ contract MembershipTreasuryTest is MembershipBaseSetup {
 
   // Integration
   // test withdraw a second time
-  function test_withdrawSecondTime()
-    external
-    givenMembershipHasPrice
-    givenAliceHasPaidMembership
-  {
+  function test_withdrawSecondTime() external givenMembershipHasPrice givenAliceHasPaidMembership {
     vm.prank(founder);
     treasury.withdraw(founder);
 
     uint256 protocolFee = BasisPoints.calculate(
-      MEMBERSHIP_PRICE,
-      IPlatformRequirements(spaceFactory).getMembershipBps()
+      MEMBERSHIP_PRICE, IPlatformRequirements(spaceFactory).getMembershipBps()
     );
 
     uint256 expectedBalance = MEMBERSHIP_PRICE - protocolFee;

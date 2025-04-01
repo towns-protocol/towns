@@ -29,11 +29,7 @@ contract MembershipRenewTest is MembershipBaseSetup, IERC5643Base {
     _;
   }
 
-  function test_renewMembership()
-    external
-    givenAliceHasMintedMembership
-    givenMembershipHasExpired
-  {
+  function test_renewMembership() external givenAliceHasMintedMembership givenMembershipHasExpired {
     uint256 totalSupply = membershipToken.totalSupply();
     uint256 tokenId;
 
@@ -53,10 +49,7 @@ contract MembershipRenewTest is MembershipBaseSetup, IERC5643Base {
 
     uint256 expiration = membership.expiresAt(tokenId);
     vm.expectEmit(address(membership));
-    emit SubscriptionUpdate(
-      tokenId,
-      uint64(expiration + membership.getMembershipDuration())
-    );
+    emit SubscriptionUpdate(tokenId, uint64(expiration + membership.getMembershipDuration()));
     membership.renewMembership{value: renewalPrice}(tokenId);
 
     assertEq(membershipToken.balanceOf(alice), 1);
@@ -87,22 +80,13 @@ contract MembershipRenewTest is MembershipBaseSetup, IERC5643Base {
     vm.deal(alice, renewalPrice);
     membership.renewMembership{value: renewalPrice}(tokenId);
 
-    uint256 protocolFee = BasisPoints.calculate(
-      renewalPrice,
-      platformReqs.getMembershipBps()
-    );
+    uint256 protocolFee = BasisPoints.calculate(renewalPrice, platformReqs.getMembershipBps());
 
     assertEq(protocol.balance, protocolBalance + protocolFee);
-    assertEq(
-      address(membership).balance,
-      spaceBalance + renewalPrice - protocolFee
-    );
+    assertEq(address(membership).balance, spaceBalance + renewalPrice - protocolFee);
   }
 
-  function test_revertWhen_renewMembershipNotExpiredYet()
-    external
-    givenAliceHasMintedMembership
-  {
+  function test_revertWhen_renewMembershipNotExpiredYet() external givenAliceHasMintedMembership {
     uint256 totalSupply = membershipToken.totalSupply();
     uint256 tokenId;
 

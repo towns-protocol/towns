@@ -13,7 +13,9 @@ contract MockERC721A is ERC721A {
     __ERC721ABase_init("TownsTest", "TNFT");
   }
 
-  function mintTo(address to) external returns (uint256 tokenId) {
+  function mintTo(
+    address to
+  ) external returns (uint256 tokenId) {
     tokenId = _nextTokenId();
     _mint(to, 1);
   }
@@ -22,7 +24,9 @@ contract MockERC721A is ERC721A {
     _mint(to, amount);
   }
 
-  function burn(uint256 token) external {
+  function burn(
+    uint256 token
+  ) external {
     _burn(token);
   }
 }

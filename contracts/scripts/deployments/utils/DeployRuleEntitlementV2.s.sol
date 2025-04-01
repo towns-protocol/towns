@@ -10,7 +10,9 @@ contract DeployRuleEntitlementV2 is Deployer {
     return "utils/ruleEntitlementV2";
   }
 
-  function __deploy(address deployer) public override returns (address) {
+  function __deploy(
+    address deployer
+  ) public override returns (address) {
     vm.broadcast(deployer);
     return address(new RuleEntitlementV2());
   }

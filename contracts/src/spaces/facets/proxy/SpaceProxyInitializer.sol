@@ -10,10 +10,12 @@ import {IMembership} from "contracts/src/spaces/facets/membership/IMembership.so
 // libraries
 
 // contracts
-import {TokenOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/token/TokenOwnableBase.sol";
+import {TokenOwnableBase} from
+  "@towns-protocol/diamond/src/facets/ownable/token/TokenOwnableBase.sol";
 import {MembershipBase} from "contracts/src/spaces/facets/membership/MembershipBase.sol";
 import {ERC721ABase} from "contracts/src/diamond/facets/token/ERC721A/ERC721ABase.sol";
-import {IntrospectionBase} from "@towns-protocol/diamond/src/facets/introspection/IntrospectionBase.sol";
+import {IntrospectionBase} from
+  "@towns-protocol/diamond/src/facets/introspection/IntrospectionBase.sol";
 import {EntitlementGatedBase} from "contracts/src/spaces/facets/gated/EntitlementGatedBase.sol";
 import {Initializable} from "@towns-protocol/diamond/src/facets/initializable/Initializable.sol";
 

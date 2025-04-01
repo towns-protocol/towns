@@ -17,9 +17,12 @@ import {DeployDiamondLoupe} from "contracts/scripts/deployments/facets/DeployDia
 import {DeployEIP712Facet} from "contracts/scripts/deployments/facets/DeployEIP712Facet.s.sol";
 import {DeployIntrospection} from "contracts/scripts/deployments/facets/DeployIntrospection.s.sol";
 import {DeployMetadata} from "contracts/scripts/deployments/facets/DeployMetadata.s.sol";
-import {DeploySpaceOwnerFacet} from "contracts/scripts/deployments/facets/DeploySpaceOwnerFacet.s.sol";
+import {DeploySpaceOwnerFacet} from
+  "contracts/scripts/deployments/facets/DeploySpaceOwnerFacet.s.sol";
 import {DeployGuardianFacet} from "contracts/scripts/deployments/facets/DeployGuardianFacet.s.sol";
-import {DeployMultiInit, MultiInit} from "contracts/scripts/deployments/utils/DeployMultiInit.s.sol";
+import {
+  DeployMultiInit, MultiInit
+} from "contracts/scripts/deployments/utils/DeployMultiInit.s.sol";
 
 contract DeploySpaceOwner is DiamondHelper, Deployer {
   DeployDiamondCut diamondCutHelper = new DeployDiamondCut();
@@ -47,7 +50,9 @@ contract DeploySpaceOwner is DiamondHelper, Deployer {
     return "spaceOwner";
   }
 
-  function addImmutableCuts(address deployer) internal {
+  function addImmutableCuts(
+    address deployer
+  ) internal {
     multiInit = multiInitHelper.deploy(deployer);
 
     diamondCut = diamondCutHelper.deploy(deployer);
@@ -106,22 +111,14 @@ contract DeploySpaceOwner is DiamondHelper, Deployer {
       metadataHelper.makeInitData(bytes32("Space Owner"), "")
     );
 
-    return
-      Diamond.InitParams({
-        baseFacets: baseFacets(),
-        init: multiInit,
-        initData: abi.encodeWithSelector(
-          MultiInit.multiInit.selector,
-          _initAddresses,
-          _initDatas
-        )
-      });
+    return Diamond.InitParams({
+      baseFacets: baseFacets(),
+      init: multiInit,
+      initData: abi.encodeWithSelector(MultiInit.multiInit.selector, _initAddresses, _initDatas)
+    });
   }
 
-  function diamondInitParamsFromFacets(
-    address deployer,
-    string[] memory facets
-  ) public {
+  function diamondInitParamsFromFacets(address deployer, string[] memory facets) public {
     for (uint256 i = 0; i < facets.length; i++) {
       bytes32 facetNameHash = keccak256(abi.encodePacked(facets[i]));
 
@@ -146,9 +143,7 @@ contract DeploySpaceOwner is DiamondHelper, Deployer {
           eip712,
           eip712Helper.makeInitData("Space Owner", "1")
         );
-      } else if (
-        facetNameHash == keccak256(abi.encodePacked("GuardianFacet"))
-      ) {
+      } else if (facetNameHash == keccak256(abi.encodePacked("GuardianFacet"))) {
         guardian = guardianHelper.deploy(deployer);
         addFacet(
           guardianHelper.makeCut(guardian, IDiamond.FacetCutAction.Add),
@@ -167,7 +162,9 @@ contract DeploySpaceOwner is DiamondHelper, Deployer {
     return this.getCuts();
   }
 
-  function __deploy(address deployer) public override returns (address) {
+  function __deploy(
+    address deployer
+  ) public override returns (address) {
     addImmutableCuts(deployer);
 
     Diamond.InitParams memory initDiamondCut = diamondInitParams(deployer);

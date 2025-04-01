@@ -4,7 +4,8 @@ pragma solidity ^0.8.23;
 // interfaces
 import {ITipping} from "./ITipping.sol";
 import {ITownsPointsBase} from "contracts/src/airdrop/points/ITownsPoints.sol";
-import {IPlatformRequirements} from "contracts/src/factory/facets/platform/requirements/IPlatformRequirements.sol";
+import {IPlatformRequirements} from
+  "contracts/src/factory/facets/platform/requirements/IPlatformRequirements.sol";
 
 // libraries
 import {TippingBase} from "./TippingBase.sol";
@@ -25,13 +26,10 @@ contract TippingFacet is ITipping, ERC721ABase, Facet, ReentrancyGuard {
   }
 
   /// @inheritdoc ITipping
-  function tip(TipRequest calldata tipRequest) external payable nonReentrant {
-    _validateTipRequest(
-      msg.sender,
-      tipRequest.receiver,
-      tipRequest.currency,
-      tipRequest.amount
-    );
+  function tip(
+    TipRequest calldata tipRequest
+  ) external payable nonReentrant {
+    _validateTipRequest(msg.sender, tipRequest.receiver, tipRequest.currency, tipRequest.amount);
 
     uint256 tipAmount = tipRequest.amount;
 
@@ -39,20 +37,14 @@ contract TippingFacet is ITipping, ERC721ABase, Facet, ReentrancyGuard {
       uint256 protocolFee = _payProtocol(msg.sender, tipRequest.amount);
       tipAmount = tipRequest.amount - protocolFee;
 
-      uint256 points = PointsProxyLib.getPoints(
-        ITownsPointsBase.Action.Tip,
-        abi.encode(protocolFee)
-      );
+      uint256 points =
+        PointsProxyLib.getPoints(ITownsPointsBase.Action.Tip, abi.encode(protocolFee));
 
       PointsProxyLib.mint(msg.sender, points);
     }
 
     TippingBase.tip(
-      msg.sender,
-      tipRequest.receiver,
-      tipRequest.tokenId,
-      tipRequest.currency,
-      tipAmount
+      msg.sender, tipRequest.receiver, tipRequest.tokenId, tipRequest.currency, tipAmount
     );
 
     emit Tip(
@@ -103,26 +95,21 @@ contract TippingFacet is ITipping, ERC721ABase, Facet, ReentrancyGuard {
     address currency,
     uint256 amount
   ) internal pure {
-    if (currency == address(0))
+    if (currency == address(0)) {
       CustomRevert.revertWith(CurrencyIsZero.selector);
+    }
     if (sender == receiver) CustomRevert.revertWith(CannotTipSelf.selector);
     if (amount == 0) CustomRevert.revertWith(AmountIsZero.selector);
   }
 
-  function _payProtocol(
-    address sender,
-    uint256 amount
-  ) internal returns (uint256 protocolFee) {
+  function _payProtocol(address sender, uint256 amount) internal returns (uint256 protocolFee) {
     MembershipStorage.Layout storage ds = MembershipStorage.layout();
     IPlatformRequirements platform = IPlatformRequirements(ds.spaceFactory);
 
     protocolFee = BasisPoints.calculate(amount, 50); // 0.5%
 
     CurrencyTransfer.transferCurrency(
-      CurrencyTransfer.NATIVE_TOKEN,
-      sender,
-      platform.getFeeRecipient(),
-      protocolFee
+      CurrencyTransfer.NATIVE_TOKEN, sender, platform.getFeeRecipient(), protocolFee
     );
   }
 }

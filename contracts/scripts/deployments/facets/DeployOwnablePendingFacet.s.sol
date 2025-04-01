@@ -8,7 +8,8 @@ pragma solidity ^0.8.23;
 //contracts
 import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
 import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
-import {OwnablePendingFacet} from "@towns-protocol/diamond/src/facets/ownable/pending/OwnablePendingFacet.sol";
+import {OwnablePendingFacet} from
+  "@towns-protocol/diamond/src/facets/ownable/pending/OwnablePendingFacet.sol";
 
 contract DeployOwnablePendingFacet is FacetHelper, Deployer {
   constructor() {
@@ -22,7 +23,9 @@ contract DeployOwnablePendingFacet is FacetHelper, Deployer {
     return "facets/ownablePendingFacet";
   }
 
-  function __deploy(address deployer) public override returns (address) {
+  function __deploy(
+    address deployer
+  ) public override returns (address) {
     vm.startBroadcast(deployer);
     OwnablePendingFacet facet = new OwnablePendingFacet();
     vm.stopBroadcast();
@@ -33,11 +36,9 @@ contract DeployOwnablePendingFacet is FacetHelper, Deployer {
     return OwnablePendingFacet.__OwnablePending_init.selector;
   }
 
-  function makeInitData(address owner) public pure returns (bytes memory) {
-    return
-      abi.encodeWithSelector(
-        OwnablePendingFacet.__OwnablePending_init.selector,
-        owner
-      );
+  function makeInitData(
+    address owner
+  ) public pure returns (bytes memory) {
+    return abi.encodeWithSelector(OwnablePendingFacet.__OwnablePending_init.selector, owner);
   }
 }

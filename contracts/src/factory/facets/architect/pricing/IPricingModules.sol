@@ -31,11 +31,17 @@ interface IPricingModulesBase {
 }
 
 interface IPricingModules is IPricingModulesBase {
-  function isPricingModule(address module) external view returns (bool);
+  function isPricingModule(
+    address module
+  ) external view returns (bool);
 
-  function addPricingModule(address module) external;
+  function addPricingModule(
+    address module
+  ) external;
 
-  function removePricingModule(address module) external;
+  function removePricingModule(
+    address module
+  ) external;
 
   function listPricingModules() external view returns (PricingModule[] memory);
 }

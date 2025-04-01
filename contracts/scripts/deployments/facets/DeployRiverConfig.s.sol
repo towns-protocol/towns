@@ -42,16 +42,15 @@ contract DeployRiverConfig is FacetHelper, Deployer {
     address deployer,
     address facetAddress
   ) external override returns (FacetCut memory, bytes memory) {
-    IDiamond.FacetCut memory facetCut = this.makeCut(
-      facetAddress,
-      IDiamond.FacetCutAction.Add
-    );
+    IDiamond.FacetCut memory facetCut = this.makeCut(facetAddress, IDiamond.FacetCutAction.Add);
     address[] memory configManagers = new address[](1);
     configManagers[0] = deployer;
     return (facetCut, makeInitData(configManagers));
   }
 
-  function __deploy(address deployer) public override returns (address) {
+  function __deploy(
+    address deployer
+  ) public override returns (address) {
     vm.startBroadcast(deployer);
     RiverConfig riverConfig = new RiverConfig();
     vm.stopBroadcast();

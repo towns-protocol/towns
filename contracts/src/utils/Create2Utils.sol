@@ -5,17 +5,13 @@ import {LibClone} from "solady/utils/LibClone.sol";
 import {CustomRevert} from "contracts/src/utils/libraries/CustomRevert.sol";
 
 library Create2Utils {
-  address internal constant CREATE2_FACTORY =
-    0x4e59b44847b379578588920cA78FbF26c0B4956C;
+  address internal constant CREATE2_FACTORY = 0x4e59b44847b379578588920cA78FbF26c0B4956C;
 
   error MissingCreate2Factory();
   error Create2AddressDerivationFailed();
   error Create2CallFailed();
 
-  function create2Deploy(
-    bytes32 salt,
-    bytes memory bytecode
-  ) internal returns (address) {
+  function create2Deploy(bytes32 salt, bytes memory bytecode) internal returns (address) {
     if (!isContractDeployed(CREATE2_FACTORY)) {
       CustomRevert.revertWith(MissingCreate2Factory.selector);
     }
@@ -45,12 +41,7 @@ library Create2Utils {
     bytes32 salt,
     bytes memory bytecode
   ) internal pure returns (address) {
-    return
-      LibClone.predictDeterministicAddress(
-        keccak256(bytecode),
-        salt,
-        CREATE2_FACTORY
-      );
+    return LibClone.predictDeterministicAddress(keccak256(bytecode), salt, CREATE2_FACTORY);
   }
 
   function performCreate2Call(

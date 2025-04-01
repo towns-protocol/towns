@@ -17,7 +17,8 @@ library VotesEnumerableLib {
     mapping(address => uint256) delegationTimeForDelegator;
   }
 
-  // keccak256(abi.encode(uint256(keccak256("diamond.facets.governance.votes.enumerable.storage")) - 1)) & ~bytes32(uint256(0xff))
+  // keccak256(abi.encode(uint256(keccak256("diamond.facets.governance.votes.enumerable.storage")) -
+  // 1)) & ~bytes32(uint256(0xff))
   bytes32 internal constant STORAGE_SLOT =
     0xed095a1d53cef9e2be0aab14d20856bfa3fbcc76a945321739a0da68a6078e00;
 
@@ -76,11 +77,7 @@ library VotesEnumerableLib {
     return (delegators, next);
   }
 
-  function setDelegators(
-    address account,
-    address newDelegatee,
-    address currentDelegatee
-  ) internal {
+  function setDelegators(address account, address newDelegatee, address currentDelegatee) internal {
     Layout storage ds = layout();
 
     // If current delegatee is address(0), add account to delegators

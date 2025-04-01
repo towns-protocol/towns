@@ -18,7 +18,9 @@ contract DeployMember is Deployer {
     return "utils/member";
   }
 
-  function __deploy(address deployer) public override returns (address) {
+  function __deploy(
+    address deployer
+  ) public override returns (address) {
     vm.startBroadcast(deployer);
     member = new Member(
       "Council Member",
@@ -32,7 +34,9 @@ contract DeployMember is Deployer {
     return address(member);
   }
 
-  function deployWithProof(address deployer) public returns (address) {
+  function deployWithProof(
+    address deployer
+  ) public returns (address) {
     address[] memory accounts = new address[](5);
     accounts[0] = address(0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266);
     accounts[1] = address(0x70997970C51812dc3A010C7d01b50e0d17dc79C8);
@@ -48,10 +52,7 @@ contract DeployMember is Deployer {
     allowances[4] = 1;
 
     merkle = new MerkleTree();
-    (bytes32 root, bytes32[][] memory tree) = merkle.constructTree(
-      accounts,
-      allowances
-    );
+    (bytes32 root, bytes32[][] memory tree) = merkle.constructTree(accounts, allowances);
 
     vm.startBroadcast(deployer);
     member = new Member(
@@ -62,21 +63,15 @@ contract DeployMember is Deployer {
     );
 
     member.privateMint{value: member.MINT_PRICE()}(
-      accounts[0],
-      allowances[0],
-      merkle.getProof(tree, 0)
+      accounts[0], allowances[0], merkle.getProof(tree, 0)
     );
 
     member.privateMint{value: member.MINT_PRICE()}(
-      accounts[1],
-      allowances[1],
-      merkle.getProof(tree, 1)
+      accounts[1], allowances[1], merkle.getProof(tree, 1)
     );
 
     member.privateMint{value: member.MINT_PRICE()}(
-      accounts[2],
-      allowances[2],
-      merkle.getProof(tree, 2)
+      accounts[2], allowances[2], merkle.getProof(tree, 2)
     );
 
     member.startWaitlistMint();

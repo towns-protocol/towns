@@ -10,8 +10,7 @@ import {LibString} from "solady/utils/LibString.sol";
  */
 library SolanaUtils {
   /// @notice Character set for Base58 encoding
-  bytes internal constant ALPHABET =
-    "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
+  bytes internal constant ALPHABET = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
 
   /// @notice Lookup table for the first 32 characters of the Base58 alphabet
   uint256 internal constant ALPHABET0 =
@@ -21,8 +20,8 @@ library SolanaUtils {
     0x5a6162636465666768696a6b6d6e6f707172737475767778797a000000000000;
   /// @notice XOR mask for the Base58 alphabet to handle both halves
   uint256 internal constant XOR_ALPHABET =
-    0x31323334353637383941424344454647484a4b4c4d4e50515253545556575859 ^
-      0x5a6162636465666768696a6b6d6e6f707172737475767778797a000000000000;
+  0x31323334353637383941424344454647484a4b4c4d4e50515253545556575859
+    ^ 0x5a6162636465666768696a6b6d6e6f707172737475767778797a000000000000;
 
   /// @notice Precomputed bitmask for Base58 allowed characters
   uint256 internal constant BASE58_MAP = 0x07ffeffe07ff7dfe03fe000000000000;
@@ -63,9 +62,7 @@ library SolanaUtils {
       let ptr := end
       // encode from the end of the result array
       for {} 1 {} {
-        if iszero(value) {
-          break
-        }
+        if iszero(value) { break }
         let remainder := mod(value, 58)
         value := div(value, 58)
         // equivalent: table = remainder < 32 ? ALPHABET0 : ALPHABET1
@@ -74,10 +71,7 @@ library SolanaUtils {
         mstore8(ptr, byte(and(remainder, 0x1f), table))
       }
       // Add leading '1's for each leading zero byte
-      mstore(
-        sub(ptr, 0x20),
-        0x3131313131313131313131313131313131313131313131313131313131313131
-      )
+      mstore(sub(ptr, 0x20), 0x3131313131313131313131313131313131313131313131313131313131313131)
       // starting offset of the result
       ptr := sub(ptr, zeros)
       // Create the final string with the correct length
@@ -130,11 +124,7 @@ library SolanaUtils {
     string memory solanaAddress,
     uint256[5] memory extPubKey
   ) internal pure returns (bool) {
-    return
-      LibString.eq(
-        solanaAddress,
-        getSolanaAddressFromFixedExtPubKey(extPubKey)
-      );
+    return LibString.eq(solanaAddress, getSolanaAddressFromFixedExtPubKey(extPubKey));
   }
 
   /**

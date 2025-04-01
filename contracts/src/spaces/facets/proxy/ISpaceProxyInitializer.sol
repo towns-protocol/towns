@@ -10,11 +10,7 @@ import {IMembershipBase} from "contracts/src/spaces/facets/membership/IMembershi
 
 // contracts
 
-interface ISpaceProxyInitializer is
-  ITokenOwnableBase,
-  IMembershipBase,
-  IManagedProxyBase
-{
+interface ISpaceProxyInitializer is ITokenOwnableBase, IMembershipBase, IManagedProxyBase {
   function initialize(
     address owner,
     address manager,

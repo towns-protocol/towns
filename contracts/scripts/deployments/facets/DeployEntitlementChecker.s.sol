@@ -26,7 +26,9 @@ contract DeployEntitlementChecker is Deployer, FacetHelper {
     return "facets/entitlementCheckerFacet";
   }
 
-  function __deploy(address deployer) public override returns (address) {
+  function __deploy(
+    address deployer
+  ) public override returns (address) {
     vm.startBroadcast(deployer);
     EntitlementChecker entitlementChecker = new EntitlementChecker();
     vm.stopBroadcast();

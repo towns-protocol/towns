@@ -30,7 +30,9 @@ contract ReviewFacetTest is MembershipBaseSetup, IReviewBase {
   /*                             ADD                            */
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-  function test_fuzz_addReview_revertIf_notMember(address user) public {
+  function test_fuzz_addReview_revertIf_notMember(
+    address user
+  ) public {
     vm.assume(user != address(0));
     vm.assume(user != founder);
     vm.assume(membershipToken.balanceOf(user) == 0);
@@ -40,10 +42,7 @@ contract ReviewFacetTest is MembershipBaseSetup, IReviewBase {
     reviewFacet.setReview(Action.Add, abi.encode(sampleReview));
   }
 
-  function test_addReview_revertIf_commentTooShort()
-    public
-    givenAliceHasMintedMembership
-  {
+  function test_addReview_revertIf_commentTooShort() public givenAliceHasMintedMembership {
     Review memory invalidReview = Review({comment: "Bad", rating: 5});
 
     vm.expectRevert(ReviewFacet__InvalidCommentLength.selector);
@@ -51,10 +50,7 @@ contract ReviewFacetTest is MembershipBaseSetup, IReviewBase {
     reviewFacet.setReview(Action.Add, abi.encode(invalidReview));
   }
 
-  function test_addReview_revertIf_invalidRating()
-    public
-    givenAliceHasMintedMembership
-  {
+  function test_addReview_revertIf_invalidRating() public givenAliceHasMintedMembership {
     Review memory invalidReview = Review({
       comment: "This exceeds the maximum allowed rating.",
       rating: 6 // Invalid rating
@@ -71,9 +67,8 @@ contract ReviewFacetTest is MembershipBaseSetup, IReviewBase {
   ) public givenAliceHasMintedMembership {
     rating = uint8(bound(rating, 0, 5));
     if (bytes(comment).length < DEFAULT_MIN_COMMENT_LENGTH) {
-      comment = comment.concat(
-        string(" ").repeat(DEFAULT_MIN_COMMENT_LENGTH - bytes(comment).length)
-      );
+      comment =
+        comment.concat(string(" ").repeat(DEFAULT_MIN_COMMENT_LENGTH - bytes(comment).length));
     }
     if (bytes(comment).length > DEFAULT_MAX_COMMENT_LENGTH) {
       comment = comment.slice(0, DEFAULT_MAX_COMMENT_LENGTH);
@@ -115,10 +110,7 @@ contract ReviewFacetTest is MembershipBaseSetup, IReviewBase {
     vm.prank(alice);
     reviewFacet.setReview(Action.Add, abi.encode(sampleReview));
 
-    Review memory updatedReview = Review({
-      comment: "Updated comment",
-      rating: 4
-    });
+    Review memory updatedReview = Review({comment: "Updated comment", rating: 4});
 
     vm.expectEmit(address(reviewFacet));
     emit ReviewUpdated(alice, updatedReview.comment, updatedReview.rating);
@@ -175,21 +167,10 @@ contract ReviewFacetTest is MembershipBaseSetup, IReviewBase {
     vm.prank(charlie);
     reviewFacet.setReview(Action.Add, abi.encode(review));
 
-    (
-      address[] memory users,
-      ReviewStorage.Content[] memory reviews
-    ) = reviewFacet.getAllReviews();
+    (address[] memory users, ReviewStorage.Content[] memory reviews) = reviewFacet.getAllReviews();
     assertEq(users.length, 2, "User count incorrect");
     assertEq(reviews.length, 2, "Review count incorrect");
-    assertEq(
-      reviews[0].comment,
-      sampleReview.comment,
-      "First review comment mismatch"
-    );
-    assertEq(
-      reviews[1].comment,
-      review.comment,
-      "Second review comment mismatch"
-    );
+    assertEq(reviews[0].comment, sampleReview.comment, "First review comment mismatch");
+    assertEq(reviews[1].comment, review.comment, "Second review comment mismatch");
   }
 }

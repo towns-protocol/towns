@@ -3,7 +3,8 @@ pragma solidity ^0.8.23;
 
 // interfaces
 import {ITowns} from "./ITowns.sol";
-import {IVotesEnumerable} from "contracts/src/diamond/facets/governance/votes/enumerable/IVotesEnumerable.sol";
+import {IVotesEnumerable} from
+  "contracts/src/diamond/facets/governance/votes/enumerable/IVotesEnumerable.sol";
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import {IVotes} from "@openzeppelin/contracts/governance/utils/IVotes.sol";
 import {IERC6372} from "@openzeppelin/contracts/interfaces/IERC6372.sol";
@@ -15,22 +16,18 @@ import {IERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/IERC2
 import {OwnableRoles} from "solady/auth/OwnableRoles.sol";
 import {BasisPoints} from "contracts/src/utils/libraries/BasisPoints.sol";
 import {TokenInflationLib} from "contracts/src/tokens/towns/mainnet/libs/TokenInflationLib.sol";
-import {VotesEnumerableLib} from "contracts/src/diamond/facets/governance/votes/enumerable/VotesEnumerableLib.sol";
+import {VotesEnumerableLib} from
+  "contracts/src/diamond/facets/governance/votes/enumerable/VotesEnumerableLib.sol";
 import {CustomRevert} from "contracts/src/utils/libraries/CustomRevert.sol";
 
 // contracts
-import {IntrospectionBase} from "@towns-protocol/diamond/src/facets/introspection/IntrospectionBase.sol";
-import {VotesEnumerable} from "contracts/src/diamond/facets/governance/votes/enumerable/VotesEnumerable.sol";
+import {IntrospectionBase} from
+  "@towns-protocol/diamond/src/facets/introspection/IntrospectionBase.sol";
+import {VotesEnumerable} from
+  "contracts/src/diamond/facets/governance/votes/enumerable/VotesEnumerable.sol";
 import {ERC20Votes} from "solady/tokens/ERC20Votes.sol";
 
-contract Towns is
-  OwnableRoles,
-  ERC20Votes,
-  IntrospectionBase,
-  VotesEnumerable,
-  ITowns,
-  IERC165
-{
+contract Towns is OwnableRoles, ERC20Votes, IntrospectionBase, VotesEnumerable, ITowns, IERC165 {
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                  Constants & Immutables                    */
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -94,7 +91,9 @@ contract Towns is
   /// @notice Mints the initial supply to the given address
   /// @dev Can only be called by the owner
   /// @dev Can only be called once
-  function mintInitialSupply(address to) external onlyOwner {
+  function mintInitialSupply(
+    address to
+  ) external onlyOwner {
     if (initialSupplyMinted) {
       CustomRevert.revertWith(InitialSupplyAlreadyMinted.selector);
     }
@@ -136,10 +135,7 @@ contract Towns is
       CustomRevert.revertWith(InvalidInflationRate.selector);
     }
 
-    TokenInflationLib.setOverrideInflation(
-      overrideInflation,
-      overrideInflationRate
-    );
+    TokenInflationLib.setOverrideInflation(overrideInflation, overrideInflationRate);
   }
 
   /// @inheritdoc ITowns
@@ -156,20 +152,14 @@ contract Towns is
   /// @inheritdoc ITowns
   function createInflation() external onlyRoles(ROLE_INFLATION_MANAGER) {
     // verify that minting can only happen once per year
-    uint256 timeSinceLastMint = block.timestamp -
-      TokenInflationLib.lastMintTime();
+    uint256 timeSinceLastMint = block.timestamp - TokenInflationLib.lastMintTime();
 
     if (timeSinceLastMint < 365 days) {
       CustomRevert.revertWith(MintingTooSoon.selector);
     }
 
-    uint256 inflationRateBPS = TokenInflationLib.getCurrentInflationRateBPS(
-      initialMintTime
-    );
-    uint256 inflationAmount = BasisPoints.calculate(
-      totalSupply(),
-      inflationRateBPS
-    );
+    uint256 inflationRateBPS = TokenInflationLib.getCurrentInflationRateBPS(initialMintTime);
+    uint256 inflationAmount = BasisPoints.calculate(totalSupply(), inflationRateBPS);
 
     address receiver = TokenInflationLib.inflationReceiver();
     _mint(receiver, inflationAmount);
@@ -221,12 +211,7 @@ contract Towns is
   }
 
   /// @dev This allows Permit2 to be used without prior approval.
-  function _givePermit2InfiniteAllowance()
-    internal
-    pure
-    override
-    returns (bool)
-  {
+  function _givePermit2InfiniteAllowance() internal pure override returns (bool) {
     return true;
   }
 

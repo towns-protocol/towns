@@ -14,7 +14,9 @@ contract DeployEntrypoint is Deployer {
     return "utils/entrypoint";
   }
 
-  function __deploy(address deployer) public override returns (address) {
+  function __deploy(
+    address deployer
+  ) public override returns (address) {
     if (!isAnvil()) revert("not supported");
 
     bytes32 salt = bytes32(uint256(1));

@@ -11,15 +11,11 @@ interface IRewardsDistributionBase {
   error RewardsDistribution_NoRewardsToClaim();
   error RewardsDistribution_InsufficientRewardBalance();
   error RewardsDistribution_InvalidOperator();
+
   event RewardsDistributed(address operator, uint256 amount);
-  error RewardsDistribution_UnauthorizedClaimer(
-    address delegator,
-    address claimer
-  );
-  error RewardsDistribution_UnauthorizedOperatorClaimer(
-    address operator,
-    address claimer
-  );
+
+  error RewardsDistribution_UnauthorizedClaimer(address delegator, address claimer);
+  error RewardsDistribution_UnauthorizedOperatorClaimer(address operator, address claimer);
 }
 
 interface IRewardsDistribution is IRewardsDistributionBase {
@@ -41,19 +37,27 @@ interface IRewardsDistribution is IRewardsDistributionBase {
 
   function delegatorClaim() external;
 
-  function distributeRewards(address operator) external;
+  function distributeRewards(
+    address operator
+  ) external;
 
-  function setPeriodDistributionAmount(uint256 amount) external;
+  function setPeriodDistributionAmount(
+    uint256 amount
+  ) external;
 
   function getPeriodDistributionAmount() external view returns (uint256);
 
-  function setActivePeriodLength(uint256 length) external;
+  function setActivePeriodLength(
+    uint256 length
+  ) external;
 
   function getActivePeriodLength() external view returns (uint256);
 
   function getActiveOperators() external view returns (address[] memory);
 
-  function setWithdrawalRecipient(address recipient) external;
+  function setWithdrawalRecipient(
+    address recipient
+  ) external;
 
   function getWithdrawalRecipient() external view returns (address);
 

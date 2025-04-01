@@ -13,30 +13,26 @@ import {DropClaimLib} from "./DropClaimLib.sol";
 library DropFacetLib {
   using DropClaimLib for DropClaimLib.ClaimCondition;
 
-  // keccak256(abi.encode(uint256(keccak256("diamond.facets.drop.storage")) - 1)) & ~bytes32(uint256(0xff))
-  bytes32 constant STORAGE_SLOT =
-    0xeda6a1e2ce6f1639b6d3066254ca87a2daf51c4f0ad5038d408bbab6cc2cab00;
+  // keccak256(abi.encode(uint256(keccak256("diamond.facets.drop.storage")) - 1)) &
+  // ~bytes32(uint256(0xff))
+  bytes32 constant STORAGE_SLOT = 0xeda6a1e2ce6f1639b6d3066254ca87a2daf51c4f0ad5038d408bbab6cc2cab00;
 
   struct Layout {
     address rewardsDistribution;
     uint48 conditionStartId;
     uint48 conditionCount;
-    mapping(uint256 conditionId => mapping(address => DropClaimLib.SupplyClaim)) supplyClaimedByWallet;
+    mapping(uint256 conditionId => mapping(address => DropClaimLib.SupplyClaim))
+      supplyClaimedByWallet;
     mapping(uint256 conditionId => DropClaimLib.ClaimCondition) conditionById;
   }
 
   function getActiveConditionId(
     Layout storage self
   ) internal view returns (uint256) {
-    (uint48 conditionStartId, uint48 conditionCount) = (
-      self.conditionStartId,
-      self.conditionCount
-    );
+    (uint48 conditionStartId, uint48 conditionCount) = (self.conditionStartId, self.conditionCount);
 
     if (conditionCount == 0) {
-      CustomRevert.revertWith(
-        IDropFacetBase.DropFacet__NoActiveClaimCondition.selector
-      );
+      CustomRevert.revertWith(IDropFacetBase.DropFacet__NoActiveClaimCondition.selector);
     }
 
     uint256 lastConditionId;
@@ -48,16 +44,14 @@ library DropFacetLib {
       DropClaimLib.ClaimCondition storage condition = self.conditionById[i];
       uint256 endTimestamp = condition.endTimestamp;
       if (
-        block.timestamp >= condition.startTimestamp &&
-        (endTimestamp == 0 || block.timestamp < endTimestamp)
+        block.timestamp >= condition.startTimestamp
+          && (endTimestamp == 0 || block.timestamp < endTimestamp)
       ) {
         return i;
       }
     }
 
-    CustomRevert.revertWith(
-      IDropFacetBase.DropFacet__NoActiveClaimCondition.selector
-    );
+    CustomRevert.revertWith(IDropFacetBase.DropFacet__NoActiveClaimCondition.selector);
   }
 
   function getClaimConditionById(
@@ -79,10 +73,7 @@ library DropFacetLib {
     Layout storage self,
     DropClaimLib.ClaimCondition calldata newCondition
   ) internal {
-    (uint48 existingStartId, uint48 existingCount) = (
-      self.conditionStartId,
-      self.conditionCount
-    );
+    (uint48 existingStartId, uint48 existingCount) = (self.conditionStartId, self.conditionCount);
     uint48 newConditionId = existingStartId + existingCount;
 
     // Check timestamp order
@@ -106,10 +97,7 @@ library DropFacetLib {
     // Update condition count
     self.conditionCount = existingCount + 1;
 
-    emit IDropFacetBase.DropFacet_ClaimConditionAdded(
-      newConditionId,
-      newCondition
-    );
+    emit IDropFacetBase.DropFacet_ClaimConditionAdded(newConditionId, newCondition);
   }
 
   function getClaimConditions(
@@ -127,15 +115,11 @@ library DropFacetLib {
     DropClaimLib.ClaimCondition[] calldata conditions
   ) internal {
     // get the existing claim condition count and start id
-    (uint48 newStartId, uint48 existingConditionCount) = (
-      self.conditionStartId,
-      self.conditionCount
-    );
+    (uint48 newStartId, uint48 existingConditionCount) =
+      (self.conditionStartId, self.conditionCount);
 
     if (uint256(newStartId) + conditions.length > type(uint48).max) {
-      CustomRevert.revertWith(
-        IDropFacetBase.DropFacet__CannotSetClaimConditions.selector
-      );
+      CustomRevert.revertWith(IDropFacetBase.DropFacet__CannotSetClaimConditions.selector);
     }
 
     uint48 newConditionCount = uint48(conditions.length);
@@ -152,15 +136,11 @@ library DropFacetLib {
       }
 
       // check that amount already claimed is less than or equal to the max claimable supply
-      DropClaimLib.ClaimCondition storage condition = self.conditionById[
-        newStartId + i
-      ];
+      DropClaimLib.ClaimCondition storage condition = self.conditionById[newStartId + i];
       uint256 amountAlreadyClaimed = condition.supplyClaimed;
 
       if (amountAlreadyClaimed > newCondition.maxClaimableSupply) {
-        CustomRevert.revertWith(
-          IDropFacetBase.DropFacet__CannotSetClaimConditions.selector
-        );
+        CustomRevert.revertWith(IDropFacetBase.DropFacet__CannotSetClaimConditions.selector);
       }
 
       // copy the new condition to the storage except `supplyClaimed`
@@ -181,24 +161,16 @@ library DropFacetLib {
       }
     }
 
-    emit IDropFacetBase.DropFacet_ClaimConditionsUpdated(
-      newStartId,
-      conditions
-    );
+    emit IDropFacetBase.DropFacet_ClaimConditionsUpdated(newStartId, conditions);
   }
 
-  function updateDepositId(
-    DropClaimLib.SupplyClaim storage claimed,
-    uint256 depositId
-  ) internal {
+  function updateDepositId(DropClaimLib.SupplyClaim storage claimed, uint256 depositId) internal {
     claimed.depositId = depositId;
   }
 
   function verifyEnoughBalance(address currency, uint256 amount) internal view {
     if (amount > IERC20(currency).balanceOf(address(this))) {
-      CustomRevert.revertWith(
-        IDropFacetBase.DropFacet__InsufficientBalance.selector
-      );
+      CustomRevert.revertWith(IDropFacetBase.DropFacet__InsufficientBalance.selector);
     }
   }
 
@@ -210,14 +182,9 @@ library DropFacetLib {
     IERC20(condition.currency).approve(self.rewardsDistribution, amount);
   }
 
-  function setRewardsDistribution(
-    Layout storage self,
-    address rewardsDistribution
-  ) internal {
+  function setRewardsDistribution(Layout storage self, address rewardsDistribution) internal {
     if (rewardsDistribution == address(0)) {
-      CustomRevert.revertWith(
-        IDropFacetBase.DropFacet__RewardsDistributionNotSet.selector
-      );
+      CustomRevert.revertWith(IDropFacetBase.DropFacet__RewardsDistributionNotSet.selector);
     }
 
     self.rewardsDistribution = rewardsDistribution;

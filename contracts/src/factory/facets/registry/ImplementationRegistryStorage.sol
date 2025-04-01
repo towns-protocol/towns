@@ -8,7 +8,8 @@ pragma solidity ^0.8.23;
 // contracts
 
 library ImplementationRegistryStorage {
-  // keccak256(abi.encode(uint256(keccak256("factory.facets.registry.storage")) - 1)) & ~bytes32(uint256(0xff))
+  // keccak256(abi.encode(uint256(keccak256("factory.facets.registry.storage")) - 1)) &
+  // ~bytes32(uint256(0xff))
   bytes32 internal constant STORAGE_SLOT =
     0x31d1d65d94f3e9d7ffc7a93cc3bd1ee24d47f432e2c4fc10a5d92f8e2dd98900;
 

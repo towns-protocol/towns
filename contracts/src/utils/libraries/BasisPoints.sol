@@ -10,10 +10,7 @@ library BasisPoints {
    * @param basisPoints The basis points to calculate
    * @return The basis points of the given amount
    */
-  function calculate(
-    uint256 amount,
-    uint256 basisPoints
-  ) internal pure returns (uint256) {
+  function calculate(uint256 amount, uint256 basisPoints) internal pure returns (uint256) {
     require(basisPoints <= MAX_BPS, "Basis points cannot exceed 10_000");
     return (amount * basisPoints) / MAX_BPS;
   }

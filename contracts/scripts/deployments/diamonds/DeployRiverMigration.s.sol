@@ -58,7 +58,9 @@ contract DeployRiverMigration is DiamondHelper, Deployer {
     return (OLD_TOKEN, NEW_TOKEN);
   }
 
-  function addImmutableCuts(address deployer) internal {
+  function addImmutableCuts(
+    address deployer
+  ) internal {
     multiInit = deployMultiInit.deploy(deployer);
     diamondCut = diamondCutHelper.deploy(deployer);
     diamondLoupe = diamondLoupeHelper.deploy(deployer);
@@ -106,19 +108,16 @@ contract DeployRiverMigration is DiamondHelper, Deployer {
       tokenMigrationHelper.makeInitData(oldToken, newToken)
     );
 
-    return
-      Diamond.InitParams({
-        baseFacets: baseFacets(),
-        init: multiInit,
-        initData: abi.encodeWithSelector(
-          MultiInit.multiInit.selector,
-          _initAddresses,
-          _initDatas
-        )
-      });
+    return Diamond.InitParams({
+      baseFacets: baseFacets(),
+      init: multiInit,
+      initData: abi.encodeWithSelector(MultiInit.multiInit.selector, _initAddresses, _initDatas)
+    });
   }
 
-  function __deploy(address deployer) public override returns (address) {
+  function __deploy(
+    address deployer
+  ) public override returns (address) {
     addImmutableCuts(deployer);
 
     Diamond.InitParams memory initDiamondCut = diamondInitParams(deployer);

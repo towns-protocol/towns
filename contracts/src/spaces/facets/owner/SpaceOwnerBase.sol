@@ -22,7 +22,9 @@ abstract contract SpaceOwnerBase is ISpaceOwnerBase {
     _;
   }
 
-  function _setFactory(address factory) internal {
+  function _setFactory(
+    address factory
+  ) internal {
     Validator.checkAddress(factory);
 
     SpaceOwnerStorage.Layout storage ds = SpaceOwnerStorage.layout();
@@ -55,12 +57,8 @@ abstract contract SpaceOwnerBase is ISpaceOwnerBase {
     SpaceOwnerStorage.Layout storage ds = SpaceOwnerStorage.layout();
 
     ds.spaceByTokenId[tokenId] = space;
-    ds.spaceByAddress[space] = SpaceOwnerStorage.Space({
-      name: name,
-      uri: uri,
-      tokenId: tokenId,
-      createdAt: block.timestamp
-    });
+    ds.spaceByAddress[space] =
+      SpaceOwnerStorage.Space({name: name, uri: uri, tokenId: tokenId, createdAt: block.timestamp});
     ds.spaceMetadata[space] = SpaceOwnerStorage.SpaceMetadata({
       shortDescription: shortDescription,
       longDescription: longDescription
@@ -91,31 +89,33 @@ abstract contract SpaceOwnerBase is ISpaceOwnerBase {
     emit SpaceOwner__UpdateSpace(space);
   }
 
-  function _getSpace(address space) internal view returns (Space memory) {
-    SpaceOwnerStorage.Space storage spaceInfo = SpaceOwnerStorage
-      .layout()
-      .spaceByAddress[space];
+  function _getSpace(
+    address space
+  ) internal view returns (Space memory) {
+    SpaceOwnerStorage.Space storage spaceInfo = SpaceOwnerStorage.layout().spaceByAddress[space];
 
-    SpaceOwnerStorage.SpaceMetadata storage metadata = SpaceOwnerStorage
-      .layout()
-      .spaceMetadata[space];
+    SpaceOwnerStorage.SpaceMetadata storage metadata =
+      SpaceOwnerStorage.layout().spaceMetadata[space];
 
-    return
-      Space({
-        name: spaceInfo.name,
-        uri: spaceInfo.uri,
-        tokenId: spaceInfo.tokenId,
-        createdAt: spaceInfo.createdAt,
-        shortDescription: metadata.shortDescription,
-        longDescription: metadata.longDescription
-      });
+    return Space({
+      name: spaceInfo.name,
+      uri: spaceInfo.uri,
+      tokenId: spaceInfo.tokenId,
+      createdAt: spaceInfo.createdAt,
+      shortDescription: metadata.shortDescription,
+      longDescription: metadata.longDescription
+    });
   }
 
-  function _getTokenId(address space) internal view returns (uint256) {
+  function _getTokenId(
+    address space
+  ) internal view returns (uint256) {
     return SpaceOwnerStorage.layout().spaceByAddress[space].tokenId;
   }
 
-  function _getSpaceByTokenId(uint256 tokenId) internal view returns (address) {
+  function _getSpaceByTokenId(
+    uint256 tokenId
+  ) internal view returns (address) {
     return SpaceOwnerStorage.layout().spaceByTokenId[tokenId];
   }
 }

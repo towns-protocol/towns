@@ -2,7 +2,8 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {IEntitlementChecker} from "contracts/src/base/registry/facets/checker/IEntitlementChecker.sol";
+import {IEntitlementChecker} from
+  "contracts/src/base/registry/facets/checker/IEntitlementChecker.sol";
 import {IEntitlementGatedBase} from "contracts/src/spaces/facets/gated/IEntitlementGated.sol";
 // libraries
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
@@ -10,7 +11,8 @@ import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet
 // contracts
 
 library XChainLib {
-  // keccak256(abi.encode(uint256(keccak256("xchain.entitlement.transactions.storage")) - 1)) & ~bytes32(uint256(0xff))
+  // keccak256(abi.encode(uint256(keccak256("xchain.entitlement.transactions.storage")) - 1)) &
+  // ~bytes32(uint256(0xff))
   bytes32 internal constant STORAGE_SLOT =
     0xf501c51c066c21fd640901535874a71171bb35113f6dc2832fce1b1f9da0cc00;
 

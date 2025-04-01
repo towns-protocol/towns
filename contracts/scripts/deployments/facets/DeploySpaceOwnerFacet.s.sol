@@ -54,7 +54,9 @@ contract DeploySpaceOwnerFacet is FacetHelper, Deployer {
     return "facets/spaceOwnerFacet";
   }
 
-  function __deploy(address deployer) public override returns (address) {
+  function __deploy(
+    address deployer
+  ) public override returns (address) {
     vm.startBroadcast(deployer);
     SpaceOwner facet = new SpaceOwner();
     vm.stopBroadcast();

@@ -38,9 +38,7 @@ contract Channels is IChannel, ChannelBase, RolesBase, Entitled, Facet {
 
     for (uint256 i = 0; i < rolePermissions.length; i++) {
       _setChannelPermissionOverrides(
-        rolePermissions[i].roleId,
-        channelId,
-        rolePermissions[i].permissions
+        rolePermissions[i].roleId, channelId, rolePermissions[i].permissions
       );
     }
   }
@@ -55,16 +53,14 @@ contract Channels is IChannel, ChannelBase, RolesBase, Entitled, Facet {
     return _getChannels();
   }
 
-  function updateChannel(
-    bytes32 channelId,
-    string memory metadata,
-    bool disabled
-  ) external {
+  function updateChannel(bytes32 channelId, string memory metadata, bool disabled) external {
     _validatePermission(Permissions.AddRemoveChannels);
     _updateChannel(channelId, metadata, disabled);
   }
 
-  function removeChannel(bytes32 channelId) external {
+  function removeChannel(
+    bytes32 channelId
+  ) external {
     _validatePermission(Permissions.AddRemoveChannels);
     _removeChannel(channelId);
   }

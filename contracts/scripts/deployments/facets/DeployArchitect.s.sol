@@ -30,21 +30,18 @@ contract DeployArchitect is FacetHelper, Deployer {
     address _ruleEntitlement,
     address _legacyRuleEntitlement
   ) public pure returns (bytes memory) {
-    return
-      abi.encodeWithSelector(
-        initializer(),
-        _spaceOwnerToken,
-        _userEntitlement,
-        _ruleEntitlement,
-        _legacyRuleEntitlement
-      );
+    return abi.encodeWithSelector(
+      initializer(), _spaceOwnerToken, _userEntitlement, _ruleEntitlement, _legacyRuleEntitlement
+    );
   }
 
   function versionName() public pure override returns (string memory) {
     return "facets/architectFacet";
   }
 
-  function __deploy(address deployer) public override returns (address) {
+  function __deploy(
+    address deployer
+  ) public override returns (address) {
     vm.startBroadcast(deployer);
     Architect architect = new Architect();
     vm.stopBroadcast();

@@ -2,10 +2,12 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {IVotesEnumerable} from "contracts/src/diamond/facets/governance/votes/enumerable/IVotesEnumerable.sol";
+import {IVotesEnumerable} from
+  "contracts/src/diamond/facets/governance/votes/enumerable/IVotesEnumerable.sol";
 
 // libraries
-import {VotesEnumerableLib} from "contracts/src/diamond/facets/governance/votes/enumerable/VotesEnumerableLib.sol";
+import {VotesEnumerableLib} from
+  "contracts/src/diamond/facets/governance/votes/enumerable/VotesEnumerableLib.sol";
 
 // contracts
 abstract contract VotesEnumerable is IVotesEnumerable {

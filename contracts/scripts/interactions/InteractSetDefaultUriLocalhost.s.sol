@@ -8,7 +8,9 @@ import {Interaction} from "../common/Interaction.s.sol";
 contract InteractSetDefaultUriLocalhost is Interaction {
   string internal constant URI = "http://localhost:3002/";
 
-  function __interact(address deployer) internal override {
+  function __interact(
+    address deployer
+  ) internal override {
     address spaceOwner = getDeployment("spaceOwner");
 
     vm.broadcast(deployer);

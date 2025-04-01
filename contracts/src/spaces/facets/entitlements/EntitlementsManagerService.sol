@@ -23,9 +23,10 @@ library EntitlementsManagerService {
 
   string internal constant IN_TOWN = "";
 
-  function checkEntitlement(address entitlement) internal view {
-    EntitlementsManagerStorage.Layout storage ds = EntitlementsManagerStorage
-      .layout();
+  function checkEntitlement(
+    address entitlement
+  ) internal view {
+    EntitlementsManagerStorage.Layout storage ds = EntitlementsManagerStorage.layout();
 
     if (!ds.entitlements.contains(entitlement)) {
       revert EntitlementsService__EntitlementDoesNotExist();
@@ -35,25 +36,24 @@ library EntitlementsManagerService {
   // TODO define what isImmutable means
   function addEntitlement(address entitlement, bool isImmutable) internal {
     IEntitlement ie = IEntitlement(entitlement);
-    EntitlementsManagerStorage.Layout storage ds = EntitlementsManagerStorage
-      .layout();
+    EntitlementsManagerStorage.Layout storage ds = EntitlementsManagerStorage.layout();
 
     if (ds.entitlements.contains(entitlement)) {
       revert EntitlementsService__EntitlementAlreadyExists();
     }
 
     ds.entitlements.add(entitlement);
-    ds.entitlementByAddress[entitlement] = EntitlementsManagerStorage
-      .Entitlement({
-        entitlement: IEntitlement(entitlement),
-        isImmutable: isImmutable,
-        isCrosschain: ie.isCrosschain()
-      });
+    ds.entitlementByAddress[entitlement] = EntitlementsManagerStorage.Entitlement({
+      entitlement: IEntitlement(entitlement),
+      isImmutable: isImmutable,
+      isCrosschain: ie.isCrosschain()
+    });
   }
 
-  function removeEntitlement(address entitlement) internal {
-    EntitlementsManagerStorage.Layout storage ds = EntitlementsManagerStorage
-      .layout();
+  function removeEntitlement(
+    address entitlement
+  ) internal {
+    EntitlementsManagerStorage.Layout storage ds = EntitlementsManagerStorage.layout();
 
     if (!ds.entitlements.contains(entitlement)) {
       revert EntitlementsService__EntitlementDoesNotExist();
@@ -72,15 +72,9 @@ library EntitlementsManagerService {
   )
     internal
     view
-    returns (
-      string memory name,
-      address moduleAddress,
-      string memory moduleType,
-      bool isImmutable
-    )
+    returns (string memory name, address moduleAddress, string memory moduleType, bool isImmutable)
   {
-    EntitlementsManagerStorage.Layout storage ds = EntitlementsManagerStorage
-      .layout();
+    EntitlementsManagerStorage.Layout storage ds = EntitlementsManagerStorage.layout();
 
     if (!ds.entitlements.contains(entitlement)) {
       revert EntitlementsService__EntitlementDoesNotExist();
@@ -95,11 +89,7 @@ library EntitlementsManagerService {
     return (temp1, temp2, temp3, temp4);
   }
 
-  function getEntitlements()
-    internal
-    view
-    returns (address[] memory entitlements)
-  {
+  function getEntitlements() internal view returns (address[] memory entitlements) {
     return EntitlementsManagerStorage.layout().entitlements.values();
   }
 
@@ -107,14 +97,16 @@ library EntitlementsManagerService {
   //                           Validation
   // =============================================================
 
-  function validateEntitlement(address entitlement) internal view {
+  function validateEntitlement(
+    address entitlement
+  ) internal view {
     if (entitlement == address(0)) {
       revert EntitlementsService__InvalidEntitlementAddress();
     }
 
-    try
-      IERC165(entitlement).supportsInterface(type(IEntitlement).interfaceId)
-    returns (bool supported) {
+    try IERC165(entitlement).supportsInterface(type(IEntitlement).interfaceId) returns (
+      bool supported
+    ) {
       if (!supported) {
         revert EntitlementsService__InvalidEntitlementInterface();
       }
@@ -143,10 +135,7 @@ library EntitlementsManagerService {
     IEntitlement(entitlement).setEntitlement(role, entitlementData);
   }
 
-  function proxyRemoveRoleFromEntitlement(
-    address entitlement,
-    uint256 role
-  ) internal {
+  function proxyRemoveRoleFromEntitlement(address entitlement, uint256 role) internal {
     checkEntitlement(entitlement);
     IEntitlement(entitlement).removeEntitlement(role);
   }

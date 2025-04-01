@@ -22,7 +22,8 @@ import {DeployMultiInit} from "contracts/scripts/deployments/utils/DeployMultiIn
 import {DeployRiverConfig} from "contracts/scripts/deployments/facets/DeployRiverConfig.s.sol";
 import {DeployNodeRegistry} from "contracts/scripts/deployments/facets/DeployNodeRegistry.s.sol";
 import {DeployStreamRegistry} from "contracts/scripts/deployments/facets/DeployStreamRegistry.s.sol";
-import {DeployOperatorRegistry} from "contracts/scripts/deployments/facets/DeployOperatorRegistry.s.sol";
+import {DeployOperatorRegistry} from
+  "contracts/scripts/deployments/facets/DeployOperatorRegistry.s.sol";
 
 // facets
 import {OperatorRegistry} from "contracts/src/river/registry/facets/operator/OperatorRegistry.sol";
@@ -36,10 +37,8 @@ contract DeployRiverRegistry is DiamondHelper, Deployer {
   DeployIntrospection internal introspectionHelper = new DeployIntrospection();
   DeployOwnable internal ownableHelper = new DeployOwnable();
   DeployNodeRegistry internal nodeRegistryHelper = new DeployNodeRegistry();
-  DeployStreamRegistry internal streamRegistryHelper =
-    new DeployStreamRegistry();
-  DeployOperatorRegistry internal operatorRegistryHelper =
-    new DeployOperatorRegistry();
+  DeployStreamRegistry internal streamRegistryHelper = new DeployStreamRegistry();
+  DeployOperatorRegistry internal operatorRegistryHelper = new DeployOperatorRegistry();
   DeployRiverConfig internal riverConfigHelper = new DeployRiverConfig();
 
   // deployer
@@ -72,7 +71,9 @@ contract DeployRiverRegistry is DiamondHelper, Deployer {
     return "riverRegistry";
   }
 
-  function addImmutableCuts(address deployer) internal {
+  function addImmutableCuts(
+    address deployer
+  ) internal {
     multiInit = deployMultiInit.deploy(deployer);
     diamondCut = cutHelper.deploy(deployer);
     diamondLoupe = loupeHelper.deploy(deployer);
@@ -113,10 +114,7 @@ contract DeployRiverRegistry is DiamondHelper, Deployer {
     configManagers[0] = deployer;
 
     addFacet(
-      operatorRegistryHelper.makeCut(
-        operatorRegistry,
-        IDiamond.FacetCutAction.Add
-      ),
+      operatorRegistryHelper.makeCut(operatorRegistry, IDiamond.FacetCutAction.Add),
       operatorRegistry,
       operatorRegistryHelper.makeInitData(operators)
     );
@@ -125,29 +123,17 @@ contract DeployRiverRegistry is DiamondHelper, Deployer {
       riverConfig,
       riverConfigHelper.makeInitData(configManagers)
     );
-    addCut(
-      nodeRegistryHelper.makeCut(nodeRegistry, IDiamond.FacetCutAction.Add)
-    );
-    addCut(
-      streamRegistryHelper.makeCut(streamRegistry, IDiamond.FacetCutAction.Add)
-    );
+    addCut(nodeRegistryHelper.makeCut(nodeRegistry, IDiamond.FacetCutAction.Add));
+    addCut(streamRegistryHelper.makeCut(streamRegistry, IDiamond.FacetCutAction.Add));
 
-    return
-      Diamond.InitParams({
-        baseFacets: baseFacets(),
-        init: multiInit,
-        initData: abi.encodeWithSelector(
-          MultiInit.multiInit.selector,
-          _initAddresses,
-          _initDatas
-        )
-      });
+    return Diamond.InitParams({
+      baseFacets: baseFacets(),
+      init: multiInit,
+      initData: abi.encodeWithSelector(MultiInit.multiInit.selector, _initAddresses, _initDatas)
+    });
   }
 
-  function diamondInitParamsFromFacets(
-    address deployer,
-    string[] memory facets
-  ) public {
+  function diamondInitParamsFromFacets(address deployer, string[] memory facets) public {
     for (uint256 i = 0; i < facets.length; i++) {
       string memory facetName = facets[i];
       address facetHelperAddress = facetDeployments[facetName];
@@ -156,9 +142,8 @@ contract DeployRiverRegistry is DiamondHelper, Deployer {
       if (facetHelperAddress != address(0)) {
         // deploy facet
         address facetAddress = Deployer(facetHelperAddress).deploy(deployer);
-        (FacetCut memory cut, bytes memory config) = FacetHelper(
-          facetHelperAddress
-        ).facetInitHelper(deployer, facetAddress);
+        (FacetCut memory cut, bytes memory config) =
+          FacetHelper(facetHelperAddress).facetInitHelper(deployer, facetAddress);
         if (config.length > 0) {
           addFacet(cut, facetAddress, config);
         } else {
@@ -176,7 +161,9 @@ contract DeployRiverRegistry is DiamondHelper, Deployer {
     return this.getCuts();
   }
 
-  function __deploy(address deployer) public override returns (address) {
+  function __deploy(
+    address deployer
+  ) public override returns (address) {
     addImmutableCuts(deployer);
 
     Diamond.InitParams memory initDiamondCut = diamondInitParams(deployer);

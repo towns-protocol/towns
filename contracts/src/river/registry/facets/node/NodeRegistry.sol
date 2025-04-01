@@ -17,7 +17,9 @@ contract NodeRegistry is INodeRegistry, RegistryModifiers {
   using EnumerableSet for EnumerableSet.AddressSet;
   using CustomRevert for string;
 
-  function isNode(address nodeAddress) public view returns (bool) {
+  function isNode(
+    address nodeAddress
+  ) public view returns (bool) {
     return ds.nodeByAddress[nodeAddress].nodeAddress != address(0);
   }
 
@@ -31,12 +33,8 @@ contract NodeRegistry is INodeRegistry, RegistryModifiers {
       RiverRegistryErrors.ALREADY_EXISTS.revertWith();
     }
 
-    Node memory newNode = Node({
-      nodeAddress: nodeAddress,
-      url: url,
-      status: status,
-      operator: msg.sender
-    });
+    Node memory newNode =
+      Node({nodeAddress: nodeAddress, url: url, status: status, operator: msg.sender});
 
     ds.nodes.add(nodeAddress); // TODO: remove this line
     ds.nodeByAddress[nodeAddress] = newNode;
@@ -89,15 +87,17 @@ contract NodeRegistry is INodeRegistry, RegistryModifiers {
   {
     Node storage node = ds.nodeByAddress[nodeAddress];
 
-    if (
-      keccak256(abi.encodePacked(node.url)) == keccak256(abi.encodePacked(url))
-    ) RiverRegistryErrors.BAD_ARG.revertWith();
+    if (keccak256(abi.encodePacked(node.url)) == keccak256(abi.encodePacked(url))) {
+      RiverRegistryErrors.BAD_ARG.revertWith();
+    }
 
     node.url = url;
     emit NodeUrlUpdated(node.nodeAddress, url);
   }
 
-  function getNode(address nodeAddress) external view returns (Node memory) {
+  function getNode(
+    address nodeAddress
+  ) external view returns (Node memory) {
     // validate that the node is in the registry
     if (!ds.nodes.contains(nodeAddress)) {
       RiverRegistryErrors.NODE_NOT_FOUND.revertWith();
@@ -124,19 +124,13 @@ contract NodeRegistry is INodeRegistry, RegistryModifiers {
     return nodes;
   }
 
-  function _checkNodeStatusTransionAllowed(
-    NodeStatus from,
-    NodeStatus to
-  ) internal pure {
+  function _checkNodeStatusTransionAllowed(NodeStatus from, NodeStatus to) internal pure {
     if (
-      from == NodeStatus.NotInitialized ||
-      (from == NodeStatus.RemoteOnly &&
-        (to == NodeStatus.Failed || to == NodeStatus.Departing)) ||
-      (from == NodeStatus.Operational &&
-        (to == NodeStatus.Failed || to == NodeStatus.Departing)) ||
-      (from == NodeStatus.Departing &&
-        (to == NodeStatus.Failed || to == NodeStatus.Deleted)) ||
-      (from == NodeStatus.Failed && to == NodeStatus.Deleted)
+      from == NodeStatus.NotInitialized
+        || (from == NodeStatus.RemoteOnly && (to == NodeStatus.Failed || to == NodeStatus.Departing))
+        || (from == NodeStatus.Operational && (to == NodeStatus.Failed || to == NodeStatus.Departing))
+        || (from == NodeStatus.Departing && (to == NodeStatus.Failed || to == NodeStatus.Deleted))
+        || (from == NodeStatus.Failed && to == NodeStatus.Deleted)
     ) {
       return;
     }

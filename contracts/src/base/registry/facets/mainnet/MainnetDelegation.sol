@@ -3,21 +3,18 @@ pragma solidity ^0.8.23;
 
 // interfaces
 import {IMainnetDelegation} from "contracts/src/base/registry/facets/mainnet/IMainnetDelegation.sol";
-import {ICrossDomainMessenger} from "contracts/src/base/registry/facets/mainnet/ICrossDomainMessenger.sol";
+import {ICrossDomainMessenger} from
+  "contracts/src/base/registry/facets/mainnet/ICrossDomainMessenger.sol";
 
 // libraries
 
 // contracts
 import {OwnableBase} from "@towns-protocol/diamond/src/facets/ownable/OwnableBase.sol";
-import {MainnetDelegationBase} from "contracts/src/base/registry/facets/mainnet/MainnetDelegationBase.sol";
+import {MainnetDelegationBase} from
+  "contracts/src/base/registry/facets/mainnet/MainnetDelegationBase.sol";
 import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
 
-contract MainnetDelegation is
-  IMainnetDelegation,
-  MainnetDelegationBase,
-  OwnableBase,
-  Facet
-{
+contract MainnetDelegation is IMainnetDelegation, MainnetDelegationBase, OwnableBase, Facet {
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                        INITIALIZERS                        */
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -28,7 +25,9 @@ contract MainnetDelegation is
     __MainnetDelegation_init_unchained(messenger);
   }
 
-  function __MainnetDelegation_init_unchained(address messenger) internal {
+  function __MainnetDelegation_init_unchained(
+    address messenger
+  ) internal {
     _addInterface(type(IMainnetDelegation).interfaceId);
     _setMessenger(ICrossDomainMessenger(messenger));
   }
@@ -41,8 +40,8 @@ contract MainnetDelegation is
     ICrossDomainMessenger messenger = _getMessenger();
 
     require(
-      msg.sender == address(messenger) &&
-        messenger.xDomainMessageSender() == address(_getProxyDelegation()),
+      msg.sender == address(messenger)
+        && messenger.xDomainMessageSender() == address(_getProxyDelegation()),
       "MainnetDelegation: sender is not the cross-domain messenger"
     );
     _;
@@ -52,12 +51,16 @@ contract MainnetDelegation is
   /*                       ADMIN FUNCTIONS                      */
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-  function setProxyDelegation(address proxyDelegation) external onlyOwner {
+  function setProxyDelegation(
+    address proxyDelegation
+  ) external onlyOwner {
     _setProxyDelegation(proxyDelegation);
   }
 
   /// @inheritdoc IMainnetDelegation
-  function relayDelegations(bytes calldata encodedMsgs) external onlyOwner {
+  function relayDelegations(
+    bytes calldata encodedMsgs
+  ) external onlyOwner {
     _relayDelegations(encodedMsgs);
   }
 
@@ -114,7 +117,9 @@ contract MainnetDelegation is
     return _getDelegatedStakeByOperator(operator);
   }
 
-  function getAuthorizedClaimer(address owner) external view returns (address) {
+  function getAuthorizedClaimer(
+    address owner
+  ) external view returns (address) {
     return _getAuthorizedClaimer(owner);
   }
 }

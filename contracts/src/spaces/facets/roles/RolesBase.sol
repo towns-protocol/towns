@@ -10,7 +10,8 @@ import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet
 import {Validator} from "contracts/src/utils/Validator.sol";
 
 // services
-import {EntitlementsManagerService} from "contracts/src/spaces/facets/entitlements/EntitlementsManagerService.sol";
+import {EntitlementsManagerService} from
+  "contracts/src/spaces/facets/entitlements/EntitlementsManagerService.sol";
 import {ChannelService} from "contracts/src/spaces/facets/channels/ChannelService.sol";
 import {RolesStorage} from "./RolesStorage.sol";
 
@@ -32,25 +33,19 @@ abstract contract RolesBase is IRolesBase {
 
     uint256 entitlementsLen = entitlements.length;
 
-    IEntitlement[] memory entitlementAddresses = new IEntitlement[](
-      entitlementsLen
-    );
+    IEntitlement[] memory entitlementAddresses = new IEntitlement[](entitlementsLen);
 
     roleId = _getNextRoleId();
 
-    for (uint256 i = 0; i < entitlementsLen; ) {
-      EntitlementsManagerService.validateEntitlement(
-        address(entitlements[i].module)
-      );
+    for (uint256 i = 0; i < entitlementsLen;) {
+      EntitlementsManagerService.validateEntitlement(address(entitlements[i].module));
       entitlementAddresses[i] = entitlements[i].module;
 
       // check for empty address or data
       Validator.checkByteLength(entitlements[i].data);
 
       EntitlementsManagerService.proxyAddRoleToEntitlement(
-        address(entitlements[i].module),
-        roleId,
-        entitlements[i].data
+        address(entitlements[i].module), roleId, entitlements[i].data
       );
 
       unchecked {
@@ -69,7 +64,7 @@ abstract contract RolesBase is IRolesBase {
 
     roles = new Role[](roleIdLen);
 
-    for (uint256 i = 0; i < roleIdLen; ) {
+    for (uint256 i = 0; i < roleIdLen;) {
       (
         string memory name,
         bool isImmutable,
@@ -142,14 +137,13 @@ abstract contract RolesBase is IRolesBase {
       IEntitlement[] memory entitlements
     ) = _getRole(roleId);
 
-    return
-      Role({
-        id: roleId,
-        name: name,
-        disabled: isImmutable,
-        permissions: permissions,
-        entitlements: entitlements
-      });
+    return Role({
+      id: roleId,
+      name: name,
+      disabled: isImmutable,
+      permissions: permissions,
+      entitlements: entitlements
+    });
   }
 
   // make nonreentrant
@@ -167,11 +161,9 @@ abstract contract RolesBase is IRolesBase {
     uint256 currentEntitlementsLen = currentEntitlements.length;
 
     uint256 entitlementsLen = entitlements.length;
-    IEntitlement[] memory entitlementAddresses = new IEntitlement[](
-      entitlementsLen
-    );
+    IEntitlement[] memory entitlementAddresses = new IEntitlement[](entitlementsLen);
 
-    for (uint256 i = 0; i < entitlementsLen; ) {
+    for (uint256 i = 0; i < entitlementsLen;) {
       address module = address(entitlements[i].module);
       EntitlementsManagerService.validateEntitlement(module);
       EntitlementsManagerService.checkEntitlement(module);
@@ -188,11 +180,8 @@ abstract contract RolesBase is IRolesBase {
 
     // Update permissions
     if (permissions.length > 0) {
-      string[] memory currentPermissions = RolesStorage
-        .layout()
-        .roleById[roleId]
-        .permissions
-        .values();
+      string[] memory currentPermissions =
+        RolesStorage.layout().roleById[roleId].permissions.values();
 
       // Remove all the current permissions
       _removePermissionsFromRole(roleId, currentPermissions);
@@ -208,7 +197,7 @@ abstract contract RolesBase is IRolesBase {
     if (entitlementAddresses.length > 0) {
       uint256 entitlementAddressesLen = entitlementAddresses.length;
 
-      for (uint256 i = 0; i < currentEntitlementsLen; ) {
+      for (uint256 i = 0; i < currentEntitlementsLen;) {
         _removeEntitlementFromRole(roleId, address(currentEntitlements[i]));
         unchecked {
           i++;
@@ -216,7 +205,7 @@ abstract contract RolesBase is IRolesBase {
       }
 
       // Add all the new entitlements
-      for (uint256 i = 0; i < entitlementAddressesLen; ) {
+      for (uint256 i = 0; i < entitlementAddressesLen;) {
         _addEntitlementToRole(roleId, address(entitlementAddresses[i]));
         unchecked {
           i++;
@@ -225,15 +214,14 @@ abstract contract RolesBase is IRolesBase {
     }
 
     // loop through old entitlements and remove them
-    for (uint256 i = 0; i < currentEntitlementsLen; ) {
+    for (uint256 i = 0; i < currentEntitlementsLen;) {
       // fetch entitlement data and if it's not empty, remove it
-      bytes memory entitlementData = IEntitlement(currentEntitlements[i])
-        .getEntitlementDataByRoleId(roleId);
+      bytes memory entitlementData =
+        IEntitlement(currentEntitlements[i]).getEntitlementDataByRoleId(roleId);
 
       if (entitlementData.length > 0) {
         EntitlementsManagerService.proxyRemoveRoleFromEntitlement(
-          address(currentEntitlements[i]),
-          roleId
+          address(currentEntitlements[i]), roleId
         );
       }
 
@@ -242,15 +230,13 @@ abstract contract RolesBase is IRolesBase {
       }
     }
 
-    for (uint256 i = 0; i < entitlementsLen; ) {
+    for (uint256 i = 0; i < entitlementsLen;) {
       if (entitlements[i].data.length > 0) {
         // check for empty address or data
         Validator.checkByteLength(entitlements[i].data);
 
         EntitlementsManagerService.proxyAddRoleToEntitlement(
-          address(entitlements[i].module),
-          roleId,
-          entitlements[i].data
+          address(entitlements[i].module), roleId, entitlements[i].data
         );
       }
 
@@ -262,7 +248,9 @@ abstract contract RolesBase is IRolesBase {
     emit RoleUpdated(msg.sender, roleId);
   }
 
-  function _removeRole(uint256 roleId) internal {
+  function _removeRole(
+    uint256 roleId
+  ) internal {
     // check role exists
     _checkRoleExists(roleId);
 
@@ -280,19 +268,15 @@ abstract contract RolesBase is IRolesBase {
     uint256 permissionLen = rs.roleById[roleId].permissions.length();
     uint256 entitlementLen = rs.roleById[roleId].entitlements.length();
 
-    for (uint256 i = 0; i < permissionLen; ) {
-      rs.roleById[roleId].permissions.remove(
-        rs.roleById[roleId].permissions.at(i)
-      );
+    for (uint256 i = 0; i < permissionLen;) {
+      rs.roleById[roleId].permissions.remove(rs.roleById[roleId].permissions.at(i));
       unchecked {
         i++;
       }
     }
 
-    for (uint256 i = 0; i < entitlementLen; ) {
-      rs.roleById[roleId].entitlements.remove(
-        rs.roleById[roleId].entitlements.at(i)
-      );
+    for (uint256 i = 0; i < entitlementLen;) {
+      rs.roleById[roleId].entitlements.remove(rs.roleById[roleId].entitlements.at(i));
       unchecked {
         i++;
       }
@@ -302,7 +286,7 @@ abstract contract RolesBase is IRolesBase {
     uint256 channelIdsLen = channelIds.length;
 
     // remove role from channels
-    for (uint256 i = 0; i < channelIdsLen; ) {
+    for (uint256 i = 0; i < channelIdsLen;) {
       ChannelService.removeRoleFromChannel(channelIds[i], roleId);
 
       unchecked {
@@ -311,10 +295,9 @@ abstract contract RolesBase is IRolesBase {
     }
 
     // remove role from entitlements
-    for (uint256 i = 0; i < currentEntitlementsLen; ) {
+    for (uint256 i = 0; i < currentEntitlementsLen;) {
       EntitlementsManagerService.proxyRemoveRoleFromEntitlement(
-        address(currentEntitlements[i]),
-        roleId
+        address(currentEntitlements[i]), roleId
       );
 
       unchecked {
@@ -338,10 +321,7 @@ abstract contract RolesBase is IRolesBase {
     // check channel exists
     ChannelService.checkChannelExists(channelId);
 
-    return
-      RolesStorage
-      .layout()
-      .permissionOverridesByRole[roleId][channelId].values();
+    return RolesStorage.layout().permissionOverridesByRole[roleId][channelId].values();
   }
 
   function _setChannelPermissionOverrides(
@@ -358,9 +338,7 @@ abstract contract RolesBase is IRolesBase {
 
     rs.channelOverridesByRole[roleId].add(channelId);
 
-    StringSet.Set storage permissionsSet = rs.permissionOverridesByRole[roleId][
-      channelId
-    ];
+    StringSet.Set storage permissionsSet = rs.permissionOverridesByRole[roleId][channelId];
 
     // remove current channel permissions if any
     if (permissionsSet.length() > 0) {
@@ -385,10 +363,7 @@ abstract contract RolesBase is IRolesBase {
     emit PermissionsAddedToChannelRole(msg.sender, roleId, channelId);
   }
 
-  function _clearChannelPermissionOverrides(
-    uint256 roleId,
-    bytes32 channelId
-  ) internal {
+  function _clearChannelPermissionOverrides(uint256 roleId, bytes32 channelId) internal {
     // check role exists
     _checkRoleExists(roleId);
 
@@ -396,9 +371,7 @@ abstract contract RolesBase is IRolesBase {
     ChannelService.checkChannelExists(channelId);
 
     RolesStorage.Layout storage rs = RolesStorage.layout();
-    StringSet.Set storage permissionsSet = rs.permissionOverridesByRole[roleId][
-      channelId
-    ];
+    StringSet.Set storage permissionsSet = rs.permissionOverridesByRole[roleId][channelId];
 
     // get current permissions
     string[] memory currentPermissions = permissionsSet.values();
@@ -420,7 +393,9 @@ abstract contract RolesBase is IRolesBase {
     return rs.roleCount + 1;
   }
 
-  function _checkRoleExists(uint256 roleId) internal view {
+  function _checkRoleExists(
+    uint256 roleId
+  ) internal view {
     // check that role exists
     if (!RolesStorage.layout().roles.contains(roleId)) {
       revert Roles__RoleDoesNotExist();
@@ -454,16 +429,12 @@ abstract contract RolesBase is IRolesBase {
   function _getEntitlementsByRole(
     uint256 roleId
   ) internal view returns (IEntitlement[] memory) {
-    EnumerableSet.AddressSet storage entitlements = RolesStorage
-      .layout()
-      .roleById[roleId]
-      .entitlements;
+    EnumerableSet.AddressSet storage entitlements =
+      RolesStorage.layout().roleById[roleId].entitlements;
 
     uint256 entitlementLen = entitlements.length();
 
-    IEntitlement[] memory entitlementsArray = new IEntitlement[](
-      entitlementLen
-    );
+    IEntitlement[] memory entitlementsArray = new IEntitlement[](entitlementLen);
 
     for (uint256 i = 0; i < entitlementLen; i++) {
       address entitlementAddress = entitlements.at(i);
@@ -503,10 +474,7 @@ abstract contract RolesBase is IRolesBase {
   //                    Permission Management
   // =============================================================
 
-  function _addPermissionsToRole(
-    uint256 roleId,
-    string[] memory permissions
-  ) internal {
+  function _addPermissionsToRole(uint256 roleId, string[] memory permissions) internal {
     // check role exists
     _checkRoleExists(roleId);
 
@@ -514,7 +482,7 @@ abstract contract RolesBase is IRolesBase {
 
     uint256 permissionLen = permissions.length;
 
-    for (uint256 i = 0; i < permissionLen; ) {
+    for (uint256 i = 0; i < permissionLen;) {
       // if permission is empty, revert
       _checkEmptyString(permissions[i]);
 
@@ -531,10 +499,7 @@ abstract contract RolesBase is IRolesBase {
     }
   }
 
-  function _removePermissionsFromRole(
-    uint256 roleId,
-    string[] memory permissions
-  ) internal {
+  function _removePermissionsFromRole(uint256 roleId, string[] memory permissions) internal {
     // check role exists
     _checkRoleExists(roleId);
 
@@ -543,7 +508,7 @@ abstract contract RolesBase is IRolesBase {
 
     uint256 permissionLen = permissions.length;
 
-    for (uint256 i = 0; i < permissionLen; ) {
+    for (uint256 i = 0; i < permissionLen;) {
       // if permission is empty, revert
       _checkEmptyString(permissions[i]);
 
@@ -564,17 +529,14 @@ abstract contract RolesBase is IRolesBase {
   function _getPermissionsByRoleId(
     uint256 roleId
   ) internal view returns (string[] memory permissions) {
-    (, , permissions, ) = _getRole(roleId);
+    (,, permissions,) = _getRole(roleId);
   }
 
   // =============================================================
   //                  Role - Entitlement Management
   // =============================================================
 
-  function _addRoleToEntitlement(
-    uint256 roleId,
-    CreateEntitlement memory entitlement
-  ) internal {
+  function _addRoleToEntitlement(uint256 roleId, CreateEntitlement memory entitlement) internal {
     // check role exists
     _checkRoleExists(roleId);
 
@@ -586,9 +548,7 @@ abstract contract RolesBase is IRolesBase {
 
     // set entitlement to role
     EntitlementsManagerService.proxyAddRoleToEntitlement(
-      address(entitlement.module),
-      roleId,
-      entitlement.data
+      address(entitlement.module), roleId, entitlement.data
     );
   }
 
@@ -606,22 +566,18 @@ abstract contract RolesBase is IRolesBase {
     _removeEntitlementFromRole(roleId, address(entitlement.module));
 
     // set entitlement to role
-    EntitlementsManagerService.proxyRemoveRoleFromEntitlement(
-      address(entitlement.module),
-      roleId
-    );
+    EntitlementsManagerService.proxyRemoveRoleFromEntitlement(address(entitlement.module), roleId);
   }
 
-  function _checkEmptyString(string memory str) internal pure {
+  function _checkEmptyString(
+    string memory str
+  ) internal pure {
     if (bytes(str).length == 0) {
       revert Roles__InvalidPermission();
     }
   }
 
-  function _removeEntitlementFromRole(
-    uint256 roleId,
-    address entitlement
-  ) internal {
+  function _removeEntitlementFromRole(uint256 roleId, address entitlement) internal {
     RolesStorage.Role storage role = RolesStorage.layout().roleById[roleId];
 
     if (!role.entitlements.contains(entitlement)) {

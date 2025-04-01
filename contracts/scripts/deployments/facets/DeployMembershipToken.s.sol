@@ -25,9 +25,7 @@ contract DeployMembershipToken is FacetHelper, Deployer {
     addSelector(IERC721A.symbol.selector);
     addSelector(IERC721A.tokenURI.selector);
     addSelector(bytes4(keccak256("safeTransferFrom(address,address,uint256)")));
-    addSelector(
-      bytes4(keccak256("safeTransferFrom(address,address,uint256,bytes)"))
-    );
+    addSelector(bytes4(keccak256("safeTransferFrom(address,address,uint256,bytes)")));
   }
 
   function initializer() public pure override returns (bytes4) {
@@ -45,7 +43,9 @@ contract DeployMembershipToken is FacetHelper, Deployer {
     return abi.encode(name, symbol);
   }
 
-  function __deploy(address deployer) public override returns (address) {
+  function __deploy(
+    address deployer
+  ) public override returns (address) {
     vm.startBroadcast(deployer);
     MembershipToken facet = new MembershipToken();
     vm.stopBroadcast();

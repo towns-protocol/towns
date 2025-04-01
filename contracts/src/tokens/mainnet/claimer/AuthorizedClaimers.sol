@@ -30,11 +30,7 @@ contract AuthorizedClaimers is IAuthorizedClaimers, EIP712Facet {
     }
 
     address signer = ECDSA.recover(
-      _hashTypedDataV4(
-        keccak256(
-          abi.encode(_AUTHORIZE_TYPEHASH, owner, claimer, nonce, expiry)
-        )
-      ),
+      _hashTypedDataV4(keccak256(abi.encode(_AUTHORIZE_TYPEHASH, owner, claimer, nonce, expiry))),
       v,
       r,
       s
@@ -49,7 +45,9 @@ contract AuthorizedClaimers is IAuthorizedClaimers, EIP712Facet {
   }
 
   /// @inheritdoc IAuthorizedClaimers
-  function authorizeClaimer(address claimer) external {
+  function authorizeClaimer(
+    address claimer
+  ) external {
     _authorizeClaimer(msg.sender, claimer);
   }
 
@@ -69,16 +67,16 @@ contract AuthorizedClaimers is IAuthorizedClaimers, EIP712Facet {
   //                          Internal
   // =============================================================
   function _authorizeClaimer(address signer, address claimer) internal {
-    AuthorizedClaimerStorage.Layout storage ds = AuthorizedClaimerStorage
-      .layout();
+    AuthorizedClaimerStorage.Layout storage ds = AuthorizedClaimerStorage.layout();
 
     if (claimer == address(0)) {
       delete ds.authorizedClaimers[signer];
       emit AuthorizedClaimerRemoved(signer);
     } else {
       address currentClaimer = ds.authorizedClaimers[signer];
-      if (currentClaimer == claimer)
+      if (currentClaimer == claimer) {
         revert AuthorizedClaimers_ClaimerAlreadyAuthorized();
+      }
 
       ds.authorizedClaimers[signer] = claimer;
 

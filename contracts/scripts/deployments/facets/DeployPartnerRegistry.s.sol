@@ -27,7 +27,9 @@ contract DeployPartnerRegistry is FacetHelper, Deployer {
     return "facets/partnerRegistryFacet";
   }
 
-  function __deploy(address deployer) public override returns (address) {
+  function __deploy(
+    address deployer
+  ) public override returns (address) {
     vm.startBroadcast(deployer);
     PartnerRegistry partnerRegistry = new PartnerRegistry();
     vm.stopBroadcast();

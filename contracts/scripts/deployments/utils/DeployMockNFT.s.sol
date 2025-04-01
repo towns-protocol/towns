@@ -63,19 +63,16 @@ contract DeployMockNFT is DiamondHelper, Deployer {
     );
     addCut(mockERC721Helper.makeCut(erc721aMock, IDiamond.FacetCutAction.Add));
 
-    return
-      Diamond.InitParams({
-        baseFacets: baseFacets(),
-        init: multiInit,
-        initData: abi.encodeWithSelector(
-          MultiInit.multiInit.selector,
-          _initAddresses,
-          _initDatas
-        )
-      });
+    return Diamond.InitParams({
+      baseFacets: baseFacets(),
+      init: multiInit,
+      initData: abi.encodeWithSelector(MultiInit.multiInit.selector, _initAddresses, _initDatas)
+    });
   }
 
-  function __deploy(address deployer) public override returns (address) {
+  function __deploy(
+    address deployer
+  ) public override returns (address) {
     Diamond.InitParams memory initDiamondCut = diamondInitParams(deployer);
     vm.broadcast(deployer);
     Diamond diamond = new Diamond(initDiamondCut);

@@ -11,10 +11,7 @@ contract MockCrossChainEntitlement is ICrossChainEntitlement {
     isEntitledByUserAndId[hash] = entitled;
   }
 
-  function isEntitled(
-    address[] calldata users,
-    bytes calldata data
-  ) external view returns (bool) {
+  function isEntitled(address[] calldata users, bytes calldata data) external view returns (bool) {
     uint256 id = abi.decode(data, (uint256));
     for (uint256 i = 0; i < users.length; ++i) {
       bytes32 hash = keccak256(abi.encode(users[i], id));

@@ -30,16 +30,22 @@ abstract contract ERC5643Base is IERC5643Base {
     emit SubscriptionUpdate(tokenId, newExpiration);
   }
 
-  function _cancelSubscription(uint256 tokenId) internal {
+  function _cancelSubscription(
+    uint256 tokenId
+  ) internal {
     delete ERC5643Storage.layout().expiration[tokenId];
     emit SubscriptionUpdate(tokenId, 0);
   }
 
-  function _expiresAt(uint256 tokenId) internal view returns (uint64) {
+  function _expiresAt(
+    uint256 tokenId
+  ) internal view returns (uint64) {
     return ERC5643Storage.layout().expiration[tokenId];
   }
 
-  function _isRenewable(uint256) internal view virtual returns (bool) {
+  function _isRenewable(
+    uint256
+  ) internal view virtual returns (bool) {
     return true;
   }
 }

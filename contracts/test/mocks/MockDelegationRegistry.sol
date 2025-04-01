@@ -2,7 +2,8 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {IDelegateRegistry} from "contracts/src/factory/facets/wallet-link/interfaces/IDelegateRegistry.sol";
+import {IDelegateRegistry} from
+  "contracts/src/factory/facets/wallet-link/interfaces/IDelegateRegistry.sol";
 
 // libraries
 import {EnumerableSetLib} from "solady/utils/EnumerableSetLib.sol";
@@ -14,15 +15,13 @@ contract MockDelegationRegistry is IDelegateRegistry {
 
   mapping(address to => EnumerableSetLib.AddressSet) internal _delegations;
 
-  function delegateAll(address to) external {
+  function delegateAll(
+    address to
+  ) external {
     _delegations[to].add(msg.sender);
   }
 
-  function checkDelegateForAll(
-    address,
-    address,
-    bytes32
-  ) external pure returns (bool) {
+  function checkDelegateForAll(address, address, bytes32) external pure returns (bool) {
     return true;
   }
 

@@ -16,12 +16,10 @@ import {RiverRegistryErrors} from "contracts/src/river/registry/libraries/Regist
 // deployments
 import {RiverRegistryBaseSetup} from "contracts/test/river/registry/RiverRegistryBaseSetup.t.sol";
 
-contract RiverConfigTest is
-  RiverRegistryBaseSetup,
-  IOwnableBase,
-  IRiverConfigBase
-{
-  modifier givenConfigurationManagerIsApproved(address configManager) {
+contract RiverConfigTest is RiverRegistryBaseSetup, IOwnableBase, IRiverConfigBase {
+  modifier givenConfigurationManagerIsApproved(
+    address configManager
+  ) {
     vm.assume(configManager != address(0));
     vm.assume(riverConfig.isConfigurationManager(configManager) == false);
 
@@ -48,7 +46,9 @@ contract RiverConfigTest is
   // =============================================================
   //                      Configuration
   // =============================================================
-  function test_configurationNonExistingKey(bytes32 key) external view {
+  function test_configurationNonExistingKey(
+    bytes32 key
+  ) external view {
     assertFalse(riverConfig.configurationExists(key));
   }
 
@@ -116,10 +116,7 @@ contract RiverConfigTest is
     riverConfig.setConfiguration(key, blockNumber, "hello world!");
   }
 
-  function test_configurationSetWithInvalidValue(
-    bytes32 key,
-    uint64 blockNumber
-  ) external {
+  function test_configurationSetWithInvalidValue(bytes32 key, uint64 blockNumber) external {
     vm.prank(deployer);
     vm.expectRevert(bytes(RiverRegistryErrors.BAD_ARG));
 
@@ -178,7 +175,9 @@ contract RiverConfigTest is
     }
   }
 
-  function test_configurationDeleteNonExisting(bytes32 key) external {
+  function test_configurationDeleteNonExisting(
+    bytes32 key
+  ) external {
     vm.assume(!riverConfig.configurationExists(key));
 
     vm.prank(deployer);
@@ -214,7 +213,9 @@ contract RiverConfigTest is
     assertEq(setting.value, "hello world!");
   }
 
-  function test_configurationGetNonExisting(bytes32 key) external {
+  function test_configurationGetNonExisting(
+    bytes32 key
+  ) external {
     assertFalse(riverConfig.configurationExists(key));
     vm.expectRevert(bytes(RiverRegistryErrors.NOT_FOUND));
     riverConfig.getConfiguration(key);

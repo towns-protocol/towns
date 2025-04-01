@@ -6,28 +6,29 @@ import {TestUtils} from "contracts/test/utils/TestUtils.sol";
 
 //interfaces
 import {IArchitectBase} from "contracts/src/factory/facets/architect/IArchitect.sol";
-import {ILegacyArchitect, ILegacyArchitectBase} from "contracts/test/mocks/legacy/IMockLegacyArchitect.sol";
+import {
+  ILegacyArchitect,
+  ILegacyArchitectBase
+} from "contracts/test/mocks/legacy/IMockLegacyArchitect.sol";
 import {IMembership} from "contracts/src/spaces/facets/membership/IMembership.sol";
-import {IPricingModulesBase} from "contracts/src/factory/facets/architect/pricing/IPricingModules.sol";
+import {IPricingModulesBase} from
+  "contracts/src/factory/facets/architect/pricing/IPricingModules.sol";
 import {ICreateSpace} from "contracts/src/factory/facets/create/ICreateSpace.sol";
-import {IPlatformRequirements} from "contracts/src/factory/facets/platform/requirements/IPlatformRequirements.sol";
+import {IPlatformRequirements} from
+  "contracts/src/factory/facets/platform/requirements/IPlatformRequirements.sol";
 
 //libraries
 import {FixedPointMathLib} from "solady/utils/FixedPointMathLib.sol";
 //contracts
 import {SpaceHelper} from "contracts/test/spaces/SpaceHelper.sol";
 import {Architect} from "contracts/src/factory/facets/architect/Architect.sol";
-import {PricingModulesFacet} from "contracts/src/factory/facets/architect/pricing/PricingModulesFacet.sol";
+import {PricingModulesFacet} from
+  "contracts/src/factory/facets/architect/pricing/PricingModulesFacet.sol";
 
 // debuggging
 import {console} from "forge-std/console.sol";
 
-contract ForkCreateSpace is
-  IArchitectBase,
-  IPricingModulesBase,
-  TestUtils,
-  SpaceHelper
-{
+contract ForkCreateSpace is IArchitectBase, IPricingModulesBase, TestUtils, SpaceHelper {
   function getDynamicPricingModule(
     address spaceFactory
   ) internal view returns (address) {
@@ -36,8 +37,8 @@ contract ForkCreateSpace is
 
     for (uint256 i = 0; i < modules.length; i++) {
       if (
-        keccak256(abi.encodePacked(modules[i].name)) ==
-        keccak256(abi.encodePacked("TieredLogPricingOracleV3"))
+        keccak256(abi.encodePacked(modules[i].name))
+          == keccak256(abi.encodePacked("TieredLogPricingOracleV3"))
       ) {
         return modules[i].module;
       }
@@ -68,11 +69,8 @@ contract ForkCreateSpace is
     ILegacyArchitect legacyCreateSpace = ILegacyArchitect(spaceFactory);
     ICreateSpace createSpace = ICreateSpace(spaceFactory);
 
-    ILegacyArchitectBase.SpaceInfo
-      memory legacySpaceInfo = _createLegacySpaceInfo("fork-space");
-    CreateSpace memory createSpaceInfo = _createSpaceWithPrepayInfo(
-      "fork-space"
-    );
+    ILegacyArchitectBase.SpaceInfo memory legacySpaceInfo = _createLegacySpaceInfo("fork-space");
+    CreateSpace memory createSpaceInfo = _createSpaceWithPrepayInfo("fork-space");
 
     address dynamicPricingModule = getDynamicPricingModule(spaceFactory);
 
@@ -88,18 +86,10 @@ contract ForkCreateSpace is
     address modernSpace = createSpace.createSpaceWithPrepay(createSpaceInfo);
     vm.stopPrank();
 
-    address legacyPricingModule = IMembership(legacySpace)
-      .getMembershipPricingModule();
-    assertEq(
-      legacyPricingModule,
-      legacySpaceInfo.membership.settings.pricingModule
-    );
+    address legacyPricingModule = IMembership(legacySpace).getMembershipPricingModule();
+    assertEq(legacyPricingModule, legacySpaceInfo.membership.settings.pricingModule);
 
-    address modernPricingModule = IMembership(modernSpace)
-      .getMembershipPricingModule();
-    assertEq(
-      modernPricingModule,
-      createSpaceInfo.membership.settings.pricingModule
-    );
+    address modernPricingModule = IMembership(modernSpace).getMembershipPricingModule();
+    assertEq(modernPricingModule, createSpaceInfo.membership.settings.pricingModule);
   }
 }

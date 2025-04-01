@@ -18,27 +18,16 @@ interface IRoyalty is IERC2981 {
   event DefaultRoyalty(address indexed _receiver, uint256 _amount);
 
   /// @dev Emitted when the royalty recipient for tokenId is set.
-  event RoyaltyForToken(
-    uint256 indexed _tokenId,
-    address indexed _receiver,
-    uint256 _amount
-  );
+  event RoyaltyForToken(uint256 indexed _tokenId, address indexed _receiver, uint256 _amount);
 
   /// @dev Returns the royalty recipient and fraction
-  function getDefaultRoyaltyInfo()
-    external
-    view
-    returns (RoyaltyInfo memory _royalty);
+  function getDefaultRoyaltyInfo() external view returns (RoyaltyInfo memory _royalty);
 
   /// @dev Lets a module admin update the royalty fraction and recipient
   function setDefaultRoyaltyInfo(address _recipient, uint256 _amount) external;
 
   /// @dev Let's a module admin set the royalty fraction for a particular token id
-  function setRoyaltyInfoForToken(
-    uint256 _tokenId,
-    address _recipient,
-    uint256 _amount
-  ) external;
+  function setRoyaltyInfoForToken(uint256 _tokenId, address _recipient, uint256 _amount) external;
 
   /// @dev Returns the royalty recipient for a particular token id
   function getRoyaltyInfoForToken(

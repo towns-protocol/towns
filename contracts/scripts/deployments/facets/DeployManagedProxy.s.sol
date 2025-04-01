@@ -24,7 +24,9 @@ contract DeployManagedProxy is FacetHelper, Deployer {
     return "facets/managedProxyFacet";
   }
 
-  function __deploy(address deployer) public override returns (address) {
+  function __deploy(
+    address deployer
+  ) public override returns (address) {
     vm.startBroadcast(deployer);
     ManagedProxyFacet facet = new ManagedProxyFacet();
     vm.stopBroadcast();

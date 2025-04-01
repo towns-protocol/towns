@@ -5,7 +5,9 @@ import {ICrossChainEntitlement} from "contracts/src/spaces/entitlements/ICrossCh
 import {IERC1155} from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 
 interface IGnosisSafeProxyFactory {
-  function computeProxyAddress(address user) external view returns (address);
+  function computeProxyAddress(
+    address user
+  ) external view returns (address);
 }
 
 contract PolymarketEntitlement is ICrossChainEntitlement {
@@ -14,22 +16,16 @@ contract PolymarketEntitlement is ICrossChainEntitlement {
 
   constructor() {
     // Set the proxyFactory and token contract addresses
-    proxyFactory = IGnosisSafeProxyFactory(
-      address(0xaacFeEa03eb1561C4e67d661e40682Bd20E3541b)
-    );
-    tokenContract = IERC1155(
-      address(0x4D97DCd97eC945f40cF65F87097ACe5EA0476045)
-    );
+    proxyFactory = IGnosisSafeProxyFactory(address(0xaacFeEa03eb1561C4e67d661e40682Bd20E3541b));
+    tokenContract = IERC1155(address(0x4D97DCd97eC945f40cF65F87097ACe5EA0476045));
   }
 
   function isEntitled(
     address[] calldata users,
     bytes calldata paramData
   ) external view override returns (bool) {
-    (uint256 tokenId, uint256 requiredBalance, bool aggregate) = abi.decode(
-      paramData,
-      (uint256, uint256, bool)
-    );
+    (uint256 tokenId, uint256 requiredBalance, bool aggregate) =
+      abi.decode(paramData, (uint256, uint256, bool));
 
     uint256 totalBalance = 0;
 

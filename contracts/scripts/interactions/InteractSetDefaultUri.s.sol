@@ -8,7 +8,9 @@ import {Interaction} from "../common/Interaction.s.sol";
 contract InteractSetDefaultUri is Interaction {
   string internal constant URI = "https://alpha.river.delivery/";
 
-  function __interact(address deployer) internal override {
+  function __interact(
+    address deployer
+  ) internal override {
     // vm.setEnv("DEPLOYMENT_CONTEXT", "alpha");
     address spaceOwner = getDeployment("spaceOwner");
 

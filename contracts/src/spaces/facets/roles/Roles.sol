@@ -47,26 +47,22 @@ contract Roles is IRoles, RolesBase, Entitled {
   }
 
   /// @inheritdoc IRoles
-  function removeRole(uint256 roleId) external override {
+  function removeRole(
+    uint256 roleId
+  ) external override {
     _validatePermission(Permissions.ModifySpaceSettings);
     _removeRole(roleId);
   }
 
   // permissions
   /// @inheritdoc IRoles
-  function addPermissionsToRole(
-    uint256 roleId,
-    string[] memory permissions
-  ) external override {
+  function addPermissionsToRole(uint256 roleId, string[] memory permissions) external override {
     _validatePermission(Permissions.ModifySpaceSettings);
     _addPermissionsToRole(roleId, permissions);
   }
 
   /// @inheritdoc IRoles
-  function removePermissionsFromRole(
-    uint256 roleId,
-    string[] memory permissions
-  ) external override {
+  function removePermissionsFromRole(uint256 roleId, string[] memory permissions) external override {
     _validatePermission(Permissions.ModifySpaceSettings);
     _removePermissionsFromRole(roleId, permissions);
   }
@@ -80,19 +76,13 @@ contract Roles is IRoles, RolesBase, Entitled {
 
   // entitlements
   /// @inheritdoc IRoles
-  function addRoleToEntitlement(
-    uint256 roleId,
-    CreateEntitlement memory entitlement
-  ) external {
+  function addRoleToEntitlement(uint256 roleId, CreateEntitlement memory entitlement) external {
     _validatePermission(Permissions.ModifySpaceSettings);
     _addRoleToEntitlement(roleId, entitlement);
   }
 
   /// @inheritdoc IRoles
-  function removeRoleFromEntitlement(
-    uint256 roleId,
-    CreateEntitlement memory entitlement
-  ) external {
+  function removeRoleFromEntitlement(uint256 roleId, CreateEntitlement memory entitlement) external {
     _validatePermission(Permissions.ModifySpaceSettings);
     _removeRoleFromEntitlement(roleId, entitlement);
   }
@@ -117,10 +107,7 @@ contract Roles is IRoles, RolesBase, Entitled {
   }
 
   /// @inheritdoc IRoles
-  function clearChannelPermissionOverrides(
-    uint256 roleId,
-    bytes32 channelId
-  ) external {
+  function clearChannelPermissionOverrides(uint256 roleId, bytes32 channelId) external {
     _validatePermission(Permissions.ModifySpaceSettings);
     _clearChannelPermissionOverrides(roleId, channelId);
   }

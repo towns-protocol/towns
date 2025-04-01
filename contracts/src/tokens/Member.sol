@@ -129,7 +129,9 @@ contract Member is ERC721, Ownable {
     return _mintTo(recipient);
   }
 
-  function publicMint(address recipient) external payable returns (uint256) {
+  function publicMint(
+    address recipient
+  ) external payable returns (uint256) {
     _validateInvalidAddress(recipient);
     _validateMintPrice();
     _validateMaxSupply();
@@ -142,7 +144,9 @@ contract Member is ERC721, Ownable {
   //                        BASE URI OPERATIONS
   // =============================================================
 
-  function setBaseURI(string memory baseURI_) external onlyOwner {
+  function setBaseURI(
+    string memory baseURI_
+  ) external onlyOwner {
     baseURI = baseURI_;
   }
 
@@ -159,10 +163,7 @@ contract Member is ERC721, Ownable {
     if (ownerOf(tokenId) == address(0)) {
       revert NonExistentTokenURI();
     }
-    return
-      bytes(baseURI).length > 0
-        ? string(abi.encodePacked(baseURI, "councilmetadata"))
-        : "";
+    return bytes(baseURI).length > 0 ? string(abi.encodePacked(baseURI, "councilmetadata")) : "";
   }
 
   // =============================================================
@@ -185,9 +186,11 @@ contract Member is ERC721, Ownable {
 
   /// @notice withdraw the balance from the contract
   /// @param payee the address that will receive the withdrawn ether
-  function withdrawPayments(address payable payee) external onlyOwner {
+  function withdrawPayments(
+    address payable payee
+  ) external onlyOwner {
     uint256 balance = address(this).balance;
-    (bool transferTx, ) = payee.call{value: balance}("");
+    (bool transferTx,) = payee.call{value: balance}("");
     if (!transferTx) {
       revert WithdrawTransfer();
     }
@@ -196,7 +199,9 @@ contract Member is ERC721, Ownable {
   // =============================================================
   //                       INTERNAL OPERATIONS
   // =============================================================
-  function _mintTo(address recipient) internal returns (uint256) {
+  function _mintTo(
+    address recipient
+  ) internal returns (uint256) {
     _hasMinted[recipient] = true;
     uint256 tokenId = currentTokenId;
     currentTokenId++;
@@ -205,13 +210,17 @@ contract Member is ERC721, Ownable {
     return tokenId;
   }
 
-  function _setState(MintState _state) internal {
+  function _setState(
+    MintState _state
+  ) internal {
     MintState prevState = _mintState;
     _mintState = _state;
     emit MintStateChanged(msg.sender, prevState, _state, block.timestamp);
   }
 
-  function _validateInvalidAddress(address recipient) internal pure {
+  function _validateInvalidAddress(
+    address recipient
+  ) internal pure {
     if (recipient == address(0)) {
       revert InvalidAddress();
     }
@@ -223,19 +232,25 @@ contract Member is ERC721, Ownable {
     }
   }
 
-  function _validateState(MintState _state) internal view {
+  function _validateState(
+    MintState _state
+  ) internal view {
     if (_mintState != _state) {
       revert InvalidMintState();
     }
   }
 
-  function _validateAllowlist(uint256 allowance) internal view {
+  function _validateAllowlist(
+    uint256 allowance
+  ) internal view {
     if (_mintState == MintState.Allowlist && allowance != 1) {
       revert NotAllowed();
     }
   }
 
-  function _validateMinted(address recipient) internal view {
+  function _validateMinted(
+    address recipient
+  ) internal view {
     if (_hasMinted[recipient]) {
       revert AlreadyMinted();
     }

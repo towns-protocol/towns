@@ -48,11 +48,14 @@ interface ITippingBase {
 
 interface ITipping is ITippingBase {
   /// @notice Sends a tip to a space member
-  /// @param tipRequest The tip request containing token ID, currency, amount, message ID and channel ID
+  /// @param tipRequest The tip request containing token ID, currency, amount, message ID and
+  /// channel ID
   /// @dev Requires sender and receiver to be members of the space
   /// @dev Requires amount > 0 and valid currency address
   /// @dev Emits Tip event
-  function tip(TipRequest calldata tipRequest) external payable;
+  function tip(
+    TipRequest calldata tipRequest
+  ) external payable;
 
   /// @notice Gets the total tips received for a token ID in a specific currency
   /// @param tokenId The token ID to get tips for

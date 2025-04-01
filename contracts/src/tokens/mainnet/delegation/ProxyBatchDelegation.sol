@@ -2,10 +2,15 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {IVotesEnumerable} from "contracts/src/diamond/facets/governance/votes/enumerable/IVotesEnumerable.sol";
+import {IVotesEnumerable} from
+  "contracts/src/diamond/facets/governance/votes/enumerable/IVotesEnumerable.sol";
 import {IAuthorizedClaimers} from "contracts/src/tokens/mainnet/claimer/IAuthorizedClaimers.sol";
-import {IMainnetDelegationBase, IMainnetDelegation} from "contracts/src/base/registry/facets/mainnet/IMainnetDelegation.sol";
-import {ICrossDomainMessenger} from "contracts/src/base/registry/facets/mainnet/ICrossDomainMessenger.sol";
+import {
+  IMainnetDelegationBase,
+  IMainnetDelegation
+} from "contracts/src/base/registry/facets/mainnet/IMainnetDelegation.sol";
+import {ICrossDomainMessenger} from
+  "contracts/src/base/registry/facets/mainnet/ICrossDomainMessenger.sol";
 
 // libraries
 import {SafeTransferLib} from "solady/utils/SafeTransferLib.sol";
@@ -21,26 +26,21 @@ contract ProxyBatchDelegation is IMainnetDelegationBase {
   address public immutable TOWNS;
   address public immutable CLAIMER_MANAGER;
 
-  constructor(
-    address _towns,
-    address _claimers,
-    address _messenger,
-    address _target
-  ) {
+  constructor(address _towns, address _claimers, address _messenger, address _target) {
     TOWNS = _towns;
     CLAIMER_MANAGER = _claimers;
     MESSENGER = _messenger;
     BASE_REGISTRY = _target;
   }
 
-  function relayDelegationDigest(uint32 minGasLimit) external {
+  function relayDelegationDigest(
+    uint32 minGasLimit
+  ) external {
     DelegationMsg[] memory msgs = _getDelegationMsgs();
     bytes32 digest = _digest(msgs);
 
     ICrossDomainMessenger(MESSENGER).sendMessage(
-      BASE_REGISTRY,
-      abi.encodeCall(IMainnetDelegation.setDelegationDigest, digest),
-      minGasLimit
+      BASE_REGISTRY, abi.encodeCall(IMainnetDelegation.setDelegationDigest, digest), minGasLimit
     );
   }
 
@@ -57,11 +57,7 @@ contract ProxyBatchDelegation is IMainnetDelegationBase {
   }
 
   /// @dev Gathers the delegation messages
-  function _getDelegationMsgs()
-    internal
-    view
-    returns (DelegationMsg[] memory msgs)
-  {
+  function _getDelegationMsgs() internal view returns (DelegationMsg[] memory msgs) {
     address[] memory allDelegators = IVotesEnumerable(TOWNS).getDelegators();
     uint256 length = allDelegators.length;
     msgs = new DelegationMsg[](length);
@@ -71,30 +67,27 @@ contract ProxyBatchDelegation is IMainnetDelegationBase {
       msgs[i].delegator = delegator;
       msgs[i].delegatee = _delegates(TOWNS, delegator);
       msgs[i].quantity = TOWNS.balanceOf(delegator);
-      msgs[i].claimer = IAuthorizedClaimers(CLAIMER_MANAGER)
-        .getAuthorizedClaimer(delegator);
+      msgs[i].claimer = IAuthorizedClaimers(CLAIMER_MANAGER).getAuthorizedClaimer(delegator);
     }
   }
 
   /// @dev Returns the delegate that `account` has chosen.
   /// Returns zero if the `token` does not exist.
-  function _delegates(
-    address token,
-    address account
-  ) internal view returns (address delegatee) {
+  function _delegates(address token, address account) internal view returns (address delegatee) {
     /// @solidity memory-safe-assembly
     assembly {
       mstore(0x14, account) // Store the `account` argument.
       mstore(0x00, 0x587cde1e000000000000000000000000) // `delegates(address)`.
-      delegatee := mul(
-        // The arguments of `mul` are evaluated from right to left.
-        mload(0x20),
-        and(
-          // The arguments of `and` are evaluated from right to left.
-          gt(returndatasize(), 0x1f), // At least 32 bytes returned.
-          staticcall(gas(), token, 0x10, 0x24, 0x20, 0x20)
+      delegatee :=
+        mul(
+          // The arguments of `mul` are evaluated from right to left.
+          mload(0x20),
+          and(
+            // The arguments of `and` are evaluated from right to left.
+            gt(returndatasize(), 0x1f), // At least 32 bytes returned.
+            staticcall(gas(), token, 0x10, 0x24, 0x20, 0x20)
+          )
         )
-      )
     }
   }
 }

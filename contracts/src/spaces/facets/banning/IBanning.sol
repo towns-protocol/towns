@@ -25,11 +25,17 @@ interface IBanningBase {
 }
 
 interface IBanning is IBanningBase {
-  function ban(uint256 tokenId) external;
+  function ban(
+    uint256 tokenId
+  ) external;
 
-  function unban(uint256 tokenId) external;
+  function unban(
+    uint256 tokenId
+  ) external;
 
-  function isBanned(uint256 tokenId) external view returns (bool);
+  function isBanned(
+    uint256 tokenId
+  ) external view returns (bool);
 
   function banned() external view returns (uint256[] memory);
 }

@@ -15,7 +15,9 @@ abstract contract Interaction is Script, DeployBase {
   // - loading private keys
   // - saving deployments
   // - logging
-  function __interact(address deployer) internal virtual;
+  function __interact(
+    address deployer
+  ) internal virtual;
 
   // will first try to load existing deployments from `deployments/<network>/<contract>.json`
   // if OVERRIDE_DEPLOYMENTS is set or if no deployment is found:

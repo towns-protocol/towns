@@ -4,19 +4,22 @@
  * @title EntitlementRule
  * @dev This contract manages entitlement rules based on blockchain operations.
  * The contract maintains a tree-like data structure to combine various types of operations.
- * The tree is implemented as a dynamic array of 'Operation' structs, and is built in post-order fashion.
+ * The tree is implemented as a dynamic array of 'Operation' structs, and is built in post-order
+ * fashion.
  *
  * Post-order Tree Structure:
  * In a post-order binary tree, children nodes must be added before their respective parent nodes.
  * The 'LogicalOperation' nodes refer to their child nodes via indices in the 'operations' array.
- * As new LogicalOperation nodes are added, they can only reference existing nodes in the 'operations' array,
+ * As new LogicalOperation nodes are added, they can only reference existing nodes in the
+ * 'operations' array,
  * ensuring a valid post-order tree structure.
  */
 pragma solidity ^0.8.0;
 
 // contracts
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import {ERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
+import {ERC165Upgradeable} from
+  "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
 import {ContextUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
@@ -56,7 +59,9 @@ contract RuleEntitlement is
     _disableInitializers();
   }
 
-  function initialize(address _space) public initializer {
+  function initialize(
+    address _space
+  ) public initializer {
     __UUPSUpgradeable_init();
     __ERC165_init();
     __Context_init();
@@ -80,9 +85,7 @@ contract RuleEntitlement is
   function supportsInterface(
     bytes4 interfaceId
   ) public view virtual override returns (bool) {
-    return
-      interfaceId == type(IEntitlement).interfaceId ||
-      super.supportsInterface(interfaceId);
+    return interfaceId == type(IEntitlement).interfaceId || super.supportsInterface(interfaceId);
   }
 
   // @inheritdoc IEntitlement
@@ -102,10 +105,7 @@ contract RuleEntitlement is
   }
 
   // @inheritdoc IEntitlement
-  function setEntitlement(
-    uint256 roleId,
-    bytes calldata entitlementData
-  ) external onlySpace {
+  function setEntitlement(uint256 roleId, bytes calldata entitlementData) external onlySpace {
     if (entitlementData.length == 0) return;
 
     // equivalent: abi.decode(entitlementData, (RuleData))
@@ -130,18 +130,12 @@ contract RuleEntitlement is
 
       if (opType == CombinedOperationType.CHECK) {
         if (index >= checkOperationsLength) {
-          revert InvalidCheckOperationIndex(
-            index,
-            uint8(checkOperationsLength)
-          );
+          revert InvalidCheckOperationIndex(index, uint8(checkOperationsLength));
         }
       } else if (opType == CombinedOperationType.LOGICAL) {
         // Use custom error in revert statement
         if (index >= logicalOperationsLength) {
-          revert InvalidLogicalOperationIndex(
-            index,
-            uint8(logicalOperationsLength)
-          );
+          revert InvalidLogicalOperationIndex(index, uint8(logicalOperationsLength));
         }
 
         // Verify the logical operations make a DAG
@@ -167,7 +161,9 @@ contract RuleEntitlement is
   }
 
   // @inheritdoc IEntitlement
-  function removeEntitlement(uint256 roleId) external onlySpace {
+  function removeEntitlement(
+    uint256 roleId
+  ) external onlySpace {
     Entitlement storage entitlement = entitlementsByRoleId[roleId];
     if (entitlement.grantedBy == address(0)) {
       revert Entitlement__InvalidValue();

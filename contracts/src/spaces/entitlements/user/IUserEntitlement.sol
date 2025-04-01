@@ -7,7 +7,9 @@ interface IUserEntitlement is IEntitlement {
   // Constructor is not included in interfaces
 
   // Initialize function, if it's intended to be called externally
-  function initialize(address _space) external;
+  function initialize(
+    address _space
+  ) external;
 
   // Any other external or public functions
   function isEntitled(
@@ -16,12 +18,11 @@ interface IUserEntitlement is IEntitlement {
     bytes32 permission
   ) external view returns (bool);
 
-  function setEntitlement(
-    uint256 roleId,
-    bytes calldata entitlementData
-  ) external;
+  function setEntitlement(uint256 roleId, bytes calldata entitlementData) external;
 
-  function removeEntitlement(uint256 roleId) external;
+  function removeEntitlement(
+    uint256 roleId
+  ) external;
 
   function getEntitlementDataByRoleId(
     uint256 roleId

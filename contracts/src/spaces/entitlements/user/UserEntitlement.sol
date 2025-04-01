@@ -11,7 +11,8 @@ import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet
 
 // contracts
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import {ERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
+import {ERC165Upgradeable} from
+  "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
 import {ContextUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import {IUserEntitlement} from "./IUserEntitlement.sol";
@@ -55,7 +56,9 @@ contract UserEntitlement is
     _disableInitializers();
   }
 
-  function initialize(address _space) public initializer {
+  function initialize(
+    address _space
+  ) public initializer {
     __UUPSUpgradeable_init();
     __ERC165_init();
     __Context_init();
@@ -72,9 +75,7 @@ contract UserEntitlement is
   function supportsInterface(
     bytes4 interfaceId
   ) public view virtual override returns (bool) {
-    return
-      interfaceId == type(IEntitlement).interfaceId ||
-      super.supportsInterface(interfaceId);
+    return interfaceId == type(IEntitlement).interfaceId || super.supportsInterface(interfaceId);
   }
 
   // @inheritdoc IEntitlement
@@ -97,10 +98,7 @@ contract UserEntitlement is
   }
 
   // @inheritdoc IEntitlement
-  function setEntitlement(
-    uint256 roleId,
-    bytes calldata entitlementData
-  ) external onlySpace {
+  function setEntitlement(uint256 roleId, bytes calldata entitlementData) external onlySpace {
     address[] memory users = abi.decode(entitlementData, (address[]));
 
     for (uint256 i = 0; i < users.length; i++) {
@@ -112,35 +110,32 @@ contract UserEntitlement is
 
     // First remove any prior values
     while (entitlementsByRoleId[roleId].users.length > 0) {
-      address user = entitlementsByRoleId[roleId].users[
-        entitlementsByRoleId[roleId].users.length - 1
-      ];
+      address user =
+        entitlementsByRoleId[roleId].users[entitlementsByRoleId[roleId].users.length - 1];
       _removeRoleIdFromUser(user, roleId);
       entitlementsByRoleId[roleId].users.pop();
     }
     delete entitlementsByRoleId[roleId];
 
-    entitlementsByRoleId[roleId] = Entitlement({
-      grantedBy: _msgSender(),
-      grantedTime: block.timestamp,
-      users: users
-    });
+    entitlementsByRoleId[roleId] =
+      Entitlement({grantedBy: _msgSender(), grantedTime: block.timestamp, users: users});
     for (uint256 i = 0; i < users.length; i++) {
       roleIdsByUser[users[i]].push(roleId);
     }
   }
 
   // @inheritdoc IEntitlement
-  function removeEntitlement(uint256 roleId) external onlySpace {
+  function removeEntitlement(
+    uint256 roleId
+  ) external onlySpace {
     if (entitlementsByRoleId[roleId].grantedBy == address(0)) {
       revert Entitlement__InvalidValue();
     }
 
     // First remove any prior values
     while (entitlementsByRoleId[roleId].users.length > 0) {
-      address user = entitlementsByRoleId[roleId].users[
-        entitlementsByRoleId[roleId].users.length - 1
-      ];
+      address user =
+        entitlementsByRoleId[roleId].users[entitlementsByRoleId[roleId].users.length - 1];
       _removeRoleIdFromUser(user, roleId);
       entitlementsByRoleId[roleId].users.pop();
     }
@@ -164,9 +159,7 @@ contract UserEntitlement is
     address[] memory wallets,
     bytes32 permission
   ) internal view returns (bool _entitled) {
-    IChannel.Channel memory channel = IChannel(SPACE_ADDRESS).getChannel(
-      channelId
-    );
+    IChannel.Channel memory channel = IChannel(SPACE_ADDRESS).getChannel(channelId);
 
     // get all the roleids for the user
     uint256[] memory rolesIds = _getRoleIdsByUser(wallets);
@@ -180,10 +173,7 @@ contract UserEntitlement is
       for (uint256 j = 0; j < rolesIds.length; j++) {
         // check if the role id for that channel matches the entitlement role id
         // and if the permission matches the role permission
-        if (
-          rolesIds[j] == roleId &&
-          _validateRolePermission(rolesIds[j], permission)
-        ) {
+        if (rolesIds[j] == roleId && _validateRolePermission(rolesIds[j], permission)) {
           _entitled = true;
         }
       }
@@ -249,13 +239,8 @@ contract UserEntitlement is
   /// @param roleId the role id
   /// @param permission the permission we are checking for
   /// @return _hasPermission true if the role has the permission
-  function _validateRolePermission(
-    uint256 roleId,
-    bytes32 permission
-  ) internal view returns (bool) {
-    string[] memory permissions = IRoles(SPACE_ADDRESS).getPermissionsByRoleId(
-      roleId
-    );
+  function _validateRolePermission(uint256 roleId, bytes32 permission) internal view returns (bool) {
+    string[] memory permissions = IRoles(SPACE_ADDRESS).getPermissionsByRoleId(roleId);
     uint256 permissionLen = permissions.length;
 
     for (uint256 i = 0; i < permissionLen; i++) {

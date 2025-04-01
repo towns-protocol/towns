@@ -19,12 +19,7 @@ import {ReentrancyGuard} from "solady/utils/ReentrancyGuard.sol";
 /// - PausableBase: Allows pausing of space creation functionality
 /// - ReentrancyGuard: Prevents reentrancy attacks during space creation
 /// - Facet: Base contract for diamond facets
-contract CreateSpaceFacet is
-  ICreateSpace,
-  PausableBase,
-  ReentrancyGuard,
-  Facet
-{
+contract CreateSpaceFacet is ICreateSpace, PausableBase, ReentrancyGuard, Facet {
   function __CreateSpace_init() external onlyInitializing {
     _addInterface(type(ICreateSpace).interfaceId);
   }

@@ -34,7 +34,9 @@ contract SimpleProxy {
 
   /// @notice Allows authorized addresses to change the implementation
   /// @param _newImplementation The new implementation address
-  function upgradeProxy(address _newImplementation) external {
+  function upgradeProxy(
+    address _newImplementation
+  ) external {
     require(msg.sender == proxyGovernance, "unauthorized");
     proxyImplementation = _newImplementation;
   }
@@ -42,7 +44,9 @@ contract SimpleProxy {
   /// @notice Sets the address which can upgrade this proxy, only callable
   ///         by the current address which can upgrade this proxy.
   /// @param _newGovernance The new governance address
-  function resetProxyOwner(address _newGovernance) external {
+  function resetProxyOwner(
+    address _newGovernance
+  ) external {
     require(msg.sender == proxyGovernance, "unauthorized");
     proxyGovernance = _newGovernance;
   }
@@ -57,9 +61,7 @@ contract SimpleProxy {
       let calldataLength := calldatasize()
 
       // equivalent to receive() external payable {}
-      if iszero(calldataLength) {
-        return(0, 0)
-      }
+      if iszero(calldataLength) { return(0, 0) }
 
       // We load the free memory pointer
       // Note - We technically don't need to do this because the whole call is
@@ -79,24 +81,23 @@ contract SimpleProxy {
       // Load the implementation address
       let implementation := sload(proxyImplementation.slot)
       // It's very unlikely any extra data got loaded but we clean anyway
-      implementation := and(
-        implementation,
-        0x000000000000000000000000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
-      )
+      implementation :=
+        and(implementation, 0x000000000000000000000000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF)
       // Now we make the delegatecall
-      let success := delegatecall(
-        // The gas param
-        gas(),
-        // The address
-        implementation,
-        // The memory location of the input data
-        ptr,
-        // The input size
-        calldataLength,
-        // The output memory pointer and size, we use the return data instead
-        0,
-        0
-      )
+      let success :=
+        delegatecall(
+          // The gas param
+          gas(),
+          // The address
+          implementation,
+          // The memory location of the input data
+          ptr,
+          // The input size
+          calldataLength,
+          // The output memory pointer and size, we use the return data instead
+          0,
+          0
+        )
       // Load our new free memory pointer
       ptr := mload(0x40)
       // Load the return data size
@@ -111,9 +112,7 @@ contract SimpleProxy {
         returndataLength
       )
       // If the call was not successful we revert
-      if iszero(success) {
-        revert(ptr, returndataLength)
-      }
+      if iszero(success) { revert(ptr, returndataLength) }
 
       // If the call was successful we return
       return(ptr, returndataLength)

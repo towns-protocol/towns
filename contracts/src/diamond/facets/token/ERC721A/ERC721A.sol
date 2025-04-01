@@ -24,17 +24,11 @@ import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
 contract ERC721A is IERC721A, ERC721ABase, Facet {
   using ERC721AStorage for ERC721AStorage.Layout;
 
-  function __ERC721A_init(
-    string memory name_,
-    string memory symbol_
-  ) external onlyInitializing {
+  function __ERC721A_init(string memory name_, string memory symbol_) external onlyInitializing {
     __ERC721A_init_unchained(name_, symbol_);
   }
 
-  function __ERC721A_init_unchained(
-    string memory name_,
-    string memory symbol_
-  ) internal {
+  function __ERC721A_init_unchained(string memory name_, string memory symbol_) internal {
     _addInterface(0x80ac58cd); // ERC165 Interface ID for ERC721
     _addInterface(0x5b5e139f); // ERC165 Interface ID for ERC721Metadata
     __ERC721ABase_init(name_, symbol_);
@@ -52,7 +46,9 @@ contract ERC721A is IERC721A, ERC721ABase, Facet {
   /**
    * @dev Returns the number of tokens in `owner`'s account.
    */
-  function balanceOf(address owner) public view virtual returns (uint256) {
+  function balanceOf(
+    address owner
+  ) public view virtual returns (uint256) {
     return _balanceOf(owner);
   }
 
@@ -83,10 +79,7 @@ contract ERC721A is IERC721A, ERC721ABase, Facet {
     if (!_exists(tokenId)) revert URIQueryForNonexistentToken();
 
     string memory baseURI = _baseURI();
-    return
-      bytes(baseURI).length != 0
-        ? string(abi.encodePacked(baseURI, _toString(tokenId)))
-        : "";
+    return bytes(baseURI).length != 0 ? string(abi.encodePacked(baseURI, _toString(tokenId))) : "";
   }
 
   /**
@@ -103,16 +96,14 @@ contract ERC721A is IERC721A, ERC721ABase, Facet {
   }
 
   /**
-   * @dev Gives permission to `to` to transfer `tokenId` token to another account. See {ERC721A-_approve}.
+   * @dev Gives permission to `to` to transfer `tokenId` token to another account. See
+   * {ERC721A-_approve}.
    *
    * Requirements:
    *
    * - The caller must own the token or be an approved operator.
    */
-  function approve(
-    address to,
-    uint256 tokenId
-  ) public payable virtual override {
+  function approve(address to, uint256 tokenId) public payable virtual override {
     _approve(to, tokenId, true);
   }
 
@@ -140,13 +131,8 @@ contract ERC721A is IERC721A, ERC721ABase, Facet {
    *
    * Emits an {ApprovalForAll} event.
    */
-  function setApprovalForAll(
-    address operator,
-    bool approved
-  ) public virtual override {
-    ERC721AStorage.layout()._operatorApprovals[_msgSenderERC721A()][
-      operator
-    ] = approved;
+  function setApprovalForAll(address operator, bool approved) public virtual override {
+    ERC721AStorage.layout()._operatorApprovals[_msgSenderERC721A()][operator] = approved;
     emit ApprovalForAll(_msgSenderERC721A(), operator, approved);
   }
 
@@ -175,25 +161,21 @@ contract ERC721A is IERC721A, ERC721ABase, Facet {
    *
    * Emits a {Transfer} event.
    */
-  function transferFrom(
-    address from,
-    address to,
-    uint256 tokenId
-  ) public payable virtual override {
+  function transferFrom(address from, address to, uint256 tokenId) public payable virtual override {
     uint256 prevOwnershipPacked = _packedOwnershipOf(tokenId);
 
-    if (address(uint160(prevOwnershipPacked)) != from)
+    if (address(uint160(prevOwnershipPacked)) != from) {
       revert TransferFromIncorrectOwner();
+    }
 
-    (
-      uint256 approvedAddressSlot,
-      address approvedAddress
-    ) = _getApprovedSlotAndAddress(tokenId);
+    (uint256 approvedAddressSlot, address approvedAddress) = _getApprovedSlotAndAddress(tokenId);
 
     // The nested ifs save around 20+ gas over a compound boolean condition.
-    if (!_isSenderApprovedOrOwner(approvedAddress, from, _msgSenderERC721A()))
-      if (!isApprovedForAll(from, _msgSenderERC721A()))
+    if (!_isSenderApprovedOrOwner(approvedAddress, from, _msgSenderERC721A())) {
+      if (!isApprovedForAll(from, _msgSenderERC721A())) {
         revert TransferCallerNotOwnerNorApproved();
+      }
+    }
 
     if (to == address(0)) revert TransferToZeroAddress();
 
@@ -221,9 +203,7 @@ contract ERC721A is IERC721A, ERC721ABase, Facet {
       // - `burned` to `false`.
       // - `nextInitialized` to `true`.
       ERC721AStorage.layout()._packedOwnerships[tokenId] = _packOwnershipData(
-        to,
-        _BITMASK_NEXT_INITIALIZED |
-          _nextExtraData(from, to, prevOwnershipPacked)
+        to, _BITMASK_NEXT_INITIALIZED | _nextExtraData(from, to, prevOwnershipPacked)
       );
 
       // If the next slot may not have been initialized (i.e. `nextInitialized == false`) .
@@ -234,9 +214,7 @@ contract ERC721A is IERC721A, ERC721ABase, Facet {
           // If the next slot is within bounds.
           if (nextTokenId != ERC721AStorage.layout()._currentIndex) {
             // Initialize the next slot to maintain correctness for `ownerOf(tokenId + 1)`.
-            ERC721AStorage.layout()._packedOwnerships[
-              nextTokenId
-            ] = prevOwnershipPacked;
+            ERC721AStorage.layout()._packedOwnerships[nextTokenId] = prevOwnershipPacked;
           }
         }
       }
@@ -279,9 +257,10 @@ contract ERC721A is IERC721A, ERC721ABase, Facet {
     bytes memory _data
   ) public payable virtual override {
     transferFrom(from, to, tokenId);
-    if (to.code.length != 0)
+    if (to.code.length != 0) {
       if (!_checkContractOnERC721Received(from, to, tokenId, _data)) {
         revert TransferToNonERC721ReceiverImplementer();
       }
+    }
   }
 }

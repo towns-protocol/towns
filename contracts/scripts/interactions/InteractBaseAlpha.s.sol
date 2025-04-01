@@ -23,7 +23,9 @@ contract InteractBaseAlpha is AlphaHelper {
   DeploySpaceOwner deploySpaceOwner = new DeploySpaceOwner();
   DeployRiverAirdrop deployRiverAirdrop = new DeployRiverAirdrop();
 
-  function __interact(address deployer) internal override {
+  function __interact(
+    address deployer
+  ) internal override {
     vm.setEnv("OVERRIDE_DEPLOYMENTS", "1");
     address space = getDeployment("space");
     address spaceOwner = getDeployment("spaceOwner");
@@ -92,10 +94,7 @@ contract InteractBaseAlpha is AlphaHelper {
     IDiamondCut(spaceOwner).diamondCut(newCuts, address(0), "");
   }
 
-  function deploySpaceFactoryCuts(
-    address deployer,
-    address spaceFactory
-  ) external {
+  function deploySpaceFactoryCuts(address deployer, address spaceFactory) external {
     deploySpaceFactory.diamondInitParams(deployer);
     FacetCut[] memory newCuts = deploySpaceFactory.getCuts();
     address spaceFactoryInit = deploySpaceFactory.spaceFactoryInit();
@@ -104,20 +103,14 @@ contract InteractBaseAlpha is AlphaHelper {
     IDiamondCut(spaceFactory).diamondCut(newCuts, spaceFactoryInit, initData);
   }
 
-  function deployBaseRegistryCuts(
-    address deployer,
-    address baseRegistry
-  ) external {
+  function deployBaseRegistryCuts(address deployer, address baseRegistry) external {
     deployBaseRegistry.diamondInitParams(deployer);
     FacetCut[] memory newCuts = deployBaseRegistry.getCuts();
     vm.broadcast(deployer);
     IDiamondCut(baseRegistry).diamondCut(newCuts, address(0), "");
   }
 
-  function deployRiverAirdropCuts(
-    address deployer,
-    address riverAirdrop
-  ) external {
+  function deployRiverAirdropCuts(address deployer, address riverAirdrop) external {
     deployRiverAirdrop.diamondInitParams(deployer);
     FacetCut[] memory newCuts = deployRiverAirdrop.getCuts();
     vm.broadcast(deployer);

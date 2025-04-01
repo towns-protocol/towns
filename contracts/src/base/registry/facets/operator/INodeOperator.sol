@@ -4,7 +4,8 @@ pragma solidity ^0.8.23;
 // interfaces
 
 // libraries
-import {NodeOperatorStatus} from "contracts/src/base/registry/facets/operator/NodeOperatorStorage.sol";
+import {NodeOperatorStatus} from
+  "contracts/src/base/registry/facets/operator/NodeOperatorStorage.sol";
 
 // contracts
 interface INodeOperatorBase {
@@ -28,19 +29,11 @@ interface INodeOperatorBase {
   // =============================================================
   //                           Events
   // =============================================================
+
   event OperatorRegistered(address indexed operator);
-  event OperatorStatusChanged(
-    address indexed operator,
-    NodeOperatorStatus indexed newStatus
-  );
-  event OperatorCommissionChanged(
-    address indexed operator,
-    uint256 indexed commission
-  );
-  event OperatorClaimAddressChanged(
-    address indexed operator,
-    address indexed claimAddress
-  );
+  event OperatorStatusChanged(address indexed operator, NodeOperatorStatus indexed newStatus);
+  event OperatorCommissionChanged(address indexed operator, uint256 indexed commission);
+  event OperatorClaimAddressChanged(address indexed operator, address indexed claimAddress);
 }
 
 interface INodeOperator is INodeOperatorBase {
@@ -50,13 +43,17 @@ interface INodeOperator is INodeOperatorBase {
   /*
    * @notice  Registers an operator.
    */
-  function registerOperator(address claimer) external;
+  function registerOperator(
+    address claimer
+  ) external;
 
   /*
    * @notice  Returns whether an operator is registered.
    * @param   operator Address of the operator.
    */
-  function isOperator(address operator) external view returns (bool);
+  function isOperator(
+    address operator
+  ) external view returns (bool);
 
   /*
    * @notice  Returns the status of an operator.
@@ -71,18 +68,12 @@ interface INodeOperator is INodeOperatorBase {
    * @notice  Sets the status of an operator.
    * @param   operator Address of the operator.
    */
-  function setOperatorStatus(
-    address operator,
-    NodeOperatorStatus newStatus
-  ) external;
+  function setOperatorStatus(address operator, NodeOperatorStatus newStatus) external;
 
   // =============================================================
   //                           Operator Information
   // =============================================================
-  function setClaimAddressForOperator(
-    address claimer,
-    address operator
-  ) external;
+  function setClaimAddressForOperator(address claimer, address operator) external;
 
   function getClaimAddressForOperator(
     address operator
@@ -98,12 +89,16 @@ interface INodeOperator is INodeOperatorBase {
    * @param   operator Address of the operator.
    * @param   commission The new commission rate.
    */
-  function setCommissionRate(uint256 commission) external;
+  function setCommissionRate(
+    uint256 commission
+  ) external;
 
   /*
    * @notice  Returns the commission rate of an operator.
    * @param   operator Address of the operator.
    * @return  The commission rate of the operator.
    */
-  function getCommissionRate(address operator) external view returns (uint256);
+  function getCommissionRate(
+    address operator
+  ) external view returns (uint256);
 }

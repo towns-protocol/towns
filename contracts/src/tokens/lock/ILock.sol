@@ -14,33 +14,39 @@ interface ILockBase {
   /// @param account The account that was updated.
   /// @param enabled Whether the lock is enabled.
   /// @param expiration The expiration of the lock.
-  event LockUpdated(
-    address indexed account,
-    bool indexed enabled,
-    uint256 expiration
-  );
+  event LockUpdated(address indexed account, bool indexed enabled, uint256 expiration);
 }
 
 interface ILock is ILockBase {
   /// @notice Enables the lock for the given account.
   /// @param account The account to enable the lock for.
-  function enableLock(address account) external;
+  function enableLock(
+    address account
+  ) external;
 
   /// @notice Disables the lock and starts the cooldown for the given account.
   /// @param account The account to disable the lock for.
-  function disableLock(address account) external;
+  function disableLock(
+    address account
+  ) external;
 
   /// @notice Returns whether the lock is active for the given account.
   /// @param account The account to check the lock for.
   /// @return true if the lock is active
-  function isLockActive(address account) external view returns (bool);
+  function isLockActive(
+    address account
+  ) external view returns (bool);
 
   /// @notice Returns the expiration of the lock for the given account.
   /// @param account The account to check the lock expiration for.
   /// @return The expiration timestamp.
-  function lockExpiration(address account) external view returns (uint256);
+  function lockExpiration(
+    address account
+  ) external view returns (uint256);
 
   /// @notice Sets the default cooldown for the lock.
   /// @param cooldown The cooldown in seconds.
-  function setLockCooldown(uint256 cooldown) external;
+  function setLockCooldown(
+    uint256 cooldown
+  ) external;
 }

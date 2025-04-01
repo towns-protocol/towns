@@ -8,7 +8,9 @@ import {IOperatorRegistry} from "contracts/src/river/registry/facets/operator/IO
 import {IRiverConfig} from "contracts/src/river/registry/facets/config/IRiverConfig.sol";
 
 // structs
-import {NodeStatus, Node, Setting} from "contracts/src/river/registry/libraries/RegistryStorage.sol";
+import {
+  NodeStatus, Node, Setting
+} from "contracts/src/river/registry/libraries/RegistryStorage.sol";
 
 // libraries
 import {RiverRegistryErrors} from "contracts/src/river/registry/libraries/RegistryErrors.sol";
@@ -53,9 +55,7 @@ contract OperatorRegistryTest is RiverRegistryBaseSetup, IOwnableBase {
     vm.assume(nonOwner != nodeOperator);
 
     vm.prank(nonOwner);
-    vm.expectRevert(
-      abi.encodeWithSelector(Ownable__NotOwner.selector, nonOwner)
-    );
+    vm.expectRevert(abi.encodeWithSelector(Ownable__NotOwner.selector, nonOwner));
     operatorRegistry.approveOperator(nodeOperator);
   }
 

@@ -7,10 +7,7 @@ interface IL2StandardBridge {
   /// @param _extraData   Extra data to be sent with the transaction. Note that the recipient will
   ///                     not be triggered with this data, but it will be emitted and can be used
   ///                     to identify the transaction.
-  function bridgeETH(
-    uint32 _minGasLimit,
-    bytes calldata _extraData
-  ) external payable;
+  function bridgeETH(uint32 _minGasLimit, bytes calldata _extraData) external payable;
 
   /// @notice Sends ETH to a receiver's address on the other chain. Note that if ETH is sent to a
   ///         smart contract and the call fails, the ETH will be temporarily locked in the

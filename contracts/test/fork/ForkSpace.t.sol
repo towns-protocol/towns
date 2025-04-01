@@ -23,10 +23,7 @@ contract ForkOmegaSpace is TestUtils, SpaceHelper, IArchitectBase {
 
   function setUp() external onlyForked {
     SpaceInfo memory spaceInfo = _createEveryoneSpaceInfo("fork-space");
-    spaceInfo
-      .membership
-      .settings
-      .pricingModule = 0x7E49Fcec32E060a3D710d568B249c0ED69f01005;
+    spaceInfo.membership.settings.pricingModule = 0x7E49Fcec32E060a3D710d568B249c0ED69f01005;
 
     founder = _randomAddress();
 

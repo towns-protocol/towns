@@ -23,7 +23,9 @@ abstract contract MultiCaller {
   /// @dev Bubble up the revert from the returnedData (supports Panic, Error & Custom Errors)
   /// @notice This is needed in order to provide some human-readable revert message from a call
   /// @param returnedData Response of the call
-  function revertFromReturnedData(bytes memory returnedData) internal pure {
+  function revertFromReturnedData(
+    bytes memory returnedData
+  ) internal pure {
     if (returnedData.length < 4) {
       // case 1: catch all
       revert("unhandled revert");
@@ -32,12 +34,11 @@ abstract contract MultiCaller {
       assembly {
         errorSelector := mload(add(returnedData, 0x20))
       }
-      if (
-        errorSelector == bytes4(0x4e487b71) /* `seth sig "Panic(uint256)"` */
-      ) {
+      if (errorSelector == bytes4(0x4e487b71) /* `seth sig "Panic(uint256)"` */ ) {
         // case 2: Panic(uint256) (Defined since 0.8.0)
         // solhint-disable-next-line max-line-length
-        // ref: https://docs.soliditylang.org/en/v0.8.0/control-structures.html#panic-via-assert-and-error-via-require)
+        // ref:
+        // https://docs.soliditylang.org/en/v0.8.0/control-structures.html#panic-via-assert-and-error-via-require)
         string memory reason = "panicked: 0x__";
         uint256 errorCode;
         assembly {
@@ -48,13 +49,11 @@ abstract contract MultiCaller {
           // but since panic code doesn't have those cases, we will ignore them for now!
           let e1 := add(and(errorCode, 0xf), 0x30)
           let e2 := shl(8, add(shr(4, and(errorCode, 0xf0)), 0x30))
-          reasonWord := or(
-            and(
-              reasonWord,
-              0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff0000
-            ),
-            or(e2, e1)
-          )
+          reasonWord :=
+            or(
+              and(reasonWord, 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff0000),
+              or(e2, e1)
+            )
           mstore(add(reason, 0x20), reasonWord)
         }
         revert(reason);

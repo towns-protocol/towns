@@ -7,7 +7,8 @@ pragma solidity ^0.8.0;
 
 //contracts
 import {IDiamond} from "@towns-protocol/diamond/src/Diamond.sol";
-import {DiamondHelper as _DiamondHelper} from "@towns-protocol/diamond/scripts/common/helpers/DiamondHelper.s.sol";
+import {DiamondHelper as _DiamondHelper} from
+  "@towns-protocol/diamond/scripts/common/helpers/DiamondHelper.s.sol";
 
 interface IDiamondInitHelper is IDiamond {
   function diamondInitHelper(

@@ -2,7 +2,8 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {IImplementationRegistry} from "contracts/src/factory/facets/registry/IImplementationRegistry.sol";
+import {IImplementationRegistry} from
+  "contracts/src/factory/facets/registry/IImplementationRegistry.sol";
 import {ITownsPoints} from "contracts/src/airdrop/points/ITownsPoints.sol";
 
 // libraries
@@ -21,15 +22,12 @@ library PointsProxyLib {
   // =============================================================
 
   function airdropDiamond() internal view returns (address) {
-    return
-      IImplementationRegistry(MembershipStorage.layout().spaceFactory)
-        .getLatestImplementation(POINTS_DIAMOND);
+    return IImplementationRegistry(MembershipStorage.layout().spaceFactory).getLatestImplementation(
+      POINTS_DIAMOND
+    );
   }
 
-  function getPoints(
-    ITownsPoints.Action action,
-    bytes memory data
-  ) internal view returns (uint256) {
+  function getPoints(ITownsPoints.Action action, bytes memory data) internal view returns (uint256) {
     return ITownsPoints(airdropDiamond()).getPoints(action, data);
   }
 

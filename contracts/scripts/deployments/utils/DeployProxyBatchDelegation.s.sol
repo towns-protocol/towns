@@ -7,7 +7,8 @@ pragma solidity ^0.8.23;
 
 //contracts
 import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
-import {ProxyBatchDelegation} from "contracts/src/tokens/mainnet/delegation/ProxyBatchDelegation.sol";
+import {ProxyBatchDelegation} from
+  "contracts/src/tokens/mainnet/delegation/ProxyBatchDelegation.sol";
 
 // deployments
 import {DeployTownsMainnet} from "./DeployTownsMainnet.s.sol";
@@ -18,8 +19,7 @@ import {MockMessenger} from "contracts/test/mocks/MockMessenger.sol";
 contract DeployProxyBatchDelegation is Deployer {
   // Mainnet
   DeployTownsMainnet internal townsHelper = new DeployTownsMainnet();
-  DeployAuthorizedClaimers internal claimersHelper =
-    new DeployAuthorizedClaimers();
+  DeployAuthorizedClaimers internal claimersHelper = new DeployAuthorizedClaimers();
 
   address public townsToken;
   address public claimers;
@@ -31,15 +31,14 @@ contract DeployProxyBatchDelegation is Deployer {
     return "utils/proxyBatchDelegation";
   }
 
-  function setDependencies(
-    address mainnetDelegation_,
-    address messenger_
-  ) external {
+  function setDependencies(address mainnetDelegation_, address messenger_) external {
     mainnetDelegation = mainnetDelegation_;
     messenger = messenger_;
   }
 
-  function __deploy(address deployer) public override returns (address) {
+  function __deploy(
+    address deployer
+  ) public override returns (address) {
     townsToken = townsHelper.deploy(deployer);
     vault = townsHelper.vault();
     claimers = claimersHelper.deploy(deployer);
@@ -66,19 +65,11 @@ contract DeployProxyBatchDelegation is Deployer {
     }
 
     vm.broadcast(deployer);
-    return
-      address(
-        new ProxyBatchDelegation(
-          townsToken,
-          claimers,
-          messenger,
-          mainnetDelegation
-        )
-      );
+    return address(new ProxyBatchDelegation(townsToken, claimers, messenger, mainnetDelegation));
   }
 
   function _getMainnetDelegation() internal returns (address) {
-    if (block.chainid == 84532 || block.chainid == 11155111) {
+    if (block.chainid == 84_532 || block.chainid == 11_155_111) {
       // base registry on base sepolia
       return 0x08cC41b782F27d62995056a4EF2fCBAe0d3c266F;
     }
@@ -93,12 +84,12 @@ contract DeployProxyBatchDelegation is Deployer {
 
   function getMessenger() public view returns (address) {
     // Base or Base (Sepolia)
-    if (block.chainid == 8453 || block.chainid == 84532) {
+    if (block.chainid == 8453 || block.chainid == 84_532) {
       return 0x4200000000000000000000000000000000000007;
     } else if (block.chainid == 1) {
       // Mainnet
       return 0x866E82a600A1414e583f7F13623F1aC5d58b0Afa;
-    } else if (block.chainid == 11155111) {
+    } else if (block.chainid == 11_155_111) {
       // Sepolia
       return 0xC34855F4De64F1840e5686e64278da901e261f20;
     } else {

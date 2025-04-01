@@ -16,9 +16,7 @@ abstract contract Royalty is IRoyalty, ERC165 {
   function supportsInterface(
     bytes4 interfaceId
   ) public view virtual override(IERC165, ERC165) returns (bool) {
-    return
-      interfaceId == type(IERC2981).interfaceId ||
-      super.supportsInterface(interfaceId);
+    return interfaceId == type(IERC2981).interfaceId || super.supportsInterface(interfaceId);
   }
 
   /// @inheritdoc IERC2981
@@ -34,12 +32,7 @@ abstract contract Royalty is IRoyalty, ERC165 {
   }
 
   /// @inheritdoc IRoyalty
-  function getDefaultRoyaltyInfo()
-    public
-    view
-    override
-    returns (RoyaltyInfo memory _royalty)
-  {
+  function getDefaultRoyaltyInfo() public view override returns (RoyaltyInfo memory _royalty) {
     return _defaultRoyaltyInfo;
   }
 
@@ -53,10 +46,7 @@ abstract contract Royalty is IRoyalty, ERC165 {
   }
 
   /// @inheritdoc IRoyalty
-  function setDefaultRoyaltyInfo(
-    address _recipient,
-    uint256 _amount
-  ) external override {
+  function setDefaultRoyaltyInfo(address _recipient, uint256 _amount) external override {
     if (!_canSetRoyaltyInfo()) {
       revert("Royalty: not authorized");
     }
@@ -87,15 +77,8 @@ abstract contract Royalty is IRoyalty, ERC165 {
   }
 
   /// @dev Sets the royalty info for a given token id.
-  function _setRoyaltyInfoForToken(
-    uint256 _tokenId,
-    address _recipient,
-    uint256 _amount
-  ) internal {
-    require(
-      _amount <= _feeDenominator(),
-      "Royalty: royalty fee will exceed salePrice"
-    );
+  function _setRoyaltyInfoForToken(uint256 _tokenId, address _recipient, uint256 _amount) internal {
+    require(_amount <= _feeDenominator(), "Royalty: royalty fee will exceed salePrice");
     require(_recipient != address(0), "Royalty: invalid receiver");
 
     _tokenRoyaltyInfo[_tokenId] = RoyaltyInfo(_recipient, _amount);
@@ -104,14 +87,8 @@ abstract contract Royalty is IRoyalty, ERC165 {
   }
 
   /// @dev Sets the default royalty info.
-  function _setDefaultRoyaltyInfo(
-    address _recipient,
-    uint256 _amount
-  ) internal {
-    require(
-      _amount <= _feeDenominator(),
-      "Royalty: royalty fee will exceed salePrice"
-    );
+  function _setDefaultRoyaltyInfo(address _recipient, uint256 _amount) internal {
+    require(_amount <= _feeDenominator(), "Royalty: royalty fee will exceed salePrice");
     require(_recipient != address(0), "Royalty: invalid receiver");
 
     _defaultRoyaltyInfo = RoyaltyInfo(_recipient, _amount);
@@ -125,7 +102,9 @@ abstract contract Royalty is IRoyalty, ERC165 {
   }
 
   /// @dev Deletes the royalty info for a given token id.
-  function _resetTokenRoyalty(uint256 tokenId) internal virtual {
+  function _resetTokenRoyalty(
+    uint256 tokenId
+  ) internal virtual {
     delete _tokenRoyaltyInfo[tokenId];
   }
 

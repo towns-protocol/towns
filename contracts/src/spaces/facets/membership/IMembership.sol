@@ -61,10 +61,7 @@ interface IMembershipBase {
   event MembershipFeeRecipientUpdated(address indexed recipient);
   event MembershipFreeAllocationUpdated(uint256 indexed allocation);
   event MembershipWithdrawal(address indexed recipient, uint256 amount);
-  event MembershipTokenIssued(
-    address indexed recipient,
-    uint256 indexed tokenId
-  );
+  event MembershipTokenIssued(address indexed recipient, uint256 indexed tokenId);
   event MembershipTokenRejected(address indexed recipient);
 }
 
@@ -86,29 +83,32 @@ interface IMembership is IMembershipBase {
    * @notice Join a space
    * @param receiver The address of the receiver
    */
-  function joinSpace(address receiver) external payable;
+  function joinSpace(
+    address receiver
+  ) external payable;
 
   /**
    * @notice Join a space with a referral
    * @param receiver The address of the receiver
    * @param referral The referral data
    */
-  function joinSpaceWithReferral(
-    address receiver,
-    ReferralTypes memory referral
-  ) external payable;
+  function joinSpaceWithReferral(address receiver, ReferralTypes memory referral) external payable;
 
   /**
    * @notice Renew a space membership
    * @param tokenId The token id of the membership
    */
-  function renewMembership(uint256 tokenId) external payable;
+  function renewMembership(
+    uint256 tokenId
+  ) external payable;
 
   /**
    * @notice Return the expiration date of a membership
    * @param tokenId The token id of the membership
    */
-  function expiresAt(uint256 tokenId) external view returns (uint256);
+  function expiresAt(
+    uint256 tokenId
+  ) external view returns (uint256);
 
   // =============================================================
   //                           Duration
@@ -127,7 +127,9 @@ interface IMembership is IMembershipBase {
    * @notice Set the membership pricing module
    * @param pricingModule The new pricing module
    */
-  function setMembershipPricingModule(address pricingModule) external;
+  function setMembershipPricingModule(
+    address pricingModule
+  ) external;
 
   /**
    * @notice Get the membership pricing module
@@ -149,7 +151,9 @@ interface IMembership is IMembershipBase {
    * @notice Set the membership price
    * @param newPrice The new membership price
    */
-  function setMembershipPrice(uint256 newPrice) external;
+  function setMembershipPrice(
+    uint256 newPrice
+  ) external;
 
   /**
    * @notice Get the membership price
@@ -173,7 +177,9 @@ interface IMembership is IMembershipBase {
    * @notice Set the membership free allocation
    * @param newAllocation The new membership free allocation
    */
-  function setMembershipFreeAllocation(uint256 newAllocation) external;
+  function setMembershipFreeAllocation(
+    uint256 newAllocation
+  ) external;
 
   /**
    * @notice Get the membership free allocation
@@ -189,7 +195,9 @@ interface IMembership is IMembershipBase {
    * @notice Set the membership limit
    * @param newLimit The new membership limit
    */
-  function setMembershipLimit(uint256 newLimit) external;
+  function setMembershipLimit(
+    uint256 newLimit
+  ) external;
 
   /**
    * @notice Get the membership limit
@@ -214,7 +222,9 @@ interface IMembership is IMembershipBase {
    * @notice Set the membership image
    * @param image The new membership image
    */
-  function setMembershipImage(string calldata image) external;
+  function setMembershipImage(
+    string calldata image
+  ) external;
 
   /**
    * @notice Get the membership image

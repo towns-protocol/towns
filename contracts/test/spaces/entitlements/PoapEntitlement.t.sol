@@ -28,7 +28,9 @@ contract PoapEntitlementTest is TestUtils, IEntitlementBase {
 }
 
 contract MockPoap is IPOAP {
-  function balanceOf(address) external pure returns (uint256) {
+  function balanceOf(
+    address
+  ) external pure returns (uint256) {
     return 1;
   }
 

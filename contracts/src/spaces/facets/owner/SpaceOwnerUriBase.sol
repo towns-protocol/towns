@@ -14,7 +14,9 @@ import {SpaceOwnerStorage} from "contracts/src/spaces/facets/owner/SpaceOwnerSto
 abstract contract SpaceOwnerUriBase is ISpaceOwnerBase {
   using LibString for address;
 
-  function _setDefaultUri(string memory uri) internal {
+  function _setDefaultUri(
+    string memory uri
+  ) internal {
     Validator.checkLength(uri, 1);
 
     SpaceOwnerStorage.layout().defaultUri = uri;
@@ -47,8 +49,7 @@ abstract contract SpaceOwnerUriBase is ISpaceOwnerBase {
     unchecked {
       // the ASCII code for "/" is 0x2f
       if (bytes(defaultUri)[length - 1] != 0x2f) {
-        return
-          string.concat(defaultUri, "/", spaceAddress.toHexStringChecksummed());
+        return string.concat(defaultUri, "/", spaceAddress.toHexStringChecksummed());
       } else {
         return string.concat(defaultUri, spaceAddress.toHexStringChecksummed());
       }

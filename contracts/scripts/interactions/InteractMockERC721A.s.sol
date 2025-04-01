@@ -10,7 +10,9 @@ import {Interaction} from "contracts/scripts/common/Interaction.s.sol";
 import {MockERC721A} from "contracts/test/mocks/MockERC721A.sol";
 
 contract InteractMockERC721A is Interaction {
-  function __interact(address deployer) internal override {
+  function __interact(
+    address deployer
+  ) internal override {
     address nft = getDeployment("mockERC721A");
 
     vm.startBroadcast(deployer);

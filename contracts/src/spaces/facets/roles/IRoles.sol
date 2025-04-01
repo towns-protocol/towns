@@ -52,9 +52,7 @@ interface IRolesBase {
   /// @param roleId Unique identifier of the role
   /// @param channelId Unique identifier of the channel
   event PermissionsAddedToChannelRole(
-    address indexed updater,
-    uint256 indexed roleId,
-    bytes32 indexed channelId
+    address indexed updater, uint256 indexed roleId, bytes32 indexed channelId
   );
 
   /// @notice Emitted when permissions are removed from a channel role
@@ -62,9 +60,7 @@ interface IRolesBase {
   /// @param roleId Unique identifier of the role
   /// @param channelId Unique identifier of the channel
   event PermissionsRemovedFromChannelRole(
-    address indexed updater,
-    uint256 indexed roleId,
-    bytes32 indexed channelId
+    address indexed updater, uint256 indexed roleId, bytes32 indexed channelId
   );
 
   /// @notice Emitted when permissions are updated for a channel role
@@ -72,9 +68,7 @@ interface IRolesBase {
   /// @param roleId Unique identifier of the role
   /// @param channelId Unique identifier of the channel
   event PermissionsUpdatedForChannelRole(
-    address indexed updater,
-    uint256 indexed roleId,
-    bytes32 indexed channelId
+    address indexed updater, uint256 indexed roleId, bytes32 indexed channelId
   );
 
   // =============================================================
@@ -117,7 +111,9 @@ interface IRoles is IRolesBase {
   /// @notice Retrieves a role by its ID
   /// @param roleId Unique identifier of the role
   /// @return role The role struct
-  function getRoleById(uint256 roleId) external view returns (Role memory role);
+  function getRoleById(
+    uint256 roleId
+  ) external view returns (Role memory role);
 
   /// @notice Updates an existing role
   /// @param roleId Unique identifier of the role to update
@@ -133,25 +129,21 @@ interface IRoles is IRolesBase {
 
   /// @notice Removes a role
   /// @param roleId Unique identifier of the role to remove
-  function removeRole(uint256 roleId) external;
+  function removeRole(
+    uint256 roleId
+  ) external;
 
   // permissions
 
   /// @notice Adds permissions to a role
   /// @param roleId Unique identifier of the role
   /// @param permissions List of permissions to add
-  function addPermissionsToRole(
-    uint256 roleId,
-    string[] memory permissions
-  ) external;
+  function addPermissionsToRole(uint256 roleId, string[] memory permissions) external;
 
   /// @notice Removes permissions from a role
   /// @param roleId Unique identifier of the role
   /// @param permissions List of permissions to remove
-  function removePermissionsFromRole(
-    uint256 roleId,
-    string[] memory permissions
-  ) external;
+  function removePermissionsFromRole(uint256 roleId, string[] memory permissions) external;
 
   /// @notice Retrieves permissions for a role
   /// @param roleId Unique identifier of the role
@@ -165,18 +157,12 @@ interface IRoles is IRolesBase {
   /// @notice Adds an entitlement to a role
   /// @param roleId Unique identifier of the role
   /// @param entitlement Entitlement to add
-  function addRoleToEntitlement(
-    uint256 roleId,
-    CreateEntitlement calldata entitlement
-  ) external;
+  function addRoleToEntitlement(uint256 roleId, CreateEntitlement calldata entitlement) external;
 
   /// @notice Removes an entitlement from a role
   /// @param roleId Unique identifier of the role
   /// @param entitlement Entitlement to remove
-  function removeRoleFromEntitlement(
-    uint256 roleId,
-    CreateEntitlement memory entitlement
-  ) external;
+  function removeRoleFromEntitlement(uint256 roleId, CreateEntitlement memory entitlement) external;
 
   /// @notice Sets channel permission overrides for a role
   /// @param roleId Unique identifier of the role
@@ -200,8 +186,5 @@ interface IRoles is IRolesBase {
   /// @notice Clears channel permission overrides for a role
   /// @param roleId Unique identifier of the role
   /// @param channelId Unique identifier of the channel
-  function clearChannelPermissionOverrides(
-    uint256 roleId,
-    bytes32 channelId
-  ) external;
+  function clearChannelPermissionOverrides(uint256 roleId, bytes32 channelId) external;
 }

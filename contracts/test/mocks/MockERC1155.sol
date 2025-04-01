@@ -13,15 +13,21 @@ contract MockERC1155 is ERC1155 {
 
   constructor() ERC1155("MockERC1155") {}
 
-  function mintGold(address account) external {
+  function mintGold(
+    address account
+  ) external {
     _mint(account, GOLD, AMOUNT, "");
   }
 
-  function mintSilver(address account) external {
+  function mintSilver(
+    address account
+  ) external {
     _mint(account, SILVER, AMOUNT, "");
   }
 
-  function mintBronze(address account) external {
+  function mintBronze(
+    address account
+  ) external {
     _mint(account, BRONZE, AMOUNT, "");
   }
 
@@ -29,40 +35,26 @@ contract MockERC1155 is ERC1155 {
     _mint(account, id, amount, "");
   }
 
-  function directCheckOfReceived(address account) external returns (bool) {
-    ERC1155Utils.checkOnERC1155Received(
-      address(this),
-      address(0),
-      account,
-      GOLD,
-      AMOUNT,
-      ""
-    );
+  function directCheckOfReceived(
+    address account
+  ) external returns (bool) {
+    ERC1155Utils.checkOnERC1155Received(address(this), address(0), account, GOLD, AMOUNT, "");
     return true;
   }
 
-  function directCheckOfReceivedBatch(address account) external returns (bool) {
+  function directCheckOfReceivedBatch(
+    address account
+  ) external returns (bool) {
     uint256[] memory ids = new uint256[](1);
     ids[0] = GOLD;
     uint256[] memory amounts = new uint256[](1);
     amounts[0] = AMOUNT;
 
-    ERC1155Utils.checkOnERC1155BatchReceived(
-      address(this),
-      address(0),
-      account,
-      ids,
-      amounts,
-      ""
-    );
+    ERC1155Utils.checkOnERC1155BatchReceived(address(this), address(0), account, ids, amounts, "");
     return true;
   }
 
-  function safeMintBatch(
-    address account,
-    uint256[] memory ids,
-    uint256[] memory amounts
-  ) external {
+  function safeMintBatch(address account, uint256[] memory ids, uint256[] memory amounts) external {
     _mintBatch(account, ids, amounts, "");
   }
 }

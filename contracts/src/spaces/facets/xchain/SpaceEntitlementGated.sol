@@ -28,10 +28,8 @@ contract SpaceEntitlementGated is MembershipJoin, EntitlementGated {
       return;
     }
 
-    (bytes4 transactionType, , address receiver, ) = abi.decode(
-      data,
-      (bytes4, address, address, bytes)
-    );
+    (bytes4 transactionType,, address receiver,) =
+      abi.decode(data, (bytes4, address, address, bytes));
 
     if (result == NodeVoteStatus.PASSED) {
       bool shouldCharge = _shouldChargeForJoinSpace();
@@ -47,9 +45,7 @@ contract SpaceEntitlementGated is MembershipJoin, EntitlementGated {
 
         if (transactionType == IMembership.joinSpace.selector) {
           _chargeForJoinSpace(transactionId);
-        } else if (
-          transactionType == IMembership.joinSpaceWithReferral.selector
-        ) {
+        } else if (transactionType == IMembership.joinSpaceWithReferral.selector) {
           _chargeForJoinSpaceWithReferral(transactionId);
         } else {
           _rejectMembership(transactionId, receiver);

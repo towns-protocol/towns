@@ -21,7 +21,9 @@ contract DeployMockERC721A is Deployer, FacetHelper {
     addSelectors(deployERC721A.selectors());
   }
 
-  function __deploy(address deployer) public override returns (address) {
+  function __deploy(
+    address deployer
+  ) public override returns (address) {
     vm.startBroadcast(deployer);
     MockERC721A deployment = new MockERC721A();
     vm.stopBroadcast();

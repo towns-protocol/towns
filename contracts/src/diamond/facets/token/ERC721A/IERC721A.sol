@@ -109,30 +109,18 @@ interface IERC721ABase {
   /**
    * @dev Emitted when `tokenId` token is transferred from `from` to `to`.
    */
-  event Transfer(
-    address indexed from,
-    address indexed to,
-    uint256 indexed tokenId
-  );
+  event Transfer(address indexed from, address indexed to, uint256 indexed tokenId);
 
   /**
    * @dev Emitted when `owner` enables `approved` to manage the `tokenId` token.
    */
-  event Approval(
-    address indexed owner,
-    address indexed approved,
-    uint256 indexed tokenId
-  );
+  event Approval(address indexed owner, address indexed approved, uint256 indexed tokenId);
 
   /**
    * @dev Emitted when `owner` enables or disables
    * (`approved`) `operator` to manage all of its assets.
    */
-  event ApprovalForAll(
-    address indexed owner,
-    address indexed operator,
-    bool approved
-  );
+  event ApprovalForAll(address indexed owner, address indexed operator, bool approved);
 
   // =============================================================
   //                           IERC2309
@@ -146,10 +134,7 @@ interface IERC721ABase {
    * See {_mintERC2309} for more details.
    */
   event ConsecutiveTransfer(
-    uint256 indexed fromTokenId,
-    uint256 toTokenId,
-    address indexed from,
-    address indexed to
+    uint256 indexed fromTokenId, uint256 toTokenId, address indexed from, address indexed to
   );
 }
 
@@ -171,7 +156,9 @@ interface IERC721A is IERC721ABase {
   /**
    * @dev Returns the number of tokens in `owner`'s account.
    */
-  function balanceOf(address owner) external view returns (uint256 balance);
+  function balanceOf(
+    address owner
+  ) external view returns (uint256 balance);
 
   /**
    * @dev Returns the owner of the `tokenId` token.
@@ -180,7 +167,9 @@ interface IERC721A is IERC721ABase {
    *
    * - `tokenId` must exist.
    */
-  function ownerOf(uint256 tokenId) external view returns (address owner);
+  function ownerOf(
+    uint256 tokenId
+  ) external view returns (address owner);
 
   /**
    * @dev Safely transfers `tokenId` token from `from` to `to`,
@@ -209,11 +198,7 @@ interface IERC721A is IERC721ABase {
   /**
    * @dev Equivalent to `safeTransferFrom(from, to, tokenId, '')`.
    */
-  function safeTransferFrom(
-    address from,
-    address to,
-    uint256 tokenId
-  ) external payable;
+  function safeTransferFrom(address from, address to, uint256 tokenId) external payable;
 
   /**
    * @dev Transfers `tokenId` from `from` to `to`.
@@ -231,11 +216,7 @@ interface IERC721A is IERC721ABase {
    *
    * Emits a {Transfer} event.
    */
-  function transferFrom(
-    address from,
-    address to,
-    uint256 tokenId
-  ) external payable;
+  function transferFrom(address from, address to, uint256 tokenId) external payable;
 
   /**
    * @dev Gives permission to `to` to transfer `tokenId` token to another account.
@@ -282,10 +263,7 @@ interface IERC721A is IERC721ABase {
    *
    * See {setApprovalForAll}.
    */
-  function isApprovedForAll(
-    address owner,
-    address operator
-  ) external view returns (bool);
+  function isApprovedForAll(address owner, address operator) external view returns (bool);
 
   // =============================================================
   //                        IERC721Metadata
@@ -304,5 +282,7 @@ interface IERC721A is IERC721ABase {
   /**
    * @dev Returns the Uniform Resource Identifier (URI) for `tokenId` token.
    */
-  function tokenURI(uint256 tokenId) external view returns (string memory);
+  function tokenURI(
+    uint256 tokenId
+  ) external view returns (string memory);
 }

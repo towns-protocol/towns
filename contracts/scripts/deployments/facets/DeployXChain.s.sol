@@ -26,7 +26,9 @@ contract DeployXChain is Deployer, FacetHelper {
     return XChain.__XChain_init.selector;
   }
 
-  function __deploy(address deployer) public override returns (address) {
+  function __deploy(
+    address deployer
+  ) public override returns (address) {
     vm.startBroadcast(deployer);
     XChain xchain = new XChain();
     vm.stopBroadcast();

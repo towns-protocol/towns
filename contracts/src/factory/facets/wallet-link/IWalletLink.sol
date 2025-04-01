@@ -57,22 +57,13 @@ interface IWalletLinkBase {
   event RemoveLink(address indexed wallet, address indexed secondWallet);
 
   /// @notice Emitted when a default wallet is set for a root key
-  event SetDefaultWallet(
-    address indexed rootKey,
-    address indexed defaultWallet
-  );
+  event SetDefaultWallet(address indexed rootKey, address indexed defaultWallet);
 
   /// @notice Emitted when a non-EVM wallet is linked to a root key
-  event LinkNonEVMWalletToRootWallet(
-    bytes32 indexed walletHash,
-    address indexed rootKey
-  );
+  event LinkNonEVMWalletToRootWallet(bytes32 indexed walletHash, address indexed rootKey);
 
   /// @notice Emitted when a non-EVM wallet is removed from a root key
-  event RemoveNonEVMWalletLink(
-    bytes32 indexed walletHash,
-    address indexed rootKey
-  );
+  event RemoveNonEVMWalletLink(bytes32 indexed walletHash, address indexed rootKey);
 
   // =============================================================
   //                      Errors
@@ -102,18 +93,17 @@ interface IWalletLink is IWalletLinkBase {
   /**
    * @notice Link caller wallet to a root wallet
    * @param rootWallet the root wallet that the caller is linking to
-   * @param nonce a nonce used to prevent replay attacks, nonce must always be higher than previous nonce
+   * @param nonce a nonce used to prevent replay attacks, nonce must always be higher than previous
+   * nonce
    */
-  function linkCallerToRootKey(
-    LinkedWallet memory rootWallet,
-    uint256 nonce
-  ) external;
+  function linkCallerToRootKey(LinkedWallet memory rootWallet, uint256 nonce) external;
 
   /**
    * @notice Link a wallet to a root wallet
    * @param wallet the wallet being linked to the root wallet
    * @param rootWallet the root wallet that the caller is linking to
-   * @param nonce a nonce used to prevent replay attacks, nonce must always be higher than previous nonce
+   * @param nonce a nonce used to prevent replay attacks, nonce must always be higher than previous
+   * nonce
    */
   function linkWalletToRootKey(
     LinkedWallet memory wallet,
@@ -124,34 +114,26 @@ interface IWalletLink is IWalletLinkBase {
   /**
    * @notice Link a non-EVM wallet to a root wallet
    * @param wallet the wallet being linked to the root wallet
-   * @param nonce a nonce used to prevent replay attacks, nonce must always be higher than previous nonce
+   * @param nonce a nonce used to prevent replay attacks, nonce must always be higher than previous
+   * nonce
    * @dev The function can only be called by an already linked wallet
    */
-  function linkNonEVMWalletToRootKey(
-    NonEVMLinkedWallet calldata wallet,
-    uint256 nonce
-  ) external;
+  function linkNonEVMWalletToRootKey(NonEVMLinkedWallet calldata wallet, uint256 nonce) external;
 
   /**
    * @notice Remove a non-EVM wallet link from a root wallet
    * @param wallet the wallet being removed from the root wallet
-   * @param nonce a nonce used to prevent replay attacks, nonce must always be higher than previous nonce
+   * @param nonce a nonce used to prevent replay attacks, nonce must always be higher than previous
+   * nonce
    * @dev The function can only be called by an already linked wallet
    */
-  function removeNonEVMWalletLink(
-    WalletLib.Wallet memory wallet,
-    uint256 nonce
-  ) external;
+  function removeNonEVMWalletLink(WalletLib.Wallet memory wallet, uint256 nonce) external;
 
   /**
    * @notice Called via the rootkey signing a message to a remove a wallet from itself
    * @param wallet the wallet being unlinked from the sending wallet
    */
-  function removeLink(
-    address wallet,
-    LinkedWallet memory rootWallet,
-    uint256 nonce
-  ) external;
+  function removeLink(address wallet, LinkedWallet memory rootWallet, uint256 nonce) external;
 
   /**
    * @notice Remove the caller's link to their root key
@@ -164,7 +146,9 @@ interface IWalletLink is IWalletLinkBase {
    * @dev A wallet can only be set as the default wallet if it is already linked to the root wallet
    * @dev The default wallet can only be an EVM wallet for now
    */
-  function setDefaultWallet(address defaultWallet) external;
+  function setDefaultWallet(
+    address defaultWallet
+  ) external;
 
   // =============================================================
   //                      External - Read
@@ -175,7 +159,9 @@ interface IWalletLink is IWalletLinkBase {
    * @param rootKey the public key of the users rootkey to find associated wallets for
    * @return defaultWallet the default wallet for the root key
    */
-  function getDefaultWallet(address rootKey) external view returns (address);
+  function getDefaultWallet(
+    address rootKey
+  ) external view returns (address);
 
   /**
    * @notice Returns all wallets linked to a root key
@@ -220,10 +206,7 @@ interface IWalletLink is IWalletLinkBase {
    * @param wallet the ethereum wallet to check
    * @return areLinked boolean if they are linked together
    */
-  function checkIfLinked(
-    address rootKey,
-    address wallet
-  ) external view returns (bool);
+  function checkIfLinked(address rootKey, address wallet) external view returns (bool);
 
   /**
    * @notice checks if a root key and non-EVM wallet are linked
@@ -248,15 +231,14 @@ interface IWalletLink is IWalletLinkBase {
    * @notice gets the dependency address for a given dependency label
    * @param dependency the dependency label to get
    */
-  function getDependency(bytes32 dependency) external view returns (address);
+  function getDependency(
+    bytes32 dependency
+  ) external view returns (address);
 
   /**
    * @notice sets the dependency address for a given dependency label
    * @param dependency the dependency label to set
    * @param dependencyAddress the dependency address to set
    */
-  function setDependency(
-    bytes32 dependency,
-    address dependencyAddress
-  ) external;
+  function setDependency(bytes32 dependency, address dependencyAddress) external;
 }

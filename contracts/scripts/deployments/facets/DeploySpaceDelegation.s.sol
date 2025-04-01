@@ -8,7 +8,8 @@ pragma solidity ^0.8.23;
 // helpers
 import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
 import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
-import {SpaceDelegationFacet} from "contracts/src/base/registry/facets/delegation/SpaceDelegationFacet.sol";
+import {SpaceDelegationFacet} from
+  "contracts/src/base/registry/facets/delegation/SpaceDelegationFacet.sol";
 
 contract DeploySpaceDelegation is Deployer, FacetHelper {
   constructor() {
@@ -28,7 +29,9 @@ contract DeploySpaceDelegation is Deployer, FacetHelper {
     return SpaceDelegationFacet.__SpaceDelegation_init.selector;
   }
 
-  function makeInitData(address riverToken) public pure returns (bytes memory) {
+  function makeInitData(
+    address riverToken
+  ) public pure returns (bytes memory) {
     return abi.encodeWithSelector(initializer(), riverToken);
   }
 
@@ -36,7 +39,9 @@ contract DeploySpaceDelegation is Deployer, FacetHelper {
     return "facets/spaceDelegationFacet";
   }
 
-  function __deploy(address deployer) public override returns (address) {
+  function __deploy(
+    address deployer
+  ) public override returns (address) {
     vm.startBroadcast(deployer);
     SpaceDelegationFacet spaceDelegationFacet = new SpaceDelegationFacet();
     vm.stopBroadcast();

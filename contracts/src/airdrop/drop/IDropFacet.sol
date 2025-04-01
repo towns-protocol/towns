@@ -13,27 +13,19 @@ interface IDropFacetBase {
   //                           Events
   // =============================================================
   event DropFacet_Claimed_WithPenalty(
-    uint256 indexed conditionId,
-    address indexed claimer,
-    address indexed account,
-    uint256 amount
+    uint256 indexed conditionId, address indexed claimer, address indexed account, uint256 amount
   );
 
   event DropFacet_Claimed_And_Staked(
-    uint256 indexed conditionId,
-    address indexed claimer,
-    address indexed account,
-    uint256 amount
+    uint256 indexed conditionId, address indexed claimer, address indexed account, uint256 amount
   );
 
   event DropFacet_ClaimConditionsUpdated(
-    uint256 indexed conditionId,
-    DropClaimLib.ClaimCondition[] conditions
+    uint256 indexed conditionId, DropClaimLib.ClaimCondition[] conditions
   );
 
   event DropFacet_ClaimConditionAdded(
-    uint256 indexed conditionId,
-    DropClaimLib.ClaimCondition condition
+    uint256 indexed conditionId, DropClaimLib.ClaimCondition condition
   );
 
   // =============================================================
@@ -58,10 +50,7 @@ interface IDropFacetBase {
 interface IDropFacet is IDropFacetBase {
   /// @notice Gets all claim conditions
   /// @return An array of ClaimCondition structs
-  function getClaimConditions()
-    external
-    view
-    returns (DropClaimLib.ClaimCondition[] memory);
+  function getClaimConditions() external view returns (DropClaimLib.ClaimCondition[] memory);
 
   /// @notice Sets the claim conditions for the drop
   /// @param conditions An array of ClaimCondition structs defining the conditions

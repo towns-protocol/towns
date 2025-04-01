@@ -41,7 +41,9 @@ contract MetadataFacet is IMetadata, OwnableBase, Facet {
     return MetadataStorage.layout().contractURI;
   }
 
-  function setContractURI(string calldata uri) external onlyOwner {
+  function setContractURI(
+    string calldata uri
+  ) external onlyOwner {
     MetadataStorage.layout().contractURI = uri;
     emit ContractURIChanged(uri);
   }
@@ -57,7 +59,8 @@ library MetadataStorage {
     string contractURI;
   }
 
-  // keccak256(abi.encode(uint256(keccak256("diamond.facets.metadata.storage")) - 1)) & ~bytes32(uint256(0xff))
+  // keccak256(abi.encode(uint256(keccak256("diamond.facets.metadata.storage")) - 1)) &
+  // ~bytes32(uint256(0xff))
   bytes32 internal constant STORAGE_SLOT =
     0xf5e7800d151c04390bdf7c63536bd6072359c9f89940782fbad33a288db56300;
 

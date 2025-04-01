@@ -37,11 +37,7 @@ abstract contract RolesBaseSetup is BaseSetup, IRolesBase, IEntitlementBase {
 
     // create a role
     vm.prank(founder);
-    ROLE_ID = roles.createRole(
-      roleName,
-      new string[](0),
-      new IRoles.CreateEntitlement[](0)
-    );
+    ROLE_ID = roles.createRole(roleName, new string[](0), new IRoles.CreateEntitlement[](0));
 
     _;
   }

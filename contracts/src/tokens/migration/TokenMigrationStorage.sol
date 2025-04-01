@@ -9,7 +9,8 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 // contracts
 
 library TokenMigrationStorage {
-  // keccak256(abi.encode(uint256(keccak256("token.migration.storage")) - 1)) & ~bytes32(uint256(0xff))
+  // keccak256(abi.encode(uint256(keccak256("token.migration.storage")) - 1)) &
+  // ~bytes32(uint256(0xff))
   bytes32 public constant STORAGE_SLOT =
     0x70042d58ab6ffbb7e110198cb4fbcbe6957a43f69f02f904ebed551d03013400;
 

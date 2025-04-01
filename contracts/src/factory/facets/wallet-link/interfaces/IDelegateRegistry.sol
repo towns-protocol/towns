@@ -38,7 +38,8 @@ interface IDelegateRegistry {
    * @notice Check if `to` is a delegate of `from` for the entire wallet
    * @param to The potential delegate address
    * @param from The potential address who delegated rights
-   * @param rights Specific rights to check for, pass the zero value to ignore subdelegations and check full delegations only
+   * @param rights Specific rights to check for, pass the zero value to ignore subdelegations and
+   * check full delegations only
    * @return valid Whether delegate is granted to act on the from's behalf
    */
   function checkDelegateForAll(

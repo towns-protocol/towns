@@ -12,7 +12,9 @@ library Factory {
   /// @notice deploy contract code using "CREATE" opcode
   /// @param initCode contract initialization code
   /// @return deployment address of deployed contract
-  function deploy(bytes memory initCode) internal returns (address deployment) {
+  function deploy(
+    bytes memory initCode
+  ) internal returns (address deployment) {
     assembly ("memory-safe") {
       deployment := create(0, add(initCode, 0x20), mload(initCode))
       if iszero(deployment) {
@@ -33,10 +35,7 @@ library Factory {
   /// @param initCode contract initialization code
   /// @param salt input for deterministic address calculation
   /// @return deployment address of deployed contract
-  function deploy(
-    bytes memory initCode,
-    bytes32 salt
-  ) internal returns (address deployment) {
+  function deploy(bytes memory initCode, bytes32 salt) internal returns (address deployment) {
     assembly ("memory-safe") {
       deployment := create2(0, add(initCode, 0x20), mload(initCode), salt)
       if iszero(deployment) {
@@ -60,11 +59,7 @@ library Factory {
     bytes32 initCodeHash,
     bytes32 salt
   ) internal view returns (address deployment) {
-    deployment = LibClone.predictDeterministicAddress(
-      initCodeHash,
-      salt,
-      address(this)
-    );
+    deployment = LibClone.predictDeterministicAddress(initCodeHash, salt, address(this));
     assembly {
       // clean the upper 96 bits
       deployment := and(deployment, 0xffffffffffffffffffffffffffffffffffffffff)

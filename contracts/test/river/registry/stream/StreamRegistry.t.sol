@@ -6,7 +6,12 @@ import {Vm} from "forge-std/Vm.sol";
 import {IOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
 
 // libraries
-import {Stream, StreamWithId, SetMiniblock, SetStreamReplicationFactor} from "contracts/src/river/registry/libraries/RegistryStorage.sol";
+import {
+  Stream,
+  StreamWithId,
+  SetMiniblock,
+  SetStreamReplicationFactor
+} from "contracts/src/river/registry/libraries/RegistryStorage.sol";
 import {RiverRegistryErrors} from "contracts/src/river/registry/libraries/RegistryErrors.sol";
 import {IStreamRegistryBase} from "contracts/src/river/registry/facets/stream/IStreamRegistry.sol";
 import {IRiverConfigBase} from "contracts/src/river/registry/facets/config/IRiverConfig.sol";
@@ -26,13 +31,11 @@ contract StreamRegistryTest is
   address internal NODE = makeAddr("node");
   address internal OPERATOR = makeAddr("operator");
   TestStream internal SAMPLE_STREAM =
-    TestStream(
-      bytes32(uint256(1234567890)),
-      keccak256("genesisMiniblock"),
-      "genesisMiniblock"
-    );
+    TestStream(bytes32(uint256(1_234_567_890)), keccak256("genesisMiniblock"), "genesisMiniblock");
 
-  modifier givenConfigurationManagerIsApproved(address configManager) {
+  modifier givenConfigurationManagerIsApproved(
+    address configManager
+  ) {
     vm.assume(configManager != address(0));
     vm.assume(riverConfig.isConfigurationManager(configManager) == false);
 
@@ -69,11 +72,7 @@ contract StreamRegistryTest is
     address nodeOperator,
     TestNode[100] memory nodes,
     TestStream memory testStream
-  )
-    external
-    givenNodeOperatorIsApproved(nodeOperator)
-    givenNodesAreRegistered(nodeOperator, nodes)
-  {
+  ) external givenNodeOperatorIsApproved(nodeOperator) givenNodesAreRegistered(nodeOperator, nodes) {
     address[] memory nodeAddresses = new address[](nodes.length);
     uint256 nodesLength = nodes.length;
     for (uint256 i; i < nodesLength; ++i) {
@@ -100,16 +99,11 @@ contract StreamRegistryTest is
     );
 
     // get logs and check for StreamUpdated event
-    Vm.Log memory streamUpdatedLog = _getFirstMatchingLog(
-      vm.getRecordedLogs(),
-      StreamUpdated.selector
-    );
+    Vm.Log memory streamUpdatedLog =
+      _getFirstMatchingLog(vm.getRecordedLogs(), StreamUpdated.selector);
 
     // check event type (first topic should be the event signature, second is the indexed eventType)
-    assertEq(
-      uint8(uint256(streamUpdatedLog.topics[1])),
-      uint8(StreamEventType.Allocate)
-    );
+    assertEq(uint8(uint256(streamUpdatedLog.topics[1])), uint8(StreamEventType.Allocate));
 
     // decode the event data
     (bytes32 emittedStreamId, Stream memory emittedStream) = abi.decode(
@@ -139,33 +133,24 @@ contract StreamRegistryTest is
 
   function test_fuzz_allocateStream_revertWhen_streamIdAlreadyExists(
     TestStream memory testStream
-  )
-    external
-    givenNodeOperatorIsApproved(OPERATOR)
-    givenNodeIsRegistered(OPERATOR, NODE, "url")
-  {
+  ) external givenNodeOperatorIsApproved(OPERATOR) givenNodeIsRegistered(OPERATOR, NODE, "url") {
     address[] memory nodes = new address[](1);
     nodes[0] = NODE;
 
     vm.prank(NODE);
     streamRegistry.allocateStream(
-      testStream.streamId,
-      nodes,
-      testStream.genesisMiniblockHash,
-      testStream.genesisMiniblock
+      testStream.streamId, nodes, testStream.genesisMiniblockHash, testStream.genesisMiniblock
     );
 
     vm.prank(NODE);
     vm.expectRevert(bytes(RiverRegistryErrors.ALREADY_EXISTS));
     streamRegistry.allocateStream(
-      testStream.streamId,
-      nodes,
-      testStream.genesisMiniblockHash,
-      testStream.genesisMiniblock
+      testStream.streamId, nodes, testStream.genesisMiniblockHash, testStream.genesisMiniblock
     );
   }
 
-  /// @notice This test is to ensure that the node who is calling the allocateStream function is registered.
+  /// @notice This test is to ensure that the node who is calling the allocateStream function is
+  /// registered.
   function test_fuzz_allocateStream_revertWhen_nodeNotRegistered(
     address node,
     TestStream memory testStream
@@ -176,14 +161,12 @@ contract StreamRegistryTest is
     vm.prank(node);
     vm.expectRevert(bytes(RiverRegistryErrors.NODE_NOT_FOUND));
     streamRegistry.allocateStream(
-      testStream.streamId,
-      nodes,
-      testStream.genesisMiniblockHash,
-      testStream.genesisMiniblock
+      testStream.streamId, nodes, testStream.genesisMiniblockHash, testStream.genesisMiniblock
     );
   }
 
-  /// @notice This test is to ensure that the nodes being passed in are registered before allocating a stream.
+  /// @notice This test is to ensure that the nodes being passed in are registered before allocating
+  /// a stream.
   function test_fuzz_allocateStream_revertWhen_nodesNotRegistered(
     address randomNode,
     TestNode memory node,
@@ -201,10 +184,7 @@ contract StreamRegistryTest is
     vm.prank(node.node);
     vm.expectRevert(bytes(RiverRegistryErrors.NODE_NOT_FOUND));
     streamRegistry.allocateStream(
-      testStream.streamId,
-      nodes,
-      testStream.genesisMiniblockHash,
-      testStream.genesisMiniblock
+      testStream.streamId, nodes, testStream.genesisMiniblockHash, testStream.genesisMiniblock
     );
   }
 
@@ -230,9 +210,7 @@ contract StreamRegistryTest is
 
     vm.prank(nodeAddresses[0]);
     streamRegistry.addStream(
-      SAMPLE_STREAM.streamId,
-      SAMPLE_STREAM.genesisMiniblockHash,
-      streamToCreate
+      SAMPLE_STREAM.streamId, SAMPLE_STREAM.genesisMiniblockHash, streamToCreate
     );
   }
 
@@ -241,11 +219,7 @@ contract StreamRegistryTest is
     address nodeOperator,
     TestStream memory testStream,
     TestNode[100] memory nodes
-  )
-    external
-    givenNodeOperatorIsApproved(nodeOperator)
-    givenNodesAreRegistered(nodeOperator, nodes)
-  {
+  ) external givenNodeOperatorIsApproved(nodeOperator) givenNodesAreRegistered(nodeOperator, nodes) {
     address[] memory nodeAddresses = new address[](nodes.length);
     uint256 nodesLength = nodes.length;
     for (uint256 i; i < nodesLength; ++i) {
@@ -261,35 +235,20 @@ contract StreamRegistryTest is
     });
 
     vm.expectEmit(address(streamRegistry));
-    emit StreamCreated(
-      testStream.streamId,
-      testStream.genesisMiniblockHash,
-      streamToCreate
-    );
+    emit StreamCreated(testStream.streamId, testStream.genesisMiniblockHash, streamToCreate);
 
     vm.recordLogs();
     vm.prank(nodes[0].node);
 
-    streamRegistry.addStream(
-      testStream.streamId,
-      testStream.genesisMiniblockHash,
-      streamToCreate
-    );
+    streamRegistry.addStream(testStream.streamId, testStream.genesisMiniblockHash, streamToCreate);
 
-    Vm.Log memory streamUpdatedLog = _getFirstMatchingLog(
-      vm.getRecordedLogs(),
-      StreamUpdated.selector
-    );
+    Vm.Log memory streamUpdatedLog =
+      _getFirstMatchingLog(vm.getRecordedLogs(), StreamUpdated.selector);
 
-    assertEq(
-      uint8(uint256(streamUpdatedLog.topics[1])),
-      uint8(StreamEventType.Create)
-    );
+    assertEq(uint8(uint256(streamUpdatedLog.topics[1])), uint8(StreamEventType.Create));
 
-    (bytes32 emittedStreamId, Stream memory emittedStream) = abi.decode(
-      abi.decode(streamUpdatedLog.data, (bytes)),
-      (bytes32, Stream)
-    );
+    (bytes32 emittedStreamId, Stream memory emittedStream) =
+      abi.decode(abi.decode(streamUpdatedLog.data, (bytes)), (bytes32, Stream));
 
     assertEq(emittedStreamId, testStream.streamId);
     _assertEqStream(emittedStream, streamToCreate);
@@ -321,22 +280,15 @@ contract StreamRegistryTest is
     });
 
     vm.prank(node.node);
-    streamRegistry.addStream(
-      testStream.streamId,
-      testStream.genesisMiniblockHash,
-      streamToCreate
-    );
+    streamRegistry.addStream(testStream.streamId, testStream.genesisMiniblockHash, streamToCreate);
 
     vm.prank(node.node);
     vm.expectRevert(bytes(RiverRegistryErrors.ALREADY_EXISTS));
-    streamRegistry.addStream(
-      testStream.streamId,
-      testStream.genesisMiniblockHash,
-      streamToCreate
-    );
+    streamRegistry.addStream(testStream.streamId, testStream.genesisMiniblockHash, streamToCreate);
   }
 
-  /// @notice This test is to ensure that the node who is calling the addStream function is registered.
+  /// @notice This test is to ensure that the node who is calling the addStream function is
+  /// registered.
   function test_fuzz_addStream_revertWhen_nodeNotRegistered(
     TestStream memory testStream,
     TestNode memory node
@@ -353,14 +305,11 @@ contract StreamRegistryTest is
 
     vm.prank(node.node);
     vm.expectRevert(bytes(RiverRegistryErrors.NODE_NOT_FOUND));
-    streamRegistry.addStream(
-      testStream.streamId,
-      testStream.genesisMiniblockHash,
-      streamToCreate
-    );
+    streamRegistry.addStream(testStream.streamId, testStream.genesisMiniblockHash, streamToCreate);
   }
 
-  /// @notice This test is to ensure that the nodes being passed in are registered before allocating a stream.
+  /// @notice This test is to ensure that the nodes being passed in are registered before allocating
+  /// a stream.
   function test_fuzz_addStream_revertWhen_nodesNotRegistered(
     address randomNode,
     TestStream memory testStream,
@@ -385,11 +334,7 @@ contract StreamRegistryTest is
 
     vm.prank(node.node);
     vm.expectRevert(bytes(RiverRegistryErrors.NODE_NOT_FOUND));
-    streamRegistry.addStream(
-      testStream.streamId,
-      testStream.genesisMiniblockHash,
-      streamToCreate
-    );
+    streamRegistry.addStream(testStream.streamId, testStream.genesisMiniblockHash, streamToCreate);
   }
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -433,20 +378,14 @@ contract StreamRegistryTest is
     vm.prank(NODE);
     streamRegistry.setStreamLastMiniblockBatch(miniblocks);
 
-    Vm.Log memory streamUpdatedLog = _getFirstMatchingLog(
-      vm.getRecordedLogs(),
-      StreamUpdated.selector
-    );
+    Vm.Log memory streamUpdatedLog =
+      _getFirstMatchingLog(vm.getRecordedLogs(), StreamUpdated.selector);
 
     assertEq(
-      uint8(uint256(streamUpdatedLog.topics[1])),
-      uint8(StreamEventType.LastMiniblockBatchUpdated)
+      uint8(uint256(streamUpdatedLog.topics[1])), uint8(StreamEventType.LastMiniblockBatchUpdated)
     );
 
-    assertEq(
-      abi.decode(streamUpdatedLog.data, (bytes)),
-      abi.encode(miniblocks)
-    );
+    assertEq(abi.decode(streamUpdatedLog.data, (bytes)), abi.encode(miniblocks));
   }
 
   /// forge-config: default.fuzz.runs = 64
@@ -469,10 +408,7 @@ contract StreamRegistryTest is
 
       vm.prank(node.node);
       streamRegistry.allocateStream(
-        miniblocks[i].streamId,
-        nodes,
-        genesisMiniblockHash,
-        genesisMiniblock
+        miniblocks[i].streamId, nodes, genesisMiniblockHash, genesisMiniblock
       );
     }
 
@@ -492,8 +428,8 @@ contract StreamRegistryTest is
       );
     }
 
-    (StreamWithId[] memory streams, bool isLastPage) = streamRegistry
-      .getPaginatedStreams(0, miniblocks.length);
+    (StreamWithId[] memory streams, bool isLastPage) =
+      streamRegistry.getPaginatedStreams(0, miniblocks.length);
     assertEq(streams.length, miniblocks.length);
     assertTrue(isLastPage);
   }
@@ -546,17 +482,14 @@ contract StreamRegistryTest is
 
     vm.prank(node.node);
     streamRegistry.allocateStream(
-      testStream.streamId,
-      nodes,
-      testStream.genesisMiniblockHash,
-      testStream.genesisMiniblock
+      testStream.streamId, nodes, testStream.genesisMiniblockHash, testStream.genesisMiniblock
     );
 
     SetMiniblock[] memory miniblocks = new SetMiniblock[](1);
     miniblock.isSealed = true;
     miniblock.streamId = testStream.streamId;
     miniblock.lastMiniblockNum = 1;
-    miniblock.lastMiniblockHash = bytes32(uint256(1234567890));
+    miniblock.lastMiniblockHash = bytes32(uint256(1_234_567_890));
     miniblocks[0] = miniblock;
 
     vm.prank(node.node);
@@ -599,20 +532,13 @@ contract StreamRegistryTest is
     vm.prank(newNode);
     streamRegistry.placeStreamOnNode(SAMPLE_STREAM.streamId, newNode);
 
-    Vm.Log memory streamUpdatedLog = _getFirstMatchingLog(
-      vm.getRecordedLogs(),
-      StreamUpdated.selector
-    );
+    Vm.Log memory streamUpdatedLog =
+      _getFirstMatchingLog(vm.getRecordedLogs(), StreamUpdated.selector);
 
-    assertEq(
-      uint8(uint256(streamUpdatedLog.topics[1])),
-      uint8(StreamEventType.PlacementUpdated)
-    );
+    assertEq(uint8(uint256(streamUpdatedLog.topics[1])), uint8(StreamEventType.PlacementUpdated));
 
-    (bytes32 emittedStreamId, Stream memory emittedStream) = abi.decode(
-      abi.decode(streamUpdatedLog.data, (bytes)),
-      (bytes32, Stream)
-    );
+    (bytes32 emittedStreamId, Stream memory emittedStream) =
+      abi.decode(abi.decode(streamUpdatedLog.data, (bytes)), (bytes32, Stream));
     assertEq(emittedStreamId, SAMPLE_STREAM.streamId);
 
     Stream memory stream = streamRegistry.getStream(emittedStreamId);
@@ -647,20 +573,13 @@ contract StreamRegistryTest is
     vm.prank(NODE);
     streamRegistry.removeStreamFromNode(SAMPLE_STREAM.streamId, NODE);
 
-    Vm.Log memory streamUpdatedLog = _getFirstMatchingLog(
-      vm.getRecordedLogs(),
-      StreamUpdated.selector
-    );
+    Vm.Log memory streamUpdatedLog =
+      _getFirstMatchingLog(vm.getRecordedLogs(), StreamUpdated.selector);
 
-    assertEq(
-      uint8(uint256(streamUpdatedLog.topics[1])),
-      uint8(StreamEventType.PlacementUpdated)
-    );
+    assertEq(uint8(uint256(streamUpdatedLog.topics[1])), uint8(StreamEventType.PlacementUpdated));
 
-    (bytes32 emittedStreamId, Stream memory emittedStream) = abi.decode(
-      abi.decode(streamUpdatedLog.data, (bytes)),
-      (bytes32, Stream)
-    );
+    (bytes32 emittedStreamId, Stream memory emittedStream) =
+      abi.decode(abi.decode(streamUpdatedLog.data, (bytes)), (bytes32, Stream));
     assertEq(emittedStreamId, SAMPLE_STREAM.streamId);
 
     Stream memory stream = streamRegistry.getStream(emittedStreamId);
@@ -683,7 +602,8 @@ contract StreamRegistryTest is
     newNodes[1] = makeAddr("replNode1");
     newNodes[2] = makeAddr("replNode2");
 
-    uint8 replFactor = 1; // node 0 remains the only leader for this stream until other nodes are synced
+    uint8 replFactor = 1; // node 0 remains the only leader for this stream until other nodes are
+      // synced
 
     Stream memory expectedStream = Stream({
       lastMiniblockHash: stream.lastMiniblockHash,
@@ -695,8 +615,7 @@ contract StreamRegistryTest is
 
     vm.recordLogs();
     vm.prank(configManager);
-    SetStreamReplicationFactor[]
-      memory requests = new SetStreamReplicationFactor[](1);
+    SetStreamReplicationFactor[] memory requests = new SetStreamReplicationFactor[](1);
     requests[0] = SetStreamReplicationFactor({
       streamId: SAMPLE_STREAM.streamId,
       nodes: newNodes,
@@ -707,19 +626,12 @@ contract StreamRegistryTest is
     Vm.Log[] memory logs = vm.getRecordedLogs();
 
     // Verify StreamUpdated event
-    Vm.Log memory streamUpdatedLog = _getFirstMatchingLog(
-      logs,
-      StreamUpdated.selector
-    );
+    Vm.Log memory streamUpdatedLog = _getFirstMatchingLog(logs, StreamUpdated.selector);
+
+    assertEq(uint8(uint256(streamUpdatedLog.topics[1])), uint8(StreamEventType.PlacementUpdated));
 
     assertEq(
-      uint8(uint256(streamUpdatedLog.topics[1])),
-      uint8(StreamEventType.PlacementUpdated)
-    );
-
-    assertEq(
-      abi.decode(streamUpdatedLog.data, (bytes)),
-      abi.encode(SAMPLE_STREAM.streamId, expectedStream)
+      abi.decode(streamUpdatedLog.data, (bytes)), abi.encode(SAMPLE_STREAM.streamId, expectedStream)
     );
   }
 
@@ -737,8 +649,8 @@ contract StreamRegistryTest is
   function test_getStreamWithGenesis() public {
     test_allocateStream();
 
-    (Stream memory stream, bytes32 genesisMiniblockHash, ) = streamRegistry
-      .getStreamWithGenesis(SAMPLE_STREAM.streamId);
+    (Stream memory stream, bytes32 genesisMiniblockHash,) =
+      streamRegistry.getStreamWithGenesis(SAMPLE_STREAM.streamId);
     assertEq(stream.lastMiniblockHash, SAMPLE_STREAM.genesisMiniblockHash);
     assertEq(genesisMiniblockHash, SAMPLE_STREAM.genesisMiniblockHash);
   }
@@ -750,11 +662,7 @@ contract StreamRegistryTest is
   {
     _addStreams();
 
-    StreamWithId[] memory streams = streamRegistry.getPaginatedStreamsOnNode(
-      NODE,
-      0,
-      10
-    );
+    StreamWithId[] memory streams = streamRegistry.getPaginatedStreamsOnNode(NODE, 0, 10);
 
     assertEq(streams.length, 10);
     for (uint256 i; i < streams.length; ++i) {
@@ -770,8 +678,7 @@ contract StreamRegistryTest is
   {
     _addStreams();
 
-    (StreamWithId[] memory streams, bool isLastPage) = streamRegistry
-      .getPaginatedStreams(0, 10);
+    (StreamWithId[] memory streams, bool isLastPage) = streamRegistry.getPaginatedStreams(0, 10);
 
     assertEq(streams.length, 10);
     for (uint256 i; i < streams.length; ++i) {
@@ -793,18 +700,11 @@ contract StreamRegistryTest is
       });
       streams[i].nodes[0] = NODE;
       vm.prank(NODE);
-      streamRegistry.addStream(
-        bytes32(uint256(i)),
-        bytes32(uint256(i)),
-        streams[i]
-      );
+      streamRegistry.addStream(bytes32(uint256(i)), bytes32(uint256(i)), streams[i]);
     }
   }
 
-  function _assertEqStream(
-    Stream memory stream,
-    Stream memory expectedStream
-  ) internal pure {
+  function _assertEqStream(Stream memory stream, Stream memory expectedStream) internal pure {
     assertEq(abi.encode(stream), abi.encode(expectedStream));
   }
 }

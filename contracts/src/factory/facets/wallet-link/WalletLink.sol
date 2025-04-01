@@ -22,10 +22,7 @@ contract WalletLink is IWalletLink, WalletLinkBase, OwnableBase, Facet {
   }
 
   /// @inheritdoc IWalletLink
-  function linkCallerToRootKey(
-    LinkedWallet calldata rootWallet,
-    uint256 nonce
-  ) external {
+  function linkCallerToRootKey(LinkedWallet calldata rootWallet, uint256 nonce) external {
     _linkCallerToRootWallet(rootWallet, nonce);
   }
 
@@ -39,27 +36,17 @@ contract WalletLink is IWalletLink, WalletLinkBase, OwnableBase, Facet {
   }
 
   /// @inheritdoc IWalletLink
-  function linkNonEVMWalletToRootKey(
-    NonEVMLinkedWallet calldata wallet,
-    uint256 nonce
-  ) external {
+  function linkNonEVMWalletToRootKey(NonEVMLinkedWallet calldata wallet, uint256 nonce) external {
     _linkNonEVMWalletToRootWalletViaCaller(wallet, nonce);
   }
 
   /// @inheritdoc IWalletLink
-  function removeNonEVMWalletLink(
-    WalletLib.Wallet calldata wallet,
-    uint256 nonce
-  ) external {
+  function removeNonEVMWalletLink(WalletLib.Wallet calldata wallet, uint256 nonce) external {
     _removeNonEVMWalletLink(wallet, nonce);
   }
 
   /// @inheritdoc IWalletLink
-  function removeLink(
-    address wallet,
-    LinkedWallet calldata rootWallet,
-    uint256 nonce
-  ) external {
+  function removeLink(address wallet, LinkedWallet calldata rootWallet, uint256 nonce) external {
     _removeLink(wallet, rootWallet, nonce);
   }
 
@@ -69,7 +56,9 @@ contract WalletLink is IWalletLink, WalletLinkBase, OwnableBase, Facet {
   }
 
   /// @inheritdoc IWalletLink
-  function setDefaultWallet(address defaultWallet) external {
+  function setDefaultWallet(
+    address defaultWallet
+  ) external {
     _setDefaultWallet(msg.sender, defaultWallet);
   }
 
@@ -110,10 +99,7 @@ contract WalletLink is IWalletLink, WalletLinkBase, OwnableBase, Facet {
   }
 
   /// @inheritdoc IWalletLink
-  function checkIfLinked(
-    address rootKey,
-    address wallet
-  ) external view returns (bool) {
+  function checkIfLinked(address rootKey, address wallet) external view returns (bool) {
     return _checkIfLinked(rootKey, wallet);
   }
 
@@ -133,15 +119,14 @@ contract WalletLink is IWalletLink, WalletLinkBase, OwnableBase, Facet {
   }
 
   /// @inheritdoc IWalletLink
-  function getDependency(bytes32 dependency) external view returns (address) {
+  function getDependency(
+    bytes32 dependency
+  ) external view returns (address) {
     return _getDependency(dependency);
   }
 
   /// @inheritdoc IWalletLink
-  function setDependency(
-    bytes32 dependency,
-    address dependencyAddress
-  ) external onlyOwner {
+  function setDependency(bytes32 dependency, address dependencyAddress) external onlyOwner {
     _setDependency(dependency, dependencyAddress);
   }
 }

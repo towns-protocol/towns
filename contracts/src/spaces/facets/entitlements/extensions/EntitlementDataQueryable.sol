@@ -2,7 +2,8 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {IEntitlementDataQueryable} from "contracts/src/spaces/facets/entitlements/extensions/IEntitlementDataQueryable.sol";
+import {IEntitlementDataQueryable} from
+  "contracts/src/spaces/facets/entitlements/extensions/IEntitlementDataQueryable.sol";
 import {IRolesBase} from "contracts/src/spaces/facets/roles/IRoles.sol";
 import {IEntitlement} from "contracts/src/spaces/entitlements/IEntitlement.sol";
 import {IEntitlementGatedBase} from "contracts/src/spaces/facets/gated/IEntitlementGated.sol";
@@ -11,7 +12,8 @@ import {IEntitlementGatedBase} from "contracts/src/spaces/facets/gated/IEntitlem
 import {StringSet} from "contracts/src/utils/StringSet.sol";
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import {ChannelService} from "contracts/src/spaces/facets/channels/ChannelService.sol";
-import {EntitlementGatedStorage} from "contracts/src/spaces/facets/gated/EntitlementGatedStorage.sol";
+import {EntitlementGatedStorage} from
+  "contracts/src/spaces/facets/gated/EntitlementGatedStorage.sol";
 import {RolesStorage} from "contracts/src/spaces/facets/roles/RolesStorage.sol";
 import {StringSet} from "contracts/src/utils/StringSet.sol";
 
@@ -48,8 +50,7 @@ contract EntitlementDataQueryable is
     bytes32 transactionId,
     uint256 roleId
   ) external view returns (EntitlementData memory) {
-    EntitlementGatedStorage.Layout storage ds = EntitlementGatedStorage
-      .layout();
+    EntitlementGatedStorage.Layout storage ds = EntitlementGatedStorage.layout();
 
     Transaction storage transaction = ds.transactions[transactionId];
 
@@ -59,8 +60,7 @@ contract EntitlementDataQueryable is
 
     IEntitlement re = IEntitlement(transaction.entitlement);
 
-    return
-      EntitlementData(re.moduleType(), re.getEntitlementDataByRoleId(roleId));
+    return EntitlementData(re.moduleType(), re.getEntitlementDataByRoleId(roleId));
   }
 
   // =============================================================
@@ -91,9 +91,7 @@ contract EntitlementDataQueryable is
 
       // check if role is associated with the channel and has the requested permission
       if (rs.channelOverridesByRole[roleId].contains(channelId)) {
-        StringSet.Set storage permissions = rs.permissionOverridesByRole[
-          roleId
-        ][channelId];
+        StringSet.Set storage permissions = rs.permissionOverridesByRole[roleId][channelId];
         hasPermission = permissions.contains(permission);
       }
       // check the default permissions if this role didn't have a channel override.
@@ -145,8 +143,7 @@ contract EntitlementDataQueryable is
           IEntitlement entitlement = IEntitlement(entitlements[j]);
 
           entitlementData[currentIndex] = EntitlementData(
-            entitlement.moduleType(),
-            entitlement.getEntitlementDataByRoleId(roles[i].id)
+            entitlement.moduleType(), entitlement.getEntitlementDataByRoleId(roles[i].id)
           );
           unchecked {
             ++currentIndex;

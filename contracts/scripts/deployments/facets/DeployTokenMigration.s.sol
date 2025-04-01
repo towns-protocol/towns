@@ -26,15 +26,13 @@ contract DeployTokenMigration is FacetHelper, Deployer {
     return "facets/tokenMigrationFacet";
   }
 
-  function makeInitData(
-    address oldToken,
-    address newToken
-  ) public pure returns (bytes memory) {
-    return
-      abi.encodeWithSelector(initializer(), IERC20(oldToken), IERC20(newToken));
+  function makeInitData(address oldToken, address newToken) public pure returns (bytes memory) {
+    return abi.encodeWithSelector(initializer(), IERC20(oldToken), IERC20(newToken));
   }
 
-  function __deploy(address deployer) public override returns (address) {
+  function __deploy(
+    address deployer
+  ) public override returns (address) {
     vm.startBroadcast(deployer);
     TokenMigrationFacet tokenMigration = new TokenMigrationFacet();
     vm.stopBroadcast();

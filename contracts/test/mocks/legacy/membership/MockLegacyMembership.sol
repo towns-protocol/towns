@@ -13,7 +13,9 @@ import {Permissions} from "contracts/src/spaces/facets/Permissions.sol";
 import {MembershipJoin} from "contracts/src/spaces/facets/membership/join/MembershipJoin.sol";
 
 contract MockLegacyMembership is MembershipJoin {
-  function joinSpaceLegacy(address receiver) external payable {
+  function joinSpaceLegacy(
+    address receiver
+  ) external payable {
     ReferralTypes memory emptyReferral;
     _joinSpaceWithReferral(receiver, emptyReferral);
   }
@@ -22,15 +24,8 @@ contract MockLegacyMembership is MembershipJoin {
     address receiver,
     address,
     bytes32 transactionId
-  )
-    internal
-    virtual
-    override
-    returns (bool isEntitled, bool isCrosschainPending)
-  {
-    IRolesBase.Role[] memory roles = _getRolesWithPermission(
-      Permissions.JoinSpace
-    );
+  ) internal virtual override returns (bool isEntitled, bool isCrosschainPending) {
+    IRolesBase.Role[] memory roles = _getRolesWithPermission(Permissions.JoinSpace);
     address[] memory linkedWallets = _getLinkedWalletsWithUser(receiver);
 
     uint256 totalRoles = roles.length;
@@ -49,10 +44,7 @@ contract MockLegacyMembership is MembershipJoin {
 
         if (entitlement.isCrosschain()) {
           _requestEntitlementCheck(
-            receiver,
-            transactionId,
-            IRuleEntitlement(address(entitlement)),
-            role.id
+            receiver, transactionId, IRuleEntitlement(address(entitlement)), role.id
           );
           isCrosschainPending = true;
         }

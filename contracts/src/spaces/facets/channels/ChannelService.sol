@@ -33,16 +33,14 @@ library ChannelService {
     ChannelStorage.Layout storage channel = ChannelStorage.layout();
 
     channel.channelIds.add(channelId);
-    channel.channelById[channelId] = ChannelStorage.Channel({
-      id: channelId,
-      disabled: false,
-      metadata: metadata
-    });
+    channel.channelById[channelId] =
+      ChannelStorage.Channel({id: channelId, disabled: false, metadata: metadata});
 
     for (uint256 i = 0; i < roleIds.length; i++) {
       // check if role already exists in channel
-      if (channel.rolesByChannelId[channelId].contains(roleIds[i]))
+      if (channel.rolesByChannelId[channelId].contains(roleIds[i])) {
         revert ChannelService__RoleAlreadyExists();
+      }
       channel.rolesByChannelId[channelId].add(roleIds[i]);
     }
   }
@@ -60,11 +58,7 @@ library ChannelService {
     disabled = channelInfo.disabled;
   }
 
-  function updateChannel(
-    bytes32 channelId,
-    string memory metadata,
-    bool disabled
-  ) internal {
+  function updateChannel(bytes32 channelId, string memory metadata, bool disabled) internal {
     checkChannelExists(channelId);
 
     ChannelStorage.Layout storage channel = ChannelStorage.layout();
@@ -72,8 +66,8 @@ library ChannelService {
     ChannelStorage.Channel storage channelInfo = channel.channelById[channelId];
 
     if (
-      bytes(metadata).length > 0 &&
-      keccak256(bytes(metadata)) != keccak256(bytes(channelInfo.metadata))
+      bytes(metadata).length > 0
+        && keccak256(bytes(metadata)) != keccak256(bytes(channelInfo.metadata))
     ) {
       channelInfo.metadata = metadata;
     }
@@ -83,7 +77,9 @@ library ChannelService {
     }
   }
 
-  function removeChannel(bytes32 channelId) internal {
+  function removeChannel(
+    bytes32 channelId
+  ) internal {
     checkChannelExists(channelId);
 
     ChannelStorage.Layout storage channel = ChannelStorage.layout();
@@ -116,7 +112,7 @@ library ChannelService {
 
     channelIds = new bytes32[](potentialChannelsLength);
 
-    for (uint256 i = 0; i < potentialChannelsLength; ) {
+    for (uint256 i = 0; i < potentialChannelsLength;) {
       bytes32 channelId = channel.channelIds.at(i);
 
       if (channel.rolesByChannelId[channelId].contains(roleId)) {
@@ -175,7 +171,9 @@ library ChannelService {
   //                        Validators
   // =============================================================
 
-  function checkChannelNotDisabled(bytes32 channelId) internal view {
+  function checkChannelNotDisabled(
+    bytes32 channelId
+  ) internal view {
     ChannelStorage.Layout storage channel = ChannelStorage.layout();
 
     if (channel.channelById[channelId].disabled) {
@@ -183,14 +181,18 @@ library ChannelService {
     }
   }
 
-  function checkChannel(bytes32 channelId) internal view {
+  function checkChannel(
+    bytes32 channelId
+  ) internal view {
     // check that channel exists
     if (ChannelStorage.layout().channelIds.contains(channelId)) {
       revert ChannelService__ChannelAlreadyExists();
     }
   }
 
-  function checkChannelExists(bytes32 channelId) internal view {
+  function checkChannelExists(
+    bytes32 channelId
+  ) internal view {
     // check that channel exists
     if (!ChannelStorage.layout().channelIds.contains(channelId)) {
       revert ChannelService__ChannelDoesNotExist();

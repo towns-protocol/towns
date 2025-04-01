@@ -60,7 +60,9 @@ contract PlatformRequirementsFacet is
   }
 
   /// @inheritdoc IPlatformRequirements
-  function setMembershipMinPrice(uint256 minPrice) external onlyOwner {
+  function setMembershipMinPrice(
+    uint256 minPrice
+  ) external onlyOwner {
     _setMembershipMinPrice(minPrice);
   }
 
@@ -70,27 +72,37 @@ contract PlatformRequirementsFacet is
   }
 
   /// @inheritdoc IPlatformRequirements
-  function setFeeRecipient(address recipient) external onlyOwner {
+  function setFeeRecipient(
+    address recipient
+  ) external onlyOwner {
     _setFeeRecipient(recipient);
   }
 
   /// @inheritdoc IPlatformRequirements
-  function setMembershipBps(uint16 bps) external onlyOwner {
+  function setMembershipBps(
+    uint16 bps
+  ) external onlyOwner {
     _setMembershipBps(bps);
   }
 
   /// @inheritdoc IPlatformRequirements
-  function setMembershipFee(uint256 fee) external onlyOwner {
+  function setMembershipFee(
+    uint256 fee
+  ) external onlyOwner {
     _setMembershipFee(fee);
   }
 
   /// @inheritdoc IPlatformRequirements
-  function setMembershipMintLimit(uint256 limit) external onlyOwner {
+  function setMembershipMintLimit(
+    uint256 limit
+  ) external onlyOwner {
     _setMembershipMintLimit(limit);
   }
 
   /// @inheritdoc IPlatformRequirements
-  function setMembershipDuration(uint64 duration) external onlyOwner {
+  function setMembershipDuration(
+    uint64 duration
+  ) external onlyOwner {
     _setMembershipDuration(duration);
   }
 
@@ -100,32 +112,24 @@ contract PlatformRequirementsFacet is
   }
 
   /// @inheritdoc IPlatformRequirements
-  function getSwapFees()
-    external
-    view
-    returns (uint16 treasuryBps, uint16 posterBps)
-  {
+  function getSwapFees() external view returns (uint16 treasuryBps, uint16 posterBps) {
     return _getSwapFees();
   }
 
   /// @inheritdoc IPlatformRequirements
-  function setSwapFees(
-    uint16 treasuryBps,
-    uint16 posterBps
-  ) external onlyOwner {
+  function setSwapFees(uint16 treasuryBps, uint16 posterBps) external onlyOwner {
     _setSwapFees(treasuryBps, posterBps);
   }
 
   /// @inheritdoc IPlatformRequirements
-  function isRouterWhitelisted(address router) external view returns (bool) {
+  function isRouterWhitelisted(
+    address router
+  ) external view returns (bool) {
     return _isRouterWhitelisted(router);
   }
 
   /// @inheritdoc IPlatformRequirements
-  function setRouterWhitelisted(
-    address router,
-    bool whitelisted
-  ) external onlyOwner {
+  function setRouterWhitelisted(address router, bool whitelisted) external onlyOwner {
     _setRouterWhitelisted(router, whitelisted);
   }
 }

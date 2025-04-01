@@ -14,8 +14,7 @@ library CurrencyTransfer {
   using SafeTransferLib for address;
 
   /// @dev The address interpreted as native token of the chain.
-  address internal constant NATIVE_TOKEN =
-    address(0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE);
+  address internal constant NATIVE_TOKEN = address(0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE);
 
   /// @dev The ETH transfer has failed.
   error ETHTransferFailed();
@@ -34,12 +33,7 @@ library CurrencyTransfer {
   /// @param from The address to transfer from.
   /// @param to The address to transfer to.
   /// @param amount The amount to transfer.
-  function transferCurrency(
-    address currency,
-    address from,
-    address to,
-    uint256 amount
-  ) internal {
+  function transferCurrency(address currency, address from, address to, uint256 amount) internal {
     if (amount == 0) {
       return;
     }
@@ -73,14 +67,17 @@ library CurrencyTransfer {
         IWETH(_nativeTokenWrapper).withdraw(amount);
         safeTransferNativeTokenWithWrapper(to, amount, _nativeTokenWrapper);
       } else if (to == address(this)) {
-        if (amount != msg.value)
+        if (amount != msg.value) {
           CustomRevert.revertWith(MsgValueMismatch.selector);
+        }
 
         IWETH(_nativeTokenWrapper).deposit{value: msg.value}();
       } else {
-        // This is a fallback for the case where the contract receives native token and then transfers it to another address.
-        if (amount != msg.value)
+        // This is a fallback for the case where the contract receives native token and then
+        // transfers it to another address.
+        if (amount != msg.value) {
           CustomRevert.revertWith(MsgValueMismatch.selector);
+        }
 
         safeTransferNativeTokenWithWrapper(to, msg.value, _nativeTokenWrapper);
       }
@@ -90,12 +87,7 @@ library CurrencyTransfer {
   }
 
   /// @dev Transfer `amount` of ERC20 token from `from` to `to`.
-  function safeTransferERC20(
-    address token,
-    address from,
-    address to,
-    uint256 amount
-  ) internal {
+  function safeTransferERC20(address token, address from, address to, uint256 amount) internal {
     if (from == to) {
       return;
     }

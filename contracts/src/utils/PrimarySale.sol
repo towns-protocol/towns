@@ -14,7 +14,9 @@ abstract contract PrimarySale is IPrimarySale {
   }
 
   /// @inheritdoc IPrimarySale
-  function setPrimarySaleRecipient(address _recipient) external override {
+  function setPrimarySaleRecipient(
+    address _recipient
+  ) external override {
     if (!_canSetPrimarySaleRecipient()) {
       revert("PrimarySale: Not authorized");
     }
@@ -22,7 +24,9 @@ abstract contract PrimarySale is IPrimarySale {
     _setPrimarySaleRecipient(_recipient);
   }
 
-  function _setPrimarySaleRecipient(address _recipient) internal {
+  function _setPrimarySaleRecipient(
+    address _recipient
+  ) internal {
     recipient = _recipient;
     emit PrimarySaleRecipientUpdated(_recipient);
   }

@@ -16,27 +16,15 @@ contract DeployBase is Context, DeployHelpers, Script {
     // set up chains
     setChain(
       "river",
-      ChainData({
-        name: "river",
-        chainId: 550,
-        rpcUrl: "https://mainnet.rpc.river.build/http"
-      })
+      ChainData({name: "river", chainId: 550, rpcUrl: "https://mainnet.rpc.river.build/http"})
     );
     setChain(
       "river_anvil",
-      ChainData({
-        name: "river_anvil",
-        chainId: 31338,
-        rpcUrl: "http://localhost:8546"
-      })
+      ChainData({name: "river_anvil", chainId: 31_338, rpcUrl: "http://localhost:8546"})
     );
     setChain(
       "river_devnet",
-      ChainData({
-        name: "river_devnet",
-        chainId: 6524490,
-        rpcUrl: "https://devnet.rpc.river.build"
-      })
+      ChainData({name: "river_devnet", chainId: 6_524_490, rpcUrl: "https://devnet.rpc.river.build"})
     );
   }
 
@@ -46,9 +34,8 @@ contract DeployBase is Context, DeployHelpers, Script {
 
   /// @notice returns the chain alias for the current chain
   function chainIdAlias() internal returns (string memory) {
-    string memory chainAlias = block.chainid == 31337
-      ? "base_anvil"
-      : getChain(block.chainid).chainAlias;
+    string memory chainAlias =
+      block.chainid == 31_337 ? "base_anvil" : getChain(block.chainid).chainAlias;
     return getInitialStringFromChar(chainAlias, "_", chainAlias);
   }
 
@@ -60,31 +47,20 @@ contract DeployBase is Context, DeployHelpers, Script {
     if (bytes(context).length == 0) {
       context = string.concat(DEPLOYMENT_CACHE_PATH, "/", chainAlias);
     } else {
-      context = string.concat(
-        DEPLOYMENT_CACHE_PATH,
-        "/",
-        context,
-        "/",
-        chainAlias
-      );
+      context = string.concat(DEPLOYMENT_CACHE_PATH, "/", context, "/", chainAlias);
     }
 
     path = string.concat(vm.projectRoot(), "/", context);
   }
 
-  function getDeployment(string memory versionName) internal returns (address) {
+  function getDeployment(
+    string memory versionName
+  ) internal returns (address) {
     string memory networkDir = networkDirPath();
     string memory path = addressesPath(versionName, networkDir);
 
     if (!exists(path)) {
-      debug(
-        string.concat(
-          "no deployment found for ",
-          versionName,
-          " on ",
-          chainIdAlias()
-        )
-      );
+      debug(string.concat("no deployment found for ", versionName, " on ", chainIdAlias()));
       return address(0);
     }
 
@@ -92,10 +68,7 @@ contract DeployBase is Context, DeployHelpers, Script {
     return vm.parseJsonAddress(data, ".address");
   }
 
-  function saveDeployment(
-    string memory versionName,
-    address contractAddr
-  ) internal {
+  function saveDeployment(string memory versionName, address contractAddr) internal {
     if (!shouldSaveDeployments()) {
       debug("(set SAVE_DEPLOYMENTS=1 to save deployments to file)");
       return;
@@ -117,11 +90,7 @@ contract DeployBase is Context, DeployHelpers, Script {
     string memory path = addressesPath(versionName, networkDir);
 
     // save deployment
-    string memory contractJson = vm.serializeAddress(
-      "addresses",
-      "address",
-      contractAddr
-    );
+    string memory contractJson = vm.serializeAddress("addresses", "address", contractAddr);
     debug("saving deployment to: ", path);
     vm.writeJson(contractJson, path);
   }
@@ -134,7 +103,9 @@ contract DeployBase is Context, DeployHelpers, Script {
     return string.concat(networkDir, "/addresses/", versionName, ".json");
   }
 
-  function createChainIdFile(string memory networkDir) internal {
+  function createChainIdFile(
+    string memory networkDir
+  ) internal {
     string memory chainIdFilePath = string.concat(networkDir, "/chainId.json");
 
     if (!exists(chainIdFilePath)) {

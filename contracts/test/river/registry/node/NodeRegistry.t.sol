@@ -69,11 +69,7 @@ contract NodeRegistryTest is RiverRegistryBaseSetup, INodeRegistryBase {
   //                           removeNode
   // =============================================================
 
-  modifier givenNodeStatusIs(
-    address nodeOperator,
-    address node,
-    NodeStatus status
-  ) {
+  modifier givenNodeStatusIs(address nodeOperator, address node, NodeStatus status) {
     vm.prank(nodeOperator);
     vm.expectEmit(diamond);
     emit NodeStatusUpdated(node, status);
@@ -127,7 +123,9 @@ contract NodeRegistryTest is RiverRegistryBaseSetup, INodeRegistryBase {
     assertEq(uint256(updated.status), uint256(NodeStatus.RemoteOnly));
   }
 
-  function test_revertWhen_updateNodeStatusNodeNotFound(address node) external {
+  function test_revertWhen_updateNodeStatusNodeNotFound(
+    address node
+  ) external {
     vm.assume(node != address(0));
 
     vm.expectRevert(bytes(RiverRegistryErrors.NODE_NOT_FOUND));
@@ -165,11 +163,7 @@ contract NodeRegistryTest is RiverRegistryBaseSetup, INodeRegistryBase {
   // =============================================================
   //                         updateNodeUrl
   // =============================================================
-  modifier givenNodeUrlIsUpdated(
-    address nodeOperator,
-    address node,
-    string memory newUrl
-  ) {
+  modifier givenNodeUrlIsUpdated(address nodeOperator, address node, string memory newUrl) {
     vm.prank(nodeOperator);
     vm.expectEmit(diamond);
     emit NodeUrlUpdated(node, newUrl);
@@ -190,7 +184,9 @@ contract NodeRegistryTest is RiverRegistryBaseSetup, INodeRegistryBase {
     assertEq(updated.url, "new-url");
   }
 
-  function test_revertWhen_updateNodeUrlInvalidOperator(address node) external {
+  function test_revertWhen_updateNodeUrlInvalidOperator(
+    address node
+  ) external {
     vm.prank(_randomAddress());
     vm.expectRevert(bytes(RiverRegistryErrors.BAD_AUTH));
     nodeRegistry.updateNodeUrl(node, url);

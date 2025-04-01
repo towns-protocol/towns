@@ -8,10 +8,7 @@ pragma solidity ^0.8.23;
 // contracts
 
 interface IL1StandardBridge {
-  function depositETH(
-    uint32 _minGasLimit,
-    bytes calldata _extraData
-  ) external payable;
+  function depositETH(uint32 _minGasLimit, bytes calldata _extraData) external payable;
 
   function depositETHTo(
     address _to,

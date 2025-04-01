@@ -4,7 +4,8 @@ pragma solidity ^0.8.23;
 import {IERC721ABase} from "./IERC721A.sol";
 
 library ERC721AStorage {
-  // keccak256(abi.encode(uint256(keccak256("diamond.facets.token.ERC721A.storage")) - 1)) & ~bytes32(uint256(0xff))
+  // keccak256(abi.encode(uint256(keccak256("diamond.facets.token.ERC721A.storage")) - 1)) &
+  // ~bytes32(uint256(0xff))
   bytes32 internal constant STORAGE_SLOT =
     0x6569bde4a160c636ea8b8d11acb83a60d7fec0b8f2e09389306cba0e1340df00;
 

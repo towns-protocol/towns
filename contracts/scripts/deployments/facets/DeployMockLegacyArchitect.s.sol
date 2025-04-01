@@ -23,7 +23,9 @@ contract DeployMockLegacyArchitect is FacetHelper, Deployer {
     return "facets/mockLegacyArchitectFacet";
   }
 
-  function __deploy(address deployer) public override returns (address) {
+  function __deploy(
+    address deployer
+  ) public override returns (address) {
     vm.startBroadcast(deployer);
     MockLegacyArchitect architect = new MockLegacyArchitect();
     vm.stopBroadcast();

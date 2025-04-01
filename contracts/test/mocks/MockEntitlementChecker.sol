@@ -10,16 +10,14 @@ import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet
 // contracts
 import {NodeOperatorFacet} from "contracts/src/base/registry/facets/operator/NodeOperatorFacet.sol";
 import {EntitlementChecker} from "contracts/src/base/registry/facets/checker/EntitlementChecker.sol";
-import {NodeOperatorStorage, NodeOperatorStatus} from "contracts/src/base/registry/facets/operator/NodeOperatorStorage.sol";
+import {
+  NodeOperatorStorage,
+  NodeOperatorStatus
+} from "contracts/src/base/registry/facets/operator/NodeOperatorStorage.sol";
 import {OwnableBase} from "@towns-protocol/diamond/src/facets/ownable/OwnableBase.sol";
 import {XChain} from "contracts/src/base/registry/facets/xchain/XChain.sol";
 
-contract MockEntitlementChecker is
-  OwnableBase,
-  NodeOperatorFacet,
-  EntitlementChecker,
-  XChain
-{
+contract MockEntitlementChecker is OwnableBase, NodeOperatorFacet, EntitlementChecker, XChain {
   using EnumerableSet for EnumerableSet.AddressSet;
 
   // =============================================================
@@ -28,7 +26,9 @@ contract MockEntitlementChecker is
   // Constructor is used for tests that deploy contract directly
   // since owner is not set in this case.
   // Regular deployment scripts pass empty array to the constructor.
-  constructor(address[] memory approvedOperators) {
+  constructor(
+    address[] memory approvedOperators
+  ) {
     _transferOwnership(msg.sender);
     _addInterface(type(INodeOperator).interfaceId);
     _mint(msg.sender, 1);

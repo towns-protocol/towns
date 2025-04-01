@@ -2,8 +2,12 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {IEntitlementDataQueryable, IEntitlementDataQueryableBase} from "contracts/src/spaces/facets/entitlements/extensions/IEntitlementDataQueryable.sol";
-import {IEntitlementsManager} from "contracts/src/spaces/facets/entitlements/IEntitlementsManager.sol";
+import {
+  IEntitlementDataQueryable,
+  IEntitlementDataQueryableBase
+} from "contracts/src/spaces/facets/entitlements/extensions/IEntitlementDataQueryable.sol";
+import {IEntitlementsManager} from
+  "contracts/src/spaces/facets/entitlements/IEntitlementsManager.sol";
 import {IRolesBase, IRoles} from "contracts/src/spaces/facets/roles/IRoles.sol";
 import {IEntitlement} from "contracts/src/spaces/entitlements/IEntitlement.sol";
 import {IChannel} from "contracts/src/spaces/facets/channels/IChannel.sol";
@@ -35,14 +39,12 @@ contract EntitlementDataQueryableTest is
     mockEntitlement.initialize(everyoneSpace);
 
     vm.prank(founder);
-    IEntitlementsManager(everyoneSpace).addEntitlementModule(
-      address(mockEntitlement)
-    );
+    IEntitlementsManager(everyoneSpace).addEntitlementModule(address(mockEntitlement));
   }
 
   function test_getEntitlementDataByPermission() external view {
-    EntitlementData[] memory entitlement = entitlements
-      .getEntitlementDataByPermission(Permissions.JoinSpace);
+    EntitlementData[] memory entitlement =
+      entitlements.getEntitlementDataByPermission(Permissions.JoinSpace);
 
     assertEq(entitlement.length, 1);
     assertEq(entitlement[0].entitlementType, "UserEntitlement");
@@ -60,17 +62,12 @@ contract EntitlementDataQueryableTest is
     permissions[0] = Permissions.Read;
 
     CreateEntitlement[] memory createEntitlements = new CreateEntitlement[](1);
-    createEntitlements[0] = CreateEntitlement({
-      module: IEntitlement(mockEntitlement),
-      data: abi.encode(users)
-    });
+    createEntitlements[0] =
+      CreateEntitlement({module: IEntitlement(mockEntitlement), data: abi.encode(users)});
 
     vm.prank(founder);
-    uint256 roleId = IRoles(everyoneSpace).createRole(
-      "test-channel-member",
-      permissions,
-      createEntitlements
-    );
+    uint256 roleId =
+      IRoles(everyoneSpace).createRole("test-channel-member", permissions, createEntitlements);
 
     uint256[] memory roles = new uint256[](1);
     roles[0] = roleId;
@@ -79,8 +76,8 @@ contract EntitlementDataQueryableTest is
     vm.prank(founder);
     IChannel(everyoneSpace).createChannel(channelId, "Metadata", roles);
 
-    EntitlementData[] memory channelEntitlements = entitlements
-      .getChannelEntitlementDataByPermission(channelId, Permissions.Read);
+    EntitlementData[] memory channelEntitlements =
+      entitlements.getChannelEntitlementDataByPermission(channelId, Permissions.Read);
 
     assertEq(channelEntitlements.length, 1);
     assertEq(channelEntitlements[0].entitlementType, "MockUserEntitlement");
@@ -98,12 +95,10 @@ contract EntitlementDataQueryableTest is
     vm.prank(user);
     membership.joinSpace(user);
 
-    (, , , bytes32 transactionId, uint256 roleId, ) = _getRequestV2EventData(
-      vm.getRecordedLogs()
-    );
+    (,,, bytes32 transactionId, uint256 roleId,) = _getRequestV2EventData(vm.getRecordedLogs());
 
-    EntitlementData memory data = IEntitlementDataQueryable(userSpace)
-      .getCrossChainEntitlementData(transactionId, roleId);
+    EntitlementData memory data =
+      IEntitlementDataQueryable(userSpace).getCrossChainEntitlementData(transactionId, roleId);
 
     assertTrue(data.entitlementData.length > 0);
     assertEq(data.entitlementType, "RuleEntitlementV2");

@@ -14,7 +14,11 @@ import "forge-std/console.sol";
 
 // contracts
 
-import {AlphaHelper, DiamondFacetData, FacetData} from "contracts/scripts/interactions/helpers/AlphaHelper.sol";
+import {
+  AlphaHelper,
+  DiamondFacetData,
+  FacetData
+} from "contracts/scripts/interactions/helpers/AlphaHelper.sol";
 
 import {DeploySpace} from "contracts/scripts/deployments/diamonds/DeploySpace.s.sol";
 import {DeploySpaceFactory} from "contracts/scripts/deployments/diamonds/DeploySpaceFactory.s.sol";
@@ -84,7 +88,9 @@ contract InteractAlphaSparse is AlphaHelper {
 
   string private jsonData;
 
-  function readJSON(string memory jsonPath) internal {
+  function readJSON(
+    string memory jsonPath
+  ) internal {
     jsonData = vm.readFile(jsonPath);
   }
 
@@ -94,28 +100,14 @@ contract InteractAlphaSparse is AlphaHelper {
    *      and parses it to extract information about updated diamonds and their facets
    * @return An array of DiamondFacetData structs containing the decoded information
    */
-
-  function decodeDiamondsFromJSON()
-    internal
-    view
-    returns (DiamondFacetData[] memory)
-  {
-    uint256 updatedDiamondLen = abi.decode(
-      vm.parseJson(jsonData, ".numUpdated"),
-      (uint256)
-    );
-    DiamondFacetData[] memory diamonds = new DiamondFacetData[](
-      updatedDiamondLen
-    );
+  function decodeDiamondsFromJSON() internal view returns (DiamondFacetData[] memory) {
+    uint256 updatedDiamondLen = abi.decode(vm.parseJson(jsonData, ".numUpdated"), (uint256));
+    DiamondFacetData[] memory diamonds = new DiamondFacetData[](updatedDiamondLen);
 
     for (uint256 i = 0; i < updatedDiamondLen; i++) {
       // Decode diamond name and number of facets
       DiamondFacetData memory diamondData = abi.decode(
-        vm.parseJson(
-          jsonData,
-          string.concat("$.updated[", vm.toString(i), "]")
-        ),
-        (DiamondFacetData)
+        vm.parseJson(jsonData, string.concat("$.updated[", vm.toString(i), "]")), (DiamondFacetData)
       );
 
       diamonds[i] = diamondData;
@@ -129,7 +121,8 @@ contract InteractAlphaSparse is AlphaHelper {
    * @dev This function reads a JSON file containing information about diamond and facet updates,
    *      then applies these updates to the corresponding diamonds. It performs the following steps:
    *      1. Sets the OVERRIDE_DEPLOYMENTS environment variable
-   *      2. Determines the JSON input path (either from INTERACTION_INPUT_PATH env var or using a default)
+   *      2. Determines the JSON input path (either from INTERACTION_INPUT_PATH env var or using a
+   * default)
    *      3. Reads and decodes the JSON data
    *      4. Iterates through each diamond update:
    *         - Identifies the diamond type (space, spaceOwner, spaceFactory, or baseRegistry)
@@ -138,18 +131,16 @@ contract InteractAlphaSparse is AlphaHelper {
    *         - Executes a diamondCut operation to apply the updates
    * @param deployer The address of the account that will deploy and interact with the contracts
    */
-  function __interact(address deployer) internal override {
+  function __interact(
+    address deployer
+  ) internal override {
     vm.setEnv("OVERRIDE_DEPLOYMENTS", "1");
 
     string memory jsonPath;
     try vm.envString("INTERACTION_INPUT_PATH") returns (string memory path) {
       jsonPath = string.concat(vm.projectRoot(), path);
     } catch {
-      jsonPath = string.concat(
-        vm.projectRoot(),
-        DEFAULT_REPORT_PATH,
-        DEFAULT_JSON_FILE
-      );
+      jsonPath = string.concat(vm.projectRoot(), DEFAULT_REPORT_PATH, DEFAULT_JSON_FILE);
     }
 
     readJSON(jsonPath);
@@ -176,15 +167,8 @@ contract InteractAlphaSparse is AlphaHelper {
       if (diamondHelper != address(0)) {
         console.log("interact::diamondDeployedName", diamondName);
         diamondDeployedAddress = getDeployment(diamondName);
-        removeRemoteFacetsByAddresses(
-          deployer,
-          diamondDeployedAddress,
-          facetAddresses
-        );
-        newCuts = IDiamondInitHelper(diamondHelper).diamondInitHelper(
-          deployer,
-          facetNames
-        );
+        removeRemoteFacetsByAddresses(deployer, diamondDeployedAddress, facetAddresses);
+        newCuts = IDiamondInitHelper(diamondHelper).diamondInitHelper(deployer, facetNames);
 
         vm.broadcast(deployer);
         IDiamondCut(diamondDeployedAddress).diamondCut(newCuts, address(0), "");

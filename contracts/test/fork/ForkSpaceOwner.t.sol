@@ -14,20 +14,17 @@ import {ISpaceOwnerBase} from "contracts/src/spaces/facets/owner/ISpaceOwner.sol
 //contracts
 import {DiamondCutFacet} from "@towns-protocol/diamond/src/facets/cut/DiamondCutFacet.sol";
 import {SpaceHelper} from "contracts/test/spaces/SpaceHelper.sol";
-import {DeploySpaceOwnerFacet, SpaceOwner} from "contracts/scripts/deployments/facets/DeploySpaceOwnerFacet.s.sol";
+import {
+  DeploySpaceOwnerFacet,
+  SpaceOwner
+} from "contracts/scripts/deployments/facets/DeploySpaceOwnerFacet.s.sol";
 import {DeployArchitect} from "contracts/scripts/deployments/facets/DeployArchitect.s.sol";
 
 import {ICreateSpace} from "contracts/src/factory/facets/create/ICreateSpace.sol";
-contract ForkSpaceOwner is
-  IArchitectBase,
-  ISpaceOwnerBase,
-  TestUtils,
-  SpaceHelper
-{
-  address internal constant DEPLOYER_ADDRESS =
-    0x9f2667b9Ec9a7d09A47D87156f032c6735a077Ad;
-  address internal constant GOVERNANCE_ADDRESS =
-    0x63217D4c321CC02Ed306cB3843309184D347667B;
+
+contract ForkSpaceOwner is IArchitectBase, ISpaceOwnerBase, TestUtils, SpaceHelper {
+  address internal constant DEPLOYER_ADDRESS = 0x9f2667b9Ec9a7d09A47D87156f032c6735a077Ad;
+  address internal constant GOVERNANCE_ADDRESS = 0x63217D4c321CC02Ed306cB3843309184D347667B;
 
   address spaceOwnerDiamond = 0x2824D1235d1CbcA6d61C00C3ceeCB9155cd33a42;
   address spaceFactory = 0x9978c826d93883701522d2CA645d5436e5654252;
@@ -86,10 +83,7 @@ contract ForkSpaceOwner is
     address founder = _randomAddress();
 
     SpaceInfo memory spaceInfo = _createEveryoneSpaceInfo("fork-space");
-    spaceInfo
-      .membership
-      .settings
-      .pricingModule = 0x7E49Fcec32E060a3D710d568B249c0ED69f01005;
+    spaceInfo.membership.settings.pricingModule = 0x7E49Fcec32E060a3D710d568B249c0ED69f01005;
 
     ICreateSpace spaceArchitect = ICreateSpace(spaceFactory);
 
@@ -98,12 +92,8 @@ contract ForkSpaceOwner is
   }
 
   function test_getSpaceInfo() external view onlyForked {
-    Space memory space = SpaceOwner(spaceOwnerDiamond).getSpaceInfo(
-      0xC87bb04477151743070B45A3426938128896AC5D
-    );
-    assertTrue(
-      bytes(space.shortDescription).length == 0,
-      "Short description is not empty"
-    );
+    Space memory space =
+      SpaceOwner(spaceOwnerDiamond).getSpaceInfo(0xC87bb04477151743070B45A3426938128896AC5D);
+    assertTrue(bytes(space.shortDescription).length == 0, "Short description is not empty");
   }
 }

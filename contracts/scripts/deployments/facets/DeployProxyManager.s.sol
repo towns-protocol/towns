@@ -24,18 +24,16 @@ contract DeployProxyManager is Deployer, FacetHelper {
   function makeInitData(
     address implementation
   ) public pure returns (bytes memory) {
-    return
-      abi.encodeWithSelector(
-        ProxyManager.__ProxyManager_init.selector,
-        implementation
-      );
+    return abi.encodeWithSelector(ProxyManager.__ProxyManager_init.selector, implementation);
   }
 
   function versionName() public pure override returns (string memory) {
     return "facets/proxyManagerFacet";
   }
 
-  function __deploy(address deployer) public override returns (address) {
+  function __deploy(
+    address deployer
+  ) public override returns (address) {
     vm.startBroadcast(deployer);
     ProxyManager facet = new ProxyManager();
     vm.stopBroadcast();

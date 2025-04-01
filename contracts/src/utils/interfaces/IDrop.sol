@@ -7,9 +7,11 @@ import {IClaimConditionMultiPhase} from "./IClaimConditionMultiPhase.sol";
 /**
  * @title Drop interface
  * @notice Distribution mechanism for a token
- * @dev An authorized account can create a series of claim conditions, ordered by their `startTimestamp`.
+ * @dev An authorized account can create a series of claim conditions, ordered by their
+ * `startTimestamp`.
  *    - A condition defines a set of criteria that must be met for a claim to be valid.
- *    - They can be overwritten or added to by the authorized account. There can only be one active claim condition at a time.
+ *    - They can be overwritten or added to by the authorized account. There can only be one active
+ * claim condition at a time.
  */
 interface IDrop is IClaimConditionMultiPhase {
   /// @notice A struct representing an allowlist proof
@@ -41,10 +43,7 @@ interface IDrop is IClaimConditionMultiPhase {
   /// @notice An event emitted when claim conditions are updated.
   /// @param claimConditions The claim conditions
   /// @param resetEligibility Whether the eligibility of the claim conditions should be reset
-  event ClaimConditionsUpdated(
-    ClaimCondition[] claimConditions,
-    bool resetEligibility
-  );
+  event ClaimConditionsUpdated(ClaimCondition[] claimConditions, bool resetEligibility);
 
   /// @notice Allow an account to claim a quantity of tokens
   /// @param receiver The address of the receiver
@@ -64,9 +63,7 @@ interface IDrop is IClaimConditionMultiPhase {
 
   /// @notice Allows an admin account to update the claim conditions
   /// @param phases The claim conditions in ascending order by `startTimestamp`
-  /// @param resetEligibility Whether to honor the restrictions applied to account that have already claimed tokens, or to reset them
-  function setClaimConditions(
-    ClaimCondition[] calldata phases,
-    bool resetEligibility
-  ) external;
+  /// @param resetEligibility Whether to honor the restrictions applied to account that have already
+  /// claimed tokens, or to reset them
+  function setClaimConditions(ClaimCondition[] calldata phases, bool resetEligibility) external;
 }

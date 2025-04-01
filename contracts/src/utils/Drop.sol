@@ -23,33 +23,19 @@ contract Drop is IDrop {
     bytes memory _data
   ) external payable virtual override {
     // call hook
-    _beforeClaim(
-      _receiver,
-      _quantity,
-      _currency,
-      _pricePerToken,
-      _allowlistProof,
-      _data
-    );
+    _beforeClaim(_receiver, _quantity, _currency, _pricePerToken, _allowlistProof, _data);
 
     // get the active claim condition id
     uint256 activeConditionId = getActiveClaimConditionId();
 
     // verify the claim
     verifyClaim(
-      activeConditionId,
-      _dropMsgSender(),
-      _quantity,
-      _currency,
-      _pricePerToken,
-      _allowlistProof
+      activeConditionId, _dropMsgSender(), _quantity, _currency, _pricePerToken, _allowlistProof
     );
 
     // update claim condition
     claimCondition.conditions[activeConditionId].supplyClaimed += _quantity;
-    claimCondition.supplyClaimedByWallet[activeConditionId][
-      _dropMsgSender()
-    ] += _quantity;
+    claimCondition.supplyClaimedByWallet[activeConditionId][_dropMsgSender()] += _quantity;
 
     // collect price
     _collectPriceOnClaim(address(0), _quantity, _currency, _pricePerToken);
@@ -58,23 +44,10 @@ contract Drop is IDrop {
     uint256 startTokenId = _transferTokensOnClaim(_receiver, _quantity);
 
     // emit event
-    emit TokensClaimed(
-      activeConditionId,
-      _dropMsgSender(),
-      _receiver,
-      startTokenId,
-      _quantity
-    );
+    emit TokensClaimed(activeConditionId, _dropMsgSender(), _receiver, startTokenId, _quantity);
 
     // call hook
-    _afterClaim(
-      _receiver,
-      _quantity,
-      _currency,
-      _pricePerToken,
-      _allowlistProof,
-      _data
-    );
+    _afterClaim(_receiver, _quantity, _currency, _pricePerToken, _allowlistProof, _data);
   }
 
   /// @inheritdoc IDrop
@@ -108,9 +81,7 @@ contract Drop is IDrop {
         "Drop: claim conditions are not in ascending order"
       );
 
-      uint256 amountAlreadyClaimed = claimCondition
-        .conditions[newStartId + i]
-        .supplyClaimed;
+      uint256 amountAlreadyClaimed = claimCondition.conditions[newStartId + i].supplyClaimed;
 
       // check that amount already claimed is less than or equal to the max claimable amount
       if (amountAlreadyClaimed > _claimConditions[i].maxClaimableSupply) {
@@ -118,9 +89,7 @@ contract Drop is IDrop {
       }
 
       claimCondition.conditions[newStartId + i] = _claimConditions[i];
-      claimCondition
-        .conditions[newStartId + i]
-        .supplyClaimed = amountAlreadyClaimed;
+      claimCondition.conditions[newStartId + i].supplyClaimed = amountAlreadyClaimed;
 
       lastConditionTimestamp = _claimConditions[i].startTimestamp;
     }
@@ -175,33 +144,21 @@ contract Drop is IDrop {
 
     // if the allowlist proof is valid, override the claim limit, price, and currency
     if (isOverride) {
-      claimLimit = _allowlistProof.limitPerWallet != 0
-        ? _allowlistProof.limitPerWallet
-        : claimLimit;
+      claimLimit = _allowlistProof.limitPerWallet != 0 ? _allowlistProof.limitPerWallet : claimLimit;
       claimPrice = _allowlistProof.pricePerToken != type(uint256).max
         ? _allowlistProof.pricePerToken
         : claimPrice;
-      claimCurrency = _allowlistProof.pricePerToken != type(uint256).max &&
-        _allowlistProof.currency != address(0)
-        ? _allowlistProof.currency
-        : claimCurrency;
+      claimCurrency = _allowlistProof.pricePerToken != type(uint256).max
+        && _allowlistProof.currency != address(0) ? _allowlistProof.currency : claimCurrency;
     }
 
-    uint256 supplyClaimedByWallet = claimCondition.supplyClaimedByWallet[
-      _conditionId
-    ][_claimer];
+    uint256 supplyClaimedByWallet = claimCondition.supplyClaimedByWallet[_conditionId][_claimer];
 
     // check that currency and price match the condition
-    require(
-      _currency == claimCurrency,
-      "Drop: currency does not match claim condition"
-    );
+    require(_currency == claimCurrency, "Drop: currency does not match claim condition");
 
     // check that the price per token matches the condition
-    require(
-      _pricePerToken == claimPrice,
-      "Drop: price per token does not match claim condition"
-    );
+    require(_pricePerToken == claimPrice, "Drop: price per token does not match claim condition");
 
     // check that the quantity is more than 0
     require(_quantity > 0, "Drop: quantity must be more than 0");
@@ -219,10 +176,7 @@ contract Drop is IDrop {
     );
 
     // check that the current timestamp is more than the start timestamp
-    require(
-      block.timestamp >= condition.startTimestamp,
-      "Drop: claim not yet available"
-    );
+    require(block.timestamp >= condition.startTimestamp, "Drop: claim not yet available");
   }
 
   /// @dev Returns the uid for the active claim condition

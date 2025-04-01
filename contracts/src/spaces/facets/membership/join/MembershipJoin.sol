@@ -3,8 +3,12 @@ pragma solidity ^0.8.23;
 
 // interfaces
 import {IEntitlement} from "contracts/src/spaces/entitlements/IEntitlement.sol";
-import {IPartnerRegistryBase, IPartnerRegistry} from "contracts/src/factory/facets/partner/IPartnerRegistry.sol";
-import {IImplementationRegistry} from "contracts/src/factory/facets/registry/IImplementationRegistry.sol";
+import {
+  IPartnerRegistryBase,
+  IPartnerRegistry
+} from "contracts/src/factory/facets/partner/IPartnerRegistry.sol";
+import {IImplementationRegistry} from
+  "contracts/src/factory/facets/registry/IImplementationRegistry.sol";
 import {IRolesBase} from "contracts/src/spaces/facets/roles/IRoles.sol";
 import {IRuleEntitlement} from "contracts/src/spaces/entitlements/rule/IRuleEntitlement.sol";
 import {IMembership} from "contracts/src/spaces/facets/membership/IMembership.sol";
@@ -27,7 +31,8 @@ import {ReferralsBase} from "contracts/src/spaces/facets/referrals/ReferralsBase
 import {EntitlementGatedBase} from "contracts/src/spaces/facets/gated/EntitlementGatedBase.sol";
 
 /// @title MembershipJoin
-/// @notice Handles the logic for joining a space, including entitlement checks and payment processing
+/// @notice Handles the logic for joining a space, including entitlement checks and payment
+/// processing
 /// @dev Inherits from multiple base contracts to provide comprehensive membership functionality
 abstract contract MembershipJoin is
   IRolesBase,
@@ -41,8 +46,7 @@ abstract contract MembershipJoin is
   PrepayBase
 {
   /// @notice Constant representing the permission to join a space
-  bytes32 internal constant JOIN_SPACE =
-    bytes32(abi.encodePacked(Permissions.JoinSpace));
+  bytes32 internal constant JOIN_SPACE = bytes32(abi.encodePacked(Permissions.JoinSpace));
 
   /// @notice Encodes data for joining a space
   /// @param selector The type of transaction (join with or without referral)
@@ -61,7 +65,9 @@ abstract contract MembershipJoin is
 
   /// @notice Handles the process of joining a space
   /// @param receiver The address that will receive the membership token
-  function _joinSpace(address receiver) internal {
+  function _joinSpace(
+    address receiver
+  ) internal {
     _validateJoinSpace(receiver);
 
     bool shouldCharge = _shouldChargeForJoinSpace();
@@ -69,16 +75,11 @@ abstract contract MembershipJoin is
 
     bytes4 selector = IMembership.joinSpace.selector;
 
-    bytes32 transactionId = _registerTransaction(
-      receiver,
-      _encodeJoinSpaceData(selector, msg.sender, receiver, "")
-    );
+    bytes32 transactionId =
+      _registerTransaction(receiver, _encodeJoinSpaceData(selector, msg.sender, receiver, ""));
 
-    (bool isEntitled, bool isCrosschainPending) = _checkEntitlement(
-      receiver,
-      msg.sender,
-      transactionId
-    );
+    (bool isEntitled, bool isCrosschainPending) =
+      _checkEntitlement(receiver, msg.sender, transactionId);
 
     if (!isCrosschainPending) {
       if (isEntitled) {
@@ -95,10 +96,7 @@ abstract contract MembershipJoin is
   /// @notice Handles the process of joining a space with a referral
   /// @param receiver The address that will receive the membership token
   /// @param referral The referral information
-  function _joinSpaceWithReferral(
-    address receiver,
-    ReferralTypes memory referral
-  ) internal {
+  function _joinSpaceWithReferral(address receiver, ReferralTypes memory referral) internal {
     _validateJoinSpace(receiver);
 
     bool shouldCharge = _shouldChargeForJoinSpace();
@@ -111,15 +109,11 @@ abstract contract MembershipJoin is
     bytes4 selector = IMembership.joinSpaceWithReferral.selector;
 
     bytes32 transactionId = _registerTransaction(
-      receiver,
-      _encodeJoinSpaceData(selector, msg.sender, receiver, referralData)
+      receiver, _encodeJoinSpaceData(selector, msg.sender, receiver, referralData)
     );
 
-    (bool isEntitled, bool isCrosschainPending) = _checkEntitlement(
-      receiver,
-      msg.sender,
-      transactionId
-    );
+    (bool isEntitled, bool isCrosschainPending) =
+      _checkEntitlement(receiver, msg.sender, transactionId);
 
     if (!isCrosschainPending) {
       if (isEntitled) {
@@ -139,7 +133,9 @@ abstract contract MembershipJoin is
     emit MembershipTokenRejected(receiver);
   }
 
-  function _getRequiredAmount(uint256 price) internal view returns (uint256) {
+  function _getRequiredAmount(
+    uint256 price
+  ) internal view returns (uint256) {
     // Check if there are any prepaid memberships available
     uint256 prepaidSupply = _getPrepaidSupply();
     if (prepaidSupply > 0) return 0; // If prepaid memberships exist, no payment is required
@@ -153,18 +149,16 @@ abstract contract MembershipJoin is
     // Get the current membership price based on total supply
     uint256 membershipPrice = _getMembershipPrice(_totalSupply());
     uint256 requiredAmount = _getRequiredAmount(membershipPrice);
-    if (msg.value < requiredAmount)
+    if (msg.value < requiredAmount) {
       CustomRevert.revertWith(Membership__InsufficientPayment.selector);
+    }
   }
 
-  function _validateUserReferral(
-    address receiver,
-    ReferralTypes memory referral
-  ) internal view {
+  function _validateUserReferral(address receiver, ReferralTypes memory referral) internal view {
     if (referral.userReferral != address(0)) {
-      if (
-        referral.userReferral == receiver || referral.userReferral == msg.sender
-      ) CustomRevert.revertWith(Membership__InvalidAddress.selector);
+      if (referral.userReferral == receiver || referral.userReferral == msg.sender) {
+        CustomRevert.revertWith(Membership__InvalidAddress.selector);
+      }
     }
   }
 
@@ -179,9 +173,7 @@ abstract contract MembershipJoin is
     address sender,
     bytes32 transactionId
   ) internal virtual returns (bool isEntitled, bool isCrosschainPending) {
-    IRolesBase.Role[] memory roles = _getRolesWithPermission(
-      Permissions.JoinSpace
-    );
+    IRolesBase.Role[] memory roles = _getRolesWithPermission(Permissions.JoinSpace);
     address[] memory linkedWallets = _getLinkedWalletsWithUser(receiver);
 
     uint256 totalRoles = roles.length;
@@ -200,11 +192,7 @@ abstract contract MembershipJoin is
 
         if (entitlement.isCrosschain()) {
           _requestEntitlementCheckV2(
-            receiver,
-            sender,
-            transactionId,
-            IRuleEntitlement(address(entitlement)),
-            role.id
+            receiver, sender, transactionId, IRuleEntitlement(address(entitlement)), role.id
           );
           isCrosschainPending = true;
         }
@@ -235,14 +223,14 @@ abstract contract MembershipJoin is
 
   /// @notice Processes the charge for joining a space without referral
   /// @param transactionId The unique identifier for this join transaction
-  function _chargeForJoinSpace(bytes32 transactionId) internal {
+  function _chargeForJoinSpace(
+    bytes32 transactionId
+  ) internal {
     uint256 membershipPrice = _getMembershipPrice(_totalSupply());
     uint256 paymentRequired = _getRequiredAmount(membershipPrice);
 
-    (bytes4 selector, address sender, address receiver, ) = abi.decode(
-      _getCapturedData(transactionId),
-      (bytes4, address, address, bytes)
-    );
+    (bytes4 selector, address sender, address receiver,) =
+      abi.decode(_getCapturedData(transactionId), (bytes4, address, address, bytes));
 
     if (selector != IMembership.joinSpace.selector) {
       CustomRevert.revertWith(Membership__InvalidTransactionType.selector);
@@ -252,30 +240,20 @@ abstract contract MembershipJoin is
     uint256 ownerProceeds = paymentRequired - protocolFee;
 
     _afterChargeForJoinSpace(
-      transactionId,
-      sender,
-      receiver,
-      paymentRequired,
-      ownerProceeds,
-      membershipPrice
+      transactionId, sender, receiver, paymentRequired, ownerProceeds, membershipPrice
     );
   }
 
   /// @notice Processes the charge for joining a space with referral
   /// @param transactionId The unique identifier for this join transaction
-  function _chargeForJoinSpaceWithReferral(bytes32 transactionId) internal {
+  function _chargeForJoinSpaceWithReferral(
+    bytes32 transactionId
+  ) internal {
     uint256 membershipPrice = _getMembershipPrice(_totalSupply());
     uint256 paymentRequired = _getRequiredAmount(membershipPrice);
 
-    (
-      bytes4 selector,
-      address sender,
-      address receiver,
-      bytes memory referralData
-    ) = abi.decode(
-        _getCapturedData(transactionId),
-        (bytes4, address, address, bytes)
-      );
+    (bytes4 selector, address sender, address receiver, bytes memory referralData) =
+      abi.decode(_getCapturedData(transactionId), (bytes4, address, address, bytes));
 
     if (selector != IMembership.joinSpaceWithReferral.selector) {
       CustomRevert.revertWith(Membership__InvalidTransactionType.selector);
@@ -287,29 +265,17 @@ abstract contract MembershipJoin is
     {
       uint256 protocolFee = _collectProtocolFee(sender, membershipPrice);
 
-      uint256 partnerFee = _collectPartnerFee(
-        sender,
-        referral.partner,
-        membershipPrice
-      );
+      uint256 partnerFee = _collectPartnerFee(sender, referral.partner, membershipPrice);
 
       uint256 referralFee = _collectReferralCodeFee(
-        sender,
-        referral.userReferral,
-        referral.referralCode,
-        membershipPrice
+        sender, referral.userReferral, referral.referralCode, membershipPrice
       );
 
       ownerProceeds = paymentRequired - protocolFee - partnerFee - referralFee;
     }
 
     _afterChargeForJoinSpace(
-      transactionId,
-      sender,
-      receiver,
-      paymentRequired,
-      ownerProceeds,
-      membershipPrice
+      transactionId, sender, receiver, paymentRequired, ownerProceeds, membershipPrice
     );
   }
 
@@ -329,14 +295,10 @@ abstract contract MembershipJoin is
 
     // calculate points and credit them
     ITownsPoints pointsToken = ITownsPoints(
-      IImplementationRegistry(_getSpaceFactory()).getLatestImplementation(
-        bytes32("RiverAirdrop")
-      )
+      IImplementationRegistry(_getSpaceFactory()).getLatestImplementation(bytes32("RiverAirdrop"))
     );
-    uint256 points = pointsToken.getPoints(
-      ITownsPointsBase.Action.JoinSpace,
-      abi.encode(membershipPrice)
-    );
+    uint256 points =
+      pointsToken.getPoints(ITownsPointsBase.Action.JoinSpace, abi.encode(membershipPrice));
 
     pointsToken.mint(receiver, points);
     pointsToken.mint(_owner(), points);
@@ -344,7 +306,9 @@ abstract contract MembershipJoin is
 
   /// @notice Issues a membership token to the receiver
   /// @param receiver The address that will receive the membership token
-  function _issueToken(address receiver) internal {
+  function _issueToken(
+    address receiver
+  ) internal {
     // get token id
     uint256 tokenId = _nextTokenId();
 
@@ -363,12 +327,16 @@ abstract contract MembershipJoin is
 
   /// @notice Validates if a user can join the space
   /// @param receiver The address that will receive the membership token
-  function _validateJoinSpace(address receiver) internal view {
-    if (receiver == address(0))
+  function _validateJoinSpace(
+    address receiver
+  ) internal view {
+    if (receiver == address(0)) {
       CustomRevert.revertWith(Membership__InvalidAddress.selector);
+    }
     uint256 membershipSupplyLimit = _getMembershipSupplyLimit();
-    if (membershipSupplyLimit != 0 && _totalSupply() >= membershipSupplyLimit)
+    if (membershipSupplyLimit != 0 && _totalSupply() >= membershipSupplyLimit) {
       CustomRevert.revertWith(Membership__MaxSupplyReached.selector);
+    }
   }
 
   /// @notice Refunds the balance to the sender if necessary
@@ -378,12 +346,7 @@ abstract contract MembershipJoin is
     uint256 userValue = _getCapturedValue(transactionId);
     if (userValue > 0) {
       _releaseCapturedValue(transactionId, userValue);
-      CurrencyTransfer.transferCurrency(
-        _getMembershipCurrency(),
-        address(this),
-        sender,
-        userValue
-      );
+      CurrencyTransfer.transferCurrency(_getMembershipCurrency(), address(this), sender, userValue);
     }
   }
 
@@ -401,31 +364,21 @@ abstract contract MembershipJoin is
     if (bytes(referralCode).length != 0) {
       Referral memory referral = _referralInfo(referralCode);
 
-      if (referral.recipient == address(0) || referral.basisPoints == 0)
+      if (referral.recipient == address(0) || referral.basisPoints == 0) {
         return 0;
+      }
 
-      referralFee = BasisPoints.calculate(
-        membershipPrice,
-        referral.basisPoints
-      );
+      referralFee = BasisPoints.calculate(membershipPrice, referral.basisPoints);
 
       CurrencyTransfer.transferCurrency(
-        _getMembershipCurrency(),
-        payer,
-        referral.recipient,
-        referralFee
+        _getMembershipCurrency(), payer, referral.recipient, referralFee
       );
     } else if (userReferral != address(0)) {
       if (userReferral == payer) return 0;
 
       referralFee = BasisPoints.calculate(membershipPrice, _defaultBpsFee());
 
-      CurrencyTransfer.transferCurrency(
-        _getMembershipCurrency(),
-        payer,
-        userReferral,
-        referralFee
-      );
+      CurrencyTransfer.transferCurrency(_getMembershipCurrency(), payer, userReferral, referralFee);
     }
   }
 
@@ -441,18 +394,14 @@ abstract contract MembershipJoin is
   ) internal returns (uint256 partnerFee) {
     if (partner == address(0)) return 0;
 
-    Partner memory partnerInfo = IPartnerRegistry(_getSpaceFactory())
-      .partnerInfo(partner);
+    Partner memory partnerInfo = IPartnerRegistry(_getSpaceFactory()).partnerInfo(partner);
 
     if (partnerInfo.fee == 0) return 0;
 
     partnerFee = BasisPoints.calculate(membershipPrice, partnerInfo.fee);
 
     CurrencyTransfer.transferCurrency(
-      _getMembershipCurrency(),
-      payer,
-      partnerInfo.recipient,
-      partnerFee
+      _getMembershipCurrency(), payer, partnerInfo.recipient, partnerFee
     );
   }
 }

@@ -6,7 +6,10 @@ import {INodeOperator} from "./INodeOperator.sol";
 
 // libraries
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-import {NodeOperatorStorage, NodeOperatorStatus} from "contracts/src/base/registry/facets/operator/NodeOperatorStorage.sol";
+import {
+  NodeOperatorStorage,
+  NodeOperatorStatus
+} from "contracts/src/base/registry/facets/operator/NodeOperatorStorage.sol";
 
 // contracts
 import {OwnableBase} from "@towns-protocol/diamond/src/facets/ownable/OwnableBase.sol";
@@ -26,13 +29,16 @@ contract NodeOperatorFacet is INodeOperator, OwnableBase, ERC721ABase, Facet {
   // =============================================================
 
   /// @inheritdoc INodeOperator
-  function registerOperator(address claimer) external {
+  function registerOperator(
+    address claimer
+  ) external {
     if (claimer == address(0)) revert NodeOperator__InvalidAddress();
 
     NodeOperatorStorage.Layout storage ds = NodeOperatorStorage.layout();
 
-    if (ds.operators.contains(msg.sender))
+    if (ds.operators.contains(msg.sender)) {
       revert NodeOperator__AlreadyRegistered();
+    }
 
     _mint(msg.sender, 1);
 
@@ -49,16 +55,15 @@ contract NodeOperatorFacet is INodeOperator, OwnableBase, ERC721ABase, Facet {
   // =============================================================
 
   /// @inheritdoc INodeOperator
-  function isOperator(address operator) external view returns (bool) {
+  function isOperator(
+    address operator
+  ) external view returns (bool) {
     NodeOperatorStorage.Layout storage ds = NodeOperatorStorage.layout();
     return ds.operators.contains(operator);
   }
 
   /// @inheritdoc INodeOperator
-  function setOperatorStatus(
-    address operator,
-    NodeOperatorStatus newStatus
-  ) external onlyOwner {
+  function setOperatorStatus(address operator, NodeOperatorStatus newStatus) external onlyOwner {
     if (operator == address(0)) revert NodeOperator__InvalidAddress();
 
     NodeOperatorStorage.Layout storage ds = NodeOperatorStorage.layout();
@@ -74,26 +79,20 @@ contract NodeOperatorFacet is INodeOperator, OwnableBase, ERC721ABase, Facet {
     // Standby -> Approved
     // Approved -> Exiting || Active
     // Active -> Exiting || Approved
-    if (
-      currentStatus == NodeOperatorStatus.Exiting &&
-      newStatus != NodeOperatorStatus.Standby
+    if (currentStatus == NodeOperatorStatus.Exiting && newStatus != NodeOperatorStatus.Standby) {
+      revert NodeOperator__InvalidStatusTransition();
+    } else if (
+      currentStatus == NodeOperatorStatus.Standby && newStatus != NodeOperatorStatus.Approved
     ) {
       revert NodeOperator__InvalidStatusTransition();
     } else if (
-      currentStatus == NodeOperatorStatus.Standby &&
-      newStatus != NodeOperatorStatus.Approved
+      currentStatus == NodeOperatorStatus.Approved
+        && (newStatus != NodeOperatorStatus.Exiting && newStatus != NodeOperatorStatus.Active)
     ) {
       revert NodeOperator__InvalidStatusTransition();
     } else if (
-      currentStatus == NodeOperatorStatus.Approved &&
-      (newStatus != NodeOperatorStatus.Exiting &&
-        newStatus != NodeOperatorStatus.Active)
-    ) {
-      revert NodeOperator__InvalidStatusTransition();
-    } else if (
-      currentStatus == NodeOperatorStatus.Active &&
-      (newStatus != NodeOperatorStatus.Exiting &&
-        newStatus != NodeOperatorStatus.Approved)
+      currentStatus == NodeOperatorStatus.Active
+        && (newStatus != NodeOperatorStatus.Exiting && newStatus != NodeOperatorStatus.Approved)
     ) {
       revert NodeOperator__InvalidStatusTransition();
     }
@@ -159,16 +158,19 @@ contract NodeOperatorFacet is INodeOperator, OwnableBase, ERC721ABase, Facet {
   // =============================================================
   //                           Commission
   // =============================================================
-  function setCommissionRate(uint256 rateBps) external {
+  function setCommissionRate(
+    uint256 rateBps
+  ) external {
     NodeOperatorStorage.Layout storage ds = NodeOperatorStorage.layout();
-    if (!ds.operators.contains(msg.sender))
+    if (!ds.operators.contains(msg.sender)) {
       revert NodeOperator__NotRegistered();
-    if (rateBps > 10000) revert NodeOperator__InvalidCommissionRate();
+    }
+    if (rateBps > 10_000) revert NodeOperator__InvalidCommissionRate();
 
     //only allow raising the commission if operator is in standby status
     if (
-      rateBps > ds.commissionByOperator[msg.sender] &&
-      ds.statusByOperator[msg.sender] != NodeOperatorStatus.Standby
+      rateBps > ds.commissionByOperator[msg.sender]
+        && ds.statusByOperator[msg.sender] != NodeOperatorStatus.Standby
     ) {
       revert NodeOperator__InvalidCommissionRate();
     }
@@ -177,7 +179,9 @@ contract NodeOperatorFacet is INodeOperator, OwnableBase, ERC721ABase, Facet {
     emit OperatorCommissionChanged(msg.sender, rateBps);
   }
 
-  function getCommissionRate(address operator) external view returns (uint256) {
+  function getCommissionRate(
+    address operator
+  ) external view returns (uint256) {
     NodeOperatorStorage.Layout storage ds = NodeOperatorStorage.layout();
     return ds.commissionByOperator[operator];
   }

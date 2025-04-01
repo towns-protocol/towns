@@ -25,29 +25,19 @@ contract RuleEntitlementV2Test is RuleEntitlementTest {
     RuleData memory ruleData = ruleEntitlement.getRuleData(roleId);
     assertTrue(ruleData.operations.length > 0);
 
-    assertFalse(
-      ruleEntitlement.supportsInterface(type(IRuleEntitlementV2).interfaceId)
-    );
+    assertFalse(ruleEntitlement.supportsInterface(type(IRuleEntitlementV2).interfaceId));
 
     // Upgrade to Rule V2
     vm.prank(deployer);
     RuleEntitlementV2 implementationV2 = new RuleEntitlementV2();
 
     vm.prank(space);
-    UUPSUpgradeable(entitlement).upgradeToAndCall(
-      address(implementationV2),
-      ""
-    );
+    UUPSUpgradeable(entitlement).upgradeToAndCall(address(implementationV2), "");
 
     // Rule V1 persists after upgrade
-    assertEq(
-      abi.encode(ruleEntitlementV2.getRuleData(roleId)),
-      abi.encode(ruleData)
-    );
+    assertEq(abi.encode(ruleEntitlementV2.getRuleData(roleId)), abi.encode(ruleData));
 
-    assertTrue(
-      ruleEntitlementV2.supportsInterface(type(IRuleEntitlementV2).interfaceId)
-    );
+    assertTrue(ruleEntitlementV2.supportsInterface(type(IRuleEntitlementV2).interfaceId));
   }
 
   function test_setRuleEntitlement() public override {
@@ -102,11 +92,8 @@ contract RuleEntitlementV2Test is RuleEntitlementTest {
     vm.prank(space);
     ruleEntitlementV2.removeEntitlement(roleId);
 
-    RuleDataV2 memory emptyRuleData = RuleDataV2(
-      new Operation[](0),
-      new CheckOperationV2[](0),
-      new LogicalOperation[](0)
-    );
+    RuleDataV2 memory emptyRuleData =
+      RuleDataV2(new Operation[](0), new CheckOperationV2[](0), new LogicalOperation[](0));
     RuleDataV2 memory ruleData = ruleEntitlementV2.getRuleDataV2(roleId);
     assertEq(abi.encode(ruleData), abi.encode(emptyRuleData));
 
@@ -137,18 +124,10 @@ contract RuleEntitlementV2Test is RuleEntitlementTest {
     Operation[] memory operations = new Operation[](4);
     CheckOperationV2[] memory checkOperations = new CheckOperationV2[](2);
     LogicalOperation[] memory logicalOperations = new LogicalOperation[](2);
-    checkOperations[0] = CheckOperationV2(
-      CheckOperationType.ERC20,
-      31337,
-      address(0x12),
-      abi.encode(uint256(100))
-    );
-    checkOperations[1] = CheckOperationV2(
-      CheckOperationType.ERC721,
-      31337,
-      address(0x21),
-      abi.encode(uint256(100))
-    );
+    checkOperations[0] =
+      CheckOperationV2(CheckOperationType.ERC20, 31_337, address(0x12), abi.encode(uint256(100)));
+    checkOperations[1] =
+      CheckOperationV2(CheckOperationType.ERC721, 31_337, address(0x21), abi.encode(uint256(100)));
     // This operation is referring to a parent so will revert
     logicalOperations[0] = LogicalOperation(LogicalOperationType.AND, 0, 3);
     logicalOperations[1] = LogicalOperation(LogicalOperationType.AND, 0, 1);
@@ -157,35 +136,23 @@ contract RuleEntitlementV2Test is RuleEntitlementTest {
     operations[2] = Operation(CombinedOperationType.LOGICAL, 0);
     operations[3] = Operation(CombinedOperationType.LOGICAL, 1);
 
-    RuleDataV2 memory ruleData = RuleDataV2(
-      operations,
-      checkOperations,
-      logicalOperations
-    );
+    RuleDataV2 memory ruleData = RuleDataV2(operations, checkOperations, logicalOperations);
 
     bytes memory encodedData = abi.encode(ruleData);
 
-    vm.expectRevert(
-      abi.encodeWithSelector(InvalidRightOperationIndex.selector, 3, 2)
-    );
+    vm.expectRevert(abi.encodeWithSelector(InvalidRightOperationIndex.selector, 3, 2));
 
     vm.prank(space);
     ruleEntitlementV2.setEntitlement(0, encodedData);
 
-    Operation[] memory ruleOperations = ruleEntitlementV2
-      .getRuleDataV2(0)
-      .operations;
+    Operation[] memory ruleOperations = ruleEntitlementV2.getRuleDataV2(0).operations;
     assertEq(ruleOperations.length, 0);
   }
 
   // =============================================================
   //                           Internal
   // =============================================================
-  function _createRuleDataV2()
-    internal
-    view
-    returns (bytes memory encodedData)
-  {
+  function _createRuleDataV2() internal view returns (bytes memory encodedData) {
     uint256 chainId = block.chainid;
     address erc20Contract = _randomAddress();
     address erc721Contract = _randomAddress();
@@ -201,20 +168,11 @@ contract RuleEntitlementV2Test is RuleEntitlementTest {
     LogicalOperation[] memory logicalOperations = new LogicalOperation[](1);
 
     // for the first check operation, we are checking ERC20 balance of 100 on chain 31337
-    checkOperations[0] = CheckOperationV2(
-      CheckOperationType.ERC20,
-      chainId,
-      erc20Contract,
-      params
-    );
+    checkOperations[0] = CheckOperationV2(CheckOperationType.ERC20, chainId, erc20Contract, params);
 
     // for the second check operation, we are checking ERC721 balance of 100 on chain 31337
-    checkOperations[1] = CheckOperationV2(
-      CheckOperationType.ERC721,
-      chainId,
-      erc721Contract,
-      params
-    );
+    checkOperations[1] =
+      CheckOperationV2(CheckOperationType.ERC721, chainId, erc721Contract, params);
 
     // we are combining the two check operations with an AND operation so both must pass
     logicalOperations[0] = LogicalOperation(LogicalOperationType.AND, 0, 1);
@@ -229,11 +187,7 @@ contract RuleEntitlementV2Test is RuleEntitlementTest {
     operations[2] = Operation(CombinedOperationType.LOGICAL, 0);
 
     // we are combining all the operations into a rule data struct
-    RuleDataV2 memory ruleData = RuleDataV2(
-      operations,
-      checkOperations,
-      logicalOperations
-    );
+    RuleDataV2 memory ruleData = RuleDataV2(operations, checkOperations, logicalOperations);
 
     encodedData = abi.encode(ruleData);
   }

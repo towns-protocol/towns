@@ -2,7 +2,12 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {Stream, StreamWithId, SetMiniblock, SetStreamReplicationFactor} from "contracts/src/river/registry/libraries/RegistryStorage.sol";
+import {
+  Stream,
+  StreamWithId,
+  SetMiniblock,
+  SetStreamReplicationFactor
+} from "contracts/src/river/registry/libraries/RegistryStorage.sol";
 
 // libraries
 
@@ -33,37 +38,20 @@ interface IStreamRegistryBase {
   event StreamUpdated(StreamEventType indexed eventType, bytes data);
 
   event StreamAllocated(
-    bytes32 streamId,
-    address[] nodes,
-    bytes32 genesisMiniblockHash,
-    bytes genesisMiniblock
+    bytes32 streamId, address[] nodes, bytes32 genesisMiniblockHash, bytes genesisMiniblock
   );
 
-  event StreamCreated(
-    bytes32 streamId,
-    bytes32 genesisMiniblockHash,
-    Stream stream
-  );
+  event StreamCreated(bytes32 streamId, bytes32 genesisMiniblockHash, Stream stream);
 
   event StreamLastMiniblockUpdated(
-    bytes32 streamId,
-    bytes32 lastMiniblockHash,
-    uint64 lastMiniblockNum,
-    bool isSealed
+    bytes32 streamId, bytes32 lastMiniblockHash, uint64 lastMiniblockNum, bool isSealed
   );
 
   event StreamLastMiniblockUpdateFailed(
-    bytes32 streamId,
-    bytes32 lastMiniblockHash,
-    uint64 lastMiniblockNum,
-    string reason
+    bytes32 streamId, bytes32 lastMiniblockHash, uint64 lastMiniblockNum, string reason
   );
 
-  event StreamPlacementUpdated(
-    bytes32 streamId,
-    address nodeAddress,
-    bool isAdded
-  );
+  event StreamPlacementUpdated(bytes32 streamId, address nodeAddress, bool isAdded);
 }
 
 interface IStreamRegistry is IStreamRegistryBase {
@@ -91,11 +79,7 @@ interface IStreamRegistry is IStreamRegistryBase {
    * @param stream is the Stream object to be created
    * @dev Only callable by registered nodes
    */
-  function addStream(
-    bytes32 streamId,
-    bytes32 genesisMiniblockHash,
-    Stream memory stream
-  ) external;
+  function addStream(bytes32 streamId, bytes32 genesisMiniblockHash, Stream memory stream) external;
 
   /**
    * @notice Sync node addresses for streams in a range to `streamIdsByNode` mapping
@@ -106,9 +90,11 @@ interface IStreamRegistry is IStreamRegistryBase {
 
   /**
    * @notice Set the last miniblock for multiple streams in a batch operation
-   * @param miniblocks Array of SetMiniblock structs containing stream IDs and their last miniblock information
+   * @param miniblocks Array of SetMiniblock structs containing stream IDs and their last miniblock
+   * information
    * @dev Only callable by registered nodes
-   * @dev This function allows updating multiple streams' last miniblock data in a single transaction
+   * @dev This function allows updating multiple streams' last miniblock data in a single
+   * transaction
    */
   function setStreamLastMiniblockBatch(
     SetMiniblock[] calldata miniblocks
@@ -134,7 +120,8 @@ interface IStreamRegistry is IStreamRegistryBase {
    * @dev Only callable by configuration managers
    *
    * @dev This function is to migrate existing non-replicated streams to replicated streams.
-   * If the replication factor is less than the number of nodes it indicates that only the first "replicationFactor"
+   * If the replication factor is less than the number of nodes it indicates that only the first
+   * "replicationFactor"
    * nodes participate in reaching quorum. The remaining nodes only sync the stream data.
    */
   function setStreamReplicationFactor(
@@ -150,14 +137,18 @@ interface IStreamRegistry is IStreamRegistryBase {
    * @param streamId The ID of the stream to check
    * @return bool True if the stream exists, false otherwise
    */
-  function isStream(bytes32 streamId) external view returns (bool);
+  function isStream(
+    bytes32 streamId
+  ) external view returns (bool);
 
   /**
    * @notice Get a stream from the registry
    * @param streamId The ID of the stream to get
    * @return Stream The stream data
    */
-  function getStream(bytes32 streamId) external view returns (Stream memory);
+  function getStream(
+    bytes32 streamId
+  ) external view returns (Stream memory);
 
   /**
    * @notice Get a stream and its genesis information from the registry

@@ -4,7 +4,8 @@ pragma solidity ^0.8.23;
 // interfaces
 import {IArchitectBase} from "contracts/src/factory/facets/architect/IArchitect.sol";
 import {IPricingModules} from "contracts/src/factory/facets/architect/pricing/IPricingModules.sol";
-import {IEntitlementsManager} from "contracts/src/spaces/facets/entitlements/IEntitlementsManager.sol";
+import {IEntitlementsManager} from
+  "contracts/src/spaces/facets/entitlements/IEntitlementsManager.sol";
 import {IOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {IERC721ABase} from "contracts/src/diamond/facets/token/ERC721A/IERC721A.sol";
@@ -12,7 +13,10 @@ import {IERC173} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
 import {IPausableBase, IPausable} from "@towns-protocol/diamond/src/facets/pausable/IPausable.sol";
 import {IGuardian} from "contracts/src/spaces/facets/guardian/IGuardian.sol";
 import {IUserEntitlement} from "contracts/src/spaces/entitlements/user/IUserEntitlement.sol";
-import {IRuleEntitlement, IRuleEntitlementV2} from "contracts/src/spaces/entitlements/rule/IRuleEntitlement.sol";
+import {
+  IRuleEntitlement,
+  IRuleEntitlementV2
+} from "contracts/src/spaces/entitlements/rule/IRuleEntitlement.sol";
 import {RuleEntitlement} from "contracts/src/spaces/entitlements/rule/RuleEntitlement.sol";
 import {RuleEntitlementV2} from "contracts/src/spaces/entitlements/rule/RuleEntitlementV2.sol";
 import {IRoles} from "contracts/src/spaces/facets/roles/IRoles.sol";
@@ -35,12 +39,7 @@ import {Factory} from "contracts/src/utils/Factory.sol";
 // errors
 import {Validator__InvalidStringLength} from "contracts/src/utils/Validator.sol";
 
-contract ArchitectTest is
-  BaseSetup,
-  IArchitectBase,
-  IOwnableBase,
-  IPausableBase
-{
+contract ArchitectTest is BaseSetup, IArchitectBase, IOwnableBase, IPausableBase {
   Architect public spaceArchitect;
   ICreateSpace public createSpaceFacet;
 
@@ -50,10 +49,7 @@ contract ArchitectTest is
     createSpaceFacet = ICreateSpace(spaceFactory);
   }
 
-  function test_fuzz_createSpace(
-    address founder,
-    address user
-  ) external assumeEOA(founder) {
+  function test_fuzz_createSpace(address founder, address user) external assumeEOA(founder) {
     vm.assume(founder != user);
 
     SpaceInfo memory spaceInfo = _createSpaceInfo("Test");
@@ -63,20 +59,10 @@ contract ArchitectTest is
     address spaceAddress = createSpaceFacet.createSpace(spaceInfo);
 
     // expect owner to be founder
-    assertTrue(
-      IEntitlementsManager(spaceAddress).isEntitledToSpace(
-        founder,
-        Permissions.Read
-      )
-    );
+    assertTrue(IEntitlementsManager(spaceAddress).isEntitledToSpace(founder, Permissions.Read));
 
     // expect no one to be entitled
-    assertFalse(
-      IEntitlementsManager(spaceAddress).isEntitledToSpace(
-        user,
-        Permissions.Read
-      )
-    );
+    assertFalse(IEntitlementsManager(spaceAddress).isEntitledToSpace(user, Permissions.Read));
   }
 
   function test_fuzz_createUserSpace_syncedEntitlements(
@@ -87,10 +73,7 @@ contract ArchitectTest is
     address[] memory users = new address[](1);
     users[0] = _randomAddress();
 
-    IArchitectBase.SpaceInfo memory spaceInfo = _createUserSpaceInfo(
-      "Test",
-      users
-    );
+    IArchitectBase.SpaceInfo memory spaceInfo = _createUserSpaceInfo("Test", users);
     spaceInfo.membership.settings.pricingModule = pricingModule;
     spaceInfo.membership.requirements.syncEntitlements = true;
     address spaceAddress = createSpaceFacet.createSpace(spaceInfo);
@@ -104,9 +87,8 @@ contract ArchitectTest is
       }
     }
 
-    IEntitlementsManager.Entitlement[]
-      memory entitlements = IEntitlementsManager(spaceAddress)
-        .getEntitlements();
+    IEntitlementsManager.Entitlement[] memory entitlements =
+      IEntitlementsManager(spaceAddress).getEntitlements();
     address entitlementAddress;
     for (uint256 i; i < entitlements.length; ++i) {
       if (LibString.eq(entitlements[i].moduleType, "UserEntitlement")) {
@@ -115,8 +97,8 @@ contract ArchitectTest is
       }
     }
 
-    bytes memory entitlementData = IUserEntitlement(entitlementAddress)
-      .getEntitlementDataByRoleId(memberRole.id);
+    bytes memory entitlementData =
+      IUserEntitlement(entitlementAddress).getEntitlementDataByRoleId(memberRole.id);
     assertEq(entitlementData, abi.encode(users));
   }
 
@@ -138,9 +120,8 @@ contract ArchitectTest is
       }
     }
 
-    IEntitlementsManager.Entitlement[]
-      memory entitlements = IEntitlementsManager(spaceAddress)
-        .getEntitlements();
+    IEntitlementsManager.Entitlement[] memory entitlements =
+      IEntitlementsManager(spaceAddress).getEntitlements();
     address ruleEntitlementAddress;
     for (uint256 i; i < entitlements.length; ++i) {
       if (LibString.eq(entitlements[i].moduleType, "RuleEntitlementV2")) {
@@ -149,14 +130,10 @@ contract ArchitectTest is
       }
     }
 
-    IRuleEntitlement.RuleDataV2 memory ruleData = IRuleEntitlementV2(
-      ruleEntitlementAddress
-    ).getRuleDataV2(memberRole.id);
+    IRuleEntitlement.RuleDataV2 memory ruleData =
+      IRuleEntitlementV2(ruleEntitlementAddress).getRuleDataV2(memberRole.id);
 
-    assertEq(
-      abi.encode(ruleData),
-      abi.encode(RuleEntitlementUtil.getMockERC721RuleData())
-    );
+    assertEq(abi.encode(ruleData), abi.encode(RuleEntitlementUtil.getMockERC721RuleData()));
   }
 
   function test_fuzz_minterRoleEntitlementExists(
@@ -167,9 +144,8 @@ contract ArchitectTest is
     spaceInfo.membership.settings.pricingModule = pricingModule;
     address spaceAddress = createSpaceFacet.createSpace(spaceInfo);
 
-    IEntitlementsManager.Entitlement[]
-      memory entitlements = IEntitlementsManager(spaceAddress)
-        .getEntitlements();
+    IEntitlementsManager.Entitlement[] memory entitlements =
+      IEntitlementsManager(spaceAddress).getEntitlements();
 
     address ruleEntitlementAddress;
     for (uint256 i; i < entitlements.length; ++i) {
@@ -181,14 +157,10 @@ contract ArchitectTest is
 
     // ruleData for minter role
     uint256 minterRoleId = 1;
-    IRuleEntitlement.RuleDataV2 memory ruleData = IRuleEntitlementV2(
-      ruleEntitlementAddress
-    ).getRuleDataV2(minterRoleId);
+    IRuleEntitlement.RuleDataV2 memory ruleData =
+      IRuleEntitlementV2(ruleEntitlementAddress).getRuleDataV2(minterRoleId);
 
-    assertEq(
-      abi.encode(ruleData),
-      abi.encode(RuleEntitlementUtil.getMockERC721RuleData())
-    );
+    assertEq(abi.encode(ruleData), abi.encode(RuleEntitlementUtil.getMockERC721RuleData()));
   }
 
   function test_getImplementations() external view {
@@ -205,7 +177,9 @@ contract ArchitectTest is
     assertEq(legacyRuleEntitlement, address(legacyRuleEntitlementAddress));
   }
 
-  function test_fuzz_setImplementations(address user) external {
+  function test_fuzz_setImplementations(
+    address user
+  ) external {
     ISpaceOwner newSpaceToken = ISpaceOwner(address(new MockERC721()));
     IUserEntitlement newUserEntitlement = new UserEntitlement();
     IRuleEntitlement newRuleEntitlement = new RuleEntitlement();
@@ -216,18 +190,12 @@ contract ArchitectTest is
     vm.prank(user);
     vm.expectRevert(abi.encodeWithSelector(Ownable__NotOwner.selector, user));
     spaceArchitect.setSpaceArchitectImplementations(
-      newSpaceToken,
-      newUserEntitlement,
-      newRuleEntitlementV2,
-      newRuleEntitlement
+      newSpaceToken, newUserEntitlement, newRuleEntitlementV2, newRuleEntitlement
     );
 
     vm.prank(deployer);
     spaceArchitect.setSpaceArchitectImplementations(
-      newSpaceToken,
-      newUserEntitlement,
-      newRuleEntitlementV2,
-      newRuleEntitlement
+      newSpaceToken, newUserEntitlement, newRuleEntitlementV2, newRuleEntitlement
     );
 
     (
@@ -257,15 +225,9 @@ contract ArchitectTest is
     vm.prank(founder);
     address newSpace = createSpaceFacet.createSpace(spaceInfo);
 
-    assertTrue(
-      IEntitlementsManager(newSpace).isEntitledToSpace(
-        founder,
-        Permissions.Read
-      )
-    );
+    assertTrue(IEntitlementsManager(newSpace).isEntitledToSpace(founder, Permissions.Read));
 
-    (ISpaceOwner spaceOwner, , , ) = spaceArchitect
-      .getSpaceArchitectImplementations();
+    (ISpaceOwner spaceOwner,,,) = spaceArchitect.getSpaceArchitectImplementations();
     uint256 tokenId = spaceArchitect.getTokenIdBySpace(newSpace);
 
     vm.prank(founder);
@@ -276,16 +238,9 @@ contract ArchitectTest is
     vm.prank(founder);
     IERC721(address(spaceOwner)).transferFrom(founder, buyer, tokenId);
 
-    assertFalse(
-      IEntitlementsManager(newSpace).isEntitledToSpace(
-        founder,
-        Permissions.Read
-      )
-    );
+    assertFalse(IEntitlementsManager(newSpace).isEntitledToSpace(founder, Permissions.Read));
 
-    assertTrue(
-      IEntitlementsManager(newSpace).isEntitledToSpace(buyer, Permissions.Read)
-    );
+    assertTrue(IEntitlementsManager(newSpace).isEntitledToSpace(buyer, Permissions.Read));
   }
 
   function test_fuzz_revertWhen_createSpaceAndPaused(
@@ -323,7 +278,9 @@ contract ArchitectTest is
     createSpaceFacet.createSpace(spaceInfo);
   }
 
-  function test_revertIfNotProperReceiver(string memory spaceName) external {
+  function test_revertIfNotProperReceiver(
+    string memory spaceName
+  ) external {
     vm.assume(bytes(spaceName).length > 2);
 
     SpaceInfo memory spaceInfo = _createSpaceInfo(spaceName);
@@ -332,9 +289,7 @@ contract ArchitectTest is
     vm.expectRevert(
       abi.encodeWithSelector(
         Factory.Factory__FailedDeployment.selector,
-        abi.encodeWithSelector(
-          IERC721ABase.TransferToNonERC721ReceiverImplementer.selector
-        )
+        abi.encodeWithSelector(IERC721ABase.TransferToNonERC721ReceiverImplementer.selector)
       )
     );
 
@@ -349,10 +304,8 @@ contract ArchitectTest is
   ) external assumeEOA(founder) {
     vm.assume(bytes(spaceName).length > 2);
     vm.assume(
-      _pricingModule == address(0) ||
-        !IPricingModules(address(spaceArchitect)).isPricingModule(
-          _pricingModule
-        )
+      _pricingModule == address(0)
+        || !IPricingModules(address(spaceArchitect)).isPricingModule(_pricingModule)
     );
 
     SpaceInfo memory spaceInfo = _createSpaceInfo(spaceName);
@@ -384,10 +337,7 @@ contract ArchitectTest is
 
     // assert that he cannot modify channels
     assertFalse(
-      IEntitlementsManager(spaceInstance).isEntitledToSpace(
-        user,
-        Permissions.AddRemoveChannels
-      )
+      IEntitlementsManager(spaceInstance).isEntitledToSpace(user, Permissions.AddRemoveChannels)
     );
 
     // get the current member role
@@ -408,20 +358,17 @@ contract ArchitectTest is
     IRoles(spaceInstance).addPermissionsToRole(memberRole.id, permissions);
 
     assertTrue(
-      IEntitlementsManager(spaceInstance).isEntitledToSpace(
-        user,
-        Permissions.AddRemoveChannels
-      )
+      IEntitlementsManager(spaceInstance).isEntitledToSpace(user, Permissions.AddRemoveChannels)
     );
   }
 
-  function test_fuzz_setProxyInitializer(address proxyInitializer) external {
+  function test_fuzz_setProxyInitializer(
+    address proxyInitializer
+  ) external {
     vm.prank(deployer);
     vm.expectEmit(address(spaceArchitect));
     emit Architect__ProxyInitializerSet(proxyInitializer);
-    spaceArchitect.setProxyInitializer(
-      ISpaceProxyInitializer(proxyInitializer)
-    );
+    spaceArchitect.setProxyInitializer(ISpaceProxyInitializer(proxyInitializer));
 
     assertEq(address(spaceArchitect.getProxyInitializer()), proxyInitializer);
   }
@@ -433,8 +380,6 @@ contract ArchitectTest is
     vm.assume(user != deployer);
     vm.prank(user);
     vm.expectRevert(abi.encodeWithSelector(Ownable__NotOwner.selector, user));
-    spaceArchitect.setProxyInitializer(
-      ISpaceProxyInitializer(proxyInitializer)
-    );
+    spaceArchitect.setProxyInitializer(ISpaceProxyInitializer(proxyInitializer));
   }
 }

@@ -18,8 +18,10 @@ abstract contract LogUtils {
     revert("Log not found");
   }
 
-  /// @dev Returns the Nth log (zero-indexed) that matches the topic0, where N is the provided index.
-  /// For example, index=0 returns the first matching log, index=1 returns the second matching log, etc.
+  /// @dev Returns the Nth log (zero-indexed) that matches the topic0, where N is the provided
+  /// index.
+  /// For example, index=0 returns the first matching log, index=1 returns the second matching log,
+  /// etc.
   /// @param logs Array of logs to search through
   /// @param topic The topic0 to match against
   /// @param index The Nth occurrence to find (0-based)

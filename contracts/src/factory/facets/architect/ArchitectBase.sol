@@ -23,11 +23,15 @@ abstract contract ArchitectBase is IArchitectBase {
   // =============================================================
   //                           Spaces
   // =============================================================
-  function _getTokenIdBySpace(address space) internal view returns (uint256) {
+  function _getTokenIdBySpace(
+    address space
+  ) internal view returns (uint256) {
     return ArchitectStorage.layout().tokenIdBySpace[space];
   }
 
-  function _getSpaceByTokenId(uint256 tokenId) internal view returns (address) {
+  function _getSpaceByTokenId(
+    uint256 tokenId
+  ) internal view returns (address) {
     return ArchitectStorage.layout().spaceByTokenId[tokenId];
   }
 
@@ -41,12 +45,15 @@ abstract contract ArchitectBase is IArchitectBase {
     IRuleEntitlementV2 ruleEntitlement,
     IRuleEntitlement legacyRuleEntitlement
   ) internal {
-    if (address(spaceOwnerToken).code.length == 0)
+    if (address(spaceOwnerToken).code.length == 0) {
       revert Architect__NotContract();
-    if (address(userEntitlement).code.length == 0)
+    }
+    if (address(userEntitlement).code.length == 0) {
       revert Architect__NotContract();
-    if (address(ruleEntitlement).code.length == 0)
+    }
+    if (address(ruleEntitlement).code.length == 0) {
       revert Architect__NotContract();
+    }
 
     ImplementationStorage.Layout storage ds = ImplementationStorage.layout();
     ds.spaceOwnerToken = spaceOwnerToken;
@@ -67,22 +74,13 @@ abstract contract ArchitectBase is IArchitectBase {
   {
     ImplementationStorage.Layout storage ds = ImplementationStorage.layout();
 
-    return (
-      ds.spaceOwnerToken,
-      ds.userEntitlement,
-      ds.ruleEntitlement,
-      ds.legacyRuleEntitlement
-    );
+    return (ds.spaceOwnerToken, ds.userEntitlement, ds.ruleEntitlement, ds.legacyRuleEntitlement);
   }
 
   // =============================================================
   //                         Proxy Initializer
   // =============================================================
-  function _getProxyInitializer()
-    internal
-    view
-    returns (ISpaceProxyInitializer)
-  {
+  function _getProxyInitializer() internal view returns (ISpaceProxyInitializer) {
     return ImplementationStorage.layout().proxyInitializer;
   }
 

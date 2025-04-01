@@ -13,10 +13,7 @@ interface IGuardianBase {
   error Guardian_AlreadyDisabled();
 
   event GuardianUpdated(
-    address indexed caller,
-    bool indexed enabled,
-    uint256 cooldown,
-    uint256 timestamp
+    address indexed caller, bool indexed enabled, uint256 cooldown, uint256 timestamp
   );
 
   event GuardianDefaultCooldownUpdated(uint256 indexed cooldown);
@@ -36,12 +33,16 @@ interface IGuardian is IGuardianBase {
   /// @notice Returns the cooldown period for a specific guardian
   /// @param guardian The address of the guardian to check
   /// @return The cooldown period in seconds
-  function guardianCooldown(address guardian) external view returns (uint256);
+  function guardianCooldown(
+    address guardian
+  ) external view returns (uint256);
 
   /// @notice Checks if guardian mode is enabled for a specific address
   /// @param guardian The address to check
   /// @return True if guardian mode is enabled, false otherwise
-  function isGuardianEnabled(address guardian) external view returns (bool);
+  function isGuardianEnabled(
+    address guardian
+  ) external view returns (bool);
 
   /// @notice Returns the default cooldown period
   /// @return The default cooldown period in seconds
@@ -50,5 +51,7 @@ interface IGuardian is IGuardianBase {
   /// @notice Sets the default cooldown period
   /// @dev Can only be called by the contract owner
   /// @param cooldown The new default cooldown period in seconds
-  function setDefaultCooldown(uint256 cooldown) external;
+  function setDefaultCooldown(
+    uint256 cooldown
+  ) external;
 }

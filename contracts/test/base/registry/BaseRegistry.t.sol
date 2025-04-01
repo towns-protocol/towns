@@ -9,7 +9,8 @@ import {ICreateSpace} from "contracts/src/factory/facets/create/ICreateSpace.sol
 // libraries
 import {FixedPointMathLib} from "solady/utils/FixedPointMathLib.sol";
 import {StakingRewards} from "contracts/src/base/registry/facets/distribution/v2/StakingRewards.sol";
-import {NodeOperatorStatus} from "contracts/src/base/registry/facets/operator/NodeOperatorStorage.sol";
+import {NodeOperatorStatus} from
+  "contracts/src/base/registry/facets/operator/NodeOperatorStorage.sol";
 
 // contracts
 import {BaseSetup} from "contracts/test/spaces/BaseSetup.sol";
@@ -17,8 +18,10 @@ import {EIP712Facet} from "@towns-protocol/diamond/src/utils/cryptography/EIP712
 import {NodeOperatorFacet} from "contracts/src/base/registry/facets/operator/NodeOperatorFacet.sol";
 import {Towns} from "contracts/src/tokens/towns/base/Towns.sol";
 import {MainnetDelegation} from "contracts/src/base/registry/facets/mainnet/MainnetDelegation.sol";
-import {SpaceDelegationFacet} from "contracts/src/base/registry/facets/delegation/SpaceDelegationFacet.sol";
-import {RewardsDistribution} from "contracts/src/base/registry/facets/distribution/v2/RewardsDistribution.sol";
+import {SpaceDelegationFacet} from
+  "contracts/src/base/registry/facets/delegation/SpaceDelegationFacet.sol";
+import {RewardsDistribution} from
+  "contracts/src/base/registry/facets/distribution/v2/RewardsDistribution.sol";
 import {RewardsVerifier} from "./RewardsVerifier.t.sol";
 
 abstract contract BaseRegistryTest is RewardsVerifier, BaseSetup {
@@ -76,7 +79,9 @@ abstract contract BaseRegistryTest is RewardsVerifier, BaseSetup {
     setOperatorStatus(operator, NodeOperatorStatus.Active);
   }
 
-  function registerOperator(address operator) internal {
+  function registerOperator(
+    address operator
+  ) internal {
     vm.assume(operator != address(0));
     if (!operatorFacet.isOperator(operator)) {
       vm.prank(operator);
@@ -84,11 +89,8 @@ abstract contract BaseRegistryTest is RewardsVerifier, BaseSetup {
     }
   }
 
-  function setOperatorCommissionRate(
-    address operator,
-    uint256 commissionRate
-  ) internal {
-    commissionRate = bound(commissionRate, 0, 10000);
+  function setOperatorCommissionRate(address operator, uint256 commissionRate) internal {
+    commissionRate = bound(commissionRate, 0, 10_000);
     vm.prank(operator);
     operatorFacet.setCommissionRate(commissionRate);
   }
@@ -100,18 +102,12 @@ abstract contract BaseRegistryTest is RewardsVerifier, BaseSetup {
     operatorFacet.setClaimAddressForOperator(claimer, operator);
   }
 
-  function setOperatorStatus(
-    address operator,
-    NodeOperatorStatus newStatus
-  ) internal {
+  function setOperatorStatus(address operator, NodeOperatorStatus newStatus) internal {
     vm.prank(deployer);
     operatorFacet.setOperatorStatus(operator, newStatus);
   }
 
-  function resetOperatorCommissionRate(
-    address operator,
-    uint256 commissionRate
-  ) internal {
+  function resetOperatorCommissionRate(address operator, uint256 commissionRate) internal {
     setOperatorStatus(operator, NodeOperatorStatus.Exiting);
     setOperatorStatus(operator, NodeOperatorStatus.Standby);
     setOperatorCommissionRate(operator, commissionRate);
@@ -123,10 +119,11 @@ abstract contract BaseRegistryTest is RewardsVerifier, BaseSetup {
   /*                           SPACE                            */
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-  function deploySpace(address _deployer) internal returns (address _space) {
-    IArchitectBase.SpaceInfo memory spaceInfo = _createSpaceInfo(
-      string(abi.encode(_randomUint256()))
-    );
+  function deploySpace(
+    address _deployer
+  ) internal returns (address _space) {
+    IArchitectBase.SpaceInfo memory spaceInfo =
+      _createSpaceInfo(string(abi.encode(_randomUint256())));
     spaceInfo.membership.settings.pricingModule = pricingModule;
     vm.prank(_deployer);
     _space = ICreateSpace(spaceFactory).createSpace(spaceInfo);
@@ -155,22 +152,22 @@ abstract contract BaseRegistryTest is RewardsVerifier, BaseSetup {
   /*                           HELPER                           */
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-  function boundReward(uint256 reward) internal view returns (uint256) {
-    return
-      bound(
-        reward,
-        rewardDuration,
-        FixedPointMathLib.min(
-          rewardDuration.fullMulDiv(
-            type(uint256).max,
-            StakingRewards.SCALE_FACTOR
-          ),
-          REASONABLE_TOKEN_SUPPLY
-        )
-      );
+  function boundReward(
+    uint256 reward
+  ) internal view returns (uint256) {
+    return bound(
+      reward,
+      rewardDuration,
+      FixedPointMathLib.min(
+        rewardDuration.fullMulDiv(type(uint256).max, StakingRewards.SCALE_FACTOR),
+        REASONABLE_TOKEN_SUPPLY
+      )
+    );
   }
 
-  function sanitizeAmounts(uint256[32] memory amounts) internal {
+  function sanitizeAmounts(
+    uint256[32] memory amounts
+  ) internal {
     uint256 len = amounts.length;
     for (uint256 i; i < len; ++i) {
       vm.assume(totalStaked < type(uint96).max);
@@ -179,7 +176,9 @@ abstract contract BaseRegistryTest is RewardsVerifier, BaseSetup {
     }
   }
 
-  function sanitizeAmounts(uint256[] memory amounts) internal {
+  function sanitizeAmounts(
+    uint256[] memory amounts
+  ) internal {
     uint256 len = amounts.length;
     for (uint256 i; i < len; ++i) {
       vm.assume(totalStaked < type(uint96).max);
@@ -195,16 +194,7 @@ abstract contract BaseRegistryTest is RewardsVerifier, BaseSetup {
       res := mload(0x40)
       mstore(0x40, add(res, mul(33, 0x20)))
       mstore(res, 32)
-      pop(
-        staticcall(
-          gas(),
-          0x04,
-          arr,
-          mul(32, 0x20),
-          add(res, 0x20),
-          mul(32, 0x20)
-        )
-      )
+      pop(staticcall(gas(), 0x04, arr, mul(32, 0x20), add(res, 0x20), mul(32, 0x20)))
     }
   }
 
@@ -215,16 +205,7 @@ abstract contract BaseRegistryTest is RewardsVerifier, BaseSetup {
       res := mload(0x40)
       mstore(0x40, add(res, mul(33, 0x20)))
       mstore(res, 32)
-      pop(
-        staticcall(
-          gas(),
-          0x04,
-          arr,
-          mul(32, 0x20),
-          add(res, 0x20),
-          mul(32, 0x20)
-        )
-      )
+      pop(staticcall(gas(), 0x04, arr, mul(32, 0x20), add(res, 0x20), mul(32, 0x20)))
     }
   }
 

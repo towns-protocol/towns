@@ -43,11 +43,7 @@ interface ILegacyArchitectBase {
   // =============================================================
   //                           EVENTS
   // =============================================================
-  event SpaceCreated(
-    address indexed owner,
-    uint256 indexed tokenId,
-    address indexed space
-  );
+  event SpaceCreated(address indexed owner, uint256 indexed tokenId, address indexed space);
 
   // =============================================================
   //                           ERRORS
@@ -62,5 +58,7 @@ interface ILegacyArchitectBase {
 interface ILegacyArchitect is ILegacyArchitectBase {
   /// @notice Creates a new space
   /// @param SpaceInfo Space information
-  function createSpace(SpaceInfo memory SpaceInfo) external returns (address);
+  function createSpace(
+    SpaceInfo memory SpaceInfo
+  ) external returns (address);
 }

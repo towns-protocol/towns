@@ -20,7 +20,8 @@ library TokenInflationLib {
     uint256 overrideInflationRate;
   }
 
-  // keccak256(abi.encode(uint256(keccak256("tokens.towns.mainnet.lib.storage")) - 1)) & ~bytes32(uint256(0xff))
+  // keccak256(abi.encode(uint256(keccak256("tokens.towns.mainnet.lib.storage")) - 1)) &
+  // ~bytes32(uint256(0xff))
   function layout() internal pure returns (Layout storage l) {
     bytes32 slot = 0x366bbacac8c1291905a47c4b12670e7c8ce975e09c84414dddf77ba98c85af00;
     assembly {
@@ -28,7 +29,9 @@ library TokenInflationLib {
     }
   }
 
-  function initialize(ITownsBase.InflationConfig memory config) internal {
+  function initialize(
+    ITownsBase.InflationConfig memory config
+  ) internal {
     Layout storage ds = layout();
     ds.lastMintTime = config.initialMintTime;
     ds.inflationReceiver = config.inflationReceiver;
@@ -50,7 +53,9 @@ library TokenInflationLib {
     return layout().lastMintTime;
   }
 
-  function setInflationReceiver(address receiver) internal {
+  function setInflationReceiver(
+    address receiver
+  ) internal {
     layout().inflationReceiver = receiver;
   }
 
@@ -58,10 +63,7 @@ library TokenInflationLib {
     layout().lastMintTime = block.timestamp;
   }
 
-  function setOverrideInflation(
-    bool overrideInflation,
-    uint256 overrideInflationRateBps
-  ) internal {
+  function setOverrideInflation(bool overrideInflation, uint256 overrideInflationRateBps) internal {
     layout().overrideInflation = overrideInflation;
     layout().overrideInflationRate = overrideInflationRateBps;
   }
@@ -77,14 +79,14 @@ library TokenInflationLib {
 
     if (ds.overrideInflation) return ds.overrideInflationRate; // override inflation rate
 
-    uint256 yearsSinceInitialMint = (block.timestamp - initialMintTime) /
-      365 days;
+    uint256 yearsSinceInitialMint = (block.timestamp - initialMintTime) / 365 days;
 
-    if (yearsSinceInitialMint >= ds.finalInflationYears)
+    if (yearsSinceInitialMint >= ds.finalInflationYears) {
       return ds.finalInflationRate;
+    }
 
-    uint256 inflationRateDecrease = (yearsSinceInitialMint *
-      ds.inflationDecayRate) / ds.finalInflationYears;
+    uint256 inflationRateDecrease =
+      (yearsSinceInitialMint * ds.inflationDecayRate) / ds.finalInflationYears;
     return ds.initialInflationRate - inflationRateDecrease;
   }
 }

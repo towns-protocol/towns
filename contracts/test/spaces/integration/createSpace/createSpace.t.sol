@@ -4,7 +4,8 @@ pragma solidity ^0.8.23;
 // interfaces
 import {IChannel} from "contracts/src/spaces/facets/channels/IChannel.sol";
 import {IChannel} from "contracts/src/spaces/facets/channels/IChannel.sol";
-import {IEntitlementsManager} from "contracts/src/spaces/facets/entitlements/IEntitlementsManager.sol";
+import {IEntitlementsManager} from
+  "contracts/src/spaces/facets/entitlements/IEntitlementsManager.sol";
 import {IRoles} from "contracts/src/spaces/facets/roles/IRoles.sol";
 import {IRolesBase} from "contracts/src/spaces/facets/roles/IRoles.sol";
 import {IArchitect} from "contracts/src/factory/facets/architect/IArchitect.sol";
@@ -12,7 +13,8 @@ import {IArchitectBase} from "contracts/src/factory/facets/architect/IArchitect.
 import {IMembership} from "contracts/src/spaces/facets/membership/IMembership.sol";
 import {IRuleEntitlementBase} from "contracts/src/spaces/entitlements/rule/IRuleEntitlement.sol";
 import {IEntitlement} from "contracts/src/spaces/entitlements/IEntitlement.sol";
-import {IPlatformRequirements} from "contracts/src/factory/facets/platform/requirements/IPlatformRequirements.sol";
+import {IPlatformRequirements} from
+  "contracts/src/factory/facets/platform/requirements/IPlatformRequirements.sol";
 import {IPrepay} from "contracts/src/spaces/facets/prepay/IPrepay.sol";
 import {IERC173} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
 
@@ -28,12 +30,7 @@ import {Architect} from "contracts/src/factory/facets/architect/Architect.sol";
 import {MockERC721} from "contracts/test/mocks/MockERC721.sol";
 import {CreateSpaceFacet} from "contracts/src/factory/facets/create/CreateSpace.sol";
 
-contract IntegrationCreateSpace is
-  BaseSetup,
-  IRolesBase,
-  IArchitectBase,
-  IRuleEntitlementBase
-{
+contract IntegrationCreateSpace is BaseSetup, IRolesBase, IArchitectBase, IRuleEntitlementBase {
   Architect public spaceArchitect;
   CreateSpaceFacet public createSpaceFacet;
 
@@ -57,12 +54,7 @@ contract IntegrationCreateSpace is
     address newSpace = createSpaceFacet.createSpace(spaceInfo);
 
     // assert everyone can join
-    assertTrue(
-      IEntitlementsManager(newSpace).isEntitledToSpace(
-        user,
-        Permissions.JoinSpace
-      )
-    );
+    assertTrue(IEntitlementsManager(newSpace).isEntitledToSpace(user, Permissions.JoinSpace));
   }
 
   function test_fuzz_createUserGatedSpace(
@@ -85,10 +77,7 @@ contract IntegrationCreateSpace is
     address newSpace = createSpaceFacet.createSpace(spaceInfo);
 
     assertTrue(
-      IEntitlementsManager(newSpace).isEntitledToSpace(
-        user,
-        Permissions.JoinSpace
-      ),
+      IEntitlementsManager(newSpace).isEntitledToSpace(user, Permissions.JoinSpace),
       "Bob should be entitled to mint a membership"
     );
 
@@ -167,15 +156,15 @@ contract IntegrationCreateSpace is
     IMembership(newSpace).joinSpace(member);
 
     // look for user entitlement
-    IEntitlementsManager.Entitlement[]
-      memory entitlements = IEntitlementsManager(newSpace).getEntitlements();
+    IEntitlementsManager.Entitlement[] memory entitlements =
+      IEntitlementsManager(newSpace).getEntitlements();
 
     address userEntitlement;
 
     for (uint256 i = 0; i < entitlements.length; i++) {
       if (
-        keccak256(abi.encodePacked(entitlements[i].moduleType)) ==
-        keccak256(abi.encodePacked("UserEntitlement"))
+        keccak256(abi.encodePacked(entitlements[i].moduleType))
+          == keccak256(abi.encodePacked("UserEntitlement"))
       ) {
         userEntitlement = entitlements[i].moduleAddress;
         break;
@@ -197,10 +186,8 @@ contract IntegrationCreateSpace is
     CreateEntitlement[] memory roleEntitlements = new CreateEntitlement[](1);
 
     // create entitlement adding users and user entitlement
-    roleEntitlements[0] = CreateEntitlement({
-      module: IEntitlement(userEntitlement),
-      data: abi.encode(users)
-    });
+    roleEntitlements[0] =
+      CreateEntitlement({module: IEntitlement(userEntitlement), data: abi.encode(users)});
 
     // create role with permissions and entitlements attached to it
     vm.prank(founder);
@@ -220,10 +207,7 @@ contract IntegrationCreateSpace is
 
     // members can access the space
     assertTrue(
-      IEntitlementsManager(newSpace).isEntitledToSpace({
-        user: member,
-        permission: Permissions.Write
-      }),
+      IEntitlementsManager(newSpace).isEntitledToSpace({user: member, permission: Permissions.Write}),
       "Member should be able to access the space"
     );
 
@@ -241,13 +225,10 @@ contract IntegrationCreateSpace is
     vm.prank(founder);
     IChannel(newSpace).addRoleToChannel({channelId: "test2", roleId: roleId});
 
-    bool isEntitledToChannelAfter = IEntitlementsManager(newSpace)
-      .isEntitledToChannel("test2", member, Permissions.Write);
+    bool isEntitledToChannelAfter =
+      IEntitlementsManager(newSpace).isEntitledToChannel("test2", member, Permissions.Write);
     // members can access the channel now
-    assertTrue(
-      isEntitledToChannelAfter,
-      "Member should be able to access the channel"
-    );
+    assertTrue(isEntitledToChannelAfter, "Member should be able to access the channel");
   }
 
   function test_fuzz_createSpaceWithPrepay(
@@ -264,27 +245,18 @@ contract IntegrationCreateSpace is
     spaceInfo.prepay.supply = 100;
     spaceInfo.membership.requirements.everyone = true;
 
-    uint256 cost = spaceInfo.prepay.supply *
-      IPlatformRequirements(spaceFactory).getMembershipFee();
+    uint256 cost = spaceInfo.prepay.supply * IPlatformRequirements(spaceFactory).getMembershipFee();
 
     vm.deal(founder, cost);
     vm.prank(founder);
-    address newSpace = createSpaceFacet.createSpaceWithPrepay{value: cost}(
-      spaceInfo
-    );
+    address newSpace = createSpaceFacet.createSpaceWithPrepay{value: cost}(spaceInfo);
 
     uint256 prepaidSupply = IPrepay(newSpace).prepaidMembershipSupply();
 
-    assertTrue(
-      IEntitlementsManager(newSpace).isEntitledToSpace(
-        member,
-        Permissions.JoinSpace
-      )
-    );
+    assertTrue(IEntitlementsManager(newSpace).isEntitledToSpace(member, Permissions.JoinSpace));
 
     assertTrue(
-      prepaidSupply == spaceInfo.prepay.supply,
-      "Prepaid supply should be equal to the supply"
+      prepaidSupply == spaceInfo.prepay.supply, "Prepaid supply should be equal to the supply"
     );
   }
 
@@ -294,10 +266,7 @@ contract IntegrationCreateSpace is
   function test_createSpaceV2_with_invalid_pricing_module() public {
     vm.prank(founder);
     vm.expectRevert(Validator__InvalidAddress.selector);
-    createSpaceFacet.createSpaceV2(
-      _createSpaceWithPrepayInfo("test"),
-      SpaceOptions({to: founder})
-    );
+    createSpaceFacet.createSpaceV2(_createSpaceWithPrepayInfo("test"), SpaceOptions({to: founder}));
   }
 
   function test_createSpaceV2_with_invalid_to() public {
@@ -324,10 +293,7 @@ contract IntegrationCreateSpace is
     spaceInfo.membership.requirements.everyone = true;
 
     vm.prank(founder);
-    address newSpace = createSpaceFacet.createSpaceV2(
-      spaceInfo,
-      SpaceOptions({to: member})
-    );
+    address newSpace = createSpaceFacet.createSpaceV2(spaceInfo, SpaceOptions({to: member}));
 
     assertTrue(IERC173(newSpace).owner() == member);
   }

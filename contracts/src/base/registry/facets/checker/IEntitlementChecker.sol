@@ -38,16 +38,22 @@ interface IEntitlementCheckerBase {
 interface IEntitlementChecker is IEntitlementCheckerBase {
   /// @notice Register a new node in the system
   /// @param node The address of the node to register
-  function registerNode(address node) external;
+  function registerNode(
+    address node
+  ) external;
 
   /// @notice Unregister an existing node from the system
   /// @param node The address of the node to unregister
-  function unregisterNode(address node) external;
+  function unregisterNode(
+    address node
+  ) external;
 
   /// @notice Check if a node address is registered and valid
   /// @param node The address of the node to check
   /// @return bool True if the node is valid, false otherwise
-  function isValidNode(address node) external view returns (bool);
+  function isValidNode(
+    address node
+  ) external view returns (bool);
 
   /// @notice Get the total number of registered nodes
   /// @return uint256 The count of registered nodes
@@ -56,7 +62,9 @@ interface IEntitlementChecker is IEntitlementCheckerBase {
   /// @notice Get the node address at a specific index
   /// @param index The index of the node to retrieve
   /// @return address The address of the node at the given index
-  function getNodeAtIndex(uint256 index) external view returns (address);
+  function getNodeAtIndex(
+    uint256 index
+  ) external view returns (address);
 
   /// @notice Get a random selection of registered nodes
   /// @param count The number of random nodes to return

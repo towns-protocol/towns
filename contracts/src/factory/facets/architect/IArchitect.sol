@@ -87,6 +87,7 @@ interface IArchitectBase {
    * @notice Options for creating a space
    * @param to Address that will receive the space NFT (defaults to msg.sender if not specified)
    */
+
   struct SpaceOptions {
     address to;
   }
@@ -94,11 +95,7 @@ interface IArchitectBase {
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                           Events                               */
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-  event SpaceCreated(
-    address indexed owner,
-    uint256 indexed tokenId,
-    address indexed space
-  );
+  event SpaceCreated(address indexed owner, uint256 indexed tokenId, address indexed space);
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                           Errors                               */
@@ -109,6 +106,7 @@ interface IArchitectBase {
   error Architect__InvalidAddress();
   error Architect__NotContract();
   error Architect__InvalidPricingModule();
+
   event Architect__ProxyInitializerSet(address indexed proxyInitializer);
 }
 
@@ -120,7 +118,9 @@ interface IArchitect is IArchitectBase {
     uint256 tokenId
   ) external view returns (address space);
 
-  function getTokenIdBySpace(address space) external view returns (uint256);
+  function getTokenIdBySpace(
+    address space
+  ) external view returns (uint256);
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                           Implementations                               */

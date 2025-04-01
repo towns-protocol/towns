@@ -3,8 +3,10 @@ pragma solidity ^0.8.23;
 
 // interfaces
 import {IOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
-import {IEntitlementsManager} from "contracts/src/spaces/facets/entitlements/IEntitlementsManager.sol";
-import {IEntitlementsManagerBase} from "contracts/src/spaces/facets/entitlements/IEntitlementsManager.sol";
+import {IEntitlementsManager} from
+  "contracts/src/spaces/facets/entitlements/IEntitlementsManager.sol";
+import {IEntitlementsManagerBase} from
+  "contracts/src/spaces/facets/entitlements/IEntitlementsManager.sol";
 import {IMembershipBase} from "contracts/src/spaces/facets/membership/IMembership.sol";
 import {IChannel} from "contracts/src/spaces/facets/channels/IChannel.sol";
 import {IRoles, IRolesBase} from "contracts/src/spaces/facets/roles/IRoles.sol";
@@ -21,15 +23,17 @@ import {MembershipFacet} from "contracts/src/spaces/facets/membership/Membership
 // errors
 
 // solhint-disable-next-line max-line-length
-import {EntitlementsService__InvalidEntitlementAddress, EntitlementsService__InvalidEntitlementInterface, EntitlementsService__ImmutableEntitlement, EntitlementsService__EntitlementDoesNotExist, EntitlementsService__EntitlementAlreadyExists} from "contracts/src/spaces/facets/entitlements/EntitlementsManagerService.sol";
+import {
+  EntitlementsService__InvalidEntitlementAddress,
+  EntitlementsService__InvalidEntitlementInterface,
+  EntitlementsService__ImmutableEntitlement,
+  EntitlementsService__EntitlementDoesNotExist,
+  EntitlementsService__EntitlementAlreadyExists
+} from "contracts/src/spaces/facets/entitlements/EntitlementsManagerService.sol";
 
 import {BaseSetup} from "contracts/test/spaces/BaseSetup.sol";
 
-contract EntitlementsManagerTest is
-  BaseSetup,
-  IEntitlementsManagerBase,
-  IMembershipBase
-{
+contract EntitlementsManagerTest is BaseSetup, IEntitlementsManagerBase, IMembershipBase {
   EntitlementsManager internal entitlements;
   MockUserEntitlement internal mockEntitlement;
   MockUserEntitlement internal mockImmutableEntitlement;
@@ -55,15 +59,11 @@ contract EntitlementsManagerTest is
     address user = _randomAddress();
 
     vm.prank(user);
-    vm.expectRevert(
-      abi.encodeWithSelector(IOwnableBase.Ownable__NotOwner.selector, user)
-    );
+    vm.expectRevert(abi.encodeWithSelector(IOwnableBase.Ownable__NotOwner.selector, user));
     entitlements.addImmutableEntitlements(immutableEntitlements);
   }
 
-  function test_addImmutableEntitlements_revert_when_invalid_entitlement_address()
-    external
-  {
+  function test_addImmutableEntitlements_revert_when_invalid_entitlement_address() external {
     address[] memory invalidEntitlements = new address[](1);
     invalidEntitlements[0] = address(0);
 
@@ -72,9 +72,7 @@ contract EntitlementsManagerTest is
     entitlements.addImmutableEntitlements(invalidEntitlements);
   }
 
-  function test_addImmutableEntitlements_revert_when_invalid_entitlement_interface()
-    external
-  {
+  function test_addImmutableEntitlements_revert_when_invalid_entitlement_interface() external {
     vm.prank(founder);
     vm.expectRevert(EntitlementsService__InvalidEntitlementAddress.selector);
     entitlements.addImmutableEntitlements(new address[](1));
@@ -103,23 +101,17 @@ contract EntitlementsManagerTest is
     address user = _randomAddress();
 
     vm.prank(user);
-    vm.expectRevert(
-      abi.encodeWithSelector(IOwnableBase.Ownable__NotOwner.selector, user)
-    );
+    vm.expectRevert(abi.encodeWithSelector(IOwnableBase.Ownable__NotOwner.selector, user));
     entitlements.addEntitlementModule(address(mockEntitlement));
   }
 
-  function test_addEntitlement_revert_when_invalid_entitlement_address()
-    external
-  {
+  function test_addEntitlement_revert_when_invalid_entitlement_address() external {
     vm.prank(founder);
     vm.expectRevert(EntitlementsService__InvalidEntitlementAddress.selector);
     entitlements.addEntitlementModule(address(0));
   }
 
-  function test_addEntitlement_revert_when_invalid_entitlement_interface()
-    external
-  {
+  function test_addEntitlement_revert_when_invalid_entitlement_interface() external {
     vm.prank(founder);
     vm.expectRevert(EntitlementsService__InvalidEntitlementInterface.selector);
     entitlements.addEntitlementModule(address(this));
@@ -151,30 +143,21 @@ contract EntitlementsManagerTest is
     entitlements.removeEntitlementModule(address(mockEntitlement));
   }
 
-  function test_removeEntitlement_revert_when_not_owner()
-    external
-    givenInitialEntitlementsAreSet
-  {
+  function test_removeEntitlement_revert_when_not_owner() external givenInitialEntitlementsAreSet {
     address user = _randomAddress();
 
     vm.prank(user);
-    vm.expectRevert(
-      abi.encodeWithSelector(IOwnableBase.Ownable__NotOwner.selector, user)
-    );
+    vm.expectRevert(abi.encodeWithSelector(IOwnableBase.Ownable__NotOwner.selector, user));
     entitlements.removeEntitlementModule(address(mockEntitlement));
   }
 
-  function test_removeEntitlement_revert_when_invalid_entitlement_address()
-    external
-  {
+  function test_removeEntitlement_revert_when_invalid_entitlement_address() external {
     vm.prank(founder);
     vm.expectRevert(EntitlementsService__InvalidEntitlementAddress.selector);
     entitlements.removeEntitlementModule(address(0));
   }
 
-  function test_removeEntitlement_revert_when_invalid_entitlement_interface()
-    external
-  {
+  function test_removeEntitlement_revert_when_invalid_entitlement_interface() external {
     vm.prank(founder);
     vm.expectRevert(EntitlementsService__InvalidEntitlementInterface.selector);
     entitlements.removeEntitlementModule(address(this));
@@ -208,16 +191,12 @@ contract EntitlementsManagerTest is
   // =============================================================
 
   function test_getSingleEntitlement() external givenInitialEntitlementsAreSet {
-    Entitlement memory entitlement = entitlements.getEntitlement(
-      address(mockEntitlement)
-    );
+    Entitlement memory entitlement = entitlements.getEntitlement(address(mockEntitlement));
 
     assertEq(address(entitlement.moduleAddress), address(mockEntitlement));
   }
 
-  function test_getEntitlement_revert_when_invalid_entitlement_address()
-    external
-  {
+  function test_getEntitlement_revert_when_invalid_entitlement_address() external {
     vm.prank(founder);
     vm.expectRevert(EntitlementsService__InvalidEntitlementAddress.selector);
     entitlements.getEntitlement(address(0));
@@ -238,17 +217,11 @@ contract EntitlementsManagerTest is
 
     assertEq(entitlements.isEntitledToSpace(user, "test"), false);
 
-    assertEq(
-      entitlements.isEntitledToSpace(founder, Permissions.JoinSpace),
-      true
-    );
+    assertEq(entitlements.isEntitledToSpace(founder, Permissions.JoinSpace), true);
 
     vm.prank(user);
     MembershipFacet(everyoneSpace).joinSpace(user);
 
-    assertEq(
-      entitlements.isEntitledToSpace(founder, Permissions.JoinSpace),
-      true
-    );
+    assertEq(entitlements.isEntitledToSpace(founder, Permissions.JoinSpace), true);
   }
 }

@@ -2,12 +2,14 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {IMembershipPricing} from "contracts/src/spaces/facets/membership/pricing/IMembershipPricing.sol";
+import {IMembershipPricing} from
+  "contracts/src/spaces/facets/membership/pricing/IMembershipPricing.sol";
 
 // libraries
 
 // contracts
-import {IntrospectionFacet} from "@towns-protocol/diamond/src/facets/introspection/IntrospectionFacet.sol";
+import {IntrospectionFacet} from
+  "@towns-protocol/diamond/src/facets/introspection/IntrospectionFacet.sol";
 
 contract MockPricingModule is IMembershipPricing, IntrospectionFacet {
   string public name = "MockPricingModule";
@@ -18,7 +20,9 @@ contract MockPricingModule is IMembershipPricing, IntrospectionFacet {
     _addInterface(type(IMembershipPricing).interfaceId);
   }
 
-  function setPrice(uint256) external pure override {
+  function setPrice(
+    uint256
+  ) external pure override {
     revert("MockPricingModule: price is calculated");
   }
 

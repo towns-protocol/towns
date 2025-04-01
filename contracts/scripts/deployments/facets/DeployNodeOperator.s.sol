@@ -31,7 +31,9 @@ contract DeployNodeOperator is Deployer, FacetHelper {
     return "facets/nodeOperatorFacet";
   }
 
-  function __deploy(address deployer) public override returns (address) {
+  function __deploy(
+    address deployer
+  ) public override returns (address) {
     vm.startBroadcast(deployer);
     NodeOperatorFacet nodeOperatorFacet = new NodeOperatorFacet();
     vm.stopBroadcast();

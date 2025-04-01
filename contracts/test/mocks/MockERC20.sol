@@ -8,7 +8,8 @@ import {ERC20Storage} from "@towns-protocol/diamond/src/facets/token/ERC20/ERC20
 
 // contracts
 import {ERC20} from "@towns-protocol/diamond/src/facets/token/ERC20/ERC20.sol";
-import {IntrospectionFacet} from "@towns-protocol/diamond/src/facets/introspection/IntrospectionFacet.sol";
+import {IntrospectionFacet} from
+  "@towns-protocol/diamond/src/facets/introspection/IntrospectionFacet.sol";
 
 contract MockERC20 is ERC20, IntrospectionFacet {
   constructor(string memory name, string memory symbol) {

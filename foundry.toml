@@ -40,13 +40,13 @@ river_devnet = "${RIVER_DEVNET_RPC_URL}"
 sepolia = "${SEPOLIA_RPC_URL}"
 
 [fmt]
-line_length = 80
-tab_width = 2
-bracket_spacing = true
+bracket_spacing = false
 int_types = "long"
-multiline_func_header = "all"
+line_length = 100
+multiline_func_header = "params_first"
 number_underscore = "thousands"
 quote_style = "double"
-wrap_comments = false
+tab_width = 2
+wrap_comments = true
 
 # See more config options https://github.com/foundry-rs/foundry/tree/master/config

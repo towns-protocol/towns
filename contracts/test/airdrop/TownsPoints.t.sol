@@ -15,12 +15,7 @@ import {CheckIn} from "contracts/src/airdrop/points/CheckIn.sol";
 import {TownsPoints} from "contracts/src/airdrop/points/TownsPoints.sol";
 import {BaseRegistryTest} from "../base/registry/BaseRegistry.t.sol";
 
-contract TownsPointsTest is
-  BaseRegistryTest,
-  IOwnableBase,
-  IDiamond,
-  ITownsPointsBase
-{
+contract TownsPointsTest is BaseRegistryTest, IOwnableBase, IDiamond, ITownsPointsBase {
   TownsPoints internal pointsFacet;
 
   function setUp() public override {
@@ -61,16 +56,11 @@ contract TownsPointsTest is
   }
 
   function test_batchMintPoints_revertIf_notOwner() public {
-    vm.expectRevert(
-      abi.encodeWithSelector(Ownable__NotOwner.selector, address(this))
-    );
+    vm.expectRevert(abi.encodeWithSelector(Ownable__NotOwner.selector, address(this)));
     pointsFacet.batchMintPoints(abi.encode(new address[](1), new uint256[](1)));
   }
 
-  function test_fuzz_batchMintPoints(
-    address[32] memory accounts,
-    uint256[32] memory values
-  ) public {
+  function test_fuzz_batchMintPoints(address[32] memory accounts, uint256[32] memory values) public {
     for (uint256 i; i < accounts.length; ++i) {
       if (accounts[i] == address(0)) {
         accounts[i] = _randomAddress();
@@ -84,14 +74,18 @@ contract TownsPointsTest is
     pointsFacet.batchMintPoints(abi.encode(_accounts, _values));
   }
 
-  modifier givenCheckedIn(address user) {
+  modifier givenCheckedIn(
+    address user
+  ) {
     vm.assume(user != address(0));
     vm.prank(user);
     pointsFacet.checkIn();
     _;
   }
 
-  modifier givenUserCheckInAfterMaxStreak(address user) {
+  modifier givenUserCheckInAfterMaxStreak(
+    address user
+  ) {
     vm.assume(user != address(0));
     uint256 currentTime = block.timestamp;
     for (uint256 i; i < CheckIn.MAX_STREAK_PER_CHECKIN; ++i) {
@@ -103,7 +97,9 @@ contract TownsPointsTest is
     _;
   }
 
-  function test_checkInFirstTime(address user) external givenCheckedIn(user) {
+  function test_checkInFirstTime(
+    address user
+  ) external givenCheckedIn(user) {
     assertEq(pointsFacet.balanceOf(user), 1 ether);
     assertEq(pointsFacet.getCurrentStreak(user), 1);
     assertEq(pointsFacet.getLastCheckIn(user), block.timestamp);
@@ -124,11 +120,8 @@ contract TownsPointsTest is
 
     uint256 currentStreak = pointsFacet.getCurrentStreak(user);
     uint256 currentPoints = pointsFacet.balanceOf(user);
-    (uint256 pointsToAward, uint256 newStreak) = CheckIn.getPointsAndStreak(
-      pointsFacet.getLastCheckIn(user),
-      currentStreak,
-      block.timestamp
-    );
+    (uint256 pointsToAward, uint256 newStreak) =
+      CheckIn.getPointsAndStreak(pointsFacet.getLastCheckIn(user), currentStreak, block.timestamp);
 
     vm.prank(user);
     pointsFacet.checkIn();
@@ -147,9 +140,6 @@ contract TownsPointsTest is
     vm.prank(user);
     pointsFacet.checkIn();
 
-    assertEq(
-      pointsFacet.balanceOf(user),
-      currentPoints + CheckIn.MAX_POINTS_PER_CHECKIN
-    );
+    assertEq(pointsFacet.balanceOf(user), currentPoints + CheckIn.MAX_POINTS_PER_CHECKIN);
   }
 }

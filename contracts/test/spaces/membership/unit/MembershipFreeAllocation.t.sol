@@ -32,9 +32,7 @@ contract MembershipFreeAllocationTest is MembershipBaseSetup {
     membership.setMembershipFreeAllocation(100);
   }
 
-  function test_revertWhen_setMembershipFreeAllocationIsMoreThanCurrentSupply()
-    external
-  {
+  function test_revertWhen_setMembershipFreeAllocationIsMoreThanCurrentSupply() external {
     vm.prank(founder);
     membership.setMembershipLimit(100);
 
@@ -43,9 +41,7 @@ contract MembershipFreeAllocationTest is MembershipBaseSetup {
     membership.setMembershipFreeAllocation(101);
   }
 
-  function test_revertWhen_setMembershipFreeAllocationIsMoreThanPlatformAllows()
-    external
-  {
+  function test_revertWhen_setMembershipFreeAllocationIsMoreThanPlatformAllows() external {
     uint256 platformLimit = platformReqs.getMembershipMintLimit();
 
     vm.prank(founder);

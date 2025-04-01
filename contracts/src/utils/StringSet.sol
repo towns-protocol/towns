@@ -40,10 +40,7 @@ library StringSet {
   /**
    * @dev Returns the storage reference at position `index` in the set without bounds check.
    */
-  function _at(
-    Set storage set,
-    uint256 index
-  ) private pure returns (StringWrapper storage ref) {
+  function _at(Set storage set, uint256 index) private pure returns (StringWrapper storage ref) {
     assembly ("memory-safe") {
       mstore(0, set.slot)
       ref.slot := add(keccak256(0, 0x20), index)
@@ -75,10 +72,7 @@ library StringSet {
    * Returns true if the value was added to the set, that is if it was not
    * already present.
    */
-  function add(
-    Set storage set,
-    string memory value
-  ) internal returns (bool added) {
+  function add(Set storage set, string memory value) internal returns (bool added) {
     Uint256Ref storage indexRef = _indexRef(set, value);
     added = indexRef.value == 0;
     if (added) {
@@ -104,17 +98,15 @@ library StringSet {
    * Returns true if the value was removed from the set, that is if it was
    * present.
    */
-  function remove(
-    Set storage set,
-    string memory value
-  ) internal returns (bool removed) {
+  function remove(Set storage set, string memory value) internal returns (bool removed) {
     // We read and store the value's index to prevent multiple reads from the same storage slot
     Uint256Ref storage indexRef = _indexRef(set, value);
     uint256 valueIndex = indexRef.value;
     removed = valueIndex != 0;
     if (removed) {
       // Equivalent to contains(set, value)
-      // To delete an element from the _values array in O(1), we swap the element to delete with the last one in
+      // To delete an element from the _values array in O(1), we swap the element to delete with the
+      // last one in
       // the array, and then remove the last element (sometimes called as 'swap and pop').
       // This modifies the order of the array, as noted in {at}.
 
@@ -149,7 +141,9 @@ library StringSet {
   /**
    * @dev Removes all values from a set. O(n).
    */
-  function clear(Set storage set) internal {
+  function clear(
+    Set storage set
+  ) internal {
     Uint256Ref storage lengthRef = _valuesLengthRef(set);
     uint256 len = lengthRef.value;
     for (uint256 i; i < len; ++i) {
@@ -163,10 +157,7 @@ library StringSet {
   /**
    * @dev Returns true if the value is in the set. O(1).
    */
-  function contains(
-    Set storage set,
-    string memory value
-  ) internal view returns (bool) {
+  function contains(Set storage set, string memory value) internal view returns (bool) {
     // equivalent: return set._indexes[value] != 0;
     return _indexRef(set, value).value != 0;
   }
@@ -174,7 +165,9 @@ library StringSet {
   /**
    * @dev Returns the number of values in the set. O(1).
    */
-  function length(Set storage set) internal view returns (uint256) {
+  function length(
+    Set storage set
+  ) internal view returns (uint256) {
     return set._values.length;
   }
 
@@ -188,22 +181,25 @@ library StringSet {
    *
    * - `index` must be strictly less than {length}.
    */
-  function at(
-    Set storage set,
-    uint256 index
-  ) internal view returns (string memory) {
+  function at(Set storage set, uint256 index) internal view returns (string memory) {
     return set._values[index];
   }
 
   /**
    * @dev Return the entire set in an array
    *
-   * WARNING: This operation will copy the entire storage to memory, which can be quite expensive. This is designed
-   * to mostly be used by view accessors that are queried without any gas fees. Developers should keep in mind that
-   * this function has an unbounded cost, and using it as part of a state-changing function may render the function
-   * uncallable if the set grows to a point where copying to memory consumes too much gas to fit in a block.
+   * WARNING: This operation will copy the entire storage to memory, which can be quite expensive.
+   * This is designed
+   * to mostly be used by view accessors that are queried without any gas fees. Developers should
+   * keep in mind that
+   * this function has an unbounded cost, and using it as part of a state-changing function may
+   * render the function
+   * uncallable if the set grows to a point where copying to memory consumes too much gas to fit in
+   * a block.
    */
-  function values(Set storage set) internal view returns (string[] memory) {
+  function values(
+    Set storage set
+  ) internal view returns (string[] memory) {
     return set._values;
   }
 }

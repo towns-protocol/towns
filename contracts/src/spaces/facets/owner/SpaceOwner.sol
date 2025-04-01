@@ -4,7 +4,8 @@ pragma solidity ^0.8.23;
 // interfaces
 import {IERC4906} from "@openzeppelin/contracts/interfaces/IERC4906.sol";
 import {ISpaceOwner} from "./ISpaceOwner.sol";
-import {IMembershipMetadata} from "contracts/src/spaces/facets/membership/metadata/IMembershipMetadata.sol";
+import {IMembershipMetadata} from
+  "contracts/src/spaces/facets/membership/metadata/IMembershipMetadata.sol";
 
 // libraries
 
@@ -25,10 +26,7 @@ contract SpaceOwner is
   Votes,
   ERC721A
 {
-  function __SpaceOwner_init(
-    string memory name,
-    string memory symbol
-  ) external initializer {
+  function __SpaceOwner_init(string memory name, string memory symbol) external initializer {
     __ERC721A_init_unchained(name, symbol);
   }
 
@@ -37,7 +35,9 @@ contract SpaceOwner is
   // =============================================================
 
   /// @inheritdoc ISpaceOwner
-  function setFactory(address factory) external onlyOwner {
+  function setFactory(
+    address factory
+  ) external onlyOwner {
     _setFactory(factory);
   }
 
@@ -69,12 +69,16 @@ contract SpaceOwner is
   }
 
   /// @inheritdoc ISpaceOwner
-  function getSpaceInfo(address space) external view returns (Space memory) {
+  function getSpaceInfo(
+    address space
+  ) external view returns (Space memory) {
     return _getSpace(space);
   }
 
   /// @inheritdoc ISpaceOwner
-  function getSpaceByTokenId(uint256 tokenId) external view returns (address) {
+  function getSpaceByTokenId(
+    uint256 tokenId
+  ) external view returns (address) {
     return _getSpaceByTokenId(tokenId);
   }
 
@@ -99,7 +103,9 @@ contract SpaceOwner is
   // =============================================================
 
   /// @inheritdoc ISpaceOwner
-  function setDefaultUri(string memory uri) external onlyOwner {
+  function setDefaultUri(
+    string memory uri
+  ) external onlyOwner {
     _setDefaultUri(uri);
   }
 
@@ -170,7 +176,9 @@ contract SpaceOwner is
   // =============================================================
   //                           Internal
   // =============================================================
-  function _onlySpaceOwner(address space) internal view {
+  function _onlySpaceOwner(
+    address space
+  ) internal view {
     if (_ownerOf(_getTokenId(space)) != msg.sender) {
       revert SpaceOwner__OnlySpaceOwnerAllowed();
     }

@@ -43,7 +43,9 @@ contract DeployWalletLink is FacetHelper, Deployer {
     return "facets/walletLinkFacet";
   }
 
-  function __deploy(address deployer) public override returns (address) {
+  function __deploy(
+    address deployer
+  ) public override returns (address) {
     vm.startBroadcast(deployer);
     WalletLink walletLink = new WalletLink();
     vm.stopBroadcast();

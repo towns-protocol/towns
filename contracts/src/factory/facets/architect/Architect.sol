@@ -18,14 +18,7 @@ import {ReentrancyGuard} from "solady/utils/ReentrancyGuard.sol";
 import {PausableBase} from "@towns-protocol/diamond/src/facets/pausable/PausableBase.sol";
 import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
 
-contract Architect is
-  IArchitect,
-  ArchitectBase,
-  OwnableBase,
-  PausableBase,
-  ReentrancyGuard,
-  Facet
-{
+contract Architect is IArchitect, ArchitectBase, OwnableBase, PausableBase, ReentrancyGuard, Facet {
   function __Architect_init(
     ISpaceOwner ownerImplementation,
     IUserEntitlement userEntitlementImplementation,
@@ -45,12 +38,16 @@ contract Architect is
   // =============================================================
 
   /// @inheritdoc IArchitect
-  function getSpaceByTokenId(uint256 tokenId) external view returns (address) {
+  function getSpaceByTokenId(
+    uint256 tokenId
+  ) external view returns (address) {
     return _getSpaceByTokenId(tokenId);
   }
 
   /// @inheritdoc IArchitect
-  function getTokenIdBySpace(address space) external view returns (uint256) {
+  function getTokenIdBySpace(
+    address space
+  ) external view returns (uint256) {
     return _getTokenIdBySpace(space);
   }
 
@@ -92,11 +89,7 @@ contract Architect is
   // =============================================================
 
   /// @inheritdoc IArchitect
-  function getProxyInitializer()
-    external
-    view
-    returns (ISpaceProxyInitializer)
-  {
+  function getProxyInitializer() external view returns (ISpaceProxyInitializer) {
     return _getProxyInitializer();
   }
 

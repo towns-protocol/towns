@@ -10,22 +10,22 @@ import {IEntitlementsManager} from "./IEntitlementsManager.sol";
 import {EntitlementsManagerBase} from "./EntitlementsManagerBase.sol";
 import {Entitled} from "../Entitled.sol";
 
-contract EntitlementsManager is
-  IEntitlementsManager,
-  EntitlementsManagerBase,
-  Entitled
-{
+contract EntitlementsManager is IEntitlementsManager, EntitlementsManagerBase, Entitled {
   function addImmutableEntitlements(
     address[] calldata entitlements
   ) external onlyOwner {
     _addImmutableEntitlements(entitlements);
   }
 
-  function addEntitlementModule(address entitlement) external onlyOwner {
+  function addEntitlementModule(
+    address entitlement
+  ) external onlyOwner {
     _addEntitlementModule(entitlement);
   }
 
-  function removeEntitlementModule(address entitlement) external onlyOwner {
+  function removeEntitlementModule(
+    address entitlement
+  ) external onlyOwner {
     _removeEntitlementModule(entitlement);
   }
 
@@ -39,10 +39,7 @@ contract EntitlementsManager is
     return _getEntitlement(entitlement);
   }
 
-  function isEntitledToSpace(
-    address user,
-    string calldata permission
-  ) external view returns (bool) {
+  function isEntitledToSpace(address user, string calldata permission) external view returns (bool) {
     return _isEntitledToSpace(user, permission);
   }
 

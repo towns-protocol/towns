@@ -29,14 +29,13 @@ contract DeployMerkleAirdrop is Deployer, FacetHelper {
     return MerkleAirdrop.__MerkleAirdrop_init.selector;
   }
 
-  function makeInitData(
-    bytes32 merkleRoot,
-    address token
-  ) public pure returns (bytes memory) {
+  function makeInitData(bytes32 merkleRoot, address token) public pure returns (bytes memory) {
     return abi.encodeWithSelector(initializer(), merkleRoot, IERC20(token));
   }
 
-  function __deploy(address deployer) public override returns (address) {
+  function __deploy(
+    address deployer
+  ) public override returns (address) {
     vm.startBroadcast(deployer);
     MerkleAirdrop merkleAirdrop = new MerkleAirdrop();
     vm.stopBroadcast();

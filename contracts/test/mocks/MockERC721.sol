@@ -8,13 +8,17 @@ contract MockERC721 is ERC721 {
 
   constructor() ERC721("MyNFT", "MNFT") {}
 
-  function mintTo(address to) external returns (uint256) {
+  function mintTo(
+    address to
+  ) external returns (uint256) {
     tokenId++;
     _mint(to, tokenId);
     return tokenId;
   }
 
-  function safeMint(address to) external returns (uint256) {
+  function safeMint(
+    address to
+  ) external returns (uint256) {
     tokenId++;
     _safeMint(to, tokenId);
     return tokenId;
@@ -27,7 +31,9 @@ contract MockERC721 is ERC721 {
     }
   }
 
-  function burn(uint256 token) external {
+  function burn(
+    uint256 token
+  ) external {
     _burn(token);
   }
 }

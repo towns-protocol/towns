@@ -19,6 +19,7 @@ library WalletLib {
     WASM, // WebAssembly VM (Polkadot, NEAR)
     AVM, // Avalanche Virtual Machine
     UNKNOWN // For future compatibility
+
   }
 
   struct Wallet {
@@ -32,11 +33,7 @@ library WalletLib {
     mapping(bytes32 => Wallet) walletByHash;
   }
 
-  function addWallet(
-    RootWallet storage self,
-    bytes32 walletHash,
-    Wallet calldata wallet
-  ) internal {
+  function addWallet(RootWallet storage self, bytes32 walletHash, Wallet calldata wallet) internal {
     self.walletHashes.add(walletHash);
     self.walletByHash[walletHash] = wallet;
   }
@@ -46,10 +43,7 @@ library WalletLib {
     delete self.walletByHash[walletHash];
   }
 
-  function exists(
-    RootWallet storage self,
-    bytes32 walletHash
-  ) internal view returns (bool) {
+  function exists(RootWallet storage self, bytes32 walletHash) internal view returns (bool) {
     return self.walletHashes.contains(walletHash);
   }
 }

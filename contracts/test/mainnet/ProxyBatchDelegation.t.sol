@@ -2,17 +2,22 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {IMainnetDelegationBase, IMainnetDelegation} from "contracts/src/base/registry/facets/mainnet/IMainnetDelegation.sol";
+import {
+  IMainnetDelegationBase,
+  IMainnetDelegation
+} from "contracts/src/base/registry/facets/mainnet/IMainnetDelegation.sol";
 import {IAuthorizedClaimers} from "contracts/src/tokens/mainnet/claimer/IAuthorizedClaimers.sol";
 
 // libraries
-import {NodeOperatorStatus} from "contracts/src/base/registry/facets/operator/NodeOperatorStorage.sol";
+import {NodeOperatorStatus} from
+  "contracts/src/base/registry/facets/operator/NodeOperatorStorage.sol";
 
 // contracts
 import {BaseSetup} from "contracts/test/spaces/BaseSetup.sol";
 import {NodeOperatorFacet} from "contracts/src/base/registry/facets/operator/NodeOperatorFacet.sol";
 import {Towns} from "contracts/src/tokens/towns/mainnet/Towns.sol";
-import {ProxyBatchDelegation} from "contracts/src/tokens/mainnet/delegation/ProxyBatchDelegation.sol";
+import {ProxyBatchDelegation} from
+  "contracts/src/tokens/mainnet/delegation/ProxyBatchDelegation.sol";
 
 contract ProxyBatchDelegationTest is BaseSetup, IMainnetDelegationBase {
   IMainnetDelegation internal mainnetDelegation;
@@ -61,13 +66,10 @@ contract ProxyBatchDelegationTest is BaseSetup, IMainnetDelegationBase {
 
     for (uint256 i; i < _users.length; ++i) {
       address user = _users[i];
-      Delegation memory delegation = mainnetDelegation.getDelegationByDelegator(
-        user
-      );
+      Delegation memory delegation = mainnetDelegation.getDelegationByDelegator(user);
       assertEq(towns.delegates(user), delegation.operator);
       assertEq(
-        authorizedClaimers.getAuthorizedClaimer(user),
-        mainnetDelegation.getAuthorizedClaimer(user)
+        authorizedClaimers.getAuthorizedClaimer(user), mainnetDelegation.getAuthorizedClaimer(user)
       );
     }
   }
@@ -79,7 +81,9 @@ contract ProxyBatchDelegationTest is BaseSetup, IMainnetDelegationBase {
     return addresses[_randomUint256() % addresses.length];
   }
 
-  function setOperator(address operator) internal {
+  function setOperator(
+    address operator
+  ) internal {
     vm.assume(operator != address(0));
     if (!operatorFacet.isOperator(operator)) {
       vm.prank(operator);

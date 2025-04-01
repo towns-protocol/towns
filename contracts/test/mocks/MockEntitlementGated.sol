@@ -1,10 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import {IEntitlementChecker} from "contracts/src/base/registry/facets/checker/IEntitlementChecker.sol";
+import {IEntitlementChecker} from
+  "contracts/src/base/registry/facets/checker/IEntitlementChecker.sol";
 import {EntitlementGated} from "contracts/src/spaces/facets/gated/EntitlementGated.sol";
 import {IRuleEntitlement} from "contracts/src/spaces/entitlements/rule/IRuleEntitlement.sol";
-import {IEntitlementDataQueryableBase} from "contracts/src/spaces/facets/entitlements/extensions/IEntitlementDataQueryable.sol";
+import {IEntitlementDataQueryableBase} from
+  "contracts/src/spaces/facets/entitlements/extensions/IEntitlementDataQueryable.sol";
 
 /// @dev _onEntitlementCheckResultPosted is not implemented to avoid confusion
 contract MockEntitlementGated is EntitlementGated {
@@ -13,7 +15,9 @@ contract MockEntitlementGated is EntitlementGated {
 
   IRuleEntitlement.RuleData encodedRuleData;
 
-  constructor(IEntitlementChecker checker) {
+  constructor(
+    IEntitlementChecker checker
+  ) {
     _setEntitlementChecker(checker);
   }
 
@@ -38,15 +42,8 @@ contract MockEntitlementGated is EntitlementGated {
     IRuleEntitlement.RuleData calldata ruleData
   ) external returns (bytes32) {
     ruleDatasByRoleId[roleId] = ruleData;
-    bytes32 transactionId = keccak256(
-      abi.encodePacked(tx.origin, block.number)
-    );
-    _requestEntitlementCheck(
-      msg.sender,
-      transactionId,
-      IRuleEntitlement(address(this)),
-      roleId
-    );
+    bytes32 transactionId = keccak256(abi.encodePacked(tx.origin, block.number));
+    _requestEntitlementCheck(msg.sender, transactionId, IRuleEntitlement(address(this)), roleId);
     return transactionId;
   }
 
@@ -58,16 +55,11 @@ contract MockEntitlementGated is EntitlementGated {
     for (uint256 i = 0; i < roleIds.length; i++) {
       ruleDatasV2ByRoleId[roleIds[i]] = ruleData;
     }
-    bytes32 transactionId = keccak256(
-      abi.encodePacked(tx.origin, block.number)
-    );
+    bytes32 transactionId = keccak256(abi.encodePacked(tx.origin, block.number));
 
     for (uint256 i = 0; i < roleIds.length; i++) {
       _requestEntitlementCheck(
-        msg.sender,
-        transactionId,
-        IRuleEntitlement(address(this)),
-        roleIds[i]
+        msg.sender, transactionId, IRuleEntitlement(address(this)), roleIds[i]
       );
     }
     return transactionId;
@@ -81,17 +73,11 @@ contract MockEntitlementGated is EntitlementGated {
     for (uint256 i = 0; i < roleIds.length; i++) {
       ruleDatasByRoleId[roleIds[i]] = ruleData;
     }
-    bytes32 transactionId = keccak256(
-      abi.encodePacked(tx.origin, block.number)
-    );
+    bytes32 transactionId = keccak256(abi.encodePacked(tx.origin, block.number));
 
     for (uint256 i = 0; i < roleIds.length; i++) {
       _requestEntitlementCheckV2(
-        msg.sender,
-        address(this),
-        transactionId,
-        IRuleEntitlement(address(this)),
-        roleIds[i]
+        msg.sender, address(this), transactionId, IRuleEntitlement(address(this)), roleIds[i]
       );
     }
     return transactionId;
@@ -105,17 +91,11 @@ contract MockEntitlementGated is EntitlementGated {
     for (uint256 i = 0; i < roleIds.length; i++) {
       ruleDatasV2ByRoleId[roleIds[i]] = ruleData;
     }
-    bytes32 transactionId = keccak256(
-      abi.encodePacked(tx.origin, block.number)
-    );
+    bytes32 transactionId = keccak256(abi.encodePacked(tx.origin, block.number));
 
     for (uint256 i = 0; i < roleIds.length; i++) {
       _requestEntitlementCheckV2(
-        msg.sender,
-        address(this),
-        transactionId,
-        IRuleEntitlement(address(this)),
-        roleIds[i]
+        msg.sender, address(this), transactionId, IRuleEntitlement(address(this)), roleIds[i]
       );
     }
     return transactionId;
@@ -124,23 +104,15 @@ contract MockEntitlementGated is EntitlementGated {
   function getCrossChainEntitlementData(
     bytes32,
     uint256 roleId
-  )
-    external
-    view
-    returns (IEntitlementDataQueryableBase.EntitlementData memory)
-  {
+  ) external view returns (IEntitlementDataQueryableBase.EntitlementData memory) {
     if (ruleDatasByRoleId[roleId].operations.length > 0) {
-      return
-        IEntitlementDataQueryableBase.EntitlementData(
-          "RuleEntitlement",
-          abi.encode(ruleDatasByRoleId[roleId])
-        );
+      return IEntitlementDataQueryableBase.EntitlementData(
+        "RuleEntitlement", abi.encode(ruleDatasByRoleId[roleId])
+      );
     } else {
-      return
-        IEntitlementDataQueryableBase.EntitlementData(
-          "RuleEntitlementV2",
-          abi.encode(ruleDatasV2ByRoleId[roleId])
-        );
+      return IEntitlementDataQueryableBase.EntitlementData(
+        "RuleEntitlementV2", abi.encode(ruleDatasV2ByRoleId[roleId])
+      );
     }
   }
 }

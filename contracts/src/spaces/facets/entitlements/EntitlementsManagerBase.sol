@@ -5,19 +5,24 @@ pragma solidity ^0.8.23;
 import {IEntitlementsManagerBase} from "./IEntitlementsManager.sol";
 
 // libraries
-import {EntitlementsManagerService} from "contracts/src/spaces/facets/entitlements/EntitlementsManagerService.sol";
+import {EntitlementsManagerService} from
+  "contracts/src/spaces/facets/entitlements/EntitlementsManagerService.sol";
 
 // contracts
 
 contract EntitlementsManagerBase is IEntitlementsManagerBase {
-  function _addImmutableEntitlements(address[] calldata entitlements) internal {
+  function _addImmutableEntitlements(
+    address[] calldata entitlements
+  ) internal {
     for (uint256 i; i < entitlements.length; ++i) {
       EntitlementsManagerService.validateEntitlement(entitlements[i]);
       EntitlementsManagerService.addEntitlement(entitlements[i], true);
     }
   }
 
-  function _addEntitlementModule(address entitlement) internal {
+  function _addEntitlementModule(
+    address entitlement
+  ) internal {
     // validate permission
 
     // validate entitlement
@@ -30,7 +35,9 @@ contract EntitlementsManagerBase is IEntitlementsManagerBase {
     emit EntitlementModuleAdded(msg.sender, entitlement);
   }
 
-  function _removeEntitlementModule(address entitlement) internal {
+  function _removeEntitlementModule(
+    address entitlement
+  ) internal {
     // validate permission
 
     // validate entitlement
@@ -48,12 +55,8 @@ contract EntitlementsManagerBase is IEntitlementsManagerBase {
   ) internal view returns (Entitlement memory module) {
     EntitlementsManagerService.validateEntitlement(entitlement);
 
-    (
-      string memory name,
-      address entitlementAddress,
-      string memory moduleType,
-      bool isImmutable
-    ) = EntitlementsManagerService.getEntitlement(entitlement);
+    (string memory name, address entitlementAddress, string memory moduleType, bool isImmutable) =
+      EntitlementsManagerService.getEntitlement(entitlement);
 
     module = Entitlement({
       name: name,
@@ -63,23 +66,14 @@ contract EntitlementsManagerBase is IEntitlementsManagerBase {
     });
   }
 
-  function _getEntitlements()
-    internal
-    view
-    returns (Entitlement[] memory modules)
-  {
-    address[] memory entitlements = EntitlementsManagerService
-      .getEntitlements();
+  function _getEntitlements() internal view returns (Entitlement[] memory modules) {
+    address[] memory entitlements = EntitlementsManagerService.getEntitlements();
 
     modules = new Entitlement[](entitlements.length);
 
     for (uint256 i; i < entitlements.length; ++i) {
-      (
-        string memory name,
-        address entitlementAddress,
-        string memory moduleType,
-        bool isImmutable
-      ) = EntitlementsManagerService.getEntitlement(entitlements[i]);
+      (string memory name, address entitlementAddress, string memory moduleType, bool isImmutable) =
+        EntitlementsManagerService.getEntitlement(entitlements[i]);
 
       modules[i] = Entitlement({
         name: name,

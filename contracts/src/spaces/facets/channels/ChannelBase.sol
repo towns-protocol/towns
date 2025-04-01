@@ -24,19 +24,11 @@ abstract contract ChannelBase is IChannelBase {
   function _getChannel(
     bytes32 channelId
   ) internal view returns (Channel memory channel) {
-    (, string memory metadata, bool disabled) = ChannelService.getChannel(
-      channelId
-    );
+    (, string memory metadata, bool disabled) = ChannelService.getChannel(channelId);
 
     uint256[] memory roleIds = ChannelService.getRolesByChannel(channelId);
 
-    return
-      Channel({
-        id: channelId,
-        disabled: disabled,
-        metadata: metadata,
-        roleIds: roleIds
-      });
+    return Channel({id: channelId, disabled: disabled, metadata: metadata, roleIds: roleIds});
   }
 
   function _getChannels() internal view returns (Channel[] memory) {
@@ -45,43 +37,30 @@ abstract contract ChannelBase is IChannelBase {
     Channel[] memory channels = new Channel[](channelIds.length);
 
     for (uint256 i = 0; i < channelIds.length; i++) {
-      (bytes32 id, string memory metadata, bool disabled) = ChannelService
-        .getChannel(channelIds[i]);
+      (bytes32 id, string memory metadata, bool disabled) = ChannelService.getChannel(channelIds[i]);
 
-      uint256[] memory roleIds = ChannelService.getRolesByChannel(
-        channelIds[i]
-      );
+      uint256[] memory roleIds = ChannelService.getRolesByChannel(channelIds[i]);
 
-      channels[i] = Channel({
-        id: id,
-        disabled: disabled,
-        metadata: metadata,
-        roleIds: roleIds
-      });
+      channels[i] = Channel({id: id, disabled: disabled, metadata: metadata, roleIds: roleIds});
     }
 
     return channels;
   }
 
-  function _setChannelRoleOverrides(
-    bytes32 channelId,
-    uint256[] memory roleIds
-  ) internal {
+  function _setChannelRoleOverrides(bytes32 channelId, uint256[] memory roleIds) internal {
     for (uint256 i = 0; i < roleIds.length; i++) {
       _addRoleToChannel(channelId, roleIds[i]);
     }
   }
 
-  function _updateChannel(
-    bytes32 channelId,
-    string memory metadata,
-    bool disabled
-  ) internal {
+  function _updateChannel(bytes32 channelId, string memory metadata, bool disabled) internal {
     ChannelService.updateChannel(channelId, metadata, disabled);
     emit ChannelUpdated(msg.sender, channelId);
   }
 
-  function _removeChannel(bytes32 channelId) internal {
+  function _removeChannel(
+    bytes32 channelId
+  ) internal {
     ChannelService.removeChannel(channelId);
     emit ChannelRemoved(msg.sender, channelId);
   }

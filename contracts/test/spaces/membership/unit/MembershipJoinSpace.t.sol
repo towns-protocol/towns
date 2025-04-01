@@ -8,7 +8,8 @@ import {MembershipBaseSetup} from "../MembershipBaseSetup.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IEntitlementGated} from "contracts/src/spaces/facets/gated/IEntitlementGated.sol";
 import {IEntitlementGatedBase} from "contracts/src/spaces/facets/gated/IEntitlementGated.sol";
-import {IEntitlementCheckerBase} from "contracts/src/base/registry/facets/checker/IEntitlementChecker.sol";
+import {IEntitlementCheckerBase} from
+  "contracts/src/base/registry/facets/checker/IEntitlementChecker.sol";
 import {IArchitectBase} from "contracts/src/factory/facets/architect/IArchitect.sol";
 import {ICreateSpace} from "contracts/src/factory/facets/create/ICreateSpace.sol";
 
@@ -57,10 +58,7 @@ contract MembershipJoinSpaceTest is
 
     assertEq(membershipToken.balanceOf(alice), 1);
     assertEq(alice.balance, 0);
-    assertEq(
-      IERC20(riverAirdrop).balanceOf(alice),
-      _getPoints(MEMBERSHIP_PRICE)
-    );
+    assertEq(IERC20(riverAirdrop).balanceOf(alice), _getPoints(MEMBERSHIP_PRICE));
   }
 
   /// @dev Test that a user can join a space with an entitled root wallet as the signer
@@ -73,7 +71,8 @@ contract MembershipJoinSpaceTest is
     assertEq(membershipToken.balanceOf(bobWallet.addr), 1);
   }
 
-  /// @dev Test that a user can join a space with a linked wallet as the signer but the linked wallet is entitled
+  /// @dev Test that a user can join a space with a linked wallet as the signer but the linked
+  /// wallet is entitled
   function test_joinSpaceWithEntitledLinkedWallet()
     external
     givenWalletIsLinked(bobWallet, aliceWallet)
@@ -119,21 +118,15 @@ contract MembershipJoinSpaceTest is
           emit MembershipTokenIssued(bob, nextTokenId);
         }
         _entitlementGated.postEntitlementCheckResult(
-          transactionId,
-          roleId,
-          IEntitlementGatedBase.NodeVoteStatus.PASSED
+          transactionId, roleId, IEntitlementGatedBase.NodeVoteStatus.PASSED
         );
         continue;
       }
 
       vm.prank(selectedNodes[i]);
-      vm.expectRevert(
-        EntitlementGated_TransactionCheckAlreadyCompleted.selector
-      );
+      vm.expectRevert(EntitlementGated_TransactionCheckAlreadyCompleted.selector);
       _entitlementGated.postEntitlementCheckResult(
-        transactionId,
-        roleId,
-        IEntitlementGatedBase.NodeVoteStatus.PASSED
+        transactionId, roleId, IEntitlementGatedBase.NodeVoteStatus.PASSED
       );
     }
 
@@ -158,29 +151,22 @@ contract MembershipJoinSpaceTest is
     assertEq(numCheckRequests, 3);
     assertEq(membershipToken.balanceOf(bob), 0);
 
-    EntitlementCheckRequestEvent[]
-      memory entitlementCheckRequests = _getRequestV2Events(requestLogs);
+    EntitlementCheckRequestEvent[] memory entitlementCheckRequests =
+      _getRequestV2Events(requestLogs);
 
-    EntitlementCheckRequestEvent memory firstRequest = entitlementCheckRequests[
-      0
-    ];
+    EntitlementCheckRequestEvent memory firstRequest = entitlementCheckRequests[0];
 
     vm.recordLogs();
     for (uint256 j = 0; j < firstRequest.randomNodes.length; j++) {
-      IEntitlementGatedBase.NodeVoteStatus status = IEntitlementGatedBase
-        .NodeVoteStatus
-        .PASSED;
+      IEntitlementGatedBase.NodeVoteStatus status = IEntitlementGatedBase.NodeVoteStatus.PASSED;
       // Send a few failures to exercise quorum code, this should result in a pass.
       if (j % 2 == 1) {
         status = IEntitlementGatedBase.NodeVoteStatus.FAILED;
       }
       vm.prank(firstRequest.randomNodes[j]);
-      IEntitlementGated(firstRequest.resolverAddress)
-        .postEntitlementCheckResult(
-          firstRequest.transactionId,
-          firstRequest.requestId,
-          status
-        );
+      IEntitlementGated(firstRequest.resolverAddress).postEntitlementCheckResult(
+        firstRequest.transactionId, firstRequest.requestId, status
+      );
     }
 
     Vm.Log[] memory resultLogs = vm.getRecordedLogs(); // Retrieve the recorded logs
@@ -196,22 +182,17 @@ contract MembershipJoinSpaceTest is
       "MembershipTokenIssued should have been emitted"
     );
 
-    // Further node votes to the terminated transaction should cause reversion due to cleaned up txn.
+    // Further node votes to the terminated transaction should cause reversion due to cleaned up
+    // txn.
     vm.expectRevert(
       abi.encodeWithSelector(
-        IEntitlementGatedBase
-          .EntitlementGated_TransactionCheckAlreadyCompleted
-          .selector
+        IEntitlementGatedBase.EntitlementGated_TransactionCheckAlreadyCompleted.selector
       )
     );
-    EntitlementCheckRequestEvent memory finalRequest = entitlementCheckRequests[
-      2
-    ];
-    (bool success, ) = address(finalRequest.resolverAddress).call(
+    EntitlementCheckRequestEvent memory finalRequest = entitlementCheckRequests[2];
+    (bool success,) = address(finalRequest.resolverAddress).call(
       abi.encodeWithSelector(
-        IEntitlementGated(finalRequest.resolverAddress)
-          .postEntitlementCheckResult
-          .selector,
+        IEntitlementGated(finalRequest.resolverAddress).postEntitlementCheckResult.selector,
         finalRequest.transactionId,
         finalRequest.requestId,
         IEntitlementGatedBase.NodeVoteStatus.PASSED
@@ -248,21 +229,15 @@ contract MembershipJoinSpaceTest is
       if (i <= quorum) {
         vm.prank(selectedNodes[i]);
         IEntitlementGated(resolverAddress).postEntitlementCheckResult(
-          transactionId,
-          roleId,
-          IEntitlementGatedBase.NodeVoteStatus.FAILED
+          transactionId, roleId, IEntitlementGatedBase.NodeVoteStatus.FAILED
         );
         continue;
       }
 
       vm.prank(selectedNodes[i]);
-      vm.expectRevert(
-        EntitlementGated_TransactionCheckAlreadyCompleted.selector
-      );
+      vm.expectRevert(EntitlementGated_TransactionCheckAlreadyCompleted.selector);
       IEntitlementGated(resolverAddress).postEntitlementCheckResult(
-        transactionId,
-        roleId,
-        IEntitlementGatedBase.NodeVoteStatus.PASSED
+        transactionId, roleId, IEntitlementGatedBase.NodeVoteStatus.PASSED
       );
     }
 
@@ -293,9 +268,7 @@ contract MembershipJoinSpaceTest is
     for (uint256 i; i < 3; ++i) {
       vm.prank(selectedNodes[i]);
       IEntitlementGated(resolverAddress).postEntitlementCheckResult(
-        transactionId,
-        roleId,
-        IEntitlementGatedBase.NodeVoteStatus.PASSED
+        transactionId, roleId, IEntitlementGatedBase.NodeVoteStatus.PASSED
       );
     }
 
@@ -324,9 +297,7 @@ contract MembershipJoinSpaceTest is
     for (uint256 i; i < 3; ++i) {
       vm.prank(selectedNodes[i]);
       IEntitlementGated(resolverAddress).postEntitlementCheckResult(
-        transactionId,
-        roleId,
-        IEntitlementGatedBase.NodeVoteStatus.FAILED
+        transactionId, roleId, IEntitlementGatedBase.NodeVoteStatus.FAILED
       );
     }
 
@@ -370,17 +341,12 @@ contract MembershipJoinSpaceTest is
 
       vm.prank(currentNode);
       IEntitlementGated(resolverAddress).postEntitlementCheckResult(
-        transactionId,
-        roleId,
-        IEntitlementGatedBase.NodeVoteStatus.PASSED
+        transactionId, roleId, IEntitlementGatedBase.NodeVoteStatus.PASSED
       );
     }
 
     assertGt(
-      _getMatchingLogCount(
-        vm.getRecordedLogs(),
-        EntitlementCheckResultPosted.selector
-      ),
+      _getMatchingLogCount(vm.getRecordedLogs(), EntitlementCheckResultPosted.selector),
       0,
       "EntitlementCheckResultPosted should have been emitted"
     );
@@ -397,9 +363,7 @@ contract MembershipJoinSpaceTest is
     membership.joinSpace(alice);
   }
 
-  function test_revertWhen_setMembershipLimitToLowerThanCurrentBalance()
-    external
-  {
+  function test_revertWhen_setMembershipLimitToLowerThanCurrentBalance() external {
     vm.prank(founder);
     membership.setMembershipLimit(2);
 
@@ -439,10 +403,7 @@ contract MembershipJoinSpaceTest is
     assertEq(address(membership).balance, 0);
   }
 
-  function test_joinSpace_priceChangesMidTransaction()
-    external
-    givenMembershipHasPrice
-  {
+  function test_joinSpace_priceChangesMidTransaction() external givenMembershipHasPrice {
     vm.deal(bob, MEMBERSHIP_PRICE);
 
     assertEq(membershipToken.balanceOf(bob), 0);
@@ -467,9 +428,7 @@ contract MembershipJoinSpaceTest is
     for (uint256 i; i < 3; ++i) {
       vm.prank(selectedNodes[i]);
       IEntitlementGated(resolverAddress).postEntitlementCheckResult(
-        transactionId,
-        roleId,
-        IEntitlementGatedBase.NodeVoteStatus.PASSED
+        transactionId, roleId, IEntitlementGatedBase.NodeVoteStatus.PASSED
       );
     }
 
@@ -484,21 +443,15 @@ contract MembershipJoinSpaceTest is
     allowedUsers[0] = alice;
     allowedUsers[1] = bob;
 
-    IArchitectBase.SpaceInfo memory freeAllocationInfo = _createUserSpaceInfo(
-      "FreeAllocationSpace",
-      allowedUsers
-    );
+    IArchitectBase.SpaceInfo memory freeAllocationInfo =
+      _createUserSpaceInfo("FreeAllocationSpace", allowedUsers);
     freeAllocationInfo.membership.settings.pricingModule = fixedPricingModule;
     freeAllocationInfo.membership.settings.freeAllocation = 1;
 
     vm.prank(founder);
-    address freeAllocationSpace = ICreateSpace(spaceFactory).createSpace(
-      freeAllocationInfo
-    );
+    address freeAllocationSpace = ICreateSpace(spaceFactory).createSpace(freeAllocationInfo);
 
-    MembershipFacet freeAllocationMembership = MembershipFacet(
-      freeAllocationSpace
-    );
+    MembershipFacet freeAllocationMembership = MembershipFacet(freeAllocationSpace);
 
     vm.prank(bob);
     vm.expectRevert(Membership__InsufficientPayment.selector);
@@ -536,10 +489,7 @@ contract MembershipJoinSpaceTest is
     uint256 price = membership.getMembershipPrice();
     uint256 protocolFee = membership.getProtocolFee();
 
-    assertEq(
-      protocolFee,
-      BasisPoints.calculate(price, platformReqs.getMembershipBps())
-    );
+    assertEq(protocolFee, BasisPoints.calculate(price, platformReqs.getMembershipBps()));
   }
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -557,21 +507,15 @@ contract MembershipJoinSpaceTest is
     external
     givenJoinspaceHasAdditionalCrosschainEntitlements
   {
-    MockLegacyMembership legacyMembership = MockLegacyMembership(
-      address(membership)
-    );
+    MockLegacyMembership legacyMembership = MockLegacyMembership(address(membership));
 
     vm.recordLogs();
     vm.prank(bob);
     legacyMembership.joinSpaceLegacy(bob);
     Vm.Log[] memory logs = vm.getRecordedLogs();
 
-    (
-      address resolverAddress,
-      bytes32 transactionId,
-      uint256 roleId,
-      address[] memory selectedNodes
-    ) = _getRequestV1EventData(logs);
+    (address resolverAddress, bytes32 transactionId, uint256 roleId, address[] memory selectedNodes)
+    = _getRequestV1EventData(logs);
 
     // posting to space
     IEntitlementGated entitlementGated = IEntitlementGated(resolverAddress);
@@ -579,9 +523,7 @@ contract MembershipJoinSpaceTest is
     for (uint256 i = 0; i < 3; i++) {
       vm.prank(selectedNodes[i]);
       entitlementGated.postEntitlementCheckResult(
-        transactionId,
-        roleId,
-        IEntitlementGatedBase.NodeVoteStatus.PASSED
+        transactionId, roleId, IEntitlementGatedBase.NodeVoteStatus.PASSED
       );
     }
 

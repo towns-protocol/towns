@@ -30,7 +30,9 @@ contract DeployReferrals is Deployer, FacetHelper {
     return ReferralsFacet.__ReferralsFacet_init.selector;
   }
 
-  function __deploy(address deployer) public override returns (address) {
+  function __deploy(
+    address deployer
+  ) public override returns (address) {
     vm.startBroadcast(deployer);
     ReferralsFacet facet = new ReferralsFacet();
     vm.stopBroadcast();
