@@ -16,11 +16,9 @@ type StreamNodes interface {
 	GetNodes() []common.Address
 
 	// GetSyncNodes returns the nodes that don't take part in the quorum but sync the stream in local storage.
-	// This is a temporary function that is used during migrating non-replicated streams to replicated streams.
 	GetSyncNodes() []common.Address
 
 	// IsQuorum returns an indication if the local node is part of the quorum.
-	// This is a temporary function that is used during migrating non-replicated streams to replicated streams.
 	IsQuorum() bool
 
 	// GetRemotesAndIsLocal returns all remote nodes and true if the local node is in the list of nodes.
@@ -44,7 +42,6 @@ type StreamNodes interface {
 	// Reset the list of nodes to the given nodes and local node. The nodes in range Nodes[0:replicationFactor] take
 	// part in the quorum. The nodes in range Nodes[replicationFactor:] are the nodes that sync the stream into local
 	// storage but don't take part in quorum.
-	// This is a temporary solution during the migration of non-replicated streams to replicated streams.
 	Reset(replicationFactor int, nodes []common.Address, localNode common.Address)
 }
 
