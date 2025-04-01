@@ -16,7 +16,7 @@ const (
 )
 
 type (
-	MiniblockHandlerFunc func(blockdata []byte, seqNum int64) error
+	MiniblockHandlerFunc func(blockdata []byte, seqNum int64, snapshot []byte) error
 
 	ReadStreamFromLastSnapshotResult struct {
 		SnapshotMiniblockOffset int
@@ -27,14 +27,15 @@ type (
 	WriteMiniblockData struct {
 		Number   int64
 		Hash     common.Hash
-		Snapshot bool
+		Snapshot []byte
 		Data     []byte
 	}
 
 	MiniblockDescriptor struct {
-		Number int64
-		Data   []byte
-		Hash   common.Hash // Only set for miniblock candidates
+		Number   int64
+		Data     []byte
+		Hash     common.Hash // Only set for miniblock candidates
+		Snapshot []byte
 	}
 
 	EventDescriptor struct {
