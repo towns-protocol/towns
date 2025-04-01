@@ -183,7 +183,7 @@ func compareStreamMiniblocks(
 
 	for i, mb := range miniblocks {
 		info, err := events.NewMiniblockInfoFromBytesWithOpts(
-			mb,
+			mb.Data,
 			events.NewParsedMiniblockInfoOpts().
 				WithExpectedBlockNumber(int64(i)).
 				WithDoNotParseEvents(true),

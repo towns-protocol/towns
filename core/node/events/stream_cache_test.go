@@ -8,6 +8,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/towns-protocol/towns/core/node/storage"
+
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/stretchr/testify/require"
@@ -542,9 +544,11 @@ func TestMiniblockRegistrationWithPendingLocalCandidate(t *testing.T) {
 	err = instance.params.Storage.WriteMiniblockCandidate(
 		ctx,
 		spaceStreamId,
-		candidate.Ref.Hash,
-		candidate.Ref.Num,
-		miniblockBytes,
+		&storage.WriteMiniblockData{
+			Number: candidate.Ref.Num,
+			Hash:   candidate.Ref.Hash,
+			Data:   miniblockBytes,
+		},
 	)
 	require.NoError(err)
 

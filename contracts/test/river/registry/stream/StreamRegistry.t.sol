@@ -6,9 +6,10 @@ import {Vm} from "forge-std/Vm.sol";
 import {IOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
 
 // libraries
-import {Stream, StreamWithId, SetMiniblock} from "contracts/src/river/registry/libraries/RegistryStorage.sol";
+import {Stream, StreamWithId, SetMiniblock, SetStreamReplicationFactor} from "contracts/src/river/registry/libraries/RegistryStorage.sol";
 import {RiverRegistryErrors} from "contracts/src/river/registry/libraries/RegistryErrors.sol";
 import {IStreamRegistryBase} from "contracts/src/river/registry/facets/stream/IStreamRegistry.sol";
+import {IRiverConfigBase} from "contracts/src/river/registry/facets/config/IRiverConfig.sol";
 import {StreamFlags} from "contracts/src/river/registry/facets/stream/StreamRegistry.sol";
 import {LogUtils} from "contracts/test/utils/LogUtils.sol";
 
@@ -19,6 +20,7 @@ contract StreamRegistryTest is
   LogUtils,
   RiverRegistryBaseSetup,
   IOwnableBase,
+  IRiverConfigBase,
   IStreamRegistryBase
 {
   address internal NODE = makeAddr("node");
@@ -29,6 +31,17 @@ contract StreamRegistryTest is
       keccak256("genesisMiniblock"),
       "genesisMiniblock"
     );
+
+  modifier givenConfigurationManagerIsApproved(address configManager) {
+    vm.assume(configManager != address(0));
+    vm.assume(riverConfig.isConfigurationManager(configManager) == false);
+
+    vm.prank(deployer);
+    vm.expectEmit();
+    emit ConfigurationManagerAdded(configManager);
+    riverConfig.approveConfigurationManager(configManager);
+    _;
+  }
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                       allocateStream                       */
@@ -109,7 +122,7 @@ contract StreamRegistryTest is
       lastMiniblockHash: testStream.genesisMiniblockHash,
       lastMiniblockNum: 0,
       flags: 0,
-      reserved0: 0,
+      reserved0: uint64(nodeAddresses.length),
       nodes: nodeAddresses
     });
 
@@ -211,7 +224,7 @@ contract StreamRegistryTest is
       lastMiniblockHash: SAMPLE_STREAM.genesisMiniblockHash,
       lastMiniblockNum: 1,
       flags: StreamFlags.SEALED,
-      reserved0: 0,
+      reserved0: 1,
       nodes: nodeAddresses
     });
 
@@ -243,7 +256,7 @@ contract StreamRegistryTest is
       lastMiniblockHash: testStream.genesisMiniblockHash,
       lastMiniblockNum: 1,
       flags: StreamFlags.SEALED,
-      reserved0: 0,
+      reserved0: 1,
       nodes: nodeAddresses
     });
 
@@ -303,7 +316,7 @@ contract StreamRegistryTest is
       lastMiniblockHash: testStream.genesisMiniblockHash,
       lastMiniblockNum: 1,
       flags: StreamFlags.SEALED,
-      reserved0: 0,
+      reserved0: 1,
       nodes: nodes
     });
 
@@ -334,7 +347,7 @@ contract StreamRegistryTest is
       lastMiniblockHash: testStream.genesisMiniblockHash,
       lastMiniblockNum: 1,
       flags: StreamFlags.SEALED,
-      reserved0: 0,
+      reserved0: 1,
       nodes: nodes
     });
 
@@ -366,7 +379,7 @@ contract StreamRegistryTest is
       lastMiniblockHash: testStream.genesisMiniblockHash,
       lastMiniblockNum: 1,
       flags: StreamFlags.SEALED,
-      reserved0: 0,
+      reserved0: 1,
       nodes: nodes
     });
 
@@ -657,6 +670,59 @@ contract StreamRegistryTest is
     assertEq(stream.nodes.length, 0);
   }
 
+  function test_initMigrateNonReplicatedStreamsToReplicated_3(
+    address configManager
+  ) public givenConfigurationManagerIsApproved(configManager) {
+    // Add a valid stream first
+    test_allocateStream();
+
+    Stream memory stream = streamRegistry.getStream(SAMPLE_STREAM.streamId);
+
+    address[] memory newNodes = new address[](3);
+    newNodes[0] = stream.nodes[0]; // keep stream existing node
+    newNodes[1] = makeAddr("replNode1");
+    newNodes[2] = makeAddr("replNode2");
+
+    uint8 replFactor = 1; // node 0 remains the only leader for this stream until other nodes are synced
+
+    Stream memory expectedStream = Stream({
+      lastMiniblockHash: stream.lastMiniblockHash,
+      lastMiniblockNum: stream.lastMiniblockNum,
+      reserved0: replFactor,
+      flags: stream.flags,
+      nodes: newNodes
+    });
+
+    vm.recordLogs();
+    vm.prank(configManager);
+    SetStreamReplicationFactor[]
+      memory requests = new SetStreamReplicationFactor[](1);
+    requests[0] = SetStreamReplicationFactor({
+      streamId: SAMPLE_STREAM.streamId,
+      nodes: newNodes,
+      replicationFactor: replFactor
+    });
+    streamRegistry.setStreamReplicationFactor(requests);
+
+    Vm.Log[] memory logs = vm.getRecordedLogs();
+
+    // Verify StreamUpdated event
+    Vm.Log memory streamUpdatedLog = _getFirstMatchingLog(
+      logs,
+      StreamUpdated.selector
+    );
+
+    assertEq(
+      uint8(uint256(streamUpdatedLog.topics[1])),
+      uint8(StreamEventType.PlacementUpdated)
+    );
+
+    assertEq(
+      abi.decode(streamUpdatedLog.data, (bytes)),
+      abi.encode(SAMPLE_STREAM.streamId, expectedStream)
+    );
+  }
+
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                         Getters                            */
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -722,7 +788,7 @@ contract StreamRegistryTest is
         lastMiniblockHash: bytes32(uint256(i)),
         lastMiniblockNum: 1,
         flags: StreamFlags.SEALED,
-        reserved0: 0,
+        reserved0: 1,
         nodes: new address[](1)
       });
       streams[i].nodes[0] = NODE;

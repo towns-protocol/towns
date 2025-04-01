@@ -2,7 +2,7 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {Stream, StreamWithId, SetMiniblock} from "contracts/src/river/registry/libraries/RegistryStorage.sol";
+import {Stream, StreamWithId, SetMiniblock, SetStreamReplicationFactor} from "contracts/src/river/registry/libraries/RegistryStorage.sol";
 
 // libraries
 
@@ -67,12 +67,9 @@ interface IStreamRegistryBase {
 }
 
 interface IStreamRegistry is IStreamRegistryBase {
-  /**
-   * @notice Check if a stream exists in the registry
-   * @param streamId The ID of the stream to check
-   * @return bool True if the stream exists, false otherwise
-   */
-  function isStream(bytes32 streamId) external view returns (bool);
+  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+  /*                          STREAMS                           */
+  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
   /**
    * @notice Allocate a new stream in the registry
@@ -99,13 +96,6 @@ interface IStreamRegistry is IStreamRegistryBase {
     bytes32 genesisMiniblockHash,
     Stream memory stream
   ) external;
-
-  /**
-   * @notice Get a stream from the registry
-   * @param streamId The ID of the stream to get
-   * @return Stream The stream data
-   */
-  function getStream(bytes32 streamId) external view returns (Stream memory);
 
   /**
    * @notice Sync node addresses for streams in a range to `streamIdsByNode` mapping
@@ -137,6 +127,48 @@ interface IStreamRegistry is IStreamRegistryBase {
    * @param nodeAddress The address of the node to remove the stream from
    */
   function removeStreamFromNode(bytes32 streamId, address nodeAddress) external;
+
+  /**
+   * @notice Set the replication factor for existing streams
+   * @param requests list with streams to set replication factor for
+   * @dev Only callable by configuration managers
+   *
+   * @dev This function is to migrate existing non-replicated streams to replicated streams.
+   * If the replication factor is less than the number of nodes it indicates that only the first "replicationFactor"
+   * nodes participate in reaching quorum. The remaining nodes only sync the stream data.
+   */
+  function setStreamReplicationFactor(
+    SetStreamReplicationFactor[] calldata requests
+  ) external;
+
+  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+  /*                          GETTERS                           */
+  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+  /**
+   * @notice Check if a stream exists in the registry
+   * @param streamId The ID of the stream to check
+   * @return bool True if the stream exists, false otherwise
+   */
+  function isStream(bytes32 streamId) external view returns (bool);
+
+  /**
+   * @notice Get a stream from the registry
+   * @param streamId The ID of the stream to get
+   * @return Stream The stream data
+   */
+  function getStream(bytes32 streamId) external view returns (Stream memory);
+
+  /**
+   * @notice Get a stream and its genesis information from the registry
+   * @param streamId The ID of the stream to get
+   * @return Stream The stream data
+   * @return bytes32 The genesis miniblock hash
+   * @return bytes The genesis miniblock data
+   */
+  function getStreamWithGenesis(
+    bytes32 streamId
+  ) external view returns (Stream memory, bytes32, bytes memory);
 
   /**
    * @notice Get the total number of streams in the registry
@@ -177,15 +209,4 @@ interface IStreamRegistry is IStreamRegistryBase {
     uint256 start,
     uint256 stop
   ) external view returns (StreamWithId[] memory, bool);
-
-  /**
-   * @notice Get a stream and its genesis information from the registry
-   * @param streamId The ID of the stream to get
-   * @return Stream The stream data
-   * @return bytes32 The genesis miniblock hash
-   * @return bytes The genesis miniblock data
-   */
-  function getStreamWithGenesis(
-    bytes32 streamId
-  ) external view returns (Stream memory, bytes32, bytes memory);
 }

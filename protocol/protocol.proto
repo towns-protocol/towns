@@ -144,6 +144,9 @@ message MiniblockHeader {
     // pointer to block with previous snapshot
     int64 prev_snapshot_miniblock_num = 7;
 
+    // hash of the snapshot.
+    optional bytes snapshot_hash = 8;
+
     // stream payloads are required to have a content field
     oneof content {
         google.protobuf.Empty none = 100;
@@ -1020,15 +1023,6 @@ message InfoResponse {
     string version = 3;
 }
 
-message GetMiniblockHeaderRequest {
-    bytes stream_id = 1;
-    int64 miniblock_num = 2;
-}
-
-message GetMiniblockHeaderResponse {
-    Envelope header = 1;
-}
-
 service StreamService {
     rpc CreateStream(CreateStreamRequest) returns (CreateStreamResponse);
     rpc CreateMediaStream(CreateMediaStreamRequest) returns (CreateMediaStreamResponse);
@@ -1036,7 +1030,6 @@ service StreamService {
     rpc GetStreamEx(GetStreamExRequest) returns (stream GetStreamExResponse);
     rpc GetMiniblocks(GetMiniblocksRequest) returns (GetMiniblocksResponse);
     rpc GetLastMiniblockHash(GetLastMiniblockHashRequest) returns (GetLastMiniblockHashResponse);
-    rpc GetMiniblockHeader(GetMiniblockHeaderRequest) returns (GetMiniblockHeaderResponse);
     rpc AddEvent(AddEventRequest) returns (AddEventResponse);
     rpc AddMediaEvent(AddMediaEventRequest) returns (AddMediaEventResponse);
     rpc SyncStreams(SyncStreamsRequest) returns (stream SyncStreamsResponse);
