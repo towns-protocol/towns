@@ -99,7 +99,7 @@ func (st *serviceTester) deployXchainTestContracts() {
 		log                   = logging.FromCtx(st.ctx)
 		approvedNodeOperators []common.Address
 	)
-	for _, w := range st.btc.Wallets {
+	for _, w := range st.btc.NodeWallets {
 		approvedNodeOperators = append(approvedNodeOperators, w.Address)
 	}
 

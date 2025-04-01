@@ -82,7 +82,7 @@ type BlockchainTestContext struct {
 	ChainId              *big.Int
 
 	DeployerBlockchain  *Blockchain
-	nodeWallets         []*Wallet
+	NodeWallets         []*Wallet
 	operatorWallets     []*Wallet
 	operatorBlockchains []*Blockchain
 }
@@ -240,7 +240,7 @@ func NewBlockchainTestContext(ctx context.Context, params TestParams) (*Blockcha
 		RemoteNode:          isRemote,
 		ChainId:             chainId,
 		BcClient:            client,
-		nodeWallets:         nodeWallets,
+		NodeWallets:         nodeWallets,
 		operatorWallets:     operatorWallets,
 		operatorBlockchains: make([]*Blockchain, len(operatorWallets)),
 	}
@@ -499,7 +499,7 @@ func makeTestBlockchain(
 }
 
 func (c *BlockchainTestContext) GetBlockchain(ctx context.Context, index int) *Blockchain {
-	return makeTestBlockchain(ctx, c.nodeWallets[index], c.Client())
+	return makeTestBlockchain(ctx, c.NodeWallets[index], c.Client())
 }
 
 func (c *BlockchainTestContext) NewWalletAndBlockchain(ctx context.Context) *Blockchain {
@@ -527,7 +527,7 @@ func (c *BlockchainTestContext) InitNodeRecordEx(ctx context.Context, index int,
 		ctx,
 		"RegisterNode",
 		func(opts *bind.TransactOpts) (*types.Transaction, error) {
-			return c.NodeRegistry.RegisterNode(opts, c.nodeWallets[index].Address, url, status)
+			return c.NodeRegistry.RegisterNode(opts, c.NodeWallets[index].Address, url, status)
 		},
 	)
 	if err != nil {
@@ -556,7 +556,7 @@ func (c *BlockchainTestContext) UpdateNodeStatus(ctx context.Context, index int,
 		ctx,
 		"UpdateNodeStatus",
 		func(opts *bind.TransactOpts) (*types.Transaction, error) {
-			return c.NodeRegistry.UpdateNodeStatus(opts, c.nodeWallets[index].Address, status)
+			return c.NodeRegistry.UpdateNodeStatus(opts, c.NodeWallets[index].Address, status)
 		},
 	)
 	if err != nil {
@@ -585,7 +585,7 @@ func (c *BlockchainTestContext) UpdateNodeUrl(ctx context.Context, index int, ur
 		ctx,
 		"UpdateNodeUrl",
 		func(opts *bind.TransactOpts) (*types.Transaction, error) {
-			return c.NodeRegistry.UpdateNodeUrl(opts, c.nodeWallets[index].Address, url)
+			return c.NodeRegistry.UpdateNodeUrl(opts, c.NodeWallets[index].Address, url)
 		},
 	)
 	if err != nil {
