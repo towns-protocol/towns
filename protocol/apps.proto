@@ -72,7 +72,10 @@ message GetStatusResponse {
 }
 
 // As a performance optimization, we may wish to bundle together many key solicitation requests
-// and channel messages for the bot to respond to in a single webhook call.
+// and channel messages for the bot to respond to in a single webhook call. Thus, an isolated
+// group of channel messages and encryption keys, or a request for a key solicitation, is
+// represented here. For webhook calls regarding channel content, the payload may contain one or
+// more of these events.
 message EventPayload {
     // A MessagesPayload represents a group of user messages in a channel that qualifies for the app
     // to be notified. The included set of group encryption sessions in this message should have
