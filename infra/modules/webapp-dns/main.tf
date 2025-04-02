@@ -66,7 +66,29 @@ resource "cloudflare_page_rule" "cdn_cache" {
   zone_id = data.cloudflare_zone.zone.id
   target  = "${var.dns_name}.${module.global_constants.primary_hosted_zone_name}/assets/*"
   actions {
-    cache_level    = "cache_everything"
-    edge_cache_ttl = 604800 # 1 week
+    cache_ttl_by_status {
+      codes = "200-299"
+      ttl   = 604800 # 1 week
+    }
+    cache_ttl_by_status {
+      codes = "300-399"
+      ttl   = 60
+    }
+    cache_ttl_by_status {
+      codes = "400-403"
+      ttl   = -1
+    }
+    cache_ttl_by_status {
+      codes = "404"
+      ttl   = 30
+    }
+    cache_ttl_by_status {
+      codes = "405-499"
+      ttl   = -1
+    }
+    cache_ttl_by_status {
+      codes = "500-599"
+      ttl   = 0
+    }
   }
 }

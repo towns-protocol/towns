@@ -160,5 +160,6 @@ module "gcp_env" {
   river_node_config = {
     num_stream_nodes  = local.num_full_nodes
     num_archive_nodes = local.num_archive_nodes
+    min_db_cpu_count  = 2
   }
 }
