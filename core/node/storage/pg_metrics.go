@@ -81,8 +81,7 @@ func PreparePostgresStatus(ctx context.Context, pool PgxPoolInfo) PostgresStatus
 	var streamCount int64
 	err = pool.Pool.QueryRow(
 		ctx,
-		// This query should be fine to run before any migrations have run - it will not produce
-		// any errors in postgres logs.
+		// This query should be fine to run even if the es table does not exist.
 		fmt.Sprintf(
 			`SELECT safe_table_count('es', '%v');`,
 			pool.Schema,
@@ -102,10 +101,12 @@ func PreparePostgresStatus(ctx context.Context, pool PgxPoolInfo) PostgresStatus
 }
 
 func setupPostgresMetrics(ctx context.Context, pool PgxPoolInfo, factory infra.MetricsFactory) error {
+	// Create a function to safely evaluate the count of a table that may or may not exist in the
+	// schema without triggering a postgres error, since not all runnable node services use postgres
+	// to store streams. It is easy enough to ignore these errors from the node, but it can make the
+	// postgres logs difficult to navigate.
 	if _, err := pool.Pool.Exec(
 		ctx,
-		// This query should be fine to run before any migrations have run - it will not produce
-		// any errors in postgres logs.
 		fmt.Sprintf(
 			`
 			CREATE OR REPLACE FUNCTION %v.safe_table_count(tablename text, schemaname text default 'public')
