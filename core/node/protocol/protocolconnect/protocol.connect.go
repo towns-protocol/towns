@@ -107,7 +107,6 @@ type StreamServiceClient interface {
 	GetLastMiniblockHash(context.Context, *connect.Request[protocol.GetLastMiniblockHashRequest]) (*connect.Response[protocol.GetLastMiniblockHashResponse], error)
 	AddEvent(context.Context, *connect.Request[protocol.AddEventRequest]) (*connect.Response[protocol.AddEventResponse], error)
 	AddMediaEvent(context.Context, *connect.Request[protocol.AddMediaEventRequest]) (*connect.Response[protocol.AddMediaEventResponse], error)
-	// TODO: rpc GetSnapshot(GetSnapshotRequest) returns (GetSnapshotResponse);
 	SyncStreams(context.Context, *connect.Request[protocol.SyncStreamsRequest]) (*connect.ServerStreamForClient[protocol.SyncStreamsResponse], error)
 	AddStreamToSync(context.Context, *connect.Request[protocol.AddStreamToSyncRequest]) (*connect.Response[protocol.AddStreamToSyncResponse], error)
 	// ModifySync adds/removes streams to/from an in progress sync session.
@@ -329,7 +328,6 @@ type StreamServiceHandler interface {
 	GetLastMiniblockHash(context.Context, *connect.Request[protocol.GetLastMiniblockHashRequest]) (*connect.Response[protocol.GetLastMiniblockHashResponse], error)
 	AddEvent(context.Context, *connect.Request[protocol.AddEventRequest]) (*connect.Response[protocol.AddEventResponse], error)
 	AddMediaEvent(context.Context, *connect.Request[protocol.AddMediaEventRequest]) (*connect.Response[protocol.AddMediaEventResponse], error)
-	// TODO: rpc GetSnapshot(GetSnapshotRequest) returns (GetSnapshotResponse);
 	SyncStreams(context.Context, *connect.Request[protocol.SyncStreamsRequest], *connect.ServerStream[protocol.SyncStreamsResponse]) error
 	AddStreamToSync(context.Context, *connect.Request[protocol.AddStreamToSyncRequest]) (*connect.Response[protocol.AddStreamToSyncResponse], error)
 	// ModifySync adds/removes streams to/from an in progress sync session.
