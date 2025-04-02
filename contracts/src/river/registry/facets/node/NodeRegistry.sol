@@ -131,7 +131,9 @@ contract NodeRegistry is INodeRegistry, RegistryModifiers {
     if (
       from == NodeStatus.NotInitialized ||
       (from == NodeStatus.RemoteOnly &&
-        (to == NodeStatus.Failed || to == NodeStatus.Departing)) ||
+        (to == NodeStatus.Failed ||
+          to == NodeStatus.Departing ||
+          to == NodeStatus.Operational)) ||
       (from == NodeStatus.Operational &&
         (to == NodeStatus.Failed || to == NodeStatus.Departing)) ||
       (from == NodeStatus.Departing &&
