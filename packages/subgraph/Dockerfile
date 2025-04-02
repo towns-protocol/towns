@@ -11,7 +11,7 @@ ARG GIT_SHA
 
 # Install curl and other required packages for Foundry installation
 RUN apt-get update && \
-    apt-get install -y curl build-essential git && \
+    apt-get install -y curl build-essential git make && \
     rm -rf /var/lib/apt/lists/*
 
 # Install Foundry
@@ -38,6 +38,11 @@ RUN chmod +x ./packages/subgraph/docker-entrypoint.sh
 
 # Install dependencies
 RUN yarn install
+
+# Build contracts
+WORKDIR /app/contracts
+RUN make build
+WORKDIR /app
 
 # Generate contract typings
 RUN yarn workspace @towns-protocol/contracts typings
