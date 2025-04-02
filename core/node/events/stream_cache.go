@@ -200,43 +200,38 @@ func (s *StreamCache) onBlockWithLogs(ctx context.Context, blockNum crypto.Block
 
 	for streamID, events := range streamEvents {
 		wp.Submit(func() {
-			eventsChains := s.splitStreamEventsOnReplacements(events)
-			for _, events := range eventsChains {
-				switch events[0].Reason() {
+		for len(events) > 0  {
+			switch events[0].Reason() {
 				case river.StreamUpdatedEventTypeAllocate:
 					streamState := events[0].(*river.StreamState)
 					s.onStreamAllocated(ctx, streamState, events[1:], blockNum)
+					events = events[1:]
 				case river.StreamUpdatedEventTypeCreate:
 					streamState := events[0].(*river.StreamState)
 					s.onStreamCreated(ctx, streamState, blockNum)
+					events = events[1:]
 				case river.StreamUpdatedEventTypePlacementUpdated:
 					streamState := events[0].(*river.StreamState)
-					s.onStreamReplaced(ctx, streamState, blockNum) // TODO: determine what needs to be done for events[1:]
+					s.onStreamReplaced(ctx, streamState, blockNum)
+					events = events[1:]
 				case river.StreamUpdatedEventTypeLastMiniblockBatchUpdated:
+				    i := 1
+				    for i < len(events) && events[i].Reason() == river.StreamUpdatedEventTypeLastMiniblockBatchUpdated {
+				      i++
+				    }
+				    eventsToApply := events[:i]
+				    events = events[i:]
+				    
 					stream, ok := s.cache.Load(streamID)
 					if !ok {
 						return
 					}
 
-					if stream.nodesLocked.IsLocal() && stream.nodesLocked.IsLocalInQuorum() {
-						stream.applyStreamEvents(ctx, events, blockNum)
-					}
-
-					// migrate stream to repl
-					if stream.nodesLocked.IsLocal() && !stream.nodesLocked.IsLocalInQuorum() {
-						// determine if stream update contains newer miniblock than currently in storage.
-						if mb, err := stream.getLastMiniblockNumSkipLoad(ctx); err == nil {
-							latestMb := int64(0)
-							for _, event := range events {
-								if ev, ok := event.(*river.StreamState); ok {
-									latestMb = max(latestMb, int64(ev.LastMiniblockNum))
-								}
-							}
-							if mb > latestMb {
-								s.SubmitSyncStreamTask(ctx, stream)
-							}
-						}
-					}
+					// COMMENT: Move logic from here to applyStreamEvents - mutex should be taken
+					stream.applyStreamEvents(ctx, eventsToApply, blockNum)
+					
+			}
+		}
 				}
 			}
 		})
