@@ -252,6 +252,10 @@ function toTownsContent_fromParsedEvent(
                 message.event.payload.value,
                 description,
             )
+        case 'snapshot':
+            return {
+                error: `${description} snapshot not supported?`,
+            }
         case undefined:
             return { error: `Undefined payload case: ${description}` }
         default:
