@@ -4,6 +4,11 @@ FROM node:20-slim
 # Set working directory
 WORKDIR /app
 
+ARG VER_VERSION=version_unset
+ARG VER_BRANCH=branch_unset
+ARG VER_COMMIT=commit_unset
+ARG GIT_SHA
+
 # Install curl and other required packages for Foundry installation
 RUN apt-get update && \
     apt-get install -y curl build-essential git && \
