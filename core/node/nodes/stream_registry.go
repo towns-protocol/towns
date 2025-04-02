@@ -2,15 +2,10 @@ package nodes
 
 import (
 	"context"
-	"hash/fnv"
-	"slices"
 
 	"github.com/ethereum/go-ethereum/common"
 
-	"github.com/towns-protocol/towns/core/contracts/river"
-	. "github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/crypto"
-	. "github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/registries"
 	. "github.com/towns-protocol/towns/core/node/shared"
 )
@@ -34,9 +29,6 @@ type StreamRegistry interface {
 		lastMiniblockNum int64,
 		isSealed bool,
 	) error
-
-	// ChooseStreamNodes returns a list of nodes that should store the stream.
-	ChooseStreamNodes(streamId StreamId) ([]common.Address, error)
 }
 
 type streamRegistryImpl struct {
@@ -66,7 +58,7 @@ func (sr *streamRegistryImpl) AllocateStream(
 	genesisMiniblockHash common.Hash,
 	genesisMiniblock []byte,
 ) ([]common.Address, error) {
-	addrs, err := sr.ChooseStreamNodes(streamId)
+	addrs, err := sr.nodeRegistry.ChooseStreamNodes(ctx, streamId, int(sr.onChainConfig.Get().ReplicationFactor))
 	if err != nil {
 		return nil, err
 	}
@@ -97,42 +89,4 @@ func (sr *streamRegistryImpl) AddStream(
 		lastMiniblockNum,
 		isSealed,
 	)
-}
-
-func (sr *streamRegistryImpl) ChooseStreamNodes(streamId StreamId) ([]common.Address, error) {
-	allNodes := sr.nodeRegistry.GetAllNodes()
-	nodes := make([]*NodeRecord, 0, len(allNodes))
-
-	nodeBlocklist := sr.onChainConfig.Get().NodeBlocklist
-	for _, n := range allNodes {
-		if n.Status() == river.NodeStatus_Operational && !slices.Contains(nodeBlocklist, n.Address()) {
-			nodes = append(nodes, n)
-		}
-	}
-
-	replFactor := int(sr.onChainConfig.Get().ReplicationFactor)
-
-	if len(nodes) < replFactor {
-		return nil, RiverError(
-			Err_BAD_CONFIG,
-			"replication factor is greater than number of operational nodes",
-			"replication_factor",
-			replFactor,
-			"num_nodes",
-			len(nodes),
-		)
-	}
-
-	h := fnv.New64a()
-	addrs := make([]common.Address, replFactor)
-	for i := 0; i < replFactor; i++ {
-		h.Write(streamId[:])
-		index := i + int(h.Sum64()%uint64(len(nodes)-i))
-		tt := nodes[index]
-		nodes[index] = nodes[i]
-		nodes[i] = tt
-		addrs[i] = nodes[i].Address()
-	}
-
-	return addrs, nil
 }

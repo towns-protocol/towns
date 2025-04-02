@@ -9,6 +9,7 @@ import (
 	"time"
 
 	mapset "github.com/deckarep/golang-set/v2"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/gammazero/workerpool"
 	"github.com/linkdata/deadlock"
@@ -298,7 +299,7 @@ func (s *StreamCache) onStreamAllocated(
 		return
 	}
 
-	_, genesisHash, genesisMB, _, err := s.params.Registry.GetStreamWithGenesis(ctx, event.StreamID)
+	_, genesisHash, genesisMB, genesisMbNum, err := s.params.Registry.GetStreamWithGenesis(ctx, event.StreamID)
 	if err != nil {
 		logging.FromCtx(ctx).Errorw("Failed to get genesis block for allocated stream", "err", err)
 		return
@@ -317,7 +318,7 @@ func (s *StreamCache) onStreamAllocated(
 		local:               &localStreamState{},
 	}
 	stream.nodesLocked.ResetFromStreamState(event, s.params.Wallet.Address)
-	stream, created, err := s.createStreamStorage(ctx, stream, genesisMB)
+	stream, created, err := s.createStreamStorage(ctx, stream, genesisMB, genesisMbNum, genesisHash)
 	if err != nil {
 		logging.FromCtx(ctx).Errorw("Failed to allocate stream", "err", err, "streamId", event.GetStreamId())
 	}
@@ -409,7 +410,7 @@ func (s *StreamCache) tryLoadStreamRecord(
 	// Blockchain record is already created, but this fact is not reflected yet in local storage.
 	// This may happen if somebody observes record allocation on blockchain and tries to get stream
 	// while local storage is being initialized.
-	record, _, mb, blockNum, err := s.params.Registry.GetStreamWithGenesis(ctx, streamId)
+	record, hash, mb, blockNum, err := s.params.Registry.GetStreamWithGenesis(ctx, streamId)
 	if err != nil {
 		if !waitForLocal {
 			s.loadStreamRecordCounter.IncFail()
@@ -434,7 +435,7 @@ func (s *StreamCache) tryLoadStreamRecord(
 					s.loadStreamRecordCounter.IncPass()
 					return stream, nil
 				}
-				record, _, mb, blockNum, err = s.params.Registry.GetStreamWithGenesis(ctx, streamId)
+				record, hash, mb, blockNum, err = s.params.Registry.GetStreamWithGenesis(ctx, streamId)
 				if err == nil {
 					break forLoop
 				}
@@ -472,7 +473,7 @@ func (s *StreamCache) tryLoadStreamRecord(
 		)
 	}
 
-	stream, _, err = s.createStreamStorage(ctx, stream, mb)
+	stream, _, err = s.createStreamStorage(ctx, stream, mb, blockNum, hash)
 	if err != nil {
 		s.loadStreamRecordCounter.IncFail()
 		return nil, err
@@ -485,7 +486,9 @@ func (s *StreamCache) tryLoadStreamRecord(
 func (s *StreamCache) createStreamStorage(
 	ctx context.Context,
 	stream *Stream,
-	mb []byte,
+	data []byte,
+	num crypto.BlockNumber,
+	hash common.Hash,
 ) (*Stream, bool, error) {
 	// Lock stream, so parallel creators have to wait for the stream to be intialized.
 	stream.mu.Lock()
@@ -495,7 +498,7 @@ func (s *StreamCache) createStreamStorage(
 		// TODO: delete entry on failures below?
 
 		// Our stream won the race, put into storage.
-		err := s.params.Storage.CreateStreamStorage(ctx, stream.streamId, mb)
+		err := s.params.Storage.CreateStreamStorage(ctx, stream.streamId, data)
 		if err != nil {
 			if AsRiverError(err).Code == Err_ALREADY_EXISTS {
 				// Attempt to load stream from storage. Might as well do it while under lock.
@@ -510,10 +513,12 @@ func (s *StreamCache) createStreamStorage(
 
 		// Successfully put data into storage, init stream view.
 		view, err := MakeStreamView(
-			ctx,
 			&storage.ReadStreamFromLastSnapshotResult{
-				StartMiniblockNumber: 0,
-				Miniblocks:           [][]byte{mb},
+				Miniblocks: []*storage.MiniblockDescriptor{{
+					Data:   data,
+					Number: num.AsBigInt().Int64(),
+					Hash:   hash,
+				}},
 			},
 		)
 		if err != nil {

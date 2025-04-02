@@ -28,10 +28,7 @@ type StreamViewStats struct {
 	TotalEventsEver       int // This is total number of events in the stream ever, not in the cache.
 }
 
-func MakeStreamView(
-	ctx context.Context,
-	streamData *storage.ReadStreamFromLastSnapshotResult,
-) (*StreamView, error) {
+func MakeStreamView(streamData *storage.ReadStreamFromLastSnapshotResult) (*StreamView, error) {
 	if len(streamData.Miniblocks) <= 0 {
 		return nil, RiverError(Err_STREAM_EMPTY, "no blocks").Func("MakeStreamView")
 	}
@@ -39,8 +36,12 @@ func MakeStreamView(
 	miniblocks := make([]*MiniblockInfo, len(streamData.Miniblocks))
 	lastMiniblockNumber := int64(-2)
 	snapshotIndex := -1
-	for i, binMiniblock := range streamData.Miniblocks {
-		miniblock, err := NewMiniblockInfoFromBytes(binMiniblock, lastMiniblockNumber+1)
+	for i, mb := range streamData.Miniblocks {
+		miniblock, err := NewMiniblockInfoFromDescriptor(&storage.MiniblockDescriptor{
+			Number: lastMiniblockNumber + 1,
+			Data:   mb.Data,
+			Hash:   mb.Hash,
+		})
 		if err != nil {
 			return nil, err
 		}
@@ -99,7 +100,7 @@ func MakeStreamView(
 	}, nil
 }
 
-func MakeRemoteStreamView(ctx context.Context, stream *StreamAndCookie) (*StreamView, error) {
+func MakeRemoteStreamView(stream *StreamAndCookie) (*StreamView, error) {
 	if stream == nil {
 		return nil, RiverError(Err_STREAM_EMPTY, "no stream").Func("MakeStreamViewFromRemote")
 	}
@@ -112,7 +113,7 @@ func MakeRemoteStreamView(ctx context.Context, stream *StreamAndCookie) (*Stream
 	snapshotIndex := 0
 	for i, binMiniblock := range stream.Miniblocks {
 		opts := NewParsedMiniblockInfoOpts()
-		// Ignore block number of first block, but enforce afterwards
+		// Ignore block number of first block, but enforce afterward
 		if i > 0 {
 			opts = opts.WithExpectedBlockNumber(lastMiniblockNumber + 1)
 		}
@@ -554,7 +555,7 @@ func (r *StreamView) blockWithNum(mininblockNum int64) (*MiniblockInfo, error) {
 	return r.blocks[index], nil
 }
 
-// iterate over events starting at startBlock including events in the minipool
+// ForEachEvent iterates over events starting at startBlock including events in the minipool
 func (r *StreamView) ForEachEvent(
 	startBlock int,
 	op func(e *ParsedEvent, minibockNum int64, eventNum int64) (bool, error),
@@ -916,7 +917,7 @@ func (r *StreamView) GetStreamSince(
 	miniblockIndex, err := r.indexOfMiniblockWithNum(cookie.MinipoolGen)
 	if err != nil {
 		// The user's sync cookie is out of date. Send a sync reset and return an up-to-date StreamAndCookie.
-		log.Warnw("GetStreamSince: out of date cookie.MiniblockNum. Sending sync reset.",
+		log.Debugw("GetStreamSince: out of date cookie.MiniblockNum. Sending sync reset.",
 			"stream", r.streamId, "error", err.Error())
 
 		return &StreamAndCookie{

@@ -44,7 +44,7 @@ func (s *Service) loadStream(ctx context.Context, streamId StreamId) (ViewStream
 		return nil, err
 	}
 
-	streamView, err := MakeRemoteStreamView(ctx, resp.Msg.GetStream())
+	streamView, err := MakeRemoteStreamView(resp.Msg.GetStream())
 	if err != nil {
 		return nil, err
 	}

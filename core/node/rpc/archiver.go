@@ -706,13 +706,11 @@ func (a *Archiver) ArchiveStream(ctx context.Context, stream *ArchiveStream) (er
 			if err != nil {
 				return err
 			}
-			bb, err := info.ToBytes()
+			storageMb, err := info.AsStorageMb()
 			if err != nil {
 				return err
 			}
-			serialized = append(serialized, &storage.WriteMiniblockData{
-				Data: bb,
-			})
+			serialized = append(serialized, storageMb)
 		}
 
 		log.Debugw("Writing miniblocks to storage", "streamId", stream.streamId, "numBlocks", len(serialized))
