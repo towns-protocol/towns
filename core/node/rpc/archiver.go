@@ -310,7 +310,7 @@ func NewArchiveStream(
 ) *ArchiveStream {
 	stream := &ArchiveStream{
 		streamId: streamId,
-		nodes:    nodes.NewStreamNodesWithLock(*nn, common.Address{}),
+		nodes:    nodes.NewStreamNodesWithLock(len(*nn), *nn, common.Address{}),
 		corrupt:  NewStreamCorruptionTracker(maxConsecutiveFailedUpdates),
 	}
 	stream.numBlocksInContract.Store(int64(lastKnownMiniblock + 1))
@@ -508,7 +508,7 @@ func (a *Archiver) GetCorruptStreams(ctx context.Context) []scrub.CorruptStreamR
 					}
 					record := scrub.CorruptStreamRecord{
 						StreamId:             stream.streamId,
-						Nodes:                stream.nodes.GetNodes(),
+						Nodes:                stream.nodes.GetQuorumNodes(),
 						MostRecentBlock:      stream.numBlocksInContract.Load(),
 						MostRecentLocalBlock: stream.numBlocksInDb.Load(),
 						FirstCorruptBlock:    stream.corrupt.firstCorruptBlock,
@@ -987,7 +987,7 @@ func (a *Archiver) onStreamPlacementUpdated(
 		return
 	}
 	stream := record.(*ArchiveStream)
-	stream.nodes.Reset(event.Nodes, common.Address{})
+	stream.nodes.ResetFromStreamState(event, common.Address{})
 }
 
 func (a *Archiver) onStreamLastMiniblockUpdated(

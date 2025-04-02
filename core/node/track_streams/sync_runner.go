@@ -98,7 +98,7 @@ func (sr *SyncRunner) Run(
 ) {
 	var (
 		promLabels                = prometheus.Labels{"type": channelLabelType(stream.StreamId)}
-		remotes                   = nodes.NewStreamNodesWithLock(stream.Nodes, common.Address{})
+		remotes                   = nodes.NewStreamNodesWithLock(stream.StreamReplicationFactor(), stream.Nodes, common.Address{})
 		restartSyncSessionCounter = 0
 	)
 

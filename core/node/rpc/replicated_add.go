@@ -154,7 +154,7 @@ func (s *Service) replicatedAddMediaEventImpl(ctx context.Context, event *Parsed
 	}
 
 	// genesisMiniblockHashes is needed to register the stream onchain if everything goes well.
-	nodes := NewStreamNodesWithLock(cc.NodeAddresses(), s.wallet.Address)
+	nodes := NewStreamNodesWithLock(len(cc.NodeAddresses()), cc.NodeAddresses(), s.wallet.Address)
 	remotes, _ := nodes.GetRemotesAndIsLocal()
 
 	var (
