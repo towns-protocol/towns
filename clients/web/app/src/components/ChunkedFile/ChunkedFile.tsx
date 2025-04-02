@@ -128,7 +128,9 @@ const ChunkedFileDownload = (
                 {isDownloading ? (
                     <ButtonSpinner color="gray2" square="square_sm" />
                 ) : (
-                    <Icon type="download" color="gray2" size="square_sm" />
+                    <Box background="level1" borderRadius="full">
+                        <Icon type="download" color="gray2" size="square_sm" />
+                    </Box>
                 )}
             </Button>
         </Stack>
@@ -277,7 +279,9 @@ const ChunkedImageMedia = (
             />
             {isHovering && (
                 <Box position="bottomRight" padding="sm">
-                    <IconButton icon="download" onClick={onDownloadClicked} />
+                    <Box background="level1" borderRadius="full">
+                        <IconButton icon="download" onClick={onDownloadClicked} />
+                    </Box>
                 </Box>
             )}
             {touchButton}
