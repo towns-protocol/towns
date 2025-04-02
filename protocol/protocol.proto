@@ -874,8 +874,8 @@ message GetStreamResponse {
 
 message GetMiniblocksRequest {
     bytes stream_id = 1;
-    int64 fromInclusive = 2;
-    int64 toExclusive = 3;
+    int64 from_inclusive = 2;
+    int64 to_exclusive = 3;
 }
 
 message GetMiniblocksResponse {

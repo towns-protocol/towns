@@ -336,7 +336,7 @@ func TestAppRegistry_ForwardsChannelEvents(t *testing.T) {
 			},
 		})
 		assert.NoError(c, err)
-		view, err := events.MakeRemoteStreamView(tester.ctx, res.Msg.Stream)
+		view, err := events.MakeRemoteStreamView(res.Msg.Stream)
 		assert.NoError(c, err)
 		isMember, err := view.IsMember(wallet.Address[:])
 		assert.NoError(c, err)
