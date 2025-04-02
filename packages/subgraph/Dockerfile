@@ -1,0 +1,51 @@
+# Use Node.js 20 as the base image
+FROM node:20-slim
+
+# Set working directory
+WORKDIR /app
+
+# Install curl and other required packages for Foundry installation
+RUN apt-get update && \
+    apt-get install -y curl build-essential git && \
+    rm -rf /var/lib/apt/lists/*
+
+# Install Foundry
+RUN curl -L https://foundry.paradigm.xyz | bash && \
+    ~/.foundry/bin/foundryup
+
+# Add Foundry binaries to PATH
+ENV PATH="/root/.foundry/bin:${PATH}"
+
+# Enable Corepack for Yarn 3.x support
+RUN corepack enable
+
+# Copy monorepo configuration from root
+COPY package.json yarn.lock .yarnrc.yml ./
+COPY .yarn ./.yarn
+
+# Copy the required packages
+COPY packages/subgraph ./packages/subgraph/
+COPY packages/prettier-config ./packages/prettier-config/
+COPY contracts ./contracts/
+
+# Add entrypoint script
+RUN chmod +x ./packages/subgraph/docker-entrypoint.sh
+
+# Install dependencies
+RUN yarn install
+
+# Generate contract typings
+RUN yarn workspace @towns-protocol/contracts typings
+
+# Set working directory to subgraph package
+WORKDIR /app/packages/subgraph
+
+# Expose the default Ponder port
+EXPOSE 42069
+
+# Set environment variables
+ENV NODE_ENV=production
+ENV DATABASE_SCHEMA=public
+
+# Use entrypoint script
+ENTRYPOINT ["./docker-entrypoint.sh"]

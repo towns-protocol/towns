@@ -37,7 +37,7 @@ export default createConfig({
             abi: createSpaceFacetAbi,
             address: spaceFactory,
             startBlock,
-            network: 'anvil',
+            network: 'gamma',
         },
     },
 })

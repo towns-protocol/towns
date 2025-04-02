@@ -234,7 +234,7 @@ waitLoop:
 			if err != nil {
 				continue
 			}
-			nodes := nodes.NewStreamNodesWithLock(stream.Nodes, common.Address{})
+			nodes := nodes.NewStreamNodesWithLock(stream.StreamReplicationFactor(), stream.Nodes, common.Address{})
 			streamResponse, err := utils.PeerNodeRequestWithRetries(
 				ctx,
 				nodes,
