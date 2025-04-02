@@ -25,8 +25,8 @@
     },
     "devDependencies": {
         "esbuild": "^0.21.5",
-        "eslint": "^8.53.0",
+        "eslint": "^8.57.0",
         "prettier": "^2.8.8",
-        "typescript": "^5.1.6"
+        "typescript": "^5.8.2"
     }
 }
