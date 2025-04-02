@@ -890,6 +890,7 @@ message GetMiniblocksRequest {
     bytes stream_id = 1;
     int64 from_inclusive = 2;
     int64 to_exclusive = 3;
+    bool omit_snapshot = 4;
 }
 
 message GetMiniblocksResponse {
