@@ -65,7 +65,7 @@ func (s *Service) GetMbs(
 	streamId StreamId,
 	fromInclusive int64,
 	toExclusive int64,
-) ([]*Miniblock, error) {
+) ([]*MiniblockInfo, error) {
 	remote, err := s.nodeRegistry.GetStreamServiceClientForAddress(node)
 	if err != nil {
 		return nil, err
@@ -80,5 +80,16 @@ func (s *Service) GetMbs(
 		return nil, err
 	}
 
-	return resp.Msg.GetMiniblocks(), nil
+	mbs := make([]*MiniblockInfo, len(resp.Msg.GetMiniblocks()))
+	for i, mbProto := range resp.Msg.GetMiniblocks() {
+		mbs[i], err = NewMiniblockInfoFromProto(
+			mbProto,
+			NewParsedMiniblockInfoOpts().WithExpectedBlockNumber(fromInclusive+int64(i)),
+		)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return mbs, nil
 }

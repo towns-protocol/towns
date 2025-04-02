@@ -21,22 +21,8 @@ import (
 	"github.com/towns-protocol/towns/core/node/storage"
 )
 
-type AddableStream interface {
-	AddEvent(ctx context.Context, event *ParsedEvent) error
-}
-
-type MiniblockStream interface {
-	GetMiniblocks(ctx context.Context, fromInclusive int64, ToExclusive int64) ([]*Miniblock, bool, error)
-}
-
 type ViewStream interface {
-	AddableStream
-	MiniblockStream
-
 	GetView(ctx context.Context) (*StreamView, error)
-
-	// GetViewIfLocal returns the stream view if the stream is local, otherwise returns nil, nil.
-	GetViewIfLocal(ctx context.Context) (*StreamView, error)
 }
 
 type SyncResultReceiver interface {
@@ -46,12 +32,6 @@ type SyncResultReceiver interface {
 	OnSyncError(err error)
 	// OnStreamSyncDown is called when updates for a stream could not be given.
 	OnStreamSyncDown(StreamId)
-}
-
-func SyncStreamsResponseFromStreamAndCookie(result *StreamAndCookie) *SyncStreamsResponse {
-	return &SyncStreamsResponse{
-		Stream: result,
-	}
 }
 
 type Stream struct {
@@ -649,19 +629,18 @@ func (s *Stream) GetMiniblocks(
 	ctx context.Context,
 	fromInclusive int64,
 	toExclusive int64,
-) ([]*Miniblock, bool, error) {
+) ([]*MiniblockInfo, bool, error) {
 	blocks, err := s.params.Storage.ReadMiniblocks(ctx, s.streamId, fromInclusive, toExclusive)
 	if err != nil {
 		return nil, false, err
 	}
 
-	miniblocks := make([]*Miniblock, len(blocks))
+	miniblocks := make([]*MiniblockInfo, len(blocks))
 	for i, block := range blocks {
-		miniblock, err := NewMiniblockInfoFromDescriptor(block)
+		miniblocks[i], err = NewMiniblockInfoFromDescriptor(block)
 		if err != nil {
 			return nil, false, err
 		}
-		miniblocks[i] = miniblock.Proto
 	}
 
 	terminus := fromInclusive == 0

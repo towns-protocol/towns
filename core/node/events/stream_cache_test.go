@@ -315,7 +315,7 @@ func TestStreamMiniblockBatchProduction(t *testing.T) {
 				require.NoError(err, "get miniblocks")
 
 				for _, mb := range miniblocks {
-					gotStreamEventsCount += len(mb.Events)
+					gotStreamEventsCount += len(mb.Proto.Events)
 				}
 
 				if expStreamEventsCount == gotStreamEventsCount {

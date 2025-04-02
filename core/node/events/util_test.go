@@ -347,7 +347,7 @@ func (ctc *cacheTestContext) GetMbs(
 	streamId StreamId,
 	fromInclusive int64,
 	toExclusive int64,
-) ([]*Miniblock, error) {
+) ([]*MiniblockInfo, error) {
 	for _, instance := range ctc.instances {
 		if node == instance.params.Wallet.Address {
 			stream, err := instance.cache.getStreamImpl(ctx, streamId, true)

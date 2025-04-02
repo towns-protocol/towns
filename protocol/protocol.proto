@@ -899,6 +899,8 @@ message GetMiniblocksResponse {
     bool terminus = 2;
     int64 from_inclusive = 3;
     int64 limit = 4;
+    bool omit_snapshot = 5;
+    map<int64, Envelope> snapshots = 6;
 }
 
 message GetLastMiniblockHashRequest {

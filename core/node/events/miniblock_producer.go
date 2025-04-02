@@ -51,7 +51,7 @@ type RemoteMiniblockProvider interface {
 		streamId StreamId,
 		fromInclusive int64,
 		toExclusive int64,
-	) ([]*Miniblock, error)
+	) ([]*MiniblockInfo, error)
 }
 
 type TestMiniblockProducer interface {

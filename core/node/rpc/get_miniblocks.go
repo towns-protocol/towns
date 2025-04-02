@@ -26,9 +26,21 @@ func (s *Service) localGetMiniblocks(
 		toExclusive = req.Msg.FromInclusive + limit
 	}
 
-	miniblocks, terminus, err := stream.GetMiniblocks(ctx, req.Msg.FromInclusive, toExclusive)
+	mbsInfo, terminus, err := stream.GetMiniblocks(ctx, req.Msg.FromInclusive, toExclusive)
 	if err != nil {
 		return nil, err
+	}
+
+	miniblocks := make([]*Miniblock, len(mbsInfo))
+	var snapshots map[int64]*Envelope
+	if !req.Msg.GetOmitSnapshot() {
+		snapshots = make(map[int64]*Envelope)
+	}
+	for i, info := range mbsInfo {
+		miniblocks[i] = info.Proto
+		if !req.Msg.GetOmitSnapshot() {
+			snapshots[info.Ref.Num] = info.Snapshot
+		}
 	}
 
 	fromInclusive := req.Msg.FromInclusive
@@ -46,6 +58,7 @@ func (s *Service) localGetMiniblocks(
 		Terminus:      terminus,
 		FromInclusive: fromInclusive,
 		Limit:         limit,
+		OmitSnapshot:  req.Msg.GetOmitSnapshot(),
 	}
 
 	return connect.NewResponse(resp), nil
