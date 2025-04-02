@@ -97,13 +97,17 @@ func promoteMiniblockCandidate(
 	if err != nil {
 		return err
 	}
+	var snData []byte
+	if snapshotMiniblock {
+		snData = make([]byte, 0)
+	}
 	return pgStreamStore.WriteMiniblocks(
 		ctx,
 		streamId,
 		[]*WriteMiniblockData{{
 			Number:   mbNum,
 			Hash:     candidateBlockHash,
-			Snapshot: snapshotMiniblock,
+			Snapshot: snData,
 			Data:     mbData.Data,
 		}},
 		mbNum+1,
@@ -885,10 +889,9 @@ func TestGetStreamFromLastSnapshotConsistencyCheckNoZeroIndexEnvelope(t *testing
 		ctx,
 		streamId,
 		&WriteMiniblockData{
-			Number:   2,
-			Hash:     common.BytesToHash([]byte("blockhash2")),
-			Snapshot: false,
-			Data:     []byte("block2"),
+			Number: 2,
+			Hash:   common.BytesToHash([]byte("blockhash2")),
+			Data:   []byte("block2"),
 		},
 	)
 	_ = promoteMiniblockCandidate(
@@ -1126,10 +1129,9 @@ func (m *dataMaker) mbs(start, n int) []*WriteMiniblockData {
 		b := make([]byte, 200)
 		_, _ = (*rand.Rand)(m).Read(b)
 		ret = append(ret, &WriteMiniblockData{
-			Number:   int64(start + i),
-			Hash:     common.BytesToHash(b), // Hash is fake
-			Snapshot: false,
-			Data:     b,
+			Number: int64(start + i),
+			Hash:   common.BytesToHash(b), // Hash is fake
+			Data:   b,
 		})
 	}
 	return ret

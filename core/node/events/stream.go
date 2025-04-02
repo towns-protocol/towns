@@ -301,10 +301,16 @@ func (s *Stream) applyMiniblockImplLocked(
 
 	var storageMb *storage.WriteMiniblockData
 	if miniblock != nil {
+		// TODO: Will be replaced with the real snapshot after DB migration.
+		var snBytes []byte
+		if info.IsSnapshot() {
+			snBytes = make([]byte, 0)
+		}
+
 		storageMb = &storage.WriteMiniblockData{
 			Number:   info.Ref.Num,
 			Hash:     info.Ref.Hash,
-			Snapshot: info.IsSnapshot(),
+			Snapshot: snBytes,
 			Data:     miniblock.Data,
 		}
 	} else {

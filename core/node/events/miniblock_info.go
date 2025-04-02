@@ -265,10 +265,16 @@ func (b *MiniblockInfo) AsStorageMb() (*storage.WriteMiniblockData, error) {
 			Func("AsStorageMb")
 	}
 
+	// TODO: Going to be replaced with a real snapshot after DB migration.
+	var serializedSn []byte
+	if b.IsSnapshot() {
+		serializedSn = make([]byte, 0)
+	}
+
 	return &storage.WriteMiniblockData{
 		Number:   b.Ref.Num,
 		Hash:     b.Ref.Hash,
-		Snapshot: b.IsSnapshot(),
+		Snapshot: serializedSn,
 		Data:     serializedMb,
 	}, nil
 }

@@ -1449,7 +1449,7 @@ func (s *PostgresStreamStore) writeMiniblocksTx(
 		pgx.CopyFromSlice(
 			len(miniblocks),
 			func(i int) ([]any, error) {
-				if miniblocks[i].Snapshot {
+				if miniblocks[i].Snapshot != nil {
 					newLastSnapshotMiniblock = miniblocks[i].Number
 				}
 

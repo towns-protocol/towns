@@ -209,7 +209,7 @@ func (s *Service) createReplicatedMediaStream(
 		sender.AddTask(func(ctx context.Context) error {
 			return s.storage.CreateEphemeralStreamStorage(ctx, streamId, &storage.WriteMiniblockData{
 				Data:     mbBytes,
-				Snapshot: len(snBytes) > 0,
+				Snapshot: snBytes,
 			})
 		})
 	}

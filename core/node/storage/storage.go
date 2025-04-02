@@ -27,7 +27,7 @@ type (
 	WriteMiniblockData struct {
 		Number   int64
 		Hash     common.Hash
-		Snapshot bool
+		Snapshot []byte
 		Data     []byte
 	}
 

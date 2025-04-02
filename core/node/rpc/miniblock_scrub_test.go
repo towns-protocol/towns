@@ -246,6 +246,15 @@ func writeStreamBackToStore(
 	require.NoError(err)
 	require.NotNil(mb2)
 
+	// TODO: Will be replaced with a real snapshot after DB migration.
+	var mb1Snapshot, mb2Snapshot []byte
+	if mb1.IsSnapshot() {
+		mb1Snapshot = make([]byte, 0)
+	}
+	if mb2.IsSnapshot() {
+		mb2Snapshot = make([]byte, 0)
+	}
+
 	// Re-write the stream with corrupt block 1
 	require.NoError(store.CreateStreamStorage(ctx, streamId, &storage.WriteMiniblockData{Data: blocks[0].Data}))
 	require.NoError(
@@ -256,13 +265,13 @@ func writeStreamBackToStore(
 				{
 					Number:   1,
 					Hash:     mb1.Ref.Hash,
-					Snapshot: mb1.IsSnapshot(),
+					Snapshot: mb1Snapshot,
 					Data:     blocks[1].Data,
 				},
 				{
 					Number:   2,
 					Hash:     mb2.Ref.Hash,
-					Snapshot: mb1.IsSnapshot(),
+					Snapshot: mb2Snapshot,
 					Data:     blocks[2].Data,
 				},
 			},

@@ -57,7 +57,7 @@ func (s *Service) allocateEphemeralStream(ctx context.Context, req *AllocateEphe
 
 	if err = s.storage.CreateEphemeralStreamStorage(ctx, streamId, &storage.WriteMiniblockData{
 		Data:     mbBytes,
-		Snapshot: len(snBytes) > 0,
+		Snapshot: snBytes,
 	}); err != nil {
 		return nil, err
 	}
