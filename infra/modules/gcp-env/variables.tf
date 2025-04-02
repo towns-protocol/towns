@@ -26,5 +26,6 @@ variable "river_node_config" {
   type = object({
     num_stream_nodes  = number
     num_archive_nodes = number
+    min_db_cpu_count  = number
   })
 }

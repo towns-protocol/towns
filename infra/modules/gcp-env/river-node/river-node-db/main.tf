@@ -36,10 +36,14 @@ resource "google_alloydb_cluster" "river_node_db" {
   }
 
   depends_on = [var.private_vpc_connection]
+
+  continuous_backup_config {
+    enabled              = true
+    recovery_window_days = 7
+  }
 }
 
 
-# TODO: how do i make sure the db is backed up?
 resource "google_alloydb_instance" "river_node_primary" {
   cluster       = google_alloydb_cluster.river_node_db.name
   instance_id   = "river-node-db-primary"

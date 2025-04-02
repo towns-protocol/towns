@@ -40,8 +40,9 @@ module "webapp_dns" {
   source               = "../../modules/webapp-dns"
   dns_name             = "app"
   dns_value            = "towns-server-omega.onrender.com"
-  proxied              = false
+  proxied              = true
   cloudflare_api_token = var.cloudflare_terraform_api_token
+  enable_cnd_caching   = true
 }
 
 module "webapp_dns_fastapp" {
@@ -90,7 +91,7 @@ module "system_parameters" {
 
 locals {
   num_archive_nodes = 2
-  num_stream_nodes  = 0
+  num_stream_nodes  = 2
 }
 
 resource "aws_ecs_cluster" "river_ecs_cluster" {
@@ -151,5 +152,6 @@ module "gcp_env" {
   river_node_config = {
     num_archive_nodes = local.num_archive_nodes
     num_stream_nodes  = local.num_stream_nodes
+    min_db_cpu_count  = 4
   }
 }

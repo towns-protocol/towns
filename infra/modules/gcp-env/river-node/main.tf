@@ -55,4 +55,5 @@ module "river_node_db" {
 
   k8s_subnet_cidr        = var.k8s_subnet_cidr
   private_vpc_connection = var.private_vpc_connection
+  db_min_cpu_count       = var.node_config.min_db_cpu_count
 }
