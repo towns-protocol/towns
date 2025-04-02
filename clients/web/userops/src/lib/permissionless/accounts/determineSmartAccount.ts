@@ -24,7 +24,7 @@ export async function determineSmartAccount({
     paymasterProxyAuthSecret,
     ownerAddress,
 }: {
-    newAccountImplementationType: SmartAccountType
+    newAccountImplementationType?: SmartAccountType
     paymasterProxyUrl: string
     paymasterProxyAuthSecret: string
     ownerAddress: string
@@ -36,7 +36,9 @@ export async function determineSmartAccount({
         try {
             const url = new URL(paymasterProxyUrl)
             url.pathname = `/api/smart-account/${ownerAddress}`
-            url.searchParams.set('newAccountImplementationType', newAccountImplementationType)
+            if (newAccountImplementationType) {
+                url.searchParams.set('newAccountImplementationType', newAccountImplementationType)
+            }
             const response = await fetch(url, {
                 method: 'GET',
                 headers: {

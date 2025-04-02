@@ -435,6 +435,264 @@ test('a modular account can be created and used', async () => {
     expect(receipt?.status).toBe('success')
 }, 10000000)
 
+test('a deployed simple account returns the correct address and account type when another client calls the endpoint', async () => {
+    const publicClient = createPublicClient({
+        chain: getChain(),
+        transport: http(RPC_URL),
+    })
+
+    const owner = privateKeyToAccount(generatePrivateKey())
+
+    //////////////////////////////////////////////////////////////
+    // create simple account
+    //////////////////////////////////////////////////////////////
+    const simpleAccountData = await determineSmartAccount({
+        newAccountImplementationType: 'simple',
+        ownerAddress: owner.address,
+        paymasterProxyUrl: process.env.AA_PAYMASTER_PROXY_URL as string,
+        paymasterProxyAuthSecret: process.env.AA_PAYMASTER_PROXY_AUTH_SECRET as string,
+    })
+
+    const simpleAccount = await toSimpleSmartAccount({
+        client: publicClient,
+        address: simpleAccountData.address,
+        owner,
+        nonceKey: 0n,
+        entryPoint: {
+            address: entryPoint06Address,
+            version: '0.6',
+        },
+    })
+
+    const simpleAccountClient = createSmartAccountClient({
+        account: simpleAccount,
+        chain: getChain(),
+        bundlerTransport: http(BUNDLER_RPC_URL),
+        userOperation: {
+            estimateFeesPerGas: async () => await publicClient.estimateFeesPerGas(),
+        },
+    })
+
+    expect(
+        isAddress(simpleAccountClient.account.address) &&
+            simpleAccountClient.account.address !== zeroAddress,
+    ).toBe(true)
+
+    const AMOUNT_TO_FUND = ALCHEMY ? '0.00001' : '1'
+    const AMOUNT_FOR_USEROP = '0.0000001'
+
+    const tx = await fundedWallet.sendTransaction({
+        chain: getChain(),
+        to: simpleAccountClient.account.address,
+        value: parseEther(AMOUNT_TO_FUND),
+    })
+
+    await waitForTransactionReceipt(publicClient, {
+        hash: tx,
+    })
+
+    expect(
+        await publicClient.getBalance({
+            address: simpleAccountClient.account.address,
+        }),
+    ).toBe(parseEther(AMOUNT_TO_FUND))
+
+    //////////////////////////////////////////////////////////////
+    // deploy simple account
+    //////////////////////////////////////////////////////////////
+
+    const txHash = await simpleAccountClient.sendUserOperation({
+        calls: [
+            {
+                to: zeroAddress,
+                value: parseEther(AMOUNT_FOR_USEROP),
+            },
+        ],
+    })
+
+    const useropReceipt = await simpleAccountClient.waitForUserOperationReceipt({
+        hash: txHash,
+    })
+
+    const entrypoint06 = await publicClient.readContract({
+        address: simpleAccountClient.account.address,
+        abi: entrypointAbi,
+        functionName: 'entryPoint',
+    })
+    expect(entrypoint06).toEqual(entryPoint06Address)
+
+    expect(useropReceipt.success).toBe(true)
+    const receipt = await publicClient.getTransactionReceipt({
+        hash: useropReceipt.receipt.transactionHash,
+    })
+
+    expect(receipt?.status).toBe('success')
+
+    const ownerResponse = await publicClient.readContract({
+        address: simpleAccountClient.account.address,
+        abi: ownerAbi,
+        functionName: 'owner',
+    })
+    expect(ownerResponse).toBe(owner.address)
+
+    // now ios or staking site load this user
+    const smartAccountDataWithoutNewImplementationType = await determineSmartAccount({
+        ownerAddress: owner.address,
+        paymasterProxyUrl: process.env.AA_PAYMASTER_PROXY_URL as string,
+        paymasterProxyAuthSecret: process.env.AA_PAYMASTER_PROXY_AUTH_SECRET as string,
+    })
+
+    expect(smartAccountDataWithoutNewImplementationType.accountType).toBe('simple')
+    expect(smartAccountDataWithoutNewImplementationType.address).toMatch(simpleAccountData.address)
+
+    const smartAccountDataWithWrongNewImplementationType = await determineSmartAccount({
+        ownerAddress: owner.address,
+        newAccountImplementationType: 'modular',
+        paymasterProxyUrl: process.env.AA_PAYMASTER_PROXY_URL as string,
+        paymasterProxyAuthSecret: process.env.AA_PAYMASTER_PROXY_AUTH_SECRET as string,
+    })
+
+    expect(smartAccountDataWithWrongNewImplementationType.accountType).toBe('simple')
+    expect(smartAccountDataWithoutNewImplementationType.address).toMatch(simpleAccountData.address)
+}, 10000000)
+
+test('a deployed modular account returns the correct address and account type when another client calls the endpoint', async () => {
+    const publicClient = createPublicClient({
+        chain: getChain(),
+        transport: http(RPC_URL),
+    })
+
+    const owner = privateKeyToAccount(generatePrivateKey())
+
+    //////////////////////////////////////////////////////////////
+    // create modular account
+    //////////////////////////////////////////////////////////////
+    const modularAccountData = await determineSmartAccount({
+        newAccountImplementationType: 'modular',
+        ownerAddress: owner.address,
+        paymasterProxyUrl: process.env.AA_PAYMASTER_PROXY_URL as string,
+        paymasterProxyAuthSecret: process.env.AA_PAYMASTER_PROXY_AUTH_SECRET as string,
+    })
+
+    const modularAccount = await toModularSmartAccount({
+        client: publicClient,
+        address: modularAccountData.address,
+        owner,
+    })
+
+    const modularAccountClient = createSmartAccountClient({
+        account: modularAccount,
+        chain: getChain(),
+        bundlerTransport: http(BUNDLER_RPC_URL),
+        userOperation: {
+            estimateFeesPerGas: async () => await publicClient.estimateFeesPerGas(),
+        },
+    })
+
+    expect(
+        isAddress(modularAccountClient.account.address) &&
+            modularAccountClient.account.address !== zeroAddress,
+    ).toBe(true)
+
+    const AMOUNT_TO_FUND = ALCHEMY ? '0.00001' : '1'
+    const AMOUNT_FOR_USEROP = '0.0000001'
+
+    const tx = await fundedWallet.sendTransaction({
+        chain: getChain(),
+        to: modularAccountClient.account.address,
+        value: parseEther(AMOUNT_TO_FUND),
+    })
+
+    await waitForTransactionReceipt(publicClient, {
+        hash: tx,
+    })
+
+    expect(
+        await publicClient.getBalance({
+            address: modularAccountClient.account.address,
+        }),
+    ).toBe(parseEther(AMOUNT_TO_FUND))
+
+    //////////////////////////////////////////////////////////////
+    // deploy modular account
+    //////////////////////////////////////////////////////////////
+
+    const txHash = await modularAccountClient.sendUserOperation({
+        calls: [
+            {
+                to: zeroAddress,
+                value: parseEther(AMOUNT_FOR_USEROP),
+            },
+        ],
+    })
+
+    const useropReceipt = await modularAccountClient.waitForUserOperationReceipt({
+        hash: txHash,
+    })
+
+    const entrypoint07 = await publicClient.readContract({
+        address: modularAccountClient.account.address,
+        abi: entrypointAbi,
+        functionName: 'entryPoint',
+    })
+    expect(entrypoint07).toEqual(entryPoint07Address)
+
+    expect(useropReceipt.success).toBe(true)
+    const receipt = await publicClient.getTransactionReceipt({
+        hash: useropReceipt.receipt.transactionHash,
+    })
+
+    expect(receipt?.status).toBe('success')
+
+    const [modularOwnerAddress] = await publicClient.readContract({
+        address: modularAccountClient.account.address,
+        abi: [
+            {
+                type: 'function',
+                name: 'getFallbackSignerData',
+                inputs: [],
+                outputs: [
+                    {
+                        name: '',
+                        type: 'address',
+                        internalType: 'address',
+                    },
+                    {
+                        name: '',
+                        type: 'bool',
+                        internalType: 'bool',
+                    },
+                ],
+                stateMutability: 'view',
+            },
+        ],
+        functionName: 'getFallbackSignerData',
+    })
+    expect(modularOwnerAddress).toBe(owner.address)
+
+    // now ios or staking site load this user
+    const smartAccountDataWithoutNewImplementationType = await determineSmartAccount({
+        ownerAddress: owner.address,
+        paymasterProxyUrl: process.env.AA_PAYMASTER_PROXY_URL as string,
+        paymasterProxyAuthSecret: process.env.AA_PAYMASTER_PROXY_AUTH_SECRET as string,
+    })
+
+    expect(smartAccountDataWithoutNewImplementationType.accountType).toBe('modular')
+    expect(smartAccountDataWithoutNewImplementationType.address).toMatch(modularAccountData.address)
+
+    const smartAccountDataWithWrongNewImplementationType = await determineSmartAccount({
+        ownerAddress: owner.address,
+        newAccountImplementationType: 'simple',
+        paymasterProxyUrl: process.env.AA_PAYMASTER_PROXY_URL as string,
+        paymasterProxyAuthSecret: process.env.AA_PAYMASTER_PROXY_AUTH_SECRET as string,
+    })
+
+    expect(smartAccountDataWithWrongNewImplementationType.accountType).toBe('modular')
+    expect(smartAccountDataWithWrongNewImplementationType.address).toMatch(
+        modularAccountData.address,
+    )
+}, 10000000)
+
 const entrypointAbi = [
     {
         inputs: [],

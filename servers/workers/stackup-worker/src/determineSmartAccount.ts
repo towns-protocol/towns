@@ -16,7 +16,7 @@ import { entryPoint06Abi } from 'viem/account-abstraction'
 import { entryPoint06Address } from 'viem/account-abstraction'
 import { providerMap } from './provider'
 import { Environment } from 'worker-common'
-import { Env } from './types'
+import { Env } from './index'
 
 type SmartAccountType = 'simple' | 'modular'
 
@@ -50,7 +50,7 @@ let entryPointContractV07: GetContractReturnType<
 >
 
 export async function determineSmartAccount(args: {
-    newAccountImplementationType: SmartAccountType
+    newAccountImplementationType?: SmartAccountType
     ownerAddress: Address
     environment: Environment
     env: Env
@@ -92,14 +92,6 @@ export async function determineSmartAccount(args: {
         throw new Error('Failed to get sender address')
     }
 
-    // not upgrading yet, we can just return the simple account address
-    if (newAccountImplementationType === 'simple') {
-        return {
-            address: senderAddressSimpleAccount,
-            accountType: 'simple',
-        }
-    }
-
     let implementationDetails:
         | {
               implementationAddress: Address
@@ -117,12 +109,23 @@ export async function determineSmartAccount(args: {
         console.error('failed to get storage for account')
     }
 
-    // new account
+    // brand new user
     if (!implementationDetails) {
-        // brand new user
+        if (newAccountImplementationType === 'simple') {
+            return {
+                address: senderAddressSimpleAccount,
+                accountType: 'simple',
+            }
+        } else if (newAccountImplementationType === 'modular') {
+            return {
+                address: senderAddressModularAccount,
+                accountType: 'modular',
+            }
+        }
+        // default to simple
         return {
-            address: senderAddressModularAccount,
-            accountType: 'modular',
+            address: senderAddressSimpleAccount,
+            accountType: 'simple',
         }
     }
 

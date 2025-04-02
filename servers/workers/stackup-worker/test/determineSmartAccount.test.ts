@@ -24,6 +24,7 @@ const IncomingRequest = Request<unknown, IncomingRequestCfProperties>
 const OWNER = '0x8E92749c43f9884EA0402AE83CBCf7280068C476'
 const MODULAR_ADDRESS = '0x75D55630E5804E9E2Ac45d98Caa4BC12CD30A33F'
 const SIMPLE_ADDRESS = '0xC8FfDA60a6a0fAbe57bb49be2c6e4E02b226eA67'
+const RPC_URL = 'http://localhost:8545'
 
 describe('determineSmartAccount', () => {
     it('should determine a simple account address', async () => {
@@ -37,6 +38,25 @@ describe('determineSmartAccount', () => {
                 },
             },
         )
+        const ctx = createExecutionContext()
+
+        const response = await worker.fetch(request, env as Env)
+        // Wait for all `Promise`s passed to `ctx.waitUntil()` to settle before running test assertions
+        await waitOnExecutionContext(ctx)
+        const json = (await response.json()) as { data: { address: string; accountType: string } }
+        const data = json.data
+        expect(data.address).toBe(SIMPLE_ADDRESS)
+        expect(data.accountType).toBe('simple')
+    })
+
+    it('should determine a simple account address if no newAccountImplementationType is passed', async () => {
+        const AUTH_TOKEN = 'Zm9v'
+        const request = new IncomingRequest(`http://fake-server.com/api/smart-account/${OWNER}`, {
+            method: 'GET',
+            headers: {
+                Authorization: `Bearer ${AUTH_TOKEN}`,
+            },
+        })
         const ctx = createExecutionContext()
 
         const response = await worker.fetch(request, env as Env)
@@ -72,8 +92,6 @@ describe('determineSmartAccount', () => {
 
     // This test emulates a client that would call this endpoint
     it('should handle different implementations correctly', async () => {
-        const RPC_URL = 'http://localhost:8545'
-
         const publicClient = createPublicClient({
             chain: foundry,
             transport: http(RPC_URL),
@@ -90,7 +108,7 @@ describe('determineSmartAccount', () => {
             newAccountImplementationType: 'simple',
             ownerAddress: owner.address,
             environment: 'development',
-            env,
+            env: env as Env,
         })
         expect(simpleAccountData.accountType).toBe('simple')
         const simpleAddress = simpleAccountData.address
@@ -182,7 +200,7 @@ describe('determineSmartAccount', () => {
             newAccountImplementationType: 'modular',
             ownerAddress: owner.address,
             environment: 'development',
-            env,
+            env: env as Env,
         })
 
         expect(preUpgradeData.accountType).toBe('simple')
@@ -241,7 +259,7 @@ describe('determineSmartAccount', () => {
             newAccountImplementationType: 'modular',
             ownerAddress: owner.address,
             environment: 'development',
-            env,
+            env: env as Env,
         })
 
         expect(postUpgradeData.address).toEqual(preUpgradeData.address)
@@ -261,6 +279,122 @@ describe('determineSmartAccount', () => {
         })
 
         expect(entrypoint07).toEqual(entryPoint07Address)
+    })
+
+    it('should return previously created simple account if no newAccountImplementationType is passed', async () => {
+        const request = new IncomingRequest(
+            `http://fake-server.com/api/smart-account/${OWNER}?newAccountImplementationType=simple`,
+        )
+
+        const publicClient = createPublicClient({
+            chain: foundry,
+            transport: http(RPC_URL),
+        })
+
+        const anvilClient = createTestClient({
+            transport: http(RPC_URL),
+            mode: 'anvil',
+        })
+
+        const owner = privateKeyToAccount(generatePrivateKey())
+
+        // web app creates a new simple account
+        const simpleAccountData = await determineSmartAccount({
+            newAccountImplementationType: 'simple',
+            ownerAddress: owner.address,
+            environment: 'development',
+            env: env as Env,
+        })
+
+        expect(simpleAccountData.accountType).toBe('simple')
+        const simpleAddress = simpleAccountData.address
+
+        await anvilClient.setBalance({
+            address: simpleAddress,
+            value: parseEther('1'),
+        })
+
+        const simpleAccount = await toSimpleSmartAccount({
+            client: publicClient,
+            address: simpleAddress,
+            owner,
+            nonceKey: 0n,
+            entryPoint: {
+                address: entryPoint06Address,
+                version: '0.6',
+            },
+        })
+
+        const AMOUNT_FOR_USEROP = '0.0000001'
+
+        const simpleAccountClient = createSmartAccountClient({
+            account: simpleAccount,
+            chain: foundry,
+            bundlerTransport: http('http://localhost:43370'),
+            userOperation: {
+                estimateFeesPerGas: async () => await publicClient.estimateFeesPerGas(),
+            },
+        })
+
+        const txHash = await simpleAccountClient.sendUserOperation({
+            calls: [
+                {
+                    to: zeroAddress,
+                    value: parseEther(AMOUNT_FOR_USEROP),
+                },
+            ],
+        })
+
+        const useropReceipt = await simpleAccountClient.waitForUserOperationReceipt({
+            hash: txHash,
+        })
+
+        expect(useropReceipt.success).toBe(true)
+        const receipt = await publicClient.getTransactionReceipt({
+            hash: useropReceipt.receipt.transactionHash,
+        })
+
+        expect(receipt?.status).toBe('success')
+
+        const entrypoint06 = await publicClient.readContract({
+            address: simpleAccountClient.account.address,
+            abi: [
+                {
+                    inputs: [],
+                    name: 'entryPoint',
+                    outputs: [{ internalType: 'contract IEntryPoint', name: '', type: 'address' }],
+                    stateMutability: 'view',
+                    type: 'function',
+                },
+            ],
+            functionName: 'entryPoint',
+        })
+        expect(entrypoint06).toEqual(entryPoint06Address)
+
+        const ownerResponse = await publicClient.readContract({
+            address: simpleAddress,
+            abi: [
+                {
+                    inputs: [],
+                    name: 'owner',
+                    outputs: [{ internalType: 'address', name: '', type: 'address' }],
+                    stateMutability: 'view',
+                    type: 'function',
+                },
+            ],
+            functionName: 'owner',
+        })
+        expect(ownerResponse).toBe(owner.address)
+
+        // now ios or staking site load this user
+        const preUpgradeData = await determineSmartAccount({
+            ownerAddress: owner.address,
+            environment: 'development',
+            env: env as Env,
+        })
+
+        expect(preUpgradeData.accountType).toBe('simple')
+        expect(preUpgradeData.address).toMatch(simpleAddress)
     })
 }, 1000000)
 

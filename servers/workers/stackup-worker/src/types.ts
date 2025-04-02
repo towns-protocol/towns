@@ -156,26 +156,16 @@ export function isOverrideOperation(obj: any): obj is IOverrideOperation {
 }
 
 export function isSmartAccountRequest(obj: unknown): obj is {
-    newAccountImplementationType: 'simple' | 'modular'
     ownerAddress: Address
 } {
     if (typeof obj !== 'object' || obj === null) {
         return false
     }
-    if (
-        !('newAccountImplementationType' in obj) ||
-        typeof obj.newAccountImplementationType !== 'string'
-    ) {
-        return false
-    }
+
     if (!('ownerAddress' in obj) || typeof obj.ownerAddress !== 'string') {
         return false
     }
-    return (
-        (obj.newAccountImplementationType === 'simple' ||
-            obj.newAccountImplementationType === 'modular') &&
-        isAddress(obj.ownerAddress)
-    )
+    return isAddress(obj.ownerAddress)
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
