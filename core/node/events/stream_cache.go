@@ -151,7 +151,7 @@ func (s *StreamCache) Start(ctx context.Context) error {
 			lastAppliedBlockNum: s.params.AppliedBlockNum,
 			local:               &localStreamState{},
 		}
-		stream.nodesLocked.Reset(streamRecord.Nodes, s.params.Wallet.Address)
+		stream.nodesLocked.ResetFromStreamResult(streamRecord, s.params.Wallet.Address)
 		s.cache.Store(streamRecord.StreamId, stream)
 		if s.params.Config.StreamReconciliation.InitialWorkerPoolSize > 0 {
 			s.submitSyncStreamTaskToPool(
@@ -255,7 +255,7 @@ func (s *StreamCache) onStreamAllocated(
 		lastAccessedTime:    time.Now(),
 		local:               &localStreamState{},
 	}
-	stream.nodesLocked.Reset(event.Nodes, s.params.Wallet.Address)
+	stream.nodesLocked.ResetFromStreamState(event, s.params.Wallet.Address)
 	stream, created, err := s.createStreamStorage(ctx, stream, genesisMB, genesisMbNum, genesisHash)
 	if err != nil {
 		logging.FromCtx(ctx).Errorw("Failed to allocate stream", "err", err, "streamId", event.GetStreamId())
@@ -388,7 +388,7 @@ func (s *StreamCache) tryLoadStreamRecord(
 		lastAppliedBlockNum: blockNum,
 		lastAccessedTime:    time.Now(),
 	}
-	stream.nodesLocked.Reset(record.Nodes, s.params.Wallet.Address)
+	stream.nodesLocked.ResetFromStreamResult(record, s.params.Wallet.Address)
 
 	if !stream.nodesLocked.IsLocal() {
 		stream, _ = s.cache.LoadOrStore(streamId, stream)
