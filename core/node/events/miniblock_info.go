@@ -16,17 +16,20 @@ import (
 )
 
 type MiniblockInfo struct {
-	Ref                *MiniblockRef
+	Ref      *MiniblockRef
+	Proto    *Miniblock
+	Snapshot *Envelope
+
 	headerEvent        *ParsedEvent
 	useGetterForEvents []*ParsedEvent // Use events(). Getter checks if events have been initialized.
-	Proto              *Miniblock
+	snapshot           *ParsedEvent
 }
 
 // NewMiniblockInfoFromProto initializes a MiniblockInfo from a proto, applying validation based
 // on whatever is set in the opts. If an empty opts is passed in, the method will still perform
 // some minimal validation to confirm that event counts between the header and body match.
-func NewMiniblockInfoFromProto(pb *Miniblock, opts *ParsedMiniblockInfoOpts) (*MiniblockInfo, error) {
-	headerEvent, err := ParseEvent(pb.Header)
+func NewMiniblockInfoFromProto(mb *Miniblock, sn *Envelope, opts *ParsedMiniblockInfoOpts) (*MiniblockInfo, error) {
+	headerEvent, err := ParseEvent(mb.Header)
 	if err != nil {
 		return nil, AsRiverError(
 			err,
@@ -49,18 +52,18 @@ func NewMiniblockInfoFromProto(pb *Miniblock, opts *ParsedMiniblockInfoOpts) (*M
 
 	// Validate the number of events matches event hashes
 	// We will validate that the hashes match if the events are parsed.
-	if len(blockHeader.EventHashes) != len(pb.Events) {
+	if len(blockHeader.EventHashes) != len(mb.Events) {
 		return nil, RiverError(
 			Err_BAD_BLOCK,
 			"Length of events in block does not match length of event hashes in header",
 		).Func("NewMiniblockInfoFromProto").
 			Tag("eventHashesLength", len(blockHeader.EventHashes)).
-			Tag("eventsLength", len(pb.Events))
+			Tag("eventsLength", len(mb.Events))
 	}
 
 	var events []*ParsedEvent
 	if !opts.DoNotParseEvents() {
-		events, err = ParseEvents(pb.Events)
+		events, err = ParseEvents(mb.Events)
 		if err != nil {
 			return nil, AsRiverError(err, Err_BAD_EVENT_HASH).Func("NewMiniblockInfoFromProto")
 		}
@@ -125,6 +128,16 @@ func NewMiniblockInfoFromProto(pb *Miniblock, opts *ParsedMiniblockInfoOpts) (*M
 			Tag("prevSnapshotMiniblockNum", blockHeader.PrevSnapshotMiniblockNum)
 	}
 
+	var parsedSnapshot *ParsedEvent
+	if sn != nil {
+		parsedSnapshot, err = ParseEvent(sn)
+		if err != nil {
+			return nil, AsRiverError(err, Err_BAD_EVENT).
+				Message("Error parsing snapshot event").
+				Func("NewMiniblockInfoFromProto")
+		}
+	}
+
 	// TODO: snapshot validation if requested
 	// (How to think about versioning?)
 
@@ -133,9 +146,11 @@ func NewMiniblockInfoFromProto(pb *Miniblock, opts *ParsedMiniblockInfoOpts) (*M
 			Hash: headerEvent.Hash,
 			Num:  blockHeader.MiniblockNum,
 		},
+		Proto:              mb,
+		Snapshot:           sn,
 		headerEvent:        headerEvent,
 		useGetterForEvents: events,
-		Proto:              pb,
+		snapshot:           parsedSnapshot,
 	}, nil
 }
 
@@ -155,7 +170,11 @@ func NewMiniblocksInfoFromProtos(pbs []*Miniblock, opts *ParsedMiniblockInfoOpts
 	return mbs, nil
 }
 
-func NewMiniblockInfoFromParsed(headerEvent *ParsedEvent, events []*ParsedEvent) (*MiniblockInfo, error) {
+func NewMiniblockInfoFromParsed(
+	headerEvent *ParsedEvent,
+	events []*ParsedEvent,
+	snapshot *ParsedEvent,
+) (*MiniblockInfo, error) {
 	if headerEvent.Event.GetMiniblockHeader() == nil {
 		return nil, RiverError(Err_BAD_EVENT, "header event must be a block header")
 	}
@@ -170,12 +189,14 @@ func NewMiniblockInfoFromParsed(headerEvent *ParsedEvent, events []*ParsedEvent)
 			Hash: headerEvent.Hash,
 			Num:  headerEvent.Event.GetMiniblockHeader().MiniblockNum,
 		},
-		headerEvent:        headerEvent,
-		useGetterForEvents: events,
 		Proto: &Miniblock{
 			Header: headerEvent.Envelope,
 			Events: envelopes,
 		},
+		Snapshot:           snapshot.Envelope,
+		headerEvent:        headerEvent,
+		useGetterForEvents: events,
+		snapshot:           snapshot,
 	}, nil
 }
 
@@ -183,6 +204,7 @@ func NewMiniblockInfoFromHeaderAndParsed(
 	wallet *crypto.Wallet,
 	header *MiniblockHeader,
 	events []*ParsedEvent,
+	snapshot *ParsedEvent,
 ) (*MiniblockInfo, error) {
 	headerEvent, err := MakeParsedEventWithPayload(
 		wallet,
@@ -196,7 +218,7 @@ func NewMiniblockInfoFromHeaderAndParsed(
 		return nil, err
 	}
 
-	return NewMiniblockInfoFromParsed(headerEvent, events)
+	return NewMiniblockInfoFromParsed(headerEvent, events, snapshot)
 }
 
 func NewMiniblockInfoFromDescriptor(mb *storage.MiniblockDescriptor) (*MiniblockInfo, error) {
@@ -207,7 +229,10 @@ func NewMiniblockInfoFromDescriptor(mb *storage.MiniblockDescriptor) (*Miniblock
 	return NewMiniblockInfoFromDescriptorWithOpts(mb, opts)
 }
 
-func NewMiniblockInfoFromDescriptorWithOpts(mb *storage.MiniblockDescriptor, opts *ParsedMiniblockInfoOpts) (*MiniblockInfo, error) {
+func NewMiniblockInfoFromDescriptorWithOpts(
+	mb *storage.MiniblockDescriptor,
+	opts *ParsedMiniblockInfoOpts,
+) (*MiniblockInfo, error) {
 	var pb Miniblock
 	if err := proto.Unmarshal(mb.Data, &pb); err != nil {
 		return nil, AsRiverError(err, Err_INVALID_ARGUMENT).
@@ -215,7 +240,17 @@ func NewMiniblockInfoFromDescriptorWithOpts(mb *storage.MiniblockDescriptor, opt
 			Func("NewMiniblockInfoFromDescriptorWithOpts")
 	}
 
-	return NewMiniblockInfoFromProto(&pb, opts)
+	var sn *Envelope
+	if len(mb.Snapshot) > 0 {
+		sn = &Envelope{}
+		if err := proto.Unmarshal(mb.Snapshot, sn); err != nil {
+			return nil, AsRiverError(err, Err_INVALID_ARGUMENT).
+				Message("Failed to decode snapshot from bytes").
+				Func("NewMiniblockInfoFromDescriptorWithOpts")
+		}
+	}
+
+	return NewMiniblockInfoFromProto(&pb, sn, opts)
 }
 
 func (b *MiniblockInfo) Events() []*ParsedEvent {
@@ -255,10 +290,19 @@ func (b *MiniblockInfo) AsStorageMb() (*storage.WriteMiniblockData, error) {
 			Func("AsStorageMb")
 	}
 
+	var serializedSn []byte
+	if b.Snapshot != nil {
+		if serializedSn, err = proto.Marshal(b.Snapshot); err != nil {
+			return nil, AsRiverError(err, Err_INTERNAL).
+				Message("Failed to serialize snapshot to bytes").
+				Func("AsStorageMb")
+		}
+	}
+
 	return &storage.WriteMiniblockData{
 		Number:   b.Ref.Num,
 		Hash:     b.Ref.Hash,
-		Snapshot: b.IsSnapshot(),
+		Snapshot: serializedSn,
 		Data:     serializedMb,
 	}, nil
 }
