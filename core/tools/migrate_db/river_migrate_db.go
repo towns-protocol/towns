@@ -1626,7 +1626,10 @@ func lastSnapshotIndexFromMiniblocks(
 		rows,
 		[]any{&seqNum, &blockData},
 		func() error {
-			mbInfo, err := events.NewMiniblockInfoFromBytesWithOpts(blockData, events.NewParsedMiniblockInfoOpts().WithDoNotParseEvents(true))
+			mbInfo, err := events.NewMiniblockInfoFromDescriptorWithOpts(
+				&storage.MiniblockDescriptor{Number: seqNum, Data: blockData},
+				events.NewParsedMiniblockInfoOpts().WithDoNotParseEvents(true),
+			)
 			if err != nil {
 				return fmt.Errorf("could not parse miniblock for stream %v: %w", streamId, err)
 			}
