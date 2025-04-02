@@ -75,23 +75,19 @@ func (s *StreamNodesWithoutLock) ResetFromStreamResult(result *registries.GetStr
 }
 
 func (s *StreamNodesWithoutLock) Reset(replicationFactor int, nodes []common.Address, localNode common.Address) {
-	// for the migration of non-replicated streams to replicated streams a node needs to sync the stream to local
-	// storage first before it can participate in the quorum. This is a temporary solution during this migration.
-	s.quorumNodes = slices.Clone(nodes[:replicationFactor])
-	s.syncNodes = slices.Clone(nodes[replicationFactor:])
-	s.isLocal = slices.Contains(nodes, localNode)
-	s.isLocalInQuorum = slices.Contains(nodes[:replicationFactor], localNode)
-
-	nodes = nodes[:replicationFactor]
-
 	var lastStickyAddr common.Address
 	if s.stickyPeerIndex < len(s.quorumNodes) {
 		lastStickyAddr = s.quorumNodes[s.stickyPeerIndex]
 	}
 
-	localIndex := slices.Index(s.quorumNodes, localNode)
+	s.quorumNodes = slices.Clone(nodes[:replicationFactor])
+	s.syncNodes = slices.Clone(nodes[replicationFactor:])
+	s.isLocalInQuorum = slices.Contains(s.quorumNodes, localNode)
 
-	if localIndex >= 0 {
+	localIndex := slices.Index(s.quorumNodes, localNode)
+	s.isLocal = localIndex >= 0
+
+	if s.isLocal {
 		s.remotes = slices.Concat(s.quorumNodes[:localIndex], s.quorumNodes[localIndex+1:])
 	} else {
 		s.remotes = slices.Clone(s.quorumNodes)
@@ -138,15 +134,15 @@ func (s *StreamNodesWithoutLock) GetStickyPeer() common.Address {
 }
 
 func (s *StreamNodesWithoutLock) AdvanceStickyPeer(currentPeer common.Address) common.Address {
-	if len(s.quorumNodes) == 0 {
+	if len(s.remotes) == 0 {
 		return common.Address{}
 	}
 
 	// If the node has already been advanced, ignore the call to advance and return the current sticky
 	// peer. Many concurrent requests may fail and try to advance the node at the same time, but we only
 	// want to advance once.
-	if s.quorumNodes[s.stickyPeerIndex] != currentPeer {
-		return s.quorumNodes[s.stickyPeerIndex]
+	if s.remotes[s.stickyPeerIndex] != currentPeer {
+		return s.remotes[s.stickyPeerIndex]
 	}
 
 	s.stickyPeerIndex++
@@ -157,7 +153,7 @@ func (s *StreamNodesWithoutLock) AdvanceStickyPeer(currentPeer common.Address) c
 		s.stickyPeerIndex = 0
 	}
 
-	return s.quorumNodes[s.stickyPeerIndex]
+	return s.remotes[s.stickyPeerIndex]
 }
 
 type StreamNodesWithLock struct {
