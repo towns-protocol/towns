@@ -2,6 +2,7 @@ package events
 
 import (
 	"context"
+	"fmt"
 	"slices"
 	"sync"
 	"sync/atomic"
@@ -200,38 +201,46 @@ func (s *StreamCache) onBlockWithLogs(ctx context.Context, blockNum crypto.Block
 
 	for streamID, events := range streamEvents {
 		wp.Submit(func() {
-		for len(events) > 0  {
-			switch events[0].Reason() {
+			for len(events) > 0 {
+				switch events[0].Reason() {
 				case river.StreamUpdatedEventTypeAllocate:
 					streamState := events[0].(*river.StreamState)
 					s.onStreamAllocated(ctx, streamState, events[1:], blockNum)
-					events = events[1:]
+					events = nil
 				case river.StreamUpdatedEventTypeCreate:
 					streamState := events[0].(*river.StreamState)
 					s.onStreamCreated(ctx, streamState, blockNum)
 					events = events[1:]
 				case river.StreamUpdatedEventTypePlacementUpdated:
 					streamState := events[0].(*river.StreamState)
-					s.onStreamReplaced(ctx, streamState, blockNum)
+					s.onStreamReplacementUpdated(ctx, streamState, blockNum)
 					events = events[1:]
 				case river.StreamUpdatedEventTypeLastMiniblockBatchUpdated:
-				    i := 1
-				    for i < len(events) && events[i].Reason() == river.StreamUpdatedEventTypeLastMiniblockBatchUpdated {
-				      i++
-				    }
-				    eventsToApply := events[:i]
-				    events = events[i:]
-				    
+					i := 1
+					for i < len(events) && events[i].Reason() == river.StreamUpdatedEventTypeLastMiniblockBatchUpdated {
+						i++
+					}
+					eventsToApply := events[:i]
+					events = events[i:]
+
 					stream, ok := s.cache.Load(streamID)
 					if !ok {
 						return
 					}
 
+					if stream.nodesLocked.IsLocalInQuorum() {
+						for _, event := range eventsToApply {
+							e := event.(*river.StreamMiniblockUpdate)
+							fmt.Printf(
+								"BVK DBG event stream: %s blocknum: %d node: %s\n",
+								event.GetStreamId(),
+								e.SetMiniblock.LastMiniblockNum,
+								s.params.Wallet.Address,
+							)
+						}
+					}
 					// COMMENT: Move logic from here to applyStreamEvents - mutex should be taken
 					stream.applyStreamEvents(ctx, eventsToApply, blockNum)
-					
-			}
-		}
 				}
 			}
 		})
@@ -242,34 +251,7 @@ func (s *StreamCache) onBlockWithLogs(ctx context.Context, blockNum crypto.Block
 	s.appliedBlockNum.Store(uint64(blockNum))
 }
 
-// splitStreamEvents splits the given events on replacement updates.
-// It guarantees that placement updates are the first event in a chain.
-func (s *StreamCache) splitStreamEventsOnReplacements(events []river.StreamUpdatedEvent) [][]river.StreamUpdatedEvent {
-	var (
-		results = make([][]river.StreamUpdatedEvent, 1)
-		index   = 0
-	)
-
-	for _, e := range events {
-		results[index] = append(results[index], e)
-		if e.Reason() == river.StreamUpdatedEventTypePlacementUpdated {
-			results = append(results, []river.StreamUpdatedEvent{})
-			index++
-			results[index] = append(results[index], e)
-		} else {
-			results[index] = append(results[index], e)
-		}
-	}
-
-	// strip last events chain if last event was a stream replacement
-	if len(results[0]) == 0 {
-		results = results[1:]
-	}
-
-	return results
-}
-
-func (s *StreamCache) onStreamReplaced(
+func (s *StreamCache) onStreamReplacementUpdated(
 	ctx context.Context,
 	event *river.StreamState,
 	blockNum crypto.BlockNumber,
@@ -278,6 +260,8 @@ func (s *StreamCache) onStreamReplaced(
 		// TODO: if stream is removed from this node cleanup stream storage/cache.
 		return
 	}
+
+	fmt.Printf("BVK DBG onStreamReplacementUpdated: %s on node %s\n", event.GetStreamId(), s.params.Wallet.Address)
 
 	stream := &Stream{
 		streamId:            event.GetStreamId(),
@@ -293,6 +277,13 @@ func (s *StreamCache) onStreamReplaced(
 		stream.local = &localStreamState{}
 	}
 	stream.mu.Unlock()
+
+	fmt.Printf(
+		"BVK DBG onStreamReplacementUpdated: submit sync task for stream %s on node %s [quorum nodes: %v]\n",
+		event.GetStreamId(),
+		s.params.Wallet.Address,
+		stream.nodesLocked.GetQuorumNodes(),
+	)
 
 	s.SubmitSyncStreamTask(ctx, stream)
 }

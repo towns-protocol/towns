@@ -4,10 +4,11 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"github.com/towns-protocol/towns/core/node/registries"
 	"slices"
 	"strings"
 	"time"
+
+	"github.com/towns-protocol/towns/core/node/registries"
 
 	mapset "github.com/deckarep/golang-set/v2"
 	"github.com/ethereum/go-ethereum/common"
@@ -1044,6 +1045,12 @@ func (s *Stream) applyStreamEvents(
 			})
 			if err != nil {
 				logging.FromCtx(ctx).Errorw("onStreamLastMiniblockUpdated: failed to promote candidate", "err", err)
+				fmt.Printf(
+					"BVK DBG %s failed to promote candidate %d: %s\n",
+					s.streamId,
+					int64(event.LastMiniblockNum),
+					err,
+				)
 			}
 		case river.StreamUpdatedEventTypeAllocate:
 			logging.FromCtx(ctx).Errorw("applyStreamEvents: unexpected stream allocation event",

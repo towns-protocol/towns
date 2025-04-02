@@ -85,16 +85,16 @@ func (s *StreamNodesWithoutLock) Reset(replicationFactor int, nodes []common.Add
 	nodes = nodes[:replicationFactor]
 
 	var lastStickyAddr common.Address
-	if s.stickyPeerIndex < len(s.remotes) {
-		lastStickyAddr = s.remotes[s.stickyPeerIndex]
+	if s.stickyPeerIndex < len(s.quorumNodes) {
+		lastStickyAddr = s.quorumNodes[s.stickyPeerIndex]
 	}
 
-	localIndex := slices.Index(nodes, localNode)
+	localIndex := slices.Index(s.quorumNodes, localNode)
 
 	if localIndex >= 0 {
-		s.remotes = slices.Concat(nodes[:localIndex], nodes[localIndex+1:])
+		s.remotes = slices.Concat(s.quorumNodes[:localIndex], s.quorumNodes[localIndex+1:])
 	} else {
-		s.remotes = slices.Clone(nodes)
+		s.remotes = slices.Clone(s.quorumNodes)
 	}
 
 	rand.Shuffle(len(s.remotes), func(i, j int) { s.remotes[i], s.remotes[j] = s.remotes[j], s.remotes[i] })
@@ -138,15 +138,15 @@ func (s *StreamNodesWithoutLock) GetStickyPeer() common.Address {
 }
 
 func (s *StreamNodesWithoutLock) AdvanceStickyPeer(currentPeer common.Address) common.Address {
-	if len(s.remotes) == 0 {
+	if len(s.quorumNodes) == 0 {
 		return common.Address{}
 	}
 
 	// If the node has already been advanced, ignore the call to advance and return the current sticky
 	// peer. Many concurrent requests may fail and try to advance the node at the same time, but we only
 	// want to advance once.
-	if s.remotes[s.stickyPeerIndex] != currentPeer {
-		return s.remotes[s.stickyPeerIndex]
+	if s.quorumNodes[s.stickyPeerIndex] != currentPeer {
+		return s.quorumNodes[s.stickyPeerIndex]
 	}
 
 	s.stickyPeerIndex++
@@ -157,7 +157,7 @@ func (s *StreamNodesWithoutLock) AdvanceStickyPeer(currentPeer common.Address) c
 		s.stickyPeerIndex = 0
 	}
 
-	return s.remotes[s.stickyPeerIndex]
+	return s.quorumNodes[s.stickyPeerIndex]
 }
 
 type StreamNodesWithLock struct {

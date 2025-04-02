@@ -8,6 +8,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
 	"github.com/towns-protocol/towns/core/node/testutils/testfmt"
 
 	"github.com/towns-protocol/towns/core/contracts/river"
@@ -61,7 +62,13 @@ func TestStreamNonReplToReplMigration(t *testing.T) {
 		}
 	}
 
-	testfmt.Logf(t, "Set stream %s repl factor to %d / placementNodeAddresses: %v", channelId, 1, placementNodeAddresses)
+	testfmt.Logf(
+		t,
+		"Set stream %s repl factor to %d / placementNodeAddresses: %v",
+		channelId,
+		1,
+		placementNodeAddresses,
+	)
 
 	tt.btc.SetStreamReplicationFactor(
 		t,
@@ -122,7 +129,7 @@ func TestStreamNonReplToReplMigration(t *testing.T) {
 		}
 
 		assert.EqualValues(c, len(placementNodeAddresses), syncedNodes, "unexpected number of synced nodes")
-	}, time.Second*10, time.Millisecond*100)
+	}, time.Second*10, time.Millisecond*1000)
 
 	// bump the replication factor to all replacement nodes and ensure that the stream is now quorum-replicated
 	tt.btc.SetStreamReplicationFactor(
