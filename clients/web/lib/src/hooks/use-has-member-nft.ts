@@ -31,17 +31,17 @@ export function useHasMemberNft({
             .concat(spaceDapp.hasSpaceMembership(spaceId, userId))
 
         try {
-            await Promise.any(allPromises)
-            return true
+            const results = await Promise.all(allPromises)
+            return results.some((result) => result)
         } catch (e) {
-            if (e instanceof AggregateError) {
-                return false
-            }
+            console.error(`[useHasMemberNft] error fetching nft balance`, e)
+            return false
         }
     }, [linkedWallets, spaceDapp, spaceId, userId])
 
     return useQuery(blockchainKeys.hasMemberNft(spaceId), fetchNftBalance, {
         enabled: !!linkedWallets && !!spaceDapp && !!userId && !!spaceId && enabled,
         refetchOnMount: true,
+        staleTime: 1_000 * 60 * 5,
     })
 }
