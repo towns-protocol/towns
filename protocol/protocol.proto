@@ -33,7 +33,7 @@ message Envelope {
     /**
      * Signature.
      * For the event to be valid, signature must match event.creator_address
-     * or be signed by the address from evant.delegate_sig.
+     * or be signed by the address from event.delegate_sig.
      */
     bytes signature = 2;
 
