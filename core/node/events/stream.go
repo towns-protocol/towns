@@ -1020,21 +1020,17 @@ func (s *Stream) applyStreamEvents(
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	// Sanity check
-	if s.lastAppliedBlockNum >= blockNum {
-		logging.FromCtx(ctx).
-			Errorw("applyStreamEvents: already applied events for block", "blockNum", blockNum, "streamId", s.streamId,
-				"lastAppliedBlockNum", s.lastAppliedBlockNum,
-			)
-		return nil
-	}
+	// TODO: REPLICATION: FIX: this function now can be called multiple times per block.
+	// if s.lastAppliedBlockNum >= blockNum {
+	// 	logging.FromCtx(ctx).
+	// 		Errorw("applyStreamEvents: already applied events for block", "blockNum", blockNum, "streamId", s.streamId,
+	// 			"lastAppliedBlockNum", s.lastAppliedBlockNum,
+	// 		)
+	// 	return
+	// }
 
 	for _, e := range events {
-		switch e.Reason() {
-		case river.StreamUpdatedEventTypePlacementUpdated:
-			ev := e.(*river.StreamState)
-			s.nodesLocked.ResetFromStreamState(ev, s.params.Wallet.Address)
-		case river.StreamUpdatedEventTypeLastMiniblockBatchUpdated:
+		if e.Reason() == river.StreamUpdatedEventTypeLastMiniblockBatchUpdated {
 			event := e.(*river.StreamMiniblockUpdate)
 			err := s.promoteCandidateLocked(ctx, &MiniblockRef{
 				Hash: event.LastMiniblockHash,
@@ -1048,16 +1044,8 @@ func (s *Stream) applyStreamEvents(
 			if err != nil {
 				logging.FromCtx(ctx).Errorw("onStreamLastMiniblockUpdated: failed to promote candidate", "err", err)
 			}
-		case river.StreamUpdatedEventTypeAllocate:
-			logging.FromCtx(ctx).Errorw("applyStreamEvents: unexpected stream allocation event",
-				"event", e, "streamId", s.streamId)
-			continue
-		case river.StreamUpdatedEventTypeCreate:
-			logging.FromCtx(ctx).Errorw("applyStreamEvents: unexpected stream creation event",
-				"event", e, "streamId", s.streamId)
-			continue
-		default:
-			logging.FromCtx(ctx).Errorw("applyStreamEvents: unknown event", "event", e, "streamId", s.streamId)
+		} else {
+			logging.FromCtx(ctx).Errorw("applyStreamEvents: unexpected event", "event", e, "streamId", s.streamId)
 		}
 	}
 

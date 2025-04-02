@@ -213,7 +213,7 @@ func (s *StreamCache) onBlockWithLogs(ctx context.Context, blockNum crypto.Block
 					events = events[1:]
 				case river.StreamUpdatedEventTypePlacementUpdated:
 					streamState := events[0].(*river.StreamState)
-					s.onStreamReplacementUpdated(ctx, streamState, blockNum)
+					s.onStreamPlacementUpdated(ctx, streamState, blockNum)
 					events = events[1:]
 				case river.StreamUpdatedEventTypeLastMiniblockBatchUpdated:
 					i := 1
@@ -228,7 +228,6 @@ func (s *StreamCache) onBlockWithLogs(ctx context.Context, blockNum crypto.Block
 						continue
 					}
 
-					// COMMENT: Move logic from here to applyStreamEvents - mutex should be taken
 					if err := stream.applyStreamEvents(ctx, eventsToApply, blockNum); err != nil {
 						if riverErr := AsRiverError(err); riverErr != nil && riverErr.Code == Err_NOT_FOUND {
 							s.SubmitSyncStreamTask(ctx, stream)
@@ -301,33 +300,31 @@ func (s *StreamCache) onStreamReplacementUpdated(
 		return
 	}
 
-	// add stream to cache if it is not already there
-	stream := &Stream{
-		streamId:            event.GetStreamId(),
-		lastAppliedBlockNum: blockNum,
-		params:              s.params,
-		local:               &localStreamState{},
-	}
+	// in not in the cache, insert new recored in the correct state, otherwise load existing
+	stream, loaded := s.cache.LoadOrCompute(event.GetStreamId(), func() *Stream {
+		s := &Stream{
+			streamId:            event.GetStreamId(),
+			lastAppliedBlockNum: blockNum,
+			params:              s.params,
+			local:               &localStreamState{},
+		}
+		s.nodesLocked.ResetFromStreamState(event, s.params.Wallet.Address)
+		return s
+	})
 
-	// in case the stream is already in the cache only to reset the nodes list
-	stream, loaded := s.cache.LoadOrStore(event.GetStreamId(), stream)
-	inQuorumInOldState := false
 	if loaded {
-		inQuorumInOldState = stream.nodesLocked.IsLocalInQuorum()
+		stream.mu.Lock()
+		// TODO: REPLICATION: FIX: what to do with lastAppliedBlockNum
+		stream.nodesLocked.ResetFromStreamState(event, s.params.Wallet.Address)
+		if stream.local == nil {
+			stream.local = &localStreamState{}
+		}
+		stream.mu.Unlock()
 	}
 
-	stream.mu.Lock()
-	stream.nodesLocked.ResetFromStreamState(event, s.params.Wallet.Address)
-	if stream.local == nil {
-		stream.local = &localStreamState{}
-	}
-	stream.mu.Unlock()
-
-	// if node was not already participating in the stream quorum, submit a sync task to catch up and
-	// prepare node to participate in quorum in the future.
-	if !inQuorumInOldState {
-		s.SubmitSyncStreamTask(ctx, stream)
-	}
+	// always submit a sync task, this change is rare, and it will be a no-op if it's up-to-date
+	// it's easier to submit a task then to figurte out when exactly it's needed
+	s.SubmitSyncStreamTask(ctx, stream)
 }
 
 func (s *StreamCache) Params() *StreamCacheParams {
