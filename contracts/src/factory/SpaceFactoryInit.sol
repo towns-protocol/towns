@@ -6,15 +6,15 @@ import {ISpaceProxyInitializer} from "contracts/src/spaces/facets/proxy/ISpacePr
 
 // libraries
 import {ImplementationStorage} from
-  "contracts/src/factory/facets/architect/ImplementationStorage.sol";
+    "contracts/src/factory/facets/architect/ImplementationStorage.sol";
 
 // contracts
 
 contract SpaceFactoryInit {
-  function initialize(
-    address proxyInitializer
-  ) external {
-    ImplementationStorage.Layout storage ds = ImplementationStorage.layout();
-    ds.proxyInitializer = ISpaceProxyInitializer(proxyInitializer);
-  }
+    function initialize(
+        address proxyInitializer
+    ) external {
+        ImplementationStorage.Layout storage ds = ImplementationStorage.layout();
+        ds.proxyInitializer = ISpaceProxyInitializer(proxyInitializer);
+    }
 }

@@ -13,22 +13,22 @@ import {PausableBase} from "@towns-protocol/diamond/src/facets/pausable/Pausable
 import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
 
 contract MockLegacyArchitect is
-  ILegacyArchitect,
-  LegacyArchitectBase,
-  PausableBase,
-  ReentrancyGuard,
-  Facet
+    ILegacyArchitect,
+    LegacyArchitectBase,
+    PausableBase,
+    ReentrancyGuard,
+    Facet
 {
-  function __Architect_init() external onlyInitializing {
-    _addInterface(type(ILegacyArchitect).interfaceId);
-  }
+    function __Architect_init() external onlyInitializing {
+        _addInterface(type(ILegacyArchitect).interfaceId);
+    }
 
-  // =============================================================
-  //                            Space
-  // =============================================================
-  function createSpace(
-    SpaceInfo memory spaceInfo
-  ) external nonReentrant whenNotPaused returns (address) {
-    return _createSpace(spaceInfo);
-  }
+    // =============================================================
+    //                            Space
+    // =============================================================
+    function createSpace(
+        SpaceInfo memory spaceInfo
+    ) external nonReentrant whenNotPaused returns (address) {
+        return _createSpace(spaceInfo);
+    }
 }

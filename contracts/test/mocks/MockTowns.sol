@@ -10,11 +10,11 @@ pragma solidity ^0.8.23;
 import {Towns} from "contracts/src/tokens/towns/base/Towns.sol";
 
 contract MockTowns is Towns {
-  function localMint(address to, uint256 amount) external onlyOwner {
-    _mint(to, amount);
-  }
+    function localMint(address to, uint256 amount) external onlyOwner {
+        _mint(to, amount);
+    }
 
-  function localBurn(address from, uint256 amount) external onlyOwner {
-    _burn(from, amount);
-  }
+    function localBurn(address from, uint256 amount) external onlyOwner {
+        _burn(from, amount);
+    }
 }

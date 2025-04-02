@@ -12,33 +12,33 @@ import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetH
 import {MerkleAirdrop} from "contracts/src/utils/airdrop/merkle/MerkleAirdrop.sol";
 
 contract DeployMerkleAirdrop is Deployer, FacetHelper {
-  // FacetHelper
-  constructor() {
-    addSelector(MerkleAirdrop.claim.selector);
-    addSelector(MerkleAirdrop.getMerkleRoot.selector);
-    addSelector(MerkleAirdrop.getToken.selector);
-    addSelector(MerkleAirdrop.getMessageHash.selector);
-  }
+    // FacetHelper
+    constructor() {
+        addSelector(MerkleAirdrop.claim.selector);
+        addSelector(MerkleAirdrop.getMerkleRoot.selector);
+        addSelector(MerkleAirdrop.getToken.selector);
+        addSelector(MerkleAirdrop.getMessageHash.selector);
+    }
 
-  // Deploying
-  function versionName() public pure override returns (string memory) {
-    return "facets/merkleAirdropFacet";
-  }
+    // Deploying
+    function versionName() public pure override returns (string memory) {
+        return "facets/merkleAirdropFacet";
+    }
 
-  function initializer() public pure override returns (bytes4) {
-    return MerkleAirdrop.__MerkleAirdrop_init.selector;
-  }
+    function initializer() public pure override returns (bytes4) {
+        return MerkleAirdrop.__MerkleAirdrop_init.selector;
+    }
 
-  function makeInitData(bytes32 merkleRoot, address token) public pure returns (bytes memory) {
-    return abi.encodeWithSelector(initializer(), merkleRoot, IERC20(token));
-  }
+    function makeInitData(bytes32 merkleRoot, address token) public pure returns (bytes memory) {
+        return abi.encodeWithSelector(initializer(), merkleRoot, IERC20(token));
+    }
 
-  function __deploy(
-    address deployer
-  ) public override returns (address) {
-    vm.startBroadcast(deployer);
-    MerkleAirdrop merkleAirdrop = new MerkleAirdrop();
-    vm.stopBroadcast();
-    return address(merkleAirdrop);
-  }
+    function __deploy(
+        address deployer
+    ) public override returns (address) {
+        vm.startBroadcast(deployer);
+        MerkleAirdrop merkleAirdrop = new MerkleAirdrop();
+        vm.stopBroadcast();
+        return address(merkleAirdrop);
+    }
 }

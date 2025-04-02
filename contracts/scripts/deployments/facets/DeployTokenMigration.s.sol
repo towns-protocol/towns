@@ -12,30 +12,30 @@ import {TokenMigrationFacet} from "contracts/src/tokens/migration/TokenMigration
 import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
 
 contract DeployTokenMigration is FacetHelper, Deployer {
-  constructor() {
-    addSelector(TokenMigrationFacet.migrate.selector);
-    addSelector(TokenMigrationFacet.emergencyWithdraw.selector);
-    addSelector(TokenMigrationFacet.tokens.selector);
-  }
+    constructor() {
+        addSelector(TokenMigrationFacet.migrate.selector);
+        addSelector(TokenMigrationFacet.emergencyWithdraw.selector);
+        addSelector(TokenMigrationFacet.tokens.selector);
+    }
 
-  function initializer() public pure override returns (bytes4) {
-    return TokenMigrationFacet.__TokenMigrationFacet_init.selector;
-  }
+    function initializer() public pure override returns (bytes4) {
+        return TokenMigrationFacet.__TokenMigrationFacet_init.selector;
+    }
 
-  function versionName() public pure override returns (string memory) {
-    return "facets/tokenMigrationFacet";
-  }
+    function versionName() public pure override returns (string memory) {
+        return "facets/tokenMigrationFacet";
+    }
 
-  function makeInitData(address oldToken, address newToken) public pure returns (bytes memory) {
-    return abi.encodeWithSelector(initializer(), IERC20(oldToken), IERC20(newToken));
-  }
+    function makeInitData(address oldToken, address newToken) public pure returns (bytes memory) {
+        return abi.encodeWithSelector(initializer(), IERC20(oldToken), IERC20(newToken));
+    }
 
-  function __deploy(
-    address deployer
-  ) public override returns (address) {
-    vm.startBroadcast(deployer);
-    TokenMigrationFacet tokenMigration = new TokenMigrationFacet();
-    vm.stopBroadcast();
-    return address(tokenMigration);
-  }
+    function __deploy(
+        address deployer
+    ) public override returns (address) {
+        vm.startBroadcast(deployer);
+        TokenMigrationFacet tokenMigration = new TokenMigrationFacet();
+        vm.stopBroadcast();
+        return address(tokenMigration);
+    }
 }

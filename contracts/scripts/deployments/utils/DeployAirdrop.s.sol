@@ -6,14 +6,14 @@ import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
 import {Airdrop} from "contracts/src/utils/Airdrop.sol";
 
 contract DeployAirdrop is Deployer {
-  function versionName() public pure override returns (string memory) {
-    return "utils/airdrop";
-  }
+    function versionName() public pure override returns (string memory) {
+        return "utils/airdrop";
+    }
 
-  function __deploy(
-    address deployer
-  ) public override returns (address) {
-    vm.broadcast(deployer);
-    return address(new Airdrop());
-  }
+    function __deploy(
+        address deployer
+    ) public override returns (address) {
+        vm.broadcast(deployer);
+        return address(new Airdrop());
+    }
 }

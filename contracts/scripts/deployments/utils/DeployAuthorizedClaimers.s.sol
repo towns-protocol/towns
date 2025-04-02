@@ -6,21 +6,21 @@ import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetH
 import {AuthorizedClaimers} from "contracts/src/tokens/mainnet/claimer/AuthorizedClaimers.sol";
 
 contract DeployAuthorizedClaimers is Deployer, FacetHelper {
-  constructor() {
-    addSelector(AuthorizedClaimers.authorizeClaimerBySig.selector);
-    addSelector(AuthorizedClaimers.getAuthorizedClaimer.selector);
-    addSelector(AuthorizedClaimers.authorizeClaimer.selector);
-    addSelector(AuthorizedClaimers.removeAuthorizedClaimer.selector);
-  }
+    constructor() {
+        addSelector(AuthorizedClaimers.authorizeClaimerBySig.selector);
+        addSelector(AuthorizedClaimers.getAuthorizedClaimer.selector);
+        addSelector(AuthorizedClaimers.authorizeClaimer.selector);
+        addSelector(AuthorizedClaimers.removeAuthorizedClaimer.selector);
+    }
 
-  function versionName() public pure override returns (string memory) {
-    return "utils/authorizedClaimers";
-  }
+    function versionName() public pure override returns (string memory) {
+        return "utils/authorizedClaimers";
+    }
 
-  function __deploy(
-    address deployer
-  ) public override returns (address) {
-    vm.broadcast(deployer);
-    return address(new AuthorizedClaimers());
-  }
+    function __deploy(
+        address deployer
+    ) public override returns (address) {
+        vm.broadcast(deployer);
+        return address(new AuthorizedClaimers());
+    }
 }

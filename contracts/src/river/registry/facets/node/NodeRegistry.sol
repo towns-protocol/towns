@@ -14,126 +14,134 @@ import {RiverRegistryErrors} from "contracts/src/river/registry/libraries/Regist
 import {RegistryModifiers} from "contracts/src/river/registry/libraries/RegistryStorage.sol";
 
 contract NodeRegistry is INodeRegistry, RegistryModifiers {
-  using EnumerableSet for EnumerableSet.AddressSet;
-  using CustomRevert for string;
+    using EnumerableSet for EnumerableSet.AddressSet;
+    using CustomRevert for string;
 
-  function isNode(
-    address nodeAddress
-  ) public view returns (bool) {
-    return ds.nodeByAddress[nodeAddress].nodeAddress != address(0);
-  }
-
-  function registerNode(
-    address nodeAddress,
-    string memory url,
-    NodeStatus status
-  ) external onlyOperator(msg.sender) {
-    // validate that the node is not already in the registry
-    if (ds.nodeByAddress[nodeAddress].nodeAddress != address(0)) {
-      RiverRegistryErrors.ALREADY_EXISTS.revertWith();
+    function isNode(
+        address nodeAddress
+    ) public view returns (bool) {
+        return ds.nodeByAddress[nodeAddress].nodeAddress != address(0);
     }
 
-    Node memory newNode =
-      Node({nodeAddress: nodeAddress, url: url, status: status, operator: msg.sender});
+    function registerNode(
+        address nodeAddress,
+        string memory url,
+        NodeStatus status
+    ) external onlyOperator(msg.sender) {
+        // validate that the node is not already in the registry
+        if (ds.nodeByAddress[nodeAddress].nodeAddress != address(0)) {
+            RiverRegistryErrors.ALREADY_EXISTS.revertWith();
+        }
 
-    ds.nodes.add(nodeAddress); // TODO: remove this line
-    ds.nodeByAddress[nodeAddress] = newNode;
+        Node memory newNode =
+            Node({nodeAddress: nodeAddress, url: url, status: status, operator: msg.sender});
 
-    emit NodeAdded(nodeAddress, msg.sender, url, status);
-  }
+        ds.nodes.add(nodeAddress); // TODO: remove this line
+        ds.nodeByAddress[nodeAddress] = newNode;
 
-  function removeNode(
-    address nodeAddress
-  ) external onlyNodeOperator(nodeAddress, msg.sender) {
-    if (ds.nodeByAddress[nodeAddress].nodeAddress == address(0)) {
-      RiverRegistryErrors.NODE_NOT_FOUND.revertWith();
+        emit NodeAdded(nodeAddress, msg.sender, url, status);
     }
 
-    if (ds.nodeByAddress[nodeAddress].status != NodeStatus.Deleted) {
-      RiverRegistryErrors.NODE_STATE_NOT_ALLOWED.revertWith();
+    function removeNode(
+        address nodeAddress
+    ) external onlyNodeOperator(nodeAddress, msg.sender) {
+        if (ds.nodeByAddress[nodeAddress].nodeAddress == address(0)) {
+            RiverRegistryErrors.NODE_NOT_FOUND.revertWith();
+        }
+
+        if (ds.nodeByAddress[nodeAddress].status != NodeStatus.Deleted) {
+            RiverRegistryErrors.NODE_STATE_NOT_ALLOWED.revertWith();
+        }
+
+        ds.nodes.remove(nodeAddress);
+        delete ds.nodeByAddress[nodeAddress];
+
+        emit NodeRemoved(nodeAddress);
     }
 
-    ds.nodes.remove(nodeAddress);
-    delete ds.nodeByAddress[nodeAddress];
+    function updateNodeStatus(
+        address nodeAddress,
+        NodeStatus status
+    )
+        external
+        onlyNode(nodeAddress)
+        onlyOperator(msg.sender)
+        onlyNodeOperator(nodeAddress, msg.sender)
+    {
+        Node storage node = ds.nodeByAddress[nodeAddress];
 
-    emit NodeRemoved(nodeAddress);
-  }
+        _checkNodeStatusTransionAllowed(node.status, status);
 
-  function updateNodeStatus(
-    address nodeAddress,
-    NodeStatus status
-  )
-    external
-    onlyNode(nodeAddress)
-    onlyOperator(msg.sender)
-    onlyNodeOperator(nodeAddress, msg.sender)
-  {
-    Node storage node = ds.nodeByAddress[nodeAddress];
-
-    _checkNodeStatusTransionAllowed(node.status, status);
-
-    node.status = status;
-    emit NodeStatusUpdated(node.nodeAddress, status);
-  }
-
-  function updateNodeUrl(
-    address nodeAddress,
-    string memory url
-  )
-    external
-    onlyOperator(msg.sender)
-    onlyNode(nodeAddress)
-    onlyNodeOperator(nodeAddress, msg.sender)
-  {
-    Node storage node = ds.nodeByAddress[nodeAddress];
-
-    if (keccak256(abi.encodePacked(node.url)) == keccak256(abi.encodePacked(url))) {
-      RiverRegistryErrors.BAD_ARG.revertWith();
+        node.status = status;
+        emit NodeStatusUpdated(node.nodeAddress, status);
     }
 
-    node.url = url;
-    emit NodeUrlUpdated(node.nodeAddress, url);
-  }
+    function updateNodeUrl(
+        address nodeAddress,
+        string memory url
+    )
+        external
+        onlyOperator(msg.sender)
+        onlyNode(nodeAddress)
+        onlyNodeOperator(nodeAddress, msg.sender)
+    {
+        Node storage node = ds.nodeByAddress[nodeAddress];
 
-  function getNode(
-    address nodeAddress
-  ) external view returns (Node memory) {
-    // validate that the node is in the registry
-    if (!ds.nodes.contains(nodeAddress)) {
-      RiverRegistryErrors.NODE_NOT_FOUND.revertWith();
+        if (keccak256(abi.encodePacked(node.url)) == keccak256(abi.encodePacked(url))) {
+            RiverRegistryErrors.BAD_ARG.revertWith();
+        }
+
+        node.url = url;
+        emit NodeUrlUpdated(node.nodeAddress, url);
     }
 
-    return ds.nodeByAddress[nodeAddress];
-  }
+    function getNode(
+        address nodeAddress
+    ) external view returns (Node memory) {
+        // validate that the node is in the registry
+        if (!ds.nodes.contains(nodeAddress)) {
+            RiverRegistryErrors.NODE_NOT_FOUND.revertWith();
+        }
 
-  function getNodeCount() external view returns (uint256) {
-    return ds.nodes.length();
-  }
-
-  function getAllNodeAddresses() external view returns (address[] memory) {
-    return ds.nodes.values();
-  }
-
-  function getAllNodes() external view returns (Node[] memory) {
-    Node[] memory nodes = new Node[](ds.nodes.length());
-
-    for (uint256 i = 0; i < ds.nodes.length(); ++i) {
-      nodes[i] = ds.nodeByAddress[ds.nodes.at(i)];
+        return ds.nodeByAddress[nodeAddress];
     }
 
-    return nodes;
-  }
-
-  function _checkNodeStatusTransionAllowed(NodeStatus from, NodeStatus to) internal pure {
-    if (
-      from == NodeStatus.NotInitialized
-        || (from == NodeStatus.RemoteOnly && (to == NodeStatus.Failed || to == NodeStatus.Departing))
-        || (from == NodeStatus.Operational && (to == NodeStatus.Failed || to == NodeStatus.Departing))
-        || (from == NodeStatus.Departing && (to == NodeStatus.Failed || to == NodeStatus.Deleted))
-        || (from == NodeStatus.Failed && to == NodeStatus.Deleted)
-    ) {
-      return;
+    function getNodeCount() external view returns (uint256) {
+        return ds.nodes.length();
     }
-    RiverRegistryErrors.NODE_STATE_NOT_ALLOWED.revertWith();
-  }
+
+    function getAllNodeAddresses() external view returns (address[] memory) {
+        return ds.nodes.values();
+    }
+
+    function getAllNodes() external view returns (Node[] memory) {
+        Node[] memory nodes = new Node[](ds.nodes.length());
+
+        for (uint256 i = 0; i < ds.nodes.length(); ++i) {
+            nodes[i] = ds.nodeByAddress[ds.nodes.at(i)];
+        }
+
+        return nodes;
+    }
+
+    function _checkNodeStatusTransionAllowed(NodeStatus from, NodeStatus to) internal pure {
+        if (
+            from == NodeStatus.NotInitialized
+                || (
+                    from == NodeStatus.RemoteOnly
+                        && (to == NodeStatus.Failed || to == NodeStatus.Departing)
+                )
+                || (
+                    from == NodeStatus.Operational
+                        && (to == NodeStatus.Failed || to == NodeStatus.Departing)
+                )
+                || (
+                    from == NodeStatus.Departing
+                        && (to == NodeStatus.Failed || to == NodeStatus.Deleted)
+                ) || (from == NodeStatus.Failed && to == NodeStatus.Deleted)
+        ) {
+            return;
+        }
+        RiverRegistryErrors.NODE_STATE_NOT_ALLOWED.revertWith();
+    }
 }

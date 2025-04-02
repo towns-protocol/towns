@@ -7730,6 +7730,7 @@ __metadata:
     "@prb/math": ^4.1.0
     "@prb/test": ^0.6.4
     "@towns-protocol/diamond": ^0.3.0
+    "@towns-protocol/prettier-config": "workspace:^"
     "@wagmi/cli": ^2.2.0
     account-abstraction: "github:eth-infinitism/account-abstraction"
     crypto-lib: "github:towns-protocol/crypto-lib#f40c5f6944a55583a687b672ba680db3bfabb0ef"

@@ -20,76 +20,77 @@ import {ImplementationStorage} from "./ImplementationStorage.sol";
 // modules
 
 abstract contract ArchitectBase is IArchitectBase {
-  // =============================================================
-  //                           Spaces
-  // =============================================================
-  function _getTokenIdBySpace(
-    address space
-  ) internal view returns (uint256) {
-    return ArchitectStorage.layout().tokenIdBySpace[space];
-  }
-
-  function _getSpaceByTokenId(
-    uint256 tokenId
-  ) internal view returns (address) {
-    return ArchitectStorage.layout().spaceByTokenId[tokenId];
-  }
-
-  // =============================================================
-  //                           Implementations
-  // =============================================================
-
-  function _setImplementations(
-    ISpaceOwner spaceOwnerToken,
-    IUserEntitlement userEntitlement,
-    IRuleEntitlementV2 ruleEntitlement,
-    IRuleEntitlement legacyRuleEntitlement
-  ) internal {
-    if (address(spaceOwnerToken).code.length == 0) {
-      revert Architect__NotContract();
-    }
-    if (address(userEntitlement).code.length == 0) {
-      revert Architect__NotContract();
-    }
-    if (address(ruleEntitlement).code.length == 0) {
-      revert Architect__NotContract();
+    // =============================================================
+    //                           Spaces
+    // =============================================================
+    function _getTokenIdBySpace(
+        address space
+    ) internal view returns (uint256) {
+        return ArchitectStorage.layout().tokenIdBySpace[space];
     }
 
-    ImplementationStorage.Layout storage ds = ImplementationStorage.layout();
-    ds.spaceOwnerToken = spaceOwnerToken;
-    ds.userEntitlement = userEntitlement;
-    ds.ruleEntitlement = ruleEntitlement;
-    ds.legacyRuleEntitlement = legacyRuleEntitlement;
-  }
+    function _getSpaceByTokenId(
+        uint256 tokenId
+    ) internal view returns (address) {
+        return ArchitectStorage.layout().spaceByTokenId[tokenId];
+    }
 
-  function _getImplementations()
-    internal
-    view
-    returns (
-      ISpaceOwner spaceOwnerToken,
-      IUserEntitlement userEntitlementImplementation,
-      IRuleEntitlementV2 ruleEntitlementImplementation,
-      IRuleEntitlement legacyRuleEntitlement
-    )
-  {
-    ImplementationStorage.Layout storage ds = ImplementationStorage.layout();
+    // =============================================================
+    //                           Implementations
+    // =============================================================
 
-    return (ds.spaceOwnerToken, ds.userEntitlement, ds.ruleEntitlement, ds.legacyRuleEntitlement);
-  }
+    function _setImplementations(
+        ISpaceOwner spaceOwnerToken,
+        IUserEntitlement userEntitlement,
+        IRuleEntitlementV2 ruleEntitlement,
+        IRuleEntitlement legacyRuleEntitlement
+    ) internal {
+        if (address(spaceOwnerToken).code.length == 0) {
+            revert Architect__NotContract();
+        }
+        if (address(userEntitlement).code.length == 0) {
+            revert Architect__NotContract();
+        }
+        if (address(ruleEntitlement).code.length == 0) {
+            revert Architect__NotContract();
+        }
 
-  // =============================================================
-  //                         Proxy Initializer
-  // =============================================================
-  function _getProxyInitializer() internal view returns (ISpaceProxyInitializer) {
-    return ImplementationStorage.layout().proxyInitializer;
-  }
+        ImplementationStorage.Layout storage ds = ImplementationStorage.layout();
+        ds.spaceOwnerToken = spaceOwnerToken;
+        ds.userEntitlement = userEntitlement;
+        ds.ruleEntitlement = ruleEntitlement;
+        ds.legacyRuleEntitlement = legacyRuleEntitlement;
+    }
 
-  function _setProxyInitializer(
-    ISpaceProxyInitializer proxyInitializer
-  ) internal {
-    ImplementationStorage.Layout storage ds = ImplementationStorage.layout();
-    ds.proxyInitializer = proxyInitializer;
+    function _getImplementations()
+        internal
+        view
+        returns (
+            ISpaceOwner spaceOwnerToken,
+            IUserEntitlement userEntitlementImplementation,
+            IRuleEntitlementV2 ruleEntitlementImplementation,
+            IRuleEntitlement legacyRuleEntitlement
+        )
+    {
+        ImplementationStorage.Layout storage ds = ImplementationStorage.layout();
 
-    emit Architect__ProxyInitializerSet(address(proxyInitializer));
-  }
+        return
+            (ds.spaceOwnerToken, ds.userEntitlement, ds.ruleEntitlement, ds.legacyRuleEntitlement);
+    }
+
+    // =============================================================
+    //                         Proxy Initializer
+    // =============================================================
+    function _getProxyInitializer() internal view returns (ISpaceProxyInitializer) {
+        return ImplementationStorage.layout().proxyInitializer;
+    }
+
+    function _setProxyInitializer(
+        ISpaceProxyInitializer proxyInitializer
+    ) internal {
+        ImplementationStorage.Layout storage ds = ImplementationStorage.layout();
+        ds.proxyInitializer = proxyInitializer;
+
+        emit Architect__ProxyInitializerSet(address(proxyInitializer));
+    }
 }

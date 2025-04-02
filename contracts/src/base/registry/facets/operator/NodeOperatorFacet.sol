@@ -7,8 +7,8 @@ import {INodeOperator} from "./INodeOperator.sol";
 // libraries
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import {
-  NodeOperatorStorage,
-  NodeOperatorStatus
+    NodeOperatorStorage,
+    NodeOperatorStatus
 } from "contracts/src/base/registry/facets/operator/NodeOperatorStorage.sol";
 
 // contracts
@@ -18,185 +18,186 @@ import {ERC721ABase} from "contracts/src/diamond/facets/token/ERC721A/ERC721ABas
 import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
 
 contract NodeOperatorFacet is INodeOperator, OwnableBase, ERC721ABase, Facet {
-  using EnumerableSet for EnumerableSet.AddressSet;
+    using EnumerableSet for EnumerableSet.AddressSet;
 
-  function __NodeOperator_init() external onlyInitializing {
-    _addInterface(type(INodeOperator).interfaceId);
-  }
-
-  // =============================================================
-  //                           Registration
-  // =============================================================
-
-  /// @inheritdoc INodeOperator
-  function registerOperator(
-    address claimer
-  ) external {
-    if (claimer == address(0)) revert NodeOperator__InvalidAddress();
-
-    NodeOperatorStorage.Layout storage ds = NodeOperatorStorage.layout();
-
-    if (ds.operators.contains(msg.sender)) {
-      revert NodeOperator__AlreadyRegistered();
+    function __NodeOperator_init() external onlyInitializing {
+        _addInterface(type(INodeOperator).interfaceId);
     }
 
-    _mint(msg.sender, 1);
+    // =============================================================
+    //                           Registration
+    // =============================================================
 
-    ds.operators.add(msg.sender);
-    ds.statusByOperator[msg.sender] = NodeOperatorStatus.Standby;
-    ds.claimerByOperator[msg.sender] = claimer;
-    ds.operatorsByClaimer[claimer].add(msg.sender);
+    /// @inheritdoc INodeOperator
+    function registerOperator(
+        address claimer
+    ) external {
+        if (claimer == address(0)) revert NodeOperator__InvalidAddress();
 
-    emit OperatorRegistered(msg.sender);
-  }
+        NodeOperatorStorage.Layout storage ds = NodeOperatorStorage.layout();
 
-  // =============================================================
-  //                           Operator Status
-  // =============================================================
+        if (ds.operators.contains(msg.sender)) {
+            revert NodeOperator__AlreadyRegistered();
+        }
 
-  /// @inheritdoc INodeOperator
-  function isOperator(
-    address operator
-  ) external view returns (bool) {
-    NodeOperatorStorage.Layout storage ds = NodeOperatorStorage.layout();
-    return ds.operators.contains(operator);
-  }
+        _mint(msg.sender, 1);
 
-  /// @inheritdoc INodeOperator
-  function setOperatorStatus(address operator, NodeOperatorStatus newStatus) external onlyOwner {
-    if (operator == address(0)) revert NodeOperator__InvalidAddress();
+        ds.operators.add(msg.sender);
+        ds.statusByOperator[msg.sender] = NodeOperatorStatus.Standby;
+        ds.claimerByOperator[msg.sender] = claimer;
+        ds.operatorsByClaimer[claimer].add(msg.sender);
 
-    NodeOperatorStorage.Layout storage ds = NodeOperatorStorage.layout();
-
-    if (!ds.operators.contains(operator)) revert NodeOperator__NotRegistered();
-
-    NodeOperatorStatus currentStatus = ds.statusByOperator[operator];
-
-    if (currentStatus == newStatus) revert NodeOperator__StatusNotChanged();
-
-    // Check for valid newStatus transitions
-    // Exiting -> Standby
-    // Standby -> Approved
-    // Approved -> Exiting || Active
-    // Active -> Exiting || Approved
-    if (currentStatus == NodeOperatorStatus.Exiting && newStatus != NodeOperatorStatus.Standby) {
-      revert NodeOperator__InvalidStatusTransition();
-    } else if (
-      currentStatus == NodeOperatorStatus.Standby && newStatus != NodeOperatorStatus.Approved
-    ) {
-      revert NodeOperator__InvalidStatusTransition();
-    } else if (
-      currentStatus == NodeOperatorStatus.Approved
-        && (newStatus != NodeOperatorStatus.Exiting && newStatus != NodeOperatorStatus.Active)
-    ) {
-      revert NodeOperator__InvalidStatusTransition();
-    } else if (
-      currentStatus == NodeOperatorStatus.Active
-        && (newStatus != NodeOperatorStatus.Exiting && newStatus != NodeOperatorStatus.Approved)
-    ) {
-      revert NodeOperator__InvalidStatusTransition();
-    }
-    if (newStatus == NodeOperatorStatus.Active) {
-      ds.approvalTimeByOperator[operator] = block.timestamp;
-    } else {
-      ds.approvalTimeByOperator[operator] = 0;
-    }
-    ds.statusByOperator[operator] = newStatus;
-
-    emit OperatorStatusChanged(operator, newStatus);
-  }
-
-  /// @inheritdoc INodeOperator
-  function getOperatorStatus(
-    address operator
-  ) external view returns (NodeOperatorStatus) {
-    NodeOperatorStorage.Layout storage ds = NodeOperatorStorage.layout();
-    return ds.statusByOperator[operator];
-  }
-
-  // =============================================================
-  //                           Operator Info
-  // =============================================================
-
-  /// @inheritdoc INodeOperator
-  function setClaimAddressForOperator(
-    address claimer,
-    address operator
-  ) external onlyClaimer(msg.sender, operator) {
-    NodeOperatorStorage.Layout storage ds = NodeOperatorStorage.layout();
-
-    if (!ds.operators.contains(operator)) revert NodeOperator__NotRegistered();
-
-    address currentClaimer = ds.claimerByOperator[operator];
-
-    if (currentClaimer == claimer) {
-      revert NodeOperator__ClaimAddressNotChanged();
+        emit OperatorRegistered(msg.sender);
     }
 
-    if (ds.operatorsByClaimer[currentClaimer].contains(operator)) {
-      ds.operatorsByClaimer[currentClaimer].remove(operator);
+    // =============================================================
+    //                           Operator Status
+    // =============================================================
+
+    /// @inheritdoc INodeOperator
+    function isOperator(
+        address operator
+    ) external view returns (bool) {
+        NodeOperatorStorage.Layout storage ds = NodeOperatorStorage.layout();
+        return ds.operators.contains(operator);
     }
 
-    ds.claimerByOperator[operator] = claimer;
-    ds.operatorsByClaimer[claimer].add(operator);
+    /// @inheritdoc INodeOperator
+    function setOperatorStatus(address operator, NodeOperatorStatus newStatus) external onlyOwner {
+        if (operator == address(0)) revert NodeOperator__InvalidAddress();
 
-    emit OperatorClaimAddressChanged(operator, claimer);
-  }
+        NodeOperatorStorage.Layout storage ds = NodeOperatorStorage.layout();
 
-  /// @inheritdoc INodeOperator
-  function getClaimAddressForOperator(
-    address operator
-  ) external view returns (address) {
-    return NodeOperatorStorage.layout().claimerByOperator[operator];
-  }
+        if (!ds.operators.contains(operator)) revert NodeOperator__NotRegistered();
 
-  function getOperators() external view returns (address[] memory) {
-    NodeOperatorStorage.Layout storage ds = NodeOperatorStorage.layout();
-    return ds.operators.values();
-  }
+        NodeOperatorStatus currentStatus = ds.statusByOperator[operator];
 
-  // =============================================================
-  //                           Commission
-  // =============================================================
-  function setCommissionRate(
-    uint256 rateBps
-  ) external {
-    NodeOperatorStorage.Layout storage ds = NodeOperatorStorage.layout();
-    if (!ds.operators.contains(msg.sender)) {
-      revert NodeOperator__NotRegistered();
+        if (currentStatus == newStatus) revert NodeOperator__StatusNotChanged();
+
+        // Check for valid newStatus transitions
+        // Exiting -> Standby
+        // Standby -> Approved
+        // Approved -> Exiting || Active
+        // Active -> Exiting || Approved
+        if (currentStatus == NodeOperatorStatus.Exiting && newStatus != NodeOperatorStatus.Standby)
+        {
+            revert NodeOperator__InvalidStatusTransition();
+        } else if (
+            currentStatus == NodeOperatorStatus.Standby && newStatus != NodeOperatorStatus.Approved
+        ) {
+            revert NodeOperator__InvalidStatusTransition();
+        } else if (
+            currentStatus == NodeOperatorStatus.Approved
+                && (newStatus != NodeOperatorStatus.Exiting && newStatus != NodeOperatorStatus.Active)
+        ) {
+            revert NodeOperator__InvalidStatusTransition();
+        } else if (
+            currentStatus == NodeOperatorStatus.Active
+                && (newStatus != NodeOperatorStatus.Exiting && newStatus != NodeOperatorStatus.Approved)
+        ) {
+            revert NodeOperator__InvalidStatusTransition();
+        }
+        if (newStatus == NodeOperatorStatus.Active) {
+            ds.approvalTimeByOperator[operator] = block.timestamp;
+        } else {
+            ds.approvalTimeByOperator[operator] = 0;
+        }
+        ds.statusByOperator[operator] = newStatus;
+
+        emit OperatorStatusChanged(operator, newStatus);
     }
-    if (rateBps > 10_000) revert NodeOperator__InvalidCommissionRate();
 
-    //only allow raising the commission if operator is in standby status
-    if (
-      rateBps > ds.commissionByOperator[msg.sender]
-        && ds.statusByOperator[msg.sender] != NodeOperatorStatus.Standby
-    ) {
-      revert NodeOperator__InvalidCommissionRate();
+    /// @inheritdoc INodeOperator
+    function getOperatorStatus(
+        address operator
+    ) external view returns (NodeOperatorStatus) {
+        NodeOperatorStorage.Layout storage ds = NodeOperatorStorage.layout();
+        return ds.statusByOperator[operator];
     }
 
-    ds.commissionByOperator[msg.sender] = rateBps;
-    emit OperatorCommissionChanged(msg.sender, rateBps);
-  }
+    // =============================================================
+    //                           Operator Info
+    // =============================================================
 
-  function getCommissionRate(
-    address operator
-  ) external view returns (uint256) {
-    NodeOperatorStorage.Layout storage ds = NodeOperatorStorage.layout();
-    return ds.commissionByOperator[operator];
-  }
+    /// @inheritdoc INodeOperator
+    function setClaimAddressForOperator(
+        address claimer,
+        address operator
+    ) external onlyClaimer(msg.sender, operator) {
+        NodeOperatorStorage.Layout storage ds = NodeOperatorStorage.layout();
 
-  // =============================================================
-  //                           Modifiers
-  // =============================================================
+        if (!ds.operators.contains(operator)) revert NodeOperator__NotRegistered();
 
-  // only an existing claimer for that operator can call this function
-  modifier onlyClaimer(address claimer, address operator) {
-    NodeOperatorStorage.Layout storage ds = NodeOperatorStorage.layout();
+        address currentClaimer = ds.claimerByOperator[operator];
 
-    if (!ds.operatorsByClaimer[claimer].contains(operator)) {
-      revert NodeOperator__NotClaimer();
+        if (currentClaimer == claimer) {
+            revert NodeOperator__ClaimAddressNotChanged();
+        }
+
+        if (ds.operatorsByClaimer[currentClaimer].contains(operator)) {
+            ds.operatorsByClaimer[currentClaimer].remove(operator);
+        }
+
+        ds.claimerByOperator[operator] = claimer;
+        ds.operatorsByClaimer[claimer].add(operator);
+
+        emit OperatorClaimAddressChanged(operator, claimer);
     }
-    _;
-  }
+
+    /// @inheritdoc INodeOperator
+    function getClaimAddressForOperator(
+        address operator
+    ) external view returns (address) {
+        return NodeOperatorStorage.layout().claimerByOperator[operator];
+    }
+
+    function getOperators() external view returns (address[] memory) {
+        NodeOperatorStorage.Layout storage ds = NodeOperatorStorage.layout();
+        return ds.operators.values();
+    }
+
+    // =============================================================
+    //                           Commission
+    // =============================================================
+    function setCommissionRate(
+        uint256 rateBps
+    ) external {
+        NodeOperatorStorage.Layout storage ds = NodeOperatorStorage.layout();
+        if (!ds.operators.contains(msg.sender)) {
+            revert NodeOperator__NotRegistered();
+        }
+        if (rateBps > 10_000) revert NodeOperator__InvalidCommissionRate();
+
+        //only allow raising the commission if operator is in standby status
+        if (
+            rateBps > ds.commissionByOperator[msg.sender]
+                && ds.statusByOperator[msg.sender] != NodeOperatorStatus.Standby
+        ) {
+            revert NodeOperator__InvalidCommissionRate();
+        }
+
+        ds.commissionByOperator[msg.sender] = rateBps;
+        emit OperatorCommissionChanged(msg.sender, rateBps);
+    }
+
+    function getCommissionRate(
+        address operator
+    ) external view returns (uint256) {
+        NodeOperatorStorage.Layout storage ds = NodeOperatorStorage.layout();
+        return ds.commissionByOperator[operator];
+    }
+
+    // =============================================================
+    //                           Modifiers
+    // =============================================================
+
+    // only an existing claimer for that operator can call this function
+    modifier onlyClaimer(address claimer, address operator) {
+        NodeOperatorStorage.Layout storage ds = NodeOperatorStorage.layout();
+
+        if (!ds.operatorsByClaimer[claimer].contains(operator)) {
+            revert NodeOperator__NotClaimer();
+        }
+        _;
+    }
 }

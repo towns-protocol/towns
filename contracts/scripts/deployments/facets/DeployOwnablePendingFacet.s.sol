@@ -9,36 +9,36 @@ pragma solidity ^0.8.23;
 import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
 import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
 import {OwnablePendingFacet} from
-  "@towns-protocol/diamond/src/facets/ownable/pending/OwnablePendingFacet.sol";
+    "@towns-protocol/diamond/src/facets/ownable/pending/OwnablePendingFacet.sol";
 
 contract DeployOwnablePendingFacet is FacetHelper, Deployer {
-  constructor() {
-    addSelector(OwnablePendingFacet.startTransferOwnership.selector);
-    addSelector(OwnablePendingFacet.acceptOwnership.selector);
-    addSelector(OwnablePendingFacet.currentOwner.selector);
-    addSelector(OwnablePendingFacet.pendingOwner.selector);
-  }
+    constructor() {
+        addSelector(OwnablePendingFacet.startTransferOwnership.selector);
+        addSelector(OwnablePendingFacet.acceptOwnership.selector);
+        addSelector(OwnablePendingFacet.currentOwner.selector);
+        addSelector(OwnablePendingFacet.pendingOwner.selector);
+    }
 
-  function versionName() public pure override returns (string memory) {
-    return "facets/ownablePendingFacet";
-  }
+    function versionName() public pure override returns (string memory) {
+        return "facets/ownablePendingFacet";
+    }
 
-  function __deploy(
-    address deployer
-  ) public override returns (address) {
-    vm.startBroadcast(deployer);
-    OwnablePendingFacet facet = new OwnablePendingFacet();
-    vm.stopBroadcast();
-    return address(facet);
-  }
+    function __deploy(
+        address deployer
+    ) public override returns (address) {
+        vm.startBroadcast(deployer);
+        OwnablePendingFacet facet = new OwnablePendingFacet();
+        vm.stopBroadcast();
+        return address(facet);
+    }
 
-  function initializer() public pure override returns (bytes4) {
-    return OwnablePendingFacet.__OwnablePending_init.selector;
-  }
+    function initializer() public pure override returns (bytes4) {
+        return OwnablePendingFacet.__OwnablePending_init.selector;
+    }
 
-  function makeInitData(
-    address owner
-  ) public pure returns (bytes memory) {
-    return abi.encodeWithSelector(OwnablePendingFacet.__OwnablePending_init.selector, owner);
-  }
+    function makeInitData(
+        address owner
+    ) public pure returns (bytes memory) {
+        return abi.encodeWithSelector(OwnablePendingFacet.__OwnablePending_init.selector, owner);
+    }
 }

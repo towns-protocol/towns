@@ -13,31 +13,31 @@ import {IReferralsBase} from "contracts/src/spaces/facets/referrals/IReferrals.s
 import {ReferralsFacet} from "contracts/src/spaces/facets/referrals/ReferralsFacet.sol";
 
 abstract contract ReferralsFacetTest is MembershipBaseSetup, IReferralsBase {
-  ReferralsFacet referralsFacet;
+    ReferralsFacet referralsFacet;
 
-  function setUp() public override {
-    super.setUp();
-    referralsFacet = ReferralsFacet(userSpace);
+    function setUp() public override {
+        super.setUp();
+        referralsFacet = ReferralsFacet(userSpace);
 
-    // set max bps fee to 10%
-    vm.prank(founder);
-    referralsFacet.setMaxBpsFee(REFERRAL_BPS);
-  }
+        // set max bps fee to 10%
+        vm.prank(founder);
+        referralsFacet.setMaxBpsFee(REFERRAL_BPS);
+    }
 
-  modifier givenReferralCodeIsRegistered(
-    Referral memory referral
-  ) {
-    vm.assume(referral.recipient != address(0));
-    vm.assume(bytes(referral.referralCode).length > 0);
-    assumeNotPrecompile(referral.recipient);
-    referral.basisPoints = bound(referral.basisPoints, 1, REFERRAL_BPS);
+    modifier givenReferralCodeIsRegistered(
+        Referral memory referral
+    ) {
+        vm.assume(referral.recipient != address(0));
+        vm.assume(bytes(referral.referralCode).length > 0);
+        assumeNotPrecompile(referral.recipient);
+        referral.basisPoints = bound(referral.basisPoints, 1, REFERRAL_BPS);
 
-    vm.prank(founder);
-    vm.expectEmit(address(userSpace));
-    emit ReferralRegistered(
-      keccak256(bytes(referral.referralCode)), referral.basisPoints, referral.recipient
-    );
-    referralsFacet.registerReferral(referral);
-    _;
-  }
+        vm.prank(founder);
+        vm.expectEmit(address(userSpace));
+        emit ReferralRegistered(
+            keccak256(bytes(referral.referralCode)), referral.basisPoints, referral.recipient
+        );
+        referralsFacet.registerReferral(referral);
+        _;
+    }
 }

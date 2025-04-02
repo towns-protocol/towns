@@ -18,85 +18,92 @@ import {ReentrancyGuard} from "solady/utils/ReentrancyGuard.sol";
 import {PausableBase} from "@towns-protocol/diamond/src/facets/pausable/PausableBase.sol";
 import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
 
-contract Architect is IArchitect, ArchitectBase, OwnableBase, PausableBase, ReentrancyGuard, Facet {
-  function __Architect_init(
-    ISpaceOwner ownerImplementation,
-    IUserEntitlement userEntitlementImplementation,
-    IRuleEntitlementV2 ruleEntitlementImplementation,
-    IRuleEntitlement legacyRuleEntitlement
-  ) external onlyInitializing {
-    _setImplementations(
-      ownerImplementation,
-      userEntitlementImplementation,
-      ruleEntitlementImplementation,
-      legacyRuleEntitlement
-    );
-  }
+contract Architect is
+    IArchitect,
+    ArchitectBase,
+    OwnableBase,
+    PausableBase,
+    ReentrancyGuard,
+    Facet
+{
+    function __Architect_init(
+        ISpaceOwner ownerImplementation,
+        IUserEntitlement userEntitlementImplementation,
+        IRuleEntitlementV2 ruleEntitlementImplementation,
+        IRuleEntitlement legacyRuleEntitlement
+    ) external onlyInitializing {
+        _setImplementations(
+            ownerImplementation,
+            userEntitlementImplementation,
+            ruleEntitlementImplementation,
+            legacyRuleEntitlement
+        );
+    }
 
-  // =============================================================
-  //                            Space
-  // =============================================================
+    // =============================================================
+    //                            Space
+    // =============================================================
 
-  /// @inheritdoc IArchitect
-  function getSpaceByTokenId(
-    uint256 tokenId
-  ) external view returns (address) {
-    return _getSpaceByTokenId(tokenId);
-  }
+    /// @inheritdoc IArchitect
+    function getSpaceByTokenId(
+        uint256 tokenId
+    ) external view returns (address) {
+        return _getSpaceByTokenId(tokenId);
+    }
 
-  /// @inheritdoc IArchitect
-  function getTokenIdBySpace(
-    address space
-  ) external view returns (uint256) {
-    return _getTokenIdBySpace(space);
-  }
+    /// @inheritdoc IArchitect
+    function getTokenIdBySpace(
+        address space
+    ) external view returns (uint256) {
+        return _getTokenIdBySpace(space);
+    }
 
-  // =============================================================
-  //                         Implementations
-  // =============================================================
+    // =============================================================
+    //                         Implementations
+    // =============================================================
 
-  /// @inheritdoc IArchitect
-  function setSpaceArchitectImplementations(
-    ISpaceOwner spaceToken,
-    IUserEntitlement userEntitlementImplementation,
-    IRuleEntitlementV2 ruleEntitlementImplementation,
-    IRuleEntitlement legacyRuleEntitlement
-  ) external onlyOwner {
-    _setImplementations(
-      spaceToken,
-      userEntitlementImplementation,
-      ruleEntitlementImplementation,
-      legacyRuleEntitlement
-    );
-  }
+    /// @inheritdoc IArchitect
+    function setSpaceArchitectImplementations(
+        ISpaceOwner spaceToken,
+        IUserEntitlement userEntitlementImplementation,
+        IRuleEntitlementV2 ruleEntitlementImplementation,
+        IRuleEntitlement legacyRuleEntitlement
+    ) external onlyOwner {
+        _setImplementations(
+            spaceToken,
+            userEntitlementImplementation,
+            ruleEntitlementImplementation,
+            legacyRuleEntitlement
+        );
+    }
 
-  /// @inheritdoc IArchitect
-  function getSpaceArchitectImplementations()
-    external
-    view
-    returns (
-      ISpaceOwner spaceToken,
-      IUserEntitlement userEntitlementImplementation,
-      IRuleEntitlementV2 ruleEntitlementImplementation,
-      IRuleEntitlement legacyRuleEntitlement
-    )
-  {
-    return _getImplementations();
-  }
+    /// @inheritdoc IArchitect
+    function getSpaceArchitectImplementations()
+        external
+        view
+        returns (
+            ISpaceOwner spaceToken,
+            IUserEntitlement userEntitlementImplementation,
+            IRuleEntitlementV2 ruleEntitlementImplementation,
+            IRuleEntitlement legacyRuleEntitlement
+        )
+    {
+        return _getImplementations();
+    }
 
-  // =============================================================
-  //                         Proxy Initializer
-  // =============================================================
+    // =============================================================
+    //                         Proxy Initializer
+    // =============================================================
 
-  /// @inheritdoc IArchitect
-  function getProxyInitializer() external view returns (ISpaceProxyInitializer) {
-    return _getProxyInitializer();
-  }
+    /// @inheritdoc IArchitect
+    function getProxyInitializer() external view returns (ISpaceProxyInitializer) {
+        return _getProxyInitializer();
+    }
 
-  /// @inheritdoc IArchitect
-  function setProxyInitializer(
-    ISpaceProxyInitializer proxyInitializer
-  ) external onlyOwner {
-    _setProxyInitializer(proxyInitializer);
-  }
+    /// @inheritdoc IArchitect
+    function setProxyInitializer(
+        ISpaceProxyInitializer proxyInitializer
+    ) external onlyOwner {
+        _setProxyInitializer(proxyInitializer);
+    }
 }

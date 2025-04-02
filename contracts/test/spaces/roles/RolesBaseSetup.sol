@@ -17,39 +17,39 @@ import {Roles} from "contracts/src/spaces/facets/roles/Roles.sol";
 import {MockUserEntitlement} from "contracts/test/mocks/MockUserEntitlement.sol";
 
 abstract contract RolesBaseSetup is BaseSetup, IRolesBase, IEntitlementBase {
-  MockUserEntitlement internal mockEntitlement;
-  Roles internal roles;
+    MockUserEntitlement internal mockEntitlement;
+    Roles internal roles;
 
-  bytes32 CHANNEL_ID = "channel1";
-  uint256 ROLE_ID;
+    bytes32 CHANNEL_ID = "channel1";
+    uint256 ROLE_ID;
 
-  function setUp() public override {
-    super.setUp();
+    function setUp() public override {
+        super.setUp();
 
-    mockEntitlement = new MockUserEntitlement();
-    mockEntitlement.initialize(everyoneSpace);
+        mockEntitlement = new MockUserEntitlement();
+        mockEntitlement.initialize(everyoneSpace);
 
-    roles = Roles(everyoneSpace);
-  }
+        roles = Roles(everyoneSpace);
+    }
 
-  modifier givenRoleExists() {
-    string memory roleName = "role1";
+    modifier givenRoleExists() {
+        string memory roleName = "role1";
 
-    // create a role
-    vm.prank(founder);
-    ROLE_ID = roles.createRole(roleName, new string[](0), new IRoles.CreateEntitlement[](0));
+        // create a role
+        vm.prank(founder);
+        ROLE_ID = roles.createRole(roleName, new string[](0), new IRoles.CreateEntitlement[](0));
 
-    _;
-  }
+        _;
+    }
 
-  modifier givenRoleIsInChannel() {
-    // create a channel
-    uint256[] memory roleIds = new uint256[](1);
-    roleIds[0] = ROLE_ID;
+    modifier givenRoleIsInChannel() {
+        // create a channel
+        uint256[] memory roleIds = new uint256[](1);
+        roleIds[0] = ROLE_ID;
 
-    vm.prank(founder);
-    IChannel(everyoneSpace).createChannel(CHANNEL_ID, "ipfs://test", roleIds);
+        vm.prank(founder);
+        IChannel(everyoneSpace).createChannel(CHANNEL_ID, "ipfs://test", roleIds);
 
-    _;
-  }
+        _;
+    }
 }

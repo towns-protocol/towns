@@ -46,7 +46,6 @@ line_length = 100
 multiline_func_header = "params_first"
 number_underscore = "thousands"
 quote_style = "double"
-tab_width = 2
 wrap_comments = true
 
 # See more config options https://github.com/foundry-rs/foundry/tree/master/config

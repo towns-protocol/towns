@@ -11,25 +11,25 @@ import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetH
 import {ManagedProxyFacet} from "@towns-protocol/diamond/src/proxy/managed/ManagedProxyFacet.sol";
 
 contract DeployManagedProxy is FacetHelper, Deployer {
-  constructor() {
-    addSelector(ManagedProxyFacet.getManager.selector);
-    addSelector(ManagedProxyFacet.setManager.selector);
-  }
+    constructor() {
+        addSelector(ManagedProxyFacet.getManager.selector);
+        addSelector(ManagedProxyFacet.setManager.selector);
+    }
 
-  function initializer() public pure override returns (bytes4) {
-    return ManagedProxyFacet.__ManagedProxy_init.selector;
-  }
+    function initializer() public pure override returns (bytes4) {
+        return ManagedProxyFacet.__ManagedProxy_init.selector;
+    }
 
-  function versionName() public pure override returns (string memory) {
-    return "facets/managedProxyFacet";
-  }
+    function versionName() public pure override returns (string memory) {
+        return "facets/managedProxyFacet";
+    }
 
-  function __deploy(
-    address deployer
-  ) public override returns (address) {
-    vm.startBroadcast(deployer);
-    ManagedProxyFacet facet = new ManagedProxyFacet();
-    vm.stopBroadcast();
-    return address(facet);
-  }
+    function __deploy(
+        address deployer
+    ) public override returns (address) {
+        vm.startBroadcast(deployer);
+        ManagedProxyFacet facet = new ManagedProxyFacet();
+        vm.stopBroadcast();
+        return address(facet);
+    }
 }

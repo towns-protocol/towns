@@ -13,30 +13,30 @@ import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetH
 // helpers
 
 contract DeploySpaceFactoryInit is Deployer, FacetHelper {
-  constructor() {
-    addSelector(SpaceFactoryInit.initialize.selector);
-  }
+    constructor() {
+        addSelector(SpaceFactoryInit.initialize.selector);
+    }
 
-  function initializer() public pure override returns (bytes4) {
-    return SpaceFactoryInit.initialize.selector;
-  }
+    function initializer() public pure override returns (bytes4) {
+        return SpaceFactoryInit.initialize.selector;
+    }
 
-  function makeInitData(
-    address _proxyInitializer
-  ) public pure returns (bytes memory) {
-    return abi.encodeWithSelector(initializer(), _proxyInitializer);
-  }
+    function makeInitData(
+        address _proxyInitializer
+    ) public pure returns (bytes memory) {
+        return abi.encodeWithSelector(initializer(), _proxyInitializer);
+    }
 
-  function versionName() public pure override returns (string memory) {
-    return "facets/spaceFactoryInit";
-  }
+    function versionName() public pure override returns (string memory) {
+        return "facets/spaceFactoryInit";
+    }
 
-  function __deploy(
-    address deployer
-  ) public override returns (address) {
-    vm.startBroadcast(deployer);
-    SpaceFactoryInit spaceFactoryInit = new SpaceFactoryInit();
-    vm.stopBroadcast();
-    return address(spaceFactoryInit);
-  }
+    function __deploy(
+        address deployer
+    ) public override returns (address) {
+        vm.startBroadcast(deployer);
+        SpaceFactoryInit spaceFactoryInit = new SpaceFactoryInit();
+        vm.stopBroadcast();
+        return address(spaceFactoryInit);
+    }
 }

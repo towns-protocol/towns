@@ -12,22 +12,22 @@ import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
 import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
 
 contract DeploySpaceEntitlementGated is FacetHelper, Deployer {
-  constructor() {
-    addSelector(EntitlementGated.postEntitlementCheckResult.selector);
-    addSelector(EntitlementGated.postEntitlementCheckResultV2.selector);
-    addSelector(EntitlementGated.getRuleData.selector);
-  }
+    constructor() {
+        addSelector(EntitlementGated.postEntitlementCheckResult.selector);
+        addSelector(EntitlementGated.postEntitlementCheckResultV2.selector);
+        addSelector(EntitlementGated.getRuleData.selector);
+    }
 
-  function versionName() public pure override returns (string memory) {
-    return "facets/spaceEntitlementGatedFacet";
-  }
+    function versionName() public pure override returns (string memory) {
+        return "facets/spaceEntitlementGatedFacet";
+    }
 
-  function __deploy(
-    address deployer
-  ) public override returns (address) {
-    vm.startBroadcast(deployer);
-    SpaceEntitlementGated facet = new SpaceEntitlementGated();
-    vm.stopBroadcast();
-    return address(facet);
-  }
+    function __deploy(
+        address deployer
+    ) public override returns (address) {
+        vm.startBroadcast(deployer);
+        SpaceEntitlementGated facet = new SpaceEntitlementGated();
+        vm.stopBroadcast();
+        return address(facet);
+    }
 }

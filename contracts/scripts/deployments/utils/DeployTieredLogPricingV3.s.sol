@@ -8,20 +8,20 @@ pragma solidity ^0.8.23;
 //contracts
 
 import {TieredLogPricingOracleV3} from
-  "contracts/src/spaces/facets/membership/pricing/tiered/TieredLogPricingOracleV3.sol";
+    "contracts/src/spaces/facets/membership/pricing/tiered/TieredLogPricingOracleV3.sol";
 import {TieredLogPricing} from "contracts/scripts/deployments/utils/pricing/TieredLogPricing.s.sol";
 
 contract DeployTieredLogPricingV3 is TieredLogPricing {
-  function versionName() public pure override returns (string memory) {
-    return "utils/tieredLogPricingV3";
-  }
+    function versionName() public pure override returns (string memory) {
+        return "utils/tieredLogPricingV3";
+    }
 
-  function __deploy(
-    address deployer
-  ) public override returns (address) {
-    address oracle = isAnvil() ? _setupLocalOracle(deployer) : _getOracleAddress();
+    function __deploy(
+        address deployer
+    ) public override returns (address) {
+        address oracle = isAnvil() ? _setupLocalOracle(deployer) : _getOracleAddress();
 
-    vm.broadcast(deployer);
-    return address(new TieredLogPricingOracleV3(oracle));
-  }
+        vm.broadcast(deployer);
+        return address(new TieredLogPricingOracleV3(oracle));
+    }
 }

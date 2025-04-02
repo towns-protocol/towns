@@ -9,56 +9,56 @@ import {IRuleEntitlement} from "contracts/src/spaces/entitlements/rule/IRuleEnti
 
 // contracts
 interface ILegacyArchitectBase {
-  // =============================================================
-  //                           STRUCTS
-  // =============================================================
+    // =============================================================
+    //                           STRUCTS
+    // =============================================================
 
-  // Latest
-  struct MembershipRequirements {
-    bool everyone;
-    address[] users;
-    IRuleEntitlement.RuleData ruleData;
-    bool syncEntitlements;
-  }
+    // Latest
+    struct MembershipRequirements {
+        bool everyone;
+        address[] users;
+        IRuleEntitlement.RuleData ruleData;
+        bool syncEntitlements;
+    }
 
-  struct Membership {
-    IMembershipBase.Membership settings;
-    MembershipRequirements requirements;
-    string[] permissions;
-  }
+    struct Membership {
+        IMembershipBase.Membership settings;
+        MembershipRequirements requirements;
+        string[] permissions;
+    }
 
-  struct ChannelInfo {
-    string metadata;
-  }
+    struct ChannelInfo {
+        string metadata;
+    }
 
-  struct SpaceInfo {
-    string name;
-    string uri;
-    string shortDescription;
-    string longDescription;
-    Membership membership;
-    ChannelInfo channel;
-  }
+    struct SpaceInfo {
+        string name;
+        string uri;
+        string shortDescription;
+        string longDescription;
+        Membership membership;
+        ChannelInfo channel;
+    }
 
-  // =============================================================
-  //                           EVENTS
-  // =============================================================
-  event SpaceCreated(address indexed owner, uint256 indexed tokenId, address indexed space);
+    // =============================================================
+    //                           EVENTS
+    // =============================================================
+    event SpaceCreated(address indexed owner, uint256 indexed tokenId, address indexed space);
 
-  // =============================================================
-  //                           ERRORS
-  // =============================================================
+    // =============================================================
+    //                           ERRORS
+    // =============================================================
 
-  error Architect__InvalidStringLength();
-  error Architect__InvalidNetworkId();
-  error Architect__InvalidAddress();
-  error Architect__NotContract();
+    error Architect__InvalidStringLength();
+    error Architect__InvalidNetworkId();
+    error Architect__InvalidAddress();
+    error Architect__NotContract();
 }
 
 interface ILegacyArchitect is ILegacyArchitectBase {
-  /// @notice Creates a new space
-  /// @param SpaceInfo Space information
-  function createSpace(
-    SpaceInfo memory SpaceInfo
-  ) external returns (address);
+    /// @notice Creates a new space
+    /// @param SpaceInfo Space information
+    function createSpace(
+        SpaceInfo memory SpaceInfo
+    ) external returns (address);
 }
