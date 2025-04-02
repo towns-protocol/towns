@@ -1044,12 +1044,6 @@ func (s *Stream) applyStreamEvents(
 			})
 			if err != nil {
 				logging.FromCtx(ctx).Errorw("onStreamLastMiniblockUpdated: failed to promote candidate", "err", err)
-				fmt.Printf(
-					"BVK DBG %s failed to promote candidate %d: %s\n",
-					s.streamId,
-					int64(event.LastMiniblockNum),
-					err,
-				)
 			}
 		case river.StreamUpdatedEventTypeAllocate:
 			logging.FromCtx(ctx).Errorw("applyStreamEvents: unexpected stream allocation event",

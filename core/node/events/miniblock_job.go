@@ -22,16 +22,12 @@ type mbJob struct {
 	remoteNodes []common.Address
 	replicated  bool
 
-	// syncNodes holds the list of node address that track to stream in preparation of joining the quorum.
-	syncNodes []common.Address
-
 	candidate *MiniblockInfo
 }
 
 func (j *mbJob) produceCandidate(ctx context.Context) error {
 	var isLocal bool
 	j.remoteNodes, isLocal = j.stream.GetRemotesAndIsLocal()
-	j.syncNodes = j.stream.GetSyncNodes()
 	j.replicated = len(j.remoteNodes) > 0
 
 	// TODO: this is a sanity check, but in general mb production code needs to be hardened
@@ -319,12 +315,6 @@ func (j *mbJob) saveCandidate(ctx context.Context) error {
 	qp.AddNodeTasks(j.remoteNodes, func(ctx context.Context, node common.Address) error {
 		return j.cache.Params().RemoteMiniblockProvider.SaveMbCandidate(ctx, node, j.stream.streamId, j.candidate.Proto)
 	})
-
-	for _, node := range j.syncNodes {
-		go func() {
-			_ = j.cache.Params().RemoteMiniblockProvider.SaveMbCandidate(ctx, node, j.stream.streamId, j.candidate.Proto)
-		}()
-	}
 
 	return qp.Wait()
 }

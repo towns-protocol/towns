@@ -2,7 +2,6 @@ package events
 
 import (
 	"context"
-	"fmt"
 	"slices"
 	"sync"
 	"sync/atomic"
@@ -152,7 +151,7 @@ func (s *StreamCache) Start(ctx context.Context) error {
 			lastAppliedBlockNum: s.params.AppliedBlockNum,
 			local:               &localStreamState{},
 		}
-		stream.nodesLocked.ResetFromStreamResult(streamRecord, s.params.Wallet.Address)
+		stream.nodesLocked.Reset(streamRecord.Nodes, s.params.Wallet.Address)
 		s.cache.Store(streamRecord.StreamId, stream)
 		if s.params.Config.StreamReconciliation.InitialWorkerPoolSize > 0 {
 			s.submitSyncStreamTaskToPool(
@@ -202,47 +201,23 @@ func (s *StreamCache) onBlockWithLogs(ctx context.Context, blockNum crypto.Block
 
 	for streamID, events := range streamEvents {
 		wp.Submit(func() {
-			for len(events) > 0 {
-				switch events[0].Reason() {
-				case river.StreamUpdatedEventTypeAllocate:
-					streamState := events[0].(*river.StreamState)
-					s.onStreamAllocated(ctx, streamState, events[1:], blockNum)
-					events = nil
-				case river.StreamUpdatedEventTypeCreate:
-					streamState := events[0].(*river.StreamState)
-					s.onStreamCreated(ctx, streamState, blockNum)
-					events = events[1:]
-				case river.StreamUpdatedEventTypePlacementUpdated:
-					streamState := events[0].(*river.StreamState)
-					s.onStreamReplacementUpdated(ctx, streamState, blockNum)
-					events = events[1:]
-				case river.StreamUpdatedEventTypeLastMiniblockBatchUpdated:
-					i := 1
-					for i < len(events) && events[i].Reason() == river.StreamUpdatedEventTypeLastMiniblockBatchUpdated {
-						i++
-					}
-					eventsToApply := events[:i]
-					events = events[i:]
-
-					stream, ok := s.cache.Load(streamID)
-					if !ok {
-						return
-					}
-
-					if stream.nodesLocked.IsLocalInQuorum() {
-						for _, event := range eventsToApply {
-							e := event.(*river.StreamMiniblockUpdate)
-							fmt.Printf(
-								"BVK DBG event stream: %s blocknum: %d node: %s\n",
-								event.GetStreamId(),
-								e.SetMiniblock.LastMiniblockNum,
-								s.params.Wallet.Address,
-							)
-						}
-					}
-					// COMMENT: Move logic from here to applyStreamEvents - mutex should be taken
-					stream.applyStreamEvents(ctx, eventsToApply, blockNum)
+			switch events[0].Reason() {
+			case river.StreamUpdatedEventTypeAllocate:
+				streamState := events[0].(*river.StreamState)
+				s.onStreamAllocated(ctx, streamState, events[1:], blockNum)
+			case river.StreamUpdatedEventTypeCreate:
+				streamState := events[0].(*river.StreamState)
+				s.onStreamCreated(ctx, streamState, blockNum)
+			case river.StreamUpdatedEventTypePlacementUpdated: // linter
+				fallthrough
+			case river.StreamUpdatedEventTypeLastMiniblockBatchUpdated:
+				fallthrough
+			default:
+				stream, ok := s.cache.Load(streamID)
+				if !ok {
+					return
 				}
+				stream.applyStreamEvents(ctx, events, blockNum)
 			}
 		})
 	}
@@ -250,43 +225,6 @@ func (s *StreamCache) onBlockWithLogs(ctx context.Context, blockNum crypto.Block
 	wp.StopWait()
 
 	s.appliedBlockNum.Store(uint64(blockNum))
-}
-
-func (s *StreamCache) onStreamReplacementUpdated(
-	ctx context.Context,
-	event *river.StreamState,
-	blockNum crypto.BlockNumber,
-) {
-	if !slices.Contains(event.Nodes, s.params.Wallet.Address) {
-		// TODO: if stream is removed from this node cleanup stream storage/cache.
-		return
-	}
-
-	fmt.Printf("BVK DBG onStreamReplacementUpdated: %s on node %s\n", event.GetStreamId(), s.params.Wallet.Address)
-
-	stream := &Stream{
-		streamId:            event.GetStreamId(),
-		lastAppliedBlockNum: blockNum,
-		params:              s.params,
-		local:               &localStreamState{},
-	}
-
-	stream, _ = s.cache.LoadOrStore(event.GetStreamId(), stream)
-	stream.mu.Lock()
-	stream.nodesLocked.ResetFromStreamState(event, s.params.Wallet.Address)
-	if stream.local == nil {
-		stream.local = &localStreamState{}
-	}
-	stream.mu.Unlock()
-
-	fmt.Printf(
-		"BVK DBG onStreamReplacementUpdated: submit sync task for stream %s on node %s [quorum nodes: %v]\n",
-		event.GetStreamId(),
-		s.params.Wallet.Address,
-		stream.nodesLocked.GetQuorumNodes(),
-	)
-
-	s.SubmitSyncStreamTask(ctx, stream)
 }
 
 func (s *StreamCache) onStreamAllocated(
@@ -317,7 +255,7 @@ func (s *StreamCache) onStreamAllocated(
 		lastAccessedTime:    time.Now(),
 		local:               &localStreamState{},
 	}
-	stream.nodesLocked.ResetFromStreamState(event, s.params.Wallet.Address)
+	stream.nodesLocked.Reset(event.Nodes, s.params.Wallet.Address)
 	stream, created, err := s.createStreamStorage(ctx, stream, genesisMB, genesisMbNum, genesisHash)
 	if err != nil {
 		logging.FromCtx(ctx).Errorw("Failed to allocate stream", "err", err, "streamId", event.GetStreamId())
@@ -450,7 +388,7 @@ func (s *StreamCache) tryLoadStreamRecord(
 		lastAppliedBlockNum: blockNum,
 		lastAccessedTime:    time.Now(),
 	}
-	stream.nodesLocked.ResetFromStreamResult(record, s.params.Wallet.Address)
+	stream.nodesLocked.Reset(record.Nodes, s.params.Wallet.Address)
 
 	if !stream.nodesLocked.IsLocal() {
 		stream, _ = s.cache.LoadOrStore(streamId, stream)

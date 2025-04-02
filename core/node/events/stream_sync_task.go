@@ -2,7 +2,6 @@ package events
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/gammazero/workerpool"
@@ -108,7 +107,6 @@ func (s *StreamCache) syncStreamFromPeersImpl(
 
 	remote := stream.GetStickyPeer()
 	var nextFromInclusive int64
-
 	for range remotes {
 		nextFromInclusive, err = s.syncStreamFromSinglePeer(ctx, stream, remote, fromInclusive, toExclusive)
 		if err == nil && nextFromInclusive >= toExclusive {
@@ -131,20 +129,12 @@ func (s *StreamCache) syncStreamFromSinglePeer(
 	fromInclusive int64,
 	toExclusive int64,
 ) (int64, error) {
-	fmt.Printf("BVK DBG syncStreamFromSinglePeer: stream %s from %d to %d on node %s\n",
-		stream.streamId,
-		fromInclusive,
-		toExclusive,
-		s.params.Wallet.Address,
-	)
-
 	pageSize := s.params.Config.StreamReconciliation.GetMiniblocksPageSize
 	if pageSize <= 0 {
 		pageSize = 128
 	}
 
 	currentFromInclusive := fromInclusive
-
 	for {
 		if currentFromInclusive >= toExclusive {
 			return currentFromInclusive, nil
