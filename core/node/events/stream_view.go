@@ -896,7 +896,7 @@ func (r *StreamView) AllEvents() iter.Seq[*ParsedEvent] {
 
 func (r *StreamView) GetStreamSince(
 	ctx context.Context,
-	localNodeAddress common.Address,
+	wallet *crypto.Wallet,
 	cookie *SyncCookie,
 ) (*StreamAndCookie, error) {
 	log := logging.FromCtx(ctx)
@@ -910,7 +910,7 @@ func (r *StreamView) GetStreamSince(
 		// always send response, even if there are no events so that the client knows it's upToDate
 		return &StreamAndCookie{
 			Events:         envelopes,
-			NextSyncCookie: r.SyncCookie(localNodeAddress),
+			NextSyncCookie: r.SyncCookie(wallet.Address),
 		}, nil
 	}
 
@@ -920,13 +920,7 @@ func (r *StreamView) GetStreamSince(
 		log.Debugw("GetStreamSince: out of date cookie.MiniblockNum. Sending sync reset.",
 			"stream", r.streamId, "error", err.Error())
 
-		return &StreamAndCookie{
-			Events:         r.MinipoolEnvelopes(),
-			NextSyncCookie: r.SyncCookie(localNodeAddress),
-			Miniblocks:     r.MiniblocksFromLastSnapshot(),
-			SyncReset:      true,
-		}, nil
-
+		return r.ResetStreamAndCookie(wallet)
 	}
 
 	// append events from blocks
@@ -945,6 +939,24 @@ func (r *StreamView) GetStreamSince(
 	// always send response, even if there are no events so that the client knows it's upToDate
 	return &StreamAndCookie{
 		Events:         envelopes,
-		NextSyncCookie: r.SyncCookie(localNodeAddress),
+		NextSyncCookie: r.SyncCookie(wallet.Address),
+	}, nil
+}
+
+func (r *StreamView) ResetStreamAndCookie(wallet *crypto.Wallet) (*StreamAndCookie, error) {
+	var snapshot *Envelope
+	if r.snapshot != nil {
+		var err error
+		if snapshot, err = MakeEnvelopeWithPayload(wallet, Make_Snapshot(r.snapshot), nil); err != nil {
+			return nil, err
+		}
+	}
+
+	return &StreamAndCookie{
+		Events:         r.MinipoolEnvelopes(),
+		NextSyncCookie: r.SyncCookie(wallet.Address),
+		Miniblocks:     r.MiniblocksFromLastSnapshot(),
+		SyncReset:      true,
+		Snapshot:       snapshot,
 	}, nil
 }

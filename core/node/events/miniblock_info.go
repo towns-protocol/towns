@@ -16,10 +16,11 @@ import (
 )
 
 type MiniblockInfo struct {
-	Ref                *MiniblockRef
+	Ref   *MiniblockRef
+	Proto *Miniblock
+
 	headerEvent        *ParsedEvent
 	useGetterForEvents []*ParsedEvent // Use events(). Getter checks if events have been initialized.
-	Proto              *Miniblock
 }
 
 // NewMiniblockInfoFromProto initializes a MiniblockInfo from a proto, applying validation based
@@ -133,9 +134,9 @@ func NewMiniblockInfoFromProto(pb *Miniblock, opts *ParsedMiniblockInfoOpts) (*M
 			Hash: headerEvent.Hash,
 			Num:  blockHeader.MiniblockNum,
 		},
+		Proto:              pb,
 		headerEvent:        headerEvent,
 		useGetterForEvents: events,
-		Proto:              pb,
 	}, nil
 }
 
@@ -156,7 +157,8 @@ func NewMiniblocksInfoFromProtos(pbs []*Miniblock, opts *ParsedMiniblockInfoOpts
 }
 
 func NewMiniblockInfoFromParsed(headerEvent *ParsedEvent, events []*ParsedEvent) (*MiniblockInfo, error) {
-	if headerEvent.Event.GetMiniblockHeader() == nil {
+	header := headerEvent.Event.GetMiniblockHeader()
+	if header == nil {
 		return nil, RiverError(Err_BAD_EVENT, "header event must be a block header")
 	}
 
@@ -168,14 +170,14 @@ func NewMiniblockInfoFromParsed(headerEvent *ParsedEvent, events []*ParsedEvent)
 	return &MiniblockInfo{
 		Ref: &MiniblockRef{
 			Hash: headerEvent.Hash,
-			Num:  headerEvent.Event.GetMiniblockHeader().MiniblockNum,
+			Num:  header.MiniblockNum,
 		},
-		headerEvent:        headerEvent,
-		useGetterForEvents: events,
 		Proto: &Miniblock{
 			Header: headerEvent.Envelope,
 			Events: envelopes,
 		},
+		headerEvent:        headerEvent,
+		useGetterForEvents: events,
 	}, nil
 }
 
@@ -255,10 +257,7 @@ func (b *MiniblockInfo) IsSnapshot() bool {
 
 // AsStorageMb returns a storage miniblock with the data from the MiniblockInfo.
 func (b *MiniblockInfo) AsStorageMb() (*storage.WriteMiniblockData, error) {
-	serializedMb, err := proto.Marshal(&Miniblock{
-		Events: b.Proto.Events,
-		Header: b.Proto.Header,
-	})
+	serializedMb, err := proto.Marshal(b.Proto)
 	if err != nil {
 		return nil, AsRiverError(err, Err_INTERNAL).
 			Message("Failed to serialize miniblock info to bytes").

@@ -33,7 +33,7 @@ func TestStreamCacheViewEviction(t *testing.T) {
 
 	node := tc.getBC()
 	streamID := testutils.FakeStreamId(STREAM_SPACE_BIN)
-	_, genesisMiniblock := makeTestSpaceStream(t, node.Wallet, streamID, nil)
+	_, genesisMiniblock, _ := makeTestSpaceStream(t, node.Wallet, streamID, nil)
 
 	tc.createStreamNoCache(streamID, genesisMiniblock)
 
@@ -136,7 +136,7 @@ func TestCacheEvictionWithFilledMiniBlockPool(t *testing.T) {
 
 	node := tc.getBC()
 	streamID := testutils.FakeStreamId(STREAM_SPACE_BIN)
-	_, genesisMiniblock := makeTestSpaceStream(t, node.Wallet, streamID, nil)
+	_, genesisMiniblock, _ := makeTestSpaceStream(t, node.Wallet, streamID, nil)
 
 	tc.createStreamNoCache(streamID, genesisMiniblock)
 

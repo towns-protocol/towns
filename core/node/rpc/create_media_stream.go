@@ -179,7 +179,7 @@ func (s *Service) createReplicatedMediaStream(
 	streamId StreamId,
 	parsedEvents []*ParsedEvent,
 ) (*CreationCookie, error) {
-	mb, err := MakeGenesisMiniblock(s.wallet, parsedEvents)
+	mb, _, err := MakeGenesisMiniblock(s.wallet, parsedEvents)
 	if err != nil {
 		return nil, err
 	}

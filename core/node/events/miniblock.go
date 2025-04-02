@@ -46,10 +46,13 @@ func Make_GenesisMiniblockHeader(parsedEvents []*ParsedEvent) (*MiniblockHeader,
 	}, nil
 }
 
-func MakeGenesisMiniblock(wallet *crypto.Wallet, genesisMiniblockEvents []*ParsedEvent) (*Miniblock, error) {
+func MakeGenesisMiniblock(
+	wallet *crypto.Wallet,
+	genesisMiniblockEvents []*ParsedEvent,
+) (*Miniblock, *Envelope, error) {
 	header, err := Make_GenesisMiniblockHeader(genesisMiniblockEvents)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	headerEnvelope, err := MakeEnvelopeWithPayload(
@@ -58,7 +61,7 @@ func MakeGenesisMiniblock(wallet *crypto.Wallet, genesisMiniblockEvents []*Parse
 		nil,
 	)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	envelopes := make([]*Envelope, len(genesisMiniblockEvents))
@@ -66,10 +69,15 @@ func MakeGenesisMiniblock(wallet *crypto.Wallet, genesisMiniblockEvents []*Parse
 		envelopes[i] = e.Envelope
 	}
 
+	snapshotEnvelope, err := MakeEnvelopeWithPayload(wallet, Make_Snapshot(header.Snapshot), nil)
+	if err != nil {
+		return nil, nil, err
+	}
+
 	return &Miniblock{
 		Events: envelopes,
 		Header: headerEnvelope,
-	}, nil
+	}, snapshotEnvelope, nil
 }
 
 func NextMiniblockTimestamp(prevBlockTimestamp *timestamppb.Timestamp) *timestamppb.Timestamp {
