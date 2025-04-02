@@ -432,7 +432,11 @@ func (s *Stream) initFromGenesis(
 			Func("initFromGenesis")
 	}
 
-	if err := s.params.Storage.CreateStreamStorage(ctx, s.streamId, genesisBytes); err != nil {
+	if err = s.params.Storage.CreateStreamStorage(
+		ctx,
+		s.streamId,
+		&storage.WriteMiniblockData{Data: genesisBytes},
+	); err != nil {
 		// TODO: this error is not handle correctly here: if stream is in storage, caller of this initFromGenesis
 		// should read it from storage.
 		if AsRiverError(err).Code != Err_ALREADY_EXISTS {
@@ -489,8 +493,11 @@ func (s *Stream) initFromBlockchain(ctx context.Context) error {
 		)
 	}
 
-	err = s.params.Storage.CreateStreamStorage(ctx, s.streamId, mb)
-	if err != nil {
+	if err = s.params.Storage.CreateStreamStorage(
+		ctx,
+		s.streamId,
+		&storage.WriteMiniblockData{Data: mb},
+	); err != nil {
 		return err
 	}
 
@@ -887,7 +894,7 @@ func (s *Stream) getStatus() *streamImplStatus {
 // the first block in the list of pending candidates, it will be applied. This method is thread-safe.
 // Note: saving the candidate itself, without applying it, does not modify the stream's in-memory
 // cached state at all.
-func (s *Stream) SaveMiniblockCandidate(ctx context.Context, mb *Miniblock) error {
+func (s *Stream) SaveMiniblockCandidate(ctx context.Context, mb *Miniblock, sn *Envelope) error {
 	mbInfo, err := NewMiniblockInfoFromProto(
 		mb,
 		NewParsedMiniblockInfoOpts(),

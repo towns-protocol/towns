@@ -15,6 +15,7 @@ import (
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/rules"
 	. "github.com/towns-protocol/towns/core/node/shared"
+	"github.com/towns-protocol/towns/core/node/storage"
 )
 
 func (s *Service) createMediaStreamImpl(
@@ -201,7 +202,9 @@ func (s *Service) createReplicatedMediaStream(
 	// Create ephemeral stream within the local node
 	if isLocal {
 		sender.AddTask(func(ctx context.Context) error {
-			return s.storage.CreateEphemeralStreamStorage(ctx, streamId, mbBytes)
+			return s.storage.CreateEphemeralStreamStorage(ctx, streamId, &storage.WriteMiniblockData{
+				Data: mbBytes,
+			})
 		})
 	}
 

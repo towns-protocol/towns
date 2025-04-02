@@ -431,7 +431,7 @@ func (s *PostgresStreamStore) sqlForStream(sql string, streamId StreamId) string
 func (s *PostgresStreamStore) CreateStreamStorage(
 	ctx context.Context,
 	streamId StreamId,
-	genesisMiniblock []byte,
+	genesisMiniblock *WriteMiniblockData,
 ) error {
 	return s.txRunner(
 		ctx,
@@ -487,7 +487,7 @@ func (s *PostgresStreamStore) createStreamStorageTx(
 	ctx context.Context,
 	tx pgx.Tx,
 	streamId StreamId,
-	genesisMiniblock []byte,
+	genesisMiniblock *WriteMiniblockData,
 ) error {
 	sql := s.sqlForStream(
 		`
@@ -496,7 +496,7 @@ func (s *PostgresStreamStore) createStreamStorageTx(
 			INSERT INTO {{minipools}} (stream_id, generation, slot_num) VALUES ($1, 1, -1);`,
 		streamId,
 	)
-	if _, err := tx.Exec(ctx, sql, streamId, genesisMiniblock); err != nil {
+	if _, err := tx.Exec(ctx, sql, streamId, genesisMiniblock.Data); err != nil {
 		if isPgError(err, pgerrcode.UniqueViolation) {
 			return WrapRiverError(Err_ALREADY_EXISTS, err).Message("stream already exists")
 		}

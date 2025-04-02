@@ -46,7 +46,7 @@ func Test_StreamCache_normalizeEphemeralStream(t *testing.T) {
 		storageMb, err := mb.AsStorageMb()
 		tc.require.NoError(err)
 
-		err = leaderInstance.params.Storage.CreateEphemeralStreamStorage(ctx, streamId, storageMb.Data)
+		err = leaderInstance.params.Storage.CreateEphemeralStreamStorage(ctx, streamId, storageMb)
 		tc.require.NoError(err)
 
 		mbRef := *mb.Ref
@@ -107,7 +107,7 @@ func Test_StreamCache_normalizeEphemeralStream(t *testing.T) {
 		storageMb, err := mb.AsStorageMb()
 		tc.require.NoError(err)
 
-		err = leaderInstance.params.Storage.CreateEphemeralStreamStorage(ctx, streamId, storageMb.Data)
+		err = leaderInstance.params.Storage.CreateEphemeralStreamStorage(ctx, streamId, storageMb)
 		tc.require.NoError(err)
 
 		mbRef := *mb.Ref

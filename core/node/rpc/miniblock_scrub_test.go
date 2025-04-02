@@ -247,7 +247,7 @@ func writeStreamBackToStore(
 	require.NotNil(mb2)
 
 	// Re-write the stream with corrupt block 1
-	require.NoError(store.CreateStreamStorage(ctx, streamId, blocks[0].Data))
+	require.NoError(store.CreateStreamStorage(ctx, streamId, &storage.WriteMiniblockData{Data: blocks[0].Data}))
 	require.NoError(
 		store.WriteMiniblocks(
 			ctx,

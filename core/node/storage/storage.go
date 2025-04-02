@@ -68,10 +68,10 @@ type (
 		// CreateStreamStorage creates a new stream with the given genesis miniblock at index 0.
 		// Last snapshot minblock index is set to 0.
 		// Minipool is set to generation number 1 (i.e. number of miniblock that is going to be produced next) and is empty.
-		CreateStreamStorage(ctx context.Context, streamId StreamId, genesisMiniblock []byte) error
+		CreateStreamStorage(ctx context.Context, streamId StreamId, genesisMiniblock *WriteMiniblockData) error
 
 		// CreateEphemeralStreamStorage same as CreateStreamStorage but marks the stream as ephemeral.
-		CreateEphemeralStreamStorage(ctx context.Context, streamId StreamId, genesisMiniblock []byte) error
+		CreateEphemeralStreamStorage(ctx context.Context, streamId StreamId, genesisMiniblock *WriteMiniblockData) error
 
 		// CreateStreamArchiveStorage creates a new archive storage for the given stream.
 		// Unlike regular CreateStreamStorage, only entry in es table and partition table for miniblocks are created.

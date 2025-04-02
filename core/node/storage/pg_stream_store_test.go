@@ -132,7 +132,7 @@ func TestPostgresStreamStore(t *testing.T) {
 
 	// Test that created stream will have proper genesis miniblock
 	genesisMiniblock := []byte("genesisMiniblock")
-	err = pgStreamStore.CreateStreamStorage(ctx, streamId1, genesisMiniblock)
+	err = pgStreamStore.CreateStreamStorage(ctx, streamId1, &WriteMiniblockData{Data: genesisMiniblock})
 	require.NoError(err)
 
 	streamsNumber, err = pgStreamStore.GetStreamsNumber(ctx)
@@ -151,11 +151,11 @@ func TestPostgresStreamStore(t *testing.T) {
 
 	// Test that we cannot add second stream with same id
 	genesisMiniblock2 := []byte("genesisMiniblock2")
-	err = pgStreamStore.CreateStreamStorage(ctx, streamId1, genesisMiniblock2)
+	err = pgStreamStore.CreateStreamStorage(ctx, streamId1, &WriteMiniblockData{Data: genesisMiniblock2})
 	require.Error(err)
 
 	// Test that we can add second stream and then GetStreams will return both
-	err = pgStreamStore.CreateStreamStorage(ctx, streamId2, genesisMiniblock2)
+	err = pgStreamStore.CreateStreamStorage(ctx, streamId2, &WriteMiniblockData{Data: genesisMiniblock2})
 	require.NoError(err)
 
 	streams, err := pgStreamStore.GetStreams(ctx)
@@ -164,7 +164,7 @@ func TestPostgresStreamStore(t *testing.T) {
 
 	// Test that we can delete stream and proper stream will be deleted
 	genesisMiniblock3 := []byte("genesisMiniblock3")
-	err = pgStreamStore.CreateStreamStorage(ctx, streamId3, genesisMiniblock3)
+	err = pgStreamStore.CreateStreamStorage(ctx, streamId3, &WriteMiniblockData{Data: genesisMiniblock3})
 	require.NoError(err)
 
 	err = pgStreamStore.DeleteStream(ctx, streamId2)
@@ -288,7 +288,7 @@ func TestPromoteMiniblockCandidate(t *testing.T) {
 	// Add candidate from another stream. This candidate should be untouched by the delete when a
 	// candidate from the first stream is promoted.
 	genesisMiniblock := []byte("genesisMiniblock")
-	_ = pgStreamStore.CreateStreamStorage(ctx, streamId2, genesisMiniblock)
+	_ = pgStreamStore.CreateStreamStorage(ctx, streamId2, &WriteMiniblockData{Data: genesisMiniblock})
 	err = pgStreamStore.WriteMiniblockCandidate(ctx, streamId2, &WriteMiniblockData{
 		Number: 1,
 		Hash:   candidateHash,
@@ -352,7 +352,7 @@ func TestPromoteMiniblockCandidate(t *testing.T) {
 
 func prepareTestDataForAddEventConsistencyCheck(ctx context.Context, s *PostgresStreamStore, streamId StreamId) {
 	genesisMiniblock := []byte("genesisMiniblock")
-	_ = s.CreateStreamStorage(ctx, streamId, genesisMiniblock)
+	_ = s.CreateStreamStorage(ctx, streamId, &WriteMiniblockData{Data: genesisMiniblock})
 	_ = s.WriteEvent(ctx, streamId, 1, 0, []byte("event1"))
 	_ = s.WriteEvent(ctx, streamId, 1, 1, []byte("event2"))
 	_ = s.WriteEvent(ctx, streamId, 1, 2, []byte("event3"))
@@ -464,7 +464,7 @@ func TestCreateBlockProposalConsistencyChecksProperNewMinipoolGeneration(t *test
 
 	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 	genesisMiniblock := []byte("genesisMiniblock")
-	_ = pgStreamStore.CreateStreamStorage(ctx, streamId, genesisMiniblock)
+	_ = pgStreamStore.CreateStreamStorage(ctx, streamId, &WriteMiniblockData{Data: genesisMiniblock})
 
 	var testEnvelopes1 [][]byte
 	testEnvelopes1 = append(testEnvelopes1, []byte("event1"))
@@ -508,7 +508,7 @@ func TestPromoteBlockConsistencyChecksProperNewMinipoolGeneration(t *testing.T) 
 
 	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 	genesisMiniblock := []byte("genesisMiniblock")
-	_ = pgStreamStore.CreateStreamStorage(ctx, streamId, genesisMiniblock)
+	_ = pgStreamStore.CreateStreamStorage(ctx, streamId, &WriteMiniblockData{Data: genesisMiniblock})
 
 	var testEnvelopes1 [][]byte
 	testEnvelopes1 = append(testEnvelopes1, []byte("event1"))
@@ -565,7 +565,7 @@ func TestCreateBlockProposalNoSuchStreamError(t *testing.T) {
 
 	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 	genesisMiniblock := []byte("genesisMiniblock")
-	_ = pgStreamStore.CreateStreamStorage(ctx, streamId, genesisMiniblock)
+	_ = pgStreamStore.CreateStreamStorage(ctx, streamId, &WriteMiniblockData{Data: genesisMiniblock})
 
 	_, _ = pgStreamStore.pool.Exec(
 		ctx,
@@ -599,7 +599,7 @@ func TestPromoteBlockNoSuchStreamError(t *testing.T) {
 
 	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 	genesisMiniblock := []byte("genesisMiniblock")
-	_ = pgStreamStore.CreateStreamStorage(ctx, streamId, genesisMiniblock)
+	_ = pgStreamStore.CreateStreamStorage(ctx, streamId, &WriteMiniblockData{Data: genesisMiniblock})
 
 	var testEnvelopes1 [][]byte
 	testEnvelopes1 = append(testEnvelopes1, []byte("event1"))
@@ -638,7 +638,7 @@ func TestExitIfSecondStorageCreated(t *testing.T) {
 
 	genesisMiniblock := []byte("genesisMiniblock")
 	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
-	err := pgStreamStore.CreateStreamStorage(ctx, streamId, genesisMiniblock)
+	err := pgStreamStore.CreateStreamStorage(ctx, streamId, &WriteMiniblockData{Data: genesisMiniblock})
 	require.NoError(err)
 
 	pool, err := CreateAndValidatePgxPool(
@@ -694,7 +694,7 @@ func TestGetStreamFromLastSnapshotConsistencyChecksMissingBlockFailure(t *testin
 
 	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 	genesisMiniblock := []byte("genesisMiniblock")
-	_ = pgStreamStore.CreateStreamStorage(ctx, streamId, genesisMiniblock)
+	_ = pgStreamStore.CreateStreamStorage(ctx, streamId, &WriteMiniblockData{Data: genesisMiniblock})
 	var testEnvelopes1 [][]byte
 	testEnvelopes1 = append(testEnvelopes1, []byte("event1"))
 	var testEnvelopes2 [][]byte
@@ -784,7 +784,7 @@ func TestGetStreamFromLastSnapshotConsistencyCheckWrongEnvelopeGeneration(t *tes
 
 	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 	genesisMiniblock := []byte("genesisMiniblock")
-	_ = pgStreamStore.CreateStreamStorage(ctx, streamId, genesisMiniblock)
+	_ = pgStreamStore.CreateStreamStorage(ctx, streamId, &WriteMiniblockData{Data: genesisMiniblock})
 
 	var testEnvelopes1 [][]byte
 	testEnvelopes1 = append(testEnvelopes1, []byte("event1"))
@@ -853,7 +853,7 @@ func TestGetStreamFromLastSnapshotConsistencyCheckNoZeroIndexEnvelope(t *testing
 
 	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 	genesisMiniblock := []byte("genesisMiniblock")
-	_ = pgStreamStore.CreateStreamStorage(ctx, streamId, genesisMiniblock)
+	_ = pgStreamStore.CreateStreamStorage(ctx, streamId, &WriteMiniblockData{Data: genesisMiniblock})
 
 	var testEnvelopes1 [][]byte
 	testEnvelopes1 = append(testEnvelopes1, []byte("event1"))
@@ -924,7 +924,7 @@ func TestGetStreamFromLastSnapshotConsistencyCheckGapInEnvelopesIndexes(t *testi
 
 	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 	genesisMiniblock := []byte("genesisMiniblock")
-	_ = pgStreamStore.CreateStreamStorage(ctx, streamId, genesisMiniblock)
+	_ = pgStreamStore.CreateStreamStorage(ctx, streamId, &WriteMiniblockData{Data: genesisMiniblock})
 
 	var testEnvelopes1 [][]byte
 	testEnvelopes1 = append(testEnvelopes1, []byte("event1"))
@@ -994,7 +994,7 @@ func TestGetMiniblocksConsistencyChecks(t *testing.T) {
 
 	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 	genesisMiniblock := []byte("genesisMiniblock")
-	_ = pgStreamStore.CreateStreamStorage(ctx, streamId, genesisMiniblock)
+	_ = pgStreamStore.CreateStreamStorage(ctx, streamId, &WriteMiniblockData{Data: genesisMiniblock})
 
 	var testEnvelopes1 [][]byte
 	testEnvelopes1 = append(testEnvelopes1, []byte("event1"))
@@ -1083,10 +1083,10 @@ func TestAlreadyExists(t *testing.T) {
 
 	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 	genesisMiniblock := []byte("genesisMiniblock")
-	err := pgStreamStore.CreateStreamStorage(ctx, streamId, genesisMiniblock)
+	err := pgStreamStore.CreateStreamStorage(ctx, streamId, &WriteMiniblockData{Data: genesisMiniblock})
 	require.NoError(err)
 
-	err = pgStreamStore.CreateStreamStorage(ctx, streamId, genesisMiniblock)
+	err = pgStreamStore.CreateStreamStorage(ctx, streamId, &WriteMiniblockData{Data: genesisMiniblock})
 	require.Equal(Err_ALREADY_EXISTS, AsRiverError(err).Code)
 }
 
@@ -1178,7 +1178,7 @@ func TestReadStreamFromLastSnapshot(t *testing.T) {
 
 	genMB := dataMaker.mb(0)
 	mbs := []*MiniblockDescriptor{genMB}
-	require.NoError(store.CreateStreamStorage(ctx, streamId, genMB.Data))
+	require.NoError(store.CreateStreamStorage(ctx, streamId, &WriteMiniblockData{Data: genMB.Data}))
 
 	mb1 := dataMaker.mb(1)
 	mbs = append(mbs, mb1)
@@ -1265,7 +1265,7 @@ func TestQueryPlan(t *testing.T) {
 	for range 20 {
 		streamId = testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 		genMB := dataMaker.mb(0)
-		require.NoError(store.CreateStreamStorage(ctx, streamId, genMB.Data))
+		require.NoError(store.CreateStreamStorage(ctx, streamId, &WriteMiniblockData{Data: genMB.Data}))
 
 		require.NoError(store.WriteMiniblocks(ctx, streamId, dataMaker.mbs(1, 10), 11, dataMaker.events(10), 1, 0))
 
