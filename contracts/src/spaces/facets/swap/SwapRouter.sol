@@ -22,6 +22,7 @@ contract SwapRouter is ISwapRouter, MembershipBase, Facet {
 
   /// @notice Executes a swap through a whitelisted router
   /// @param router The address of the router to use
+  /// @param approveTarget The address to approve the token transfer
   /// @param tokenIn The token being sold
   /// @param tokenOut The token being bought
   /// @param amountIn The amount of tokenIn to swap
@@ -31,6 +32,7 @@ contract SwapRouter is ISwapRouter, MembershipBase, Facet {
   /// @return amountOut The amount of tokenOut received
   function executeSwap(
     address router,
+    address approveTarget,
     address tokenIn,
     address tokenOut,
     uint256 amountIn,
@@ -47,19 +49,19 @@ contract SwapRouter is ISwapRouter, MembershipBase, Facet {
     // Transfer tokens from user to this contract
     uint256 balanceBefore = _getBalance(tokenOut);
 
+    uint256 value;
     if (tokenIn == CurrencyTransfer.NATIVE_TOKEN) {
       if (msg.value != amountIn) {
         SwapRouter__InvalidAmount.selector.revertWith();
       }
+      value = amountIn;
     } else {
       IERC20(tokenIn).transferFrom(msg.sender, address(this), amountIn);
-      IERC20(tokenIn).approve(router, amountIn);
+      IERC20(tokenIn).approve(approveTarget, amountIn);
     }
 
     // Execute swap
-    (bool success, ) = router.call{
-      value: tokenIn == CurrencyTransfer.NATIVE_TOKEN ? amountIn : 0
-    }(swapData);
+    (bool success, ) = router.call{value: value}(swapData);
     if (!success) SwapRouter__SwapFailed.selector.revertWith();
 
     // Calculate amount received
@@ -69,23 +71,27 @@ contract SwapRouter is ISwapRouter, MembershipBase, Facet {
     }
 
     // Calculate and distribute fees
-    (uint256 posterFee, uint256 treasuryFee) = _collectFees(
-      tokenOut,
-      amountOut,
-      poster
-    );
-    uint256 finalAmount = amountOut - posterFee - treasuryFee;
+    uint256 finalAmount;
+    {
+      (uint256 posterFee, uint256 treasuryFee) = _collectFees(
+        tokenOut,
+        amountOut,
+        poster
+      );
+      finalAmount = amountOut - posterFee - treasuryFee;
+    }
 
     // Transfer remaining tokens to user
-    if (tokenOut == CurrencyTransfer.NATIVE_TOKEN) {
-      CurrencyTransfer.transferCurrency(
-        CurrencyTransfer.NATIVE_TOKEN,
-        address(this),
-        msg.sender,
-        finalAmount
-      );
-    } else {
-      IERC20(tokenOut).transfer(msg.sender, finalAmount);
+    CurrencyTransfer.transferCurrency(
+      tokenOut,
+      address(this),
+      msg.sender,
+      finalAmount
+    );
+
+    // Reset approval for tokenIn
+    if (tokenIn != CurrencyTransfer.NATIVE_TOKEN) {
+      IERC20(tokenIn).approve(approveTarget, 0);
     }
 
     emit Swap(router, tokenIn, tokenOut, amountIn, amountOut, msg.sender);
@@ -125,31 +131,13 @@ contract SwapRouter is ISwapRouter, MembershipBase, Facet {
     posterFee = BasisPoints.calculate(amount, posterBps);
     treasuryFee = BasisPoints.calculate(amount, treasuryBps);
 
-    if (posterFee > 0) {
-      if (token == CurrencyTransfer.NATIVE_TOKEN) {
-        CurrencyTransfer.transferCurrency(
-          CurrencyTransfer.NATIVE_TOKEN,
-          address(this),
-          poster,
-          posterFee
-        );
-      } else {
-        IERC20(token).transfer(poster, posterFee);
-      }
-    }
+    CurrencyTransfer.transferCurrency(token, address(this), poster, posterFee);
 
-    if (treasuryFee > 0) {
-      address treasury = platform.getFeeRecipient();
-      if (token == CurrencyTransfer.NATIVE_TOKEN) {
-        CurrencyTransfer.transferCurrency(
-          CurrencyTransfer.NATIVE_TOKEN,
-          address(this),
-          treasury,
-          treasuryFee
-        );
-      } else {
-        IERC20(token).transfer(treasury, treasuryFee);
-      }
-    }
+    CurrencyTransfer.transferCurrency(
+      token,
+      address(this),
+      platform.getFeeRecipient(),
+      treasuryFee
+    );
   }
 }

@@ -22,6 +22,7 @@ interface ISwapRouterBase {
 interface ISwapRouter is ISwapRouterBase {
   /// @notice Executes a swap through a whitelisted router
   /// @param router The address of the router to use
+  /// @param approveTarget The address to approve the token transfer
   /// @param tokenIn The token being sold
   /// @param tokenOut The token being bought
   /// @param amountIn The amount of tokenIn to swap
@@ -31,6 +32,7 @@ interface ISwapRouter is ISwapRouterBase {
   /// @return amountOut The amount of tokenOut received
   function executeSwap(
     address router,
+    address approveTarget,
     address tokenIn,
     address tokenOut,
     uint256 amountIn,
