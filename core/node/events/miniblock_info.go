@@ -17,16 +17,16 @@ import (
 
 type MiniblockInfo struct {
 	Ref                *MiniblockRef
+	Proto              *Miniblock
 	headerEvent        *ParsedEvent
 	useGetterForEvents []*ParsedEvent // Use events(). Getter checks if events have been initialized.
-	Proto              *Miniblock
 }
 
 // NewMiniblockInfoFromProto initializes a MiniblockInfo from a proto, applying validation based
 // on whatever is set in the opts. If an empty opts is passed in, the method will still perform
 // some minimal validation to confirm that event counts between the header and body match.
-func NewMiniblockInfoFromProto(pb *Miniblock, opts *ParsedMiniblockInfoOpts) (*MiniblockInfo, error) {
-	headerEvent, err := ParseEvent(pb.Header)
+func NewMiniblockInfoFromProto(mb *Miniblock, opts *ParsedMiniblockInfoOpts) (*MiniblockInfo, error) {
+	headerEvent, err := ParseEvent(mb.Header)
 	if err != nil {
 		return nil, AsRiverError(
 			err,
@@ -49,18 +49,18 @@ func NewMiniblockInfoFromProto(pb *Miniblock, opts *ParsedMiniblockInfoOpts) (*M
 
 	// Validate the number of events matches event hashes
 	// We will validate that the hashes match if the events are parsed.
-	if len(blockHeader.EventHashes) != len(pb.Events) {
+	if len(blockHeader.EventHashes) != len(mb.Events) {
 		return nil, RiverError(
 			Err_BAD_BLOCK,
 			"Length of events in block does not match length of event hashes in header",
 		).Func("NewMiniblockInfoFromProto").
 			Tag("eventHashesLength", len(blockHeader.EventHashes)).
-			Tag("eventsLength", len(pb.Events))
+			Tag("eventsLength", len(mb.Events))
 	}
 
 	var events []*ParsedEvent
 	if !opts.DoNotParseEvents() {
-		events, err = ParseEvents(pb.Events)
+		events, err = ParseEvents(mb.Events)
 		if err != nil {
 			return nil, AsRiverError(err, Err_BAD_EVENT_HASH).Func("NewMiniblockInfoFromProto")
 		}
@@ -133,9 +133,9 @@ func NewMiniblockInfoFromProto(pb *Miniblock, opts *ParsedMiniblockInfoOpts) (*M
 			Hash: headerEvent.Hash,
 			Num:  blockHeader.MiniblockNum,
 		},
+		Proto:              mb,
 		headerEvent:        headerEvent,
 		useGetterForEvents: events,
-		Proto:              pb,
 	}, nil
 }
 
@@ -170,12 +170,12 @@ func NewMiniblockInfoFromParsed(headerEvent *ParsedEvent, events []*ParsedEvent)
 			Hash: headerEvent.Hash,
 			Num:  headerEvent.Event.GetMiniblockHeader().MiniblockNum,
 		},
-		headerEvent:        headerEvent,
-		useGetterForEvents: events,
 		Proto: &Miniblock{
 			Header: headerEvent.Envelope,
 			Events: envelopes,
 		},
+		headerEvent:        headerEvent,
+		useGetterForEvents: events,
 	}, nil
 }
 
@@ -255,10 +255,7 @@ func (b *MiniblockInfo) IsSnapshot() bool {
 
 // AsStorageMb returns a storage miniblock with the data from the MiniblockInfo.
 func (b *MiniblockInfo) AsStorageMb() (*storage.WriteMiniblockData, error) {
-	serializedMb, err := proto.Marshal(&Miniblock{
-		Events: b.Proto.Events,
-		Header: b.Proto.Header,
-	})
+	serializedMb, err := proto.Marshal(b.Proto)
 	if err != nil {
 		return nil, AsRiverError(err, Err_INTERNAL).
 			Message("Failed to serialize miniblock info to bytes").

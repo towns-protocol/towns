@@ -16,7 +16,7 @@ const (
 )
 
 type (
-	MiniblockHandlerFunc func(blockdata []byte, seqNum int64) error
+	MiniblockHandlerFunc func(blockdata []byte, seqNum int64, snapshot []byte) error
 
 	ReadStreamFromLastSnapshotResult struct {
 		SnapshotMiniblockOffset int

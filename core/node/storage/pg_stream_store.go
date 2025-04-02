@@ -1054,7 +1054,7 @@ func (s *PostgresStreamStore) readMiniblocksByStreamTx(
 
 		prevSeqNum = seqNum
 
-		return onEachMb(blockdata, seqNum)
+		return onEachMb(blockdata, seqNum, nil)
 	})
 
 	return err
@@ -1108,7 +1108,7 @@ func (s *PostgresStreamStore) readMiniblocksByIdsTx(
 	var blockdata []byte
 	var seqNum int64
 	_, err = pgx.ForEachRow(rows, []any{&blockdata, &seqNum}, func() error {
-		return onEachMb(blockdata, seqNum)
+		return onEachMb(blockdata, seqNum, nil)
 	})
 
 	return err

@@ -834,6 +834,7 @@ message InfoResponse {
 
 message GetStreamExRequest {
     bytes stream_id = 1;
+    bool omit_snapshot = 2;
 }
 
 // GetStreamExResponse is a stream of raw data that represents the current state of the requested stream.
@@ -845,6 +846,7 @@ message GetStreamExResponse {
         Miniblock miniblock = 1;
         Minipool minipool = 2;
     }
+    optional Envelope snapshot = 3;
 }
 
 message CreateStreamRequest {
