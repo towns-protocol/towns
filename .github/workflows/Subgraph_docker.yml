@@ -62,7 +62,7 @@ jobs:
               run: |
                   COMMIT_HASH=$(git describe --tags --always --dirty)
                   BRANCH=$(git rev-parse --abbrev-ref HEAD)
-                  TAGS=($COMMIT_HASH)
+                  TAGS=("subgraph-$COMMIT_HASH")
 
                   # if release version is not provided, we set it to "subgraph"
                   if [ -z "$RELEASE_VERSION" ]; then
