@@ -111,10 +111,6 @@ export const useJoinFunnelAnalytics = () => {
             [],
         ),
 
-        riverConnectedSuccessfully: useCallback(() => {
-            Analytics.getInstance().trackOnce('river connected successfully')
-        }, []),
-
         // this event is tracked either when user is logged out and clicks "join" - actually they are logging in, join logic is handled elsewhere afterwards
         // or when user is logged in and clicks "join"
         // we use other events/props to segment funnels based on auth state

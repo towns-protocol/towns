@@ -4,7 +4,6 @@ import { Address } from 'use-towns-client'
 import { PanelContext } from '@components/Panel/PanelContext'
 import { CHANNEL_INFO_PARAMS_VALUES } from 'routes'
 import { useDevice } from 'hooks/useDevice'
-import { Analytics } from 'hooks/useAnalytics'
 
 export const usePanelActions = () => {
     const { isTouch } = useDevice()
@@ -58,18 +57,6 @@ export const usePanelActions = () => {
         ),
         closePanel: useCallback(
             (params?: { preventPopStack?: boolean; force?: boolean }) => {
-                const panel = searchParams.get('panel')
-                if (panel) {
-                    Analytics.getInstance().track(
-                        'closed panel',
-                        {
-                            panel,
-                        },
-                        () => {
-                            console.log('[analytics] closed panel', panel)
-                        },
-                    )
-                }
                 if (params?.force) {
                     searchParams.delete('panel')
                     setSearchParams({ ...searchParams })

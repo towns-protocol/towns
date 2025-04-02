@@ -1,5 +1,5 @@
 import React, { Suspense, useCallback, useEffect, useRef, useState } from 'react'
-import { useRiverPoints, useRiverPointsCheckIn, useSpaceId } from 'use-towns-client'
+import { useRiverPoints, useRiverPointsCheckIn } from 'use-towns-client'
 import { AnimatePresence } from 'framer-motion'
 import { Signer } from 'ethers'
 import { popupToast } from '@components/Notifications/popupToast'
@@ -13,7 +13,6 @@ import { FadeInBox } from '@components/Transitions'
 import { useCombinedAuth } from 'privy/useCombinedAuth'
 import { ButtonSpinner } from '@components/Login/LoginButton/Spinner/ButtonSpinner'
 import { useMyAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
-import { Analytics } from 'hooks/useAnalytics'
 import { CountdownPill, RiverPointsPill, StreakPill } from './PointsPanelPills'
 
 const BeaverAnimation = React.lazy(() =>
@@ -147,8 +146,6 @@ const useHandleCheckin = (abstractAccountAddress: `0x${string}` | undefined) => 
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [isPointsSuccess, setIsPointsSuccess] = useState(false)
 
-    const spaceId = useSpaceId()
-
     useEffect(() => {
         if (
             !isAwaitingPointsRef.current ||
@@ -181,10 +178,7 @@ const useHandleCheckin = (abstractAccountAddress: `0x${string}` | undefined) => 
         setIsPointsSuccess(true)
         isAwaitingPointsRef.current = true
         currentPointsRef.current = data?.riverPoints ?? 0
-        Analytics.getInstance().track('completed belly rub', {
-            spaceId,
-        })
-    }, [data?.riverPoints, spaceId])
+    }, [data?.riverPoints])
 
     const onError = useCallback((error: Error | undefined) => {
         console.log('[river-points] onError', error)
@@ -228,13 +222,10 @@ const useHandleCheckin = (abstractAccountAddress: `0x${string}` | undefined) => 
 
     const checkIn = useCallback(
         (signer: Signer) => {
-            Analytics.getInstance().track('clicked on beaver', {
-                spaceId,
-            })
             currentPointsRef.current = data?.riverPoints
             checkInTransaction({ signer })
         },
-        [checkInTransaction, data?.riverPoints, spaceId],
+        [checkInTransaction, data?.riverPoints],
     )
 
     return {

@@ -35,7 +35,6 @@ import { useNotificationRoute } from 'hooks/useNotificationRoute'
 import { useOfflineToast } from '@components/Offline/OfflineToast'
 import { UserOpTxModal } from '@components/Web3/UserOpTxModal/UserOpTxModal'
 import { CombinedAuthContextProvider } from 'privy/useCombinedAuth'
-import { useRiverConnectedSuccessfullyAnalyticsEvent } from '@components/Analytics/useRiverConnectedSuccessfullyAnalyticsEvent'
 import { validateAndParseXChainConfig } from 'utils/validateAndParseXChainConfig'
 import { FundWalletModal } from '@components/Web3/Wallet/FundWalletModal'
 import { TradingContextProvider } from '@components/Web3/Trading/TradingContextProvider'
@@ -203,7 +202,6 @@ export const App = () => {
                         <MonitorJoinFlow />
                         <UserOpTxModal />
                         <FundWalletModal />
-                        <TrackRiverConnectedSuccessfully />
                         <LocalStorageMigrator />
                     </TradingContextProvider>
                 </CombinedAuthContextProvider>
@@ -213,8 +211,3 @@ export const App = () => {
 }
 
 export default App
-
-function TrackRiverConnectedSuccessfully() {
-    useRiverConnectedSuccessfullyAnalyticsEvent()
-    return null
-}
