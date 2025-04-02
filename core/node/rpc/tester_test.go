@@ -84,6 +84,7 @@ type serviceTester struct {
 
 type serviceTesterOpts struct {
 	numNodes          int
+	numOperators      int
 	replicationFactor int
 	start             bool
 	btcParams         *crypto.TestParams
@@ -131,9 +132,10 @@ func newServiceTester(t *testing.T, opts serviceTesterOpts) *serviceTester {
 
 	btcParams := opts.btcParams
 	if btcParams == nil {
-		btcParams = &crypto.TestParams{NumKeys: opts.numNodes, MineOnTx: true, AutoMine: true}
+		btcParams = &crypto.TestParams{NumKeys: opts.numNodes, MineOnTx: true, AutoMine: true, NumOperators: opts.numOperators}
 	} else if btcParams.NumKeys == 0 {
 		btcParams.NumKeys = opts.numNodes
+		btcParams.NumOperators = opts.numOperators
 	}
 	btc, err := crypto.NewBlockchainTestContext(
 		st.ctx,
@@ -245,6 +247,7 @@ func (st *serviceTester) startAutoMining() {
 		return
 	}
 
+	// TODO: FIX: remove
 	// hack to ensure that the chain always produces blocks (automining=true)
 	// commit on simulated backend with no pending txs can sometimes crash in the simulator.
 	// by having a pending tx with automining enabled we can work around that issue.

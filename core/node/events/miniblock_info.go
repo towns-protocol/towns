@@ -49,18 +49,18 @@ func NewMiniblockInfoFromProto(pb *Miniblock, opts *ParsedMiniblockInfoOpts) (*M
 
 	// Validate the number of events matches event hashes
 	// We will validate that the hashes match if the events are parsed.
-	if len(blockHeader.EventHashes) != len(mb.Events) {
+	if len(blockHeader.EventHashes) != len(pb.Events) {
 		return nil, RiverError(
 			Err_BAD_BLOCK,
 			"Length of events in block does not match length of event hashes in header",
 		).Func("NewMiniblockInfoFromProto").
 			Tag("eventHashesLength", len(blockHeader.EventHashes)).
-			Tag("eventsLength", len(mb.Events))
+			Tag("eventsLength", len(pb.Events))
 	}
 
 	var events []*ParsedEvent
 	if !opts.DoNotParseEvents() {
-		events, err = ParseEvents(mb.Events)
+		events, err = ParseEvents(pb.Events)
 		if err != nil {
 			return nil, AsRiverError(err, Err_BAD_EVENT_HASH).Func("NewMiniblockInfoFromProto")
 		}
@@ -135,7 +135,7 @@ func NewMiniblockInfoFromProto(pb *Miniblock, opts *ParsedMiniblockInfoOpts) (*M
 		},
 		headerEvent:        headerEvent,
 		useGetterForEvents: events,
-		Proto:              mb,
+		Proto:              pb,
 	}, nil
 }
 

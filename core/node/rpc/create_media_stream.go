@@ -189,7 +189,7 @@ func (s *Service) createReplicatedMediaStream(
 		return nil, err
 	}
 
-	nodesList, err := s.streamRegistry.ChooseStreamNodes(streamId)
+	nodesList, err := s.nodeRegistry.ChooseStreamNodes(ctx, streamId, int(s.chainConfig.Get().ReplicationFactor))
 	if err != nil {
 		return nil, err
 	}

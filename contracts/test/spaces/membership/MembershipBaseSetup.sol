@@ -16,6 +16,7 @@ import {IWalletLink, IWalletLinkBase} from "contracts/src/factory/facets/wallet-
 import {IPartnerRegistry} from "contracts/src/factory/facets/partner/IPartnerRegistry.sol";
 import {IReferrals} from "contracts/src/spaces/facets/referrals/IReferrals.sol";
 import {ITownsPointsBase, ITownsPoints} from "contracts/src/airdrop/points/ITownsPoints.sol";
+import {ITreasury} from "contracts/src/spaces/facets/treasury/ITreasury.sol";
 
 // libraries
 // libraries
@@ -52,6 +53,7 @@ contract MembershipBaseSetup is
   IPartnerRegistry internal partnerRegistry;
   IPrepay prepayFacet;
   IReferrals internal referrals;
+  ITreasury internal treasury;
   // entitled user
   Vm.Wallet aliceWallet;
   Vm.Wallet charlieWallet;
@@ -108,6 +110,7 @@ contract MembershipBaseSetup is
     membershipToken = IERC721A(userSpace);
     prepayFacet = IPrepay(userSpace);
     referrals = IReferrals(userSpace);
+    treasury = ITreasury(userSpace);
     platformReqs = IPlatformRequirements(spaceFactory);
     partnerRegistry = IPartnerRegistry(spaceFactory);
     _registerOperators();

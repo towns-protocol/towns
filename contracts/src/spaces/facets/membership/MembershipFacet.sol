@@ -6,7 +6,6 @@ import {IMembership} from "./IMembership.sol";
 import {IMembershipPricing} from "./pricing/IMembershipPricing.sol";
 
 // libraries
-import {CurrencyTransfer} from "contracts/src/utils/libraries/CurrencyTransfer.sol";
 import {CustomRevert} from "contracts/src/utils/libraries/CustomRevert.sol";
 
 // contracts
@@ -23,26 +22,6 @@ contract MembershipFacet is
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                            FUNDS                           */
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-  /// @inheritdoc IMembership
-  function withdraw(address account) external onlyOwner nonReentrant {
-    if (account == address(0))
-      CustomRevert.revertWith(Membership__InvalidAddress.selector);
-
-    // get the balance
-    uint256 balance = address(this).balance;
-
-    // verify the balance is not 0
-    if (balance == 0)
-      CustomRevert.revertWith(Membership__InsufficientPayment.selector);
-
-    CurrencyTransfer.transferCurrency(
-      _getMembershipCurrency(),
-      address(this),
-      account,
-      balance
-    );
-  }
 
   /// @inheritdoc IMembership
   function revenue() external view returns (uint256) {

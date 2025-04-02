@@ -14,7 +14,7 @@ import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetH
 contract DeployMembership is Deployer, FacetHelper {
   constructor() {
     // Funds
-    addSelector(IMembership.withdraw.selector);
+
     addSelector(IMembership.revenue.selector);
 
     // Minting

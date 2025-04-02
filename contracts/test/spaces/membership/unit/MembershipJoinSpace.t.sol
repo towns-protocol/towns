@@ -432,7 +432,7 @@ contract MembershipJoinSpaceTest is
     address withdrawAddress = _randomAddress();
     vm.prank(founder);
     vm.expectRevert(Membership__InsufficientPayment.selector);
-    membership.withdraw(withdrawAddress);
+    treasury.withdraw(withdrawAddress);
 
     // withdraw address balance is 0
     assertEq(withdrawAddress.balance, 0);

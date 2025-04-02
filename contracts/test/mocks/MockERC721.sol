@@ -14,6 +14,12 @@ contract MockERC721 is ERC721 {
     return tokenId;
   }
 
+  function safeMint(address to) external returns (uint256) {
+    tokenId++;
+    _safeMint(to, tokenId);
+    return tokenId;
+  }
+
   function mint(address to, uint256 amount) external {
     for (uint256 i = 0; i < amount; i++) {
       _mint(to, tokenId);

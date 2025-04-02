@@ -99,7 +99,7 @@ func (st *serviceTester) deployXchainTestContracts() {
 		log                   = logging.FromCtx(st.ctx)
 		approvedNodeOperators []common.Address
 	)
-	for _, w := range st.btc.Wallets {
+	for _, w := range st.btc.NodeWallets {
 		approvedNodeOperators = append(approvedNodeOperators, w.Address)
 	}
 
@@ -200,6 +200,7 @@ func (st *serviceTester) Start(t *testing.T) {
 		<-done
 	}
 
+	// TODO: FIX: remove
 	// hack to ensure that the chain always produces blocks (automining=true)
 	// commit on simulated backend with no pending txs can sometimes crash the simulator.
 	// by having a pending tx with automining enabled we can work around that issue.

@@ -917,7 +917,7 @@ func (r *StreamView) GetStreamSince(
 	miniblockIndex, err := r.indexOfMiniblockWithNum(cookie.MinipoolGen)
 	if err != nil {
 		// The user's sync cookie is out of date. Send a sync reset and return an up-to-date StreamAndCookie.
-		log.Warnw("GetStreamSince: out of date cookie.MiniblockNum. Sending sync reset.",
+		log.Debugw("GetStreamSince: out of date cookie.MiniblockNum. Sending sync reset.",
 			"stream", r.streamId, "error", err.Error())
 
 		return &StreamAndCookie{
