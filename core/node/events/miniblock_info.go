@@ -159,7 +159,7 @@ func NewMiniblocksInfoFromProtos(pbs []*Miniblock, opts *ParsedMiniblockInfoOpts
 	mbs := make([]*MiniblockInfo, len(pbs))
 	for i, pb := range pbs {
 		o := opts
-		mbs[i], err = NewMiniblockInfoFromProto(pb, o)
+		mbs[i], err = NewMiniblockInfoFromProto(pb, nil, o)
 		if o.HasExpectedBlockNumber() {
 			o.WithExpectedBlockNumber(o.GetExpectedBlockNumber() + 1)
 		}
