@@ -43,5 +43,6 @@ export function useHasMemberNft({
     return useQuery(blockchainKeys.hasMemberNft(spaceId), fetchNftBalance, {
         enabled: !!linkedWallets && !!spaceDapp && !!userId && !!spaceId && enabled,
         refetchOnMount: true,
+        staleTime: 1_000 * 60 * 5,
     })
 }

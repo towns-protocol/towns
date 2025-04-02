@@ -4,6 +4,7 @@ import {
     Permission,
     useConnectivity,
     useContractSpaceInfoWithoutClient,
+    useHasMemberNft,
     useHasPermission,
     useTownsContext,
 } from 'use-towns-client'
@@ -70,8 +71,21 @@ export function JoinLoginButton({
 
     const { data: entitlements } = useEntitlements(spaceId, minterRoleId)
     const { data: membershipInfo } = useReadableMembershipInfo(spaceId ?? '')
+    const { data: hasMemberNft, isLoading: isLoadingHasMemberNft } = useHasMemberNft({
+        spaceId,
+    })
+
+    const blockJoining = useMemo(() => {
+        if (isLoadingHasMemberNft || hasMemberNft) {
+            return false
+        }
+        return maxSupplyReached
+    }, [hasMemberNft, isLoadingHasMemberNft, maxSupplyReached])
 
     const joinOrPriceText = useMemo(() => {
+        if (hasMemberNft) {
+            return 'Rejoin'
+        }
         if (entitlements?.hasEntitlements) {
             return 'Verify Assets to Join'
         }
@@ -80,7 +94,12 @@ export function JoinLoginButton({
         }
         const price = getPriceText(membershipInfo.price, membershipInfo.remainingFreeSupply)
         return `Join for ${price?.value} ${price?.suffix}`
-    }, [membershipInfo?.price, membershipInfo?.remainingFreeSupply, entitlements?.hasEntitlements])
+    }, [
+        membershipInfo?.price,
+        membershipInfo?.remainingFreeSupply,
+        entitlements?.hasEntitlements,
+        hasMemberNft,
+    ])
 
     const onJoinClick = useCallback(
         async (getSigner: GetSigner) => {
@@ -129,12 +148,12 @@ export function JoinLoginButton({
     )
 
     const onLoginClick = useCallback(() => {
-        if (maxSupplyReached) {
+        if (blockJoining) {
             return
         }
         clickedJoinTown({ spaceId, pricingModule })
         startJoinPreLogin()
-    }, [startJoinPreLogin, maxSupplyReached, spaceId, pricingModule, clickedJoinTown])
+    }, [startJoinPreLogin, blockJoining, spaceId, pricingModule, clickedJoinTown])
 
     const isEvaluating = useWatchEvaluatingCredentialsAuthStatus()
 
@@ -173,11 +192,11 @@ export function JoinLoginButton({
         return (
             <WalletReady>
                 {({ getSigner }) => (
-                    <Box tooltip={maxSupplyReached ? 'No memberships left' : undefined}>
+                    <Box tooltip={blockJoining ? 'No memberships left' : undefined}>
                         <FancyButton
                             cta
                             type="button"
-                            disabled={disableJoinUi || maxSupplyReached}
+                            disabled={disableJoinUi || blockJoining}
                             spinner={!!spaceBeingJoined}
                             onClick={() => onJoinClick(getSigner)}
                         >
