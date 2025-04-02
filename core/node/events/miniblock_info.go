@@ -22,7 +22,7 @@ type MiniblockInfo struct {
 
 	headerEvent        *ParsedEvent
 	useGetterForEvents []*ParsedEvent // Use events(). Getter checks if events have been initialized.
-	snapshot           *ParsedEvent
+	snapshot           *ParsedEvent   //nolint:unused
 }
 
 // NewMiniblockInfoFromProto initializes a MiniblockInfo from a proto, applying validation based

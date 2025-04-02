@@ -28,7 +28,7 @@ func MakeGenesisMiniblockForSpaceStream(
 	)
 	require.NoError(t, err)
 
-	mb, err := MakeGenesisMiniblock(nodeWallet, []*ParsedEvent{inception})
+	mb, _, err := MakeGenesisMiniblock(nodeWallet, []*ParsedEvent{inception})
 	require.NoError(t, err)
 
 	mbInfo, err := NewMiniblockInfoFromProto(
@@ -52,7 +52,7 @@ func MakeGenesisMiniblockForUserSettingsStream(
 	)
 	require.NoError(t, err)
 
-	mb, err := MakeGenesisMiniblock(nodeWallet, []*ParsedEvent{inception})
+	mb, _, err := MakeGenesisMiniblock(nodeWallet, []*ParsedEvent{inception})
 	require.NoError(t, err)
 
 	mbInfo, err := NewMiniblockInfoFromProto(
@@ -77,7 +77,7 @@ func MakeGenesisMiniblockForMediaStream(
 	)
 	require.NoError(t, err)
 
-	mb, err := MakeGenesisMiniblock(nodeWallet, []*ParsedEvent{inception})
+	mb, _, err := MakeGenesisMiniblock(nodeWallet, []*ParsedEvent{inception})
 	require.NoError(t, err)
 
 	mbInfo, err := NewMiniblockInfoFromProto(
