@@ -313,7 +313,13 @@ func (j *mbJob) saveCandidate(ctx context.Context) error {
 	})
 
 	qp.AddNodeTasks(j.remoteNodes, func(ctx context.Context, node common.Address) error {
-		return j.cache.Params().RemoteMiniblockProvider.SaveMbCandidate(ctx, node, j.stream.streamId, j.candidate.Proto)
+		return j.cache.Params().RemoteMiniblockProvider.SaveMbCandidate(
+			ctx,
+			node,
+			j.stream.streamId,
+			j.candidate.Proto,
+			j.candidate.Snapshot,
+		)
 	})
 
 	return qp.Wait()

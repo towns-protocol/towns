@@ -39,6 +39,7 @@ func (s *Service) SaveMbCandidate(
 	node common.Address,
 	streamId StreamId,
 	mb *Miniblock,
+	sn *Envelope,
 ) error {
 	stub, err := s.nodeRegistry.GetNodeToNodeClientForAddress(node)
 	if err != nil {
@@ -50,6 +51,7 @@ func (s *Service) SaveMbCandidate(
 		connect.NewRequest(&SaveMiniblockCandidateRequest{
 			StreamId:  streamId[:],
 			Miniblock: mb,
+			Snapshot:  sn,
 		}),
 	)
 

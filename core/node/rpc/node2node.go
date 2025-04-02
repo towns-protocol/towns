@@ -207,7 +207,7 @@ func (s *Service) saveMiniblockCandidate(
 		return nil, err
 	}
 
-	err = stream.SaveMiniblockCandidate(ctx, req.GetMiniblock())
+	err = stream.SaveMiniblockCandidate(ctx, req.GetMiniblock(), req.GetSnapshot())
 	if err != nil {
 		return nil, err
 	}

@@ -16,10 +16,13 @@ import (
 )
 
 type MiniblockInfo struct {
-	Ref                *MiniblockRef
-	Proto              *Miniblock
+	Ref      *MiniblockRef
+	Proto    *Miniblock
+	Snapshot *Envelope
+
 	headerEvent        *ParsedEvent
 	useGetterForEvents []*ParsedEvent // Use events(). Getter checks if events have been initialized.
+	snapshot           *ParsedEvent
 }
 
 // NewMiniblockInfoFromProto initializes a MiniblockInfo from a proto, applying validation based
