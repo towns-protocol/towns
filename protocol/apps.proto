@@ -67,8 +67,8 @@ message GetStatusResponse {
     // info included in the response body.
     bool valid_response = 2;
 
-    // version info returned by the webhook
-    string version_info = 3;
+    // Forward the status returned by the bot service.
+    AppServiceResponse.StatusResponse status = 3;
 }
 
 // As a performance optimization, we may wish to bundle together many key solicitation requests

@@ -10,6 +10,8 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 
+	ttlcache "github.com/patrickmn/go-cache"
+
 	"github.com/towns-protocol/towns/core/config"
 	"github.com/towns-protocol/towns/core/node/app_registry/app_client"
 	"github.com/towns-protocol/towns/core/node/app_registry/sync"
@@ -43,6 +45,7 @@ type (
 		appClient                     *app_client.AppClient
 		riverRegistry                 *registries.RiverRegistryContract
 		nodeRegistry                  nodes.NodeRegistry
+		statusCache                   *ttlcache.Cache
 	}
 )
 
@@ -113,6 +116,7 @@ func NewService(
 		appClient:                     appClient,
 		riverRegistry:                 riverRegistry,
 		nodeRegistry:                  nodes[0],
+		statusCache:                   ttlcache.New(2*time.Second, 1*time.Minute),
 	}
 
 	if err := s.InitAuthentication(appServiceChallengePrefix, &cfg.Authentication); err != nil {
@@ -354,6 +358,10 @@ func (s *Service) RegisterWebhook(
 			Tag("responseFallbackKey", serverEncryptionDevice.FallbackKey)
 	}
 
+	// Bust the status cache since the webhook may be changing. This method can be called
+	// many times to update the webhook.
+	s.statusCache.Delete(app.String())
+
 	// Store the app record in pg
 	if err := s.store.RegisterWebhook(ctx, app, webhook, defaultEncryptionDevice.DeviceKey, defaultEncryptionDevice.FallbackKey); err != nil {
 		return nil, base.AsRiverError(err, Err_INTERNAL).Func("RegisterWebhook")
@@ -366,20 +374,36 @@ func (s *Service) GetStatus(
 	ctx context.Context,
 	req *connect.Request[GetStatusRequest],
 ) (
-	*connect.Response[GetStatusResponse],
-	error,
+	resp *connect.Response[GetStatusResponse],
+	err error,
 ) {
+	defer func() {
+		if err != nil {
+			err = base.AsRiverError(err, Err_INTERNAL).Func("GetStatus")
+		}
+	}()
 	app, err := base.BytesToAddress(req.Msg.AppId)
 	if err != nil {
 		return nil, base.WrapRiverError(Err_INVALID_ARGUMENT, err).
 			Message("invalid app id").
-			Tag("app_id", req.Msg.AppId).
-			Func("GetStatus")
+			Tag("app_id", req.Msg.AppId)
 	}
 
-	// TODO: implement 2 second caching here as a security measure against
-	// DoS attacks.
-	if _, err = s.store.GetAppInfo(ctx, app); err != nil {
+	// Check for cached status response
+	if cached, ok := s.statusCache.Get(app.String()); ok {
+		if status, ok := cached.(*AppServiceResponse_StatusResponse); ok {
+			return &connect.Response[GetStatusResponse]{
+				Msg: &GetStatusResponse{
+					IsRegistered:  true,
+					ValidResponse: true,
+					Status:        status,
+				},
+			}, nil
+		}
+	}
+
+	appInfo, err := s.store.GetAppInfo(ctx, app)
+	if err != nil {
 		// App does not exist
 		if base.IsRiverErrorCode(err, Err_NOT_FOUND) {
 			return &connect.Response[GetStatusResponse]{
@@ -391,16 +415,40 @@ func (s *Service) GetStatus(
 			// Error fetching app
 			return nil, base.WrapRiverError(Err_INTERNAL, err).
 				Message("unable to fetch info for app").
-				Tag("app_id", app).
-				Func("GetStatus")
+				Tag("app_id", app)
 		}
 	}
 
-	// TODO: issue request to app service, confirm 200 response, and
-	// validate returned version info. Return in the response.
+	decryptedSecret, err := decryptSharedSecret(appInfo.EncryptedSecret, s.sharedSecretDataEncryptionKey)
+	if err != nil {
+		return nil, base.WrapRiverError(Err_INTERNAL, err).
+			Message("Unable to decrypt app shared secret from db").
+			Tag("appId", app)
+	}
+
+	status, err := s.appClient.GetWebhookStatus(ctx, appInfo.WebhookUrl, app, decryptedSecret)
+	if err != nil {
+		if base.IsRiverErrorCode(err, Err_MALFORMED_WEBHOOK_RESPONSE) {
+			// App is registered but returned an invalid response
+			return &connect.Response[GetStatusResponse]{
+				Msg: &GetStatusResponse{
+					IsRegistered: true,
+				},
+			}, nil
+		} else {
+			return nil, base.WrapRiverError(Err_INTERNAL, err).
+				Message("Unable to call app webhook").
+				Tag("app_id", app)
+		}
+	}
+
+	s.statusCache.Set(app.String(), status, 0)
+
 	return &connect.Response[GetStatusResponse]{
 		Msg: &GetStatusResponse{
-			IsRegistered: true,
+			IsRegistered:  true,
+			ValidResponse: true,
+			Status:        status,
 		},
 	}, nil
 }
