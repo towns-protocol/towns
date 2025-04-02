@@ -7945,7 +7945,7 @@ __metadata:
     typescript: ^5.8.2
   peerDependencies:
     react: ^18.2.0
-    typescript: ^5.8.2
+    typescript: ^5
   languageName: unknown
   linkType: soft
 

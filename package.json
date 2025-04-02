@@ -79,8 +79,7 @@
     "syncpack": {
         "dependencyTypes": [
             "dev",
-            "prod",
-            "peer"
+            "prod"
         ],
         "indent": "    ",
         "sortFirst": [
