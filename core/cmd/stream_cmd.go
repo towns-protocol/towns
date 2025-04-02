@@ -59,7 +59,7 @@ func runStreamGetEventCmd(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	nodes := nodes.NewStreamNodesWithLock(stream.Nodes, common.Address{})
+	nodes := nodes.NewStreamNodesWithLock(stream.StreamReplicationFactor(), stream.Nodes, common.Address{})
 	remoteNodeAddress := nodes.GetStickyPeer()
 
 	remote, err := registryContract.NodeRegistry.GetNode(nil, remoteNodeAddress)
@@ -161,7 +161,7 @@ func runStreamGetMiniblockCmd(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	nodes := nodes.NewStreamNodesWithLock(stream.Nodes, common.Address{})
+	nodes := nodes.NewStreamNodesWithLock(stream.StreamReplicationFactor(), stream.Nodes, common.Address{})
 	remoteNodeAddress := nodes.GetStickyPeer()
 
 	remote, err := registryContract.NodeRegistry.GetNode(nil, remoteNodeAddress)
@@ -303,7 +303,7 @@ func runStreamGetMiniblockNumCmd(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	nodes := nodes.NewStreamNodesWithLock(stream.Nodes, common.Address{})
+	nodes := nodes.NewStreamNodesWithLock(stream.StreamReplicationFactor(), stream.Nodes, common.Address{})
 	remoteNodeAddress := nodes.GetStickyPeer()
 
 	remote, err := registryContract.NodeRegistry.GetNode(nil, remoteNodeAddress)
@@ -408,7 +408,7 @@ func runStreamDumpCmd(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	nodes := nodes.NewStreamNodesWithLock(stream.Nodes, common.Address{})
+	nodes := nodes.NewStreamNodesWithLock(stream.StreamReplicationFactor(), stream.Nodes, common.Address{})
 	remoteNodeAddress := nodes.GetStickyPeer()
 
 	remote, err := registryContract.NodeRegistry.GetNode(nil, remoteNodeAddress)
@@ -626,7 +626,7 @@ func runStreamGetCmd(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	nodes := nodes.NewStreamNodesWithLock(streamRecord.Nodes, common.Address{})
+	nodes := nodes.NewStreamNodesWithLock(streamRecord.StreamReplicationFactor(), streamRecord.Nodes, common.Address{})
 	remoteNodeAddress := nodes.GetStickyPeer()
 
 	remote, err := registryContract.NodeRegistry.GetNode(nil, remoteNodeAddress)
