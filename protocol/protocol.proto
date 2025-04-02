@@ -1034,7 +1034,6 @@ service StreamService {
     rpc GetLastMiniblockHash(GetLastMiniblockHashRequest) returns (GetLastMiniblockHashResponse);
     rpc AddEvent(AddEventRequest) returns (AddEventResponse);
     rpc AddMediaEvent(AddMediaEventRequest) returns (AddMediaEventResponse);
-    // TODO: rpc GetSnapshot(GetSnapshotRequest) returns (GetSnapshotResponse);
     rpc SyncStreams(SyncStreamsRequest) returns (stream SyncStreamsResponse);
     rpc AddStreamToSync(AddStreamToSyncRequest) returns (AddStreamToSyncResponse);
     // ModifySync adds/removes streams to/from an in progress sync session.
