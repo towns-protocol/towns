@@ -76,18 +76,18 @@ func (s *StreamNodesWithoutLock) ResetFromStreamResult(result *registries.GetStr
 
 func (s *StreamNodesWithoutLock) Reset(replicationFactor int, nodes []common.Address, localNode common.Address) {
 	var lastStickyAddr common.Address
-	if s.stickyPeerIndex < len(s.quorumNodes) {
-		lastStickyAddr = s.quorumNodes[s.stickyPeerIndex]
+	if s.stickyPeerIndex < len(s.remotes) {
+		lastStickyAddr = s.remotes[s.stickyPeerIndex]
 	}
 
 	s.quorumNodes = slices.Clone(nodes[:replicationFactor])
 	s.syncNodes = slices.Clone(nodes[replicationFactor:])
-	s.isLocalInQuorum = slices.Contains(s.quorumNodes, localNode)
+	s.isLocal = slices.Contains(nodes, localNode)
 
 	localIndex := slices.Index(s.quorumNodes, localNode)
-	s.isLocal = localIndex >= 0
+	s.isLocalInQuorum = localIndex >= 0
 
-	if s.isLocal {
+	if s.isLocalInQuorum {
 		s.remotes = slices.Concat(s.quorumNodes[:localIndex], s.quorumNodes[localIndex+1:])
 	} else {
 		s.remotes = slices.Clone(s.quorumNodes)
