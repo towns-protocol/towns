@@ -82,7 +82,7 @@ func (s *Service) GetMbs(
 	mbs := make([]*MiniblockInfo, len(resp.Msg.GetMiniblocks()))
 	for i, mbProto := range resp.Msg.GetMiniblocks() {
 		mbs[i], err = NewMiniblockInfoFromProto(
-			mbProto,
+			mbProto, resp.Msg.GetMiniblockSnapshot(fromInclusive+int64(i)),
 			NewParsedMiniblockInfoOpts().WithExpectedBlockNumber(fromInclusive+int64(i)),
 		)
 		if err != nil {

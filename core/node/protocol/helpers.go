@@ -53,3 +53,13 @@ func (sc *SyncCookie) CopyWithAddr(address common.Address) *SyncCookie {
 		PrevMiniblockHash: sc.GetPrevMiniblockHash(),
 	}
 }
+
+// GetMiniblockSnapshot returns the snapshot for the given miniblock number.
+// Returns nil if the snapshot is not found.
+func (x *GetMiniblocksResponse) GetMiniblockSnapshot(num int64) *Envelope {
+	if x == nil || x.Snapshots == nil {
+		return nil
+	}
+
+	return x.Snapshots[num]
+}

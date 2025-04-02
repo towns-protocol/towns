@@ -28,7 +28,7 @@ type MiniblockInfo struct {
 // NewMiniblockInfoFromProto initializes a MiniblockInfo from a proto, applying validation based
 // on whatever is set in the opts. If an empty opts is passed in, the method will still perform
 // some minimal validation to confirm that event counts between the header and body match.
-func NewMiniblockInfoFromProto(mb *Miniblock, opts *ParsedMiniblockInfoOpts) (*MiniblockInfo, error) {
+func NewMiniblockInfoFromProto(mb *Miniblock, sn *Envelope, opts *ParsedMiniblockInfoOpts) (*MiniblockInfo, error) {
 	headerEvent, err := ParseEvent(mb.Header)
 	if err != nil {
 		return nil, AsRiverError(
@@ -142,22 +142,6 @@ func NewMiniblockInfoFromProto(mb *Miniblock, opts *ParsedMiniblockInfoOpts) (*M
 	}, nil
 }
 
-func NewMiniblocksInfoFromProtos(pbs []*Miniblock, opts *ParsedMiniblockInfoOpts) ([]*MiniblockInfo, error) {
-	var err error
-	mbs := make([]*MiniblockInfo, len(pbs))
-	for i, pb := range pbs {
-		o := opts
-		mbs[i], err = NewMiniblockInfoFromProto(pb, o)
-		if o.HasExpectedBlockNumber() {
-			o.WithExpectedBlockNumber(o.GetExpectedBlockNumber() + 1)
-		}
-		if err != nil {
-			return nil, AsRiverError(err, Err_BAD_BLOCK).Func("NewMiniblockInfoFromProtos").Tag("ithBlock", i)
-		}
-	}
-	return mbs, nil
-}
-
 func NewMiniblockInfoFromParsed(headerEvent *ParsedEvent, events []*ParsedEvent) (*MiniblockInfo, error) {
 	if headerEvent.Event.GetMiniblockHeader() == nil {
 		return nil, RiverError(Err_BAD_EVENT, "header event must be a block header")
@@ -203,21 +187,17 @@ func NewMiniblockInfoFromHeaderAndParsed(
 }
 
 func NewMiniblockInfoFromDescriptor(mb *storage.MiniblockDescriptor) (*MiniblockInfo, error) {
-	var pb Miniblock
-	if err := proto.Unmarshal(mb.Data, &pb); err != nil {
-		return nil, AsRiverError(err, Err_INVALID_ARGUMENT).
-			Message("Failed to decode miniblock from bytes").
-			Func("NewMiniblockInfoFromDescriptor")
-	}
-
 	opts := NewParsedMiniblockInfoOpts()
 	if mb.Number > -1 {
 		opts = opts.WithExpectedBlockNumber(mb.Number)
 	}
-	return NewMiniblockInfoFromProto(&pb, opts)
+	return NewMiniblockInfoFromDescriptorWithOpts(mb, opts)
 }
 
-func NewMiniblockInfoFromDescriptorWithOpts(mb *storage.MiniblockDescriptor, opts *ParsedMiniblockInfoOpts) (*MiniblockInfo, error) {
+func NewMiniblockInfoFromDescriptorWithOpts(
+	mb *storage.MiniblockDescriptor,
+	opts *ParsedMiniblockInfoOpts,
+) (*MiniblockInfo, error) {
 	var pb Miniblock
 	if err := proto.Unmarshal(mb.Data, &pb); err != nil {
 		return nil, AsRiverError(err, Err_INVALID_ARGUMENT).
@@ -225,7 +205,17 @@ func NewMiniblockInfoFromDescriptorWithOpts(mb *storage.MiniblockDescriptor, opt
 			Func("NewMiniblockInfoFromDescriptorWithOpts")
 	}
 
-	return NewMiniblockInfoFromProto(&pb, opts)
+	var snapshot *Envelope
+	if len(mb.Snapshot) > 0 {
+		snapshot = &Envelope{}
+		if err := proto.Unmarshal(mb.Snapshot, snapshot); err != nil {
+			return nil, AsRiverError(err, Err_INVALID_ARGUMENT).
+				Message("Failed to decode snapshot from bytes").
+				Func("NewMiniblockInfoFromDescriptor")
+		}
+	}
+
+	return NewMiniblockInfoFromProto(&pb, snapshot, opts)
 }
 
 func (b *MiniblockInfo) Events() []*ParsedEvent {
@@ -307,6 +297,7 @@ type ParsedMiniblockInfoOpts struct {
 	expectedMinimumTimestampExclusive *time.Time
 	expectedPrevSnapshotMiniblockNum  *int64
 	dontParseEvents                   bool
+	skipSnapshotValidation            bool
 }
 
 func NewParsedMiniblockInfoOpts() *ParsedMiniblockInfoOpts {
@@ -390,4 +381,13 @@ func (p *ParsedMiniblockInfoOpts) WithDoNotParseEvents(doNotParse bool) *ParsedM
 
 func (p *ParsedMiniblockInfoOpts) DoNotParseEvents() bool {
 	return p.dontParseEvents
+}
+
+func (p *ParsedMiniblockInfoOpts) WithSkipSnapshotValidation() *ParsedMiniblockInfoOpts {
+	p.skipSnapshotValidation = true
+	return p
+}
+
+func (p *ParsedMiniblockInfoOpts) SkipSnapshotValidation() bool {
+	return p.skipSnapshotValidation
 }

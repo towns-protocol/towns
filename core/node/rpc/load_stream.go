@@ -77,7 +77,7 @@ func (s *remoteStream) GetMiniblocks(
 	mbs := make([]*MiniblockInfo, len(res.Msg.GetMiniblocks()))
 	for i, mbProto := range res.Msg.GetMiniblocks() {
 		mbs[i], err = NewMiniblockInfoFromProto(
-			mbProto,
+			mbProto, res.Msg.GetMiniblockSnapshot(fromInclusive+int64(i)),
 			NewParsedMiniblockInfoOpts().WithExpectedBlockNumber(fromInclusive+int64(i)),
 		)
 		if err != nil {

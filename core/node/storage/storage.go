@@ -32,9 +32,10 @@ type (
 	}
 
 	MiniblockDescriptor struct {
-		Number int64
-		Data   []byte
-		Hash   common.Hash // Only set for miniblock candidates
+		Number   int64
+		Data     []byte
+		Hash     common.Hash // Only set for miniblock candidates
+		Snapshot []byte
 	}
 
 	EventDescriptor struct {

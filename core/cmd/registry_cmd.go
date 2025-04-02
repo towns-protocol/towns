@@ -131,10 +131,16 @@ func validateStream(
 
 	fmt.Printf("      Miniblocks: %d\n", len(stream.Miniblocks))
 	var lastBlock *MiniblockRef
-	for _, mb := range stream.Miniblocks {
+	for i, mb := range stream.Miniblocks {
+		var snapshotEnv *Envelope
+		if i == 0 {
+			snapshotEnv = stream.GetSnapshot()
+		}
+
 		info, err := events.NewMiniblockInfoFromProto(
-			mb,
-			events.NewParsedMiniblockInfoOpts().WithDoNotParseEvents(true),
+			mb, snapshotEnv,
+			events.NewParsedMiniblockInfoOpts().
+				WithDoNotParseEvents(true),
 		)
 		if err != nil {
 			return err

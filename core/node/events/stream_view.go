@@ -118,10 +118,12 @@ func MakeRemoteStreamView(stream *StreamAndCookie) (*StreamView, error) {
 			opts = opts.WithExpectedBlockNumber(lastMiniblockNumber + 1)
 		}
 
-		miniblock, err := NewMiniblockInfoFromProto(
-			binMiniblock,
-			opts,
-		)
+		var snapshot *Envelope
+		if i == 0 {
+			snapshot = stream.Snapshot
+		}
+
+		miniblock, err := NewMiniblockInfoFromProto(binMiniblock, snapshot, opts)
 		if err != nil {
 			return nil, err
 		}

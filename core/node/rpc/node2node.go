@@ -207,7 +207,10 @@ func (s *Service) saveMiniblockCandidate(
 		return nil, err
 	}
 
-	mbInfo, err := NewMiniblockInfoFromProto(req.GetMiniblock(), NewParsedMiniblockInfoOpts())
+	mbInfo, err := NewMiniblockInfoFromProto(
+		req.GetMiniblock(), req.GetSnapshot(),
+		NewParsedMiniblockInfoOpts(),
+	)
 	if err != nil {
 		return nil, err
 	}

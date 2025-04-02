@@ -89,7 +89,10 @@ func (s *Service) saveEphemeralMiniblock(ctx context.Context, req *SaveEphemeral
 		return err
 	}
 
-	mbInfo, err := NewMiniblockInfoFromProto(req.GetMiniblock(), NewParsedMiniblockInfoOpts())
+	mbInfo, err := NewMiniblockInfoFromProto(
+		req.GetMiniblock(), req.GetSnapshot(),
+		NewParsedMiniblockInfoOpts(),
+	)
 	if err != nil {
 		return err
 	}
