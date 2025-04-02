@@ -137,6 +137,7 @@ func NewMiniblockInfoFromProto(mb *Miniblock, sn *Envelope, opts *ParsedMinibloc
 			Num:  blockHeader.MiniblockNum,
 		},
 		Proto:              mb,
+		Snapshot:           sn,
 		headerEvent:        headerEvent,
 		useGetterForEvents: events,
 	}, nil
