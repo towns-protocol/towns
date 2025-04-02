@@ -123,11 +123,12 @@ func (d *AppDispatcher) SubmitMessages(
 		func() {
 			if err := d.appClient.SendSessionMessages(
 				ctx,
+				messages.StreamId,
 				messages.AppId,
 				sharedSecret,
-				messages.EncryptionEnvelope,
-				messages.WebhookUrl,
 				messages.MessageEnvelopes,
+				[][]byte{messages.EncryptionEnvelope},
+				messages.WebhookUrl,
 			); err != nil {
 				// TODO: retry logic?
 				logging.FromCtx(ctx).Errorw(
@@ -138,6 +139,8 @@ func (d *AppDispatcher) SubmitMessages(
 					messages.DeviceKey,
 					"webHookUrl",
 					messages.WebhookUrl,
+					"streamId",
+					messages.StreamId,
 					"error",
 					err,
 				)
