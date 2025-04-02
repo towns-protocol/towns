@@ -128,6 +128,7 @@ func makeCacheTestContext(t *testing.T, p testParams) (context.Context, *cacheTe
 			bc.Wallet.Address,
 			blockNumber,
 			bc.ChainMonitor,
+			btc.OnChainConfig,
 			nil,
 			nil,
 		)

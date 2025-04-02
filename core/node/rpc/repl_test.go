@@ -310,3 +310,29 @@ func TestStreamReconciliationForKnownStreams(t *testing.T) {
 	require.Equal(latestMbNum, view.LastBlock().Ref.Num, "unexpected last mini-block num")
 	require.Equal(mbChain[latestMbNum], view.LastBlock().Ref.Hash, "unexpected last mini-block hash")
 }
+
+func TestStreamAllocatedAcrossOperators(t *testing.T) {
+	tt := newServiceTester(t, serviceTesterOpts{numNodes: 6, replicationFactor: 3, numOperators: 3, start: true})
+	ctx := tt.ctx
+	require := tt.require
+
+	for i := range 10 {
+		alice := tt.newTestClient(i%tt.opts.numNodes, testClientOpts{})
+		cookie := alice.createUserStreamGetCookie()
+		streamId, _ := StreamIdFromBytes(cookie.StreamId)
+
+		node := tt.nodes[(i+5)%tt.opts.numNodes]
+		stream, err := node.service.registryContract.GetStreamOnLatestBlock(ctx, streamId)
+		require.NoError(err)
+		require.Len(stream.Nodes, 3)
+
+		operators := make(map[common.Address]bool)
+		for _, nodeAddr := range stream.Nodes {
+			n, err := node.service.nodeRegistry.GetNode(nodeAddr)
+			require.NoError(err)
+			require.False(operators[n.Operator()])
+			operators[n.Operator()] = true
+		}
+		require.Len(operators, 3)
+	}
+}
