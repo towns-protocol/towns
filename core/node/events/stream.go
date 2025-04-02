@@ -879,16 +879,8 @@ func (s *Stream) getStatus() *streamImplStatus {
 // the first block in the list of pending candidates, it will be applied. This method is thread-safe.
 // Note: saving the candidate itself, without applying it, does not modify the stream's in-memory
 // cached state at all.
-func (s *Stream) SaveMiniblockCandidate(ctx context.Context, mb *Miniblock, sn *Envelope) error {
-	mbInfo, err := NewMiniblockInfoFromProto(
-		mb,
-		NewParsedMiniblockInfoOpts(),
-	)
-	if err != nil {
-		return err
-	}
-
-	applied, err := s.tryApplyCandidate(ctx, mbInfo)
+func (s *Stream) SaveMiniblockCandidate(ctx context.Context, candidate *MiniblockInfo) error {
+	applied, err := s.tryApplyCandidate(ctx, candidate)
 	if err != nil {
 		return err
 	}
@@ -896,7 +888,7 @@ func (s *Stream) SaveMiniblockCandidate(ctx context.Context, mb *Miniblock, sn *
 		return nil
 	}
 
-	storageMb, err := mbInfo.AsStorageMb()
+	storageMb, err := candidate.AsStorageMb()
 	if err != nil {
 		return err
 	}

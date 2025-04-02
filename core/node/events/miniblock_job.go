@@ -317,8 +317,7 @@ func (j *mbJob) saveCandidate(ctx context.Context) error {
 			ctx,
 			node,
 			j.stream.streamId,
-			j.candidate.Proto,
-			j.candidate.Snapshot,
+			j.candidate,
 		)
 	})
 

@@ -328,8 +328,7 @@ func (ctc *cacheTestContext) SaveMbCandidate(
 	ctx context.Context,
 	node common.Address,
 	streamId StreamId,
-	mb *Miniblock,
-	sn *Envelope,
+	candidate *MiniblockInfo,
 ) error {
 	inst := ctc.instancesByAddr[node]
 
@@ -338,7 +337,7 @@ func (ctc *cacheTestContext) SaveMbCandidate(
 		return err
 	}
 
-	return stream.SaveMiniblockCandidate(ctx, mb, sn)
+	return stream.SaveMiniblockCandidate(ctx, candidate)
 }
 
 func (ctc *cacheTestContext) GetMbs(

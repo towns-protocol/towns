@@ -37,8 +37,7 @@ type RemoteMiniblockProvider interface {
 		ctx context.Context,
 		node common.Address,
 		streamId StreamId,
-		mb *Miniblock,
-		sn *Envelope,
+		candidate *MiniblockInfo,
 	) error
 
 	// GetMbs returns a range of miniblocks from the given stream from the given node.

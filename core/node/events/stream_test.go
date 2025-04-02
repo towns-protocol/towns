@@ -283,9 +283,9 @@ func TestCandidatePromotionCandidateInPlace(t *testing.T) {
 	require.EqualValues(view.LastBlock().Ref.Hash[:], mb.PrevMiniblockHash)
 	require.Equal(int64(1), mb.MiniblockNum)
 
-	require.NoError(stream.SaveMiniblockCandidate(ctx, candidate.Proto, candidate.Snapshot))
+	require.NoError(stream.SaveMiniblockCandidate(ctx, candidate))
 
-	err = stream.SaveMiniblockCandidate(ctx, candidate.Proto, candidate.Snapshot)
+	err = stream.SaveMiniblockCandidate(ctx, candidate)
 	require.ErrorIs(err, RiverError(Err_ALREADY_EXISTS, ""))
 
 	require.NoError(stream.promoteCandidate(ctx, candidate.Ref))
@@ -336,7 +336,7 @@ func TestCandidatePromotionCandidateIsDelayed(t *testing.T) {
 	require.Len(stream.local.pendingCandidates, 1)
 	require.EqualValues(candidate1.Ref, stream.local.pendingCandidates[0])
 
-	require.NoError(stream.SaveMiniblockCandidate(ctx, candidate1.Proto, candidate1.Snapshot))
+	require.NoError(stream.SaveMiniblockCandidate(ctx, candidate1))
 
 	view = getView(t, ctx, stream)
 	require.Equal(int64(1), view.LastBlock().Ref.Num)
@@ -382,13 +382,13 @@ func TestCandidatePromotionCandidateIsDelayed(t *testing.T) {
 		require.Len(stream.local.pendingCandidates, 3)
 
 		if i == 0 {
-			require.NoError(stream.SaveMiniblockCandidate(ctx, candidate2.Proto, candidate2.Snapshot))
-			require.NoError(stream.SaveMiniblockCandidate(ctx, candidate3.Proto, candidate3.Snapshot))
-			require.NoError(stream.SaveMiniblockCandidate(ctx, candidate4.Proto, candidate4.Snapshot))
+			require.NoError(stream.SaveMiniblockCandidate(ctx, candidate2))
+			require.NoError(stream.SaveMiniblockCandidate(ctx, candidate3))
+			require.NoError(stream.SaveMiniblockCandidate(ctx, candidate4))
 		} else {
-			require.NoError(stream.SaveMiniblockCandidate(ctx, candidate4.Proto, candidate4.Snapshot))
-			require.NoError(stream.SaveMiniblockCandidate(ctx, candidate2.Proto, candidate2.Snapshot))
-			require.NoError(stream.SaveMiniblockCandidate(ctx, candidate3.Proto, candidate3.Snapshot))
+			require.NoError(stream.SaveMiniblockCandidate(ctx, candidate4))
+			require.NoError(stream.SaveMiniblockCandidate(ctx, candidate2))
+			require.NoError(stream.SaveMiniblockCandidate(ctx, candidate3))
 		}
 
 		view = getView(t, ctx, stream)

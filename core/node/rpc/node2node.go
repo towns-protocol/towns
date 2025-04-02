@@ -207,7 +207,12 @@ func (s *Service) saveMiniblockCandidate(
 		return nil, err
 	}
 
-	err = stream.SaveMiniblockCandidate(ctx, req.GetMiniblock(), req.GetSnapshot())
+	mbInfo, err := NewMiniblockInfoFromProto(req.GetMiniblock(), NewParsedMiniblockInfoOpts())
+	if err != nil {
+		return nil, err
+	}
+
+	err = stream.SaveMiniblockCandidate(ctx, mbInfo)
 	if err != nil {
 		return nil, err
 	}
