@@ -112,6 +112,7 @@ message StreamEvent {
         MediaPayload media_payload = 108;
         DmChannelPayload dm_channel_payload = 109;
         GdmChannelPayload gdm_channel_payload = 110;
+        Snapshot snapshot = 111;
     }
 }
 
@@ -604,7 +605,6 @@ message MediaPayload {
 * Snapshot contains a summary of all state events up to the most recent miniblock
 */
 message Snapshot {
-    
     MemberPayload.Snapshot members = 1;
     int32 snapshot_version = 2;
     
@@ -803,13 +803,11 @@ message CreationCookie {
 message StreamAndCookie {
     repeated Envelope events = 1;
     SyncCookie next_sync_cookie = 2;
-    // if non-empty, contains all blocks since the latest snapshot, miniblocks[0].header is the latest snapshot
+    // if non-empty, contains all blocks since the latest snapshot
     repeated Miniblock miniblocks = 3;
     bool sync_reset = 4;
-}
-
-message GetStreamExRequest {
-    bytes stream_id = 1;
+    // if non-empty, contains the latest snapshot of the stream
+    optional Envelope snapshot = 5;
 }
 
 message Minipool {
@@ -822,6 +820,20 @@ message Tags {
     repeated bytes mentioned_user_addresses = 3;
     repeated bytes participating_user_addresses = 4;
     optional bytes thread_id = 5;
+}
+
+message InfoRequest {
+    repeated string debug = 1;
+}
+
+message InfoResponse {
+    string graffiti = 1;
+    google.protobuf.Timestamp start_time = 2;
+    string version = 3;
+}
+
+message GetStreamExRequest {
+    bytes stream_id = 1;
 }
 
 // GetStreamExResponse is a stream of raw data that represents the current state of the requested stream.
@@ -874,8 +886,8 @@ message GetStreamResponse {
 
 message GetMiniblocksRequest {
     bytes stream_id = 1;
-    int64 fromInclusive = 2;
-    int64 toExclusive = 3;
+    int64 from_inclusive = 2;
+    int64 to_exclusive = 3;
 }
 
 message GetMiniblocksResponse {
@@ -1013,17 +1025,8 @@ message PingSyncRequest {
 
 message PingSyncResponse {}
 
-message InfoRequest {
-    repeated string debug = 1;
-}
-
-message InfoResponse {
-    string graffiti = 1;
-    google.protobuf.Timestamp start_time = 2;
-    string version = 3;
-}
-
 service StreamService {
+    rpc Info(InfoRequest) returns (InfoResponse);
     rpc CreateStream(CreateStreamRequest) returns (CreateStreamResponse);
     rpc CreateMediaStream(CreateMediaStreamRequest) returns (CreateMediaStreamResponse);
     rpc GetStream(GetStreamRequest) returns (GetStreamResponse);
@@ -1042,7 +1045,6 @@ service StreamService {
     rpc ModifySync(ModifySyncRequest) returns (ModifySyncResponse);
     rpc CancelSync(CancelSyncRequest) returns (CancelSyncResponse);
     rpc RemoveStreamFromSync(RemoveStreamFromSyncRequest) returns (RemoveStreamFromSyncResponse);
-    rpc Info(InfoRequest) returns (InfoResponse);
     rpc PingSync(PingSyncRequest) returns (PingSyncResponse);
 }
 

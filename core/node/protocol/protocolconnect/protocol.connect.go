@@ -33,6 +33,8 @@ const (
 // reflection-formatted method names, remove the leading slash and convert the remaining slash to a
 // period.
 const (
+	// StreamServiceInfoProcedure is the fully-qualified name of the StreamService's Info RPC.
+	StreamServiceInfoProcedure = "/river.StreamService/Info"
 	// StreamServiceCreateStreamProcedure is the fully-qualified name of the StreamService's
 	// CreateStream RPC.
 	StreamServiceCreateStreamProcedure = "/river.StreamService/CreateStream"
@@ -70,8 +72,6 @@ const (
 	// StreamServiceRemoveStreamFromSyncProcedure is the fully-qualified name of the StreamService's
 	// RemoveStreamFromSync RPC.
 	StreamServiceRemoveStreamFromSyncProcedure = "/river.StreamService/RemoveStreamFromSync"
-	// StreamServiceInfoProcedure is the fully-qualified name of the StreamService's Info RPC.
-	StreamServiceInfoProcedure = "/river.StreamService/Info"
 	// StreamServicePingSyncProcedure is the fully-qualified name of the StreamService's PingSync RPC.
 	StreamServicePingSyncProcedure = "/river.StreamService/PingSync"
 )
@@ -79,6 +79,7 @@ const (
 // These variables are the protoreflect.Descriptor objects for the RPCs defined in this package.
 var (
 	streamServiceServiceDescriptor                    = protocol.File_protocol_proto.Services().ByName("StreamService")
+	streamServiceInfoMethodDescriptor                 = streamServiceServiceDescriptor.Methods().ByName("Info")
 	streamServiceCreateStreamMethodDescriptor         = streamServiceServiceDescriptor.Methods().ByName("CreateStream")
 	streamServiceCreateMediaStreamMethodDescriptor    = streamServiceServiceDescriptor.Methods().ByName("CreateMediaStream")
 	streamServiceGetStreamMethodDescriptor            = streamServiceServiceDescriptor.Methods().ByName("GetStream")
@@ -92,12 +93,12 @@ var (
 	streamServiceModifySyncMethodDescriptor           = streamServiceServiceDescriptor.Methods().ByName("ModifySync")
 	streamServiceCancelSyncMethodDescriptor           = streamServiceServiceDescriptor.Methods().ByName("CancelSync")
 	streamServiceRemoveStreamFromSyncMethodDescriptor = streamServiceServiceDescriptor.Methods().ByName("RemoveStreamFromSync")
-	streamServiceInfoMethodDescriptor                 = streamServiceServiceDescriptor.Methods().ByName("Info")
 	streamServicePingSyncMethodDescriptor             = streamServiceServiceDescriptor.Methods().ByName("PingSync")
 )
 
 // StreamServiceClient is a client for the river.StreamService service.
 type StreamServiceClient interface {
+	Info(context.Context, *connect.Request[protocol.InfoRequest]) (*connect.Response[protocol.InfoResponse], error)
 	CreateStream(context.Context, *connect.Request[protocol.CreateStreamRequest]) (*connect.Response[protocol.CreateStreamResponse], error)
 	CreateMediaStream(context.Context, *connect.Request[protocol.CreateMediaStreamRequest]) (*connect.Response[protocol.CreateMediaStreamResponse], error)
 	GetStream(context.Context, *connect.Request[protocol.GetStreamRequest]) (*connect.Response[protocol.GetStreamResponse], error)
@@ -116,7 +117,6 @@ type StreamServiceClient interface {
 	ModifySync(context.Context, *connect.Request[protocol.ModifySyncRequest]) (*connect.Response[protocol.ModifySyncResponse], error)
 	CancelSync(context.Context, *connect.Request[protocol.CancelSyncRequest]) (*connect.Response[protocol.CancelSyncResponse], error)
 	RemoveStreamFromSync(context.Context, *connect.Request[protocol.RemoveStreamFromSyncRequest]) (*connect.Response[protocol.RemoveStreamFromSyncResponse], error)
-	Info(context.Context, *connect.Request[protocol.InfoRequest]) (*connect.Response[protocol.InfoResponse], error)
 	PingSync(context.Context, *connect.Request[protocol.PingSyncRequest]) (*connect.Response[protocol.PingSyncResponse], error)
 }
 
@@ -130,6 +130,12 @@ type StreamServiceClient interface {
 func NewStreamServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...connect.ClientOption) StreamServiceClient {
 	baseURL = strings.TrimRight(baseURL, "/")
 	return &streamServiceClient{
+		info: connect.NewClient[protocol.InfoRequest, protocol.InfoResponse](
+			httpClient,
+			baseURL+StreamServiceInfoProcedure,
+			connect.WithSchema(streamServiceInfoMethodDescriptor),
+			connect.WithClientOptions(opts...),
+		),
 		createStream: connect.NewClient[protocol.CreateStreamRequest, protocol.CreateStreamResponse](
 			httpClient,
 			baseURL+StreamServiceCreateStreamProcedure,
@@ -208,12 +214,6 @@ func NewStreamServiceClient(httpClient connect.HTTPClient, baseURL string, opts 
 			connect.WithSchema(streamServiceRemoveStreamFromSyncMethodDescriptor),
 			connect.WithClientOptions(opts...),
 		),
-		info: connect.NewClient[protocol.InfoRequest, protocol.InfoResponse](
-			httpClient,
-			baseURL+StreamServiceInfoProcedure,
-			connect.WithSchema(streamServiceInfoMethodDescriptor),
-			connect.WithClientOptions(opts...),
-		),
 		pingSync: connect.NewClient[protocol.PingSyncRequest, protocol.PingSyncResponse](
 			httpClient,
 			baseURL+StreamServicePingSyncProcedure,
@@ -225,6 +225,7 @@ func NewStreamServiceClient(httpClient connect.HTTPClient, baseURL string, opts 
 
 // streamServiceClient implements StreamServiceClient.
 type streamServiceClient struct {
+	info                 *connect.Client[protocol.InfoRequest, protocol.InfoResponse]
 	createStream         *connect.Client[protocol.CreateStreamRequest, protocol.CreateStreamResponse]
 	createMediaStream    *connect.Client[protocol.CreateMediaStreamRequest, protocol.CreateMediaStreamResponse]
 	getStream            *connect.Client[protocol.GetStreamRequest, protocol.GetStreamResponse]
@@ -238,8 +239,12 @@ type streamServiceClient struct {
 	modifySync           *connect.Client[protocol.ModifySyncRequest, protocol.ModifySyncResponse]
 	cancelSync           *connect.Client[protocol.CancelSyncRequest, protocol.CancelSyncResponse]
 	removeStreamFromSync *connect.Client[protocol.RemoveStreamFromSyncRequest, protocol.RemoveStreamFromSyncResponse]
-	info                 *connect.Client[protocol.InfoRequest, protocol.InfoResponse]
 	pingSync             *connect.Client[protocol.PingSyncRequest, protocol.PingSyncResponse]
+}
+
+// Info calls river.StreamService.Info.
+func (c *streamServiceClient) Info(ctx context.Context, req *connect.Request[protocol.InfoRequest]) (*connect.Response[protocol.InfoResponse], error) {
+	return c.info.CallUnary(ctx, req)
 }
 
 // CreateStream calls river.StreamService.CreateStream.
@@ -307,11 +312,6 @@ func (c *streamServiceClient) RemoveStreamFromSync(ctx context.Context, req *con
 	return c.removeStreamFromSync.CallUnary(ctx, req)
 }
 
-// Info calls river.StreamService.Info.
-func (c *streamServiceClient) Info(ctx context.Context, req *connect.Request[protocol.InfoRequest]) (*connect.Response[protocol.InfoResponse], error) {
-	return c.info.CallUnary(ctx, req)
-}
-
 // PingSync calls river.StreamService.PingSync.
 func (c *streamServiceClient) PingSync(ctx context.Context, req *connect.Request[protocol.PingSyncRequest]) (*connect.Response[protocol.PingSyncResponse], error) {
 	return c.pingSync.CallUnary(ctx, req)
@@ -319,6 +319,7 @@ func (c *streamServiceClient) PingSync(ctx context.Context, req *connect.Request
 
 // StreamServiceHandler is an implementation of the river.StreamService service.
 type StreamServiceHandler interface {
+	Info(context.Context, *connect.Request[protocol.InfoRequest]) (*connect.Response[protocol.InfoResponse], error)
 	CreateStream(context.Context, *connect.Request[protocol.CreateStreamRequest]) (*connect.Response[protocol.CreateStreamResponse], error)
 	CreateMediaStream(context.Context, *connect.Request[protocol.CreateMediaStreamRequest]) (*connect.Response[protocol.CreateMediaStreamResponse], error)
 	GetStream(context.Context, *connect.Request[protocol.GetStreamRequest]) (*connect.Response[protocol.GetStreamResponse], error)
@@ -337,7 +338,6 @@ type StreamServiceHandler interface {
 	ModifySync(context.Context, *connect.Request[protocol.ModifySyncRequest]) (*connect.Response[protocol.ModifySyncResponse], error)
 	CancelSync(context.Context, *connect.Request[protocol.CancelSyncRequest]) (*connect.Response[protocol.CancelSyncResponse], error)
 	RemoveStreamFromSync(context.Context, *connect.Request[protocol.RemoveStreamFromSyncRequest]) (*connect.Response[protocol.RemoveStreamFromSyncResponse], error)
-	Info(context.Context, *connect.Request[protocol.InfoRequest]) (*connect.Response[protocol.InfoResponse], error)
 	PingSync(context.Context, *connect.Request[protocol.PingSyncRequest]) (*connect.Response[protocol.PingSyncResponse], error)
 }
 
@@ -347,6 +347,12 @@ type StreamServiceHandler interface {
 // By default, handlers support the Connect, gRPC, and gRPC-Web protocols with the binary Protobuf
 // and JSON codecs. They also support gzip compression.
 func NewStreamServiceHandler(svc StreamServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
+	streamServiceInfoHandler := connect.NewUnaryHandler(
+		StreamServiceInfoProcedure,
+		svc.Info,
+		connect.WithSchema(streamServiceInfoMethodDescriptor),
+		connect.WithHandlerOptions(opts...),
+	)
 	streamServiceCreateStreamHandler := connect.NewUnaryHandler(
 		StreamServiceCreateStreamProcedure,
 		svc.CreateStream,
@@ -425,12 +431,6 @@ func NewStreamServiceHandler(svc StreamServiceHandler, opts ...connect.HandlerOp
 		connect.WithSchema(streamServiceRemoveStreamFromSyncMethodDescriptor),
 		connect.WithHandlerOptions(opts...),
 	)
-	streamServiceInfoHandler := connect.NewUnaryHandler(
-		StreamServiceInfoProcedure,
-		svc.Info,
-		connect.WithSchema(streamServiceInfoMethodDescriptor),
-		connect.WithHandlerOptions(opts...),
-	)
 	streamServicePingSyncHandler := connect.NewUnaryHandler(
 		StreamServicePingSyncProcedure,
 		svc.PingSync,
@@ -439,6 +439,8 @@ func NewStreamServiceHandler(svc StreamServiceHandler, opts ...connect.HandlerOp
 	)
 	return "/river.StreamService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
+		case StreamServiceInfoProcedure:
+			streamServiceInfoHandler.ServeHTTP(w, r)
 		case StreamServiceCreateStreamProcedure:
 			streamServiceCreateStreamHandler.ServeHTTP(w, r)
 		case StreamServiceCreateMediaStreamProcedure:
@@ -465,8 +467,6 @@ func NewStreamServiceHandler(svc StreamServiceHandler, opts ...connect.HandlerOp
 			streamServiceCancelSyncHandler.ServeHTTP(w, r)
 		case StreamServiceRemoveStreamFromSyncProcedure:
 			streamServiceRemoveStreamFromSyncHandler.ServeHTTP(w, r)
-		case StreamServiceInfoProcedure:
-			streamServiceInfoHandler.ServeHTTP(w, r)
 		case StreamServicePingSyncProcedure:
 			streamServicePingSyncHandler.ServeHTTP(w, r)
 		default:
@@ -477,6 +477,10 @@ func NewStreamServiceHandler(svc StreamServiceHandler, opts ...connect.HandlerOp
 
 // UnimplementedStreamServiceHandler returns CodeUnimplemented from all methods.
 type UnimplementedStreamServiceHandler struct{}
+
+func (UnimplementedStreamServiceHandler) Info(context.Context, *connect.Request[protocol.InfoRequest]) (*connect.Response[protocol.InfoResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("river.StreamService.Info is not implemented"))
+}
 
 func (UnimplementedStreamServiceHandler) CreateStream(context.Context, *connect.Request[protocol.CreateStreamRequest]) (*connect.Response[protocol.CreateStreamResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("river.StreamService.CreateStream is not implemented"))
@@ -528,10 +532,6 @@ func (UnimplementedStreamServiceHandler) CancelSync(context.Context, *connect.Re
 
 func (UnimplementedStreamServiceHandler) RemoveStreamFromSync(context.Context, *connect.Request[protocol.RemoveStreamFromSyncRequest]) (*connect.Response[protocol.RemoveStreamFromSyncResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("river.StreamService.RemoveStreamFromSync is not implemented"))
-}
-
-func (UnimplementedStreamServiceHandler) Info(context.Context, *connect.Request[protocol.InfoRequest]) (*connect.Response[protocol.InfoResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("river.StreamService.Info is not implemented"))
 }
 
 func (UnimplementedStreamServiceHandler) PingSync(context.Context, *connect.Request[protocol.PingSyncRequest]) (*connect.Response[protocol.PingSyncResponse], error) {
