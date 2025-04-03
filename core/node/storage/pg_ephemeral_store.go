@@ -76,11 +76,11 @@ func (s *PostgresStreamStore) createEphemeralStreamStorageTx(
 	sql := s.sqlForStream(
 		`
 			INSERT INTO es (stream_id, latest_snapshot_miniblock, migrated, ephemeral) VALUES ($1, 0, true, true);
-			INSERT INTO {{miniblocks}} (stream_id, seq_num, blockdata, snapshot) VALUES ($1, 0, $2, $3);`,
+			INSERT INTO {{miniblocks}} (stream_id, seq_num, blockdata) VALUES ($1, 0, $2);`,
 		streamId,
 	)
 
-	if _, err := tx.Exec(ctx, sql, streamId, genesisMiniblock.Data, genesisMiniblock.Snapshot); err != nil {
+	if _, err := tx.Exec(ctx, sql, streamId, genesisMiniblock.Data); err != nil {
 		if pgerr, ok := err.(*pgconn.PgError); ok && pgerr.Code == pgerrcode.UniqueViolation {
 			return WrapRiverError(Err_ALREADY_EXISTS, err).Message("stream already exists")
 		}
@@ -176,7 +176,7 @@ func (s *PostgresStreamStore) writeEphemeralMiniblockTx(
 	miniblock *WriteMiniblockData,
 ) error {
 	// Query to insert a new ephemeral miniblock
-	query := s.sqlForStream("INSERT INTO {{miniblocks}} (stream_id, seq_num, blockdata, snapshot) VALUES ($1, $2, $3, $4);", streamId)
+	query := s.sqlForStream("INSERT INTO {{miniblocks}} (stream_id, seq_num, blockdata) VALUES ($1, $2, $3);", streamId)
 
 	// Lock the ephemeral stream to ensure that the stream exists and is ephemeral.
 	if _, err := s.lockEphemeralStream(ctx, tx, streamId, true); err != nil {
@@ -188,7 +188,7 @@ func (s *PostgresStreamStore) writeEphemeralMiniblockTx(
 		}
 	}
 
-	_, err := tx.Exec(ctx, query, streamId, miniblock.Number, miniblock.Data, miniblock.Snapshot)
+	_, err := tx.Exec(ctx, query, streamId, miniblock.Number, miniblock.Data)
 	return err
 }
 
