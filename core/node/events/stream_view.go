@@ -950,7 +950,7 @@ func (r *StreamView) GetResetStreamAndCookie(wallet *crypto.Wallet) (*StreamAndC
 	var snapshot *Envelope
 	if r.snapshot != nil {
 		var err error
-		if snapshot, err = MakeEnvelopeWithPayload(wallet, Make_Snapshot(r.snapshot), nil); err != nil {
+		if snapshot, err = MakeSnapshotEnvelope(wallet, r.snapshot); err != nil {
 			return nil, err
 		}
 	}

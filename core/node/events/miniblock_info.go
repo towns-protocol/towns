@@ -22,7 +22,7 @@ type MiniblockInfo struct {
 
 	headerEvent        *ParsedEvent
 	useGetterForEvents []*ParsedEvent // Use events(). Getter checks if events have been initialized.
-	snapshot           *ParsedEvent   //nolint:unused
+	snapshot           *Snapshot      //nolint:unused
 }
 
 // NewMiniblockInfoFromProto initializes a MiniblockInfo from a proto, applying validation based
@@ -128,9 +128,9 @@ func NewMiniblockInfoFromProto(mb *Miniblock, sn *Envelope, opts *ParsedMinibloc
 			Tag("prevSnapshotMiniblockNum", blockHeader.PrevSnapshotMiniblockNum)
 	}
 
-	var snapshot *ParsedEvent
+	var snapshot *Snapshot
 	if sn != nil {
-		if snapshot, err = ParseEvent(sn); err != nil {
+		if snapshot, err = ParseSnapshot(sn, headerEvent.Event.CreatorAddress); err != nil {
 			return nil, AsRiverError(err, Err_BAD_EVENT).
 				Message("Failed to parse snapshot").
 				Func("NewMiniblockInfoFromProto")

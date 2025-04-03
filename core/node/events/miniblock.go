@@ -71,7 +71,7 @@ func MakeGenesisMiniblock(
 		envelopes[i] = e.Envelope
 	}
 
-	snapshotEnvelope, err := MakeEnvelopeWithPayload(wallet, Make_Snapshot(header.Snapshot), nil)
+	snapshotEnvelope, err := MakeSnapshotEnvelope(wallet, header.Snapshot)
 	if err != nil {
 		return nil, nil, err
 	}

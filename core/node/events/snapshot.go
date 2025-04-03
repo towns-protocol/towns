@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"slices"
 
+	"github.com/towns-protocol/towns/core/node/crypto"
+
 	"github.com/ethereum/go-ethereum/common"
 	"google.golang.org/protobuf/proto"
 
@@ -13,6 +15,58 @@ import (
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/shared"
 )
+
+// MakeSnapshotEnvelope creates a snapshot envelope from the given snapshot.
+func MakeSnapshotEnvelope(wallet *crypto.Wallet, snapshot *Snapshot) (*Envelope, error) {
+	eventBytes, err := proto.Marshal(snapshot)
+	if err != nil {
+		return nil, AsRiverError(err, Err_INTERNAL).
+			Message("Failed to serialize snapshot to bytes").
+			Func("MakeSnapshotEnvelope")
+	}
+
+	hash := crypto.TownsHashForSnapshots.Hash(eventBytes)
+	signature, err := wallet.SignHash(hash)
+	if err != nil {
+		return nil, err
+	}
+
+	return &Envelope{
+		Event:     eventBytes,
+		Signature: signature,
+		Hash:      hash[:],
+	}, nil
+}
+
+// ParseSnapshot parses the given envelope into a snapshot.
+// It verifies the hash and signature of the envelope.
+func ParseSnapshot(envelope *Envelope, signer []byte) (*Snapshot, error) {
+	hash := crypto.TownsHashForSnapshots.Hash(envelope.Event)
+	if !bytes.Equal(hash[:], envelope.Hash) {
+		return nil, RiverError(Err_BAD_EVENT_HASH, "Bad hash provided", "computed", hash, "got", envelope.Hash)
+	}
+
+	signerPubKey, err := crypto.RecoverSignerPublicKey(hash[:], envelope.Signature)
+	if err != nil {
+		return nil, err
+	}
+
+	var sn Snapshot
+	if err = proto.Unmarshal(envelope.Event, &sn); err != nil {
+		return nil, AsRiverError(err, Err_INVALID_ARGUMENT).
+			Message("Failed to decode snapshot from bytes").
+			Func("ParseSnapshot")
+	}
+
+	address := crypto.PublicKeyToAddress(signerPubKey)
+	if !bytes.Equal(address.Bytes(), signer) {
+		return nil, RiverError(Err_BAD_EVENT_SIGNATURE, "Bad signature provided",
+			"computed address", address,
+			"event creatorAddress", signer)
+	}
+
+	return &sn, nil
+}
 
 func Make_GenesisSnapshot(events []*ParsedEvent) (*Snapshot, error) {
 	if len(events) == 0 {
