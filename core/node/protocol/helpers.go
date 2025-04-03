@@ -64,10 +64,11 @@ func (x *GetMiniblocksResponse) GetMiniblockSnapshot(num int64) *Envelope {
 	return x.Snapshots[num]
 }
 
-// GetSnapshotForMiniblockIndex returns the snapshot for 0 miniblock in the list.
+// GetSnapshotByMiniblockIndex returns the snapshot by the given miniblock index in the list.
 // StreamAndCookie contains a list of miniblocks starting from the latest snapshot.
 // Meaning the first miniblock in the list is the latest snapshot.
-func (x *StreamAndCookie) GetSnapshotForMiniblockIndex(i int) *Envelope {
+// Meaning it returns the snapshot only when i is 0.
+func (x *StreamAndCookie) GetSnapshotByMiniblockIndex(i int) *Envelope {
 	if i == 0 {
 		return x.GetSnapshot()
 	}
