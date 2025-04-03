@@ -16,6 +16,10 @@ import { PATHS } from 'routes'
 import { useEntitlements } from 'hooks/useEntitlements'
 import { formatUnitsToFixedLength, parseUnits } from 'hooks/useBalance'
 import { minterRoleId } from '@components/SpaceSettingsPanel/rolePermissions.const'
+import { ReviewStars } from '@components/ReviewStars/ReviewStars'
+import { useReviews } from 'hooks/useReviews'
+import { env } from 'utils/environment'
+import { useDevice } from 'hooks/useDevice'
 
 interface ExploreCardProps {
     address: string
@@ -31,6 +35,8 @@ export const ExploreCard = ({ address, variant }: ExploreCardProps) => {
     const { data: memberInfo } = useReadableMembershipInfo(spaceId ?? '')
     const { data: entitlements } = useEntitlements(spaceId ?? '', minterRoleId)
     const membership = useMyMembership(spaceId)
+    const { averageRating, totalReviews } = useReviews(spaceId ?? '')
+    const { isTouch } = useDevice()
 
     const onClick = useCallback(() => {
         Analytics.getInstance().track('clicked town on explore', {
@@ -48,24 +54,45 @@ export const ExploreCard = ({ address, variant }: ExploreCardProps) => {
     }
 
     const isBig = variant === 'big'
+    const isReviewsEnabled = env.VITE_REVIEWS_ENABLED
 
-    const MemberCount = () =>
-        (memberInfo?.totalSupply ?? 0) > 1 ? (
-            <Box display="flex" flexDirection="row" gap="sm" color="gray2" alignItems="center">
-                <Icon type="people" size="square_sm" />
-                <Paragraph size={isBig ? 'md' : 'sm'}>{memberInfo?.totalSupply}</Paragraph>
+    const MemberCount = () => (
+        <Box
+            flexDirection="row"
+            gap="xxs"
+            alignItems="center"
+            style={{ marginTop: isTouch ? '0px' : isBig ? '-1px' : '-2px' }}
+        >
+            <Icon type="people" size={isBig ? 'square_md' : 'square_sm'} color="gray2" />
+            <Text color="gray2" size={isBig ? 'md' : 'sm'}>
+                {memberInfo?.totalSupply ?? 0}
+            </Text>
+        </Box>
+    )
+
+    const ReviewsInfo = () =>
+        isReviewsEnabled ? (
+            <Box flexDirection="row" gap="xs">
+                <ReviewStars rating={averageRating} size={isBig ? 20 : 16} color="gray2" />
+                <Text
+                    color="gray2"
+                    size={isBig ? 'md' : 'sm'}
+                    style={{ marginTop: isBig ? '5px' : '3px' }}
+                >
+                    {totalReviews > 0 ? (
+                        <>
+                            {averageRating.toFixed(1)} ({totalReviews})
+                        </>
+                    ) : (
+                        '0.0 (0)'
+                    )}
+                </Text>
             </Box>
         ) : null
+
     const PriceTag = () =>
         memberInfo?.price ? (
-            <Pill
-                background="level3"
-                position="relative"
-                alignSelf="start"
-                cursor="pointer"
-                paddingY="md"
-                minWidth="100"
-            >
+            <Pill background="level3" cursor="pointer" paddingY="md" minWidth="100">
                 {membership !== Membership.Join ? (
                     <Text color="greenBlue">
                         {entitlements.hasEntitlements
@@ -137,7 +164,10 @@ export const ExploreCard = ({ address, variant }: ExploreCardProps) => {
                                         {spaceInfo.shortDescription}
                                     </Paragraph>
                                 )}
-                                <MemberCount />
+                                <Stack horizontal gap="sm">
+                                    <ReviewsInfo />
+                                    <MemberCount />
+                                </Stack>
                                 <PriceTag />
                             </Stack>
                         </Box>
@@ -165,7 +195,7 @@ export const ExploreCard = ({ address, variant }: ExploreCardProps) => {
                         reduceMotion
                         spaceId={spaceId}
                         address={address}
-                        size="xs"
+                        size={isTouch ? 'xxs' : 'xs'}
                         spaceName={spaceInfo?.name}
                     />
 
@@ -189,7 +219,11 @@ export const ExploreCard = ({ address, variant }: ExploreCardProps) => {
                                 {spaceInfo?.shortDescription}
                             </Paragraph>
                         )}
-                        <MemberCount />
+
+                        <Stack horizontal={!isTouch} gap="sm">
+                            <ReviewsInfo />
+                            <MemberCount />
+                        </Stack>
                     </Stack>
                 </Box>
                 <Box alignSelf="center" paddingRight="sm">

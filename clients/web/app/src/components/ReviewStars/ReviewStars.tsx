@@ -10,6 +10,10 @@ interface ReviewStarsProps {
      * Size of each star icon in pixels
      */
     size?: number
+    /**
+     * Color of the star icon
+     */
+    color?: 'default' | 'gray2'
 }
 
 interface HoverableReviewStarsProps extends Omit<ReviewStarsProps, 'rating'> {
@@ -36,7 +40,7 @@ const getIconSize = (size: number) => {
     return 'square_lg'
 }
 
-export const ReviewStars = ({ rating, size = 20 }: ReviewStarsProps) => {
+export const ReviewStars = ({ rating, size = 20, color }: ReviewStarsProps) => {
     const iconSize = getIconSize(size)
     return (
         <Stack horizontal gap="none">
@@ -45,17 +49,21 @@ export const ReviewStars = ({ rating, size = 20 }: ReviewStarsProps) => {
                 return (
                     <Box key={i} position="relative" style={{ width: size, height: size }}>
                         <Box position="absolute">
-                            <Icon type="star" size={iconSize} color="gray2" />
+                            <Icon type="star" size={iconSize} color={color ?? 'gray2'} />
                         </Box>
                         {filled > 0 && (
                             <Box
                                 position="absolute"
                                 style={{
-                                    width: `${filled * 100}%`,
+                                    width: `${(Math.round(filled * 2) / 2) * 100}%`,
                                     overflow: 'hidden',
                                 }}
                             >
-                                <Icon type="starFilled" size={iconSize} color="default" />
+                                <Icon
+                                    type="starFilled"
+                                    size={iconSize}
+                                    color={color ?? 'default'}
+                                />
                             </Box>
                         )}
                     </Box>
