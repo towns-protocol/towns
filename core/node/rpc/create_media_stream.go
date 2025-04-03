@@ -189,12 +189,12 @@ func (s *Service) createReplicatedMediaStream(
 		return nil, err
 	}
 
-	nodesList, err := s.streamRegistry.ChooseStreamNodes(streamId)
+	nodesList, err := s.nodeRegistry.ChooseStreamNodes(ctx, streamId, int(s.chainConfig.Get().ReplicationFactor))
 	if err != nil {
 		return nil, err
 	}
 
-	nodes := NewStreamNodesWithLock(nodesList, s.wallet.Address)
+	nodes := NewStreamNodesWithLock(len(nodesList), nodesList, s.wallet.Address)
 	remotes, isLocal := nodes.GetRemotesAndIsLocal()
 	sender := NewQuorumPool(ctx, NewQuorumPoolOpts().WriteMode().WithTags("method", "createReplicatedMediaStream", "streamId", streamId))
 

@@ -43,10 +43,10 @@ func Test_StreamCache_normalizeEphemeralStream(t *testing.T) {
 			leaderInstance.params.Wallet,
 			&MediaPayload_Inception{StreamId: streamId[:], ChannelId: channelId[:], ChunkCount: chunks},
 		)
-		mbBytes, err := mb.ToBytes()
+		storageMb, err := mb.AsStorageMb()
 		tc.require.NoError(err)
 
-		err = leaderInstance.params.Storage.CreateEphemeralStreamStorage(ctx, streamId, mbBytes)
+		err = leaderInstance.params.Storage.CreateEphemeralStreamStorage(ctx, streamId, storageMb.Data)
 		tc.require.NoError(err)
 
 		mbRef := *mb.Ref
@@ -88,7 +88,7 @@ func Test_StreamCache_normalizeEphemeralStream(t *testing.T) {
 			lastAppliedBlockNum: leaderInstance.params.AppliedBlockNum,
 			local:               &localStreamState{},
 		}
-		si.nodesLocked.Reset(nodes, leaderInstance.params.Wallet.Address)
+		si.nodesLocked.Reset(len(nodes), nodes, leaderInstance.params.Wallet.Address)
 
 		err = leaderInstance.cache.normalizeEphemeralStream(ctx, si, int64(chunks), true)
 		tc.require.NoError(err)
@@ -104,10 +104,10 @@ func Test_StreamCache_normalizeEphemeralStream(t *testing.T) {
 			leaderInstance.params.Wallet,
 			&MediaPayload_Inception{StreamId: streamId[:], ChannelId: channelId[:], ChunkCount: chunks},
 		)
-		mbBytes, err := mb.ToBytes()
+		storageMb, err := mb.AsStorageMb()
 		tc.require.NoError(err)
 
-		err = leaderInstance.params.Storage.CreateEphemeralStreamStorage(ctx, streamId, mbBytes)
+		err = leaderInstance.params.Storage.CreateEphemeralStreamStorage(ctx, streamId, storageMb.Data)
 		tc.require.NoError(err)
 
 		mbRef := *mb.Ref
@@ -193,7 +193,7 @@ func Test_StreamCache_normalizeEphemeralStream(t *testing.T) {
 			lastAppliedBlockNum: replica.params.AppliedBlockNum,
 			local:               &localStreamState{},
 		}
-		si.nodesLocked.Reset(nodes, replica.params.Wallet.Address)
+		si.nodesLocked.Reset(len(nodes), nodes, replica.params.Wallet.Address)
 
 		err = replica.cache.normalizeEphemeralStream(ctx, si, int64(chunks), true)
 		tc.require.NoError(err)

@@ -214,7 +214,7 @@ func (p *miniblockProducer) isLocalLeaderOnCurrentBlock(
 	stream *Stream,
 	blockNum crypto.BlockNumber,
 ) bool {
-	streamNodes := stream.GetNodes()
+	streamNodes := stream.GetQuorumNodes()
 	if len(streamNodes) == 0 {
 		return false
 	}

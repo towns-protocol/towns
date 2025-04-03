@@ -51,6 +51,7 @@ func (s *Service) startAppRegistryMode(opts *ServerStartOpts) error {
 			common.Address{},
 			s.riverChain.InitialBlockNum,
 			s.riverChain.ChainMonitor,
+			s.chainConfig,
 			httpClient,
 			s.otelConnectIterceptor,
 		)
