@@ -78,6 +78,14 @@ func (q *CachedEncryptedMessageQueue) RegisterWebhook(
 	return nil
 }
 
+func (q *CachedEncryptedMessageQueue) GetSessionKey(
+	ctx context.Context,
+	app common.Address,
+	sessionId string,
+) (encryptionEnvelope []byte, err error) {
+	return q.store.GetSessionKey(ctx, app, sessionId)
+}
+
 func (q *CachedEncryptedMessageQueue) PublishSessionKeys(
 	ctx context.Context,
 	streamId shared.StreamId,
@@ -89,16 +97,20 @@ func (q *CachedEncryptedMessageQueue) PublishSessionKeys(
 	if err != nil {
 		return err
 	}
-	messages := &SessionMessages{
-		StreamId:              streamId,
-		AppId:                 sendableMessages.AppId,
-		EncryptedSharedSecret: sendableMessages.EncryptedSharedSecret,
-		DeviceKey:             deviceKey,
-		EncryptionEnvelope:    encryptionEnvelope,
-		WebhookUrl:            sendableMessages.WebhookUrl,
-		MessageEnvelopes:      sendableMessages.MessageEnvelopes,
+	if sendableMessages != nil {
+		messages := &SessionMessages{
+			StreamId:              streamId,
+			AppId:                 sendableMessages.AppId,
+			EncryptedSharedSecret: sendableMessages.EncryptedSharedSecret,
+			DeviceKey:             deviceKey,
+			EncryptionEnvelope:    encryptionEnvelope,
+			WebhookUrl:            sendableMessages.WebhookUrl,
+			MessageEnvelopes:      sendableMessages.MessageEnvelopes,
+		}
+		return q.appDispatcher.SubmitMessages(ctx, messages)
+	} else {
+		return nil
 	}
-	return q.appDispatcher.SubmitMessages(ctx, messages)
 }
 
 // DispatchOrEnqueueMessages will immediately send a message for each device that has session keys, and will

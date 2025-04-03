@@ -35,12 +35,7 @@ type testAppRegistryStoreParams struct {
 	schema             string
 	config             *config.DatabaseConfig
 	closer             func()
-	// For retaining schema and manually closing the store, use
-	// the following two cleanup functions to manually delete the
-	// schema and cancel the test context.
-	schemaDeleter func()
-	ctxCloser     func()
-	exitSignal    chan error
+	exitSignal         chan error
 }
 
 func setupAppRegistryStorageTest(t *testing.T) *testAppRegistryStoreParams {
@@ -48,6 +43,7 @@ func setupAppRegistryStorageTest(t *testing.T) *testAppRegistryStoreParams {
 	ctx, ctxCloser := test.NewTestContext()
 
 	dbCfg, dbSchemaName, dbCloser, err := dbtestutils.ConfigureDbWithPrefix(ctx, "b_")
+	t.Log(dbSchemaName)
 	require.NoError(err, "Error configuring db for test")
 
 	dbCfg.StartupDelay = 2 * time.Millisecond
@@ -78,11 +74,9 @@ func setupAppRegistryStorageTest(t *testing.T) *testAppRegistryStoreParams {
 		exitSignal:         exitSignal,
 		closer: sync.OnceFunc(func() {
 			store.Close(ctx)
-			// dbCloser()
+			dbCloser()
 			ctxCloser()
 		}),
-		schemaDeleter: dbCloser,
-		ctxCloser:     ctxCloser,
 	}
 
 	return params
@@ -93,6 +87,84 @@ func safeAddress(t *testing.T) common.Address {
 	_, err := rand.Read(addr[:])
 	require.NoError(t, err)
 	return addr
+}
+
+func TestGetSessionKey(t *testing.T) {
+	params := setupAppRegistryStorageTest(t)
+	t.Cleanup(params.closer)
+
+	require := require.New(t)
+	store := params.pgAppRegistryStore
+
+	owner := safeAddress(t)
+	app := safeAddress(t)
+	unregisteredApp := safeAddress(t)
+
+	secretBytes, err := hex.DecodeString(testSecretHexString)
+	require.NoError(err)
+	secret := [32]byte(secretBytes)
+
+	err = store.CreateApp(params.ctx, owner, app, secret)
+	require.NoError(err)
+
+	err = store.RegisterWebhook(params.ctx, app, "http://www.callme.com/webhook", "deviceKey", "fallbackKey")
+	require.NoError(err)
+
+	spaceId, err := shared.MakeSpaceId()
+	require.NoError(err)
+	channelId, err := shared.MakeChannelId(spaceId)
+	require.NoError(err)
+
+	envelope := []byte("encryption_envelope")
+
+	sendable, err := store.PublishSessionKeys(
+		params.ctx,
+		channelId,
+		"deviceKey",
+		[]string{"sessionId1", "sessionId2"},
+		envelope,
+	)
+	require.Nil(sendable)
+	require.NoError(err)
+
+	tests := map[string]struct {
+		expectFound      bool
+		expectedEnvelope []byte
+		app              common.Address
+		sessionId        string
+	}{
+		"found - app registered with session key": {
+			expectFound:      true,
+			app:              app,
+			sessionId:        "sessionId1",
+			expectedEnvelope: envelope,
+		},
+		"found - check 2nd session key": {
+			expectFound:      true,
+			app:              app,
+			sessionId:        "sessionId2",
+			expectedEnvelope: envelope,
+		},
+		"unfound - registered app without key": {
+			app:       app,
+			sessionId: "session3Id",
+		},
+		"unfound - unregistered app": {
+			app: unregisteredApp,
+		},
+	}
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			envelope, err := store.GetSessionKey(params.ctx, tc.app, tc.sessionId)
+			if tc.expectFound {
+				require.NoError(err)
+				require.Equal(tc.expectedEnvelope, envelope)
+			} else {
+				require.Error(err)
+				require.True(base.IsRiverErrorCode(err, protocol.Err_NOT_FOUND))
+			}
+		})
+	}
 }
 
 func TestRegisterWebhook(t *testing.T) {
@@ -418,7 +490,7 @@ func TestEnqueueMessages(t *testing.T) {
 			AppId:                 apps[i].Address,
 			EncryptedSharedSecret: secrets[i],
 			WebhookUrl:            fmt.Sprintf("https://webhook.com/%d", i),
-			MessageEnvelopes:          streamEvents,
+			MessageEnvelopes:      streamEvents,
 		}
 	}
 
