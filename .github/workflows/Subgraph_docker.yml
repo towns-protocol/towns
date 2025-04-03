@@ -55,14 +55,13 @@ jobs:
                   ECR_REGISTRY: ${{ steps.login-aws-ecr.outputs.registry }}
                   #This can be custom alias once requested to aws and approved for public repo
                   REGISTRY_ALIAS: h5v6m2x1
-                  ECR_REPOSITORY: river
+                  ECR_REPOSITORY: subgraph
                   RELEASE_VERSION: ${{ inputs.release_version }}
                   ADDITIONAL_TAGS: ${{ inputs.additional_tags_csv }}
-              working-directory: .
               run: |
                   COMMIT_HASH=$(git describe --tags --always --dirty)
                   BRANCH=$(git rev-parse --abbrev-ref HEAD)
-                  TAGS=("subgraph-$COMMIT_HASH")
+                  TAGS=($COMMIT_HASH)
 
                   # if release version is not provided, we set it to "subgraph"
                   if [ -z "$RELEASE_VERSION" ]; then
