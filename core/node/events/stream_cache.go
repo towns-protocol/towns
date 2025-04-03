@@ -279,11 +279,11 @@ func (s *StreamCache) onStreamAllocated(
 		logging.FromCtx(ctx).Errorw("Failed to allocate stream", "err", err, "streamId", event.GetStreamId())
 	}
 	if created && len(otherEvents) > 0 {
-		stream.applyStreamEvents(ctx, otherEvents, blockNum)
+		_ = stream.applyStreamEvents(ctx, otherEvents, blockNum)
 	}
 }
 
-func (s *StreamCache) onStreamReplacementUpdated(
+func (s *StreamCache) onStreamPlacementUpdated(
 	ctx context.Context,
 	event *river.StreamState,
 	blockNum crypto.BlockNumber,
