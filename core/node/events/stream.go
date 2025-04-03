@@ -352,10 +352,6 @@ func (s *Stream) promoteCandidateLocked(ctx context.Context, mb *MiniblockRef) e
 		return nil
 	}
 
-	if s.local == nil {
-		return nil
-	}
-
 	if err := s.loadInternal(ctx); err != nil {
 		return err
 	}
@@ -402,9 +398,11 @@ func (s *Stream) promoteCandidateLocked(ctx context.Context, mb *MiniblockRef) e
 func (s *Stream) schedulePromotionLocked(mb *MiniblockRef) error {
 	if len(s.local.pendingCandidates) == 0 {
 		if mb.Num != s.view().LastBlock().Ref.Num+1 {
-			return RiverError(Err_INTERNAL, "schedulePromotionNoLock: next promotion is not for the next block")
+			return RiverError(Err_NOT_FOUND, "schedulePromotionNoLock: next promotion is not for the next block")
 		}
 		s.local.pendingCandidates = append(s.local.pendingCandidates, mb)
+	} else if len(s.local.pendingCandidates) > 3 {
+		return RiverError(Err_NOT_FOUND, "schedulePromotionNoLock: too many pending candidates")
 	} else {
 		lastPending := s.local.pendingCandidates[len(s.local.pendingCandidates)-1]
 		if mb.Num != lastPending.Num+1 {
@@ -559,7 +557,7 @@ func (s *Stream) GetView(ctx context.Context) (*StreamView, error) {
 func (s *Stream) tryGetView() (*StreamView, bool) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
-	isLocal := s.nodesLocked.IsLocalInQuorum() && s.local != nil
+	isLocal := s.nodesLocked.IsLocal()
 	if isLocal && s.view() != nil {
 		s.maybeScrubLocked()
 		return s.view(), true
@@ -1014,9 +1012,9 @@ func (s *Stream) applyStreamEvents(
 	ctx context.Context,
 	events []river.StreamUpdatedEvent,
 	blockNum crypto.BlockNumber,
-) {
+) error {
 	if len(events) == 0 {
-		return
+		return nil
 	}
 
 	s.mu.Lock()
@@ -1028,7 +1026,7 @@ func (s *Stream) applyStreamEvents(
 			Errorw("applyStreamEvents: already applied events for block", "blockNum", blockNum, "streamId", s.streamId,
 				"lastAppliedBlockNum", s.lastAppliedBlockNum,
 			)
-		return
+		return nil
 	}
 
 	for _, e := range events {
@@ -1042,6 +1040,11 @@ func (s *Stream) applyStreamEvents(
 				Hash: event.LastMiniblockHash,
 				Num:  int64(event.LastMiniblockNum),
 			})
+			riverErr := AsRiverError(err)
+			if riverErr != nil && riverErr.Code == Err_NOT_FOUND {
+				return riverErr
+			}
+
 			if err != nil {
 				logging.FromCtx(ctx).Errorw("onStreamLastMiniblockUpdated: failed to promote candidate", "err", err)
 			}
@@ -1059,6 +1062,8 @@ func (s *Stream) applyStreamEvents(
 	}
 
 	s.lastAppliedBlockNum = blockNum
+
+	return nil
 }
 
 // GetQuorumNodes returns the list of nodes this stream resides on according to the stream
