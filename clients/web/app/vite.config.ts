@@ -73,8 +73,7 @@ export default ({ mode }: { mode: string }) => {
             VITE_APP_COMMIT_HASH: JSON.stringify(commitHash),
             VITE_APP_TIMESTAMP: JSON.stringify(Date.now()),
             VITE_APP_MODE: JSON.stringify(process.env.MODE ?? ''),
-            // userops mode is used for loading env.userops.local
-            ...(mode === 'development' || mode === 'userops'
+            ...(mode === 'development'
                 ? {
                       'process.env': {
                           NODE_ENV: JSON.stringify(mode),
