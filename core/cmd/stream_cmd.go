@@ -652,13 +652,8 @@ func runStreamGetCmd(cmd *cobra.Command, args []string) error {
 	fmt.Println("MBs: ", len(stream.GetMiniblocks()), " Events: ", len(stream.GetEvents()))
 
 	for i, mb := range stream.GetMiniblocks() {
-		var snapshot *protocol.Envelope
-		if i == 0 {
-			snapshot = stream.GetSnapshot()
-		}
-
 		info, err := events.NewMiniblockInfoFromProto(
-			mb, snapshot,
+			mb, stream.GetSnapshotForMiniblockIndex(i),
 			events.NewParsedMiniblockInfoOpts().
 				WithDoNotParseEvents(true),
 		)
