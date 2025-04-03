@@ -18,21 +18,21 @@ import (
 
 // MakeSnapshotEnvelope creates a snapshot envelope from the given snapshot.
 func MakeSnapshotEnvelope(wallet *crypto.Wallet, snapshot *Snapshot) (*Envelope, error) {
-	eventBytes, err := proto.Marshal(snapshot)
+	snapshotBytes, err := proto.Marshal(snapshot)
 	if err != nil {
 		return nil, AsRiverError(err, Err_INTERNAL).
 			Message("Failed to serialize snapshot to bytes").
 			Func("MakeSnapshotEnvelope")
 	}
 
-	hash := crypto.TownsHashForSnapshots.Hash(eventBytes)
+	hash := crypto.TownsHashForSnapshots.Hash(snapshotBytes)
 	signature, err := wallet.SignHash(hash)
 	if err != nil {
 		return nil, err
 	}
 
 	return &Envelope{
-		Event:     eventBytes,
+		Event:     snapshotBytes,
 		Signature: signature,
 		Hash:      hash[:],
 	}, nil
@@ -58,11 +58,10 @@ func ParseSnapshot(envelope *Envelope, signer []byte) (*Snapshot, error) {
 			Func("ParseSnapshot")
 	}
 
-	address := crypto.PublicKeyToAddress(signerPubKey)
-	if !bytes.Equal(address.Bytes(), signer) {
+	if !bytes.Equal(signerPubKey, signer) {
 		return nil, RiverError(Err_BAD_EVENT_SIGNATURE, "Bad signature provided",
-			"computed address", address,
-			"event creatorAddress", signer)
+			"computedAddress", crypto.PublicKeyToAddress(signerPubKey),
+			"expectedAddress", crypto.PublicKeyToAddress(signer))
 	}
 
 	return &sn, nil
