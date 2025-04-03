@@ -8,9 +8,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/towns-protocol/towns/core/node/registries"
+
 	mapset "github.com/deckarep/golang-set/v2"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/linkdata/deadlock"
+
 	"github.com/towns-protocol/towns/core/contracts/river"
 	. "github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/crypto"
@@ -56,6 +59,8 @@ type Stream struct {
 	// local is not nil if stream is local to current node. local and all fields of local are protected by mu.
 	local *localStreamState
 }
+
+var _ nodes.StreamNodes = (*Stream)(nil)
 
 type localStreamState struct {
 	// useGetterAndSetterToGetView contains pointer to current immutable view, if loaded, nil otherwise.
@@ -457,7 +462,7 @@ func (s *Stream) initFromBlockchain(ctx context.Context) error {
 		return err
 	}
 
-	s.nodesLocked.Reset(record.Nodes, s.params.Wallet.Address)
+	s.nodesLocked.ResetFromStreamResult(record, s.params.Wallet.Address)
 	if !s.nodesLocked.IsLocal() {
 		return RiverError(
 			Err_INTERNAL,
@@ -547,7 +552,7 @@ func (s *Stream) GetView(ctx context.Context) (*StreamView, error) {
 func (s *Stream) tryGetView() (*StreamView, bool) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
-	isLocal := s.local != nil
+	isLocal := s.nodesLocked.IsLocalInQuorum() && s.local != nil
 	if isLocal && s.view() != nil {
 		s.maybeScrubLocked()
 		return s.view(), true
@@ -1013,14 +1018,14 @@ func (s *Stream) applyStreamEvents(
 	for _, e := range events {
 		switch e.Reason() {
 		case river.StreamUpdatedEventTypePlacementUpdated:
-			s.nodesLocked.Reset(e.(*river.StreamState).Nodes, s.params.Wallet.Address)
+			ev := e.(*river.StreamState)
+			s.nodesLocked.ResetFromStreamState(ev, s.params.Wallet.Address)
 		case river.StreamUpdatedEventTypeLastMiniblockBatchUpdated:
 			event := e.(*river.StreamMiniblockUpdate)
 			err := s.promoteCandidateLocked(ctx, &MiniblockRef{
 				Hash: event.LastMiniblockHash,
 				Num:  int64(event.LastMiniblockNum),
 			})
-
 			if err != nil {
 				logging.FromCtx(ctx).Errorw("onStreamLastMiniblockUpdated: failed to promote candidate", "err", err)
 			}
@@ -1040,12 +1045,12 @@ func (s *Stream) applyStreamEvents(
 	s.lastAppliedBlockNum = blockNum
 }
 
-// GetNodes returns the list of nodes this stream resides on according to the stream
-// registry. GetNodes is thread-safe.
-func (s *Stream) GetNodes() []common.Address {
+// GetQuorumNodes returns the list of nodes this stream resides on according to the stream
+// registry. GetQuorumNodes is thread-safe.
+func (s *Stream) GetQuorumNodes() []common.Address {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
-	return slices.Clone(s.nodesLocked.GetNodes())
+	return slices.Clone(s.nodesLocked.GetQuorumNodes())
 }
 
 // GetRemotesAndIsLocal returns
@@ -1077,9 +1082,37 @@ func (s *Stream) AdvanceStickyPeer(currentPeer common.Address) common.Address {
 	return s.nodesLocked.AdvanceStickyPeer(currentPeer)
 }
 
-func (s *Stream) Reset(nodes []common.Address, localNode common.Address) {
+func (s *Stream) ResetFromStreamState(state *river.StreamState, localNode common.Address) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	s.nodesLocked.Reset(nodes, localNode)
+	s.nodesLocked.ResetFromStreamState(state, localNode)
+}
+
+func (s *Stream) ResetFromStreamResult(result *registries.GetStreamResult, localNode common.Address) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	s.nodesLocked.ResetFromStreamResult(result, localNode)
+}
+
+func (s *Stream) Reset(replicationFactor int, nodes []common.Address, localNode common.Address) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	s.nodesLocked.Reset(replicationFactor, nodes, localNode)
+}
+
+func (s *Stream) GetSyncNodes() []common.Address {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	return s.nodesLocked.GetSyncNodes()
+}
+
+func (s *Stream) IsLocalInQuorum() bool {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	return s.nodesLocked.IsLocalInQuorum()
 }
