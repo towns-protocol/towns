@@ -225,7 +225,7 @@ func (s *StreamCache) onBlockWithLogs(ctx context.Context, blockNum crypto.Block
 
 					stream, ok := s.cache.Load(streamID)
 					if !ok {
-						return
+						continue
 					}
 
 					// COMMENT: Move logic from here to applyStreamEvents - mutex should be taken

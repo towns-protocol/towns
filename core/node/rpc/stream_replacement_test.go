@@ -252,7 +252,7 @@ func testColdStreamPlacementUpdate(t *testing.T) {
 // state when a stream that is still receiving events is migrated to a different set of nodes.
 func testHotStreamPlacementUpdate(t *testing.T) {
 	const nonReplFactor = 1
-	const replReplicationFactor = 2
+	const replReplicationFactor = 3
 
 	tt := newServiceTester(
 		t,
@@ -320,7 +320,6 @@ func testHotStreamPlacementUpdate(t *testing.T) {
 			// make sure cache is up to date
 			stream, err := node.service.cache.GetStreamNoWait(tt.ctx, channelId)
 			require.NoError(c, err)
-
 			require.Truef(c, stream.IsLocal(), "node %s is not local for stream %s", node.address, channelId)
 
 			view, err := stream.GetViewIfLocal(tt.ctx)
