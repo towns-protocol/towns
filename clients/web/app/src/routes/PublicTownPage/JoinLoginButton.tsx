@@ -260,7 +260,7 @@ function useWatchEvaluatingCredentialsAuthStatus() {
                 toastId = popupToast(
                     ({ toast }) => (
                         <StandardToast.Error
-                            message={`We're having trouble connecting with River. Please try again later.`}
+                            message={`We're having trouble connecting with Towns. Please try again later.`}
                             toast={toast}
                         />
                     ),

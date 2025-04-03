@@ -111,7 +111,7 @@ const BearerTokenPanel = () => {
     return (
         <Panel label="Bearer Token" gap="lg">
             <Paragraph size="sm" color="gray2">
-                You can use it to authenticate your account in River.
+                You can use it to authenticate your account in Towns.
             </Paragraph>
 
             <Box gap>

@@ -235,7 +235,7 @@ const DebugModal = ({ environment }: ModalProps) => {
                                     goHome()
                                 }}
                             >
-                                Logout from River
+                                Logout from Towns Protocol
                             </Button>
 
                             <Button
@@ -254,7 +254,7 @@ const DebugModal = ({ environment }: ModalProps) => {
                                     goHome()
                                 }}
                             >
-                                Logout from River + Privy
+                                Logout from Towns Protocol + Privy
                             </Button>
                         </Stack>
                     </>

@@ -68,7 +68,7 @@ export function EditPrepaidPanelWithoutAuth() {
                         <Icon type="info" shrink={false} size="square_sm" />
                         <Paragraph color="gray2">
                             This means membership fees will be waived for these members and you will
-                            sponsor their River protocol fees and gas fees
+                            sponsor their Towns protocol fees and gas fees
                         </Paragraph>
                     </Stack>
                     <Stack grow>
