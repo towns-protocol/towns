@@ -112,7 +112,6 @@ message StreamEvent {
         MediaPayload media_payload = 108;
         DmChannelPayload dm_channel_payload = 109;
         GdmChannelPayload gdm_channel_payload = 110;
-        Snapshot snapshot = 111;
     }
 }
 
