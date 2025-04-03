@@ -6,7 +6,11 @@ import {
     useMyUserId,
     useUserLookupArray,
 } from 'use-towns-client'
-import { isDMChannelStreamId, isGDMChannelStreamId } from '@towns-protocol/sdk'
+import {
+    type MessageReactions,
+    isDMChannelStreamId,
+    isGDMChannelStreamId,
+} from '@towns-protocol/sdk'
 import { Box, Icon, Paragraph, Pill, Text, Tooltip } from '@ui'
 import { useStore } from 'store/store'
 import { atoms } from 'ui/styles/atoms.css'
@@ -25,9 +29,17 @@ type Props = {
     messageOwner: LookupUser
     isTippable?: boolean
     streamId?: string
+    reactions?: MessageReactions
 }
 
-export function TipReaction({ tips, eventId, messageOwner, isTippable, streamId }: Props) {
+export function TipReaction({
+    tips,
+    eventId,
+    messageOwner,
+    isTippable,
+    streamId,
+    reactions,
+}: Props) {
     const tippers = useTippers(tips ?? emptyTips, streamId)
     const myUserId = useMyUserId()
     const isTippedByMe = tippers.some((t) => t.userId === myUserId)
@@ -72,7 +84,18 @@ export function TipReaction({ tips, eventId, messageOwner, isTippable, streamId 
     const isDmOrGDM =
         !!channelId && (isDMChannelStreamId(channelId) || isGDMChannelStreamId(channelId))
 
-    if (!channelId || isDmOrGDM || (messageOwner.userId === myUserId && hasNoTips)) {
+    const hasMyReaction = useMemo(() => {
+        const reactionToUsers = Object.values(reactions ?? {})
+        const users = reactionToUsers.flatMap((userToEventId) => Object.keys(userToEventId))
+        return users.some((userId) => userId === myUserId)
+    }, [reactions, myUserId])
+
+    if (
+        !channelId ||
+        isDmOrGDM ||
+        (messageOwner.userId === myUserId && hasNoTips) ||
+        (hasNoTips && !hasMyReaction)
+    ) {
         return null
     }
 

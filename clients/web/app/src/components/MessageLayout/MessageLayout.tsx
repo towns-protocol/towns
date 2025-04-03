@@ -316,6 +316,7 @@ export const MessageLayout = (props: Props) => {
                                                 messageOwner={messageOwner}
                                                 key={`tip-${eventId}`}
                                                 streamId={streamId}
+                                                reactions={reactions}
                                             />
                                         ) : (
                                             <></>
@@ -331,6 +332,7 @@ export const MessageLayout = (props: Props) => {
                                         eventId={eventId}
                                         messageOwner={messageOwner}
                                         streamId={streamId}
+                                        reactions={reactions}
                                     />
                                 </Box>
                             ) : null}
