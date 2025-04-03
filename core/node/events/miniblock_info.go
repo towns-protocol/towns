@@ -128,6 +128,15 @@ func NewMiniblockInfoFromProto(mb *Miniblock, sn *Envelope, opts *ParsedMinibloc
 			Tag("prevSnapshotMiniblockNum", blockHeader.PrevSnapshotMiniblockNum)
 	}
 
+	var snapshot *ParsedEvent
+	if sn != nil {
+		if snapshot, err = ParseEvent(sn); err != nil {
+			return nil, AsRiverError(err, Err_BAD_EVENT).
+				Message("Failed to parse snapshot").
+				Func("NewMiniblockInfoFromProto")
+		}
+	}
+
 	// TODO: snapshot validation if requested
 	// (How to think about versioning?)
 
@@ -140,6 +149,7 @@ func NewMiniblockInfoFromProto(mb *Miniblock, sn *Envelope, opts *ParsedMinibloc
 		Snapshot:           sn,
 		headerEvent:        headerEvent,
 		useGetterForEvents: events,
+		snapshot:           snapshot,
 	}, nil
 }
 
