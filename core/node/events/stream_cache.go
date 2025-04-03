@@ -229,7 +229,7 @@ func (s *StreamCache) onBlockWithLogs(ctx context.Context, blockNum crypto.Block
 					}
 
 					if err := stream.applyStreamEvents(ctx, eventsToApply, blockNum); err != nil {
-						if riverErr := AsRiverError(err); riverErr != nil && riverErr.Code == Err_NOT_FOUND {
+						if IsRiverErrorCode(err, Err_STREAM_RECONCILIATION_REQUIRED) {
 							s.SubmitSyncStreamTask(ctx, stream)
 							return
 						}

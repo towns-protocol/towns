@@ -398,11 +398,14 @@ func (s *Stream) promoteCandidateLocked(ctx context.Context, mb *MiniblockRef) e
 func (s *Stream) schedulePromotionLocked(mb *MiniblockRef) error {
 	if len(s.local.pendingCandidates) == 0 {
 		if mb.Num != s.view().LastBlock().Ref.Num+1 {
-			return RiverError(Err_NOT_FOUND, "schedulePromotionNoLock: next promotion is not for the next block")
+			return RiverError(
+				Err_STREAM_RECONCILIATION_REQUIRED,
+				"schedulePromotionNoLock: next promotion is not for the next block",
+			)
 		}
 		s.local.pendingCandidates = append(s.local.pendingCandidates, mb)
 	} else if len(s.local.pendingCandidates) > 3 {
-		return RiverError(Err_NOT_FOUND, "schedulePromotionNoLock: too many pending candidates")
+		return RiverError(Err_STREAM_RECONCILIATION_REQUIRED, "schedulePromotionNoLock: too many pending candidates")
 	} else {
 		lastPending := s.local.pendingCandidates[len(s.local.pendingCandidates)-1]
 		if mb.Num != lastPending.Num+1 {
@@ -1036,9 +1039,8 @@ func (s *Stream) applyStreamEvents(
 				Hash: event.LastMiniblockHash,
 				Num:  int64(event.LastMiniblockNum),
 			})
-			riverErr := AsRiverError(err)
-			if riverErr != nil && riverErr.Code == Err_NOT_FOUND {
-				return riverErr
+			if err != nil && IsRiverErrorCode(err, Err_STREAM_RECONCILIATION_REQUIRED) {
+				return err
 			}
 
 			if err != nil {
