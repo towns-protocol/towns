@@ -14,6 +14,20 @@ if (!env.DEV) {
     console.debug = bufferedLogger.getLogger().debug
     console.error = bufferedLogger.getLogger().error
 }
+const originalLanguage = document.documentElement.lang
+
+const observer = new MutationObserver(() => {
+    const lang = document.documentElement.lang
+    if (lang !== originalLanguage) {
+        console.log(`🌎 Page translation detected, lang="${lang}" (original="${originalLanguage}")`)
+    }
+})
+observer.observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ['lang'],
+    childList: false,
+    characterData: false,
+})
 
 console.log(
     `%c\n\nTOWNS\n%c${VITE_APP_MODE}\n${VITE_APP_COMMIT_HASH}\n${new Date(

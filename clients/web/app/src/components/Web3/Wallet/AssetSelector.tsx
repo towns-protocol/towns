@@ -54,7 +54,7 @@ export function AssetSelector(props: {
         } else if (assetToTransfer) {
             const asset = options.find((t) => t.data.address === assetToTransfer)
             if (!asset) {
-                return <>not found</>
+                return <Text color="error">Asset not found</Text>
             }
             return (
                 <AssetToTransfer onRemoveClick={onRemoveClick}>

@@ -92,7 +92,7 @@ export function ActionButton(props: FundWalletCallbacks) {
                     onClick={buttonStates.onClick}
                 >
                     {(buttonStates.loading || buttonStates.isApproving) && <ButtonSpinner />}
-                    {buttonStates.text}
+                    <Text>{buttonStates.text}</Text>
                 </Button>
             </Stack>
         </>
