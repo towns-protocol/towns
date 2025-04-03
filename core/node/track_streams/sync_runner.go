@@ -323,7 +323,7 @@ func (sr *SyncRunner) Run(
 					if !reset {
 						if err := trackedStream.ApplyBlock(
 							block,
-							update.GetStream().GetSnapshotForMiniblockIndex(i),
+							update.GetStream().GetSnapshotByMiniblockIndex(i),
 						); err != nil {
 							log.Errorw("Unable to apply block", "err", err)
 						}

@@ -653,7 +653,7 @@ func runStreamGetCmd(cmd *cobra.Command, args []string) error {
 
 	for i, mb := range stream.GetMiniblocks() {
 		info, err := events.NewMiniblockInfoFromProto(
-			mb, stream.GetSnapshotForMiniblockIndex(i),
+			mb, stream.GetSnapshotByMiniblockIndex(i),
 			events.NewParsedMiniblockInfoOpts().
 				WithDoNotParseEvents(true),
 		)
