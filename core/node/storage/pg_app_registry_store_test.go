@@ -43,7 +43,6 @@ func setupAppRegistryStorageTest(t *testing.T) *testAppRegistryStoreParams {
 	ctx, ctxCloser := test.NewTestContext()
 
 	dbCfg, dbSchemaName, dbCloser, err := dbtestutils.ConfigureDbWithPrefix(ctx, "b_")
-	t.Log(dbSchemaName)
 	require.NoError(err, "Error configuring db for test")
 
 	dbCfg.StartupDelay = 2 * time.Millisecond
@@ -286,7 +285,7 @@ func TestCreateApp(t *testing.T) {
 
 	info, err = store.GetAppInfo(params.ctx, app3)
 	require.Nil(info)
-	require.ErrorContains(err, "app does not exist")
+	require.ErrorContains(err, "app is not registered")
 	require.True(base.IsRiverErrorCode(err, protocol.Err_NOT_FOUND))
 }
 

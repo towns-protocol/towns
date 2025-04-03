@@ -878,7 +878,7 @@ func TestAppRegistry_RegisterWebhook(t *testing.T) {
 			appId:                unregisteredAppWallet.Address[:],
 			authenticatingWallet: unregisteredAppWallet,
 			webhookUrl:           "http://www.test.com/callme",
-			expectedErr:          "app does not exist",
+			expectedErr:          "app is not registered",
 		},
 		"Failure: missing authentication": {
 			appId:       appWallet.Address[:],
