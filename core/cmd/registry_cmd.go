@@ -133,7 +133,7 @@ func validateStream(
 	var lastBlock *MiniblockRef
 	for i, mb := range stream.Miniblocks {
 		info, err := events.NewMiniblockInfoFromProto(
-			mb, stream.GetSnapshotForMiniblockIndex(i),
+			mb, stream.GetSnapshotByMiniblockIndex(i),
 			events.NewParsedMiniblockInfoOpts().
 				WithDoNotParseEvents(true),
 		)
