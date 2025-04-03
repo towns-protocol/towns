@@ -29,9 +29,17 @@ type mbJob struct {
 }
 
 func (j *mbJob) produceCandidate(ctx context.Context) error {
-	j.remoteNodes = j.stream.GetQuorumNodes()
+	var isLocalInQuorum bool
+	j.remoteNodes, isLocalInQuorum = j.stream.GetRemotesAndIsLocal()
 	j.syncNodes = j.stream.GetSyncNodes()
 	j.replicated = len(j.remoteNodes) > 0
+
+	// Check if local replica has been removed from the stream after the job was scheduled.
+	// TODO: REPLICATION: FIX: Additionally, replica can be removed while job is in progress,
+	// potentially code needs to be hardened to handle this case.
+	if !isLocalInQuorum {
+		return RiverError(Err_INTERNAL, "Not a local stream")
+	}
 
 	err := j.makeCandidate(ctx)
 	if err != nil {
