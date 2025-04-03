@@ -3,7 +3,6 @@ package events
 import (
 	"bytes"
 	"encoding/hex"
-	"fmt"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -131,7 +130,6 @@ func NewMiniblockInfoFromProto(mb *Miniblock, sn *Envelope, opts *ParsedMinibloc
 
 	var snapshot *Snapshot
 	if sn != nil {
-		fmt.Println(headerEvent.Event.GetMiniblockHeader().GetSnapshot())
 		if snapshot, err = ParseSnapshot(sn, headerEvent.Event.CreatorAddress); err != nil {
 			return nil, AsRiverError(err, Err_BAD_EVENT).
 				Message("Failed to parse snapshot").
