@@ -20,8 +20,6 @@ import { StandardToast, dismissToast } from '@components/Notifications/StandardT
 import { GetSigner, WalletReady } from 'privy/WalletReady'
 import { useJoinFunnelAnalytics } from '@components/Analytics/useJoinFunnelAnalytics'
 import { useGatherSpaceDetailsAnalytics } from '@components/Analytics/useGatherSpaceDetailsAnalytics'
-import { getPriceText } from '@components/TownPageLayout/townPageUtils'
-import { useReadableMembershipInfo } from '@components/TownPageLayout/useReadableMembershipInfo'
 import { useEntitlements } from 'hooks/useEntitlements'
 import { minterRoleId } from '@components/SpaceSettingsPanel/rolePermissions.const'
 import { usePublicPageLoginFlow } from './usePublicPageLoginFlow'
@@ -70,7 +68,6 @@ export function JoinLoginButton({
         useJoinFunnelAnalytics()
 
     const { data: entitlements } = useEntitlements(spaceId, minterRoleId)
-    const { data: membershipInfo } = useReadableMembershipInfo(spaceId ?? '')
     const { data: hasMemberNft, isLoading: isLoadingHasMemberNft } = useHasMemberNft({
         spaceId,
     })
@@ -89,17 +86,8 @@ export function JoinLoginButton({
         if (entitlements?.hasEntitlements) {
             return 'Verify Assets to Join'
         }
-        if (!membershipInfo?.price) {
-            return 'Join'
-        }
-        const price = getPriceText(membershipInfo.price, membershipInfo.remainingFreeSupply)
-        return `Join for ${price?.value} ${price?.suffix}`
-    }, [
-        membershipInfo?.price,
-        membershipInfo?.remainingFreeSupply,
-        entitlements?.hasEntitlements,
-        hasMemberNft,
-    ])
+        return 'Join'
+    }, [entitlements?.hasEntitlements, hasMemberNft])
 
     const onJoinClick = useCallback(
         async (getSigner: GetSigner) => {
