@@ -14,22 +14,17 @@ func (s *Service) localGetStream(
 	streamView *StreamView,
 	syncCookie *SyncCookie,
 ) (*connect.Response[GetStreamResponse], error) {
+	var stream *StreamAndCookie
+	var err error
 	if syncCookie != nil {
-		stream, err := streamView.GetStreamSince(ctx, s.wallet.Address, syncCookie)
-		if err != nil {
-			return nil, err
-		}
-		return connect.NewResponse(
-			&GetStreamResponse{Stream: stream},
-		), nil
+		stream, err = streamView.GetStreamSince(ctx, s.wallet, syncCookie)
 	} else {
-		return connect.NewResponse(&GetStreamResponse{
-			Stream: &StreamAndCookie{
-				Events:         streamView.MinipoolEnvelopes(),
-				NextSyncCookie: streamView.SyncCookie(s.wallet.Address),
-				Miniblocks:     streamView.MiniblocksFromLastSnapshot(),
-				SyncReset:      true,
-			},
-		}), nil
+		stream, err = streamView.GetResetStreamAndCookie(s.wallet)
 	}
+	if err != nil {
+		return nil, err
+	}
+	return connect.NewResponse(
+		&GetStreamResponse{Stream: stream},
+	), nil
 }
