@@ -787,7 +787,7 @@ func (s *Stream) Sub(ctx context.Context, cookie *SyncCookie, receiver SyncResul
 
 	s.lastAccessedTime = time.Now()
 
-	resp, err := s.view().GetStreamSince(ctx, s.params.Wallet.Address, cookie)
+	resp, err := s.view().GetStreamSince(ctx, s.params.Wallet, cookie)
 	if err != nil {
 		return err
 	}
