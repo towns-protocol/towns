@@ -272,7 +272,7 @@ const ChunkedImageMedia = (
                 height={height}
                 style={{
                     height: isGridContext && rowHeight ? rowHeight : '100%',
-                    width: isGridContext && rowHeight ? rowHeight * (width / height) : '100%',
+                    width: isGridContext && rowHeight ? rowHeight * (width / height) : 'auto',
                     filter: applyBlur ? 'blur(10px) brightness(80%)' : undefined,
                 }}
                 onClick={isTouch ? undefined : onClick}
