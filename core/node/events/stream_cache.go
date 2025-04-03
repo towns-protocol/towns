@@ -205,8 +205,8 @@ func (s *StreamCache) onBlockWithLogs(ctx context.Context, blockNum crypto.Block
 				switch events[0].Reason() {
 				case river.StreamUpdatedEventTypeAllocate:
 					streamState := events[0].(*river.StreamState)
-					s.onStreamAllocated(ctx, streamState, events[1:], blockNum)
-					events = nil
+					s.onStreamAllocated(ctx, streamState, blockNum)
+					events = events[1:]
 				case river.StreamUpdatedEventTypeCreate:
 					streamState := events[0].(*river.StreamState)
 					s.onStreamCreated(ctx, streamState, blockNum)
@@ -248,7 +248,6 @@ func (s *StreamCache) onBlockWithLogs(ctx context.Context, blockNum crypto.Block
 func (s *StreamCache) onStreamAllocated(
 	ctx context.Context,
 	event *river.StreamState,
-	otherEvents []river.StreamUpdatedEvent,
 	blockNum crypto.BlockNumber,
 ) {
 	if !slices.Contains(event.Nodes, s.params.Wallet.Address) {
@@ -274,12 +273,9 @@ func (s *StreamCache) onStreamAllocated(
 		local:               &localStreamState{},
 	}
 	stream.nodesLocked.ResetFromStreamState(event, s.params.Wallet.Address)
-	stream, created, err := s.createStreamStorage(ctx, stream, genesisMB, genesisMbNum, genesisHash)
+	_, _, err = s.createStreamStorage(ctx, stream, genesisMB, genesisMbNum, genesisHash)
 	if err != nil {
 		logging.FromCtx(ctx).Errorw("Failed to allocate stream", "err", err, "streamId", event.GetStreamId())
-	}
-	if created && len(otherEvents) > 0 {
-		_ = stream.applyStreamEvents(ctx, otherEvents, blockNum)
 	}
 }
 
@@ -312,8 +308,10 @@ func (s *StreamCache) onStreamPlacementUpdated(
 		return s
 	})
 
+	localWasInQuorum := false
 	if loaded {
 		stream.mu.Lock()
+		localWasInQuorum = stream.nodesLocked.IsLocalInQuorum()
 		// TODO: REPLICATION: FIX: what to do with lastAppliedBlockNum
 		stream.nodesLocked.ResetFromStreamState(event, s.params.Wallet.Address)
 		if stream.local == nil {
@@ -322,9 +320,11 @@ func (s *StreamCache) onStreamPlacementUpdated(
 		stream.mu.Unlock()
 	}
 
-	// always submit a sync task, this change is rare, and it will be a no-op if it's up-to-date
-	// it's easier to submit a task then to figurte out when exactly it's needed
-	s.SubmitSyncStreamTask(ctx, stream)
+	// if local node was in quorum, it should be up-to-date, otherwise submit a sync task,
+	// sometimes it will be a no-op, but it's ok since it's rare codepath
+	if !localWasInQuorum {
+		s.SubmitSyncStreamTask(ctx, stream)
+	}
 }
 
 func (s *StreamCache) Params() *StreamCacheParams {
