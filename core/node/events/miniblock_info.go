@@ -253,9 +253,9 @@ func (b *MiniblockInfo) lastEvent() *ParsedEvent {
 	}
 }
 
-// IsSnapshot returns non-nil but empty byte array if the miniblock is a snapshot.
+// GetSnapshot returns non-nil but empty byte array if the miniblock is a snapshot.
 // TODO: Will be replaced with the real snapshot after DB migration. WIP.
-func (b *MiniblockInfo) IsSnapshot() []byte {
+func (b *MiniblockInfo) GetSnapshot() []byte {
 	if b.Header().GetSnapshot() != nil || len(b.Header().GetSnapshotHash()) > 0 {
 		return make([]byte, 0)
 	}
@@ -275,7 +275,7 @@ func (b *MiniblockInfo) AsStorageMb() (*storage.WriteMiniblockData, error) {
 	return &storage.WriteMiniblockData{
 		Number:   b.Ref.Num,
 		Hash:     b.Ref.Hash,
-		Snapshot: b.IsSnapshot(),
+		Snapshot: b.GetSnapshot(),
 		Data:     serializedMb,
 	}, nil
 }

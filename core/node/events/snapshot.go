@@ -5,12 +5,11 @@ import (
 	"fmt"
 	"slices"
 
-	"github.com/towns-protocol/towns/core/node/crypto"
-
 	"github.com/ethereum/go-ethereum/common"
 	"google.golang.org/protobuf/proto"
 
 	. "github.com/towns-protocol/towns/core/node/base"
+	"github.com/towns-protocol/towns/core/node/crypto"
 	"github.com/towns-protocol/towns/core/node/events/migrations"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/shared"

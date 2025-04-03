@@ -289,7 +289,7 @@ func (s *Stream) applyMiniblockImplLocked(
 		storageMb = &storage.WriteMiniblockData{
 			Number:   info.Ref.Num,
 			Hash:     info.Ref.Hash,
-			Snapshot: info.IsSnapshot(),
+			Snapshot: info.GetSnapshot(),
 			Data:     miniblock.Data,
 		}
 	} else {
