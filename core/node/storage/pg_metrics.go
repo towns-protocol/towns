@@ -109,13 +109,13 @@ func setupPostgresMetrics(ctx context.Context, pool PgxPoolInfo, factory infra.M
 		ctx,
 		fmt.Sprintf(
 			`
-			CREATE OR REPLACE FUNCTION %v.safe_table_count(tablename text, schemaname text default 'public')
+			CREATE OR REPLACE FUNCTION "%s".safe_table_count(tablename text, schemaname text default 'public')
 			RETURNS integer AS $$
 			DECLARE
 				total integer := 0;
 			BEGIN
-				IF to_regclass(format('%%I.%%I', schemaname, tablename)) IS NOT NULL THEN
-					EXECUTE format('SELECT COUNT(*) FROM %%I.%%I', schemaname, tablename)
+				IF to_regclass(format('"%%I".%%I', schemaname, tablename)) IS NOT NULL THEN
+					EXECUTE format('SELECT COUNT(*) FROM "%%I".%%I', schemaname, tablename)
 					INTO total;
 				END IF;
 				RETURN total;
