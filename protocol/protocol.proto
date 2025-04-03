@@ -1229,4 +1229,8 @@ enum Err {
     // The encryption device returned by the app service webhook does not match the first
     // encryption device found in the app's user metadata stream.
     BAD_ENCRYPTION_DEVICE = 68;
+
+    // STREAM_RECONCILIATION_REQUIRED indicates that the stream is out of sync and must be 
+    // reconciled before it can be used.
+    STREAM_RECONCILIATION_REQUIRED = 69;
 }
