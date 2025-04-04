@@ -19,7 +19,7 @@ func (s *Service) localGetStream(
 	if syncCookie != nil {
 		stream, err = streamView.GetStreamSince(ctx, s.wallet, syncCookie)
 	} else {
-		stream, err = streamView.GetResetStreamAndCookie(s.wallet)
+		stream = streamView.GetResetStreamAndCookie(s.wallet)
 	}
 	if err != nil {
 		return nil, err

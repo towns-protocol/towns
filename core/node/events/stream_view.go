@@ -118,12 +118,7 @@ func MakeRemoteStreamView(stream *StreamAndCookie) (*StreamView, error) {
 			opts = opts.WithExpectedBlockNumber(lastMiniblockNumber + 1)
 		}
 
-		var snapshot *Envelope
-		if i == 0 {
-			snapshot = stream.Snapshot
-		}
-
-		miniblock, err := NewMiniblockInfoFromProto(binMiniblock, snapshot, opts)
+		miniblock, err := NewMiniblockInfoFromProto(binMiniblock, stream.GetSnapshotByMiniblockIndex(i), opts)
 		if err != nil {
 			return nil, err
 		}
@@ -922,7 +917,7 @@ func (r *StreamView) GetStreamSince(
 		log.Debugw("GetStreamSince: out of date cookie.MiniblockNum. Sending sync reset.",
 			"stream", r.streamId, "error", err.Error())
 
-		return r.GetResetStreamAndCookie(wallet)
+		return r.GetResetStreamAndCookie(wallet), nil
 
 	}
 
@@ -946,20 +941,11 @@ func (r *StreamView) GetStreamSince(
 	}, nil
 }
 
-func (r *StreamView) GetResetStreamAndCookie(wallet *crypto.Wallet) (*StreamAndCookie, error) {
-	var snapshot *Envelope
-	if r.snapshot != nil {
-		var err error
-		if snapshot, err = MakeEnvelopeWithPayload(wallet, Make_Snapshot(r.snapshot), nil); err != nil {
-			return nil, err
-		}
-	}
-
+func (r *StreamView) GetResetStreamAndCookie(wallet *crypto.Wallet) *StreamAndCookie {
 	return &StreamAndCookie{
 		Events:         r.MinipoolEnvelopes(),
 		NextSyncCookie: r.SyncCookie(wallet.Address),
 		Miniblocks:     r.MiniblocksFromLastSnapshot(),
 		SyncReset:      true,
-		Snapshot:       snapshot,
-	}, nil
+	}
 }

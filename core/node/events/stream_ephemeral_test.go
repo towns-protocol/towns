@@ -165,7 +165,7 @@ func Test_StreamCache_normalizeEphemeralStream(t *testing.T) {
 						}
 
 						var snapshot *Envelope
-						if len(snBytes) > 0 && !req.Msg.GetOmitSnapshot() {
+						if len(snBytes) > 0 && !req.Msg.GetOmitSnapshots() {
 							snapshot = &Envelope{}
 							if err = proto.Unmarshal(snBytes, snapshot); err != nil {
 								return WrapRiverError(Err_BAD_BLOCK, err).Message("Unable to unmarshal snapshot")

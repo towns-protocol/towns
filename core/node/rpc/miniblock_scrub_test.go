@@ -256,13 +256,13 @@ func writeStreamBackToStore(
 				{
 					Number:   1,
 					Hash:     mb1.Ref.Hash,
-					Snapshot: mb1.IsSnapshot(),
+					Snapshot: mb1.GetSnapshot(),
 					Data:     blocks[1].Data,
 				},
 				{
 					Number:   2,
 					Hash:     mb2.Ref.Hash,
-					Snapshot: mb2.IsSnapshot(),
+					Snapshot: mb2.GetSnapshot(),
 					Data:     blocks[2].Data,
 				},
 			},

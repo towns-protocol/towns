@@ -22,7 +22,7 @@ type MiniblockInfo struct {
 
 	headerEvent        *ParsedEvent
 	useGetterForEvents []*ParsedEvent // Use events(). Getter checks if events have been initialized.
-	snapshot           *ParsedEvent   //nolint:unused
+	snapshot           *Snapshot      //nolint:unused
 }
 
 // NewMiniblockInfoFromProto initializes a MiniblockInfo from a proto, applying validation based
@@ -128,9 +128,9 @@ func NewMiniblockInfoFromProto(mb *Miniblock, sn *Envelope, opts *ParsedMinibloc
 			Tag("prevSnapshotMiniblockNum", blockHeader.PrevSnapshotMiniblockNum)
 	}
 
-	var snapshot *ParsedEvent
+	var snapshot *Snapshot
 	if sn != nil {
-		if snapshot, err = ParseEvent(sn); err != nil {
+		if snapshot, err = ParseSnapshot(sn, common.BytesToAddress(headerEvent.Event.CreatorAddress)); err != nil {
 			return nil, AsRiverError(err, Err_BAD_EVENT).
 				Message("Failed to parse snapshot").
 				Func("NewMiniblockInfoFromProto")
@@ -253,9 +253,9 @@ func (b *MiniblockInfo) lastEvent() *ParsedEvent {
 	}
 }
 
-// IsSnapshot returns non-nil but empty byte array if the miniblock is a snapshot.
+// GetSnapshot returns non-nil but empty byte array if the miniblock is a snapshot.
 // TODO: Will be replaced with the real snapshot after DB migration. WIP.
-func (b *MiniblockInfo) IsSnapshot() []byte {
+func (b *MiniblockInfo) GetSnapshot() []byte {
 	if b.Header().GetSnapshot() != nil || len(b.Header().GetSnapshotHash()) > 0 {
 		return make([]byte, 0)
 	}
@@ -275,7 +275,7 @@ func (b *MiniblockInfo) AsStorageMb() (*storage.WriteMiniblockData, error) {
 	return &storage.WriteMiniblockData{
 		Number:   b.Ref.Num,
 		Hash:     b.Ref.Hash,
-		Snapshot: b.IsSnapshot(),
+		Snapshot: b.GetSnapshot(),
 		Data:     serializedMb,
 	}, nil
 }

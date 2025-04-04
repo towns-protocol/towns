@@ -262,7 +262,7 @@ func (s *Service) streamMiniblocksByIds(
 			}
 
 			var snapshot *Envelope
-			if len(snBytes) > 0 && !req.GetOmitSnapshot() {
+			if len(snBytes) > 0 && !req.GetOmitSnapshots() {
 				snapshot = &Envelope{}
 				if err = proto.Unmarshal(snBytes, snapshot); err != nil {
 					return WrapRiverError(Err_BAD_BLOCK, err).Message("Unable to unmarshal snapshot")

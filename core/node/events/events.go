@@ -651,9 +651,3 @@ func Make_MiniblockHeader(miniblockHeader *MiniblockHeader) *StreamEvent_Miniblo
 		MiniblockHeader: miniblockHeader,
 	}
 }
-
-func Make_Snapshot(snapshot *Snapshot) *StreamEvent_Snapshot {
-	return &StreamEvent_Snapshot{
-		Snapshot: snapshot,
-	}
-}
