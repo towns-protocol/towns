@@ -15,9 +15,9 @@
 //          - yes - 2
 //          - no - 1
 
-import { makeRiverConfig } from '@river-build/sdk'
+import { makeRiverConfig } from '@towns-protocol/sdk'
 import { makeTownsBot } from './bot'
-const bot = await makeTownsBot('<private-key>', makeRiverConfig('gamma'))
+const bot = await makeTownsBot('<private-key>', 'gamma')
 
 type State = {
     messageToSurvey: {
