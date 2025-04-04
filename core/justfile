@@ -148,6 +148,17 @@ _config-instance $INSTANCE_NUM $INSTANCE_DIR: _require_run_env
 
 config-instances: _require_run_env (_loop-instances "_config-instance")
 
+config-app-registry: _require_run_env
+    #!/usr/bin/env -S bash {{BASH_OPTS}}
+    source ${ENV_FILE}
+    INSTANCE_DIR="${INSTANCE_BASE}/app-registry"
+    mkdir -p ${INSTANCE_DIR}/{config,logs,certs}
+    # Take the next available port after all stream nodes have been assigned.
+    echo "RIVER_PORT=$((${RPC_PORT} + ${NUM_INSTANCES}))" > ${INSTANCE_DIR}/config/config.env
+    if [ ! -f "${INSTANCE_DIR}/certs/cert.pem" ]; then
+    ./scripts/generate-certs.sh $(realpath ${INSTANCE_DIR}/certs)
+    fi
+
 _remove-instance $INSTANCE_NUM $INSTANCE_DIR: _require_run_env
     @rm -rf ${INSTANCE_DIR}
 
@@ -285,7 +296,7 @@ just-register-nodes-river: _require_run_env (_loop-instances-seq "_register-node
 
 register-nodes-river: _require_run_env config-river-chain config-instances just-register-nodes-river
 
-config: _require_run_env config-root register-nodes-base register-nodes-river storage-start
+config: _require_run_env config-root config-app-registry register-nodes-base register-nodes-river storage-start
 
 build: _require_run_env
     #!/usr/bin/env -S bash {{BASH_OPTS}}
@@ -317,6 +328,21 @@ _run-node $INSTANCE_NUM $INSTANCE_DIR: _require_run_env
         ${RUN_ARGS} \
         > ./logs/tty.stdout.log 2> ./logs/tty.stderr.log &
 
+start-app-registry: _require_run_env
+    #!/usr/bin/env -S bash {{BASH_OPTS}}
+    echo "Running start-app-registry with args $@"
+    source ${ENV_FILE}
+    RUN_ARGS=${RUN_ARGS:-}
+    RUN_CMD=${RUN_CMD:-app-registry}
+    cd ${INSTANCE_BASE}/app-registry
+    ../bin/river_node ${RUN_CMD} \
+        --config ../common.yaml \
+        --config ../contracts.env \
+        --config ../config.yaml \
+        --config config/config.env \
+        ${RUN_ARGS} \
+        > ./logs/tty.stdout.log 2> ./logs/tty.stderr.log &
+
 _stop-node $INSTANCE_NUM $INSTANCE_DIR: _require_run_env
     #!/usr/bin/env -S bash {{BASH_OPTS}}
     source ${ENV_FILE}
@@ -325,6 +351,17 @@ _stop-node $INSTANCE_NUM $INSTANCE_DIR: _require_run_env
     fi
     source ${INSTANCE_DIR}/config/config.env
     ../scripts/kill-on-port.sh ${RIVER_PORT} instance_${INSTANCE_NUM}
+
+stop-app-registry: _require_run_env
+    #!/usr/bin/env -S bash {{BASH_OPTS}}
+    echo "Running stop-app-registry with args $@"
+    source ${ENV_FILE}
+    if [ ! -f "${INSTANCE_BASE}/app-registry/config/config.env" ]; then
+        exit 0
+    fi
+    source ${INSTANCE_BASE}/app-registry/config/config.env
+    ../scripts/kill-on-port.sh ${RIVER_PORT} app-registry
+
 
 # Stop all nodes
 stop: _require_run_env (_loop-instances "_stop-node")
@@ -335,6 +372,14 @@ _wait-node $INSTANCE_NUM $INSTANCE_DIR: _require_run_env
     source ${INSTANCE_DIR}/config/config.env
     cd ..
     yarn wait-on https://localhost:${RIVER_PORT}/status?blockchain=1 --timeout=300000
+
+wait-app-registry: _require_run_env
+    #!/usr/bin/env -S bash {{BASH_OPTS}}
+    echo "Running wait-app-registry with args $@"
+    source ${ENV_FILE}
+    source ${INSTANCE_BASE}/app-registry/config/config.env
+    cd ..
+    yarn wait-on https://localhost:${RIVER_PORT}/status?blockchain=0 --timeout=300000
 
 _wait-ctrl-c:
     #!/usr/bin/env -S bash {{BASH_OPTS}}
@@ -347,6 +392,13 @@ tail-logs: _require_run_env
     source ${ENV_FILE}
     shopt -s nullglob
     LOGS=(${INSTANCE_BASE}/*/logs/tty.*.log)
+    tail -n 500 -F ${LOGS[@]} | yarn exec pino-pretty
+
+tail-app-registry-logs: _require_run_env
+    #!/usr/bin/env -S bash {{BASH_OPTS}}
+    source ${ENV_FILE}
+    shopt -s nullglob
+    LOGS=(${INSTANCE_BASE}/app-registry/logs/tty.*.log)
     tail -n 500 -F ${LOGS[@]} | yarn exec pino-pretty
 
 # Tail logs from all instances starting with 10 last lines
@@ -422,6 +474,8 @@ config-run-tail: _require_run_env stop config build run-and-tail
 
 # Run nodes in foreground, config and build should be run before, CTRL-C to exit
 run: _require_run_env _start-all _wait-all _wait-ctrl-c stop
+
+run-app-registry: _require_run_env start-app-registry wait-app-registry _wait-ctrl-c stop-app-registry
 
 # Start nodes in foreground tailing logs, config and build should be run before
 run-and-tail: _require_run_env _start-all _wait-all tail-logs stop

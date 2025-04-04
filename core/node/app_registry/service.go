@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/hex"
 	"net/http"
+	"strings"
 	"time"
 
 	"connectrpc.com/connect"
@@ -65,10 +66,20 @@ func NewService(
 			"App registry service initialized with insufficient node registries",
 		)
 	}
+
+	// Trim optional "0x" prefix for shared secret data encryption key
+	if len(cfg.SharedSecretDataEncryptionKey) > 2 && strings.ToLower(cfg.SharedSecretDataEncryptionKey[0:2]) == "0x" {
+		cfg.SharedSecretDataEncryptionKey = cfg.SharedSecretDataEncryptionKey[2:]
+	}
+
 	sharedSecretDataEncryptionKey, err := hex.DecodeString(cfg.SharedSecretDataEncryptionKey)
 	if err != nil || len(sharedSecretDataEncryptionKey) != 32 {
 		return nil, base.AsRiverError(err, Err_INVALID_ARGUMENT).
-			Message("AppRegistryConfig SharedSecretDataEncryptionKey must be a 32-byte key encoded as hex")
+			Message("AppRegistryConfig SharedSecretDataEncryptionKey must be a 32-byte key encoded as hex").
+			Tag("error", err).
+			Tag("len", len(sharedSecretDataEncryptionKey)).
+			Tag("key", cfg.SharedSecretDataEncryptionKey).
+			Tag("cfg", cfg)
 	}
 	fixedWidthDataEncryptionKey := [32]byte(sharedSecretDataEncryptionKey)
 
