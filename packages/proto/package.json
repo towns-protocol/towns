@@ -5,6 +5,9 @@
     "type": "module",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
+    "publishConfig": {
+        "access": "public"
+    },
     "scripts": {
         "buf:clean": "rm -rf ./src/gen/*",
         "buf:generate": "cd ../.. && buf generate --template packages/proto/buf.gen.yaml --path protocol/protocol.proto --path protocol/payloads.proto --path packages/proto/internal.proto --path protocol/notifications.proto --path protocol/auth.proto --path protocol/apps.proto",
