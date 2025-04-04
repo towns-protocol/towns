@@ -41,7 +41,7 @@ contract DeployRewardsDistribution is Deployer, FacetHelper {
         return "facets/rewardsDistributionFacet";
     }
 
-    function __deploy(address deployer) public override returns (address) {
+    function __deploy(address deployer) internal override returns (address) {
         vm.startBroadcast(deployer);
         RewardsDistribution facet = new RewardsDistribution();
         vm.stopBroadcast();

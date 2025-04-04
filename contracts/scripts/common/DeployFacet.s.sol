@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import {SimpleDeployer} from "@towns-protocol/diamond/scripts/common/deployers/SimpleDeployer.s.sol";
+import {DeployFacet as _DeployFacet} from "@towns-protocol/diamond/scripts/common/DeployFacet.s.sol";
 
-abstract contract Deployer is SimpleDeployer {
+contract DeployFacet is _DeployFacet {
     /// @dev Override to set the artifact output directory
     function outDir() internal pure override returns (string memory) {
         return "contracts/out/";
