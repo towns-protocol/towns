@@ -348,7 +348,11 @@ func (n *nodeRegistryImpl) GetValidNodeAddresses() []common.Address {
 	return n.validAddrsLocked
 }
 
-func (n *nodeRegistryImpl) ChooseStreamNodes(ctx context.Context, streamId StreamId, replFactor int) ([]common.Address, error) {
+func (n *nodeRegistryImpl) ChooseStreamNodes(
+	ctx context.Context,
+	streamId StreamId,
+	replFactor int,
+) ([]common.Address, error) {
 	n.mu.RLock()
 	defer n.mu.RUnlock()
 
