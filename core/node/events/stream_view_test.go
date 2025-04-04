@@ -224,7 +224,9 @@ func TestLoad(t *testing.T) {
 		view.LastBlock().Ref,
 	)
 	assert.NoError(t, err)
-	miniblock, err := NewMiniblockInfoFromParsed(miniblockHeaderEvent, mbCandidate.Events())
+	parsedSnapshot, err := MakeParsedSnapshot(userWallet, miniblockHeader.Snapshot)
+	assert.NoError(t, err)
+	miniblock, err := NewMiniblockInfoFromParsed(miniblockHeaderEvent, mbCandidate.Events(), parsedSnapshot)
 	assert.NoError(t, err)
 	// with 5 generations (5 blocks kept in memory)
 	newSV1, newEvents, err := view.copyAndApplyBlock(miniblock, cfg)

@@ -243,8 +243,9 @@ func TestSpaceViewState(t *testing.T) {
 	spaceViewStateTest_CheckUserJoined(t, view2, user2Wallet, true)
 	spaceViewStateTest_CheckUserJoined(t, view2, user3Wallet, true)
 	// now, turn that block into bytes, then load it back into a view
-	miniblocks := stream.view().MiniblocksFromLastSnapshot()
+	miniblocks, snapshot := stream.view().MiniblocksFromLastSnapshot()
 	require.Equal(t, 1, len(miniblocks))
+	require.Nil(t, snapshot)
 	miniblock := miniblocks[0]
 	miniblockProtoBytes, err := proto.Marshal(miniblock)
 	require.NoError(t, err)
@@ -311,7 +312,8 @@ func TestChannelViewState_JoinedMembers(t *testing.T) {
 	// make a miniblock
 	_ = tt.makeMiniblock(0, channelStreamId, false)
 	// get the miniblock's last snapshot and convert it into bytes
-	miniblocks := channelStream.view().MiniblocksFromLastSnapshot()
+	miniblocks, snapshot := channelStream.view().MiniblocksFromLastSnapshot()
+	require.Nil(t, snapshot)
 	miniblock := miniblocks[0]
 	miniblockProtoBytes, _ := proto.Marshal(miniblock)
 	// create a stream view from the miniblock bytes
@@ -372,7 +374,8 @@ func TestChannelViewState_RemainingMembers(t *testing.T) {
 	// make a miniblock
 	_ = tt.makeMiniblock(0, channelStreamId, false)
 	// get the miniblock's last snapshot and convert it into bytes
-	miniblocks := channelStream.view().MiniblocksFromLastSnapshot()
+	miniblocks, snapshot := channelStream.view().MiniblocksFromLastSnapshot()
+	require.Nil(t, snapshot)
 	miniblock := miniblocks[0]
 	miniblockProtoBytes, _ := proto.Marshal(miniblock)
 	// create a stream view from the miniblock bytes
