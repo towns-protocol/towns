@@ -537,7 +537,7 @@ func TestSyncWithManyStreams(t *testing.T) {
 // TestSyncWithEmptyNodeAddress tests that the sync service can handle an empty node address by using sticky peer.
 func TestSyncWithEmptyNodeAddress(t *testing.T) {
 	numNodes := 10
-	tt := newServiceTester(t, serviceTesterOpts{numNodes: numNodes, start: true})
+	tt := newServiceTester(t, serviceTesterOpts{numNodes: numNodes, start: true, printTestLogs: true})
 	ctx := tt.ctx
 	require := tt.require
 

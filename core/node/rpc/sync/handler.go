@@ -69,11 +69,11 @@ type (
 	handlerImpl struct {
 		// nodeAddr is used to determine if a stream is local or remote
 		nodeAddr common.Address
-		// streamCache is used to subscribe on local streams
+		// streamCache is used to subscribe to local streams
 		streamCache *StreamCache
-		// nodeRegistry is used to find a node endpoint to subscribe on remote streams
+		// nodeRegistry is used to find a node endpoint to subscribe to remote streams
 		nodeRegistry nodes.NodeRegistry
-		// otelTracer is used to trace individual sync Send operations, tracing is disabled if nil
+		// otelTracer is used to trace individual sync Send operations. tracing is disabled if nil
 		otelTracer trace.Tracer
 		// activeSyncOperations keeps a mapping from SyncID -> *StreamSyncOperation
 		activeSyncOperations sync.Map
@@ -86,8 +86,8 @@ var (
 )
 
 // NewHandler returns a structure that implements the Handler interface.
-// It keeps internally a map of in progress stream sync operations and forwards add stream, remove sream, cancel sync
-// requests to the associated stream sync operation.
+// It internally maintains a map of in-progress stream sync operations and forwards add stream, remove stream, and cancel
+// sync requests to the associated stream sync operation.
 func NewHandler(
 	nodeAddr common.Address,
 	cache *StreamCache,
