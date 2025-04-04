@@ -151,7 +151,7 @@ func (s *StreamCache) Start(ctx context.Context) error {
 			lastAppliedBlockNum: s.params.AppliedBlockNum,
 			local:               &localStreamState{},
 		}
-		stream.nodesLocked.Reset(streamRecord.Nodes, s.params.Wallet.Address)
+		stream.nodesLocked.ResetFromStreamResult(streamRecord, s.params.Wallet.Address)
 		s.cache.Store(streamRecord.StreamId, stream)
 		if s.params.Config.StreamReconciliation.InitialWorkerPoolSize > 0 {
 			s.submitSyncStreamTaskToPool(
@@ -255,7 +255,7 @@ func (s *StreamCache) onStreamAllocated(
 		lastAccessedTime:    time.Now(),
 		local:               &localStreamState{},
 	}
-	stream.nodesLocked.Reset(event.Nodes, s.params.Wallet.Address)
+	stream.nodesLocked.ResetFromStreamState(event, s.params.Wallet.Address)
 	stream, created, err := s.createStreamStorage(ctx, stream, genesisMB, genesisMbNum, genesisHash)
 	if err != nil {
 		logging.FromCtx(ctx).Errorw("Failed to allocate stream", "err", err, "streamId", event.GetStreamId())
@@ -388,7 +388,7 @@ func (s *StreamCache) tryLoadStreamRecord(
 		lastAppliedBlockNum: blockNum,
 		lastAccessedTime:    time.Now(),
 	}
-	stream.nodesLocked.Reset(record.Nodes, s.params.Wallet.Address)
+	stream.nodesLocked.ResetFromStreamResult(record, s.params.Wallet.Address)
 
 	if !stream.nodesLocked.IsLocal() {
 		stream, _ = s.cache.LoadOrStore(streamId, stream)
@@ -436,8 +436,11 @@ func (s *StreamCache) createStreamStorage(
 		// TODO: delete entry on failures below?
 
 		// Our stream won the race, put into storage.
-		err := s.params.Storage.CreateStreamStorage(ctx, stream.streamId, data)
-		if err != nil {
+		if err := s.params.Storage.CreateStreamStorage(
+			ctx,
+			stream.streamId,
+			&storage.WriteMiniblockData{Data: data},
+		); err != nil {
 			if AsRiverError(err).Code == Err_ALREADY_EXISTS {
 				// Attempt to load stream from storage. Might as well do it while under lock.
 				err = stream.loadInternal(ctx)

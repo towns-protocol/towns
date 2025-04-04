@@ -280,8 +280,6 @@ func (s *PostgresEventStore) init(
 ) error {
 	log := logging.FromCtx(ctx)
 
-	setupPostgresMetrics(ctx, *poolInfo, metrics)
-
 	s.config = poolInfo.Config
 	s.pool = poolInfo.Pool
 	s.poolConfig = poolInfo.PoolConfig
@@ -322,6 +320,11 @@ func (s *PostgresEventStore) init(
 	err := s.InitStorage(ctx)
 	if err != nil {
 		return err
+	}
+
+	// Delay the creation of metrics until after the schema has been created.
+	if err := setupPostgresMetrics(ctx, *poolInfo, metrics); err != nil {
+		return WrapRiverError(Err_DB_OPERATION_FAILURE, err).Message("Unable to set up postgres metrics for db")
 	}
 
 	return nil

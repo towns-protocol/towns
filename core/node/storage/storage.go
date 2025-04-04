@@ -16,7 +16,7 @@ const (
 )
 
 type (
-	MiniblockHandlerFunc func(blockdata []byte, seqNum int64) error
+	MiniblockHandlerFunc func(blockdata []byte, seqNum int64, snapshot []byte) error
 
 	ReadStreamFromLastSnapshotResult struct {
 		SnapshotMiniblockOffset int
@@ -27,14 +27,15 @@ type (
 	WriteMiniblockData struct {
 		Number   int64
 		Hash     common.Hash
-		Snapshot bool
+		Snapshot []byte
 		Data     []byte
 	}
 
 	MiniblockDescriptor struct {
-		Number int64
-		Data   []byte
-		Hash   common.Hash // Only set for miniblock candidates
+		Number   int64
+		Data     []byte
+		Hash     common.Hash // Only set for miniblock candidates
+		Snapshot []byte
 	}
 
 	EventDescriptor struct {
@@ -68,10 +69,10 @@ type (
 		// CreateStreamStorage creates a new stream with the given genesis miniblock at index 0.
 		// Last snapshot minblock index is set to 0.
 		// Minipool is set to generation number 1 (i.e. number of miniblock that is going to be produced next) and is empty.
-		CreateStreamStorage(ctx context.Context, streamId StreamId, genesisMiniblock []byte) error
+		CreateStreamStorage(ctx context.Context, streamId StreamId, genesisMiniblock *WriteMiniblockData) error
 
 		// CreateEphemeralStreamStorage same as CreateStreamStorage but marks the stream as ephemeral.
-		CreateEphemeralStreamStorage(ctx context.Context, streamId StreamId, genesisMiniblock []byte) error
+		CreateEphemeralStreamStorage(ctx context.Context, streamId StreamId, genesisMiniblock *WriteMiniblockData) error
 
 		// CreateStreamArchiveStorage creates a new archive storage for the given stream.
 		// Unlike regular CreateStreamStorage, only entry in es table and partition table for miniblocks are created.

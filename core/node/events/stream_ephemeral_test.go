@@ -46,7 +46,7 @@ func Test_StreamCache_normalizeEphemeralStream(t *testing.T) {
 		storageMb, err := mb.AsStorageMb()
 		tc.require.NoError(err)
 
-		err = leaderInstance.params.Storage.CreateEphemeralStreamStorage(ctx, streamId, storageMb.Data)
+		err = leaderInstance.params.Storage.CreateEphemeralStreamStorage(ctx, streamId, storageMb)
 		tc.require.NoError(err)
 
 		mbRef := *mb.Ref
@@ -88,7 +88,7 @@ func Test_StreamCache_normalizeEphemeralStream(t *testing.T) {
 			lastAppliedBlockNum: leaderInstance.params.AppliedBlockNum,
 			local:               &localStreamState{},
 		}
-		si.nodesLocked.Reset(nodes, leaderInstance.params.Wallet.Address)
+		si.nodesLocked.Reset(len(nodes), nodes, leaderInstance.params.Wallet.Address)
 
 		err = leaderInstance.cache.normalizeEphemeralStream(ctx, si, int64(chunks), true)
 		tc.require.NoError(err)
@@ -107,7 +107,7 @@ func Test_StreamCache_normalizeEphemeralStream(t *testing.T) {
 		storageMb, err := mb.AsStorageMb()
 		tc.require.NoError(err)
 
-		err = leaderInstance.params.Storage.CreateEphemeralStreamStorage(ctx, streamId, storageMb.Data)
+		err = leaderInstance.params.Storage.CreateEphemeralStreamStorage(ctx, streamId, storageMb)
 		tc.require.NoError(err)
 
 		mbRef := *mb.Ref
@@ -158,15 +158,24 @@ func Test_StreamCache_normalizeEphemeralStream(t *testing.T) {
 					ctx,
 					streamId,
 					req.Msg.GetMiniblockIds(),
-					func(blockdata []byte, seqNum int64) error {
+					func(mbBytes []byte, seqNum int64, snBytes []byte) error {
 						var mb Miniblock
-						if err = proto.Unmarshal(blockdata, &mb); err != nil {
+						if err = proto.Unmarshal(mbBytes, &mb); err != nil {
 							return WrapRiverError(Err_BAD_BLOCK, err).Message("Unable to unmarshal miniblock")
+						}
+
+						var snapshot *Envelope
+						if len(snBytes) > 0 && !req.Msg.GetOmitSnapshots() {
+							snapshot = &Envelope{}
+							if err = proto.Unmarshal(snBytes, snapshot); err != nil {
+								return WrapRiverError(Err_BAD_BLOCK, err).Message("Unable to unmarshal snapshot")
+							}
 						}
 
 						return resp.Send(&GetMiniblockResponse{
 							Num:       seqNum,
 							Miniblock: &mb,
+							Snapshot:  snapshot,
 						})
 					},
 				)
@@ -193,7 +202,7 @@ func Test_StreamCache_normalizeEphemeralStream(t *testing.T) {
 			lastAppliedBlockNum: replica.params.AppliedBlockNum,
 			local:               &localStreamState{},
 		}
-		si.nodesLocked.Reset(nodes, replica.params.Wallet.Address)
+		si.nodesLocked.Reset(len(nodes), nodes, replica.params.Wallet.Address)
 
 		err = replica.cache.normalizeEphemeralStream(ctx, si, int64(chunks), true)
 		tc.require.NoError(err)

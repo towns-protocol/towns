@@ -19,62 +19,74 @@ import {ReentrancyGuard} from "solady/utils/ReentrancyGuard.sol";
 /// - PausableBase: Allows pausing of space creation functionality
 /// - ReentrancyGuard: Prevents reentrancy attacks during space creation
 /// - Facet: Base contract for diamond facets
-contract CreateSpaceFacet is
-  ICreateSpace,
-  PausableBase,
-  ReentrancyGuard,
-  Facet
-{
-  function __CreateSpace_init() external onlyInitializing {
-    _addInterface(type(ICreateSpace).interfaceId);
-  }
+contract CreateSpaceFacet is ICreateSpace, PausableBase, ReentrancyGuard, Facet {
+    function __CreateSpace_init() external onlyInitializing {
+        _addInterface(type(ICreateSpace).interfaceId);
+    }
 
-  /// @inheritdoc ICreateSpace
-  function createSpaceV2(
-    CreateSpace memory spaceInfo,
-    SpaceOptions memory options
-  ) external payable nonReentrant whenNotPaused returns (address) {
-    return CreateSpaceLib.createSpaceWithPrepay(spaceInfo, options);
-  }
+    /// @inheritdoc ICreateSpace
+    function createSpaceV2(
+        CreateSpace memory spaceInfo,
+        SpaceOptions memory options
+    )
+        external
+        payable
+        nonReentrant
+        whenNotPaused
+        returns (address)
+    {
+        return CreateSpaceLib.createSpaceWithPrepay(spaceInfo, options);
+    }
 
-  /// @inheritdoc ICreateSpace
-  function createSpace(
-    SpaceInfo memory spaceInfo
-  ) external nonReentrant whenNotPaused returns (address) {
-    SpaceOptions memory spaceOptions = SpaceOptions({to: msg.sender});
-    return CreateSpaceLib.createSpace(spaceInfo, spaceOptions);
-  }
+    /// @inheritdoc ICreateSpace
+    function createSpace(SpaceInfo memory spaceInfo)
+        external
+        nonReentrant
+        whenNotPaused
+        returns (address)
+    {
+        SpaceOptions memory spaceOptions = SpaceOptions({to: msg.sender});
+        return CreateSpaceLib.createSpace(spaceInfo, spaceOptions);
+    }
 
-  /// @inheritdoc ICreateSpace
-  function createSpaceWithPrepay(
-    CreateSpace memory spaceInfo
-  ) external payable nonReentrant whenNotPaused returns (address) {
-    SpaceOptions memory spaceOptions = SpaceOptions({to: msg.sender});
-    return CreateSpaceLib.createSpaceWithPrepay(spaceInfo, spaceOptions);
-  }
+    /// @inheritdoc ICreateSpace
+    function createSpaceWithPrepay(CreateSpace memory spaceInfo)
+        external
+        payable
+        nonReentrant
+        whenNotPaused
+        returns (address)
+    {
+        SpaceOptions memory spaceOptions = SpaceOptions({to: msg.sender});
+        return CreateSpaceLib.createSpaceWithPrepay(spaceInfo, spaceOptions);
+    }
 
-  /// @inheritdoc ICreateSpace
-  function createSpaceWithPrepay(
-    CreateSpaceOld memory spaceInfo
-  ) external payable nonReentrant whenNotPaused returns (address) {
-    MembershipRequirements memory requirements = MembershipRequirements({
-      everyone: spaceInfo.membership.requirements.everyone,
-      users: spaceInfo.membership.requirements.users,
-      ruleData: spaceInfo.membership.requirements.ruleData,
-      syncEntitlements: false
-    });
-    Membership memory membership = Membership({
-      settings: spaceInfo.membership.settings,
-      requirements: requirements,
-      permissions: spaceInfo.membership.permissions
-    });
-    CreateSpace memory newSpaceInfo = CreateSpace({
-      metadata: spaceInfo.metadata,
-      membership: membership,
-      channel: spaceInfo.channel,
-      prepay: spaceInfo.prepay
-    });
-    SpaceOptions memory spaceOptions = SpaceOptions({to: msg.sender});
-    return CreateSpaceLib.createSpaceWithPrepay(newSpaceInfo, spaceOptions);
-  }
+    /// @inheritdoc ICreateSpace
+    function createSpaceWithPrepay(CreateSpaceOld memory spaceInfo)
+        external
+        payable
+        nonReentrant
+        whenNotPaused
+        returns (address)
+    {
+        MembershipRequirements memory requirements = MembershipRequirements({
+            everyone: spaceInfo.membership.requirements.everyone,
+            users: spaceInfo.membership.requirements.users,
+            ruleData: spaceInfo.membership.requirements.ruleData,
+            syncEntitlements: false
+        });
+        Membership memory membership = Membership({
+            settings: spaceInfo.membership.settings,
+            requirements: requirements,
+            permissions: spaceInfo.membership.permissions
+        });
+        CreateSpace memory newSpaceInfo = CreateSpace({
+            metadata: spaceInfo.metadata,
+            membership: membership,
+            channel: spaceInfo.channel,
+            prepay: spaceInfo.prepay
+        });
+        SpaceOptions memory spaceOptions = SpaceOptions({to: msg.sender});
+        return CreateSpaceLib.createSpaceWithPrepay(newSpaceInfo, spaceOptions);
+    }
 }

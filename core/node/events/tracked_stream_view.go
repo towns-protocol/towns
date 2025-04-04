@@ -14,7 +14,7 @@ import (
 type TrackedStreamView interface {
 	// ApplyBlock applies the block to the internal view, updating the stream with the latest
 	// membership if it is a channel.
-	ApplyBlock(miniblock *Miniblock) error
+	ApplyBlock(miniblock *Miniblock, snapshot *Envelope) error
 
 	// ApplyEvent applies the event to the internal view and notifies if the event unseen
 	ApplyEvent(ctx context.Context, event *Envelope) error
@@ -64,8 +64,13 @@ func (ts *TrackedStreamViewImpl) Init(
 
 func (ts *TrackedStreamViewImpl) ApplyBlock(
 	miniblock *Miniblock,
+	snapshot *Envelope,
 ) error {
-	mb, err := NewMiniblockInfoFromProto(miniblock, NewParsedMiniblockInfoOpts())
+	mb, err := NewMiniblockInfoFromProto(
+		miniblock,
+		snapshot,
+		NewParsedMiniblockInfoOpts(),
+	)
 	if err != nil {
 		return err
 	}
