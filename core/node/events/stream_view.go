@@ -119,22 +119,22 @@ func MakeRemoteStreamView(stream *StreamAndCookie) (*StreamView, error) {
 		if i > 0 {
 			opts = opts.WithExpectedBlockNumber(lastMiniblockNumber + 1)
 		}
-
 		miniblock, err := NewMiniblockInfoFromProto(binMiniblock, stream.GetSnapshotByMiniblockIndex(i), opts)
 		if err != nil {
 			return nil, err
 		}
 		lastMiniblockNumber = miniblock.Header().MiniblockNum
 		miniblocks[i] = miniblock
-		if miniblock.Header().Snapshot != nil {
+		if miniblock.GetSnapshot() != nil {
 			snapshotIndex = i
 		}
 	}
 
-	snapshot := miniblocks[0].headerEvent.Event.GetMiniblockHeader().GetSnapshot()
+	snapshot := miniblocks[snapshotIndex].GetSnapshot()
 	if snapshot == nil {
 		return nil, RiverError(Err_STREAM_BAD_EVENT, "no snapshot").Func("MakeStreamView")
 	}
+
 	streamId, err := StreamIdFromBytes(snapshot.GetInceptionPayload().GetStreamId())
 	if err != nil {
 		return nil, RiverError(Err_STREAM_BAD_EVENT, "bad streamId").Func("MakeStreamView")
@@ -417,7 +417,7 @@ func (r *StreamView) makeMiniblockCandidate(
 		// TODO: header.SnapshotHash = parsedSnapshot.Envelope.Hash
 		// TODO: Remove the following line.
 		// Just resetting it to nil for now to avoid storing it in the DB until all nodes can handle snapshots.
-		parsedSnapshot = nil
+		// parsedSnapshot = nil
 	}
 
 	return NewMiniblockInfoFromHeaderAndParsed(params.Wallet, header, events, parsedSnapshot)

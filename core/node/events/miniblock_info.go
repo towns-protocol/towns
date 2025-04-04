@@ -135,10 +135,15 @@ func NewMiniblockInfoFromProto(mb *Miniblock, sn *Envelope, opts *ParsedMinibloc
 				Message("Failed to parse snapshot").
 				Func("NewMiniblockInfoFromProto")
 		}
+	} else if blockHeader.GetSnapshot() != nil && len(blockHeader.GetSnapshotHash()) == 0 {
+		// This function can be called from the places where a stream gets initialized based on the miniblock
+		// data fetched from the blockchain. In this case, the snapshot is set in the header.
+		// TODO: This case could be removed when the network operates in a new snapshot style.
+		snapshot = &ParsedSnapshot{Snapshot: blockHeader.GetSnapshot()}
 	}
 
 	// TODO: Make it work with the new style of snapshot
-	if !opts.SkipSnapshotValidation() && false {
+	if !opts.SkipSnapshotValidation() {
 		if len(blockHeader.GetSnapshotHash()) == 0 && blockHeader.GetSnapshot() == nil && snapshot != nil {
 			return nil, RiverError(Err_BAD_BLOCK, "Snapshot is not expected").
 				Func("NewMiniblockInfoFromProto")
@@ -205,11 +210,11 @@ func NewMiniblockInfoFromParsed(
 		},
 		headerEvent:        headerEvent,
 		useGetterForEvents: events,
+		snapshot:           snapshot,
 	}
 
 	if snapshot != nil {
 		mbInfo.Snapshot = snapshot.Envelope
-		mbInfo.snapshot = snapshot
 	}
 
 	return mbInfo, nil
@@ -316,8 +321,10 @@ func (b *MiniblockInfo) AsStorageMb() (*storage.WriteMiniblockData, error) {
 			Func("AsStorageMb")
 	}
 
+	// Serialize snapshot if the miniblock header contains a snapshot hash instead of a full snapshot.
+	// Here the DB record is controlled by the header, so we need to serialize the snapshot.
 	var serializedSn []byte
-	if b.Snapshot != nil {
+	if b.Snapshot != nil /*&& (len(b.Header().GetSnapshotHash()) > 0 && b.Header().GetSnapshot() == nil)*/ {
 		if serializedSn, err = proto.Marshal(b.Snapshot); err != nil {
 			return nil, AsRiverError(err, Err_INTERNAL).
 				Message("Failed to serialize snapshot to bytes").
