@@ -4,9 +4,6 @@ pragma solidity ^0.8.23;
 // interfaces
 import {ISchemaResolver} from "./interfaces/ISchemaResolver.sol";
 
-// types
-import {PackedModuleTypes, ModuleType} from "./libraries/ModuleTypes.sol";
-
 library DataTypes {
   // A representation of an empty/uninitialized UID.
   bytes32 constant EMPTY_UID = 0;
@@ -14,25 +11,30 @@ library DataTypes {
   // A zero expiration represents an non-expiring attestation.
   uint64 constant NO_EXPIRATION_TIME = 0;
 
-  // A zero module type represents an unfiltered attestation.
-  ModuleType constant ZERO_MODULE_TYPE = ModuleType.wrap(0);
+  enum PluginType {
+    Validation,
+    Execution,
+    Both
+  }
 
   struct Schema {
     bytes32 uid; // The unique identifier of the schema.
     ISchemaResolver resolver; // The address of the resolver that will validate the schema.
-    string definition; // The schema to register e.g. "(address plugin,string pluginType,bool audited)"
+    bool revocable; // Whether the schema is revocable.
+    string schema; // The schema to register e.g. "(address plugin,uint8 pluginType,bool audited)"
   }
 
   struct Attestation {
     bytes32 uid; // The unique identifier of the attestation.
-    bytes32 schemaId; // The unique identifier of the schema.
+    bytes32 schema; // The unique identifier of the schema.
     uint64 time; // The time when the attestation was created (Unix timestamp).
     uint64 expirationTime; // The time when the attestation expires (Unix timestamp).
     uint64 revocationTime; // The time when the attestation was revoked (Unix timestamp).
-    PackedModuleTypes moduleTypes; // The type of the module.
+    bytes32 refUID; // The UID of the related attestation.
     address recipient; // The address of the plugin that is being attested to.
     address attester; // The attester/sender of the attestation.
-    bytes data; // The data to attest to.
+    bool revocable; // Whether the attestation is revocable.
+    bytes data; // Custom attestation data.
   }
 
   struct TrustedAttester {
@@ -45,18 +47,28 @@ library DataTypes {
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                       Request Types                        */
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+  struct AttestationRequestData {
+    address recipient; // The recipient of the attestation.
+    uint64 expirationTime; // The time when the attestation expires (Unix timestamp).
+    bool revocable; // Whether the attestation is revocable.
+    bytes32 refUID; // The UID of the related attestation.
+    bytes data; // Custom attestation data.
+    uint256 value; // An explicit ETH amount to send to the resolver. This is important to prevent accidental user errors.
+  }
 
   struct AttestationRequest {
     bytes32 schemaId; // The schema to attest to
-    address recipient; // The address of the plugin that is being attested to.
-    uint64 expirationTime; // The time at which the attestation will expire.
-    bytes data; // The data to attest to.
-    ModuleType[] moduleTypes; // The type of the module.
+    AttestationRequestData data; // The data to attest to
+  }
+
+  struct RevocationRequestData {
+    bytes32 uid; // The identifier of the attestation
+    uint256 value; // An explicit ETH amount to send to the resolver. This is important to prevent accidental user errors.
   }
 
   struct RevocationRequest {
-    bytes32 schemaId; // The identifier of the schema
-    bytes32 uid; // The identifier of the attestation
+    bytes32 schemaId; // The schema to revoke
+    RevocationRequestData data; // The data to revoke
   }
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -77,6 +89,9 @@ library DataTypes {
   error NoTrustedAttestersFound();
   error InsufficientAttestations();
   error InvalidModuleType();
+  error NotPayable();
+  error InsufficientBalance();
+  error NotFound();
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*                           Events                           */
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -99,33 +114,4 @@ library DataTypes {
     bytes32 indexed uid,
     bytes32 schemaId
   );
-}
-
-interface IAppRegistry {
-  /// @notice Register a schema
-  /// @param schema The schema to register e.g. "(address plugin,string pluginType,bool audited)"
-  /// @param resolver A contract that will validate the schema whenever someone attests to it
-  /// @return schemaId The UID of the schema
-  function registerSchema(
-    string calldata schema,
-    ISchemaResolver resolver // OPTIONAL
-  ) external returns (bytes32);
-
-  /// @notice Get the schema record for a given schemaId
-  /// @param schemaId The schemaId of the schema
-  /// @return The schema record
-  function getSchema(
-    bytes32 schemaId
-  ) external view returns (DataTypes.Schema memory);
-
-  /// @notice Attest a request
-  /// @param request The request to attest to
-  function attest(
-    bytes32 schemaId,
-    DataTypes.AttestationRequest calldata request
-  ) external;
-
-  /// @notice Revoke a plugin
-  /// @param request The request to revoke
-  function revoke(DataTypes.RevocationRequest calldata request) external;
 }

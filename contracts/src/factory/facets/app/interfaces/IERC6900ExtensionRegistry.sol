@@ -1,25 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import {ModuleType} from "../libraries/ModuleTypes.sol";
-
-interface IERC7484 {
+interface IERC6900ExtensionRegistry {
   event NewTrustedAttesters(address indexed smartAccount);
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
   /*          Check with Registry internal attesters            */
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
   function check(address module) external view;
-
   function checkForAccount(address smartAccount, address module) external view;
-
-  function check(address module, ModuleType moduleType) external view;
-
-  function checkForAccount(
-    address smartAccount,
-    address module,
-    ModuleType moduleType
-  ) external view;
 
   /**
    * Allows Smart Accounts - the end users of the registry - to appoint
@@ -41,13 +30,6 @@ interface IERC7484 {
 
   function check(
     address module,
-    address[] calldata attesters,
-    uint256 threshold
-  ) external view;
-
-  function check(
-    address module,
-    ModuleType moduleType,
     address[] calldata attesters,
     uint256 threshold
   ) external view;

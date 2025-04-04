@@ -2,32 +2,33 @@
 pragma solidity ^0.8.23;
 
 //interfaces
-import {IAppRegistry} from "contracts/src/factory/facets/app/IAppRegistry.sol";
+
 //libraries
 
 //contracts
 import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
-import {AppRegistry} from "contracts/src/factory/facets/app/AppRegistry.sol";
+import {AttestationRegistry} from "contracts/src/factory/facets/app/AttestationRegistry.sol";
 import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
 
-contract DeployAppRegistry is FacetHelper, Deployer {
+contract DeployAttestationRegistry is FacetHelper, Deployer {
   constructor() {
-    addSelector(IAppRegistry.registerSchema.selector);
-    addSelector(IAppRegistry.getSchema.selector);
+    addSelector(AttestationRegistry.attest.selector);
+    addSelector(AttestationRegistry.revoke.selector);
+    addSelector(AttestationRegistry.getAttestation.selector);
   }
 
   function initializer() public pure override returns (bytes4) {
-    return AppRegistry.__AppRegistry_init.selector;
+    return AttestationRegistry.__AttestationRegistry_init.selector;
   }
 
   function versionName() public pure override returns (string memory) {
-    return "facets/appRegistryFacet";
+    return "facets/attestationRegistryFacet";
   }
 
   function __deploy(address deployer) public override returns (address) {
     vm.startBroadcast(deployer);
-    AppRegistry appRegistry = new AppRegistry();
+    AttestationRegistry attestationRegistry = new AttestationRegistry();
     vm.stopBroadcast();
-    return address(appRegistry);
+    return address(attestationRegistry);
   }
 }

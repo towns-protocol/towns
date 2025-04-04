@@ -4,8 +4,8 @@ pragma solidity ^0.8.23;
 // interfaces
 import {ISchemaResolver} from "../interfaces/ISchemaResolver.sol";
 // libraries
-import {DataTypes} from "../IAppRegistry.sol";
-import {AppRegistryStorage} from "../AppRegistryStorage.sol";
+import {DataTypes} from "../DataTypes.sol";
+import {SchemaRegistryStorage} from "../storage/SchemaRegistryStorage.sol";
 import {CustomRevert} from "../../../../utils/libraries/CustomRevert.sol";
 
 // contracts
@@ -19,17 +19,19 @@ library SchemaLib {
 
   function registerSchema(
     string calldata schema,
-    ISchemaResolver resolver
+    ISchemaResolver resolver,
+    bool revocable
   ) internal returns (bytes32 schemaUID) {
     checkResolver(resolver);
 
     DataTypes.Schema memory schemaRecord = DataTypes.Schema({
       uid: DataTypes.EMPTY_UID,
       resolver: resolver,
-      definition: schema
+      revocable: revocable,
+      schema: schema
     });
 
-    AppRegistryStorage.Layout storage db = AppRegistryStorage.getLayout();
+    SchemaRegistryStorage.Layout storage db = SchemaRegistryStorage.getLayout();
 
     schemaUID = getUID(schemaRecord);
     if (db.schemas[schemaUID].uid != DataTypes.EMPTY_UID) {
@@ -47,7 +49,7 @@ library SchemaLib {
   function getSchema(
     bytes32 uid
   ) internal view returns (DataTypes.Schema memory) {
-    return AppRegistryStorage.getLayout().schemas[uid];
+    return SchemaRegistryStorage.getLayout().schemas[uid];
   }
 
   /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -65,14 +67,10 @@ library SchemaLib {
 
   function getUID(
     DataTypes.Schema memory schema
-  ) internal view returns (bytes32) {
+  ) internal pure returns (bytes32) {
     return
       keccak256(
-        abi.encodePacked(
-          msg.sender,
-          schema.definition,
-          address(schema.resolver)
-        )
+        abi.encodePacked(schema.schema, schema.resolver, schema.revocable)
       );
   }
 

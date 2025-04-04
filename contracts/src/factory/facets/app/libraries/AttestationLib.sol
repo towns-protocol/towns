@@ -2,44 +2,74 @@
 pragma solidity ^0.8.23;
 
 // interfaces
+import {ISchemaResolver} from "../interfaces/ISchemaResolver.sol";
 
 // libraries
-import {DataTypes} from "../IAppRegistry.sol";
-import {AppRegistryStorage} from "../AppRegistryStorage.sol";
+import {DataTypes} from "../DataTypes.sol";
 import {SchemaLib} from "./SchemaLib.sol";
+import {AttestationRegistryStorage} from "../storage/AttestationRegistryStorage.sol";
 import {CustomRevert} from "../../../../utils/libraries/CustomRevert.sol";
-import {ModuleTypeLib, ModuleType, PackedModuleTypes} from "./ModuleTypes.sol";
+import {CurrencyTransfer} from "../../../../utils/libraries/CurrencyTransfer.sol";
+
 // contracts
 
 library AttestationLib {
   using CustomRevert for bytes4;
-  using ModuleTypeLib for ModuleType[];
 
+  /// @dev Resolves a new attestation or a revocation of an existing attestation.
+  /// @param schema The schema of the attestation.
+  /// @param attestation The data of the attestation to make/revoke
+  /// @param value An explicit ETH amount to send to the resolver.
+  /// @param isRevocation Whether the attestation is a revocation.
   function resolveAttestation(
-    bytes32 schemaId,
+    DataTypes.Schema memory schema,
     DataTypes.Attestation memory attestation,
-    bool isRevocation
-  ) internal {
-    DataTypes.Schema memory schema = SchemaLib.getSchema(schemaId);
+    uint256 value,
+    bool isRevocation,
+    uint256 availableValue,
+    bool last
+  ) internal returns (uint256) {
+    ISchemaResolver resolver = ISchemaResolver(schema.resolver);
+
     if (schema.uid == DataTypes.EMPTY_UID) {
       DataTypes.InvalidSchema.selector.revertWith();
     }
 
-    if (address(schema.resolver) != address(0)) {
-      if (isRevocation) {
-        if (!schema.resolver.revoke(attestation)) {
-          DataTypes.InvalidRevocation.selector.revertWith();
-        }
-      } else if (!schema.resolver.attest(attestation)) {
-        DataTypes.InvalidAttestation.selector.revertWith();
+    if (address(resolver) == address(0)) {
+      if (value != 0) DataTypes.NotPayable.selector.revertWith();
+      if (last) refund(availableValue);
+      return 0;
+    }
+
+    if (value != 0) {
+      if (!resolver.isPayable()) DataTypes.NotPayable.selector.revertWith();
+      if (value > availableValue)
+        DataTypes.InsufficientBalance.selector.revertWith();
+
+      unchecked {
+        availableValue -= value;
       }
     }
+
+    if (isRevocation) {
+      if (!resolver.revoke{value: value}(attestation)) {
+        DataTypes.InvalidRevocation.selector.revertWith();
+      }
+    } else if (!resolver.attest{value: value}(attestation)) {
+      DataTypes.InvalidAttestation.selector.revertWith();
+    }
+
+    if (last) refund(availableValue);
+
+    return value;
   }
 
   function attest(
     bytes32 schemaId,
+    DataTypes.AttestationRequestData memory request,
     address attester,
-    DataTypes.AttestationRequest memory request
+    uint256 availableValue,
+    bool last
   ) internal returns (DataTypes.Attestation memory) {
     DataTypes.Schema memory schema = SchemaLib.getSchema(schemaId);
     if (schema.uid == DataTypes.EMPTY_UID) {
@@ -55,44 +85,75 @@ library AttestationLib {
       DataTypes.InvalidExpirationTime.selector.revertWith();
     }
 
+    // If the schema is not revocable, the attestation cannot be revoked
+    if (!schema.revocable && request.revocable) {
+      DataTypes.Irrevocable.selector.revertWith();
+    }
+
     DataTypes.Attestation memory attestation = DataTypes.Attestation({
       uid: DataTypes.EMPTY_UID,
-      schemaId: schemaId,
+      schema: schemaId,
       time: timeNow,
       expirationTime: request.expirationTime,
       revocationTime: 0,
-      moduleTypes: request.moduleTypes.pack(),
+      refUID: request.refUID,
       recipient: request.recipient,
       attester: attester,
+      revocable: request.revocable,
       data: request.data
     });
 
-    bytes32 attestationUID = hashAttestation(attestation, 0);
+    AttestationRegistryStorage.Layout storage db = AttestationRegistryStorage
+      .getLayout();
 
-    AppRegistryStorage.Layout storage db = AppRegistryStorage.getLayout();
-
-    if (db.attestations[attestationUID].uid != DataTypes.EMPTY_UID) {
-      DataTypes.InvalidAttestation.selector.revertWith();
+    bytes32 attestationUID;
+    uint32 bump;
+    while (true) {
+      attestationUID = hashAttestation(attestation, bump);
+      if (db.attestations[attestationUID].uid == DataTypes.EMPTY_UID) {
+        break;
+      }
+      unchecked {
+        ++bump;
+      }
     }
 
     attestation.uid = attestationUID;
     db.attestations[attestationUID] = attestation;
 
+    if (request.refUID != DataTypes.EMPTY_UID) {
+      if (!isValidAttestation(request.refUID)) {
+        DataTypes.NotFound.selector.revertWith();
+      }
+    }
+
     emit DataTypes.AttestationCreated(
       attestation.recipient,
       attestation.attester,
       attestation.uid,
-      attestation.schemaId
+      attestation.schema
     );
+
+    resolveAttestation({
+      schema: schema,
+      attestation: attestation,
+      value: request.value,
+      isRevocation: false,
+      availableValue: availableValue,
+      last: last
+    });
 
     return attestation;
   }
 
   function revoke(
+    bytes32 schemaId,
+    DataTypes.RevocationRequestData memory request,
     address revoker,
-    DataTypes.RevocationRequest memory request
+    uint256 availableValue,
+    bool last
   ) internal returns (DataTypes.Attestation memory) {
-    DataTypes.Schema memory schema = SchemaLib.getSchema(request.schemaId);
+    DataTypes.Schema memory schema = SchemaLib.getSchema(schemaId);
     if (schema.uid == DataTypes.EMPTY_UID) {
       DataTypes.InvalidSchema.selector.revertWith();
     }
@@ -103,7 +164,7 @@ library AttestationLib {
       DataTypes.InvalidAttestation.selector.revertWith();
     }
 
-    if (attestation.schemaId != request.schemaId) {
+    if (attestation.schema != schemaId) {
       DataTypes.InvalidSchema.selector.revertWith();
     }
 
@@ -111,11 +172,16 @@ library AttestationLib {
       DataTypes.InvalidRevoker.selector.revertWith();
     }
 
+    if (!attestation.revocable) {
+      DataTypes.Irrevocable.selector.revertWith();
+    }
+
     if (attestation.revocationTime != 0) {
       DataTypes.InvalidRevocation.selector.revertWith();
     }
 
-    AppRegistryStorage.Layout storage db = AppRegistryStorage.getLayout();
+    AttestationRegistryStorage.Layout storage db = AttestationRegistryStorage
+      .getLayout();
 
     db.attestations[attestation.uid].revocationTime = time();
     db.recipientToAttesterToAttestation[attestation.recipient][
@@ -126,8 +192,17 @@ library AttestationLib {
       attestation.recipient,
       attestation.attester,
       attestation.uid,
-      attestation.schemaId
+      attestation.schema
     );
+
+    resolveAttestation({
+      schema: schema,
+      attestation: attestation,
+      value: request.value,
+      isRevocation: true,
+      availableValue: availableValue,
+      last: last
+    });
 
     return attestation;
   }
@@ -135,14 +210,14 @@ library AttestationLib {
   function getAttestation(
     bytes32 uid
   ) internal view returns (DataTypes.Attestation memory) {
-    return AppRegistryStorage.getLayout().attestations[uid];
+    return AttestationRegistryStorage.getLayout().attestations[uid];
   }
 
   function getAttestationByRecipientAndAttester(
     address recipient,
     address attester
   ) internal view returns (DataTypes.Attestation memory) {
-    bytes32 uid = AppRegistryStorage
+    bytes32 uid = AttestationRegistryStorage
       .getLayout()
       .recipientToAttesterToAttestation[recipient][attester];
 
@@ -157,20 +232,13 @@ library AttestationLib {
   /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
   function checkValid(
-    DataTypes.Attestation memory attestation,
-    ModuleType moduleType
+    DataTypes.Attestation memory attestation
   ) internal view returns (bool) {
-    (
-      bytes32 uid,
-      uint64 expirationTime,
-      uint64 revocationTime,
-      PackedModuleTypes moduleTypes
-    ) = (
-        attestation.uid,
-        attestation.expirationTime,
-        attestation.revocationTime,
-        attestation.moduleTypes
-      );
+    (bytes32 uid, uint64 expirationTime, uint64 revocationTime) = (
+      attestation.uid,
+      attestation.expirationTime,
+      attestation.revocationTime
+    );
 
     if (uid == DataTypes.EMPTY_UID) {
       return false;
@@ -187,13 +255,6 @@ library AttestationLib {
       return false;
     }
 
-    if (
-      moduleType != DataTypes.ZERO_MODULE_TYPE &&
-      !ModuleTypeLib.isType(moduleTypes, moduleType)
-    ) {
-      return false;
-    }
-
     return true;
   }
 
@@ -204,11 +265,13 @@ library AttestationLib {
     return
       keccak256(
         abi.encodePacked(
-          attestation.schemaId,
+          attestation.schema,
           attestation.recipient,
           attestation.attester,
           attestation.time,
           attestation.expirationTime,
+          attestation.revocable,
+          attestation.refUID,
           attestation.data,
           bump
         )
@@ -217,5 +280,15 @@ library AttestationLib {
 
   function time() internal view returns (uint64) {
     return uint64(block.timestamp);
+  }
+
+  function refund(uint256 value) internal {
+    if (value > 0) {
+      CurrencyTransfer.safeTransferNativeToken(msg.sender, value);
+    }
+  }
+
+  function isValidAttestation(bytes32 uid) internal view returns (bool) {
+    return getAttestation(uid).uid != DataTypes.EMPTY_UID;
   }
 }

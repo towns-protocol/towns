@@ -2,20 +2,18 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {IERC7484} from "../interfaces/IERC7484.sol";
+import {IERC6900ExtensionRegistry} from "../interfaces/IERC6900ExtensionRegistry.sol";
 // libraries
 import {LibSort} from "solady/utils/LibSort.sol";
 import {CustomRevert} from "contracts/src/utils/libraries/CustomRevert.sol";
-import {DataTypes} from "../IAppRegistry.sol";
-import {AppRegistryStorage} from "../AppRegistryStorage.sol";
+import {DataTypes} from "../DataTypes.sol";
+import {AttestationRegistryStorage} from "../storage/AttestationRegistryStorage.sol";
 import {AttestationLib} from "./AttestationLib.sol";
-import {ModuleTypeLib, ModuleType, PackedModuleTypes} from "./ModuleTypes.sol";
 // contracts
 
 library TrustedLib {
   using LibSort for address[];
   using CustomRevert for bytes4;
-  using ModuleTypeLib for PackedModuleTypes;
 
   function trustAttesters(
     uint8 threshold,
@@ -43,7 +41,8 @@ library TrustedLib {
       DataTypes.InvalidThreshold.selector.revertWith();
     }
 
-    AppRegistryStorage.Layout storage db = AppRegistryStorage.getLayout();
+    AttestationRegistryStorage.Layout storage db = AttestationRegistryStorage
+      .getLayout();
 
     DataTypes.TrustedAttester storage trustedAttester = db.trustedAttesters[
       msg.sender
@@ -58,15 +57,12 @@ library TrustedLib {
       trustedAttester.linkedAttesters[attester][msg.sender] = attesters[i + 1];
     }
 
-    emit IERC7484.NewTrustedAttesters(msg.sender);
+    emit IERC6900ExtensionRegistry.NewTrustedAttesters(msg.sender);
   }
 
-  function check(
-    address account,
-    address module,
-    ModuleType moduleType
-  ) internal view {
-    AppRegistryStorage.Layout storage db = AppRegistryStorage.getLayout();
+  function check(address account, address module) internal view {
+    AttestationRegistryStorage.Layout storage db = AttestationRegistryStorage
+      .getLayout();
 
     DataTypes.TrustedAttester storage trustedAttester = db.trustedAttesters[
       account
@@ -87,7 +83,7 @@ library TrustedLib {
           attester: attester
         });
 
-      if (AttestationLib.checkValid(attestation, moduleType)) return;
+      if (AttestationLib.checkValid(attestation)) return;
 
       for (uint256 i; i < attesterCount; ++i) {
         attester = trustedAttester.linkedAttesters[attester][account];
@@ -95,7 +91,7 @@ library TrustedLib {
           recipient: module,
           attester: attester
         });
-        if (AttestationLib.checkValid(attestation, moduleType)) return;
+        if (AttestationLib.checkValid(attestation)) return;
       }
 
       DataTypes.InsufficientAttestations.selector.revertWith();
@@ -105,7 +101,7 @@ library TrustedLib {
           recipient: module,
           attester: attester
         });
-      if (AttestationLib.checkValid(attestation, moduleType)) return;
+      if (AttestationLib.checkValid(attestation)) return;
 
       for (uint256 i; i < attesterCount; ++i) {
         attester = trustedAttester.linkedAttesters[attester][account];
@@ -113,7 +109,7 @@ library TrustedLib {
           recipient: module,
           attester: attester
         });
-        if (AttestationLib.checkValid(attestation, moduleType)) threshold--;
+        if (AttestationLib.checkValid(attestation)) threshold--;
         if (threshold == 0) return;
       }
       if (threshold > 0) {
@@ -146,40 +142,7 @@ library TrustedLib {
           attester: attester
         });
 
-      if (AttestationLib.checkValid(attestation, DataTypes.ZERO_MODULE_TYPE)) {
-        --threshold;
-        if (threshold == 0) return;
-      }
-    }
-    DataTypes.InsufficientAttestations.selector.revertWith();
-  }
-
-  function check(
-    address module,
-    ModuleType moduleType,
-    address[] calldata attesters,
-    uint256 threshold
-  ) internal view {
-    uint256 len = attesters.length;
-    if (len == 0 || threshold == 0) {
-      DataTypes.NoTrustedAttestersFound.selector.revertWith();
-    } else if (len < threshold) {
-      DataTypes.InsufficientAttestations.selector.revertWith();
-    }
-
-    address cache;
-    for (uint256 i; i < len; ++i) {
-      address attester = attesters[i];
-      if (attester <= cache) DataTypes.InvalidAttesters.selector.revertWith();
-      else cache = attester;
-
-      DataTypes.Attestation memory attestation = AttestationLib
-        .getAttestationByRecipientAndAttester({
-          recipient: module,
-          attester: attester
-        });
-
-      if (AttestationLib.checkValid(attestation, moduleType)) {
+      if (AttestationLib.checkValid(attestation)) {
         --threshold;
         if (threshold == 0) return;
       }
@@ -190,7 +153,8 @@ library TrustedLib {
   function findTrustedAttesters(
     address account
   ) internal view returns (address[] memory attesters) {
-    AppRegistryStorage.Layout storage db = AppRegistryStorage.getLayout();
+    AttestationRegistryStorage.Layout storage db = AttestationRegistryStorage
+      .getLayout();
 
     DataTypes.TrustedAttester storage trustedAttesters = db.trustedAttesters[
       account
