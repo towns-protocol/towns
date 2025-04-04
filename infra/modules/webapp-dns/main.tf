@@ -61,7 +61,7 @@ resource "cloudflare_record" "app_dns" {
   proxied = var.proxied
 }
 
-resource "cloudflare_page_rule" "cdn_cache" {
+resource "cloudflare_page_rule" "cdn_cache_assets" {
   count   = var.enable_cnd_caching ? 1 : 0
   zone_id = data.cloudflare_zone.zone.id
   target  = "${var.dns_name}.${module.global_constants.primary_hosted_zone_name}/assets/*"
@@ -89,6 +89,18 @@ resource "cloudflare_page_rule" "cdn_cache" {
     cache_ttl_by_status {
       codes = "500-599"
       ttl   = 0
+    }
+  }
+}
+
+resource "cloudflare_page_rule" "cdn_cache_main_sw" {
+  count   = var.enable_cnd_caching ? 1 : 0
+  zone_id = data.cloudflare_zone.zone.id
+  target  = "${var.dns_name}.${module.global_constants.primary_hosted_zone_name}/main-sw.js"
+  actions {
+    cache_ttl_by_status {
+      codes = "200-299"
+      ttl   = 60
     }
   }
 }
