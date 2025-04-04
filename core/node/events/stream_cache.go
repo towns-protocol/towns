@@ -498,8 +498,11 @@ func (s *StreamCache) createStreamStorage(
 		// TODO: delete entry on failures below?
 
 		// Our stream won the race, put into storage.
-		err := s.params.Storage.CreateStreamStorage(ctx, stream.streamId, data)
-		if err != nil {
+		if err := s.params.Storage.CreateStreamStorage(
+			ctx,
+			stream.streamId,
+			&storage.WriteMiniblockData{Data: data},
+		); err != nil {
 			if AsRiverError(err).Code == Err_ALREADY_EXISTS {
 				// Attempt to load stream from storage. Might as well do it while under lock.
 				err = stream.loadInternal(ctx)

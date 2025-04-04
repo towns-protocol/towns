@@ -12,6 +12,7 @@ import (
 	. "github.com/towns-protocol/towns/core/node/events"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	. "github.com/towns-protocol/towns/core/node/shared"
+	"github.com/towns-protocol/towns/core/node/storage"
 	"github.com/towns-protocol/towns/core/node/utils"
 )
 
@@ -47,8 +48,17 @@ func (s *Service) allocateEphemeralStream(ctx context.Context, req *AllocateEphe
 		return nil, err
 	}
 
-	err = s.storage.CreateEphemeralStreamStorage(ctx, streamId, mbBytes)
-	if err != nil {
+	var snBytes []byte
+	if req.Snapshot != nil {
+		if snBytes, err = proto.Marshal(req.Snapshot); err != nil {
+			return nil, err
+		}
+	}
+
+	if err = s.storage.CreateEphemeralStreamStorage(ctx, streamId, &storage.WriteMiniblockData{
+		Data:     mbBytes,
+		Snapshot: snBytes,
+	}); err != nil {
 		return nil, err
 	}
 
@@ -79,7 +89,10 @@ func (s *Service) saveEphemeralMiniblock(ctx context.Context, req *SaveEphemeral
 		return err
 	}
 
-	mbInfo, err := NewMiniblockInfoFromProto(req.GetMiniblock(), NewParsedMiniblockInfoOpts())
+	mbInfo, err := NewMiniblockInfoFromProto(
+		req.GetMiniblock(), req.GetSnapshot(),
+		NewParsedMiniblockInfoOpts(),
+	)
 	if err != nil {
 		return err
 	}

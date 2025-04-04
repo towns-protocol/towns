@@ -325,7 +325,12 @@ func (j *mbJob) saveCandidate(ctx context.Context) error {
 	})
 
 	qp.AddNodeTasks(j.remoteNodes, func(ctx context.Context, node common.Address) error {
-		return j.cache.Params().RemoteMiniblockProvider.SaveMbCandidate(ctx, node, j.stream.streamId, j.candidate.Proto)
+		return j.cache.Params().RemoteMiniblockProvider.SaveMbCandidate(
+			ctx,
+			node,
+			j.stream.streamId,
+			j.candidate,
+		)
 	})
 
 	// save the candidate to the nodes that are not in the quorum but participating in the stream.
@@ -335,7 +340,7 @@ func (j *mbJob) saveCandidate(ctx context.Context) error {
 				ctx,
 				node,
 				j.stream.streamId,
-				j.candidate.Proto,
+				j.candidate,
 			)
 		}()
 	}

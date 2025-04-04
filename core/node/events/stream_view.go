@@ -118,10 +118,7 @@ func MakeRemoteStreamView(stream *StreamAndCookie) (*StreamView, error) {
 			opts = opts.WithExpectedBlockNumber(lastMiniblockNumber + 1)
 		}
 
-		miniblock, err := NewMiniblockInfoFromProto(
-			binMiniblock,
-			opts,
-		)
+		miniblock, err := NewMiniblockInfoFromProto(binMiniblock, stream.GetSnapshotByMiniblockIndex(i), opts)
 		if err != nil {
 			return nil, err
 		}
@@ -896,7 +893,7 @@ func (r *StreamView) AllEvents() iter.Seq[*ParsedEvent] {
 
 func (r *StreamView) GetStreamSince(
 	ctx context.Context,
-	localNodeAddress common.Address,
+	wallet *crypto.Wallet,
 	cookie *SyncCookie,
 ) (*StreamAndCookie, error) {
 	log := logging.FromCtx(ctx)
@@ -910,7 +907,7 @@ func (r *StreamView) GetStreamSince(
 		// always send response, even if there are no events so that the client knows it's upToDate
 		return &StreamAndCookie{
 			Events:         envelopes,
-			NextSyncCookie: r.SyncCookie(localNodeAddress),
+			NextSyncCookie: r.SyncCookie(wallet.Address),
 		}, nil
 	}
 
@@ -920,12 +917,7 @@ func (r *StreamView) GetStreamSince(
 		log.Debugw("GetStreamSince: out of date cookie.MiniblockNum. Sending sync reset.",
 			"stream", r.streamId, "error", err.Error())
 
-		return &StreamAndCookie{
-			Events:         r.MinipoolEnvelopes(),
-			NextSyncCookie: r.SyncCookie(localNodeAddress),
-			Miniblocks:     r.MiniblocksFromLastSnapshot(),
-			SyncReset:      true,
-		}, nil
+		return r.GetResetStreamAndCookie(wallet), nil
 
 	}
 
@@ -945,6 +937,15 @@ func (r *StreamView) GetStreamSince(
 	// always send response, even if there are no events so that the client knows it's upToDate
 	return &StreamAndCookie{
 		Events:         envelopes,
-		NextSyncCookie: r.SyncCookie(localNodeAddress),
+		NextSyncCookie: r.SyncCookie(wallet.Address),
 	}, nil
+}
+
+func (r *StreamView) GetResetStreamAndCookie(wallet *crypto.Wallet) *StreamAndCookie {
+	return &StreamAndCookie{
+		Events:         r.MinipoolEnvelopes(),
+		NextSyncCookie: r.SyncCookie(wallet.Address),
+		Miniblocks:     r.MiniblocksFromLastSnapshot(),
+		SyncReset:      true,
+	}
 }

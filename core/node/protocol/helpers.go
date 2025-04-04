@@ -53,3 +53,25 @@ func (sc *SyncCookie) CopyWithAddr(address common.Address) *SyncCookie {
 		PrevMiniblockHash: sc.GetPrevMiniblockHash(),
 	}
 }
+
+// GetMiniblockSnapshot returns the snapshot for the given miniblock number.
+// Returns nil if the snapshot is not found.
+func (x *GetMiniblocksResponse) GetMiniblockSnapshot(num int64) *Envelope {
+	if x == nil || x.Snapshots == nil {
+		return nil
+	}
+
+	return x.Snapshots[num]
+}
+
+// GetSnapshotByMiniblockIndex returns the snapshot by the given miniblock index in the list.
+// StreamAndCookie contains a list of miniblocks starting from the latest snapshot.
+// Meaning the first miniblock in the list is the latest snapshot.
+// Meaning it returns the snapshot only when i is 0.
+func (x *StreamAndCookie) GetSnapshotByMiniblockIndex(i int) *Envelope {
+	if i == 0 {
+		return x.GetSnapshot()
+	}
+
+	return nil
+}

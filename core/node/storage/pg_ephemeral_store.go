@@ -53,7 +53,7 @@ func (s *PostgresStreamStore) lockEphemeralStream(
 func (s *PostgresStreamStore) CreateEphemeralStreamStorage(
 	ctx context.Context,
 	streamId StreamId,
-	genesisMiniblock []byte,
+	genesisMiniblock *WriteMiniblockData,
 ) error {
 	return s.txRunner(
 		ctx,
@@ -71,7 +71,7 @@ func (s *PostgresStreamStore) createEphemeralStreamStorageTx(
 	ctx context.Context,
 	tx pgx.Tx,
 	streamId StreamId,
-	genesisMiniblock []byte,
+	genesisMiniblock *WriteMiniblockData,
 ) error {
 	sql := s.sqlForStream(
 		`
@@ -80,7 +80,7 @@ func (s *PostgresStreamStore) createEphemeralStreamStorageTx(
 		streamId,
 	)
 
-	if _, err := tx.Exec(ctx, sql, streamId, genesisMiniblock); err != nil {
+	if _, err := tx.Exec(ctx, sql, streamId, genesisMiniblock.Data); err != nil {
 		if pgerr, ok := err.(*pgconn.PgError); ok && pgerr.Code == pgerrcode.UniqueViolation {
 			return WrapRiverError(Err_ALREADY_EXISTS, err).Message("stream already exists")
 		}
