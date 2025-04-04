@@ -164,7 +164,7 @@ func TestStreamReconciliationFromGenesis(t *testing.T) {
 	require.NoError(err, "unable to get mini-blocks")
 	fetchedMbChain := make(map[int64]common.Hash)
 	for i, blk := range miniBlocks {
-		fetchedMbChain[int64(i)] = common.BytesToHash(blk.GetHeader().GetHash())
+		fetchedMbChain[int64(i)] = common.BytesToHash(blk.Proto.GetHeader().GetHash())
 	}
 
 	require.Equal(mbChain, fetchedMbChain, "unexpected mini-block chain")
@@ -271,7 +271,7 @@ func TestStreamReconciliationForKnownStreams(t *testing.T) {
 	// wait till stream cache has finish reconciliation for the stream
 	var (
 		stream             *Stream
-		receivedMiniblocks []*protocol.Miniblock
+		receivedMiniblocks []*MiniblockInfo
 	)
 
 	// grab mini-blocks from node that is already up and running and ensure that the just restarted node has the
@@ -298,7 +298,7 @@ func TestStreamReconciliationForKnownStreams(t *testing.T) {
 	// require.NoError(err, "unable to get mini-blocks")
 	fetchedMbChain := make(map[int64]common.Hash)
 	for i, blk := range receivedMiniblocks {
-		fetchedMbChain[int64(i)] = common.BytesToHash(blk.GetHeader().GetHash())
+		fetchedMbChain[int64(i)] = common.BytesToHash(blk.Proto.GetHeader().GetHash())
 	}
 
 	stream, err = streamCache.GetStreamNoWait(ctx, streamId)

@@ -112,7 +112,6 @@ message StreamEvent {
         MediaPayload media_payload = 108;
         DmChannelPayload dm_channel_payload = 109;
         GdmChannelPayload gdm_channel_payload = 110;
-        Snapshot snapshot = 111;
     }
 }
 
@@ -834,6 +833,7 @@ message InfoResponse {
 
 message GetStreamExRequest {
     bytes stream_id = 1;
+    bool omit_snapshot = 2;
 }
 
 // GetStreamExResponse is a stream of raw data that represents the current state of the requested stream.
@@ -845,6 +845,7 @@ message GetStreamExResponse {
         Miniblock miniblock = 1;
         Minipool minipool = 2;
     }
+    optional Envelope snapshot = 3;
 }
 
 message CreateStreamRequest {
@@ -888,6 +889,7 @@ message GetMiniblocksRequest {
     bytes stream_id = 1;
     int64 from_inclusive = 2;
     int64 to_exclusive = 3;
+    bool omit_snapshots = 4;
 }
 
 message GetMiniblocksResponse {
@@ -896,6 +898,8 @@ message GetMiniblocksResponse {
     bool terminus = 2;
     int64 from_inclusive = 3;
     int64 limit = 4;
+    bool omit_snapshots = 5;
+    map<int64, Envelope> snapshots = 6;
 }
 
 message GetLastMiniblockHashRequest {
@@ -1229,8 +1233,4 @@ enum Err {
     // The encryption device returned by the app service webhook does not match the first
     // encryption device found in the app's user metadata stream.
     BAD_ENCRYPTION_DEVICE = 68;
-
-    // STREAM_RECONCILIATION_REQUIRED indicates that the stream is out of sync and must be 
-    // reconciled before it can be used.
-    STREAM_RECONCILIATION_REQUIRED = 69;
 }

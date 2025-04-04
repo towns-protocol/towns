@@ -328,7 +328,7 @@ func (ctc *cacheTestContext) SaveMbCandidate(
 	ctx context.Context,
 	node common.Address,
 	streamId StreamId,
-	mb *Miniblock,
+	candidate *MiniblockInfo,
 ) error {
 	inst := ctc.instancesByAddr[node]
 
@@ -337,7 +337,7 @@ func (ctc *cacheTestContext) SaveMbCandidate(
 		return err
 	}
 
-	return stream.SaveMiniblockCandidate(ctx, mb)
+	return stream.SaveMiniblockCandidate(ctx, candidate)
 }
 
 func (ctc *cacheTestContext) GetMbs(
@@ -346,7 +346,7 @@ func (ctc *cacheTestContext) GetMbs(
 	streamId StreamId,
 	fromInclusive int64,
 	toExclusive int64,
-) ([]*Miniblock, error) {
+) ([]*MiniblockInfo, error) {
 	for _, instance := range ctc.instances {
 		if node == instance.params.Wallet.Address {
 			stream, err := instance.cache.getStreamImpl(ctx, streamId, true)

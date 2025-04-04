@@ -24,22 +24,8 @@ import (
 	"github.com/towns-protocol/towns/core/node/storage"
 )
 
-type AddableStream interface {
-	AddEvent(ctx context.Context, event *ParsedEvent) error
-}
-
-type MiniblockStream interface {
-	GetMiniblocks(ctx context.Context, fromInclusive int64, ToExclusive int64) ([]*Miniblock, bool, error)
-}
-
 type ViewStream interface {
-	AddableStream
-	MiniblockStream
-
 	GetView(ctx context.Context) (*StreamView, error)
-
-	// GetViewIfLocal returns the stream view if the stream is local, otherwise returns nil, nil.
-	GetViewIfLocal(ctx context.Context) (*StreamView, error)
 }
 
 type SyncResultReceiver interface {
@@ -49,12 +35,6 @@ type SyncResultReceiver interface {
 	OnSyncError(err error)
 	// OnStreamSyncDown is called when updates for a stream could not be given.
 	OnStreamSyncDown(StreamId)
-}
-
-func SyncStreamsResponseFromStreamAndCookie(result *StreamAndCookie) *SyncStreamsResponse {
-	return &SyncStreamsResponse{
-		Stream: result,
-	}
 }
 
 type Stream struct {
@@ -309,7 +289,7 @@ func (s *Stream) applyMiniblockImplLocked(
 		storageMb = &storage.WriteMiniblockData{
 			Number:   info.Ref.Num,
 			Hash:     info.Ref.Hash,
-			Snapshot: info.IsSnapshot(),
+			Snapshot: info.GetSnapshot(),
 			Data:     miniblock.Data,
 		}
 	} else {
@@ -348,6 +328,10 @@ func (s *Stream) promoteCandidate(ctx context.Context, mb *MiniblockRef) error {
 
 // promoteCandidateLocked shouldbe called with a lock held.
 func (s *Stream) promoteCandidateLocked(ctx context.Context, mb *MiniblockRef) error {
+	if s.local == nil {
+		return nil
+	}
+
 	if s.local == nil {
 		return nil
 	}
@@ -398,18 +382,13 @@ func (s *Stream) promoteCandidateLocked(ctx context.Context, mb *MiniblockRef) e
 func (s *Stream) schedulePromotionLocked(mb *MiniblockRef) error {
 	if len(s.local.pendingCandidates) == 0 {
 		if mb.Num != s.view().LastBlock().Ref.Num+1 {
-			return RiverError(
-				Err_STREAM_RECONCILIATION_REQUIRED,
-				"schedulePromotionNoLock: next promotion is not for the next block",
-			)
+			return RiverError(Err_INTERNAL, "schedulePromotionNoLock: next promotion is not for the next block")
 		}
 		s.local.pendingCandidates = append(s.local.pendingCandidates, mb)
-	} else if len(s.local.pendingCandidates) > 3 {
-		return RiverError(Err_STREAM_RECONCILIATION_REQUIRED, "schedulePromotionNoLock: too many pending candidates")
 	} else {
 		lastPending := s.local.pendingCandidates[len(s.local.pendingCandidates)-1]
 		if mb.Num != lastPending.Num+1 {
-			return RiverError(Err_STREAM_RECONCILIATION_REQUIRED, "schedulePromotionNoLock: pending candidates are not consecutive")
+			return RiverError(Err_INTERNAL, "schedulePromotionNoLock: pending candidates are not consecutive")
 		}
 		s.local.pendingCandidates = append(s.local.pendingCandidates, mb)
 	}
@@ -438,7 +417,11 @@ func (s *Stream) initFromGenesis(
 			Func("initFromGenesis")
 	}
 
-	if err := s.params.Storage.CreateStreamStorage(ctx, s.streamId, genesisBytes); err != nil {
+	if err = s.params.Storage.CreateStreamStorage(
+		ctx,
+		s.streamId,
+		&storage.WriteMiniblockData{Data: genesisBytes},
+	); err != nil {
 		// TODO: this error is not handle correctly here: if stream is in storage, caller of this initFromGenesis
 		// should read it from storage.
 		if AsRiverError(err).Code != Err_ALREADY_EXISTS {
@@ -495,8 +478,11 @@ func (s *Stream) initFromBlockchain(ctx context.Context) error {
 		)
 	}
 
-	err = s.params.Storage.CreateStreamStorage(ctx, s.streamId, mb)
-	if err != nil {
+	if err = s.params.Storage.CreateStreamStorage(
+		ctx,
+		s.streamId,
+		&storage.WriteMiniblockData{Data: mb},
+	); err != nil {
 		return err
 	}
 
@@ -560,7 +546,7 @@ func (s *Stream) GetView(ctx context.Context) (*StreamView, error) {
 func (s *Stream) tryGetView() (*StreamView, bool) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
-	isLocal := s.nodesLocked.IsLocal()
+	isLocal := s.nodesLocked.IsLocalInQuorum() && s.local != nil
 	if isLocal && s.view() != nil {
 		s.maybeScrubLocked()
 		return s.view(), true
@@ -642,19 +628,18 @@ func (s *Stream) GetMiniblocks(
 	ctx context.Context,
 	fromInclusive int64,
 	toExclusive int64,
-) ([]*Miniblock, bool, error) {
+) ([]*MiniblockInfo, bool, error) {
 	blocks, err := s.params.Storage.ReadMiniblocks(ctx, s.streamId, fromInclusive, toExclusive)
 	if err != nil {
 		return nil, false, err
 	}
 
-	miniblocks := make([]*Miniblock, len(blocks))
+	miniblocks := make([]*MiniblockInfo, len(blocks))
 	for i, block := range blocks {
-		miniblock, err := NewMiniblockInfoFromDescriptor(block)
+		miniblocks[i], err = NewMiniblockInfoFromDescriptor(block)
 		if err != nil {
 			return nil, false, err
 		}
-		miniblocks[i] = miniblock.Proto
 	}
 
 	terminus := fromInclusive == 0
@@ -802,7 +787,7 @@ func (s *Stream) Sub(ctx context.Context, cookie *SyncCookie, receiver SyncResul
 
 	s.lastAccessedTime = time.Now()
 
-	resp, err := s.view().GetStreamSince(ctx, s.params.Wallet.Address, cookie)
+	resp, err := s.view().GetStreamSince(ctx, s.params.Wallet, cookie)
 	if err != nil {
 		return err
 	}
@@ -893,16 +878,8 @@ func (s *Stream) getStatus() *streamImplStatus {
 // the first block in the list of pending candidates, it will be applied. This method is thread-safe.
 // Note: saving the candidate itself, without applying it, does not modify the stream's in-memory
 // cached state at all.
-func (s *Stream) SaveMiniblockCandidate(ctx context.Context, mb *Miniblock) error {
-	mbInfo, err := NewMiniblockInfoFromProto(
-		mb,
-		NewParsedMiniblockInfoOpts(),
-	)
-	if err != nil {
-		return err
-	}
-
-	applied, err := s.tryApplyCandidate(ctx, mbInfo)
+func (s *Stream) SaveMiniblockCandidate(ctx context.Context, candidate *MiniblockInfo) error {
+	applied, err := s.tryApplyCandidate(ctx, candidate)
 	if err != nil {
 		return err
 	}
@@ -910,7 +887,7 @@ func (s *Stream) SaveMiniblockCandidate(ctx context.Context, mb *Miniblock) erro
 		return nil
 	}
 
-	storageMb, err := mbInfo.AsStorageMb()
+	storageMb, err := candidate.AsStorageMb()
 	if err != nil {
 		return err
 	}
@@ -1015,45 +992,51 @@ func (s *Stream) applyStreamEvents(
 	ctx context.Context,
 	events []river.StreamUpdatedEvent,
 	blockNum crypto.BlockNumber,
-) error {
+) {
 	if len(events) == 0 {
-		return nil
+		return
 	}
 
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	// TODO: REPLICATION: FIX: this function now can be called multiple times per block.
-	// if s.lastAppliedBlockNum >= blockNum {
-	// 	logging.FromCtx(ctx).
-	// 		Errorw("applyStreamEvents: already applied events for block", "blockNum", blockNum, "streamId", s.streamId,
-	// 			"lastAppliedBlockNum", s.lastAppliedBlockNum,
-	// 		)
-	// 	return
-	// }
+	// Sanity check
+	if s.lastAppliedBlockNum >= blockNum {
+		logging.FromCtx(ctx).
+			Errorw("applyStreamEvents: already applied events for block", "blockNum", blockNum, "streamId", s.streamId,
+				"lastAppliedBlockNum", s.lastAppliedBlockNum,
+			)
+		return
+	}
 
 	for _, e := range events {
-		if e.Reason() == river.StreamUpdatedEventTypeLastMiniblockBatchUpdated {
+		switch e.Reason() {
+		case river.StreamUpdatedEventTypePlacementUpdated:
+			ev := e.(*river.StreamState)
+			s.nodesLocked.ResetFromStreamState(ev, s.params.Wallet.Address)
+		case river.StreamUpdatedEventTypeLastMiniblockBatchUpdated:
 			event := e.(*river.StreamMiniblockUpdate)
 			err := s.promoteCandidateLocked(ctx, &MiniblockRef{
 				Hash: event.LastMiniblockHash,
 				Num:  int64(event.LastMiniblockNum),
 			})
-			if err != nil && IsRiverErrorCode(err, Err_STREAM_RECONCILIATION_REQUIRED) {
-				return err
-			}
-
 			if err != nil {
 				logging.FromCtx(ctx).Errorw("onStreamLastMiniblockUpdated: failed to promote candidate", "err", err)
 			}
-		} else {
-			logging.FromCtx(ctx).Errorw("applyStreamEvents: unexpected event", "event", e, "streamId", s.streamId)
+		case river.StreamUpdatedEventTypeAllocate:
+			logging.FromCtx(ctx).Errorw("applyStreamEvents: unexpected stream allocation event",
+				"event", e, "streamId", s.streamId)
+			continue
+		case river.StreamUpdatedEventTypeCreate:
+			logging.FromCtx(ctx).Errorw("applyStreamEvents: unexpected stream creation event",
+				"event", e, "streamId", s.streamId)
+			continue
+		default:
+			logging.FromCtx(ctx).Errorw("applyStreamEvents: unknown event", "event", e, "streamId", s.streamId)
 		}
 	}
 
 	s.lastAppliedBlockNum = blockNum
-
-	return nil
 }
 
 // GetQuorumNodes returns the list of nodes this stream resides on according to the stream

@@ -1025,11 +1025,17 @@ func (tc *testClient) getMiniblocks(streamId StreamId, fromInclusive, toExclusiv
 		ToExclusive:   toExclusive,
 	}))
 	tc.require.NoError(err)
-	mbs, err := NewMiniblocksInfoFromProtos(
-		resp.Msg.Miniblocks,
-		NewParsedMiniblockInfoOpts().WithExpectedBlockNumber(fromInclusive),
-	)
-	tc.require.NoError(err)
+
+	mbs := make([]*MiniblockInfo, len(resp.Msg.GetMiniblocks()))
+	for i, pb := range resp.Msg.GetMiniblocks() {
+		mbs[i], err = NewMiniblockInfoFromProto(
+			pb, resp.Msg.GetMiniblockSnapshot(fromInclusive+int64(i)),
+			NewParsedMiniblockInfoOpts().
+				WithExpectedBlockNumber(fromInclusive+int64(i)),
+		)
+		tc.require.NoError(err)
+	}
+
 	return mbs
 }
 

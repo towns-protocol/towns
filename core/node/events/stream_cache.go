@@ -201,41 +201,23 @@ func (s *StreamCache) onBlockWithLogs(ctx context.Context, blockNum crypto.Block
 
 	for streamID, events := range streamEvents {
 		wp.Submit(func() {
-			for len(events) > 0 {
-				switch events[0].Reason() {
-				case river.StreamUpdatedEventTypeAllocate:
-					streamState := events[0].(*river.StreamState)
-					s.onStreamAllocated(ctx, streamState, blockNum)
-					events = events[1:]
-				case river.StreamUpdatedEventTypeCreate:
-					streamState := events[0].(*river.StreamState)
-					s.onStreamCreated(ctx, streamState, blockNum)
-					events = events[1:]
-				case river.StreamUpdatedEventTypePlacementUpdated:
-					streamState := events[0].(*river.StreamState)
-					s.onStreamPlacementUpdated(ctx, streamState, blockNum)
-					events = events[1:]
-				case river.StreamUpdatedEventTypeLastMiniblockBatchUpdated:
-					i := 1
-					for i < len(events) && events[i].Reason() == river.StreamUpdatedEventTypeLastMiniblockBatchUpdated {
-						i++
-					}
-					eventsToApply := events[:i]
-					events = events[i:]
-
-					stream, ok := s.cache.Load(streamID)
-					if !ok {
-						continue
-					}
-
-					if err := stream.applyStreamEvents(ctx, eventsToApply, blockNum); err != nil {
-						if IsRiverErrorCode(err, Err_STREAM_RECONCILIATION_REQUIRED) {
-							s.SubmitSyncStreamTask(ctx, stream)
-							return
-						}
-						logging.FromCtx(ctx).Errorw("Failed to apply stream events", "err", err, "streamId", streamID)
-					}
+			switch events[0].Reason() {
+			case river.StreamUpdatedEventTypeAllocate:
+				streamState := events[0].(*river.StreamState)
+				s.onStreamAllocated(ctx, streamState, events[1:], blockNum)
+			case river.StreamUpdatedEventTypeCreate:
+				streamState := events[0].(*river.StreamState)
+				s.onStreamCreated(ctx, streamState, blockNum)
+			case river.StreamUpdatedEventTypePlacementUpdated: // linter
+				fallthrough
+			case river.StreamUpdatedEventTypeLastMiniblockBatchUpdated:
+				fallthrough
+			default:
+				stream, ok := s.cache.Load(streamID)
+				if !ok {
+					return
 				}
+				stream.applyStreamEvents(ctx, events, blockNum)
 			}
 		})
 	}
@@ -248,6 +230,7 @@ func (s *StreamCache) onBlockWithLogs(ctx context.Context, blockNum crypto.Block
 func (s *StreamCache) onStreamAllocated(
 	ctx context.Context,
 	event *river.StreamState,
+	otherEvents []river.StreamUpdatedEvent,
 	blockNum crypto.BlockNumber,
 ) {
 	if !slices.Contains(event.Nodes, s.params.Wallet.Address) {
@@ -273,57 +256,12 @@ func (s *StreamCache) onStreamAllocated(
 		local:               &localStreamState{},
 	}
 	stream.nodesLocked.ResetFromStreamState(event, s.params.Wallet.Address)
-	_, _, err = s.createStreamStorage(ctx, stream, genesisMB, genesisMbNum, genesisHash)
+	stream, created, err := s.createStreamStorage(ctx, stream, genesisMB, genesisMbNum, genesisHash)
 	if err != nil {
 		logging.FromCtx(ctx).Errorw("Failed to allocate stream", "err", err, "streamId", event.GetStreamId())
 	}
-}
-
-func (s *StreamCache) onStreamPlacementUpdated(
-	ctx context.Context,
-	event *river.StreamState,
-	blockNum crypto.BlockNumber,
-) {
-	participatingInStream := slices.Contains(event.Nodes, s.params.Wallet.Address)
-	if !participatingInStream {
-		if stream, ok := s.cache.Load(event.GetStreamId()); ok {
-			stream.mu.Lock()
-			stream.nodesLocked.ResetFromStreamState(event, s.params.Wallet.Address)
-			stream.local = nil
-			stream.mu.Unlock()
-		}
-		// TODO: if stream is removed from this node cleanup stream storage.
-		return
-	}
-
-	// in not in the cache, insert new recored in the correct state, otherwise load existing
-	stream, loaded := s.cache.LoadOrCompute(event.GetStreamId(), func() *Stream {
-		s := &Stream{
-			streamId:            event.GetStreamId(),
-			lastAppliedBlockNum: blockNum,
-			params:              s.params,
-			local:               &localStreamState{},
-		}
-		s.nodesLocked.ResetFromStreamState(event, s.params.Wallet.Address)
-		return s
-	})
-
-	localWasInQuorum := false
-	if loaded {
-		stream.mu.Lock()
-		localWasInQuorum = stream.nodesLocked.IsLocalInQuorum()
-		// TODO: REPLICATION: FIX: what to do with lastAppliedBlockNum
-		stream.nodesLocked.ResetFromStreamState(event, s.params.Wallet.Address)
-		if stream.local == nil {
-			stream.local = &localStreamState{}
-		}
-		stream.mu.Unlock()
-	}
-
-	// if local node was in quorum, it should be up-to-date, otherwise submit a sync task,
-	// sometimes it will be a no-op, but it's ok since it's rare codepath
-	if !localWasInQuorum {
-		s.SubmitSyncStreamTask(ctx, stream)
+	if created && len(otherEvents) > 0 {
+		stream.applyStreamEvents(ctx, otherEvents, blockNum)
 	}
 }
 
@@ -498,8 +436,11 @@ func (s *StreamCache) createStreamStorage(
 		// TODO: delete entry on failures below?
 
 		// Our stream won the race, put into storage.
-		err := s.params.Storage.CreateStreamStorage(ctx, stream.streamId, data)
-		if err != nil {
+		if err := s.params.Storage.CreateStreamStorage(
+			ctx,
+			stream.streamId,
+			&storage.WriteMiniblockData{Data: data},
+		); err != nil {
 			if AsRiverError(err).Code == Err_ALREADY_EXISTS {
 				// Attempt to load stream from storage. Might as well do it while under lock.
 				err = stream.loadInternal(ctx)
