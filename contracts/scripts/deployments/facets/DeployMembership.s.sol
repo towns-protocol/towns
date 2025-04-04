@@ -7,64 +7,65 @@ import {IMembership} from "contracts/src/spaces/facets/membership/IMembership.so
 //libraries
 
 //contracts
+
+import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
 import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
 import {MembershipFacet} from "contracts/src/spaces/facets/membership/MembershipFacet.sol";
-import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
 
 contract DeployMembership is Deployer, FacetHelper {
-  constructor() {
-    // Funds
-    addSelector(IMembership.withdraw.selector);
-    addSelector(IMembership.revenue.selector);
+    constructor() {
+        // Funds
 
-    // Minting
-    addSelector(IMembership.joinSpace.selector);
-    addSelector(IMembership.joinSpaceWithReferral.selector);
-    addSelector(IMembership.renewMembership.selector);
+        addSelector(IMembership.revenue.selector);
 
-    addSelector(IMembership.expiresAt.selector);
+        // Minting
+        addSelector(IMembership.joinSpace.selector);
+        addSelector(IMembership.joinSpaceWithReferral.selector);
+        addSelector(IMembership.renewMembership.selector);
 
-    // Duration
-    addSelector(IMembership.getMembershipDuration.selector);
+        addSelector(IMembership.expiresAt.selector);
 
-    // Pricing Module
-    addSelector(IMembership.setMembershipPricingModule.selector);
-    addSelector(IMembership.getMembershipPricingModule.selector);
+        // Duration
+        addSelector(IMembership.getMembershipDuration.selector);
 
-    // Pricing
-    addSelector(IMembership.setMembershipPrice.selector);
-    addSelector(IMembership.getMembershipPrice.selector);
-    addSelector(IMembership.getMembershipRenewalPrice.selector);
-    addSelector(IMembership.getProtocolFee.selector);
+        // Pricing Module
+        addSelector(IMembership.setMembershipPricingModule.selector);
+        addSelector(IMembership.getMembershipPricingModule.selector);
 
-    // Allocation
-    addSelector(IMembership.setMembershipFreeAllocation.selector);
-    addSelector(IMembership.getMembershipFreeAllocation.selector);
+        // Pricing
+        addSelector(IMembership.setMembershipPrice.selector);
+        addSelector(IMembership.getMembershipPrice.selector);
+        addSelector(IMembership.getMembershipRenewalPrice.selector);
+        addSelector(IMembership.getProtocolFee.selector);
 
-    // Limits
-    addSelector(IMembership.setMembershipLimit.selector);
-    addSelector(IMembership.getMembershipLimit.selector);
+        // Allocation
+        addSelector(IMembership.setMembershipFreeAllocation.selector);
+        addSelector(IMembership.getMembershipFreeAllocation.selector);
 
-    // Currency
-    addSelector(IMembership.getMembershipCurrency.selector);
+        // Limits
+        addSelector(IMembership.setMembershipLimit.selector);
+        addSelector(IMembership.getMembershipLimit.selector);
 
-    // Image
-    addSelector(IMembership.setMembershipImage.selector);
-    addSelector(IMembership.getMembershipImage.selector);
+        // Currency
+        addSelector(IMembership.getMembershipCurrency.selector);
 
-    // Factory
-    addSelector(IMembership.getSpaceFactory.selector);
-  }
+        // Image
+        addSelector(IMembership.setMembershipImage.selector);
+        addSelector(IMembership.getMembershipImage.selector);
 
-  function versionName() public pure override returns (string memory) {
-    return "facets/membershipFacet";
-  }
+        // Factory
+        addSelector(IMembership.getSpaceFactory.selector);
+    }
 
-  function __deploy(address deployer) public override returns (address) {
-    vm.startBroadcast(deployer);
-    address membership = address(new MembershipFacet());
-    vm.stopBroadcast();
+    function versionName() public pure override returns (string memory) {
+        return "facets/membershipFacet";
+    }
 
-    return membership;
-  }
+    function __deploy(address deployer) public override returns (address) {
+        vm.startBroadcast(deployer);
+        address membership = address(new MembershipFacet());
+        vm.stopBroadcast();
+
+        return membership;
+    }
 }

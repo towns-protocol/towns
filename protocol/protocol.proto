@@ -33,7 +33,7 @@ message Envelope {
     /**
      * Signature.
      * For the event to be valid, signature must match event.creator_address
-     * or be signed by the address from evant.delegate_sig.
+     * or be signed by the address from event.delegate_sig.
      */
     bytes signature = 2;
 
@@ -604,7 +604,6 @@ message MediaPayload {
 * Snapshot contains a summary of all state events up to the most recent miniblock
 */
 message Snapshot {
-    
     MemberPayload.Snapshot members = 1;
     int32 snapshot_version = 2;
     
@@ -803,13 +802,11 @@ message CreationCookie {
 message StreamAndCookie {
     repeated Envelope events = 1;
     SyncCookie next_sync_cookie = 2;
-    // if non-empty, contains all blocks since the latest snapshot, miniblocks[0].header is the latest snapshot
+    // if non-empty, contains all blocks since the latest snapshot
     repeated Miniblock miniblocks = 3;
     bool sync_reset = 4;
-}
-
-message GetStreamExRequest {
-    bytes stream_id = 1;
+    // if non-empty, contains the latest snapshot of the stream
+    optional Envelope snapshot = 5;
 }
 
 message Minipool {
@@ -824,6 +821,21 @@ message Tags {
     optional bytes thread_id = 5;
 }
 
+message InfoRequest {
+    repeated string debug = 1;
+}
+
+message InfoResponse {
+    string graffiti = 1;
+    google.protobuf.Timestamp start_time = 2;
+    string version = 3;
+}
+
+message GetStreamExRequest {
+    bytes stream_id = 1;
+    bool omit_snapshot = 2;
+}
+
 // GetStreamExResponse is a stream of raw data that represents the current state of the requested stream.
 // These responses represent streams that are not expected to change once finalized, and have a optimized code path
 // for retrieval. Response may potentially be very large, and are streamed back to the client. The client is expected
@@ -833,6 +845,7 @@ message GetStreamExResponse {
         Miniblock miniblock = 1;
         Minipool minipool = 2;
     }
+    optional Envelope snapshot = 3;
 }
 
 message CreateStreamRequest {
@@ -874,8 +887,9 @@ message GetStreamResponse {
 
 message GetMiniblocksRequest {
     bytes stream_id = 1;
-    int64 fromInclusive = 2;
-    int64 toExclusive = 3;
+    int64 from_inclusive = 2;
+    int64 to_exclusive = 3;
+    bool omit_snapshots = 4;
 }
 
 message GetMiniblocksResponse {
@@ -884,6 +898,8 @@ message GetMiniblocksResponse {
     bool terminus = 2;
     int64 from_inclusive = 3;
     int64 limit = 4;
+    bool omit_snapshots = 5;
+    map<int64, Envelope> snapshots = 6;
 }
 
 message GetLastMiniblockHashRequest {
@@ -1013,33 +1029,14 @@ message PingSyncRequest {
 
 message PingSyncResponse {}
 
-message InfoRequest {
-    repeated string debug = 1;
-}
-
-message InfoResponse {
-    string graffiti = 1;
-    google.protobuf.Timestamp start_time = 2;
-    string version = 3;
-}
-
-message GetMiniblockHeaderRequest {
-    bytes stream_id = 1;
-    int64 miniblock_num = 2;
-}
-
-message GetMiniblockHeaderResponse {
-    Envelope header = 1;
-}
-
 service StreamService {
+    rpc Info(InfoRequest) returns (InfoResponse);
     rpc CreateStream(CreateStreamRequest) returns (CreateStreamResponse);
     rpc CreateMediaStream(CreateMediaStreamRequest) returns (CreateMediaStreamResponse);
     rpc GetStream(GetStreamRequest) returns (GetStreamResponse);
     rpc GetStreamEx(GetStreamExRequest) returns (stream GetStreamExResponse);
     rpc GetMiniblocks(GetMiniblocksRequest) returns (GetMiniblocksResponse);
     rpc GetLastMiniblockHash(GetLastMiniblockHashRequest) returns (GetLastMiniblockHashResponse);
-    rpc GetMiniblockHeader(GetMiniblockHeaderRequest) returns (GetMiniblockHeaderResponse);
     rpc AddEvent(AddEventRequest) returns (AddEventResponse);
     rpc AddMediaEvent(AddMediaEventRequest) returns (AddMediaEventResponse);
     rpc SyncStreams(SyncStreamsRequest) returns (stream SyncStreamsResponse);
@@ -1052,7 +1049,6 @@ service StreamService {
     rpc ModifySync(ModifySyncRequest) returns (ModifySyncResponse);
     rpc CancelSync(CancelSyncRequest) returns (CancelSyncResponse);
     rpc RemoveStreamFromSync(RemoveStreamFromSyncRequest) returns (RemoveStreamFromSyncResponse);
-    rpc Info(InfoRequest) returns (InfoResponse);
     rpc PingSync(PingSyncRequest) returns (PingSyncResponse);
 }
 

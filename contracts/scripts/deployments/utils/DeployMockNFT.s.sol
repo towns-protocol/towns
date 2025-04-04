@@ -21,65 +21,58 @@ import {DeployIntrospection} from "contracts/scripts/deployments/facets/DeployIn
 import {DeployMultiInit} from "contracts/scripts/deployments/utils/DeployMultiInit.s.sol";
 
 contract DeployMockNFT is DiamondHelper, Deployer {
-  DeployDiamondCut diamondCutHelper = new DeployDiamondCut();
-  DeployDiamondLoupe loupeHelper = new DeployDiamondLoupe();
-  DeployIntrospection introspectionHelper = new DeployIntrospection();
-  DeployMultiInit multiInitHelper = new DeployMultiInit();
+    DeployDiamondCut diamondCutHelper = new DeployDiamondCut();
+    DeployDiamondLoupe loupeHelper = new DeployDiamondLoupe();
+    DeployIntrospection introspectionHelper = new DeployIntrospection();
+    DeployMultiInit multiInitHelper = new DeployMultiInit();
 
-  DeployMockERC721A mockERC721Helper = new DeployMockERC721A();
+    DeployMockERC721A mockERC721Helper = new DeployMockERC721A();
 
-  address diamondCut;
-  address diamondLoupe;
-  address introspection;
-  address erc721aMock;
+    address diamondCut;
+    address diamondLoupe;
+    address introspection;
+    address erc721aMock;
 
-  function versionName() public pure override returns (string memory) {
-    return "utils/mockNFT";
-  }
+    function versionName() public pure override returns (string memory) {
+        return "utils/mockNFT";
+    }
 
-  function diamondInitParams(
-    address deployer
-  ) internal returns (Diamond.InitParams memory) {
-    address multiInit = multiInitHelper.deploy(deployer);
-    diamondCut = diamondCutHelper.deploy(deployer);
-    diamondLoupe = loupeHelper.deploy(deployer);
-    introspection = introspectionHelper.deploy(deployer);
-    erc721aMock = mockERC721Helper.deploy(deployer);
+    function diamondInitParams(address deployer) internal returns (Diamond.InitParams memory) {
+        address multiInit = multiInitHelper.deploy(deployer);
+        diamondCut = diamondCutHelper.deploy(deployer);
+        diamondLoupe = loupeHelper.deploy(deployer);
+        introspection = introspectionHelper.deploy(deployer);
+        erc721aMock = mockERC721Helper.deploy(deployer);
 
-    addFacet(
-      diamondCutHelper.makeCut(diamondCut, IDiamond.FacetCutAction.Add),
-      diamondCut,
-      diamondCutHelper.makeInitData("")
-    );
-    addFacet(
-      loupeHelper.makeCut(diamondLoupe, IDiamond.FacetCutAction.Add),
-      diamondLoupe,
-      loupeHelper.makeInitData("")
-    );
-    addFacet(
-      introspectionHelper.makeCut(diamondCut, IDiamond.FacetCutAction.Add),
-      introspection,
-      introspectionHelper.makeInitData("")
-    );
-    addCut(mockERC721Helper.makeCut(erc721aMock, IDiamond.FacetCutAction.Add));
+        addFacet(
+            diamondCutHelper.makeCut(diamondCut, IDiamond.FacetCutAction.Add),
+            diamondCut,
+            diamondCutHelper.makeInitData("")
+        );
+        addFacet(
+            loupeHelper.makeCut(diamondLoupe, IDiamond.FacetCutAction.Add),
+            diamondLoupe,
+            loupeHelper.makeInitData("")
+        );
+        addFacet(
+            introspectionHelper.makeCut(diamondCut, IDiamond.FacetCutAction.Add),
+            introspection,
+            introspectionHelper.makeInitData("")
+        );
+        addCut(mockERC721Helper.makeCut(erc721aMock, IDiamond.FacetCutAction.Add));
 
-    return
-      Diamond.InitParams({
-        baseFacets: baseFacets(),
-        init: multiInit,
-        initData: abi.encodeWithSelector(
-          MultiInit.multiInit.selector,
-          _initAddresses,
-          _initDatas
-        )
-      });
-  }
+        return Diamond.InitParams({
+            baseFacets: baseFacets(),
+            init: multiInit,
+            initData: abi.encodeWithSelector(MultiInit.multiInit.selector, _initAddresses, _initDatas)
+        });
+    }
 
-  function __deploy(address deployer) public override returns (address) {
-    Diamond.InitParams memory initDiamondCut = diamondInitParams(deployer);
-    vm.broadcast(deployer);
-    Diamond diamond = new Diamond(initDiamondCut);
+    function __deploy(address deployer) public override returns (address) {
+        Diamond.InitParams memory initDiamondCut = diamondInitParams(deployer);
+        vm.broadcast(deployer);
+        Diamond diamond = new Diamond(initDiamondCut);
 
-    return address(diamond);
-  }
+        return address(diamond);
+    }
 }
