@@ -1,4 +1,6 @@
-import { PlainMessage } from '@bufbuild/protobuf'
+/* eslint-disable import/no-extraneous-dependencies */
+// eslint is probably broken for this project, will take a look later
+import { create, toBinary } from '@bufbuild/protobuf'
 
 import {
     getRefEventIdFromChannelMessage,
@@ -13,7 +15,7 @@ import {
     createTownsClient,
     type ClientV2,
     type makeRiverConfig,
-} from '@river-build/sdk'
+} from '@towns-protocol/sdk'
 import { Hono, type Context } from 'hono'
 import { serve } from '@hono/node-server'
 import EventEmitter from 'node:events'
@@ -23,9 +25,10 @@ import {
     type ChannelMessage_Post_Mention,
     ChannelMessage,
     type Envelope,
-} from '@river-build/proto'
-import { bin_toHexString } from '@river-build/dlog'
-import type { GroupEncryptionAlgorithmId } from '@river-build/encryption'
+    ChannelMessageSchema,
+} from '@towns-protocol/proto'
+import { bin_toHexString } from '@towns-protocol/dlog'
+import type { GroupEncryptionAlgorithmId } from '@towns-protocol/encryption'
 
 type BasePayload = {
     userId: string
@@ -45,8 +48,8 @@ type BotActions = {
         opts?: {
             threadId?: string
             replyId?: string
-            mentions?: PlainMessage<ChannelMessage_Post_Mention>[]
-            attachments?: PlainMessage<ChannelMessage_Post_Attachment>[]
+            mentions?: ChannelMessage_Post_Mention[]
+            attachments?: ChannelMessage_Post_Attachment[]
         },
     ) => Promise<{ eventId: string }>
     editMessage: (
@@ -160,7 +163,7 @@ class Bot extends (EventEmitter as new () => TypedEmitter<BotEvents>) {
         serve({ port, fetch: this.server.fetch })
     }
 
-    private async webhookResponseHandler(c: Context) {
+    private async webhookResponseHandler(_c: Context) {
         // - accepts a protobuf payload
         // - checks that the payload is signed by the bot-registry-server
         // - processes payload, returns BotWebookResponse
@@ -205,7 +208,7 @@ const botBotActions = (client: ClientV2): BotActions => {
 
         const message = await client.crypto.encryptGroupEvent(
             streamId,
-            payload.toBinary(),
+            toBinary(ChannelMessageSchema, payload),
             (encryptionAlgorithm as GroupEncryptionAlgorithmId) ||
                 client.defaultGroupEncryptionAlgorithm,
         )
@@ -249,7 +252,7 @@ const botBotActions = (client: ClientV2): BotActions => {
     }
 
     const sendMessage: BotActions['sendMessage'] = async (streamId, message, opts) => {
-        const payload = new ChannelMessage({
+        const payload = create(ChannelMessageSchema, {
             payload: {
                 case: 'post',
                 value: {
@@ -271,7 +274,7 @@ const botBotActions = (client: ClientV2): BotActions => {
         return sendMessageEvent({ streamId, payload })
     }
     const editMessage: BotActions['editMessage'] = async (streamId, messageId, message) => {
-        const payload = new ChannelMessage({
+        const payload = create(ChannelMessageSchema, {
             payload: {
                 case: 'edit',
                 value: {
@@ -286,14 +289,14 @@ const botBotActions = (client: ClientV2): BotActions => {
     }
     const sendDm = sendMessage
     const sendReaction: BotActions['sendReaction'] = async (streamId, messageId, reaction) => {
-        const payload = new ChannelMessage({
+        const payload = create(ChannelMessageSchema, {
             payload: { case: 'reaction', value: { refEventId: messageId, reaction } },
         })
         return sendMessageEvent({ streamId, payload })
     }
 
     const redactEvent: BotActions['redactEvent'] = async (streamId, messageId) => {
-        const payload = new ChannelMessage({
+        const payload = create(ChannelMessageSchema, {
             payload: { case: 'redaction', value: { refEventId: messageId } },
         })
         return sendMessageEvent({ streamId, payload })

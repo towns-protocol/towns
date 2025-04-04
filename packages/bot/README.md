@@ -1,11 +1,11 @@
-# @river-build/bot
+# @towns-protocol/bot
 
 A bot framework for Towns.
 
 ## Usage
 
 ```ts
-import { makeTownsBot } from "@river-build/bot";
+import { makeTownsBot } from "@towns-protocol/bot";
 
 const bot = await makeTownsBot("<private-key>", makeRiverConfig("gamma"));
 
