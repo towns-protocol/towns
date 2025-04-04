@@ -477,6 +477,8 @@ run: _require_run_env _start-all _wait-all _wait-ctrl-c stop
 
 run-app-registry: _require_run_env start-app-registry wait-app-registry _wait-ctrl-c stop-app-registry
 
+run-app-registry-and-tail: _require_run_env start-app-registry wait-app-registry tail-app-registry-logs stop-app-registry
+
 # Start nodes in foreground tailing logs, config and build should be run before
 run-and-tail: _require_run_env _start-all _wait-all tail-logs stop
 
