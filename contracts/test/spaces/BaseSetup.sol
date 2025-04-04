@@ -20,7 +20,6 @@ import {ICreateSpace} from "contracts/src/factory/facets/create/ICreateSpace.sol
 import {ITowns} from "contracts/src/tokens/towns/mainnet/ITowns.sol";
 
 // libraries
-import {MessageHashUtils} from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 import {TownsLib} from "contracts/src/tokens/towns/base/TownsLib.sol";
 
 // contracts

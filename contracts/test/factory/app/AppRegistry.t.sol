@@ -2,39 +2,45 @@
 pragma solidity ^0.8.23;
 
 // interfaces
+import {ISchemaResolver} from "contracts/src/factory/facets/app/interfaces/ISchemaResolver.sol";
 
 // libraries
-import {AppKey} from "contracts/src/factory/facets/app/libraries/AppId.sol";
-import {App} from "contracts/src/factory/facets/app/libraries/App.sol";
+import {DataTypes} from "contracts/src/factory/facets/app/IAppRegistry.sol";
+
 // contracts
 import {BaseSetup} from "contracts/test/spaces/BaseSetup.sol";
 import {AppRegistry} from "contracts/src/factory/facets/app/AppRegistry.sol";
-import {MockApp} from "contracts/test/mocks/MockApp.sol";
 
 contract AppRegistryTest is BaseSetup {
   AppRegistry registry;
 
-  address appDeveloper;
-
   function setUp() public override {
     super.setUp();
     registry = AppRegistry(spaceFactory);
-    appDeveloper = makeAddr("appDeveloper");
   }
 
-  function test_register() public {
-    MockApp app = new MockApp();
+  function test_registerSchema() external {
+    DataTypes.Schema memory schema = DataTypes.Schema({
+      uid: DataTypes.EMPTY_UID,
+      resolver: ISchemaResolver(address(0)),
+      definition: "address plugin,string pluginType,bool audited"
+    });
 
-    AppKey memory appKey = AppKey({space: everyoneSpace, app: app});
+    bytes32 uid = registry.registerSchema(
+      "address plugin,string pluginType,bool audited",
+      ISchemaResolver(address(0))
+    );
 
-    vm.prank(appDeveloper);
-    registry.register(appKey);
+    assertEq(uid, hashSchema(address(this), schema));
+  }
 
-    assertEq(app.onRegisterData(), new bytes(123));
-    assertTrue(registry.isRegistered(appKey));
-
-    App.State memory appState = registry.getRegistration(appKey);
-    assertEq(appState.space, everyoneSpace);
-    assertEq(uint256(appState.status), uint256(App.Status.Pending));
+  function hashSchema(
+    address sender,
+    DataTypes.Schema memory schema
+  ) internal pure returns (bytes32) {
+    return
+      keccak256(
+        abi.encodePacked(sender, schema.definition, address(schema.resolver))
+      );
   }
 }

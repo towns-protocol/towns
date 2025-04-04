@@ -3,88 +3,143 @@ pragma solidity ^0.8.23;
 
 // interfaces
 import {IAppRegistry} from "./IAppRegistry.sol";
-import {ISpaceApp} from "./interface/ISpaceApp.sol";
-import {IERC721} from "@openzeppelin/contracts/interfaces/IERC721.sol";
+import {ISchemaResolver} from "./interfaces/ISchemaResolver.sol";
+import {IERC7484} from "./interfaces/IERC7484.sol";
 
 // libraries
-import {AppKey, AppId} from "./libraries/AppId.sol";
-import {App} from "./libraries/App.sol";
-import {Actions} from "./libraries/Actions.sol";
-import {ArchitectStorage} from "contracts/src/factory/facets/architect/ArchitectStorage.sol";
-
+import {DataTypes} from "./IAppRegistry.sol";
+import {SchemaLib} from "./libraries/SchemaLib.sol";
+import {AttestationLib} from "./libraries/AttestationLib.sol";
+import {TrustedLib} from "./libraries/TrustedLib.sol";
+import {ModuleType} from "./libraries/ModuleTypes.sol";
 // contracts
-import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
-import {OwnableBase} from "@towns-protocol/diamond/src/facets/ownable/OwnableBase.sol";
 
-contract AppRegistry is IAppRegistry, Facet, OwnableBase {
-  using App for App.State;
-  using Actions for ISpaceApp;
+contract AppRegistry is IAppRegistry, IERC7484 {
+  function __AppRegistry_init() external {}
 
-  /// @custom:storage-location erc7201:towns.app.registry.storage
-  struct Layout {
-    mapping(AppId id => App.State app) apps;
+  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+  /*                     IERC7484 Implementation                */
+  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+  /// @inheritdoc IERC7484
+  function trustAttesters(
+    uint8 threshold,
+    address[] calldata attesters
+  ) external {
+    TrustedLib.trustAttesters(threshold, attesters);
   }
 
-  // keccak256(abi.encode(uint256(keccak256("towns.app.registry.storage")) - 1)) & ~bytes32(uint256(0xff))
-  bytes32 constant DEFAULT_STORAGE_SLOT =
-    0x97f004dd1211f81541acff9cd81687384947bc64ea25e261c178294e68b73600;
-
-  function __AppRegistry_init() external {
-    _addInterface(type(IAppRegistry).interfaceId);
+  /// @inheritdoc IERC7484
+  function check(address module) external view {
+    TrustedLib.check(msg.sender, module, DataTypes.ZERO_MODULE_TYPE);
   }
 
-  // actions
-  function register(AppKey memory appKey) external returns (AppId appId) {
-    // validations
-    validateSpace(appKey.space);
-    if (!appKey.app.isValidAction()) revert InvalidApp();
-
-    appId = appKey.toId();
-
-    getLayout().apps[appId].initialize(appKey.app, appKey.space);
-
-    emit Registered(appId, App.Status.Pending, appKey.app);
-
-    appKey.app.callOnRegister(appKey);
+  /// @inheritdoc IERC7484
+  function check(address module, ModuleType moduleType) external view {
+    TrustedLib.check(msg.sender, module, moduleType);
   }
 
-  function isRegistered(AppKey memory appKey) external view returns (bool) {
-    return getLayout().apps[appKey.toId()].space != address(0);
+  /// @inheritdoc IERC7484
+  function checkForAccount(address account, address module) external view {
+    TrustedLib.check(account, module, DataTypes.ZERO_MODULE_TYPE);
   }
 
-  function getRegistration(
-    AppKey memory appKey
-  ) external view returns (App.State memory app) {
-    app = getLayout().apps[appKey.toId()];
+  /// @inheritdoc IERC7484
+  function checkForAccount(
+    address account,
+    address module,
+    ModuleType moduleType
+  ) external view {
+    TrustedLib.check(account, module, moduleType);
   }
 
-  function setAppStatus(
-    AppKey memory appKey,
-    App.Status status
-  ) external onlyOwner {
-    AppId appId = appKey.toId();
-    getLayout().apps[appId].status = status;
-    emit StatusUpdated(appId, status);
+  /// @inheritdoc IERC7484
+  function check(
+    address module,
+    address[] calldata attesters,
+    uint256 threshold
+  ) external view {
+    TrustedLib.check(module, attesters, threshold);
   }
 
-  // validations
-  function validateSpace(address space) internal view {
-    uint256 tokenId = ArchitectStorage.layout().tokenIdBySpace[space];
-
-    // space must be valid
-    if (space == address(0)) revert InvalidSpace();
-
-    // space must exist in architect storage
-    if (tokenId == 0) revert InvalidSpace();
-
-    // only owner of the space can register an app
-    if (IERC721(space).ownerOf(tokenId) != msg.sender) revert InvalidSpace();
+  /// @inheritdoc IERC7484
+  function check(
+    address module,
+    ModuleType moduleType,
+    address[] calldata attesters,
+    uint256 threshold
+  ) external view {
+    TrustedLib.check(module, moduleType, attesters, threshold);
   }
 
-  // storage
-  function getLayout() internal pure returns (Layout storage $) {
-    assembly ("memory-safe") {
-      $.slot := DEFAULT_STORAGE_SLOT
-    }
+  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+  /*                     Register Plugins                       */
+  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+  function registerApp(
+    bytes32 schemaId,
+    address app,
+    string calldata appType,
+    bool audited,
+    ModuleType[] calldata moduleTypes
+  ) external {
+    bytes memory encoded = abi.encode(app, appType, audited);
+
+    DataTypes.AttestationRequest memory request = DataTypes.AttestationRequest({
+      schemaId: schemaId,
+      recipient: app,
+      expirationTime: 0,
+      data: encoded,
+      moduleTypes: moduleTypes
+    });
+
+    attest(schemaId, request);
+  }
+
+  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+  /*                     Schema Management                      */
+  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+  function registerSchema(
+    string calldata schema,
+    ISchemaResolver resolver
+  ) external returns (bytes32) {
+    return SchemaLib.registerSchema(schema, resolver);
+  }
+
+  function getSchema(
+    bytes32 uid
+  ) external view returns (DataTypes.Schema memory) {
+    return SchemaLib.getSchema(uid);
+  }
+
+  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+  /*                     Attestation Management                   */
+  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+  function attest(
+    bytes32 schemaId,
+    DataTypes.AttestationRequest memory request
+  ) public {
+    DataTypes.Attestation memory attestation = AttestationLib.attest(
+      schemaId,
+      msg.sender,
+      request
+    );
+    AttestationLib.resolveAttestation(schemaId, attestation, false);
+  }
+
+  function revoke(DataTypes.RevocationRequest memory request) external {
+    DataTypes.Attestation memory attestation = AttestationLib.revoke(
+      msg.sender,
+      request
+    );
+    AttestationLib.resolveAttestation(request.schemaId, attestation, true);
+  }
+
+  function getAttestation(
+    bytes32 uid
+  ) external view returns (DataTypes.Attestation memory) {
+    return AttestationLib.getAttestation(uid);
   }
 }

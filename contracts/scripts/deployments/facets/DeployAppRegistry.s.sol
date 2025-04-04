@@ -12,10 +12,8 @@ import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetH
 
 contract DeployAppRegistry is FacetHelper, Deployer {
   constructor() {
-    addSelector(IAppRegistry.register.selector);
-    addSelector(IAppRegistry.isRegistered.selector);
-    addSelector(IAppRegistry.getRegistration.selector);
-    addSelector(IAppRegistry.setAppStatus.selector);
+    addSelector(IAppRegistry.registerSchema.selector);
+    addSelector(IAppRegistry.getSchema.selector);
   }
 
   function initializer() public pure override returns (bytes4) {
