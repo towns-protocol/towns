@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"connectrpc.com/connect"
+
 	. "github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/logging"
 	. "github.com/towns-protocol/towns/core/node/nodes"
@@ -137,12 +138,14 @@ func PeerNodeRequestWithRetries[T any](
 				Func("peerNodeRequestWithRetries").
 				Message("makeStubRequest failed").
 				Tag("retry", retry).
-				Tag("numRetries", numRetries)
+				Tag("numRetries", numRetries).
+				Tag("lastPeer", peer)
 		}
 	}
 	// If all requests fail, return the last error.
 	return nil, AsRiverError(err).
 		Func("peerNodeRequestWithRetries").
 		Message("All retries failed").
-		Tag("numRetries", numRetries)
+		Tag("numRetries", numRetries).
+		Tag("lastPeer", nodes.GetStickyPeer())
 }

@@ -310,7 +310,7 @@ func NewArchiveStream(
 ) *ArchiveStream {
 	stream := &ArchiveStream{
 		streamId: streamId,
-		nodes:    nodes.NewStreamNodesWithLock(*nn, common.Address{}),
+		nodes:    nodes.NewStreamNodesWithLock(len(*nn), *nn, common.Address{}),
 		corrupt:  NewStreamCorruptionTracker(maxConsecutiveFailedUpdates),
 	}
 	stream.numBlocksInContract.Store(int64(lastKnownMiniblock + 1))
@@ -508,7 +508,7 @@ func (a *Archiver) GetCorruptStreams(ctx context.Context) []scrub.CorruptStreamR
 					}
 					record := scrub.CorruptStreamRecord{
 						StreamId:             stream.streamId,
-						Nodes:                stream.nodes.GetNodes(),
+						Nodes:                stream.nodes.GetQuorumNodes(),
 						MostRecentBlock:      stream.numBlocksInContract.Load(),
 						MostRecentLocalBlock: stream.numBlocksInDb.Load(),
 						FirstCorruptBlock:    stream.corrupt.firstCorruptBlock,
@@ -698,7 +698,7 @@ func (a *Archiver) ArchiveStream(ctx context.Context, stream *ArchiveStream) (er
 		for i, mb := range msg.Miniblocks {
 			// Parse header
 			info, err := events.NewMiniblockInfoFromProto(
-				mb,
+				mb, msg.GetMiniblockSnapshot(int64(i)+mbsInDb),
 				events.NewParsedMiniblockInfoOpts().
 					WithExpectedBlockNumber(int64(i)+mbsInDb).
 					WithDoNotParseEvents(true),
@@ -706,13 +706,11 @@ func (a *Archiver) ArchiveStream(ctx context.Context, stream *ArchiveStream) (er
 			if err != nil {
 				return err
 			}
-			bb, err := info.ToBytes()
+			storageMb, err := info.AsStorageMb()
 			if err != nil {
 				return err
 			}
-			serialized = append(serialized, &storage.WriteMiniblockData{
-				Data: bb,
-			})
+			serialized = append(serialized, storageMb)
 		}
 
 		log.Debugw("Writing miniblocks to storage", "streamId", stream.streamId, "numBlocks", len(serialized))
@@ -989,7 +987,7 @@ func (a *Archiver) onStreamPlacementUpdated(
 		return
 	}
 	stream := record.(*ArchiveStream)
-	stream.nodes.Reset(event.Nodes, common.Address{})
+	stream.nodes.ResetFromStreamState(event, common.Address{})
 }
 
 func (a *Archiver) onStreamLastMiniblockUpdated(
