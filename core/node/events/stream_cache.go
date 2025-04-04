@@ -490,10 +490,12 @@ func (s *StreamCache) createStreamStorage(
 	num crypto.BlockNumber,
 	hash common.Hash,
 ) (*Stream, bool, error) {
+	entry, loaded := s.cache.LoadOrStore(stream.streamId, stream)
+
 	// Lock stream, so parallel creators have to wait for the stream to be intialized.
 	stream.mu.Lock()
 	defer stream.mu.Unlock()
-	entry, loaded := s.cache.LoadOrStore(stream.streamId, stream)
+
 	if !loaded {
 		// TODO: delete entry on failures below?
 
