@@ -6,10 +6,11 @@ import {ISchemaResolver} from "../interfaces/ISchemaResolver.sol";
 
 // libraries
 
-import {CurrencyTransfer} from "../../../../utils/libraries/CurrencyTransfer.sol";
-import {CustomRevert} from "../../../../utils/libraries/CustomRevert.sol";
-import {DataTypes} from "../DataTypes.sol";
+import {CurrencyTransfer} from "../../utils/libraries/CurrencyTransfer.sol";
+import {CustomRevert} from "../../utils/libraries/CustomRevert.sol";
+
 import {AttestationRegistryStorage} from "../storage/AttestationRegistryStorage.sol";
+import {DataTypes} from "../types/DataTypes.sol";
 import {SchemaLib} from "./SchemaLib.sol";
 
 // contracts
@@ -77,7 +78,7 @@ library AttestationLib {
         bool last
     )
         internal
-        returns (DataTypes.Attestation memory)
+        returns (DataTypes.Attestation memory attestation)
     {
         DataTypes.Schema memory schema = SchemaLib.getSchema(schemaId);
         if (schema.uid == DataTypes.EMPTY_UID) {
@@ -98,7 +99,7 @@ library AttestationLib {
             DataTypes.Irrevocable.selector.revertWith();
         }
 
-        DataTypes.Attestation memory attestation = DataTypes.Attestation({
+        attestation = DataTypes.Attestation({
             uid: DataTypes.EMPTY_UID,
             schema: schemaId,
             time: timeNow,
@@ -192,8 +193,6 @@ library AttestationLib {
         AttestationRegistryStorage.Layout storage db = AttestationRegistryStorage.getLayout();
 
         db.attestations[attestation.uid].revocationTime = time();
-        db.moduleToAttesterToAttestation[attestation.recipient][attestation.attester] =
-            attestation.uid;
 
         emit DataTypes.AttestationRevoked(
             attestation.recipient, attestation.attester, attestation.uid, attestation.schema

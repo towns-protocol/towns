@@ -1,13 +1,21 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import {DataTypes} from "./DataTypes.sol";
+// interfaces
 import {ISchemaRegistry} from "./interfaces/ISchemaRegistry.sol";
 import {ISchemaResolver} from "./interfaces/ISchemaResolver.sol";
+
+// libraries
 import {SchemaLib} from "./libraries/SchemaLib.sol";
 
-contract SchemaRegistry is ISchemaRegistry {
-    function __SchemaRegistry_init() external {}
+// types
+import {DataTypes} from "./types/DataTypes.sol";
+
+// contracts
+import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
+
+contract SchemaRegistry is ISchemaRegistry, Facet {
+    function __SchemaRegistry_init() external onlyInitializing {}
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                     Schema Management                      */

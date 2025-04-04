@@ -7,8 +7,11 @@ import {IERC6900ExtensionRegistry} from "./interfaces/IERC6900ExtensionRegistry.
 // libraries
 import {TrustedLib} from "./libraries/TrustedLib.sol";
 
-contract TrustedRegistry is IERC6900ExtensionRegistry {
-    function __TrustedRegistry_init() external {}
+// contracts
+import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
+
+contract TrustedRegistry is IERC6900ExtensionRegistry, Facet {
+    function __TrustedRegistry_init() external onlyInitializing {}
 
     /// @inheritdoc IERC6900ExtensionRegistry
     function trustAttesters(uint8 threshold, address[] calldata attesters) external {

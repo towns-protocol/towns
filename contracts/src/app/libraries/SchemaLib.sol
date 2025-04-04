@@ -5,8 +5,8 @@ pragma solidity ^0.8.23;
 import {ISchemaResolver} from "../interfaces/ISchemaResolver.sol";
 // libraries
 
-import {CustomRevert} from "../../../../utils/libraries/CustomRevert.sol";
-import {DataTypes} from "../DataTypes.sol";
+import {CustomRevert} from "../../utils/libraries/CustomRevert.sol";
+import {DataTypes} from "../types/DataTypes.sol";
 import {SchemaRegistryStorage} from "../storage/SchemaRegistryStorage.sol";
 
 // contracts

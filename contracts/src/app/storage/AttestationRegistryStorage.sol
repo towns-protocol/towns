@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import {DataTypes} from "../DataTypes.sol";
+import {DataTypes} from "../types/DataTypes.sol";
 
 library AttestationRegistryStorage {
     // keccak256(abi.encode(uint256(keccak256("towns.facets.app.attestation.registry.storage")) -

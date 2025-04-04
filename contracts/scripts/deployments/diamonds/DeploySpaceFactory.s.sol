@@ -56,11 +56,8 @@ import {DeployTieredLogPricingV3} from
 import {DeployUserEntitlement} from
     "contracts/scripts/deployments/utils/DeployUserEntitlement.s.sol";
 
-import {DeployAttestationRegistry} from
-    "contracts/scripts/deployments/facets/DeployAttestationRegistry.s.sol";
 import {DeployMockLegacyArchitect} from
     "contracts/scripts/deployments/facets/DeployMockLegacyArchitect.s.sol";
-import {DeploySchemaRegistry} from "contracts/scripts/deployments/facets/DeploySchemaRegistry.s.sol";
 import {DeploySpaceFactoryInit} from
     "contracts/scripts/deployments/facets/DeploySpaceFactoryInit.s.sol";
 import {DeployMockDelegationRegistry} from
@@ -90,8 +87,6 @@ contract DeploySpaceFactory is DiamondHelper, Deployer {
     DeployEIP712Facet eip712Helper = new DeployEIP712Facet();
     DeployMockLegacyArchitect deployMockLegacyArchitect = new DeployMockLegacyArchitect();
     DeployPartnerRegistry partnerRegistryHelper = new DeployPartnerRegistry();
-    DeploySchemaRegistry deploySchemaRegistry = new DeploySchemaRegistry();
-    DeployAttestationRegistry deployAttestationRegistry = new DeployAttestationRegistry();
 
     // dependencies
     DeploySpace deploySpace = new DeploySpace();
@@ -130,8 +125,6 @@ contract DeploySpaceFactory is DiamondHelper, Deployer {
     address pausable;
     address platformReqs;
     address pricingModulesFacet;
-    address schemaRegistry;
-    address attestationRegistry;
 
     address registry;
     address walletLink;
@@ -222,8 +215,7 @@ contract DeploySpaceFactory is DiamondHelper, Deployer {
         eip712 = eip712Helper.deploy(deployer);
         pricingModulesFacet = pricingModulesHelper.deploy(deployer);
         partnerRegistry = partnerRegistryHelper.deploy(deployer);
-        schemaRegistry = deploySchemaRegistry.deploy(deployer);
-        attestationRegistry = deployAttestationRegistry.deploy(deployer);
+
         spaceProxyInitializer = deploySpaceProxyInitializer.deploy(deployer);
         spaceFactoryInit = deploySpaceFactoryInit.deploy(deployer);
         spaceFactoryInitData = deploySpaceFactoryInit.makeInitData(spaceProxyInitializer);
@@ -309,16 +301,6 @@ contract DeploySpaceFactory is DiamondHelper, Deployer {
             partnerRegistryHelper.makeCut(partnerRegistry, IDiamond.FacetCutAction.Add),
             partnerRegistry,
             partnerRegistryHelper.makeInitData("")
-        );
-        addFacet(
-            deploySchemaRegistry.makeCut(schemaRegistry, IDiamond.FacetCutAction.Add),
-            schemaRegistry,
-            deploySchemaRegistry.makeInitData("")
-        );
-        addFacet(
-            deployAttestationRegistry.makeCut(attestationRegistry, IDiamond.FacetCutAction.Add),
-            attestationRegistry,
-            deployAttestationRegistry.makeInitData("")
         );
 
         addInit(spaceFactoryInit, spaceFactoryInitData);

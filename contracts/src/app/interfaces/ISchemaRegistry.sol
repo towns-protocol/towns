@@ -2,7 +2,7 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {DataTypes} from "../DataTypes.sol";
+import {DataTypes} from "../types/DataTypes.sol";
 import {ISchemaResolver} from "./ISchemaResolver.sol";
 
 // libraries

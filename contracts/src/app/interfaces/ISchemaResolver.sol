@@ -6,7 +6,7 @@ pragma solidity ^0.8.23;
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
 // libraries
-import {DataTypes} from "../DataTypes.sol";
+import {DataTypes} from "../types/DataTypes.sol";
 
 // contracts
 

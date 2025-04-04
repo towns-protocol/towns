@@ -2,7 +2,7 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {ISchemaResolver} from "./interfaces/ISchemaResolver.sol";
+import {ISchemaResolver} from "../interfaces/ISchemaResolver.sol";
 
 library DataTypes {
     // A representation of an empty/uninitialized UID.
@@ -83,7 +83,6 @@ library DataTypes {
     error InvalidSchema();
     error InvalidExpirationTime();
     error Irrevocable();
-    error InvalidRefUID();
     error InvalidValue();
     error InvalidAttestation();
     error InvalidRevocation();

@@ -4,9 +4,9 @@ pragma solidity ^0.8.23;
 // interfaces
 
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
-import {ISchemaResolver} from "contracts/src/factory/facets/eas/interfaces/ISchemaResolver.sol";
+import {ISchemaResolver} from "contracts/src/app/interfaces/ISchemaResolver.sol";
 // libraries
-import {DataTypes} from "contracts/src/factory/facets/eas/DataTypes.sol";
+import {DataTypes} from "contracts/src/app/types/DataTypes.sol";
 
 // contracts
 
@@ -35,6 +35,7 @@ contract MockPluginResolver is ISchemaResolver {
         if (pluginOwners[attestation.recipient] != attestation.attester) {
             return false;
         }
+        pluginOwners[attestation.recipient] = address(0);
         return true;
     }
 }

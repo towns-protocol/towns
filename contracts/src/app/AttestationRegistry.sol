@@ -5,11 +5,14 @@ pragma solidity ^0.8.23;
 import {IAttestationRegistry} from "./interfaces/IAttestationRegistry.sol";
 
 // libraries
-import {DataTypes} from "./DataTypes.sol";
 import {AttestationLib} from "./libraries/AttestationLib.sol";
+import {DataTypes} from "./types/DataTypes.sol";
 
-contract AttestationRegistry is IAttestationRegistry {
-    function __AttestationRegistry_init() external {}
+// contracts
+import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
+
+contract AttestationRegistry is IAttestationRegistry, Facet {
+    function __AttestationRegistry_init() external onlyInitializing {}
 
     /// @notice Create a new attestation
     /// @param request The attestation request data
