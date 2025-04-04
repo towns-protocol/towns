@@ -64,7 +64,7 @@ message SaveMiniblockCandidateResponse {
 message GetMiniblocksByIdsRequest {
     bytes stream_id = 1;
     repeated int64 miniblock_ids = 2;
-    bool omit_snapshot = 3;
+    bool omit_snapshots = 3;
 }
 
 message GetMiniblockResponse {

@@ -39,7 +39,7 @@ func MakeSnapshotEnvelope(wallet *crypto.Wallet, snapshot *Snapshot) (*Envelope,
 
 // ParseSnapshot parses the given envelope into a snapshot.
 // It verifies the hash and signature of the envelope.
-func ParseSnapshot(envelope *Envelope, signer []byte) (*Snapshot, error) {
+func ParseSnapshot(envelope *Envelope, signer common.Address) (*Snapshot, error) {
 	hash := crypto.TownsHashForSnapshots.Hash(envelope.Event)
 	if !bytes.Equal(hash[:], envelope.Hash) {
 		return nil, RiverError(Err_BAD_EVENT_HASH, "Bad hash provided",
@@ -59,10 +59,10 @@ func ParseSnapshot(envelope *Envelope, signer []byte) (*Snapshot, error) {
 			Func("ParseSnapshot")
 	}
 
-	if !bytes.Equal(crypto.PublicKeyToAddress(signerPubKey).Bytes(), signer) {
+	if addr := crypto.PublicKeyToAddress(signerPubKey); addr.Cmp(signer) != 0 {
 		return nil, RiverError(Err_BAD_EVENT_SIGNATURE, "Bad signature provided",
-			"computedAddress", crypto.PublicKeyToAddress(signerPubKey),
-			"expectedAddress", crypto.PublicKeyToAddress(signer)).
+			"computedAddress", addr,
+			"expectedAddress", signer).
 			Func("ParseSnapshot")
 	}
 

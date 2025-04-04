@@ -130,7 +130,7 @@ func NewMiniblockInfoFromProto(mb *Miniblock, sn *Envelope, opts *ParsedMinibloc
 
 	var snapshot *Snapshot
 	if sn != nil {
-		if snapshot, err = ParseSnapshot(sn, headerEvent.Event.CreatorAddress); err != nil {
+		if snapshot, err = ParseSnapshot(sn, common.BytesToAddress(headerEvent.Event.CreatorAddress)); err != nil {
 			return nil, AsRiverError(err, Err_BAD_EVENT).
 				Message("Failed to parse snapshot").
 				Func("NewMiniblockInfoFromProto")

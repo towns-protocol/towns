@@ -889,7 +889,7 @@ message GetMiniblocksRequest {
     bytes stream_id = 1;
     int64 from_inclusive = 2;
     int64 to_exclusive = 3;
-    bool omit_snapshot = 4;
+    bool omit_snapshots = 4;
 }
 
 message GetMiniblocksResponse {
@@ -898,7 +898,7 @@ message GetMiniblocksResponse {
     bool terminus = 2;
     int64 from_inclusive = 3;
     int64 limit = 4;
-    bool omit_snapshot = 5;
+    bool omit_snapshots = 5;
     map<int64, Envelope> snapshots = 6;
 }
 
