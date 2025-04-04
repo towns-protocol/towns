@@ -6,7 +6,7 @@ import {
     type IGroupEncryptionClient,
     type UserDevice,
     type UserDeviceCollection,
-} from '@river-build/encryption'
+} from '@towns-protocol/encryption'
 import { makeStreamRpcClient, type StreamRpcClient } from './makeStreamRpcClient'
 import {
     makeSignerContext,
@@ -15,7 +15,7 @@ import {
 } from './signerContext'
 import { makeRiverConfig } from './riverConfig'
 import { ethers } from 'ethers'
-import { RiverRegistry } from '@river-build/web3'
+import { RiverRegistry } from '@towns-protocol/web3'
 import { makeRiverProvider } from './sync-agent/utils/providers'
 import { RiverDbManager } from './riverDbManager'
 import {
@@ -26,7 +26,9 @@ import {
 } from './id'
 import { make_UserInboxPayload_GroupEncryptionSessions, type ParsedStreamResponse } from './types'
 import { makeEvent, unpackStream } from './sign'
-import { bin_toHexString, check } from '@river-build/dlog'
+import { bin_toHexString, check } from '@towns-protocol/dlog'
+import { toJsonString } from '@bufbuild/protobuf'
+import { SessionKeysSchema } from '@towns-protocol/proto'
 
 type Client_Base = {
     /** The userId of the Client. */
@@ -68,7 +70,6 @@ type Extended = Prettify<
 
 export type Prettify<T> = {
     [K in keyof T]: T[K]
-    // eslint-disable-next-line @typescript-eslint/ban-types
 } & {}
 
 export const createTownsClient = async (
@@ -179,7 +180,7 @@ export const createTownsClient = async (
                 const promises = Object.entries(toDevices).map(async ([userId, deviceKeys]) => {
                     try {
                         const ciphertext = await crypto.encryptWithDeviceKeys(
-                            payload.toJsonString(),
+                            toJsonString(SessionKeysSchema, payload),
                             deviceKeys,
                         )
                         if (Object.keys(ciphertext).length === 0) {
