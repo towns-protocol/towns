@@ -18,7 +18,7 @@ contract InteractRiverRegistrySetFreq is Interaction {
     vm.startBroadcast(deployer);
     IRiverConfig(riverRegistry).setConfiguration(
       keccak256("stream.replicationfactor"),
-      20829675,
+      13824246,
       abi.encode(value)
     );
     vm.stopBroadcast();
