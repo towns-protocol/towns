@@ -533,7 +533,7 @@ func TestMiniblockRegistrationWithPendingLocalCandidate(t *testing.T) {
 	}
 
 	candidate, err := NewMiniblockInfoFromHeaderAndParsed(
-		instance.params.Wallet, candidateHeader, []*ParsedEvent{event1, event2},
+		instance.params.Wallet, candidateHeader, []*ParsedEvent{event1, event2}, nil,
 	)
 	require.NoError(err)
 

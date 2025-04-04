@@ -21,8 +21,8 @@ type MiniblockInfo struct {
 	Snapshot *Envelope
 
 	headerEvent        *ParsedEvent
-	useGetterForEvents []*ParsedEvent // Use events(). Getter checks if events have been initialized.
-	snapshot           *Snapshot      //nolint:unused
+	useGetterForEvents []*ParsedEvent  // Use events(). Getter checks if events have been initialized.
+	snapshot           *ParsedSnapshot //nolint:unused
 }
 
 // NewMiniblockInfoFromProto initializes a MiniblockInfo from a proto, applying validation based
@@ -128,12 +128,39 @@ func NewMiniblockInfoFromProto(mb *Miniblock, sn *Envelope, opts *ParsedMinibloc
 			Tag("prevSnapshotMiniblockNum", blockHeader.PrevSnapshotMiniblockNum)
 	}
 
-	var snapshot *Snapshot
+	var snapshot *ParsedSnapshot
 	if sn != nil {
 		if snapshot, err = ParseSnapshot(sn, common.BytesToAddress(headerEvent.Event.CreatorAddress)); err != nil {
 			return nil, AsRiverError(err, Err_BAD_EVENT).
 				Message("Failed to parse snapshot").
 				Func("NewMiniblockInfoFromProto")
+		}
+	}
+
+	// TODO: Make it work with the new style of snapshot
+	if !opts.SkipSnapshotValidation() && false {
+		if len(blockHeader.GetSnapshotHash()) == 0 && blockHeader.GetSnapshot() == nil && snapshot != nil {
+			return nil, RiverError(Err_BAD_BLOCK, "Snapshot is not expected").
+				Func("NewMiniblockInfoFromProto")
+		}
+
+		if snapshot == nil {
+			return nil, RiverError(Err_BAD_BLOCK, "Snapshot envelope must be set").
+				Func("NewMiniblockInfoFromProto")
+		}
+
+		if len(blockHeader.GetSnapshotHash()) > 0 {
+			// Validate snapshot in a new style
+			if common.BytesToHash(sn.Hash).Cmp(common.BytesToHash(blockHeader.GetSnapshotHash())) != 0 {
+				return nil, RiverError(Err_BAD_BLOCK, "Snapshot hash does not match snapshot envelope hash").
+					Func("NewMiniblockInfoFromProto")
+			}
+		} else if blockHeader.GetSnapshot() != nil {
+			// Validate snapshot in a legacy style
+			if !proto.Equal(blockHeader.GetSnapshot(), snapshot.Snapshot) {
+				return nil, RiverError(Err_BAD_BLOCK, "Snapshot envelope does not match snapshot envelope in header").
+					Func("NewMiniblockInfoFromProto")
+			}
 		}
 	}
 
@@ -153,7 +180,11 @@ func NewMiniblockInfoFromProto(mb *Miniblock, sn *Envelope, opts *ParsedMinibloc
 	}, nil
 }
 
-func NewMiniblockInfoFromParsed(headerEvent *ParsedEvent, events []*ParsedEvent) (*MiniblockInfo, error) {
+func NewMiniblockInfoFromParsed(
+	headerEvent *ParsedEvent,
+	events []*ParsedEvent,
+	snapshot *ParsedSnapshot,
+) (*MiniblockInfo, error) {
 	if headerEvent.Event.GetMiniblockHeader() == nil {
 		return nil, RiverError(Err_BAD_EVENT, "header event must be a block header")
 	}
@@ -163,7 +194,7 @@ func NewMiniblockInfoFromParsed(headerEvent *ParsedEvent, events []*ParsedEvent)
 		envelopes[i] = e.Envelope
 	}
 
-	return &MiniblockInfo{
+	mbInfo := &MiniblockInfo{
 		Ref: &MiniblockRef{
 			Hash: headerEvent.Hash,
 			Num:  headerEvent.Event.GetMiniblockHeader().MiniblockNum,
@@ -174,13 +205,21 @@ func NewMiniblockInfoFromParsed(headerEvent *ParsedEvent, events []*ParsedEvent)
 		},
 		headerEvent:        headerEvent,
 		useGetterForEvents: events,
-	}, nil
+	}
+
+	if snapshot != nil {
+		mbInfo.Snapshot = snapshot.Envelope
+		mbInfo.snapshot = snapshot
+	}
+
+	return mbInfo, nil
 }
 
 func NewMiniblockInfoFromHeaderAndParsed(
 	wallet *crypto.Wallet,
 	header *MiniblockHeader,
 	events []*ParsedEvent,
+	snapshot *ParsedSnapshot,
 ) (*MiniblockInfo, error) {
 	headerEvent, err := MakeParsedEventWithPayload(
 		wallet,
@@ -194,7 +233,7 @@ func NewMiniblockInfoFromHeaderAndParsed(
 		return nil, err
 	}
 
-	return NewMiniblockInfoFromParsed(headerEvent, events)
+	return NewMiniblockInfoFromParsed(headerEvent, events, snapshot)
 }
 
 func NewMiniblockInfoFromDescriptor(mb *storage.MiniblockDescriptor) (*MiniblockInfo, error) {

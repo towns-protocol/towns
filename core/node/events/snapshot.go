@@ -15,6 +15,25 @@ import (
 	"github.com/towns-protocol/towns/core/node/shared"
 )
 
+// ParsedSnapshot is a wrapper around the snapshot and its envelope.
+type ParsedSnapshot struct {
+	Snapshot *Snapshot
+	Envelope *Envelope
+}
+
+// MakeParsedSnapshot creates a parsed snapshot from the given wallet and snapshot.
+func MakeParsedSnapshot(wallet *crypto.Wallet, snapshot *Snapshot) (*ParsedSnapshot, error) {
+	envelope, err := MakeSnapshotEnvelope(wallet, snapshot)
+	if err != nil {
+		return nil, err
+	}
+
+	return &ParsedSnapshot{
+		Snapshot: snapshot,
+		Envelope: envelope,
+	}, nil
+}
+
 // MakeSnapshotEnvelope creates a snapshot envelope from the given snapshot.
 func MakeSnapshotEnvelope(wallet *crypto.Wallet, snapshot *Snapshot) (*Envelope, error) {
 	snapshotBytes, err := proto.Marshal(snapshot)
@@ -39,7 +58,7 @@ func MakeSnapshotEnvelope(wallet *crypto.Wallet, snapshot *Snapshot) (*Envelope,
 
 // ParseSnapshot parses the given envelope into a snapshot.
 // It verifies the hash and signature of the envelope.
-func ParseSnapshot(envelope *Envelope, signer common.Address) (*Snapshot, error) {
+func ParseSnapshot(envelope *Envelope, signer common.Address) (*ParsedSnapshot, error) {
 	hash := crypto.TownsHashForSnapshots.Hash(envelope.Event)
 	if !bytes.Equal(hash[:], envelope.Hash) {
 		return nil, RiverError(Err_BAD_EVENT_HASH, "Bad hash provided",
@@ -66,7 +85,10 @@ func ParseSnapshot(envelope *Envelope, signer common.Address) (*Snapshot, error)
 			Func("ParseSnapshot")
 	}
 
-	return &sn, nil
+	return &ParsedSnapshot{
+		Snapshot: &sn,
+		Envelope: envelope,
+	}, nil
 }
 
 func Make_GenesisSnapshot(events []*ParsedEvent) (*Snapshot, error) {

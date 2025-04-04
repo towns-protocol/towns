@@ -120,7 +120,7 @@ func MakeTestBlockForUserSettingsStream(
 		},
 	}
 
-	mb, err := NewMiniblockInfoFromHeaderAndParsed(nodeWallet, header, []*ParsedEvent{event})
+	mb, err := NewMiniblockInfoFromHeaderAndParsed(nodeWallet, header, []*ParsedEvent{event}, nil)
 	require.NoError(t, err)
 
 	return mb
