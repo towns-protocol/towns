@@ -13,12 +13,12 @@ contract InteractRiverRegistrySetFreq is Interaction {
   function __interact(address deployer) internal override {
     address riverRegistry = getDeployment("riverRegistry");
 
-    uint64 value = 10;
+    uint64 value = 3;
 
     vm.startBroadcast(deployer);
     IRiverConfig(riverRegistry).setConfiguration(
-      keccak256("stream.miniblockregistrationfrequency"),
-      0,
+      keccak256("stream.replicationfactor"),
+      20829675,
       abi.encode(value)
     );
     vm.stopBroadcast();
