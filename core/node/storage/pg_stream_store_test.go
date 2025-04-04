@@ -90,16 +90,11 @@ func promoteMiniblockCandidate(
 	streamId StreamId,
 	mbNum int64,
 	candidateBlockHash common.Hash,
-	snapshotMiniblock bool,
 	envelopes [][]byte,
 ) error {
 	mbData, err := pgStreamStore.ReadMiniblockCandidate(ctx, streamId, candidateBlockHash, mbNum)
 	if err != nil {
 		return err
-	}
-	var snData []byte
-	if snapshotMiniblock {
-		snData = make([]byte, 0)
 	}
 	return pgStreamStore.WriteMiniblocks(
 		ctx,
@@ -107,7 +102,7 @@ func promoteMiniblockCandidate(
 		[]*WriteMiniblockData{{
 			Number:   mbNum,
 			Hash:     candidateBlockHash,
-			Snapshot: snData,
+			Snapshot: mbData.Snapshot,
 			Data:     mbData.Data,
 		}},
 		mbNum+1,
@@ -135,8 +130,8 @@ func TestPostgresStreamStore(t *testing.T) {
 	nonExistentStreamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 
 	// Test that created stream will have proper genesis miniblock
-	genesisMiniblock := []byte("genesisMiniblock")
-	err = pgStreamStore.CreateStreamStorage(ctx, streamId1, &WriteMiniblockData{Data: genesisMiniblock})
+	genesisMb := &WriteMiniblockData{Data: []byte("genesisMiniblock")}
+	err = pgStreamStore.CreateStreamStorage(ctx, streamId1, genesisMb)
 	require.NoError(err)
 
 	streamsNumber, err = pgStreamStore.GetStreamsNumber(ctx)
@@ -148,9 +143,10 @@ func TestPostgresStreamStore(t *testing.T) {
 	require.Len(streamFromLastSnaphot.Miniblocks, 1, "Expected to find one miniblock, found different number")
 	require.EqualValues(
 		streamFromLastSnaphot.Miniblocks[0].Data,
-		genesisMiniblock,
+		genesisMb.Data,
 		"Expected to find original genesis block, found different",
 	)
+	require.EqualValues(streamFromLastSnaphot.Miniblocks[0].Snapshot, genesisMb.Snapshot)
 	require.Len(streamFromLastSnaphot.MinipoolEnvelopes, 0, "Expected minipool to be empty, found different")
 
 	// Test that we cannot add second stream with same id
@@ -187,39 +183,39 @@ func TestPostgresStreamStore(t *testing.T) {
 	require.Len(streamFromLastSnaphot.Miniblocks, 1, "Expected to find one miniblock, found different number")
 	require.EqualValues(
 		streamFromLastSnaphot.Miniblocks[0].Data,
-		genesisMiniblock,
+		genesisMb.Data,
 		"Expected to find original genesis block, found different",
 	)
 
 	var testEnvelopes [][]byte
 	testEnvelopes = append(testEnvelopes, []byte("event2"))
-	blockHash := common.BytesToHash([]byte("block_hash"))
-	blockData := []byte("block1")
-	err = pgStreamStore.WriteMiniblockCandidate(ctx, streamId1, &WriteMiniblockData{
+	mb1 := &WriteMiniblockData{
 		Number: 1,
-		Hash:   blockHash,
-		Data:   blockData,
-	})
+		Hash:   common.BytesToHash([]byte("block_hash")),
+		Data:   []byte("block1"),
+	}
+	err = pgStreamStore.WriteMiniblockCandidate(ctx, streamId1, mb1)
 	require.NoError(err)
 
-	mb, err := pgStreamStore.ReadMiniblockCandidate(ctx, streamId1, blockHash, 1)
+	mb, err := pgStreamStore.ReadMiniblockCandidate(ctx, streamId1, mb1.Hash, 1)
 	require.NoError(err)
-	require.EqualValues(blockData, mb.Data)
+	require.EqualValues(mb1.Data, mb.Data)
 
-	err = promoteMiniblockCandidate(ctx, pgStreamStore, streamId1, 1, blockHash, false, testEnvelopes)
+	err = promoteMiniblockCandidate(ctx, pgStreamStore, streamId1, 1, mb1.Hash, testEnvelopes)
 	require.NoError(err)
 
 	var testEnvelopes2 [][]byte
 	testEnvelopes2 = append(testEnvelopes2, []byte("event3"))
-	blockHash2 := common.BytesToHash([]byte("block_hash_2"))
-	err = pgStreamStore.WriteMiniblockCandidate(ctx, streamId1, &WriteMiniblockData{
-		Number: 2,
-		Hash:   blockHash2,
-		Data:   []byte("block2"),
-	})
+	mb2 := &WriteMiniblockData{
+		Number:   2,
+		Hash:     common.BytesToHash([]byte("block_hash_2")),
+		Data:     []byte("block2"),
+		Snapshot: []byte("snapshot"),
+	}
+	err = pgStreamStore.WriteMiniblockCandidate(ctx, streamId1, mb2)
 	require.NoError(err)
 
-	err = promoteMiniblockCandidate(ctx, pgStreamStore, streamId1, 2, blockHash2, true, testEnvelopes2)
+	err = promoteMiniblockCandidate(ctx, pgStreamStore, streamId1, 2, mb2.Hash, testEnvelopes2)
 	require.NoError(err)
 
 	lastMiniblockNumber, err := pgStreamStore.GetLastMiniblockNumber(ctx, streamId1)
@@ -246,14 +242,14 @@ func TestPromoteMiniblockCandidate(t *testing.T) {
 
 	candidateHash := common.BytesToHash([]byte("block_hash"))
 	candidateHash2 := common.BytesToHash([]byte("block_hash_2"))
-	candidateHash_block2 := common.BytesToHash([]byte("block_hash_block2"))
-	miniblock_bytes := []byte("miniblock_bytes")
+	candidateHashBlock2 := common.BytesToHash([]byte("block_hash_block2"))
+	miniblockBytes := []byte("miniblock_bytes")
 
 	// Miniblock candidate seq number must be at least current
 	err := pgStreamStore.WriteMiniblockCandidate(ctx, streamId, &WriteMiniblockData{
 		Number: 0,
 		Hash:   candidateHash,
-		Data:   miniblock_bytes,
+		Data:   miniblockBytes,
 	})
 	require.True(IsRiverErrorCode(err, Err_MINIBLOCKS_STORAGE_FAILURE))
 	require.Equal(AsRiverError(err).GetTag("LastBlockInStorage"), int64(0))
@@ -262,8 +258,8 @@ func TestPromoteMiniblockCandidate(t *testing.T) {
 	// Future candidates fine
 	err = pgStreamStore.WriteMiniblockCandidate(ctx, streamId, &WriteMiniblockData{
 		Number: 2,
-		Hash:   candidateHash_block2,
-		Data:   miniblock_bytes,
+		Hash:   candidateHashBlock2,
+		Data:   miniblockBytes,
 	})
 	require.NoError(err)
 
@@ -271,21 +267,21 @@ func TestPromoteMiniblockCandidate(t *testing.T) {
 	err = pgStreamStore.WriteMiniblockCandidate(ctx, streamId, &WriteMiniblockData{
 		Number: 1,
 		Hash:   candidateHash,
-		Data:   miniblock_bytes,
+		Data:   miniblockBytes,
 	})
 	require.NoError(err)
 
 	err = pgStreamStore.WriteMiniblockCandidate(ctx, streamId, &WriteMiniblockData{
 		Number: 1,
 		Hash:   candidateHash,
-		Data:   miniblock_bytes,
+		Data:   miniblockBytes,
 	})
 	require.True(IsRiverErrorCode(err, Err_ALREADY_EXISTS))
 
 	err = pgStreamStore.WriteMiniblockCandidate(ctx, streamId, &WriteMiniblockData{
 		Number: 1,
 		Hash:   candidateHash2,
-		Data:   miniblock_bytes,
+		Data:   miniblockBytes,
 	})
 	require.NoError(err)
 
@@ -311,7 +307,6 @@ func TestPromoteMiniblockCandidate(t *testing.T) {
 		streamId,
 		1,
 		common.BytesToHash([]byte("nonexistent_hash")),
-		false,
 		testEnvelopes,
 	)
 	require.Error(err)
@@ -324,7 +319,6 @@ func TestPromoteMiniblockCandidate(t *testing.T) {
 		streamId,
 		1,
 		candidateHash,
-		false,
 		testEnvelopes,
 	)
 	require.NoError(err)
@@ -335,8 +329,7 @@ func TestPromoteMiniblockCandidate(t *testing.T) {
 		pgStreamStore,
 		streamId,
 		2,
-		candidateHash_block2,
-		false,
+		candidateHashBlock2,
 		testEnvelopes,
 	)
 	require.NoError(err)
@@ -348,7 +341,6 @@ func TestPromoteMiniblockCandidate(t *testing.T) {
 		streamId2,
 		1,
 		candidateHash,
-		false,
 		testEnvelopes,
 	)
 	require.NoError(err)
@@ -479,18 +471,19 @@ func TestCreateBlockProposalConsistencyChecksProperNewMinipoolGeneration(t *test
 	blockHash2 := common.BytesToHash([]byte("hash2"))
 	blockHash3 := common.BytesToHash([]byte("hash3"))
 	_ = pgStreamStore.WriteMiniblockCandidate(ctx, streamId, &WriteMiniblockData{
-		Number: 1,
-		Hash:   blockHash1,
-		Data:   []byte("block1"),
+		Number:   1,
+		Hash:     blockHash1,
+		Data:     []byte("block1"),
+		Snapshot: []byte("snapshot"),
 	})
-	_ = promoteMiniblockCandidate(ctx, pgStreamStore, streamId, 1, blockHash1, true, testEnvelopes1)
+	_ = promoteMiniblockCandidate(ctx, pgStreamStore, streamId, 1, blockHash1, testEnvelopes1)
 
 	_ = pgStreamStore.WriteMiniblockCandidate(ctx, streamId, &WriteMiniblockData{
 		Number: 2,
 		Hash:   blockHash2,
 		Data:   []byte("block2"),
 	})
-	_ = promoteMiniblockCandidate(ctx, pgStreamStore, streamId, 2, blockHash2, false, testEnvelopes2)
+	_ = promoteMiniblockCandidate(ctx, pgStreamStore, streamId, 2, blockHash2, testEnvelopes2)
 
 	_, _ = pgStreamStore.pool.Exec(ctx, "DELETE FROM miniblocks WHERE seq_num = 2")
 
@@ -525,18 +518,19 @@ func TestPromoteBlockConsistencyChecksProperNewMinipoolGeneration(t *testing.T) 
 	blockHash2 := common.BytesToHash([]byte("hash2"))
 	blockHash3 := common.BytesToHash([]byte("hash3"))
 	_ = pgStreamStore.WriteMiniblockCandidate(ctx, streamId, &WriteMiniblockData{
-		Number: 1,
-		Hash:   blockHash1,
-		Data:   []byte("block1"),
+		Number:   1,
+		Hash:     blockHash1,
+		Data:     []byte("block1"),
+		Snapshot: []byte("snapshot"),
 	})
-	_ = promoteMiniblockCandidate(ctx, pgStreamStore, streamId, 1, blockHash1, true, testEnvelopes1)
+	_ = promoteMiniblockCandidate(ctx, pgStreamStore, streamId, 1, blockHash1, testEnvelopes1)
 
 	_ = pgStreamStore.WriteMiniblockCandidate(ctx, streamId, &WriteMiniblockData{
 		Number: 2,
 		Hash:   blockHash2,
 		Data:   []byte("block2"),
 	})
-	_ = promoteMiniblockCandidate(ctx, pgStreamStore, streamId, 2, blockHash2, false, testEnvelopes2)
+	_ = promoteMiniblockCandidate(ctx, pgStreamStore, streamId, 2, blockHash2, testEnvelopes2)
 
 	_ = pgStreamStore.WriteMiniblockCandidate(ctx, streamId, &WriteMiniblockData{
 		Number: 3,
@@ -551,7 +545,7 @@ func TestPromoteBlockConsistencyChecksProperNewMinipoolGeneration(t *testing.T) 
 			streamId,
 		),
 	)
-	err := promoteMiniblockCandidate(ctx, pgStreamStore, streamId, 3, blockHash3, false, testEnvelopes3)
+	err := promoteMiniblockCandidate(ctx, pgStreamStore, streamId, 3, blockHash3, testEnvelopes3)
 
 	// TODO(crystal): tune these
 	require.NotNil(err)
@@ -609,9 +603,10 @@ func TestPromoteBlockNoSuchStreamError(t *testing.T) {
 	testEnvelopes1 = append(testEnvelopes1, []byte("event1"))
 	block_hash := common.BytesToHash([]byte("block_hash"))
 	_ = pgStreamStore.WriteMiniblockCandidate(ctx, streamId, &WriteMiniblockData{
-		Number: 1,
-		Hash:   block_hash,
-		Data:   []byte("block1"),
+		Number:   1,
+		Hash:     block_hash,
+		Data:     []byte("block1"),
+		Snapshot: []byte("snapshot"),
 	})
 
 	_, _ = pgStreamStore.pool.Exec(
@@ -622,7 +617,7 @@ func TestPromoteBlockNoSuchStreamError(t *testing.T) {
 		),
 	)
 
-	err := promoteMiniblockCandidate(ctx, pgStreamStore, streamId, 1, block_hash, true, testEnvelopes1)
+	err := promoteMiniblockCandidate(ctx, pgStreamStore, streamId, 1, block_hash, testEnvelopes1)
 
 	require.NotNil(err)
 	require.Contains(err.Error(), "No blocks for the stream found in block storage")
@@ -710,9 +705,10 @@ func TestGetStreamFromLastSnapshotConsistencyChecksMissingBlockFailure(t *testin
 		ctx,
 		streamId,
 		&WriteMiniblockData{
-			Number: 1,
-			Hash:   common.BytesToHash([]byte("blockhash1")),
-			Data:   []byte("block1"),
+			Number:   1,
+			Hash:     common.BytesToHash([]byte("blockhash1")),
+			Data:     []byte("block1"),
+			Snapshot: []byte("snapshot"),
 		},
 	)
 	_ = promoteMiniblockCandidate(
@@ -721,7 +717,6 @@ func TestGetStreamFromLastSnapshotConsistencyChecksMissingBlockFailure(t *testin
 		streamId,
 		1,
 		common.BytesToHash([]byte("blockhash1")),
-		true,
 		testEnvelopes1,
 	)
 
@@ -740,7 +735,6 @@ func TestGetStreamFromLastSnapshotConsistencyChecksMissingBlockFailure(t *testin
 		streamId,
 		2,
 		common.BytesToHash([]byte("blockhash2")),
-		false,
 		testEnvelopes2,
 	)
 
@@ -759,7 +753,6 @@ func TestGetStreamFromLastSnapshotConsistencyChecksMissingBlockFailure(t *testin
 		streamId,
 		3,
 		common.BytesToHash([]byte("blockhash3")),
-		false,
 		testEnvelopes3,
 	)
 
@@ -801,9 +794,10 @@ func TestGetStreamFromLastSnapshotConsistencyCheckWrongEnvelopeGeneration(t *tes
 		ctx,
 		streamId,
 		&WriteMiniblockData{
-			Number: 1,
-			Hash:   common.BytesToHash([]byte("blockhash1")),
-			Data:   []byte("block1"),
+			Number:   1,
+			Hash:     common.BytesToHash([]byte("blockhash1")),
+			Data:     []byte("block1"),
+			Snapshot: []byte("snapshot"),
 		},
 	)
 	_ = promoteMiniblockCandidate(
@@ -812,7 +806,6 @@ func TestGetStreamFromLastSnapshotConsistencyCheckWrongEnvelopeGeneration(t *tes
 		streamId,
 		1,
 		common.BytesToHash([]byte("blockhash1")),
-		true,
 		testEnvelopes1,
 	)
 	_ = pgStreamStore.WriteMiniblockCandidate(
@@ -830,7 +823,6 @@ func TestGetStreamFromLastSnapshotConsistencyCheckWrongEnvelopeGeneration(t *tes
 		streamId,
 		2,
 		common.BytesToHash([]byte("blockhash2")),
-		false,
 		testEnvelopes2,
 	)
 
@@ -871,9 +863,10 @@ func TestGetStreamFromLastSnapshotConsistencyCheckNoZeroIndexEnvelope(t *testing
 		ctx,
 		streamId,
 		&WriteMiniblockData{
-			Number: 1,
-			Hash:   common.BytesToHash([]byte("blockhash1")),
-			Data:   []byte("block1"),
+			Number:   1,
+			Hash:     common.BytesToHash([]byte("blockhash1")),
+			Data:     []byte("block1"),
+			Snapshot: []byte("snapshot"),
 		},
 	)
 	_ = promoteMiniblockCandidate(
@@ -882,7 +875,6 @@ func TestGetStreamFromLastSnapshotConsistencyCheckNoZeroIndexEnvelope(t *testing
 		streamId,
 		1,
 		common.BytesToHash([]byte("blockhash1")),
-		true,
 		testEnvelopes1,
 	)
 	_ = pgStreamStore.WriteMiniblockCandidate(
@@ -900,7 +892,6 @@ func TestGetStreamFromLastSnapshotConsistencyCheckNoZeroIndexEnvelope(t *testing
 		streamId,
 		2,
 		common.BytesToHash([]byte("blockhash2")),
-		false,
 		testEnvelopes2,
 	)
 
@@ -941,9 +932,10 @@ func TestGetStreamFromLastSnapshotConsistencyCheckGapInEnvelopesIndexes(t *testi
 		ctx,
 		streamId,
 		&WriteMiniblockData{
-			Number: 1,
-			Hash:   common.BytesToHash([]byte("blockhash1")),
-			Data:   []byte("block1"),
+			Number:   1,
+			Hash:     common.BytesToHash([]byte("blockhash1")),
+			Data:     []byte("block1"),
+			Snapshot: []byte("snapshot"),
 		},
 	)
 	_ = promoteMiniblockCandidate(
@@ -952,7 +944,6 @@ func TestGetStreamFromLastSnapshotConsistencyCheckGapInEnvelopesIndexes(t *testi
 		streamId,
 		1,
 		common.BytesToHash([]byte("blockhash1")),
-		true,
 		testEnvelopes1,
 	)
 	_ = pgStreamStore.WriteMiniblockCandidate(
@@ -970,7 +961,6 @@ func TestGetStreamFromLastSnapshotConsistencyCheckGapInEnvelopesIndexes(t *testi
 		streamId,
 		2,
 		common.BytesToHash([]byte("blockhash2")),
-		false,
 		testEnvelopes2,
 	)
 
@@ -1010,9 +1000,10 @@ func TestGetMiniblocksConsistencyChecks(t *testing.T) {
 		ctx,
 		streamId,
 		&WriteMiniblockData{
-			Number: 1,
-			Hash:   common.BytesToHash([]byte("blockhash1")),
-			Data:   []byte("block1"),
+			Number:   1,
+			Hash:     common.BytesToHash([]byte("blockhash1")),
+			Data:     []byte("block1"),
+			Snapshot: []byte("snapshot"),
 		},
 	)
 	_ = promoteMiniblockCandidate(
@@ -1021,7 +1012,6 @@ func TestGetMiniblocksConsistencyChecks(t *testing.T) {
 		streamId,
 		1,
 		common.BytesToHash([]byte("blockhash1")),
-		true,
 		testEnvelopes1,
 	)
 	_ = pgStreamStore.WriteMiniblockCandidate(
@@ -1039,7 +1029,6 @@ func TestGetMiniblocksConsistencyChecks(t *testing.T) {
 		streamId,
 		2,
 		common.BytesToHash([]byte("blockhash2")),
-		false,
 		testEnvelopes2,
 	)
 	_ = pgStreamStore.WriteMiniblockCandidate(
@@ -1057,7 +1046,6 @@ func TestGetMiniblocksConsistencyChecks(t *testing.T) {
 		streamId,
 		3,
 		common.BytesToHash([]byte("blockhash3")),
-		false,
 		testEnvelopes3,
 	)
 
@@ -1112,14 +1100,20 @@ func newDataMaker() *dataMaker {
 	return (*dataMaker)(rand.New(rand.NewSource(42)))
 }
 
-func (m *dataMaker) mb(num int64) *MiniblockDescriptor {
+func (m *dataMaker) mb(num int64, sn bool) *MiniblockDescriptor {
 	b := make([]byte, 200)
 	_, _ = (*rand.Rand)(m).Read(b)
+	var snapshot []byte
+	if sn {
+		snapshot = make([]byte, 200)
+		_, _ = (*rand.Rand)(m).Read(snapshot)
+	}
 	// Hash is fake
 	return &MiniblockDescriptor{
-		Data:   b,
-		Hash:   common.BytesToHash(b),
-		Number: num,
+		Data:     b,
+		Hash:     common.BytesToHash(b),
+		Number:   num,
+		Snapshot: snapshot,
 	}
 }
 
@@ -1157,8 +1151,9 @@ func requireSnapshotResult(
 	require.EqualValues(t, snapshotOffset, result.SnapshotMiniblockOffset, "SnapshotMiniblockOffset")
 	require.Equal(t, len(result.Miniblocks), len(miniblocks), "len of miniblocks")
 	for i, mb := range miniblocks {
-		require.EqualValues(t, mb.Number, result.Miniblocks[i].Number)
-		require.EqualValues(t, mb.Data, result.Miniblocks[i].Data)
+		require.EqualValues(t, mb.Number, result.Miniblocks[i].Number, i)
+		require.EqualValues(t, mb.Data, result.Miniblocks[i].Data, i)
+		require.EqualValues(t, mb.Snapshot, result.Miniblocks[i].Snapshot, i)
 	}
 	require.Equal(t, len(result.MinipoolEnvelopes), len(minipoolEnvelopes), "len of minipoolEnvelopes")
 	require.EqualValues(t, minipoolEnvelopes, result.MinipoolEnvelopes)
@@ -1178,11 +1173,14 @@ func TestReadStreamFromLastSnapshot(t *testing.T) {
 
 	var store StreamStorage = pgStreamStore
 
-	genMB := dataMaker.mb(0)
+	genMB := dataMaker.mb(0, true)
 	mbs := []*MiniblockDescriptor{genMB}
-	require.NoError(store.CreateStreamStorage(ctx, streamId, &WriteMiniblockData{Data: genMB.Data}))
+	require.NoError(store.CreateStreamStorage(ctx, streamId, &WriteMiniblockData{
+		Data:     genMB.Data,
+		Snapshot: genMB.Snapshot,
+	}))
 
-	mb1 := dataMaker.mb(1)
+	mb1 := dataMaker.mb(1, false)
 	mbs = append(mbs, mb1)
 	require.NoError(store.WriteMiniblockCandidate(ctx, streamId, &WriteMiniblockData{
 		Number: mb1.Number,
@@ -1195,27 +1193,29 @@ func TestReadStreamFromLastSnapshot(t *testing.T) {
 	require.EqualValues(mb1, mb1read)
 
 	eventPool1 := dataMaker.events(5)
-	require.NoError(promoteMiniblockCandidate(ctx, pgStreamStore, streamId, mb1.Number, mb1.Hash, false, eventPool1))
+	require.NoError(promoteMiniblockCandidate(ctx, pgStreamStore, streamId, mb1.Number, mb1.Hash, eventPool1))
 
 	streamData, err := store.ReadStreamFromLastSnapshot(ctx, streamId, 10)
 	require.NoError(err)
 	requireSnapshotResult(t, streamData, 0, mbs, eventPool1)
 
-	mb2 := dataMaker.mb(2)
+	mb2 := dataMaker.mb(2, true)
 	mbs = append(mbs, mb2)
 	require.NoError(store.WriteMiniblockCandidate(ctx, streamId, &WriteMiniblockData{
-		Number: mb2.Number,
-		Hash:   mb2.Hash,
-		Data:   mb2.Data,
+		Number:   mb2.Number,
+		Hash:     mb2.Hash,
+		Data:     mb2.Data,
+		Snapshot: mb2.Snapshot,
 	}))
 
 	mb2read, err := store.ReadMiniblockCandidate(ctx, streamId, mb2.Hash, mb2.Number)
 	require.NoError(err)
 	require.EqualValues(mb2.Number, mb2read.Number)
 	require.EqualValues(mb2.Data, mb2read.Data)
+	require.EqualValues(mb2.Snapshot, mb2read.Snapshot)
 
 	eventPool2 := dataMaker.events(5)
-	require.NoError(promoteMiniblockCandidate(ctx, pgStreamStore, streamId, mb2.Number, mb2.Hash, true, eventPool2))
+	require.NoError(promoteMiniblockCandidate(ctx, pgStreamStore, streamId, mb2.Number, mb2.Hash, eventPool2))
 
 	streamData, err = store.ReadStreamFromLastSnapshot(ctx, streamId, 10)
 	require.NoError(err)
@@ -1223,7 +1223,7 @@ func TestReadStreamFromLastSnapshot(t *testing.T) {
 
 	var lastEvents [][]byte
 	for i := range 12 {
-		mb := dataMaker.mb(3 + int64(i))
+		mb := dataMaker.mb(3+int64(i), false)
 		mbs = append(mbs, mb)
 		require.NoError(store.WriteMiniblockCandidate(ctx, streamId, &WriteMiniblockData{
 			Number: mb.Number,
@@ -1231,22 +1231,23 @@ func TestReadStreamFromLastSnapshot(t *testing.T) {
 			Data:   mb.Data,
 		}))
 		lastEvents = dataMaker.events(5)
-		require.NoError(promoteMiniblockCandidate(ctx, pgStreamStore, streamId, mb.Number, mb.Hash, false, lastEvents))
+		require.NoError(promoteMiniblockCandidate(ctx, pgStreamStore, streamId, mb.Number, mb.Hash, lastEvents))
 	}
 
 	streamData, err = store.ReadStreamFromLastSnapshot(ctx, streamId, 14)
 	require.NoError(err)
 	requireSnapshotResult(t, streamData, 1, mbs[1:], lastEvents)
 
-	mb := dataMaker.mb(15)
+	mb := dataMaker.mb(15, true)
 	mbs = append(mbs, mb)
 	require.NoError(store.WriteMiniblockCandidate(ctx, streamId, &WriteMiniblockData{
-		Number: mb.Number,
-		Hash:   mb.Hash,
-		Data:   mb.Data,
+		Number:   mb.Number,
+		Hash:     mb.Hash,
+		Data:     mb.Data,
+		Snapshot: mb.Snapshot,
 	}))
 	lastEvents = dataMaker.events(5)
-	require.NoError(promoteMiniblockCandidate(ctx, pgStreamStore, streamId, mb.Number, mb.Hash, true, lastEvents))
+	require.NoError(promoteMiniblockCandidate(ctx, pgStreamStore, streamId, mb.Number, mb.Hash, lastEvents))
 
 	streamData, err = store.ReadStreamFromLastSnapshot(ctx, streamId, 6)
 	require.NoError(err)
@@ -1266,13 +1267,16 @@ func TestQueryPlan(t *testing.T) {
 	var candHash common.Hash
 	for range 20 {
 		streamId = testutils.FakeStreamId(STREAM_CHANNEL_BIN)
-		genMB := dataMaker.mb(0)
-		require.NoError(store.CreateStreamStorage(ctx, streamId, &WriteMiniblockData{Data: genMB.Data}))
+		genMB := dataMaker.mb(0, true)
+		require.NoError(store.CreateStreamStorage(ctx, streamId, &WriteMiniblockData{
+			Data:     genMB.Data,
+			Snapshot: genMB.Snapshot,
+		}))
 
 		require.NoError(store.WriteMiniblocks(ctx, streamId, dataMaker.mbs(1, 10), 11, dataMaker.events(10), 1, 0))
 
 		for range 5 {
-			mb := dataMaker.mb(11)
+			mb := dataMaker.mb(11, false)
 			candHash = mb.Hash
 			require.NoError(store.WriteMiniblockCandidate(ctx, streamId, &WriteMiniblockData{
 				Number: mb.Number,
