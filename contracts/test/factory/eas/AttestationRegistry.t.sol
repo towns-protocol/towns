@@ -18,11 +18,11 @@ import {MockPlugin} from "contracts/test/mocks/MockPlugin.sol";
 import {MockPluginResolver} from "contracts/test/mocks/MockPluginResolver.sol";
 
 contract AttestationRegistryTest is BaseSetup {
-    SchemaRegistry schemaRegistry;
-    AttestationRegistry attestationRegistry;
+    SchemaRegistry internal schemaRegistry;
+    AttestationRegistry internal attestationRegistry;
 
-    bytes32 schemaUID;
-    address attester;
+    bytes32 internal schemaUID;
+    address internal attester;
 
     function setUp() public override {
         super.setUp();
@@ -43,6 +43,17 @@ contract AttestationRegistryTest is BaseSetup {
         assertEq(schema.revocable, false);
     }
 
+    function test_revertWhen_invalidSchemaResolver(string memory testSchema) external {
+        MockPlugin plugin = new MockPlugin();
+        vm.prank(deployer);
+        vm.expectRevert(DataTypes.InvalidSchemaResolver.selector);
+        schemaRegistry.register({
+            schema: testSchema,
+            resolver: ISchemaResolver(address(plugin)),
+            revocable: false
+        });
+    }
+
     function test_revertWhen_schemaAlreadyRegistered(string memory testSchema)
         external
         givenSchema(testSchema)
@@ -52,15 +63,6 @@ contract AttestationRegistryTest is BaseSetup {
         schemaRegistry.register({
             schema: testSchema,
             resolver: ISchemaResolver(address(0)),
-            revocable: false
-        });
-    }
-
-    function test_revertWhen_invalidSchemaResolver(string memory testSchema) external {
-        vm.prank(deployer);
-        schemaRegistry.register({
-            schema: testSchema,
-            resolver: ISchemaResolver(_randomAddress()),
             revocable: false
         });
     }
