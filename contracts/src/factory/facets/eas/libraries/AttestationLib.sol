@@ -127,6 +127,8 @@ library AttestationLib {
 
         attestation.uid = attestationUID;
         db.attestations[attestationUID] = attestation;
+        db.moduleToAttesterToAttestation[attestation.recipient][attestation.attester] =
+            attestationUID;
 
         if (request.refUID != DataTypes.EMPTY_UID) {
             if (!isValidAttestation(request.refUID)) {
@@ -190,7 +192,7 @@ library AttestationLib {
         AttestationRegistryStorage.Layout storage db = AttestationRegistryStorage.getLayout();
 
         db.attestations[attestation.uid].revocationTime = time();
-        db.recipientToAttesterToAttestation[attestation.recipient][attestation.attester] =
+        db.moduleToAttesterToAttestation[attestation.recipient][attestation.attester] =
             attestation.uid;
 
         emit DataTypes.AttestationRevoked(
@@ -213,7 +215,7 @@ library AttestationLib {
         return AttestationRegistryStorage.getLayout().attestations[uid];
     }
 
-    function getAttestationByRecipientAndAttester(
+    function getAttestation(
         address recipient,
         address attester
     )
@@ -221,7 +223,7 @@ library AttestationLib {
         view
         returns (DataTypes.Attestation memory)
     {
-        bytes32 uid = AttestationRegistryStorage.getLayout().recipientToAttesterToAttestation[recipient][attester];
+        bytes32 uid = AttestationRegistryStorage.getLayout().moduleToAttesterToAttestation[recipient][attester];
 
         if (uid == DataTypes.EMPTY_UID) {
             DataTypes.InvalidAttestation.selector.revertWith();

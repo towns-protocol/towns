@@ -3,6 +3,10 @@ pragma solidity ^0.8.23;
 
 import {IERC165} from "@openzeppelin/contracts/interfaces/IERC165.sol";
 
+/// @title IERC6900Module Interface
+/// @notice Interface for ERC-6900 modules that can be installed and uninstalled from modular
+/// accounts
+/// @dev Modules must implement this interface to be compatible with ERC-6900 modular accounts
 interface IERC6900Module is IERC165 {
     /// @notice Initialize module data for the modular account.
     /// @dev Called by the modular account during `installExecution`.

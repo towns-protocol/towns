@@ -6,7 +6,7 @@ import {IERC6900ExtensionRegistry} from "../interfaces/IERC6900ExtensionRegistry
 // libraries
 
 import {DataTypes} from "../DataTypes.sol";
-import {AttestationRegistryStorage} from "../storage/AttestationRegistryStorage.sol";
+import {TrustedAttestersStorage} from "../storage/TrustedAttestersStorage.sol";
 import {AttestationLib} from "./AttestationLib.sol";
 import {CustomRevert} from "contracts/src/utils/libraries/CustomRevert.sol";
 import {LibSort} from "solady/utils/LibSort.sol";
@@ -39,7 +39,7 @@ library TrustedLib {
             DataTypes.InvalidThreshold.selector.revertWith();
         }
 
-        AttestationRegistryStorage.Layout storage db = AttestationRegistryStorage.getLayout();
+        TrustedAttestersStorage.Layout storage db = TrustedAttestersStorage.getLayout();
 
         DataTypes.TrustedAttester storage trustedAttester = db.trustedAttesters[msg.sender];
 
@@ -56,7 +56,7 @@ library TrustedLib {
     }
 
     function check(address account, address module) internal view {
-        AttestationRegistryStorage.Layout storage db = AttestationRegistryStorage.getLayout();
+        TrustedAttestersStorage.Layout storage db = TrustedAttestersStorage.getLayout();
 
         DataTypes.TrustedAttester storage trustedAttester = db.trustedAttesters[account];
 
@@ -66,32 +66,26 @@ library TrustedLib {
         if (attester == address(0) || threshold == 0) {
             DataTypes.NoTrustedAttestersFound.selector.revertWith();
         } else if (threshold == 1) {
-            DataTypes.Attestation memory attestation = AttestationLib
-                .getAttestationByRecipientAndAttester({recipient: module, attester: attester});
+            DataTypes.Attestation memory attestation =
+                AttestationLib.getAttestation(module, attester);
 
             if (AttestationLib.checkValid(attestation)) return;
 
             for (uint256 i; i < attesterCount; ++i) {
                 attester = trustedAttester.linkedAttesters[attester][account];
-                attestation = AttestationLib.getAttestationByRecipientAndAttester({
-                    recipient: module,
-                    attester: attester
-                });
+                attestation = AttestationLib.getAttestation(module, attester);
                 if (AttestationLib.checkValid(attestation)) return;
             }
 
             DataTypes.InsufficientAttestations.selector.revertWith();
         } else {
-            DataTypes.Attestation memory attestation = AttestationLib
-                .getAttestationByRecipientAndAttester({recipient: module, attester: attester});
+            DataTypes.Attestation memory attestation =
+                AttestationLib.getAttestation(module, attester);
             if (AttestationLib.checkValid(attestation)) return;
 
             for (uint256 i; i < attesterCount; ++i) {
                 attester = trustedAttester.linkedAttesters[attester][account];
-                attestation = AttestationLib.getAttestationByRecipientAndAttester({
-                    recipient: module,
-                    attester: attester
-                });
+                attestation = AttestationLib.getAttestation(module, attester);
                 if (AttestationLib.checkValid(attestation)) threshold--;
                 if (threshold == 0) return;
             }
@@ -115,8 +109,8 @@ library TrustedLib {
             if (attester <= cache) DataTypes.InvalidAttesters.selector.revertWith();
             else cache = attester;
 
-            DataTypes.Attestation memory attestation = AttestationLib
-                .getAttestationByRecipientAndAttester({recipient: module, attester: attester});
+            DataTypes.Attestation memory attestation =
+                AttestationLib.getAttestation(module, attester);
 
             if (AttestationLib.checkValid(attestation)) {
                 --threshold;
@@ -131,7 +125,7 @@ library TrustedLib {
         view
         returns (address[] memory attesters)
     {
-        AttestationRegistryStorage.Layout storage db = AttestationRegistryStorage.getLayout();
+        TrustedAttestersStorage.Layout storage db = TrustedAttestersStorage.getLayout();
 
         DataTypes.TrustedAttester storage trustedAttesters = db.trustedAttesters[account];
 

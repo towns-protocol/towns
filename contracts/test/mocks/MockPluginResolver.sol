@@ -4,9 +4,9 @@ pragma solidity ^0.8.23;
 // interfaces
 
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
-import {ISchemaResolver} from "contracts/src/factory/facets/app/interfaces/ISchemaResolver.sol";
+import {ISchemaResolver} from "contracts/src/factory/facets/eas/interfaces/ISchemaResolver.sol";
 // libraries
-import {DataTypes} from "contracts/src/factory/facets/app/DataTypes.sol";
+import {DataTypes} from "contracts/src/factory/facets/eas/DataTypes.sol";
 
 // contracts
 

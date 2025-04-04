@@ -11,9 +11,8 @@ library AttestationRegistryStorage {
 
     struct Layout {
         mapping(bytes32 uid => DataTypes.Attestation attestation) attestations;
-        mapping(address recipient => mapping(address attester => bytes32 uid))
-            recipientToAttesterToAttestation;
-        mapping(address account => DataTypes.TrustedAttester trustedAttester) trustedAttesters;
+        mapping(address module => mapping(address attester => bytes32 uid))
+            moduleToAttesterToAttestation;
     }
 
     function getLayout() internal pure returns (Layout storage ds) {

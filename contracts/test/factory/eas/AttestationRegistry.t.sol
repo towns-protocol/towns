@@ -2,34 +2,33 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {ISchemaResolver} from "contracts/src/factory/facets/app/interfaces/ISchemaResolver.sol";
+import {ISchemaResolver} from "contracts/src/factory/facets/eas/interfaces/ISchemaResolver.sol";
 
 // libraries
-import {DataTypes} from "contracts/src/factory/facets/app/DataTypes.sol";
+import {DataTypes} from "contracts/src/factory/facets/eas/DataTypes.sol";
 
 // contracts
 
-import {AttestationRegistry} from "contracts/src/factory/facets/app/AttestationRegistry.sol";
-import {SchemaRegistry} from "contracts/src/factory/facets/app/SchemaRegistry.sol";
+import {AttestationRegistry} from "contracts/src/factory/facets/eas/AttestationRegistry.sol";
+import {SchemaRegistry} from "contracts/src/factory/facets/eas/SchemaRegistry.sol";
 import {BaseSetup} from "contracts/test/spaces/BaseSetup.sol";
 
 // mocks
 import {MockPlugin} from "contracts/test/mocks/MockPlugin.sol";
 import {MockPluginResolver} from "contracts/test/mocks/MockPluginResolver.sol";
 
-contract AppRegistryTest is BaseSetup {
+contract AttestationRegistryTest is BaseSetup {
     SchemaRegistry schemaRegistry;
     AttestationRegistry attestationRegistry;
 
     bytes32 schemaUID;
-
-    address appOwner;
+    address attester;
 
     function setUp() public override {
         super.setUp();
         schemaRegistry = SchemaRegistry(spaceFactory);
         attestationRegistry = AttestationRegistry(spaceFactory);
-        appOwner = makeAddr("appOwner");
+        attester = makeAddr("attester");
     }
 
     modifier givenSchema(string memory testSchema) {
@@ -43,6 +42,32 @@ contract AppRegistryTest is BaseSetup {
         assertEq(schema.schema, testSchema);
         assertEq(schema.revocable, false);
     }
+
+    function test_revertWhen_schemaAlreadyRegistered(string memory testSchema)
+        external
+        givenSchema(testSchema)
+    {
+        vm.prank(deployer);
+        vm.expectRevert(DataTypes.SchemaAlreadyRegistered.selector);
+        schemaRegistry.register({
+            schema: testSchema,
+            resolver: ISchemaResolver(address(0)),
+            revocable: false
+        });
+    }
+
+    function test_revertWhen_invalidSchemaResolver(string memory testSchema) external {
+        vm.prank(deployer);
+        schemaRegistry.register({
+            schema: testSchema,
+            resolver: ISchemaResolver(_randomAddress()),
+            revocable: false
+        });
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                           Attest                           */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     function test_attest() external {
         // Deploy a mock resolver that will validate plugin attestations
@@ -79,16 +104,16 @@ contract AppRegistryTest is BaseSetup {
             DataTypes.AttestationRequest({schemaId: schemaId, data: data});
 
         // Submit the attestation as the app owner
-        vm.prank(appOwner);
-        bytes32 appId = attestationRegistry.attest(request);
+        vm.prank(attester);
+        bytes32 attestationId = attestationRegistry.attest(request);
 
         // Verify the resolver recorded the plugin owner correctly
-        assertEq(resolver.pluginOwners(address(plugin)), appOwner);
+        assertEq(resolver.pluginOwners(address(plugin)), attester);
 
         // Verify the attestation was stored with correct data
-        DataTypes.Attestation memory attestation = attestationRegistry.getAttestation(appId);
+        DataTypes.Attestation memory attestation = attestationRegistry.getAttestation(attestationId);
         assertEq(attestation.recipient, address(plugin));
-        assertEq(attestation.attester, appOwner);
+        assertEq(attestation.attester, attester);
         assertEq(attestation.schema, schemaId);
     }
 
