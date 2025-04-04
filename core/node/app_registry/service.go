@@ -75,11 +75,7 @@ func NewService(
 	sharedSecretDataEncryptionKey, err := hex.DecodeString(cfg.SharedSecretDataEncryptionKey)
 	if err != nil || len(sharedSecretDataEncryptionKey) != 32 {
 		return nil, base.AsRiverError(err, Err_INVALID_ARGUMENT).
-			Message("AppRegistryConfig SharedSecretDataEncryptionKey must be a 32-byte key encoded as hex").
-			Tag("error", err).
-			Tag("len", len(sharedSecretDataEncryptionKey)).
-			Tag("key", cfg.SharedSecretDataEncryptionKey).
-			Tag("cfg", cfg)
+			Message("AppRegistryConfig SharedSecretDataEncryptionKey must be a 32-byte key encoded as hex")
 	}
 	fixedWidthDataEncryptionKey := [32]byte(sharedSecretDataEncryptionKey)
 
