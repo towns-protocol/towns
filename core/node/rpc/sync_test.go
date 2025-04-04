@@ -377,7 +377,7 @@ func TestSyncWithFlush(t *testing.T) {
 // the client receives for each stream an update and the sync session remains valid.
 func TestSyncWithManyStreams(t *testing.T) {
 	numNodes := 10
-	tt := newServiceTester(t, serviceTesterOpts{numNodes: numNodes, start: true})
+	tt := newServiceTester(t, serviceTesterOpts{numNodes: numNodes, start: true, printTestLogs: true})
 	ctx := tt.ctx
 	require := tt.require
 
@@ -429,8 +429,18 @@ func TestSyncWithManyStreams(t *testing.T) {
 	// start sync session with all channels and ensure that for each stream an update is received with 1 message
 	now := time.Now()
 	syncClients.startSyncMany(t, ctx, channelCookies)
-	syncClients.expectNUpdates(t, len(channelCookies), 30*time.Second, &updateOpts{events: 1, eventType: "ChannelPayload"})
-	testfmt.Printf(t, "Received first update for all %d streams in init sync session took: %s", len(channelCookies), time.Since(now))
+	syncClients.expectNUpdates(
+		t,
+		len(channelCookies),
+		30*time.Second,
+		&updateOpts{events: 1, eventType: "ChannelPayload"},
+	)
+	testfmt.Printf(
+		t,
+		"Received first update for all %d streams in init sync session took: %s",
+		len(channelCookies),
+		time.Since(now),
+	)
 
 	// create more streams and add them to the sync via the modify sync endpoint
 	var add []*protocol.SyncCookie
@@ -470,8 +480,18 @@ func TestSyncWithManyStreams(t *testing.T) {
 
 	// send modify sync request
 	syncClients.modifySync(t, ctx, add, remove)
-	syncClients.expectNUpdates(t, len(add)+len(channelCookies[len(channelCookies)/2:]), 30*time.Second, &updateOpts{events: 1, eventType: "ChannelPayload"})
-	testfmt.Printf(t, "Received second update for all %d streams in init sync session took: %s", len(channelCookies), time.Since(now))
+	syncClients.expectNUpdates(
+		t,
+		len(add)+len(channelCookies[len(channelCookies)/2:]),
+		30*time.Second,
+		&updateOpts{events: 1, eventType: "ChannelPayload"},
+	)
+	testfmt.Printf(
+		t,
+		"Received second update for all %d streams in init sync session took: %s",
+		len(channelCookies),
+		time.Since(now),
+	)
 
 	// add two same streams in the modify sync request and expect error
 	t.Run("duplicate add streams", func(t *testing.T) {
@@ -572,8 +592,18 @@ func TestSyncWithEmptyNodeAddress(t *testing.T) {
 	// start sync session with all channels and ensure that for each stream an update is received with 1 message
 	now := time.Now()
 	syncClients.startSyncMany(t, ctx, channelCookies)
-	syncClients.expectNUpdates(t, len(channelCookies), 30*time.Second, &updateOpts{events: 1, eventType: "ChannelPayload"})
-	testfmt.Printf(t, "Received first update for all %d streams in init sync session took: %s", len(channelCookies), time.Since(now))
+	syncClients.expectNUpdates(
+		t,
+		len(channelCookies),
+		30*time.Second,
+		&updateOpts{events: 1, eventType: "ChannelPayload"},
+	)
+	testfmt.Printf(
+		t,
+		"Received first update for all %d streams in init sync session took: %s",
+		len(channelCookies),
+		time.Since(now),
+	)
 
 	// create more streams and add them to the sync via the modify sync endpoint
 	var add []*protocol.SyncCookie
@@ -610,8 +640,18 @@ func TestSyncWithEmptyNodeAddress(t *testing.T) {
 
 	// send modify sync request
 	syncClients.modifySync(t, ctx, add, remove)
-	syncClients.expectNUpdates(t, len(add)+len(channelCookies[len(channelCookies)/2:]), 30*time.Second, &updateOpts{events: 1, eventType: "ChannelPayload"})
-	testfmt.Printf(t, "Received second update for all %d streams in init sync session took: %s", len(channelCookies), time.Since(now))
+	syncClients.expectNUpdates(
+		t,
+		len(add)+len(channelCookies[len(channelCookies)/2:]),
+		30*time.Second,
+		&updateOpts{events: 1, eventType: "ChannelPayload"},
+	)
+	testfmt.Printf(
+		t,
+		"Received second update for all %d streams in init sync session took: %s",
+		len(channelCookies),
+		time.Since(now),
+	)
 
 	// finish testing
 	syncClients.cancelAll(t, ctx)

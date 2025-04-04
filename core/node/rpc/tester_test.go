@@ -111,7 +111,7 @@ func newServiceTester(t *testing.T, opts serviceTesterOpts) *serviceTester {
 	var ctx context.Context
 	var ctxCancel func()
 	if opts.printTestLogs {
-		ctx, ctxCancel = test.NewTestContextWithLogging("info")
+		ctx, ctxCancel = test.NewTestContextWithLogging("debug")
 	} else {
 		ctx, ctxCancel = test.NewTestContext()
 	}
@@ -132,7 +132,12 @@ func newServiceTester(t *testing.T, opts serviceTesterOpts) *serviceTester {
 
 	btcParams := opts.btcParams
 	if btcParams == nil {
-		btcParams = &crypto.TestParams{NumKeys: opts.numNodes, MineOnTx: true, AutoMine: true, NumOperators: opts.numOperators}
+		btcParams = &crypto.TestParams{
+			NumKeys:      opts.numNodes,
+			MineOnTx:     true,
+			AutoMine:     true,
+			NumOperators: opts.numOperators,
+		}
 	} else if btcParams.NumKeys == 0 {
 		btcParams.NumKeys = opts.numNodes
 		btcParams.NumOperators = opts.numOperators

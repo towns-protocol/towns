@@ -1187,7 +1187,7 @@ func TestForwardingWithRetries(t *testing.T) {
 func TestUnstableStreams(t *testing.T) {
 	var (
 		req      = require.New(t)
-		services = newServiceTester(t, serviceTesterOpts{numNodes: 5, start: true})
+		services = newServiceTester(t, serviceTesterOpts{numNodes: 5, start: true, printTestLogs: true})
 		client0  = services.testClient(0)
 		client1  = services.testClient(1)
 		ctx      = services.ctx
@@ -1709,7 +1709,7 @@ func (s slowStreamsResponseSender) Send(msg *protocol.SyncStreamsResponse) error
 func TestSyncSubscriptionWithTooSlowClient(t *testing.T) {
 	var (
 		req      = require.New(t)
-		services = newServiceTester(t, serviceTesterOpts{numNodes: 5, start: true})
+		services = newServiceTester(t, serviceTesterOpts{numNodes: 5, start: true, printTestLogs: true})
 		client0  = services.testClient(0)
 		client1  = services.testClient(1)
 		node1    = services.nodes[1]
