@@ -493,28 +493,12 @@ func (s *StreamCache) createStreamStorage(
 	// Lock stream, so parallel creators have to wait for the stream to be intialized.
 	stream.mu.Lock()
 	defer stream.mu.Unlock()
+
 	entry, loaded := s.cache.LoadOrStore(stream.streamId, stream)
 	if !loaded {
 		// TODO: delete entry on failures below?
 
-		// Our stream won the race, put into storage.
-		if err := s.params.Storage.CreateStreamStorage(
-			ctx,
-			stream.streamId,
-			&storage.WriteMiniblockData{Data: data},
-		); err != nil {
-			if AsRiverError(err).Code == Err_ALREADY_EXISTS {
-				// Attempt to load stream from storage. Might as well do it while under lock.
-				err = stream.loadInternal(ctx)
-				if err != nil {
-					return nil, false, err
-				}
-				return stream, true, nil
-			}
-			return nil, false, err
-		}
-
-		// Successfully put data into storage, init stream view.
+		// Create stream view
 		view, err := MakeStreamView(
 			&storage.ReadStreamFromLastSnapshotResult{
 				Miniblocks: []*storage.MiniblockDescriptor{{
@@ -527,16 +511,37 @@ func (s *StreamCache) createStreamStorage(
 		if err != nil {
 			return nil, false, err
 		}
+
+		// Prepare storage level structure to create a stream.
+		storageMb, err := view.Miniblocks()[view.snapshotIndex].AsStorageMb()
+		if err != nil {
+			return nil, false, err
+		}
+
+		// Our stream won the race, put into storage.
+		if err = s.params.Storage.CreateStreamStorage(ctx, stream.streamId, storageMb); err != nil {
+			if AsRiverError(err).Code == Err_ALREADY_EXISTS {
+				// Attempt to load stream from storage. Might as well do it while under lock.
+				if err = stream.loadInternal(ctx); err != nil {
+					return nil, false, err
+				}
+				return stream, true, nil
+			}
+			return nil, false, err
+		}
+
+		// Successfully put data into storage, init stream view.
 		stream.setView(view)
 
 		return stream, true, nil
-	} else {
-		// There was another record in the cache, use it.
-		if entry == nil {
-			return nil, false, RiverError(Err_INTERNAL, "tryLoadStreamRecord: Cache corruption", "streamId", stream.streamId)
-		}
-		return entry, false, nil
 	}
+
+	// There was another record in the cache, use it.
+	if entry == nil {
+		return nil, false, RiverError(Err_INTERNAL, "tryLoadStreamRecord: Cache corruption", "streamId", stream.streamId)
+	}
+
+	return entry, false, nil
 }
 
 // GetStreamWaitForLocal is a transitional method to support existing GetStream API before block number are wired through APIs.

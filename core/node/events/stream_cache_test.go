@@ -524,7 +524,6 @@ func TestMiniblockRegistrationWithPendingLocalCandidate(t *testing.T) {
 		Timestamp:                NextMiniblockTimestamp(lastBlock.Header().Timestamp),
 		EventHashes:              [][]byte{event1.Hash.Bytes(), event2.Hash.Bytes()},
 		PrevMiniblockHash:        lastBlock.headerEvent.Hash[:],
-		Snapshot:                 nil,
 		EventNumOffset:           0,
 		PrevSnapshotMiniblockNum: view.LastBlock().Header().GetPrevSnapshotMiniblockNum(),
 		Content: &MiniblockHeader_None{

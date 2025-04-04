@@ -272,7 +272,7 @@ func (s *Stream) applyMiniblockImplLocked(
 	// TODO: strict check here.
 	// TODO: tests for this.
 
-	// Lets see if this miniblock can be applied.
+	// Let's see if this miniblock can be applied.
 	prevSV := s.view()
 	newSV, newEvents, err := prevSV.copyAndApplyBlock(info, s.params.ChainConfig.Get())
 	if err != nil {
@@ -289,7 +289,7 @@ func (s *Stream) applyMiniblockImplLocked(
 		storageMb = &storage.WriteMiniblockData{
 			Number:   info.Ref.Num,
 			Hash:     info.Ref.Hash,
-			Snapshot: info.GetSnapshot(),
+			Snapshot: miniblock.Snapshot,
 			Data:     miniblock.Data,
 		}
 	} else {
@@ -418,20 +418,7 @@ func (s *Stream) initFromGenesis(
 			Func("initFromGenesis")
 	}
 
-	if err = s.params.Storage.CreateStreamStorage(
-		ctx,
-		s.streamId,
-		&storage.WriteMiniblockData{Data: genesisBytes},
-	); err != nil {
-		// TODO: this error is not handle correctly here: if stream is in storage, caller of this initFromGenesis
-		// should read it from storage.
-		if AsRiverError(err).Code != Err_ALREADY_EXISTS {
-			return err
-		}
-	}
-
-	s.lastAppliedBlockNum = blockNum
-
+	// Create view from genesis miniblock.
 	view, err := MakeStreamView(
 		&storage.ReadStreamFromLastSnapshotResult{
 			Miniblocks: []*storage.MiniblockDescriptor{{
@@ -444,6 +431,22 @@ func (s *Stream) initFromGenesis(
 	if err != nil {
 		return err
 	}
+
+	// Prepare storage level structure to create a stream.
+	storageMb, err := view.Miniblocks()[view.snapshotIndex].AsStorageMb()
+	if err != nil {
+		return err
+	}
+
+	if err = s.params.Storage.CreateStreamStorage(ctx, s.streamId, storageMb); err != nil {
+		// TODO: this error is not handle correctly here: if stream is in storage, caller of this initFromGenesis
+		// should read it from storage.
+		if AsRiverError(err).Code != Err_ALREADY_EXISTS {
+			return err
+		}
+	}
+
+	s.lastAppliedBlockNum = blockNum
 	s.setView(view)
 
 	return nil
@@ -479,17 +482,7 @@ func (s *Stream) initFromBlockchain(ctx context.Context) error {
 		)
 	}
 
-	if err = s.params.Storage.CreateStreamStorage(
-		ctx,
-		s.streamId,
-		&storage.WriteMiniblockData{Data: mb},
-	); err != nil {
-		return err
-	}
-
-	s.lastAppliedBlockNum = blockNum
-
-	// Successfully put data into storage, init stream view.
+	// Create view from genesis miniblock.
 	view, err := MakeStreamView(
 		&storage.ReadStreamFromLastSnapshotResult{
 			Miniblocks: []*storage.MiniblockDescriptor{{
@@ -502,7 +495,22 @@ func (s *Stream) initFromBlockchain(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+
+	// Prepare storage level structure to create a stream.
+	storageMb, err := view.Miniblocks()[view.snapshotIndex].AsStorageMb()
+	if err != nil {
+		return err
+	}
+
+	if err = s.params.Storage.CreateStreamStorage(ctx, s.streamId, storageMb); err != nil {
+		return err
+	}
+
+	s.lastAppliedBlockNum = blockNum
+
+	// Successfully put data into storage, init stream view.
 	s.setView(view)
+
 	return nil
 }
 

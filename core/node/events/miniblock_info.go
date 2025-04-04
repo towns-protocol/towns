@@ -283,6 +283,21 @@ func (b *MiniblockInfo) Header() *MiniblockHeader {
 	return b.headerEvent.Event.GetMiniblockHeader()
 }
 
+// GetSnapshot returns the snapshot of the miniblock.
+// Tries to return the snapshot from the header first,
+// if it is not set, it will return the separately stored snapshot
+func (b *MiniblockInfo) GetSnapshot() *Snapshot {
+	if b.Header().GetSnapshot() != nil {
+		return b.Header().GetSnapshot()
+	}
+
+	if b.snapshot == nil {
+		return nil
+	}
+
+	return b.snapshot.Snapshot
+}
+
 func (b *MiniblockInfo) lastEvent() *ParsedEvent {
 	events := b.Events()
 	if len(events) > 0 {
@@ -290,16 +305,6 @@ func (b *MiniblockInfo) lastEvent() *ParsedEvent {
 	} else {
 		return nil
 	}
-}
-
-// GetSnapshot returns non-nil but empty byte array if the miniblock is a snapshot.
-// TODO: Will be replaced with the real snapshot after DB migration. WIP.
-func (b *MiniblockInfo) GetSnapshot() []byte {
-	if b.Header().GetSnapshot() != nil || len(b.Header().GetSnapshotHash()) > 0 {
-		return make([]byte, 0)
-	}
-
-	return nil
 }
 
 // AsStorageMb returns a storage miniblock with the data from the MiniblockInfo.
@@ -311,10 +316,19 @@ func (b *MiniblockInfo) AsStorageMb() (*storage.WriteMiniblockData, error) {
 			Func("AsStorageMb")
 	}
 
+	var serializedSn []byte
+	if b.Snapshot != nil {
+		if serializedSn, err = proto.Marshal(b.Snapshot); err != nil {
+			return nil, AsRiverError(err, Err_INTERNAL).
+				Message("Failed to serialize snapshot to bytes").
+				Func("AsStorageMb")
+		}
+	}
+
 	return &storage.WriteMiniblockData{
 		Number:   b.Ref.Num,
 		Hash:     b.Ref.Hash,
-		Snapshot: b.GetSnapshot(),
+		Snapshot: serializedSn,
 		Data:     serializedMb,
 	}, nil
 }
