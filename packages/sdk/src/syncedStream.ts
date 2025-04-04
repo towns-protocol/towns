@@ -54,6 +54,8 @@ export class SyncedStream extends Stream implements ISyncedStream {
         return true
     }
 
+    // TODO: possibly a bug. Stream interface expects a non promise initialize.
+    // eslint-disable-next-line @typescript-eslint/no-misused-promises
     async initialize(
         nextSyncCookie: SyncCookie,
         events: ParsedEvent[],

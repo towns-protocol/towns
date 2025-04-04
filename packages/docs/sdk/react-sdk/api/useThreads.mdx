@@ -15,16 +15,9 @@ import { useThreads } from '@towns-protocol/react-sdk'
 function useThreads(
   streamId: string,
   config?: ObservableConfig.FromObservable<Threads>,
-): {
-    data: {
-        [x: string]: TimelineEvent[];
-    };
-    error: undefined;
-    status: "loading" | "loaded";
-    isLoading: boolean;
-    isError: false;
-    isLoaded: boolean;
-}
+): ObservableValue<{
+    [x: string]: TimelineEvent[];
+}>
 ```
 
 **Source:** [useThreads](https://github.com/towns-protocol/towns/blob/main/packages/react-sdk/src/useThreads.ts)
@@ -49,14 +42,7 @@ Configuration options for the observable.
 The threads of the stream as a map from the message eventId to a thread.
 
 ```ts
-{
-    data: {
-        [x: string]: TimelineEvent[];
-    };
-    error: undefined;
-    status: "loading" | "loaded";
-    isLoading: boolean;
-    isError: false;
-    isLoaded: boolean;
-}
+ObservableValue<{
+    [x: string]: TimelineEvent[];
+}>
 ```
