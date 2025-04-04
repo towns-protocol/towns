@@ -3,13 +3,14 @@ pragma solidity ^0.8.23;
 
 // interfaces
 import {IEntryPoint} from "account-abstraction/interfaces/IEntryPoint.sol";
-import {IReviewBase, IReview} from "contracts/src/spaces/facets/review/IReview.sol";
+import {IReview, IReviewBase} from "contracts/src/spaces/facets/review/IReview.sol";
 
 // libraries
 
 // contracts
-import {SimpleAccountFactory} from "account-abstraction/samples/SimpleAccountFactory.sol";
+
 import {SimpleAccount} from "account-abstraction/samples/SimpleAccount.sol";
+import {SimpleAccountFactory} from "account-abstraction/samples/SimpleAccountFactory.sol";
 import {ReviewFacet} from "contracts/src/spaces/facets/review/ReviewFacet.sol";
 import {TestUtils} from "contracts/test/utils/TestUtils.sol";
 
@@ -45,9 +46,7 @@ contract ForkUserOp is TestUtils {
         );
     }
 
-    function _createSimpleAccount(
-        address owner
-    ) internal returns (SimpleAccount) {
+    function _createSimpleAccount(address owner) internal returns (SimpleAccount) {
         return simpleAccountFactory.createAccount(owner, _randomUint256());
     }
 }

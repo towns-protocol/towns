@@ -11,9 +11,10 @@ pragma solidity ^0.8.19;
 import {ReferralsFacetTest} from "contracts/test/spaces/referrals/Referrals.t.sol";
 
 contract ReferralsFacet_removeReferral is ReferralsFacetTest {
-    function test_removeReferral(
-        Referral memory referral
-    ) external givenReferralCodeIsRegistered(referral) {
+    function test_removeReferral(Referral memory referral)
+        external
+        givenReferralCodeIsRegistered(referral)
+    {
         vm.prank(founder);
         vm.expectEmit(address(userSpace));
         emit ReferralRemoved(keccak256(bytes(referral.referralCode)));
@@ -23,7 +24,10 @@ contract ReferralsFacet_removeReferral is ReferralsFacetTest {
     function test_revertWhen_removeReferral_withInvalidPermissions(
         Referral memory referral,
         address user
-    ) external givenReferralCodeIsRegistered(referral) {
+    )
+        external
+        givenReferralCodeIsRegistered(referral)
+    {
         vm.assume(user != founder);
         vm.prank(user);
         vm.expectRevert(Entitlement__NotAllowed.selector);

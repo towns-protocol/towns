@@ -4,9 +4,7 @@ pragma solidity ^0.8.24;
 /// @title MultiCaller
 /// @notice Enables calling multiple methods in a single call to the contract
 abstract contract MultiCaller {
-    function multicall(
-        bytes[] calldata data
-    ) external returns (bytes[] memory results) {
+    function multicall(bytes[] calldata data) external returns (bytes[] memory results) {
         results = new bytes[](data.length);
         for (uint256 i = 0; i < data.length; i++) {
             (bool success, bytes memory result) = address(this).delegatecall(data[i]);
@@ -23,9 +21,7 @@ abstract contract MultiCaller {
     /// @dev Bubble up the revert from the returnedData (supports Panic, Error & Custom Errors)
     /// @notice This is needed in order to provide some human-readable revert message from a call
     /// @param returnedData Response of the call
-    function revertFromReturnedData(
-        bytes memory returnedData
-    ) internal pure {
+    function revertFromReturnedData(bytes memory returnedData) internal pure {
         if (returnedData.length < 4) {
             // case 1: catch all
             revert("unhandled revert");

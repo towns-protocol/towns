@@ -41,17 +41,16 @@ interface IERC721AQueryable is IERC721ABase {
      * - `burned = false`
      * - `extraData = <Extra data at start of ownership>`
      */
-    function explicitOwnershipOf(
-        uint256 tokenId
-    ) external view returns (TokenOwnership memory);
+    function explicitOwnershipOf(uint256 tokenId) external view returns (TokenOwnership memory);
 
     /**
      * @dev Returns an array of `TokenOwnership` structs at `tokenIds` in order.
      * See {ERC721AQueryable-explicitOwnershipOf}
      */
-    function explicitOwnershipsOf(
-        uint256[] memory tokenIds
-    ) external view returns (TokenOwnership[] memory);
+    function explicitOwnershipsOf(uint256[] memory tokenIds)
+        external
+        view
+        returns (TokenOwnership[] memory);
 
     /**
      * @dev Returns an array of token IDs owned by `owner`,
@@ -69,7 +68,10 @@ interface IERC721AQueryable is IERC721ABase {
         address owner,
         uint256 start,
         uint256 stop
-    ) external view returns (uint256[] memory);
+    )
+        external
+        view
+        returns (uint256[] memory);
 
     /**
      * @dev Returns an array of token IDs owned by `owner`.
@@ -81,7 +83,5 @@ interface IERC721AQueryable is IERC721ABase {
      * multiple smaller scans if the collection is large enough to cause
      * an out-of-gas error (10K collections should be fine).
      */
-    function tokensOfOwner(
-        address owner
-    ) external view returns (uint256[] memory);
+    function tokensOfOwner(address owner) external view returns (uint256[] memory);
 }

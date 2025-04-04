@@ -2,20 +2,23 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {Vm} from "forge-std/Vm.sol";
+
 import {IOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
+import {Vm} from "forge-std/Vm.sol";
 
 // libraries
-import {
-    Stream,
-    StreamWithId,
-    SetMiniblock,
-    SetStreamReplicationFactor
-} from "contracts/src/river/registry/libraries/RegistryStorage.sol";
-import {RiverRegistryErrors} from "contracts/src/river/registry/libraries/RegistryErrors.sol";
-import {IStreamRegistryBase} from "contracts/src/river/registry/facets/stream/IStreamRegistry.sol";
+
 import {IRiverConfigBase} from "contracts/src/river/registry/facets/config/IRiverConfig.sol";
+import {IStreamRegistryBase} from "contracts/src/river/registry/facets/stream/IStreamRegistry.sol";
 import {StreamFlags} from "contracts/src/river/registry/facets/stream/StreamRegistry.sol";
+import {RiverRegistryErrors} from "contracts/src/river/registry/libraries/RegistryErrors.sol";
+import {
+    SetMiniblock,
+    SetStreamReplicationFactor,
+    Stream,
+    StreamWithId
+} from "contracts/src/river/registry/libraries/RegistryStorage.sol";
+
 import {LogUtils} from "contracts/test/utils/LogUtils.sol";
 
 // deployments
@@ -34,9 +37,7 @@ contract StreamRegistryTest is
         bytes32(uint256(1_234_567_890)), keccak256("genesisMiniblock"), "genesisMiniblock"
     );
 
-    modifier givenConfigurationManagerIsApproved(
-        address configManager
-    ) {
+    modifier givenConfigurationManagerIsApproved(address configManager) {
         vm.assume(configManager != address(0));
         vm.assume(riverConfig.isConfigurationManager(configManager) == false);
 
@@ -137,9 +138,11 @@ contract StreamRegistryTest is
         _assertEqStream(stream, expectedStream);
     }
 
-    function test_fuzz_allocateStream_revertWhen_streamIdAlreadyExists(
-        TestStream memory testStream
-    ) external givenNodeOperatorIsApproved(OPERATOR) givenNodeIsRegistered(OPERATOR, NODE, "url") {
+    function test_fuzz_allocateStream_revertWhen_streamIdAlreadyExists(TestStream memory testStream)
+        external
+        givenNodeOperatorIsApproved(OPERATOR)
+        givenNodeIsRegistered(OPERATOR, NODE, "url")
+    {
         address[] memory nodes = new address[](1);
         nodes[0] = NODE;
 
@@ -160,7 +163,10 @@ contract StreamRegistryTest is
     function test_fuzz_allocateStream_revertWhen_nodeNotRegistered(
         address node,
         TestStream memory testStream
-    ) external givenNodeOperatorIsApproved(OPERATOR) {
+    )
+        external
+        givenNodeOperatorIsApproved(OPERATOR)
+    {
         address[] memory nodes = new address[](1);
         nodes[0] = node;
 
@@ -309,7 +315,10 @@ contract StreamRegistryTest is
     function test_fuzz_addStream_revertWhen_nodeNotRegistered(
         TestStream memory testStream,
         TestNode memory node
-    ) external givenNodeOperatorIsApproved(OPERATOR) {
+    )
+        external
+        givenNodeOperatorIsApproved(OPERATOR)
+    {
         address[] memory nodes = new address[](1);
         nodes[0] = node.node;
         Stream memory streamToCreate = Stream({
@@ -616,9 +625,10 @@ contract StreamRegistryTest is
         assertEq(stream.nodes.length, 0);
     }
 
-    function test_initMigrateNonReplicatedStreamsToReplicated_3(
-        address configManager
-    ) public givenConfigurationManagerIsApproved(configManager) {
+    function test_initMigrateNonReplicatedStreamsToReplicated_3(address configManager)
+        public
+        givenConfigurationManagerIsApproved(configManager)
+    {
         // Add a valid stream first
         test_allocateStream();
 

@@ -111,7 +111,8 @@ interface IWalletLink is IWalletLinkBase {
         LinkedWallet memory wallet,
         LinkedWallet memory rootWallet,
         uint256 nonce
-    ) external;
+    )
+        external;
 
     /**
      * @notice Link a non-EVM wallet to a root wallet
@@ -124,7 +125,8 @@ interface IWalletLink is IWalletLinkBase {
     function linkNonEVMWalletToRootKey(
         NonEVMLinkedWallet calldata wallet,
         uint256 nonce
-    ) external;
+    )
+        external;
 
     /**
      * @notice Remove a non-EVM wallet link from a root wallet
@@ -154,9 +156,7 @@ interface IWalletLink is IWalletLinkBase {
      * wallet
      * @dev The default wallet can only be an EVM wallet for now
      */
-    function setDefaultWallet(
-        address defaultWallet
-    ) external;
+    function setDefaultWallet(address defaultWallet) external;
 
     // =============================================================
     //                      External - Read
@@ -167,27 +167,27 @@ interface IWalletLink is IWalletLinkBase {
      * @param rootKey the public key of the users rootkey to find associated wallets for
      * @return defaultWallet the default wallet for the root key
      */
-    function getDefaultWallet(
-        address rootKey
-    ) external view returns (address);
+    function getDefaultWallet(address rootKey) external view returns (address);
 
     /**
      * @notice Returns all wallets linked to a root key
      * @param rootKey the public key of the users rootkey to find associated wallets for
      * @return wallets an array of ethereum wallets linked to this root key
      */
-    function getWalletsByRootKey(
-        address rootKey
-    ) external view returns (address[] memory wallets);
+    function getWalletsByRootKey(address rootKey)
+        external
+        view
+        returns (address[] memory wallets);
 
     /**
      * @notice Returns all wallets linked to a root key with their delegations
      * @param rootKey the public key of the users rootkey to find associated wallets for
      * @return wallets an array of ethereum wallets linked to this root key
      */
-    function getWalletsByRootKeyWithDelegations(
-        address rootKey
-    ) external view returns (address[] memory wallets);
+    function getWalletsByRootKeyWithDelegations(address rootKey)
+        external
+        view
+        returns (address[] memory wallets);
 
     /**
      * @notice Returns all wallets linked to a root key with their metadata
@@ -197,16 +197,17 @@ interface IWalletLink is IWalletLinkBase {
     function explicitWalletsByRootKey(
         address rootKey,
         WalletQueryOptions calldata options
-    ) external view returns (WalletLib.Wallet[] memory wallets);
+    )
+        external
+        view
+        returns (WalletLib.Wallet[] memory wallets);
 
     /**
      * @notice Returns the root key for a given wallet
      * @param wallet the ethereum wallet to find associated root key for
      * @return rootKey the rootkey that this wallet is linked to
      */
-    function getRootKeyForWallet(
-        address wallet
-    ) external view returns (address rootKey);
+    function getRootKeyForWallet(address wallet) external view returns (address rootKey);
 
     /**
      * @notice checks if a root key and wallet are linked
@@ -225,23 +226,22 @@ interface IWalletLink is IWalletLinkBase {
     function checkIfNonEVMWalletLinked(
         address rootKey,
         bytes32 walletHash
-    ) external view returns (bool);
+    )
+        external
+        view
+        returns (bool);
 
     /**
      * @notice gets the latest nonce for a rootkey to use a higher one for next link action
      * @param rootKey the public key of the users rootkey to check
      */
-    function getLatestNonceForRootKey(
-        address rootKey
-    ) external view returns (uint256);
+    function getLatestNonceForRootKey(address rootKey) external view returns (uint256);
 
     /**
      * @notice gets the dependency address for a given dependency label
      * @param dependency the dependency label to get
      */
-    function getDependency(
-        bytes32 dependency
-    ) external view returns (address);
+    function getDependency(bytes32 dependency) external view returns (address);
 
     /**
      * @notice sets the dependency address for a given dependency label

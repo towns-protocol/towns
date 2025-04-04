@@ -33,38 +33,24 @@ interface IPartnerRegistryBase {
 }
 
 interface IPartnerRegistry is IPartnerRegistryBase {
-    function registerPartner(
-        Partner memory partner
-    ) external payable;
+    function registerPartner(Partner memory partner) external payable;
 
-    function partnerInfo(
-        address account
-    ) external view returns (Partner memory);
+    function partnerInfo(address account) external view returns (Partner memory);
 
-    function partnerFee(
-        address account
-    ) external view returns (uint256 fee);
+    function partnerFee(address account) external view returns (uint256 fee);
 
-    function updatePartner(
-        Partner memory partner
-    ) external;
+    function updatePartner(Partner memory partner) external;
 
-    function removePartner(
-        address account
-    ) external;
+    function removePartner(address account) external;
 
     // =============================================================
     //                           Admin
     // =============================================================
     function maxPartnerFee() external view returns (uint256 fee);
 
-    function setMaxPartnerFee(
-        uint256 fee
-    ) external;
+    function setMaxPartnerFee(uint256 fee) external;
 
     function registryFee() external view returns (uint256 fee);
 
-    function setRegistryFee(
-        uint256 fee
-    ) external;
+    function setRegistryFee(uint256 fee) external;
 }

@@ -2,15 +2,16 @@
 pragma solidity ^0.8.23;
 
 // interfaces
+
+import {IEntitlement} from "contracts/src/spaces/entitlements/IEntitlement.sol";
+import {IChannel} from "contracts/src/spaces/facets/channels/IChannel.sol";
+import {IEntitlementsManager} from
+    "contracts/src/spaces/facets/entitlements/IEntitlementsManager.sol";
 import {
     IEntitlementDataQueryable,
     IEntitlementDataQueryableBase
 } from "contracts/src/spaces/facets/entitlements/extensions/IEntitlementDataQueryable.sol";
-import {IEntitlementsManager} from
-    "contracts/src/spaces/facets/entitlements/IEntitlementsManager.sol";
-import {IRolesBase, IRoles} from "contracts/src/spaces/facets/roles/IRoles.sol";
-import {IEntitlement} from "contracts/src/spaces/entitlements/IEntitlement.sol";
-import {IChannel} from "contracts/src/spaces/facets/channels/IChannel.sol";
+import {IRoles, IRolesBase} from "contracts/src/spaces/facets/roles/IRoles.sol";
 
 // libraries
 import {Permissions} from "contracts/src/spaces/facets/Permissions.sol";
@@ -50,9 +51,7 @@ contract EntitlementDataQueryableTest is
         assertEq(entitlement[0].entitlementType, "UserEntitlement");
     }
 
-    function test_fuzz_getChannelEntitlementDataByPermission(
-        address[] memory users
-    ) external {
+    function test_fuzz_getChannelEntitlementDataByPermission(address[] memory users) external {
         vm.assume(users.length > 0);
         for (uint256 i; i < users.length; ++i) {
             if (users[i] == address(0)) users[i] = vm.randomAddress();
@@ -84,9 +83,7 @@ contract EntitlementDataQueryableTest is
         assertEq(channelEntitlements[0].entitlementData, abi.encode(users));
     }
 
-    function test_fuzz_getCrossChainEntitlementData(
-        address user
-    ) external assumeEOA(user) {
+    function test_fuzz_getCrossChainEntitlementData(address user) external assumeEOA(user) {
         // TODO: find a better way to exclude user from being a minter
         vm.assume(user != alice && user != charlie);
 

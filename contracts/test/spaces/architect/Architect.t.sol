@@ -2,40 +2,47 @@
 pragma solidity ^0.8.23;
 
 // interfaces
+
+import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import {IOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
+
+import {IERC173} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
+import {IPausable, IPausableBase} from "@towns-protocol/diamond/src/facets/pausable/IPausable.sol";
+import {IERC721ABase} from "contracts/src/diamond/facets/token/ERC721A/IERC721A.sol";
 import {IArchitectBase} from "contracts/src/factory/facets/architect/IArchitect.sol";
 import {IPricingModules} from "contracts/src/factory/facets/architect/pricing/IPricingModules.sol";
-import {IEntitlementsManager} from
-    "contracts/src/spaces/facets/entitlements/IEntitlementsManager.sol";
-import {IOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
-import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
-import {IERC721ABase} from "contracts/src/diamond/facets/token/ERC721A/IERC721A.sol";
-import {IERC173} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
-import {IPausableBase, IPausable} from "@towns-protocol/diamond/src/facets/pausable/IPausable.sol";
-import {IGuardian} from "contracts/src/spaces/facets/guardian/IGuardian.sol";
-import {IUserEntitlement} from "contracts/src/spaces/entitlements/user/IUserEntitlement.sol";
+
+import {ICreateSpace} from "contracts/src/factory/facets/create/ICreateSpace.sol";
 import {
     IRuleEntitlement,
     IRuleEntitlementV2
 } from "contracts/src/spaces/entitlements/rule/IRuleEntitlement.sol";
 import {RuleEntitlement} from "contracts/src/spaces/entitlements/rule/RuleEntitlement.sol";
 import {RuleEntitlementV2} from "contracts/src/spaces/entitlements/rule/RuleEntitlementV2.sol";
-import {IRoles} from "contracts/src/spaces/facets/roles/IRoles.sol";
+import {IUserEntitlement} from "contracts/src/spaces/entitlements/user/IUserEntitlement.sol";
+import {IEntitlementsManager} from
+    "contracts/src/spaces/facets/entitlements/IEntitlementsManager.sol";
+import {IGuardian} from "contracts/src/spaces/facets/guardian/IGuardian.sol";
+
 import {IMembership} from "contracts/src/spaces/facets/membership/IMembership.sol";
 import {ISpaceOwner} from "contracts/src/spaces/facets/owner/ISpaceOwner.sol";
 import {ISpaceProxyInitializer} from "contracts/src/spaces/facets/proxy/ISpaceProxyInitializer.sol";
-import {ICreateSpace} from "contracts/src/factory/facets/create/ICreateSpace.sol";
+import {IRoles} from "contracts/src/spaces/facets/roles/IRoles.sol";
 
 // libraries
-import {LibString} from "solady/utils/LibString.sol";
+
 import {Permissions} from "contracts/src/spaces/facets/Permissions.sol";
 import {RuleEntitlementUtil} from "contracts/test/crosschain/RuleEntitlementUtil.sol";
+import {LibString} from "solady/utils/LibString.sol";
 
 // contracts
-import {BaseSetup} from "contracts/test/spaces/BaseSetup.sol";
+
 import {Architect} from "contracts/src/factory/facets/architect/Architect.sol";
-import {MockERC721} from "contracts/test/mocks/MockERC721.sol";
+
 import {UserEntitlement} from "contracts/src/spaces/entitlements/user/UserEntitlement.sol";
 import {Factory} from "contracts/src/utils/Factory.sol";
+import {MockERC721} from "contracts/test/mocks/MockERC721.sol";
+import {BaseSetup} from "contracts/test/spaces/BaseSetup.sol";
 // errors
 import {Validator__InvalidStringLength} from "contracts/src/utils/Validator.sol";
 
@@ -65,9 +72,10 @@ contract ArchitectTest is BaseSetup, IArchitectBase, IOwnableBase, IPausableBase
         assertFalse(IEntitlementsManager(spaceAddress).isEntitledToSpace(user, Permissions.Read));
     }
 
-    function test_fuzz_createUserSpace_syncedEntitlements(
-        address founder
-    ) external assumeEOA(founder) {
+    function test_fuzz_createUserSpace_syncedEntitlements(address founder)
+        external
+        assumeEOA(founder)
+    {
         vm.prank(founder);
 
         address[] memory users = new address[](1);
@@ -102,9 +110,10 @@ contract ArchitectTest is BaseSetup, IArchitectBase, IOwnableBase, IPausableBase
         assertEq(entitlementData, abi.encode(users));
     }
 
-    function test_fuzz_createGatedSpace_syncedEntitlements(
-        address founder
-    ) external assumeEOA(founder) {
+    function test_fuzz_createGatedSpace_syncedEntitlements(address founder)
+        external
+        assumeEOA(founder)
+    {
         vm.prank(founder);
         IArchitectBase.SpaceInfo memory spaceInfo = _createGatedSpaceInfo("Test");
         spaceInfo.membership.settings.pricingModule = pricingModule;
@@ -136,9 +145,7 @@ contract ArchitectTest is BaseSetup, IArchitectBase, IOwnableBase, IPausableBase
         assertEq(abi.encode(ruleData), abi.encode(RuleEntitlementUtil.getMockERC721RuleData()));
     }
 
-    function test_fuzz_minterRoleEntitlementExists(
-        address founder
-    ) external assumeEOA(founder) {
+    function test_fuzz_minterRoleEntitlementExists(address founder) external assumeEOA(founder) {
         vm.prank(founder);
         IArchitectBase.SpaceInfo memory spaceInfo = _createGatedSpaceInfo("Test");
         spaceInfo.membership.settings.pricingModule = pricingModule;
@@ -177,9 +184,7 @@ contract ArchitectTest is BaseSetup, IArchitectBase, IOwnableBase, IPausableBase
         assertEq(legacyRuleEntitlement, address(legacyRuleEntitlementAddress));
     }
 
-    function test_fuzz_setImplementations(
-        address user
-    ) external {
+    function test_fuzz_setImplementations(address user) external {
         ISpaceOwner newSpaceToken = ISpaceOwner(address(new MockERC721()));
         IUserEntitlement newUserEntitlement = new UserEntitlement();
         IRuleEntitlement newRuleEntitlement = new RuleEntitlement();
@@ -215,7 +220,11 @@ contract ArchitectTest is BaseSetup, IArchitectBase, IOwnableBase, IPausableBase
         string memory spaceName,
         address founder,
         address buyer
-    ) external assumeEOA(founder) assumeEOA(buyer) {
+    )
+        external
+        assumeEOA(founder)
+        assumeEOA(buyer)
+    {
         vm.assume(bytes(spaceName).length > 2);
         vm.assume(founder != buyer);
 
@@ -246,7 +255,10 @@ contract ArchitectTest is BaseSetup, IArchitectBase, IOwnableBase, IPausableBase
     function test_fuzz_revertWhen_createSpaceAndPaused(
         string memory spaceName,
         address founder
-    ) external assumeEOA(founder) {
+    )
+        external
+        assumeEOA(founder)
+    {
         vm.assume(bytes(spaceName).length > 2);
 
         vm.prank(deployer);
@@ -266,9 +278,7 @@ contract ArchitectTest is BaseSetup, IArchitectBase, IOwnableBase, IPausableBase
         createSpaceFacet.createSpace(spaceInfo);
     }
 
-    function test_fuzz_revertIfInvalidSpaceId(
-        address founder
-    ) external assumeEOA(founder) {
+    function test_fuzz_revertIfInvalidSpaceId(address founder) external assumeEOA(founder) {
         vm.expectRevert(Validator__InvalidStringLength.selector);
 
         SpaceInfo memory spaceInfo = _createSpaceInfo("");
@@ -278,9 +288,7 @@ contract ArchitectTest is BaseSetup, IArchitectBase, IOwnableBase, IPausableBase
         createSpaceFacet.createSpace(spaceInfo);
     }
 
-    function test_revertIfNotProperReceiver(
-        string memory spaceName
-    ) external {
+    function test_revertIfNotProperReceiver(string memory spaceName) external {
         vm.assume(bytes(spaceName).length > 2);
 
         SpaceInfo memory spaceInfo = _createSpaceInfo(spaceName);
@@ -301,7 +309,10 @@ contract ArchitectTest is BaseSetup, IArchitectBase, IOwnableBase, IPausableBase
         string memory spaceName,
         address founder,
         address _pricingModule
-    ) external assumeEOA(founder) {
+    )
+        external
+        assumeEOA(founder)
+    {
         vm.assume(bytes(spaceName).length > 2);
         vm.assume(
             _pricingModule == address(0)
@@ -320,7 +331,11 @@ contract ArchitectTest is BaseSetup, IArchitectBase, IOwnableBase, IPausableBase
         string memory spaceName,
         address founder,
         address user
-    ) external assumeEOA(founder) assumeEOA(user) {
+    )
+        external
+        assumeEOA(founder)
+        assumeEOA(user)
+    {
         vm.assume(bytes(spaceName).length > 2);
         vm.assume(founder != user);
 
@@ -366,9 +381,7 @@ contract ArchitectTest is BaseSetup, IArchitectBase, IOwnableBase, IPausableBase
         );
     }
 
-    function test_fuzz_setProxyInitializer(
-        address proxyInitializer
-    ) external {
+    function test_fuzz_setProxyInitializer(address proxyInitializer) external {
         vm.prank(deployer);
         vm.expectEmit(address(spaceArchitect));
         emit Architect__ProxyInitializerSet(proxyInitializer);
@@ -380,7 +393,10 @@ contract ArchitectTest is BaseSetup, IArchitectBase, IOwnableBase, IPausableBase
     function test_fuzz_setProxyInitializer_revertIfNotOwner(
         address user,
         address proxyInitializer
-    ) external assumeEOA(user) {
+    )
+        external
+        assumeEOA(user)
+    {
         vm.assume(user != deployer);
         vm.prank(user);
         vm.expectRevert(abi.encodeWithSelector(Ownable__NotOwner.selector, user));

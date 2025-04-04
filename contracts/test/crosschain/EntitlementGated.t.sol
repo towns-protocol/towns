@@ -4,8 +4,9 @@ pragma solidity ^0.8.23;
 //interfaces
 import {IEntitlementCheckerBase} from
     "contracts/src/base/registry/facets/checker/IEntitlementChecker.sol";
-import {IEntitlementGatedBase} from "contracts/src/spaces/facets/gated/IEntitlementGated.sol";
+
 import {IRuleEntitlement} from "contracts/src/spaces/entitlements/rule/IRuleEntitlement.sol";
+import {IEntitlementGatedBase} from "contracts/src/spaces/facets/gated/IEntitlementGated.sol";
 import {IEntitlementGated} from "contracts/src/spaces/facets/gated/IEntitlementGated.sol";
 
 //libraries
@@ -13,8 +14,9 @@ import {RuleEntitlementUtil} from "./RuleEntitlementUtil.sol";
 
 //contracts
 import {MockEntitlementGated} from "contracts/test/mocks/MockEntitlementGated.sol";
-import {EntitlementTestUtils} from "contracts/test/utils/EntitlementTestUtils.sol";
+
 import {BaseSetup} from "contracts/test/spaces/BaseSetup.sol";
+import {EntitlementTestUtils} from "contracts/test/utils/EntitlementTestUtils.sol";
 
 import {Vm} from "forge-std/Test.sol";
 
@@ -202,7 +204,9 @@ contract EntitlementGatedTest is
     function test_fuzz_postEntitlementCheckV1ResultRuleDataV2_revert_transactionNotRegistered(
         bytes32 requestId,
         address node
-    ) external {
+    )
+        external
+    {
         vm.prank(node);
         vm.expectRevert(EntitlementGated_TransactionNotRegistered.selector);
         gated.postEntitlementCheckResult(requestId, 0, NodeVoteStatus.PASSED);
@@ -226,9 +230,9 @@ contract EntitlementGatedTest is
         gated.postEntitlementCheckResult(requestId, 0, NodeVoteStatus.PASSED);
     }
 
-    function test_postEntitlementCheckV1ResultRuleDataV2_revert_nodeNotFound(
-        address node
-    ) external {
+    function test_postEntitlementCheckV1ResultRuleDataV2_revert_nodeNotFound(address node)
+        external
+    {
         uint256[] memory roleIds = new uint256[](1);
         roleIds[0] = 0;
 
@@ -350,7 +354,9 @@ contract EntitlementGatedTest is
         uint256 roleId,
         address[] memory nodes,
         NodeVoteStatus vote
-    ) internal {
+    )
+        internal
+    {
         uint256 halfNodes = nodes.length / 2;
         bool eventEmitted = false;
 

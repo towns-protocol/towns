@@ -5,8 +5,9 @@ pragma solidity ^0.8.23;
 import {IDropFacetBase} from "./IDropFacet.sol";
 
 // libraries
-import {CustomRevert} from "contracts/src/utils/libraries/CustomRevert.sol";
+
 import {BasisPoints} from "contracts/src/utils/libraries/BasisPoints.sol";
+import {CustomRevert} from "contracts/src/utils/libraries/CustomRevert.sol";
 import {MerkleProofLib} from "solady/utils/MerkleProofLib.sol";
 
 // contracts
@@ -56,7 +57,9 @@ library DropClaimLib {
         ClaimCondition storage condition,
         SupplyClaim storage claimed,
         uint256 amount
-    ) internal {
+    )
+        internal
+    {
         condition.supplyClaimed += amount;
         unchecked {
             claimed.claimed += amount;
@@ -66,7 +69,9 @@ library DropClaimLib {
     function updateClaimCondition(
         ClaimCondition storage self,
         ClaimCondition calldata newCondition
-    ) internal {
+    )
+        internal
+    {
         self.startTimestamp = newCondition.startTimestamp;
         self.endTimestamp = newCondition.endTimestamp;
         self.maxClaimableSupply = newCondition.maxClaimableSupply;
@@ -79,7 +84,10 @@ library DropClaimLib {
         ClaimCondition storage condition,
         SupplyClaim storage claimed,
         Claim calldata claim
-    ) internal view {
+    )
+        internal
+        view
+    {
         if (condition.merkleRoot == bytes32(0)) {
             CustomRevert.revertWith(IDropFacetBase.DropFacet__MerkleRootNotSet.selector);
         }
@@ -124,7 +132,11 @@ library DropClaimLib {
         ClaimCondition storage self,
         Claim calldata claim,
         uint16 expectedPenaltyBps
-    ) internal view returns (uint256 amount) {
+    )
+        internal
+        view
+        returns (uint256 amount)
+    {
         uint16 penaltyBps = self.penaltyBps;
         if (penaltyBps != expectedPenaltyBps) {
             CustomRevert.revertWith(IDropFacetBase.DropFacet__UnexpectedPenaltyBps.selector);

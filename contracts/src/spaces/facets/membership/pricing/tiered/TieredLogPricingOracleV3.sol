@@ -7,7 +7,7 @@ import {IMembershipPricing} from
 import {AggregatorV3Interface} from "contracts/src/utils/interfaces/AggregatorV3Interface.sol";
 
 // libraries
-import {UD60x18, Casting, log10} from "@prb/math/UD60x18.sol";
+import {Casting, UD60x18, log10} from "@prb/math/UD60x18.sol";
 
 // contracts
 import {IntrospectionFacet} from
@@ -35,9 +35,7 @@ contract TieredLogPricingOracleV3 is IMembershipPricing, IntrospectionFacet {
     error TieredLogPricingOracle__InvalidTimestamp();
     error TieredLogPricingOracle__StaleData();
 
-    constructor(
-        address priceFeed
-    ) {
+    constructor(address priceFeed) {
         __IntrospectionBase_init();
         _addInterface(type(IMembershipPricing).interfaceId);
         dataFeed = AggregatorV3Interface(priceFeed);
@@ -53,9 +51,7 @@ contract TieredLogPricingOracleV3 is IMembershipPricing, IntrospectionFacet {
         return "Logarithmically increasing price";
     }
 
-    function setPrice(
-        uint256
-    ) external pure {
+    function setPrice(uint256) external pure {
         revert("TieredLogPricingOracle: price is calculated logarithmically");
     }
 
@@ -96,9 +92,7 @@ contract TieredLogPricingOracleV3 is IMembershipPricing, IntrospectionFacet {
     /// @notice Converts a price in cents to wei
     /// @param cents The price in cents to convert
     /// @return The price in wei
-    function _getWeiFromCents(
-        uint256 cents
-    ) internal view returns (uint256) {
+    function _getWeiFromCents(uint256 cents) internal view returns (uint256) {
         uint256 exchangeRate = getChainlinkDataFeedLatestAnswer(); // chainlink oracle returns this
             // value
 
@@ -138,9 +132,7 @@ contract TieredLogPricingOracleV3 is IMembershipPricing, IntrospectionFacet {
         }
     }
 
-    function _calculateLogScale(
-        uint256 value
-    ) private pure returns (uint256) {
+    function _calculateLogScale(uint256 value) private pure returns (uint256) {
         UD60x18 logResult = log10(Casting.ud(value * SCALE));
         return Casting.intoUint256(logResult) / LOG_BASE;
     }

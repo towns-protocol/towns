@@ -4,8 +4,9 @@ pragma solidity ^0.8.23;
 // interfaces
 
 // libraries
-import {IMembershipBase} from "contracts/src/spaces/facets/membership/IMembership.sol";
+
 import {IRuleEntitlement} from "contracts/src/spaces/entitlements/rule/IRuleEntitlement.sol";
+import {IMembershipBase} from "contracts/src/spaces/facets/membership/IMembership.sol";
 
 // contracts
 interface ILegacyArchitectBase {
@@ -58,7 +59,5 @@ interface ILegacyArchitectBase {
 interface ILegacyArchitect is ILegacyArchitectBase {
     /// @notice Creates a new space
     /// @param SpaceInfo Space information
-    function createSpace(
-        SpaceInfo memory SpaceInfo
-    ) external returns (address);
+    function createSpace(SpaceInfo memory SpaceInfo) external returns (address);
 }

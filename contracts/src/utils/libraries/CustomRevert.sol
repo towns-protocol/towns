@@ -11,9 +11,7 @@ pragma solidity ^0.8.0;
 /// is exited immediately
 library CustomRevert {
     /// @dev Reverts with the selector of a custom error in the scratch space
-    function revertWith(
-        bytes4 selector
-    ) internal pure {
+    function revertWith(bytes4 selector) internal pure {
         assembly ("memory-safe") {
             mstore(0, selector)
             revert(0, 0x04)
@@ -39,9 +37,7 @@ library CustomRevert {
     }
 
     /// @dev Reverts with the legacy error message without additional allocation
-    function revertWith(
-        string memory message
-    ) internal pure {
+    function revertWith(string memory message) internal pure {
         assembly ("memory-safe") {
             mstore(sub(message, 0x40), 0x08c379a0) // Error(string)
             mstore(sub(message, 0x20), 0x20) // abi encoding offset

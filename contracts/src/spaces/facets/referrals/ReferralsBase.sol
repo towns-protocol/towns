@@ -1,13 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import {ReferralsStorage} from "./ReferralsStorage.sol";
 import {IReferralsBase} from "./IReferrals.sol";
+import {ReferralsStorage} from "./ReferralsStorage.sol";
 
 abstract contract ReferralsBase is IReferralsBase {
-    function _validateReferral(
-        Referral memory referral
-    ) internal view {
+    function _validateReferral(Referral memory referral) internal view {
         if (referral.recipient == address(0)) revert Referrals__InvalidRecipient();
         if (referral.basisPoints == 0) revert Referrals__InvalidBasisPoints();
         if (bytes(referral.referralCode).length == 0) {
@@ -19,9 +17,7 @@ abstract contract ReferralsBase is IReferralsBase {
         }
     }
 
-    function _registerReferral(
-        Referral memory referral
-    ) internal {
+    function _registerReferral(Referral memory referral) internal {
         bytes32 referralCode = keccak256(bytes(referral.referralCode));
         ReferralsStorage.Layout storage ds = ReferralsStorage.layout();
         if (ds.referrals[referralCode].recipient != address(0)) {
@@ -36,17 +32,13 @@ abstract contract ReferralsBase is IReferralsBase {
         emit ReferralRegistered(referralCode, referral.basisPoints, referral.recipient);
     }
 
-    function _referralInfo(
-        string memory referralCode
-    ) internal view returns (Referral memory) {
+    function _referralInfo(string memory referralCode) internal view returns (Referral memory) {
         ReferralsStorage.Referral storage storedReferral =
             ReferralsStorage.layout().referrals[keccak256(bytes(referralCode))];
         return Referral(referralCode, storedReferral.bpsFee, storedReferral.recipient);
     }
 
-    function _updateReferral(
-        Referral memory referral
-    ) internal {
+    function _updateReferral(Referral memory referral) internal {
         _validateReferral(referral);
         bytes32 referralCode = keccak256(bytes(referral.referralCode));
         ReferralsStorage.Layout storage ds = ReferralsStorage.layout();
@@ -58,17 +50,13 @@ abstract contract ReferralsBase is IReferralsBase {
         emit ReferralUpdated(referralCode, referral.basisPoints, referral.recipient);
     }
 
-    function _removeReferral(
-        string memory referralCode
-    ) internal {
+    function _removeReferral(string memory referralCode) internal {
         bytes32 referralCodeHash = keccak256(bytes(referralCode));
         delete ReferralsStorage.layout().referrals[referralCodeHash];
         emit ReferralRemoved(referralCodeHash);
     }
 
-    function _setMaxBpsFee(
-        uint256 maxBpsFee
-    ) internal {
+    function _setMaxBpsFee(uint256 maxBpsFee) internal {
         ReferralsStorage.layout().referralSettings.maxBpsFee = maxBpsFee;
         emit MaxBpsFeeUpdated(maxBpsFee);
     }
@@ -77,9 +65,7 @@ abstract contract ReferralsBase is IReferralsBase {
         return ReferralsStorage.layout().referralSettings.maxBpsFee;
     }
 
-    function _setDefaultBpsFee(
-        uint256 defaultBpsFee
-    ) internal {
+    function _setDefaultBpsFee(uint256 defaultBpsFee) internal {
         ReferralsStorage.layout().referralSettings.defaultBpsFee = defaultBpsFee;
         emit DefaultBpsFeeUpdated(defaultBpsFee);
     }

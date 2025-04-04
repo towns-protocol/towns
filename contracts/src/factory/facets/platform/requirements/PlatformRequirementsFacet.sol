@@ -7,9 +7,10 @@ import {IPlatformRequirements} from "./IPlatformRequirements.sol";
 // libraries
 
 // contracts
+
+import {PlatformRequirementsBase} from "./PlatformRequirementsBase.sol";
 import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
 import {OwnableBase} from "@towns-protocol/diamond/src/facets/ownable/OwnableBase.sol";
-import {PlatformRequirementsBase} from "./PlatformRequirementsBase.sol";
 
 contract PlatformRequirementsFacet is
     IPlatformRequirements,
@@ -24,7 +25,10 @@ contract PlatformRequirementsFacet is
         uint256 membershipMintLimit,
         uint64 membershipDuration,
         uint256 membershipMinPrice
-    ) external onlyInitializing {
+    )
+        external
+        onlyInitializing
+    {
         _addInterface(type(IPlatformRequirements).interfaceId);
         _setFeeRecipient(feeRecipient);
         _setMembershipBps(membershipBps);
@@ -60,9 +64,7 @@ contract PlatformRequirementsFacet is
     }
 
     /// @inheritdoc IPlatformRequirements
-    function setMembershipMinPrice(
-        uint256 minPrice
-    ) external onlyOwner {
+    function setMembershipMinPrice(uint256 minPrice) external onlyOwner {
         _setMembershipMinPrice(minPrice);
     }
 
@@ -72,37 +74,27 @@ contract PlatformRequirementsFacet is
     }
 
     /// @inheritdoc IPlatformRequirements
-    function setFeeRecipient(
-        address recipient
-    ) external onlyOwner {
+    function setFeeRecipient(address recipient) external onlyOwner {
         _setFeeRecipient(recipient);
     }
 
     /// @inheritdoc IPlatformRequirements
-    function setMembershipBps(
-        uint16 bps
-    ) external onlyOwner {
+    function setMembershipBps(uint16 bps) external onlyOwner {
         _setMembershipBps(bps);
     }
 
     /// @inheritdoc IPlatformRequirements
-    function setMembershipFee(
-        uint256 fee
-    ) external onlyOwner {
+    function setMembershipFee(uint256 fee) external onlyOwner {
         _setMembershipFee(fee);
     }
 
     /// @inheritdoc IPlatformRequirements
-    function setMembershipMintLimit(
-        uint256 limit
-    ) external onlyOwner {
+    function setMembershipMintLimit(uint256 limit) external onlyOwner {
         _setMembershipMintLimit(limit);
     }
 
     /// @inheritdoc IPlatformRequirements
-    function setMembershipDuration(
-        uint64 duration
-    ) external onlyOwner {
+    function setMembershipDuration(uint64 duration) external onlyOwner {
         _setMembershipDuration(duration);
     }
 
@@ -122,9 +114,7 @@ contract PlatformRequirementsFacet is
     }
 
     /// @inheritdoc IPlatformRequirements
-    function isRouterWhitelisted(
-        address router
-    ) external view returns (bool) {
+    function isRouterWhitelisted(address router) external view returns (bool) {
         return _isRouterWhitelisted(router);
     }
 

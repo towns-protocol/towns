@@ -41,21 +41,15 @@ interface ISpaceDelegation is ISpaceDelegationBase {
 
     /// @notice Removes a space delegation from an operator
     /// @param space The address of the space
-    function removeSpaceDelegation(
-        address space
-    ) external;
+    function removeSpaceDelegation(address space) external;
 
     /// @notice Sets the address of the River token
     /// @param riverToken The address of the River token contract
-    function setRiverToken(
-        address riverToken
-    ) external;
+    function setRiverToken(address riverToken) external;
 
     /// @notice Sets the stake requirement for delegation
     /// @param stakeRequirement_ The new stake requirement amount
-    function setStakeRequirement(
-        uint256 stakeRequirement_
-    ) external;
+    function setStakeRequirement(uint256 stakeRequirement_) external;
 
     /// @notice Gets the stake requirement for delegation
     /// @return The stake requirement amount
@@ -63,9 +57,7 @@ interface ISpaceDelegation is ISpaceDelegationBase {
 
     /// @notice Sets the address of the mainnet delegation contract
     /// @param mainnetDelegation_ The address of the mainnet delegation contract
-    function setMainnetDelegation(
-        address mainnetDelegation_
-    ) external;
+    function setMainnetDelegation(address mainnetDelegation_) external;
 
     /// @notice Gets the address of the mainnet delegation contract
     /// @return The address of the mainnet delegation contract
@@ -74,16 +66,15 @@ interface ISpaceDelegation is ISpaceDelegationBase {
     /// @notice Gets the operator address for a given space
     /// @param space The address of the space
     /// @return The address of the operator delegated to the space
-    function getSpaceDelegation(
-        address space
-    ) external view returns (address);
+    function getSpaceDelegation(address space) external view returns (address);
 
     /// @notice Gets all spaces delegated to a specific operator
     /// @param operator The address of the operator
     /// @return An array of space addresses delegated to the operator
-    function getSpaceDelegationsByOperator(
-        address operator
-    ) external view returns (address[] memory);
+    function getSpaceDelegationsByOperator(address operator)
+        external
+        view
+        returns (address[] memory);
 
     /// @notice Gets the address of the River token
     /// @return The address of the River token contract
@@ -92,15 +83,11 @@ interface ISpaceDelegation is ISpaceDelegationBase {
     /// @notice Gets the total delegation for a specific operator
     /// @param operator The address of the operator
     /// @return The total amount delegated to the operator
-    function getTotalDelegation(
-        address operator
-    ) external view returns (uint256);
+    function getTotalDelegation(address operator) external view returns (uint256);
 
     /// @notice Sets the address of the space factory
     /// @param spaceFactory The address of the space factory
-    function setSpaceFactory(
-        address spaceFactory
-    ) external;
+    function setSpaceFactory(address spaceFactory) external;
 
     /// @notice Gets the address of the space factory
     /// @return The address of the space factory

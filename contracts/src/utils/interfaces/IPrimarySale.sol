@@ -6,9 +6,7 @@ interface IPrimarySale {
     function primarySaleRecipient() external view returns (address);
 
     /// @dev Lets a module admin set the default recipient of all primary sales.
-    function setPrimarySaleRecipient(
-        address _recipient
-    ) external;
+    function setPrimarySaleRecipient(address _recipient) external;
 
     /// @dev Emitted when a new sale recipient is set.
     event PrimarySaleRecipientUpdated(address indexed _recipient);

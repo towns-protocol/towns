@@ -64,50 +64,42 @@ interface IMainnetDelegation is IMainnetDelegationBase {
     /// @notice Set delegation digest from L1
     /// @dev Only the L2 messenger can call this function
     /// @param digest The delegation digest
-    function setDelegationDigest(
-        bytes32 digest
-    ) external;
+    function setDelegationDigest(bytes32 digest) external;
 
     /// @notice Relay cross-chain delegations
     /// @dev Only the owner can call this function
     /// @param encodedMsgs The encoded delegation messages
-    function relayDelegations(
-        bytes calldata encodedMsgs
-    ) external;
+    function relayDelegations(bytes calldata encodedMsgs) external;
 
     /// @notice Get delegation of a delegator
     /// @param delegator The delegator address
     /// @return Delegation delegation struct
-    function getDelegationByDelegator(
-        address delegator
-    ) external view returns (Delegation memory);
+    function getDelegationByDelegator(address delegator)
+        external
+        view
+        returns (Delegation memory);
 
     /// @notice Get delegation of a operator
     /// @param operator The operator address
     /// @return Delegation delegation struct
-    function getMainnetDelegationsByOperator(
-        address operator
-    ) external view returns (Delegation[] memory);
+    function getMainnetDelegationsByOperator(address operator)
+        external
+        view
+        returns (Delegation[] memory);
 
     /// @notice Get delegated stake of a operator
     /// @param operator The operator address
     /// @return uint256 The delegated stake
-    function getDelegatedStakeByOperator(
-        address operator
-    ) external view returns (uint256);
+    function getDelegatedStakeByOperator(address operator) external view returns (uint256);
 
     /// @notice Get authorized claimer
     /// @param owner The owner address
     /// @return address The claimer address
-    function getAuthorizedClaimer(
-        address owner
-    ) external view returns (address);
+    function getAuthorizedClaimer(address owner) external view returns (address);
 
     /// @notice Set proxy delegation
     /// @param proxyDelegation The proxy delegation address
-    function setProxyDelegation(
-        address proxyDelegation
-    ) external;
+    function setProxyDelegation(address proxyDelegation) external;
 
     /// @notice Get proxy delegation
     /// @return address The proxy delegation address
@@ -120,7 +112,5 @@ interface IMainnetDelegation is IMainnetDelegationBase {
     /// @notice Get the deposit ID by delegator
     /// @param delegator The mainnet delegator address
     /// @return uint256 The deposit ID
-    function getDepositIdByDelegator(
-        address delegator
-    ) external view returns (uint256);
+    function getDepositIdByDelegator(address delegator) external view returns (uint256);
 }

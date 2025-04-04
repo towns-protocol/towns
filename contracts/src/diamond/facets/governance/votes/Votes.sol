@@ -2,9 +2,10 @@
 pragma solidity ^0.8.23;
 
 // interfaces
+
+import {IVotes} from "@openzeppelin/contracts/governance/utils/IVotes.sol";
 import {IERC5805} from "@openzeppelin/contracts/interfaces/IERC5805.sol";
 import {IERC6372} from "@openzeppelin/contracts/interfaces/IERC6372.sol";
-import {IVotes} from "@openzeppelin/contracts/governance/utils/IVotes.sol";
 
 // contracts
 import {VotesBase} from "./VotesBase.sol";
@@ -21,9 +22,7 @@ abstract contract Votes is VotesBase, IERC5805 {
     }
 
     /// @inheritdoc IVotes
-    function getVotes(
-        address account
-    ) public view virtual returns (uint256) {
+    function getVotes(address account) public view virtual returns (uint256) {
         return _getVotes(account);
     }
 
@@ -31,28 +30,27 @@ abstract contract Votes is VotesBase, IERC5805 {
     function getPastVotes(
         address account,
         uint256 timepoint
-    ) public view virtual returns (uint256) {
+    )
+        public
+        view
+        virtual
+        returns (uint256)
+    {
         return _getPastVotes(account, timepoint);
     }
 
     /// @inheritdoc IVotes
-    function getPastTotalSupply(
-        uint256 timepoint
-    ) public view virtual returns (uint256) {
+    function getPastTotalSupply(uint256 timepoint) public view virtual returns (uint256) {
         return _getPastTotalSupply(timepoint);
     }
 
     /// @inheritdoc IVotes
-    function delegates(
-        address account
-    ) public view virtual returns (address) {
+    function delegates(address account) public view virtual returns (address) {
         return _delegates(account);
     }
 
     /// @inheritdoc IVotes
-    function delegate(
-        address delegatee
-    ) public virtual {
+    function delegate(address delegatee) public virtual {
         _delegate(msg.sender, delegatee);
     }
 
@@ -64,7 +62,10 @@ abstract contract Votes is VotesBase, IERC5805 {
         uint8 v,
         bytes32 r,
         bytes32 s
-    ) public virtual {
+    )
+        public
+        virtual
+    {
         return _delegateBySig(delegatee, nonce, expiry, v, r, s);
     }
 }

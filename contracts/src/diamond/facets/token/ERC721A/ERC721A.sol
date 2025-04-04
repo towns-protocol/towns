@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import {IERC721A} from "./IERC721A.sol";
-import {ERC721AStorage} from "./ERC721AStorage.sol";
 import {ERC721ABase} from "./ERC721ABase.sol";
+import {ERC721AStorage} from "./ERC721AStorage.sol";
+import {IERC721A} from "./IERC721A.sol";
+
 import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
 
 /**
@@ -46,9 +47,7 @@ contract ERC721A is IERC721A, ERC721ABase, Facet {
     /**
      * @dev Returns the number of tokens in `owner`'s account.
      */
-    function balanceOf(
-        address owner
-    ) public view virtual returns (uint256) {
+    function balanceOf(address owner) public view virtual returns (uint256) {
         return _balanceOf(owner);
     }
 
@@ -73,9 +72,7 @@ contract ERC721A is IERC721A, ERC721ABase, Facet {
     /**
      * @dev Returns the Uniform Resource Identifier (URI) for `tokenId` token.
      */
-    function tokenURI(
-        uint256 tokenId
-    ) public view virtual override returns (string memory) {
+    function tokenURI(uint256 tokenId) public view virtual override returns (string memory) {
         if (!_exists(tokenId)) revert URIQueryForNonexistentToken();
 
         string memory baseURI = _baseURI();
@@ -90,9 +87,7 @@ contract ERC721A is IERC721A, ERC721ABase, Facet {
      *
      * - `tokenId` must exist.
      */
-    function ownerOf(
-        uint256 tokenId
-    ) public view virtual override returns (address) {
+    function ownerOf(uint256 tokenId) public view virtual override returns (address) {
         return address(uint160(_packedOwnershipOf(tokenId)));
     }
 
@@ -115,9 +110,7 @@ contract ERC721A is IERC721A, ERC721ABase, Facet {
      *
      * - `tokenId` must exist.
      */
-    function getApproved(
-        uint256 tokenId
-    ) public view virtual override returns (address) {
+    function getApproved(uint256 tokenId) public view virtual override returns (address) {
         return _getApproved(tokenId);
     }
 
@@ -145,7 +138,13 @@ contract ERC721A is IERC721A, ERC721ABase, Facet {
     function isApprovedForAll(
         address owner,
         address operator
-    ) public view virtual override returns (bool) {
+    )
+        public
+        view
+        virtual
+        override
+        returns (bool)
+    {
         return _isApprovedForAll(owner, operator);
     }
 
@@ -166,7 +165,12 @@ contract ERC721A is IERC721A, ERC721ABase, Facet {
         address from,
         address to,
         uint256 tokenId
-    ) public payable virtual override {
+    )
+        public
+        payable
+        virtual
+        override
+    {
         uint256 prevOwnershipPacked = _packedOwnershipOf(tokenId);
 
         if (address(uint160(prevOwnershipPacked)) != from) {
@@ -237,7 +241,12 @@ contract ERC721A is IERC721A, ERC721ABase, Facet {
         address from,
         address to,
         uint256 tokenId
-    ) public payable virtual override {
+    )
+        public
+        payable
+        virtual
+        override
+    {
         safeTransferFrom(from, to, tokenId, "");
     }
 
@@ -261,7 +270,12 @@ contract ERC721A is IERC721A, ERC721ABase, Facet {
         address to,
         uint256 tokenId,
         bytes memory _data
-    ) public payable virtual override {
+    )
+        public
+        payable
+        virtual
+        override
+    {
         transferFrom(from, to, tokenId);
         if (to.code.length != 0) {
             if (!_checkContractOnERC721Received(from, to, tokenId, _data)) {

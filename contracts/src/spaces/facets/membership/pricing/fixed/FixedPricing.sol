@@ -21,9 +21,7 @@ contract FixedPricing is IMembershipPricing, IntrospectionFacet {
         _addInterface(type(IMembershipPricing).interfaceId);
     }
 
-    function setPrice(
-        uint256 price
-    ) external {
+    function setPrice(uint256 price) external {
         FixedPricingStorage.layout().priceBySpace[msg.sender] = price;
     }
 

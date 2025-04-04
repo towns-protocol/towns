@@ -12,8 +12,9 @@ import {IPlatformRequirements} from
 import {BasisPoints} from "contracts/src/utils/libraries/BasisPoints.sol";
 
 //mocks
-import {MockERC721} from "contracts/test/mocks/MockERC721.sol";
+
 import {MockERC1155} from "contracts/test/mocks/MockERC1155.sol";
+import {MockERC721} from "contracts/test/mocks/MockERC721.sol";
 
 contract MembershipTreasuryTest is MembershipBaseSetup {
     MockERC721 test721;

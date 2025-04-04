@@ -37,7 +37,9 @@ library WalletLib {
         RootWallet storage self,
         bytes32 walletHash,
         Wallet calldata wallet
-    ) internal {
+    )
+        internal
+    {
         self.walletHashes.add(walletHash);
         self.walletByHash[walletHash] = wallet;
     }

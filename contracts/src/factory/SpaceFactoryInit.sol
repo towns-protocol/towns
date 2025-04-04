@@ -11,9 +11,7 @@ import {ImplementationStorage} from
 // contracts
 
 contract SpaceFactoryInit {
-    function initialize(
-        address proxyInitializer
-    ) external {
+    function initialize(address proxyInitializer) external {
         ImplementationStorage.Layout storage ds = ImplementationStorage.layout();
         ds.proxyInitializer = ISpaceProxyInitializer(proxyInitializer);
     }

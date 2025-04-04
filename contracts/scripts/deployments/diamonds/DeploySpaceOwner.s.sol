@@ -2,24 +2,27 @@
 pragma solidity ^0.8.24;
 
 // interface
-import {IDiamond, Diamond} from "@towns-protocol/diamond/src/Diamond.sol";
+import {Diamond, IDiamond} from "@towns-protocol/diamond/src/Diamond.sol";
 
 // libraries
 
 // contracts
-import {DiamondHelper} from "contracts/test/diamond/Diamond.t.sol";
+
 import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
+import {DiamondHelper} from "contracts/test/diamond/Diamond.t.sol";
 
 // helpers
-import {DeployOwnable} from "contracts/scripts/deployments/facets/DeployOwnable.s.sol";
+
 import {DeployDiamondCut} from "contracts/scripts/deployments/facets/DeployDiamondCut.s.sol";
 import {DeployDiamondLoupe} from "contracts/scripts/deployments/facets/DeployDiamondLoupe.s.sol";
 import {DeployEIP712Facet} from "contracts/scripts/deployments/facets/DeployEIP712Facet.s.sol";
+
+import {DeployGuardianFacet} from "contracts/scripts/deployments/facets/DeployGuardianFacet.s.sol";
 import {DeployIntrospection} from "contracts/scripts/deployments/facets/DeployIntrospection.s.sol";
 import {DeployMetadata} from "contracts/scripts/deployments/facets/DeployMetadata.s.sol";
+import {DeployOwnable} from "contracts/scripts/deployments/facets/DeployOwnable.s.sol";
 import {DeploySpaceOwnerFacet} from
     "contracts/scripts/deployments/facets/DeploySpaceOwnerFacet.s.sol";
-import {DeployGuardianFacet} from "contracts/scripts/deployments/facets/DeployGuardianFacet.s.sol";
 import {
     DeployMultiInit, MultiInit
 } from "contracts/scripts/deployments/utils/DeployMultiInit.s.sol";
@@ -50,9 +53,7 @@ contract DeploySpaceOwner is DiamondHelper, Deployer {
         return "spaceOwner";
     }
 
-    function addImmutableCuts(
-        address deployer
-    ) internal {
+    function addImmutableCuts(address deployer) internal {
         multiInit = multiInitHelper.deploy(deployer);
 
         diamondCut = diamondCutHelper.deploy(deployer);
@@ -82,9 +83,7 @@ contract DeploySpaceOwner is DiamondHelper, Deployer {
         );
     }
 
-    function diamondInitParams(
-        address deployer
-    ) public returns (Diamond.InitParams memory) {
+    function diamondInitParams(address deployer) public returns (Diamond.InitParams memory) {
         metadata = metadataHelper.deploy(deployer);
         spaceOwner = spaceOwnerHelper.deploy(deployer);
         guardian = guardianHelper.deploy(deployer);
@@ -157,14 +156,16 @@ contract DeploySpaceOwner is DiamondHelper, Deployer {
     function diamondInitHelper(
         address deployer,
         string[] memory facetNames
-    ) external override returns (FacetCut[] memory) {
+    )
+        external
+        override
+        returns (FacetCut[] memory)
+    {
         diamondInitParamsFromFacets(deployer, facetNames);
         return this.getCuts();
     }
 
-    function __deploy(
-        address deployer
-    ) public override returns (address) {
+    function __deploy(address deployer) public override returns (address) {
         addImmutableCuts(deployer);
 
         Diamond.InitParams memory initDiamondCut = diamondInitParams(deployer);

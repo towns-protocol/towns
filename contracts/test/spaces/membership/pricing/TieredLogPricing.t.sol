@@ -11,9 +11,10 @@ import {IMembershipPricing} from
 //libraries
 
 //contracts
-import {MockAggregatorV3} from "contracts/test/mocks/MockAggregatorV3.sol";
+
 import {TieredLogPricingOracleV3} from
     "contracts/src/spaces/facets/membership/pricing/tiered/TieredLogPricingOracleV3.sol";
+import {MockAggregatorV3} from "contracts/test/mocks/MockAggregatorV3.sol";
 
 contract TieredLogPricingTest is TestUtils {
     int256 public constant EXCHANGE_RATE = 222_616_000_000;
@@ -65,9 +66,7 @@ contract TieredLogPricingTest is TestUtils {
     // =============================================================
     //                           Helpers
     // =============================================================
-    function _getCentsFromWei(
-        uint256 weiAmount
-    ) private pure returns (uint256) {
+    function _getCentsFromWei(uint256 weiAmount) private pure returns (uint256) {
         uint256 exchangeRate = uint256(EXCHANGE_RATE); // chainlink oracle returns this value
         uint256 exchangeRateDecimals = 10 ** 8; // chainlink oracle returns this value
 

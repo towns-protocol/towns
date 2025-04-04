@@ -138,9 +138,7 @@ interface IRewardsDistribution is IRewardsDistributionBase {
     /// @notice Upgrades the delegation proxy implementation in the beacon
     /// @dev Only the owner can call this function
     /// @param newImplementation The address of the new implementation
-    function upgradeDelegationProxy(
-        address newImplementation
-    ) external;
+    function upgradeDelegationProxy(address newImplementation) external;
 
     /// @notice Sets whitelist status for reward notifiers
     /// @dev Only the owner can call this function
@@ -151,9 +149,7 @@ interface IRewardsDistribution is IRewardsDistributionBase {
     /// @notice Sets the reward amount for a period
     /// @dev Only the owner can call this function
     /// @param amount The amount of rewardToken to distribute
-    function setPeriodRewardAmount(
-        uint256 amount
-    ) external;
+    function setPeriodRewardAmount(uint256 amount) external;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                       STATE MUTATING                       */
@@ -169,7 +165,9 @@ interface IRewardsDistribution is IRewardsDistributionBase {
         uint96 amount,
         address delegatee,
         address beneficiary
-    ) external returns (uint256 depositId);
+    )
+        external
+        returns (uint256 depositId);
 
     /// @notice Approves the contract to spend the stakeToken with an EIP-2612 permit and stakes the
     /// stakeToken for rewards
@@ -189,7 +187,9 @@ interface IRewardsDistribution is IRewardsDistributionBase {
         uint8 v,
         bytes32 r,
         bytes32 s
-    ) external returns (uint256 depositId);
+    )
+        external
+        returns (uint256 depositId);
 
     /// @notice Stakes on behalf of a user with an EIP-712 signature
     /// @dev The caller must approve the contract to spend the stakeToken
@@ -205,7 +205,9 @@ interface IRewardsDistribution is IRewardsDistributionBase {
         address owner,
         uint256,
         bytes calldata
-    ) external returns (uint256 depositId);
+    )
+        external
+        returns (uint256 depositId);
 
     /// @notice Increases the stake of an existing deposit
     /// @dev The caller must be the owner of the deposit
@@ -231,7 +233,8 @@ interface IRewardsDistribution is IRewardsDistributionBase {
         uint8 v,
         bytes32 r,
         bytes32 s
-    ) external;
+    )
+        external;
 
     /// @notice Redelegates an existing deposit to a new delegatee or reactivates a pending
     /// withdrawal
@@ -250,17 +253,13 @@ interface IRewardsDistribution is IRewardsDistributionBase {
     /// @dev The caller must be the owner of the deposit
     /// @param depositId The ID of the deposit
     /// @return amount The amount of stakeToken that will be withdrawn
-    function initiateWithdraw(
-        uint256 depositId
-    ) external returns (uint96 amount);
+    function initiateWithdraw(uint256 depositId) external returns (uint96 amount);
 
     /// @notice Withdraws the stakeToken from a deposit
     /// @dev The caller must be the owner of the deposit
     /// @param depositId The ID of the deposit
     /// @return amount The amount of stakeToken that is withdrawn
-    function withdraw(
-        uint256 depositId
-    ) external returns (uint96 amount);
+    function withdraw(uint256 depositId) external returns (uint96 amount);
 
     /// @notice Claims the reward for a beneficiary
     /// @dev The beneficiary may be the caller.
@@ -273,14 +272,14 @@ interface IRewardsDistribution is IRewardsDistributionBase {
     function claimReward(
         address beneficiary,
         address recipient
-    ) external returns (uint256 reward);
+    )
+        external
+        returns (uint256 reward);
 
     /// @notice Notifies the contract of an incoming reward
     /// @dev The caller must be a reward notifier
     /// @param reward The amount of rewardToken that has been added
-    function notifyRewardAmount(
-        uint256 reward
-    ) external;
+    function notifyRewardAmount(uint256 reward) external;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                          GETTERS                           */
@@ -302,16 +301,12 @@ interface IRewardsDistribution is IRewardsDistributionBase {
     /// @notice Returns the amount of stakeToken that is staked by a particular depositor
     /// @param depositor The address of the depositor
     /// @return amount The amount of stakeToken that is staked by the depositor
-    function stakedByDepositor(
-        address depositor
-    ) external view returns (uint96 amount);
+    function stakedByDepositor(address depositor) external view returns (uint96 amount);
 
     /// @notice Returns the deposit IDs for a particular depositor
     /// @param depositor The address of the depositor
     /// @return The deposit IDs for the depositor
-    function getDepositsByDepositor(
-        address depositor
-    ) external view returns (uint256[] memory);
+    function getDepositsByDepositor(address depositor) external view returns (uint256[] memory);
 
     /// @notice Returns the account information for a beneficiary
     /// @param beneficiary The address of the beneficiary
@@ -320,9 +315,10 @@ interface IRewardsDistribution is IRewardsDistributionBase {
     /// rewardPerTokenAccumulated The scaled amount of rewardToken that has been accumulated per
     /// staked token
     /// unclaimedRewardSnapshot The snapshot of the unclaimed reward scaled
-    function treasureByBeneficiary(
-        address beneficiary
-    ) external view returns (StakingRewards.Treasure memory);
+    function treasureByBeneficiary(address beneficiary)
+        external
+        view
+        returns (StakingRewards.Treasure memory);
 
     /// @notice Returns the information for a deposit
     /// @param depositId The ID of the deposit
@@ -333,23 +329,17 @@ interface IRewardsDistribution is IRewardsDistributionBase {
     /// delegatee The address of the delegatee
     /// pendingWithdrawal The amount of stakeToken that is pending withdrawal
     /// beneficiary The address of the beneficiary
-    function depositById(
-        uint256 depositId
-    ) external view returns (StakingRewards.Deposit memory);
+    function depositById(uint256 depositId) external view returns (StakingRewards.Deposit memory);
 
     /// @notice Returns the address of the delegation proxy for a deposit
     /// @param depositId The ID of the deposit
     /// @return The address of the delegation proxy
-    function delegationProxyById(
-        uint256 depositId
-    ) external view returns (address);
+    function delegationProxyById(uint256 depositId) external view returns (address);
 
     /// @notice Returns whether a particular address is a reward notifier
     /// @param notifier The address to check
     /// @return True if the address is a reward notifier
-    function isRewardNotifier(
-        address notifier
-    ) external view returns (bool);
+    function isRewardNotifier(address notifier) external view returns (bool);
 
     /// @notice Returns the lesser of rewardEndTime and the current time
     /// @return The lesser of rewardEndTime and the current time
@@ -364,16 +354,12 @@ interface IRewardsDistribution is IRewardsDistributionBase {
     /// @notice Returns the current unclaimed reward for a beneficiary
     /// @param beneficiary The address of the beneficiary
     /// @return The current unclaimed reward for the beneficiary
-    function currentReward(
-        address beneficiary
-    ) external view returns (uint256);
+    function currentReward(address beneficiary) external view returns (uint256);
 
     /// @notice Returns the current unclaimed reward for an operator from delegating spaces
     /// @param operator The address of the operator
     /// @return The current unclaimed reward for the operator from delegating spaces
-    function currentSpaceDelegationReward(
-        address operator
-    ) external view returns (uint256);
+    function currentSpaceDelegationReward(address operator) external view returns (uint256);
 
     /// @notice Returns the implementation stored in the beacon
     function implementation() external view returns (address);

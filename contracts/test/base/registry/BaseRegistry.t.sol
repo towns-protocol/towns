@@ -7,22 +7,24 @@ import {IArchitectBase} from "contracts/src/factory/facets/architect/IArchitect.
 import {ICreateSpace} from "contracts/src/factory/facets/create/ICreateSpace.sol";
 
 // libraries
-import {FixedPointMathLib} from "solady/utils/FixedPointMathLib.sol";
+
 import {StakingRewards} from "contracts/src/base/registry/facets/distribution/v2/StakingRewards.sol";
 import {NodeOperatorStatus} from
     "contracts/src/base/registry/facets/operator/NodeOperatorStorage.sol";
+import {FixedPointMathLib} from "solady/utils/FixedPointMathLib.sol";
 
 // contracts
-import {BaseSetup} from "contracts/test/spaces/BaseSetup.sol";
+
+import {RewardsVerifier} from "./RewardsVerifier.t.sol";
 import {EIP712Facet} from "@towns-protocol/diamond/src/utils/cryptography/EIP712Facet.sol";
-import {NodeOperatorFacet} from "contracts/src/base/registry/facets/operator/NodeOperatorFacet.sol";
-import {Towns} from "contracts/src/tokens/towns/base/Towns.sol";
-import {MainnetDelegation} from "contracts/src/base/registry/facets/mainnet/MainnetDelegation.sol";
 import {SpaceDelegationFacet} from
     "contracts/src/base/registry/facets/delegation/SpaceDelegationFacet.sol";
 import {RewardsDistribution} from
     "contracts/src/base/registry/facets/distribution/v2/RewardsDistribution.sol";
-import {RewardsVerifier} from "./RewardsVerifier.t.sol";
+import {MainnetDelegation} from "contracts/src/base/registry/facets/mainnet/MainnetDelegation.sol";
+import {NodeOperatorFacet} from "contracts/src/base/registry/facets/operator/NodeOperatorFacet.sol";
+import {Towns} from "contracts/src/tokens/towns/base/Towns.sol";
+import {BaseSetup} from "contracts/test/spaces/BaseSetup.sol";
 
 abstract contract BaseRegistryTest is RewardsVerifier, BaseSetup {
     using FixedPointMathLib for uint256;
@@ -79,9 +81,7 @@ abstract contract BaseRegistryTest is RewardsVerifier, BaseSetup {
         setOperatorStatus(operator, NodeOperatorStatus.Active);
     }
 
-    function registerOperator(
-        address operator
-    ) internal {
+    function registerOperator(address operator) internal {
         vm.assume(operator != address(0));
         if (!operatorFacet.isOperator(operator)) {
             vm.prank(operator);
@@ -119,9 +119,7 @@ abstract contract BaseRegistryTest is RewardsVerifier, BaseSetup {
     /*                           SPACE                            */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    function deploySpace(
-        address _deployer
-    ) internal returns (address _space) {
+    function deploySpace(address _deployer) internal returns (address _space) {
         IArchitectBase.SpaceInfo memory spaceInfo =
             _createSpaceInfo(string(abi.encode(_randomUint256())));
         spaceInfo.membership.settings.pricingModule = pricingModule;
@@ -152,9 +150,7 @@ abstract contract BaseRegistryTest is RewardsVerifier, BaseSetup {
     /*                           HELPER                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    function boundReward(
-        uint256 reward
-    ) internal view returns (uint256) {
+    function boundReward(uint256 reward) internal view returns (uint256) {
         return bound(
             reward,
             rewardDuration,
@@ -165,9 +161,7 @@ abstract contract BaseRegistryTest is RewardsVerifier, BaseSetup {
         );
     }
 
-    function sanitizeAmounts(
-        uint256[32] memory amounts
-    ) internal {
+    function sanitizeAmounts(uint256[32] memory amounts) internal {
         uint256 len = amounts.length;
         for (uint256 i; i < len; ++i) {
             vm.assume(totalStaked < type(uint96).max);
@@ -176,9 +170,7 @@ abstract contract BaseRegistryTest is RewardsVerifier, BaseSetup {
         }
     }
 
-    function sanitizeAmounts(
-        uint256[] memory amounts
-    ) internal {
+    function sanitizeAmounts(uint256[] memory amounts) internal {
         uint256 len = amounts.length;
         for (uint256 i; i < len; ++i) {
             vm.assume(totalStaked < type(uint96).max);
@@ -187,9 +179,7 @@ abstract contract BaseRegistryTest is RewardsVerifier, BaseSetup {
         }
     }
 
-    function toDyn(
-        address[32] memory arr
-    ) internal view returns (address[] memory res) {
+    function toDyn(address[32] memory arr) internal view returns (address[] memory res) {
         assembly ("memory-safe") {
             res := mload(0x40)
             mstore(0x40, add(res, mul(33, 0x20)))
@@ -198,9 +188,7 @@ abstract contract BaseRegistryTest is RewardsVerifier, BaseSetup {
         }
     }
 
-    function toDyn(
-        uint256[32] memory arr
-    ) internal view returns (uint256[] memory res) {
+    function toDyn(uint256[32] memory arr) internal view returns (uint256[] memory res) {
         assembly ("memory-safe") {
             res := mload(0x40)
             mstore(0x40, add(res, mul(33, 0x20)))

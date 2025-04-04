@@ -5,14 +5,13 @@ pragma solidity ^0.8.23;
 import {IGuardianBase} from "./IGuardian.sol";
 
 // libraries
-import {Address} from "@openzeppelin/contracts/utils/Address.sol";
+
 import {GuardianStorage} from "./GuardianStorage.sol";
+import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 import {SpaceOwnerStorage} from "contracts/src/spaces/facets/owner/SpaceOwnerStorage.sol";
 
 abstract contract GuardianBase is IGuardianBase {
-    function _setDefaultCooldown(
-        uint256 cooldown
-    ) internal {
+    function _setDefaultCooldown(uint256 cooldown) internal {
         GuardianStorage.layout().defaultCooldown = cooldown;
         emit GuardianDefaultCooldownUpdated(cooldown);
     }
@@ -25,9 +24,7 @@ abstract contract GuardianBase is IGuardianBase {
      * @notice Enables a guardian
      * @param guardian The guardian address
      */
-    function _enableGuardian(
-        address guardian
-    ) internal {
+    function _enableGuardian(address guardian) internal {
         GuardianStorage.Layout storage ds = GuardianStorage.layout();
 
         if (ds.cooldownByAddress[guardian] == 0) {
@@ -43,9 +40,7 @@ abstract contract GuardianBase is IGuardianBase {
      * @notice Disables a guardian
      * @param guardian The guardian address
      */
-    function _disableGuardian(
-        address guardian
-    ) internal {
+    function _disableGuardian(address guardian) internal {
         GuardianStorage.Layout storage ds = GuardianStorage.layout();
 
         if (ds.cooldownByAddress[guardian] != 0) {
@@ -57,9 +52,7 @@ abstract contract GuardianBase is IGuardianBase {
         emit GuardianUpdated(guardian, false, block.timestamp + ds.defaultCooldown, block.timestamp);
     }
 
-    function _guardianCooldown(
-        address guardian
-    ) internal view returns (uint256) {
+    function _guardianCooldown(address guardian) internal view returns (uint256) {
         return GuardianStorage.layout().cooldownByAddress[guardian];
     }
 
@@ -68,9 +61,7 @@ abstract contract GuardianBase is IGuardianBase {
      * @param guardian The guardian address
      * @return True if the guardian is enabled
      */
-    function _guardianEnabled(
-        address guardian
-    ) internal view returns (bool) {
+    function _guardianEnabled(address guardian) internal view returns (bool) {
         GuardianStorage.Layout storage ds = GuardianStorage.layout();
 
         // guardian is enabled if it is not a contract and

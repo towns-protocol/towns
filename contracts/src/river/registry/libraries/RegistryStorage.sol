@@ -3,8 +3,9 @@ pragma solidity ^0.8.23;
 
 // libraries
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-import {CustomRevert} from "contracts/src/utils/libraries/CustomRevert.sol";
+
 import {RiverRegistryErrors} from "contracts/src/river/registry/libraries/RegistryErrors.sol";
+import {CustomRevert} from "contracts/src/utils/libraries/CustomRevert.sol";
 
 struct Stream {
     bytes32 lastMiniblockHash; // 32 bytes, slot 0
@@ -103,41 +104,31 @@ abstract contract RegistryModifiers {
 
     AppStorage internal ds;
 
-    modifier onlyNode(
-        address node
-    ) {
+    modifier onlyNode(address node) {
         if (ds.nodeByAddress[node].nodeAddress == address(0)) {
             RiverRegistryErrors.NODE_NOT_FOUND.revertWith();
         }
         _;
     }
 
-    modifier onlyRegisteredNodes(
-        address[] calldata nodes
-    ) {
+    modifier onlyRegisteredNodes(address[] calldata nodes) {
         _verifyNodes(nodes);
         _;
     }
 
-    modifier onlyOperator(
-        address operator
-    ) {
+    modifier onlyOperator(address operator) {
         if (!ds.operators.contains(operator)) {
             RiverRegistryErrors.BAD_AUTH.revertWith();
         }
         _;
     }
 
-    modifier onlyStream(
-        bytes32 streamId
-    ) {
+    modifier onlyStream(bytes32 streamId) {
         _verifyStreamIdExists(streamId);
         _;
     }
 
-    modifier onlyStreamNotExists(
-        bytes32 streamId
-    ) {
+    modifier onlyStreamNotExists(bytes32 streamId) {
         _verifyStreamIdNotExists(streamId);
         _;
     }
@@ -149,18 +140,14 @@ abstract contract RegistryModifiers {
         _;
     }
 
-    modifier configKeyExists(
-        bytes32 key
-    ) {
+    modifier configKeyExists(bytes32 key) {
         if (!ds.configurationKeys.contains(key)) {
             RiverRegistryErrors.NOT_FOUND.revertWith();
         }
         _;
     }
 
-    modifier onlyConfigurationManager(
-        address manager
-    ) {
+    modifier onlyConfigurationManager(address manager) {
         if (!ds.configurationManagers.contains(manager)) {
             RiverRegistryErrors.BAD_AUTH.revertWith();
         }
@@ -168,27 +155,21 @@ abstract contract RegistryModifiers {
     }
 
     /// @dev Verifies that the streamId is in the registry
-    function _verifyStreamIdExists(
-        bytes32 streamId
-    ) internal view {
+    function _verifyStreamIdExists(bytes32 streamId) internal view {
         if (!ds.streams.contains(streamId)) {
             RiverRegistryErrors.NOT_FOUND.revertWith();
         }
     }
 
     /// @dev Verifies that the streamId is not in the registry
-    function _verifyStreamIdNotExists(
-        bytes32 streamId
-    ) internal view {
+    function _verifyStreamIdNotExists(bytes32 streamId) internal view {
         if (ds.streams.contains(streamId)) {
             RiverRegistryErrors.ALREADY_EXISTS.revertWith();
         }
     }
 
     /// @dev Verifies that the nodes are in the registry
-    function _verifyNodes(
-        address[] calldata nodes
-    ) internal view {
+    function _verifyNodes(address[] calldata nodes) internal view {
         uint256 nodeCount = nodes.length;
         for (uint256 i; i < nodeCount; ++i) {
             if (!ds.nodes.contains(nodes[i])) {

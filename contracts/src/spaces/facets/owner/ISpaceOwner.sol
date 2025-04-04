@@ -28,17 +28,13 @@ interface ISpaceOwnerBase {
 
 interface ISpaceOwner is ISpaceOwnerBase {
     /// @notice Set the factory address that is allowed to mint spaces
-    function setFactory(
-        address factory
-    ) external;
+    function setFactory(address factory) external;
 
     /// @notice Get the factory address
     function getFactory() external view returns (address);
 
     /// @notice Set the default URI
-    function setDefaultUri(
-        string memory uri
-    ) external;
+    function setDefaultUri(string memory uri) external;
 
     /// @notice Get the default URI
     function getDefaultUri() external view returns (string memory);
@@ -60,21 +56,19 @@ interface ISpaceOwner is ISpaceOwnerBase {
         address space,
         string memory shortDescription,
         string memory longDescription
-    ) external returns (uint256 tokenId);
+    )
+        external
+        returns (uint256 tokenId);
 
     /// @notice Get the space info
     /// @param space The address of the space
     /// @return space The space info
-    function getSpaceInfo(
-        address space
-    ) external view returns (Space memory);
+    function getSpaceInfo(address space) external view returns (Space memory);
 
     /// @notice Get the space address by token id
     /// @param tokenId The token id of the space
     /// @return space The address of the space
-    function getSpaceByTokenId(
-        uint256 tokenId
-    ) external view returns (address);
+    function getSpaceByTokenId(uint256 tokenId) external view returns (address);
 
     /// @notice Update the space info
     /// @dev Only the space owner is allowed to update the space info
@@ -89,5 +83,6 @@ interface ISpaceOwner is ISpaceOwnerBase {
         string memory uri,
         string memory shortDescription,
         string memory longDescription
-    ) external;
+    )
+        external;
 }

@@ -27,14 +27,22 @@ contract DeployMetadata is FacetHelper, Deployer {
     function makeInitData(
         bytes32 contractType,
         string memory contractURI
-    ) public pure returns (bytes memory) {
+    )
+        public
+        pure
+        returns (bytes memory)
+    {
         return abi.encodeWithSelector(initializer(), contractType, contractURI);
     }
 
     function facetInitHelper(
         address deployer,
         address facetAddress
-    ) external override returns (FacetCut memory, bytes memory) {
+    )
+        external
+        override
+        returns (FacetCut memory, bytes memory)
+    {
         IDiamond.FacetCut memory facetCut = this.makeCut(facetAddress, IDiamond.FacetCutAction.Add);
         console.log("facetInitHelper: deployer", deployer);
         return (facetCut, makeInitData(bytes32("RiverAirdrop"), ""));
@@ -44,9 +52,7 @@ contract DeployMetadata is FacetHelper, Deployer {
         return "facets/metadataFacet";
     }
 
-    function __deploy(
-        address deployer
-    ) public override returns (address) {
+    function __deploy(address deployer) public override returns (address) {
         vm.startBroadcast(deployer);
         MetadataFacet metadataFacet = new MetadataFacet();
         vm.stopBroadcast();

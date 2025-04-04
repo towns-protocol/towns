@@ -6,10 +6,11 @@ pragma solidity ^0.8.23;
 //libraries
 
 //contracts
-import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
-import {RiverConfig} from "contracts/src/river/registry/facets/config/RiverConfig.sol";
+
 import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
 import {IDiamond} from "@towns-protocol/diamond/src/Diamond.sol";
+import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
+import {RiverConfig} from "contracts/src/river/registry/facets/config/RiverConfig.sol";
 
 contract DeployRiverConfig is FacetHelper, Deployer {
     constructor() {
@@ -28,9 +29,7 @@ contract DeployRiverConfig is FacetHelper, Deployer {
         return RiverConfig.__RiverConfig_init.selector;
     }
 
-    function makeInitData(
-        address[] memory configManagers
-    ) public pure returns (bytes memory) {
+    function makeInitData(address[] memory configManagers) public pure returns (bytes memory) {
         return abi.encodeWithSelector(initializer(), configManagers);
     }
 
@@ -41,16 +40,18 @@ contract DeployRiverConfig is FacetHelper, Deployer {
     function facetInitHelper(
         address deployer,
         address facetAddress
-    ) external override returns (FacetCut memory, bytes memory) {
+    )
+        external
+        override
+        returns (FacetCut memory, bytes memory)
+    {
         IDiamond.FacetCut memory facetCut = this.makeCut(facetAddress, IDiamond.FacetCutAction.Add);
         address[] memory configManagers = new address[](1);
         configManagers[0] = deployer;
         return (facetCut, makeInitData(configManagers));
     }
 
-    function __deploy(
-        address deployer
-    ) public override returns (address) {
+    function __deploy(address deployer) public override returns (address) {
         vm.startBroadcast(deployer);
         RiverConfig riverConfig = new RiverConfig();
         vm.stopBroadcast();

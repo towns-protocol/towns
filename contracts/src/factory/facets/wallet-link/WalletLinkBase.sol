@@ -6,14 +6,16 @@ import {IWalletLinkBase} from "./IWalletLink.sol";
 import {IDelegateRegistry} from "./interfaces/IDelegateRegistry.sol";
 
 // libraries
-import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-import {ECDSA} from "solady/utils/ECDSA.sol";
+
 import {WalletLinkStorage} from "./WalletLinkStorage.sol";
 import {ISCL_EIP6565} from "./interfaces/ISCL_EIP6565.sol";
-import {LibString} from "solady/utils/LibString.sol";
-import {WalletLib} from "./libraries/WalletLib.sol";
-import {CustomRevert} from "contracts/src/utils/libraries/CustomRevert.sol";
+
 import {SolanaUtils} from "./libraries/SolanaUtils.sol";
+import {WalletLib} from "./libraries/WalletLib.sol";
+import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import {CustomRevert} from "contracts/src/utils/libraries/CustomRevert.sol";
+import {ECDSA} from "solady/utils/ECDSA.sol";
+import {LibString} from "solady/utils/LibString.sol";
 
 // contracts
 import {Nonces} from "@towns-protocol/diamond/src/utils/Nonces.sol";
@@ -94,7 +96,9 @@ abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
         LinkedWallet calldata wallet,
         LinkedWallet calldata rootWallet,
         uint256 nonce
-    ) internal {
+    )
+        internal
+    {
         WalletLinkStorage.Layout storage ds = WalletLinkStorage.layout();
 
         _verifyWallets(ds, wallet.addr, rootWallet.addr);
@@ -130,7 +134,9 @@ abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
     function _linkNonEVMWalletToRootWalletViaCaller(
         NonEVMLinkedWallet calldata nonEVMWallet,
         uint256 nonce
-    ) internal {
+    )
+        internal
+    {
         WalletLinkStorage.Layout storage ds = WalletLinkStorage.layout();
         address linkedWallet = msg.sender;
         bytes32 walletHash = keccak256(abi.encode(nonEVMWallet.wallet));
@@ -198,7 +204,9 @@ abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
         address walletToRemove,
         LinkedWallet calldata rootWallet,
         uint256 nonce
-    ) internal {
+    )
+        internal
+    {
         WalletLinkStorage.Layout storage ds = WalletLinkStorage.layout();
 
         // Check walletToRemove or rootWallet.addr are not address(0)
@@ -265,15 +273,19 @@ abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                        Read
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    function _getWalletsByRootKey(
-        address rootKey
-    ) internal view returns (address[] memory wallets) {
+    function _getWalletsByRootKey(address rootKey)
+        internal
+        view
+        returns (address[] memory wallets)
+    {
         return WalletLinkStorage.layout().walletsByRootKey[rootKey].values();
     }
 
-    function _getWalletsByRootKeyWithDelegations(
-        address rootKey
-    ) internal view returns (address[] memory wallets) {
+    function _getWalletsByRootKeyWithDelegations(address rootKey)
+        internal
+        view
+        returns (address[] memory wallets)
+    {
         // Single storage read for layout
         WalletLinkStorage.Layout storage ds = WalletLinkStorage.layout();
         address delegateRegistry = ds.dependencies[DELEGATE_REGISTRY_V2];
@@ -340,7 +352,11 @@ abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
     function _explicitWalletsByRootKey(
         address rootKey,
         WalletQueryOptions calldata options
-    ) internal view returns (WalletLib.Wallet[] memory wallets) {
+    )
+        internal
+        view
+        returns (WalletLib.Wallet[] memory wallets)
+    {
         WalletLinkStorage.Layout storage ds = WalletLinkStorage.layout();
         WalletLib.RootWallet storage rootWallet = ds.rootWalletByRootKey[rootKey];
 
@@ -376,9 +392,7 @@ abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
         }
     }
 
-    function _getRootKeyByWallet(
-        address wallet
-    ) internal view returns (address rootKey) {
+    function _getRootKeyByWallet(address wallet) internal view returns (address rootKey) {
         return WalletLinkStorage.layout().rootKeyByWallet[wallet];
     }
 
@@ -390,7 +404,11 @@ abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
     function _checkIfNonEVMWalletLinked(
         address rootKey,
         bytes32 walletHash
-    ) internal view returns (bool) {
+    )
+        internal
+        view
+        returns (bool)
+    {
         return WalletLinkStorage.layout().rootKeyByHash[walletHash] == rootKey;
     }
 
@@ -429,18 +447,14 @@ abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
         emit SetDefaultWallet(rootKey, defaultWallet);
     }
 
-    function _getDefaultWallet(
-        address rootKey
-    ) internal view returns (address defaultWallet) {
+    function _getDefaultWallet(address rootKey) internal view returns (address defaultWallet) {
         return WalletLinkStorage.layout().rootWalletByRootKey[rootKey].defaultWallet;
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                      Dependencies Functions                */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-    function _getDependency(
-        bytes32 dependency
-    ) internal view returns (address) {
+    function _getDependency(bytes32 dependency) internal view returns (address) {
         return WalletLinkStorage.layout().dependencies[dependency];
     }
 
@@ -455,7 +469,10 @@ abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
         WalletLinkStorage.Layout storage ds,
         NonEVMLinkedWallet calldata nonEVMWallet,
         bytes32 walletHash
-    ) internal view {
+    )
+        internal
+        view
+    {
         address caller = msg.sender;
 
         // Check that the wallet address string is not empty
@@ -487,7 +504,10 @@ abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
         WalletLinkStorage.Layout storage ds,
         address wallet,
         address rootWallet
-    ) internal view {
+    )
+        internal
+        view
+    {
         // Check wallet or rootWallet.addr are not address(0)
         if (wallet == address(0) || rootWallet == address(0)) {
             revert WalletLink__InvalidAddress();
@@ -519,9 +539,7 @@ abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
         }
     }
 
-    function _verifySolanaWallet(
-        NonEVMLinkedWallet calldata nonEVMWallet
-    ) internal {
+    function _verifySolanaWallet(NonEVMLinkedWallet calldata nonEVMWallet) internal {
         SolanaSpecificData memory solanaSpecificData =
             abi.decode(nonEVMWallet.extraData[0].value, (SolanaSpecificData));
 
@@ -544,9 +562,7 @@ abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
         }
     }
 
-    function _validateAddressFormatByVMType(
-        WalletLib.Wallet calldata wallet
-    ) internal pure {
+    function _validateAddressFormatByVMType(WalletLib.Wallet calldata wallet) internal pure {
         if (wallet.vmType == WalletLib.VirtualMachineType.SVM) {
             // Validate Solana address format (base58, 32-44 chars)
             if (bytes(wallet.addr).length < 32 || bytes(wallet.addr).length > 44) {
@@ -559,7 +575,11 @@ abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
         string memory message,
         address addr,
         uint256 nonce
-    ) internal pure returns (bytes32) {
+    )
+        internal
+        pure
+        returns (bytes32)
+    {
         // https://eips.ethereum.org/EIPS/eip-712
         // ATTENTION: "The dynamic values bytes and string are encoded as a keccak256 hash of their
         // contents."

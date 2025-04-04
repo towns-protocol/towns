@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import {Vm} from "forge-std/Vm.sol";
+import {LogUtils} from "./LogUtils.sol";
 import {IEntitlementCheckerBase} from
     "contracts/src/base/registry/facets/checker/IEntitlementChecker.sol";
-import {LogUtils} from "./LogUtils.sol";
+import {Vm} from "forge-std/Vm.sol";
 
 abstract contract EntitlementTestUtils is IEntitlementCheckerBase, LogUtils {
     struct EntitlementCheckRequestEvent {
@@ -17,9 +17,7 @@ abstract contract EntitlementTestUtils is IEntitlementCheckerBase, LogUtils {
     }
 
     /// @dev Capture the requested entitlement data from the logs emitted by the EntitlementChecker
-    function _getRequestV1EventData(
-        Vm.Log[] memory requestLogs
-    )
+    function _getRequestV1EventData(Vm.Log[] memory requestLogs)
         internal
         pure
         returns (
@@ -35,15 +33,15 @@ abstract contract EntitlementTestUtils is IEntitlementCheckerBase, LogUtils {
         );
     }
 
-    function _getRequestV2EventCount(
-        Vm.Log[] memory logs
-    ) internal pure returns (uint256) {
+    function _getRequestV2EventCount(Vm.Log[] memory logs) internal pure returns (uint256) {
         return _getMatchingLogCount(logs, EntitlementCheckRequestedV2.selector);
     }
 
-    function _getRequestV2Events(
-        Vm.Log[] memory requestLogs
-    ) internal pure returns (EntitlementCheckRequestEvent[] memory entitlementCheckRequests) {
+    function _getRequestV2Events(Vm.Log[] memory requestLogs)
+        internal
+        pure
+        returns (EntitlementCheckRequestEvent[] memory entitlementCheckRequests)
+    {
         Vm.Log[] memory logs = _getMatchingLogs(requestLogs, EntitlementCheckRequestedV2.selector);
         entitlementCheckRequests = new EntitlementCheckRequestEvent[](logs.length);
         for (uint256 i; i < logs.length; ++i) {
@@ -63,9 +61,7 @@ abstract contract EntitlementTestUtils is IEntitlementCheckerBase, LogUtils {
         }
     }
 
-    function _getRequestV2EventData(
-        Vm.Log[] memory requestLogs
-    )
+    function _getRequestV2EventData(Vm.Log[] memory requestLogs)
         internal
         pure
         returns (

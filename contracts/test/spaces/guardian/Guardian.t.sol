@@ -2,16 +2,18 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {IGuardianBase} from "contracts/src/spaces/facets/guardian/IGuardian.sol";
-import {IGuardian} from "contracts/src/spaces/facets/guardian/IGuardian.sol";
+
 import {IERC721A} from "contracts/src/diamond/facets/token/ERC721A/IERC721A.sol";
 import {IArchitect} from "contracts/src/factory/facets/architect/IArchitect.sol";
+import {IGuardianBase} from "contracts/src/spaces/facets/guardian/IGuardian.sol";
+import {IGuardian} from "contracts/src/spaces/facets/guardian/IGuardian.sol";
 
 // libraries
 
 // contracts
-import {BaseSetup} from "contracts/test/spaces/BaseSetup.sol";
+
 import {SimpleAccount} from "account-abstraction/samples/SimpleAccount.sol";
+import {BaseSetup} from "contracts/test/spaces/BaseSetup.sol";
 
 contract GuardianTest is BaseSetup, IGuardianBase {
     IGuardian guardian;
@@ -41,9 +43,7 @@ contract GuardianTest is BaseSetup, IGuardianBase {
         assertFalse(guardian.isGuardianEnabled(wallet));
     }
 
-    function test_enableGuardian(
-        address user
-    ) external {
+    function test_enableGuardian(address user) external {
         SimpleAccount account = _createSimpleAccount(user);
         address wallet = address(account);
 

@@ -7,9 +7,10 @@ pragma solidity ^0.8.0;
 import {LibString} from "solady/utils/LibString.sol";
 
 //contracts
-import {Script} from "forge-std/Script.sol";
-import {DeployHelpers} from "./DeployHelpers.s.sol";
+
 import {Context} from "./Context.sol";
+import {DeployHelpers} from "./DeployHelpers.s.sol";
+import {Script} from "forge-std/Script.sol";
 
 contract DeployBase is Context, DeployHelpers, Script {
     constructor() {
@@ -57,9 +58,7 @@ contract DeployBase is Context, DeployHelpers, Script {
         path = string.concat(vm.projectRoot(), "/", context);
     }
 
-    function getDeployment(
-        string memory versionName
-    ) internal returns (address) {
+    function getDeployment(string memory versionName) internal returns (address) {
         string memory networkDir = networkDirPath();
         string memory path = addressesPath(versionName, networkDir);
 
@@ -103,13 +102,15 @@ contract DeployBase is Context, DeployHelpers, Script {
     function addressesPath(
         string memory versionName,
         string memory networkDir
-    ) internal pure returns (string memory path) {
+    )
+        internal
+        pure
+        returns (string memory path)
+    {
         return string.concat(networkDir, "/addresses/", versionName, ".json");
     }
 
-    function createChainIdFile(
-        string memory networkDir
-    ) internal {
+    function createChainIdFile(string memory networkDir) internal {
         string memory chainIdFilePath = string.concat(networkDir, "/chainId.json");
 
         if (!exists(chainIdFilePath)) {
@@ -123,7 +124,11 @@ contract DeployBase is Context, DeployHelpers, Script {
         string memory fullString,
         string memory char,
         string memory replacement
-    ) internal pure returns (string memory) {
+    )
+        internal
+        pure
+        returns (string memory)
+    {
         uint256 charIndex = LibString.indexOf(fullString, char);
         if (charIndex == LibString.NOT_FOUND) {
             return replacement;

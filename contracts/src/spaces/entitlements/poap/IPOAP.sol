@@ -11,9 +11,7 @@ interface IPOAP {
     /// @notice Get the POAP token balance of an owner
     /// @param owner The address to query the balance of
     /// @return The number of POAP tokens owned by the given address
-    function balanceOf(
-        address owner
-    ) external view returns (uint256);
+    function balanceOf(address owner) external view returns (uint256);
 
     ///  @dev Gets the Token Id and Event Id for a given index of the tokens list of the requested
     /// owner
@@ -24,5 +22,8 @@ interface IPOAP {
     function tokenDetailsOfOwnerByIndex(
         address owner,
         uint256 index
-    ) external view returns (uint256 tokenId, uint256 eventId);
+    )
+        external
+        view
+        returns (uint256 tokenId, uint256 eventId);
 }

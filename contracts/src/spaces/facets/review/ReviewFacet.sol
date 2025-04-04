@@ -5,10 +5,11 @@ pragma solidity ^0.8.23;
 import {IReview} from "./IReview.sol";
 
 // libraries
-import {FixedPointMathLib} from "solady/utils/FixedPointMathLib.sol";
-import {EnumerableSetLib} from "solady/utils/EnumerableSetLib.sol";
-import {CustomRevert} from "contracts/src/utils/libraries/CustomRevert.sol";
+
 import {ReviewStorage} from "./ReviewStorage.sol";
+import {CustomRevert} from "contracts/src/utils/libraries/CustomRevert.sol";
+import {EnumerableSetLib} from "solady/utils/EnumerableSetLib.sol";
+import {FixedPointMathLib} from "solady/utils/FixedPointMathLib.sol";
 
 // contracts
 import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
@@ -66,9 +67,7 @@ contract ReviewFacet is IReview, Entitled, Facet {
         }
     }
 
-    function getReview(
-        address user
-    ) external view returns (ReviewStorage.Content memory review) {
+    function getReview(address user) external view returns (ReviewStorage.Content memory review) {
         assembly ("memory-safe") {
             mstore(0x40, review)
         }
@@ -88,9 +87,7 @@ contract ReviewFacet is IReview, Entitled, Facet {
         }
     }
 
-    function _validateReview(
-        Review memory review
-    ) internal pure {
+    function _validateReview(Review memory review) internal pure {
         uint256 length = bytes(review.comment).length;
         if (length < DEFAULT_MIN_COMMENT_LENGTH || length > DEFAULT_MAX_COMMENT_LENGTH) {
             CustomRevert.revertWith(ReviewFacet__InvalidCommentLength.selector);

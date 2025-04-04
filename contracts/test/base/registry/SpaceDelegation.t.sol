@@ -7,13 +7,15 @@ import {ISpaceDelegationBase} from
     "contracts/src/base/registry/facets/delegation/ISpaceDelegation.sol";
 
 // libraries
-import {FixedPointMathLib} from "solady/utils/FixedPointMathLib.sol";
+
 import {StakingRewards} from "contracts/src/base/registry/facets/distribution/v2/StakingRewards.sol";
+import {FixedPointMathLib} from "solady/utils/FixedPointMathLib.sol";
 
 // contracts
+
+import {BaseRegistryTest} from "./BaseRegistry.t.sol";
 import {SpaceDelegationFacet} from
     "contracts/src/base/registry/facets/delegation/SpaceDelegationFacet.sol";
-import {BaseRegistryTest} from "./BaseRegistry.t.sol";
 
 contract SpaceDelegationTest is BaseRegistryTest, IOwnableBase, ISpaceDelegationBase {
     using FixedPointMathLib for uint256;
@@ -47,7 +49,11 @@ contract SpaceDelegationTest is BaseRegistryTest, IOwnableBase, ISpaceDelegation
     function test_fuzz_addSpaceDelegation(
         address operator,
         uint256 commissionRate
-    ) public givenOperator(operator, commissionRate) returns (address space) {
+    )
+        public
+        givenOperator(operator, commissionRate)
+        returns (address space)
+    {
         space = deploySpace(deployer);
 
         vm.prank(deployer);
@@ -66,7 +72,10 @@ contract SpaceDelegationTest is BaseRegistryTest, IOwnableBase, ISpaceDelegation
         uint256[2] memory commissionRates,
         uint256 rewardAmount,
         uint256 timeLapse
-    ) public givenOperator(operators[1], commissionRates[1]) {
+    )
+        public
+        givenOperator(operators[1], commissionRates[1])
+    {
         vm.assume(operators[0] != operators[1]);
         commissionRates[0] = bound(commissionRates[0], 1, 10_000);
         address space = test_fuzz_addSpaceDelegation(operators[0], commissionRates[0]);
@@ -100,7 +109,9 @@ contract SpaceDelegationTest is BaseRegistryTest, IOwnableBase, ISpaceDelegation
         uint256 commissionRate,
         uint256 rewardAmount,
         uint256 timeLapse
-    ) public {
+    )
+        public
+    {
         vm.assume(operator != OPERATOR);
         commissionRate = bound(commissionRate, 1, 10_000);
         address space = test_fuzz_addSpaceDelegation(operator, commissionRate);
@@ -160,7 +171,9 @@ contract SpaceDelegationTest is BaseRegistryTest, IOwnableBase, ISpaceDelegation
         uint256 commissionRate,
         uint256 rewardAmount,
         uint256 timeLapse
-    ) public {
+    )
+        public
+    {
         commissionRate = bound(commissionRate, 1, 10_000);
         address space = test_fuzz_addSpaceDelegation(operator, commissionRate);
 
@@ -195,9 +208,7 @@ contract SpaceDelegationTest is BaseRegistryTest, IOwnableBase, ISpaceDelegation
     /*                           GETTERS                          */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    function test_fuzz_getSpaceDelegationsByOperator(
-        address operator
-    ) public {
+    function test_fuzz_getSpaceDelegationsByOperator(address operator) public {
         address space1 = test_fuzz_addSpaceDelegation(operator, 0);
         address space2 = test_fuzz_addSpaceDelegation(operator, 0);
 
@@ -217,9 +228,7 @@ contract SpaceDelegationTest is BaseRegistryTest, IOwnableBase, ISpaceDelegation
         spaceDelegationFacet.setRiverToken(address(0));
     }
 
-    function test_fuzz_setRiverToken(
-        address newToken
-    ) public {
+    function test_fuzz_setRiverToken(address newToken) public {
         vm.assume(newToken != address(0));
 
         vm.expectEmit(address(spaceDelegationFacet));
@@ -237,9 +246,7 @@ contract SpaceDelegationTest is BaseRegistryTest, IOwnableBase, ISpaceDelegation
         spaceDelegationFacet.setSpaceFactory(address(0));
     }
 
-    function test_fuzz_setSpaceFactory(
-        address newSpaceFactory
-    ) public {
+    function test_fuzz_setSpaceFactory(address newSpaceFactory) public {
         vm.assume(newSpaceFactory != address(0));
 
         vm.prank(deployer);

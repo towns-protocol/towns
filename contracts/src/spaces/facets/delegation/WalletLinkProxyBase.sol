@@ -10,9 +10,7 @@ import {WalletLinkProxyStorage} from "./WalletLinkProxyStorage.sol";
 // contracts
 
 abstract contract WalletLinkProxyBase {
-    function _setWalletLinkProxy(
-        IWalletLink wallet
-    ) internal {
+    function _setWalletLinkProxy(IWalletLink wallet) internal {
         WalletLinkProxyStorage.layout().walletLink = wallet;
     }
 

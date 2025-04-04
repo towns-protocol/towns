@@ -2,8 +2,9 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
+
 import {IPricingModulesBase} from "./IPricingModules.sol";
+import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import {IMembershipPricing} from
     "contracts/src/spaces/facets/membership/pricing/IMembershipPricing.sol";
 
@@ -17,16 +18,12 @@ import {CustomRevert} from "contracts/src/utils/libraries/CustomRevert.sol";
 library PricingModulesBase {
     using EnumerableSet for EnumerableSet.AddressSet;
 
-    function isPricingModule(
-        address module
-    ) internal view returns (bool) {
+    function isPricingModule(address module) internal view returns (bool) {
         PricingModulesStorage.Layout storage ds = PricingModulesStorage.layout();
         return ds.pricingModules.contains(module);
     }
 
-    function addPricingModule(
-        address module
-    ) internal {
+    function addPricingModule(address module) internal {
         PricingModulesStorage.Layout storage ds = PricingModulesStorage.layout();
 
         if (module == address(0)) {
@@ -46,9 +43,7 @@ library PricingModulesBase {
         emit IPricingModulesBase.PricingModuleAdded(module);
     }
 
-    function removePricingModule(
-        address module
-    ) internal {
+    function removePricingModule(address module) internal {
         PricingModulesStorage.Layout storage ds = PricingModulesStorage.layout();
 
         if (module == address(0)) {
@@ -89,9 +84,7 @@ library PricingModulesBase {
     // =============================================================
     //                           Internal
     // =============================================================
-    function verifyInterface(
-        address module
-    ) internal view returns (bool) {
+    function verifyInterface(address module) internal view returns (bool) {
         return IERC165(module).supportsInterface(type(IMembershipPricing).interfaceId);
     }
 }

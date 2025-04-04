@@ -4,8 +4,9 @@ pragma solidity ^0.8.18;
 // interfaces
 
 // libraries
-import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+
 import {StakingRewards} from "./StakingRewards.sol";
+import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
 // contracts
 

@@ -5,8 +5,9 @@ pragma solidity ^0.8.18;
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 // libraries
-import {FixedPointMathLib} from "solady/utils/FixedPointMathLib.sol";
+
 import {CustomRevert} from "contracts/src/utils/libraries/CustomRevert.sol";
+import {FixedPointMathLib} from "solady/utils/FixedPointMathLib.sol";
 
 // contracts
 
@@ -90,15 +91,15 @@ library StakingRewards {
     /*                          VIEWERS                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    function lastTimeRewardDistributed(
-        Layout storage self
-    ) internal view returns (uint256) {
+    function lastTimeRewardDistributed(Layout storage self) internal view returns (uint256) {
         return FixedPointMathLib.min(self.rewardEndTime, block.timestamp);
     }
 
-    function currentRewardPerTokenAccumulated(
-        Layout storage self
-    ) internal view returns (uint256) {
+    function currentRewardPerTokenAccumulated(Layout storage self)
+        internal
+        view
+        returns (uint256)
+    {
         // cache storage reads
         (
             uint96 totalStaked,
@@ -119,7 +120,11 @@ library StakingRewards {
     function currentRewardScaled(
         Layout storage self,
         Treasure storage treasure
-    ) internal view returns (uint256) {
+    )
+        internal
+        view
+        returns (uint256)
+    {
         uint256 rewardPerTokenGrowth;
         unchecked {
             rewardPerTokenGrowth =
@@ -134,9 +139,7 @@ library StakingRewards {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @dev Must be called before any storage updates.
-    function updateGlobalReward(
-        Layout storage self
-    ) internal {
+    function updateGlobalReward(Layout storage self) internal {
         self.rewardPerTokenAccumulated = currentRewardPerTokenAccumulated(self);
         self.lastUpdateTime = lastTimeRewardDistributed(self);
     }
@@ -154,7 +157,10 @@ library StakingRewards {
         address delegatee,
         address beneficiary,
         uint256 commissionRate
-    ) internal returns (uint256 depositId) {
+    )
+        internal
+        returns (uint256 depositId)
+    {
         if (amount == 0) {
             CustomRevert.revertWith(StakingRewards__InvalidAmount.selector);
         }
@@ -179,7 +185,9 @@ library StakingRewards {
         address delegatee,
         address beneficiary,
         uint256 commissionRate
-    ) internal {
+    )
+        internal
+    {
         updateGlobalReward(self);
 
         Treasure storage beneficiaryTreasure = self.treasureByBeneficiary[beneficiary];
@@ -200,7 +208,9 @@ library StakingRewards {
         Deposit storage deposit,
         address newDelegatee,
         uint256 commissionRate
-    ) internal {
+    )
+        internal
+    {
         updateGlobalReward(self);
 
         Treasure storage beneficiaryTreasure = self.treasureByBeneficiary[deposit.beneficiary];
@@ -220,7 +230,9 @@ library StakingRewards {
         Deposit storage deposit,
         address newBeneficiary,
         uint256 commissionRate
-    ) internal {
+    )
+        internal
+    {
         if (newBeneficiary == address(0)) {
             CustomRevert.revertWith(StakingRewards__InvalidAddress.selector);
         }
@@ -266,7 +278,10 @@ library StakingRewards {
     function claimReward(
         Layout storage self,
         address beneficiary
-    ) internal returns (uint256 reward) {
+    )
+        internal
+        returns (uint256 reward)
+    {
         updateGlobalReward(self);
 
         Treasure storage treasure = self.treasureByBeneficiary[beneficiary];
@@ -328,7 +343,9 @@ library StakingRewards {
         uint96 amount,
         address delegatee,
         uint256 commissionRate
-    ) private {
+    )
+        private
+    {
         unchecked {
             if (commissionRate == 0) {
                 beneficiaryTreasure.earningPower += amount;
@@ -353,7 +370,9 @@ library StakingRewards {
         Layout storage self,
         Deposit storage deposit,
         Treasure storage beneficiaryTreasure
-    ) private {
+    )
+        private
+    {
         unchecked {
             (uint96 amount, uint96 commissionEarningPower, address delegatee) =
                 (deposit.amount, deposit.commissionEarningPower, deposit.delegatee);

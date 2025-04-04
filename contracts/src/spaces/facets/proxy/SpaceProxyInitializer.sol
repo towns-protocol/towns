@@ -2,22 +2,24 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {ISpaceProxyInitializer} from "contracts/src/spaces/facets/proxy/ISpaceProxyInitializer.sol";
-import {IERC5643} from "contracts/src/diamond/facets/token/ERC5643/IERC5643.sol";
+
 import {IERC173} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
+import {IERC5643} from "contracts/src/diamond/facets/token/ERC5643/IERC5643.sol";
 import {IMembership} from "contracts/src/spaces/facets/membership/IMembership.sol";
+import {ISpaceProxyInitializer} from "contracts/src/spaces/facets/proxy/ISpaceProxyInitializer.sol";
 
 // libraries
 
 // contracts
-import {TokenOwnableBase} from
-    "@towns-protocol/diamond/src/facets/ownable/token/TokenOwnableBase.sol";
-import {MembershipBase} from "contracts/src/spaces/facets/membership/MembershipBase.sol";
-import {ERC721ABase} from "contracts/src/diamond/facets/token/ERC721A/ERC721ABase.sol";
+
+import {Initializable} from "@towns-protocol/diamond/src/facets/initializable/Initializable.sol";
 import {IntrospectionBase} from
     "@towns-protocol/diamond/src/facets/introspection/IntrospectionBase.sol";
+import {TokenOwnableBase} from
+    "@towns-protocol/diamond/src/facets/ownable/token/TokenOwnableBase.sol";
+import {ERC721ABase} from "contracts/src/diamond/facets/token/ERC721A/ERC721ABase.sol";
 import {EntitlementGatedBase} from "contracts/src/spaces/facets/gated/EntitlementGatedBase.sol";
-import {Initializable} from "@towns-protocol/diamond/src/facets/initializable/Initializable.sol";
+import {MembershipBase} from "contracts/src/spaces/facets/membership/MembershipBase.sol";
 
 contract SpaceProxyInitializer is
     ISpaceProxyInitializer,
@@ -33,7 +35,10 @@ contract SpaceProxyInitializer is
         address manager,
         TokenOwnable memory tokenOwnable,
         Membership memory membership
-    ) external initializer {
+    )
+        external
+        initializer
+    {
         __IntrospectionBase_init();
         __TokenOwnableBase_init(tokenOwnable);
         __ERC721ABase_init(membership.name, membership.symbol);

@@ -15,14 +15,15 @@ import {IStreamRegistry} from "contracts/src/river/registry/facets/stream/IStrea
 //libraries
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import {
+    SetMiniblock,
     Stream,
-    StreamWithId,
-    SetMiniblock
+    StreamWithId
 } from "contracts/src/river/registry/libraries/RegistryStorage.sol";
 
 //contracts
-import {StreamRegistry} from "contracts/src/river/registry/facets/stream/StreamRegistry.sol";
+
 import {TestUtils} from "../utils/TestUtils.sol";
+import {StreamRegistry} from "contracts/src/river/registry/facets/stream/StreamRegistry.sol";
 
 contract ForkStreamRegistry is DeployBase, TestUtils, IDiamond {
     using EnumerableSet for EnumerableSet.AddressSet;

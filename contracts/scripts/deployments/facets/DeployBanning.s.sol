@@ -6,8 +6,9 @@ pragma solidity ^0.8.23;
 //libraries
 
 //contracts
-import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
+
 import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
+import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
 import {Banning} from "contracts/src/spaces/facets/banning/Banning.sol";
 
 contract DeployBanning is Deployer, FacetHelper {
@@ -24,9 +25,7 @@ contract DeployBanning is Deployer, FacetHelper {
         return "facets/banningFacet";
     }
 
-    function __deploy(
-        address deployer
-    ) public override returns (address) {
+    function __deploy(address deployer) public override returns (address) {
         vm.startBroadcast(deployer);
         Banning banning = new Banning();
         vm.stopBroadcast();

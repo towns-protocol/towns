@@ -10,9 +10,7 @@ contract DeploySLCEIP6565 is Deployer {
         return "utils/sclEip6565";
     }
 
-    function __deploy(
-        address deployer
-    ) public override returns (address) {
+    function __deploy(address deployer) public override returns (address) {
         address verifierLib;
         bytes memory bytecode = abi.encodePacked(type(SCL_EIP6565).creationCode);
 

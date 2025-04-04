@@ -8,8 +8,9 @@ import {Create2Utils} from "contracts/src/utils/Create2Utils.sol";
 
 // contracts
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
-import {MockTowns} from "contracts/test/mocks/MockTowns.sol";
+
 import {Towns} from "contracts/src/tokens/towns/base/Towns.sol";
+import {MockTowns} from "contracts/test/mocks/MockTowns.sol";
 
 contract MockTownsDeployer {
     constructor(address l1Token, address owner, bytes32 implementationSalt, bytes32 proxySalt) {

@@ -9,9 +9,10 @@ import {IMembershipPricing} from "./pricing/IMembershipPricing.sol";
 import {CustomRevert} from "contracts/src/utils/libraries/CustomRevert.sol";
 
 // contracts
+
+import {MembershipJoin} from "./join/MembershipJoin.sol";
 import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
 import {ReentrancyGuard} from "solady/utils/ReentrancyGuard.sol";
-import {MembershipJoin} from "./join/MembershipJoin.sol";
 
 contract MembershipFacet is IMembership, MembershipJoin, ReentrancyGuard, Facet {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -28,9 +29,7 @@ contract MembershipFacet is IMembership, MembershipJoin, ReentrancyGuard, Facet 
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @inheritdoc IMembership
-    function joinSpace(
-        address receiver
-    ) external payable nonReentrant {
+    function joinSpace(address receiver) external payable nonReentrant {
         _joinSpace(receiver);
     }
 
@@ -38,7 +37,11 @@ contract MembershipFacet is IMembership, MembershipJoin, ReentrancyGuard, Facet 
     function joinSpaceWithReferral(
         address receiver,
         ReferralTypes memory referral
-    ) external payable nonReentrant {
+    )
+        external
+        payable
+        nonReentrant
+    {
         _joinSpaceWithReferral(receiver, referral);
     }
 
@@ -47,9 +50,7 @@ contract MembershipFacet is IMembership, MembershipJoin, ReentrancyGuard, Facet 
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @inheritdoc IMembership
-    function renewMembership(
-        uint256 tokenId
-    ) external payable nonReentrant {
+    function renewMembership(uint256 tokenId) external payable nonReentrant {
         address receiver = _ownerOf(tokenId);
 
         if (receiver == address(0)) {
@@ -75,9 +76,7 @@ contract MembershipFacet is IMembership, MembershipJoin, ReentrancyGuard, Facet 
     }
 
     /// @inheritdoc IMembership
-    function expiresAt(
-        uint256 tokenId
-    ) external view returns (uint256) {
+    function expiresAt(uint256 tokenId) external view returns (uint256) {
         return _expiresAt(tokenId);
     }
 
@@ -95,9 +94,7 @@ contract MembershipFacet is IMembership, MembershipJoin, ReentrancyGuard, Facet 
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @inheritdoc IMembership
-    function setMembershipPricingModule(
-        address pricingModule
-    ) external onlyOwner {
+    function setMembershipPricingModule(address pricingModule) external onlyOwner {
         _verifyPricingModule(pricingModule);
         _setPricingModule(pricingModule);
     }
@@ -112,9 +109,7 @@ contract MembershipFacet is IMembership, MembershipJoin, ReentrancyGuard, Facet 
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @inheritdoc IMembership
-    function setMembershipPrice(
-        uint256 newPrice
-    ) external onlyOwner {
+    function setMembershipPrice(uint256 newPrice) external onlyOwner {
         _verifyPrice(newPrice);
         IMembershipPricing(_getPricingModule()).setPrice(newPrice);
     }
@@ -125,9 +120,7 @@ contract MembershipFacet is IMembership, MembershipJoin, ReentrancyGuard, Facet 
     }
 
     /// @inheritdoc IMembership
-    function getMembershipRenewalPrice(
-        uint256 tokenId
-    ) external view returns (uint256) {
+    function getMembershipRenewalPrice(uint256 tokenId) external view returns (uint256) {
         return _getMembershipRenewalPrice(tokenId, _totalSupply());
     }
 
@@ -141,9 +134,7 @@ contract MembershipFacet is IMembership, MembershipJoin, ReentrancyGuard, Facet 
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @inheritdoc IMembership
-    function setMembershipFreeAllocation(
-        uint256 newAllocation
-    ) external onlyOwner {
+    function setMembershipFreeAllocation(uint256 newAllocation) external onlyOwner {
         // get current supply limit
         uint256 currentSupplyLimit = _getMembershipSupplyLimit();
 
@@ -167,9 +158,7 @@ contract MembershipFacet is IMembership, MembershipJoin, ReentrancyGuard, Facet 
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @inheritdoc IMembership
-    function setMembershipLimit(
-        uint256 newLimit
-    ) external onlyOwner {
+    function setMembershipLimit(uint256 newLimit) external onlyOwner {
         _verifyMaxSupply(newLimit, _totalSupply());
         _setMembershipSupplyLimit(newLimit);
     }
@@ -192,9 +181,7 @@ contract MembershipFacet is IMembership, MembershipJoin, ReentrancyGuard, Facet 
     /*                            IMAGE                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    function setMembershipImage(
-        string calldata newImage
-    ) external onlyOwner {
+    function setMembershipImage(string calldata newImage) external onlyOwner {
         _setMembershipImage(newImage);
     }
 

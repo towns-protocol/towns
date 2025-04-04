@@ -5,7 +5,7 @@ pragma solidity ^0.8.23;
 import {INodeRegistryBase} from "contracts/src/river/registry/facets/node/INodeRegistry.sol";
 
 // structs
-import {NodeStatus, Node} from "contracts/src/river/registry/libraries/RegistryStorage.sol";
+import {Node, NodeStatus} from "contracts/src/river/registry/libraries/RegistryStorage.sol";
 
 // libraries
 import {RiverRegistryErrors} from "contracts/src/river/registry/libraries/RegistryErrors.sol";
@@ -24,7 +24,10 @@ contract NodeRegistryTest is RiverRegistryBaseSetup, INodeRegistryBase {
     function test_registerNode(
         address nodeOperator,
         address node
-    ) external givenNodeOperatorIsApproved(nodeOperator) {
+    )
+        external
+        givenNodeOperatorIsApproved(nodeOperator)
+    {
         vm.assume(node != address(0));
 
         vm.prank(nodeOperator);
@@ -41,7 +44,9 @@ contract NodeRegistryTest is RiverRegistryBaseSetup, INodeRegistryBase {
     function test_revertWhen_registerNodeOperatorNotApproved(
         address nodeOperator,
         address node
-    ) external {
+    )
+        external
+    {
         vm.assume(node != address(0));
         vm.assume(nodeOperator != address(0));
         vm.assume(nodeOperator != node);
@@ -123,9 +128,7 @@ contract NodeRegistryTest is RiverRegistryBaseSetup, INodeRegistryBase {
         assertEq(uint256(updated.status), uint256(NodeStatus.RemoteOnly));
     }
 
-    function test_revertWhen_updateNodeStatusNodeNotFound(
-        address node
-    ) external {
+    function test_revertWhen_updateNodeStatusNodeNotFound(address node) external {
         vm.assume(node != address(0));
 
         vm.expectRevert(bytes(RiverRegistryErrors.NODE_NOT_FOUND));
@@ -184,9 +187,7 @@ contract NodeRegistryTest is RiverRegistryBaseSetup, INodeRegistryBase {
         assertEq(updated.url, "new-url");
     }
 
-    function test_revertWhen_updateNodeUrlInvalidOperator(
-        address node
-    ) external {
+    function test_revertWhen_updateNodeUrlInvalidOperator(address node) external {
         vm.prank(_randomAddress());
         vm.expectRevert(bytes(RiverRegistryErrors.BAD_AUTH));
         nodeRegistry.updateNodeUrl(node, url);
@@ -195,7 +196,10 @@ contract NodeRegistryTest is RiverRegistryBaseSetup, INodeRegistryBase {
     function test_revertWhen_updateNodeUrlInvalidNode(
         address nodeOperator,
         address node
-    ) external givenNodeOperatorIsApproved(nodeOperator) {
+    )
+        external
+        givenNodeOperatorIsApproved(nodeOperator)
+    {
         vm.prank(nodeOperator);
         vm.expectRevert(bytes(RiverRegistryErrors.NODE_NOT_FOUND));
         nodeRegistry.updateNodeUrl(node, url);

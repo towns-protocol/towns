@@ -15,18 +15,25 @@ interface IEntitlementDataQueryableBase {
 
 interface IEntitlementDataQueryable is IEntitlementDataQueryableBase {
     // Entitlement data pertaining to all roles in the space.
-    function getEntitlementDataByPermission(
-        string calldata permission
-    ) external view returns (EntitlementData[] memory);
+    function getEntitlementDataByPermission(string calldata permission)
+        external
+        view
+        returns (EntitlementData[] memory);
 
     // Entitlement data pertaining to all roles assigned to a channel.
     function getChannelEntitlementDataByPermission(
         bytes32 channelId,
         string calldata permission
-    ) external view returns (EntitlementData[] memory);
+    )
+        external
+        view
+        returns (EntitlementData[] memory);
 
     function getCrossChainEntitlementData(
         bytes32 transactionId,
         uint256 roleId
-    ) external view returns (EntitlementData memory);
+    )
+        external
+        view
+        returns (EntitlementData memory);
 }

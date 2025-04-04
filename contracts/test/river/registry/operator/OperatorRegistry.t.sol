@@ -3,13 +3,14 @@ pragma solidity ^0.8.23;
 
 // interfaces
 import {IOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
+
+import {IRiverConfig} from "contracts/src/river/registry/facets/config/IRiverConfig.sol";
 import {INodeRegistry} from "contracts/src/river/registry/facets/node/INodeRegistry.sol";
 import {IOperatorRegistry} from "contracts/src/river/registry/facets/operator/IOperatorRegistry.sol";
-import {IRiverConfig} from "contracts/src/river/registry/facets/config/IRiverConfig.sol";
 
 // structs
 import {
-    NodeStatus, Node, Setting
+    Node, NodeStatus, Setting
 } from "contracts/src/river/registry/libraries/RegistryStorage.sol";
 
 // libraries
@@ -25,9 +26,10 @@ contract OperatorRegistryTest is RiverRegistryBaseSetup, IOwnableBase {
     //                           approveOperator
     // =============================================================
 
-    function test_approveOperator(
-        address nodeOperator
-    ) external givenNodeOperatorIsApproved(nodeOperator) {
+    function test_approveOperator(address nodeOperator)
+        external
+        givenNodeOperatorIsApproved(nodeOperator)
+    {
         assertTrue(operatorRegistry.isOperator(nodeOperator));
     }
 
@@ -37,9 +39,10 @@ contract OperatorRegistryTest is RiverRegistryBaseSetup, IOwnableBase {
         operatorRegistry.approveOperator(address(0));
     }
 
-    function test_revertWhen_approveOperatorWithAlreadyApprovedOperator(
-        address nodeOperator
-    ) external givenNodeOperatorIsApproved(nodeOperator) {
+    function test_revertWhen_approveOperatorWithAlreadyApprovedOperator(address nodeOperator)
+        external
+        givenNodeOperatorIsApproved(nodeOperator)
+    {
         vm.prank(deployer);
         vm.expectRevert(bytes(RiverRegistryErrors.ALREADY_EXISTS));
         operatorRegistry.approveOperator(nodeOperator);
@@ -48,7 +51,9 @@ contract OperatorRegistryTest is RiverRegistryBaseSetup, IOwnableBase {
     function test_revertWhen_approveOperatorWithNonOwner(
         address nonOwner,
         address nodeOperator
-    ) external {
+    )
+        external
+    {
         vm.assume(nonOwner != address(0));
         vm.assume(nodeOperator != address(0));
         vm.assume(nonOwner != deployer);
@@ -62,9 +67,10 @@ contract OperatorRegistryTest is RiverRegistryBaseSetup, IOwnableBase {
     // =============================================================
     //                           removeOperator
     // =============================================================
-    function test_removeOperator(
-        address nodeOperator
-    ) external givenNodeOperatorIsApproved(nodeOperator) {
+    function test_removeOperator(address nodeOperator)
+        external
+        givenNodeOperatorIsApproved(nodeOperator)
+    {
         assertTrue(operatorRegistry.isOperator(nodeOperator));
 
         vm.prank(deployer);
@@ -75,9 +81,7 @@ contract OperatorRegistryTest is RiverRegistryBaseSetup, IOwnableBase {
         assertFalse(operatorRegistry.isOperator(nodeOperator));
     }
 
-    function test_revertWhen_removeOperatorWhenOperatorNotFound(
-        address nodeOperator
-    ) external {
+    function test_revertWhen_removeOperatorWhenOperatorNotFound(address nodeOperator) external {
         vm.assume(operatorRegistry.isOperator(nodeOperator) == false);
         vm.prank(deployer);
         vm.expectRevert(bytes(RiverRegistryErrors.OPERATOR_NOT_FOUND));

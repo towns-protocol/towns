@@ -65,34 +65,24 @@ interface IReferralsBase {
 interface IReferrals is IReferralsBase {
     /// @notice Register a new referral
     /// @param referral The referral information to register
-    function registerReferral(
-        Referral memory referral
-    ) external;
+    function registerReferral(Referral memory referral) external;
 
     /// @notice Get information about a specific referral
     /// @param referralCode The unique code of the referral to retrieve
     /// @return The referral information
-    function referralInfo(
-        string memory referralCode
-    ) external view returns (Referral memory);
+    function referralInfo(string memory referralCode) external view returns (Referral memory);
 
     /// @notice Update a referral
     /// @param referral The referral information to update
-    function updateReferral(
-        Referral memory referral
-    ) external;
+    function updateReferral(Referral memory referral) external;
 
     /// @notice Remove a referral
     /// @param referralCode The unique code of the referral to remove
-    function removeReferral(
-        string memory referralCode
-    ) external;
+    function removeReferral(string memory referralCode) external;
 
     /// @notice Set the max bps fee
     /// @param bps The new max bps fee
-    function setMaxBpsFee(
-        uint256 bps
-    ) external;
+    function setMaxBpsFee(uint256 bps) external;
 
     /// @notice Get the max bps fee
     /// @return The max bps fee
@@ -100,9 +90,7 @@ interface IReferrals is IReferralsBase {
 
     /// @notice Set the default bps fee
     /// @param bps The new default bps fee
-    function setDefaultBpsFee(
-        uint256 bps
-    ) external;
+    function setDefaultBpsFee(uint256 bps) external;
 
     /// @notice Get the default bps fee
     /// @return The default bps fee

@@ -5,62 +5,68 @@ pragma solidity ^0.8.23;
 import {IDiamond} from "@towns-protocol/diamond/src/IDiamond.sol";
 
 // helpers
-import {DiamondHelper} from "contracts/test/diamond/Diamond.t.sol";
+
 import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
+import {DiamondHelper} from "contracts/test/diamond/Diamond.t.sol";
 
 // contracts
 import {Diamond} from "@towns-protocol/diamond/src/Diamond.sol";
 
-import {Architect} from "contracts/src/factory/facets/architect/Architect.sol";
 import {ProxyManager} from "@towns-protocol/diamond/src/proxy/manager/ProxyManager.sol";
+import {Architect} from "contracts/src/factory/facets/architect/Architect.sol";
 
 // space helpers
 import {MultiInit} from "@towns-protocol/diamond/src/initializers/MultiInit.sol";
 
 // deployments
-import {DeployOwnable} from "contracts/scripts/deployments/facets/DeployOwnable.s.sol";
+
+import {DeployArchitect} from "contracts/scripts/deployments/facets/DeployArchitect.s.sol";
+import {DeployCreateSpace} from "contracts/scripts/deployments/facets/DeployCreateSpace.s.sol";
 import {DeployDiamondCut} from "contracts/scripts/deployments/facets/DeployDiamondCut.s.sol";
 import {DeployDiamondLoupe} from "contracts/scripts/deployments/facets/DeployDiamondLoupe.s.sol";
 import {DeployIntrospection} from "contracts/scripts/deployments/facets/DeployIntrospection.s.sol";
 import {DeployMetadata} from "contracts/scripts/deployments/facets/DeployMetadata.s.sol";
-import {DeployArchitect} from "contracts/scripts/deployments/facets/DeployArchitect.s.sol";
-import {DeployCreateSpace} from "contracts/scripts/deployments/facets/DeployCreateSpace.s.sol";
+import {DeployOwnable} from "contracts/scripts/deployments/facets/DeployOwnable.s.sol";
+
 import {DeployProxyManager} from "contracts/scripts/deployments/facets/DeployProxyManager.s.sol";
 
-import {DeployUserEntitlement} from
-    "contracts/scripts/deployments/utils/DeployUserEntitlement.s.sol";
-import {DeployMultiInit} from "contracts/scripts/deployments/utils/DeployMultiInit.s.sol";
 import {DeploySpace} from "contracts/scripts/deployments/diamonds/DeploySpace.s.sol";
 import {DeploySpaceOwner} from "contracts/scripts/deployments/diamonds/DeploySpaceOwner.s.sol";
+
+import {DeployEIP712Facet} from "contracts/scripts/deployments/facets/DeployEIP712Facet.s.sol";
+import {DeployImplementationRegistry} from
+    "contracts/scripts/deployments/facets/DeployImplementationRegistry.s.sol";
+import {DeployPartnerRegistry} from
+    "contracts/scripts/deployments/facets/DeployPartnerRegistry.s.sol";
+import {DeployPausable} from "contracts/scripts/deployments/facets/DeployPausable.s.sol";
+import {DeployPlatformRequirements} from
+    "contracts/scripts/deployments/facets/DeployPlatformRequirements.s.sol";
+import {DeployPricingModules} from "contracts/scripts/deployments/facets/DeployPricingModules.s.sol";
+import {DeployWalletLink} from "contracts/scripts/deployments/facets/DeployWalletLink.s.sol";
+import {DeployFixedPricing} from "contracts/scripts/deployments/utils/DeployFixedPricing.s.sol";
+import {DeployMultiInit} from "contracts/scripts/deployments/utils/DeployMultiInit.s.sol";
 import {DeployRuleEntitlement} from
     "contracts/scripts/deployments/utils/DeployRuleEntitlement.s.sol";
 import {DeployRuleEntitlementV2} from
     "contracts/scripts/deployments/utils/DeployRuleEntitlementV2.s.sol";
-import {DeployWalletLink} from "contracts/scripts/deployments/facets/DeployWalletLink.s.sol";
 import {DeployTieredLogPricingV2} from
     "contracts/scripts/deployments/utils/DeployTieredLogPricingV2.s.sol";
 import {DeployTieredLogPricingV3} from
     "contracts/scripts/deployments/utils/DeployTieredLogPricingV3.s.sol";
-import {DeployFixedPricing} from "contracts/scripts/deployments/utils/DeployFixedPricing.s.sol";
-import {DeployPricingModules} from "contracts/scripts/deployments/facets/DeployPricingModules.s.sol";
-import {DeployImplementationRegistry} from
-    "contracts/scripts/deployments/facets/DeployImplementationRegistry.s.sol";
-import {DeployPausable} from "contracts/scripts/deployments/facets/DeployPausable.s.sol";
-import {DeployPlatformRequirements} from
-    "contracts/scripts/deployments/facets/DeployPlatformRequirements.s.sol";
-import {DeployEIP712Facet} from "contracts/scripts/deployments/facets/DeployEIP712Facet.s.sol";
-import {DeployPartnerRegistry} from
-    "contracts/scripts/deployments/facets/DeployPartnerRegistry.s.sol";
+import {DeployUserEntitlement} from
+    "contracts/scripts/deployments/utils/DeployUserEntitlement.s.sol";
 
 import {DeployMockLegacyArchitect} from
     "contracts/scripts/deployments/facets/DeployMockLegacyArchitect.s.sol";
-import {DeploySpaceProxyInitializer} from
-    "contracts/scripts/deployments/utils/DeploySpaceProxyInitializer.s.sol";
+
 import {DeploySpaceFactoryInit} from
     "contracts/scripts/deployments/facets/DeploySpaceFactoryInit.s.sol";
-import {DeploySLCEIP6565} from "contracts/scripts/deployments/utils/DeploySLCEIP6565.s.sol";
+
 import {DeployMockDelegationRegistry} from
     "contracts/scripts/deployments/utils/DeployMockDelegationRegistry.s.sol";
+import {DeploySLCEIP6565} from "contracts/scripts/deployments/utils/DeploySLCEIP6565.s.sol";
+import {DeploySpaceProxyInitializer} from
+    "contracts/scripts/deployments/utils/DeploySpaceProxyInitializer.s.sol";
 
 contract DeploySpaceFactory is DiamondHelper, Deployer {
     // diamond helpers
@@ -150,9 +156,7 @@ contract DeploySpaceFactory is DiamondHelper, Deployer {
         return "spaceFactory";
     }
 
-    function addImmutableCuts(
-        address deployer
-    ) internal {
+    function addImmutableCuts(address deployer) internal {
         spaceImpl = deploySpace.deploy(deployer);
         spaceOwner = deploySpaceOwner.deploy(deployer);
 
@@ -201,9 +205,7 @@ contract DeploySpaceFactory is DiamondHelper, Deployer {
         );
     }
 
-    function diamondInitParams(
-        address deployer
-    ) public returns (Diamond.InitParams memory) {
+    function diamondInitParams(address deployer) public returns (Diamond.InitParams memory) {
         metadata = metadataHelper.deploy(deployer);
         architect = architectHelper.deploy(deployer);
         create = createSpaceHelper.deploy(deployer);
@@ -418,14 +420,16 @@ contract DeploySpaceFactory is DiamondHelper, Deployer {
     function diamondInitHelper(
         address deployer,
         string[] memory facetNames
-    ) external override returns (FacetCut[] memory) {
+    )
+        external
+        override
+        returns (FacetCut[] memory)
+    {
         diamondInitParamsFromFacets(deployer, facetNames);
         return this.getCuts();
     }
 
-    function __deploy(
-        address deployer
-    ) public override returns (address) {
+    function __deploy(address deployer) public override returns (address) {
         addImmutableCuts(deployer);
 
         Diamond.InitParams memory initDiamondCut = diamondInitParams(deployer);

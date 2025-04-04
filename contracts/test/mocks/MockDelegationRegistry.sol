@@ -15,9 +15,7 @@ contract MockDelegationRegistry is IDelegateRegistry {
 
     mapping(address to => EnumerableSetLib.AddressSet) internal _delegations;
 
-    function delegateAll(
-        address to
-    ) external {
+    function delegateAll(address to) external {
         _delegations[to].add(msg.sender);
     }
 
@@ -25,9 +23,11 @@ contract MockDelegationRegistry is IDelegateRegistry {
         return true;
     }
 
-    function getIncomingDelegations(
-        address to
-    ) external view returns (Delegation[] memory delegations) {
+    function getIncomingDelegations(address to)
+        external
+        view
+        returns (Delegation[] memory delegations)
+    {
         EnumerableSetLib.AddressSet storage incomingDelegations = _delegations[to];
 
         uint256 count = incomingDelegations.length();

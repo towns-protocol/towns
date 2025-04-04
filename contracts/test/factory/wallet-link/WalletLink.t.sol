@@ -6,18 +6,21 @@ import {IWalletLinkBase} from "contracts/src/factory/facets/wallet-link/IWalletL
 import {WalletLink} from "contracts/src/factory/facets/wallet-link/WalletLink.sol";
 
 // libraries
+
+import {SolanaUtils} from "contracts/src/factory/facets/wallet-link/libraries/SolanaUtils.sol";
+import {WalletLib} from "contracts/src/factory/facets/wallet-link/libraries/WalletLib.sol";
+import {SCL_EIP6565_UTILS} from "crypto-lib/lib/libSCL_eddsaUtils.sol";
 import {Vm} from "forge-std/Test.sol";
 import {LibString} from "solady/utils/LibString.sol";
-import {SCL_EIP6565_UTILS} from "crypto-lib/lib/libSCL_eddsaUtils.sol";
-import {WalletLib} from "contracts/src/factory/facets/wallet-link/libraries/WalletLib.sol";
-import {SolanaUtils} from "contracts/src/factory/facets/wallet-link/libraries/SolanaUtils.sol";
 
 // contracts
-import {DeployBase} from "contracts/scripts/common/DeployBase.s.sol";
-import {BaseSetup} from "contracts/test/spaces/BaseSetup.sol";
+
 import {Nonces} from "@towns-protocol/diamond/src/utils/Nonces.sol";
-import {MockDelegationRegistry} from "contracts/test/mocks/MockDelegationRegistry.sol";
+
 import {SimpleAccount} from "account-abstraction/samples/SimpleAccount.sol";
+import {DeployBase} from "contracts/scripts/common/DeployBase.s.sol";
+import {MockDelegationRegistry} from "contracts/test/mocks/MockDelegationRegistry.sol";
+import {BaseSetup} from "contracts/test/spaces/BaseSetup.sol";
 
 contract WalletLinkTest is IWalletLinkBase, BaseSetup, DeployBase {
     Vm.Wallet internal rootWallet;
@@ -104,9 +107,7 @@ contract WalletLinkTest is IWalletLinkBase, BaseSetup, DeployBase {
         _;
     }
 
-    modifier givenSolanaWalletIsLinkedToRootKey(
-        uint256 secretSeed
-    ) {
+    modifier givenSolanaWalletIsLinkedToRootKey(uint256 secretSeed) {
         (extPubKey, signer) = SCL_EIP6565_UTILS.SetKey(secretSeed);
 
         string memory solanaAddress = SolanaUtils.toBase58String(bytes32(extPubKey[4]));
@@ -141,9 +142,11 @@ contract WalletLinkTest is IWalletLinkBase, BaseSetup, DeployBase {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                   linkNonEVMWalletToRootKey                */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-    function test_linkNonEVMWalletToRootKey(
-        uint256 secretSeed
-    ) external givenWalletIsLinkedViaCaller givenSolanaWalletIsLinkedToRootKey(secretSeed) {
+    function test_linkNonEVMWalletToRootKey(uint256 secretSeed)
+        external
+        givenWalletIsLinkedViaCaller
+        givenSolanaWalletIsLinkedToRootKey(secretSeed)
+    {
         string memory solanaAddress = SolanaUtils.toBase58String(bytes32(extPubKey[4]));
 
         WalletLib.Wallet memory solanaWallet =
@@ -209,9 +212,10 @@ contract WalletLinkTest is IWalletLinkBase, BaseSetup, DeployBase {
         walletLink.linkNonEVMWalletToRootKey(nonEVMWallet, 0);
     }
 
-    function test_revertWhen_linkNonEVMWalletToRootKeyDifferentRootKey(
-        uint256 secretSeed
-    ) external givenWalletIsLinkedViaCaller {
+    function test_revertWhen_linkNonEVMWalletToRootKeyDifferentRootKey(uint256 secretSeed)
+        external
+        givenWalletIsLinkedViaCaller
+    {
         // Link a second wallet to a second root key
         uint256 secondNonce = walletLink.getLatestNonceForRootKey(secondRootWallet.addr);
         bytes memory secondSignature =
@@ -267,9 +271,11 @@ contract WalletLinkTest is IWalletLinkBase, BaseSetup, DeployBase {
         walletLink.linkNonEVMWalletToRootKey(nonEVMWallet, firstRootKeyNonce);
     }
 
-    function test_revertWhen_linkNonEVMWalletToRootKeyRootKeyAlreadyLinked(
-        uint256 secretSeed
-    ) external givenWalletIsLinkedViaCaller givenSolanaWalletIsLinkedToRootKey(secretSeed) {
+    function test_revertWhen_linkNonEVMWalletToRootKeyRootKeyAlreadyLinked(uint256 secretSeed)
+        external
+        givenWalletIsLinkedViaCaller
+        givenSolanaWalletIsLinkedToRootKey(secretSeed)
+    {
         uint256 nonce = walletLink.getLatestNonceForRootKey(rootWallet.addr);
         NonEVMLinkedWallet memory nonEVMWallet = _createNonEVMWallet(secretSeed, rootWallet.addr);
 
@@ -923,7 +929,11 @@ contract WalletLinkTest is IWalletLinkBase, BaseSetup, DeployBase {
     function _createNonEVMWallet(
         uint256 secretSeed,
         address rootKey
-    ) internal view returns (NonEVMLinkedWallet memory) {
+    )
+        internal
+        view
+        returns (NonEVMLinkedWallet memory)
+    {
         (uint256[5] memory solanaExtPubKey, uint256[2] memory solanaSigner) =
             SCL_EIP6565_UTILS.SetKey(secretSeed);
 

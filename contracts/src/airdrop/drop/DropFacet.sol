@@ -7,10 +7,11 @@ import {IRewardsDistribution} from
     "contracts/src/base/registry/facets/distribution/v2/IRewardsDistribution.sol";
 
 // libraries
+
+import {DropClaimLib} from "contracts/src/airdrop/drop/DropClaimLib.sol";
+import {DropFacetLib} from "contracts/src/airdrop/drop/DropFacetLib.sol";
 import {CurrencyTransfer} from "contracts/src/utils/libraries/CurrencyTransfer.sol";
 import {SafeCastLib} from "solady/utils/SafeCastLib.sol";
-import {DropFacetLib} from "contracts/src/airdrop/drop/DropFacetLib.sol";
-import {DropClaimLib} from "contracts/src/airdrop/drop/DropClaimLib.sol";
 
 // contracts
 import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
@@ -20,16 +21,12 @@ contract DropFacet is IDropFacet, OwnableBase, Facet {
     using DropFacetLib for DropFacetLib.Layout;
     using DropClaimLib for DropClaimLib.ClaimCondition;
 
-    function __DropFacet_init(
-        address rewardsDistribution
-    ) external onlyInitializing {
+    function __DropFacet_init(address rewardsDistribution) external onlyInitializing {
         _addInterface(type(IDropFacet).interfaceId);
         __DropFacet_init_unchained(rewardsDistribution);
     }
 
-    function __DropFacet_init_unchained(
-        address rewardsDistribution
-    ) internal {
+    function __DropFacet_init_unchained(address rewardsDistribution) internal {
         DropFacetLib.getLayout().setRewardsDistribution(rewardsDistribution);
     }
 
@@ -37,7 +34,10 @@ contract DropFacet is IDropFacet, OwnableBase, Facet {
     function claimWithPenalty(
         DropClaimLib.Claim calldata claim,
         uint16 expectedPenaltyBps
-    ) external returns (uint256 amount) {
+    )
+        external
+        returns (uint256 amount)
+    {
         DropClaimLib.ClaimCondition storage condition =
             DropFacetLib.getLayout().getClaimConditionById(claim.conditionId);
 
@@ -61,7 +61,10 @@ contract DropFacet is IDropFacet, OwnableBase, Facet {
         address delegatee,
         uint256 deadline,
         bytes calldata signature
-    ) external returns (uint256) {
+    )
+        external
+        returns (uint256)
+    {
         DropClaimLib.ClaimCondition storage condition =
             DropFacetLib.getLayout().getClaimConditionById(claim.conditionId);
 
@@ -93,16 +96,15 @@ contract DropFacet is IDropFacet, OwnableBase, Facet {
     }
 
     ///@inheritdoc IDropFacet
-    function setClaimConditions(
-        DropClaimLib.ClaimCondition[] calldata conditions
-    ) external onlyOwner {
+    function setClaimConditions(DropClaimLib.ClaimCondition[] calldata conditions)
+        external
+        onlyOwner
+    {
         DropFacetLib.getLayout().setClaimConditions(conditions);
     }
 
     ///@inheritdoc IDropFacet
-    function addClaimCondition(
-        DropClaimLib.ClaimCondition calldata condition
-    ) external onlyOwner {
+    function addClaimCondition(DropClaimLib.ClaimCondition calldata condition) external onlyOwner {
         DropFacetLib.getLayout().addClaimCondition(condition);
     }
 
@@ -117,9 +119,11 @@ contract DropFacet is IDropFacet, OwnableBase, Facet {
     }
 
     ///@inheritdoc IDropFacet
-    function getClaimConditionById(
-        uint256 conditionId
-    ) external view returns (DropClaimLib.ClaimCondition memory condition) {
+    function getClaimConditionById(uint256 conditionId)
+        external
+        view
+        returns (DropClaimLib.ClaimCondition memory condition)
+    {
         assembly ("memory-safe") {
             // By default, memory has been implicitly allocated for `condition`.
             // But we don't need this implicitly allocated memory.
@@ -135,7 +139,11 @@ contract DropFacet is IDropFacet, OwnableBase, Facet {
     function getSupplyClaimedByWallet(
         address account,
         uint256 conditionId
-    ) external view returns (uint256) {
+    )
+        external
+        view
+        returns (uint256)
+    {
         return DropFacetLib.getLayout().getSupplyClaimedByWallet(conditionId, account).claimed;
     }
 
@@ -143,7 +151,11 @@ contract DropFacet is IDropFacet, OwnableBase, Facet {
     function getDepositIdByWallet(
         address account,
         uint256 conditionId
-    ) external view returns (uint256) {
+    )
+        external
+        view
+        returns (uint256)
+    {
         return DropFacetLib.getLayout().getSupplyClaimedByWallet(conditionId, account).depositId;
     }
 }

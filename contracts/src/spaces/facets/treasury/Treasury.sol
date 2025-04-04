@@ -2,20 +2,22 @@
 pragma solidity ^0.8.23;
 
 // interfaces
+
+import {IERC1155Receiver} from "@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol";
 import {IMembershipBase} from "contracts/src/spaces/facets/membership/IMembership.sol";
 import {ITreasury} from "contracts/src/spaces/facets/treasury/ITreasury.sol";
-import {IERC1155Receiver} from "@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol";
 
 // libraries
 import {CurrencyTransfer} from "contracts/src/utils/libraries/CurrencyTransfer.sol";
 
 // contracts
+
+import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
 import {TokenOwnableBase} from
     "@towns-protocol/diamond/src/facets/ownable/token/TokenOwnableBase.sol";
-import {ReentrancyGuard} from "solady/utils/ReentrancyGuard.sol";
-import {CustomRevert} from "contracts/src/utils/libraries/CustomRevert.sol";
 import {MembershipStorage} from "contracts/src/spaces/facets/membership/MembershipStorage.sol";
-import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
+import {CustomRevert} from "contracts/src/utils/libraries/CustomRevert.sol";
+import {ReentrancyGuard} from "solady/utils/ReentrancyGuard.sol";
 
 contract Treasury is TokenOwnableBase, ReentrancyGuard, Facet, ITreasury {
     function __Treasury_init() external onlyInitializing {
@@ -23,9 +25,7 @@ contract Treasury is TokenOwnableBase, ReentrancyGuard, Facet, ITreasury {
     }
 
     ///@inheritdoc ITreasury
-    function withdraw(
-        address account
-    ) external onlyOwner nonReentrant {
+    function withdraw(address account) external onlyOwner nonReentrant {
         if (account == address(0)) {
             CustomRevert.revertWith(IMembershipBase.Membership__InvalidAddress.selector);
         }
@@ -55,7 +55,11 @@ contract Treasury is TokenOwnableBase, ReentrancyGuard, Facet, ITreasury {
         address,
         uint256,
         bytes memory
-    ) external pure returns (bytes4) {
+    )
+        external
+        pure
+        returns (bytes4)
+    {
         return this.onERC721Received.selector;
     }
 
@@ -66,7 +70,11 @@ contract Treasury is TokenOwnableBase, ReentrancyGuard, Facet, ITreasury {
         uint256,
         uint256,
         bytes memory
-    ) external pure returns (bytes4) {
+    )
+        external
+        pure
+        returns (bytes4)
+    {
         return this.onERC1155Received.selector;
     }
 
@@ -77,7 +85,11 @@ contract Treasury is TokenOwnableBase, ReentrancyGuard, Facet, ITreasury {
         uint256[] memory,
         uint256[] memory,
         bytes memory
-    ) external pure returns (bytes4) {
+    )
+        external
+        pure
+        returns (bytes4)
+    {
         return this.onERC1155BatchReceived.selector;
     }
 }

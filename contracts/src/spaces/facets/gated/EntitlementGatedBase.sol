@@ -3,11 +3,12 @@ pragma solidity ^0.8.23;
 
 // interfaces
 import {IEntitlementGatedBase} from "./IEntitlementGated.sol";
-import {IRuleEntitlement} from "contracts/src/spaces/entitlements/rule/IRuleEntitlement.sol";
+
 import {IEntitlementChecker} from
     "contracts/src/base/registry/facets/checker/IEntitlementChecker.sol";
 import {IImplementationRegistry} from
     "contracts/src/factory/facets/registry/IImplementationRegistry.sol";
+import {IRuleEntitlement} from "contracts/src/spaces/entitlements/rule/IRuleEntitlement.sol";
 
 // libraries
 import {EntitlementGatedStorage} from "./EntitlementGatedStorage.sol";
@@ -22,9 +23,7 @@ abstract contract EntitlementGatedBase is IEntitlementGatedBase {
         _;
     }
 
-    function _setEntitlementChecker(
-        IEntitlementChecker entitlementChecker
-    ) internal {
+    function _setEntitlementChecker(IEntitlementChecker entitlementChecker) internal {
         EntitlementGatedStorage.layout().entitlementChecker = entitlementChecker;
     }
 
@@ -33,7 +32,9 @@ abstract contract EntitlementGatedBase is IEntitlementGatedBase {
         bytes32 transactionId,
         IRuleEntitlement entitlement,
         uint256 roleId
-    ) internal {
+    )
+        internal
+    {
         if (callerAddress == address(0)) {
             CustomRevert.revertWith(EntitlementGated_InvalidAddress.selector);
         }
@@ -81,7 +82,9 @@ abstract contract EntitlementGatedBase is IEntitlementGatedBase {
         bytes32 transactionId,
         uint256 roleId,
         NodeVoteStatus result
-    ) internal {
+    )
+        internal
+    {
         EntitlementGatedStorage.Layout storage ds = EntitlementGatedStorage.layout();
         Transaction storage transaction = ds.transactions[transactionId];
 
@@ -157,7 +160,9 @@ abstract contract EntitlementGatedBase is IEntitlementGatedBase {
         bytes32 transactionId,
         IRuleEntitlement entitlement,
         uint256 requestId
-    ) internal {
+    )
+        internal
+    {
         if (walletAddress == address(0)) {
             CustomRevert.revertWith(EntitlementGated_InvalidAddress.selector);
         }
@@ -182,7 +187,9 @@ abstract contract EntitlementGatedBase is IEntitlementGatedBase {
         bytes32 transactionId,
         uint256,
         NodeVoteStatus result
-    ) internal {
+    )
+        internal
+    {
         EntitlementGatedStorage.Layout storage ds = EntitlementGatedStorage.layout();
         Transaction storage transaction = ds.transactions[transactionId];
 
@@ -199,9 +206,7 @@ abstract contract EntitlementGatedBase is IEntitlementGatedBase {
     /*                           Helpers                          */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    function _checkAllRoleIdsCompleted(
-        bytes32 transactionId
-    ) internal view returns (bool) {
+    function _checkAllRoleIdsCompleted(bytes32 transactionId) internal view returns (bool) {
         EntitlementGatedStorage.Layout storage ds = EntitlementGatedStorage.layout();
 
         Transaction storage transaction = ds.transactions[transactionId];
@@ -214,9 +219,7 @@ abstract contract EntitlementGatedBase is IEntitlementGatedBase {
         return true;
     }
 
-    function _removeTransaction(
-        bytes32 transactionId
-    ) internal {
+    function _removeTransaction(bytes32 transactionId) internal {
         EntitlementGatedStorage.Layout storage ds = EntitlementGatedStorage.layout();
 
         Transaction storage transaction = ds.transactions[transactionId];
@@ -231,7 +234,11 @@ abstract contract EntitlementGatedBase is IEntitlementGatedBase {
     function _getRuleData(
         bytes32 transactionId,
         uint256 roleId
-    ) internal view returns (IRuleEntitlement.RuleData memory) {
+    )
+        internal
+        view
+        returns (IRuleEntitlement.RuleData memory)
+    {
         EntitlementGatedStorage.Layout storage ds = EntitlementGatedStorage.layout();
 
         Transaction storage transaction = ds.transactions[transactionId];
@@ -247,7 +254,10 @@ abstract contract EntitlementGatedBase is IEntitlementGatedBase {
     function _onEntitlementCheckResultPosted(
         bytes32 transactionId,
         NodeVoteStatus result
-    ) internal virtual {}
+    )
+        internal
+        virtual
+    {}
 
     // TODO: This should be removed in the future when we wipe data
     function _setFallbackEntitlementChecker() internal {

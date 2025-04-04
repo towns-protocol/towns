@@ -6,13 +6,12 @@ pragma solidity ^0.8.23;
 // libraries
 
 // contracts
-import {ERC721A} from "contracts/src/diamond/facets/token/ERC721A/ERC721A.sol";
+
 import {Votes} from "contracts/src/diamond/facets/governance/votes/Votes.sol";
+import {ERC721A} from "contracts/src/diamond/facets/token/ERC721A/ERC721A.sol";
 
 contract MockERC721Votes is Votes, ERC721A {
-    function mintTo(
-        address to
-    ) external returns (uint256 tokenId) {
+    function mintTo(address to) external returns (uint256 tokenId) {
         tokenId = _nextTokenId();
         _mint(to, 1);
     }
@@ -21,9 +20,7 @@ contract MockERC721Votes is Votes, ERC721A {
         _mint(to, amount);
     }
 
-    function burn(
-        uint256 token
-    ) external {
+    function burn(uint256 token) external {
         _burn(token);
     }
 
@@ -37,7 +34,11 @@ contract MockERC721Votes is Votes, ERC721A {
         address to,
         uint256 firstTokenId,
         uint256 batchSize
-    ) internal virtual override {
+    )
+        internal
+        virtual
+        override
+    {
         _transferVotingUnits(from, to, batchSize);
         super._afterTokenTransfers(from, to, firstTokenId, batchSize);
     }
@@ -45,9 +46,7 @@ contract MockERC721Votes is Votes, ERC721A {
     /**
      * @dev Returns the balance of `account`.
      */
-    function _getVotingUnits(
-        address account
-    ) internal view virtual override returns (uint256) {
+    function _getVotingUnits(address account) internal view virtual override returns (uint256) {
         return balanceOf(account);
     }
 }

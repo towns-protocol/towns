@@ -12,22 +12,24 @@ import {IRewardsDistribution} from
 
 // libraries
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-import {CurrencyTransfer} from "contracts/src/utils/libraries/CurrencyTransfer.sol";
-import {
-    NodeOperatorStorage,
-    NodeOperatorStatus
-} from "contracts/src/base/registry/facets/operator/NodeOperatorStorage.sol";
-import {RewardsDistributionStorage} from
-    "contracts/src/base/registry/facets/distribution/v1/RewardsDistributionStorage.sol";
+
 import {SpaceDelegationStorage} from
     "contracts/src/base/registry/facets/delegation/SpaceDelegationStorage.sol";
+import {RewardsDistributionStorage} from
+    "contracts/src/base/registry/facets/distribution/v1/RewardsDistributionStorage.sol";
+import {
+    NodeOperatorStatus,
+    NodeOperatorStorage
+} from "contracts/src/base/registry/facets/operator/NodeOperatorStorage.sol";
+import {CurrencyTransfer} from "contracts/src/utils/libraries/CurrencyTransfer.sol";
 
 // contracts
 import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
-import {ERC721ABase} from "contracts/src/diamond/facets/token/ERC721A/ERC721ABase.sol";
+
+import {OwnableBase} from "@towns-protocol/diamond/src/facets/ownable/OwnableBase.sol";
 import {MainnetDelegationBase} from
     "contracts/src/base/registry/facets/mainnet/MainnetDelegationBase.sol";
-import {OwnableBase} from "@towns-protocol/diamond/src/facets/ownable/OwnableBase.sol";
+import {ERC721ABase} from "contracts/src/diamond/facets/token/ERC721A/ERC721ABase.sol";
 
 contract RewardsDistribution is
     IRewardsDistribution,
@@ -42,23 +44,21 @@ contract RewardsDistribution is
         _addInterface(type(IRewardsDistribution).interfaceId);
     }
 
-    function getClaimableAmountForOperator(
-        address operator
-    ) public view returns (uint256) {
+    function getClaimableAmountForOperator(address operator) public view returns (uint256) {
         RewardsDistributionStorage.Layout storage ds = RewardsDistributionStorage.layout();
         return ds.distributionByOperator[operator];
     }
 
-    function getClaimableAmountForDelegator(
-        address delegator
-    ) public view returns (uint256) {
+    function getClaimableAmountForDelegator(address delegator) public view returns (uint256) {
         RewardsDistributionStorage.Layout storage ds = RewardsDistributionStorage.layout();
         return ds.distributionByDelegator[delegator];
     }
 
-    function getClaimableAmountForAuthorizedClaimer(
-        address claimer
-    ) public view returns (uint256) {
+    function getClaimableAmountForAuthorizedClaimer(address claimer)
+        public
+        view
+        returns (uint256)
+    {
         RewardsDistributionStorage.Layout storage ds = RewardsDistributionStorage.layout();
         address[] memory delegatorsForClaimer = _getDelegatorsByAuthorizedClaimer(claimer);
         uint256 totalClaimableAmount = 0;
@@ -96,9 +96,7 @@ contract RewardsDistribution is
         CurrencyTransfer.transferCurrency(riverToken, address(this), recipient, amount);
     }
 
-    function operatorClaimByAddress(
-        address operatorAddress
-    ) external {
+    function operatorClaimByAddress(address operatorAddress) external {
         NodeOperatorStorage.Layout storage nos = NodeOperatorStorage.layout();
         if (nos.claimerByOperator[operatorAddress] != msg.sender) {
             revert RewardsDistribution_UnauthorizedOperatorClaimer(operatorAddress, msg.sender);
@@ -124,9 +122,7 @@ contract RewardsDistribution is
         _transferRewards(totalClaimableAmount, msg.sender);
     }
 
-    function mainnetClaimByAddress(
-        address mainnetDelegatorToClaim
-    ) external {
+    function mainnetClaimByAddress(address mainnetDelegatorToClaim) external {
         if (_getAuthorizedClaimer(mainnetDelegatorToClaim) != msg.sender) {
             revert RewardsDistribution_UnauthorizedClaimer(mainnetDelegatorToClaim, msg.sender);
         }
@@ -148,9 +144,7 @@ contract RewardsDistribution is
         _transferRewards(amount, msg.sender);
     }
 
-    function distributeRewards(
-        address operator
-    ) external onlyOwner {
+    function distributeRewards(address operator) external onlyOwner {
         address[] memory activeOperators = _getActiveOperators();
         uint256 totalActiveOperators = activeOperators.length;
 
@@ -185,9 +179,7 @@ contract RewardsDistribution is
         _distributeDelegatorsRewards(sd, operator, delegatorClaimAmount);
     }
 
-    function setPeriodDistributionAmount(
-        uint256 amount
-    ) external onlyOwner {
+    function setPeriodDistributionAmount(uint256 amount) external onlyOwner {
         RewardsDistributionStorage.layout().periodDistributionAmount = amount;
     }
 
@@ -195,9 +187,7 @@ contract RewardsDistribution is
         return RewardsDistributionStorage.layout().periodDistributionAmount;
     }
 
-    function setActivePeriodLength(
-        uint256 length
-    ) external onlyOwner {
+    function setActivePeriodLength(uint256 length) external onlyOwner {
         RewardsDistributionStorage.layout().activePeriodLength = length;
     }
 
@@ -209,9 +199,7 @@ contract RewardsDistribution is
         return _getActiveOperators();
     }
 
-    function setWithdrawalRecipient(
-        address recipient
-    ) external onlyOwner {
+    function setWithdrawalRecipient(address recipient) external onlyOwner {
         RewardsDistributionStorage.layout().withdrawalRecipient = recipient;
     }
 
@@ -236,7 +224,11 @@ contract RewardsDistribution is
     function _calculateOperatorDistribution(
         address operator,
         uint256 amountPerOperator
-    ) internal view returns (uint256) {
+    )
+        internal
+        view
+        returns (uint256)
+    {
         NodeOperatorStorage.Layout storage nos = NodeOperatorStorage.layout();
         uint256 commission = nos.commissionByOperator[operator];
         uint256 operatorClaimAmount = (commission * amountPerOperator) / 10_000;
@@ -247,7 +239,9 @@ contract RewardsDistribution is
         SpaceDelegationStorage.Layout storage sd,
         address operator,
         uint256 delegatorsClaimAmount
-    ) internal {
+    )
+        internal
+    {
         //Get all the RVR delegators from the Base token
         address[] memory delegators = _getValidDelegators(sd, operator);
 
@@ -315,7 +309,9 @@ contract RewardsDistribution is
         address operator,
         uint256 totalDelegation,
         uint256 delegatorsClaimAmount
-    ) internal {
+    )
+        internal
+    {
         uint256 delegatorsLen = combinedDelegators.length;
 
         RewardsDistributionStorage.Layout storage ds = RewardsDistributionStorage.layout();
@@ -389,7 +385,11 @@ contract RewardsDistribution is
     function _getValidDelegators(
         SpaceDelegationStorage.Layout storage sd,
         address operator
-    ) internal view returns (address[] memory) {
+    )
+        internal
+        view
+        returns (address[] memory)
+    {
         address riverToken = sd.riverToken;
         address[] memory delegators =
             IVotesEnumerable(riverToken).getDelegatorsByDelegatee(operator);
@@ -411,7 +411,11 @@ contract RewardsDistribution is
     function _getValidDelegatingSpaces(
         SpaceDelegationStorage.Layout storage sd,
         address operator
-    ) internal view returns (address[] memory) {
+    )
+        internal
+        view
+        returns (address[] memory)
+    {
         address[] memory delegatingSpaces = sd.spacesByOperator[operator].values();
         address[] memory validDelegatingSpaces = new address[](delegatingSpaces.length);
         for (uint256 i = 0; i < delegatingSpaces.length; i++) {
@@ -422,9 +426,11 @@ contract RewardsDistribution is
         return validDelegatingSpaces;
     }
 
-    function _getValidMainnetDelegationsByOperator(
-        address operator
-    ) internal view returns (Delegation[] memory) {
+    function _getValidMainnetDelegationsByOperator(address operator)
+        internal
+        view
+        returns (Delegation[] memory)
+    {
         //get all the delegators delegating to the operator on the mainnet
         Delegation[] memory mainnetDelegations = _getMainnetDelegationsByOperator(operator);
         Delegation[] memory validMainnetDelegations = new Delegation[](mainnetDelegations.length);
@@ -437,9 +443,7 @@ contract RewardsDistribution is
         return validMainnetDelegations;
     }
 
-    function _getOperatorDelegatee(
-        address delegator
-    ) internal view returns (address) {
+    function _getOperatorDelegatee(address delegator) internal view returns (address) {
         SpaceDelegationStorage.Layout storage sd = SpaceDelegationStorage.layout();
 
         // get the delegatee that the delegator is voting for
@@ -450,9 +454,7 @@ contract RewardsDistribution is
         return actualOperator;
     }
 
-    function _isActiveSinceLastCycle(
-        uint256 startTime
-    ) internal view returns (bool) {
+    function _isActiveSinceLastCycle(uint256 startTime) internal view returns (bool) {
         return startTime < (block.timestamp - getActivePeriodLength());
     }
 }

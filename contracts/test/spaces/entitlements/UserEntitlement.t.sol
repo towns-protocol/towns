@@ -10,8 +10,9 @@ import {IEntitlementBase} from "contracts/src/spaces/entitlements/IEntitlement.s
 //libraries
 
 //contracts
-import {UserEntitlement} from "contracts/src/spaces/entitlements/user/UserEntitlement.sol";
+
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
+import {UserEntitlement} from "contracts/src/spaces/entitlements/user/UserEntitlement.sol";
 
 contract UserEntitlementTest is TestUtils, IEntitlementBase {
     UserEntitlement internal implementation;
@@ -59,9 +60,7 @@ contract UserEntitlementTest is TestUtils, IEntitlementBase {
         assertEq(decodedAddresses[0], user);
     }
 
-    function test_setEntitlement_replace_with_empty_users(
-        uint256 roleId
-    ) external {
+    function test_setEntitlement_replace_with_empty_users(uint256 roleId) external {
         address[] memory users = new address[](1);
         users[0] = _randomAddress();
         vm.prank(space);
@@ -87,9 +86,7 @@ contract UserEntitlementTest is TestUtils, IEntitlementBase {
         }
     }
 
-    function test_setEntitlement_revert_invalid_user(
-        uint256 roleId
-    ) external {
+    function test_setEntitlement_revert_invalid_user(uint256 roleId) external {
         address[] memory users = new address[](1);
         users[0] = address(0);
 
@@ -98,9 +95,7 @@ contract UserEntitlementTest is TestUtils, IEntitlementBase {
         userEntitlement.setEntitlement(roleId, abi.encode(users));
     }
 
-    function test_removeEntitlement(
-        uint256 roleId
-    ) external {
+    function test_removeEntitlement(uint256 roleId) external {
         vm.assume(roleId != 0);
 
         address user = _randomAddress();
@@ -117,7 +112,9 @@ contract UserEntitlementTest is TestUtils, IEntitlementBase {
     function test_removeEntitlement_revert_invalid_value(
         uint256 roleId,
         uint256 invalidRoleId
-    ) external {
+    )
+        external
+    {
         vm.assume(roleId != 0);
         vm.assume(invalidRoleId != roleId);
 

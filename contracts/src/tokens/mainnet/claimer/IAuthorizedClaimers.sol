@@ -15,9 +15,7 @@ interface IAuthorizedClaimersBase {
 
 interface IAuthorizedClaimers is IAuthorizedClaimersBase {
     // Authorize a claimer to claim rewards on the callers behalf
-    function authorizeClaimer(
-        address claimer
-    ) external;
+    function authorizeClaimer(address claimer) external;
 
     // Authorize a claimer to claim rewards on the authorizer's behalf
     function authorizeClaimerBySig(
@@ -28,12 +26,11 @@ interface IAuthorizedClaimers is IAuthorizedClaimersBase {
         uint8 v,
         bytes32 r,
         bytes32 s
-    ) external;
+    )
+        external;
 
     // Get the authorized claimer for the authorizer
-    function getAuthorizedClaimer(
-        address authorizer
-    ) external view returns (address);
+    function getAuthorizedClaimer(address authorizer) external view returns (address);
 
     // Remove the authorized claimer for the caller
     function removeAuthorizedClaimer() external;

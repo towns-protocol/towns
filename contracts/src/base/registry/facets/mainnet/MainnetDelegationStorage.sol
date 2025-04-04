@@ -2,8 +2,9 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {IMainnetDelegationBase} from "./IMainnetDelegation.sol";
+
 import {ICrossDomainMessenger} from "./ICrossDomainMessenger.sol";
+import {IMainnetDelegationBase} from "./IMainnetDelegation.sol";
 
 // libraries
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";

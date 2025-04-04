@@ -5,7 +5,5 @@ interface IMembershipMetadata {
     /// @notice Emits an event to trigger metadata refresh when the space info is updated
     function refreshMetadata() external;
 
-    function tokenURI(
-        uint256 tokenId
-    ) external view returns (string memory);
+    function tokenURI(uint256 tokenId) external view returns (string memory);
 }

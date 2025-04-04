@@ -3,33 +3,38 @@ pragma solidity ^0.8.23;
 
 // interfaces
 import {ILegacyArchitectBase} from "./IMockLegacyArchitect.sol";
+
+import {ITokenOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/token/ITokenOwnable.sol";
+import {IManagedProxyBase} from "@towns-protocol/diamond/src/proxy/managed/IManagedProxy.sol";
+import {IProxyManager} from "@towns-protocol/diamond/src/proxy/manager/IProxyManager.sol";
+
+import {IERC721A} from "contracts/src/diamond/facets/token/ERC721A/IERC721A.sol";
 import {IEntitlement} from "contracts/src/spaces/entitlements/IEntitlement.sol";
-import {IUserEntitlement} from "contracts/src/spaces/entitlements/user/IUserEntitlement.sol";
 import {IRuleEntitlement} from "contracts/src/spaces/entitlements/rule/IRuleEntitlement.sol";
-import {IRoles, IRolesBase} from "contracts/src/spaces/facets/roles/IRoles.sol";
+import {IUserEntitlement} from "contracts/src/spaces/entitlements/user/IUserEntitlement.sol";
+
 import {IChannel} from "contracts/src/spaces/facets/channels/IChannel.sol";
 import {IEntitlementsManager} from
     "contracts/src/spaces/facets/entitlements/IEntitlementsManager.sol";
-import {IProxyManager} from "@towns-protocol/diamond/src/proxy/manager/IProxyManager.sol";
-import {ITokenOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/token/ITokenOwnable.sol";
-import {IManagedProxyBase} from "@towns-protocol/diamond/src/proxy/managed/IManagedProxy.sol";
 import {IMembershipBase} from "contracts/src/spaces/facets/membership/IMembership.sol";
-import {IERC721A} from "contracts/src/diamond/facets/token/ERC721A/IERC721A.sol";
+import {IRoles, IRolesBase} from "contracts/src/spaces/facets/roles/IRoles.sol";
 
 // libraries
-import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-import {StringSet} from "contracts/src/utils/StringSet.sol";
-import {Validator} from "contracts/src/utils/Validator.sol";
+
 import {Address} from "@openzeppelin/contracts/utils/Address.sol";
+import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import {ArchitectStorage} from "contracts/src/factory/facets/architect/ArchitectStorage.sol";
 import {ImplementationStorage} from
     "contracts/src/factory/facets/architect/ImplementationStorage.sol";
 import {Permissions} from "contracts/src/spaces/facets/Permissions.sol";
+import {StringSet} from "contracts/src/utils/StringSet.sol";
+import {Validator} from "contracts/src/utils/Validator.sol";
 
 // contracts
-import {Factory} from "contracts/src/utils/Factory.sol";
+
 import {SpaceProxy} from "contracts/src/spaces/facets/proxy/SpaceProxy.sol";
 import {SpaceProxyInitializer} from "contracts/src/spaces/facets/proxy/SpaceProxyInitializer.sol";
+import {Factory} from "contracts/src/utils/Factory.sol";
 
 // modules
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
@@ -45,21 +50,15 @@ abstract contract LegacyArchitectBase is ILegacyArchitectBase {
     // =============================================================
     //                           Spaces
     // =============================================================
-    function _getTokenIdBySpace(
-        address space
-    ) internal view returns (uint256) {
+    function _getTokenIdBySpace(address space) internal view returns (uint256) {
         return ArchitectStorage.layout().tokenIdBySpace[space];
     }
 
-    function _getSpaceByTokenId(
-        uint256 tokenId
-    ) internal view returns (address) {
+    function _getSpaceByTokenId(uint256 tokenId) internal view returns (address) {
         return ArchitectStorage.layout().spaceByTokenId[tokenId];
     }
 
-    function _createSpace(
-        SpaceInfo memory spaceInfo
-    ) internal returns (address spaceAddress) {
+    function _createSpace(SpaceInfo memory spaceInfo) internal returns (address spaceAddress) {
         ArchitectStorage.Layout storage ds = ArchitectStorage.layout();
         ImplementationStorage.Layout storage ims = ImplementationStorage.layout();
 
@@ -129,9 +128,7 @@ abstract contract LegacyArchitectBase is ILegacyArchitectBase {
     //                           Implementations
     // =============================================================
 
-    function _setLegacyRuleEntitlement(
-        IRuleEntitlement entitlement
-    ) internal {
+    function _setLegacyRuleEntitlement(IRuleEntitlement entitlement) internal {
         ImplementationStorage.Layout storage ds = ImplementationStorage.layout();
         ds.legacyRuleEntitlement = entitlement;
     }
@@ -144,7 +141,9 @@ abstract contract LegacyArchitectBase is ILegacyArchitectBase {
         address space,
         uint256 roleId,
         ChannelInfo memory channelInfo
-    ) internal {
+    )
+        internal
+    {
         uint256[] memory roleIds = new uint256[](1);
         roleIds[0] = roleId;
 
@@ -162,7 +161,10 @@ abstract contract LegacyArchitectBase is ILegacyArchitectBase {
         IUserEntitlement userEntitlement,
         IRuleEntitlement ruleEntitlement,
         MembershipRequirements memory requirements
-    ) internal returns (uint256 roleId) {
+    )
+        internal
+        returns (uint256 roleId)
+    {
         string[] memory joinPermissions = new string[](1);
         joinPermissions[0] = Permissions.JoinSpace;
 
@@ -215,7 +217,10 @@ abstract contract LegacyArchitectBase is ILegacyArchitectBase {
         string memory memberName,
         string[] memory memberPermissions,
         IUserEntitlement userEntitlement
-    ) internal returns (uint256 roleId) {
+    )
+        internal
+        returns (uint256 roleId)
+    {
         address[] memory users = new address[](1);
         users[0] = EVERYONE_ADDRESS;
 
@@ -233,7 +238,10 @@ abstract contract LegacyArchitectBase is ILegacyArchitectBase {
     function _deploySpace(
         uint256 spaceTokenId,
         Membership memory membership
-    ) internal returns (address space) {
+    )
+        internal
+        returns (address space)
+    {
         // get deployment info
         (bytes memory initCode, bytes32 salt) = _getSpaceDeploymentInfo(spaceTokenId, membership);
         return Factory.deploy(initCode, salt);
@@ -242,7 +250,10 @@ abstract contract LegacyArchitectBase is ILegacyArchitectBase {
     function _deployEntitlement(
         IEntitlement entitlement,
         address spaceAddress
-    ) internal returns (address) {
+    )
+        internal
+        returns (address)
+    {
         // calculate init code
         bytes memory initCode = abi.encodePacked(
             type(ERC1967Proxy).creationCode,
@@ -255,7 +266,11 @@ abstract contract LegacyArchitectBase is ILegacyArchitectBase {
     function _getSpaceDeploymentInfo(
         uint256 spaceTokenId,
         Membership memory membership
-    ) internal view returns (bytes memory initCode, bytes32 salt) {
+    )
+        internal
+        view
+        returns (bytes memory initCode, bytes32 salt)
+    {
         ImplementationStorage.Layout storage ds = ImplementationStorage.layout();
 
         // calculate salt

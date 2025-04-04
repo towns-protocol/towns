@@ -2,16 +2,18 @@
 pragma solidity ^0.8.23;
 
 //interfaces
-import {IRoles, IRolesBase} from "contracts/src/spaces/facets/roles/IRoles.sol";
-import {IChannel} from "contracts/src/spaces/facets/channels/IChannel.sol";
+
 import {IEntitlementBase} from "contracts/src/spaces/entitlements/IEntitlement.sol";
 import {IEntitlement} from "contracts/src/spaces/entitlements/IEntitlement.sol";
+import {IChannel} from "contracts/src/spaces/facets/channels/IChannel.sol";
+import {IRoles, IRolesBase} from "contracts/src/spaces/facets/roles/IRoles.sol";
 
 // libraries
 
 // contracts
-import {BaseSetup} from "contracts/test/spaces/BaseSetup.sol";
+
 import {Roles} from "contracts/src/spaces/facets/roles/Roles.sol";
+import {BaseSetup} from "contracts/test/spaces/BaseSetup.sol";
 
 // mocks
 import {MockUserEntitlement} from "contracts/test/mocks/MockUserEntitlement.sol";

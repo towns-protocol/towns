@@ -14,9 +14,7 @@ contract DeployTownsMainnet is Deployer, ITownsBase {
     address public manager;
     address public vault;
 
-    function inflationConfig(
-        address _manager
-    ) public pure returns (InflationConfig memory) {
+    function inflationConfig(address _manager) public pure returns (InflationConfig memory) {
         return InflationConfig({
             initialMintTime: 1_709_667_671, // Tuesday, March 5, 2024 7:41:11 PM
             initialInflationRate: 800,
@@ -31,9 +29,7 @@ contract DeployTownsMainnet is Deployer, ITownsBase {
         return "townsMainnet";
     }
 
-    function __deploy(
-        address deployer
-    ) public override returns (address) {
+    function __deploy(address deployer) public override returns (address) {
         manager = _getManager();
         vault = _getVault();
         InflationConfig memory config = inflationConfig(manager);

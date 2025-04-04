@@ -16,9 +16,7 @@ contract DeployEntitlementGatedExample is Deployer {
         return "utils/entitlementGatedExample";
     }
 
-    function __deploy(
-        address deployer
-    ) public override returns (address) {
+    function __deploy(address deployer) public override returns (address) {
         vm.broadcast(deployer);
         return address(new MockEntitlementGated(IEntitlementChecker(getDeployment("baseRegistry"))));
     }

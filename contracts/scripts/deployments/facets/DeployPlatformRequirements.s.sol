@@ -36,9 +36,7 @@ contract DeployPlatformRequirements is FacetHelper, Deployer {
         return "facets/platformRequirementsFacet";
     }
 
-    function __deploy(
-        address deployer
-    ) public override returns (address) {
+    function __deploy(address deployer) public override returns (address) {
         vm.startBroadcast(deployer);
         PlatformRequirementsFacet facet = new PlatformRequirementsFacet();
         vm.stopBroadcast();
@@ -56,7 +54,11 @@ contract DeployPlatformRequirements is FacetHelper, Deployer {
         uint256 membershipMintLimit,
         uint64 membershipDuration,
         uint256 membershipMinPrice
-    ) public pure returns (bytes memory) {
+    )
+        public
+        pure
+        returns (bytes memory)
+    {
         return abi.encodeWithSelector(
             PlatformRequirementsFacet.__PlatformRequirements_init.selector,
             feeRecipient,

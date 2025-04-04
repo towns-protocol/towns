@@ -16,16 +16,12 @@ abstract contract DispatcherBase is IDispatcherBase {
         ds.transactionData[transactionId] = data;
     }
 
-    function _getCapturedData(
-        bytes32 transactionId
-    ) internal view returns (bytes memory) {
+    function _getCapturedData(bytes32 transactionId) internal view returns (bytes memory) {
         DispatcherStorage.Layout storage ds = DispatcherStorage.layout();
         return ds.transactionData[transactionId];
     }
 
-    function _captureValue(
-        bytes32 transactionId
-    ) internal {
+    function _captureValue(bytes32 transactionId) internal {
         DispatcherStorage.Layout storage ds = DispatcherStorage.layout();
         ds.transactionBalance[transactionId] += msg.value;
     }
@@ -35,23 +31,17 @@ abstract contract DispatcherBase is IDispatcherBase {
         ds.transactionBalance[transactionId] -= value;
     }
 
-    function _getCapturedValue(
-        bytes32 transactionId
-    ) internal view returns (uint256) {
+    function _getCapturedValue(bytes32 transactionId) internal view returns (uint256) {
         DispatcherStorage.Layout storage ds = DispatcherStorage.layout();
         return ds.transactionBalance[transactionId];
     }
 
-    function _dispatchNonce(
-        bytes32 keyHash
-    ) internal view returns (uint256) {
+    function _dispatchNonce(bytes32 keyHash) internal view returns (uint256) {
         DispatcherStorage.Layout storage ds = DispatcherStorage.layout();
         return ds.transactionNonce[keyHash];
     }
 
-    function _useDispatchNonce(
-        bytes32 keyHash
-    ) internal returns (uint256) {
+    function _useDispatchNonce(bytes32 keyHash) internal returns (uint256) {
         DispatcherStorage.Layout storage ds = DispatcherStorage.layout();
         return ds.transactionNonce[keyHash]++;
     }
@@ -60,7 +50,11 @@ abstract contract DispatcherBase is IDispatcherBase {
         bytes32 keyHash,
         address requester,
         uint256 nonce
-    ) internal pure returns (uint256) {
+    )
+        internal
+        pure
+        returns (uint256)
+    {
         return uint256(keccak256(abi.encode(keyHash, requester, nonce)));
     }
 
@@ -71,7 +65,10 @@ abstract contract DispatcherBase is IDispatcherBase {
     function _registerTransaction(
         address sender,
         bytes memory data
-    ) internal returns (bytes32 transactionId) {
+    )
+        internal
+        returns (bytes32 transactionId)
+    {
         bytes32 keyHash = keccak256(abi.encodePacked(sender, block.number));
 
         transactionId = _makeDispatchId(

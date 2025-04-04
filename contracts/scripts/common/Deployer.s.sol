@@ -6,8 +6,9 @@ pragma solidity ^0.8.0;
 //libraries
 
 //contracts
-import {Script} from "forge-std/Script.sol";
+
 import {DeployBase} from "./DeployBase.s.sol";
+import {Script} from "forge-std/Script.sol";
 
 abstract contract Deployer is Script, DeployBase {
     // override this with the name of the deployment version that this script deploys
@@ -18,9 +19,7 @@ abstract contract Deployer is Script, DeployBase {
     // - loading private keys
     // - saving deployments
     // - logging
-    function __deploy(
-        address deployer
-    ) public virtual returns (address);
+    function __deploy(address deployer) public virtual returns (address);
 
     // will first try to load existing deployments from `deployments/<network>/<contract>.json`
     // if OVERRIDE_DEPLOYMENTS is set to true or if no cached deployment is found:
@@ -31,9 +30,7 @@ abstract contract Deployer is Script, DeployBase {
         return deploy(_msgSender());
     }
 
-    function deploy(
-        address deployer
-    ) public virtual returns (address deployedAddr) {
+    function deploy(address deployer) public virtual returns (address deployedAddr) {
         bool overrideDeployment = vm.envOr("OVERRIDE_DEPLOYMENTS", uint256(0)) > 0;
 
         address existingAddr = isTesting() ? address(0) : getDeployment(versionName());

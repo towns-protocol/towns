@@ -2,9 +2,10 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {IPrepay} from "contracts/src/spaces/facets/prepay/IPrepay.sol";
+
 import {IPlatformRequirements} from
     "contracts/src/factory/facets/platform/requirements/IPlatformRequirements.sol";
+import {IPrepay} from "contracts/src/spaces/facets/prepay/IPrepay.sol";
 
 // libraries
 import {MembershipStorage} from "contracts/src/spaces/facets/membership/MembershipStorage.sol";
@@ -12,18 +13,17 @@ import {CurrencyTransfer} from "contracts/src/utils/libraries/CurrencyTransfer.s
 
 // contracts
 import {PrepayBase} from "./PrepayBase.sol";
-import {ReentrancyGuard} from "solady/utils/ReentrancyGuard.sol";
-import {Entitled} from "contracts/src/spaces/facets/Entitled.sol";
+
 import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
+import {Entitled} from "contracts/src/spaces/facets/Entitled.sol";
+import {ReentrancyGuard} from "solady/utils/ReentrancyGuard.sol";
 
 contract PrepayFacet is IPrepay, PrepayBase, ReentrancyGuard, Entitled, Facet {
     function __PrepayFacet_init() external onlyInitializing {
         _addInterface(type(IPrepay).interfaceId);
     }
 
-    function prepayMembership(
-        uint256 supply
-    ) external payable nonReentrant {
+    function prepayMembership(uint256 supply) external payable nonReentrant {
         if (supply == 0) revert Prepay__InvalidSupplyAmount();
 
         MembershipStorage.Layout storage ds = MembershipStorage.layout();
@@ -52,9 +52,7 @@ contract PrepayFacet is IPrepay, PrepayBase, ReentrancyGuard, Entitled, Facet {
         return _getPrepaidSupply();
     }
 
-    function calculateMembershipPrepayFee(
-        uint256 supply
-    ) external view returns (uint256) {
+    function calculateMembershipPrepayFee(uint256 supply) external view returns (uint256) {
         MembershipStorage.Layout storage ds = MembershipStorage.layout();
         IPlatformRequirements platform = IPlatformRequirements(ds.spaceFactory);
         return supply * platform.getMembershipFee();

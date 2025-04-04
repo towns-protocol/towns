@@ -20,9 +20,7 @@ abstract contract PlatformRequirementsBase is IPlatformRequirementsBase {
     }
 
     // Fee Recipient
-    function _setFeeRecipient(
-        address recipient
-    ) internal {
+    function _setFeeRecipient(address recipient) internal {
         if (recipient == address(0)) {
             Platform__InvalidFeeRecipient.selector.revertWith();
         }
@@ -37,9 +35,7 @@ abstract contract PlatformRequirementsBase is IPlatformRequirementsBase {
     }
 
     // Membership BPS
-    function _setMembershipBps(
-        uint16 bps
-    ) internal {
+    function _setMembershipBps(uint16 bps) internal {
         if (bps > BasisPoints.MAX_BPS) {
             Platform__InvalidMembershipBps.selector.revertWith();
         }
@@ -53,9 +49,7 @@ abstract contract PlatformRequirementsBase is IPlatformRequirementsBase {
     }
 
     // Membership Fee
-    function _setMembershipFee(
-        uint256 fee
-    ) internal {
+    function _setMembershipFee(uint256 fee) internal {
         PlatformRequirementsStorage.layout().membershipFee = fee;
         emit PlatformMembershipFeeSet(fee);
     }
@@ -65,9 +59,7 @@ abstract contract PlatformRequirementsBase is IPlatformRequirementsBase {
     }
 
     // Membership Mint Limit
-    function _setMembershipMintLimit(
-        uint256 limit
-    ) internal {
+    function _setMembershipMintLimit(uint256 limit) internal {
         if (limit == 0) Platform__InvalidMembershipMintLimit.selector.revertWith();
 
         PlatformRequirementsStorage.layout().membershipMintLimit = limit;
@@ -79,9 +71,7 @@ abstract contract PlatformRequirementsBase is IPlatformRequirementsBase {
     }
 
     // Membership Duration
-    function _setMembershipDuration(
-        uint64 duration
-    ) internal {
+    function _setMembershipDuration(uint64 duration) internal {
         if (duration == 0) {
             Platform__InvalidMembershipDuration.selector.revertWith();
         }
@@ -95,9 +85,7 @@ abstract contract PlatformRequirementsBase is IPlatformRequirementsBase {
     }
 
     // Membership Min Price
-    function _setMembershipMinPrice(
-        uint256 minPrice
-    ) internal {
+    function _setMembershipMinPrice(uint256 minPrice) internal {
         if (minPrice == 0) {
             Platform__InvalidMembershipMinPrice.selector.revertWith();
         }
@@ -130,9 +118,7 @@ abstract contract PlatformRequirementsBase is IPlatformRequirementsBase {
         emit RouterWhitelistUpdated(router, whitelisted);
     }
 
-    function _isRouterWhitelisted(
-        address router
-    ) internal view returns (bool) {
+    function _isRouterWhitelisted(address router) internal view returns (bool) {
         return PlatformRequirementsStorage.layout().whitelistedRouters[router];
     }
 }

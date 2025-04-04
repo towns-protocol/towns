@@ -18,16 +18,18 @@ pragma solidity ^0.8.0;
 
 // contracts
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+
+import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import {ContextUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
 import {ERC165Upgradeable} from
     "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
-import {ContextUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
-import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
 // libraries
 
 // interfaces
-import {IEntitlement} from "contracts/src/spaces/entitlements/IEntitlement.sol";
+
 import {IRuleEntitlementV2} from "./IRuleEntitlement.sol";
+import {IEntitlement} from "contracts/src/spaces/entitlements/IEntitlement.sol";
 
 contract RuleEntitlementV2 is
     Initializable,
@@ -60,9 +62,7 @@ contract RuleEntitlementV2 is
         _disableInitializers();
     }
 
-    function initialize(
-        address _space
-    ) public initializer {
+    function initialize(address _space) public initializer {
         __UUPSUpgradeable_init();
         __ERC165_init();
         __Context_init();
@@ -82,9 +82,7 @@ contract RuleEntitlementV2 is
 
     /// @notice allow the contract to be upgraded while retaining state
     /// @param newImplementation address of the new implementation
-    function _authorizeUpgrade(
-        address newImplementation
-    ) internal override onlySpace {}
+    function _authorizeUpgrade(address newImplementation) internal override onlySpace {}
 
     /// @notice get the storage slot for the contract
     /// @return ds storage slot
@@ -98,9 +96,7 @@ contract RuleEntitlementV2 is
     //                           External
     // =============================================================
 
-    function supportsInterface(
-        bytes4 interfaceId
-    ) public view override returns (bool) {
+    function supportsInterface(bytes4 interfaceId) public view override returns (bool) {
         return interfaceId == type(IEntitlement).interfaceId
             || interfaceId == type(IRuleEntitlementV2).interfaceId
             || super.supportsInterface(interfaceId);
@@ -179,9 +175,7 @@ contract RuleEntitlementV2 is
     }
 
     // @inheritdoc IEntitlement
-    function removeEntitlement(
-        uint256 roleId
-    ) external onlySpace {
+    function removeEntitlement(uint256 roleId) external onlySpace {
         Layout storage ds = layout();
         EntitlementV2 storage entitlement = ds.entitlementsByRoleIdV2[roleId];
 
@@ -193,28 +187,20 @@ contract RuleEntitlementV2 is
     }
 
     // @inheritdoc IEntitlement
-    function getEntitlementDataByRoleId(
-        uint256 roleId
-    ) external view returns (bytes memory) {
+    function getEntitlementDataByRoleId(uint256 roleId) external view returns (bytes memory) {
         EntitlementV2 storage entitlement = layout().entitlementsByRoleIdV2[roleId];
         return entitlement.data;
     }
 
-    function encodeRuleData(
-        RuleDataV2 calldata data
-    ) external pure returns (bytes memory) {
+    function encodeRuleData(RuleDataV2 calldata data) external pure returns (bytes memory) {
         return abi.encode(data);
     }
 
-    function getRuleData(
-        uint256 roleId
-    ) external view returns (RuleData memory data) {
+    function getRuleData(uint256 roleId) external view returns (RuleData memory data) {
         return entitlementsByRoleId[roleId].data;
     }
 
-    function getRuleDataV2(
-        uint256 roleId
-    ) external view returns (RuleDataV2 memory data) {
+    function getRuleDataV2(uint256 roleId) external view returns (RuleDataV2 memory data) {
         bytes storage ruleData = layout().entitlementsByRoleIdV2[roleId].data;
 
         if (ruleData.length == 0) return data;
@@ -225,9 +211,7 @@ contract RuleEntitlementV2 is
     // =============================================================
     //                           Internal
     // =============================================================
-    function _removeRuleDataV1(
-        uint256 roleId
-    ) internal {
+    function _removeRuleDataV1(uint256 roleId) internal {
         if (entitlementsByRoleId[roleId].grantedBy != address(0)) {
             delete entitlementsByRoleId[roleId];
         }

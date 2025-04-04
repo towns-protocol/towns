@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.23;
 
-import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
 import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
+import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
 import {EntitlementChecker} from "contracts/src/base/registry/facets/checker/EntitlementChecker.sol";
 
 contract DeployEntitlementChecker is Deployer, FacetHelper {
@@ -26,9 +26,7 @@ contract DeployEntitlementChecker is Deployer, FacetHelper {
         return "facets/entitlementCheckerFacet";
     }
 
-    function __deploy(
-        address deployer
-    ) public override returns (address) {
+    function __deploy(address deployer) public override returns (address) {
         vm.startBroadcast(deployer);
         EntitlementChecker entitlementChecker = new EntitlementChecker();
         vm.stopBroadcast();

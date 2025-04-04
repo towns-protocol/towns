@@ -5,15 +5,17 @@ pragma solidity ^0.8.23;
 import {IRolesBase} from "./IRoles.sol";
 import {IEntitlement} from "contracts/src/spaces/entitlements/IEntitlement.sol";
 // libraries
-import {StringSet} from "contracts/src/utils/StringSet.sol";
+
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import {StringSet} from "contracts/src/utils/StringSet.sol";
 import {Validator} from "contracts/src/utils/Validator.sol";
 
 // services
+
+import {RolesStorage} from "./RolesStorage.sol";
+import {ChannelService} from "contracts/src/spaces/facets/channels/ChannelService.sol";
 import {EntitlementsManagerService} from
     "contracts/src/spaces/facets/entitlements/EntitlementsManagerService.sol";
-import {ChannelService} from "contracts/src/spaces/facets/channels/ChannelService.sol";
-import {RolesStorage} from "./RolesStorage.sol";
 
 abstract contract RolesBase is IRolesBase {
     using StringSet for StringSet.Set;
@@ -28,7 +30,10 @@ abstract contract RolesBase is IRolesBase {
         string calldata roleName,
         string[] memory permissions,
         CreateEntitlement[] memory entitlements
-    ) internal returns (uint256 roleId) {
+    )
+        internal
+        returns (uint256 roleId)
+    {
         Validator.checkLength(roleName, 2);
 
         uint256 entitlementsLen = entitlements.length;
@@ -86,9 +91,11 @@ abstract contract RolesBase is IRolesBase {
         }
     }
 
-    function _getRolesWithPermission(
-        string memory permission
-    ) internal view returns (Role[] memory) {
+    function _getRolesWithPermission(string memory permission)
+        internal
+        view
+        returns (Role[] memory)
+    {
         uint256[] memory roleIds = _getRoleIds();
         uint256 roleIdLen = roleIds.length;
         Role[] memory rolesWithPermission = new Role[](roleIdLen);
@@ -127,9 +134,7 @@ abstract contract RolesBase is IRolesBase {
         return rolesWithPermission;
     }
 
-    function _getRoleById(
-        uint256 roleId
-    ) internal view returns (Role memory role) {
+    function _getRoleById(uint256 roleId) internal view returns (Role memory role) {
         (
             string memory name,
             bool isImmutable,
@@ -152,7 +157,9 @@ abstract contract RolesBase is IRolesBase {
         string calldata roleName,
         string[] memory permissions,
         CreateEntitlement[] memory entitlements
-    ) internal {
+    )
+        internal
+    {
         // check role exists
         _checkRoleExists(roleId);
 
@@ -248,9 +255,7 @@ abstract contract RolesBase is IRolesBase {
         emit RoleUpdated(msg.sender, roleId);
     }
 
-    function _removeRole(
-        uint256 roleId
-    ) internal {
+    function _removeRole(uint256 roleId) internal {
         // check role exists
         _checkRoleExists(roleId);
 
@@ -314,7 +319,11 @@ abstract contract RolesBase is IRolesBase {
     function _getChannelPermissionOverrides(
         uint256 roleId,
         bytes32 channelId
-    ) internal view returns (string[] memory permissions) {
+    )
+        internal
+        view
+        returns (string[] memory permissions)
+    {
         // check role exists
         _checkRoleExists(roleId);
 
@@ -328,7 +337,9 @@ abstract contract RolesBase is IRolesBase {
         uint256 roleId,
         bytes32 channelId,
         string[] memory permissions
-    ) internal {
+    )
+        internal
+    {
         ChannelService.checkChannelExists(channelId);
 
         // check role exists
@@ -393,18 +404,14 @@ abstract contract RolesBase is IRolesBase {
         return rs.roleCount + 1;
     }
 
-    function _checkRoleExists(
-        uint256 roleId
-    ) internal view {
+    function _checkRoleExists(uint256 roleId) internal view {
         // check that role exists
         if (!RolesStorage.layout().roles.contains(roleId)) {
             revert Roles__RoleDoesNotExist();
         }
     }
 
-    function _getRole(
-        uint256 roleId
-    )
+    function _getRole(uint256 roleId)
         internal
         view
         returns (
@@ -426,9 +433,7 @@ abstract contract RolesBase is IRolesBase {
         return RolesStorage.layout().roles.values();
     }
 
-    function _getEntitlementsByRole(
-        uint256 roleId
-    ) internal view returns (IEntitlement[] memory) {
+    function _getEntitlementsByRole(uint256 roleId) internal view returns (IEntitlement[] memory) {
         EnumerableSet.AddressSet storage entitlements =
             RolesStorage.layout().roleById[roleId].entitlements;
 
@@ -449,7 +454,10 @@ abstract contract RolesBase is IRolesBase {
         bool isImmutable,
         string[] memory permissions,
         IEntitlement[] memory entitlements
-    ) internal returns (uint256 roleId) {
+    )
+        internal
+        returns (uint256 roleId)
+    {
         RolesStorage.Layout storage rs = RolesStorage.layout();
 
         roleId = ++rs.roleCount;
@@ -526,9 +534,11 @@ abstract contract RolesBase is IRolesBase {
         }
     }
 
-    function _getPermissionsByRoleId(
-        uint256 roleId
-    ) internal view returns (string[] memory permissions) {
+    function _getPermissionsByRoleId(uint256 roleId)
+        internal
+        view
+        returns (string[] memory permissions)
+    {
         (,, permissions,) = _getRole(roleId);
     }
 
@@ -555,7 +565,9 @@ abstract contract RolesBase is IRolesBase {
     function _removeRoleFromEntitlement(
         uint256 roleId,
         CreateEntitlement memory entitlement
-    ) internal {
+    )
+        internal
+    {
         // check role exists
         _checkRoleExists(roleId);
 
@@ -571,9 +583,7 @@ abstract contract RolesBase is IRolesBase {
         );
     }
 
-    function _checkEmptyString(
-        string memory str
-    ) internal pure {
+    function _checkEmptyString(string memory str) internal pure {
         if (bytes(str).length == 0) {
             revert Roles__InvalidPermission();
         }

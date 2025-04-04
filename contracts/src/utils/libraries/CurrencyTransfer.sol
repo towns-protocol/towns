@@ -5,8 +5,9 @@ pragma solidity ^0.8.24;
 import {IWETH} from "contracts/src/utils/interfaces/IWETH.sol";
 
 // libraries
-import {SafeTransferLib} from "solady/utils/SafeTransferLib.sol";
+
 import {CustomRevert} from "contracts/src/utils/libraries/CustomRevert.sol";
+import {SafeTransferLib} from "solady/utils/SafeTransferLib.sol";
 
 // contracts
 
@@ -38,7 +39,9 @@ library CurrencyTransfer {
         address from,
         address to,
         uint256 amount
-    ) internal {
+    )
+        internal
+    {
         if (amount == 0) {
             return;
         }
@@ -62,7 +65,9 @@ library CurrencyTransfer {
         address to,
         uint256 amount,
         address _nativeTokenWrapper
-    ) internal {
+    )
+        internal
+    {
         if (amount == 0) {
             return;
         }
@@ -114,7 +119,9 @@ library CurrencyTransfer {
         address to,
         uint256 value,
         address _nativeTokenWrapper
-    ) internal {
+    )
+        internal
+    {
         bool success = to.trySafeTransferETH(value, gasleft());
         if (!success) {
             IWETH(_nativeTokenWrapper).deposit{value: value}();

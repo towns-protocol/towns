@@ -9,12 +9,14 @@ import "forge-std/console.sol";
 
 // contracts
 import {Diamond} from "@towns-protocol/diamond/src/Diamond.sol";
-import {AlphaHelper} from "contracts/scripts/interactions/helpers/AlphaHelper.sol";
+
+import {DeployBaseRegistry} from "contracts/scripts/deployments/diamonds/DeployBaseRegistry.s.sol";
+
+import {DeployRiverAirdrop} from "contracts/scripts/deployments/diamonds/DeployRiverAirdrop.s.sol";
 import {DeploySpace} from "contracts/scripts/deployments/diamonds/DeploySpace.s.sol";
 import {DeploySpaceFactory} from "contracts/scripts/deployments/diamonds/DeploySpaceFactory.s.sol";
-import {DeployBaseRegistry} from "contracts/scripts/deployments/diamonds/DeployBaseRegistry.s.sol";
 import {DeploySpaceOwner} from "contracts/scripts/deployments/diamonds/DeploySpaceOwner.s.sol";
-import {DeployRiverAirdrop} from "contracts/scripts/deployments/diamonds/DeployRiverAirdrop.s.sol";
+import {AlphaHelper} from "contracts/scripts/interactions/helpers/AlphaHelper.sol";
 
 contract InteractBaseAlpha is AlphaHelper {
     DeploySpace deploySpace = new DeploySpace();
@@ -23,9 +25,7 @@ contract InteractBaseAlpha is AlphaHelper {
     DeploySpaceOwner deploySpaceOwner = new DeploySpaceOwner();
     DeployRiverAirdrop deployRiverAirdrop = new DeployRiverAirdrop();
 
-    function __interact(
-        address deployer
-    ) internal override {
+    function __interact(address deployer) internal override {
         vm.setEnv("OVERRIDE_DEPLOYMENTS", "1");
         address space = getDeployment("space");
         address spaceOwner = getDeployment("spaceOwner");

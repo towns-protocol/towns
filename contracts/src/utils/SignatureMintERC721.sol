@@ -5,8 +5,9 @@ pragma solidity ^0.8.24;
 import {ISignatureMintERC721} from "contracts/src/utils/interfaces/ISignatureMintERC721.sol";
 
 // contracts
-import {EIP712} from "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
+
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import {EIP712} from "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
 
 abstract contract SignatureMintERC721 is EIP712, ISignatureMintERC721 {
     using ECDSA for bytes32;
@@ -26,7 +27,12 @@ abstract contract SignatureMintERC721 is EIP712, ISignatureMintERC721 {
     function verify(
         MintRequest calldata mintRequest,
         bytes calldata signature
-    ) public view override returns (bool success, address signer) {
+    )
+        public
+        view
+        override
+        returns (bool success, address signer)
+    {
         signer = _recoverAddress(mintRequest, signature);
         success = !minted[mintRequest.uid] && _canSignMintRequest(signer);
     }
@@ -36,15 +42,16 @@ abstract contract SignatureMintERC721 is EIP712, ISignatureMintERC721 {
     // =============================================================
 
     /// @dev Returns whether a given address is authorized to sign mint requests
-    function _canSignMintRequest(
-        address signer
-    ) internal view virtual returns (bool);
+    function _canSignMintRequest(address signer) internal view virtual returns (bool);
 
     /// @dev Verifies a mint request and marks the request as minted
     function _processRequest(
         MintRequest calldata mintRequest,
         bytes calldata signature
-    ) internal returns (address signer) {
+    )
+        internal
+        returns (address signer)
+    {
         bool success;
         (success, signer) = verify(mintRequest, signature);
 
@@ -69,14 +76,20 @@ abstract contract SignatureMintERC721 is EIP712, ISignatureMintERC721 {
     function _recoverAddress(
         MintRequest calldata mintRequest,
         bytes calldata signature
-    ) internal view returns (address) {
+    )
+        internal
+        view
+        returns (address)
+    {
         return _hashTypedDataV4(keccak256(_encodeRequest(mintRequest))).recover(signature);
     }
 
     /// @dev Resolves `stack too deep` error in `_recoverAddress`
-    function _encodeRequest(
-        MintRequest calldata mintRequest
-    ) internal pure returns (bytes memory) {
+    function _encodeRequest(MintRequest calldata mintRequest)
+        internal
+        pure
+        returns (bytes memory)
+    {
         return abi.encode(
             TYPEHASH,
             mintRequest.to,

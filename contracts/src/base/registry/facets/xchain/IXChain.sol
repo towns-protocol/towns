@@ -2,9 +2,10 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {IEntitlementGatedBase} from "contracts/src/spaces/facets/gated/IEntitlementGated.sol";
+
 import {IEntitlementCheckerBase} from
     "contracts/src/base/registry/facets/checker/IEntitlementChecker.sol";
+import {IEntitlementGatedBase} from "contracts/src/spaces/facets/gated/IEntitlementGated.sol";
 
 // libraries
 
@@ -18,7 +19,10 @@ interface IXChain is IEntitlementGatedBase, IEntitlementCheckerBase {
     function isCheckCompleted(
         bytes32 transactionId,
         uint256 requestId
-    ) external view returns (bool);
+    )
+        external
+        view
+        returns (bool);
 
     /// @notice Allows a sender to request a refund for timed-out entitlement checks
     /// @dev Will revert if no refunds are available or if the contract has insufficient funds
@@ -32,5 +36,6 @@ interface IXChain is IEntitlementGatedBase, IEntitlementCheckerBase {
         bytes32 transactionId,
         uint256 roleId,
         NodeVoteStatus result
-    ) external;
+    )
+        external;
 }

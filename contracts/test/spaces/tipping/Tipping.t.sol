@@ -3,23 +3,27 @@ pragma solidity ^0.8.23;
 
 // interfaces
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {ITippingBase} from "contracts/src/spaces/facets/tipping/ITipping.sol";
+
+import {ITownsPoints, ITownsPointsBase} from "contracts/src/airdrop/points/ITownsPoints.sol";
+import {IERC721ABase} from "contracts/src/diamond/facets/token/ERC721A/IERC721A.sol";
 import {IERC721AQueryable} from
     "contracts/src/diamond/facets/token/ERC721A/extensions/IERC721AQueryable.sol";
-import {IERC721ABase} from "contracts/src/diamond/facets/token/ERC721A/IERC721A.sol";
-import {ITownsPoints, ITownsPointsBase} from "contracts/src/airdrop/points/ITownsPoints.sol";
+
 import {IPlatformRequirements} from
     "contracts/src/factory/facets/platform/requirements/IPlatformRequirements.sol";
+import {ITippingBase} from "contracts/src/spaces/facets/tipping/ITipping.sol";
 
 // libraries
-import {CurrencyTransfer} from "contracts/src/utils/libraries/CurrencyTransfer.sol";
+
 import {BasisPoints} from "contracts/src/utils/libraries/BasisPoints.sol";
+import {CurrencyTransfer} from "contracts/src/utils/libraries/CurrencyTransfer.sol";
 
 // contracts
-import {TippingFacet} from "contracts/src/spaces/facets/tipping/TippingFacet.sol";
+
 import {IntrospectionFacet} from
     "@towns-protocol/diamond/src/facets/introspection/IntrospectionFacet.sol";
 import {MembershipFacet} from "contracts/src/spaces/facets/membership/MembershipFacet.sol";
+import {TippingFacet} from "contracts/src/spaces/facets/tipping/TippingFacet.sol";
 
 import {
     DeployMockERC20, MockERC20
@@ -75,7 +79,10 @@ contract TippingTest is BaseSetup, ITippingBase, IERC721ABase {
         uint256 amount,
         bytes32 messageId,
         bytes32 channelId
-    ) external givenUsersAreMembers(sender, receiver) {
+    )
+        external
+        givenUsersAreMembers(sender, receiver)
+    {
         vm.assume(sender != platformRecipient);
         vm.assume(receiver != platformRecipient);
         amount = bound(amount, 0.0003 ether, 1 ether);
@@ -127,7 +134,10 @@ contract TippingTest is BaseSetup, ITippingBase, IERC721ABase {
         uint256 amount,
         bytes32 messageId,
         bytes32 channelId
-    ) external givenUsersAreMembers(sender, receiver) {
+    )
+        external
+        givenUsersAreMembers(sender, receiver)
+    {
         amount = bound(amount, 0.01 ether, 1 ether);
 
         uint256[] memory tokens = token.tokensOfOwner(receiver);
@@ -168,7 +178,10 @@ contract TippingTest is BaseSetup, ITippingBase, IERC721ABase {
         uint256 amount,
         bytes32 messageId,
         bytes32 channelId
-    ) external givenUsersAreMembers(sender, receiver) {
+    )
+        external
+        givenUsersAreMembers(sender, receiver)
+    {
         uint256 tokenId = token.tokensOfOwner(receiver)[0];
 
         vm.expectRevert(CurrencyIsZero.selector);
@@ -190,7 +203,10 @@ contract TippingTest is BaseSetup, ITippingBase, IERC721ABase {
         uint256 amount,
         bytes32 messageId,
         bytes32 channelId
-    ) external givenUsersAreMembers(sender, receiver) {
+    )
+        external
+        givenUsersAreMembers(sender, receiver)
+    {
         uint256 tokenId = token.tokensOfOwner(sender)[0];
 
         vm.prank(sender);
@@ -212,7 +228,10 @@ contract TippingTest is BaseSetup, ITippingBase, IERC721ABase {
         address receiver,
         bytes32 messageId,
         bytes32 channelId
-    ) external givenUsersAreMembers(sender, receiver) {
+    )
+        external
+        givenUsersAreMembers(sender, receiver)
+    {
         uint256 tokenId = token.tokensOfOwner(receiver)[0];
 
         vm.expectRevert(AmountIsZero.selector);

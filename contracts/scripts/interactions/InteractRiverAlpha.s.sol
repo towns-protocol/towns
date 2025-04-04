@@ -14,9 +14,7 @@ import {DeployRiverRegistry} from "contracts/scripts/deployments/diamonds/Deploy
 contract InteractRiverAlpha is AlphaHelper {
     DeployRiverRegistry deployRiverRegistry = new DeployRiverRegistry();
 
-    function __interact(
-        address deployer
-    ) internal override {
+    function __interact(address deployer) internal override {
         vm.setEnv("OVERRIDE_DEPLOYMENTS", "1");
         address riverRegistry = getDeployment("riverRegistry");
 

@@ -2,32 +2,30 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {IMainnetDelegation} from "contracts/src/base/registry/facets/mainnet/IMainnetDelegation.sol";
+
 import {ICrossDomainMessenger} from
     "contracts/src/base/registry/facets/mainnet/ICrossDomainMessenger.sol";
+import {IMainnetDelegation} from "contracts/src/base/registry/facets/mainnet/IMainnetDelegation.sol";
 
 // libraries
 
 // contracts
+
+import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
 import {OwnableBase} from "@towns-protocol/diamond/src/facets/ownable/OwnableBase.sol";
 import {MainnetDelegationBase} from
     "contracts/src/base/registry/facets/mainnet/MainnetDelegationBase.sol";
-import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
 
 contract MainnetDelegation is IMainnetDelegation, MainnetDelegationBase, OwnableBase, Facet {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                        INITIALIZERS                        */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    function __MainnetDelegation_init(
-        address messenger
-    ) external onlyInitializing {
+    function __MainnetDelegation_init(address messenger) external onlyInitializing {
         __MainnetDelegation_init_unchained(messenger);
     }
 
-    function __MainnetDelegation_init_unchained(
-        address messenger
-    ) internal {
+    function __MainnetDelegation_init_unchained(address messenger) internal {
         _addInterface(type(IMainnetDelegation).interfaceId);
         _setMessenger(ICrossDomainMessenger(messenger));
     }
@@ -51,16 +49,12 @@ contract MainnetDelegation is IMainnetDelegation, MainnetDelegationBase, Ownable
     /*                       ADMIN FUNCTIONS                      */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    function setProxyDelegation(
-        address proxyDelegation
-    ) external onlyOwner {
+    function setProxyDelegation(address proxyDelegation) external onlyOwner {
         _setProxyDelegation(proxyDelegation);
     }
 
     /// @inheritdoc IMainnetDelegation
-    function relayDelegations(
-        bytes calldata encodedMsgs
-    ) external onlyOwner {
+    function relayDelegations(bytes calldata encodedMsgs) external onlyOwner {
         _relayDelegations(encodedMsgs);
     }
 
@@ -69,9 +63,7 @@ contract MainnetDelegation is IMainnetDelegation, MainnetDelegationBase, Ownable
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @inheritdoc IMainnetDelegation
-    function setDelegationDigest(
-        bytes32 digest
-    ) external onlyCrossDomainMessenger {
+    function setDelegationDigest(bytes32 digest) external onlyCrossDomainMessenger {
         _setDelegationDigest(digest);
     }
 
@@ -90,36 +82,34 @@ contract MainnetDelegation is IMainnetDelegation, MainnetDelegationBase, Ownable
     }
 
     /// @inheritdoc IMainnetDelegation
-    function getDepositIdByDelegator(
-        address delegator
-    ) external view returns (uint256) {
+    function getDepositIdByDelegator(address delegator) external view returns (uint256) {
         return _getDepositIdByDelegator(delegator);
     }
 
     /// @inheritdoc IMainnetDelegation
-    function getDelegationByDelegator(
-        address delegator
-    ) external view returns (Delegation memory) {
+    function getDelegationByDelegator(address delegator)
+        external
+        view
+        returns (Delegation memory)
+    {
         return _getDelegationByDelegator(delegator);
     }
 
     /// @inheritdoc IMainnetDelegation
-    function getMainnetDelegationsByOperator(
-        address operator
-    ) external view returns (Delegation[] memory) {
+    function getMainnetDelegationsByOperator(address operator)
+        external
+        view
+        returns (Delegation[] memory)
+    {
         return _getMainnetDelegationsByOperator(operator);
     }
 
     /// @inheritdoc IMainnetDelegation
-    function getDelegatedStakeByOperator(
-        address operator
-    ) external view returns (uint256) {
+    function getDelegatedStakeByOperator(address operator) external view returns (uint256) {
         return _getDelegatedStakeByOperator(operator);
     }
 
-    function getAuthorizedClaimer(
-        address owner
-    ) external view returns (address) {
+    function getAuthorizedClaimer(address owner) external view returns (address) {
         return _getAuthorizedClaimer(owner);
     }
 }

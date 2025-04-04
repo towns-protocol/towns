@@ -8,13 +8,12 @@ import {IGuardian} from "./IGuardian.sol";
 
 // contracts
 import {GuardianBase} from "./GuardianBase.sol";
-import {OwnableBase} from "@towns-protocol/diamond/src/facets/ownable/OwnableBase.sol";
+
 import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
+import {OwnableBase} from "@towns-protocol/diamond/src/facets/ownable/OwnableBase.sol";
 
 contract GuardianFacet is IGuardian, GuardianBase, OwnableBase, Facet {
-    function __GuardianFacet_init(
-        uint256 cooldown
-    ) external onlyInitializing {
+    function __GuardianFacet_init(uint256 cooldown) external onlyInitializing {
         _setDefaultCooldown(cooldown);
     }
 
@@ -22,9 +21,7 @@ contract GuardianFacet is IGuardian, GuardianBase, OwnableBase, Facet {
         _enableGuardian(msg.sender);
     }
 
-    function guardianCooldown(
-        address guardian
-    ) external view returns (uint256) {
+    function guardianCooldown(address guardian) external view returns (uint256) {
         return _guardianCooldown(guardian);
     }
 
@@ -32,9 +29,7 @@ contract GuardianFacet is IGuardian, GuardianBase, OwnableBase, Facet {
         _disableGuardian(msg.sender);
     }
 
-    function isGuardianEnabled(
-        address guardian
-    ) external view returns (bool) {
+    function isGuardianEnabled(address guardian) external view returns (bool) {
         return _guardianEnabled(guardian);
     }
 
@@ -42,9 +37,7 @@ contract GuardianFacet is IGuardian, GuardianBase, OwnableBase, Facet {
         return _getDefaultCooldown();
     }
 
-    function setDefaultCooldown(
-        uint256 cooldown
-    ) external onlyOwner {
+    function setDefaultCooldown(uint256 cooldown) external onlyOwner {
         _setDefaultCooldown(cooldown);
     }
 }

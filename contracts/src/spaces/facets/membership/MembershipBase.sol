@@ -3,17 +3,19 @@ pragma solidity ^0.8.23;
 
 // interfaces
 import {IMembershipBase} from "./IMembership.sol";
-import {IPlatformRequirements} from
-    "contracts/src/factory/facets/platform/requirements/IPlatformRequirements.sol";
+
 import {IMembershipPricing} from "./pricing/IMembershipPricing.sol";
 import {IPricingModules} from "contracts/src/factory/facets/architect/pricing/IPricingModules.sol";
+import {IPlatformRequirements} from
+    "contracts/src/factory/facets/platform/requirements/IPlatformRequirements.sol";
 
 // libraries
-import {SafeTransferLib} from "solady/utils/SafeTransferLib.sol";
+
+import {MembershipStorage} from "./MembershipStorage.sol";
+import {BasisPoints} from "contracts/src/utils/libraries/BasisPoints.sol";
 import {CurrencyTransfer} from "contracts/src/utils/libraries/CurrencyTransfer.sol";
 import {CustomRevert} from "contracts/src/utils/libraries/CustomRevert.sol";
-import {BasisPoints} from "contracts/src/utils/libraries/BasisPoints.sol";
-import {MembershipStorage} from "./MembershipStorage.sol";
+import {SafeTransferLib} from "solady/utils/SafeTransferLib.sol";
 
 // contracts
 
@@ -48,7 +50,10 @@ abstract contract MembershipBase is IMembershipBase {
     function _collectProtocolFee(
         address payer,
         uint256 membershipPrice
-    ) internal returns (uint256 protocolFee) {
+    )
+        internal
+        returns (uint256 protocolFee)
+    {
         protocolFee = _getProtocolFee(membershipPrice);
 
         // transfer the platform fee to the platform fee recipient
@@ -60,9 +65,7 @@ abstract contract MembershipBase is IMembershipBase {
         );
     }
 
-    function _getProtocolFee(
-        uint256 membershipPrice
-    ) internal view returns (uint256) {
+    function _getProtocolFee(uint256 membershipPrice) internal view returns (uint256) {
         IPlatformRequirements platform = _getPlatformRequirements();
 
         uint256 minPrice = platform.getMembershipMinPrice();
@@ -102,9 +105,7 @@ abstract contract MembershipBase is IMembershipBase {
         return MembershipStorage.layout().tokenBalance;
     }
 
-    function _setCreatorBalance(
-        uint256 newBalance
-    ) internal {
+    function _setCreatorBalance(uint256 newBalance) internal {
         MembershipStorage.layout().tokenBalance = newBalance;
     }
 
@@ -120,9 +121,7 @@ abstract contract MembershipBase is IMembershipBase {
     /*                       PRICING MODULE                       */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    function _verifyPricingModule(
-        address pricingModule
-    ) internal view {
+    function _verifyPricingModule(address pricingModule) internal view {
         if (pricingModule == address(0)) {
             CustomRevert.revertWith(Membership__InvalidPricingModule.selector);
         }
@@ -132,9 +131,7 @@ abstract contract MembershipBase is IMembershipBase {
         }
     }
 
-    function _setPricingModule(
-        address newPricingModule
-    ) internal {
+    function _setPricingModule(address newPricingModule) internal {
         MembershipStorage.layout().pricingModule = newPricingModule;
     }
 
@@ -146,9 +143,7 @@ abstract contract MembershipBase is IMembershipBase {
     /*                           PRICING                          */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    function _verifyPrice(
-        uint256 newPrice
-    ) internal view {
+    function _verifyPrice(uint256 newPrice) internal view {
         uint256 minFee = _getPlatformRequirements().getMembershipFee();
         if (newPrice < minFee) {
             CustomRevert.revertWith(Membership__PriceTooLow.selector);
@@ -156,9 +151,12 @@ abstract contract MembershipBase is IMembershipBase {
     }
 
     /// @dev Makes it virtual to allow other pricing strategies
-    function _getMembershipPrice(
-        uint256 totalSupply
-    ) internal view virtual returns (uint256 membershipPrice) {
+    function _getMembershipPrice(uint256 totalSupply)
+        internal
+        view
+        virtual
+        returns (uint256 membershipPrice)
+    {
         // get free allocation
         uint256 freeAllocation = _getMembershipFreeAllocation();
 
@@ -179,7 +177,11 @@ abstract contract MembershipBase is IMembershipBase {
     function _getMembershipRenewalPrice(
         uint256 tokenId,
         uint256 totalSupply
-    ) internal view returns (uint256) {
+    )
+        internal
+        view
+        returns (uint256)
+    {
         MembershipStorage.Layout storage ds = MembershipStorage.layout();
 
         uint256 renewalPrice = ds.renewalPriceByTokenId[tokenId];
@@ -192,18 +194,14 @@ abstract contract MembershipBase is IMembershipBase {
     /*                         ALLOCATION                         */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    function _verifyFreeAllocation(
-        uint256 newAllocation
-    ) internal view {
+    function _verifyFreeAllocation(uint256 newAllocation) internal view {
         // verify newLimit is not more than the allowed platform limit
         if (newAllocation > _getPlatformRequirements().getMembershipMintLimit()) {
             CustomRevert.revertWith(Membership__InvalidFreeAllocation.selector);
         }
     }
 
-    function _setMembershipFreeAllocation(
-        uint256 newAllocation
-    ) internal {
+    function _setMembershipFreeAllocation(uint256 newAllocation) internal {
         MembershipStorage.Layout storage ds = MembershipStorage.layout();
         ds.freeAllocation = newAllocation;
         ds.freeAllocationEnabled = true;
@@ -229,9 +227,7 @@ abstract contract MembershipBase is IMembershipBase {
         }
     }
 
-    function _setMembershipSupplyLimit(
-        uint256 newLimit
-    ) internal {
+    function _setMembershipSupplyLimit(uint256 newLimit) internal {
         MembershipStorage.layout().membershipMaxSupply = newLimit;
     }
 
@@ -267,9 +263,7 @@ abstract contract MembershipBase is IMembershipBase {
         return MembershipStorage.layout().membershipImage;
     }
 
-    function _setMembershipImage(
-        string memory image
-    ) internal {
+    function _setMembershipImage(string memory image) internal {
         MembershipStorage.layout().membershipImage = image;
     }
 }

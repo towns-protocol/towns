@@ -14,7 +14,11 @@ contract ERC721ANonTransferable is ERC721A {
         address to,
         uint256 startTokenId,
         uint256 quantity
-    ) internal virtual override {
+    )
+        internal
+        virtual
+        override
+    {
         if (from != address(0)) revert TransferFromIncorrectOwner();
         super._beforeTokenTransfers(from, to, startTokenId, quantity);
     }

@@ -5,18 +5,20 @@ pragma solidity ^0.8.23;
 import {IArchitect} from "contracts/src/factory/facets/architect/IArchitect.sol";
 import {IRuleEntitlement} from "contracts/src/spaces/entitlements/rule/IRuleEntitlement.sol";
 import {IRuleEntitlementV2} from "contracts/src/spaces/entitlements/rule/IRuleEntitlement.sol";
-import {ISpaceOwner} from "contracts/src/spaces/facets/owner/ISpaceOwner.sol";
+
 import {IUserEntitlement} from "contracts/src/spaces/entitlements/user/IUserEntitlement.sol";
+import {ISpaceOwner} from "contracts/src/spaces/facets/owner/ISpaceOwner.sol";
 import {ISpaceProxyInitializer} from "contracts/src/spaces/facets/proxy/ISpaceProxyInitializer.sol";
 
 // libraries
 
 // contracts
 import {ArchitectBase} from "./ArchitectBase.sol";
-import {OwnableBase} from "@towns-protocol/diamond/src/facets/ownable/OwnableBase.sol";
-import {ReentrancyGuard} from "solady/utils/ReentrancyGuard.sol";
-import {PausableBase} from "@towns-protocol/diamond/src/facets/pausable/PausableBase.sol";
+
 import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
+import {OwnableBase} from "@towns-protocol/diamond/src/facets/ownable/OwnableBase.sol";
+import {PausableBase} from "@towns-protocol/diamond/src/facets/pausable/PausableBase.sol";
+import {ReentrancyGuard} from "solady/utils/ReentrancyGuard.sol";
 
 contract Architect is
     IArchitect,
@@ -31,7 +33,10 @@ contract Architect is
         IUserEntitlement userEntitlementImplementation,
         IRuleEntitlementV2 ruleEntitlementImplementation,
         IRuleEntitlement legacyRuleEntitlement
-    ) external onlyInitializing {
+    )
+        external
+        onlyInitializing
+    {
         _setImplementations(
             ownerImplementation,
             userEntitlementImplementation,
@@ -45,16 +50,12 @@ contract Architect is
     // =============================================================
 
     /// @inheritdoc IArchitect
-    function getSpaceByTokenId(
-        uint256 tokenId
-    ) external view returns (address) {
+    function getSpaceByTokenId(uint256 tokenId) external view returns (address) {
         return _getSpaceByTokenId(tokenId);
     }
 
     /// @inheritdoc IArchitect
-    function getTokenIdBySpace(
-        address space
-    ) external view returns (uint256) {
+    function getTokenIdBySpace(address space) external view returns (uint256) {
         return _getTokenIdBySpace(space);
     }
 
@@ -68,7 +69,10 @@ contract Architect is
         IUserEntitlement userEntitlementImplementation,
         IRuleEntitlementV2 ruleEntitlementImplementation,
         IRuleEntitlement legacyRuleEntitlement
-    ) external onlyOwner {
+    )
+        external
+        onlyOwner
+    {
         _setImplementations(
             spaceToken,
             userEntitlementImplementation,
@@ -101,9 +105,7 @@ contract Architect is
     }
 
     /// @inheritdoc IArchitect
-    function setProxyInitializer(
-        ISpaceProxyInitializer proxyInitializer
-    ) external onlyOwner {
+    function setProxyInitializer(ISpaceProxyInitializer proxyInitializer) external onlyOwner {
         _setProxyInitializer(proxyInitializer);
     }
 }

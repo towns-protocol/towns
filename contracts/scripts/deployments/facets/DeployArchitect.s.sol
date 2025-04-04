@@ -6,9 +6,10 @@ import {IArchitect} from "contracts/src/factory/facets/architect/IArchitect.sol"
 //libraries
 
 //contracts
+
+import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
 import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
 import {Architect} from "contracts/src/factory/facets/architect/Architect.sol";
-import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
 
 contract DeployArchitect is FacetHelper, Deployer {
     constructor() {
@@ -29,7 +30,11 @@ contract DeployArchitect is FacetHelper, Deployer {
         address _userEntitlement,
         address _ruleEntitlement,
         address _legacyRuleEntitlement
-    ) public pure returns (bytes memory) {
+    )
+        public
+        pure
+        returns (bytes memory)
+    {
         return abi.encodeWithSelector(
             initializer(),
             _spaceOwnerToken,
@@ -43,9 +48,7 @@ contract DeployArchitect is FacetHelper, Deployer {
         return "facets/architectFacet";
     }
 
-    function __deploy(
-        address deployer
-    ) public override returns (address) {
+    function __deploy(address deployer) public override returns (address) {
         vm.startBroadcast(deployer);
         Architect architect = new Architect();
         vm.stopBroadcast();

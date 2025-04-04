@@ -3,9 +3,10 @@ pragma solidity ^0.8.23;
 
 // interfaces
 import {IArchitectBase} from "contracts/src/factory/facets/architect/IArchitect.sol";
-import {ILegacyArchitectBase} from "contracts/test/mocks/legacy/IMockLegacyArchitect.sol";
-import {IMembershipBase} from "contracts/src/spaces/facets/membership/IMembership.sol";
+
 import {Permissions} from "contracts/src/spaces/facets/Permissions.sol";
+import {IMembershipBase} from "contracts/src/spaces/facets/membership/IMembership.sol";
+import {ILegacyArchitectBase} from "contracts/test/mocks/legacy/IMockLegacyArchitect.sol";
 
 // libraries
 import {RuleEntitlementUtil} from "contracts/test/crosschain/RuleEntitlementUtil.sol";
@@ -16,16 +17,22 @@ abstract contract SpaceHelper {
     function _createUserSpaceInfo(
         string memory spaceId,
         address[] memory users
-    ) internal pure returns (IArchitectBase.SpaceInfo memory info) {
+    )
+        internal
+        pure
+        returns (IArchitectBase.SpaceInfo memory info)
+    {
         info = _createSpaceInfo(spaceId);
         info.membership.requirements.users = users;
         info.membership.requirements.ruleData =
             abi.encode(RuleEntitlementUtil.getMockERC721RuleData());
     }
 
-    function _createLegacySpaceInfo(
-        string memory spaceId
-    ) internal pure returns (ILegacyArchitectBase.SpaceInfo memory) {
+    function _createLegacySpaceInfo(string memory spaceId)
+        internal
+        pure
+        returns (ILegacyArchitectBase.SpaceInfo memory)
+    {
         return ILegacyArchitectBase.SpaceInfo({
             name: spaceId,
             uri: "ipfs://test",
@@ -55,9 +62,11 @@ abstract contract SpaceHelper {
         });
     }
 
-    function _createSpaceInfo(
-        string memory spaceId
-    ) internal pure returns (IArchitectBase.SpaceInfo memory) {
+    function _createSpaceInfo(string memory spaceId)
+        internal
+        pure
+        returns (IArchitectBase.SpaceInfo memory)
+    {
         return IArchitectBase.SpaceInfo({
             name: spaceId,
             uri: "ipfs://test",
@@ -87,9 +96,11 @@ abstract contract SpaceHelper {
         });
     }
 
-    function _createEveryoneSpaceInfo(
-        string memory spaceId
-    ) internal pure returns (IArchitectBase.SpaceInfo memory info) {
+    function _createEveryoneSpaceInfo(string memory spaceId)
+        internal
+        pure
+        returns (IArchitectBase.SpaceInfo memory info)
+    {
         info = _createSpaceInfo(spaceId);
         string[] memory permissions = new string[](3);
         permissions[0] = Permissions.Read;
@@ -100,9 +111,11 @@ abstract contract SpaceHelper {
         info.membership.permissions = permissions;
     }
 
-    function _createGatedSpaceInfo(
-        string memory townId
-    ) internal pure returns (IArchitectBase.SpaceInfo memory info) {
+    function _createGatedSpaceInfo(string memory townId)
+        internal
+        pure
+        returns (IArchitectBase.SpaceInfo memory info)
+    {
         info = _createSpaceInfo(townId);
         string[] memory permissions = new string[](2);
         permissions[0] = Permissions.Read;
@@ -113,9 +126,11 @@ abstract contract SpaceHelper {
         info.membership.permissions = permissions;
     }
 
-    function _createSpaceWithPrepayInfo(
-        string memory spaceId
-    ) internal pure returns (IArchitectBase.CreateSpace memory info) {
+    function _createSpaceWithPrepayInfo(string memory spaceId)
+        internal
+        pure
+        returns (IArchitectBase.CreateSpace memory info)
+    {
         info = IArchitectBase.CreateSpace({
             metadata: IArchitectBase.Metadata({
                 name: spaceId,

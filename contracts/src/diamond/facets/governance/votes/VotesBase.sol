@@ -5,10 +5,11 @@ pragma solidity ^0.8.23;
 import {IVotes} from "@openzeppelin/contracts/governance/utils/IVotes.sol";
 
 // libraries
-import {ECDSA} from "solady/utils/ECDSA.sol";
-import {SafeCastLib} from "solady/utils/SafeCastLib.sol";
+
 import {Checkpoints} from "./Checkpoints.sol";
 import {VotesStorage} from "./VotesStorage.sol";
+import {ECDSA} from "solady/utils/ECDSA.sol";
+import {SafeCastLib} from "solady/utils/SafeCastLib.sol";
 
 // contracts
 import {Nonces} from "@towns-protocol/diamond/src/utils/Nonces.sol";
@@ -83,9 +84,7 @@ abstract contract VotesBase is EIP712Base, Nonces {
     /**
      * @dev Returns the current amount of votes that `account` has.
      */
-    function _getVotes(
-        address account
-    ) internal view returns (uint256) {
+    function _getVotes(address account) internal view returns (uint256) {
         return VotesStorage.layout()._delegateCheckpoints[account].latest();
     }
 
@@ -126,9 +125,7 @@ abstract contract VotesBase is EIP712Base, Nonces {
      * already
      * mined.
      */
-    function _getPastTotalSupply(
-        uint256 timepoint
-    ) internal view returns (uint256) {
+    function _getPastTotalSupply(uint256 timepoint) internal view returns (uint256) {
         require(timepoint < _clock(), "Votes: future lookup");
         return VotesStorage.layout()._totalCheckpoints.upperLookupRecent(
             SafeCastLib.toUint32(timepoint)
@@ -138,9 +135,7 @@ abstract contract VotesBase is EIP712Base, Nonces {
     /**
      * @dev Returns the delegate that `account` has chosen.
      */
-    function _delegates(
-        address account
-    ) internal view returns (address) {
+    function _delegates(address account) internal view returns (address) {
         return VotesStorage.layout()._delegation[account];
     }
 
@@ -154,7 +149,9 @@ abstract contract VotesBase is EIP712Base, Nonces {
         uint8 v,
         bytes32 r,
         bytes32 s
-    ) internal {
+    )
+        internal
+    {
         require(block.timestamp <= expiry, "Votes: signature expired");
         address signer = ECDSA.recover(
             _hashTypedDataV4(keccak256(abi.encode(_DELEGATION_TYPEHASH, delegatee, nonce, expiry))),
@@ -170,9 +167,7 @@ abstract contract VotesBase is EIP712Base, Nonces {
     /**
      * @dev Must return the voting units held by an account.
      */
-    function _getVotingUnits(
-        address
-    ) internal view virtual returns (uint256);
+    function _getVotingUnits(address) internal view virtual returns (uint256);
 
     // =============================================================
     //                           Internal
@@ -245,7 +240,10 @@ abstract contract VotesBase is EIP712Base, Nonces {
         Checkpoints.Trace224 storage store,
         function(uint224, uint224) view returns (uint224) op,
         uint224 delta
-    ) private returns (uint224, uint224) {
+    )
+        private
+        returns (uint224, uint224)
+    {
         return store.push(SafeCastLib.toUint32(_clock()), op(store.latest(), delta));
     }
 

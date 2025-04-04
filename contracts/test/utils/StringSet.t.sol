@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import {stdError} from "forge-std/StdError.sol";
-import {StringSet} from "contracts/src/utils/StringSet.sol";
 import {TestUtils} from "./TestUtils.sol";
+import {StringSet} from "contracts/src/utils/StringSet.sol";
+import {stdError} from "forge-std/StdError.sol";
 
 contract StringSetTest is TestUtils {
     using StringSet for StringSet.Set;
@@ -153,15 +153,11 @@ contract StringSetTest is TestUtils {
         assertFalse(this.contains("value3"), "Expected 'value3' to be removed");
     }
 
-    function add(
-        string memory value
-    ) external returns (bool) {
+    function add(string memory value) external returns (bool) {
         return mockSet.add(value);
     }
 
-    function remove(
-        string memory value
-    ) external returns (bool) {
+    function remove(string memory value) external returns (bool) {
         return mockSet.remove(value);
     }
 
@@ -169,9 +165,7 @@ contract StringSetTest is TestUtils {
         mockSet.clear();
     }
 
-    function contains(
-        string memory value
-    ) external view returns (bool) {
+    function contains(string memory value) external view returns (bool) {
         return mockSet.contains(value);
     }
 
@@ -179,9 +173,7 @@ contract StringSetTest is TestUtils {
         return mockSet.length();
     }
 
-    function at(
-        uint256 index
-    ) external view returns (string memory) {
+    function at(uint256 index) external view returns (string memory) {
         return mockSet.at(index);
     }
 

@@ -10,7 +10,9 @@ interface ERC721A__IERC721ReceiverUpgradeable {
         address from,
         uint256 tokenId,
         bytes calldata data
-    ) external returns (bytes4);
+    )
+        external
+        returns (bytes4);
 }
 
 interface IERC721ABase {
@@ -156,9 +158,7 @@ interface IERC721A is IERC721ABase {
     /**
      * @dev Returns the number of tokens in `owner`'s account.
      */
-    function balanceOf(
-        address owner
-    ) external view returns (uint256 balance);
+    function balanceOf(address owner) external view returns (uint256 balance);
 
     /**
      * @dev Returns the owner of the `tokenId` token.
@@ -167,9 +167,7 @@ interface IERC721A is IERC721ABase {
      *
      * - `tokenId` must exist.
      */
-    function ownerOf(
-        uint256 tokenId
-    ) external view returns (address owner);
+    function ownerOf(uint256 tokenId) external view returns (address owner);
 
     /**
      * @dev Safely transfers `tokenId` token from `from` to `to`,
@@ -193,7 +191,9 @@ interface IERC721A is IERC721ABase {
         address to,
         uint256 tokenId,
         bytes calldata data
-    ) external payable;
+    )
+        external
+        payable;
 
     /**
      * @dev Equivalent to `safeTransferFrom(from, to, tokenId, '')`.
@@ -254,9 +254,7 @@ interface IERC721A is IERC721ABase {
      *
      * - `tokenId` must exist.
      */
-    function getApproved(
-        uint256 tokenId
-    ) external view returns (address operator);
+    function getApproved(uint256 tokenId) external view returns (address operator);
 
     /**
      * @dev Returns if the `operator` is allowed to manage all of the assets of `owner`.
@@ -282,7 +280,5 @@ interface IERC721A is IERC721ABase {
     /**
      * @dev Returns the Uniform Resource Identifier (URI) for `tokenId` token.
      */
-    function tokenURI(
-        uint256 tokenId
-    ) external view returns (string memory);
+    function tokenURI(uint256 tokenId) external view returns (string memory);
 }

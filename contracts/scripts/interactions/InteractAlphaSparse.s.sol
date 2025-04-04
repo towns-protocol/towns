@@ -5,8 +5,8 @@ pragma solidity ^0.8.23;
 import {IDiamondCut} from "@towns-protocol/diamond/src/facets/cut/IDiamondCut.sol";
 import {IDiamondInitHelper} from "contracts/test/diamond/Diamond.t.sol";
 
-import {Diamond} from "@towns-protocol/diamond/src/Diamond.sol";
 import {DiamondHelper} from "@towns-protocol/diamond/scripts/common/helpers/DiamondHelper.s.sol";
+import {Diamond} from "@towns-protocol/diamond/src/Diamond.sol";
 
 // libraries
 import {stdJson} from "forge-std/StdJson.sol";
@@ -20,11 +20,12 @@ import {
     FacetData
 } from "contracts/scripts/interactions/helpers/AlphaHelper.sol";
 
+import {DeployBaseRegistry} from "contracts/scripts/deployments/diamonds/DeployBaseRegistry.s.sol";
+
+import {DeployRiverAirdrop} from "contracts/scripts/deployments/diamonds/DeployRiverAirdrop.s.sol";
 import {DeploySpace} from "contracts/scripts/deployments/diamonds/DeploySpace.s.sol";
 import {DeploySpaceFactory} from "contracts/scripts/deployments/diamonds/DeploySpaceFactory.s.sol";
-import {DeployBaseRegistry} from "contracts/scripts/deployments/diamonds/DeployBaseRegistry.s.sol";
 import {DeploySpaceOwner} from "contracts/scripts/deployments/diamonds/DeploySpaceOwner.s.sol";
-import {DeployRiverAirdrop} from "contracts/scripts/deployments/diamonds/DeployRiverAirdrop.s.sol";
 
 contract InteractAlphaSparse is AlphaHelper {
     using stdJson for string;
@@ -88,9 +89,7 @@ contract InteractAlphaSparse is AlphaHelper {
 
     string private jsonData;
 
-    function readJSON(
-        string memory jsonPath
-    ) internal {
+    function readJSON(string memory jsonPath) internal {
         jsonData = vm.readFile(jsonPath);
     }
 
@@ -133,9 +132,7 @@ contract InteractAlphaSparse is AlphaHelper {
      *         - Executes a diamondCut operation to apply the updates
      * @param deployer The address of the account that will deploy and interact with the contracts
      */
-    function __interact(
-        address deployer
-    ) internal override {
+    function __interact(address deployer) internal override {
         vm.setEnv("OVERRIDE_DEPLOYMENTS", "1");
 
         string memory jsonPath;

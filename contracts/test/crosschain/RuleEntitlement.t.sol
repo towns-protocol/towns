@@ -4,10 +4,10 @@ pragma solidity ^0.8.24;
 // utils
 import {TestUtils} from "contracts/test/utils/TestUtils.sol";
 
-import {RuleEntitlement} from "contracts/src/spaces/entitlements/rule/RuleEntitlement.sol";
+import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import {IEntitlementBase} from "contracts/src/spaces/entitlements/IEntitlement.sol";
 import {IRuleEntitlementBase} from "contracts/src/spaces/entitlements/rule/IRuleEntitlement.sol";
-import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
+import {RuleEntitlement} from "contracts/src/spaces/entitlements/rule/RuleEntitlement.sol";
 
 contract RuleEntitlementTest is TestUtils, IEntitlementBase, IRuleEntitlementBase {
     uint256 internal constant ENTITLEMENTS_SLOT = 0;
@@ -102,9 +102,7 @@ contract RuleEntitlementTest is TestUtils, IEntitlementBase, IRuleEntitlementBas
         assertEq(vm.getMappingLength(entitlement, bytes32(ENTITLEMENTS_SLOT)), 0);
     }
 
-    function test_fuzz_revertWhenNotAllowedToRemove(
-        address caller
-    ) external virtual {
+    function test_fuzz_revertWhenNotAllowedToRemove(address caller) external virtual {
         vm.assume(caller != space);
         vm.expectRevert(Entitlement__NotAllowed.selector);
         vm.prank(caller);

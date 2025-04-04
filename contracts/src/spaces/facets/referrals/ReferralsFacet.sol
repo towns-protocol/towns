@@ -7,10 +7,11 @@ pragma solidity ^0.8.23;
 import {Permissions} from "contracts/src/spaces/facets/Permissions.sol";
 
 // contracts
-import {Entitled} from "contracts/src/spaces/facets/Entitled.sol";
-import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
+
 import {IReferrals} from "./IReferrals.sol";
 import {ReferralsBase} from "./ReferralsBase.sol";
+import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
+import {Entitled} from "contracts/src/spaces/facets/Entitled.sol";
 
 contract ReferralsFacet is IReferrals, ReferralsBase, Entitled, Facet {
     function __ReferralsFacet_init() external onlyInitializing {
@@ -18,40 +19,30 @@ contract ReferralsFacet is IReferrals, ReferralsBase, Entitled, Facet {
     }
 
     /// @inheritdoc IReferrals
-    function registerReferral(
-        Referral memory referral
-    ) external {
+    function registerReferral(Referral memory referral) external {
         _validatePermission(Permissions.ModifySpaceSettings);
         _registerReferral(referral);
     }
 
     /// @inheritdoc IReferrals
-    function referralInfo(
-        string memory referralCode
-    ) external view returns (Referral memory) {
+    function referralInfo(string memory referralCode) external view returns (Referral memory) {
         return _referralInfo(referralCode);
     }
 
     /// @inheritdoc IReferrals
-    function updateReferral(
-        Referral memory referral
-    ) external {
+    function updateReferral(Referral memory referral) external {
         _validatePermission(Permissions.ModifySpaceSettings);
         _updateReferral(referral);
     }
 
     /// @inheritdoc IReferrals
-    function removeReferral(
-        string memory referralCode
-    ) external {
+    function removeReferral(string memory referralCode) external {
         _validatePermission(Permissions.ModifySpaceSettings);
         _removeReferral(referralCode);
     }
 
     /// @inheritdoc IReferrals
-    function setMaxBpsFee(
-        uint256 bps
-    ) external {
+    function setMaxBpsFee(uint256 bps) external {
         _validatePermission(Permissions.ModifySpaceSettings);
         _setMaxBpsFee(bps);
     }
@@ -62,9 +53,7 @@ contract ReferralsFacet is IReferrals, ReferralsBase, Entitled, Facet {
     }
 
     /// @inheritdoc IReferrals
-    function setDefaultBpsFee(
-        uint256 bps
-    ) external {
+    function setDefaultBpsFee(uint256 bps) external {
         _validatePermission(Permissions.ModifySpaceSettings);
         _setDefaultBpsFee(bps);
     }

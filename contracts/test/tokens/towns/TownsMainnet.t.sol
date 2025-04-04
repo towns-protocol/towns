@@ -10,13 +10,15 @@ import {IERC20Metadata} from "@openzeppelin/contracts/interfaces/IERC20Metadata.
 import {ITownsBase} from "contracts/src/tokens/towns/mainnet/ITowns.sol";
 
 //libraries
-import {BasisPoints} from "contracts/src/utils/libraries/BasisPoints.sol";
+
 import {TokenInflationLib} from "contracts/src/tokens/towns/mainnet/libs/TokenInflationLib.sol";
+import {BasisPoints} from "contracts/src/utils/libraries/BasisPoints.sol";
 
 //contracts
+
+import {EIP712Utils} from "@towns-protocol/diamond/test/facets/signature/EIP712Utils.sol";
 import {DeployTownsMainnet} from "contracts/scripts/deployments/utils/DeployTownsMainnet.s.sol";
 import {Towns} from "contracts/src/tokens/towns/mainnet/Towns.sol";
-import {EIP712Utils} from "@towns-protocol/diamond/test/facets/signature/EIP712Utils.sol";
 
 contract TownsMainnetTests is TestUtils, ITownsBase, EIP712Utils {
     DeployTownsMainnet internal deployTownsMainnet = new DeployTownsMainnet();
@@ -84,9 +86,7 @@ contract TownsMainnetTests is TestUtils, ITownsBase, EIP712Utils {
     /*                       INITIAL SUPPLY                       */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    function test_mintInitialSupply(
-        address to
-    ) external {
+    function test_mintInitialSupply(address to) external {
         vm.assume(to != address(0));
         vm.assume(to != ZERO_SENTINEL);
 
@@ -102,7 +102,11 @@ contract TownsMainnetTests is TestUtils, ITownsBase, EIP712Utils {
         address alice,
         address bob,
         uint256 amount
-    ) external givenMintedInitialSupply givenCallerHasTokens(alice, amount) {
+    )
+        external
+        givenMintedInitialSupply
+        givenCallerHasTokens(alice, amount)
+    {
         vm.assume(bob != address(0));
         vm.assume(bob != ZERO_SENTINEL);
         vm.assume(alice != bob);
@@ -118,7 +122,10 @@ contract TownsMainnetTests is TestUtils, ITownsBase, EIP712Utils {
         uint256 alicePrivateKey,
         address bob,
         uint256 amount
-    ) external givenMintedInitialSupply {
+    )
+        external
+        givenMintedInitialSupply
+    {
         vm.assume(bob != address(0));
         vm.assume(bob != ZERO_SENTINEL);
         amount = bound(amount, 1, INITIAL_SUPPLY);
@@ -166,9 +173,7 @@ contract TownsMainnetTests is TestUtils, ITownsBase, EIP712Utils {
         assertEq(towns.balanceOf(vault), totalMinted);
     }
 
-    function test_createInflation_multipleTimes(
-        uint256 times
-    ) external givenMintedInitialSupply {
+    function test_createInflation_multipleTimes(uint256 times) external givenMintedInitialSupply {
         times = bound(times, 1, 20);
 
         for (uint256 i = 0; i < times; ++i) {
@@ -292,9 +297,10 @@ contract TownsMainnetTests is TestUtils, ITownsBase, EIP712Utils {
         uint256 tokenAmount;
     }
 
-    function test_getPaginatedDelegators(
-        TestPaginatedDelegators[10] memory test
-    ) external givenMintedInitialSupply {
+    function test_getPaginatedDelegators(TestPaginatedDelegators[10] memory test)
+        external
+        givenMintedInitialSupply
+    {
         for (uint256 i = 0; i < test.length; ++i) {
             test[i].tokenAmount = bound(test[i].tokenAmount, 1, 100);
             vm.assume(test[i].holder != test[i].delegatee);

@@ -59,7 +59,9 @@ interface IDrop is IClaimConditionMultiPhase {
         uint256 pricePerToken,
         AllowlistProof calldata allowlistProof,
         bytes memory data
-    ) external payable;
+    )
+        external
+        payable;
 
     /// @notice Allows an admin account to update the claim conditions
     /// @param phases The claim conditions in ascending order by `startTimestamp`

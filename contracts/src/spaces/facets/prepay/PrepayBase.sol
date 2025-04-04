@@ -10,17 +10,13 @@ import {PrepayStorage} from "./PrepayStorage.sol";
 // contracts
 
 abstract contract PrepayBase is IPrepayBase {
-    function _addPrepay(
-        uint256 supply
-    ) internal {
+    function _addPrepay(uint256 supply) internal {
         PrepayStorage.Layout storage ds = PrepayStorage.layout();
         ds.supply += supply;
         emit Prepay__Prepaid(supply);
     }
 
-    function _reducePrepay(
-        uint256 supply
-    ) internal {
+    function _reducePrepay(uint256 supply) internal {
         PrepayStorage.Layout storage ds = PrepayStorage.layout();
         ds.supply -= supply;
     }

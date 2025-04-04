@@ -17,9 +17,7 @@ interface IEntitlementBase {
 
 interface IEntitlement is IEntitlementBase {
     /// @notice initializes the entitlement module
-    function initialize(
-        address space
-    ) external;
+    function initialize(address space) external;
 
     /// @notice The name of the entitlement module
     function name() external view returns (string memory);
@@ -37,16 +35,12 @@ interface IEntitlement is IEntitlementBase {
 
     /// @notice removes an entitlement
     /// @param roleId id of the role to remove
-    function removeEntitlement(
-        uint256 roleId
-    ) external;
+    function removeEntitlement(uint256 roleId) external;
 
     /// @notice fetches the entitlement data for a roleId
     /// @param roleId the roleId to fetch the entitlement data for
     /// @return entitlementData array for the role
-    function getEntitlementDataByRoleId(
-        uint256 roleId
-    ) external view returns (bytes memory);
+    function getEntitlementDataByRoleId(uint256 roleId) external view returns (bytes memory);
 
     /// @notice some entitlements require cross chain evaluation and may not be executed directly
     /// from
@@ -63,5 +57,8 @@ interface IEntitlement is IEntitlementBase {
         bytes32 channelId,
         address[] memory user,
         bytes32 permission
-    ) external view returns (bool);
+    )
+        external
+        view
+        returns (bool);
 }

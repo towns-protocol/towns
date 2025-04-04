@@ -16,33 +16,23 @@ contract PartnerRegistry is PartnerRegistryBase, OwnableBase, IPartnerRegistry, 
         _addInterface(type(IPartnerRegistry).interfaceId);
     }
 
-    function registerPartner(
-        Partner calldata partner
-    ) external payable {
+    function registerPartner(Partner calldata partner) external payable {
         _registerPartner(partner);
     }
 
-    function partnerInfo(
-        address account
-    ) external view returns (Partner memory) {
+    function partnerInfo(address account) external view returns (Partner memory) {
         return _partner(account);
     }
 
-    function partnerFee(
-        address account
-    ) external view returns (uint256 fee) {
+    function partnerFee(address account) external view returns (uint256 fee) {
         return _partnerFee(account);
     }
 
-    function updatePartner(
-        Partner calldata partner
-    ) external {
+    function updatePartner(Partner calldata partner) external {
         _updatePartner(partner);
     }
 
-    function removePartner(
-        address account
-    ) external onlyOwner {
+    function removePartner(address account) external onlyOwner {
         _removePartner(account);
     }
 
@@ -53,9 +43,7 @@ contract PartnerRegistry is PartnerRegistryBase, OwnableBase, IPartnerRegistry, 
         return _maxPartnerFee();
     }
 
-    function setMaxPartnerFee(
-        uint256 fee
-    ) external onlyOwner {
+    function setMaxPartnerFee(uint256 fee) external onlyOwner {
         _setMaxPartnerFee(fee);
     }
 
@@ -63,9 +51,7 @@ contract PartnerRegistry is PartnerRegistryBase, OwnableBase, IPartnerRegistry, 
         return _registryFee();
     }
 
-    function setRegistryFee(
-        uint256 fee
-    ) external onlyOwner {
+    function setRegistryFee(uint256 fee) external onlyOwner {
         _setRegistryFee(fee);
     }
 }

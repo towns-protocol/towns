@@ -5,9 +5,7 @@ library Bytes32ToHexString {
     // Hex character lookup table
     bytes constant HEX_SYMBOLS = bytes("0123456789abcdef");
 
-    function bytes32ToHexString(
-        bytes32 data
-    ) public pure returns (string memory) {
+    function bytes32ToHexString(bytes32 data) public pure returns (string memory) {
         bytes memory result = new bytes(64);
 
         for (uint256 i = 0; i < 32; i++) {

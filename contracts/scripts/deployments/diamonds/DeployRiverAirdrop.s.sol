@@ -9,19 +9,23 @@ import {IDiamond} from "@towns-protocol/diamond/src/IDiamond.sol";
 //contracts
 import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
 import {Diamond} from "@towns-protocol/diamond/src/Diamond.sol";
-import {DiamondHelper} from "contracts/test/diamond/Diamond.t.sol";
+
 import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
+import {DiamondHelper} from "contracts/test/diamond/Diamond.t.sol";
 
 // deployers
 import {MultiInit} from "@towns-protocol/diamond/src/initializers/MultiInit.sol";
-import {DeployMultiInit} from "contracts/scripts/deployments/utils/DeployMultiInit.s.sol";
+
 import {DeployDiamondCut} from "contracts/scripts/deployments/facets/DeployDiamondCut.s.sol";
 import {DeployDiamondLoupe} from "contracts/scripts/deployments/facets/DeployDiamondLoupe.s.sol";
-import {DeployIntrospection} from "contracts/scripts/deployments/facets/DeployIntrospection.s.sol";
-import {DeployOwnable} from "contracts/scripts/deployments/facets/DeployOwnable.s.sol";
+
 import {DeployDropFacet} from "contracts/scripts/deployments/facets/DeployDropFacet.s.sol";
-import {DeployTownsPoints} from "contracts/scripts/deployments/facets/DeployTownsPoints.s.sol";
+import {DeployIntrospection} from "contracts/scripts/deployments/facets/DeployIntrospection.s.sol";
+
 import {DeployMetadata} from "contracts/scripts/deployments/facets/DeployMetadata.s.sol";
+import {DeployOwnable} from "contracts/scripts/deployments/facets/DeployOwnable.s.sol";
+import {DeployTownsPoints} from "contracts/scripts/deployments/facets/DeployTownsPoints.s.sol";
+import {DeployMultiInit} from "contracts/scripts/deployments/utils/DeployMultiInit.s.sol";
 
 contract DeployRiverAirdrop is DiamondHelper, Deployer {
     address internal BASE_REGISTRY = address(0);
@@ -58,9 +62,7 @@ contract DeployRiverAirdrop is DiamondHelper, Deployer {
         return "riverAirdrop";
     }
 
-    function setSpaceFactory(
-        address spaceFactory
-    ) external {
+    function setSpaceFactory(address spaceFactory) external {
         SPACE_FACTORY = spaceFactory;
     }
 
@@ -72,9 +74,7 @@ contract DeployRiverAirdrop is DiamondHelper, Deployer {
         return getDeployment("spaceFactory");
     }
 
-    function setBaseRegistry(
-        address baseRegistry
-    ) external {
+    function setBaseRegistry(address baseRegistry) external {
         BASE_REGISTRY = baseRegistry;
     }
 
@@ -86,9 +86,7 @@ contract DeployRiverAirdrop is DiamondHelper, Deployer {
         return getDeployment("baseRegistry");
     }
 
-    function addImmutableCuts(
-        address deployer
-    ) internal {
+    function addImmutableCuts(address deployer) internal {
         multiInit = deployMultiInit.deploy(deployer);
         diamondCut = diamondCutHelper.deploy(deployer);
         diamondLoupe = diamondLoupeHelper.deploy(deployer);
@@ -117,9 +115,7 @@ contract DeployRiverAirdrop is DiamondHelper, Deployer {
         );
     }
 
-    function diamondInitParams(
-        address deployer
-    ) public returns (Diamond.InitParams memory) {
+    function diamondInitParams(address deployer) public returns (Diamond.InitParams memory) {
         dropFacet = dropHelper.deploy(deployer);
         pointsFacet = pointsHelper.deploy(deployer);
         metadata = metadataHelper.deploy(deployer);
@@ -168,14 +164,16 @@ contract DeployRiverAirdrop is DiamondHelper, Deployer {
     function diamondInitHelper(
         address deployer,
         string[] memory facetNames
-    ) external override returns (FacetCut[] memory) {
+    )
+        external
+        override
+        returns (FacetCut[] memory)
+    {
         diamondInitParamsFromFacets(deployer, facetNames);
         return this.getCuts();
     }
 
-    function __deploy(
-        address deployer
-    ) public override returns (address) {
+    function __deploy(address deployer) public override returns (address) {
         addImmutableCuts(deployer);
 
         Diamond.InitParams memory initDiamondCut = diamondInitParams(deployer);

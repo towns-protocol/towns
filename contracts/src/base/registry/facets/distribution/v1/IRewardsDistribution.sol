@@ -19,17 +19,11 @@ interface IRewardsDistributionBase {
 }
 
 interface IRewardsDistribution is IRewardsDistributionBase {
-    function getClaimableAmountForOperator(
-        address addr
-    ) external view returns (uint256);
+    function getClaimableAmountForOperator(address addr) external view returns (uint256);
 
-    function getClaimableAmountForAuthorizedClaimer(
-        address addr
-    ) external view returns (uint256);
+    function getClaimableAmountForAuthorizedClaimer(address addr) external view returns (uint256);
 
-    function getClaimableAmountForDelegator(
-        address addr
-    ) external view returns (uint256);
+    function getClaimableAmountForDelegator(address addr) external view returns (uint256);
 
     function operatorClaim() external;
 
@@ -37,27 +31,19 @@ interface IRewardsDistribution is IRewardsDistributionBase {
 
     function delegatorClaim() external;
 
-    function distributeRewards(
-        address operator
-    ) external;
+    function distributeRewards(address operator) external;
 
-    function setPeriodDistributionAmount(
-        uint256 amount
-    ) external;
+    function setPeriodDistributionAmount(uint256 amount) external;
 
     function getPeriodDistributionAmount() external view returns (uint256);
 
-    function setActivePeriodLength(
-        uint256 length
-    ) external;
+    function setActivePeriodLength(uint256 length) external;
 
     function getActivePeriodLength() external view returns (uint256);
 
     function getActiveOperators() external view returns (address[] memory);
 
-    function setWithdrawalRecipient(
-        address recipient
-    ) external;
+    function setWithdrawalRecipient(address recipient) external;
 
     function getWithdrawalRecipient() external view returns (address);
 

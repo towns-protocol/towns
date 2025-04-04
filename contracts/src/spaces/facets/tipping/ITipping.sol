@@ -53,9 +53,7 @@ interface ITipping is ITippingBase {
     /// @dev Requires sender and receiver to be members of the space
     /// @dev Requires amount > 0 and valid currency address
     /// @dev Emits Tip event
-    function tip(
-        TipRequest calldata tipRequest
-    ) external payable;
+    function tip(TipRequest calldata tipRequest) external payable;
 
     /// @notice Gets the total tips received for a token ID in a specific currency
     /// @param tokenId The token ID to get tips for
@@ -64,7 +62,10 @@ interface ITipping is ITippingBase {
     function tipsByCurrencyAndTokenId(
         uint256 tokenId,
         address currency
-    ) external view returns (uint256);
+    )
+        external
+        view
+        returns (uint256);
 
     /// @notice Gets the list of currencies that have been tipped to the space
     /// @return An array of currency addresses
@@ -73,14 +74,10 @@ interface ITipping is ITippingBase {
     /// @notice Gets the total number of tips received in a specific currency
     /// @param currency The currency address to get tips for
     /// @return The total number of tips received in the specified currency
-    function totalTipsByCurrency(
-        address currency
-    ) external view returns (uint256);
+    function totalTipsByCurrency(address currency) external view returns (uint256);
 
     /// @notice Gets the total amount of tips received in a specific currency
     /// @param currency The currency address to get tips for
     /// @return The total amount of tips received in the specified currency
-    function tipAmountByCurrency(
-        address currency
-    ) external view returns (uint256);
+    function tipAmountByCurrency(address currency) external view returns (uint256);
 }

@@ -7,8 +7,9 @@ import {IArchitectBase} from "contracts/src/factory/facets/architect/IArchitect.
 // libraries
 
 // contracts
-import {TestUtils} from "contracts/test/utils/TestUtils.sol";
+
 import {SpaceHelper} from "contracts/test/spaces/SpaceHelper.sol";
+import {TestUtils} from "contracts/test/utils/TestUtils.sol";
 
 import {ICreateSpace} from "contracts/src/factory/facets/create/ICreateSpace.sol";
 

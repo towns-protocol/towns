@@ -11,9 +11,7 @@ contract MockERC1155Test is TestUtils {
         mockToken = new MockERC1155();
     }
 
-    function test_mintGold(
-        address user
-    ) external {
+    function test_mintGold(address user) external {
         vm.assume(user != address(0));
         vm.assume(user.code.length == 0);
 

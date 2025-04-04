@@ -12,8 +12,9 @@ import {ITownsPointsBase} from "contracts/src/airdrop/points/ITownsPoints.sol";
 import {CheckIn} from "contracts/src/airdrop/points/CheckIn.sol";
 
 // contracts
-import {TownsPoints} from "contracts/src/airdrop/points/TownsPoints.sol";
+
 import {BaseRegistryTest} from "../base/registry/BaseRegistry.t.sol";
+import {TownsPoints} from "contracts/src/airdrop/points/TownsPoints.sol";
 
 contract TownsPointsTest is BaseRegistryTest, IOwnableBase, IDiamond, ITownsPointsBase {
     TownsPoints internal pointsFacet;
@@ -63,7 +64,9 @@ contract TownsPointsTest is BaseRegistryTest, IOwnableBase, IDiamond, ITownsPoin
     function test_fuzz_batchMintPoints(
         address[32] memory accounts,
         uint256[32] memory values
-    ) public {
+    )
+        public
+    {
         for (uint256 i; i < accounts.length; ++i) {
             if (accounts[i] == address(0)) {
                 accounts[i] = _randomAddress();
@@ -77,18 +80,14 @@ contract TownsPointsTest is BaseRegistryTest, IOwnableBase, IDiamond, ITownsPoin
         pointsFacet.batchMintPoints(abi.encode(_accounts, _values));
     }
 
-    modifier givenCheckedIn(
-        address user
-    ) {
+    modifier givenCheckedIn(address user) {
         vm.assume(user != address(0));
         vm.prank(user);
         pointsFacet.checkIn();
         _;
     }
 
-    modifier givenUserCheckInAfterMaxStreak(
-        address user
-    ) {
+    modifier givenUserCheckInAfterMaxStreak(address user) {
         vm.assume(user != address(0));
         uint256 currentTime = block.timestamp;
         for (uint256 i; i < CheckIn.MAX_STREAK_PER_CHECKIN; ++i) {
@@ -100,25 +99,22 @@ contract TownsPointsTest is BaseRegistryTest, IOwnableBase, IDiamond, ITownsPoin
         _;
     }
 
-    function test_checkInFirstTime(
-        address user
-    ) external givenCheckedIn(user) {
+    function test_checkInFirstTime(address user) external givenCheckedIn(user) {
         assertEq(pointsFacet.balanceOf(user), 1 ether);
         assertEq(pointsFacet.getCurrentStreak(user), 1);
         assertEq(pointsFacet.getLastCheckIn(user), block.timestamp);
     }
 
-    function test_checkIn_revertIf_checkInPeriodNotPassed(
-        address user
-    ) external givenCheckedIn(user) {
+    function test_checkIn_revertIf_checkInPeriodNotPassed(address user)
+        external
+        givenCheckedIn(user)
+    {
         vm.prank(user);
         vm.expectRevert(TownsPoints__CheckInPeriodNotPassed.selector);
         pointsFacet.checkIn();
     }
 
-    function test_checkIn_afterTimePeriodPassed(
-        address user
-    ) external givenCheckedIn(user) {
+    function test_checkIn_afterTimePeriodPassed(address user) external givenCheckedIn(user) {
         vm.warp(block.timestamp + CheckIn.CHECK_IN_WAIT_PERIOD + 1);
 
         uint256 currentStreak = pointsFacet.getCurrentStreak(user);
@@ -134,9 +130,10 @@ contract TownsPointsTest is BaseRegistryTest, IOwnableBase, IDiamond, ITownsPoin
         assertEq(pointsFacet.getCurrentStreak(user), newStreak);
     }
 
-    function test_checkIn_afterMaxStreak(
-        address user
-    ) external givenUserCheckInAfterMaxStreak(user) {
+    function test_checkIn_afterMaxStreak(address user)
+        external
+        givenUserCheckInAfterMaxStreak(user)
+    {
         uint256 currentPoints = pointsFacet.balanceOf(user);
 
         vm.warp(block.timestamp + CheckIn.CHECK_IN_WAIT_PERIOD + 1);

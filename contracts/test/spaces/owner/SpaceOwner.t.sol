@@ -3,22 +3,25 @@ pragma solidity ^0.8.23;
 
 // interfaces
 import {IERC4906} from "@openzeppelin/contracts/interfaces/IERC4906.sol";
-import {IGuardian} from "contracts/src/spaces/facets/guardian/IGuardian.sol";
+
 import {IOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
+
+import {IERC721ABase} from "contracts/src/diamond/facets/token/ERC721A/IERC721A.sol";
+import {IGuardian} from "contracts/src/spaces/facets/guardian/IGuardian.sol";
 import {ISpaceOwnerBase} from "contracts/src/spaces/facets/owner/ISpaceOwner.sol";
 import {
-    Validator__InvalidStringLength,
-    Validator__InvalidAddress
+    Validator__InvalidAddress,
+    Validator__InvalidStringLength
 } from "contracts/src/utils/Validator.sol";
-import {IERC721ABase} from "contracts/src/diamond/facets/token/ERC721A/IERC721A.sol";
 
 // libraries
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 import {LibString} from "solady/utils/LibString.sol";
 
 // contracts
-import {BaseSetup} from "contracts/test/spaces/BaseSetup.sol";
+
 import {SpaceOwner} from "contracts/src/spaces/facets/owner/SpaceOwner.sol";
+import {BaseSetup} from "contracts/test/spaces/BaseSetup.sol";
 
 contract SpaceOwnerTest is ISpaceOwnerBase, IOwnableBase, BaseSetup {
     string internal name = "Awesome Space";
@@ -262,9 +265,7 @@ contract SpaceOwnerTest is ISpaceOwnerBase, IOwnableBase, BaseSetup {
 
     // ------------ getSpace ------------
 
-    function test_fuzz_getSpaceInfo(
-        address spaceAddress
-    ) external {
+    function test_fuzz_getSpaceInfo(address spaceAddress) external {
         vm.assume(spaceAddress != address(0));
         uint256 tokenId = mintSpace(uri, spaceAddress);
 
@@ -277,9 +278,7 @@ contract SpaceOwnerTest is ISpaceOwnerBase, IOwnableBase, BaseSetup {
         assertEq(space.longDescription, longDescription);
     }
 
-    function test_fuzz_getSpaceByTokenId(
-        address spaceAddress
-    ) external {
+    function test_fuzz_getSpaceByTokenId(address spaceAddress) external {
         vm.assume(spaceAddress != address(0));
         uint256 tokenId = mintSpace(uri, spaceAddress);
 

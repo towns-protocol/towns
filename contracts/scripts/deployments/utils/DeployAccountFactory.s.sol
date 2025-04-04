@@ -6,18 +6,17 @@ pragma solidity ^0.8.23;
 //libraries
 
 //contracts
-import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
-import {SimpleAccountFactory} from "account-abstraction/samples/SimpleAccountFactory.sol";
+
 import {EntryPoint} from "account-abstraction/core/EntryPoint.sol";
+import {SimpleAccountFactory} from "account-abstraction/samples/SimpleAccountFactory.sol";
+import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
 
 contract DeployAccountFactory is Deployer {
     function versionName() public pure override returns (string memory) {
         return "utils/accountFactory";
     }
 
-    function __deploy(
-        address deployer
-    ) public override returns (address) {
+    function __deploy(address deployer) public override returns (address) {
         if (!isAnvil()) revert("not supported");
 
         address entrypoint = getDeployment("entrypoint");

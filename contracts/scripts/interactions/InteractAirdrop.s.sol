@@ -22,9 +22,7 @@ contract InteractAirdrop is Interaction {
         Wallet[] wallets;
     }
 
-    function __interact(
-        address deployer
-    ) internal override {
+    function __interact(address deployer) internal override {
         // Read JSON file and parse wallet data
         string memory root = vm.projectRoot();
         string memory path = string.concat(root, "/contracts/in/airdrop-input-data.json");

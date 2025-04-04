@@ -23,7 +23,5 @@ interface IMetadata is IMetadataBase {
     function contractURI() external view returns (string memory);
 
     /// @dev Sets the metadata URI of the contract
-    function setContractURI(
-        string calldata uri
-    ) external;
+    function setContractURI(string calldata uri) external;
 }

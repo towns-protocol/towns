@@ -3,8 +3,9 @@ pragma solidity ^0.8.23;
 
 // interfaces
 import {IArchitect} from "contracts/src/factory/facets/architect/IArchitect.sol";
-import {ISpaceProxyInitializer} from "contracts/src/spaces/facets/proxy/ISpaceProxyInitializer.sol";
+
 import {IPricingModules} from "contracts/src/factory/facets/architect/pricing/IPricingModules.sol";
+import {ISpaceProxyInitializer} from "contracts/src/spaces/facets/proxy/ISpaceProxyInitializer.sol";
 
 // deployment
 import {DeploySpaceProxyInitializer} from
@@ -19,9 +20,7 @@ contract InteractAlphaPost is Interaction {
     DeploySpaceProxyInitializer deploySpaceProxyInitializer = new DeploySpaceProxyInitializer();
     DeployTieredLogPricingV3 deployTieredLogPricingV3 = new DeployTieredLogPricingV3();
 
-    function __interact(
-        address deployer
-    ) internal override {
+    function __interact(address deployer) internal override {
         address spaceFactory = getDeployment("spaceFactory");
 
         vm.setEnv("OVERRIDE_DEPLOYMENTS", "1");

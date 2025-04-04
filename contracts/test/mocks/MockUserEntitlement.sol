@@ -7,11 +7,12 @@ import {IRoles} from "contracts/src/spaces/facets/roles/IRoles.sol";
 import {MockUserEntitlementStorage} from "./MockUserEntitlementStorage.sol";
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
+import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+
+import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import {ContextUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
 import {ERC165Upgradeable} from
     "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
-import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import {ContextUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
-import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
 contract MockUserEntitlement is
     Initializable,
@@ -37,9 +38,7 @@ contract MockUserEntitlement is
         _;
     }
 
-    function initialize(
-        address _space
-    ) public initializer {
+    function initialize(address _space) public initializer {
         __UUPSUpgradeable_init();
         __ERC165_init();
         __Context_init();
@@ -47,13 +46,9 @@ contract MockUserEntitlement is
         SPACE_ADDRESS = _space;
     }
 
-    function _authorizeUpgrade(
-        address newImplementation
-    ) internal override onlySpace {}
+    function _authorizeUpgrade(address newImplementation) internal override onlySpace {}
 
-    function supportsInterface(
-        bytes4 interfaceId
-    ) public view virtual override returns (bool) {
+    function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
         return interfaceId == type(IEntitlement).interfaceId || super.supportsInterface(interfaceId);
     }
 
@@ -101,9 +96,7 @@ contract MockUserEntitlement is
         }
     }
 
-    function removeEntitlement(
-        uint256 roleId
-    ) external onlySpace {
+    function removeEntitlement(uint256 roleId) external onlySpace {
         MockUserEntitlementStorage.Layout storage ds = MockUserEntitlementStorage.layout();
 
         // First remove any prior values
@@ -129,25 +122,23 @@ contract MockUserEntitlement is
         ds.roleIdsByChannelId[channelId].remove(roleId);
     }
 
-    function getRoleIdsByChannelId(
-        string memory channelId
-    ) external view returns (uint256[] memory roleIds) {
+    function getRoleIdsByChannelId(string memory channelId)
+        external
+        view
+        returns (uint256[] memory roleIds)
+    {
         MockUserEntitlementStorage.Layout storage ds = MockUserEntitlementStorage.layout();
 
         return ds.roleIdsByChannelId[channelId].values();
     }
 
-    function getEntitlementDataByRoleId(
-        uint256 roleId
-    ) external view returns (bytes memory) {
+    function getEntitlementDataByRoleId(uint256 roleId) external view returns (bytes memory) {
         MockUserEntitlementStorage.Layout storage ds = MockUserEntitlementStorage.layout();
 
         return abi.encode(ds.entitlementsByRoleId[roleId].users);
     }
 
-    function getUserRoles(
-        address
-    ) external pure returns (IRoles.Role[] memory) {
+    function getUserRoles(address) external pure returns (IRoles.Role[] memory) {
         IRoles.Role[] memory roles = new IRoles.Role[](0);
         return roles;
     }

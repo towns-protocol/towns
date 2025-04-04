@@ -24,9 +24,7 @@ abstract contract ReferralsFacetTest is MembershipBaseSetup, IReferralsBase {
         referralsFacet.setMaxBpsFee(REFERRAL_BPS);
     }
 
-    modifier givenReferralCodeIsRegistered(
-        Referral memory referral
-    ) {
+    modifier givenReferralCodeIsRegistered(Referral memory referral) {
         vm.assume(referral.recipient != address(0));
         vm.assume(bytes(referral.referralCode).length > 0);
         assumeNotPrecompile(referral.recipient);

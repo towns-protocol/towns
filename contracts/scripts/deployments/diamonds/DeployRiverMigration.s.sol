@@ -7,19 +7,21 @@ import {IDiamond} from "@towns-protocol/diamond/src/IDiamond.sol";
 //libraries
 
 //contracts
-import {Diamond} from "@towns-protocol/diamond/src/Diamond.sol";
+
 import {DiamondHelper} from "@towns-protocol/diamond/scripts/common/helpers/DiamondHelper.s.sol";
+import {Diamond} from "@towns-protocol/diamond/src/Diamond.sol";
 import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
 
 // deployers
 import {MultiInit} from "@towns-protocol/diamond/src/initializers/MultiInit.sol";
-import {DeployMultiInit} from "contracts/scripts/deployments/utils/DeployMultiInit.s.sol";
+
 import {DeployDiamondCut} from "contracts/scripts/deployments/facets/DeployDiamondCut.s.sol";
 import {DeployDiamondLoupe} from "contracts/scripts/deployments/facets/DeployDiamondLoupe.s.sol";
 import {DeployIntrospection} from "contracts/scripts/deployments/facets/DeployIntrospection.s.sol";
 import {DeployOwnable} from "contracts/scripts/deployments/facets/DeployOwnable.s.sol";
 import {DeployPausable} from "contracts/scripts/deployments/facets/DeployPausable.s.sol";
 import {DeployTokenMigration} from "contracts/scripts/deployments/facets/DeployTokenMigration.s.sol";
+import {DeployMultiInit} from "contracts/scripts/deployments/utils/DeployMultiInit.s.sol";
 
 contract DeployRiverMigration is DiamondHelper, Deployer {
     address OLD_TOKEN = 0x0000000000000000000000000000000000000000;
@@ -58,9 +60,7 @@ contract DeployRiverMigration is DiamondHelper, Deployer {
         return (OLD_TOKEN, NEW_TOKEN);
     }
 
-    function addImmutableCuts(
-        address deployer
-    ) internal {
+    function addImmutableCuts(address deployer) internal {
         multiInit = deployMultiInit.deploy(deployer);
         diamondCut = diamondCutHelper.deploy(deployer);
         diamondLoupe = diamondLoupeHelper.deploy(deployer);
@@ -95,9 +95,7 @@ contract DeployRiverMigration is DiamondHelper, Deployer {
         );
     }
 
-    function diamondInitParams(
-        address deployer
-    ) public returns (Diamond.InitParams memory) {
+    function diamondInitParams(address deployer) public returns (Diamond.InitParams memory) {
         tokenMigration = tokenMigrationHelper.deploy(deployer);
 
         (address oldToken, address newToken) = getTokens();
@@ -115,9 +113,7 @@ contract DeployRiverMigration is DiamondHelper, Deployer {
         });
     }
 
-    function __deploy(
-        address deployer
-    ) public override returns (address) {
+    function __deploy(address deployer) public override returns (address) {
         addImmutableCuts(deployer);
 
         Diamond.InitParams memory initDiamondCut = diamondInitParams(deployer);

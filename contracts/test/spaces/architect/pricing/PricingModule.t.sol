@@ -2,20 +2,23 @@
 pragma solidity ^0.8.23;
 
 // interfaces
+
+import {IOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
 import {IPricingModulesBase} from
     "contracts/src/factory/facets/architect/pricing/IPricingModules.sol";
-import {IOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
 
 // libraries
 
 // contracts
-import {BaseSetup} from "contracts/test/spaces/BaseSetup.sol";
+
 import {PricingModulesFacet} from
     "contracts/src/factory/facets/architect/pricing/PricingModulesFacet.sol";
+import {BaseSetup} from "contracts/test/spaces/BaseSetup.sol";
 
 // mocks
-import {MockPricingModule} from "contracts/test/mocks/MockPricingModule.sol";
+
 import {MockERC20} from "contracts/test/mocks/MockERC20.sol";
+import {MockPricingModule} from "contracts/test/mocks/MockPricingModule.sol";
 
 contract PricingModuleTest is BaseSetup, IPricingModulesBase, IOwnableBase {
     PricingModulesFacet internal pricingModules;
@@ -32,9 +35,7 @@ contract PricingModuleTest is BaseSetup, IPricingModulesBase, IOwnableBase {
         _;
     }
 
-    modifier givenNotOwner(
-        address notOwner
-    ) {
+    modifier givenNotOwner(address notOwner) {
         vm.assume(deployer != notOwner);
         vm.prank(notOwner);
         _;
@@ -47,9 +48,10 @@ contract PricingModuleTest is BaseSetup, IPricingModulesBase, IOwnableBase {
         assertTrue(pricingModules.isPricingModule(address(mockPricingModule)));
     }
 
-    function test_revertWhen_addPricingModule_notOwner(
-        address notOwner
-    ) public givenNotOwner(notOwner) {
+    function test_revertWhen_addPricingModule_notOwner(address notOwner)
+        public
+        givenNotOwner(notOwner)
+    {
         vm.expectRevert(abi.encodeWithSelector(Ownable__NotOwner.selector, notOwner));
         pricingModules.addPricingModule(address(mockPricingModule));
     }
@@ -90,9 +92,10 @@ contract PricingModuleTest is BaseSetup, IPricingModulesBase, IOwnableBase {
         assertFalse(pricingModules.isPricingModule(address(mockPricingModule)));
     }
 
-    function test_revertWhen_removePricingModule_notOwner(
-        address notOwner
-    ) public givenNotOwner(notOwner) {
+    function test_revertWhen_removePricingModule_notOwner(address notOwner)
+        public
+        givenNotOwner(notOwner)
+    {
         vm.expectRevert(abi.encodeWithSelector(Ownable__NotOwner.selector, notOwner));
         pricingModules.removePricingModule(address(mockPricingModule));
     }

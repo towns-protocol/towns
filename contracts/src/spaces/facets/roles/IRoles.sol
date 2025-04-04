@@ -102,7 +102,9 @@ interface IRoles is IRolesBase {
         string calldata roleName,
         string[] memory permissions,
         CreateEntitlement[] memory entitlements
-    ) external returns (uint256 roleId);
+    )
+        external
+        returns (uint256 roleId);
 
     /// @notice Retrieves all roles
     /// @return roles Array of all roles
@@ -111,9 +113,7 @@ interface IRoles is IRolesBase {
     /// @notice Retrieves a role by its ID
     /// @param roleId Unique identifier of the role
     /// @return role The role struct
-    function getRoleById(
-        uint256 roleId
-    ) external view returns (Role memory role);
+    function getRoleById(uint256 roleId) external view returns (Role memory role);
 
     /// @notice Updates an existing role
     /// @param roleId Unique identifier of the role to update
@@ -125,13 +125,12 @@ interface IRoles is IRolesBase {
         string calldata roleName,
         string[] memory permissions,
         CreateEntitlement[] memory entitlements
-    ) external;
+    )
+        external;
 
     /// @notice Removes a role
     /// @param roleId Unique identifier of the role to remove
-    function removeRole(
-        uint256 roleId
-    ) external;
+    function removeRole(uint256 roleId) external;
 
     // permissions
 
@@ -148,9 +147,10 @@ interface IRoles is IRolesBase {
     /// @notice Retrieves permissions for a role
     /// @param roleId Unique identifier of the role
     /// @return permissions List of permissions for the role
-    function getPermissionsByRoleId(
-        uint256 roleId
-    ) external view returns (string[] memory permissions);
+    function getPermissionsByRoleId(uint256 roleId)
+        external
+        view
+        returns (string[] memory permissions);
 
     // entitlements
 
@@ -160,7 +160,8 @@ interface IRoles is IRolesBase {
     function addRoleToEntitlement(
         uint256 roleId,
         CreateEntitlement calldata entitlement
-    ) external;
+    )
+        external;
 
     /// @notice Removes an entitlement from a role
     /// @param roleId Unique identifier of the role
@@ -168,7 +169,8 @@ interface IRoles is IRolesBase {
     function removeRoleFromEntitlement(
         uint256 roleId,
         CreateEntitlement memory entitlement
-    ) external;
+    )
+        external;
 
     /// @notice Sets channel permission overrides for a role
     /// @param roleId Unique identifier of the role
@@ -178,7 +180,8 @@ interface IRoles is IRolesBase {
         uint256 roleId,
         bytes32 channelId,
         string[] memory permissions
-    ) external;
+    )
+        external;
 
     /// @notice Retrieves channel permission overrides for a role
     /// @param roleId Unique identifier of the role
@@ -187,7 +190,10 @@ interface IRoles is IRolesBase {
     function getChannelPermissionOverrides(
         uint256 roleId,
         bytes32 channelId
-    ) external view returns (string[] memory permissions);
+    )
+        external
+        view
+        returns (string[] memory permissions);
 
     /// @notice Clears channel permission overrides for a role
     /// @param roleId Unique identifier of the role

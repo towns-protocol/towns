@@ -8,9 +8,10 @@ import {IChannel} from "./IChannel.sol";
 import {Permissions} from "contracts/src/spaces/facets/Permissions.sol";
 
 // contracts
+
+import {ChannelBase} from "./ChannelBase.sol";
 import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
 import {Entitled} from "contracts/src/spaces/facets/Entitled.sol";
-import {ChannelBase} from "./ChannelBase.sol";
 import {RolesBase} from "contracts/src/spaces/facets/roles/RolesBase.sol";
 
 contract Channels is IChannel, ChannelBase, RolesBase, Entitled, Facet {
@@ -18,7 +19,9 @@ contract Channels is IChannel, ChannelBase, RolesBase, Entitled, Facet {
         bytes32 channelId,
         string memory metadata,
         uint256[] memory roleIds
-    ) external {
+    )
+        external
+    {
         _validatePermission(Permissions.AddRemoveChannels);
         _createChannel(channelId, metadata, roleIds);
     }
@@ -27,7 +30,9 @@ contract Channels is IChannel, ChannelBase, RolesBase, Entitled, Facet {
         bytes32 channelId,
         string memory metadata,
         RolePermissions[] calldata rolePermissions
-    ) external {
+    )
+        external
+    {
         _validatePermission(Permissions.AddRemoveChannels);
 
         uint256[] memory roleIds = new uint256[](rolePermissions.length);
@@ -43,9 +48,7 @@ contract Channels is IChannel, ChannelBase, RolesBase, Entitled, Facet {
         }
     }
 
-    function getChannel(
-        bytes32 channelId
-    ) external view returns (Channel memory channel) {
+    function getChannel(bytes32 channelId) external view returns (Channel memory channel) {
         return _getChannel(channelId);
     }
 
@@ -58,9 +61,7 @@ contract Channels is IChannel, ChannelBase, RolesBase, Entitled, Facet {
         _updateChannel(channelId, metadata, disabled);
     }
 
-    function removeChannel(
-        bytes32 channelId
-    ) external {
+    function removeChannel(bytes32 channelId) external {
         _validatePermission(Permissions.AddRemoveChannels);
         _removeChannel(channelId);
     }
@@ -70,9 +71,11 @@ contract Channels is IChannel, ChannelBase, RolesBase, Entitled, Facet {
         _addRoleToChannel(channelId, roleId);
     }
 
-    function getRolesByChannel(
-        bytes32 channelId
-    ) external view returns (uint256[] memory roleIds) {
+    function getRolesByChannel(bytes32 channelId)
+        external
+        view
+        returns (uint256[] memory roleIds)
+    {
         return _getRolesByChannel(channelId);
     }
 

@@ -18,17 +18,19 @@ pragma solidity ^0.8.0;
 
 // contracts
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+
+import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import {ContextUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
 import {ERC165Upgradeable} from
     "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
-import {ContextUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
-import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
 // libraries
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
 // interfaces
-import {IEntitlement} from "contracts/src/spaces/entitlements/IEntitlement.sol";
+
 import {IRuleEntitlement} from "./IRuleEntitlement.sol";
+import {IEntitlement} from "contracts/src/spaces/entitlements/IEntitlement.sol";
 
 contract RuleEntitlement is
     Initializable,
@@ -59,9 +61,7 @@ contract RuleEntitlement is
         _disableInitializers();
     }
 
-    function initialize(
-        address _space
-    ) public initializer {
+    function initialize(address _space) public initializer {
         __UUPSUpgradeable_init();
         __ERC165_init();
         __Context_init();
@@ -78,13 +78,9 @@ contract RuleEntitlement is
 
     /// @notice allow the contract to be upgraded while retaining state
     /// @param newImplementation address of the new implementation
-    function _authorizeUpgrade(
-        address newImplementation
-    ) internal override onlySpace {}
+    function _authorizeUpgrade(address newImplementation) internal override onlySpace {}
 
-    function supportsInterface(
-        bytes4 interfaceId
-    ) public view virtual override returns (bool) {
+    function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
         return interfaceId == type(IEntitlement).interfaceId || super.supportsInterface(interfaceId);
     }
 
@@ -99,7 +95,11 @@ contract RuleEntitlement is
         bytes32, //channelId,
         address[] memory, //user,
         bytes32 //permission
-    ) external pure returns (bool) {
+    )
+        external
+        pure
+        returns (bool)
+    {
         // TODO possible optimization: if there are no crosschain operations, evaluate locally
         return false;
     }
@@ -162,9 +162,7 @@ contract RuleEntitlement is
     }
 
     // @inheritdoc IEntitlement
-    function removeEntitlement(
-        uint256 roleId
-    ) external onlySpace {
+    function removeEntitlement(uint256 roleId) external onlySpace {
         Entitlement storage entitlement = entitlementsByRoleId[roleId];
         if (entitlement.grantedBy == address(0)) {
             revert Entitlement__InvalidValue();
@@ -174,22 +172,16 @@ contract RuleEntitlement is
     }
 
     // @inheritdoc IEntitlement
-    function getEntitlementDataByRoleId(
-        uint256 roleId
-    ) external view returns (bytes memory) {
+    function getEntitlementDataByRoleId(uint256 roleId) external view returns (bytes memory) {
         Entitlement storage entitlement = entitlementsByRoleId[roleId];
         return abi.encode(entitlement.data);
     }
 
-    function encodeRuleData(
-        RuleData calldata data
-    ) external pure returns (bytes memory) {
+    function encodeRuleData(RuleData calldata data) external pure returns (bytes memory) {
         return abi.encode(data);
     }
 
-    function getRuleData(
-        uint256 roleId
-    ) external view returns (RuleData memory data) {
+    function getRuleData(uint256 roleId) external view returns (RuleData memory data) {
         return entitlementsByRoleId[roleId].data;
     }
 }

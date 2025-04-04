@@ -5,8 +5,9 @@ pragma solidity ^0.8.23;
 import {ISpaceOwnerBase} from "contracts/src/spaces/facets/owner/ISpaceOwner.sol";
 
 // libraries
-import {LibString} from "solady/utils/LibString.sol";
+
 import {Validator} from "contracts/src/utils/Validator.sol";
+import {LibString} from "solady/utils/LibString.sol";
 
 // contracts
 import {SpaceOwnerStorage} from "contracts/src/spaces/facets/owner/SpaceOwnerStorage.sol";
@@ -14,9 +15,7 @@ import {SpaceOwnerStorage} from "contracts/src/spaces/facets/owner/SpaceOwnerSto
 abstract contract SpaceOwnerUriBase is ISpaceOwnerBase {
     using LibString for address;
 
-    function _setDefaultUri(
-        string memory uri
-    ) internal {
+    function _setDefaultUri(string memory uri) internal {
         Validator.checkLength(uri, 1);
 
         SpaceOwnerStorage.layout().defaultUri = uri;
@@ -28,9 +27,7 @@ abstract contract SpaceOwnerUriBase is ISpaceOwnerBase {
     }
 
     /// @dev Returns `${space.uri}` or `${defaultUri}/${spaceAddress}`
-    function _render(
-        uint256 tokenId
-    ) internal view virtual returns (string memory) {
+    function _render(uint256 tokenId) internal view virtual returns (string memory) {
         SpaceOwnerStorage.Layout storage ds = SpaceOwnerStorage.layout();
         address spaceAddress = ds.spaceByTokenId[tokenId];
 

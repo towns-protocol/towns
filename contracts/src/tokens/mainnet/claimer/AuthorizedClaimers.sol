@@ -5,8 +5,9 @@ pragma solidity ^0.8.23;
 import {IAuthorizedClaimers} from "./IAuthorizedClaimers.sol";
 
 // libraries
-import {ECDSA} from "solady/utils/ECDSA.sol";
+
 import {AuthorizedClaimerStorage} from "./AuthorizedClaimerStorage.sol";
+import {ECDSA} from "solady/utils/ECDSA.sol";
 
 // contracts
 import {EIP712Facet} from "@towns-protocol/diamond/src/utils/cryptography/EIP712Facet.sol";
@@ -24,7 +25,9 @@ contract AuthorizedClaimers is IAuthorizedClaimers, EIP712Facet {
         uint8 v,
         bytes32 r,
         bytes32 s
-    ) external {
+    )
+        external
+    {
         if (expiry != 0 && block.timestamp >= expiry) {
             revert AuthorizedClaimers_ExpiredSignature();
         }
@@ -47,9 +50,7 @@ contract AuthorizedClaimers is IAuthorizedClaimers, EIP712Facet {
     }
 
     /// @inheritdoc IAuthorizedClaimers
-    function authorizeClaimer(
-        address claimer
-    ) external {
+    function authorizeClaimer(address claimer) external {
         _authorizeClaimer(msg.sender, claimer);
     }
 
@@ -59,9 +60,7 @@ contract AuthorizedClaimers is IAuthorizedClaimers, EIP712Facet {
     }
 
     /// @inheritdoc IAuthorizedClaimers
-    function getAuthorizedClaimer(
-        address authorizer
-    ) external view returns (address) {
+    function getAuthorizedClaimer(address authorizer) external view returns (address) {
         return AuthorizedClaimerStorage.layout().authorizedClaimers[authorizer];
     }
 

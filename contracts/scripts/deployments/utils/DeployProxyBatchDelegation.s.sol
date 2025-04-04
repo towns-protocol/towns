@@ -11,8 +11,9 @@ import {ProxyBatchDelegation} from
     "contracts/src/tokens/mainnet/delegation/ProxyBatchDelegation.sol";
 
 // deployments
-import {DeployTownsMainnet} from "./DeployTownsMainnet.s.sol";
+
 import {DeployAuthorizedClaimers} from "./DeployAuthorizedClaimers.s.sol";
+import {DeployTownsMainnet} from "./DeployTownsMainnet.s.sol";
 
 import {MockMessenger} from "contracts/test/mocks/MockMessenger.sol";
 
@@ -36,9 +37,7 @@ contract DeployProxyBatchDelegation is Deployer {
         messenger = messenger_;
     }
 
-    function __deploy(
-        address deployer
-    ) public override returns (address) {
+    function __deploy(address deployer) public override returns (address) {
         townsToken = townsHelper.deploy(deployer);
         vault = townsHelper.vault();
         claimers = claimersHelper.deploy(deployer);

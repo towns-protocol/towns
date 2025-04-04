@@ -3,19 +3,21 @@ pragma solidity ^0.8.24;
 
 // interfaces
 import {IEntitlement} from "../IEntitlement.sol";
-import {IRoles} from "contracts/src/spaces/facets/roles/IRoles.sol";
+
 import {IChannel} from "contracts/src/spaces/facets/channels/IChannel.sol";
+import {IRoles} from "contracts/src/spaces/facets/roles/IRoles.sol";
 
 // libraries
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
 // contracts
+
+import {IUserEntitlement} from "./IUserEntitlement.sol";
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import {ContextUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
 import {ERC165Upgradeable} from
     "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
-import {ContextUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
-import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
-import {IUserEntitlement} from "./IUserEntitlement.sol";
 
 contract UserEntitlement is
     Initializable,
@@ -56,9 +58,7 @@ contract UserEntitlement is
         _disableInitializers();
     }
 
-    function initialize(
-        address _space
-    ) public initializer {
+    function initialize(address _space) public initializer {
         __UUPSUpgradeable_init();
         __ERC165_init();
         __Context_init();
@@ -68,13 +68,9 @@ contract UserEntitlement is
 
     /// @notice allow the contract to be upgraded while retaining state
     /// @param newImplementation address of the new implementation
-    function _authorizeUpgrade(
-        address newImplementation
-    ) internal override onlySpace {}
+    function _authorizeUpgrade(address newImplementation) internal override onlySpace {}
 
-    function supportsInterface(
-        bytes4 interfaceId
-    ) public view virtual override returns (bool) {
+    function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
         return interfaceId == type(IEntitlement).interfaceId || super.supportsInterface(interfaceId);
     }
 
@@ -88,7 +84,11 @@ contract UserEntitlement is
         bytes32 channelId,
         address[] memory wallets,
         bytes32 permission
-    ) external view returns (bool) {
+    )
+        external
+        view
+        returns (bool)
+    {
         // Check if channelId is not equal to the zero value for bytes32
         if (channelId != bytes32(0)) {
             return _isEntitledToChannel(channelId, wallets, permission);
@@ -125,9 +125,7 @@ contract UserEntitlement is
     }
 
     // @inheritdoc IEntitlement
-    function removeEntitlement(
-        uint256 roleId
-    ) external onlySpace {
+    function removeEntitlement(uint256 roleId) external onlySpace {
         if (entitlementsByRoleId[roleId].grantedBy == address(0)) {
             revert Entitlement__InvalidValue();
         }
@@ -143,9 +141,7 @@ contract UserEntitlement is
     }
 
     // @inheritdoc IEntitlement
-    function getEntitlementDataByRoleId(
-        uint256 roleId
-    ) external view returns (bytes memory) {
+    function getEntitlementDataByRoleId(uint256 roleId) external view returns (bytes memory) {
         return abi.encode(entitlementsByRoleId[roleId].users);
     }
 
@@ -158,7 +154,11 @@ contract UserEntitlement is
         bytes32 channelId,
         address[] memory wallets,
         bytes32 permission
-    ) internal view returns (bool _entitled) {
+    )
+        internal
+        view
+        returns (bool _entitled)
+    {
         IChannel.Channel memory channel = IChannel(SPACE_ADDRESS).getChannel(channelId);
 
         // get all the roleids for the user
@@ -183,9 +183,7 @@ contract UserEntitlement is
     /// @notice gets all the roles given to specific users
     /// @param wallets the array of user addresses
     /// @return roles the array of roles these users have, may include duplicates
-    function _getRoleIdsByUser(
-        address[] memory wallets
-    ) internal view returns (uint256[] memory) {
+    function _getRoleIdsByUser(address[] memory wallets) internal view returns (uint256[] memory) {
         uint256 totalLength = 0;
 
         // Calculate total length
@@ -222,7 +220,11 @@ contract UserEntitlement is
     function _isEntitledToSpace(
         address[] memory wallets,
         bytes32 permission
-    ) internal view returns (bool) {
+    )
+        internal
+        view
+        returns (bool)
+    {
         // get all the roleids for the user
         uint256[] memory rolesIds = _getRoleIdsByUser(wallets);
 
@@ -242,7 +244,11 @@ contract UserEntitlement is
     function _validateRolePermission(
         uint256 roleId,
         bytes32 permission
-    ) internal view returns (bool) {
+    )
+        internal
+        view
+        returns (bool)
+    {
         string[] memory permissions = IRoles(SPACE_ADDRESS).getPermissionsByRoleId(roleId);
         uint256 permissionLen = permissions.length;
 
@@ -263,7 +269,11 @@ contract UserEntitlement is
     function concatArrays(
         Entitlement[] memory a,
         Entitlement[] memory b
-    ) internal pure returns (Entitlement[] memory) {
+    )
+        internal
+        pure
+        returns (Entitlement[] memory)
+    {
         Entitlement[] memory c = new Entitlement[](a.length + b.length);
         uint256 i = 0;
         for (; i < a.length; i++) {

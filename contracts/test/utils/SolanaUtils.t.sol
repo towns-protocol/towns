@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import {TestUtils} from "contracts/test/utils/TestUtils.sol";
-import {LibBytes} from "solady/utils/LibBytes.sol";
 import {SolanaUtils} from "contracts/src/factory/facets/wallet-link/libraries/SolanaUtils.sol";
+import {TestUtils} from "contracts/test/utils/TestUtils.sol";
 import {SCL_EIP6565_UTILS} from "crypto-lib/lib/libSCL_eddsaUtils.sol";
+import {LibBytes} from "solady/utils/LibBytes.sol";
 
 contract SolanaUtilsTest is TestUtils {
     // Test data
@@ -34,9 +34,7 @@ contract SolanaUtilsTest is TestUtils {
         knownBase58ForKnownBytes = "9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin";
     }
 
-    function test_fuzz_isBase58(
-        bytes1 char
-    ) public pure {
+    function test_fuzz_isBase58(bytes1 char) public pure {
         assertEq(
             (SolanaUtils.BASE58_MAP >> uint8(char)) & 1 != 0,
             LibBytes.contains(SolanaUtils.ALPHABET, bytes.concat(char))
@@ -240,37 +238,39 @@ contract SolanaUtilsTest is TestUtils {
     /*                         Helpers                            */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
     // Helper function to call the internal toBase58String function
-    function callToBase58String(
-        bytes32 data
-    ) external pure returns (string memory) {
+    function callToBase58String(bytes32 data) external pure returns (string memory) {
         return SolanaUtils.toBase58String(data);
     }
 
     // Helper function to call the internal getCompressedPublicKey function
-    function callGetCompressedPublicKey(
-        uint256[5] memory pubkey
-    ) external pure returns (bytes32) {
+    function callGetCompressedPublicKey(uint256[5] memory pubkey) external pure returns (bytes32) {
         return SolanaUtils.getCompressedPublicKey(pubkey);
     }
 
     // Helper function to call the internal getCompressedPublicKeyAsString function
-    function callGetCompressedPublicKeyAsString(
-        uint256[5] memory pubkey
-    ) external pure returns (string memory) {
+    function callGetCompressedPublicKeyAsString(uint256[5] memory pubkey)
+        external
+        pure
+        returns (string memory)
+    {
         return SolanaUtils.getCompressedPublicKeyAsString(pubkey);
     }
 
     // Helper function to call the internal getSolanaAddressFromCompressedKey function
-    function callGetSolanaAddressFromCompressedKey(
-        uint256 compressedPubkey
-    ) external pure returns (string memory) {
+    function callGetSolanaAddressFromCompressedKey(uint256 compressedPubkey)
+        external
+        pure
+        returns (string memory)
+    {
         return SolanaUtils.getSolanaAddressFromCompressedKey(compressedPubkey);
     }
 
     // Helper function to call the internal getSolanaAddressFromFixedExtPubKey function
-    function callGetSolanaAddressFromFixedExtPubKey(
-        uint256[5] memory extPubKey
-    ) external pure returns (string memory) {
+    function callGetSolanaAddressFromFixedExtPubKey(uint256[5] memory extPubKey)
+        external
+        pure
+        returns (string memory)
+    {
         return SolanaUtils.getSolanaAddressFromFixedExtPubKey(extPubKey);
     }
 
@@ -278,14 +278,16 @@ contract SolanaUtilsTest is TestUtils {
     function callIsValidSolanaAddress(
         string memory solanaAddress,
         uint256[5] memory extPubKey
-    ) external pure returns (bool) {
+    )
+        external
+        pure
+        returns (bool)
+    {
         return SolanaUtils.isValidSolanaAddress(solanaAddress, extPubKey);
     }
 
     // Helper function to call the internal isValidSolanaAddress function (string only)
-    function callIsValidSolanaAddress(
-        string memory solanaAddress
-    ) external pure returns (bool) {
+    function callIsValidSolanaAddress(string memory solanaAddress) external pure returns (bool) {
         return SolanaUtils.isValidSolanaAddress(solanaAddress);
     }
 }

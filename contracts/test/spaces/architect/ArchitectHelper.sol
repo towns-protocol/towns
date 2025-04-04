@@ -4,8 +4,9 @@ pragma solidity ^0.8.23;
 // interfaces
 
 // contracts
-import {Architect} from "contracts/src/factory/facets/architect/Architect.sol";
+
 import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
+import {Architect} from "contracts/src/factory/facets/architect/Architect.sol";
 
 contract ArchitectHelper is FacetHelper {
     constructor() {
@@ -24,7 +25,11 @@ contract ArchitectHelper is FacetHelper {
         address _userEntitlement,
         address _ruleEntitlement,
         address _walletLink
-    ) public pure returns (bytes memory) {
+    )
+        public
+        pure
+        returns (bytes memory)
+    {
         return abi.encodeWithSelector(
             initializer(), _spaceOwnerToken, _userEntitlement, _ruleEntitlement, _walletLink
         );

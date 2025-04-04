@@ -6,16 +6,21 @@ pragma solidity ^0.8.23;
 // libraries
 
 // contracts
-import {IRoyalty, IERC2981} from "contracts/src/utils/interfaces/IRoyalty.sol";
+
 import {ERC165, IERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
+import {IERC2981, IRoyalty} from "contracts/src/utils/interfaces/IRoyalty.sol";
 
 abstract contract Royalty is IRoyalty, ERC165 {
     RoyaltyInfo private _defaultRoyaltyInfo;
     mapping(uint256 => RoyaltyInfo) private _tokenRoyaltyInfo;
 
-    function supportsInterface(
-        bytes4 interfaceId
-    ) public view virtual override(IERC165, ERC165) returns (bool) {
+    function supportsInterface(bytes4 interfaceId)
+        public
+        view
+        virtual
+        override(IERC165, ERC165)
+        returns (bool)
+    {
         return interfaceId == type(IERC2981).interfaceId || super.supportsInterface(interfaceId);
     }
 
@@ -23,7 +28,13 @@ abstract contract Royalty is IRoyalty, ERC165 {
     function royaltyInfo(
         uint256 tokenId,
         uint256 salePrice
-    ) public view virtual override returns (address, uint256) {
+    )
+        public
+        view
+        virtual
+        override
+        returns (address, uint256)
+    {
         RoyaltyInfo memory royalty = getRoyaltyInfoForToken(tokenId);
 
         uint256 royaltyAmount = (salePrice * royalty.amount) / _feeDenominator();
@@ -37,9 +48,12 @@ abstract contract Royalty is IRoyalty, ERC165 {
     }
 
     /// @inheritdoc IRoyalty
-    function getRoyaltyInfoForToken(
-        uint256 _tokenId
-    ) public view override returns (RoyaltyInfo memory _royalty) {
+    function getRoyaltyInfoForToken(uint256 _tokenId)
+        public
+        view
+        override
+        returns (RoyaltyInfo memory _royalty)
+    {
         RoyaltyInfo memory royalty = _tokenRoyaltyInfo[_tokenId];
 
         return royalty.receiver == address(0) ? _defaultRoyaltyInfo : royalty;
@@ -59,7 +73,10 @@ abstract contract Royalty is IRoyalty, ERC165 {
         uint256 _tokenId,
         address _recipient,
         uint256 _amount
-    ) external override {
+    )
+        external
+        override
+    {
         if (!_canSetRoyaltyInfo()) {
             revert("Royalty: not authorized");
         }
@@ -81,7 +98,9 @@ abstract contract Royalty is IRoyalty, ERC165 {
         uint256 _tokenId,
         address _recipient,
         uint256 _amount
-    ) internal {
+    )
+        internal
+    {
         require(_amount <= _feeDenominator(), "Royalty: royalty fee will exceed salePrice");
         require(_recipient != address(0), "Royalty: invalid receiver");
 
@@ -106,9 +125,7 @@ abstract contract Royalty is IRoyalty, ERC165 {
     }
 
     /// @dev Deletes the royalty info for a given token id.
-    function _resetTokenRoyalty(
-        uint256 tokenId
-    ) internal virtual {
+    function _resetTokenRoyalty(uint256 tokenId) internal virtual {
         delete _tokenRoyaltyInfo[tokenId];
     }
 

@@ -2,9 +2,10 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {IRolesBase} from "contracts/src/spaces/facets/roles/IRoles.sol";
+
 import {IEntitlement} from "contracts/src/spaces/entitlements/IEntitlement.sol";
 import {IRuleEntitlement} from "contracts/src/spaces/entitlements/rule/IRuleEntitlement.sol";
+import {IRolesBase} from "contracts/src/spaces/facets/roles/IRoles.sol";
 
 // libraries
 import {Permissions} from "contracts/src/spaces/facets/Permissions.sol";
@@ -13,9 +14,7 @@ import {Permissions} from "contracts/src/spaces/facets/Permissions.sol";
 import {MembershipJoin} from "contracts/src/spaces/facets/membership/join/MembershipJoin.sol";
 
 contract MockLegacyMembership is MembershipJoin {
-    function joinSpaceLegacy(
-        address receiver
-    ) external payable {
+    function joinSpaceLegacy(address receiver) external payable {
         ReferralTypes memory emptyReferral;
         _joinSpaceWithReferral(receiver, emptyReferral);
     }
@@ -24,7 +23,12 @@ contract MockLegacyMembership is MembershipJoin {
         address receiver,
         address,
         bytes32 transactionId
-    ) internal virtual override returns (bool isEntitled, bool isCrosschainPending) {
+    )
+        internal
+        virtual
+        override
+        returns (bool isEntitled, bool isCrosschainPending)
+    {
         IRolesBase.Role[] memory roles = _getRolesWithPermission(Permissions.JoinSpace);
         address[] memory linkedWallets = _getLinkedWalletsWithUser(receiver);
 

@@ -39,7 +39,10 @@ interface ISignatureMintERC721 {
     function verify(
         MintRequest calldata mintRequest,
         bytes calldata signature
-    ) external view returns (bool success, address signer);
+    )
+        external
+        view
+        returns (bool success, address signer);
 
     /// @notice Mints tokens according to a mint request
     /// @param mintRequest The payload of the mint request
@@ -48,5 +51,8 @@ interface ISignatureMintERC721 {
     function mintWithSignature(
         MintRequest calldata mintRequest,
         bytes calldata signature
-    ) external payable returns (address signer);
+    )
+        external
+        payable
+        returns (address signer);
 }

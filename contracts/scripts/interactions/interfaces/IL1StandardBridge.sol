@@ -14,7 +14,9 @@ interface IL1StandardBridge {
         address _to,
         uint32 _minGasLimit,
         bytes calldata _extraData
-    ) external payable;
+    )
+        external
+        payable;
 
     function depositERC20(
         address _l1Token,
@@ -22,7 +24,8 @@ interface IL1StandardBridge {
         uint256 _amount,
         uint32 _minGasLimit,
         bytes calldata _extraData
-    ) external;
+    )
+        external;
 
     function depositERC20To(
         address _l1Token,
@@ -31,5 +34,6 @@ interface IL1StandardBridge {
         uint256 _amount,
         uint32 _minGasLimit,
         bytes calldata _extraData
-    ) external;
+    )
+        external;
 }

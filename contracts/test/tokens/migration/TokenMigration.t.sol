@@ -5,10 +5,11 @@ pragma solidity ^0.8.19;
 import {TestUtils} from "contracts/test/utils/TestUtils.sol";
 
 //interfaces
+
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {IOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
 import {IPausableBase} from "@towns-protocol/diamond/src/facets/pausable/IPausable.sol";
 import {ITokenMigrationBase} from "contracts/src/tokens/migration/ITokenMigration.sol";
-import {IOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 //libraries
 import {Validator__InvalidAddress} from "contracts/src/utils/Validator.sol";
@@ -19,8 +20,9 @@ import {DeployRiverMigration} from
 import {MockERC20} from "contracts/test/mocks/MockERC20.sol";
 
 // facets
-import {TokenMigrationFacet} from "contracts/src/tokens/migration/TokenMigration.sol";
+
 import {PausableFacet} from "@towns-protocol/diamond/src/facets/pausable/PausableFacet.sol";
+import {TokenMigrationFacet} from "contracts/src/tokens/migration/TokenMigration.sol";
 
 contract TokenMigrationTest is TestUtils, IPausableBase, ITokenMigrationBase, IOwnableBase {
     DeployRiverMigration internal riverMigrationHelper;
@@ -58,9 +60,7 @@ contract TokenMigrationTest is TestUtils, IPausableBase, ITokenMigrationBase, IO
         _;
     }
 
-    modifier givenContractHasNewTokens(
-        uint256 amount
-    ) {
+    modifier givenContractHasNewTokens(uint256 amount) {
         vm.prank(deployer);
         newToken.mint(address(tokenMigration), amount);
         _;
@@ -114,9 +114,11 @@ contract TokenMigrationTest is TestUtils, IPausableBase, ITokenMigrationBase, IO
         tokenMigration.migrate(address(0));
     }
 
-    function test_revertWhen_balanceIsZero(
-        address account
-    ) external givenContractIsUnpaused assumeEOA(account) {
+    function test_revertWhen_balanceIsZero(address account)
+        external
+        givenContractIsUnpaused
+        assumeEOA(account)
+    {
         vm.expectRevert(TokenMigration__InvalidBalance.selector);
         tokenMigration.migrate(account);
     }

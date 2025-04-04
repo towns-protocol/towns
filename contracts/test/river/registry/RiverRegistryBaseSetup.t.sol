@@ -2,6 +2,8 @@
 pragma solidity ^0.8.23;
 
 // interfaces
+
+import {IRiverConfig} from "contracts/src/river/registry/facets/config/IRiverConfig.sol";
 import {
     INodeRegistry,
     INodeRegistryBase,
@@ -9,7 +11,6 @@ import {
 } from "contracts/src/river/registry/facets/node/INodeRegistry.sol";
 import {IOperatorRegistry} from "contracts/src/river/registry/facets/operator/IOperatorRegistry.sol";
 import {IStreamRegistry} from "contracts/src/river/registry/facets/stream/IStreamRegistry.sol";
-import {IRiverConfig} from "contracts/src/river/registry/facets/config/IRiverConfig.sol";
 
 // structs
 
@@ -53,16 +54,12 @@ contract RiverRegistryBaseSetup is TestUtils {
         riverConfig = IRiverConfig(diamond);
     }
 
-    modifier givenNodeOperatorIsApproved(
-        address nodeOperator
-    ) {
+    modifier givenNodeOperatorIsApproved(address nodeOperator) {
         _approveNodeOperator(nodeOperator);
         _;
     }
 
-    function _approveNodeOperator(
-        address nodeOperator
-    ) internal {
+    function _approveNodeOperator(address nodeOperator) internal {
         vm.assume(nodeOperator != address(0));
         vm.assume(operatorRegistry.isOperator(nodeOperator) == false);
 

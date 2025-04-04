@@ -43,16 +43,12 @@ interface IAirdropERC721 {
     /// operator
     /// for the tokens.
     /// @param airdrops The list of airdrop recipients, tokenIds to airdrop
-    function addAirdropRecipients(
-        Airdrop[] calldata airdrops
-    ) external;
+    function addAirdropRecipients(Airdrop[] calldata airdrops) external;
 
     /// @notice Lets contract owner set up an airdrop of ERC721 tokens to a list of recipients
     /// @dev The token-owner should approve target tokens to Airdrop contract, which acts as
     /// operator
     /// of the tokens.
     /// @param paymentsToProcess The number of airdrop payments to process
-    function airdrop(
-        uint256 paymentsToProcess
-    ) external;
+    function airdrop(uint256 paymentsToProcess) external;
 }

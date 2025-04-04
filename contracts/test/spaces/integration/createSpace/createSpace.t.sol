@@ -2,33 +2,37 @@
 pragma solidity ^0.8.23;
 
 // interfaces
+
+import {IERC173} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
+import {IArchitect} from "contracts/src/factory/facets/architect/IArchitect.sol";
+import {IArchitectBase} from "contracts/src/factory/facets/architect/IArchitect.sol";
+import {IPlatformRequirements} from
+    "contracts/src/factory/facets/platform/requirements/IPlatformRequirements.sol";
+import {IEntitlement} from "contracts/src/spaces/entitlements/IEntitlement.sol";
+import {IRuleEntitlementBase} from "contracts/src/spaces/entitlements/rule/IRuleEntitlement.sol";
 import {IChannel} from "contracts/src/spaces/facets/channels/IChannel.sol";
 import {IChannel} from "contracts/src/spaces/facets/channels/IChannel.sol";
 import {IEntitlementsManager} from
     "contracts/src/spaces/facets/entitlements/IEntitlementsManager.sol";
+import {IMembership} from "contracts/src/spaces/facets/membership/IMembership.sol";
+
+import {IPrepay} from "contracts/src/spaces/facets/prepay/IPrepay.sol";
 import {IRoles} from "contracts/src/spaces/facets/roles/IRoles.sol";
 import {IRolesBase} from "contracts/src/spaces/facets/roles/IRoles.sol";
-import {IArchitect} from "contracts/src/factory/facets/architect/IArchitect.sol";
-import {IArchitectBase} from "contracts/src/factory/facets/architect/IArchitect.sol";
-import {IMembership} from "contracts/src/spaces/facets/membership/IMembership.sol";
-import {IRuleEntitlementBase} from "contracts/src/spaces/entitlements/rule/IRuleEntitlement.sol";
-import {IEntitlement} from "contracts/src/spaces/entitlements/IEntitlement.sol";
-import {IPlatformRequirements} from
-    "contracts/src/factory/facets/platform/requirements/IPlatformRequirements.sol";
-import {IPrepay} from "contracts/src/spaces/facets/prepay/IPrepay.sol";
-import {IERC173} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
 
 // libraries
 import {Permissions} from "contracts/src/spaces/facets/Permissions.sol";
 import {Validator__InvalidAddress} from "contracts/src/utils/Validator.sol";
 
 // contracts
-import {BaseSetup} from "contracts/test/spaces/BaseSetup.sol";
+
 import {Architect} from "contracts/src/factory/facets/architect/Architect.sol";
+import {BaseSetup} from "contracts/test/spaces/BaseSetup.sol";
 
 // mocks
-import {MockERC721} from "contracts/test/mocks/MockERC721.sol";
+
 import {CreateSpaceFacet} from "contracts/src/factory/facets/create/CreateSpace.sol";
+import {MockERC721} from "contracts/test/mocks/MockERC721.sol";
 
 contract IntegrationCreateSpace is BaseSetup, IRolesBase, IArchitectBase, IRuleEntitlementBase {
     Architect public spaceArchitect;
@@ -44,7 +48,10 @@ contract IntegrationCreateSpace is BaseSetup, IRolesBase, IArchitectBase, IRuleE
         string memory spaceId,
         address founder,
         address user
-    ) external assumeEOA(founder) {
+    )
+        external
+        assumeEOA(founder)
+    {
         vm.assume(bytes(spaceId).length > 2 && bytes(spaceId).length < 100);
 
         SpaceInfo memory spaceInfo = _createEveryoneSpaceInfo(spaceId);
@@ -61,7 +68,11 @@ contract IntegrationCreateSpace is BaseSetup, IRolesBase, IArchitectBase, IRuleE
         string memory spaceId,
         address founder,
         address user
-    ) external assumeEOA(founder) assumeEOA(user) {
+    )
+        external
+        assumeEOA(founder)
+        assumeEOA(user)
+    {
         vm.assume(bytes(spaceId).length > 2 && bytes(spaceId).length < 100);
 
         address[] memory users = new address[](1);
@@ -94,7 +105,11 @@ contract IntegrationCreateSpace is BaseSetup, IRolesBase, IArchitectBase, IRuleE
         string memory spaceId,
         address founder,
         address user
-    ) external assumeEOA(founder) assumeEOA(user) {
+    )
+        external
+        assumeEOA(founder)
+        assumeEOA(user)
+    {
         vm.assume(bytes(spaceId).length > 2 && bytes(spaceId).length < 100);
 
         address mock = address(new MockERC721());
@@ -140,7 +155,11 @@ contract IntegrationCreateSpace is BaseSetup, IRolesBase, IArchitectBase, IRuleE
         string memory spaceId,
         address founder,
         address member
-    ) external assumeEOA(founder) assumeEOA(member) {
+    )
+        external
+        assumeEOA(founder)
+        assumeEOA(member)
+    {
         vm.assume(bytes(spaceId).length > 2 && bytes(spaceId).length < 100);
         vm.assume(founder != member);
 
@@ -238,7 +257,11 @@ contract IntegrationCreateSpace is BaseSetup, IRolesBase, IArchitectBase, IRuleE
         string memory spaceId,
         address founder,
         address member
-    ) external assumeEOA(founder) assumeEOA(member) {
+    )
+        external
+        assumeEOA(founder)
+        assumeEOA(member)
+    {
         vm.assume(bytes(spaceId).length > 2 && bytes(spaceId).length < 100);
         vm.assume(founder != member);
 
@@ -289,7 +312,11 @@ contract IntegrationCreateSpace is BaseSetup, IRolesBase, IArchitectBase, IRuleE
         string memory spaceId,
         address founder,
         address member
-    ) external assumeEOA(founder) assumeEOA(member) {
+    )
+        external
+        assumeEOA(founder)
+        assumeEOA(member)
+    {
         vm.assume(bytes(spaceId).length > 2 && bytes(spaceId).length < 100);
         vm.assume(founder != member);
 

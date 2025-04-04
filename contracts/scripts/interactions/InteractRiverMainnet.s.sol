@@ -13,9 +13,7 @@ import {Towns} from "contracts/src/tokens/towns/mainnet/Towns.sol";
 import {console} from "forge-std/console.sol";
 
 contract InteractRiverMainnet is Interaction {
-    function __interact(
-        address
-    ) internal view override {
+    function __interact(address) internal view override {
         address towns = address(0);
 
         address[] memory delegators = Towns(towns).getDelegators();

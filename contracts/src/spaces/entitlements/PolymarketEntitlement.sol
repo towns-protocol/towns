@@ -1,13 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import {ICrossChainEntitlement} from "contracts/src/spaces/entitlements/ICrossChainEntitlement.sol";
 import {IERC1155} from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
+import {ICrossChainEntitlement} from "contracts/src/spaces/entitlements/ICrossChainEntitlement.sol";
 
 interface IGnosisSafeProxyFactory {
-    function computeProxyAddress(
-        address user
-    ) external view returns (address);
+    function computeProxyAddress(address user) external view returns (address);
 }
 
 contract PolymarketEntitlement is ICrossChainEntitlement {
@@ -23,7 +21,12 @@ contract PolymarketEntitlement is ICrossChainEntitlement {
     function isEntitled(
         address[] calldata users,
         bytes calldata paramData
-    ) external view override returns (bool) {
+    )
+        external
+        view
+        override
+        returns (bool)
+    {
         (uint256 tokenId, uint256 requiredBalance, bool aggregate) =
             abi.decode(paramData, (uint256, uint256, bool));
 

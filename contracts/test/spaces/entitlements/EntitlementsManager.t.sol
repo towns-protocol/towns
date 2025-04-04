@@ -3,32 +3,34 @@ pragma solidity ^0.8.23;
 
 // interfaces
 import {IOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
+
+import {IEntitlement} from "contracts/src/spaces/entitlements/IEntitlement.sol";
+import {IChannel} from "contracts/src/spaces/facets/channels/IChannel.sol";
 import {IEntitlementsManager} from
     "contracts/src/spaces/facets/entitlements/IEntitlementsManager.sol";
 import {IEntitlementsManagerBase} from
     "contracts/src/spaces/facets/entitlements/IEntitlementsManager.sol";
 import {IMembershipBase} from "contracts/src/spaces/facets/membership/IMembership.sol";
-import {IChannel} from "contracts/src/spaces/facets/channels/IChannel.sol";
 import {IRoles, IRolesBase} from "contracts/src/spaces/facets/roles/IRoles.sol";
-import {IEntitlement} from "contracts/src/spaces/entitlements/IEntitlement.sol";
 
 // libraries
 import {Permissions} from "contracts/src/spaces/facets/Permissions.sol";
 
 // contracts
 import {EntitlementsManager} from "contracts/src/spaces/facets/entitlements/EntitlementsManager.sol";
-import {MockUserEntitlement} from "contracts/test/mocks/MockUserEntitlement.sol";
+
 import {MembershipFacet} from "contracts/src/spaces/facets/membership/MembershipFacet.sol";
+import {MockUserEntitlement} from "contracts/test/mocks/MockUserEntitlement.sol";
 
 // errors
 
 // solhint-disable-next-line max-line-length
 import {
-    EntitlementsService__InvalidEntitlementAddress,
-    EntitlementsService__InvalidEntitlementInterface,
-    EntitlementsService__ImmutableEntitlement,
+    EntitlementsService__EntitlementAlreadyExists,
     EntitlementsService__EntitlementDoesNotExist,
-    EntitlementsService__EntitlementAlreadyExists
+    EntitlementsService__ImmutableEntitlement,
+    EntitlementsService__InvalidEntitlementAddress,
+    EntitlementsService__InvalidEntitlementInterface
 } from "contracts/src/spaces/facets/entitlements/EntitlementsManagerService.sol";
 
 import {BaseSetup} from "contracts/test/spaces/BaseSetup.sol";

@@ -2,16 +2,19 @@
 pragma solidity ^0.8.23;
 
 //interfaces
-import {IERC6372} from "@openzeppelin/contracts/interfaces/IERC6372.sol";
+
 import {IVotes} from "@openzeppelin/contracts/governance/utils/IVotes.sol";
+import {IERC6372} from "@openzeppelin/contracts/interfaces/IERC6372.sol";
 
 //libraries
 
 //contracts
-import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
+
 import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
-import {SpaceOwner} from "contracts/src/spaces/facets/owner/SpaceOwner.sol";
+import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
+
 import {DeployERC721A} from "contracts/scripts/deployments/facets/DeployERC721A.s.sol";
+import {SpaceOwner} from "contracts/src/spaces/facets/owner/SpaceOwner.sol";
 
 contract DeploySpaceOwnerFacet is FacetHelper, Deployer {
     DeployERC721A erc721aHelper = new DeployERC721A();
@@ -46,7 +49,11 @@ contract DeploySpaceOwnerFacet is FacetHelper, Deployer {
     function makeInitData(
         string memory name,
         string memory symbol
-    ) public pure returns (bytes memory) {
+    )
+        public
+        pure
+        returns (bytes memory)
+    {
         return abi.encodeWithSelector(initializer(), name, symbol);
     }
 
@@ -54,9 +61,7 @@ contract DeploySpaceOwnerFacet is FacetHelper, Deployer {
         return "facets/spaceOwnerFacet";
     }
 
-    function __deploy(
-        address deployer
-    ) public override returns (address) {
+    function __deploy(address deployer) public override returns (address) {
         vm.startBroadcast(deployer);
         SpaceOwner facet = new SpaceOwner();
         vm.stopBroadcast();

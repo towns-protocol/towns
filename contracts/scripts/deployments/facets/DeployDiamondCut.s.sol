@@ -6,9 +6,10 @@ pragma solidity ^0.8.23;
 //libraries
 
 //contracts
-import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
-import {DiamondCutFacet} from "@towns-protocol/diamond/src/facets/cut/DiamondCutFacet.sol";
+
 import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
+import {DiamondCutFacet} from "@towns-protocol/diamond/src/facets/cut/DiamondCutFacet.sol";
+import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
 
 contract DeployDiamondCut is FacetHelper, Deployer {
     constructor() {
@@ -23,9 +24,7 @@ contract DeployDiamondCut is FacetHelper, Deployer {
         return "facets/diamondCutFacet";
     }
 
-    function __deploy(
-        address deployer
-    ) public override returns (address) {
+    function __deploy(address deployer) public override returns (address) {
         vm.startBroadcast(deployer);
         DiamondCutFacet diamondCut = new DiamondCutFacet();
         vm.stopBroadcast();

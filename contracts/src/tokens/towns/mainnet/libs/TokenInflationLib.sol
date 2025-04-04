@@ -29,9 +29,7 @@ library TokenInflationLib {
         }
     }
 
-    function initialize(
-        ITownsBase.InflationConfig memory config
-    ) internal {
+    function initialize(ITownsBase.InflationConfig memory config) internal {
         Layout storage ds = layout();
         ds.lastMintTime = config.initialMintTime;
         ds.inflationReceiver = config.inflationReceiver;
@@ -53,9 +51,7 @@ library TokenInflationLib {
         return layout().lastMintTime;
     }
 
-    function setInflationReceiver(
-        address receiver
-    ) internal {
+    function setInflationReceiver(address receiver) internal {
         layout().inflationReceiver = receiver;
     }
 
@@ -66,7 +62,9 @@ library TokenInflationLib {
     function setOverrideInflation(
         bool overrideInflation,
         uint256 overrideInflationRateBps
-    ) internal {
+    )
+        internal
+    {
         layout().overrideInflation = overrideInflation;
         layout().overrideInflationRate = overrideInflationRateBps;
     }
@@ -75,9 +73,7 @@ library TokenInflationLib {
      * @dev Returns the current inflation rate.
      * @return inflation rate in basis points (0-10_000)
      */
-    function getCurrentInflationRateBPS(
-        uint256 initialMintTime
-    ) internal view returns (uint256) {
+    function getCurrentInflationRateBPS(uint256 initialMintTime) internal view returns (uint256) {
         Layout storage ds = layout();
 
         if (ds.overrideInflation) return ds.overrideInflationRate; // override inflation rate

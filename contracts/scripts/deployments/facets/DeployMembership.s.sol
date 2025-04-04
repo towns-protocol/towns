@@ -7,9 +7,10 @@ import {IMembership} from "contracts/src/spaces/facets/membership/IMembership.so
 //libraries
 
 //contracts
+
+import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
 import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
 import {MembershipFacet} from "contracts/src/spaces/facets/membership/MembershipFacet.sol";
-import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
 
 contract DeployMembership is Deployer, FacetHelper {
     constructor() {
@@ -60,9 +61,7 @@ contract DeployMembership is Deployer, FacetHelper {
         return "facets/membershipFacet";
     }
 
-    function __deploy(
-        address deployer
-    ) public override returns (address) {
+    function __deploy(address deployer) public override returns (address) {
         vm.startBroadcast(deployer);
         address membership = address(new MembershipFacet());
         vm.stopBroadcast();

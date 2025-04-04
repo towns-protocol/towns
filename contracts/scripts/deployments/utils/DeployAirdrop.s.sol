@@ -10,9 +10,7 @@ contract DeployAirdrop is Deployer {
         return "utils/airdrop";
     }
 
-    function __deploy(
-        address deployer
-    ) public override returns (address) {
+    function __deploy(address deployer) public override returns (address) {
         vm.broadcast(deployer);
         return address(new Airdrop());
     }

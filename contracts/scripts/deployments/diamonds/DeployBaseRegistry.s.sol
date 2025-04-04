@@ -5,34 +5,40 @@ pragma solidity ^0.8.23;
 import {IDiamond} from "@towns-protocol/diamond/src/IDiamond.sol";
 
 //contracts
-import {DiamondHelper} from "contracts/test/diamond/Diamond.t.sol";
-import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
+
 import {Diamond} from "@towns-protocol/diamond/src/Diamond.sol";
+import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
+import {DiamondHelper} from "contracts/test/diamond/Diamond.t.sol";
 
 // facets
 import {MultiInit} from "@towns-protocol/diamond/src/initializers/MultiInit.sol";
 
 // deployers
-import {DeployMultiInit} from "contracts/scripts/deployments/utils/DeployMultiInit.s.sol";
+
 import {DeployDiamondCut} from "contracts/scripts/deployments/facets/DeployDiamondCut.s.sol";
 import {DeployDiamondLoupe} from "contracts/scripts/deployments/facets/DeployDiamondLoupe.s.sol";
-import {DeployIntrospection} from "contracts/scripts/deployments/facets/DeployIntrospection.s.sol";
-import {DeployOwnable} from "contracts/scripts/deployments/facets/DeployOwnable.s.sol";
-import {DeployMainnetDelegation} from
-    "contracts/scripts/deployments/facets/DeployMainnetDelegation.s.sol";
-import {DeployEntitlementChecker} from
-    "contracts/scripts/deployments/facets/DeployEntitlementChecker.s.sol";
-import {DeployNodeOperator} from "contracts/scripts/deployments/facets/DeployNodeOperator.s.sol";
-import {DeployMetadata} from "contracts/scripts/deployments/facets/DeployMetadata.s.sol";
-import {DeploySpaceDelegation} from
-    "contracts/scripts/deployments/facets/DeploySpaceDelegation.s.sol";
-import {DeployRewardsDistributionV2} from
-    "contracts/scripts/deployments/facets/DeployRewardsDistributionV2.s.sol";
+
+import {DeployEIP712Facet} from "contracts/scripts/deployments/facets/DeployEIP712Facet.s.sol";
 import {DeployERC721ANonTransferable} from
     "contracts/scripts/deployments/facets/DeployERC721ANonTransferable.s.sol";
+import {DeployEntitlementChecker} from
+    "contracts/scripts/deployments/facets/DeployEntitlementChecker.s.sol";
+import {DeployIntrospection} from "contracts/scripts/deployments/facets/DeployIntrospection.s.sol";
+import {DeployMainnetDelegation} from
+    "contracts/scripts/deployments/facets/DeployMainnetDelegation.s.sol";
+
+import {DeployMetadata} from "contracts/scripts/deployments/facets/DeployMetadata.s.sol";
 import {DeployMockMessenger} from "contracts/scripts/deployments/facets/DeployMockMessenger.s.sol";
-import {DeployEIP712Facet} from "contracts/scripts/deployments/facets/DeployEIP712Facet.s.sol";
+import {DeployNodeOperator} from "contracts/scripts/deployments/facets/DeployNodeOperator.s.sol";
+import {DeployOwnable} from "contracts/scripts/deployments/facets/DeployOwnable.s.sol";
+
+import {DeployRewardsDistributionV2} from
+    "contracts/scripts/deployments/facets/DeployRewardsDistributionV2.s.sol";
+import {DeploySpaceDelegation} from
+    "contracts/scripts/deployments/facets/DeploySpaceDelegation.s.sol";
+
 import {DeployXChain} from "contracts/scripts/deployments/facets/DeployXChain.s.sol";
+import {DeployMultiInit} from "contracts/scripts/deployments/utils/DeployMultiInit.s.sol";
 
 contract DeployBaseRegistry is DiamondHelper, Deployer {
     DeployERC721ANonTransferable deployNFT = new DeployERC721ANonTransferable();
@@ -76,15 +82,11 @@ contract DeployBaseRegistry is DiamondHelper, Deployer {
         return "baseRegistry";
     }
 
-    function setDependencies(
-        address riverToken_
-    ) external {
+    function setDependencies(address riverToken_) external {
         riverToken = riverToken_;
     }
 
-    function addImmutableCuts(
-        address deployer
-    ) internal {
+    function addImmutableCuts(address deployer) internal {
         multiInit = deployMultiInit.deploy(deployer);
 
         diamondCut = diamondCutHelper.deploy(deployer);
@@ -114,9 +116,7 @@ contract DeployBaseRegistry is DiamondHelper, Deployer {
         );
     }
 
-    function diamondInitParams(
-        address deployer
-    ) public returns (Diamond.InitParams memory) {
+    function diamondInitParams(address deployer) public returns (Diamond.InitParams memory) {
         metadata = metadataHelper.deploy(deployer);
         entitlementChecker = checkerHelper.deploy(deployer);
         operator = operatorHelper.deploy(deployer);
@@ -251,14 +251,16 @@ contract DeployBaseRegistry is DiamondHelper, Deployer {
     function diamondInitHelper(
         address deployer,
         string[] memory facetNames
-    ) external override returns (FacetCut[] memory) {
+    )
+        external
+        override
+        returns (FacetCut[] memory)
+    {
         diamondInitParamsFromFacets(deployer, facetNames);
         return this.getCuts();
     }
 
-    function __deploy(
-        address deployer
-    ) public override returns (address) {
+    function __deploy(address deployer) public override returns (address) {
         addImmutableCuts(deployer);
 
         Diamond.InitParams memory initDiamondCut = diamondInitParams(deployer);

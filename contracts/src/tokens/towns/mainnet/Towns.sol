@@ -3,22 +3,26 @@ pragma solidity ^0.8.23;
 
 // interfaces
 import {ITowns} from "./ITowns.sol";
-import {IVotesEnumerable} from
-    "contracts/src/diamond/facets/governance/votes/enumerable/IVotesEnumerable.sol";
-import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
+
 import {IVotes} from "@openzeppelin/contracts/governance/utils/IVotes.sol";
-import {IERC6372} from "@openzeppelin/contracts/interfaces/IERC6372.sol";
+
 import {IERC20} from "@openzeppelin/contracts/interfaces/IERC20.sol";
 import {IERC20Metadata} from "@openzeppelin/contracts/interfaces/IERC20Metadata.sol";
+import {IERC6372} from "@openzeppelin/contracts/interfaces/IERC6372.sol";
 import {IERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol";
+import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
+import {IVotesEnumerable} from
+    "contracts/src/diamond/facets/governance/votes/enumerable/IVotesEnumerable.sol";
 
 // libraries
-import {OwnableRoles} from "solady/auth/OwnableRoles.sol";
-import {BasisPoints} from "contracts/src/utils/libraries/BasisPoints.sol";
-import {TokenInflationLib} from "contracts/src/tokens/towns/mainnet/libs/TokenInflationLib.sol";
+
 import {VotesEnumerableLib} from
     "contracts/src/diamond/facets/governance/votes/enumerable/VotesEnumerableLib.sol";
+import {TokenInflationLib} from "contracts/src/tokens/towns/mainnet/libs/TokenInflationLib.sol";
+import {BasisPoints} from "contracts/src/utils/libraries/BasisPoints.sol";
+
 import {CustomRevert} from "contracts/src/utils/libraries/CustomRevert.sol";
+import {OwnableRoles} from "solady/auth/OwnableRoles.sol";
 
 // contracts
 import {IntrospectionBase} from
@@ -91,9 +95,7 @@ contract Towns is OwnableRoles, ERC20Votes, IntrospectionBase, VotesEnumerable, 
     /// @notice Mints the initial supply to the given address
     /// @dev Can only be called by the owner
     /// @dev Can only be called once
-    function mintInitialSupply(
-        address to
-    ) external onlyOwner {
+    function mintInitialSupply(address to) external onlyOwner {
         if (initialSupplyMinted) {
             CustomRevert.revertWith(InitialSupplyAlreadyMinted.selector);
         }
@@ -130,7 +132,10 @@ contract Towns is OwnableRoles, ERC20Votes, IntrospectionBase, VotesEnumerable, 
     function setOverrideInflation(
         bool overrideInflation,
         uint256 overrideInflationRate
-    ) external onlyRoles(ROLE_INFLATION_RATE_MANAGER) {
+    )
+        external
+        onlyRoles(ROLE_INFLATION_RATE_MANAGER)
+    {
         if (overrideInflationRate > TokenInflationLib.finalInflationRate()) {
             CustomRevert.revertWith(InvalidInflationRate.selector);
         }
@@ -139,9 +144,7 @@ contract Towns is OwnableRoles, ERC20Votes, IntrospectionBase, VotesEnumerable, 
     }
 
     /// @inheritdoc ITowns
-    function setInflationReceiver(
-        address receiver
-    ) external onlyRoles(ROLE_INFLATION_MANAGER) {
+    function setInflationReceiver(address receiver) external onlyRoles(ROLE_INFLATION_MANAGER) {
         if (receiver == address(0)) {
             CustomRevert.revertWith(InvalidAddress.selector);
         }
@@ -172,9 +175,7 @@ contract Towns is OwnableRoles, ERC20Votes, IntrospectionBase, VotesEnumerable, 
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @inheritdoc IERC165
-    function supportsInterface(
-        bytes4 interfaceId
-    ) public view virtual override returns (bool) {
+    function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
         return _supportsInterface(interfaceId);
     }
 

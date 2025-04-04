@@ -7,9 +7,10 @@ pragma solidity ^0.8.23;
 import {console} from "forge-std/console.sol";
 
 //contracts
-import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
+
 import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
 import {IDiamond} from "@towns-protocol/diamond/src/Diamond.sol";
+import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
 
 import {StreamRegistry} from "contracts/src/river/registry/facets/stream/StreamRegistry.sol";
 
@@ -39,15 +40,17 @@ contract DeployStreamRegistry is FacetHelper, Deployer {
     function facetInitHelper(
         address deployer,
         address facetAddress
-    ) external override returns (FacetCut memory, bytes memory) {
+    )
+        external
+        override
+        returns (FacetCut memory, bytes memory)
+    {
         IDiamond.FacetCut memory facetCut = this.makeCut(facetAddress, IDiamond.FacetCutAction.Add);
         console.log("facetInitHelper: deployer", deployer);
         return (facetCut, "");
     }
 
-    function __deploy(
-        address deployer
-    ) public override returns (address) {
+    function __deploy(address deployer) public override returns (address) {
         vm.startBroadcast(deployer);
         StreamRegistry facet = new StreamRegistry();
         vm.stopBroadcast();

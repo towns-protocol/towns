@@ -6,9 +6,10 @@ pragma solidity ^0.8.23;
 //libraries
 
 //contracts
-import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
+
 import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
 import {IDiamond} from "@towns-protocol/diamond/src/Diamond.sol";
+import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
 
 import {OperatorRegistry} from "contracts/src/river/registry/facets/operator/OperatorRegistry.sol";
 
@@ -24,9 +25,7 @@ contract DeployOperatorRegistry is FacetHelper, Deployer {
         return OperatorRegistry.__OperatorRegistry_init.selector;
     }
 
-    function makeInitData(
-        address[] memory operators
-    ) public pure returns (bytes memory) {
+    function makeInitData(address[] memory operators) public pure returns (bytes memory) {
         return abi.encodeWithSelector(initializer(), operators);
     }
 
@@ -37,16 +36,18 @@ contract DeployOperatorRegistry is FacetHelper, Deployer {
     function facetInitHelper(
         address deployer,
         address facetAddress
-    ) external override returns (FacetCut memory, bytes memory) {
+    )
+        external
+        override
+        returns (FacetCut memory, bytes memory)
+    {
         IDiamond.FacetCut memory facetCut = this.makeCut(facetAddress, IDiamond.FacetCutAction.Add);
         address[] memory operators = new address[](1);
         operators[0] = deployer;
         return (facetCut, makeInitData(operators));
     }
 
-    function __deploy(
-        address deployer
-    ) public override returns (address) {
+    function __deploy(address deployer) public override returns (address) {
         vm.startBroadcast(deployer);
         OperatorRegistry facet = new OperatorRegistry();
         vm.stopBroadcast();

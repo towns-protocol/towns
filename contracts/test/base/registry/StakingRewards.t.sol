@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.23;
 
-import "forge-std/Test.sol";
 import {StakingRewards} from "contracts/src/base/registry/facets/distribution/v2/StakingRewards.sol";
+import "forge-std/Test.sol";
 
 contract StakingRewardsTest is Test {
     StakingRewards.Deposit internal deposit;

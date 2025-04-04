@@ -15,9 +15,7 @@ import {NodeOperatorFacet} from "contracts/src/base/registry/facets/operator/Nod
 import {console} from "forge-std/console.sol";
 
 contract InteractNodeOperators is Interaction {
-    function __interact(
-        address
-    ) internal override {
+    function __interact(address) internal override {
         address baseRegistry = getDeployment("baseRegistry");
 
         address[] memory operators = NodeOperatorFacet(baseRegistry).getOperators();
@@ -30,9 +28,7 @@ contract InteractNodeOperators is Interaction {
         }
     }
 
-    function _logStatus(
-        NodeOperatorStatus status
-    ) internal pure {
+    function _logStatus(NodeOperatorStatus status) internal pure {
         if (status == NodeOperatorStatus.Exiting) {
             console.log("Exiting");
         } else if (status == NodeOperatorStatus.Standby) {

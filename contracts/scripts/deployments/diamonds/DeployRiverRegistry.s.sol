@@ -8,26 +8,31 @@ import {IDiamond} from "@towns-protocol/diamond/src/IDiamond.sol";
 import "forge-std/console.sol";
 
 // helpers
-import {DiamondHelper} from "contracts/test/diamond/Diamond.t.sol";
-import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
-import {Diamond} from "@towns-protocol/diamond/src/Diamond.sol";
+
 import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
+import {Diamond} from "@towns-protocol/diamond/src/Diamond.sol";
+import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
+
 import {DeployDiamondCut} from "contracts/scripts/deployments/facets/DeployDiamondCut.s.sol";
 import {DeployDiamondLoupe} from "contracts/scripts/deployments/facets/DeployDiamondLoupe.s.sol";
 import {DeployIntrospection} from "contracts/scripts/deployments/facets/DeployIntrospection.s.sol";
 import {DeployOwnable} from "contracts/scripts/deployments/facets/DeployOwnable.s.sol";
+import {DiamondHelper} from "contracts/test/diamond/Diamond.t.sol";
 
 // deployers
-import {DeployMultiInit} from "contracts/scripts/deployments/utils/DeployMultiInit.s.sol";
-import {DeployRiverConfig} from "contracts/scripts/deployments/facets/DeployRiverConfig.s.sol";
+
 import {DeployNodeRegistry} from "contracts/scripts/deployments/facets/DeployNodeRegistry.s.sol";
-import {DeployStreamRegistry} from "contracts/scripts/deployments/facets/DeployStreamRegistry.s.sol";
+
 import {DeployOperatorRegistry} from
     "contracts/scripts/deployments/facets/DeployOperatorRegistry.s.sol";
+import {DeployRiverConfig} from "contracts/scripts/deployments/facets/DeployRiverConfig.s.sol";
+import {DeployStreamRegistry} from "contracts/scripts/deployments/facets/DeployStreamRegistry.s.sol";
+import {DeployMultiInit} from "contracts/scripts/deployments/utils/DeployMultiInit.s.sol";
 
 // facets
-import {OperatorRegistry} from "contracts/src/river/registry/facets/operator/OperatorRegistry.sol";
+
 import {RiverConfig} from "contracts/src/river/registry/facets/config/RiverConfig.sol";
+import {OperatorRegistry} from "contracts/src/river/registry/facets/operator/OperatorRegistry.sol";
 
 import {MultiInit} from "@towns-protocol/diamond/src/initializers/MultiInit.sol";
 
@@ -71,9 +76,7 @@ contract DeployRiverRegistry is DiamondHelper, Deployer {
         return "riverRegistry";
     }
 
-    function addImmutableCuts(
-        address deployer
-    ) internal {
+    function addImmutableCuts(address deployer) internal {
         multiInit = deployMultiInit.deploy(deployer);
         diamondCut = cutHelper.deploy(deployer);
         diamondLoupe = loupeHelper.deploy(deployer);
@@ -102,9 +105,7 @@ contract DeployRiverRegistry is DiamondHelper, Deployer {
         );
     }
 
-    function diamondInitParams(
-        address deployer
-    ) public returns (Diamond.InitParams memory) {
+    function diamondInitParams(address deployer) public returns (Diamond.InitParams memory) {
         riverConfig = riverConfigHelper.deploy(deployer);
         nodeRegistry = nodeRegistryHelper.deploy(deployer);
         streamRegistry = streamRegistryHelper.deploy(deployer);
@@ -156,14 +157,16 @@ contract DeployRiverRegistry is DiamondHelper, Deployer {
     function diamondInitHelper(
         address deployer,
         string[] memory facetNames
-    ) external override returns (FacetCut[] memory) {
+    )
+        external
+        override
+        returns (FacetCut[] memory)
+    {
         diamondInitParamsFromFacets(deployer, facetNames);
         return this.getCuts();
     }
 
-    function __deploy(
-        address deployer
-    ) public override returns (address) {
+    function __deploy(address deployer) public override returns (address) {
         addImmutableCuts(deployer);
 
         Diamond.InitParams memory initDiamondCut = diamondInitParams(deployer);

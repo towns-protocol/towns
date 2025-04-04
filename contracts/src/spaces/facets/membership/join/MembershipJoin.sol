@@ -2,33 +2,38 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {IEntitlement} from "contracts/src/spaces/entitlements/IEntitlement.sol";
+
+import {ITownsPoints, ITownsPointsBase} from "contracts/src/airdrop/points/ITownsPoints.sol";
 import {
-    IPartnerRegistryBase,
-    IPartnerRegistry
+    IPartnerRegistry,
+    IPartnerRegistryBase
 } from "contracts/src/factory/facets/partner/IPartnerRegistry.sol";
 import {IImplementationRegistry} from
     "contracts/src/factory/facets/registry/IImplementationRegistry.sol";
-import {IRolesBase} from "contracts/src/spaces/facets/roles/IRoles.sol";
+import {IEntitlement} from "contracts/src/spaces/entitlements/IEntitlement.sol";
+
 import {IRuleEntitlement} from "contracts/src/spaces/entitlements/rule/IRuleEntitlement.sol";
 import {IMembership} from "contracts/src/spaces/facets/membership/IMembership.sol";
-import {ITownsPoints, ITownsPointsBase} from "contracts/src/airdrop/points/ITownsPoints.sol";
+import {IRolesBase} from "contracts/src/spaces/facets/roles/IRoles.sol";
 
 // libraries
-import {FixedPointMathLib} from "solady/utils/FixedPointMathLib.sol";
+
 import {Permissions} from "contracts/src/spaces/facets/Permissions.sol";
 import {BasisPoints} from "contracts/src/utils/libraries/BasisPoints.sol";
 import {CurrencyTransfer} from "contracts/src/utils/libraries/CurrencyTransfer.sol";
 import {CustomRevert} from "contracts/src/utils/libraries/CustomRevert.sol";
+import {FixedPointMathLib} from "solady/utils/FixedPointMathLib.sol";
 
 // contracts
-import {MembershipBase} from "contracts/src/spaces/facets/membership/MembershipBase.sol";
-import {DispatcherBase} from "contracts/src/spaces/facets/dispatcher/DispatcherBase.sol";
-import {RolesBase} from "contracts/src/spaces/facets/roles/RolesBase.sol";
+
 import {Entitled} from "contracts/src/spaces/facets/Entitled.sol";
+import {DispatcherBase} from "contracts/src/spaces/facets/dispatcher/DispatcherBase.sol";
+
+import {EntitlementGatedBase} from "contracts/src/spaces/facets/gated/EntitlementGatedBase.sol";
+import {MembershipBase} from "contracts/src/spaces/facets/membership/MembershipBase.sol";
 import {PrepayBase} from "contracts/src/spaces/facets/prepay/PrepayBase.sol";
 import {ReferralsBase} from "contracts/src/spaces/facets/referrals/ReferralsBase.sol";
-import {EntitlementGatedBase} from "contracts/src/spaces/facets/gated/EntitlementGatedBase.sol";
+import {RolesBase} from "contracts/src/spaces/facets/roles/RolesBase.sol";
 
 /// @title MembershipJoin
 /// @notice Handles the logic for joining a space, including entitlement checks and payment
@@ -59,15 +64,17 @@ abstract contract MembershipJoin is
         address sender,
         address receiver,
         bytes memory referralData
-    ) internal pure returns (bytes memory) {
+    )
+        internal
+        pure
+        returns (bytes memory)
+    {
         return abi.encode(selector, sender, receiver, referralData);
     }
 
     /// @notice Handles the process of joining a space
     /// @param receiver The address that will receive the membership token
-    function _joinSpace(
-        address receiver
-    ) internal {
+    function _joinSpace(address receiver) internal {
         _validateJoinSpace(receiver);
 
         bool shouldCharge = _shouldChargeForJoinSpace();
@@ -133,9 +140,7 @@ abstract contract MembershipJoin is
         emit MembershipTokenRejected(receiver);
     }
 
-    function _getRequiredAmount(
-        uint256 price
-    ) internal view returns (uint256) {
+    function _getRequiredAmount(uint256 price) internal view returns (uint256) {
         // Check if there are any prepaid memberships available
         uint256 prepaidSupply = _getPrepaidSupply();
         if (prepaidSupply > 0) return 0; // If prepaid memberships exist, no payment is required
@@ -173,7 +178,11 @@ abstract contract MembershipJoin is
         address receiver,
         address sender,
         bytes32 transactionId
-    ) internal virtual returns (bool isEntitled, bool isCrosschainPending) {
+    )
+        internal
+        virtual
+        returns (bool isEntitled, bool isCrosschainPending)
+    {
         IRolesBase.Role[] memory roles = _getRolesWithPermission(Permissions.JoinSpace);
         address[] memory linkedWallets = _getLinkedWalletsWithUser(receiver);
 
@@ -228,9 +237,7 @@ abstract contract MembershipJoin is
 
     /// @notice Processes the charge for joining a space without referral
     /// @param transactionId The unique identifier for this join transaction
-    function _chargeForJoinSpace(
-        bytes32 transactionId
-    ) internal {
+    function _chargeForJoinSpace(bytes32 transactionId) internal {
         uint256 membershipPrice = _getMembershipPrice(_totalSupply());
         uint256 paymentRequired = _getRequiredAmount(membershipPrice);
 
@@ -251,9 +258,7 @@ abstract contract MembershipJoin is
 
     /// @notice Processes the charge for joining a space with referral
     /// @param transactionId The unique identifier for this join transaction
-    function _chargeForJoinSpaceWithReferral(
-        bytes32 transactionId
-    ) internal {
+    function _chargeForJoinSpaceWithReferral(bytes32 transactionId) internal {
         uint256 membershipPrice = _getMembershipPrice(_totalSupply());
         uint256 paymentRequired = _getRequiredAmount(membershipPrice);
 
@@ -291,7 +296,9 @@ abstract contract MembershipJoin is
         uint256 paymentRequired,
         uint256 ownerProceeds,
         uint256 membershipPrice
-    ) internal {
+    )
+        internal
+    {
         // account for owner's proceeds
         if (ownerProceeds != 0) _transferIn(payer, ownerProceeds);
 
@@ -313,9 +320,7 @@ abstract contract MembershipJoin is
 
     /// @notice Issues a membership token to the receiver
     /// @param receiver The address that will receive the membership token
-    function _issueToken(
-        address receiver
-    ) internal {
+    function _issueToken(address receiver) internal {
         // get token id
         uint256 tokenId = _nextTokenId();
 
@@ -334,9 +339,7 @@ abstract contract MembershipJoin is
 
     /// @notice Validates if a user can join the space
     /// @param receiver The address that will receive the membership token
-    function _validateJoinSpace(
-        address receiver
-    ) internal view {
+    function _validateJoinSpace(address receiver) internal view {
         if (receiver == address(0)) {
             CustomRevert.revertWith(Membership__InvalidAddress.selector);
         }
@@ -369,7 +372,10 @@ abstract contract MembershipJoin is
         address userReferral,
         string memory referralCode,
         uint256 membershipPrice
-    ) internal returns (uint256 referralFee) {
+    )
+        internal
+        returns (uint256 referralFee)
+    {
         if (bytes(referralCode).length != 0) {
             Referral memory referral = _referralInfo(referralCode);
 
@@ -402,7 +408,10 @@ abstract contract MembershipJoin is
         address payer,
         address partner,
         uint256 membershipPrice
-    ) internal returns (uint256 partnerFee) {
+    )
+        internal
+        returns (uint256 partnerFee)
+    {
         if (partner == address(0)) return 0;
 
         Partner memory partnerInfo = IPartnerRegistry(_getSpaceFactory()).partnerInfo(partner);

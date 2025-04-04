@@ -11,9 +11,7 @@ pragma solidity ^0.8.19;
 import {ReferralsFacetTest} from "contracts/test/spaces/referrals/Referrals.t.sol";
 
 contract ReferralsFacet_setMaxBpsFee is ReferralsFacetTest {
-    function test_setMaxBpsFee(
-        uint256 bps
-    ) external {
+    function test_setMaxBpsFee(uint256 bps) external {
         vm.assume(bps > 0);
 
         vm.prank(founder);

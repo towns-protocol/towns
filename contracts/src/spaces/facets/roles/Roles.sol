@@ -8,8 +8,9 @@ import {IRoles} from "./IRoles.sol";
 import {Permissions} from "contracts/src/spaces/facets/Permissions.sol";
 
 // contracts
-import {RolesBase} from "./RolesBase.sol";
+
 import {Entitled} from "../Entitled.sol";
+import {RolesBase} from "./RolesBase.sol";
 
 contract Roles is IRoles, RolesBase, Entitled {
     /// @inheritdoc IRoles
@@ -17,7 +18,11 @@ contract Roles is IRoles, RolesBase, Entitled {
         string calldata roleName,
         string[] memory permissions,
         CreateEntitlement[] memory entitlements
-    ) external override returns (uint256) {
+    )
+        external
+        override
+        returns (uint256)
+    {
         _validatePermission(Permissions.ModifySpaceSettings);
         return _createRole(roleName, permissions, entitlements);
     }
@@ -28,9 +33,7 @@ contract Roles is IRoles, RolesBase, Entitled {
     }
 
     /// @inheritdoc IRoles
-    function getRoleById(
-        uint256 roleId
-    ) external view override returns (Role memory) {
+    function getRoleById(uint256 roleId) external view override returns (Role memory) {
         _checkRoleExists(roleId);
         return _getRoleById(roleId);
     }
@@ -41,15 +44,16 @@ contract Roles is IRoles, RolesBase, Entitled {
         string calldata roleName,
         string[] memory permissions,
         CreateEntitlement[] memory entitlements
-    ) external override {
+    )
+        external
+        override
+    {
         _validatePermission(Permissions.ModifySpaceSettings);
         _updateRole(roleId, roleName, permissions, entitlements);
     }
 
     /// @inheritdoc IRoles
-    function removeRole(
-        uint256 roleId
-    ) external override {
+    function removeRole(uint256 roleId) external override {
         _validatePermission(Permissions.ModifySpaceSettings);
         _removeRole(roleId);
     }
@@ -65,15 +69,21 @@ contract Roles is IRoles, RolesBase, Entitled {
     function removePermissionsFromRole(
         uint256 roleId,
         string[] memory permissions
-    ) external override {
+    )
+        external
+        override
+    {
         _validatePermission(Permissions.ModifySpaceSettings);
         _removePermissionsFromRole(roleId, permissions);
     }
 
     /// @inheritdoc IRoles
-    function getPermissionsByRoleId(
-        uint256 roleId
-    ) external view override returns (string[] memory permissions) {
+    function getPermissionsByRoleId(uint256 roleId)
+        external
+        view
+        override
+        returns (string[] memory permissions)
+    {
         return _getPermissionsByRoleId(roleId);
     }
 
@@ -88,7 +98,9 @@ contract Roles is IRoles, RolesBase, Entitled {
     function removeRoleFromEntitlement(
         uint256 roleId,
         CreateEntitlement memory entitlement
-    ) external {
+    )
+        external
+    {
         _validatePermission(Permissions.ModifySpaceSettings);
         _removeRoleFromEntitlement(roleId, entitlement);
     }
@@ -99,7 +111,9 @@ contract Roles is IRoles, RolesBase, Entitled {
         uint256 roleId,
         bytes32 channelId,
         string[] memory permissions
-    ) external {
+    )
+        external
+    {
         _validatePermission(Permissions.ModifySpaceSettings);
         _setChannelPermissionOverrides(roleId, channelId, permissions);
     }
@@ -108,7 +122,11 @@ contract Roles is IRoles, RolesBase, Entitled {
     function getChannelPermissionOverrides(
         uint256 roleId,
         bytes32 channelId
-    ) external view returns (string[] memory permissions) {
+    )
+        external
+        view
+        returns (string[] memory permissions)
+    {
         return _getChannelPermissionOverrides(roleId, channelId);
     }
 

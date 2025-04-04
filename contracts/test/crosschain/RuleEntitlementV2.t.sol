@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import {RuleEntitlementV2} from "contracts/src/spaces/entitlements/rule/RuleEntitlementV2.sol";
 import {IRuleEntitlementV2} from "contracts/src/spaces/entitlements/rule/IRuleEntitlement.sol";
+import {RuleEntitlementV2} from "contracts/src/spaces/entitlements/rule/RuleEntitlementV2.sol";
 
-import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import {RuleEntitlementTest} from "./RuleEntitlement.t.sol";
+import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
 contract RuleEntitlementV2Test is RuleEntitlementTest {
     uint256 internal constant ENTITLEMENT_V2_SLOT =
@@ -107,9 +107,7 @@ contract RuleEntitlementV2Test is RuleEntitlementTest {
         assertEq(vm.getMappingLength(entitlement, bytes32(ENTITLEMENT_V2_SLOT)), 0);
     }
 
-    function test_fuzz_revertWhenNotAllowedToRemove(
-        address caller
-    ) external override {
+    function test_fuzz_revertWhenNotAllowedToRemove(address caller) external override {
         test_upgradeToRuleV2();
 
         vm.assume(caller != space);

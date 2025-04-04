@@ -2,8 +2,9 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {ICrossChainEntitlement} from "contracts/src/spaces/entitlements/ICrossChainEntitlement.sol";
+
 import {IPOAP} from "./IPOAP.sol";
+import {ICrossChainEntitlement} from "contracts/src/spaces/entitlements/ICrossChainEntitlement.sol";
 // libraries
 
 // contracts
@@ -11,16 +12,18 @@ import {IPOAP} from "./IPOAP.sol";
 contract PoapEntitlement is ICrossChainEntitlement {
     IPOAP immutable poapContract;
 
-    constructor(
-        address poapContractAddress
-    ) {
+    constructor(address poapContractAddress) {
         poapContract = IPOAP(poapContractAddress);
     }
 
     function isEntitled(
         address[] calldata users,
         bytes calldata data
-    ) external view returns (bool) {
+    )
+        external
+        view
+        returns (bool)
+    {
         uint256 eventId = abi.decode(data, (uint256));
 
         for (uint256 i = 0; i < users.length; i++) {

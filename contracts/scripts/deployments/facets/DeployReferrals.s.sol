@@ -6,8 +6,9 @@ pragma solidity ^0.8.19;
 //libraries
 
 //contracts
-import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
+
 import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
+import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
 import {ReferralsFacet} from "contracts/src/spaces/facets/referrals/ReferralsFacet.sol";
 
 contract DeployReferrals is Deployer, FacetHelper {
@@ -30,9 +31,7 @@ contract DeployReferrals is Deployer, FacetHelper {
         return ReferralsFacet.__ReferralsFacet_init.selector;
     }
 
-    function __deploy(
-        address deployer
-    ) public override returns (address) {
+    function __deploy(address deployer) public override returns (address) {
         vm.startBroadcast(deployer);
         ReferralsFacet facet = new ReferralsFacet();
         vm.stopBroadcast();

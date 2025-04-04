@@ -15,9 +15,7 @@ import {console} from "forge-std/console.sol";
 contract InteractPrepay is Interaction {
     IPrepay prepay = IPrepay(0x0000000000000000000000000000000000000000);
 
-    function __interact(
-        address deployer
-    ) internal override {
+    function __interact(address deployer) internal override {
         uint256 expectedAmount = 1000;
         uint256 totalAmount = prepay.calculateMembershipPrepayFee(expectedAmount);
 

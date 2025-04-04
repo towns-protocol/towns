@@ -24,19 +24,18 @@ interface IVotesEnumerable {
     function getPaginatedDelegators(
         uint256 cursor,
         uint256 size
-    ) external view returns (address[] memory delegators, uint256 next);
+    )
+        external
+        view
+        returns (address[] memory delegators, uint256 next);
 
     /// @notice Get all delegators who have delegated their voting power to a specific account
     /// @param account The delegatee address to get delegators for
     /// @return Array of delegator addresses who delegated to the specified account
-    function getDelegatorsByDelegatee(
-        address account
-    ) external view returns (address[] memory);
+    function getDelegatorsByDelegatee(address account) external view returns (address[] memory);
 
     /// @notice Get the timestamp when a delegator last delegated their voting power
     /// @param account The delegator address to get delegation time for
     /// @return Timestamp of the last delegation, returns 0 if never delegated
-    function getDelegationTimeForDelegator(
-        address account
-    ) external view returns (uint256);
+    function getDelegationTimeForDelegator(address account) external view returns (uint256);
 }

@@ -27,9 +27,7 @@ library DropFacetLib {
         mapping(uint256 conditionId => DropClaimLib.ClaimCondition) conditionById;
     }
 
-    function getActiveConditionId(
-        Layout storage self
-    ) internal view returns (uint256) {
+    function getActiveConditionId(Layout storage self) internal view returns (uint256) {
         (uint48 conditionStartId, uint48 conditionCount) =
             (self.conditionStartId, self.conditionCount);
 
@@ -59,7 +57,11 @@ library DropFacetLib {
     function getClaimConditionById(
         Layout storage self,
         uint256 conditionId
-    ) internal view returns (DropClaimLib.ClaimCondition storage) {
+    )
+        internal
+        view
+        returns (DropClaimLib.ClaimCondition storage)
+    {
         return self.conditionById[conditionId];
     }
 
@@ -67,14 +69,20 @@ library DropFacetLib {
         Layout storage self,
         uint256 conditionId,
         address account
-    ) internal view returns (DropClaimLib.SupplyClaim storage) {
+    )
+        internal
+        view
+        returns (DropClaimLib.SupplyClaim storage)
+    {
         return self.supplyClaimedByWallet[conditionId][account];
     }
 
     function addClaimCondition(
         Layout storage self,
         DropClaimLib.ClaimCondition calldata newCondition
-    ) internal {
+    )
+        internal
+    {
         (uint48 existingStartId, uint48 existingCount) =
             (self.conditionStartId, self.conditionCount);
         uint48 newConditionId = existingStartId + existingCount;
@@ -103,9 +111,11 @@ library DropFacetLib {
         emit IDropFacetBase.DropFacet_ClaimConditionAdded(newConditionId, newCondition);
     }
 
-    function getClaimConditions(
-        Layout storage self
-    ) internal view returns (DropClaimLib.ClaimCondition[] memory conditions) {
+    function getClaimConditions(Layout storage self)
+        internal
+        view
+        returns (DropClaimLib.ClaimCondition[] memory conditions)
+    {
         conditions = new DropClaimLib.ClaimCondition[](self.conditionCount);
         for (uint256 i; i < self.conditionCount; ++i) {
             conditions[i] = self.conditionById[self.conditionStartId + i];
@@ -116,7 +126,9 @@ library DropFacetLib {
     function setClaimConditions(
         Layout storage self,
         DropClaimLib.ClaimCondition[] calldata conditions
-    ) internal {
+    )
+        internal
+    {
         // get the existing claim condition count and start id
         (uint48 newStartId, uint48 existingConditionCount) =
             (self.conditionStartId, self.conditionCount);
@@ -170,7 +182,9 @@ library DropFacetLib {
     function updateDepositId(
         DropClaimLib.SupplyClaim storage claimed,
         uint256 depositId
-    ) internal {
+    )
+        internal
+    {
         claimed.depositId = depositId;
     }
 
@@ -184,7 +198,9 @@ library DropFacetLib {
         Layout storage self,
         DropClaimLib.ClaimCondition storage condition,
         uint256 amount
-    ) internal {
+    )
+        internal
+    {
         IERC20(condition.currency).approve(self.rewardsDistribution, amount);
     }
 

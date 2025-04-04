@@ -3,17 +3,18 @@ pragma solidity ^0.8.23;
 
 // interfaces
 import {IArchitectBase} from "./IArchitect.sol";
-import {IUserEntitlement} from "contracts/src/spaces/entitlements/user/IUserEntitlement.sol";
+
 import {IRuleEntitlement} from "contracts/src/spaces/entitlements/rule/IRuleEntitlement.sol";
 import {IRuleEntitlementV2} from "contracts/src/spaces/entitlements/rule/IRuleEntitlement.sol";
+import {IUserEntitlement} from "contracts/src/spaces/entitlements/user/IUserEntitlement.sol";
 import {ISpaceOwner} from "contracts/src/spaces/facets/owner/ISpaceOwner.sol";
 import {ISpaceProxyInitializer} from "contracts/src/spaces/facets/proxy/ISpaceProxyInitializer.sol";
 
 // libraries
 
-import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 import {ArchitectStorage} from "./ArchitectStorage.sol";
 import {ImplementationStorage} from "./ImplementationStorage.sol";
+import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 
 // contracts
 
@@ -23,15 +24,11 @@ abstract contract ArchitectBase is IArchitectBase {
     // =============================================================
     //                           Spaces
     // =============================================================
-    function _getTokenIdBySpace(
-        address space
-    ) internal view returns (uint256) {
+    function _getTokenIdBySpace(address space) internal view returns (uint256) {
         return ArchitectStorage.layout().tokenIdBySpace[space];
     }
 
-    function _getSpaceByTokenId(
-        uint256 tokenId
-    ) internal view returns (address) {
+    function _getSpaceByTokenId(uint256 tokenId) internal view returns (address) {
         return ArchitectStorage.layout().spaceByTokenId[tokenId];
     }
 
@@ -44,7 +41,9 @@ abstract contract ArchitectBase is IArchitectBase {
         IUserEntitlement userEntitlement,
         IRuleEntitlementV2 ruleEntitlement,
         IRuleEntitlement legacyRuleEntitlement
-    ) internal {
+    )
+        internal
+    {
         if (address(spaceOwnerToken).code.length == 0) {
             revert Architect__NotContract();
         }
@@ -85,9 +84,7 @@ abstract contract ArchitectBase is IArchitectBase {
         return ImplementationStorage.layout().proxyInitializer;
     }
 
-    function _setProxyInitializer(
-        ISpaceProxyInitializer proxyInitializer
-    ) internal {
+    function _setProxyInitializer(ISpaceProxyInitializer proxyInitializer) internal {
         ImplementationStorage.Layout storage ds = ImplementationStorage.layout();
         ds.proxyInitializer = proxyInitializer;
 

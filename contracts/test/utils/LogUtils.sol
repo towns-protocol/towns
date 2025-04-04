@@ -8,7 +8,11 @@ abstract contract LogUtils {
     function _getFirstMatchingLog(
         Vm.Log[] memory logs,
         bytes32 topic0
-    ) internal pure returns (Vm.Log memory log) {
+    )
+        internal
+        pure
+        returns (Vm.Log memory log)
+    {
         for (uint256 i; i < logs.length; ++i) {
             log = logs[i];
             if (log.topics.length > 0 && log.topics[0] == topic0) {
@@ -31,7 +35,11 @@ abstract contract LogUtils {
         Vm.Log[] memory logs,
         bytes32 topic,
         uint256 index
-    ) internal pure returns (Vm.Log memory log) {
+    )
+        internal
+        pure
+        returns (Vm.Log memory log)
+    {
         uint256 currentIndex;
         for (uint256 i; i < logs.length; ++i) {
             log = logs[i];
@@ -46,7 +54,11 @@ abstract contract LogUtils {
     function _getMatchingLogCount(
         Vm.Log[] memory logs,
         bytes32 topic0
-    ) internal pure returns (uint256 count) {
+    )
+        internal
+        pure
+        returns (uint256 count)
+    {
         for (uint256 i; i < logs.length; ++i) {
             Vm.Log memory log = logs[i];
             if (log.topics.length > 0 && log.topics[0] == topic0) {
@@ -60,7 +72,11 @@ abstract contract LogUtils {
     function _getMatchingLogs(
         Vm.Log[] memory logs,
         bytes32 topic0
-    ) internal pure returns (Vm.Log[] memory matchingLogs) {
+    )
+        internal
+        pure
+        returns (Vm.Log[] memory matchingLogs)
+    {
         uint256 length = logs.length;
         // allocates an array of pointers to the logs
         // similar to `matchingLogs = new Vm.Log[](length)` without the struct allocation

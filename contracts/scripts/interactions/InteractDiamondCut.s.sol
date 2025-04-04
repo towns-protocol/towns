@@ -2,8 +2,9 @@
 pragma solidity ^0.8.23;
 
 //interfaces
-import {IDiamondCut} from "@towns-protocol/diamond/src/facets/cut/IDiamondCut.sol";
+
 import {IDiamond} from "@towns-protocol/diamond/src/Diamond.sol";
+import {IDiamondCut} from "@towns-protocol/diamond/src/facets/cut/IDiamondCut.sol";
 
 //libraries
 import {console} from "forge-std/console.sol";
@@ -21,9 +22,7 @@ contract InteractDiamondCut is Interaction, AlphaHelper {
     DeployEIP712Facet eip712Helper = new DeployEIP712Facet();
     DeploySpaceOwnerFacet spaceOwnerHelper = new DeploySpaceOwnerFacet();
 
-    function __interact(
-        address deployer
-    ) internal override {
+    function __interact(address deployer) internal override {
         address diamond = getDeployment("spaceOwner");
         //    address spaceOwnerFacet = getDeployment("spaceOwnerFacet");
         //    address eip712Facet = getDeployment("eip712Facet");

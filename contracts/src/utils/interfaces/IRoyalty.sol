@@ -31,10 +31,12 @@ interface IRoyalty is IERC2981 {
         uint256 _tokenId,
         address _recipient,
         uint256 _amount
-    ) external;
+    )
+        external;
 
     /// @dev Returns the royalty recipient for a particular token id
-    function getRoyaltyInfoForToken(
-        uint256 _tokenId
-    ) external view returns (RoyaltyInfo memory _royalty);
+    function getRoyaltyInfoForToken(uint256 _tokenId)
+        external
+        view
+        returns (RoyaltyInfo memory _royalty);
 }

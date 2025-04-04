@@ -11,9 +11,12 @@ import {ERC721ABase} from "../ERC721ABase.sol";
 
 contract ERC721AQueryable is ERC721ABase, IERC721AQueryable {
     /// @inheritdoc IERC721AQueryable
-    function explicitOwnershipOf(
-        uint256 tokenId
-    ) public view override returns (TokenOwnership memory) {
+    function explicitOwnershipOf(uint256 tokenId)
+        public
+        view
+        override
+        returns (TokenOwnership memory)
+    {
         TokenOwnership memory ownership;
 
         if (tokenId < _startTokenId() || tokenId >= _nextTokenId()) {
@@ -29,9 +32,12 @@ contract ERC721AQueryable is ERC721ABase, IERC721AQueryable {
     }
 
     /// @inheritdoc IERC721AQueryable
-    function explicitOwnershipsOf(
-        uint256[] calldata tokenIds
-    ) external view override returns (TokenOwnership[] memory) {
+    function explicitOwnershipsOf(uint256[] calldata tokenIds)
+        external
+        view
+        override
+        returns (TokenOwnership[] memory)
+    {
         unchecked {
             uint256 tokenIdsLen = tokenIds.length;
             TokenOwnership[] memory ownerships = new TokenOwnership[](tokenIdsLen);
@@ -47,7 +53,13 @@ contract ERC721AQueryable is ERC721ABase, IERC721AQueryable {
         address owner,
         uint256 start,
         uint256 stop
-    ) external view virtual override returns (uint256[] memory) {
+    )
+        external
+        view
+        virtual
+        override
+        returns (uint256[] memory)
+    {
         unchecked {
             if (start >= stop) revert InvalidQueryRange();
             uint256 tokenIdsIdx;
@@ -107,9 +119,13 @@ contract ERC721AQueryable is ERC721ABase, IERC721AQueryable {
     }
 
     /// @inheritdoc IERC721AQueryable
-    function tokensOfOwner(
-        address owner
-    ) external view virtual override returns (uint256[] memory) {
+    function tokensOfOwner(address owner)
+        external
+        view
+        virtual
+        override
+        returns (uint256[] memory)
+    {
         unchecked {
             uint256 tokenIdsIdx;
             address currOwnershipAddr;

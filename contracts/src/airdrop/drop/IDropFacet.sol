@@ -60,15 +60,11 @@ interface IDropFacet is IDropFacetBase {
 
     /// @notice Sets the claim conditions for the drop
     /// @param conditions An array of ClaimCondition structs defining the conditions
-    function setClaimConditions(
-        DropClaimLib.ClaimCondition[] calldata conditions
-    ) external;
+    function setClaimConditions(DropClaimLib.ClaimCondition[] calldata conditions) external;
 
     /// @notice Adds a new claim condition
     /// @param condition The ClaimCondition struct defining the condition
-    function addClaimCondition(
-        DropClaimLib.ClaimCondition calldata condition
-    ) external;
+    function addClaimCondition(DropClaimLib.ClaimCondition calldata condition) external;
 
     /// @notice Gets the ID of the currently active claim condition
     /// @return The ID of the active claim condition
@@ -77,9 +73,10 @@ interface IDropFacet is IDropFacetBase {
     /// @notice Retrieves a specific claim condition by its ID
     /// @param conditionId The ID of the claim condition to retrieve
     /// @return The ClaimCondition struct for the specified ID
-    function getClaimConditionById(
-        uint256 conditionId
-    ) external view returns (DropClaimLib.ClaimCondition memory);
+    function getClaimConditionById(uint256 conditionId)
+        external
+        view
+        returns (DropClaimLib.ClaimCondition memory);
 
     /// @notice Gets the amount of tokens claimed by a specific wallet for a given condition
     /// @param account The address of the wallet to check
@@ -88,7 +85,10 @@ interface IDropFacet is IDropFacetBase {
     function getSupplyClaimedByWallet(
         address account,
         uint256 conditionId
-    ) external view returns (uint256);
+    )
+        external
+        view
+        returns (uint256);
 
     /// @notice Gets the deposit ID of a specific wallet for a given condition
     /// @param account The address of the wallet to check
@@ -97,7 +97,10 @@ interface IDropFacet is IDropFacetBase {
     function getDepositIdByWallet(
         address account,
         uint256 conditionId
-    ) external view returns (uint256);
+    )
+        external
+        view
+        returns (uint256);
 
     /// @notice Claims tokens with a penalty
     /// @param claim The claim to process
@@ -106,7 +109,9 @@ interface IDropFacet is IDropFacetBase {
     function claimWithPenalty(
         DropClaimLib.Claim calldata claim,
         uint16 expectedPenaltyBps
-    ) external returns (uint256);
+    )
+        external
+        returns (uint256);
 
     /// @notice Claims tokens and stakes them in the staking contract
     /// @param claim The claim to process
@@ -119,5 +124,7 @@ interface IDropFacet is IDropFacetBase {
         address delegatee,
         uint256 deadline,
         bytes calldata signature
-    ) external returns (uint256);
+    )
+        external
+        returns (uint256);
 }

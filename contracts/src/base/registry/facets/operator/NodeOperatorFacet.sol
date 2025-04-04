@@ -7,8 +7,8 @@ import {INodeOperator} from "./INodeOperator.sol";
 // libraries
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import {
-    NodeOperatorStorage,
-    NodeOperatorStatus
+    NodeOperatorStatus,
+    NodeOperatorStorage
 } from "contracts/src/base/registry/facets/operator/NodeOperatorStorage.sol";
 
 // contracts
@@ -29,9 +29,7 @@ contract NodeOperatorFacet is INodeOperator, OwnableBase, ERC721ABase, Facet {
     // =============================================================
 
     /// @inheritdoc INodeOperator
-    function registerOperator(
-        address claimer
-    ) external {
+    function registerOperator(address claimer) external {
         if (claimer == address(0)) revert NodeOperator__InvalidAddress();
 
         NodeOperatorStorage.Layout storage ds = NodeOperatorStorage.layout();
@@ -55,9 +53,7 @@ contract NodeOperatorFacet is INodeOperator, OwnableBase, ERC721ABase, Facet {
     // =============================================================
 
     /// @inheritdoc INodeOperator
-    function isOperator(
-        address operator
-    ) external view returns (bool) {
+    function isOperator(address operator) external view returns (bool) {
         NodeOperatorStorage.Layout storage ds = NodeOperatorStorage.layout();
         return ds.operators.contains(operator);
     }
@@ -108,9 +104,7 @@ contract NodeOperatorFacet is INodeOperator, OwnableBase, ERC721ABase, Facet {
     }
 
     /// @inheritdoc INodeOperator
-    function getOperatorStatus(
-        address operator
-    ) external view returns (NodeOperatorStatus) {
+    function getOperatorStatus(address operator) external view returns (NodeOperatorStatus) {
         NodeOperatorStorage.Layout storage ds = NodeOperatorStorage.layout();
         return ds.statusByOperator[operator];
     }
@@ -123,7 +117,10 @@ contract NodeOperatorFacet is INodeOperator, OwnableBase, ERC721ABase, Facet {
     function setClaimAddressForOperator(
         address claimer,
         address operator
-    ) external onlyClaimer(msg.sender, operator) {
+    )
+        external
+        onlyClaimer(msg.sender, operator)
+    {
         NodeOperatorStorage.Layout storage ds = NodeOperatorStorage.layout();
 
         if (!ds.operators.contains(operator)) revert NodeOperator__NotRegistered();
@@ -145,9 +142,7 @@ contract NodeOperatorFacet is INodeOperator, OwnableBase, ERC721ABase, Facet {
     }
 
     /// @inheritdoc INodeOperator
-    function getClaimAddressForOperator(
-        address operator
-    ) external view returns (address) {
+    function getClaimAddressForOperator(address operator) external view returns (address) {
         return NodeOperatorStorage.layout().claimerByOperator[operator];
     }
 
@@ -159,9 +154,7 @@ contract NodeOperatorFacet is INodeOperator, OwnableBase, ERC721ABase, Facet {
     // =============================================================
     //                           Commission
     // =============================================================
-    function setCommissionRate(
-        uint256 rateBps
-    ) external {
+    function setCommissionRate(uint256 rateBps) external {
         NodeOperatorStorage.Layout storage ds = NodeOperatorStorage.layout();
         if (!ds.operators.contains(msg.sender)) {
             revert NodeOperator__NotRegistered();
@@ -180,9 +173,7 @@ contract NodeOperatorFacet is INodeOperator, OwnableBase, ERC721ABase, Facet {
         emit OperatorCommissionChanged(msg.sender, rateBps);
     }
 
-    function getCommissionRate(
-        address operator
-    ) external view returns (uint256) {
+    function getCommissionRate(address operator) external view returns (uint256) {
         NodeOperatorStorage.Layout storage ds = NodeOperatorStorage.layout();
         return ds.commissionByOperator[operator];
     }

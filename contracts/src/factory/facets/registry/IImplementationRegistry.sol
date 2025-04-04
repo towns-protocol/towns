@@ -23,9 +23,7 @@ interface IImplementationRegistryBase {
 interface IImplementationRegistry is IImplementationRegistryBase {
     /// @notice Add an implementation to the registry
     /// @param implementation The address of the implementation
-    function addImplementation(
-        address implementation
-    ) external;
+    function addImplementation(address implementation) external;
 
     /// @notice Approve or disapprove an implementation
     /// @param implementation The address of the implementation
@@ -39,12 +37,13 @@ interface IImplementationRegistry is IImplementationRegistryBase {
     function getImplementation(
         bytes32 contractType,
         uint32 version
-    ) external view returns (address);
+    )
+        external
+        view
+        returns (address);
 
     /// @notice Get the latest implementation by contract type
     /// @param contractType The contract type
     /// @return The address of the latest implementation
-    function getLatestImplementation(
-        bytes32 contractType
-    ) external view returns (address);
+    function getLatestImplementation(bytes32 contractType) external view returns (address);
 }

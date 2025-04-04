@@ -3,8 +3,8 @@ pragma solidity ^0.8.23;
 
 // interfaces
 import {
-    IMainnetDelegationBase,
-    IMainnetDelegation
+    IMainnetDelegation,
+    IMainnetDelegationBase
 } from "contracts/src/base/registry/facets/mainnet/IMainnetDelegation.sol";
 import {IAuthorizedClaimers} from "contracts/src/tokens/mainnet/claimer/IAuthorizedClaimers.sol";
 
@@ -13,11 +13,13 @@ import {NodeOperatorStatus} from
     "contracts/src/base/registry/facets/operator/NodeOperatorStorage.sol";
 
 // contracts
-import {BaseSetup} from "contracts/test/spaces/BaseSetup.sol";
+
 import {NodeOperatorFacet} from "contracts/src/base/registry/facets/operator/NodeOperatorFacet.sol";
-import {Towns} from "contracts/src/tokens/towns/mainnet/Towns.sol";
+
 import {ProxyBatchDelegation} from
     "contracts/src/tokens/mainnet/delegation/ProxyBatchDelegation.sol";
+import {Towns} from "contracts/src/tokens/towns/mainnet/Towns.sol";
+import {BaseSetup} from "contracts/test/spaces/BaseSetup.sol";
 
 contract ProxyBatchDelegationTest is BaseSetup, IMainnetDelegationBase {
     IMainnetDelegation internal mainnetDelegation;
@@ -75,16 +77,12 @@ contract ProxyBatchDelegationTest is BaseSetup, IMainnetDelegationBase {
         }
     }
 
-    function _getRandomElement(
-        address[] memory addresses
-    ) internal pure returns (address) {
+    function _getRandomElement(address[] memory addresses) internal pure returns (address) {
         require(addresses.length > 0, "No addresses available");
         return addresses[_randomUint256() % addresses.length];
     }
 
-    function setOperator(
-        address operator
-    ) internal {
+    function setOperator(address operator) internal {
         vm.assume(operator != address(0));
         if (!operatorFacet.isOperator(operator)) {
             vm.prank(operator);

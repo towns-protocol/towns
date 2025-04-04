@@ -30,9 +30,7 @@ contract InteractRiverAlphaSparse is AlphaHelper {
 
     string private jsonData;
 
-    function readJSON(
-        string memory jsonPath
-    ) internal {
+    function readJSON(string memory jsonPath) internal {
         jsonData = vm.readFile(jsonPath);
     }
 
@@ -75,9 +73,7 @@ contract InteractRiverAlphaSparse is AlphaHelper {
      *         - Executes a diamondCut operation to apply the updates
      * @param deployer The address of the account that will deploy and interact with the contracts
      */
-    function __interact(
-        address deployer
-    ) internal override {
+    function __interact(address deployer) internal override {
         vm.setEnv("OVERRIDE_DEPLOYMENTS", "1");
 
         string memory jsonPath;

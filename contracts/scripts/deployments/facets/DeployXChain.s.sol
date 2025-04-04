@@ -6,8 +6,9 @@ pragma solidity ^0.8.23;
 //libraries
 
 //contracts
-import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
+
 import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
+import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
 import {XChain} from "contracts/src/base/registry/facets/xchain/XChain.sol";
 
 contract DeployXChain is Deployer, FacetHelper {
@@ -26,9 +27,7 @@ contract DeployXChain is Deployer, FacetHelper {
         return XChain.__XChain_init.selector;
     }
 
-    function __deploy(
-        address deployer
-    ) public override returns (address) {
+    function __deploy(address deployer) public override returns (address) {
         vm.startBroadcast(deployer);
         XChain xchain = new XChain();
         vm.stopBroadcast();

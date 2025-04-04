@@ -3,10 +3,10 @@ pragma solidity ^0.8.23;
 
 // interfaces
 import {
-    Stream,
-    StreamWithId,
     SetMiniblock,
-    SetStreamReplicationFactor
+    SetStreamReplicationFactor,
+    Stream,
+    StreamWithId
 } from "contracts/src/river/registry/libraries/RegistryStorage.sol";
 
 // libraries
@@ -72,7 +72,8 @@ interface IStreamRegistry is IStreamRegistryBase {
         address[] memory nodes,
         bytes32 genesisMiniblockHash,
         bytes memory genesisMiniblock
-    ) external;
+    )
+        external;
 
     /**
      * @notice Create a new stream in the registry
@@ -83,7 +84,8 @@ interface IStreamRegistry is IStreamRegistryBase {
         bytes32 streamId,
         bytes32 genesisMiniblockHash,
         Stream memory stream
-    ) external;
+    )
+        external;
 
     /**
      * @notice Sync node addresses for streams in a range to `streamIdsByNode` mapping
@@ -101,9 +103,7 @@ interface IStreamRegistry is IStreamRegistryBase {
      * @dev This function allows updating multiple streams' last miniblock data in a single
      * transaction
      */
-    function setStreamLastMiniblockBatch(
-        SetMiniblock[] calldata miniblocks
-    ) external;
+    function setStreamLastMiniblockBatch(SetMiniblock[] calldata miniblocks) external;
 
     /**
      * @notice Place a stream on a specific node
@@ -129,9 +129,7 @@ interface IStreamRegistry is IStreamRegistryBase {
      * "replicationFactor"
      * nodes participate in reaching quorum. The remaining nodes only sync the stream data.
      */
-    function setStreamReplicationFactor(
-        SetStreamReplicationFactor[] calldata requests
-    ) external;
+    function setStreamReplicationFactor(SetStreamReplicationFactor[] calldata requests) external;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                          GETTERS                           */
@@ -142,18 +140,14 @@ interface IStreamRegistry is IStreamRegistryBase {
      * @param streamId The ID of the stream to check
      * @return bool True if the stream exists, false otherwise
      */
-    function isStream(
-        bytes32 streamId
-    ) external view returns (bool);
+    function isStream(bytes32 streamId) external view returns (bool);
 
     /**
      * @notice Get a stream from the registry
      * @param streamId The ID of the stream to get
      * @return Stream The stream data
      */
-    function getStream(
-        bytes32 streamId
-    ) external view returns (Stream memory);
+    function getStream(bytes32 streamId) external view returns (Stream memory);
 
     /**
      * @notice Get a stream and its genesis information from the registry
@@ -162,9 +156,10 @@ interface IStreamRegistry is IStreamRegistryBase {
      * @return bytes32 The genesis miniblock hash
      * @return bytes The genesis miniblock data
      */
-    function getStreamWithGenesis(
-        bytes32 streamId
-    ) external view returns (Stream memory, bytes32, bytes memory);
+    function getStreamWithGenesis(bytes32 streamId)
+        external
+        view
+        returns (Stream memory, bytes32, bytes memory);
 
     /**
      * @notice Get the total number of streams in the registry
@@ -177,9 +172,7 @@ interface IStreamRegistry is IStreamRegistryBase {
      * @param nodeAddress The address of the node to check
      * @return uint256 The number of streams on the node
      */
-    function getStreamCountOnNode(
-        address nodeAddress
-    ) external view returns (uint256);
+    function getStreamCountOnNode(address nodeAddress) external view returns (uint256);
 
     /**
      * @notice Get a paginated list of streams on a specific node
@@ -192,7 +185,10 @@ interface IStreamRegistry is IStreamRegistryBase {
         address nodeAddress,
         uint256 start,
         uint256 stop
-    ) external view returns (StreamWithId[] memory streams);
+    )
+        external
+        view
+        returns (StreamWithId[] memory streams);
     /**
      * @notice Get a paginated list of streams from the registry
      * @dev Recommended range is 5000 streams to avoid gas limits
@@ -204,5 +200,8 @@ interface IStreamRegistry is IStreamRegistryBase {
     function getPaginatedStreams(
         uint256 start,
         uint256 stop
-    ) external view returns (StreamWithId[] memory, bool);
+    )
+        external
+        view
+        returns (StreamWithId[] memory, bool);
 }

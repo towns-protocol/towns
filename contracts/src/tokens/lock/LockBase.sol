@@ -5,13 +5,12 @@ pragma solidity ^0.8.23;
 import {ILockBase} from "./ILock.sol";
 
 // libraries
-import {CustomRevert} from "contracts/src/utils/libraries/CustomRevert.sol";
+
 import {LockStorage} from "./LockStorage.sol";
+import {CustomRevert} from "contracts/src/utils/libraries/CustomRevert.sol";
 
 abstract contract LockBase is ILockBase {
-    function __LockBase_init(
-        uint256 cooldown
-    ) internal {
+    function __LockBase_init(uint256 cooldown) internal {
         _setDefaultCooldown(cooldown);
     }
 
@@ -21,16 +20,12 @@ abstract contract LockBase is ILockBase {
     }
 
     /// @dev Sets the default cooldown for the lock.
-    function _setDefaultCooldown(
-        uint256 cooldown
-    ) internal {
+    function _setDefaultCooldown(uint256 cooldown) internal {
         LockStorage.layout().defaultCooldown = cooldown;
     }
 
     /// @dev Enables the lock for the given account.
-    function _enableLock(
-        address account
-    ) internal {
+    function _enableLock(address account) internal {
         LockStorage.Layout storage ds = LockStorage.layout();
 
         ds.enabledByAddress[account] = true;
@@ -40,9 +35,7 @@ abstract contract LockBase is ILockBase {
     }
 
     /// @dev Disables the lock and starts the cooldown for the given account.
-    function _disableLock(
-        address account
-    ) internal {
+    function _disableLock(address account) internal {
         LockStorage.Layout storage ds = LockStorage.layout();
 
         uint256 expiration = block.timestamp + ds.defaultCooldown;
@@ -53,16 +46,12 @@ abstract contract LockBase is ILockBase {
     }
 
     /// @dev Returns the lock expiration for the given account.
-    function _lockExpiration(
-        address account
-    ) internal view returns (uint256) {
+    function _lockExpiration(address account) internal view returns (uint256) {
         return LockStorage.layout().expirationByAddress[account];
     }
 
     /// @dev Returns whether the lock is active for the given account.
-    function _isLockActive(
-        address account
-    ) internal view returns (bool) {
+    function _isLockActive(address account) internal view returns (bool) {
         LockStorage.Layout storage ds = LockStorage.layout();
 
         if (ds.enabledByAddress[account]) return true;

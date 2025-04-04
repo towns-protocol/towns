@@ -36,9 +36,7 @@ contract MainnetDelegationTest is BaseRegistryTest, IMainnetDelegationBase {
         mainnetDelegationFacet.setDelegationDigest(_randomBytes32());
     }
 
-    function test_fuzz_setDelegationDigest(
-        bytes32 digest
-    ) public {
+    function test_fuzz_setDelegationDigest(bytes32 digest) public {
         vm.prank(address(messenger));
         mainnetDelegationFacet.setDelegationDigest(digest);
     }
@@ -51,7 +49,9 @@ contract MainnetDelegationTest is BaseRegistryTest, IMainnetDelegationBase {
         address claimer,
         uint256 rewardAmount,
         uint256 timeLapse
-    ) public {
+    )
+        public
+    {
         vm.assume(
             claimer != address(0) && claimer != delegator
                 && claimer != address(rewardsDistributionFacet)
@@ -91,7 +91,9 @@ contract MainnetDelegationTest is BaseRegistryTest, IMainnetDelegationBase {
         uint256[32] memory quantities,
         address[32] memory operators,
         uint256[32] memory commissionRates
-    ) public {
+    )
+        public
+    {
         sanitizeAmounts(quantities);
 
         for (uint256 i; i < 32; ++i) {
@@ -129,7 +131,9 @@ contract MainnetDelegationTest is BaseRegistryTest, IMainnetDelegationBase {
         address[] memory claimers,
         uint256[] memory quantities,
         address[] memory operators
-    ) internal {
+    )
+        internal
+    {
         uint256 len = delegators.length;
         DelegationMsg[] memory msgs = new DelegationMsg[](len);
         for (uint256 i; i < len; ++i) {
@@ -156,7 +160,10 @@ contract MainnetDelegationTest is BaseRegistryTest, IMainnetDelegationBase {
         uint96 amount,
         address operator,
         uint256 commissionRate
-    ) internal givenOperator(operator, commissionRate) {
+    )
+        internal
+        givenOperator(operator, commissionRate)
+    {
         vm.assume(delegator != baseRegistry);
         vm.assume(delegator != address(0) && delegator != operator);
         amount = uint96(bound(amount, 1, type(uint96).max - totalStaked));
@@ -182,7 +189,9 @@ contract MainnetDelegationTest is BaseRegistryTest, IMainnetDelegationBase {
         uint256[32] memory quantities,
         address[32] memory operators,
         uint256[32] memory commissionRates
-    ) public {
+    )
+        public
+    {
         test_fuzz_relayDelegations(delegators, claimers, quantities, operators, commissionRates);
 
         address[] memory _delegators = toDyn(delegators);
@@ -213,7 +222,9 @@ contract MainnetDelegationTest is BaseRegistryTest, IMainnetDelegationBase {
         uint256[32] memory quantities,
         address[32] memory operators,
         uint256[32] memory commissionRates
-    ) public {
+    )
+        public
+    {
         test_fuzz_relayDelegations(delegators, claimers, quantities, operators, commissionRates);
 
         relayDelegations(toDyn(delegators), toDyn(claimers), toDyn(quantities), new address[](32));
@@ -236,7 +247,10 @@ contract MainnetDelegationTest is BaseRegistryTest, IMainnetDelegationBase {
         address operator,
         uint96 quantity,
         uint256 commissionRate
-    ) internal view {
+    )
+        internal
+        view
+    {
         Delegation memory delegation = mainnetDelegationFacet.getDelegationByDelegator(delegator);
         assertEq(delegation.operator, operator);
         assertEq(delegation.quantity, quantity);
@@ -270,7 +284,10 @@ contract MainnetDelegationTest is BaseRegistryTest, IMainnetDelegationBase {
         uint256[] memory quantities,
         address[] memory operators,
         uint256[] memory commissionRates
-    ) internal view {
+    )
+        internal
+        view
+    {
         uint256 len = delegators.length;
         uint256[] memory deposits = rewardsDistributionFacet.getDepositsByDepositor(baseRegistry);
         assertEq(deposits.length, len);

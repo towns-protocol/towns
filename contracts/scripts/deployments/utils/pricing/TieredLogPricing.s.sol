@@ -24,9 +24,7 @@ abstract contract TieredLogPricing is Deployer {
         }
     }
 
-    function _setupLocalOracle(
-        address deployer
-    ) internal returns (address) {
+    function _setupLocalOracle(address deployer) internal returns (address) {
         vm.startBroadcast(deployer);
         MockAggregatorV3 oracle =
             new MockAggregatorV3({_decimals: 8, _description: "ETH/USD", _version: 1});

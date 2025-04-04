@@ -7,11 +7,12 @@ pragma solidity ^0.8.19;
 import {Create2Utils} from "contracts/src/utils/Create2Utils.sol";
 
 //contracts
+
+import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
 import {TownsDeployer} from "contracts/src/tokens/towns/base/TownsDeployer.sol";
-import {MockTownsDeployer} from "contracts/test/mocks/MockTownsDeployer.sol";
 import {TownsDeployer} from "contracts/src/tokens/towns/base/TownsDeployer.sol";
-import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
+import {MockTownsDeployer} from "contracts/test/mocks/MockTownsDeployer.sol";
 
 import {Towns} from "contracts/src/tokens/towns/base/Towns.sol";
 import {MockTowns} from "contracts/test/mocks/MockTowns.sol";
@@ -25,9 +26,7 @@ contract DeployTownsBase is Deployer {
         return "utils/towns";
     }
 
-    function __deploy(
-        address deployer
-    ) public override returns (address) {
+    function __deploy(address deployer) public override returns (address) {
         (implSalt, proxySalt) = _getSalts();
 
         address vault = _getVault(deployer);
@@ -44,9 +43,7 @@ contract DeployTownsBase is Deployer {
         return proxy;
     }
 
-    function _implAddress(
-        bytes32 salt
-    ) internal view returns (address impl) {
+    function _implAddress(bytes32 salt) internal view returns (address impl) {
         if (isAnvil()) {
             impl = Create2Utils.computeCreate2Address(salt, type(MockTowns).creationCode);
         } else {
@@ -59,7 +56,11 @@ contract DeployTownsBase is Deployer {
         bytes32 salt,
         address remoteToken,
         address owner
-    ) internal pure returns (address proxy) {
+    )
+        internal
+        pure
+        returns (address proxy)
+    {
         bytes memory byteCode = abi.encodePacked(
             type(ERC1967Proxy).creationCode,
             abi.encode(
@@ -75,9 +76,7 @@ contract DeployTownsBase is Deployer {
         proxySalt = proxy;
     }
 
-    function _getVault(
-        address deployer
-    ) internal view returns (address) {
+    function _getVault(address deployer) internal view returns (address) {
         if (isAnvil()) {
             return deployer;
         } else {

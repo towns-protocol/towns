@@ -33,9 +33,7 @@ interface ITowns is ITownsBase {
     /// @notice Mints the initial supply to the given address
     /// @dev Can only be called by the owner
     /// @dev Can only be called once
-    function mintInitialSupply(
-        address to
-    ) external;
+    function mintInitialSupply(address to) external;
 
     /// @notice Creates new tokens according to the current inflation rate
     /// @dev Can only be called by accounts with ROLE_INFLATION_MANAGER
@@ -54,7 +52,5 @@ interface ITowns is ITownsBase {
     /// @param receiver The new inflation receiver address
     /// @dev Can only be called by accounts with ROLE_INFLATION_MANAGER
     /// @dev receiver cannot be the zero address
-    function setInflationReceiver(
-        address receiver
-    ) external;
+    function setInflationReceiver(address receiver) external;
 }

@@ -27,7 +27,9 @@ contract MockWalletLink is IWalletLinkBase {
         LinkedWallet memory wallet,
         LinkedWallet memory rootWallet,
         uint256
-    ) external {
+    )
+        external
+    {
         MockWalletLinkStorage.Layout storage ds = MockWalletLinkStorage.layout();
 
         //set link in mapping
@@ -35,21 +37,23 @@ contract MockWalletLink is IWalletLinkBase {
         ds.rootKeyByWallet[wallet.addr] = rootWallet.addr;
     }
 
-    function getWalletsByRootKey(
-        address rootKey
-    ) external view returns (address[] memory wallets) {
+    function getWalletsByRootKey(address rootKey)
+        external
+        view
+        returns (address[] memory wallets)
+    {
         return MockWalletLinkStorage.layout().walletsByRootKey[rootKey].values();
     }
 
-    function getWalletsByRootKeyWithDelegations(
-        address rootKey
-    ) external view returns (address[] memory wallets) {
+    function getWalletsByRootKeyWithDelegations(address rootKey)
+        external
+        view
+        returns (address[] memory wallets)
+    {
         return MockWalletLinkStorage.layout().walletsByRootKey[rootKey].values();
     }
 
-    function getRootKeyForWallet(
-        address wallet
-    ) external view returns (address rootKey) {
+    function getRootKeyForWallet(address wallet) external view returns (address rootKey) {
         return MockWalletLinkStorage.layout().rootKeyByWallet[wallet];
     }
 
@@ -57,9 +61,7 @@ contract MockWalletLink is IWalletLinkBase {
         return MockWalletLinkStorage.layout().rootKeyByWallet[wallet] == rootKey;
     }
 
-    function getLatestNonceForRootKey(
-        address
-    ) external pure returns (uint256) {
+    function getLatestNonceForRootKey(address) external pure returns (uint256) {
         return 0;
     }
 }

@@ -12,9 +12,7 @@ import {IPrepayBase} from "contracts/src/spaces/facets/prepay/IPrepay.sol";
 import {MembershipBaseSetup} from "contracts/test/spaces/membership/MembershipBaseSetup.sol";
 
 contract PrepayFacetTest is MembershipBaseSetup, IPrepayBase {
-    modifier givenFounderHasPrepaid(
-        uint256 amount
-    ) {
+    modifier givenFounderHasPrepaid(uint256 amount) {
         uint256 membershipFee = prepayFacet.calculateMembershipPrepayFee(amount);
 
         vm.deal(founder, membershipFee);

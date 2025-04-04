@@ -2,7 +2,7 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {IDropFacetBase, IDropFacet} from "contracts/src/airdrop/drop/IDropFacet.sol";
+import {IDropFacet, IDropFacetBase} from "contracts/src/airdrop/drop/IDropFacet.sol";
 
 // libraries
 import {DropClaimLib} from "contracts/src/airdrop/drop/DropClaimLib.sol";
@@ -26,9 +26,7 @@ contract InteractClaimCondition is IDropFacetBase, Interaction {
         amounts.push(1 ether); // equivalent to 1 token
     }
 
-    function __interact(
-        address deployer
-    ) internal override {
+    function __interact(address deployer) internal override {
         vm.pauseGasMetering();
 
         DeployRiverAirdrop deployRiverAirdrop = new DeployRiverAirdrop();

@@ -143,18 +143,14 @@ interface IRuleEntitlementV2 is IRuleEntitlementBase, IEntitlement {
      * @param data RuleData struct to encode
      * @return Encoded bytes of the RuleData struct
      */
-    function encodeRuleData(
-        RuleDataV2 memory data
-    ) external pure returns (bytes memory);
+    function encodeRuleData(RuleDataV2 memory data) external pure returns (bytes memory);
 
     /**
      * @notice Decodes the RuleDataV2 struct from bytes
      * @param roleId Role ID
      * @return data RuleDataV2 struct
      */
-    function getRuleDataV2(
-        uint256 roleId
-    ) external view returns (RuleDataV2 memory data);
+    function getRuleDataV2(uint256 roleId) external view returns (RuleDataV2 memory data);
 }
 
 interface IRuleEntitlement is IRuleEntitlementBase, IEntitlement {
@@ -167,16 +163,12 @@ interface IRuleEntitlement is IRuleEntitlementBase, IEntitlement {
      * @param data RuleData struct to encode
      * @return Encoded bytes of the RuleData struct
      */
-    function encodeRuleData(
-        RuleData memory data
-    ) external pure returns (bytes memory);
+    function encodeRuleData(RuleData memory data) external pure returns (bytes memory);
 
     /**
      * @notice Decodes the RuleData struct from bytes
      * @param roleId Role ID
      * @return data RuleData struct
      */
-    function getRuleData(
-        uint256 roleId
-    ) external view returns (RuleData memory data);
+    function getRuleData(uint256 roleId) external view returns (RuleData memory data);
 }

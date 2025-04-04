@@ -6,10 +6,11 @@ import {IERC721A} from "contracts/src/diamond/facets/token/ERC721A/IERC721A.sol"
 // libraries
 
 // contracts
+
+import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
+import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
 import {ERC721A} from "contracts/src/diamond/facets/token/ERC721A/ERC721A.sol";
 import {MembershipToken} from "contracts/src/spaces/facets/membership/token/MembershipToken.sol";
-import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
-import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
 
 contract DeployMembershipToken is FacetHelper, Deployer {
     constructor() {
@@ -39,13 +40,15 @@ contract DeployMembershipToken is FacetHelper, Deployer {
     function makeInitData(
         string memory name,
         string memory symbol
-    ) public pure returns (bytes memory) {
+    )
+        public
+        pure
+        returns (bytes memory)
+    {
         return abi.encode(name, symbol);
     }
 
-    function __deploy(
-        address deployer
-    ) public override returns (address) {
+    function __deploy(address deployer) public override returns (address) {
         vm.startBroadcast(deployer);
         MembershipToken facet = new MembershipToken();
         vm.stopBroadcast();

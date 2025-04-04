@@ -6,15 +6,17 @@ import {IMerkleAirdrop} from "./IMerkleAirdrop.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 // libraries
+
+import {MerkleAirdropStorage} from "./MerkleAirdropStorage.sol";
 import {ECDSA} from "solady/utils/ECDSA.sol";
 import {MerkleProofLib} from "solady/utils/MerkleProofLib.sol";
 import {SafeTransferLib} from "solady/utils/SafeTransferLib.sol";
-import {MerkleAirdropStorage} from "./MerkleAirdropStorage.sol";
 
 // contracts
+
+import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
 import {EIP712Base} from "@towns-protocol/diamond/src/utils/cryptography/EIP712Base.sol";
 import {CustomRevert} from "contracts/src/utils/libraries/CustomRevert.sol";
-import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
 
 contract MerkleAirdrop is IMerkleAirdrop, EIP712Base, Facet {
     // keccak256("AirdropClaim(address account,uint256 amount,address receiver)");
@@ -41,7 +43,11 @@ contract MerkleAirdrop is IMerkleAirdrop, EIP712Base, Facet {
         address account,
         uint256 amount,
         address receiver
-    ) public view returns (bytes32) {
+    )
+        public
+        view
+        returns (bytes32)
+    {
         return _hashTypedDataV4(
             keccak256(abi.encode(MESSAGE_TYPEHASH, AirdropClaim(account, amount, receiver)))
         );
@@ -54,7 +60,9 @@ contract MerkleAirdrop is IMerkleAirdrop, EIP712Base, Facet {
         bytes32[] calldata merkleProof,
         bytes calldata signature,
         address receiver
-    ) external {
+    )
+        external
+    {
         MerkleAirdropStorage.Layout storage ds = MerkleAirdropStorage.layout();
 
         if (ds.claimed[account]) {
@@ -90,7 +98,10 @@ contract MerkleAirdrop is IMerkleAirdrop, EIP712Base, Facet {
         address signer,
         bytes32 digest,
         bytes calldata signature
-    ) internal view {
+    )
+        internal
+        view
+    {
         address actualSigner = ECDSA.recoverCalldata(digest, signature);
         if (actualSigner != signer) {
             CustomRevert.revertWith(MerkleAirdrop__InvalidSignature.selector);

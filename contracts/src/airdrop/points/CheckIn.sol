@@ -38,7 +38,11 @@ library CheckIn {
         uint256 lastCheckIn,
         uint256 currentStreak,
         uint256 currentTime
-    ) internal pure returns (uint256 pointsToAward, uint256 streak) {
+    )
+        internal
+        pure
+        returns (uint256 pointsToAward, uint256 streak)
+    {
         // First time checking in
         if (lastCheckIn == 0) {
             return (1 ether, 1); // equivalent to 1 point
@@ -60,15 +64,11 @@ library CheckIn {
         return (pointsToAward, newStreak);
     }
 
-    function getCurrentStreak(
-        address user
-    ) internal view returns (uint256) {
+    function getCurrentStreak(address user) internal view returns (uint256) {
         return layout().checkInsByAddress[user].streak;
     }
 
-    function getLastCheckIn(
-        address user
-    ) internal view returns (uint256) {
+    function getLastCheckIn(address user) internal view returns (uint256) {
         return layout().checkInsByAddress[user].lastCheckIn;
     }
 }

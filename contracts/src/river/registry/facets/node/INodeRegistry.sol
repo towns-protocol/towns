@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import {NodeStatus, Node} from "contracts/src/river/registry/libraries/RegistryStorage.sol";
+import {Node, NodeStatus} from "contracts/src/river/registry/libraries/RegistryStorage.sol";
 
 // libraries
 
@@ -23,22 +23,16 @@ interface INodeRegistry is INodeRegistryBase {
     //                           Nodes
     // =============================================================
 
-    function isNode(
-        address nodeAddress
-    ) external view returns (bool);
+    function isNode(address nodeAddress) external view returns (bool);
     function registerNode(address nodeAddress, string memory url, NodeStatus status) external;
 
-    function removeNode(
-        address nodeAddress
-    ) external;
+    function removeNode(address nodeAddress) external;
 
     function updateNodeStatus(address nodeAddress, NodeStatus status) external;
 
     function updateNodeUrl(address nodeAddress, string memory url) external;
 
-    function getNode(
-        address nodeAddress
-    ) external view returns (Node memory);
+    function getNode(address nodeAddress) external view returns (Node memory);
 
     function getNodeCount() external view returns (uint256);
 

@@ -30,7 +30,10 @@ interface IMerkleAirdrop is IMerkleAirdropBase {
         address account,
         uint256 amount,
         address receiver
-    ) external view returns (bytes32);
+    )
+        external
+        view
+        returns (bytes32);
 
     /// @notice Retrieves the current Merkle root used for verifying claims
     /// @return The current Merkle root
@@ -51,5 +54,6 @@ interface IMerkleAirdrop is IMerkleAirdropBase {
         bytes32[] calldata merkleProof,
         bytes calldata signature,
         address receiver
-    ) external;
+    )
+        external;
 }

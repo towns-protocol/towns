@@ -2,19 +2,22 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
 import {ITokenMigration} from "./ITokenMigration.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 // libraries
-import {SafeTransferLib} from "solady/utils/SafeTransferLib.sol";
-import {CustomRevert} from "contracts/src/utils/libraries/CustomRevert.sol";
+
 import {TokenMigrationStorage} from "./TokenMigrationStorage.sol";
 import {Validator} from "contracts/src/utils/Validator.sol";
+import {CustomRevert} from "contracts/src/utils/libraries/CustomRevert.sol";
+import {SafeTransferLib} from "solady/utils/SafeTransferLib.sol";
 
 // contracts
-import {PausableBase} from "@towns-protocol/diamond/src/facets/pausable/PausableBase.sol";
-import {OwnableBase} from "@towns-protocol/diamond/src/facets/ownable/OwnableBase.sol";
+
 import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
+import {OwnableBase} from "@towns-protocol/diamond/src/facets/ownable/OwnableBase.sol";
+import {PausableBase} from "@towns-protocol/diamond/src/facets/pausable/PausableBase.sol";
 
 contract TokenMigrationFacet is OwnableBase, PausableBase, Facet, ITokenMigration {
     using SafeTransferLib for address;
@@ -22,7 +25,10 @@ contract TokenMigrationFacet is OwnableBase, PausableBase, Facet, ITokenMigratio
     function __TokenMigrationFacet_init(
         IERC20 oldToken,
         IERC20 newToken
-    ) external onlyInitializing {
+    )
+        external
+        onlyInitializing
+    {
         _validateTokens(oldToken, newToken);
 
         TokenMigrationStorage.Layout storage ds = TokenMigrationStorage.layout();
@@ -31,9 +37,7 @@ contract TokenMigrationFacet is OwnableBase, PausableBase, Facet, ITokenMigratio
     }
 
     /// @inheritdoc ITokenMigration
-    function migrate(
-        address account
-    ) external whenNotPaused {
+    function migrate(address account) external whenNotPaused {
         Validator.checkAddress(account);
 
         TokenMigrationStorage.Layout storage ds = TokenMigrationStorage.layout();

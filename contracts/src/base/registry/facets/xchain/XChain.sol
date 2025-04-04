@@ -8,12 +8,14 @@ import {IEntitlementGated} from "contracts/src/spaces/facets/gated/IEntitlementG
 // libraries
 import {XChainLib} from "./XChainLib.sol";
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-import {CustomRevert} from "contracts/src/utils/libraries/CustomRevert.sol";
+
 import {CurrencyTransfer} from "contracts/src/utils/libraries/CurrencyTransfer.sol";
+import {CustomRevert} from "contracts/src/utils/libraries/CustomRevert.sol";
 
 // contracts
-import {EntitlementGated} from "contracts/src/spaces/facets/gated/EntitlementGated.sol";
+
 import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
+import {EntitlementGated} from "contracts/src/spaces/facets/gated/EntitlementGated.sol";
 import {ReentrancyGuard} from "solady/utils/ReentrancyGuard.sol";
 
 contract XChain is IXChain, ReentrancyGuard, Facet {
@@ -29,7 +31,11 @@ contract XChain is IXChain, ReentrancyGuard, Facet {
     function isCheckCompleted(
         bytes32 transactionId,
         uint256 requestId
-    ) external view returns (bool) {
+    )
+        external
+        view
+        returns (bool)
+    {
         return XChainLib.layout().checks[transactionId].voteCompleted[requestId];
     }
 
@@ -77,7 +83,10 @@ contract XChain is IXChain, ReentrancyGuard, Facet {
         bytes32 transactionId,
         uint256 requestId,
         NodeVoteStatus result
-    ) external nonReentrant {
+    )
+        external
+        nonReentrant
+    {
         XChainLib.Request storage request = XChainLib.layout().requests[transactionId];
 
         if (request.completed) {
@@ -150,9 +159,7 @@ contract XChain is IXChain, ReentrancyGuard, Facet {
     /*                           Internal                         */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    function _checkAllRequestsCompleted(
-        bytes32 transactionId
-    ) internal view returns (bool) {
+    function _checkAllRequestsCompleted(bytes32 transactionId) internal view returns (bool) {
         XChainLib.Check storage check = XChainLib.layout().checks[transactionId];
 
         uint256 requestIdsLength = check.requestIds.length();

@@ -5,10 +5,11 @@ pragma solidity ^0.8.23;
 import {IAuthorizedClaimersBase} from "contracts/src/tokens/mainnet/claimer/IAuthorizedClaimers.sol";
 
 //contracts
-import {TestUtils} from "contracts/test/utils/TestUtils.sol";
-import {AuthorizedClaimers} from "contracts/src/tokens/mainnet/claimer/AuthorizedClaimers.sol";
+
 import {DeployAuthorizedClaimers} from
     "contracts/scripts/deployments/utils/DeployAuthorizedClaimers.s.sol";
+import {AuthorizedClaimers} from "contracts/src/tokens/mainnet/claimer/AuthorizedClaimers.sol";
+import {TestUtils} from "contracts/test/utils/TestUtils.sol";
 
 contract AuthorizedClaimersTest is TestUtils, IAuthorizedClaimersBase {
     DeployAuthorizedClaimers internal deployAuthorizedClaimers = new DeployAuthorizedClaimers();
@@ -53,9 +54,7 @@ contract AuthorizedClaimersTest is TestUtils, IAuthorizedClaimersBase {
         test_fuzz_removeAuthorizedClaimer(address(1));
     }
 
-    function test_fuzz_removeAuthorizedClaimer(
-        address claimer
-    ) public {
+    function test_fuzz_removeAuthorizedClaimer(address claimer) public {
         authorizedClaimers.authorizeClaimer(claimer);
         authorizedClaimers.removeAuthorizedClaimer();
         assertEq(
@@ -74,9 +73,7 @@ contract AuthorizedClaimersTest is TestUtils, IAuthorizedClaimersBase {
         );
     }
 
-    function test_fuzz_getAuthorizedClaimer_notAuthorized(
-        address signer
-    ) public view {
+    function test_fuzz_getAuthorizedClaimer_notAuthorized(address signer) public view {
         assertEq(
             authorizedClaimers.getAuthorizedClaimer(signer),
             address(0),
@@ -84,9 +81,7 @@ contract AuthorizedClaimersTest is TestUtils, IAuthorizedClaimersBase {
         );
     }
 
-    function test_fuzz_authorizeClaimer_alreadyAuthorized(
-        address claimer
-    ) public {
+    function test_fuzz_authorizeClaimer_alreadyAuthorized(address claimer) public {
         vm.assume(claimer != address(0));
         authorizedClaimers.authorizeClaimer(claimer);
 
@@ -127,7 +122,11 @@ contract AuthorizedClaimersTest is TestUtils, IAuthorizedClaimersBase {
         address signer,
         address claimer,
         uint256 expiry
-    ) internal view returns (uint8 v, bytes32 r, bytes32 s) {
+    )
+        internal
+        view
+        returns (uint8 v, bytes32 r, bytes32 s)
+    {
         bytes32 domainSeparator = authorizedClaimers.DOMAIN_SEPARATOR();
         uint256 nonce = authorizedClaimers.nonces(signer);
 

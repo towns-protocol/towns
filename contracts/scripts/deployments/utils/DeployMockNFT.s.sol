@@ -37,9 +37,7 @@ contract DeployMockNFT is DiamondHelper, Deployer {
         return "utils/mockNFT";
     }
 
-    function diamondInitParams(
-        address deployer
-    ) internal returns (Diamond.InitParams memory) {
+    function diamondInitParams(address deployer) internal returns (Diamond.InitParams memory) {
         address multiInit = multiInitHelper.deploy(deployer);
         diamondCut = diamondCutHelper.deploy(deployer);
         diamondLoupe = loupeHelper.deploy(deployer);
@@ -70,9 +68,7 @@ contract DeployMockNFT is DiamondHelper, Deployer {
         });
     }
 
-    function __deploy(
-        address deployer
-    ) public override returns (address) {
+    function __deploy(address deployer) public override returns (address) {
         Diamond.InitParams memory initDiamondCut = diamondInitParams(deployer);
         vm.broadcast(deployer);
         Diamond diamond = new Diamond(initDiamondCut);

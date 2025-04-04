@@ -4,11 +4,12 @@ pragma solidity ^0.8.23;
 // utils
 
 //interfaces
-import {IRoles} from "contracts/src/spaces/facets/roles/IRoles.sol";
+
+import {IEntitlementBase} from "contracts/src/spaces/entitlements/IEntitlement.sol";
 import {IChannel, IChannelBase} from "contracts/src/spaces/facets/channels/IChannel.sol";
 import {IEntitlementsManager} from
     "contracts/src/spaces/facets/entitlements/IEntitlementsManager.sol";
-import {IEntitlementBase} from "contracts/src/spaces/entitlements/IEntitlement.sol";
+import {IRoles} from "contracts/src/spaces/facets/roles/IRoles.sol";
 
 //libraries
 import {Permissions} from "contracts/src/spaces/facets/Permissions.sol";
@@ -19,9 +20,9 @@ import {BaseSetup} from "contracts/test/spaces/BaseSetup.sol";
 // solhint-disable-next-line max-line-length
 import {
     ChannelService__ChannelAlreadyExists,
+    ChannelService__ChannelDoesNotExist,
     ChannelService__RoleAlreadyExists,
-    ChannelService__RoleDoesNotExist,
-    ChannelService__ChannelDoesNotExist
+    ChannelService__RoleDoesNotExist
 } from "contracts/src/spaces/facets/channels/ChannelService.sol";
 
 contract ChannelsTest is BaseSetup, IEntitlementBase {
@@ -234,9 +235,7 @@ contract ChannelsTest is BaseSetup, IEntitlementBase {
         assertEq(_channel.disabled, false);
     }
 
-    function test_updateChannel_disable_channel(
-        string memory channelMetadata
-    ) public {
+    function test_updateChannel_disable_channel(string memory channelMetadata) public {
         bound(bytes(channelMetadata).length, 3, 1000);
 
         bytes32 channelId = "fooChannel";
@@ -250,9 +249,7 @@ contract ChannelsTest is BaseSetup, IEntitlementBase {
         assertTrue(_channel.disabled);
     }
 
-    function test_removeChannel(
-        string memory channelMetadata
-    ) public {
+    function test_removeChannel(string memory channelMetadata) public {
         bound(bytes(channelMetadata).length, 3, 1000);
 
         bytes32 channelId = "fooChannel";
@@ -285,7 +282,9 @@ contract ChannelsTest is BaseSetup, IEntitlementBase {
     function test_addRoleToChannel_existing_role(
         string memory channelMetadata,
         uint256 roleId
-    ) public {
+    )
+        public
+    {
         bound(bytes(channelMetadata).length, 3, 1000);
 
         bytes32 channelId = "my-cool-channel";
@@ -316,9 +315,7 @@ contract ChannelsTest is BaseSetup, IEntitlementBase {
         assertEq(_channel.roleIds.length, 0);
     }
 
-    function test_removeRoleFromChannel_nonexistent_role(
-        string memory channelMetadata
-    ) public {
+    function test_removeRoleFromChannel_nonexistent_role(string memory channelMetadata) public {
         bound(bytes(channelMetadata).length, 3, 1000);
 
         bytes32 channelId = "my-cool-channel";
@@ -338,9 +335,7 @@ contract ChannelsTest is BaseSetup, IEntitlementBase {
     //                           Reverts
     // =============================================================
 
-    function test_createChannel_reverts_when_not_allowed(
-        string memory channelMetadata
-    ) public {
+    function test_createChannel_reverts_when_not_allowed(string memory channelMetadata) public {
         bound(bytes(channelMetadata).length, 3, 1000);
 
         bytes32 channelId = "my-cool-channel";
@@ -351,9 +346,7 @@ contract ChannelsTest is BaseSetup, IEntitlementBase {
         IChannel(everyoneSpace).createChannel(channelId, channelMetadata, new uint256[](0));
     }
 
-    function test_createChannel_reverts_when_channel_exists(
-        string memory channelMetadata
-    ) public {
+    function test_createChannel_reverts_when_channel_exists(string memory channelMetadata) public {
         bound(bytes(channelMetadata).length, 3, 1000);
 
         bytes32 channelId = "my-cool-channel";

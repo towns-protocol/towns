@@ -41,7 +41,9 @@ library TippingBase {
         uint256 tokenId,
         address currency,
         uint256 amount
-    ) internal {
+    )
+        internal
+    {
         Layout storage ds = layout();
 
         ds.currencies.add(currency);
@@ -54,22 +56,22 @@ library TippingBase {
         CurrencyTransfer.transferCurrency(currency, sender, receiver, amount);
     }
 
-    function totalTipsByCurrency(
-        address currency
-    ) internal view returns (uint256) {
+    function totalTipsByCurrency(address currency) internal view returns (uint256) {
         return layout().tippingStatsByCurrency[currency].totalTips;
     }
 
-    function tipAmountByCurrency(
-        address currency
-    ) internal view returns (uint256) {
+    function tipAmountByCurrency(address currency) internal view returns (uint256) {
         return layout().tippingStatsByCurrency[currency].tipAmount;
     }
 
     function tipsByCurrencyByTokenId(
         uint256 tokenId,
         address currency
-    ) internal view returns (uint256) {
+    )
+        internal
+        view
+        returns (uint256)
+    {
         return layout().tipsByCurrencyByTokenId[tokenId][currency];
     }
 

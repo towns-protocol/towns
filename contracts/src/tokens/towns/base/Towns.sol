@@ -2,31 +2,35 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
+
+import {IVotes} from "@openzeppelin/contracts/governance/utils/IVotes.sol";
+import {IERC6372} from "@openzeppelin/contracts/interfaces/IERC6372.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import {IERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol";
-import {IERC6372} from "@openzeppelin/contracts/interfaces/IERC6372.sol";
-import {IVotes} from "@openzeppelin/contracts/governance/utils/IVotes.sol";
+import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
+
+import {IERC7802} from "contracts/src/tokens/towns/base/IERC7802.sol";
 import {
-    IOptimismMintableERC20,
-    ILegacyMintableERC20
+    ILegacyMintableERC20,
+    IOptimismMintableERC20
 } from "contracts/src/tokens/towns/base/IOptimismMintableERC20.sol";
 import {ISemver} from "contracts/src/tokens/towns/base/ISemver.sol";
-import {IERC7802} from "contracts/src/tokens/towns/base/IERC7802.sol";
 
 // libraries
-import {CustomRevert} from "contracts/src/utils/libraries/CustomRevert.sol";
+
 import {TownsLib} from "./TownsLib.sol";
+import {CustomRevert} from "contracts/src/utils/libraries/CustomRevert.sol";
 
 // contracts
 import {IntrospectionBase} from
     "@towns-protocol/diamond/src/facets/introspection/IntrospectionBase.sol";
+
+import {LockBase} from "contracts/src/tokens/lock/LockBase.sol";
 import {Ownable} from "solady/auth/Ownable.sol";
+import {ERC20Votes} from "solady/tokens/ERC20Votes.sol";
 import {Initializable} from "solady/utils/Initializable.sol";
 import {UUPSUpgradeable} from "solady/utils/UUPSUpgradeable.sol";
-import {ERC20Votes} from "solady/tokens/ERC20Votes.sol";
-import {LockBase} from "contracts/src/tokens/lock/LockBase.sol";
 
 contract Towns is
     IOptimismMintableERC20,
@@ -169,9 +173,7 @@ contract Towns is
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @inheritdoc IERC165
-    function supportsInterface(
-        bytes4 interfaceId
-    ) public view virtual override returns (bool) {
+    function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
         return _supportsInterface(interfaceId);
     }
 
@@ -179,15 +181,11 @@ contract Towns is
     /*                           Lock                               */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    function isLockActive(
-        address account
-    ) external view virtual returns (bool) {
+    function isLockActive(address account) external view virtual returns (bool) {
         return _isLockActive(account);
     }
 
-    function lockExpiration(
-        address account
-    ) external view virtual returns (uint256) {
+    function lockExpiration(address account) external view virtual returns (uint256) {
         return _lockExpiration(account);
     }
 
@@ -213,7 +211,11 @@ contract Towns is
     function mint(
         address to,
         uint256 amount
-    ) external override(IOptimismMintableERC20) onlyL2StandardBridge {
+    )
+        external
+        override(IOptimismMintableERC20)
+        onlyL2StandardBridge
+    {
         _mint(to, amount);
     }
 
@@ -223,7 +225,11 @@ contract Towns is
     function burn(
         address from,
         uint256 amount
-    ) external override(IOptimismMintableERC20) onlyL2StandardBridge {
+    )
+        external
+        override(IOptimismMintableERC20)
+        onlyL2StandardBridge
+    {
         _burn(from, amount);
     }
 
@@ -285,7 +291,5 @@ contract Towns is
     }
 
     /// @notice Override the default upgrade check to only allow the owner.
-    function _authorizeUpgrade(
-        address newImplementation
-    ) internal override onlyOwner {}
+    function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
 }

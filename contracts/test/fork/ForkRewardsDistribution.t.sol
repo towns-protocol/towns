@@ -2,37 +2,43 @@
 pragma solidity ^0.8.19;
 
 // utils
-import {DeployBase} from "contracts/scripts/common/DeployBase.s.sol";
-import {TestUtils} from "../utils/TestUtils.sol";
+
 import {RewardsVerifier} from "../base/registry/RewardsVerifier.t.sol";
+import {TestUtils} from "../utils/TestUtils.sol";
+import {DeployBase} from "contracts/scripts/common/DeployBase.s.sol";
+
 import {DeployRewardsDistributionV2} from
     "contracts/scripts/deployments/facets/DeployRewardsDistributionV2.s.sol";
 
 //interfaces
+
+import {IDiamond} from "@towns-protocol/diamond/src/Diamond.sol";
 import {IDiamondCut} from "@towns-protocol/diamond/src/facets/cut/IDiamondCut.sol";
 import {IDiamondLoupe} from "@towns-protocol/diamond/src/facets/loupe/IDiamondLoupe.sol";
-import {IDiamond} from "@towns-protocol/diamond/src/Diamond.sol";
 import {IERC173} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
-import {INodeOperator} from "contracts/src/base/registry/facets/operator/INodeOperator.sol";
-import {
-    IMainnetDelegationBase,
-    IMainnetDelegation
-} from "contracts/src/base/registry/facets/mainnet/IMainnetDelegation.sol";
+
 import {ICrossDomainMessenger} from
     "contracts/src/base/registry/facets/mainnet/ICrossDomainMessenger.sol";
+import {
+    IMainnetDelegation,
+    IMainnetDelegationBase
+} from "contracts/src/base/registry/facets/mainnet/IMainnetDelegation.sol";
+import {INodeOperator} from "contracts/src/base/registry/facets/operator/INodeOperator.sol";
 
 //libraries
-import {FixedPointMathLib} from "solady/utils/FixedPointMathLib.sol";
+
 import {StakingRewards} from "contracts/src/base/registry/facets/distribution/v2/StakingRewards.sol";
+import {FixedPointMathLib} from "solady/utils/FixedPointMathLib.sol";
 
 //contracts
-import {MainnetDelegation} from "contracts/src/base/registry/facets/mainnet/MainnetDelegation.sol";
-import {MockMessenger} from "contracts/test/mocks/MockMessenger.sol";
-import {NodeOperatorStatus} from
-    "contracts/src/base/registry/facets/operator/NodeOperatorStorage.sol";
+
 import {RewardsDistribution} from
     "contracts/src/base/registry/facets/distribution/v2/RewardsDistribution.sol";
+import {MainnetDelegation} from "contracts/src/base/registry/facets/mainnet/MainnetDelegation.sol";
+import {NodeOperatorStatus} from
+    "contracts/src/base/registry/facets/operator/NodeOperatorStorage.sol";
 import {Towns} from "contracts/src/tokens/towns/base/Towns.sol";
+import {MockMessenger} from "contracts/test/mocks/MockMessenger.sol";
 
 // deployers
 import {SpaceDelegationFacet} from
@@ -77,7 +83,10 @@ contract ForkRewardsDistributionTest is
         uint96 amount,
         address beneficiary,
         uint256 seed
-    ) public returns (uint256 depositId) {
+    )
+        public
+        returns (uint256 depositId)
+    {
         address operator = randomOperator(seed);
         vm.assume(depositor != address(rewardsDistributionFacet));
         vm.assume(beneficiary != address(0) && beneficiary != operator);
@@ -94,7 +103,9 @@ contract ForkRewardsDistributionTest is
         address delegator,
         uint96 amount,
         uint256 seed
-    ) public {
+    )
+        public
+    {
         address operator = randomOperator(seed);
         amount = uint96(bound(amount, 1, type(uint96).max / 2));
         vm.assume(delegator != address(rewardsDistributionFacet));
@@ -116,7 +127,9 @@ contract ForkRewardsDistributionTest is
         uint96 amount1,
         address beneficiary,
         uint256 seed
-    ) public {
+    )
+        public
+    {
         address operator = randomOperator(seed);
         vm.assume(beneficiary != address(0) && beneficiary != operator);
         amount0 = uint96(bound(amount0, 1, type(uint96).max));
@@ -185,7 +198,10 @@ contract ForkRewardsDistributionTest is
         uint96 amount,
         address beneficiary,
         uint256 seed
-    ) public returns (uint256 depositId) {
+    )
+        public
+        returns (uint256 depositId)
+    {
         address operator = randomOperator(seed);
         vm.assume(beneficiary != address(0) && beneficiary != operator);
 
@@ -204,7 +220,10 @@ contract ForkRewardsDistributionTest is
         uint96 amount,
         address beneficiary,
         uint256 seed
-    ) public returns (uint256 depositId) {
+    )
+        public
+        returns (uint256 depositId)
+    {
         address operator = randomOperator(seed);
         depositId = test_fuzz_initiateWithdraw(amount, beneficiary, seed);
 
@@ -222,9 +241,7 @@ contract ForkRewardsDistributionTest is
     }
 
     /// forge-config: default.fuzz.runs = 64
-    function test_fuzz_notifyRewardAmount(
-        uint256 reward
-    ) public {
+    function test_fuzz_notifyRewardAmount(uint256 reward) public {
         reward = bound(reward, rewardDuration, 1e27);
         deal(address(towns), address(rewardsDistributionFacet), reward, true);
 
@@ -254,7 +271,9 @@ contract ForkRewardsDistributionTest is
         uint256 timeLapse,
         uint256 seed0,
         uint256 seed1
-    ) public {
+    )
+        public
+    {
         address operator0 = randomOperator(seed0);
         address operator1 = randomOperator(seed1);
         vm.assume(depositor != address(this) && depositor != address(rewardsDistributionFacet));
@@ -291,7 +310,9 @@ contract ForkRewardsDistributionTest is
         uint256 timeLapse,
         uint256 seed0,
         uint256 seed1
-    ) public {
+    )
+        public
+    {
         address operator0 = randomOperator(seed0);
         address operator1 = randomOperator(seed1);
         vm.assume(
@@ -341,7 +362,9 @@ contract ForkRewardsDistributionTest is
         uint256 rewardAmount,
         uint256 timeLapse,
         uint256 seed
-    ) public {
+    )
+        public
+    {
         address operator = randomOperator(seed);
         timeLapse = bound(timeLapse, 0, rewardDuration);
         amount = uint96(bound(amount, 1 ether, type(uint96).max));
@@ -408,15 +431,11 @@ contract ForkRewardsDistributionTest is
         }
     }
 
-    function randomOperator(
-        uint256 seed
-    ) internal view returns (address) {
+    function randomOperator(uint256 seed) internal view returns (address) {
         return activeOperators[seed % activeOperators.length];
     }
 
-    function getCommissionRate(
-        address operator
-    ) internal view returns (uint256) {
+    function getCommissionRate(address operator) internal view returns (uint256) {
         return INodeOperator(baseRegistry).getCommissionRate(operator);
     }
 
@@ -425,7 +444,10 @@ contract ForkRewardsDistributionTest is
         uint96 amount,
         address beneficiary,
         address operator
-    ) internal returns (uint256 depositId) {
+    )
+        internal
+        returns (uint256 depositId)
+    {
         vm.assume(depositor != address(0));
         vm.assume(beneficiary != address(0));
         vm.assume(amount > 0);
@@ -470,14 +492,20 @@ contract MockMainnetDelegation is MainnetDelegation {
         address delegator,
         address operator,
         uint256 quantity
-    ) external onlyCrossDomainMessenger {
+    )
+        external
+        onlyCrossDomainMessenger
+    {
         _setDelegation(delegator, operator, quantity);
     }
 
     function setAuthorizedClaimer(
         address owner,
         address claimer
-    ) external onlyCrossDomainMessenger {
+    )
+        external
+        onlyCrossDomainMessenger
+    {
         _setAuthorizedClaimer(owner, claimer);
     }
 }

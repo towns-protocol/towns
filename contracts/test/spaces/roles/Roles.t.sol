@@ -2,31 +2,33 @@
 pragma solidity ^0.8.23;
 
 //interfaces
-import {IRoles} from "contracts/src/spaces/facets/roles/IRoles.sol";
+
+import {IEntitlement} from "contracts/src/spaces/entitlements/IEntitlement.sol";
 import {IChannel} from "contracts/src/spaces/facets/channels/IChannel.sol";
 import {IEntitlementsManager} from
     "contracts/src/spaces/facets/entitlements/IEntitlementsManager.sol";
-import {IEntitlement} from "contracts/src/spaces/entitlements/IEntitlement.sol";
+import {IRoles} from "contracts/src/spaces/facets/roles/IRoles.sol";
 
 // libraries
 
 import {Permissions} from "contracts/src/spaces/facets/Permissions.sol";
 
 // contracts
-import {RolesBaseSetup} from "contracts/test/spaces/roles/RolesBaseSetup.sol";
+
 import {Roles} from "contracts/src/spaces/facets/roles/Roles.sol";
+import {RolesBaseSetup} from "contracts/test/spaces/roles/RolesBaseSetup.sol";
 
 // errors
 // solhint-disable-next-line max-line-length
 import {
-    EntitlementsService__InvalidEntitlementInterface,
+    EntitlementsService__EntitlementDoesNotExist,
     EntitlementsService__InvalidEntitlementAddress,
-    EntitlementsService__EntitlementDoesNotExist
+    EntitlementsService__InvalidEntitlementInterface
 } from "contracts/src/spaces/facets/entitlements/EntitlementsManagerService.sol";
 // solhint-disable-next-line max-line-length
 import {
-    Validator__InvalidStringLength,
-    Validator__InvalidByteLength
+    Validator__InvalidByteLength,
+    Validator__InvalidStringLength
 } from "contracts/src/utils/Validator.sol";
 // solhint-disable-next-line max-line-length
 
@@ -34,9 +36,7 @@ import {
 import {MockUserEntitlement} from "contracts/test/mocks/MockUserEntitlement.sol";
 
 contract RolesTest is RolesBaseSetup {
-    function test_createRole_only(
-        string memory roleName
-    ) external {
+    function test_createRole_only(string memory roleName) external {
         vm.assume(bytes(roleName).length > 2);
 
         address[] memory data = _createAccounts(4);
@@ -93,7 +93,9 @@ contract RolesTest is RolesBaseSetup {
     function test_createRole_with_permissions(
         string memory roleName,
         string memory permission
-    ) external {
+    )
+        external
+    {
         vm.assume(bytes(roleName).length > 2);
         vm.assume(bytes(permission).length > 2);
 
@@ -111,9 +113,7 @@ contract RolesTest is RolesBaseSetup {
         assertEq(roleData.entitlements.length, 0);
     }
 
-    function test_createRole_revert_when_invalid_permission(
-        string memory roleName
-    ) external {
+    function test_createRole_revert_when_invalid_permission(string memory roleName) external {
         vm.assume(bytes(roleName).length > 2);
 
         string[] memory permissions = new string[](1);
@@ -124,9 +124,7 @@ contract RolesTest is RolesBaseSetup {
         roles.createRole(roleName, permissions, new IRoles.CreateEntitlement[](0));
     }
 
-    function test_createRole_revert_when_not_entitled(
-        string memory roleName
-    ) external {
+    function test_createRole_revert_when_not_entitled(string memory roleName) external {
         vm.assume(bytes(roleName).length > 2);
 
         address nonEntitled = _randomAddress();
@@ -142,9 +140,9 @@ contract RolesTest is RolesBaseSetup {
         roles.createRole("", new string[](0), new IRoles.CreateEntitlement[](0));
     }
 
-    function test_createRole_revert_when_invalid_entitlement_address(
-        string memory roleName
-    ) external {
+    function test_createRole_revert_when_invalid_entitlement_address(string memory roleName)
+        external
+    {
         vm.assume(bytes(roleName).length > 2);
         vm.prank(founder);
         vm.expectRevert(EntitlementsService__InvalidEntitlementAddress.selector);
@@ -154,7 +152,9 @@ contract RolesTest is RolesBaseSetup {
     function test_createRole_revert_when_entitlement_does_not_exist(
         string memory roleName,
         bytes memory data
-    ) external {
+    )
+        external
+    {
         vm.assume(bytes(roleName).length > 2);
         vm.assume(data.length > 2);
 
@@ -170,7 +170,9 @@ contract RolesTest is RolesBaseSetup {
     function test_createRole_revert_when_entitlement_data_empty(
         string memory roleName,
         string memory permission
-    ) external {
+    )
+        external
+    {
         vm.assume(bytes(roleName).length > 2);
         vm.assume(bytes(permission).length > 2);
 
@@ -218,9 +220,7 @@ contract RolesTest is RolesBaseSetup {
     //                           Get Role
     // =============================================================
 
-    function test_getRoleById(
-        string memory roleName
-    ) external {
+    function test_getRoleById(string memory roleName) external {
         vm.assume(bytes(roleName).length > 2);
 
         vm.prank(founder);
@@ -299,7 +299,9 @@ contract RolesTest is RolesBaseSetup {
     function test_updateRole_only_permissions(
         string memory roleName,
         string memory newRoleName
-    ) external {
+    )
+        external
+    {
         vm.assume(bytes(roleName).length > 2);
         vm.assume(bytes(newRoleName).length > 2);
 
@@ -330,9 +332,7 @@ contract RolesTest is RolesBaseSetup {
         assertEq(roleData.entitlements.length, 0);
     }
 
-    function test_updateRole_revert_when_invalid_role(
-        string memory roleName
-    ) external {
+    function test_updateRole_revert_when_invalid_role(string memory roleName) external {
         vm.assume(bytes(roleName).length > 2);
 
         vm.prank(founder);
@@ -340,9 +340,7 @@ contract RolesTest is RolesBaseSetup {
         roles.updateRole(0, roleName, new string[](0), new IRoles.CreateEntitlement[](0));
     }
 
-    function test_updateRole_revert_when_invalid_permissions(
-        string memory roleName
-    ) external {
+    function test_updateRole_revert_when_invalid_permissions(string memory roleName) external {
         vm.assume(bytes(roleName).length > 2);
 
         vm.prank(founder);
@@ -354,9 +352,9 @@ contract RolesTest is RolesBaseSetup {
         roles.updateRole(roleId, roleName, new string[](3), new IRoles.CreateEntitlement[](0));
     }
 
-    function test_updateRole_revert_when_invalid_entitlement_address(
-        string memory roleName
-    ) external {
+    function test_updateRole_revert_when_invalid_entitlement_address(string memory roleName)
+        external
+    {
         vm.assume(bytes(roleName).length > 2);
 
         vm.prank(founder);
@@ -368,9 +366,9 @@ contract RolesTest is RolesBaseSetup {
         roles.updateRole(roleId, roleName, new string[](0), new IRoles.CreateEntitlement[](1));
     }
 
-    function test_updateRole_revert_when_invalid_entitlement_interface(
-        string memory roleName
-    ) external {
+    function test_updateRole_revert_when_invalid_entitlement_interface(string memory roleName)
+        external
+    {
         vm.assume(bytes(roleName).length > 2);
 
         vm.prank(founder);
@@ -392,9 +390,7 @@ contract RolesTest is RolesBaseSetup {
     //                           Delete Role
     // =============================================================
 
-    function test_removeRole(
-        string memory roleName
-    ) external {
+    function test_removeRole(string memory roleName) external {
         vm.assume(bytes(roleName).length > 2);
 
         vm.prank(founder);
@@ -474,9 +470,7 @@ contract RolesTest is RolesBaseSetup {
         roles.getRoleById(roleId);
     }
 
-    function test_removeRole_with_entitlements(
-        string memory roleName
-    ) external {
+    function test_removeRole_with_entitlements(string memory roleName) external {
         vm.assume(bytes(roleName).length > 2);
 
         vm.prank(founder);
@@ -517,9 +511,7 @@ contract RolesTest is RolesBaseSetup {
     //                      Add Permissions
     // =============================================================
 
-    function test_addPermissionsToRole(
-        string memory roleName
-    ) external {
+    function test_addPermissionsToRole(string memory roleName) external {
         vm.assume(bytes(roleName).length > 2);
 
         string[] memory permissions = new string[](1);
@@ -543,9 +535,9 @@ contract RolesTest is RolesBaseSetup {
         assertEq(roleData.permissions[1], Permissions.Read);
     }
 
-    function test_addPermissionsToRole_revert_when_duplicate_permissions(
-        string memory permission
-    ) external {
+    function test_addPermissionsToRole_revert_when_duplicate_permissions(string memory permission)
+        external
+    {
         vm.assume(bytes(permission).length > 2);
 
         string[] memory permissions = new string[](1);
@@ -564,7 +556,9 @@ contract RolesTest is RolesBaseSetup {
     function test_addPermissionsToRole_revert_when_invalid_role(
         string memory permission,
         string memory permission2
-    ) external {
+    )
+        external
+    {
         vm.assume(bytes(permission).length > 2);
         vm.assume(bytes(permission2).length > 2);
 
@@ -581,9 +575,7 @@ contract RolesTest is RolesBaseSetup {
     //                      Remove Permissions
     // =============================================================
 
-    function test_removePermissionsFromRole(
-        string memory roleName
-    ) external {
+    function test_removePermissionsFromRole(string memory roleName) external {
         vm.assume(bytes(roleName).length > 2);
 
         string[] memory permissions = new string[](2);
@@ -604,9 +596,9 @@ contract RolesTest is RolesBaseSetup {
         assertEq(roleData.permissions.length, 0);
     }
 
-    function test_removePermissionsFromRole_revert_when_invalid_permission(
-        string memory permission
-    ) external {
+    function test_removePermissionsFromRole_revert_when_invalid_permission(string memory permission)
+        external
+    {
         vm.assume(bytes(permission).length > 2);
 
         string[] memory permissions = new string[](1);
@@ -624,9 +616,9 @@ contract RolesTest is RolesBaseSetup {
         roles.removePermissionsFromRole(roleId, permissions);
     }
 
-    function test_removePermissionsFromRole_revert_when_invalid_role(
-        string memory permission
-    ) external {
+    function test_removePermissionsFromRole_revert_when_invalid_role(string memory permission)
+        external
+    {
         vm.assume(bytes(permission).length > 2);
 
         string[] memory permissions = new string[](1);
@@ -641,9 +633,7 @@ contract RolesTest is RolesBaseSetup {
     //                      Add Entitlements
     // =============================================================
 
-    function test_addRoleToEntitlement(
-        string memory roleName
-    ) external {
+    function test_addRoleToEntitlement(string memory roleName) external {
         vm.assume(bytes(roleName).length > 2);
 
         vm.prank(founder);
@@ -704,7 +694,9 @@ contract RolesTest is RolesBaseSetup {
 
     function test_addRoleToEntitlement_revert_when_entitlement_already_exists_in_role(
         string memory roleName
-    ) external {
+    )
+        external
+    {
         vm.assume(bytes(roleName).length > 2);
 
         vm.prank(founder);
@@ -735,9 +727,7 @@ contract RolesTest is RolesBaseSetup {
     //                      Remove Entitlements
     // =============================================================
 
-    function test_removeRoleFromEntitlement(
-        string memory roleName
-    ) external {
+    function test_removeRoleFromEntitlement(string memory roleName) external {
         vm.assume(bytes(roleName).length > 2);
 
         vm.prank(founder);
@@ -809,7 +799,9 @@ contract RolesTest is RolesBaseSetup {
 
     function test_removeRoleFromEntitlement_revert_when_entitlement_does_not_exist_in_role(
         string memory roleName
-    ) external {
+    )
+        external
+    {
         vm.assume(bytes(roleName).length > 2);
 
         vm.prank(founder);

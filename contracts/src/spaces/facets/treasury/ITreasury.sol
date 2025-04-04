@@ -12,9 +12,7 @@ interface ITreasury {
     /// @dev Can only be called by the owner of the contract. Will revert if account is zero address
     /// or if balance is 0
     /// @param account The address to withdraw funds to
-    function withdraw(
-        address account
-    ) external;
+    function withdraw(address account) external;
 
     /// @notice Handle the receipt of a single ERC721 token
     /// @dev Implements the IERC721Receiver interface to safely receive ERC721 tokens
@@ -28,7 +26,9 @@ interface ITreasury {
         address from,
         uint256 tokenId,
         bytes calldata data
-    ) external returns (bytes4);
+    )
+        external
+        returns (bytes4);
 
     /// @notice Handle the receipt of a single ERC1155 token
     /// @dev Implements the IERC1155Receiver interface to safely receive ERC1155 tokens
@@ -45,7 +45,9 @@ interface ITreasury {
         uint256 id,
         uint256 value,
         bytes calldata data
-    ) external returns (bytes4);
+    )
+        external
+        returns (bytes4);
 
     /// @notice Handle the receipt of multiple ERC1155 tokens
     /// @dev Implements the IERC1155Receiver interface to safely receive multiple ERC1155 tokens
@@ -62,5 +64,7 @@ interface ITreasury {
         uint256[] calldata ids,
         uint256[] calldata values,
         bytes calldata data
-    ) external returns (bytes4);
+    )
+        external
+        returns (bytes4);
 }

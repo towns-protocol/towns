@@ -26,9 +26,7 @@ interface IPrepay is IPrepayBase {
      * @notice Prepay a membership
      * @param supply The amount of memberships to prepay
      */
-    function prepayMembership(
-        uint256 supply
-    ) external payable;
+    function prepayMembership(uint256 supply) external payable;
 
     /**
      * @notice Get the prepaid supply
@@ -41,7 +39,5 @@ interface IPrepay is IPrepayBase {
      * @param supply The supply to calculate the fee for
      * @return The fee
      */
-    function calculateMembershipPrepayFee(
-        uint256 supply
-    ) external view returns (uint256);
+    function calculateMembershipPrepayFee(uint256 supply) external view returns (uint256);
 }

@@ -2,15 +2,16 @@
 pragma solidity ^0.8.23;
 
 // interfaces
+
+import {ICrossDomainMessenger} from
+    "contracts/src/base/registry/facets/mainnet/ICrossDomainMessenger.sol";
+import {
+    IMainnetDelegation,
+    IMainnetDelegationBase
+} from "contracts/src/base/registry/facets/mainnet/IMainnetDelegation.sol";
 import {IVotesEnumerable} from
     "contracts/src/diamond/facets/governance/votes/enumerable/IVotesEnumerable.sol";
 import {IAuthorizedClaimers} from "contracts/src/tokens/mainnet/claimer/IAuthorizedClaimers.sol";
-import {
-    IMainnetDelegationBase,
-    IMainnetDelegation
-} from "contracts/src/base/registry/facets/mainnet/IMainnetDelegation.sol";
-import {ICrossDomainMessenger} from
-    "contracts/src/base/registry/facets/mainnet/ICrossDomainMessenger.sol";
 
 // libraries
 import {SafeTransferLib} from "solady/utils/SafeTransferLib.sol";
@@ -33,9 +34,7 @@ contract ProxyBatchDelegation is IMainnetDelegationBase {
         BASE_REGISTRY = _target;
     }
 
-    function relayDelegationDigest(
-        uint32 minGasLimit
-    ) external {
+    function relayDelegationDigest(uint32 minGasLimit) external {
         DelegationMsg[] memory msgs = _getDelegationMsgs();
         bytes32 digest = _digest(msgs);
 
@@ -52,9 +51,7 @@ contract ProxyBatchDelegation is IMainnetDelegationBase {
     }
 
     /// @dev Generates the digest of the delegation messages
-    function _digest(
-        DelegationMsg[] memory msgs
-    ) internal pure returns (bytes32 digest) {
+    function _digest(DelegationMsg[] memory msgs) internal pure returns (bytes32 digest) {
         digest = keccak256(abi.encode(keccak256(abi.encode(msgs))));
     }
 

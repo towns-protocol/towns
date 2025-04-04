@@ -7,8 +7,9 @@ import {Setting} from "contracts/src/river/registry/libraries/RegistryStorage.so
 
 // libraries
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-import {CustomRevert} from "contracts/src/utils/libraries/CustomRevert.sol";
+
 import {RiverRegistryErrors} from "contracts/src/river/registry/libraries/RegistryErrors.sol";
+import {CustomRevert} from "contracts/src/utils/libraries/CustomRevert.sol";
 
 // contracts
 import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
@@ -24,25 +25,19 @@ contract RiverConfig is IRiverConfig, RegistryModifiers, OwnableBase, Facet {
     /*                       ADMIN FUNCTIONS                      */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    function __RiverConfig_init(
-        address[] calldata configManagers
-    ) external onlyInitializing {
+    function __RiverConfig_init(address[] calldata configManagers) external onlyInitializing {
         for (uint256 i; i < configManagers.length; ++i) {
             _approveConfigurationManager(configManagers[i]);
         }
     }
 
     /// @inheritdoc IRiverConfig
-    function approveConfigurationManager(
-        address manager
-    ) external onlyOwner {
+    function approveConfigurationManager(address manager) external onlyOwner {
         _approveConfigurationManager(manager);
     }
 
     /// @inheritdoc IRiverConfig
-    function removeConfigurationManager(
-        address manager
-    ) external onlyOwner {
+    function removeConfigurationManager(address manager) external onlyOwner {
         if (manager == address(0)) RiverRegistryErrors.BAD_ARG.revertWith();
 
         if (!ds.configurationManagers.remove(manager)) {
@@ -57,7 +52,10 @@ contract RiverConfig is IRiverConfig, RegistryModifiers, OwnableBase, Facet {
         bytes32 key,
         uint64 blockNumber,
         bytes calldata value
-    ) external onlyConfigurationManager(msg.sender) {
+    )
+        external
+        onlyConfigurationManager(msg.sender)
+    {
         if (blockNumber == type(uint64).max) {
             RiverRegistryErrors.BAD_ARG.revertWith();
         }
@@ -84,9 +82,11 @@ contract RiverConfig is IRiverConfig, RegistryModifiers, OwnableBase, Facet {
     }
 
     /// @inheritdoc IRiverConfig
-    function deleteConfiguration(
-        bytes32 key
-    ) external onlyConfigurationManager(msg.sender) configKeyExists(key) {
+    function deleteConfiguration(bytes32 key)
+        external
+        onlyConfigurationManager(msg.sender)
+        configKeyExists(key)
+    {
         delete ds.configuration[key];
 
         ds.configurationKeys.remove(key);
@@ -98,7 +98,10 @@ contract RiverConfig is IRiverConfig, RegistryModifiers, OwnableBase, Facet {
     function deleteConfigurationOnBlock(
         bytes32 key,
         uint64 blockNumber
-    ) external onlyConfigurationManager(msg.sender) {
+    )
+        external
+        onlyConfigurationManager(msg.sender)
+    {
         bool found = false;
         Setting[] storage configs = ds.configuration[key];
         uint256 configurationLen = configs.length;
@@ -121,16 +124,17 @@ contract RiverConfig is IRiverConfig, RegistryModifiers, OwnableBase, Facet {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @inheritdoc IRiverConfig
-    function configurationExists(
-        bytes32 key
-    ) external view returns (bool) {
+    function configurationExists(bytes32 key) external view returns (bool) {
         return ds.configurationKeys.contains(key);
     }
 
     /// @inheritdoc IRiverConfig
-    function getConfiguration(
-        bytes32 key
-    ) external view configKeyExists(key) returns (Setting[] memory) {
+    function getConfiguration(bytes32 key)
+        external
+        view
+        configKeyExists(key)
+        returns (Setting[] memory)
+    {
         return ds.configuration[key];
     }
 
@@ -159,9 +163,7 @@ contract RiverConfig is IRiverConfig, RegistryModifiers, OwnableBase, Facet {
     }
 
     /// @inheritdoc IRiverConfig
-    function isConfigurationManager(
-        address manager
-    ) external view returns (bool) {
+    function isConfigurationManager(address manager) external view returns (bool) {
         return ds.configurationManagers.contains(manager);
     }
 
@@ -171,9 +173,7 @@ contract RiverConfig is IRiverConfig, RegistryModifiers, OwnableBase, Facet {
 
     /// @dev Internal function to approve a configuration manager, doesn't do any
     /// validation
-    function _approveConfigurationManager(
-        address manager
-    ) internal {
+    function _approveConfigurationManager(address manager) internal {
         if (manager == address(0)) RiverRegistryErrors.BAD_ARG.revertWith();
 
         if (!ds.configurationManagers.add(manager)) {

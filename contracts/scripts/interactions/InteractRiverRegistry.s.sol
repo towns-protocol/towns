@@ -10,9 +10,7 @@ import {IRiverConfig} from "contracts/src/river/registry/facets/config/IRiverCon
 import {Interaction} from "contracts/scripts/common/Interaction.s.sol";
 
 contract InteractRiverRegistry is Interaction {
-    function __interact(
-        address deployer
-    ) internal override {
+    function __interact(address deployer) internal override {
         address riverRegistry = getDeployment("riverRegistry");
 
         uint64[] memory chains = new uint64[](9);

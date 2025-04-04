@@ -8,8 +8,9 @@ import {IDiamond} from "@towns-protocol/diamond/src/IDiamond.sol";
 import "forge-std/console.sol";
 
 //contracts
-import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
+
 import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
+import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
 import {DropFacet} from "contracts/src/airdrop/drop/DropFacet.sol";
 
 contract DeployDropFacet is Deployer, FacetHelper {
@@ -35,24 +36,24 @@ contract DeployDropFacet is Deployer, FacetHelper {
         return DropFacet.__DropFacet_init.selector;
     }
 
-    function makeInitData(
-        address stakingContract
-    ) public pure returns (bytes memory) {
+    function makeInitData(address stakingContract) public pure returns (bytes memory) {
         return abi.encodeWithSelector(initializer(), stakingContract);
     }
 
     function facetInitHelper(
         address deployer,
         address facetAddress
-    ) external override returns (FacetCut memory, bytes memory) {
+    )
+        external
+        override
+        returns (FacetCut memory, bytes memory)
+    {
         IDiamond.FacetCut memory facetCut = this.makeCut(facetAddress, IDiamond.FacetCutAction.Add);
         console.log("facetInitHelper: deployer", deployer);
         return (facetCut, makeInitData(getDeployment("baseRegistry")));
     }
 
-    function __deploy(
-        address deployer
-    ) public override returns (address) {
+    function __deploy(address deployer) public override returns (address) {
         vm.startBroadcast(deployer);
         DropFacet dropFacet = new DropFacet();
         vm.stopBroadcast();

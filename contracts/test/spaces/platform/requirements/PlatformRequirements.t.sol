@@ -4,16 +4,18 @@ pragma solidity ^0.8.23;
 // utils
 
 //interfaces
+
+import {IOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
 import {IPlatformRequirementsBase} from
     "contracts/src/factory/facets/platform/requirements/IPlatformRequirements.sol";
-import {IOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
 
 //libraries
 
 //contracts
-import {BaseSetup} from "contracts/test/spaces/BaseSetup.sol";
+
 import {PlatformRequirementsFacet} from
     "contracts/src/factory/facets/platform/requirements/PlatformRequirementsFacet.sol";
+import {BaseSetup} from "contracts/test/spaces/BaseSetup.sol";
 
 contract PlatformRequirementsTest is BaseSetup, IPlatformRequirementsBase, IOwnableBase {
     PlatformRequirementsFacet internal platformReqs;

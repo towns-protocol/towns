@@ -22,9 +22,7 @@ abstract contract SpaceOwnerBase is ISpaceOwnerBase {
         _;
     }
 
-    function _setFactory(
-        address factory
-    ) internal {
+    function _setFactory(address factory) internal {
         Validator.checkAddress(factory);
 
         SpaceOwnerStorage.Layout storage ds = SpaceOwnerStorage.layout();
@@ -48,7 +46,9 @@ abstract contract SpaceOwnerBase is ISpaceOwnerBase {
         address space,
         string memory shortDescription,
         string memory longDescription
-    ) internal {
+    )
+        internal
+    {
         Validator.checkLength(name, 2);
         // if the space uri is empty, it will default to `${defaultUri}/${spaceAddress}`
         Validator.checkLength(uri, 0);
@@ -75,7 +75,9 @@ abstract contract SpaceOwnerBase is ISpaceOwnerBase {
         string memory uri,
         string memory shortDescription,
         string memory longDescription
-    ) internal {
+    )
+        internal
+    {
         Validator.checkLength(name, 2);
         // if the space uri is empty, it will default to `${defaultUri}/${spaceAddress}`
         Validator.checkLength(uri, 0);
@@ -93,9 +95,7 @@ abstract contract SpaceOwnerBase is ISpaceOwnerBase {
         emit SpaceOwner__UpdateSpace(space);
     }
 
-    function _getSpace(
-        address space
-    ) internal view returns (Space memory) {
+    function _getSpace(address space) internal view returns (Space memory) {
         SpaceOwnerStorage.Space storage spaceInfo = SpaceOwnerStorage.layout().spaceByAddress[space];
 
         SpaceOwnerStorage.SpaceMetadata storage metadata =
@@ -111,15 +111,11 @@ abstract contract SpaceOwnerBase is ISpaceOwnerBase {
         });
     }
 
-    function _getTokenId(
-        address space
-    ) internal view returns (uint256) {
+    function _getTokenId(address space) internal view returns (uint256) {
         return SpaceOwnerStorage.layout().spaceByAddress[space].tokenId;
     }
 
-    function _getSpaceByTokenId(
-        uint256 tokenId
-    ) internal view returns (address) {
+    function _getSpaceByTokenId(uint256 tokenId) internal view returns (address) {
         return SpaceOwnerStorage.layout().spaceByTokenId[tokenId];
     }
 }

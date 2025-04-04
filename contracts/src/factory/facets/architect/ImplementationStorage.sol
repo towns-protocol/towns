@@ -2,13 +2,14 @@
 pragma solidity ^0.8.23;
 
 // interfaces
+
+import {IEntitlementChecker} from
+    "contracts/src/base/registry/facets/checker/IEntitlementChecker.sol";
+import {IWalletLink} from "contracts/src/factory/facets/wallet-link/IWalletLink.sol";
 import {IRuleEntitlement} from "contracts/src/spaces/entitlements/rule/IRuleEntitlement.sol";
 import {IRuleEntitlementV2} from "contracts/src/spaces/entitlements/rule/IRuleEntitlement.sol";
 import {IUserEntitlement} from "contracts/src/spaces/entitlements/user/IUserEntitlement.sol";
-import {IWalletLink} from "contracts/src/factory/facets/wallet-link/IWalletLink.sol";
 import {ISpaceOwner} from "contracts/src/spaces/facets/owner/ISpaceOwner.sol";
-import {IEntitlementChecker} from
-    "contracts/src/base/registry/facets/checker/IEntitlementChecker.sol";
 import {ISpaceProxyInitializer} from "contracts/src/spaces/facets/proxy/ISpaceProxyInitializer.sol";
 // libraries
 

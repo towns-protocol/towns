@@ -35,9 +35,7 @@ contract SimpleProxy {
 
     /// @notice Allows authorized addresses to change the implementation
     /// @param _newImplementation The new implementation address
-    function upgradeProxy(
-        address _newImplementation
-    ) external {
+    function upgradeProxy(address _newImplementation) external {
         require(msg.sender == proxyGovernance, "unauthorized");
         proxyImplementation = _newImplementation;
     }
@@ -45,9 +43,7 @@ contract SimpleProxy {
     /// @notice Sets the address which can upgrade this proxy, only callable
     ///         by the current address which can upgrade this proxy.
     /// @param _newGovernance The new governance address
-    function resetProxyOwner(
-        address _newGovernance
-    ) external {
+    function resetProxyOwner(address _newGovernance) external {
         require(msg.sender == proxyGovernance, "unauthorized");
         proxyGovernance = _newGovernance;
     }

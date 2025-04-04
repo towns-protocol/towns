@@ -46,10 +46,14 @@ interface IEntitlementGated is IEntitlementGatedBase {
         bytes32 transactionId,
         uint256 roleId,
         NodeVoteStatus result
-    ) external;
+    )
+        external;
 
     function getRuleData(
         bytes32 transactionId,
         uint256 roleId
-    ) external view returns (IRuleEntitlement.RuleData memory);
+    )
+        external
+        view
+        returns (IRuleEntitlement.RuleData memory);
 }

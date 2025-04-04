@@ -2,13 +2,15 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {IMainnetDelegationBase} from "./IMainnetDelegation.sol";
+
 import {ICrossDomainMessenger} from "./ICrossDomainMessenger.sol";
+import {IMainnetDelegationBase} from "./IMainnetDelegation.sol";
 
 // libraries
+
+import {MainnetDelegationStorage} from "./MainnetDelegationStorage.sol";
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import {SafeCastLib} from "solady/utils/SafeCastLib.sol";
-import {MainnetDelegationStorage} from "./MainnetDelegationStorage.sol";
 
 // contracts
 import {IRewardsDistribution} from
@@ -17,17 +19,13 @@ import {IRewardsDistribution} from
 abstract contract MainnetDelegationBase is IMainnetDelegationBase {
     using EnumerableSet for EnumerableSet.AddressSet;
 
-    function _setDelegationDigest(
-        bytes32 digest
-    ) internal {
+    function _setDelegationDigest(bytes32 digest) internal {
         MainnetDelegationStorage.layout().delegationDigest = digest;
 
         emit DelegationDigestSet(digest);
     }
 
-    function _verifyDelegations(
-        bytes calldata encodedMsgs
-    ) internal view {
+    function _verifyDelegations(bytes calldata encodedMsgs) internal view {
         MainnetDelegationStorage.Layout storage ds = MainnetDelegationStorage.layout();
 
         bytes32 digest = keccak256(abi.encode(keccak256(encodedMsgs)));
@@ -35,9 +33,11 @@ abstract contract MainnetDelegationBase is IMainnetDelegationBase {
     }
 
     /// @dev equivalent: abi.decode(encodedMsgs, (DelegationMsg[]));
-    function _decodeDelegations(
-        bytes calldata encodedMsgs
-    ) internal pure returns (DelegationMsg[] calldata msgs) {
+    function _decodeDelegations(bytes calldata encodedMsgs)
+        internal
+        pure
+        returns (DelegationMsg[] calldata msgs)
+    {
         assembly {
             // this is a dynamic array, so calldataload(encodedMsgs.offset) is the
             // offset from encodedMsgs.offset at which the array begins
@@ -47,9 +47,7 @@ abstract contract MainnetDelegationBase is IMainnetDelegationBase {
         }
     }
 
-    function _relayDelegations(
-        bytes calldata encodedMsgs
-    ) internal {
+    function _relayDelegations(bytes calldata encodedMsgs) internal {
         _verifyDelegations(encodedMsgs);
 
         DelegationMsg[] calldata msgs = _decodeDelegations(encodedMsgs);
@@ -81,9 +79,7 @@ abstract contract MainnetDelegationBase is IMainnetDelegationBase {
         }
     }
 
-    function _removeDelegation(
-        address delegator
-    ) internal {
+    function _removeDelegation(address delegator) internal {
         MainnetDelegationStorage.Layout storage ds = MainnetDelegationStorage.layout();
 
         ds.delegators.remove(delegator);
@@ -103,7 +99,9 @@ abstract contract MainnetDelegationBase is IMainnetDelegationBase {
         address delegator,
         address operator,
         uint256 quantity
-    ) internal {
+    )
+        internal
+    {
         MainnetDelegationStorage.Layout storage ds = MainnetDelegationStorage.layout();
 
         if (currentOperator != operator) {
@@ -127,7 +125,9 @@ abstract contract MainnetDelegationBase is IMainnetDelegationBase {
         address delegator,
         address operator,
         uint256 quantity
-    ) internal {
+    )
+        internal
+    {
         MainnetDelegationStorage.Layout storage ds = MainnetDelegationStorage.layout();
 
         ds.delegators.add(delegator);
@@ -184,9 +184,7 @@ abstract contract MainnetDelegationBase is IMainnetDelegationBase {
     }
 
     /// @dev Unstake the delegation of the delegator if exists
-    function _unstake(
-        address delegator
-    ) internal {
+    function _unstake(address delegator) internal {
         MainnetDelegationStorage.Layout storage ds = MainnetDelegationStorage.layout();
 
         uint256 depositId = ds.depositIdByDelegator[delegator];
@@ -196,15 +194,15 @@ abstract contract MainnetDelegationBase is IMainnetDelegationBase {
         }
     }
 
-    function _getDepositIdByDelegator(
-        address delegator
-    ) internal view returns (uint256) {
+    function _getDepositIdByDelegator(address delegator) internal view returns (uint256) {
         return MainnetDelegationStorage.layout().depositIdByDelegator[delegator];
     }
 
-    function _getDelegationByDelegator(
-        address delegator
-    ) internal view returns (Delegation memory delegation) {
+    function _getDelegationByDelegator(address delegator)
+        internal
+        view
+        returns (Delegation memory delegation)
+    {
         assembly ("memory-safe") {
             // By default, memory has been implicitly allocated for `delegation`.
             // But we don't need this implicitly allocated memory.
@@ -215,9 +213,11 @@ abstract contract MainnetDelegationBase is IMainnetDelegationBase {
         delegation = MainnetDelegationStorage.layout().delegationByDelegator[delegator];
     }
 
-    function _getMainnetDelegationsByOperator(
-        address operator
-    ) internal view returns (Delegation[] memory delegations) {
+    function _getMainnetDelegationsByOperator(address operator)
+        internal
+        view
+        returns (Delegation[] memory delegations)
+    {
         MainnetDelegationStorage.Layout storage ds = MainnetDelegationStorage.layout();
         EnumerableSet.AddressSet storage delegators = ds.delegatorsByOperator[operator];
         uint256 length = delegators.length();
@@ -229,9 +229,7 @@ abstract contract MainnetDelegationBase is IMainnetDelegationBase {
         }
     }
 
-    function _getDelegatedStakeByOperator(
-        address operator
-    ) internal view returns (uint256 stake) {
+    function _getDelegatedStakeByOperator(address operator) internal view returns (uint256 stake) {
         Delegation[] memory delegations = _getMainnetDelegationsByOperator(operator);
         for (uint256 i; i < delegations.length; ++i) {
             stake += delegations[i].quantity;
@@ -253,22 +251,20 @@ abstract contract MainnetDelegationBase is IMainnetDelegationBase {
         }
     }
 
-    function _getDelegatorsByAuthorizedClaimer(
-        address claimer
-    ) internal view returns (address[] memory) {
+    function _getDelegatorsByAuthorizedClaimer(address claimer)
+        internal
+        view
+        returns (address[] memory)
+    {
         MainnetDelegationStorage.Layout storage ds = MainnetDelegationStorage.layout();
         return ds.delegatorsByAuthorizedClaimer[claimer].values();
     }
 
-    function _getAuthorizedClaimer(
-        address owner
-    ) internal view returns (address) {
+    function _getAuthorizedClaimer(address owner) internal view returns (address) {
         return MainnetDelegationStorage.layout().claimerByDelegator[owner];
     }
 
-    function _setProxyDelegation(
-        address proxyDelegation
-    ) internal {
+    function _setProxyDelegation(address proxyDelegation) internal {
         MainnetDelegationStorage.layout().proxyDelegation = proxyDelegation;
     }
 
@@ -276,9 +272,7 @@ abstract contract MainnetDelegationBase is IMainnetDelegationBase {
         return MainnetDelegationStorage.layout().proxyDelegation;
     }
 
-    function _setMessenger(
-        ICrossDomainMessenger messenger
-    ) internal {
+    function _setMessenger(ICrossDomainMessenger messenger) internal {
         MainnetDelegationStorage.layout().messenger = messenger;
     }
 

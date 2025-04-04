@@ -3,12 +3,13 @@ pragma solidity ^0.8.23;
 
 // interfaces
 import {INodeRegistry} from "./INodeRegistry.sol";
-import {NodeStatus, Node} from "contracts/src/river/registry/libraries/RegistryStorage.sol";
+import {Node, NodeStatus} from "contracts/src/river/registry/libraries/RegistryStorage.sol";
 
 // libraries
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-import {CustomRevert} from "contracts/src/utils/libraries/CustomRevert.sol";
+
 import {RiverRegistryErrors} from "contracts/src/river/registry/libraries/RegistryErrors.sol";
+import {CustomRevert} from "contracts/src/utils/libraries/CustomRevert.sol";
 
 // contracts
 import {RegistryModifiers} from "contracts/src/river/registry/libraries/RegistryStorage.sol";
@@ -17,9 +18,7 @@ contract NodeRegistry is INodeRegistry, RegistryModifiers {
     using EnumerableSet for EnumerableSet.AddressSet;
     using CustomRevert for string;
 
-    function isNode(
-        address nodeAddress
-    ) public view returns (bool) {
+    function isNode(address nodeAddress) public view returns (bool) {
         return ds.nodeByAddress[nodeAddress].nodeAddress != address(0);
     }
 
@@ -27,7 +26,10 @@ contract NodeRegistry is INodeRegistry, RegistryModifiers {
         address nodeAddress,
         string memory url,
         NodeStatus status
-    ) external onlyOperator(msg.sender) {
+    )
+        external
+        onlyOperator(msg.sender)
+    {
         // validate that the node is not already in the registry
         if (ds.nodeByAddress[nodeAddress].nodeAddress != address(0)) {
             RiverRegistryErrors.ALREADY_EXISTS.revertWith();
@@ -42,9 +44,7 @@ contract NodeRegistry is INodeRegistry, RegistryModifiers {
         emit NodeAdded(nodeAddress, msg.sender, url, status);
     }
 
-    function removeNode(
-        address nodeAddress
-    ) external onlyNodeOperator(nodeAddress, msg.sender) {
+    function removeNode(address nodeAddress) external onlyNodeOperator(nodeAddress, msg.sender) {
         if (ds.nodeByAddress[nodeAddress].nodeAddress == address(0)) {
             RiverRegistryErrors.NODE_NOT_FOUND.revertWith();
         }
@@ -95,9 +95,7 @@ contract NodeRegistry is INodeRegistry, RegistryModifiers {
         emit NodeUrlUpdated(node.nodeAddress, url);
     }
 
-    function getNode(
-        address nodeAddress
-    ) external view returns (Node memory) {
+    function getNode(address nodeAddress) external view returns (Node memory) {
         // validate that the node is in the registry
         if (!ds.nodes.contains(nodeAddress)) {
             RiverRegistryErrors.NODE_NOT_FOUND.revertWith();

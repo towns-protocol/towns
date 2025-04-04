@@ -2,9 +2,10 @@
 pragma solidity ^0.8.0;
 
 import "@prb/test/Helpers.sol" as Helpers;
+
+import {Context} from "contracts/scripts/common/Context.sol";
 import {Test} from "forge-std/Test.sol";
 import {LibString} from "solady/utils/LibString.sol";
-import {Context} from "contracts/scripts/common/Context.sol";
 
 contract TestUtils is Context, Test {
     event LogNamedArray(string key, address[] value);
@@ -30,9 +31,7 @@ contract TestUtils is Context, Test {
         }
     }
 
-    modifier assumeEOA(
-        address account
-    ) {
+    modifier assumeEOA(address account) {
         vm.assume(account != address(0) && account.code.length == 0);
         _;
     }
@@ -60,9 +59,7 @@ contract TestUtils is Context, Test {
         // solhint-enable
     }
 
-    function getJsonAddress(
-        string memory path
-    ) internal view returns (address) {
+    function getJsonAddress(string memory path) internal view returns (address) {
         string memory data = vm.readFile(path);
         return vm.parseJsonAddress(data, ".address");
     }
@@ -70,13 +67,15 @@ contract TestUtils is Context, Test {
     function getMappingValueSlot(
         uint256 mappingSlot,
         uint256 key
-    ) internal pure returns (bytes32) {
+    )
+        internal
+        pure
+        returns (bytes32)
+    {
         return keccak256(abi.encode(key, mappingSlot));
     }
 
-    function _bytes32ToString(
-        bytes32 str
-    ) internal pure returns (string memory) {
+    function _bytes32ToString(bytes32 str) internal pure returns (string memory) {
         return string(abi.encodePacked(str));
     }
 
@@ -96,16 +95,12 @@ contract TestUtils is Context, Test {
         return abi.decode(_callVm(abi.encodeWithSelector(RANDOM_UINT_SIG_2, lo, hi)), (uint256));
     }
 
-    function _toAddressArray(
-        address v
-    ) internal pure returns (address[] memory arr) {
+    function _toAddressArray(address v) internal pure returns (address[] memory arr) {
         arr = new address[](1);
         arr[0] = v;
     }
 
-    function _toUint256Array(
-        uint256 v
-    ) internal pure returns (uint256[] memory arr) {
+    function _toUint256Array(uint256 v) internal pure returns (uint256[] memory arr) {
         arr = new uint256[](1);
         arr[0] = v;
     }
@@ -122,9 +117,7 @@ contract TestUtils is Context, Test {
         return s1 == s2;
     }
 
-    function _createAccounts(
-        uint256 count
-    ) internal pure returns (address[] memory accounts) {
+    function _createAccounts(uint256 count) internal pure returns (address[] memory accounts) {
         accounts = new address[](count);
         for (uint256 i; i < count; ++i) {
             accounts[i] = _randomAddress();
@@ -212,7 +205,10 @@ contract TestUtils is Context, Test {
         string[] memory a,
         string memory b,
         string memory err
-    ) internal virtual {
+    )
+        internal
+        virtual
+    {
         if (!Helpers.contains(a, b)) {
             emit log_named_string("Error", err);
             assertContains(a, b);
@@ -242,23 +238,21 @@ contract TestUtils is Context, Test {
     /*                       COMPILER TRICK                       */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    function _callVm(
-        bytes memory payload
-    ) internal pure returns (bytes memory) {
+    function _callVm(bytes memory payload) internal pure returns (bytes memory) {
         return _castVmPayloadToPure(_sendVmPayload)(payload);
     }
 
-    function _castVmPayloadToPure(
-        function(bytes memory) internal returns (bytes memory) fnIn
-    ) internal pure returns (function(bytes memory) internal pure returns (bytes memory) fnOut) {
+    function _castVmPayloadToPure(function(bytes memory) internal returns (bytes memory) fnIn)
+        internal
+        pure
+        returns (function(bytes memory) internal pure returns (bytes memory) fnOut)
+    {
         assembly {
             fnOut := fnIn
         }
     }
 
-    function _sendVmPayload(
-        bytes memory payload
-    ) private returns (bytes memory res) {
+    function _sendVmPayload(bytes memory payload) private returns (bytes memory res) {
         address vmAddress = address(VM_ADDRESS);
         /// @solidity memory-safe-assembly
         assembly {

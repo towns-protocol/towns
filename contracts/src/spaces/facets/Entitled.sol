@@ -2,25 +2,28 @@
 pragma solidity ^0.8.23;
 
 // interfaces
+
+import {IWalletLink} from "contracts/src/factory/facets/wallet-link/IWalletLink.sol";
 import {IEntitlement} from "contracts/src/spaces/entitlements/IEntitlement.sol";
 import {IEntitlementBase} from "contracts/src/spaces/entitlements/IEntitlement.sol";
-import {IWalletLink} from "contracts/src/factory/facets/wallet-link/IWalletLink.sol";
 
 // libraries
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-import {CustomRevert} from "contracts/src/utils/libraries/CustomRevert.sol";
+
+import {ERC721ABase} from "contracts/src/diamond/facets/token/ERC721A/ERC721ABase.sol";
+import {WalletLinkProxyBase} from "contracts/src/spaces/facets/delegation/WalletLinkProxyBase.sol";
 import {EntitlementsManagerStorage} from
     "contracts/src/spaces/facets/entitlements/EntitlementsManagerStorage.sol";
 import {MembershipStorage} from "contracts/src/spaces/facets/membership/MembershipStorage.sol";
-import {ERC721ABase} from "contracts/src/diamond/facets/token/ERC721A/ERC721ABase.sol";
-import {WalletLinkProxyBase} from "contracts/src/spaces/facets/delegation/WalletLinkProxyBase.sol";
+import {CustomRevert} from "contracts/src/utils/libraries/CustomRevert.sol";
 
 // contracts
 import {TokenOwnableBase} from
     "@towns-protocol/diamond/src/facets/ownable/token/TokenOwnableBase.sol";
 import {PausableBase} from "@towns-protocol/diamond/src/facets/pausable/PausableBase.sol";
-import {BanningBase} from "contracts/src/spaces/facets/banning/BanningBase.sol";
+
 import {ERC5643Base} from "contracts/src/diamond/facets/token/ERC5643/ERC5643Base.sol";
+import {BanningBase} from "contracts/src/spaces/facets/banning/BanningBase.sol";
 
 abstract contract Entitled is
     IEntitlementBase,
@@ -35,9 +38,7 @@ abstract contract Entitled is
 
     bytes32 internal constant IN_TOWN = 0x0;
 
-    function _isMember(
-        address user
-    ) internal view returns (bool member) {
+    function _isMember(address user) internal view returns (bool member) {
         member = _balanceOf(user) > 0;
     }
 
@@ -45,7 +46,11 @@ abstract contract Entitled is
         bytes32 channelId,
         address user,
         bytes32 permission
-    ) internal view returns (bool) {
+    )
+        internal
+        view
+        returns (bool)
+    {
         address owner = _owner();
 
         address[] memory wallets = _getLinkedWalletsWithUser(user);
@@ -89,7 +94,11 @@ abstract contract Entitled is
     function _isEntitledToSpace(
         address user,
         string calldata permission
-    ) internal view returns (bool) {
+    )
+        internal
+        view
+        returns (bool)
+    {
         return _isEntitled(IN_TOWN, user, bytes32(bytes(permission)));
     }
 
@@ -97,7 +106,11 @@ abstract contract Entitled is
         bytes32 channelId,
         address user,
         string calldata permission
-    ) internal view returns (bool) {
+    )
+        internal
+        view
+        returns (bool)
+    {
         return _isEntitled(channelId, user, bytes32(bytes(permission)));
     }
 
@@ -105,7 +118,11 @@ abstract contract Entitled is
         bytes32 channelId,
         string memory permission,
         address caller
-    ) internal view returns (bool) {
+    )
+        internal
+        view
+        returns (bool)
+    {
         return _owner() == caller
             || (!_paused() && _isEntitled(channelId, caller, bytes32(bytes(permission))));
     }
@@ -117,9 +134,7 @@ abstract contract Entitled is
             || (!_paused() && _isEntitled(channelId, sender, bytes32(bytes(permission))));
     }
 
-    function _validatePermission(
-        string memory permission
-    ) internal view {
+    function _validatePermission(string memory permission) internal view {
         if (!_isAllowed(IN_TOWN, permission)) {
             CustomRevert.revertWith(Entitlement__NotAllowed.selector);
         }
@@ -131,9 +146,7 @@ abstract contract Entitled is
         }
     }
 
-    function _validateMembership(
-        address user
-    ) internal view {
+    function _validateMembership(address user) internal view {
         // return if the user is a member or the owner
         if (_isMember(user)) return;
         address owner = _owner();
@@ -153,15 +166,16 @@ abstract contract Entitled is
     function _validateChannelPermission(
         bytes32 channelId,
         string memory permission
-    ) internal view {
+    )
+        internal
+        view
+    {
         if (!_isAllowed(channelId, permission)) {
             CustomRevert.revertWith(Entitlement__NotAllowed.selector);
         }
     }
 
-    function _getLinkedWalletsWithUser(
-        address rootKey
-    ) internal view returns (address[] memory) {
+    function _getLinkedWalletsWithUser(address rootKey) internal view returns (address[] memory) {
         IWalletLink wl = IWalletLink(MembershipStorage.layout().spaceFactory);
         address[] memory linkedWallets = wl.getWalletsByRootKey(rootKey);
 

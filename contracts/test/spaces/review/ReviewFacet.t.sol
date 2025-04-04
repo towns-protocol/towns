@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import {LibString} from "solady/utils/LibString.sol";
 import {IReviewBase} from "contracts/src/spaces/facets/review/IReview.sol";
 import {ReviewFacet} from "contracts/src/spaces/facets/review/ReviewFacet.sol";
 import {ReviewStorage} from "contracts/src/spaces/facets/review/ReviewStorage.sol";
 import {MembershipBaseSetup} from "contracts/test/spaces/membership/MembershipBaseSetup.sol";
+import {LibString} from "solady/utils/LibString.sol";
 
 contract ReviewFacetTest is MembershipBaseSetup, IReviewBase {
     using LibString for string;
@@ -30,9 +30,7 @@ contract ReviewFacetTest is MembershipBaseSetup, IReviewBase {
     /*                             ADD                            */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    function test_fuzz_addReview_revertIf_notMember(
-        address user
-    ) public {
+    function test_fuzz_addReview_revertIf_notMember(address user) public {
         vm.assume(user != address(0));
         vm.assume(user != founder);
         vm.assume(membershipToken.balanceOf(user) == 0);
@@ -64,7 +62,10 @@ contract ReviewFacetTest is MembershipBaseSetup, IReviewBase {
     function test_fuzz_addReview(
         string memory comment,
         uint8 rating
-    ) public givenAliceHasMintedMembership {
+    )
+        public
+        givenAliceHasMintedMembership
+    {
         rating = uint8(bound(rating, 0, 5));
         if (bytes(comment).length < DEFAULT_MIN_COMMENT_LENGTH) {
             comment = comment.concat(

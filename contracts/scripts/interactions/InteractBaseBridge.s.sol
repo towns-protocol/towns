@@ -2,9 +2,10 @@
 pragma solidity ^0.8.23;
 
 //interfaces
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
 import {IL1StandardBridge} from "./interfaces/IL1StandardBridge.sol";
 import {IL2StandardBridge} from "./interfaces/IL2StandardBridge.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 //libraries
 
@@ -19,9 +20,7 @@ contract InteractBaseBridge is Interaction {
     address townsOnBaseSepolia = 0x00000000A22C618fd6b4D7E9A335C4B96B189a38;
     uint256 tokensToDeposit = 10 ether;
 
-    function __interact(
-        address deployer
-    ) internal override {
+    function __interact(address deployer) internal override {
         // Bridge from Base Sepolia to Sepolia
         // vm.startBroadcast(deployer);
         // IERC20(townsOnBaseSepolia).approve(l2StandardBridge, tokensToDeposit);

@@ -29,9 +29,7 @@ library StringSet {
     /**
      * @dev Returns the storage reference for the length of the values array.
      */
-    function _valuesLengthRef(
-        Set storage set
-    ) private pure returns (Uint256Ref storage ref) {
+    function _valuesLengthRef(Set storage set) private pure returns (Uint256Ref storage ref) {
         assembly ("memory-safe") {
             ref.slot := set.slot
         }
@@ -53,7 +51,11 @@ library StringSet {
     function _indexRef(
         Set storage set,
         string memory value
-    ) private pure returns (Uint256Ref storage ref) {
+    )
+        private
+        pure
+        returns (Uint256Ref storage ref)
+    {
         // https://docs.soliditylang.org/en/latest/internals/layout_in_storage.html#mappings-and-dynamic-arrays
         assembly ("memory-safe") {
             let key_len := add(mload(value), 0x20)
@@ -142,9 +144,7 @@ library StringSet {
     /**
      * @dev Removes all values from a set. O(n).
      */
-    function clear(
-        Set storage set
-    ) internal {
+    function clear(Set storage set) internal {
         Uint256Ref storage lengthRef = _valuesLengthRef(set);
         uint256 len = lengthRef.value;
         for (uint256 i; i < len; ++i) {
@@ -166,9 +166,7 @@ library StringSet {
     /**
      * @dev Returns the number of values in the set. O(1).
      */
-    function length(
-        Set storage set
-    ) internal view returns (uint256) {
+    function length(Set storage set) internal view returns (uint256) {
         return set._values.length;
     }
 
@@ -199,9 +197,7 @@ library StringSet {
      * in
      * a block.
      */
-    function values(
-        Set storage set
-    ) internal view returns (string[] memory) {
+    function values(Set storage set) internal view returns (string[] memory) {
         return set._values;
     }
 }

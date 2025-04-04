@@ -33,9 +33,7 @@ interface ICrossDomainMessenger {
 
     function baseGas(bytes memory _message, uint32 _minGasLimit) external pure returns (uint64);
 
-    function failedMessages(
-        bytes32
-    ) external view returns (bool);
+    function failedMessages(bytes32) external view returns (bool);
 
     function messageNonce() external view returns (uint256);
 
@@ -46,17 +44,19 @@ interface ICrossDomainMessenger {
         uint256 _value,
         uint256 _minGasLimit,
         bytes memory _message
-    ) external payable;
+    )
+        external
+        payable;
 
     function sendMessage(
         address _target,
         bytes memory _message,
         uint32 _minGasLimit
-    ) external payable;
+    )
+        external
+        payable;
 
-    function successfulMessages(
-        bytes32
-    ) external view returns (bool);
+    function successfulMessages(bytes32) external view returns (bool);
 
     function xDomainMessageSender() external view returns (address);
 }

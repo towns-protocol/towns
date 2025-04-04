@@ -2,24 +2,24 @@
 pragma solidity ^0.8.23;
 
 // interfaces
+
+import {ITownsPoints} from "./ITownsPoints.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import {IArchitect} from "contracts/src/factory/facets/architect/IArchitect.sol";
-import {ITownsPoints} from "./ITownsPoints.sol";
 
 // libraries
-import {CustomRevert} from "contracts/src/utils/libraries/CustomRevert.sol";
-import {TownsPointsStorage} from "./TownsPointsStorage.sol";
+
 import {CheckIn} from "./CheckIn.sol";
+import {TownsPointsStorage} from "./TownsPointsStorage.sol";
+import {CustomRevert} from "contracts/src/utils/libraries/CustomRevert.sol";
 
 // contracts
 import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
 import {OwnableBase} from "@towns-protocol/diamond/src/facets/ownable/OwnableBase.sol";
 
 contract TownsPoints is IERC20Metadata, ITownsPoints, OwnableBase, Facet {
-    function __TownsPoints_init(
-        address spaceFactory
-    ) external onlyInitializing {
+    function __TownsPoints_init(address spaceFactory) external onlyInitializing {
         TownsPointsStorage.Layout storage ds = TownsPointsStorage.layout();
         ds.spaceFactory = spaceFactory;
         _addInterface(type(IERC20).interfaceId);
@@ -39,9 +39,7 @@ contract TownsPoints is IERC20Metadata, ITownsPoints, OwnableBase, Facet {
     }
 
     /// @inheritdoc ITownsPoints
-    function batchMintPoints(
-        bytes calldata data
-    ) external onlyOwner {
+    function batchMintPoints(bytes calldata data) external onlyOwner {
         address[] calldata accounts;
         uint256[] calldata values;
         uint256 relativeOffset;
@@ -115,16 +113,12 @@ contract TownsPoints is IERC20Metadata, ITownsPoints, OwnableBase, Facet {
     }
 
     /// @inheritdoc ITownsPoints
-    function getCurrentStreak(
-        address user
-    ) external view returns (uint256) {
+    function getCurrentStreak(address user) external view returns (uint256) {
         return CheckIn.getCurrentStreak(user);
     }
 
     /// @inheritdoc ITownsPoints
-    function getLastCheckIn(
-        address user
-    ) external view returns (uint256) {
+    function getLastCheckIn(address user) external view returns (uint256) {
         return CheckIn.getLastCheckIn(user);
     }
 
@@ -161,9 +155,7 @@ contract TownsPoints is IERC20Metadata, ITownsPoints, OwnableBase, Facet {
     }
 
     /// @inheritdoc IERC20
-    function balanceOf(
-        address account
-    ) external view returns (uint256) {
+    function balanceOf(address account) external view returns (uint256) {
         return TownsPointsStorage.layout().inner.balanceOf(account);
     }
 

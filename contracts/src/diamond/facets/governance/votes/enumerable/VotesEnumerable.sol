@@ -25,21 +25,21 @@ abstract contract VotesEnumerable is IVotesEnumerable {
     function getPaginatedDelegators(
         uint256 cursor,
         uint256 size
-    ) external view returns (address[] memory delegators, uint256 next) {
+    )
+        external
+        view
+        returns (address[] memory delegators, uint256 next)
+    {
         return VotesEnumerableLib.getPaginatedDelegators(cursor, size);
     }
 
     /// @inheritdoc IVotesEnumerable
-    function getDelegatorsByDelegatee(
-        address delegatee
-    ) external view returns (address[] memory) {
+    function getDelegatorsByDelegatee(address delegatee) external view returns (address[] memory) {
         return VotesEnumerableLib.getDelegatorsByDelegatee(delegatee);
     }
 
     /// @inheritdoc IVotesEnumerable
-    function getDelegationTimeForDelegator(
-        address delegator
-    ) external view returns (uint256) {
+    function getDelegationTimeForDelegator(address delegator) external view returns (uint256) {
         return VotesEnumerableLib.getDelegationTimeForDelegator(delegator);
     }
 }

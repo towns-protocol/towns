@@ -18,9 +18,7 @@ contract DeployMember is Deployer {
         return "utils/member";
     }
 
-    function __deploy(
-        address deployer
-    ) public override returns (address) {
+    function __deploy(address deployer) public override returns (address) {
         vm.startBroadcast(deployer);
         member = new Member(
             "Council Member",
@@ -34,9 +32,7 @@ contract DeployMember is Deployer {
         return address(member);
     }
 
-    function deployWithProof(
-        address deployer
-    ) public returns (address) {
+    function deployWithProof(address deployer) public returns (address) {
         address[] memory accounts = new address[](5);
         accounts[0] = address(0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266);
         accounts[1] = address(0x70997970C51812dc3A010C7d01b50e0d17dc79C8);

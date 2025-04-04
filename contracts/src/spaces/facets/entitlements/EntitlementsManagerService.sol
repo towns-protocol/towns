@@ -6,8 +6,9 @@ import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import {IEntitlement} from "contracts/src/spaces/entitlements/IEntitlement.sol";
 
 // libraries
-import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+
 import {EntitlementsManagerStorage} from "./EntitlementsManagerStorage.sol";
+import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
 // contracts
 error EntitlementsService__InvalidEntitlementAddress();
@@ -23,9 +24,7 @@ library EntitlementsManagerService {
 
     string internal constant IN_TOWN = "";
 
-    function checkEntitlement(
-        address entitlement
-    ) internal view {
+    function checkEntitlement(address entitlement) internal view {
         EntitlementsManagerStorage.Layout storage ds = EntitlementsManagerStorage.layout();
 
         if (!ds.entitlements.contains(entitlement)) {
@@ -50,9 +49,7 @@ library EntitlementsManagerService {
         });
     }
 
-    function removeEntitlement(
-        address entitlement
-    ) internal {
+    function removeEntitlement(address entitlement) internal {
         EntitlementsManagerStorage.Layout storage ds = EntitlementsManagerStorage.layout();
 
         if (!ds.entitlements.contains(entitlement)) {
@@ -67,9 +64,7 @@ library EntitlementsManagerService {
         delete ds.entitlementByAddress[entitlement];
     }
 
-    function getEntitlement(
-        address entitlement
-    )
+    function getEntitlement(address entitlement)
         internal
         view
         returns (
@@ -102,9 +97,7 @@ library EntitlementsManagerService {
     //                           Validation
     // =============================================================
 
-    function validateEntitlement(
-        address entitlement
-    ) internal view {
+    function validateEntitlement(address entitlement) internal view {
         if (entitlement == address(0)) {
             revert EntitlementsService__InvalidEntitlementAddress();
         }
@@ -126,7 +119,11 @@ library EntitlementsManagerService {
     function proxyGetEntitlementDataByRole(
         address entitlement,
         uint256 role
-    ) internal view returns (bytes memory) {
+    )
+        internal
+        view
+        returns (bytes memory)
+    {
         checkEntitlement(entitlement);
         return IEntitlement(entitlement).getEntitlementDataByRoleId(role);
     }
@@ -135,7 +132,9 @@ library EntitlementsManagerService {
         address entitlement,
         uint256 role,
         bytes memory entitlementData
-    ) internal {
+    )
+        internal
+    {
         checkEntitlement(entitlement);
         IEntitlement(entitlement).setEntitlement(role, entitlementData);
     }

@@ -32,9 +32,7 @@ interface ITownsPoints is ITownsPointsBase {
     /// @notice Batch mint points to multiple users
     /// @dev Only callable by the owner
     /// @param data The abi-encoded array of addresses and values to mint
-    function batchMintPoints(
-        bytes calldata data
-    ) external;
+    function batchMintPoints(bytes calldata data) external;
 
     /// @notice Mint points to a user
     /// @dev Only spaces can mint points
@@ -56,14 +54,10 @@ interface ITownsPoints is ITownsPointsBase {
     /// @notice Gets the current check-in streak for a user
     /// @param user The address of the user to query
     /// @return The current streak count for the user
-    function getCurrentStreak(
-        address user
-    ) external view returns (uint256);
+    function getCurrentStreak(address user) external view returns (uint256);
 
     /// @notice Gets the timestamp of the user's last check-in
     /// @param user The address of the user to query
     /// @return The timestamp of the user's last check-in, 0 if never checked in
-    function getLastCheckIn(
-        address user
-    ) external view returns (uint256);
+    function getLastCheckIn(address user) external view returns (uint256);
 }

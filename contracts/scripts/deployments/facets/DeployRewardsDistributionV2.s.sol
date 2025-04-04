@@ -50,7 +50,11 @@ contract DeployRewardsDistributionV2 is Deployer, FacetHelper {
         address stakeToken,
         address rewardToken,
         uint256 rewardDuration
-    ) public pure returns (bytes memory) {
+    )
+        public
+        pure
+        returns (bytes memory)
+    {
         return abi.encodeWithSelector(initializer(), stakeToken, rewardToken, rewardDuration);
     }
 
@@ -58,9 +62,7 @@ contract DeployRewardsDistributionV2 is Deployer, FacetHelper {
         return "facets/rewardsDistributionV2Facet";
     }
 
-    function __deploy(
-        address deployer
-    ) public override returns (address) {
+    function __deploy(address deployer) public override returns (address) {
         vm.broadcast(deployer);
         return address(new RewardsDistribution());
     }

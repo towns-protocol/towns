@@ -2,20 +2,23 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {IERC4906} from "@openzeppelin/contracts/interfaces/IERC4906.sol";
+
 import {ISpaceOwner} from "./ISpaceOwner.sol";
+import {IERC4906} from "@openzeppelin/contracts/interfaces/IERC4906.sol";
 import {IMembershipMetadata} from
     "contracts/src/spaces/facets/membership/metadata/IMembershipMetadata.sol";
 
 // libraries
 
 // contracts
-import {OwnableBase} from "@towns-protocol/diamond/src/facets/ownable/OwnableBase.sol";
-import {ERC721A} from "contracts/src/diamond/facets/token/ERC721A/ERC721A.sol";
+
 import {SpaceOwnerBase} from "./SpaceOwnerBase.sol";
-import {GuardianBase} from "contracts/src/spaces/facets/guardian/GuardianBase.sol";
-import {Votes} from "contracts/src/diamond/facets/governance/votes/Votes.sol";
+
 import {SpaceOwnerUriBase} from "./SpaceOwnerUriBase.sol";
+import {OwnableBase} from "@towns-protocol/diamond/src/facets/ownable/OwnableBase.sol";
+import {Votes} from "contracts/src/diamond/facets/governance/votes/Votes.sol";
+import {ERC721A} from "contracts/src/diamond/facets/token/ERC721A/ERC721A.sol";
+import {GuardianBase} from "contracts/src/spaces/facets/guardian/GuardianBase.sol";
 
 contract SpaceOwner is
     ISpaceOwner,
@@ -35,9 +38,7 @@ contract SpaceOwner is
     // =============================================================
 
     /// @inheritdoc ISpaceOwner
-    function setFactory(
-        address factory
-    ) external onlyOwner {
+    function setFactory(address factory) external onlyOwner {
         _setFactory(factory);
     }
 
@@ -62,23 +63,23 @@ contract SpaceOwner is
         address space,
         string memory shortDescription,
         string memory longDescription
-    ) external onlyFactory returns (uint256 tokenId) {
+    )
+        external
+        onlyFactory
+        returns (uint256 tokenId)
+    {
         tokenId = _nextTokenId();
         _mintSpace(name, uri, tokenId, space, shortDescription, longDescription);
         _mint(msg.sender, 1);
     }
 
     /// @inheritdoc ISpaceOwner
-    function getSpaceInfo(
-        address space
-    ) external view returns (Space memory) {
+    function getSpaceInfo(address space) external view returns (Space memory) {
         return _getSpace(space);
     }
 
     /// @inheritdoc ISpaceOwner
-    function getSpaceByTokenId(
-        uint256 tokenId
-    ) external view returns (address) {
+    function getSpaceByTokenId(uint256 tokenId) external view returns (address) {
         return _getSpaceByTokenId(tokenId);
     }
 
@@ -89,7 +90,9 @@ contract SpaceOwner is
         string memory uri,
         string memory shortDescription,
         string memory longDescription
-    ) external {
+    )
+        external
+    {
         _onlySpaceOwner(space);
         _updateSpace(space, name, uri, shortDescription, longDescription);
 
@@ -103,9 +106,7 @@ contract SpaceOwner is
     // =============================================================
 
     /// @inheritdoc ISpaceOwner
-    function setDefaultUri(
-        string memory uri
-    ) external onlyOwner {
+    function setDefaultUri(string memory uri) external onlyOwner {
         _setDefaultUri(uri);
     }
 
@@ -114,9 +115,7 @@ contract SpaceOwner is
         return _getDefaultUri();
     }
 
-    function tokenURI(
-        uint256 tokenId
-    ) public view virtual override returns (string memory) {
+    function tokenURI(uint256 tokenId) public view virtual override returns (string memory) {
         if (!_exists(tokenId)) revert URIQueryForNonexistentToken();
 
         return _render(tokenId);
@@ -148,7 +147,10 @@ contract SpaceOwner is
         address to,
         uint256 startTokenId,
         uint256 quantity
-    ) internal override {
+    )
+        internal
+        override
+    {
         if (from != address(0) && _guardianEnabled(from)) {
             // allow transferring handle at minting time
             revert Guardian_Enabled();
@@ -162,23 +164,23 @@ contract SpaceOwner is
         address to,
         uint256 firstTokenId,
         uint256 batchSize
-    ) internal virtual override {
+    )
+        internal
+        virtual
+        override
+    {
         _transferVotingUnits(from, to, batchSize);
         super._afterTokenTransfers(from, to, firstTokenId, batchSize);
     }
 
-    function _getVotingUnits(
-        address account
-    ) internal view virtual override returns (uint256) {
+    function _getVotingUnits(address account) internal view virtual override returns (uint256) {
         return balanceOf(account);
     }
 
     // =============================================================
     //                           Internal
     // =============================================================
-    function _onlySpaceOwner(
-        address space
-    ) internal view {
+    function _onlySpaceOwner(address space) internal view {
         if (_ownerOf(_getTokenId(space)) != msg.sender) {
             revert SpaceOwner__OnlySpaceOwnerAllowed();
         }

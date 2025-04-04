@@ -6,9 +6,10 @@ pragma solidity ^0.8.23;
 //libraries
 
 //contracts
-import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
+
 import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
 import {EIP712Facet} from "@towns-protocol/diamond/src/utils/cryptography/EIP712Facet.sol";
+import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
 
 contract DeployEIP712Facet is FacetHelper, Deployer {
     constructor() {
@@ -28,13 +29,15 @@ contract DeployEIP712Facet is FacetHelper, Deployer {
     function makeInitData(
         string memory name,
         string memory version
-    ) public pure returns (bytes memory) {
+    )
+        public
+        pure
+        returns (bytes memory)
+    {
         return abi.encodeWithSelector(initializer(), name, version);
     }
 
-    function __deploy(
-        address deployer
-    ) public override returns (address) {
+    function __deploy(address deployer) public override returns (address) {
         vm.startBroadcast(deployer);
         EIP712Facet facet = new EIP712Facet();
         vm.stopBroadcast();

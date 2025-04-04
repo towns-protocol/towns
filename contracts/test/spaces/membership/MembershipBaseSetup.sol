@@ -2,26 +2,31 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {IMembershipBase} from "contracts/src/spaces/facets/membership/IMembership.sol";
-import {IEntitlementBase} from "contracts/src/spaces/entitlements/IEntitlement.sol";
-import {IERC721ABase, IERC721A} from "contracts/src/diamond/facets/token/ERC721A/IERC721A.sol";
+
+import {IOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
+
+import {ITownsPoints, ITownsPointsBase} from "contracts/src/airdrop/points/ITownsPoints.sol";
+import {IERC721A, IERC721ABase} from "contracts/src/diamond/facets/token/ERC721A/IERC721A.sol";
 import {IArchitectBase} from "contracts/src/factory/facets/architect/IArchitect.sol";
+import {IPartnerRegistry} from "contracts/src/factory/facets/partner/IPartnerRegistry.sol";
 import {IPlatformRequirements} from
     "contracts/src/factory/facets/platform/requirements/IPlatformRequirements.sol";
-import {IOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
+import {
+    IWalletLink, IWalletLinkBase
+} from "contracts/src/factory/facets/wallet-link/IWalletLink.sol";
+import {IEntitlementBase} from "contracts/src/spaces/entitlements/IEntitlement.sol";
+import {IEntitlement} from "contracts/src/spaces/entitlements/IEntitlement.sol";
 import {
     IEntitlementsManager,
     IEntitlementsManagerBase
 } from "contracts/src/spaces/facets/entitlements/IEntitlementsManager.sol";
-import {IRoles, IRolesBase} from "contracts/src/spaces/facets/roles/IRoles.sol";
-import {IEntitlement} from "contracts/src/spaces/entitlements/IEntitlement.sol";
+import {IMembershipBase} from "contracts/src/spaces/facets/membership/IMembership.sol";
+
 import {IPrepay} from "contracts/src/spaces/facets/prepay/IPrepay.sol";
-import {
-    IWalletLink, IWalletLinkBase
-} from "contracts/src/factory/facets/wallet-link/IWalletLink.sol";
-import {IPartnerRegistry} from "contracts/src/factory/facets/partner/IPartnerRegistry.sol";
+
 import {IReferrals} from "contracts/src/spaces/facets/referrals/IReferrals.sol";
-import {ITownsPointsBase, ITownsPoints} from "contracts/src/airdrop/points/ITownsPoints.sol";
+import {IRoles, IRolesBase} from "contracts/src/spaces/facets/roles/IRoles.sol";
+
 import {ITreasury} from "contracts/src/spaces/facets/treasury/ITreasury.sol";
 
 // libraries
@@ -35,8 +40,9 @@ import {BaseSetup} from "contracts/test/spaces/BaseSetup.sol";
 import {Vm} from "forge-std/Test.sol";
 
 import {Architect} from "contracts/src/factory/facets/architect/Architect.sol";
-import {MembershipFacet} from "contracts/src/spaces/facets/membership/MembershipFacet.sol";
+
 import {CreateSpaceFacet} from "contracts/src/factory/facets/create/CreateSpace.sol";
+import {MembershipFacet} from "contracts/src/spaces/facets/membership/MembershipFacet.sol";
 
 contract MembershipBaseSetup is
     IMembershipBase,
@@ -198,9 +204,7 @@ contract MembershipBaseSetup is
         _;
     }
 
-    function _getPoints(
-        uint256 price
-    ) internal view returns (uint256) {
+    function _getPoints(uint256 price) internal view returns (uint256) {
         return ITownsPoints(riverAirdrop).getPoints(
             ITownsPointsBase.Action.JoinSpace, abi.encode(price)
         );

@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.18;
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IVotes} from "@openzeppelin/contracts/governance/utils/IVotes.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {Initializable} from "@towns-protocol/diamond/src/facets/initializable/Initializable.sol";
 
 /// @title DelegationProxy
@@ -35,9 +35,7 @@ contract DelegationProxy is Initializable {
     /// @notice Reinitializes the contract with the stake token and delegates it to the same address
     /// @dev Must be called by the factory
     /// @param stakeToken_ The address of the stake token
-    function reinitialize(
-        address stakeToken_
-    ) external payable onlyFactory reinitializer(3) {
+    function reinitialize(address stakeToken_) external payable onlyFactory reinitializer(3) {
         address currentDelegatee = IVotes(stakeToken).delegates(address(this));
         stakeToken = stakeToken_;
         IERC20(stakeToken_).approve(msg.sender, type(uint256).max);
@@ -49,9 +47,7 @@ contract DelegationProxy is Initializable {
     /// @notice Delegates the stake token to the given address
     /// @dev Must be called by the factory
     /// @param delegatee The address to delegate the stake token to
-    function redelegate(
-        address delegatee
-    ) external payable onlyFactory {
+    function redelegate(address delegatee) external payable onlyFactory {
         IVotes(stakeToken).delegate(delegatee);
     }
 }

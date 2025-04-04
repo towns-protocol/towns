@@ -28,23 +28,17 @@ interface IERC5643 is IERC5643Base {
     /// @notice Cancels the subscription of an NFT
     /// @dev Throws if `tokenId` is not a valid NFT
     /// @param tokenId The NFT to cancel the subscription for
-    function cancelSubscription(
-        uint256 tokenId
-    ) external payable;
+    function cancelSubscription(uint256 tokenId) external payable;
 
     /// @notice Gets the expiration date of a subscription
     /// @dev Throws if `tokenId` is not a valid NFT
     /// @param tokenId The NFT to get the expiration date of
     /// @return The expiration date of the subscription
-    function expiresAt(
-        uint256 tokenId
-    ) external view returns (uint64);
+    function expiresAt(uint256 tokenId) external view returns (uint64);
 
     /// @notice Determines whether a subscription can be renewed
     /// @dev Throws if `tokenId` is not a valid NFT
     /// @param tokenId The NFT to get the expiration date of
     /// @return The renewability of a the subscription
-    function isRenewable(
-        uint256 tokenId
-    ) external view returns (bool);
+    function isRenewable(uint256 tokenId) external view returns (bool);
 }

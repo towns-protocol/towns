@@ -10,8 +10,9 @@ import {IImplementationRegistry} from
 import {ImplementationRegistryStorage} from "./ImplementationRegistryStorage.sol";
 
 // contracts
-import {OwnableBase} from "@towns-protocol/diamond/src/facets/ownable/OwnableBase.sol";
+
 import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
+import {OwnableBase} from "@towns-protocol/diamond/src/facets/ownable/OwnableBase.sol";
 
 contract ImplementationRegistryFacet is IImplementationRegistry, OwnableBase, Facet {
     function __ImplementationRegistry_init() external {
@@ -19,9 +20,7 @@ contract ImplementationRegistryFacet is IImplementationRegistry, OwnableBase, Fa
     }
 
     /// @inheritdoc IImplementationRegistry
-    function addImplementation(
-        address implementation
-    ) external onlyOwner {
+    function addImplementation(address implementation) external onlyOwner {
         IMetadata metadata = IMetadata(implementation);
 
         bytes32 contractType = metadata.contractType();
@@ -54,14 +53,16 @@ contract ImplementationRegistryFacet is IImplementationRegistry, OwnableBase, Fa
     function getImplementation(
         bytes32 contractType,
         uint32 version
-    ) external view returns (address) {
+    )
+        external
+        view
+        returns (address)
+    {
         return ImplementationRegistryStorage.layout().implementation[contractType][version];
     }
 
     /// @inheritdoc IImplementationRegistry
-    function getLatestImplementation(
-        bytes32 contractType
-    ) external view returns (address) {
+    function getLatestImplementation(bytes32 contractType) external view returns (address) {
         ImplementationRegistryStorage.Layout storage ds = ImplementationRegistryStorage.layout();
         return ds.implementation[contractType][ds.currentVersion[contractType]];
     }

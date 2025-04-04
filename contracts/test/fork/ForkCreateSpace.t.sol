@@ -6,32 +6,32 @@ import {TestUtils} from "contracts/test/utils/TestUtils.sol";
 
 //interfaces
 import {IArchitectBase} from "contracts/src/factory/facets/architect/IArchitect.sol";
-import {
-    ILegacyArchitect,
-    ILegacyArchitectBase
-} from "contracts/test/mocks/legacy/IMockLegacyArchitect.sol";
-import {IMembership} from "contracts/src/spaces/facets/membership/IMembership.sol";
+
 import {IPricingModulesBase} from
     "contracts/src/factory/facets/architect/pricing/IPricingModules.sol";
 import {ICreateSpace} from "contracts/src/factory/facets/create/ICreateSpace.sol";
 import {IPlatformRequirements} from
     "contracts/src/factory/facets/platform/requirements/IPlatformRequirements.sol";
+import {IMembership} from "contracts/src/spaces/facets/membership/IMembership.sol";
+import {
+    ILegacyArchitect,
+    ILegacyArchitectBase
+} from "contracts/test/mocks/legacy/IMockLegacyArchitect.sol";
 
 //libraries
 import {FixedPointMathLib} from "solady/utils/FixedPointMathLib.sol";
 //contracts
-import {SpaceHelper} from "contracts/test/spaces/SpaceHelper.sol";
+
 import {Architect} from "contracts/src/factory/facets/architect/Architect.sol";
 import {PricingModulesFacet} from
     "contracts/src/factory/facets/architect/pricing/PricingModulesFacet.sol";
+import {SpaceHelper} from "contracts/test/spaces/SpaceHelper.sol";
 
 // debuggging
 import {console} from "forge-std/console.sol";
 
 contract ForkCreateSpace is IArchitectBase, IPricingModulesBase, TestUtils, SpaceHelper {
-    function getDynamicPricingModule(
-        address spaceFactory
-    ) internal view returns (address) {
+    function getDynamicPricingModule(address spaceFactory) internal view returns (address) {
         PricingModulesFacet pricingModules = PricingModulesFacet(spaceFactory);
         PricingModule[] memory modules = pricingModules.listPricingModules();
 

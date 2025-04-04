@@ -4,8 +4,9 @@ pragma solidity ^0.8.23;
 // interfaces
 
 // libraries
-import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+
 import {ChannelStorage} from "./ChannelStorage.sol";
+import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
 // contracts
 error ChannelService__ChannelAlreadyExists();
@@ -27,7 +28,9 @@ library ChannelService {
         bytes32 channelId,
         string memory metadata,
         uint256[] memory roleIds
-    ) internal {
+    )
+        internal
+    {
         checkChannel(channelId);
 
         ChannelStorage.Layout storage channel = ChannelStorage.layout();
@@ -45,9 +48,11 @@ library ChannelService {
         }
     }
 
-    function getChannel(
-        bytes32 channelId
-    ) internal view returns (bytes32 id, string memory metadata, bool disabled) {
+    function getChannel(bytes32 channelId)
+        internal
+        view
+        returns (bytes32 id, string memory metadata, bool disabled)
+    {
         checkChannelExists(channelId);
 
         ChannelStorage.Layout storage channel = ChannelStorage.layout();
@@ -77,9 +82,7 @@ library ChannelService {
         }
     }
 
-    function removeChannel(
-        bytes32 channelId
-    ) internal {
+    function removeChannel(bytes32 channelId) internal {
         checkChannelExists(channelId);
 
         ChannelStorage.Layout storage channel = ChannelStorage.layout();
@@ -102,9 +105,11 @@ library ChannelService {
         return channel.channelIds.values();
     }
 
-    function getChannelIdsByRole(
-        uint256 roleId
-    ) internal view returns (bytes32[] memory channelIds) {
+    function getChannelIdsByRole(uint256 roleId)
+        internal
+        view
+        returns (bytes32[] memory channelIds)
+    {
         ChannelStorage.Layout storage channel = ChannelStorage.layout();
 
         uint256 potentialChannelsLength = channel.channelIds.length();
@@ -159,9 +164,7 @@ library ChannelService {
         channel.rolesByChannelId[channelId].remove(roleId);
     }
 
-    function getRolesByChannel(
-        bytes32 channelId
-    ) internal view returns (uint256[] memory) {
+    function getRolesByChannel(bytes32 channelId) internal view returns (uint256[] memory) {
         checkChannelExists(channelId);
         ChannelStorage.Layout storage channel = ChannelStorage.layout();
         return channel.rolesByChannelId[channelId].values();
@@ -171,9 +174,7 @@ library ChannelService {
     //                        Validators
     // =============================================================
 
-    function checkChannelNotDisabled(
-        bytes32 channelId
-    ) internal view {
+    function checkChannelNotDisabled(bytes32 channelId) internal view {
         ChannelStorage.Layout storage channel = ChannelStorage.layout();
 
         if (channel.channelById[channelId].disabled) {
@@ -181,18 +182,14 @@ library ChannelService {
         }
     }
 
-    function checkChannel(
-        bytes32 channelId
-    ) internal view {
+    function checkChannel(bytes32 channelId) internal view {
         // check that channel exists
         if (ChannelStorage.layout().channelIds.contains(channelId)) {
             revert ChannelService__ChannelAlreadyExists();
         }
     }
 
-    function checkChannelExists(
-        bytes32 channelId
-    ) internal view {
+    function checkChannelExists(bytes32 channelId) internal view {
         // check that channel exists
         if (!ChannelStorage.layout().channelIds.contains(channelId)) {
             revert ChannelService__ChannelDoesNotExist();

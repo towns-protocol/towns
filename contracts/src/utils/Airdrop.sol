@@ -20,7 +20,10 @@ contract Airdrop {
         address nft,
         address[] calldata addresses,
         uint256[] calldata tokenIds
-    ) external payable {
+    )
+        external
+        payable
+    {
         assembly {
             // Check that the number of addresses matches the number of tokenIds
             if iszero(eq(tokenIds.length, addresses.length)) { revert(0, 0) }
@@ -60,7 +63,10 @@ contract Airdrop {
         address[] calldata addresses,
         uint256[] calldata amounts,
         uint256 totalAmount
-    ) external payable {
+    )
+        external
+        payable
+    {
         assembly {
             // Check that the number of addresses matches the number of amounts
             if iszero(eq(amounts.length, addresses.length)) { revert(0, 0) }
@@ -107,7 +113,10 @@ contract Airdrop {
     function airdropETH(
         address[] calldata addresses,
         uint256[] calldata amounts
-    ) external payable {
+    )
+        external
+        payable
+    {
         assembly {
             // Check that the number of addresses matches the number of amounts
             if iszero(eq(amounts.length, addresses.length)) { revert(0, 0) }

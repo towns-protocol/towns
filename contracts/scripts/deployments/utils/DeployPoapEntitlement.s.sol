@@ -10,9 +10,7 @@ contract DeployPoapEntitlement is Deployer {
         return "utils/poapEntitlement";
     }
 
-    function __deploy(
-        address deployer
-    ) public override returns (address) {
+    function __deploy(address deployer) public override returns (address) {
         vm.broadcast(deployer);
         return address(new PoapEntitlement(0x22C1f6050E56d2876009903609a2cC3fEf83B415));
     }

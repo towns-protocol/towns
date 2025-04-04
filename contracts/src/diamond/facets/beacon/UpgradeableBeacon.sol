@@ -19,16 +19,12 @@ abstract contract UpgradeableBeaconBase {
     /// `uint72(bytes9(keccak256("_UPGRADEABLE_BEACON_IMPLEMENTATION_SLOT")))`.
     uint256 internal constant _UPGRADEABLE_BEACON_IMPLEMENTATION_SLOT = 0x911c5a209f08d5ec5e;
 
-    function __UpgradeableBeacon_init_unchained(
-        address initialImplementation
-    ) internal {
+    function __UpgradeableBeacon_init_unchained(address initialImplementation) internal {
         _setImplementation(initialImplementation);
     }
 
     /// @dev Sets the implementation directly without authorization guard.
-    function _setImplementation(
-        address newImplementation
-    ) internal virtual {
+    function _setImplementation(address newImplementation) internal virtual {
         /// @solidity memory-safe-assembly
         assembly {
             newImplementation := shr(96, shl(96, newImplementation)) // Clean the upper 96 bits.
@@ -48,16 +44,12 @@ abstract contract UpgradeableBeaconBase {
 /// @author Modified from Solady
 /// (https://github.com/vectorized/solady/blob/main/src/utils/UpgradeableBeacon.sol)
 contract UpgradeableBeacon is UpgradeableBeaconBase, OwnableBase, Facet {
-    function __UpgradeableBeacon_init(
-        address initialImplementation
-    ) external onlyInitializing {
+    function __UpgradeableBeacon_init(address initialImplementation) external onlyInitializing {
         __UpgradeableBeacon_init_unchained(initialImplementation);
     }
 
     /// @dev Allows the owner to upgrade the implementation.
-    function upgradeTo(
-        address newImplementation
-    ) public virtual onlyOwner {
+    function upgradeTo(address newImplementation) public virtual onlyOwner {
         _setImplementation(newImplementation);
     }
 

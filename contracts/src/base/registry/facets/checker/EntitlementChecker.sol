@@ -6,11 +6,12 @@ import {IEntitlementChecker} from "./IEntitlementChecker.sol";
 import {IEntitlementGatedBase} from "contracts/src/spaces/facets/gated/IEntitlementGated.sol";
 
 // libraries
-import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+
 import {EntitlementCheckerStorage} from "./EntitlementCheckerStorage.sol";
+import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import {
-    NodeOperatorStorage,
-    NodeOperatorStatus
+    NodeOperatorStatus,
+    NodeOperatorStorage
 } from "contracts/src/base/registry/facets/operator/NodeOperatorStorage.sol";
 import {XChainLib} from "contracts/src/base/registry/facets/xchain/XChainLib.sol";
 
@@ -59,9 +60,7 @@ contract EntitlementChecker is IEntitlementChecker, Facet {
     // =============================================================
 
     /// @inheritdoc IEntitlementChecker
-    function registerNode(
-        address node
-    ) external onlyRegisteredApprovedOperator {
+    function registerNode(address node) external onlyRegisteredApprovedOperator {
         EntitlementCheckerStorage.Layout storage layout = EntitlementCheckerStorage.layout();
 
         if (layout.nodes.contains(node)) {
@@ -75,9 +74,7 @@ contract EntitlementChecker is IEntitlementChecker, Facet {
     }
 
     /// @inheritdoc IEntitlementChecker
-    function unregisterNode(
-        address node
-    ) external onlyNodeOperator(node, msg.sender) {
+    function unregisterNode(address node) external onlyNodeOperator(node, msg.sender) {
         EntitlementCheckerStorage.Layout storage layout = EntitlementCheckerStorage.layout();
 
         if (!layout.nodes.contains(node)) {
@@ -91,9 +88,7 @@ contract EntitlementChecker is IEntitlementChecker, Facet {
     }
 
     /// @inheritdoc IEntitlementChecker
-    function isValidNode(
-        address node
-    ) external view returns (bool) {
+    function isValidNode(address node) external view returns (bool) {
         EntitlementCheckerStorage.Layout storage layout = EntitlementCheckerStorage.layout();
         return layout.nodes.contains(node);
     }
@@ -105,9 +100,7 @@ contract EntitlementChecker is IEntitlementChecker, Facet {
     }
 
     /// @inheritdoc IEntitlementChecker
-    function getNodeAtIndex(
-        uint256 index
-    ) external view returns (address) {
+    function getNodeAtIndex(uint256 index) external view returns (address) {
         EntitlementCheckerStorage.Layout storage layout = EntitlementCheckerStorage.layout();
 
         require(index < layout.nodes.length(), "Index out of bounds");
@@ -115,9 +108,7 @@ contract EntitlementChecker is IEntitlementChecker, Facet {
     }
 
     /// @inheritdoc IEntitlementChecker
-    function getRandomNodes(
-        uint256 count
-    ) external view returns (address[] memory) {
+    function getRandomNodes(uint256 count) external view returns (address[] memory) {
         return _getRandomNodes(count);
     }
 
@@ -127,7 +118,9 @@ contract EntitlementChecker is IEntitlementChecker, Facet {
         bytes32 transactionId,
         uint256 roleId,
         address[] memory nodes
-    ) external {
+    )
+        external
+    {
         emit EntitlementCheckRequested(walletAddress, msg.sender, transactionId, roleId, nodes);
     }
 
@@ -137,7 +130,10 @@ contract EntitlementChecker is IEntitlementChecker, Facet {
         bytes32 transactionId,
         uint256 requestId,
         bytes memory extraData
-    ) external payable {
+    )
+        external
+        payable
+    {
         address space = msg.sender;
         address senderAddress = abi.decode(extraData, (address));
 
@@ -173,9 +169,7 @@ contract EntitlementChecker is IEntitlementChecker, Facet {
     }
 
     /// @inheritdoc IEntitlementChecker
-    function getNodesByOperator(
-        address operator
-    ) external view returns (address[] memory nodes) {
+    function getNodesByOperator(address operator) external view returns (address[] memory nodes) {
         EntitlementCheckerStorage.Layout storage layout = EntitlementCheckerStorage.layout();
         uint256 totalNodeCount = layout.nodes.length();
         nodes = new address[](totalNodeCount);
@@ -196,9 +190,7 @@ contract EntitlementChecker is IEntitlementChecker, Facet {
     // =============================================================
     //                           Internal
     // =============================================================
-    function _getRandomNodes(
-        uint256 count
-    ) internal view returns (address[] memory) {
+    function _getRandomNodes(uint256 count) internal view returns (address[] memory) {
         EntitlementCheckerStorage.Layout storage layout = EntitlementCheckerStorage.layout();
 
         uint256 nodeCount = layout.nodes.length();

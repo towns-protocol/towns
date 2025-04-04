@@ -9,7 +9,11 @@ contract MerkleTree {
     function constructTree(
         address[] memory members,
         uint256[] memory claimAmounts
-    ) external pure returns (bytes32 root, bytes32[][] memory tree) {
+    )
+        external
+        pure
+        returns (bytes32 root, bytes32[][] memory tree)
+    {
         require(members.length != 0 && members.length == claimAmounts.length, "invalid input");
         // Determine tree height.
         uint256 height = 0;
@@ -57,7 +61,11 @@ contract MerkleTree {
     function getProof(
         bytes32[][] memory tree,
         uint256 memberIndex
-    ) external pure returns (bytes32[] memory proof) {
+    )
+        external
+        pure
+        returns (bytes32[] memory proof)
+    {
         uint256 leafIndex = memberIndex;
         uint256 height = tree.length;
         proof = new bytes32[](height - 1);

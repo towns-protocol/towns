@@ -6,10 +6,11 @@ pragma solidity ^0.8.23;
 // libraries
 
 // contracts
-import {ManagedProxyBase} from "@towns-protocol/diamond/src/proxy/managed/ManagedProxyBase.sol";
-import {OwnableBase} from "@towns-protocol/diamond/src/facets/ownable/OwnableBase.sol";
+
 import {IntrospectionBase} from
     "@towns-protocol/diamond/src/facets/introspection/IntrospectionBase.sol";
+import {OwnableBase} from "@towns-protocol/diamond/src/facets/ownable/OwnableBase.sol";
+import {ManagedProxyBase} from "@towns-protocol/diamond/src/proxy/managed/ManagedProxyBase.sol";
 
 contract MockOwnableManagedProxy is ManagedProxyBase, OwnableBase, IntrospectionBase {
     receive() external payable {
@@ -21,9 +22,7 @@ contract MockOwnableManagedProxy is ManagedProxyBase, OwnableBase, Introspection
         _transferOwnership(msg.sender);
     }
 
-    function dangerous_addInterface(
-        bytes4 interfaceId
-    ) external onlyOwner {
+    function dangerous_addInterface(bytes4 interfaceId) external onlyOwner {
         _addInterface(interfaceId);
     }
 }

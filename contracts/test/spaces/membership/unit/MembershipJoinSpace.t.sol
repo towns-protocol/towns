@@ -6,16 +6,18 @@ import {MembershipBaseSetup} from "../MembershipBaseSetup.sol";
 
 //interfaces
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {IEntitlementGated} from "contracts/src/spaces/facets/gated/IEntitlementGated.sol";
-import {IEntitlementGatedBase} from "contracts/src/spaces/facets/gated/IEntitlementGated.sol";
+
 import {IEntitlementCheckerBase} from
     "contracts/src/base/registry/facets/checker/IEntitlementChecker.sol";
 import {IArchitectBase} from "contracts/src/factory/facets/architect/IArchitect.sol";
 import {ICreateSpace} from "contracts/src/factory/facets/create/ICreateSpace.sol";
+import {IEntitlementGated} from "contracts/src/spaces/facets/gated/IEntitlementGated.sol";
+import {IEntitlementGatedBase} from "contracts/src/spaces/facets/gated/IEntitlementGated.sol";
 
 //libraries
-import {Vm} from "forge-std/Test.sol";
+
 import {BasisPoints} from "contracts/src/utils/libraries/BasisPoints.sol";
+import {Vm} from "forge-std/Test.sol";
 
 //contracts
 import {MembershipFacet} from "contracts/src/spaces/facets/membership/MembershipFacet.sol";
@@ -246,9 +248,10 @@ contract MembershipJoinSpaceTest is
         assertEq(membershipToken.balanceOf(bob), 0);
     }
 
-    function test_fuzz_joinSpace_refundOnSuccess(
-        uint256 overPayment
-    ) external givenMembershipHasPrice {
+    function test_fuzz_joinSpace_refundOnSuccess(uint256 overPayment)
+        external
+        givenMembershipHasPrice
+    {
         overPayment = bound(overPayment, MEMBERSHIP_PRICE, 100 * MEMBERSHIP_PRICE);
         vm.deal(bob, overPayment);
 

@@ -41,9 +41,7 @@ interface IReviewBase {
 interface IReview is IReviewBase {
     function setReview(Action action, bytes calldata data) external;
 
-    function getReview(
-        address user
-    ) external view returns (ReviewStorage.Content memory);
+    function getReview(address user) external view returns (ReviewStorage.Content memory);
 
     function getAllReviews()
         external

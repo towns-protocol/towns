@@ -20,9 +20,7 @@ contract MockPricingModule is IMembershipPricing, IntrospectionFacet {
         _addInterface(type(IMembershipPricing).interfaceId);
     }
 
-    function setPrice(
-        uint256
-    ) external pure override {
+    function setPrice(uint256) external pure override {
         revert("MockPricingModule: price is calculated");
     }
 

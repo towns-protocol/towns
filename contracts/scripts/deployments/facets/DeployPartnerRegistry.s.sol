@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
 import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
+import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
 
 import {PartnerRegistry} from "contracts/src/factory/facets/partner/PartnerRegistry.sol";
 
@@ -27,9 +27,7 @@ contract DeployPartnerRegistry is FacetHelper, Deployer {
         return "facets/partnerRegistryFacet";
     }
 
-    function __deploy(
-        address deployer
-    ) public override returns (address) {
+    function __deploy(address deployer) public override returns (address) {
         vm.startBroadcast(deployer);
         PartnerRegistry partnerRegistry = new PartnerRegistry();
         vm.stopBroadcast();

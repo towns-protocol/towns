@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import {LibClone} from "solady/utils/LibClone.sol";
 import {CustomRevert} from "contracts/src/utils/libraries/CustomRevert.sol";
+import {LibClone} from "solady/utils/LibClone.sol";
 
 library Create2Utils {
     address internal constant CREATE2_FACTORY = 0x4e59b44847b379578588920cA78FbF26c0B4956C;
@@ -29,9 +29,7 @@ library Create2Utils {
         }
     }
 
-    function isContractDeployed(
-        address addr
-    ) internal view returns (bool isContract) {
+    function isContractDeployed(address addr) internal view returns (bool isContract) {
         assembly ("memory-safe") {
             isContract := gt(extcodesize(addr), 0)
         }
@@ -40,14 +38,21 @@ library Create2Utils {
     function computeCreate2Address(
         bytes32 salt,
         bytes memory bytecode
-    ) internal pure returns (address) {
+    )
+        internal
+        pure
+        returns (address)
+    {
         return LibClone.predictDeterministicAddress(keccak256(bytecode), salt, CREATE2_FACTORY);
     }
 
     function performCreate2Call(
         bytes32 salt,
         bytes memory bytecode
-    ) internal returns (address deployedAt) {
+    )
+        internal
+        returns (address deployedAt)
+    {
         bytes memory data = abi.encodePacked(salt, bytecode);
 
         assembly ("memory-safe") {

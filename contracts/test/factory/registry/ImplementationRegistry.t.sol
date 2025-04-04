@@ -10,8 +10,9 @@ import {IImplementationRegistryBase} from
 //libraries
 
 //contracts
-import {BaseSetup} from "contracts/test/spaces/BaseSetup.sol";
+
 import {MetadataFacet} from "contracts/src/diamond/facets/metadata/MetadataFacet.sol";
+import {BaseSetup} from "contracts/test/spaces/BaseSetup.sol";
 
 contract ImplementationRegistryTest is IImplementationRegistryBase, BaseSetup {
     address mockImplementation;

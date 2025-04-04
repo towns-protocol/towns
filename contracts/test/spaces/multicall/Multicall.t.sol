@@ -4,15 +4,16 @@ pragma solidity ^0.8.23;
 // utils
 
 //interfaces
-import {IChannelBase, IChannel} from "contracts/src/spaces/facets/channels/IChannel.sol";
+import {IChannel, IChannelBase} from "contracts/src/spaces/facets/channels/IChannel.sol";
 
 //libraries
 import {ChannelService__ChannelDoesNotExist} from
     "contracts/src/spaces/facets/channels/ChannelService.sol";
 
 //contracts
-import {Multicallable} from "solady/utils/Multicallable.sol";
+
 import {BaseSetup} from "../BaseSetup.sol";
+import {Multicallable} from "solady/utils/Multicallable.sol";
 
 contract MulticallTest is BaseSetup {
     function test_multicall() external {

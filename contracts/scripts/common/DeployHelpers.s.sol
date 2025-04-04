@@ -16,9 +16,7 @@ abstract contract DeployHelpers is CommonBase {
     //                      LOGGING HELPERS
     // =============================================================
 
-    function debug(
-        string memory message
-    ) internal view {
+    function debug(string memory message) internal view {
         if (DEBUG) {
             console.log(string.concat("[DEBUG]: ", message));
         }
@@ -52,9 +50,7 @@ abstract contract DeployHelpers is CommonBase {
     //                           FFI HELPERS
     // =============================================================
 
-    function ffi(
-        string memory cmd
-    ) internal returns (bytes memory results) {
+    function ffi(string memory cmd) internal returns (bytes memory results) {
         string[] memory commandInput = new string[](1);
         commandInput[0] = cmd;
         return vm.ffi(commandInput);
@@ -71,7 +67,10 @@ abstract contract DeployHelpers is CommonBase {
         string memory cmd,
         string memory arg1,
         string memory arg2
-    ) internal returns (bytes memory results) {
+    )
+        internal
+        returns (bytes memory results)
+    {
         string[] memory commandInput = new string[](3);
         commandInput[0] = cmd;
         commandInput[1] = arg1;
@@ -84,7 +83,10 @@ abstract contract DeployHelpers is CommonBase {
         string memory arg1,
         string memory arg2,
         string memory arg3
-    ) internal returns (bytes memory results) {
+    )
+        internal
+        returns (bytes memory results)
+    {
         string[] memory commandInput = new string[](4);
         commandInput[0] = cmd;
         commandInput[1] = arg1;
@@ -99,7 +101,10 @@ abstract contract DeployHelpers is CommonBase {
         string memory arg2,
         string memory arg3,
         string memory arg4
-    ) internal returns (bytes memory results) {
+    )
+        internal
+        returns (bytes memory results)
+    {
         string[] memory commandInput = new string[](5);
         commandInput[0] = cmd;
         commandInput[1] = arg1;
@@ -112,15 +117,11 @@ abstract contract DeployHelpers is CommonBase {
     // =============================================================
     //                     FILE SYSTEM HELPERS
     // =============================================================
-    function exists(
-        string memory path
-    ) internal view returns (bool) {
+    function exists(string memory path) internal view returns (bool) {
         return vm.exists(path);
     }
 
-    function createDir(
-        string memory path
-    ) internal {
+    function createDir(string memory path) internal {
         if (!exists(path)) {
             debug("creating directory: ", path);
             ffi("mkdir", "-p", path);

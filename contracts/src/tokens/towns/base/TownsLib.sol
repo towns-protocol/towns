@@ -24,9 +24,7 @@ library TownsLib {
         }
     }
 
-    function initializeRemoteToken(
-        address _remoteToken
-    ) internal {
+    function initializeRemoteToken(address _remoteToken) internal {
         Layout storage l = layout();
         l.remoteToken = _remoteToken;
     }

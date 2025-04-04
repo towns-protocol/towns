@@ -14,9 +14,7 @@ contract MockMessenger {
         return sender;
     }
 
-    function setXDomainMessageSender(
-        address sender_
-    ) external {
+    function setXDomainMessageSender(address sender_) external {
         sender = sender_;
     }
 

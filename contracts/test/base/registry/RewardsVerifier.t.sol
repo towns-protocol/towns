@@ -6,14 +6,16 @@ import {IRewardsDistributionBase} from
     "contracts/src/base/registry/facets/distribution/v2/IRewardsDistribution.sol";
 
 // libraries
-import {FixedPointMathLib} from "solady/utils/FixedPointMathLib.sol";
+
 import {StakingRewards} from "contracts/src/base/registry/facets/distribution/v2/StakingRewards.sol";
+import {FixedPointMathLib} from "solady/utils/FixedPointMathLib.sol";
 
 // contracts
-import {StdAssertions} from "forge-std/StdAssertions.sol";
-import {Towns} from "contracts/src/tokens/towns/base/Towns.sol";
+
 import {RewardsDistribution} from
     "contracts/src/base/registry/facets/distribution/v2/RewardsDistribution.sol";
+import {Towns} from "contracts/src/tokens/towns/base/Towns.sol";
+import {StdAssertions} from "forge-std/StdAssertions.sol";
 
 abstract contract RewardsVerifier is StdAssertions, IRewardsDistributionBase {
     using FixedPointMathLib for uint256;
@@ -28,7 +30,10 @@ abstract contract RewardsVerifier is StdAssertions, IRewardsDistributionBase {
         address delegatee,
         uint256 commissionRate,
         address beneficiary
-    ) internal view {
+    )
+        internal
+        view
+    {
         if (depositor != address(rewardsDistributionFacet)) {
             assertEq(
                 rewardsDistributionFacet.stakedByDepositor(depositor), amount, "stakedByDepositor"
@@ -75,7 +80,10 @@ abstract contract RewardsVerifier is StdAssertions, IRewardsDistributionBase {
         uint96 withdrawAmount,
         address operator,
         address beneficiary
-    ) internal view {
+    )
+        internal
+        view
+    {
         assertEq(rewardsDistributionFacet.stakedByDepositor(depositor), 0, "stakedByDepositor");
         assertEq(towns.balanceOf(depositor), withdrawAmount, "withdrawAmount");
 
@@ -113,7 +121,10 @@ abstract contract RewardsVerifier is StdAssertions, IRewardsDistributionBase {
         uint256 reward,
         uint256 currentReward,
         uint256 timeLapse
-    ) internal view {
+    )
+        internal
+        view
+    {
         assertEq(reward, currentReward, "reward");
         assertEq(towns.balanceOf(claimer), reward, "reward balance");
 
@@ -136,7 +147,10 @@ abstract contract RewardsVerifier is StdAssertions, IRewardsDistributionBase {
         uint256 amount,
         uint256 commissionRate,
         uint256 timeLapse
-    ) internal view {
+    )
+        internal
+        view
+    {
         StakingState memory state = rewardsDistributionFacet.stakingState();
         StakingRewards.Treasure memory spaceTreasure =
             rewardsDistributionFacet.treasureByBeneficiary(space);

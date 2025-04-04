@@ -6,9 +6,10 @@ pragma solidity ^0.8.24;
 //libraries
 
 //contracts
+
+import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
 import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
 import {TippingFacet} from "contracts/src/spaces/facets/tipping/TippingFacet.sol";
-import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
 
 contract DeployTipping is FacetHelper, Deployer {
     constructor() {
@@ -27,9 +28,7 @@ contract DeployTipping is FacetHelper, Deployer {
         return "facets/tippingFacet";
     }
 
-    function __deploy(
-        address deployer
-    ) public override returns (address) {
+    function __deploy(address deployer) public override returns (address) {
         vm.startBroadcast(deployer);
         TippingFacet tipping = new TippingFacet();
         vm.stopBroadcast();

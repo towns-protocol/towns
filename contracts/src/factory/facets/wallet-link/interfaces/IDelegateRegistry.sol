@@ -46,7 +46,10 @@ interface IDelegateRegistry {
         address to,
         address from,
         bytes32 rights
-    ) external view returns (bool);
+    )
+        external
+        view
+        returns (bool);
 
     /**
      * ----------- ENUMERATIONS -----------
@@ -57,7 +60,8 @@ interface IDelegateRegistry {
      * @param to The address to retrieve delegations for
      * @return delegations Array of Delegation structs
      */
-    function getIncomingDelegations(
-        address to
-    ) external view returns (Delegation[] memory delegations);
+    function getIncomingDelegations(address to)
+        external
+        view
+        returns (Delegation[] memory delegations);
 }

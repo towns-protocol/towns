@@ -7,9 +7,10 @@ import {IERC5643} from "./IERC5643.sol";
 // libraries
 
 // contracts
-import {ERC721ABase} from "contracts/src/diamond/facets/token/ERC721A/ERC721ABase.sol";
-import {ERC5643Base} from "contracts/src/diamond/facets/token/ERC5643/ERC5643Base.sol";
+
 import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
+import {ERC5643Base} from "contracts/src/diamond/facets/token/ERC5643/ERC5643Base.sol";
+import {ERC721ABase} from "contracts/src/diamond/facets/token/ERC721A/ERC721ABase.sol";
 
 contract ERC5643 is IERC5643, ERC5643Base, ERC721ABase, Facet {
     function __ERC5643_init() external onlyInitializing {
@@ -22,22 +23,16 @@ contract ERC5643 is IERC5643, ERC5643Base, ERC721ABase, Facet {
         _renewSubscription(tokenId, duration);
     }
 
-    function cancelSubscription(
-        uint256 tokenId
-    ) external payable virtual {
+    function cancelSubscription(uint256 tokenId) external payable virtual {
         if (!_isApprovedOrOwner(tokenId)) revert ERC5643__NotApprovedOrOwner();
         _cancelSubscription(tokenId);
     }
 
-    function expiresAt(
-        uint256 tokenId
-    ) external view returns (uint64) {
+    function expiresAt(uint256 tokenId) external view returns (uint64) {
         return _expiresAt(tokenId);
     }
 
-    function isRenewable(
-        uint256 tokenId
-    ) external view returns (bool) {
+    function isRenewable(uint256 tokenId) external view returns (bool) {
         return _isRenewable(tokenId);
     }
 
@@ -45,9 +40,7 @@ contract ERC5643 is IERC5643, ERC5643Base, ERC721ABase, Facet {
     //                           Internal
     // =============================================================
 
-    function _isApprovedOrOwner(
-        uint256 tokenId
-    ) internal view returns (bool) {
+    function _isApprovedOrOwner(uint256 tokenId) internal view returns (bool) {
         address owner = _ownerOf(tokenId);
 
         return (_msgSenderERC721A() == owner) || _isApprovedForAll(owner, _msgSenderERC721A())

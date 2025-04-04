@@ -2,23 +2,27 @@
 pragma solidity ^0.8.23;
 
 // utils
-import {TestUtils} from "contracts/test/utils/TestUtils.sol";
+
 import {EIP712Utils} from "@towns-protocol/diamond/test/facets/signature/EIP712Utils.sol";
-import {SimpleAccountFactory} from "account-abstraction/samples/SimpleAccountFactory.sol";
+
 import {SimpleAccount} from "account-abstraction/samples/SimpleAccount.sol";
+import {SimpleAccountFactory} from "account-abstraction/samples/SimpleAccountFactory.sol";
+import {TestUtils} from "contracts/test/utils/TestUtils.sol";
 
 // interfaces
-import {IArchitectBase} from "contracts/src/factory/facets/architect/IArchitect.sol";
+
+import {IEntryPoint} from "account-abstraction/interfaces/IEntryPoint.sol";
 import {IEntitlementChecker} from
     "contracts/src/base/registry/facets/checker/IEntitlementChecker.sol";
+import {IMainnetDelegation} from "contracts/src/base/registry/facets/mainnet/IMainnetDelegation.sol";
+import {INodeOperator} from "contracts/src/base/registry/facets/operator/INodeOperator.sol";
+import {IArchitectBase} from "contracts/src/factory/facets/architect/IArchitect.sol";
+
+import {ICreateSpace} from "contracts/src/factory/facets/create/ICreateSpace.sol";
 import {IImplementationRegistry} from
     "contracts/src/factory/facets/registry/IImplementationRegistry.sol";
 import {IWalletLink} from "contracts/src/factory/facets/wallet-link/IWalletLink.sol";
 import {ISpaceOwner} from "contracts/src/spaces/facets/owner/ISpaceOwner.sol";
-import {IMainnetDelegation} from "contracts/src/base/registry/facets/mainnet/IMainnetDelegation.sol";
-import {INodeOperator} from "contracts/src/base/registry/facets/operator/INodeOperator.sol";
-import {IEntryPoint} from "account-abstraction/interfaces/IEntryPoint.sol";
-import {ICreateSpace} from "contracts/src/factory/facets/create/ICreateSpace.sol";
 import {ITowns} from "contracts/src/tokens/towns/mainnet/ITowns.sol";
 
 // libraries
@@ -33,19 +37,21 @@ import {MockMessenger} from "contracts/test/mocks/MockMessenger.sol";
 
 // deployments
 import {Architect} from "contracts/src/factory/facets/architect/Architect.sol";
-import {SpaceHelper} from "contracts/test/spaces/SpaceHelper.sol";
-import {RuleEntitlement} from "contracts/src/spaces/entitlements/rule/RuleEntitlement.sol";
 
-import {SpaceOwner} from "contracts/src/spaces/facets/owner/SpaceOwner.sol";
+import {RuleEntitlement} from "contracts/src/spaces/entitlements/rule/RuleEntitlement.sol";
+import {SpaceHelper} from "contracts/test/spaces/SpaceHelper.sol";
+
 import {ISpaceDelegation} from "contracts/src/base/registry/facets/delegation/ISpaceDelegation.sol";
+import {SpaceOwner} from "contracts/src/spaces/facets/owner/SpaceOwner.sol";
 
 // deployments
-import {DeploySpaceFactory} from "contracts/scripts/deployments/diamonds/DeploySpaceFactory.s.sol";
-import {DeployTownsBase} from "contracts/scripts/deployments/utils/DeployTownsBase.s.sol";
-import {DeployProxyBatchDelegation} from
-    "contracts/scripts/deployments/utils/DeployProxyBatchDelegation.s.sol";
+
 import {DeployBaseRegistry} from "contracts/scripts/deployments/diamonds/DeployBaseRegistry.s.sol";
 import {DeployRiverAirdrop} from "contracts/scripts/deployments/diamonds/DeployRiverAirdrop.s.sol";
+import {DeploySpaceFactory} from "contracts/scripts/deployments/diamonds/DeploySpaceFactory.s.sol";
+import {DeployProxyBatchDelegation} from
+    "contracts/scripts/deployments/utils/DeployProxyBatchDelegation.s.sol";
+import {DeployTownsBase} from "contracts/scripts/deployments/utils/DeployTownsBase.s.sol";
 
 /*
  * @notice - This is the base setup to start testing the entire suite of contracts
@@ -225,7 +231,11 @@ contract BaseSetup is TestUtils, EIP712Utils, SpaceHelper {
         uint256 privateKey,
         address newWallet,
         uint256 nonce
-    ) internal view returns (bytes memory) {
+    )
+        internal
+        view
+        returns (bytes memory)
+    {
         bytes32 linkedWalletHash =
             _getLinkedWalletTypedDataHash(LINKED_WALLET_MESSAGE, newWallet, nonce);
         (uint8 v, bytes32 r, bytes32 s) =
@@ -238,7 +248,11 @@ contract BaseSetup is TestUtils, EIP712Utils, SpaceHelper {
         string memory message,
         address addr,
         uint256 nonce
-    ) internal pure returns (bytes32) {
+    )
+        internal
+        pure
+        returns (bytes32)
+    {
         // https://eips.ethereum.org/EIPS/eip-712
         // ATTENTION: "The dynamic values bytes and string are encoded as a keccak256 hash of their
         // contents."
@@ -247,9 +261,7 @@ contract BaseSetup is TestUtils, EIP712Utils, SpaceHelper {
             keccak256(abi.encode(_LINKED_WALLET_TYPEHASH, keccak256(bytes(message)), addr, nonce));
     }
 
-    function _createSimpleAccount(
-        address owner
-    ) internal returns (SimpleAccount) {
+    function _createSimpleAccount(address owner) internal returns (SimpleAccount) {
         return simpleAccountFactory.createAccount(owner, _randomUint256());
     }
 }

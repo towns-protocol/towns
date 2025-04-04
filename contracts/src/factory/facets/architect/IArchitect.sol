@@ -4,10 +4,12 @@ pragma solidity ^0.8.23;
 // interfaces
 
 // libraries
-import {IMembershipBase} from "contracts/src/spaces/facets/membership/IMembership.sol";
-import {IUserEntitlement} from "contracts/src/spaces/entitlements/user/IUserEntitlement.sol";
+
 import {IRuleEntitlement} from "contracts/src/spaces/entitlements/rule/IRuleEntitlement.sol";
 import {IRuleEntitlementV2} from "contracts/src/spaces/entitlements/rule/IRuleEntitlement.sol";
+import {IUserEntitlement} from "contracts/src/spaces/entitlements/user/IUserEntitlement.sol";
+import {IMembershipBase} from "contracts/src/spaces/facets/membership/IMembership.sol";
+
 import {ISpaceOwner} from "contracts/src/spaces/facets/owner/ISpaceOwner.sol";
 import {ISpaceProxyInitializer} from "contracts/src/spaces/facets/proxy/ISpaceProxyInitializer.sol";
 
@@ -114,13 +116,9 @@ interface IArchitect is IArchitectBase {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           Registry                               */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-    function getSpaceByTokenId(
-        uint256 tokenId
-    ) external view returns (address space);
+    function getSpaceByTokenId(uint256 tokenId) external view returns (address space);
 
-    function getTokenIdBySpace(
-        address space
-    ) external view returns (uint256);
+    function getTokenIdBySpace(address space) external view returns (uint256);
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           Implementations                               */
@@ -131,7 +129,8 @@ interface IArchitect is IArchitectBase {
         IUserEntitlement userEntitlementImplementation,
         IRuleEntitlementV2 ruleEntitlementImplementation,
         IRuleEntitlement legacyRuleEntitlement
-    ) external;
+    )
+        external;
 
     function getSpaceArchitectImplementations()
         external
@@ -153,7 +152,5 @@ interface IArchitect is IArchitectBase {
     /// @notice Sets a new proxy initializer
     /// @param proxyInitializer The address of the new ISpaceProxyInitializer contract to be set
     /// @dev This function should only be callable by the contract owner or authorized roles
-    function setProxyInitializer(
-        ISpaceProxyInitializer proxyInitializer
-    ) external;
+    function setProxyInitializer(ISpaceProxyInitializer proxyInitializer) external;
 }

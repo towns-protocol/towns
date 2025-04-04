@@ -10,7 +10,7 @@ import {IEntitlementBase} from "contracts/src/spaces/entitlements/IEntitlement.s
 //libraries
 
 //contracts
-import {PoapEntitlement, IPOAP} from "contracts/src/spaces/entitlements/poap/PoapEntitlement.sol";
+import {IPOAP, PoapEntitlement} from "contracts/src/spaces/entitlements/poap/PoapEntitlement.sol";
 
 contract PoapEntitlementTest is TestUtils, IEntitlementBase {
     PoapEntitlement internal poapEntitlement;
@@ -28,16 +28,18 @@ contract PoapEntitlementTest is TestUtils, IEntitlementBase {
 }
 
 contract MockPoap is IPOAP {
-    function balanceOf(
-        address
-    ) external pure returns (uint256) {
+    function balanceOf(address) external pure returns (uint256) {
         return 1;
     }
 
     function tokenDetailsOfOwnerByIndex(
         address,
         uint256
-    ) external pure returns (uint256 eventId, uint256 tokenId) {
+    )
+        external
+        pure
+        returns (uint256 eventId, uint256 tokenId)
+    {
         return (28, 1);
     }
 }

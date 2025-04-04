@@ -2,8 +2,9 @@
 pragma solidity ^0.8.24;
 
 // interfaces
-import {IDrop} from "contracts/src/utils/interfaces/IDrop.sol";
+
 import {MerkleProof} from "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
+import {IDrop} from "contracts/src/utils/interfaces/IDrop.sol";
 
 // libraries
 
@@ -21,7 +22,12 @@ contract Drop is IDrop {
         uint256 _pricePerToken,
         AllowlistProof calldata _allowlistProof,
         bytes memory _data
-    ) external payable virtual override {
+    )
+        external
+        payable
+        virtual
+        override
+    {
         // call hook
         _beforeClaim(_receiver, _quantity, _currency, _pricePerToken, _allowlistProof, _data);
 
@@ -59,7 +65,11 @@ contract Drop is IDrop {
     function setClaimConditions(
         ClaimCondition[] calldata _claimConditions,
         bool _resetEligibility
-    ) external virtual override {
+    )
+        external
+        virtual
+        override
+    {
         // check if can set claim conditions
         if (!_canSetClaimConditions()) {
             revert("Drop: cannot set claim conditions");
@@ -126,7 +136,11 @@ contract Drop is IDrop {
         address _currency,
         uint256 _pricePerToken,
         AllowlistProof calldata _allowlistProof
-    ) public view returns (bool isOverride) {
+    )
+        public
+        view
+        returns (bool isOverride)
+    {
         ClaimCondition memory condition = claimCondition.conditions[_conditionId];
 
         uint256 claimLimit = condition.limitPerWallet;
@@ -205,9 +219,11 @@ contract Drop is IDrop {
     }
 
     /// @dev Returns the claim condition at a given uid.
-    function getClaimConditionById(
-        uint256 _conditionId
-    ) external view returns (ClaimCondition memory) {
+    function getClaimConditionById(uint256 _conditionId)
+        external
+        view
+        returns (ClaimCondition memory)
+    {
         return claimCondition.conditions[_conditionId];
     }
 
@@ -215,7 +231,11 @@ contract Drop is IDrop {
     function getSupplyClaimedByWallet(
         uint256 _conditionId,
         address _claimer
-    ) external view returns (uint256) {
+    )
+        external
+        view
+        returns (uint256)
+    {
         return claimCondition.supplyClaimedByWallet[_conditionId][_claimer];
     }
 
@@ -234,7 +254,10 @@ contract Drop is IDrop {
         uint256 _pricePerToken,
         AllowlistProof calldata _allowlistProof,
         bytes memory _data
-    ) internal virtual {}
+    )
+        internal
+        virtual
+    {}
 
     /// @dev Hook to be called after a claim is made
     function _afterClaim(
@@ -244,7 +267,10 @@ contract Drop is IDrop {
         uint256 _pricePerToken,
         AllowlistProof calldata _allowlistProof,
         bytes memory _data
-    ) internal virtual {}
+    )
+        internal
+        virtual
+    {}
 
     /// @dev Collects and distributes the primary sale of a token being claimed
     function _collectPriceOnClaim(
@@ -252,13 +278,20 @@ contract Drop is IDrop {
         uint256 _quantityToClaim,
         address _currency,
         uint256 _pricePerToken
-    ) internal virtual {}
+    )
+        internal
+        virtual
+    {}
 
     /// @dev Transfers the tokens being claimed.
     function _transferTokensOnClaim(
         address _to,
         uint256 _quantifyBeingClaimed
-    ) internal virtual returns (uint256 startTokenId) {}
+    )
+        internal
+        virtual
+        returns (uint256 startTokenId)
+    {}
 
     /// @dev Determine what wallet can update the claim conditions
     function _canSetClaimConditions() internal view virtual returns (bool) {}

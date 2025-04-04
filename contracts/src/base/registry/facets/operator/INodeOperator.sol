@@ -43,26 +43,20 @@ interface INodeOperator is INodeOperatorBase {
     /*
     * @notice  Registers an operator.
     */
-    function registerOperator(
-        address claimer
-    ) external;
+    function registerOperator(address claimer) external;
 
     /*
     * @notice  Returns whether an operator is registered.
     * @param   operator Address of the operator.
     */
-    function isOperator(
-        address operator
-    ) external view returns (bool);
+    function isOperator(address operator) external view returns (bool);
 
     /*
     * @notice  Returns the status of an operator.
     * @param   operator Address of the operator.
     * @return  The status of the operator.
     */
-    function getOperatorStatus(
-        address operator
-    ) external view returns (NodeOperatorStatus);
+    function getOperatorStatus(address operator) external view returns (NodeOperatorStatus);
 
     /*
     * @notice  Sets the status of an operator.
@@ -75,9 +69,7 @@ interface INodeOperator is INodeOperatorBase {
     // =============================================================
     function setClaimAddressForOperator(address claimer, address operator) external;
 
-    function getClaimAddressForOperator(
-        address operator
-    ) external view returns (address);
+    function getClaimAddressForOperator(address operator) external view returns (address);
 
     function getOperators() external view returns (address[] memory);
 
@@ -89,16 +81,12 @@ interface INodeOperator is INodeOperatorBase {
     * @param   operator Address of the operator.
     * @param   commission The new commission rate.
     */
-    function setCommissionRate(
-        uint256 commission
-    ) external;
+    function setCommissionRate(uint256 commission) external;
 
     /*
     * @notice  Returns the commission rate of an operator.
     * @param   operator Address of the operator.
     * @return  The commission rate of the operator.
     */
-    function getCommissionRate(
-        address operator
-    ) external view returns (uint256);
+    function getCommissionRate(address operator) external view returns (uint256);
 }

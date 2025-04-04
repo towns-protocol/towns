@@ -18,9 +18,7 @@ contract MembershipJoinSpaceWithReferralTest is
     IPartnerRegistryBase,
     IReferralsBase
 {
-    modifier givenValidReferral(
-        ReferralTypes memory referral
-    ) {
+    modifier givenValidReferral(ReferralTypes memory referral) {
         vm.assume(referral.partner != address(0));
         vm.assume(referral.userReferral != address(0));
         vm.assume(referral.partner != referral.userReferral);
@@ -28,9 +26,7 @@ contract MembershipJoinSpaceWithReferralTest is
         _;
     }
 
-    modifier givenPartnerIsRegistered(
-        Partner memory partner
-    ) {
+    modifier givenPartnerIsRegistered(Partner memory partner) {
         vm.assume(partner.account != address(0));
         vm.assume(partner.recipient != address(0));
         partner.active = true;
@@ -45,9 +41,10 @@ contract MembershipJoinSpaceWithReferralTest is
         _;
     }
 
-    function test_joinSpaceWithReferral(
-        ReferralTypes memory referral
-    ) external givenValidReferral(referral) {
+    function test_joinSpaceWithReferral(ReferralTypes memory referral)
+        external
+        givenValidReferral(referral)
+    {
         vm.assume(alice != referral.userReferral);
 
         vm.startPrank(alice);
@@ -74,9 +71,7 @@ contract MembershipJoinSpaceWithReferralTest is
         assertEq(address(membership).balance, MEMBERSHIP_PRICE - protocolFee);
     }
 
-    function test_revertWhen_joinSpaceWithReferral_partnerReferral(
-        Partner memory partner
-    )
+    function test_revertWhen_joinSpaceWithReferral_partnerReferral(Partner memory partner)
         external
         givenMembershipHasPrice
         givenPartnerIsRegistered(partner)
@@ -167,14 +162,18 @@ contract MembershipJoinSpaceWithReferralTest is
 
     function test_revertWhen_joinSpaceWithReferral_invalidReceiverAddress(
         ReferralTypes memory referral
-    ) external givenValidReferral(referral) {
+    )
+        external
+        givenValidReferral(referral)
+    {
         vm.expectRevert(Membership__InvalidAddress.selector);
         membership.joinSpaceWithReferral(address(0), referral);
     }
 
-    function test_revertWhen_joinSpaceWithReferral_maxSupplyReached(
-        ReferralTypes memory referral
-    ) external givenValidReferral(referral) {
+    function test_revertWhen_joinSpaceWithReferral_maxSupplyReached(ReferralTypes memory referral)
+        external
+        givenValidReferral(referral)
+    {
         vm.prank(founder);
         membership.setMembershipLimit(1);
 
@@ -184,7 +183,11 @@ contract MembershipJoinSpaceWithReferralTest is
 
     function test_revertWhen_joinSpaceWithReferral_insufficientPayment(
         ReferralTypes memory referral
-    ) external givenValidReferral(referral) givenMembershipHasPrice {
+    )
+        external
+        givenValidReferral(referral)
+        givenMembershipHasPrice
+    {
         vm.deal(alice, MEMBERSHIP_PRICE - 1);
         vm.prank(alice);
         vm.expectRevert(Membership__InsufficientPayment.selector);

@@ -6,8 +6,9 @@ pragma solidity ^0.8.0;
 //libraries
 
 //contracts
-import {Script} from "forge-std/Script.sol";
+
 import {DeployBase} from "./DeployBase.s.sol";
+import {Script} from "forge-std/Script.sol";
 
 abstract contract Interaction is Script, DeployBase {
     // override this with the actual deployment logic, no need to worry about:
@@ -15,9 +16,7 @@ abstract contract Interaction is Script, DeployBase {
     // - loading private keys
     // - saving deployments
     // - logging
-    function __interact(
-        address deployer
-    ) internal virtual;
+    function __interact(address deployer) internal virtual;
 
     // will first try to load existing deployments from `deployments/<network>/<contract>.json`
     // if OVERRIDE_DEPLOYMENTS is set or if no deployment is found:

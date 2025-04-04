@@ -2,7 +2,7 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {IERC721ABase, ERC721A__IERC721ReceiverUpgradeable} from "./IERC721A.sol";
+import {ERC721A__IERC721ReceiverUpgradeable, IERC721ABase} from "./IERC721A.sol";
 
 // libraries
 import {ERC721AStorage} from "./ERC721AStorage.sol";
@@ -81,9 +81,7 @@ abstract contract ERC721ABase is IERC721ABase {
         }
     }
 
-    function _balanceOf(
-        address owner
-    ) internal view returns (uint256) {
+    function _balanceOf(address owner) internal view returns (uint256) {
         if (owner == address(0)) revert BalanceQueryForZeroAddress();
         return ERC721AStorage.layout()._packedAddressData[owner] & _BITMASK_ADDRESS_DATA_ENTRY;
     }
@@ -132,9 +130,7 @@ abstract contract ERC721ABase is IERC721ABase {
     /**
      * Returns the number of tokens minted by `owner`.
      */
-    function _numberMinted(
-        address owner
-    ) internal view returns (uint256) {
+    function _numberMinted(address owner) internal view returns (uint256) {
         return (ERC721AStorage.layout()._packedAddressData[owner] >> _BITPOS_NUMBER_MINTED)
             & _BITMASK_ADDRESS_DATA_ENTRY;
     }
@@ -142,9 +138,7 @@ abstract contract ERC721ABase is IERC721ABase {
     /**
      * Returns the number of tokens burned by or on behalf of `owner`.
      */
-    function _numberBurned(
-        address owner
-    ) internal view returns (uint256) {
+    function _numberBurned(address owner) internal view returns (uint256) {
         return (ERC721AStorage.layout()._packedAddressData[owner] >> _BITPOS_NUMBER_BURNED)
             & _BITMASK_ADDRESS_DATA_ENTRY;
     }
@@ -152,9 +146,7 @@ abstract contract ERC721ABase is IERC721ABase {
     /**
      * Returns the auxiliary data for `owner`. (e.g. number of whitelist mint slots used).
      */
-    function _getAux(
-        address owner
-    ) internal view returns (uint64) {
+    function _getAux(address owner) internal view returns (uint64) {
         return uint64(ERC721AStorage.layout()._packedAddressData[owner] >> _BITPOS_AUX);
     }
 
@@ -190,27 +182,21 @@ abstract contract ERC721ABase is IERC721ABase {
      * @dev Gas spent here starts off proportional to the maximum mint batch size.
      * It gradually moves to O(1) as tokens get transferred around over time.
      */
-    function _ownershipOf(
-        uint256 tokenId
-    ) internal view virtual returns (TokenOwnership memory) {
+    function _ownershipOf(uint256 tokenId) internal view virtual returns (TokenOwnership memory) {
         return _unpackedOwnership(_packedOwnershipOf(tokenId));
     }
 
     /**
      * @dev Returns the unpacked `TokenOwnership` struct at `index`.
      */
-    function _ownershipAt(
-        uint256 index
-    ) internal view virtual returns (TokenOwnership memory) {
+    function _ownershipAt(uint256 index) internal view virtual returns (TokenOwnership memory) {
         return _unpackedOwnership(ERC721AStorage.layout()._packedOwnerships[index]);
     }
 
     /**
      * @dev Initializes the ownership slot minted at `index` for efficiency purposes.
      */
-    function _initializeOwnershipAt(
-        uint256 index
-    ) internal virtual {
+    function _initializeOwnershipAt(uint256 index) internal virtual {
         if (ERC721AStorage.layout()._packedOwnerships[index] == 0) {
             ERC721AStorage.layout()._packedOwnerships[index] = _packedOwnershipOf(index);
         }
@@ -219,9 +205,7 @@ abstract contract ERC721ABase is IERC721ABase {
     /**
      * Returns the packed ownership data of `tokenId`.
      */
-    function _packedOwnershipOf(
-        uint256 tokenId
-    ) internal view returns (uint256 packed) {
+    function _packedOwnershipOf(uint256 tokenId) internal view returns (uint256 packed) {
         if (_startTokenId() <= tokenId) {
             ERC721AStorage.Layout storage ds = ERC721AStorage.layout();
 
@@ -262,9 +246,11 @@ abstract contract ERC721ABase is IERC721ABase {
     /**
      * @dev Returns the unpacked `TokenOwnership` struct from `packed`.
      */
-    function _unpackedOwnership(
-        uint256 packed
-    ) internal pure returns (TokenOwnership memory ownership) {
+    function _unpackedOwnership(uint256 packed)
+        internal
+        pure
+        returns (TokenOwnership memory ownership)
+    {
         ownership.addr = address(uint160(packed));
         ownership.startTimestamp = uint64(packed >> _BITPOS_START_TIMESTAMP);
         ownership.burned = packed & _BITMASK_BURNED != 0;
@@ -277,7 +263,11 @@ abstract contract ERC721ABase is IERC721ABase {
     function _packOwnershipData(
         address owner,
         uint256 flags
-    ) internal view returns (uint256 result) {
+    )
+        internal
+        view
+        returns (uint256 result)
+    {
         assembly {
             // Mask `owner` to the lower 160 bits, in case the upper bits somehow aren't clean.
             owner := and(owner, _BITMASK_ADDRESS)
@@ -289,9 +279,7 @@ abstract contract ERC721ABase is IERC721ABase {
     /**
      * @dev Returns the `nextInitialized` flag set if `quantity` equals 1.
      */
-    function _nextInitializedFlag(
-        uint256 quantity
-    ) internal pure returns (uint256 result) {
+    function _nextInitializedFlag(uint256 quantity) internal pure returns (uint256 result) {
         // For branchless setting of the `nextInitialized` flag.
         assembly {
             // `(quantity == 1) << _BITPOS_NEXT_INITIALIZED`.
@@ -311,9 +299,7 @@ abstract contract ERC721ABase is IERC721ABase {
      *
      * Tokens start existing when they are minted. See {_mint}.
      */
-    function _exists(
-        uint256 tokenId
-    ) internal view virtual returns (bool) {
+    function _exists(uint256 tokenId) internal view virtual returns (bool) {
         return _startTokenId() <= tokenId && tokenId < ERC721AStorage.layout()._currentIndex // If
             // within bounds,
             && ERC721AStorage.layout()._packedOwnerships[tokenId] & _BITMASK_BURNED == 0; // and not
@@ -327,7 +313,11 @@ abstract contract ERC721ABase is IERC721ABase {
         address approvedAddress,
         address owner,
         address msgSender
-    ) internal pure returns (bool result) {
+    )
+        internal
+        pure
+        returns (bool result)
+    {
         assembly {
             // Mask `owner` to the lower 160 bits, in case the upper bits somehow aren't clean.
             owner := and(owner, _BITMASK_ADDRESS)
@@ -341,9 +331,11 @@ abstract contract ERC721ABase is IERC721ABase {
     /**
      * @dev Returns the storage slot and value for the approved address of `tokenId`.
      */
-    function _getApprovedSlotAndAddress(
-        uint256 tokenId
-    ) internal view returns (uint256 approvedAddressSlot, address approvedAddress) {
+    function _getApprovedSlotAndAddress(uint256 tokenId)
+        internal
+        view
+        returns (uint256 approvedAddressSlot, address approvedAddress)
+    {
         TokenApprovalRef storage tokenApproval = ERC721AStorage.layout()._tokenApprovals[tokenId];
 
         // The following is equivalent to `approvedAddress = _tokenApprovals[tokenId].value`.
@@ -378,7 +370,10 @@ abstract contract ERC721ABase is IERC721ABase {
         address to,
         uint256 startTokenId,
         uint256 quantity
-    ) internal virtual {}
+    )
+        internal
+        virtual
+    {}
 
     /**
      * @dev Hook that is called after a set of serially-ordered token IDs
@@ -401,7 +396,10 @@ abstract contract ERC721ABase is IERC721ABase {
         address to,
         uint256 startTokenId,
         uint256 quantity
-    ) internal virtual {}
+    )
+        internal
+        virtual
+    {}
 
     /**
      * @dev Private function to invoke {IERC721Receiver-onERC721Received} on a target contract.
@@ -418,7 +416,10 @@ abstract contract ERC721ABase is IERC721ABase {
         address to,
         uint256 tokenId,
         bytes memory _data
-    ) internal returns (bool) {
+    )
+        internal
+        returns (bool)
+    {
         try ERC721A__IERC721ReceiverUpgradeable(to).onERC721Received(
             _msgSenderERC721A(), from, tokenId, _data
         ) returns (bytes4 retval) {
@@ -610,9 +611,7 @@ abstract contract ERC721ABase is IERC721ABase {
     // =============================================================
     //                       APPROVAL OPERATIONS
     // =============================================================
-    function _ownerOf(
-        uint256 tokenId
-    ) internal view virtual returns (address) {
+    function _ownerOf(uint256 tokenId) internal view virtual returns (address) {
         return address(uint160(_packedOwnershipOf(tokenId)));
     }
 
@@ -624,13 +623,16 @@ abstract contract ERC721ABase is IERC721ABase {
     function _isApprovedForAll(
         address owner,
         address operator
-    ) internal view virtual returns (bool) {
+    )
+        internal
+        view
+        virtual
+        returns (bool)
+    {
         return ERC721AStorage.layout()._operatorApprovals[owner][operator];
     }
 
-    function _getApproved(
-        uint256 tokenId
-    ) internal view virtual returns (address) {
+    function _getApproved(uint256 tokenId) internal view virtual returns (address) {
         if (!_exists(tokenId)) revert ApprovalQueryForNonexistentToken();
 
         return ERC721AStorage.layout()._tokenApprovals[tokenId].value;
@@ -678,9 +680,7 @@ abstract contract ERC721ABase is IERC721ABase {
     /**
      * @dev Equivalent to `_burn(tokenId, false)`.
      */
-    function _burn(
-        uint256 tokenId
-    ) internal virtual {
+    function _burn(uint256 tokenId) internal virtual {
         _burn(tokenId, false);
     }
 
@@ -806,7 +806,12 @@ abstract contract ERC721ABase is IERC721ABase {
         address from,
         address to,
         uint24 previousExtraData
-    ) internal view virtual returns (uint24) {}
+    )
+        internal
+        view
+        virtual
+        returns (uint24)
+    {}
 
     /**
      * @dev Returns the next extra data for the packed ownership data.
@@ -816,7 +821,11 @@ abstract contract ERC721ABase is IERC721ABase {
         address from,
         address to,
         uint256 prevOwnershipPacked
-    ) internal view returns (uint256) {
+    )
+        internal
+        view
+        returns (uint256)
+    {
         uint24 extraData = uint24(prevOwnershipPacked >> _BITPOS_EXTRA_DATA);
         return uint256(_extraData(from, to, extraData)) << _BITPOS_EXTRA_DATA;
     }
@@ -837,9 +846,7 @@ abstract contract ERC721ABase is IERC721ABase {
     /**
      * @dev Converts a uint256 to its ASCII string decimal representation.
      */
-    function _toString(
-        uint256 value
-    ) internal pure virtual returns (string memory str) {
+    function _toString(uint256 value) internal pure virtual returns (string memory str) {
         assembly {
             // The maximum value of a uint256 contains 78 digits (1 byte per digit), but
             // we allocate 0xa0 bytes to keep the free memory pointer 32-byte word aligned.

@@ -3,13 +3,14 @@ pragma solidity ^0.8.23;
 
 // interfaces
 import {IOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
-import {IERC721ABase} from "contracts/src/diamond/facets/token/ERC721A/IERC721A.sol";
+
+import {ISpaceDelegationBase} from
+    "contracts/src/base/registry/facets/delegation/ISpaceDelegation.sol";
 import {
     INodeOperator,
     INodeOperatorBase
 } from "contracts/src/base/registry/facets/operator/INodeOperator.sol";
-import {ISpaceDelegationBase} from
-    "contracts/src/base/registry/facets/delegation/ISpaceDelegation.sol";
+import {IERC721ABase} from "contracts/src/diamond/facets/token/ERC721A/IERC721A.sol";
 
 // libraries
 
@@ -18,12 +19,13 @@ import {NodeOperatorStatus} from
     "contracts/src/base/registry/facets/operator/NodeOperatorStorage.sol";
 
 // contracts
-import {BaseSetup} from "contracts/test/spaces/BaseSetup.sol";
-import {OwnableFacet} from "@towns-protocol/diamond/src/facets/ownable/OwnableFacet.sol";
+
 import {IntrospectionFacet} from
     "@towns-protocol/diamond/src/facets/introspection/IntrospectionFacet.sol";
+import {OwnableFacet} from "@towns-protocol/diamond/src/facets/ownable/OwnableFacet.sol";
 import {ERC721A} from "contracts/src/diamond/facets/token/ERC721A/ERC721A.sol";
 import {Towns} from "contracts/src/tokens/towns/base/Towns.sol";
+import {BaseSetup} from "contracts/test/spaces/BaseSetup.sol";
 
 contract NodeOperatorFacetTest is
     BaseSetup,
@@ -59,9 +61,7 @@ contract NodeOperatorFacetTest is
     // =============================================================
     //                           registerOperator
     // =============================================================
-    modifier givenOperatorIsRegistered(
-        address _operator
-    ) {
+    modifier givenOperatorIsRegistered(address _operator) {
         vm.assume(_operator != address(0));
         vm.assume(_operator != ZERO_SENTINEL);
         vm.assume(!nodeOperator.isOperator(_operator));
@@ -74,24 +74,28 @@ contract NodeOperatorFacetTest is
         _;
     }
 
-    function test_revertWhen_registerOperatorWithAlreadyRegisteredOperator(
-        address randomOperator
-    ) public givenOperatorIsRegistered(randomOperator) {
+    function test_revertWhen_registerOperatorWithAlreadyRegisteredOperator(address randomOperator)
+        public
+        givenOperatorIsRegistered(randomOperator)
+    {
         vm.expectRevert(NodeOperator__AlreadyRegistered.selector);
         vm.prank(randomOperator);
         nodeOperator.registerOperator(randomOperator);
     }
 
-    function test_registerOperatorWithValidAddress(
-        address randomOperator
-    ) public givenOperatorIsRegistered(randomOperator) {
+    function test_registerOperatorWithValidAddress(address randomOperator)
+        public
+        givenOperatorIsRegistered(randomOperator)
+    {
         assertTrue(nodeOperator.getOperatorStatus(randomOperator) == NodeOperatorStatus.Standby);
     }
 
     function test_getOperatorsAfterRegisterOperator(
         address randomOperator1,
         address randomOperator2
-    ) public {
+    )
+        public
+    {
         vm.assume(randomOperator1 != address(0));
         vm.assume(randomOperator2 != address(0));
         vm.assume(randomOperator1 != randomOperator2);
@@ -115,17 +119,16 @@ contract NodeOperatorFacetTest is
     // =============================================================
     //                           isOperator
     // =============================================================
-    function test_revertWhen_isOperatorWithInvalidOperator(
-        address randomOperator
-    ) external view {
+    function test_revertWhen_isOperatorWithInvalidOperator(address randomOperator) external view {
         vm.assume(randomOperator != address(0));
         vm.assume(nodeOperator.isOperator(randomOperator) == false);
         assertFalse(nodeOperator.isOperator(randomOperator));
     }
 
-    function test_isOperatorWithValidOperator(
-        address randomOperator
-    ) public givenOperatorIsRegistered(randomOperator) {
+    function test_isOperatorWithValidOperator(address randomOperator)
+        public
+        givenOperatorIsRegistered(randomOperator)
+    {
         assertTrue(nodeOperator.isOperator(randomOperator));
     }
 
@@ -133,9 +136,10 @@ contract NodeOperatorFacetTest is
     //                       setOperatorStatus
     // =============================================================
 
-    function test_revertWhen_setOperatorStatusIsCalledByNonOwner(
-        address randomOperator
-    ) public givenOperatorIsRegistered(randomOperator) {
+    function test_revertWhen_setOperatorStatusIsCalledByNonOwner(address randomOperator)
+        public
+        givenOperatorIsRegistered(randomOperator)
+    {
         address randomOwner = _randomAddress();
 
         vm.prank(randomOwner);
@@ -156,24 +160,29 @@ contract NodeOperatorFacetTest is
         nodeOperator.setOperatorStatus(address(0), NodeOperatorStatus.Approved);
     }
 
-    function test_revert_setOperatorStatus_withNotRegistered(
-        address notRegisteredOperator
-    ) public whenCalledByDeployer {
+    function test_revert_setOperatorStatus_withNotRegistered(address notRegisteredOperator)
+        public
+        whenCalledByDeployer
+    {
         vm.assume(notRegisteredOperator != address(0));
         vm.expectRevert(NodeOperator__NotRegistered.selector);
         nodeOperator.setOperatorStatus(notRegisteredOperator, NodeOperatorStatus.Approved);
     }
 
-    function test_revertWhen_setOperatorStatusWithStatusNotChanged(
-        address randomOperator
-    ) public givenOperatorIsRegistered(randomOperator) whenCalledByDeployer {
+    function test_revertWhen_setOperatorStatusWithStatusNotChanged(address randomOperator)
+        public
+        givenOperatorIsRegistered(randomOperator)
+        whenCalledByDeployer
+    {
         vm.expectRevert(NodeOperator__StatusNotChanged.selector);
         nodeOperator.setOperatorStatus(randomOperator, NodeOperatorStatus.Standby);
     }
 
-    function test_revertWhen_setOperatorStatusFromStandbyToExiting(
-        address randomOperator
-    ) public givenOperatorIsRegistered(randomOperator) whenCalledByDeployer {
+    function test_revertWhen_setOperatorStatusFromStandbyToExiting(address randomOperator)
+        public
+        givenOperatorIsRegistered(randomOperator)
+        whenCalledByDeployer
+    {
         vm.expectRevert(NodeOperator__InvalidStatusTransition.selector);
         nodeOperator.setOperatorStatus(randomOperator, NodeOperatorStatus.Exiting);
     }
@@ -328,16 +337,15 @@ contract NodeOperatorFacetTest is
     //                           getOperatorStatus
     // =============================================================
 
-    function test_getOperatorStatus_operatorNotRegistered(
-        address randomOperator
-    ) public view {
+    function test_getOperatorStatus_operatorNotRegistered(address randomOperator) public view {
         vm.assume(!nodeOperator.isOperator(randomOperator));
         assertTrue(nodeOperator.getOperatorStatus(randomOperator) == NodeOperatorStatus.Exiting);
     }
 
-    function test_getOperatorStatus_registeredOperator(
-        address randomOperator
-    ) public givenOperatorIsRegistered(randomOperator) {
+    function test_getOperatorStatus_registeredOperator(address randomOperator)
+        public
+        givenOperatorIsRegistered(randomOperator)
+    {
         assertTrue(nodeOperator.getOperatorStatus(randomOperator) == NodeOperatorStatus.Standby);
     }
 
@@ -377,7 +385,9 @@ contract NodeOperatorFacetTest is
     function test_revertWhen_setClaimAddressIsCalledByInvalidOperator(
         address randomOperator,
         address randomClaimer
-    ) public {
+    )
+        public
+    {
         vm.expectRevert(NodeOperator__NotClaimer.selector);
         vm.prank(randomClaimer);
         nodeOperator.setClaimAddressForOperator(randomClaimer, randomOperator);
@@ -400,7 +410,10 @@ contract NodeOperatorFacetTest is
     function test_setCommissionRate(
         address randomOperator,
         uint256 rate
-    ) external givenOperatorIsRegistered(randomOperator) {
+    )
+        external
+        givenOperatorIsRegistered(randomOperator)
+    {
         rate = bound(rate, 0, 10_000);
 
         vm.prank(randomOperator);
@@ -414,7 +427,9 @@ contract NodeOperatorFacetTest is
     function test_revertWhen_setCommissionRateIsCalledByInvalidOperator(
         address randomOperator,
         uint256 rate
-    ) external {
+    )
+        external
+    {
         vm.assume(randomOperator != address(0));
         vm.assume(!nodeOperator.isOperator(randomOperator));
         rate = bound(rate, 0, 10_000);
@@ -498,9 +513,10 @@ contract NodeOperatorFacetTest is
     // =============================================================
     //                        Non-Transferable
     // =============================================================
-    function test_revertWhen_transferIsCalled(
-        address randomOperator
-    ) public givenOperatorIsRegistered(randomOperator) {
+    function test_revertWhen_transferIsCalled(address randomOperator)
+        public
+        givenOperatorIsRegistered(randomOperator)
+    {
         vm.assume(randomOperator != address(0));
 
         vm.prank(randomOperator);
@@ -511,7 +527,9 @@ contract NodeOperatorFacetTest is
     function test_revertWhen_transferIsCalledNotRegistered(
         address notRegisteredOperator,
         address someAddress
-    ) public {
+    )
+        public
+    {
         vm.assume(notRegisteredOperator != address(0));
         vm.assume(erc721.balanceOf(notRegisteredOperator) == 0);
 
@@ -525,9 +543,11 @@ contract NodeOperatorFacetTest is
     // =============================================================
     //                           Internal
     // =============================================================
-    function _getOperatorsByStatus(
-        NodeOperatorStatus status
-    ) internal view returns (address[] memory) {
+    function _getOperatorsByStatus(NodeOperatorStatus status)
+        internal
+        view
+        returns (address[] memory)
+    {
         uint256 totalOperators = erc721.totalSupply();
         uint256 totalApprovedOperators = 0;
 

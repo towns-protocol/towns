@@ -7,8 +7,9 @@ pragma solidity ^0.8.23;
 
 //contracts
 import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
-import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
+
 import {OwnableFacet} from "@towns-protocol/diamond/src/facets/ownable/OwnableFacet.sol";
+import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
 
 contract DeployOwnable is FacetHelper, Deployer {
     constructor() {
@@ -20,9 +21,7 @@ contract DeployOwnable is FacetHelper, Deployer {
         return "facets/ownableFacet";
     }
 
-    function __deploy(
-        address deployer
-    ) public override returns (address) {
+    function __deploy(address deployer) public override returns (address) {
         vm.startBroadcast(deployer);
         OwnableFacet facet = new OwnableFacet();
         vm.stopBroadcast();
@@ -33,9 +32,7 @@ contract DeployOwnable is FacetHelper, Deployer {
         return OwnableFacet.__Ownable_init.selector;
     }
 
-    function makeInitData(
-        address owner
-    ) public pure returns (bytes memory) {
+    function makeInitData(address owner) public pure returns (bytes memory) {
         return abi.encodeWithSelector(OwnableFacet.__Ownable_init.selector, owner);
     }
 }

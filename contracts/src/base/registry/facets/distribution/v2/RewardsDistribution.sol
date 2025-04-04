@@ -5,13 +5,17 @@ pragma solidity ^0.8.23;
 import {IRewardsDistribution} from "./IRewardsDistribution.sol";
 
 // libraries
-import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-import {SafeTransferLib} from "solady/utils/SafeTransferLib.sol";
-import {CustomRevert} from "contracts/src/utils/libraries/CustomRevert.sol";
-import {StakingRewards} from "./StakingRewards.sol";
+
 import {RewardsDistributionStorage} from "./RewardsDistributionStorage.sol";
+import {StakingRewards} from "./StakingRewards.sol";
+import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import {CustomRevert} from "contracts/src/utils/libraries/CustomRevert.sol";
+import {SafeTransferLib} from "solady/utils/SafeTransferLib.sol";
 
 // contracts
+
+import {DelegationProxy} from "./DelegationProxy.sol";
+import {RewardsDistributionBase} from "./RewardsDistributionBase.sol";
 import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
 import {OwnableBase} from "@towns-protocol/diamond/src/facets/ownable/OwnableBase.sol";
 import {Nonces} from "@towns-protocol/diamond/src/utils/Nonces.sol";
@@ -19,8 +23,6 @@ import {EIP712Base} from "@towns-protocol/diamond/src/utils/cryptography/EIP712B
 import {MainnetDelegationBase} from
     "contracts/src/base/registry/facets/mainnet/MainnetDelegationBase.sol";
 import {UpgradeableBeaconBase} from "contracts/src/diamond/facets/beacon/UpgradeableBeacon.sol";
-import {DelegationProxy} from "./DelegationProxy.sol";
-import {RewardsDistributionBase} from "./RewardsDistributionBase.sol";
 
 contract RewardsDistribution is
     IRewardsDistribution,
@@ -48,7 +50,10 @@ contract RewardsDistribution is
         address stakeToken,
         address rewardToken,
         uint256 rewardDuration
-    ) external onlyInitializing {
+    )
+        external
+        onlyInitializing
+    {
         RewardsDistributionStorage.Layout storage ds = RewardsDistributionStorage.layout();
         StakingRewards.Layout storage staking = ds.staking;
         (staking.stakeToken, staking.rewardToken, staking.rewardDuration) =
@@ -65,9 +70,7 @@ contract RewardsDistribution is
     }
 
     /// @inheritdoc IRewardsDistribution
-    function upgradeDelegationProxy(
-        address newImplementation
-    ) external onlyOwner {
+    function upgradeDelegationProxy(address newImplementation) external onlyOwner {
         _setImplementation(newImplementation);
     }
 
@@ -79,9 +82,7 @@ contract RewardsDistribution is
     }
 
     /// @inheritdoc IRewardsDistribution
-    function setPeriodRewardAmount(
-        uint256 amount
-    ) external onlyOwner {
+    function setPeriodRewardAmount(uint256 amount) external onlyOwner {
         RewardsDistributionStorage.layout().periodRewardAmount = amount;
 
         emit PeriodRewardAmountSet(amount);
@@ -96,7 +97,10 @@ contract RewardsDistribution is
         uint96 amount,
         address delegatee,
         address beneficiary
-    ) external returns (uint256 depositId) {
+    )
+        external
+        returns (uint256 depositId)
+    {
         depositId = _stake(amount, delegatee, beneficiary, msg.sender);
     }
 
@@ -109,7 +113,10 @@ contract RewardsDistribution is
         uint8 v,
         bytes32 r,
         bytes32 s
-    ) external returns (uint256 depositId) {
+    )
+        external
+        returns (uint256 depositId)
+    {
         _permitStakeToken(amount, deadline, v, r, s);
         depositId = _stake(amount, delegatee, beneficiary, msg.sender);
     }
@@ -122,7 +129,10 @@ contract RewardsDistribution is
         address owner,
         uint256,
         bytes calldata
-    ) external returns (uint256 depositId) {
+    )
+        external
+        returns (uint256 depositId)
+    {
         depositId = _stake(amount, delegatee, beneficiary, owner);
     }
 
@@ -139,7 +149,9 @@ contract RewardsDistribution is
         uint8 v,
         bytes32 r,
         bytes32 s
-    ) external {
+    )
+        external
+    {
         _permitStakeToken(amount, deadline, v, r, s);
         _increaseStake(depositId, amount);
     }
@@ -193,9 +205,7 @@ contract RewardsDistribution is
     }
 
     /// @inheritdoc IRewardsDistribution
-    function initiateWithdraw(
-        uint256 depositId
-    ) external returns (uint96 amount) {
+    function initiateWithdraw(uint256 depositId) external returns (uint96 amount) {
         RewardsDistributionStorage.Layout storage ds = RewardsDistributionStorage.layout();
         StakingRewards.Deposit storage deposit = ds.staking.depositById[depositId];
         address owner = deposit.owner;
@@ -219,9 +229,7 @@ contract RewardsDistribution is
     }
 
     /// @inheritdoc IRewardsDistribution
-    function withdraw(
-        uint256 depositId
-    ) external returns (uint96 amount) {
+    function withdraw(uint256 depositId) external returns (uint96 amount) {
         RewardsDistributionStorage.Layout storage ds = RewardsDistributionStorage.layout();
         StakingRewards.Deposit storage deposit = ds.staking.depositById[depositId];
         address owner = deposit.owner;
@@ -247,7 +255,10 @@ contract RewardsDistribution is
     function claimReward(
         address beneficiary,
         address recipient
-    ) external returns (uint256 reward) {
+    )
+        external
+        returns (uint256 reward)
+    {
         RewardsDistributionStorage.Layout storage ds = RewardsDistributionStorage.layout();
         // If the beneficiary is the caller (user or operator), they can claim the reward
         if (msg.sender == beneficiary) {}
@@ -274,9 +285,7 @@ contract RewardsDistribution is
     }
 
     /// @inheritdoc IRewardsDistribution
-    function notifyRewardAmount(
-        uint256 reward
-    ) external {
+    function notifyRewardAmount(uint256 reward) external {
         RewardsDistributionStorage.Layout storage ds = RewardsDistributionStorage.layout();
         if (!ds.isRewardNotifier[msg.sender]) {
             CustomRevert.revertWith(RewardsDistribution__NotRewardNotifier.selector);
@@ -314,25 +323,23 @@ contract RewardsDistribution is
     }
 
     /// @inheritdoc IRewardsDistribution
-    function stakedByDepositor(
-        address depositor
-    ) external view returns (uint96 amount) {
+    function stakedByDepositor(address depositor) external view returns (uint96 amount) {
         RewardsDistributionStorage.Layout storage ds = RewardsDistributionStorage.layout();
         amount = ds.staking.stakedByDepositor[depositor];
     }
 
     /// @inheritdoc IRewardsDistribution
-    function getDepositsByDepositor(
-        address depositor
-    ) external view returns (uint256[] memory) {
+    function getDepositsByDepositor(address depositor) external view returns (uint256[] memory) {
         RewardsDistributionStorage.Layout storage ds = RewardsDistributionStorage.layout();
         return ds.depositsByDepositor[depositor].values();
     }
 
     /// @inheritdoc IRewardsDistribution
-    function treasureByBeneficiary(
-        address beneficiary
-    ) external view returns (StakingRewards.Treasure memory treasure) {
+    function treasureByBeneficiary(address beneficiary)
+        external
+        view
+        returns (StakingRewards.Treasure memory treasure)
+    {
         RewardsDistributionStorage.Layout storage ds = RewardsDistributionStorage.layout();
         assembly ("memory-safe") {
             mstore(0x40, treasure)
@@ -341,9 +348,11 @@ contract RewardsDistribution is
     }
 
     /// @inheritdoc IRewardsDistribution
-    function depositById(
-        uint256 depositId
-    ) external view returns (StakingRewards.Deposit memory deposit) {
+    function depositById(uint256 depositId)
+        external
+        view
+        returns (StakingRewards.Deposit memory deposit)
+    {
         RewardsDistributionStorage.Layout storage ds = RewardsDistributionStorage.layout();
         assembly ("memory-safe") {
             mstore(0x40, deposit)
@@ -352,17 +361,13 @@ contract RewardsDistribution is
     }
 
     /// @inheritdoc IRewardsDistribution
-    function delegationProxyById(
-        uint256 depositId
-    ) external view returns (address) {
+    function delegationProxyById(uint256 depositId) external view returns (address) {
         RewardsDistributionStorage.Layout storage ds = RewardsDistributionStorage.layout();
         return ds.proxyById[depositId];
     }
 
     /// @inheritdoc IRewardsDistribution
-    function isRewardNotifier(
-        address notifier
-    ) external view returns (bool) {
+    function isRewardNotifier(address notifier) external view returns (bool) {
         RewardsDistributionStorage.Layout storage ds = RewardsDistributionStorage.layout();
         return ds.isRewardNotifier[notifier];
     }
@@ -380,18 +385,14 @@ contract RewardsDistribution is
     }
 
     /// @inheritdoc IRewardsDistribution
-    function currentReward(
-        address beneficiary
-    ) external view returns (uint256) {
+    function currentReward(address beneficiary) external view returns (uint256) {
         RewardsDistributionStorage.Layout storage ds = RewardsDistributionStorage.layout();
         return ds.staking.currentRewardScaled(ds.staking.treasureByBeneficiary[beneficiary])
             / StakingRewards.SCALE_FACTOR;
     }
 
     /// @inheritdoc IRewardsDistribution
-    function currentSpaceDelegationReward(
-        address operator
-    ) external view returns (uint256) {
+    function currentSpaceDelegationReward(address operator) external view returns (uint256) {
         return _currentSpaceDelegationReward(operator);
     }
 

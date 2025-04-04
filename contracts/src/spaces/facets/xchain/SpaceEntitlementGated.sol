@@ -7,8 +7,9 @@ pragma solidity ^0.8.23;
 
 // contracts
 import {EntitlementGated} from "contracts/src/spaces/facets/gated/EntitlementGated.sol";
-import {MembershipJoin} from "contracts/src/spaces/facets/membership/join/MembershipJoin.sol";
+
 import {IMembership} from "contracts/src/spaces/facets/membership/IMembership.sol";
+import {MembershipJoin} from "contracts/src/spaces/facets/membership/join/MembershipJoin.sol";
 
 /// @title SpaceEntitlementGated
 /// @notice Handles entitlement-gated access to spaces and membership token issuance
@@ -21,7 +22,10 @@ contract SpaceEntitlementGated is MembershipJoin, EntitlementGated {
     function _onEntitlementCheckResultPosted(
         bytes32 transactionId,
         NodeVoteStatus result
-    ) internal override {
+    )
+        internal
+        override
+    {
         bytes memory data = _getCapturedData(transactionId);
 
         if (data.length == 0) {

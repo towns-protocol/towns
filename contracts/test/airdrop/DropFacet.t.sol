@@ -6,29 +6,31 @@ import {Vm} from "forge-std/Test.sol";
 
 //interfaces
 
-import {IDropFacetBase} from "contracts/src/airdrop/drop/IDropFacet.sol";
 import {IOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
+import {IDropFacetBase} from "contracts/src/airdrop/drop/IDropFacet.sol";
 import {IRewardsDistributionBase} from
     "contracts/src/base/registry/facets/distribution/v2/IRewardsDistribution.sol";
 
 //libraries
-import {FixedPointMathLib} from "solady/utils/FixedPointMathLib.sol";
-import {MerkleTree} from "contracts/test/utils/MerkleTree.sol";
+
+import {DropClaimLib} from "contracts/src/airdrop/drop/DropClaimLib.sol";
 import {DropFacet} from "contracts/src/airdrop/drop/DropFacet.sol";
+import {DropFacetLib} from "contracts/src/airdrop/drop/DropFacetLib.sol";
 import {RewardsDistribution} from
     "contracts/src/base/registry/facets/distribution/v2/RewardsDistribution.sol";
-import {BasisPoints} from "contracts/src/utils/libraries/BasisPoints.sol";
 import {NodeOperatorStatus} from
     "contracts/src/base/registry/facets/operator/NodeOperatorStorage.sol";
-import {DropFacetLib} from "contracts/src/airdrop/drop/DropFacetLib.sol";
-import {DropClaimLib} from "contracts/src/airdrop/drop/DropClaimLib.sol";
+import {BasisPoints} from "contracts/src/utils/libraries/BasisPoints.sol";
+import {MerkleTree} from "contracts/test/utils/MerkleTree.sol";
+import {FixedPointMathLib} from "solady/utils/FixedPointMathLib.sol";
 
 // contracts
-import {BaseSetup} from "contracts/test/spaces/BaseSetup.sol";
-import {Towns} from "contracts/src/tokens/towns/base/Towns.sol";
-import {NodeOperatorFacet} from "contracts/src/base/registry/facets/operator/NodeOperatorFacet.sol";
+
 import {EIP712Facet} from "@towns-protocol/diamond/src/utils/cryptography/EIP712Facet.sol";
 import {StakingRewards} from "contracts/src/base/registry/facets/distribution/v2/StakingRewards.sol";
+import {NodeOperatorFacet} from "contracts/src/base/registry/facets/operator/NodeOperatorFacet.sol";
+import {Towns} from "contracts/src/tokens/towns/base/Towns.sol";
+import {BaseSetup} from "contracts/test/spaces/BaseSetup.sol";
 
 contract DropFacetTest is BaseSetup, IDropFacetBase, IOwnableBase, IRewardsDistributionBase {
     using FixedPointMathLib for uint256;
@@ -109,17 +111,13 @@ contract DropFacetTest is BaseSetup, IDropFacetBase, IOwnableBase, IRewardsDistr
     //                        MODIFIERS
     // =============================================================
 
-    modifier givenTokensMinted(
-        uint256 amount
-    ) {
+    modifier givenTokensMinted(uint256 amount) {
         vm.prank(bridge);
         towns.mint(address(dropFacet), amount);
         _;
     }
 
-    modifier givenClaimConditionSet(
-        uint16 penaltyBps
-    ) {
+    modifier givenClaimConditionSet(uint16 penaltyBps) {
         DropClaimLib.ClaimCondition[] memory conditions = new DropClaimLib.ClaimCondition[](1);
         conditions[0] = _createClaimCondition(block.timestamp, root, TOTAL_TOKEN_AMOUNT);
         conditions[0].penaltyBps = penaltyBps;
@@ -234,9 +232,11 @@ contract DropFacetTest is BaseSetup, IDropFacetBase, IOwnableBase, IRewardsDistr
     }
 
     // getClaimConditionById
-    function test_getClaimConditionById(
-        uint16 penaltyBps
-    ) external givenTokensMinted(TOTAL_TOKEN_AMOUNT) givenClaimConditionSet(penaltyBps) {
+    function test_getClaimConditionById(uint16 penaltyBps)
+        external
+        givenTokensMinted(TOTAL_TOKEN_AMOUNT)
+        givenClaimConditionSet(penaltyBps)
+    {
         DropClaimLib.ClaimCondition memory condition =
             dropFacet.getClaimConditionById(dropFacet.getActiveClaimConditionId());
         assertEq(condition.startTimestamp, block.timestamp);
@@ -248,9 +248,7 @@ contract DropFacetTest is BaseSetup, IDropFacetBase, IOwnableBase, IRewardsDistr
     }
 
     // claimWithPenalty
-    function test_claimWithPenalty_fuzz(
-        ClaimData[] memory claimData
-    ) external {
+    function test_claimWithPenalty_fuzz(ClaimData[] memory claimData) external {
         vm.assume(claimData.length > 0 && claimData.length <= 1000);
 
         uint256 totalAmount;
@@ -574,9 +572,7 @@ contract DropFacetTest is BaseSetup, IDropFacetBase, IOwnableBase, IRewardsDistr
         assertEq(newConditionId, 0);
     }
 
-    function test_fuzz_setClaimConditions_revertWhen_notOwner(
-        address caller
-    ) external {
+    function test_fuzz_setClaimConditions_revertWhen_notOwner(address caller) external {
         vm.assume(caller != deployer);
 
         vm.prank(caller);
@@ -640,9 +636,10 @@ contract DropFacetTest is BaseSetup, IDropFacetBase, IOwnableBase, IRewardsDistr
     }
 
     // getClaimConditions
-    function test_getClaimConditions(
-        uint16 penaltyBps
-    ) external givenTokensMinted(TOTAL_TOKEN_AMOUNT) {
+    function test_getClaimConditions(uint16 penaltyBps)
+        external
+        givenTokensMinted(TOTAL_TOKEN_AMOUNT)
+    {
         DropClaimLib.ClaimCondition[] memory currentConditions = dropFacet.getClaimConditions();
         assertEq(currentConditions.length, 0);
 
@@ -881,7 +878,11 @@ contract DropFacetTest is BaseSetup, IDropFacetBase, IOwnableBase, IRewardsDistr
         uint256 _startTime,
         bytes32 _merkleRoot,
         uint256 _maxClaimableSupply
-    ) internal view returns (DropClaimLib.ClaimCondition memory) {
+    )
+        internal
+        view
+        returns (DropClaimLib.ClaimCondition memory)
+    {
         return DropClaimLib.ClaimCondition({
             startTimestamp: uint40(_startTime),
             endTimestamp: 0,
@@ -893,9 +894,7 @@ contract DropFacetTest is BaseSetup, IDropFacetBase, IOwnableBase, IRewardsDistr
         });
     }
 
-    function _calculateExpectedAmount(
-        address _account
-    ) internal view returns (uint256) {
+    function _calculateExpectedAmount(address _account) internal view returns (uint256) {
         DropClaimLib.ClaimCondition memory condition =
             dropFacet.getClaimConditionById(dropFacet.getActiveClaimConditionId());
         uint256 penaltyBps = condition.penaltyBps;
@@ -921,7 +920,11 @@ contract DropFacetTest is BaseSetup, IDropFacetBase, IOwnableBase, IRewardsDistr
         address operator,
         address beneficiary,
         uint256 deadline
-    ) internal view returns (bytes memory) {
+    )
+        internal
+        view
+        returns (bytes memory)
+    {
         bytes32 structHash = keccak256(
             abi.encode(
                 STAKE_TYPEHASH,
@@ -942,7 +945,10 @@ contract DropFacetTest is BaseSetup, IDropFacetBase, IOwnableBase, IRewardsDistr
         address claimer,
         uint256 reward,
         uint256 currentReward
-    ) internal view {
+    )
+        internal
+        view
+    {
         assertEq(reward, currentReward, "reward");
         assertEq(towns.balanceOf(claimer), reward, "reward balance");
 

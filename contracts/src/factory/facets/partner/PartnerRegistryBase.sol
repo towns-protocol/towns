@@ -5,8 +5,9 @@ pragma solidity ^0.8.23;
 import {IPartnerRegistryBase} from "./IPartnerRegistry.sol";
 
 // libraries
-import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+
 import {PartnerRegistryStorage} from "./PartnerRegistryStorage.sol";
+import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
 // contracts
 
@@ -22,9 +23,7 @@ abstract contract PartnerRegistryBase is IPartnerRegistryBase {
         });
     }
 
-    function _registerPartner(
-        Partner memory partner
-    ) internal {
+    function _registerPartner(Partner memory partner) internal {
         PartnerRegistryStorage.Layout storage ds = PartnerRegistryStorage.layout();
 
         PartnerRegistryStorage.PartnerSettings memory settings = ds.partnerSettings;
@@ -51,9 +50,7 @@ abstract contract PartnerRegistryBase is IPartnerRegistryBase {
         emit PartnerRegistered(partner.account);
     }
 
-    function _updatePartner(
-        Partner memory partner
-    ) internal {
+    function _updatePartner(Partner memory partner) internal {
         if (partner.account != msg.sender) {
             revert PartnerRegistry__NotPartnerAccount(msg.sender);
         }
@@ -81,9 +78,7 @@ abstract contract PartnerRegistryBase is IPartnerRegistryBase {
         emit PartnerUpdated(partner.account);
     }
 
-    function _removePartner(
-        address account
-    ) internal {
+    function _removePartner(address account) internal {
         PartnerRegistryStorage.Layout storage ds = PartnerRegistryStorage.layout();
 
         if (!ds.partners.remove(account)) {
@@ -95,9 +90,7 @@ abstract contract PartnerRegistryBase is IPartnerRegistryBase {
         emit PartnerRemoved(account);
     }
 
-    function _partner(
-        address account
-    ) internal view returns (Partner memory partner) {
+    function _partner(address account) internal view returns (Partner memory partner) {
         PartnerRegistryStorage.Layout storage ds = PartnerRegistryStorage.layout();
 
         partner = Partner({
@@ -108,9 +101,7 @@ abstract contract PartnerRegistryBase is IPartnerRegistryBase {
         });
     }
 
-    function _partnerFee(
-        address account
-    ) internal view returns (uint256 fee) {
+    function _partnerFee(address account) internal view returns (uint256 fee) {
         PartnerRegistryStorage.Layout storage ds = PartnerRegistryStorage.layout();
         fee = ds.partnerByAccount[account].fee;
     }
@@ -120,9 +111,7 @@ abstract contract PartnerRegistryBase is IPartnerRegistryBase {
         fee = ds.partnerSettings.maxPartnerFee;
     }
 
-    function _setMaxPartnerFee(
-        uint256 fee
-    ) internal {
+    function _setMaxPartnerFee(uint256 fee) internal {
         PartnerRegistryStorage.Layout storage ds = PartnerRegistryStorage.layout();
         ds.partnerSettings.maxPartnerFee = fee;
 
@@ -134,9 +123,7 @@ abstract contract PartnerRegistryBase is IPartnerRegistryBase {
         fee = ds.partnerSettings.registryFee;
     }
 
-    function _setRegistryFee(
-        uint256 fee
-    ) internal {
+    function _setRegistryFee(uint256 fee) internal {
         PartnerRegistryStorage.Layout storage ds = PartnerRegistryStorage.layout();
         ds.partnerSettings.registryFee = fee;
 

@@ -3,11 +3,12 @@ pragma solidity ^0.8.23;
 
 // interfaces
 import {IArchitectBase} from "contracts/src/factory/facets/architect/IArchitect.sol";
-import {ICreateSpace} from "contracts/src/factory/facets/create/ICreateSpace.sol";
+
 import {
     IPricingModules,
     IPricingModulesBase
 } from "contracts/src/factory/facets/architect/pricing/IPricingModules.sol";
+import {ICreateSpace} from "contracts/src/factory/facets/create/ICreateSpace.sol";
 
 // common
 import {Interaction} from "contracts/scripts/common/Interaction.s.sol";
@@ -22,9 +23,7 @@ import {console} from "forge-std/console.sol";
 contract InteractCreateSpace is Interaction, SpaceHelper, IPricingModulesBase {
     string public constant TIERED_LOG_PRICING_MODULE = "TieredLogPricingOracleV3";
 
-    function __interact(
-        address deployer
-    ) internal override {
+    function __interact(address deployer) internal override {
         // Get SpaceFactory deployment address
         address spaceFactory = getDeployment("spaceFactory");
 

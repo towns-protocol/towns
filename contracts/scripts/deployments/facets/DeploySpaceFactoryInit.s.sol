@@ -6,9 +6,10 @@ pragma solidity ^0.8.19;
 //libraries
 
 //contracts
+
+import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
 import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
 import {SpaceFactoryInit} from "contracts/src/factory/SpaceFactoryInit.sol";
-import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
 
 // helpers
 
@@ -21,9 +22,7 @@ contract DeploySpaceFactoryInit is Deployer, FacetHelper {
         return SpaceFactoryInit.initialize.selector;
     }
 
-    function makeInitData(
-        address _proxyInitializer
-    ) public pure returns (bytes memory) {
+    function makeInitData(address _proxyInitializer) public pure returns (bytes memory) {
         return abi.encodeWithSelector(initializer(), _proxyInitializer);
     }
 
@@ -31,9 +30,7 @@ contract DeploySpaceFactoryInit is Deployer, FacetHelper {
         return "facets/spaceFactoryInit";
     }
 
-    function __deploy(
-        address deployer
-    ) public override returns (address) {
+    function __deploy(address deployer) public override returns (address) {
         vm.startBroadcast(deployer);
         SpaceFactoryInit spaceFactoryInit = new SpaceFactoryInit();
         vm.stopBroadcast();

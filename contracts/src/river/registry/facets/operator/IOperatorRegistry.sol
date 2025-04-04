@@ -18,17 +18,11 @@ interface IOperatorRegistry {
     // =============================================================
     //                           Operators
     // =============================================================
-    function approveOperator(
-        address operator
-    ) external;
+    function approveOperator(address operator) external;
 
-    function removeOperator(
-        address operator
-    ) external;
+    function removeOperator(address operator) external;
 
-    function isOperator(
-        address operator
-    ) external view returns (bool);
+    function isOperator(address operator) external view returns (bool);
 
     function getAllOperators() external view returns (address[] memory);
 }

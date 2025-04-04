@@ -33,15 +33,11 @@ library VotesEnumerableLib {
         return layout().delegators.values();
     }
 
-    function getDelegatorsByDelegatee(
-        address account
-    ) internal view returns (address[] memory) {
+    function getDelegatorsByDelegatee(address account) internal view returns (address[] memory) {
         return layout().delegatorsByDelegatee[account].values();
     }
 
-    function getDelegationTimeForDelegator(
-        address account
-    ) internal view returns (uint256) {
+    function getDelegationTimeForDelegator(address account) internal view returns (uint256) {
         return layout().delegationTimeForDelegator[account];
     }
 
@@ -52,7 +48,11 @@ library VotesEnumerableLib {
     function getPaginatedDelegators(
         uint256 cursor,
         uint256 size
-    ) internal view returns (address[] memory delegators, uint256 next) {
+    )
+        internal
+        view
+        returns (address[] memory delegators, uint256 next)
+    {
         Layout storage ds = layout();
         uint256 length = ds.delegators.length();
 
@@ -82,7 +82,9 @@ library VotesEnumerableLib {
         address account,
         address newDelegatee,
         address currentDelegatee
-    ) internal {
+    )
+        internal
+    {
         Layout storage ds = layout();
 
         // If current delegatee is address(0), add account to delegators

@@ -13,12 +13,16 @@ interface ISCL_EIP6565 {
         uint256 r,
         uint256 s,
         uint256[5] memory extKpub
-    ) external returns (bool flag);
+    )
+        external
+        returns (bool flag);
 
     function Verify_LE(
         string memory m,
         uint256 r,
         uint256 s,
         uint256[5] memory extKpub
-    ) external returns (bool flag);
+    )
+        external
+        returns (bool flag);
 }

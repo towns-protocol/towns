@@ -25,9 +25,7 @@ contract DeployEntitlementsManager is FacetHelper, Deployer {
         return "facets/entitlementsManagerFacet";
     }
 
-    function __deploy(
-        address deployer
-    ) public override returns (address) {
+    function __deploy(address deployer) public override returns (address) {
         vm.startBroadcast(deployer);
         EntitlementsManager facet = new EntitlementsManager();
         vm.stopBroadcast();
