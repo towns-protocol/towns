@@ -5,46 +5,37 @@ pragma solidity ^0.8.23;
 import {IDiamond} from "@towns-protocol/diamond/src/IDiamond.sol";
 
 // libraries
-import "forge-std/console.sol";
+import {DeployDiamondCut} from
+    "@towns-protocol/diamond/scripts/deployments/facets/DeployDiamondCut.s.sol";
+import {DeployDiamondLoupe} from
+    "@towns-protocol/diamond/scripts/deployments/facets/DeployDiamondLoupe.s.sol";
+import {DeployIntrospection} from
+    "@towns-protocol/diamond/scripts/deployments/facets/DeployIntrospection.s.sol";
+import {DeployOwnable} from "@towns-protocol/diamond/scripts/deployments/facets/DeployOwnable.s.sol";
 
-// helpers
+// contracts
 import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
 import {Diamond} from "@towns-protocol/diamond/src/Diamond.sol";
-import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
-import {DeployDiamondCut} from "contracts/scripts/deployments/facets/DeployDiamondCut.s.sol";
-import {DeployDiamondLoupe} from "contracts/scripts/deployments/facets/DeployDiamondLoupe.s.sol";
-import {DeployIntrospection} from "contracts/scripts/deployments/facets/DeployIntrospection.s.sol";
-import {DeployOwnable} from "contracts/scripts/deployments/facets/DeployOwnable.s.sol";
+import {MultiInit} from "@towns-protocol/diamond/src/initializers/MultiInit.sol";
 import {DiamondHelper} from "contracts/test/diamond/Diamond.t.sol";
 
 // deployers
+import {DeployFacet} from "../../common/DeployFacet.s.sol";
+import {Deployer} from "../../common/Deployer.s.sol";
 import {DeployNodeRegistry} from "contracts/scripts/deployments/facets/DeployNodeRegistry.s.sol";
 import {DeployOperatorRegistry} from
     "contracts/scripts/deployments/facets/DeployOperatorRegistry.s.sol";
 import {DeployRiverConfig} from "contracts/scripts/deployments/facets/DeployRiverConfig.s.sol";
 import {DeployStreamRegistry} from "contracts/scripts/deployments/facets/DeployStreamRegistry.s.sol";
-import {DeployMultiInit} from "contracts/scripts/deployments/utils/DeployMultiInit.s.sol";
-
-// facets
-import {MultiInit} from "@towns-protocol/diamond/src/initializers/MultiInit.sol";
-import {RiverConfig} from "contracts/src/river/registry/facets/config/RiverConfig.sol";
-import {OperatorRegistry} from "contracts/src/river/registry/facets/operator/OperatorRegistry.sol";
 
 contract DeployRiverRegistry is DiamondHelper, Deployer {
-    DeployDiamondCut internal cutHelper = new DeployDiamondCut();
-    DeployDiamondLoupe internal loupeHelper = new DeployDiamondLoupe();
-    DeployIntrospection internal introspectionHelper = new DeployIntrospection();
-    DeployOwnable internal ownableHelper = new DeployOwnable();
+    DeployFacet private facetHelper = new DeployFacet();
     DeployNodeRegistry internal nodeRegistryHelper = new DeployNodeRegistry();
     DeployStreamRegistry internal streamRegistryHelper = new DeployStreamRegistry();
     DeployOperatorRegistry internal operatorRegistryHelper = new DeployOperatorRegistry();
     DeployRiverConfig internal riverConfigHelper = new DeployRiverConfig();
 
-    // deployer
-    DeployMultiInit deployMultiInit = new DeployMultiInit();
-
     address internal multiInit;
-
     address internal diamondCut;
     address internal diamondLoupe;
     address internal introspection;
@@ -71,31 +62,31 @@ contract DeployRiverRegistry is DiamondHelper, Deployer {
     }
 
     function addImmutableCuts(address deployer) internal {
-        multiInit = deployMultiInit.deploy(deployer);
-        diamondCut = cutHelper.deploy(deployer);
-        diamondLoupe = loupeHelper.deploy(deployer);
-        introspection = introspectionHelper.deploy(deployer);
-        ownable = ownableHelper.deploy(deployer);
+        multiInit = facetHelper.deploy("MultiInit", deployer);
+        diamondCut = facetHelper.deploy("DiamondCutFacet", deployer);
+        diamondLoupe = facetHelper.deploy("DiamondLoupeFacet", deployer);
+        introspection = facetHelper.deploy("IntrospectionFacet", deployer);
+        ownable = facetHelper.deploy("OwnableFacet", deployer);
 
         addFacet(
-            cutHelper.makeCut(diamondCut, IDiamond.FacetCutAction.Add),
+            DeployDiamondCut.makeCut(diamondCut, IDiamond.FacetCutAction.Add),
             diamondCut,
-            cutHelper.makeInitData("")
+            DeployDiamondCut.makeInitData()
         );
         addFacet(
-            loupeHelper.makeCut(diamondLoupe, IDiamond.FacetCutAction.Add),
+            DeployDiamondLoupe.makeCut(diamondLoupe, IDiamond.FacetCutAction.Add),
             diamondLoupe,
-            loupeHelper.makeInitData("")
+            DeployDiamondLoupe.makeInitData()
         );
         addFacet(
-            introspectionHelper.makeCut(introspection, IDiamond.FacetCutAction.Add),
+            DeployIntrospection.makeCut(introspection, IDiamond.FacetCutAction.Add),
             introspection,
-            introspectionHelper.makeInitData("")
+            DeployIntrospection.makeInitData()
         );
         addFacet(
-            ownableHelper.makeCut(ownable, IDiamond.FacetCutAction.Add),
+            DeployOwnable.makeCut(ownable, IDiamond.FacetCutAction.Add),
             ownable,
-            ownableHelper.makeInitData(deployer)
+            DeployOwnable.makeInitData(deployer)
         );
     }
 
@@ -132,8 +123,6 @@ contract DeployRiverRegistry is DiamondHelper, Deployer {
         for (uint256 i = 0; i < facets.length; i++) {
             string memory facetName = facets[i];
             address facetHelperAddress = facetDeployments[facetName];
-            console.log("facetName", facetName);
-            console.log("facetHelperAddress", facetHelperAddress);
             if (facetHelperAddress != address(0)) {
                 // deploy facet
                 address facetAddress = Deployer(facetHelperAddress).deploy(deployer);
@@ -167,7 +156,6 @@ contract DeployRiverRegistry is DiamondHelper, Deployer {
 
         vm.broadcast(deployer);
         Diamond diamond = new Diamond(initDiamondCut);
-
         return address(diamond);
     }
 }
