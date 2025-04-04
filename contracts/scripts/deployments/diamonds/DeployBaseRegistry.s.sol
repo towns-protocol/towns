@@ -28,6 +28,7 @@ import {DeployERC721ANonTransferable} from "contracts/scripts/deployments/facets
 import {DeployMockMessenger} from "contracts/scripts/deployments/facets/DeployMockMessenger.s.sol";
 import {DeployEIP712Facet} from "contracts/scripts/deployments/facets/DeployEIP712Facet.s.sol";
 import {DeployXChain} from "contracts/scripts/deployments/facets/DeployXChain.s.sol";
+
 contract DeployBaseRegistry is DiamondHelper, Deployer {
   DeployERC721ANonTransferable deployNFT = new DeployERC721ANonTransferable();
 
@@ -48,6 +49,7 @@ contract DeployBaseRegistry is DiamondHelper, Deployer {
   DeployMockMessenger messengerHelper = new DeployMockMessenger();
   DeployEIP712Facet eip712Helper = new DeployEIP712Facet();
   DeployXChain xchainHelper = new DeployXChain();
+
   address multiInit;
   address diamondCut;
   address diamondLoupe;
@@ -119,6 +121,7 @@ contract DeployBaseRegistry is DiamondHelper, Deployer {
     messenger = messengerHelper.deploy(deployer);
     eip712 = eip712Helper.deploy(deployer);
     xchain = xchainHelper.deploy(deployer);
+
     addFacet(
       deployNFT.makeCut(nft, IDiamond.FacetCutAction.Add),
       nft,

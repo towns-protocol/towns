@@ -49,6 +49,7 @@ import {DeploySpaceProxyInitializer} from "contracts/scripts/deployments/utils/D
 import {DeploySpaceFactoryInit} from "contracts/scripts/deployments/facets/DeploySpaceFactoryInit.s.sol";
 import {DeploySLCEIP6565} from "contracts/scripts/deployments/utils/DeploySLCEIP6565.s.sol";
 import {DeployMockDelegationRegistry} from "contracts/scripts/deployments/utils/DeployMockDelegationRegistry.s.sol";
+import {DeployFeatureManager} from "contracts/scripts/deployments/facets/DeployFeatureManager.s.sol";
 
 contract DeploySpaceFactory is DiamondHelper, Deployer {
   // diamond helpers
@@ -73,6 +74,7 @@ contract DeploySpaceFactory is DiamondHelper, Deployer {
   DeployMockLegacyArchitect deployMockLegacyArchitect =
     new DeployMockLegacyArchitect();
   DeployPartnerRegistry partnerRegistryHelper = new DeployPartnerRegistry();
+  DeployFeatureManager featureManagerHelper = new DeployFeatureManager();
   DeployMultiInit deployMultiInit = new DeployMultiInit();
 
   // dependencies
@@ -123,6 +125,7 @@ contract DeploySpaceFactory is DiamondHelper, Deployer {
   address walletLink;
   address eip712;
   address partnerRegistry;
+  address featureManager;
 
   // external contracts
   address public spaceImpl;
@@ -210,6 +213,7 @@ contract DeploySpaceFactory is DiamondHelper, Deployer {
     eip712 = eip712Helper.deploy(deployer);
     pricingModulesFacet = pricingModulesHelper.deploy(deployer);
     partnerRegistry = partnerRegistryHelper.deploy(deployer);
+    featureManager = featureManagerHelper.deploy(deployer);
 
     spaceProxyInitializer = deploySpaceProxyInitializer.deploy(deployer);
     spaceFactoryInit = deploySpaceFactoryInit.deploy(deployer);
@@ -307,6 +311,11 @@ contract DeploySpaceFactory is DiamondHelper, Deployer {
       ),
       partnerRegistry,
       partnerRegistryHelper.makeInitData("")
+    );
+    addFacet(
+      featureManagerHelper.makeCut(featureManager, IDiamond.FacetCutAction.Add),
+      featureManager,
+      featureManagerHelper.makeInitData("")
     );
 
     addInit(spaceFactoryInit, spaceFactoryInitData);
