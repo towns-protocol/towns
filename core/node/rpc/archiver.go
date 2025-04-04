@@ -698,7 +698,7 @@ func (a *Archiver) ArchiveStream(ctx context.Context, stream *ArchiveStream) (er
 		for i, mb := range msg.Miniblocks {
 			// Parse header
 			info, err := events.NewMiniblockInfoFromProto(
-				mb,
+				mb, msg.GetMiniblockSnapshot(int64(i)+mbsInDb),
 				events.NewParsedMiniblockInfoOpts().
 					WithExpectedBlockNumber(int64(i)+mbsInDb).
 					WithDoNotParseEvents(true),

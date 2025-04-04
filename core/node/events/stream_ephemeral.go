@@ -137,7 +137,10 @@ func (s *StreamCache) normalizeEphemeralStream(
 					break
 				}
 
-				mbInfo, err := NewMiniblockInfoFromProto(msg.GetMiniblock(), NewParsedMiniblockInfoOpts())
+				mbInfo, err := NewMiniblockInfoFromProto(
+					msg.GetMiniblock(), msg.GetSnapshot(),
+					NewParsedMiniblockInfoOpts(),
+				)
 				if err != nil {
 					logging.FromCtx(ctx).
 						Errorw("Failed to parse miniblock info", "err", err, "streamId", stream.streamId)

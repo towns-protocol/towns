@@ -15,9 +15,9 @@ import "protocol.proto";
 service AppRegistryService {
     rpc Register(RegisterRequest) returns (RegisterResponse);
     rpc RegisterWebhook(RegisterWebhookRequest) returns (RegisterWebhookResponse);
-    // rpc GetInfo(GetInfoRequest) returns (GetInfoResponse);
     // rpc RotateSecret(RotateSecretRequest) returns (RotateSecretResponse);
     rpc GetStatus(GetStatusRequest) returns (GetStatusResponse);
+    rpc GetSession(GetSessionRequest) returns (GetSessionResponse);
 }
 
 message RegisterRequest {
@@ -50,8 +50,9 @@ message RotateSecretRequest {
 }
 
 message RotateSecretResponse {
-    // the updated shared secret used to generate the hmac the app registry will send to the app service
-    string hmac_shared_secret = 1;
+    // the updated shared secret used to sign the jwt the app registry will use to authenticate
+    // to the app service. This secret should be exactly 32 bytes.
+    string hs256_shared_secret = 1;
 }
 
 message GetStatusRequest {
@@ -69,6 +70,18 @@ message GetStatusResponse {
 
     // Forward the status returned by the bot service.
     AppServiceResponse.StatusResponse status = 3;
+}
+
+message GetSessionRequest {
+    // public key of the app
+    bytes app_id = 1;
+
+    string session_id = 2;    
+}
+
+message GetSessionResponse {
+    // This will be 
+    Envelope group_encryption_sessions = 1;
 }
 
 // As a performance optimization, we may wish to bundle together many key solicitation requests

@@ -319,9 +319,12 @@ func (sr *SyncRunner) Run(
 					continue
 				}
 
-				for _, block := range update.GetStream().GetMiniblocks() {
+				for i, block := range update.GetStream().GetMiniblocks() {
 					if !reset {
-						if err := trackedStream.ApplyBlock(block); err != nil {
+						if err := trackedStream.ApplyBlock(
+							block,
+							update.GetStream().GetSnapshotByMiniblockIndex(i),
+						); err != nil {
 							log.Errorw("Unable to apply block", "err", err)
 						}
 					}
