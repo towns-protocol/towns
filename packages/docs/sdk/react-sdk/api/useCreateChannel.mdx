@@ -14,7 +14,7 @@ import { useCreateChannel } from '@towns-protocol/react-sdk'
 ```ts
 function useCreateChannel(
   spaceId: string,
-  config?: ActionConfig<Space['createChannel']>,
+  config?: ActionConfig<Space["createChannel"]>,
 ): {
     data: string | undefined;
     error: Error | undefined;
@@ -22,7 +22,7 @@ function useCreateChannel(
     isSuccess: boolean;
     isError: boolean;
     createChannel: (channelName: string, signer: Signer, opts?: {
-        topic?: string | undefined;
+        topic?: string;
     } | undefined) => Promise<string>;
 }
 ```
@@ -37,7 +37,7 @@ function useCreateChannel(
 
 ### config
 
-- **Type:** `ActionConfig<Space['createChannel']>`
+- **Type:** `ActionConfig<Space["createChannel"]>`
 - **Optional**
 
 Configuration options for the action.
@@ -54,7 +54,7 @@ The `createChannel` action and its loading state.
     isSuccess: boolean;
     isError: boolean;
     createChannel: (channelName: string, signer: Signer, opts?: {
-        topic?: string | undefined;
+        topic?: string;
     } | undefined) => Promise<string>;
 }
 ```

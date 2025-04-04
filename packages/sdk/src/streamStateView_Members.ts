@@ -588,7 +588,11 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
             messageId: bin_toHexString(transferContent.messageId),
             amount: BigInt(transferContent.amount),
         }
-        prepend ? this.tokenTransfers.unshift(transferData) : this.tokenTransfers.push(transferData)
+        if (prepend) {
+            this.tokenTransfers.unshift(transferData)
+        } else {
+            this.tokenTransfers.push(transferData)
+        }
         stateEmitter?.emit('streamTokenTransfer', this.streamId, transferData)
     }
 

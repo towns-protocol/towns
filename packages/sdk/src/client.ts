@@ -816,10 +816,10 @@ export class Client
         spaceId: string | Uint8Array | undefined,
         userId: string | undefined,
         chunkCount: number,
-        firstChunk?: Uint8Array | undefined,
-        firstChunkIv?: Uint8Array | undefined,
-        streamSettings?: PlainMessage<StreamSettings> | undefined,
-        perChunkEncryption?: boolean | undefined,
+        firstChunk?: Uint8Array,
+        firstChunkIv?: Uint8Array,
+        streamSettings?: PlainMessage<StreamSettings>,
+        perChunkEncryption?: boolean,
     ): Promise<{ creationCookie: CreationCookie }> {
         assert(this.userStreamId !== undefined, 'userStreamId must be set')
         if (!channelId && !spaceId && !userId) {
