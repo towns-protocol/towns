@@ -148,6 +148,7 @@ export function useCreateSpaceTransactionWithRetries() {
                             transactionResult?.error ||
                             transactionResult?.status === TransactionStatus.Failed
                         ) {
+                            // eslint-disable-next-line @typescript-eslint/only-throw-error
                             throw transactionResult.error
                         }
                         return transactionResult

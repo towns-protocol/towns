@@ -4,9 +4,11 @@ import (
 	"context"
 	"encoding/hex"
 	"net/http"
+	"strings"
 	"time"
 
 	"connectrpc.com/connect"
+	"google.golang.org/protobuf/proto"
 
 	"github.com/ethereum/go-ethereum/common"
 
@@ -65,6 +67,12 @@ func NewService(
 			"App registry service initialized with insufficient node registries",
 		)
 	}
+
+	// Trim optional "0x" prefix for shared secret data encryption key
+	if len(cfg.SharedSecretDataEncryptionKey) > 2 && strings.ToLower(cfg.SharedSecretDataEncryptionKey[0:2]) == "0x" {
+		cfg.SharedSecretDataEncryptionKey = cfg.SharedSecretDataEncryptionKey[2:]
+	}
+
 	sharedSecretDataEncryptionKey, err := hex.DecodeString(cfg.SharedSecretDataEncryptionKey)
 	if err != nil || len(sharedSecretDataEncryptionKey) != 32 {
 		return nil, base.AsRiverError(err, Err_INVALID_ARGUMENT).
@@ -142,6 +150,51 @@ func (s *Service) Start(ctx context.Context) {
 	}()
 }
 
+func (s *Service) GetSession(
+	ctx context.Context,
+	req *connect.Request[GetSessionRequest],
+) (
+	*connect.Response[GetSessionResponse],
+	error,
+) {
+	var app common.Address
+	var err error
+	if app, err = base.BytesToAddress(req.Msg.AppId); err != nil {
+		return nil, base.WrapRiverError(Err_INVALID_ARGUMENT, err).
+			Message("invalid app id").Tag("appId", req.Msg.AppId).Func("GetSession")
+	}
+
+	userId := authentication.UserFromAuthenticatedContext(ctx)
+	if app != userId {
+		return nil, base.RiverError(Err_PERMISSION_DENIED, "authenticated user must be app").
+			Tag("app", app).Tag("userId", userId).Func("GetSession")
+	}
+
+	if req.Msg.SessionId == "" {
+		return nil, base.RiverError(
+			Err_INVALID_ARGUMENT,
+			"Invalid session id",
+		).Tag("sessionId", req.Msg.SessionId).Tag("appId", app).Func("GetSession")
+	}
+
+	envelopeBytes, err := s.store.GetSessionKey(ctx, app, req.Msg.SessionId)
+	if err != nil {
+		return nil, base.AsRiverError(err, Err_DB_OPERATION_FAILURE)
+	}
+
+	var envelope Envelope
+	if err = proto.Unmarshal(envelopeBytes, &envelope); err != nil {
+		return nil, base.AsRiverError(err, Err_BAD_EVENT).Message("Could not marshal encryption envelope").
+			Tag("sessionId", req.Msg.SessionId).Tag("appId", app).Func("GetSession")
+	}
+
+	return &connect.Response[GetSessionResponse]{
+		Msg: &GetSessionResponse{
+			GroupEncryptionSessions: &envelope,
+		},
+	}, nil
+}
+
 func (s *Service) Register(
 	ctx context.Context,
 	req *connect.Request[RegisterRequest],
@@ -154,13 +207,13 @@ func (s *Service) Register(
 	if app, err = base.BytesToAddress(req.Msg.AppId); err != nil {
 		return nil, base.WrapRiverError(Err_INVALID_ARGUMENT, err).
 			Message("invalid app id").
-			Tag("app_id", req.Msg.AppId)
+			Tag("appId", req.Msg.AppId)
 	}
 
 	if owner, err = base.BytesToAddress(req.Msg.AppOwnerId); err != nil {
 		return nil, base.WrapRiverError(Err_INVALID_ARGUMENT, err).
 			Message("invalid owner id").
-			Tag("owner_id", req.Msg.AppOwnerId)
+			Tag("ownerId", req.Msg.AppOwnerId)
 	}
 
 	userId := authentication.UserFromAuthenticatedContext(ctx)
@@ -210,7 +263,7 @@ func (s *Service) waitForAppEncryptionDevice(
 	ctx context.Context,
 	appId common.Address,
 ) (*storage.EncryptionDevice, error) {
-	log := logging.FromCtx(ctx).With("func", "AppRegistryService.waitForEncryptionDevice")
+	log := logging.FromCtx(ctx)
 	ctx, cancel := context.WithTimeout(ctx, time.Second*10)
 	userMetadataStreamId := shared.UserMetadataStreamIdFromAddress(appId)
 	defer cancel()
@@ -234,7 +287,7 @@ waitLoop:
 			if err != nil {
 				continue
 			}
-			nodes := nodes.NewStreamNodesWithLock(stream.Nodes, common.Address{})
+			nodes := nodes.NewStreamNodesWithLock(stream.StreamReplicationFactor(), stream.Nodes, common.Address{})
 			streamResponse, err := utils.PeerNodeRequestWithRetries(
 				ctx,
 				nodes,
@@ -259,7 +312,7 @@ waitLoop:
 				log.Warnw("Error fetching user metadata stream for app", "error", err, "streamId", userMetadataStreamId, "appId", appId)
 				continue
 			}
-			view, loopExitErr = events.MakeRemoteStreamView(ctx, streamResponse.Msg.Stream)
+			view, loopExitErr = events.MakeRemoteStreamView(streamResponse.Msg.Stream)
 			if loopExitErr != nil {
 				break waitLoop
 			}

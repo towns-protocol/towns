@@ -47,7 +47,7 @@ describe('messageThreads', () => {
 
         // get the message id
         const messageId = bob
-            .getEvents_TypedChannelMessage(channelId)!
+            .getEvents_TypedChannelMessage(channelId)
             .find((event) => event.content?.body === 'hi Bob!')!.eventId
         // bob sends a threaded message
         await bob.sendMessage(channelId, 'hi Alice!', { threadId: messageId })

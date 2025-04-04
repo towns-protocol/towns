@@ -276,7 +276,6 @@ export const PillSelector = <T,>(props: Props<T>) => {
 
     useEffect(() => {
         if (selection.size > 0) {
-            selection
             fieldRef.current?.focus()
         }
     }, [fieldRef, selection])

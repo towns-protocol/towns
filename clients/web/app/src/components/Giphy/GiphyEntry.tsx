@@ -78,7 +78,7 @@ const GiphyCardOpener = (props: Props) => {
     ) => {
         setIsFetching(true)
         setOptedIn(true)
-        clickCb && clickCb(e)
+        clickCb?.(e)
     }
 
     const onCardClose = useCallback(() => {

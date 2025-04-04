@@ -76,7 +76,6 @@ export const VListDebugger = <T,>(props: Props<T>) => {
         // viewport
         context.fillStyle = '#F60'
         context.lineWidth = 2
-        referenceDiffRef.current
         let scrollTop = containerRef.current?.scrollTop ?? 0
         scrollTop -= referenceDiffRef.current
 

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-base-to-string */
 import { Membership, isDMChannelStreamId, isGDMChannelStreamId } from '@towns-protocol/sdk'
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useParams } from 'react-router'

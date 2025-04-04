@@ -77,7 +77,9 @@ describe('space invite', () => {
         /** Act */
         // invite user to join the space by first checking if they can read.
         if (roomId && alice.getUserId()) {
-            !isEntitledRead && (await bob.inviteUser(roomId, alice.getUserId()))
+            if (!isEntitledRead) {
+                await bob.inviteUser(roomId, alice.getUserId())
+            }
         }
         /** Assert */
         expect(isEntitledRead).toBe(false)
@@ -131,7 +133,9 @@ describe('space invite', () => {
         /** Act */
         // invite user to join the space by first checking if they can read.
         if (roomId && tokenGrantedUser.getUserId()) {
-            isEntitledRead && (await bob.inviteUser(roomId, tokenGrantedUser.getUserId()))
+            if (isEntitledRead) {
+                await bob.inviteUser(roomId, tokenGrantedUser.getUserId())
+            }
         }
         /** Assert */
         expect(isEntitledRead).toBe(true)

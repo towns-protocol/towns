@@ -7,12 +7,12 @@
     },
     "devDependencies": {
         "@towns-protocol/prettier-config": "workspace:^",
-        "@typescript-eslint/eslint-plugin": "^6.10.0",
-        "@typescript-eslint/parser": "^7.14.1",
-        "eslint": "^8.53.0",
+        "@typescript-eslint/eslint-plugin": "^8.29.0",
+        "@typescript-eslint/parser": "^8.29.0",
+        "eslint": "^8.57.0",
         "eslint-plugin-import": "^2.27.5",
         "eslint-plugin-react": "^7.32.2",
-        "typescript": "^5.1.6"
+        "typescript": "^5.8.2"
     },
     "peerDependencies": {
         "@privy-io/react-auth": "2.4.3",

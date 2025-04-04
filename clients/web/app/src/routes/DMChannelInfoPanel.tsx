@@ -120,6 +120,7 @@ export const DMChannelInfo = (props: { channelId?: string; data?: DMChannelIdent
         return membersExcludingSelf.map((m) => m?.userId).filter(isDefined)
     }, [membersExcludingSelf])
 
+    // eslint-disable-next-line @typescript-eslint/no-base-to-string
     const membersText = useUserList({ userIds: memberNamesExludingSelf, excludeSelf: true }).join(
         '',
     )

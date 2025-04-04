@@ -281,7 +281,6 @@ export function VList<T>(props: Props<T>) {
     }, [groupIds, keyList])
 
     const groupHeights = useMemo(() => {
-        renderItems
         return groups.reduce((groupHeights, group) => {
             // using the ID of the first item of the group (date divider) as index
             const groupId = group[0]
@@ -292,6 +291,8 @@ export function VList<T>(props: Props<T>) {
             )
             return groupHeights
         }, {} as { [key: string]: number })
+        // renderItems dependency is needed
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [groups, itemCache, renderItems])
 
     const groupHeightsRef = useRef(groupHeights)
@@ -313,7 +314,9 @@ export function VList<T>(props: Props<T>) {
 
         const anchorDiff = anchorDiffRef.current
 
-        anchorDiff && log(`updateDOM() - ${anchorDiff}`)
+        if (anchorDiff) {
+            log(`updateDOM() - ${anchorDiff}`)
+        }
 
         offsetContent.style.top = `${anchorDiff}px`
 
@@ -433,8 +436,6 @@ export function VList<T>(props: Props<T>) {
     const idleDebounceRef = useRef(false)
 
     useEffect(() => {
-        // dependency
-        isLazyRealign
         const timeout = setTimeout(() => {
             idleDebounceRef.current = false
             setIsReadyToRealign(true)
@@ -443,6 +444,7 @@ export function VList<T>(props: Props<T>) {
         return () => {
             clearTimeout(timeout)
         }
+        // dependency isLazyRealign is needed
     }, [isIdleRef, isLazyRealign])
 
     const debounceResetIdle = useCallback(() => {

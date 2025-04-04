@@ -157,7 +157,7 @@ func (s *Service) createReplicatedStream(
 	streamId StreamId,
 	parsedEvents []*ParsedEvent,
 ) (*StreamAndCookie, error) {
-	mb, err := MakeGenesisMiniblock(s.wallet, parsedEvents)
+	mb, sn, err := MakeGenesisMiniblock(s.wallet, parsedEvents)
 	if err != nil {
 		return nil, err
 	}
@@ -172,7 +172,7 @@ func (s *Service) createReplicatedStream(
 		return nil, err
 	}
 
-	nodes := NewStreamNodesWithLock(nodesList, s.wallet.Address)
+	nodes := NewStreamNodesWithLock(len(nodesList), nodesList, s.wallet.Address)
 	remotes, isLocal := nodes.GetRemotesAndIsLocal()
 	sender := NewQuorumPool(ctx, NewQuorumPoolOpts().WriteMode().WithTags("method", "createReplicatedStream", "streamId", streamId))
 
@@ -206,6 +206,7 @@ func (s *Service) createReplicatedStream(
 					&AllocateStreamRequest{
 						StreamId:  streamId[:],
 						Miniblock: mb,
+						Snapshot:  sn,
 					},
 				),
 			)
@@ -232,5 +233,6 @@ func (s *Service) createReplicatedStream(
 	return &StreamAndCookie{
 		NextSyncCookie: cookie,
 		Miniblocks:     []*Miniblock{mb},
+		Snapshot:       sn,
 	}, nil
 }

@@ -68,7 +68,7 @@ async function getRoles(spaceId: string, roleIds: number[], spaceDapp: ISpaceDap
         getRolePromises.push(spaceDapp.getRole(spaceId, roleId))
     }
     const roles = await Promise.all(getRolePromises)
-    return roles.filter((role) => role !== null) as RoleDetails[]
+    return roles.filter((role) => role !== null)
 }
 
 export function useMultipleRoleDetails(spaceId: string, roleIds: number[]) {

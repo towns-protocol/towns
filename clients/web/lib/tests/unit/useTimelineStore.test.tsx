@@ -7,8 +7,6 @@ import { ThreadStatsData, MessageTips } from '../../src/types/timeline-types'
 import { ChannelMessageEvent, TimelineEvent } from '@towns-protocol/sdk'
 import { ConversationBuilder } from './helpers/ConversationBuilder'
 
-export {}
-
 function describeEvent(event: TimelineEvent) {
     return `${event.eventId} ${event.fallbackContent}`
 }
@@ -117,258 +115,258 @@ describe('UseTimelineStore', () => {
         const { timelines, setState } = useRawTimelineStore.getState()
         const roomIds = Object.keys(timelines)
         setState.reset(roomIds)
-    }),
-        afterEach(() => {
-            const { timelines, setState } = useRawTimelineStore.getState()
-            const roomIds = Object.keys(timelines)
-            setState.reset(roomIds)
-        }),
-        test('test send', () => {
-            // events
-            const events = new ConversationBuilder()
-                .sendMessage({ from: 'alice', body: 'hi bob!' })
-                .getEvents()
-            // results
-            execute('alice', events, { timeline: ['event0 alice: hi bob!'] })
-        }),
-        test('test send and edit', () => {
-            // events (use a custom id for the fist message so we can edit it)
-            const events = new ConversationBuilder()
-                .sendMessage({ id: 'MSG_0', from: 'alice', body: 'hi bob!' })
-                .editMessage({ edits: 'MSG_0', newBody: 'hi bob! (edited)' })
-                .getEvents()
-            // results
-            execute('alice', events, { timeline: ['MSG_0 alice: hi bob! (edited)'] })
-        }),
-        test('test send and edit with different sender', () => {
-            // events (use a custom id for the fist message so we can edit it)
-            const events = new ConversationBuilder()
-                .sendMessage({ id: 'MSG_0', from: 'alice', body: 'hi bob!' })
-                .editMessage({ edits: 'MSG_0', newBody: 'alice sucks! (edited)', senderId: 'bob' })
-                .getEvents()
-            // results
-            execute('alice', events, { timeline: ['MSG_0 alice: hi bob!'] })
-        }),
-        test('test send and multiple edits', () => {
-            // events (use a custom id for the fist message so we can edit it)
-            const events = new ConversationBuilder()
-                .sendMessage({ id: 'MSG_0', from: 'alice', body: 'hi bob!' })
-                .editMessage({ edits: 'MSG_0', newBody: 'hi bob! (edited)' })
-                .editMessage({ edits: 'MSG_0', newBody: 'hi bob! (edited2)' })
-                .getEvents()
-            // results
-            execute('alice', events, { timeline: ['MSG_0 alice: hi bob! (edited2)'] })
-        }),
-        test('test send and multiple edits out of order', () => {
-            // events (use a custom id for the fist message so we can edit it)
-            const events = new ConversationBuilder()
-                .sendMessage({ id: 'MSG_0', from: 'alice', body: 'hi bob!' })
-                .editMessage({ edits: 'MSG_0', newBody: 'hi bob! (edited)' })
-                .editMessage({ edits: 'MSG_0', newBody: 'hi bob! (edited2)' })
-                .getEvents()
-            // results
-            const ex = events[events.length - 1]
-            events[events.length - 1] = events[events.length - 2]
-            events[events.length - 2] = ex
-            execute('alice', events, { timeline: ['MSG_0 alice: hi bob! (edited2)'] })
-        }),
-        test('test threads and thread stats', () => {
-            // events
-            const events = new ConversationBuilder()
-                .sendMessage({ id: 'MSG_0', from: 'alice', body: 'hi bob!' })
-                .sendMessage({ threadId: 'MSG_0', from: 'bob', body: 'hi alice!' })
-                .sendMessage({ threadId: 'MSG_0', from: 'bob', body: 'Hows it going?' })
-                .getEvents()
-            // results
-            execute('alice', events, {
-                timeline: [
-                    'MSG_0 alice: hi bob!',
-                    'event1 bob: hi alice!',
-                    'event2 bob: Hows it going?',
-                ],
-                threads: {
-                    MSG_0: ['event1 bob: hi alice!', 'event2 bob: Hows it going?'],
+    })
+    afterEach(() => {
+        const { timelines, setState } = useRawTimelineStore.getState()
+        const roomIds = Object.keys(timelines)
+        setState.reset(roomIds)
+    })
+    test('test send', () => {
+        // events
+        const events = new ConversationBuilder()
+            .sendMessage({ from: 'alice', body: 'hi bob!' })
+            .getEvents()
+        // results
+        execute('alice', events, { timeline: ['event0 alice: hi bob!'] })
+    })
+    test('test send and edit', () => {
+        // events (use a custom id for the fist message so we can edit it)
+        const events = new ConversationBuilder()
+            .sendMessage({ id: 'MSG_0', from: 'alice', body: 'hi bob!' })
+            .editMessage({ edits: 'MSG_0', newBody: 'hi bob! (edited)' })
+            .getEvents()
+        // results
+        execute('alice', events, { timeline: ['MSG_0 alice: hi bob! (edited)'] })
+    })
+    test('test send and edit with different sender', () => {
+        // events (use a custom id for the fist message so we can edit it)
+        const events = new ConversationBuilder()
+            .sendMessage({ id: 'MSG_0', from: 'alice', body: 'hi bob!' })
+            .editMessage({ edits: 'MSG_0', newBody: 'alice sucks! (edited)', senderId: 'bob' })
+            .getEvents()
+        // results
+        execute('alice', events, { timeline: ['MSG_0 alice: hi bob!'] })
+    })
+    test('test send and multiple edits', () => {
+        // events (use a custom id for the fist message so we can edit it)
+        const events = new ConversationBuilder()
+            .sendMessage({ id: 'MSG_0', from: 'alice', body: 'hi bob!' })
+            .editMessage({ edits: 'MSG_0', newBody: 'hi bob! (edited)' })
+            .editMessage({ edits: 'MSG_0', newBody: 'hi bob! (edited2)' })
+            .getEvents()
+        // results
+        execute('alice', events, { timeline: ['MSG_0 alice: hi bob! (edited2)'] })
+    })
+    test('test send and multiple edits out of order', () => {
+        // events (use a custom id for the fist message so we can edit it)
+        const events = new ConversationBuilder()
+            .sendMessage({ id: 'MSG_0', from: 'alice', body: 'hi bob!' })
+            .editMessage({ edits: 'MSG_0', newBody: 'hi bob! (edited)' })
+            .editMessage({ edits: 'MSG_0', newBody: 'hi bob! (edited2)' })
+            .getEvents()
+        // results
+        const ex = events[events.length - 1]
+        events[events.length - 1] = events[events.length - 2]
+        events[events.length - 2] = ex
+        execute('alice', events, { timeline: ['MSG_0 alice: hi bob! (edited2)'] })
+    })
+    test('test threads and thread stats', () => {
+        // events
+        const events = new ConversationBuilder()
+            .sendMessage({ id: 'MSG_0', from: 'alice', body: 'hi bob!' })
+            .sendMessage({ threadId: 'MSG_0', from: 'bob', body: 'hi alice!' })
+            .sendMessage({ threadId: 'MSG_0', from: 'bob', body: 'Hows it going?' })
+            .getEvents()
+        // results
+        execute('alice', events, {
+            timeline: [
+                'MSG_0 alice: hi bob!',
+                'event1 bob: hi alice!',
+                'event2 bob: Hows it going?',
+            ],
+            threads: {
+                MSG_0: ['event1 bob: hi alice!', 'event2 bob: Hows it going?'],
+            },
+            threadStats: {
+                MSG_0: {
+                    replyEventIds: new Set(['event1', 'event2']),
+                    userIds: new Set(['bob']),
+                    latestTs: events[2].createdAtEpochMs,
+                    parentId: events[0].eventId,
+                    parentEvent: events[0],
+                    parentMessageContent: events[0].content as ChannelMessageEvent,
+                    isParticipating: true,
                 },
-                threadStats: {
-                    MSG_0: {
-                        replyEventIds: new Set(['event1', 'event2']),
-                        userIds: new Set(['bob']),
-                        latestTs: events[2].createdAtEpochMs,
-                        parentId: events[0].eventId,
-                        parentEvent: events[0],
-                        parentMessageContent: events[0].content as ChannelMessageEvent,
-                        isParticipating: true,
-                    },
-                },
-            })
-        }),
-        test('test tip', () => {
-            // ids must be hex
-            const msgId_0 = '0x1234'
-            const msgId_1 = '0x1235'
-            const tipId_a = '0x1236'
-            const tipId_b = '0x1237'
-            const tipId_c = '0x1238'
-            // events
-            const events = new ConversationBuilder()
-                .sendMessage({ id: msgId_0, from: 'alice', body: 'hi bob!' })
-                .sendMessage({ id: msgId_1, from: 'bob', body: 'hi alice!' })
-                .sendTip({ tip: 10, ref: msgId_1, id: tipId_a, from: 'bob', to: 'alice' })
-                .sendTip({ tip: 10, ref: msgId_0, id: tipId_b, from: 'alice', to: 'bob' })
-                .sendTip({ tip: 10, ref: msgId_0, id: tipId_c, from: 'alice', to: 'bob' })
-                .getEvents()
-            // results
-            execute('alice', events, {
-                timeline: [
-                    `${msgId_0} alice: hi bob!`,
-                    `${msgId_1} bob: hi alice!`,
-                    `${tipId_a} tip from: bob to: alice refEventId: ${msgId_1} amount: 10`,
-                    `${tipId_b} tip from: alice to: bob refEventId: ${msgId_0} amount: 10`,
-                    `${tipId_c} tip from: alice to: bob refEventId: ${msgId_0} amount: 10`,
-                ],
-                tips: {
-                    [msgId_1]: [`${tipId_a} amount: 10 from: bob to: alice`],
-                    [msgId_0]: [
-                        `${tipId_b} amount: 10 from: alice to: bob`,
-                        `${tipId_c} amount: 10 from: alice to: bob`,
-                    ],
-                },
-            })
-        }),
-        test('test edit thread item', () => {
-            // events
-            const events = new ConversationBuilder()
-                .sendMessage({ id: 'MSG_0', from: 'alice', body: 'hi bob!' })
-                .sendMessage({ id: 'THREAD_0', threadId: 'MSG_0', from: 'bob', body: 'hi alice!' })
-                .editMessage({ edits: 'THREAD_0', newBody: 'hi alice! (edited)' })
-                .getEvents()
-            // results
-            execute('alice', events, {
-                timeline: ['MSG_0 alice: hi bob!', 'THREAD_0 bob: hi alice! (edited)'],
-                threads: {
-                    MSG_0: ['THREAD_0 bob: hi alice! (edited)'],
-                },
-                threadStats: {
-                    MSG_0: {
-                        replyEventIds: new Set(['THREAD_0']),
-                        userIds: new Set(['bob']),
-                        latestTs: events[1].createdAtEpochMs,
-                        parentId: events[0].eventId,
-                        parentEvent: events[0],
-                        parentMessageContent: events[0].content as ChannelMessageEvent,
-                        isParticipating: true,
-                    },
-                },
-            })
-        }),
-        test('test redact thread item', () => {
-            // events
-            const events = new ConversationBuilder()
-                .sendMessage({ id: 'MSG_0', from: 'alice', body: 'hi bob!' })
-                .sendMessage({ id: 'THREAD_0', threadId: 'MSG_0', from: 'bob', body: 'hi alice!' })
-                .redactMessage({ redacts: 'THREAD_0' })
-                .getEvents()
-            // results
-            execute('alice', events, {
-                timeline: [
-                    'MSG_0 alice: hi bob!',
-                    'THREAD_0 ~Redacted~',
-                    'event2 Redacts THREAD_0 adminRedaction: false',
-                ],
-                threads: {
-                    MSG_0: ['THREAD_0 ~Redacted~'],
-                },
-                threadStats: {
-                    MSG_0: {
-                        replyEventIds: new Set([]),
-                        userIds: new Set([]),
-                        latestTs: events[1].createdAtEpochMs,
-                        parentId: events[0].eventId,
-                        parentEvent: events[0],
-                        parentMessageContent: events[0].content as ChannelMessageEvent,
-                        isParticipating: false,
-                    },
-                },
-            })
-        }),
-        test('test send, edit and redact', () => {
-            // events
-            const events = new ConversationBuilder()
-                .sendMessage({ from: 'alice', body: 'hi bob!' })
-                .sendMessage({
-                    id: 'MSG_1',
-                    from: 'bob',
-                    body: 'hi alice!',
-                })
-                .sendMessage({
-                    id: 'MSG_2',
-                    from: 'bob',
-                    body: 'this is banannas',
-                })
-                .editMessage({
-                    edits: 'MSG_1',
-                    newBody: 'hi alice! (edited)',
-                })
-                .sendMessage({ from: 'alice', body: 'banannas? lol' })
-                .redactMessage({ redacts: 'MSG_2' })
-                .getEvents()
-            // results
-            execute('alice', events, {
-                timeline: [
-                    'event0 alice: hi bob!',
-                    'MSG_1 bob: hi alice! (edited)',
-                    'MSG_2 ~Redacted~',
-                    'event4 alice: banannas? lol',
-                    'event5 Redacts MSG_2 adminRedaction: false',
-                ],
-            })
-        }),
-        test('test send and redact', () => {
-            // events (use a custom id for the fist message so we can edit it)
-            const events = new ConversationBuilder()
-                .sendMessage({ id: 'MSG_0', from: 'alice', body: 'hi bob' })
-                .sendMessage({ id: 'MSG_1', from: 'alice', body: 'hi bob!' })
-                .redactMessage({ redacts: 'MSG_0' })
-                .getEvents()
-            // results
-            execute('alice', events, {
-                timeline: [
-                    'MSG_0 ~Redacted~',
-                    'MSG_1 alice: hi bob!',
-                    'event2 Redacts MSG_0 adminRedaction: false',
-                ],
-            })
-        }),
-        test('test send and redact with different sender, redaction should be ignored', () => {
-            // events (use a custom id for the fist message so we can edit it)
-            const events = new ConversationBuilder()
-                .sendMessage({ id: 'MSG_0', from: 'alice', body: 'hi bob' })
-                .sendMessage({ id: 'MSG_1', from: 'alice', body: 'hi bob!' })
-                .redactMessage({ redacts: 'MSG_0', senderId: 'bob' })
-                .getEvents()
-            // results
-            execute('alice', events, {
-                timeline: [
-                    'MSG_0 alice: hi bob',
-                    'MSG_1 alice: hi bob!',
-                    'event2 Redacts MSG_0 adminRedaction: false', // the redaction action show up, but the message is not redacted
-                ],
-            })
-        }),
-        test('test send and admin redact', () => {
-            // events (use a custom id for the fist message so we can edit it)
-            const events = new ConversationBuilder()
-                .sendMessage({ id: 'MSG_0', from: 'alice', body: 'hi bob' })
-                .sendMessage({ id: 'MSG_1', from: 'alice', body: 'hi bob!' })
-                .redactMessage({ redacts: 'MSG_0', senderId: 'bob', isAdmin: true })
-                .getEvents()
-            // results
-            execute('alice', events, {
-                timeline: [
-                    'MSG_0 ~Redacted~',
-                    'MSG_1 alice: hi bob!',
-                    'event2 Redacts MSG_0 adminRedaction: true',
-                ],
-            })
+            },
         })
+    })
+    test('test tip', () => {
+        // ids must be hex
+        const msgId_0 = '0x1234'
+        const msgId_1 = '0x1235'
+        const tipId_a = '0x1236'
+        const tipId_b = '0x1237'
+        const tipId_c = '0x1238'
+        // events
+        const events = new ConversationBuilder()
+            .sendMessage({ id: msgId_0, from: 'alice', body: 'hi bob!' })
+            .sendMessage({ id: msgId_1, from: 'bob', body: 'hi alice!' })
+            .sendTip({ tip: 10, ref: msgId_1, id: tipId_a, from: 'bob', to: 'alice' })
+            .sendTip({ tip: 10, ref: msgId_0, id: tipId_b, from: 'alice', to: 'bob' })
+            .sendTip({ tip: 10, ref: msgId_0, id: tipId_c, from: 'alice', to: 'bob' })
+            .getEvents()
+        // results
+        execute('alice', events, {
+            timeline: [
+                `${msgId_0} alice: hi bob!`,
+                `${msgId_1} bob: hi alice!`,
+                `${tipId_a} tip from: bob to: alice refEventId: ${msgId_1} amount: 10`,
+                `${tipId_b} tip from: alice to: bob refEventId: ${msgId_0} amount: 10`,
+                `${tipId_c} tip from: alice to: bob refEventId: ${msgId_0} amount: 10`,
+            ],
+            tips: {
+                [msgId_1]: [`${tipId_a} amount: 10 from: bob to: alice`],
+                [msgId_0]: [
+                    `${tipId_b} amount: 10 from: alice to: bob`,
+                    `${tipId_c} amount: 10 from: alice to: bob`,
+                ],
+            },
+        })
+    })
+    test('test edit thread item', () => {
+        // events
+        const events = new ConversationBuilder()
+            .sendMessage({ id: 'MSG_0', from: 'alice', body: 'hi bob!' })
+            .sendMessage({ id: 'THREAD_0', threadId: 'MSG_0', from: 'bob', body: 'hi alice!' })
+            .editMessage({ edits: 'THREAD_0', newBody: 'hi alice! (edited)' })
+            .getEvents()
+        // results
+        execute('alice', events, {
+            timeline: ['MSG_0 alice: hi bob!', 'THREAD_0 bob: hi alice! (edited)'],
+            threads: {
+                MSG_0: ['THREAD_0 bob: hi alice! (edited)'],
+            },
+            threadStats: {
+                MSG_0: {
+                    replyEventIds: new Set(['THREAD_0']),
+                    userIds: new Set(['bob']),
+                    latestTs: events[1].createdAtEpochMs,
+                    parentId: events[0].eventId,
+                    parentEvent: events[0],
+                    parentMessageContent: events[0].content as ChannelMessageEvent,
+                    isParticipating: true,
+                },
+            },
+        })
+    })
+    test('test redact thread item', () => {
+        // events
+        const events = new ConversationBuilder()
+            .sendMessage({ id: 'MSG_0', from: 'alice', body: 'hi bob!' })
+            .sendMessage({ id: 'THREAD_0', threadId: 'MSG_0', from: 'bob', body: 'hi alice!' })
+            .redactMessage({ redacts: 'THREAD_0' })
+            .getEvents()
+        // results
+        execute('alice', events, {
+            timeline: [
+                'MSG_0 alice: hi bob!',
+                'THREAD_0 ~Redacted~',
+                'event2 Redacts THREAD_0 adminRedaction: false',
+            ],
+            threads: {
+                MSG_0: ['THREAD_0 ~Redacted~'],
+            },
+            threadStats: {
+                MSG_0: {
+                    replyEventIds: new Set([]),
+                    userIds: new Set([]),
+                    latestTs: events[1].createdAtEpochMs,
+                    parentId: events[0].eventId,
+                    parentEvent: events[0],
+                    parentMessageContent: events[0].content as ChannelMessageEvent,
+                    isParticipating: false,
+                },
+            },
+        })
+    })
+    test('test send, edit and redact', () => {
+        // events
+        const events = new ConversationBuilder()
+            .sendMessage({ from: 'alice', body: 'hi bob!' })
+            .sendMessage({
+                id: 'MSG_1',
+                from: 'bob',
+                body: 'hi alice!',
+            })
+            .sendMessage({
+                id: 'MSG_2',
+                from: 'bob',
+                body: 'this is banannas',
+            })
+            .editMessage({
+                edits: 'MSG_1',
+                newBody: 'hi alice! (edited)',
+            })
+            .sendMessage({ from: 'alice', body: 'banannas? lol' })
+            .redactMessage({ redacts: 'MSG_2' })
+            .getEvents()
+        // results
+        execute('alice', events, {
+            timeline: [
+                'event0 alice: hi bob!',
+                'MSG_1 bob: hi alice! (edited)',
+                'MSG_2 ~Redacted~',
+                'event4 alice: banannas? lol',
+                'event5 Redacts MSG_2 adminRedaction: false',
+            ],
+        })
+    })
+    test('test send and redact', () => {
+        // events (use a custom id for the fist message so we can edit it)
+        const events = new ConversationBuilder()
+            .sendMessage({ id: 'MSG_0', from: 'alice', body: 'hi bob' })
+            .sendMessage({ id: 'MSG_1', from: 'alice', body: 'hi bob!' })
+            .redactMessage({ redacts: 'MSG_0' })
+            .getEvents()
+        // results
+        execute('alice', events, {
+            timeline: [
+                'MSG_0 ~Redacted~',
+                'MSG_1 alice: hi bob!',
+                'event2 Redacts MSG_0 adminRedaction: false',
+            ],
+        })
+    })
+    test('test send and redact with different sender, redaction should be ignored', () => {
+        // events (use a custom id for the fist message so we can edit it)
+        const events = new ConversationBuilder()
+            .sendMessage({ id: 'MSG_0', from: 'alice', body: 'hi bob' })
+            .sendMessage({ id: 'MSG_1', from: 'alice', body: 'hi bob!' })
+            .redactMessage({ redacts: 'MSG_0', senderId: 'bob' })
+            .getEvents()
+        // results
+        execute('alice', events, {
+            timeline: [
+                'MSG_0 alice: hi bob',
+                'MSG_1 alice: hi bob!',
+                'event2 Redacts MSG_0 adminRedaction: false', // the redaction action show up, but the message is not redacted
+            ],
+        })
+    })
+    test('test send and admin redact', () => {
+        // events (use a custom id for the fist message so we can edit it)
+        const events = new ConversationBuilder()
+            .sendMessage({ id: 'MSG_0', from: 'alice', body: 'hi bob' })
+            .sendMessage({ id: 'MSG_1', from: 'alice', body: 'hi bob!' })
+            .redactMessage({ redacts: 'MSG_0', senderId: 'bob', isAdmin: true })
+            .getEvents()
+        // results
+        execute('alice', events, {
+            timeline: [
+                'MSG_0 ~Redacted~',
+                'MSG_1 alice: hi bob!',
+                'event2 Redacts MSG_0 adminRedaction: true',
+            ],
+        })
+    })
 })

@@ -413,8 +413,8 @@ export const EditModeContainer = (props: EditRowProps) => {
     }, [isEditing, props.initialValue])
 
     useEffect(() => {
-        value
         setError(undefined)
+        // value is a needed dependency
     }, [value])
 
     const onChange = useEvent((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {

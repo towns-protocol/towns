@@ -1,6 +1,6 @@
 {
     "name": "@towns-protocol/proto",
-    "version": "0.0.189",
+    "version": "0.0.191",
     "packageManager": "yarn@3.8.0",
     "type": "module",
     "main": "dist/index.js",
@@ -25,10 +25,10 @@
         "@bufbuild/buf": "^1.32.0",
         "@bufbuild/protoc-gen-es": "^2.2.2",
         "@towns-protocol/proto-source": "workspace:^",
-        "@types/node": "^20.5.0",
+        "@types/node": "^20.14.8",
         "lodash.debounce": "^4.0.8",
         "ts-node": "^10.9.1",
-        "typescript": "^5.1.6",
+        "typescript": "^5.8.2",
         "vitest": "3.0.5"
     },
     "files": [

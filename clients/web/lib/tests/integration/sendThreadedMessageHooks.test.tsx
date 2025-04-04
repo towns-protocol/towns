@@ -372,7 +372,7 @@ describe('sendThreadedMessageHooks', () => {
             console.log(`jane hello channels sent`)
         })
         const channel_1_message_0 = jane
-            .getEvents_TypedChannelMessage(channel_1)!
+            .getEvents_TypedChannelMessage(channel_1)
             .find((e) => e.content.body === 'hello channel_1')!
         await waitFor(() => expect(channel_1_message_0.eventId.startsWith('~')).toBe(false))
 
@@ -408,7 +408,7 @@ describe('sendThreadedMessageHooks', () => {
             TestConstants.DoubleDefaultWaitForTimeout,
         )
         const channel_2_message_1 = jane
-            .getEvents_TypedChannelMessage(channel_2)!
+            .getEvents_TypedChannelMessage(channel_2)
             .find((e) => e.content.body === 'hello jane in channel_2')!
 
         await act(async () => {

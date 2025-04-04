@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/prefer-promise-reject-errors */
 export async function createWorkerPromise<TArgs, TReturn>(
     worker: Worker,
     message?: TArgs,

@@ -2,8 +2,10 @@
 pragma solidity ^0.8.23;
 
 // interfaces
+
+import {IPlatformRequirements} from
+    "contracts/src/factory/facets/platform/requirements/IPlatformRequirements.sol";
 import {IPrepay} from "contracts/src/spaces/facets/prepay/IPrepay.sol";
-import {IPlatformRequirements} from "contracts/src/factory/facets/platform/requirements/IPlatformRequirements.sol";
 
 // libraries
 import {MembershipStorage} from "contracts/src/spaces/facets/membership/MembershipStorage.sol";
@@ -11,49 +13,48 @@ import {CurrencyTransfer} from "contracts/src/utils/libraries/CurrencyTransfer.s
 
 // contracts
 import {PrepayBase} from "./PrepayBase.sol";
-import {ReentrancyGuard} from "solady/utils/ReentrancyGuard.sol";
-import {Entitled} from "contracts/src/spaces/facets/Entitled.sol";
+
 import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
+import {Entitled} from "contracts/src/spaces/facets/Entitled.sol";
+import {ReentrancyGuard} from "solady/utils/ReentrancyGuard.sol";
 
 contract PrepayFacet is IPrepay, PrepayBase, ReentrancyGuard, Entitled, Facet {
-  function __PrepayFacet_init() external onlyInitializing {
-    _addInterface(type(IPrepay).interfaceId);
-  }
+    function __PrepayFacet_init() external onlyInitializing {
+        _addInterface(type(IPrepay).interfaceId);
+    }
 
-  function prepayMembership(uint256 supply) external payable nonReentrant {
-    if (supply == 0) revert Prepay__InvalidSupplyAmount();
+    function prepayMembership(uint256 supply) external payable nonReentrant {
+        if (supply == 0) revert Prepay__InvalidSupplyAmount();
 
-    MembershipStorage.Layout storage ds = MembershipStorage.layout();
-    IPlatformRequirements platform = IPlatformRequirements(ds.spaceFactory);
+        MembershipStorage.Layout storage ds = MembershipStorage.layout();
+        IPlatformRequirements platform = IPlatformRequirements(ds.spaceFactory);
 
-    uint256 cost = supply * platform.getMembershipFee();
+        uint256 cost = supply * platform.getMembershipFee();
 
-    // validate payment covers membership fee
-    if (msg.value != cost) revert Prepay__InvalidAmount();
+        // validate payment covers membership fee
+        if (msg.value != cost) revert Prepay__InvalidAmount();
 
-    // add prepay
-    _addPrepay(supply);
+        // add prepay
+        _addPrepay(supply);
 
-    // transfer fee to platform recipient
-    address currency = ds.membershipCurrency;
-    address platformRecipient = platform.getFeeRecipient();
-    CurrencyTransfer.transferCurrency(
-      currency,
-      msg.sender, // from
-      platformRecipient, // to
-      cost
-    );
-  }
+        // transfer fee to platform recipient
+        address currency = ds.membershipCurrency;
+        address platformRecipient = platform.getFeeRecipient();
+        CurrencyTransfer.transferCurrency(
+            currency,
+            msg.sender, // from
+            platformRecipient, // to
+            cost
+        );
+    }
 
-  function prepaidMembershipSupply() external view returns (uint256) {
-    return _getPrepaidSupply();
-  }
+    function prepaidMembershipSupply() external view returns (uint256) {
+        return _getPrepaidSupply();
+    }
 
-  function calculateMembershipPrepayFee(
-    uint256 supply
-  ) external view returns (uint256) {
-    MembershipStorage.Layout storage ds = MembershipStorage.layout();
-    IPlatformRequirements platform = IPlatformRequirements(ds.spaceFactory);
-    return supply * platform.getMembershipFee();
-  }
+    function calculateMembershipPrepayFee(uint256 supply) external view returns (uint256) {
+        MembershipStorage.Layout storage ds = MembershipStorage.layout();
+        IPlatformRequirements platform = IPlatformRequirements(ds.spaceFactory);
+        return supply * platform.getMembershipFee();
+    }
 }

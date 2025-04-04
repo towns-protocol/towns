@@ -78,6 +78,7 @@ export class TownsTestWeb3Provider extends ethers.providers.JsonRpcProvider {
                 return this.wallet.signMessage(message)
             }
         } else {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
             return this.send(method, params)
         }
     }

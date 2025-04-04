@@ -16,6 +16,7 @@ export const usePeriodicUpdates = () => {
 
     const registration = useRegisterSW({
         onRegisteredSW: (swUrl, registration) => {
+            // eslint-disable-next-line @typescript-eslint/no-base-to-string
             log('registered:' + registration)
 
             if (!registration) {

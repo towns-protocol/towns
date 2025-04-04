@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"math/rand"
 	"os"
 	"slices"
@@ -18,8 +19,12 @@ import (
 	"github.com/ethereum/go-ethereum/accounts"
 	"github.com/ethereum/go-ethereum/common"
 	eth_crypto "github.com/ethereum/go-ethereum/crypto"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/proto"
+
 	. "github.com/towns-protocol/towns/core/node/base"
+	"github.com/towns-protocol/towns/core/node/base/test"
 	"github.com/towns-protocol/towns/core/node/crypto"
 	"github.com/towns-protocol/towns/core/node/events"
 	"github.com/towns-protocol/towns/core/node/logging"
@@ -28,11 +33,41 @@ import (
 	river_sync "github.com/towns-protocol/towns/core/node/rpc/sync"
 	. "github.com/towns-protocol/towns/core/node/shared"
 	"github.com/towns-protocol/towns/core/node/testutils"
+	"github.com/towns-protocol/towns/core/node/testutils/dbtestutils"
 	"github.com/towns-protocol/towns/core/node/testutils/testfmt"
-	"google.golang.org/protobuf/proto"
 )
 
+var setupDB sync.Once
+
+// Creation of extensions can cause race conditions in the database even if
+// they are created with an "IF NOT EXISTS" clause, causing migrations across
+// multiple tests to fail. Therefore we create all required extensions in
+// pg one time here.
+func initPostgres() {
+	ctx, cancel := test.NewTestContext()
+	defer cancel()
+
+	// We are not creating a schema for this connection, therefore no need to tear
+	// it down - do not call the closer.
+	cfg, _, _, err := dbtestutils.ConfigureDbWithSchemaName(ctx, "")
+	if err != nil {
+		log.Fatalf("Unable to create postgres extensions: unable to configure db: %v", err)
+	}
+
+	conn, err := pgxpool.New(ctx, cfg.GetUrl())
+	if err != nil {
+		log.Fatalf("Failed to connect to database: %v", err)
+	}
+	defer conn.Close()
+	_, err = conn.Exec(ctx, "CREATE EXTENSION IF NOT EXISTS btree_gin;")
+	if err != nil {
+		log.Fatalf("Unable to create extension: %v", err)
+	}
+}
+
 func TestMain(m *testing.M) {
+	setupDB.Do(initPostgres)
+
 	c := m.Run()
 	if c != 0 {
 		os.Exit(c)

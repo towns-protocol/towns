@@ -8,8 +8,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/towns-protocol/towns/core/node/storage"
-
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/stretchr/testify/require"
@@ -35,7 +33,7 @@ func TestStreamCacheViewEviction(t *testing.T) {
 
 	node := tc.getBC()
 	streamID := testutils.FakeStreamId(STREAM_SPACE_BIN)
-	_, genesisMiniblock := makeTestSpaceStream(t, node.Wallet, streamID, nil)
+	_, genesisMiniblock, _ := makeTestSpaceStream(t, node.Wallet, streamID, nil)
 
 	tc.createStreamNoCache(streamID, genesisMiniblock)
 
@@ -138,7 +136,7 @@ func TestCacheEvictionWithFilledMiniBlockPool(t *testing.T) {
 
 	node := tc.getBC()
 	streamID := testutils.FakeStreamId(STREAM_SPACE_BIN)
-	_, genesisMiniblock := makeTestSpaceStream(t, node.Wallet, streamID, nil)
+	_, genesisMiniblock, _ := makeTestSpaceStream(t, node.Wallet, streamID, nil)
 
 	tc.createStreamNoCache(streamID, genesisMiniblock)
 
@@ -317,7 +315,7 @@ func TestStreamMiniblockBatchProduction(t *testing.T) {
 				require.NoError(err, "get miniblocks")
 
 				for _, mb := range miniblocks {
-					gotStreamEventsCount += len(mb.Events)
+					gotStreamEventsCount += len(mb.Proto.Events)
 				}
 
 				if expStreamEventsCount == gotStreamEventsCount {
@@ -535,21 +533,14 @@ func TestMiniblockRegistrationWithPendingLocalCandidate(t *testing.T) {
 	}
 
 	candidate, err := NewMiniblockInfoFromHeaderAndParsed(
-		instance.params.Wallet, candidateHeader, []*ParsedEvent{event1, event2})
-	require.NoError(err)
-
-	miniblockBytes, err := candidate.ToBytes()
-	require.NoError(err)
-
-	err = instance.params.Storage.WriteMiniblockCandidate(
-		ctx,
-		spaceStreamId,
-		&storage.WriteMiniblockData{
-			Number: candidate.Ref.Num,
-			Hash:   candidate.Ref.Hash,
-			Data:   miniblockBytes,
-		},
+		instance.params.Wallet, candidateHeader, []*ParsedEvent{event1, event2},
 	)
+	require.NoError(err)
+
+	storageMb, err := candidate.AsStorageMb()
+	require.NoError(err)
+
+	err = instance.params.Storage.WriteMiniblockCandidate(ctx, spaceStreamId, storageMb)
 	require.NoError(err)
 
 	// bypass the mini-block producer and register candidate in the stream facet

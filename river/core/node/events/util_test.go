@@ -128,6 +128,7 @@ func makeCacheTestContext(t *testing.T, p testParams) (context.Context, *cacheTe
 			bc.Wallet.Address,
 			blockNumber,
 			bc.ChainMonitor,
+			btc.OnChainConfig,
 			nil,
 			nil,
 		)
@@ -178,14 +179,14 @@ func (ctc *cacheTestContext) initAllCaches(opts *MiniblockProducerOpts) {
 func (ctc *cacheTestContext) createReplStream() (StreamId, []common.Address, *MiniblockRef) {
 	streamId := testutils.FakeStreamId(STREAM_USER_SETTINGS_BIN)
 	mb := MakeGenesisMiniblockForUserSettingsStream(ctc.t, ctc.clientWallet, ctc.instances[0].params.Wallet, streamId)
-	mbBytes, err := mb.ToBytes()
+	storageMb, err := mb.AsStorageMb()
 	ctc.require.NoError(err)
 
 	nodes, err := ctc.instances[0].streamRegistry.AllocateStream(
 		ctc.ctx,
 		streamId,
 		common.BytesToHash(mb.Proto.Header.Hash),
-		mbBytes,
+		storageMb.Data,
 	)
 	ctc.require.NoError(err)
 	ctc.require.Len(nodes, ctc.testParams.replFactor)
@@ -327,7 +328,7 @@ func (ctc *cacheTestContext) SaveMbCandidate(
 	ctx context.Context,
 	node common.Address,
 	streamId StreamId,
-	mb *Miniblock,
+	candidate *MiniblockInfo,
 ) error {
 	inst := ctc.instancesByAddr[node]
 
@@ -336,7 +337,7 @@ func (ctc *cacheTestContext) SaveMbCandidate(
 		return err
 	}
 
-	return stream.SaveMiniblockCandidate(ctx, mb)
+	return stream.SaveMiniblockCandidate(ctx, candidate)
 }
 
 func (ctc *cacheTestContext) GetMbs(
@@ -345,7 +346,7 @@ func (ctc *cacheTestContext) GetMbs(
 	streamId StreamId,
 	fromInclusive int64,
 	toExclusive int64,
-) ([]*Miniblock, error) {
+) ([]*MiniblockInfo, error) {
 	for _, instance := range ctc.instances {
 		if node == instance.params.Wallet.Address {
 			stream, err := instance.cache.getStreamImpl(ctx, streamId, true)

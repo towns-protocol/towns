@@ -59,6 +59,7 @@ function LoginComponent({
                     cta
                     disabled={!privyReady || isBusy}
                     spinner={isBusy}
+                    // eslint-disable-next-line @typescript-eslint/no-base-to-string
                     data-testid={`${text?.toString().toLowerCase()}-button`}
                     onClick={onButtonClick}
                 >

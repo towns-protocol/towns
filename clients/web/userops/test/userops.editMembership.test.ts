@@ -674,7 +674,7 @@ async function generateAndFundMembers(count: number) {
 
     // Verify balances
     const balances = await Promise.all(
-        members.map(async (member, i) => member.getBalance(memberAbstractAddresses[i]!)),
+        members.map(async (member, i) => member.getBalance(memberAbstractAddresses[i])),
     )
 
     if (balances.some((balance) => balance.toBigInt() <= 0n)) {

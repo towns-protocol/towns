@@ -174,6 +174,7 @@ export const TradingContextProvider = ({ children }: { children: React.ReactNode
                             popupToast(({ toast }) => (
                                 <StandardToast.Error
                                     message="Transaction failed"
+                                    // eslint-disable-next-line @typescript-eslint/no-base-to-string
                                     subMessage={txResult.meta?.err?.toString()}
                                     toast={toast}
                                 />

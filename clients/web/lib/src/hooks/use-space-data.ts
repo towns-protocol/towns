@@ -390,7 +390,7 @@ export function useSpaceRollups(
                         maxWait: 3000,
                     }) // only do each space once every 3 seconds
                 }
-                debounceRef.current[streamId]!()
+                debounceRef.current[streamId]()
             }
         }
 

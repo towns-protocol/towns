@@ -30,6 +30,7 @@ export async function ethersSignerToAccount(signer: Signer) {
         },
         signTypedData: async (args) => {
             if ('_signTypedData' in signer && typeof signer._signTypedData === 'function') {
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-call
                 return signer._signTypedData(
                     args.domain as TypedDataDomain,
                     args.types as Record<string, TypedDataField[]>,

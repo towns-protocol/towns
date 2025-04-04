@@ -92,7 +92,6 @@ const PopupMenuOption = <T,>(
 ) => {
     const { onSelectOption, option, renderOption, ...boxProps } = props
     const ctx = useContext(CardOpenerContext)
-    ctx?.closeCard
     return (
         <Box
             hoverable

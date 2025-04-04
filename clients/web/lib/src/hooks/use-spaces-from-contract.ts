@@ -54,13 +54,8 @@ function useSpacesFromContractWithAddress(myWalletAddress?: string): UseSpaceFro
             const entitledSpaces = await Promise.all(isEntitledPromises)
             // Filter out the spaces that the user is not entitled to see
             const entitledSpaceItems = entitledSpaces
-                .map((isEntitled, index) => {
-                    if (isEntitled) {
-                        return spaceRooms[index]
-                    }
-                    return undefined
-                })
-                .filter((x) => x !== undefined) as SpaceItem[]
+                .map((isEntitled, index) => (isEntitled ? spaceRooms[index] : undefined))
+                .filter((x) => x !== undefined)
             return entitledSpaceItems
         }
 

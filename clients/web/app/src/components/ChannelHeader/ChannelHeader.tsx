@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-base-to-string */
 import React, { useCallback, useContext, useMemo } from 'react'
 import {
     useChannelMembers,

@@ -10,7 +10,7 @@
 
 // These initial Types are based on bindings that don't exist in the project yet,
 // you can follow the links to learn how to implement them.
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
+// eslint-disable-next-line @typescript-eslint/no-empty-interface, @typescript-eslint/no-empty-object-type
 export interface Env {
 	// Example binding to KV. Learn more at https://developers.cloudflare.com/workers/runtime-apis/kv/
 	// MY_KV_NAMESPACE: KVNamespace

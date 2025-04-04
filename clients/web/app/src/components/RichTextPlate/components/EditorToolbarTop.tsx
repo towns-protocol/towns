@@ -10,7 +10,7 @@ import { FloatingToolbar } from './plate-ui/FloatingToolbar'
 import { FormattingToolbar, FormattingToolbarProps } from './plate-ui/FormattingToolbar'
 import { focusEditorTowns, getLinkURLAtSelection } from '../utils/helpers'
 
-interface Props extends Omit<FormattingToolbarProps, 'onLinkClick'> {}
+type Props = Omit<FormattingToolbarProps, 'onLinkClick'>
 const linkify = linkifyit()
 
 export const EditorToolbarTop = (props: Props) => {

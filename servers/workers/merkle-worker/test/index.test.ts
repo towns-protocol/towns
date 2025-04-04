@@ -47,7 +47,7 @@ describe('Merkle Tree Worker', () => {
             )
 
             expect(result.status).toBe(200)
-            const responseBody = (await result.json()) as { merkleRoot: string }
+            const responseBody: { merkleRoot: string } = await result.json()
             expect(responseBody).toHaveProperty('merkleRoot')
             expect(responseBody.merkleRoot).toBeTruthy()
         })
@@ -80,7 +80,7 @@ describe('Merkle Tree Worker', () => {
             )
 
             expect(result.status).toBe(409)
-            const responseBody = (await result.json()) as ApiErrorResponse
+            const responseBody: ApiErrorResponse = await result.json()
             expect(responseBody.errorDetail.code).toBe(ErrorCode.ALREADY_EXISTS)
         })
     })
@@ -101,7 +101,7 @@ describe('Merkle Tree Worker', () => {
                     }),
                 ),
             )
-            const responseBody = (await result.json()) as { merkleRoot: string }
+            const responseBody: { merkleRoot: string } = await result.json()
             merkleRoot = responseBody.merkleRoot
         })
 
@@ -122,7 +122,7 @@ describe('Merkle Tree Worker', () => {
             )
 
             expect(result.status).toBe(200)
-            const responseBody = (await result.json()) as ApiSuccessResponse<MerkleProofResponse>
+            const responseBody: ApiSuccessResponse<MerkleProofResponse> = await result.json()
             console.log(`responseBody: ${JSON.stringify(responseBody)}`)
             expect(responseBody).toHaveProperty('proof')
             expect(Array.isArray(responseBody?.proof)).toBe(true)
@@ -144,7 +144,7 @@ describe('Merkle Tree Worker', () => {
             )
 
             expect(result.status).toBe(404)
-            const responseBody = (await result.json()) as ApiErrorResponse
+            const responseBody: ApiErrorResponse = await result.json()
             expect(responseBody.errorDetail.code).toBe(ErrorCode.MERKLE_TREE_NOT_FOUND)
         })
 
@@ -166,15 +166,15 @@ describe('Merkle Tree Worker', () => {
             )
 
             expect(result.status).toBe(404)
-            const responseBody = (await result.json()) as ApiErrorResponse
+            const responseBody: ApiErrorResponse = await result.json()
             expect(responseBody.errorDetail.code).toBe(ErrorCode.CLAIM_NOT_FOUND)
         })
     })
 
     describe.skip('POST /api/verify-proof', () => {
         let merkleRoot: string
-        let proof: string[]
-        let leaf: [string, string]
+        const proof: string[] = []
+        const leaf: [string, string] = ['', '']
         const testConditionId = 'test-condition-123'
 
         // Setup: Create merkle tree and store it first
@@ -202,16 +202,16 @@ describe('Merkle Tree Worker', () => {
             })
 
             merkleRoot = treeLoaded.root
-            let leaf = [testClaims[0].address, testClaims[0].amount]
+            const leaf = [testClaims[0].address, testClaims[0].amount]
             // Get proof for the specific value, not the index
-            let proof: string[] | null = null
+            let proof: string[] = []
             for (const [i, v] of treeLoaded.entries()) {
                 if (v[0] === leaf[0] && v[1] === leaf[1]) {
                     proof = treeLoaded.getProof(i)
                     break
                 }
             }
-            console.log(`proof: ${proof}`)
+            console.log('proof: ', proof)
             expect(proof).toBeDefined()
             expect(proof?.length).toBeGreaterThan(0)
 
@@ -228,9 +228,7 @@ describe('Merkle Tree Worker', () => {
                 ),
             )
 
-            const responseBody = (await response.json()) as ApiSuccessResponse<{
-                merkleRoot: string
-            }>
+            const responseBody: ApiSuccessResponse<{ merkleRoot: string }> = await response.json()
             expect(responseBody.data?.merkleRoot).toEqual(merkleRoot)
         })
 
@@ -278,7 +276,7 @@ describe('Merkle Tree Worker', () => {
             )
 
             expect(result.status).toBe(500)
-            const responseBody = (await result.json()) as ApiErrorResponse
+            const responseBody: ApiErrorResponse = await result.json()
             expect(responseBody.error).toContain('Error processing request')
         })
     })

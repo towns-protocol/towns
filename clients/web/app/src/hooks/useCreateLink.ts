@@ -128,6 +128,7 @@ const mentionsRoutePaths: Path[] = [
     },
 ]
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const linkParams = {
     messageThreads: {
         params: {

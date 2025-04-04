@@ -81,7 +81,8 @@ export const CreateMessageSelect = () => {
     })
 
     const firstUser = useMemo(
-        () => lookupUser(selectedUsers.values().next().value),
+        // TODO: this might be a bug, .next() can return undefined.
+        () => lookupUser(selectedUsers.values().next().value!),
         [lookupUser, selectedUsers],
     )
 

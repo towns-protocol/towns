@@ -341,7 +341,7 @@ router.post('/admin/api/add-override', async (request: WorkerRequest, env: Env) 
         return createErrorResponse(400, 'Bad Request', ErrorCode.BAD_REQUEST)
     }
     const { operation, enabled, n } = content
-    switch (operation) {
+    switch (operation as Overrides) {
         case Overrides.EveryWalletCanMintWhitelistedEmail: {
             await env.OVERRIDES.put(operation, toJson({ operation: operation, enabled: enabled }))
             break
@@ -379,7 +379,7 @@ router.post('/admin/api/add-to-whitelist', async (request: WorkerRequest, env: E
         return createErrorResponse(400, 'Bad Request', ErrorCode.BAD_REQUEST)
     }
     const { operation, enabled, data } = content
-    switch (operation) {
+    switch (operation as Whitelist) {
         case Whitelist.EmailWhitelist: {
             // add to KV
             // todo: check if email is valid
@@ -433,7 +433,10 @@ router.get('/api/smart-account/:ownerAddress', async (request: WorkerRequest, en
     }
     const { newAccountImplementationType, ownerAddress } = content
     const smartAccount = await determineSmartAccount({
-        newAccountImplementationType,
+        newAccountImplementationType: newAccountImplementationType as
+            | 'simple'
+            | 'modular'
+            | undefined,
         ownerAddress,
         environment: env.ENVIRONMENT,
         env,

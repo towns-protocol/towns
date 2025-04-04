@@ -112,18 +112,12 @@ export class StreamStateView_UserMetadata extends StreamStateView_AbstractConten
         stateEmitter?.emit('userDeviceKeysUpdated', this.streamId, this.deviceKeys)
     }
 
-    private addProfileImage(
-        data: EncryptedData,
-        stateEmitter?: TypedEmitter<StreamStateEvents> | undefined,
-    ) {
+    private addProfileImage(data: EncryptedData, stateEmitter?: TypedEmitter<StreamStateEvents>) {
         this.encryptedProfileImage = data
         stateEmitter?.emit('userProfileImageUpdated', this.streamId)
     }
 
-    private addBio(
-        data: EncryptedData,
-        stateEmitter?: TypedEmitter<StreamStateEvents> | undefined,
-    ) {
+    private addBio(data: EncryptedData, stateEmitter?: TypedEmitter<StreamStateEvents>) {
         this.encryptedBio = data
         stateEmitter?.emit('userBioUpdated', this.streamId)
     }

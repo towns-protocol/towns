@@ -654,9 +654,9 @@ export class TownsClient
         spaceId: string | Uint8Array | undefined,
         userId: string | undefined,
         chunkCount: number,
-        firstChunk?: Uint8Array | undefined,
-        firstChunkIv?: Uint8Array | undefined,
-        perChunkEncryption?: boolean | undefined,
+        firstChunk?: Uint8Array,
+        firstChunkIv?: Uint8Array,
+        perChunkEncryption?: boolean,
     ): Promise<{ creationCookie: CreationCookie }> {
         if (!this.casablancaClient) {
             throw new Error("Casablanca client doesn't exist")
@@ -997,9 +997,10 @@ export class TownsClient
             walletAddress,
         )
         const promises = wallets.map((walletAddress) => {
-            return this.spaceDapp
-                .walletAddressIsBanned(spaceId, walletAddress)
-                .then((result) => (result === true ? Promise.resolve(true) : Promise.reject(false)))
+            return this.spaceDapp.walletAddressIsBanned(spaceId, walletAddress).then((result) =>
+                // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
+                result === true ? Promise.resolve(true) : Promise.reject(false),
+            )
         })
         try {
             await Promise.any(promises)

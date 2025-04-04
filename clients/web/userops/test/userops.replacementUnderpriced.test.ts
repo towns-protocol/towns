@@ -195,6 +195,7 @@ test(
                 } catch (error) {
                     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
                     const calls = (parameters as any).calls
+                    // eslint-disable-next-line @typescript-eslint/only-throw-error
                     throw getUserOperationError(error as BaseError, {
                         ...(request as UserOperation),
                         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
@@ -334,6 +335,7 @@ test(
                 } catch (error) {
                     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
                     const calls = (parameters as any).calls
+                    // eslint-disable-next-line @typescript-eslint/only-throw-error
                     throw getUserOperationError(error as BaseError, {
                         ...(request as UserOperation),
                         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment

@@ -269,9 +269,7 @@ export class GroupEncryptionCrypto {
                     const algorithm = key.algorithm
                     if (algorithm in this.groupDecryption) {
                         try {
-                            await this.groupDecryption[
-                                algorithm as GroupEncryptionAlgorithmId
-                            ].importStreamKey(streamId, key)
+                            await this.groupDecryption[algorithm].importStreamKey(streamId, key)
                         } catch (error) {
                             log(`failed to import key`, error)
                         }
@@ -320,9 +318,7 @@ export class GroupEncryptionCrypto {
                 const algorithm = key.algorithm
                 if (algorithm in this.groupDecryption) {
                     try {
-                        await this.groupDecryption[
-                            algorithm as GroupEncryptionAlgorithmId
-                        ].importStreamKey(key.streamId, key)
+                        await this.groupDecryption[algorithm].importStreamKey(key.streamId, key)
                         successes++
                         if (opts.progressCallback) {
                             updateProgress()

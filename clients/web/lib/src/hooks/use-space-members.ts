@@ -12,7 +12,7 @@ export function useSpaceMembers() {
     return useMembers(spaceId)
 }
 
-export function useSpaceMembersWithFallback(spaceId?: string | undefined) {
+export function useSpaceMembersWithFallback(spaceId?: string) {
     const { rooms, spaceIds: allSpaceIds } = useTownsContext()
     const spaceIds = useMemo(() => (spaceId ? [spaceId] : allSpaceIds), [spaceId, allSpaceIds])
     const memberIds = useMemo(

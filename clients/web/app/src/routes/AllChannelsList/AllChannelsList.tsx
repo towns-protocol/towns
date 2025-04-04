@@ -183,7 +183,7 @@ export const ChannelItem = ({
         if (link) {
             navigate(link)
         }
-        onOpenChannel && onOpenChannel(channelIdentifier)
+        onOpenChannel?.(channelIdentifier)
     })
 
     return (

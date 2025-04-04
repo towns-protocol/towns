@@ -33,13 +33,13 @@
         "@cloudflare/vitest-pool-workers": "^0.7.5",
         "@cloudflare/workers-types": "^4.20240529.0",
         "@types/jest": "^29.5.3",
-        "@typescript-eslint/eslint-plugin": "^6.10.0",
-        "@typescript-eslint/parser": "^7.14.1",
-        "eslint": "^8.53.0",
+        "@typescript-eslint/eslint-plugin": "^8.29.0",
+        "@typescript-eslint/parser": "^8.29.0",
+        "eslint": "^8.57.0",
         "eslint-plugin-vitest": "^0.5.4",
         "miniflare": "^3.20240524.1",
         "prettier": "^2.8.8",
-        "typescript": "^5.1.6",
+        "typescript": "^5.8.2",
         "vitest": "~3.0.7",
         "wrangler": "^4.6.0"
     }

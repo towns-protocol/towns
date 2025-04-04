@@ -2931,8 +2931,8 @@ export type IconProps = {
     Omit<BoxProps, 'children' | 'size' | 'background'>
 
 export const Icon = forwardRef<HTMLDivElement, IconProps>((props, ref) => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { size = 'square_md', color, type, height, className, ...boxProps } = props
-    height // prevent unused var error
     const Icon = iconMap[type ?? 'bell']
 
     return (

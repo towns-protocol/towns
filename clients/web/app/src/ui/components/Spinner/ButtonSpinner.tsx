@@ -22,5 +22,3 @@ export const ButtonSpinner = (props: Omit<BoxProps, 'children'>) => {
         </Box>
     )
 }
-
-globalThis.indexedDB

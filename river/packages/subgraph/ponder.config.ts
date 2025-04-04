@@ -26,13 +26,18 @@ export default createConfig({
             transport: http(process.env.PONDER_RPC_URL_1),
             disableCache: true,
         },
+        gamma: {
+            chainId: 84532,
+            transport: http(process.env.PONDER_RPC_URL_1),
+            disableCache: true,
+        },
     },
     contracts: {
         CreateSpace: {
-            network: 'anvil',
             abi: createSpaceFacetAbi,
             address: spaceFactory,
             startBlock,
+            network: 'anvil',
         },
     },
 })

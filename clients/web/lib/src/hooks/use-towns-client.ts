@@ -154,9 +154,9 @@ interface TownsClientImpl {
         spaceId: string | undefined,
         userId: string | undefined,
         chunkCount: number,
-        firstChunk?: Uint8Array | undefined,
-        firstChunkIv?: Uint8Array | undefined,
-        perChunkEncryption?: boolean | undefined,
+        firstChunk?: Uint8Array,
+        firstChunkIv?: Uint8Array,
+        perChunkEncryption?: boolean,
     ) => Promise<{ creationCookie: CreationCookie } | undefined>
     createRoleTransaction: (
         spaceNetworkId: string,

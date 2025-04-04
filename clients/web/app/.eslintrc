@@ -36,7 +36,17 @@
   "rules": {
     "curly": "warn",
     "@typescript-eslint/no-base-to-string": "error",
-    "@typescript-eslint/no-unused-vars": ["warn", { "args": "none" }],
+    "@typescript-eslint/no-unused-expressions": [
+      "error",
+      {
+        "allowShortCircuit": true,
+        "allowTernary": true
+      }
+    ],
+    "@typescript-eslint/no-unused-vars": [
+      "warn",
+      { "args": "none", "caughtErrors": "none" }
+    ],
     "import/no-named-as-default-member": "off",
     "react/display-name": "off",
     "react/jsx-boolean-value": ["warn", "never"],

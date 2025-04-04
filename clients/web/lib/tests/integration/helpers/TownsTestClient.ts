@@ -152,7 +152,7 @@ export class TownsTestClient extends TownsClient {
     public override async joinTown(
         spaceId: string,
         signer: ethers.Signer,
-        inSignerContext?: SignerContext | undefined,
+        inSignerContext?: SignerContext,
     ): Promise<StreamView> {
         const signerContext =
             inSignerContext ?? (await makeSignerContext(signer, this.delegateWallet))

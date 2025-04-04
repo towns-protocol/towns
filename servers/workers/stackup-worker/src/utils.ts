@@ -1,4 +1,4 @@
-import { IUserOperation } from 'userop.js'
+/* eslint-disable @typescript-eslint/no-base-to-string */
 import { Request as IttyRequest } from 'itty-router'
 import {
     GasOverrides,

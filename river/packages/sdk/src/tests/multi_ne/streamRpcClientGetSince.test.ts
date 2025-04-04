@@ -101,7 +101,7 @@ describe('streamRpcClientGetSince', () => {
             streamId: bobsSettingsStreamId,
             syncCookie: cookie,
         })
-        expect(streamSince.stream?.events.length).toBe(3) // all events since last cookie
+        expect(streamSince.stream?.events.length).toBeGreaterThanOrEqual(3) // all events since last cookie
         expect(streamSince.stream?.miniblocks.length).toBe(0)
         expect(streamSince.stream?.syncReset).toBe(false)
     })

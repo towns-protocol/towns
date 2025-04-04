@@ -9,47 +9,47 @@ import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet
 // contracts
 
 library WalletLib {
-  using EnumerableSet for EnumerableSet.Bytes32Set;
+    using EnumerableSet for EnumerableSet.Bytes32Set;
 
-  enum VirtualMachineType {
-    EVM, // Ethereum Virtual Machine (Ethereum, BSC, Polygon, etc.)
-    SVM, // Solana Virtual Machine
-    MOVE, // Move Virtual Machine (Aptos, Sui)
-    CVM, // Cosmos Virtual Machine
-    WASM, // WebAssembly VM (Polkadot, NEAR)
-    AVM, // Avalanche Virtual Machine
-    UNKNOWN // For future compatibility
-  }
+    enum VirtualMachineType {
+        EVM, // Ethereum Virtual Machine (Ethereum, BSC, Polygon, etc.)
+        SVM, // Solana Virtual Machine
+        MOVE, // Move Virtual Machine (Aptos, Sui)
+        CVM, // Cosmos Virtual Machine
+        WASM, // WebAssembly VM (Polkadot, NEAR)
+        AVM, // Avalanche Virtual Machine
+        UNKNOWN // For future compatibility
 
-  struct Wallet {
-    string addr; // Base58/Bech32/etc. encoded address
-    VirtualMachineType vmType; // Type of VM this wallet belongs to
-  }
+    }
 
-  struct RootWallet {
-    EnumerableSet.Bytes32Set walletHashes;
-    address defaultWallet;
-    mapping(bytes32 => Wallet) walletByHash;
-  }
+    struct Wallet {
+        string addr; // Base58/Bech32/etc. encoded address
+        VirtualMachineType vmType; // Type of VM this wallet belongs to
+    }
 
-  function addWallet(
-    RootWallet storage self,
-    bytes32 walletHash,
-    Wallet calldata wallet
-  ) internal {
-    self.walletHashes.add(walletHash);
-    self.walletByHash[walletHash] = wallet;
-  }
+    struct RootWallet {
+        EnumerableSet.Bytes32Set walletHashes;
+        address defaultWallet;
+        mapping(bytes32 => Wallet) walletByHash;
+    }
 
-  function removeWallet(RootWallet storage self, bytes32 walletHash) internal {
-    self.walletHashes.remove(walletHash);
-    delete self.walletByHash[walletHash];
-  }
+    function addWallet(
+        RootWallet storage self,
+        bytes32 walletHash,
+        Wallet calldata wallet
+    )
+        internal
+    {
+        self.walletHashes.add(walletHash);
+        self.walletByHash[walletHash] = wallet;
+    }
 
-  function exists(
-    RootWallet storage self,
-    bytes32 walletHash
-  ) internal view returns (bool) {
-    return self.walletHashes.contains(walletHash);
-  }
+    function removeWallet(RootWallet storage self, bytes32 walletHash) internal {
+        self.walletHashes.remove(walletHash);
+        delete self.walletByHash[walletHash];
+    }
+
+    function exists(RootWallet storage self, bytes32 walletHash) internal view returns (bool) {
+        return self.walletHashes.contains(walletHash);
+    }
 }

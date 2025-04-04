@@ -22,7 +22,6 @@ export function MonitorJoinFlow() {
                 step = JoinStep.Done
                 const timeout = setTimeout(() => {
                     endPublicPageLoginFlow()
-                    spaceBeingJoined
                 }, SECOND_MS * 2)
                 return () => {
                     clearTimeout(timeout)

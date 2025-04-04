@@ -98,7 +98,7 @@ func (sr *SyncRunner) Run(
 ) {
 	var (
 		promLabels                = prometheus.Labels{"type": channelLabelType(stream.StreamId)}
-		remotes                   = nodes.NewStreamNodesWithLock(stream.Nodes, common.Address{})
+		remotes                   = nodes.NewStreamNodesWithLock(stream.StreamReplicationFactor(), stream.Nodes, common.Address{})
 		restartSyncSessionCounter = 0
 	)
 
@@ -319,9 +319,12 @@ func (sr *SyncRunner) Run(
 					continue
 				}
 
-				for _, block := range update.GetStream().GetMiniblocks() {
+				for i, block := range update.GetStream().GetMiniblocks() {
 					if !reset {
-						if err := trackedStream.ApplyBlock(block); err != nil {
+						if err := trackedStream.ApplyBlock(
+							block,
+							update.GetStream().GetSnapshotByMiniblockIndex(i),
+						); err != nil {
 							log.Errorw("Unable to apply block", "err", err)
 						}
 					}

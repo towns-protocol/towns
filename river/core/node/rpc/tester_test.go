@@ -84,6 +84,7 @@ type serviceTester struct {
 
 type serviceTesterOpts struct {
 	numNodes          int
+	numOperators      int
 	replicationFactor int
 	start             bool
 	btcParams         *crypto.TestParams
@@ -131,9 +132,10 @@ func newServiceTester(t *testing.T, opts serviceTesterOpts) *serviceTester {
 
 	btcParams := opts.btcParams
 	if btcParams == nil {
-		btcParams = &crypto.TestParams{NumKeys: opts.numNodes, MineOnTx: true, AutoMine: true}
+		btcParams = &crypto.TestParams{NumKeys: opts.numNodes, MineOnTx: true, AutoMine: true, NumOperators: opts.numOperators}
 	} else if btcParams.NumKeys == 0 {
 		btcParams.NumKeys = opts.numNodes
+		btcParams.NumOperators = opts.numOperators
 	}
 	btc, err := crypto.NewBlockchainTestContext(
 		st.ctx,
@@ -245,6 +247,7 @@ func (st *serviceTester) startAutoMining() {
 		return
 	}
 
+	// TODO: FIX: remove
 	// hack to ensure that the chain always produces blocks (automining=true)
 	// commit on simulated backend with no pending txs can sometimes crash in the simulator.
 	// by having a pending tx with automining enabled we can work around that issue.
@@ -475,7 +478,7 @@ func (st *serviceTester) compareStreamDataInStorage(
 				)
 				for j, mb := range data[i].Miniblocks {
 					exp := data[0].Miniblocks[j]
-					_ = assert.EqualValues(t, exp.MiniblockNumber, mb.MiniblockNumber, "Bad mb num in node %d", i) &&
+					_ = assert.EqualValues(t, exp.Number, mb.Number, "Bad mb num in node %d", i) &&
 						assert.EqualValues(t, exp.Hash, mb.Hash, "Bad mb hash in node %d", i) &&
 						assert.Equal(
 							t,
@@ -974,7 +977,7 @@ func (tc *testClient) getStreamAndView(
 	stream := tc.getStream(streamId)
 	var view *StreamView
 	var err error
-	view, err = MakeRemoteStreamView(tc.ctx, stream)
+	view, err = MakeRemoteStreamView(stream)
 	tc.require.NoError(err)
 	tc.require.NotNil(view)
 
@@ -1010,7 +1013,7 @@ func (tc *testClient) maybeDumpStream(stream *StreamAndCookie) {
 			tc.name,
 			"Dumping stream",
 			"\n",
-			dumpevents.DumpStream(tc.ctx, stream, dumpevents.DumpOpts{EventContent: true, TestMessages: true}),
+			dumpevents.DumpStream(stream, dumpevents.DumpOpts{EventContent: true, TestMessages: true}),
 		)
 	}
 }
@@ -1022,11 +1025,17 @@ func (tc *testClient) getMiniblocks(streamId StreamId, fromInclusive, toExclusiv
 		ToExclusive:   toExclusive,
 	}))
 	tc.require.NoError(err)
-	mbs, err := NewMiniblocksInfoFromProtos(
-		resp.Msg.Miniblocks,
-		NewParsedMiniblockInfoOpts().WithExpectedBlockNumber(fromInclusive),
-	)
-	tc.require.NoError(err)
+
+	mbs := make([]*MiniblockInfo, len(resp.Msg.GetMiniblocks()))
+	for i, pb := range resp.Msg.GetMiniblocks() {
+		mbs[i], err = NewMiniblockInfoFromProto(
+			pb, resp.Msg.GetMiniblockSnapshot(fromInclusive+int64(i)),
+			NewParsedMiniblockInfoOpts().
+				WithExpectedBlockNumber(fromInclusive+int64(i)),
+		)
+		tc.require.NoError(err)
+	}
+
 	return mbs
 }
 

@@ -33,11 +33,11 @@ describe('sendThreadedMessage', () => {
             },
         )
         // create a channel
-        const channelId = (await createTestChannelWithSpaceRoles(bob, {
+        const channelId = await createTestChannelWithSpaceRoles(bob, {
             name: 'bobs channel',
             parentSpaceId: spaceId,
             roles: [],
-        }))!
+        })
 
         console.log("bob's spaceId", { spaceId, channelId })
 

@@ -83,6 +83,7 @@ const DesktopPanel = ({ modalPresentable, onClosed: onCloseProp, ...rest }: Prop
                 label={label}
                 leftBarButton={leftBarButton}
                 rightBarButton={rightBarButton}
+                // eslint-disable-next-line @typescript-eslint/no-base-to-string
                 dataTestId={`${label} panel`}
                 onClose={isRootPanel ? undefined : onClose}
             />

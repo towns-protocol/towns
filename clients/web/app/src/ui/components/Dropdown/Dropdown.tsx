@@ -17,7 +17,7 @@ export const Dropdown = (props: Props) => {
     const onChange = useCallback(
         (e: React.FormEvent) => {
             const selectEvent = e as React.FormEvent<HTMLSelectElement>
-            delegatedOnChange && delegatedOnChange(selectEvent.currentTarget.value)
+            delegatedOnChange?.(selectEvent.currentTarget.value)
         },
         [delegatedOnChange],
     )

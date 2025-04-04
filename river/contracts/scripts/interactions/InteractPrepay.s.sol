@@ -13,18 +13,18 @@ import {IPrepay} from "contracts/src/spaces/facets/prepay/IPrepay.sol";
 import {console} from "forge-std/console.sol";
 
 contract InteractPrepay is Interaction {
-  IPrepay prepay = IPrepay(0x0000000000000000000000000000000000000000);
+    IPrepay prepay = IPrepay(0x0000000000000000000000000000000000000000);
 
-  function __interact(address deployer) internal override {
-    uint256 expectedAmount = 1000;
-    uint256 totalAmount = prepay.calculateMembershipPrepayFee(expectedAmount);
+    function __interact(address deployer) internal override {
+        uint256 expectedAmount = 1000;
+        uint256 totalAmount = prepay.calculateMembershipPrepayFee(expectedAmount);
 
-    console.log("paying:", totalAmount);
+        console.log("paying:", totalAmount);
 
-    vm.startBroadcast(deployer);
-    IPrepay(prepay).prepayMembership{value: totalAmount}(expectedAmount);
-    vm.stopBroadcast();
+        vm.startBroadcast(deployer);
+        IPrepay(prepay).prepayMembership{value: totalAmount}(expectedAmount);
+        vm.stopBroadcast();
 
-    console.log("prepaidSupply", prepay.prepaidMembershipSupply());
-  }
+        console.log("prepaidSupply", prepay.prepaidMembershipSupply());
+    }
 }

@@ -583,7 +583,7 @@ describe('memberMetadataTests', () => {
             streamId,
             bin_toString(nft.tokenId),
             1,
-            userIdFromAddress(nft.contractAddress)!,
+            userIdFromAddress(nft.contractAddress),
         )
 
         await bobPromise.expectToSucceed()
