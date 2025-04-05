@@ -1823,6 +1823,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@erc6900/reference-implementation@npm:^0.8.1":
+  version: 0.8.1
+  resolution: "@erc6900/reference-implementation@npm:0.8.1"
+  checksum: 2b5198a6136deea17f79f4376c77fe1c5fb7f5cbb8a9f2be39bfa982d496020a10fa5577b20b6016e18cfa6b38078f2e5da7aef7ca75501a8d523437f6529f3a
+  languageName: node
+  linkType: hard
+
 "@esbuild/aix-ppc64@npm:0.19.12":
   version: 0.19.12
   resolution: "@esbuild/aix-ppc64@npm:0.19.12"
@@ -7712,6 +7719,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@towns-protocol/contracts@workspace:contracts"
   dependencies:
+    "@erc6900/reference-implementation": ^0.8.1
     "@openzeppelin/contracts": ^5.2.0
     "@openzeppelin/contracts-upgradeable": ^5.2.0
     "@prb/math": ^4.1.0
