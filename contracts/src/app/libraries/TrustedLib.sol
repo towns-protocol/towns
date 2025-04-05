@@ -13,10 +13,22 @@ import {LibSort} from "solady/utils/LibSort.sol";
 
 // contracts
 
+/// @title TrustedLib
+/// @notice Library for managing trusted attesters and verifying attestations
+/// @dev Provides functionality to store and verify trusted attesters for accounts
 library TrustedLib {
     using LibSort for address[];
     using CustomRevert for bytes4;
 
+    /// @notice Stores trusted attesters and their threshold for an account
+    /// @dev Attesters must be sorted and unique. The first attester is stored separately and
+    /// subsequent attesters are stored in a linked list
+    /// @param threshold The minimum number of attestations required from trusted attesters
+    /// @param attesters Array of attester addresses, must be sorted and unique
+    /// @custom:events Emits NewTrustedAttesters when attesters are successfully stored
+    /// @custom:errors InvalidAttesters if attesters array is invalid (empty, too long, unsorted,
+    /// non-unique, or contains zero address)
+    /// @custom:errors InvalidThreshold if threshold is greater than number of attesters
     function trustAttesters(uint8 threshold, address[] calldata attesters) internal {
         uint256 len = attesters.length;
 
@@ -41,12 +53,10 @@ library TrustedLib {
         }
 
         TrustedAttestersStorage.Layout storage db = TrustedAttestersStorage.getLayout();
-
         DataTypes.TrustedAttester storage trustedAttester = db.trustedAttesters[msg.sender];
 
-        trustedAttester.count = uint8(len);
-        trustedAttester.threshold = threshold;
-        trustedAttester.attester = attesters[0];
+        (trustedAttester.count, trustedAttester.threshold, trustedAttester.attester) =
+            (uint8(len), threshold, attesters[0]);
 
         for (uint256 i; i < len - 1; ++i) {
             address attester = attesters[i];

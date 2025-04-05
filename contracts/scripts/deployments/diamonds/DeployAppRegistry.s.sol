@@ -5,7 +5,6 @@ pragma solidity ^0.8.23;
 import {IDiamond} from "@towns-protocol/diamond/src/IDiamond.sol";
 
 // libraries
-import "forge-std/console.sol";
 
 // helpers
 
@@ -23,11 +22,10 @@ import {DiamondHelper} from "contracts/test/diamond/Diamond.t.sol";
 import {DeployMultiInit} from "contracts/scripts/deployments/utils/DeployMultiInit.s.sol";
 
 // facets
+import {MultiInit} from "@towns-protocol/diamond/src/initializers/MultiInit.sol";
 import {DeployAttestationRegistry} from
     "contracts/scripts/deployments/facets/DeployAttestationRegistry.s.sol";
 import {DeploySchemaRegistry} from "contracts/scripts/deployments/facets/DeploySchemaRegistry.s.sol";
-
-import {MultiInit} from "@towns-protocol/diamond/src/initializers/MultiInit.sol";
 
 contract DeployAppRegistry is DiamondHelper, Deployer {
     DeployDiamondCut internal cutHelper = new DeployDiamondCut();
