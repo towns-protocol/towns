@@ -44,6 +44,10 @@ export type StreamMember = {
     encryptedDisplayName?: WrappedEncryptedData
     ensAddress?: Uint8Array
     nft?: MemberPayload_Nft
+    tipsSent?: { [key: string]: bigint }
+    tipsReceived?: { [key: string]: bigint }
+    tipsSentCount?: { [key: string]: bigint }
+    tipsReceivedCount?: { [key: string]: bigint }
 }
 
 export interface Pin {
@@ -59,6 +63,7 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
     readonly memberMetadata: StreamStateView_MemberMetadata
     readonly pins: Pin[] = []
     tips: { [key: string]: bigint } = {}
+    tipsCount: { [key: string]: bigint } = {}
     encryptionAlgorithm?: string = undefined
     spaceReviews: {
         review: SpaceReviewEventObject
@@ -114,6 +119,10 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
                 encryptedDisplayName: member.displayName,
                 ensAddress: member.ensAddress,
                 nft: member.nft,
+                tipsSent: member.tipsSent,
+                tipsReceived: member.tipsReceived,
+                tipsSentCount: member.tipsSentCount,
+                tipsReceivedCount: member.tipsReceivedCount,
             })
             this.membership.applyMembershipEvent(
                 userId,
@@ -184,6 +193,7 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
         })
 
         this.tips = { ...snapshot.members.tips }
+        this.tipsCount = { ...snapshot.members.tipsCount }
         this.encryptionAlgorithm = snapshot.members.encryptionAlgorithm?.algorithm
     }
 
@@ -408,6 +418,34 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
                         }
                         const currency = utils.getAddress(bin_toHexString(tipEvent.currency))
                         this.tips[currency] = (this.tips[currency] ?? 0n) + tipEvent.amount
+                        this.tipsCount[currency] = (this.tipsCount[currency] ?? 0n) + 1n
+                        const senderAddress = payload.content.value.fromUserAddress
+                        const sender = this.joined.get(userIdFromAddress(senderAddress))
+                        if (sender) {
+                            sender.tipsSent = {
+                                ...sender.tipsSent,
+                                [currency]: (sender.tipsSent?.[currency] ?? 0n) + tipEvent.amount,
+                            }
+                            sender.tipsSentCount = {
+                                ...sender.tipsSentCount,
+                                [currency]: (sender.tipsSentCount?.[currency] ?? 0n) + 1n,
+                            }
+                        }
+                        const receiver = this.joined.get(
+                            userIdFromAddress(transactionContent.value.toUserAddress),
+                        )
+                        if (receiver) {
+                            receiver.tipsReceived = {
+                                ...receiver.tipsReceived,
+                                [currency]:
+                                    (receiver.tipsReceived?.[currency] ?? 0n) + tipEvent.amount,
+                            }
+                            receiver.tipsReceivedCount = {
+                                ...receiver.tipsReceivedCount,
+                                [currency]: (receiver.tipsReceivedCount?.[currency] ?? 0n) + 1n,
+                            }
+                        }
+
                         stateEmitter?.emit(
                             'streamTipped',
                             this.streamId,
