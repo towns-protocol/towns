@@ -58,10 +58,8 @@ import {DeployUserEntitlement} from
 
 import {DeployMockLegacyArchitect} from
     "contracts/scripts/deployments/facets/DeployMockLegacyArchitect.s.sol";
-
 import {DeploySpaceFactoryInit} from
     "contracts/scripts/deployments/facets/DeploySpaceFactoryInit.s.sol";
-
 import {DeployMockDelegationRegistry} from
     "contracts/scripts/deployments/utils/DeployMockDelegationRegistry.s.sol";
 import {DeploySLCEIP6565} from "contracts/scripts/deployments/utils/DeploySLCEIP6565.s.sol";
@@ -75,6 +73,7 @@ contract DeploySpaceFactory is DiamondHelper, Deployer {
     DeployDiamondLoupe diamondLoupeHelper = new DeployDiamondLoupe();
     DeployIntrospection introspectionHelper = new DeployIntrospection();
     DeployMetadata metadataHelper = new DeployMetadata();
+    DeployMultiInit deployMultiInit = new DeployMultiInit();
 
     // facets
     DeployArchitect architectHelper = new DeployArchitect();
@@ -88,7 +87,6 @@ contract DeploySpaceFactory is DiamondHelper, Deployer {
     DeployEIP712Facet eip712Helper = new DeployEIP712Facet();
     DeployMockLegacyArchitect deployMockLegacyArchitect = new DeployMockLegacyArchitect();
     DeployPartnerRegistry partnerRegistryHelper = new DeployPartnerRegistry();
-    DeployMultiInit deployMultiInit = new DeployMultiInit();
 
     // dependencies
     DeploySpace deploySpace = new DeploySpace();
@@ -143,7 +141,7 @@ contract DeploySpaceFactory is DiamondHelper, Deployer {
     address public tieredLogPricingV2;
     address public tieredLogPricingV3;
     address public fixedPricing;
-
+    address public appRegistry;
     address public sclEip6565;
     address public mockDelegationRegistry;
     address[] pricingModules;
