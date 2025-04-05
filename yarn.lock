@@ -3418,6 +3418,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@hono/node-server@npm:^1.13.8":
+  version: 1.13.8
+  resolution: "@hono/node-server@npm:1.13.8"
+  peerDependencies:
+    hono: ^4
+  checksum: 83ebab5429ac579483368b17cdb713cfe6020253c4eb4dda0e865bda98a2988c0ccfa5d3720af29aaa762f1104d0493b28c2aa79720a31fe464736518240a3ad
+  languageName: node
+  linkType: hard
+
 "@hookform/resolvers@npm:^3.6.0":
   version: 3.6.0
   resolution: "@hookform/resolvers@npm:3.6.0"
@@ -7708,6 +7717,35 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@towns-protocol/bot@workspace:packages/bot":
+  version: 0.0.0-use.local
+  resolution: "@towns-protocol/bot@workspace:packages/bot"
+  dependencies:
+    "@bufbuild/protobuf": ^2.2.2
+    "@hono/node-server": ^1.13.8
+    "@towns-protocol/encryption": "workspace:^"
+    "@towns-protocol/proto": "workspace:^"
+    "@towns-protocol/sdk": "workspace:^"
+    "@towns-protocol/web3": "workspace:^"
+    "@types/debug": ^4.1.8
+    "@types/lodash": ^4.14.186
+    "@types/node": ^20.14.8
+    "@types/seedrandom": ^3.0.4
+    "@typescript-eslint/eslint-plugin": ^8.29.0
+    "@typescript-eslint/parser": ^8.29.0
+    eslint: ^8.57.0
+    eslint-import-resolver-typescript: ^3.5.5
+    eslint-plugin-import: ^2.27.5
+    eslint-plugin-tsdoc: ^0.3.0
+    fake-indexeddb: ^4.0.1
+    hono: ^4.7.2
+    typed-emitter: ^2.1.0
+    typescript: ^5.8.2
+    vitest: 3.0.5
+    vitest-fetch-mock: ^0.4.3
+  languageName: unknown
+  linkType: soft
+
 "@towns-protocol/contracts@workspace:contracts":
   version: 0.0.0-use.local
   resolution: "@towns-protocol/contracts@workspace:contracts"
@@ -8081,7 +8119,7 @@ __metadata:
     eslint-config-ponder: ^0.9.27
     eslint-import-resolver-typescript: ^3.5.5
     eslint-plugin-prettier: ^4.2.1
-    hono: ^4.5.0
+    hono: ^4.7.2
     ponder: ^0.9.27
     prettier: ^2.8.8
     tsx: ^4.7.1
@@ -17053,10 +17091,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"hono@npm:^4.5.0":
-  version: 4.7.4
-  resolution: "hono@npm:4.7.4"
-  checksum: fcc4b48eaa51572f6db6b102a2ce9c69ead6c47cba9c4e9e816c5741894dc210913f29379967005591d43884ea8ad56a66859c4126bf0eeddc275d64fcb9af1c
+"hono@npm:^4.7.2":
+  version: 4.7.2
+  resolution: "hono@npm:4.7.2"
+  checksum: d0154b61e3c8f7599a3dfcb3c2ee841569d3d9dc7e79f115ab767c99cacda8df528f3d0c866756befb9cdb49aa3e18fa924b6ae8b7487470993462cdb8c588f3
   languageName: node
   linkType: hard
 
