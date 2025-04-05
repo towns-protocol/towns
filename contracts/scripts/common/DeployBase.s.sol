@@ -28,4 +28,9 @@ contract DeployBase is _DeployBase {
     function outDir() internal pure override returns (string memory) {
         return "contracts/out/";
     }
+
+    /// @dev Override to set the deployment cache path
+    function deploymentCachePath() internal pure override returns (string memory) {
+        return "contracts/deployments";
+    }
 }
