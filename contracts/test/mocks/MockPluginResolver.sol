@@ -4,13 +4,13 @@ pragma solidity ^0.8.23;
 // interfaces
 
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
-import {ISchemaResolver} from "contracts/src/app/interfaces/ISchemaResolver.sol";
+import {ISchemaResolver} from "contracts/src/attest/interfaces/ISchemaResolver.sol";
 
 // libraries
-import {DataTypes} from "contracts/src/app/types/DataTypes.sol";
+import {DataTypes} from "contracts/src/attest/types/DataTypes.sol";
 
 // contracts
-import {SchemaResolver} from "contracts/src/app/resolvers/SchemaResolver.sol";
+import {SchemaResolver} from "contracts/src/attest/resolvers/SchemaResolver.sol";
 
 contract MockPluginResolver is SchemaResolver {
     mapping(address plugin => address owner) public pluginOwners;

@@ -10,7 +10,7 @@ pragma solidity ^0.8.23;
 import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
 import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
 import {TrustedAttesterResolver} from
-    "contracts/src/app/resolvers/trusted/TrustedAttesterResolver.sol";
+    "contracts/src/attest/resolvers/trusted/TrustedAttesterResolver.sol";
 
 contract DeployTrustedResolver is FacetHelper, Deployer {
     constructor() {

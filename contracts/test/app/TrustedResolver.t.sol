@@ -2,17 +2,17 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {ISchemaResolver} from "contracts/src/app/interfaces/ISchemaResolver.sol";
+import {ISchemaResolver} from "contracts/src/attest/interfaces/ISchemaResolver.sol";
 
 // libraries
-import {DataTypes} from "contracts/src/app/types/DataTypes.sol";
+import {DataTypes} from "contracts/src/attest/types/DataTypes.sol";
 
 // contracts
-import {AttestationRegistry} from "contracts/src/app/AttestationRegistry.sol";
-import {SchemaRegistry} from "contracts/src/app/SchemaRegistry.sol";
+import {AttestationRegistry} from "contracts/src/attest/AttestationRegistry.sol";
+import {SchemaRegistry} from "contracts/src/attest/SchemaRegistry.sol";
 
 import {TrustedAttesterResolver} from
-    "contracts/src/app/resolvers/trusted/TrustedAttesterResolver.sol";
+    "contracts/src/attest/resolvers/trusted/TrustedAttesterResolver.sol";
 import {BaseSetup} from "contracts/test/spaces/BaseSetup.sol";
 
 // mocks
@@ -22,7 +22,7 @@ contract TrustedResolverTest is BaseSetup {
     SchemaRegistry internal schemaRegistry;
     AttestationRegistry internal attestationRegistry;
     TrustedAttesterResolver internal trustedResolver;
-    MockPlugin internal plugin;
+    MockPlugin internal app;
 
     address internal developer;
     address internal user;
@@ -33,7 +33,7 @@ contract TrustedResolverTest is BaseSetup {
         attestationRegistry = AttestationRegistry(appRegistry);
         trustedResolver = new TrustedAttesterResolver();
         trustedResolver.__TrustedAttesterResolver_init(appRegistry);
-        plugin = new MockPlugin();
+        app = new MockPlugin();
         developer = makeAddr("developer");
         user = makeAddr("user");
     }
@@ -41,8 +41,7 @@ contract TrustedResolverTest is BaseSetup {
     function test_onAttest() public {
         (bytes32 schemaId, bytes32 attestationId) = registerApp();
         DataTypes.Attestation memory attestation =
-            trustedResolver.getAttestation(address(plugin), address(developer));
-
+            trustedResolver.getAttestation(address(app), address(developer));
         assertEq(attestation.schema, schemaId);
         assertEq(attestation.uid, attestationId);
     }
@@ -50,36 +49,36 @@ contract TrustedResolverTest is BaseSetup {
     /// @notice Tests the trusted attesters functionality
     /// @dev This test verifies that:
     /// 1. A user can set trusted attesters
-    /// 2. Installing a plugin without being registered should fail
-    /// 3. After attestation, installing the plugin should succeed
+    /// 2. Installing a app without being registered should fail
+    /// 3. After attestation, installing the app should succeed
     function test_trustAttesters() public {
         // Set up single trusted attester (the developer)
         address[] memory attesters = new address[](1);
         attesters[0] = developer;
 
         // User sets developer as trusted attester with threshold of 1
-        // meaning that at least one attestation is required to install the plugin
+        // meaning that at least one attestation is required to install the app
         vm.prank(user);
         trustedResolver.trustAttesters(1, attesters);
 
-        // Check should fail since plugin has no attestations yet
+        // Check should fail since app has no attestations yet
         vm.prank(user);
         vm.expectRevert(DataTypes.InsufficientAttestations.selector);
-        trustedResolver.check(address(plugin));
+        trustedResolver.check(address(app));
 
-        // Developer attests to the plugin
+        // Developer attests to the app
         registerApp();
 
-        // Check should now succeed since plugin has attestation from trusted attester
+        // Check should now succeed since app has attestation from trusted attester
         vm.prank(user);
-        trustedResolver.check(address(plugin));
+        trustedResolver.check(address(app));
     }
 
     function registerApp() internal returns (bytes32 schemaId, bytes32 attestationId) {
         schemaId = registerSchema("testSchema", address(trustedResolver), true);
 
         DataTypes.AttestationRequestData memory data = DataTypes.AttestationRequestData({
-            recipient: address(plugin),
+            recipient: address(app),
             expirationTime: 0,
             revocable: true,
             refUID: DataTypes.EMPTY_UID,

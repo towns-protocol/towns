@@ -3,15 +3,15 @@ pragma solidity ^0.8.23;
 
 // interfaces
 
-import {IERC6900Module} from "contracts/src/app/interfaces/IERC6900Module.sol";
-import {ISchemaResolver} from "contracts/src/app/interfaces/ISchemaResolver.sol";
+import {IERC6900Module} from "contracts/src/attest/interfaces/IERC6900Module.sol";
+import {ISchemaResolver} from "contracts/src/attest/interfaces/ISchemaResolver.sol";
 
 // libraries
-import {DataTypes} from "contracts/src/app/types/DataTypes.sol";
+import {DataTypes} from "contracts/src/attest/types/DataTypes.sol";
 
 // contracts
-import {AttestationRegistry} from "contracts/src/app/AttestationRegistry.sol";
-import {SchemaRegistry} from "contracts/src/app/SchemaRegistry.sol";
+import {AttestationRegistry} from "contracts/src/attest/AttestationRegistry.sol";
+import {SchemaRegistry} from "contracts/src/attest/SchemaRegistry.sol";
 import {BaseSetup} from "contracts/test/spaces/BaseSetup.sol";
 
 // mocks
