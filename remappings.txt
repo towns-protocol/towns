@@ -7,3 +7,5 @@ solady/=node_modules/solady/src/
 @towns-protocol/diamond/=node_modules/@towns-protocol/diamond/
 crypto-lib/=node_modules/crypto-lib/src/
 @solidity/=node_modules/crypto-lib/src/
+@erc6900/reference-implementation/=node_modules/@erc6900/reference-implementation/
+@eth-infinitism/account-abstraction/=node_modules/account-abstraction/contracts/

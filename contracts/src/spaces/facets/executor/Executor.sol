@@ -2,12 +2,14 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {IExecutor} from "./IExecutor.sol";
+import {IExecutor} from "./interfaces/IExecutor.sol";
 import {IImplementationRegistry} from
     "contracts/src/factory/facets/registry/IImplementationRegistry.sol";
 
 // libraries
-import {ExecutorLib} from "./ExecutorLib.sol";
+
+import {ExecutorLib} from "./libraries/ExecutorLib.sol";
+import {ExecutorTypes} from "./libraries/ExecutorTypes.sol";
 import {DiamondLoupeBase} from "@towns-protocol/diamond/src/facets/loupe/DiamondLoupeBase.sol";
 
 // contracts
@@ -33,7 +35,7 @@ contract Executor is TokenOwnableBase, IExecutor {
 
     /// @inheritdoc IExecutor
     function grantAccess(
-        uint64 groupId,
+        bytes32 groupId,
         address account,
         uint32 delay
     )
@@ -48,7 +50,7 @@ contract Executor is TokenOwnableBase, IExecutor {
 
     /// @inheritdoc IExecutor
     function hasAccess(
-        uint64 groupId,
+        bytes32 groupId,
         address account
     )
         external
@@ -60,7 +62,7 @@ contract Executor is TokenOwnableBase, IExecutor {
 
     /// @inheritdoc IExecutor
     function getAccess(
-        uint64 groupId,
+        bytes32 groupId,
         address account
     )
         external
@@ -71,26 +73,26 @@ contract Executor is TokenOwnableBase, IExecutor {
     }
 
     /// @inheritdoc IExecutor
-    function revokeAccess(uint64 groupId, address account) external onlyOwner {
+    function revokeAccess(bytes32 groupId, address account) external onlyOwner {
         ExecutorLib.revokeGroupAccess(groupId, account);
     }
 
     /// @inheritdoc IExecutor
-    function renounceAccess(uint64 groupId, address account) external {
+    function renounceAccess(bytes32 groupId, address account) external {
         ExecutorLib.renounceGroupAccess(groupId, account);
     }
 
     /// @inheritdoc IExecutor
-    function setGuardian(uint64 groupId, uint64 guardian) external onlyOwner {
+    function setGuardian(bytes32 groupId, bytes32 guardian) external onlyOwner {
         ExecutorLib.setGroupGuardian(groupId, guardian);
     }
 
     /// @inheritdoc IExecutor
-    function setGroupDelay(uint64 groupId, uint32 delay) external onlyOwner {
+    function setGroupDelay(bytes32 groupId, uint32 delay) external onlyOwner {
         ExecutorLib.setGroupGrantDelay(groupId, delay, 0);
     }
 
-    function getGroupDelay(uint64 groupId) external view returns (uint32) {
+    function getGroupDelay(bytes32 groupId) external view returns (uint32) {
         return ExecutorLib.getGroupGrantDelay(groupId);
     }
 
@@ -98,7 +100,7 @@ contract Executor is TokenOwnableBase, IExecutor {
     function setTargetFunctionGroup(
         address target,
         bytes4 selector,
-        uint64 groupId
+        bytes32 groupId
     )
         external
         onlyAuthorized(target)
@@ -106,7 +108,7 @@ contract Executor is TokenOwnableBase, IExecutor {
     {
         // Disallow setting any diamond functions
         if (target == DiamondLoupeBase.facetAddress(selector)) {
-            revert UnauthorizedTarget(target);
+            revert ExecutorTypes.UnauthorizedTarget(target);
         }
         ExecutorLib.setTargetFunctionGroup(target, selector, groupId);
     }
@@ -157,6 +159,7 @@ contract Executor is TokenOwnableBase, IExecutor {
     /// @inheritdoc IExecutor
     function execute(
         address target,
+        uint256 value,
         bytes calldata data
     )
         external
@@ -164,7 +167,7 @@ contract Executor is TokenOwnableBase, IExecutor {
         onlyAuthorized(target)
         returns (uint32 nonce)
     {
-        return ExecutorLib.execute(target, data);
+        return ExecutorLib.execute(target, value, data);
     }
 
     /// @inheritdoc IExecutor
@@ -195,7 +198,7 @@ contract Executor is TokenOwnableBase, IExecutor {
             target == factory || target == _getImplementation(factory, bytes32("RiverAirdrop"))
                 || target == _getImplementation(factory, bytes32("SpaceOperator"))
         ) {
-            revert UnauthorizedTarget(target);
+            revert ExecutorTypes.UnauthorizedTarget(target);
         }
     }
 }

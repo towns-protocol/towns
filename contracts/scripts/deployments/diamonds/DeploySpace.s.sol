@@ -39,15 +39,15 @@ import {DeployPrepayFacet} from "contracts/scripts/deployments/facets/DeployPrep
 import {DeployReferrals} from "contracts/scripts/deployments/facets/DeployReferrals.s.sol";
 import {DeployReviewFacet} from "contracts/scripts/deployments/facets/DeployReviewFacet.s.sol";
 import {DeployRoles} from "contracts/scripts/deployments/facets/DeployRoles.s.sol";
-
 import {DeploySpaceEntitlementGated} from
     "contracts/scripts/deployments/facets/DeploySpaceEntitlementGated.s.sol";
 import {DeployTipping} from "contracts/scripts/deployments/facets/DeployTipping.s.sol";
 import {DeployTokenOwnable} from "contracts/scripts/deployments/facets/DeployTokenOwnable.s.sol";
 import {DeployTokenPausable} from "contracts/scripts/deployments/facets/DeployTokenPausable.s.sol";
-
 import {DeployTreasury} from "contracts/scripts/deployments/facets/DeployTreasury.s.sol";
 import {DeployMultiInit} from "contracts/scripts/deployments/utils/DeployMultiInit.s.sol";
+import {DeployModularAccount} from "contracts/scripts/deployments/facets/DeployModularAccount.s.sol";
+
 // Test Facets
 import {DeployMockLegacyMembership} from
     "contracts/scripts/deployments/utils/DeployMockLegacyMembership.s.sol";
@@ -78,8 +78,11 @@ contract DeploySpace is DiamondHelper, Deployer {
     DeployMultiInit deployMultiInit = new DeployMultiInit();
     DeployTipping tippingHelper = new DeployTipping();
     DeployTreasury treasuryHelper = new DeployTreasury();
+
     // Test Facets
     DeployMockLegacyMembership mockLegacyMembershipHelper = new DeployMockLegacyMembership();
+
+    DeployModularAccount modularAccountHelper = new DeployModularAccount();
 
     address tokenOwnable;
     address diamondCut;
@@ -104,6 +107,7 @@ contract DeploySpace is DiamondHelper, Deployer {
     address tipping;
     address multiInit;
     address treasury;
+    address modularAccount;
 
     // Test Facets
     address mockLegacyMembership;
@@ -151,7 +155,7 @@ contract DeploySpace is DiamondHelper, Deployer {
         tipping = tippingHelper.deploy(deployer);
         treasury = treasuryHelper.deploy(deployer);
         membershipTokenHelper.removeSelector(IERC721A.tokenURI.selector);
-
+        modularAccount = modularAccountHelper.deploy(deployer);
         if (isAnvil()) {
             mockLegacyMembership = mockLegacyMembershipHelper.deploy(deployer);
         }
@@ -177,6 +181,8 @@ contract DeploySpace is DiamondHelper, Deployer {
         addCut(reviewHelper.makeCut(review, IDiamond.FacetCutAction.Add));
         addCut(tippingHelper.makeCut(tipping, IDiamond.FacetCutAction.Add));
         addCut(treasuryHelper.makeCut(treasury, IDiamond.FacetCutAction.Add));
+        addCut(modularAccountHelper.makeCut(modularAccount, IDiamond.FacetCutAction.Add));
+
         if (isAnvil()) {
             addCut(
                 mockLegacyMembershipHelper.makeCut(
