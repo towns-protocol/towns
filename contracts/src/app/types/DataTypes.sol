@@ -95,6 +95,8 @@ library DataTypes {
     error NotPayable();
     error InsufficientBalance();
     error NotFound();
+    error InvalidAppRegistry();
+    error AccessDenied();
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           Events                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/

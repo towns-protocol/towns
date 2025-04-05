@@ -5,11 +5,12 @@ pragma solidity ^0.8.23;
 import {IERC6900ExtensionRegistry} from "../interfaces/IERC6900ExtensionRegistry.sol";
 // libraries
 
-import {DataTypes} from "../types/DataTypes.sol";
 import {TrustedAttestersStorage} from "../storage/TrustedAttestersStorage.sol";
+import {DataTypes} from "../types/DataTypes.sol";
 import {AttestationLib} from "./AttestationLib.sol";
 import {CustomRevert} from "contracts/src/utils/libraries/CustomRevert.sol";
 import {LibSort} from "solady/utils/LibSort.sol";
+
 // contracts
 
 library TrustedLib {

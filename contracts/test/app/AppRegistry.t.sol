@@ -31,7 +31,7 @@ contract AppRegistryTest is BaseSetup {
         schemaRegistry = SchemaRegistry(appRegistry);
         attestationRegistry = AttestationRegistry(appRegistry);
         developer = makeAddr("developer");
-        pluginValidator = new MockPluginResolver();
+        pluginValidator = new MockPluginResolver(appRegistry);
     }
 
     modifier givenSchema(string memory testSchema, bool revocable) {
