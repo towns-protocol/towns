@@ -220,7 +220,7 @@ contract AppRegistryTest is BaseSetup {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
     function test_revoke() external {
         MockPlugin plugin = new MockPlugin();
-        (bytes32 schemaId, bytes32 attestationId) = registerPlugin(plugin, true);
+        (bytes32 schemaId, bytes32 attestationId) = registerApp(plugin, true);
 
         DataTypes.RevocationRequestData memory data =
             DataTypes.RevocationRequestData({uid: attestationId, value: 0});
@@ -255,7 +255,7 @@ contract AppRegistryTest is BaseSetup {
 
     function test_revertWhen_revokeInvalidAttestation() external {
         MockPlugin plugin = new MockPlugin();
-        (bytes32 schemaId,) = registerPlugin(plugin, true);
+        (bytes32 schemaId,) = registerApp(plugin, true);
 
         DataTypes.RevocationRequestData memory data =
             DataTypes.RevocationRequestData({uid: _randomBytes32(), value: 0});
@@ -270,7 +270,7 @@ contract AppRegistryTest is BaseSetup {
 
     function test_revertWhen_revokeInvalidAttestationSchema() external {
         MockPlugin plugin = new MockPlugin();
-        (, bytes32 attestationId) = registerPlugin(plugin, true);
+        (, bytes32 attestationId) = registerApp(plugin, true);
         bytes32 invalidSchemaId = registerSchema("test", address(0), false);
 
         DataTypes.RevocationRequestData memory data =
@@ -286,7 +286,7 @@ contract AppRegistryTest is BaseSetup {
 
     function test_revertWhen_revokeInvalidRevoker() external {
         MockPlugin plugin = new MockPlugin();
-        (bytes32 schemaId, bytes32 attestationId) = registerPlugin(plugin, true);
+        (bytes32 schemaId, bytes32 attestationId) = registerApp(plugin, true);
 
         DataTypes.RevocationRequestData memory data =
             DataTypes.RevocationRequestData({uid: attestationId, value: 0});
@@ -301,7 +301,7 @@ contract AppRegistryTest is BaseSetup {
 
     function test_revertWhen_revokeIrrevocable() external {
         MockPlugin plugin = new MockPlugin();
-        (bytes32 schemaId, bytes32 attestationId) = registerPlugin(plugin, false);
+        (bytes32 schemaId, bytes32 attestationId) = registerApp(plugin, false);
 
         DataTypes.RevocationRequestData memory data =
             DataTypes.RevocationRequestData({uid: attestationId, value: 0});
@@ -316,7 +316,7 @@ contract AppRegistryTest is BaseSetup {
 
     function test_revertWhen_revokeAlreadyRevoked() external {
         MockPlugin plugin = new MockPlugin();
-        (bytes32 schemaId, bytes32 attestationId) = registerPlugin(plugin, true);
+        (bytes32 schemaId, bytes32 attestationId) = registerApp(plugin, true);
 
         DataTypes.RevocationRequestData memory data =
             DataTypes.RevocationRequestData({uid: attestationId, value: 0});
@@ -336,7 +336,7 @@ contract AppRegistryTest is BaseSetup {
     /*                           Helpers                          */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    function registerPlugin(
+    function registerApp(
         IERC6900Module plugin,
         bool revocable
     )
