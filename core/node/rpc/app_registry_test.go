@@ -961,7 +961,7 @@ func TestAppRegistry_RegisterWebhook(t *testing.T) {
 }
 
 func TestAppRegistry_Status(t *testing.T) {
-	tester := newServiceTester(t, serviceTesterOpts{numNodes: 1, start: true})
+	tester := newServiceTester(t, serviceTesterOpts{numNodes: 1, start: true, printTestLogs: false})
 	service := initAppRegistryService(tester.ctx, tester)
 
 	httpClient, _ := testcert.GetHttp2LocalhostTLSClient(tester.ctx, tester.getConfig())
@@ -981,27 +981,47 @@ func TestAppRegistry_Status(t *testing.T) {
 	ownerWallet := safeNewWallet(tester.ctx, tester.require)
 	safeCreateUserStreams(t, tester.ctx, appWallet, tester.testClient(0), &testEncryptionDevice)
 
-	req := &connect.Request[protocol.RegisterRequest]{
-		Msg: &protocol.RegisterRequest{
-			AppId:      appWallet.Address[:],
-			AppOwnerId: ownerWallet.Address[:],
-		},
-	}
-	authenticateBS(tester.ctx, tester.require, authClient, ownerWallet, req)
-	resp, err := appRegistryClient.Register(
+	appServer := app_registry.NewTestAppServer(t, appWallet, tester.testClient(0))
+	defer appServer.Close()
+	go func() {
+		if err := appServer.Serve(tester.ctx); err != nil {
+			t.Errorf("Error starting app service: %v", err)
+		}
+	}()
+
+	sharedSecret := register(
 		tester.ctx,
-		req,
+		tester.require,
+		appWallet.Address[:],
+		ownerWallet.Address[:],
+		ownerWallet,
+		authClient,
+		appRegistryClient,
+	)
+	registerWebhook(
+		tester.ctx,
+		tester.require,
+		appWallet,
+		sharedSecret,
+		testEncryptionDevice,
+		authClient,
+		appRegistryClient,
+		appServer,
 	)
 
-	tester.require.NoError(err)
-	tester.require.NotNil(resp)
 	statusTests := map[string]struct {
-		appId                []byte
-		expectedIsRegistered bool
+		appId                    []byte
+		expectedIsRegistered     bool
+		expectedDeviceKey        string
+		expectedFallbackKey      string
+		expectedFrameworkVersion int32
 	}{
 		"Registered app": {
-			appId:                appWallet.Address[:],
-			expectedIsRegistered: true,
+			appId:                    appWallet.Address[:],
+			expectedIsRegistered:     true,
+			expectedDeviceKey:        "deviceKey",
+			expectedFallbackKey:      "fallbackKey",
+			expectedFrameworkVersion: 12345,
 		},
 		"Unregistered app": {
 			appId:                unregisteredApp[:],
@@ -1011,6 +1031,13 @@ func TestAppRegistry_Status(t *testing.T) {
 
 	for name, tc := range statusTests {
 		t.Run(name, func(t *testing.T) {
+			if tc.expectedIsRegistered {
+				appServer.SetFrameworkVersion(tc.expectedFrameworkVersion)
+				appServer.SetEncryptionDevice(app_client.EncryptionDevice{
+					DeviceKey:   tc.expectedDeviceKey,
+					FallbackKey: tc.expectedFallbackKey,
+				})
+			}
 			status, err := appRegistryClient.GetStatus(
 				tester.ctx,
 				&connect.Request[protocol.GetStatusRequest]{
@@ -1022,6 +1049,33 @@ func TestAppRegistry_Status(t *testing.T) {
 			tester.require.NoError(err)
 			tester.require.NotNil(status)
 			tester.require.Equal(tc.expectedIsRegistered, status.Msg.IsRegistered)
+
+			if !tc.expectedIsRegistered {
+				return
+			}
+
+			tester.require.Equal(tc.expectedFrameworkVersion, status.Msg.Status.FrameworkVersion)
+			tester.require.Equal(tc.expectedDeviceKey, status.Msg.Status.DeviceKey)
+			tester.require.Equal(tc.expectedFallbackKey, status.Msg.Status.FallbackKey)
+
+			// Validate previous status is cached by changing the framework version of the app
+			// server. The ttl is only 2 seconds, but that should not present a problem here.
+			appServer.SetFrameworkVersion(tc.expectedFrameworkVersion + 100)
+			status, err = appRegistryClient.GetStatus(
+				tester.ctx,
+				&connect.Request[protocol.GetStatusRequest]{
+					Msg: &protocol.GetStatusRequest{
+						AppId: tc.appId,
+					},
+				},
+			)
+			tester.require.NoError(err)
+			tester.require.NotNil(status)
+
+			// None of the original status values should have changed
+			tester.require.Equal(tc.expectedFrameworkVersion, status.Msg.Status.FrameworkVersion)
+			tester.require.Equal(tc.expectedDeviceKey, status.Msg.Status.DeviceKey)
+			tester.require.Equal(tc.expectedFallbackKey, status.Msg.Status.FallbackKey)
 		})
 	}
 }
