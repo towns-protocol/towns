@@ -8,7 +8,6 @@ import {IDiamond} from "@towns-protocol/diamond/src/IDiamond.sol";
 import "forge-std/console.sol";
 
 //contracts
-
 import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
 import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
 import {DropFacet} from "contracts/src/airdrop/drop/DropFacet.sol";
@@ -53,7 +52,7 @@ contract DeployDropFacet is Deployer, FacetHelper {
         return (facetCut, makeInitData(getDeployment("baseRegistry")));
     }
 
-    function __deploy(address deployer) public override returns (address) {
+    function __deploy(address deployer) internal override returns (address) {
         vm.startBroadcast(deployer);
         DropFacet dropFacet = new DropFacet();
         vm.stopBroadcast();

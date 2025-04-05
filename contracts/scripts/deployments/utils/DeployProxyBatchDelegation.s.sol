@@ -9,13 +9,11 @@ pragma solidity ^0.8.23;
 import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
 import {ProxyBatchDelegation} from
     "contracts/src/tokens/mainnet/delegation/ProxyBatchDelegation.sol";
+import {MockMessenger} from "contracts/test/mocks/MockMessenger.sol";
 
 // deployments
-
 import {DeployAuthorizedClaimers} from "./DeployAuthorizedClaimers.s.sol";
 import {DeployTownsMainnet} from "./DeployTownsMainnet.s.sol";
-
-import {MockMessenger} from "contracts/test/mocks/MockMessenger.sol";
 
 contract DeployProxyBatchDelegation is Deployer {
     // Mainnet
@@ -37,7 +35,7 @@ contract DeployProxyBatchDelegation is Deployer {
         messenger = messenger_;
     }
 
-    function __deploy(address deployer) public override returns (address) {
+    function __deploy(address deployer) internal override returns (address) {
         townsToken = townsHelper.deploy(deployer);
         vault = townsHelper.vault();
         claimers = claimersHelper.deploy(deployer);

@@ -2,7 +2,6 @@
 pragma solidity ^0.8.24;
 
 import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
-
 import {Airdrop} from "contracts/src/utils/Airdrop.sol";
 
 contract DeployAirdrop is Deployer {
@@ -10,7 +9,7 @@ contract DeployAirdrop is Deployer {
         return "utils/airdrop";
     }
 
-    function __deploy(address deployer) public override returns (address) {
+    function __deploy(address deployer) internal override returns (address) {
         vm.broadcast(deployer);
         return address(new Airdrop());
     }

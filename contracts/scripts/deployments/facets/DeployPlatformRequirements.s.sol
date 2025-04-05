@@ -36,7 +36,7 @@ contract DeployPlatformRequirements is FacetHelper, Deployer {
         return "facets/platformRequirementsFacet";
     }
 
-    function __deploy(address deployer) public override returns (address) {
+    function __deploy(address deployer) internal override returns (address) {
         vm.startBroadcast(deployer);
         PlatformRequirementsFacet facet = new PlatformRequirementsFacet();
         vm.stopBroadcast();

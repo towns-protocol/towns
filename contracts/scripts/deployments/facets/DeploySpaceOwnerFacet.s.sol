@@ -2,17 +2,14 @@
 pragma solidity ^0.8.23;
 
 //interfaces
-
 import {IVotes} from "@openzeppelin/contracts/governance/utils/IVotes.sol";
 import {IERC6372} from "@openzeppelin/contracts/interfaces/IERC6372.sol";
 
 //libraries
 
 //contracts
-
 import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
 import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
-
 import {DeployERC721A} from "contracts/scripts/deployments/facets/DeployERC721A.s.sol";
 import {SpaceOwner} from "contracts/src/spaces/facets/owner/SpaceOwner.sol";
 
@@ -61,7 +58,7 @@ contract DeploySpaceOwnerFacet is FacetHelper, Deployer {
         return "facets/spaceOwnerFacet";
     }
 
-    function __deploy(address deployer) public override returns (address) {
+    function __deploy(address deployer) internal override returns (address) {
         vm.startBroadcast(deployer);
         SpaceOwner facet = new SpaceOwner();
         vm.stopBroadcast();

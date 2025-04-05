@@ -6,7 +6,6 @@ pragma solidity ^0.8.23;
 // libraries
 
 // helpers
-
 import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
 import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
 import {SpaceDelegationFacet} from
@@ -38,7 +37,7 @@ contract DeploySpaceDelegation is Deployer, FacetHelper {
         return "facets/spaceDelegationFacet";
     }
 
-    function __deploy(address deployer) public override returns (address) {
+    function __deploy(address deployer) internal override returns (address) {
         vm.startBroadcast(deployer);
         SpaceDelegationFacet spaceDelegationFacet = new SpaceDelegationFacet();
         vm.stopBroadcast();

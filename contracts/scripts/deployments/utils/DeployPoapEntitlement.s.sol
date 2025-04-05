@@ -2,7 +2,6 @@
 pragma solidity ^0.8.24;
 
 import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
-
 import {PoapEntitlement} from "contracts/src/spaces/entitlements/poap/PoapEntitlement.sol";
 
 contract DeployPoapEntitlement is Deployer {
@@ -10,7 +9,7 @@ contract DeployPoapEntitlement is Deployer {
         return "utils/poapEntitlement";
     }
 
-    function __deploy(address deployer) public override returns (address) {
+    function __deploy(address deployer) internal override returns (address) {
         vm.broadcast(deployer);
         return address(new PoapEntitlement(0x22C1f6050E56d2876009903609a2cC3fEf83B415));
     }

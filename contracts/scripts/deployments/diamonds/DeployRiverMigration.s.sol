@@ -7,14 +7,12 @@ import {IDiamond} from "@towns-protocol/diamond/src/IDiamond.sol";
 //libraries
 
 //contracts
-
 import {DiamondHelper} from "@towns-protocol/diamond/scripts/common/helpers/DiamondHelper.s.sol";
 import {Diamond} from "@towns-protocol/diamond/src/Diamond.sol";
 import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
 
 // deployers
 import {MultiInit} from "@towns-protocol/diamond/src/initializers/MultiInit.sol";
-
 import {DeployDiamondCut} from "contracts/scripts/deployments/facets/DeployDiamondCut.s.sol";
 import {DeployDiamondLoupe} from "contracts/scripts/deployments/facets/DeployDiamondLoupe.s.sol";
 import {DeployIntrospection} from "contracts/scripts/deployments/facets/DeployIntrospection.s.sol";
@@ -113,7 +111,7 @@ contract DeployRiverMigration is DiamondHelper, Deployer {
         });
     }
 
-    function __deploy(address deployer) public override returns (address) {
+    function __deploy(address deployer) internal override returns (address) {
         addImmutableCuts(deployer);
 
         Diamond.InitParams memory initDiamondCut = diamondInitParams(deployer);

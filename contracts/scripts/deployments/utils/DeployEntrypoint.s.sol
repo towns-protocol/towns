@@ -6,7 +6,6 @@ pragma solidity ^0.8.23;
 //libraries
 
 //contracts
-
 import {EntryPoint} from "account-abstraction/core/EntryPoint.sol";
 import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
 
@@ -15,7 +14,7 @@ contract DeployEntrypoint is Deployer {
         return "utils/entrypoint";
     }
 
-    function __deploy(address deployer) public override returns (address) {
+    function __deploy(address deployer) internal override returns (address) {
         if (!isAnvil()) revert("not supported");
 
         bytes32 salt = bytes32(uint256(1));

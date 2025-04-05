@@ -7,7 +7,6 @@ pragma solidity ^0.8.23;
 
 //contracts
 import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
-
 import {PausableFacet} from "@towns-protocol/diamond/src/facets/pausable/PausableFacet.sol";
 import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
 
@@ -26,7 +25,7 @@ contract DeployPausable is FacetHelper, Deployer {
         return PausableFacet.__Pausable_init.selector;
     }
 
-    function __deploy(address deployer) public override returns (address) {
+    function __deploy(address deployer) internal override returns (address) {
         vm.startBroadcast(deployer);
         PausableFacet facet = new PausableFacet();
         vm.stopBroadcast();

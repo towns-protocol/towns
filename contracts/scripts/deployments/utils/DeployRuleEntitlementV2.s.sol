@@ -2,7 +2,6 @@
 pragma solidity ^0.8.24;
 
 import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
-
 import {RuleEntitlementV2} from "contracts/src/spaces/entitlements/rule/RuleEntitlementV2.sol";
 
 contract DeployRuleEntitlementV2 is Deployer {
@@ -10,7 +9,7 @@ contract DeployRuleEntitlementV2 is Deployer {
         return "utils/ruleEntitlementV2";
     }
 
-    function __deploy(address deployer) public override returns (address) {
+    function __deploy(address deployer) internal override returns (address) {
         vm.broadcast(deployer);
         return address(new RuleEntitlementV2());
     }

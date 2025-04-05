@@ -14,7 +14,7 @@ contract DeployMockMessenger is Deployer {
         return "facets/mockMessengerFacet";
     }
 
-    function __deploy(address deployer) public override returns (address) {
+    function __deploy(address deployer) internal override returns (address) {
         if (isAnvil() || isTesting()) {
             vm.startBroadcast(deployer);
             MockMessenger messenger = new MockMessenger();

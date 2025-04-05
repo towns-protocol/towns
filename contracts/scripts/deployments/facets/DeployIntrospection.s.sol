@@ -6,7 +6,6 @@ pragma solidity ^0.8.23;
 //libraries
 
 //contracts
-
 import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
 import {IntrospectionFacet} from
     "@towns-protocol/diamond/src/facets/introspection/IntrospectionFacet.sol";
@@ -25,7 +24,7 @@ contract DeployIntrospection is FacetHelper, Deployer {
         return "facets/introspectionFacet";
     }
 
-    function __deploy(address deployer) public override returns (address) {
+    function __deploy(address deployer) internal override returns (address) {
         vm.startBroadcast(deployer);
         IntrospectionFacet facet = new IntrospectionFacet();
         vm.stopBroadcast();

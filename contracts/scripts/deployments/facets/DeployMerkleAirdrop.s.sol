@@ -7,7 +7,6 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 //libraries
 
 //contracts
-
 import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
 import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
 import {MerkleAirdrop} from "contracts/src/utils/airdrop/merkle/MerkleAirdrop.sol";
@@ -34,7 +33,7 @@ contract DeployMerkleAirdrop is Deployer, FacetHelper {
         return abi.encodeWithSelector(initializer(), merkleRoot, IERC20(token));
     }
 
-    function __deploy(address deployer) public override returns (address) {
+    function __deploy(address deployer) internal override returns (address) {
         vm.startBroadcast(deployer);
         MerkleAirdrop merkleAirdrop = new MerkleAirdrop();
         vm.stopBroadcast();

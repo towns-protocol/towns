@@ -9,19 +9,15 @@ import {IDiamond} from "@towns-protocol/diamond/src/IDiamond.sol";
 //contracts
 import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
 import {Diamond} from "@towns-protocol/diamond/src/Diamond.sol";
-
 import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
 import {DiamondHelper} from "contracts/test/diamond/Diamond.t.sol";
 
 // deployers
 import {MultiInit} from "@towns-protocol/diamond/src/initializers/MultiInit.sol";
-
 import {DeployDiamondCut} from "contracts/scripts/deployments/facets/DeployDiamondCut.s.sol";
 import {DeployDiamondLoupe} from "contracts/scripts/deployments/facets/DeployDiamondLoupe.s.sol";
-
 import {DeployDropFacet} from "contracts/scripts/deployments/facets/DeployDropFacet.s.sol";
 import {DeployIntrospection} from "contracts/scripts/deployments/facets/DeployIntrospection.s.sol";
-
 import {DeployMetadata} from "contracts/scripts/deployments/facets/DeployMetadata.s.sol";
 import {DeployOwnable} from "contracts/scripts/deployments/facets/DeployOwnable.s.sol";
 import {DeployTownsPoints} from "contracts/scripts/deployments/facets/DeployTownsPoints.s.sol";
@@ -173,7 +169,7 @@ contract DeployRiverAirdrop is DiamondHelper, Deployer {
         return this.getCuts();
     }
 
-    function __deploy(address deployer) public override returns (address) {
+    function __deploy(address deployer) internal override returns (address) {
         addImmutableCuts(deployer);
 
         Diamond.InitParams memory initDiamondCut = diamondInitParams(deployer);

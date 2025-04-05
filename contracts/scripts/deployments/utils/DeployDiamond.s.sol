@@ -6,18 +6,15 @@ pragma solidity ^0.8.23;
 //libraries
 
 //contracts
-
 import {DiamondHelper} from "@towns-protocol/diamond/scripts/common/helpers/DiamondHelper.s.sol";
 import {Diamond, IDiamond} from "@towns-protocol/diamond/src/Diamond.sol";
 import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
-
 import {DeployDiamondCut} from "contracts/scripts/deployments/facets/DeployDiamondCut.s.sol";
 import {DeployDiamondLoupe} from "contracts/scripts/deployments/facets/DeployDiamondLoupe.s.sol";
 import {DeployIntrospection} from "contracts/scripts/deployments/facets/DeployIntrospection.s.sol";
 import {DeployOwnable} from "contracts/scripts/deployments/facets/DeployOwnable.s.sol";
 
 // utils
-
 import {MultiInit} from "@towns-protocol/diamond/src/initializers/MultiInit.sol";
 import {DeployMultiInit} from "contracts/scripts/deployments/utils/DeployMultiInit.s.sol";
 
@@ -67,7 +64,7 @@ contract DeployDiamond is DiamondHelper, Deployer {
         });
     }
 
-    function __deploy(address deployer) public override returns (address) {
+    function __deploy(address deployer) internal override returns (address) {
         Diamond.InitParams memory initDiamondCut = diamondInitParams(deployer);
 
         vm.startBroadcast(deployer);

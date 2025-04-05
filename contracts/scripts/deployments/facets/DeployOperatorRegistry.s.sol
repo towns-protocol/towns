@@ -6,11 +6,9 @@ pragma solidity ^0.8.23;
 //libraries
 
 //contracts
-
 import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
 import {IDiamond} from "@towns-protocol/diamond/src/Diamond.sol";
 import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
-
 import {OperatorRegistry} from "contracts/src/river/registry/facets/operator/OperatorRegistry.sol";
 
 contract DeployOperatorRegistry is FacetHelper, Deployer {
@@ -47,7 +45,7 @@ contract DeployOperatorRegistry is FacetHelper, Deployer {
         return (facetCut, makeInitData(operators));
     }
 
-    function __deploy(address deployer) public override returns (address) {
+    function __deploy(address deployer) internal override returns (address) {
         vm.startBroadcast(deployer);
         OperatorRegistry facet = new OperatorRegistry();
         vm.stopBroadcast();

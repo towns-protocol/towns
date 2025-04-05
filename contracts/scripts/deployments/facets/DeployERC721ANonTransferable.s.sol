@@ -7,10 +7,8 @@ import {IERC721A} from "contracts/src/diamond/facets/token/ERC721A/IERC721A.sol"
 //libraries
 
 //contracts
-
 import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
 import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
-
 import {ERC721A} from "contracts/src/diamond/facets/token/ERC721A/ERC721A.sol";
 import {ERC721ANonTransferable} from
     "contracts/src/diamond/facets/token/ERC721A/ERC721ANonTransferable.sol";
@@ -47,7 +45,7 @@ contract DeployERC721ANonTransferable is FacetHelper, Deployer {
         return "facets/erc721ANonTransferableFacet";
     }
 
-    function __deploy(address deployer) public override returns (address) {
+    function __deploy(address deployer) internal override returns (address) {
         vm.startBroadcast(deployer);
         ERC721ANonTransferable facet = new ERC721ANonTransferable();
         vm.stopBroadcast();

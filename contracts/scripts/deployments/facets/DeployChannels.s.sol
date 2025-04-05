@@ -27,7 +27,7 @@ contract DeployChannels is FacetHelper, Deployer {
         return "facets/channelsFacet";
     }
 
-    function __deploy(address deployer) public override returns (address) {
+    function __deploy(address deployer) internal override returns (address) {
         vm.startBroadcast(deployer);
         Channels facet = new Channels();
         vm.stopBroadcast();

@@ -8,15 +8,12 @@ import {IERC721A} from "contracts/src/diamond/facets/token/ERC721A/IERC721A.sol"
 //libraries
 
 //contracts
-
 import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
 import {DiamondHelper} from "contracts/test/diamond/Diamond.t.sol";
 
 // Facets
 import {MultiInit} from "@towns-protocol/diamond/src/initializers/MultiInit.sol";
-
 import {DeployBanning} from "contracts/scripts/deployments/facets/DeployBanning.s.sol";
-
 import {DeployChannels} from "contracts/scripts/deployments/facets/DeployChannels.s.sol";
 import {DeployDiamondCut} from "contracts/scripts/deployments/facets/DeployDiamondCut.s.sol";
 import {DeployDiamondLoupe} from "contracts/scripts/deployments/facets/DeployDiamondLoupe.s.sol";
@@ -30,7 +27,6 @@ import {DeployIntrospection} from "contracts/scripts/deployments/facets/DeployIn
 import {DeployMembership} from "contracts/scripts/deployments/facets/DeployMembership.s.sol";
 import {DeployMembershipMetadata} from
     "contracts/scripts/deployments/facets/DeployMembershipMetadata.s.sol";
-
 import {DeployMembershipToken} from
     "contracts/scripts/deployments/facets/DeployMembershipToken.s.sol";
 import {DeployOwnablePendingFacet} from
@@ -39,13 +35,11 @@ import {DeployPrepayFacet} from "contracts/scripts/deployments/facets/DeployPrep
 import {DeployReferrals} from "contracts/scripts/deployments/facets/DeployReferrals.s.sol";
 import {DeployReviewFacet} from "contracts/scripts/deployments/facets/DeployReviewFacet.s.sol";
 import {DeployRoles} from "contracts/scripts/deployments/facets/DeployRoles.s.sol";
-
 import {DeploySpaceEntitlementGated} from
     "contracts/scripts/deployments/facets/DeploySpaceEntitlementGated.s.sol";
 import {DeployTipping} from "contracts/scripts/deployments/facets/DeployTipping.s.sol";
 import {DeployTokenOwnable} from "contracts/scripts/deployments/facets/DeployTokenOwnable.s.sol";
 import {DeployTokenPausable} from "contracts/scripts/deployments/facets/DeployTokenPausable.s.sol";
-
 import {DeployTreasury} from "contracts/scripts/deployments/facets/DeployTreasury.s.sol";
 import {DeployMultiInit} from "contracts/scripts/deployments/utils/DeployMultiInit.s.sol";
 // Test Facets
@@ -270,7 +264,7 @@ contract DeploySpace is DiamondHelper, Deployer {
         return this.getCuts();
     }
 
-    function __deploy(address deployer) public override returns (address) {
+    function __deploy(address deployer) internal override returns (address) {
         addImmutableCuts(deployer);
 
         Diamond.InitParams memory initDiamondCut = diamondInitParams(deployer);

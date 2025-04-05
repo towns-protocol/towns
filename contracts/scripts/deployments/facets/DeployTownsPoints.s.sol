@@ -8,7 +8,6 @@ import {IDiamond} from "@towns-protocol/diamond/src/IDiamond.sol";
 import "forge-std/console.sol";
 
 //contracts
-
 import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
 import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
 import {TownsPoints} from "contracts/src/airdrop/points/TownsPoints.sol";
@@ -57,7 +56,7 @@ contract DeployTownsPoints is Deployer, FacetHelper {
         return (facetCut, makeInitData(getDeployment("spaceFactory")));
     }
 
-    function __deploy(address deployer) public override returns (address) {
+    function __deploy(address deployer) internal override returns (address) {
         vm.startBroadcast(deployer);
         TownsPoints riverPointsFacet = new TownsPoints();
         vm.stopBroadcast();

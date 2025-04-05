@@ -7,15 +7,13 @@ pragma solidity ^0.8.19;
 import {Create2Utils} from "contracts/src/utils/Create2Utils.sol";
 
 //contracts
-
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
-import {TownsDeployer} from "contracts/src/tokens/towns/base/TownsDeployer.sol";
-import {TownsDeployer} from "contracts/src/tokens/towns/base/TownsDeployer.sol";
-import {MockTownsDeployer} from "contracts/test/mocks/MockTownsDeployer.sol";
-
 import {Towns} from "contracts/src/tokens/towns/base/Towns.sol";
+import {TownsDeployer} from "contracts/src/tokens/towns/base/TownsDeployer.sol";
+import {TownsDeployer} from "contracts/src/tokens/towns/base/TownsDeployer.sol";
 import {MockTowns} from "contracts/test/mocks/MockTowns.sol";
+import {MockTownsDeployer} from "contracts/test/mocks/MockTownsDeployer.sol";
 
 contract DeployTownsBase is Deployer {
     address public l1Token = 0x000000Fa00b200406de700041CFc6b19BbFB4d13;
@@ -26,7 +24,7 @@ contract DeployTownsBase is Deployer {
         return "utils/towns";
     }
 
-    function __deploy(address deployer) public override returns (address) {
+    function __deploy(address deployer) internal override returns (address) {
         (implSalt, proxySalt) = _getSalts();
 
         address vault = _getVault(deployer);
