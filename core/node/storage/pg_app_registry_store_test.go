@@ -271,6 +271,7 @@ func TestCreateApp(t *testing.T) {
 	require.NoError(err)
 	require.Equal(app, info.App)
 	require.Equal(owner, info.Owner)
+	require.Equal(secret, info.EncryptedSecret)
 	require.Equal("", info.WebhookUrl)
 	require.Equal("", info.EncryptionDevice.DeviceKey)
 	require.Equal("", info.EncryptionDevice.FallbackKey)
@@ -279,6 +280,7 @@ func TestCreateApp(t *testing.T) {
 	require.NoError(err)
 	require.Equal(app2, info.App)
 	require.Equal(owner, info.Owner)
+	require.Equal(secret2, info.EncryptedSecret)
 	require.Equal("", info.WebhookUrl)
 	require.Equal("", info.EncryptionDevice.DeviceKey)
 	require.Equal("", info.EncryptionDevice.FallbackKey)
@@ -287,6 +289,43 @@ func TestCreateApp(t *testing.T) {
 	require.Nil(info)
 	require.ErrorContains(err, "app is not registered")
 	require.True(base.IsRiverErrorCode(err, protocol.Err_NOT_FOUND))
+}
+
+func TestRotateSecret(t *testing.T) {
+	params := setupAppRegistryStorageTest(t)
+	t.Cleanup(params.closer)
+
+	require := require.New(t)
+	store := params.pgAppRegistryStore
+
+	// Generate random addresses
+	owner := safeAddress(t)
+	app := safeAddress(t)
+
+	secretBytes, err := hex.DecodeString(testSecretHexString)
+	require.NoError(err)
+	secret := [32]byte(secretBytes)
+
+	secretBytes2, err := hex.DecodeString(testSecretHexString2)
+	require.NoError(err)
+	secret2 := [32]byte(secretBytes2)
+
+	err = store.CreateApp(params.ctx, owner, app, secret)
+	require.NoError(err)
+
+	info, err := store.GetAppInfo(params.ctx, app)
+	require.NoError(err)
+	require.Equal(secret, info.EncryptedSecret)
+
+	err = store.RotateSecret(params.ctx, app, secret2)
+	require.NoError(err)
+
+	info, err = store.GetAppInfo(params.ctx, app)
+	require.NoError(err)
+	require.Equal(secret2, info.EncryptedSecret)
+
+	err = store.RotateSecret(params.ctx, safeAddress(t), secret)
+	require.ErrorContains(err, "app was not found in registry")
 }
 
 func requireSendableMessagesEqual(t *testing.T, expected *storage.SendableMessages, actual *storage.SendableMessages) {

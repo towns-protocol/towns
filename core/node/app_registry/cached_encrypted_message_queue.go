@@ -56,6 +56,14 @@ func (q *CachedEncryptedMessageQueue) CreateApp(
 	return q.store.CreateApp(ctx, owner, app, sharedSecret)
 }
 
+func (q *CachedEncryptedMessageQueue) RotateSharedSecret(
+	ctx context.Context,
+	app common.Address,
+	sharedSecret [32]byte,
+) error {
+	return q.store.RotateSecret(ctx, app, sharedSecret)
+}
+
 func (q *CachedEncryptedMessageQueue) GetAppInfo(
 	ctx context.Context,
 	app common.Address,

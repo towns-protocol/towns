@@ -154,6 +154,58 @@ func (s *Service) Start(ctx context.Context) {
 	}()
 }
 
+func (s *Service) RotateSecret(
+	ctx context.Context,
+	req *connect.Request[RotateSecretRequest],
+) (
+	*connect.Response[RotateSecretResponse],
+	error,
+) {
+	var app common.Address
+	var err error
+	if app, err = base.BytesToAddress(req.Msg.AppId); err != nil {
+		return nil, base.WrapRiverError(Err_INVALID_ARGUMENT, err).
+			Message("invalid app id").Tag("appId", req.Msg.AppId).Func("GetSession")
+	}
+
+	appInfo, err := s.store.GetAppInfo(ctx, app)
+	if err != nil {
+		return nil, base.WrapRiverError(Err_INTERNAL, err).Message("could not determine app owner").
+			Tag("appId", app).Func("GetSession")
+	}
+
+	userId := authentication.UserFromAuthenticatedContext(ctx)
+	if app != userId && appInfo.Owner != userId {
+		return nil, base.RiverError(Err_PERMISSION_DENIED, "authenticated user must be app or owner").
+			Tag("appId", app).Tag("userId", userId).Tag("ownerId", appInfo.Owner).Func("GetSession")
+	}
+
+	// Generate a secret, encrypt it, and store the app record in pg.
+	appSecret, err := genHS256SharedSecret()
+	if err != nil {
+		return nil, base.AsRiverError(err, Err_INTERNAL).Message("error generating shared secret for app").
+			Tag("appId", app).Func("GetSession")
+	}
+
+	encrypted, err := encryptSharedSecret(appSecret, s.sharedSecretDataEncryptionKey)
+	if err != nil {
+		return nil, base.AsRiverError(err, Err_INTERNAL).Message("error encrypting shared secret for app").
+			Tag("appId", app).Func("GetSession")
+	}
+
+	if err := s.store.RotateSharedSecret(ctx, app, encrypted); err != nil {
+		return nil, base.AsRiverError(err, Err_DB_OPERATION_FAILURE).
+			Message("Error storing encrypted shared secret for app").
+			Tag("appId", app).Func("GetSession")
+	}
+
+	return &connect.Response[RotateSecretResponse]{
+		Msg: &RotateSecretResponse{
+			Hs256SharedSecret: appSecret[:],
+		},
+	}, nil
+}
+
 func (s *Service) GetSession(
 	ctx context.Context,
 	req *connect.Request[GetSessionRequest],

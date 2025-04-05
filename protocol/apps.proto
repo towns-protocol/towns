@@ -15,7 +15,7 @@ import "protocol.proto";
 service AppRegistryService {
     rpc Register(RegisterRequest) returns (RegisterResponse);
     rpc RegisterWebhook(RegisterWebhookRequest) returns (RegisterWebhookResponse);
-    // rpc RotateSecret(RotateSecretRequest) returns (RotateSecretResponse);
+    rpc RotateSecret(RotateSecretRequest) returns (RotateSecretResponse);
     rpc GetStatus(GetStatusRequest) returns (GetStatusResponse);
     rpc GetSession(GetSessionRequest) returns (GetSessionResponse);
 }
@@ -52,7 +52,7 @@ message RotateSecretRequest {
 message RotateSecretResponse {
     // the updated shared secret used to sign the jwt the app registry will use to authenticate
     // to the app service. This secret should be exactly 32 bytes.
-    string hs256_shared_secret = 1;
+    bytes hs256_shared_secret = 1;
 }
 
 message GetStatusRequest {
