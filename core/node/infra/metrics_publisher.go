@@ -41,7 +41,7 @@ var DefaultDbTxDurationBucketsSeconds = []float64{
 }
 
 // MetricsPublisher both provides handler to publish metrics from the given registry
-// and optionally published metric on give adddress:port.
+// and optionally published metric on give address:port.
 type MetricsPublisher struct {
 	registry   *prometheus.Registry
 	httpServer *http.Server
