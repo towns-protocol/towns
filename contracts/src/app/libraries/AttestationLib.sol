@@ -128,8 +128,6 @@ library AttestationLib {
 
         attestation.uid = attestationUID;
         db.attestations[attestationUID] = attestation;
-        db.moduleToAttesterToAttestation[attestation.recipient][attestation.attester] =
-            attestationUID;
 
         if (request.refUID != DataTypes.EMPTY_UID) {
             if (!isValidAttestation(request.refUID)) {
@@ -214,44 +212,9 @@ library AttestationLib {
         return AttestationRegistryStorage.getLayout().attestations[uid];
     }
 
-    function getAttestation(
-        address recipient,
-        address attester
-    )
-        internal
-        view
-        returns (DataTypes.Attestation memory)
-    {
-        bytes32 uid = AttestationRegistryStorage.getLayout().moduleToAttesterToAttestation[recipient][attester];
-
-        if (uid == DataTypes.EMPTY_UID) {
-            DataTypes.InvalidAttestation.selector.revertWith();
-        }
-
-        return getAttestation(uid);
-    }
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                     Validator Checks                       */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-    function checkValid(DataTypes.Attestation memory attestation) internal view returns (bool) {
-        (bytes32 uid, uint64 expirationTime, uint64 revocationTime) =
-            (attestation.uid, attestation.expirationTime, attestation.revocationTime);
-
-        if (uid == DataTypes.EMPTY_UID) {
-            return false;
-        }
-
-        if (expirationTime != DataTypes.NO_EXPIRATION_TIME && block.timestamp > expirationTime) {
-            return false;
-        }
-
-        if (revocationTime != 0) {
-            return false;
-        }
-
-        return true;
-    }
 
     function hashAttestation(
         DataTypes.Attestation memory attestation,

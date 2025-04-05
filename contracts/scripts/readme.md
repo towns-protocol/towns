@@ -30,13 +30,15 @@ contract DeployMockERC721A is Deployer {
 
 The framework will:
 
-1. Load an existing deployment from `contracts/deployments/<deploymentContext>/<chainIdAlias>/<contracts>.json`
+1. Load an existing deployment from
+   `contracts/deployments/<deploymentContext>/<chainIdAlias>/<contracts>.json`
 
 2. if `OVERRIDE_DEPLOYMENTS=1` is set or if no deployments are found, it will:
 
 - read `PRIVATE_KEY` from env (LOCAL_PRIVATE_KEY for anvil) or wait for ledger
 - invoke `__deploy()` function
-- if `SAVE_DEPLOYMENTS` is set; it will save the deployment to `contracts/deployments/deploymentContext/<network>/<contract>.json`
+- if `SAVE_DEPLOYMENTS` is set; it will save the deployment to
+  `contracts/deployments/deploymentContext/<network>/<contract>.json`
 
 This makes it easy to:
 
@@ -47,9 +49,12 @@ This makes it easy to:
 
 ## Flags
 
-- `OVERRIDE_DEPLOYMENTS=1`: It will redeploy a version of the contracts even if there's a cache in deployments assigned, be very careful when using this
-- `SAVE_DEPLOYMENTS=1`: It will save a cached address of deployments to `contracts/deployments/<network>/<contract>.json`
-- `DEPLOYMENT_CONTEXT=string`: It will save the addresses on a subdirectory with the given name, useful for deployment contract to same network
+- `OVERRIDE_DEPLOYMENTS=1`: It will redeploy a version of the contracts even if there's a cache in
+  deployments assigned, be very careful when using this
+- `SAVE_DEPLOYMENTS=1`: It will save a cached address of deployments to
+  `contracts/deployments/<network>/<contract>.json`
+- `DEPLOYMENT_CONTEXT=string`: It will save the addresses on a subdirectory with the given name,
+  useful for deployment contract to same network
 
 ## How to deploy locally (step-by-step)
 
