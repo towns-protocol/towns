@@ -39,7 +39,7 @@ contract TrustedResolverTest is BaseSetup {
     }
 
     function test_onAttest() public {
-        (bytes32 schemaId, bytes32 attestationId) = registerPlugin();
+        (bytes32 schemaId, bytes32 attestationId) = registerApp();
         DataTypes.Attestation memory attestation =
             trustedResolver.getAttestation(address(plugin), address(developer));
 
@@ -47,24 +47,35 @@ contract TrustedResolverTest is BaseSetup {
         assertEq(attestation.uid, attestationId);
     }
 
+    /// @notice Tests the trusted attesters functionality
+    /// @dev This test verifies that:
+    /// 1. A user can set trusted attesters
+    /// 2. Installing a plugin without being registered should fail
+    /// 3. After attestation, installing the plugin should succeed
     function test_trustAttesters() public {
+        // Set up single trusted attester (the developer)
         address[] memory attesters = new address[](1);
         attesters[0] = developer;
 
+        // User sets developer as trusted attester with threshold of 1
+        // meaning that at least one attestation is required to install the plugin
         vm.prank(user);
         trustedResolver.trustAttesters(1, attesters);
 
+        // Check should fail since plugin has no attestations yet
         vm.prank(user);
         vm.expectRevert(DataTypes.InsufficientAttestations.selector);
         trustedResolver.check(address(plugin));
 
-        registerPlugin();
+        // Developer attests to the plugin
+        registerApp();
 
+        // Check should now succeed since plugin has attestation from trusted attester
         vm.prank(user);
         trustedResolver.check(address(plugin));
     }
 
-    function registerPlugin() internal returns (bytes32 schemaId, bytes32 attestationId) {
+    function registerApp() internal returns (bytes32 schemaId, bytes32 attestationId) {
         schemaId = registerSchema("testSchema", address(trustedResolver), true);
 
         DataTypes.AttestationRequestData memory data = DataTypes.AttestationRequestData({
