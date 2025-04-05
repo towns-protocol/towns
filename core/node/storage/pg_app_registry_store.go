@@ -91,11 +91,21 @@ type (
 	}
 
 	AppRegistryStore interface {
+		// Note: the shared secret passed into this method call is stored directly on disk and
+		// therefore should always be encrypted using the service's configured data encryption key.
 		CreateApp(
 			ctx context.Context,
 			owner common.Address,
 			app common.Address,
-			sharedSecret [32]byte,
+			encryptedSharedSecret [32]byte,
+		) error
+
+		// Note: the shared secret passed into this method call is stored directly on disk and
+		// therefore should always be encrypted using the service's configured data encryption key.
+		RotateSecret(
+			ctx context.Context,
+			app common.Address,
+			encryptedSharedSecret [32]byte,
 		) error
 
 		RegisterWebhook(
@@ -279,6 +289,47 @@ func (s *PostgresAppRegistryStore) createApp(
 			return WrapRiverError(protocol.Err_DB_OPERATION_FAILURE, err).Message("unable to create app record")
 		}
 	}
+	return nil
+}
+
+func (s *PostgresAppRegistryStore) RotateSecret(
+	ctx context.Context,
+	app common.Address,
+	encryptedSharedSecret [32]byte,
+) error {
+	return s.txRunner(
+		ctx,
+		"RotateSecret",
+		pgx.ReadWrite,
+		func(ctx context.Context, tx pgx.Tx) error {
+			return s.rotateSecret(ctx, app, encryptedSharedSecret, tx)
+		},
+		nil,
+		"appAddress", app,
+	)
+}
+
+func (s *PostgresAppRegistryStore) rotateSecret(
+	ctx context.Context,
+	app common.Address,
+	encryptedSharedSecret [32]byte,
+	txn pgx.Tx,
+) error {
+	tag, err := txn.Exec(
+		ctx,
+		`UPDATE app_registry SET encrypted_shared_secret = $2 WHERE app_id = $1`,
+		PGAddress(app),
+		PGSecret(encryptedSharedSecret),
+	)
+	if err != nil {
+		return AsRiverError(err, protocol.Err_DB_OPERATION_FAILURE).
+			Message("Unable to update the encrypted shared secret for app").
+			Tag("app", app)
+	}
+	if tag.RowsAffected() < 1 {
+		return RiverError(protocol.Err_NOT_FOUND, "app was not found in registry")
+	}
+
 	return nil
 }
 
