@@ -208,7 +208,7 @@ func DbSchemaNameForAppRegistryService(appServiceId string) string {
 }
 
 // NewPostgresAppRegistryStore instantiates a new PostgreSQL persistent storage for the app registry service.
-// This implementation requires isolation level of at least repeatable read in order for the queueing
+// This implementation requires isolation level of at least serializable in order for the queueing
 // functionality to work as expected.
 func NewPostgresAppRegistryStore(
 	ctx context.Context,

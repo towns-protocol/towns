@@ -12,6 +12,7 @@ export type PersistedModel<T> =
     | { status: 'loaded'; data: T }
     | { status: 'error'; data: T; error: Error }
 
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 interface Storable {}
 
 const all_tables = new Set<string>()

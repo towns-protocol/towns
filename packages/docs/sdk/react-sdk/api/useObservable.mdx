@@ -12,10 +12,10 @@ import { useObservable } from '@towns-protocol/react-sdk'
 ## Definition
 
 ```ts
-function useObservable<T>(
-  observable: Observable<T>,
-  config?: ObservableConfig.FromData<T>,
-): ObservableValue<T>
+function useObservable<Model, Data>(
+  observable: Observable<Model>,
+  config?: ObservableConfig.FromData<Model>,
+): ObservableValue<Data>
 ```
 
 **Source:** [useObservable](https://github.com/towns-protocol/towns/blob/main/packages/react-sdk/src/useObservable.ts)
@@ -24,13 +24,13 @@ function useObservable<T>(
 
 ### observable
 
-- **Type:** `Observable<T>`
+- **Type:** `Observable<Model>`
 
 The observable to subscribe to.
 
 ### config
 
-- **Type:** `ObservableConfig.FromData<T>`
+- **Type:** `ObservableConfig.FromData<Model>`
 - **Optional**
 
 Configuration options for the observable.
@@ -61,5 +61,5 @@ Callback function to be called when the data is updated.
 The value of the observable.
 
 ```ts
-ObservableValue<T>
+ObservableValue<Data>
 ```
