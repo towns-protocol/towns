@@ -238,7 +238,7 @@ export const checkStreamId = (streamId: string): void => {
 
 const hexNanoId = customAlphabet('0123456789abcdef', 62)
 
-export const genId = (size?: number | undefined): string => {
+export const genId = (size?: number): string => {
     return hexNanoId(size)
 }
 
