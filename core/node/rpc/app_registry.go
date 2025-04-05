@@ -30,6 +30,15 @@ func (s *Service) startAppRegistryMode(opts *ServerStartOpts) error {
 		return AsRiverError(err).Message("Failed to init river chain").LogError(s.defaultLogger)
 	}
 
+	// At this time, the app registry database requires serializable isolation level in order
+	// for the postgres implementation of message queueing to function properly. It's possible
+	// this could be relaxed with row locking.
+	if s.config.Database.IsolationLevel != "serializable" {
+		logging.FromCtx(s.serverCtx).
+			Warnw("Minimum isolation level of postgres for app registry service is serializable, setting to serializable", "configuredLevel", s.config.Database.IsolationLevel)
+		s.config.Database.IsolationLevel = "serializable"
+	}
+
 	err = s.prepareStore()
 	if err != nil {
 		return err
