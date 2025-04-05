@@ -1,10 +1,17 @@
-import { PlainMessage } from '@bufbuild/protobuf'
-import { ChannelMessage, GroupMentionType, MessageInteractionType, Tags } from '@river-build/proto'
+import {
+    BlockchainTransaction_TokenTransfer,
+    ChannelMessage,
+    GroupMentionType,
+    MessageInteractionType,
+    Tags,
+    PlainMessage,
+} from '@towns-protocol/proto'
 import { IStreamStateView } from './streamStateView'
 import { addressFromUserId } from './id'
-import { bin_fromHexString, check } from '@river-build/dlog'
-import { TipEventObject } from '@river-build/generated/dev/typings/ITipping'
+import { bin_fromHexString, bin_toHexString, check } from '@towns-protocol/dlog'
+import { TipEventObject } from '@towns-protocol/generated/dev/typings/ITipping'
 import { isDefined } from './check'
+import { bytesToHex } from 'ethereum-cryptography/utils'
 
 export function makeTags(
     message: PlainMessage<ChannelMessage>,
@@ -31,6 +38,23 @@ export function makeTipTags(
         mentionedUserAddresses: [],
         participatingUserAddresses: [addressFromUserId(toUserId)],
         threadId: getParentThreadId(event.messageId, streamView),
+    } satisfies PlainMessage<Tags>
+}
+
+export function makeTransferTags(
+    event: PlainMessage<BlockchainTransaction_TokenTransfer>,
+    streamView: IStreamStateView,
+): PlainMessage<Tags> | undefined {
+    check(isDefined(streamView), 'stream not found')
+    return {
+        messageInteractionType: MessageInteractionType.TRADE,
+        groupMentionTypes: [],
+        mentionedUserAddresses: [],
+        participatingUserAddresses: participantsFromParentEventId(
+            bin_toHexString(event.messageId),
+            streamView,
+        ),
+        threadId: getParentThreadId(bytesToHex(event.messageId), streamView),
     } satisfies PlainMessage<Tags>
 }
 
@@ -113,36 +137,37 @@ function getParticipatingUserAddresses(
             return []
         }
         case 'post': {
-            const participating = new Set<Uint8Array>()
             const parentId = message.payload.value.threadId || message.payload.value.replyId
             if (parentId) {
-                const parentEvent = streamView.events.get(parentId)
-                if (parentEvent && parentEvent.remoteEvent?.event.creatorAddress) {
-                    participating.add(parentEvent.remoteEvent.event.creatorAddress)
-                }
-                streamView.timeline.forEach((event) => {
-                    if (
-                        event.decryptedContent?.kind === 'channelMessage' &&
-                        event.decryptedContent.content.payload.case === 'post' &&
-                        event.decryptedContent.content.payload.value.threadId === parentId &&
-                        event.remoteEvent?.event.creatorAddress
-                    ) {
-                        participating.add(event.remoteEvent.event.creatorAddress)
-                    } else if (
-                        event.decryptedContent?.kind === 'channelMessage' &&
-                        event.decryptedContent.content.payload.case === 'reaction' &&
-                        event.decryptedContent.content.payload.value.refEventId === parentId &&
-                        event.remoteEvent?.event.creatorAddress
-                    ) {
-                        participating.add(event.remoteEvent.event.creatorAddress)
-                    }
-                })
+                return participantsFromParentEventId(parentId, streamView)
             }
-            return Array.from(participating)
+            return []
         }
         default:
             return []
     }
+}
+
+function participantsFromParentEventId(
+    parentId: string,
+    streamView: IStreamStateView,
+): Uint8Array[] {
+    const participating = new Set<Uint8Array>()
+    const parentEvent = streamView.events.get(parentId)
+    if (parentEvent && parentEvent.remoteEvent?.event.creatorAddress) {
+        participating.add(parentEvent.remoteEvent.event.creatorAddress)
+    }
+    streamView.timeline.forEach((event) => {
+        if (
+            event.decryptedContent?.kind === 'channelMessage' &&
+            event.decryptedContent.content.payload.case === 'post' &&
+            event.decryptedContent.content.payload.value.threadId === parentId &&
+            event.remoteEvent?.event.creatorAddress
+        ) {
+            participating.add(event.remoteEvent.event.creatorAddress)
+        }
+    })
+    return Array.from(participating)
 }
 
 function getParentThreadId(

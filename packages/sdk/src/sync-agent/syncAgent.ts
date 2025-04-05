@@ -1,6 +1,6 @@
 import { RiverConnection, RiverConnectionModel } from './river-connection/riverConnection'
 import { RiverConfig } from '../riverConfig'
-import { RiverRegistry, SpaceDapp } from '@river-build/web3'
+import { RiverRegistry, SpaceDapp } from '@towns-protocol/web3'
 import { RetryParams } from '../rpcInterceptors'
 import { Store } from '../store/store'
 import { SignerContext } from '../signerContext'
@@ -20,10 +20,11 @@ import { UserSettingsModel } from './user/models/userSettings'
 import { Spaces, SpacesModel } from './spaces/spaces'
 import { AuthStatus } from './river-connection/models/authStatus'
 import { ethers } from 'ethers'
-import type { EncryptionDeviceInitOpts } from '@river-build/encryption'
+import type { EncryptionDeviceInitOpts } from '@towns-protocol/encryption'
 import { Gdms, type GdmsModel } from './gdms/gdms'
 import { Dms, DmsModel } from './dms/dms'
 import { UnpackEnvelopeOpts } from '../sign'
+import { dlog, DLogger, shortenHexString } from '@towns-protocol/dlog'
 
 export interface SyncAgentConfig {
     context: SignerContext
@@ -37,9 +38,11 @@ export interface SyncAgentConfig {
     encryptionDevice?: EncryptionDeviceInitOpts
     onTokenExpired?: () => void
     unpackEnvelopeOpts?: UnpackEnvelopeOpts
+    logId?: string
 }
 
 export class SyncAgent {
+    log: DLogger
     userId: string
     config: SyncAgentConfig
     riverConnection: RiverConnection
@@ -67,27 +70,32 @@ export class SyncAgent {
 
     constructor(config: SyncAgentConfig) {
         this.userId = userIdFromAddress(config.context.creatorAddress)
+        const logId = config.logId ?? shortenHexString(this.userId)
+        this.log = dlog('csb:syncAgent', { defaultEnabled: true }).extend(logId)
         this.config = config
         const base = config.riverConfig.base
         const river = config.riverConfig.river
         const baseProvider = config.baseProvider ?? makeBaseProvider(config.riverConfig)
         const riverProvider = config.riverProvider ?? makeRiverProvider(config.riverConfig)
         this.store = new Store(this.syncAgentDbName(), DB_VERSION, DB_MODELS)
-        this.store.newTransactionGroup('SyncAgent::initalization')
+        this.store.newTransactionGroup('SyncAgent::initialization')
         const spaceDapp = new SpaceDapp(base.chainConfig, baseProvider)
         const riverRegistryDapp = new RiverRegistry(river.chainConfig, riverProvider)
         this.riverConnection = new RiverConnection(this.store, spaceDapp, riverRegistryDapp, {
             signerContext: config.context,
             cryptoStore: RiverDbManager.getCryptoDb(this.userId, this.cryptoDbName()),
             entitlementsDelegate: new Entitlements(this.config.riverConfig, spaceDapp),
-            persistenceStoreName:
-                config.disablePersistenceStore !== true ? this.persistenceDbName() : undefined,
-            logNamespaceFilter: undefined,
-            highPriorityStreamIds: this.config.highPriorityStreamIds,
+            opts: {
+                persistenceStoreName:
+                    config.disablePersistenceStore !== true ? this.persistenceDbName() : undefined,
+                logNamespaceFilter: undefined,
+                highPriorityStreamIds: this.config.highPriorityStreamIds,
+                unpackEnvelopeOpts: config.unpackEnvelopeOpts,
+                logId: config.logId,
+            },
             rpcRetryParams: config.retryParams,
             encryptionDevice: config.encryptionDevice,
             onTokenExpired: config.onTokenExpired,
-            unpackEnvelopeOpts: config.unpackEnvelopeOpts,
         })
 
         this.user = new User(this.userId, this.store, this.riverConnection)
@@ -116,9 +124,11 @@ export class SyncAgent {
         }
         // commit the initialization transaction, which triggers onLoaded on the models
         await this.store.commitTransaction()
+        this.log('SyncAgent::start: starting river connection')
         // start thie river connection, this will log us in if the user is already signed up
         // it will leave us in a connected state otherwise, see riverConnection.authStatus
         await this.riverConnection.start()
+        this.log('SyncAgent::start: river connection started')
     }
 
     async stop() {

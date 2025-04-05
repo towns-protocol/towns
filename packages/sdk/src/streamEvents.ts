@@ -6,7 +6,7 @@ import {
     UserPayload_UserMembership,
     UserInboxPayload_Snapshot_DeviceSummary,
     BlockchainTransaction_Tip,
-} from '@river-build/proto'
+} from '@towns-protocol/proto'
 
 import {
     ClientInitStatus,
@@ -16,10 +16,15 @@ import {
     RemoteTimelineEvent,
     StreamTimelineEvent,
 } from './types'
-import { KeySolicitationContent, UserDevice } from '@river-build/encryption'
+import {
+    EventSignatureBundle,
+    KeySolicitationContent,
+    UserDevice,
+} from '@towns-protocol/encryption'
 import { EncryptedContent } from './encryptedContentTypes'
 import { SyncState } from './syncedStreamsLoop'
 import { Pin } from './streamStateView_Members'
+import { SpaceReviewEventObject } from '@towns-protocol/web3'
 
 export type StreamChange = {
     prepended?: RemoteTimelineEvent[]
@@ -34,40 +39,31 @@ export type StreamEncryptionEvents = {
     newEncryptedContent: (streamId: string, eventId: string, content: EncryptedContent) => void
     newKeySolicitation: (
         streamId: string,
+        eventHashStr: string,
         fromUserId: string,
         fromUserAddress: Uint8Array,
         event: KeySolicitationContent,
+        sigBundle: EventSignatureBundle,
     ) => void
     updatedKeySolicitation: (
         streamId: string,
+        eventHashStr: string,
         fromUserId: string,
         fromUserAddress: Uint8Array,
         event: KeySolicitationContent,
+        sigBundle: EventSignatureBundle,
     ) => void
     initKeySolicitations: (
         streamId: string,
+        eventHashStr: string,
         members: {
             userId: string
             userAddress: Uint8Array
             solicitations: KeySolicitationContent[]
         }[],
+        sigBundle: EventSignatureBundle,
     ) => void
     userDeviceKeyMessage: (streamId: string, userId: string, userDevice: UserDevice) => void
-    // MLS-specific encryption events
-    mlsNewEncryptedContent: (streamId: string, eventId: string, content: EncryptedContent) => void
-    mlsInitializeGroup: (
-        streamId: string,
-        groupInfoMessage: Uint8Array,
-        externalGroupSnapshot: Uint8Array,
-        signaturePublicKey: Uint8Array,
-    ) => void
-    mlsExternalJoin: (
-        streamId: string,
-        signaturePublicKey: Uint8Array,
-        commit: Uint8Array,
-        groupInfoMessage: Uint8Array,
-    ) => void
-    mlsEpochSecrets: (streamId: string, secrets: { epoch: bigint; secret: Uint8Array }[]) => void
 }
 
 export type SyncedStreamEvents = {
@@ -113,6 +109,7 @@ export type StreamStateEvents = {
     ) => void
     spaceChannelDeleted: (spaceId: string, channelId: string) => void
     spaceImageUpdated: (spaceId: string) => void
+    spaceReviewsUpdated: (streamId: string, review: SpaceReviewEventObject) => void
     channelPinAdded: (channelId: string, pin: Pin) => void
     channelPinRemoved: (channelId: string, pin: Pin, index: number) => void
     channelPinDecrypted: (channelId: string, pin: Pin, index: number) => void
@@ -144,6 +141,18 @@ export type StreamStateEvents = {
     streamNftUpdated: (streamId: string, userId: string) => void
     streamChannelPropertiesUpdated: (streamId: string) => void
     streamEncryptionAlgorithmUpdated: (streamId: string, encryptionAlgorithm?: string) => void
+    streamTokenTransfer: (
+        streamId: string,
+        transaction: {
+            address: Uint8Array
+            amount: bigint
+            isBuy: boolean
+            chainId: string
+            userId: string
+            createdAtEpochMs: bigint
+            messageId: string
+        },
+    ) => void
 }
 
 export type StreamEvents = StreamEncryptionEvents & StreamStateEvents & SyncedStreamEvents

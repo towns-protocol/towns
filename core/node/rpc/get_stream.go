@@ -1,20 +1,30 @@
 package rpc
 
 import (
+	"context"
+
 	"connectrpc.com/connect"
 
-	. "github.com/river-build/river/core/node/events"
-	. "github.com/river-build/river/core/node/protocol"
+	. "github.com/towns-protocol/towns/core/node/events"
+	. "github.com/towns-protocol/towns/core/node/protocol"
 )
 
 func (s *Service) localGetStream(
-	streamView StreamView,
+	ctx context.Context,
+	streamView *StreamView,
+	syncCookie *SyncCookie,
 ) (*connect.Response[GetStreamResponse], error) {
-	return connect.NewResponse(&GetStreamResponse{
-		Stream: &StreamAndCookie{
-			Events:         streamView.MinipoolEnvelopes(),
-			NextSyncCookie: streamView.SyncCookie(s.wallet.Address),
-			Miniblocks:     streamView.MiniblocksFromLastSnapshot(),
-		},
-	}), nil
+	var stream *StreamAndCookie
+	var err error
+	if syncCookie != nil {
+		stream, err = streamView.GetStreamSince(ctx, s.wallet, syncCookie)
+	} else {
+		stream = streamView.GetResetStreamAndCookie(s.wallet)
+	}
+	if err != nil {
+		return nil, err
+	}
+	return connect.NewResponse(
+		&GetStreamResponse{Stream: stream},
+	), nil
 }

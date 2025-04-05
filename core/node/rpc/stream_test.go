@@ -11,12 +11,12 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 
-	"github.com/river-build/river/core/config"
-	"github.com/river-build/river/core/contracts/river"
-	"github.com/river-build/river/core/node/crypto"
-	"github.com/river-build/river/core/node/protocol"
-	"github.com/river-build/river/core/node/testutils/testcert"
-	"github.com/river-build/river/core/node/testutils/testfmt"
+	"github.com/towns-protocol/towns/core/config"
+	"github.com/towns-protocol/towns/core/contracts/river"
+	"github.com/towns-protocol/towns/core/node/crypto"
+	"github.com/towns-protocol/towns/core/node/protocol"
+	"github.com/towns-protocol/towns/core/node/testutils/testcert"
+	"github.com/towns-protocol/towns/core/node/testutils/testfmt"
 )
 
 func TestGetStreamEx(t *testing.T) {
@@ -34,10 +34,10 @@ func TestGetStreamEx(t *testing.T) {
 	)
 	require := tt.require
 
-	alice := tt.newTestClient(0)
+	alice := tt.newTestClient(0, testClientOpts{})
 	_ = alice.createUserStream()
 	spaceId, _ := alice.createSpace()
-	channelId, _ := alice.createChannel(spaceId)
+	channelId, _, _ := alice.createChannel(spaceId)
 
 	for count := range 100 {
 		alice.say(channelId, fmt.Sprintf("hello from Alice %d", count))
@@ -63,7 +63,7 @@ func TestGetStreamEx(t *testing.T) {
 }
 
 // expected miniblock nums seq: [1, step, 2*step, 3*step, ...]
-func logsAreSequentialAndStartFrom1(logs []*river.StreamRegistryV1StreamLastMiniblockUpdated, step uint64) bool {
+func logsAreSequentialAndStartFrom1(logs []*river.StreamMiniblockUpdate, step uint64) bool {
 	if len(logs) < 3 {
 		return false
 	}
@@ -101,10 +101,10 @@ func TestMiniBlockProductionFrequency(t *testing.T) {
 		config.Graffiti = "firstNode"
 	}})
 
-	alice := tt.newTestClient(0)
+	alice := tt.newTestClient(0, testClientOpts{})
 	_ = alice.createUserStream()
 	spaceId, _ := alice.createSpace()
-	channelId, _ := alice.createChannel(spaceId)
+	channelId, _, _ := alice.createChannel(spaceId)
 
 	// retrieve set last miniblock events and make sure that only 1 out of miniblockRegistrationFrequency
 	// miniblocks is registered
@@ -121,33 +121,39 @@ func TestMiniBlockProductionFrequency(t *testing.T) {
 		alice.say(channelId, msg)
 
 		// get all logs and make sure that at least 3 miniblocks are registered
-		logs, err := filterer.FilterStreamLastMiniblockUpdated(&bind.FilterOpts{
+		logs, err := filterer.FilterStreamUpdated(&bind.FilterOpts{
 			Start:   0,
 			End:     nil,
 			Context: tt.ctx,
-		})
+		}, []uint8{uint8(river.StreamUpdatedEventTypeLastMiniblockBatchUpdated)})
 		tt.require.NoError(err)
 
-		var logsFound []*river.StreamRegistryV1StreamLastMiniblockUpdated
+		var streamUpdates []*river.StreamMiniblockUpdate
 		for logs.Next() {
-			if log := logs.Event; log.StreamId == channelId {
-				logsFound = append(logsFound, log)
+			parsedLogs, err := river.ParseStreamUpdatedEvent(logs.Event)
+			tt.require.NoError(err)
+
+			for _, parsedLog := range parsedLogs {
+				tt.require.Equal(river.StreamUpdatedEventTypeLastMiniblockBatchUpdated, parsedLog.Reason())
+				if parsedLog.GetStreamId() == channelId {
+					streamUpdates = append(streamUpdates, parsedLog.(*river.StreamMiniblockUpdate))
+				}
 			}
 		}
 
 		if testfmt.Enabled() {
 			mbs := alice.getMiniblocks(channelId, 0, 100)
-			testfmt.Print(t, "iter", i, "logsFound", len(logsFound), "mbs", len(mbs))
-			for _, l := range logsFound {
+			testfmt.Print(t, "iter", i, "logsFound", len(streamUpdates), "mbs", len(mbs))
+			for _, l := range streamUpdates {
 				testfmt.Print(t, "    log", l.LastMiniblockNum)
 			}
 		}
 
-		if len(logsFound) < 3 {
+		if len(streamUpdates) < 3 {
 			return false
 		}
 
-		return logsAreSequentialAndStartFrom1(logsFound, miniblockRegistrationFrequency)
+		return logsAreSequentialAndStartFrom1(streamUpdates, miniblockRegistrationFrequency)
 	}, 20*time.Second, 25*time.Millisecond)
 
 	alice.listen(channelId, []common.Address{alice.userId}, conversation)
@@ -193,37 +199,45 @@ func TestMiniBlockProductionFrequency(t *testing.T) {
 
 	tt.require.Eventually(func() bool {
 		i++
-		var logsFound []*river.StreamRegistryV1StreamLastMiniblockUpdated
 
 		msg := fmt.Sprint("hi again!", i)
 		conversation = append(conversation, []string{msg})
 		alice.say(channelId, msg)
 
 		// get all logs and make sure that at least 3 miniblocks are registered
-		logs, err := filterer.FilterStreamLastMiniblockUpdated(&bind.FilterOpts{
+		logs, err := filterer.FilterStreamUpdated(&bind.FilterOpts{
 			Start:   0,
 			End:     nil,
 			Context: tt.ctx,
-		})
+		}, []uint8{uint8(river.StreamUpdatedEventTypeLastMiniblockBatchUpdated)})
 		tt.require.NoError(err)
 
+		var streamUpdates []*river.StreamMiniblockUpdate
 		for logs.Next() {
-			if log := logs.Event; log.StreamId == channelId {
-				logsFound = append(logsFound, log)
+			parsedLogs, err := river.ParseStreamUpdatedEvent(logs.Event)
+			tt.require.NoError(err)
+
+			for _, parsedLog := range parsedLogs {
+				tt.require.Equal(river.StreamUpdatedEventTypeLastMiniblockBatchUpdated, parsedLog.Reason())
+				if parsedLog.GetStreamId() == channelId {
+					streamUpdates = append(streamUpdates, parsedLog.(*river.StreamMiniblockUpdate))
+				}
 			}
 		}
 
 		if testfmt.Enabled() {
 			mbs := alice.getMiniblocks(channelId, 0, 100)
-			testfmt.Print(t, "iter", i, "logsFound", len(logsFound), "mbs", len(mbs))
+			testfmt.Print(t, "iter", i, "logsFound", len(streamUpdates), "mbs", len(mbs))
 		}
 
-		if len(logsFound) < 10 {
+		testfmt.Printf(t, "found %d logs", len(streamUpdates))
+
+		if len(streamUpdates) < 10 {
 			return false
 		}
 
 		// make sure that the logs have last miniblock num frequency apart
-		return logsAreSequentialAndStartFrom1(logsFound, miniblockRegistrationFrequency)
+		return logsAreSequentialAndStartFrom1(streamUpdates, miniblockRegistrationFrequency)
 	}, 20*time.Second, 25*time.Millisecond)
 
 	alice.listen(channelId, []common.Address{alice.userId}, conversation)

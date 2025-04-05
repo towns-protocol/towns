@@ -2,10 +2,13 @@
  * @group main
  */
 
-import { dlog, check } from '@river-build/dlog'
+import { dlog, check } from '@towns-protocol/dlog'
 import { isDefined } from '../../check'
-import { DecryptionStatus, GroupEncryptionAlgorithmId, UserDevice } from '@river-build/encryption'
-import { Client } from '../../client'
+import {
+    DecryptionStatus,
+    GroupEncryptionAlgorithmId,
+    UserDevice,
+} from '@towns-protocol/encryption'
 import {
     makeUserStreamId,
     makeUserSettingsStreamId,
@@ -22,20 +25,26 @@ import {
     waitFor,
     getChannelMessagePayload,
     makeRandomUserAddress,
+    TestClient,
+    cloneTestClient,
+    SignerContextWithWallet,
 } from '../testUtils'
 import {
-    CancelSyncRequest,
     CancelSyncResponse,
     ChannelMessage,
-    MediaInfo,
+    ChannelMessageSchema,
     SnapshotCaseType,
     SyncOp,
-    SyncStreamsRequest,
     SyncStreamsResponse,
-    UserBio,
     type ChunkedMedia,
-} from '@river-build/proto'
-import { PartialMessage, type PlainMessage } from '@bufbuild/protobuf'
+    SyncStreamsRequestSchema,
+    PlainMessage,
+    SyncStreamsResponseSchema,
+    CancelSyncResponseSchema,
+    CancelSyncRequestSchema,
+    MediaInfoSchema,
+} from '@towns-protocol/proto'
+import { create, MessageInitShape, toBinary } from '@bufbuild/protobuf'
 import { CallOptions } from '@connectrpc/connect'
 import { vi } from 'vitest'
 import {
@@ -44,7 +53,6 @@ import {
     make_MemberPayload_KeyFulfillment,
     make_MemberPayload_KeySolicitation,
 } from '../../types'
-import { SignerContext } from '../../signerContext'
 import { deriveKeyAndIV } from '../../crypto_utils'
 import { nanoid } from 'nanoid'
 
@@ -64,7 +72,7 @@ const createMockSyncGenerator = (shouldFail: () => boolean, updateEmitted?: () =
         if (syncCanceled) {
             log('emitting close')
             return Promise.resolve(
-                new SyncStreamsResponse({
+                create(SyncStreamsResponseSchema, {
                     syncId: 'mockSyncId',
                     syncOp: SyncOp.SYNC_CLOSE,
                 }),
@@ -74,7 +82,7 @@ const createMockSyncGenerator = (shouldFail: () => boolean, updateEmitted?: () =
             syncStarted = true
             log('emitting new')
             return Promise.resolve(
-                new SyncStreamsResponse({
+                create(SyncStreamsResponseSchema, {
                     syncId: 'mockSyncId',
                     syncOp: SyncOp.SYNC_NEW,
                 }),
@@ -83,7 +91,7 @@ const createMockSyncGenerator = (shouldFail: () => boolean, updateEmitted?: () =
             log('emitting junk')
             updateEmitted?.()
             return Promise.resolve(
-                new SyncStreamsResponse({
+                create(SyncStreamsResponseSchema, {
                     syncId: 'mockSyncId',
                     syncOp: SyncOp.SYNC_UPDATE,
                     stream: { events: [], nextSyncCookie: {} },
@@ -111,8 +119,8 @@ function makeMockSyncGenerator(generator: () => Promise<SyncStreamsResponse>) {
 }
 
 describe('clientTest', () => {
-    let bobsClient: Client
-    let alicesClient: Client
+    let bobsClient: TestClient
+    let alicesClient: TestClient
 
     beforeEach(async () => {
         bobsClient = await makeTestClient()
@@ -174,18 +182,19 @@ describe('clientTest', () => {
 
         // hand construct a message, (don't do this normally! just use sendMessage(..))
         const algorithm = GroupEncryptionAlgorithmId.GroupEncryption // algorithm doesn't matter here, don't copy paste
-        const encrypted = await bobsClient.encryptGroupEvent(
-            new ChannelMessage({
-                payload: {
-                    case: 'post',
-                    value: {
-                        content: {
-                            case: 'text',
-                            value: { body: 'Hello world' },
-                        },
+        const channelMessage = create(ChannelMessageSchema, {
+            payload: {
+                case: 'post',
+                value: {
+                    content: {
+                        case: 'text',
+                        value: { body: 'Hello world', mentions: [], attachments: [] },
                     },
                 },
-            }),
+            },
+        } satisfies PlainMessage<ChannelMessage>)
+        const encrypted = await bobsClient.encryptGroupEvent(
+            toBinary(ChannelMessageSchema, channelMessage),
             channelId,
             algorithm,
         )
@@ -213,7 +222,7 @@ describe('clientTest', () => {
             .spyOn(alicesClient.rpcClient, 'syncStreams')
             .mockImplementation(
                 (
-                    _request: PartialMessage<SyncStreamsRequest>,
+                    _request: MessageInitShape<typeof SyncStreamsRequestSchema>,
                     _options?: CallOptions,
                 ): AsyncIterable<SyncStreamsResponse> => {
                     return makeMockSyncGenerator(generator)
@@ -232,12 +241,12 @@ describe('clientTest', () => {
             .spyOn(alicesClient.rpcClient, 'cancelSync')
             .mockImplementation(
                 (
-                    request: PartialMessage<CancelSyncRequest>,
+                    request: MessageInitShape<typeof CancelSyncRequestSchema>,
                     _options?: CallOptions,
                 ): Promise<CancelSyncResponse> => {
                     log('mocked cancelSync', request)
                     generator.setSyncCancelled()
-                    return Promise.resolve(new CancelSyncResponse({}))
+                    return Promise.resolve(create(CancelSyncResponseSchema, {}))
                 },
             )
 
@@ -260,7 +269,7 @@ describe('clientTest', () => {
             .spyOn(alicesClient.rpcClient, 'syncStreams')
             .mockImplementation(
                 (
-                    _request: PartialMessage<SyncStreamsRequest>,
+                    _request: MessageInitShape<typeof SyncStreamsRequestSchema>,
                     _options?: CallOptions,
                 ): AsyncIterable<SyncStreamsResponse> => {
                     return makeMockSyncGenerator(generator)
@@ -279,12 +288,12 @@ describe('clientTest', () => {
             .spyOn(alicesClient.rpcClient, 'cancelSync')
             .mockImplementation(
                 (
-                    request: PartialMessage<CancelSyncRequest>,
+                    request: MessageInitShape<typeof CancelSyncRequestSchema>,
                     _options?: CallOptions,
                 ): Promise<CancelSyncResponse> => {
                     log('mocked cancelSync', request)
                     generator.setSyncCancelled()
-                    return Promise.resolve(new CancelSyncResponse({}))
+                    return Promise.resolve(create(CancelSyncResponseSchema, {}))
                 },
             )
 
@@ -303,7 +312,7 @@ describe('clientTest', () => {
 
     test('clientCreatesStreamsForExistingUser', async () => {
         await expect(bobsClient.initializeUser()).resolves.not.toThrow()
-        const bobsAnotherClient = await makeTestClient({ context: bobsClient.signerContext })
+        const bobsAnotherClient = await cloneTestClient(bobsClient)
         await expect(bobsAnotherClient.initializeUser()).resolves.not.toThrow()
         expect(bobsAnotherClient.streams.size()).toEqual(4)
         expect(
@@ -334,6 +343,17 @@ describe('clientTest', () => {
         payload = make_MemberPayload_KeySolicitation({
             deviceKey: 'foo',
             sessionIds: [],
+            fallbackKey: 'baz',
+            isNewDevice: false,
+        })
+        await expect(
+            bobsClient.makeEventAndAddToStream(bobsClient.userSettingsStreamId!, payload),
+        ).rejects.toThrow('INVALID_ARGUMENT')
+
+        // solicitation with empty key should fail
+        payload = make_MemberPayload_KeySolicitation({
+            deviceKey: 'foo',
+            sessionIds: [''],
             fallbackKey: 'baz',
             isNewDevice: false,
         })
@@ -384,7 +404,7 @@ describe('clientTest', () => {
         })
         await expect(
             bobsClient.makeEventAndAddToStream(bobsClient.userSettingsStreamId!, payload),
-        ).rejects.toThrow('DUPLICATE_EVENT')
+        ).rejects.toThrow('PERMISSION_DENIED')
     })
 
     test('bobCreatesUnamedSpaceAndStream', async () => {
@@ -406,7 +426,7 @@ describe('clientTest', () => {
         await expect(bobsClient.stopSync()).resolves.not.toThrow()
     })
 
-    const bobCanReconnect = async (signer: SignerContext) => {
+    const bobCanReconnect = async (signer: SignerContextWithWallet) => {
         const bobsAnotherClient = await makeTestClient({ context: signer, deviceId: 'd2' })
         const bobsOneMoreAnotherClient = await makeTestClient({ context: signer, deviceId: 'd3' })
 
@@ -915,7 +935,7 @@ describe('clientTest', () => {
         alicesClient.startSync()
         await waitFor(() => {
             // @ts-ignore
-            expect(alicesClient.decryptionExtensions?.status).toEqual(DecryptionStatus.idle)
+            expect(alicesClient.decryptionExtensions?.status).toEqual(DecryptionStatus.done)
         })
         const alicesUserId = alicesClient.userId
 
@@ -979,7 +999,7 @@ describe('clientTest', () => {
         alicesClient.startSync()
         await waitFor(() => {
             // @ts-ignore
-            expect(alicesClient.decryptionExtensions?.status).toEqual(DecryptionStatus.idle)
+            expect(alicesClient.decryptionExtensions?.status).toEqual(DecryptionStatus.done)
         })
 
         await expect(
@@ -1020,14 +1040,10 @@ describe('clientTest', () => {
 
         // assert assumptionsP
         expect(userMetadataStream).toBeDefined()
-        expect(
-            userMetadataStream.view.snapshot?.content.case === 'userMetadataContent' &&
-                userMetadataStream.view.snapshot?.content.value.profileImage === undefined,
-        ).toBe(true)
 
         // make a space image event
         const mediaStreamId = makeUniqueMediaStreamId()
-        const image = new MediaInfo({
+        const image = create(MediaInfoSchema, {
             mimetype: 'image/png',
             filename: 'bob-1.png',
         })
@@ -1043,7 +1059,7 @@ describe('clientTest', () => {
         } satisfies PlainMessage<ChunkedMedia>
 
         const { eventId } = await bobsClient.setUserProfileImage(chunkedMediaInfo)
-        expect(await waitFor(() => userMetadataStream.view.events.has(eventId))).toBe(true)
+        await waitFor(() => expect(userMetadataStream.view.events.has(eventId)).toBe(true))
 
         const decrypted = await bobsClient.getUserProfileImage(bobsClient.userId)
         expect(decrypted).toBeDefined()
@@ -1060,17 +1076,13 @@ describe('clientTest', () => {
         const userMetadataStream = await bobsClient.waitForStream(streamId)
 
         expect(userMetadataStream).toBeDefined()
-        expect(
-            userMetadataStream.view.snapshot?.content.case === 'userMetadataContent' &&
-                userMetadataStream.view.snapshot?.content.value.profileImage === undefined,
-        ).toBe(true)
 
-        const bio = new UserBio({ bio: 'Hello, world!' })
+        const bio = { bio: 'Hello, world!' }
         const { eventId } = await bobsClient.setUserBio(bio)
-        expect(await waitFor(() => userMetadataStream.view.events.has(eventId))).toBe(true)
+        await waitFor(() => expect(userMetadataStream.view.events.has(eventId)).toBe(true))
 
         const decrypted = await bobsClient.getUserBio(bobsClient.userId)
-        expect(decrypted).toStrictEqual(bio)
+        expect(decrypted?.bio).toStrictEqual(bio.bio)
     })
 
     test('setUserBio empty', async () => {
@@ -1080,16 +1092,12 @@ describe('clientTest', () => {
         const userMetadataStream = await bobsClient.waitForStream(streamId)
 
         expect(userMetadataStream).toBeDefined()
-        expect(
-            userMetadataStream.view.snapshot?.content.case === 'userMetadataContent' &&
-                userMetadataStream.view.snapshot?.content.value.profileImage === undefined,
-        ).toBe(true)
 
-        const bio = new UserBio({ bio: '' })
+        const bio = { bio: '' }
         const { eventId } = await bobsClient.setUserBio(bio)
-        expect(await waitFor(() => userMetadataStream.view.events.has(eventId))).toBe(true)
+        await waitFor(() => expect(userMetadataStream.view.events.has(eventId)).toBe(true))
 
         const decrypted = await bobsClient.getUserBio(bobsClient.userId)
-        expect(decrypted).toStrictEqual(bio)
+        expect(decrypted?.bio).toStrictEqual(bio.bio)
     })
 })

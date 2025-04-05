@@ -3,11 +3,14 @@ package cmd
 import (
 	"fmt"
 	"os"
-
-	"github.com/river-build/river/core/config"
-	"github.com/river-build/river/core/config/builder"
+	"time"
 
 	"github.com/spf13/cobra"
+
+	"github.com/linkdata/deadlock"
+	"github.com/towns-protocol/towns/core/config"
+	"github.com/towns-protocol/towns/core/config/builder"
+	"github.com/towns-protocol/towns/core/node/logging"
 )
 
 var configFiles []string
@@ -87,10 +90,23 @@ func initConfigAndLog() {
 		fmt.Println("Failed to initialize config, error=", err)
 		os.Exit(1)
 	}
-	InitLogFromConfig(&cmdConfig.Log)
+
+	logging.Init(
+		cmdConfig.Log.Level,
+		cmdConfig.Log.Console,
+		cmdConfig.Log.ConsoleLevel,
+		cmdConfig.Log.File,
+		cmdConfig.Log.FileLevel,
+	)
 }
 
 func init() {
+	deadlock.Opts.WriteLocked(func() {
+		deadlock.Opts.DeadlockTimeout = 5 * time.Minute
+		deadlock.Opts.MaxMapSize = 1024 * 256
+		deadlock.Opts.PrintAllCurrentGoroutines = true
+	})
+
 	cobra.OnInitialize(initConfigAndLog)
 
 	rootCmd.PersistentFlags().
@@ -101,7 +117,7 @@ func init() {
 		"log_level",
 		"l",
 		"info",
-		"Log level (options: trace, debug, info, warn, error, panic, fatal)",
+		"Log level (options: trace, debug, info, warn, error, panic, fatal) followed with optional custom per component (options: default, miniblock, rpc) log level e.g. 'info,miniblock=debug,rpc=error')",
 	)
 	rootCmd.PersistentFlags().String(
 		"log_file",

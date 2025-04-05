@@ -6,38 +6,26 @@ import (
 	"fmt"
 	"slices"
 	"strings"
-	"sync"
 	"time"
+
+	"github.com/towns-protocol/towns/core/node/registries"
 
 	mapset "github.com/deckarep/golang-set/v2"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/linkdata/deadlock"
 
-	"github.com/river-build/river/core/contracts/river"
-	. "github.com/river-build/river/core/node/base"
-	"github.com/river-build/river/core/node/crypto"
-	"github.com/river-build/river/core/node/logging"
-	"github.com/river-build/river/core/node/nodes"
-	. "github.com/river-build/river/core/node/protocol"
-	. "github.com/river-build/river/core/node/shared"
-	"github.com/river-build/river/core/node/storage"
+	"github.com/towns-protocol/towns/core/contracts/river"
+	. "github.com/towns-protocol/towns/core/node/base"
+	"github.com/towns-protocol/towns/core/node/crypto"
+	"github.com/towns-protocol/towns/core/node/logging"
+	"github.com/towns-protocol/towns/core/node/nodes"
+	. "github.com/towns-protocol/towns/core/node/protocol"
+	. "github.com/towns-protocol/towns/core/node/shared"
+	"github.com/towns-protocol/towns/core/node/storage"
 )
 
-type AddableStream interface {
-	AddEvent(ctx context.Context, event *ParsedEvent) error
-}
-
-type MiniblockStream interface {
-	GetMiniblocks(ctx context.Context, fromInclusive int64, ToExclusive int64) ([]*Miniblock, bool, error)
-}
-
-type Stream interface {
-	AddableStream
-	MiniblockStream
-
-	GetView(ctx context.Context) (StreamView, error)
-
-	// GetViewIfLocal returns the stream view if the stream is local, otherwise returns nil, nil.
-	GetViewIfLocal(ctx context.Context) (StreamView, error)
+type ViewStream interface {
+	GetView(ctx context.Context) (*StreamView, error)
 }
 
 type SyncResultReceiver interface {
@@ -49,35 +37,7 @@ type SyncResultReceiver interface {
 	OnStreamSyncDown(StreamId)
 }
 
-// TODO: refactor interfaces.
-type SyncStream interface {
-	Stream
-	nodes.StreamNodes
-
-	Sub(ctx context.Context, cookie *SyncCookie, receiver SyncResultReceiver) error
-	Unsub(receiver SyncResultReceiver)
-
-	// ApplyMiniblock applies given miniblock, updating the cached stream view and storage.
-	ApplyMiniblock(ctx context.Context, miniblock *MiniblockInfo) error
-
-	// SaveMiniblockCandidate saves the given miniblock as a candidate.
-	// Once blockchain event making candidate canonical is observed,
-	// candidate is read and applied.
-	SaveMiniblockCandidate(
-		ctx context.Context,
-		mb *Miniblock,
-	) error
-
-	IsLocal() bool
-}
-
-func SyncStreamsResponseFromStreamAndCookie(result *StreamAndCookie) *SyncStreamsResponse {
-	return &SyncStreamsResponse{
-		Stream: result,
-	}
-}
-
-type streamImpl struct {
+type Stream struct {
 	params *StreamCacheParams
 
 	streamId StreamId
@@ -87,7 +47,7 @@ type streamImpl struct {
 	// I.e. if there no calls to AddEvent, readers share the same view object
 	// out of lock, which is immutable, so if there is a need to modify, lock is taken, copy
 	// of view is created, and copy is modified and stored.
-	mu sync.RWMutex
+	mu deadlock.RWMutex
 
 	lastAppliedBlockNum crypto.BlockNumber
 
@@ -100,12 +60,12 @@ type streamImpl struct {
 	local *localStreamState
 }
 
-var _ SyncStream = (*streamImpl)(nil)
+var _ nodes.StreamNodes = (*Stream)(nil)
 
 type localStreamState struct {
 	// useGetterAndSetterToGetView contains pointer to current immutable view, if loaded, nil otherwise.
 	// Use view() and setView() to access it.
-	useGetterAndSetterToGetView *streamViewImpl
+	useGetterAndSetterToGetView *StreamView
 
 	// lastScrubbedTime keeps track of when the stream was last scrubbed. Streams that
 	// are never scrubbed will not have this value modified.
@@ -124,19 +84,24 @@ type localStreamState struct {
 }
 
 // IsLocal is thread-safe.
-func (s *streamImpl) IsLocal() bool {
+func (s *Stream) IsLocal() bool {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	return s.local != nil
 }
 
+// StreamId is thread-safe: streamId is immutable.
+func (s *Stream) StreamId() StreamId {
+	return s.streamId
+}
+
 // view should be called with at least a read lock.
-func (s *streamImpl) view() *streamViewImpl {
+func (s *Stream) view() *StreamView {
 	return s.local.useGetterAndSetterToGetView
 }
 
 // This should be accessed under lock.
-func (s *streamImpl) setView(view *streamViewImpl) {
+func (s *Stream) setView(view *StreamView) {
 	s.local.useGetterAndSetterToGetView = view
 	if view != nil && len(s.local.pendingCandidates) > 0 {
 		lastMbNum := view.LastBlock().Ref.Num
@@ -151,7 +116,7 @@ func (s *streamImpl) setView(view *streamViewImpl) {
 }
 
 // loadInternal should be called with a lock held.
-func (s *streamImpl) loadInternal(ctx context.Context) error {
+func (s *Stream) loadInternal(ctx context.Context) error {
 	if s.view() != nil {
 		return nil
 	}
@@ -170,10 +135,11 @@ func (s *streamImpl) loadInternal(ctx context.Context) error {
 		return err
 	}
 
-	view, err := MakeStreamView(ctx, streamData)
+	view, err := MakeStreamView(streamData)
 	if err != nil {
 		logging.FromCtx(ctx).
-			Errorw("Stream.loadInternal: Failed to parse stream data loaded from storage", "error", err, "streamId", s.streamId)
+			Errorw("Stream.loadInternal: Failed to parse stream data loaded from storage",
+				"error", err, "streamId", s.streamId)
 		return err
 	}
 
@@ -183,7 +149,7 @@ func (s *streamImpl) loadInternal(ctx context.Context) error {
 
 // ApplyMiniblock applies given miniblock, updating the cached stream view and storage.
 // ApplyMiniblock is thread-safe.
-func (s *streamImpl) ApplyMiniblock(ctx context.Context, miniblock *MiniblockInfo) error {
+func (s *Stream) ApplyMiniblock(ctx context.Context, miniblock *MiniblockInfo) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -196,7 +162,7 @@ func (s *streamImpl) ApplyMiniblock(ctx context.Context, miniblock *MiniblockInf
 
 // importMiniblocks imports the given miniblocks.
 // importMiniblocks is thread-safe.
-func (s *streamImpl) importMiniblocks(
+func (s *Stream) importMiniblocks(
 	ctx context.Context,
 	miniblocks []*MiniblockInfo,
 ) error {
@@ -210,7 +176,7 @@ func (s *streamImpl) importMiniblocks(
 }
 
 // importMiniblocksLocked should be called with a lock held.
-func (s *streamImpl) importMiniblocksLocked(
+func (s *Stream) importMiniblocksLocked(
 	ctx context.Context,
 	miniblocks []*MiniblockInfo,
 ) error {
@@ -220,7 +186,7 @@ func (s *streamImpl) importMiniblocksLocked(
 		if miniblock.Ref.Num != firstMbNum+int64(i) {
 			return RiverError(Err_INTERNAL, "miniblock numbers are not sequential").Func("importMiniblocks")
 		}
-		mb, err := miniblock.asStorageMb()
+		mb, err := miniblock.AsStorageMb()
 		if err != nil {
 			return err
 		}
@@ -293,13 +259,13 @@ func (s *streamImpl) importMiniblocksLocked(
 }
 
 // applyMiniblockImplLocked should be called with a lock held.
-func (s *streamImpl) applyMiniblockImplLocked(
+func (s *Stream) applyMiniblockImplLocked(
 	ctx context.Context,
-	miniblock *MiniblockInfo,
-	miniblockBytes []byte,
+	info *MiniblockInfo,
+	miniblock *storage.MiniblockDescriptor,
 ) error {
 	// Check if the miniblock is already applied.
-	if miniblock.Ref.Num <= s.view().LastBlock().Ref.Num {
+	if info.Ref.Num <= s.view().LastBlock().Ref.Num {
 		return nil
 	}
 
@@ -308,7 +274,7 @@ func (s *streamImpl) applyMiniblockImplLocked(
 
 	// Lets see if this miniblock can be applied.
 	prevSV := s.view()
-	newSV, newEvents, err := prevSV.copyAndApplyBlock(miniblock, s.params.ChainConfig.Get())
+	newSV, newEvents, err := prevSV.copyAndApplyBlock(info, s.params.ChainConfig.Get())
 	if err != nil {
 		return err
 	}
@@ -318,9 +284,16 @@ func (s *streamImpl) applyMiniblockImplLocked(
 		return err
 	}
 
-	if miniblockBytes == nil {
-		miniblockBytes, err = miniblock.ToBytes()
-		if err != nil {
+	var storageMb *storage.WriteMiniblockData
+	if miniblock != nil {
+		storageMb = &storage.WriteMiniblockData{
+			Number:   info.Ref.Num,
+			Hash:     info.Ref.Hash,
+			Snapshot: info.GetSnapshot(),
+			Data:     miniblock.Data,
+		}
+	} else {
+		if storageMb, err = info.AsStorageMb(); err != nil {
 			return err
 		}
 	}
@@ -328,7 +301,7 @@ func (s *streamImpl) applyMiniblockImplLocked(
 	err = s.params.Storage.WriteMiniblocks(
 		ctx,
 		s.streamId,
-		[]*storage.WriteMiniblockData{miniblock.asStorageMbWithData(miniblockBytes)},
+		[]*storage.WriteMiniblockData{storageMb},
 		newSV.minipool.generation,
 		newMinipool,
 		prevSV.minipool.generation,
@@ -341,20 +314,20 @@ func (s *streamImpl) applyMiniblockImplLocked(
 	s.setView(newSV)
 	newSyncCookie := s.view().SyncCookie(s.params.Wallet.Address)
 
-	newEvents = append(newEvents, miniblock.headerEvent.Envelope)
+	newEvents = append(newEvents, info.headerEvent.Envelope)
 	s.notifySubscribersLocked(newEvents, newSyncCookie)
 	return nil
 }
 
 // promoteCandidate is thread-safe.
-func (s *streamImpl) promoteCandidate(ctx context.Context, mb *MiniblockRef) error {
+func (s *Stream) promoteCandidate(ctx context.Context, mb *MiniblockRef) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	return s.promoteCandidateLocked(ctx, mb)
 }
 
 // promoteCandidateLocked shouldbe called with a lock held.
-func (s *streamImpl) promoteCandidateLocked(ctx context.Context, mb *MiniblockRef) error {
+func (s *Stream) promoteCandidateLocked(ctx context.Context, mb *MiniblockRef) error {
 	if s.local == nil {
 		return nil
 	}
@@ -388,7 +361,7 @@ func (s *streamImpl) promoteCandidateLocked(ctx context.Context, mb *MiniblockRe
 		return s.schedulePromotionLocked(mb)
 	}
 
-	miniblockBytes, err := s.params.Storage.ReadMiniblockCandidate(ctx, s.streamId, mb.Hash, mb.Num)
+	miniblockCandidate, err := s.params.Storage.ReadMiniblockCandidate(ctx, s.streamId, mb.Hash, mb.Num)
 	if err != nil {
 		if IsRiverErrorCode(err, Err_NOT_FOUND) {
 			return s.schedulePromotionLocked(mb)
@@ -396,16 +369,17 @@ func (s *streamImpl) promoteCandidateLocked(ctx context.Context, mb *MiniblockRe
 		return err
 	}
 
-	miniblock, err := NewMiniblockInfoFromBytes(miniblockBytes, mb.Num)
+	miniblock, err := NewMiniblockInfoFromDescriptor(miniblockCandidate)
 	if err != nil {
 		return err
 	}
 
-	return s.applyMiniblockImplLocked(ctx, miniblock, miniblockBytes)
+	return s.applyMiniblockImplLocked(ctx, miniblock, miniblockCandidate)
 }
 
 // schedulePromotionLocked should be called with a lock held.
-func (s *streamImpl) schedulePromotionLocked(mb *MiniblockRef) error {
+// TODO: REPLICATION: FIX: there should be periodic check to trigger reconciliation if scheduled promotion is not acted upon.
+func (s *Stream) schedulePromotionLocked(mb *MiniblockRef) error {
 	if len(s.local.pendingCandidates) == 0 {
 		if mb.Num != s.view().LastBlock().Ref.Num+1 {
 			return RiverError(Err_INTERNAL, "schedulePromotionNoLock: next promotion is not for the next block")
@@ -422,7 +396,7 @@ func (s *streamImpl) schedulePromotionLocked(mb *MiniblockRef) error {
 }
 
 // initFromGenesis is not thread-safe. It should be called with a lock held.
-func (s *streamImpl) initFromGenesis(
+func (s *Stream) initFromGenesis(
 	ctx context.Context,
 	genesisInfo *MiniblockInfo,
 	genesisBytes []byte,
@@ -443,7 +417,11 @@ func (s *streamImpl) initFromGenesis(
 			Func("initFromGenesis")
 	}
 
-	if err := s.params.Storage.CreateStreamStorage(ctx, s.streamId, genesisBytes); err != nil {
+	if err = s.params.Storage.CreateStreamStorage(
+		ctx,
+		s.streamId,
+		&storage.WriteMiniblockData{Data: genesisBytes},
+	); err != nil {
 		// TODO: this error is not handle correctly here: if stream is in storage, caller of this initFromGenesis
 		// should read it from storage.
 		if AsRiverError(err).Code != Err_ALREADY_EXISTS {
@@ -454,10 +432,12 @@ func (s *streamImpl) initFromGenesis(
 	s.lastAppliedBlockNum = blockNum
 
 	view, err := MakeStreamView(
-		ctx,
 		&storage.ReadStreamFromLastSnapshotResult{
-			StartMiniblockNumber: 0,
-			Miniblocks:           [][]byte{genesisBytes},
+			Miniblocks: []*storage.MiniblockDescriptor{{
+				Data:   genesisBytes,
+				Number: genesisInfo.Ref.Num,
+				Hash:   genesisInfo.Ref.Hash,
+			}},
 		},
 	)
 	if err != nil {
@@ -469,14 +449,14 @@ func (s *streamImpl) initFromGenesis(
 }
 
 // initFromBlockchain is not thread-safe. It should be called with a lock held.
-func (s *streamImpl) initFromBlockchain(ctx context.Context) error {
+func (s *Stream) initFromBlockchain(ctx context.Context) error {
 	// TODO: move this call out of the lock
-	record, _, mb, blockNum, err := s.params.Registry.GetStreamWithGenesis(ctx, s.streamId)
+	record, hash, mb, blockNum, err := s.params.Registry.GetStreamWithGenesis(ctx, s.streamId)
 	if err != nil {
 		return err
 	}
 
-	s.nodesLocked.Reset(record.Nodes, s.params.Wallet.Address)
+	s.nodesLocked.ResetFromStreamResult(record, s.params.Wallet.Address)
 	if !s.nodesLocked.IsLocal() {
 		return RiverError(
 			Err_INTERNAL,
@@ -498,8 +478,11 @@ func (s *streamImpl) initFromBlockchain(ctx context.Context) error {
 		)
 	}
 
-	err = s.params.Storage.CreateStreamStorage(ctx, s.streamId, mb)
-	if err != nil {
+	if err = s.params.Storage.CreateStreamStorage(
+		ctx,
+		s.streamId,
+		&storage.WriteMiniblockData{Data: mb},
+	); err != nil {
 		return err
 	}
 
@@ -507,10 +490,12 @@ func (s *streamImpl) initFromBlockchain(ctx context.Context) error {
 
 	// Successfully put data into storage, init stream view.
 	view, err := MakeStreamView(
-		ctx,
 		&storage.ReadStreamFromLastSnapshotResult{
-			StartMiniblockNumber: 0,
-			Miniblocks:           [][]byte{mb},
+			Miniblocks: []*storage.MiniblockDescriptor{{
+				Data:   mb,
+				Number: blockNum.AsBigInt().Int64(),
+				Hash:   hash,
+			}},
 		},
 	)
 	if err != nil {
@@ -520,20 +505,11 @@ func (s *streamImpl) initFromBlockchain(ctx context.Context) error {
 	return nil
 }
 
-// getViewIfLocal return stream view if stream is local, nil if stream is not local,
+// GetViewIfLocal returns stream view if stream is local, nil if stream is not local,
 // and error if stream is local and failed to load.
-// getViewIfLocal is thread-safe.
-func (s *streamImpl) getViewIfLocal(ctx context.Context) (*streamViewImpl, error) {
-	s.mu.RLock()
-	isLocal := s.local != nil
-	var view *streamViewImpl
-	if isLocal {
-		view = s.view()
-		if view != nil {
-			s.maybeScrubLocked()
-		}
-	}
-	s.mu.RUnlock()
+// GetViewIfLocal is thread-safe.
+func (s *Stream) GetViewIfLocal(ctx context.Context) (*StreamView, error) {
+	view, isLocal := s.tryGetView()
 	if !isLocal {
 		return nil, nil
 	}
@@ -551,23 +527,10 @@ func (s *streamImpl) getViewIfLocal(ctx context.Context) (*streamViewImpl, error
 	return s.view(), nil
 }
 
-// GetViewIfLocal is thread-safe.
-func (s *streamImpl) GetViewIfLocal(ctx context.Context) (StreamView, error) {
-	view, err := s.getViewIfLocal(ctx)
-	// Return nil interface, if implementation is nil.
-	if err != nil {
-		return nil, err
-	}
-	if view == nil {
-		return nil, nil
-	}
-	return view, nil
-}
-
-// getView returns stream view if stream is local, and error if stream is not local or failed to load.
-// getView is thread-safe.
-func (s *streamImpl) getView(ctx context.Context) (*streamViewImpl, error) {
-	view, err := s.getViewIfLocal(ctx)
+// GetView returns stream view if stream is local, and error if stream is not local or failed to load.
+// GetView is thread-safe.
+func (s *Stream) GetView(ctx context.Context) (*StreamView, error) {
+	view, err := s.GetViewIfLocal(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -577,61 +540,56 @@ func (s *streamImpl) getView(ctx context.Context) (*streamViewImpl, error) {
 	return view, nil
 }
 
-// GetView is thread-safe.
-func (s *streamImpl) GetView(ctx context.Context) (StreamView, error) {
-	view, err := s.getView(ctx)
-	// Return nil interface, if implementation is nil.
-	if err != nil {
-		return nil, err
-	}
-	return view, nil
-}
-
 // tryGetView returns StreamView if it's already loaded, or nil if it's not.
+// The second return value is true if the view is local.
 // tryGetView is thread-safe.
-func (s *streamImpl) tryGetView() StreamView {
+func (s *Stream) tryGetView() (*StreamView, bool) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
-	// Return nil interface, if implementation is nil. This is go for you.
-	if s.local != nil && s.view() != nil {
+	isLocal := s.nodesLocked.IsLocalInQuorum() && s.local != nil
+	if isLocal && s.view() != nil {
 		s.maybeScrubLocked()
-		return s.view()
+		return s.view(), true
 	} else {
-		return nil
+		return nil, isLocal
 	}
 }
 
 // maybeScrubLocked schedules a stream scrub if the stream is eligible based on it's
 // last scrub time.
 // maybeScrubLocked should be taken with a lock.
-func (s *streamImpl) maybeScrubLocked() {
+func (s *Stream) maybeScrubLocked() {
 	if !ValidChannelStreamId(&s.streamId) {
 		return
 	}
 
 	if s.params.Config.Scrubbing.ScrubEligibleDuration > 0 &&
 		time.Since(s.local.lastScrubbedTime) > s.params.Config.Scrubbing.ScrubEligibleDuration {
-		s.params.Scrubber.Scrub(s.streamId)
-		// Needs write lock to reset last scrubbed time.
-		go s.resetLastScrubbed()
+		go s.maybeScheduleScrub()
 	}
 }
 
-// resetLastScrubbed reset the last scrubbed time on the stream, which is used for
-// determining when the stream is eligible for another scrub.
-// resetLastScrubbed is thread-safe.
-func (s *streamImpl) resetLastScrubbed() {
+func (s *Stream) shouldScrub() bool {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	if s.local != nil {
+	if s.params.Config.Scrubbing.ScrubEligibleDuration > 0 &&
+		time.Since(s.local.lastScrubbedTime) > s.params.Config.Scrubbing.ScrubEligibleDuration {
 		s.local.lastScrubbedTime = time.Now()
+		return true
+	}
+	return false
+}
+
+func (s *Stream) maybeScheduleScrub() {
+	if s.shouldScrub() {
+		s.params.Scrubber.Scrub(s.streamId)
 	}
 }
 
 // tryCleanup unloads its internal view when s haven't got activity within the given expiration period.
 // It returns true when the view is unloaded
 // tryCleanup is thread-safe.
-func (s *streamImpl) tryCleanup(expiration time.Duration) bool {
+func (s *Stream) tryCleanup(expiration time.Duration) bool {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -666,27 +624,22 @@ func (s *streamImpl) tryCleanup(expiration time.Duration) bool {
 // miniblocks: with indexes from fromIndex inclusive, to toIndex exclusive
 // terminus: true if fromIndex is 0, or if there are no more blocks because they've been garbage collected
 // GetMiniblocks is thread-safe.
-func (s *streamImpl) GetMiniblocks(
+func (s *Stream) GetMiniblocks(
 	ctx context.Context,
 	fromInclusive int64,
 	toExclusive int64,
-) ([]*Miniblock, bool, error) {
+) ([]*MiniblockInfo, bool, error) {
 	blocks, err := s.params.Storage.ReadMiniblocks(ctx, s.streamId, fromInclusive, toExclusive)
 	if err != nil {
 		return nil, false, err
 	}
 
-	miniblocks := make([]*Miniblock, len(blocks))
-	startMiniblockNumber := int64(-1)
-	for i, binMiniblock := range blocks {
-		miniblock, err := NewMiniblockInfoFromBytes(binMiniblock, startMiniblockNumber+int64(i))
+	miniblocks := make([]*MiniblockInfo, len(blocks))
+	for i, block := range blocks {
+		miniblocks[i], err = NewMiniblockInfoFromDescriptor(block)
 		if err != nil {
 			return nil, false, err
 		}
-		if i == 0 {
-			startMiniblockNumber = miniblock.Header().MiniblockNum
-		}
-		miniblocks[i] = miniblock.Proto
 	}
 
 	terminus := fromInclusive == 0
@@ -695,11 +648,18 @@ func (s *streamImpl) GetMiniblocks(
 
 // AddEvent adds an event to the stream.
 // AddEvent is thread-safe.
-func (s *streamImpl) AddEvent(ctx context.Context, event *ParsedEvent) error {
+func (s *Stream) AddEvent(ctx context.Context, event *ParsedEvent) error {
+	_, err := s.AddEvent2(ctx, event)
+	return err
+}
+
+// AddEvent2 adds an event to the stream and returns the new stream view.
+// AddEvent2 is thread-safe.
+func (s *Stream) AddEvent2(ctx context.Context, event *ParsedEvent) (*StreamView, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	if err := s.loadInternal(ctx); err != nil {
-		return err
+		return nil, err
 	}
 
 	return s.addEventLocked(ctx, event)
@@ -707,7 +667,7 @@ func (s *streamImpl) AddEvent(ctx context.Context, event *ParsedEvent) error {
 
 // notifySubscribersLocked updates all callers with unseen events and the new sync cookie.
 // Callers must have a lock held.
-func (s *streamImpl) notifySubscribersLocked(
+func (s *Stream) notifySubscribersLocked(
 	envelopes []*Envelope,
 	newSyncCookie *SyncCookie,
 ) {
@@ -726,23 +686,32 @@ func (s *streamImpl) notifySubscribersLocked(
 
 // addEventLocked is not thread-safe.
 // Callers must have a lock held.
-func (s *streamImpl) addEventLocked(ctx context.Context, event *ParsedEvent) error {
+func (s *Stream) addEventLocked(ctx context.Context, event *ParsedEvent) (*StreamView, error) {
 	envelopeBytes, err := event.GetEnvelopeBytes()
 	if err != nil {
-		return err
+		return nil, err
+	}
+
+	oldSV := s.view()
+	err = oldSV.ValidateNextEvent(ctx, s.params.ChainConfig.Get(), event, time.Time{})
+	if err != nil {
+		if IsRiverErrorCode(err, Err_DUPLICATE_EVENT) {
+			return oldSV, nil
+		}
+		return nil, AsRiverError(err).Func("copyAndAddEvent")
 	}
 
 	// Check if event can be added before writing to storage.
-	newSV, err := s.view().copyAndAddEvent(event)
+	newSV, err := oldSV.copyAndAddEvent(event)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	err = s.params.Storage.WriteEvent(
 		ctx,
 		s.streamId,
-		s.view().minipool.generation,
-		s.view().minipool.nextSlotNumber(),
+		oldSV.minipool.generation,
+		oldSV.minipool.nextSlotNumber(),
 		envelopeBytes,
 	)
 	// TODO: for some classes of errors, it's not clear if event was added or not
@@ -761,7 +730,7 @@ func (s *streamImpl) addEventLocked(ctx context.Context, event *ParsedEvent) err
 			eventsStr = sb.String()
 		}
 
-		return AsRiverError(err, Err_DB_OPERATION_FAILURE).
+		return nil, AsRiverError(err, Err_DB_OPERATION_FAILURE).
 			Tag("inMemoryBlocks", len(s.view().blocks)).
 			Tag("inMemoryEvents", eventsStr)
 	}
@@ -771,13 +740,23 @@ func (s *streamImpl) addEventLocked(ctx context.Context, event *ParsedEvent) err
 
 	s.notifySubscribersLocked([]*Envelope{event.Envelope}, newSyncCookie)
 
-	return nil
+	return newSV, nil
 }
 
-// Sub subscribes the reciever to the stream, sending all content between the cookie and the
-// current stream state. This method is thread-safe.
-func (s *streamImpl) Sub(ctx context.Context, cookie *SyncCookie, receiver SyncResultReceiver) error {
-	log := logging.FromCtx(ctx)
+// Sub subscribes to the stream, sending all content between the cookie and the current stream state.
+// This method is thread-safe.
+// Only local streams are allowed to subscribe.
+func (s *Stream) Sub(ctx context.Context, cookie *SyncCookie, receiver SyncResultReceiver) error {
+	if !s.IsLocal() {
+		return RiverError(
+			Err_NOT_FOUND,
+			"stream not found",
+			"cookie.StreamId",
+			cookie.StreamId,
+			"s.streamId",
+			s.streamId,
+		)
+	}
 	if !bytes.Equal(cookie.NodeAddress, s.params.Wallet.Address.Bytes()) {
 		return RiverError(
 			Err_BAD_SYNC_COOKIE,
@@ -798,91 +777,35 @@ func (s *streamImpl) Sub(ctx context.Context, cookie *SyncCookie, receiver SyncR
 			s.streamId,
 		)
 	}
-	slot := cookie.MinipoolSlot
-	if slot < 0 {
-		return RiverError(Err_BAD_SYNC_COOKIE, "bad slot", "cookie.MinipoolSlot", slot).Func("Stream.Sub")
-	}
 
 	s.mu.Lock()
 	defer s.mu.Unlock()
+
 	if err := s.loadInternal(ctx); err != nil {
 		return err
 	}
 
 	s.lastAccessedTime = time.Now()
 
-	if cookie.MinipoolGen == s.view().minipool.generation {
-		if slot > int64(s.view().minipool.events.Len()) {
-			return RiverError(Err_BAD_SYNC_COOKIE, "Stream.Sub: bad slot")
-		}
-
-		if s.local.receivers == nil {
-			s.local.receivers = mapset.NewSet[SyncResultReceiver]()
-		}
-		s.local.receivers.Add(receiver)
-
-		envelopes := make([]*Envelope, 0, s.view().minipool.events.Len()-int(slot))
-		if slot < int64(s.view().minipool.events.Len()) {
-			for _, e := range s.view().minipool.events.Values[slot:] {
-				envelopes = append(envelopes, e.Envelope)
-			}
-		}
-		// always send response, even if there are no events so that the client knows it's upToDate
-		receiver.OnUpdate(
-			&StreamAndCookie{
-				Events:         envelopes,
-				NextSyncCookie: s.view().SyncCookie(s.params.Wallet.Address),
-			},
-		)
-		return nil
-	} else {
-		if s.local.receivers == nil {
-			s.local.receivers = mapset.NewSet[SyncResultReceiver]()
-		}
-		s.local.receivers.Add(receiver)
-
-		miniblockIndex, err := s.view().indexOfMiniblockWithNum(cookie.MinipoolGen)
-		if err != nil {
-			// The user's sync cookie is out of date. Send a sync reset and return an up-to-date StreamAndCookie.
-			log.Warnw("Stream.Sub: out of date cookie.MiniblockNum. Sending sync reset.",
-				"stream", s.streamId, "error", err.Error())
-
-			receiver.OnUpdate(
-				&StreamAndCookie{
-					Events:         s.view().MinipoolEnvelopes(),
-					NextSyncCookie: s.view().SyncCookie(s.params.Wallet.Address),
-					Miniblocks:     s.view().MiniblocksFromLastSnapshot(),
-					SyncReset:      true,
-				},
-			)
-			return nil
-		}
-
-		// append events from blocks
-		envelopes := make([]*Envelope, 0, 16)
-		err = s.view().forEachEvent(miniblockIndex, func(e *ParsedEvent, minibockNum int64, eventNum int64) (bool, error) {
-			envelopes = append(envelopes, e.Envelope)
-			return true, nil
-		})
-		if err != nil {
-			panic("Should never happen: Stream.Sub: forEachEvent failed: " + err.Error())
-		}
-
-		// always send response, even if there are no events so that the client knows it's upToDate
-		receiver.OnUpdate(
-			&StreamAndCookie{
-				Events:         envelopes,
-				NextSyncCookie: s.view().SyncCookie(s.params.Wallet.Address),
-			},
-		)
-		return nil
+	resp, err := s.view().GetStreamSince(ctx, s.params.Wallet, cookie)
+	if err != nil {
+		return err
 	}
+
+	if s.local.receivers == nil {
+		s.local.receivers = mapset.NewSet[SyncResultReceiver]()
+	}
+	s.local.receivers.Add(receiver)
+
+	receiver.OnUpdate(resp)
+
+	return nil
 }
 
 // Unsub unsubscribes the receiver from sync. It's ok to unsub non-existing receiver.
 // Such situation arises during ForceFlush.
 // Unsub is thread-safe.
-func (s *streamImpl) Unsub(receiver SyncResultReceiver) {
+func (s *Stream) Unsub(receiver SyncResultReceiver) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	if s.local.receivers != nil {
@@ -894,7 +817,7 @@ func (s *streamImpl) Unsub(receiver SyncResultReceiver) {
 // All subbed receivers will receive empty response and must
 // terminate corresponding sync loop.
 // ForceFlush is thread-safe.
-func (s *streamImpl) ForceFlush(ctx context.Context) {
+func (s *Stream) ForceFlush(ctx context.Context) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -914,7 +837,7 @@ func (s *streamImpl) ForceFlush(ctx context.Context) {
 
 // canCreateMiniblock determines if a stream is eligible to create a miniblock.
 // canCreateMiniblock is thread-safe.
-func (s *streamImpl) canCreateMiniblock() bool {
+func (s *Stream) canCreateMiniblock() bool {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
@@ -934,7 +857,7 @@ type streamImplStatus struct {
 
 // getStatus returns a snapshot of useful statistics describing the stream's in-memory state.
 // getStatus is thread-safe.
-func (s *streamImpl) getStatus() *streamImplStatus {
+func (s *Stream) getStatus() *streamImplStatus {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
@@ -955,16 +878,8 @@ func (s *streamImpl) getStatus() *streamImplStatus {
 // the first block in the list of pending candidates, it will be applied. This method is thread-safe.
 // Note: saving the candidate itself, without applying it, does not modify the stream's in-memory
 // cached state at all.
-func (s *streamImpl) SaveMiniblockCandidate(ctx context.Context, mb *Miniblock) error {
-	mbInfo, err := NewMiniblockInfoFromProto(
-		mb,
-		NewParsedMiniblockInfoOpts(),
-	)
-	if err != nil {
-		return err
-	}
-
-	applied, err := s.tryApplyCandidate(ctx, mbInfo)
+func (s *Stream) SaveMiniblockCandidate(ctx context.Context, candidate *MiniblockInfo) error {
+	applied, err := s.tryApplyCandidate(ctx, candidate)
 	if err != nil {
 		return err
 	}
@@ -972,18 +887,12 @@ func (s *streamImpl) SaveMiniblockCandidate(ctx context.Context, mb *Miniblock) 
 		return nil
 	}
 
-	serialized, err := mbInfo.ToBytes()
+	storageMb, err := candidate.AsStorageMb()
 	if err != nil {
 		return err
 	}
 
-	return s.params.Storage.WriteMiniblockCandidate(
-		ctx,
-		s.streamId,
-		mbInfo.Ref.Hash,
-		mbInfo.Ref.Num,
-		serialized,
-	)
+	return s.params.Storage.WriteMiniblockCandidate(ctx, s.streamId, storageMb)
 }
 
 // tryApplyCandidate tries to apply the miniblock candidate to the stream. It will apply iff
@@ -991,7 +900,7 @@ func (s *streamImpl) SaveMiniblockCandidate(ctx context.Context, mb *Miniblock) 
 // list of pending candidates. It will also return a true result if this block matches the
 // last block applied to the stream.
 // tryApplyCandidate is thread-safe.
-func (s *streamImpl) tryApplyCandidate(ctx context.Context, mb *MiniblockInfo) (bool, error) {
+func (s *Stream) tryApplyCandidate(ctx context.Context, mb *MiniblockInfo) (bool, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -1044,13 +953,12 @@ func (s *streamImpl) tryApplyCandidate(ctx context.Context, mb *MiniblockInfo) (
 
 // tryReadAndApplyCandidateLocked searches for the candidate in storage and applies it if it exists.
 // tryReadAndApplyCandidateLocked is not thread-safe.
-func (s *streamImpl) tryReadAndApplyCandidateLocked(ctx context.Context, mbRef *MiniblockRef) bool {
-	miniblockBytes, err := s.params.Storage.ReadMiniblockCandidate(ctx, s.streamId, mbRef.Hash, mbRef.Num)
+func (s *Stream) tryReadAndApplyCandidateLocked(ctx context.Context, mbRef *MiniblockRef) bool {
+	miniblockCandidate, err := s.params.Storage.ReadMiniblockCandidate(ctx, s.streamId, mbRef.Hash, mbRef.Num)
 	if err == nil {
-		miniblock, err := NewMiniblockInfoFromBytes(miniblockBytes, mbRef.Num)
+		miniblock, err := NewMiniblockInfoFromDescriptor(miniblockCandidate)
 		if err == nil {
-			err = s.importMiniblocksLocked(ctx, []*MiniblockInfo{miniblock})
-			if err == nil {
+			if err = s.importMiniblocksLocked(ctx, []*MiniblockInfo{miniblock}); err == nil {
 				return true
 			}
 		}
@@ -1066,7 +974,7 @@ func (s *streamImpl) tryReadAndApplyCandidateLocked(ctx context.Context, mbRef *
 // getLastMiniblockNumSkipLoad returns the last miniblock number for the given stream from the view if loaded,
 // or from storage otherwise.
 // getLastMiniblockNumSkipLoad is thread-safe.
-func (s *streamImpl) getLastMiniblockNumSkipLoad(ctx context.Context) (int64, error) {
+func (s *Stream) getLastMiniblockNumSkipLoad(ctx context.Context) (int64, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
@@ -1080,9 +988,9 @@ func (s *streamImpl) getLastMiniblockNumSkipLoad(ctx context.Context) (int64, er
 
 // applyStreamEvents applies the list of stream events to the stream.
 // applyStreamEvents is thread-safe.
-func (s *streamImpl) applyStreamEvents(
+func (s *Stream) applyStreamEvents(
 	ctx context.Context,
-	events []river.EventWithStreamId,
+	events []river.StreamUpdatedEvent,
 	blockNum crypto.BlockNumber,
 ) {
 	if len(events) == 0 {
@@ -1102,8 +1010,12 @@ func (s *streamImpl) applyStreamEvents(
 	}
 
 	for _, e := range events {
-		switch event := e.(type) {
-		case *river.StreamLastMiniblockUpdated:
+		switch e.Reason() {
+		case river.StreamUpdatedEventTypePlacementUpdated:
+			ev := e.(*river.StreamState)
+			s.nodesLocked.ResetFromStreamState(ev, s.params.Wallet.Address)
+		case river.StreamUpdatedEventTypeLastMiniblockBatchUpdated:
+			event := e.(*river.StreamMiniblockUpdate)
 			err := s.promoteCandidateLocked(ctx, &MiniblockRef{
 				Hash: event.LastMiniblockHash,
 				Num:  int64(event.LastMiniblockNum),
@@ -1111,32 +1023,35 @@ func (s *streamImpl) applyStreamEvents(
 			if err != nil {
 				logging.FromCtx(ctx).Errorw("onStreamLastMiniblockUpdated: failed to promote candidate", "err", err)
 			}
-		case *river.StreamPlacementUpdated:
-			err := s.nodesLocked.Update(event, s.params.Wallet.Address)
-			if err != nil {
-				logging.FromCtx(ctx).Errorw("applyStreamEvents: failed to update nodes", "err", err, "streamId", s.streamId)
-			}
+		case river.StreamUpdatedEventTypeAllocate:
+			logging.FromCtx(ctx).Errorw("applyStreamEvents: unexpected stream allocation event",
+				"event", e, "streamId", s.streamId)
+			continue
+		case river.StreamUpdatedEventTypeCreate:
+			logging.FromCtx(ctx).Errorw("applyStreamEvents: unexpected stream creation event",
+				"event", e, "streamId", s.streamId)
+			continue
 		default:
-			logging.FromCtx(ctx).Errorw("applyStreamEvents: unknown event", "event", event, "streamId", s.streamId)
+			logging.FromCtx(ctx).Errorw("applyStreamEvents: unknown event", "event", e, "streamId", s.streamId)
 		}
 	}
 
 	s.lastAppliedBlockNum = blockNum
 }
 
-// GetNodes returns the list of nodes this stream resides on according to the stream
-// registry. GetNodes is thread-safe.
-func (s *streamImpl) GetNodes() []common.Address {
+// GetQuorumNodes returns the list of nodes this stream resides on according to the stream
+// registry. GetQuorumNodes is thread-safe.
+func (s *Stream) GetQuorumNodes() []common.Address {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
-	return slices.Clone(s.nodesLocked.GetNodes())
+	return slices.Clone(s.nodesLocked.GetQuorumNodes())
 }
 
 // GetRemotesAndIsLocal returns
 // remotes - a list of non-local nodes on which the stream resides
 // isLocal - boolean, whether the stream is hosted on this node
 // GetRemotesAndIsLocal is thread-safe.
-func (s *streamImpl) GetRemotesAndIsLocal() ([]common.Address, bool) {
+func (s *Stream) GetRemotesAndIsLocal() ([]common.Address, bool) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	r, l := s.nodesLocked.GetRemotesAndIsLocal()
@@ -1146,7 +1061,7 @@ func (s *streamImpl) GetRemotesAndIsLocal() ([]common.Address, bool) {
 // GetStickyPeer returns the peer this node typically uses to forward requests to for this
 // stream. If the node becomes unavailable, the sticky peer can be updated with AdvanceStickyPeer.
 // This method is thread-safe.
-func (s *streamImpl) GetStickyPeer() common.Address {
+func (s *Stream) GetStickyPeer() common.Address {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	return s.nodesLocked.GetStickyPeer()
@@ -1155,12 +1070,43 @@ func (s *streamImpl) GetStickyPeer() common.Address {
 // AdvanceStickyPeer updates the peer used for forwarding requests for this stream. AdvanceStickyPeer
 // can be used whenever a node becomes unavailable.
 // AdvanceStickyPeer is thread-safe.
-func (s *streamImpl) AdvanceStickyPeer(currentPeer common.Address) common.Address {
+func (s *Stream) AdvanceStickyPeer(currentPeer common.Address) common.Address {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	return s.nodesLocked.AdvanceStickyPeer(currentPeer)
 }
 
-func (s *streamImpl) Update(event *river.StreamPlacementUpdated, localNode common.Address) error {
-	return RiverError(Err_INTERNAL, "Can't update nodes on the streamImpl")
+func (s *Stream) ResetFromStreamState(state *river.StreamState, localNode common.Address) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	s.nodesLocked.ResetFromStreamState(state, localNode)
+}
+
+func (s *Stream) ResetFromStreamResult(result *registries.GetStreamResult, localNode common.Address) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	s.nodesLocked.ResetFromStreamResult(result, localNode)
+}
+
+func (s *Stream) Reset(replicationFactor int, nodes []common.Address, localNode common.Address) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	s.nodesLocked.Reset(replicationFactor, nodes, localNode)
+}
+
+func (s *Stream) GetSyncNodes() []common.Address {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	return s.nodesLocked.GetSyncNodes()
+}
+
+func (s *Stream) IsLocalInQuorum() bool {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	return s.nodesLocked.IsLocalInQuorum()
 }

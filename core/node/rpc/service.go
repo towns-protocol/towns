@@ -7,25 +7,24 @@ import (
 	"sync/atomic"
 	"time"
 
-	"go.uber.org/zap"
-
-	"github.com/river-build/river/core/node/notifications"
-
 	"connectrpc.com/otelconnect"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/trace"
 
-	"github.com/river-build/river/core/config"
-	"github.com/river-build/river/core/node/auth"
-	"github.com/river-build/river/core/node/crypto"
-	"github.com/river-build/river/core/node/events"
-	"github.com/river-build/river/core/node/infra"
-	"github.com/river-build/river/core/node/nodes"
-	. "github.com/river-build/river/core/node/protocol/protocolconnect"
-	"github.com/river-build/river/core/node/registries"
-	river_sync "github.com/river-build/river/core/node/rpc/sync"
-	"github.com/river-build/river/core/node/storage"
-	"github.com/river-build/river/core/xchain/entitlement"
+	"github.com/towns-protocol/towns/core/config"
+	"github.com/towns-protocol/towns/core/node/app_registry"
+	"github.com/towns-protocol/towns/core/node/auth"
+	"github.com/towns-protocol/towns/core/node/crypto"
+	. "github.com/towns-protocol/towns/core/node/events"
+	"github.com/towns-protocol/towns/core/node/infra"
+	"github.com/towns-protocol/towns/core/node/logging"
+	"github.com/towns-protocol/towns/core/node/nodes"
+	"github.com/towns-protocol/towns/core/node/notifications"
+	. "github.com/towns-protocol/towns/core/node/protocol/protocolconnect"
+	"github.com/towns-protocol/towns/core/node/registries"
+	river_sync "github.com/towns-protocol/towns/core/node/rpc/sync"
+	"github.com/towns-protocol/towns/core/node/storage"
+	"github.com/towns-protocol/towns/core/xchain/entitlement"
 )
 
 type HttpClientMakerFunc = func(context.Context, *config.Config) (*http.Client, error)
@@ -36,7 +35,7 @@ type Service struct {
 	serverCtxCancel context.CancelFunc
 	config          *config.Config
 	instanceId      string
-	defaultLogger   *zap.SugaredLogger
+	defaultLogger   *logging.Log
 	wallet          *crypto.Wallet
 	startTime       time.Time
 	mode            string
@@ -51,12 +50,15 @@ type Service struct {
 	storage         storage.StreamStorage
 
 	// Streams
-	cache       events.StreamCache
-	mbProducer  events.TestMiniblockProducer
+	cache       *StreamCache
+	mbProducer  TestMiniblockProducer
 	syncHandler river_sync.Handler
 
 	// Notifications
 	notifications notifications.UserPreferencesStore
+
+	// App Registry
+	appStore storage.AppRegistryStore
 
 	// River chain
 	riverChain       *crypto.Blockchain
@@ -86,6 +88,9 @@ type Service struct {
 
 	// NotificationService is not nil if running in notification mode
 	NotificationService *notifications.Service
+
+	// AppRegistryService is not nil if running in app registry mode
+	AppRegistryService *app_registry.Service
 
 	// Metrics
 	metrics               infra.MetricsFactory

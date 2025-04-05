@@ -1,8 +1,8 @@
 import { Client } from '../client'
-import { DLogger, check, dlog } from '@river-build/dlog'
+import { DLogger, check, dlog } from '@towns-protocol/dlog'
 import { makeTestClient, makeUniqueSpaceStreamId } from './testUtils'
 import { makeUniqueChannelStreamId } from '../id'
-import { MembershipOp, SnapshotCaseType } from '@river-build/proto'
+import { SnapshotCaseType } from '@towns-protocol/proto'
 import { DecryptedTimelineEvent } from '../types'
 
 class TestDriver {
@@ -24,31 +24,20 @@ class TestDriver {
     }
 
     async start(): Promise<void> {
-        this.log(`driver starting client`)
+        this.log('driver starting client')
 
         await this.client.initializeUser()
 
-        this.client.on('userInvitedToStream', (s) => void this.userInvitedToStream.bind(this)(s))
-        this.client.on('userJoinedStream', (s) => void this.userJoinedStream.bind(this)(s))
         this.client.on('eventDecrypted', (e, f, g) => void this.eventDecrypted.bind(this)(e, f, g))
 
         this.client.startSync()
-        this.log(`driver started client`)
+        this.log('driver started client')
     }
 
     async stop(): Promise<void> {
-        this.log(`driver stopping client`)
+        this.log('driver stopping client')
         await this.client.stop()
-        this.log(`driver stopped client`)
-    }
-
-    async userInvitedToStream(streamId: string): Promise<void> {
-        this.log(`userInvitedToStream streamId=${streamId}`)
-        await this.client.joinStream(streamId)
-    }
-
-    userJoinedStream(streamId: string): void {
-        this.log(`userJoinedStream streamId=${streamId}`)
+        this.log('driver stopped client')
     }
 
     eventDecrypted(
@@ -63,34 +52,38 @@ class TestDriver {
             payload.content?.payload?.case !== 'post' ||
             payload.content?.payload?.value.content.case !== 'text'
         ) {
-            throw new Error(`eventDecrypted is not a post`)
+            throw new Error('eventDecrypted is not a post')
         }
         content = payload.content?.payload?.value.content.value.body
         this.log(
-            `eventDecrypted channelId=${streamId} message=${content}`,
+            'eventDecrypted channelId=',
+            streamId,
+            'message=',
+            content,
             this.expected ? [...this.expected] : undefined,
         )
         if (this.expected?.delete(content)) {
-            this.log(`eventDecrypted expected message Received, text=${content}`)
+            this.log('eventDecrypted expected message Received, text=', content)
 
             if (this.expected.size === 0) {
                 this.expected = undefined
                 if (this.allExpectedReceived === undefined) {
                     throw new Error('allExpectedReceived is undefined')
                 }
-                this.log(`eventDecrypted all expected messages Received, text=${content}`)
+                this.log('eventDecrypted all expected messages Received, text=', content)
                 this.allExpectedReceived()
             } else {
-                this.log(`eventDecrypted still expecting messages`, this.expected)
+                this.log('eventDecrypted still expecting messages', this.expected)
             }
         } else {
             if (this.badMessageReceived === undefined) {
                 throw new Error('badMessageReceived is undefined')
             }
             this.log(
-                `channelNewMessage badMessageReceived text=${content}}, expected=${Array.from(
-                    this.expected?.values() ?? [],
-                ).join(', ')}`,
+                'channelNewMessage badMessageReceived text=',
+                content,
+                'expected=',
+                Array.from(this.expected?.values() ?? []).join(', '),
             )
             this.badMessageReceived(
                 `badMessageReceived text=${content}, expected=${Array.from(
@@ -109,7 +102,7 @@ class TestDriver {
         this.stepNum = stepNum
         this.log = dlog(`test:${this.testName} client:${this.num}:step:${this.stepNum}`)
 
-        this.log(`step start`, message)
+        this.log('step start', message)
 
         this.expected = new Set(expected)
         const ret = new Promise<void>((resolve, reject) => {
@@ -118,7 +111,7 @@ class TestDriver {
         })
 
         if (message !== '') {
-            this.log(`step sending channelId=${channelId} message=${message}`)
+            this.log('step sending channelId=', channelId, 'message=', message)
             await this.client.sendMessage(channelId, message)
         }
         if (expected.size > 0) {
@@ -127,7 +120,7 @@ class TestDriver {
 
         this.allExpectedReceived = undefined
         this.badMessageReceived = undefined
-        this.log(`step end`, message)
+        this.log('step end', message)
         this.stepNum = undefined
         this.log = dlog(`test:client:${this.num}:step:${this.stepNum}`)
     }
@@ -145,97 +138,78 @@ export const converse = async (conversation: string[][], testName: string): Prom
         const numDrivers = conversation[0].length
         const numConversationSteps = conversation.length
 
-        log(`START, numDrivers=${numDrivers}, steps=${numConversationSteps}`)
+        log('START, numDrivers=', numDrivers, 'steps=', numConversationSteps)
         const drivers = await Promise.all(
             Array.from({ length: numDrivers })
                 .fill('')
                 .map(async (_, i) => await makeTestDriver(i, testName)),
         )
 
-        log(`starting all drivers`)
+        log('starting all drivers')
         await Promise.all(
             drivers.map(async (d) => {
-                log(`starting driver`, {
+                log('starting driver', {
                     num: d.num,
                     userId: d.client.userId,
                 })
                 await d.start()
-                log(`started driver`, { num: d.num })
+                log('started driver', { num: d.num })
             }),
         )
-        log(`started all drivers`)
+        log('started all drivers')
 
         const alice = drivers[0]
         const others = drivers.slice(1)
 
         const spaceId = makeUniqueSpaceStreamId()
-        log(`creating space ${spaceId}`)
+        log('creating space', spaceId)
         await alice.client.createSpace(spaceId)
         await alice.client.waitForStream(spaceId)
 
-        // Invite and join space.
-        log(`inviting others to space`)
-        const allJoinedSpace = Promise.all(
-            others.map(async (d) => {
-                log(`awaiting userJoinedStream for`, d.client.userId)
-                const stream = await d.client.waitForStream(spaceId)
-                await stream.waitForMembership(MembershipOp.SO_JOIN)
-                log(`received userJoinedStream for`, d.client.userId)
-            }),
-        )
+        // Join others to space.
+        log('joining others to space')
         await Promise.all(
             others.map(async (d) => {
-                log(`${alice.client.userId} inviting other to space`, d.client.userId)
-                await alice.client.inviteUser(spaceId, d.client.userId)
-                log(`invited other to space`, d.client.userId)
+                await d.client.joinStream(spaceId)
+                log(
+                    'joined space',
+                    d.num,
+                    'last know miniblock',
+                    //d.client.stream(spaceId)?.view.prevMiniblock,
+                )
             }),
         )
-        log(`and wait for all to join space...`)
-        await allJoinedSpace
-        log(`all joined space`)
-        log(
-            `${testName} inviting others to space after`,
-            others.map((d) => ({ num: d.num, userStreamId: d.client.userStreamId })),
-        )
+        log('all joined space')
 
-        log(`creating channel`)
+        log('creating channel')
         const channelId = makeUniqueChannelStreamId(spaceId)
-        const channelName = 'Alica channel'
-        const channelTopic = 'Alica channel topic'
+        const channelName = 'Alice channel'
+        const channelTopic = 'Alice channel topic'
 
         await alice.client.createChannel(spaceId, channelName, channelTopic, channelId)
         await alice.client.waitForStream(channelId)
 
-        // Invite and join channel.
-        log(
-            `${testName} inviting others to channel`,
-            others.map((d) => ({ num: d.num, userStreamId: d.client.userStreamId })),
-        )
-        const allJoined = Promise.all(
-            others.map(async (d) => {
-                log(`awaiting userJoinedStream channel for`, d.client.userId, channelId)
-                const stream = await d.client.waitForStream(channelId)
-                await stream.waitForMembership(MembershipOp.SO_JOIN)
-                log(`received userJoinedStream channel for`, d.client.userId, channelId)
-            }),
-        )
+        // Join others to channel.
+        log('joining others to channel')
         await Promise.all(
             others.map(async (d) => {
-                log(`inviting user to channel`, d.client.userId, channelId)
-                await alice.client.inviteUser(channelId, d.client.userId)
-                log(`invited user to channel`, d.client.userId, channelId)
+                await d.client.joinStream(channelId)
+                log(
+                    'joined channel',
+                    d.num,
+                    'last know miniblock',
+                    //d.client.stream(channelId)?.view.prevMiniblock,
+                )
             }),
         )
-        log(`and wait for all to join...`)
-        await allJoined
-        log(`all joined`)
+        log('all joined channel')
 
         for (const [conv_idx, conv] of conversation.entries()) {
             log(`conversation stepping start ${conv_idx}`, conv)
             await Promise.all(
                 conv.map(async (msg, msg_idx) => {
                     log(`conversation step before send conv: ${conv_idx} msg: ${msg_idx}`, msg)
-                    // expect to recieve everyone elses messages (don't worry about your own, they render locally)
+                    // expect to receive everyone elses messages (don't worry about your own, they render locally)
                     const expected = new Set(
                         [...conv.slice(0, msg_idx), ...conv.slice(msg_idx + 1)].filter(
                             (s) => s !== '',
@@ -251,13 +225,13 @@ export const converse = async (conversation: string[][], testName: string): Prom
             )
             log(`conversation stepping end ${conv_idx}`, conv)
         }
-        log(`conversation complete, now stopping drivers`)
+        log('conversation complete, now stopping drivers')
 
         await Promise.all(drivers.map((d) => d.stop()))
-        log(`drivers stopped`)
+        log('drivers stopped')
         return 'success'
     } catch (e) {
-        log(`converse ERROR`, e)
+        log('converse ERROR', e)
         throw e
     }
 }

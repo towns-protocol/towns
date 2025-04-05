@@ -1,6 +1,7 @@
 import {
     FullyReadMarker,
-    FullyReadMarkers,
+    FullyReadMarkersSchema,
+    PlainMessage,
     Snapshot,
     UserSettingsPayload,
     UserSettingsPayload_FullyReadMarkers,
@@ -8,15 +9,17 @@ import {
     UserSettingsPayload_Snapshot,
     UserSettingsPayload_Snapshot_UserBlocks,
     UserSettingsPayload_Snapshot_UserBlocks_Block,
+    UserSettingsPayload_Snapshot_UserBlocks_BlockSchema,
+    UserSettingsPayload_Snapshot_UserBlocksSchema,
     UserSettingsPayload_UserBlock,
-} from '@river-build/proto'
+} from '@towns-protocol/proto'
 import TypedEmitter from 'typed-emitter'
 import { RemoteTimelineEvent } from './types'
 import { StreamEncryptionEvents, StreamStateEvents } from './streamEvents'
-import { check, dlog } from '@river-build/dlog'
+import { check, dlog } from '@towns-protocol/dlog'
 import { logNever } from './check'
 import { StreamStateView_AbstractContent } from './streamStateView_AbstractContent'
-import { toPlainMessage } from '@bufbuild/protobuf'
+import { create, fromJsonString } from '@bufbuild/protobuf'
 import { streamIdFromBytes, userIdFromAddress } from './id'
 
 const log = dlog('csb:stream')
@@ -105,9 +108,7 @@ export class StreamStateView_UserSettings extends StreamStateView_AbstractConten
         }
         const streamId = streamIdFromBytes(payload.streamId)
         this.fullyReadMarkersSrc.set(streamId, content)
-        const fullyReadMarkersContent = toPlainMessage(
-            FullyReadMarkers.fromJsonString(content.data),
-        )
+        const fullyReadMarkersContent = fromJsonString(FullyReadMarkersSchema, content.data)
 
         this.fullyReadMarkers.set(streamId, fullyReadMarkersContent.markers)
         emitter?.emit('fullyReadMarkersUpdated', streamId, fullyReadMarkersContent.markers)
@@ -119,9 +120,14 @@ export class StreamStateView_UserSettings extends StreamStateView_AbstractConten
     ): void {
         const userId = userIdFromAddress(payload.userId)
         if (!this.userBlocks[userId]) {
-            this.userBlocks[userId] = new UserSettingsPayload_Snapshot_UserBlocks()
+            this.userBlocks[userId] = create(UserSettingsPayload_Snapshot_UserBlocksSchema, {})
         }
-        this.userBlocks[userId].blocks.push(payload)
+        this.userBlocks[userId].blocks.push(
+            create(UserSettingsPayload_Snapshot_UserBlocks_BlockSchema, {
+                eventNum: payload.eventNum,
+                isBlocked: payload.isBlocked,
+            } satisfies PlainMessage<UserSettingsPayload_Snapshot_UserBlocks_Block>),
+        )
         emitter?.emit('userBlockUpdated', payload)
     }
 

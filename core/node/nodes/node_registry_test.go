@@ -1,8 +1,8 @@
 package nodes
 
 // import (
-// 	. "github.com/river-build/river/core/node/base"
-// 	. "github.com/river-build/river/core/node/protocol"
+// 	. "github.com/towns-protocol/towns/core/node/base"
+// 	. "github.com/towns-protocol/towns/core/node/protocol"
 // )
 
 // func TestNodeRegistryUpdates(t *testing.T) {

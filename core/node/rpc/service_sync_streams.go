@@ -9,9 +9,9 @@ import (
 	"connectrpc.com/connect"
 	"go.uber.org/zap"
 
-	. "github.com/river-build/river/core/node/base"
-	. "github.com/river-build/river/core/node/protocol"
-	"github.com/river-build/river/core/node/utils"
+	. "github.com/towns-protocol/towns/core/node/base"
+	. "github.com/towns-protocol/towns/core/node/protocol"
+	"github.com/towns-protocol/towns/core/node/utils"
 )
 
 func runWithLabels(
@@ -83,49 +83,20 @@ func (s *Service) ModifySync(
 	req *connect.Request[ModifySyncRequest],
 ) (*connect.Response[ModifySyncResponse], error) {
 	ctx, log := utils.CtxAndLogForRequest(ctx, req)
-	res := connect.NewResponse(&ModifySyncResponse{})
-
+	var res *connect.Response[ModifySyncResponse]
+	var err error
 	runWithLabels(ctx, req.Msg.GetSyncId(), func(ctx context.Context) {
-		for _, syncPos := range req.Msg.GetAddStreams() {
-			if _, err := s.syncHandler.AddStreamToSync(ctx, connect.NewRequest(&AddStreamToSyncRequest{
-				SyncId:  req.Msg.GetSyncId(),
-				SyncPos: syncPos,
-			})); err != nil {
-				connectErr := AsRiverError(err).
-					Tags("syncId", req.Msg.GetSyncId(), "streamId", syncPos.GetStreamId()).
-					Func("AddStreamsToSync").
-					LogWarn(log).
-					AsConnectError()
-
-				res.Msg.Adds = append(res.Msg.Adds, &SyncStreamOpStatus{
-					StreamId: syncPos.GetStreamId(),
-					Code:     int32(connectErr.Code()),
-					Message:  connectErr.Error(),
-				})
-			}
-		}
-
-		for _, streamID := range req.Msg.GetRemoveStreams() {
-			if _, err := s.syncHandler.RemoveStreamFromSync(ctx, connect.NewRequest(&RemoveStreamFromSyncRequest{
-				SyncId:   req.Msg.GetSyncId(),
-				StreamId: streamID,
-			})); err != nil {
-				connectErr := AsRiverError(err).
-					Tags("syncId", req.Msg.GetSyncId(), "streamId", streamID).
-					Func("RemoveStreamFromSync").
-					LogWarn(log).
-					AsConnectError()
-
-				res.Msg.Removals = append(res.Msg.Removals, &SyncStreamOpStatus{
-					StreamId: streamID,
-					Code:     int32(connectErr.Code()),
-					Message:  connectErr.Error(),
-				})
-			}
-		}
+		res, err = s.syncHandler.ModifySync(ctx, req)
 	})
-
-	return res, nil
+	if err != nil {
+		err = AsRiverError(
+			err,
+		).Func("ModifySync").
+			Tags("syncId", req.Msg.GetSyncId()).
+			LogWarn(log).
+			AsConnectError()
+	}
+	return res, err
 }
 
 func (s *Service) RemoveStreamFromSync(

@@ -1,39 +1,33 @@
-import { RiverRegistry, SpaceDapp } from '@river-build/web3'
+import { RiverRegistry, SpaceDapp } from '@towns-protocol/web3'
 import { makeStreamRpcClient } from '../../makeStreamRpcClient'
 import { RiverChain } from './models/riverChain'
 import { Identifiable, LoadPriority, Store } from '../../store/store'
-import { check, dlogger } from '@river-build/dlog'
+import { check, dlogger, shortenHexString } from '@towns-protocol/dlog'
 import { PromiseQueue } from '../utils/promiseQueue'
 import {
     CryptoStore,
     EntitlementsDelegate,
     type EncryptionDeviceInitOpts,
-} from '@river-build/encryption'
-import { Client } from '../../client'
+} from '@towns-protocol/encryption'
+import { Client, ClientOptions } from '../../client'
 import { SignerContext } from '../../signerContext'
 import { PersistedObservable, persistedObservable } from '../../observable/persistedObservable'
 import { userIdFromAddress } from '../../id'
 import { TransactionalClient } from './models/transactionalClient'
 import { Observable } from '../../observable/observable'
 import { AuthStatus } from './models/authStatus'
-import { RetryParams, expiryInterceptor } from '../../rpcInterceptors'
+import { expiryInterceptor, RetryParams } from '../../rpcInterceptors'
 import { Stream } from '../../stream'
 import { isDefined } from '../../check'
-import { UnpackEnvelopeOpts } from '../../sign'
-
-const logger = dlogger('csb:riverConnection')
 
 export interface ClientParams {
     signerContext: SignerContext
     cryptoStore: CryptoStore
     entitlementsDelegate: EntitlementsDelegate
-    persistenceStoreName?: string
-    logNamespaceFilter?: string
-    highPriorityStreamIds?: string[]
-    rpcRetryParams?: RetryParams
+    opts?: ClientOptions
     encryptionDevice?: EncryptionDeviceInitOpts
     onTokenExpired?: () => void
-    unpackEnvelopeOpts?: UnpackEnvelopeOpts
+    rpcRetryParams?: RetryParams
 }
 
 export type OnStoppedFn = () => void
@@ -54,6 +48,7 @@ export class RiverConnection extends PersistedObservable<RiverConnectionModel> {
     riverChain: RiverChain
     authStatus = new Observable<AuthStatus>(AuthStatus.Initializing)
     loginError?: Error
+    private logger: ReturnType<typeof dlogger>
     private clientQueue = new PromiseQueue<Client>()
     private views: onClientStartedFn[] = []
     private onStoppedFns: OnStoppedFn[] = []
@@ -67,7 +62,9 @@ export class RiverConnection extends PersistedObservable<RiverConnectionModel> {
         public clientParams: ClientParams,
     ) {
         super({ id: '0', userExists: false }, store, LoadPriority.high)
-        this.riverChain = new RiverChain(store, riverRegistryDapp, this.userId)
+        const logId = this.clientParams.opts?.logId ?? shortenHexString(this.userId)
+        this.logger = dlogger(`csb:rconn:${logId}`)
+        this.riverChain = new RiverChain(store, riverRegistryDapp, this.userId, logId)
     }
 
     protected override onLoaded() {
@@ -147,14 +144,14 @@ export class RiverConnection extends PersistedObservable<RiverConnectionModel> {
 
         if (this.client !== undefined) {
             // this is wired up to be reactive to changes in the urls
-            logger.log('RiverConnection: rpc urls changed, client already set', urls)
+            this.logger.log('RiverConnection: rpc urls changed, client already set', urls)
             return
         }
         if (!urls) {
-            logger.error('RiverConnection: urls is not set')
+            this.logger.error('RiverConnection: urls is not set')
             return
         }
-        logger.log(`setting rpcClient with urls: "${urls}"`)
+        this.logger.info(`setting rpcClient with urls: "${urls}"`)
         const rpcClient = makeStreamRpcClient(
             urls,
             () => this.riverRegistryDapp.getOperationalNodeUrls(),
@@ -173,10 +170,7 @@ export class RiverConnection extends PersistedObservable<RiverConnectionModel> {
             rpcClient,
             this.clientParams.cryptoStore,
             this.clientParams.entitlementsDelegate,
-            this.clientParams.persistenceStoreName,
-            this.clientParams.logNamespaceFilter,
-            this.clientParams.highPriorityStreamIds,
-            this.clientParams.unpackEnvelopeOpts,
+            this.clientParams.opts,
         )
         client.setMaxListeners(100)
         this.client = client
@@ -191,13 +185,13 @@ export class RiverConnection extends PersistedObservable<RiverConnectionModel> {
 
     async login(newUserMetadata?: { spaceId: Uint8Array | string }) {
         this.newUserMetadata = newUserMetadata ?? this.newUserMetadata
-        logger.log('login', { newUserMetadata })
+        this.logger.log('login', { newUserMetadata })
         await this.loginWithRetries()
     }
 
     private async loginWithRetries() {
         check(isDefined(this.client), 'riverConnection::loginWithRetries client is not defined')
-        logger.log('login', { authStatus: this.authStatus.value, promise: this.loginPromise })
+        this.logger.info('login', { authStatus: this.authStatus.value, promise: this.loginPromise })
         if (this.loginPromise) {
             this.loginPromise.context.cancelled = true
             await this.loginPromise.promise
@@ -216,7 +210,7 @@ export class RiverConnection extends PersistedObservable<RiverConnectionModel> {
                     'riverConnection::loginWithRetries client is not defined',
                 )
                 try {
-                    logger.log('logging in', {
+                    this.logger.info('logging in', {
                         userExists: this.data.userExists,
                         newUserMetadata: this.newUserMetadata,
                     })
@@ -226,17 +220,22 @@ export class RiverConnection extends PersistedObservable<RiverConnectionModel> {
                         spaceId: this.newUserMetadata?.spaceId,
                         encryptionDeviceInit: this.clientParams.encryptionDevice,
                     })
+                    this.logger.info('user initialized')
                     client.startSync()
                     this.setData({ userExists: true })
                     this.authStatus.setValue(AuthStatus.ConnectedToRiver)
                     // New rpcClient is available, resolve all queued requests
                     this.clientQueue.flush(client)
+                    this.loginPromise = undefined
 
                     break
                 } catch (err) {
                     retryCount++
                     this.loginError = err as Error
-                    logger.log('encountered exception while initializing', err)
+                    this.logger.error(
+                        `encountered exception while initializing ${this.userId}`,
+                        err,
+                    )
 
                     for (const fn of this.onStoppedFns) {
                         fn()
@@ -247,20 +246,20 @@ export class RiverConnection extends PersistedObservable<RiverConnectionModel> {
                     await this.createStreamsClient()
 
                     if (loginContext.cancelled) {
-                        logger.log('login cancelled after error')
+                        this.logger.info('login cancelled after error')
+                        this.loginPromise = undefined
                         break
                     } else if (retryCount >= MAX_RETRY_COUNT) {
+                        this.logger.info('login MAX_RETRY_COUNT reached')
                         this.authStatus.setValue(AuthStatus.Error)
+                        this.loginPromise = undefined
                         throw err
                     } else {
                         const retryDelay = getRetryDelay(retryCount)
-                        logger.log('retrying', { retryDelay, retryCount })
+                        this.logger.info('retrying', { retryDelay, retryCount })
                         // sleep
                         await new Promise((resolve) => setTimeout(resolve, retryDelay))
                     }
-                } finally {
-                    logger.log('exiting login loop')
-                    this.loginPromise = undefined
                 }
             }
         }

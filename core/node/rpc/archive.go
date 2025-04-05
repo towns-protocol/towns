@@ -9,10 +9,10 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/river-build/river/core/config"
-	. "github.com/river-build/river/core/node/base"
-	"github.com/river-build/river/core/node/logging"
-	. "github.com/river-build/river/core/node/protocol"
+	"github.com/towns-protocol/towns/core/config"
+	. "github.com/towns-protocol/towns/core/node/base"
+	"github.com/towns-protocol/towns/core/node/logging"
+	. "github.com/towns-protocol/towns/core/node/protocol"
 )
 
 func (s *Service) startArchiveMode(opts *ServerStartOpts, once bool) error {
@@ -24,6 +24,8 @@ func (s *Service) startArchiveMode(opts *ServerStartOpts, once bool) error {
 	if s.config.Archive.ArchiveId == "" {
 		return RiverError(Err_BAD_CONFIG, "ArchiveId must be set").LogError(s.defaultLogger)
 	}
+
+	s.initTracing("river-archive", s.config.Archive.ArchiveId)
 
 	err = s.initRiverChain()
 	if err != nil {
@@ -50,7 +52,7 @@ func (s *Service) startArchiveMode(opts *ServerStartOpts, once bool) error {
 		return AsRiverError(err).Message("Failed to init archiver").LogError(s.defaultLogger)
 	}
 
-	s.registerDebugHandlers(s.config.EnableDebugEndpoints, s.config.DebugEndpoints)
+	s.registerDebugHandlers()
 
 	s.SetStatus("OK")
 

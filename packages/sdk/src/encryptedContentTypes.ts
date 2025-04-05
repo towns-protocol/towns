@@ -1,9 +1,12 @@
 import {
     ChannelMessage,
+    ChannelMessageSchema,
     ChannelProperties,
     EncryptedData,
     EncryptedDataVersion,
-} from '@river-build/proto'
+    ChannelPropertiesSchema,
+} from '@towns-protocol/proto'
+import { fromBinary, fromJsonString } from '@bufbuild/protobuf'
 import { checkNever, logNever } from './check'
 
 /*************
@@ -55,7 +58,7 @@ export function toDecryptedContent(
     switch (dataVersion) {
         case EncryptedDataVersion.ENCRYPTED_DATA_VERSION_0:
             if (typeof cleartext !== 'string') {
-                throw new Error('cleartext is a string when dataversion is 0')
+                throw new Error('cleartext is not a string when dataversion is 0')
             }
             switch (kind) {
                 case 'text':
@@ -66,13 +69,12 @@ export function toDecryptedContent(
                 case 'channelMessage':
                     return {
                         kind,
-                        content: ChannelMessage.fromJsonString(cleartext),
+                        content: fromJsonString(ChannelMessageSchema, cleartext),
                     } satisfies DecryptedContent_ChannelMessage
-
                 case 'channelProperties':
                     return {
                         kind,
-                        content: ChannelProperties.fromJsonString(cleartext),
+                        content: fromJsonString(ChannelPropertiesSchema, cleartext),
                     } satisfies DecryptedContent_ChannelProperties
                 default:
                     // the client is responsible for this
@@ -85,7 +87,7 @@ export function toDecryptedContent(
             }
         case EncryptedDataVersion.ENCRYPTED_DATA_VERSION_1:
             if (typeof cleartext === 'string') {
-                throw new Error('cleartext is a string whend dataversion is 1')
+                throw new Error('cleartext is a string when dataversion is 1')
             }
             switch (kind) {
                 case 'text':
@@ -96,12 +98,12 @@ export function toDecryptedContent(
                 case 'channelProperties':
                     return {
                         kind: 'channelProperties',
-                        content: ChannelProperties.fromBinary(cleartext),
+                        content: fromBinary(ChannelPropertiesSchema, cleartext),
                     } satisfies DecryptedContent_ChannelProperties
                 case 'channelMessage':
                     return {
                         kind: 'channelMessage',
-                        content: ChannelMessage.fromBinary(cleartext),
+                        content: fromBinary(ChannelMessageSchema, cleartext),
                     } satisfies DecryptedContent_ChannelMessage
                 default:
                     checkNever(kind) // local to our codebase, should never happen

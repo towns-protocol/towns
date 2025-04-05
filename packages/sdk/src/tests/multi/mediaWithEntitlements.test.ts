@@ -3,14 +3,13 @@
  */
 
 import {
-    makeUserContextFromWallet,
     makeTestClient,
     createVersionedSpace,
     getFreeSpacePricingSetup,
+    TestClient,
 } from '../testUtils'
 import { makeDefaultChannelStreamId, makeSpaceStreamId } from '../../id'
-import { ethers, Wallet } from 'ethers'
-import { Client } from '../../client'
+import { ethers } from 'ethers'
 import {
     ETH_ADDRESS,
     LocalhostWeb3Provider,
@@ -18,34 +17,30 @@ import {
     NoopRuleData,
     Permission,
     createSpaceDapp,
-} from '@river-build/web3'
-import { SignerContext } from '../../signerContext'
+} from '@towns-protocol/web3'
 import { makeBaseChainConfig } from '../../riverConfig'
-import { dlog } from '@river-build/dlog'
+import { dlog } from '@towns-protocol/dlog'
 
 const log = dlog('csb:test:mediaWithEntitlements')
 
 describe('mediaWithEntitlements', () => {
-    let bobClient: Client
-    let bobWallet: Wallet
-    let bobContext: SignerContext
+    let bobClient: TestClient
+    let bobWallet: ethers.Wallet
 
-    let aliceClient: Client
-    let aliceWallet: Wallet
-    let aliceContext: SignerContext
+    let aliceClient: TestClient
 
     const baseConfig = makeBaseChainConfig()
 
     beforeEach(async () => {
-        bobWallet = ethers.Wallet.createRandom()
-        bobContext = await makeUserContextFromWallet(bobWallet)
-        bobClient = await makeTestClient({ context: bobContext })
+        bobClient = await makeTestClient()
+        bobWallet = bobClient.wallet
 
-        aliceWallet = ethers.Wallet.createRandom()
-        aliceContext = await makeUserContextFromWallet(aliceWallet)
-        aliceClient = await makeTestClient({
-            context: aliceContext,
-        })
+        aliceClient = await makeTestClient()
+    })
+
+    afterEach(async () => {
+        await bobClient.stop()
+        await aliceClient.stop()
     })
 
     test('clientCanOnlyCreateMediaStreamIfMemberOfSpaceAndChannel', async () => {

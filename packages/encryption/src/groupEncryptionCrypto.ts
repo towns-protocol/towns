@@ -1,4 +1,4 @@
-import { EncryptedData } from '@river-build/proto'
+import { EncryptedData, ExportedDevice } from '@towns-protocol/proto'
 import {
     GroupEncryptionAlgorithmId,
     GroupEncryptionSession,
@@ -15,9 +15,9 @@ import {
 } from './base'
 import { GroupDecryption } from './groupDecryption'
 import { GroupEncryption } from './groupEncryption'
-import { EncryptionDevice, ExportedDevice, type EncryptionDeviceInitOpts } from './encryptionDevice'
+import { EncryptionDevice, type EncryptionDeviceInitOpts } from './encryptionDevice'
 import { EncryptionDelegate } from './encryptionDelegate'
-import { check, dlog } from '@river-build/dlog'
+import { check, dlog } from '@towns-protocol/dlog'
 import { HybridGroupEncryption } from './hybridGroupEncryption'
 import { HybridGroupDecryption } from './hybridGroupDecryption'
 
@@ -269,9 +269,7 @@ export class GroupEncryptionCrypto {
                     const algorithm = key.algorithm
                     if (algorithm in this.groupDecryption) {
                         try {
-                            await this.groupDecryption[
-                                algorithm as GroupEncryptionAlgorithmId
-                            ].importStreamKey(streamId, key)
+                            await this.groupDecryption[algorithm].importStreamKey(streamId, key)
                         } catch (error) {
                             log(`failed to import key`, error)
                         }
@@ -320,9 +318,7 @@ export class GroupEncryptionCrypto {
                 const algorithm = key.algorithm
                 if (algorithm in this.groupDecryption) {
                     try {
-                        await this.groupDecryption[
-                            algorithm as GroupEncryptionAlgorithmId
-                        ].importStreamKey(key.streamId, key)
+                        await this.groupDecryption[algorithm].importStreamKey(key.streamId, key)
                         successes++
                         if (opts.progressCallback) {
                             updateProgress()

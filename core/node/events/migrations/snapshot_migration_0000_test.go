@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	. "github.com/river-build/river/core/node/protocol"
+	. "github.com/towns-protocol/towns/core/node/protocol"
 )
 
 // a no-op migration test for the initial snapshot, use as a template for new migrations

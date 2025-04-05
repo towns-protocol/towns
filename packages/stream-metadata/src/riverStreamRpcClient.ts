@@ -8,10 +8,11 @@ import {
 	streamIdAsBytes,
 	streamIdAsString,
 	unpackStream,
-} from '@river-build/sdk'
+} from '@towns-protocol/sdk'
 import { filetypemime } from 'magic-bytes.js'
 import { FastifyBaseLogger } from 'fastify'
 import { LRUCache } from 'lru-cache'
+import { errors } from 'ethers'
 
 import { MediaContent } from './types'
 import { getNodeForStream } from './streamRegistry'
@@ -25,7 +26,7 @@ const streamLocationCache = new LRUCache<string, string>({ max: 5000 })
 const clients = new Map<string, StreamRpcClient>()
 const streamClientRequests = new Map<string, Promise<StreamRpcClient>>()
 const streamRequests = new Map<string, Promise<StreamStateView>>()
-const mediaRequests = new Map<string, Promise<MediaContent>>()
+const mediaRequests = new Map<string, Promise<MediaContent | undefined>>()
 
 async function _getStreamClient(logger: FastifyBaseLogger, streamId: string) {
 	let url = streamLocationCache.get(streamId)
@@ -187,7 +188,7 @@ export async function _getStream(
 		const unpackedResponse = await unpackStream(response.stream, opts)
 		return streamViewFromUnpackedResponse(streamId, unpackedResponse)
 	} catch (e) {
-		logger.error(
+		logger.warn(
 			{ url: client.url, streamId, err: e },
 			'getStream failed, removing client from cache',
 		)
@@ -200,7 +201,7 @@ export async function getStream(
 	logger: FastifyBaseLogger,
 	streamId: string,
 	opts: UnpackEnvelopeOpts = STREAM_METADATA_SERVICE_DEFAULT_UNPACK_OPTS,
-): Promise<StreamStateView> {
+): Promise<StreamStateView | undefined> {
 	const existing = streamRequests.get(streamId)
 	if (existing) {
 		return existing
@@ -209,6 +210,19 @@ export async function getStream(
 		const promise = _getStream(logger, streamId, opts)
 		streamRequests.set(streamId, promise)
 		return await promise
+	} catch (e) {
+		// We don't want to immediately throw when the stream is not found,
+		// because this is not always an unexpected error. When streams are
+		// not found, the caller should handle this case and return a 404.
+		if (
+			e instanceof Error &&
+			'code' in e &&
+			e.code === `${errors.CALL_EXCEPTION}` &&
+			'reason' in e &&
+			e.reason === 'NOT_FOUND'
+		) {
+			return undefined
+		}
 	} finally {
 		streamRequests.delete(streamId)
 	}
@@ -219,8 +233,11 @@ export async function _getMediaStreamContent(
 	streamId: string,
 	secret: Uint8Array,
 	iv: Uint8Array,
-): Promise<MediaContent> {
+): Promise<MediaContent | undefined> {
 	const sv = await getStream(logger, streamId)
+	if (!sv) {
+		return undefined
+	}
 	const result = await mediaContentFromStreamView(logger, sv, secret, iv)
 	return result
 }
@@ -230,7 +247,7 @@ export async function getMediaStreamContent(
 	streamId: string,
 	secret: Uint8Array,
 	iv: Uint8Array,
-): Promise<MediaContent> {
+): Promise<MediaContent | undefined> {
 	const existing = mediaRequests.get(streamId)
 	if (existing) {
 		return existing

@@ -1,6 +1,6 @@
 import { makeEvent, unpackStreamEnvelopes } from '../sign'
-import { MembershipOp, SyncStreamsResponse, Envelope, SyncOp } from '@river-build/proto'
-import { DLogger } from '@river-build/dlog'
+import { MembershipOp, SyncStreamsResponse, Envelope, SyncOp } from '@towns-protocol/proto'
+import { DLogger } from '@towns-protocol/dlog'
 import {
     lastEventFiltered,
     makeEvent_test,
@@ -239,19 +239,14 @@ export const bobTalksToHimself = async (
         }),
     )
 
-    log("Bob can't add a previously added event (messages from the client contain timestamps)")
+    log('Adding event again succeeds')
     await maybeFlush()
     await expect(
         bob.addEvent({
             streamId: channelId,
             event: helloEvent,
         }),
-    ).rejects.toThrow(
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-        expect.objectContaining({
-            message: expect.stringContaining('37:DUPLICATE_EVENT'),
-        }),
-    )
+    ).resolves.not.toThrow()
 
     log('done')
 }

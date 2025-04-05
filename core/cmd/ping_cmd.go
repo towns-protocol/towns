@@ -7,13 +7,13 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/spf13/cobra"
 
-	"github.com/river-build/river/core/config"
-	"github.com/river-build/river/core/node/crypto"
-	"github.com/river-build/river/core/node/http_client"
-	"github.com/river-build/river/core/node/infra"
-	"github.com/river-build/river/core/node/nodes"
-	"github.com/river-build/river/core/node/registries"
-	"github.com/river-build/river/core/node/rpc"
+	"github.com/towns-protocol/towns/core/config"
+	"github.com/towns-protocol/towns/core/node/crypto"
+	"github.com/towns-protocol/towns/core/node/http_client"
+	"github.com/towns-protocol/towns/core/node/infra"
+	"github.com/towns-protocol/towns/core/node/nodes"
+	"github.com/towns-protocol/towns/core/node/registries"
+	"github.com/towns-protocol/towns/core/node/rpc"
 )
 
 func runPing(cfg *config.Config) error {
@@ -51,18 +51,29 @@ func runPing(cfg *config.Config) error {
 		return err
 	}
 
+	onChainConfig, err := crypto.NewOnChainConfig(
+		ctx,
+		riverChain.Client,
+		registryContract.Address,
+		riverChain.InitialBlockNum,
+		riverChain.ChainMonitor,
+	)
+	if err != nil {
+		return err
+	}
+
 	httpClient, err := http_client.GetHttpClient(ctx, cfg)
 	if err != nil {
 		return err
 	}
 
 	nodeRegistry, err := nodes.LoadNodeRegistry(
-		ctx, registryContract, common.Address{}, riverChain.InitialBlockNum, riverChain.ChainMonitor, httpClient, nil)
+		ctx, registryContract, common.Address{}, riverChain.InitialBlockNum, riverChain.ChainMonitor, onChainConfig, httpClient, nil)
 	if err != nil {
 		return err
 	}
 
-	result, err := rpc.GetRiverNetworkStatus(ctx, cfg, nodeRegistry, riverChain, baseChain, nil, nil)
+	result, err := rpc.GetRiverNetworkStatus(ctx, cfg, nodeRegistry, riverChain, baseChain, nil)
 	if err != nil {
 		return err
 	}

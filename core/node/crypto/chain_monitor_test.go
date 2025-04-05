@@ -16,10 +16,10 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/river-build/river/core/contracts/river"
-	"github.com/river-build/river/core/node/base/test"
-	"github.com/river-build/river/core/node/crypto"
-	"github.com/river-build/river/core/node/infra"
+	"github.com/towns-protocol/towns/core/contracts/river"
+	"github.com/towns-protocol/towns/core/node/base/test"
+	"github.com/towns-protocol/towns/core/node/crypto"
+	"github.com/towns-protocol/towns/core/node/infra"
 )
 
 func TestChainMonitorBlocks(t *testing.T) {
@@ -182,7 +182,7 @@ func TestChainMonitorEvents(t *testing.T) {
 		nodeRegistryABI, _ = abi.JSON(strings.NewReader(river.NodeRegistryV1ABI))
 
 		urls  = []string{"https://river0.test"}
-		addrs = []common.Address{tc.Wallets[0].Address}
+		addrs = []common.Address{tc.GetBlockchain(ctx, 0).Wallet.Address}
 	)
 
 	tc.DeployerBlockchain.ChainMonitor.OnBlock(onBlockCallback)

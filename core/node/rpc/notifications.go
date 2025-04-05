@@ -11,12 +11,12 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 
-	"github.com/river-build/river/core/config"
-	. "github.com/river-build/river/core/node/base"
-	"github.com/river-build/river/core/node/logging"
-	"github.com/river-build/river/core/node/nodes"
-	"github.com/river-build/river/core/node/notifications"
-	"github.com/river-build/river/core/node/notifications/push"
+	"github.com/towns-protocol/towns/core/config"
+	. "github.com/towns-protocol/towns/core/node/base"
+	"github.com/towns-protocol/towns/core/node/logging"
+	"github.com/towns-protocol/towns/core/node/nodes"
+	"github.com/towns-protocol/towns/core/node/notifications"
+	"github.com/towns-protocol/towns/core/node/notifications/push"
 )
 
 func (s *Service) startNotificationMode(notifier push.MessageNotifier, opts *ServerStartOpts) error {
@@ -32,7 +32,7 @@ func (s *Service) startNotificationMode(notifier push.MessageNotifier, opts *Ser
 
 	err = s.prepareStore()
 	if err != nil {
-		return err
+		return AsRiverError(err).Message("Failed to prepare store").LogError(s.defaultLogger)
 	}
 
 	err = s.initNotificationsStore()
@@ -72,6 +72,7 @@ func (s *Service) startNotificationMode(notifier push.MessageNotifier, opts *Ser
 			common.Address{},
 			s.riverChain.InitialBlockNum,
 			s.riverChain.ChainMonitor,
+			s.chainConfig,
 			httpClient,
 			s.otelConnectIterceptor,
 		)

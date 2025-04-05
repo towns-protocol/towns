@@ -5,29 +5,24 @@ import (
 	"time"
 
 	"connectrpc.com/connect"
-
 	"github.com/ethereum/go-ethereum/common"
 
-	. "github.com/river-build/river/core/node/base"
-	. "github.com/river-build/river/core/node/events"
-	"github.com/river-build/river/core/node/logging"
-	. "github.com/river-build/river/core/node/protocol"
-	"github.com/river-build/river/core/node/rules"
-	. "github.com/river-build/river/core/node/shared"
+	. "github.com/towns-protocol/towns/core/node/base"
+	. "github.com/towns-protocol/towns/core/node/events"
+	"github.com/towns-protocol/towns/core/node/logging"
+	. "github.com/towns-protocol/towns/core/node/protocol"
+	"github.com/towns-protocol/towns/core/node/rules"
+	. "github.com/towns-protocol/towns/core/node/shared"
 )
 
 func (s *Service) localAddEvent(
 	ctx context.Context,
 	req *connect.Request[AddEventRequest],
-	localStream SyncStream,
-	streamView StreamView,
+	streamId StreamId,
+	localStream *Stream,
+	streamView *StreamView,
 ) (*connect.Response[AddEventResponse], error) {
 	log := logging.FromCtx(ctx)
-
-	streamId, err := StreamIdFromBytes(req.Msg.StreamId)
-	if err != nil {
-		return nil, AsRiverError(err).Func("localAddEvent")
-	}
 
 	parsedEvent, err := ParseEvent(req.Msg.Event)
 	if err != nil {
@@ -36,11 +31,25 @@ func (s *Service) localAddEvent(
 
 	log.Debugw("localAddEvent", "parsedEvent", parsedEvent)
 
+	if parsedEvent.MiniblockRef.Num >= 0 {
+		streamView, err = s.ensureStreamIsUpToDate(ctx, streamView, parsedEvent, localStream)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	newEvents, err := s.addParsedEvent(ctx, streamId, parsedEvent, localStream, streamView)
+	if err != nil {
+		err = AsRiverError(err).Func("localAddEvent").Tags(
+			"eventMiniblock", parsedEvent.MiniblockRef,
+			"lastLocalMiniblock", streamView.LastBlock().Ref,
+		)
+	}
+
 	if err != nil && req.Msg.Optional {
 		// aellis 5/2024 - we only want to wrap errors from canAddEvent,
 		// currently this is catching all errors, which is not ideal
-		riverError := AsRiverError(err).Func("localAddEvent")
+		riverError := AsRiverError(err)
 		return connect.NewResponse(&AddEventResponse{
 			Error: &AddEventResponse_Error{
 				Code:  riverError.Code,
@@ -50,7 +59,7 @@ func (s *Service) localAddEvent(
 			NewEvents: newEvents,
 		}), nil
 	} else if err != nil {
-		return nil, AsRiverError(err).Func("localAddEvent")
+		return nil, err
 	} else {
 		return connect.NewResponse(&AddEventResponse{
 			NewEvents: newEvents,
@@ -58,14 +67,58 @@ func (s *Service) localAddEvent(
 	}
 }
 
+// ensureStreamIsUpToDate returns the StreamView for the given StreamId that is up to date enough to
+// add the given parsedEvent.
+func (s *Service) ensureStreamIsUpToDate(
+	ctx context.Context,
+	streamView *StreamView,
+	parsedEvent *ParsedEvent,
+	localStream *Stream,
+) (*StreamView, error) {
+	retryCount := 0
+	backoff := BackoffTracker{
+		NextDelay:  100 * time.Millisecond,
+		Multiplier: 2,
+		Divisor:    1,
+	}
+	var err error
+
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	for {
+		stats := streamView.GetStats()
+		streamUpToDate := stats.LastMiniblockNum >= parsedEvent.MiniblockRef.Num
+		if streamUpToDate {
+			return streamView, nil
+		}
+
+		retryCount++
+		if retryCount == 5 { // schedules task after 100ms + 200ms + 400ms + 800ms = 1500ms
+			s.cache.SubmitSyncStreamTask(s.serverCtx, localStream)
+		}
+
+		if err := backoff.Wait(ctx, RiverError(Err_BAD_BLOCK_NUMBER, "Stream out-of-sync",
+			"streamBlockNum", stats.LastMiniblockNum,
+			"eventBlockNum", parsedEvent.MiniblockRef.Num)); err != nil {
+			return nil, err
+		}
+
+		streamView, err = localStream.GetViewIfLocal(ctx)
+		if err != nil {
+			return nil, err
+		}
+	}
+}
+
 func (s *Service) addParsedEvent(
 	ctx context.Context,
 	streamId StreamId,
 	parsedEvent *ParsedEvent,
-	localStream SyncStream,
-	streamView StreamView,
+	localStream *Stream,
+	streamView *StreamView,
 ) ([]*EventRef, error) {
-	// TODO: here it should loop and re-check the rules if view was updated in the meantime.
+	// TODO: REPLICATION: FIX: here it should loop and re-check the rules if view was updated in the meantime.
 	canAddEvent, verifications, sideEffects, err := rules.CanAddEvent(
 		ctx,
 		*s.config,
@@ -76,8 +129,17 @@ func (s *Service) addParsedEvent(
 		streamView,
 	)
 
-	if !canAddEvent || err != nil {
+	if err != nil {
+		if IsRiverErrorCode(err, Err_DUPLICATE_EVENT) {
+			// TODO: REPLICATION: FIX: implement returning relevant EventRefs here. How are they used in SDK?
+			return nil, nil
+		}
 		return nil, err
+	}
+
+	// TODO: REPLICATION: FIX: why canAddEvent exists? It doesn't seem to be correct to return nil, nil here.
+	if !canAddEvent {
+		return nil, nil
 	}
 
 	if len(verifications.OneOfChainAuths) > 0 {
@@ -145,14 +207,7 @@ func (s *Service) addParsedEvent(
 		}
 	}
 
-	stream := &replicatedStream{
-		streamId:    streamId.String(),
-		localStream: localStream,
-		nodes:       localStream,
-		service:     s,
-	}
-
-	err = stream.AddEvent(ctx, parsedEvent)
+	err = s.replicatedAddEvent(ctx, localStream, parsedEvent)
 	if err != nil {
 		return newParentEvents, err
 	}

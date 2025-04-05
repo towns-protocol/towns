@@ -7,22 +7,18 @@ import (
 	"strconv"
 	"time"
 
-	"go.uber.org/zap"
-
-	"github.com/river-build/river/core/node/rpc/sync"
-	"github.com/river-build/river/core/node/utils"
-
 	"connectrpc.com/connect"
+	"github.com/ethereum/go-ethereum/common"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/ethereum/go-ethereum/common"
-
-	. "github.com/river-build/river/core/node/base"
-	"github.com/river-build/river/core/node/logging"
-	. "github.com/river-build/river/core/node/protocol"
-	. "github.com/river-build/river/core/node/protocol/protocolconnect"
-	"github.com/river-build/river/core/node/shared"
-	"github.com/river-build/river/core/river_node/version"
+	. "github.com/towns-protocol/towns/core/node/base"
+	"github.com/towns-protocol/towns/core/node/logging"
+	. "github.com/towns-protocol/towns/core/node/protocol"
+	. "github.com/towns-protocol/towns/core/node/protocol/protocolconnect"
+	"github.com/towns-protocol/towns/core/node/rpc/sync"
+	"github.com/towns-protocol/towns/core/node/shared"
+	"github.com/towns-protocol/towns/core/node/utils"
+	"github.com/towns-protocol/towns/core/river_node/version"
 )
 
 func (s *Service) Info(
@@ -45,7 +41,7 @@ func (s *Service) Info(
 
 func (s *Service) info(
 	ctx context.Context,
-	log *zap.SugaredLogger,
+	log *logging.Log,
 	request *connect.Request[InfoRequest],
 ) (*connect.Response[InfoResponse], error) {
 	if len(request.Msg.Debug) > 0 {
@@ -201,14 +197,14 @@ func (s *Service) debugInfoMakeMiniblock(
 			Version:  v,
 		}), nil
 	} else {
-		return peerNodeRequestWithRetries(
+		return utils.PeerNodeRequestWithRetries(
 			ctx,
 			stream,
-			s,
 			func(ctx context.Context, stub StreamServiceClient) (*connect.Response[InfoResponse], error) {
 				return stub.Info(ctx, request)
 			},
-			-1,
+			s.config.Network.NumRetries,
+			s.nodeRegistry,
 		)
 	}
 }

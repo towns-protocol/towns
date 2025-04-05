@@ -6,10 +6,10 @@ import {
     UserPayload,
     UserPayload_Snapshot,
     UserPayload_UserMembership,
-} from '@river-build/proto'
+} from '@towns-protocol/proto'
 import { StreamEncryptionEvents, StreamEvents, StreamStateEvents } from './streamEvents'
 import { StreamStateView_AbstractContent } from './streamStateView_AbstractContent'
-import { bin_toHexString, check } from '@river-build/dlog'
+import { bin_toHexString, check } from '@towns-protocol/dlog'
 import { logNever } from './check'
 import { streamIdFromBytes } from './id'
 import { utils } from 'ethers'
@@ -19,6 +19,8 @@ export class StreamStateView_User extends StreamStateView_AbstractContent {
     readonly streamMemberships: { [key: string]: UserPayload_UserMembership } = {}
     tipsSent: { [key: string]: bigint } = {}
     tipsReceived: { [key: string]: bigint } = {}
+    tipsSentCount: { [key: string]: bigint } = {}
+    tipsReceivedCount: { [key: string]: bigint } = {}
 
     constructor(streamId: string) {
         super()
@@ -36,6 +38,8 @@ export class StreamStateView_User extends StreamStateView_AbstractContent {
         }
         this.tipsSent = { ...content.tipsSent }
         this.tipsReceived = { ...content.tipsReceived }
+        this.tipsSentCount = { ...content.tipsSentCount }
+        this.tipsReceivedCount = { ...content.tipsReceivedCount }
     }
 
     prependEvent(
@@ -93,7 +97,14 @@ export class StreamStateView_User extends StreamStateView_AbstractContent {
                         }
                         const currency = utils.getAddress(bin_toHexString(event.currency))
                         this.tipsSent[currency] = this.tipsSent[currency] ?? 0n + event.amount
+                        this.tipsSentCount[currency] = this.tipsSentCount[currency] ?? 0n + 1n
                         stateEmitter?.emit('userTipSent', this.streamId, currency, event.amount)
+                        break
+                    }
+                    case 'tokenTransfer':
+                        break
+                    case 'spaceReview': {
+                        // user left a review on a space
                         break
                     }
                     default:
@@ -115,7 +126,15 @@ export class StreamStateView_User extends StreamStateView_AbstractContent {
                         const currency = utils.getAddress(bin_toHexString(event.currency))
                         this.tipsReceived[currency] =
                             this.tipsReceived[currency] ?? 0n + event.amount
+                        this.tipsReceivedCount[currency] =
+                            this.tipsReceivedCount[currency] ?? 0n + 1n
                         stateEmitter?.emit('userTipReceived', this.streamId, currency, event.amount)
+                        break
+                    }
+                    case 'tokenTransfer':
+                        break
+                    case 'spaceReview': {
+                        // user left a review on a space
                         break
                     }
                     default:

@@ -2,11 +2,12 @@ package storage
 
 import (
 	"testing"
-
-	. "github.com/river-build/river/core/node/base"
-	"github.com/river-build/river/core/node/infra"
+	"time"
 
 	"github.com/stretchr/testify/require"
+
+	. "github.com/towns-protocol/towns/core/node/base"
+	"github.com/towns-protocol/towns/core/node/infra"
 )
 
 func TestMigrateExistingDb(t *testing.T) {
@@ -36,6 +37,7 @@ func TestMigrateExistingDb(t *testing.T) {
 		instanceId2,
 		exitSignal2,
 		infra.NewMetricsFactory(nil, "", ""),
+		time.Minute*10,
 	)
 	require.NoError(err)
 	defer pgStreamStore2.Close(ctx)

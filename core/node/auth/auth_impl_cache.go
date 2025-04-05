@@ -5,18 +5,17 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
-
-	"github.com/river-build/river/core/config"
-	. "github.com/river-build/river/core/node/base"
-	"github.com/river-build/river/core/node/logging"
-	"github.com/river-build/river/core/node/protocol"
-
 	lru "github.com/hashicorp/golang-lru/arc/v2"
+
+	"github.com/towns-protocol/towns/core/config"
+	. "github.com/towns-protocol/towns/core/node/base"
+	"github.com/towns-protocol/towns/core/node/logging"
+	"github.com/towns-protocol/towns/core/node/protocol"
 )
 
 type entitlementCache struct {
 	// Not using expirable version, as it retains the cache hits for a min TTL, but
-	// then continues to return that value as long as a hit happens in that tTL window.
+	// then continues to return that value as long as a hit happens in that TTL window.
 	// We want to return the value only if the cache is fresh, and not continue to return
 	positiveCache    *lru.ARCCache[ChainAuthArgs, entitlementCacheValue]
 	negativeCache    *lru.ARCCache[ChainAuthArgs, entitlementCacheValue]

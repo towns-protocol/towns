@@ -8,10 +8,10 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 
-	. "github.com/river-build/river/core/node/base"
-	. "github.com/river-build/river/core/node/crypto"
-	. "github.com/river-build/river/core/node/protocol"
-	. "github.com/river-build/river/core/node/shared"
+	. "github.com/towns-protocol/towns/core/node/base"
+	. "github.com/towns-protocol/towns/core/node/crypto"
+	. "github.com/towns-protocol/towns/core/node/protocol"
+	. "github.com/towns-protocol/towns/core/node/shared"
 )
 
 type ParsedEvent struct {
@@ -34,7 +34,7 @@ func (e *ParsedEvent) GetEnvelopeBytes() ([]byte, error) {
 }
 
 func ParseEvent(envelope *Envelope) (*ParsedEvent, error) {
-	hash := RiverHash(envelope.Event)
+	hash := TownsHashForEvents.Hash(envelope.Event)
 	if !bytes.Equal(hash[:], envelope.Hash) {
 		return nil, RiverError(Err_BAD_EVENT_HASH, "Bad hash provided", "computed", hash, "got", envelope.Hash)
 	}
@@ -75,13 +75,18 @@ func ParseEvent(envelope *Envelope) (*ParsedEvent, error) {
 		}
 	}
 
+	prevMiniblockNum := int64(-1)
+	if streamEvent.PrevMiniblockNum != nil {
+		prevMiniblockNum = *streamEvent.PrevMiniblockNum
+	}
+
 	return &ParsedEvent{
 		Event:    &streamEvent,
 		Envelope: envelope,
 		Hash:     common.BytesToHash(envelope.Hash),
 		MiniblockRef: &MiniblockRef{
 			Hash: common.BytesToHash(streamEvent.PrevMiniblockHash),
-			Num:  streamEvent.PrevMiniblockNum,
+			Num:  prevMiniblockNum,
 		},
 		SignerPubKey: signerPubKey,
 	}, nil
@@ -148,6 +153,27 @@ func (e *ParsedEvent) GetChannelMessage() *ChannelPayload_Message {
 		switch cp := payload.ChannelPayload.Content.(type) {
 		case *ChannelPayload_Message:
 			return cp
+		}
+	}
+	return nil
+}
+
+func (e *ParsedEvent) GetEncryptedMessage() *EncryptedData {
+	switch payload := e.Event.Payload.(type) {
+	case *StreamEvent_ChannelPayload:
+		switch cp := payload.ChannelPayload.Content.(type) {
+		case *ChannelPayload_Message:
+			return cp.Message
+		}
+	case *StreamEvent_DmChannelPayload:
+		switch cp := payload.DmChannelPayload.Content.(type) {
+		case *DmChannelPayload_Message:
+			return cp.Message
+		}
+	case *StreamEvent_GdmChannelPayload:
+		switch cp := payload.GdmChannelPayload.Content.(type) {
+		case *GdmChannelPayload_Message:
+			return cp.Message
 		}
 	}
 	return nil

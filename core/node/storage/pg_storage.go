@@ -20,11 +20,11 @@ import (
 	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap/zapcore"
 
-	"github.com/river-build/river/core/config"
-	. "github.com/river-build/river/core/node/base"
-	"github.com/river-build/river/core/node/infra"
-	"github.com/river-build/river/core/node/logging"
-	. "github.com/river-build/river/core/node/protocol"
+	"github.com/towns-protocol/towns/core/config"
+	. "github.com/towns-protocol/towns/core/node/base"
+	"github.com/towns-protocol/towns/core/node/infra"
+	"github.com/towns-protocol/towns/core/node/logging"
+	. "github.com/towns-protocol/towns/core/node/protocol"
 )
 
 type PostgresEventStore struct {
@@ -93,25 +93,6 @@ func (s *PostgresEventStore) txRunnerInner(
 	return nil
 }
 
-type backoffTracker struct {
-	last time.Duration
-}
-
-// Retries first attempt immediately, next waits for 50ms, then multipled by 1.5 each time.
-func (b *backoffTracker) wait(ctx context.Context) error {
-	if b.last == 0 {
-		b.last = 50 * time.Millisecond
-		return nil
-	}
-	select {
-	case <-ctx.Done():
-		return ctx.Err()
-	case <-time.After(b.last):
-		b.last = b.last * 3 / 2
-		return nil
-	}
-}
-
 func (s *PostgresEventStore) txRunner(
 	ctx context.Context,
 	name string,
@@ -130,7 +111,7 @@ func (s *PostgresEventStore) txRunner(
 
 	defer prometheus.NewTimer(s.txDuration.WithLabelValues(name)).ObserveDuration()
 
-	var backoff backoffTracker
+	var backoff BackoffTracker
 	s.txTracker.track("START", name, tags...)
 	for {
 		err := s.txRunnerInner(ctx, accessMode, txFn, opts)
@@ -146,7 +127,7 @@ func (s *PostgresEventStore) txRunner(
 						"txTracker", s.txTracker.dump(),
 					)
 
-					backoffErr := backoff.wait(ctx)
+					backoffErr := backoff.Wait(ctx, err)
 					if backoffErr != nil {
 						s.txTracker.track("RETRY_TIMEOUT", name, tags...)
 						return AsRiverError(backoffErr).Func(name).Message("Timed out waiting for backoff")
@@ -212,7 +193,9 @@ func createPgxPool(
 
 	// In general, it should be possible to add database schema name into database url as a parameter search_path (&search_path=database_schema_name)
 	// For some reason it doesn't work so have to put it into config explicitly
-	poolConf.ConnConfig.RuntimeParams["search_path"] = databaseSchemaName
+	if databaseSchemaName != "" {
+		poolConf.ConnConfig.RuntimeParams["search_path"] = databaseSchemaName
+	}
 	poolConf.ConnConfig.RuntimeParams["application_name"] = name
 
 	poolConf.ConnConfig.DefaultQueryExecMode = pgx.QueryExecModeSimpleProtocol
@@ -297,8 +280,6 @@ func (s *PostgresEventStore) init(
 ) error {
 	log := logging.FromCtx(ctx)
 
-	setupPostgresMetrics(ctx, *poolInfo, metrics)
-
 	s.config = poolInfo.Config
 	s.pool = poolInfo.Pool
 	s.poolConfig = poolInfo.PoolConfig
@@ -324,15 +305,13 @@ func (s *PostgresEventStore) init(
 		s.isolationLevel = pgx.Serializable
 	case "repeatable read", "repeatable_read", "repeatableread":
 		s.isolationLevel = pgx.RepeatableRead
-	case "read committed", "read_committed", "readcommitted":
+	case "read committed", "read_committed", "readcommitted", "":
 		s.isolationLevel = pgx.ReadCommitted
 	default:
-		s.isolationLevel = pgx.Serializable
+		return RiverError(Err_BAD_CONFIG, "Unknown IsolationLevel in config", "value", poolInfo.Config.IsolationLevel)
 	}
 
-	if s.isolationLevel != pgx.Serializable {
-		log.Infow("PostgresEventStore: using isolation level", "level", s.isolationLevel)
-	}
+	log.Infow("PostgresEventStore: using isolation level", "level", s.isolationLevel)
 
 	if s.config.DebugTransactions {
 		s.txTracker.enable()
@@ -341,6 +320,11 @@ func (s *PostgresEventStore) init(
 	err := s.InitStorage(ctx)
 	if err != nil {
 		return err
+	}
+
+	// Delay the creation of metrics until after the schema has been created.
+	if err := setupPostgresMetrics(ctx, *poolInfo, metrics); err != nil {
+		return WrapRiverError(Err_DB_OPERATION_FAILURE, err).Message("Unable to set up postgres metrics for db")
 	}
 
 	return nil

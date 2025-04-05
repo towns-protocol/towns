@@ -6,36 +6,80 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/gammazero/workerpool"
 
-	. "github.com/river-build/river/core/node/base"
-	"github.com/river-build/river/core/node/logging"
-	. "github.com/river-build/river/core/node/protocol"
-	. "github.com/river-build/river/core/node/shared"
+	. "github.com/towns-protocol/towns/core/node/base"
+	"github.com/towns-protocol/towns/core/node/logging"
+	. "github.com/towns-protocol/towns/core/node/protocol"
+	"github.com/towns-protocol/towns/core/node/registries"
 )
 
-func (s *streamCacheImpl) submitSyncStreamTask(
+func (s *StreamCache) SubmitSyncStreamTask(
 	ctx context.Context,
-	pool *workerpool.WorkerPool,
-	streamId StreamId,
-	lastMbInContract *MiniblockRef,
+	stream *Stream,
 ) {
-	pool.Submit(func() {
-		err := s.syncStreamFromPeers(ctx, streamId, lastMbInContract)
-		if err != nil {
-			logging.FromCtx(ctx).
-				Errorw("Unable to sync stream from peers", "stream", streamId, "error", err, "targetMiniblockNum", lastMbInContract.Num)
-		}
-	})
+	s.stoppedMu.RLock()
+	defer s.stoppedMu.RUnlock()
+
+	if !s.stopped {
+		s.submitSyncStreamTaskToPool(ctx, s.onlineSyncWorkerPool, stream, nil)
+	}
 }
 
-// syncStreamFromPeers syncs the database for the given streamResult by fetching missing blocks from peers
+func (s *StreamCache) submitSyncStreamTaskToPool(
+	ctx context.Context,
+	pool *workerpool.WorkerPool,
+	stream *Stream,
+	streamRecord *registries.GetStreamResult,
+) {
+	s.onlineSyncStreamTasksInProgressMu.Lock()
+	if s.onlineSyncStreamTasksInProgress.Add(stream.StreamId()) {
+		pool.Submit(func() {
+			s.syncStreamFromPeers(ctx, stream, streamRecord)
+			s.onlineSyncStreamTasksInProgressMu.Lock()
+			s.onlineSyncStreamTasksInProgress.Remove(stream.StreamId())
+			s.onlineSyncStreamTasksInProgressMu.Unlock()
+		})
+	}
+	s.onlineSyncStreamTasksInProgressMu.Unlock()
+}
+
+func (s *StreamCache) syncStreamFromPeers(
+	ctx context.Context,
+	stream *Stream,
+	streamRecord *registries.GetStreamResult,
+) {
+	var err error
+	if streamRecord == nil {
+		streamRecord, err = s.params.Registry.GetStreamOnLatestBlock(ctx, stream.streamId)
+		if err != nil {
+			logging.FromCtx(ctx).
+				Errorw("syncStreamFromPeers:Unable to get stream record",
+					"stream", stream.streamId,
+					"error", err)
+			return
+		}
+	}
+
+	err = s.syncStreamFromPeersImpl(ctx, stream, streamRecord)
+	if err != nil {
+		logging.FromCtx(ctx).
+			Errorw("syncStreamFromPeers: Unable to sync stream from peers",
+				"stream", stream.streamId,
+				"error", err,
+				"streamRecord", streamRecord)
+	}
+}
+
+// syncStreamFromPeersImpl syncs the database for the given streamResult by fetching missing blocks from peers
 // participating in the stream.
 // TODO: change. It is assumed that stream is already in the local DB and only miniblocks maybe in the need of syncing.
-func (s *streamCacheImpl) syncStreamFromPeers(
+func (s *StreamCache) syncStreamFromPeersImpl(
 	ctx context.Context,
-	streamId StreamId,
-	lastMbInContract *MiniblockRef,
+	stream *Stream,
+	streamRecord *registries.GetStreamResult,
 ) error {
-	stream, err := s.getStreamImpl(ctx, streamId, false)
+	// TODO: double check if this is correct to normalize here
+	// Try to normalize the given stream if needed.
+	err := s.normalizeEphemeralStream(ctx, stream, int64(streamRecord.LastMiniblockNum), streamRecord.IsSealed)
 	if err != nil {
 		return err
 	}
@@ -49,16 +93,16 @@ func (s *streamCacheImpl) syncStreamFromPeers(
 		}
 	}
 
-	if lastMbInContract.Num <= lastMiniblockNum {
+	if int64(streamRecord.LastMiniblockNum) <= lastMiniblockNum {
 		return nil
 	}
 
 	fromInclusive := lastMiniblockNum + 1
-	toExclusive := lastMbInContract.Num + 1
+	toExclusive := int64(streamRecord.LastMiniblockNum) + 1
 
 	remotes, _ := stream.GetRemotesAndIsLocal()
 	if len(remotes) == 0 {
-		return RiverError(Err_UNAVAILABLE, "Stream has no remotes", "stream", streamId)
+		return RiverError(Err_UNAVAILABLE, "Stream has no remotes", "stream", stream.streamId)
 	}
 
 	remote := stream.GetStickyPeer()
@@ -72,15 +116,15 @@ func (s *streamCacheImpl) syncStreamFromPeers(
 	}
 
 	return AsRiverError(err, Err_UNAVAILABLE).
-		Tags("stream", streamId, "missingFromInclusive", nextFromInclusive, "missingToExlusive", toExclusive).
+		Tags("stream", stream.streamId, "missingFromInclusive", nextFromInclusive, "missingToExlusive", toExclusive).
 		Message("No peer could provide miniblocks for stream reconciliation")
 }
 
 // syncStreamFromSinglePeer syncs the database for the given streamResult by fetching missing blocks from a single peer.
 // It returns block number of last block successfully synced + 1.
-func (s *streamCacheImpl) syncStreamFromSinglePeer(
+func (s *StreamCache) syncStreamFromSinglePeer(
 	ctx context.Context,
-	stream *streamImpl,
+	stream *Stream,
 	remote common.Address,
 	fromInclusive int64,
 	toExclusive int64,
@@ -98,7 +142,7 @@ func (s *streamCacheImpl) syncStreamFromSinglePeer(
 
 		currentToExclusive := min(currentFromInclusive+pageSize, toExclusive)
 
-		mbProtos, err := s.params.RemoteMiniblockProvider.GetMbs(
+		mbs, err := s.params.RemoteMiniblockProvider.GetMbs(
 			ctx,
 			remote,
 			stream.streamId,
@@ -109,20 +153,8 @@ func (s *streamCacheImpl) syncStreamFromSinglePeer(
 			return currentFromInclusive, err
 		}
 
-		if len(mbProtos) == 0 {
+		if len(mbs) == 0 {
 			return currentFromInclusive, nil
-		}
-
-		mbs := make([]*MiniblockInfo, len(mbProtos))
-		for i, mbProto := range mbProtos {
-			mb, err := NewMiniblockInfoFromProto(
-				mbProto,
-				NewParsedMiniblockInfoOpts().WithExpectedBlockNumber(currentFromInclusive+int64(i)),
-			)
-			if err != nil {
-				return currentFromInclusive, err
-			}
-			mbs[i] = mb
 		}
 
 		err = stream.importMiniblocks(ctx, mbs)

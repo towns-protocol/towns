@@ -1,15 +1,15 @@
 quiet: False
 disable-version-string: True
 with-expecter: False
-dir: "testutils/mocks"
-filename: "mock_{{.InterfaceNameSnake}}.go"
-outpkg: "mocks"
+dir: 'testutils/mocks'
+filename: 'mock_{{.InterfaceNameSnake}}.go'
+outpkg: 'mocks'
 packages:
-    github.com/river-build/river/core/node/nodes:
+    github.com/towns-protocol/towns/core/node/nodes:
         interfaces:
             NodeRegistry:
             StreamRegistry:
-    github.com/river-build/river/core/node/protocol/protocolconnect:
+    github.com/towns-protocol/towns/core/node/protocol/protocolconnect:
         interfaces:
             StreamServiceClient:
-
+            NodeToNodeHandler:

@@ -12,7 +12,7 @@ There are two local environments available:
 - multi_ne - no entitlements
 - multi - entitlements are enabled
 
-Environment name always needs to be provided through RUN_ENV variable.
+The environment name always needs to be provided through RUN_ENV variable.
 
 Config, build and start in background:
 
@@ -30,7 +30,7 @@ Just build:
 
     just RUN_ENV=multi build
 
-Just start with existing config and binary:
+Just start with the existing config and binary:
 
     just RUN_ENV=multi start
 
@@ -40,12 +40,11 @@ Restart after rebuilding with current changes:
 
 # Building and running go tests
 
-MLS lib needs to be built for some tests to run, there are just commands that build and configure lib and then run go tests:
+There are just commands to run go tests, `go test` works too:
 
     just test ./...  # Run go test
     just test-all # Run all go tests from module root
     just t # Run all tests from current dir
-    just build-mls # Rebuild mls without running tests
 
     just t-debug -run TestMyName  # Run TestMyName with info logging and test printing
     just t-debug-debug -run TestMyName  # Run TestMyName with debug logging and test printing
@@ -53,7 +52,7 @@ MLS lib needs to be built for some tests to run, there are just commands that bu
 # Running the archiver service locally against different environments
 
 To run a local archiver service that downloads from various public networks, use the `run.sh` command
-for that environment and pass in specific configuration to store the data in the local database, which
+for that environment and pass in a specific configuration to store the data in the local database, which
 is written in `core/env/local/archiver/config.yaml`.
 
 ## Example: Running against omega nodes
@@ -62,9 +61,12 @@ is written in `core/env/local/archiver/config.yaml`.
 # Make sure postgres container is running
 ./scripts/launch_storage.sh
 
-# Make sure to use an absolute path to refer to the archiver-local.yaml file
+# Make sure to use an absolute path to refer to the archiver/config.yaml file
 # populate RIVER_REPO_PATH with the absolute path to the root of your river repository
 ./env/omega/run.sh archive -c $RIVER_REPO_PATH/core/env/local/archiver/config.yaml
+
+# For formatted logs, try the following. pino-pretty should be installed with `yarn build`
+./env/omega/run.sh archive -c $RIVER_REPO_PATH/core/env/local/archiver/config.yaml | yarn exec pino-pretty
 ```
 
 ## Example: Running against gamma nodes
@@ -72,16 +74,41 @@ is written in `core/env/local/archiver/config.yaml`.
 ```
 ./scripts/launch_storage.sh
 
-./env/gamma/run.sh archive -c $RIVER_REPO_PATH/core/env/archiver/config.yaml
+./env/gamma/run.sh archive -c $RIVER_REPO_PATH/core/env/local/archiver/config.yaml | yarn exec pino-pretty
 ```
 
 **Note:** some networks, such as omega, may have hundreds of gigabytes of stream data available. Be sure to increase the maximum storage, CPU and/or memory of your docker service / postgres container appropriately so it can handle the load.
 
-# Installing just
+# Running the app registry service locally against different environments
+
+To run a local app registry service that checks against the streams and contracts from various public networks, use the `run.sh` command for that environment and pass in a specific configuration to encrypt shared secrets stored on disk, sign authentication tokens, and store app data in the local database, which is written in `core/env/local/app-registry/config.yaml`.
+
+## Example: Running against omega nodes
+
+```
+# Make sure postgres container is running
+./scripts/launch_storage.sh
+
+# Make sure to use an absolute path to refer to the app-registry/config.yaml file
+# populate RIVER_REPO_PATH with the absolute path to the root of your river repository
+./env/omega/run.sh app-registry -c $RIVER_REPO_PATH/core/env/local/app-registry/config.yaml | yarn exec pino-pretty
+```
+
+## Example: Running against gamma nodes
+
+```
+./scripts/launch_storage.sh
+
+./env/gamma/run.sh app-registry -c $RIVER_REPO_PATH/core/env/local/app-registry/config.yaml | yarn exec pino-pretty
+```
+
+# Installing Dependencies
+
+## just
 
     brew install just
 
-# Installing protoc and Buf
+## protoc and Buf
 
     brew install protobuf@3
     brew link --overwrite protobuf@3
@@ -124,7 +151,7 @@ Run node tests:
 
 Build is incremental, as such it may get confused when packages are updated or branches are switched.
 
-Clean build artificats and rebuild:
+Clean build artifacts and rebuild:
 
     yarn csb:clean
     yarn csb:build

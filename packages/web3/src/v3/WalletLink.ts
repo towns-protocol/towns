@@ -247,6 +247,10 @@ export class WalletLink {
         return this.walletLinkShim.read.getWalletsByRootKey(rootKey)
     }
 
+    public async getLinkedWalletsWithDelegations(rootKey: string): Promise<string[]> {
+        return this.walletLinkShim.read.getWalletsByRootKeyWithDelegations(rootKey)
+    }
+
     public getRootKeyForWallet(wallet: string): Promise<string> {
         return this.walletLinkShim.read.getRootKeyForWallet(wallet)
     }
@@ -321,9 +325,10 @@ export class WalletLink {
         value: any,
     ): Promise<string> {
         if ('_signTypedData' in signer && typeof signer._signTypedData === 'function') {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-call
             return (await signer._signTypedData(domain, types, value)) as string
         } else {
-            throw new Error('wallet does not have the funciton to sign typed data')
+            throw new Error('wallet does not have the function to sign typed data')
         }
     }
 

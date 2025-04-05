@@ -8,10 +8,10 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 
-	"github.com/river-build/river/core/contracts/base"
-	"github.com/river-build/river/core/contracts/types"
-	"github.com/river-build/river/core/contracts/types/test_util"
-	"github.com/river-build/river/core/node/base/test"
+	"github.com/towns-protocol/towns/core/contracts/base"
+	"github.com/towns-protocol/towns/core/contracts/types"
+	"github.com/towns-protocol/towns/core/contracts/types/test_util"
+	"github.com/towns-protocol/towns/core/node/base/test"
 )
 
 func TestEncodeDecodeThresholdParams(t *testing.T) {

@@ -2,9 +2,9 @@ import {
     ISpaceOwner as LocalhostContract,
     ISpaceOwnerBase as LocalhostISpaceOwnerBase,
     ISpaceOwnerInterface as LocalhostInterface,
-} from '@river-build/generated/dev/typings/ISpaceOwner'
+} from '@towns-protocol/generated/dev/typings/ISpaceOwner'
 
-import LocalhostAbi from '@river-build/generated/dev/abis/SpaceOwner.abi.json' assert { type: 'json' }
+import LocalhostAbi from '@towns-protocol/generated/dev/abis/SpaceOwner.abi.json' assert { type: 'json' }
 
 import { ethers } from 'ethers'
 import { BaseContractShim } from './BaseContractShim'

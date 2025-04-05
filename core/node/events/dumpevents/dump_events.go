@@ -2,13 +2,12 @@ package dumpevents
 
 import (
 	"bytes"
-	"context"
 	"fmt"
 	"io"
 	"strings"
 
-	. "github.com/river-build/river/core/node/events"
-	. "github.com/river-build/river/core/node/protocol"
+	. "github.com/towns-protocol/towns/core/node/events"
+	. "github.com/towns-protocol/towns/core/node/protocol"
 )
 
 type DumpOpts struct {
@@ -136,7 +135,7 @@ func DumpMiniblockW(w io.Writer, mb *MiniblockInfo, opts DumpOpts) {
 	}
 }
 
-func DumpStreamViewW(w io.Writer, view StreamView, opts DumpOpts) {
+func DumpStreamViewW(w io.Writer, view *StreamView, opts DumpOpts) {
 	fmt.Fprintf(w, "%sSTREAM %v miniblocks: %d\n", opts.Prefix, view.StreamId(), len(view.Miniblocks()))
 
 	o := opts
@@ -152,14 +151,14 @@ func DumpStreamViewW(w io.Writer, view StreamView, opts DumpOpts) {
 	}
 }
 
-func DumpStreamView(view StreamView, opts DumpOpts) string {
+func DumpStreamView(view *StreamView, opts DumpOpts) string {
 	var buf bytes.Buffer
 	DumpStreamViewW(&buf, view, opts)
 	return buf.String()
 }
 
-func DumpStreamW(ctx context.Context, w io.Writer, stream *StreamAndCookie, opts DumpOpts) {
-	view, err := MakeRemoteStreamView(ctx, stream)
+func DumpStreamW(w io.Writer, stream *StreamAndCookie, opts DumpOpts) {
+	view, err := MakeRemoteStreamView(stream)
 	if err != nil {
 		fmt.Fprintf(w, "error: %v\n", err)
 		return
@@ -167,8 +166,8 @@ func DumpStreamW(ctx context.Context, w io.Writer, stream *StreamAndCookie, opts
 	DumpStreamViewW(w, view, opts)
 }
 
-func DumpStream(ctx context.Context, stream *StreamAndCookie, opts DumpOpts) string {
+func DumpStream(stream *StreamAndCookie, opts DumpOpts) string {
 	var buf bytes.Buffer
-	DumpStreamW(ctx, &buf, stream, opts)
+	DumpStreamW(&buf, stream, opts)
 	return buf.String()
 }

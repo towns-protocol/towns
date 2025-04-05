@@ -3,19 +3,20 @@ package rpc
 import (
 	"context"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"connectrpc.com/connect"
 	"github.com/ethereum/go-ethereum/common"
 	"google.golang.org/protobuf/proto"
 
-	. "github.com/river-build/river/core/node/base"
-	. "github.com/river-build/river/core/node/events"
-	"github.com/river-build/river/core/node/logging"
-	. "github.com/river-build/river/core/node/nodes"
-	. "github.com/river-build/river/core/node/protocol"
-	"github.com/river-build/river/core/node/rules"
-	. "github.com/river-build/river/core/node/shared"
+	. "github.com/towns-protocol/towns/core/node/base"
+	. "github.com/towns-protocol/towns/core/node/events"
+	"github.com/towns-protocol/towns/core/node/logging"
+	. "github.com/towns-protocol/towns/core/node/nodes"
+	. "github.com/towns-protocol/towns/core/node/protocol"
+	"github.com/towns-protocol/towns/core/node/rules"
+	. "github.com/towns-protocol/towns/core/node/shared"
 )
 
 func (s *Service) createStreamImpl(
@@ -80,7 +81,7 @@ func (s *Service) createStream(ctx context.Context, req *CreateStreamRequest) (*
 	if csRules.RequiredMemberships != nil {
 		// load the creator's user stream
 		stream, err := s.loadStream(ctx, csRules.CreatorStreamId)
-		var creatorStreamView StreamView
+		var creatorStreamView *StreamView
 		if err == nil {
 			creatorStreamView, err = stream.GetView(ctx)
 		}
@@ -92,7 +93,7 @@ func (s *Service) createStream(ctx context.Context, req *CreateStreamRequest) (*
 			if err != nil {
 				return nil, nil, RiverError(Err_BAD_STREAM_CREATION_PARAMS, "invalid stream id", "err", err)
 			}
-			if !creatorStreamView.(UserStreamView).IsMemberOf(streamId) {
+			if !creatorStreamView.IsMemberOf(streamId) {
 				return nil, nil, RiverError(Err_PERMISSION_DENIED, "not a member of", "requiredStreamId", streamId)
 			}
 		}
@@ -156,7 +157,7 @@ func (s *Service) createReplicatedStream(
 	streamId StreamId,
 	parsedEvents []*ParsedEvent,
 ) (*StreamAndCookie, error) {
-	mb, err := MakeGenesisMiniblock(s.wallet, parsedEvents)
+	mb, sn, err := MakeGenesisMiniblock(s.wallet, parsedEvents)
 	if err != nil {
 		return nil, err
 	}
@@ -171,13 +172,13 @@ func (s *Service) createReplicatedStream(
 		return nil, err
 	}
 
-	nodes := NewStreamNodesWithLock(nodesList, s.wallet.Address)
+	nodes := NewStreamNodesWithLock(len(nodesList), nodesList, s.wallet.Address)
 	remotes, isLocal := nodes.GetRemotesAndIsLocal()
-	sender := NewQuorumPool("method", "createReplicatedStream", "streamId", streamId)
+	sender := NewQuorumPool(ctx, NewQuorumPoolOpts().WriteMode().WithTags("method", "createReplicatedStream", "streamId", streamId))
 
-	var localSyncCookie *SyncCookie
+	var localSyncCookie atomic.Pointer[SyncCookie]
 	if isLocal {
-		sender.GoLocal(ctx, func(ctx context.Context) error {
+		sender.AddTask(func(ctx context.Context) error {
 			st, err := s.cache.GetStreamNoWait(ctx, streamId)
 			if err != nil {
 				return err
@@ -186,7 +187,7 @@ func (s *Service) createReplicatedStream(
 			if err != nil {
 				return err
 			}
-			localSyncCookie = sv.SyncCookie(s.wallet.Address)
+			localSyncCookie.Store(sv.SyncCookie(s.wallet.Address))
 			return nil
 		})
 	}
@@ -194,7 +195,7 @@ func (s *Service) createReplicatedStream(
 	var remoteSyncCookie *SyncCookie
 	var remoteSyncCookieOnce sync.Once
 	if len(remotes) > 0 {
-		sender.GoRemotes(ctx, remotes, func(ctx context.Context, node common.Address) error {
+		sender.AddNodeTasks(remotes, func(ctx context.Context, node common.Address) error {
 			stub, err := s.nodeRegistry.GetNodeToNodeClientForAddress(node)
 			if err != nil {
 				return err
@@ -205,6 +206,7 @@ func (s *Service) createReplicatedStream(
 					&AllocateStreamRequest{
 						StreamId:  streamId[:],
 						Miniblock: mb,
+						Snapshot:  sn,
 					},
 				),
 			)
@@ -223,7 +225,7 @@ func (s *Service) createReplicatedStream(
 		return nil, err
 	}
 
-	cookie := localSyncCookie
+	cookie := localSyncCookie.Load()
 	if cookie == nil {
 		cookie = remoteSyncCookie
 	}
@@ -231,5 +233,6 @@ func (s *Service) createReplicatedStream(
 	return &StreamAndCookie{
 		NextSyncCookie: cookie,
 		Miniblocks:     []*Miniblock{mb},
+		Snapshot:       sn,
 	}, nil
 }

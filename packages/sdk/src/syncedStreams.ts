@@ -1,5 +1,5 @@
-import { SyncCookie } from '@river-build/proto'
-import { DLogger, check, dlog, dlogError, shortenHexString } from '@river-build/dlog'
+import { SyncCookie } from '@towns-protocol/proto'
+import { DLogger, check, dlog, dlogError } from '@towns-protocol/dlog'
 import { StreamRpcClient } from './makeStreamRpcClient'
 import { SyncedStreamEvents } from './streamEvents'
 import TypedEmitter from 'typed-emitter'
@@ -11,13 +11,13 @@ import { UnpackEnvelopeOpts } from './sign'
 
 export class SyncedStreams {
     private syncedStreamsLoop: SyncedStreamsLoop | undefined
+    private highPriorityIds: Set<string> = new Set()
     // userId is the current user id
     private readonly userId: string
-    private readonly logNamespace: string
     // mapping of stream id to stream
     private readonly streams: Map<string, SyncedStream> = new Map()
     // loggers
-    private readonly logSync: DLogger
+    private readonly log: DLogger
     private readonly logError: DLogger
     // clientEmitter is used to proxy the events from the streams to the client
     private readonly clientEmitter: TypedEmitter<SyncedStreamEvents>
@@ -29,15 +29,14 @@ export class SyncedStreams {
         rpcClient: StreamRpcClient,
         clientEmitter: TypedEmitter<SyncedStreamEvents>,
         private readonly unpackEnvelopeOpts: UnpackEnvelopeOpts | undefined,
+        private readonly logId: string,
+        private readonly streamOpts?: { useModifySync?: boolean },
     ) {
         this.userId = userId
         this.rpcClient = rpcClient
         this.clientEmitter = clientEmitter
-        this.logNamespace = shortenHexString(
-            this.userId.startsWith('0x') ? this.userId.slice(2) : this.userId,
-        )
-        this.logSync = dlog('csb:cl:sync').extend(this.logNamespace)
-        this.logError = dlogError('csb:cl:sync:stream').extend(this.logNamespace)
+        this.log = dlog('csb:cl:sync').extend(this.logId)
+        this.logError = dlogError('csb:cl:sync:stream').extend(this.logId)
     }
 
     public get syncState(): SyncState {
@@ -67,6 +66,11 @@ export class SyncedStreams {
         this.streams.set(id, stream)
     }
 
+    public setHighPriorityStreams(streamIds: string[]) {
+        this.highPriorityIds = new Set(streamIds)
+        this.syncedStreamsLoop?.setHighPriorityStreams(streamIds)
+    }
+
     public delete(inStreamId: string | Uint8Array): void {
         const streamId = streamIdAsString(inStreamId)
         this.streams.get(streamId)?.stop()
@@ -91,14 +95,10 @@ export class SyncedStreams {
 
     public onNetworkStatusChanged(isOnline: boolean) {
         this.log('network status changed. Network online?', isOnline)
-        if (isOnline) {
-            // immediate retry if the network comes back online
-            this.log('back online, release retry wait', { syncState: this.syncState })
-            this.syncedStreamsLoop?.releaseRetryWait?.()
-        }
+        this.syncedStreamsLoop?.onNetworkStatusChanged(isOnline)
     }
 
-    public async startSyncStreams() {
+    public startSyncStreams() {
         const streamRecords = Array.from(this.streams.values())
             .filter((x) => isDefined(x.syncCookie))
             .map((stream) => ({ syncCookie: stream.syncCookie!, stream }))
@@ -107,10 +107,12 @@ export class SyncedStreams {
             this.clientEmitter,
             this.rpcClient,
             streamRecords,
-            this.logNamespace,
+            this.logId,
             this.unpackEnvelopeOpts,
+            this.highPriorityIds,
+            this.streamOpts,
         )
-        await this.syncedStreamsLoop.start()
+        this.syncedStreamsLoop.start()
     }
 
     public async stopSync() {
@@ -119,8 +121,10 @@ export class SyncedStreams {
     }
 
     // adds stream to the sync subscription
-    public async addStreamToSync(syncCookie: SyncCookie): Promise<void> {
-        const streamId = streamIdAsString(syncCookie.streamId)
+    public addStreamToSync(streamId: string, syncCookie: SyncCookie): void {
+        if (!this.syncedStreamsLoop) {
+            return
+        }
         this.log('addStreamToSync', streamId)
         const stream = this.streams.get(streamId)
         if (!stream) {
@@ -128,7 +132,7 @@ export class SyncedStreams {
             this.logError('streamId not in this.streams, not adding to sync', streamId)
             return
         }
-        await this.syncedStreamsLoop?.addStreamToSync(syncCookie, stream)
+        this.syncedStreamsLoop.addStreamToSync(streamId, syncCookie, stream)
     }
 
     // remove stream from the sync subsbscription
@@ -142,9 +146,5 @@ export class SyncedStreams {
         }
         await this.syncedStreamsLoop?.removeStreamFromSync(streamId)
         this.streams.delete(streamId)
-    }
-
-    private log(...args: unknown[]): void {
-        this.logSync(...args)
     }
 }

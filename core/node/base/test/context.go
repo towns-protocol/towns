@@ -2,19 +2,19 @@ package test
 
 import (
 	"context"
-	"log/slog"
 	"os"
 
-	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 
-	"github.com/river-build/river/core/node/logging"
+	"github.com/towns-protocol/towns/core/node/logging"
 )
 
 func NewTestContext() (context.Context, context.CancelFunc) {
 	logLevel := os.Getenv("RIVER_TEST_LOG")
 	if logLevel == "" {
 		//lint:ignore LE0000 context.Background() used correctly
-		ctx := logging.CtxWithLog(context.Background(), zap.NewNop().Sugar())
+		ctx := logging.CtxWithLog(context.Background(), logging.NoopLogger())
+
 		return context.WithCancel(ctx)
 	} else {
 		return NewTestContextWithLogging(logLevel)
@@ -22,13 +22,13 @@ func NewTestContext() (context.Context, context.CancelFunc) {
 }
 
 func NewTestContextWithLogging(logLevel string) (context.Context, context.CancelFunc) {
-	var level slog.Level
+	var level zapcore.Level
 	err := level.UnmarshalText([]byte(logLevel))
 	if err != nil {
-		level = slog.LevelInfo
+		level = zapcore.InfoLevel
 	}
 
 	//lint:ignore LE0000 context.Background() used correctly
-	ctx := logging.CtxWithLog(context.Background(), logging.DefaultZapLogger())
+	ctx := logging.CtxWithLog(context.Background(), logging.DefaultLogger(level))
 	return context.WithCancel(ctx)
 }

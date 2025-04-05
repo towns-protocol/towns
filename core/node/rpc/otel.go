@@ -14,11 +14,11 @@ import (
 	semconv "go.opentelemetry.io/otel/semconv/v1.26.0"
 	"go.uber.org/zap"
 
-	"github.com/river-build/river/core/node/utils"
-	"github.com/river-build/river/core/river_node/version"
+	"github.com/towns-protocol/towns/core/node/utils"
+	"github.com/towns-protocol/towns/core/river_node/version"
 )
 
-func (s *Service) initTracing() {
+func (s *Service) initTracing(serviceName, instanceID string) {
 	if !s.config.PerformanceTracking.TracingEnabled {
 		return
 	}
@@ -98,8 +98,8 @@ func (s *Service) initTracing() {
 	res, err := resource.New(
 		s.serverCtx,
 		resource.WithAttributes(
-			semconv.ServiceName("river-stream"),
-			semconv.ServiceInstanceID(s.wallet.String()),
+			semconv.ServiceName(serviceName),
+			semconv.ServiceInstanceID(instanceID),
 			semconv.ServiceVersion(version.GetFullVersion()),
 		),
 	)

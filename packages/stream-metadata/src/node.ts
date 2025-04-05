@@ -112,7 +112,7 @@ export function setupRoutes(srv: Server) {
 	srv.get('/space/:spaceAddress/image', fetchSpaceImage)
 	srv.get('/space/:spaceAddress/image/:eventId', fetchSpaceImage)
 	srv.get('/space/:spaceAddress', fetchSpaceMetadata)
-	srv.get('/space/:spaceAddress/token/:tokenId', fetchSpaceMemberMetadata)
+	srv.get('/space/:spaceAddress/token/:tokenId', fetchSpaceMemberMetadata) // for fetching token info (i.e. openSea metadata)
 	srv.get('/user/:userId/bio', fetchUserBio)
 
 	// not cached

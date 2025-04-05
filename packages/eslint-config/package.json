@@ -1,6 +1,9 @@
 {
-    "name": "@river-build/eslint-config",
-    "version": "0.0.158",
+    "name": "@towns-protocol/eslint-config",
+    "version": "0.0.192",
     "license": "MIT",
-    "main": "typescript.js"
+    "main": "typescript.js",
+    "publishConfig": {
+        "access": "public"
+    }
 }

@@ -112,8 +112,8 @@ This XChain Node resides in a monorepo and interfaces with the `EntitlementCheck
 
 ### IEntitlementChecker Interface Methods
 
-- `registerNode()`: Registers a node. TODO integrate with Node Registery contract.
-- `unregisterNode()`: Unregisters a node. TODO integrate with Node Registery contract.
+- `registerNode()`: Registers a node. TODO integrate with Node Registry contract.
+- `unregisterNode()`: Unregisters a node. TODO integrate with Node Registry contract.
 - `nodeCount()`: Returns the count of registered nodes. Util to help with debugging
 - `getRandomNodes(requestedNodeCount, requestingContract)`: Returns a set of random nodes.
 - `emitEntitlementCheckRequested(transactionId, selectedNodes)`: Emits an event indicating an entitlement check request.

@@ -1,4 +1,4 @@
-import type { AnyMessage, Message } from '@bufbuild/protobuf'
+import type { DescMessage } from '@bufbuild/protobuf'
 import {
     type Interceptor,
     type UnaryRequest,
@@ -7,10 +7,11 @@ import {
     type StreamResponse,
     Code,
 } from '@connectrpc/connect'
-import { Err } from '@river-build/proto'
+import { Err } from '@towns-protocol/proto'
 import { genShortId, streamIdAsString } from './id'
 import { isBaseUrlIncluded, isIConnectError } from './utils'
-import { dlog, dlogError, check } from '@river-build/dlog'
+import { dlog, dlogError, check } from '@towns-protocol/dlog'
+import cloneDeep from 'lodash/cloneDeep'
 
 export const DEFAULT_RETRY_PARAMS: RetryParams = {
     maxAttempts: 3,
@@ -46,101 +47,98 @@ const histogramIntervalMs = 5000
 export const retryInterceptor: (retryParams: RetryParams) => Interceptor = (
     retryParams: RetryParams,
 ) => {
-    return (next) =>
-        async (
-            req: UnaryRequest<AnyMessage, AnyMessage> | StreamRequest<AnyMessage, AnyMessage>,
-        ) => {
-            if (req.stream) {
-                return await next(req)
-            }
-            const requestStart = Date.now()
-            let attempt = 0
-            const id = req.header.get('x-river-request-id')
-            if (!id) {
-                throw new Error(
-                    'No request id, expected header x-river-request-id which is set by loggingInterceptor',
+    return (next) => async (req: UnaryRequest | StreamRequest) => {
+        if (req.stream) {
+            return await next(req)
+        }
+        const requestStart = Date.now()
+        let attempt = 0
+        const id = req.header.get('x-river-request-id')
+        if (!id) {
+            throw new Error(
+                'No request id, expected header x-river-request-id which is set by loggingInterceptor',
+            )
+        }
+        const orignalAbortSignal = req.signal
+        // eslint-disable-next-line no-constant-condition
+        while (true) {
+            const loopStart = Date.now()
+            const abortController = new AbortController()
+            const signal = abortController.signal
+            const originalAbortHandler = () => {
+                const elapsed = Date.now() - requestStart
+                logError(
+                    'Orignial request aborted in retryInterceptor',
+                    'rpc:',
+                    req.method.name,
+                    id,
+                    'elapsed=',
+                    elapsed,
                 )
+                abortController.abort()
             }
-            const orignalAbortSignal = req.signal
-            // eslint-disable-next-line no-constant-condition
-            while (true) {
-                const loopStart = Date.now()
-                const abortController = new AbortController()
-                const signal = abortController.signal
-                const originalAbortHandler = () => {
-                    const elapsed = Date.now() - requestStart
-                    logError(
-                        'Orignial request aborted in retryInterceptor',
-                        'rpc:',
-                        req.method.name,
-                        id,
-                        'elapsed=',
-                        elapsed,
-                    )
-                    abortController.abort()
-                }
-                // listen to the original abort signal and abort the request if it's aborted
-                orignalAbortSignal?.addEventListener('abort', originalAbortHandler)
-                // set a timeout on the request
-                const requestTimeoutId = setTimeout(() => {
-                    const elapsed = Date.now() - loopStart
-                    logError(
-                        'Request timed out in retryInterceptor',
-                        'rpc:',
-                        req.method.name,
-                        id,
-                        'elapsed=',
-                        elapsed,
-                    )
-                    abortController.abort({
-                        message: 'The operation was aborted.',
-                        name: 'AbortError',
-                    })
-                }, retryParams.defaultTimeoutMs)
+            // listen to the original abort signal and abort the request if it's aborted
+            orignalAbortSignal?.addEventListener('abort', originalAbortHandler)
+            // set a timeout on the request
+            const requestTimeoutId = setTimeout(() => {
+                const elapsed = Date.now() - loopStart
+                logError(
+                    'Request timed out in retryInterceptor',
+                    'rpc:',
+                    req.method.name,
+                    id,
+                    'elapsed=',
+                    elapsed,
+                )
+                abortController.abort({
+                    message: 'The operation was aborted.',
+                    name: 'AbortError',
+                })
+            }, retryParams.defaultTimeoutMs)
 
-                attempt++
-                try {
-                    // Clone the request before each attempt
-                    const clonedReq = cloneUnaryRequest(req, signal)
-                    return await next(clonedReq)
-                } catch (e) {
-                    const elapsed = Date.now() - loopStart
-                    const retryDelay = getRetryDelay(e, signal.aborted, attempt, retryParams)
-                    // if the request was aborted, or we've run out of retries, throw the error
-                    if (orignalAbortSignal.aborted || retryDelay <= 0) {
-                        throw e
-                    }
-                    if (retryParams.refreshNodeUrl) {
-                        // re-materialize view and check if client is still operational according to network
-                        const urls = await retryParams.refreshNodeUrl()
-                        const isStillNodeUrl = isBaseUrlIncluded(urls.split(','), req.url)
-                        if (!isStillNodeUrl) {
-                            throw new Error(`Node url ${req.url} no longer operationl in registry`)
-                        }
-                    }
-                    logError(
-                        'ERROR RETRYING',
-                        'rpc:',
-                        req.method.name,
-                        id,
-                        'attempt=',
-                        attempt,
-                        'of',
-                        retryParams.maxAttempts,
-                        'elapsed:',
-                        elapsed,
-                        'retryDelay:',
-                        retryDelay,
-                        'error:',
-                        e,
-                    )
-                    await new Promise((resolve) => setTimeout(resolve, retryDelay))
-                } finally {
-                    clearTimeout(requestTimeoutId)
-                    orignalAbortSignal?.removeEventListener('abort', originalAbortHandler)
+            attempt++
+            try {
+                // Clone the request before each attempt
+                const clonedReq = cloneUnaryRequest(req, signal)
+                return await next(clonedReq)
+            } catch (e) {
+                const elapsed = Date.now() - loopStart
+                const retryDelay = getRetryDelay(e, signal.aborted, attempt, retryParams)
+                // if the request was aborted, or we've run out of retries, throw the error
+                if (orignalAbortSignal.aborted || retryDelay <= 0) {
+                    throw e
                 }
+                if (retryParams.refreshNodeUrl) {
+                    // re-materialize view and check if client is still operational according to network
+                    const urls = await retryParams.refreshNodeUrl()
+                    const isStillNodeUrl = isBaseUrlIncluded(urls.split(','), req.url)
+                    if (!isStillNodeUrl) {
+                        throw new Error(`Node url ${req.url} no longer operationl in registry`)
+                    }
+                }
+                logError(
+                    'ERROR RETRYING',
+                    'rpc:',
+                    req.method.name,
+                    id,
+                    'attempt=',
+                    attempt,
+                    'of',
+                    retryParams.maxAttempts,
+                    'elapsed:',
+                    elapsed,
+                    'retryDelay:',
+                    retryDelay,
+                    'error:',
+                    e,
+                )
+                await new Promise((resolve) => setTimeout(resolve, retryDelay))
+            } finally {
+                clearTimeout(requestTimeoutId)
+                orignalAbortSignal?.removeEventListener('abort', originalAbortHandler)
             }
         }
+    }
 }
 
 export const expiryInterceptor = (opts: { onTokenExpired?: () => void }): Interceptor => {
@@ -226,65 +224,61 @@ export const loggingInterceptor: (transportId: number, serviceName?: string) => 
         }
     }, histogramIntervalMs)
 
-    return (next) =>
-        async (
-            req: UnaryRequest<AnyMessage, AnyMessage> | StreamRequest<AnyMessage, AnyMessage>,
-        ) => {
-            let localReq = req
-            const id = genShortId()
-            localReq.header.set('x-river-request-id', id)
+    return (next) => async (req: UnaryRequest | StreamRequest) => {
+        let localReq = req
+        const id = genShortId()
+        localReq.header.set('x-river-request-id', id)
 
-            let streamId: string | undefined
-            if (req.stream) {
-                // to intercept streaming request messages, we wrap
+        let streamId: string | undefined
+        if (req.stream) {
+            // to intercept streaming request messages, we wrap
+            // the AsynchronousIterable with a generator function
+            localReq = {
+                ...req,
+                message: logEachRequest(req.method.name, id, req.message),
+            }
+        } else {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+            const streamIdBytes = (req.message as any)['streamId'] as Uint8Array
+            streamId = streamIdBytes ? streamIdAsString(streamIdBytes) : undefined
+            if (streamId !== undefined) {
+                logCalls(req.method.name, streamId, id)
+            } else {
+                logCalls(req.method.name, id)
+            }
+            logProtos(req.method.name, 'REQUEST', id, req.message)
+        }
+        updateHistogram(req.method.name, streamId)
+
+        try {
+            const res: UnaryResponse | StreamResponse = await next(localReq)
+
+            if (res.stream) {
+                // to intercept streaming response messages, we wrap
                 // the AsynchronousIterable with a generator function
-                localReq = {
-                    ...req,
-                    message: logEachRequest(req.method.name, id, req.message),
+                return {
+                    ...res,
+                    message: logEachResponse(res.method.name, id, res.message),
                 }
             } else {
-                const streamIdBytes = req.message['streamId'] as Uint8Array
-                streamId = streamIdBytes ? streamIdAsString(streamIdBytes) : undefined
-                if (streamId !== undefined) {
-                    logCalls(req.method.name, streamId, id)
-                } else {
-                    logCalls(req.method.name, id)
-                }
-                logProtos(req.method.name, 'REQUEST', id, req.message)
+                logProtos(res.method.name, 'RESPONSE', id, res.message)
             }
-            updateHistogram(req.method.name, streamId)
-
-            try {
-                const res:
-                    | UnaryResponse<AnyMessage, AnyMessage>
-                    | StreamResponse<AnyMessage, AnyMessage> = await next(localReq)
-
-                if (res.stream) {
-                    // to intercept streaming response messages, we wrap
-                    // the AsynchronousIterable with a generator function
-                    return {
-                        ...res,
-                        message: logEachResponse(res.method.name, id, res.message),
-                    }
-                } else {
-                    logProtos(res.method.name, 'RESPONSE', id, res.message)
-                }
-                return res
-            } catch (e) {
-                // ignore NotFound errors for GetStream
-                if (
-                    !(
-                        req.method.name === 'GetStream' &&
-                        isIConnectError(e) &&
-                        e.code === (Code.NotFound as number)
-                    )
-                ) {
-                    logError('ERROR calling rpc:', req.method.name, id, e)
-                    updateHistogram(req.method.name, streamId, true)
-                }
-                throw e
+            return res
+        } catch (e) {
+            // ignore NotFound errors for GetStream
+            if (
+                !(
+                    req.method.name === 'GetStream' &&
+                    isIConnectError(e) &&
+                    e.code === (Code.NotFound as number)
+                )
+            ) {
+                logError('ERROR calling rpc:', req.method.name, id, e)
+                updateHistogram(req.method.name, streamId, true)
             }
+            throw e
         }
+    }
     async function* logEachRequest(name: string, id: string, stream: AsyncIterable<any>) {
         try {
             for await (const m of stream) {
@@ -370,7 +364,7 @@ export function errorContains(err: unknown, error: Err): boolean {
     return false
 }
 
-/// not great way to pull info out of the error messsage
+/// not great way to pull info out of the error message
 export function getRpcErrorProperty(err: unknown, prop: string): string | undefined {
     if (err !== null && typeof err === 'object' && 'message' in err) {
         const expected = `${prop} = `
@@ -446,19 +440,16 @@ function getRetryDelay(
     return -1
 }
 
-// Function to clone a UnaryRequest
-function cloneUnaryRequest<I extends Message<I>, O extends Message<O>>(
+// Function to clone a UnaryRequest (aellis not sure if this is needed after v2 upgrade)
+function cloneUnaryRequest<I extends DescMessage, O extends DescMessage>(
     req: UnaryRequest<I, O>,
     signal: AbortSignal,
 ): UnaryRequest<I, O> {
     // Clone the message
-    const clonedMessage = req.message.clone()
+    const clonedMessage = cloneDeep(req.message)
 
     // Clone headers
     const clonedHeader = new Headers(req.header)
-
-    // Clone init
-    const clonedInit = { ...req.init }
 
     // Clone contextValues
     const clonedContextValues = { ...req.contextValues }
@@ -468,7 +459,6 @@ function cloneUnaryRequest<I extends Message<I>, O extends Message<O>>(
         ...req,
         message: clonedMessage,
         header: clonedHeader,
-        init: clonedInit,
         contextValues: clonedContextValues,
         signal: signal,
     }

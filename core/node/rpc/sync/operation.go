@@ -2,19 +2,22 @@ package sync
 
 import (
 	"context"
+	"sync"
 	"time"
-
-	"github.com/river-build/river/core/node/logging"
 
 	"connectrpc.com/connect"
 	"github.com/ethereum/go-ethereum/common"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 
-	. "github.com/river-build/river/core/node/base"
-	"github.com/river-build/river/core/node/events"
-	"github.com/river-build/river/core/node/nodes"
-	. "github.com/river-build/river/core/node/protocol"
-	"github.com/river-build/river/core/node/rpc/sync/client"
-	"github.com/river-build/river/core/node/shared"
+	. "github.com/towns-protocol/towns/core/node/base"
+	. "github.com/towns-protocol/towns/core/node/events"
+	"github.com/towns-protocol/towns/core/node/logging"
+	"github.com/towns-protocol/towns/core/node/nodes"
+	. "github.com/towns-protocol/towns/core/node/protocol"
+	"github.com/towns-protocol/towns/core/node/rpc/sync/client"
+	"github.com/towns-protocol/towns/core/node/rpc/sync/dynmsgbuf"
+	"github.com/towns-protocol/towns/core/node/shared"
 )
 
 type (
@@ -34,9 +37,11 @@ type (
 		// thisNodeAddress keeps the address of this stream  thisNodeAddress instance
 		thisNodeAddress common.Address
 		// streamCache gives access to streams managed by this thisNodeAddress
-		streamCache events.StreamCache
+		streamCache *StreamCache
 		// nodeRegistry is used to get the remote remoteNode endpoint from a thisNodeAddress address
 		nodeRegistry nodes.NodeRegistry
+		// otelTracer is used to trace individual sync Send operations, tracing is disabled if nil
+		otelTracer trace.Tracer
 	}
 
 	// subCommand represents a request to add or remove a stream and ping sync operation
@@ -44,6 +49,7 @@ type (
 		Ctx             context.Context
 		RmStreamReq     *connect.Request[RemoveStreamFromSyncRequest]
 		AddStreamReq    *connect.Request[AddStreamToSyncRequest]
+		ModifySyncReq   *client.ModifyRequest
 		PingReq         *connect.Request[PingSyncRequest]
 		CancelReq       *connect.Request[CancelSyncRequest]
 		DebugDropStream shared.StreamId
@@ -66,8 +72,9 @@ func NewStreamsSyncOperation(
 	ctx context.Context,
 	syncId string,
 	node common.Address,
-	streamCache events.StreamCache,
+	streamCache *StreamCache,
 	nodeRegistry nodes.NodeRegistry,
+	otelTracer trace.Tracer,
 ) (*StreamSyncOperation, error) {
 	// make the sync operation cancellable for CancelSync
 	syncOpCtx, cancel := context.WithCancelCause(ctx)
@@ -81,6 +88,7 @@ func NewStreamsSyncOperation(
 		commands:        make(chan *subCommand, 64),
 		streamCache:     streamCache,
 		nodeRegistry:    nodeRegistry,
+		otelTracer:      otelTracer,
 	}, nil
 }
 
@@ -90,40 +98,52 @@ func (syncOp *StreamSyncOperation) Run(
 	res StreamsResponseSubscriber,
 ) error {
 	log := logging.FromCtx(syncOp.ctx).With("syncId", syncOp.SyncID)
-
-	cookies, err := client.ValidateAndGroupSyncCookies(req.Msg.GetSyncPos())
-	if err != nil {
-		return err
-	}
+	log.Debug("Stream sync operation start")
 
 	syncers, messages, err := client.NewSyncers(
 		syncOp.ctx, syncOp.cancel, syncOp.SyncID, syncOp.streamCache,
-		syncOp.nodeRegistry, syncOp.thisNodeAddress, cookies)
+		syncOp.nodeRegistry, syncOp.thisNodeAddress, nil, syncOp.otelTracer)
 	if err != nil {
 		return err
 	}
 
-	syncers.AddInitialStreams()
-
 	go syncers.Run()
 
+	go func() {
+		for _, cookie := range req.Msg.GetSyncPos() {
+			cmd := &subCommand{
+				Ctx: syncOp.ctx,
+				AddStreamReq: &connect.Request[AddStreamToSyncRequest]{
+					Msg: &AddStreamToSyncRequest{
+						SyncId:  syncOp.SyncID,
+						SyncPos: cookie,
+					},
+				},
+				reply: make(chan error, 1),
+			}
+			if err := syncOp.process(cmd); err != nil {
+				select {
+				case <-syncOp.ctx.Done():
+					return
+				default:
+					_ = messages.AddMessage(&SyncStreamsResponse{
+						SyncOp:   SyncOp_SYNC_DOWN,
+						StreamId: cookie.GetStreamId(),
+					})
+				}
+			}
+		}
+	}()
+
+	// Start separate goroutine to process sync stream commands
+	go syncOp.runCommandsProcessing(syncers, messages)
+
+	var messagesSendToClient int
+	defer log.Debugw("Stream sync operation stopped", "send", messagesSendToClient)
+
+	var msgs []*SyncStreamsResponse
 	for {
 		select {
-		case msg, ok := <-messages:
-			if !ok {
-				_ = res.Send(&SyncStreamsResponse{
-					SyncId: syncOp.SyncID,
-					SyncOp: SyncOp_SYNC_CLOSE,
-				})
-				return nil
-			}
-
-			msg.SyncId = syncOp.SyncID
-			if err = res.Send(msg); err != nil {
-				log.Errorw("Unable to send sync stream update to client", "err", err)
-				return err
-			}
-
 		case <-syncOp.ctx.Done():
 			// clientErr non-nil indicates client hung up, get the error from the root ctx.
 			if clientErr := syncOp.rootCtx.Err(); clientErr != nil {
@@ -131,16 +151,69 @@ func (syncOp *StreamSyncOperation) Run(
 			}
 			// otherwise syncOp is stopped internally.
 			return context.Cause(syncOp.ctx)
+		case _, open := <-messages.Wait():
+			msgs = messages.GetBatch(msgs)
 
+			// nil msgs indicates the buffer is closed
+			if msgs == nil {
+				_ = res.Send(&SyncStreamsResponse{
+					SyncId: syncOp.SyncID,
+					SyncOp: SyncOp_SYNC_CLOSE,
+				})
+				return nil
+			}
+
+			for i, msg := range msgs {
+				msg.SyncId = syncOp.SyncID
+				if err := res.Send(msg); err != nil {
+					log.Errorw("Unable to send sync stream update to client", "err", err)
+					return err
+				}
+
+				messagesSendToClient++
+
+				log.Debug("Pending messages in sync operation", "count", messages.Len()+len(msgs)-i-1)
+
+				if msg.GetSyncOp() == SyncOp_SYNC_CLOSE {
+					return nil
+				}
+
+				select {
+				case <-syncOp.ctx.Done():
+					// clientErr non-nil indicates client hung up, get the error from the root ctx.
+					if clientErr := syncOp.rootCtx.Err(); clientErr != nil {
+						return clientErr
+					}
+					// otherwise syncOp is stopped internally.
+					return context.Cause(syncOp.ctx)
+				default:
+				}
+			}
+
+			// If the client sent a close message, stop sending messages to client from the buffer.
+			// In theory should not happen, but just in case.
+			if !open {
+				_ = res.Send(&SyncStreamsResponse{
+					SyncId: syncOp.SyncID,
+					SyncOp: SyncOp_SYNC_CLOSE,
+				})
+				return nil
+			}
+		}
+	}
+}
+
+func (syncOp *StreamSyncOperation) runCommandsProcessing(
+	syncers *client.SyncerSet,
+	messages *dynmsgbuf.DynamicBuffer[*SyncStreamsResponse],
+) {
+	for {
+		select {
+		case <-syncOp.ctx.Done():
+			return
 		case cmd := <-syncOp.commands:
 			if cmd.AddStreamReq != nil {
-				nodeAddress := common.BytesToAddress(cmd.AddStreamReq.Msg.GetSyncPos().GetNodeAddress())
-				streamID, err := shared.StreamIdFromBytes(cmd.AddStreamReq.Msg.GetSyncPos().GetStreamId())
-				if err != nil {
-					cmd.Reply(err)
-					continue
-				}
-				cmd.Reply(syncers.AddStream(cmd.Ctx, nodeAddress, streamID, cmd.AddStreamReq.Msg.GetSyncPos()))
+				cmd.Reply(syncers.AddStream(cmd.Ctx, cmd.AddStreamReq.Msg.GetSyncPos()))
 			} else if cmd.RmStreamReq != nil {
 				streamID, err := shared.StreamIdFromBytes(cmd.RmStreamReq.Msg.GetStreamId())
 				if err != nil {
@@ -148,23 +221,21 @@ func (syncOp *StreamSyncOperation) Run(
 					continue
 				}
 				cmd.Reply(syncers.RemoveStream(cmd.Ctx, streamID))
-			} else if cmd.PingReq != nil {
-				err = res.Send(&SyncStreamsResponse{
-					SyncId:    syncOp.SyncID,
-					SyncOp:    SyncOp_SYNC_PONG,
-					PongNonce: cmd.PingReq.Msg.GetNonce(),
-				})
-				cmd.Reply(err)
+			} else if cmd.ModifySyncReq != nil {
+				cmd.Reply(syncers.Modify(cmd.Ctx, *cmd.ModifySyncReq))
 			} else if cmd.DebugDropStream != (shared.StreamId{}) {
 				cmd.Reply(syncers.DebugDropStream(cmd.Ctx, cmd.DebugDropStream))
 			} else if cmd.CancelReq != nil {
-				_ = res.Send(&SyncStreamsResponse{
-					SyncId: syncOp.SyncID,
-					SyncOp: SyncOp_SYNC_CLOSE,
-				})
-
+				_ = messages.AddMessage(&SyncStreamsResponse{SyncOp: SyncOp_SYNC_CLOSE})
+				messages.Close()
 				cmd.Reply(nil)
-				return nil
+				return
+			} else if cmd.PingReq != nil {
+				_ = messages.AddMessage(&SyncStreamsResponse{
+					SyncOp:    SyncOp_SYNC_PONG,
+					PongNonce: cmd.PingReq.Msg.GetNonce(),
+				})
+				cmd.Reply(nil)
 			}
 		}
 	}
@@ -174,8 +245,18 @@ func (syncOp *StreamSyncOperation) AddStreamToSync(
 	ctx context.Context,
 	req *connect.Request[AddStreamToSyncRequest],
 ) (*connect.Response[AddStreamToSyncResponse], error) {
-	if err := events.SyncCookieValidate(req.Msg.GetSyncPos()); err != nil {
+	if err := SyncCookieValidate(req.Msg.GetSyncPos()); err != nil {
 		return nil, err
+	}
+
+	if syncOp.otelTracer != nil {
+		var span trace.Span
+		streamID, _ := shared.StreamIdFromBytes(req.Msg.GetSyncPos().GetStreamId())
+		ctx, span = syncOp.otelTracer.Start(ctx, "addStreamToSync",
+			trace.WithAttributes(
+				attribute.String("stream", streamID.String()),
+				attribute.String("syncId", req.Msg.GetSyncId())))
+		defer span.End()
 	}
 
 	cmd := &subCommand{
@@ -199,6 +280,15 @@ func (syncOp *StreamSyncOperation) RemoveStreamFromSync(
 		return nil, RiverError(Err_INVALID_ARGUMENT, "invalid syncId").Tag("syncId", req.Msg.GetSyncId())
 	}
 
+	if syncOp.otelTracer != nil {
+		var span trace.Span
+		streamID, _ := shared.StreamIdFromBytes(req.Msg.GetStreamId())
+		ctx, span = syncOp.otelTracer.Start(ctx, "removeStreamFromSync",
+			trace.WithAttributes(attribute.String("stream", streamID.String()),
+				attribute.String("syncId", req.Msg.GetSyncId())))
+		defer span.End()
+	}
+
 	cmd := &subCommand{
 		Ctx:         ctx,
 		RmStreamReq: req,
@@ -210,6 +300,49 @@ func (syncOp *StreamSyncOperation) RemoveStreamFromSync(
 	}
 
 	return connect.NewResponse(&RemoveStreamFromSyncResponse{}), nil
+}
+
+func (syncOp *StreamSyncOperation) ModifySync(
+	ctx context.Context,
+	req *connect.Request[ModifySyncRequest],
+) (*connect.Response[ModifySyncResponse], error) {
+	if req.Msg.GetSyncId() != syncOp.SyncID {
+		return nil, RiverError(Err_INVALID_ARGUMENT, "invalid syncId").Tag("syncId", req.Msg.GetSyncId())
+	}
+
+	if syncOp.otelTracer != nil {
+		var span trace.Span
+		ctx, span = syncOp.otelTracer.Start(ctx, "modifySync",
+			trace.WithAttributes(attribute.String("syncId", req.Msg.GetSyncId())))
+		defer span.End()
+	}
+
+	resp := connect.NewResponse(&ModifySyncResponse{})
+	respLock := sync.Mutex{}
+	cmd := &subCommand{
+		Ctx: ctx,
+		ModifySyncReq: &client.ModifyRequest{
+			ToAdd:    req.Msg.GetAddStreams(),
+			ToRemove: req.Msg.GetRemoveStreams(),
+			AddingFailureHandler: func(status *SyncStreamOpStatus) {
+				respLock.Lock()
+				resp.Msg.Adds = append(resp.Msg.Adds, status)
+				respLock.Unlock()
+			},
+			RemovingFailureHandler: func(status *SyncStreamOpStatus) {
+				respLock.Lock()
+				resp.Msg.Removals = append(resp.Msg.Removals, status)
+				respLock.Unlock()
+			},
+		},
+		reply: make(chan error, 1),
+	}
+
+	if err := syncOp.process(cmd); err != nil {
+		return nil, err
+	}
+
+	return resp, nil
 }
 
 func (syncOp *StreamSyncOperation) CancelSync(

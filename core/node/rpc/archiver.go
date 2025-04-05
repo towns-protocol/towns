@@ -12,18 +12,18 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/prometheus/client_golang/prometheus"
 
-	"github.com/river-build/river/core/config"
-	"github.com/river-build/river/core/contracts/river"
-	. "github.com/river-build/river/core/node/base"
-	"github.com/river-build/river/core/node/events"
-	"github.com/river-build/river/core/node/infra"
-	"github.com/river-build/river/core/node/logging"
-	"github.com/river-build/river/core/node/nodes"
-	. "github.com/river-build/river/core/node/protocol"
-	"github.com/river-build/river/core/node/registries"
-	"github.com/river-build/river/core/node/scrub"
-	. "github.com/river-build/river/core/node/shared"
-	"github.com/river-build/river/core/node/storage"
+	"github.com/towns-protocol/towns/core/config"
+	"github.com/towns-protocol/towns/core/contracts/river"
+	. "github.com/towns-protocol/towns/core/node/base"
+	"github.com/towns-protocol/towns/core/node/events"
+	"github.com/towns-protocol/towns/core/node/infra"
+	"github.com/towns-protocol/towns/core/node/logging"
+	"github.com/towns-protocol/towns/core/node/nodes"
+	. "github.com/towns-protocol/towns/core/node/protocol"
+	"github.com/towns-protocol/towns/core/node/registries"
+	"github.com/towns-protocol/towns/core/node/scrub"
+	. "github.com/towns-protocol/towns/core/node/shared"
+	"github.com/towns-protocol/towns/core/node/storage"
 )
 
 type CorruptionReason int
@@ -310,7 +310,7 @@ func NewArchiveStream(
 ) *ArchiveStream {
 	stream := &ArchiveStream{
 		streamId: streamId,
-		nodes:    nodes.NewStreamNodesWithLock(*nn, common.Address{}),
+		nodes:    nodes.NewStreamNodesWithLock(len(*nn), *nn, common.Address{}),
 		corrupt:  NewStreamCorruptionTracker(maxConsecutiveFailedUpdates),
 	}
 	stream.numBlocksInContract.Store(int64(lastKnownMiniblock + 1))
@@ -508,7 +508,7 @@ func (a *Archiver) GetCorruptStreams(ctx context.Context) []scrub.CorruptStreamR
 					}
 					record := scrub.CorruptStreamRecord{
 						StreamId:             stream.streamId,
-						Nodes:                stream.nodes.GetNodes(),
+						Nodes:                stream.nodes.GetQuorumNodes(),
 						MostRecentBlock:      stream.numBlocksInContract.Load(),
 						MostRecentLocalBlock: stream.numBlocksInDb.Load(),
 						FirstCorruptBlock:    stream.corrupt.firstCorruptBlock,
@@ -694,11 +694,11 @@ func (a *Archiver) ArchiveStream(ctx context.Context, stream *ArchiveStream) (er
 
 		// Validate miniblocks are sequential.
 		// TODO: validate miniblock signatures.
-		var serialized [][]byte
+		var serialized []*storage.WriteMiniblockData
 		for i, mb := range msg.Miniblocks {
 			// Parse header
 			info, err := events.NewMiniblockInfoFromProto(
-				mb,
+				mb, msg.GetMiniblockSnapshot(int64(i)+mbsInDb),
 				events.NewParsedMiniblockInfoOpts().
 					WithExpectedBlockNumber(int64(i)+mbsInDb).
 					WithDoNotParseEvents(true),
@@ -706,11 +706,11 @@ func (a *Archiver) ArchiveStream(ctx context.Context, stream *ArchiveStream) (er
 			if err != nil {
 				return err
 			}
-			bb, err := info.ToBytes()
+			storageMb, err := info.AsStorageMb()
 			if err != nil {
 				return err
 			}
-			serialized = append(serialized, bb)
+			serialized = append(serialized, storageMb)
 		}
 
 		log.Debugw("Writing miniblocks to storage", "streamId", stream.streamId, "numBlocks", len(serialized))
@@ -802,6 +802,7 @@ func (a *Archiver) processScrubReports(ctx context.Context) {
 
 				log.Errorw("Corrupt stream detected",
 					"streamId", as.streamId,
+					"streamType", StreamTypeToString(as.streamId.Type()),
 					"corruptBlock", report.FirstCorruptBlock,
 					"error", report.ScrubError,
 					"lastBlockScrubbed", report.LatestBlockScrubbed,
@@ -947,6 +948,7 @@ func (a *Archiver) startImpl(ctx context.Context, once bool, metrics infra.Metri
 			ctx,
 			blockNum+1,
 			a.onStreamAllocated,
+			a.onStreamAdded,
 			a.onStreamLastMiniblockUpdated,
 			a.onStreamPlacementUpdated,
 		)
@@ -958,36 +960,43 @@ func (a *Archiver) startImpl(ctx context.Context, once bool, metrics infra.Metri
 	return nil
 }
 
-func (a *Archiver) onStreamAllocated(ctx context.Context, event *river.StreamRegistryV1StreamAllocated) {
+func (a *Archiver) onStreamAllocated(ctx context.Context, event *river.StreamState) {
 	a.newStreamAllocated.Add(1)
-	id := StreamId(event.StreamId)
+	id := event.StreamID
 	a.addNewStream(ctx, id, &event.Nodes, 0)
+	a.tasks <- id
+}
+
+func (a *Archiver) onStreamAdded(ctx context.Context, event *river.StreamState) {
+	a.newStreamAllocated.Add(1)
+	id := event.StreamID
+	a.addNewStream(ctx, id, &event.Stream.Nodes, 0)
 	a.tasks <- id
 }
 
 func (a *Archiver) onStreamPlacementUpdated(
 	ctx context.Context,
-	event *river.StreamRegistryV1StreamPlacementUpdated,
+	event *river.StreamState,
 ) {
 	a.streamPlacementUpdated.Add(1)
 
-	id := StreamId(event.StreamId)
+	id := event.StreamID
 	record, loaded := a.streams.Load(id)
 	if !loaded {
 		logging.FromCtx(ctx).Errorw("onStreamPlacementUpdated: Stream not found in map", "streamId", id)
 		return
 	}
 	stream := record.(*ArchiveStream)
-	_ = stream.nodes.Update(event, common.Address{})
+	stream.nodes.ResetFromStreamState(event, common.Address{})
 }
 
 func (a *Archiver) onStreamLastMiniblockUpdated(
 	ctx context.Context,
-	event *river.StreamRegistryV1StreamLastMiniblockUpdated,
+	event *river.StreamMiniblockUpdate,
 ) {
 	a.streamLastMiniblockUpdated.Add(1)
 
-	id := StreamId(event.StreamId)
+	id := event.GetStreamId()
 	record, loaded := a.streams.Load(id)
 	if !loaded {
 		logging.FromCtx(ctx).Errorw("onStreamLastMiniblockUpdated: Stream not found in map", "streamId", id)
@@ -1044,7 +1053,11 @@ func (a *Archiver) worker(ctx context.Context) {
 			}
 			err := a.ArchiveStream(ctx, record.(*ArchiveStream))
 			if err != nil {
-				log.Errorw("archiver.worker: Failed to archive stream", "error", err, "streamId", streamId)
+				// Do not log for the known set of streams that were registered under an operator address.
+				// These errors are not worth tracking.
+				if !IsRiverErrorCode(err, Err_UNKNOWN_NODE) {
+					log.Errorw("archiver.worker: Failed to archive stream", "error", err, "streamId", streamId)
+				}
 				a.failedOpsCount.Add(1)
 			} else {
 				a.successOpsCount.Add(1)

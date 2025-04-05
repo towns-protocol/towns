@@ -4,14 +4,14 @@ import (
 	"context"
 	"time"
 
-	"github.com/river-build/river/core/node/utils"
-
 	"connectrpc.com/connect"
+	"google.golang.org/protobuf/proto"
 
-	. "github.com/river-build/river/core/node/base"
-	. "github.com/river-build/river/core/node/events"
-	. "github.com/river-build/river/core/node/protocol"
-	. "github.com/river-build/river/core/node/shared"
+	. "github.com/towns-protocol/towns/core/node/base"
+	. "github.com/towns-protocol/towns/core/node/events"
+	. "github.com/towns-protocol/towns/core/node/protocol"
+	. "github.com/towns-protocol/towns/core/node/shared"
+	"github.com/towns-protocol/towns/core/node/utils"
 )
 
 func (s *Service) AllocateStream(
@@ -97,6 +97,18 @@ func (s *Service) newEventReceived(
 	stream, err := s.cache.GetStreamWaitForLocal(ctx, streamId)
 	if err != nil {
 		return nil, err
+	}
+
+	view, err := stream.GetViewIfLocal(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	if parsedEvent.MiniblockRef.Num >= 0 {
+		_, err = s.ensureStreamIsUpToDate(ctx, view, parsedEvent, stream)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	err = stream.AddEvent(ctx, parsedEvent)
@@ -195,10 +207,78 @@ func (s *Service) saveMiniblockCandidate(
 		return nil, err
 	}
 
-	err = stream.SaveMiniblockCandidate(ctx, req.Miniblock)
+	mbInfo, err := NewMiniblockInfoFromProto(
+		req.GetMiniblock(), req.GetSnapshot(),
+		NewParsedMiniblockInfoOpts(),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	err = stream.SaveMiniblockCandidate(ctx, mbInfo)
 	if err != nil {
 		return nil, err
 	}
 
 	return &SaveMiniblockCandidateResponse{}, nil
+}
+
+func (s *Service) GetMiniblocksByIds(
+	ctx context.Context,
+	req *connect.Request[GetMiniblocksByIdsRequest],
+	resp *connect.ServerStream[GetMiniblockResponse],
+) error {
+	ctx, log := utils.CtxAndLogForRequest(ctx, req)
+	log.Debugw("GetMiniblocksByIds ENTER")
+	if err := s.streamMiniblocksByIds(ctx, req.Msg, resp); err != nil {
+		return AsRiverError(err).Func("GetMiniblocksByIds").
+			Tag("streamId", req.Msg.StreamId).
+			Tag("mbIds", req.Msg.MiniblockIds).
+			LogWarn(log).
+			AsConnectError()
+	}
+	log.Debugw("GetMiniblocksByIds LEAVE")
+	return nil
+}
+
+func (s *Service) streamMiniblocksByIds(
+	ctx context.Context,
+	req *GetMiniblocksByIdsRequest,
+	resp *connect.ServerStream[GetMiniblockResponse],
+) error {
+	streamId, err := StreamIdFromBytes(req.GetStreamId())
+	if err != nil {
+		return err
+	}
+
+	if err = s.storage.ReadMiniblocksByIds(
+		ctx,
+		streamId,
+		req.GetMiniblockIds(),
+		func(mbBytes []byte, seqNum int64, snBytes []byte) error {
+			var mb Miniblock
+			if err = proto.Unmarshal(mbBytes, &mb); err != nil {
+				return WrapRiverError(Err_BAD_BLOCK, err).Message("Unable to unmarshal miniblock")
+			}
+
+			var snapshot *Envelope
+			if len(snBytes) > 0 && !req.GetOmitSnapshots() {
+				snapshot = &Envelope{}
+				if err = proto.Unmarshal(snBytes, snapshot); err != nil {
+					return WrapRiverError(Err_BAD_BLOCK, err).Message("Unable to unmarshal snapshot")
+				}
+			}
+
+			return resp.Send(&GetMiniblockResponse{
+				Num:       seqNum,
+				Miniblock: &mb,
+				Snapshot:  snapshot,
+			})
+		},
+	); err != nil {
+		return err
+	}
+
+	// Send back an empty response to signal the end of the stream.
+	return resp.Send(&GetMiniblockResponse{})
 }

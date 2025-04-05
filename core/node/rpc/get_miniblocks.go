@@ -5,15 +5,15 @@ import (
 
 	"connectrpc.com/connect"
 
-	. "github.com/river-build/river/core/node/base"
-	. "github.com/river-build/river/core/node/events"
-	. "github.com/river-build/river/core/node/protocol"
+	. "github.com/towns-protocol/towns/core/node/base"
+	. "github.com/towns-protocol/towns/core/node/events"
+	. "github.com/towns-protocol/towns/core/node/protocol"
 )
 
 func (s *Service) localGetMiniblocks(
 	ctx context.Context,
 	req *connect.Request[GetMiniblocksRequest],
-	stream SyncStream,
+	stream *Stream,
 ) (*connect.Response[GetMiniblocksResponse], error) {
 	toExclusive := req.Msg.ToExclusive
 
@@ -26,9 +26,21 @@ func (s *Service) localGetMiniblocks(
 		toExclusive = req.Msg.FromInclusive + limit
 	}
 
-	miniblocks, terminus, err := stream.GetMiniblocks(ctx, req.Msg.FromInclusive, toExclusive)
+	mbsInfo, terminus, err := stream.GetMiniblocks(ctx, req.Msg.FromInclusive, toExclusive)
 	if err != nil {
 		return nil, err
+	}
+
+	miniblocks := make([]*Miniblock, len(mbsInfo))
+	var snapshots map[int64]*Envelope
+	if !req.Msg.GetOmitSnapshots() {
+		snapshots = make(map[int64]*Envelope)
+	}
+	for i, info := range mbsInfo {
+		miniblocks[i] = info.Proto
+		if !req.Msg.GetOmitSnapshots() {
+			snapshots[info.Ref.Num] = info.Snapshot
+		}
 	}
 
 	fromInclusive := req.Msg.FromInclusive
@@ -46,6 +58,7 @@ func (s *Service) localGetMiniblocks(
 		Terminus:      terminus,
 		FromInclusive: fromInclusive,
 		Limit:         limit,
+		OmitSnapshots: req.Msg.GetOmitSnapshots(),
 	}
 
 	return connect.NewResponse(resp), nil

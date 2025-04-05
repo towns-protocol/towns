@@ -1,0 +1,147 @@
+syntax = "proto3";
+package river;
+option go_package = "github.com/towns-protocol/towns/core/node/protocol";
+
+import "google/protobuf/empty.proto";
+import "protocol.proto";
+
+// AppRegistryService allows apps and app owners to register apps, and set app-related preferences for messages added
+// to channels the app has membership in.
+//
+// These functions are all authenticated, with the exception of GetStatus, and require a session token to be passed
+// through the authorization metadata.
+// This session token can be obtained from the AuthenticationService. If the session token is missing or invalid an
+// Err_UNAUTHENTICATED (code=16) is returned.
+service AppRegistryService {
+    rpc Register(RegisterRequest) returns (RegisterResponse);
+    rpc RegisterWebhook(RegisterWebhookRequest) returns (RegisterWebhookResponse);
+    // rpc RotateSecret(RotateSecretRequest) returns (RotateSecretResponse);
+    rpc GetStatus(GetStatusRequest) returns (GetStatusResponse);
+    rpc GetSession(GetSessionRequest) returns (GetSessionResponse);
+}
+
+message RegisterRequest {
+    // public key of the app
+    bytes app_id = 1;
+
+    // public key of the app owner
+    bytes app_owner_id = 2;
+}
+
+message RegisterResponse {
+    // The shared secret used to sign the jwt the app registry will use to authenticate to the
+    // app service. This secret should be exactly 32 bytes.
+    bytes hs256_shared_secret = 1;
+}
+
+message RegisterWebhookRequest {
+    // public key of the app
+    bytes app_id = 1;
+
+    // Webhook for sending requests to the app service
+    string webhook_url = 2;
+}
+
+message RegisterWebhookResponse { }
+
+message RotateSecretRequest {
+        // public key of the app
+        bytes app_id = 1;
+}
+
+message RotateSecretResponse {
+    // the updated shared secret used to sign the jwt the app registry will use to authenticate
+    // to the app service. This secret should be exactly 32 bytes.
+    string hs256_shared_secret = 1;
+}
+
+message GetStatusRequest {
+    // public key of the app
+    bytes app_id = 1;
+}
+
+message GetStatusResponse {
+    // is_registered describes if the app is registered with a webhook
+    bool is_registered = 1;
+
+    // valid_response is set to true if calling the webhook results in a 200 with version
+    // info included in the response body.
+    bool valid_response = 2;
+
+    // Forward the status returned by the bot service.
+    AppServiceResponse.StatusResponse status = 3;
+}
+
+message GetSessionRequest {
+    // public key of the app
+    bytes app_id = 1;
+
+    string session_id = 2;    
+}
+
+message GetSessionResponse {
+    // This will be 
+    Envelope group_encryption_sessions = 1;
+}
+
+// As a performance optimization, we may wish to bundle together many key solicitation requests
+// and channel messages for the bot to respond to in a single webhook call. Thus, an isolated
+// group of channel messages and encryption keys, or a request for a key solicitation, is
+// represented here. For webhook calls regarding channel content, the payload may contain one or
+// more of these events.
+message EventPayload {
+    // A Messages payload represents a group of user messages in a channel that qualifies for the app
+    // to be notified. The included set of group encryption sessions in this message should have
+    // all the needed ciphertexts to decrypt the set of messages sent in the same payload.
+    message Messages {
+        bytes stream_id = 1;
+        repeated Envelope messages = 2;
+        repeated Envelope group_encryption_sessions_messages = 3;
+    }
+
+    // A SolicitKeys request is sent when one or more messages in the same channel cannot be forwarded
+    // to the app because the app does not have keys available to decrypt it in it's user inbox stream.
+    // In this case, the app must be prompted to send a message to the stream to solicit the missing
+    // session keys so that all queued messages can be forwarded.
+    message SolicitKeys {
+        bytes stream_id = 1;
+        repeated string session_ids = 2;
+    }
+
+    oneof payload {
+        Messages messages = 1;
+        SolicitKeys solicitation = 2;
+    }
+}
+
+message EventsPayload {
+    repeated EventPayload events = 1;
+}
+
+message AppServiceRequest {
+    oneof payload {
+        google.protobuf.Empty initialize = 101;
+        google.protobuf.Empty status = 102;
+        EventsPayload events = 103;
+    }
+}
+
+
+message AppServiceResponse {
+    message InitializeResponse {
+        UserMetadataPayload.EncryptionDevice encryption_device = 1; 
+    }
+
+    message StatusResponse {
+        int32 framework_version = 1;
+        string device_key = 2;
+        string fallback_key = 3;
+    }
+
+    oneof payload {
+        InitializeResponse initialize = 101;
+        StatusResponse status = 102;
+    }
+}
+
+

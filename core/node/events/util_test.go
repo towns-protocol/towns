@@ -10,18 +10,18 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/proto"
 
-	"github.com/river-build/river/core/config"
-	. "github.com/river-build/river/core/node/base"
-	"github.com/river-build/river/core/node/base/test"
-	"github.com/river-build/river/core/node/crypto"
-	"github.com/river-build/river/core/node/infra"
-	"github.com/river-build/river/core/node/logging"
-	. "github.com/river-build/river/core/node/nodes"
-	. "github.com/river-build/river/core/node/protocol"
-	"github.com/river-build/river/core/node/registries"
-	. "github.com/river-build/river/core/node/shared"
-	"github.com/river-build/river/core/node/storage"
-	"github.com/river-build/river/core/node/testutils"
+	"github.com/towns-protocol/towns/core/config"
+	. "github.com/towns-protocol/towns/core/node/base"
+	"github.com/towns-protocol/towns/core/node/base/test"
+	"github.com/towns-protocol/towns/core/node/crypto"
+	"github.com/towns-protocol/towns/core/node/infra"
+	"github.com/towns-protocol/towns/core/node/logging"
+	. "github.com/towns-protocol/towns/core/node/nodes"
+	. "github.com/towns-protocol/towns/core/node/protocol"
+	"github.com/towns-protocol/towns/core/node/registries"
+	. "github.com/towns-protocol/towns/core/node/shared"
+	"github.com/towns-protocol/towns/core/node/storage"
+	"github.com/towns-protocol/towns/core/node/testutils"
 )
 
 type cacheTestContext struct {
@@ -41,7 +41,7 @@ var _ RemoteMiniblockProvider = (*cacheTestContext)(nil)
 type cacheTestInstance struct {
 	params         *StreamCacheParams
 	streamRegistry StreamRegistry
-	cache          *streamCacheImpl
+	cache          *StreamCache
 	mbProducer     *miniblockProducer
 }
 
@@ -53,8 +53,9 @@ type testParams struct {
 	recencyConstraintsAgeSec      int
 	defaultMinEventsPerSnapshot   int
 
-	disableMineOnTx bool
-	numInstances    int
+	disableMineOnTx             bool
+	numInstances                int
+	disableStreamCacheCallbacks bool
 }
 
 type noopScrubber struct{}
@@ -121,10 +122,16 @@ func makeCacheTestContext(t *testing.T, p testParams) (context.Context, *cacheTe
 
 		blockNumber := btc.BlockNum(ctx)
 
-		nr, err := LoadNodeRegistry(ctx, registry, bc.Wallet.Address, blockNumber, bc.ChainMonitor, nil, nil)
-		ctc.require.NoError(err)
-
-		sr, err := NewStreamRegistry(ctx, bc, nr, registry, btc.OnChainConfig)
+		nr, err := LoadNodeRegistry(
+			ctx,
+			registry,
+			bc.Wallet.Address,
+			blockNumber,
+			bc.ChainMonitor,
+			btc.OnChainConfig,
+			nil,
+			nil,
+		)
 		ctc.require.NoError(err)
 
 		params := &StreamCacheParams{
@@ -139,11 +146,13 @@ func makeCacheTestContext(t *testing.T, p testParams) (context.Context, *cacheTe
 			Metrics:                 infra.NewMetricsFactory(nil, "", ""),
 			RemoteMiniblockProvider: ctc,
 			Scrubber:                &noopScrubber{},
+			NodeRegistry:            nr,
+			disableCallbacks:        p.disableStreamCacheCallbacks,
 		}
 
 		inst := &cacheTestInstance{
 			params:         params,
-			streamRegistry: sr,
+			streamRegistry: NewStreamRegistry(bc, nr, registry, btc.OnChainConfig),
 		}
 		ctc.instances = append(ctc.instances, inst)
 		ctc.instancesByAddr[bc.Wallet.Address] = inst
@@ -152,12 +161,12 @@ func makeCacheTestContext(t *testing.T, p testParams) (context.Context, *cacheTe
 	return baseCtx, ctc
 }
 
-func (ctc *cacheTestContext) initCache(n int, opts *MiniblockProducerOpts) *streamCacheImpl {
-	streamCache := NewStreamCache(ctc.ctx, ctc.instances[n].params)
+func (ctc *cacheTestContext) initCache(n int, opts *MiniblockProducerOpts) *StreamCache {
+	streamCache := NewStreamCache(ctc.instances[n].params)
 	err := streamCache.Start(ctc.ctx)
 	ctc.require.NoError(err)
 	ctc.instances[n].cache = streamCache
-	ctc.instances[n].mbProducer = NewMiniblockProducer(ctc.ctx, streamCache, ctc.btc.OnChainConfig, opts)
+	ctc.instances[n].mbProducer = NewMiniblockProducer(ctc.ctx, streamCache, opts)
 	return streamCache
 }
 
@@ -170,20 +179,20 @@ func (ctc *cacheTestContext) initAllCaches(opts *MiniblockProducerOpts) {
 func (ctc *cacheTestContext) createReplStream() (StreamId, []common.Address, *MiniblockRef) {
 	streamId := testutils.FakeStreamId(STREAM_USER_SETTINGS_BIN)
 	mb := MakeGenesisMiniblockForUserSettingsStream(ctc.t, ctc.clientWallet, ctc.instances[0].params.Wallet, streamId)
-	mbBytes, err := mb.ToBytes()
+	storageMb, err := mb.AsStorageMb()
 	ctc.require.NoError(err)
 
 	nodes, err := ctc.instances[0].streamRegistry.AllocateStream(
 		ctc.ctx,
 		streamId,
 		common.BytesToHash(mb.Proto.Header.Hash),
-		mbBytes,
+		storageMb.Data,
 	)
 	ctc.require.NoError(err)
 	ctc.require.Len(nodes, ctc.testParams.replFactor)
 
 	for _, n := range nodes {
-		var s SyncStream
+		var s *Stream
 		var err error
 		for {
 			s, err = ctc.instancesByAddr[n].cache.GetStreamWaitForLocal(ctc.ctx, streamId)
@@ -249,7 +258,7 @@ func (ctc *cacheTestContext) createStreamNoCache(
 func (ctc *cacheTestContext) createStream(
 	streamId StreamId,
 	genesisMiniblock *Miniblock,
-) (SyncStream, StreamView) {
+) (*Stream, *StreamView) {
 	ctc.createStreamNoCache(streamId, genesisMiniblock)
 	s, err := ctc.instances[0].cache.GetStreamWaitForLocal(ctc.ctx, streamId)
 	ctc.require.NoError(err)
@@ -303,7 +312,7 @@ func (ctc *cacheTestContext) GetMbProposal(
 		return nil, err
 	}
 
-	view, err := stream.getView(ctx)
+	view, err := stream.GetView(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -319,7 +328,7 @@ func (ctc *cacheTestContext) SaveMbCandidate(
 	ctx context.Context,
 	node common.Address,
 	streamId StreamId,
-	mb *Miniblock,
+	candidate *MiniblockInfo,
 ) error {
 	inst := ctc.instancesByAddr[node]
 
@@ -328,7 +337,7 @@ func (ctc *cacheTestContext) SaveMbCandidate(
 		return err
 	}
 
-	return stream.SaveMiniblockCandidate(ctx, mb)
+	return stream.SaveMiniblockCandidate(ctx, candidate)
 }
 
 func (ctc *cacheTestContext) GetMbs(
@@ -337,7 +346,7 @@ func (ctc *cacheTestContext) GetMbs(
 	streamId StreamId,
 	fromInclusive int64,
 	toExclusive int64,
-) ([]*Miniblock, error) {
+) ([]*MiniblockInfo, error) {
 	for _, instance := range ctc.instances {
 		if node == instance.params.Wallet.Address {
 			stream, err := instance.cache.getStreamImpl(ctx, streamId, true)
@@ -403,11 +412,11 @@ func setOnChainStreamConfig(t *testing.T, ctx context.Context, btc *crypto.Block
 
 func (i *cacheTestInstance) makeAndSaveMbCandidate(
 	ctx context.Context,
-	stream SyncStream,
+	stream *Stream,
 ) (*MiniblockInfo, error) {
 	j := &mbJob{
-		stream: stream.(*streamImpl),
-		params: i.params,
+		stream: stream,
+		cache:  i.cache,
 	}
 	err := j.produceCandidate(ctx)
 	if err != nil {
@@ -418,11 +427,11 @@ func (i *cacheTestInstance) makeAndSaveMbCandidate(
 
 func (i *cacheTestInstance) makeMbCandidate(
 	ctx context.Context,
-	stream SyncStream,
+	stream *Stream,
 ) (*MiniblockInfo, error) {
 	j := &mbJob{
-		stream: stream.(*streamImpl),
-		params: i.params,
+		stream: stream,
+		cache:  i.cache,
 	}
 	j.remoteNodes, _ = j.stream.GetRemotesAndIsLocal()
 	j.replicated = len(j.remoteNodes) > 0
@@ -435,7 +444,7 @@ func (i *cacheTestInstance) makeMbCandidate(
 
 func (i *cacheTestInstance) makeMbCandidateForView(
 	ctx context.Context,
-	view *streamViewImpl,
+	view *StreamView,
 ) (*MiniblockInfo, error) {
 	proposal := view.proposeNextMiniblock(ctx, i.params.ChainConfig.Get(), false)
 	mbCandidate, err := view.makeMiniblockCandidate(ctx, i.params, proposal)

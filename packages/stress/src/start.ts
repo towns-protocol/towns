@@ -1,6 +1,6 @@
 import 'fake-indexeddb/auto' // used to mock indexdb in dexie, don't remove
-import { check } from '@river-build/dlog'
-import { makeRiverConfig } from '@river-build/sdk'
+import { check } from '@towns-protocol/dlog'
+import { makeRiverConfig } from '@towns-protocol/sdk'
 import { exit } from 'process'
 import { Wallet } from 'ethers'
 import { isSet } from './utils/expect'
@@ -13,8 +13,9 @@ check(isSet(process.env.PROCESS_INDEX), 'process.env.PROCESS_INDEX')
 const processIndex = parseInt(process.env.PROCESS_INDEX)
 
 const config = makeRiverConfig(process.env.RIVER_ENV)
-const logger = getLogger(`stress:run`, { processIndex })
+const logger = getLogger(`stress:run`)
 logger.info('======================= run =======================')
+logger.error('test error')
 
 if (processIndex === 0) {
     logger.info(process.env, 'env')
@@ -68,6 +69,6 @@ const run = async () => {
     exit(0)
 }
 run().catch((e) => {
-    logger.error('unhandled error:', e)
+    logger.error(e, 'unhandled error:')
     exit(1)
 })

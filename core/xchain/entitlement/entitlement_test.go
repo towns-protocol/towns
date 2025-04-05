@@ -1,7 +1,6 @@
 package entitlement
 
 import (
-	"context"
 	"fmt"
 	"math/big"
 	"os"
@@ -10,16 +9,16 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/river-build/river/core/config"
-	"github.com/river-build/river/core/node/base/test"
-	"github.com/river-build/river/core/node/crypto"
-	"github.com/river-build/river/core/node/infra"
-	"github.com/river-build/river/core/xchain/examples"
+	"github.com/towns-protocol/towns/core/config"
+	"github.com/towns-protocol/towns/core/node/base/test"
+	"github.com/towns-protocol/towns/core/node/crypto"
+	"github.com/towns-protocol/towns/core/node/infra"
+	"github.com/towns-protocol/towns/core/xchain/examples"
 
 	"github.com/ethereum/go-ethereum/common"
 
-	"github.com/river-build/river/core/contracts/river"
-	. "github.com/river-build/river/core/contracts/types"
+	"github.com/towns-protocol/towns/core/contracts/river"
+	. "github.com/towns-protocol/towns/core/contracts/types"
 )
 
 const (
@@ -291,15 +290,23 @@ var nftMultiCheckHighThresholdBaseSepolia = CheckOperation{
 	Params:          encodeThresholdParams(big.NewInt(10)),
 }
 
+func getFromEnv(envVar string, defaultValue string) string {
+	value := os.Getenv(envVar)
+	if value == "" {
+		return defaultValue
+	}
+	return value
+}
+
 var cfg = &config.Config{
 	ChainConfigs: map[uint64]*config.ChainConfig{
 		examples.EthSepoliaChainIdUint64: {
-			NetworkUrl:  "https://ethereum-sepolia-rpc.publicnode.com",
+			NetworkUrl:  getFromEnv("ETH_SEPOLIA_RPC_URL", "https://ethereum-sepolia-rpc.publicnode.com"),
 			ChainId:     examples.EthSepoliaChainIdUint64,
 			BlockTimeMs: 12000,
 		},
 		examples.BaseSepoliaChainIdUint64: {
-			NetworkUrl:  "https://sepolia.base.org",
+			NetworkUrl:  getFromEnv("BASE_SEPOLIA_RPC_URL", "https://sepolia.base.org"),
 			ChainId:     examples.BaseSepoliaChainIdUint64,
 			BlockTimeMs: 2000,
 		},
@@ -336,11 +343,14 @@ var evaluator *Evaluator
 
 func TestMain(m *testing.M) {
 	var err error
+	ctx, cancel := test.NewTestContext()
+	defer cancel()
 	evaluator, err = NewEvaluatorFromConfig(
-		context.Background(),
+		ctx,
 		cfg,
 		allSepoliaChains_onChainConfig,
 		infra.NewMetricsFactory(nil, "", ""),
+		nil,
 	)
 	if err != nil {
 		panic(err)
@@ -580,7 +590,6 @@ func TestCheckOperation(t *testing.T) {
 
 // Disable this test case, which is relying on a public rpc endpoint.
 func TestCheckOperation_Untimed(t *testing.T) {
-	t.Skip("Disabling this test due to dependence on public endpoints")
 	testCases := map[string]struct {
 		op          Operation
 		wallets     []common.Address
@@ -918,7 +927,9 @@ func TestCheckOperation_Untimed(t *testing.T) {
 
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
-			result, err := evaluator.evaluateOp(context.Background(), tc.op, tc.wallets)
+			ctx, cancel := test.NewTestContext()
+			defer cancel()
+			result, err := evaluator.evaluateOp(ctx, tc.op, tc.wallets)
 			if tc.expectedErr == nil {
 				require.NoError(t, err)
 			} else {
@@ -933,22 +944,21 @@ func TestCheckOperation_Untimed(t *testing.T) {
 
 var singleEtherChainBlockChainInfo = map[uint64]config.BlockchainInfo{
 	examples.EthSepoliaChainId.Uint64(): {
-		ChainId:      examples.EthSepoliaChainId.Uint64(),
-		Name:         "Ethereum Seplia",
-		Blocktime:    12000,
-		IsEtherBased: true,
+		ChainId:           examples.EthSepoliaChainId.Uint64(),
+		Name:              "Ethereum Seplia",
+		Blocktime:         12000,
+		IsEtherNative:     true,
+		IsEthereumNetwork: true,
 	},
 	examples.BaseSepoliaChainId.Uint64(): {
-		ChainId:      examples.BaseSepoliaChainId.Uint64(),
-		Name:         "Base Sepolia",
-		Blocktime:    2000,
-		IsEtherBased: false, // for the sake of testing
+		ChainId:       examples.BaseSepoliaChainId.Uint64(),
+		Name:          "Base Sepolia",
+		Blocktime:     2000,
+		IsEtherNative: false, // for the sake of testing
 	},
 }
 
-// Disable this test case, which is relying on a public rpc endpoint.
 func Test_evaluateEthBalance_withConfig(t *testing.T) {
-	t.Skip("Disabling this test due to dependence on public endpoints")
 	tests := map[string]struct {
 		op          Operation
 		wallets     []common.Address
@@ -973,17 +983,20 @@ func Test_evaluateEthBalance_withConfig(t *testing.T) {
 
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
+			ctx, cancel := test.NewTestContext()
+			defer cancel()
 			require := require.New(t)
 			customEvaluator, err := NewEvaluatorFromConfigWithBlockchainInfo(
-				context.Background(),
+				ctx,
 				cfg,
 				allSepoliaChains_onChainConfig,
 				singleEtherChainBlockChainInfo,
 				infra.NewMetricsFactory(nil, "", ""),
+				nil,
 			)
 			require.NoError(err)
 
-			result, err := customEvaluator.evaluateOp(context.Background(), tc.op, tc.wallets)
+			result, err := customEvaluator.evaluateOp(ctx, tc.op, tc.wallets)
 			if tc.expectedErr == nil {
 				require.NoError(err)
 			} else {

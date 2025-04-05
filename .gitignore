@@ -20,11 +20,13 @@ lcov.info
 coverage.json
 .npmrc
 
+
 # Contracts
 contracts/.openzeppelin/unknown-*.json
 contracts/docs/coverage
 contracts/.env
 contracts/.env.tpl
+contracts/in
 
 abi/
 
@@ -48,6 +50,7 @@ tsconfig.tsbuildinfo
 /contracts/deployments/alpha/base_anvil
 /contracts/deployments/alpha/river_anvil
 /contracts/deployments/local*
+/contracts/typings
 /broadcast
 
 
@@ -83,5 +86,6 @@ go.work.sum
 
 .idea
 
-/core/node/mls_service/libmls*
-libmls_lib.*
+# Ponder
+packages/subgraph/.ponder
+packages/subgraph/generated

@@ -5,19 +5,20 @@ import (
 	"fmt"
 	"reflect"
 	"strings"
-	"sync/atomic"
 	"testing"
 	"time"
 
 	"connectrpc.com/connect"
-
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 
-	"github.com/river-build/river/core/node/crypto"
-	. "github.com/river-build/river/core/node/events"
-	"github.com/river-build/river/core/node/protocol"
-	"github.com/river-build/river/core/node/protocol/protocolconnect"
-	. "github.com/river-build/river/core/node/shared"
+	"github.com/towns-protocol/towns/core/node/crypto"
+	. "github.com/towns-protocol/towns/core/node/events"
+	"github.com/towns-protocol/towns/core/node/protocol"
+	"github.com/towns-protocol/towns/core/node/protocol/protocolconnect"
+	. "github.com/towns-protocol/towns/core/node/shared"
+	"github.com/towns-protocol/towns/core/node/testutils"
+	"github.com/towns-protocol/towns/core/node/testutils/testfmt"
 )
 
 const defaultTimeout = 5 * time.Second
@@ -25,7 +26,7 @@ const defaultTimeout = 5 * time.Second
 type syncClient struct {
 	client  protocolconnect.StreamServiceClient
 	syncId  string
-	err     atomic.Pointer[error]
+	err     chan error
 	errC    chan error
 	syncIdC chan string
 	updateC chan *protocol.StreamAndCookie
@@ -33,10 +34,10 @@ type syncClient struct {
 	pongC   chan string
 }
 
-func (c *syncClient) sync(ctx context.Context, cookie *protocol.SyncCookie) {
+func (c *syncClient) syncMany(ctx context.Context, cookies []*protocol.SyncCookie) {
 	req := &protocol.SyncStreamsRequest{}
-	if cookie != nil {
-		req.SyncPos = []*protocol.SyncCookie{cookie}
+	if len(cookies) > 0 {
+		req.SyncPos = cookies
 	}
 	resp, err := c.client.SyncStreams(ctx, connect.NewRequest(req))
 	if err == nil {
@@ -79,10 +80,25 @@ func (c *syncClient) sync(ctx context.Context, cookie *protocol.SyncCookie) {
 
 	// Store pointer to error: if error is nil, sync is completed successfully
 	// if error is not nil, sync failed
-	c.err.Store(&err)
+	c.err <- err
 	if err != nil {
 		c.errC <- err
 	}
+}
+
+func (c *syncClient) sync(ctx context.Context, cookie *protocol.SyncCookie) {
+	c.syncMany(ctx, []*protocol.SyncCookie{cookie})
+}
+
+func (c *syncClient) modify(t *testing.T, ctx context.Context, add []*protocol.SyncCookie, remove [][]byte) {
+	resp, err := c.client.ModifySync(ctx, connect.NewRequest(&protocol.ModifySyncRequest{
+		SyncId:        c.syncId,
+		AddStreams:    add,
+		RemoveStreams: remove,
+	}))
+	require.NoError(t, err, "failed to modify sync")
+	require.Len(t, resp.Msg.GetAdds(), 0)
+	require.Len(t, resp.Msg.GetRemovals(), 0)
 }
 
 func (c *syncClient) cancelSync(t *testing.T, ctx context.Context) {
@@ -102,6 +118,7 @@ func makeSyncClients(tt *serviceTester, numNodes int) *syncClients {
 	for i := range numNodes {
 		clients[i] = &syncClient{
 			client:  tt.testClient(i),
+			err:     make(chan error, 1),
 			errC:    make(chan error, 100),
 			syncIdC: make(chan string, 100),
 			updateC: make(chan *protocol.StreamAndCookie, 100),
@@ -111,6 +128,29 @@ func makeSyncClients(tt *serviceTester, numNodes int) *syncClients {
 	}
 
 	return &syncClients{clients: clients}
+}
+
+func (sc *syncClients) startSyncMany(t *testing.T, ctx context.Context, cookies []*protocol.SyncCookie) {
+	for _, client := range sc.clients {
+		go client.syncMany(ctx, cookies)
+	}
+
+	t.Cleanup(func() {
+		sc.cancelAll(t, ctx)
+	})
+
+	for i, client := range sc.clients {
+		select {
+		case <-client.syncIdC:
+			// Received syncId, continue
+		case err := <-client.errC:
+			t.Fatalf("Error in sync client %d: %v", i, err)
+			return
+		case <-time.After(defaultTimeout):
+			t.Fatalf("Timeout waiting for syncId from client %d", i)
+			return
+		}
+	}
 }
 
 func (sc *syncClients) startSync(t *testing.T, ctx context.Context, cookie *protocol.SyncCookie) {
@@ -136,15 +176,17 @@ func (sc *syncClients) startSync(t *testing.T, ctx context.Context, cookie *prot
 	}
 }
 
+func (sc *syncClients) modifySync(t *testing.T, ctx context.Context, add []*protocol.SyncCookie, remove [][]byte) {
+	for _, client := range sc.clients {
+		go client.modify(t, ctx, add, remove)
+	}
+}
+
 func (sc *syncClients) checkDone(t *testing.T) {
 	for i, client := range sc.clients {
-		err := client.err.Load()
-		if err == nil {
-			t.Fatalf("sync client not done %d", i)
-			return
-		}
-		if *err != nil {
-			t.Fatalf("Error in sync client %d: %v", i, *err)
+		err := <-client.err
+		if err != nil {
+			t.Fatalf("Error in sync client %d: %v", i, err)
 			return
 		}
 		// Check that all updates and pongs are consumed
@@ -176,6 +218,37 @@ func (sc *syncClients) expectOneUpdate(t *testing.T, opts *updateOpts) {
 		case <-timer.C:
 			t.Fatalf("Timeout waiting for update on client %d", i)
 			return
+		}
+	}
+}
+
+func (sc *syncClients) expectNUpdates(
+	t *testing.T,
+	wantedUniqueStreamsWithUpdates int,
+	timeout time.Duration,
+	opts *updateOpts,
+) {
+	t.Helper()
+	timer := time.NewTimer(timeout)
+	defer timer.Stop()
+
+	uniqueStreamsWithUpdates := make(map[StreamId]struct{})
+
+	for i, client := range sc.clients {
+		for len(uniqueStreamsWithUpdates) < wantedUniqueStreamsWithUpdates {
+			select {
+			case update := <-client.updateC:
+				checkUpdate(t, update, opts)
+				if t.Failed() {
+					return
+				}
+
+				streamID, _ := StreamIdFromBytes(update.GetNextSyncCookie().GetStreamId())
+				uniqueStreamsWithUpdates[streamID] = struct{}{}
+			case <-timer.C:
+				t.Fatalf("Timeout waiting for update on client %d", i)
+				return
+			}
 		}
 	}
 }
@@ -296,6 +369,251 @@ func TestSyncWithFlush(t *testing.T) {
 	require.Equal(int64(2), mbRef.Num)
 	syncClients.expectOneUpdate(t, &updateOpts{events: 1, eventType: "MiniblockHeader"})
 
+	syncClients.cancelAll(t, ctx)
+	syncClients.checkDone(t)
+}
+
+// TestSyncWithManyStreams ensures that when starting a sync session with a lot of initial streams
+// the client receives for each stream an update and the sync session remains valid.
+func TestSyncWithManyStreams(t *testing.T) {
+	numNodes := 10
+	tt := newServiceTester(t, serviceTesterOpts{numNodes: numNodes, start: true})
+	ctx := tt.ctx
+	require := tt.require
+
+	syncClients := makeSyncClients(tt, 1)
+	syncClient0 := syncClients.clients[0].client
+
+	wallet, err := crypto.NewWallet(ctx)
+	require.NoError(err)
+	resuser, _, err := createUser(ctx, wallet, syncClient0, nil)
+	require.NoError(err)
+	require.NotNil(resuser)
+
+	_, _, err = createUserMetadataStream(ctx, wallet, syncClient0, nil)
+	require.NoError(err)
+
+	// create space with 500 channels and add 1 event to each channel
+	spaceId := testutils.FakeStreamId(STREAM_SPACE_BIN)
+	_, _, err = createSpace(ctx, wallet, syncClient0, spaceId, &protocol.StreamSettings{})
+	require.NoError(err)
+
+	produceChannel := func() (*protocol.SyncCookie, *MiniblockRef) {
+		channelId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
+		channel, channelHash, err := createChannel(
+			ctx,
+			wallet,
+			syncClient0,
+			spaceId,
+			channelId,
+			&protocol.StreamSettings{DisableMiniblockCreation: true},
+		)
+		require.NoError(err)
+		require.NotNil(channel)
+		b0ref, err := makeMiniblock(ctx, syncClient0, channelId, false, -1)
+		require.NoError(err)
+		require.Equal(int64(0), b0ref.Num)
+		return channel, channelHash
+	}
+
+	var channelCookies []*protocol.SyncCookie
+	for range 500 {
+		channel, channelHash := produceChannel()
+
+		// add 1 event to the channel
+		addMessageToChannel(ctx, syncClient0, wallet, "hello", StreamId(channel.StreamId), channelHash, require)
+
+		channelCookies = append(channelCookies, channel)
+	}
+
+	// start sync session with all channels and ensure that for each stream an update is received with 1 message
+	now := time.Now()
+	syncClients.startSyncMany(t, ctx, channelCookies)
+	syncClients.expectNUpdates(t, len(channelCookies), 30*time.Second, &updateOpts{events: 1, eventType: "ChannelPayload"})
+	testfmt.Printf(t, "Received first update for all %d streams in init sync session took: %s", len(channelCookies), time.Since(now))
+
+	// create more streams and add them to the sync via the modify sync endpoint
+	var add []*protocol.SyncCookie
+	for range 500 {
+		channel, channelHash := produceChannel()
+
+		// add 1 event to the channel
+		addMessageToChannel(ctx, syncClient0, wallet, "hello", StreamId(channel.StreamId), channelHash, require)
+
+		add = append(add, channel)
+	}
+
+	// remove half of the previously added streams and send one more message to the remaining half
+	var remove [][]byte
+	for _, existingStream := range channelCookies[:len(channelCookies)/2] {
+		remove = append(remove, existingStream.GetStreamId())
+	}
+	for _, existingStream := range channelCookies[len(channelCookies)/2:] {
+		res, err := syncClient0.GetLastMiniblockHash(ctx, connect.NewRequest(&protocol.GetLastMiniblockHashRequest{
+			StreamId: existingStream.GetStreamId(),
+		}))
+		require.NoError(err)
+
+		addMessageToChannel(
+			ctx,
+			syncClient0,
+			wallet,
+			"hello",
+			StreamId(existingStream.GetStreamId()),
+			&MiniblockRef{
+				Hash: common.BytesToHash(res.Msg.Hash),
+				Num:  res.Msg.MiniblockNum,
+			},
+			require,
+		)
+	}
+
+	// send modify sync request
+	syncClients.modifySync(t, ctx, add, remove)
+	syncClients.expectNUpdates(t, len(add)+len(channelCookies[len(channelCookies)/2:]), 30*time.Second, &updateOpts{events: 1, eventType: "ChannelPayload"})
+	testfmt.Printf(t, "Received second update for all %d streams in init sync session took: %s", len(channelCookies), time.Since(now))
+
+	// add two same streams in the modify sync request and expect error
+	t.Run("duplicate add streams", func(t *testing.T) {
+		channel, _ := produceChannel()
+		_, err = syncClient0.ModifySync(ctx, connect.NewRequest(&protocol.ModifySyncRequest{
+			SyncId:     syncClients.clients[0].syncId,
+			AddStreams: []*protocol.SyncCookie{channel, channel},
+		}))
+		require.Error(err)
+		require.Equal(connect.CodeAlreadyExists, connect.CodeOf(err))
+	})
+
+	// remove two same streams in the modify sync request and expect error
+	t.Run("duplicate remove streams", func(t *testing.T) {
+		_, err = syncClient0.ModifySync(ctx, connect.NewRequest(&protocol.ModifySyncRequest{
+			SyncId: syncClients.clients[0].syncId,
+			RemoveStreams: [][]byte{
+				channelCookies[len(channelCookies)-1].StreamId,
+				channelCookies[len(channelCookies)-1].StreamId,
+			},
+		}))
+		require.Error(err)
+		require.Equal(connect.CodeAlreadyExists, connect.CodeOf(err))
+	})
+
+	// passing the same stream in add and remove streams in the modify sync request and expect error
+	t.Run("same stream in remove and add", func(t *testing.T) {
+		channel, _ := produceChannel()
+		_, err = syncClient0.ModifySync(ctx, connect.NewRequest(&protocol.ModifySyncRequest{
+			SyncId:        syncClients.clients[0].syncId,
+			AddStreams:    []*protocol.SyncCookie{channel},
+			RemoveStreams: [][]byte{channel.StreamId},
+		}))
+		require.Error(err)
+		require.Equal(connect.CodeInvalidArgument, connect.CodeOf(err))
+	})
+
+	// finish testing
+	syncClients.cancelAll(t, ctx)
+	syncClients.checkDone(t)
+}
+
+// TestSyncWithEmptyNodeAddress tests that the sync service can handle an empty node address by using sticky peer.
+func TestSyncWithEmptyNodeAddress(t *testing.T) {
+	numNodes := 10
+	tt := newServiceTester(t, serviceTesterOpts{numNodes: numNodes, start: true})
+	ctx := tt.ctx
+	require := tt.require
+
+	syncClients := makeSyncClients(tt, 1)
+	syncClient0 := syncClients.clients[0].client
+
+	wallet, err := crypto.NewWallet(ctx)
+	require.NoError(err)
+	resuser, _, err := createUser(ctx, wallet, syncClient0, nil)
+	require.NoError(err)
+	require.NotNil(resuser)
+
+	_, _, err = createUserMetadataStream(ctx, wallet, syncClient0, nil)
+	require.NoError(err)
+
+	// create space with 500 channels and add 1 event to each channel
+	spaceId := testutils.FakeStreamId(STREAM_SPACE_BIN)
+	_, _, err = createSpace(ctx, wallet, syncClient0, spaceId, &protocol.StreamSettings{})
+	require.NoError(err)
+
+	produceChannel := func() (*protocol.SyncCookie, *MiniblockRef) {
+		channelId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
+		channel, channelHash, err := createChannel(
+			ctx,
+			wallet,
+			syncClient0,
+			spaceId,
+			channelId,
+			&protocol.StreamSettings{DisableMiniblockCreation: true},
+		)
+		require.NoError(err)
+		require.NotNil(channel)
+		b0ref, err := makeMiniblock(ctx, syncClient0, channelId, false, -1)
+		require.NoError(err)
+		require.Equal(int64(0), b0ref.Num)
+
+		// do not specify the node address to force the sync service to use sticky peer
+		return &protocol.SyncCookie{
+			StreamId:          channel.GetStreamId(),
+			MinipoolGen:       channel.GetMinipoolGen(),
+			PrevMiniblockHash: channel.GetPrevMiniblockHash(),
+		}, channelHash
+	}
+
+	var channelCookies []*protocol.SyncCookie
+	for range 50 {
+		channel, channelHash := produceChannel()
+		addMessageToChannel(ctx, syncClient0, wallet, "hello", StreamId(channel.StreamId), channelHash, require)
+		channelCookies = append(channelCookies, channel)
+	}
+
+	// start sync session with all channels and ensure that for each stream an update is received with 1 message
+	now := time.Now()
+	syncClients.startSyncMany(t, ctx, channelCookies)
+	syncClients.expectNUpdates(t, len(channelCookies), 30*time.Second, &updateOpts{events: 1, eventType: "ChannelPayload"})
+	testfmt.Printf(t, "Received first update for all %d streams in init sync session took: %s", len(channelCookies), time.Since(now))
+
+	// create more streams and add them to the sync via the modify sync endpoint
+	var add []*protocol.SyncCookie
+	for range 50 {
+		channel, channelHash := produceChannel()
+		addMessageToChannel(ctx, syncClient0, wallet, "hello", StreamId(channel.StreamId), channelHash, require)
+		add = append(add, channel)
+	}
+
+	// remove half of the previously added streams and send one more message to the remaining half
+	var remove [][]byte
+	for _, existingStream := range channelCookies[:len(channelCookies)/2] {
+		remove = append(remove, existingStream.GetStreamId())
+	}
+	for _, existingStream := range channelCookies[len(channelCookies)/2:] {
+		res, err := syncClient0.GetLastMiniblockHash(ctx, connect.NewRequest(&protocol.GetLastMiniblockHashRequest{
+			StreamId: existingStream.GetStreamId(),
+		}))
+		require.NoError(err)
+
+		addMessageToChannel(
+			ctx,
+			syncClient0,
+			wallet,
+			"hello",
+			StreamId(existingStream.GetStreamId()),
+			&MiniblockRef{
+				Hash: common.BytesToHash(res.Msg.Hash),
+				Num:  res.Msg.MiniblockNum,
+			},
+			require,
+		)
+	}
+
+	// send modify sync request
+	syncClients.modifySync(t, ctx, add, remove)
+	syncClients.expectNUpdates(t, len(add)+len(channelCookies[len(channelCookies)/2:]), 30*time.Second, &updateOpts{events: 1, eventType: "ChannelPayload"})
+	testfmt.Printf(t, "Received second update for all %d streams in init sync session took: %s", len(channelCookies), time.Since(now))
+
+	// finish testing
 	syncClients.cancelAll(t, ctx)
 	syncClients.checkDone(t)
 }

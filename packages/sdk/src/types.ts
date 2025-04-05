@@ -1,5 +1,6 @@
-import { PlainMessage } from '@bufbuild/protobuf'
+import { create, fromJsonString } from '@bufbuild/protobuf'
 import {
+    PlainMessage,
     StreamEvent,
     ChannelMessage,
     ChannelMessage_Post_Content_Text,
@@ -36,14 +37,14 @@ import {
     MemberPayload,
     MemberPayload_Nft,
     BlockchainTransaction,
-    MemberPayload_Mls,
-} from '@river-build/proto'
+    ChannelMessageSchema,
+} from '@towns-protocol/proto'
 import { keccak256 } from 'ethereum-cryptography/keccak'
-import { bin_toHexString } from '@river-build/dlog'
+import { bin_toHexString } from '@towns-protocol/dlog'
 import { isDefined } from './check'
 import { DecryptedContent } from './encryptedContentTypes'
 import { addressFromUserId, streamIdAsBytes } from './id'
-import { DecryptionSessionError } from '@river-build/encryption'
+import { DecryptionSessionError, EventSignatureBundle } from '@towns-protocol/encryption'
 
 export type LocalEventStatus = 'sending' | 'sent' | 'failed'
 export interface LocalEvent {
@@ -57,7 +58,6 @@ export interface ParsedEvent {
     hash: Uint8Array
     hashStr: string
     signature: Uint8Array | undefined
-    prevMiniblockHashStr?: string
     creatorUserId: string
 }
 
@@ -112,6 +112,39 @@ export type ContractReceipt = {
     }[]
 }
 
+type SolanaTokenBalance = {
+    mint: string
+    owner: string
+    amount: {
+        amount: string
+        decimals: number
+    }
+}
+
+export type SolanaTransactionReceipt = {
+    transaction: {
+        signatures: string[]
+    }
+    meta: {
+        preTokenBalances: SolanaTokenBalance[]
+        postTokenBalances: SolanaTokenBalance[]
+    }
+    slot: bigint
+}
+
+export function isSolanaTransactionReceipt(obj: unknown): obj is SolanaTransactionReceipt {
+    return (
+        typeof obj === 'object' &&
+        obj !== null &&
+        'transaction' in obj &&
+        'meta' in obj &&
+        typeof obj['meta'] === 'object' &&
+        obj.meta !== null &&
+        'preTokenBalances' in obj.meta &&
+        'postTokenBalances' in obj.meta
+    )
+}
+
 export function isLocalEvent(event: StreamTimelineEvent): event is LocalTimelineEvent {
     return event.localEvent !== undefined
 }
@@ -130,6 +163,18 @@ export function isConfirmedEvent(event: StreamTimelineEvent): event is Confirmed
         event.confirmedEventNum !== undefined &&
         event.miniblockNum !== undefined
     )
+}
+
+export function getEventSignature(remoteEvent: ParsedEvent): EventSignatureBundle {
+    return {
+        hash: remoteEvent.hash,
+        signature: remoteEvent.signature,
+        event: {
+            creatorAddress: remoteEvent.event.creatorAddress,
+            delegateSig: remoteEvent.event.delegateSig,
+            delegateExpiryEpochMs: remoteEvent.event.delegateExpiryEpochMs,
+        },
+    }
 }
 
 export function makeRemoteTimelineEvent(params: {
@@ -357,26 +402,12 @@ export const make_MemberPayload_Unpin = (
     }
 }
 
-export const make_MemberPayload_Mls = (
-    value: PlainMessage<MemberPayload_Mls>,
-): PlainMessage<StreamEvent>['payload'] => {
-    return {
-        case: 'memberPayload',
-        value: {
-            content: {
-                case: 'mls',
-                value,
-            },
-        },
-    }
-}
-
 export const make_ChannelMessage_Post_Content_Text = (
     body: string,
     mentions?: PlainMessage<ChannelMessage_Post_Mention>[],
 ): ChannelMessage => {
     const mentionsPayload = mentions !== undefined ? mentions : []
-    return new ChannelMessage({
+    return create(ChannelMessageSchema, {
         payload: {
             case: 'post',
             value: {
@@ -396,7 +427,7 @@ export const make_ChannelMessage_Post_Content_GM = (
     typeUrl: string,
     value?: Uint8Array,
 ): ChannelMessage => {
-    return new ChannelMessage({
+    return create(ChannelMessageSchema, {
         payload: {
             case: 'post',
             value: {
@@ -416,7 +447,7 @@ export const make_ChannelMessage_Reaction = (
     refEventId: string,
     reaction: string,
 ): ChannelMessage => {
-    return new ChannelMessage({
+    return create(ChannelMessageSchema, {
         payload: {
             case: 'reaction',
             value: {
@@ -431,7 +462,7 @@ export const make_ChannelMessage_Edit = (
     refEventId: string,
     post: PlainMessage<ChannelMessage_Post>,
 ): ChannelMessage => {
-    return new ChannelMessage({
+    return create(ChannelMessageSchema, {
         payload: {
             case: 'edit',
             value: {
@@ -446,7 +477,7 @@ export const make_ChannelMessage_Redaction = (
     refEventId: string,
     reason?: string,
 ): ChannelMessage => {
-    return new ChannelMessage({
+    return create(ChannelMessageSchema, {
         payload: {
             case: 'redaction',
             value: {
@@ -887,7 +918,7 @@ export const getMessagePayloadContent = (
     if (!payload) {
         return undefined
     }
-    return ChannelMessage.fromJsonString(payload.ciphertext)
+    return fromJsonString(ChannelMessageSchema, payload.ciphertext)
 }
 
 export const getMessagePayloadContent_Text = (

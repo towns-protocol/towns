@@ -3,12 +3,13 @@ package shared
 import (
 	"bytes"
 	"encoding/hex"
+	"fmt"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/jackc/pgx/v5/pgtype"
 
-	. "github.com/river-build/river/core/node/base"
-	. "github.com/river-build/river/core/node/protocol"
+	. "github.com/towns-protocol/towns/core/node/base"
+	. "github.com/towns-protocol/towns/core/node/protocol"
 )
 
 const (
@@ -36,6 +37,30 @@ const (
 )
 
 type StreamId [STREAM_ID_BYTES_LENGTH]byte
+
+func StreamTypeToString(streamType byte) string {
+	switch streamType {
+	case STREAM_CHANNEL_BIN:
+		return "space_channel"
+	case STREAM_DM_CHANNEL_BIN:
+		return "dm_channel"
+	case STREAM_GDM_CHANNEL_BIN:
+		return "gdm_channel"
+	case STREAM_MEDIA_BIN:
+		return "media"
+	case STREAM_SPACE_BIN:
+		return "space"
+	case STREAM_USER_METADATA_KEY_BIN:
+		return "user_metadata"
+	case STREAM_USER_INBOX_BIN:
+		return "user_inbox"
+	case STREAM_USER_BIN:
+		return "user"
+	case STREAM_USER_SETTINGS_BIN:
+		return "user_settings"
+	}
+	return fmt.Sprintf("%02x", streamType)
+}
 
 func StreamIdFromString(s string) (StreamId, error) {
 	b, err := hex.DecodeString(s)

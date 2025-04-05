@@ -6,72 +6,82 @@ import {IOperatorRegistry} from "./IOperatorRegistry.sol";
 
 // libraries
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+
 import {RiverRegistryErrors} from "contracts/src/river/registry/libraries/RegistryErrors.sol";
+import {CustomRevert} from "contracts/src/utils/libraries/CustomRevert.sol";
 
 // contracts
+import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
+import {OwnableBase} from "@towns-protocol/diamond/src/facets/ownable/OwnableBase.sol";
 import {RegistryModifiers} from "contracts/src/river/registry/libraries/RegistryStorage.sol";
-import {OwnableBase} from "@river-build/diamond/src/facets/ownable/OwnableBase.sol";
-import {Facet} from "@river-build/diamond/src/facets/Facet.sol";
 
-contract OperatorRegistry is
-  IOperatorRegistry,
-  RegistryModifiers,
-  OwnableBase,
-  Facet
-{
-  using EnumerableSet for EnumerableSet.AddressSet;
+contract OperatorRegistry is IOperatorRegistry, RegistryModifiers, OwnableBase, Facet {
+    using EnumerableSet for EnumerableSet.AddressSet;
+    using CustomRevert for string;
 
-  function __OperatorRegistry_init(
-    address[] calldata initialOperators
-  ) external onlyInitializing {
-    for (uint256 i = 0; i < initialOperators.length; ++i) {
-      _approveOperator(initialOperators[i]);
-    }
-  }
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                       ADMIN FUNCTIONS                      */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-  // =============================================================
-  //                           Operators
-  // =============================================================
-  function approveOperator(address operator) external onlyOwner {
-    _approveOperator(operator);
-  }
-
-  function isOperator(address operator) external view returns (bool) {
-    return ds.operators.contains(operator);
-  }
-
-  function removeOperator(address operator) external onlyOwner {
-    if (!ds.operators.contains(operator))
-      revert(RiverRegistryErrors.OPERATOR_NOT_FOUND);
-
-    // verify that the operator has no nodes attached
-    for (uint256 i = 0; i < ds.nodes.length(); ++i) {
-      if (ds.nodeByAddress[ds.nodes.at(i)].operator == operator)
-        revert(RiverRegistryErrors.OUT_OF_BOUNDS);
+    function __OperatorRegistry_init(address[] calldata initialOperators)
+        external
+        onlyInitializing
+    {
+        for (uint256 i; i < initialOperators.length; ++i) {
+            _approveOperator(initialOperators[i]);
+        }
     }
 
-    ds.operators.remove(operator);
+    /// @inheritdoc IOperatorRegistry
+    function approveOperator(address operator) external onlyOwner {
+        _approveOperator(operator);
+    }
 
-    emit OperatorRemoved(operator);
-  }
+    /// @inheritdoc IOperatorRegistry
+    function removeOperator(address operator) external onlyOwner {
+        if (!isOperator(operator)) {
+            RiverRegistryErrors.OPERATOR_NOT_FOUND.revertWith();
+        }
 
-  function getAllOperators() external view returns (address[] memory) {
-    return ds.operators.values();
-  }
+        uint256 length = ds.nodes.length();
+        // verify that the operator has no nodes attached
+        for (uint256 i; i < length; ++i) {
+            if (ds.nodeByAddress[ds.nodes.at(i)].operator == operator) {
+                RiverRegistryErrors.OUT_OF_BOUNDS.revertWith();
+            }
+        }
 
-  // =============================================================
-  //                           Internal
-  // =============================================================
+        ds.operators.remove(operator);
 
-  function _approveOperator(address operator) internal {
-    // Validate operator address
-    if (operator == address(0)) revert(RiverRegistryErrors.BAD_ARG);
+        emit OperatorRemoved(operator);
+    }
 
-    if (ds.operators.contains(operator))
-      revert(RiverRegistryErrors.ALREADY_EXISTS);
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                          GETTERS                           */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    ds.operators.add(operator);
+    /// @inheritdoc IOperatorRegistry
+    function isOperator(address operator) public view returns (bool) {
+        return ds.operators.contains(operator);
+    }
 
-    emit OperatorAdded(operator);
-  }
+    /// @inheritdoc IOperatorRegistry
+    function getAllOperators() external view returns (address[] memory) {
+        return ds.operators.values();
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                          INTERNAL                          */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    function _approveOperator(address operator) internal {
+        // Validate operator address
+        if (operator == address(0)) RiverRegistryErrors.BAD_ARG.revertWith();
+
+        if (isOperator(operator)) RiverRegistryErrors.ALREADY_EXISTS.revertWith();
+
+        ds.operators.add(operator);
+
+        emit OperatorAdded(operator);
+    }
 }

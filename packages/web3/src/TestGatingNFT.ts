@@ -2,12 +2,12 @@ import { createTestClient, http, publicActions, walletActions, parseEther } from
 import { generatePrivateKey, privateKeyToAccount } from 'viem/accounts'
 import { foundry } from 'viem/chains'
 
-import MockERC721a from './MockERC721A'
+import { MockERC721a } from './MockERC721A'
 
 import { isHexString, deployContract, Mutex } from './TestGatingUtils'
 import { Address } from './ContractTypes'
 
-import { dlogger } from '@river-build/dlog'
+import { dlogger } from '@towns-protocol/dlog'
 
 const logger = dlogger('csb:TestGatingNFT')
 

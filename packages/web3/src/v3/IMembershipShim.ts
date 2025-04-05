@@ -1,15 +1,15 @@
 import {
     MembershipFacet as LocalhostContract,
     MembershipFacetInterface as LocalhostInterface,
-} from '@river-build/generated/dev/typings/MembershipFacet'
+} from '@towns-protocol/generated/dev/typings/MembershipFacet'
 
 import { IERC721AShim } from './IERC721AShim'
 
 import { BigNumber, BigNumberish, ethers } from 'ethers'
 import { BaseContractShim } from './BaseContractShim'
 
-import LocalhostAbi from '@river-build/generated/dev/abis/MembershipFacet.abi.json' assert { type: 'json' }
-import { dlogger } from '@river-build/dlog'
+import LocalhostAbi from '@towns-protocol/generated/dev/abis/MembershipFacet.abi.json' assert { type: 'json' }
+import { dlogger } from '@towns-protocol/dlog'
 import { IMembershipMetadataShim } from './IMembershipMetadataShim'
 
 const log = dlogger('csb:IMembershipShim')
@@ -46,7 +46,7 @@ export class IMembershipShim extends BaseContractShim<LocalhostContract, Localho
               }, 20_000)
 
         const abortController = providedAbortController ?? timeoutController!
-        // TODO: this isn't picking up correct typed fucntion signature, treating as string
+        // TODO: this isn't picking up correct typed function signature, treating as string
         const issuedFilter = this.read.filters['MembershipTokenIssued(address,uint256)'](
             receiver,
         ) as string

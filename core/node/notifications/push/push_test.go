@@ -12,11 +12,11 @@ import (
 	payload2 "github.com/sideshow/apns2/payload"
 	"github.com/stretchr/testify/require"
 
-	"github.com/river-build/river/core/config"
-	"github.com/river-build/river/core/node/infra"
-	"github.com/river-build/river/core/node/notifications/push"
-	"github.com/river-build/river/core/node/notifications/types"
-	"github.com/river-build/river/core/node/protocol"
+	"github.com/towns-protocol/towns/core/config"
+	"github.com/towns-protocol/towns/core/node/infra"
+	"github.com/towns-protocol/towns/core/node/notifications/push"
+	"github.com/towns-protocol/towns/core/node/notifications/types"
+	"github.com/towns-protocol/towns/core/node/protocol"
 )
 
 func TestAPNSPushNotification(t *testing.T) {

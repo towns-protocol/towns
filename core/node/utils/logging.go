@@ -8,7 +8,7 @@ import (
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 
-	"github.com/river-build/river/core/node/logging"
+	"github.com/towns-protocol/towns/core/node/logging"
 )
 
 // NewHttpLogger returns a logger that print TLS handshake errors on debug level
@@ -20,7 +20,7 @@ func NewHttpLogger(ctx context.Context) *log.Logger {
 }
 
 type handlerWriter struct {
-	log *zap.SugaredLogger
+	log *logging.Log
 }
 
 func (w *handlerWriter) Write(buf []byte) (int, error) {
@@ -38,17 +38,17 @@ func (w *handlerWriter) Write(buf []byte) (int, error) {
 	if len(buf) > 0 && buf[len(buf)-1] == '\n' {
 		buf = buf[:len(buf)-1]
 	}
-	w.log.Desugar().Log(level, string(buf))
+	w.log.Default.Desugar().Log(level, string(buf))
 
 	return origLen, nil
 }
 
-func NewLevelLogger(logger *zap.SugaredLogger, level zapcore.Level) *log.Logger {
+func NewLevelLogger(logger *logging.Log, level zapcore.Level) *log.Logger {
 	return log.New(&levelWriter{log: logger, level: level}, "", 0)
 }
 
 type levelWriter struct {
-	log   *zap.SugaredLogger
+	log   *logging.Log
 	level zapcore.Level
 }
 
@@ -58,7 +58,7 @@ func (l *levelWriter) Write(buf []byte) (int, error) {
 	if len(buf) > 0 && buf[len(buf)-1] == '\n' {
 		buf = buf[:len(buf)-1]
 	}
-	l.log.Desugar().Log(l.level, string(buf))
+	l.log.Default.Desugar().Log(l.level, string(buf))
 
 	return origLen, nil
 }

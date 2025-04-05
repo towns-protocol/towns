@@ -1,12 +1,23 @@
 import {
     PersistedEvent,
+    PersistedEventSchema,
     PersistedMiniblock,
+    PersistedMiniblockSchema,
     PersistedSyncedStream,
     SyncCookie,
-} from '@river-build/proto'
+} from '@towns-protocol/proto'
 import { ParsedEvent, ParsedMiniblock } from './types'
-import { bin_toHexString } from '@river-build/dlog'
+import { bin_toHexString } from '@towns-protocol/dlog'
+import { create } from '@bufbuild/protobuf'
 import { isDefined, logNever } from './check'
+
+export interface ParsedPersistedSyncedStream {
+    streamId: string
+    syncCookie: SyncCookie
+    lastSnapshotMiniblockNum: bigint
+    minipoolEvents: ParsedEvent[]
+    lastMiniblockNum: bigint
+}
 
 export function isPersistedEvent(event: ParsedEvent, direction: 'forward' | 'backward'): boolean {
     if (!event.event) {
@@ -23,7 +34,14 @@ export function isPersistedEvent(event: ParsedEvent, direction: 'forward' | 'bac
         case 'mediaPayload':
             return true
         case 'userPayload':
-            return direction === 'forward' ? true : false
+            switch (event.event.payload.value.content.case) {
+                case 'blockchainTransaction':
+                    return true
+                case 'receivedBlockchainTransaction':
+                    return true
+                default:
+                    return direction === 'forward' ? true : false
+            }
         case 'userSettingsPayload':
             return direction === 'forward' ? true : false
         case 'miniblockHeader':
@@ -36,6 +54,8 @@ export function isPersistedEvent(event: ParsedEvent, direction: 'forward' | 'bac
                     return direction === 'forward' ? true : false
                 case 'keyFulfillment':
                     return direction === 'forward' ? true : false
+                case 'memberBlockchainTransaction':
+                    return true
                 case undefined:
                     return false
                 default:
@@ -63,8 +83,6 @@ export function persistedEventToParsedEvent(event: PersistedEvent): ParsedEvent 
         hash: event.hash,
         hashStr: bin_toHexString(event.hash),
         signature: event.signature,
-        prevMiniblockHashStr:
-            event.prevMiniblockHashStr.length > 0 ? event.prevMiniblockHashStr : undefined,
         creatorUserId: event.creatorUserId,
     }
 }
@@ -86,7 +104,10 @@ export function parsedMiniblockToPersistedMiniblock(
     miniblock: ParsedMiniblock,
     direction: 'forward' | 'backward',
 ) {
-    return new PersistedMiniblock({
+    if (direction === 'backward') {
+        miniblock.header.snapshot = undefined
+    }
+    return create(PersistedMiniblockSchema, {
         hash: miniblock.hash,
         header: miniblock.header,
         events: miniblock.events
@@ -96,27 +117,23 @@ export function parsedMiniblockToPersistedMiniblock(
 }
 
 function parsedEventToPersistedEvent(event: ParsedEvent) {
-    return new PersistedEvent({
+    return create(PersistedEventSchema, {
         event: event.event,
         hash: event.hash,
         signature: event.signature,
-        prevMiniblockHashStr: event.prevMiniblockHashStr,
         creatorUserId: event.creatorUserId,
     })
 }
 
-export function persistedSyncedStreamToParsedSyncedStream(stream: PersistedSyncedStream):
-    | {
-          syncCookie: SyncCookie
-          lastSnapshotMiniblockNum: bigint
-          minipoolEvents: ParsedEvent[]
-          lastMiniblockNum: bigint
-      }
-    | undefined {
+export function persistedSyncedStreamToParsedSyncedStream(
+    streamId: string,
+    stream: PersistedSyncedStream,
+): ParsedPersistedSyncedStream | undefined {
     if (!stream.syncCookie) {
         return undefined
     }
     return {
+        streamId,
         syncCookie: stream.syncCookie,
         lastSnapshotMiniblockNum: stream.lastSnapshotMiniblockNum,
         minipoolEvents: stream.minipoolEvents.map(persistedEventToParsedEvent).filter(isDefined),

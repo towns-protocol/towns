@@ -6,9 +6,9 @@ import (
 	"connectrpc.com/connect"
 	"github.com/ethereum/go-ethereum/common"
 
-	. "github.com/river-build/river/core/node/events"
-	. "github.com/river-build/river/core/node/protocol"
-	. "github.com/river-build/river/core/node/shared"
+	. "github.com/towns-protocol/towns/core/node/events"
+	. "github.com/towns-protocol/towns/core/node/protocol"
+	. "github.com/towns-protocol/towns/core/node/shared"
 )
 
 var _ RemoteMiniblockProvider = (*Service)(nil)
@@ -38,7 +38,7 @@ func (s *Service) SaveMbCandidate(
 	ctx context.Context,
 	node common.Address,
 	streamId StreamId,
-	mb *Miniblock,
+	candidate *MiniblockInfo,
 ) error {
 	stub, err := s.nodeRegistry.GetNodeToNodeClientForAddress(node)
 	if err != nil {
@@ -49,7 +49,8 @@ func (s *Service) SaveMbCandidate(
 		ctx,
 		connect.NewRequest(&SaveMiniblockCandidateRequest{
 			StreamId:  streamId[:],
-			Miniblock: mb,
+			Miniblock: candidate.Proto,
+			Snapshot:  candidate.Snapshot,
 		}),
 	)
 
@@ -63,7 +64,7 @@ func (s *Service) GetMbs(
 	streamId StreamId,
 	fromInclusive int64,
 	toExclusive int64,
-) ([]*Miniblock, error) {
+) ([]*MiniblockInfo, error) {
 	remote, err := s.nodeRegistry.GetStreamServiceClientForAddress(node)
 	if err != nil {
 		return nil, err
@@ -78,5 +79,16 @@ func (s *Service) GetMbs(
 		return nil, err
 	}
 
-	return resp.Msg.GetMiniblocks(), nil
+	mbs := make([]*MiniblockInfo, len(resp.Msg.GetMiniblocks()))
+	for i, mbProto := range resp.Msg.GetMiniblocks() {
+		mbs[i], err = NewMiniblockInfoFromProto(
+			mbProto, resp.Msg.GetMiniblockSnapshot(fromInclusive+int64(i)),
+			NewParsedMiniblockInfoOpts().WithExpectedBlockNumber(fromInclusive+int64(i)),
+		)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return mbs, nil
 }

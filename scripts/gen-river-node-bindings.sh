@@ -34,8 +34,6 @@ generate_go() {
         --out "${OUT_DIR}/${GO_NAME}.go"
 }
 
-
-
 # Base (and other) contracts interfaces
 generate_go base base IArchitect architect
 generate_go base base Channels channels
@@ -51,9 +49,12 @@ generate_go base base IEntitlementChecker i_entitlement_checker
 generate_go base base IEntitlementGated i_entitlement_gated
 generate_go base base IEntitlement i_entitlement
 generate_go base base ICrossChainEntitlement i_cross_chain_entitlement
+generate_go base base IReview space_review
 generate_go base base IRoles i_roles
 generate_go base base ITipping tipping
-
+generate_go base base XChain xchain
+generate_go base base IDiamond diamond
+generate_go base base IDelegateRegistryV1 IDelegateRegistryV1
 
 # Full Base (and other) contracts for deployment from tests
 generate_go base/deploy deploy MockCrossChainEntitlement mock_cross_chain_entitlement
@@ -88,5 +89,7 @@ go build -o bin/gen-bindings-remove-struct scripts/gen-bindings-remove-struct.go
 ./bin/gen-bindings-remove-struct core/contracts/base/entitlements_manager.go IRuleEntitlementBaseCheckOperation,IRuleEntitlementBaseLogicalOperation,IRuleEntitlementBaseOperation,IRuleEntitlementBaseRuleData
 ./bin/gen-bindings-remove-struct core/contracts/base/rule_entitlement.go IRuleEntitlementBaseCheckOperation,IRuleEntitlementBaseLogicalOperation,IRuleEntitlementBaseOperation,IRuleEntitlementBaseRuleData
 ./bin/gen-bindings-remove-struct core/contracts/base/rule_entitlement_v2.go IRuleEntitlementBaseCheckOperation,IRuleEntitlementBaseLogicalOperation,IRuleEntitlementBaseOperation,IRuleEntitlementBaseRuleData
+./bin/gen-bindings-remove-struct core/contracts/base/xchain.go IRuleEntitlementBaseCheckOperation,IRuleEntitlementBaseLogicalOperation,IRuleEntitlementBaseOperation,IRuleEntitlementBaseRuleData
+./bin/gen-bindings-remove-struct core/contracts/base/deploy/mock_entitlement_checker.go IRuleEntitlementBaseCheckOperation,IRuleEntitlementBaseLogicalOperation,IRuleEntitlementBaseOperation,IRuleEntitlementBaseRuleData
 ./bin/gen-bindings-remove-struct core/contracts/base/deploy/mock_wallet_link.go IWalletLinkBaseLinkedWallet
 

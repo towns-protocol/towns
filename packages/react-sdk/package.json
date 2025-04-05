@@ -1,10 +1,13 @@
 {
-    "name": "@river-build/react-sdk",
-    "description": "React Hooks for River SDK",
-    "version": "0.0.158",
+    "name": "@towns-protocol/react-sdk",
+    "description": "React Hooks for Towns Protocol SDK",
+    "version": "0.0.192",
     "type": "module",
     "main": "./dist/esm/index.js",
     "types": "./dist/types/index.d.ts",
+    "publishConfig": {
+        "access": "public"
+    },
     "scripts": {
         "build": "yarn run clean && yarn run build:esm+types",
         "build:esm+types": "tsc --project tsconfig.build.json --outDir ./dist/esm --declaration --declarationMap --declarationDir ./dist/types",
@@ -18,21 +21,20 @@
         "watch": "yarn build -w"
     },
     "dependencies": {
-        "@river-build/sdk": "workspace:^",
+        "@towns-protocol/sdk": "workspace:^",
         "ethers": "^5.7.2"
     },
     "devDependencies": {
-        "@microsoft/api-extractor": "^7.47.7",
-        "@microsoft/api-extractor-model": "^7.29.6",
+        "@microsoft/api-extractor": "^7.52.2",
+        "@microsoft/api-extractor-model": "^7.30.5",
         "@microsoft/tsdoc": "^0.15.0",
         "@microsoft/tsdoc-config": "^0.17.0",
-        "@testing-library/react": "^14.2.1",
-        "@types/node": "^20.5.0",
+        "@types/node": "^20.14.8",
         "@types/react": "^18.2.11",
         "@types/react-dom": "^18.2.4",
-        "@typescript-eslint/eslint-plugin": "^6.10.0",
-        "@typescript-eslint/parser": "^7.14.1",
-        "eslint": "^8.53.0",
+        "@typescript-eslint/eslint-plugin": "^8.29.0",
+        "@typescript-eslint/parser": "^8.29.0",
+        "eslint": "^8.57.0",
         "eslint-plugin-import": "^2.27.5",
         "eslint-plugin-react": "^7.32.2",
         "eslint-plugin-react-hooks": "^4.6.0",
@@ -41,7 +43,7 @@
         "react-dom": "^18.2.0",
         "ts-morph": "^24.0.0",
         "tsx": "^4.7.1",
-        "typescript": "^5.1.6"
+        "typescript": "^5.8.2"
     },
     "files": [
         "dist/**",
@@ -59,11 +61,11 @@
     ],
     "peerDependencies": {
         "react": "^18.2.0",
-        "typescript": "^5.1.6"
+        "typescript": "^5"
     },
     "repository": {
         "type": "git",
-        "url": "https://github.com/river-build/river.git",
+        "url": "https://github.com/towns-protocol/towns.git",
         "directory": "packages/react"
     },
     "sideEffects": false,

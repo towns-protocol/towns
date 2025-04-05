@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"slices"
 	"sync/atomic"
 	"time"
 
@@ -12,17 +13,18 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 
-	"github.com/river-build/river/core/config"
-	"github.com/river-build/river/core/contracts/river"
-	. "github.com/river-build/river/core/node/base"
-	"github.com/river-build/river/core/node/crypto"
-	"github.com/river-build/river/core/node/events"
-	"github.com/river-build/river/core/node/http_client"
-	"github.com/river-build/river/core/node/infra"
-	. "github.com/river-build/river/core/node/protocol"
-	. "github.com/river-build/river/core/node/protocol/protocolconnect"
-	"github.com/river-build/river/core/node/registries"
-	. "github.com/river-build/river/core/node/shared"
+	"github.com/towns-protocol/towns/core/config"
+	"github.com/towns-protocol/towns/core/contracts/river"
+	. "github.com/towns-protocol/towns/core/node/base"
+	"github.com/towns-protocol/towns/core/node/crypto"
+	"github.com/towns-protocol/towns/core/node/events"
+	"github.com/towns-protocol/towns/core/node/http_client"
+	"github.com/towns-protocol/towns/core/node/infra"
+	"github.com/towns-protocol/towns/core/node/logging"
+	. "github.com/towns-protocol/towns/core/node/protocol"
+	. "github.com/towns-protocol/towns/core/node/protocol/protocolconnect"
+	"github.com/towns-protocol/towns/core/node/registries"
+	. "github.com/towns-protocol/towns/core/node/shared"
 
 	"github.com/spf13/cobra"
 )
@@ -129,10 +131,11 @@ func validateStream(
 
 	fmt.Printf("      Miniblocks: %d\n", len(stream.Miniblocks))
 	var lastBlock *MiniblockRef
-	for _, mb := range stream.Miniblocks {
+	for i, mb := range stream.Miniblocks {
 		info, err := events.NewMiniblockInfoFromProto(
-			mb,
-			events.NewParsedMiniblockInfoOpts().WithDoNotParseEvents(true),
+			mb, stream.GetSnapshotByMiniblockIndex(i),
+			events.NewParsedMiniblockInfoOpts().
+				WithDoNotParseEvents(true),
 		)
 		if err != nil {
 			return err
@@ -373,6 +376,48 @@ func blockNumber(cfg *config.Config) error {
 	return nil
 }
 
+func getStreamsForNode(ctx context.Context, node common.Address) error {
+	blockchain, err := crypto.NewBlockchain(
+		ctx,
+		&cmdConfig.RiverChain,
+		nil,
+		infra.NewMetricsFactory(nil, "river", "cmdline"),
+		nil,
+	)
+	if err != nil {
+		return err
+	}
+
+	registryContract, err := registries.NewRiverRegistryContract(
+		ctx,
+		blockchain,
+		&cmdConfig.RegistryContract,
+		&cmdConfig.RiverRegistry,
+	)
+	if err != nil {
+		return err
+	}
+
+	blockNum, err := blockchain.GetBlockNumber(ctx)
+	if err != nil {
+		return err
+	}
+	fmt.Printf("#Using current block number: %d, node address %v\n", blockNum, node)
+	fmt.Printf("#Streams:\n")
+	fmt.Printf("#========\n")
+
+	if err := registryContract.ForAllStreams(ctx, blockNum, func(result *registries.GetStreamResult) bool {
+		if slices.Contains(result.Nodes, node) {
+			fmt.Println(result.StreamId.String())
+		}
+		return true
+	}); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func init() {
 	srCmd := &cobra.Command{
 		Use:     "registry",
@@ -399,6 +444,25 @@ func init() {
 	streamsCmd.Flags().Bool("count", false, "Only print the stream count")
 	streamsCmd.Flags().Bool("time", false, "Print only timing information")
 	srCmd.AddCommand(streamsCmd)
+
+	allStreamsCmd := &cobra.Command{
+		Use:   "all-streams <node-address>",
+		Short: "Get all streams on a node from the stream registry",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			nodeAddress := common.HexToAddress(args[0])
+			zeroAddress := common.Address{}
+			if nodeAddress == zeroAddress {
+				return fmt.Errorf("invalid argument 0: node-address")
+			}
+
+			return getStreamsForNode(
+				logging.CtxWithLog(context.Background(), logging.NoopLogger()),
+				nodeAddress,
+			)
+		},
+	}
+	srCmd.AddCommand(allStreamsCmd)
 
 	streamCmd := &cobra.Command{
 		Use:   "stream <stream-id>",

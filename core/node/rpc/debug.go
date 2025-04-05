@@ -1,12 +1,14 @@
 package rpc
 
 import (
-	"bufio"
-	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
+	"net"
 	"net/http"
 	"net/http/pprof"
+	"os"
+	"path/filepath"
 	"runtime"
 	runtimePProf "runtime/pprof"
 	"slices"
@@ -14,16 +16,16 @@ import (
 	"strings"
 	"time"
 
-	"github.com/river-build/river/core/config"
-	"github.com/river-build/river/core/node/base"
-	"github.com/river-build/river/core/node/crypto"
-	. "github.com/river-build/river/core/node/events"
-	"github.com/river-build/river/core/node/logging"
-	"github.com/river-build/river/core/node/protocol"
-	"github.com/river-build/river/core/node/rpc/render"
-	"github.com/river-build/river/core/node/scrub"
-	"github.com/river-build/river/core/node/shared"
-	"github.com/river-build/river/core/node/storage"
+	"github.com/towns-protocol/towns/core/config"
+	"github.com/towns-protocol/towns/core/node/base"
+	"github.com/towns-protocol/towns/core/node/crypto"
+	. "github.com/towns-protocol/towns/core/node/events"
+	"github.com/towns-protocol/towns/core/node/logging"
+	"github.com/towns-protocol/towns/core/node/protocol"
+	"github.com/towns-protocol/towns/core/node/rpc/render"
+	"github.com/towns-protocol/towns/core/node/scrub"
+	"github.com/towns-protocol/towns/core/node/shared"
+	"github.com/towns-protocol/towns/core/node/storage"
 )
 
 type debugHandler struct {
@@ -65,10 +67,10 @@ type httpMux interface {
 	Handle(pattern string, handler http.Handler)
 }
 
-func (s *Service) registerDebugHandlers(enableDebugEndpoints bool, cfg config.DebugEndpointsConfig) {
-	mux := s.mux
+func (s *Service) registerDebugHandlersOnMux(mux httpMux, enableDebugEndpoints bool, cfg config.DebugEndpointsConfig) {
 	handler := debugHandler{}
 	mux.HandleFunc("/debug", handler.ServeHTTP)
+	mux.HandleFunc("/debug/", handler.ServeHTTP)
 	handler.HandleFunc(mux, "/debug/multi", s.handleDebugMulti)
 	handler.HandleFunc(mux, "/debug/multi/json", s.handleDebugMultiJson)
 	handler.Handle(mux, "/debug/config", &onChainConfigHandler{onChainConfig: s.chainConfig})
@@ -107,6 +109,89 @@ func (s *Service) registerDebugHandlers(enableDebugEndpoints bool, cfg config.De
 	}
 	if s.mode == ServerModeArchive && (cfg.CorruptStreams || enableDebugEndpoints) {
 		handler.Handle(mux, "/debug/corrupt_streams", &corruptStreamsHandler{service: s.Archiver})
+	}
+}
+
+func (s *Service) registerDebugHandlersOnPrivateAddress(cfg config.DebugEndpointsConfig) {
+	if cfg.PrivateDebugServerAddress == "" {
+		return
+	}
+
+	debugMux := http.NewServeMux()
+
+	s.registerDebugHandlersOnMux(debugMux, true, cfg)
+
+	debugServer := &http.Server{
+		Addr:    cfg.PrivateDebugServerAddress,
+		Handler: debugMux,
+		BaseContext: func(l net.Listener) context.Context {
+			return s.serverCtx
+		},
+	}
+
+	go func() {
+		s.defaultLogger.Infow("Starting debug HTTP server", "addr", debugServer.Addr)
+		if err := debugServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			s.defaultLogger.Errorw("Debug HTTP server failed", "error", err)
+		}
+	}()
+
+	s.onClose(func() {
+		shutdownCtx, cancel := context.WithTimeout(s.serverCtx, time.Second)
+		defer cancel()
+
+		s.defaultLogger.Infow("Shutting down debug HTTP server")
+		if err := debugServer.Shutdown(shutdownCtx); err != nil {
+			s.defaultLogger.Errorw("Failed to gracefully shutdown debug HTTP server", "error", err)
+		}
+	})
+}
+
+func (s *Service) registerDebugHandlers() {
+	s.registerDebugHandlersOnMux(s.mux, s.config.EnableDebugEndpoints, s.config.DebugEndpoints)
+	s.registerDebugHandlersOnPrivateAddress(s.config.DebugEndpoints)
+	s.startMemProfile(s.config.DebugEndpoints)
+}
+
+func (s *Service) startMemProfile(cfg config.DebugEndpointsConfig) {
+	if cfg.MemProfileDir == "" {
+		return
+	}
+
+	go func() {
+		_ = base.SleepWithContext(s.serverCtx, cfg.MemProfileInterval/2)
+
+		ticker := time.NewTicker(cfg.MemProfileInterval)
+		defer ticker.Stop()
+
+		for i := 0; ; i++ {
+			select {
+			case <-ticker.C:
+				s.writeMemProfile(i % 2)
+			case <-s.serverCtx.Done():
+				return
+			}
+		}
+	}()
+}
+
+func (s *Service) writeMemProfile(index int) {
+	// Ensure the memory profile directory exists
+	if err := os.MkdirAll(s.config.DebugEndpoints.MemProfileDir, 0755); err != nil {
+		s.defaultLogger.Errorw("unable to create mem profile directory", "dir", s.config.DebugEndpoints.MemProfileDir, "err", err)
+		return
+	}
+	fileName := filepath.Join(s.config.DebugEndpoints.MemProfileDir, fmt.Sprintf("mem_profile_%s_%d.pb.gz", s.getServerName(), index))
+	f, err := os.Create(fileName)
+	if err != nil {
+		s.defaultLogger.Errorw("unable to create mem profile", "err", err)
+		return
+	}
+	defer f.Close()
+	runtime.GC()
+	err = runtimePProf.Lookup("heap").WriteTo(f, 0)
+	if err != nil {
+		s.defaultLogger.Errorw("unable to write mem profile", "err", err)
 	}
 }
 
@@ -174,41 +259,34 @@ type stacksHandler struct {
 }
 
 func (h *stacksHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	stacksSize := h.maxSizeKb * 1024
-	if stacksSize == 0 {
-		stacksSize = 1024 * 1024
+	w.Header().Set("X-Content-Type-Options", "nosniff")
+	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+
+	var stacksSize int
+	if h.maxSizeKb > 0 {
+		stacksSize = h.maxSizeKb * 1024
+	} else {
+		stacksSize = 64 * 1024 * 1024
 	}
 
-	var (
-		ctx          = r.Context()
-		buf          = make([]byte, stacksSize)
-		stackSize    = runtime.Stack(buf, true)
-		traceScanner = bufio.NewScanner(bytes.NewReader((buf[:stackSize])))
-		reply        render.GoRoutineData
-	)
+	buf := make([]byte, stacksSize)
+	n := runtime.Stack(buf, true)
+	buf = buf[:n]
 
-	traceScanner.Split(bufio.ScanLines)
+	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write(buf)
+}
 
-	for traceScanner.Scan() {
-		stack, err := readGoRoutineStackFrame(traceScanner)
-		if err != nil {
-			logging.FromCtx(ctx).Errorw("unable to read stack frame", "err", err)
-			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-			return
-		}
-		reply.Stacks = append(reply.Stacks, stack)
-	}
-
-	output, err := render.Execute(&reply)
-	if err != nil {
-		logging.FromCtx(ctx).Errorw("unable to render stack data", "err", err)
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+func stacks2Handler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("X-Content-Type-Options", "nosniff")
+	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+	p := runtimePProf.Lookup("goroutine")
+	if p == nil {
+		w.WriteHeader(http.StatusNotFound)
+		fmt.Fprintln(w, "Unknown profile")
 		return
 	}
-
-	w.Header().Set("Content-Type", "text/html")
-	w.WriteHeader(http.StatusOK)
-	_, _ = w.Write(output.Bytes())
+	_ = p.WriteTo(w, 1)
 }
 
 type streamHandler struct {
@@ -262,18 +340,6 @@ func (s *streamHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html")
 	w.WriteHeader(http.StatusOK)
 	_, _ = w.Write(output.Bytes())
-}
-
-func stacks2Handler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("X-Content-Type-Options", "nosniff")
-	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
-	p := runtimePProf.Lookup("goroutine")
-	if p == nil {
-		w.WriteHeader(http.StatusNotFound)
-		fmt.Fprintln(w, "Unknown profile")
-		return
-	}
-	_ = p.WriteTo(w, 1)
 }
 
 type onChainConfigHandler struct {
@@ -340,7 +406,7 @@ func (h *txpoolHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 type cacheHandler struct {
-	cache StreamCache
+	cache *StreamCache
 }
 
 func (h *cacheHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -361,7 +427,7 @@ func (h *cacheHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		reply.Streams = make([]*render.CacheDataStream, streamCount)
 	}
 
-	slices.SortFunc(streams, func(a, b StreamView) int {
+	slices.SortFunc(streams, func(a, b *StreamView) int {
 		return a.StreamId().Compare(*b.StreamId())
 	})
 
@@ -402,26 +468,4 @@ func (h *cacheHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html")
 	w.WriteHeader(http.StatusOK)
 	_, _ = w.Write(output.Bytes())
-}
-
-func readGoRoutineStackFrame(trace *bufio.Scanner) (*render.GoRoutineStack, error) {
-	var (
-		head = trace.Text()
-		data render.GoRoutineStack
-	)
-
-	if !strings.HasPrefix(head, "goroutine ") {
-		return nil, fmt.Errorf("expected goroutine header, got %q", head)
-	}
-
-	data.Description = head
-
-	for trace.Scan() {
-		line := trace.Text()
-		if line == "" { // marks end of the frame
-			return &data, nil
-		}
-		data.Lines = append(data.Lines, line)
-	}
-	return &data, nil
 }

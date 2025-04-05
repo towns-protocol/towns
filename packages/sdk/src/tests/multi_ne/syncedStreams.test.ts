@@ -8,14 +8,13 @@ import { SyncState, stateConstraints } from '../../syncedStreamsLoop'
 import { makeDonePromise, makeRandomUserContext, makeTestRpcClient, waitFor } from '../testUtils'
 import { makeUserInboxStreamId, streamIdToBytes, userIdFromAddress } from '../../id'
 import { make_UserInboxPayload_Ack, make_UserInboxPayload_Inception } from '../../types'
-import { dlog } from '@river-build/dlog'
+import { dlog, shortenHexString } from '@towns-protocol/dlog'
 import TypedEmitter from 'typed-emitter'
 import EventEmitter from 'events'
 import { StreamEvents } from '../../streamEvents'
 import { SyncedStream } from '../../syncedStream'
 import { StubPersistenceStore } from '../../persistenceStore'
-import { PartialMessage, PlainMessage } from '@bufbuild/protobuf'
-import { Envelope, StreamEvent } from '@river-build/proto'
+import { Envelope, StreamEvent, PlainMessage } from '@towns-protocol/proto'
 import { nanoid } from 'nanoid'
 
 const log = dlog('csb:test:syncedStreams')
@@ -62,10 +61,11 @@ describe('syncStreams', () => {
             rpcClient,
             mockClientEmitter,
             undefined,
+            shortenHexString(alicesUserId),
         )
 
         // some helper functions
-        const createStream = async (streamId: Uint8Array, events: PartialMessage<Envelope>[]) => {
+        const createStream = async (streamId: Uint8Array, events: PlainMessage<Envelope>[]) => {
             const streamResponse = await rpcClient.createStream({
                 events,
                 streamId,
@@ -94,11 +94,14 @@ describe('syncStreams', () => {
         )
         await userInboxStream.initializeFromResponse(userInboxStreamResponse)
 
-        await alicesSyncedStreams.startSyncStreams()
+        alicesSyncedStreams.startSyncStreams()
         await done1.promise
 
         alicesSyncedStreams.set(alicesUserInboxStreamIdStr, userInboxStream)
-        await alicesSyncedStreams.addStreamToSync(userInboxStream.view.syncCookie!)
+        alicesSyncedStreams.addStreamToSync(
+            alicesUserInboxStreamIdStr,
+            userInboxStream.view.syncCookie!,
+        )
 
         // some helper functions
         const addEvent = async (payload: PlainMessage<StreamEvent>['payload']) => {

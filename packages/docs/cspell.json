@@ -6,6 +6,7 @@
         "hotfixes",
         "riverchain",
         "basechain",
+        "celenium",
         "libusb",
         "toolkit",
         "protobuf",
@@ -50,7 +51,11 @@
         "infof",
         "warnf",
         "debugf",
-        "errorf"
+        "errorf",
+        "Celestia",
+        "POAP",
+        "POAPs",
+        "pprof"
     ],
     "allowCompoundWords": true,
     "ignoreRegExpList": [

@@ -9,9 +9,9 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/river-build/river/core/config"
-	. "github.com/river-build/river/core/node/base"
-	"github.com/river-build/river/core/node/logging"
+	"github.com/towns-protocol/towns/core/config"
+	. "github.com/towns-protocol/towns/core/node/base"
+	"github.com/towns-protocol/towns/core/node/logging"
 )
 
 func (s *Service) startInfoMode(opts *ServerStartOpts) error {
@@ -36,7 +36,7 @@ func (s *Service) startInfoMode(opts *ServerStartOpts) error {
 		return AsRiverError(err).Message("Failed to run http server").LogError(s.defaultLogger)
 	}
 
-	s.registerDebugHandlers(s.config.EnableDebugEndpoints, s.config.DebugEndpoints)
+	s.registerDebugHandlers()
 
 	s.SetStatus("OK")
 

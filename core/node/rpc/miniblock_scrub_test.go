@@ -11,15 +11,15 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/river-build/river/core/node/crypto"
-	"github.com/river-build/river/core/node/events"
-	"github.com/river-build/river/core/node/infra"
-	"github.com/river-build/river/core/node/protocol"
-	"github.com/river-build/river/core/node/protocol/protocolconnect"
-	"github.com/river-build/river/core/node/scrub"
-	. "github.com/river-build/river/core/node/shared"
-	"github.com/river-build/river/core/node/storage"
-	"github.com/river-build/river/core/node/testutils"
+	"github.com/towns-protocol/towns/core/node/crypto"
+	"github.com/towns-protocol/towns/core/node/events"
+	"github.com/towns-protocol/towns/core/node/infra"
+	"github.com/towns-protocol/towns/core/node/protocol"
+	"github.com/towns-protocol/towns/core/node/protocol/protocolconnect"
+	"github.com/towns-protocol/towns/core/node/scrub"
+	. "github.com/towns-protocol/towns/core/node/shared"
+	"github.com/towns-protocol/towns/core/node/storage"
+	"github.com/towns-protocol/towns/core/node/testutils"
 )
 
 func addMessageToChannel(
@@ -168,7 +168,7 @@ func createMultiblockChannelStream(
 ) (
 	streamId StreamId,
 	mb1 *events.MiniblockInfo,
-	blocks [][]byte,
+	mbs []*storage.MiniblockDescriptor,
 ) {
 	wallet, _ := crypto.NewWallet(ctx)
 
@@ -221,13 +221,13 @@ func createMultiblockChannelStream(
 	require.NoError(err)
 	require.Equal(int64(2), b2ref.Num)
 
-	blocks, err = store.ReadMiniblocks(ctx, channelId, 0, 3)
+	blocks, err := store.ReadMiniblocks(ctx, channelId, 0, 3)
 	require.NoError(err)
 	require.Len(blocks, 3)
 
 	require.NoError(store.(*storage.PostgresStreamStore).DeleteStream(ctx, channelId))
 
-	mb1, err = events.NewMiniblockInfoFromBytes(blocks[1], 1)
+	mb1, err = events.NewMiniblockInfoFromDescriptor(blocks[1])
 	require.NoError(err)
 	require.NotNil(mb1)
 
@@ -240,14 +240,14 @@ func writeStreamBackToStore(
 	store storage.StreamStorage,
 	streamId StreamId,
 	mb1 *events.MiniblockInfo,
-	blocks [][]byte,
+	blocks []*storage.MiniblockDescriptor,
 ) {
-	mb2, err := events.NewMiniblockInfoFromBytes(blocks[2], 2)
+	mb2, err := events.NewMiniblockInfoFromDescriptor(blocks[2])
 	require.NoError(err)
 	require.NotNil(mb2)
 
 	// Re-write the stream with corrupt block 1
-	require.NoError(store.CreateStreamStorage(ctx, streamId, blocks[0]))
+	require.NoError(store.CreateStreamStorage(ctx, streamId, &storage.WriteMiniblockData{Data: blocks[0].Data}))
 	require.NoError(
 		store.WriteMiniblocks(
 			ctx,
@@ -256,14 +256,14 @@ func writeStreamBackToStore(
 				{
 					Number:   1,
 					Hash:     mb1.Ref.Hash,
-					Snapshot: mb1.IsSnapshot(),
-					Data:     blocks[1],
+					Snapshot: mb1.GetSnapshot(),
+					Data:     blocks[1].Data,
 				},
 				{
 					Number:   2,
 					Hash:     mb2.Ref.Hash,
-					Snapshot: mb2.IsSnapshot(),
-					Data:     blocks[2],
+					Snapshot: mb2.GetSnapshot(),
+					Data:     blocks[2].Data,
 				},
 			},
 			3,
@@ -568,7 +568,7 @@ func TestMiniblockScrubber_CorruptBlocks(t *testing.T) {
 			channelId, mb1, blocks := createMultiblockChannelStream(ctx, require, client, store)
 
 			// Corrupt block 1
-			blocks[1] = tc.corruptBlock(require, tester.nodes[0].service.wallet, blocks[1])
+			blocks[1].Data = tc.corruptBlock(require, tester.nodes[0].service.wallet, blocks[1].Data)
 
 			writeStreamBackToStore(ctx, require, store, channelId, mb1, blocks)
 

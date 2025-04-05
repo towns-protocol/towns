@@ -5,15 +5,14 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/types/known/emptypb"
 
-	. "github.com/river-build/river/core/node/base"
-	"github.com/river-build/river/core/node/crypto"
-	. "github.com/river-build/river/core/node/protocol"
-	. "github.com/river-build/river/core/node/shared"
-	"github.com/river-build/river/core/node/testutils"
-
-	"github.com/stretchr/testify/require"
+	. "github.com/towns-protocol/towns/core/node/base"
+	"github.com/towns-protocol/towns/core/node/crypto"
+	. "github.com/towns-protocol/towns/core/node/protocol"
+	. "github.com/towns-protocol/towns/core/node/shared"
+	"github.com/towns-protocol/towns/core/node/testutils"
 )
 
 func MakeGenesisMiniblockForSpaceStream(
@@ -29,12 +28,14 @@ func MakeGenesisMiniblockForSpaceStream(
 	)
 	require.NoError(t, err)
 
-	mb, err := MakeGenesisMiniblock(nodeWallet, []*ParsedEvent{inception})
+	mb, sn, err := MakeGenesisMiniblock(nodeWallet, []*ParsedEvent{inception})
 	require.NoError(t, err)
 
 	mbInfo, err := NewMiniblockInfoFromProto(
-		mb,
-		NewParsedMiniblockInfoOpts().WithExpectedBlockNumber(0).WithDoNotParseEvents(true),
+		mb, sn,
+		NewParsedMiniblockInfoOpts().
+			WithExpectedBlockNumber(0).
+			WithDoNotParseEvents(true),
 	)
 	require.NoError(t, err)
 	return mbInfo
@@ -53,12 +54,41 @@ func MakeGenesisMiniblockForUserSettingsStream(
 	)
 	require.NoError(t, err)
 
-	mb, err := MakeGenesisMiniblock(nodeWallet, []*ParsedEvent{inception})
+	mb, sn, err := MakeGenesisMiniblock(nodeWallet, []*ParsedEvent{inception})
 	require.NoError(t, err)
 
 	mbInfo, err := NewMiniblockInfoFromProto(
-		mb,
-		NewParsedMiniblockInfoOpts().WithExpectedBlockNumber(0).WithDoNotParseEvents(true),
+		mb, sn,
+		NewParsedMiniblockInfoOpts().
+			WithExpectedBlockNumber(0).
+			WithDoNotParseEvents(true),
+	)
+	require.NoError(t, err)
+
+	return mbInfo
+}
+
+func MakeGenesisMiniblockForMediaStream(
+	t *testing.T,
+	userWallet *crypto.Wallet,
+	nodeWallet *crypto.Wallet,
+	media *MediaPayload_Inception,
+) *MiniblockInfo {
+	inception, err := MakeParsedEventWithPayload(
+		userWallet,
+		Make_MediaPayload_Inception(media),
+		&MiniblockRef{},
+	)
+	require.NoError(t, err)
+
+	mb, sn, err := MakeGenesisMiniblock(nodeWallet, []*ParsedEvent{inception})
+	require.NoError(t, err)
+
+	mbInfo, err := NewMiniblockInfoFromProto(
+		mb, sn,
+		NewParsedMiniblockInfoOpts().
+			WithExpectedBlockNumber(0).
+			WithDoNotParseEvents(true),
 	)
 	require.NoError(t, err)
 
@@ -111,7 +141,7 @@ func addEventToStream(
 	t *testing.T,
 	ctx context.Context,
 	streamCacheParams *StreamCacheParams,
-	stream SyncStream,
+	stream *Stream,
 	data string,
 	prevMiniblock *MiniblockRef,
 ) {
@@ -130,10 +160,10 @@ func addEventToStream(
 func addEventToView(
 	t *testing.T,
 	streamCacheParams *StreamCacheParams,
-	view *streamViewImpl,
+	view *StreamView,
 	data string,
 	prevMiniblock *MiniblockRef,
-) *streamViewImpl {
+) *StreamView {
 	view, err := view.copyAndAddEvent(
 		MakeEvent(
 			t,
@@ -147,8 +177,8 @@ func addEventToView(
 	return view
 }
 
-func getView(t *testing.T, ctx context.Context, stream *streamImpl) *streamViewImpl {
-	view, err := stream.getViewIfLocal(ctx)
+func getView(t *testing.T, ctx context.Context, stream *Stream) *StreamView {
+	view, err := stream.GetViewIfLocal(ctx)
 	require.NoError(t, err)
 	require.NotNil(t, view)
 	return view
@@ -241,9 +271,8 @@ func TestCandidatePromotionCandidateInPlace(t *testing.T) {
 		spaceStreamId,
 	)
 
-	syncStream, viewInt := tt.createStream(spaceStreamId, genesisMb.Proto)
-	stream := syncStream.(*streamImpl)
-	view := viewInt.(*streamViewImpl)
+	syncStream, view := tt.createStream(spaceStreamId, genesisMb.Proto)
+	stream := syncStream
 
 	addEventToStream(t, ctx, tt.instances[0].params, stream, "1", view.LastBlock().Ref)
 	addEventToStream(t, ctx, tt.instances[0].params, stream, "2", view.LastBlock().Ref)
@@ -260,14 +289,14 @@ func TestCandidatePromotionCandidateInPlace(t *testing.T) {
 	require.EqualValues(view.LastBlock().Ref.Hash[:], mb.PrevMiniblockHash)
 	require.Equal(int64(1), mb.MiniblockNum)
 
-	require.NoError(stream.SaveMiniblockCandidate(ctx, candidate.Proto))
+	require.NoError(stream.SaveMiniblockCandidate(ctx, candidate))
 
-	err = stream.SaveMiniblockCandidate(ctx, candidate.Proto)
+	err = stream.SaveMiniblockCandidate(ctx, candidate)
 	require.ErrorIs(err, RiverError(Err_ALREADY_EXISTS, ""))
 
 	require.NoError(stream.promoteCandidate(ctx, candidate.Ref))
 
-	view, err = stream.getViewIfLocal(ctx)
+	view, err = stream.GetViewIfLocal(ctx)
 	require.NoError(err)
 	require.EqualValues(candidate.Ref, view.LastBlock().Ref)
 	require.Equal(0, view.minipool.events.Len())
@@ -288,9 +317,8 @@ func TestCandidatePromotionCandidateIsDelayed(t *testing.T) {
 		spaceStreamId,
 	)
 
-	syncStream, viewInt := tt.createStream(spaceStreamId, genesisMb.Proto)
-	stream := syncStream.(*streamImpl)
-	view := viewInt.(*streamViewImpl)
+	syncStream, view := tt.createStream(spaceStreamId, genesisMb.Proto)
+	stream := syncStream
 
 	addEventToStream(t, ctx, params, stream, "1", view.LastBlock().Ref)
 	addEventToStream(t, ctx, params, stream, "2", view.LastBlock().Ref)
@@ -314,7 +342,7 @@ func TestCandidatePromotionCandidateIsDelayed(t *testing.T) {
 	require.Len(stream.local.pendingCandidates, 1)
 	require.EqualValues(candidate1.Ref, stream.local.pendingCandidates[0])
 
-	require.NoError(stream.SaveMiniblockCandidate(ctx, candidate1.Proto))
+	require.NoError(stream.SaveMiniblockCandidate(ctx, candidate1))
 
 	view = getView(t, ctx, stream)
 	require.Equal(int64(1), view.LastBlock().Ref.Num)
@@ -360,13 +388,13 @@ func TestCandidatePromotionCandidateIsDelayed(t *testing.T) {
 		require.Len(stream.local.pendingCandidates, 3)
 
 		if i == 0 {
-			require.NoError(stream.SaveMiniblockCandidate(ctx, candidate2.Proto))
-			require.NoError(stream.SaveMiniblockCandidate(ctx, candidate3.Proto))
-			require.NoError(stream.SaveMiniblockCandidate(ctx, candidate4.Proto))
+			require.NoError(stream.SaveMiniblockCandidate(ctx, candidate2))
+			require.NoError(stream.SaveMiniblockCandidate(ctx, candidate3))
+			require.NoError(stream.SaveMiniblockCandidate(ctx, candidate4))
 		} else {
-			require.NoError(stream.SaveMiniblockCandidate(ctx, candidate4.Proto))
-			require.NoError(stream.SaveMiniblockCandidate(ctx, candidate2.Proto))
-			require.NoError(stream.SaveMiniblockCandidate(ctx, candidate3.Proto))
+			require.NoError(stream.SaveMiniblockCandidate(ctx, candidate4))
+			require.NoError(stream.SaveMiniblockCandidate(ctx, candidate2))
+			require.NoError(stream.SaveMiniblockCandidate(ctx, candidate3))
 		}
 
 		view = getView(t, ctx, stream)

@@ -56,7 +56,7 @@ function renderImports(options: { module: string }) {
     const { module } = options
     const content = [
         '## Imports',
-        ['```ts', `import { ${module} } from '@river-build/react-sdk'`, '```'].join('\n'),
+        ['```ts', `import { ${module} } from '@towns-protocol/react-sdk'`, '```'].join('\n'),
     ]
     return content.join('\n\n')
 }
@@ -387,8 +387,8 @@ function getTypeLink(options: {
 
     const data = (() => {
         // TODO: fix `type` link resolution.
-        // if (dataLookup[`@river-build/react-sdk!${type.type}:type`])
-        //   return dataLookup[`@river-build/react-sdk!${type.type}:type`]
+        // if (dataLookup[`@towns-protocol/react-sdk!${type.type}:type`])
+        //   return dataLookup[`@towns-protocol/react-sdk!${type.type}:type`]
         if (type.primaryCanonicalReference && !type.primaryGenericArguments) {
             return (
                 dataLookup[type.primaryCanonicalReference] ??

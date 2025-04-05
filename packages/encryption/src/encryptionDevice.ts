@@ -9,15 +9,22 @@ import {
 } from './encryptionTypes'
 import { EncryptionDelegate } from './encryptionDelegate'
 import { GroupEncryptionAlgorithmId, GroupEncryptionSession } from './olmLib'
-import { bin_equal, bin_fromHexString, bin_toHexString, dlog } from '@river-build/dlog'
-import type {
-    ExtendedInboundGroupSessionData,
-    GroupSessionRecord,
-    HybridGroupSessionRecord,
-} from './storeTypes'
-import { HybridGroupSessionKey } from '@river-build/proto'
+import { bin_equal, bin_fromHexString, bin_toHexString, dlog } from '@towns-protocol/dlog'
+import type { HybridGroupSessionRecord } from './storeTypes'
+import {
+    ExportedDevice,
+    ExportedDevice_GroupSession,
+    ExportedDevice_HybridGroupSession,
+    ExportedDeviceSchema,
+    ExportedDevice_GroupSessionSchema,
+    ExportedDevice_HybridGroupSessionSchema,
+    HybridGroupSessionKey,
+    HybridGroupSessionKeySchema,
+    PlainMessage,
+} from '@towns-protocol/proto'
 import { exportAesGsmKeyBytes, generateNewAesGcmKey } from './cryptoAesGcm'
 import { Dexie } from 'dexie'
+import { create, fromBinary, toBinary } from '@bufbuild/protobuf'
 
 const log = dlog('csb:encryption:encryptionDevice')
 
@@ -33,14 +40,6 @@ export interface InboundGroupSessionData {
     keysClaimed: Record<string, string>
     /** whether this session is untrusted. */
     untrusted?: boolean
-}
-
-export type ExportedDevice = {
-    pickleKey: string
-    pickledAccount: string
-    outboundSessions: GroupSessionRecord[]
-    inboundSessions: ExtendedInboundGroupSessionData[]
-    hybridGroupSessions: HybridGroupSessionRecord[]
 }
 
 export type EncryptionDeviceInitOpts = {
@@ -188,7 +187,11 @@ export class EncryptionDevice {
                     this.cryptoStore.storeEndToEndInboundGroupSession(
                         session.streamId,
                         session.sessionId,
-                        session,
+                        {
+                            stream_id: session.streamId,
+                            session: session.session,
+                            keysClaimed: {},
+                        } satisfies InboundGroupSessionData,
                     ),
                 ),
                 ...exportedData.hybridGroupSessions.map((session) =>
@@ -225,13 +228,32 @@ export class EncryptionDevice {
             this.cryptoStore.getAllHybridGroupSessions(),
         ])
 
-        return {
+        return create(ExportedDeviceSchema, {
             pickleKey: this.pickleKey,
             pickledAccount,
-            inboundSessions,
-            outboundSessions,
-            hybridGroupSessions,
-        }
+            inboundSessions: inboundSessions.map((session) =>
+                create(ExportedDevice_GroupSessionSchema, {
+                    sessionId: session.sessionId,
+                    streamId: session.streamId,
+                    session: session.session,
+                } satisfies PlainMessage<ExportedDevice_GroupSession>),
+            ),
+            outboundSessions: outboundSessions.map((session) =>
+                create(ExportedDevice_GroupSessionSchema, {
+                    sessionId: session.sessionId,
+                    streamId: session.streamId,
+                    session: session.session,
+                } satisfies PlainMessage<ExportedDevice_GroupSession>),
+            ),
+            hybridGroupSessions: hybridGroupSessions.map((session) =>
+                create(ExportedDevice_HybridGroupSessionSchema, {
+                    sessionId: session.sessionId,
+                    streamId: session.streamId,
+                    sessionKey: session.sessionKey,
+                    miniblockNum: session.miniblockNum,
+                } satisfies PlainMessage<ExportedDevice_HybridGroupSession>),
+            ),
+        })
     }
 
     /**
@@ -401,7 +423,7 @@ export class EncryptionDevice {
                 (max, current) => (current.miniblockNum > max.miniblockNum ? current : max),
                 sessionRecords[0],
             )
-            return HybridGroupSessionKey.fromBinary(sessionRecord.sessionKey)
+            return fromBinary(HybridGroupSessionKeySchema, sessionRecord.sessionKey)
         })
     }
 
@@ -415,7 +437,7 @@ export class EncryptionDevice {
             if (!sessionRecord) {
                 throw new Error(`hybrid group session not found for stream ${streamId}`)
             }
-            return HybridGroupSessionKey.fromBinary(sessionRecord.sessionKey)
+            return fromBinary(HybridGroupSessionKeySchema, sessionRecord.sessionKey)
         })
     }
 
@@ -475,18 +497,18 @@ export class EncryptionDevice {
             miniblockNum,
             miniblockHash,
         )
-        const sessionKey = new HybridGroupSessionKey({
+        const sessionKey = create(HybridGroupSessionKeySchema, {
             sessionId: sessionIdBytes,
             streamId: streamIdBytes,
             key: aesKeyBytes,
             miniblockNum,
             miniblockHash,
-        })
+        } satisfies PlainMessage<HybridGroupSessionKey>)
         const sessionId = bin_toHexString(sessionIdBytes)
         const sessionRecord: HybridGroupSessionRecord = {
             sessionId,
             streamId: streamId,
-            sessionKey: sessionKey.toBinary(),
+            sessionKey: toBinary(HybridGroupSessionKeySchema, sessionKey),
             miniblockNum,
         }
 
@@ -644,7 +666,7 @@ export class EncryptionDevice {
     /** */
     public async addHybridGroupSession(streamId: string, sessionId: string, sessionKey: string) {
         const sessionKeyBytes = bin_fromHexString(sessionKey)
-        const session = HybridGroupSessionKey.fromBinary(sessionKeyBytes)
+        const session = fromBinary(HybridGroupSessionKeySchema, sessionKeyBytes)
         if (bin_toHexString(session.streamId) !== streamId) {
             throw new Error(`Stream ID mismatch for hybrid group session ${streamId}`)
         }

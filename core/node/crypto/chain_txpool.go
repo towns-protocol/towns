@@ -6,7 +6,6 @@ import (
 	"errors"
 	"math/big"
 	"strings"
-	"sync"
 	"sync/atomic"
 	"time"
 
@@ -15,17 +14,16 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/linkdata/deadlock"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/puzpuzpuz/xsync/v3"
+	"github.com/towns-protocol/towns/core/config"
+	. "github.com/towns-protocol/towns/core/node/base"
+	"github.com/towns-protocol/towns/core/node/infra"
+	"github.com/towns-protocol/towns/core/node/logging"
+	. "github.com/towns-protocol/towns/core/node/protocol"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
-	"go.uber.org/zap"
-
-	"github.com/river-build/river/core/config"
-	. "github.com/river-build/river/core/node/base"
-	"github.com/river-build/river/core/node/infra"
-	"github.com/river-build/river/core/node/logging"
-	. "github.com/river-build/river/core/node/protocol"
 )
 
 type (
@@ -73,7 +71,6 @@ type (
 		client                 BlockchainClient
 		wallet                 *Wallet
 		chainID                uint64
-		chainIDStr             string
 		signerFn               bind.SignerFn
 		tracer                 trace.Tracer
 		pricePolicy            TransactionPricePolicy
@@ -82,9 +79,10 @@ type (
 		transactionSubmitted         *prometheus.CounterVec
 		walletBalanceLastTimeChecked time.Time
 		walletBalance                prometheus.Gauge
+		baseFee                      atomic.Pointer[big.Int]
 
 		// mu guards lastNonce that is used to determine the tx nonce
-		mu        sync.Mutex
+		mu        deadlock.Mutex
 		lastNonce *uint64
 	}
 
@@ -133,13 +131,15 @@ type (
 		transactionGasCap                 *prometheus.GaugeVec
 		transactionGasTip                 *prometheus.GaugeVec
 
-		onCheckPendingTransactionsMutex sync.Mutex
+		onCheckPendingTransactionsMutex deadlock.Mutex
 	}
 )
 
 var (
 	_ TransactionPool                   = (*transactionPool)(nil)
 	_ TransactionPoolPendingTransaction = (*txPoolPendingTransaction)(nil)
+
+	riverChainFixedTipCap = big.NewInt(10_000) // 0.00001 gWei
 )
 
 func newPendingTransactionPool(
@@ -249,7 +249,7 @@ func (pool *pendingTransactionPool) run(ctx context.Context) {
 }
 
 func (pool *pendingTransactionPool) closeTx(
-	log *zap.SugaredLogger,
+	log *logging.Log,
 	ptx *txPoolPendingTransaction,
 	receipt *types.Receipt,
 	txHash common.Hash,
@@ -501,7 +501,6 @@ func NewTransactionPoolWithPolicies(
 		client:               client,
 		wallet:               wallet,
 		chainID:              chainID.Uint64(),
-		chainIDStr:           chainID.String(),
 		pricePolicy:          pricePolicy,
 		signerFn:             signerFn,
 		tracer:               tracer,
@@ -511,13 +510,17 @@ func NewTransactionPoolWithPolicies(
 			ctx, chainMonitor, client, chainID, wallet, replacePolicy, pricePolicy, metrics),
 	}
 
-	chainMonitor.OnHeader(txPool.Balance)
+	chainMonitor.OnHeader(txPool.onHead)
 
 	if !disableReplacePendingTransactionOnBoot {
 		go txPool.sendReplacementTransactions(ctx)
 	}
 
 	return txPool, nil
+}
+
+func (r *transactionPool) isRiverChain() bool {
+	return r.chainID == 550 /*mainnet*/ || r.chainID == 6524490 /*devnet*/
 }
 
 // sendReplacementTransactions tries to send replacement transactions for pending/stuck transactions.
@@ -636,7 +639,8 @@ func (r *transactionPool) sendReplacementTransactions(ctx context.Context) {
 func (tx *txPoolPendingTransaction) Wait(ctx context.Context) (*types.Receipt, error) {
 	var span trace.Span
 	if tx.tracer != nil {
-		ctx, span = tx.tracer.Start(ctx, "pending_tx_wait")
+		ctx, span = tx.tracer.Start(ctx, "pending_tx_wait",
+			trace.WithAttributes(attribute.String("function", tx.name)))
 		defer span.End()
 	}
 
@@ -728,6 +732,17 @@ func (r *transactionPool) submitLocked(
 		GasFeeCap: r.pricePolicy.GasFeeCap(),
 	}
 
+	// on river chain there is no gas market and miners are expected to include transactions with a
+	// fixed tip of riverChainFixedTipCap. This saves several rpc calls when assembling the transaction.
+	if r.isRiverChain() {
+		if baseFee := r.baseFee.Load(); baseFee != nil {
+			opts.GasFeeCap = new(big.Int).Add(
+				new(big.Int).Mul(baseFee, big.NewInt(2)),
+				riverChainFixedTipCap)
+		}
+		opts.GasTipCap = riverChainFixedTipCap
+	}
+
 	tx, err := createTx(opts)
 	if err != nil {
 		return nil, err
@@ -798,7 +813,9 @@ func (r *transactionPool) submitLocked(
 	return pendingTx, nil
 }
 
-func (r *transactionPool) Balance(ctx context.Context, _ *types.Header) {
+func (r *transactionPool) onHead(ctx context.Context, head *types.Header) {
+	r.baseFee.Store(new(big.Int).Set(head.BaseFee))
+
 	if time.Since(r.walletBalanceLastTimeChecked) < time.Minute {
 		return
 	}

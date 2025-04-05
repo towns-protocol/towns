@@ -1,0 +1,50 @@
+---
+title: Local Towns Chain Node
+description: For local development purposes, it may be useful to run the Towns protocol components. One such component is the Towns Chain which manages the stream and node registries. This guide shows how to easily setup a local Towns Chain for development purposes.
+---
+
+## Running Towns Chain from Source
+
+Running an instance of Towns Chain from source can be accomplished using [Foundry](https://github.com/foundry-rs/foundry) Ethereum toolkit. An `anvil` instance is created where the `StreamRegistry` contract is deployed.
+
+Towns Nodes deployed locally connect to Towns Chain on port 8546 (distinct from `BaseChain`, which also runs an anvil instance on port 8545) to read from the `StreamRegistry` and publish top-chain transactions.
+
+### Requirements
+
+- Foundry Toolkit - `curl -L https://foundry.paradigm.xyz | bash`
+- [jq](https://jqlang.github.io/jq/download/) - optional
+
+### Setup
+
+Once you've installed Anvil you can proceed to setup your environment as follows.
+
+```bash
+# clone monorepo
+git clone https://github.com/HereNotThere/harmony.git
+
+# Pin Foundry to specific version
+./scripts/foundry-up.sh
+# If you see a warning about libusb, install it by running:
+brew install libusb
+```
+
+### Run Anvil to start Towns Chain
+
+```bash
+./scripts/start-local-riverchain.sh
+```
+
+### Deploy StreamRegistry Contract
+
+With anvil running, we can deploy the [StreamRegistry](https://github.com/HereNotThere/harmony/blob/main/contracts/src/river/registry/StreamRegistry.sol) contract.
+
+The easiest way to do so is by using the helper script, `deploy-river-registry.sh` found under `/harmony/scripts`. This script uses a `make` target that uses `forge` to run the deployer script, which is a solidity file that inherits from the `Deployer` abstract contract (see [Deployer.s.sol](https://github.com/HereNotThere/harmony/blob/main/contracts/scripts/common/Deployer.s.sol)).
+
+```bash
+./scripts/deploy-river-registry.sh
+
+# use cast and jq to test deployed contract. 0 should be returned since there are no streams registered yet.
+CONTRACT=$(cat ./packages/generated/localhost/addresses/streamRegistry.json | jq -r '.address')
+➜  harmony git:(main) ✗ cast call $CONTRACT "getStreamsLength()(uint256)" --rpc-url http://localhost:8546
+0
+```

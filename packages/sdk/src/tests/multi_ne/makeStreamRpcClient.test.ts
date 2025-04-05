@@ -2,19 +2,20 @@
  * @group main
  */
 
-import { Err, InfoRequest, InfoResponse } from '@river-build/proto'
+import { Err, InfoRequestSchema, InfoResponse } from '@towns-protocol/proto'
 import { makeTestRpcClient } from '../testUtils'
 import { DEFAULT_RETRY_PARAMS, errorContains } from '../../rpcInterceptors'
 import { makeRiverRpcClient } from '../../makeRiverRpcClient'
-import { LocalhostWeb3Provider } from '@river-build/web3'
+import { LocalhostWeb3Provider } from '@towns-protocol/web3'
 import { makeRiverChainConfig } from '../../riverConfig'
+import { create } from '@bufbuild/protobuf'
 
 describe('protocol 1', () => {
     test('info using makeStreamRpcClient', async () => {
         const client = await makeTestRpcClient()
         expect(client).toBeDefined()
 
-        const response: InfoResponse = await client.info(new InfoRequest({}), {
+        const response: InfoResponse = await client.info(create(InfoRequestSchema, {}), {
             timeoutMs: 10000,
         })
         expect(response).toBeDefined()
@@ -26,7 +27,7 @@ describe('protocol 1', () => {
         expect(client).toBeDefined()
 
         try {
-            await client.info(new InfoRequest({ debug: ['error'] }))
+            await client.info(create(InfoRequestSchema, { debug: ['error'] }))
             expect(true).toBe(false)
         } catch (err) {
             expect(errorContains(err, Err.DEBUG_ERROR)).toBe(true)
@@ -47,10 +48,10 @@ describe('protocol 1', () => {
         })
         expect(client).toBeDefined()
 
-        await client.info(new InfoRequest({ debug: ['ping'] }))
+        await client.info(create(InfoRequestSchema, { debug: ['ping'] }))
 
         await expect(
-            client.info(new InfoRequest({ debug: ['sleep'] }), { timeoutMs: 2500 }),
+            client.info(create(InfoRequestSchema, { debug: ['sleep'] }), { timeoutMs: 2500 }),
         ).rejects.toThrow()
     })
 
@@ -67,7 +68,7 @@ describe('protocol 1', () => {
             const client = await makeRiverRpcClient(provider, riverConfig.chainConfig)
             expect(client).toBeDefined()
 
-            const response: InfoResponse = await client.info(new InfoRequest({}), {
+            const response: InfoResponse = await client.info(create(InfoRequestSchema, {}), {
                 timeoutMs: 10000,
             })
             expect(response).toBeDefined()
@@ -79,7 +80,7 @@ describe('protocol 1', () => {
             expect(client).toBeDefined()
 
             try {
-                await client.info(new InfoRequest({ debug: ['error'] }))
+                await client.info(create(InfoRequestSchema, { debug: ['error'] }))
                 expect(true).toBe(false)
             } catch (err) {
                 expect(errorContains(err, Err.DEBUG_ERROR)).toBe(true)

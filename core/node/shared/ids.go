@@ -11,8 +11,8 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 
-	. "github.com/river-build/river/core/node/base"
-	. "github.com/river-build/river/core/node/protocol"
+	. "github.com/towns-protocol/towns/core/node/base"
+	. "github.com/towns-protocol/towns/core/node/protocol"
 )
 
 func AddressHex(address []byte) (string, error) {
@@ -42,6 +42,21 @@ func AddressFromSpaceId(spaceId StreamId) (common.Address, error) {
 		)
 	}
 	return common.BytesToAddress(spaceId[1:21]), nil
+}
+
+func SpaceIdFromBytes(bytes []byte) (StreamId, error) {
+	if len(bytes) != 20 {
+		return StreamId{}, RiverError(Err_BAD_ADDRESS, "wrong length", "bytes", len(bytes))
+	}
+	address := common.BytesToAddress(bytes)
+	return SpaceIdFromAddress(address), nil
+}
+
+func SpaceIdFromAddress(address common.Address) StreamId {
+	var b StreamId
+	b[0] = STREAM_SPACE_BIN
+	copy(b[1:], address.Bytes())
+	return b
 }
 
 func MakeSpaceId() (StreamId, error) {
@@ -126,6 +141,13 @@ func UserSettingStreamIdFromAddr(addr common.Address) StreamId {
 func UserMetadataStreamIdFromAddress(addr common.Address) StreamId {
 	var b StreamId
 	b[0] = STREAM_USER_METADATA_KEY_BIN
+	copy(b[1:], addr.Bytes())
+	return b
+}
+
+func UserInboxStreamIdFromAddress(addr common.Address) StreamId {
+	var b StreamId
+	b[0] = STREAM_USER_INBOX_BIN
 	copy(b[1:], addr.Bytes())
 	return b
 }

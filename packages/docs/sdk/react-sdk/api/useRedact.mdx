@@ -6,7 +6,7 @@ Hook to redact your own message in a channel stream.
 ## Imports
 
 ```ts
-import { useRedact } from '@river-build/react-sdk'
+import { useRedact } from '@towns-protocol/react-sdk'
 ```
 
 ## Examples
@@ -15,7 +15,7 @@ import { useRedact } from '@river-build/react-sdk'
 
 You can use `redact` to redact a message in a stream.
 ```ts
-import { useRedact } from '@river-build/react-sdk'
+import { useRedact } from '@towns-protocol/react-sdk'
 
 const { redact } = useRedact(streamId)
 redact({ eventId: messageEventId })
@@ -24,7 +24,7 @@ redact({ eventId: messageEventId })
 
 You can also use `redact` to redact a message reaction in a stream.
 ```ts
-import { useRedact } from '@river-build/react-sdk'
+import { useRedact } from '@towns-protocol/react-sdk'
 
 const { redact } = useRedact(streamId)
 redact({ eventId: reactionEventId })
@@ -35,7 +35,7 @@ redact({ eventId: reactionEventId })
 ```ts
 function useRedact(
   streamId: string,
-  config?: ActionConfig<Channel['redact']>,
+  config?: ActionConfig<Channel["redact"]>,
 ): {
     data: {
         eventId: string;
@@ -50,7 +50,7 @@ function useRedact(
 }
 ```
 
-**Source:** [useRedact](https://github.com/river-build/river/blob/main/packages/react-sdk/src/useRedact.ts)
+**Source:** [useRedact](https://github.com/towns-protocol/towns/blob/main/packages/react-sdk/src/useRedact.ts)
 
 ## Parameters
 
@@ -62,7 +62,7 @@ The id of the stream to redact the message in.
 
 ### config
 
-- **Type:** `ActionConfig<Channel['redact']>`
+- **Type:** `ActionConfig<Channel["redact"]>`
 - **Optional**
 
 Configuration options for the action.

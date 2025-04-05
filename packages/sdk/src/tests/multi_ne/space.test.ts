@@ -4,13 +4,13 @@
 
 import { isEncryptedData, makeTestClient, makeUniqueSpaceStreamId, waitFor } from '../testUtils'
 import { Client } from '../../client'
-import { dlog } from '@river-build/dlog'
-import { AES_GCM_DERIVED_ALGORITHM } from '@river-build/encryption'
+import { dlog } from '@towns-protocol/dlog'
+import { AES_GCM_DERIVED_ALGORITHM } from '@towns-protocol/encryption'
 import { makeUniqueChannelStreamId, makeUniqueMediaStreamId } from '../../id'
-import { ChunkedMedia, MediaInfo, MembershipOp } from '@river-build/proto'
+import { ChunkedMedia, MediaInfoSchema, MembershipOp, PlainMessage } from '@towns-protocol/proto'
 import { deriveKeyAndIV } from '../../crypto_utils'
-import { PlainMessage } from '@bufbuild/protobuf'
 import { nanoid } from 'nanoid'
+import { create } from '@bufbuild/protobuf'
 
 const log = dlog('csb:test')
 
@@ -71,10 +71,6 @@ describe('spaceTests', () => {
 
         // assert assumptions
         expect(spaceStream).toBeDefined()
-        expect(
-            spaceStream.view.snapshot?.content.case === 'spaceContent' &&
-                spaceStream.view.snapshot?.content.value.channels.length === 0,
-        ).toBe(true)
 
         // create a new channel
         const channelId = makeUniqueChannelStreamId(spaceId)
@@ -96,15 +92,16 @@ describe('spaceTests', () => {
             spaceStream.view.spaceContent.spaceChannelsMetadata.get(channelId)!.updatedAtEventNum
 
         // make a snapshot
+        spaceStream.view.saveSnapshots = true
         await bobsClient.debugForceMakeMiniblock(spaceId, { forceSnapshot: true })
 
         // the new snapshot should have the new data
         await waitFor(() => {
+            const snapshot = spaceStream.view.snapshot()
             expect(
-                spaceStream.view.snapshot?.content.case === 'spaceContent' &&
-                    spaceStream.view.snapshot.content.value.channels.length === 1 &&
-                    spaceStream.view.snapshot.content.value.channels[0].updatedAtEventNum ===
-                        prevUpdatedAt,
+                snapshot?.content.case === 'spaceContent' &&
+                    snapshot.content.value.channels.length === 1 &&
+                    snapshot.content.value.channels[0].updatedAtEventNum === prevUpdatedAt,
             ).toBe(true)
         })
 
@@ -121,15 +118,16 @@ describe('spaceTests', () => {
         })
 
         // make a miniblock
+        spaceStream.view.saveSnapshots = true
         await bobsClient.debugForceMakeMiniblock(spaceId, { forceSnapshot: true })
 
         // see new snapshot should have the new data
         await waitFor(() => {
+            const snapshot = spaceStream.view.snapshot()
             expect(
-                spaceStream.view.snapshot?.content.case === 'spaceContent' &&
-                    spaceStream.view.snapshot.content.value.channels.length === 1 &&
-                    spaceStream.view.snapshot.content.value.channels[0].updatedAtEventNum >
-                        prevUpdatedAt,
+                snapshot?.content.case === 'spaceContent' &&
+                    snapshot.content.value.channels.length === 1 &&
+                    snapshot.content.value.channels[0].updatedAtEventNum > prevUpdatedAt,
             ).toBe(true)
         })
     })
@@ -145,13 +143,8 @@ describe('spaceTests', () => {
         const spaceId = makeUniqueSpaceStreamId()
         await expect(bobsClient.createSpace(spaceId)).resolves.not.toThrow()
         const spaceStream = await bobsClient.waitForStream(spaceId)
+        spaceStream.view.saveSnapshots = true
 
-        // assert assumptions
-        expect(spaceStream).toBeDefined()
-        expect(
-            spaceStream.view.snapshot?.content.case === 'spaceContent' &&
-                spaceStream.view.snapshot?.content.value.spaceImage === undefined,
-        ).toBe(true)
         spaceStream.on(
             'spaceImageUpdated',
             spaceImageUpdated.bind(null, spaceId, spaceImageUpdatedCounter),
@@ -160,7 +153,7 @@ describe('spaceTests', () => {
         try {
             // make a space image event
             const mediaStreamId = makeUniqueMediaStreamId()
-            const image = new MediaInfo({
+            const image = create(MediaInfoSchema, {
                 mimetype: 'image/png',
                 filename: 'bob-1.png',
             })
@@ -182,18 +175,20 @@ describe('spaceTests', () => {
 
             // see the space image in the snapshot
             await waitFor(() => {
+                const snapshot = spaceStream.view.snapshot()
                 expect(
-                    spaceStream.view.snapshot?.content.case === 'spaceContent' &&
-                        spaceStream.view.snapshot.content.value.spaceImage !== undefined &&
-                        spaceStream.view.snapshot.content.value.spaceImage.data !== undefined,
+                    snapshot?.content.case === 'spaceContent' &&
+                        snapshot.content.value.spaceImage !== undefined &&
+                        snapshot.content.value.spaceImage.data !== undefined,
                 ).toBe(true)
             })
             expect(spaceImageUpdatedCounter.count).toBe(1)
 
             // decrypt the snapshot and assert the image values
+            const snapshot = spaceStream.view.snapshot()
             const encryptedData =
-                spaceStream.view.snapshot?.content.case === 'spaceContent'
-                    ? spaceStream.view.snapshot.content.value.spaceImage?.data
+                snapshot?.content.case === 'spaceContent'
+                    ? snapshot.content.value.spaceImage?.data
                     : undefined
             expect(
                 encryptedData !== undefined &&
@@ -211,7 +206,7 @@ describe('spaceTests', () => {
 
             // make another space image event
             const mediaStreamId2 = makeUniqueMediaStreamId()
-            const image2 = new MediaInfo({
+            const image2 = create(MediaInfoSchema, {
                 mimetype: 'image/jpg',
                 filename: 'bob-2.jpg',
             })
@@ -228,14 +223,16 @@ describe('spaceTests', () => {
             await bobsClient.setSpaceImage(spaceId, chunkedMediaInfo2)
 
             // make a snapshot
+            spaceStream.view.saveSnapshots = true
             await bobsClient.debugForceMakeMiniblock(spaceId, { forceSnapshot: true })
 
             // see the space image in the snapshot
             await waitFor(() => {
+                const snapshot = spaceStream.view.snapshot()
                 expect(
-                    spaceStream.view.snapshot?.content.case === 'spaceContent' &&
-                        spaceStream.view.snapshot.content.value.spaceImage !== undefined &&
-                        spaceStream.view.snapshot.content.value.spaceImage.data !== undefined,
+                    snapshot?.content.case === 'spaceContent' &&
+                        snapshot.content.value.spaceImage !== undefined &&
+                        snapshot.content.value.spaceImage.data !== undefined,
                 ).toBe(true)
             })
 

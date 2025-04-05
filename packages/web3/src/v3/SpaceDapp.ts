@@ -11,6 +11,7 @@ import {
     RoleDetails,
     VersionedRuleData,
 } from '../ContractTypes'
+import { computeDelegatorsForProvider } from '../DelegateRegistry'
 import { BytesLike, ContractReceipt, ContractTransaction, ethers } from 'ethers'
 import {
     CreateLegacySpaceParams,
@@ -41,19 +42,20 @@ import {
     UserEntitlementShim,
 } from './index'
 import { PricingModules } from './PricingModules'
-import { dlogger, isTestEnv } from '@river-build/dlog'
+import { dlogger, isTestEnv } from '@towns-protocol/dlog'
 import { EVERYONE_ADDRESS, stringifyChannelMetadataJSON, NoEntitledWalletError } from '../Utils'
 import {
     XchainConfig,
     evaluateOperationsForEntitledWallet,
     ruleDataToOperations,
+    findEthereumProviders,
 } from '../entitlement'
 import { RuleEntitlementShim } from './RuleEntitlementShim'
 import { PlatformRequirements } from './PlatformRequirements'
 import { EntitlementDataStructOutput } from './IEntitlementDataQueryableShim'
 import { CacheResult, EntitlementCache, Keyable } from '../EntitlementCache'
 import { RuleEntitlementV2Shim } from './RuleEntitlementV2Shim'
-import { TipEventObject } from '@river-build/generated/dev/typings/ITipping'
+import { TipEventObject } from '@towns-protocol/generated/dev/typings/ITipping'
 
 const logger = dlogger('csb:SpaceDapp:debug')
 
@@ -147,7 +149,8 @@ function ensureHexPrefix(value: string): string {
 
 const EmptyXchainConfig: XchainConfig = {
     supportedRpcUrls: {},
-    etherBasedChains: [],
+    etherNativeNetworkIds: [],
+    ethereumNetworkIds: [],
 }
 
 type EntitledWallet = string | undefined
@@ -733,6 +736,32 @@ export class SpaceDapp implements ISpaceDapp {
         return [wallet, ...linkedWallets]
     }
 
+    private async getMainnetDelegationsForLinkedWallets(
+        linkedWallets: string[],
+        config: XchainConfig,
+    ): Promise<Set<string>> {
+        const delegatorSet: Set<string> = new Set()
+        const ethProviders = await findEthereumProviders(config)
+
+        for (const provider of ethProviders) {
+            const delegators = await computeDelegatorsForProvider(provider, linkedWallets)
+            for (const delegator of delegators) {
+                delegatorSet.add(delegator)
+            }
+        }
+        return delegatorSet
+    }
+
+    public async getLinkedWalletsWithDelegations(
+        wallet: string,
+        config: XchainConfig,
+    ): Promise<string[]> {
+        const linkedWallets = await this.getLinkedWallets(wallet)
+        const allWallets = new Set(linkedWallets)
+        const delegators = await this.getMainnetDelegationsForLinkedWallets(linkedWallets, config)
+        return [...new Set([...allWallets, ...delegators])]
+    }
+
     private async evaluateEntitledWallet(
         rootKey: string,
         allWallets: string[],
@@ -829,7 +858,7 @@ export class SpaceDapp implements ISpaceDapp {
         rootKey: string,
         xchainConfig: XchainConfig,
     ): Promise<EntitledWallet> {
-        const allWallets = await this.getLinkedWallets(rootKey)
+        const allWallets = await this.getLinkedWalletsWithDelegations(rootKey, xchainConfig)
 
         const space = this.getSpace(spaceId)
         if (!space) {
@@ -926,7 +955,7 @@ export class SpaceDapp implements ISpaceDapp {
 
         const channelId = ensureHexPrefix(channelNetworkId)
 
-        const linkedWallets = await this.getLinkedWallets(user)
+        const linkedWallets = await this.getLinkedWalletsWithDelegations(user, xchainConfig)
 
         const owner = await space.Ownable.read.owner()
 
@@ -1641,7 +1670,7 @@ export class SpaceDapp implements ISpaceDapp {
         if (!space) {
             throw new Error(`Space with spaceId "${spaceId}" is not found.`)
         }
-        return space.Membership.write(signer).withdraw(recipient)
+        return space.Treasury.write(signer).withdraw(recipient)
     }
 
     // If the caller doesn't provide an abort controller, listenForMembershipToken will create one
@@ -1669,12 +1698,16 @@ export class SpaceDapp implements ISpaceDapp {
      * @param owner - The owner
      * @returns The token id
      */
-    public async getTokenIdOfOwner(spaceId: string, owner: string): Promise<string | undefined> {
+    public async getTokenIdOfOwner(
+        spaceId: string,
+        owner: string,
+        config: XchainConfig = EmptyXchainConfig,
+    ): Promise<string | undefined> {
         const space = this.getSpace(spaceId)
         if (!space) {
             throw new Error(`Space with spaceId "${spaceId}" is not found.`)
         }
-        const linkedWallets = await this.getLinkedWallets(owner)
+        const linkedWallets = await this.getLinkedWalletsWithDelegations(owner, config)
         const tokenIds = await space.getTokenIdsOfOwner(linkedWallets)
         return tokenIds[0]
     }
@@ -1780,6 +1813,8 @@ async function wrapTransaction(
                     (error as { code: unknown }).code === 'CALL_EXCEPTION'
                 ) {
                     logger.error('Transaction failed', { tx, errorCount, error })
+                    // TODO: is this a bug?
+                    // eslint-disable-next-line @typescript-eslint/only-throw-error
                     throw error
                 }
 

@@ -7,178 +7,179 @@ import {Setting} from "contracts/src/river/registry/libraries/RegistryStorage.so
 
 // libraries
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+
 import {RiverRegistryErrors} from "contracts/src/river/registry/libraries/RegistryErrors.sol";
+import {CustomRevert} from "contracts/src/utils/libraries/CustomRevert.sol";
 
 // contracts
+import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
+import {OwnableBase} from "@towns-protocol/diamond/src/facets/ownable/OwnableBase.sol";
 import {RegistryModifiers} from "contracts/src/river/registry/libraries/RegistryStorage.sol";
-import {OwnableBase} from "@river-build/diamond/src/facets/ownable/OwnableBase.sol";
-import {Facet} from "@river-build/diamond/src/facets/Facet.sol";
 
 contract RiverConfig is IRiverConfig, RegistryModifiers, OwnableBase, Facet {
-  using EnumerableSet for EnumerableSet.AddressSet;
-  using EnumerableSet for EnumerableSet.Bytes32Set;
+    using EnumerableSet for EnumerableSet.AddressSet;
+    using EnumerableSet for EnumerableSet.Bytes32Set;
+    using CustomRevert for string;
 
-  // =============================================================
-  //                         Initialization
-  // =============================================================
-  function __RiverConfig_init(
-    address[] calldata configManagers
-  ) external onlyInitializing {
-    for (uint256 i = 0; i < configManagers.length; ++i) {
-      _approveConfigurationManager(configManagers[i]);
-    }
-  }
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                       ADMIN FUNCTIONS                      */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-  // =============================================================
-  //                         Settings
-  // =============================================================
-
-  /// Indication if there is a setting for the given key
-  /// @inheritdoc IRiverConfig
-  function configurationExists(bytes32 key) external view returns (bool) {
-    return ds.configurationKeys.contains(key);
-  }
-
-  /// Set a bytes setting for the given key
-  /// @inheritdoc IRiverConfig
-  function setConfiguration(
-    bytes32 key,
-    uint64 blockNumber,
-    bytes calldata value
-  ) external onlyConfigurationManager(msg.sender) {
-    if (blockNumber == type(uint64).max) revert(RiverRegistryErrors.BAD_ARG);
-    if (value.length == 0) revert(RiverRegistryErrors.BAD_ARG);
-
-    if (!ds.configurationKeys.contains(key)) {
-      ds.configurationKeys.add(key);
+    function __RiverConfig_init(address[] calldata configManagers) external onlyInitializing {
+        for (uint256 i; i < configManagers.length; ++i) {
+            _approveConfigurationManager(configManagers[i]);
+        }
     }
 
-    // if there is already a setting on the given block override it
-    uint256 configurationLen = ds.configuration[key].length;
-    for (uint256 i = 0; i < configurationLen; ++i) {
-      if (ds.configuration[key][i].blockNumber == blockNumber) {
-        ds.configuration[key][i].value = value;
+    /// @inheritdoc IRiverConfig
+    function approveConfigurationManager(address manager) external onlyOwner {
+        _approveConfigurationManager(manager);
+    }
+
+    /// @inheritdoc IRiverConfig
+    function removeConfigurationManager(address manager) external onlyOwner {
+        if (manager == address(0)) RiverRegistryErrors.BAD_ARG.revertWith();
+
+        if (!ds.configurationManagers.remove(manager)) {
+            RiverRegistryErrors.NOT_FOUND.revertWith();
+        }
+
+        emit ConfigurationManagerRemoved(manager);
+    }
+
+    /// @inheritdoc IRiverConfig
+    function setConfiguration(
+        bytes32 key,
+        uint64 blockNumber,
+        bytes calldata value
+    )
+        external
+        onlyConfigurationManager(msg.sender)
+    {
+        if (blockNumber == type(uint64).max) {
+            RiverRegistryErrors.BAD_ARG.revertWith();
+        }
+        if (value.length == 0) RiverRegistryErrors.BAD_ARG.revertWith();
+
+        if (!ds.configurationKeys.contains(key)) {
+            ds.configurationKeys.add(key);
+        }
+
+        // if there is already a setting on the given block override it
+        Setting[] storage configs = ds.configuration[key];
+        uint256 configurationLen = configs.length;
+        for (uint256 i; i < configurationLen; ++i) {
+            Setting storage config = configs[i];
+            if (config.blockNumber == blockNumber) {
+                config.value = value;
+                emit ConfigurationChanged(key, blockNumber, value, false);
+                return;
+            }
+        }
+
+        configs.push(Setting(key, blockNumber, value));
         emit ConfigurationChanged(key, blockNumber, value, false);
-        return;
-      }
     }
 
-    ds.configuration[key].push(Setting(key, blockNumber, value));
-    emit ConfigurationChanged(key, blockNumber, value, false);
-  }
+    /// @inheritdoc IRiverConfig
+    function deleteConfiguration(bytes32 key)
+        external
+        onlyConfigurationManager(msg.sender)
+        configKeyExists(key)
+    {
+        delete ds.configuration[key];
 
-  /// Deletes the setting for the given key on all blocks
-  /// @inheritdoc IRiverConfig
-  function deleteConfiguration(
-    bytes32 key
-  ) external onlyConfigurationManager(msg.sender) configKeyExists(key) {
-    while (ds.configuration[key].length != 0) {
-      ds.configuration[key].pop();
-    }
-    delete (ds.configuration[key]);
+        ds.configurationKeys.remove(key);
 
-    ds.configurationKeys.remove(key);
-
-    emit ConfigurationChanged(key, type(uint64).max, "", true);
-  }
-
-  /// Deletes the setting for the given key at the given block
-  /// @inheritdoc IRiverConfig
-  function deleteConfigurationOnBlock(
-    bytes32 key,
-    uint64 blockNumber
-  ) external onlyConfigurationManager(msg.sender) {
-    bool found = false;
-    for (uint256 i = 0; i < ds.configuration[key].length; ++i) {
-      if (ds.configuration[key][i].blockNumber == blockNumber) {
-        ds.configuration[key][i] = ds.configuration[key][
-          ds.configuration[key].length - 1
-        ];
-        ds.configuration[key].pop();
-        found = true;
-      }
+        emit ConfigurationChanged(key, type(uint64).max, "", true);
     }
 
-    if (!found) revert(RiverRegistryErrors.NOT_FOUND);
+    /// @inheritdoc IRiverConfig
+    function deleteConfigurationOnBlock(
+        bytes32 key,
+        uint64 blockNumber
+    )
+        external
+        onlyConfigurationManager(msg.sender)
+    {
+        bool found = false;
+        Setting[] storage configs = ds.configuration[key];
+        uint256 configurationLen = configs.length;
+        for (uint256 i; i < configurationLen; ++i) {
+            if (configs[i].blockNumber == blockNumber) {
+                configs[i] = configs[configurationLen - 1];
+                configs.pop();
+                found = true;
+                break;
+            }
+        }
 
-    emit ConfigurationChanged(key, blockNumber, "", true);
-  }
+        if (!found) RiverRegistryErrors.NOT_FOUND.revertWith();
 
-  /// Get settings for the given key
-  /// @inheritdoc IRiverConfig
-  function getConfiguration(
-    bytes32 key
-  ) external view configKeyExists(key) returns (Setting[] memory) {
-    return ds.configuration[key];
-  }
-
-  /// Get all settings store in the registry
-  /// @inheritdoc IRiverConfig
-  function getAllConfiguration() external view returns (Setting[] memory) {
-    uint256 settingCount = 0;
-
-    uint256 configurationLen = ds.configurationKeys.length();
-    for (uint256 i = 0; i < configurationLen; ++i) {
-      bytes32 key = ds.configurationKeys.at(i);
-      settingCount += ds.configuration[key].length;
+        emit ConfigurationChanged(key, blockNumber, "", true);
     }
 
-    Setting[] memory settings = new Setting[](settingCount);
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                          GETTERS                           */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    uint256 length = ds.configurationKeys.length();
-    uint256 c = 0;
-    for (uint256 i = 0; i < length; ++i) {
-      bytes32 key = ds.configurationKeys.at(i);
-      Setting[] memory keySettings = ds.configuration[key];
-      for (uint256 j = 0; j < keySettings.length; ++j) {
-        settings[c++] = keySettings[j];
-      }
+    /// @inheritdoc IRiverConfig
+    function configurationExists(bytes32 key) external view returns (bool) {
+        return ds.configurationKeys.contains(key);
     }
 
-    return settings;
-  }
+    /// @inheritdoc IRiverConfig
+    function getConfiguration(bytes32 key)
+        external
+        view
+        configKeyExists(key)
+        returns (Setting[] memory)
+    {
+        return ds.configuration[key];
+    }
 
-  // =============================================================
-  //                    Configuration manager
-  // =============================================================
+    /// @inheritdoc IRiverConfig
+    function getAllConfiguration() external view returns (Setting[] memory settings) {
+        uint256 settingCount = 0;
 
-  /// Check if the given address is a configuration manager
-  /// @inheritdoc IRiverConfig
-  function isConfigurationManager(
-    address manager
-  ) external view returns (bool) {
-    return ds.configurationManagers.contains(manager);
-  }
+        uint256 configurationLen = ds.configurationKeys.length();
+        for (uint256 i; i < configurationLen; ++i) {
+            bytes32 key = ds.configurationKeys.at(i);
+            settingCount += ds.configuration[key].length;
+        }
 
-  /// Add a configuration manager
-  /// @inheritdoc IRiverConfig
-  function approveConfigurationManager(address manager) external onlyOwner {
-    _approveConfigurationManager(manager);
-  }
+        settings = new Setting[](settingCount);
 
-  /// Remove a configuration manager
-  /// @inheritdoc IRiverConfig
-  function removeConfigurationManager(address manager) external onlyOwner {
-    if (manager == address(0)) revert(RiverRegistryErrors.BAD_ARG);
+        uint256 keysLen = ds.configurationKeys.length();
+        uint256 c = 0;
+        for (uint256 i; i < keysLen; ++i) {
+            bytes32 key = ds.configurationKeys.at(i);
+            Setting[] storage configs = ds.configuration[key];
+            uint256 configsLen = configs.length;
+            for (uint256 j; j < configsLen; ++j) {
+                settings[c++] = configs[j];
+            }
+        }
+    }
 
-    if (!ds.configurationManagers.remove(manager))
-      revert(RiverRegistryErrors.NOT_FOUND);
+    /// @inheritdoc IRiverConfig
+    function isConfigurationManager(address manager) external view returns (bool) {
+        return ds.configurationManagers.contains(manager);
+    }
 
-    emit ConfigurationManagerRemoved(manager);
-  }
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                          INTERNAL                          */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-  // =============================================================
-  //                           Internal
-  // =============================================================
+    /// @dev Internal function to approve a configuration manager, doesn't do any
+    /// validation
+    function _approveConfigurationManager(address manager) internal {
+        if (manager == address(0)) RiverRegistryErrors.BAD_ARG.revertWith();
 
-  /// Internal function to approve a configuration manager, doesn't do any
-  /// validation
-  function _approveConfigurationManager(address manager) internal {
-    if (manager == address(0)) revert(RiverRegistryErrors.BAD_ARG);
+        if (!ds.configurationManagers.add(manager)) {
+            RiverRegistryErrors.ALREADY_EXISTS.revertWith();
+        }
 
-    if (!ds.configurationManagers.add(manager))
-      revert(RiverRegistryErrors.ALREADY_EXISTS);
-
-    emit ConfigurationManagerAdded(manager);
-  }
+        emit ConfigurationManagerAdded(manager);
+    }
 }

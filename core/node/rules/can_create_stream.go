@@ -6,19 +6,17 @@ import (
 	"fmt"
 	"time"
 
-	"go.uber.org/zap"
-
-	"github.com/river-build/river/core/node/crypto"
+	"github.com/towns-protocol/towns/core/node/crypto"
 
 	"github.com/ethereum/go-ethereum/common"
 
-	"github.com/river-build/river/core/config"
-	"github.com/river-build/river/core/node/auth"
-	. "github.com/river-build/river/core/node/base"
-	"github.com/river-build/river/core/node/events"
-	"github.com/river-build/river/core/node/logging"
-	. "github.com/river-build/river/core/node/protocol"
-	"github.com/river-build/river/core/node/shared"
+	"github.com/towns-protocol/towns/core/config"
+	"github.com/towns-protocol/towns/core/node/auth"
+	. "github.com/towns-protocol/towns/core/node/base"
+	"github.com/towns-protocol/towns/core/node/events"
+	"github.com/towns-protocol/towns/core/node/logging"
+	. "github.com/towns-protocol/towns/core/node/protocol"
+	"github.com/towns-protocol/towns/core/node/shared"
 )
 
 type csParams struct {
@@ -179,7 +177,7 @@ func CanCreateStream(
 	return builder.run()
 }
 
-func (ru *csParams) log() *zap.SugaredLogger {
+func (ru *csParams) log() *logging.Log {
 	return logging.FromCtx(ru.ctx)
 }
 
@@ -229,7 +227,7 @@ func (ru *csParams) canCreateStream() ruleBuilderCS {
 			return builder.
 				check(
 					ru.params.streamIdTypeIsCorrect(shared.STREAM_MEDIA_BIN),
-					ru.params.eventCountMatches(1),
+					ru.params.eventCountInRange(1, 2),
 					ru.checkMediaInceptionPayload,
 				).
 				requireUserAddr(inception.UserId).
@@ -239,7 +237,7 @@ func (ru *csParams) canCreateStream() ruleBuilderCS {
 		return builder.
 			check(
 				ru.params.streamIdTypeIsCorrect(shared.STREAM_MEDIA_BIN),
-				ru.params.eventCountMatches(1),
+				ru.params.eventCountInRange(1, 2),
 				ru.checkMediaInceptionPayload,
 			).
 			requireMembership(
@@ -393,6 +391,21 @@ func (ru *csParams) eventCountGreaterThanOrEqualTo(eventCount int) func() error 
 				len(ru.parsedEvents),
 				"expectedCount",
 				eventCount,
+			)
+		}
+		return nil
+	}
+}
+
+func (ru *csParams) eventCountInRange(min, max int) func() error {
+	return func() error {
+		if len(ru.parsedEvents) < min || len(ru.parsedEvents) > max {
+			return RiverError(
+				Err_BAD_STREAM_CREATION_PARAMS,
+				"bad event count",
+				"count",
+				len(ru.parsedEvents),
+				"minExpectedCount", min, "maxExpectedCount", max,
 			)
 		}
 		return nil

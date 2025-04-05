@@ -8,12 +8,12 @@ import (
 	"github.com/gammazero/workerpool"
 	"github.com/prometheus/client_golang/prometheus"
 
-	"github.com/river-build/river/core/node/base"
-	"github.com/river-build/river/core/node/events"
-	"github.com/river-build/river/core/node/infra"
-	"github.com/river-build/river/core/node/protocol"
-	"github.com/river-build/river/core/node/shared"
-	"github.com/river-build/river/core/node/storage"
+	"github.com/towns-protocol/towns/core/node/base"
+	"github.com/towns-protocol/towns/core/node/events"
+	"github.com/towns-protocol/towns/core/node/infra"
+	"github.com/towns-protocol/towns/core/node/protocol"
+	"github.com/towns-protocol/towns/core/node/shared"
+	"github.com/towns-protocol/towns/core/node/storage"
 )
 
 type CorruptStreamRecord struct {
@@ -201,7 +201,7 @@ func (m *miniblockScrubTaskProcessorImpl) scrubMiniblocks(
 			)
 		}
 
-		prevMb, err := events.NewMiniblockInfoFromBytes(prevBlock[0], blockNum-1)
+		prevMb, err := events.NewMiniblockInfoFromDescriptor(prevBlock[0])
 		if err != nil {
 			// Don't return a corruption error here because the previous block is outside
 			// of the range we were given to check.
@@ -254,7 +254,7 @@ func (m *miniblockScrubTaskProcessorImpl) scrubMiniblocks(
 		}
 
 		for offset, block := range blocks {
-			mbInfo, err := events.NewMiniblockInfoFromBytesWithOpts(block, opts)
+			mbInfo, err := events.NewMiniblockInfoFromDescriptorWithOpts(block, opts)
 			if err != nil {
 				err = base.AsRiverError(err, protocol.Err_DB_OPERATION_FAILURE).
 					Message("Failed to validate miniblock").

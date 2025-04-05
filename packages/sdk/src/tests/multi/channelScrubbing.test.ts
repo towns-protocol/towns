@@ -2,7 +2,7 @@
  * @group with-entitlements
  */
 
-import { MembershipOp } from '@river-build/proto'
+import { MembershipOp } from '@towns-protocol/proto'
 import { makeUserStreamId } from '../../id'
 import {
     getNftRuleData,
@@ -12,8 +12,8 @@ import {
     expectUserCanJoinChannel,
     waitFor,
 } from '../testUtils'
-import { dlog } from '@river-build/dlog'
-import { Address, TestERC721 } from '@river-build/web3'
+import { dlog } from '@towns-protocol/dlog'
+import { Address, TestERC721 } from '@towns-protocol/web3'
 
 const log = dlog('csb:test:channelsWithEntitlements')
 
@@ -51,7 +51,7 @@ describe('channelScrubbing', () => {
         // should be booted from the stream since she unlinked her entitled wallet.
         await expect(bob.joinStream(channelId!)).resolves.not.toThrow()
 
-        const userStreamView = (await alice.waitForStream(makeUserStreamId(alice.userId))!).view
+        const userStreamView = (await alice.waitForStream(makeUserStreamId(alice.userId))).view
         // Wait for alice's user stream to have the leave event
         await waitFor(() => userStreamView.userContent.isMember(channelId!, MembershipOp.SO_LEAVE))
     })

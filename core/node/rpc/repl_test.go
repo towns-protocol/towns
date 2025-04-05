@@ -6,12 +6,11 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 
-	"github.com/river-build/river/core/contracts/river"
-	"github.com/river-build/river/core/node/crypto"
-	"github.com/river-build/river/core/node/events"
-	"github.com/river-build/river/core/node/protocol"
-	. "github.com/river-build/river/core/node/shared"
-	"github.com/river-build/river/core/node/testutils"
+	"github.com/towns-protocol/towns/core/contracts/river"
+	"github.com/towns-protocol/towns/core/node/crypto"
+	. "github.com/towns-protocol/towns/core/node/events"
+	"github.com/towns-protocol/towns/core/node/protocol"
+	. "github.com/towns-protocol/towns/core/node/shared"
 )
 
 func TestReplCreate(t *testing.T) {
@@ -59,8 +58,6 @@ func TestReplAdd(t *testing.T) {
 }
 
 func TestReplMiniblock(t *testing.T) {
-	testutils.SkipFlackyTest(t)
-
 	tt := newServiceTester(t, serviceTesterOpts{numNodes: 5, replicationFactor: 5, start: true})
 	ctx := tt.ctx
 	require := tt.require
@@ -151,7 +148,7 @@ func TestStreamReconciliationFromGenesis(t *testing.T) {
 
 	// make sure that node loaded the stream and synced up its local database with the stream registry.
 	// this happens as a background task, therefore wait till all mini-blocks are imported.
-	var stream events.SyncStream
+	var stream *Stream
 	require.Eventuallyf(func() bool {
 		stream, err = lastStartedNode.service.cache.GetStreamNoWait(ctx, streamId)
 		if err == nil {
@@ -167,7 +164,7 @@ func TestStreamReconciliationFromGenesis(t *testing.T) {
 	require.NoError(err, "unable to get mini-blocks")
 	fetchedMbChain := make(map[int64]common.Hash)
 	for i, blk := range miniBlocks {
-		fetchedMbChain[int64(i)] = common.BytesToHash(blk.GetHeader().GetHash())
+		fetchedMbChain[int64(i)] = common.BytesToHash(blk.Proto.GetHeader().GetHash())
 	}
 
 	require.Equal(mbChain, fetchedMbChain, "unexpected mini-block chain")
@@ -181,8 +178,6 @@ func TestStreamReconciliationFromGenesis(t *testing.T) {
 // TestStreamReconciliationForKnownStreams ensures that a node reconciles local streams that it already knows
 // but advanced when the node was down.
 func TestStreamReconciliationForKnownStreams(t *testing.T) {
-	//	t.Skip("SKIPPED: TODO: REPLICATION: fix")
-
 	var (
 		opts    = serviceTesterOpts{numNodes: 5, replicationFactor: 5, start: true}
 		tt      = newServiceTester(t, opts)
@@ -275,8 +270,8 @@ func TestStreamReconciliationForKnownStreams(t *testing.T) {
 
 	// wait till stream cache has finish reconciliation for the stream
 	var (
-		stream             events.SyncStream
-		receivedMiniblocks []*protocol.Miniblock
+		stream             *Stream
+		receivedMiniblocks []*MiniblockInfo
 	)
 
 	// grab mini-blocks from node that is already up and running and ensure that the just restarted node has the
@@ -303,7 +298,7 @@ func TestStreamReconciliationForKnownStreams(t *testing.T) {
 	// require.NoError(err, "unable to get mini-blocks")
 	fetchedMbChain := make(map[int64]common.Hash)
 	for i, blk := range receivedMiniblocks {
-		fetchedMbChain[int64(i)] = common.BytesToHash(blk.GetHeader().GetHash())
+		fetchedMbChain[int64(i)] = common.BytesToHash(blk.Proto.GetHeader().GetHash())
 	}
 
 	stream, err = streamCache.GetStreamNoWait(ctx, streamId)
@@ -314,4 +309,30 @@ func TestStreamReconciliationForKnownStreams(t *testing.T) {
 	require.Equal(mbChain, fetchedMbChain, "unexpected mini-block chain")
 	require.Equal(latestMbNum, view.LastBlock().Ref.Num, "unexpected last mini-block num")
 	require.Equal(mbChain[latestMbNum], view.LastBlock().Ref.Hash, "unexpected last mini-block hash")
+}
+
+func TestStreamAllocatedAcrossOperators(t *testing.T) {
+	tt := newServiceTester(t, serviceTesterOpts{numNodes: 6, replicationFactor: 3, numOperators: 3, start: true})
+	ctx := tt.ctx
+	require := tt.require
+
+	for i := range 10 {
+		alice := tt.newTestClient(i%tt.opts.numNodes, testClientOpts{})
+		cookie := alice.createUserStreamGetCookie()
+		streamId, _ := StreamIdFromBytes(cookie.StreamId)
+
+		node := tt.nodes[(i+5)%tt.opts.numNodes]
+		stream, err := node.service.registryContract.GetStreamOnLatestBlock(ctx, streamId)
+		require.NoError(err)
+		require.Len(stream.Nodes, 3)
+
+		operators := make(map[common.Address]bool)
+		for _, nodeAddr := range stream.Nodes {
+			n, err := node.service.nodeRegistry.GetNode(nodeAddr)
+			require.NoError(err)
+			require.False(operators[n.Operator()])
+			operators[n.Operator()] = true
+		}
+		require.Len(operators, 3)
+	}
 }

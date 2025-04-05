@@ -1,9 +1,9 @@
 package events
 
 import (
-	. "github.com/river-build/river/core/node/base"
-	. "github.com/river-build/river/core/node/protocol"
-	"github.com/river-build/river/core/node/shared"
+	. "github.com/towns-protocol/towns/core/node/base"
+	. "github.com/towns-protocol/towns/core/node/protocol"
+	"github.com/towns-protocol/towns/core/node/shared"
 )
 
 type SpaceStreamView interface {
@@ -13,9 +13,9 @@ type SpaceStreamView interface {
 	GetChannelInfo(channelId shared.StreamId) (*SpacePayload_ChannelMetadata, error)
 }
 
-var _ SpaceStreamView = (*streamViewImpl)(nil)
+var _ SpaceStreamView = (*StreamView)(nil)
 
-func (r *streamViewImpl) GetSpaceInception() (*SpacePayload_Inception, error) {
+func (r *StreamView) GetSpaceInception() (*SpacePayload_Inception, error) {
 	i := r.InceptionPayload()
 	c, ok := i.(*SpacePayload_Inception)
 	if ok {
@@ -25,7 +25,7 @@ func (r *streamViewImpl) GetSpaceInception() (*SpacePayload_Inception, error) {
 	}
 }
 
-func (r *streamViewImpl) GetSpaceSnapshotContent() (*SpacePayload_Snapshot, error) {
+func (r *StreamView) GetSpaceSnapshotContent() (*SpacePayload_Snapshot, error) {
 	s := r.snapshot.Content
 	c, ok := s.(*Snapshot_SpaceContent)
 	if ok {
@@ -35,7 +35,7 @@ func (r *streamViewImpl) GetSpaceSnapshotContent() (*SpacePayload_Snapshot, erro
 	}
 }
 
-func (r *streamViewImpl) GetChannelInfo(channelId shared.StreamId) (*SpacePayload_ChannelMetadata, error) {
+func (r *StreamView) GetChannelInfo(channelId shared.StreamId) (*SpacePayload_ChannelMetadata, error) {
 	snap, err := r.GetSpaceSnapshotContent()
 	if err != nil {
 		return nil, err

@@ -1,3 +1,3 @@
-## @river-build/eslint-config
+## @towns-protocol/eslint-config
 
 A shared lint configuration between packages

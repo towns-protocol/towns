@@ -4,16 +4,20 @@ import (
 	"context"
 	"fmt"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/types/known/emptypb"
 
-	"github.com/river-build/river/core/node/crypto"
-	. "github.com/river-build/river/core/node/protocol"
-	. "github.com/river-build/river/core/node/shared"
-	"github.com/river-build/river/core/node/testutils"
+	"github.com/towns-protocol/towns/core/contracts/river"
+	"github.com/towns-protocol/towns/core/node/crypto"
+	. "github.com/towns-protocol/towns/core/node/protocol"
+	. "github.com/towns-protocol/towns/core/node/shared"
+	"github.com/towns-protocol/towns/core/node/testutils"
 )
 
 func TestStreamCacheViewEviction(t *testing.T) {
@@ -29,7 +33,7 @@ func TestStreamCacheViewEviction(t *testing.T) {
 
 	node := tc.getBC()
 	streamID := testutils.FakeStreamId(STREAM_SPACE_BIN)
-	_, genesisMiniblock := makeTestSpaceStream(t, node.Wallet, streamID, nil)
+	_, genesisMiniblock, _ := makeTestSpaceStream(t, node.Wallet, streamID, nil)
 
 	tc.createStreamNoCache(streamID, genesisMiniblock)
 
@@ -41,7 +45,7 @@ func TestStreamCacheViewEviction(t *testing.T) {
 	// stream just loaded and should be with view in cache
 	streamWithoutLoadedView := 0
 	streamWithLoadedViewCount := 0
-	streamCache.cache.Range(func(key StreamId, value *streamImpl) bool {
+	streamCache.cache.Range(func(key StreamId, value *Stream) bool {
 		if value.view() == nil {
 			streamWithoutLoadedView++
 		} else {
@@ -67,7 +71,7 @@ func TestStreamCacheViewEviction(t *testing.T) {
 	// cache must have view dropped even there is a subscriber
 	streamWithoutLoadedView = 0
 	streamWithLoadedViewCount = 0
-	streamCache.cache.Range(func(key StreamId, value *streamImpl) bool {
+	streamCache.cache.Range(func(key StreamId, value *Stream) bool {
 		if value.view() == nil {
 			streamWithoutLoadedView++
 		} else {
@@ -89,7 +93,7 @@ func TestStreamCacheViewEviction(t *testing.T) {
 
 	streamWithoutLoadedView = 0
 	streamWithLoadedViewCount = 0
-	streamCache.cache.Range(func(key StreamId, value *streamImpl) bool {
+	streamCache.cache.Range(func(key StreamId, value *Stream) bool {
 		if value.view() == nil {
 			streamWithoutLoadedView++
 		} else {
@@ -107,7 +111,7 @@ func TestStreamCacheViewEviction(t *testing.T) {
 	require.NoError(err, "get view")
 	streamWithoutLoadedView = 0
 	streamWithLoadedViewCount = 0
-	streamCache.cache.Range(func(key StreamId, value *streamImpl) bool {
+	streamCache.cache.Range(func(key StreamId, value *Stream) bool {
 		if value.view() == nil {
 			streamWithoutLoadedView++
 		} else {
@@ -132,7 +136,7 @@ func TestCacheEvictionWithFilledMiniBlockPool(t *testing.T) {
 
 	node := tc.getBC()
 	streamID := testutils.FakeStreamId(STREAM_SPACE_BIN)
-	_, genesisMiniblock := makeTestSpaceStream(t, node.Wallet, streamID, nil)
+	_, genesisMiniblock, _ := makeTestSpaceStream(t, node.Wallet, streamID, nil)
 
 	tc.createStreamNoCache(streamID, genesisMiniblock)
 
@@ -144,7 +148,7 @@ func TestCacheEvictionWithFilledMiniBlockPool(t *testing.T) {
 	// stream just loaded and should have view loaded
 	streamWithoutLoadedView := 0
 	streamWithLoadedViewCount := 0
-	streamCache.cache.Range(func(key StreamId, value *streamImpl) bool {
+	streamCache.cache.Range(func(key StreamId, value *Stream) bool {
 		if value.view() == nil {
 			streamWithoutLoadedView++
 		} else {
@@ -235,7 +239,7 @@ func TestStreamMiniblockBatchProduction(t *testing.T) {
 
 	streamCache := tc.initCache(0, nil)
 
-	streamCache.cache.Range(func(key StreamId, value *streamImpl) bool {
+	streamCache.cache.Range(func(key StreamId, value *Stream) bool {
 		require.Fail("stream cache must be empty")
 		return true
 	})
@@ -311,7 +315,7 @@ func TestStreamMiniblockBatchProduction(t *testing.T) {
 				require.NoError(err, "get miniblocks")
 
 				for _, mb := range miniblocks {
-					gotStreamEventsCount += len(mb.Events)
+					gotStreamEventsCount += len(mb.Proto.Events)
 				}
 
 				if expStreamEventsCount == gotStreamEventsCount {
@@ -327,22 +331,22 @@ func TestStreamMiniblockBatchProduction(t *testing.T) {
 	)
 }
 
-func isCacheEmpty(streamCache *streamCacheImpl) bool {
+func isCacheEmpty(streamCache *StreamCache) bool {
 	return streamCache.cache.Size() == 0
 }
 
-func cleanUpCache(streamCache *streamCacheImpl) bool {
+func cleanUpCache(streamCache *StreamCache) bool {
 	cleanedUp := true
-	streamCache.cache.Range(func(key StreamId, streamVal *streamImpl) bool {
+	streamCache.cache.Range(func(key StreamId, streamVal *Stream) bool {
 		cleanedUp = cleanedUp && streamVal.tryCleanup(0)
 		return true
 	})
 	return cleanedUp
 }
 
-func areAllViewsDropped(streamCache *streamCacheImpl) bool {
+func areAllViewsDropped(streamCache *StreamCache) bool {
 	allDropped := true
-	streamCache.cache.Range(func(key StreamId, streamVal *streamImpl) bool {
+	streamCache.cache.Range(func(key StreamId, streamVal *Stream) bool {
 		st := streamVal.getStatus()
 		allDropped = allDropped && !st.loaded
 		return true
@@ -390,10 +394,10 @@ func Disabled_TestStreamUnloadWithSubscribers(t *testing.T) {
 	tc.instances[0].params.AppliedBlockNum = blockNum
 
 	// create fresh stream cache and subscribe
-	streamCache = NewStreamCache(ctx, tc.instances[0].params)
+	streamCache = NewStreamCache(tc.instances[0].params)
 	err = streamCache.Start(ctx)
 	require.NoError(err, "instantiating stream cache")
-	mpProducer := NewMiniblockProducer(ctx, streamCache, tc.btc.OnChainConfig, &MiniblockProducerOpts{TestDisableMbProdcutionOnBlock: true})
+	mpProducer := NewMiniblockProducer(ctx, streamCache, &MiniblockProducerOpts{TestDisableMbProdcutionOnBlock: true})
 
 	for streamID, syncCookie := range syncCookies {
 		streamSync, err := streamCache.GetStreamWaitForLocal(ctx, streamID)
@@ -450,4 +454,155 @@ func Disabled_TestStreamUnloadWithSubscribers(t *testing.T) {
 
 	// make sure that all views are dropped
 	require.True(areAllViewsDropped(streamCache))
+}
+
+// TestMiniblockRegistrationWithPendingLocalCandidate tests that the node can recover from a situation where it tries to
+// register a miniblock candidate but fails because the candidate was already registered but the confirmation receipt was
+// missed before and therefore the candidate was never promoted.
+func TestMiniblockRegistrationWithPendingLocalCandidate(t *testing.T) {
+	ctx, tt := makeCacheTestContext(t, testParams{replFactor: 1, disableStreamCacheCallbacks: true})
+	_ = tt.initCache(0, &MiniblockProducerOpts{TestDisableMbProdcutionOnBlock: true})
+	require := require.New(t)
+	instance := tt.instances[0]
+	mbProducer := instance.mbProducer
+
+	// through disableCallback the test can control if the stream cache witnesses river chain events.
+	var disableCallbacks atomic.Bool
+	instance.params.ChainMonitor.OnBlockWithLogs(instance.params.AppliedBlockNum+1,
+		func(ctx context.Context, blockNumber crypto.BlockNumber, logs []*types.Log) {
+			if !disableCallbacks.Load() {
+				mbProducer.onNewBlock(ctx, blockNumber)
+				instance.cache.onBlockWithLogs(ctx, blockNumber, logs)
+			}
+		})
+
+	spaceStreamId := testutils.FakeStreamId(STREAM_SPACE_BIN)
+	genesisMb := MakeGenesisMiniblockForSpaceStream(t, instance.params.Wallet, instance.params.Wallet, spaceStreamId)
+	stream, view := tt.createStream(spaceStreamId, genesisMb.Proto)
+
+	// advance the stream with some miniblocks
+	var producedMiniBlockRef *MiniblockRef
+	for i := range 2 {
+		addEventToStream(t, ctx, instance.params, stream, fmt.Sprintf("%d", i*2), view.LastBlock().Ref)
+		addEventToStream(t, ctx, instance.params, stream, fmt.Sprintf("%d", 1+(i*2)), view.LastBlock().Ref)
+
+		var err error
+		producedMiniBlockRef, err = mbProducer.TestMakeMiniblock(ctx, spaceStreamId, false)
+		require.NoError(err)
+		require.Equal(int64(i+1), producedMiniBlockRef.Num)
+	}
+
+	// make sure that the stream is on the latest mini-block and the mb producer hasn't got pending candidates.
+	require.Eventually(func() bool {
+		view, err := stream.GetView(ctx)
+		require.NoError(err)
+		lastBlock := view.LastBlock()
+
+		mbProducer.candidates.mu.Lock()
+		nCandidates := len(mbProducer.candidates.candidates)
+		mbProducer.candidates.mu.Unlock()
+
+		return nCandidates == 0 && lastBlock.Ref.Hash == producedMiniBlockRef.Hash
+	}, 10*time.Second, 100*time.Millisecond)
+
+	// disable the event callback to simulate the scenario where the mb producer misses river chain events.
+	disableCallbacks.Store(true)
+
+	// create a new candidate with 2 events in it and store it in the node storage.
+	view, err := stream.GetView(ctx)
+	require.NoError(err)
+	lastBlock := view.LastBlock()
+
+	event1 := MakeEvent(
+		t, instance.params.Wallet, Make_MemberPayload_Username(&EncryptedData{Ciphertext: "A"}), lastBlock.Ref)
+
+	event2 := MakeEvent(
+		t, instance.params.Wallet, Make_MemberPayload_Username(&EncryptedData{Ciphertext: "B"}), lastBlock.Ref)
+
+	candidateHeader := &MiniblockHeader{
+		MiniblockNum:             lastBlock.Ref.Num + 1,
+		Timestamp:                NextMiniblockTimestamp(lastBlock.Header().Timestamp),
+		EventHashes:              [][]byte{event1.Hash.Bytes(), event2.Hash.Bytes()},
+		PrevMiniblockHash:        lastBlock.headerEvent.Hash[:],
+		Snapshot:                 nil,
+		EventNumOffset:           0,
+		PrevSnapshotMiniblockNum: view.LastBlock().Header().GetPrevSnapshotMiniblockNum(),
+		Content: &MiniblockHeader_None{
+			None: &emptypb.Empty{},
+		},
+	}
+
+	candidate, err := NewMiniblockInfoFromHeaderAndParsed(
+		instance.params.Wallet, candidateHeader, []*ParsedEvent{event1, event2},
+	)
+	require.NoError(err)
+
+	storageMb, err := candidate.AsStorageMb()
+	require.NoError(err)
+
+	err = instance.params.Storage.WriteMiniblockCandidate(ctx, spaceStreamId, storageMb)
+	require.NoError(err)
+
+	// bypass the mini-block producer and register candidate in the stream facet
+	req := []river.SetMiniblock{{
+		StreamId:          spaceStreamId,
+		PrevMiniBlockHash: common.BytesToHash(candidateHeader.GetPrevMiniblockHash()),
+		LastMiniblockHash: candidate.Ref.Hash,
+		LastMiniblockNum:  uint64(candidate.Ref.Num),
+		IsSealed:          false,
+	}}
+
+	success, invalidMiniBlocks, failed, err := instance.params.Registry.SetStreamLastMiniblockBatch(ctx, req)
+	require.NoError(err)
+	require.Equal([]StreamId{spaceStreamId}, success)
+	require.Empty(invalidMiniBlocks)
+	require.Empty(failed)
+
+	// makes sure that stream advanced in stream facet to candidate but local stream is still on the prev mini-block
+	// because the candidate was not promoted because the node never witnessed the set stream event.
+	riverChainBlockNum, err := instance.params.RiverChain.Client.BlockNumber(ctx)
+	require.NoError(err)
+	getStream, err := instance.params.Registry.GetStream(ctx, spaceStreamId, crypto.BlockNumber(riverChainBlockNum))
+	require.NoError(err)
+
+	require.Equal(int64(getStream.LastMiniblockNum), candidate.Ref.Num)
+	require.Equal(getStream.LastMiniblockHash, candidate.Ref.Hash)
+
+	view, err = stream.GetView(ctx)
+	require.NoError(err)
+	lastBlock = view.LastBlock()
+	require.Equal(lastBlock.Ref.Num+1, int64(getStream.LastMiniblockNum))
+
+	// Add some events to the stream and try produce a mini-block. This must fail because the
+	// stream facet already progressed by the just registered candidate. The node must detect this
+	// scenario and load the candidate from its storage and apply/promote it. The node must be able
+	// to produce a new mini-block with the events in the mini-pool.
+	addEventToStream(t, ctx, instance.params, stream, "A", view.LastBlock().Ref)
+	addEventToStream(t, ctx, instance.params, stream, "B", view.LastBlock().Ref)
+	addEventToStream(t, ctx, instance.params, stream, "C", view.LastBlock().Ref)
+
+	mb, err := mbProducer.TestMakeMiniblock(ctx, spaceStreamId, false)
+	require.NoError(err)
+	require.Equal(candidate.Ref.Num, mb.Num) // candidate was promoted
+	require.Equal(candidate.Ref.Hash, mb.Hash)
+
+	// make sure that there are still 3 events in the mini-pool because the candidate was promoted
+	// and no new mini-block was produced.
+	view, err = stream.GetView(ctx)
+	require.NoError(err)
+	require.Equal(3, view.GetStats().EventsInMinipool)
+
+	// make mini-block and ensure that this time the 3 events are included in the mini-block,
+	// the mini-pool is empty and that the new mini-block is build on top of the promoted candidate.
+	mb, err = mbProducer.TestMakeMiniblock(ctx, spaceStreamId, false)
+	require.NoError(err)
+
+	view, err = stream.GetView(ctx)
+	require.NoError(err)
+	lastBlock = view.LastBlock()
+
+	require.Equal(candidateHeader.MiniblockNum+1, mb.Num)
+	require.Equal(candidate.Ref.Hash, common.BytesToHash(view.LastBlock().Header().PrevMiniblockHash))
+	require.Equal(3, len(lastBlock.Events()))
+	require.Equal([]*ParsedEvent{}, view.MinipoolEvents())
 }

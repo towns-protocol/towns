@@ -11,15 +11,13 @@ import (
 	"testing"
 	"time"
 
-	"go.uber.org/zap"
-
-	"github.com/river-build/river/core/config"
-	"github.com/river-build/river/core/contracts/base"
-	"github.com/river-build/river/core/contracts/base/deploy"
-	test_contracts "github.com/river-build/river/core/contracts/base/deploy"
-	"github.com/river-build/river/core/xchain/client_simulator"
-	xc_common "github.com/river-build/river/core/xchain/common"
-	"github.com/river-build/river/core/xchain/server"
+	"github.com/towns-protocol/towns/core/config"
+	"github.com/towns-protocol/towns/core/contracts/base"
+	"github.com/towns-protocol/towns/core/contracts/base/deploy"
+	test_contracts "github.com/towns-protocol/towns/core/contracts/base/deploy"
+	"github.com/towns-protocol/towns/core/xchain/client_simulator"
+	xc_common "github.com/towns-protocol/towns/core/xchain/common"
+	"github.com/towns-protocol/towns/core/xchain/server"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
@@ -27,16 +25,16 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/stretchr/testify/require"
 
-	node_config "github.com/river-build/river/core/config"
-	"github.com/river-build/river/core/node/base/test"
-	"github.com/river-build/river/core/node/crypto"
-	node_crypto "github.com/river-build/river/core/node/crypto"
-	"github.com/river-build/river/core/node/logging"
-	"github.com/river-build/river/core/node/testutils/testfmt"
+	node_config "github.com/towns-protocol/towns/core/config"
+	"github.com/towns-protocol/towns/core/node/base/test"
+	"github.com/towns-protocol/towns/core/node/crypto"
+	node_crypto "github.com/towns-protocol/towns/core/node/crypto"
+	"github.com/towns-protocol/towns/core/node/logging"
+	"github.com/towns-protocol/towns/core/node/testutils/testfmt"
 
-	contract_types "github.com/river-build/river/core/contracts/types"
+	contract_types "github.com/towns-protocol/towns/core/contracts/types"
 
-	"github.com/river-build/river/core/contracts/types/test_util"
+	"github.com/towns-protocol/towns/core/contracts/types/test_util"
 )
 
 const (
@@ -71,21 +69,8 @@ type serviceTester struct {
 	decoder *node_crypto.EvmErrorDecoder
 }
 
-// Disable color output for console testing.
-func noColorLogger() *zap.SugaredLogger {
-	logger, _ := zap.NewDevelopment()
-	return logger.Sugar()
-}
-
-func silentLogger() *zap.SugaredLogger {
-	return zap.NewNop().Sugar()
-}
-
 func newServiceTester(numNodes int, require *require.Assertions) *serviceTester {
 	ctx, cancel := test.NewTestContext()
-	// Comment out to silence xchain and client simulator logs. Chain monitoring logs are still visible.
-	ctx = logging.CtxWithLog(ctx, noColorLogger())
-
 	log := logging.FromCtx(ctx)
 	log.Infow("Creating service tester")
 
@@ -114,7 +99,7 @@ func (st *serviceTester) deployXchainTestContracts() {
 		log                   = logging.FromCtx(st.ctx)
 		approvedNodeOperators []common.Address
 	)
-	for _, w := range st.btc.Wallets {
+	for _, w := range st.btc.NodeWallets {
 		approvedNodeOperators = append(approvedNodeOperators, w.Address)
 	}
 
@@ -165,7 +150,6 @@ func (st *serviceTester) deployXchainTestContracts() {
 	// Commit all deploys
 	st.btc.Commit(st.ctx)
 
-	log = logging.FromCtx(st.ctx)
 	log.Infow(
 		"Contracts deployed",
 		"entitlementChecker",
@@ -216,6 +200,7 @@ func (st *serviceTester) Start(t *testing.T) {
 		<-done
 	}
 
+	// TODO: FIX: remove
 	// hack to ensure that the chain always produces blocks (automining=true)
 	// commit on simulated backend with no pending txs can sometimes crash the simulator.
 	// by having a pending tx with automining enabled we can work around that issue.
@@ -299,9 +284,6 @@ func (st *serviceTester) Config() *config.Config {
 		BaseChain:  node_config.ChainConfig{},
 		RiverChain: node_config.ChainConfig{},
 		Chains:     fmt.Sprintf("%d:%s", ChainID, BaseRpcEndpoint),
-		TestEntitlementContract: config.ContractConfig{
-			Address: st.mockEntitlementGatedAddress,
-		},
 		EntitlementContract: config.ContractConfig{
 			Address: st.entitlementCheckerAddress,
 		},
@@ -322,28 +304,18 @@ func (st *serviceTester) linkWalletToRootWallet(
 	rootWallet *node_crypto.Wallet,
 ) {
 	// Root key nonce
-	rootKeyNonce, err := st.walletLink.GetLatestNonceForRootKey(nil, rootWallet.Address)
-	st.require.NoError(err)
+	rootKeyNonce := big.NewInt(0)
 
 	// Create RootKey IWalletLinkLinkedWallet
-	hash, err := node_crypto.PackWithNonce(wallet.Address, rootKeyNonce.Uint64())
-	st.require.NoError(err)
-	rootKeySignature, err := rootWallet.SignHash(node_crypto.ToEthMessageHash(hash))
-	rootKeySignature[64] += 27 // Transform V from 0/1 to 27/28
-
 	rootKeyWallet := base.IWalletLinkBaseLinkedWallet{
 		Addr:      rootWallet.Address,
-		Signature: rootKeySignature,
+		Signature: []byte(""),
 	}
 
 	// Create Wallet IWalletLinkLinkedWallet
-	hash, err = node_crypto.PackWithNonce(rootWallet.Address, rootKeyNonce.Uint64())
-	st.require.NoError(err)
-	nodeWalletSignature, err := wallet.SignHash(node_crypto.ToEthMessageHash(hash))
-	nodeWalletSignature[64] += 27 // Transform V from 0/1 to 27/28
 	nodeWallet := base.IWalletLinkBaseLinkedWallet{
 		Addr:      wallet.Address,
-		Signature: nodeWalletSignature,
+		Signature: []byte(""),
 	}
 
 	pendingTx, err := st.ClientSimulatorBlockchain().TxPool.Submit(
@@ -432,9 +404,10 @@ func expectEntitlementCheckResult(
 	ctx context.Context,
 	cfg *config.Config,
 	data base.IRuleEntitlementBaseRuleData,
+	emitV2Event bool,
 	expected bool,
 ) {
-	result, err := cs.EvaluateRuleData(ctx, cfg, data)
+	result, err := cs.EvaluateRuleData(ctx, cfg, data, emitV2Event)
 	require.NoError(err)
 	require.Equal(expected, result)
 }
@@ -445,9 +418,10 @@ func expectV2EntitlementCheckResult(
 	ctx context.Context,
 	cfg *config.Config,
 	data base.IRuleEntitlementBaseRuleDataV2,
+	emitV2Event bool,
 	expected bool,
 ) {
-	result, err := cs.EvaluateRuleDataV2(ctx, cfg, data)
+	result, err := cs.EvaluateRuleDataV2(ctx, cfg, data, emitV2Event)
 	require.NoError(err)
 	require.Equal(expected, result)
 }
@@ -507,24 +481,41 @@ func deployMockErc721Contract(
 
 func TestErc721Entitlements(t *testing.T) {
 	tests := map[string]struct {
-		v2                  bool
+		v2Request           bool
+		emitV2Event         bool
 		sentByRootKeyWallet bool
 	}{
-		"v1 request sent by root key wallet": {sentByRootKeyWallet: true},
-		"v1 request sent by linked wallet":   {sentByRootKeyWallet: false},
-		"v2 request sent by root key wallet": {
-			v2:                  true,
+		"v1 request sent by root key wallet, v1 event emitted": {
 			sentByRootKeyWallet: true,
 		},
-		"v2 request sent by linked wallet": {
-			v2:                  true,
-			sentByRootKeyWallet: false,
+		"v1 request sent by linked wallet, v1 event emitted": {},
+		"v2 request sent by root key wallet, v1 event emitted": {
+			v2Request:           true,
+			sentByRootKeyWallet: true,
+		},
+		"v2 request sent by linked wallet, v1 event emitted": {
+			v2Request: true,
+		},
+		"v1 request sent by root key wallet, v2 event emitted": {
+			emitV2Event:         true,
+			sentByRootKeyWallet: true,
+		},
+		"v1 request sent by linked wallet, v2 event emitted": {
+			emitV2Event: true,
+		},
+		"v2 request sent by root key wallet, v2 event emitted": {
+			v2Request:           true,
+			emitV2Event:         true,
+			sentByRootKeyWallet: true,
+		},
+		"v2 request sent by linked wallet, v2 event emitted": {
+			v2Request:   true,
+			emitV2Event: true,
 		},
 	}
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			ctx, cancel := test.NewTestContext()
-			ctx = logging.CtxWithLog(ctx, noColorLogger())
 			defer cancel()
 
 			require := require.New(t)
@@ -534,19 +525,19 @@ func TestErc721Entitlements(t *testing.T) {
 
 			bc := st.ClientSimulatorBlockchain()
 			cfg := st.Config()
-			cs, err := client_simulator.New(ctx, cfg, bc, bc.Wallet)
+			cs, err := client_simulator.New(ctx, cfg, st.mockEntitlementGatedAddress, bc, bc.Wallet)
 			require.NoError(err)
 			cs.Start(ctx)
 			defer cs.Stop()
 
 			// Deploy mock ERC721 contract to anvil chain
-			auth, contractAddress, erc721 := deployMockErc721Contract(require, st)
+			auth, erc721ContractAddress, erc721 := deployMockErc721Contract(require, st)
 
 			check := func(
 				v1Check base.IRuleEntitlementBaseRuleData,
 				expected bool,
 			) {
-				if tc.v2 {
+				if tc.v2Request {
 					v2Check, err := contract_types.ConvertV1RuleDataToV2(ctx, &v1Check)
 					require.NoError(err)
 					expectV2EntitlementCheckResult(
@@ -555,6 +546,7 @@ func TestErc721Entitlements(t *testing.T) {
 						ctx,
 						cfg,
 						*v2Check,
+						tc.emitV2Event,
 						expected,
 					)
 				} else {
@@ -564,28 +556,34 @@ func TestErc721Entitlements(t *testing.T) {
 						ctx,
 						cfg,
 						v1Check,
+						tc.emitV2Event,
 						expected,
 					)
 				}
 			}
 
 			// Expect no NFT minted for the client simulator wallet
-			oneCheck := test_util.Erc721Check(ChainID, contractAddress, 1)
+			logging.FromCtx(st.ctx).
+				Infow("erc721 check wallet", "wallet", cs.Wallet(), "erc721ContractAddress", erc721ContractAddress)
+			oneCheck := test_util.Erc721Check(ChainID, erc721ContractAddress, 1)
 			check(oneCheck, false)
+
 			// Mint an NFT for client simulator wallet.
+			logging.FromCtx(st.ctx).
+				Infow("Minting erc721 token for wallet", "wallet", cs.Wallet(), "erc721ContractAddress", erc721ContractAddress)
 			mintTokenForWallet(require, auth, st, erc721, cs.Wallet(), 1)
 
 			// Check if the wallet a 1 balance of the NFT - should pass
 			check(oneCheck, true)
 
 			// Checking for balance of 2 should fail
-			check(test_util.Erc721Check(ChainID, contractAddress, 2), false)
+			check(test_util.Erc721Check(ChainID, erc721ContractAddress, 2), false)
 
 			// Create a set of 3 linked wallets using client simulator address.
 			_, wallet1, wallet2, _ := generateLinkedWallets(ctx, require, tc.sentByRootKeyWallet, st, cs.Wallet())
 
 			// Sanity check: balance of 4 across all 3 wallets should fail
-			fourCheck := test_util.Erc721Check(ChainID, contractAddress, 4)
+			fourCheck := test_util.Erc721Check(ChainID, erc721ContractAddress, 4)
 			check(fourCheck, false)
 
 			// Mint 2 NFTs for wallet1.
@@ -689,10 +687,13 @@ func mintErc1155TokensForWallet(
 
 func TestErc1155Entitlements(t *testing.T) {
 	tests := map[string]struct {
+		emitV2Event         bool
 		sentByRootKeyWallet bool
 	}{
-		"v2 request sent by root key wallet": {sentByRootKeyWallet: true},
-		"v2 request sent by linked wallet":   {sentByRootKeyWallet: false},
+		"v2 request sent by root key wallet, v1 event emitted": {sentByRootKeyWallet: true},
+		"v2 request sent by linked wallet, v1 event emitted":   {sentByRootKeyWallet: false},
+		"v2 request sent by root key wallet, v2 event emitted": {emitV2Event: true, sentByRootKeyWallet: true},
+		"v2 request sent by linked wallet, v2 event emitted":   {emitV2Event: true, sentByRootKeyWallet: false},
 	}
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
@@ -706,7 +707,7 @@ func TestErc1155Entitlements(t *testing.T) {
 
 			cfg := st.Config()
 			bc := st.ClientSimulatorBlockchain()
-			cs, err := client_simulator.New(ctx, cfg, bc, bc.Wallet)
+			cs, err := client_simulator.New(ctx, cfg, st.mockEntitlementGatedAddress, bc, bc.Wallet)
 			require.NoError(err)
 			cs.Start(ctx)
 			defer cs.Stop()
@@ -721,6 +722,7 @@ func TestErc1155Entitlements(t *testing.T) {
 				ctx,
 				cfg,
 				oneGoldCheck,
+				tc.emitV2Event,
 				false,
 			)
 
@@ -734,6 +736,7 @@ func TestErc1155Entitlements(t *testing.T) {
 				ctx,
 				cfg,
 				oneGoldCheck,
+				tc.emitV2Event,
 				true,
 			)
 
@@ -749,6 +752,7 @@ func TestErc1155Entitlements(t *testing.T) {
 				ctx,
 				cfg,
 				threeGoldCheck,
+				tc.emitV2Event,
 				false,
 			)
 
@@ -765,6 +769,7 @@ func TestErc1155Entitlements(t *testing.T) {
 				ctx,
 				cfg,
 				threeGoldCheck,
+				tc.emitV2Event,
 				true,
 			)
 			// Sanity check: erc 1155 balance checks respect token ids.
@@ -775,6 +780,7 @@ func TestErc1155Entitlements(t *testing.T) {
 				ctx,
 				cfg,
 				oneSilverCheck,
+				tc.emitV2Event,
 				false,
 			)
 		})
@@ -783,13 +789,25 @@ func TestErc1155Entitlements(t *testing.T) {
 
 func TestErc20Entitlements(t *testing.T) {
 	tests := map[string]struct {
-		v2                  bool
+		v2Request           bool
+		emitV2Event         bool
 		sentByRootKeyWallet bool
 	}{
-		"v1 request sent by root key wallet": {sentByRootKeyWallet: true},
-		"v1 request sent by linked wallet":   {sentByRootKeyWallet: false},
-		"v2 request sent by root key wallet": {v2: true, sentByRootKeyWallet: true},
-		"v2 request sent by linked wallet":   {v2: true, sentByRootKeyWallet: false},
+		"v1 request sent by root key wallet, v1 event emitted": {sentByRootKeyWallet: true},
+		"v1 request sent by linked wallet, v1 event emitted":   {},
+		"v2 request sent by root key wallet, v1 event emitted": {v2Request: true, sentByRootKeyWallet: true},
+		"v2 request sent by linked wallet, v1 event emitted":   {v2Request: true},
+		"v1 request sent by root key wallet, v2 event emitted": {emitV2Event: true, sentByRootKeyWallet: true},
+		"v1 request sent by linked wallet, v2 event emitted":   {emitV2Event: true, sentByRootKeyWallet: false},
+		"v2 request sent by root key wallet, v2 event emitted": {
+			v2Request:           true,
+			emitV2Event:         true,
+			sentByRootKeyWallet: true,
+		},
+		"v2 request sent by linked wallet, v2 event emitted": {
+			v2Request:   true,
+			emitV2Event: true,
+		},
 	}
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
@@ -803,7 +821,7 @@ func TestErc20Entitlements(t *testing.T) {
 
 			cfg := st.Config()
 			bc := st.ClientSimulatorBlockchain()
-			cs, err := client_simulator.New(ctx, cfg, bc, bc.Wallet)
+			cs, err := client_simulator.New(ctx, cfg, st.mockEntitlementGatedAddress, bc, bc.Wallet)
 			require.NoError(err)
 			cs.Start(ctx)
 			defer cs.Stop()
@@ -815,7 +833,7 @@ func TestErc20Entitlements(t *testing.T) {
 				v1Check base.IRuleEntitlementBaseRuleData,
 				expected bool,
 			) {
-				if tc.v2 {
+				if tc.v2Request {
 					v2Check, err := contract_types.ConvertV1RuleDataToV2(ctx, &v1Check)
 					require.NoError(err)
 					expectV2EntitlementCheckResult(
@@ -824,6 +842,7 @@ func TestErc20Entitlements(t *testing.T) {
 						ctx,
 						cfg,
 						*v2Check,
+						tc.emitV2Event,
 						expected,
 					)
 				} else {
@@ -833,6 +852,7 @@ func TestErc20Entitlements(t *testing.T) {
 						ctx,
 						cfg,
 						v1Check,
+						tc.emitV2Event,
 						expected,
 					)
 				}
@@ -917,10 +937,13 @@ func deployMockCrossChainEntitlement(
 
 func TestCrossChainEntitlements(t *testing.T) {
 	tests := map[string]struct {
+		emitV2Event         bool
 		sentByRootKeyWallet bool
 	}{
-		"v2 request sent by root key wallet": {sentByRootKeyWallet: true},
-		"v2 request sent by linked wallet":   {sentByRootKeyWallet: false},
+		"v2 request sent by root key wallet, v1 event emitted": {sentByRootKeyWallet: true},
+		"v2 request sent by linked wallet, v1 event emitted":   {},
+		"v2 request sent by root key wallet, v2 event emitted": {emitV2Event: true, sentByRootKeyWallet: true},
+		"v2 request sent by linked wallet, v2 event emitted":   {emitV2Event: true},
 	}
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
@@ -934,7 +957,7 @@ func TestCrossChainEntitlements(t *testing.T) {
 
 			cfg := st.Config()
 			bc := st.ClientSimulatorBlockchain()
-			cs, err := client_simulator.New(ctx, cfg, bc, bc.Wallet)
+			cs, err := client_simulator.New(ctx, cfg, st.mockEntitlementGatedAddress, bc, bc.Wallet)
 			require.NoError(err)
 			cs.Start(ctx)
 			defer cs.Stop()
@@ -953,6 +976,7 @@ func TestCrossChainEntitlements(t *testing.T) {
 					ctx,
 					cfg,
 					check,
+					tc.emitV2Event,
 					result,
 				)
 			}
@@ -993,18 +1017,29 @@ func TestCrossChainEntitlements(t *testing.T) {
 
 func TestEthBalance(t *testing.T) {
 	tests := map[string]struct {
-		v2                  bool
+		v2Request           bool
+		emitV2Event         bool
 		sentByRootKeyWallet bool
 	}{
-		"v1 request sent by root key wallet": {sentByRootKeyWallet: true},
-		"v1 request sent by linked wallet":   {sentByRootKeyWallet: false},
-		"v2 request sent by root key wallet": {v2: true, sentByRootKeyWallet: true},
-		"v2 request sent by linked wallet":   {v2: true, sentByRootKeyWallet: false},
+		"v1 request sent by root key wallet, v1 event emitted": {sentByRootKeyWallet: true},
+		"v1 request sent by linked wallet, v1 event emitted":   {},
+		"v2 request sent by root key wallet, v1 event emitted": {v2Request: true, sentByRootKeyWallet: true},
+		"v2 request sent by linked wallet, v1 event emitted":   {v2Request: true},
+		"v1 request sent by root key wallet, v2 event emitted": {emitV2Event: true, sentByRootKeyWallet: true},
+		"v1 request sent by linked wallet, v2 event emitted":   {emitV2Event: true},
+		"v2 request sent by root key wallet, v2 event emitted": {
+			emitV2Event:         true,
+			v2Request:           true,
+			sentByRootKeyWallet: true,
+		},
+		"v2 request sent by linked wallet, v2 event emitted": {
+			emitV2Event: true,
+			v2Request:   true,
+		},
 	}
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			ctx, cancel := test.NewTestContext()
-			ctx = logging.CtxWithLog(ctx, noColorLogger())
 			defer cancel()
 
 			require := require.New(t)
@@ -1014,7 +1049,7 @@ func TestEthBalance(t *testing.T) {
 
 			cfg := st.Config()
 			bc := st.ClientSimulatorBlockchain()
-			cs, err := client_simulator.New(ctx, cfg, bc, bc.Wallet)
+			cs, err := client_simulator.New(ctx, cfg, st.mockEntitlementGatedAddress, bc, bc.Wallet)
 			require.NoError(err)
 			cs.Start(ctx)
 			defer cs.Stop()
@@ -1023,7 +1058,7 @@ func TestEthBalance(t *testing.T) {
 				v1Check base.IRuleEntitlementBaseRuleData,
 				expected bool,
 			) {
-				if tc.v2 {
+				if tc.v2Request {
 					v2Check, err := contract_types.ConvertV1RuleDataToV2(ctx, &v1Check)
 					require.NoError(err)
 					expectV2EntitlementCheckResult(
@@ -1032,6 +1067,7 @@ func TestEthBalance(t *testing.T) {
 						ctx,
 						cfg,
 						*v2Check,
+						tc.emitV2Event,
 						expected,
 					)
 				} else {
@@ -1041,6 +1077,7 @@ func TestEthBalance(t *testing.T) {
 						ctx,
 						cfg,
 						v1Check,
+						tc.emitV2Event,
 						expected,
 					)
 				}
