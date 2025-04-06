@@ -150,9 +150,14 @@ library ExecutorLib {
         emit ExecutorTypes.TargetFunctionGroupSet(target, selector, groupId);
     }
 
-    function setTargetFunctionDisabled(address target, bool disabled) internal {
+    function setTargetFunctionDisabled(address target, bytes4 selector, bool disabled) internal {
+        ExecutorStorage.getLayout().targets[target].disabledFunctions[selector] = disabled;
+        emit ExecutorTypes.TargetFunctionDisabledSet(target, selector, disabled);
+    }
+
+    function setTargetDisabled(address target, bool disabled) internal {
         ExecutorStorage.getLayout().targets[target].disabled = disabled;
-        emit ExecutorTypes.TargetFunctionDisabledSet(target, disabled);
+        emit ExecutorTypes.TargetDisabledSet(target, disabled);
     }
 
     function getTargetFunctionGroupId(
@@ -168,6 +173,17 @@ library ExecutorLib {
 
     function isTargetDisabled(address target) internal view returns (bool) {
         return ExecutorStorage.getLayout().targets[target].disabled;
+    }
+
+    function isTargetFunctionDisabled(
+        address target,
+        bytes4 selector
+    )
+        internal
+        view
+        returns (bool)
+    {
+        return ExecutorStorage.getLayout().targets[target].disabledFunctions[selector];
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -292,7 +308,11 @@ library ExecutorLib {
         bytes4 selector = checkSelector(data);
 
         bytes32 operationId = hashOperation(caller, target, data);
-        if (ExecutorStorage.getLayout().schedules[operationId].timepoint == 0) {
+
+        ExecutorTypes.Schedule storage schedule = ExecutorStorage.getLayout().schedules[operationId];
+
+        // If the operation is not scheduled, revert
+        if (schedule.timepoint == 0) {
             revert ExecutorTypes.NotScheduled(operationId);
         } else if (caller != sender) {
             // calls can only be canceled by the account that scheduled them, a global admin, or by
@@ -305,9 +325,9 @@ library ExecutorLib {
             }
         }
 
-        delete ExecutorStorage.getLayout().schedules[operationId].timepoint; // reset the timepoint,
+        delete schedule.timepoint; // reset the timepoint,
             // keep the nonce
-        uint32 nonce = ExecutorStorage.getLayout().schedules[operationId].nonce;
+        uint32 nonce = schedule.nonce;
         emit ExecutorTypes.OperationCanceled(operationId, nonce);
 
         return nonce;
@@ -323,6 +343,8 @@ library ExecutorLib {
         returns (bool immediate, uint32 delay)
     {
         if (isTargetDisabled(target)) {
+            return (false, 0);
+        } else if (isTargetFunctionDisabled(target, selector)) {
             return (false, 0);
         } else if (caller == address(this)) {
             // Caller is Space, this means the call was sent through {execute} and it already
@@ -389,7 +411,7 @@ library ExecutorLib {
         }
 
         if (caller == address(this)) {
-            // Caller is Space, this means the call was sent through {execute} and it already
+            // Caller is itself, this means the call was sent through {execute} and it already
             // checked permissions. We verify that the call "identifier", which is set during
             // {execute}, is correct.
             return (_isExecuting(address(this), checkSelector(data)), 0);

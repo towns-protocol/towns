@@ -10,6 +10,11 @@ import {
 import {IERC6900Module} from "@erc6900/reference-implementation/src/interfaces/IERC6900Module.sol";
 
 contract MockModule is IERC6900ExecutionModule {
+    struct RequiredPermission {
+        bytes32 permission;
+        string description;
+    }
+
     // Events to track function calls
     event MockFunctionCalled(address caller, uint256 value);
     event MockFunctionWithParamsCalled(address caller, uint256 value, string param);
@@ -31,6 +36,23 @@ contract MockModule is IERC6900ExecutionModule {
 
     function mockFunctionWithParams(string calldata param) external payable {
         emit MockFunctionWithParamsCalled(msg.sender, msg.value, param);
+    }
+
+    // Module declares what permissions it needs
+    function getRequiredPermissions() public pure returns (RequiredPermission[] memory) {
+        RequiredPermission[] memory required = new RequiredPermission[](2);
+
+        required[0] = RequiredPermission({
+            permission: keccak256("Read"),
+            description: "Required to read messages in channels"
+        });
+
+        required[1] = RequiredPermission({
+            permission: keccak256("Write"),
+            description: "Required to send messages"
+        });
+
+        return required;
     }
 
     // Update the hook function to match the expected signature

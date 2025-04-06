@@ -114,7 +114,7 @@ contract Executor is TokenOwnableBase, IExecutor {
     }
 
     /// @inheritdoc IExecutor
-    function setTargetFunctionDisabled(
+    function setTargetDisabled(
         address target,
         bool disabled
     )
@@ -122,7 +122,7 @@ contract Executor is TokenOwnableBase, IExecutor {
         onlyAuthorized(target)
         onlyOwner
     {
-        ExecutorLib.setTargetFunctionDisabled(target, disabled);
+        ExecutorLib.setTargetDisabled(target, disabled);
     }
 
     /// @inheritdoc IExecutor

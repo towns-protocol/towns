@@ -8,6 +8,7 @@ import {ModularAccount} from "contracts/src/spaces/facets/executor/ModularAccoun
 contract DeployModularAccount is Deployer, FacetHelper {
     constructor() {
         addSelector(ModularAccount.installExecution.selector);
+        addSelector(ModularAccount.uninstallExecution.selector);
         addSelector(ModularAccount.hasGroupAccess.selector);
         addSelector(ModularAccount.execute.selector);
     }

@@ -97,7 +97,7 @@ interface IExecutor {
      * @param target The target contract address
      * @param disabled Whether the target should be disabled
      */
-    function setTargetFunctionDisabled(address target, bool disabled) external;
+    function setTargetDisabled(address target, bool disabled) external;
 
     /**
      * @notice Gets the scheduled timepoint for an operation

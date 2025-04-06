@@ -22,7 +22,7 @@ contract DeployExecutor is Deployer, FacetHelper {
         addSelector(Executor.getGroupDelay.selector);
         addSelector(Executor.getAccess.selector);
         addSelector(Executor.setTargetFunctionGroup.selector);
-        addSelector(Executor.setTargetFunctionDisabled.selector);
+        addSelector(Executor.setTargetDisabled.selector);
         addSelector(Executor.getSchedule.selector);
         addSelector(Executor.scheduleOperation.selector);
         addSelector(Executor.hashOperation.selector);

@@ -15,6 +15,8 @@ library ExecutorTypes {
     struct Target {
         // Mapping of allowed groups for this target.
         mapping(bytes4 selector => bytes32 groupId) allowedGroups;
+        // Mapping of disabled functions for this target.
+        mapping(bytes4 selector => bool disabled) disabledFunctions;
         // Whether the target is disabled.
         bool disabled;
     }
@@ -81,7 +83,8 @@ library ExecutorTypes {
         address indexed target, bytes4 indexed selector, bytes32 indexed groupId
     );
     event TargetFunctionDelaySet(address indexed target, uint32 newDelay, uint32 minSetback);
-    event TargetFunctionDisabledSet(address indexed target, bool disabled);
+    event TargetFunctionDisabledSet(address indexed target, bytes4 indexed selector, bool disabled);
+    event TargetDisabledSet(address indexed target, bool disabled);
     event OperationScheduled(bytes32 indexed operationId, uint48 timepoint, uint48 nonce);
     event OperationExecuted(bytes32 indexed operationId, uint32 nonce);
     event OperationCanceled(bytes32 indexed operationId, uint32 nonce);
