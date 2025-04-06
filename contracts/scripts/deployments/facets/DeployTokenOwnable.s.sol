@@ -8,7 +8,6 @@ import {ITokenOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/toke
 
 //contracts
 import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
-
 import {TokenOwnableFacet} from
     "@towns-protocol/diamond/src/facets/ownable/token/TokenOwnableFacet.sol";
 import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
@@ -23,7 +22,7 @@ contract DeployTokenOwnable is FacetHelper, Deployer, ITokenOwnableBase {
         return "facets/tokenOwnableFacet";
     }
 
-    function __deploy(address deployer) public override returns (address) {
+    function __deploy(address deployer) internal override returns (address) {
         vm.startBroadcast(deployer);
         TokenOwnableFacet facet = new TokenOwnableFacet();
         vm.stopBroadcast();

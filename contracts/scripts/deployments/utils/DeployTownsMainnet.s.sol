@@ -29,7 +29,7 @@ contract DeployTownsMainnet is Deployer, ITownsBase {
         return "townsMainnet";
     }
 
-    function __deploy(address deployer) public override returns (address) {
+    function __deploy(address deployer) internal override returns (address) {
         manager = _getManager();
         vault = _getVault();
         InflationConfig memory config = inflationConfig(manager);

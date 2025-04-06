@@ -6,10 +6,9 @@ import {IDiamond} from "@towns-protocol/diamond/src/IDiamond.sol";
 
 // helpers
 import {DiamondHelper} from "@towns-protocol/diamond/scripts/common/helpers/DiamondHelper.s.sol";
-import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
-
 import {Diamond} from "@towns-protocol/diamond/src/Diamond.sol";
 import {MultiInit} from "@towns-protocol/diamond/src/initializers/MultiInit.sol";
+import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
 
 // mocks
 import {DeployMockERC721A} from "contracts/scripts/deployments/utils/DeployMockERC721A.s.sol";
@@ -68,7 +67,7 @@ contract DeployMockNFT is DiamondHelper, Deployer {
         });
     }
 
-    function __deploy(address deployer) public override returns (address) {
+    function __deploy(address deployer) internal override returns (address) {
         Diamond.InitParams memory initDiamondCut = diamondInitParams(deployer);
         vm.broadcast(deployer);
         Diamond diamond = new Diamond(initDiamondCut);

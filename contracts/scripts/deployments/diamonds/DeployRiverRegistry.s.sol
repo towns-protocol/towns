@@ -8,11 +8,9 @@ import {IDiamond} from "@towns-protocol/diamond/src/IDiamond.sol";
 import "forge-std/console.sol";
 
 // helpers
-
 import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
 import {Diamond} from "@towns-protocol/diamond/src/Diamond.sol";
 import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
-
 import {DeployDiamondCut} from "contracts/scripts/deployments/facets/DeployDiamondCut.s.sol";
 import {DeployDiamondLoupe} from "contracts/scripts/deployments/facets/DeployDiamondLoupe.s.sol";
 import {DeployIntrospection} from "contracts/scripts/deployments/facets/DeployIntrospection.s.sol";
@@ -20,9 +18,7 @@ import {DeployOwnable} from "contracts/scripts/deployments/facets/DeployOwnable.
 import {DiamondHelper} from "contracts/test/diamond/Diamond.t.sol";
 
 // deployers
-
 import {DeployNodeRegistry} from "contracts/scripts/deployments/facets/DeployNodeRegistry.s.sol";
-
 import {DeployOperatorRegistry} from
     "contracts/scripts/deployments/facets/DeployOperatorRegistry.s.sol";
 import {DeployRiverConfig} from "contracts/scripts/deployments/facets/DeployRiverConfig.s.sol";
@@ -30,11 +26,9 @@ import {DeployStreamRegistry} from "contracts/scripts/deployments/facets/DeployS
 import {DeployMultiInit} from "contracts/scripts/deployments/utils/DeployMultiInit.s.sol";
 
 // facets
-
+import {MultiInit} from "@towns-protocol/diamond/src/initializers/MultiInit.sol";
 import {RiverConfig} from "contracts/src/river/registry/facets/config/RiverConfig.sol";
 import {OperatorRegistry} from "contracts/src/river/registry/facets/operator/OperatorRegistry.sol";
-
-import {MultiInit} from "@towns-protocol/diamond/src/initializers/MultiInit.sol";
 
 contract DeployRiverRegistry is DiamondHelper, Deployer {
     DeployDiamondCut internal cutHelper = new DeployDiamondCut();
@@ -166,7 +160,7 @@ contract DeployRiverRegistry is DiamondHelper, Deployer {
         return this.getCuts();
     }
 
-    function __deploy(address deployer) public override returns (address) {
+    function __deploy(address deployer) internal override returns (address) {
         addImmutableCuts(deployer);
 
         Diamond.InitParams memory initDiamondCut = diamondInitParams(deployer);
