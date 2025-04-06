@@ -2,16 +2,30 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {ISchemaResolver} from "../interfaces/ISchemaResolver.sol";
+import {ISchemaResolver} from
+    "@ethereum-attestation-service/eas-contracts/resolver/ISchemaResolver.sol";
 
 // libraries
 
 import {CurrencyTransfer} from "../../utils/libraries/CurrencyTransfer.sol";
 import {CustomRevert} from "../../utils/libraries/CustomRevert.sol";
+import {DataTypes} from "../types/DataTypes.sol";
 
 import {AttestationRegistryStorage} from "../storage/AttestationRegistryStorage.sol";
-import {DataTypes} from "../types/DataTypes.sol";
+
 import {SchemaLib} from "./SchemaLib.sol";
+import {
+    Attestation,
+    EMPTY_UID,
+    NO_EXPIRATION_TIME
+} from "@ethereum-attestation-service/eas-contracts/Common.sol";
+
+import {
+    AttestationRequestData,
+    IEAS,
+    RevocationRequestData
+} from "@ethereum-attestation-service/eas-contracts/IEAS.sol";
+import {SchemaRecord} from "@ethereum-attestation-service/eas-contracts/ISchemaRegistry.sol";
 
 // contracts
 
@@ -24,8 +38,8 @@ library AttestationLib {
     /// @param value An explicit ETH amount to send to the resolver.
     /// @param isRevocation Whether the attestation is a revocation.
     function resolveAttestation(
-        DataTypes.Schema memory schema,
-        DataTypes.Attestation memory attestation,
+        SchemaRecord memory schema,
+        Attestation memory attestation,
         uint256 value,
         bool isRevocation,
         uint256 availableValue,
@@ -36,7 +50,7 @@ library AttestationLib {
     {
         ISchemaResolver resolver = ISchemaResolver(schema.resolver);
 
-        if (schema.uid == DataTypes.EMPTY_UID) {
+        if (schema.uid == EMPTY_UID) {
             DataTypes.InvalidSchema.selector.revertWith();
         }
 
@@ -72,25 +86,22 @@ library AttestationLib {
 
     function attest(
         bytes32 schemaId,
-        DataTypes.AttestationRequestData memory request,
+        AttestationRequestData memory request,
         address attester,
         uint256 availableValue,
         bool last
     )
         internal
-        returns (DataTypes.Attestation memory attestation)
+        returns (Attestation memory attestation)
     {
-        DataTypes.Schema memory schema = SchemaLib.getSchema(schemaId);
-        if (schema.uid == DataTypes.EMPTY_UID) {
+        SchemaRecord memory schema = SchemaLib.getSchema(schemaId);
+        if (schema.uid == EMPTY_UID) {
             DataTypes.InvalidSchema.selector.revertWith();
         }
 
-        uint64 timeNow = time();
+        uint64 timeNow = uint64(block.timestamp);
 
-        if (
-            request.expirationTime != DataTypes.NO_EXPIRATION_TIME
-                && request.expirationTime <= timeNow
-        ) {
+        if (request.expirationTime != NO_EXPIRATION_TIME && request.expirationTime <= timeNow) {
             DataTypes.InvalidExpirationTime.selector.revertWith();
         }
 
@@ -99,8 +110,8 @@ library AttestationLib {
             DataTypes.Irrevocable.selector.revertWith();
         }
 
-        attestation = DataTypes.Attestation({
-            uid: DataTypes.EMPTY_UID,
+        attestation = Attestation({
+            uid: EMPTY_UID,
             schema: schemaId,
             time: timeNow,
             expirationTime: request.expirationTime,
@@ -117,8 +128,8 @@ library AttestationLib {
         bytes32 attestationUID;
         uint32 bump;
         while (true) {
-            attestationUID = hashAttestation(attestation, bump);
-            if (db.attestations[attestationUID].uid == DataTypes.EMPTY_UID) {
+            attestationUID = _hashAttestation(attestation, bump);
+            if (db.attestations[attestationUID].uid == EMPTY_UID) {
                 break;
             }
             unchecked {
@@ -129,13 +140,13 @@ library AttestationLib {
         attestation.uid = attestationUID;
         db.attestations[attestationUID] = attestation;
 
-        if (request.refUID != DataTypes.EMPTY_UID) {
+        if (request.refUID != EMPTY_UID) {
             if (!isValidAttestation(request.refUID)) {
                 DataTypes.NotFound.selector.revertWith();
             }
         }
 
-        emit DataTypes.AttestationCreated(
+        emit IEAS.Attested(
             attestation.recipient, attestation.attester, attestation.uid, attestation.schema
         );
 
@@ -153,22 +164,22 @@ library AttestationLib {
 
     function revoke(
         bytes32 schemaId,
-        DataTypes.RevocationRequestData memory request,
+        RevocationRequestData memory request,
         address revoker,
         uint256 availableValue,
         bool last
     )
         internal
-        returns (DataTypes.Attestation memory)
+        returns (Attestation memory)
     {
-        DataTypes.Schema memory schema = SchemaLib.getSchema(schemaId);
-        if (schema.uid == DataTypes.EMPTY_UID) {
+        SchemaRecord memory schema = SchemaLib.getSchema(schemaId);
+        if (schema.uid == EMPTY_UID) {
             DataTypes.InvalidSchema.selector.revertWith();
         }
 
-        DataTypes.Attestation memory attestation = getAttestation(request.uid);
+        Attestation memory attestation = getAttestation(request.uid);
 
-        if (attestation.uid == DataTypes.EMPTY_UID) {
+        if (attestation.uid == EMPTY_UID) {
             DataTypes.InvalidAttestation.selector.revertWith();
         }
 
@@ -190,9 +201,9 @@ library AttestationLib {
 
         AttestationRegistryStorage.Layout storage db = AttestationRegistryStorage.getLayout();
 
-        db.attestations[attestation.uid].revocationTime = time();
+        db.attestations[attestation.uid].revocationTime = uint64(block.timestamp);
 
-        emit DataTypes.AttestationRevoked(
+        emit IEAS.Revoked(
             attestation.recipient, attestation.attester, attestation.uid, attestation.schema
         );
 
@@ -208,7 +219,7 @@ library AttestationLib {
         return attestation;
     }
 
-    function getAttestation(bytes32 uid) internal view returns (DataTypes.Attestation memory) {
+    function getAttestation(bytes32 uid) internal view returns (Attestation memory) {
         return AttestationRegistryStorage.getLayout().attestations[uid];
     }
 
@@ -216,8 +227,8 @@ library AttestationLib {
     /*                     Validator Checks                       */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    function hashAttestation(
-        DataTypes.Attestation memory attestation,
+    function _hashAttestation(
+        Attestation memory attestation,
         uint32 bump
     )
         internal
@@ -239,10 +250,6 @@ library AttestationLib {
         );
     }
 
-    function time() internal view returns (uint64) {
-        return uint64(block.timestamp);
-    }
-
     function refund(uint256 value) internal {
         if (value > 0) {
             CurrencyTransfer.safeTransferNativeToken(msg.sender, value);
@@ -250,6 +257,6 @@ library AttestationLib {
     }
 
     function isValidAttestation(bytes32 uid) internal view returns (bool) {
-        return getAttestation(uid).uid != DataTypes.EMPTY_UID;
+        return getAttestation(uid).uid != EMPTY_UID;
     }
 }

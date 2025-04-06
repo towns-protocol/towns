@@ -49,6 +49,7 @@ contract AppRegistryTest is BaseSetup {
     }
 
     modifier givenSchema(string memory testSchema, bool revocable) {
+        vm.assume(bytes(testSchema).length > 0);
         schemaUID = registerSchema(testSchema, address(0), revocable);
         _;
     }
@@ -66,7 +67,14 @@ contract AppRegistryTest is BaseSetup {
         assertEq(schema.revocable, revocable);
     }
 
+    function test_revertWhen_emptySchema() external {
+        vm.prank(deployer);
+        vm.expectRevert(DataTypes.InvalidSchema.selector);
+        schemaRegistry.register("", ISchemaResolver(address(0)), false);
+    }
+
     function test_revertWhen_invalidSchemaResolver(string memory testSchema) external {
+        vm.assume(bytes(testSchema).length > 0);
         MockPlugin plugin = new MockPlugin();
         vm.prank(deployer);
         vm.expectRevert(DataTypes.InvalidSchemaResolver.selector);
@@ -141,7 +149,7 @@ contract AppRegistryTest is BaseSetup {
     }
 
     function test_revertWhen_attestationInvalidSchema() external {
-        bytes32 schemaId = _randomBytes32();
+        bytes32 schemaId = "test";
         address plugin = _randomAddress();
 
         AttestationRequestData memory data = AttestationRequestData({
