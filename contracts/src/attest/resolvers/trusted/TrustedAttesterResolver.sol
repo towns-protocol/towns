@@ -4,12 +4,17 @@ pragma solidity ^0.8.23;
 // interfaces
 
 import {IAttestationRegistry} from "../../interfaces/IAttestationRegistry.sol";
-import {ISchemaResolver} from "../../interfaces/ISchemaResolver.sol";
+
 import {IERC6900ExtensionRegistry} from "./IERC6900ExtensionRegistry.sol";
+import {ISchemaResolver} from
+    "@ethereum-attestation-service/eas-contracts/resolver/ISchemaResolver.sol";
+
 // libraries
-import {DataTypes} from "../../types/DataTypes.sol";
 import {TrustedAttestersStorage} from "./TrustedAttestersStorage.sol";
 import {TrustedLib} from "./TrustedLib.sol";
+
+// types
+import {Attestation} from "@ethereum-attestation-service/eas-contracts/Common.sol";
 
 // contracts
 import {SchemaResolverUpgradeable} from "../SchemaResolverUpgradeable.sol";
@@ -24,7 +29,11 @@ contract TrustedAttesterResolver is
         __SchemaResolver_init(_appRegistry);
     }
 
-    function supportsInterface(bytes4 interfaceId) public pure override returns (bool) {
+    function version() external pure returns (string memory) {
+        return "1.0.0";
+    }
+
+    function supportsInterface(bytes4 interfaceId) public pure returns (bool) {
         return interfaceId == type(ISchemaResolver).interfaceId;
     }
 
@@ -54,34 +63,19 @@ contract TrustedAttesterResolver is
     )
         external
         view
-        returns (DataTypes.Attestation memory)
+        returns (Attestation memory)
     {
         return TrustedLib.getAttestation(recipient, attester);
     }
 
-    function onAttest(
-        DataTypes.Attestation calldata attestation,
-        uint256
-    )
-        internal
-        override
-        returns (bool)
-    {
+    function onAttest(Attestation calldata attestation, uint256) internal override returns (bool) {
         TrustedAttestersStorage.saveAttestation(
             attestation.recipient, attestation.attester, attestation.uid
         );
         return true;
     }
 
-    function onRevoke(
-        DataTypes.Attestation calldata,
-        uint256
-    )
-        internal
-        pure
-        override
-        returns (bool)
-    {
+    function onRevoke(Attestation calldata, uint256) internal pure override returns (bool) {
         return true;
     }
 }

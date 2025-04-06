@@ -2,6 +2,8 @@
 pragma solidity ^0.8.23;
 
 import {DataTypes} from "../../types/DataTypes.sol";
+
+import {EMPTY_UID} from "@ethereum-attestation-service/eas-contracts/Common.sol";
 import {CustomRevert} from "contracts/src/utils/libraries/CustomRevert.sol";
 
 library TrustedAttestersStorage {
@@ -32,7 +34,7 @@ library TrustedAttestersStorage {
     {
         uid = getLayout().attestationByAttesterByRecipient[recipient][attester];
 
-        if (uid == DataTypes.EMPTY_UID) {
+        if (uid == EMPTY_UID) {
             DataTypes.InvalidAttestation.selector.revertWith();
         }
     }

@@ -3,11 +3,12 @@ pragma solidity ^0.8.23;
 
 // interfaces
 
+import {ISchemaResolver} from
+    "@ethereum-attestation-service/eas-contracts/resolver/ISchemaResolver.sol";
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
-import {ISchemaResolver} from "contracts/src/attest/interfaces/ISchemaResolver.sol";
 
-// libraries
-import {DataTypes} from "contracts/src/attest/types/DataTypes.sol";
+// types
+import {Attestation} from "@ethereum-attestation-service/eas-contracts/Common.sol";
 
 // contracts
 import {SchemaResolver} from "contracts/src/attest/resolvers/SchemaResolver.sol";
@@ -17,19 +18,16 @@ contract MockPluginResolver is SchemaResolver {
 
     constructor(address _appRegistry) SchemaResolver(_appRegistry) {}
 
-    function supportsInterface(bytes4 interfaceId) external pure override returns (bool) {
+    function version() external pure returns (string memory) {
+        return "1.0.0";
+    }
+
+    function supportsInterface(bytes4 interfaceId) external pure returns (bool) {
         return interfaceId == type(ISchemaResolver).interfaceId
             || interfaceId == type(IERC165).interfaceId;
     }
 
-    function onAttest(
-        DataTypes.Attestation calldata attestation,
-        uint256
-    )
-        internal
-        override
-        returns (bool)
-    {
+    function onAttest(Attestation calldata attestation, uint256) internal override returns (bool) {
         (address plugin,,,) = abi.decode(attestation.data, (address, uint8, string, bool));
 
         if (attestation.recipient != plugin) return false;
@@ -38,14 +36,7 @@ contract MockPluginResolver is SchemaResolver {
         return true;
     }
 
-    function onRevoke(
-        DataTypes.Attestation calldata attestation,
-        uint256
-    )
-        internal
-        override
-        returns (bool)
-    {
+    function onRevoke(Attestation calldata attestation, uint256) internal override returns (bool) {
         if (pluginOwners[attestation.recipient] != attestation.attester) {
             return false;
         }

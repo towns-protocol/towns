@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import {DataTypes} from "../types/DataTypes.sol";
+import {SchemaRecord} from "@ethereum-attestation-service/eas-contracts/ISchemaRegistry.sol";
 
 library SchemaRegistryStorage {
     // keccak256(abi.encode(uint256(keccak256("towns.facets.app.schema.registry.storage")) - 1)) &
@@ -10,7 +10,7 @@ library SchemaRegistryStorage {
         0x5ba8ee142c4318feae31e8bb48d5ff771f11fa24c56ebe04d08eea2fc2002800;
 
     struct Layout {
-        mapping(bytes32 uid => DataTypes.Schema schema) schemas;
+        mapping(bytes32 uid => SchemaRecord schema) schemas;
     }
 
     function getLayout() internal pure returns (Layout storage ds) {

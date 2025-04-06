@@ -2,13 +2,23 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {ISchemaResolver} from "../interfaces/ISchemaResolver.sol";
 
-// libraries
-import {DataTypes} from "../types/DataTypes.sol";
+import {Attestation} from "@ethereum-attestation-service/eas-contracts/Common.sol";
+import {ISchemaResolver} from
+    "@ethereum-attestation-service/eas-contracts/resolver/ISchemaResolver.sol";
+
+// errors
+import {
+    AccessDenied,
+    InvalidEAS,
+    InvalidLength
+} from "@ethereum-attestation-service/eas-contracts/Common.sol";
 
 // contracts
 abstract contract SchemaResolverUpgradeable is ISchemaResolver {
+    error InsufficientValue();
+    error NotPayable();
+
     function __SchemaResolver_init(address _appRegistry) internal {
         SchemaResolverStorage.Layout storage l = SchemaResolverStorage.getLayout();
         l.appRegistry = _appRegistry;
@@ -16,14 +26,14 @@ abstract contract SchemaResolverUpgradeable is ISchemaResolver {
 
     modifier onlyAppRegistry() {
         if (msg.sender != SchemaResolverStorage.getLayout().appRegistry) {
-            revert DataTypes.AccessDenied();
+            revert AccessDenied();
         }
         _;
     }
 
     receive() external payable virtual {
         if (!isPayable()) {
-            revert DataTypes.NotPayable();
+            revert NotPayable();
         }
     }
 
@@ -33,7 +43,7 @@ abstract contract SchemaResolverUpgradeable is ISchemaResolver {
     }
 
     /// @inheritdoc ISchemaResolver
-    function attest(DataTypes.Attestation calldata attestation)
+    function attest(Attestation calldata attestation)
         external
         payable
         onlyAppRegistry
@@ -43,7 +53,54 @@ abstract contract SchemaResolverUpgradeable is ISchemaResolver {
     }
 
     /// @inheritdoc ISchemaResolver
-    function revoke(DataTypes.Attestation calldata attestation)
+    function multiAttest(
+        Attestation[] calldata attestations,
+        uint256[] calldata values
+    )
+        external
+        payable
+        onlyAppRegistry
+        returns (bool)
+    {
+        uint256 length = attestations.length;
+        if (length != values.length) {
+            revert InvalidLength();
+        }
+
+        // We are keeping track of the remaining ETH amount that can be sent to resolvers and will
+        // keep deducting
+        // from it to verify that there isn't any attempt to send too much ETH to resolvers. Please
+        // note that unless
+        // some ETH was stuck in the contract by accident (which shouldn't happen in normal
+        // conditions), it won't be
+        // possible to send too much ETH anyway.
+        uint256 remainingValue = msg.value;
+
+        for (uint256 i = 0; i < length; ++i) {
+            // Ensure that the attester/revoker doesn't try to spend more than available.
+            uint256 value = values[i];
+            if (value > remainingValue) {
+                revert InsufficientValue();
+            }
+
+            // Forward the attestation to the underlying resolver and return false in case it isn't
+            // approved.
+            if (!onAttest(attestations[i], value)) {
+                return false;
+            }
+
+            unchecked {
+                // Subtract the ETH amount, that was provided to this attestation, from the global
+                // remaining ETH amount.
+                remainingValue -= value;
+            }
+        }
+
+        return true;
+    }
+
+    /// @inheritdoc ISchemaResolver
+    function revoke(Attestation calldata attestation)
         external
         payable
         onlyAppRegistry
@@ -52,12 +109,59 @@ abstract contract SchemaResolverUpgradeable is ISchemaResolver {
         return onRevoke(attestation, msg.value);
     }
 
+    /// @inheritdoc ISchemaResolver
+    function multiRevoke(
+        Attestation[] calldata attestations,
+        uint256[] calldata values
+    )
+        external
+        payable
+        onlyAppRegistry
+        returns (bool)
+    {
+        uint256 length = attestations.length;
+        if (length != values.length) {
+            revert InvalidLength();
+        }
+
+        // We are keeping track of the remaining ETH amount that can be sent to resolvers and will
+        // keep deducting
+        // from it to verify that there isn't any attempt to send too much ETH to resolvers. Please
+        // note that unless
+        // some ETH was stuck in the contract by accident (which shouldn't happen in normal
+        // conditions), it won't be
+        // possible to send too much ETH anyway.
+        uint256 remainingValue = msg.value;
+
+        for (uint256 i = 0; i < length; ++i) {
+            // Ensure that the attester/revoker doesn't try to spend more than available.
+            uint256 value = values[i];
+            if (value > remainingValue) {
+                revert InsufficientValue();
+            }
+
+            // Forward the revocation to the underlying resolver and return false in case it isn't
+            // approved.
+            if (!onRevoke(attestations[i], value)) {
+                return false;
+            }
+
+            unchecked {
+                // Subtract the ETH amount, that was provided to this attestation, from the global
+                // remaining ETH amount.
+                remainingValue -= value;
+            }
+        }
+
+        return true;
+    }
+
     /// @notice Hook that is called before an attestation is created
     /// @param attestation The attestation data
     /// @param value The amount of ETH sent with the attestation
     /// @return Whether the attestation is valid
     function onAttest(
-        DataTypes.Attestation calldata attestation,
+        Attestation calldata attestation,
         uint256 value
     )
         internal
@@ -69,7 +173,7 @@ abstract contract SchemaResolverUpgradeable is ISchemaResolver {
     /// @param value The amount of ETH sent with the revocation
     /// @return Whether the attestation can be revoked
     function onRevoke(
-        DataTypes.Attestation calldata attestation,
+        Attestation calldata attestation,
         uint256 value
     )
         internal

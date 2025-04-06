@@ -7,11 +7,15 @@ import {IAttestationRegistry} from "../../interfaces/IAttestationRegistry.sol";
 import {IERC6900ExtensionRegistry} from "./IERC6900ExtensionRegistry.sol";
 
 // libraries
-
 import {DataTypes} from "../../types/DataTypes.sol";
-
 import {SchemaResolverStorage} from "../SchemaResolverUpgradeable.sol";
 import {TrustedAttestersStorage} from "./TrustedAttestersStorage.sol";
+
+import {
+    Attestation,
+    EMPTY_UID,
+    NO_EXPIRATION_TIME
+} from "@ethereum-attestation-service/eas-contracts/Common.sol";
 import {CustomRevert} from "contracts/src/utils/libraries/CustomRevert.sol";
 import {LibSort} from "solady/utils/LibSort.sol";
 
@@ -80,7 +84,7 @@ library TrustedLib {
         if (attester == address(0) || threshold == 0) {
             DataTypes.NoTrustedAttestersFound.selector.revertWith();
         } else if (threshold == 1) {
-            DataTypes.Attestation memory attestation = getAttestation(module, attester);
+            Attestation memory attestation = getAttestation(module, attester);
 
             if (checkValid(attestation)) return;
 
@@ -92,7 +96,7 @@ library TrustedLib {
 
             DataTypes.InsufficientAttestations.selector.revertWith();
         } else {
-            DataTypes.Attestation memory attestation = getAttestation(module, attester);
+            Attestation memory attestation = getAttestation(module, attester);
             if (checkValid(attestation)) return;
 
             for (uint256 i; i < attesterCount; ++i) {
@@ -121,7 +125,7 @@ library TrustedLib {
             if (attester <= cache) DataTypes.InvalidAttesters.selector.revertWith();
             else cache = attester;
 
-            DataTypes.Attestation memory attestation = getAttestation(module, attester);
+            Attestation memory attestation = getAttestation(module, attester);
 
             if (checkValid(attestation)) {
                 --threshold;
@@ -137,7 +141,7 @@ library TrustedLib {
     )
         internal
         view
-        returns (DataTypes.Attestation memory)
+        returns (Attestation memory)
     {
         TrustedAttestersStorage.Layout storage db = TrustedAttestersStorage.getLayout();
         SchemaResolverStorage.Layout storage schemaDb = SchemaResolverStorage.getLayout();
@@ -168,15 +172,15 @@ library TrustedLib {
         }
     }
 
-    function checkValid(DataTypes.Attestation memory attestation) internal view returns (bool) {
+    function checkValid(Attestation memory attestation) internal view returns (bool) {
         (bytes32 uid, uint64 expirationTime, uint64 revocationTime) =
             (attestation.uid, attestation.expirationTime, attestation.revocationTime);
 
-        if (uid == DataTypes.EMPTY_UID) {
+        if (uid == EMPTY_UID) {
             return false;
         }
 
-        if (expirationTime != DataTypes.NO_EXPIRATION_TIME && block.timestamp > expirationTime) {
+        if (expirationTime != NO_EXPIRATION_TIME && block.timestamp > expirationTime) {
             return false;
         }
 

@@ -2,10 +2,18 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {ISchemaResolver} from "contracts/src/attest/interfaces/ISchemaResolver.sol";
+import {ISchemaResolver} from
+    "@ethereum-attestation-service/eas-contracts/resolver/ISchemaResolver.sol";
 
 // libraries
 import {DataTypes} from "contracts/src/attest/types/DataTypes.sol";
+
+// types
+import {Attestation, EMPTY_UID} from "@ethereum-attestation-service/eas-contracts/Common.sol";
+import {
+    AttestationRequest,
+    AttestationRequestData
+} from "@ethereum-attestation-service/eas-contracts/IEAS.sol";
 
 // contracts
 import {AttestationRegistry} from "contracts/src/attest/AttestationRegistry.sol";
@@ -40,7 +48,7 @@ contract TrustedResolverTest is BaseSetup {
 
     function test_onAttest() public {
         (bytes32 schemaId, bytes32 attestationId) = registerApp();
-        DataTypes.Attestation memory attestation =
+        Attestation memory attestation =
             trustedResolver.getAttestation(address(app), address(developer));
         assertEq(attestation.schema, schemaId);
         assertEq(attestation.uid, attestationId);
@@ -77,17 +85,16 @@ contract TrustedResolverTest is BaseSetup {
     function registerApp() internal returns (bytes32 schemaId, bytes32 attestationId) {
         schemaId = registerSchema("testSchema", address(trustedResolver), true);
 
-        DataTypes.AttestationRequestData memory data = DataTypes.AttestationRequestData({
+        AttestationRequestData memory data = AttestationRequestData({
             recipient: address(app),
             expirationTime: 0,
             revocable: true,
-            refUID: DataTypes.EMPTY_UID,
+            refUID: EMPTY_UID,
             data: "",
             value: 0
         });
 
-        DataTypes.AttestationRequest memory request =
-            DataTypes.AttestationRequest({schemaId: schemaId, data: data});
+        AttestationRequest memory request = AttestationRequest({schema: schemaId, data: data});
 
         vm.prank(developer);
         attestationId = attestationRegistry.attest(request);

@@ -3,11 +3,25 @@ pragma solidity ^0.8.23;
 
 // interfaces
 
-import {IERC6900Module} from "contracts/src/attest/interfaces/IERC6900Module.sol";
-import {ISchemaResolver} from "contracts/src/attest/interfaces/ISchemaResolver.sol";
+import {IERC6900Module} from "@erc6900/reference-implementation/interfaces/IERC6900Module.sol";
+
+import {ISchemaRegistry} from "@ethereum-attestation-service/eas-contracts/ISchemaRegistry.sol";
+import {ISchemaResolver} from
+    "@ethereum-attestation-service/eas-contracts/resolver/ISchemaResolver.sol";
 
 // libraries
 import {DataTypes} from "contracts/src/attest/types/DataTypes.sol";
+
+// types
+import {Attestation, EMPTY_UID} from "@ethereum-attestation-service/eas-contracts/Common.sol";
+import {
+    AttestationRequest,
+    AttestationRequestData,
+    IEAS,
+    RevocationRequest,
+    RevocationRequestData
+} from "@ethereum-attestation-service/eas-contracts/IEAS.sol";
+import {SchemaRecord} from "@ethereum-attestation-service/eas-contracts/ISchemaRegistry.sol";
 
 // contracts
 import {AttestationRegistry} from "contracts/src/attest/AttestationRegistry.sol";
@@ -46,7 +60,7 @@ contract AppRegistryTest is BaseSetup {
         external
         givenSchema(testSchema, revocable)
     {
-        DataTypes.Schema memory schema = schemaRegistry.getSchema(schemaUID);
+        SchemaRecord memory schema = schemaRegistry.getSchema(schemaUID);
         assertEq(schema.uid, schemaUID);
         assertEq(schema.schema, testSchema);
         assertEq(schema.revocable, revocable);
@@ -100,18 +114,17 @@ contract AppRegistryTest is BaseSetup {
             abi.encode(plugin, DataTypes.PluginType.Execution, plugin.moduleId(), true);
 
         // Create the attestation request data structure
-        DataTypes.AttestationRequestData memory data = DataTypes.AttestationRequestData({
+        AttestationRequestData memory data = AttestationRequestData({
             recipient: address(plugin), // The plugin contract will receive the attestation
             expirationTime: 0, // No expiration
             revocable: false, // Cannot be revoked
-            refUID: DataTypes.EMPTY_UID, // No reference attestation
+            refUID: EMPTY_UID, // No reference attestation
             data: encodedData, // The encoded plugin data
             value: 0 // No ETH value sent
         });
 
         // Create the full attestation request
-        DataTypes.AttestationRequest memory request =
-            DataTypes.AttestationRequest({schemaId: schemaId, data: data});
+        AttestationRequest memory request = AttestationRequest({schema: schemaId, data: data});
 
         // Submit the attestation as the app owner
         vm.prank(developer);
@@ -121,7 +134,7 @@ contract AppRegistryTest is BaseSetup {
         assertEq(pluginValidator.pluginOwners(address(plugin)), developer);
 
         // Verify the attestation was stored with correct data
-        DataTypes.Attestation memory attestation = attestationRegistry.getAttestation(attestationId);
+        Attestation memory attestation = attestationRegistry.getAttestation(attestationId);
         assertEq(attestation.recipient, address(plugin));
         assertEq(attestation.attester, developer);
         assertEq(attestation.schema, schemaId);
@@ -131,17 +144,16 @@ contract AppRegistryTest is BaseSetup {
         bytes32 schemaId = _randomBytes32();
         address plugin = _randomAddress();
 
-        DataTypes.AttestationRequestData memory data = DataTypes.AttestationRequestData({
+        AttestationRequestData memory data = AttestationRequestData({
             recipient: address(plugin), // The plugin contract will receive the attestation
             expirationTime: 0, // No expiration
             revocable: false, // Cannot be revoked
-            refUID: DataTypes.EMPTY_UID, // No reference attestation
+            refUID: EMPTY_UID, // No reference attestation
             data: "", // The encoded plugin data
             value: 0 // No ETH value sent
         });
 
-        DataTypes.AttestationRequest memory request =
-            DataTypes.AttestationRequest({schemaId: schemaId, data: data});
+        AttestationRequest memory request = AttestationRequest({schema: schemaId, data: data});
 
         vm.prank(developer);
         vm.expectRevert(DataTypes.InvalidSchema.selector);
@@ -155,17 +167,16 @@ contract AppRegistryTest is BaseSetup {
         address plugin = _randomAddress();
         uint64 expirationTime = uint64(block.timestamp - 1 days);
 
-        DataTypes.AttestationRequestData memory data = DataTypes.AttestationRequestData({
+        AttestationRequestData memory data = AttestationRequestData({
             recipient: address(plugin), // The plugin contract will receive the attestation
             expirationTime: expirationTime, // Set expiration time in the future
             revocable: false, // Cannot be revoked
-            refUID: DataTypes.EMPTY_UID, // No reference attestation
+            refUID: EMPTY_UID, // No reference attestation
             data: "", // The encoded plugin data
             value: 0 // No ETH value sent
         });
 
-        DataTypes.AttestationRequest memory request =
-            DataTypes.AttestationRequest({schemaId: schemaUID, data: data});
+        AttestationRequest memory request = AttestationRequest({schema: schemaUID, data: data});
 
         vm.prank(developer);
         vm.expectRevert(DataTypes.InvalidExpirationTime.selector);
@@ -175,20 +186,19 @@ contract AppRegistryTest is BaseSetup {
     function test_revertWhen_attestationInvalidRevocable() external givenSchema("test", false) {
         address plugin = _randomAddress();
 
-        DataTypes.Schema memory schema = schemaRegistry.getSchema(schemaUID);
+        SchemaRecord memory schema = schemaRegistry.getSchema(schemaUID);
         assertEq(schema.revocable, false);
 
-        DataTypes.AttestationRequestData memory data = DataTypes.AttestationRequestData({
+        AttestationRequestData memory data = AttestationRequestData({
             recipient: address(plugin), // The plugin contract will receive the attestation
             expirationTime: 0, // No expiration
             revocable: true, // Can be revoked
-            refUID: DataTypes.EMPTY_UID, // No reference attestation
+            refUID: EMPTY_UID, // No reference attestation
             data: "", // The encoded plugin data
             value: 0 // No ETH value sent
         });
 
-        DataTypes.AttestationRequest memory request =
-            DataTypes.AttestationRequest({schemaId: schemaUID, data: data});
+        AttestationRequest memory request = AttestationRequest({schema: schemaUID, data: data});
 
         vm.prank(developer);
         vm.expectRevert(DataTypes.Irrevocable.selector);
@@ -198,7 +208,7 @@ contract AppRegistryTest is BaseSetup {
     function test_revertWhen_attestationInvalidRefUID() external givenSchema("test", false) {
         address plugin = _randomAddress();
 
-        DataTypes.AttestationRequestData memory data = DataTypes.AttestationRequestData({
+        AttestationRequestData memory data = AttestationRequestData({
             recipient: address(plugin), // The plugin contract will receive the attestation
             expirationTime: 0, // No expiration
             revocable: false, // Cannot be revoked
@@ -207,8 +217,7 @@ contract AppRegistryTest is BaseSetup {
             value: 0 // No ETH value sent
         });
 
-        DataTypes.AttestationRequest memory request =
-            DataTypes.AttestationRequest({schemaId: schemaUID, data: data});
+        AttestationRequest memory request = AttestationRequest({schema: schemaUID, data: data});
 
         vm.prank(developer);
         vm.expectRevert(DataTypes.NotFound.selector);
@@ -222,18 +231,16 @@ contract AppRegistryTest is BaseSetup {
         MockPlugin plugin = new MockPlugin();
         (bytes32 schemaId, bytes32 attestationId) = registerApp(plugin, true);
 
-        DataTypes.RevocationRequestData memory data =
-            DataTypes.RevocationRequestData({uid: attestationId, value: 0});
+        RevocationRequestData memory data = RevocationRequestData({uid: attestationId, value: 0});
 
-        DataTypes.RevocationRequest memory request =
-            DataTypes.RevocationRequest({schemaId: schemaId, data: data});
+        RevocationRequest memory request = RevocationRequest({schema: schemaId, data: data});
 
         vm.prank(developer);
         vm.expectEmit(appRegistry);
-        emit DataTypes.AttestationRevoked(address(plugin), developer, attestationId, schemaId);
+        emit IEAS.Revoked(address(plugin), developer, attestationId, schemaId);
         attestationRegistry.revoke(request);
 
-        DataTypes.Attestation memory attestation = attestationRegistry.getAttestation(attestationId);
+        Attestation memory attestation = attestationRegistry.getAttestation(attestationId);
         assertEq(attestation.revocationTime, block.timestamp);
         assertEq(pluginValidator.pluginOwners(address(plugin)), address(0));
     }
@@ -242,11 +249,9 @@ contract AppRegistryTest is BaseSetup {
         bytes32 schemaId = _randomBytes32();
         bytes32 attestationId = _randomBytes32();
 
-        DataTypes.RevocationRequestData memory data =
-            DataTypes.RevocationRequestData({uid: attestationId, value: 0});
+        RevocationRequestData memory data = RevocationRequestData({uid: attestationId, value: 0});
 
-        DataTypes.RevocationRequest memory request =
-            DataTypes.RevocationRequest({schemaId: schemaId, data: data});
+        RevocationRequest memory request = RevocationRequest({schema: schemaId, data: data});
 
         vm.prank(developer);
         vm.expectRevert(DataTypes.InvalidSchema.selector);
@@ -257,11 +262,9 @@ contract AppRegistryTest is BaseSetup {
         MockPlugin plugin = new MockPlugin();
         (bytes32 schemaId,) = registerApp(plugin, true);
 
-        DataTypes.RevocationRequestData memory data =
-            DataTypes.RevocationRequestData({uid: _randomBytes32(), value: 0});
+        RevocationRequestData memory data = RevocationRequestData({uid: _randomBytes32(), value: 0});
 
-        DataTypes.RevocationRequest memory request =
-            DataTypes.RevocationRequest({schemaId: schemaId, data: data});
+        RevocationRequest memory request = RevocationRequest({schema: schemaId, data: data});
 
         vm.prank(developer);
         vm.expectRevert(DataTypes.InvalidAttestation.selector);
@@ -273,11 +276,9 @@ contract AppRegistryTest is BaseSetup {
         (, bytes32 attestationId) = registerApp(plugin, true);
         bytes32 invalidSchemaId = registerSchema("test", address(0), false);
 
-        DataTypes.RevocationRequestData memory data =
-            DataTypes.RevocationRequestData({uid: attestationId, value: 0});
+        RevocationRequestData memory data = RevocationRequestData({uid: attestationId, value: 0});
 
-        DataTypes.RevocationRequest memory request =
-            DataTypes.RevocationRequest({schemaId: invalidSchemaId, data: data});
+        RevocationRequest memory request = RevocationRequest({schema: invalidSchemaId, data: data});
 
         vm.prank(developer);
         vm.expectRevert(DataTypes.InvalidSchema.selector);
@@ -288,11 +289,9 @@ contract AppRegistryTest is BaseSetup {
         MockPlugin plugin = new MockPlugin();
         (bytes32 schemaId, bytes32 attestationId) = registerApp(plugin, true);
 
-        DataTypes.RevocationRequestData memory data =
-            DataTypes.RevocationRequestData({uid: attestationId, value: 0});
+        RevocationRequestData memory data = RevocationRequestData({uid: attestationId, value: 0});
 
-        DataTypes.RevocationRequest memory request =
-            DataTypes.RevocationRequest({schemaId: schemaId, data: data});
+        RevocationRequest memory request = RevocationRequest({schema: schemaId, data: data});
 
         vm.prank(_randomAddress());
         vm.expectRevert(DataTypes.InvalidRevoker.selector);
@@ -303,11 +302,9 @@ contract AppRegistryTest is BaseSetup {
         MockPlugin plugin = new MockPlugin();
         (bytes32 schemaId, bytes32 attestationId) = registerApp(plugin, false);
 
-        DataTypes.RevocationRequestData memory data =
-            DataTypes.RevocationRequestData({uid: attestationId, value: 0});
+        RevocationRequestData memory data = RevocationRequestData({uid: attestationId, value: 0});
 
-        DataTypes.RevocationRequest memory request =
-            DataTypes.RevocationRequest({schemaId: schemaId, data: data});
+        RevocationRequest memory request = RevocationRequest({schema: schemaId, data: data});
 
         vm.prank(developer);
         vm.expectRevert(DataTypes.Irrevocable.selector);
@@ -318,11 +315,9 @@ contract AppRegistryTest is BaseSetup {
         MockPlugin plugin = new MockPlugin();
         (bytes32 schemaId, bytes32 attestationId) = registerApp(plugin, true);
 
-        DataTypes.RevocationRequestData memory data =
-            DataTypes.RevocationRequestData({uid: attestationId, value: 0});
+        RevocationRequestData memory data = RevocationRequestData({uid: attestationId, value: 0});
 
-        DataTypes.RevocationRequest memory request =
-            DataTypes.RevocationRequest({schemaId: schemaId, data: data});
+        RevocationRequest memory request = RevocationRequest({schema: schemaId, data: data});
 
         vm.prank(developer);
         attestationRegistry.revoke(request);
@@ -351,17 +346,16 @@ contract AppRegistryTest is BaseSetup {
         bytes memory encodedData =
             abi.encode(address(plugin), DataTypes.PluginType.Execution, plugin.moduleId(), true);
 
-        DataTypes.AttestationRequestData memory data = DataTypes.AttestationRequestData({
+        AttestationRequestData memory data = AttestationRequestData({
             recipient: address(plugin), // The plugin contract will receive the attestation
             expirationTime: 0, // No expiration
             revocable: revocable, // Can it be revoked by the developer
-            refUID: DataTypes.EMPTY_UID, // No reference attestation
+            refUID: EMPTY_UID, // No reference attestation
             data: encodedData, // The encoded plugin data
             value: 0 // No ETH value sent
         });
 
-        DataTypes.AttestationRequest memory request =
-            DataTypes.AttestationRequest({schemaId: schemaId, data: data});
+        AttestationRequest memory request = AttestationRequest({schema: schemaId, data: data});
 
         vm.prank(developer);
         attestationId = attestationRegistry.attest(request);
@@ -375,8 +369,8 @@ contract AppRegistryTest is BaseSetup {
         internal
         returns (bytes32)
     {
-        DataTypes.Schema memory schema = DataTypes.Schema({
-            uid: DataTypes.EMPTY_UID,
+        SchemaRecord memory schema = SchemaRecord({
+            uid: EMPTY_UID,
             resolver: ISchemaResolver(resolver),
             revocable: revocable,
             schema: testSchema
@@ -385,7 +379,7 @@ contract AppRegistryTest is BaseSetup {
 
         vm.prank(deployer);
         vm.expectEmit(appRegistry);
-        emit DataTypes.SchemaRegistered(schema.uid, deployer, schema);
+        emit ISchemaRegistry.Registered(schema.uid, deployer, schema);
         return schemaRegistry.register({
             schema: testSchema,
             resolver: ISchemaResolver(resolver),
@@ -393,7 +387,7 @@ contract AppRegistryTest is BaseSetup {
         });
     }
 
-    function getUID(DataTypes.Schema memory schema) internal pure returns (bytes32) {
+    function getUID(SchemaRecord memory schema) internal pure returns (bytes32) {
         return keccak256(abi.encodePacked(schema.schema, schema.resolver, schema.revocable));
     }
 }
