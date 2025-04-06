@@ -494,6 +494,7 @@ func (s *Stream) initFromGenesisLocked(
 
 // GetViewIfLocal returns stream view if stream is local, nil if stream is not local,
 // and error if stream is local and failed to load.
+// If local storage is not initialized, it will wait for it to be initialized.
 // GetViewIfLocal is thread-safe.
 func (s *Stream) GetViewIfLocal(ctx context.Context) (*StreamView, error) {
 	view, isLocal := s.tryGetView()
@@ -517,6 +518,7 @@ func (s *Stream) GetViewIfLocal(ctx context.Context) (*StreamView, error) {
 }
 
 // GetView returns stream view if stream is local, and error if stream is not local or failed to load.
+// If local storage is not initialized, it will wait for it to be initialized.
 // GetView is thread-safe.
 func (s *Stream) GetView(ctx context.Context) (*StreamView, error) {
 	view, err := s.GetViewIfLocal(ctx)
