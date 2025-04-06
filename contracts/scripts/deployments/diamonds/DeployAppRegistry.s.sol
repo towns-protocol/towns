@@ -104,7 +104,7 @@ contract DeployAppRegistry is DiamondHelper, Deployer {
         });
     }
 
-    function __deploy(address deployer) public override returns (address) {
+    function __deploy(address deployer) internal override returns (address) {
         addImmutableCuts(deployer);
 
         Diamond.InitParams memory initDiamondCut = diamondInitParams(deployer);

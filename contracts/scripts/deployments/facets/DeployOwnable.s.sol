@@ -7,7 +7,6 @@ pragma solidity ^0.8.23;
 
 //contracts
 import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
-
 import {OwnableFacet} from "@towns-protocol/diamond/src/facets/ownable/OwnableFacet.sol";
 import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
 
@@ -21,7 +20,7 @@ contract DeployOwnable is FacetHelper, Deployer {
         return "facets/ownableFacet";
     }
 
-    function __deploy(address deployer) public override returns (address) {
+    function __deploy(address deployer) internal override returns (address) {
         vm.startBroadcast(deployer);
         OwnableFacet facet = new OwnableFacet();
         vm.stopBroadcast();

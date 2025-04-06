@@ -28,7 +28,7 @@ contract DeployTrustedResolver is FacetHelper, Deployer {
         return "utils/trustedAttesterResolver";
     }
 
-    function __deploy(address deployer) public override returns (address) {
+    function __deploy(address deployer) internal override returns (address) {
         vm.startBroadcast(deployer);
         TrustedAttesterResolver trustedAttesterResolver = new TrustedAttesterResolver();
         vm.stopBroadcast();

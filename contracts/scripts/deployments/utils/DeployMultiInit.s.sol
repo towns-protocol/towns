@@ -10,7 +10,7 @@ contract DeployMultiInit is Deployer, FacetHelper {
         return "utils/multiInit";
     }
 
-    function __deploy(address deployer) public override returns (address) {
+    function __deploy(address deployer) internal override returns (address) {
         vm.broadcast(deployer);
         return address(new MultiInit());
     }

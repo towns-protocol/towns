@@ -26,7 +26,7 @@ contract DeployAttestationRegistry is FacetHelper, Deployer {
         return "facets/attestationRegistryFacet";
     }
 
-    function __deploy(address deployer) public override returns (address) {
+    function __deploy(address deployer) internal override returns (address) {
         vm.startBroadcast(deployer);
         AttestationRegistry attestationRegistry = new AttestationRegistry();
         vm.stopBroadcast();
