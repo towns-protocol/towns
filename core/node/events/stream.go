@@ -158,6 +158,9 @@ func (s *Stream) lockMuAndLoadView(ctx context.Context) (*StreamView, error) {
 
 	for {
 		s.mu.Lock()
+		if s.local == nil {
+			return nil, nil
+		}
 		// importMiniblocks initializes view, so there is no need for loading it from the storage.
 		if s.getViewLocked() != nil {
 			s.lastAccessedTime = time.Now()
