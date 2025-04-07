@@ -12,7 +12,7 @@ import (
 	"github.com/gammazero/workerpool"
 	"github.com/linkdata/deadlock"
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/puzpuzpuz/xsync/v3"
+	"github.com/puzpuzpuz/xsync/v4"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
@@ -59,7 +59,7 @@ type StreamCache struct {
 	// streamId -> *streamImpl
 	// cache is populated by getting all streams that should be on local node from River chain.
 	// streamImpl can be in unloaded state, in which case it will be loaded on first GetStream call.
-	cache *xsync.MapOf[StreamId, *Stream]
+	cache *xsync.Map[StreamId, *Stream]
 
 	// appliedBlockNum is the number of the last block logs from which were applied to cache.
 	appliedBlockNum atomic.Uint64
@@ -86,7 +86,7 @@ type StreamCache struct {
 func NewStreamCache(params *StreamCacheParams) *StreamCache {
 	s := &StreamCache{
 		params: params,
-		cache:  xsync.NewMapOf[StreamId, *Stream](),
+		cache:  xsync.NewMap[StreamId, *Stream](),
 		streamCacheSizeGauge: params.Metrics.NewGaugeVecEx(
 			"stream_cache_size", "Number of streams in stream cache",
 			"chain_id", "address",
@@ -287,7 +287,7 @@ func (s *StreamCache) onStreamAllocated(
 
 	_, _ = s.cache.LoadOrCompute(
 		event.GetStreamId(),
-		func() *Stream {
+		func() (newValue *Stream, cancel bool) {
 			ret := &Stream{
 				params:              s.params,
 				streamId:            event.GetStreamId(),
@@ -296,7 +296,7 @@ func (s *StreamCache) onStreamAllocated(
 				local:               &localStreamState{},
 			}
 			ret.nodesLocked.ResetFromStreamState(event, s.params.Wallet.Address)
-			return ret
+			return ret, false
 		},
 	)
 }
@@ -436,7 +436,7 @@ func (s *StreamCache) loadStreamRecordImpl(
 	if !local {
 		stream, _ := s.cache.LoadOrCompute(
 			streamId,
-			func() *Stream {
+			func() (newValue *Stream, cancel bool) {
 				ret := &Stream{
 					params:              s.params,
 					streamId:            streamId,
@@ -444,7 +444,7 @@ func (s *StreamCache) loadStreamRecordImpl(
 					lastAccessedTime:    time.Now(),
 				}
 				ret.nodesLocked.ResetFromStreamResult(record, s.params.Wallet.Address)
-				return ret
+				return ret, false
 			},
 		)
 		return stream, nil
@@ -454,7 +454,7 @@ func (s *StreamCache) loadStreamRecordImpl(
 	if record.LastMiniblockNum > 0 {
 		stream, _ := s.cache.LoadOrCompute(
 			streamId,
-			func() *Stream {
+			func() (newValue *Stream, cancel bool) {
 				ret := &Stream{
 					params:              s.params,
 					streamId:            streamId,
@@ -463,7 +463,7 @@ func (s *StreamCache) loadStreamRecordImpl(
 					local:               &localStreamState{},
 				}
 				ret.nodesLocked.ResetFromStreamResult(record, s.params.Wallet.Address)
-				return ret
+				return ret, false
 			},
 		)
 		s.SubmitSyncStreamTask(ctx, stream)
@@ -504,7 +504,7 @@ func (s *StreamCache) loadStreamRecordImpl(
 
 	stream, _ = s.cache.LoadOrCompute(
 		streamId,
-		func() *Stream {
+		func() (newValue *Stream, cancel bool) {
 			ret := &Stream{
 				params:              s.params,
 				streamId:            streamId,
@@ -513,7 +513,7 @@ func (s *StreamCache) loadStreamRecordImpl(
 				local:               &localStreamState{},
 			}
 			ret.nodesLocked.ResetFromStreamResult(record, s.params.Wallet.Address)
-			return ret
+			return ret, false
 		},
 	)
 
