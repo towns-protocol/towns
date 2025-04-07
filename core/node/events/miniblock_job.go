@@ -3,6 +3,7 @@ package events
 import (
 	"bytes"
 	"context"
+	"slices"
 	"sync"
 	"time"
 
@@ -276,8 +277,13 @@ func (j *mbJob) gatherRemoteProposals(
 		return nil
 	})
 
+	// local proposal is requested separately
+	remoteQuorumNodes := slices.DeleteFunc(slices.Clone(j.quorumNodes), func(node common.Address) bool {
+		return node == j.cache.Params().Wallet.Address
+	})
+
 	qp.AddNodeTasks(
-		j.quorumNodes,
+		remoteQuorumNodes,
 		func(ctx context.Context, node common.Address) error {
 			proposal, err := j.cache.Params().RemoteMiniblockProvider.GetMbProposal(ctx, node, request)
 			if err != nil {
@@ -293,6 +299,7 @@ func (j *mbJob) gatherRemoteProposals(
 			mu.Lock()
 			defer mu.Unlock()
 			proposals = append(proposals, proposal)
+
 			return nil
 		},
 	)
@@ -330,5 +337,18 @@ func (j *mbJob) saveCandidate(ctx context.Context) error {
 	qp.AddNodeTasks(j.quorumNodes, func(ctx context.Context, node common.Address) error {
 		return j.cache.Params().RemoteMiniblockProvider.SaveMbCandidate(ctx, node, j.stream.streamId, j.candidate)
 	})
+
+	// save the candidate to the nodes that are not in the quorum but participating in the stream.
+	for _, node := range j.syncNodes {
+		go func() {
+			_ = j.cache.Params().RemoteMiniblockProvider.SaveMbCandidate(
+				ctx,
+				node,
+				j.stream.streamId,
+				j.candidate,
+			)
+		}()
+	}
+
 	return qp.Wait()
 }

@@ -25,8 +25,8 @@ type StreamNodes interface {
 	GetRemotesAndIsLocal() ([]common.Address, bool)
 
 	// GetQuorumAndSyncNodesAndIsLocal returns
-	// quorumNodes - a list of non-local nodes that participate in the stream quorum
-	// syncNodes - a list of non-local nodes that sync the stream into local storage but don't participate in quorum (yet)
+	// quorumNodes - a list of nodes that participate in the stream quorum
+	// syncNodes - a list nodes that sync the stream into local storage but don't participate in quorum (yet)
 	// isLocal - boolean, whether the stream is hosted on this node
 	// GetQuorumAndSyncNodesAndIsLocal is thread-safe.
 	GetQuorumAndSyncNodesAndIsLocal() ([]common.Address, []common.Address, bool)
