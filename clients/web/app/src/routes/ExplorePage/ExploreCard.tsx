@@ -200,33 +200,35 @@ export const ExploreCard = ({ address, variant }: ExploreCardProps) => {
                     />
 
                     <Stack gap="sm" paddingY="md">
-                        <Heading level={3} color="default" whiteSpace="normal">
-                            {spaceInfo?.name}
-                        </Heading>
-                        {spaceInfo?.shortDescription && (
-                            <Paragraph
-                                color="gray2"
-                                style={{
-                                    marginTop: '8px',
-                                    marginRight: '4px',
-                                    overflow: 'hidden',
-                                    display: '-webkit-box',
-                                    WebkitLineClamp: 1,
-                                    WebkitBoxOrient: 'vertical',
-                                    paddingBottom: '4px',
-                                }}
-                            >
-                                {spaceInfo?.shortDescription}
-                            </Paragraph>
-                        )}
+                        <Stack gap="md">
+                            <Heading level={3} color="default" whiteSpace="normal">
+                                {spaceInfo?.name}
+                            </Heading>
 
+                            {spaceInfo?.shortDescription && (
+                                <Paragraph
+                                    color="gray2"
+                                    style={{
+                                        marginBottom: '-6px',
+                                        overflow: 'hidden',
+                                        display: '-webkit-box',
+                                        WebkitLineClamp: 1,
+                                        WebkitBoxOrient: 'vertical',
+                                        lineHeight: '1.5',
+                                        minHeight: '1.5em',
+                                    }}
+                                >
+                                    {spaceInfo?.shortDescription}
+                                </Paragraph>
+                            )}
+                        </Stack>
                         <Stack horizontal={!isTouch} gap="sm">
                             <ReviewsInfo />
                             <MemberCount />
                         </Stack>
                     </Stack>
                 </Box>
-                <Box alignSelf="center" paddingRight="sm">
+                <Box alignSelf="center" paddingRight="sm" paddingLeft="sm">
                     <PriceTag />
                 </Box>
             </Box>
