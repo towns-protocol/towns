@@ -25,6 +25,8 @@ import {DeployMultiInit} from "contracts/scripts/deployments/utils/DeployMultiIn
 import {MultiInit} from "@towns-protocol/diamond/src/initializers/MultiInit.sol";
 import {DeployAttestationRegistry} from
     "contracts/scripts/deployments/facets/DeployAttestationRegistry.s.sol";
+
+import {DeployModuleRegistry} from "contracts/scripts/deployments/facets/DeployModuleRegistry.s.sol";
 import {DeploySchemaRegistry} from "contracts/scripts/deployments/facets/DeploySchemaRegistry.s.sol";
 
 contract DeployAppRegistry is DiamondHelper, Deployer {
@@ -36,6 +38,7 @@ contract DeployAppRegistry is DiamondHelper, Deployer {
     // facets
     DeploySchemaRegistry deploySchemaRegistry = new DeploySchemaRegistry();
     DeployAttestationRegistry deployAttestationRegistry = new DeployAttestationRegistry();
+    DeployModuleRegistry deployModuleRegistry = new DeployModuleRegistry();
 
     // deployer
     DeployMultiInit deployMultiInit = new DeployMultiInit();
@@ -48,6 +51,7 @@ contract DeployAppRegistry is DiamondHelper, Deployer {
     address internal ownable;
     address internal schemaRegistry;
     address internal attestationRegistry;
+    address internal moduleRegistry;
 
     function versionName() public pure override returns (string memory) {
         return "appRegistry";
@@ -85,7 +89,7 @@ contract DeployAppRegistry is DiamondHelper, Deployer {
     function diamondInitParams(address deployer) public returns (Diamond.InitParams memory) {
         schemaRegistry = deploySchemaRegistry.deploy(deployer);
         attestationRegistry = deployAttestationRegistry.deploy(deployer);
-
+        moduleRegistry = deployModuleRegistry.deploy(deployer);
         addFacet(
             deploySchemaRegistry.makeCut(schemaRegistry, IDiamond.FacetCutAction.Add),
             schemaRegistry,
@@ -95,6 +99,11 @@ contract DeployAppRegistry is DiamondHelper, Deployer {
             deployAttestationRegistry.makeCut(attestationRegistry, IDiamond.FacetCutAction.Add),
             attestationRegistry,
             deployAttestationRegistry.makeInitData("")
+        );
+        addFacet(
+            deployModuleRegistry.makeCut(moduleRegistry, IDiamond.FacetCutAction.Add),
+            moduleRegistry,
+            deployModuleRegistry.makeInitData("")
         );
 
         return Diamond.InitParams({

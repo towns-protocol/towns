@@ -2,43 +2,26 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {IModuleRegistry} from "./interfaces/IModuleRegistry.sol";
+
 // libraries
-import {ModuleLib} from "./libraries/ModuleLib.sol";
 
 // contracts
-import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
-import {OwnableBase} from "@towns-protocol/diamond/src/facets/ownable/OwnableBase.sol";
 
-contract ModuleRegistry is IModuleRegistry, OwnableBase, Facet {
-    using ModuleLib for ModuleLib.Layout;
-
-    function __ModuleRegistry_init() external initializer {}
-
-    /// @notice Get the schema structure used for registering modules
-    /// @return The schema structure
-    function getModuleSchema() external pure returns (string memory) {
-        return "address module, address client, address owner, bytes32[] permissions";
-    }
-
+/// @title IModuleRegistry Interface
+/// @notice Interface for managing module registrations and permissions
+interface IModuleRegistry {
     /// @notice Get the active schema ID used for module attestations
     /// @return The schema ID
-    function getModuleSchemaId() external view returns (bytes32) {
-        return ModuleLib.getSchema();
-    }
+    function getModuleSchemaId() external view returns (bytes32);
 
     /// @notice Set the schema ID used for module attestations
     /// @param schema The new schema ID
-    function setModuleSchemaId(bytes32 schema) external onlyOwner {
-        ModuleLib.setSchema(schema);
-    }
+    function setModuleSchemaId(bytes32 schema) external;
 
     /// @notice Get the current version (attestation UID) for a module
     /// @param module The module address
     /// @return The attestation UID representing the current version
-    function getModuleVersion(address module) external view returns (bytes32) {
-        return ModuleLib.getModuleVersion(module);
-    }
+    function getModuleVersion(address module) external view returns (bytes32);
 
     /// @notice Register a new module with permissions
     /// @param module The module address to register
@@ -51,12 +34,7 @@ contract ModuleRegistry is IModuleRegistry, OwnableBase, Facet {
         address client,
         address owner,
         bytes32[] calldata permissions
-    )
-        external
-        returns (bytes32)
-    {
-        return ModuleLib.addModule(module, client, owner, permissions);
-    }
+    ) external returns (bytes32);
 
     /// @notice Update the permissions for an existing module
     /// @param module The module address to update
@@ -65,18 +43,10 @@ contract ModuleRegistry is IModuleRegistry, OwnableBase, Facet {
     function updateModulePermissions(
         address module,
         bytes32[] calldata permissions
-    )
-        external
-        returns (bytes32)
-    {
-        return ModuleLib.updatePermissions(module, permissions);
-    }
+    ) external returns (bytes32);
 
     /// @notice Revoke a module's registration
     /// @param module The module address to revoke
-    /// @dev Only the registrar can revoke a module
     /// @return The attestation UID that was revoked
-    function revokeModule(address module) external returns (bytes32) {
-        return ModuleLib.removeModule(module);
-    }
+    function revokeModule(address module) external returns (bytes32);
 }

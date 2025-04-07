@@ -10,7 +10,10 @@ import {EnumerableSetLib} from "solady/utils/EnumerableSetLib.sol";
 
 // types
 import {Attestation} from "@ethereum-attestation-service/eas-contracts/Common.sol";
-import {AttestationRequest} from "@ethereum-attestation-service/eas-contracts/IEAS.sol";
+import {
+    AttestationRequest,
+    RevocationRequestData
+} from "@ethereum-attestation-service/eas-contracts/IEAS.sol";
 
 // contracts
 
@@ -23,32 +26,28 @@ library ModuleLib {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
     error ModuleAlreadyRegistered();
     error ModuleNotRegistered();
-
+    error ModuleRevoked();
+    error ModuleNotOwner();
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           EVENTS                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-    event ModuleRegistered(address indexed module, address indexed client, address indexed owner);
-    event ModuleUnregistered(address indexed module);
-    event ModuleClientUpdated(
-        address indexed module, address indexed oldClient, address indexed newClient
-    );
 
+    event ModuleRegistered(address indexed module, bytes32 uid);
+    event ModuleUnregistered(address indexed module, bytes32 uid);
+    event ModuleUpdated(address indexed module, bytes32 uid);
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           STRUCTS                            */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
     struct ModuleInfo {
-        address owner;
-        address client;
-        bool active;
+        bytes32 uid;
     }
 
     struct Layout {
         // Registered schema ID
-        bytes32 activeSchemaId;
+        bytes32 schema;
         // Module => ModuleInfo
         mapping(address => ModuleInfo) modules;
-        // Module => Permission => UID
-        mapping(address => mapping(bytes32 => bytes32)) permissionToUid;
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -69,70 +68,93 @@ library ModuleLib {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           FUNCTIONS                          */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-    function setActiveSchema(bytes32 schemaId) internal {
+    function setSchema(bytes32 schemaId) internal {
         Layout storage db = getLayout();
-        db.activeSchemaId = schemaId;
+        db.schema = schemaId;
     }
 
-    function registerModule(
+    function getSchema() internal view returns (bytes32) {
+        return getLayout().schema;
+    }
+
+    function getModuleVersion(address module) internal view returns (bytes32 version) {
+        return getLayout().modules[module].uid;
+    }
+
+    function addModule(
         address module,
         address client,
         address owner,
         bytes32[] calldata permissions
     )
         internal
+        returns (bytes32 version)
     {
         Layout storage db = getLayout();
         ModuleInfo storage info = db.modules[module];
 
-        if (info.active) ModuleAlreadyRegistered.selector.revertWith();
+        if (info.uid != bytes32(0)) ModuleAlreadyRegistered.selector.revertWith();
 
-        uint256 len = permissions.length;
-        bytes32 activeSchemaId = db.activeSchemaId;
+        AttestationRequest memory request;
+        request.schema = db.schema;
+        request.data.recipient = address(module);
+        request.data.revocable = true;
+        request.data.data = abi.encode(module, client, owner, permissions);
+        info.uid = AttestationLib.attest(request).uid;
 
-        for (uint256 i; i < len; ++i) {
-            AttestationRequest memory request;
-            request.schema = activeSchemaId;
-            request.data.revocable = true;
-            request.data.data = abi.encode(module, permissions[i]);
-            bytes32 uid = AttestationLib.attest(request).uid;
-            db.permissionToUid[module][permissions[i]] = uid;
-        }
+        emit ModuleRegistered(module, info.uid);
 
-        emit ModuleRegistered(module, client, owner);
+        return info.uid;
     }
 
-    function updateModuleClient(
+    function updatePermissions(
         address module,
-        address client
+        bytes32[] calldata permissions
     )
         internal
-        returns (address oldClient)
+        returns (bytes32 version)
     {
         Layout storage db = getLayout();
-        ModuleInfo storage moduleInfo = db.modules[module];
-        if (!moduleInfo.active) ModuleNotRegistered.selector.revertWith();
-        oldClient = moduleInfo.client;
-        moduleInfo.client = client;
-        emit ModuleClientUpdated(module, oldClient, client);
+        ModuleInfo storage info = db.modules[module];
+
+        if (info.uid == bytes32(0)) ModuleNotRegistered.selector.revertWith();
+
+        Attestation memory att = AttestationLib.getAttestation(info.uid);
+        if (att.revocationTime > 0) ModuleRevoked.selector.revertWith();
+        (, address client, address owner,) =
+            abi.decode(att.data, (address, address, address, bytes32[]));
+
+        if (msg.sender != owner) ModuleNotOwner.selector.revertWith();
+
+        RevocationRequestData memory revocationRequest;
+        revocationRequest.uid = info.uid;
+        AttestationLib.revoke(db.schema, revocationRequest, msg.sender, 0, true);
+
+        AttestationRequest memory request;
+        request.schema = db.schema;
+        request.data.revocable = true;
+        request.data.refUID = info.uid;
+        request.data.data = abi.encode(module, client, owner, permissions);
+        info.uid = AttestationLib.attest(request).uid;
+
+        emit ModuleUpdated(module, info.uid);
+
+        return info.uid;
     }
 
-    function isAuthorizedCaller(address module, address client) internal view returns (bool) {
+    function removeModule(address module) internal returns (bytes32 version) {
         Layout storage db = getLayout();
         ModuleInfo storage info = db.modules[module];
-        if (!info.active) return false;
-        return client == info.owner || client == info.client;
-    }
 
-    function hasPermission(address module, bytes32 permission) internal view returns (bool) {
-        Layout storage db = getLayout();
+        if (info.uid == bytes32(0)) ModuleNotRegistered.selector.revertWith();
 
-        if (!db.modules[module].active) return false;
+        RevocationRequestData memory request;
+        request.uid = info.uid;
 
-        Attestation memory attestation =
-            AttestationLib.getAttestation(db.permissionToUid[module][permission]);
-        if (attestation.revocationTime != 0) return false;
+        AttestationLib.revoke(db.schema, request, msg.sender, 0, true);
 
-        return true;
+        emit ModuleUnregistered(module, info.uid);
+
+        return info.uid;
     }
 }

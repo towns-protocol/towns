@@ -36,7 +36,7 @@ import {BaseSetup} from "contracts/test/spaces/BaseSetup.sol";
 import {MockPlugin} from "contracts/test/mocks/MockPlugin.sol";
 import {MockPluginResolver} from "contracts/test/mocks/MockPluginResolver.sol";
 
-contract AppRegistryTest is BaseSetup {
+contract AttestationRegistryTest is BaseSetup {
     SchemaRegistry internal schemaRegistry;
     AttestationRegistry internal attestationRegistry;
     MockPluginResolver internal pluginValidator;
