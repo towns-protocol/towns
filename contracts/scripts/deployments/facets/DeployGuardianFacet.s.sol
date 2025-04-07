@@ -33,7 +33,7 @@ contract DeployGuardianFacet is FacetHelper, Deployer {
         return abi.encodeWithSelector(initializer(), cooldown);
     }
 
-    function __deploy(address deployer) public override returns (address) {
+    function __deploy(address deployer) internal override returns (address) {
         vm.startBroadcast(deployer);
         GuardianFacet facet = new GuardianFacet();
         vm.stopBroadcast();

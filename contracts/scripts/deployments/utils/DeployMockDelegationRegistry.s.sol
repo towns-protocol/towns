@@ -2,7 +2,6 @@
 pragma solidity ^0.8.24;
 
 import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
-
 import {MockDelegationRegistry} from "contracts/test/mocks/MockDelegationRegistry.sol";
 
 contract DeployMockDelegationRegistry is Deployer {
@@ -10,7 +9,7 @@ contract DeployMockDelegationRegistry is Deployer {
         return "utils/mockDelegationRegistry";
     }
 
-    function __deploy(address deployer) public override returns (address) {
+    function __deploy(address deployer) internal override returns (address) {
         // bytes32 salt = bytes32(uint256(uint160(deployer))); // create a salt from address
 
         // bytes32 initCodeHash = hashInitCode(type(MockERC20).creationCode);

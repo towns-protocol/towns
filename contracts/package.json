@@ -17,10 +17,11 @@
     },
     "dependencies": {
         "@erc6900/reference-implementation": "^0.8.1",
+        "@ethereum-attestation-service/eas-contracts": "^1.8.0",
         "@openzeppelin/contracts": "^5.2.0",
         "@openzeppelin/contracts-upgradeable": "^5.2.0",
         "@prb/math": "^4.1.0",
-        "@towns-protocol/diamond": "^0.3.0",
+        "@towns-protocol/diamond": "^0.3.5",
         "crypto-lib": "github:towns-protocol/crypto-lib#f40c5f6944a55583a687b672ba680db3bfabb0ef",
         "solady": "^0.1.12"
     },

@@ -2,14 +2,15 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {ISchemaRegistry} from "./interfaces/ISchemaRegistry.sol";
-import {ISchemaResolver} from "./interfaces/ISchemaResolver.sol";
+import {ISchemaRegistry} from "@ethereum-attestation-service/eas-contracts/ISchemaRegistry.sol";
+import {ISchemaResolver} from
+    "@ethereum-attestation-service/eas-contracts/resolver/ISchemaResolver.sol";
 
 // libraries
 import {SchemaLib} from "./libraries/SchemaLib.sol";
 
 // types
-import {DataTypes} from "./types/DataTypes.sol";
+import {SchemaRecord} from "@ethereum-attestation-service/eas-contracts/ISchemaRegistry.sol";
 
 // contracts
 import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
@@ -20,6 +21,12 @@ contract SchemaRegistry is ISchemaRegistry, Facet {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                     Schema Management                      */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @notice Returns the full semver contract version.
+    /// @return Semver contract version as a string.
+    function version() external pure returns (string memory) {
+        return "1.0.0";
+    }
 
     /// @notice Register a schema
     /// @param schema The schema to register e.g. "(address plugin,string pluginType,bool audited)"
@@ -40,7 +47,7 @@ contract SchemaRegistry is ISchemaRegistry, Facet {
     /// @notice Get the schema record for a given schemaId
     /// @param uid The schemaId of the schema
     /// @return The schema record
-    function getSchema(bytes32 uid) external view returns (DataTypes.Schema memory) {
+    function getSchema(bytes32 uid) external view returns (SchemaRecord memory) {
         return SchemaLib.getSchema(uid);
     }
 }

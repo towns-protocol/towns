@@ -2,17 +2,46 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {ISchemaResolver} from "../interfaces/ISchemaResolver.sol";
-// libraries
 
+import {ISchemaRegistry} from "@ethereum-attestation-service/eas-contracts/ISchemaRegistry.sol";
+import {ISchemaResolver} from
+    "@ethereum-attestation-service/eas-contracts/resolver/ISchemaResolver.sol";
+import {IERC165} from "@openzeppelin/contracts/interfaces/IERC165.sol";
+
+// types
+import {EMPTY_UID} from "@ethereum-attestation-service/eas-contracts/Common.sol";
+import {SchemaRecord} from "@ethereum-attestation-service/eas-contracts/ISchemaRegistry.sol";
+
+// libraries
 import {CustomRevert} from "../../utils/libraries/CustomRevert.sol";
-import {DataTypes} from "../types/DataTypes.sol";
-import {SchemaRegistryStorage} from "../storage/SchemaRegistryStorage.sol";
 
 // contracts
 
 library SchemaLib {
     using CustomRevert for bytes4;
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                           STORAGE                          */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    // keccak256(abi.encode(uint256(keccak256("attestations.module.schema.storage")) - 1)) &
+    // ~bytes32(uint256(0xff))
+    bytes32 internal constant STORAGE_SLOT =
+        0xfd5bc2b1c92b0a5f91f2b26739da3957fadd042854b0b9b4b07f2b0885d3e400;
+
+    struct Layout {
+        mapping(bytes32 uid => SchemaRecord schema) schemas;
+    }
+
+    function getLayout() internal pure returns (Layout storage ds) {
+        assembly {
+            ds.slot := STORAGE_SLOT
+        }
+    }
+
+    error InvalidSchemaResolver();
+    error SchemaAlreadyRegistered();
+    error InvalidSchema();
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                     Schema Management                      */
@@ -25,32 +54,33 @@ library SchemaLib {
         internal
         returns (bytes32 schemaUID)
     {
+        // check empty schema
+        if (bytes(schema).length == 0) {
+            InvalidSchema.selector.revertWith();
+        }
+
         checkResolver(resolver);
 
-        DataTypes.Schema memory schemaRecord = DataTypes.Schema({
-            uid: DataTypes.EMPTY_UID,
-            resolver: resolver,
-            revocable: revocable,
-            schema: schema
-        });
+        SchemaRecord memory schemaRecord =
+            SchemaRecord({uid: EMPTY_UID, resolver: resolver, revocable: revocable, schema: schema});
 
-        SchemaRegistryStorage.Layout storage db = SchemaRegistryStorage.getLayout();
+        Layout storage db = getLayout();
 
         schemaUID = getUID(schemaRecord);
-        if (db.schemas[schemaUID].uid != DataTypes.EMPTY_UID) {
-            DataTypes.SchemaAlreadyRegistered.selector.revertWith();
+        if (db.schemas[schemaUID].uid != EMPTY_UID) {
+            SchemaAlreadyRegistered.selector.revertWith();
         }
 
         schemaRecord.uid = schemaUID;
         db.schemas[schemaUID] = schemaRecord;
 
-        emit DataTypes.SchemaRegistered(schemaUID, msg.sender, schemaRecord);
+        emit ISchemaRegistry.Registered(schemaUID, msg.sender, schemaRecord);
 
         return schemaUID;
     }
 
-    function getSchema(bytes32 uid) internal view returns (DataTypes.Schema memory) {
-        return SchemaRegistryStorage.getLayout().schemas[uid];
+    function getSchema(bytes32 uid) internal view returns (SchemaRecord memory) {
+        return getLayout().schemas[uid];
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -60,13 +90,13 @@ library SchemaLib {
     function checkResolver(ISchemaResolver resolver) internal view {
         if (
             address(resolver) != address(0)
-                && !resolver.supportsInterface(type(ISchemaResolver).interfaceId)
+                && !IERC165(address(resolver)).supportsInterface(type(ISchemaResolver).interfaceId)
         ) {
-            DataTypes.InvalidSchemaResolver.selector.revertWith();
+            InvalidSchemaResolver.selector.revertWith();
         }
     }
 
-    function getUID(DataTypes.Schema memory schema) internal pure returns (bytes32) {
+    function getUID(SchemaRecord memory schema) internal pure returns (bytes32) {
         return keccak256(abi.encodePacked(schema.schema, schema.resolver, schema.revocable));
     }
 
