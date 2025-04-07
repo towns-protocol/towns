@@ -30,7 +30,8 @@ contract UserEntitlementTest is TestUtils, IEntitlementBase {
         implementation = new UserEntitlement();
         entitlement = address(
             new ERC1967Proxy(
-                address(implementation), abi.encodeCall(UserEntitlement.initialize, (space))
+                address(implementation),
+                abi.encodeCall(UserEntitlement.initialize, (space))
             )
         );
 
@@ -78,8 +79,10 @@ contract UserEntitlementTest is TestUtils, IEntitlementBase {
         newUsers[1] = _randomAddress();
         vm.prank(space);
         userEntitlement.setEntitlement(roleId, abi.encode(newUsers));
-        address[] memory newDecodedUsers =
-            abi.decode(userEntitlement.getEntitlementDataByRoleId(roleId), (address[]));
+        address[] memory newDecodedUsers = abi.decode(
+            userEntitlement.getEntitlementDataByRoleId(roleId),
+            (address[])
+        );
         assertEq(newDecodedUsers.length, newUsers.length);
         for (uint256 i = 0; i < newUsers.length; i++) {
             assertEq(newUsers[i], newDecodedUsers[i]);
@@ -112,9 +115,7 @@ contract UserEntitlementTest is TestUtils, IEntitlementBase {
     function test_removeEntitlement_revert_invalid_value(
         uint256 roleId,
         uint256 invalidRoleId
-    )
-        external
-    {
+    ) external {
         vm.assume(roleId != 0);
         vm.assume(invalidRoleId != roleId);
 

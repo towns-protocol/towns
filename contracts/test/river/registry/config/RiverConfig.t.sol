@@ -51,10 +51,7 @@ contract RiverConfigTest is RiverRegistryBaseSetup, IOwnableBase, IRiverConfigBa
     function test_configurationExistingKey(
         bytes32 key,
         uint64 blockNumber
-    )
-        external
-        setBytesConfig(key, blockNumber, "hello world!")
-    {
+    ) external setBytesConfig(key, blockNumber, "hello world!") {
         assertTrue(riverConfig.configurationExists(key));
     }
 
@@ -62,10 +59,7 @@ contract RiverConfigTest is RiverRegistryBaseSetup, IOwnableBase, IRiverConfigBa
         address configManager,
         bytes32 key,
         uint64 blockNumber
-    )
-        external
-        givenConfigurationManagerIsApproved(configManager)
-    {
+    ) external givenConfigurationManagerIsApproved(configManager) {
         vm.assume(blockNumber != type(uint64).max);
         vm.prank(configManager);
         riverConfig.setConfiguration(key, blockNumber, "hello");
@@ -84,10 +78,7 @@ contract RiverConfigTest is RiverRegistryBaseSetup, IOwnableBase, IRiverConfigBa
         bytes32 key1,
         bytes32 key2,
         bytes32 key3
-    )
-        external
-        givenConfigurationManagerIsApproved(configManager)
-    {
+    ) external givenConfigurationManagerIsApproved(configManager) {
         vm.assume(key1 != key2);
         vm.assume(key1 != key3);
         vm.assume(key2 != key3);
@@ -113,9 +104,7 @@ contract RiverConfigTest is RiverRegistryBaseSetup, IOwnableBase, IRiverConfigBa
         bytes32 key,
         uint64 blockNumber,
         address caller
-    )
-        external
-    {
+    ) external {
         vm.assume(caller != deployer);
         vm.prank(caller);
         vm.expectRevert(bytes(RiverRegistryErrors.BAD_AUTH));
@@ -133,10 +122,7 @@ contract RiverConfigTest is RiverRegistryBaseSetup, IOwnableBase, IRiverConfigBa
     function test_configurationDeleteExisting(
         bytes32 key,
         uint64 blockNumber
-    )
-        external
-        setBytesConfig(key, blockNumber, "hello world!")
-    {
+    ) external setBytesConfig(key, blockNumber, "hello world!") {
         assertTrue(riverConfig.configurationExists(key));
 
         vm.prank(deployer);
@@ -197,10 +183,7 @@ contract RiverConfigTest is RiverRegistryBaseSetup, IOwnableBase, IRiverConfigBa
         bytes32 key,
         uint64 blockNumber,
         address caller
-    )
-        external
-        setBytesConfig(key, blockNumber, "hello world!")
-    {
+    ) external setBytesConfig(key, blockNumber, "hello world!") {
         vm.assume(caller != deployer);
         assertTrue(riverConfig.configurationExists(key));
 
@@ -213,10 +196,7 @@ contract RiverConfigTest is RiverRegistryBaseSetup, IOwnableBase, IRiverConfigBa
     function test_configurationGetByKey(
         bytes32 key,
         uint64 blockNumber
-    )
-        external
-        setBytesConfig(key, blockNumber, "hello world!")
-    {
+    ) external setBytesConfig(key, blockNumber, "hello world!") {
         assertTrue(riverConfig.configurationExists(key));
         Setting[] memory settings = riverConfig.getConfiguration(key);
         assertEq(settings.length, 1);

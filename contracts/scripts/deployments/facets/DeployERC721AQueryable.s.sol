@@ -8,8 +8,7 @@ pragma solidity ^0.8.23;
 //contracts
 import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
 import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
-import {ERC721AQueryable} from
-    "contracts/src/diamond/facets/token/ERC721A/extensions/ERC721AQueryable.sol";
+import {ERC721AQueryable} from "contracts/src/diamond/facets/token/ERC721A/extensions/ERC721AQueryable.sol";
 
 contract DeployERC721AQueryable is FacetHelper, Deployer {
     constructor() {

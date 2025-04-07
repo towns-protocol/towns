@@ -23,12 +23,7 @@ contract MockLegacyMembership is MembershipJoin {
         address receiver,
         address,
         bytes32 transactionId
-    )
-        internal
-        virtual
-        override
-        returns (bool isEntitled, bool isCrosschainPending)
-    {
+    ) internal virtual override returns (bool isEntitled, bool isCrosschainPending) {
         IRolesBase.Role[] memory roles = _getRolesWithPermission(Permissions.JoinSpace);
         address[] memory linkedWallets = _getLinkedWalletsWithUser(receiver);
 
@@ -48,7 +43,10 @@ contract MockLegacyMembership is MembershipJoin {
 
                 if (entitlement.isCrosschain()) {
                     _requestEntitlementCheck(
-                        receiver, transactionId, IRuleEntitlement(address(entitlement)), role.id
+                        receiver,
+                        transactionId,
+                        IRuleEntitlement(address(entitlement)),
+                        role.id
                     );
                     isCrosschainPending = true;
                 }

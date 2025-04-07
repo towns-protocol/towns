@@ -4,8 +4,7 @@ pragma solidity ^0.8.23;
 // interfaces
 import {ITipping} from "./ITipping.sol";
 import {ITownsPointsBase} from "contracts/src/airdrop/points/ITownsPoints.sol";
-import {IPlatformRequirements} from
-    "contracts/src/factory/facets/platform/requirements/IPlatformRequirements.sol";
+import {IPlatformRequirements} from "contracts/src/factory/facets/platform/requirements/IPlatformRequirements.sol";
 
 // libraries
 import {TippingBase} from "./TippingBase.sol";
@@ -29,7 +28,12 @@ contract TippingFacet is ITipping, ERC721ABase, Facet, ReentrancyGuard {
 
     /// @inheritdoc ITipping
     function tip(TipRequest calldata tipRequest) external payable nonReentrant {
-        _validateTipRequest(msg.sender, tipRequest.receiver, tipRequest.currency, tipRequest.amount);
+        _validateTipRequest(
+            msg.sender,
+            tipRequest.receiver,
+            tipRequest.currency,
+            tipRequest.amount
+        );
 
         uint256 tipAmount = tipRequest.amount;
 
@@ -37,14 +41,20 @@ contract TippingFacet is ITipping, ERC721ABase, Facet, ReentrancyGuard {
             uint256 protocolFee = _payProtocol(msg.sender, tipRequest.amount);
             tipAmount = tipRequest.amount - protocolFee;
 
-            uint256 points =
-                PointsProxyLib.getPoints(ITownsPointsBase.Action.Tip, abi.encode(protocolFee));
+            uint256 points = PointsProxyLib.getPoints(
+                ITownsPointsBase.Action.Tip,
+                abi.encode(protocolFee)
+            );
 
             PointsProxyLib.mint(msg.sender, points);
         }
 
         TippingBase.tip(
-            msg.sender, tipRequest.receiver, tipRequest.tokenId, tipRequest.currency, tipAmount
+            msg.sender,
+            tipRequest.receiver,
+            tipRequest.tokenId,
+            tipRequest.currency,
+            tipAmount
         );
 
         emit Tip(
@@ -67,11 +77,7 @@ contract TippingFacet is ITipping, ERC721ABase, Facet, ReentrancyGuard {
     function tipsByCurrencyAndTokenId(
         uint256 tokenId,
         address currency
-    )
-        external
-        view
-        returns (uint256)
-    {
+    ) external view returns (uint256) {
         return TippingBase.tipsByCurrencyByTokenId(tokenId, currency);
     }
 
@@ -94,10 +100,7 @@ contract TippingFacet is ITipping, ERC721ABase, Facet, ReentrancyGuard {
         address receiver,
         address currency,
         uint256 amount
-    )
-        internal
-        pure
-    {
+    ) internal pure {
         if (currency == address(0)) {
             CustomRevert.revertWith(CurrencyIsZero.selector);
         }
@@ -112,7 +115,10 @@ contract TippingFacet is ITipping, ERC721ABase, Facet, ReentrancyGuard {
         protocolFee = BasisPoints.calculate(amount, 50); // 0.5%
 
         CurrencyTransfer.transferCurrency(
-            CurrencyTransfer.NATIVE_TOKEN, sender, platform.getFeeRecipient(), protocolFee
+            CurrencyTransfer.NATIVE_TOKEN,
+            sender,
+            platform.getFeeRecipient(),
+            protocolFee
         );
     }
 }

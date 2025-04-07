@@ -21,8 +21,7 @@ import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Ini
 
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import {ContextUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
-import {ERC165Upgradeable} from
-    "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
+import {ERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
 
 // libraries
 
@@ -97,9 +96,10 @@ contract RuleEntitlementV2 is
     // =============================================================
 
     function supportsInterface(bytes4 interfaceId) public view override returns (bool) {
-        return interfaceId == type(IEntitlement).interfaceId
-            || interfaceId == type(IRuleEntitlementV2).interfaceId
-            || super.supportsInterface(interfaceId);
+        return
+            interfaceId == type(IEntitlement).interfaceId ||
+            interfaceId == type(IRuleEntitlementV2).interfaceId ||
+            super.supportsInterface(interfaceId);
     }
 
     // @inheritdoc IEntitlement

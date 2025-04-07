@@ -11,13 +11,11 @@ import {IERC20Metadata} from "@openzeppelin/contracts/interfaces/IERC20Metadata.
 import {IERC6372} from "@openzeppelin/contracts/interfaces/IERC6372.sol";
 import {IERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol";
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
-import {IVotesEnumerable} from
-    "contracts/src/diamond/facets/governance/votes/enumerable/IVotesEnumerable.sol";
+import {IVotesEnumerable} from "contracts/src/diamond/facets/governance/votes/enumerable/IVotesEnumerable.sol";
 
 // libraries
 
-import {VotesEnumerableLib} from
-    "contracts/src/diamond/facets/governance/votes/enumerable/VotesEnumerableLib.sol";
+import {VotesEnumerableLib} from "contracts/src/diamond/facets/governance/votes/enumerable/VotesEnumerableLib.sol";
 import {TokenInflationLib} from "contracts/src/tokens/towns/mainnet/libs/TokenInflationLib.sol";
 import {BasisPoints} from "contracts/src/utils/libraries/BasisPoints.sol";
 
@@ -25,10 +23,8 @@ import {CustomRevert} from "contracts/src/utils/libraries/CustomRevert.sol";
 import {OwnableRoles} from "solady/auth/OwnableRoles.sol";
 
 // contracts
-import {IntrospectionBase} from
-    "@towns-protocol/diamond/src/facets/introspection/IntrospectionBase.sol";
-import {VotesEnumerable} from
-    "contracts/src/diamond/facets/governance/votes/enumerable/VotesEnumerable.sol";
+import {IntrospectionBase} from "@towns-protocol/diamond/src/facets/introspection/IntrospectionBase.sol";
+import {VotesEnumerable} from "contracts/src/diamond/facets/governance/votes/enumerable/VotesEnumerable.sol";
 import {ERC20Votes} from "solady/tokens/ERC20Votes.sol";
 
 contract Towns is OwnableRoles, ERC20Votes, IntrospectionBase, VotesEnumerable, ITowns, IERC165 {
@@ -132,10 +128,7 @@ contract Towns is OwnableRoles, ERC20Votes, IntrospectionBase, VotesEnumerable, 
     function setOverrideInflation(
         bool overrideInflation,
         uint256 overrideInflationRate
-    )
-        external
-        onlyRoles(ROLE_INFLATION_RATE_MANAGER)
-    {
+    ) external onlyRoles(ROLE_INFLATION_RATE_MANAGER) {
         if (overrideInflationRate > TokenInflationLib.finalInflationRate()) {
             CustomRevert.revertWith(InvalidInflationRate.selector);
         }

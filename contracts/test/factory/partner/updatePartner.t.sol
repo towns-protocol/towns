@@ -12,10 +12,7 @@ contract PartnerRegistry_updatePartner is PartnerRegistrySetup {
     function test_updatePartner(
         Partner memory partner,
         Partner memory updatedPartner
-    )
-        external
-        givenPartnerIsRegistered(partner)
-    {
+    ) external givenPartnerIsRegistered(partner) {
         vm.assume(updatedPartner.recipient != address(0));
         updatedPartner.fee = bound(updatedPartner.fee, 0, partnerRegistry.maxPartnerFee());
 
@@ -36,10 +33,7 @@ contract PartnerRegistry_updatePartner is PartnerRegistrySetup {
     function test_revertWhen_updatePartner_notPartnerAccount(
         Partner memory partner,
         address nonPartnerAccount
-    )
-        external
-        givenPartnerIsRegistered(partner)
-    {
+    ) external givenPartnerIsRegistered(partner) {
         vm.assume(nonPartnerAccount != partner.account);
 
         vm.prank(nonPartnerAccount);
@@ -49,10 +43,9 @@ contract PartnerRegistry_updatePartner is PartnerRegistrySetup {
         partnerRegistry.updatePartner(partner);
     }
 
-    function test_revertWhen_updatePartner_invalidRecipient(Partner memory partner)
-        external
-        givenPartnerIsRegistered(partner)
-    {
+    function test_revertWhen_updatePartner_invalidRecipient(
+        Partner memory partner
+    ) external givenPartnerIsRegistered(partner) {
         partner.recipient = address(0);
 
         vm.prank(partner.account);
@@ -60,25 +53,29 @@ contract PartnerRegistry_updatePartner is PartnerRegistrySetup {
         partnerRegistry.updatePartner(partner);
     }
 
-    function test_revertWhen_updatePartner_partnerNotRegistered(Partner memory unregisteredPartner)
-        external
-    {
+    function test_revertWhen_updatePartner_partnerNotRegistered(
+        Partner memory unregisteredPartner
+    ) external {
         vm.assume(unregisteredPartner.recipient != address(0));
-        unregisteredPartner.fee = bound(unregisteredPartner.fee, 0, partnerRegistry.maxPartnerFee());
+        unregisteredPartner.fee = bound(
+            unregisteredPartner.fee,
+            0,
+            partnerRegistry.maxPartnerFee()
+        );
 
         vm.prank(unregisteredPartner.account);
         vm.expectRevert(
             abi.encodeWithSelector(
-                PartnerRegistry__PartnerNotRegistered.selector, unregisteredPartner.account
+                PartnerRegistry__PartnerNotRegistered.selector,
+                unregisteredPartner.account
             )
         );
         partnerRegistry.updatePartner(unregisteredPartner);
     }
 
-    function test_revertWhen_updatePartner_invalidPartnerFee(Partner memory partner)
-        external
-        givenPartnerIsRegistered(partner)
-    {
+    function test_revertWhen_updatePartner_invalidPartnerFee(
+        Partner memory partner
+    ) external givenPartnerIsRegistered(partner) {
         partner.fee = partnerRegistry.maxPartnerFee() + 1;
 
         vm.prank(partner.account);

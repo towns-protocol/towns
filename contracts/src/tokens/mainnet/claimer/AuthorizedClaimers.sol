@@ -25,9 +25,7 @@ contract AuthorizedClaimers is IAuthorizedClaimers, EIP712Facet {
         uint8 v,
         bytes32 r,
         bytes32 s
-    )
-        external
-    {
+    ) external {
         if (expiry != 0 && block.timestamp >= expiry) {
             revert AuthorizedClaimers_ExpiredSignature();
         }

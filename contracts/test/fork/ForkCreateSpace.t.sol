@@ -7,24 +7,18 @@ import {TestUtils} from "contracts/test/utils/TestUtils.sol";
 //interfaces
 import {IArchitectBase} from "contracts/src/factory/facets/architect/IArchitect.sol";
 
-import {IPricingModulesBase} from
-    "contracts/src/factory/facets/architect/pricing/IPricingModules.sol";
+import {IPricingModulesBase} from "contracts/src/factory/facets/architect/pricing/IPricingModules.sol";
 import {ICreateSpace} from "contracts/src/factory/facets/create/ICreateSpace.sol";
-import {IPlatformRequirements} from
-    "contracts/src/factory/facets/platform/requirements/IPlatformRequirements.sol";
+import {IPlatformRequirements} from "contracts/src/factory/facets/platform/requirements/IPlatformRequirements.sol";
 import {IMembership} from "contracts/src/spaces/facets/membership/IMembership.sol";
-import {
-    ILegacyArchitect,
-    ILegacyArchitectBase
-} from "contracts/test/mocks/legacy/IMockLegacyArchitect.sol";
+import {ILegacyArchitect, ILegacyArchitectBase} from "contracts/test/mocks/legacy/IMockLegacyArchitect.sol";
 
 //libraries
 import {FixedPointMathLib} from "solady/utils/FixedPointMathLib.sol";
 //contracts
 
 import {Architect} from "contracts/src/factory/facets/architect/Architect.sol";
-import {PricingModulesFacet} from
-    "contracts/src/factory/facets/architect/pricing/PricingModulesFacet.sol";
+import {PricingModulesFacet} from "contracts/src/factory/facets/architect/pricing/PricingModulesFacet.sol";
 import {SpaceHelper} from "contracts/test/spaces/SpaceHelper.sol";
 
 // debuggging
@@ -37,8 +31,8 @@ contract ForkCreateSpace is IArchitectBase, IPricingModulesBase, TestUtils, Spac
 
         for (uint256 i = 0; i < modules.length; i++) {
             if (
-                keccak256(abi.encodePacked(modules[i].name))
-                    == keccak256(abi.encodePacked("TieredLogPricingOracleV3"))
+                keccak256(abi.encodePacked(modules[i].name)) ==
+                keccak256(abi.encodePacked("TieredLogPricingOracleV3"))
             ) {
                 return modules[i].module;
             }
@@ -69,7 +63,9 @@ contract ForkCreateSpace is IArchitectBase, IPricingModulesBase, TestUtils, Spac
         ILegacyArchitect legacyCreateSpace = ILegacyArchitect(spaceFactory);
         ICreateSpace createSpace = ICreateSpace(spaceFactory);
 
-        ILegacyArchitectBase.SpaceInfo memory legacySpaceInfo = _createLegacySpaceInfo("fork-space");
+        ILegacyArchitectBase.SpaceInfo memory legacySpaceInfo = _createLegacySpaceInfo(
+            "fork-space"
+        );
         CreateSpace memory createSpaceInfo = _createSpaceWithPrepayInfo("fork-space");
 
         address dynamicPricingModule = getDynamicPricingModule(spaceFactory);

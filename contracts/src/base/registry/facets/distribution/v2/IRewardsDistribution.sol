@@ -50,7 +50,9 @@ interface IRewardsDistributionBase {
     /// @param rewardToken The token that is being distributed as rewards
     /// @param rewardDuration The duration of each reward distribution period
     event RewardsDistributionInitialized(
-        address stakeToken, address rewardToken, uint256 rewardDuration
+        address stakeToken,
+        address rewardToken,
+        uint256 rewardDuration
     );
 
     /// @notice Emitted when a delegation proxy is deployed
@@ -58,7 +60,9 @@ interface IRewardsDistributionBase {
     /// @param delegatee The address of the delegatee
     /// @param proxy The address of the delegation proxy
     event DelegationProxyDeployed(
-        uint256 indexed depositId, address indexed delegatee, address proxy
+        uint256 indexed depositId,
+        address indexed delegatee,
+        address proxy
     );
 
     /// @notice Emitted when a reward notifier is set
@@ -165,9 +169,7 @@ interface IRewardsDistribution is IRewardsDistributionBase {
         uint96 amount,
         address delegatee,
         address beneficiary
-    )
-        external
-        returns (uint256 depositId);
+    ) external returns (uint256 depositId);
 
     /// @notice Approves the contract to spend the stakeToken with an EIP-2612 permit and stakes the
     /// stakeToken for rewards
@@ -187,9 +189,7 @@ interface IRewardsDistribution is IRewardsDistributionBase {
         uint8 v,
         bytes32 r,
         bytes32 s
-    )
-        external
-        returns (uint256 depositId);
+    ) external returns (uint256 depositId);
 
     /// @notice Stakes on behalf of a user with an EIP-712 signature
     /// @dev The caller must approve the contract to spend the stakeToken
@@ -205,9 +205,7 @@ interface IRewardsDistribution is IRewardsDistributionBase {
         address owner,
         uint256,
         bytes calldata
-    )
-        external
-        returns (uint256 depositId);
+    ) external returns (uint256 depositId);
 
     /// @notice Increases the stake of an existing deposit
     /// @dev The caller must be the owner of the deposit
@@ -233,8 +231,7 @@ interface IRewardsDistribution is IRewardsDistributionBase {
         uint8 v,
         bytes32 r,
         bytes32 s
-    )
-        external;
+    ) external;
 
     /// @notice Redelegates an existing deposit to a new delegatee or reactivates a pending
     /// withdrawal
@@ -269,12 +266,7 @@ interface IRewardsDistribution is IRewardsDistributionBase {
     /// @param beneficiary The address of the beneficiary
     /// @param recipient The address of the recipient
     /// @return reward The amount of rewardToken that is claimed
-    function claimReward(
-        address beneficiary,
-        address recipient
-    )
-        external
-        returns (uint256 reward);
+    function claimReward(address beneficiary, address recipient) external returns (uint256 reward);
 
     /// @notice Notifies the contract of an incoming reward
     /// @dev The caller must be a reward notifier
@@ -315,10 +307,9 @@ interface IRewardsDistribution is IRewardsDistributionBase {
     /// rewardPerTokenAccumulated The scaled amount of rewardToken that has been accumulated per
     /// staked token
     /// unclaimedRewardSnapshot The snapshot of the unclaimed reward scaled
-    function treasureByBeneficiary(address beneficiary)
-        external
-        view
-        returns (StakingRewards.Treasure memory);
+    function treasureByBeneficiary(
+        address beneficiary
+    ) external view returns (StakingRewards.Treasure memory);
 
     /// @notice Returns the information for a deposit
     /// @param depositId The ID of the deposit

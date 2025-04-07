@@ -22,11 +22,7 @@ library RuleEntitlementUtil {
         data.operations[0] = noop;
     }
 
-    function getNoopRuleData()
-        internal
-        pure
-        returns (IRuleEntitlementBase.RuleDataV2 memory data)
-    {
+    function getNoopRuleData() internal pure returns (IRuleEntitlementBase.RuleDataV2 memory data) {
         data = IRuleEntitlementBase.RuleDataV2({
             operations: new IRuleEntitlementBase.Operation[](1),
             checkOperations: new IRuleEntitlementBase.CheckOperationV2[](0),
@@ -50,12 +46,13 @@ library RuleEntitlementUtil {
             checkOperations: new IRuleEntitlementBase.CheckOperationV2[](1),
             logicalOperations: new IRuleEntitlementBase.LogicalOperation[](0)
         });
-        IRuleEntitlementBase.CheckOperationV2 memory checkOp = IRuleEntitlementBase.CheckOperationV2({
-            opType: IRuleEntitlementBase.CheckOperationType.ERC721,
-            chainId: 11_155_111,
-            contractAddress: address(0xb088b3f2b35511A611bF2aaC13fE605d491D6C19),
-            params: abi.encodePacked(uint256(1))
-        });
+        IRuleEntitlementBase.CheckOperationV2 memory checkOp = IRuleEntitlementBase
+            .CheckOperationV2({
+                opType: IRuleEntitlementBase.CheckOperationType.ERC721,
+                chainId: 11_155_111,
+                contractAddress: address(0xb088b3f2b35511A611bF2aaC13fE605d491D6C19),
+                params: abi.encodePacked(uint256(1))
+            });
         IRuleEntitlementBase.Operation memory op = IRuleEntitlementBase.Operation({
             opType: IRuleEntitlementBase.CombinedOperationType.CHECK,
             index: 0
@@ -75,12 +72,13 @@ library RuleEntitlementUtil {
             checkOperations: new IRuleEntitlementBase.CheckOperationV2[](1),
             logicalOperations: new IRuleEntitlementBase.LogicalOperation[](0)
         });
-        IRuleEntitlementBase.CheckOperationV2 memory checkOp = IRuleEntitlementBase.CheckOperationV2({
-            opType: IRuleEntitlementBase.CheckOperationType.ERC20,
-            chainId: 31_337,
-            contractAddress: address(0x11),
-            params: abi.encodePacked(uint256(100))
-        });
+        IRuleEntitlementBase.CheckOperationV2 memory checkOp = IRuleEntitlementBase
+            .CheckOperationV2({
+                opType: IRuleEntitlementBase.CheckOperationType.ERC20,
+                chainId: 31_337,
+                contractAddress: address(0x11),
+                params: abi.encodePacked(uint256(100))
+            });
         IRuleEntitlementBase.Operation memory op = IRuleEntitlementBase.Operation({
             opType: IRuleEntitlementBase.CombinedOperationType.CHECK,
             index: 0
@@ -99,12 +97,13 @@ library RuleEntitlementUtil {
             checkOperations: new IRuleEntitlementBase.CheckOperationV2[](1),
             logicalOperations: new IRuleEntitlementBase.LogicalOperation[](0)
         });
-        IRuleEntitlementBase.CheckOperationV2 memory checkOp = IRuleEntitlementBase.CheckOperationV2({
-            opType: IRuleEntitlementBase.CheckOperationType.ERC1155,
-            chainId: 31_341,
-            contractAddress: address(0x55),
-            params: abi.encodePacked(uint256(500))
-        });
+        IRuleEntitlementBase.CheckOperationV2 memory checkOp = IRuleEntitlementBase
+            .CheckOperationV2({
+                opType: IRuleEntitlementBase.CheckOperationType.ERC1155,
+                chainId: 31_341,
+                contractAddress: address(0x55),
+                params: abi.encodePacked(uint256(500))
+            });
         IRuleEntitlementBase.Operation memory op = IRuleEntitlementBase.Operation({
             opType: IRuleEntitlementBase.CombinedOperationType.CHECK,
             index: 0

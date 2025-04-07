@@ -41,9 +41,7 @@ abstract contract ArchitectBase is IArchitectBase {
         IUserEntitlement userEntitlement,
         IRuleEntitlementV2 ruleEntitlement,
         IRuleEntitlement legacyRuleEntitlement
-    )
-        internal
-    {
+    ) internal {
         if (address(spaceOwnerToken).code.length == 0) {
             revert Architect__NotContract();
         }
@@ -73,8 +71,12 @@ abstract contract ArchitectBase is IArchitectBase {
     {
         ImplementationStorage.Layout storage ds = ImplementationStorage.layout();
 
-        return
-            (ds.spaceOwnerToken, ds.userEntitlement, ds.ruleEntitlement, ds.legacyRuleEntitlement);
+        return (
+            ds.spaceOwnerToken,
+            ds.userEntitlement,
+            ds.ruleEntitlement,
+            ds.legacyRuleEntitlement
+        );
     }
 
     // =============================================================

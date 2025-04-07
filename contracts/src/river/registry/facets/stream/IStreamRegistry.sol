@@ -2,12 +2,7 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {
-    SetMiniblock,
-    SetStreamReplicationFactor,
-    Stream,
-    StreamWithId
-} from "contracts/src/river/registry/libraries/RegistryStorage.sol";
+import {SetMiniblock, SetStreamReplicationFactor, Stream, StreamWithId} from "contracts/src/river/registry/libraries/RegistryStorage.sol";
 
 // libraries
 
@@ -38,17 +33,26 @@ interface IStreamRegistryBase {
     event StreamUpdated(StreamEventType indexed eventType, bytes data);
 
     event StreamAllocated(
-        bytes32 streamId, address[] nodes, bytes32 genesisMiniblockHash, bytes genesisMiniblock
+        bytes32 streamId,
+        address[] nodes,
+        bytes32 genesisMiniblockHash,
+        bytes genesisMiniblock
     );
 
     event StreamCreated(bytes32 streamId, bytes32 genesisMiniblockHash, Stream stream);
 
     event StreamLastMiniblockUpdated(
-        bytes32 streamId, bytes32 lastMiniblockHash, uint64 lastMiniblockNum, bool isSealed
+        bytes32 streamId,
+        bytes32 lastMiniblockHash,
+        uint64 lastMiniblockNum,
+        bool isSealed
     );
 
     event StreamLastMiniblockUpdateFailed(
-        bytes32 streamId, bytes32 lastMiniblockHash, uint64 lastMiniblockNum, string reason
+        bytes32 streamId,
+        bytes32 lastMiniblockHash,
+        uint64 lastMiniblockNum,
+        string reason
     );
 
     event StreamPlacementUpdated(bytes32 streamId, address nodeAddress, bool isAdded);
@@ -72,8 +76,7 @@ interface IStreamRegistry is IStreamRegistryBase {
         address[] memory nodes,
         bytes32 genesisMiniblockHash,
         bytes memory genesisMiniblock
-    )
-        external;
+    ) external;
 
     /**
      * @notice Create a new stream in the registry
@@ -84,8 +87,7 @@ interface IStreamRegistry is IStreamRegistryBase {
         bytes32 streamId,
         bytes32 genesisMiniblockHash,
         Stream memory stream
-    )
-        external;
+    ) external;
 
     /**
      * @notice Sync node addresses for streams in a range to `streamIdsByNode` mapping
@@ -156,10 +158,9 @@ interface IStreamRegistry is IStreamRegistryBase {
      * @return bytes32 The genesis miniblock hash
      * @return bytes The genesis miniblock data
      */
-    function getStreamWithGenesis(bytes32 streamId)
-        external
-        view
-        returns (Stream memory, bytes32, bytes memory);
+    function getStreamWithGenesis(
+        bytes32 streamId
+    ) external view returns (Stream memory, bytes32, bytes memory);
 
     /**
      * @notice Get the total number of streams in the registry
@@ -185,10 +186,7 @@ interface IStreamRegistry is IStreamRegistryBase {
         address nodeAddress,
         uint256 start,
         uint256 stop
-    )
-        external
-        view
-        returns (StreamWithId[] memory streams);
+    ) external view returns (StreamWithId[] memory streams);
     /**
      * @notice Get a paginated list of streams from the registry
      * @dev Recommended range is 5000 streams to avoid gas limits
@@ -200,8 +198,5 @@ interface IStreamRegistry is IStreamRegistryBase {
     function getPaginatedStreams(
         uint256 start,
         uint256 stop
-    )
-        external
-        view
-        returns (StreamWithId[] memory, bool);
+    ) external view returns (StreamWithId[] memory, bool);
 }

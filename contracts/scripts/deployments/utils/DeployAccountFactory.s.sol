@@ -21,14 +21,17 @@ contract DeployAccountFactory is Deployer {
         address entrypoint = getDeployment("entrypoint");
 
         bytes32 salt = bytes32(uint256(1));
-        bytes32 initCodeHash =
-            hashInitCode(type(SimpleAccountFactory).creationCode, abi.encode(entrypoint));
+        bytes32 initCodeHash = hashInitCode(
+            type(SimpleAccountFactory).creationCode,
+            abi.encode(entrypoint)
+        );
 
         address soonToBe = computeCreate2Address(salt, initCodeHash);
 
         vm.broadcast(deployer);
-        SimpleAccountFactory factory =
-            new SimpleAccountFactory{salt: salt}(EntryPoint(payable(entrypoint)));
+        SimpleAccountFactory factory = new SimpleAccountFactory{salt: salt}(
+            EntryPoint(payable(entrypoint))
+        );
 
         require(address(factory) == soonToBe, "address mismatch");
 

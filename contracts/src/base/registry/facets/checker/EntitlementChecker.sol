@@ -9,10 +9,7 @@ import {IEntitlementGatedBase} from "contracts/src/spaces/facets/gated/IEntitlem
 
 import {EntitlementCheckerStorage} from "./EntitlementCheckerStorage.sol";
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-import {
-    NodeOperatorStatus,
-    NodeOperatorStorage
-} from "contracts/src/base/registry/facets/operator/NodeOperatorStorage.sol";
+import {NodeOperatorStatus, NodeOperatorStorage} from "contracts/src/base/registry/facets/operator/NodeOperatorStorage.sol";
 import {XChainLib} from "contracts/src/base/registry/facets/xchain/XChainLib.sol";
 
 // contracts
@@ -118,9 +115,7 @@ contract EntitlementChecker is IEntitlementChecker, Facet {
         bytes32 transactionId,
         uint256 roleId,
         address[] memory nodes
-    )
-        external
-    {
+    ) external {
         emit EntitlementCheckRequested(walletAddress, msg.sender, transactionId, roleId, nodes);
     }
 
@@ -130,10 +125,7 @@ contract EntitlementChecker is IEntitlementChecker, Facet {
         bytes32 transactionId,
         uint256 requestId,
         bytes memory extraData
-    )
-        external
-        payable
-    {
+    ) external payable {
         address space = msg.sender;
         address senderAddress = abi.decode(extraData, (address));
 
@@ -164,7 +156,12 @@ contract EntitlementChecker is IEntitlementChecker, Facet {
         }
 
         emit EntitlementCheckRequestedV2(
-            walletAddress, space, address(this), transactionId, requestId, randomNodes
+            walletAddress,
+            space,
+            address(this),
+            transactionId,
+            requestId,
+            randomNodes
         );
     }
 
@@ -220,7 +217,8 @@ contract EntitlementChecker is IEntitlementChecker, Facet {
 
     // Generate a pseudo-random index based on a seed and the node count
     function _pseudoRandom(uint256 seed, uint256 nodeCount) internal view returns (uint256) {
-        return uint256(keccak256(abi.encode(block.prevrandao, block.timestamp, seed, msg.sender)))
-            % nodeCount;
+        return
+            uint256(keccak256(abi.encode(block.prevrandao, block.timestamp, seed, msg.sender))) %
+            nodeCount;
     }
 }

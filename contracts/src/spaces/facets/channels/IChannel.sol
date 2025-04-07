@@ -41,8 +41,7 @@ interface IChannel is IChannelBase {
         bytes32 channelId,
         string memory metadata,
         uint256[] memory roleIds
-    )
-        external;
+    ) external;
 
     /// @notice creates a channel with override permissions
     /// @param channelId the channelId of the channel
@@ -52,8 +51,7 @@ interface IChannel is IChannelBase {
         bytes32 channelId,
         string memory metadata,
         RolePermissions[] memory rolePermissions
-    )
-        external;
+    ) external;
 
     /// @notice gets a channel
     /// @param channelId the channelId to get
@@ -77,10 +75,7 @@ interface IChannel is IChannelBase {
     /// @notice gets all roles for a channel
     /// @param channelId the channelId to get the roles for
     /// @return roleIds an array of roleIds for the channel
-    function getRolesByChannel(bytes32 channelId)
-        external
-        view
-        returns (uint256[] memory roleIds);
+    function getRolesByChannel(bytes32 channelId) external view returns (uint256[] memory roleIds);
 
     /// @notice adds a role to a channel
     /// @param channelId the channelId to add the role to

@@ -2,8 +2,7 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {IDelegateRegistry} from
-    "contracts/src/factory/facets/wallet-link/interfaces/IDelegateRegistry.sol";
+import {IDelegateRegistry} from "contracts/src/factory/facets/wallet-link/interfaces/IDelegateRegistry.sol";
 
 // libraries
 import {EnumerableSetLib} from "solady/utils/EnumerableSetLib.sol";
@@ -23,11 +22,9 @@ contract MockDelegationRegistry is IDelegateRegistry {
         return true;
     }
 
-    function getIncomingDelegations(address to)
-        external
-        view
-        returns (Delegation[] memory delegations)
-    {
+    function getIncomingDelegations(
+        address to
+    ) external view returns (Delegation[] memory delegations) {
         EnumerableSetLib.AddressSet storage incomingDelegations = _delegations[to];
 
         uint256 count = incomingDelegations.length();

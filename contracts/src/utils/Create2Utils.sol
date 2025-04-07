@@ -38,21 +38,14 @@ library Create2Utils {
     function computeCreate2Address(
         bytes32 salt,
         bytes memory bytecode
-    )
-        internal
-        pure
-        returns (address)
-    {
+    ) internal pure returns (address) {
         return LibClone.predictDeterministicAddress(keccak256(bytecode), salt, CREATE2_FACTORY);
     }
 
     function performCreate2Call(
         bytes32 salt,
         bytes memory bytecode
-    )
-        internal
-        returns (address deployedAt)
-    {
+    ) internal returns (address deployedAt) {
         bytes memory data = abi.encodePacked(salt, bytecode);
 
         assembly ("memory-safe") {

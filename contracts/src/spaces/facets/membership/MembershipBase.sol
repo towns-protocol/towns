@@ -6,8 +6,7 @@ import {IMembershipBase} from "./IMembership.sol";
 
 import {IMembershipPricing} from "./pricing/IMembershipPricing.sol";
 import {IPricingModules} from "contracts/src/factory/facets/architect/pricing/IPricingModules.sol";
-import {IPlatformRequirements} from
-    "contracts/src/factory/facets/platform/requirements/IPlatformRequirements.sol";
+import {IPlatformRequirements} from "contracts/src/factory/facets/platform/requirements/IPlatformRequirements.sol";
 
 // libraries
 
@@ -50,10 +49,7 @@ abstract contract MembershipBase is IMembershipBase {
     function _collectProtocolFee(
         address payer,
         uint256 membershipPrice
-    )
-        internal
-        returns (uint256 protocolFee)
-    {
+    ) internal returns (uint256 protocolFee) {
         protocolFee = _getProtocolFee(membershipPrice);
 
         // transfer the platform fee to the platform fee recipient
@@ -151,17 +147,16 @@ abstract contract MembershipBase is IMembershipBase {
     }
 
     /// @dev Makes it virtual to allow other pricing strategies
-    function _getMembershipPrice(uint256 totalSupply)
-        internal
-        view
-        virtual
-        returns (uint256 membershipPrice)
-    {
+    function _getMembershipPrice(
+        uint256 totalSupply
+    ) internal view virtual returns (uint256 membershipPrice) {
         // get free allocation
         uint256 freeAllocation = _getMembershipFreeAllocation();
 
-        membershipPrice =
-            IMembershipPricing(_getPricingModule()).getPrice(freeAllocation, totalSupply);
+        membershipPrice = IMembershipPricing(_getPricingModule()).getPrice(
+            freeAllocation,
+            totalSupply
+        );
 
         IPlatformRequirements platform = _getPlatformRequirements();
 
@@ -177,11 +172,7 @@ abstract contract MembershipBase is IMembershipBase {
     function _getMembershipRenewalPrice(
         uint256 tokenId,
         uint256 totalSupply
-    )
-        internal
-        view
-        returns (uint256)
-    {
+    ) internal view returns (uint256) {
         MembershipStorage.Layout storage ds = MembershipStorage.layout();
 
         uint256 renewalPrice = ds.renewalPriceByTokenId[tokenId];

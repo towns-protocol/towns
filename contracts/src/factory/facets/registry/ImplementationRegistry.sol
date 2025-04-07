@@ -3,8 +3,7 @@ pragma solidity ^0.8.23;
 
 // interfaces
 import {IMetadata} from "contracts/src/diamond/facets/metadata/IMetadata.sol";
-import {IImplementationRegistry} from
-    "contracts/src/factory/facets/registry/IImplementationRegistry.sol";
+import {IImplementationRegistry} from "contracts/src/factory/facets/registry/IImplementationRegistry.sol";
 
 // libraries
 import {ImplementationRegistryStorage} from "./ImplementationRegistryStorage.sol";
@@ -53,11 +52,7 @@ contract ImplementationRegistryFacet is IImplementationRegistry, OwnableBase, Fa
     function getImplementation(
         bytes32 contractType,
         uint32 version
-    )
-        external
-        view
-        returns (address)
-    {
+    ) external view returns (address) {
         return ImplementationRegistryStorage.layout().implementation[contractType][version];
     }
 

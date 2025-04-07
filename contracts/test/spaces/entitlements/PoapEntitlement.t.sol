@@ -35,11 +35,7 @@ contract MockPoap is IPOAP {
     function tokenDetailsOfOwnerByIndex(
         address,
         uint256
-    )
-        external
-        pure
-        returns (uint256 eventId, uint256 tokenId)
-    {
+    ) external pure returns (uint256 eventId, uint256 tokenId) {
         return (28, 1);
     }
 }

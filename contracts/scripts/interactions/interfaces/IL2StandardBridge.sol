@@ -25,9 +25,7 @@ interface IL2StandardBridge {
         address _to,
         uint32 _minGasLimit,
         bytes calldata _extraData
-    )
-        external
-        payable;
+    ) external payable;
 
     /// @notice Sends ERC20 tokens to the sender's address on the other chain. Note that if the
     ///         ERC20 token on the other chain does not recognize the local token as the correct
@@ -46,8 +44,7 @@ interface IL2StandardBridge {
         uint256 _amount,
         uint32 _minGasLimit,
         bytes calldata _extraData
-    )
-        external;
+    ) external;
 
     /// @notice Sends ERC20 tokens to a receiver's address on the other chain. Note that if the
     ///         ERC20 token on the other chain does not recognize the local token as the correct
@@ -68,6 +65,5 @@ interface IL2StandardBridge {
         uint256 _amount,
         uint32 _minGasLimit,
         bytes calldata _extraData
-    )
-        external;
+    ) external;
 }

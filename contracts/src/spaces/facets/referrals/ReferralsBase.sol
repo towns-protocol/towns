@@ -26,15 +26,18 @@ abstract contract ReferralsBase is IReferralsBase {
 
         _validateReferral(referral);
 
-        ds.referrals[referralCode] =
-            ReferralsStorage.Referral(referral.basisPoints, referral.recipient);
+        ds.referrals[referralCode] = ReferralsStorage.Referral(
+            referral.basisPoints,
+            referral.recipient
+        );
 
         emit ReferralRegistered(referralCode, referral.basisPoints, referral.recipient);
     }
 
     function _referralInfo(string memory referralCode) internal view returns (Referral memory) {
-        ReferralsStorage.Referral storage storedReferral =
-            ReferralsStorage.layout().referrals[keccak256(bytes(referralCode))];
+        ReferralsStorage.Referral storage storedReferral = ReferralsStorage.layout().referrals[
+            keccak256(bytes(referralCode))
+        ];
         return Referral(referralCode, storedReferral.bpsFee, storedReferral.recipient);
     }
 
@@ -45,8 +48,10 @@ abstract contract ReferralsBase is IReferralsBase {
         if (ds.referrals[referralCode].recipient == address(0)) {
             revert Referrals__InvalidReferralCode();
         }
-        ds.referrals[referralCode] =
-            ReferralsStorage.Referral(referral.basisPoints, referral.recipient);
+        ds.referrals[referralCode] = ReferralsStorage.Referral(
+            referral.basisPoints,
+            referral.recipient
+        );
         emit ReferralUpdated(referralCode, referral.basisPoints, referral.recipient);
     }
 

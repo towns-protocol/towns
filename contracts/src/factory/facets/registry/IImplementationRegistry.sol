@@ -37,10 +37,7 @@ interface IImplementationRegistry is IImplementationRegistryBase {
     function getImplementation(
         bytes32 contractType,
         uint32 version
-    )
-        external
-        view
-        returns (address);
+    ) external view returns (address);
 
     /// @notice Get the latest implementation by contract type
     /// @param contractType The contract type

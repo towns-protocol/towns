@@ -4,15 +4,13 @@ pragma solidity ^0.8.23;
 // interfaces
 
 import {IOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
-import {IPricingModulesBase} from
-    "contracts/src/factory/facets/architect/pricing/IPricingModules.sol";
+import {IPricingModulesBase} from "contracts/src/factory/facets/architect/pricing/IPricingModules.sol";
 
 // libraries
 
 // contracts
 
-import {PricingModulesFacet} from
-    "contracts/src/factory/facets/architect/pricing/PricingModulesFacet.sol";
+import {PricingModulesFacet} from "contracts/src/factory/facets/architect/pricing/PricingModulesFacet.sol";
 import {BaseSetup} from "contracts/test/spaces/BaseSetup.sol";
 
 // mocks
@@ -48,10 +46,9 @@ contract PricingModuleTest is BaseSetup, IPricingModulesBase, IOwnableBase {
         assertTrue(pricingModules.isPricingModule(address(mockPricingModule)));
     }
 
-    function test_revertWhen_addPricingModule_notOwner(address notOwner)
-        public
-        givenNotOwner(notOwner)
-    {
+    function test_revertWhen_addPricingModule_notOwner(
+        address notOwner
+    ) public givenNotOwner(notOwner) {
         vm.expectRevert(abi.encodeWithSelector(Ownable__NotOwner.selector, notOwner));
         pricingModules.addPricingModule(address(mockPricingModule));
     }
@@ -92,10 +89,9 @@ contract PricingModuleTest is BaseSetup, IPricingModulesBase, IOwnableBase {
         assertFalse(pricingModules.isPricingModule(address(mockPricingModule)));
     }
 
-    function test_revertWhen_removePricingModule_notOwner(address notOwner)
-        public
-        givenNotOwner(notOwner)
-    {
+    function test_revertWhen_removePricingModule_notOwner(
+        address notOwner
+    ) public givenNotOwner(notOwner) {
         vm.expectRevert(abi.encodeWithSelector(Ownable__NotOwner.selector, notOwner));
         pricingModules.removePricingModule(address(mockPricingModule));
     }

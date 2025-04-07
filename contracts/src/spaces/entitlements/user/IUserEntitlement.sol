@@ -14,10 +14,7 @@ interface IUserEntitlement is IEntitlement {
         bytes32 channelId,
         address[] memory wallets,
         bytes32 permission
-    )
-        external
-        view
-        returns (bool);
+    ) external view returns (bool);
 
     function setEntitlement(uint256 roleId, bytes calldata entitlementData) external;
 

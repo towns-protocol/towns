@@ -22,14 +22,15 @@ library DropFacetLib {
         address rewardsDistribution;
         uint48 conditionStartId;
         uint48 conditionCount;
-        mapping(uint256 conditionId => mapping(address => DropClaimLib.SupplyClaim))
-            supplyClaimedByWallet;
+        mapping(uint256 conditionId => mapping(address => DropClaimLib.SupplyClaim)) supplyClaimedByWallet;
         mapping(uint256 conditionId => DropClaimLib.ClaimCondition) conditionById;
     }
 
     function getActiveConditionId(Layout storage self) internal view returns (uint256) {
-        (uint48 conditionStartId, uint48 conditionCount) =
-            (self.conditionStartId, self.conditionCount);
+        (uint48 conditionStartId, uint48 conditionCount) = (
+            self.conditionStartId,
+            self.conditionCount
+        );
 
         if (conditionCount == 0) {
             CustomRevert.revertWith(IDropFacetBase.DropFacet__NoActiveClaimCondition.selector);
@@ -44,8 +45,8 @@ library DropFacetLib {
             DropClaimLib.ClaimCondition storage condition = self.conditionById[i];
             uint256 endTimestamp = condition.endTimestamp;
             if (
-                block.timestamp >= condition.startTimestamp
-                    && (endTimestamp == 0 || block.timestamp < endTimestamp)
+                block.timestamp >= condition.startTimestamp &&
+                (endTimestamp == 0 || block.timestamp < endTimestamp)
             ) {
                 return i;
             }
@@ -57,11 +58,7 @@ library DropFacetLib {
     function getClaimConditionById(
         Layout storage self,
         uint256 conditionId
-    )
-        internal
-        view
-        returns (DropClaimLib.ClaimCondition storage)
-    {
+    ) internal view returns (DropClaimLib.ClaimCondition storage) {
         return self.conditionById[conditionId];
     }
 
@@ -69,22 +66,18 @@ library DropFacetLib {
         Layout storage self,
         uint256 conditionId,
         address account
-    )
-        internal
-        view
-        returns (DropClaimLib.SupplyClaim storage)
-    {
+    ) internal view returns (DropClaimLib.SupplyClaim storage) {
         return self.supplyClaimedByWallet[conditionId][account];
     }
 
     function addClaimCondition(
         Layout storage self,
         DropClaimLib.ClaimCondition calldata newCondition
-    )
-        internal
-    {
-        (uint48 existingStartId, uint48 existingCount) =
-            (self.conditionStartId, self.conditionCount);
+    ) internal {
+        (uint48 existingStartId, uint48 existingCount) = (
+            self.conditionStartId,
+            self.conditionCount
+        );
         uint48 newConditionId = existingStartId + existingCount;
 
         // Check timestamp order
@@ -111,11 +104,9 @@ library DropFacetLib {
         emit IDropFacetBase.DropFacet_ClaimConditionAdded(newConditionId, newCondition);
     }
 
-    function getClaimConditions(Layout storage self)
-        internal
-        view
-        returns (DropClaimLib.ClaimCondition[] memory conditions)
-    {
+    function getClaimConditions(
+        Layout storage self
+    ) internal view returns (DropClaimLib.ClaimCondition[] memory conditions) {
         conditions = new DropClaimLib.ClaimCondition[](self.conditionCount);
         for (uint256 i; i < self.conditionCount; ++i) {
             conditions[i] = self.conditionById[self.conditionStartId + i];
@@ -126,12 +117,12 @@ library DropFacetLib {
     function setClaimConditions(
         Layout storage self,
         DropClaimLib.ClaimCondition[] calldata conditions
-    )
-        internal
-    {
+    ) internal {
         // get the existing claim condition count and start id
-        (uint48 newStartId, uint48 existingConditionCount) =
-            (self.conditionStartId, self.conditionCount);
+        (uint48 newStartId, uint48 existingConditionCount) = (
+            self.conditionStartId,
+            self.conditionCount
+        );
 
         if (uint256(newStartId) + conditions.length > type(uint48).max) {
             CustomRevert.revertWith(IDropFacetBase.DropFacet__CannotSetClaimConditions.selector);
@@ -155,7 +146,9 @@ library DropFacetLib {
             uint256 amountAlreadyClaimed = condition.supplyClaimed;
 
             if (amountAlreadyClaimed > newCondition.maxClaimableSupply) {
-                CustomRevert.revertWith(IDropFacetBase.DropFacet__CannotSetClaimConditions.selector);
+                CustomRevert.revertWith(
+                    IDropFacetBase.DropFacet__CannotSetClaimConditions.selector
+                );
             }
 
             // copy the new condition to the storage except `supplyClaimed`
@@ -179,12 +172,7 @@ library DropFacetLib {
         emit IDropFacetBase.DropFacet_ClaimConditionsUpdated(newStartId, conditions);
     }
 
-    function updateDepositId(
-        DropClaimLib.SupplyClaim storage claimed,
-        uint256 depositId
-    )
-        internal
-    {
+    function updateDepositId(DropClaimLib.SupplyClaim storage claimed, uint256 depositId) internal {
         claimed.depositId = depositId;
     }
 
@@ -198,9 +186,7 @@ library DropFacetLib {
         Layout storage self,
         DropClaimLib.ClaimCondition storage condition,
         uint256 amount
-    )
-        internal
-    {
+    ) internal {
         IERC20(condition.currency).approve(self.rewardsDistribution, amount);
     }
 

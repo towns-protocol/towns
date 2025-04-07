@@ -8,8 +8,7 @@ pragma solidity ^0.8.23;
 //contracts
 import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
 import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
-import {ImplementationRegistryFacet} from
-    "contracts/src/factory/facets/registry/ImplementationRegistry.sol";
+import {ImplementationRegistryFacet} from "contracts/src/factory/facets/registry/ImplementationRegistry.sol";
 
 contract DeployImplementationRegistry is FacetHelper, Deployer {
     constructor() {

@@ -11,10 +11,9 @@ pragma solidity ^0.8.19;
 import {ReferralsFacetTest} from "contracts/test/spaces/referrals/Referrals.t.sol";
 
 contract ReferralsFacet_registerReferral is ReferralsFacetTest {
-    function test_registerReferral(Referral memory referral)
-        external
-        givenReferralCodeIsRegistered(referral)
-    {
+    function test_registerReferral(
+        Referral memory referral
+    ) external givenReferralCodeIsRegistered(referral) {
         // Assert
         Referral memory storedReferral = referralsFacet.referralInfo(referral.referralCode);
         assertEq(storedReferral.referralCode, referral.referralCode, "Referral code should match");
@@ -30,9 +29,7 @@ contract ReferralsFacet_registerReferral is ReferralsFacetTest {
     function test_revertWhen_registerReferral_invalidPermission(
         address user,
         Referral memory referral
-    )
-        external
-    {
+    ) external {
         vm.assume(user != founder);
         vm.prank(user);
         vm.expectRevert(abi.encodeWithSelector(Entitlement__NotAllowed.selector));
@@ -49,9 +46,9 @@ contract ReferralsFacet_registerReferral is ReferralsFacetTest {
         referralsFacet.registerReferral(referral);
     }
 
-    function test_revertWhen_registerReferral_invalidBasisPoints(Referral memory referral)
-        external
-    {
+    function test_revertWhen_registerReferral_invalidBasisPoints(
+        Referral memory referral
+    ) external {
         vm.assume(referral.recipient != address(0));
         vm.assume(bytes(referral.referralCode).length > 0);
         referral.basisPoints = 0;
@@ -61,9 +58,9 @@ contract ReferralsFacet_registerReferral is ReferralsFacetTest {
         referralsFacet.registerReferral(referral);
     }
 
-    function test_revertWhen_registerReferral_basisPointsExceedMaxBpsFee(Referral memory referral)
-        external
-    {
+    function test_revertWhen_registerReferral_basisPointsExceedMaxBpsFee(
+        Referral memory referral
+    ) external {
         vm.assume(referral.recipient != address(0));
         vm.assume(bytes(referral.referralCode).length > 0);
         referral.basisPoints = REFERRAL_BPS + 1;
@@ -73,9 +70,7 @@ contract ReferralsFacet_registerReferral is ReferralsFacetTest {
         referralsFacet.registerReferral(referral);
     }
 
-    function test_revertWhen_registerReferral_emptyReferralCode(Referral memory referral)
-        external
-    {
+    function test_revertWhen_registerReferral_emptyReferralCode(Referral memory referral) external {
         vm.assume(referral.recipient != address(0));
         referral.basisPoints = bound(referral.basisPoints, 1, REFERRAL_BPS);
         referral.referralCode = "";

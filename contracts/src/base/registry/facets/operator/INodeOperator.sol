@@ -4,8 +4,7 @@ pragma solidity ^0.8.23;
 // interfaces
 
 // libraries
-import {NodeOperatorStatus} from
-    "contracts/src/base/registry/facets/operator/NodeOperatorStorage.sol";
+import {NodeOperatorStatus} from "contracts/src/base/registry/facets/operator/NodeOperatorStorage.sol";
 
 // contracts
 interface INodeOperatorBase {
@@ -41,27 +40,27 @@ interface INodeOperator is INodeOperatorBase {
     //                           Registration
     // =============================================================
     /*
-    * @notice  Registers an operator.
-    */
+     * @notice  Registers an operator.
+     */
     function registerOperator(address claimer) external;
 
     /*
-    * @notice  Returns whether an operator is registered.
-    * @param   operator Address of the operator.
-    */
+     * @notice  Returns whether an operator is registered.
+     * @param   operator Address of the operator.
+     */
     function isOperator(address operator) external view returns (bool);
 
     /*
-    * @notice  Returns the status of an operator.
-    * @param   operator Address of the operator.
-    * @return  The status of the operator.
-    */
+     * @notice  Returns the status of an operator.
+     * @param   operator Address of the operator.
+     * @return  The status of the operator.
+     */
     function getOperatorStatus(address operator) external view returns (NodeOperatorStatus);
 
     /*
-    * @notice  Sets the status of an operator.
-    * @param   operator Address of the operator.
-    */
+     * @notice  Sets the status of an operator.
+     * @param   operator Address of the operator.
+     */
     function setOperatorStatus(address operator, NodeOperatorStatus newStatus) external;
 
     // =============================================================
@@ -77,16 +76,16 @@ interface INodeOperator is INodeOperatorBase {
     //                           Commission
     // =============================================================
     /*
-    * @notice  Sets the commission rate of an operator.
-    * @param   operator Address of the operator.
-    * @param   commission The new commission rate.
-    */
+     * @notice  Sets the commission rate of an operator.
+     * @param   operator Address of the operator.
+     * @param   commission The new commission rate.
+     */
     function setCommissionRate(uint256 commission) external;
 
     /*
-    * @notice  Returns the commission rate of an operator.
-    * @param   operator Address of the operator.
-    * @return  The commission rate of the operator.
-    */
+     * @notice  Returns the commission rate of an operator.
+     * @param   operator Address of the operator.
+     * @return  The commission rate of the operator.
+     */
     function getCommissionRate(address operator) external view returns (uint256);
 }

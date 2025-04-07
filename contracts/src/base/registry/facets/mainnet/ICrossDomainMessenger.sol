@@ -44,17 +44,13 @@ interface ICrossDomainMessenger {
         uint256 _value,
         uint256 _minGasLimit,
         bytes memory _message
-    )
-        external
-        payable;
+    ) external payable;
 
     function sendMessage(
         address _target,
         bytes memory _message,
         uint32 _minGasLimit
-    )
-        external
-        payable;
+    ) external payable;
 
     function successfulMessages(bytes32) external view returns (bool);
 

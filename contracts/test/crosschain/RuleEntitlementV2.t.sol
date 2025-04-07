@@ -92,8 +92,11 @@ contract RuleEntitlementV2Test is RuleEntitlementTest {
         vm.prank(space);
         ruleEntitlementV2.removeEntitlement(roleId);
 
-        RuleDataV2 memory emptyRuleData =
-            RuleDataV2(new Operation[](0), new CheckOperationV2[](0), new LogicalOperation[](0));
+        RuleDataV2 memory emptyRuleData = RuleDataV2(
+            new Operation[](0),
+            new CheckOperationV2[](0),
+            new LogicalOperation[](0)
+        );
         RuleDataV2 memory ruleData = ruleEntitlementV2.getRuleDataV2(roleId);
         assertEq(abi.encode(ruleData), abi.encode(emptyRuleData));
 
@@ -123,10 +126,16 @@ contract RuleEntitlementV2Test is RuleEntitlementTest {
         CheckOperationV2[] memory checkOperations = new CheckOperationV2[](2);
         LogicalOperation[] memory logicalOperations = new LogicalOperation[](2);
         checkOperations[0] = CheckOperationV2(
-            CheckOperationType.ERC20, 31_337, address(0x12), abi.encode(uint256(100))
+            CheckOperationType.ERC20,
+            31_337,
+            address(0x12),
+            abi.encode(uint256(100))
         );
         checkOperations[1] = CheckOperationV2(
-            CheckOperationType.ERC721, 31_337, address(0x21), abi.encode(uint256(100))
+            CheckOperationType.ERC721,
+            31_337,
+            address(0x21),
+            abi.encode(uint256(100))
         );
         // This operation is referring to a parent so will revert
         logicalOperations[0] = LogicalOperation(LogicalOperationType.AND, 0, 3);
@@ -168,12 +177,20 @@ contract RuleEntitlementV2Test is RuleEntitlementTest {
         LogicalOperation[] memory logicalOperations = new LogicalOperation[](1);
 
         // for the first check operation, we are checking ERC20 balance of 100 on chain 31337
-        checkOperations[0] =
-            CheckOperationV2(CheckOperationType.ERC20, chainId, erc20Contract, params);
+        checkOperations[0] = CheckOperationV2(
+            CheckOperationType.ERC20,
+            chainId,
+            erc20Contract,
+            params
+        );
 
         // for the second check operation, we are checking ERC721 balance of 100 on chain 31337
-        checkOperations[1] =
-            CheckOperationV2(CheckOperationType.ERC721, chainId, erc721Contract, params);
+        checkOperations[1] = CheckOperationV2(
+            CheckOperationType.ERC721,
+            chainId,
+            erc721Contract,
+            params
+        );
 
         // we are combining the two check operations with an AND operation so both must pass
         logicalOperations[0] = LogicalOperation(LogicalOperationType.AND, 0, 1);

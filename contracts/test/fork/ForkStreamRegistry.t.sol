@@ -14,11 +14,7 @@ import {IStreamRegistry} from "contracts/src/river/registry/facets/stream/IStrea
 
 //libraries
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-import {
-    SetMiniblock,
-    Stream,
-    StreamWithId
-} from "contracts/src/river/registry/libraries/RegistryStorage.sol";
+import {SetMiniblock, Stream, StreamWithId} from "contracts/src/river/registry/libraries/RegistryStorage.sol";
 
 //contracts
 
@@ -50,7 +46,7 @@ contract ForkStreamRegistry is DeployBase, TestUtils, IDiamond {
 
     function test_syncNodesOnStreams() public {
         uint256 stop = 200;
-        (StreamWithId[] memory streams,) = streamRegistry.getPaginatedStreams(0, stop);
+        (StreamWithId[] memory streams, ) = streamRegistry.getPaginatedStreams(0, stop);
         for (uint256 i; i < stop; ++i) {
             StreamWithId memory stream = streams[i];
             address[] memory nodes = stream.stream.nodes;
@@ -75,8 +71,11 @@ contract ForkStreamRegistry is DeployBase, TestUtils, IDiamond {
             EnumerableSet.Bytes32Set storage streamIds = streamIdsByNode[_ghostNodes[i]];
             assertEq(streamRegistry.getStreamCountOnNode(_ghostNodes[i]), streamIds.length());
 
-            StreamWithId[] memory streamsOnNode =
-                streamRegistry.getPaginatedStreamsOnNode(_ghostNodes[i], 0, stop);
+            StreamWithId[] memory streamsOnNode = streamRegistry.getPaginatedStreamsOnNode(
+                _ghostNodes[i],
+                0,
+                stop
+            );
             assertEq(streamsOnNode.length, streamIds.length());
 
             for (uint256 j; j < streamsOnNode.length; ++j) {
@@ -86,8 +85,9 @@ contract ForkStreamRegistry is DeployBase, TestUtils, IDiamond {
     }
 
     function governanceActions() internal {
-        address impl =
-            IDiamondLoupe(riverRegistry).facetAddress(IStreamRegistry.allocateStream.selector);
+        address impl = IDiamondLoupe(riverRegistry).facetAddress(
+            IStreamRegistry.allocateStream.selector
+        );
         bytes4[] memory functionSelectors = new bytes4[](2);
         functionSelectors[0] = StreamRegistry.getPaginatedStreamsOnNode.selector;
         functionSelectors[1] = StreamRegistry.syncNodesOnStreams.selector;
