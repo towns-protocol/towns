@@ -13,7 +13,11 @@ import {ISchemaResolver} from
 import {DataTypes} from "contracts/src/attest/types/DataTypes.sol";
 
 // types
-import {Attestation, EMPTY_UID} from "@ethereum-attestation-service/eas-contracts/Common.sol";
+import {
+    Attestation,
+    EMPTY_UID,
+    NotFound
+} from "@ethereum-attestation-service/eas-contracts/Common.sol";
 import {
     AttestationRequest,
     AttestationRequestData,
@@ -228,7 +232,7 @@ contract AppRegistryTest is BaseSetup {
         AttestationRequest memory request = AttestationRequest({schema: schemaUID, data: data});
 
         vm.prank(developer);
-        vm.expectRevert(DataTypes.NotFound.selector);
+        vm.expectRevert(NotFound.selector);
         attestationRegistry.attest(request);
     }
 

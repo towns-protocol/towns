@@ -25,16 +25,13 @@ contract AttestationRegistry is IAttestationRegistry, Facet {
     /// @notice Create a new attestation
     /// @param request The attestation request data
     /// @return The UID of the created attestation
-    function attest(AttestationRequest memory request) external payable returns (bytes32) {
-        Attestation memory attestation =
-            AttestationLib.attest(request.schema, request.data, msg.sender, msg.value, true);
-
-        return attestation.uid;
+    function attest(AttestationRequest calldata request) external payable returns (bytes32) {
+        return AttestationLib.attest(request).uid;
     }
 
     /// @notice Revoke an existing attestation
     /// @param request The revocation request data
-    function revoke(RevocationRequest memory request) external payable {
+    function revoke(RevocationRequest calldata request) external payable {
         AttestationLib.revoke(request.schema, request.data, msg.sender, msg.value, true);
     }
 

@@ -39,19 +39,4 @@ library DataTypes {
     error InsufficientAttestations();
     error NotPayable();
     error InsufficientBalance();
-    error NotFound();
-    error AccessDenied();
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                           Events                           */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-    event SchemaRegistered(bytes32 indexed uid, address indexed registrar, SchemaRecord schema);
-
-    event AttestationCreated(
-        address indexed recipient, address indexed attester, bytes32 indexed uid, bytes32 schemaId
-    );
-
-    event AttestationRevoked(
-        address indexed recipient, address indexed revoker, bytes32 indexed uid, bytes32 schemaId
-    );
 }
