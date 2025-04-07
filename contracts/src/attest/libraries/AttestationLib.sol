@@ -34,7 +34,7 @@ import {SchemaRecord} from "@ethereum-attestation-service/eas-contracts/ISchemaR
 library AttestationLib {
     using CustomRevert for bytes4;
 
-    function attest(AttestationRequest calldata request)
+    function attest(AttestationRequest memory request)
         internal
         returns (Attestation memory attestation)
     {

@@ -2,7 +2,6 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-
 import {IERC6900Module} from "@erc6900/reference-implementation/interfaces/IERC6900Module.sol";
 import {IERC165} from "@openzeppelin/contracts/interfaces/IERC165.sol";
 
@@ -13,6 +12,12 @@ import {IERC165} from "@openzeppelin/contracts/interfaces/IERC165.sol";
 contract MockPlugin is IERC6900Module {
     address public installedBy;
     bytes public initData;
+
+    function requiredPermissions() external pure returns (bytes32[] memory) {
+        bytes32[] memory permissions = new bytes32[](1);
+        permissions[0] = keccak256("Read");
+        return permissions;
+    }
 
     function supportsInterface(bytes4 interfaceId) external pure override returns (bool) {
         return interfaceId == type(IERC6900Module).interfaceId
