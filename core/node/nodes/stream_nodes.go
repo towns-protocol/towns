@@ -24,6 +24,13 @@ type StreamNodes interface {
 	// GetRemotesAndIsLocal returns all remote nodes and true if the local node is in the list of nodes.
 	GetRemotesAndIsLocal() ([]common.Address, bool)
 
+	// GetQuorumAndSyncNodesAndIsLocal returns
+	// quorumNodes - a list of non-local nodes that participate in the stream quorum
+	// syncNodes - a list of non-local nodes that sync the stream into local storage but don't participate in quorum (yet)
+	// isLocal - boolean, whether the stream is hosted on this node
+	// GetQuorumAndSyncNodesAndIsLocal is thread-safe.
+	GetQuorumAndSyncNodesAndIsLocal() ([]common.Address, []common.Address, bool)
+
 	// GetStickyPeer returns the current sticky peer.
 	// If there are no remote nodes, it returns an empty address.
 	// The sticky peer is selected in a round-robin manner from the remote nodes.
@@ -121,6 +128,10 @@ func (s *StreamNodesWithoutLock) GetRemotesAndIsLocal() ([]common.Address, bool)
 	return s.remotes, s.isLocal
 }
 
+func (s *StreamNodesWithoutLock) GetQuorumAndSyncNodesAndIsLocal() ([]common.Address, []common.Address, bool) {
+	return s.quorumNodes, s.syncNodes, s.isLocal
+}
+
 func (s *StreamNodesWithoutLock) IsLocal() bool {
 	return s.isLocal
 }
@@ -181,6 +192,19 @@ func (s *StreamNodesWithLock) GetRemotesAndIsLocal() ([]common.Address, bool) {
 	defer s.mu.RUnlock()
 	r, l := s.n.GetRemotesAndIsLocal()
 	return slices.Clone(r), l
+}
+
+// GetQuorumAndSyncNodesAndIsLocal returns
+// quorumNodes - a list of non-local nodes that participate in the stream quorum
+// syncNodes - a list of non-local nodes that sync the stream into local storage but don't participate in quorum (yet)
+// isLocal - boolean, whether the stream is hosted on this node
+// GetQuorumAndSyncNodesAndIsLocal is thread-safe.
+func (s *StreamNodesWithLock) GetQuorumAndSyncNodesAndIsLocal() ([]common.Address, []common.Address, bool) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	qn, sn, l := s.n.GetQuorumAndSyncNodesAndIsLocal()
+	return slices.Clone(qn), slices.Clone(sn), l
 }
 
 func (s *StreamNodesWithLock) GetSyncNodes() []common.Address {

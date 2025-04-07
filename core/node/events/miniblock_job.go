@@ -15,20 +15,28 @@ import (
 
 // mbJos tracks single miniblock production attempt for a single stream.
 type mbJob struct {
-	stream        *Stream
-	cache         *StreamCache
+	// stream is the stream this job is producing a miniblock for.
+	stream *Stream
+	// cache is the nodes stream cache.
+	cache *StreamCache
+	// forceSnapshot is true if the miniblock producer is forced to snapshot.
 	forceSnapshot bool
-
-	remoteNodes []common.Address
-	replicated  bool
-
+	// quorumNodes is the list of nodes that participate in the stream quorum.
+	quorumNodes []common.Address
+	// syncNodes is the list of nodes that sync the stream into local storage in anticipation
+	// of joining the streams quorum.
+	syncNodes []common.Address
+	// replicated is true if the stream is replicated.
+	replicated bool
+	// candidate is the produced miniblock candidate that is attempted to promote to a miniblock.
 	candidate *MiniblockInfo
 }
 
 func (j *mbJob) produceCandidate(ctx context.Context) error {
+	// miniblock producer creates mbJob's only on nodes that participate in stream quorum.
 	var isLocal bool
-	j.remoteNodes, isLocal = j.stream.GetRemotesAndIsLocal()
-	j.replicated = len(j.remoteNodes) > 0
+	j.quorumNodes, j.syncNodes, isLocal = j.stream.GetQuorumAndSyncNodesAndIsLocal()
+	j.replicated = len(j.quorumNodes) > 1
 
 	// TODO: this is a sanity check, but in general mb production code needs to be hardened
 	// to handle scenario when local replica is removed from the stream.
@@ -133,7 +141,10 @@ func (j *mbJob) processRemoteProposals(ctx context.Context) ([]*mbProposal, *Str
 	}
 	if view.minipool.generation != request.NewMiniblockNum {
 		// TODO: REPLICATION: FIX: if any MissingEvents are received, should they still be attempted to be added? I.e. loop below should be still executed?
-		return nil, nil, RiverError(Err_MINIBLOCK_TOO_OLD, "mbJob.processRemoteProposals: stream advanced in the meantime (1)")
+		return nil, nil, RiverError(
+			Err_MINIBLOCK_TOO_OLD,
+			"mbJob.processRemoteProposals: stream advanced in the meantime (1)",
+		)
 	}
 
 	// Apply received MissingEvents, even if there are not enough quorum of proposals.
@@ -165,7 +176,10 @@ func (j *mbJob) processRemoteProposals(ctx context.Context) ([]*mbProposal, *Str
 
 	// View might have been updated by adding events, check if stream advanced in the meantime.
 	if view.minipool.generation != request.NewMiniblockNum {
-		return nil, nil, RiverError(Err_MINIBLOCK_TOO_OLD, "mbJob.processRemoteProposals: stream advanced in the meantime (2)")
+		return nil, nil, RiverError(
+			Err_MINIBLOCK_TOO_OLD,
+			"mbJob.processRemoteProposals: stream advanced in the meantime (2)",
+		)
 	}
 
 	if quorumErr != nil {
@@ -177,7 +191,7 @@ func (j *mbJob) processRemoteProposals(ctx context.Context) ([]*mbProposal, *Str
 	}
 
 	// Sanity check: check if we have enough remote proposals and return them.
-	if len(converted) >= RemoteQuorumNum(len(j.remoteNodes), true) {
+	if len(converted) >= RemoteQuorumNum(len(j.quorumNodes), true) {
 		return converted, view, nil
 	}
 
@@ -193,7 +207,7 @@ func (j *mbJob) combineProposals(proposals []*mbProposal) (*mbProposal, error) {
 	}
 
 	// Sanity check: there should be quorum of proposals.
-	quorumNum := TotalQuorumNum(len(j.remoteNodes) + 1)
+	quorumNum := TotalQuorumNum(len(j.quorumNodes) + 1)
 	if len(proposals) < quorumNum {
 		return nil, RiverError(Err_INTERNAL, "mbJob.combineProposals: not enough proposals")
 	}
@@ -242,7 +256,7 @@ func (j *mbJob) gatherRemoteProposals(
 	ctx, cancel := context.WithTimeout(ctx, j.cache.Params().RiverChain.Config.BlockTime()*2)
 	defer cancel()
 
-	proposals := make([]*ProposeMiniblockResponse, 0, len(j.remoteNodes))
+	proposals := make([]*ProposeMiniblockResponse, 0, len(j.quorumNodes))
 	var mu sync.Mutex
 
 	qp := NewQuorumPool(
@@ -263,7 +277,7 @@ func (j *mbJob) gatherRemoteProposals(
 	})
 
 	qp.AddNodeTasks(
-		j.remoteNodes,
+		j.quorumNodes,
 		func(ctx context.Context, node common.Address) error {
 			proposal, err := j.cache.Params().RemoteMiniblockProvider.GetMbProposal(ctx, node, request)
 			if err != nil {
@@ -271,7 +285,8 @@ func (j *mbJob) gatherRemoteProposals(
 			}
 
 			// Sanity check: discard proposals for wrong miniblock number and wrong prev hash.
-			if proposal.Proposal.NewMiniblockNum != request.NewMiniblockNum || !bytes.Equal(proposal.Proposal.PrevMiniblockHash, request.PrevMiniblockHash) {
+			if proposal.Proposal.NewMiniblockNum != request.NewMiniblockNum ||
+				!bytes.Equal(proposal.Proposal.PrevMiniblockHash, request.PrevMiniblockHash) {
 				return RiverError(Err_MINIBLOCK_TOO_OLD, "gatherRemoteProposals: wrong miniblock number or prev hash")
 			}
 
@@ -312,7 +327,7 @@ func (j *mbJob) saveCandidate(ctx context.Context) error {
 		return j.cache.Params().Storage.WriteMiniblockCandidate(ctx, j.stream.streamId, mb)
 	})
 
-	qp.AddNodeTasks(j.remoteNodes, func(ctx context.Context, node common.Address) error {
+	qp.AddNodeTasks(j.quorumNodes, func(ctx context.Context, node common.Address) error {
 		return j.cache.Params().RemoteMiniblockProvider.SaveMbCandidate(ctx, node, j.stream.streamId, j.candidate)
 	})
 	return qp.Wait()

@@ -8,6 +8,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/linkdata/deadlock"
 	"github.com/puzpuzpuz/xsync/v3"
+
 	"github.com/towns-protocol/towns/core/contracts/river"
 	. "github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/crypto"
@@ -355,7 +356,8 @@ func (p *miniblockProducer) jobDone(ctx context.Context, j *mbJob) {
 		return oldValue, false
 	})
 	if notFound {
-		logging.FromCtx(ctx).Errorw("MiniblockProducer: jobDone: job not found in jobs map", "streamId", j.stream.streamId)
+		logging.FromCtx(ctx).
+			Errorw("MiniblockProducer: jobDone: job not found in jobs map", "streamId", j.stream.streamId)
 	}
 }
 

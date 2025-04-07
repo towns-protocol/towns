@@ -433,8 +433,8 @@ func (i *cacheTestInstance) makeMbCandidate(
 		stream: stream,
 		cache:  i.cache,
 	}
-	j.remoteNodes, _ = j.stream.GetRemotesAndIsLocal()
-	j.replicated = len(j.remoteNodes) > 0
+	j.quorumNodes, _ = j.stream.GetRemotesAndIsLocal()
+	j.replicated = len(j.quorumNodes) > 0
 	err := j.makeCandidate(ctx)
 	if err != nil {
 		return nil, err
