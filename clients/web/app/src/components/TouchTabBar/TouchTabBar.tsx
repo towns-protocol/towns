@@ -116,11 +116,6 @@ export const TouchTabBar = () => {
                     }
                     scrollToTopId={TouchScrollToTopScrollId.ExploreTabScrollId}
                     highlightPattern="/"
-                    onPressTwice={() => {
-                        document
-                            .getElementById(TouchScrollToTopScrollId.ExploreTabScrollId)
-                            ?.focus()
-                    }}
                 />
 
                 <TabBarItem
