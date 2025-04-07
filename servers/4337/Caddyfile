@@ -1,0 +1,23 @@
+:80 {
+    @options {
+        method OPTIONS
+    }
+    handle @options {
+        header {
+            Access-Control-Allow-Origin *
+            Access-Control-Allow-Methods "GET, POST, OPTIONS"
+            Access-Control-Allow-Headers "*"
+            Access-Control-Max-Age "3600"
+        }
+        respond 204
+    }
+
+    handle {
+        reverse_proxy bundler:4337
+        header {
+            Access-Control-Allow-Origin *
+            Access-Control-Allow-Methods "GET, POST, OPTIONS"
+            Access-Control-Allow-Headers "*"
+        }
+    }
+} 

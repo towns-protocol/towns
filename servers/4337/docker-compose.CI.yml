@@ -26,5 +26,5 @@ services:
 
   mock-paymaster:
     environment:
-      - BUNDLER_RPC=http://bundler:4337
+      - BUNDLER_RPC=http://caddy:80 # Point to the caddy proxy
       - ANVIL_RPC=http://anvil:8545

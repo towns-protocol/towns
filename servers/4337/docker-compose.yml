@@ -15,11 +15,21 @@ services:
       # Uncomment this if you want to use the forked version
       #- SKIP_DEPLOYMENTS=true
 
+  caddy:
+    image: caddy:2-alpine
+    ports:
+      - "43370:80"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+    depends_on:
+      bundler:
+        condition: service_healthy
+
   bundler:
     build:
       context: ./bundler
       dockerfile: Dockerfile
-    ports: ["43370:4337"]
+    # Ports now exposed via caddy proxy
     environment:
       - ANVIL_RPC=${ANVIL_RPC:-http://host.docker.internal:8545}
     depends_on:
@@ -39,7 +49,7 @@ services:
       dockerfile: Dockerfile
     ports: ["43371:3000"]
     environment:
-      - BUNDLER_RPC=http://bundler:4337
+      - BUNDLER_RPC=http://caddy:80 # Point to the caddy proxy
       - ANVIL_RPC=${ANVIL_RPC:-http://host.docker.internal:8545}
     depends_on:
       bundler:
