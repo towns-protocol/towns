@@ -55,6 +55,13 @@ deploy-any-local :;
 	forge script scripts/deployments/${type}/${contract}.s.sol:${contract} \
 	--ffi --rpc-url ${rpc} --private-key ${LOCAL_PRIVATE_KEY} --broadcast
 
+deploy-facet-local :;
+	@echo "Deploying $(contract) on local chain"
+	@SAVE_DEPLOYMENTS=1 $(if $(context),DEPLOYMENT_CONTEXT=$(context)) \
+	CONTRACT_NAME=$(contract) \
+	forge script scripts/common/DeployFacet.s.sol \
+	--ffi --rpc-url ${rpc} --private-key ${LOCAL_PRIVATE_KEY} --broadcast
+
 interact-any-local :;
 	@echo "Running $(contract) on local chain"
 	@SAVE_DEPLOYMENTS=1 $(if $(context),DEPLOYMENT_CONTEXT=$(context)) \
