@@ -7,10 +7,8 @@ import (
 	"sync/atomic"
 	"time"
 
-	mapset "github.com/deckarep/golang-set/v2"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/gammazero/workerpool"
-	"github.com/linkdata/deadlock"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/puzpuzpuz/xsync/v4"
 	"go.opentelemetry.io/otel/attribute"
@@ -75,8 +73,7 @@ type StreamCache struct {
 	stoppedMu sync.RWMutex
 	stopped   bool
 
-	onlineSyncStreamTasksInProgressMu deadlock.Mutex
-	onlineSyncStreamTasksInProgress   mapset.Set[StreamId]
+	scheduledReconciliationTasks *xsync.MapOf[StreamId, *reconcileTask]
 
 	onlineSyncWorkerPool *workerpool.WorkerPool
 
@@ -117,10 +114,10 @@ func NewStreamCache(params *StreamCacheParams) *StreamCache {
 			"stream_cache_load_counter",
 			"Number of stream record loads",
 		),
-		chainConfig:                     params.ChainConfig,
-		onlineSyncWorkerPool:            workerpool.New(params.Config.StreamReconciliation.OnlineWorkerPoolSize),
-		disableCallbacks:                params.disableCallbacks,
-		onlineSyncStreamTasksInProgress: mapset.NewSet[StreamId](),
+		chainConfig:                  params.ChainConfig,
+		onlineSyncWorkerPool:         workerpool.New(params.Config.StreamReconciliation.OnlineWorkerPoolSize),
+		disableCallbacks:             params.disableCallbacks,
+		scheduledReconciliationTasks: xsync.NewMapOf[StreamId, *reconcileTask](),
 	}
 	s.params.streamCache = s
 	return s
@@ -466,7 +463,7 @@ func (s *StreamCache) loadStreamRecordImpl(
 				return ret, false
 			},
 		)
-		s.SubmitSyncStreamTask(ctx, stream)
+		s.SubmitSyncStreamTask(ctx, stream, record)
 		return stream, nil
 	}
 

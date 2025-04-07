@@ -146,7 +146,7 @@ func (s *Stream) lockMuAndLoadView(ctx context.Context) (*StreamView, error) {
 	}
 
 	s.mu.Unlock()
-	s.params.streamCache.SubmitSyncStreamTask(ctx, s)
+	s.params.streamCache.SubmitSyncStreamTask(ctx, s, nil)
 
 	// Wait for reconciliation to complete.
 	backoff := BackoffTracker{

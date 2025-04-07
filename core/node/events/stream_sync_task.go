@@ -12,9 +12,17 @@ import (
 	"github.com/towns-protocol/towns/core/node/registries"
 )
 
+type reconcileTask struct {
+	inProgress   *registries.GetStreamResult
+	next         *registries.GetStreamResult
+	getNewRecord bool
+	stream       *Stream
+}
+
 func (s *StreamCache) SubmitSyncStreamTask(
 	ctx context.Context,
 	stream *Stream,
+	streamRecord *registries.GetStreamResult,
 ) {
 	// TODO: REPLICATION: remove context from params and refactor to use default server context
 	ctx = context.WithoutCancel(ctx)
@@ -23,7 +31,7 @@ func (s *StreamCache) SubmitSyncStreamTask(
 	defer s.stoppedMu.RUnlock()
 
 	if !s.stopped {
-		s.submitSyncStreamTaskToPool(ctx, s.onlineSyncWorkerPool, stream, nil)
+		s.submitSyncStreamTaskToPool(ctx, s.onlineSyncWorkerPool, stream, streamRecord)
 	}
 }
 
@@ -33,7 +41,18 @@ func (s *StreamCache) submitSyncStreamTaskToPool(
 	stream *Stream,
 	streamRecord *registries.GetStreamResult,
 ) {
-	s.onlineSyncStreamTasksInProgressMu.Lock()
+	task, loaded := s.scheduledReconciliationTasks.Compute(stream.streamId, func(oldValue *reconcileTask, loaded bool) (*reconcileTask, bool) {
+		if loaded {
+			return oldValue, false
+		}
+
+		return &reconcileTask{
+			inProgress:   streamRecord,
+			getNewRecord: streamRecord == nil,
+			stream:       stream,
+		}
+	})
+	task, exists := s.scheduledReconciliationTasks.Load(stream.streamId)
 	if s.onlineSyncStreamTasksInProgress.Add(stream.StreamId()) {
 		pool.Submit(func() {
 			s.syncStreamFromPeers(ctx, stream, streamRecord)
@@ -42,7 +61,6 @@ func (s *StreamCache) submitSyncStreamTaskToPool(
 			s.onlineSyncStreamTasksInProgressMu.Unlock()
 		})
 	}
-	s.onlineSyncStreamTasksInProgressMu.Unlock()
 }
 
 func (s *StreamCache) syncStreamFromPeers(
