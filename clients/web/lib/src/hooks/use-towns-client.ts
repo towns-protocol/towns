@@ -239,7 +239,6 @@ interface TownsClientImpl {
               terminus: boolean
               eventCount: number
               firstEventId?: string
-              firstEventTimestamp?: number
           }
         | undefined
     >

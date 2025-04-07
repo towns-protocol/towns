@@ -1698,7 +1698,6 @@ export class TownsClient
         terminus: boolean
         eventCount: number
         firstEventId?: string
-        firstEventTimestamp?: number
     }> {
         if (!this.casablancaClient) {
             throw new Error('casablanca client is undefined')
@@ -1708,9 +1707,6 @@ export class TownsClient
             terminus: result.terminus,
             eventCount: this.casablancaClient?.stream(roomId)?.view?.timeline.length ?? 0,
             firstEventId: result.firstEvent?.hashStr,
-            firstEventTimestamp: result.firstEvent
-                ? Number(result.firstEvent.createdAtEpochMs)
-                : undefined,
         }
     }
 
