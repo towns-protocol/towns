@@ -93,7 +93,7 @@ func (s *StreamCache) onStreamPlacementUpdated(
 
 	// Always submit a sync task, since this only happens on stream placement updates it happens
 	// rarely. If local node was in quorum, it should be up-to-date making this a no-op task.
-	s.SubmitSyncStreamTask(ctx, stream)
+	s.SubmitSyncStreamTask(ctx, stream, nil) // TODO: provide record
 }
 
 // normalizeEphemeralStream normalizes the ephemeral stream.
