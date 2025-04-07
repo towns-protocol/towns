@@ -23,7 +23,7 @@ require (
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/prometheus/client_golang v1.20.5
-	github.com/puzpuzpuz/xsync/v3 v3.4.0
+	github.com/puzpuzpuz/xsync/v4 v4.0.0
 	github.com/rs/cors v1.11.1
 	github.com/sideshow/apns2 v0.25.0
 	github.com/spf13/cobra v1.8.1
