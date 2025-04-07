@@ -7,11 +7,9 @@ pragma solidity ^0.8.23;
 import "forge-std/console.sol";
 
 //contracts
-
 import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
 import {IDiamond} from "@towns-protocol/diamond/src/Diamond.sol";
 import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
-
 import {NodeRegistry} from "contracts/src/river/registry/facets/node/NodeRegistry.sol";
 
 contract DeployNodeRegistry is FacetHelper, Deployer {
@@ -44,7 +42,7 @@ contract DeployNodeRegistry is FacetHelper, Deployer {
         return (facetCut, "");
     }
 
-    function __deploy(address deployer) public override returns (address) {
+    function __deploy(address deployer) internal override returns (address) {
         vm.startBroadcast(deployer);
         NodeRegistry facet = new NodeRegistry();
         vm.stopBroadcast();

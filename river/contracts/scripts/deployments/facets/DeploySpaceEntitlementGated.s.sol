@@ -6,7 +6,6 @@ pragma solidity ^0.8.23;
 // libraries
 
 // contracts
-
 import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
 import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
 import {EntitlementGated} from "contracts/src/spaces/facets/gated/EntitlementGated.sol";
@@ -23,7 +22,7 @@ contract DeploySpaceEntitlementGated is FacetHelper, Deployer {
         return "facets/spaceEntitlementGatedFacet";
     }
 
-    function __deploy(address deployer) public override returns (address) {
+    function __deploy(address deployer) internal override returns (address) {
         vm.startBroadcast(deployer);
         SpaceEntitlementGated facet = new SpaceEntitlementGated();
         vm.stopBroadcast();

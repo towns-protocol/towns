@@ -12,7 +12,7 @@ contract DeploySpaceProxyInitializer is Deployer {
         return "utils/spaceProxyInitializer";
     }
 
-    function __deploy(address deployer) public override returns (address) {
+    function __deploy(address deployer) internal override returns (address) {
         vm.startBroadcast(deployer);
         SpaceProxyInitializer proxyInitializer = new SpaceProxyInitializer();
         vm.stopBroadcast();

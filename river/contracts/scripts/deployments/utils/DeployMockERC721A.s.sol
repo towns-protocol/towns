@@ -3,9 +3,8 @@ pragma solidity ^0.8.24;
 
 import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
 import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
-import {MockERC721A} from "contracts/test/mocks/MockERC721A.sol";
-
 import {DeployERC721A} from "contracts/scripts/deployments/facets/DeployERC721A.s.sol";
+import {MockERC721A} from "contracts/test/mocks/MockERC721A.sol";
 
 contract DeployMockERC721A is Deployer, FacetHelper {
     DeployERC721A deployERC721A = new DeployERC721A();
@@ -21,7 +20,7 @@ contract DeployMockERC721A is Deployer, FacetHelper {
         addSelectors(deployERC721A.selectors());
     }
 
-    function __deploy(address deployer) public override returns (address) {
+    function __deploy(address deployer) internal override returns (address) {
         vm.startBroadcast(deployer);
         MockERC721A deployment = new MockERC721A();
         vm.stopBroadcast();
