@@ -13,6 +13,10 @@ import {Attestation} from "@ethereum-attestation-service/eas-contracts/Common.so
 import {AttestationLib} from "contracts/src/attest/libraries/AttestationLib.sol";
 import {ModuleLib} from "contracts/src/attest/libraries/ModuleLib.sol";
 
+// types
+import {ExecutionManifest} from
+    "@erc6900/reference-implementation/interfaces/IERC6900ExecutionModule.sol";
+
 //contracts
 import {ModuleRegistry} from "contracts/src/attest/ModuleRegistry.sol";
 import {SchemaRegistry} from "contracts/src/attest/SchemaRegistry.sol";
@@ -49,15 +53,18 @@ contract ModuleRegistryTest is BaseSetup {
         address client = _randomAddress();
         bytes32[] memory permissions = new bytes32[](1);
         permissions[0] = keccak256("Read");
+        ExecutionManifest memory manifest;
 
-        bytes32 uid = moduleRegistry.registerModule(module, client, owner, permissions);
+        bytes32 uid = moduleRegistry.registerModule(module, client, owner, permissions, manifest);
+        assertEq(uid, moduleRegistry.getModuleVersion(module));
     }
 
     function registerModule(
         address module,
         address client,
         address owner,
-        bytes32[] calldata permissions
+        bytes32[] calldata permissions,
+        ExecutionManifest calldata manifest
     )
         external
     {
@@ -67,13 +74,13 @@ contract ModuleRegistryTest is BaseSetup {
         att.recipient = address(module);
         att.revocable = true;
         att.attester = owner;
-        att.data = abi.encode(module, client, owner, permissions);
+        att.data = abi.encode(module, client, owner, permissions, manifest);
 
         bytes32 uid = AttestationLib._hashAttestation(att, 0);
 
         vm.prank(owner);
         vm.expectEmit(appRegistry);
         emit ModuleLib.ModuleRegistered(module, uid);
-        moduleRegistry.registerModule(module, client, owner, permissions);
+        moduleRegistry.registerModule(module, client, owner, permissions, manifest);
     }
 }

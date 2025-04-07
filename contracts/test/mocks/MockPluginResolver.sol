@@ -16,7 +16,9 @@ import {SchemaResolver} from "contracts/src/attest/resolvers/SchemaResolver.sol"
 contract MockPluginResolver is SchemaResolver {
     mapping(address plugin => address owner) public pluginOwners;
 
-    constructor(address _appRegistry) SchemaResolver(_appRegistry) {}
+    constructor(address _appRegistry) {
+        __SchemaResolver_init(_appRegistry);
+    }
 
     function version() external pure returns (string memory) {
         return "1.0.0";

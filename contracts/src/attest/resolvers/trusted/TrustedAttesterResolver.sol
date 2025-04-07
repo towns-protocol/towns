@@ -17,14 +17,10 @@ import {TrustedLib} from "./TrustedLib.sol";
 import {Attestation} from "@ethereum-attestation-service/eas-contracts/Common.sol";
 
 // contracts
-import {SchemaResolverUpgradeable} from "../SchemaResolverUpgradeable.sol";
+import {SchemaResolver} from "../SchemaResolver.sol";
 import {Initializable} from "@towns-protocol/diamond/src/facets/initializable/Initializable.sol";
 
-contract TrustedAttesterResolver is
-    SchemaResolverUpgradeable,
-    IERC6900ExtensionRegistry,
-    Initializable
-{
+contract TrustedAttesterResolver is SchemaResolver, IERC6900ExtensionRegistry, Initializable {
     function __TrustedAttesterResolver_init(address _appRegistry) external initializer {
         __SchemaResolver_init(_appRegistry);
     }

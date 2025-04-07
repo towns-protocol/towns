@@ -2,11 +2,10 @@
 pragma solidity ^0.8.23;
 
 // interfaces
+
+import {Attestation} from "@ethereum-attestation-service/eas-contracts/Common.sol";
 import {ISchemaResolver} from
     "@ethereum-attestation-service/eas-contracts/resolver/ISchemaResolver.sol";
-
-// types
-import {Attestation} from "@ethereum-attestation-service/eas-contracts/Common.sol";
 
 // errors
 import {
@@ -16,22 +15,17 @@ import {
 } from "@ethereum-attestation-service/eas-contracts/Common.sol";
 
 // contracts
-
 abstract contract SchemaResolver is ISchemaResolver {
     error InsufficientValue();
     error NotPayable();
 
-    address internal immutable appRegistry;
-
-    constructor(address _appRegistry) {
-        if (_appRegistry == address(0)) {
-            revert InvalidEAS();
-        }
-        appRegistry = _appRegistry;
+    function __SchemaResolver_init(address registry) internal {
+        SchemaResolverStorage.Layout storage l = SchemaResolverStorage.getLayout();
+        l.registry = registry;
     }
 
-    modifier onlyAppRegistry() {
-        if (msg.sender != appRegistry) {
+    modifier onlyRegistry() {
+        if (msg.sender != SchemaResolverStorage.getLayout().registry) {
             revert AccessDenied();
         }
         _;
@@ -52,7 +46,7 @@ abstract contract SchemaResolver is ISchemaResolver {
     function attest(Attestation calldata attestation)
         external
         payable
-        onlyAppRegistry
+        onlyRegistry
         returns (bool)
     {
         return onAttest(attestation, msg.value);
@@ -65,7 +59,7 @@ abstract contract SchemaResolver is ISchemaResolver {
     )
         external
         payable
-        onlyAppRegistry
+        onlyRegistry
         returns (bool)
     {
         uint256 length = attestations.length;
@@ -109,7 +103,7 @@ abstract contract SchemaResolver is ISchemaResolver {
     function revoke(Attestation calldata attestation)
         external
         payable
-        onlyAppRegistry
+        onlyRegistry
         returns (bool)
     {
         return onRevoke(attestation, msg.value);
@@ -122,7 +116,7 @@ abstract contract SchemaResolver is ISchemaResolver {
     )
         external
         payable
-        onlyAppRegistry
+        onlyRegistry
         returns (bool)
     {
         uint256 length = attestations.length;
@@ -185,4 +179,22 @@ abstract contract SchemaResolver is ISchemaResolver {
         internal
         virtual
         returns (bool);
+}
+
+library SchemaResolverStorage {
+    // keccak256(abi.encode(uint256(keccak256("towns.schema.resolver.storage")) - 1)) &
+    // ~bytes32(uint256(0xff))
+    bytes32 internal constant STORAGE_SLOT =
+        0x3a14026143f063e5ed064cce80cc75f6ea25b68d1ad3a3261a9ae5e3f526fa00;
+
+    struct Layout {
+        address registry;
+    }
+
+    function getLayout() internal pure returns (Layout storage l) {
+        bytes32 slot = STORAGE_SLOT;
+        assembly {
+            l.slot := slot
+        }
+    }
 }

@@ -2,6 +2,8 @@
 pragma solidity ^0.8.23;
 
 // interfaces
+import {ExecutionManifest} from
+    "@erc6900/reference-implementation/interfaces/IERC6900ExecutionModule.sol";
 
 // libraries
 
@@ -33,8 +35,11 @@ interface IModuleRegistry {
         address module,
         address client,
         address owner,
-        bytes32[] calldata permissions
-    ) external returns (bytes32);
+        bytes32[] calldata permissions,
+        ExecutionManifest calldata manifest
+    )
+        external
+        returns (bytes32);
 
     /// @notice Update the permissions for an existing module
     /// @param module The module address to update
@@ -43,7 +48,9 @@ interface IModuleRegistry {
     function updateModulePermissions(
         address module,
         bytes32[] calldata permissions
-    ) external returns (bytes32);
+    )
+        external
+        returns (bytes32);
 
     /// @notice Revoke a module's registration
     /// @param module The module address to revoke

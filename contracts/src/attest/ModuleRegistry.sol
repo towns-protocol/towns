@@ -3,8 +3,13 @@ pragma solidity ^0.8.23;
 
 // interfaces
 import {IModuleRegistry} from "./interfaces/IModuleRegistry.sol";
+
 // libraries
 import {ModuleLib} from "./libraries/ModuleLib.sol";
+
+// types
+import {ExecutionManifest} from
+    "@erc6900/reference-implementation/interfaces/IERC6900ExecutionModule.sol";
 
 // contracts
 import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
@@ -18,7 +23,8 @@ contract ModuleRegistry is IModuleRegistry, OwnableBase, Facet {
     /// @notice Get the schema structure used for registering modules
     /// @return The schema structure
     function getModuleSchema() external pure returns (string memory) {
-        return "address module, address client, address owner, bytes32[] permissions";
+        return
+        "address module, address client, address owner, bytes32[] permissions, ExecutionManifest manifest";
     }
 
     /// @notice Get the active schema ID used for module attestations
@@ -50,12 +56,13 @@ contract ModuleRegistry is IModuleRegistry, OwnableBase, Facet {
         address module,
         address client,
         address owner,
-        bytes32[] calldata permissions
+        bytes32[] calldata permissions,
+        ExecutionManifest calldata manifest
     )
         external
         returns (bytes32)
     {
-        return ModuleLib.addModule(module, client, owner, permissions);
+        return ModuleLib.addModule(module, client, owner, permissions, manifest);
     }
 
     /// @notice Update the permissions for an existing module

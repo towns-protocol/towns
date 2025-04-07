@@ -2,6 +2,12 @@
 pragma solidity ^0.8.23;
 
 // interfaces
+import {IERC6900ExecutionModule} from
+    "@erc6900/reference-implementation/interfaces/IERC6900ExecutionModule.sol";
+import {IERC6900Module} from "@erc6900/reference-implementation/interfaces/IERC6900Module.sol";
+
+import {IERC165} from "@openzeppelin/contracts/interfaces/IERC165.sol";
+import {ITownsModule} from "contracts/src/attest/interfaces/ITownsModule.sol";
 
 // libraries
 import {CustomRevert} from "../../utils/libraries/CustomRevert.sol";
@@ -9,6 +15,9 @@ import {AttestationLib} from "./AttestationLib.sol";
 import {EnumerableSetLib} from "solady/utils/EnumerableSetLib.sol";
 
 // types
+
+import {ExecutionManifest} from
+    "@erc6900/reference-implementation/interfaces/IERC6900ExecutionModule.sol";
 import {Attestation} from "@ethereum-attestation-service/eas-contracts/Common.sol";
 import {
     AttestationRequest,
@@ -28,6 +37,7 @@ library ModuleLib {
     error ModuleNotRegistered();
     error ModuleRevoked();
     error ModuleNotOwner();
+    error ModuleDoesNotImplementInterface();
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           EVENTS                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -85,11 +95,14 @@ library ModuleLib {
         address module,
         address client,
         address owner,
-        bytes32[] calldata permissions
+        bytes32[] calldata permissions,
+        ExecutionManifest calldata manifest
     )
         internal
         returns (bytes32 version)
     {
+        _verifyModuleInterfaces(module);
+
         Layout storage db = getLayout();
         ModuleInfo storage info = db.modules[module];
 
@@ -99,7 +112,7 @@ library ModuleLib {
         request.schema = db.schema;
         request.data.recipient = address(module);
         request.data.revocable = true;
-        request.data.data = abi.encode(module, client, owner, permissions);
+        request.data.data = abi.encode(module, client, owner, permissions, manifest);
         info.uid = AttestationLib.attest(request).uid;
 
         emit ModuleRegistered(module, info.uid);
@@ -121,8 +134,8 @@ library ModuleLib {
 
         Attestation memory att = AttestationLib.getAttestation(info.uid);
         if (att.revocationTime > 0) ModuleRevoked.selector.revertWith();
-        (, address client, address owner,) =
-            abi.decode(att.data, (address, address, address, bytes32[]));
+        (, address client, address owner,, ExecutionManifest memory manifest) =
+            abi.decode(att.data, (address, address, address, bytes32[], ExecutionManifest));
 
         if (msg.sender != owner) ModuleNotOwner.selector.revertWith();
 
@@ -134,7 +147,7 @@ library ModuleLib {
         request.schema = db.schema;
         request.data.revocable = true;
         request.data.refUID = info.uid;
-        request.data.data = abi.encode(module, client, owner, permissions);
+        request.data.data = abi.encode(module, client, owner, permissions, manifest);
         info.uid = AttestationLib.attest(request).uid;
 
         emit ModuleUpdated(module, info.uid);
@@ -156,5 +169,15 @@ library ModuleLib {
         emit ModuleUnregistered(module, info.uid);
 
         return info.uid;
+    }
+
+    function _verifyModuleInterfaces(address module) internal view {
+        if (
+            !IERC165(module).supportsInterface(type(IERC6900Module).interfaceId)
+                || !IERC165(module).supportsInterface(type(IERC6900ExecutionModule).interfaceId)
+                || !IERC165(module).supportsInterface(type(ITownsModule).interfaceId)
+        ) {
+            ModuleDoesNotImplementInterface.selector.revertWith();
+        }
     }
 }
