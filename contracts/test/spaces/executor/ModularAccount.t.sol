@@ -10,7 +10,7 @@ import {ExecutorTypes} from "contracts/src/spaces/facets/executor/libraries/Exec
 
 // types
 import {ExecutionManifest} from
-    "@erc6900/reference-implementation/src/interfaces/IERC6900ExecutionModule.sol";
+    "@erc6900/reference-implementation/interfaces/IERC6900ExecutionModule.sol";
 
 //libraries
 import {Time} from "@openzeppelin/contracts/utils/types/Time.sol";

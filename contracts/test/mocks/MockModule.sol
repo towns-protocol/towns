@@ -6,8 +6,8 @@ import {
     IERC6900ExecutionModule,
     ManifestExecutionFunction,
     ManifestExecutionHook
-} from "@erc6900/reference-implementation/src/interfaces/IERC6900ExecutionModule.sol";
-import {IERC6900Module} from "@erc6900/reference-implementation/src/interfaces/IERC6900Module.sol";
+} from "@erc6900/reference-implementation/interfaces/IERC6900ExecutionModule.sol";
+import {IERC6900Module} from "@erc6900/reference-implementation/interfaces/IERC6900Module.sol";
 
 contract MockModule is IERC6900ExecutionModule {
     struct RequiredPermission {

@@ -3,13 +3,13 @@ pragma solidity ^0.8.23;
 
 // interfaces
 
-import {IERC6900Account} from "@erc6900/reference-implementation/src/interfaces/IERC6900Account.sol";
+import {IERC6900Account} from "@erc6900/reference-implementation/interfaces/IERC6900Account.sol";
 import {
     ExecutionManifest,
     ManifestExecutionFunction,
     ManifestExecutionHook
-} from "@erc6900/reference-implementation/src/interfaces/IERC6900ExecutionModule.sol";
-import {IERC6900Module} from "@erc6900/reference-implementation/src/interfaces/IERC6900Module.sol";
+} from "@erc6900/reference-implementation/interfaces/IERC6900ExecutionModule.sol";
+import {IERC6900Module} from "@erc6900/reference-implementation/interfaces/IERC6900Module.sol";
 import {IImplementationRegistry} from
     "contracts/src/factory/facets/registry/IImplementationRegistry.sol";
 

@@ -18,7 +18,7 @@ contract DeployModularAccount is Deployer, FacetHelper {
         return "facets/modularAccount";
     }
 
-    function __deploy(address deployer) public override returns (address) {
+    function __deploy(address deployer) internal override returns (address) {
         vm.startBroadcast(deployer);
         ModularAccount modularAccount = new ModularAccount();
         vm.stopBroadcast();
