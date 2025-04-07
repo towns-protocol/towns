@@ -33,6 +33,8 @@ library DropClaimLib {
     struct SupplyClaim {
         uint256 claimed;
         uint256 depositId;
+        uint48 lockStart;
+        uint48 lockDuration;
     }
 
     /// @notice A struct representing a claim condition
@@ -130,27 +132,51 @@ library DropClaimLib {
 
     function verifyPenaltyBps(
         ClaimCondition storage self,
-        Claim calldata claim,
+        uint256 amount,
         uint16 expectedPenaltyBps
     )
         internal
         view
-        returns (uint256 amount)
+        returns (uint256 remaining)
     {
         uint16 penaltyBps = self.penaltyBps;
         if (penaltyBps != expectedPenaltyBps) {
             CustomRevert.revertWith(IDropFacetBase.DropFacet__UnexpectedPenaltyBps.selector);
         }
 
-        amount = claim.quantity;
-        if (penaltyBps > 0) {
+        remaining = amount;
+        if (penaltyBps != 0) {
             unchecked {
-                uint256 penaltyAmount = BasisPoints.calculate(claim.quantity, penaltyBps);
-                amount = claim.quantity - penaltyAmount;
+                uint256 penaltyAmount = BasisPoints.calculate(amount, penaltyBps);
+                remaining = amount - penaltyAmount;
             }
         }
+    }
 
-        return amount;
+    function lockToBoost(
+        ClaimCondition storage self,
+        SupplyClaim storage claimed,
+        uint256 amount,
+        uint48 maxLockDuration,
+        uint48 lockDuration
+    )
+        internal
+        returns (uint256 remaining)
+    {
+        uint16 penaltyBps = self.penaltyBps;
+        // linear decrease of penaltyBps according to lockDuration
+        penaltyBps =
+            uint16((uint256(penaltyBps) * (maxLockDuration - lockDuration)) / maxLockDuration);
+
+        remaining = amount;
+        if (penaltyBps != 0) {
+            unchecked {
+                uint256 penaltyAmount = BasisPoints.calculate(amount, penaltyBps);
+                remaining = amount - penaltyAmount;
+            }
+        }
+        // store timestamp of claim and lockDuration
+        (claimed.lockStart, claimed.lockDuration) = (uint48(block.timestamp), lockDuration);
     }
 
     function createLeaf(address account, uint256 amount) internal pure returns (bytes32 leaf) {

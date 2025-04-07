@@ -188,35 +188,28 @@ contract RewardsDistribution is
         emit Redelegate(depositId, delegatee);
     }
 
-  /// @notice Change the owner of a deposit
-  /// @param depositId The ID of the deposit
-  /// @param newOwner The new owner of the deposit
-  function changeDepositOwner(uint256 depositId, address newOwner) external {
-    RewardsDistributionStorage.Layout storage ds = RewardsDistributionStorage
-      .layout();
-    StakingRewards.Deposit storage deposit = ds.staking.depositById[depositId];
-    address owner = deposit.owner;
+    /// @notice Change the owner of a deposit
+    /// @param depositId The ID of the deposit
+    /// @param newOwner The new owner of the deposit
+    function changeDepositOwner(uint256 depositId, address newOwner) external {
+        RewardsDistributionStorage.Layout storage ds = RewardsDistributionStorage.layout();
+        StakingRewards.Deposit storage deposit = ds.staking.depositById[depositId];
+        address owner = deposit.owner;
 
-    if (owner == address(this)) {
-      CustomRevert.revertWith(
-        RewardsDistribution__CannotChangeOwnerFromSelf.selector
-      );
+        if (owner == address(this)) {
+            CustomRevert.revertWith(RewardsDistribution__CannotChangeOwnerFromSelf.selector);
+        }
+        _revertIfNotDepositOwner(owner);
+
+        deposit.owner = newOwner;
+        emit ChangeDepositOwner(depositId, newOwner);
     }
-    _revertIfNotDepositOwner(owner);
 
-    deposit.owner = newOwner;
-    emit ChangeDepositOwner(depositId, newOwner);
-  }
-
-  /// @inheritdoc IRewardsDistribution
-  function changeBeneficiary(
-    uint256 depositId,
-    address newBeneficiary
-  ) external {
-    RewardsDistributionStorage.Layout storage ds = RewardsDistributionStorage
-      .layout();
-    StakingRewards.Deposit storage deposit = ds.staking.depositById[depositId];
-    _revertIfNotDepositOwner(deposit.owner);
+    /// @inheritdoc IRewardsDistribution
+    function changeBeneficiary(uint256 depositId, address newBeneficiary) external {
+        RewardsDistributionStorage.Layout storage ds = RewardsDistributionStorage.layout();
+        StakingRewards.Deposit storage deposit = ds.staking.depositById[depositId];
+        _revertIfNotDepositOwner(deposit.owner);
 
         address delegatee = deposit.delegatee;
         _revertIfNotOperatorOrSpace(delegatee);

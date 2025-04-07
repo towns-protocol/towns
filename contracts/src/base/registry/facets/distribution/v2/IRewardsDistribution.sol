@@ -29,18 +29,18 @@ interface IRewardsDistributionBase {
     /*                       CUSTOM ERRORS                        */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-  /// @dev Self-explanatory
-  error RewardsDistribution__NotBeneficiary();
-  error RewardsDistribution__NotClaimer();
-  error RewardsDistribution__NotDepositOwner();
-  error RewardsDistribution__NotRewardNotifier();
-  error RewardsDistribution__NotOperatorOrSpace();
-  error RewardsDistribution__NotActiveOperator();
-  error RewardsDistribution__ExpiredDeadline();
-  error RewardsDistribution__InvalidSignature();
-  error RewardsDistribution__CannotChangeOwnerFromSelf();
-  error RewardsDistribution__CannotWithdrawFromSelf();
-  error RewardsDistribution__NoPendingWithdrawal();
+    /// @dev Self-explanatory
+    error RewardsDistribution__NotBeneficiary();
+    error RewardsDistribution__NotClaimer();
+    error RewardsDistribution__NotDepositOwner();
+    error RewardsDistribution__NotRewardNotifier();
+    error RewardsDistribution__NotOperatorOrSpace();
+    error RewardsDistribution__NotActiveOperator();
+    error RewardsDistribution__ExpiredDeadline();
+    error RewardsDistribution__InvalidSignature();
+    error RewardsDistribution__CannotChangeOwnerFromSelf();
+    error RewardsDistribution__CannotWithdrawFromSelf();
+    error RewardsDistribution__NoPendingWithdrawal();
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           EVENTS                           */
@@ -95,18 +95,15 @@ interface IRewardsDistributionBase {
     /// @param delegatee The address of the delegatee
     event Redelegate(uint256 indexed depositId, address indexed delegatee);
 
-  /// @notice Emitted when the owner of a deposit is changed
-  /// @param depositId The ID of the deposit
-  /// @param newOwner The new owner of the deposit
-  event ChangeDepositOwner(uint256 indexed depositId, address newOwner);
+    /// @notice Emitted when the owner of a deposit is changed
+    /// @param depositId The ID of the deposit
+    /// @param newOwner The new owner of the deposit
+    event ChangeDepositOwner(uint256 indexed depositId, address newOwner);
 
-  /// @notice Emitted when the beneficiary of a deposit is changed
-  /// @param depositId The ID of the deposit
-  /// @param newBeneficiary The address of the new beneficiary
-  event ChangeBeneficiary(
-    uint256 indexed depositId,
-    address indexed newBeneficiary
-  );
+    /// @notice Emitted when the beneficiary of a deposit is changed
+    /// @param depositId The ID of the deposit
+    /// @param newBeneficiary The address of the new beneficiary
+    event ChangeBeneficiary(uint256 indexed depositId, address indexed newBeneficiary);
 
     /// @notice Emitted when the withdrawal of a deposit is initiated
     /// @param owner The address of the depositor
@@ -252,20 +249,17 @@ interface IRewardsDistribution is IRewardsDistributionBase {
     /// @param delegatee The address of the new delegatee
     function redelegate(uint256 depositId, address delegatee) external;
 
-  /// @notice Changes the owner of a deposit
-  /// @dev The caller must be the owner of the deposit
-  /// @param depositId The ID of the deposit
-  /// @param newOwner The new owner of the deposit
-  function changeDepositOwner(uint256 depositId, address newOwner) external;
+    /// @notice Changes the owner of a deposit
+    /// @dev The caller must be the owner of the deposit
+    /// @param depositId The ID of the deposit
+    /// @param newOwner The new owner of the deposit
+    function changeDepositOwner(uint256 depositId, address newOwner) external;
 
-  /// @notice Changes the beneficiary of a deposit
-  /// @dev The caller must be the owner of the deposit
-  /// @param depositId The ID of the deposit
-  /// @param newBeneficiary The address of the new beneficiary
-  function changeBeneficiary(
-    uint256 depositId,
-    address newBeneficiary
-  ) external;
+    /// @notice Changes the beneficiary of a deposit
+    /// @dev The caller must be the owner of the deposit
+    /// @param depositId The ID of the deposit
+    /// @param newBeneficiary The address of the new beneficiary
+    function changeBeneficiary(uint256 depositId, address newBeneficiary) external;
 
     /// @notice Initiates the withdrawal of a deposit, subject to the lockup period
     /// @dev The caller must be the owner of the deposit

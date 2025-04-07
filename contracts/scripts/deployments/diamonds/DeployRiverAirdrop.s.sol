@@ -24,10 +24,10 @@ import {DeployTownsPoints} from "contracts/scripts/deployments/facets/DeployTown
 import {DeployMultiInit} from "contracts/scripts/deployments/utils/DeployMultiInit.s.sol";
 
 contract DeployRiverAirdrop is DiamondHelper, Deployer {
-  address internal BASE_REGISTRY = address(0);
-  address internal SPACE_FACTORY = address(0);
-  uint48 public minLockDuration = 30 days;
-  uint48 public maxLockDuration = 180 days;
+    address internal BASE_REGISTRY = address(0);
+    address internal SPACE_FACTORY = address(0);
+    uint48 public minLockDuration = 30 days;
+    uint48 public maxLockDuration = 180 days;
 
     DeployMultiInit deployMultiInit = new DeployMultiInit();
     DeployDiamondCut diamondCutHelper = new DeployDiamondCut();
@@ -113,13 +113,11 @@ contract DeployRiverAirdrop is DiamondHelper, Deployer {
         );
     }
 
-  function diamondInitParams(
-    address deployer
-  ) public returns (Diamond.InitParams memory) {
-    dropHelper.setLockDurations(minLockDuration, maxLockDuration);
-    dropFacet = dropHelper.deploy(deployer);
-    pointsFacet = pointsHelper.deploy(deployer);
-    metadata = metadataHelper.deploy(deployer);
+    function diamondInitParams(address deployer) public returns (Diamond.InitParams memory) {
+        dropHelper.setLockDurations(minLockDuration, maxLockDuration);
+        dropFacet = dropHelper.deploy(deployer);
+        pointsFacet = pointsHelper.deploy(deployer);
+        metadata = metadataHelper.deploy(deployer);
 
         addFacet(
             dropHelper.makeCut(dropFacet, IDiamond.FacetCutAction.Add),

@@ -3,14 +3,15 @@ pragma solidity ^0.8.23;
 
 // interfaces
 import {IDropFacet} from "contracts/src/airdrop/drop/IDropFacet.sol";
-import {IRewardsDistribution} from "contracts/src/base/registry/facets/distribution/v2/IRewardsDistribution.sol";
+import {IRewardsDistribution} from
+    "contracts/src/base/registry/facets/distribution/v2/IRewardsDistribution.sol";
 
 // libraries
-import {SafeCastLib} from "solady/utils/SafeCastLib.sol";
-import {CustomRevert} from "contracts/src/utils/libraries/CustomRevert.sol";
 import {DropClaimLib} from "contracts/src/airdrop/drop/DropClaimLib.sol";
 import {DropFacetLib} from "contracts/src/airdrop/drop/DropFacetLib.sol";
 import {CurrencyTransfer} from "contracts/src/utils/libraries/CurrencyTransfer.sol";
+import {CustomRevert} from "contracts/src/utils/libraries/CustomRevert.sol";
+import {SafeCastLib} from "solady/utils/SafeCastLib.sol";
 
 // contracts
 import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
@@ -20,161 +21,134 @@ contract DropFacet is IDropFacet, OwnableBase, Facet {
     using DropFacetLib for DropFacetLib.Layout;
     using DropClaimLib for DropClaimLib.ClaimCondition;
 
-  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-  /*                       ADMIN FUNCTIONS                      */
-  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                       ADMIN FUNCTIONS                      */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-  function __DropFacet_init(
-    address rewardsDistribution,
-    uint48 minLockDuration,
-    uint48 maxLockDuration
-  ) external onlyInitializing {
-    __DropFacet_init_unchained(
-      rewardsDistribution,
-      minLockDuration,
-      maxLockDuration
-    );
-  }
-
-  function __DropFacet_init_unchained(
-    address rewardsDistribution,
-    uint48 minLockDuration,
-    uint48 maxLockDuration
-  ) internal {
-    if (rewardsDistribution == address(0)) {
-      CustomRevert.revertWith(DropFacet__RewardsDistributionNotSet.selector);
+    function __DropFacet_init(
+        address rewardsDistribution,
+        uint48 minLockDuration,
+        uint48 maxLockDuration
+    )
+        external
+        onlyInitializing
+    {
+        __DropFacet_init_unchained(rewardsDistribution, minLockDuration, maxLockDuration);
     }
 
-    DropStorage.Layout storage ds = DropStorage.layout();
-    (ds.rewardsDistribution, ds.minLockDuration, ds.maxLockDuration) = (
-      rewardsDistribution,
-      minLockDuration,
-      maxLockDuration
-    );
-  }
+    function __DropFacet_init_unchained(
+        address rewardsDistribution,
+        uint48 minLockDuration,
+        uint48 maxLockDuration
+    )
+        internal
+    {
+        if (rewardsDistribution == address(0)) {
+            CustomRevert.revertWith(DropFacet__RewardsDistributionNotSet.selector);
+        }
 
-  /// @inheritdoc IDropFacet
-  function setClaimConditions(
-    ClaimCondition[] calldata conditions
-  ) external onlyOwner {
+        DropFacetLib.Layout storage ds = DropFacetLib.getLayout();
+        (ds.rewardsDistribution, ds.minLockDuration, ds.maxLockDuration) =
+            (rewardsDistribution, minLockDuration, maxLockDuration);
+    }
+
+    /// @inheritdoc IDropFacet
+    function setClaimConditions(DropClaimLib.ClaimCondition[] calldata conditions)
+        external
+        onlyOwner
+    {
         DropFacetLib.getLayout().setClaimConditions(conditions);
-  }
+    }
 
-  /// @inheritdoc IDropFacet
-  function addClaimCondition(
-    ClaimCondition calldata condition
-  ) external onlyOwner {
+    /// @inheritdoc IDropFacet
+    function addClaimCondition(DropClaimLib.ClaimCondition calldata condition) external onlyOwner {
         DropFacetLib.getLayout().addClaimCondition(condition);
-  }
+    }
 
-  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-  /*                            CLAIM                           */
-  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                            CLAIM                           */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-  /// @inheritdoc IDropFacet
-  // TODO: rename
-  function claimWithPenalty(
+    /// @inheritdoc IDropFacet
+    // TODO: rename
+    function claimWithPenalty(
         DropClaimLib.Claim calldata claim,
-    uint16 expectedPenaltyBps
-  ) external returns (uint256 amount) {
-    DropStorage.Layout storage ds = DropStorage.layout();
+        uint16 expectedPenaltyBps
+    )
+        external
+        returns (uint256 amount)
+    {
+        DropFacetLib.Layout storage self = DropFacetLib.getLayout();
         DropClaimLib.ClaimCondition storage condition =
-            DropFacetLib.getLayout().getClaimConditionById(claim.conditionId);
+            self.getClaimConditionById(claim.conditionId);
 
         DropClaimLib.SupplyClaim storage claimed =
-            DropFacetLib.getLayout().getSupplyClaimedByWallet(claim.conditionId, claim.account);
+            self.getSupplyClaimedByWallet(claim.conditionId, claim.account);
 
         condition.verifyClaim(claimed, claim);
-        amount = condition.verifyPenaltyBps(claim, expectedPenaltyBps);
+        amount = condition.verifyPenaltyBps(claim.quantity, expectedPenaltyBps);
 
         condition.updateClaim(claimed, amount);
 
-    CurrencyTransfer.safeTransferERC20(
-      condition.currency,
-      address(this),
-      claim.account,
-      amount
-    );
+        CurrencyTransfer.safeTransferERC20(condition.currency, address(this), claim.account, amount);
 
-    emit DropFacet_Claimed_WithPenalty(
-      claim.conditionId,
-      msg.sender,
-      claim.account,
-      amount
-    );
-  }
+        emit DropFacet_Claimed_WithPenalty(claim.conditionId, msg.sender, claim.account, amount);
+    }
 
-  /// @inheritdoc IDropFacet
-  function claimAndStake(
-    Claim calldata claim,
-    address delegatee,
-    uint48 lockDuration
-  ) external returns (uint256 amount) {
-    DropStorage.Layout storage ds = DropStorage.layout();
-    _verifyLockDuration(ds, lockDuration);
+    /// @inheritdoc IDropFacet
+    function claimAndStake(
+        DropClaimLib.Claim calldata claim,
+        address delegatee,
+        uint48 lockDuration
+    )
+        external
+        returns (uint256 amount)
+    {
+        DropFacetLib.Layout storage self = DropFacetLib.getLayout();
+        self.verifyLockDuration(lockDuration);
 
         DropClaimLib.ClaimCondition storage condition =
-            DropFacetLib.getLayout().getClaimConditionById(claim.conditionId);
+            self.getClaimConditionById(claim.conditionId);
 
         DropClaimLib.SupplyClaim storage claimed =
-            DropFacetLib.getLayout().getSupplyClaimedByWallet(claim.conditionId, claim.account);
+            self.getSupplyClaimedByWallet(claim.conditionId, claim.account);
 
         condition.verifyClaim(claimed, claim);
 
-    amount = _lockToBoost(
-      condition,
-      claimed,
-      claim.quantity,
-      ds.maxLockDuration,
-      lockDuration
-    );
+        amount = condition.lockToBoost(claimed, claim.quantity, self.maxLockDuration, lockDuration);
 
         condition.updateClaim(claimed, amount);
-        DropFacetLib.getLayout().approveClaimToken(condition, amount);
+        self.approveClaimToken(condition, amount);
 
-    uint256 depositId = IRewardsDistribution(ds.rewardsDistribution)
-      .stakeOnBehalf(
-        SafeCastLib.toUint96(amount),
-        delegatee,
-        claim.account,
-        address(this),
-        0,
-        ""
-      );
+        uint256 depositId = IRewardsDistribution(self.rewardsDistribution).stakeOnBehalf(
+            SafeCastLib.toUint96(amount), delegatee, claim.account, address(this), 0, ""
+        );
 
         DropFacetLib.updateDepositId(claimed, depositId);
 
-    emit DropFacet_Claimed_And_Staked(
-      claim.conditionId,
-      msg.sender,
-      claim.account,
-      amount
-    );
-  }
-
-  /// @inheritdoc IDropFacet
-  function unlockStake(uint256 conditionId) external {
-    DropStorage.Layout storage ds = DropStorage.layout();
-    DropStorage.SupplyClaim storage claimed = ds.getSupplyClaimedByWallet(
-      conditionId,
-      msg.sender
-    );
-    uint256 unlockTime = claimed.lockStart + claimed.lockDuration;
-    if (block.timestamp < unlockTime) {
-      CustomRevert.revertWith(DropFacet__StakeNotUnlocked.selector);
+        emit DropFacet_Claimed_And_Staked(claim.conditionId, msg.sender, claim.account, amount);
     }
 
-    IRewardsDistribution(ds.rewardsDistribution).changeDepositOwner(
-      claimed.depositId,
-      msg.sender
-    );
+    /// @inheritdoc IDropFacet
+    function unlockStake(uint256 conditionId) external {
+        DropFacetLib.Layout storage self = DropFacetLib.getLayout();
+        DropClaimLib.SupplyClaim storage claimed =
+            self.getSupplyClaimedByWallet(conditionId, msg.sender);
+        uint256 unlockTime = claimed.lockStart + claimed.lockDuration;
+        if (block.timestamp < unlockTime) {
+            CustomRevert.revertWith(DropFacet__StakeNotUnlocked.selector);
+        }
 
-    emit DropFacet_Unlocked_Stake(conditionId, msg.sender);
-  }
+        IRewardsDistribution(self.rewardsDistribution).changeDepositOwner(
+            claimed.depositId, msg.sender
+        );
 
-  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-  /*                          GETTERS                           */
-  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+        emit DropFacet_Unlocked_Stake(conditionId, msg.sender);
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                          GETTERS                           */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     ///@inheritdoc IDropFacet
     function getActiveClaimConditionId() external view returns (uint256) {
@@ -227,14 +201,10 @@ contract DropFacet is IDropFacet, OwnableBase, Facet {
         return DropFacetLib.getLayout().getSupplyClaimedByWallet(conditionId, account).depositId;
     }
 
-  /// @inheritdoc IDropFacet
-  function getUnlockTime(
-    address account,
-    uint256 conditionId
-  ) external view returns (uint256) {
-    DropStorage.SupplyClaim storage supplyClaim = DropStorage
-      .layout()
-      .getSupplyClaimedByWallet(conditionId, account);
-    return supplyClaim.lockStart + supplyClaim.lockDuration;
-  }
+    /// @inheritdoc IDropFacet
+    function getUnlockTime(address account, uint256 conditionId) external view returns (uint256) {
+        DropClaimLib.SupplyClaim storage supplyClaim =
+            DropFacetLib.getLayout().getSupplyClaimedByWallet(conditionId, account);
+        return supplyClaim.lockStart + supplyClaim.lockDuration;
+    }
 }

@@ -15,7 +15,7 @@ library DropFacetLib {
 
     // keccak256(abi.encode(uint256(keccak256("diamond.facets.drop.storage")) - 1)) &
     // ~bytes32(uint256(0xff))
-    bytes32 constant STORAGE_SLOT =
+    bytes32 internal constant STORAGE_SLOT =
         0xeda6a1e2ce6f1639b6d3066254ca87a2daf51c4f0ad5038d408bbab6cc2cab00;
 
     struct Layout {
@@ -25,6 +25,8 @@ library DropFacetLib {
         mapping(uint256 conditionId => mapping(address => DropClaimLib.SupplyClaim))
             supplyClaimedByWallet;
         mapping(uint256 conditionId => DropClaimLib.ClaimCondition) conditionById;
+        uint48 minLockDuration;
+        uint48 maxLockDuration;
     }
 
     function getActiveConditionId(Layout storage self) internal view returns (uint256) {
@@ -120,7 +122,6 @@ library DropFacetLib {
         for (uint256 i; i < self.conditionCount; ++i) {
             conditions[i] = self.conditionById[self.conditionStartId + i];
         }
-        return conditions;
     }
 
     function setClaimConditions(
@@ -194,6 +195,15 @@ library DropFacetLib {
         }
     }
 
+    function verifyLockDuration(Layout storage self, uint48 lockDuration) internal view {
+        if (lockDuration < self.minLockDuration) {
+            CustomRevert.revertWith(IDropFacetBase.DropFacet__InvalidLockDuration.selector);
+        }
+        if (lockDuration > self.maxLockDuration) {
+            CustomRevert.revertWith(IDropFacetBase.DropFacet__InvalidLockDuration.selector);
+        }
+    }
+
     function approveClaimToken(
         Layout storage self,
         DropClaimLib.ClaimCondition storage condition,
@@ -202,14 +212,6 @@ library DropFacetLib {
         internal
     {
         IERC20(condition.currency).approve(self.rewardsDistribution, amount);
-    }
-
-    function setRewardsDistribution(Layout storage self, address rewardsDistribution) internal {
-        if (rewardsDistribution == address(0)) {
-            CustomRevert.revertWith(IDropFacetBase.DropFacet__RewardsDistributionNotSet.selector);
-        }
-
-        self.rewardsDistribution = rewardsDistribution;
     }
 
     // =============================================================
