@@ -12,6 +12,8 @@ import {ITownsModule} from "contracts/src/attest/interfaces/ITownsModule.sol";
 // libraries
 import {CustomRevert} from "../../utils/libraries/CustomRevert.sol";
 import {AttestationLib} from "./AttestationLib.sol";
+
+import {VerificationLib} from "./VerificationLib.sol";
 import {EnumerableSetLib} from "solady/utils/EnumerableSetLib.sol";
 
 // types
@@ -110,7 +112,7 @@ library ModuleLib {
 
         AttestationRequest memory request;
         request.schema = db.schema;
-        request.data.recipient = address(module);
+        request.data.recipient = module;
         request.data.revocable = true;
         request.data.data = abi.encode(module, client, owner, permissions, manifest);
         info.uid = AttestationLib.attest(request).uid;

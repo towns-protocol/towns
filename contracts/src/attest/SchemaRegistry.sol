@@ -10,7 +10,6 @@ import {ISchemaResolver} from
 import {SchemaLib} from "./libraries/SchemaLib.sol";
 
 // types
-import {DataTypes} from "./types/DataTypes.sol";
 import {SchemaRecord} from "@ethereum-attestation-service/eas-contracts/ISchemaRegistry.sol";
 
 // contracts

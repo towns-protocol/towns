@@ -6,7 +6,6 @@ import {IAttestationRegistry} from "./interfaces/IAttestationRegistry.sol";
 
 // libraries
 import {AttestationLib} from "./libraries/AttestationLib.sol";
-import {DataTypes} from "./types/DataTypes.sol";
 
 // contracts
 

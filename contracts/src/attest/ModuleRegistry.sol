@@ -3,10 +3,12 @@ pragma solidity ^0.8.23;
 
 // interfaces
 import {IModuleRegistry} from "./interfaces/IModuleRegistry.sol";
+import {ISchemaResolver} from
+    "@ethereum-attestation-service/eas-contracts/resolver/ISchemaResolver.sol";
 
 // libraries
 import {ModuleLib} from "./libraries/ModuleLib.sol";
-
+import {SchemaLib} from "./libraries/SchemaLib.sol";
 // types
 import {ExecutionManifest} from
     "@erc6900/reference-implementation/interfaces/IERC6900ExecutionModule.sol";
@@ -35,8 +37,16 @@ contract ModuleRegistry is IModuleRegistry, OwnableBase, Facet {
 
     /// @notice Set the schema ID used for module attestations
     /// @param schema The new schema ID
-    function setModuleSchemaId(bytes32 schema) external onlyOwner {
-        ModuleLib.setSchema(schema);
+    function registerModuleSchema(
+        string calldata schema,
+        ISchemaResolver resolver,
+        bool revocable
+    )
+        external
+        onlyOwner
+    {
+        bytes32 schemaId = SchemaLib.registerSchema(schema, resolver, revocable);
+        ModuleLib.setSchema(schemaId);
     }
 
     /// @notice Get the current version (attestation UID) for a module

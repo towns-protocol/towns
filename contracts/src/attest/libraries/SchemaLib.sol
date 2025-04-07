@@ -14,13 +14,34 @@ import {SchemaRecord} from "@ethereum-attestation-service/eas-contracts/ISchemaR
 
 // libraries
 import {CustomRevert} from "../../utils/libraries/CustomRevert.sol";
-import {SchemaRegistryStorage} from "../storage/SchemaRegistryStorage.sol";
-import {DataTypes} from "../types/DataTypes.sol";
 
 // contracts
 
 library SchemaLib {
     using CustomRevert for bytes4;
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                           STORAGE                          */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    // keccak256(abi.encode(uint256(keccak256("attestations.module.schema.storage")) - 1)) &
+    // ~bytes32(uint256(0xff))
+    bytes32 internal constant STORAGE_SLOT =
+        0xfd5bc2b1c92b0a5f91f2b26739da3957fadd042854b0b9b4b07f2b0885d3e400;
+
+    struct Layout {
+        mapping(bytes32 uid => SchemaRecord schema) schemas;
+    }
+
+    function getLayout() internal pure returns (Layout storage ds) {
+        assembly {
+            ds.slot := STORAGE_SLOT
+        }
+    }
+
+    error InvalidSchemaResolver();
+    error SchemaAlreadyRegistered();
+    error InvalidSchema();
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                     Schema Management                      */
@@ -35,7 +56,7 @@ library SchemaLib {
     {
         // check empty schema
         if (bytes(schema).length == 0) {
-            DataTypes.InvalidSchema.selector.revertWith();
+            InvalidSchema.selector.revertWith();
         }
 
         checkResolver(resolver);
@@ -43,11 +64,11 @@ library SchemaLib {
         SchemaRecord memory schemaRecord =
             SchemaRecord({uid: EMPTY_UID, resolver: resolver, revocable: revocable, schema: schema});
 
-        SchemaRegistryStorage.Layout storage db = SchemaRegistryStorage.getLayout();
+        Layout storage db = getLayout();
 
         schemaUID = getUID(schemaRecord);
         if (db.schemas[schemaUID].uid != EMPTY_UID) {
-            DataTypes.SchemaAlreadyRegistered.selector.revertWith();
+            SchemaAlreadyRegistered.selector.revertWith();
         }
 
         schemaRecord.uid = schemaUID;
@@ -59,7 +80,7 @@ library SchemaLib {
     }
 
     function getSchema(bytes32 uid) internal view returns (SchemaRecord memory) {
-        return SchemaRegistryStorage.getLayout().schemas[uid];
+        return getLayout().schemas[uid];
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -71,7 +92,7 @@ library SchemaLib {
             address(resolver) != address(0)
                 && !IERC165(address(resolver)).supportsInterface(type(ISchemaResolver).interfaceId)
         ) {
-            DataTypes.InvalidSchemaResolver.selector.revertWith();
+            InvalidSchemaResolver.selector.revertWith();
         }
     }
 

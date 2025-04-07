@@ -38,7 +38,7 @@ contract MockPlugin is ITownsModule {
     function supportsInterface(bytes4 interfaceId) external pure override returns (bool) {
         return interfaceId == type(IERC6900Module).interfaceId
             || interfaceId == type(IERC6900ExecutionModule).interfaceId
-            || interfaceId == type(IERC165).interfaceId;
+            || interfaceId == type(ITownsModule).interfaceId || interfaceId == type(IERC165).interfaceId;
     }
 
     function onInstall(bytes calldata data) external override {

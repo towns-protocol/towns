@@ -10,7 +10,9 @@ import {ISchemaResolver} from
     "@ethereum-attestation-service/eas-contracts/resolver/ISchemaResolver.sol";
 
 // libraries
-import {DataTypes} from "contracts/src/attest/types/DataTypes.sol";
+
+import {AttestationLib} from "contracts/src/attest/libraries/AttestationLib.sol";
+import {SchemaLib} from "contracts/src/attest/libraries/SchemaLib.sol";
 
 // types
 import {
@@ -44,6 +46,12 @@ contract AttestationRegistryTest is BaseSetup {
     bytes32 internal schemaUID;
     address internal developer;
 
+    enum PluginType {
+        Validation,
+        Execution,
+        Both
+    }
+
     function setUp() public override {
         super.setUp();
         schemaRegistry = SchemaRegistry(appRegistry);
@@ -73,7 +81,7 @@ contract AttestationRegistryTest is BaseSetup {
 
     function test_revertWhen_emptySchema() external {
         vm.prank(deployer);
-        vm.expectRevert(DataTypes.InvalidSchema.selector);
+        vm.expectRevert(SchemaLib.InvalidSchema.selector);
         schemaRegistry.register("", ISchemaResolver(address(0)), false);
     }
 
@@ -81,7 +89,7 @@ contract AttestationRegistryTest is BaseSetup {
         vm.assume(bytes(testSchema).length > 0);
         MockPlugin plugin = new MockPlugin();
         vm.prank(deployer);
-        vm.expectRevert(DataTypes.InvalidSchemaResolver.selector);
+        vm.expectRevert(SchemaLib.InvalidSchemaResolver.selector);
         schemaRegistry.register({
             schema: testSchema,
             resolver: ISchemaResolver(address(plugin)),
@@ -94,7 +102,7 @@ contract AttestationRegistryTest is BaseSetup {
         givenSchema(testSchema, false)
     {
         vm.prank(deployer);
-        vm.expectRevert(DataTypes.SchemaAlreadyRegistered.selector);
+        vm.expectRevert(SchemaLib.SchemaAlreadyRegistered.selector);
         schemaRegistry.register({
             schema: testSchema,
             resolver: ISchemaResolver(address(0)),
@@ -122,8 +130,7 @@ contract AttestationRegistryTest is BaseSetup {
         MockPlugin plugin = new MockPlugin();
 
         // Encode the attestation data according to the schema
-        bytes memory encodedData =
-            abi.encode(plugin, DataTypes.PluginType.Execution, plugin.moduleId(), true);
+        bytes memory encodedData = abi.encode(plugin, PluginType.Execution, plugin.moduleId(), true);
 
         // Create the attestation request data structure
         AttestationRequestData memory data = AttestationRequestData({
@@ -168,7 +175,7 @@ contract AttestationRegistryTest is BaseSetup {
         AttestationRequest memory request = AttestationRequest({schema: schemaId, data: data});
 
         vm.prank(developer);
-        vm.expectRevert(DataTypes.InvalidSchema.selector);
+        vm.expectRevert(SchemaLib.InvalidSchema.selector);
         attestationRegistry.attest(request);
     }
 
@@ -191,7 +198,7 @@ contract AttestationRegistryTest is BaseSetup {
         AttestationRequest memory request = AttestationRequest({schema: schemaUID, data: data});
 
         vm.prank(developer);
-        vm.expectRevert(DataTypes.InvalidExpirationTime.selector);
+        vm.expectRevert(AttestationLib.InvalidExpirationTime.selector);
         attestationRegistry.attest(request);
     }
 
@@ -213,7 +220,7 @@ contract AttestationRegistryTest is BaseSetup {
         AttestationRequest memory request = AttestationRequest({schema: schemaUID, data: data});
 
         vm.prank(developer);
-        vm.expectRevert(DataTypes.Irrevocable.selector);
+        vm.expectRevert(AttestationLib.Irrevocable.selector);
         attestationRegistry.attest(request);
     }
 
@@ -266,7 +273,7 @@ contract AttestationRegistryTest is BaseSetup {
         RevocationRequest memory request = RevocationRequest({schema: schemaId, data: data});
 
         vm.prank(developer);
-        vm.expectRevert(DataTypes.InvalidSchema.selector);
+        vm.expectRevert(SchemaLib.InvalidSchema.selector);
         attestationRegistry.revoke(request);
     }
 
@@ -279,7 +286,7 @@ contract AttestationRegistryTest is BaseSetup {
         RevocationRequest memory request = RevocationRequest({schema: schemaId, data: data});
 
         vm.prank(developer);
-        vm.expectRevert(DataTypes.InvalidAttestation.selector);
+        vm.expectRevert(AttestationLib.InvalidAttestation.selector);
         attestationRegistry.revoke(request);
     }
 
@@ -293,7 +300,7 @@ contract AttestationRegistryTest is BaseSetup {
         RevocationRequest memory request = RevocationRequest({schema: invalidSchemaId, data: data});
 
         vm.prank(developer);
-        vm.expectRevert(DataTypes.InvalidSchema.selector);
+        vm.expectRevert(SchemaLib.InvalidSchema.selector);
         attestationRegistry.revoke(request);
     }
 
@@ -306,7 +313,7 @@ contract AttestationRegistryTest is BaseSetup {
         RevocationRequest memory request = RevocationRequest({schema: schemaId, data: data});
 
         vm.prank(_randomAddress());
-        vm.expectRevert(DataTypes.InvalidRevoker.selector);
+        vm.expectRevert(AttestationLib.InvalidRevoker.selector);
         attestationRegistry.revoke(request);
     }
 
@@ -319,7 +326,7 @@ contract AttestationRegistryTest is BaseSetup {
         RevocationRequest memory request = RevocationRequest({schema: schemaId, data: data});
 
         vm.prank(developer);
-        vm.expectRevert(DataTypes.Irrevocable.selector);
+        vm.expectRevert(AttestationLib.Irrevocable.selector);
         attestationRegistry.revoke(request);
     }
 
@@ -335,7 +342,7 @@ contract AttestationRegistryTest is BaseSetup {
         attestationRegistry.revoke(request);
 
         vm.prank(developer);
-        vm.expectRevert(DataTypes.InvalidRevocation.selector);
+        vm.expectRevert(AttestationLib.InvalidRevocation.selector);
         attestationRegistry.revoke(request);
     }
 
@@ -356,7 +363,7 @@ contract AttestationRegistryTest is BaseSetup {
             true
         );
         bytes memory encodedData =
-            abi.encode(address(plugin), DataTypes.PluginType.Execution, plugin.moduleId(), true);
+            abi.encode(address(plugin), PluginType.Execution, plugin.moduleId(), true);
 
         AttestationRequestData memory data = AttestationRequestData({
             recipient: address(plugin), // The plugin contract will receive the attestation

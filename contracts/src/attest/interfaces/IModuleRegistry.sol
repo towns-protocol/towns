@@ -4,6 +4,8 @@ pragma solidity ^0.8.23;
 // interfaces
 import {ExecutionManifest} from
     "@erc6900/reference-implementation/interfaces/IERC6900ExecutionModule.sol";
+import {ISchemaResolver} from
+    "@ethereum-attestation-service/eas-contracts/resolver/ISchemaResolver.sol";
 
 // libraries
 
@@ -18,7 +20,12 @@ interface IModuleRegistry {
 
     /// @notice Set the schema ID used for module attestations
     /// @param schema The new schema ID
-    function setModuleSchemaId(bytes32 schema) external;
+    function registerModuleSchema(
+        string calldata schema,
+        ISchemaResolver resolver,
+        bool revocable
+    )
+        external;
 
     /// @notice Get the current version (attestation UID) for a module
     /// @param module The module address
