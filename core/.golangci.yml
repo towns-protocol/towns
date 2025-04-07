@@ -1,28 +1,28 @@
-version: "2"
+version: '2'
 linters:
-  enable:
-    - exhaustive
-  disable:
-    - staticcheck
-  settings:
-    exhaustive:
-      check:
-        - switch
-  exclusions:
-    generated: lax
-    presets:
-      - comments
-      - common-false-positives
-      - legacy
-      - std-error-handling
-    paths:
-      - third_party$
-      - builtin$
-      - examples$
+    enable:
+        - exhaustive
+    disable:
+        - staticcheck
+    settings:
+        exhaustive:
+            check:
+                - switch
+    exclusions:
+        generated: lax
+        presets:
+            - comments
+            - common-false-positives
+            - legacy
+            - std-error-handling
+        paths:
+            - third_party$
+            - builtin$
+            - examples$
 formatters:
-  exclusions:
-    generated: lax
-    paths:
-      - third_party$
-      - builtin$
-      - examples$
+    exclusions:
+        generated: lax
+        paths:
+            - third_party$
+            - builtin$
+            - examples$
