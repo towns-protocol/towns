@@ -134,9 +134,9 @@ jobs:
 
             - name: Linting River Node
               if: ${{ !cancelled() && steps.setup_success.outcome == 'success' }}
-              uses: golangci/golangci-lint-action@v6
+              uses: golangci/golangci-lint-action@v7
               with:
-                  version: v1.62.0
+                  version: v2.0.2
                   working-directory: core
                   args: --timeout=10m --config=.golangci.yml
 
@@ -168,7 +168,7 @@ jobs:
               if: ${{ !cancelled() && steps.setup_success.outcome == 'success' }}
               uses: dominikh/staticcheck-action@v1
               with:
-                  version: v0.5.1
+                  version: v0.6.1
                   working-directory: core
                   install-go: false
 
