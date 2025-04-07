@@ -1,6 +1,6 @@
 import { RiverConnection, RiverConnectionModel } from './river-connection/riverConnection'
 import { RiverConfig } from '../riverConfig'
-import { RiverRegistry, SpaceDapp } from '@river-build/web3'
+import { RiverRegistry, SpaceDapp } from '@towns-protocol/web3'
 import { RetryParams } from '../rpcInterceptors'
 import { Store } from '../store/store'
 import { SignerContext } from '../signerContext'
@@ -20,11 +20,11 @@ import { UserSettingsModel } from './user/models/userSettings'
 import { Spaces, SpacesModel } from './spaces/spaces'
 import { AuthStatus } from './river-connection/models/authStatus'
 import { ethers } from 'ethers'
-import type { EncryptionDeviceInitOpts } from '@river-build/encryption'
+import type { EncryptionDeviceInitOpts } from '@towns-protocol/encryption'
 import { Gdms, type GdmsModel } from './gdms/gdms'
 import { Dms, DmsModel } from './dms/dms'
 import { UnpackEnvelopeOpts } from '../sign'
-import { dlog, DLogger, shortenHexString } from '@river-build/dlog'
+import { dlog, DLogger, shortenHexString } from '@towns-protocol/dlog'
 
 export interface SyncAgentConfig {
     context: SignerContext

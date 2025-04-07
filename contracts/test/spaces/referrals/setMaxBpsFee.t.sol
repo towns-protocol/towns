@@ -11,14 +11,14 @@ pragma solidity ^0.8.19;
 import {ReferralsFacetTest} from "contracts/test/spaces/referrals/Referrals.t.sol";
 
 contract ReferralsFacet_setMaxBpsFee is ReferralsFacetTest {
-  function test_setMaxBpsFee(uint256 bps) external {
-    vm.assume(bps > 0);
+    function test_setMaxBpsFee(uint256 bps) external {
+        vm.assume(bps > 0);
 
-    vm.prank(founder);
-    vm.expectEmit(address(userSpace));
-    emit MaxBpsFeeUpdated(bps);
-    referralsFacet.setMaxBpsFee(bps);
+        vm.prank(founder);
+        vm.expectEmit(address(userSpace));
+        emit MaxBpsFeeUpdated(bps);
+        referralsFacet.setMaxBpsFee(bps);
 
-    assertEq(referralsFacet.maxBpsFee(), bps, "Max bps fee should match");
-  }
+        assertEq(referralsFacet.maxBpsFee(), bps, "Max bps fee should match");
+    }
 }

@@ -1,11 +1,11 @@
 /* eslint-disable no-console */
-import { check } from '@river-build/dlog'
+import { check } from '@towns-protocol/dlog'
 import { promises as fs } from 'node:fs'
 import {
     RiverConfig,
     contractAddressFromSpaceId,
     makeDefaultChannelStreamId,
-} from '@river-build/sdk'
+} from '@towns-protocol/sdk'
 import { Wallet, ethers } from 'ethers'
 import { makeStressClient, StressClient } from '../../utils/stressClient'
 import { kickoffChat } from './kickoffChat'

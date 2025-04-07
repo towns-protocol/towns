@@ -1,6 +1,6 @@
 import { utils } from 'ethers'
 import { nanoid, customAlphabet } from 'nanoid'
-import { bin_fromHexString, bin_toHexString, check } from '@river-build/dlog'
+import { bin_fromHexString, bin_toHexString, check } from '@towns-protocol/dlog'
 import { hashString } from './utils'
 
 export const STREAM_ID_BYTES_LENGTH = 32
@@ -238,7 +238,7 @@ export const checkStreamId = (streamId: string): void => {
 
 const hexNanoId = customAlphabet('0123456789abcdef', 62)
 
-export const genId = (size?: number | undefined): string => {
+export const genId = (size?: number): string => {
     return hexNanoId(size)
 }
 

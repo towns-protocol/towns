@@ -1,7 +1,7 @@
 import { Client, createClient } from '@connectrpc/connect'
 import { ConnectTransportOptions } from '@connectrpc/connect-web'
-import { NotificationService } from '@river-build/proto'
-import { dlog } from '@river-build/dlog'
+import { NotificationService } from '@towns-protocol/proto'
+import { dlog } from '@towns-protocol/dlog'
 import { getEnvVar, randomUrlSelector } from './utils'
 import { createHttp2ConnectTransport, RpcOptions } from './rpcCommon'
 import {

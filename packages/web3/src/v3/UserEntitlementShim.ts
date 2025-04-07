@@ -1,15 +1,15 @@
 import {
     UserEntitlement as LocalhostContract,
     UserEntitlementInterface as LocalhostInterface,
-} from '@river-build/generated/dev/typings/UserEntitlement'
+} from '@towns-protocol/generated/dev/typings/UserEntitlement'
 
-import LocalhostAbi from '@river-build/generated/dev/abis/UserEntitlement.abi.json' assert { type: 'json' }
+import LocalhostAbi from '@towns-protocol/generated/dev/abis/UserEntitlement.abi.json' assert { type: 'json' }
 
 import { BaseContractShim } from './BaseContractShim'
 import { BigNumberish, ethers } from 'ethers'
 import { decodeUsers } from '../ConvertersEntitlements'
 import { EntitlementModuleType, EntitlementModule } from '../ContractTypes'
-import { dlogger } from '@river-build/dlog'
+import { dlogger } from '@towns-protocol/dlog'
 
 const logger = dlogger('csb:UserEntitlementShim:debug')
 

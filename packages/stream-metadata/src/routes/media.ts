@@ -1,7 +1,7 @@
 import { FastifyReply, FastifyRequest } from 'fastify'
 import { z } from 'zod'
-import { isValidStreamId } from '@river-build/sdk'
-import { bin_fromHexString } from '@river-build/dlog'
+import { isValidStreamId } from '@towns-protocol/sdk'
+import { bin_fromHexString } from '@towns-protocol/dlog'
 
 import { getMediaStreamContent } from '../riverStreamRpcClient'
 

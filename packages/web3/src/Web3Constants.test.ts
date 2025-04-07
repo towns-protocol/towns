@@ -4,7 +4,6 @@ import { LocalhostWeb3Provider } from './LocalhostWeb3Provider'
 const log = debug('web3:test')
 
 describe('Web3Constants', () => {
-    ;``
     it('BASE_SEPOLIA', () => {
         expect(BASE_SEPOLIA).toBe(84532)
     })

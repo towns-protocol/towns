@@ -1,4 +1,4 @@
-import { SnapshotSchema } from '@river-build/proto'
+import { SnapshotSchema } from '@towns-protocol/proto'
 import { create } from '@bufbuild/protobuf'
 import { snapshotMigration0000 } from '../../migrations/snapshotMigration0000'
 

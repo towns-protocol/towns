@@ -1,6 +1,6 @@
 import { StressClient } from '../../utils/stressClient'
 import { ChatConfig } from '../common/types'
-import { RiverTimelineEvent, type TimelineEvent } from '@river-build/sdk'
+import { RiverTimelineEvent, type TimelineEvent } from '@towns-protocol/sdk'
 import { getLogger } from '../../utils/logger'
 
 export async function slowChat(client: StressClient, chatConfig: ChatConfig) {

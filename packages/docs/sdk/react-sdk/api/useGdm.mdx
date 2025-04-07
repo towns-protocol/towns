@@ -6,7 +6,7 @@ Hook to get the data of a Group DM. You can use this hook to get Group DM metada
 ## Imports
 
 ```ts
-import { useGdm } from '@river-build/react-sdk'
+import { useGdm } from '@towns-protocol/react-sdk'
 ```
 
 ## Definition
@@ -15,31 +15,10 @@ import { useGdm } from '@river-build/react-sdk'
 function useGdm(
   streamId: string,
   config?: ObservableConfig.FromData<GdmModel>,
-): {
-    data: GdmModel;
-    error: Error | undefined;
-    status: "error" | "loading" | "loaded";
-    isLoading: boolean;
-    isError: boolean;
-    isLoaded: boolean;
-} | {
-    data: GdmModel;
-    error: Error | undefined;
-    status: "error" | "loading" | "loaded";
-    isLoading: boolean;
-    isError: boolean;
-    isLoaded: boolean;
-} | {
-    data: GdmModel;
-    error: Error | undefined;
-    status: "error" | "loading" | "loaded";
-    isLoading: boolean;
-    isError: boolean;
-    isLoaded: boolean;
-}
+): ObservableValue<GdmModel>
 ```
 
-**Source:** [useGdm](https://github.com/river-build/river/blob/main/packages/react-sdk/src/useGdm.ts)
+**Source:** [useGdm](https://github.com/towns-protocol/towns/blob/main/packages/react-sdk/src/useGdm.ts)
 
 ## Parameters
 
@@ -61,26 +40,5 @@ Configuration options for the observable.
 The GdmModel of the Group DM.
 
 ```ts
-{
-    data: GdmModel;
-    error: Error | undefined;
-    status: "error" | "loading" | "loaded";
-    isLoading: boolean;
-    isError: boolean;
-    isLoaded: boolean;
-} | {
-    data: GdmModel;
-    error: Error | undefined;
-    status: "error" | "loading" | "loaded";
-    isLoading: boolean;
-    isError: boolean;
-    isLoaded: boolean;
-} | {
-    data: GdmModel;
-    error: Error | undefined;
-    status: "error" | "loading" | "loaded";
-    isLoading: boolean;
-    isError: boolean;
-    isLoaded: boolean;
-}
+ObservableValue<GdmModel>
 ```

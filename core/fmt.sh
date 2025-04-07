@@ -20,7 +20,7 @@ else
 fi
 
 FMT_CMD="golines --base-formatter=gofumpt --max-len=120"
-IMPORTS_CMD="goimports -local github.com/river-build/river"
+IMPORTS_CMD="goimports -local github.com/towns-protocol/towns"
 
 # If arguments are empty and stdin is not empty, run formatter on stdin to stdout
 if [[ -z "$*" && -n "${INPUT}" ]]

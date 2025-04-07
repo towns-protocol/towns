@@ -10,8 +10,8 @@ import {
     linkWallets,
     mockCrossChainCheckOp,
 } from '../../testUtils'
-import { dlog } from '@river-build/dlog'
-import { Address, treeToRuleData, TestCrossChainEntitlement } from '@river-build/web3'
+import { dlog } from '@towns-protocol/dlog'
+import { Address, treeToRuleData, TestCrossChainEntitlement } from '@towns-protocol/web3'
 
 const log = dlog('csb:test:channelsWithCrossChainEntitlements')
 

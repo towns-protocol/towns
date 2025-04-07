@@ -193,7 +193,9 @@ func createPgxPool(
 
 	// In general, it should be possible to add database schema name into database url as a parameter search_path (&search_path=database_schema_name)
 	// For some reason it doesn't work so have to put it into config explicitly
-	poolConf.ConnConfig.RuntimeParams["search_path"] = databaseSchemaName
+	if databaseSchemaName != "" {
+		poolConf.ConnConfig.RuntimeParams["search_path"] = databaseSchemaName
+	}
 	poolConf.ConnConfig.RuntimeParams["application_name"] = name
 
 	poolConf.ConnConfig.DefaultQueryExecMode = pgx.QueryExecModeSimpleProtocol
@@ -278,8 +280,6 @@ func (s *PostgresEventStore) init(
 ) error {
 	log := logging.FromCtx(ctx)
 
-	setupPostgresMetrics(ctx, *poolInfo, metrics)
-
 	s.config = poolInfo.Config
 	s.pool = poolInfo.Pool
 	s.poolConfig = poolInfo.PoolConfig
@@ -320,6 +320,11 @@ func (s *PostgresEventStore) init(
 	err := s.InitStorage(ctx)
 	if err != nil {
 		return err
+	}
+
+	// Delay the creation of metrics until after the schema has been created.
+	if err := setupPostgresMetrics(ctx, *poolInfo, metrics); err != nil {
+		return WrapRiverError(Err_DB_OPERATION_FAILURE, err).Message("Unable to set up postgres metrics for db")
 	}
 
 	return nil

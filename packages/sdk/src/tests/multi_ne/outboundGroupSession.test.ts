@@ -5,9 +5,9 @@
 import { makeTestClient, makeUniqueSpaceStreamId, TestClient } from '../testUtils'
 
 import { genShortId, makeUniqueChannelStreamId } from '../../id'
-import { ChannelMessageSchema } from '@river-build/proto'
-import { GroupEncryptionAlgorithmId } from '@river-build/encryption'
-import { checkNever } from '@river-build/web3'
+import { ChannelMessageSchema } from '@towns-protocol/proto'
+import { GroupEncryptionAlgorithmId } from '@towns-protocol/encryption'
+import { checkNever } from '@towns-protocol/web3'
 import { create, toBinary } from '@bufbuild/protobuf'
 
 describe('outboundSessionTests', () => {

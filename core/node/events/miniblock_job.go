@@ -304,23 +304,16 @@ func (j *mbJob) saveCandidate(ctx context.Context) error {
 	)
 
 	qp.AddTask(func(ctx context.Context) error {
-		miniblockBytes, err := j.candidate.ToBytes()
+		mb, err := j.candidate.AsStorageMb()
 		if err != nil {
 			return err
 		}
 
-		return j.cache.Params().Storage.WriteMiniblockCandidate(
-			ctx,
-			j.stream.streamId,
-			j.candidate.Ref.Hash,
-			j.candidate.Ref.Num,
-			miniblockBytes,
-		)
+		return j.cache.Params().Storage.WriteMiniblockCandidate(ctx, j.stream.streamId, mb)
 	})
 
 	qp.AddNodeTasks(j.remoteNodes, func(ctx context.Context, node common.Address) error {
-		return j.cache.Params().RemoteMiniblockProvider.SaveMbCandidate(ctx, node, j.stream.streamId, j.candidate.Proto)
+		return j.cache.Params().RemoteMiniblockProvider.SaveMbCandidate(ctx, node, j.stream.streamId, j.candidate)
 	})
-
 	return qp.Wait()
 }

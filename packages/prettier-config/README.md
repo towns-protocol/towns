@@ -1,3 +1,3 @@
-## @river-build/prettier-config
+## @towns-protocol/prettier-config
 
 A shared prettier configuration between packages

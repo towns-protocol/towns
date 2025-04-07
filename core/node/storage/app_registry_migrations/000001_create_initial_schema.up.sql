@@ -19,7 +19,7 @@ CREATE TABLE IF NOT EXISTS app_session_keys (
     device_key  VARCHAR    NOT NULL,
     stream_id   CHAR(64)   NOT NULL,
     session_ids VARCHAR[]  NOT NULL,
-    ciphertexts VARCHAR    NOT NULL,
+    message_envelope BYTEA NOT NULL,
     CHECK (array_length(session_ids, 1) > 0), -- session ids array contains at least 1 element
     CHECK (array_has_no_duplicates(session_ids)), -- all session ids are unique within an array
     CONSTRAINT fk_device_key FOREIGN KEY (device_key) REFERENCES app_registry(device_key)

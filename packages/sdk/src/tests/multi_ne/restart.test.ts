@@ -1,9 +1,9 @@
 /**
  */
 
-import { MembershipOp } from '@river-build/proto'
+import { MembershipOp } from '@towns-protocol/proto'
 import { setTimeout } from 'timers/promises'
-import { dlog } from '@river-build/dlog'
+import { dlog } from '@towns-protocol/dlog'
 import {
     makeUniqueChannelStreamId,
     makeUserStreamId,

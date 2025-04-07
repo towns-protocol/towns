@@ -8,7 +8,9 @@ import {TestUtils} from "contracts/test/utils/TestUtils.sol";
 import {ILockBase} from "contracts/src/tokens/lock/ILock.sol";
 
 //libraries
-import {EIP712Utils} from "contracts/test/utils/EIP712Utils.sol";
+import {EIP712Utils} from "@towns-protocol/diamond/test/facets/signature/EIP712Utils.sol";
+
+import {LockStorage} from "contracts/src/tokens/lock/LockStorage.sol";
 import {TownsLib} from "contracts/src/tokens/towns/base/TownsLib.sol";
 
 //contracts
@@ -19,312 +21,328 @@ import {ERC20} from "solady/tokens/ERC20.sol";
 import {ERC20Votes} from "solady/tokens/ERC20Votes.sol";
 
 contract TownsBaseTest is TestUtils, EIP712Utils, ILockBase {
-  DeployTownsBase internal deployTownsBase = new DeployTownsBase();
-  Towns towns;
+    address internal constant PERMIT2 = 0x000000000022D473030F116dDEE9F6B43aC78BA3;
 
-  address internal deployer;
-  address internal bridge;
+    DeployTownsBase internal deployTownsBase = new DeployTownsBase();
+    Towns towns;
 
-  function setUp() external {
-    deployer = getDeployer();
-    towns = Towns(deployTownsBase.deploy(deployer));
-    bridge = TownsLib.L2_STANDARD_BRIDGE;
-  }
+    address internal deployer;
+    address internal bridge;
 
-  modifier givenCallerHasBridgedTokens(address caller, uint256 amount) {
-    vm.assume(caller != address(0));
-    amount = bound(amount, 0, type(uint208).max);
+    function setUp() external {
+        deployer = getDeployer();
+        towns = Towns(deployTownsBase.deploy(deployer));
+        bridge = TownsLib.L2_STANDARD_BRIDGE;
+    }
 
-    vm.prank(bridge);
-    towns.mint(caller, amount);
-    _;
-  }
+    modifier givenCallerHasBridgedTokens(address caller, uint256 amount) {
+        vm.assume(caller != address(0));
+        amount = bound(amount, 0, type(uint208).max);
 
-  modifier givenCallerDelegates(address caller, address delegate) {
-    vm.assume(delegate != address(0));
+        vm.prank(bridge);
+        towns.mint(caller, amount);
+        _;
+    }
 
-    vm.prank(caller);
-    towns.delegate(delegate);
-    _;
-  }
+    modifier givenCallerDelegates(address caller, address delegate) {
+        vm.assume(delegate != address(0));
 
-  function test_init() external view {
-    assertEq(towns.owner(), address(deployer));
-    assertEq(towns.name(), "Towns");
-    assertEq(towns.symbol(), "TOWNS");
-    assertEq(towns.decimals(), 18);
-  }
+        vm.prank(caller);
+        towns.delegate(delegate);
+        _;
+    }
 
-  // Permit and Permit with Signature
-  function test_allowance(
-    address alice,
-    uint256 amount,
-    address bob
-  ) public givenCallerHasBridgedTokens(alice, amount) {
-    vm.assume(bob != address(0));
-    vm.assume(bob != ZERO_SENTINEL);
-    vm.assume(alice != bob);
+    function test_init() external view {
+        assertEq(towns.owner(), address(deployer));
+        assertEq(towns.name(), "Towns");
+        assertEq(towns.symbol(), "TOWNS");
+        assertEq(towns.decimals(), 18);
+    }
 
-    vm.assume(towns.allowance(alice, bob) == 0);
+    function test_storageSlot() public pure {
+        bytes32 slot = keccak256("river.tokens.lock.storage");
+        assertEq(slot, LockStorage.STORAGE_SLOT, "slot");
+    }
 
-    vm.prank(alice);
-    towns.approve(bob, amount);
+    // Permit and Permit with Signature
+    function test_allowance(
+        address alice,
+        uint256 amount,
+        address bob
+    )
+        public
+        givenCallerHasBridgedTokens(alice, amount)
+    {
+        vm.assume(bob != address(0));
+        vm.assume(bob != ZERO_SENTINEL);
+        vm.assume(alice != bob);
 
-    assertEq(towns.allowance(alice, bob), amount);
-  }
+        vm.assume(towns.allowance(alice, bob) == 0);
 
-  function test_permit(
-    uint256 alicePrivateKey,
-    uint256 amount,
-    address bob
-  ) public {
-    vm.assume(bob != address(0));
-    vm.assume(bob != address(towns));
-    vm.assume(bob != ZERO_SENTINEL);
+        vm.prank(alice);
+        towns.approve(bob, amount);
 
-    amount = bound(amount, 1, type(uint208).max);
+        assertEq(towns.allowance(alice, bob), amount);
+    }
 
-    alicePrivateKey = boundPrivateKey(alicePrivateKey);
+    function test_permit(uint256 alicePrivateKey, uint256 amount, address bob) public {
+        vm.assume(bob != address(0));
+        vm.assume(bob != address(towns));
+        vm.assume(bob != ZERO_SENTINEL);
 
-    address alice = vm.addr(alicePrivateKey);
+        amount = bound(amount, 1, type(uint208).max);
 
-    vm.assume(towns.delegates(alice) == address(0));
-    vm.assume(towns.allowance(alice, bob) == 0);
+        alicePrivateKey = boundPrivateKey(alicePrivateKey);
 
-    vm.prank(bridge);
-    towns.mint(alice, amount);
+        address alice = vm.addr(alicePrivateKey);
 
-    vm.warp(block.timestamp + 100);
+        vm.assume(towns.delegates(alice) == address(0));
+        vm.assume(towns.allowance(alice, bob) == 0);
 
-    uint256 deadline = block.timestamp + 100;
-    (uint8 v, bytes32 r, bytes32 s) = signPermit(
-      alicePrivateKey,
-      address(towns),
-      alice,
-      bob,
-      amount,
-      deadline
-    );
+        vm.prank(bridge);
+        towns.mint(alice, amount);
 
-    assertEq(towns.allowance(alice, bob), 0);
+        vm.warp(block.timestamp + 100);
 
-    vm.prank(bob);
-    towns.permit(alice, bob, amount, deadline, v, r, s);
+        uint256 deadline = block.timestamp + 100;
+        (uint8 v, bytes32 r, bytes32 s) =
+            signPermit(alicePrivateKey, address(towns), alice, bob, amount, deadline);
 
-    assertEq(towns.allowance(alice, bob), amount);
-  }
+        assertEq(towns.allowance(alice, bob), 0);
 
-  function test_revertWhen_permit_deadlineExpired(
-    uint256 alicePrivateKey,
-    uint256 amount,
-    address bob
-  ) external {
-    vm.assume(bob != address(0));
-    vm.assume(bob != PERMIT2);
+        vm.prank(bob);
+        towns.permit(alice, bob, amount, deadline, v, r, s);
 
-    alicePrivateKey = boundPrivateKey(alicePrivateKey);
-    amount = bound(amount, 1, type(uint208).max);
+        assertEq(towns.allowance(alice, bob), amount);
+    }
 
-    address alice = vm.addr(alicePrivateKey);
+    function test_revertWhen_permit_deadlineExpired(
+        uint256 alicePrivateKey,
+        uint256 amount,
+        address bob
+    )
+        external
+    {
+        vm.assume(bob != address(0));
+        vm.assume(bob != PERMIT2);
 
-    vm.prank(bridge);
-    towns.mint(alice, amount);
+        alicePrivateKey = boundPrivateKey(alicePrivateKey);
+        amount = bound(amount, 1, type(uint208).max);
 
-    uint256 deadline = block.timestamp + 100;
-    (uint8 v, bytes32 r, bytes32 s) = signPermit(
-      alicePrivateKey,
-      address(towns),
-      alice,
-      bob,
-      amount,
-      deadline
-    );
+        address alice = vm.addr(alicePrivateKey);
 
-    vm.warp(deadline + 1);
+        vm.prank(bridge);
+        towns.mint(alice, amount);
 
-    vm.prank(bob);
-    vm.expectRevert(ERC20.PermitExpired.selector);
-    towns.permit(alice, bob, amount, deadline, v, r, s);
-  }
+        uint256 deadline = block.timestamp + 100;
+        (uint8 v, bytes32 r, bytes32 s) =
+            signPermit(alicePrivateKey, address(towns), alice, bob, amount, deadline);
 
-  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-  /*                        Delegating                          */
-  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-  function test_delegate_enableLock(
-    address alice,
-    address space,
-    uint256 amount
-  )
-    public
-    givenCallerHasBridgedTokens(alice, amount)
-    givenCallerDelegates(alice, space)
-  {
-    assertEq(towns.isLockEnabled(alice), true);
+        vm.warp(deadline + 1);
 
-    vm.expectEmit(address(towns));
-    emit LockUpdated(alice, false, block.timestamp + 30 days);
+        vm.prank(bob);
+        vm.expectRevert(ERC20.PermitExpired.selector);
+        towns.permit(alice, bob, amount, deadline, v, r, s);
+    }
 
-    vm.prank(alice);
-    towns.delegate(address(0));
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                        Delegating                          */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+    function test_delegate_enableLock(
+        address alice,
+        address space,
+        uint256 amount
+    )
+        public
+        givenCallerHasBridgedTokens(alice, amount)
+        givenCallerDelegates(alice, space)
+    {
+        assertEq(towns.isLockActive(alice), true);
 
-    assertEq(towns.isLockEnabled(alice), true);
+        vm.expectEmit(address(towns));
+        emit LockUpdated(alice, false, block.timestamp + 30 days);
 
-    uint256 cd = towns.lockCooldown(alice);
-    vm.warp(cd);
+        vm.prank(alice);
+        towns.delegate(address(0));
 
-    assertEq(towns.isLockEnabled(alice), false);
-  }
+        assertEq(towns.isLockActive(alice), true);
 
-  function test_revertWhen_delegateToZeroAddress(address alice) external {
-    vm.prank(alice);
-    vm.expectRevert(Towns.DelegateeSameAsCurrent.selector);
-    towns.delegate(address(0));
-    assertEq(towns.delegates(alice), address(0));
-  }
+        uint256 cd = towns.lockExpiration(alice);
+        vm.warp(cd);
 
-  function test_delegate_redelegate(
-    address alice,
-    address bob,
-    address space,
-    uint256 amount
-  )
-    external
-    givenCallerHasBridgedTokens(alice, amount)
-    givenCallerDelegates(alice, space)
-  {
-    vm.assume(bob != address(0) && bob != space);
+        assertEq(towns.isLockActive(alice), false);
+    }
 
-    vm.startPrank(alice);
-    towns.delegate(bob);
-    towns.delegate(address(0));
-    towns.delegate(bob);
-    vm.stopPrank();
-  }
+    function test_revertWhen_delegateToZeroAddress(address alice) external {
+        vm.prank(alice);
+        vm.expectRevert(Towns.DelegateeSameAsCurrent.selector);
+        towns.delegate(address(0));
+        assertEq(towns.delegates(alice), address(0));
+    }
 
-  function test_revertWhen_transfer_lockEnabled(
-    address alice,
-    address space,
-    uint256 amount,
-    address bob
-  )
-    external
-    givenCallerHasBridgedTokens(alice, amount)
-    givenCallerDelegates(alice, space)
-  {
-    vm.assume(bob != address(0));
-    vm.prank(alice);
-    vm.expectRevert(Towns.TransferLockEnabled.selector);
-    towns.transfer(bob, amount);
-  }
+    function test_revertWhen_undelegate_twice(
+        address alice,
+        address space,
+        uint256 amount
+    )
+        external
+        givenCallerHasBridgedTokens(alice, amount)
+        givenCallerDelegates(alice, space)
+    {
+        vm.startPrank(alice);
+        towns.delegate(address(0));
+        vm.expectRevert(Towns.DelegateeSameAsCurrent.selector);
+        towns.delegate(address(0));
+    }
 
-  function test_revertWhen_transfer_delegating(
-    address alice,
-    address space,
-    uint256 amount,
-    address bob
-  )
-    external
-    givenCallerHasBridgedTokens(alice, amount)
-    givenCallerDelegates(alice, space)
-  {
-    amount = bound(amount, 0, type(uint208).max);
-    vm.assume(bob != address(0));
+    function test_delegate_redelegate(
+        address alice,
+        address bob,
+        address space,
+        uint256 amount
+    )
+        external
+        givenCallerHasBridgedTokens(alice, amount)
+        givenCallerDelegates(alice, space)
+    {
+        vm.assume(bob != address(0) && bob != space);
 
-    vm.startPrank(alice);
-    towns.delegate(address(0));
+        vm.startPrank(alice);
+        towns.delegate(bob);
+        towns.delegate(address(0));
+        towns.delegate(bob);
+        vm.stopPrank();
+    }
 
-    assertEq(towns.isLockEnabled(alice), true);
+    function test_revertWhen_transfer_lockEnabled(
+        address alice,
+        address space,
+        uint256 amount,
+        address bob
+    )
+        external
+        givenCallerHasBridgedTokens(alice, amount)
+        givenCallerDelegates(alice, space)
+    {
+        vm.assume(bob != address(0));
+        vm.prank(alice);
+        vm.expectRevert(Towns.TransferLockEnabled.selector);
+        towns.transfer(bob, amount);
+    }
 
-    towns.delegate(space);
+    function test_revertWhen_transfer_delegating(
+        address alice,
+        address space,
+        uint256 amount,
+        address bob
+    )
+        external
+        givenCallerHasBridgedTokens(alice, amount)
+        givenCallerDelegates(alice, space)
+    {
+        amount = bound(amount, 0, type(uint208).max);
+        vm.assume(bob != address(0));
 
-    uint256 cd = towns.lockCooldown(alice);
-    vm.warp(cd);
+        vm.startPrank(alice);
+        towns.delegate(address(0));
 
-    vm.expectRevert(Towns.TransferLockEnabled.selector);
-    towns.transfer(bob, amount);
-  }
+        assertEq(towns.isLockActive(alice), true);
 
-  function test_transfer_delegateVotesIsCorrect(
-    address alice,
-    address space,
-    uint256 amountA,
-    address bob,
-    uint256 amountB
-  ) public {
-    vm.assume(alice != bob);
-    vm.assume(alice != address(0));
-    vm.assume(bob != address(0));
-    vm.assume(space != address(0));
+        towns.delegate(space);
 
-    amountA = bound(amountA, 1, type(uint208).max - 1);
-    amountB = bound(amountB, 1, type(uint208).max - amountA);
+        uint256 cd = towns.lockExpiration(alice);
+        vm.warp(cd);
 
-    vm.prank(bridge);
-    towns.mint(alice, amountA);
+        vm.expectRevert(Towns.TransferLockEnabled.selector);
+        towns.transfer(bob, amount);
+    }
 
-    vm.prank(bridge);
-    towns.mint(bob, amountB);
+    function test_transfer_delegateVotesIsCorrect(
+        address alice,
+        address space,
+        uint256 amountA,
+        address bob,
+        uint256 amountB
+    )
+        public
+    {
+        vm.assume(alice != bob);
+        vm.assume(alice != address(0));
+        vm.assume(bob != address(0));
+        vm.assume(space != address(0));
 
-    vm.expectEmit(address(towns));
-    emit ERC20Votes.DelegateVotesChanged(space, 0, amountB);
-    emit LockUpdated(bob, true, 0);
+        amountA = bound(amountA, 1, type(uint208).max - 1);
+        amountB = bound(amountB, 1, type(uint208).max - amountA);
 
-    vm.prank(bob);
-    towns.delegate(space);
+        vm.prank(bridge);
+        towns.mint(alice, amountA);
 
-    uint256 timestamp = block.timestamp;
-    vm.warp(timestamp + 1);
-    assertEq(towns.getVotes(space), towns.getPastVotes(space, timestamp));
-    assertEq(towns.getVotes(space), amountB);
+        vm.prank(bridge);
+        towns.mint(bob, amountB);
 
-    vm.expectEmit(address(towns));
-    emit ERC20Votes.DelegateVotesChanged(space, amountB, amountA + amountB);
+        vm.expectEmit(address(towns));
+        emit ERC20Votes.DelegateVotesChanged(space, 0, amountB);
+        emit LockUpdated(bob, true, 0);
 
-    vm.prank(alice);
-    towns.transfer(bob, amountA);
+        vm.prank(bob);
+        towns.delegate(space);
 
-    assertEq(towns.getVotes(space), amountA + amountB);
-  }
+        uint256 timestamp = block.timestamp;
+        vm.warp(timestamp + 1);
+        assertEq(towns.getVotes(space), towns.getPastVotes(space, timestamp));
+        assertEq(towns.getVotes(space), amountB);
 
-  /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-  /*                           Upgrades                         */
-  /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-  function test_upgrade() external {
-    address impl = address(new TownsV2());
+        vm.expectEmit(address(towns));
+        emit ERC20Votes.DelegateVotesChanged(space, amountB, amountA + amountB);
 
-    vm.prank(address(deployer));
-    TownsV2(address(towns)).upgradeToAndCall(
-      impl,
-      abi.encodeCall(TownsV2.updateCoolDown, (100)) // Function call on the new impl
-    );
-  }
+        vm.prank(alice);
+        towns.transfer(bob, amountA);
 
-  function test_enabledLockUpdated(
-    address alice,
-    address space,
-    uint256 amount
-  ) external givenCallerHasBridgedTokens(alice, amount) {
-    vm.assume(space != address(0));
+        assertEq(towns.getVotes(space), amountA + amountB);
+    }
 
-    address impl = address(new TownsV2());
-    uint256 cooldown = 300; // 5 mins
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                           Upgrades                         */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+    function test_upgrade() external {
+        address impl = address(new TownsV2());
 
-    // upgrade and call updateCoolDown on the new impl
-    vm.prank(address(deployer));
-    TownsV2(address(towns)).upgradeToAndCall(
-      impl,
-      abi.encodeCall(TownsV2.updateCoolDown, (cooldown)) // Function call on the new impl
-    );
+        vm.prank(address(deployer));
+        TownsV2(address(towns)).upgradeToAndCall(
+            impl,
+            abi.encodeCall(TownsV2.updateCoolDown, (100)) // Function call on the new impl
+        );
+    }
 
-    vm.startPrank(alice);
-    vm.expectEmit(address(towns));
-    emit LockUpdated(alice, true, 0);
-    towns.delegate(space);
-    vm.stopPrank();
+    function test_enabledLockUpdated(
+        address alice,
+        address space,
+        uint256 amount
+    )
+        external
+        givenCallerHasBridgedTokens(alice, amount)
+    {
+        vm.assume(space != address(0));
 
-    vm.prank(alice);
-    vm.expectEmit(address(towns));
-    emit LockUpdated(alice, false, block.timestamp + cooldown);
-    towns.delegate(address(0));
-  }
+        address impl = address(new TownsV2());
+        uint256 cooldown = 300; // 5 mins
+
+        // upgrade and call updateCoolDown on the new impl
+        vm.prank(address(deployer));
+        TownsV2(address(towns)).upgradeToAndCall(
+            impl,
+            abi.encodeCall(TownsV2.updateCoolDown, (cooldown)) // Function call on the new impl
+        );
+
+        vm.startPrank(alice);
+        vm.expectEmit(address(towns));
+        emit LockUpdated(alice, true, 0);
+        towns.delegate(space);
+        vm.stopPrank();
+
+        vm.prank(alice);
+        vm.expectEmit(address(towns));
+        emit LockUpdated(alice, false, block.timestamp + cooldown);
+        towns.delegate(address(0));
+    }
 }

@@ -3,7 +3,7 @@
  */
 
 import { makeEvent } from '../../sign'
-import { MembershipOp, SyncStreamsResponse, SyncOp } from '@river-build/proto'
+import { MembershipOp, SyncStreamsResponse, SyncOp } from '@towns-protocol/proto'
 import {
     makeRandomUserContext,
     makeTestRpcClient,

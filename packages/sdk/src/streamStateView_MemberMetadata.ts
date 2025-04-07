@@ -2,13 +2,13 @@ import {
     WrappedEncryptedData as WrappedEncryptedData,
     EncryptedData,
     MemberPayload_Nft,
-} from '@river-build/proto'
+} from '@towns-protocol/proto'
 import TypedEmitter from 'typed-emitter'
 import { ConfirmedTimelineEvent, RemoteTimelineEvent } from './types'
 import { StreamEncryptionEvents, StreamStateEvents } from './streamEvents'
 import { MemberMetadata_Usernames } from './memberMetadata_Usernames'
 import { MemberMetadata_DisplayNames } from './memberMetadata_DisplayNames'
-import { bin_toHexString } from '@river-build/dlog'
+import { bin_toHexString } from '@towns-protocol/dlog'
 import { MemberMetadata_EnsAddresses } from './memberMetadata_EnsAddresses'
 import { MemberMetadata_Nft } from './memberMetadata_Nft'
 

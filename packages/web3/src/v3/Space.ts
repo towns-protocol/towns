@@ -38,6 +38,7 @@ import { parseChannelMetadataJSON } from '../Utils'
 import { IPrepayShim } from './IPrepayShim'
 import { IERC721AShim } from './IERC721AShim'
 import { IReviewShim } from './IReviewShim'
+import { ITreasuryShim } from './ITreasuryShim'
 
 interface AddressToEntitlement {
     [address: string]: EntitlementShim
@@ -64,6 +65,7 @@ export class Space {
     private readonly spaceOwnerErc721A: IERC721AShim
     private readonly tipping: ITippingShim
     private readonly review: IReviewShim
+    private readonly treasury: ITreasuryShim
 
     constructor(
         address: string,
@@ -93,6 +95,7 @@ export class Space {
         this.erc721A = new IERC721AShim(address, provider)
         this.tipping = new ITippingShim(address, provider)
         this.review = new IReviewShim(address, provider)
+        this.treasury = new ITreasuryShim(address, provider)
     }
 
     private getAllShims() {
@@ -112,6 +115,7 @@ export class Space {
             this.prepay,
             this.erc721A,
             this.tipping,
+            this.treasury,
         ] as const
     }
 
@@ -185,6 +189,10 @@ export class Space {
 
     public get Review(): IReviewShim {
         return this.review
+    }
+
+    public get Treasury(): ITreasuryShim {
+        return this.treasury
     }
 
     public async totalTips({ currency }: { currency: string }): Promise<{
@@ -301,7 +309,7 @@ export class Space {
         }
         // get all the role info
         const allRoleEntitlements = await Promise.all(getRoleEntitlementsAsync)
-        return allRoleEntitlements.filter((r) => r !== null) as RoleEntitlements[]
+        return allRoleEntitlements.filter((r) => r !== null)
     }
 
     public async findEntitlementByType(
@@ -350,7 +358,7 @@ export class Space {
     private async getEntitlementByAddress(address: string): Promise<EntitlementShim> {
         if (!this.addressToEntitlement[address]) {
             const entitlement = await this.entitlements.read.getEntitlement(address)
-            switch (entitlement.moduleType) {
+            switch (entitlement.moduleType as EntitlementModuleType) {
                 case EntitlementModuleType.UserEntitlement:
                     this.addressToEntitlement[address] = new UserEntitlementShim(
                         address,

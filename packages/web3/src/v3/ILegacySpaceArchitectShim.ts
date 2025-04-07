@@ -2,9 +2,9 @@ import {
     ILegacyArchitect as LocalhostContract,
     ILegacyArchitectBase as LocalhostILegacySpaceArchitectBase,
     ILegacyArchitectInterface as LocalhostInterface,
-} from '@river-build/generated/dev/typings/IMockLegacyArchitect.sol/ILegacyArchitect'
+} from '@towns-protocol/generated/dev/typings/IMockLegacyArchitect.sol/ILegacyArchitect'
 
-import LocalhostAbi from '@river-build/generated/dev/abis/MockLegacyArchitect.abi.json' assert { type: 'json' }
+import LocalhostAbi from '@towns-protocol/generated/dev/abis/MockLegacyArchitect.abi.json' assert { type: 'json' }
 
 import { ethers } from 'ethers'
 import { BaseContractShim } from './BaseContractShim'

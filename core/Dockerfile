@@ -1,5 +1,5 @@
 # Start with an Alpine image that includes Go.
-FROM golang:1.23.3-alpine3.20 AS builder
+FROM golang:1.24.2-alpine3.20 AS builder
 
 # Install build-base for GCC (C compiler and related tools), git, and other dependencies.
 # Install libsecp256k1-dev if available or compile it from source.
@@ -35,7 +35,7 @@ RUN go build \
 FROM alpine:latest
 LABEL org.opencontainers.image.title="River Node" \
     org.opencontainers.image.description="River Node reference implementation, written in Go" \
-    org.opencontainers.image.source="https://github.com/river-build/river" \
+    org.opencontainers.image.source="https://github.com/towns-protocol/towns" \
     org.opencontainers.image.licenses="MIT"
 
 # Install dependencies
@@ -60,7 +60,7 @@ USER riveruser
 
 # Environment variables setup
 ARG GIT_SHA
-ARG DD_GIT_REPOSITORY_URL="https://github.com/river-build/river"
+ARG DD_GIT_REPOSITORY_URL="https://github.com/towns-protocol/towns"
 
 ENV DD_GIT_REPOSITORY_URL=${DD_GIT_REPOSITORY_URL} \
     DD_GIT_COMMIT_SHA=${GIT_SHA}

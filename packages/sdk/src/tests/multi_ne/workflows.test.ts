@@ -3,8 +3,8 @@
  */
 
 import { makeEvent, unpackStreamEnvelopes } from '../../sign'
-import { MembershipOp } from '@river-build/proto'
-import { dlog } from '@river-build/dlog'
+import { MembershipOp } from '@towns-protocol/proto'
+import { dlog } from '@towns-protocol/dlog'
 import {
     lastEventFiltered,
     makeRandomUserContext,

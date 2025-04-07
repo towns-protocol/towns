@@ -280,7 +280,7 @@ func (s *Service) initWallet() error {
 	if !s.config.Log.Simplify {
 		s.defaultLogger = s.defaultLogger.With("nodeAddress", wallet.Address.Hex())
 		s.serverCtx = logging.CtxWithLog(ctx, s.defaultLogger)
-		zap.ReplaceGlobals(s.defaultLogger.Logger)
+		zap.ReplaceGlobals(s.defaultLogger.RootLogger)
 	}
 
 	return nil
@@ -343,6 +343,12 @@ func (s *Service) initRiverChain() error {
 		return err
 	}
 
+	s.chainConfig, err = crypto.NewOnChainConfig(
+		ctx, s.riverChain.Client, s.registryContract.Address, s.riverChain.InitialBlockNum, s.riverChain.ChainMonitor)
+	if err != nil {
+		return err
+	}
+
 	var walletAddress common.Address
 	if s.wallet != nil {
 		walletAddress = s.wallet.Address
@@ -357,15 +363,10 @@ func (s *Service) initRiverChain() error {
 		walletAddress,
 		s.riverChain.InitialBlockNum,
 		s.riverChain.ChainMonitor,
+		s.chainConfig,
 		httpClient,
 		s.otelConnectIterceptor,
 	)
-	if err != nil {
-		return err
-	}
-
-	s.chainConfig, err = crypto.NewOnChainConfig(
-		ctx, s.riverChain.Client, s.registryContract.Address, s.riverChain.InitialBlockNum, s.riverChain.ChainMonitor)
 	if err != nil {
 		return err
 	}
@@ -756,7 +757,7 @@ func (s *Service) initHandlers() {
 	nodeServicePattern, nodeServiceHandler := protocolconnect.NewNodeToNodeHandler(s, interceptors)
 	s.mux.Handle(nodeServicePattern, newHttpHandler(nodeServiceHandler, s.defaultLogger))
 
-	s.registerDebugHandlers(s.config.EnableDebugEndpoints, s.config.DebugEndpoints)
+	s.registerDebugHandlers()
 }
 
 func (s *Service) initNotificationHandlers() error {
@@ -791,7 +792,7 @@ func (s *Service) initNotificationHandlers() error {
 	s.mux.Handle(notificationServicePattern, newHttpHandler(notificationServiceHandler, s.defaultLogger))
 	s.mux.Handle(notificationAuthServicePattern, newHttpHandler(notificationAuthServiceHandler, s.defaultLogger))
 
-	s.registerDebugHandlers(s.config.EnableDebugEndpoints, s.config.DebugEndpoints)
+	s.registerDebugHandlers()
 
 	return nil
 }
@@ -914,4 +915,15 @@ func loadCertFromFiles(
 type CertKey struct {
 	Cert string `json:"cert"`
 	Key  string `json:"key"`
+}
+
+func (s *Service) getServerName() string {
+	name := "name_not_set"
+	if s.wallet != nil {
+		name = s.wallet.String()
+	}
+	if s.mode == ServerModeArchive && s.config.Archive.ArchiveId != "" {
+		name = s.config.Archive.ArchiveId
+	}
+	return fmt.Sprintf("%s_%s", s.mode, name)
 }

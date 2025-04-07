@@ -4,7 +4,7 @@ import {
     SpaceAddressFromSpaceId,
     SpaceReviewAction,
     SpaceReviewEventObject,
-} from '@river-build/web3'
+} from '@towns-protocol/web3'
 import {
     PlainMessage,
     MembershipOp,
@@ -34,7 +34,6 @@ import {
     UserBio,
     Tags,
     BlockchainTransaction,
-    MiniblockHeader,
     GetStreamResponse,
     CreateStreamResponse,
     ChannelProperties,
@@ -54,7 +53,7 @@ import {
     SolanaBlockchainTransactionReceipt,
     SessionKeysSchema,
     EnvelopeSchema,
-} from '@river-build/proto'
+} from '@towns-protocol/proto'
 import {
     bin_fromHexString,
     bin_toHexString,
@@ -64,7 +63,7 @@ import {
     dlog,
     dlogError,
     bin_fromString,
-} from '@river-build/dlog'
+} from '@towns-protocol/dlog'
 import {
     AES_GCM_DERIVED_ALGORITHM,
     BaseDecryptionExtensions,
@@ -79,7 +78,7 @@ import {
     UserDeviceCollection,
     makeSessionKeys,
     type EncryptionDeviceInitOpts,
-} from '@river-build/encryption'
+} from '@towns-protocol/encryption'
 import { getMaxTimeoutMs, StreamRpcClient, getMiniblocks } from './makeStreamRpcClient'
 import { errorContains, getRpcErrorProperty } from './rpcInterceptors'
 import { assert, isDefined } from './check'
@@ -106,7 +105,7 @@ import {
     contractAddressFromSpaceId,
     isUserId,
 } from './id'
-import { makeEvent, unpackEnvelope, UnpackEnvelopeOpts, unpackStream, unpackStreamEx } from './sign'
+import { makeEvent, UnpackEnvelopeOpts, unpackStream, unpackStreamEx } from './sign'
 import { StreamEvents } from './streamEvents'
 import { IStreamStateView, StreamStateView } from './streamStateView'
 import {
@@ -175,7 +174,7 @@ import { SyncedStreamsExtension } from './syncedStreamsExtension'
 import { SignerContext } from './signerContext'
 import { decryptAESGCM, deriveKeyAndIV, encryptAESGCM, uint8ArrayToBase64 } from './crypto_utils'
 import { makeTags, makeTipTags, makeTransferTags } from './tags'
-import { TipEventObject } from '@river-build/generated/dev/typings/ITipping'
+import { TipEventObject } from '@towns-protocol/generated/dev/typings/ITipping'
 
 export type ClientEvents = StreamEvents & DecryptionEvents
 
@@ -817,10 +816,10 @@ export class Client
         spaceId: string | Uint8Array | undefined,
         userId: string | undefined,
         chunkCount: number,
-        firstChunk?: Uint8Array | undefined,
-        firstChunkIv?: Uint8Array | undefined,
-        streamSettings?: PlainMessage<StreamSettings> | undefined,
-        perChunkEncryption?: boolean | undefined,
+        firstChunk?: Uint8Array,
+        firstChunkIv?: Uint8Array,
+        streamSettings?: PlainMessage<StreamSettings>,
+        perChunkEncryption?: boolean,
     ): Promise<{ creationCookie: CreationCookie }> {
         assert(this.userStreamId !== undefined, 'userStreamId must be set')
         if (!channelId && !spaceId && !userId) {
@@ -2199,24 +2198,6 @@ export class Client
             terminus: terminus,
             miniblocks: [...miniblocks, ...cachedMiniblocks],
         }
-    }
-
-    async getMiniblockHeader(
-        streamId: string,
-        miniblockNum: bigint,
-        unpackOpts: UnpackEnvelopeOpts | undefined = undefined,
-    ): Promise<MiniblockHeader> {
-        const response = await this.rpcClient.getMiniblockHeader({
-            streamId: streamIdAsBytes(streamId),
-            miniblockNum: miniblockNum,
-        })
-        check(isDefined(response.header), `header not found: ${streamId}`)
-        const header = await unpackEnvelope(response.header, unpackOpts)
-        check(
-            header.event.payload.case === 'miniblockHeader',
-            `bad miniblock header: wrong case received: ${header.event.payload.case}`,
-        )
-        return header.event.payload.value
     }
 
     async scrollback(

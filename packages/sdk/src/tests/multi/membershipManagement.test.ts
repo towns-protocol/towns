@@ -2,7 +2,7 @@
  * @group with-entitlements
  */
 
-import { dlog } from '@river-build/dlog'
+import { dlog } from '@towns-protocol/dlog'
 import {
     makeUserContextFromWallet,
     createVersionedSpace,
@@ -22,7 +22,7 @@ import {
     LegacyMembershipStruct,
     NoopRuleData,
     ETH_ADDRESS,
-} from '@river-build/web3'
+} from '@towns-protocol/web3'
 import { makeBaseChainConfig } from '../../riverConfig'
 
 const log = dlog('csb:test:membershipManagement')

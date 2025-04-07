@@ -1,9 +1,9 @@
-import { SnapshotSchema } from '@river-build/proto'
+import { SnapshotSchema } from '@towns-protocol/proto'
 import { snapshotMigration0001 } from '../../migrations/snapshotMigration0001'
 import { ethers } from 'ethers'
 import { makeUniqueSpaceStreamId } from '../testUtils'
 import { addressFromUserId, makeUniqueChannelStreamId, streamIdAsBytes } from '../../id'
-import { check } from '@river-build/dlog'
+import { check } from '@towns-protocol/dlog'
 import { create } from '@bufbuild/protobuf'
 
 // a no-op migration test for the initial snapshot, use as a template for new migrations

@@ -1,9 +1,9 @@
 import {
     IMembershipMetadata as LocalhostContract,
     IMembershipMetadataInterface as LocalhostInterface,
-} from '@river-build/generated/dev/typings/IMembershipMetadata'
+} from '@towns-protocol/generated/dev/typings/IMembershipMetadata'
 
-import LocalhostAbi from '@river-build/generated/dev/abis/IMembershipMetadata.abi.json' assert { type: 'json' }
+import LocalhostAbi from '@towns-protocol/generated/dev/abis/IMembershipMetadata.abi.json' assert { type: 'json' }
 
 import { ethers } from 'ethers'
 import { BaseContractShim } from './BaseContractShim'

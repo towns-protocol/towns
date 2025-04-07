@@ -73,13 +73,14 @@ func TestCreateEphemeralStream(t *testing.T) {
 	parsedEvents, err := events.ParseEvents([]*Envelope{inception})
 	tt.require.NoError(err)
 
-	genesisMb, err := events.MakeGenesisMiniblock(alice.wallet, parsedEvents)
+	genesisMb, genesisSn, err := events.MakeGenesisMiniblock(alice.wallet, parsedEvents)
 	tt.require.NoError(err)
 
 	// Create ephemeral media stream
 	_, err = alice.node2nodeClient.AllocateEphemeralStream(alice.ctx, connect.NewRequest(&AllocateEphemeralStreamRequest{
 		Miniblock: genesisMb,
 		StreamId:  mediaStreamId[:],
+		Snapshot:  genesisSn,
 	}))
 	tt.require.NoError(err)
 

@@ -17,10 +17,10 @@ export function mintMockNFT(
     fromWallet: ethers.Wallet,
     toAddress: string,
 ): Promise<ethers.ContractTransaction> {
-    if (!config.addresses.mockNFT) {
+    if (!config.addresses.utils.mockNFT) {
         throw new Error('No mock ERC721 address provided')
     }
-    const mockNFTAddress = config.addresses.mockNFT
+    const mockNFTAddress = config.addresses.utils.mockNFT
     const mockNFT = new MockERC721AShimV3(mockNFTAddress, provider)
     return mockNFT.write(fromWallet).mintTo(toAddress)
 }
@@ -30,10 +30,10 @@ export function balanceOfMockNFT(
     provider: ethers.providers.Provider,
     address: Address,
 ) {
-    if (!config.addresses.mockNFT) {
+    if (!config.addresses.utils.mockNFT) {
         throw new Error('No mock ERC721 address provided')
     }
-    const mockNFTAddress = config.addresses.mockNFT
+    const mockNFTAddress = config.addresses.utils.mockNFT
     const mockNFT = new MockERC721AShimV3(mockNFTAddress, provider)
     return mockNFT.read.balanceOf(address)
 }

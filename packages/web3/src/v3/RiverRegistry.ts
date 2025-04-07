@@ -1,10 +1,10 @@
-import { NodeStructOutput } from '@river-build/generated/dev/typings/INodeRegistry'
+import { NodeStructOutput } from '@towns-protocol/generated/dev/typings/INodeRegistry'
 import { RiverChainConfig } from '../IStaticContractsInfo'
 import { INodeRegistryShim } from './INodeRegistryShim'
 import { ethers } from 'ethers'
 import { IStreamRegistryShim } from './IStreamRegistryShim'
 import { IOperatorRegistryShim } from './IOperatorRegistryShim'
-import { StreamStructOutput } from '@river-build/generated/dev/typings/IStreamRegistry'
+import { StreamStructOutput } from '@towns-protocol/generated/dev/typings/IStreamRegistry'
 
 interface RiverNodesMap {
     [nodeAddress: string]: NodeStructOutput

@@ -1,6 +1,6 @@
 'use client'
 
-import type { Spaces } from '@river-build/sdk'
+import type { Spaces } from '@towns-protocol/sdk'
 import { type ActionConfig, useAction } from './internals/useAction'
 import { useSyncAgent } from './useSyncAgent'
 

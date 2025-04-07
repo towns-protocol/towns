@@ -1,4 +1,4 @@
-import { dlog } from '@river-build/dlog'
+import { dlog } from '@towns-protocol/dlog'
 import {
     createSpaceAndDefaultChannel,
     dynamicMembershipStruct,

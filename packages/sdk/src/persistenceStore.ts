@@ -3,7 +3,7 @@ import {
     PersistedSyncedStream,
     PersistedSyncedStreamSchema,
     Snapshot,
-} from '@river-build/proto'
+} from '@towns-protocol/proto'
 import Dexie, { Table } from 'dexie'
 import { ParsedMiniblock } from './types'
 import {
@@ -13,7 +13,7 @@ import {
     ParsedPersistedSyncedStream,
 } from './streamUtils'
 
-import { bin_toHexString, dlog, dlogError } from '@river-build/dlog'
+import { bin_toHexString, dlog, dlogError } from '@towns-protocol/dlog'
 import { isDefined } from './check'
 import { isChannelStreamId, isDMChannelStreamId, isGDMChannelStreamId } from './id'
 import { fromBinary, toBinary } from '@bufbuild/protobuf'
@@ -134,6 +134,11 @@ export class PersistenceStore extends Dexie implements IPersistenceStore {
         // Version 4: added a option to have a data_type field to the encrypted data, drop all saved cleartexts
         this.version(4).upgrade((tx) => {
             return tx.table('cleartexts').toCollection().delete()
+        })
+
+        // Version 5: changed how we store scrollback miniblocs, drop all saved miniblocks
+        this.version(5).upgrade((tx) => {
+            return tx.table('miniblocks').toCollection().delete()
         })
 
         this.requestPersistentStorage()

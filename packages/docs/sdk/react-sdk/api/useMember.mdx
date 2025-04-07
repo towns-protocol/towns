@@ -6,7 +6,7 @@ Hook to get data from a specific member of a Space, GDM, Channel, or DM.
 ## Imports
 
 ```ts
-import { useMember } from '@river-build/react-sdk'
+import { useMember } from '@towns-protocol/react-sdk'
 ```
 
 ## Definition
@@ -20,41 +20,7 @@ function useMember(
   config?: ObservableConfig.FromObservable<Member>,
 ): {
     error: Error | undefined;
-    status: "error" | "loading" | "loaded";
-    isLoading: boolean;
-    isError: boolean;
-    isLoaded: boolean;
-    userId: string;
-    streamId: string;
-    initialized: boolean;
-    username: string;
-    isUsernameConfirmed: boolean;
-    isUsernameEncrypted: boolean;
-    displayName: string;
-    isDisplayNameEncrypted: boolean | undefined;
-    ensAddress: string | undefined;
-    nft: NftModel | undefined;
-    membership: MembershipOp | undefined;
-} | {
-    error: Error | undefined;
-    status: "error" | "loading" | "loaded";
-    isLoading: boolean;
-    isError: boolean;
-    isLoaded: boolean;
-    userId: string;
-    streamId: string;
-    initialized: boolean;
-    username: string;
-    isUsernameConfirmed: boolean;
-    isUsernameEncrypted: boolean;
-    displayName: string;
-    isDisplayNameEncrypted: boolean | undefined;
-    ensAddress: string | undefined;
-    nft: NftModel | undefined;
-    membership: MembershipOp | undefined;
-} | {
-    error: Error | undefined;
-    status: "error" | "loading" | "loaded";
+    status: "loading" | "loaded" | "error";
     isLoading: boolean;
     isError: boolean;
     isLoaded: boolean;
@@ -72,7 +38,7 @@ function useMember(
 }
 ```
 
-**Source:** [useMember](https://github.com/river-build/river/blob/main/packages/react-sdk/src/useMember.ts)
+**Source:** [useMember](https://github.com/towns-protocol/towns/blob/main/packages/react-sdk/src/useMember.ts)
 
 ## Parameters
 
@@ -99,41 +65,7 @@ The Member data.
 ```ts
 {
     error: Error | undefined;
-    status: "error" | "loading" | "loaded";
-    isLoading: boolean;
-    isError: boolean;
-    isLoaded: boolean;
-    userId: string;
-    streamId: string;
-    initialized: boolean;
-    username: string;
-    isUsernameConfirmed: boolean;
-    isUsernameEncrypted: boolean;
-    displayName: string;
-    isDisplayNameEncrypted: boolean | undefined;
-    ensAddress: string | undefined;
-    nft: NftModel | undefined;
-    membership: MembershipOp | undefined;
-} | {
-    error: Error | undefined;
-    status: "error" | "loading" | "loaded";
-    isLoading: boolean;
-    isError: boolean;
-    isLoaded: boolean;
-    userId: string;
-    streamId: string;
-    initialized: boolean;
-    username: string;
-    isUsernameConfirmed: boolean;
-    isUsernameEncrypted: boolean;
-    displayName: string;
-    isDisplayNameEncrypted: boolean | undefined;
-    ensAddress: string | undefined;
-    nft: NftModel | undefined;
-    membership: MembershipOp | undefined;
-} | {
-    error: Error | undefined;
-    status: "error" | "loading" | "loaded";
+    status: "loading" | "loaded" | "error";
     isLoading: boolean;
     isError: boolean;
     isLoaded: boolean;

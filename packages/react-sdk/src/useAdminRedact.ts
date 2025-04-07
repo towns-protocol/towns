@@ -1,6 +1,6 @@
 'use client'
 
-import { Channel, Space, assert } from '@river-build/sdk'
+import { Channel, Space, assert } from '@towns-protocol/sdk'
 import { type ActionConfig, useAction } from './internals/useAction'
 import { useSyncAgent } from './useSyncAgent'
 import { getRoom } from './utils'
@@ -13,7 +13,7 @@ import { getRoom } from './utils'
  *
  * You can use `adminRedact` to redact a message in a stream.
  * ```ts
- * import { useAdminRedact } from '@river-build/react-sdk'
+ * import { useAdminRedact } from '@towns-protocol/react-sdk'
  *
  * const { adminRedact } = useAdminRedact(streamId)
  * adminRedact({ eventId: messageEventId })
@@ -23,7 +23,7 @@ import { getRoom } from './utils'
  *
  * You can also use `redact` to redact a message reaction in a stream.
  * ```ts
- * import { useRedact } from '@river-build/react-sdk'
+ * import { useRedact } from '@towns-protocol/react-sdk'
  *
  * const { redact } = useRedact(streamId)
  * redact({ eventId: reactionEventId })

@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
@@ -170,6 +171,16 @@ func encodeValue(valueType string, value string) ([]byte, error) {
 			nums[i] = num
 		}
 		return crypto.ABIEncodeUint64Array(nums), nil
+	case crypto.AbiTypeName_Address:
+		addr := common.HexToAddress(value)
+		return crypto.ABIEncodeAddress(addr), nil
+	case crypto.AbiTypeName_AddressArray:
+		addrStrs := strings.Split(value, ",")
+		addrs := make([]common.Address, len(addrStrs))
+		for i, addrStr := range addrStrs {
+			addrs[i] = common.HexToAddress(strings.TrimSpace(addrStr))
+		}
+		return crypto.ABIEncodeAddressArray(addrs), nil
 	default:
 		return nil, RiverError(Err_INVALID_ARGUMENT, "invalid value type", "type", valueType)
 	}
@@ -293,6 +304,12 @@ func submitConfig(ctx context.Context, cfg *config.Config, args []setArgs) error
 	return ret_err
 }
 
+func printSetArg(sa setArgs) {
+	fmt.Println("BLOCK:", sa.blockNum)
+	fmt.Println("KEY:", crypto.HashSettingName(sa.key))
+	fmt.Println("VALUE:", hex.EncodeToString(sa.value))
+}
+
 func setOnChainConfig(cmd *cobra.Command, args []string) error {
 	ctx := cmd.Context()
 	cfg := cmdConfig
@@ -305,6 +322,16 @@ func setOnChainConfig(cmd *cobra.Command, args []string) error {
 	sa, err := parseSetArgs(args, force)
 	if err != nil {
 		return err
+	}
+
+	dryRun, err := cmd.Flags().GetBool("dry-run")
+	if err != nil {
+		return err
+	}
+
+	if dryRun {
+		printSetArg(sa)
+		return nil
 	}
 
 	return submitConfig(ctx, cfg, []setArgs{sa})
@@ -339,6 +366,18 @@ func setOnChainConfigFromCSV(cmd *cobra.Command, args []string) error {
 			return err
 		}
 		setArgsList = append(setArgsList, sa)
+	}
+
+	dryRun, err := cmd.Flags().GetBool("dry-run")
+	if err != nil {
+		return err
+	}
+
+	if dryRun {
+		for _, sa := range setArgsList {
+			printSetArg(sa)
+		}
+		return nil
 	}
 
 	return submitConfig(ctx, cfg, setArgsList)
@@ -384,15 +423,17 @@ func init() {
 		RunE:  setOnChainConfig,
 	}
 	setCmd.Flags().Bool("force", false, "Force setting even if name is unknown or there is type mismatch")
+	setCmd.Flags().BoolP("dry-run", "n", false, "Dry run the command without submitting transactions, print hex values")
 	onChainConfigCmd.AddCommand(setCmd)
 
 	setCsvCmd := &cobra.Command{
 		Use:   "set-csv <file>",
-		Short: "Set on-chain config from CSV file: key,blockNumber,value>,[abi_type]. Requires PRIVATE_KEY to be set.",
+		Short: "Set on-chain config from CSV file: key,blockNumber,value,[abi_type]. Requires PRIVATE_KEY to be set.",
 		Args:  cobra.ExactArgs(1),
 		RunE:  setOnChainConfigFromCSV,
 	}
 	setCsvCmd.Flags().Bool("force", false, "Force setting even if name is unknown or there is type mismatch")
+	setCsvCmd.Flags().BoolP("dry-run", "n", false, "Dry run the command without submitting transactions, print hex values")
 	onChainConfigCmd.AddCommand(setCsvCmd)
 
 	onChainConfigCmd.AddCommand(&cobra.Command{

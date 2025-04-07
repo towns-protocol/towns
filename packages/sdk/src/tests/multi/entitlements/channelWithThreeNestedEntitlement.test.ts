@@ -9,7 +9,7 @@ import {
     expectUserCanJoinChannel,
     expectUserCannotJoinChannel,
 } from '../../testUtils'
-import { Address, TestERC721, createExternalNFTStruct } from '@river-build/web3'
+import { Address, TestERC721, createExternalNFTStruct } from '@towns-protocol/web3'
 
 describe('channelsWithThreeNestedEntitlements', () => {
     // This test takes almost one minute to run in CI and therefore gets its own file.

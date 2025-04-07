@@ -3,10 +3,10 @@ import {
     EncryptedDataSchema,
     EncryptedDataVersion,
     HybridGroupSessionKey,
-} from '@river-build/proto'
+} from '@towns-protocol/proto'
 import { EncryptionAlgorithm, IEncryptionParams } from './base'
 import { GroupEncryptionAlgorithmId } from './olmLib'
-import { dlog } from '@river-build/dlog'
+import { dlog } from '@towns-protocol/dlog'
 import { encryptAesGcm, importAesGsmKeyBytes } from './cryptoAesGcm'
 import { create } from '@bufbuild/protobuf'
 

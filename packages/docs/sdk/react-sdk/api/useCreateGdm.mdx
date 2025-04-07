@@ -6,14 +6,14 @@ A hook that allows you to create a new group direct message (GDM).
 ## Imports
 
 ```ts
-import { useCreateGdm } from '@river-build/react-sdk'
+import { useCreateGdm } from '@towns-protocol/react-sdk'
 ```
 
 ## Definition
 
 ```ts
 function useCreateGdm(
-  config?: ActionConfig<Gdms['createGDM']>,
+  config?: ActionConfig<Gdms["createGDM"]>,
 ): {
     data: {
         streamId: string;
@@ -30,13 +30,13 @@ function useCreateGdm(
 }
 ```
 
-**Source:** [useCreateGdm](https://github.com/river-build/river/blob/main/packages/react-sdk/src/useCreateGdm.ts)
+**Source:** [useCreateGdm](https://github.com/towns-protocol/towns/blob/main/packages/react-sdk/src/useCreateGdm.ts)
 
 ## Parameters
 
 ### config
 
-- **Type:** `ActionConfig<Gdms['createGDM']>`
+- **Type:** `ActionConfig<Gdms["createGDM"]>`
 - **Optional**
 
 The action config.

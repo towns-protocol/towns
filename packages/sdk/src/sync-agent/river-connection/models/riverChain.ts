@@ -1,7 +1,7 @@
-import { RiverRegistry } from '@river-build/web3'
+import { RiverRegistry } from '@towns-protocol/web3'
 import { PersistedObservable, persistedObservable } from '../../../observable/persistedObservable'
 import { LoadPriority, Store } from '../../../store/store'
-import { dlogger, ExtendedLogger } from '@river-build/dlog'
+import { dlogger, ExtendedLogger } from '@towns-protocol/dlog'
 import { makeUserStreamId, streamIdAsBytes } from '../../../id'
 
 // Over commenting here as an example that we reference from the readme

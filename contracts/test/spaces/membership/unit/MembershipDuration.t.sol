@@ -11,8 +11,8 @@ import {MembershipBaseSetup} from "../MembershipBaseSetup.sol";
 //contracts
 
 contract MembershipDurationTest is MembershipBaseSetup {
-  function test_getMembershipDuration() public view {
-    uint256 duration = membership.getMembershipDuration();
-    assertEq(duration, platformReqs.getMembershipDuration());
-  }
+    function test_getMembershipDuration() public view {
+        uint256 duration = membership.getMembershipDuration();
+        assertEq(duration, platformReqs.getMembershipDuration());
+    }
 }

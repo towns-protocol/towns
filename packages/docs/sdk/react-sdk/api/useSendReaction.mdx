@@ -8,13 +8,13 @@ Reaction can be any string value, including emojis.
 ## Imports
 
 ```ts
-import { useSendReaction } from '@river-build/react-sdk'
+import { useSendReaction } from '@towns-protocol/react-sdk'
 ```
 
 ## Examples
 
 ```ts
-import { useSendReaction } from '@river-build/react-sdk'
+import { useSendReaction } from '@towns-protocol/react-sdk'
 
 const { sendReaction } = useSendReaction('stream-id')
 sendReaction(messageEventId, '🔥')
@@ -25,7 +25,7 @@ sendReaction(messageEventId, '🔥')
 ```ts
 function useSendReaction(
   streamId: string,
-  config?: ActionConfig<Channel['sendReaction']>,
+  config?: ActionConfig<Channel["sendReaction"]>,
 ): {
     data: {
         eventId: string;
@@ -40,7 +40,7 @@ function useSendReaction(
 }
 ```
 
-**Source:** [useSendReaction](https://github.com/river-build/river/blob/main/packages/react-sdk/src/useSendReaction.ts)
+**Source:** [useSendReaction](https://github.com/towns-protocol/towns/blob/main/packages/react-sdk/src/useSendReaction.ts)
 
 ## Parameters
 
@@ -52,7 +52,7 @@ The id of the stream to send the reaction to.
 
 ### config
 
-- **Type:** `ActionConfig<Channel['sendReaction']>`
+- **Type:** `ActionConfig<Channel["sendReaction"]>`
 - **Optional**
 
 Configuration options for the action.

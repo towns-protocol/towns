@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { dlog } from '@river-build/dlog'
+import { dlog } from '@towns-protocol/dlog'
 
 import { getTestServerUrl } from '../testUtils'
 

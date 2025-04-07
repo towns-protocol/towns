@@ -1,9 +1,9 @@
 import {
     IStreamRegistry as DevContract,
     IStreamRegistryInterface as DevInterface,
-} from '@river-build/generated/dev/typings/IStreamRegistry'
+} from '@towns-protocol/generated/dev/typings/IStreamRegistry'
 
-import DevAbi from '@river-build/generated/dev/abis/StreamRegistry.abi.json' assert { type: 'json' }
+import DevAbi from '@towns-protocol/generated/dev/abis/StreamRegistry.abi.json' assert { type: 'json' }
 
 import { ethers } from 'ethers'
 import { BaseContractShim } from './BaseContractShim'

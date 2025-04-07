@@ -2,10 +2,10 @@ package rpc
 
 import (
 	"context"
-	"github.com/ethereum/go-ethereum/common"
 	"time"
 
 	"connectrpc.com/connect"
+	"github.com/ethereum/go-ethereum/common"
 	"google.golang.org/protobuf/proto"
 
 	. "github.com/towns-protocol/towns/core/node/base"
@@ -48,8 +48,17 @@ func (s *Service) allocateEphemeralStream(ctx context.Context, req *AllocateEphe
 		return nil, err
 	}
 
-	err = s.storage.CreateEphemeralStreamStorage(ctx, streamId, mbBytes)
-	if err != nil {
+	var snBytes []byte
+	if req.Snapshot != nil {
+		if snBytes, err = proto.Marshal(req.Snapshot); err != nil {
+			return nil, err
+		}
+	}
+
+	if err = s.storage.CreateEphemeralStreamStorage(ctx, streamId, &storage.WriteMiniblockData{
+		Data:     mbBytes,
+		Snapshot: snBytes,
+	}); err != nil {
 		return nil, err
 	}
 
@@ -80,24 +89,22 @@ func (s *Service) saveEphemeralMiniblock(ctx context.Context, req *SaveEphemeral
 		return err
 	}
 
-	mbInfo, err := NewMiniblockInfoFromProto(req.GetMiniblock(), NewParsedMiniblockInfoOpts())
+	mbInfo, err := NewMiniblockInfoFromProto(
+		req.GetMiniblock(), req.GetSnapshot(),
+		NewParsedMiniblockInfoOpts(),
+	)
 	if err != nil {
 		return err
 	}
 
-	mbBytes, err := mbInfo.ToBytes()
+	storageMb, err := mbInfo.AsStorageMb()
 	if err != nil {
 		return err
 	}
 
 	// Save the ephemeral miniblock.
 	// Here we are sure that the record of the stream exists in the storage.
-	err = s.storage.WriteEphemeralMiniblock(ctx, streamId, &storage.WriteMiniblockData{
-		Number:   mbInfo.Ref.Num,
-		Hash:     mbInfo.Ref.Hash,
-		Snapshot: mbInfo.IsSnapshot(),
-		Data:     mbBytes,
-	})
+	err = s.storage.WriteEphemeralMiniblock(ctx, streamId, storageMb)
 	if err != nil {
 		return err
 	}

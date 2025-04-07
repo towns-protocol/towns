@@ -1,4 +1,4 @@
-import { Space, type TimelineEvents, assert } from '@river-build/sdk'
+import { Space, type TimelineEvents, assert } from '@towns-protocol/sdk'
 import { useMemo } from 'react'
 import { type ObservableConfig, useObservable } from './useObservable'
 import { getRoom } from './utils'
@@ -11,8 +11,8 @@ import { useSyncAgent } from './useSyncAgent'
  *
  * @example
  * ```ts
- * import { useTimeline } from '@river-build/react-sdk'
- * import { RiverTimelineEvent } from '@river-build/sdk'
+ * import { useTimeline } from '@towns-protocol/react-sdk'
+ * import { RiverTimelineEvent } from '@towns-protocol/sdk'
  *
  * const { data: events } = useTimeline(streamId)
  *

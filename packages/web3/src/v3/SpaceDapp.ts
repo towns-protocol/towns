@@ -42,7 +42,7 @@ import {
     UserEntitlementShim,
 } from './index'
 import { PricingModules } from './PricingModules'
-import { dlogger, isTestEnv } from '@river-build/dlog'
+import { dlogger, isTestEnv } from '@towns-protocol/dlog'
 import { EVERYONE_ADDRESS, stringifyChannelMetadataJSON, NoEntitledWalletError } from '../Utils'
 import {
     XchainConfig,
@@ -55,7 +55,7 @@ import { PlatformRequirements } from './PlatformRequirements'
 import { EntitlementDataStructOutput } from './IEntitlementDataQueryableShim'
 import { CacheResult, EntitlementCache, Keyable } from '../EntitlementCache'
 import { RuleEntitlementV2Shim } from './RuleEntitlementV2Shim'
-import { TipEventObject } from '@river-build/generated/dev/typings/ITipping'
+import { TipEventObject } from '@towns-protocol/generated/dev/typings/ITipping'
 
 const logger = dlogger('csb:SpaceDapp:debug')
 
@@ -1670,7 +1670,7 @@ export class SpaceDapp implements ISpaceDapp {
         if (!space) {
             throw new Error(`Space with spaceId "${spaceId}" is not found.`)
         }
-        return space.Membership.write(signer).withdraw(recipient)
+        return space.Treasury.write(signer).withdraw(recipient)
     }
 
     // If the caller doesn't provide an abort controller, listenForMembershipToken will create one
@@ -1813,6 +1813,8 @@ async function wrapTransaction(
                     (error as { code: unknown }).code === 'CALL_EXCEPTION'
                 ) {
                     logger.error('Transaction failed', { tx, errorCount, error })
+                    // TODO: is this a bug?
+                    // eslint-disable-next-line @typescript-eslint/only-throw-error
                     throw error
                 }
 

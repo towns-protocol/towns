@@ -1,4 +1,4 @@
-import { useAgentConnection } from '@river-build/react-sdk'
+import { useAgentConnection } from '@towns-protocol/react-sdk'
 import { useState } from 'react'
 import { cn } from '@/utils'
 import { getStreamMetadataUrl } from '@/utils/stream-metadata'

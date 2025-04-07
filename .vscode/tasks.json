@@ -64,6 +64,8 @@
         "Casablanca",
         "Casablanca-No-Entitlements",
         "Playground",
+        "AppRegistry",
+        "AppRegistry-No-Entitlements",
       ],
       "group": {
         "kind": "build",
@@ -183,9 +185,29 @@
       }
     },
     {
+      "label": "AppRegistry",
+      "type": "shell",
+      "command": "sleep 1 && cd ./core && just RUN_ENV=multi run-app-registry-and-tail",
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": {
+        "group": "local-servers"
+      }
+    },
+    {
       "label": "Casablanca-No-Entitlements",
       "type": "shell",
       "command": "sleep 2 && cd ./core && just RUN_ENV=multi_ne run-and-tail",
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": {
+        "group": "local-servers"
+      }
+    },
+    {
+      "label": "AppRegistry-No-Entitlements",
+      "type": "shell",
+      "command": "sleep 1 && cd ./core && just RUN_ENV=multi_ne run-app-registry-and-tail",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
@@ -219,7 +241,7 @@
     {
       "label": "Stop Casablanca",
       "type": "shell",
-      "command": "echo 'killing multi && multi_ne' && kill $(ps -ax | grep 'run_files/multi' | awk '{print $1}') && kill $(ps -ax | grep 'run_files/multi_ne' | awk '{print $1}') && cd ./core && just RUN_ENV=multi stop && just RUN_ENV=multi_ne stop",
+      "command": "echo 'killing multi && multi_ne' && kill $(ps -ax | grep 'run_files/multi' | awk '{print $1}') && kill $(ps -ax | grep 'run_files/multi_ne' | awk '{print $1}') && cd ./core && just RUN_ENV=multi stop && just RUN_ENV=multi_ne stop && just RUN_ENV=multi stop-app-registry && just RUN_ENV=multi_ne stop-app-registry",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {

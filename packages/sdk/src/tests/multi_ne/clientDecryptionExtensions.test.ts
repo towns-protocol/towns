@@ -3,11 +3,11 @@
  */
 
 import { Client } from '../../client'
-import { dlog } from '@river-build/dlog'
+import { dlog } from '@towns-protocol/dlog'
 import { isDefined } from '../../check'
 import { TestClientOpts, makeTestClient, makeUniqueSpaceStreamId, waitFor } from '../testUtils'
 import { Stream } from '../../stream'
-import { DecryptionSessionError } from '@river-build/encryption'
+import { DecryptionSessionError } from '@towns-protocol/encryption'
 import { makeUniqueChannelStreamId } from '../../id'
 import { SyncState } from '../../syncedStreamsLoop'
 

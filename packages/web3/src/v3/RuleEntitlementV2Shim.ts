@@ -2,14 +2,14 @@ import {
     IRuleEntitlementV2 as LocalhostContract,
     IRuleEntitlementBase as LocalhostBase,
     IRuleEntitlementV2Interface as LocalhostInterface,
-} from '@river-build/generated/dev/typings/IRuleEntitlement.sol/IRuleEntitlementV2'
+} from '@towns-protocol/generated/dev/typings/IRuleEntitlement.sol/IRuleEntitlementV2'
 
-import LocalhostAbi from '@river-build/generated/dev/abis/IRuleEntitlementV2.abi.json' assert { type: 'json' }
+import LocalhostAbi from '@towns-protocol/generated/dev/abis/IRuleEntitlementV2.abi.json' assert { type: 'json' }
 
 import { BaseContractShim } from './BaseContractShim'
 import { BigNumberish, ethers } from 'ethers'
 import { EntitlementModuleType, EntitlementModule } from '../ContractTypes'
-import { dlogger } from '@river-build/dlog'
+import { dlogger } from '@towns-protocol/dlog'
 const logger = dlogger('csb:SpaceDapp:debug')
 
 export class RuleEntitlementV2Shim

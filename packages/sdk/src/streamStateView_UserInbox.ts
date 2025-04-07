@@ -7,9 +7,9 @@ import {
     UserInboxPayload_Snapshot_DeviceSummary,
     UserInboxPayload_GroupEncryptionSessions,
     UserInboxPayload_Ack,
-} from '@river-build/proto'
+} from '@towns-protocol/proto'
 import { StreamStateView_AbstractContent } from './streamStateView_AbstractContent'
-import { check } from '@river-build/dlog'
+import { check } from '@towns-protocol/dlog'
 import { logNever } from './check'
 import { StreamEncryptionEvents, StreamStateEvents } from './streamEvents'
 

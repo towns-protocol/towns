@@ -5,6 +5,6 @@ services:
             dockerfile: ./packages/xchain-monitor/Dockerfile
         environment:
             RIVER_ENV: omega
-            INITIAL_BLOCK_NUM: 25287260
+            INITIAL_BLOCK_NUM: 25750000
             TRANSACTION_VALID_BLOCKS: 20
             BASE_PROVIDER_URL: https://mainnet.base.org

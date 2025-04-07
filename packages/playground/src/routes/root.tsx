@@ -1,4 +1,4 @@
-import { useAgentConnection } from '@river-build/react-sdk'
+import { useAgentConnection } from '@towns-protocol/react-sdk'
 import { Navigate } from 'react-router-dom'
 
 export const IndexRoute = () => {

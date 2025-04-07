@@ -84,6 +84,7 @@ type serviceTester struct {
 
 type serviceTesterOpts struct {
 	numNodes          int
+	numOperators      int
 	replicationFactor int
 	start             bool
 	btcParams         *crypto.TestParams
@@ -110,7 +111,7 @@ func newServiceTester(t *testing.T, opts serviceTesterOpts) *serviceTester {
 	var ctx context.Context
 	var ctxCancel func()
 	if opts.printTestLogs {
-		ctx, ctxCancel = test.NewTestContextWithLogging("debug")
+		ctx, ctxCancel = test.NewTestContextWithLogging("info")
 	} else {
 		ctx, ctxCancel = test.NewTestContext()
 	}
@@ -131,9 +132,10 @@ func newServiceTester(t *testing.T, opts serviceTesterOpts) *serviceTester {
 
 	btcParams := opts.btcParams
 	if btcParams == nil {
-		btcParams = &crypto.TestParams{NumKeys: opts.numNodes, MineOnTx: true, AutoMine: true}
+		btcParams = &crypto.TestParams{NumKeys: opts.numNodes, MineOnTx: true, AutoMine: true, NumOperators: opts.numOperators}
 	} else if btcParams.NumKeys == 0 {
 		btcParams.NumKeys = opts.numNodes
+		btcParams.NumOperators = opts.numOperators
 	}
 	btc, err := crypto.NewBlockchainTestContext(
 		st.ctx,
@@ -245,6 +247,7 @@ func (st *serviceTester) startAutoMining() {
 		return
 	}
 
+	// TODO: FIX: remove
 	// hack to ensure that the chain always produces blocks (automining=true)
 	// commit on simulated backend with no pending txs can sometimes crash in the simulator.
 	// by having a pending tx with automining enabled we can work around that issue.
@@ -413,7 +416,7 @@ func (st *serviceTester) compareStreamDataInStorage(
 	var data []*storage.DebugReadStreamDataResult
 	for _, n := range st.nodes {
 		// TODO: occasionally n.service.storage.DebugReadStreamData crashes due to nil pointer dereference,
-		// example: https://github.com/river-build/river/actions/runs/10127906870/job/28006223317#step:18:113
+		// example: https://github.com/towns-protocol/towns/actions/runs/10127906870/job/28006223317#step:18:113
 		// the stack trace doesn't provide context which deref fails, therefore deref field by field.
 		svc := n.service
 		str := svc.storage
@@ -475,7 +478,7 @@ func (st *serviceTester) compareStreamDataInStorage(
 				)
 				for j, mb := range data[i].Miniblocks {
 					exp := data[0].Miniblocks[j]
-					_ = assert.EqualValues(t, exp.MiniblockNumber, mb.MiniblockNumber, "Bad mb num in node %d", i) &&
+					_ = assert.EqualValues(t, exp.Number, mb.Number, "Bad mb num in node %d", i) &&
 						assert.EqualValues(t, exp.Hash, mb.Hash, "Bad mb hash in node %d", i) &&
 						assert.Equal(
 							t,
@@ -612,15 +615,22 @@ func (tc *testClient) withRequireFor(t require.TestingT) *testClient {
 	return &tcc
 }
 
-func (tc *testClient) createUserStream(
+func (tc *testClient) createUserStreamGetCookie(
 	streamSettings ...*StreamSettings,
-) *MiniblockRef {
+) *SyncCookie {
 	var ss *StreamSettings
 	if len(streamSettings) > 0 {
 		ss = streamSettings[0]
 	}
 	cookie, _, err := createUser(tc.ctx, tc.wallet, tc.client, ss)
 	tc.require.NoError(err)
+	return cookie
+}
+
+func (tc *testClient) createUserStream(
+	streamSettings ...*StreamSettings,
+) *MiniblockRef {
+	cookie := tc.createUserStreamGetCookie(streamSettings...)
 	return &MiniblockRef{
 		Hash: common.BytesToHash(cookie.PrevMiniblockHash),
 		Num:  cookie.MinipoolGen - 1,
@@ -691,12 +701,15 @@ func (tc *testClient) startSync() {
 }
 
 func (tc *testClient) SyncID() string {
-	for {
+	for range 50 {
 		if syncID := tc.syncID.Load(); syncID != "" {
 			return syncID
 		}
-		time.Sleep(5 * time.Millisecond)
+		err := SleepWithContext(tc.ctx, 100*time.Millisecond)
+		tc.require.NoError(err, "Failed to get sync ID")
 	}
+	tc.require.Fail("Failed to get sync ID")
+	return ""
 }
 
 func (tc *testClient) createSpace(
@@ -964,7 +977,7 @@ func (tc *testClient) getStreamAndView(
 	stream := tc.getStream(streamId)
 	var view *StreamView
 	var err error
-	view, err = MakeRemoteStreamView(tc.ctx, stream)
+	view, err = MakeRemoteStreamView(stream)
 	tc.require.NoError(err)
 	tc.require.NotNil(view)
 
@@ -1000,7 +1013,7 @@ func (tc *testClient) maybeDumpStream(stream *StreamAndCookie) {
 			tc.name,
 			"Dumping stream",
 			"\n",
-			dumpevents.DumpStream(tc.ctx, stream, dumpevents.DumpOpts{EventContent: true, TestMessages: true}),
+			dumpevents.DumpStream(stream, dumpevents.DumpOpts{EventContent: true, TestMessages: true}),
 		)
 	}
 }
@@ -1012,11 +1025,17 @@ func (tc *testClient) getMiniblocks(streamId StreamId, fromInclusive, toExclusiv
 		ToExclusive:   toExclusive,
 	}))
 	tc.require.NoError(err)
-	mbs, err := NewMiniblocksInfoFromProtos(
-		resp.Msg.Miniblocks,
-		NewParsedMiniblockInfoOpts().WithExpectedBlockNumber(fromInclusive),
-	)
-	tc.require.NoError(err)
+
+	mbs := make([]*MiniblockInfo, len(resp.Msg.GetMiniblocks()))
+	for i, pb := range resp.Msg.GetMiniblocks() {
+		mbs[i], err = NewMiniblockInfoFromProto(
+			pb, resp.Msg.GetMiniblockSnapshot(fromInclusive+int64(i)),
+			NewParsedMiniblockInfoOpts().
+				WithExpectedBlockNumber(fromInclusive+int64(i)),
+		)
+		tc.require.NoError(err)
+	}
+
 	return mbs
 }
 
@@ -1245,12 +1264,6 @@ func (tcs testClients) compareNowImpl(
 				"different minipool gen, 0 and %d",
 				i+1,
 			)
-			success = success && assert.Equal(
-				first.NextSyncCookie.MinipoolSlot,
-				stream.NextSyncCookie.MinipoolSlot,
-				"different minipool slot, 0 and %d",
-				i+1,
-			)
 		}
 	}
 
@@ -1311,14 +1324,6 @@ func (tcs testClients) compareNowImpl(
 					i+1, j,
 					first.GetStream().GetNextSyncCookie().GetMinipoolGen(),
 					clientUpdate.GetStream().GetNextSyncCookie().GetMinipoolGen())
-
-				success = success && assert.Equal(
-					first.GetStream().GetNextSyncCookie().GetMinipoolSlot(),
-					clientUpdate.GetStream().GetNextSyncCookie().GetMinipoolSlot(),
-					"minipool slot differs [%d:%d]: %d / %d",
-					i+1, j,
-					first.GetStream().GetNextSyncCookie().GetMinipoolSlot(),
-					clientUpdate.GetStream().GetNextSyncCookie().GetMinipoolSlot())
 
 				success = success && assert.Equal(
 					first.GetStream().GetNextSyncCookie().GetPrevMiniblockHash(),

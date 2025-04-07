@@ -1,9 +1,9 @@
 import {
     useAgentConnection,
-    useRiver,
-    useRiverAuthStatus,
     useSyncAgent,
-} from '@river-build/react-sdk'
+    useTowns,
+    useTownsAuthStatus,
+} from '@towns-protocol/react-sdk'
 import { useLocation, useParams } from 'react-router-dom'
 import { useState } from 'react'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
@@ -33,8 +33,8 @@ export const LayoutHeader = () => {
 }
 
 const Profile = () => {
-    const { status } = useRiverAuthStatus()
-    const { data: user } = useRiver((s) => s.user)
+    const { status } = useTownsAuthStatus()
+    const { data: user } = useTowns((s) => s.user)
     const sync = useSyncAgent()
     const { spaceId, channelId } = useParams<{ spaceId: string; channelId: string }>()
     const [using, setUsing] = useState<'space' | 'channel'>(channelId ? 'channel' : 'space')

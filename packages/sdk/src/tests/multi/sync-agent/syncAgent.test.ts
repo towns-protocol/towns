@@ -1,9 +1,9 @@
 /**
  * @group with-entitlements
  */
-import { dlogger } from '@river-build/dlog'
+import { dlogger } from '@towns-protocol/dlog'
 import { waitFor } from '../../testUtils'
-import { MembershipOp } from '@river-build/proto'
+import { MembershipOp } from '@towns-protocol/proto'
 import { Bot } from '../../../sync-agent/utils/bot'
 import { AuthStatus } from '../../../sync-agent/river-connection/models/authStatus'
 import { makeBearerToken, makeSignerContextFromBearerToken } from '../../../signerContext'

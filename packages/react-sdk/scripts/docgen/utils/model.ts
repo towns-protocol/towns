@@ -62,7 +62,7 @@ export function createDataLookup(apiItem: model.ApiItem) {
         const sourceFilePath =
             apiItem.fileUrlPath ??
             apiItem.sourceLocation.fileUrl?.replace(
-                'https://github.com/river-build/river/blob/main/packages/react-sdk',
+                'https://github.com/towns-protocol/towns/blob/main/packages/react-sdk',
                 '',
             )
 

@@ -2,9 +2,9 @@
  * @group with-entitlements
  */
 
-import { dlog } from '@river-build/dlog'
+import { dlog } from '@towns-protocol/dlog'
 import { BigNumber, ethers } from 'ethers'
-import { ETH_ADDRESS, LocalhostWeb3Provider } from '@river-build/web3'
+import { ETH_ADDRESS, LocalhostWeb3Provider } from '@towns-protocol/web3'
 import { makeRiverConfig } from '../../riverConfig'
 import { SyncAgent } from '../../sync-agent/syncAgent'
 import { Bot } from '../../sync-agent/utils/bot'
@@ -12,7 +12,7 @@ import { waitFor } from '../testUtils'
 import { StreamTimelineEvent } from '../../types'
 import { userIdFromAddress, makeUniqueChannelStreamId } from '../../id'
 import { randomBytes } from 'crypto'
-import { TipEventObject } from '@river-build/generated/dev/typings/ITipping'
+import { TipEventObject } from '@towns-protocol/generated/dev/typings/ITipping'
 import { deepCopy } from 'ethers/lib/utils'
 import { cloneDeep } from 'lodash'
 
@@ -180,6 +180,8 @@ describe('transactions_Tip', () => {
         expect(tipEvent?.receipt).toBeDefined()
         // the view should have been updated with the tip
         expect(stream.view.userContent.tipsSent[ETH_ADDRESS]).toEqual(1000n)
+        expect(stream.view.userContent.tipsSentCount[ETH_ADDRESS]).toEqual(1n)
+        expect(stream.view.userContent.tipsReceived[ETH_ADDRESS]).toEqual(undefined)
     })
 
     test('aliceSeesTipReceivedInUserStream', async () => {
@@ -209,6 +211,7 @@ describe('transactions_Tip', () => {
         expect(tipEvent?.transaction?.content?.case).toEqual('tip')
         // the view should have been updated with the tip
         expect(stream.view.userContent.tipsReceived[ETH_ADDRESS]).toEqual(1000n)
+        expect(stream.view.userContent.tipsReceivedCount[ETH_ADDRESS]).toEqual(1n)
     })
 
     test('bobSeesOnMessageInChannel', async () => {
@@ -232,6 +235,16 @@ describe('transactions_Tip', () => {
         })
         expect(userIdFromAddress(tipEvent.fromUserAddress)).toEqual(bobIdentity.rootWallet.address)
         expect(stream.view.membershipContent.tips[ETH_ADDRESS]).toEqual(1000n)
+        expect(stream.view.membershipContent.tipsCount[ETH_ADDRESS]).toEqual(1n)
+        expect(
+            stream.view.membershipContent.joined.get(bobIdentity.rootWallet.address)?.tipsSent?.[
+                ETH_ADDRESS
+            ],
+        ).toEqual(1000n)
+        expect(
+            stream.view.membershipContent.joined.get(bobIdentity.rootWallet.address)
+                ?.tipsSentCount?.[ETH_ADDRESS],
+        ).toEqual(1n)
     })
 
     test('cantAddTipWithBadChannelId', async () => {
@@ -337,6 +350,8 @@ describe('transactions_Tip', () => {
         )
         expect(stream.userContent.tipsSent[ETH_ADDRESS]).toEqual(1000n)
         expect(stream.userContent.tipsReceived[ETH_ADDRESS]).toBeUndefined()
+        expect(stream.userContent.tipsSentCount[ETH_ADDRESS]).toEqual(1n)
+        expect(stream.userContent.tipsReceivedCount[ETH_ADDRESS]).toEqual(undefined)
     })
 
     test('aliceSnapshot', async () => {
@@ -351,6 +366,8 @@ describe('transactions_Tip', () => {
         )
         expect(stream.userContent.tipsReceived[ETH_ADDRESS]).toEqual(1000n)
         expect(stream.userContent.tipsSent[ETH_ADDRESS]).toBeUndefined()
+        expect(stream.userContent.tipsReceivedCount[ETH_ADDRESS]).toEqual(1n)
+        expect(stream.userContent.tipsSentCount[ETH_ADDRESS]).toEqual(undefined)
     })
 
     test('channelSnapshot', async () => {
@@ -362,5 +379,12 @@ describe('transactions_Tip', () => {
         const stream = await bob.riverConnection.client!.getStream(defaultChannelId)
         if (!stream) throw new Error('no stream found')
         expect(stream.membershipContent.tips[ETH_ADDRESS]).toEqual(1000n)
+        expect(stream.membershipContent.tipsCount[ETH_ADDRESS]).toEqual(1n)
+        const bobMember = stream.membershipContent.joined.get(bobIdentity.rootWallet.address)
+        const aliceMember = stream.membershipContent.joined.get(aliceIdentity.rootWallet.address)
+        expect(bobMember?.tipsSent?.[ETH_ADDRESS]).toEqual(1000n)
+        expect(bobMember?.tipsSentCount?.[ETH_ADDRESS]).toEqual(1n)
+        expect(aliceMember?.tipsReceived?.[ETH_ADDRESS]).toEqual(1000n)
+        expect(aliceMember?.tipsReceivedCount?.[ETH_ADDRESS]).toEqual(1n)
     })
 })

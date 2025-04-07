@@ -1,5 +1,5 @@
-import { EntitlementsDelegate } from '@river-build/encryption'
-import { Permission, SpaceDapp } from '@river-build/web3'
+import { EntitlementsDelegate } from '@towns-protocol/encryption'
+import { Permission, SpaceDapp } from '@towns-protocol/web3'
 import { RiverConfig } from '../../riverConfig'
 
 export class Entitlements implements EntitlementsDelegate {

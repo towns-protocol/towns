@@ -1,7 +1,7 @@
 import { Client, createClient } from '@connectrpc/connect'
 import { ConnectTransportOptions as ConnectTransportOptionsWeb } from '@connectrpc/connect-web'
-import { StreamService } from '@river-build/proto'
-import { dlog } from '@river-build/dlog'
+import { StreamService } from '@towns-protocol/proto'
+import { dlog } from '@towns-protocol/dlog'
 import { getEnvVar, randomUrlSelector } from './utils'
 import {
     DEFAULT_RETRY_PARAMS,

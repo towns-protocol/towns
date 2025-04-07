@@ -52,6 +52,9 @@ type TownsHash [8]byte
 // TownsHashForEvents is a TownsHash with the prefix 'CSBLANCA' as bytes for hashing Towns events.
 var TownsHashForEvents = TownsHash{67, 83, 66, 76, 65, 78, 67, 65} // Prefix 'CSBLANCA' as bytes.
 
+// TownsHashForSnapshots is a TownsHash with the prefix 'SNAPSHOT' as bytes for hashing Towns snapshots.
+var TownsHashForSnapshots = TownsHash{83, 78, 65, 80, 83, 72, 79, 84} // Prefix 'SNAPSHOT' as bytes.
+
 // Hash computes the hash of the given buffer using the Towns hashing algorithm.
 // It uses Keccak256 to ensure compatability with the EVM and uses a header, separator,
 // and footer to ensure that the hash is unique to Towns.
@@ -60,7 +63,18 @@ func (h TownsHash) Hash(buffer []byte) common.Hash {
 	_, _ = hash.Write(h[:])
 	// Write length of the buffer as 64-bit little endian uint.
 	l := uint64(len(buffer))
-	_, _ = hash.Write([]byte{byte(l), byte(l >> 8), byte(l >> 16), byte(l >> 24), byte(l >> 32), byte(l >> 40), byte(l >> 48), byte(l >> 56)})
+	_, _ = hash.Write(
+		[]byte{
+			byte(l),
+			byte(l >> 8),
+			byte(l >> 16),
+			byte(l >> 24),
+			byte(l >> 32),
+			byte(l >> 40),
+			byte(l >> 48),
+			byte(l >> 56),
+		},
+	)
 	_, _ = hash.Write(HASH_SEPARATOR)
 	_, _ = hash.Write(buffer)
 	_, _ = hash.Write(HASH_FOOTER)

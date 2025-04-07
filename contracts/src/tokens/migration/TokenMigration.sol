@@ -2,92 +2,91 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
 import {ITokenMigration} from "./ITokenMigration.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 // libraries
-import {SafeTransferLib} from "solady/utils/SafeTransferLib.sol";
-import {CustomRevert} from "contracts/src/utils/libraries/CustomRevert.sol";
+
 import {TokenMigrationStorage} from "./TokenMigrationStorage.sol";
 import {Validator} from "contracts/src/utils/Validator.sol";
+import {CustomRevert} from "contracts/src/utils/libraries/CustomRevert.sol";
+import {SafeTransferLib} from "solady/utils/SafeTransferLib.sol";
 
 // contracts
-import {PausableBase} from "@river-build/diamond/src/facets/pausable/PausableBase.sol";
-import {OwnableBase} from "@river-build/diamond/src/facets/ownable/OwnableBase.sol";
-import {Facet} from "@river-build/diamond/src/facets/Facet.sol";
 
-contract TokenMigrationFacet is
-  OwnableBase,
-  PausableBase,
-  Facet,
-  ITokenMigration
-{
-  using SafeTransferLib for address;
+import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
+import {OwnableBase} from "@towns-protocol/diamond/src/facets/ownable/OwnableBase.sol";
+import {PausableBase} from "@towns-protocol/diamond/src/facets/pausable/PausableBase.sol";
 
-  function __TokenMigrationFacet_init(
-    IERC20 oldToken,
-    IERC20 newToken
-  ) external onlyInitializing {
-    _validateTokens(oldToken, newToken);
+contract TokenMigrationFacet is OwnableBase, PausableBase, Facet, ITokenMigration {
+    using SafeTransferLib for address;
 
-    TokenMigrationStorage.Layout storage ds = TokenMigrationStorage.layout();
-    (ds.oldToken, ds.newToken) = (oldToken, newToken);
-    _pause();
-  }
+    function __TokenMigrationFacet_init(
+        IERC20 oldToken,
+        IERC20 newToken
+    )
+        external
+        onlyInitializing
+    {
+        _validateTokens(oldToken, newToken);
 
-  /// @inheritdoc ITokenMigration
-  function migrate(address account) external whenNotPaused {
-    Validator.checkAddress(account);
+        TokenMigrationStorage.Layout storage ds = TokenMigrationStorage.layout();
+        (ds.oldToken, ds.newToken) = (oldToken, newToken);
+        _pause();
+    }
 
-    TokenMigrationStorage.Layout storage ds = TokenMigrationStorage.layout();
+    /// @inheritdoc ITokenMigration
+    function migrate(address account) external whenNotPaused {
+        Validator.checkAddress(account);
 
-    (IERC20 oldToken, IERC20 newToken) = (ds.oldToken, ds.newToken);
+        TokenMigrationStorage.Layout storage ds = TokenMigrationStorage.layout();
 
-    uint256 currentBalance = oldToken.balanceOf(account);
-    if (currentBalance == 0)
-      CustomRevert.revertWith(TokenMigration__InvalidBalance.selector);
+        (IERC20 oldToken, IERC20 newToken) = (ds.oldToken, ds.newToken);
 
-    if (oldToken.allowance(account, address(this)) < currentBalance)
-      CustomRevert.revertWith(TokenMigration__InvalidAllowance.selector);
+        uint256 currentBalance = oldToken.balanceOf(account);
+        if (currentBalance == 0) {
+            CustomRevert.revertWith(TokenMigration__InvalidBalance.selector);
+        }
 
-    // check that contract has enough balance of new token
-    uint256 newTokenBalance = newToken.balanceOf(address(this));
-    if (newTokenBalance < currentBalance)
-      CustomRevert.revertWith(TokenMigration__NotEnoughTokenBalance.selector);
+        if (oldToken.allowance(account, address(this)) < currentBalance) {
+            CustomRevert.revertWith(TokenMigration__InvalidAllowance.selector);
+        }
 
-    // Transfer old tokens from user to this contract
-    address(oldToken).safeTransferFrom(account, address(this), currentBalance);
+        // check that contract has enough balance of new token
+        uint256 newTokenBalance = newToken.balanceOf(address(this));
+        if (newTokenBalance < currentBalance) {
+            CustomRevert.revertWith(TokenMigration__NotEnoughTokenBalance.selector);
+        }
 
-    // Transfer new tokens to user
-    address(newToken).safeTransfer(account, currentBalance);
+        // Transfer old tokens from user to this contract
+        address(oldToken).safeTransferFrom(account, address(this), currentBalance);
 
-    emit TokensMigrated(account, currentBalance);
-  }
+        // Transfer new tokens to user
+        address(newToken).safeTransfer(account, currentBalance);
 
-  /// @inheritdoc ITokenMigration
-  function emergencyWithdraw(
-    IERC20 token,
-    address to
-  ) external onlyOwner whenPaused {
-    uint256 balance = token.balanceOf(address(this));
-    address(token).safeTransfer(to, balance);
-    emit EmergencyWithdraw(address(token), to, balance);
-  }
+        emit TokensMigrated(account, currentBalance);
+    }
 
-  /// @inheritdoc ITokenMigration
-  function tokens() external view returns (IERC20 oldToken, IERC20 newToken) {
-    return (
-      TokenMigrationStorage.layout().oldToken,
-      TokenMigrationStorage.layout().newToken
-    );
-  }
+    /// @inheritdoc ITokenMigration
+    function emergencyWithdraw(IERC20 token, address to) external onlyOwner whenPaused {
+        uint256 balance = token.balanceOf(address(this));
+        address(token).safeTransfer(to, balance);
+        emit EmergencyWithdraw(address(token), to, balance);
+    }
 
-  // =============================================================
-  //                           Internal
-  // =============================================================
+    /// @inheritdoc ITokenMigration
+    function tokens() external view returns (IERC20 oldToken, IERC20 newToken) {
+        return (TokenMigrationStorage.layout().oldToken, TokenMigrationStorage.layout().newToken);
+    }
 
-  function _validateTokens(IERC20 oldToken, IERC20 newToken) internal pure {
-    if (address(oldToken) == address(0) || address(newToken) == address(0))
-      CustomRevert.revertWith(TokenMigration__InvalidTokens.selector);
-  }
+    // =============================================================
+    //                           Internal
+    // =============================================================
+
+    function _validateTokens(IERC20 oldToken, IERC20 newToken) internal pure {
+        if (address(oldToken) == address(0) || address(newToken) == address(0)) {
+            CustomRevert.revertWith(TokenMigration__InvalidTokens.selector);
+        }
+    }
 }

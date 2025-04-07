@@ -1,0 +1,52 @@
+---
+title: TownsSyncProvider
+---
+Provides the sync agent to all hooks usage that interacts with the Towns Protocol.
+
+- If you want to interact with the sync agent directly, you can use the `useSyncAgent` hook. - If you want to interact with the Towns Protocol using hooks provided by this SDK, you should wrap your App with this provider.
+
+You can pass an initial sync agent instance to the provider. This can be useful for persisting authentication.
+
+## Imports
+
+```ts
+import { TownsSyncProvider } from '@towns-protocol/react-sdk'
+```
+
+## Definition
+
+```ts
+function TownsSyncProvider(
+  props: {
+    syncAgent?: SyncAgent;
+    config?: {
+        onTokenExpired?: () => void;
+    };
+    children?: React.ReactNode;
+},
+): JSX.Element
+```
+
+**Source:** [TownsSyncProvider](https://github.com/towns-protocol/towns/blob/main/packages/react-sdk/src/TownsSyncProvider.tsx)
+
+## Parameters
+
+### props
+
+- **Type:** `{
+    syncAgent?: SyncAgent;
+    config?: {
+        onTokenExpired?: () => void;
+    };
+    children?: React.ReactNode;
+}`
+
+The props for the provider
+
+## Return Type
+
+The provider
+
+```ts
+JSX.Element
+```

@@ -21,7 +21,7 @@ type EncryptedMessageQueue interface {
 		streamId shared.StreamId,
 		deviceKey string,
 		sessionIds []string,
-		ciphertexts string,
+		encryptionEnvelope []byte,
 	) (err error)
 
 	HasRegisteredWebhook(

@@ -5,11 +5,11 @@ import {
     MessageInteractionType,
     Tags,
     PlainMessage,
-} from '@river-build/proto'
+} from '@towns-protocol/proto'
 import { IStreamStateView } from './streamStateView'
 import { addressFromUserId } from './id'
-import { bin_fromHexString, bin_toHexString, check } from '@river-build/dlog'
-import { TipEventObject } from '@river-build/generated/dev/typings/ITipping'
+import { bin_fromHexString, bin_toHexString, check } from '@towns-protocol/dlog'
+import { TipEventObject } from '@towns-protocol/generated/dev/typings/ITipping'
 import { isDefined } from './check'
 import { bytesToHex } from 'ethereum-cryptography/utils'
 

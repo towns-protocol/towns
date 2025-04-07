@@ -1,6 +1,6 @@
 'use client'
 
-import type { Dms } from '@river-build/sdk'
+import type { Dms } from '@towns-protocol/sdk'
 import { type ActionConfig, useAction } from './internals/useAction'
 import { useSyncAgent } from './useSyncAgent'
 
@@ -16,7 +16,7 @@ export const useCreateDm = (config?: ActionConfig<Dms['createDM']>) => {
     return {
         /**
          * Creates a new DM.
-         * @param userId - The River `userId` of the user to create a DM with.
+         * @param userId - The `userId` of the user to create a DM with.
          * @returns A promise that resolves to the result of the create operation.
          */
         createDM,

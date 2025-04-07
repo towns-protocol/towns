@@ -1,4 +1,4 @@
-import type { RiverConfig, SignerContext } from '@river-build/sdk'
+import type { RiverConfig, SignerContext } from '@towns-protocol/sdk'
 import superjson from 'superjson'
 
 export const storeAuth = (signerContext: SignerContext, riverConfig: RiverConfig) => {

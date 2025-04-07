@@ -1,5 +1,5 @@
 import { ethers } from 'ethers'
-import { SpaceDapp } from '@river-build/web3'
+import { SpaceDapp } from '@towns-protocol/web3'
 
 import { config } from './environment'
 

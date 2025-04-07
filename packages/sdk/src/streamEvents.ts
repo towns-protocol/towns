@@ -6,7 +6,7 @@ import {
     UserPayload_UserMembership,
     UserInboxPayload_Snapshot_DeviceSummary,
     BlockchainTransaction_Tip,
-} from '@river-build/proto'
+} from '@towns-protocol/proto'
 
 import {
     ClientInitStatus,
@@ -16,11 +16,15 @@ import {
     RemoteTimelineEvent,
     StreamTimelineEvent,
 } from './types'
-import { EventSignatureBundle, KeySolicitationContent, UserDevice } from '@river-build/encryption'
+import {
+    EventSignatureBundle,
+    KeySolicitationContent,
+    UserDevice,
+} from '@towns-protocol/encryption'
 import { EncryptedContent } from './encryptedContentTypes'
 import { SyncState } from './syncedStreamsLoop'
 import { Pin } from './streamStateView_Members'
-import { SpaceReviewEventObject } from '@river-build/web3'
+import { SpaceReviewEventObject } from '@towns-protocol/web3'
 
 export type StreamChange = {
     prepended?: RemoteTimelineEvent[]
@@ -35,6 +39,7 @@ export type StreamEncryptionEvents = {
     newEncryptedContent: (streamId: string, eventId: string, content: EncryptedContent) => void
     newKeySolicitation: (
         streamId: string,
+        eventHashStr: string,
         fromUserId: string,
         fromUserAddress: Uint8Array,
         event: KeySolicitationContent,
@@ -42,6 +47,7 @@ export type StreamEncryptionEvents = {
     ) => void
     updatedKeySolicitation: (
         streamId: string,
+        eventHashStr: string,
         fromUserId: string,
         fromUserAddress: Uint8Array,
         event: KeySolicitationContent,
@@ -49,6 +55,7 @@ export type StreamEncryptionEvents = {
     ) => void
     initKeySolicitations: (
         streamId: string,
+        eventHashStr: string,
         members: {
             userId: string
             userAddress: Uint8Array

@@ -27,7 +27,8 @@
             "error",
             {
                 "argsIgnorePattern": "^_",
-                "destructuredArrayIgnorePattern": "^_"
+                "destructuredArrayIgnorePattern": "^_",
+                "caughtErrors": "none"
             }
         ],
         "@typescript-eslint/restrict-template-expressions": [

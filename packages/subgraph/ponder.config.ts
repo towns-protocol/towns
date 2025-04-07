@@ -2,7 +2,7 @@ import { createConfig } from 'ponder'
 import { http } from 'viem'
 
 // import abis
-import { createSpaceFacetAbi } from '@river-build/contracts/typings'
+import { createSpaceFacetAbi } from '@towns-protocol/contracts/typings'
 
 // Import our contract address utility
 import { getContractAddress } from './utils/contractAddresses'
@@ -26,13 +26,18 @@ export default createConfig({
             transport: http(process.env.PONDER_RPC_URL_1),
             disableCache: true,
         },
+        gamma: {
+            chainId: 84532,
+            transport: http(process.env.PONDER_RPC_URL_1),
+            disableCache: true,
+        },
     },
     contracts: {
         CreateSpace: {
-            network: 'anvil',
             abi: createSpaceFacetAbi,
             address: spaceFactory,
             startBlock,
+            network: 'anvil',
         },
     },
 })

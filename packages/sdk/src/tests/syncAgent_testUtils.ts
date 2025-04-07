@@ -5,7 +5,7 @@ import { makeRiverConfig } from '../riverConfig'
 import { RiverDbManager } from '../riverDbManager'
 import { userIdFromAddress } from '../id'
 import { Entitlements } from '../sync-agent/entitlements/entitlements'
-import { SpaceDapp } from '@river-build/web3'
+import { SpaceDapp } from '@towns-protocol/web3'
 
 export async function makeRandomSyncAgentConfig(): Promise<SyncAgentConfig> {
     const context = await makeRandomUserContext()

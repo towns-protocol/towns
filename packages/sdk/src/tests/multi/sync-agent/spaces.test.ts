@@ -1,7 +1,7 @@
 /**
  * @group with-entitlements
  */
-import { dlogger } from '@river-build/dlog'
+import { dlogger } from '@towns-protocol/dlog'
 import { Bot } from '../../../sync-agent/utils/bot'
 import { findMessageByText, waitFor } from '../../testUtils'
 
@@ -23,7 +23,7 @@ describe('spaces.test.ts', () => {
         expect(syncAgent.spaces.data.spaceIds.length).toBe(1)
         expect(syncAgent.spaces.data.spaceIds[0]).toBe(spaceId)
         expect(syncAgent.spaces.getSpace(spaceId)).toBeDefined()
-        const space = syncAgent.spaces.getSpace(spaceId)!
+        const space = syncAgent.spaces.getSpace(spaceId)
         await waitFor(() => expect(space.value.status).not.toBe('loading'))
         await waitFor(() => expect(space.data.channelIds.length).toBe(1))
         expect(space.data.channelIds[0]).toBe(defaultChannelId)

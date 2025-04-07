@@ -9,7 +9,7 @@ import {
     isDMChannelStreamId,
     isGDMChannelStreamId,
 } from './id'
-import { check, dlog, dlogError, DLogger } from '@river-build/dlog'
+import { check, dlog, dlogError, DLogger } from '@towns-protocol/dlog'
 import { Stream } from './stream'
 import { ClientInitStatus } from './types'
 import pLimit from 'p-limit'

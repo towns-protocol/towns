@@ -1,0 +1,55 @@
+---
+title: useTownsAuthStatus
+---
+Hook to get the auth status of the user connection with the Towns network.
+
+## Imports
+
+```ts
+import { useTownsAuthStatus } from '@towns-protocol/react-sdk'
+```
+
+## Definition
+
+```ts
+function useTownsAuthStatus(
+  config?: ObservableConfig.FromObservable<AuthStatus>,
+): {
+    status: AuthStatus;
+    isInitializing: boolean;
+    isEvaluatingCredentials: boolean;
+    isCredentialed: boolean;
+    isConnectingToTowns: boolean;
+    isConnectedToTowns: boolean;
+    isDisconnected: boolean;
+    isError: boolean;
+}
+```
+
+**Source:** [useTownsAuthStatus](https://github.com/towns-protocol/towns/blob/main/packages/react-sdk/src/useTownsAuthStatus.ts)
+
+## Parameters
+
+### config
+
+- **Type:** `ObservableConfig.FromObservable<AuthStatus>`
+- **Optional**
+
+Configuration options for the observable.
+
+## Return Type
+
+An object containing the current AuthStatus status and boolean flags for each possible status.
+
+```ts
+{
+    status: AuthStatus;
+    isInitializing: boolean;
+    isEvaluatingCredentials: boolean;
+    isCredentialed: boolean;
+    isConnectingToTowns: boolean;
+    isConnectedToTowns: boolean;
+    isDisconnected: boolean;
+    isError: boolean;
+}
+```

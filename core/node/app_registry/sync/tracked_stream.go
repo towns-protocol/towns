@@ -33,8 +33,12 @@ func (b *AppRegistryTrackedStreamView) processUserInboxMessage(ctx context.Conte
 			if err != nil {
 				return err
 			}
-			for deviceKey, cipherTexts := range deviceCipherTexts {
-				if err := b.queue.PublishSessionKeys(ctx, streamId, deviceKey, sessionIds, cipherTexts); err != nil {
+			envelopeBytes, err := event.GetEnvelopeBytes()
+			if err != nil {
+				return err
+			}
+			for deviceKey := range deviceCipherTexts {
+				if err := b.queue.PublishSessionKeys(ctx, streamId, deviceKey, sessionIds, envelopeBytes); err != nil {
 					return err
 				}
 			}
@@ -45,17 +49,21 @@ func (b *AppRegistryTrackedStreamView) processUserInboxMessage(ctx context.Conte
 
 func (b *AppRegistryTrackedStreamView) onNewEvent(ctx context.Context, view *StreamView, event *ParsedEvent) error {
 	streamId := view.StreamId()
-	log := logging.FromCtx(ctx).With("func", "AppRegistryTrackedStreamView.onNewEvent")
+	log := logging.FromCtx(ctx).With("func", "AppRegistryTrackedStreamView.onNewEvent", "streamId", view.StreamId())
 
 	if streamId.Type() == shared.STREAM_USER_INBOX_BIN {
-		return b.processUserInboxMessage(ctx, event)
+		if err := b.processUserInboxMessage(ctx, event); err != nil {
+			log.Errorw("Error processing user inbox message", "err", err)
+			return err
+		}
+		return nil
 	}
 
 	members, err := view.GetChannelMembers()
 	if err != nil {
 		return err
 	}
-	appMembers := mapset.NewSet[string]()
+	apps := mapset.NewSet[string]()
 	members.Each(func(member string) bool {
 		// Trim 0x prefix
 		if len(member) > 2 && member[:2] == "0x" {
@@ -69,7 +77,7 @@ func (b *AppRegistryTrackedStreamView) onNewEvent(ctx context.Context, view *Str
 		}
 		memberAddress := common.BytesToAddress(bytes)
 		if b.queue.HasRegisteredWebhook(ctx, memberAddress) {
-			appMembers.Add(member)
+			apps.Add(member)
 		}
 		return false
 	})
@@ -80,14 +88,14 @@ func (b *AppRegistryTrackedStreamView) onNewEvent(ctx context.Context, view *Str
 	// 	streamId,
 	// 	"members",
 	// 	members,
-	// 	"appMembers",
-	// 	appMembers,
+	// 	"apps",
+	// 	apps,
 	// 	"event",
 	// 	event,
 	// )
-	if appMembers.Cardinality() > 0 {
-		// log.Debugw("OnMessageEvent message", "streamId", streamId, "appMembers", appMembers, "event", event)
-		b.listener.OnMessageEvent(ctx, *streamId, view.StreamParentId(), appMembers, event)
+	if apps.Cardinality() > 0 {
+		// log.Debugw("OnMessageEvent message", "streamId", streamId, "apps", apps, "event", event)
+		b.listener.OnMessageEvent(ctx, *streamId, view.StreamParentId(), apps, event)
 	}
 
 	return nil

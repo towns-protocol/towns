@@ -1,8 +1,8 @@
 /**
  * @group main
  */
-import { MembershipOp, StreamAndCookie, SyncOp } from '@river-build/proto'
-import { dlog } from '@river-build/dlog'
+import { MembershipOp, StreamAndCookie, SyncOp } from '@towns-protocol/proto'
+import { dlog } from '@towns-protocol/dlog'
 import {
     makeUniqueChannelStreamId,
     makeUserStreamId,

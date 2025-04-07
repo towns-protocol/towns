@@ -1,0 +1,69 @@
+---
+title: useTowns
+---
+Hook to get an observable from the sync agent.
+
+An alternative of our premade hooks, allowing the creation of custom abstractions.
+
+## Imports
+
+```ts
+import { useTowns } from '@towns-protocol/react-sdk'
+```
+
+## Definition
+
+```ts
+function useTowns<T>(
+  selector: (sync: SyncSelector) => Observable<T>,
+  config?: ObservableConfig.FromData<T>,
+): ObservableValue<T extends PersistedModel<infer UnwrappedData> ? UnwrappedData : T>
+```
+
+**Source:** [useTowns](https://github.com/towns-protocol/towns/blob/main/packages/react-sdk/src/useTowns.ts)
+
+## Parameters
+
+### selector
+
+- **Type:** `(sync: SyncSelector) => Observable<T>`
+
+A selector function to get a observable from the sync agent.
+
+
+
+### config
+
+- **Type:** `ObservableConfig.FromData<T>`
+- **Optional**
+
+Configuration options for the observable.
+
+#### config.fireImmediately
+
+- **Type:** `boolean`
+- **Optional**
+
+Trigger the update immediately, without waiting for the first update.
+
+#### config.onError
+
+- **Type:** `(error: Error) => void`
+- **Optional**
+
+Callback function to be called when an error occurs.
+
+#### config.onUpdate
+
+- **Type:** `(data: Data) => void`
+- **Optional**
+
+Callback function to be called when the data is updated.
+
+## Return Type
+
+The data from the selected observable.
+
+```ts
+ObservableValue<T extends PersistedModel<infer UnwrappedData> ? UnwrappedData : T>
+```

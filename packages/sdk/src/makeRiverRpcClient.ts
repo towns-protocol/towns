@@ -1,4 +1,4 @@
-import { RiverChainConfig, createRiverRegistry } from '@river-build/web3'
+import { RiverChainConfig, createRiverRegistry } from '@towns-protocol/web3'
 import { StreamRpcClient, makeStreamRpcClient } from './makeStreamRpcClient'
 import { ethers } from 'ethers'
 import { RpcOptions } from './rpcCommon'

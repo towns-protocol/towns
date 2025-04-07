@@ -64,7 +64,6 @@ export interface MembershipFacetInterface extends utils.Interface {
     "setMembershipLimit(uint256)": FunctionFragment;
     "setMembershipPrice(uint256)": FunctionFragment;
     "setMembershipPricingModule(address)": FunctionFragment;
-    "withdraw(address)": FunctionFragment;
   };
 
   getFunction(
@@ -89,7 +88,6 @@ export interface MembershipFacetInterface extends utils.Interface {
       | "setMembershipLimit"
       | "setMembershipPrice"
       | "setMembershipPricingModule"
-      | "withdraw"
   ): FunctionFragment;
 
   encodeFunctionData(
@@ -169,10 +167,6 @@ export interface MembershipFacetInterface extends utils.Interface {
     functionFragment: "setMembershipPricingModule",
     values: [PromiseOrValue<string>]
   ): string;
-  encodeFunctionData(
-    functionFragment: "withdraw",
-    values: [PromiseOrValue<string>]
-  ): string;
 
   decodeFunctionResult(functionFragment: "expiresAt", data: BytesLike): Result;
   decodeFunctionResult(
@@ -245,7 +239,6 @@ export interface MembershipFacetInterface extends utils.Interface {
     functionFragment: "setMembershipPricingModule",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(functionFragment: "withdraw", data: BytesLike): Result;
 
   events: {
     "Approval(address,address,uint256)": EventFragment;
@@ -869,11 +862,6 @@ export interface MembershipFacet extends BaseContract {
       pricingModule: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
-
-    withdraw(
-      account: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
   };
 
   expiresAt(
@@ -947,11 +935,6 @@ export interface MembershipFacet extends BaseContract {
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
-  withdraw(
-    account: PromiseOrValue<string>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
   callStatic: {
     expiresAt(
       tokenId: PromiseOrValue<BigNumberish>,
@@ -1021,11 +1004,6 @@ export interface MembershipFacet extends BaseContract {
 
     setMembershipPricingModule(
       pricingModule: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    withdraw(
-      account: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<void>;
   };
@@ -1400,11 +1378,6 @@ export interface MembershipFacet extends BaseContract {
       pricingModule: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
-
-    withdraw(
-      account: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
   };
 
   populateTransaction: {
@@ -1490,11 +1463,6 @@ export interface MembershipFacet extends BaseContract {
 
     setMembershipPricingModule(
       pricingModule: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    withdraw(
-      account: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
   };

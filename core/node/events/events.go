@@ -479,6 +479,24 @@ func Make_UserInboxPayload_Inception(streamId StreamId, settings *StreamSettings
 	}
 }
 
+func Make_UserInboxPayload_GroupEncryptionSessions(
+	streamId StreamId,
+	sessionIds []string,
+	cipherTexts map[string]string,
+) *StreamEvent_UserInboxPayload {
+	return &StreamEvent_UserInboxPayload{
+		UserInboxPayload: &UserInboxPayload{
+			Content: &UserInboxPayload_GroupEncryptionSessions_{
+				GroupEncryptionSessions: &UserInboxPayload_GroupEncryptionSessions{
+					StreamId:    streamId[:],
+					SessionIds:  sessionIds,
+					Ciphertexts: cipherTexts,
+				},
+			},
+		},
+	}
+}
+
 func Make_UserMetadataPayload_Inception(
 	streamId StreamId,
 	settings *StreamSettings,

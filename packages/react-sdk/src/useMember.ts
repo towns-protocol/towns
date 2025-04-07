@@ -1,4 +1,4 @@
-import { Member } from '@river-build/sdk'
+import { Member } from '@towns-protocol/sdk'
 import { useMemo } from 'react'
 import { useObservable } from './useObservable'
 

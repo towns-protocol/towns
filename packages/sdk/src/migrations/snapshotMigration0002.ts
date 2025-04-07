@@ -1,4 +1,4 @@
-import { Snapshot, SpacePayload_ChannelSettingsSchema } from '@river-build/proto'
+import { Snapshot, SpacePayload_ChannelSettingsSchema } from '@towns-protocol/proto'
 import { isDefaultChannelId, streamIdFromBytes } from '../id'
 import { create } from '@bufbuild/protobuf'
 

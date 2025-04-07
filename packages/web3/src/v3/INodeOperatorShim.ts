@@ -1,9 +1,9 @@
 import {
     INodeOperator as DevContract,
     INodeOperatorInterface as DevInterface,
-} from '@river-build/generated/dev/typings/INodeOperator'
+} from '@towns-protocol/generated/dev/typings/INodeOperator'
 
-import DevAbi from '@river-build/generated/dev/abis/INodeOperator.abi.json' assert { type: 'json' }
+import DevAbi from '@towns-protocol/generated/dev/abis/INodeOperator.abi.json' assert { type: 'json' }
 
 import { ethers } from 'ethers'
 import { BaseContractShim } from './BaseContractShim'

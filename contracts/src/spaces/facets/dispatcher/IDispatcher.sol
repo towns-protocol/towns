@@ -8,5 +8,5 @@ pragma solidity ^0.8.23;
 // contracts
 
 interface IDispatcherBase {
-  error Dispatcher__TransactionAlreadyExists();
+    error Dispatcher__TransactionAlreadyExists();
 }

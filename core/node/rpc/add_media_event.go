@@ -94,7 +94,7 @@ func (s *Service) getGenesisMediaEvent(ctx context.Context, streamId StreamId) (
 	}
 
 	var mb Miniblock
-	if err = proto.Unmarshal(mbs[0], &mb); err != nil {
+	if err = proto.Unmarshal(mbs[0].Data, &mb); err != nil {
 		return nil, err
 	}
 

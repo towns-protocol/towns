@@ -3,8 +3,8 @@
  */
 
 import { setupChannelWithCustomRole, expectUserCanJoinChannel } from '../../testUtils'
-import { dlog } from '@river-build/dlog'
-import { NoopRuleData, Permission } from '@river-build/web3'
+import { dlog } from '@towns-protocol/dlog'
+import { NoopRuleData, Permission } from '@towns-protocol/web3'
 
 const log = dlog('csb:test:channelEntitlementPermissions')
 

@@ -62,6 +62,11 @@ func (d *AppDispatcher) RequestKeySolicitations(
 	channelId shared.StreamId,
 	devices []SolicitationDevice,
 ) error {
+	// Drop remaining work after node context expires
+	if d.workerPool.Stopped() {
+		return nil
+	}
+
 	for _, device := range devices {
 		cacheKey := fmt.Sprintf("%s.%s", device.AppId.String(), sessionId)
 		if _, found := d.solicitationRateLimitCache.Get(cacheKey); found {
@@ -105,6 +110,11 @@ func (d *AppDispatcher) SubmitMessages(
 	ctx context.Context,
 	messages *SessionMessages,
 ) error {
+	// Drop remaining work after node context expires
+	if d.workerPool.Stopped() {
+		return nil
+	}
+
 	sharedSecret, err := decryptSharedSecret(messages.EncryptedSharedSecret, d.dataEncryptionKey)
 	if err != nil {
 		return err
@@ -113,12 +123,12 @@ func (d *AppDispatcher) SubmitMessages(
 		func() {
 			if err := d.appClient.SendSessionMessages(
 				ctx,
+				messages.StreamId,
 				messages.AppId,
 				sharedSecret,
-				messages.SessionIds,
-				messages.CipherTexts,
+				messages.MessageEnvelopes,
+				[][]byte{messages.EncryptionEnvelope},
 				messages.WebhookUrl,
-				messages.StreamEvents,
 			); err != nil {
 				// TODO: retry logic?
 				logging.FromCtx(ctx).Errorw(
@@ -129,6 +139,8 @@ func (d *AppDispatcher) SubmitMessages(
 					messages.DeviceKey,
 					"webHookUrl",
 					messages.WebhookUrl,
+					"streamId",
+					messages.StreamId,
 					"error",
 					err,
 				)

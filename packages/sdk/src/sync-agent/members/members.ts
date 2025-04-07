@@ -1,4 +1,4 @@
-import { check } from '@river-build/dlog'
+import { check } from '@towns-protocol/dlog'
 import { isDefined } from '../../check'
 import { PersistedObservable, persistedObservable } from '../../observable/persistedObservable'
 import type { Store } from '../../store/store'
@@ -6,7 +6,7 @@ import type { RiverConnection } from '../river-connection/riverConnection'
 import { Member } from './models/member'
 import { isUserId } from '../../id'
 import { Myself } from './models/myself'
-import { MembershipOp } from '@river-build/proto'
+import { MembershipOp } from '@towns-protocol/proto'
 
 export type MembersModel = {
     /** The id of the stream. */

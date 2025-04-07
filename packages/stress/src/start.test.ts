@@ -1,7 +1,7 @@
 import { getSystemInfo } from './utils/systemInfo'
 import { setupChat, startStressChat } from './mode/chat/root_chat'
-import { genShortId, makeRiverConfig } from '@river-build/sdk'
-import { LocalhostWeb3Provider } from '@river-build/web3'
+import { genShortId, makeRiverConfig } from '@towns-protocol/sdk'
+import { LocalhostWeb3Provider } from '@towns-protocol/web3'
 import { getLogger } from './utils/logger'
 
 const logger = getLogger('stress:test')

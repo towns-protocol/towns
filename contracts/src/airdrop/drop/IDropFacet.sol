@@ -2,62 +2,37 @@
 pragma solidity ^0.8.23;
 
 // interfaces
+import {DropClaimLib} from "./DropClaimLib.sol";
 
 // libraries
 
 // contracts
 
 interface IDropFacetBase {
-  /// @notice A struct representing a claim
-  /// @param conditionId The ID of the claim condition
-  /// @param account The address of the account that claimed
-  /// @param quantity The quantity of tokens claimed
-  /// @param proof The proof of the claim
-  struct Claim {
-    uint256 conditionId;
-    address account;
-    uint256 quantity;
-    bytes32[] proof;
-  }
+    // =============================================================
+    //                           Events
+    // =============================================================
+    event DropFacet_Claimed_WithPenalty(
+        uint256 indexed conditionId,
+        address indexed claimer,
+        address indexed account,
+        uint256 amount
+    );
 
-  /// @notice A struct representing a claim condition
-  /// @param currency The currency to claim in
-  /// @param startTimestamp The timestamp at which the claim condition starts
-  /// @param endTimestamp The timestamp at which the claim condition ends
-  /// @param penaltyBps The penalty in basis points for early withdrawal
-  /// @param maxClaimableSupply The maximum claimable supply for the claim condition
-  /// @param supplyClaimed The supply already claimed for the claim condition
-  /// @param merkleRoot The merkle root for the claim condition
-  struct ClaimCondition {
-    address currency;
-    uint40 startTimestamp;
-    uint40 endTimestamp;
-    uint16 penaltyBps;
-    uint256 maxClaimableSupply;
-    uint256 supplyClaimed;
-    bytes32 merkleRoot;
-  }
+    event DropFacet_Claimed_And_Staked(
+        uint256 indexed conditionId,
+        address indexed claimer,
+        address indexed account,
+        uint256 amount
+    );
 
-  // =============================================================
-  //                           Events
-  // =============================================================
-  event DropFacet_Claimed_WithPenalty(
-    uint256 indexed conditionId,
-    address indexed claimer,
-    address indexed account,
-    uint256 amount
-  );
+    event DropFacet_ClaimConditionsUpdated(
+        uint256 indexed conditionId, DropClaimLib.ClaimCondition[] conditions
+    );
 
-  event DropFacet_Claimed_And_Staked(
-    uint256 indexed conditionId,
-    address indexed claimer,
-    address indexed account,
-    uint256 amount
-  );
-
-  event DropFacet_ClaimConditionsUpdated(ClaimCondition[] conditions);
-
-  event DropFacet_ClaimConditionAdded(ClaimCondition condition);
+    event DropFacet_ClaimConditionAdded(
+        uint256 indexed conditionId, DropClaimLib.ClaimCondition condition
+    );
 
   event DropFacet_Unlocked_Stake(
     uint256 indexed conditionId,

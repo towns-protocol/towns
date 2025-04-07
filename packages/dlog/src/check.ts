@@ -1,4 +1,4 @@
-import { Err } from '@river-build/proto'
+import { Err } from '@towns-protocol/proto'
 import { dlogError } from './dlog'
 
 const log = dlogError('csb:error')

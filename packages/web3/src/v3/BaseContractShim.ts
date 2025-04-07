@@ -1,5 +1,5 @@
 import { BytesLike, ethers } from 'ethers'
-import { dlogger } from '@river-build/dlog'
+import { dlogger } from '@towns-protocol/dlog'
 
 export type PromiseOrValue<T> = T | Promise<T>
 

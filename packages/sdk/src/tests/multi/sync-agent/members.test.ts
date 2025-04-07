@@ -5,7 +5,7 @@ import { Bot } from '../../../sync-agent/utils/bot'
 import { waitFor } from '../../testUtils'
 import type { SyncAgent } from '../../../sync-agent/syncAgent'
 import type { Space } from '../../../sync-agent/spaces/models/space'
-import { MembershipOp } from '@river-build/proto'
+import { MembershipOp } from '@towns-protocol/proto'
 
 describe('members.test.ts', () => {
     const testUser = new Bot()

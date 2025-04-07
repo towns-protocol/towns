@@ -1,24 +1,24 @@
 'use client'
-import { useRiverSync } from './internals/useRiverSync'
+import { useTownsSync } from './internals/useTownsSync'
 
 /**
- * Hook to get the sync agent from the RiverSyncProvider.
+ * Hook to get the sync agent from the TownsSyncProvider.
  *
  * You can use it to interact with the sync agent for more advanced usage.
  *
- * Throws an error if no sync agent is set in the RiverSyncProvider.
+ * Throws an error if no sync agent is set in the TownsSyncProvider.
  *
- * @returns The sync agent in use, set in RiverSyncProvider.
- * @throws If no sync agent is set, use RiverSyncProvider to set one or use useAgentConnection to check if connected.
+ * @returns The sync agent in use, set in TownsSyncProvider.
+ * @throws If no sync agent is set, use TownsSyncProvider to set one or use useAgentConnection to check if connected.
  */
 export const useSyncAgent = () => {
-    const river = useRiverSync()
+    const towns = useTownsSync()
 
-    if (!river?.syncAgent) {
+    if (!towns?.syncAgent) {
         throw new Error(
-            'No SyncAgent set, use RiverSyncProvider to set one or use useAgentConnection to check if connected',
+            'No SyncAgent set, use TownsSyncProvider to set one or use useAgentConnection to check if connected',
         )
     }
 
-    return river.syncAgent
+    return towns.syncAgent
 }

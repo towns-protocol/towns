@@ -27,7 +27,7 @@ import type {
   PromiseOrValue,
 } from "./common";
 
-export declare namespace IDropFacetBase {
+export declare namespace DropClaimLib {
   export type ClaimConditionStruct = {
     currency: PromiseOrValue<string>;
     startTimestamp: PromiseOrValue<BigNumberish>;
@@ -99,12 +99,12 @@ export interface IDropFacetInterface extends utils.Interface {
 
   encodeFunctionData(
     functionFragment: "addClaimCondition",
-    values: [IDropFacetBase.ClaimConditionStruct]
+    values: [DropClaimLib.ClaimConditionStruct]
   ): string;
   encodeFunctionData(
     functionFragment: "claimAndStake",
     values: [
-      IDropFacetBase.ClaimStruct,
+      DropClaimLib.ClaimStruct,
       PromiseOrValue<string>,
       PromiseOrValue<BigNumberish>,
       PromiseOrValue<BytesLike>
@@ -112,7 +112,7 @@ export interface IDropFacetInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "claimWithPenalty",
-    values: [IDropFacetBase.ClaimStruct, PromiseOrValue<BigNumberish>]
+    values: [DropClaimLib.ClaimStruct, PromiseOrValue<BigNumberish>]
   ): string;
   encodeFunctionData(
     functionFragment: "getActiveClaimConditionId",
@@ -136,7 +136,7 @@ export interface IDropFacetInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "setClaimConditions",
-    values: [IDropFacetBase.ClaimConditionStruct[]]
+    values: [DropClaimLib.ClaimConditionStruct[]]
   ): string;
 
   decodeFunctionResult(
@@ -177,8 +177,8 @@ export interface IDropFacetInterface extends utils.Interface {
   ): Result;
 
   events: {
-    "DropFacet_ClaimConditionAdded(tuple)": EventFragment;
-    "DropFacet_ClaimConditionsUpdated(tuple[])": EventFragment;
+    "DropFacet_ClaimConditionAdded(uint256,tuple)": EventFragment;
+    "DropFacet_ClaimConditionsUpdated(uint256,tuple[])": EventFragment;
     "DropFacet_Claimed_And_Staked(uint256,address,address,uint256)": EventFragment;
     "DropFacet_Claimed_WithPenalty(uint256,address,address,uint256)": EventFragment;
   };
@@ -198,10 +198,11 @@ export interface IDropFacetInterface extends utils.Interface {
 }
 
 export interface DropFacet_ClaimConditionAddedEventObject {
-  condition: IDropFacetBase.ClaimConditionStructOutput;
+  conditionId: BigNumber;
+  condition: DropClaimLib.ClaimConditionStructOutput;
 }
 export type DropFacet_ClaimConditionAddedEvent = TypedEvent<
-  [IDropFacetBase.ClaimConditionStructOutput],
+  [BigNumber, DropClaimLib.ClaimConditionStructOutput],
   DropFacet_ClaimConditionAddedEventObject
 >;
 
@@ -209,10 +210,11 @@ export type DropFacet_ClaimConditionAddedEventFilter =
   TypedEventFilter<DropFacet_ClaimConditionAddedEvent>;
 
 export interface DropFacet_ClaimConditionsUpdatedEventObject {
-  conditions: IDropFacetBase.ClaimConditionStructOutput[];
+  conditionId: BigNumber;
+  conditions: DropClaimLib.ClaimConditionStructOutput[];
 }
 export type DropFacet_ClaimConditionsUpdatedEvent = TypedEvent<
-  [IDropFacetBase.ClaimConditionStructOutput[]],
+  [BigNumber, DropClaimLib.ClaimConditionStructOutput[]],
   DropFacet_ClaimConditionsUpdatedEventObject
 >;
 
@@ -275,12 +277,12 @@ export interface IDropFacet extends BaseContract {
 
   functions: {
     addClaimCondition(
-      condition: IDropFacetBase.ClaimConditionStruct,
+      condition: DropClaimLib.ClaimConditionStruct,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
     claimAndStake(
-      claim: IDropFacetBase.ClaimStruct,
+      claim: DropClaimLib.ClaimStruct,
       delegatee: PromiseOrValue<string>,
       deadline: PromiseOrValue<BigNumberish>,
       signature: PromiseOrValue<BytesLike>,
@@ -288,7 +290,7 @@ export interface IDropFacet extends BaseContract {
     ): Promise<ContractTransaction>;
 
     claimWithPenalty(
-      claim: IDropFacetBase.ClaimStruct,
+      claim: DropClaimLib.ClaimStruct,
       expectedPenaltyBps: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
@@ -298,11 +300,11 @@ export interface IDropFacet extends BaseContract {
     getClaimConditionById(
       conditionId: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
-    ): Promise<[IDropFacetBase.ClaimConditionStructOutput]>;
+    ): Promise<[DropClaimLib.ClaimConditionStructOutput]>;
 
     getClaimConditions(
       overrides?: CallOverrides
-    ): Promise<[IDropFacetBase.ClaimConditionStructOutput[]]>;
+    ): Promise<[DropClaimLib.ClaimConditionStructOutput[]]>;
 
     getDepositIdByWallet(
       account: PromiseOrValue<string>,
@@ -317,18 +319,18 @@ export interface IDropFacet extends BaseContract {
     ): Promise<[BigNumber]>;
 
     setClaimConditions(
-      conditions: IDropFacetBase.ClaimConditionStruct[],
+      conditions: DropClaimLib.ClaimConditionStruct[],
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
   };
 
   addClaimCondition(
-    condition: IDropFacetBase.ClaimConditionStruct,
+    condition: DropClaimLib.ClaimConditionStruct,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
   claimAndStake(
-    claim: IDropFacetBase.ClaimStruct,
+    claim: DropClaimLib.ClaimStruct,
     delegatee: PromiseOrValue<string>,
     deadline: PromiseOrValue<BigNumberish>,
     signature: PromiseOrValue<BytesLike>,
@@ -336,7 +338,7 @@ export interface IDropFacet extends BaseContract {
   ): Promise<ContractTransaction>;
 
   claimWithPenalty(
-    claim: IDropFacetBase.ClaimStruct,
+    claim: DropClaimLib.ClaimStruct,
     expectedPenaltyBps: PromiseOrValue<BigNumberish>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
@@ -346,11 +348,11 @@ export interface IDropFacet extends BaseContract {
   getClaimConditionById(
     conditionId: PromiseOrValue<BigNumberish>,
     overrides?: CallOverrides
-  ): Promise<IDropFacetBase.ClaimConditionStructOutput>;
+  ): Promise<DropClaimLib.ClaimConditionStructOutput>;
 
   getClaimConditions(
     overrides?: CallOverrides
-  ): Promise<IDropFacetBase.ClaimConditionStructOutput[]>;
+  ): Promise<DropClaimLib.ClaimConditionStructOutput[]>;
 
   getDepositIdByWallet(
     account: PromiseOrValue<string>,
@@ -365,18 +367,18 @@ export interface IDropFacet extends BaseContract {
   ): Promise<BigNumber>;
 
   setClaimConditions(
-    conditions: IDropFacetBase.ClaimConditionStruct[],
+    conditions: DropClaimLib.ClaimConditionStruct[],
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
   callStatic: {
     addClaimCondition(
-      condition: IDropFacetBase.ClaimConditionStruct,
+      condition: DropClaimLib.ClaimConditionStruct,
       overrides?: CallOverrides
     ): Promise<void>;
 
     claimAndStake(
-      claim: IDropFacetBase.ClaimStruct,
+      claim: DropClaimLib.ClaimStruct,
       delegatee: PromiseOrValue<string>,
       deadline: PromiseOrValue<BigNumberish>,
       signature: PromiseOrValue<BytesLike>,
@@ -384,7 +386,7 @@ export interface IDropFacet extends BaseContract {
     ): Promise<BigNumber>;
 
     claimWithPenalty(
-      claim: IDropFacetBase.ClaimStruct,
+      claim: DropClaimLib.ClaimStruct,
       expectedPenaltyBps: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
@@ -394,11 +396,11 @@ export interface IDropFacet extends BaseContract {
     getClaimConditionById(
       conditionId: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
-    ): Promise<IDropFacetBase.ClaimConditionStructOutput>;
+    ): Promise<DropClaimLib.ClaimConditionStructOutput>;
 
     getClaimConditions(
       overrides?: CallOverrides
-    ): Promise<IDropFacetBase.ClaimConditionStructOutput[]>;
+    ): Promise<DropClaimLib.ClaimConditionStructOutput[]>;
 
     getDepositIdByWallet(
       account: PromiseOrValue<string>,
@@ -413,23 +415,27 @@ export interface IDropFacet extends BaseContract {
     ): Promise<BigNumber>;
 
     setClaimConditions(
-      conditions: IDropFacetBase.ClaimConditionStruct[],
+      conditions: DropClaimLib.ClaimConditionStruct[],
       overrides?: CallOverrides
     ): Promise<void>;
   };
 
   filters: {
-    "DropFacet_ClaimConditionAdded(tuple)"(
+    "DropFacet_ClaimConditionAdded(uint256,tuple)"(
+      conditionId?: PromiseOrValue<BigNumberish> | null,
       condition?: null
     ): DropFacet_ClaimConditionAddedEventFilter;
     DropFacet_ClaimConditionAdded(
+      conditionId?: PromiseOrValue<BigNumberish> | null,
       condition?: null
     ): DropFacet_ClaimConditionAddedEventFilter;
 
-    "DropFacet_ClaimConditionsUpdated(tuple[])"(
+    "DropFacet_ClaimConditionsUpdated(uint256,tuple[])"(
+      conditionId?: PromiseOrValue<BigNumberish> | null,
       conditions?: null
     ): DropFacet_ClaimConditionsUpdatedEventFilter;
     DropFacet_ClaimConditionsUpdated(
+      conditionId?: PromiseOrValue<BigNumberish> | null,
       conditions?: null
     ): DropFacet_ClaimConditionsUpdatedEventFilter;
 
@@ -462,12 +468,12 @@ export interface IDropFacet extends BaseContract {
 
   estimateGas: {
     addClaimCondition(
-      condition: IDropFacetBase.ClaimConditionStruct,
+      condition: DropClaimLib.ClaimConditionStruct,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
     claimAndStake(
-      claim: IDropFacetBase.ClaimStruct,
+      claim: DropClaimLib.ClaimStruct,
       delegatee: PromiseOrValue<string>,
       deadline: PromiseOrValue<BigNumberish>,
       signature: PromiseOrValue<BytesLike>,
@@ -475,7 +481,7 @@ export interface IDropFacet extends BaseContract {
     ): Promise<BigNumber>;
 
     claimWithPenalty(
-      claim: IDropFacetBase.ClaimStruct,
+      claim: DropClaimLib.ClaimStruct,
       expectedPenaltyBps: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
@@ -502,19 +508,19 @@ export interface IDropFacet extends BaseContract {
     ): Promise<BigNumber>;
 
     setClaimConditions(
-      conditions: IDropFacetBase.ClaimConditionStruct[],
+      conditions: DropClaimLib.ClaimConditionStruct[],
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
   };
 
   populateTransaction: {
     addClaimCondition(
-      condition: IDropFacetBase.ClaimConditionStruct,
+      condition: DropClaimLib.ClaimConditionStruct,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
     claimAndStake(
-      claim: IDropFacetBase.ClaimStruct,
+      claim: DropClaimLib.ClaimStruct,
       delegatee: PromiseOrValue<string>,
       deadline: PromiseOrValue<BigNumberish>,
       signature: PromiseOrValue<BytesLike>,
@@ -522,7 +528,7 @@ export interface IDropFacet extends BaseContract {
     ): Promise<PopulatedTransaction>;
 
     claimWithPenalty(
-      claim: IDropFacetBase.ClaimStruct,
+      claim: DropClaimLib.ClaimStruct,
       expectedPenaltyBps: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
@@ -553,7 +559,7 @@ export interface IDropFacet extends BaseContract {
     ): Promise<PopulatedTransaction>;
 
     setClaimConditions(
-      conditions: IDropFacetBase.ClaimConditionStruct[],
+      conditions: DropClaimLib.ClaimConditionStruct[],
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
   };

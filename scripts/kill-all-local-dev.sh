@@ -47,7 +47,7 @@ prompt() {
     fi
 }
 
-function do_killl() {
+function do_kill() {
     echo ""
     echo "finding processes containing $1"
     echo ""
@@ -76,16 +76,13 @@ then
     (cd ./core && just RUN_ENV=multi_ne stop)
 
     # just in case
-    do_killl './bin/river_node run'
+    do_kill './bin/river_node run'
 fi
 
-if prompt 'Stop XChain?:y/n '
+if prompt 'Stop App registry?:y/n '
 then
-    RUN_ENV=multi ./core/xchain/stop_multi.sh
-    RUN_ENV=multi_ne ./core/xchain/stop_multi.sh
-
-    # that script doesn't always work
-    do_killl './bin/xchain_node run'
+    (cd ./core && just RUN_ENV=multi stop-app-registry)
+    (cd ./core && just RUN_ENV=multi_ne stop-app-registry)
 fi
 
 if prompt 'Stop Stress?:y/n '
@@ -94,11 +91,11 @@ then
 fi
 
 do_kill run_files "$1" # get the tail command from the start stream node run-and-tail
-do_killl just "$1"
-do_killl yarn "$1"
-do_killl anvil "$1"
-do_killl wrangler "$1"
-do_killl mitmweb "$1"
+do_kill just "$1"
+do_kill yarn "$1"
+do_kill anvil "$1"
+do_kill wrangler "$1"
+do_kill mitmweb "$1"
 
 
 echo ""

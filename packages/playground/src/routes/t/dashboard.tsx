@@ -11,9 +11,9 @@ import {
     useUserDms,
     useUserGdms,
     useUserSpaces,
-} from '@river-build/react-sdk'
+} from '@towns-protocol/react-sdk'
 import { suspend } from 'suspend-react'
-import { Myself } from '@river-build/sdk'
+import { Myself } from '@towns-protocol/sdk'
 import { DoorOpenIcon, PlusIcon } from 'lucide-react'
 import { GridSidePanel } from '@/components/layout/grid-side-panel'
 import { Button } from '@/components/ui/button'

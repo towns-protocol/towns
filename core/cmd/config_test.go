@@ -15,6 +15,10 @@ func TestBlockchainConfigNotSetByDefault(t *testing.T) {
 	clean()
 	require := require.New(t)
 
+	// These may be set in CI, so unset them here explicitly just in case.
+	t.Setenv("CHAINS", "")
+	t.Setenv("CHAINSSTRING", "")
+
 	configFiles = []string{"../node/default_config.yaml"}
 	cmdConfig, _, err := initViperConfig()
 	require.NoError(err)

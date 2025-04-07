@@ -1,5 +1,5 @@
 import { ethers } from 'ethers'
-import { dlogger } from '@river-build/dlog'
+import { dlogger } from '@towns-protocol/dlog'
 import { BaseChainConfig } from './IStaticContractsInfo'
 import { mintMockNFT } from './ContractHelpers'
 
@@ -63,6 +63,7 @@ export class LocalhostWeb3Provider extends ethers.providers.JsonRpcProvider {
                 return this.wallet.signMessage(message)
             }
         } else {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-return
             return this.send(method, params)
         }
     }

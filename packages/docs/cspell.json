@@ -54,7 +54,8 @@
         "errorf",
         "Celestia",
         "POAP",
-        "POAPs"
+        "POAPs",
+        "pprof"
     ],
     "allowCompoundWords": true,
     "ignoreRegExpList": [
