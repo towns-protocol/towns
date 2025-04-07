@@ -36,15 +36,11 @@ contract ModuleRegistryTest is BaseSetup {
         super.setUp();
         schemaRegistry = SchemaRegistry(appRegistry);
         moduleRegistry = ModuleRegistry(appRegistry);
-        activeSchemaId =
-            schemaRegistry.register(MODULE_REGISTRY_SCHEMA, ISchemaResolver(address(0)), true);
 
         vm.prank(deployer);
-        moduleRegistry.setModuleSchemaId(activeSchemaId);
-    }
-
-    function test_getModuleSchemaId() external view {
-        assertEq(moduleRegistry.getModuleSchemaId(), activeSchemaId);
+        activeSchemaId = moduleRegistry.registerModuleSchema(
+            MODULE_REGISTRY_SCHEMA, ISchemaResolver(address(0)), true
+        );
     }
 
     function test_registerModule() external {

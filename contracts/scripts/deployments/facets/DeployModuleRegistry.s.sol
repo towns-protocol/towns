@@ -13,9 +13,9 @@ import {ModuleRegistry} from "contracts/src/attest/ModuleRegistry.sol";
 
 contract DeployModuleRegistry is FacetHelper, Deployer {
     constructor() {
+        addSelector(ModuleRegistry.registerModuleSchema.selector);
         addSelector(ModuleRegistry.getModuleSchema.selector);
         addSelector(ModuleRegistry.getModuleSchemaId.selector);
-        addSelector(ModuleRegistry.setModuleSchemaId.selector);
         addSelector(ModuleRegistry.getModuleVersion.selector);
         addSelector(ModuleRegistry.registerModule.selector);
         addSelector(ModuleRegistry.updateModulePermissions.selector);

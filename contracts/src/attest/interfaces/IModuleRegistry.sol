@@ -25,7 +25,8 @@ interface IModuleRegistry {
         ISchemaResolver resolver,
         bool revocable
     )
-        external;
+        external
+        returns (bytes32);
 
     /// @notice Get the current version (attestation UID) for a module
     /// @param module The module address

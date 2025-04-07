@@ -44,9 +44,11 @@ contract ModuleRegistry is IModuleRegistry, OwnableBase, Facet {
     )
         external
         onlyOwner
+        returns (bytes32)
     {
         bytes32 schemaId = SchemaLib.registerSchema(schema, resolver, revocable);
         ModuleLib.setSchema(schemaId);
+        return schemaId;
     }
 
     /// @notice Get the current version (attestation UID) for a module
