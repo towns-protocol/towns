@@ -49,6 +49,50 @@ func (s *StreamCache) onStreamCreated(
 	}()
 }
 
+func (s *StreamCache) onStreamPlacementUpdated(
+	ctx context.Context,
+	event *river.StreamState,
+	blockNum crypto.BlockNumber,
+) {
+	participatingInStream := slices.Contains(event.Nodes, s.params.Wallet.Address)
+	if !participatingInStream {
+		if stream, ok := s.cache.Load(event.GetStreamId()); ok {
+			stream.mu.Lock()
+			stream.nodesLocked.ResetFromStreamState(event, s.params.Wallet.Address)
+			stream.local = nil
+			stream.mu.Unlock()
+		}
+		// TODO: if stream is removed from this node cleanup stream storage.
+		return
+	}
+
+	// in not in the cache, insert new recored in the correct state, otherwise load existing
+	stream, loaded := s.cache.LoadOrCompute(event.GetStreamId(), func() *Stream {
+		s := &Stream{
+			streamId:            event.GetStreamId(),
+			lastAppliedBlockNum: blockNum,
+			params:              s.params,
+			local:               &localStreamState{},
+		}
+		s.nodesLocked.ResetFromStreamState(event, s.params.Wallet.Address)
+		return s
+	})
+
+	if loaded {
+		stream.mu.Lock()
+		// TODO: REPLICATION: FIX: what to do with lastAppliedBlockNum
+		stream.nodesLocked.ResetFromStreamState(event, s.params.Wallet.Address)
+		if stream.local == nil {
+			stream.local = &localStreamState{}
+		}
+		stream.mu.Unlock()
+	}
+
+	// always submit a sync task, since this only happens on stream placement updates it happens
+	// rarely. If local node was in quorum, it should be up-to-date making this a no-op task.
+	s.SubmitSyncStreamTask(ctx, stream)
+}
+
 // normalizeEphemeralStream normalizes the ephemeral stream.
 // Loads the missing miniblocks from the sticky peers and writes them to the storage.
 // Seals the stream if it is ephemeral and all miniblocks are loaded.
@@ -159,7 +203,8 @@ func (s *StreamCache) normalizeEphemeralStream(
 				}
 
 				if err = s.params.Storage.WriteEphemeralMiniblock(ctx, stream.streamId, storageMb); err != nil {
-					logging.FromCtx(ctx).Errorw("Failed to write miniblock to storage", "err", err, "streamId", stream.streamId)
+					logging.FromCtx(ctx).
+						Errorw("Failed to write miniblock to storage", "err", err, "streamId", stream.streamId)
 					_ = resp.Close()
 					toNextPeer = true
 					break

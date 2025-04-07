@@ -203,23 +203,32 @@ func (s *StreamCache) onBlockWithLogs(ctx context.Context, blockNum crypto.Block
 
 	for streamID, events := range streamEvents {
 		wp.Submit(func() {
-			switch events[0].Reason() {
-			case river.StreamUpdatedEventTypeAllocate:
-				streamState := events[0].(*river.StreamState)
-				s.onStreamAllocated(ctx, streamState, events[1:], blockNum)
-			case river.StreamUpdatedEventTypeCreate:
-				streamState := events[0].(*river.StreamState)
-				s.onStreamCreated(ctx, streamState, blockNum)
-			case river.StreamUpdatedEventTypePlacementUpdated: // linter
-				fallthrough
-			case river.StreamUpdatedEventTypeLastMiniblockBatchUpdated:
-				fallthrough
-			default:
-				stream, ok := s.cache.Load(streamID)
-				if !ok {
-					return
+			for len(events) > 0 {
+				switch events[0].Reason() {
+				case river.StreamUpdatedEventTypeAllocate:
+					streamState := events[0].(*river.StreamState)
+					s.onStreamAllocated(ctx, streamState, blockNum)
+					events = events[1:]
+				case river.StreamUpdatedEventTypeCreate:
+					streamState := events[0].(*river.StreamState)
+					s.onStreamCreated(ctx, streamState, blockNum)
+					events = events[1:]
+				case river.StreamUpdatedEventTypePlacementUpdated:
+					streamState := events[0].(*river.StreamState)
+					s.onStreamPlacementUpdated(ctx, streamState, blockNum)
+					events = events[1:]
+				case river.StreamUpdatedEventTypeLastMiniblockBatchUpdated:
+					i := 1
+					for i < len(events) && events[i].Reason() == river.StreamUpdatedEventTypeLastMiniblockBatchUpdated {
+						i++
+					}
+					eventsToApply := events[:i]
+					events = events[i:]
+
+					if stream, ok := s.cache.Load(streamID); ok {
+						stream.applyStreamEvents(ctx, eventsToApply, blockNum)
+					}
 				}
-				stream.applyStreamEvents(ctx, events, blockNum)
 			}
 		})
 	}
@@ -232,7 +241,6 @@ func (s *StreamCache) onBlockWithLogs(ctx context.Context, blockNum crypto.Block
 func (s *StreamCache) onStreamAllocated(
 	ctx context.Context,
 	event *river.StreamState,
-	otherEvents []river.StreamUpdatedEvent,
 	blockNum crypto.BlockNumber,
 ) {
 	if !slices.Contains(event.Nodes, s.params.Wallet.Address) {
@@ -269,14 +277,15 @@ func (s *StreamCache) onStreamAllocated(
 	)
 	if err != nil {
 		if IsRiverErrorCode(err, Err_ALREADY_EXISTS) {
-			logging.FromCtx(ctx).Warnw("onStreamAllocated: stream already exists in storage (race with GetStream?)", "err", err)
+			logging.FromCtx(ctx).
+				Warnw("onStreamAllocated: stream already exists in storage (race with GetStream?)", "err", err)
 		} else {
 			logging.FromCtx(ctx).Errorw("onStreamAllocated: Failed to create stream storage", "err", err)
 			return
 		}
 	}
 
-	stream, _ := s.cache.LoadOrCompute(
+	_, _ = s.cache.LoadOrCompute(
 		event.GetStreamId(),
 		func() *Stream {
 			ret := &Stream{
@@ -290,10 +299,6 @@ func (s *StreamCache) onStreamAllocated(
 			return ret
 		},
 	)
-
-	if len(otherEvents) > 0 {
-		stream.applyStreamEvents(ctx, otherEvents, blockNum)
-	}
 }
 
 func (s *StreamCache) Params() *StreamCacheParams {
@@ -489,7 +494,8 @@ func (s *StreamCache) loadStreamRecordImpl(
 	)
 	if err != nil {
 		if IsRiverErrorCode(err, Err_ALREADY_EXISTS) {
-			logging.FromCtx(ctx).Warnw("loadStreamRecordImpl: stream already exists in storage (creation race?)", "err", err)
+			logging.FromCtx(ctx).
+				Warnw("loadStreamRecordImpl: stream already exists in storage (creation race?)", "err", err)
 		} else {
 			logging.FromCtx(ctx).Errorw("onStreamAllocated: Failed to create stream storage", "err", err)
 			return nil, err
