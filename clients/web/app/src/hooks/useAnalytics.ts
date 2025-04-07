@@ -107,17 +107,24 @@ export class Analytics implements TownsAnalytics {
                 console.warn('[analytics] Analytics is not enabled')
                 Analytics.instance = new Analytics(new LocalhostAnalyticsBackend())
             } else {
-                const rudder = new RudderAnalytics()
-                rudder.load(writeKey, dataPlaneUrl, {
-                    useBeacon: true,
-                    destSDKBaseURL,
-                    pluginsSDKBaseURL,
-                    configUrl,
-                })
-                rudder.ready(() => {
-                    console.log('[analytics] Analytics is ready!')
-                })
-                Analytics.instance = new Analytics(rudder)
+                try {
+                    const rudder = new RudderAnalytics()
+                    rudder.load(writeKey, dataPlaneUrl, {
+                        useBeacon: true,
+                        destSDKBaseURL,
+                        pluginsSDKBaseURL,
+                        configUrl,
+                    })
+                    rudder.ready(() => {
+                        console.log('[analytics] Analytics is ready!')
+                    })
+                    Analytics.instance = new Analytics(rudder)
+                } catch (error) {
+                    // pretty sure this is ad blocker related - not logging an error
+                    // to keep datadog logs clean, probably worth investigating in the futures
+                    console.warn('[analytics] Error loading RudderAnalytics', error)
+                    Analytics.instance = new Analytics(new LocalhostAnalyticsBackend())
+                }
             }
         }
 
