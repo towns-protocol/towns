@@ -8,6 +8,7 @@ import {
     useHasPermission,
     useSpaceThreadRootsUnreadCount,
     useSpaceUnreadThreadMentions,
+    useTownsContext,
 } from 'use-towns-client'
 import { LayoutGroup } from 'framer-motion'
 import { genId } from '@towns-protocol/sdk'
@@ -120,25 +121,22 @@ export const SpaceSideBar = (props: Props) => {
     const params = useParams()
     const currentRouteId = params.channelSlug
 
-    const {
-        favoriteChannels,
-        unreadChannels,
-        actualUnreadChannels,
-        readChannels,
-        readDms,
-        dmItems,
-        spaceMemberIds,
-    } = useSortedChannels({
-        spaceId: space.id,
-        currentRouteId,
-    })
+    const { sortedFavoriteChannels, sortedSpaceChannels, sortedDmChannels, spaceMemberIds } =
+        useSortedChannels({
+            spaceId: space.id,
+            currentRouteId,
+        })
 
-    const membersNotInDMs = useMembersNotInDMs({ dmItems, memberIds: spaceMemberIds })
+    const { dmChannels } = useTownsContext()
+
+    const membersNotInDMs = useMembersNotInDMs({
+        dmChannels,
+        memberIds: spaceMemberIds,
+    })
 
     const unreadThreadMentions = useSpaceUnreadThreadMentions(space.id)
 
     const offscreenMarkers = useOffscreenMarkers({
-        unreadChannels: actualUnreadChannels,
         unreadThreadsCount,
         unreadThreadMentions,
     })
@@ -186,7 +184,10 @@ export const SpaceSideBar = (props: Props) => {
 
     const itemRenderer = useCallback(
         (
-            u: (typeof unreadChannels)[0] | (typeof membersNotInDMs.data)[0],
+            u:
+                | (typeof sortedSpaceChannels)[0]
+                | (typeof sortedDmChannels)[0]
+                | (typeof membersNotInDMs.data)[0],
             isUnreadSection?: boolean,
         ) => {
             const key = `${u.id}`
@@ -314,7 +315,7 @@ export const SpaceSideBar = (props: Props) => {
                                         />
                                     </SpaceSideBarListItem>
                                 </MenuGroup>
-                                <MenuGroup>
+                                {/* <MenuGroup>
                                     <SpaceSideBarSectionHeader
                                         label="Unreads"
                                         key="unreads"
@@ -326,14 +327,14 @@ export const SpaceSideBar = (props: Props) => {
                                         containerMarginTop={HEADER_MARGIN}
                                     />
                                     {unreadChannels.map((channel) => itemRenderer(channel, true))}
-                                </MenuGroup>
+                                </MenuGroup> */}
                                 <MenuGroup>
                                     <SpaceSideBarSectionHeader
                                         label="Favorites"
                                         key="favorites"
-                                        hidden={favoriteChannels.length === 0}
+                                        hidden={sortedFavoriteChannels.length === 0}
                                     />
-                                    {favoriteChannels.map((channel) => itemRenderer(channel))}
+                                    {sortedFavoriteChannels.map((channel) => itemRenderer(channel))}
 
                                     <SpaceSideBarSectionHeader
                                         label="Channels"
@@ -368,7 +369,7 @@ export const SpaceSideBar = (props: Props) => {
                                     />
                                 </MenuGroup>
                                 <MenuGroup>
-                                    {readChannels.map((channel) => itemRenderer(channel))}
+                                    {sortedSpaceChannels.map((channel) => itemRenderer(channel))}
 
                                     {canCreateChannel && (
                                         <SpaceSideBarListItem key="create-channel">
@@ -397,7 +398,7 @@ export const SpaceSideBar = (props: Props) => {
                                         key="direct-messages"
                                         onClick={onTownMembersClick}
                                     />
-                                    {readDms.map((channel) => itemRenderer(channel))}
+                                    {sortedDmChannels.map((channel) => itemRenderer(channel))}
                                     {membersNotInDMs.isLoading ? (
                                         <>
                                             <DirectMessageItemSkeleton />

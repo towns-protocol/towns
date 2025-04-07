@@ -162,44 +162,37 @@ export const TouchHome = () => {
         }
     }
 
-    const { unreadChannels, readChannels, readDms, unjoinedChannels, favoriteChannels } =
-        useSortedChannels({
-            spaceId: space?.id ?? '',
-        })
+    const {
+        sortedSpaceChannels: readChannels,
+        sortedDmChannels: readDms,
+        unjoinedChannels,
+        sortedFavoriteChannels: favoriteChannels,
+    } = useSortedChannels({
+        spaceId: space?.id ?? '',
+    })
 
-    const { filteredUnreadChannels, filteredReadChannels, filteredDms, filteredFavoriteChannels } =
-        useMemo(() => {
-            return {
-                filteredUnreadChannels: fuzzysort
-                    .go(searchString, unreadChannels, { keys: ['label', 'search'], all: true })
-                    .map((m) => m.obj),
-                filteredReadChannels: fuzzysort
-                    .go(
-                        searchString,
-                        [...readChannels, ...(searchString ? unjoinedChannels : [])].filter(
-                            notUndefined,
-                        ),
-                        {
-                            keys: ['label', 'search'],
-                            all: true,
-                        },
-                    )
-                    .map((m) => m.obj),
-                filteredDms: fuzzysort
-                    .go(searchString, readDms, { keys: ['label', 'search'], all: true })
-                    .map((m) => m.obj),
-                filteredFavoriteChannels: fuzzysort
-                    .go(searchString, favoriteChannels, { keys: ['label', 'search'], all: true })
-                    .map((m) => m.obj),
-            }
-        }, [
-            readChannels,
-            readDms,
-            searchString,
-            unjoinedChannels,
-            unreadChannels,
-            favoriteChannels,
-        ])
+    const { filteredSpaceChannels, filteredDmChannels, filteredFavoriteChannels } = useMemo(() => {
+        return {
+            filteredSpaceChannels: fuzzysort
+                .go(
+                    searchString,
+                    [...readChannels, ...(searchString ? unjoinedChannels : [])].filter(
+                        notUndefined,
+                    ),
+                    {
+                        keys: ['label', 'search'],
+                        all: true,
+                    },
+                )
+                .map((m) => m.obj),
+            filteredDmChannels: fuzzysort
+                .go(searchString, readDms, { keys: ['label', 'search'], all: true })
+                .map((m) => m.obj),
+            filteredFavoriteChannels: fuzzysort
+                .go(searchString, favoriteChannels, { keys: ['label', 'search'], all: true })
+                .map((m) => m.obj),
+        }
+    }, [readChannels, readDms, searchString, unjoinedChannels, favoriteChannels])
 
     const filteredMembers = useMemo(() => {
         if (searchString.length === 0) {
@@ -235,7 +228,7 @@ export const TouchHome = () => {
 
     const { imageSrc } = useImageSource(space?.id ?? '', ImageVariants.thumbnail300)
 
-    const hasResult = filteredUnreadChannels.length > 0 || filteredReadChannels.length > 0
+    const hasResult = filteredSpaceChannels.length > 0
 
     const { createLink } = useCreateLink()
     const threadsLink = createLink({ route: 'threads' })
@@ -381,18 +374,13 @@ export const TouchHome = () => {
                                             {space && (
                                                 <>
                                                     <ChannelList
-                                                        label="Unread"
-                                                        channelItems={filteredUnreadChannels}
-                                                        space={space}
-                                                    />
-                                                    <ChannelList
                                                         label="Favorites"
                                                         channelItems={filteredFavoriteChannels}
                                                         space={space}
                                                     />
                                                     <ChannelList
                                                         label="Channels"
-                                                        channelItems={filteredReadChannels}
+                                                        channelItems={filteredSpaceChannels}
                                                         space={space}
                                                     />
                                                     <BrowseChannelRow
@@ -404,10 +392,10 @@ export const TouchHome = () => {
                                                             onClick={openCreateChannelPanel}
                                                         />
                                                     )}
-                                                    {filteredDms.length > 0 && (
+                                                    {filteredDmChannels.length > 0 && (
                                                         <ChannelList
                                                             label="Direct Messages"
-                                                            channelItems={filteredDms}
+                                                            channelItems={filteredDmChannels}
                                                             space={space}
                                                         />
                                                     )}

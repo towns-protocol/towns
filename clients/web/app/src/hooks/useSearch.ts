@@ -19,7 +19,6 @@ import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
 import { notUndefined } from 'ui/utils/utils'
 import { useMiniSearch } from './useMiniSearch'
 import { useSortedChannels } from './useSortedChannels'
-// import { useOramaSearch } from './hooks/useOramaSearch'
 
 export const useSearch = (searchTerms: string) => {
     const spaceId = useSpaceId()

@@ -11,6 +11,7 @@ import {
     useUserLookupStore,
 } from 'use-towns-client'
 import { isEqual } from 'lodash'
+import { firstBy } from 'thenby'
 import { useSpaceChannels } from './useSpaceChannels'
 import { useFavoriteChannels } from './useFavoriteChannels'
 
@@ -45,23 +46,25 @@ export type DMChannelMenuItem = {
 
 export type MixedChannelMenuItem = ChannelMenuItem | DMChannelMenuItem
 
-const STICKY_UNREADS = false
-
 /**
  * maps channel and dm data to a unified format for use in the channel menu
  */
-export const useSortedChannels = ({ spaceId, currentRouteId }: Params) => {
-    const { spaceUnreadChannelIds, dmUnreadChannelIds, dmChannels } = useTownsContext()
+export const useSortedChannels = ({ spaceId }: Params) => {
+    const {
+        spaceUnreadChannelIds: _unreadChannelIds,
+        dmUnreadChannelIds: _dmUnreadChannelIds,
+        dmChannels: _dmChannels,
+    } = useTownsContext()
     const spaceMentions = useSpaceMentions(spaceId)
     const channels = useSpaceChannels()
-    const { memberIds } = useSpaceMembers()
+    const { memberIds: spaceMemberIds } = useSpaceMembers()
     const { joinedChannels } = useJoinedChannels(spaceId)
     const { favoriteChannelIds } = useFavoriteChannels()
     const mutedStreamIds = useMutedStreamIds()
 
     const unreadChannelIds = useMemo(
-        () => (spaceId ? spaceUnreadChannelIds[spaceId] : new Set()),
-        [spaceId, spaceUnreadChannelIds],
+        () => (spaceId ? _unreadChannelIds[spaceId] : new Set()),
+        [spaceId, _unreadChannelIds],
     )
 
     // - - - - - - - - - - - - - - - - - - - - - - - - - collect and map channels
@@ -106,10 +109,11 @@ export const useSortedChannels = ({ spaceId, currentRouteId }: Params) => {
     // - - - - - - - - - - - - - - - - - - - - - - - - - collect and map all dms
 
     const dmItemsRef = useRef<DMChannelMenuItem[]>([])
-
     const dmItems = useMemo(() => {
-        const value = Array.from(dmChannels)
-            .filter((c) => !c.left && (!spaceId || c.userIds.every((m) => memberIds.includes(m))))
+        const value = Array.from(_dmChannels)
+            .filter(
+                (c) => !c.left && (!spaceId || c.userIds.every((m) => spaceMemberIds.includes(m))),
+            )
             .map((channel) => {
                 return {
                     type: 'dm',
@@ -120,7 +124,7 @@ export const useSortedChannels = ({ spaceId, currentRouteId }: Params) => {
                         .map((u) => namesFromUserId(u, { spaceId, channelId: channel.id }))
                         .join(),
                     channel,
-                    unread: dmUnreadChannelIds.has(channel.id),
+                    unread: _dmUnreadChannelIds.has(channel.id),
                     isGroup: channel.isGroup,
                     latestMs: Number(channel?.lastEventCreatedAtEpochMs ?? 0),
                     favorite: favoriteChannelIds.has(channel.id),
@@ -131,138 +135,66 @@ export const useSortedChannels = ({ spaceId, currentRouteId }: Params) => {
         dmItemsRef.current = isEqual(value, dmItemsRef.current) ? dmItemsRef.current : value
 
         return dmItemsRef.current
-    }, [dmChannels, dmUnreadChannelIds, memberIds, spaceId, favoriteChannelIds, mutedStreamIds])
+    }, [
+        _dmChannels,
+        _dmUnreadChannelIds,
+        favoriteChannelIds,
+        mutedStreamIds,
+        spaceId,
+        spaceMemberIds,
+    ])
 
-    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-    // if the current route has become unread->read, we still want to keep it in
-    // the menu as unread until the user navigates away from it
-
-    const prevUnreads = useRef<string[]>([])
-
-    const persistUnreadId =
-        currentRouteId && prevUnreads.current.includes(currentRouteId) ? currentRouteId : undefined
-
-    // - - - - - - - - - - - - - - - - - collect unread channels sorted by date
-
-    const unreadChannelsRef = useRef<MixedChannelMenuItem[]>([])
-    const unreadChannels = useMemo(() => {
-        const value = [
-            ...channelItems.filter(
-                (c) =>
-                    ((c.unread && joinedChannels.has(c.id)) ||
-                        c.channel.id === persistUnreadId ||
-                        (STICKY_UNREADS && prevUnreads.current.includes(c.id))) &&
-                    !c.muted,
-            ),
-            ...dmItems.filter(
-                (c) =>
-                    c.unread ||
-                    c.channel.id === persistUnreadId ||
-                    (STICKY_UNREADS && prevUnreads.current.includes(c.channel.id)),
-            ),
-        ].sort((a, b) => Math.sign(b.latestMs - a.latestMs))
-
-        unreadChannelsRef.current = isEqual(value, unreadChannelsRef.current)
-            ? unreadChannelsRef.current
-            : value
-
-        return unreadChannelsRef.current
-    }, [channelItems, dmItems, joinedChannels, persistUnreadId])
-
-    // - - - - - - - - - - - - - - - - - collect actual unread channels (not persisted)
-
-    const actualUnreadChannelsRef = useRef<MixedChannelMenuItem[]>([])
-    const actualUnreadChannels = useMemo(() => {
-        const value = [
-            ...channelItems.filter((c) => c.unread && joinedChannels.has(c.id)),
-            ...dmItems.filter((c) => c.unread),
-        ].sort((a, b) => Math.sign(b.latestMs - a.latestMs))
-
-        actualUnreadChannelsRef.current = isEqual(value, actualUnreadChannelsRef.current)
-            ? actualUnreadChannelsRef.current
-            : value
-
-        return actualUnreadChannelsRef.current
-    }, [channelItems, dmItems, joinedChannels])
-
-    // - - - - - - - - - - - - - - - - - - - collect read channels sorted by name
-
-    const mRef = useRef<ChannelMenuItem[]>([])
-
-    const readChannels = useMemo(() => {
+    const sortedSpaceChannelsRef = useRef<ChannelMenuItem[]>([])
+    const sortedSpaceChannels = useMemo(() => {
         const channels = [
-            ...channelItems.filter(
-                (c) =>
-                    !c.unread &&
-                    joinedChannels.has(c.id) &&
-                    persistUnreadId !== c.id &&
-                    (!STICKY_UNREADS || !prevUnreads.current.includes(c.id)) &&
-                    !c.favorite,
-            ),
+            ...channelItems
+                .filter((c) => joinedChannels.has(c.id) && !c.favorite)
+                .sort(firstBy((c) => c.mentionCount > 0, 'desc')),
         ]
-        if (!isEqual(channels, mRef.current)) {
-            mRef.current = channels
-        }
-        return mRef.current
-    }, [channelItems, joinedChannels, persistUnreadId])
+        sortedSpaceChannelsRef.current = isEqual(channels, sortedSpaceChannelsRef.current)
+            ? sortedSpaceChannelsRef.current
+            : channels
+        return sortedSpaceChannelsRef.current
+    }, [channelItems, joinedChannels])
 
-    const favoriteChannels = useMemo(() => {
-        return [
-            ...channelItems.filter(
-                (c) =>
-                    c.favorite &&
-                    !c.unread &&
-                    persistUnreadId !== c.id &&
-                    (!STICKY_UNREADS || !prevUnreads.current.includes(c.id)),
-            ),
-            ...dmItems.filter(
-                (c) =>
-                    c.favorite &&
-                    !c.unread &&
-                    persistUnreadId !== c.id &&
-                    (!STICKY_UNREADS || !prevUnreads.current.includes(c.id)),
-            ),
+    const favoriteChannelListRef = useRef<(ChannelMenuItem | DMChannelMenuItem)[]>([])
+    const sortedFavoriteChannels = useMemo(() => {
+        const value = [
+            ...channelItems.filter((c) => c.favorite),
+            ...dmItems.filter((c) => c.favorite),
         ]
-    }, [channelItems, dmItems, persistUnreadId])
+        favoriteChannelListRef.current = isEqual(value, favoriteChannelListRef.current)
+            ? favoriteChannelListRef.current
+            : value
+        return favoriteChannelListRef.current
+    }, [channelItems, dmItems])
 
     // - - - - - - - - - - - - - - - - - - - - - collect read dms sorted by date
 
-    const readDMsRef = useRef<DMChannelMenuItem[]>([])
-    const readDms = useMemo(() => {
-        const value = [
-            ...dmItems.filter(
-                (c) =>
-                    !c.unread &&
-                    persistUnreadId !== c.id &&
-                    (!STICKY_UNREADS || !prevUnreads.current.includes(c.id)) &&
-                    !c.favorite,
-            ),
-        ].sort((a, b) => Math.sign(b.latestMs - a.latestMs))
-        readDMsRef.current = isEqual(value, readDMsRef.current) ? readDMsRef.current : value
-        return readDMsRef.current
-    }, [dmItems, persistUnreadId])
+    const sortedDmChannelsRef = useRef<DMChannelMenuItem[]>([])
+    const sortedDmChannels = useMemo(() => {
+        const value = [...dmItems.filter((c) => !c.favorite)].sort((a, b) =>
+            Math.sign(b.latestMs - a.latestMs),
+        )
+        sortedDmChannelsRef.current = isEqual(value, sortedDmChannelsRef.current)
+            ? sortedDmChannelsRef.current
+            : value
+        return sortedDmChannelsRef.current
+    }, [dmItems])
 
     const unjoinedChannels = useMemo(() => {
         return channelItems.filter((c) => !c.joined)
     }, [channelItems])
 
-    prevUnreads.current = useMemo(() => {
-        const value = unreadChannels.map((u) => u.id)
-        return isEqual(value, prevUnreads.current) ? prevUnreads.current : value
-    }, [unreadChannels])
-
     return {
-        spaceMentions,
-        favoriteChannels,
-        actualUnreadChannels,
-        readChannels,
-        readDms,
-        spaceMemberIds: memberIds,
-        unreadChannels,
-        unjoinedChannels,
-        dmItems,
         channelItems,
+        dmItems,
+        sortedDmChannels,
+        sortedFavoriteChannels,
+        sortedSpaceChannels,
+        spaceMemberIds,
+        spaceMentions,
+        unjoinedChannels,
     }
 }
 

@@ -9,13 +9,13 @@ import { addressFromSpaceId } from 'ui/utils/utils'
 
 export const RegisterChannelShortcuts = () => {
     const space = useSpaceData()
-    const { favoriteChannels, unreadChannels, readChannels } = useSortedChannels({
+    const { sortedFavoriteChannels, sortedSpaceChannels } = useSortedChannels({
         spaceId: space?.id,
     })
 
     const channels = useMemo(
-        () => [...unreadChannels, ...favoriteChannels, ...readChannels],
-        [unreadChannels, favoriteChannels, readChannels],
+        () => [...sortedFavoriteChannels, ...sortedSpaceChannels],
+        [sortedFavoriteChannels, sortedSpaceChannels],
     )
 
     const channelId = useChannelId()

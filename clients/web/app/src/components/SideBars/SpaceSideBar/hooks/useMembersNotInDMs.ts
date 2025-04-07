@@ -1,8 +1,7 @@
-import { useRawTimelineStore, useTownsContext } from 'use-towns-client'
+import { DMChannelIdentifier, useRawTimelineStore, useTownsContext } from 'use-towns-client'
 import { useEffect, useMemo, useState } from 'react'
 import debounce from 'lodash/debounce'
 import { isDMChannelStreamId, isGDMChannelStreamId } from '@towns-protocol/sdk'
-import { DMChannelMenuItem } from 'hooks/useSortedChannels'
 import { createInlineWorker } from 'utils/createInlineWebWorker'
 
 const READY_TIMEOUT = 3_000
@@ -15,18 +14,19 @@ type MemberNotInDMsChannelMenuItem = {
 }
 
 function calculateMembersNotInDMs(
-    dmItems: DMChannelMenuItem[],
+    dmChannels: DMChannelIdentifier[],
     memberIds: string[],
     latestEvents: ReturnType<typeof useRawTimelineStore.getState>['lastestEventByUser'],
 ) {
     const DM_THRESHOLD = 50
 
-    if (dmItems.length >= DM_THRESHOLD) {
+    if (dmChannels.length >= DM_THRESHOLD) {
         return []
     }
 
-    const usersInDMs = new Set(dmItems.flatMap((dm) => dm.channel.userIds))
-    const remainingSlots = DM_THRESHOLD - dmItems.length
+    const remainingSlots = DM_THRESHOLD - dmChannels.length
+
+    const usersInDMs = new Set(dmChannels.flatMap((dm) => dm.userIds))
 
     const eligibleUsers = memberIds
         .reduce<{ id: string; lastEventMs: number }[]>((acc, memberId) => {
@@ -54,11 +54,14 @@ function calculateMembersNotInDMs(
 
 const workerFn = createInlineWorker(calculateMembersNotInDMs)
 
-export function useMembersNotInDMs(args: { dmItems: DMChannelMenuItem[]; memberIds: string[] }): {
+export function useMembersNotInDMs(args: {
+    dmChannels: DMChannelIdentifier[]
+    memberIds: string[]
+}): {
     data: MemberNotInDMsChannelMenuItem[]
     isLoading: boolean
 } {
-    const { dmItems, memberIds } = args
+    const { dmChannels, memberIds } = args
     const [ready, setReady] = useState(false)
     const { casablancaClient } = useTownsContext()
     const [result, setResult] = useState<MemberNotInDMsChannelMenuItem[]>([])
@@ -67,8 +70,8 @@ export function useMembersNotInDMs(args: { dmItems: DMChannelMenuItem[]; memberI
         let mounted = true
 
         const debouncedCalculation = debounce(
-            (dmItems: DMChannelMenuItem[], memberIds: string[]) => {
-                workerFn(dmItems, memberIds, useRawTimelineStore.getState().lastestEventByUser)
+            (dmChannels: DMChannelIdentifier[], memberIds: string[]) => {
+                workerFn(dmChannels, memberIds, useRawTimelineStore.getState().lastestEventByUser)
                     .then((result) => {
                         if (mounted) {
                             setResult(result)
@@ -79,13 +82,13 @@ export function useMembersNotInDMs(args: { dmItems: DMChannelMenuItem[]; memberI
             DEBOUNCE_MS,
         )
 
-        debouncedCalculation(dmItems, memberIds)
+        debouncedCalculation(dmChannels, memberIds)
 
         return () => {
             mounted = false
             debouncedCalculation.cancel()
         }
-    }, [dmItems, memberIds])
+    }, [dmChannels, memberIds])
 
     // there is no great way to know when DMs are ready, or if this user has DMs at all,
     // so rather than immediately show the members and have it replaced by DMs once they load,

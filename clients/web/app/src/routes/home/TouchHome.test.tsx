@@ -63,37 +63,36 @@ describe('<TouchHome />', () => {
             return mockSpaceData
         })
 
+        const generalChannel = {
+            type: 'channel' as const,
+            id: 'some-stream-id',
+            label: 'general',
+            search: '',
+            channel: {
+                id: 'some-stream-id',
+                label: 'general',
+                isAutojoin: false,
+                isDefault: false,
+                hideUserJoinLeaveEvents: false,
+                disabled: false,
+            },
+            mentionCount: 0,
+            unread: false,
+            joined: true,
+            latestMs: 0,
+            favorite: false,
+            muted: false,
+        }
+
         vi.spyOn(useSortedChannels, 'useSortedChannels').mockImplementation(() => {
             return {
-                readChannels: [
-                    {
-                        type: 'channel' as const,
-                        id: 'some-stream-id',
-                        label: 'general',
-                        search: '',
-                        channel: {
-                            id: 'some-stream-id',
-                            label: 'general',
-                            isAutojoin: false,
-                            isDefault: false,
-                            hideUserJoinLeaveEvents: false,
-                            disabled: false,
-                        },
-                        mentionCount: 0,
-                        unread: false,
-                        joined: true,
-                        latestMs: 0,
-                        favorite: false,
-                        muted: false,
-                    },
-                ],
-                readDms: [],
-                actualUnreadChannels: [],
-                unreadChannels: [],
+                spaceChannelsItems: [generalChannel],
+                sortedDmChannels: [],
                 unjoinedChannels: [],
                 dmItems: [],
                 channelItems: [],
-                favoriteChannels: [],
+                sortedFavoriteChannels: [],
+                sortedSpaceChannels: [generalChannel],
                 spaceMentions: [],
                 spaceMemberIds: [],
             }
