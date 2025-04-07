@@ -183,7 +183,7 @@ export function useAutoLoginToRiverIfEmbeddedWallet({
                     async function uo() {
                         let signer: Signer | undefined
                         try {
-                            signer = await getSigner()
+                            signer = await getSigner({ warnOnError: false })
                         } catch (error) {
                             return
                         }

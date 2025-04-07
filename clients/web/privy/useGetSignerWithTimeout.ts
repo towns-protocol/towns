@@ -39,24 +39,30 @@ export const useGetSignerWithTimeout = (args: { chainId: number; timeout?: numbe
         embeddedWalletRef.current = embeddedWallet
     }
 
-    return useCallback(async () => {
-        try {
-            const wallet = await waitFor(
-                () => {
-                    const _embeddedWallet = embeddedWalletRef.current
-                    if (!_embeddedWallet) {
-                        return
-                    }
-                    return _embeddedWallet
-                },
-                {
-                    timeout: _timeout,
-                    errorMsg: 'Timed out waiting for embedded wallet',
-                },
-            )
-            return await getSigner(wallet, chainId)
-        } catch (error) {
-            console.error('[useGetEmbeddedSigner]: Error fetching signer:', error)
-        }
-    }, [chainId, _timeout])
+    return useCallback(
+        async (args: { warnOnError?: boolean } = {}) => {
+            const { warnOnError = true } = args
+            try {
+                const wallet = await waitFor(
+                    () => {
+                        const _embeddedWallet = embeddedWalletRef.current
+                        if (!_embeddedWallet) {
+                            return
+                        }
+                        return _embeddedWallet
+                    },
+                    {
+                        timeout: _timeout,
+                        errorMsg: 'Timed out waiting for embedded wallet',
+                    },
+                )
+                return await getSigner(wallet, chainId)
+            } catch (error) {
+                if (warnOnError) {
+                    console.warn('[useGetEmbeddedSigner]: Error fetching signer:', error)
+                }
+            }
+        },
+        [chainId, _timeout],
+    )
 }
