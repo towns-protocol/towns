@@ -56,12 +56,12 @@ func init() {
 		StringVarP(&riverDevnetRpcUrl, "river-devnet-rpc", "", "https://testnet.rpc.river.build/http", "River Devnet RPC provider URL")
 	rootCmd.Flags().BoolVarP(&sourceDiff, "source-diff-only", "s", false, "Run source code diff")
 	rootCmd.Flags().StringVar(&sourceDiffDir, "source-diff-log", "source-diffs", "Path to diff log file")
-	rootCmd.Flags().StringVar(&compiledFacetsPath, "compiled-facets", "../../contracts/out", "Path to compiled facets")
+	rootCmd.Flags().StringVar(&compiledFacetsPath, "compiled-facets", "../../packages/contracts/out", "Path to compiled facets")
 	rootCmd.Flags().StringVar(&facetSourcePath, "facets", "", "Path to facet source files")
 	rootCmd.Flags().BoolP("verbose", "v", false, "Enable verbose output")
 	rootCmd.Flags().StringVar(&reportOutDir, "report-out-dir", "deployed-diffs", "Path to report output directory")
 	rootCmd.Flags().
-		StringVar(&deploymentsPath, "deployments", "../../contracts/deployments", "Path to deployments directory")
+		StringVar(&deploymentsPath, "deployments", "../../packages/contracts/deployments", "Path to deployments directory")
 
 	rootCmd.AddCommand(AddHashesCmd)
 }
