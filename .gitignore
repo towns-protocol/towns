@@ -89,3 +89,4 @@ go.work.sum
 # Ponder
 packages/subgraph/.ponder
 packages/subgraph/generated
+packages/generated/**/*.bin
