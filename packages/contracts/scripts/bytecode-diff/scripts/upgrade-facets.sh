@@ -74,10 +74,10 @@ process_file() {
         exit 0
     else
         current_dir=$(pwd)
-        cd ../../contracts
+        cd ../../packages/contracts
         for contract in "${contract_names[@]}"; do
             deploy_file=$(find ./scripts -name "Deploy${contract}.s.sol" -o -name "Deploy${contract}Facet.s.sol" | head -n1)
-            
+
             if [ -n "$deploy_file" ]; then
                 deploy_contract=$(basename "$deploy_file" .s.sol)
                 echo "Deploying contract: $contract using $deploy_contract to chain $chain_id with context $context"

@@ -19,7 +19,7 @@ The basic command structure is:
 
 ```bash
 # ensure contracts are compiled with forge
-cd ../../contracts
+cd ../../packages/contracts
 make build
 # disable go.work file since bytecode-diff is not a module in parent go workspace
 go mod download
@@ -119,7 +119,7 @@ Flags:
   -b, --base-rpc string           Base RPC provider URL
       --base-sepolia-rpc string   Base Sepolia RPC provider URL
       --compiled-facets string    Path to compiled facets
-      --deployments string        Path to deployments directory (default "../../contracts/deployments")
+      --deployments string        Path to deployments directory (default "../../packages/contracts/deployments")
       --facets string             Path to facet source files
   -h, --help                      help for bytecode-diff
       --log-level string          Set the logging level (debug, info, warn, error) (default "info")

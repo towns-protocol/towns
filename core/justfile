@@ -13,8 +13,8 @@ RPC_BASE := 'http://127.0.0.1:8545'
 RPC_RIVER := 'http://127.0.0.1:8546'
 BASE_EXECUTION_CLIENT := env_var_or_default("BASE_EXECUTION_CLIENT", "")
 
-OPERATOR_ADDRESS := `source ../contracts/.env.localhost && echo "${SENDER_ADDRESS}"`
-LOCAL_PRIVATE_KEY := `source ../contracts/.env.localhost && echo "${LOCAL_PRIVATE_KEY}"`
+OPERATOR_ADDRESS := `source ../packages/contracts/.env.localhost && echo "${SENDER_ADDRESS}"`
+LOCAL_PRIVATE_KEY := `source ../packages/contracts/.env.localhost && echo "${LOCAL_PRIVATE_KEY}"`
 
 # Set to "-x" to log bash commands
 JUST_BASH_OPTS := env_var_or_default("JUST_BASH_OPTS", "")
@@ -223,7 +223,7 @@ _run-go-inst $INSTANCE_NUM $INSTANCE_DIR *args: _require_run_env
     go run ../../../river_node/main.go \
         --config ../common.yaml \
         --config ../config.yaml \
-        --config ../contracts.env \
+        --config ../packages/contracts.env \
         --config config/config.env \
         "$@"
 
@@ -322,7 +322,7 @@ _run-node $INSTANCE_NUM $INSTANCE_DIR: _require_run_env
     cd ${INSTANCE_DIR}
     ../bin/river_node ${RUN_CMD} \
         --config ../common.yaml \
-        --config ../contracts.env \
+        --config ../packages/contracts.env \
         --config ../config.yaml \
         --config config/config.env \
         ${RUN_ARGS} \
@@ -337,7 +337,7 @@ start-app-registry: _require_run_env
     cd ${INSTANCE_BASE}/app-registry
     ../bin/river_node ${RUN_CMD} \
         --config ../common.yaml \
-        --config ../contracts.env \
+        --config ../packages/contracts.env \
         --config ../config.yaml \
         --config config/config.env \
         ${RUN_ARGS} \
