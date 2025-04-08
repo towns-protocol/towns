@@ -12,7 +12,7 @@ import (
 	"github.com/gammazero/workerpool"
 	"github.com/linkdata/deadlock"
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/puzpuzpuz/xsync/v3"
+	"github.com/puzpuzpuz/xsync/v4"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
@@ -59,7 +59,7 @@ type StreamCache struct {
 	// streamId -> *streamImpl
 	// cache is populated by getting all streams that should be on local node from River chain.
 	// streamImpl can be in unloaded state, in which case it will be loaded on first GetStream call.
-	cache *xsync.MapOf[StreamId, *Stream]
+	cache *xsync.Map[StreamId, *Stream]
 
 	// appliedBlockNum is the number of the last block logs from which were applied to cache.
 	appliedBlockNum atomic.Uint64
@@ -86,7 +86,7 @@ type StreamCache struct {
 func NewStreamCache(params *StreamCacheParams) *StreamCache {
 	s := &StreamCache{
 		params: params,
-		cache:  xsync.NewMapOf[StreamId, *Stream](),
+		cache:  xsync.NewMap[StreamId, *Stream](),
 		streamCacheSizeGauge: params.Metrics.NewGaugeVecEx(
 			"stream_cache_size", "Number of streams in stream cache",
 			"chain_id", "address",
@@ -203,23 +203,32 @@ func (s *StreamCache) onBlockWithLogs(ctx context.Context, blockNum crypto.Block
 
 	for streamID, events := range streamEvents {
 		wp.Submit(func() {
-			switch events[0].Reason() {
-			case river.StreamUpdatedEventTypeAllocate:
-				streamState := events[0].(*river.StreamState)
-				s.onStreamAllocated(ctx, streamState, events[1:], blockNum)
-			case river.StreamUpdatedEventTypeCreate:
-				streamState := events[0].(*river.StreamState)
-				s.onStreamCreated(ctx, streamState, blockNum)
-			case river.StreamUpdatedEventTypePlacementUpdated: // linter
-				fallthrough
-			case river.StreamUpdatedEventTypeLastMiniblockBatchUpdated:
-				fallthrough
-			default:
-				stream, ok := s.cache.Load(streamID)
-				if !ok {
-					return
+			for len(events) > 0 {
+				switch events[0].Reason() {
+				case river.StreamUpdatedEventTypeAllocate:
+					streamState := events[0].(*river.StreamState)
+					s.onStreamAllocated(ctx, streamState, blockNum)
+					events = events[1:]
+				case river.StreamUpdatedEventTypeCreate:
+					streamState := events[0].(*river.StreamState)
+					s.onStreamCreated(ctx, streamState, blockNum)
+					events = events[1:]
+				case river.StreamUpdatedEventTypePlacementUpdated:
+					streamState := events[0].(*river.StreamState)
+					s.onStreamPlacementUpdated(ctx, streamState, blockNum)
+					events = events[1:]
+				case river.StreamUpdatedEventTypeLastMiniblockBatchUpdated:
+					i := 1
+					for i < len(events) && events[i].Reason() == river.StreamUpdatedEventTypeLastMiniblockBatchUpdated {
+						i++
+					}
+					eventsToApply := events[:i]
+					events = events[i:]
+
+					if stream, ok := s.cache.Load(streamID); ok {
+						stream.applyStreamEvents(ctx, eventsToApply, blockNum)
+					}
 				}
-				stream.applyStreamEvents(ctx, events, blockNum)
 			}
 		})
 	}
@@ -232,7 +241,6 @@ func (s *StreamCache) onBlockWithLogs(ctx context.Context, blockNum crypto.Block
 func (s *StreamCache) onStreamAllocated(
 	ctx context.Context,
 	event *river.StreamState,
-	otherEvents []river.StreamUpdatedEvent,
 	blockNum crypto.BlockNumber,
 ) {
 	if !slices.Contains(event.Nodes, s.params.Wallet.Address) {
@@ -269,16 +277,17 @@ func (s *StreamCache) onStreamAllocated(
 	)
 	if err != nil {
 		if IsRiverErrorCode(err, Err_ALREADY_EXISTS) {
-			logging.FromCtx(ctx).Warnw("onStreamAllocated: stream already exists in storage (race with GetStream?)", "err", err)
+			logging.FromCtx(ctx).
+				Warnw("onStreamAllocated: stream already exists in storage (race with GetStream?)", "err", err)
 		} else {
 			logging.FromCtx(ctx).Errorw("onStreamAllocated: Failed to create stream storage", "err", err)
 			return
 		}
 	}
 
-	stream, _ := s.cache.LoadOrCompute(
+	_, _ = s.cache.LoadOrCompute(
 		event.GetStreamId(),
-		func() *Stream {
+		func() (newValue *Stream, cancel bool) {
 			ret := &Stream{
 				params:              s.params,
 				streamId:            event.GetStreamId(),
@@ -287,13 +296,9 @@ func (s *StreamCache) onStreamAllocated(
 				local:               &localStreamState{},
 			}
 			ret.nodesLocked.ResetFromStreamState(event, s.params.Wallet.Address)
-			return ret
+			return ret, false
 		},
 	)
-
-	if len(otherEvents) > 0 {
-		stream.applyStreamEvents(ctx, otherEvents, blockNum)
-	}
 }
 
 func (s *StreamCache) Params() *StreamCacheParams {
@@ -431,7 +436,7 @@ func (s *StreamCache) loadStreamRecordImpl(
 	if !local {
 		stream, _ := s.cache.LoadOrCompute(
 			streamId,
-			func() *Stream {
+			func() (newValue *Stream, cancel bool) {
 				ret := &Stream{
 					params:              s.params,
 					streamId:            streamId,
@@ -439,7 +444,7 @@ func (s *StreamCache) loadStreamRecordImpl(
 					lastAccessedTime:    time.Now(),
 				}
 				ret.nodesLocked.ResetFromStreamResult(record, s.params.Wallet.Address)
-				return ret
+				return ret, false
 			},
 		)
 		return stream, nil
@@ -449,7 +454,7 @@ func (s *StreamCache) loadStreamRecordImpl(
 	if record.LastMiniblockNum > 0 {
 		stream, _ := s.cache.LoadOrCompute(
 			streamId,
-			func() *Stream {
+			func() (newValue *Stream, cancel bool) {
 				ret := &Stream{
 					params:              s.params,
 					streamId:            streamId,
@@ -458,7 +463,7 @@ func (s *StreamCache) loadStreamRecordImpl(
 					local:               &localStreamState{},
 				}
 				ret.nodesLocked.ResetFromStreamResult(record, s.params.Wallet.Address)
-				return ret
+				return ret, false
 			},
 		)
 		s.SubmitSyncStreamTask(ctx, stream)
@@ -489,7 +494,8 @@ func (s *StreamCache) loadStreamRecordImpl(
 	)
 	if err != nil {
 		if IsRiverErrorCode(err, Err_ALREADY_EXISTS) {
-			logging.FromCtx(ctx).Warnw("loadStreamRecordImpl: stream already exists in storage (creation race?)", "err", err)
+			logging.FromCtx(ctx).
+				Warnw("loadStreamRecordImpl: stream already exists in storage (creation race?)", "err", err)
 		} else {
 			logging.FromCtx(ctx).Errorw("onStreamAllocated: Failed to create stream storage", "err", err)
 			return nil, err
@@ -498,7 +504,7 @@ func (s *StreamCache) loadStreamRecordImpl(
 
 	stream, _ = s.cache.LoadOrCompute(
 		streamId,
-		func() *Stream {
+		func() (newValue *Stream, cancel bool) {
 			ret := &Stream{
 				params:              s.params,
 				streamId:            streamId,
@@ -507,7 +513,7 @@ func (s *StreamCache) loadStreamRecordImpl(
 				local:               &localStreamState{},
 			}
 			ret.nodesLocked.ResetFromStreamResult(record, s.params.Wallet.Address)
-			return ret
+			return ret, false
 		},
 	)
 
