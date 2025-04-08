@@ -35,7 +35,7 @@ contract InteractClaimCondition is IDropFacetBase, Interaction {
 
         address riverAirdrop = deployRiverAirdrop.deploy(deployer);
         address townsBase = deployTownsBase.deploy(deployer);
-        (bytes32 root,) = merkleTree.constructTree(wallets, amounts);
+        (bytes32 root, ) = merkleTree.constructTree(wallets, amounts);
 
         DropClaimLib.ClaimCondition[] memory conditions = new DropClaimLib.ClaimCondition[](1);
         conditions[0] = DropClaimLib.ClaimCondition({

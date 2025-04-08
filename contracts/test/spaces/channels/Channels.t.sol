@@ -7,8 +7,7 @@ pragma solidity ^0.8.23;
 
 import {IEntitlementBase} from "contracts/src/spaces/entitlements/IEntitlement.sol";
 import {IChannel, IChannelBase} from "contracts/src/spaces/facets/channels/IChannel.sol";
-import {IEntitlementsManager} from
-    "contracts/src/spaces/facets/entitlements/IEntitlementsManager.sol";
+import {IEntitlementsManager} from "contracts/src/spaces/facets/entitlements/IEntitlementsManager.sol";
 import {IRoles} from "contracts/src/spaces/facets/roles/IRoles.sol";
 
 //libraries
@@ -18,12 +17,7 @@ import {Permissions} from "contracts/src/spaces/facets/Permissions.sol";
 import {BaseSetup} from "contracts/test/spaces/BaseSetup.sol";
 
 // solhint-disable-next-line max-line-length
-import {
-    ChannelService__ChannelAlreadyExists,
-    ChannelService__ChannelDoesNotExist,
-    ChannelService__RoleAlreadyExists,
-    ChannelService__RoleDoesNotExist
-} from "contracts/src/spaces/facets/channels/ChannelService.sol";
+import {ChannelService__ChannelAlreadyExists, ChannelService__ChannelDoesNotExist, ChannelService__RoleAlreadyExists, ChannelService__RoleDoesNotExist} from "contracts/src/spaces/facets/channels/ChannelService.sol";
 
 contract ChannelsTest is BaseSetup, IEntitlementBase {
     function setUp() public override {
@@ -47,7 +41,9 @@ contract ChannelsTest is BaseSetup, IEntitlementBase {
 
         vm.prank(founder);
         uint256 roleId = IRoles(everyoneSpace).createRole(
-            "Member", permissions, new IRoles.CreateEntitlement[](0)
+            "Member",
+            permissions,
+            new IRoles.CreateEntitlement[](0)
         );
 
         uint256[] memory roleIds = new uint256[](2);
@@ -67,12 +63,18 @@ contract ChannelsTest is BaseSetup, IEntitlementBase {
         permissions[0] = Permissions.Write;
 
         vm.prank(founder);
-        uint256 roleId =
-            IRoles(space).createRole("MemberTwo", permissions, new IRoles.CreateEntitlement[](0));
+        uint256 roleId = IRoles(space).createRole(
+            "MemberTwo",
+            permissions,
+            new IRoles.CreateEntitlement[](0)
+        );
 
         vm.prank(founder);
-        uint256 roleId2 =
-            IRoles(space).createRole("MemberThree", permissions, new IRoles.CreateEntitlement[](0));
+        uint256 roleId2 = IRoles(space).createRole(
+            "MemberThree",
+            permissions,
+            new IRoles.CreateEntitlement[](0)
+        );
 
         uint256[] memory roleIds = new uint256[](2);
         roleIds[0] = roleId;
@@ -90,7 +92,9 @@ contract ChannelsTest is BaseSetup, IEntitlementBase {
 
         assertFalse(
             IEntitlementsManager(space).isEntitledToChannel(
-                channelId, _randomAddress(), Permissions.Write
+                channelId,
+                _randomAddress(),
+                Permissions.Write
             )
         );
     }
@@ -107,27 +111,34 @@ contract ChannelsTest is BaseSetup, IEntitlementBase {
 
         vm.prank(founder);
         uint256 writerRoleId = IRoles(space).createRole(
-            "WriterRole", permissionsWrite, new IRoles.CreateEntitlement[](0)
+            "WriterRole",
+            permissionsWrite,
+            new IRoles.CreateEntitlement[](0)
         );
 
         vm.prank(founder);
         uint256 readerRoleId = IRoles(space).createRole(
-            "ReaderRole", permissionsRead, new IRoles.CreateEntitlement[](0)
+            "ReaderRole",
+            permissionsRead,
+            new IRoles.CreateEntitlement[](0)
         );
 
         uint256[] memory roleIds = new uint256[](2);
         roleIds[0] = writerRoleId;
         roleIds[1] = readerRoleId;
 
-        IChannelBase.RolePermissions[] memory rolePermissions =
-            new IChannelBase.RolePermissions[](2);
+        IChannelBase.RolePermissions[] memory rolePermissions = new IChannelBase.RolePermissions[](
+            2
+        );
 
         rolePermissions[0] = IChannelBase.RolePermissions(writerRoleId, permissionsWrite);
         rolePermissions[1] = IChannelBase.RolePermissions(readerRoleId, permissionsRead);
 
         vm.prank(founder);
         IChannel(space).createChannelWithOverridePermissions(
-            channelId, channelMetadata, rolePermissions
+            channelId,
+            channelMetadata,
+            rolePermissions
         );
 
         IChannel.Channel memory _channel = IChannel(space).getChannel(channelId);
@@ -139,7 +150,9 @@ contract ChannelsTest is BaseSetup, IEntitlementBase {
 
         assertFalse(
             IEntitlementsManager(space).isEntitledToChannel(
-                channelId, _randomAddress(), Permissions.Write
+                channelId,
+                _randomAddress(),
+                Permissions.Write
             )
         );
     }
@@ -165,7 +178,9 @@ contract ChannelsTest is BaseSetup, IEntitlementBase {
 
         vm.prank(founder);
         uint256 roleId = IRoles(everyoneSpace).createRole(
-            "Member", new string[](0), new IRoles.CreateEntitlement[](0)
+            "Member",
+            new string[](0),
+            new IRoles.CreateEntitlement[](0)
         );
 
         uint256[] memory roleIds = new uint256[](1);
@@ -282,9 +297,7 @@ contract ChannelsTest is BaseSetup, IEntitlementBase {
     function test_addRoleToChannel_existing_role(
         string memory channelMetadata,
         uint256 roleId
-    )
-        public
-    {
+    ) public {
         bound(bytes(channelMetadata).length, 3, 1000);
 
         bytes32 channelId = "my-cool-channel";

@@ -41,7 +41,12 @@ contract MockERC1155 is ERC1155 {
         amounts[0] = AMOUNT;
 
         ERC1155Utils.checkOnERC1155BatchReceived(
-            address(this), address(0), account, ids, amounts, ""
+            address(this),
+            address(0),
+            account,
+            ids,
+            amounts,
+            ""
         );
         return true;
     }
@@ -50,9 +55,7 @@ contract MockERC1155 is ERC1155 {
         address account,
         uint256[] memory ids,
         uint256[] memory amounts
-    )
-        external
-    {
+    ) external {
         _mintBatch(account, ids, amounts, "");
     }
 }

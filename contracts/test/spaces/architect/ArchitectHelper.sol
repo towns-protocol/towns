@@ -25,13 +25,14 @@ contract ArchitectHelper is FacetHelper {
         address _userEntitlement,
         address _ruleEntitlement,
         address _walletLink
-    )
-        public
-        pure
-        returns (bytes memory)
-    {
-        return abi.encodeWithSelector(
-            initializer(), _spaceOwnerToken, _userEntitlement, _ruleEntitlement, _walletLink
-        );
+    ) public pure returns (bytes memory) {
+        return
+            abi.encodeWithSelector(
+                initializer(),
+                _spaceOwnerToken,
+                _userEntitlement,
+                _ruleEntitlement,
+                _walletLink
+            );
     }
 }

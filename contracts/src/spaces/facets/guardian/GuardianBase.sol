@@ -49,7 +49,12 @@ abstract contract GuardianBase is IGuardianBase {
 
         ds.cooldownByAddress[guardian] = block.timestamp + ds.defaultCooldown;
 
-        emit GuardianUpdated(guardian, false, block.timestamp + ds.defaultCooldown, block.timestamp);
+        emit GuardianUpdated(
+            guardian,
+            false,
+            block.timestamp + ds.defaultCooldown,
+            block.timestamp
+        );
     }
 
     function _guardianCooldown(address guardian) internal view returns (uint256) {
@@ -67,7 +72,9 @@ abstract contract GuardianBase is IGuardianBase {
         // guardian is enabled if it is not a contract and
         // - it has no cooldown or
         // - it has a cooldown but it has not passed yet
-        return SpaceOwnerStorage.layout().factory != guardian
-            && (ds.cooldownByAddress[guardian] == 0 || block.timestamp < ds.cooldownByAddress[guardian]);
+        return
+            SpaceOwnerStorage.layout().factory != guardian &&
+            (ds.cooldownByAddress[guardian] == 0 ||
+                block.timestamp < ds.cooldownByAddress[guardian]);
     }
 }

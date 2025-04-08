@@ -6,10 +6,7 @@ import {INodeOperator} from "./INodeOperator.sol";
 
 // libraries
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-import {
-    NodeOperatorStatus,
-    NodeOperatorStorage
-} from "contracts/src/base/registry/facets/operator/NodeOperatorStorage.sol";
+import {NodeOperatorStatus, NodeOperatorStorage} from "contracts/src/base/registry/facets/operator/NodeOperatorStorage.sol";
 
 // contracts
 import {OwnableBase} from "@towns-protocol/diamond/src/facets/ownable/OwnableBase.sol";
@@ -75,21 +72,22 @@ contract NodeOperatorFacet is INodeOperator, OwnableBase, ERC721ABase, Facet {
         // Standby -> Approved
         // Approved -> Exiting || Active
         // Active -> Exiting || Approved
-        if (currentStatus == NodeOperatorStatus.Exiting && newStatus != NodeOperatorStatus.Standby)
-        {
+        if (
+            currentStatus == NodeOperatorStatus.Exiting && newStatus != NodeOperatorStatus.Standby
+        ) {
             revert NodeOperator__InvalidStatusTransition();
         } else if (
             currentStatus == NodeOperatorStatus.Standby && newStatus != NodeOperatorStatus.Approved
         ) {
             revert NodeOperator__InvalidStatusTransition();
         } else if (
-            currentStatus == NodeOperatorStatus.Approved
-                && (newStatus != NodeOperatorStatus.Exiting && newStatus != NodeOperatorStatus.Active)
+            currentStatus == NodeOperatorStatus.Approved &&
+            (newStatus != NodeOperatorStatus.Exiting && newStatus != NodeOperatorStatus.Active)
         ) {
             revert NodeOperator__InvalidStatusTransition();
         } else if (
-            currentStatus == NodeOperatorStatus.Active
-                && (newStatus != NodeOperatorStatus.Exiting && newStatus != NodeOperatorStatus.Approved)
+            currentStatus == NodeOperatorStatus.Active &&
+            (newStatus != NodeOperatorStatus.Exiting && newStatus != NodeOperatorStatus.Approved)
         ) {
             revert NodeOperator__InvalidStatusTransition();
         }
@@ -117,10 +115,7 @@ contract NodeOperatorFacet is INodeOperator, OwnableBase, ERC721ABase, Facet {
     function setClaimAddressForOperator(
         address claimer,
         address operator
-    )
-        external
-        onlyClaimer(msg.sender, operator)
-    {
+    ) external onlyClaimer(msg.sender, operator) {
         NodeOperatorStorage.Layout storage ds = NodeOperatorStorage.layout();
 
         if (!ds.operators.contains(operator)) revert NodeOperator__NotRegistered();
@@ -163,8 +158,8 @@ contract NodeOperatorFacet is INodeOperator, OwnableBase, ERC721ABase, Facet {
 
         //only allow raising the commission if operator is in standby status
         if (
-            rateBps > ds.commissionByOperator[msg.sender]
-                && ds.statusByOperator[msg.sender] != NodeOperatorStatus.Standby
+            rateBps > ds.commissionByOperator[msg.sender] &&
+            ds.statusByOperator[msg.sender] != NodeOperatorStatus.Standby
         ) {
             revert NodeOperator__InvalidCommissionRate();
         }

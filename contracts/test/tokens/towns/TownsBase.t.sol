@@ -69,10 +69,7 @@ contract TownsBaseTest is TestUtils, EIP712Utils, ILockBase {
         address alice,
         uint256 amount,
         address bob
-    )
-        public
-        givenCallerHasBridgedTokens(alice, amount)
-    {
+    ) public givenCallerHasBridgedTokens(alice, amount) {
         vm.assume(bob != address(0));
         vm.assume(bob != ZERO_SENTINEL);
         vm.assume(alice != bob);
@@ -105,8 +102,14 @@ contract TownsBaseTest is TestUtils, EIP712Utils, ILockBase {
         vm.warp(block.timestamp + 100);
 
         uint256 deadline = block.timestamp + 100;
-        (uint8 v, bytes32 r, bytes32 s) =
-            signPermit(alicePrivateKey, address(towns), alice, bob, amount, deadline);
+        (uint8 v, bytes32 r, bytes32 s) = signPermit(
+            alicePrivateKey,
+            address(towns),
+            alice,
+            bob,
+            amount,
+            deadline
+        );
 
         assertEq(towns.allowance(alice, bob), 0);
 
@@ -120,9 +123,7 @@ contract TownsBaseTest is TestUtils, EIP712Utils, ILockBase {
         uint256 alicePrivateKey,
         uint256 amount,
         address bob
-    )
-        external
-    {
+    ) external {
         vm.assume(bob != address(0));
         vm.assume(bob != PERMIT2);
 
@@ -135,8 +136,14 @@ contract TownsBaseTest is TestUtils, EIP712Utils, ILockBase {
         towns.mint(alice, amount);
 
         uint256 deadline = block.timestamp + 100;
-        (uint8 v, bytes32 r, bytes32 s) =
-            signPermit(alicePrivateKey, address(towns), alice, bob, amount, deadline);
+        (uint8 v, bytes32 r, bytes32 s) = signPermit(
+            alicePrivateKey,
+            address(towns),
+            alice,
+            bob,
+            amount,
+            deadline
+        );
 
         vm.warp(deadline + 1);
 
@@ -152,11 +159,7 @@ contract TownsBaseTest is TestUtils, EIP712Utils, ILockBase {
         address alice,
         address space,
         uint256 amount
-    )
-        public
-        givenCallerHasBridgedTokens(alice, amount)
-        givenCallerDelegates(alice, space)
-    {
+    ) public givenCallerHasBridgedTokens(alice, amount) givenCallerDelegates(alice, space) {
         assertEq(towns.isLockActive(alice), true);
 
         vm.expectEmit(address(towns));
@@ -184,11 +187,7 @@ contract TownsBaseTest is TestUtils, EIP712Utils, ILockBase {
         address alice,
         address space,
         uint256 amount
-    )
-        external
-        givenCallerHasBridgedTokens(alice, amount)
-        givenCallerDelegates(alice, space)
-    {
+    ) external givenCallerHasBridgedTokens(alice, amount) givenCallerDelegates(alice, space) {
         vm.startPrank(alice);
         towns.delegate(address(0));
         vm.expectRevert(Towns.DelegateeSameAsCurrent.selector);
@@ -200,11 +199,7 @@ contract TownsBaseTest is TestUtils, EIP712Utils, ILockBase {
         address bob,
         address space,
         uint256 amount
-    )
-        external
-        givenCallerHasBridgedTokens(alice, amount)
-        givenCallerDelegates(alice, space)
-    {
+    ) external givenCallerHasBridgedTokens(alice, amount) givenCallerDelegates(alice, space) {
         vm.assume(bob != address(0) && bob != space);
 
         vm.startPrank(alice);
@@ -219,11 +214,7 @@ contract TownsBaseTest is TestUtils, EIP712Utils, ILockBase {
         address space,
         uint256 amount,
         address bob
-    )
-        external
-        givenCallerHasBridgedTokens(alice, amount)
-        givenCallerDelegates(alice, space)
-    {
+    ) external givenCallerHasBridgedTokens(alice, amount) givenCallerDelegates(alice, space) {
         vm.assume(bob != address(0));
         vm.prank(alice);
         vm.expectRevert(Towns.TransferLockEnabled.selector);
@@ -235,11 +226,7 @@ contract TownsBaseTest is TestUtils, EIP712Utils, ILockBase {
         address space,
         uint256 amount,
         address bob
-    )
-        external
-        givenCallerHasBridgedTokens(alice, amount)
-        givenCallerDelegates(alice, space)
-    {
+    ) external givenCallerHasBridgedTokens(alice, amount) givenCallerDelegates(alice, space) {
         amount = bound(amount, 0, type(uint208).max);
         vm.assume(bob != address(0));
 
@@ -263,9 +250,7 @@ contract TownsBaseTest is TestUtils, EIP712Utils, ILockBase {
         uint256 amountA,
         address bob,
         uint256 amountB
-    )
-        public
-    {
+    ) public {
         vm.assume(alice != bob);
         vm.assume(alice != address(0));
         vm.assume(bob != address(0));
@@ -318,10 +303,7 @@ contract TownsBaseTest is TestUtils, EIP712Utils, ILockBase {
         address alice,
         address space,
         uint256 amount
-    )
-        external
-        givenCallerHasBridgedTokens(alice, amount)
-    {
+    ) external givenCallerHasBridgedTokens(alice, amount) {
         vm.assume(space != address(0));
 
         address impl = address(new TownsV2());

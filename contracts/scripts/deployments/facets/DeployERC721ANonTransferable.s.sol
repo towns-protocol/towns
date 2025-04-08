@@ -10,8 +10,7 @@ import {IERC721A} from "contracts/src/diamond/facets/token/ERC721A/IERC721A.sol"
 import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
 import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
 import {ERC721A} from "contracts/src/diamond/facets/token/ERC721A/ERC721A.sol";
-import {ERC721ANonTransferable} from
-    "contracts/src/diamond/facets/token/ERC721A/ERC721ANonTransferable.sol";
+import {ERC721ANonTransferable} from "contracts/src/diamond/facets/token/ERC721A/ERC721ANonTransferable.sol";
 
 contract DeployERC721ANonTransferable is FacetHelper, Deployer {
     constructor() {
@@ -33,11 +32,7 @@ contract DeployERC721ANonTransferable is FacetHelper, Deployer {
     function makeInitData(
         string memory name,
         string memory symbol
-    )
-        public
-        pure
-        returns (bytes memory)
-    {
+    ) public pure returns (bytes memory) {
         return abi.encodeWithSelector(ERC721A.__ERC721A_init.selector, name, symbol);
     }
 

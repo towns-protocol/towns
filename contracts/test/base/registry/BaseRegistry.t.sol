@@ -9,18 +9,15 @@ import {ICreateSpace} from "contracts/src/factory/facets/create/ICreateSpace.sol
 // libraries
 
 import {StakingRewards} from "contracts/src/base/registry/facets/distribution/v2/StakingRewards.sol";
-import {NodeOperatorStatus} from
-    "contracts/src/base/registry/facets/operator/NodeOperatorStorage.sol";
+import {NodeOperatorStatus} from "contracts/src/base/registry/facets/operator/NodeOperatorStorage.sol";
 import {FixedPointMathLib} from "solady/utils/FixedPointMathLib.sol";
 
 // contracts
 
 import {RewardsVerifier} from "./RewardsVerifier.t.sol";
 import {EIP712Facet} from "@towns-protocol/diamond/src/utils/cryptography/EIP712Facet.sol";
-import {SpaceDelegationFacet} from
-    "contracts/src/base/registry/facets/delegation/SpaceDelegationFacet.sol";
-import {RewardsDistribution} from
-    "contracts/src/base/registry/facets/distribution/v2/RewardsDistribution.sol";
+import {SpaceDelegationFacet} from "contracts/src/base/registry/facets/delegation/SpaceDelegationFacet.sol";
+import {RewardsDistribution} from "contracts/src/base/registry/facets/distribution/v2/RewardsDistribution.sol";
 import {MainnetDelegation} from "contracts/src/base/registry/facets/mainnet/MainnetDelegation.sol";
 import {NodeOperatorFacet} from "contracts/src/base/registry/facets/operator/NodeOperatorFacet.sol";
 import {Towns} from "contracts/src/tokens/towns/base/Towns.sol";
@@ -120,8 +117,9 @@ abstract contract BaseRegistryTest is RewardsVerifier, BaseSetup {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     function deploySpace(address _deployer) internal returns (address _space) {
-        IArchitectBase.SpaceInfo memory spaceInfo =
-            _createSpaceInfo(string(abi.encode(_randomUint256())));
+        IArchitectBase.SpaceInfo memory spaceInfo = _createSpaceInfo(
+            string(abi.encode(_randomUint256()))
+        );
         spaceInfo.membership.settings.pricingModule = pricingModule;
         vm.prank(_deployer);
         _space = ICreateSpace(spaceFactory).createSpace(spaceInfo);
@@ -151,14 +149,15 @@ abstract contract BaseRegistryTest is RewardsVerifier, BaseSetup {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     function boundReward(uint256 reward) internal view returns (uint256) {
-        return bound(
-            reward,
-            rewardDuration,
-            FixedPointMathLib.min(
-                rewardDuration.fullMulDiv(type(uint256).max, StakingRewards.SCALE_FACTOR),
-                REASONABLE_TOKEN_SUPPLY
-            )
-        );
+        return
+            bound(
+                reward,
+                rewardDuration,
+                FixedPointMathLib.min(
+                    rewardDuration.fullMulDiv(type(uint256).max, StakingRewards.SCALE_FACTOR),
+                    REASONABLE_TOKEN_SUPPLY
+                )
+            );
     }
 
     function sanitizeAmounts(uint256[32] memory amounts) internal {

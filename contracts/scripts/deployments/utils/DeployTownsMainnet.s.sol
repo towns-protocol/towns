@@ -15,14 +15,15 @@ contract DeployTownsMainnet is Deployer, ITownsBase {
     address public vault;
 
     function inflationConfig(address _manager) public pure returns (InflationConfig memory) {
-        return InflationConfig({
-            initialMintTime: 1_709_667_671, // Tuesday, March 5, 2024 7:41:11 PM
-            initialInflationRate: 800,
-            finalInflationRate: 200,
-            inflationDecayRate: 600,
-            finalInflationYears: 20,
-            inflationReceiver: _manager
-        });
+        return
+            InflationConfig({
+                initialMintTime: 1_709_667_671, // Tuesday, March 5, 2024 7:41:11 PM
+                initialInflationRate: 800,
+                finalInflationRate: 200,
+                inflationDecayRate: 600,
+                finalInflationYears: 20,
+                inflationReceiver: _manager
+            });
     }
 
     function versionName() public pure override returns (string memory) {

@@ -25,10 +25,7 @@ contract TokenMigrationFacet is OwnableBase, PausableBase, Facet, ITokenMigratio
     function __TokenMigrationFacet_init(
         IERC20 oldToken,
         IERC20 newToken
-    )
-        external
-        onlyInitializing
-    {
+    ) external onlyInitializing {
         _validateTokens(oldToken, newToken);
 
         TokenMigrationStorage.Layout storage ds = TokenMigrationStorage.layout();

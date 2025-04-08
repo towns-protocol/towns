@@ -59,15 +59,21 @@ contract DeployMember is Deployer {
         );
 
         member.privateMint{value: member.MINT_PRICE()}(
-            accounts[0], allowances[0], merkle.getProof(tree, 0)
+            accounts[0],
+            allowances[0],
+            merkle.getProof(tree, 0)
         );
 
         member.privateMint{value: member.MINT_PRICE()}(
-            accounts[1], allowances[1], merkle.getProof(tree, 1)
+            accounts[1],
+            allowances[1],
+            merkle.getProof(tree, 1)
         );
 
         member.privateMint{value: member.MINT_PRICE()}(
-            accounts[2], allowances[2], merkle.getProof(tree, 2)
+            accounts[2],
+            allowances[2],
+            merkle.getProof(tree, 2)
         );
 
         member.startWaitlistMint();

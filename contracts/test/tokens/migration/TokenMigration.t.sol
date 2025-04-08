@@ -15,8 +15,7 @@ import {ITokenMigrationBase} from "contracts/src/tokens/migration/ITokenMigratio
 import {Validator__InvalidAddress} from "contracts/src/utils/Validator.sol";
 
 //contracts
-import {DeployRiverMigration} from
-    "contracts/scripts/deployments/diamonds/DeployRiverMigration.s.sol";
+import {DeployRiverMigration} from "contracts/scripts/deployments/diamonds/DeployRiverMigration.s.sol";
 import {MockERC20} from "contracts/test/mocks/MockERC20.sol";
 
 // facets
@@ -114,11 +113,9 @@ contract TokenMigrationTest is TestUtils, IPausableBase, ITokenMigrationBase, IO
         tokenMigration.migrate(address(0));
     }
 
-    function test_revertWhen_balanceIsZero(address account)
-        external
-        givenContractIsUnpaused
-        assumeEOA(account)
-    {
+    function test_revertWhen_balanceIsZero(
+        address account
+    ) external givenContractIsUnpaused assumeEOA(account) {
         vm.expectRevert(TokenMigration__InvalidBalance.selector);
         tokenMigration.migrate(account);
     }

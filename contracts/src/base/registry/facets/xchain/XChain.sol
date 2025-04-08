@@ -31,11 +31,7 @@ contract XChain is IXChain, ReentrancyGuard, Facet {
     function isCheckCompleted(
         bytes32 transactionId,
         uint256 requestId
-    )
-        external
-        view
-        returns (bool)
-    {
+    ) external view returns (bool) {
         return XChainLib.layout().checks[transactionId].voteCompleted[requestId];
     }
 
@@ -74,7 +70,10 @@ contract XChain is IXChain, ReentrancyGuard, Facet {
 
         // Single transfer for all eligible refunds
         CurrencyTransfer.transferCurrency(
-            CurrencyTransfer.NATIVE_TOKEN, address(this), msg.sender, totalRefund
+            CurrencyTransfer.NATIVE_TOKEN,
+            address(this),
+            msg.sender,
+            totalRefund
         );
     }
 
@@ -83,10 +82,7 @@ contract XChain is IXChain, ReentrancyGuard, Facet {
         bytes32 transactionId,
         uint256 requestId,
         NodeVoteStatus result
-    )
-        external
-        nonReentrant
-    {
+    ) external nonReentrant {
         XChainLib.Request storage request = XChainLib.layout().requests[transactionId];
 
         if (request.completed) {
@@ -140,8 +136,9 @@ contract XChain is IXChain, ReentrancyGuard, Facet {
 
         if (passed > transactionNodesLength / 2 || failed > transactionNodesLength / 2) {
             check.voteCompleted[requestId] = true;
-            NodeVoteStatus finalStatusForRole =
-                passed > failed ? NodeVoteStatus.PASSED : NodeVoteStatus.FAILED;
+            NodeVoteStatus finalStatusForRole = passed > failed
+                ? NodeVoteStatus.PASSED
+                : NodeVoteStatus.FAILED;
 
             bool allRoleIdsCompleted = _checkAllRequestsCompleted(transactionId);
 
@@ -149,7 +146,9 @@ contract XChain is IXChain, ReentrancyGuard, Facet {
                 request.completed = true;
                 XChainLib.layout().requestsBySender[request.caller].remove(transactionId);
                 EntitlementGated(request.caller).postEntitlementCheckResultV2{value: request.value}(
-                    transactionId, 0, finalStatusForRole
+                    transactionId,
+                    0,
+                    finalStatusForRole
                 );
             }
         }

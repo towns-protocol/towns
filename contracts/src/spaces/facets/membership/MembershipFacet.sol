@@ -37,11 +37,7 @@ contract MembershipFacet is IMembership, MembershipJoin, ReentrancyGuard, Facet 
     function joinSpaceWithReferral(
         address receiver,
         ReferralTypes memory referral
-    )
-        external
-        payable
-        nonReentrant
-    {
+    ) external payable nonReentrant {
         _joinSpaceWithReferral(receiver, referral);
     }
 

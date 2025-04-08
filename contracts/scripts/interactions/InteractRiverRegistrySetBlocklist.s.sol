@@ -20,7 +20,9 @@ contract InteractRiverRegistrySetFreq is Interaction {
 
         vm.startBroadcast(deployer);
         IRiverConfig(riverRegistry).setConfiguration(
-            keccak256("node.blocklist"), 13_396_808, abi.encode(value)
+            keccak256("node.blocklist"),
+            13_396_808,
+            abi.encode(value)
         );
         vm.stopBroadcast();
     }

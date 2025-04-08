@@ -24,8 +24,7 @@ library TippingBase {
 
     struct Layout {
         EnumerableSet.AddressSet currencies;
-        mapping(uint256 tokenId => mapping(address currency => uint256 amount))
-            tipsByCurrencyByTokenId;
+        mapping(uint256 tokenId => mapping(address currency => uint256 amount)) tipsByCurrencyByTokenId;
         mapping(address currency => TippingStats) tippingStatsByCurrency;
     }
 
@@ -41,9 +40,7 @@ library TippingBase {
         uint256 tokenId,
         address currency,
         uint256 amount
-    )
-        internal
-    {
+    ) internal {
         Layout storage ds = layout();
 
         ds.currencies.add(currency);
@@ -67,11 +64,7 @@ library TippingBase {
     function tipsByCurrencyByTokenId(
         uint256 tokenId,
         address currency
-    )
-        internal
-        view
-        returns (uint256)
-    {
+    ) internal view returns (uint256) {
         return layout().tipsByCurrencyByTokenId[tokenId][currency];
     }
 

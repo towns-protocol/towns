@@ -4,10 +4,7 @@ pragma solidity ^0.8.23;
 // interfaces
 import {IArchitectBase} from "contracts/src/factory/facets/architect/IArchitect.sol";
 
-import {
-    IPricingModules,
-    IPricingModulesBase
-} from "contracts/src/factory/facets/architect/pricing/IPricingModules.sol";
+import {IPricingModules, IPricingModulesBase} from "contracts/src/factory/facets/architect/pricing/IPricingModules.sol";
 import {ICreateSpace} from "contracts/src/factory/facets/create/ICreateSpace.sol";
 
 // common

@@ -34,14 +34,7 @@ library CurrencyTransfer {
     /// @param from The address to transfer from.
     /// @param to The address to transfer to.
     /// @param amount The amount to transfer.
-    function transferCurrency(
-        address currency,
-        address from,
-        address to,
-        uint256 amount
-    )
-        internal
-    {
+    function transferCurrency(address currency, address from, address to, uint256 amount) internal {
         if (amount == 0) {
             return;
         }
@@ -65,9 +58,7 @@ library CurrencyTransfer {
         address to,
         uint256 amount,
         address _nativeTokenWrapper
-    )
-        internal
-    {
+    ) internal {
         if (amount == 0) {
             return;
         }
@@ -119,9 +110,7 @@ library CurrencyTransfer {
         address to,
         uint256 value,
         address _nativeTokenWrapper
-    )
-        internal
-    {
+    ) internal {
         bool success = to.trySafeTransferETH(value, gasleft());
         if (!success) {
             IWETH(_nativeTokenWrapper).deposit{value: value}();

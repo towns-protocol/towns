@@ -14,8 +14,7 @@ import {IEntitlement} from "contracts/src/spaces/entitlements/IEntitlement.sol";
 import {IRuleEntitlement} from "contracts/src/spaces/entitlements/rule/IRuleEntitlement.sol";
 import {IUserEntitlement} from "contracts/src/spaces/entitlements/user/IUserEntitlement.sol";
 import {IChannel} from "contracts/src/spaces/facets/channels/IChannel.sol";
-import {IEntitlementsManager} from
-    "contracts/src/spaces/facets/entitlements/IEntitlementsManager.sol";
+import {IEntitlementsManager} from "contracts/src/spaces/facets/entitlements/IEntitlementsManager.sol";
 import {IMembershipBase} from "contracts/src/spaces/facets/membership/IMembership.sol";
 import {IPrepay} from "contracts/src/spaces/facets/prepay/IPrepay.sol";
 import {IRoles, IRolesBase} from "contracts/src/spaces/facets/roles/IRoles.sol";
@@ -25,8 +24,7 @@ import {IRoles, IRolesBase} from "contracts/src/spaces/facets/roles/IRoles.sol";
 import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import {ArchitectStorage} from "contracts/src/factory/facets/architect/ArchitectStorage.sol";
-import {ImplementationStorage} from
-    "contracts/src/factory/facets/architect/ImplementationStorage.sol";
+import {ImplementationStorage} from "contracts/src/factory/facets/architect/ImplementationStorage.sol";
 import {Permissions} from "contracts/src/spaces/facets/Permissions.sol";
 import {StringSet} from "contracts/src/utils/StringSet.sol";
 import {Validator} from "contracts/src/utils/Validator.sol";
@@ -34,8 +32,7 @@ import {Validator} from "contracts/src/utils/Validator.sol";
 // contracts
 
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
-import {PricingModulesBase} from
-    "contracts/src/factory/facets/architect/pricing/PricingModulesBase.sol";
+import {PricingModulesBase} from "contracts/src/factory/facets/architect/pricing/PricingModulesBase.sol";
 import {SpaceProxy} from "contracts/src/spaces/facets/proxy/SpaceProxy.sol";
 import {SpaceProxyInitializer} from "contracts/src/spaces/facets/proxy/SpaceProxyInitializer.sol";
 import {Factory} from "contracts/src/utils/Factory.sol";
@@ -51,10 +48,7 @@ library CreateSpaceLib {
     function createSpaceWithPrepay(
         IArchitectBase.CreateSpace memory space,
         IArchitectBase.SpaceOptions memory spaceOptions
-    )
-        internal
-        returns (address spaceAddress)
-    {
+    ) internal returns (address spaceAddress) {
         Validator.checkAddress(space.membership.settings.pricingModule);
         Validator.checkAddress(spaceOptions.to);
 
@@ -77,10 +71,7 @@ library CreateSpaceLib {
     function createSpace(
         IArchitectBase.SpaceInfo memory spaceInfo,
         IArchitectBase.SpaceOptions memory spaceOptions
-    )
-        internal
-        returns (address spaceAddress)
-    {
+    ) internal returns (address spaceAddress) {
         ArchitectStorage.Layout storage ds = ArchitectStorage.layout();
         ImplementationStorage.Layout storage ims = ImplementationStorage.layout();
 
@@ -109,12 +100,14 @@ library CreateSpaceLib {
         );
 
         // deploy user entitlement
-        IUserEntitlement userEntitlement =
-            IUserEntitlement(deployEntitlement(ims.userEntitlement, spaceAddress));
+        IUserEntitlement userEntitlement = IUserEntitlement(
+            deployEntitlement(ims.userEntitlement, spaceAddress)
+        );
 
         // deploy token entitlement
-        IRuleEntitlement ruleEntitlement =
-            IRuleEntitlement(deployEntitlement(ims.ruleEntitlement, spaceAddress));
+        IRuleEntitlement ruleEntitlement = IRuleEntitlement(
+            deployEntitlement(ims.ruleEntitlement, spaceAddress)
+        );
 
         address[] memory entitlements = new address[](2);
         entitlements[0] = address(userEntitlement);
@@ -166,7 +159,9 @@ library CreateSpaceLib {
 
         // transfer nft to sender
         IERC721A(address(ims.spaceOwnerToken)).safeTransferFrom(
-            address(this), spaceOptions.to, spaceTokenId
+            address(this),
+            spaceOptions.to,
+            spaceTokenId
         );
 
         // emit event
@@ -180,9 +175,7 @@ library CreateSpaceLib {
         address space,
         uint256 roleId,
         IArchitectBase.ChannelInfo memory channelInfo
-    )
-        internal
-    {
+    ) internal {
         uint256[] memory roleIds = new uint256[](1);
         roleIds[0] = roleId;
 
@@ -201,10 +194,7 @@ library CreateSpaceLib {
         IArchitectBase.MembershipRequirements memory requirements,
         IUserEntitlement userEntitlement,
         IRuleEntitlement ruleEntitlement
-    )
-        internal
-        returns (uint256 roleId)
-    {
+    ) internal returns (uint256 roleId) {
         uint256 entitlementCount = 0;
         uint256 userReqsLen = requirements.users.length;
         uint256 ruleReqsLen = requirements.ruleData.length;
@@ -217,8 +207,9 @@ library CreateSpaceLib {
             ++entitlementCount;
         }
 
-        IRolesBase.CreateEntitlement[] memory entitlements =
-            new IRolesBase.CreateEntitlement[](entitlementCount);
+        IRolesBase.CreateEntitlement[] memory entitlements = new IRolesBase.CreateEntitlement[](
+            entitlementCount
+        );
 
         uint256 entitlementIndex;
 
@@ -235,8 +226,10 @@ library CreateSpaceLib {
         }
 
         if (ruleReqsLen > 0) {
-            entitlements[entitlementIndex++] =
-                IRolesBase.CreateEntitlement({module: ruleEntitlement, data: requirements.ruleData});
+            entitlements[entitlementIndex++] = IRolesBase.CreateEntitlement({
+                module: ruleEntitlement,
+                data: requirements.ruleData
+            });
         }
 
         roleId = createRoleWithEntitlements(spaceAddress, roleName, permissions, entitlements);
@@ -247,10 +240,7 @@ library CreateSpaceLib {
         string memory roleName,
         string[] memory permissions,
         IUserEntitlement userEntitlement
-    )
-        internal
-        returns (uint256 roleId)
-    {
+    ) internal returns (uint256 roleId) {
         address[] memory users = new address[](1);
         users[0] = EVERYONE_ADDRESS;
 
@@ -266,10 +256,7 @@ library CreateSpaceLib {
         string memory roleName,
         string[] memory permissions,
         IRolesBase.CreateEntitlement[] memory entitlements
-    )
-        internal
-        returns (uint256 roleId)
-    {
+    ) internal returns (uint256 roleId) {
         return IRoles(spaceAddress).createRole(roleName, permissions, entitlements);
     }
 
@@ -281,23 +268,20 @@ library CreateSpaceLib {
         uint256 spaceTokenId,
         IArchitectBase.Membership memory membership,
         IArchitectBase.SpaceOptions memory spaceOptions
-    )
-        internal
-        returns (address space)
-    {
+    ) internal returns (address space) {
         // get deployment info
-        (bytes memory initCode, bytes32 salt) =
-            getSpaceDeploymentInfo(spaceTokenId, membership, spaceOptions);
+        (bytes memory initCode, bytes32 salt) = getSpaceDeploymentInfo(
+            spaceTokenId,
+            membership,
+            spaceOptions
+        );
         return Factory.deploy(initCode, salt);
     }
 
     function deployEntitlement(
         IEntitlement entitlement,
         address spaceAddress
-    )
-        internal
-        returns (address)
-    {
+    ) internal returns (address) {
         // calculate init code
         bytes memory initCode = abi.encodePacked(
             type(ERC1967Proxy).creationCode,
@@ -317,11 +301,7 @@ library CreateSpaceLib {
         uint256 spaceTokenId,
         IArchitectBase.Membership memory membership,
         IArchitectBase.SpaceOptions memory spaceOptions
-    )
-        internal
-        view
-        returns (bytes memory initCode, bytes32 salt)
-    {
+    ) internal view returns (bytes memory initCode, bytes32 salt) {
         verifyPricingModule(membership.settings.pricingModule);
 
         address spaceOwnerNFT = address(ImplementationStorage.layout().spaceOwnerToken);

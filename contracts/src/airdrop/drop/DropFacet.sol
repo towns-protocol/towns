@@ -3,8 +3,7 @@ pragma solidity ^0.8.23;
 
 // interfaces
 import {IDropFacet} from "contracts/src/airdrop/drop/IDropFacet.sol";
-import {IRewardsDistribution} from
-    "contracts/src/base/registry/facets/distribution/v2/IRewardsDistribution.sol";
+import {IRewardsDistribution} from "contracts/src/base/registry/facets/distribution/v2/IRewardsDistribution.sol";
 
 // libraries
 
@@ -34,22 +33,26 @@ contract DropFacet is IDropFacet, OwnableBase, Facet {
     function claimWithPenalty(
         DropClaimLib.Claim calldata claim,
         uint16 expectedPenaltyBps
-    )
-        external
-        returns (uint256 amount)
-    {
-        DropClaimLib.ClaimCondition storage condition =
-            DropFacetLib.getLayout().getClaimConditionById(claim.conditionId);
+    ) external returns (uint256 amount) {
+        DropClaimLib.ClaimCondition storage condition = DropFacetLib
+            .getLayout()
+            .getClaimConditionById(claim.conditionId);
 
-        DropClaimLib.SupplyClaim storage claimed =
-            DropFacetLib.getLayout().getSupplyClaimedByWallet(claim.conditionId, claim.account);
+        DropClaimLib.SupplyClaim storage claimed = DropFacetLib
+            .getLayout()
+            .getSupplyClaimedByWallet(claim.conditionId, claim.account);
 
         condition.verifyClaim(claimed, claim);
         amount = condition.verifyPenaltyBps(claim, expectedPenaltyBps);
 
         condition.updateClaim(claimed, amount);
 
-        CurrencyTransfer.safeTransferERC20(condition.currency, address(this), claim.account, amount);
+        CurrencyTransfer.safeTransferERC20(
+            condition.currency,
+            address(this),
+            claim.account,
+            amount
+        );
 
         emit DropFacet_Claimed_WithPenalty(claim.conditionId, msg.sender, claim.account, amount);
 
@@ -61,15 +64,14 @@ contract DropFacet is IDropFacet, OwnableBase, Facet {
         address delegatee,
         uint256 deadline,
         bytes calldata signature
-    )
-        external
-        returns (uint256)
-    {
-        DropClaimLib.ClaimCondition storage condition =
-            DropFacetLib.getLayout().getClaimConditionById(claim.conditionId);
+    ) external returns (uint256) {
+        DropClaimLib.ClaimCondition storage condition = DropFacetLib
+            .getLayout()
+            .getClaimConditionById(claim.conditionId);
 
-        DropClaimLib.SupplyClaim storage claimed =
-            DropFacetLib.getLayout().getSupplyClaimedByWallet(claim.conditionId, claim.account);
+        DropClaimLib.SupplyClaim storage claimed = DropFacetLib
+            .getLayout()
+            .getSupplyClaimedByWallet(claim.conditionId, claim.account);
 
         condition.verifyClaim(claimed, claim);
         condition.updateClaim(claimed, claim.quantity);
@@ -78,28 +80,30 @@ contract DropFacet is IDropFacet, OwnableBase, Facet {
 
         uint256 depositId = IRewardsDistribution(DropFacetLib.getLayout().rewardsDistribution)
             .stakeOnBehalf(
-            SafeCastLib.toUint96(claim.quantity),
-            delegatee,
-            claim.account,
-            claim.account,
-            deadline,
-            signature
-        );
+                SafeCastLib.toUint96(claim.quantity),
+                delegatee,
+                claim.account,
+                claim.account,
+                deadline,
+                signature
+            );
 
         DropFacetLib.updateDepositId(claimed, depositId);
 
         emit DropFacet_Claimed_And_Staked(
-            claim.conditionId, msg.sender, claim.account, claim.quantity
+            claim.conditionId,
+            msg.sender,
+            claim.account,
+            claim.quantity
         );
 
         return claim.quantity;
     }
 
     ///@inheritdoc IDropFacet
-    function setClaimConditions(DropClaimLib.ClaimCondition[] calldata conditions)
-        external
-        onlyOwner
-    {
+    function setClaimConditions(
+        DropClaimLib.ClaimCondition[] calldata conditions
+    ) external onlyOwner {
         DropFacetLib.getLayout().setClaimConditions(conditions);
     }
 
@@ -119,11 +123,9 @@ contract DropFacet is IDropFacet, OwnableBase, Facet {
     }
 
     ///@inheritdoc IDropFacet
-    function getClaimConditionById(uint256 conditionId)
-        external
-        view
-        returns (DropClaimLib.ClaimCondition memory condition)
-    {
+    function getClaimConditionById(
+        uint256 conditionId
+    ) external view returns (DropClaimLib.ClaimCondition memory condition) {
         assembly ("memory-safe") {
             // By default, memory has been implicitly allocated for `condition`.
             // But we don't need this implicitly allocated memory.
@@ -139,11 +141,7 @@ contract DropFacet is IDropFacet, OwnableBase, Facet {
     function getSupplyClaimedByWallet(
         address account,
         uint256 conditionId
-    )
-        external
-        view
-        returns (uint256)
-    {
+    ) external view returns (uint256) {
         return DropFacetLib.getLayout().getSupplyClaimedByWallet(conditionId, account).claimed;
     }
 
@@ -151,11 +149,7 @@ contract DropFacet is IDropFacet, OwnableBase, Facet {
     function getDepositIdByWallet(
         address account,
         uint256 conditionId
-    )
-        external
-        view
-        returns (uint256)
-    {
+    ) external view returns (uint256) {
         return DropFacetLib.getLayout().getSupplyClaimedByWallet(conditionId, account).depositId;
     }
 }

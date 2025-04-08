@@ -7,25 +7,18 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IERC173} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
 import {ISpaceDelegation} from "contracts/src/base/registry/facets/delegation/ISpaceDelegation.sol";
 
-import {IRewardsDistributionBase} from
-    "contracts/src/base/registry/facets/distribution/v2/IRewardsDistribution.sol";
+import {IRewardsDistributionBase} from "contracts/src/base/registry/facets/distribution/v2/IRewardsDistribution.sol";
 import {IMainnetDelegation} from "contracts/src/base/registry/facets/mainnet/IMainnetDelegation.sol";
-import {IVotesEnumerable} from
-    "contracts/src/diamond/facets/governance/votes/enumerable/IVotesEnumerable.sol";
+import {IVotesEnumerable} from "contracts/src/diamond/facets/governance/votes/enumerable/IVotesEnumerable.sol";
 import {IArchitect} from "contracts/src/factory/facets/architect/IArchitect.sol";
 
 // libraries
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-import {SpaceDelegationStorage} from
-    "contracts/src/base/registry/facets/delegation/SpaceDelegationStorage.sol";
+import {SpaceDelegationStorage} from "contracts/src/base/registry/facets/delegation/SpaceDelegationStorage.sol";
 
-import {RewardsDistributionStorage} from
-    "contracts/src/base/registry/facets/distribution/v2/RewardsDistributionStorage.sol";
+import {RewardsDistributionStorage} from "contracts/src/base/registry/facets/distribution/v2/RewardsDistributionStorage.sol";
 import {StakingRewards} from "contracts/src/base/registry/facets/distribution/v2/StakingRewards.sol";
-import {
-    NodeOperatorStatus,
-    NodeOperatorStorage
-} from "contracts/src/base/registry/facets/operator/NodeOperatorStorage.sol";
+import {NodeOperatorStatus, NodeOperatorStorage} from "contracts/src/base/registry/facets/operator/NodeOperatorStorage.sol";
 import {CustomRevert} from "contracts/src/utils/libraries/CustomRevert.sol";
 
 // contracts
@@ -119,11 +112,9 @@ contract SpaceDelegationFacet is ISpaceDelegation, IRewardsDistributionBase, Own
     }
 
     /// @inheritdoc ISpaceDelegation
-    function getSpaceDelegationsByOperator(address operator)
-        external
-        view
-        returns (address[] memory)
-    {
+    function getSpaceDelegationsByOperator(
+        address operator
+    ) external view returns (address[] memory) {
         SpaceDelegationStorage.Layout storage ds = SpaceDelegationStorage.layout();
         return ds.spacesByOperator[operator].values();
     }
@@ -229,8 +220,9 @@ contract SpaceDelegationFacet is ISpaceDelegation, IRewardsDistributionBase, Own
 
         // forfeit the rewards if the space has undelegated
         if (currentOperator != address(0)) {
-            StakingRewards.Treasure storage operatorTreasure =
-                staking.treasureByBeneficiary[currentOperator];
+            StakingRewards.Treasure storage operatorTreasure = staking.treasureByBeneficiary[
+                currentOperator
+            ];
             operatorTreasure.unclaimedRewardSnapshot += reward;
         }
         spaceTreasure.unclaimedRewardSnapshot = 0;
@@ -244,12 +236,14 @@ contract SpaceDelegationFacet is ISpaceDelegation, IRewardsDistributionBase, Own
         if (riverToken_ == address(0) || mainnetDelegation_ == address(0)) return 0;
 
         // get the delegation from the mainnet delegation
-        uint256 delegation =
-            IMainnetDelegation(mainnetDelegation_).getDelegatedStakeByOperator(operator);
+        uint256 delegation = IMainnetDelegation(mainnetDelegation_).getDelegatedStakeByOperator(
+            operator
+        );
 
         // get the delegation from the base delegation
-        address[] memory baseDelegators =
-            IVotesEnumerable(riverToken_).getDelegatorsByDelegatee(operator);
+        address[] memory baseDelegators = IVotesEnumerable(riverToken_).getDelegatorsByDelegatee(
+            operator
+        );
         for (uint256 i; i < baseDelegators.length; ++i) {
             delegation += IERC20(riverToken_).balanceOf(baseDelegators[i]);
         }
@@ -257,8 +251,8 @@ contract SpaceDelegationFacet is ISpaceDelegation, IRewardsDistributionBase, Own
         address[] memory spaces = ds.spacesByOperator[operator].values();
 
         for (uint256 i; i < spaces.length; ++i) {
-            address[] memory usersDelegatingToSpace =
-                IVotesEnumerable(riverToken_).getDelegatorsByDelegatee(spaces[i]);
+            address[] memory usersDelegatingToSpace = IVotesEnumerable(riverToken_)
+                .getDelegatorsByDelegatee(spaces[i]);
 
             for (uint256 j; j < usersDelegatingToSpace.length; ++j) {
                 delegation += IERC20(riverToken_).balanceOf(usersDelegatingToSpace[j]);
@@ -269,7 +263,8 @@ contract SpaceDelegationFacet is ISpaceDelegation, IRewardsDistributionBase, Own
     }
 
     function _isValidSpaceOwner(address space) internal view returns (bool) {
-        return IArchitect(getSpaceFactory()).getTokenIdBySpace(space) > 0
-            && IERC173(space).owner() == msg.sender;
+        return
+            IArchitect(getSpaceFactory()).getTokenIdBySpace(space) > 0 &&
+            IERC173(space).owner() == msg.sender;
     }
 }

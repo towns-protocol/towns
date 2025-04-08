@@ -40,9 +40,8 @@ enum NodeStatus {
     Operational, // Node servers existing data, accepts stream creation
     Failed, // Node crash-exited, can be set by DAO
     Departing, // Node continues to serve traffic, new streams are not allocated, data needs to be
-        // moved out to other nodes before grace period.
+    // moved out to other nodes before grace period.
     Deleted // Final state before RemoveNode can be called
-
 }
 
 struct Node {

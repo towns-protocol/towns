@@ -74,18 +74,14 @@ interface IMainnetDelegation is IMainnetDelegationBase {
     /// @notice Get delegation of a delegator
     /// @param delegator The delegator address
     /// @return Delegation delegation struct
-    function getDelegationByDelegator(address delegator)
-        external
-        view
-        returns (Delegation memory);
+    function getDelegationByDelegator(address delegator) external view returns (Delegation memory);
 
     /// @notice Get delegation of a operator
     /// @param operator The operator address
     /// @return Delegation delegation struct
-    function getMainnetDelegationsByOperator(address operator)
-        external
-        view
-        returns (Delegation[] memory);
+    function getMainnetDelegationsByOperator(
+        address operator
+    ) external view returns (Delegation[] memory);
 
     /// @notice Get delegated stake of a operator
     /// @param operator The operator address

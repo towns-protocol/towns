@@ -43,14 +43,11 @@ contract MerkleAirdrop is IMerkleAirdrop, EIP712Base, Facet {
         address account,
         uint256 amount,
         address receiver
-    )
-        public
-        view
-        returns (bytes32)
-    {
-        return _hashTypedDataV4(
-            keccak256(abi.encode(MESSAGE_TYPEHASH, AirdropClaim(account, amount, receiver)))
-        );
+    ) public view returns (bytes32) {
+        return
+            _hashTypedDataV4(
+                keccak256(abi.encode(MESSAGE_TYPEHASH, AirdropClaim(account, amount, receiver)))
+            );
     }
 
     /// @inheritdoc IMerkleAirdrop
@@ -60,9 +57,7 @@ contract MerkleAirdrop is IMerkleAirdrop, EIP712Base, Facet {
         bytes32[] calldata merkleProof,
         bytes calldata signature,
         address receiver
-    )
-        external
-    {
+    ) external {
         MerkleAirdropStorage.Layout storage ds = MerkleAirdropStorage.layout();
 
         if (ds.claimed[account]) {
@@ -98,10 +93,7 @@ contract MerkleAirdrop is IMerkleAirdrop, EIP712Base, Facet {
         address signer,
         bytes32 digest,
         bytes calldata signature
-    )
-        internal
-        view
-    {
+    ) internal view {
         address actualSigner = ECDSA.recoverCalldata(digest, signature);
         if (actualSigner != signer) {
             CustomRevert.revertWith(MerkleAirdrop__InvalidSignature.selector);

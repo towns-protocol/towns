@@ -5,8 +5,7 @@ pragma solidity ^0.8.23;
 
 import {IPricingModulesBase} from "./IPricingModules.sol";
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
-import {IMembershipPricing} from
-    "contracts/src/spaces/facets/membership/pricing/IMembershipPricing.sol";
+import {IMembershipPricing} from "contracts/src/spaces/facets/membership/pricing/IMembershipPricing.sol";
 
 // libraries
 import {PricingModulesStorage} from "./PricingModulesStorage.sol";
@@ -67,8 +66,8 @@ library PricingModulesBase {
     {
         PricingModulesStorage.Layout storage ds = PricingModulesStorage.layout();
         uint256 length = ds.pricingModules.length();
-        IPricingModulesBase.PricingModule[] memory pricingModules =
-            new IPricingModulesBase.PricingModule[](length);
+        IPricingModulesBase.PricingModule[]
+            memory pricingModules = new IPricingModulesBase.PricingModule[](length);
         for (uint256 i = 0; i < length; i++) {
             address moduleAddress = ds.pricingModules.at(i);
             IMembershipPricing module = IMembershipPricing(moduleAddress);

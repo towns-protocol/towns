@@ -52,7 +52,9 @@ interface IRolesBase {
     /// @param roleId Unique identifier of the role
     /// @param channelId Unique identifier of the channel
     event PermissionsAddedToChannelRole(
-        address indexed updater, uint256 indexed roleId, bytes32 indexed channelId
+        address indexed updater,
+        uint256 indexed roleId,
+        bytes32 indexed channelId
     );
 
     /// @notice Emitted when permissions are removed from a channel role
@@ -60,7 +62,9 @@ interface IRolesBase {
     /// @param roleId Unique identifier of the role
     /// @param channelId Unique identifier of the channel
     event PermissionsRemovedFromChannelRole(
-        address indexed updater, uint256 indexed roleId, bytes32 indexed channelId
+        address indexed updater,
+        uint256 indexed roleId,
+        bytes32 indexed channelId
     );
 
     /// @notice Emitted when permissions are updated for a channel role
@@ -68,7 +72,9 @@ interface IRolesBase {
     /// @param roleId Unique identifier of the role
     /// @param channelId Unique identifier of the channel
     event PermissionsUpdatedForChannelRole(
-        address indexed updater, uint256 indexed roleId, bytes32 indexed channelId
+        address indexed updater,
+        uint256 indexed roleId,
+        bytes32 indexed channelId
     );
 
     // =============================================================
@@ -102,9 +108,7 @@ interface IRoles is IRolesBase {
         string calldata roleName,
         string[] memory permissions,
         CreateEntitlement[] memory entitlements
-    )
-        external
-        returns (uint256 roleId);
+    ) external returns (uint256 roleId);
 
     /// @notice Retrieves all roles
     /// @return roles Array of all roles
@@ -125,8 +129,7 @@ interface IRoles is IRolesBase {
         string calldata roleName,
         string[] memory permissions,
         CreateEntitlement[] memory entitlements
-    )
-        external;
+    ) external;
 
     /// @notice Removes a role
     /// @param roleId Unique identifier of the role to remove
@@ -147,21 +150,16 @@ interface IRoles is IRolesBase {
     /// @notice Retrieves permissions for a role
     /// @param roleId Unique identifier of the role
     /// @return permissions List of permissions for the role
-    function getPermissionsByRoleId(uint256 roleId)
-        external
-        view
-        returns (string[] memory permissions);
+    function getPermissionsByRoleId(
+        uint256 roleId
+    ) external view returns (string[] memory permissions);
 
     // entitlements
 
     /// @notice Adds an entitlement to a role
     /// @param roleId Unique identifier of the role
     /// @param entitlement Entitlement to add
-    function addRoleToEntitlement(
-        uint256 roleId,
-        CreateEntitlement calldata entitlement
-    )
-        external;
+    function addRoleToEntitlement(uint256 roleId, CreateEntitlement calldata entitlement) external;
 
     /// @notice Removes an entitlement from a role
     /// @param roleId Unique identifier of the role
@@ -169,8 +167,7 @@ interface IRoles is IRolesBase {
     function removeRoleFromEntitlement(
         uint256 roleId,
         CreateEntitlement memory entitlement
-    )
-        external;
+    ) external;
 
     /// @notice Sets channel permission overrides for a role
     /// @param roleId Unique identifier of the role
@@ -180,8 +177,7 @@ interface IRoles is IRolesBase {
         uint256 roleId,
         bytes32 channelId,
         string[] memory permissions
-    )
-        external;
+    ) external;
 
     /// @notice Retrieves channel permission overrides for a role
     /// @param roleId Unique identifier of the role
@@ -190,10 +186,7 @@ interface IRoles is IRolesBase {
     function getChannelPermissionOverrides(
         uint256 roleId,
         bytes32 channelId
-    )
-        external
-        view
-        returns (string[] memory permissions);
+    ) external view returns (string[] memory permissions);
 
     /// @notice Clears channel permission overrides for a role
     /// @param roleId Unique identifier of the role

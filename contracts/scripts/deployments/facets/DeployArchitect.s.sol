@@ -30,18 +30,15 @@ contract DeployArchitect is FacetHelper, Deployer {
         address _userEntitlement,
         address _ruleEntitlement,
         address _legacyRuleEntitlement
-    )
-        public
-        pure
-        returns (bytes memory)
-    {
-        return abi.encodeWithSelector(
-            initializer(),
-            _spaceOwnerToken,
-            _userEntitlement,
-            _ruleEntitlement,
-            _legacyRuleEntitlement
-        );
+    ) public pure returns (bytes memory) {
+        return
+            abi.encodeWithSelector(
+                initializer(),
+                _spaceOwnerToken,
+                _userEntitlement,
+                _ruleEntitlement,
+                _legacyRuleEntitlement
+            );
     }
 
     function versionName() public pure override returns (string memory) {
