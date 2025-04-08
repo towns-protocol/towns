@@ -8,40 +8,39 @@ import {INodeOperator} from "contracts/src/base/registry/facets/operator/INodeOp
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
 // contracts
-import {NodeOperatorFacet} from "contracts/src/base/registry/facets/operator/NodeOperatorFacet.sol";
-import {EntitlementChecker} from "contracts/src/base/registry/facets/checker/EntitlementChecker.sol";
-import {NodeOperatorStorage, NodeOperatorStatus} from "contracts/src/base/registry/facets/operator/NodeOperatorStorage.sol";
+
 import {OwnableBase} from "@towns-protocol/diamond/src/facets/ownable/OwnableBase.sol";
+import {EntitlementChecker} from "contracts/src/base/registry/facets/checker/EntitlementChecker.sol";
+import {NodeOperatorFacet} from "contracts/src/base/registry/facets/operator/NodeOperatorFacet.sol";
+import {
+    NodeOperatorStatus,
+    NodeOperatorStorage
+} from "contracts/src/base/registry/facets/operator/NodeOperatorStorage.sol";
 import {XChain} from "contracts/src/base/registry/facets/xchain/XChain.sol";
 
-contract MockEntitlementChecker is
-  OwnableBase,
-  NodeOperatorFacet,
-  EntitlementChecker,
-  XChain
-{
-  using EnumerableSet for EnumerableSet.AddressSet;
+contract MockEntitlementChecker is OwnableBase, NodeOperatorFacet, EntitlementChecker, XChain {
+    using EnumerableSet for EnumerableSet.AddressSet;
 
-  // =============================================================
-  //                           Constructor
-  // =============================================================
-  // Constructor is used for tests that deploy contract directly
-  // since owner is not set in this case.
-  // Regular deployment scripts pass empty array to the constructor.
-  constructor(address[] memory approvedOperators) {
-    _transferOwnership(msg.sender);
-    _addInterface(type(INodeOperator).interfaceId);
-    _mint(msg.sender, 1);
+    // =============================================================
+    //                           Constructor
+    // =============================================================
+    // Constructor is used for tests that deploy contract directly
+    // since owner is not set in this case.
+    // Regular deployment scripts pass empty array to the constructor.
+    constructor(address[] memory approvedOperators) {
+        _transferOwnership(msg.sender);
+        _addInterface(type(INodeOperator).interfaceId);
+        _mint(msg.sender, 1);
 
-    NodeOperatorStorage.Layout storage ds = NodeOperatorStorage.layout();
+        NodeOperatorStorage.Layout storage ds = NodeOperatorStorage.layout();
 
-    for (uint256 i = 0; i < approvedOperators.length; ++i) {
-      ds.operators.add(approvedOperators[i]);
-      ds.statusByOperator[approvedOperators[i]] = NodeOperatorStatus.Approved;
-      ds.claimerByOperator[approvedOperators[i]] = msg.sender;
-      ds.operatorsByClaimer[msg.sender].add(approvedOperators[i]);
+        for (uint256 i = 0; i < approvedOperators.length; ++i) {
+            ds.operators.add(approvedOperators[i]);
+            ds.statusByOperator[approvedOperators[i]] = NodeOperatorStatus.Approved;
+            ds.claimerByOperator[approvedOperators[i]] = msg.sender;
+            ds.operatorsByClaimer[msg.sender].add(approvedOperators[i]);
 
-      emit OperatorRegistered(approvedOperators[i]);
+            emit OperatorRegistered(approvedOperators[i]);
+        }
     }
-  }
 }

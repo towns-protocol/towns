@@ -16,6 +16,9 @@ func (s *StreamCache) SubmitSyncStreamTask(
 	ctx context.Context,
 	stream *Stream,
 ) {
+	// TODO: REPLICATION: remove context from params and refactor to use default server context
+	ctx = context.WithoutCancel(ctx)
+
 	s.stoppedMu.RLock()
 	defer s.stoppedMu.RUnlock()
 
@@ -142,7 +145,7 @@ func (s *StreamCache) syncStreamFromSinglePeer(
 
 		currentToExclusive := min(currentFromInclusive+pageSize, toExclusive)
 
-		mbProtos, err := s.params.RemoteMiniblockProvider.GetMbs(
+		mbs, err := s.params.RemoteMiniblockProvider.GetMbs(
 			ctx,
 			remote,
 			stream.streamId,
@@ -153,20 +156,8 @@ func (s *StreamCache) syncStreamFromSinglePeer(
 			return currentFromInclusive, err
 		}
 
-		if len(mbProtos) == 0 {
+		if len(mbs) == 0 {
 			return currentFromInclusive, nil
-		}
-
-		mbs := make([]*MiniblockInfo, len(mbProtos))
-		for i, mbProto := range mbProtos {
-			mb, err := NewMiniblockInfoFromProto(
-				mbProto,
-				NewParsedMiniblockInfoOpts().WithExpectedBlockNumber(currentFromInclusive+int64(i)),
-			)
-			if err != nil {
-				return currentFromInclusive, err
-			}
-			mbs[i] = mb
 		}
 
 		err = stream.importMiniblocks(ctx, mbs)

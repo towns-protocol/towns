@@ -29,7 +29,7 @@ export async function createLegacyEntitlementStruct<Space extends SpaceV3>(
     let userEntitlementAddress
     let ruleEntitlementAddress
     for (const module of entitlementModules) {
-        switch (module.moduleType) {
+        switch (module.moduleType as EntitlementModuleType) {
             case EntitlementModuleType.UserEntitlement:
                 userEntitlementAddress = module.moduleAddress
                 break
@@ -78,7 +78,7 @@ export async function createEntitlementStruct<Space extends SpaceV3>(
     let userEntitlementAddress
     let ruleEntitlementAddress
     for (const module of entitlementModules) {
-        switch (module.moduleType) {
+        switch (module.moduleType as EntitlementModuleType) {
             case EntitlementModuleType.UserEntitlement:
                 userEntitlementAddress = module.moduleAddress
                 break

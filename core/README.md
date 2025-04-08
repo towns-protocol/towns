@@ -61,9 +61,12 @@ is written in `core/env/local/archiver/config.yaml`.
 # Make sure postgres container is running
 ./scripts/launch_storage.sh
 
-# Make sure to use an absolute path to refer to the archiver-local.yaml file
+# Make sure to use an absolute path to refer to the archiver/config.yaml file
 # populate RIVER_REPO_PATH with the absolute path to the root of your river repository
 ./env/omega/run.sh archive -c $RIVER_REPO_PATH/core/env/local/archiver/config.yaml
+
+# For formatted logs, try the following. pino-pretty should be installed with `yarn build`
+./env/omega/run.sh archive -c $RIVER_REPO_PATH/core/env/local/archiver/config.yaml | yarn exec pino-pretty
 ```
 
 ## Example: Running against gamma nodes
@@ -71,16 +74,41 @@ is written in `core/env/local/archiver/config.yaml`.
 ```
 ./scripts/launch_storage.sh
 
-./env/gamma/run.sh archive -c $RIVER_REPO_PATH/core/env/archiver/config.yaml
+./env/gamma/run.sh archive -c $RIVER_REPO_PATH/core/env/local/archiver/config.yaml | yarn exec pino-pretty
 ```
 
 **Note:** some networks, such as omega, may have hundreds of gigabytes of stream data available. Be sure to increase the maximum storage, CPU and/or memory of your docker service / postgres container appropriately so it can handle the load.
 
-# Installing just
+# Running the app registry service locally against different environments
+
+To run a local app registry service that checks against the streams and contracts from various public networks, use the `run.sh` command for that environment and pass in a specific configuration to encrypt shared secrets stored on disk, sign authentication tokens, and store app data in the local database, which is written in `core/env/local/app-registry/config.yaml`.
+
+## Example: Running against omega nodes
+
+```
+# Make sure postgres container is running
+./scripts/launch_storage.sh
+
+# Make sure to use an absolute path to refer to the app-registry/config.yaml file
+# populate RIVER_REPO_PATH with the absolute path to the root of your river repository
+./env/omega/run.sh app-registry -c $RIVER_REPO_PATH/core/env/local/app-registry/config.yaml | yarn exec pino-pretty
+```
+
+## Example: Running against gamma nodes
+
+```
+./scripts/launch_storage.sh
+
+./env/gamma/run.sh app-registry -c $RIVER_REPO_PATH/core/env/local/app-registry/config.yaml | yarn exec pino-pretty
+```
+
+# Installing Dependencies
+
+## just
 
     brew install just
 
-# Installing protoc and Buf
+## protoc and Buf
 
     brew install protobuf@3
     brew link --overwrite protobuf@3

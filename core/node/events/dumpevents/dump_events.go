@@ -2,7 +2,6 @@ package dumpevents
 
 import (
 	"bytes"
-	"context"
 	"fmt"
 	"io"
 	"strings"
@@ -158,8 +157,8 @@ func DumpStreamView(view *StreamView, opts DumpOpts) string {
 	return buf.String()
 }
 
-func DumpStreamW(ctx context.Context, w io.Writer, stream *StreamAndCookie, opts DumpOpts) {
-	view, err := MakeRemoteStreamView(ctx, stream)
+func DumpStreamW(w io.Writer, stream *StreamAndCookie, opts DumpOpts) {
+	view, err := MakeRemoteStreamView(stream)
 	if err != nil {
 		fmt.Fprintf(w, "error: %v\n", err)
 		return
@@ -167,8 +166,8 @@ func DumpStreamW(ctx context.Context, w io.Writer, stream *StreamAndCookie, opts
 	DumpStreamViewW(w, view, opts)
 }
 
-func DumpStream(ctx context.Context, stream *StreamAndCookie, opts DumpOpts) string {
+func DumpStream(stream *StreamAndCookie, opts DumpOpts) string {
 	var buf bytes.Buffer
-	DumpStreamW(ctx, &buf, stream, opts)
+	DumpStreamW(&buf, stream, opts)
 	return buf.String()
 }

@@ -154,7 +154,7 @@ func (s *Service) replicatedAddMediaEventImpl(ctx context.Context, event *Parsed
 	}
 
 	// genesisMiniblockHashes is needed to register the stream onchain if everything goes well.
-	nodes := NewStreamNodesWithLock(cc.NodeAddresses(), s.wallet.Address)
+	nodes := NewStreamNodesWithLock(len(cc.NodeAddresses()), cc.NodeAddresses(), s.wallet.Address)
 	remotes, _ := nodes.GetRemotesAndIsLocal()
 
 	var (
@@ -187,10 +187,9 @@ func (s *Service) replicatedAddMediaEventImpl(ctx context.Context, event *Parsed
 		}
 
 		if err = s.storage.WriteEphemeralMiniblock(ctx, streamId, &storage.WriteMiniblockData{
-			Number:   cc.MiniblockNum,
-			Hash:     common.BytesToHash(ephemeralMb.Header.Hash),
-			Snapshot: false,
-			Data:     mbBytes,
+			Number: cc.MiniblockNum,
+			Hash:   common.BytesToHash(ephemeralMb.Header.Hash),
+			Data:   mbBytes,
 		}); err != nil {
 			return err
 		}
