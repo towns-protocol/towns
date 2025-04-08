@@ -564,13 +564,13 @@ func TestMiniblockRegistrationWithPendingLocalCandidate(t *testing.T) {
 	getStream, err := instance.params.Registry.GetStream(ctx, spaceStreamId, crypto.BlockNumber(riverChainBlockNum))
 	require.NoError(err)
 
-	require.Equal(int64(getStream.LastMiniblockNum), candidate.Ref.Num)
-	require.Equal(getStream.LastMiniblockHash, candidate.Ref.Hash)
+	require.Equal(getStream.LastMbNum(), candidate.Ref.Num)
+	require.Equal(getStream.LastMbHash(), candidate.Ref.Hash)
 
 	view, err = stream.GetView(ctx)
 	require.NoError(err)
 	lastBlock = view.LastBlock()
-	require.Equal(lastBlock.Ref.Num+1, int64(getStream.LastMiniblockNum))
+	require.Equal(lastBlock.Ref.Num+1, getStream.LastMbNum())
 
 	// Add some events to the stream and try produce a mini-block. This must fail because the
 	// stream facet already progressed by the just registered candidate. The node must detect this

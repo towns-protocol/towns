@@ -927,15 +927,15 @@ func (a *Archiver) startImpl(ctx context.Context, once bool, metrics infra.Metri
 	if err := a.contract.ForAllStreams(
 		ctx,
 		blockNum,
-		func(stream *registries.GetStreamResult) bool {
-			if stream.StreamId == registries.ZeroBytes32 {
+		func(stream *river.StreamWithId) bool {
+			if stream.Id == registries.ZeroBytes32 {
 				return true
 			}
 			if a.tasksWG != nil {
 				a.tasksWG.Add(1)
 			}
 
-			a.addNewStream(ctx, stream.StreamId, stream.Nodes, stream.LastMiniblockNum)
+			a.addNewStream(ctx, stream.Id, stream.Nodes(), uint64(stream.LastMbNum()))
 			return true
 		},
 	); err != nil {

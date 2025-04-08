@@ -33,6 +33,13 @@ func (s *Stream) IsSealed() bool {
 	return s.Flags&0x1 != 0
 }
 
+func NewStreamWithId(streamId StreamId, stream *Stream) *StreamWithId {
+	return &StreamWithId{
+		Id:     streamId,
+		Stream: *stream,
+	}
+}
+
 func (s *StreamWithId) StreamId() StreamId {
 	return StreamId(s.Id)
 }
