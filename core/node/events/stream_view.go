@@ -357,7 +357,7 @@ func (r *StreamView) makeMiniblockCandidate(
 	eventNumOffset := last.Header().EventNumOffset + int64(len(last.Events())) + 1 // +1 for header
 	nextMiniblockNum := last.Header().MiniblockNum + 1
 	miniblockNumOfPrevSnapshot := last.Header().PrevSnapshotMiniblockNum
-	if last.Header().Snapshot != nil {
+	if last.Header().IsSnapshot() {
 		miniblockNumOfPrevSnapshot = last.Header().MiniblockNum
 	}
 
@@ -414,7 +414,7 @@ func (r *StreamView) makeMiniblockCandidate(
 
 	if parsedSnapshot != nil {
 		header.Snapshot = parsedSnapshot.Snapshot
-		// TODO: header.SnapshotHash = parsedSnapshot.Envelope.Hash
+		// header.SnapshotHash = parsedSnapshot.Envelope.Hash
 		// TODO: Remove the following line.
 		// Just resetting it to nil for now to avoid storing it in the DB until all nodes can handle snapshots.
 		parsedSnapshot = nil
@@ -491,8 +491,12 @@ func (r *StreamView) copyAndApplyBlock(
 	var startIndex int
 	var snapshotIndex int
 	var snapshot *Snapshot
-	if header.Snapshot != nil {
-		snapshot = header.Snapshot
+	if header.IsSnapshot() {
+		if header.Snapshot != nil {
+			snapshot = header.Snapshot
+		} else {
+			snapshot = miniblock.snapshot.Snapshot
+		}
 		startIndex = max(0, len(r.blocks)-recencyConstraintsGenerations)
 		snapshotIndex = len(r.blocks) - startIndex
 	} else {
@@ -658,7 +662,7 @@ func (r *StreamView) shouldSnapshot(cfg *crypto.OnChainSettings) bool {
 	// count the events in blocks since the last snapshot
 	for i := len(r.blocks) - 1; i >= 0; i-- {
 		block := r.blocks[i]
-		if block.Header().Snapshot != nil {
+		if block.Header().IsSnapshot() {
 			break
 		}
 		count += len(block.Events())
@@ -821,7 +825,7 @@ func (r *StreamView) GetStats() StreamViewStats {
 
 	for _, block := range r.blocks {
 		stats.EventsInMiniblocks += len(block.Events()) + 1 // +1 for header
-		if block.Header().Snapshot != nil {
+		if block.Header().IsSnapshot() {
 			stats.SnapshotsInMiniblocks++
 		}
 	}
