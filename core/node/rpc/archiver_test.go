@@ -330,7 +330,7 @@ func TestArchiveOneStream(t *testing.T) {
 		ctx,
 		NewArchiveStream(
 			streamId,
-			&streamRecord.Nodes,
+			streamRecord.Nodes,
 			streamRecord.LastMiniblockNum,
 			arch.config.GetMaxConsecutiveFailedUpdates(),
 		),
@@ -356,7 +356,7 @@ func TestArchiveOneStream(t *testing.T) {
 		ctx,
 		NewArchiveStream(
 			streamId,
-			&streamRecord.Nodes,
+			streamRecord.Nodes,
 			streamRecord.LastMiniblockNum,
 			arch.config.GetMaxConsecutiveFailedUpdates(),
 		),
@@ -379,7 +379,7 @@ func TestArchiveOneStream(t *testing.T) {
 		ctx,
 		NewArchiveStream(
 			streamId,
-			&streamRecord.Nodes,
+			streamRecord.Nodes,
 			streamRecord.LastMiniblockNum,
 			arch.config.GetMaxConsecutiveFailedUpdates(),
 		),
@@ -553,7 +553,7 @@ func TestCorruptionTracker(t *testing.T) {
 	ctx := context.Background()
 	stream := NewArchiveStream(
 		testutils.FakeStreamId(STREAM_SPACE_BIN),
-		&[]common.Address{},
+		[]common.Address{},
 		0,
 		maxFailedConsecutiveUpdates,
 	)
@@ -657,7 +657,7 @@ func TestCorruptionTracker(t *testing.T) {
 	// to a scrub failure, it cannot be reset.
 	stream = NewArchiveStream(
 		testutils.FakeStreamId(STREAM_SPACE_BIN),
-		&[]common.Address{},
+		[]common.Address{},
 		0,
 		maxFailedConsecutiveUpdates,
 	)
