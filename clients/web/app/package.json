@@ -61,7 +61,6 @@
         "@udecode/plate-code-block": "^39.0.0",
         "@udecode/plate-combobox": "^39.0.0",
         "@udecode/plate-common": "^39.2.1",
-        "@udecode/plate-csv": "^39.1.6",
         "@udecode/plate-docx": "^39.2.4",
         "@udecode/plate-floating": "^39.1.6",
         "@udecode/plate-link": "^39.1.9",

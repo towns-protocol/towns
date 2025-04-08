@@ -13,7 +13,6 @@ import { ExitBreakPlugin, SoftBreakPlugin } from '@udecode/plate-break/react'
 import { CodeBlockPlugin, CodeLinePlugin, CodeSyntaxPlugin } from '@udecode/plate-code-block/react'
 import { Value } from '@udecode/plate-common'
 import { ParagraphPlugin, PlateLeaf, createPlateEditor } from '@udecode/plate-common/react'
-import { CsvPlugin } from '@udecode/plate-csv'
 import { DocxPlugin } from '@udecode/plate-docx'
 import { LinkPlugin } from '@udecode/plate-link/react'
 import {
@@ -144,7 +143,6 @@ const createTownsEditor = (
                 options: { type: 'p', allow: [BlockquotePlugin.key] },
             }),
             DocxPlugin,
-            CsvPlugin,
             MarkdownPlugin,
             EditorOverridesPlugin,
             InsertTickerMentionPlugin({

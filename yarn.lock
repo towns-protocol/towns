@@ -15524,24 +15524,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@udecode/plate-csv@npm:^39.1.6":
-  version: 39.1.6
-  resolution: "@udecode/plate-csv@npm:39.1.6"
-  dependencies:
-    "@udecode/plate-table": 39.1.6
-    papaparse: ^5.4.1
-  peerDependencies:
-    "@udecode/plate-common": ">=39.1.4"
-    react: ">=16.8.0"
-    react-dom: ">=16.8.0"
-    slate: ">=0.103.0"
-    slate-history: ">=0.93.0"
-    slate-hyperscript: ">=0.66.0"
-    slate-react: ">=0.108.0"
-  checksum: 9b78a1e6704ca16447ebf7b4ad7397a61a575b69d8c3b123a5c6986bc2d92af9a9cab2bfe79fd89a5a1e2f18a0bfd4aeee8abbfaddad1fc2abea340707da001e
-  languageName: node
-  linkType: hard
-
 "@udecode/plate-docx@npm:^39.2.4":
   version: 39.2.4
   resolution: "@udecode/plate-docx@npm:39.2.4"
@@ -25669,7 +25651,6 @@ __metadata:
     "@udecode/plate-code-block": ^39.0.0
     "@udecode/plate-combobox": ^39.0.0
     "@udecode/plate-common": ^39.2.1
-    "@udecode/plate-csv": ^39.1.6
     "@udecode/plate-docx": ^39.2.4
     "@udecode/plate-floating": ^39.1.6
     "@udecode/plate-link": ^39.1.9
