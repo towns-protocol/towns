@@ -9,6 +9,7 @@ import { useSpaceChannels } from 'hooks/useSpaceChannels'
 import { ChannelItem } from 'routes/AllChannelsList/AllChannelsList'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
 import { useUnseenChannelIds } from 'hooks/useUnseenChannelIdsCount'
+import { ChannelDiscrepancyChecker } from '@components/ChannelDiscrepancyChecker/ChannelDiscrepancyChecker'
 
 export const BrowseChannelsPanel = ({ onClose }: { onClose?: () => void }) => {
     const space = useSpaceData()
@@ -73,24 +74,27 @@ export const BrowseChannelsPanel = ({ onClose }: { onClose?: () => void }) => {
                     onChange={onTextFieldChanged}
                 />
             </Box>
-            {space && !space?.isLoadingChannels && channels.length > 0 ? (
-                <Stack scroll scrollbars gap>
-                    {filteredChannels.map((channel) => (
-                        <ChannelContextProvider key={channel.id} channelId={channel.id}>
-                            <Stack>
-                                <ChannelItem
-                                    space={space}
-                                    name={channel.label}
-                                    topic={channel.topic}
-                                    channelNetworkId={channel.id}
-                                    isJoined={myMemberships[channel.id] === Membership.Join}
-                                    showDot={channel.unseen}
-                                    onOpenChannel={onOpenChannel}
-                                />
-                            </Stack>
-                        </ChannelContextProvider>
-                    ))}
-                </Stack>
+            <ChannelDiscrepancyChecker />
+            {space && !space?.isLoadingChannels ? (
+                channels.length > 0 ? (
+                    <Stack scroll scrollbars gap>
+                        {filteredChannels.map((channel) => (
+                            <ChannelContextProvider key={channel.id} channelId={channel.id}>
+                                <Stack>
+                                    <ChannelItem
+                                        space={space}
+                                        name={channel.label}
+                                        topic={channel.topic}
+                                        channelNetworkId={channel.id}
+                                        isJoined={myMemberships[channel.id] === Membership.Join}
+                                        showDot={channel.unseen}
+                                        onOpenChannel={onOpenChannel}
+                                    />
+                                </Stack>
+                            </ChannelContextProvider>
+                        ))}
+                    </Stack>
+                ) : null
             ) : (
                 <Stack centerContent padding gap="md">
                     <Text>Loading channels</Text>

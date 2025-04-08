@@ -21,10 +21,10 @@ export function useChannelContext(): IChannelContext {
 
 interface Props {
     channelId: string
-    children: JSX.Element
+    children: React.ReactNode
 }
 
-export function ChannelContextProvider(props: Props): JSX.Element {
+export function ChannelContextProvider(props: Props) {
     const { channelId } = props
     const spaceId = useSpaceId()
 

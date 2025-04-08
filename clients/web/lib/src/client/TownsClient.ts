@@ -469,12 +469,10 @@ export class TownsClient
     }
 
     /************************************************
-     * createChannelRoom
+     * createChannelWithId
+     * Should only be used in cases where the channel is already created on-chain
      *************************************************/
-    private async createChannelRoom(
-        createInfo: CreateChannelInfo,
-        networkId?: string,
-    ): Promise<string> {
+    async createChannelWithId(createInfo: CreateChannelInfo, networkId?: string): Promise<string> {
         if (!this.casablancaClient) {
             throw new Error("createChannel: Casablanca client doesn't exist")
         }
@@ -504,7 +502,7 @@ export class TownsClient
             parentSpaceId,
             roles: [],
         }
-        return await this.createChannelRoom(channelInfo, channelId)
+        return await this.createChannelWithId(channelInfo, channelId)
     }
 
     /************************************************
@@ -559,7 +557,7 @@ export class TownsClient
                 // wait until the channel is minted on-chain
                 // before creating the stream
                 try {
-                    await this.createChannelRoom(createChannelInfo, roomId)
+                    await this.createChannelWithId(createChannelInfo, roomId)
                 } catch (error) {
                     console.error('[waitForCreateChannelTransaction] river error', error)
                     riverError = error as Error
