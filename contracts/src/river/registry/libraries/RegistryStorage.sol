@@ -3,7 +3,6 @@ pragma solidity ^0.8.23;
 
 // libraries
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-
 import {RiverRegistryErrors} from "contracts/src/river/registry/libraries/RegistryErrors.sol";
 import {CustomRevert} from "contracts/src/utils/libraries/CustomRevert.sol";
 
@@ -84,6 +83,8 @@ struct AppStorage {
     mapping(bytes32 => Setting[]) configuration;
     // Set of addresses of all configuration managers
     EnumerableSet.AddressSet configurationManagers;
+    // Deprecated slot. Do not use.
+    uint256 deprecatedSlot;
     // Map of node address to its stream ids
     mapping(address => EnumerableSet.Bytes32Set) streamIdsByNode;
 }
