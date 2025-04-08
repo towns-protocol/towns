@@ -11,19 +11,19 @@ import {FixedPricingStorage} from "./FixedPricingStorage.sol";
 import {IntrospectionFacet} from "@towns-protocol/diamond/src/facets/introspection/IntrospectionFacet.sol";
 
 contract FixedPricing is IMembershipPricing, IntrospectionFacet {
-  string public name = "FixedPricing";
-  string public description = "Fixed pricing for membership";
+    string public name = "FixedPricing";
+    string public description = "Fixed pricing for membership";
 
-  constructor() {
-    __IntrospectionBase_init();
-    _addInterface(type(IMembershipPricing).interfaceId);
-  }
+    constructor() {
+        __IntrospectionBase_init();
+        _addInterface(type(IMembershipPricing).interfaceId);
+    }
 
-  function setPrice(uint256 price) external {
-    FixedPricingStorage.layout().priceBySpace[msg.sender] = price;
-  }
+    function setPrice(uint256 price) external {
+        FixedPricingStorage.layout().priceBySpace[msg.sender] = price;
+    }
 
-  function getPrice(uint256, uint256) external view returns (uint256) {
-    return FixedPricingStorage.layout().priceBySpace[msg.sender];
-  }
+    function getPrice(uint256, uint256) external view returns (uint256) {
+        return FixedPricingStorage.layout().priceBySpace[msg.sender];
+    }
 }

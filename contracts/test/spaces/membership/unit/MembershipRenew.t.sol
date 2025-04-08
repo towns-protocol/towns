@@ -13,108 +13,96 @@ import {BasisPoints} from "contracts/src/utils/libraries/BasisPoints.sol";
 //contracts
 
 contract MembershipRenewTest is MembershipBaseSetup, IERC5643Base {
-  modifier givenMembershipHasExpired() {
-    uint256 totalSupply = membershipToken.totalSupply();
-    uint256 tokenId;
+    modifier givenMembershipHasExpired() {
+        uint256 totalSupply = membershipToken.totalSupply();
+        uint256 tokenId;
 
-    for (uint256 i = 1; i <= totalSupply; i++) {
-      if (membershipToken.ownerOf(i) == alice) {
-        tokenId = i;
-        break;
-      }
+        for (uint256 i = 1; i <= totalSupply; i++) {
+            if (membershipToken.ownerOf(i) == alice) {
+                tokenId = i;
+                break;
+            }
+        }
+
+        uint256 expiration = membership.expiresAt(tokenId);
+        vm.warp(expiration);
+        _;
     }
 
-    uint256 expiration = membership.expiresAt(tokenId);
-    vm.warp(expiration);
-    _;
-  }
+    function test_renewMembership()
+        external
+        givenAliceHasMintedMembership
+        givenMembershipHasExpired
+    {
+        uint256 totalSupply = membershipToken.totalSupply();
+        uint256 tokenId;
 
-  function test_renewMembership()
-    external
-    givenAliceHasMintedMembership
-    givenMembershipHasExpired
-  {
-    uint256 totalSupply = membershipToken.totalSupply();
-    uint256 tokenId;
+        for (uint256 i = 1; i <= totalSupply; i++) {
+            if (membershipToken.ownerOf(i) == alice) {
+                tokenId = i;
+                break;
+            }
+        }
 
-    for (uint256 i = 1; i <= totalSupply; i++) {
-      if (membershipToken.ownerOf(i) == alice) {
-        tokenId = i;
-        break;
-      }
+        // membership has expired but alice still owns the token
+        assertEq(membershipToken.balanceOf(alice), 1);
+        assertEq(membershipToken.ownerOf(tokenId), alice);
+
+        uint256 renewalPrice = membership.getMembershipRenewalPrice(tokenId);
+        vm.deal(alice, renewalPrice);
+
+        uint256 expiration = membership.expiresAt(tokenId);
+        vm.expectEmit(address(membership));
+        emit SubscriptionUpdate(tokenId, uint64(expiration + membership.getMembershipDuration()));
+        membership.renewMembership{value: renewalPrice}(tokenId);
+
+        assertEq(membershipToken.balanceOf(alice), 1);
     }
 
-    // membership has expired but alice still owns the token
-    assertEq(membershipToken.balanceOf(alice), 1);
-    assertEq(membershipToken.ownerOf(tokenId), alice);
+    function test_renewPaidMembership()
+        external
+        givenMembershipHasPrice
+        givenAliceHasPaidMembership
+        givenMembershipHasExpired
+    {
+        address protocol = platformReqs.getFeeRecipient();
+        uint256 protocolBalance = protocol.balance;
+        uint256 spaceBalance = address(membership).balance;
 
-    uint256 renewalPrice = membership.getMembershipRenewalPrice(tokenId);
-    vm.deal(alice, renewalPrice);
+        uint256 totalSupply = membershipToken.totalSupply();
+        uint256 tokenId;
 
-    uint256 expiration = membership.expiresAt(tokenId);
-    vm.expectEmit(address(membership));
-    emit SubscriptionUpdate(
-      tokenId,
-      uint64(expiration + membership.getMembershipDuration())
-    );
-    membership.renewMembership{value: renewalPrice}(tokenId);
+        for (uint256 i = 1; i <= totalSupply; i++) {
+            if (membershipToken.ownerOf(i) == alice) {
+                tokenId = i;
+                break;
+            }
+        }
 
-    assertEq(membershipToken.balanceOf(alice), 1);
-  }
+        uint256 renewalPrice = membership.getMembershipRenewalPrice(tokenId);
+        vm.prank(alice);
+        vm.deal(alice, renewalPrice);
+        membership.renewMembership{value: renewalPrice}(tokenId);
 
-  function test_renewPaidMembership()
-    external
-    givenMembershipHasPrice
-    givenAliceHasPaidMembership
-    givenMembershipHasExpired
-  {
-    address protocol = platformReqs.getFeeRecipient();
-    uint256 protocolBalance = protocol.balance;
-    uint256 spaceBalance = address(membership).balance;
+        uint256 protocolFee = BasisPoints.calculate(renewalPrice, platformReqs.getMembershipBps());
 
-    uint256 totalSupply = membershipToken.totalSupply();
-    uint256 tokenId;
-
-    for (uint256 i = 1; i <= totalSupply; i++) {
-      if (membershipToken.ownerOf(i) == alice) {
-        tokenId = i;
-        break;
-      }
+        assertEq(protocol.balance, protocolBalance + protocolFee);
+        assertEq(address(membership).balance, spaceBalance + renewalPrice - protocolFee);
     }
 
-    uint256 renewalPrice = membership.getMembershipRenewalPrice(tokenId);
-    vm.prank(alice);
-    vm.deal(alice, renewalPrice);
-    membership.renewMembership{value: renewalPrice}(tokenId);
+    function test_revertWhen_renewMembershipNotExpiredYet() external givenAliceHasMintedMembership {
+        uint256 totalSupply = membershipToken.totalSupply();
+        uint256 tokenId;
 
-    uint256 protocolFee = BasisPoints.calculate(
-      renewalPrice,
-      platformReqs.getMembershipBps()
-    );
+        for (uint256 i = 1; i <= totalSupply; i++) {
+            if (membershipToken.ownerOf(i) == alice) {
+                tokenId = i;
+                break;
+            }
+        }
 
-    assertEq(protocol.balance, protocolBalance + protocolFee);
-    assertEq(
-      address(membership).balance,
-      spaceBalance + renewalPrice - protocolFee
-    );
-  }
-
-  function test_revertWhen_renewMembershipNotExpiredYet()
-    external
-    givenAliceHasMintedMembership
-  {
-    uint256 totalSupply = membershipToken.totalSupply();
-    uint256 tokenId;
-
-    for (uint256 i = 1; i <= totalSupply; i++) {
-      if (membershipToken.ownerOf(i) == alice) {
-        tokenId = i;
-        break;
-      }
+        vm.prank(alice);
+        vm.expectRevert(Membership__NotExpired.selector);
+        membership.renewMembership(tokenId);
     }
-
-    vm.prank(alice);
-    vm.expectRevert(Membership__NotExpired.selector);
-    membership.renewMembership(tokenId);
-  }
 }

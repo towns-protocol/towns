@@ -10,8 +10,8 @@ import {ImplementationStorage} from "contracts/src/factory/facets/architect/Impl
 // contracts
 
 contract SpaceFactoryInit {
-  function initialize(address proxyInitializer) external {
-    ImplementationStorage.Layout storage ds = ImplementationStorage.layout();
-    ds.proxyInitializer = ISpaceProxyInitializer(proxyInitializer);
-  }
+    function initialize(address proxyInitializer) external {
+        ImplementationStorage.Layout storage ds = ImplementationStorage.layout();
+        ds.proxyInitializer = ISpaceProxyInitializer(proxyInitializer);
+    }
 }

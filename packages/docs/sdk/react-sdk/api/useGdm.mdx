@@ -15,28 +15,7 @@ import { useGdm } from '@towns-protocol/react-sdk'
 function useGdm(
   streamId: string,
   config?: ObservableConfig.FromData<GdmModel>,
-): {
-    data: GdmModel;
-    error: Error | undefined;
-    status: "error" | "loading" | "loaded";
-    isLoading: boolean;
-    isError: boolean;
-    isLoaded: boolean;
-} | {
-    data: GdmModel;
-    error: Error | undefined;
-    status: "error" | "loading" | "loaded";
-    isLoading: boolean;
-    isError: boolean;
-    isLoaded: boolean;
-} | {
-    data: GdmModel;
-    error: Error | undefined;
-    status: "error" | "loading" | "loaded";
-    isLoading: boolean;
-    isError: boolean;
-    isLoaded: boolean;
-}
+): ObservableValue<GdmModel>
 ```
 
 **Source:** [useGdm](https://github.com/towns-protocol/towns/blob/main/packages/react-sdk/src/useGdm.ts)
@@ -61,26 +40,5 @@ Configuration options for the observable.
 The GdmModel of the Group DM.
 
 ```ts
-{
-    data: GdmModel;
-    error: Error | undefined;
-    status: "error" | "loading" | "loaded";
-    isLoading: boolean;
-    isError: boolean;
-    isLoaded: boolean;
-} | {
-    data: GdmModel;
-    error: Error | undefined;
-    status: "error" | "loading" | "loaded";
-    isLoading: boolean;
-    isError: boolean;
-    isLoaded: boolean;
-} | {
-    data: GdmModel;
-    error: Error | undefined;
-    status: "error" | "loading" | "loaded";
-    isLoading: boolean;
-    isError: boolean;
-    isLoaded: boolean;
-}
+ObservableValue<GdmModel>
 ```

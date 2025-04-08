@@ -150,7 +150,7 @@ var maxBlocksPerScan = 100
 
 func optsFromPrevMiniblock(prevMb *events.MiniblockInfo) *events.ParsedMiniblockInfoOpts {
 	expectedPrevSnapshotNum := prevMb.Header().PrevSnapshotMiniblockNum
-	if prevMb.Header().Snapshot != nil {
+	if prevMb.Header().IsSnapshot() {
 		expectedPrevSnapshotNum = prevMb.Header().MiniblockNum
 	}
 
@@ -201,7 +201,7 @@ func (m *miniblockScrubTaskProcessorImpl) scrubMiniblocks(
 			)
 		}
 
-		prevMb, err := events.NewMiniblockInfoFromBytes(prevBlock[0], blockNum-1)
+		prevMb, err := events.NewMiniblockInfoFromDescriptor(prevBlock[0])
 		if err != nil {
 			// Don't return a corruption error here because the previous block is outside
 			// of the range we were given to check.
@@ -254,7 +254,7 @@ func (m *miniblockScrubTaskProcessorImpl) scrubMiniblocks(
 		}
 
 		for offset, block := range blocks {
-			mbInfo, err := events.NewMiniblockInfoFromBytesWithOpts(block, opts)
+			mbInfo, err := events.NewMiniblockInfoFromDescriptorWithOpts(block, opts)
 			if err != nil {
 				err = base.AsRiverError(err, protocol.Err_DB_OPERATION_FAILURE).
 					Message("Failed to validate miniblock").

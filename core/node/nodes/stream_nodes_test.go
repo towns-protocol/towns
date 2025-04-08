@@ -48,12 +48,13 @@ func TestStreamNodes(t *testing.T) {
 				nodeAddrs = slices.Clone(remotes)
 			}
 			streamNodes := nodes.NewStreamNodesWithLock(
+				len(nodeAddrs),
 				nodeAddrs,
 				local,
 			)
 			rr, isLocal := streamNodes.GetRemotesAndIsLocal()
 			require.Equal(t, tc.hasLocal, isLocal)
-			require.ElementsMatch(t, nodeAddrs, streamNodes.GetNodes())
+			require.ElementsMatch(t, nodeAddrs, streamNodes.GetQuorumNodes())
 			require.ElementsMatch(
 				t,
 				remotes,

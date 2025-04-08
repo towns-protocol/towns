@@ -34,7 +34,6 @@ import {
     UserBio,
     Tags,
     BlockchainTransaction,
-    MiniblockHeader,
     GetStreamResponse,
     CreateStreamResponse,
     ChannelProperties,
@@ -106,7 +105,7 @@ import {
     contractAddressFromSpaceId,
     isUserId,
 } from './id'
-import { makeEvent, unpackEnvelope, UnpackEnvelopeOpts, unpackStream, unpackStreamEx } from './sign'
+import { makeEvent, UnpackEnvelopeOpts, unpackStream, unpackStreamEx } from './sign'
 import { StreamEvents } from './streamEvents'
 import { IStreamStateView, StreamStateView } from './streamStateView'
 import {
@@ -817,10 +816,10 @@ export class Client
         spaceId: string | Uint8Array | undefined,
         userId: string | undefined,
         chunkCount: number,
-        firstChunk?: Uint8Array | undefined,
-        firstChunkIv?: Uint8Array | undefined,
-        streamSettings?: PlainMessage<StreamSettings> | undefined,
-        perChunkEncryption?: boolean | undefined,
+        firstChunk?: Uint8Array,
+        firstChunkIv?: Uint8Array,
+        streamSettings?: PlainMessage<StreamSettings>,
+        perChunkEncryption?: boolean,
     ): Promise<{ creationCookie: CreationCookie }> {
         assert(this.userStreamId !== undefined, 'userStreamId must be set')
         if (!channelId && !spaceId && !userId) {
@@ -2199,24 +2198,6 @@ export class Client
             terminus: terminus,
             miniblocks: [...miniblocks, ...cachedMiniblocks],
         }
-    }
-
-    async getMiniblockHeader(
-        streamId: string,
-        miniblockNum: bigint,
-        unpackOpts: UnpackEnvelopeOpts | undefined = undefined,
-    ): Promise<MiniblockHeader> {
-        const response = await this.rpcClient.getMiniblockHeader({
-            streamId: streamIdAsBytes(streamId),
-            miniblockNum: miniblockNum,
-        })
-        check(isDefined(response.header), `header not found: ${streamId}`)
-        const header = await unpackEnvelope(response.header, unpackOpts)
-        check(
-            header.event.payload.case === 'miniblockHeader',
-            `bad miniblock header: wrong case received: ${header.event.payload.case}`,
-        )
-        return header.event.payload.value
     }
 
     async scrollback(

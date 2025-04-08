@@ -14,29 +14,28 @@ import {NodeOperatorFacet} from "contracts/src/base/registry/facets/operator/Nod
 import {console} from "forge-std/console.sol";
 
 contract InteractNodeOperators is Interaction {
-  function __interact(address) internal override {
-    address baseRegistry = getDeployment("baseRegistry");
+    function __interact(address) internal override {
+        address baseRegistry = getDeployment("baseRegistry");
 
-    address[] memory operators = NodeOperatorFacet(baseRegistry).getOperators();
+        address[] memory operators = NodeOperatorFacet(baseRegistry).getOperators();
 
-    for (uint256 i = 0; i < operators.length; i++) {
-      address operator = operators[i];
-      NodeOperatorStatus status = NodeOperatorFacet(baseRegistry)
-        .getOperatorStatus(operator);
-      console.log("Operator:", operator);
-      _logStatus(status);
+        for (uint256 i = 0; i < operators.length; i++) {
+            address operator = operators[i];
+            NodeOperatorStatus status = NodeOperatorFacet(baseRegistry).getOperatorStatus(operator);
+            console.log("Operator:", operator);
+            _logStatus(status);
+        }
     }
-  }
 
-  function _logStatus(NodeOperatorStatus status) internal pure {
-    if (status == NodeOperatorStatus.Exiting) {
-      console.log("Exiting");
-    } else if (status == NodeOperatorStatus.Standby) {
-      console.log("Standby");
-    } else if (status == NodeOperatorStatus.Approved) {
-      console.log("Approved");
-    } else if (status == NodeOperatorStatus.Active) {
-      console.log("Active");
+    function _logStatus(NodeOperatorStatus status) internal pure {
+        if (status == NodeOperatorStatus.Exiting) {
+            console.log("Exiting");
+        } else if (status == NodeOperatorStatus.Standby) {
+            console.log("Standby");
+        } else if (status == NodeOperatorStatus.Approved) {
+            console.log("Approved");
+        } else if (status == NodeOperatorStatus.Active) {
+            console.log("Active");
+        }
     }
-  }
 }

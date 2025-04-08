@@ -12,8 +12,15 @@ import (
 	"github.com/towns-protocol/towns/core/node/testutils"
 )
 
-func mbDataForNumb(n int64) []byte {
-	return []byte(fmt.Sprintf("data-%d", n))
+func mbDataForNumb(n int64, sn bool) *WriteMiniblockData {
+	var snapshot []byte
+	if sn {
+		snapshot = []byte(fmt.Sprintf("snapshot-%d", n))
+	}
+	return &WriteMiniblockData{
+		Data:     []byte(fmt.Sprintf("data-%d", n)),
+		Snapshot: snapshot,
+	}
 }
 
 func TestArchive(t *testing.T) {
@@ -41,10 +48,10 @@ func TestArchive(t *testing.T) {
 	require.NoError(err)
 	require.Equal(int64(-1), bn)
 
-	data := [][]byte{
-		mbDataForNumb(0),
-		mbDataForNumb(1),
-		mbDataForNumb(2),
+	data := []*WriteMiniblockData{
+		mbDataForNumb(0, true),
+		mbDataForNumb(1, false),
+		mbDataForNumb(2, false),
 	}
 
 	err = pgStreamStore.WriteArchiveMiniblocks(ctx, streamId1, 1, data)
@@ -56,12 +63,16 @@ func TestArchive(t *testing.T) {
 	readMBs, err := pgStreamStore.ReadMiniblocks(ctx, streamId1, 0, 3)
 	require.NoError(err)
 	require.Len(readMBs, 3)
-	require.Equal(data, readMBs)
+	require.Equal([]*MiniblockDescriptor{
+		{Number: 0, Data: data[0].Data, Snapshot: data[0].Snapshot},
+		{Number: 1, Data: data[1].Data, Snapshot: data[1].Snapshot},
+		{Number: 2, Data: data[2].Data, Snapshot: data[2].Snapshot},
+	}, readMBs)
 
-	data2 := [][]byte{
-		mbDataForNumb(3),
-		mbDataForNumb(4),
-		mbDataForNumb(5),
+	data2 := []*WriteMiniblockData{
+		mbDataForNumb(3, false),
+		mbDataForNumb(4, false),
+		mbDataForNumb(5, false),
 	}
 
 	bn, err = pgStreamStore.GetMaxArchivedMiniblockNumber(ctx, streamId1)
@@ -79,7 +90,14 @@ func TestArchive(t *testing.T) {
 
 	readMBs, err = pgStreamStore.ReadMiniblocks(ctx, streamId1, 0, 8)
 	require.NoError(err)
-	require.Equal(append(data, data2...), readMBs)
+	require.Equal([]*MiniblockDescriptor{
+		{Number: 0, Data: data[0].Data, Snapshot: data[0].Snapshot},
+		{Number: 1, Data: data[1].Data, Snapshot: data[1].Snapshot},
+		{Number: 2, Data: data[2].Data, Snapshot: data[2].Snapshot},
+		{Number: 3, Data: data2[0].Data, Snapshot: data2[0].Snapshot},
+		{Number: 4, Data: data2[1].Data, Snapshot: data2[1].Snapshot},
+		{Number: 5, Data: data2[2].Data, Snapshot: data2[2].Snapshot},
+	}, readMBs)
 
 	bn, err = pgStreamStore.GetMaxArchivedMiniblockNumber(ctx, streamId1)
 	require.NoError(err)

@@ -15,6 +15,7 @@ import (
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/rules"
 	. "github.com/towns-protocol/towns/core/node/shared"
+	"github.com/towns-protocol/towns/core/node/storage"
 )
 
 func (s *Service) createMediaStreamImpl(
@@ -189,19 +190,19 @@ func (s *Service) createReplicatedMediaStream(
 		return nil, err
 	}
 
-	nodesList, err := s.streamRegistry.ChooseStreamNodes(streamId)
+	nodesList, err := s.nodeRegistry.ChooseStreamNodes(ctx, streamId, int(s.chainConfig.Get().ReplicationFactor))
 	if err != nil {
 		return nil, err
 	}
 
-	nodes := NewStreamNodesWithLock(nodesList, s.wallet.Address)
+	nodes := NewStreamNodesWithLock(len(nodesList), nodesList, s.wallet.Address)
 	remotes, isLocal := nodes.GetRemotesAndIsLocal()
 	sender := NewQuorumPool(ctx, NewQuorumPoolOpts().WriteMode().WithTags("method", "createReplicatedMediaStream", "streamId", streamId))
 
 	// Create ephemeral stream within the local node
 	if isLocal {
 		sender.AddTask(func(ctx context.Context) error {
-			return s.storage.CreateEphemeralStreamStorage(ctx, streamId, mbBytes)
+			return s.storage.CreateEphemeralStreamStorage(ctx, streamId, &storage.WriteMiniblockData{Data: mbBytes})
 		})
 	}
 

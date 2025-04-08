@@ -28,10 +28,7 @@ type StreamViewStats struct {
 	TotalEventsEver       int // This is total number of events in the stream ever, not in the cache.
 }
 
-func MakeStreamView(
-	ctx context.Context,
-	streamData *storage.ReadStreamFromLastSnapshotResult,
-) (*StreamView, error) {
+func MakeStreamView(streamData *storage.ReadStreamFromLastSnapshotResult) (*StreamView, error) {
 	if len(streamData.Miniblocks) <= 0 {
 		return nil, RiverError(Err_STREAM_EMPTY, "no blocks").Func("MakeStreamView")
 	}
@@ -39,14 +36,19 @@ func MakeStreamView(
 	miniblocks := make([]*MiniblockInfo, len(streamData.Miniblocks))
 	lastMiniblockNumber := int64(-2)
 	snapshotIndex := -1
-	for i, binMiniblock := range streamData.Miniblocks {
-		miniblock, err := NewMiniblockInfoFromBytes(binMiniblock, lastMiniblockNumber+1)
+	for i, mb := range streamData.Miniblocks {
+		miniblock, err := NewMiniblockInfoFromDescriptor(&storage.MiniblockDescriptor{
+			Number:   lastMiniblockNumber + 1,
+			Data:     mb.Data,
+			Hash:     mb.Hash,
+			Snapshot: mb.Snapshot,
+		})
 		if err != nil {
 			return nil, err
 		}
 		miniblocks[i] = miniblock
 		lastMiniblockNumber = miniblock.Header().MiniblockNum
-		if snapshotIndex == -1 && miniblock.Header().Snapshot != nil {
+		if snapshotIndex == -1 && (miniblock.GetSnapshot() != nil) {
 			snapshotIndex = i
 		}
 	}
@@ -59,6 +61,7 @@ func MakeStreamView(
 	if snapshot == nil {
 		return nil, RiverError(Err_STREAM_BAD_EVENT, "no snapshot").Func("MakeStreamView")
 	}
+
 	streamId, err := StreamIdFromBytes(snapshot.GetInceptionPayload().GetStreamId())
 	if err != nil {
 		return nil, RiverError(Err_STREAM_BAD_EVENT, "bad streamId").Func("MakeStreamView")
@@ -99,7 +102,7 @@ func MakeStreamView(
 	}, nil
 }
 
-func MakeRemoteStreamView(ctx context.Context, stream *StreamAndCookie) (*StreamView, error) {
+func MakeRemoteStreamView(stream *StreamAndCookie) (*StreamView, error) {
 	if stream == nil {
 		return nil, RiverError(Err_STREAM_EMPTY, "no stream").Func("MakeStreamViewFromRemote")
 	}
@@ -112,21 +115,18 @@ func MakeRemoteStreamView(ctx context.Context, stream *StreamAndCookie) (*Stream
 	snapshotIndex := 0
 	for i, binMiniblock := range stream.Miniblocks {
 		opts := NewParsedMiniblockInfoOpts()
-		// Ignore block number of first block, but enforce afterwards
+		// Ignore block number of first block, but enforce afterward
 		if i > 0 {
 			opts = opts.WithExpectedBlockNumber(lastMiniblockNumber + 1)
 		}
 
-		miniblock, err := NewMiniblockInfoFromProto(
-			binMiniblock,
-			opts,
-		)
+		miniblock, err := NewMiniblockInfoFromProto(binMiniblock, stream.GetSnapshotByMiniblockIndex(i), opts)
 		if err != nil {
 			return nil, err
 		}
 		lastMiniblockNumber = miniblock.Header().MiniblockNum
 		miniblocks[i] = miniblock
-		if miniblock.Header().Snapshot != nil {
+		if miniblock.GetSnapshot() != nil {
 			snapshotIndex = i
 		}
 	}
@@ -135,6 +135,7 @@ func MakeRemoteStreamView(ctx context.Context, stream *StreamAndCookie) (*Stream
 	if snapshot == nil {
 		return nil, RiverError(Err_STREAM_BAD_EVENT, "no snapshot").Func("MakeStreamView")
 	}
+
 	streamId, err := StreamIdFromBytes(snapshot.GetInceptionPayload().GetStreamId())
 	if err != nil {
 		return nil, RiverError(Err_STREAM_BAD_EVENT, "bad streamId").Func("MakeStreamView")
@@ -408,7 +409,7 @@ func (r *StreamView) makeMiniblockCandidate(
 		},
 	}
 
-	return NewMiniblockInfoFromHeaderAndParsed(params.Wallet, header, events)
+	return NewMiniblockInfoFromHeaderAndParsed(params.Wallet, header, events, nil)
 }
 
 // copyAndApplyBlock copies the current view and applies the given miniblock to it.
@@ -479,8 +480,14 @@ func (r *StreamView) copyAndApplyBlock(
 	var startIndex int
 	var snapshotIndex int
 	var snapshot *Snapshot
-	if header.Snapshot != nil {
-		snapshot = header.Snapshot
+	if header.IsSnapshot() {
+		if miniblock.snapshot != nil {
+			// Using new snapshot format
+			snapshot = miniblock.snapshot.Snapshot
+		} else {
+			// Using old snapshot format
+			snapshot = header.Snapshot
+		}
 		startIndex = max(0, len(r.blocks)-recencyConstraintsGenerations)
 		snapshotIndex = len(r.blocks) - startIndex
 	} else {
@@ -554,7 +561,7 @@ func (r *StreamView) blockWithNum(mininblockNum int64) (*MiniblockInfo, error) {
 	return r.blocks[index], nil
 }
 
-// iterate over events starting at startBlock including events in the minipool
+// ForEachEvent iterates over events starting at startBlock including events in the minipool
 func (r *StreamView) ForEachEvent(
 	startBlock int,
 	op func(e *ParsedEvent, minibockNum int64, eventNum int64) (bool, error),
@@ -643,7 +650,7 @@ func (r *StreamView) shouldSnapshot(cfg *crypto.OnChainSettings) bool {
 	// count the events in blocks since the last snapshot
 	for i := len(r.blocks) - 1; i >= 0; i-- {
 		block := r.blocks[i]
-		if block.Header().Snapshot != nil {
+		if block.Header().IsSnapshot() {
 			break
 		}
 		count += len(block.Events())
@@ -806,7 +813,7 @@ func (r *StreamView) GetStats() StreamViewStats {
 
 	for _, block := range r.blocks {
 		stats.EventsInMiniblocks += len(block.Events()) + 1 // +1 for header
-		if block.Header().Snapshot != nil {
+		if block.Header().IsSnapshot() {
 			stats.SnapshotsInMiniblocks++
 		}
 	}
@@ -895,7 +902,7 @@ func (r *StreamView) AllEvents() iter.Seq[*ParsedEvent] {
 
 func (r *StreamView) GetStreamSince(
 	ctx context.Context,
-	localNodeAddress common.Address,
+	wallet *crypto.Wallet,
 	cookie *SyncCookie,
 ) (*StreamAndCookie, error) {
 	log := logging.FromCtx(ctx)
@@ -909,22 +916,17 @@ func (r *StreamView) GetStreamSince(
 		// always send response, even if there are no events so that the client knows it's upToDate
 		return &StreamAndCookie{
 			Events:         envelopes,
-			NextSyncCookie: r.SyncCookie(localNodeAddress),
+			NextSyncCookie: r.SyncCookie(wallet.Address),
 		}, nil
 	}
 
 	miniblockIndex, err := r.indexOfMiniblockWithNum(cookie.MinipoolGen)
 	if err != nil {
 		// The user's sync cookie is out of date. Send a sync reset and return an up-to-date StreamAndCookie.
-		log.Warnw("GetStreamSince: out of date cookie.MiniblockNum. Sending sync reset.",
+		log.Debugw("GetStreamSince: out of date cookie.MiniblockNum. Sending sync reset.",
 			"stream", r.streamId, "error", err.Error())
 
-		return &StreamAndCookie{
-			Events:         r.MinipoolEnvelopes(),
-			NextSyncCookie: r.SyncCookie(localNodeAddress),
-			Miniblocks:     r.MiniblocksFromLastSnapshot(),
-			SyncReset:      true,
-		}, nil
+		return r.GetResetStreamAndCookie(wallet), nil
 
 	}
 
@@ -944,6 +946,15 @@ func (r *StreamView) GetStreamSince(
 	// always send response, even if there are no events so that the client knows it's upToDate
 	return &StreamAndCookie{
 		Events:         envelopes,
-		NextSyncCookie: r.SyncCookie(localNodeAddress),
+		NextSyncCookie: r.SyncCookie(wallet.Address),
 	}, nil
+}
+
+func (r *StreamView) GetResetStreamAndCookie(wallet *crypto.Wallet) *StreamAndCookie {
+	return &StreamAndCookie{
+		Events:         r.MinipoolEnvelopes(),
+		NextSyncCookie: r.SyncCookie(wallet.Address),
+		Miniblocks:     r.MiniblocksFromLastSnapshot(),
+		SyncReset:      true,
+	}
 }

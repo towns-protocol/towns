@@ -6,14 +6,30 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/linkdata/deadlock"
+
+	"github.com/towns-protocol/towns/core/contracts/river"
+	"github.com/towns-protocol/towns/core/node/registries"
 )
 
 type StreamNodes interface {
-	// GetNodes returns all nodes in the same order as in contract.
-	GetNodes() []common.Address
+	// GetQuorumNodes returns all nodes in the same order as in contract that participate in the streams quorum.
+	GetQuorumNodes() []common.Address
+
+	// GetSyncNodes returns the nodes that don't take part in the quorum but sync the stream in local storage.
+	GetSyncNodes() []common.Address
+
+	// IsLocalInQuorum returns an indication if the local node is part of the quorum.
+	IsLocalInQuorum() bool
 
 	// GetRemotesAndIsLocal returns all remote nodes and true if the local node is in the list of nodes.
 	GetRemotesAndIsLocal() ([]common.Address, bool)
+
+	// GetQuorumAndSyncNodesAndIsLocal returns
+	// quorumNodes - a list of nodes that participate in the stream quorum
+	// syncNodes - a list nodes that sync the stream into local storage but don't participate in quorum (yet)
+	// isLocal - boolean, whether the stream is hosted on this node
+	// GetQuorumAndSyncNodesAndIsLocal is thread-safe.
+	GetQuorumAndSyncNodesAndIsLocal() ([]common.Address, []common.Address, bool)
 
 	// GetStickyPeer returns the current sticky peer.
 	// If there are no remote nodes, it returns an empty address.
@@ -24,13 +40,30 @@ type StreamNodes interface {
 	// If the current sticky peer is the last node, it shuffles the nodes and resets the sticky peer to the first node.
 	AdvanceStickyPeer(currentPeer common.Address) common.Address
 
-	// Reset the list of nodes to the given nodes and local node
-	Reset(nodes []common.Address, localNode common.Address)
+	// ResetFromStreamState the list of nodes from the given stream state.
+	ResetFromStreamState(state *river.StreamState, localNode common.Address)
+
+	// ResetFromStreamResult the list of nodes from the given stream result.
+	ResetFromStreamResult(result *registries.GetStreamResult, localNode common.Address)
+
+	// Reset the list of nodes to the given nodes and local node. The nodes in range Nodes[0:replicationFactor] take
+	// part in the quorum. The nodes in range Nodes[replicationFactor:] are the nodes that sync the stream into local
+	// storage but don't take part in quorum.
+	Reset(replicationFactor int, nodes []common.Address, localNode common.Address)
 }
 
 type StreamNodesWithoutLock struct {
-	// nodes contains all streams nodes in the same order as in contract.
-	nodes []common.Address
+	// isLocal is true when the local node is in the list of nodes.
+	// Note: this doesn't mean that the local node is part of the stream quorum.
+	isLocal bool
+	// isLocalInQuorum is true when the local node is part of the quorum.
+	isLocalInQuorum bool
+
+	// quorumNodes contains all streams nodes that participate in the streams quorum in the same order as the contract.
+	quorumNodes []common.Address
+
+	// syncNodes contains the nodes that sync the stream into local storage but don't take part in quorum.
+	syncNodes []common.Address
 
 	// remotes are all nodes except the local node.
 	// remotes are shuffled to avoid the same node being selected as the sticky peer.
@@ -40,20 +73,31 @@ type StreamNodesWithoutLock struct {
 
 var _ StreamNodes = (*StreamNodesWithoutLock)(nil)
 
-func (s *StreamNodesWithoutLock) Reset(nodes []common.Address, localNode common.Address) {
+func (s *StreamNodesWithoutLock) ResetFromStreamState(state *river.StreamState, localNode common.Address) {
+	s.Reset(state.StreamReplicationFactor(), state.Nodes, localNode)
+}
+
+func (s *StreamNodesWithoutLock) ResetFromStreamResult(result *registries.GetStreamResult, localNode common.Address) {
+	s.Reset(result.StreamReplicationFactor(), result.Nodes, localNode)
+}
+
+func (s *StreamNodesWithoutLock) Reset(replicationFactor int, nodes []common.Address, localNode common.Address) {
 	var lastStickyAddr common.Address
 	if s.stickyPeerIndex < len(s.remotes) {
 		lastStickyAddr = s.remotes[s.stickyPeerIndex]
 	}
 
-	s.nodes = slices.Clone(nodes)
+	s.quorumNodes = slices.Clone(nodes[:replicationFactor])
+	s.syncNodes = slices.Clone(nodes[replicationFactor:])
+	s.isLocal = slices.Contains(nodes, localNode)
 
-	localIndex := slices.Index(nodes, localNode)
+	localIndex := slices.Index(s.quorumNodes, localNode)
+	s.isLocalInQuorum = localIndex >= 0
 
-	if localIndex >= 0 {
-		s.remotes = slices.Concat(nodes[:localIndex], nodes[localIndex+1:])
+	if s.isLocalInQuorum {
+		s.remotes = slices.Concat(s.quorumNodes[:localIndex], s.quorumNodes[localIndex+1:])
 	} else {
-		s.remotes = slices.Clone(nodes)
+		s.remotes = slices.Clone(s.quorumNodes)
 	}
 
 	rand.Shuffle(len(s.remotes), func(i, j int) { s.remotes[i], s.remotes[j] = s.remotes[j], s.remotes[i] })
@@ -68,16 +112,28 @@ func (s *StreamNodesWithoutLock) Reset(nodes []common.Address, localNode common.
 	}
 }
 
-func (s *StreamNodesWithoutLock) GetNodes() []common.Address {
-	return s.nodes
+func (s *StreamNodesWithoutLock) GetQuorumNodes() []common.Address {
+	return s.quorumNodes
+}
+
+func (s *StreamNodesWithoutLock) GetSyncNodes() []common.Address {
+	return s.syncNodes
+}
+
+func (s *StreamNodesWithoutLock) IsLocalInQuorum() bool {
+	return s.isLocalInQuorum
 }
 
 func (s *StreamNodesWithoutLock) GetRemotesAndIsLocal() ([]common.Address, bool) {
-	return s.remotes, len(s.nodes) > len(s.remotes)
+	return s.remotes, s.isLocal
+}
+
+func (s *StreamNodesWithoutLock) GetQuorumAndSyncNodesAndIsLocal() ([]common.Address, []common.Address, bool) {
+	return s.quorumNodes, s.syncNodes, s.isLocal
 }
 
 func (s *StreamNodesWithoutLock) IsLocal() bool {
-	return len(s.nodes) > len(s.remotes)
+	return s.isLocal
 }
 
 func (s *StreamNodesWithoutLock) GetStickyPeer() common.Address {
@@ -118,16 +174,17 @@ type StreamNodesWithLock struct {
 
 var _ StreamNodes = (*StreamNodesWithLock)(nil)
 
-func NewStreamNodesWithLock(nodes []common.Address, localNode common.Address) *StreamNodesWithLock {
+func NewStreamNodesWithLock(replFactor int, nodes []common.Address, localNode common.Address) *StreamNodesWithLock {
 	ret := &StreamNodesWithLock{}
-	ret.n.Reset(nodes, localNode)
+	ret.n.Reset(replFactor, nodes, localNode)
+
 	return ret
 }
 
-func (s *StreamNodesWithLock) GetNodes() []common.Address {
+func (s *StreamNodesWithLock) GetQuorumNodes() []common.Address {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
-	return slices.Clone(s.n.GetNodes())
+	return slices.Clone(s.n.GetQuorumNodes())
 }
 
 func (s *StreamNodesWithLock) GetRemotesAndIsLocal() ([]common.Address, bool) {
@@ -135,6 +192,33 @@ func (s *StreamNodesWithLock) GetRemotesAndIsLocal() ([]common.Address, bool) {
 	defer s.mu.RUnlock()
 	r, l := s.n.GetRemotesAndIsLocal()
 	return slices.Clone(r), l
+}
+
+// GetQuorumAndSyncNodesAndIsLocal returns
+// quorumNodes - a list of non-local nodes that participate in the stream quorum
+// syncNodes - a list of non-local nodes that sync the stream into local storage but don't participate in quorum (yet)
+// isLocal - boolean, whether the stream is hosted on this node
+// GetQuorumAndSyncNodesAndIsLocal is thread-safe.
+func (s *StreamNodesWithLock) GetQuorumAndSyncNodesAndIsLocal() ([]common.Address, []common.Address, bool) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	qn, sn, l := s.n.GetQuorumAndSyncNodesAndIsLocal()
+	return slices.Clone(qn), slices.Clone(sn), l
+}
+
+func (s *StreamNodesWithLock) GetSyncNodes() []common.Address {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	return s.n.GetSyncNodes()
+}
+
+func (s *StreamNodesWithLock) IsLocalInQuorum() bool {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	return s.n.IsLocalInQuorum()
 }
 
 func (s *StreamNodesWithLock) GetStickyPeer() common.Address {
@@ -149,8 +233,22 @@ func (s *StreamNodesWithLock) AdvanceStickyPeer(currentPeer common.Address) comm
 	return s.n.AdvanceStickyPeer(currentPeer)
 }
 
-func (s *StreamNodesWithLock) Reset(nodes []common.Address, localNode common.Address) {
+func (s *StreamNodesWithLock) Reset(replicationFactor int, nodes []common.Address, localNode common.Address) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	s.n.Reset(nodes, localNode)
+	s.n.Reset(replicationFactor, nodes, localNode)
+}
+
+func (s *StreamNodesWithLock) ResetFromStreamState(state *river.StreamState, localNode common.Address) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	s.n.ResetFromStreamState(state, localNode)
+}
+
+func (s *StreamNodesWithLock) ResetFromStreamResult(result *registries.GetStreamResult, localNode common.Address) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	s.n.ResetFromStreamResult(result, localNode)
 }

@@ -305,6 +305,7 @@ type GetStreamResult struct {
 	LastMiniblockHash common.Hash
 	LastMiniblockNum  uint64
 	IsSealed          bool
+	Reserved0         uint64
 }
 
 func makeGetStreamResult(streamId StreamId, stream *river.Stream) *GetStreamResult {
@@ -314,7 +315,16 @@ func makeGetStreamResult(streamId StreamId, stream *river.Stream) *GetStreamResu
 		LastMiniblockHash: stream.LastMiniblockHash,
 		LastMiniblockNum:  stream.LastMiniblockNum,
 		IsSealed:          stream.Flags&1 != 0, // TODO: constants for flags
+		Reserved0:         stream.Reserved0,
 	}
+}
+
+// StreamReplicationFactor returns on how many nodes the stream is replicated.
+func (s *GetStreamResult) StreamReplicationFactor() int {
+	// if s.Reserved0 & 0xFF is 0 it indicates this is an old stream that was created before the replication factor was
+	// added and the migration to replicated stream hasn't started. Use a replication factor of 1. This ensures that
+	// the first node in the streams node list is used as primary and ensures both backwards and forwards compatability.
+	return max(1, int(s.Reserved0&0xFF))
 }
 
 func (c *RiverRegistryContract) GetStream(
@@ -344,15 +354,11 @@ func (c *RiverRegistryContract) GetStreamOnLatestBlock(
 func (c *RiverRegistryContract) GetStreamWithGenesis(
 	ctx context.Context,
 	streamId StreamId,
-) (*GetStreamResult, common.Hash, []byte, crypto.BlockNumber, error) {
-	blockNum, err := c.Blockchain.GetBlockNumber(ctx)
-	if err != nil {
-		return nil, common.Hash{}, nil, blockNum, err
-	}
-
+	blockNum crypto.BlockNumber,
+) (*GetStreamResult, common.Hash, []byte, error) {
 	stream, mbHash, mb, err := c.StreamRegistry.GetStreamWithGenesis(c.callOptsWithBlockNum(ctx, blockNum), streamId)
 	if err != nil {
-		return nil, common.Hash{}, nil, blockNum, WrapRiverError(
+		return nil, common.Hash{}, nil, WrapRiverError(
 			Err_CANNOT_CALL_CONTRACT,
 			err,
 		).Func("GetStream").
@@ -360,7 +366,7 @@ func (c *RiverRegistryContract) GetStreamWithGenesis(
 			Tag("blockNum", blockNum)
 	}
 	ret := makeGetStreamResult(streamId, &stream)
-	return ret, mbHash, mb, blockNum, nil
+	return ret, mbHash, mb, nil
 }
 
 func (c *RiverRegistryContract) GetStreamCount(ctx context.Context, blockNum crypto.BlockNumber) (int64, error) {
@@ -818,9 +824,9 @@ func (c *RiverRegistryContract) callOptsWithBlockNum(ctx context.Context, blockN
 
 type NodeEvents interface {
 	river.NodeRegistryV1NodeAdded |
-	river.NodeRegistryV1NodeRemoved |
-	river.NodeRegistryV1NodeStatusUpdated |
-	river.NodeRegistryV1NodeUrlUpdated
+		river.NodeRegistryV1NodeRemoved |
+		river.NodeRegistryV1NodeStatusUpdated |
+		river.NodeRegistryV1NodeUrlUpdated
 }
 
 func (c *RiverRegistryContract) GetNodeEventsForBlock(ctx context.Context, blockNum crypto.BlockNumber) ([]any, error) {

@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	"github.com/ethereum/go-ethereum/common"
+
 	"github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/shared"
@@ -16,6 +17,7 @@ import (
 // a batch of messages in the same stream, encrypted by the same collection of
 // session ids.
 type SessionMessages struct {
+	StreamId              shared.StreamId
 	AppId                 common.Address // included for logging / metrics
 	DeviceKey             string
 	EncryptedSharedSecret [32]byte
@@ -76,6 +78,14 @@ func (q *CachedEncryptedMessageQueue) RegisterWebhook(
 	return nil
 }
 
+func (q *CachedEncryptedMessageQueue) GetSessionKey(
+	ctx context.Context,
+	app common.Address,
+	sessionId string,
+) (encryptionEnvelope []byte, err error) {
+	return q.store.GetSessionKey(ctx, app, sessionId)
+}
+
 func (q *CachedEncryptedMessageQueue) PublishSessionKeys(
 	ctx context.Context,
 	streamId shared.StreamId,
@@ -87,15 +97,20 @@ func (q *CachedEncryptedMessageQueue) PublishSessionKeys(
 	if err != nil {
 		return err
 	}
-	messages := &SessionMessages{
-		AppId:                 sendableMessages.AppId,
-		EncryptedSharedSecret: sendableMessages.EncryptedSharedSecret,
-		DeviceKey:             deviceKey,
-		EncryptionEnvelope:    encryptionEnvelope,
-		WebhookUrl:            sendableMessages.WebhookUrl,
-		MessageEnvelopes:      sendableMessages.MessageEnvelopes,
+	if sendableMessages != nil {
+		messages := &SessionMessages{
+			StreamId:              streamId,
+			AppId:                 sendableMessages.AppId,
+			EncryptedSharedSecret: sendableMessages.EncryptedSharedSecret,
+			DeviceKey:             deviceKey,
+			EncryptionEnvelope:    encryptionEnvelope,
+			WebhookUrl:            sendableMessages.WebhookUrl,
+			MessageEnvelopes:      sendableMessages.MessageEnvelopes,
+		}
+		return q.appDispatcher.SubmitMessages(ctx, messages)
+	} else {
+		return nil
 	}
-	return q.appDispatcher.SubmitMessages(ctx, messages)
 }
 
 // DispatchOrEnqueueMessages will immediately send a message for each device that has session keys, and will
@@ -141,6 +156,7 @@ func (q *CachedEncryptedMessageQueue) DispatchOrEnqueueMessages(
 	// Submit a single message for each sendable device
 	for _, sendableApp := range sendableApps {
 		if err := q.appDispatcher.SubmitMessages(ctx, &SessionMessages{
+			StreamId:              channelId,
 			AppId:                 sendableApp.AppId,
 			DeviceKey:             sendableApp.DeviceKey,
 			EncryptedSharedSecret: sendableApp.SendMessageSecrets.EncryptedSharedSecret,
