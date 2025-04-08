@@ -3,6 +3,7 @@ pragma solidity ^0.8.23;
 
 // interfaces
 import {IDiamond} from "@towns-protocol/diamond/src/IDiamond.sol";
+import {IDiamondInitHelper} from "./IDiamondInitHelper.sol";
 
 // libraries
 import {DeployDiamondCut} from "@towns-protocol/diamond/scripts/deployments/facets/DeployDiamondCut.s.sol";
@@ -14,7 +15,7 @@ import {DeployOwnable} from "@towns-protocol/diamond/scripts/deployments/facets/
 import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
 import {Diamond} from "@towns-protocol/diamond/src/Diamond.sol";
 import {MultiInit} from "@towns-protocol/diamond/src/initializers/MultiInit.sol";
-import {DiamondHelper} from "contracts/test/diamond/Diamond.t.sol";
+import {DiamondHelper} from "@towns-protocol/diamond/scripts/common/helpers/DiamondHelper.s.sol";
 
 // deployers
 import {DeployFacet} from "../../common/DeployFacet.s.sol";
@@ -24,7 +25,7 @@ import {DeployOperatorRegistry} from "contracts/scripts/deployments/facets/Deplo
 import {DeployRiverConfig} from "contracts/scripts/deployments/facets/DeployRiverConfig.s.sol";
 import {DeployStreamRegistry} from "contracts/scripts/deployments/facets/DeployStreamRegistry.s.sol";
 
-contract DeployRiverRegistry is DiamondHelper, Deployer {
+contract DeployRiverRegistry is IDiamondInitHelper, DiamondHelper, Deployer {
     DeployFacet private facetHelper = new DeployFacet();
     DeployNodeRegistry internal nodeRegistryHelper = new DeployNodeRegistry();
     DeployStreamRegistry internal streamRegistryHelper = new DeployStreamRegistry();

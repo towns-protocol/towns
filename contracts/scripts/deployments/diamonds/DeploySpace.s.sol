@@ -2,7 +2,8 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {Diamond, IDiamond} from "@towns-protocol/diamond/src/Diamond.sol";
+import {IDiamond} from "@towns-protocol/diamond/src/IDiamond.sol";
+import {IDiamondInitHelper} from "./IDiamondInitHelper.sol";
 import {IERC721A} from "contracts/src/diamond/facets/token/ERC721A/IERC721A.sol";
 
 // libraries
@@ -16,7 +17,7 @@ import {DeployTokenPausable} from "@towns-protocol/diamond/scripts/deployments/f
 // contracts
 import {Diamond} from "@towns-protocol/diamond/src/Diamond.sol";
 import {MultiInit} from "@towns-protocol/diamond/src/initializers/MultiInit.sol";
-import {DiamondHelper} from "contracts/test/diamond/Diamond.t.sol";
+import {DiamondHelper} from "@towns-protocol/diamond/scripts/common/helpers/DiamondHelper.s.sol";
 
 // deployers
 import {DeployFacet} from "../../common/DeployFacet.s.sol";
@@ -40,7 +41,7 @@ import {DeployTreasury} from "contracts/scripts/deployments/facets/DeployTreasur
 // Test Facets
 import {DeployMockLegacyMembership} from "contracts/scripts/deployments/utils/DeployMockLegacyMembership.s.sol";
 
-contract DeploySpace is DiamondHelper, Deployer {
+contract DeploySpace is IDiamondInitHelper, DiamondHelper, Deployer {
     DeployFacet private facetHelper = new DeployFacet();
     DeployERC721AQueryable erc721aQueryableHelper = new DeployERC721AQueryable();
     DeployBanning banningHelper = new DeployBanning();

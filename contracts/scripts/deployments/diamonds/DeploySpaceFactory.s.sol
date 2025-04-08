@@ -3,6 +3,7 @@ pragma solidity ^0.8.23;
 
 // interfaces
 import {IDiamond} from "@towns-protocol/diamond/src/IDiamond.sol";
+import {IDiamondInitHelper} from "./IDiamondInitHelper.sol";
 
 // libraries
 import {DeployDiamondCut} from "@towns-protocol/diamond/scripts/deployments/facets/DeployDiamondCut.s.sol";
@@ -15,7 +16,7 @@ import {DeployPausable} from "@towns-protocol/diamond/scripts/deployments/facets
 // contracts
 import {Diamond} from "@towns-protocol/diamond/src/Diamond.sol";
 import {MultiInit} from "@towns-protocol/diamond/src/initializers/MultiInit.sol";
-import {DiamondHelper} from "contracts/test/diamond/Diamond.t.sol";
+import {DiamondHelper} from "@towns-protocol/diamond/scripts/common/helpers/DiamondHelper.s.sol";
 
 // deployers
 import {DeployFacet} from "../../common/DeployFacet.s.sol";
@@ -43,7 +44,7 @@ import {DeployTieredLogPricingV2} from "contracts/scripts/deployments/utils/Depl
 import {DeployTieredLogPricingV3} from "contracts/scripts/deployments/utils/DeployTieredLogPricingV3.s.sol";
 import {DeployUserEntitlement} from "contracts/scripts/deployments/utils/DeployUserEntitlement.s.sol";
 
-contract DeploySpaceFactory is DiamondHelper, Deployer {
+contract DeploySpaceFactory is IDiamondInitHelper, DiamondHelper, Deployer {
     DeployFacet private facetHelper = new DeployFacet();
     DeployMetadata metadataHelper = new DeployMetadata();
     DeployArchitect architectHelper = new DeployArchitect();

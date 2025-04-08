@@ -3,7 +3,7 @@ pragma solidity ^0.8.23;
 
 // interfaces
 import {IDiamondCut} from "@towns-protocol/diamond/src/facets/cut/IDiamondCut.sol";
-import {IDiamondInitHelper} from "contracts/test/diamond/Diamond.t.sol";
+import {IDiamondInitHelper} from "../deployments/diamonds/IDiamondInitHelper.sol";
 
 import {DiamondHelper} from "@towns-protocol/diamond/scripts/common/helpers/DiamondHelper.s.sol";
 import {Diamond} from "@towns-protocol/diamond/src/Diamond.sol";

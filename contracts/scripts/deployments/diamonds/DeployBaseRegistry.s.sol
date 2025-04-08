@@ -3,6 +3,7 @@ pragma solidity ^0.8.23;
 
 // interfaces
 import {IDiamond} from "@towns-protocol/diamond/src/IDiamond.sol";
+import {IDiamondInitHelper} from "./IDiamondInitHelper.sol";
 
 // libraries
 import {DeployDiamondCut} from "@towns-protocol/diamond/scripts/deployments/facets/DeployDiamondCut.s.sol";
@@ -14,7 +15,7 @@ import {DeployOwnable} from "@towns-protocol/diamond/scripts/deployments/facets/
 // contracts
 import {Diamond} from "@towns-protocol/diamond/src/Diamond.sol";
 import {MultiInit} from "@towns-protocol/diamond/src/initializers/MultiInit.sol";
-import {DiamondHelper} from "contracts/test/diamond/Diamond.t.sol";
+import {DiamondHelper} from "@towns-protocol/diamond/scripts/common/helpers/DiamondHelper.s.sol";
 
 // deployers
 import {DeployFacet} from "../../common/DeployFacet.s.sol";
@@ -29,7 +30,7 @@ import {DeployRewardsDistributionV2} from "contracts/scripts/deployments/facets/
 import {DeploySpaceDelegation} from "contracts/scripts/deployments/facets/DeploySpaceDelegation.s.sol";
 import {DeployXChain} from "contracts/scripts/deployments/facets/DeployXChain.s.sol";
 
-contract DeployBaseRegistry is DiamondHelper, Deployer {
+contract DeployBaseRegistry is IDiamondInitHelper, DiamondHelper, Deployer {
     DeployERC721ANonTransferable deployNFT = new DeployERC721ANonTransferable();
 
     // deployments

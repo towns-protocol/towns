@@ -2,7 +2,8 @@
 pragma solidity ^0.8.24;
 
 // interface
-import {Diamond, IDiamond} from "@towns-protocol/diamond/src/Diamond.sol";
+import {IDiamond} from "@towns-protocol/diamond/src/IDiamond.sol";
+import {IDiamondInitHelper} from "./IDiamondInitHelper.sol";
 
 // libraries
 import {DeployDiamondCut} from "@towns-protocol/diamond/scripts/deployments/facets/DeployDiamondCut.s.sol";
@@ -12,8 +13,9 @@ import {DeployIntrospection} from "@towns-protocol/diamond/scripts/deployments/f
 import {DeployOwnable} from "@towns-protocol/diamond/scripts/deployments/facets/DeployOwnable.s.sol";
 
 // contracts
+import {Diamond} from "@towns-protocol/diamond/src/Diamond.sol";
 import {MultiInit} from "@towns-protocol/diamond/src/initializers/MultiInit.sol";
-import {DiamondHelper} from "contracts/test/diamond/Diamond.t.sol";
+import {DiamondHelper} from "@towns-protocol/diamond/scripts/common/helpers/DiamondHelper.s.sol";
 
 // deployers
 import {DeployFacet} from "contracts/scripts/common/DeployFacet.s.sol";
@@ -22,7 +24,7 @@ import {DeployGuardianFacet} from "contracts/scripts/deployments/facets/DeployGu
 import {DeployMetadata} from "contracts/scripts/deployments/facets/DeployMetadata.s.sol";
 import {DeploySpaceOwnerFacet} from "contracts/scripts/deployments/facets/DeploySpaceOwnerFacet.s.sol";
 
-contract DeploySpaceOwner is DiamondHelper, Deployer {
+contract DeploySpaceOwner is IDiamondInitHelper, DiamondHelper, Deployer {
     DeployFacet private facetHelper = new DeployFacet();
     DeployMetadata metadataHelper = new DeployMetadata();
     DeploySpaceOwnerFacet spaceOwnerHelper = new DeploySpaceOwnerFacet();

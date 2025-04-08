@@ -3,6 +3,7 @@ pragma solidity ^0.8.19;
 
 // interfaces
 import {IDiamond} from "@towns-protocol/diamond/src/IDiamond.sol";
+import {IDiamondInitHelper} from "./IDiamondInitHelper.sol";
 
 // libraries
 import {DeployDiamondCut} from "@towns-protocol/diamond/scripts/deployments/facets/DeployDiamondCut.s.sol";
@@ -14,7 +15,7 @@ import {DeployOwnable} from "@towns-protocol/diamond/scripts/deployments/facets/
 import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
 import {Diamond} from "@towns-protocol/diamond/src/Diamond.sol";
 import {MultiInit} from "@towns-protocol/diamond/src/initializers/MultiInit.sol";
-import {DiamondHelper} from "contracts/test/diamond/Diamond.t.sol";
+import {DiamondHelper} from "@towns-protocol/diamond/scripts/common/helpers/DiamondHelper.s.sol";
 
 // deployers
 import {DeployFacet} from "../../common/DeployFacet.s.sol";
@@ -23,7 +24,7 @@ import {DeployDropFacet} from "contracts/scripts/deployments/facets/DeployDropFa
 import {DeployMetadata} from "contracts/scripts/deployments/facets/DeployMetadata.s.sol";
 import {DeployTownsPoints} from "contracts/scripts/deployments/facets/DeployTownsPoints.s.sol";
 
-contract DeployRiverAirdrop is DiamondHelper, Deployer {
+contract DeployRiverAirdrop is IDiamondInitHelper, DiamondHelper, Deployer {
     address internal BASE_REGISTRY = address(0);
     address internal SPACE_FACTORY = address(0);
 
