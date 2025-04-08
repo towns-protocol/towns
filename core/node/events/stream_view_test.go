@@ -195,7 +195,8 @@ func TestLoad(t *testing.T) {
 	mbCandidate, err = view.makeMiniblockCandidate(ctx, params, mbProposalFromProto(resp.Proposal))
 	require.NoError(t, err)
 	miniblockHeader = mbCandidate.headerEvent.Event.GetMiniblockHeader()
-	assert.NotNil(t, miniblockHeader.Snapshot)
+	assert.Nil(t, miniblockHeader.Snapshot)
+	assert.NotEmpty(t, miniblockHeader.SnapshotHash)
 
 	// check count2
 	count2 := 0
@@ -224,9 +225,7 @@ func TestLoad(t *testing.T) {
 		view.LastBlock().Ref,
 	)
 	assert.NoError(t, err)
-	parsedSnapshot, err := MakeParsedSnapshot(userWallet, miniblockHeader.Snapshot)
-	assert.NoError(t, err)
-	miniblock, err := NewMiniblockInfoFromParsed(miniblockHeaderEvent, mbCandidate.Events(), parsedSnapshot)
+	miniblock, err := NewMiniblockInfoFromParsed(miniblockHeaderEvent, mbCandidate.Events(), mbCandidate.snapshot)
 	assert.NoError(t, err)
 	// with 5 generations (5 blocks kept in memory)
 	newSV1, newEvents, err := view.copyAndApplyBlock(miniblock, cfg)
