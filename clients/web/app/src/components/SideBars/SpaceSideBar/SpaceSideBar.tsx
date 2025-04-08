@@ -202,7 +202,7 @@ export const SpaceSideBar = (props: Props) => {
             const checkVisibility = u.type === 'dm'
             return (
                 <SpaceSideBarListItem key={key} checkVisibility={checkVisibility}>
-                    <OffscreenMarker id={key} containerMarginTop={HEADER_MARGIN} />
+                    <OffscreenMarker id={key} {...scrollMarginProps} />
                     {u.type === 'memberNotInDMs' ? (
                         <MemberNotInDMsNavItem {...u} />
                     ) : u.type === 'dm' ? (
@@ -284,10 +284,7 @@ export const SpaceSideBar = (props: Props) => {
                                     )}
                                     {/* threads */}
                                     <SpaceSideBarListItem key="threads">
-                                        <OffscreenMarker
-                                            id="threads"
-                                            containerMarginTop={HEADER_MARGIN}
-                                        />
+                                        <OffscreenMarker id="threads" {...scrollMarginProps} />
                                         <ActionNavItem
                                             highlight={unreadThreadsCount > 0}
                                             icon="threads"
@@ -322,19 +319,6 @@ export const SpaceSideBar = (props: Props) => {
                                         />
                                     </SpaceSideBarListItem>
                                 </MenuGroup>
-                                {/* <MenuGroup>
-                                    <SpaceSideBarSectionHeader
-                                        label="Unreads"
-                                        key="unreads"
-                                        dataTestId="unreads-header"
-                                        hidden={unreadChannels.length === 0}
-                                    />
-                                    <OffscreenMarker
-                                        id="unreads"
-                                        containerMarginTop={HEADER_MARGIN}
-                                    />
-                                    {unreadChannels.map((channel) => itemRenderer(channel, true))}
-                                </MenuGroup> */}
                                 <MenuGroup>
                                     <SpaceSideBarSectionHeader
                                         label="Favorites"
@@ -454,6 +438,12 @@ export const SpaceSideBar = (props: Props) => {
         </>
     )
 }
+
+const scrollMarginProps = {
+    scrollMarginTop: HEADER_MARGIN + 48,
+    scrollMarginBottom: 48,
+}
+
 const REDUCE_MOTION = isReduceMotion()
 
 const MenuGroup = ({ children }: { children: React.ReactNode }) =>

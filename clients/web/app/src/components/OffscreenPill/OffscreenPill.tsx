@@ -317,14 +317,18 @@ const getMarkerDomId = (id: string) => `channel-marker-${id}`
 
 export const OffscreenMarker = ({
     id,
-    containerMarginTop = 0,
+    scrollMarginTop = 0,
+    scrollMarginBottom = 0,
     ...boxProps
-}: BoxProps & { id: string; containerMarginTop: number }) => {
+}: BoxProps & { id: string; scrollMarginTop: number; scrollMarginBottom: number }) => {
     return (
         <Box
             position="absolute"
             data-offscreen-id={getMarkerDomId(id)}
-            style={{ scrollMarginTop: containerMarginTop }}
+            style={{
+                scrollMarginTop,
+                scrollMarginBottom,
+            }}
         >
             <Box height="x6" {...boxProps} />
         </Box>

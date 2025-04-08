@@ -162,7 +162,13 @@ export const useSortedChannels = ({ spaceId }: Params) => {
         const value = [
             ...channelItems.filter((c) => c.favorite),
             ...dmItems.filter((c) => c.favorite),
-        ]
+        ].sort(
+            firstBy(
+                (c: MixedChannelMenuItem) => (c.type === 'channel' ? c.mentionCount > 0 : c.unread),
+                'desc',
+            ).thenBy((c) => c.type === 'channel'),
+        )
+
         favoriteChannelListRef.current = isEqual(value, favoriteChannelListRef.current)
             ? favoriteChannelListRef.current
             : value
