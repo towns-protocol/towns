@@ -145,13 +145,13 @@ jobs:
             - name: Run Base Sepolia Interaction
               id: base_sepolia_interaction
               run: |
-                  make interact-any-explicit \
+                  make interact-any-explicit-blockscout \
                     context=alpha \
                     rpc=base_sepolia \
                     contract=InteractAlphaSparse \
                     private_key=${{ env.ALPHA_BASE_SEPOLIA_DEPLOYER_PK }} \
                     etherscan=${{ env.BLOCKSCOUT_SEPOLIA_API_KEY }} \
-                    verifier=${{ env.BLOCKSCOUT_SEPOLIA_URL }}
+                    verifier-url=${{ env.BLOCKSCOUT_SEPOLIA_URL }}
               working-directory: river/contracts
               env:
                   INTERACTION_INPUT_PATH: ${{ env.INTERACTION_INPUT_PATH }}
@@ -174,7 +174,7 @@ jobs:
                   rpc=river_devnet \
                   contract=InteractRiverAlphaSparse \
                   private_key=${{ env.ALPHA_BASE_SEPOLIA_DEPLOYER_PK }} \
-                  verifier=${{ env.RIVERSCAN_DEVNET_URL }}
+                  verifier-url=${{ env.RIVERSCAN_DEVNET_URL }}
               working-directory: river/contracts
 
             # If action failed, we send a slack notification
@@ -218,13 +218,13 @@ jobs:
 
             - name: Run Base Sepolia Interaction
               id: base_sepolia_interaction
-              run: make interact-any-explicit \
+              run: make interact-any-explicit-blockscout \
                   context=alpha \
                   rpc=base_sepolia \
                   contract=InteractBaseAlpha \
                   private_key=${{ env.ALPHA_BASE_SEPOLIA_DEPLOYER_PK }} \
                   etherscan=${{ env.BLOCKSCOUT_SEPOLIA_API_KEY }} \
-                  verifier=${{ env.BLOCKSCOUT_SEPOLIA_URL }} \
+                  verifier-url=${{ env.BLOCKSCOUT_SEPOLIA_URL }} \
                   gas_limit=18446744073709551615
               working-directory: river/contracts
 
@@ -236,7 +236,7 @@ jobs:
                   rpc=river_devnet \
                   contract=InteractRiverAlpha \
                   private_key=${{ env.ALPHA_BASE_SEPOLIA_DEPLOYER_PK }} \
-                  verifier=${{ env.RIVERSCAN_DEVNET_URL }}
+                  verifier-url=${{ env.RIVERSCAN_DEVNET_URL }}
               working-directory: river/contracts
 
             # If action failed, we send a slack notification
