@@ -3,7 +3,6 @@ package river
 import (
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-	"github.com/ethereum/go-ethereum/core/types"
 
 	. "github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/protocol"
@@ -26,18 +25,12 @@ type (
 		StreamID StreamId
 		// Reason contains the reason why the stream state was updated/created.
 		reason StreamUpdatedEventType
-		// raw is the raw event log that was emitted after the state change and this stream state was parsed from.
-		// it provides information about which transaction caused the state change and at which block number and index.
-		raw types.Log
 	}
 
 	// StreamMiniblockUpdate indicates that the stream identified by StreamID has a new miniblock.
 	StreamMiniblockUpdate struct {
 		// SetMiniblock contains the stream updated data.
 		SetMiniblock
-		// raw is the raw event log that was emitted after the state change and this stream state was parsed from.
-		// it provides information about which transaction caused the state change and at which block number and index.
-		raw types.Log
 	}
 
 	// StreamUpdatedEvent represents an event that was decoded from a StreamUpdated log by the stream registry.
@@ -46,8 +39,6 @@ type (
 		GetStreamId() StreamId
 		// Reason returns the reason the StreamUpdated log was emitted.
 		Reason() StreamUpdatedEventType
-		// Raw returns the log from which the StreamUpdate event was decoded.
-		Raw() types.Log
 	}
 )
 
@@ -97,10 +88,6 @@ func (ss *StreamState) Reason() StreamUpdatedEventType {
 	return ss.reason
 }
 
-func (ss *StreamState) Raw() types.Log {
-	return ss.raw
-}
-
 // GetStreamId implements the EventWithStreamId interface.
 func (smu *StreamMiniblockUpdate) GetStreamId() StreamId {
 	return smu.StreamId
@@ -108,10 +95,6 @@ func (smu *StreamMiniblockUpdate) GetStreamId() StreamId {
 
 func (smu *StreamMiniblockUpdate) Reason() StreamUpdatedEventType {
 	return StreamUpdatedEventTypeLastMiniblockBatchUpdated
-}
-
-func (smu *StreamMiniblockUpdate) Raw() types.Log {
-	return smu.raw
 }
 
 func MiniblockRefFromContractRecord(stream *Stream) *MiniblockRef {
@@ -131,19 +114,19 @@ func ParseStreamUpdatedEvent(event *StreamRegistryV1StreamUpdated) ([]StreamUpda
 		if err != nil {
 			return nil, err
 		}
-		return []StreamUpdatedEvent{&StreamState{Stream: *stream, StreamID: streamID, reason: reason, raw: event.Raw}}, nil
+		return []StreamUpdatedEvent{&StreamState{Stream: *stream, StreamID: streamID, reason: reason}}, nil
 	case StreamUpdatedEventTypeCreate:
 		streamID, stream, err := parseStreamIDAndStreamFromSolABIEncoded(event.Data)
 		if err != nil {
 			return nil, err
 		}
-		return []StreamUpdatedEvent{&StreamState{Stream: *stream, StreamID: streamID, reason: reason, raw: event.Raw}}, nil
+		return []StreamUpdatedEvent{&StreamState{Stream: *stream, StreamID: streamID, reason: reason}}, nil
 	case StreamUpdatedEventTypePlacementUpdated:
 		streamID, stream, err := parseStreamIDAndStreamFromSolABIEncoded(event.Data)
 		if err != nil {
 			return nil, err
 		}
-		return []StreamUpdatedEvent{&StreamState{Stream: *stream, StreamID: streamID, reason: reason, raw: event.Raw}}, nil
+		return []StreamUpdatedEvent{&StreamState{Stream: *stream, StreamID: streamID, reason: reason}}, nil
 	case StreamUpdatedEventTypeLastMiniblockBatchUpdated:
 		return parseSetMiniblocksFromSolABIEncoded(event)
 	default:
@@ -185,7 +168,6 @@ func parseSetMiniblocksFromSolABIEncoded(event *StreamRegistryV1StreamUpdated) (
 	for i, setMiniblock := range parsed {
 		results[i] = &StreamMiniblockUpdate{
 			SetMiniblock: setMiniblock,
-			raw:          event.Raw,
 		}
 	}
 
