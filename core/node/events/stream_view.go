@@ -357,13 +357,13 @@ func (r *StreamView) makeMiniblockCandidate(
 	eventNumOffset := last.Header().EventNumOffset + int64(len(last.Events())) + 1 // +1 for header
 	nextMiniblockNum := last.Header().MiniblockNum + 1
 	miniblockNumOfPrevSnapshot := last.Header().PrevSnapshotMiniblockNum
-	if last.Header().Snapshot != nil {
+	if last.Header().IsSnapshot() {
 		miniblockNumOfPrevSnapshot = last.Header().MiniblockNum
 	}
 
-	var snapshot *Snapshot
+	var parsedSnapshot *ParsedSnapshot
 	if proposal.shouldSnapshot {
-		snapshot = proto.Clone(r.snapshot).(*Snapshot)
+		snapshot := proto.Clone(r.snapshot).(*Snapshot)
 
 		// Apply all events in blocks since last snapshot
 		for i := r.snapshotIndex + 1; i < len(r.blocks); i++ {
@@ -393,6 +393,11 @@ func (r *StreamView) makeMiniblockCandidate(
 				)
 			}
 		}
+
+		var err error
+		if parsedSnapshot, err = MakeParsedSnapshot(params.Wallet, snapshot); err != nil {
+			log.Errorw("Failed to make parsed snapshot", "error", err, "streamId", r.streamId)
+		}
 	}
 
 	header := &MiniblockHeader{
@@ -400,7 +405,6 @@ func (r *StreamView) makeMiniblockCandidate(
 		Timestamp:                NextMiniblockTimestamp(last.Header().Timestamp),
 		EventHashes:              hashes,
 		PrevMiniblockHash:        last.headerEvent.Hash[:],
-		Snapshot:                 snapshot,
 		EventNumOffset:           eventNumOffset,
 		PrevSnapshotMiniblockNum: miniblockNumOfPrevSnapshot,
 		Content: &MiniblockHeader_None{
@@ -408,7 +412,15 @@ func (r *StreamView) makeMiniblockCandidate(
 		},
 	}
 
-	return NewMiniblockInfoFromHeaderAndParsed(params.Wallet, header, events, nil)
+	if parsedSnapshot != nil {
+		header.Snapshot = parsedSnapshot.Snapshot
+		// header.SnapshotHash = parsedSnapshot.Envelope.Hash
+		// TODO: Remove the following line.
+		// Just resetting it to nil for now to avoid storing it in the DB until all nodes can handle snapshots.
+		parsedSnapshot = nil
+	}
+
+	return NewMiniblockInfoFromHeaderAndParsed(params.Wallet, header, events, parsedSnapshot)
 }
 
 // copyAndApplyBlock copies the current view and applies the given miniblock to it.
@@ -620,12 +632,15 @@ func (r *StreamView) Miniblocks() []*MiniblockInfo {
 	return r.blocks
 }
 
-func (r *StreamView) MiniblocksFromLastSnapshot() []*Miniblock {
-	miniblocks := make([]*Miniblock, 0, len(r.blocks)-r.snapshotIndex)
+func (r *StreamView) MiniblocksFromLastSnapshot() (miniblocks []*Miniblock, snapshot *Envelope) {
+	miniblocks = make([]*Miniblock, 0, len(r.blocks)-r.snapshotIndex)
 	for i := r.snapshotIndex; i < len(r.blocks); i++ {
 		miniblocks = append(miniblocks, r.blocks[i].Proto)
 	}
-	return miniblocks
+	if len(miniblocks) > 0 {
+		snapshot = r.blocks[r.snapshotIndex].Snapshot
+	}
+	return
 }
 
 func (r *StreamView) SyncCookie(localNodeAddress common.Address) *SyncCookie {
@@ -950,10 +965,12 @@ func (r *StreamView) GetStreamSince(
 }
 
 func (r *StreamView) GetResetStreamAndCookie(wallet *crypto.Wallet) *StreamAndCookie {
+	mbs, sn := r.MiniblocksFromLastSnapshot()
 	return &StreamAndCookie{
 		Events:         r.MinipoolEnvelopes(),
 		NextSyncCookie: r.SyncCookie(wallet.Address),
-		Miniblocks:     r.MiniblocksFromLastSnapshot(),
+		Miniblocks:     mbs,
+		Snapshot:       sn,
 		SyncReset:      true,
 	}
 }
