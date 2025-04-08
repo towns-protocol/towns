@@ -1,58 +1,63 @@
 import { useMemo } from 'react'
 import { OffscreenMarker } from '@components/OffscreenPill/OffscreenPill'
-import { notUndefined } from 'ui/utils/utils'
+import { ChannelMenuItem, MixedChannelMenuItem } from 'hooks/useSortedChannels'
+
+const isChannel = (c: MixedChannelMenuItem): c is ChannelMenuItem => c.type === 'channel'
+
+const Priority = {
+    DM: 2,
+    Mention: 1,
+    Message: 0,
+} as const
 
 /**
  * given a list of unread channels, threads and mentions, returns a list of markers
  */
 export const useOffscreenMarkers = ({
+    unreads,
     unreadThreadsCount,
     unreadThreadMentions,
 }: {
+    unreads: MixedChannelMenuItem[]
     unreadThreadsCount: number
     unreadThreadMentions: number
 }) => {
     return useMemo(() => {
-        let defaultMarker: OffscreenMarker | undefined = undefined
-        const markers: string[] = []
+        const markers: OffscreenMarker[] = []
 
-        if (unreadThreadsCount > 0) {
-            markers.push('threads')
-            defaultMarker = {
-                targetId: 'threads',
-                label: `More unread`,
+        unreads.forEach((c) => {
+            if (isChannel(c)) {
+                markers.push({
+                    targetId: c.id,
+                    label: c.mentionCount ? 'Unread mentions' : 'More unread',
+                    priority: c.mentionCount ? Priority.Mention : Priority.Message,
+                })
+            } else {
+                markers.push({
+                    targetId: c.id,
+                    label: 'Unread messages',
+                    priority: Priority.DM,
+                })
             }
-        }
+        })
 
         // unread threads are top most
         if (unreadThreadMentions > 0) {
-            defaultMarker = {
+            markers.push({
                 targetId: 'threads',
-                label: `Unread mentions`,
-            }
-            markers.push('threads')
-        }
-
-        if (unreadThreadsCount > 0) {
-            defaultMarker = {
+                label: 'Unread mentions',
+                priority: Priority.Mention,
+            })
+        } else if (unreadThreadsCount > 0) {
+            markers.push({
                 targetId: 'threads',
-                // since threads are on top, we still want to show the pill
-                // until the user scrolls past the first thread however we keep
-                // the precedence for the label (e.g. Unread mentions first)
-                label: defaultMarker?.label ?? `More unread`,
-            }
+                label: 'More unread',
+                priority: Priority.Message,
+            })
         }
 
         return {
-            defaultLabel: defaultMarker?.label,
-            // we only use one default label (e.g. Unread mentions) for all markers
-            // independently of what's outside of the screen or not otherwise
-            // the pill changes shape / content too often as you scroll
-            markers: markers
-                .map((m) => ({
-                    targetId: m,
-                }))
-                .filter(notUndefined),
+            markers: markers.filter((m) => !!m?.targetId),
         }
-    }, [unreadThreadMentions, unreadThreadsCount])
+    }, [unreads, unreadThreadMentions, unreadThreadsCount])
 }

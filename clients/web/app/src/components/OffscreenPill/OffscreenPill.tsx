@@ -1,11 +1,13 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import React, { startTransition, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { AnimatePresence } from 'framer-motion'
 import { isEqual } from 'lodash'
 import { Box, BoxProps, MotionBox, Text } from '@ui'
+import { notUndefined } from 'ui/utils/utils'
 
 export type OffscreenMarker = {
     targetId: string
     label?: string
+    priority: number
 }
 
 type Alignment = 'top' | 'bottom'
@@ -45,81 +47,35 @@ export const OffscreenPill = (props: {
     const activeMarkerRef = useRef(activeMarker)
     activeMarkerRef.current = activeMarker
 
+    const [intersectionEntries, setIntersectionEntries] = useState<Set<string>>(new Set())
+
     useEffect(() => {
         const container = scrollRef.current
-
         if (!container) {
             return
         }
 
-        if (!markers.length) {
-            setActiveMarker(undefined)
-        }
-
-        const onChangeObserved: IntersectionObserverCallback = () => {
-            const containerBounds = container.getBoundingClientRect()
-            // we need to check the intersection of all items, not just the ones
-            // that just intersected
-            const allItems = markers
-                .map((marker) => ({
-                    marker,
-                    target: container.querySelector(
-                        `[data-offscreen-id="${getMarkerDomId(marker.targetId)}"]`,
-                    ),
-                }))
-                .reverse()
-
-            // retrieve the closest element outside the view
-            const closest = allItems.reduce(
-                (closest, item) => {
-                    if (!item.target) {
-                        return closest
-                    }
-                    const marker = item.marker
-                    const bounds = item.target.getBoundingClientRect()
-                    const pos = bounds.y
-                    // this needs to match the current intersection provided by
-                    // the observer otherwise the UI will get out of sync.
-                    // for this reason we're allowing 1/2 height of the element
-                    // in extra margin (intersection triggered at 0.5 height)
-                    const isIntersecting =
-                        bounds.top + bounds.height * 0 < containerBounds.bottom &&
-                        bounds.top + bounds.height * 1 > containerBounds.top + containerMarginTop
-
-                    const alignment: Alignment =
-                        bounds.y < containerBounds.top + containerBounds.height / 2
-                            ? 'top'
-                            : 'bottom'
-
-                    const offset = alignment === 'top' ? pos : pos - containerBounds.bottom
-
-                    if (
-                        marker &&
-                        // outside the viewport
-                        !isIntersecting &&
-                        // while being closer than the previous one
-                        (!closest || Math.abs(offset) > Math.abs(closest.offset))
-                    ) {
-                        return { offset, marker, alignment }
-                    }
-                    return closest
-                },
-                undefined as
-                    | {
-                          offset: number
-                          marker: OffscreenMarker
-                          alignment: Alignment
-                      }
-                    | undefined,
-            )
-
-            if (!isEqual(closest, activeMarkerRef.current)) {
-                // update pill
-                if (closest?.marker && !closest.marker.label) {
-                    closest.marker.label = defaultLabel
-                }
-                setActiveMarker(closest)
-            }
+        const onChangeObserved: IntersectionObserverCallback = (entries) => {
+            startTransition(() => {
+                setIntersectionEntries((prev) => {
+                    const newSet = new Set(prev)
+                    entries.forEach((e) => {
+                        const targetId = e.target.getAttribute('data-offscreen-id')
+                        const dataId = markers.find(
+                            (m) => getMarkerDomId(m.targetId) === targetId,
+                        )?.targetId
+                        if (!dataId) {
+                            return
+                        }
+                        if (e.isIntersecting) {
+                            newSet.delete(dataId)
+                        } else {
+                            newSet.add(dataId)
+                        }
+                    })
+                    return newSet
+                })
+            })
         }
 
         const intersectionObserver = new IntersectionObserver(onChangeObserved, {
@@ -136,33 +92,154 @@ export const OffscreenPill = (props: {
                 intersectionObserver.observe(dom)
             }
         })
-
-        // refresh items on init
-        onChangeObserved([], intersectionObserver)
-
         return () => {
             intersectionObserver.disconnect()
         }
-    }, [containerMarginTop, defaultLabel, markers, scrollRef])
+    }, [containerMarginTop, markers, scrollRef])
+
+    useEffect(() => {
+        const container = scrollRef.current
+        if (!container) {
+            return
+        }
+
+        const containerBounds = container.getBoundingClientRect()
+
+        const outsideItems = markers
+            .filter((m) => intersectionEntries.has(m.targetId))
+            .map((m) => {
+                const dom = container.querySelector(
+                    `[data-offscreen-id="${getMarkerDomId(m.targetId)}"]`,
+                )
+                if (!dom) {
+                    return undefined
+                }
+                const bounds = dom.getBoundingClientRect()
+                const alignment: Alignment =
+                    bounds.y < containerBounds.top + containerBounds.height / 2 ? 'top' : 'bottom'
+
+                return {
+                    marker: m,
+                    alignment,
+                    offset: 0,
+                }
+            })
+            .filter(notUndefined)
+
+        const closest = outsideItems.reduce(
+            (closest, { marker, alignment, offset }) => {
+                const isCloser = !closest || Math.abs(offset) < Math.abs(closest.offset)
+                const isPriority =
+                    (!marker.priority && !closest?.marker?.priority) ||
+                    (marker.priority &&
+                        (closest?.marker?.priority === undefined ||
+                            marker.priority <= closest.marker.priority))
+
+                if (
+                    // while being closer than the previous one
+                    !closest ||
+                    (isCloser && isPriority)
+                ) {
+                    return { offset, marker, alignment }
+                }
+                return closest
+            },
+            undefined as
+                | {
+                      offset: number
+                      marker: OffscreenMarker
+                      alignment: Alignment
+                  }
+                | undefined,
+        )
+
+        if (!isEqual(closest, activeMarkerRef.current)) {
+            if (closest?.marker && !closest.marker.label) {
+                closest.marker.label = defaultLabel
+            }
+            setActiveMarker(closest)
+        }
+    }, [defaultLabel, intersectionEntries, markers, scrollRef])
 
     const onPillClick = useCallback(() => {
-        const container = scrollRef.current
-        const furthest = activeMarker?.alignment === 'top' ? markers[0] : markers.at(-1)
-        if (furthest) {
-            const dom = container?.querySelector(
-                `[data-offscreen-id="${getMarkerDomId(furthest?.targetId)}"]`,
+        if (activeMarker) {
+            const container = scrollRef.current
+
+            if (!container) {
+                return
+            }
+
+            const containerBounds = container?.getBoundingClientRect()
+
+            const allElements = markers
+                .map((m) => {
+                    const el = container?.querySelector(
+                        `[data-offscreen-id="${getMarkerDomId(m.targetId)}"]`,
+                    )
+                    const bounds = el?.getBoundingClientRect()
+                    return bounds
+                        ? {
+                              targetId: m.targetId,
+                              bounds,
+                              el,
+                          }
+                        : undefined
+                })
+                .filter(notUndefined)
+
+            const current = allElements.find((e) => e.targetId === activeMarker.marker.targetId)
+
+            if (!current) {
+                return
+            }
+
+            const direction =
+                current.bounds.y < containerBounds.top + containerBounds.height / 2 ? 'up' : 'down'
+
+            const furthest = allElements.reduce((keep, current) => {
+                let distance: number
+                if (direction === 'up') {
+                    if (current.bounds.y > containerBounds.top) {
+                        return keep
+                    }
+                    distance = Math.abs(current.bounds.y - containerBounds.top)
+                } else {
+                    if (current.bounds.y < containerBounds.bottom) {
+                        return keep
+                    }
+                    distance = Math.abs(
+                        containerBounds.top + containerBounds.height - current.bounds.y,
+                    )
+                }
+                if (!keep || distance > keep.distance) {
+                    return { furthest: current, distance }
+                }
+                return keep
+            }, undefined as { furthest: (typeof allElements)[0]; distance: number } | undefined)?.furthest
+
+            if (!furthest) {
+                return
+            }
+
+            const dom = container.querySelector(
+                `[data-offscreen-id="${getMarkerDomId(furthest.targetId)}"]`,
             )
+
             dom?.scrollIntoView({
                 behavior: 'smooth',
-                block: activeMarker?.alignment === 'top' ? 'start' : 'end',
+                block: direction === 'up' ? 'start' : 'end',
             })
         }
-    }, [activeMarker?.alignment, markers, scrollRef])
+    }, [activeMarker, markers, scrollRef])
 
     return (
         <AnimatePresence>
             {activeMarker?.marker && (
-                <Pill alignment={activeMarker.alignment} key="pill" onClick={onPillClick}>
+                <Pill
+                    alignment={activeMarker.alignment}
+                    key={`pill-${activeMarker?.alignment}`}
+                    onClick={onPillClick}
+                >
                     <Text fontWeight="medium">{activeMarker.alignment === 'top' ? '↑' : '↓'} </Text>
                     <Text fontWeight="medium">{activeMarker.marker.label}</Text>
                 </Pill>

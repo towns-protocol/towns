@@ -1,4 +1,4 @@
-import React, { useCallback, useRef, useState } from 'react'
+import React, { useCallback, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import { useEvent } from 'react-use-event-hook'
 import {
@@ -21,7 +21,7 @@ import { CreateChannelFormContainer } from '@components/Web3/CreateChannelForm'
 import { Badge, Box, Card, Icon, IconButton, MotionBox, Paragraph, Stack, Text } from '@ui'
 import { useCreateLink } from 'hooks/useCreateLink'
 import { useShortcut } from 'hooks/useShortcut'
-import { useSortedChannels } from 'hooks/useSortedChannels'
+import { MixedChannelMenuItem, useSortedChannels } from 'hooks/useSortedChannels'
 import { useReviewStore } from 'store/reviewStore'
 import { useReviews } from 'hooks/useReviews'
 import { useMyAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
@@ -129,6 +129,12 @@ export const SpaceSideBar = (props: Props) => {
 
     const { dmChannels } = useTownsContext()
 
+    const unreads = useMemo<MixedChannelMenuItem[]>(() => {
+        return [...sortedDmChannels, ...sortedSpaceChannels, ...sortedFavoriteChannels].filter(
+            (c) => c.unread,
+        )
+    }, [sortedDmChannels, sortedSpaceChannels, sortedFavoriteChannels])
+
     const membersNotInDMs = useMembersNotInDMs({
         dmChannels,
         memberIds: spaceMemberIds,
@@ -137,6 +143,7 @@ export const SpaceSideBar = (props: Props) => {
     const unreadThreadMentions = useSpaceUnreadThreadMentions(space.id)
 
     const offscreenMarkers = useOffscreenMarkers({
+        unreads,
         unreadThreadsCount,
         unreadThreadMentions,
     })
@@ -438,7 +445,6 @@ export const SpaceSideBar = (props: Props) => {
                 )}
                 <OffscreenPill
                     markers={offscreenMarkers.markers}
-                    defaultLabel={offscreenMarkers.defaultLabel}
                     scrollRef={scrollRef}
                     containerMarginTop={HEADER_MARGIN}
                 />
