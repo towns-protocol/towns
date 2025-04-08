@@ -135,37 +135,20 @@ func NewMiniblockInfoFromProto(mb *Miniblock, sn *Envelope, opts *ParsedMinibloc
 				Message("Failed to parse snapshot").
 				Func("NewMiniblockInfoFromProto")
 		}
-	} else if blockHeader.GetSnapshot() != nil && len(blockHeader.GetSnapshotHash()) == 0 {
-		// This function can be called from the places where a stream gets initialized based on the miniblock
-		// data fetched from the blockchain. In this case, the snapshot is set in the header.
-		// TODO: This case could be removed when the network operates in a new snapshot style.
-		snapshot = &ParsedSnapshot{Snapshot: blockHeader.GetSnapshot()}
 	}
 
-	// TODO: Make it work with the new style of snapshot
-	if !opts.SkipSnapshotValidation() {
-		if len(blockHeader.GetSnapshotHash()) == 0 && blockHeader.GetSnapshot() == nil && snapshot != nil {
-			return nil, RiverError(Err_BAD_BLOCK, "Snapshot is not expected").
-				Func("NewMiniblockInfoFromProto")
-		}
-
+	// IMPORTANT: Genesis miniblocks use the legacy format of snapshots.
+	// Applied for the new snapshot format only.
+	if !opts.SkipSnapshotValidation() && blockHeader.GetSnapshot() == nil && len(blockHeader.GetSnapshotHash()) > 0 {
 		if snapshot == nil {
 			return nil, RiverError(Err_BAD_BLOCK, "Snapshot envelope must be set").
 				Func("NewMiniblockInfoFromProto")
 		}
 
-		if len(blockHeader.GetSnapshotHash()) > 0 {
-			// Validate snapshot in a new style
-			if common.BytesToHash(sn.Hash).Cmp(common.BytesToHash(blockHeader.GetSnapshotHash())) != 0 {
-				return nil, RiverError(Err_BAD_BLOCK, "Snapshot hash does not match snapshot envelope hash").
-					Func("NewMiniblockInfoFromProto")
-			}
-		} else if blockHeader.GetSnapshot() != nil {
-			// Validate snapshot in a legacy style
-			if !proto.Equal(blockHeader.GetSnapshot(), snapshot.Snapshot) {
-				return nil, RiverError(Err_BAD_BLOCK, "Snapshot envelope does not match snapshot envelope in header").
-					Func("NewMiniblockInfoFromProto")
-			}
+		// Validate snapshot in a new style
+		if common.BytesToHash(sn.Hash).Cmp(common.BytesToHash(blockHeader.GetSnapshotHash())) != 0 {
+			return nil, RiverError(Err_BAD_BLOCK, "Snapshot hash does not match snapshot envelope hash").
+				Func("NewMiniblockInfoFromProto")
 		}
 	}
 
@@ -323,8 +306,9 @@ func (b *MiniblockInfo) AsStorageMb() (*storage.WriteMiniblockData, error) {
 
 	// Serialize snapshot if the miniblock header contains a snapshot hash instead of a full snapshot.
 	// Here the DB record is controlled by the header, so we need to serialize the snapshot.
+	// IMPORTANT: Genesis miniblocks use the legacy format of snapshots.
 	var serializedSn []byte
-	if b.Snapshot != nil /*&& (len(b.Header().GetSnapshotHash()) > 0 && b.Header().GetSnapshot() == nil)*/ {
+	if b.Snapshot != nil && (len(b.Header().GetSnapshotHash()) > 0 && b.Header().GetSnapshot() == nil) {
 		if serializedSn, err = proto.Marshal(b.Snapshot); err != nil {
 			return nil, AsRiverError(err, Err_INTERNAL).
 				Message("Failed to serialize snapshot to bytes").

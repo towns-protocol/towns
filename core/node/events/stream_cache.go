@@ -256,6 +256,7 @@ func (s *StreamCache) onStreamAllocated(
 		local:               &localStreamState{},
 	}
 	stream.nodesLocked.ResetFromStreamState(event, s.params.Wallet.Address)
+
 	stream, created, err := s.createStreamStorage(ctx, stream, genesisMB, genesisMbNum, genesisHash)
 	if err != nil {
 		logging.FromCtx(ctx).Errorw("Failed to allocate stream", "err", err, "streamId", event.GetStreamId())
@@ -451,7 +452,7 @@ func (s *StreamCache) createStreamStorage(
 		}
 
 		// Prepare storage level structure to create a stream.
-		storageMb, err := view.Miniblocks()[view.snapshotIndex].AsStorageMb()
+		storageMb, err := view.Miniblocks()[0].AsStorageMb()
 		if err != nil {
 			return nil, false, err
 		}

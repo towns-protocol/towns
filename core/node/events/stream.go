@@ -406,14 +406,14 @@ func (s *Stream) initFromGenesis(
 	}
 
 	// TODO: move this call out of the lock
-	_, registeredGenesisHash, _, blockNum, err := s.params.Registry.GetStreamWithGenesis(ctx, s.streamId)
+	_, hash, _, blockNum, err := s.params.Registry.GetStreamWithGenesis(ctx, s.streamId)
 	if err != nil {
 		return err
 	}
 
-	if registeredGenesisHash != genesisInfo.Ref.Hash {
+	if hash != genesisInfo.Ref.Hash {
 		return RiverError(Err_BAD_BLOCK, "Invalid genesis block hash").
-			Tags("registryHash", registeredGenesisHash, "blockHash", genesisInfo.Ref.Hash).
+			Tags("registryHash", hash, "blockHash", genesisInfo.Ref.Hash).
 			Func("initFromGenesis")
 	}
 
@@ -432,7 +432,7 @@ func (s *Stream) initFromGenesis(
 	}
 
 	// Prepare storage level structure to create a stream.
-	storageMb, err := view.Miniblocks()[view.snapshotIndex].AsStorageMb()
+	storageMb, err := view.Miniblocks()[0].AsStorageMb()
 	if err != nil {
 		return err
 	}
@@ -496,7 +496,7 @@ func (s *Stream) initFromBlockchain(ctx context.Context) error {
 	}
 
 	// Prepare storage level structure to create a stream.
-	storageMb, err := view.Miniblocks()[view.snapshotIndex].AsStorageMb()
+	storageMb, err := view.Miniblocks()[0].AsStorageMb()
 	if err != nil {
 		return err
 	}
