@@ -8,8 +8,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/towns-protocol/towns/core/node/registries"
-
 	mapset "github.com/deckarep/golang-set/v2"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/linkdata/deadlock"
@@ -1070,18 +1068,11 @@ func (s *Stream) AdvanceStickyPeer(currentPeer common.Address) common.Address {
 	return s.nodesLocked.AdvanceStickyPeer(currentPeer)
 }
 
-func (s *Stream) ResetFromStreamState(state *river.StreamState, localNode common.Address) {
+func (s *Stream) ResetFromStreamWithId(stream *river.StreamWithId, localNode common.Address) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	s.nodesLocked.ResetFromStreamState(state, localNode)
-}
-
-func (s *Stream) ResetFromStreamResult(result *registries.GetStreamResult, localNode common.Address) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	s.nodesLocked.ResetFromStreamResult(result, localNode)
+	s.nodesLocked.ResetFromStreamWithId(stream, localNode)
 }
 
 func (s *Stream) Reset(replicationFactor int, nodes []common.Address, localNode common.Address) {

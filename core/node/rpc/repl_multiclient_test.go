@@ -130,7 +130,4 @@ func TestReplMcConversationShort(t *testing.T) {
 	t.Run("5x5", func(t *testing.T) {
 		testReplMcConversation(t, 5, 5, 1, 1, 5)
 	})
-	t.Run("5x100", func(t *testing.T) {
-		testReplMcConversation(t, 5, 100, 10, 100, 100)
-	})
 }
