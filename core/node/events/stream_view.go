@@ -48,7 +48,7 @@ func MakeStreamView(streamData *storage.ReadStreamFromLastSnapshotResult) (*Stre
 		}
 		miniblocks[i] = miniblock
 		lastMiniblockNumber = miniblock.Header().MiniblockNum
-		if snapshotIndex == -1 && (miniblock.GetSnapshot() != nil) {
+		if snapshotIndex == -1 && miniblock.Header().IsSnapshot() {
 			snapshotIndex = i
 		}
 	}
@@ -125,7 +125,7 @@ func MakeRemoteStreamView(stream *StreamAndCookie) (*StreamView, error) {
 		}
 		lastMiniblockNumber = miniblock.Header().MiniblockNum
 		miniblocks[i] = miniblock
-		if miniblock.GetSnapshot() != nil {
+		if miniblock.Header().IsSnapshot() {
 			snapshotIndex = i
 		}
 	}
@@ -492,13 +492,7 @@ func (r *StreamView) copyAndApplyBlock(
 	var snapshotIndex int
 	var snapshot *Snapshot
 	if header.IsSnapshot() {
-		if miniblock.snapshot != nil {
-			// Using new snapshot format
-			snapshot = miniblock.snapshot.Snapshot
-		} else {
-			// Using old snapshot format
-			snapshot = header.Snapshot
-		}
+		snapshot = miniblock.GetSnapshot()
 		startIndex = max(0, len(r.blocks)-recencyConstraintsGenerations)
 		snapshotIndex = len(r.blocks) - startIndex
 	} else {
