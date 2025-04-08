@@ -40,8 +40,8 @@ type StreamNodes interface {
 	// If the current sticky peer is the last node, it shuffles the nodes and resets the sticky peer to the first node.
 	AdvanceStickyPeer(currentPeer common.Address) common.Address
 
-	// ResetFromStreamState the list of nodes from the given stream state.
-	ResetFromStreamState(state *river.StreamState, localNode common.Address)
+	// ResetFromStreamWithId the list of nodes from the given stream record.
+	ResetFromStreamWithId(stream *river.StreamWithId, localNode common.Address)
 
 	// ResetFromStreamResult the list of nodes from the given stream result.
 	ResetFromStreamResult(result *registries.GetStreamResult, localNode common.Address)
@@ -73,8 +73,8 @@ type StreamNodesWithoutLock struct {
 
 var _ StreamNodes = (*StreamNodesWithoutLock)(nil)
 
-func (s *StreamNodesWithoutLock) ResetFromStreamState(state *river.StreamState, localNode common.Address) {
-	s.Reset(state.Stream.ReplicationFactor(), state.Stream.Nodes(), localNode)
+func (s *StreamNodesWithoutLock) ResetFromStreamWithId(stream *river.StreamWithId, localNode common.Address) {
+	s.Reset(stream.ReplicationFactor(), stream.Nodes(), localNode)
 }
 
 func (s *StreamNodesWithoutLock) ResetFromStreamResult(result *registries.GetStreamResult, localNode common.Address) {
@@ -239,11 +239,11 @@ func (s *StreamNodesWithLock) Reset(replicationFactor int, nodes []common.Addres
 	s.n.Reset(replicationFactor, nodes, localNode)
 }
 
-func (s *StreamNodesWithLock) ResetFromStreamState(state *river.StreamState, localNode common.Address) {
+func (s *StreamNodesWithLock) ResetFromStreamWithId(stream *river.StreamWithId, localNode common.Address) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	s.n.ResetFromStreamState(state, localNode)
+	s.n.ResetFromStreamWithId(stream, localNode)
 }
 
 func (s *StreamNodesWithLock) ResetFromStreamResult(result *registries.GetStreamResult, localNode common.Address) {

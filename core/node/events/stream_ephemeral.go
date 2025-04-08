@@ -30,7 +30,7 @@ func (s *StreamCache) onStreamCreated(
 		lastAccessedTime:    time.Now(),
 		local:               &localStreamState{},
 	}
-	stream.nodesLocked.ResetFromStreamState(event, s.params.Wallet.Address)
+	stream.nodesLocked.ResetFromStreamWithId(event.Stream, s.params.Wallet.Address)
 
 	go func() {
 		if err := s.normalizeEphemeralStream(
@@ -57,7 +57,7 @@ func (s *StreamCache) onStreamPlacementUpdated(
 	if !participatingInStream {
 		if stream, ok := s.cache.Load(event.GetStreamId()); ok {
 			stream.mu.Lock()
-			stream.nodesLocked.ResetFromStreamState(event, s.params.Wallet.Address)
+			stream.nodesLocked.ResetFromStreamWithId(event.Stream, s.params.Wallet.Address)
 			stream.local = nil
 			stream.mu.Unlock()
 		}
@@ -75,7 +75,7 @@ func (s *StreamCache) onStreamPlacementUpdated(
 				params:              s.params,
 				local:               &localStreamState{},
 			}
-			s.nodesLocked.ResetFromStreamState(event, s.params.Wallet.Address)
+			s.nodesLocked.ResetFromStreamWithId(event.Stream, s.params.Wallet.Address)
 			return s, false
 		},
 	)
@@ -83,7 +83,7 @@ func (s *StreamCache) onStreamPlacementUpdated(
 	if loaded {
 		stream.mu.Lock()
 		// TODO: REPLICATION: FIX: what to do with lastAppliedBlockNum
-		stream.nodesLocked.ResetFromStreamState(event, s.params.Wallet.Address)
+		stream.nodesLocked.ResetFromStreamWithId(event.Stream, s.params.Wallet.Address)
 		if stream.local == nil {
 			stream.local = &localStreamState{}
 		}

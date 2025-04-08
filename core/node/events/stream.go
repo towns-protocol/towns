@@ -1070,11 +1070,11 @@ func (s *Stream) AdvanceStickyPeer(currentPeer common.Address) common.Address {
 	return s.nodesLocked.AdvanceStickyPeer(currentPeer)
 }
 
-func (s *Stream) ResetFromStreamState(state *river.StreamState, localNode common.Address) {
+func (s *Stream) ResetFromStreamWithId(stream *river.StreamWithId, localNode common.Address) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	s.nodesLocked.ResetFromStreamState(state, localNode)
+	s.nodesLocked.ResetFromStreamWithId(stream, localNode)
 }
 
 func (s *Stream) ResetFromStreamResult(result *registries.GetStreamResult, localNode common.Address) {

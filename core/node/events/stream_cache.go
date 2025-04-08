@@ -295,7 +295,7 @@ func (s *StreamCache) onStreamAllocated(
 				lastAccessedTime:    time.Now(),
 				local:               &localStreamState{},
 			}
-			ret.nodesLocked.ResetFromStreamState(event, s.params.Wallet.Address)
+			ret.nodesLocked.ResetFromStreamWithId(event.Stream, s.params.Wallet.Address)
 			return ret, false
 		},
 	)
