@@ -57,7 +57,7 @@ func MakeStreamView(streamData *storage.ReadStreamFromLastSnapshotResult) (*Stre
 		return nil, RiverError(Err_STREAM_BAD_EVENT, "no snapshot").Func("MakeStreamView")
 	}
 
-	snapshot := miniblocks[snapshotIndex].headerEvent.Event.GetMiniblockHeader().GetSnapshot()
+	snapshot := miniblocks[snapshotIndex].GetSnapshot()
 	if snapshot == nil {
 		return nil, RiverError(Err_STREAM_BAD_EVENT, "no snapshot").Func("MakeStreamView")
 	}
@@ -119,7 +119,6 @@ func MakeRemoteStreamView(stream *StreamAndCookie) (*StreamView, error) {
 		if i > 0 {
 			opts = opts.WithExpectedBlockNumber(lastMiniblockNumber + 1)
 		}
-
 		miniblock, err := NewMiniblockInfoFromProto(binMiniblock, stream.GetSnapshotByMiniblockIndex(i), opts)
 		if err != nil {
 			return nil, err
@@ -131,7 +130,7 @@ func MakeRemoteStreamView(stream *StreamAndCookie) (*StreamView, error) {
 		}
 	}
 
-	snapshot := miniblocks[0].headerEvent.Event.GetMiniblockHeader().GetSnapshot()
+	snapshot := miniblocks[snapshotIndex].GetSnapshot()
 	if snapshot == nil {
 		return nil, RiverError(Err_STREAM_BAD_EVENT, "no snapshot").Func("MakeStreamView")
 	}
