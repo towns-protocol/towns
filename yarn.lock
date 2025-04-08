@@ -7708,9 +7708,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@towns-protocol/contracts@workspace:contracts":
+"@towns-protocol/contracts@workspace:packages/contracts":
   version: 0.0.0-use.local
-  resolution: "@towns-protocol/contracts@workspace:contracts"
+  resolution: "@towns-protocol/contracts@workspace:packages/contracts"
   dependencies:
     "@openzeppelin/contracts": ^5.2.0
     "@openzeppelin/contracts-upgradeable": ^5.2.0
