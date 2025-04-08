@@ -366,7 +366,7 @@ export function riverDelegateHashSrc(
     return retVal
 }
 
-export function notificationServiceHash(
+export function rpcAuthHash(
     userId: Uint8Array,
     expiration: bigint, // unix seconds
     challenge: Uint8Array,
