@@ -39,13 +39,16 @@ export const useUploadAttachment = () => {
                 ? await encryptChunkedAESGCM(data, chunkSize)
                 : await encryptAESGCM(data, chunkSize)
             const chunkCount = encryptionResult.chunks.length
+            if (chunkCount === 0) {
+                throw new Error('No media chunks')
+            }
             const mediaStreamInfo = await createMediaStream(
                 channelId,
                 spaceId,
                 userId,
                 chunkCount,
-                undefined,
-                undefined,
+                encryptionResult.chunks[0].ciphertext,
+                window.townsNewMediaEncryptionFlag ? encryptionResult.chunks[0].iv : undefined,
                 window.townsNewMediaEncryptionFlag,
             )
             if (!mediaStreamInfo) {
@@ -60,21 +63,26 @@ export const useUploadAttachment = () => {
                 perChunkEncryption: window.townsNewMediaEncryptionFlag ?? 'undefined',
             })
 
-            let cc: CreationCookie = create(CreationCookieSchema, mediaStreamInfo.creationCookie)
-            for (let chunkIndex = 0; chunkIndex < chunkCount; chunkIndex++) {
-                const chunk = encryptionResult.chunks[chunkIndex]
-                setProgress(chunkIndex / chunkCount)
-                const result = await sendMediaPayload(
-                    cc,
-                    chunkIndex == chunkCount - 1,
-                    chunk.ciphertext,
-                    chunkIndex,
-                    window.townsNewMediaEncryptionFlag ? chunk.iv : undefined,
+            if (chunkCount > 1) {
+                let cc: CreationCookie = create(
+                    CreationCookieSchema,
+                    mediaStreamInfo.creationCookie,
                 )
-                if (!result) {
-                    throw new Error('Failed to send media payload')
+                for (let chunkIndex = 1; chunkIndex < chunkCount; chunkIndex++) {
+                    const chunk = encryptionResult.chunks[chunkIndex]
+                    setProgress(chunkIndex / chunkCount)
+                    const result = await sendMediaPayload(
+                        cc,
+                        chunkIndex == chunkCount - 1,
+                        chunk.ciphertext,
+                        chunkIndex,
+                        window.townsNewMediaEncryptionFlag ? chunk.iv : undefined,
+                    )
+                    if (!result) {
+                        throw new Error('Failed to send media payload')
+                    }
+                    cc = create(CreationCookieSchema, result.creationCookie)
                 }
-                cc = create(CreationCookieSchema, result.creationCookie)
             }
             setProgress(1)
 
