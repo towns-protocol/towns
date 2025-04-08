@@ -14,11 +14,5 @@ interface IMembershipPricing {
 
     function setPrice(uint256 price) external;
 
-    function getPrice(
-        uint256 freeAllocation,
-        uint256 totalMinted
-    )
-        external
-        view
-        returns (uint256);
+    function getPrice(uint256 freeAllocation, uint256 totalMinted) external view returns (uint256);
 }

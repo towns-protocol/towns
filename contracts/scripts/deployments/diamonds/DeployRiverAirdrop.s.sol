@@ -5,12 +5,9 @@ pragma solidity ^0.8.19;
 import {IDiamond} from "@towns-protocol/diamond/src/IDiamond.sol";
 
 // libraries
-import {DeployDiamondCut} from
-    "@towns-protocol/diamond/scripts/deployments/facets/DeployDiamondCut.s.sol";
-import {DeployDiamondLoupe} from
-    "@towns-protocol/diamond/scripts/deployments/facets/DeployDiamondLoupe.s.sol";
-import {DeployIntrospection} from
-    "@towns-protocol/diamond/scripts/deployments/facets/DeployIntrospection.s.sol";
+import {DeployDiamondCut} from "@towns-protocol/diamond/scripts/deployments/facets/DeployDiamondCut.s.sol";
+import {DeployDiamondLoupe} from "@towns-protocol/diamond/scripts/deployments/facets/DeployDiamondLoupe.s.sol";
+import {DeployIntrospection} from "@towns-protocol/diamond/scripts/deployments/facets/DeployIntrospection.s.sol";
 import {DeployOwnable} from "@towns-protocol/diamond/scripts/deployments/facets/DeployOwnable.s.sol";
 
 // contracts
@@ -131,11 +128,16 @@ contract DeployRiverAirdrop is DiamondHelper, Deployer {
             metadataHelper.makeInitData(bytes32("RiverAirdrop"), "")
         );
 
-        return Diamond.InitParams({
-            baseFacets: baseFacets(),
-            init: multiInit,
-            initData: abi.encodeWithSelector(MultiInit.multiInit.selector, _initAddresses, _initDatas)
-        });
+        return
+            Diamond.InitParams({
+                baseFacets: baseFacets(),
+                init: multiInit,
+                initData: abi.encodeWithSelector(
+                    MultiInit.multiInit.selector,
+                    _initAddresses,
+                    _initDatas
+                )
+            });
     }
 
     function diamondInitParamsFromFacets(address deployer, string[] memory facets) public {
@@ -145,8 +147,8 @@ contract DeployRiverAirdrop is DiamondHelper, Deployer {
             if (facetHelperAddress != address(0)) {
                 // deploy facet
                 address facetAddress = Deployer(facetHelperAddress).deploy(deployer);
-                (FacetCut memory cut, bytes memory config) =
-                    FacetHelper(facetHelperAddress).facetInitHelper(deployer, facetAddress);
+                (FacetCut memory cut, bytes memory config) = FacetHelper(facetHelperAddress)
+                    .facetInitHelper(deployer, facetAddress);
                 if (config.length > 0) {
                     addFacet(cut, facetAddress, config);
                 } else {
@@ -159,11 +161,7 @@ contract DeployRiverAirdrop is DiamondHelper, Deployer {
     function diamondInitHelper(
         address deployer,
         string[] memory facetNames
-    )
-        external
-        override
-        returns (FacetCut[] memory)
-    {
+    ) external override returns (FacetCut[] memory) {
         diamondInitParamsFromFacets(deployer, facetNames);
         return this.getCuts();
     }

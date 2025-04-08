@@ -2,22 +2,17 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {
-    IMainnetDelegation,
-    IMainnetDelegationBase
-} from "contracts/src/base/registry/facets/mainnet/IMainnetDelegation.sol";
+import {IMainnetDelegation, IMainnetDelegationBase} from "contracts/src/base/registry/facets/mainnet/IMainnetDelegation.sol";
 import {IAuthorizedClaimers} from "contracts/src/tokens/mainnet/claimer/IAuthorizedClaimers.sol";
 
 // libraries
-import {NodeOperatorStatus} from
-    "contracts/src/base/registry/facets/operator/NodeOperatorStorage.sol";
+import {NodeOperatorStatus} from "contracts/src/base/registry/facets/operator/NodeOperatorStorage.sol";
 
 // contracts
 
 import {NodeOperatorFacet} from "contracts/src/base/registry/facets/operator/NodeOperatorFacet.sol";
 
-import {ProxyBatchDelegation} from
-    "contracts/src/tokens/mainnet/delegation/ProxyBatchDelegation.sol";
+import {ProxyBatchDelegation} from "contracts/src/tokens/mainnet/delegation/ProxyBatchDelegation.sol";
 import {Towns} from "contracts/src/tokens/towns/mainnet/Towns.sol";
 import {BaseSetup} from "contracts/test/spaces/BaseSetup.sol";
 

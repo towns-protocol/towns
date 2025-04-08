@@ -26,17 +26,18 @@ contract NodeRegistry is INodeRegistry, RegistryModifiers {
         address nodeAddress,
         string memory url,
         NodeStatus status
-    )
-        external
-        onlyOperator(msg.sender)
-    {
+    ) external onlyOperator(msg.sender) {
         // validate that the node is not already in the registry
         if (ds.nodeByAddress[nodeAddress].nodeAddress != address(0)) {
             RiverRegistryErrors.ALREADY_EXISTS.revertWith();
         }
 
-        Node memory newNode =
-            Node({nodeAddress: nodeAddress, url: url, status: status, operator: msg.sender});
+        Node memory newNode = Node({
+            nodeAddress: nodeAddress,
+            url: url,
+            status: status,
+            operator: msg.sender
+        });
 
         ds.nodes.add(nodeAddress); // TODO: remove this line
         ds.nodeByAddress[nodeAddress] = newNode;
@@ -124,22 +125,16 @@ contract NodeRegistry is INodeRegistry, RegistryModifiers {
 
     function _checkNodeStatusTransionAllowed(NodeStatus from, NodeStatus to) internal pure {
         if (
-            from == NodeStatus.NotInitialized
-                || (
-                    from == NodeStatus.RemoteOnly
-                        && (
-                            to == NodeStatus.Failed || to == NodeStatus.Departing
-                                || to == NodeStatus.Operational
-                        )
-                )
-                || (
-                    from == NodeStatus.Operational
-                        && (to == NodeStatus.Failed || to == NodeStatus.Departing)
-                )
-                || (
-                    from == NodeStatus.Departing
-                        && (to == NodeStatus.Failed || to == NodeStatus.Deleted)
-                ) || (from == NodeStatus.Failed && to == NodeStatus.Deleted)
+            from == NodeStatus.NotInitialized ||
+            (from == NodeStatus.RemoteOnly &&
+                (to == NodeStatus.Failed ||
+                    to == NodeStatus.Departing ||
+                    to == NodeStatus.Operational)) ||
+            (from == NodeStatus.Operational &&
+                (to == NodeStatus.Failed || to == NodeStatus.Departing)) ||
+            (from == NodeStatus.Departing &&
+                (to == NodeStatus.Failed || to == NodeStatus.Deleted)) ||
+            (from == NodeStatus.Failed && to == NodeStatus.Deleted)
         ) {
             return;
         }

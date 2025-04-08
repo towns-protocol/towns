@@ -95,43 +95,43 @@ library StakingRewards {
         return FixedPointMathLib.min(self.rewardEndTime, block.timestamp);
     }
 
-    function currentRewardPerTokenAccumulated(Layout storage self)
-        internal
-        view
-        returns (uint256)
-    {
+    function currentRewardPerTokenAccumulated(Layout storage self) internal view returns (uint256) {
         // cache storage reads
         (
             uint96 totalStaked,
             uint256 lastUpdateTime,
             uint256 rewardRate,
             uint256 rewardPerTokenAccumulated
-        ) = (self.totalStaked, self.lastUpdateTime, self.rewardRate, self.rewardPerTokenAccumulated);
+        ) = (
+                self.totalStaked,
+                self.lastUpdateTime,
+                self.rewardRate,
+                self.rewardPerTokenAccumulated
+            );
         if (totalStaked == 0) return rewardPerTokenAccumulated;
 
         uint256 elapsedTime;
         unchecked {
             elapsedTime = lastTimeRewardDistributed(self) - lastUpdateTime;
         }
-        return rewardPerTokenAccumulated
-            + FixedPointMathLib.fullMulDiv(rewardRate, elapsedTime, totalStaked);
+        return
+            rewardPerTokenAccumulated +
+            FixedPointMathLib.fullMulDiv(rewardRate, elapsedTime, totalStaked);
     }
 
     function currentRewardScaled(
         Layout storage self,
         Treasure storage treasure
-    )
-        internal
-        view
-        returns (uint256)
-    {
+    ) internal view returns (uint256) {
         uint256 rewardPerTokenGrowth;
         unchecked {
             rewardPerTokenGrowth =
-                currentRewardPerTokenAccumulated(self) - treasure.rewardPerTokenAccumulated;
+                currentRewardPerTokenAccumulated(self) -
+                treasure.rewardPerTokenAccumulated;
         }
-        return treasure.unclaimedRewardSnapshot
-            + (uint256(treasure.earningPower) * rewardPerTokenGrowth);
+        return
+            treasure.unclaimedRewardSnapshot +
+            (uint256(treasure.earningPower) * rewardPerTokenGrowth);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -157,10 +157,7 @@ library StakingRewards {
         address delegatee,
         address beneficiary,
         uint256 commissionRate
-    )
-        internal
-        returns (uint256 depositId)
-    {
+    ) internal returns (uint256 depositId) {
         if (amount == 0) {
             CustomRevert.revertWith(StakingRewards__InvalidAmount.selector);
         }
@@ -185,9 +182,7 @@ library StakingRewards {
         address delegatee,
         address beneficiary,
         uint256 commissionRate
-    )
-        internal
-    {
+    ) internal {
         updateGlobalReward(self);
 
         Treasure storage beneficiaryTreasure = self.treasureByBeneficiary[beneficiary];
@@ -200,7 +195,14 @@ library StakingRewards {
             self.stakedByDepositor[owner] += amount;
             deposit.amount += amount;
         }
-        _increaseEarningPower(self, deposit, beneficiaryTreasure, amount, delegatee, commissionRate);
+        _increaseEarningPower(
+            self,
+            deposit,
+            beneficiaryTreasure,
+            amount,
+            delegatee,
+            commissionRate
+        );
     }
 
     function redelegate(
@@ -208,9 +210,7 @@ library StakingRewards {
         Deposit storage deposit,
         address newDelegatee,
         uint256 commissionRate
-    )
-        internal
-    {
+    ) internal {
         updateGlobalReward(self);
 
         Treasure storage beneficiaryTreasure = self.treasureByBeneficiary[deposit.beneficiary];
@@ -219,7 +219,12 @@ library StakingRewards {
         _decreaseEarningPower(self, deposit, beneficiaryTreasure);
 
         _increaseEarningPower(
-            self, deposit, beneficiaryTreasure, deposit.amount, newDelegatee, commissionRate
+            self,
+            deposit,
+            beneficiaryTreasure,
+            deposit.amount,
+            newDelegatee,
+            commissionRate
         );
 
         deposit.delegatee = newDelegatee;
@@ -230,17 +235,18 @@ library StakingRewards {
         Deposit storage deposit,
         address newBeneficiary,
         uint256 commissionRate
-    )
-        internal
-    {
+    ) internal {
         if (newBeneficiary == address(0)) {
             CustomRevert.revertWith(StakingRewards__InvalidAddress.selector);
         }
 
         updateGlobalReward(self);
 
-        (uint96 amount, address oldBeneficiary, address delegatee) =
-            (deposit.amount, deposit.beneficiary, deposit.delegatee);
+        (uint96 amount, address oldBeneficiary, address delegatee) = (
+            deposit.amount,
+            deposit.beneficiary,
+            deposit.delegatee
+        );
         deposit.beneficiary = newBeneficiary;
 
         Treasure storage oldTreasure = self.treasureByBeneficiary[oldBeneficiary];
@@ -278,10 +284,7 @@ library StakingRewards {
     function claimReward(
         Layout storage self,
         address beneficiary
-    )
-        internal
-        returns (uint256 reward)
-    {
+    ) internal returns (uint256 reward) {
         updateGlobalReward(self);
 
         Treasure storage treasure = self.treasureByBeneficiary[beneficiary];
@@ -308,21 +311,27 @@ library StakingRewards {
             unchecked {
                 remainingTime = rewardEndTime - block.timestamp;
             }
-            rewardRate +=
-                FixedPointMathLib.fullMulDiv(self.rewardRate, remainingTime, rewardDuration);
+            rewardRate += FixedPointMathLib.fullMulDiv(
+                self.rewardRate,
+                remainingTime,
+                rewardDuration
+            );
         }
 
         // batch storage writes
-        (self.rewardEndTime, self.lastUpdateTime, self.rewardRate) =
-            (block.timestamp + rewardDuration, block.timestamp, rewardRate);
+        (self.rewardEndTime, self.lastUpdateTime, self.rewardRate) = (
+            block.timestamp + rewardDuration,
+            block.timestamp,
+            rewardRate
+        );
 
         if (rewardRate < SCALE_FACTOR) {
             CustomRevert.revertWith(StakingRewards__InvalidRewardRate.selector);
         }
 
         if (
-            FixedPointMathLib.fullMulDiv(rewardRate, rewardDuration, SCALE_FACTOR)
-                > IERC20(self.rewardToken).balanceOf(address(this))
+            FixedPointMathLib.fullMulDiv(rewardRate, rewardDuration, SCALE_FACTOR) >
+            IERC20(self.rewardToken).balanceOf(address(this))
         ) {
             CustomRevert.revertWith(StakingRewards__InsufficientReward.selector);
         }
@@ -343,15 +352,14 @@ library StakingRewards {
         uint96 amount,
         address delegatee,
         uint256 commissionRate
-    )
-        private
-    {
+    ) private {
         unchecked {
             if (commissionRate == 0) {
                 beneficiaryTreasure.earningPower += amount;
             } else {
-                uint96 commissionEarningPower =
-                    uint96((uint256(amount) * commissionRate) / MAX_COMMISSION_RATE);
+                uint96 commissionEarningPower = uint96(
+                    (uint256(amount) * commissionRate) / MAX_COMMISSION_RATE
+                );
                 deposit.commissionEarningPower += commissionEarningPower;
                 beneficiaryTreasure.earningPower += amount - commissionEarningPower;
 
@@ -370,12 +378,13 @@ library StakingRewards {
         Layout storage self,
         Deposit storage deposit,
         Treasure storage beneficiaryTreasure
-    )
-        private
-    {
+    ) private {
         unchecked {
-            (uint96 amount, uint96 commissionEarningPower, address delegatee) =
-                (deposit.amount, deposit.commissionEarningPower, deposit.delegatee);
+            (uint96 amount, uint96 commissionEarningPower, address delegatee) = (
+                deposit.amount,
+                deposit.commissionEarningPower,
+                deposit.delegatee
+            );
             if (commissionEarningPower == 0) {
                 beneficiaryTreasure.earningPower -= amount;
             } else {

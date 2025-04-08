@@ -13,10 +13,8 @@ import {Interaction} from "../common/Interaction.s.sol";
 import {AlphaHelper} from "./helpers/AlphaHelper.sol";
 
 // facet
-import {DeployEIP712Facet} from
-    "@towns-protocol/diamond/scripts/deployments/facets/DeployEIP712Facet.s.sol";
-import {DeploySpaceOwnerFacet} from
-    "contracts/scripts/deployments/facets/DeploySpaceOwnerFacet.s.sol";
+import {DeployEIP712Facet} from "@towns-protocol/diamond/scripts/deployments/facets/DeployEIP712Facet.s.sol";
+import {DeploySpaceOwnerFacet} from "contracts/scripts/deployments/facets/DeploySpaceOwnerFacet.s.sol";
 
 contract InteractDiamondCut is Interaction, AlphaHelper {
     DeploySpaceOwnerFacet spaceOwnerHelper = new DeploySpaceOwnerFacet();

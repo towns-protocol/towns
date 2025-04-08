@@ -11,10 +11,7 @@ import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
 import {OwnableBase} from "@towns-protocol/diamond/src/facets/ownable/OwnableBase.sol";
 
 contract PricingModulesFacet is IPricingModules, OwnableBase, Facet {
-    function __PricingModulesFacet_init(address[] memory pricingModules)
-        external
-        onlyInitializing
-    {
+    function __PricingModulesFacet_init(address[] memory pricingModules) external onlyInitializing {
         __PricingModulesFacet_init_unchained(pricingModules);
     }
 

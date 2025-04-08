@@ -5,17 +5,12 @@ pragma solidity ^0.8.23;
 import {IDiamond} from "@towns-protocol/diamond/src/IDiamond.sol";
 
 // libraries
-import {DeployDiamondCut} from
-    "@towns-protocol/diamond/scripts/deployments/facets/DeployDiamondCut.s.sol";
-import {DeployDiamondLoupe} from
-    "@towns-protocol/diamond/scripts/deployments/facets/DeployDiamondLoupe.s.sol";
-import {DeployEIP712Facet} from
-    "@towns-protocol/diamond/scripts/deployments/facets/DeployEIP712Facet.s.sol";
-import {DeployIntrospection} from
-    "@towns-protocol/diamond/scripts/deployments/facets/DeployIntrospection.s.sol";
+import {DeployDiamondCut} from "@towns-protocol/diamond/scripts/deployments/facets/DeployDiamondCut.s.sol";
+import {DeployDiamondLoupe} from "@towns-protocol/diamond/scripts/deployments/facets/DeployDiamondLoupe.s.sol";
+import {DeployEIP712Facet} from "@towns-protocol/diamond/scripts/deployments/facets/DeployEIP712Facet.s.sol";
+import {DeployIntrospection} from "@towns-protocol/diamond/scripts/deployments/facets/DeployIntrospection.s.sol";
 import {DeployOwnable} from "@towns-protocol/diamond/scripts/deployments/facets/DeployOwnable.s.sol";
-import {DeployPausable} from
-    "@towns-protocol/diamond/scripts/deployments/facets/DeployPausable.s.sol";
+import {DeployPausable} from "@towns-protocol/diamond/scripts/deployments/facets/DeployPausable.s.sol";
 
 // contracts
 import {Diamond} from "@towns-protocol/diamond/src/Diamond.sol";
@@ -29,36 +24,24 @@ import {DeploySpace} from "contracts/scripts/deployments/diamonds/DeploySpace.s.
 import {DeploySpaceOwner} from "contracts/scripts/deployments/diamonds/DeploySpaceOwner.s.sol";
 import {DeployArchitect} from "contracts/scripts/deployments/facets/DeployArchitect.s.sol";
 import {DeployCreateSpace} from "contracts/scripts/deployments/facets/DeployCreateSpace.s.sol";
-import {DeployImplementationRegistry} from
-    "contracts/scripts/deployments/facets/DeployImplementationRegistry.s.sol";
+import {DeployImplementationRegistry} from "contracts/scripts/deployments/facets/DeployImplementationRegistry.s.sol";
 import {DeployMetadata} from "contracts/scripts/deployments/facets/DeployMetadata.s.sol";
-import {DeployMockLegacyArchitect} from
-    "contracts/scripts/deployments/facets/DeployMockLegacyArchitect.s.sol";
-import {DeployPartnerRegistry} from
-    "contracts/scripts/deployments/facets/DeployPartnerRegistry.s.sol";
-import {DeployPlatformRequirements} from
-    "contracts/scripts/deployments/facets/DeployPlatformRequirements.s.sol";
+import {DeployMockLegacyArchitect} from "contracts/scripts/deployments/facets/DeployMockLegacyArchitect.s.sol";
+import {DeployPartnerRegistry} from "contracts/scripts/deployments/facets/DeployPartnerRegistry.s.sol";
+import {DeployPlatformRequirements} from "contracts/scripts/deployments/facets/DeployPlatformRequirements.s.sol";
 import {DeployPricingModules} from "contracts/scripts/deployments/facets/DeployPricingModules.s.sol";
 import {DeployProxyManager} from "contracts/scripts/deployments/facets/DeployProxyManager.s.sol";
-import {DeploySpaceFactoryInit} from
-    "contracts/scripts/deployments/facets/DeploySpaceFactoryInit.s.sol";
+import {DeploySpaceFactoryInit} from "contracts/scripts/deployments/facets/DeploySpaceFactoryInit.s.sol";
 import {DeployWalletLink} from "contracts/scripts/deployments/facets/DeployWalletLink.s.sol";
 import {DeployFixedPricing} from "contracts/scripts/deployments/utils/DeployFixedPricing.s.sol";
-import {DeployMockDelegationRegistry} from
-    "contracts/scripts/deployments/utils/DeployMockDelegationRegistry.s.sol";
-import {DeployRuleEntitlement} from
-    "contracts/scripts/deployments/utils/DeployRuleEntitlement.s.sol";
-import {DeployRuleEntitlementV2} from
-    "contracts/scripts/deployments/utils/DeployRuleEntitlementV2.s.sol";
+import {DeployMockDelegationRegistry} from "contracts/scripts/deployments/utils/DeployMockDelegationRegistry.s.sol";
+import {DeployRuleEntitlement} from "contracts/scripts/deployments/utils/DeployRuleEntitlement.s.sol";
+import {DeployRuleEntitlementV2} from "contracts/scripts/deployments/utils/DeployRuleEntitlementV2.s.sol";
 import {DeploySLCEIP6565} from "contracts/scripts/deployments/utils/DeploySLCEIP6565.s.sol";
-import {DeploySpaceProxyInitializer} from
-    "contracts/scripts/deployments/utils/DeploySpaceProxyInitializer.s.sol";
-import {DeployTieredLogPricingV2} from
-    "contracts/scripts/deployments/utils/DeployTieredLogPricingV2.s.sol";
-import {DeployTieredLogPricingV3} from
-    "contracts/scripts/deployments/utils/DeployTieredLogPricingV3.s.sol";
-import {DeployUserEntitlement} from
-    "contracts/scripts/deployments/utils/DeployUserEntitlement.s.sol";
+import {DeploySpaceProxyInitializer} from "contracts/scripts/deployments/utils/DeploySpaceProxyInitializer.s.sol";
+import {DeployTieredLogPricingV2} from "contracts/scripts/deployments/utils/DeployTieredLogPricingV2.s.sol";
+import {DeployTieredLogPricingV3} from "contracts/scripts/deployments/utils/DeployTieredLogPricingV3.s.sol";
+import {DeployUserEntitlement} from "contracts/scripts/deployments/utils/DeployUserEntitlement.s.sol";
 
 contract DeploySpaceFactory is DiamondHelper, Deployer {
     DeployFacet private facetHelper = new DeployFacet();
@@ -213,7 +196,10 @@ contract DeploySpaceFactory is DiamondHelper, Deployer {
             architectHelper.makeCut(architect, IDiamond.FacetCutAction.Add),
             architect,
             architectHelper.makeInitData(
-                spaceOwner, userEntitlement, ruleEntitlement, legacyRuleEntitlement
+                spaceOwner,
+                userEntitlement,
+                ruleEntitlement,
+                legacyRuleEntitlement
             )
         );
         addFacet(
@@ -278,11 +264,16 @@ contract DeploySpaceFactory is DiamondHelper, Deployer {
 
         addInit(spaceFactoryInit, spaceFactoryInitData);
 
-        return Diamond.InitParams({
-            baseFacets: baseFacets(),
-            init: multiInit,
-            initData: abi.encodeWithSelector(MultiInit.multiInit.selector, _initAddresses, _initDatas)
-        });
+        return
+            Diamond.InitParams({
+                baseFacets: baseFacets(),
+                init: multiInit,
+                initData: abi.encodeWithSelector(
+                    MultiInit.multiInit.selector,
+                    _initAddresses,
+                    _initDatas
+                )
+            });
     }
 
     function diamondInitParamsFromFacets(address deployer, string[] memory facets) public {
@@ -302,7 +293,10 @@ contract DeploySpaceFactory is DiamondHelper, Deployer {
                     architectHelper.makeCut(architect, IDiamond.FacetCutAction.Add),
                     architect,
                     architectHelper.makeInitData(
-                        spaceOwner, userEntitlement, ruleEntitlement, legacyRuleEntitlement
+                        spaceOwner,
+                        userEntitlement,
+                        ruleEntitlement,
+                        legacyRuleEntitlement
                     )
                 );
             } else if (facetNameHash == keccak256(abi.encodePacked("MockLegacyArchitect"))) {
@@ -391,11 +385,7 @@ contract DeploySpaceFactory is DiamondHelper, Deployer {
     function diamondInitHelper(
         address deployer,
         string[] memory facetNames
-    )
-        external
-        override
-        returns (FacetCut[] memory)
-    {
+    ) external override returns (FacetCut[] memory) {
         diamondInitParamsFromFacets(deployer, facetNames);
         return this.getCuts();
     }

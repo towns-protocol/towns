@@ -14,10 +14,9 @@ import {LibString} from "solady/utils/LibString.sol";
 contract ReferralsFacet_updateReferral is ReferralsFacetTest {
     using LibString for string;
 
-    function test_updateReferral(Referral memory referral)
-        external
-        givenReferralCodeIsRegistered(referral)
-    {
+    function test_updateReferral(
+        Referral memory referral
+    ) external givenReferralCodeIsRegistered(referral) {
         referral.basisPoints = REFERRAL_BPS;
         referral.recipient = _randomAddress();
 
@@ -25,7 +24,9 @@ contract ReferralsFacet_updateReferral is ReferralsFacetTest {
         vm.prank(founder);
         vm.expectEmit(address(userSpace));
         emit ReferralUpdated(
-            keccak256(bytes(referral.referralCode)), referral.basisPoints, referral.recipient
+            keccak256(bytes(referral.referralCode)),
+            referral.basisPoints,
+            referral.recipient
         );
         referralsFacet.updateReferral(referral);
 
@@ -37,10 +38,9 @@ contract ReferralsFacet_updateReferral is ReferralsFacetTest {
         assertEq(storedReferral.recipient, referral.recipient, "Recipient should match");
     }
 
-    function test_revertWhen_updateReferralWithInvalidRecipient(Referral memory referral)
-        external
-        givenReferralCodeIsRegistered(referral)
-    {
+    function test_revertWhen_updateReferralWithInvalidRecipient(
+        Referral memory referral
+    ) external givenReferralCodeIsRegistered(referral) {
         referral.recipient = address(0);
 
         vm.prank(founder);
@@ -48,10 +48,9 @@ contract ReferralsFacet_updateReferral is ReferralsFacetTest {
         referralsFacet.updateReferral(referral);
     }
 
-    function test_revertWhen_updateReferralWithInvalidBasisPoints(Referral memory referral)
-        external
-        givenReferralCodeIsRegistered(referral)
-    {
+    function test_revertWhen_updateReferralWithInvalidBasisPoints(
+        Referral memory referral
+    ) external givenReferralCodeIsRegistered(referral) {
         referral.basisPoints = 0;
 
         vm.prank(founder);
@@ -59,10 +58,9 @@ contract ReferralsFacet_updateReferral is ReferralsFacetTest {
         referralsFacet.updateReferral(referral);
     }
 
-    function test_revertWhen_updateReferralWithInvalidReferralCode(Referral memory referral)
-        external
-        givenReferralCodeIsRegistered(referral)
-    {
+    function test_revertWhen_updateReferralWithInvalidReferralCode(
+        Referral memory referral
+    ) external givenReferralCodeIsRegistered(referral) {
         referral.referralCode = "";
 
         vm.prank(founder);
@@ -70,10 +68,9 @@ contract ReferralsFacet_updateReferral is ReferralsFacetTest {
         referralsFacet.updateReferral(referral);
     }
 
-    function test_revertWhen_updateReferralWithInvalidBpsFee(Referral memory referral)
-        external
-        givenReferralCodeIsRegistered(referral)
-    {
+    function test_revertWhen_updateReferralWithInvalidBpsFee(
+        Referral memory referral
+    ) external givenReferralCodeIsRegistered(referral) {
         referral.basisPoints = REFERRAL_BPS + 1;
 
         vm.prank(founder);
@@ -84,10 +81,7 @@ contract ReferralsFacet_updateReferral is ReferralsFacetTest {
     function test_revertWhen_updateReferralWithNonExistentReferralCode(
         Referral memory referral,
         string memory invalidCode
-    )
-        external
-        givenReferralCodeIsRegistered(referral)
-    {
+    ) external givenReferralCodeIsRegistered(referral) {
         vm.assume(!invalidCode.eq(referral.referralCode));
         referral.referralCode = invalidCode;
 

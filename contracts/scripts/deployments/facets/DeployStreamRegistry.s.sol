@@ -24,7 +24,7 @@ contract DeployStreamRegistry is FacetHelper, Deployer {
         addSelector(StreamRegistry.setStreamReplicationFactor.selector);
         addSelector(StreamRegistry.getStreamCount.selector); // monitoring
         addSelector(StreamRegistry.getPaginatedStreams.selector); // only interested for stream on a
-            // single node
+        // single node
         addSelector(StreamRegistry.isStream.selector); // returns if stream exists
         addSelector(StreamRegistry.getStreamCountOnNode.selector);
         addSelector(StreamRegistry.getPaginatedStreamsOnNode.selector);
@@ -38,11 +38,7 @@ contract DeployStreamRegistry is FacetHelper, Deployer {
     function facetInitHelper(
         address deployer,
         address facetAddress
-    )
-        external
-        override
-        returns (FacetCut memory, bytes memory)
-    {
+    ) external override returns (FacetCut memory, bytes memory) {
         IDiamond.FacetCut memory facetCut = this.makeCut(facetAddress, IDiamond.FacetCutAction.Add);
         console.log("facetInitHelper: deployer", deployer);
         return (facetCut, "");

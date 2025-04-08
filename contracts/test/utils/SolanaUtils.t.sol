@@ -19,7 +19,7 @@ contract SolanaUtilsTest is TestUtils {
     function setUp() public {
         // Set up test data with known values
         // This is a sample extended public key (5 elements)
-        (validExtPubKey,) = SCL_EIP6565_UTILS.SetKey(_randomUint256());
+        (validExtPubKey, ) = SCL_EIP6565_UTILS.SetKey(_randomUint256());
 
         // The compressed key is the 5th element of the extended key
         validCompressedKey = bytes32(validExtPubKey[4]);
@@ -28,8 +28,9 @@ contract SolanaUtilsTest is TestUtils {
         knownBase58ForZero = "11111111111111111111111111111111";
 
         // Known input bytes and their expected Base58 encoding
-        knownBytes =
-            bytes32(uint256(0x850f2d6e02a47af824d09ab69dc42d70cb28cbfa249fb7ee57b9d256c12762ef));
+        knownBytes = bytes32(
+            uint256(0x850f2d6e02a47af824d09ab69dc42d70cb28cbfa249fb7ee57b9d256c12762ef)
+        );
         // This is the actual Base58 encoding of knownBytes, computed externally
         knownBase58ForKnownBytes = "9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin";
     }
@@ -121,7 +122,7 @@ contract SolanaUtilsTest is TestUtils {
 
         // Test with incorrect address
         string memory incorrectAddress = "3Myn3St4YQgL4WQvZxPdMaBWH1EvkzzpkLX8oVK3c7T4"; // Random
-            // valid-looking address
+        // valid-looking address
         bool incorrectResult = this.callIsValidSolanaAddress(incorrectAddress, validExtPubKey);
         assertFalse(incorrectResult, "Incorrect Solana address should not validate against pubkey");
     }
@@ -177,8 +178,9 @@ contract SolanaUtilsTest is TestUtils {
     // Test with edge cases for Base58 encoding
     function testBase58EdgeCases() public view {
         // Test with leading zeros
-        bytes32 leadingZeros =
-            bytes32(uint256(0x0000000000000000000000000000000000000000000000000000000000000123));
+        bytes32 leadingZeros = bytes32(
+            uint256(0x0000000000000000000000000000000000000000000000000000000000000123)
+        );
         string memory leadingZerosResult = this.callToBase58String(leadingZeros);
 
         // Expected result for leading zeros (computed externally)
@@ -248,29 +250,23 @@ contract SolanaUtilsTest is TestUtils {
     }
 
     // Helper function to call the internal getCompressedPublicKeyAsString function
-    function callGetCompressedPublicKeyAsString(uint256[5] memory pubkey)
-        external
-        pure
-        returns (string memory)
-    {
+    function callGetCompressedPublicKeyAsString(
+        uint256[5] memory pubkey
+    ) external pure returns (string memory) {
         return SolanaUtils.getCompressedPublicKeyAsString(pubkey);
     }
 
     // Helper function to call the internal getSolanaAddressFromCompressedKey function
-    function callGetSolanaAddressFromCompressedKey(uint256 compressedPubkey)
-        external
-        pure
-        returns (string memory)
-    {
+    function callGetSolanaAddressFromCompressedKey(
+        uint256 compressedPubkey
+    ) external pure returns (string memory) {
         return SolanaUtils.getSolanaAddressFromCompressedKey(compressedPubkey);
     }
 
     // Helper function to call the internal getSolanaAddressFromFixedExtPubKey function
-    function callGetSolanaAddressFromFixedExtPubKey(uint256[5] memory extPubKey)
-        external
-        pure
-        returns (string memory)
-    {
+    function callGetSolanaAddressFromFixedExtPubKey(
+        uint256[5] memory extPubKey
+    ) external pure returns (string memory) {
         return SolanaUtils.getSolanaAddressFromFixedExtPubKey(extPubKey);
     }
 
@@ -278,11 +274,7 @@ contract SolanaUtilsTest is TestUtils {
     function callIsValidSolanaAddress(
         string memory solanaAddress,
         uint256[5] memory extPubKey
-    )
-        external
-        pure
-        returns (bool)
-    {
+    ) external pure returns (bool) {
         return SolanaUtils.isValidSolanaAddress(solanaAddress, extPubKey);
     }
 

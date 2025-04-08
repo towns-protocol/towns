@@ -883,7 +883,7 @@ export abstract class BaseDecryptionExtensions {
 
         // if the key fulfillment failed, someone else already sent a key fulfillment
         if (error) {
-            if (!error.msg.includes('DUPLICATE_EVENT')) {
+            if (!error.msg.includes('DUPLICATE_EVENT') && !error.msg.includes('NOT_FOUND')) {
                 // duplicate events are expected, we can ignore them, others are not
                 this.log.error('failed to send key fulfillment', error)
             }

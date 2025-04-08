@@ -8,8 +8,7 @@ pragma solidity ^0.8.23;
 //contracts
 import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
 import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
-import {MembershipMetadata} from
-    "contracts/src/spaces/facets/membership/metadata/MembershipMetadata.sol";
+import {MembershipMetadata} from "contracts/src/spaces/facets/membership/metadata/MembershipMetadata.sol";
 
 contract DeployMembershipMetadata is Deployer, FacetHelper {
     constructor() {

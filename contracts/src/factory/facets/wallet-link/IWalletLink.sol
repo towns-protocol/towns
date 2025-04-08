@@ -111,8 +111,7 @@ interface IWalletLink is IWalletLinkBase {
         LinkedWallet memory wallet,
         LinkedWallet memory rootWallet,
         uint256 nonce
-    )
-        external;
+    ) external;
 
     /**
      * @notice Link a non-EVM wallet to a root wallet
@@ -122,11 +121,7 @@ interface IWalletLink is IWalletLinkBase {
      * nonce
      * @dev The function can only be called by an already linked wallet
      */
-    function linkNonEVMWalletToRootKey(
-        NonEVMLinkedWallet calldata wallet,
-        uint256 nonce
-    )
-        external;
+    function linkNonEVMWalletToRootKey(NonEVMLinkedWallet calldata wallet, uint256 nonce) external;
 
     /**
      * @notice Remove a non-EVM wallet link from a root wallet
@@ -174,20 +169,16 @@ interface IWalletLink is IWalletLinkBase {
      * @param rootKey the public key of the users rootkey to find associated wallets for
      * @return wallets an array of ethereum wallets linked to this root key
      */
-    function getWalletsByRootKey(address rootKey)
-        external
-        view
-        returns (address[] memory wallets);
+    function getWalletsByRootKey(address rootKey) external view returns (address[] memory wallets);
 
     /**
      * @notice Returns all wallets linked to a root key with their delegations
      * @param rootKey the public key of the users rootkey to find associated wallets for
      * @return wallets an array of ethereum wallets linked to this root key
      */
-    function getWalletsByRootKeyWithDelegations(address rootKey)
-        external
-        view
-        returns (address[] memory wallets);
+    function getWalletsByRootKeyWithDelegations(
+        address rootKey
+    ) external view returns (address[] memory wallets);
 
     /**
      * @notice Returns all wallets linked to a root key with their metadata
@@ -197,10 +188,7 @@ interface IWalletLink is IWalletLinkBase {
     function explicitWalletsByRootKey(
         address rootKey,
         WalletQueryOptions calldata options
-    )
-        external
-        view
-        returns (WalletLib.Wallet[] memory wallets);
+    ) external view returns (WalletLib.Wallet[] memory wallets);
 
     /**
      * @notice Returns the root key for a given wallet
@@ -226,10 +214,7 @@ interface IWalletLink is IWalletLinkBase {
     function checkIfNonEVMWalletLinked(
         address rootKey,
         bytes32 walletHash
-    )
-        external
-        view
-        returns (bool);
+    ) external view returns (bool);
 
     /**
      * @notice gets the latest nonce for a rootkey to use a higher one for next link action

@@ -3,7 +3,6 @@ pragma solidity ^0.8.23;
 
 // libraries
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-
 import {RiverRegistryErrors} from "contracts/src/river/registry/libraries/RegistryErrors.sol";
 import {CustomRevert} from "contracts/src/utils/libraries/CustomRevert.sol";
 
@@ -40,9 +39,8 @@ enum NodeStatus {
     Operational, // Node servers existing data, accepts stream creation
     Failed, // Node crash-exited, can be set by DAO
     Departing, // Node continues to serve traffic, new streams are not allocated, data needs to be
-        // moved out to other nodes before grace period.
+    // moved out to other nodes before grace period.
     Deleted // Final state before RemoveNode can be called
-
 }
 
 struct Node {
@@ -85,6 +83,8 @@ struct AppStorage {
     mapping(bytes32 => Setting[]) configuration;
     // Set of addresses of all configuration managers
     EnumerableSet.AddressSet configurationManagers;
+    // Deprecated slot. Do not use.
+    uint256 deprecatedSlot;
     // Map of node address to its stream ids
     mapping(address => EnumerableSet.Bytes32Set) streamIdsByNode;
 }

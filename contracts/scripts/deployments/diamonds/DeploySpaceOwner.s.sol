@@ -5,14 +5,10 @@ pragma solidity ^0.8.24;
 import {Diamond, IDiamond} from "@towns-protocol/diamond/src/Diamond.sol";
 
 // libraries
-import {DeployDiamondCut} from
-    "@towns-protocol/diamond/scripts/deployments/facets/DeployDiamondCut.s.sol";
-import {DeployDiamondLoupe} from
-    "@towns-protocol/diamond/scripts/deployments/facets/DeployDiamondLoupe.s.sol";
-import {DeployEIP712Facet} from
-    "@towns-protocol/diamond/scripts/deployments/facets/DeployEIP712Facet.s.sol";
-import {DeployIntrospection} from
-    "@towns-protocol/diamond/scripts/deployments/facets/DeployIntrospection.s.sol";
+import {DeployDiamondCut} from "@towns-protocol/diamond/scripts/deployments/facets/DeployDiamondCut.s.sol";
+import {DeployDiamondLoupe} from "@towns-protocol/diamond/scripts/deployments/facets/DeployDiamondLoupe.s.sol";
+import {DeployEIP712Facet} from "@towns-protocol/diamond/scripts/deployments/facets/DeployEIP712Facet.s.sol";
+import {DeployIntrospection} from "@towns-protocol/diamond/scripts/deployments/facets/DeployIntrospection.s.sol";
 import {DeployOwnable} from "@towns-protocol/diamond/scripts/deployments/facets/DeployOwnable.s.sol";
 
 // contracts
@@ -24,8 +20,7 @@ import {DeployFacet} from "contracts/scripts/common/DeployFacet.s.sol";
 import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
 import {DeployGuardianFacet} from "contracts/scripts/deployments/facets/DeployGuardianFacet.s.sol";
 import {DeployMetadata} from "contracts/scripts/deployments/facets/DeployMetadata.s.sol";
-import {DeploySpaceOwnerFacet} from
-    "contracts/scripts/deployments/facets/DeploySpaceOwnerFacet.s.sol";
+import {DeploySpaceOwnerFacet} from "contracts/scripts/deployments/facets/DeploySpaceOwnerFacet.s.sol";
 
 contract DeploySpaceOwner is DiamondHelper, Deployer {
     DeployFacet private facetHelper = new DeployFacet();
@@ -104,11 +99,16 @@ contract DeploySpaceOwner is DiamondHelper, Deployer {
             metadataHelper.makeInitData(bytes32("Space Owner"), "")
         );
 
-        return Diamond.InitParams({
-            baseFacets: baseFacets(),
-            init: multiInit,
-            initData: abi.encodeWithSelector(MultiInit.multiInit.selector, _initAddresses, _initDatas)
-        });
+        return
+            Diamond.InitParams({
+                baseFacets: baseFacets(),
+                init: multiInit,
+                initData: abi.encodeWithSelector(
+                    MultiInit.multiInit.selector,
+                    _initAddresses,
+                    _initDatas
+                )
+            });
     }
 
     function diamondInitParamsFromFacets(address deployer, string[] memory facets) public {
@@ -150,11 +150,7 @@ contract DeploySpaceOwner is DiamondHelper, Deployer {
     function diamondInitHelper(
         address deployer,
         string[] memory facetNames
-    )
-        external
-        override
-        returns (FacetCut[] memory)
-    {
+    ) external override returns (FacetCut[] memory) {
         diamondInitParamsFromFacets(deployer, facetNames);
         return this.getCuts();
     }

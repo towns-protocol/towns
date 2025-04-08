@@ -7723,6 +7723,7 @@ __metadata:
     crypto-lib: "github:towns-protocol/crypto-lib#f40c5f6944a55583a687b672ba680db3bfabb0ef"
     forge-std: "github:foundry-rs/forge-std#v1.9.6"
     prettier: ^2.8.8
+    prettier-plugin-solidity: ^1.4.2
     solady: ^0.1.12
     solhint: ^5.0.5
     turbo: ^2.0.12
@@ -12250,7 +12251,7 @@ __metadata:
   resolution: "crypto-lib@https://github.com/towns-protocol/crypto-lib.git#commit=f40c5f6944a55583a687b672ba680db3bfabb0ef"
   dependencies:
     forge-std: "github:foundry-rs/forge-std#v1.9.5"
-  checksum: 4626d553772dbcbce89bc5d0b394bc200702e61ffc8fdee80f651e65c3fe7ab3ed95d9d3c3cd2500c3fa3450022a77a515208e68967547af7f600490ed506e76
+  checksum: 3c532fcdf54bf202dea49afad7e96dc90653635169cd51694344d83a568806554c7e734f3a73fa5892e10cd69f33ae4805e75cecc53c79dd9f2b9c96d6f81d4b
   languageName: node
   linkType: hard
 
@@ -23754,6 +23755,18 @@ __metadata:
   dependencies:
     fast-diff: ^1.1.2
   checksum: 00ce8011cf6430158d27f9c92cfea0a7699405633f7f1d4a45f07e21bf78e99895911cbcdc3853db3a824201a7c745bd49bfea8abd5fb9883e765a90f74f8392
+  languageName: node
+  linkType: hard
+
+"prettier-plugin-solidity@npm:^1.4.2":
+  version: 1.4.2
+  resolution: "prettier-plugin-solidity@npm:1.4.2"
+  dependencies:
+    "@solidity-parser/parser": ^0.19.0
+    semver: ^7.6.3
+  peerDependencies:
+    prettier: ">=2.3.0"
+  checksum: 0ff7a1f24cf4917fa15e4ecfc0c714f01aea424226cb20a5a408957a59d23ae2864efc805930240d9d7a0e64d4333bd26057e39d1cf5e01600453a1fa191fc91
   languageName: node
   linkType: hard
 

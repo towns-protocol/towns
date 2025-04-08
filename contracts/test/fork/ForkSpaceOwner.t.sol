@@ -16,10 +16,7 @@ import {ISpaceOwnerBase} from "contracts/src/spaces/facets/owner/ISpaceOwner.sol
 import {DiamondCutFacet} from "@towns-protocol/diamond/src/facets/cut/DiamondCutFacet.sol";
 
 import {DeployArchitect} from "contracts/scripts/deployments/facets/DeployArchitect.s.sol";
-import {
-    DeploySpaceOwnerFacet,
-    SpaceOwner
-} from "contracts/scripts/deployments/facets/DeploySpaceOwnerFacet.s.sol";
+import {DeploySpaceOwnerFacet, SpaceOwner} from "contracts/scripts/deployments/facets/DeploySpaceOwnerFacet.s.sol";
 import {SpaceHelper} from "contracts/test/spaces/SpaceHelper.sol";
 
 import {ICreateSpace} from "contracts/src/factory/facets/create/ICreateSpace.sol";
@@ -94,8 +91,9 @@ contract ForkSpaceOwner is IArchitectBase, ISpaceOwnerBase, TestUtils, SpaceHelp
     }
 
     function test_getSpaceInfo() external view onlyForked {
-        Space memory space =
-            SpaceOwner(spaceOwnerDiamond).getSpaceInfo(0xC87bb04477151743070B45A3426938128896AC5D);
+        Space memory space = SpaceOwner(spaceOwnerDiamond).getSpaceInfo(
+            0xC87bb04477151743070B45A3426938128896AC5D
+        );
         assertTrue(bytes(space.shortDescription).length == 0, "Short description is not empty");
     }
 }

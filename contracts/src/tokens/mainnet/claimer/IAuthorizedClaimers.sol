@@ -26,8 +26,7 @@ interface IAuthorizedClaimers is IAuthorizedClaimersBase {
         uint8 v,
         bytes32 r,
         bytes32 s
-    )
-        external;
+    ) external;
 
     // Get the authorized claimer for the authorizer
     function getAuthorizedClaimer(address authorizer) external view returns (address);

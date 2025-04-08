@@ -24,7 +24,8 @@ contract RuleEntitlementTest is TestUtils, IEntitlementBase, IRuleEntitlementBas
         RuleEntitlement implementation = new RuleEntitlement();
         entitlement = address(
             new ERC1967Proxy(
-                address(implementation), abi.encodeCall(RuleEntitlement.initialize, (space))
+                address(implementation),
+                abi.encodeCall(RuleEntitlement.initialize, (space))
             )
         );
         vm.stopPrank();
@@ -48,12 +49,20 @@ contract RuleEntitlementTest is TestUtils, IEntitlementBase, IRuleEntitlementBas
         LogicalOperation[] memory logicalOperations = new LogicalOperation[](1);
 
         // for the first check operation, we are checking ERC20 balance of 100 on chain 31337
-        checkOperations[0] =
-            CheckOperation(CheckOperationType.ERC20, chainId, erc20Contract, threshold);
+        checkOperations[0] = CheckOperation(
+            CheckOperationType.ERC20,
+            chainId,
+            erc20Contract,
+            threshold
+        );
 
         // for the second check operation, we are checking ERC721 balance of 100 on chain 31337
-        checkOperations[1] =
-            CheckOperation(CheckOperationType.ERC721, chainId, erc721Contract, threshold);
+        checkOperations[1] = CheckOperation(
+            CheckOperationType.ERC721,
+            chainId,
+            erc721Contract,
+            threshold
+        );
 
         // we are combining the two check operations with an AND operation so both must pass
         logicalOperations[0] = LogicalOperation(LogicalOperationType.AND, 0, 1);
@@ -87,8 +96,11 @@ contract RuleEntitlementTest is TestUtils, IEntitlementBase, IRuleEntitlementBas
         vm.prank(space);
         ruleEntitlement.removeEntitlement(roleId);
 
-        RuleData memory emptyRuleData =
-            RuleData(new Operation[](0), new CheckOperation[](0), new LogicalOperation[](0));
+        RuleData memory emptyRuleData = RuleData(
+            new Operation[](0),
+            new CheckOperation[](0),
+            new LogicalOperation[](0)
+        );
         RuleData memory ruleData = ruleEntitlement.getRuleData(roleId);
         assertEq(abi.encode(ruleData), abi.encode(emptyRuleData));
 

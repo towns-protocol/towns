@@ -8,8 +8,7 @@ pragma solidity ^0.8.23;
 // helpers
 import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
 import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
-import {SpaceDelegationFacet} from
-    "contracts/src/base/registry/facets/delegation/SpaceDelegationFacet.sol";
+import {SpaceDelegationFacet} from "contracts/src/base/registry/facets/delegation/SpaceDelegationFacet.sol";
 
 contract DeploySpaceDelegation is Deployer, FacetHelper {
     constructor() {

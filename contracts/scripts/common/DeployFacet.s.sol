@@ -27,11 +27,7 @@ contract DeployFacet is DeployBase {
     function deploy(
         string memory name,
         address deployer
-    )
-        public
-        broadcastWith(deployer)
-        returns (address)
-    {
+    ) public broadcastWith(deployer) returns (address) {
         artifactPath = string.concat(outDir(), "/", name, ".sol/", name, ".json");
         string memory versionName = string.concat("facets/", name);
 

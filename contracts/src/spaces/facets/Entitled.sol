@@ -12,14 +12,12 @@ import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet
 
 import {ERC721ABase} from "contracts/src/diamond/facets/token/ERC721A/ERC721ABase.sol";
 import {WalletLinkProxyBase} from "contracts/src/spaces/facets/delegation/WalletLinkProxyBase.sol";
-import {EntitlementsManagerStorage} from
-    "contracts/src/spaces/facets/entitlements/EntitlementsManagerStorage.sol";
+import {EntitlementsManagerStorage} from "contracts/src/spaces/facets/entitlements/EntitlementsManagerStorage.sol";
 import {MembershipStorage} from "contracts/src/spaces/facets/membership/MembershipStorage.sol";
 import {CustomRevert} from "contracts/src/utils/libraries/CustomRevert.sol";
 
 // contracts
-import {TokenOwnableBase} from
-    "@towns-protocol/diamond/src/facets/ownable/token/TokenOwnableBase.sol";
+import {TokenOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/token/TokenOwnableBase.sol";
 import {PausableBase} from "@towns-protocol/diamond/src/facets/pausable/PausableBase.sol";
 
 import {ERC5643Base} from "contracts/src/diamond/facets/token/ERC5643/ERC5643Base.sol";
@@ -46,11 +44,7 @@ abstract contract Entitled is
         bytes32 channelId,
         address user,
         bytes32 permission
-    )
-        internal
-        view
-        returns (bool)
-    {
+    ) internal view returns (bool) {
         address owner = _owner();
 
         address[] memory wallets = _getLinkedWalletsWithUser(user);
@@ -81,8 +75,8 @@ abstract contract Entitled is
         for (uint256 i; i < entitlementsLength; ++i) {
             IEntitlement entitlement = ds.entitlementByAddress[ds.entitlements.at(i)].entitlement;
             if (
-                !entitlement.isCrosschain()
-                    && entitlement.isEntitled(channelId, wallets, permission)
+                !entitlement.isCrosschain() &&
+                entitlement.isEntitled(channelId, wallets, permission)
             ) {
                 return true;
             }
@@ -94,11 +88,7 @@ abstract contract Entitled is
     function _isEntitledToSpace(
         address user,
         string calldata permission
-    )
-        internal
-        view
-        returns (bool)
-    {
+    ) internal view returns (bool) {
         return _isEntitled(IN_TOWN, user, bytes32(bytes(permission)));
     }
 
@@ -106,11 +96,7 @@ abstract contract Entitled is
         bytes32 channelId,
         address user,
         string calldata permission
-    )
-        internal
-        view
-        returns (bool)
-    {
+    ) internal view returns (bool) {
         return _isEntitled(channelId, user, bytes32(bytes(permission)));
     }
 
@@ -118,20 +104,18 @@ abstract contract Entitled is
         bytes32 channelId,
         string memory permission,
         address caller
-    )
-        internal
-        view
-        returns (bool)
-    {
-        return _owner() == caller
-            || (!_paused() && _isEntitled(channelId, caller, bytes32(bytes(permission))));
+    ) internal view returns (bool) {
+        return
+            _owner() == caller ||
+            (!_paused() && _isEntitled(channelId, caller, bytes32(bytes(permission))));
     }
 
     function _isAllowed(bytes32 channelId, string memory permission) internal view returns (bool) {
         address sender = msg.sender;
 
-        return _owner() == sender
-            || (!_paused() && _isEntitled(channelId, sender, bytes32(bytes(permission))));
+        return
+            _owner() == sender ||
+            (!_paused() && _isEntitled(channelId, sender, bytes32(bytes(permission))));
     }
 
     function _validatePermission(string memory permission) internal view {
@@ -163,13 +147,7 @@ abstract contract Entitled is
         CustomRevert.revertWith(Entitlement__NotMember.selector);
     }
 
-    function _validateChannelPermission(
-        bytes32 channelId,
-        string memory permission
-    )
-        internal
-        view
-    {
+    function _validateChannelPermission(bytes32 channelId, string memory permission) internal view {
         if (!_isAllowed(channelId, permission)) {
             CustomRevert.revertWith(Entitlement__NotAllowed.selector);
         }

@@ -5,8 +5,7 @@ pragma solidity ^0.8.23;
 import {IEntitlementsManagerBase} from "./IEntitlementsManager.sol";
 
 // libraries
-import {EntitlementsManagerService} from
-    "contracts/src/spaces/facets/entitlements/EntitlementsManagerService.sol";
+import {EntitlementsManagerService} from "contracts/src/spaces/facets/entitlements/EntitlementsManagerService.sol";
 
 // contracts
 
@@ -44,15 +43,17 @@ contract EntitlementsManagerBase is IEntitlementsManagerBase {
         emit EntitlementModuleRemoved(msg.sender, entitlement);
     }
 
-    function _getEntitlement(address entitlement)
-        internal
-        view
-        returns (Entitlement memory module)
-    {
+    function _getEntitlement(
+        address entitlement
+    ) internal view returns (Entitlement memory module) {
         EntitlementsManagerService.validateEntitlement(entitlement);
 
-        (string memory name, address entitlementAddress, string memory moduleType, bool isImmutable)
-        = EntitlementsManagerService.getEntitlement(entitlement);
+        (
+            string memory name,
+            address entitlementAddress,
+            string memory moduleType,
+            bool isImmutable
+        ) = EntitlementsManagerService.getEntitlement(entitlement);
 
         module = Entitlement({
             name: name,

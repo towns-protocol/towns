@@ -28,16 +28,17 @@ library ChannelService {
         bytes32 channelId,
         string memory metadata,
         uint256[] memory roleIds
-    )
-        internal
-    {
+    ) internal {
         checkChannel(channelId);
 
         ChannelStorage.Layout storage channel = ChannelStorage.layout();
 
         channel.channelIds.add(channelId);
-        channel.channelById[channelId] =
-            ChannelStorage.Channel({id: channelId, disabled: false, metadata: metadata});
+        channel.channelById[channelId] = ChannelStorage.Channel({
+            id: channelId,
+            disabled: false,
+            metadata: metadata
+        });
 
         for (uint256 i = 0; i < roleIds.length; i++) {
             // check if role already exists in channel
@@ -48,11 +49,9 @@ library ChannelService {
         }
     }
 
-    function getChannel(bytes32 channelId)
-        internal
-        view
-        returns (bytes32 id, string memory metadata, bool disabled)
-    {
+    function getChannel(
+        bytes32 channelId
+    ) internal view returns (bytes32 id, string memory metadata, bool disabled) {
         checkChannelExists(channelId);
 
         ChannelStorage.Layout storage channel = ChannelStorage.layout();
@@ -71,8 +70,8 @@ library ChannelService {
         ChannelStorage.Channel storage channelInfo = channel.channelById[channelId];
 
         if (
-            bytes(metadata).length > 0
-                && keccak256(bytes(metadata)) != keccak256(bytes(channelInfo.metadata))
+            bytes(metadata).length > 0 &&
+            keccak256(bytes(metadata)) != keccak256(bytes(channelInfo.metadata))
         ) {
             channelInfo.metadata = metadata;
         }
@@ -105,11 +104,9 @@ library ChannelService {
         return channel.channelIds.values();
     }
 
-    function getChannelIdsByRole(uint256 roleId)
-        internal
-        view
-        returns (bytes32[] memory channelIds)
-    {
+    function getChannelIdsByRole(
+        uint256 roleId
+    ) internal view returns (bytes32[] memory channelIds) {
         ChannelStorage.Layout storage channel = ChannelStorage.layout();
 
         uint256 potentialChannelsLength = channel.channelIds.length();
@@ -117,7 +114,7 @@ library ChannelService {
 
         channelIds = new bytes32[](potentialChannelsLength);
 
-        for (uint256 i = 0; i < potentialChannelsLength;) {
+        for (uint256 i = 0; i < potentialChannelsLength; ) {
             bytes32 channelId = channel.channelIds.at(i);
 
             if (channel.rolesByChannelId[channelId].contains(roleId)) {

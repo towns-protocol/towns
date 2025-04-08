@@ -22,12 +22,7 @@ contract Drop is IDrop {
         uint256 _pricePerToken,
         AllowlistProof calldata _allowlistProof,
         bytes memory _data
-    )
-        external
-        payable
-        virtual
-        override
-    {
+    ) external payable virtual override {
         // call hook
         _beforeClaim(_receiver, _quantity, _currency, _pricePerToken, _allowlistProof, _data);
 
@@ -65,11 +60,7 @@ contract Drop is IDrop {
     function setClaimConditions(
         ClaimCondition[] calldata _claimConditions,
         bool _resetEligibility
-    )
-        external
-        virtual
-        override
-    {
+    ) external virtual override {
         // check if can set claim conditions
         if (!_canSetClaimConditions()) {
             revert("Drop: cannot set claim conditions");
@@ -136,11 +127,7 @@ contract Drop is IDrop {
         address _currency,
         uint256 _pricePerToken,
         AllowlistProof calldata _allowlistProof
-    )
-        public
-        view
-        returns (bool isOverride)
-    {
+    ) public view returns (bool isOverride) {
         ClaimCondition memory condition = claimCondition.conditions[_conditionId];
 
         uint256 claimLimit = condition.limitPerWallet;
@@ -165,23 +152,29 @@ contract Drop is IDrop {
 
         // if the allowlist proof is valid, override the claim limit, price, and currency
         if (isOverride) {
-            claimLimit =
-                _allowlistProof.limitPerWallet != 0 ? _allowlistProof.limitPerWallet : claimLimit;
+            claimLimit = _allowlistProof.limitPerWallet != 0
+                ? _allowlistProof.limitPerWallet
+                : claimLimit;
             claimPrice = _allowlistProof.pricePerToken != type(uint256).max
                 ? _allowlistProof.pricePerToken
                 : claimPrice;
-            claimCurrency = _allowlistProof.pricePerToken != type(uint256).max
-                && _allowlistProof.currency != address(0) ? _allowlistProof.currency : claimCurrency;
+            claimCurrency = _allowlistProof.pricePerToken != type(uint256).max &&
+                _allowlistProof.currency != address(0)
+                ? _allowlistProof.currency
+                : claimCurrency;
         }
 
-        uint256 supplyClaimedByWallet = claimCondition.supplyClaimedByWallet[_conditionId][_claimer];
+        uint256 supplyClaimedByWallet = claimCondition.supplyClaimedByWallet[_conditionId][
+            _claimer
+        ];
 
         // check that currency and price match the condition
         require(_currency == claimCurrency, "Drop: currency does not match claim condition");
 
         // check that the price per token matches the condition
         require(
-            _pricePerToken == claimPrice, "Drop: price per token does not match claim condition"
+            _pricePerToken == claimPrice,
+            "Drop: price per token does not match claim condition"
         );
 
         // check that the quantity is more than 0
@@ -219,11 +212,9 @@ contract Drop is IDrop {
     }
 
     /// @dev Returns the claim condition at a given uid.
-    function getClaimConditionById(uint256 _conditionId)
-        external
-        view
-        returns (ClaimCondition memory)
-    {
+    function getClaimConditionById(
+        uint256 _conditionId
+    ) external view returns (ClaimCondition memory) {
         return claimCondition.conditions[_conditionId];
     }
 
@@ -231,11 +222,7 @@ contract Drop is IDrop {
     function getSupplyClaimedByWallet(
         uint256 _conditionId,
         address _claimer
-    )
-        external
-        view
-        returns (uint256)
-    {
+    ) external view returns (uint256) {
         return claimCondition.supplyClaimedByWallet[_conditionId][_claimer];
     }
 
@@ -254,10 +241,7 @@ contract Drop is IDrop {
         uint256 _pricePerToken,
         AllowlistProof calldata _allowlistProof,
         bytes memory _data
-    )
-        internal
-        virtual
-    {}
+    ) internal virtual {}
 
     /// @dev Hook to be called after a claim is made
     function _afterClaim(
@@ -267,10 +251,7 @@ contract Drop is IDrop {
         uint256 _pricePerToken,
         AllowlistProof calldata _allowlistProof,
         bytes memory _data
-    )
-        internal
-        virtual
-    {}
+    ) internal virtual {}
 
     /// @dev Collects and distributes the primary sale of a token being claimed
     function _collectPriceOnClaim(
@@ -278,20 +259,13 @@ contract Drop is IDrop {
         uint256 _quantityToClaim,
         address _currency,
         uint256 _pricePerToken
-    )
-        internal
-        virtual
-    {}
+    ) internal virtual {}
 
     /// @dev Transfers the tokens being claimed.
     function _transferTokensOnClaim(
         address _to,
         uint256 _quantifyBeingClaimed
-    )
-        internal
-        virtual
-        returns (uint256 startTokenId)
-    {}
+    ) internal virtual returns (uint256 startTokenId) {}
 
     /// @dev Determine what wallet can update the claim conditions
     function _canSetClaimConditions() internal view virtual returns (bool) {}

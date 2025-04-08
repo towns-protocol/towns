@@ -29,8 +29,7 @@ interface IDelegateRegistryV1 {
      * @param delegate The delegate that you would like to retrieve delegations for
      * @return info Array of DelegationInfo structs
      */
-    function getDelegationsByDelegate(address delegate)
-        external
-        view
-        returns (DelegationInfo[] memory);
+    function getDelegationsByDelegate(
+        address delegate
+    ) external view returns (DelegationInfo[] memory);
 }
