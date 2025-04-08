@@ -7915,6 +7915,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@towns-protocol/playground@workspace:packages/playground"
   dependencies:
+    "@bufbuild/protobuf": ^2.2.2
     "@emoji-mart/data": ^1.1.2
     "@hookform/resolvers": ^3.6.0
     "@radix-ui/react-dialog": ^1.1.1
@@ -7929,6 +7930,7 @@ __metadata:
     "@tanstack/react-query": ^5.51.15
     "@towns-protocol/eslint-config": "workspace:^"
     "@towns-protocol/prettier-config": "workspace:^"
+    "@towns-protocol/proto": "workspace:^"
     "@towns-protocol/react-sdk": "workspace:^"
     "@towns-protocol/sdk": "workspace:^"
     "@towns-protocol/web3": "workspace:^"
