@@ -31,11 +31,7 @@ library FeatureConditionLib {
     function getVotes(
         FeatureCondition storage condition,
         address space
-    )
-        internal
-        view
-        returns (uint256)
-    {
+    ) internal view returns (uint256) {
         return IVotes(condition.token).getVotes(space);
     }
 
@@ -48,11 +44,7 @@ library FeatureConditionLib {
     function meetsThreshold(
         FeatureCondition storage condition,
         uint256 votes
-    )
-        internal
-        view
-        returns (bool)
-    {
+    ) internal view returns (bool) {
         if (!isValid(condition)) return false;
         uint256 threshold = condition.threshold;
         if (threshold == 0) return true;

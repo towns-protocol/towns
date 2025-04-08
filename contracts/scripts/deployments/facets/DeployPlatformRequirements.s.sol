@@ -8,8 +8,7 @@ pragma solidity ^0.8.23;
 //contracts
 import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
 import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
-import {PlatformRequirementsFacet} from
-    "contracts/src/factory/facets/platform/requirements/PlatformRequirementsFacet.sol";
+import {PlatformRequirementsFacet} from "contracts/src/factory/facets/platform/requirements/PlatformRequirementsFacet.sol";
 
 contract DeployPlatformRequirements is FacetHelper, Deployer {
     constructor() {
@@ -54,19 +53,16 @@ contract DeployPlatformRequirements is FacetHelper, Deployer {
         uint256 membershipMintLimit,
         uint64 membershipDuration,
         uint256 membershipMinPrice
-    )
-        public
-        pure
-        returns (bytes memory)
-    {
-        return abi.encodeWithSelector(
-            PlatformRequirementsFacet.__PlatformRequirements_init.selector,
-            feeRecipient,
-            membershipBps,
-            membershipFee,
-            membershipMintLimit,
-            membershipDuration,
-            membershipMinPrice
-        );
+    ) public pure returns (bytes memory) {
+        return
+            abi.encodeWithSelector(
+                PlatformRequirementsFacet.__PlatformRequirements_init.selector,
+                feeRecipient,
+                membershipBps,
+                membershipFee,
+                membershipMintLimit,
+                membershipDuration,
+                membershipMinPrice
+            );
     }
 }

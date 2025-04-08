@@ -11,10 +11,7 @@ import {IERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/IERC2
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
 import {IERC7802} from "contracts/src/tokens/towns/base/IERC7802.sol";
-import {
-    ILegacyMintableERC20,
-    IOptimismMintableERC20
-} from "contracts/src/tokens/towns/base/IOptimismMintableERC20.sol";
+import {ILegacyMintableERC20, IOptimismMintableERC20} from "contracts/src/tokens/towns/base/IOptimismMintableERC20.sol";
 import {ISemver} from "contracts/src/tokens/towns/base/ISemver.sol";
 
 // libraries
@@ -23,8 +20,7 @@ import {TownsLib} from "./TownsLib.sol";
 import {CustomRevert} from "contracts/src/utils/libraries/CustomRevert.sol";
 
 // contracts
-import {IntrospectionBase} from
-    "@towns-protocol/diamond/src/facets/introspection/IntrospectionBase.sol";
+import {IntrospectionBase} from "@towns-protocol/diamond/src/facets/introspection/IntrospectionBase.sol";
 
 import {LockBase} from "contracts/src/tokens/lock/LockBase.sol";
 import {Ownable} from "solady/auth/Ownable.sol";
@@ -211,11 +207,7 @@ contract Towns is
     function mint(
         address to,
         uint256 amount
-    )
-        external
-        override(IOptimismMintableERC20)
-        onlyL2StandardBridge
-    {
+    ) external override(IOptimismMintableERC20) onlyL2StandardBridge {
         _mint(to, amount);
     }
 
@@ -225,11 +217,7 @@ contract Towns is
     function burn(
         address from,
         uint256 amount
-    )
-        external
-        override(IOptimismMintableERC20)
-        onlyL2StandardBridge
-    {
+    ) external override(IOptimismMintableERC20) onlyL2StandardBridge {
         _burn(from, amount);
     }
 

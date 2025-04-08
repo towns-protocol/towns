@@ -13,15 +13,11 @@ import {IArchitectBase} from "contracts/src/factory/facets/architect/IArchitect.
 import {IPricingModules} from "contracts/src/factory/facets/architect/pricing/IPricingModules.sol";
 
 import {ICreateSpace} from "contracts/src/factory/facets/create/ICreateSpace.sol";
-import {
-    IRuleEntitlement,
-    IRuleEntitlementV2
-} from "contracts/src/spaces/entitlements/rule/IRuleEntitlement.sol";
+import {IRuleEntitlement, IRuleEntitlementV2} from "contracts/src/spaces/entitlements/rule/IRuleEntitlement.sol";
 import {RuleEntitlement} from "contracts/src/spaces/entitlements/rule/RuleEntitlement.sol";
 import {RuleEntitlementV2} from "contracts/src/spaces/entitlements/rule/RuleEntitlementV2.sol";
 import {IUserEntitlement} from "contracts/src/spaces/entitlements/user/IUserEntitlement.sol";
-import {IEntitlementsManager} from
-    "contracts/src/spaces/facets/entitlements/IEntitlementsManager.sol";
+import {IEntitlementsManager} from "contracts/src/spaces/facets/entitlements/IEntitlementsManager.sol";
 import {IGuardian} from "contracts/src/spaces/facets/guardian/IGuardian.sol";
 
 import {IMembership} from "contracts/src/spaces/facets/membership/IMembership.sol";
@@ -72,10 +68,9 @@ contract ArchitectTest is BaseSetup, IArchitectBase, IOwnableBase, IPausableBase
         assertFalse(IEntitlementsManager(spaceAddress).isEntitledToSpace(user, Permissions.Read));
     }
 
-    function test_fuzz_createUserSpace_syncedEntitlements(address founder)
-        external
-        assumeEOA(founder)
-    {
+    function test_fuzz_createUserSpace_syncedEntitlements(
+        address founder
+    ) external assumeEOA(founder) {
         vm.prank(founder);
 
         address[] memory users = new address[](1);
@@ -95,8 +90,8 @@ contract ArchitectTest is BaseSetup, IArchitectBase, IOwnableBase, IPausableBase
             }
         }
 
-        IEntitlementsManager.Entitlement[] memory entitlements =
-            IEntitlementsManager(spaceAddress).getEntitlements();
+        IEntitlementsManager.Entitlement[] memory entitlements = IEntitlementsManager(spaceAddress)
+            .getEntitlements();
         address entitlementAddress;
         for (uint256 i; i < entitlements.length; ++i) {
             if (LibString.eq(entitlements[i].moduleType, "UserEntitlement")) {
@@ -105,15 +100,14 @@ contract ArchitectTest is BaseSetup, IArchitectBase, IOwnableBase, IPausableBase
             }
         }
 
-        bytes memory entitlementData =
-            IUserEntitlement(entitlementAddress).getEntitlementDataByRoleId(memberRole.id);
+        bytes memory entitlementData = IUserEntitlement(entitlementAddress)
+            .getEntitlementDataByRoleId(memberRole.id);
         assertEq(entitlementData, abi.encode(users));
     }
 
-    function test_fuzz_createGatedSpace_syncedEntitlements(address founder)
-        external
-        assumeEOA(founder)
-    {
+    function test_fuzz_createGatedSpace_syncedEntitlements(
+        address founder
+    ) external assumeEOA(founder) {
         vm.prank(founder);
         IArchitectBase.SpaceInfo memory spaceInfo = _createGatedSpaceInfo("Test");
         spaceInfo.membership.settings.pricingModule = pricingModule;
@@ -129,8 +123,8 @@ contract ArchitectTest is BaseSetup, IArchitectBase, IOwnableBase, IPausableBase
             }
         }
 
-        IEntitlementsManager.Entitlement[] memory entitlements =
-            IEntitlementsManager(spaceAddress).getEntitlements();
+        IEntitlementsManager.Entitlement[] memory entitlements = IEntitlementsManager(spaceAddress)
+            .getEntitlements();
         address ruleEntitlementAddress;
         for (uint256 i; i < entitlements.length; ++i) {
             if (LibString.eq(entitlements[i].moduleType, "RuleEntitlementV2")) {
@@ -139,8 +133,8 @@ contract ArchitectTest is BaseSetup, IArchitectBase, IOwnableBase, IPausableBase
             }
         }
 
-        IRuleEntitlement.RuleDataV2 memory ruleData =
-            IRuleEntitlementV2(ruleEntitlementAddress).getRuleDataV2(memberRole.id);
+        IRuleEntitlement.RuleDataV2 memory ruleData = IRuleEntitlementV2(ruleEntitlementAddress)
+            .getRuleDataV2(memberRole.id);
 
         assertEq(abi.encode(ruleData), abi.encode(RuleEntitlementUtil.getMockERC721RuleData()));
     }
@@ -151,8 +145,8 @@ contract ArchitectTest is BaseSetup, IArchitectBase, IOwnableBase, IPausableBase
         spaceInfo.membership.settings.pricingModule = pricingModule;
         address spaceAddress = createSpaceFacet.createSpace(spaceInfo);
 
-        IEntitlementsManager.Entitlement[] memory entitlements =
-            IEntitlementsManager(spaceAddress).getEntitlements();
+        IEntitlementsManager.Entitlement[] memory entitlements = IEntitlementsManager(spaceAddress)
+            .getEntitlements();
 
         address ruleEntitlementAddress;
         for (uint256 i; i < entitlements.length; ++i) {
@@ -164,8 +158,8 @@ contract ArchitectTest is BaseSetup, IArchitectBase, IOwnableBase, IPausableBase
 
         // ruleData for minter role
         uint256 minterRoleId = 1;
-        IRuleEntitlement.RuleDataV2 memory ruleData =
-            IRuleEntitlementV2(ruleEntitlementAddress).getRuleDataV2(minterRoleId);
+        IRuleEntitlement.RuleDataV2 memory ruleData = IRuleEntitlementV2(ruleEntitlementAddress)
+            .getRuleDataV2(minterRoleId);
 
         assertEq(abi.encode(ruleData), abi.encode(RuleEntitlementUtil.getMockERC721RuleData()));
     }
@@ -195,12 +189,18 @@ contract ArchitectTest is BaseSetup, IArchitectBase, IOwnableBase, IPausableBase
         vm.prank(user);
         vm.expectRevert(abi.encodeWithSelector(Ownable__NotOwner.selector, user));
         spaceArchitect.setSpaceArchitectImplementations(
-            newSpaceToken, newUserEntitlement, newRuleEntitlementV2, newRuleEntitlement
+            newSpaceToken,
+            newUserEntitlement,
+            newRuleEntitlementV2,
+            newRuleEntitlement
         );
 
         vm.prank(deployer);
         spaceArchitect.setSpaceArchitectImplementations(
-            newSpaceToken, newUserEntitlement, newRuleEntitlementV2, newRuleEntitlement
+            newSpaceToken,
+            newUserEntitlement,
+            newRuleEntitlementV2,
+            newRuleEntitlement
         );
 
         (
@@ -220,11 +220,7 @@ contract ArchitectTest is BaseSetup, IArchitectBase, IOwnableBase, IPausableBase
         string memory spaceName,
         address founder,
         address buyer
-    )
-        external
-        assumeEOA(founder)
-        assumeEOA(buyer)
-    {
+    ) external assumeEOA(founder) assumeEOA(buyer) {
         vm.assume(bytes(spaceName).length > 2);
         vm.assume(founder != buyer);
 
@@ -236,7 +232,7 @@ contract ArchitectTest is BaseSetup, IArchitectBase, IOwnableBase, IPausableBase
 
         assertTrue(IEntitlementsManager(newSpace).isEntitledToSpace(founder, Permissions.Read));
 
-        (ISpaceOwner spaceOwner,,,) = spaceArchitect.getSpaceArchitectImplementations();
+        (ISpaceOwner spaceOwner, , , ) = spaceArchitect.getSpaceArchitectImplementations();
         uint256 tokenId = spaceArchitect.getTokenIdBySpace(newSpace);
 
         vm.prank(founder);
@@ -255,10 +251,7 @@ contract ArchitectTest is BaseSetup, IArchitectBase, IOwnableBase, IPausableBase
     function test_fuzz_revertWhen_createSpaceAndPaused(
         string memory spaceName,
         address founder
-    )
-        external
-        assumeEOA(founder)
-    {
+    ) external assumeEOA(founder) {
         vm.assume(bytes(spaceName).length > 2);
 
         vm.prank(deployer);
@@ -309,14 +302,11 @@ contract ArchitectTest is BaseSetup, IArchitectBase, IOwnableBase, IPausableBase
         string memory spaceName,
         address founder,
         address _pricingModule
-    )
-        external
-        assumeEOA(founder)
-    {
+    ) external assumeEOA(founder) {
         vm.assume(bytes(spaceName).length > 2);
         vm.assume(
-            _pricingModule == address(0)
-                || !IPricingModules(address(spaceArchitect)).isPricingModule(_pricingModule)
+            _pricingModule == address(0) ||
+                !IPricingModules(address(spaceArchitect)).isPricingModule(_pricingModule)
         );
 
         SpaceInfo memory spaceInfo = _createSpaceInfo(spaceName);
@@ -331,11 +321,7 @@ contract ArchitectTest is BaseSetup, IArchitectBase, IOwnableBase, IPausableBase
         string memory spaceName,
         address founder,
         address user
-    )
-        external
-        assumeEOA(founder)
-        assumeEOA(user)
-    {
+    ) external assumeEOA(founder) assumeEOA(user) {
         vm.assume(bytes(spaceName).length > 2);
         vm.assume(founder != user);
 
@@ -353,7 +339,8 @@ contract ArchitectTest is BaseSetup, IArchitectBase, IOwnableBase, IPausableBase
         // assert that he cannot modify channels
         assertFalse(
             IEntitlementsManager(spaceInstance).isEntitledToSpace(
-                user, Permissions.AddRemoveChannels
+                user,
+                Permissions.AddRemoveChannels
             )
         );
 
@@ -376,7 +363,8 @@ contract ArchitectTest is BaseSetup, IArchitectBase, IOwnableBase, IPausableBase
 
         assertTrue(
             IEntitlementsManager(spaceInstance).isEntitledToSpace(
-                user, Permissions.AddRemoveChannels
+                user,
+                Permissions.AddRemoveChannels
             )
         );
     }
@@ -393,10 +381,7 @@ contract ArchitectTest is BaseSetup, IArchitectBase, IOwnableBase, IPausableBase
     function test_fuzz_setProxyInitializer_revertIfNotOwner(
         address user,
         address proxyInitializer
-    )
-        external
-        assumeEOA(user)
-    {
+    ) external assumeEOA(user) {
         vm.assume(user != deployer);
         vm.prank(user);
         vm.expectRevert(abi.encodeWithSelector(Ownable__NotOwner.selector, user));

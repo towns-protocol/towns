@@ -47,10 +47,9 @@ interface IERC721AQueryable is IERC721ABase {
      * @dev Returns an array of `TokenOwnership` structs at `tokenIds` in order.
      * See {ERC721AQueryable-explicitOwnershipOf}
      */
-    function explicitOwnershipsOf(uint256[] memory tokenIds)
-        external
-        view
-        returns (TokenOwnership[] memory);
+    function explicitOwnershipsOf(
+        uint256[] memory tokenIds
+    ) external view returns (TokenOwnership[] memory);
 
     /**
      * @dev Returns an array of token IDs owned by `owner`,
@@ -68,10 +67,7 @@ interface IERC721AQueryable is IERC721ABase {
         address owner,
         uint256 start,
         uint256 stop
-    )
-        external
-        view
-        returns (uint256[] memory);
+    ) external view returns (uint256[] memory);
 
     /**
      * @dev Returns an array of token IDs owned by `owner`.

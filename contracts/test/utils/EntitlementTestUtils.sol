@@ -2,8 +2,7 @@
 pragma solidity ^0.8.23;
 
 import {LogUtils} from "./LogUtils.sol";
-import {IEntitlementCheckerBase} from
-    "contracts/src/base/registry/facets/checker/IEntitlementChecker.sol";
+import {IEntitlementCheckerBase} from "contracts/src/base/registry/facets/checker/IEntitlementChecker.sol";
 import {Vm} from "forge-std/Vm.sol";
 
 abstract contract EntitlementTestUtils is IEntitlementCheckerBase, LogUtils {
@@ -17,7 +16,9 @@ abstract contract EntitlementTestUtils is IEntitlementCheckerBase, LogUtils {
     }
 
     /// @dev Capture the requested entitlement data from the logs emitted by the EntitlementChecker
-    function _getRequestV1EventData(Vm.Log[] memory requestLogs)
+    function _getRequestV1EventData(
+        Vm.Log[] memory requestLogs
+    )
         internal
         pure
         returns (
@@ -37,11 +38,9 @@ abstract contract EntitlementTestUtils is IEntitlementCheckerBase, LogUtils {
         return _getMatchingLogCount(logs, EntitlementCheckRequestedV2.selector);
     }
 
-    function _getRequestV2Events(Vm.Log[] memory requestLogs)
-        internal
-        pure
-        returns (EntitlementCheckRequestEvent[] memory entitlementCheckRequests)
-    {
+    function _getRequestV2Events(
+        Vm.Log[] memory requestLogs
+    ) internal pure returns (EntitlementCheckRequestEvent[] memory entitlementCheckRequests) {
         Vm.Log[] memory logs = _getMatchingLogs(requestLogs, EntitlementCheckRequestedV2.selector);
         entitlementCheckRequests = new EntitlementCheckRequestEvent[](logs.length);
         for (uint256 i; i < logs.length; ++i) {
@@ -61,7 +60,9 @@ abstract contract EntitlementTestUtils is IEntitlementCheckerBase, LogUtils {
         }
     }
 
-    function _getRequestV2EventData(Vm.Log[] memory requestLogs)
+    function _getRequestV2EventData(
+        Vm.Log[] memory requestLogs
+    )
         internal
         pure
         returns (
@@ -73,9 +74,10 @@ abstract contract EntitlementTestUtils is IEntitlementCheckerBase, LogUtils {
             address[] memory selectedNodes
         )
     {
-        return abi.decode(
-            _getFirstMatchingLog(requestLogs, EntitlementCheckRequestedV2.selector).data,
-            (address, address, address, bytes32, uint256, address[])
-        );
+        return
+            abi.decode(
+                _getFirstMatchingLog(requestLogs, EntitlementCheckRequestedV2.selector).data,
+                (address, address, address, bytes32, uint256, address[])
+            );
     }
 }

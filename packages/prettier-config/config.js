@@ -10,7 +10,7 @@ module.exports = {
     singleQuote: false,
     tabWidth: 2,
     trailingComma: 'all',
-
+    plugins: ['prettier-plugin-solidity'],
     overrides: [
         {
             files: ['*.js', '*.mjs', '*.json', '*.ts', '*.tsx', '*.mts', '*.yml', '*.yaml'],
@@ -22,6 +22,13 @@ module.exports = {
                 singleQuote: true,
                 tabWidth: 4,
                 trailingComma: 'all',
+            },
+        },
+        {
+            files: ['*.sol'],
+            options: {
+                printWidth: 100,
+                tabWidth: 4,
             },
         },
     ],

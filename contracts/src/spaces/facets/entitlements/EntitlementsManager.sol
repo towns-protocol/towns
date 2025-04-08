@@ -35,11 +35,7 @@ contract EntitlementsManager is IEntitlementsManager, EntitlementsManagerBase, E
     function isEntitledToSpace(
         address user,
         string calldata permission
-    )
-        external
-        view
-        returns (bool)
-    {
+    ) external view returns (bool) {
         return _isEntitledToSpace(user, permission);
     }
 
@@ -47,11 +43,7 @@ contract EntitlementsManager is IEntitlementsManager, EntitlementsManagerBase, E
         bytes32 channelId,
         address user,
         string calldata permission
-    )
-        external
-        view
-        returns (bool)
-    {
+    ) external view returns (bool) {
         return _isEntitledToChannel(channelId, user, permission);
     }
 }

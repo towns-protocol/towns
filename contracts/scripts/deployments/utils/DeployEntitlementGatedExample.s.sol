@@ -2,8 +2,7 @@
 pragma solidity ^0.8.23;
 
 //interfaces
-import {IEntitlementChecker} from
-    "contracts/src/base/registry/facets/checker/IEntitlementChecker.sol";
+import {IEntitlementChecker} from "contracts/src/base/registry/facets/checker/IEntitlementChecker.sol";
 
 //libraries
 
@@ -18,6 +17,7 @@ contract DeployEntitlementGatedExample is Deployer {
 
     function __deploy(address deployer) internal override returns (address) {
         vm.broadcast(deployer);
-        return address(new MockEntitlementGated(IEntitlementChecker(getDeployment("baseRegistry"))));
+        return
+            address(new MockEntitlementGated(IEntitlementChecker(getDeployment("baseRegistry"))));
     }
 }

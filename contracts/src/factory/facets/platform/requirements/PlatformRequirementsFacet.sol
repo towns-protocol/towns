@@ -25,10 +25,7 @@ contract PlatformRequirementsFacet is
         uint256 membershipMintLimit,
         uint64 membershipDuration,
         uint256 membershipMinPrice
-    )
-        external
-        onlyInitializing
-    {
+    ) external onlyInitializing {
         _addInterface(type(IPlatformRequirements).interfaceId);
         _setFeeRecipient(feeRecipient);
         _setMembershipBps(membershipBps);

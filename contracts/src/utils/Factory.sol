@@ -56,11 +56,7 @@ library Factory {
     function calculateDeploymentAddress(
         bytes32 initCodeHash,
         bytes32 salt
-    )
-        internal
-        view
-        returns (address deployment)
-    {
+    ) internal view returns (address deployment) {
         deployment = LibClone.predictDeterministicAddress(initCodeHash, salt, address(this));
         assembly {
             // clean the upper 96 bits

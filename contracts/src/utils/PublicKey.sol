@@ -15,11 +15,7 @@ library PublicKey {
     function addressMatchesPublicKey(
         bytes calldata publicKey,
         address addr
-    )
-        public
-        pure
-        returns (bool)
-    {
+    ) public pure returns (bool) {
         address derivedAddress = getAddressFromPublicKey(publicKey);
         return derivedAddress == addr;
     }

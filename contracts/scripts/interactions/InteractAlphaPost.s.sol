@@ -8,10 +8,8 @@ import {IPricingModules} from "contracts/src/factory/facets/architect/pricing/IP
 import {ISpaceProxyInitializer} from "contracts/src/spaces/facets/proxy/ISpaceProxyInitializer.sol";
 
 // deployment
-import {DeploySpaceProxyInitializer} from
-    "contracts/scripts/deployments/utils/DeploySpaceProxyInitializer.s.sol";
-import {DeployTieredLogPricingV3} from
-    "contracts/scripts/deployments/utils/DeployTieredLogPricingV3.s.sol";
+import {DeploySpaceProxyInitializer} from "contracts/scripts/deployments/utils/DeploySpaceProxyInitializer.s.sol";
+import {DeployTieredLogPricingV3} from "contracts/scripts/deployments/utils/DeployTieredLogPricingV3.s.sol";
 
 // contracts
 import {Interaction} from "contracts/scripts/common/Interaction.s.sol";

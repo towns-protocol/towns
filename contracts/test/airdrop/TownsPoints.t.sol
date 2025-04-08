@@ -64,9 +64,7 @@ contract TownsPointsTest is BaseRegistryTest, IOwnableBase, IDiamond, ITownsPoin
     function test_fuzz_batchMintPoints(
         address[32] memory accounts,
         uint256[32] memory values
-    )
-        public
-    {
+    ) public {
         for (uint256 i; i < accounts.length; ++i) {
             if (accounts[i] == address(0)) {
                 accounts[i] = _randomAddress();
@@ -105,10 +103,9 @@ contract TownsPointsTest is BaseRegistryTest, IOwnableBase, IDiamond, ITownsPoin
         assertEq(pointsFacet.getLastCheckIn(user), block.timestamp);
     }
 
-    function test_checkIn_revertIf_checkInPeriodNotPassed(address user)
-        external
-        givenCheckedIn(user)
-    {
+    function test_checkIn_revertIf_checkInPeriodNotPassed(
+        address user
+    ) external givenCheckedIn(user) {
         vm.prank(user);
         vm.expectRevert(TownsPoints__CheckInPeriodNotPassed.selector);
         pointsFacet.checkIn();
@@ -120,7 +117,9 @@ contract TownsPointsTest is BaseRegistryTest, IOwnableBase, IDiamond, ITownsPoin
         uint256 currentStreak = pointsFacet.getCurrentStreak(user);
         uint256 currentPoints = pointsFacet.balanceOf(user);
         (uint256 pointsToAward, uint256 newStreak) = CheckIn.getPointsAndStreak(
-            pointsFacet.getLastCheckIn(user), currentStreak, block.timestamp
+            pointsFacet.getLastCheckIn(user),
+            currentStreak,
+            block.timestamp
         );
 
         vm.prank(user);
@@ -130,10 +129,9 @@ contract TownsPointsTest is BaseRegistryTest, IOwnableBase, IDiamond, ITownsPoin
         assertEq(pointsFacet.getCurrentStreak(user), newStreak);
     }
 
-    function test_checkIn_afterMaxStreak(address user)
-        external
-        givenUserCheckInAfterMaxStreak(user)
-    {
+    function test_checkIn_afterMaxStreak(
+        address user
+    ) external givenUserCheckInAfterMaxStreak(user) {
         uint256 currentPoints = pointsFacet.balanceOf(user);
 
         vm.warp(block.timestamp + CheckIn.CHECK_IN_WAIT_PERIOD + 1);

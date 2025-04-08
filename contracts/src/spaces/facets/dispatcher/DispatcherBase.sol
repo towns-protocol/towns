@@ -50,11 +50,7 @@ abstract contract DispatcherBase is IDispatcherBase {
         bytes32 keyHash,
         address requester,
         uint256 nonce
-    )
-        internal
-        pure
-        returns (uint256)
-    {
+    ) internal pure returns (uint256) {
         return uint256(keccak256(abi.encode(keyHash, requester, nonce)));
     }
 
@@ -65,14 +61,12 @@ abstract contract DispatcherBase is IDispatcherBase {
     function _registerTransaction(
         address sender,
         bytes memory data
-    )
-        internal
-        returns (bytes32 transactionId)
-    {
+    ) internal returns (bytes32 transactionId) {
         bytes32 keyHash = keccak256(abi.encodePacked(sender, block.number));
 
         transactionId = _makeDispatchId(
-            keyHash, _makeDispatchInputSeed(keyHash, sender, _useDispatchNonce(keyHash))
+            keyHash,
+            _makeDispatchInputSeed(keyHash, sender, _useDispatchNonce(keyHash))
         );
 
         // revert if the transaction already exists

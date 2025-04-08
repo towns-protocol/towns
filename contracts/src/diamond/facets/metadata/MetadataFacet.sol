@@ -14,19 +14,14 @@ contract MetadataFacet is IMetadata, OwnableBase, Facet {
     function __MetadataFacet_init(
         bytes32 _contractType,
         string memory _contractURI
-    )
-        external
-        onlyInitializing
-    {
+    ) external onlyInitializing {
         __MetadataFacet_init_unchained(_contractType, _contractURI);
     }
 
     function __MetadataFacet_init_unchained(
         bytes32 _contractType,
         string memory _contractURI
-    )
-        internal
-    {
+    ) internal {
         _addInterface(type(IMetadata).interfaceId);
 
         MetadataStorage.Layout storage ds = MetadataStorage.layout();

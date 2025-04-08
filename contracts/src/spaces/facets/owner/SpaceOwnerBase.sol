@@ -46,9 +46,7 @@ abstract contract SpaceOwnerBase is ISpaceOwnerBase {
         address space,
         string memory shortDescription,
         string memory longDescription
-    )
-        internal
-    {
+    ) internal {
         Validator.checkLength(name, 2);
         // if the space uri is empty, it will default to `${defaultUri}/${spaceAddress}`
         Validator.checkLength(uri, 0);
@@ -75,9 +73,7 @@ abstract contract SpaceOwnerBase is ISpaceOwnerBase {
         string memory uri,
         string memory shortDescription,
         string memory longDescription
-    )
-        internal
-    {
+    ) internal {
         Validator.checkLength(name, 2);
         // if the space uri is empty, it will default to `${defaultUri}/${spaceAddress}`
         Validator.checkLength(uri, 0);
@@ -96,19 +92,23 @@ abstract contract SpaceOwnerBase is ISpaceOwnerBase {
     }
 
     function _getSpace(address space) internal view returns (Space memory) {
-        SpaceOwnerStorage.Space storage spaceInfo = SpaceOwnerStorage.layout().spaceByAddress[space];
+        SpaceOwnerStorage.Space storage spaceInfo = SpaceOwnerStorage.layout().spaceByAddress[
+            space
+        ];
 
-        SpaceOwnerStorage.SpaceMetadata storage metadata =
-            SpaceOwnerStorage.layout().spaceMetadata[space];
+        SpaceOwnerStorage.SpaceMetadata storage metadata = SpaceOwnerStorage.layout().spaceMetadata[
+            space
+        ];
 
-        return Space({
-            name: spaceInfo.name,
-            uri: spaceInfo.uri,
-            tokenId: spaceInfo.tokenId,
-            createdAt: spaceInfo.createdAt,
-            shortDescription: metadata.shortDescription,
-            longDescription: metadata.longDescription
-        });
+        return
+            Space({
+                name: spaceInfo.name,
+                uri: spaceInfo.uri,
+                tokenId: spaceInfo.tokenId,
+                createdAt: spaceInfo.createdAt,
+                shortDescription: metadata.shortDescription,
+                longDescription: metadata.longDescription
+            });
     }
 
     function _getTokenId(address space) internal view returns (uint256) {

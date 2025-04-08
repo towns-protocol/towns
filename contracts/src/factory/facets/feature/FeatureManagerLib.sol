@@ -46,9 +46,7 @@ library FeatureManagerLib {
         Layout storage self,
         bytes32 featureId,
         FeatureCondition calldata condition
-    )
-        internal
-    {
+    ) internal {
         if (condition.token == address(0)) {
             CustomRevert.revertWith(IFeatureManagerFacetBase.InvalidToken.selector);
         }
@@ -77,11 +75,7 @@ library FeatureManagerLib {
     function getFeatureCondition(
         Layout storage self,
         bytes32 featureId
-    )
-        internal
-        view
-        returns (FeatureCondition memory)
-    {
+    ) internal view returns (FeatureCondition memory) {
         return self.conditions[featureId];
     }
 
@@ -89,11 +83,9 @@ library FeatureManagerLib {
     /// @dev Returns an array of all feature conditions
     /// @param self The storage layout pointer
     /// @return Condition[] An array of all feature conditions
-    function getFeatureConditions(Layout storage self)
-        internal
-        view
-        returns (FeatureCondition[] memory)
-    {
+    function getFeatureConditions(
+        Layout storage self
+    ) internal view returns (FeatureCondition[] memory) {
         uint256 featureCount = self.featureIds.length();
 
         FeatureCondition[] memory conditions = new FeatureCondition[](featureCount);
@@ -111,11 +103,7 @@ library FeatureManagerLib {
     function getFeatureConditionsForSpace(
         Layout storage self,
         address space
-    )
-        internal
-        view
-        returns (FeatureCondition[] memory)
-    {
+    ) internal view returns (FeatureCondition[] memory) {
         uint256 featureCount = self.featureIds.length();
 
         FeatureCondition[] memory conditions = new FeatureCondition[](featureCount);

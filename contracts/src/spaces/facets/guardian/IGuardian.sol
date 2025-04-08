@@ -13,7 +13,10 @@ interface IGuardianBase {
     error Guardian_AlreadyDisabled();
 
     event GuardianUpdated(
-        address indexed caller, bool indexed enabled, uint256 cooldown, uint256 timestamp
+        address indexed caller,
+        bool indexed enabled,
+        uint256 cooldown,
+        uint256 timestamp
     );
 
     event GuardianDefaultCooldownUpdated(uint256 indexed cooldown);

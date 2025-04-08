@@ -2,8 +2,7 @@
 pragma solidity ^0.8.23;
 
 //interfaces
-import {IEntitlementCheckerBase} from
-    "contracts/src/base/registry/facets/checker/IEntitlementChecker.sol";
+import {IEntitlementCheckerBase} from "contracts/src/base/registry/facets/checker/IEntitlementChecker.sol";
 
 import {IRuleEntitlement} from "contracts/src/spaces/entitlements/rule/IRuleEntitlement.sol";
 import {IEntitlementGatedBase} from "contracts/src/spaces/facets/gated/IEntitlementGated.sol";
@@ -52,7 +51,8 @@ contract EntitlementGatedTest is
         vm.recordLogs();
         vm.prank(caller);
         bytes32 realRequestId = gated.requestEntitlementCheckV2RuleDataV2{value: 1 ether}(
-            roleIds, RuleEntitlementUtil.getMockERC721RuleData()
+            roleIds,
+            RuleEntitlementUtil.getMockERC721RuleData()
         );
         Vm.Log[] memory requestLogs = vm.getRecordedLogs();
         (
@@ -78,7 +78,9 @@ contract EntitlementGatedTest is
                 emit EntitlementCheckResultPosted(transactionId, NodeVoteStatus.PASSED);
             }
             _entitlementGated.postEntitlementCheckResult(
-                transactionId, roleId, NodeVoteStatus.PASSED
+                transactionId,
+                roleId,
+                NodeVoteStatus.PASSED
             );
             vm.stopPrank();
         }
@@ -99,7 +101,8 @@ contract EntitlementGatedTest is
         vm.recordLogs();
         vm.prank(caller);
         bytes32 realRequestId = gated.requestEntitlementCheckV2RuleDataV1{value: 1 ether}(
-            roleIds, RuleEntitlementUtil.getLegacyNoopRuleData()
+            roleIds,
+            RuleEntitlementUtil.getLegacyNoopRuleData()
         );
         Vm.Log[] memory requestLogs = vm.getRecordedLogs();
 
@@ -126,7 +129,9 @@ contract EntitlementGatedTest is
                 emit EntitlementCheckResultPosted(transactionId, NodeVoteStatus.PASSED);
             }
             _entitlementGated.postEntitlementCheckResult(
-                transactionId, roleId, NodeVoteStatus.PASSED
+                transactionId,
+                roleId,
+                NodeVoteStatus.PASSED
             );
             vm.stopPrank();
         }
@@ -151,7 +156,8 @@ contract EntitlementGatedTest is
         roleIds[0] = 0;
 
         bytes32 realRequestId = gated.requestEntitlementCheckV1RuleDataV2(
-            roleIds, RuleEntitlementUtil.getMockERC721RuleData()
+            roleIds,
+            RuleEntitlementUtil.getMockERC721RuleData()
         );
 
         assertEq(realRequestId, transactionHash);
@@ -162,12 +168,14 @@ contract EntitlementGatedTest is
         roleIds[0] = 0;
 
         gated.requestEntitlementCheckV1RuleDataV2(
-            roleIds, RuleEntitlementUtil.getMockERC721RuleData()
+            roleIds,
+            RuleEntitlementUtil.getMockERC721RuleData()
         );
 
         vm.expectRevert(EntitlementGated_TransactionCheckAlreadyRegistered.selector);
         gated.requestEntitlementCheckV1RuleDataV2(
-            roleIds, RuleEntitlementUtil.getMockERC721RuleData()
+            roleIds,
+            RuleEntitlementUtil.getMockERC721RuleData()
         );
     }
 
@@ -181,7 +189,8 @@ contract EntitlementGatedTest is
         vm.prank(address(gated));
         address[] memory nodes = entitlementChecker.getRandomNodes(5);
         bytes32 requestId = gated.requestEntitlementCheckV1RuleDataV2(
-            roleIds, RuleEntitlementUtil.getMockERC721RuleData()
+            roleIds,
+            RuleEntitlementUtil.getMockERC721RuleData()
         );
 
         _nodeVotes(requestId, 0, nodes, NodeVoteStatus.PASSED);
@@ -195,7 +204,8 @@ contract EntitlementGatedTest is
         address[] memory nodes = entitlementChecker.getRandomNodes(5);
 
         bytes32 requestId = gated.requestEntitlementCheckV1RuleDataV2(
-            roleIds, RuleEntitlementUtil.getMockERC721RuleData()
+            roleIds,
+            RuleEntitlementUtil.getMockERC721RuleData()
         );
 
         _nodeVotes(requestId, 0, nodes, NodeVoteStatus.FAILED);
@@ -204,9 +214,7 @@ contract EntitlementGatedTest is
     function test_fuzz_postEntitlementCheckV1ResultRuleDataV2_revert_transactionNotRegistered(
         bytes32 requestId,
         address node
-    )
-        external
-    {
+    ) external {
         vm.prank(node);
         vm.expectRevert(EntitlementGated_TransactionNotRegistered.selector);
         gated.postEntitlementCheckResult(requestId, 0, NodeVoteStatus.PASSED);
@@ -220,7 +228,8 @@ contract EntitlementGatedTest is
         address[] memory nodes = entitlementChecker.getRandomNodes(5);
 
         bytes32 requestId = gated.requestEntitlementCheckV1RuleDataV2(
-            roleIds, RuleEntitlementUtil.getMockERC721RuleData()
+            roleIds,
+            RuleEntitlementUtil.getMockERC721RuleData()
         );
 
         vm.startPrank(nodes[0]);
@@ -230,9 +239,9 @@ contract EntitlementGatedTest is
         gated.postEntitlementCheckResult(requestId, 0, NodeVoteStatus.PASSED);
     }
 
-    function test_postEntitlementCheckV1ResultRuleDataV2_revert_nodeNotFound(address node)
-        external
-    {
+    function test_postEntitlementCheckV1ResultRuleDataV2_revert_nodeNotFound(
+        address node
+    ) external {
         uint256[] memory roleIds = new uint256[](1);
         roleIds[0] = 0;
 
@@ -242,7 +251,8 @@ contract EntitlementGatedTest is
         }
 
         bytes32 requestId = gated.requestEntitlementCheckV1RuleDataV2(
-            roleIds, RuleEntitlementUtil.getMockERC721RuleData()
+            roleIds,
+            RuleEntitlementUtil.getMockERC721RuleData()
         );
 
         vm.prank(node);
@@ -258,11 +268,12 @@ contract EntitlementGatedTest is
         vm.recordLogs();
 
         bytes32 requestId = gated.requestEntitlementCheckV1RuleDataV2(
-            roleIds, RuleEntitlementUtil.getMockERC721RuleData()
+            roleIds,
+            RuleEntitlementUtil.getMockERC721RuleData()
         );
 
         // get the nodes that were selected
-        (,,, address[] memory nodes) = _getRequestV1EventData(vm.getRecordedLogs());
+        (, , , address[] memory nodes) = _getRequestV1EventData(vm.getRecordedLogs());
 
         // first roleId is not entitled
         for (uint256 i; i < 3; ++i) {
@@ -293,7 +304,8 @@ contract EntitlementGatedTest is
         address[] memory nodes = entitlementChecker.getRandomNodes(5);
 
         bytes32 requestId = gated.requestEntitlementCheckV1RuleDataV2(
-            roleIds, RuleEntitlementUtil.getMockERC721RuleData()
+            roleIds,
+            RuleEntitlementUtil.getMockERC721RuleData()
         );
 
         for (uint256 i; i < 3; ++i) {
@@ -333,7 +345,8 @@ contract EntitlementGatedTest is
         roleIds[0] = 0;
 
         bytes32 requestId = gated.requestEntitlementCheckV1RuleDataV2(
-            roleIds, RuleEntitlementUtil.getMockERC721RuleData()
+            roleIds,
+            RuleEntitlementUtil.getMockERC721RuleData()
         );
 
         for (uint256 i; i < 3; ++i) {
@@ -354,9 +367,7 @@ contract EntitlementGatedTest is
         uint256 roleId,
         address[] memory nodes,
         NodeVoteStatus vote
-    )
-        internal
-    {
+    ) internal {
         uint256 halfNodes = nodes.length / 2;
         bool eventEmitted = false;
 

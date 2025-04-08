@@ -11,12 +11,8 @@ import {IERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/IERC2
 import {RewardsDistributionStorage} from "./RewardsDistributionStorage.sol";
 import {StakingRewards} from "./StakingRewards.sol";
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-import {SpaceDelegationStorage} from
-    "contracts/src/base/registry/facets/delegation/SpaceDelegationStorage.sol";
-import {
-    NodeOperatorStatus,
-    NodeOperatorStorage
-} from "contracts/src/base/registry/facets/operator/NodeOperatorStorage.sol";
+import {SpaceDelegationStorage} from "contracts/src/base/registry/facets/delegation/SpaceDelegationStorage.sol";
+import {NodeOperatorStatus, NodeOperatorStorage} from "contracts/src/base/registry/facets/operator/NodeOperatorStorage.sol";
 import {CustomRevert} from "contracts/src/utils/libraries/CustomRevert.sol";
 import {FixedPointMathLib} from "solady/utils/FixedPointMathLib.sol";
 import {LibClone} from "solady/utils/LibClone.sol";
@@ -41,15 +37,17 @@ abstract contract RewardsDistributionBase is IRewardsDistributionBase {
         address delegatee,
         address beneficiary,
         address owner
-    )
-        internal
-        returns (uint256 depositId)
-    {
+    ) internal returns (uint256 depositId) {
         _revertIfNotOperatorOrSpace(delegatee);
 
         RewardsDistributionStorage.Layout storage ds = RewardsDistributionStorage.layout();
-        depositId =
-            ds.staking.stake(owner, amount, delegatee, beneficiary, _getCommissionRate(delegatee));
+        depositId = ds.staking.stake(
+            owner,
+            amount,
+            delegatee,
+            beneficiary,
+            _getCommissionRate(delegatee)
+        );
 
         _sweepSpaceRewardsIfNecessary(delegatee);
 
@@ -72,7 +70,12 @@ abstract contract RewardsDistributionBase is IRewardsDistributionBase {
         _revertIfNotOperatorOrSpace(delegatee);
 
         ds.staking.increaseStake(
-            deposit, owner, amount, delegatee, deposit.beneficiary, _getCommissionRate(delegatee)
+            deposit,
+            owner,
+            amount,
+            delegatee,
+            deposit.beneficiary,
+            _getCommissionRate(delegatee)
         );
 
         _sweepSpaceRewardsIfNecessary(delegatee);
@@ -92,9 +95,7 @@ abstract contract RewardsDistributionBase is IRewardsDistributionBase {
         uint8 v,
         bytes32 r,
         bytes32 s
-    )
-        internal
-    {
+    ) internal {
         address stakeToken = RewardsDistributionStorage.layout().staking.stakeToken;
 
         bytes4 selector = IERC20Permit.permit.selector;
@@ -119,10 +120,7 @@ abstract contract RewardsDistributionBase is IRewardsDistributionBase {
     function _deployDelegationProxy(
         uint256 depositId,
         address delegatee
-    )
-        internal
-        returns (address proxy)
-    {
+    ) internal returns (address proxy) {
         RewardsDistributionStorage.Layout storage ds = RewardsDistributionStorage.layout();
         proxy = LibClone.deployDeterministicERC1967BeaconProxy(address(this), bytes32(depositId));
         ds.proxyById[depositId] = proxy;
@@ -202,14 +200,12 @@ abstract contract RewardsDistributionBase is IRewardsDistributionBase {
         }
     }
 
-    function _currentSpaceDelegationReward(address operator)
-        internal
-        view
-        returns (uint256 total)
-    {
+    function _currentSpaceDelegationReward(address operator) internal view returns (uint256 total) {
         StakingRewards.Layout storage staking = RewardsDistributionStorage.layout().staking;
-        address[] memory spaces =
-            SpaceDelegationStorage.layout().spacesByOperator[operator].values();
+        address[] memory spaces = SpaceDelegationStorage
+            .layout()
+            .spacesByOperator[operator]
+            .values();
 
         uint256 currentRewardPerTokenAccumulated = staking.currentRewardPerTokenAccumulated();
         uint256 rewardPerTokenGrowth;
@@ -217,10 +213,12 @@ abstract contract RewardsDistributionBase is IRewardsDistributionBase {
             StakingRewards.Treasure storage treasure = staking.treasureByBeneficiary[spaces[i]];
             unchecked {
                 rewardPerTokenGrowth =
-                    currentRewardPerTokenAccumulated - treasure.rewardPerTokenAccumulated;
+                    currentRewardPerTokenAccumulated -
+                    treasure.rewardPerTokenAccumulated;
             }
-            total += treasure.unclaimedRewardSnapshot
-                + (uint256(treasure.earningPower) * rewardPerTokenGrowth);
+            total +=
+                treasure.unclaimedRewardSnapshot +
+                (uint256(treasure.earningPower) * rewardPerTokenGrowth);
         }
         total /= StakingRewards.SCALE_FACTOR;
     }
@@ -263,10 +261,7 @@ abstract contract RewardsDistributionBase is IRewardsDistributionBase {
         address signer,
         bytes32 hash,
         bytes calldata signature
-    )
-        internal
-        view
-    {
+    ) internal view {
         if (!SignatureCheckerLib.isValidSignatureNowCalldata(signer, hash, signature)) {
             CustomRevert.revertWith(RewardsDistribution__InvalidSignature.selector);
         }

@@ -24,10 +24,7 @@ interface IVotesEnumerable {
     function getPaginatedDelegators(
         uint256 cursor,
         uint256 size
-    )
-        external
-        view
-        returns (address[] memory delegators, uint256 next);
+    ) external view returns (address[] memory delegators, uint256 next);
 
     /// @notice Get all delegators who have delegated their voting power to a specific account
     /// @param account The delegatee address to get delegators for

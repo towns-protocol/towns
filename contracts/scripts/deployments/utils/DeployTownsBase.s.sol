@@ -54,15 +54,12 @@ contract DeployTownsBase is Deployer {
         bytes32 salt,
         address remoteToken,
         address owner
-    )
-        internal
-        pure
-        returns (address proxy)
-    {
+    ) internal pure returns (address proxy) {
         bytes memory byteCode = abi.encodePacked(
             type(ERC1967Proxy).creationCode,
             abi.encode(
-                impl, abi.encodePacked(Towns.initialize.selector, abi.encode(remoteToken, owner))
+                impl,
+                abi.encodePacked(Towns.initialize.selector, abi.encode(remoteToken, owner))
             )
         );
 

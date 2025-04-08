@@ -17,34 +17,26 @@ import {DeployBanning} from "contracts/scripts/deployments/facets/DeployBanning.
 import {DeployChannels} from "contracts/scripts/deployments/facets/DeployChannels.s.sol";
 import {DeployDiamondCut} from "contracts/scripts/deployments/facets/DeployDiamondCut.s.sol";
 import {DeployDiamondLoupe} from "contracts/scripts/deployments/facets/DeployDiamondLoupe.s.sol";
-import {DeployERC721AQueryable} from
-    "contracts/scripts/deployments/facets/DeployERC721AQueryable.s.sol";
-import {DeployEntitlementDataQueryable} from
-    "contracts/scripts/deployments/facets/DeployEntitlementDataQueryable.s.sol";
-import {DeployEntitlementsManager} from
-    "contracts/scripts/deployments/facets/DeployEntitlementsManager.s.sol";
+import {DeployERC721AQueryable} from "contracts/scripts/deployments/facets/DeployERC721AQueryable.s.sol";
+import {DeployEntitlementDataQueryable} from "contracts/scripts/deployments/facets/DeployEntitlementDataQueryable.s.sol";
+import {DeployEntitlementsManager} from "contracts/scripts/deployments/facets/DeployEntitlementsManager.s.sol";
 import {DeployIntrospection} from "contracts/scripts/deployments/facets/DeployIntrospection.s.sol";
 import {DeployMembership} from "contracts/scripts/deployments/facets/DeployMembership.s.sol";
-import {DeployMembershipMetadata} from
-    "contracts/scripts/deployments/facets/DeployMembershipMetadata.s.sol";
-import {DeployMembershipToken} from
-    "contracts/scripts/deployments/facets/DeployMembershipToken.s.sol";
-import {DeployOwnablePendingFacet} from
-    "contracts/scripts/deployments/facets/DeployOwnablePendingFacet.s.sol";
+import {DeployMembershipMetadata} from "contracts/scripts/deployments/facets/DeployMembershipMetadata.s.sol";
+import {DeployMembershipToken} from "contracts/scripts/deployments/facets/DeployMembershipToken.s.sol";
+import {DeployOwnablePendingFacet} from "contracts/scripts/deployments/facets/DeployOwnablePendingFacet.s.sol";
 import {DeployPrepayFacet} from "contracts/scripts/deployments/facets/DeployPrepayFacet.s.sol";
 import {DeployReferrals} from "contracts/scripts/deployments/facets/DeployReferrals.s.sol";
 import {DeployReviewFacet} from "contracts/scripts/deployments/facets/DeployReviewFacet.s.sol";
 import {DeployRoles} from "contracts/scripts/deployments/facets/DeployRoles.s.sol";
-import {DeploySpaceEntitlementGated} from
-    "contracts/scripts/deployments/facets/DeploySpaceEntitlementGated.s.sol";
+import {DeploySpaceEntitlementGated} from "contracts/scripts/deployments/facets/DeploySpaceEntitlementGated.s.sol";
 import {DeployTipping} from "contracts/scripts/deployments/facets/DeployTipping.s.sol";
 import {DeployTokenOwnable} from "contracts/scripts/deployments/facets/DeployTokenOwnable.s.sol";
 import {DeployTokenPausable} from "contracts/scripts/deployments/facets/DeployTokenPausable.s.sol";
 import {DeployTreasury} from "contracts/scripts/deployments/facets/DeployTreasury.s.sol";
 import {DeployMultiInit} from "contracts/scripts/deployments/utils/DeployMultiInit.s.sol";
 // Test Facets
-import {DeployMockLegacyMembership} from
-    "contracts/scripts/deployments/utils/DeployMockLegacyMembership.s.sol";
+import {DeployMockLegacyMembership} from "contracts/scripts/deployments/utils/DeployMockLegacyMembership.s.sol";
 
 contract DeploySpace is DiamondHelper, Deployer {
     DeployDiamondCut diamondCutHelper = new DeployDiamondCut();
@@ -163,7 +155,8 @@ contract DeploySpace is DiamondHelper, Deployer {
         addCut(erc721aQueryableHelper.makeCut(erc721aQueryable, IDiamond.FacetCutAction.Add));
         addCut(
             entitlementDataQueryableHelper.makeCut(
-                entitlementDataQueryable, IDiamond.FacetCutAction.Add
+                entitlementDataQueryable,
+                IDiamond.FacetCutAction.Add
             )
         );
         addCut(prepayHelper.makeCut(prepay, IDiamond.FacetCutAction.Add));
@@ -174,16 +167,22 @@ contract DeploySpace is DiamondHelper, Deployer {
         if (isAnvil()) {
             addCut(
                 mockLegacyMembershipHelper.makeCut(
-                    mockLegacyMembership, IDiamond.FacetCutAction.Add
+                    mockLegacyMembership,
+                    IDiamond.FacetCutAction.Add
                 )
             );
         }
 
-        return Diamond.InitParams({
-            baseFacets: baseFacets(),
-            init: multiInit,
-            initData: abi.encodeWithSelector(MultiInit.multiInit.selector, _initAddresses, _initDatas)
-        });
+        return
+            Diamond.InitParams({
+                baseFacets: baseFacets(),
+                init: multiInit,
+                initData: abi.encodeWithSelector(
+                    MultiInit.multiInit.selector,
+                    _initAddresses,
+                    _initDatas
+                )
+            });
     }
 
     function diamondInitParamsFromFacets(address deployer, string[] memory facets) public {
@@ -209,14 +208,16 @@ contract DeploySpace is DiamondHelper, Deployer {
                 membershipMetadata = membershipMetadataHelper.deploy(deployer);
                 addCut(
                     membershipMetadataHelper.makeCut(
-                        membershipMetadata, IDiamond.FacetCutAction.Add
+                        membershipMetadata,
+                        IDiamond.FacetCutAction.Add
                     )
                 );
             } else if (facetNameHash == keccak256(abi.encodePacked("EntitlementDataQueryable"))) {
                 entitlementDataQueryable = entitlementDataQueryableHelper.deploy(deployer);
                 addCut(
                     entitlementDataQueryableHelper.makeCut(
-                        entitlementDataQueryable, IDiamond.FacetCutAction.Add
+                        entitlementDataQueryable,
+                        IDiamond.FacetCutAction.Add
                     )
                 );
             } else if (facetNameHash == keccak256(abi.encodePacked("EntitlementsManager"))) {
@@ -255,11 +256,7 @@ contract DeploySpace is DiamondHelper, Deployer {
     function diamondInitHelper(
         address deployer,
         string[] memory facetNames
-    )
-        external
-        override
-        returns (FacetCut[] memory)
-    {
+    ) external override returns (FacetCut[] memory) {
         diamondInitParamsFromFacets(deployer, facetNames);
         return this.getCuts();
     }

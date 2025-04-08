@@ -2,16 +2,14 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {IMembershipPricing} from
-    "contracts/src/spaces/facets/membership/pricing/IMembershipPricing.sol";
+import {IMembershipPricing} from "contracts/src/spaces/facets/membership/pricing/IMembershipPricing.sol";
 import {AggregatorV3Interface} from "contracts/src/utils/interfaces/AggregatorV3Interface.sol";
 
 // libraries
 import {Casting, UD60x18, log10} from "@prb/math/UD60x18.sol";
 
 // contracts
-import {IntrospectionFacet} from
-    "@towns-protocol/diamond/src/facets/introspection/IntrospectionFacet.sol";
+import {IntrospectionFacet} from "@towns-protocol/diamond/src/facets/introspection/IntrospectionFacet.sol";
 
 /**
  * @title TieredLogPricingOracle
@@ -94,7 +92,7 @@ contract TieredLogPricingOracleV2 is IMembershipPricing, IntrospectionFacet {
     /// @return The price in wei
     function _getWeiFromCents(uint256 cents) internal view returns (uint256) {
         uint256 exchangeRate = getChainlinkDataFeedLatestAnswer(); // chainlink oracle returns this
-            // value
+        // value
 
         // oracle or governance
         // multiple before divide to avoid truncation which ends up in precision loss
@@ -107,11 +105,7 @@ contract TieredLogPricingOracleV2 is IMembershipPricing, IntrospectionFacet {
     function _calculateStablePrice(
         uint256 freeAllocation,
         uint256 totalMinted
-    )
-        internal
-        pure
-        returns (uint256)
-    {
+    ) internal pure returns (uint256) {
         // Free allocation handling
         if (freeAllocation > 0 && totalMinted < freeAllocation) {
             return 0;

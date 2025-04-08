@@ -8,15 +8,13 @@ import {TestUtils} from "contracts/test/utils/TestUtils.sol";
 //interfaces
 import {IERC173} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
 
-import {IRewardsDistribution} from
-    "contracts/src/base/registry/facets/distribution/v2/IRewardsDistribution.sol";
+import {IRewardsDistribution} from "contracts/src/base/registry/facets/distribution/v2/IRewardsDistribution.sol";
 import {IMainnetDelegation} from "contracts/src/base/registry/facets/mainnet/IMainnetDelegation.sol";
 
 //libraries
 
 //contracts
-import {ProxyBatchDelegation} from
-    "contracts/src/tokens/mainnet/delegation/ProxyBatchDelegation.sol";
+import {ProxyBatchDelegation} from "contracts/src/tokens/mainnet/delegation/ProxyBatchDelegation.sol";
 import {MockMessenger} from "contracts/test/mocks/MockMessenger.sol";
 
 // Mainnet
@@ -48,7 +46,7 @@ contract ForkProxyBatchDelegationTest is LogUtils, TestUtils {
 
         bytes memory encodedMsgs = proxyBatchDelegation.getEncodedMsgs();
 
-        (, bytes memory message,,) = abi.decode(
+        (, bytes memory message, , ) = abi.decode(
             _getFirstMatchingLog(vm.getRecordedLogs(), SENT_MESSAGE_TOPIC).data,
             (address, bytes, uint256, uint256)
         );
@@ -64,7 +62,7 @@ contract ForkProxyBatchDelegationTest is LogUtils, TestUtils {
         );
 
         vm.prank(address(getMessenger));
-        (bool success,) = BASE_REGISTRY.call{gas: minGasLimit}(message);
+        (bool success, ) = BASE_REGISTRY.call{gas: minGasLimit}(message);
         assertTrue(success, "setDelegationDigest failed");
 
         vm.prank(IERC173(BASE_REGISTRY).owner());

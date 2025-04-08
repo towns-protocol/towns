@@ -129,8 +129,7 @@ interface IArchitect is IArchitectBase {
         IUserEntitlement userEntitlementImplementation,
         IRuleEntitlementV2 ruleEntitlementImplementation,
         IRuleEntitlement legacyRuleEntitlement
-    )
-        external;
+    ) external;
 
     function getSpaceArchitectImplementations()
         external

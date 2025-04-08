@@ -26,7 +26,9 @@ contract InteractRiverRegistry is Interaction {
 
         vm.startBroadcast(deployer);
         IRiverConfig(riverRegistry).setConfiguration(
-            keccak256("xchain.blockchains"), 0, abi.encode(chains)
+            keccak256("xchain.blockchains"),
+            0,
+            abi.encode(chains)
         );
         vm.stopBroadcast();
     }

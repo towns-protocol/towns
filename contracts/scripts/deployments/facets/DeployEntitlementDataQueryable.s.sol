@@ -8,8 +8,7 @@ pragma solidity ^0.8.23;
 //contracts
 import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
 import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
-import {EntitlementDataQueryable} from
-    "contracts/src/spaces/facets/entitlements/extensions/EntitlementDataQueryable.sol";
+import {EntitlementDataQueryable} from "contracts/src/spaces/facets/entitlements/extensions/EntitlementDataQueryable.sol";
 
 contract DeployEntitlementDataQueryable is Deployer, FacetHelper {
     // FacetHelper

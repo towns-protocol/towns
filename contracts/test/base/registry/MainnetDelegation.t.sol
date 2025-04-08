@@ -2,8 +2,7 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {IMainnetDelegationBase} from
-    "contracts/src/base/registry/facets/mainnet/IMainnetDelegation.sol";
+import {IMainnetDelegationBase} from "contracts/src/base/registry/facets/mainnet/IMainnetDelegation.sol";
 
 // libraries
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
@@ -49,12 +48,11 @@ contract MainnetDelegationTest is BaseRegistryTest, IMainnetDelegationBase {
         address claimer,
         uint256 rewardAmount,
         uint256 timeLapse
-    )
-        public
-    {
+    ) public {
         vm.assume(
-            claimer != address(0) && claimer != delegator
-                && claimer != address(rewardsDistributionFacet)
+            claimer != address(0) &&
+                claimer != delegator &&
+                claimer != address(rewardsDistributionFacet)
         );
         vm.assume(towns.balanceOf(claimer) == 0);
         rewardAmount = bound(rewardAmount, rewardDuration, 1e27);
@@ -91,9 +89,7 @@ contract MainnetDelegationTest is BaseRegistryTest, IMainnetDelegationBase {
         uint256[32] memory quantities,
         address[32] memory operators,
         uint256[32] memory commissionRates
-    )
-        public
-    {
+    ) public {
         sanitizeAmounts(quantities);
 
         for (uint256 i; i < 32; ++i) {
@@ -105,8 +101,10 @@ contract MainnetDelegationTest is BaseRegistryTest, IMainnetDelegationBase {
         }
         for (uint256 i; i < 32; ++i) {
             if (
-                operators[i] == address(0) || operators[i] == OPERATOR
-                    || operatorSet.contains(operators[i]) || delegatorSet.contains(operators[i])
+                operators[i] == address(0) ||
+                operators[i] == OPERATOR ||
+                operatorSet.contains(operators[i]) ||
+                delegatorSet.contains(operators[i])
             ) {
                 operators[i] = _randomAddress();
             }
@@ -131,9 +129,7 @@ contract MainnetDelegationTest is BaseRegistryTest, IMainnetDelegationBase {
         address[] memory claimers,
         uint256[] memory quantities,
         address[] memory operators
-    )
-        internal
-    {
+    ) internal {
         uint256 len = delegators.length;
         DelegationMsg[] memory msgs = new DelegationMsg[](len);
         for (uint256 i; i < len; ++i) {
@@ -160,10 +156,7 @@ contract MainnetDelegationTest is BaseRegistryTest, IMainnetDelegationBase {
         uint96 amount,
         address operator,
         uint256 commissionRate
-    )
-        internal
-        givenOperator(operator, commissionRate)
-    {
+    ) internal givenOperator(operator, commissionRate) {
         vm.assume(delegator != baseRegistry);
         vm.assume(delegator != address(0) && delegator != operator);
         amount = uint96(bound(amount, 1, type(uint96).max - totalStaked));
@@ -189,9 +182,7 @@ contract MainnetDelegationTest is BaseRegistryTest, IMainnetDelegationBase {
         uint256[32] memory quantities,
         address[32] memory operators,
         uint256[32] memory commissionRates
-    )
-        public
-    {
+    ) public {
         test_fuzz_relayDelegations(delegators, claimers, quantities, operators, commissionRates);
 
         address[] memory _delegators = toDyn(delegators);
@@ -222,9 +213,7 @@ contract MainnetDelegationTest is BaseRegistryTest, IMainnetDelegationBase {
         uint256[32] memory quantities,
         address[32] memory operators,
         uint256[32] memory commissionRates
-    )
-        public
-    {
+    ) public {
         test_fuzz_relayDelegations(delegators, claimers, quantities, operators, commissionRates);
 
         relayDelegations(toDyn(delegators), toDyn(claimers), toDyn(quantities), new address[](32));
@@ -247,18 +236,16 @@ contract MainnetDelegationTest is BaseRegistryTest, IMainnetDelegationBase {
         address operator,
         uint96 quantity,
         uint256 commissionRate
-    )
-        internal
-        view
-    {
+    ) internal view {
         Delegation memory delegation = mainnetDelegationFacet.getDelegationByDelegator(delegator);
         assertEq(delegation.operator, operator);
         assertEq(delegation.quantity, quantity);
         assertEq(delegation.delegator, delegator);
         assertEq(delegation.delegationTime, block.timestamp);
 
-        uint256 mainnetStake =
-            rewardsDistributionFacet.stakedByDepositor(address(rewardsDistributionFacet));
+        uint256 mainnetStake = rewardsDistributionFacet.stakedByDepositor(
+            address(rewardsDistributionFacet)
+        );
         assertEq(mainnetStake, totalStaked - 1 ether, "mainnetStake");
 
         verifyStake(baseRegistry, depositId, quantity, operator, commissionRate, delegator);
@@ -271,8 +258,9 @@ contract MainnetDelegationTest is BaseRegistryTest, IMainnetDelegationBase {
         assertEq(delegation.delegator, address(0));
         assertEq(delegation.delegationTime, 0);
 
-        uint256 mainnetStake =
-            rewardsDistributionFacet.stakedByDepositor(address(rewardsDistributionFacet));
+        uint256 mainnetStake = rewardsDistributionFacet.stakedByDepositor(
+            address(rewardsDistributionFacet)
+        );
         assertEq(mainnetStake, totalStaked - 1 ether, "mainnetStake");
 
         verifyStake(baseRegistry, depositId, 0, address(0), 0, delegator);
@@ -284,10 +272,7 @@ contract MainnetDelegationTest is BaseRegistryTest, IMainnetDelegationBase {
         uint256[] memory quantities,
         address[] memory operators,
         uint256[] memory commissionRates
-    )
-        internal
-        view
-    {
+    ) internal view {
         uint256 len = delegators.length;
         uint256[] memory deposits = rewardsDistributionFacet.getDepositsByDepositor(baseRegistry);
         assertEq(deposits.length, len);
@@ -296,7 +281,11 @@ contract MainnetDelegationTest is BaseRegistryTest, IMainnetDelegationBase {
             uint256 depositId = mainnetDelegationFacet.getDepositIdByDelegator(delegators[i]);
             assertEq(deposits[i], depositId);
             verifyDelegation(
-                depositId, delegators[i], operators[i], uint96(quantities[i]), commissionRates[i]
+                depositId,
+                delegators[i],
+                operators[i],
+                uint96(quantities[i]),
+                commissionRates[i]
             );
             assertEq(mainnetDelegationFacet.getAuthorizedClaimer(delegators[i]), claimers[i]);
         }

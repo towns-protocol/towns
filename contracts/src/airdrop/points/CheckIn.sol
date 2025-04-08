@@ -16,7 +16,7 @@ library CheckIn {
     uint256 internal constant MAX_STREAK_PER_CHECKIN = 30; // Maximum streak per check-in
     uint256 internal constant MAX_POINTS_PER_CHECKIN = 30 ether; // Maximum points per check-in
     uint256 internal constant CHECK_IN_FORGIVENESS_PERIOD = 2 days; // Time window to continue
-        // streak
+    // streak
     uint256 internal constant CHECK_IN_WAIT_PERIOD = 1 days; // Time between check-ins
 
     struct CheckInData {
@@ -38,11 +38,7 @@ library CheckIn {
         uint256 lastCheckIn,
         uint256 currentStreak,
         uint256 currentTime
-    )
-        internal
-        pure
-        returns (uint256 pointsToAward, uint256 streak)
-    {
+    ) internal pure returns (uint256 pointsToAward, uint256 streak) {
         // First time checking in
         if (lastCheckIn == 0) {
             return (1 ether, 1); // equivalent to 1 point
@@ -58,8 +54,9 @@ library CheckIn {
         uint256 newStreak = isWithinForgiveness ? currentStreak + 1 : 1;
 
         // Calculate points based on new streak
-        pointsToAward =
-            newStreak > MAX_STREAK_PER_CHECKIN ? MAX_POINTS_PER_CHECKIN : newStreak * 1 ether;
+        pointsToAward = newStreak > MAX_STREAK_PER_CHECKIN
+            ? MAX_POINTS_PER_CHECKIN
+            : newStreak * 1 ether;
 
         return (pointsToAward, newStreak);
     }

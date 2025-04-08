@@ -56,9 +56,7 @@ interface ISpaceOwner is ISpaceOwnerBase {
         address space,
         string memory shortDescription,
         string memory longDescription
-    )
-        external
-        returns (uint256 tokenId);
+    ) external returns (uint256 tokenId);
 
     /// @notice Get the space info
     /// @param space The address of the space
@@ -83,6 +81,5 @@ interface ISpaceOwner is ISpaceOwnerBase {
         string memory uri,
         string memory shortDescription,
         string memory longDescription
-    )
-        external;
+    ) external;
 }

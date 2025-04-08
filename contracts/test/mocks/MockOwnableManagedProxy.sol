@@ -7,8 +7,7 @@ pragma solidity ^0.8.23;
 
 // contracts
 
-import {IntrospectionBase} from
-    "@towns-protocol/diamond/src/facets/introspection/IntrospectionBase.sol";
+import {IntrospectionBase} from "@towns-protocol/diamond/src/facets/introspection/IntrospectionBase.sol";
 import {OwnableBase} from "@towns-protocol/diamond/src/facets/ownable/OwnableBase.sol";
 import {ManagedProxyBase} from "@towns-protocol/diamond/src/proxy/managed/ManagedProxyBase.sol";
 

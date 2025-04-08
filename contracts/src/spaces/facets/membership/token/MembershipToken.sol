@@ -16,10 +16,7 @@ contract MembershipToken is ERC721A, BanningBase, IMembershipBase {
         address to,
         uint256 tokenId,
         uint256 quantity
-    )
-        internal
-        override
-    {
+    ) internal override {
         if (from != address(0) && _isBanned(tokenId)) {
             revert Membership__Banned();
         }

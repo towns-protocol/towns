@@ -55,12 +55,17 @@ contract MockDiamondHelper {
         payloads.push(ownableHelper.makeInitData(owner));
         payloads.push(managedProxyHelper.makeInitData(""));
 
-        return new Diamond(
-            Diamond.InitParams({
-                baseFacets: cuts,
-                init: address(multiInit),
-                initData: abi.encodeWithSelector(multiInit.multiInit.selector, addresses, payloads)
-            })
-        );
+        return
+            new Diamond(
+                Diamond.InitParams({
+                    baseFacets: cuts,
+                    init: address(multiInit),
+                    initData: abi.encodeWithSelector(
+                        multiInit.multiInit.selector,
+                        addresses,
+                        payloads
+                    )
+                })
+            );
     }
 }

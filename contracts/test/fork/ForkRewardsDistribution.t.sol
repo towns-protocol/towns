@@ -7,8 +7,7 @@ import {RewardsVerifier} from "../base/registry/RewardsVerifier.t.sol";
 import {TestUtils} from "../utils/TestUtils.sol";
 import {DeployBase} from "contracts/scripts/common/DeployBase.s.sol";
 
-import {DeployRewardsDistributionV2} from
-    "contracts/scripts/deployments/facets/DeployRewardsDistributionV2.s.sol";
+import {DeployRewardsDistributionV2} from "contracts/scripts/deployments/facets/DeployRewardsDistributionV2.s.sol";
 
 //interfaces
 
@@ -17,12 +16,8 @@ import {IDiamondCut} from "@towns-protocol/diamond/src/facets/cut/IDiamondCut.so
 import {IDiamondLoupe} from "@towns-protocol/diamond/src/facets/loupe/IDiamondLoupe.sol";
 import {IERC173} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
 
-import {ICrossDomainMessenger} from
-    "contracts/src/base/registry/facets/mainnet/ICrossDomainMessenger.sol";
-import {
-    IMainnetDelegation,
-    IMainnetDelegationBase
-} from "contracts/src/base/registry/facets/mainnet/IMainnetDelegation.sol";
+import {ICrossDomainMessenger} from "contracts/src/base/registry/facets/mainnet/ICrossDomainMessenger.sol";
+import {IMainnetDelegation, IMainnetDelegationBase} from "contracts/src/base/registry/facets/mainnet/IMainnetDelegation.sol";
 import {INodeOperator} from "contracts/src/base/registry/facets/operator/INodeOperator.sol";
 
 //libraries
@@ -32,17 +27,14 @@ import {FixedPointMathLib} from "solady/utils/FixedPointMathLib.sol";
 
 //contracts
 
-import {RewardsDistribution} from
-    "contracts/src/base/registry/facets/distribution/v2/RewardsDistribution.sol";
+import {RewardsDistribution} from "contracts/src/base/registry/facets/distribution/v2/RewardsDistribution.sol";
 import {MainnetDelegation} from "contracts/src/base/registry/facets/mainnet/MainnetDelegation.sol";
-import {NodeOperatorStatus} from
-    "contracts/src/base/registry/facets/operator/NodeOperatorStorage.sol";
+import {NodeOperatorStatus} from "contracts/src/base/registry/facets/operator/NodeOperatorStorage.sol";
 import {Towns} from "contracts/src/tokens/towns/base/Towns.sol";
 import {MockMessenger} from "contracts/test/mocks/MockMessenger.sol";
 
 // deployers
-import {SpaceDelegationFacet} from
-    "contracts/src/base/registry/facets/delegation/SpaceDelegationFacet.sol";
+import {SpaceDelegationFacet} from "contracts/src/base/registry/facets/delegation/SpaceDelegationFacet.sol";
 
 contract ForkRewardsDistributionTest is
     DeployBase,
@@ -83,10 +75,7 @@ contract ForkRewardsDistributionTest is
         uint96 amount,
         address beneficiary,
         uint256 seed
-    )
-        public
-        returns (uint256 depositId)
-    {
+    ) public returns (uint256 depositId) {
         address operator = randomOperator(seed);
         vm.assume(depositor != address(rewardsDistributionFacet));
         vm.assume(beneficiary != address(0) && beneficiary != operator);
@@ -94,7 +83,12 @@ contract ForkRewardsDistributionTest is
         depositId = stake(depositor, amount, beneficiary, operator);
 
         verifyStake(
-            depositor, depositId, amount, operator, getCommissionRate(operator), beneficiary
+            depositor,
+            depositId,
+            amount,
+            operator,
+            getCommissionRate(operator),
+            beneficiary
         );
     }
 
@@ -103,9 +97,7 @@ contract ForkRewardsDistributionTest is
         address delegator,
         uint96 amount,
         uint256 seed
-    )
-        public
-    {
+    ) public {
         address operator = randomOperator(seed);
         amount = uint96(bound(amount, 1, type(uint96).max / 2));
         vm.assume(delegator != address(rewardsDistributionFacet));
@@ -114,7 +106,8 @@ contract ForkRewardsDistributionTest is
         setDelegation(delegator, operator, amount);
         assertEq(IMainnetDelegation(baseRegistry).getDepositIdByDelegator(delegator), 0);
         assertEq(
-            rewardsDistributionFacet.stakedByDepositor(address(rewardsDistributionFacet)), amount
+            rewardsDistributionFacet.stakedByDepositor(address(rewardsDistributionFacet)),
+            amount
         );
 
         setDelegation(delegator, operator, amount);
@@ -127,9 +120,7 @@ contract ForkRewardsDistributionTest is
         uint96 amount1,
         address beneficiary,
         uint256 seed
-    )
-        public
-    {
+    ) public {
         address operator = randomOperator(seed);
         vm.assume(beneficiary != address(0) && beneficiary != operator);
         amount0 = uint96(bound(amount0, 1, type(uint96).max));
@@ -172,7 +163,12 @@ contract ForkRewardsDistributionTest is
         assertEq(rewardsDistributionFacet.treasureByBeneficiary(operator0).earningPower, 0);
 
         verifyStake(
-            address(this), depositId, amount, operator1, getCommissionRate(operator1), address(this)
+            address(this),
+            depositId,
+            amount,
+            operator1,
+            getCommissionRate(operator1),
+            address(this)
         );
     }
 
@@ -189,7 +185,12 @@ contract ForkRewardsDistributionTest is
         rewardsDistributionFacet.changeBeneficiary(depositId, beneficiary);
 
         verifyStake(
-            address(this), depositId, amount, operator, getCommissionRate(operator), beneficiary
+            address(this),
+            depositId,
+            amount,
+            operator,
+            getCommissionRate(operator),
+            beneficiary
         );
     }
 
@@ -198,10 +199,7 @@ contract ForkRewardsDistributionTest is
         uint96 amount,
         address beneficiary,
         uint256 seed
-    )
-        public
-        returns (uint256 depositId)
-    {
+    ) public returns (uint256 depositId) {
         address operator = randomOperator(seed);
         vm.assume(beneficiary != address(0) && beneficiary != operator);
 
@@ -220,10 +218,7 @@ contract ForkRewardsDistributionTest is
         uint96 amount,
         address beneficiary,
         uint256 seed
-    )
-        public
-        returns (uint256 depositId)
-    {
+    ) public returns (uint256 depositId) {
         address operator = randomOperator(seed);
         depositId = test_fuzz_initiateWithdraw(amount, beneficiary, seed);
 
@@ -271,15 +266,15 @@ contract ForkRewardsDistributionTest is
         uint256 timeLapse,
         uint256 seed0,
         uint256 seed1
-    )
-        public
-    {
+    ) public {
         address operator0 = randomOperator(seed0);
         address operator1 = randomOperator(seed1);
         vm.assume(depositor != address(this) && depositor != address(rewardsDistributionFacet));
         vm.assume(
-            beneficiary != operator0 && beneficiary != operator1 && beneficiary != address(this)
-                && beneficiary != address(rewardsDistributionFacet)
+            beneficiary != operator0 &&
+                beneficiary != operator1 &&
+                beneficiary != address(this) &&
+                beneficiary != address(rewardsDistributionFacet)
         );
         amount = uint96(bound(amount, 1, type(uint96).max - 1 ether));
         timeLapse = bound(timeLapse, 0, rewardDuration);
@@ -310,19 +305,22 @@ contract ForkRewardsDistributionTest is
         uint256 timeLapse,
         uint256 seed0,
         uint256 seed1
-    )
-        public
-    {
+    ) public {
         address operator0 = randomOperator(seed0);
         address operator1 = randomOperator(seed1);
         vm.assume(
-            delegator != operator0 && delegator != operator1 && delegator != address(this)
-                && delegator != address(rewardsDistributionFacet)
+            delegator != operator0 &&
+                delegator != operator1 &&
+                delegator != address(this) &&
+                delegator != address(rewardsDistributionFacet)
         );
         vm.assume(
-            claimer != address(0) && claimer != delegator && claimer != operator0
-                && claimer != operator1 && claimer != address(this)
-                && claimer != address(rewardsDistributionFacet)
+            claimer != address(0) &&
+                claimer != delegator &&
+                claimer != operator0 &&
+                claimer != operator1 &&
+                claimer != address(this) &&
+                claimer != address(rewardsDistributionFacet)
         );
         amount = uint96(bound(amount, 1, type(uint96).max - 1 ether));
         timeLapse = bound(timeLapse, 0, rewardDuration);
@@ -362,9 +360,7 @@ contract ForkRewardsDistributionTest is
         uint256 rewardAmount,
         uint256 timeLapse,
         uint256 seed
-    )
-        public
-    {
+    ) public {
         address operator = randomOperator(seed);
         timeLapse = bound(timeLapse, 0, rewardDuration);
         amount = uint96(bound(amount, 1 ether, type(uint96).max));
@@ -392,8 +388,9 @@ contract ForkRewardsDistributionTest is
     function governanceActions() internal {
         distributionV2Helper = new DeployRewardsDistributionV2();
         address distributionV2Impl = address(new RewardsDistribution());
-        address mainnetDelegationImpl =
-            IDiamondLoupe(baseRegistry).facetAddress(MainnetDelegation.setProxyDelegation.selector);
+        address mainnetDelegationImpl = IDiamondLoupe(baseRegistry).facetAddress(
+            MainnetDelegation.setProxyDelegation.selector
+        );
         address spaceDelegationImpl = IDiamondLoupe(baseRegistry).facetAddress(
             SpaceDelegationFacet.addSpaceDelegation.selector
         );
@@ -411,8 +408,11 @@ contract ForkRewardsDistributionTest is
         selectors = new bytes4[](1);
         selectors[0] = MainnetDelegation.getDepositIdByDelegator.selector;
         facetCuts[2] = FacetCut(mainnetDelegationImpl, FacetCutAction.Add, selectors);
-        bytes memory initPayload =
-            distributionV2Helper.makeInitData(address(towns), address(towns), rewardDuration);
+        bytes memory initPayload = distributionV2Helper.makeInitData(
+            address(towns),
+            address(towns),
+            rewardDuration
+        );
 
         vm.startPrank(owner);
         IDiamondCut(baseRegistry).diamondCut(facetCuts, distributionV2Impl, initPayload);
@@ -444,10 +444,7 @@ contract ForkRewardsDistributionTest is
         uint96 amount,
         address beneficiary,
         address operator
-    )
-        internal
-        returns (uint256 depositId)
-    {
+    ) internal returns (uint256 depositId) {
         vm.assume(depositor != address(0));
         vm.assume(beneficiary != address(0));
         vm.assume(amount > 0);
@@ -492,20 +489,14 @@ contract MockMainnetDelegation is MainnetDelegation {
         address delegator,
         address operator,
         uint256 quantity
-    )
-        external
-        onlyCrossDomainMessenger
-    {
+    ) external onlyCrossDomainMessenger {
         _setDelegation(delegator, operator, quantity);
     }
 
     function setAuthorizedClaimer(
         address owner,
         address claimer
-    )
-        external
-        onlyCrossDomainMessenger
-    {
+    ) external onlyCrossDomainMessenger {
         _setAuthorizedClaimer(owner, claimer);
     }
 }

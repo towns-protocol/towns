@@ -9,10 +9,7 @@ import {IOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/IERC173.s
 import {IERC721ABase} from "contracts/src/diamond/facets/token/ERC721A/IERC721A.sol";
 import {IGuardian} from "contracts/src/spaces/facets/guardian/IGuardian.sol";
 import {ISpaceOwnerBase} from "contracts/src/spaces/facets/owner/ISpaceOwner.sol";
-import {
-    Validator__InvalidAddress,
-    Validator__InvalidStringLength
-} from "contracts/src/utils/Validator.sol";
+import {Validator__InvalidAddress, Validator__InvalidStringLength} from "contracts/src/utils/Validator.sol";
 
 // libraries
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
@@ -137,7 +134,11 @@ contract SpaceOwnerTest is ISpaceOwnerBase, IOwnableBase, BaseSetup {
         vm.prank(spaceFactory);
         vm.expectRevert(Validator__InvalidStringLength.selector);
         spaceOwnerToken.updateSpaceInfo(
-            spaceAddress, "", "ipfs://new-name", "new short description", "new long description"
+            spaceAddress,
+            "",
+            "ipfs://new-name",
+            "new short description",
+            "new long description"
         );
     }
 
@@ -153,7 +154,11 @@ contract SpaceOwnerTest is ISpaceOwnerBase, IOwnableBase, BaseSetup {
 
         vm.prank(spaceFactory);
         spaceOwnerToken.updateSpaceInfo(
-            spaceAddress, "New Name", "", "new short description", "new long description"
+            spaceAddress,
+            "New Name",
+            "",
+            "new short description",
+            "new long description"
         );
 
         Space memory space = spaceOwnerToken.getSpaceInfo(spaceAddress);
@@ -162,7 +167,8 @@ contract SpaceOwnerTest is ISpaceOwnerBase, IOwnableBase, BaseSetup {
         assertEq(space.uri, "");
         assertTrue(
             LibString.endsWith(
-                LibString.toCase(tokenUri, false), LibString.toHexString(spaceAddress)
+                LibString.toCase(tokenUri, false),
+                LibString.toHexString(spaceAddress)
             )
         );
     }
@@ -244,8 +250,11 @@ contract SpaceOwnerTest is ISpaceOwnerBase, IOwnableBase, BaseSetup {
         uint256 tokenId = mintSpace("", spaceAddress);
 
         string memory tokenUri = spaceOwnerToken.tokenURI(tokenId);
-        string memory expectedUri =
-            string.concat(defaultUri, "/", Strings.toHexString(spaceAddress));
+        string memory expectedUri = string.concat(
+            defaultUri,
+            "/",
+            Strings.toHexString(spaceAddress)
+        );
         assertEq(LibString.toCase(tokenUri, false), expectedUri);
     }
 

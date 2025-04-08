@@ -2,8 +2,7 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {IFeatureManagerFacetBase} from
-    "contracts/src/factory/facets/feature/IFeatureManagerFacet.sol";
+import {IFeatureManagerFacetBase} from "contracts/src/factory/facets/feature/IFeatureManagerFacet.sol";
 
 // libraries
 import {FeatureCondition} from "contracts/src/factory/facets/feature/FeatureConditionLib.sol";
@@ -69,12 +68,10 @@ contract FeatureManagerTest is BaseSetup, IFeatureManagerFacetBase {
         FeatureCondition memory condition,
         address to,
         uint256 amount
-    )
-        external
-        givenFeatureConditionIsSet(featureId, condition, to, amount)
-    {
-        FeatureCondition memory currentCondition =
-            featureManagerFacet.getFeatureCondition(featureId);
+    ) external givenFeatureConditionIsSet(featureId, condition, to, amount) {
+        FeatureCondition memory currentCondition = featureManagerFacet.getFeatureCondition(
+            featureId
+        );
         assertEq(currentCondition.token, address(townsToken));
         assertEq(currentCondition.threshold, condition.threshold);
         assertEq(currentCondition.active, condition.active);
@@ -175,10 +172,7 @@ contract FeatureManagerTest is BaseSetup, IFeatureManagerFacetBase {
         FeatureCondition memory condition,
         address to,
         uint256 amount
-    )
-        external
-        givenFeatureConditionIsSet(featureId, condition, to, amount)
-    {
+    ) external givenFeatureConditionIsSet(featureId, condition, to, amount) {
         vm.assume(condition.active == true);
 
         vm.prank(deployer);
@@ -186,8 +180,9 @@ contract FeatureManagerTest is BaseSetup, IFeatureManagerFacetBase {
         emit FeatureConditionDisabled(featureId);
         featureManagerFacet.disableFeatureCondition(featureId);
 
-        FeatureCondition memory currentCondition =
-            featureManagerFacet.getFeatureCondition(featureId);
+        FeatureCondition memory currentCondition = featureManagerFacet.getFeatureCondition(
+            featureId
+        );
         assertFalse(currentCondition.active);
     }
 
@@ -203,10 +198,7 @@ contract FeatureManagerTest is BaseSetup, IFeatureManagerFacetBase {
         address to,
         uint256 amount,
         address space
-    )
-        external
-        givenFeatureConditionIsSet(featureId, condition, to, amount)
-    {
+    ) external givenFeatureConditionIsSet(featureId, condition, to, amount) {
         vm.assume(condition.active == true);
         vm.assume(space != address(0));
 
@@ -224,18 +216,16 @@ contract FeatureManagerTest is BaseSetup, IFeatureManagerFacetBase {
         address user,
         uint256 amount,
         address space
-    )
-        external
-        givenFeatureConditionIsSet(featureId, condition, user, amount)
-    {
+    ) external givenFeatureConditionIsSet(featureId, condition, user, amount) {
         vm.assume(user != address(0));
         vm.assume(space != address(0));
         vm.assume(user != space);
         vm.assume(condition.active == true);
 
         // get feature conditions for space
-        FeatureCondition[] memory conditions =
-            featureManagerFacet.getFeatureConditionsForSpace(space);
+        FeatureCondition[] memory conditions = featureManagerFacet.getFeatureConditionsForSpace(
+            space
+        );
 
         // no conditions since we haven't delegated
         assertEq(conditions.length, 0);

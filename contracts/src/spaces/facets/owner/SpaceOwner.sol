@@ -5,8 +5,7 @@ pragma solidity ^0.8.23;
 
 import {ISpaceOwner} from "./ISpaceOwner.sol";
 import {IERC4906} from "@openzeppelin/contracts/interfaces/IERC4906.sol";
-import {IMembershipMetadata} from
-    "contracts/src/spaces/facets/membership/metadata/IMembershipMetadata.sol";
+import {IMembershipMetadata} from "contracts/src/spaces/facets/membership/metadata/IMembershipMetadata.sol";
 
 // libraries
 
@@ -63,11 +62,7 @@ contract SpaceOwner is
         address space,
         string memory shortDescription,
         string memory longDescription
-    )
-        external
-        onlyFactory
-        returns (uint256 tokenId)
-    {
+    ) external onlyFactory returns (uint256 tokenId) {
         tokenId = _nextTokenId();
         _mintSpace(name, uri, tokenId, space, shortDescription, longDescription);
         _mint(msg.sender, 1);
@@ -90,9 +85,7 @@ contract SpaceOwner is
         string memory uri,
         string memory shortDescription,
         string memory longDescription
-    )
-        external
-    {
+    ) external {
         _onlySpaceOwner(space);
         _updateSpace(space, name, uri, shortDescription, longDescription);
 
@@ -147,10 +140,7 @@ contract SpaceOwner is
         address to,
         uint256 startTokenId,
         uint256 quantity
-    )
-        internal
-        override
-    {
+    ) internal override {
         if (from != address(0) && _guardianEnabled(from)) {
             // allow transferring handle at minting time
             revert Guardian_Enabled();
@@ -164,11 +154,7 @@ contract SpaceOwner is
         address to,
         uint256 firstTokenId,
         uint256 batchSize
-    )
-        internal
-        virtual
-        override
-    {
+    ) internal virtual override {
         _transferVotingUnits(from, to, batchSize);
         super._afterTokenTransfers(from, to, firstTokenId, batchSize);
     }

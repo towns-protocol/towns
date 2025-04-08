@@ -71,10 +71,9 @@ interface ISpaceDelegation is ISpaceDelegationBase {
     /// @notice Gets all spaces delegated to a specific operator
     /// @param operator The address of the operator
     /// @return An array of space addresses delegated to the operator
-    function getSpaceDelegationsByOperator(address operator)
-        external
-        view
-        returns (address[] memory);
+    function getSpaceDelegationsByOperator(
+        address operator
+    ) external view returns (address[] memory);
 
     /// @notice Gets the address of the River token
     /// @return The address of the River token contract
