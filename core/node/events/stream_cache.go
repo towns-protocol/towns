@@ -129,12 +129,12 @@ func NewStreamCache(params *StreamCacheParams) *StreamCache {
 func (s *StreamCache) Start(ctx context.Context) error {
 	// schedule sync tasks for all streams that are local to this node.
 	// these tasks sync up the local db with the latest block in the registry.
-	var localStreamResults []*registries.GetStreamResult
+	var localStreamResults []*river.StreamWithId
 	err := s.params.Registry.ForAllStreams(
 		ctx,
 		s.params.AppliedBlockNum,
-		func(stream *registries.GetStreamResult) bool {
-			if slices.Contains(stream.Nodes, s.params.Wallet.Address) {
+		func(stream *river.StreamWithId) bool {
+			if slices.Contains(stream.Nodes(), s.params.Wallet.Address) {
 				localStreamResults = append(localStreamResults, stream)
 			}
 			return true
@@ -149,12 +149,12 @@ func (s *StreamCache) Start(ctx context.Context) error {
 	for _, streamRecord := range localStreamResults {
 		stream := &Stream{
 			params:              s.params,
-			streamId:            streamRecord.StreamId,
+			streamId:            streamRecord.StreamId(),
 			lastAppliedBlockNum: s.params.AppliedBlockNum,
 			local:               &localStreamState{},
 		}
-		stream.nodesLocked.ResetFromStreamResult(streamRecord, s.params.Wallet.Address)
-		s.cache.Store(streamRecord.StreamId, stream)
+		stream.nodesLocked.ResetFromStreamWithId(streamRecord, s.params.Wallet.Address)
+		s.cache.Store(streamRecord.StreamId(), stream)
 		if s.params.Config.StreamReconciliation.InitialWorkerPoolSize > 0 {
 			s.submitSyncStreamTaskToPool(
 				ctx,
@@ -243,7 +243,7 @@ func (s *StreamCache) onStreamAllocated(
 	event *river.StreamState,
 	blockNum crypto.BlockNumber,
 ) {
-	if !slices.Contains(event.Nodes, s.params.Wallet.Address) {
+	if !slices.Contains(event.Stream.Nodes(), s.params.Wallet.Address) {
 		return
 	}
 
@@ -253,13 +253,13 @@ func (s *StreamCache) onStreamAllocated(
 		return
 	}
 
-	_, genesisHash, genesisMB, err := s.params.Registry.GetStreamWithGenesis(ctx, event.StreamID, blockNum)
+	_, genesisHash, genesisMB, err := s.params.Registry.GetStreamWithGenesis(ctx, event.GetStreamId(), blockNum)
 	if err != nil {
 		logging.FromCtx(ctx).Errorw("onStreamAllocated: Failed to get genesis block for allocated stream", "err", err)
 		return
 	}
 
-	if event.LastMiniblockHash != genesisHash {
+	if event.Stream.LastMbHash() != genesisHash {
 		logging.FromCtx(ctx).Errorw("onStreamAllocated: Unexpected genesis miniblock hash on allocated stream")
 		return
 	}
@@ -295,7 +295,7 @@ func (s *StreamCache) onStreamAllocated(
 				lastAccessedTime:    time.Now(),
 				local:               &localStreamState{},
 			}
-			ret.nodesLocked.ResetFromStreamState(event, s.params.Wallet.Address)
+			ret.nodesLocked.ResetFromStreamWithId(event.Stream, s.params.Wallet.Address)
 			return ret, false
 		},
 	)
@@ -414,7 +414,7 @@ func (s *StreamCache) loadStreamRecordImpl(
 	}
 
 	var blockNum crypto.BlockNumber
-	var record *registries.GetStreamResult
+	var record *river.StreamWithId
 	for {
 		blockNum, err := s.params.RiverChain.GetBlockNumber(ctx)
 		if err == nil {
@@ -432,7 +432,7 @@ func (s *StreamCache) loadStreamRecordImpl(
 		}
 	}
 
-	local := slices.Contains(record.Nodes, s.params.Wallet.Address)
+	local := slices.Contains(record.Nodes(), s.params.Wallet.Address)
 	if !local {
 		stream, _ := s.cache.LoadOrCompute(
 			streamId,
@@ -443,7 +443,7 @@ func (s *StreamCache) loadStreamRecordImpl(
 					lastAppliedBlockNum: blockNum,
 					lastAccessedTime:    time.Now(),
 				}
-				ret.nodesLocked.ResetFromStreamResult(record, s.params.Wallet.Address)
+				ret.nodesLocked.ResetFromStreamWithId(record, s.params.Wallet.Address)
 				return ret, false
 			},
 		)
@@ -451,7 +451,7 @@ func (s *StreamCache) loadStreamRecordImpl(
 	}
 
 	// If record is beyond genesis, return stream with empty local state and schedule reconciliation.
-	if record.LastMiniblockNum > 0 {
+	if record.LastMbNum() > 0 {
 		stream, _ := s.cache.LoadOrCompute(
 			streamId,
 			func() (newValue *Stream, cancel bool) {
@@ -462,7 +462,7 @@ func (s *StreamCache) loadStreamRecordImpl(
 					lastAccessedTime:    time.Now(),
 					local:               &localStreamState{},
 				}
-				ret.nodesLocked.ResetFromStreamResult(record, s.params.Wallet.Address)
+				ret.nodesLocked.ResetFromStreamWithId(record, s.params.Wallet.Address)
 				return ret, false
 			},
 		)
@@ -512,7 +512,7 @@ func (s *StreamCache) loadStreamRecordImpl(
 				lastAccessedTime:    time.Now(),
 				local:               &localStreamState{},
 			}
-			ret.nodesLocked.ResetFromStreamResult(record, s.params.Wallet.Address)
+			ret.nodesLocked.ResetFromStreamWithId(record, s.params.Wallet.Address)
 			return ret, false
 		},
 	)

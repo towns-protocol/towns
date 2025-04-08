@@ -65,12 +65,12 @@ func srStreamDump(cfg *config.Config, countOnly, timeOnly bool) error {
 
 	var i atomic.Int64
 	startTime := time.Now()
-	err = registryContract.ForAllStreams(ctx, blockchain.InitialBlockNum, func(strm *registries.GetStreamResult) bool {
+	err = registryContract.ForAllStreams(ctx, blockchain.InitialBlockNum, func(strm *river.StreamWithId) bool {
 		curI := i.Add(1)
 		if !timeOnly {
-			s := fmt.Sprintf("%4d %s", curI-1, strm.StreamId.String())
-			fmt.Printf("%-69s %4d, %s\n", s, strm.LastMiniblockNum, strm.LastMiniblockHash.Hex())
-			for _, node := range strm.Nodes {
+			s := fmt.Sprintf("%4d %s", curI-1, strm.StreamId().String())
+			fmt.Printf("%-69s %4d, %s\n", s, strm.LastMbNum(), strm.LastMbHash().Hex())
+			for _, node := range strm.Nodes() {
 				fmt.Printf("        %s\n", node.Hex())
 			}
 		}
@@ -234,12 +234,12 @@ func srStream(cfg *config.Config, streamId string, validate bool) error {
 		return err
 	}
 
-	fmt.Printf("StreamId: %s\n", stream.StreamId.String())
-	fmt.Printf("Miniblock: %d %s\n", stream.LastMiniblockNum, stream.LastMiniblockHash.Hex())
-	fmt.Println("IsSealed: ", stream.IsSealed)
+	fmt.Printf("StreamId: %s\n", stream.StreamId().String())
+	fmt.Printf("Miniblock: %d %s\n", stream.LastMbNum(), stream.LastMbHash().Hex())
+	fmt.Println("IsSealed: ", stream.IsSealed())
 	fmt.Println("Nodes:")
 	err = nil
-	for i, node := range stream.Nodes {
+	for i, node := range stream.Nodes() {
 		fmt.Printf("  %d %s\n", i, node)
 		if validate {
 			validateErr := validateStream(
@@ -248,8 +248,8 @@ func srStream(cfg *config.Config, streamId string, validate bool) error {
 				registryContract,
 				id,
 				node,
-				stream.LastMiniblockHash,
-				int64(stream.LastMiniblockNum),
+				stream.LastMbHash(),
+				stream.LastMbNum(),
 			)
 			if validateErr != nil {
 				if err == nil {
@@ -406,9 +406,9 @@ func getStreamsForNode(ctx context.Context, node common.Address) error {
 	fmt.Printf("#Streams:\n")
 	fmt.Printf("#========\n")
 
-	if err := registryContract.ForAllStreams(ctx, blockNum, func(result *registries.GetStreamResult) bool {
-		if slices.Contains(result.Nodes, node) {
-			fmt.Println(result.StreamId.String())
+	if err := registryContract.ForAllStreams(ctx, blockNum, func(result *river.StreamWithId) bool {
+		if slices.Contains(result.Nodes(), node) {
+			fmt.Println(result.StreamId().String())
 		}
 		return true
 	}); err != nil {
