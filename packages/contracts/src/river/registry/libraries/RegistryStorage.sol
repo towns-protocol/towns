@@ -84,6 +84,8 @@ struct AppStorage {
     mapping(bytes32 => Setting[]) configuration;
     // Set of addresses of all configuration managers
     EnumerableSet.AddressSet configurationManagers;
+    // Deprecated slot. Do not use.
+    uint256 deprecatedSlot;
     // Map of node address to its stream ids
     mapping(address => EnumerableSet.Bytes32Set) streamIdsByNode;
 }

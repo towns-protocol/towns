@@ -233,11 +233,7 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
             for (; start < end; ++start) {
                 bytes32 streamId = ds.streams.at(start);
                 Stream storage stream = ds.streamById[streamId];
-                address[] storage nodes = stream.nodes;
-                uint256 nodeCount = nodes.length;
-                for (uint256 i; i < nodeCount; ++i) {
-                    ds.streamIdsByNode[nodes[i]].add(streamId);
-                }
+                _addStreamIdToNodes(streamId, stream.nodes);
             }
         }
     }
@@ -261,16 +257,10 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
             Stream storage stream = ds.streamById[req.streamId];
 
             // remove the stream from the existing set of nodes
-            uint256 oldStreamNodesLength = stream.nodes.length;
-            for (uint256 j; j < oldStreamNodesLength; ++j) {
-                ds.streamIdsByNode[stream.nodes[j]].remove(req.streamId);
-            }
+            _removeStreamIdFromNodes(req.streamId, stream.nodes);
 
             // place stream on the new set of nodes
-            uint256 newStreamNodesLength = req.nodes.length;
-            for (uint256 j; j < newStreamNodesLength; ++j) {
-                ds.streamIdsByNode[req.nodes[j]].add(req.streamId);
-            }
+            _addStreamIdToNodes(req.streamId, req.nodes);
 
             (stream.nodes, stream.reserved0) = (
                 req.nodes,
@@ -375,9 +365,26 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
     /*                          INTERNAL                          */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
+    /// @dev Adds a stream id to the nodes
+    function _addStreamIdToNodes(bytes32 streamId, address[] storage nodes) internal {
+        uint256 nodeCount = nodes.length;
+        for (uint256 i; i < nodeCount; ++i) {
+            ds.streamIdsByNode[nodes[i]].add(streamId);
+        }
+    }
+
+    /// @dev Adds a stream id to the nodes
     function _addStreamIdToNodes(bytes32 streamId, address[] calldata nodes) internal {
         for (uint256 i; i < nodes.length; ++i) {
             ds.streamIdsByNode[nodes[i]].add(streamId);
+        }
+    }
+
+    /// @dev Removes a stream id from the nodes
+    function _removeStreamIdFromNodes(bytes32 streamId, address[] storage nodes) internal {
+        uint256 nodeCount = nodes.length;
+        for (uint256 i; i < nodeCount; ++i) {
+            ds.streamIdsByNode[nodes[i]].remove(streamId);
         }
     }
 
