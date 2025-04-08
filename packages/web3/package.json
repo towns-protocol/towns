@@ -1,10 +1,13 @@
 {
     "name": "@towns-protocol/web3",
-    "version": "0.0.191",
+    "version": "0.0.194",
     "packageManager": "yarn@3.8.0",
     "type": "module",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
+    "publishConfig": {
+        "access": "public"
+    },
     "scripts": {
         "build": "tsc",
         "cb": "yarn clean && yarn build",

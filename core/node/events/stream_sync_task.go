@@ -16,6 +16,9 @@ func (s *StreamCache) SubmitSyncStreamTask(
 	ctx context.Context,
 	stream *Stream,
 ) {
+	// TODO: REPLICATION: remove context from params and refactor to use default server context
+	ctx = context.WithoutCancel(ctx)
+
 	s.stoppedMu.RLock()
 	defer s.stoppedMu.RUnlock()
 

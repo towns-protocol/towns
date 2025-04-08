@@ -7,16 +7,13 @@ import {Diamond, IDiamond} from "@towns-protocol/diamond/src/Diamond.sol";
 // libraries
 
 // contracts
-
 import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
 import {DiamondHelper} from "contracts/test/diamond/Diamond.t.sol";
 
 // helpers
-
 import {DeployDiamondCut} from "contracts/scripts/deployments/facets/DeployDiamondCut.s.sol";
 import {DeployDiamondLoupe} from "contracts/scripts/deployments/facets/DeployDiamondLoupe.s.sol";
 import {DeployEIP712Facet} from "contracts/scripts/deployments/facets/DeployEIP712Facet.s.sol";
-
 import {DeployGuardianFacet} from "contracts/scripts/deployments/facets/DeployGuardianFacet.s.sol";
 import {DeployIntrospection} from "contracts/scripts/deployments/facets/DeployIntrospection.s.sol";
 import {DeployMetadata} from "contracts/scripts/deployments/facets/DeployMetadata.s.sol";
@@ -165,7 +162,7 @@ contract DeploySpaceOwner is DiamondHelper, Deployer {
         return this.getCuts();
     }
 
-    function __deploy(address deployer) public override returns (address) {
+    function __deploy(address deployer) internal override returns (address) {
         addImmutableCuts(deployer);
 
         Diamond.InitParams memory initDiamondCut = diamondInitParams(deployer);
