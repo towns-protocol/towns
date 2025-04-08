@@ -33,7 +33,7 @@ abstract contract UpgradeableBeaconBase {
                 revert(0x1c, 0x04)
             }
             sstore(_UPGRADEABLE_BEACON_IMPLEMENTATION_SLOT, newImplementation) // Store the
-                // implementation.
+            // implementation.
             // Emit the {Upgraded} event.
             log2(codesize(), 0x00, _UPGRADED_EVENT_SIGNATURE, newImplementation)
         }

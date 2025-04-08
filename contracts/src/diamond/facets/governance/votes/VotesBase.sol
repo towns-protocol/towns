@@ -102,9 +102,10 @@ abstract contract VotesBase is EIP712Base, Nonces {
      */
     function _getPastVotes(address account, uint256 timepoint) internal view returns (uint256) {
         require(timepoint < _clock(), "Votes: future lookup");
-        return VotesStorage.layout()._delegateCheckpoints[account].upperLookupRecent(
-            SafeCastLib.toUint32(timepoint)
-        );
+        return
+            VotesStorage.layout()._delegateCheckpoints[account].upperLookupRecent(
+                SafeCastLib.toUint32(timepoint)
+            );
     }
 
     /**
@@ -127,9 +128,10 @@ abstract contract VotesBase is EIP712Base, Nonces {
      */
     function _getPastTotalSupply(uint256 timepoint) internal view returns (uint256) {
         require(timepoint < _clock(), "Votes: future lookup");
-        return VotesStorage.layout()._totalCheckpoints.upperLookupRecent(
-            SafeCastLib.toUint32(timepoint)
-        );
+        return
+            VotesStorage.layout()._totalCheckpoints.upperLookupRecent(
+                SafeCastLib.toUint32(timepoint)
+            );
     }
 
     /**
@@ -149,9 +151,7 @@ abstract contract VotesBase is EIP712Base, Nonces {
         uint8 v,
         bytes32 r,
         bytes32 s
-    )
-        internal
-    {
+    ) internal {
         require(block.timestamp <= expiry, "Votes: signature expired");
         address signer = ECDSA.recover(
             _hashTypedDataV4(keccak256(abi.encode(_DELEGATION_TYPEHASH, delegatee, nonce, expiry))),
@@ -207,7 +207,11 @@ abstract contract VotesBase is EIP712Base, Nonces {
             _push(VotesStorage.layout()._totalCheckpoints, _add, SafeCastLib.toUint224(amount));
         }
         if (to == address(0)) {
-            _push(VotesStorage.layout()._totalCheckpoints, _subtract, SafeCastLib.toUint224(amount));
+            _push(
+                VotesStorage.layout()._totalCheckpoints,
+                _subtract,
+                SafeCastLib.toUint224(amount)
+            );
         }
         _moveDelegateVotes(_delegates(from), _delegates(to), amount);
     }
@@ -240,10 +244,7 @@ abstract contract VotesBase is EIP712Base, Nonces {
         Checkpoints.Trace224 storage store,
         function(uint224, uint224) view returns (uint224) op,
         uint224 delta
-    )
-        private
-        returns (uint224, uint224)
-    {
+    ) private returns (uint224, uint224) {
         return store.push(SafeCastLib.toUint32(_clock()), op(store.latest(), delta));
     }
 

@@ -22,8 +22,5 @@ interface IPOAP {
     function tokenDetailsOfOwnerByIndex(
         address owner,
         uint256 index
-    )
-        external
-        view
-        returns (uint256 tokenId, uint256 eventId);
+    ) external view returns (uint256 tokenId, uint256 eventId);
 }

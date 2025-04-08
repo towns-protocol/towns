@@ -27,16 +27,10 @@ interface IRoyalty is IERC2981 {
     function setDefaultRoyaltyInfo(address _recipient, uint256 _amount) external;
 
     /// @dev Let's a module admin set the royalty fraction for a particular token id
-    function setRoyaltyInfoForToken(
-        uint256 _tokenId,
-        address _recipient,
-        uint256 _amount
-    )
-        external;
+    function setRoyaltyInfoForToken(uint256 _tokenId, address _recipient, uint256 _amount) external;
 
     /// @dev Returns the royalty recipient for a particular token id
-    function getRoyaltyInfoForToken(uint256 _tokenId)
-        external
-        view
-        returns (RoyaltyInfo memory _royalty);
+    function getRoyaltyInfoForToken(
+        uint256 _tokenId
+    ) external view returns (RoyaltyInfo memory _royalty);
 }

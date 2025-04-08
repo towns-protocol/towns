@@ -20,8 +20,7 @@ import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
 import {OwnableBase} from "@towns-protocol/diamond/src/facets/ownable/OwnableBase.sol";
 import {Nonces} from "@towns-protocol/diamond/src/utils/Nonces.sol";
 import {EIP712Base} from "@towns-protocol/diamond/src/utils/cryptography/EIP712Base.sol";
-import {MainnetDelegationBase} from
-    "contracts/src/base/registry/facets/mainnet/MainnetDelegationBase.sol";
+import {MainnetDelegationBase} from "contracts/src/base/registry/facets/mainnet/MainnetDelegationBase.sol";
 import {UpgradeableBeaconBase} from "contracts/src/diamond/facets/beacon/UpgradeableBeacon.sol";
 
 contract RewardsDistribution is
@@ -38,9 +37,10 @@ contract RewardsDistribution is
     using SafeTransferLib for address;
     using StakingRewards for StakingRewards.Layout;
 
-    bytes32 internal constant STAKE_TYPEHASH = keccak256(
-        "Stake(uint96 amount,address delegatee,address beneficiary,address owner,uint256 nonce,uint256 deadline)"
-    );
+    bytes32 internal constant STAKE_TYPEHASH =
+        keccak256(
+            "Stake(uint96 amount,address delegatee,address beneficiary,address owner,uint256 nonce,uint256 deadline)"
+        );
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                       ADMIN FUNCTIONS                      */
@@ -50,14 +50,14 @@ contract RewardsDistribution is
         address stakeToken,
         address rewardToken,
         uint256 rewardDuration
-    )
-        external
-        onlyInitializing
-    {
+    ) external onlyInitializing {
         RewardsDistributionStorage.Layout storage ds = RewardsDistributionStorage.layout();
         StakingRewards.Layout storage staking = ds.staking;
-        (staking.stakeToken, staking.rewardToken, staking.rewardDuration) =
-            (stakeToken, rewardToken, rewardDuration);
+        (staking.stakeToken, staking.rewardToken, staking.rewardDuration) = (
+            stakeToken,
+            rewardToken,
+            rewardDuration
+        );
         __UpgradeableBeacon_init_unchained(address(new DelegationProxy()));
 
         uint256 nextDepositId = staking.nextDepositId;
@@ -97,10 +97,7 @@ contract RewardsDistribution is
         uint96 amount,
         address delegatee,
         address beneficiary
-    )
-        external
-        returns (uint256 depositId)
-    {
+    ) external returns (uint256 depositId) {
         depositId = _stake(amount, delegatee, beneficiary, msg.sender);
     }
 
@@ -113,10 +110,7 @@ contract RewardsDistribution is
         uint8 v,
         bytes32 r,
         bytes32 s
-    )
-        external
-        returns (uint256 depositId)
-    {
+    ) external returns (uint256 depositId) {
         _permitStakeToken(amount, deadline, v, r, s);
         depositId = _stake(amount, delegatee, beneficiary, msg.sender);
     }
@@ -129,10 +123,7 @@ contract RewardsDistribution is
         address owner,
         uint256,
         bytes calldata
-    )
-        external
-        returns (uint256 depositId)
-    {
+    ) external returns (uint256 depositId) {
         depositId = _stake(amount, delegatee, beneficiary, owner);
     }
 
@@ -149,9 +140,7 @@ contract RewardsDistribution is
         uint8 v,
         bytes32 r,
         bytes32 s
-    )
-        external
-    {
+    ) external {
         _permitStakeToken(amount, deadline, v, r, s);
         _increaseStake(depositId, amount);
     }
@@ -172,7 +161,12 @@ contract RewardsDistribution is
             ds.staking.redelegate(deposit, delegatee, commissionRate);
         } else {
             ds.staking.increaseStake(
-                deposit, owner, pendingWithdrawal, delegatee, deposit.beneficiary, commissionRate
+                deposit,
+                owner,
+                pendingWithdrawal,
+                delegatee,
+                deposit.beneficiary,
+                commissionRate
             );
             deposit.delegatee = delegatee;
             deposit.pendingWithdrawal = 0;
@@ -252,13 +246,7 @@ contract RewardsDistribution is
     }
 
     /// @inheritdoc IRewardsDistribution
-    function claimReward(
-        address beneficiary,
-        address recipient
-    )
-        external
-        returns (uint256 reward)
-    {
+    function claimReward(address beneficiary, address recipient) external returns (uint256 reward) {
         RewardsDistributionStorage.Layout storage ds = RewardsDistributionStorage.layout();
         // If the beneficiary is the caller (user or operator), they can claim the reward
         if (msg.sender == beneficiary) {}
@@ -335,11 +323,9 @@ contract RewardsDistribution is
     }
 
     /// @inheritdoc IRewardsDistribution
-    function treasureByBeneficiary(address beneficiary)
-        external
-        view
-        returns (StakingRewards.Treasure memory treasure)
-    {
+    function treasureByBeneficiary(
+        address beneficiary
+    ) external view returns (StakingRewards.Treasure memory treasure) {
         RewardsDistributionStorage.Layout storage ds = RewardsDistributionStorage.layout();
         assembly ("memory-safe") {
             mstore(0x40, treasure)
@@ -348,11 +334,9 @@ contract RewardsDistribution is
     }
 
     /// @inheritdoc IRewardsDistribution
-    function depositById(uint256 depositId)
-        external
-        view
-        returns (StakingRewards.Deposit memory deposit)
-    {
+    function depositById(
+        uint256 depositId
+    ) external view returns (StakingRewards.Deposit memory deposit) {
         RewardsDistributionStorage.Layout storage ds = RewardsDistributionStorage.layout();
         assembly ("memory-safe") {
             mstore(0x40, deposit)
@@ -387,8 +371,9 @@ contract RewardsDistribution is
     /// @inheritdoc IRewardsDistribution
     function currentReward(address beneficiary) external view returns (uint256) {
         RewardsDistributionStorage.Layout storage ds = RewardsDistributionStorage.layout();
-        return ds.staking.currentRewardScaled(ds.staking.treasureByBeneficiary[beneficiary])
-            / StakingRewards.SCALE_FACTOR;
+        return
+            ds.staking.currentRewardScaled(ds.staking.treasureByBeneficiary[beneficiary]) /
+            StakingRewards.SCALE_FACTOR;
     }
 
     /// @inheritdoc IRewardsDistribution

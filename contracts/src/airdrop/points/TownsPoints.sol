@@ -80,9 +80,11 @@ contract TownsPoints is IERC20Metadata, ITownsPoints, OwnableBase, Facet {
         }
 
         if (action == Action.CheckIn) {
-            (uint256 lastCheckIn, uint256 streak, uint256 currentTime) =
-                abi.decode(data, (uint256, uint256, uint256));
-            (points,) = CheckIn.getPointsAndStreak(lastCheckIn, streak, currentTime);
+            (uint256 lastCheckIn, uint256 streak, uint256 currentTime) = abi.decode(
+                data,
+                (uint256, uint256, uint256)
+            );
+            (points, ) = CheckIn.getPointsAndStreak(lastCheckIn, streak, currentTime);
         }
 
         if (action == Action.Tip) {
@@ -99,8 +101,11 @@ contract TownsPoints is IERC20Metadata, ITownsPoints, OwnableBase, Facet {
     function checkIn() external {
         CheckIn.CheckInData storage userCheckIn = CheckIn.layout().checkInsByAddress[msg.sender];
 
-        (uint256 pointsToAward, uint256 newStreak) =
-            CheckIn.getPointsAndStreak(userCheckIn.lastCheckIn, userCheckIn.streak, block.timestamp);
+        (uint256 pointsToAward, uint256 newStreak) = CheckIn.getPointsAndStreak(
+            userCheckIn.lastCheckIn,
+            userCheckIn.streak,
+            block.timestamp
+        );
 
         // Must wait at least 24 hours between check-ins
         if (pointsToAward == 0 && newStreak == 0) {

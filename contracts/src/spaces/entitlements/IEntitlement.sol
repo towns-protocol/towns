@@ -57,8 +57,5 @@ interface IEntitlement is IEntitlementBase {
         bytes32 channelId,
         address[] memory user,
         bytes32 permission
-    )
-        external
-        view
-        returns (bool);
+    ) external view returns (bool);
 }

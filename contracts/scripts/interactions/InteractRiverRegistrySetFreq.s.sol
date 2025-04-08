@@ -17,7 +17,9 @@ contract InteractRiverRegistrySetFreq is Interaction {
 
         vm.startBroadcast(deployer);
         IRiverConfig(riverRegistry).setConfiguration(
-            keccak256("stream.miniblockregistrationfrequency"), 0, abi.encode(value)
+            keccak256("stream.miniblockregistrationfrequency"),
+            0,
+            abi.encode(value)
         );
         vm.stopBroadcast();
     }

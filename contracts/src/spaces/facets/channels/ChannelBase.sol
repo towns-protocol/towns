@@ -15,9 +15,7 @@ abstract contract ChannelBase is IChannelBase {
         bytes32 channelId,
         string memory metadata,
         uint256[] memory roleIds
-    )
-        internal
-    {
+    ) internal {
         Validator.checkLength(metadata, 0);
         ChannelService.createChannel(channelId, metadata, roleIds);
         emit ChannelCreated(msg.sender, channelId);
@@ -37,13 +35,18 @@ abstract contract ChannelBase is IChannelBase {
         Channel[] memory channels = new Channel[](channelIds.length);
 
         for (uint256 i = 0; i < channelIds.length; i++) {
-            (bytes32 id, string memory metadata, bool disabled) =
-                ChannelService.getChannel(channelIds[i]);
+            (bytes32 id, string memory metadata, bool disabled) = ChannelService.getChannel(
+                channelIds[i]
+            );
 
             uint256[] memory roleIds = ChannelService.getRolesByChannel(channelIds[i]);
 
-            channels[i] =
-                Channel({id: id, disabled: disabled, metadata: metadata, roleIds: roleIds});
+            channels[i] = Channel({
+                id: id,
+                disabled: disabled,
+                metadata: metadata,
+                roleIds: roleIds
+            });
         }
 
         return channels;

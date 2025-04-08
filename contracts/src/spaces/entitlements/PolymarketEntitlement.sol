@@ -21,14 +21,11 @@ contract PolymarketEntitlement is ICrossChainEntitlement {
     function isEntitled(
         address[] calldata users,
         bytes calldata paramData
-    )
-        external
-        view
-        override
-        returns (bool)
-    {
-        (uint256 tokenId, uint256 requiredBalance, bool aggregate) =
-            abi.decode(paramData, (uint256, uint256, bool));
+    ) external view override returns (bool) {
+        (uint256 tokenId, uint256 requiredBalance, bool aggregate) = abi.decode(
+            paramData,
+            (uint256, uint256, bool)
+        );
 
         uint256 totalBalance = 0;
 

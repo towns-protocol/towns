@@ -12,8 +12,10 @@ import {Towns} from "contracts/src/tokens/towns/base/Towns.sol";
 
 contract TownsDeployer {
     constructor(address l1Token, address owner, bytes32 implementationSalt, bytes32 proxySalt) {
-        address implementation =
-            Create2Utils.create2Deploy(implementationSalt, type(Towns).creationCode);
+        address implementation = Create2Utils.create2Deploy(
+            implementationSalt,
+            type(Towns).creationCode
+        );
 
         // Create proxy initialization bytecode
         bytes memory proxyBytecode = abi.encodePacked(

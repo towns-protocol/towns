@@ -27,12 +27,9 @@ contract MockLegacyArchitect is
     // =============================================================
     //                            Space
     // =============================================================
-    function createSpace(SpaceInfo memory spaceInfo)
-        external
-        nonReentrant
-        whenNotPaused
-        returns (address)
-    {
+    function createSpace(
+        SpaceInfo memory spaceInfo
+    ) external nonReentrant whenNotPaused returns (address) {
         return _createSpace(spaceInfo);
     }
 }

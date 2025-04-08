@@ -9,17 +9,11 @@ import {ITownsPoints, ITownsPointsBase} from "contracts/src/airdrop/points/ITown
 import {IERC721A, IERC721ABase} from "contracts/src/diamond/facets/token/ERC721A/IERC721A.sol";
 import {IArchitectBase} from "contracts/src/factory/facets/architect/IArchitect.sol";
 import {IPartnerRegistry} from "contracts/src/factory/facets/partner/IPartnerRegistry.sol";
-import {IPlatformRequirements} from
-    "contracts/src/factory/facets/platform/requirements/IPlatformRequirements.sol";
-import {
-    IWalletLink, IWalletLinkBase
-} from "contracts/src/factory/facets/wallet-link/IWalletLink.sol";
+import {IPlatformRequirements} from "contracts/src/factory/facets/platform/requirements/IPlatformRequirements.sol";
+import {IWalletLink, IWalletLinkBase} from "contracts/src/factory/facets/wallet-link/IWalletLink.sol";
 import {IEntitlementBase} from "contracts/src/spaces/entitlements/IEntitlement.sol";
 import {IEntitlement} from "contracts/src/spaces/entitlements/IEntitlement.sol";
-import {
-    IEntitlementsManager,
-    IEntitlementsManagerBase
-} from "contracts/src/spaces/facets/entitlements/IEntitlementsManager.sol";
+import {IEntitlementsManager, IEntitlementsManagerBase} from "contracts/src/spaces/facets/entitlements/IEntitlementsManager.sol";
 import {IMembershipBase} from "contracts/src/spaces/facets/membership/IMembership.sol";
 
 import {IPrepay} from "contracts/src/spaces/facets/prepay/IPrepay.sol";
@@ -99,13 +93,17 @@ contract MembershipBaseSetup is
         allowedUsers[0] = alice;
         allowedUsers[1] = charlie;
 
-        IArchitectBase.SpaceInfo memory userSpaceInfo =
-            _createUserSpaceInfo("MembershipSpace", allowedUsers);
+        IArchitectBase.SpaceInfo memory userSpaceInfo = _createUserSpaceInfo(
+            "MembershipSpace",
+            allowedUsers
+        );
         userSpaceInfo.membership.settings.pricingModule = fixedPricingModule;
         userSpaceInfo.membership.settings.freeAllocation = FREE_ALLOCATION;
 
-        IArchitectBase.SpaceInfo memory dynamicSpaceInfo =
-            _createUserSpaceInfo("DynamicSpace", allowedUsers);
+        IArchitectBase.SpaceInfo memory dynamicSpaceInfo = _createUserSpaceInfo(
+            "DynamicSpace",
+            allowedUsers
+        );
         dynamicSpaceInfo.membership.settings.pricingModule = pricingModule;
 
         vm.startPrank(founder);
@@ -157,7 +155,8 @@ contract MembershipBaseSetup is
         vm.expectEmit(address(wl));
         emit LinkWalletToRootKey(newWallet.addr, rootWallet.addr);
         wl.linkCallerToRootKey(
-            LinkedWallet(rootWallet.addr, signature, LINKED_WALLET_MESSAGE), nonce
+            LinkedWallet(rootWallet.addr, signature, LINKED_WALLET_MESSAGE),
+            nonce
         );
         vm.stopPrank();
         _;
@@ -165,17 +164,17 @@ contract MembershipBaseSetup is
 
     modifier givenJoinspaceHasAdditionalCrosschainEntitlements() {
         vm.startPrank(founder);
-        IEntitlementsManagerBase.Entitlement[] memory entitlements =
-            IEntitlementsManager(userSpace).getEntitlements();
+        IEntitlementsManagerBase.Entitlement[] memory entitlements = IEntitlementsManager(userSpace)
+            .getEntitlements();
         IEntitlement ruleEntitlement = IEntitlement(entitlements[1].moduleAddress);
 
         // IRuleEntitlements only allow one entitlement per role, so create 2 roles to add 2 rule
         // entitlements that need to
         // be checked for the joinSpace permission.
-        IRolesBase.CreateEntitlement[] memory createEntitlements1 =
-            new IRolesBase.CreateEntitlement[](1);
-        IRolesBase.CreateEntitlement[] memory createEntitlements2 =
-            new IRolesBase.CreateEntitlement[](1);
+        IRolesBase.CreateEntitlement[]
+            memory createEntitlements1 = new IRolesBase.CreateEntitlement[](1);
+        IRolesBase.CreateEntitlement[]
+            memory createEntitlements2 = new IRolesBase.CreateEntitlement[](1);
 
         createEntitlements1[0] = IRolesBase.CreateEntitlement({
             module: ruleEntitlement,
@@ -190,10 +189,14 @@ contract MembershipBaseSetup is
         permissions[0] = Permissions.JoinSpace;
 
         IRoles(userSpace).createRole(
-            "joinspace-crosschain-multi-entitlement-1", permissions, createEntitlements1
+            "joinspace-crosschain-multi-entitlement-1",
+            permissions,
+            createEntitlements1
         );
         IRoles(userSpace).createRole(
-            "joinspace-crosschain-multi-entitlement-2", permissions, createEntitlements2
+            "joinspace-crosschain-multi-entitlement-2",
+            permissions,
+            createEntitlements2
         );
         vm.stopPrank();
         _;
@@ -205,8 +208,10 @@ contract MembershipBaseSetup is
     }
 
     function _getPoints(uint256 price) internal view returns (uint256) {
-        return ITownsPoints(riverAirdrop).getPoints(
-            ITownsPointsBase.Action.JoinSpace, abi.encode(price)
-        );
+        return
+            ITownsPoints(riverAirdrop).getPoints(
+                ITownsPointsBase.Action.JoinSpace,
+                abi.encode(price)
+            );
     }
 }

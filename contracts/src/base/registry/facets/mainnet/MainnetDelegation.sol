@@ -3,8 +3,7 @@ pragma solidity ^0.8.23;
 
 // interfaces
 
-import {ICrossDomainMessenger} from
-    "contracts/src/base/registry/facets/mainnet/ICrossDomainMessenger.sol";
+import {ICrossDomainMessenger} from "contracts/src/base/registry/facets/mainnet/ICrossDomainMessenger.sol";
 import {IMainnetDelegation} from "contracts/src/base/registry/facets/mainnet/IMainnetDelegation.sol";
 
 // libraries
@@ -13,8 +12,7 @@ import {IMainnetDelegation} from "contracts/src/base/registry/facets/mainnet/IMa
 
 import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
 import {OwnableBase} from "@towns-protocol/diamond/src/facets/ownable/OwnableBase.sol";
-import {MainnetDelegationBase} from
-    "contracts/src/base/registry/facets/mainnet/MainnetDelegationBase.sol";
+import {MainnetDelegationBase} from "contracts/src/base/registry/facets/mainnet/MainnetDelegationBase.sol";
 
 contract MainnetDelegation is IMainnetDelegation, MainnetDelegationBase, OwnableBase, Facet {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -38,8 +36,8 @@ contract MainnetDelegation is IMainnetDelegation, MainnetDelegationBase, Ownable
         ICrossDomainMessenger messenger = _getMessenger();
 
         require(
-            msg.sender == address(messenger)
-                && messenger.xDomainMessageSender() == address(_getProxyDelegation()),
+            msg.sender == address(messenger) &&
+                messenger.xDomainMessageSender() == address(_getProxyDelegation()),
             "MainnetDelegation: sender is not the cross-domain messenger"
         );
         _;
@@ -87,20 +85,14 @@ contract MainnetDelegation is IMainnetDelegation, MainnetDelegationBase, Ownable
     }
 
     /// @inheritdoc IMainnetDelegation
-    function getDelegationByDelegator(address delegator)
-        external
-        view
-        returns (Delegation memory)
-    {
+    function getDelegationByDelegator(address delegator) external view returns (Delegation memory) {
         return _getDelegationByDelegator(delegator);
     }
 
     /// @inheritdoc IMainnetDelegation
-    function getMainnetDelegationsByOperator(address operator)
-        external
-        view
-        returns (Delegation[] memory)
-    {
+    function getMainnetDelegationsByOperator(
+        address operator
+    ) external view returns (Delegation[] memory) {
         return _getMainnetDelegationsByOperator(operator);
     }
 

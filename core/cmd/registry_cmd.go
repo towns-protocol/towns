@@ -143,7 +143,7 @@ func validateStream(
 		lastBlock = info.Ref
 		header := info.Header()
 		var snapshot string
-		if header.GetSnapshot() != nil {
+		if header.IsSnapshot() {
 			snapshot = "snapshot"
 		}
 		fmt.Printf(

@@ -73,8 +73,7 @@ interface IEntitlementChecker is IEntitlementCheckerBase {
         bytes32 transactionId,
         uint256 roleId,
         address[] memory nodes
-    )
-        external;
+    ) external;
 
     /// @notice Request an entitlement check with additional data (V2)
     /// @param walletAddress The wallet address to check entitlements for
@@ -86,9 +85,7 @@ interface IEntitlementChecker is IEntitlementCheckerBase {
         bytes32 transactionId,
         uint256 requestId,
         bytes memory extraData
-    )
-        external
-        payable;
+    ) external payable;
 
     /// @notice Get all nodes registered to a specific operator
     /// @param operator The address of the operator

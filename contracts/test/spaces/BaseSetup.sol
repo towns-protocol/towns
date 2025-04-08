@@ -12,15 +12,13 @@ import {TestUtils} from "contracts/test/utils/TestUtils.sol";
 // interfaces
 
 import {IEntryPoint} from "account-abstraction/interfaces/IEntryPoint.sol";
-import {IEntitlementChecker} from
-    "contracts/src/base/registry/facets/checker/IEntitlementChecker.sol";
+import {IEntitlementChecker} from "contracts/src/base/registry/facets/checker/IEntitlementChecker.sol";
 import {IMainnetDelegation} from "contracts/src/base/registry/facets/mainnet/IMainnetDelegation.sol";
 import {INodeOperator} from "contracts/src/base/registry/facets/operator/INodeOperator.sol";
 import {IArchitectBase} from "contracts/src/factory/facets/architect/IArchitect.sol";
 
 import {ICreateSpace} from "contracts/src/factory/facets/create/ICreateSpace.sol";
-import {IImplementationRegistry} from
-    "contracts/src/factory/facets/registry/IImplementationRegistry.sol";
+import {IImplementationRegistry} from "contracts/src/factory/facets/registry/IImplementationRegistry.sol";
 import {IWalletLink} from "contracts/src/factory/facets/wallet-link/IWalletLink.sol";
 import {ISpaceOwner} from "contracts/src/spaces/facets/owner/ISpaceOwner.sol";
 import {ITowns} from "contracts/src/tokens/towns/mainnet/ITowns.sol";
@@ -31,8 +29,7 @@ import {TownsLib} from "contracts/src/tokens/towns/base/TownsLib.sol";
 
 // contracts
 import {EIP712Facet} from "@towns-protocol/diamond/src/utils/cryptography/EIP712Facet.sol";
-import {NodeOperatorStatus} from
-    "contracts/src/base/registry/facets/operator/NodeOperatorStorage.sol";
+import {NodeOperatorStatus} from "contracts/src/base/registry/facets/operator/NodeOperatorStorage.sol";
 import {MockMessenger} from "contracts/test/mocks/MockMessenger.sol";
 
 // deployments
@@ -49,8 +46,7 @@ import {SpaceOwner} from "contracts/src/spaces/facets/owner/SpaceOwner.sol";
 import {DeployBaseRegistry} from "contracts/scripts/deployments/diamonds/DeployBaseRegistry.s.sol";
 import {DeployRiverAirdrop} from "contracts/scripts/deployments/diamonds/DeployRiverAirdrop.s.sol";
 import {DeploySpaceFactory} from "contracts/scripts/deployments/diamonds/DeploySpaceFactory.s.sol";
-import {DeployProxyBatchDelegation} from
-    "contracts/scripts/deployments/utils/DeployProxyBatchDelegation.s.sol";
+import {DeployProxyBatchDelegation} from "contracts/scripts/deployments/utils/DeployProxyBatchDelegation.s.sol";
 import {DeployTownsBase} from "contracts/scripts/deployments/utils/DeployTownsBase.s.sol";
 
 /*
@@ -193,8 +189,9 @@ contract BaseSetup is TestUtils, EIP712Utils, SpaceHelper {
         IArchitectBase.SpaceInfo memory spaceInfo = _createSpaceInfo("BaseSetupSpace");
         spaceInfo.membership.settings.pricingModule = pricingModule;
 
-        IArchitectBase.SpaceInfo memory everyoneSpaceInfo =
-            _createEveryoneSpaceInfo("BaseSetupEveryoneSpace");
+        IArchitectBase.SpaceInfo memory everyoneSpaceInfo = _createEveryoneSpaceInfo(
+            "BaseSetupEveryoneSpace"
+        );
         everyoneSpaceInfo.membership.settings.pricingModule = fixedPricingModule;
         everyoneSpaceInfo.membership.settings.freeAllocation = FREE_ALLOCATION;
 
@@ -231,15 +228,17 @@ contract BaseSetup is TestUtils, EIP712Utils, SpaceHelper {
         uint256 privateKey,
         address newWallet,
         uint256 nonce
-    )
-        internal
-        view
-        returns (bytes memory)
-    {
-        bytes32 linkedWalletHash =
-            _getLinkedWalletTypedDataHash(LINKED_WALLET_MESSAGE, newWallet, nonce);
-        (uint8 v, bytes32 r, bytes32 s) =
-            signIntent(privateKey, address(eip712Facet), linkedWalletHash);
+    ) internal view returns (bytes memory) {
+        bytes32 linkedWalletHash = _getLinkedWalletTypedDataHash(
+            LINKED_WALLET_MESSAGE,
+            newWallet,
+            nonce
+        );
+        (uint8 v, bytes32 r, bytes32 s) = signIntent(
+            privateKey,
+            address(eip712Facet),
+            linkedWalletHash
+        );
 
         return abi.encodePacked(r, s, v);
     }
@@ -248,11 +247,7 @@ contract BaseSetup is TestUtils, EIP712Utils, SpaceHelper {
         string memory message,
         address addr,
         uint256 nonce
-    )
-        internal
-        pure
-        returns (bytes32)
-    {
+    ) internal pure returns (bytes32) {
         // https://eips.ethereum.org/EIPS/eip-712
         // ATTENTION: "The dynamic values bytes and string are encoded as a keccak256 hash of their
         // contents."

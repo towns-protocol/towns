@@ -18,11 +18,7 @@ contract DeployMultiInit is Deployer, FacetHelper {
     function makeInitData(
         address[] memory initAddresses,
         bytes[] memory initDatas
-    )
-        public
-        pure
-        returns (bytes memory)
-    {
+    ) public pure returns (bytes memory) {
         return abi.encodeWithSelector(MultiInit.multiInit.selector, initAddresses, initDatas);
     }
 }

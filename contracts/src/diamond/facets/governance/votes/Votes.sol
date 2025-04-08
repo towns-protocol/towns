@@ -30,12 +30,7 @@ abstract contract Votes is VotesBase, IERC5805 {
     function getPastVotes(
         address account,
         uint256 timepoint
-    )
-        public
-        view
-        virtual
-        returns (uint256)
-    {
+    ) public view virtual returns (uint256) {
         return _getPastVotes(account, timepoint);
     }
 
@@ -62,10 +57,7 @@ abstract contract Votes is VotesBase, IERC5805 {
         uint8 v,
         bytes32 r,
         bytes32 s
-    )
-        public
-        virtual
-    {
+    ) public virtual {
         return _delegateBySig(delegatee, nonce, expiry, v, r, s);
     }
 }

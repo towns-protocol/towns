@@ -16,10 +16,7 @@ contract WalletLink is IWalletLink, WalletLinkBase, OwnableBase, Facet {
     function __WalletLink_init(
         address delegateRegistry,
         address sclEip6565
-    )
-        external
-        onlyInitializing
-    {
+    ) external onlyInitializing {
         _addInterface(type(IWalletLink).interfaceId);
         _setDependency(DELEGATE_REGISTRY_V2, delegateRegistry);
         _setDependency(SCL_EIP6565, sclEip6565);
@@ -35,19 +32,12 @@ contract WalletLink is IWalletLink, WalletLinkBase, OwnableBase, Facet {
         LinkedWallet calldata wallet,
         LinkedWallet calldata rootWallet,
         uint256 nonce
-    )
-        external
-    {
+    ) external {
         _linkWalletToRootWallet(wallet, rootWallet, nonce);
     }
 
     /// @inheritdoc IWalletLink
-    function linkNonEVMWalletToRootKey(
-        NonEVMLinkedWallet calldata wallet,
-        uint256 nonce
-    )
-        external
-    {
+    function linkNonEVMWalletToRootKey(NonEVMLinkedWallet calldata wallet, uint256 nonce) external {
         _linkNonEVMWalletToRootWalletViaCaller(wallet, nonce);
     }
 
@@ -77,20 +67,14 @@ contract WalletLink is IWalletLink, WalletLinkBase, OwnableBase, Facet {
     }
 
     /// @inheritdoc IWalletLink
-    function getWalletsByRootKey(address rootKey)
-        external
-        view
-        returns (address[] memory wallets)
-    {
+    function getWalletsByRootKey(address rootKey) external view returns (address[] memory wallets) {
         return _getWalletsByRootKey(rootKey);
     }
 
     /// @inheritdoc IWalletLink
-    function getWalletsByRootKeyWithDelegations(address rootKey)
-        external
-        view
-        returns (address[] memory wallets)
-    {
+    function getWalletsByRootKeyWithDelegations(
+        address rootKey
+    ) external view returns (address[] memory wallets) {
         return _getWalletsByRootKeyWithDelegations(rootKey);
     }
 
@@ -98,11 +82,7 @@ contract WalletLink is IWalletLink, WalletLinkBase, OwnableBase, Facet {
     function explicitWalletsByRootKey(
         address rootKey,
         WalletQueryOptions calldata options
-    )
-        external
-        view
-        returns (WalletLib.Wallet[] memory wallets)
-    {
+    ) external view returns (WalletLib.Wallet[] memory wallets) {
         return _explicitWalletsByRootKey(rootKey, options);
     }
 
@@ -120,11 +100,7 @@ contract WalletLink is IWalletLink, WalletLinkBase, OwnableBase, Facet {
     function checkIfNonEVMWalletLinked(
         address rootKey,
         bytes32 walletHash
-    )
-        external
-        view
-        returns (bool)
-    {
+    ) external view returns (bool) {
         return _checkIfNonEVMWalletLinked(rootKey, walletHash);
     }
 

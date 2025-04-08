@@ -14,8 +14,7 @@ import {IRuleEntitlement} from "contracts/src/spaces/entitlements/rule/IRuleEnti
 import {IUserEntitlement} from "contracts/src/spaces/entitlements/user/IUserEntitlement.sol";
 
 import {IChannel} from "contracts/src/spaces/facets/channels/IChannel.sol";
-import {IEntitlementsManager} from
-    "contracts/src/spaces/facets/entitlements/IEntitlementsManager.sol";
+import {IEntitlementsManager} from "contracts/src/spaces/facets/entitlements/IEntitlementsManager.sol";
 import {IMembershipBase} from "contracts/src/spaces/facets/membership/IMembership.sol";
 import {IRoles, IRolesBase} from "contracts/src/spaces/facets/roles/IRoles.sol";
 
@@ -24,8 +23,7 @@ import {IRoles, IRolesBase} from "contracts/src/spaces/facets/roles/IRoles.sol";
 import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import {ArchitectStorage} from "contracts/src/factory/facets/architect/ArchitectStorage.sol";
-import {ImplementationStorage} from
-    "contracts/src/factory/facets/architect/ImplementationStorage.sol";
+import {ImplementationStorage} from "contracts/src/factory/facets/architect/ImplementationStorage.sol";
 import {Permissions} from "contracts/src/spaces/facets/Permissions.sol";
 import {StringSet} from "contracts/src/utils/StringSet.sol";
 import {Validator} from "contracts/src/utils/Validator.sol";
@@ -85,12 +83,14 @@ abstract contract LegacyArchitectBase is ILegacyArchitectBase {
         );
 
         // deploy user entitlement
-        IUserEntitlement userEntitlement =
-            IUserEntitlement(_deployEntitlement(ims.userEntitlement, spaceAddress));
+        IUserEntitlement userEntitlement = IUserEntitlement(
+            _deployEntitlement(ims.userEntitlement, spaceAddress)
+        );
 
         // deploy token entitlement
-        IRuleEntitlement ruleEntitlement =
-            IRuleEntitlement(_deployEntitlement(ims.legacyRuleEntitlement, spaceAddress));
+        IRuleEntitlement ruleEntitlement = IRuleEntitlement(
+            _deployEntitlement(ims.legacyRuleEntitlement, spaceAddress)
+        );
 
         address[] memory entitlements = new address[](2);
         entitlements[0] = address(userEntitlement);
@@ -101,7 +101,10 @@ abstract contract LegacyArchitectBase is ILegacyArchitectBase {
 
         // create minter role with requirements
         _createMinterEntitlement(
-            spaceAddress, userEntitlement, ruleEntitlement, spaceInfo.membership.requirements
+            spaceAddress,
+            userEntitlement,
+            ruleEntitlement,
+            spaceInfo.membership.requirements
         );
 
         // create member role with membership as the requirement
@@ -117,7 +120,9 @@ abstract contract LegacyArchitectBase is ILegacyArchitectBase {
 
         // transfer nft to sender
         IERC721A(address(ims.spaceOwnerToken)).safeTransferFrom(
-            address(this), msg.sender, spaceTokenId
+            address(this),
+            msg.sender,
+            spaceTokenId
         );
 
         // emit event
@@ -141,9 +146,7 @@ abstract contract LegacyArchitectBase is ILegacyArchitectBase {
         address space,
         uint256 roleId,
         ChannelInfo memory channelInfo
-    )
-        internal
-    {
+    ) internal {
         uint256[] memory roleIds = new uint256[](1);
         roleIds[0] = roleId;
 
@@ -161,15 +164,14 @@ abstract contract LegacyArchitectBase is ILegacyArchitectBase {
         IUserEntitlement userEntitlement,
         IRuleEntitlement ruleEntitlement,
         MembershipRequirements memory requirements
-    )
-        internal
-        returns (uint256 roleId)
-    {
+    ) internal returns (uint256 roleId) {
         string[] memory joinPermissions = new string[](1);
         joinPermissions[0] = Permissions.JoinSpace;
 
         roleId = IRoles(spaceAddress).createRole(
-            MINTER_ROLE, joinPermissions, new IRolesBase.CreateEntitlement[](0)
+            MINTER_ROLE,
+            joinPermissions,
+            new IRolesBase.CreateEntitlement[](0)
         );
 
         if (requirements.everyone) {
@@ -183,7 +185,7 @@ abstract contract LegacyArchitectBase is ILegacyArchitectBase {
         } else {
             if (requirements.users.length != 0) {
                 // validate users
-                for (uint256 i = 0; i < requirements.users.length;) {
+                for (uint256 i = 0; i < requirements.users.length; ) {
                     Validator.checkAddress(requirements.users[i]);
                     unchecked {
                         i++;
@@ -217,10 +219,7 @@ abstract contract LegacyArchitectBase is ILegacyArchitectBase {
         string memory memberName,
         string[] memory memberPermissions,
         IUserEntitlement userEntitlement
-    )
-        internal
-        returns (uint256 roleId)
-    {
+    ) internal returns (uint256 roleId) {
         address[] memory users = new address[](1);
         users[0] = EVERYONE_ADDRESS;
 
@@ -238,10 +237,7 @@ abstract contract LegacyArchitectBase is ILegacyArchitectBase {
     function _deploySpace(
         uint256 spaceTokenId,
         Membership memory membership
-    )
-        internal
-        returns (address space)
-    {
+    ) internal returns (address space) {
         // get deployment info
         (bytes memory initCode, bytes32 salt) = _getSpaceDeploymentInfo(spaceTokenId, membership);
         return Factory.deploy(initCode, salt);
@@ -250,10 +246,7 @@ abstract contract LegacyArchitectBase is ILegacyArchitectBase {
     function _deployEntitlement(
         IEntitlement entitlement,
         address spaceAddress
-    )
-        internal
-        returns (address)
-    {
+    ) internal returns (address) {
         // calculate init code
         bytes memory initCode = abi.encodePacked(
             type(ERC1967Proxy).creationCode,
@@ -266,11 +259,7 @@ abstract contract LegacyArchitectBase is ILegacyArchitectBase {
     function _getSpaceDeploymentInfo(
         uint256 spaceTokenId,
         Membership memory membership
-    )
-        internal
-        view
-        returns (bytes memory initCode, bytes32 salt)
-    {
+    ) internal view returns (bytes memory initCode, bytes32 salt) {
         ImplementationStorage.Layout storage ds = ImplementationStorage.layout();
 
         // calculate salt

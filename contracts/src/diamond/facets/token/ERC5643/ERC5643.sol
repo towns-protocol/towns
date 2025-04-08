@@ -43,7 +43,9 @@ contract ERC5643 is IERC5643, ERC5643Base, ERC721ABase, Facet {
     function _isApprovedOrOwner(uint256 tokenId) internal view returns (bool) {
         address owner = _ownerOf(tokenId);
 
-        return (_msgSenderERC721A() == owner) || _isApprovedForAll(owner, _msgSenderERC721A())
-            || _getApproved(tokenId) == _msgSenderERC721A();
+        return
+            (_msgSenderERC721A() == owner) ||
+            _isApprovedForAll(owner, _msgSenderERC721A()) ||
+            _getApproved(tokenId) == _msgSenderERC721A();
     }
 }

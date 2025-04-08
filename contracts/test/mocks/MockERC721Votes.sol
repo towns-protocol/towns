@@ -34,11 +34,7 @@ contract MockERC721Votes is Votes, ERC721A {
         address to,
         uint256 firstTokenId,
         uint256 batchSize
-    )
-        internal
-        virtual
-        override
-    {
+    ) internal virtual override {
         _transferVotingUnits(from, to, batchSize);
         super._afterTokenTransfers(from, to, firstTokenId, batchSize);
     }

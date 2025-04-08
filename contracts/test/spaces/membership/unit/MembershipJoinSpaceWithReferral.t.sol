@@ -41,10 +41,9 @@ contract MembershipJoinSpaceWithReferralTest is
         _;
     }
 
-    function test_joinSpaceWithReferral(ReferralTypes memory referral)
-        external
-        givenValidReferral(referral)
-    {
+    function test_joinSpaceWithReferral(
+        ReferralTypes memory referral
+    ) external givenValidReferral(referral) {
         vm.assume(alice != referral.userReferral);
 
         vm.startPrank(alice);
@@ -55,15 +54,20 @@ contract MembershipJoinSpaceWithReferralTest is
     }
 
     function test_joinSpaceWithReferral_isNotReferral() external givenMembershipHasPrice {
-        ReferralTypes memory referral =
-            ReferralTypes({partner: address(0), userReferral: address(0), referralCode: ""});
+        ReferralTypes memory referral = ReferralTypes({
+            partner: address(0),
+            userReferral: address(0),
+            referralCode: ""
+        });
 
         vm.deal(alice, MEMBERSHIP_PRICE);
         vm.prank(alice);
         membership.joinSpaceWithReferral{value: MEMBERSHIP_PRICE}(alice, referral);
 
-        uint256 protocolFee =
-            BasisPoints.calculate(MEMBERSHIP_PRICE, platformReqs.getMembershipBps());
+        uint256 protocolFee = BasisPoints.calculate(
+            MEMBERSHIP_PRICE,
+            platformReqs.getMembershipBps()
+        );
 
         address protocol = platformReqs.getFeeRecipient();
 
@@ -71,7 +75,9 @@ contract MembershipJoinSpaceWithReferralTest is
         assertEq(address(membership).balance, MEMBERSHIP_PRICE - protocolFee);
     }
 
-    function test_revertWhen_joinSpaceWithReferral_partnerReferral(Partner memory partner)
+    function test_revertWhen_joinSpaceWithReferral_partnerReferral(
+        Partner memory partner
+    )
         external
         givenMembershipHasPrice
         givenPartnerIsRegistered(partner)
@@ -80,15 +86,20 @@ contract MembershipJoinSpaceWithReferralTest is
         vm.assume(partner.account != platformReqs.getFeeRecipient());
         vm.assume(partner.account.balance == 0);
 
-        ReferralTypes memory referral =
-            ReferralTypes({partner: partner.account, userReferral: address(0), referralCode: ""});
+        ReferralTypes memory referral = ReferralTypes({
+            partner: partner.account,
+            userReferral: address(0),
+            referralCode: ""
+        });
 
         vm.deal(alice, MEMBERSHIP_PRICE);
         vm.prank(alice);
         membership.joinSpaceWithReferral{value: MEMBERSHIP_PRICE}(alice, referral);
 
-        uint256 protocolFee =
-            BasisPoints.calculate(MEMBERSHIP_PRICE, platformReqs.getMembershipBps());
+        uint256 protocolFee = BasisPoints.calculate(
+            MEMBERSHIP_PRICE,
+            platformReqs.getMembershipBps()
+        );
 
         uint256 partnerFee = BasisPoints.calculate(MEMBERSHIP_PRICE, partner.fee);
 
@@ -123,11 +134,14 @@ contract MembershipJoinSpaceWithReferralTest is
         vm.prank(alice);
         membership.joinSpaceWithReferral{value: MEMBERSHIP_PRICE}(alice, membershipReferral);
 
-        uint256 protocolFee =
-            BasisPoints.calculate(MEMBERSHIP_PRICE, platformReqs.getMembershipBps());
+        uint256 protocolFee = BasisPoints.calculate(
+            MEMBERSHIP_PRICE,
+            platformReqs.getMembershipBps()
+        );
 
         uint256 referralFee = BasisPoints.calculate(
-            MEMBERSHIP_PRICE, referrals.referralInfo(referral.referralCode).basisPoints
+            MEMBERSHIP_PRICE,
+            referrals.referralInfo(referral.referralCode).basisPoints
         );
 
         assertEq(platformReqs.getFeeRecipient().balance, protocolFee);
@@ -141,15 +155,20 @@ contract MembershipJoinSpaceWithReferralTest is
         vm.prank(founder);
         referrals.setDefaultBpsFee(REFERRAL_BPS);
 
-        ReferralTypes memory referral =
-            ReferralTypes({partner: address(0), userReferral: bob, referralCode: ""});
+        ReferralTypes memory referral = ReferralTypes({
+            partner: address(0),
+            userReferral: bob,
+            referralCode: ""
+        });
 
         vm.deal(alice, MEMBERSHIP_PRICE);
         vm.prank(alice);
         membership.joinSpaceWithReferral{value: MEMBERSHIP_PRICE}(alice, referral);
 
-        uint256 protocolFee =
-            BasisPoints.calculate(MEMBERSHIP_PRICE, platformReqs.getMembershipBps());
+        uint256 protocolFee = BasisPoints.calculate(
+            MEMBERSHIP_PRICE,
+            platformReqs.getMembershipBps()
+        );
 
         uint256 referralFee = BasisPoints.calculate(MEMBERSHIP_PRICE, referrals.defaultBpsFee());
 
@@ -162,18 +181,14 @@ contract MembershipJoinSpaceWithReferralTest is
 
     function test_revertWhen_joinSpaceWithReferral_invalidReceiverAddress(
         ReferralTypes memory referral
-    )
-        external
-        givenValidReferral(referral)
-    {
+    ) external givenValidReferral(referral) {
         vm.expectRevert(Membership__InvalidAddress.selector);
         membership.joinSpaceWithReferral(address(0), referral);
     }
 
-    function test_revertWhen_joinSpaceWithReferral_maxSupplyReached(ReferralTypes memory referral)
-        external
-        givenValidReferral(referral)
-    {
+    function test_revertWhen_joinSpaceWithReferral_maxSupplyReached(
+        ReferralTypes memory referral
+    ) external givenValidReferral(referral) {
         vm.prank(founder);
         membership.setMembershipLimit(1);
 
@@ -183,11 +198,7 @@ contract MembershipJoinSpaceWithReferralTest is
 
     function test_revertWhen_joinSpaceWithReferral_insufficientPayment(
         ReferralTypes memory referral
-    )
-        external
-        givenValidReferral(referral)
-        givenMembershipHasPrice
-    {
+    ) external givenValidReferral(referral) givenMembershipHasPrice {
         vm.deal(alice, MEMBERSHIP_PRICE - 1);
         vm.prank(alice);
         vm.expectRevert(Membership__InsufficientPayment.selector);

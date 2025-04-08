@@ -8,8 +8,7 @@ pragma solidity ^0.8.23;
 // helpers
 import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
 import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
-import {RewardsDistribution} from
-    "contracts/src/base/registry/facets/distribution/v2/RewardsDistribution.sol";
+import {RewardsDistribution} from "contracts/src/base/registry/facets/distribution/v2/RewardsDistribution.sol";
 
 contract DeployRewardsDistributionV2 is Deployer, FacetHelper {
     constructor() {
@@ -50,11 +49,7 @@ contract DeployRewardsDistributionV2 is Deployer, FacetHelper {
         address stakeToken,
         address rewardToken,
         uint256 rewardDuration
-    )
-        public
-        pure
-        returns (bytes memory)
-    {
+    ) public pure returns (bytes memory) {
         return abi.encodeWithSelector(initializer(), stakeToken, rewardToken, rewardDuration);
     }
 

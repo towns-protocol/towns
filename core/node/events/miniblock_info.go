@@ -21,8 +21,8 @@ type MiniblockInfo struct {
 	Snapshot *Envelope
 
 	headerEvent        *ParsedEvent
-	useGetterForEvents []*ParsedEvent // Use events(). Getter checks if events have been initialized.
-	snapshot           *Snapshot      //nolint:unused
+	useGetterForEvents []*ParsedEvent  // Use events(). Getter checks if events have been initialized.
+	snapshot           *ParsedSnapshot //nolint:unused
 }
 
 // NewMiniblockInfoFromProto initializes a MiniblockInfo from a proto, applying validation based
@@ -128,11 +128,26 @@ func NewMiniblockInfoFromProto(mb *Miniblock, sn *Envelope, opts *ParsedMinibloc
 			Tag("prevSnapshotMiniblockNum", blockHeader.PrevSnapshotMiniblockNum)
 	}
 
-	var snapshot *Snapshot
+	var snapshot *ParsedSnapshot
 	if sn != nil {
 		if snapshot, err = ParseSnapshot(sn, common.BytesToAddress(headerEvent.Event.CreatorAddress)); err != nil {
 			return nil, AsRiverError(err, Err_BAD_EVENT).
 				Message("Failed to parse snapshot").
+				Func("NewMiniblockInfoFromProto")
+		}
+	}
+
+	// IMPORTANT: Genesis miniblocks use the legacy format of snapshots.
+	// Applied for the new snapshot format only.
+	if !opts.SkipSnapshotValidation() && blockHeader.GetSnapshot() == nil && len(blockHeader.GetSnapshotHash()) > 0 {
+		if snapshot == nil {
+			return nil, RiverError(Err_BAD_BLOCK, "Snapshot envelope must be set").
+				Func("NewMiniblockInfoFromProto")
+		}
+
+		// Validate snapshot in a new style
+		if common.BytesToHash(sn.Hash).Cmp(common.BytesToHash(blockHeader.GetSnapshotHash())) != 0 {
+			return nil, RiverError(Err_BAD_BLOCK, "Snapshot hash does not match snapshot envelope hash").
 				Func("NewMiniblockInfoFromProto")
 		}
 	}
@@ -153,7 +168,11 @@ func NewMiniblockInfoFromProto(mb *Miniblock, sn *Envelope, opts *ParsedMinibloc
 	}, nil
 }
 
-func NewMiniblockInfoFromParsed(headerEvent *ParsedEvent, events []*ParsedEvent) (*MiniblockInfo, error) {
+func NewMiniblockInfoFromParsed(
+	headerEvent *ParsedEvent,
+	events []*ParsedEvent,
+	snapshot *ParsedSnapshot,
+) (*MiniblockInfo, error) {
 	if headerEvent.Event.GetMiniblockHeader() == nil {
 		return nil, RiverError(Err_BAD_EVENT, "header event must be a block header")
 	}
@@ -163,7 +182,7 @@ func NewMiniblockInfoFromParsed(headerEvent *ParsedEvent, events []*ParsedEvent)
 		envelopes[i] = e.Envelope
 	}
 
-	return &MiniblockInfo{
+	mbInfo := &MiniblockInfo{
 		Ref: &MiniblockRef{
 			Hash: headerEvent.Hash,
 			Num:  headerEvent.Event.GetMiniblockHeader().MiniblockNum,
@@ -174,13 +193,21 @@ func NewMiniblockInfoFromParsed(headerEvent *ParsedEvent, events []*ParsedEvent)
 		},
 		headerEvent:        headerEvent,
 		useGetterForEvents: events,
-	}, nil
+		snapshot:           snapshot,
+	}
+
+	if snapshot != nil {
+		mbInfo.Snapshot = snapshot.Envelope
+	}
+
+	return mbInfo, nil
 }
 
 func NewMiniblockInfoFromHeaderAndParsed(
 	wallet *crypto.Wallet,
 	header *MiniblockHeader,
 	events []*ParsedEvent,
+	snapshot *ParsedSnapshot,
 ) (*MiniblockInfo, error) {
 	headerEvent, err := MakeParsedEventWithPayload(
 		wallet,
@@ -194,7 +221,7 @@ func NewMiniblockInfoFromHeaderAndParsed(
 		return nil, err
 	}
 
-	return NewMiniblockInfoFromParsed(headerEvent, events)
+	return NewMiniblockInfoFromParsed(headerEvent, events, snapshot)
 }
 
 func NewMiniblockInfoFromDescriptor(mb *storage.MiniblockDescriptor) (*MiniblockInfo, error) {
@@ -272,10 +299,22 @@ func (b *MiniblockInfo) AsStorageMb() (*storage.WriteMiniblockData, error) {
 			Func("AsStorageMb")
 	}
 
+	// Serialize snapshot if the miniblock header contains a snapshot hash instead of a full snapshot.
+	// Here the DB record is controlled by the header, so we need to serialize the snapshot.
+	// IMPORTANT: Genesis miniblocks use the legacy format of snapshots.
+	var serializedSn []byte
+	if b.Snapshot != nil && (len(b.Header().GetSnapshotHash()) > 0 && b.Header().GetSnapshot() == nil) {
+		if serializedSn, err = proto.Marshal(b.Snapshot); err != nil {
+			return nil, AsRiverError(err, Err_INTERNAL).
+				Message("Failed to serialize snapshot to bytes").
+				Func("AsStorageMb")
+		}
+	}
+
 	return &storage.WriteMiniblockData{
 		Number:   b.Ref.Num,
 		Hash:     b.Ref.Hash,
-		Snapshot: b.GetSnapshot(),
+		Snapshot: serializedSn,
 		Data:     serializedMb,
 	}, nil
 }

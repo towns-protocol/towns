@@ -9,10 +9,9 @@ pragma solidity ^0.8.23;
 import {PartnerRegistrySetup} from "contracts/test/factory/partner/PartnerRegistrySetup.sol";
 
 contract PartnerRegistry_registerPartner is PartnerRegistrySetup {
-    function test_registerPartner(Partner memory partner)
-        external
-        givenPartnerIsRegistered(partner)
-    {
+    function test_registerPartner(
+        Partner memory partner
+    ) external givenPartnerIsRegistered(partner) {
         Partner memory registeredPartner = partnerRegistry.partnerInfo(partner.account);
         assertEq(registeredPartner.account, partner.account);
         assertEq(registeredPartner.recipient, partner.recipient);
@@ -42,16 +41,16 @@ contract PartnerRegistry_registerPartner is PartnerRegistrySetup {
         partnerRegistry.registerPartner{value: REGISTRY_FEE}(partner);
     }
 
-    function test_revertWhen_registerPartner_partnerAlreadyRegistered(Partner memory partner)
-        external
-        givenPartnerIsRegistered(partner)
-    {
+    function test_revertWhen_registerPartner_partnerAlreadyRegistered(
+        Partner memory partner
+    ) external givenPartnerIsRegistered(partner) {
         vm.deal(partner.account, REGISTRY_FEE);
 
         vm.prank(partner.account);
         vm.expectRevert(
             abi.encodeWithSelector(
-                PartnerRegistry__PartnerAlreadyRegistered.selector, partner.account
+                PartnerRegistry__PartnerAlreadyRegistered.selector,
+                partner.account
             )
         );
         partnerRegistry.registerPartner{value: REGISTRY_FEE}(partner);
