@@ -16,14 +16,17 @@ import (
 	"time"
 
 	"connectrpc.com/connect"
-	"go.starlark.net/lib/proto"
+	"google.golang.org/protobuf/proto"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 
+	. "github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/crypto"
 	"github.com/towns-protocol/towns/core/node/events"
 	"github.com/towns-protocol/towns/core/node/protocol"
+	river_sync "github.com/towns-protocol/towns/core/node/rpc/sync"
+	. "github.com/towns-protocol/towns/core/node/shared"
 	"github.com/towns-protocol/towns/core/node/testutils"
 	"github.com/towns-protocol/towns/core/node/testutils/testfmt"
 )

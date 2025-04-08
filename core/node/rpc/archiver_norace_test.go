@@ -11,6 +11,10 @@ import (
 	"testing"
 	"time"
 
+	. "github.com/towns-protocol/towns/core/node/base"
+	. "github.com/towns-protocol/towns/core/node/protocol"
+	. "github.com/towns-protocol/towns/core/node/shared"
+
 	"github.com/stretchr/testify/assert"
 )
 

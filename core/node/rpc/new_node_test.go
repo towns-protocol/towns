@@ -5,7 +5,6 @@ import (
 
 	. "github.com/towns-protocol/towns/core/node/base"
 	. "github.com/towns-protocol/towns/core/node/protocol"
-	. "github.com/towns-protocol/towns/core/node/shared"
 )
 
 func TestNoRecordNoStart(t *testing.T) {
