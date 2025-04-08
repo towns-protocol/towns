@@ -7894,6 +7894,8 @@ __metadata:
 "@towns-protocol/prettier-config@workspace:^, @towns-protocol/prettier-config@workspace:packages/prettier-config":
   version: 0.0.0-use.local
   resolution: "@towns-protocol/prettier-config@workspace:packages/prettier-config"
+  dependencies:
+    prettier-plugin-solidity: ^1.4.2
   peerDependencies:
     prettier: ^2.8.8
   languageName: unknown
