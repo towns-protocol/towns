@@ -3,11 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { Box, Button, Icon, Paragraph, Stack } from '@ui'
 import { PATHS } from 'routes'
 
-interface BannedTownPageProps {
-    townAddress?: string
-}
-
-export const BannedTownPage: React.FC<BannedTownPageProps> = ({ townAddress }) => {
+export const BannedTownPage: React.FC = () => {
     const navigate = useNavigate()
 
     const handleExplore = () => {

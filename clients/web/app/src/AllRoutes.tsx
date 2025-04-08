@@ -21,8 +21,10 @@ import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
 const BannedTownCheck = () => {
     const spaceId = useSpaceIdFromPathname()
 
+    console.log('AllRoutes: banned town check', { spaceId })
+
     if (spaceId && isTownBanned(spaceId)) {
-        return <BannedTownPage townAddress={spaceId} />
+        return <BannedTownPage />
     }
 
     return <PublicTownPageForUnauthenticatedRoute />

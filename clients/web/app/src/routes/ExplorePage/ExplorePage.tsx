@@ -9,15 +9,17 @@ import { ExploreCard } from './ExploreCard'
 import { PublicExploreLayout } from './PublicExploreLayout'
 
 const exploreTowns =
-    env.VITE_EXPLORE_TOWNS?.split(',').map((townAddress) => townAddress.trim()) ?? []
+    env.VITE_EXPLORE_TOWNS?.split(',').map((townAddress) => townAddress.trim().toLowerCase()) ?? []
 
-const bannedTowns = env.VITE_BANNED_TOWNS?.split(',').map((townAddress) => townAddress.trim()) ?? []
+const bannedTowns =
+    env.VITE_BANNED_TOWNS?.split(',').map((townAddress) => townAddress.trim().toLowerCase()) ?? []
 
 const filteredExploreTowns = exploreTowns.filter(
     (townAddress) => !bannedTowns.includes(townAddress),
 )
 
 const ExplorePageContent = () => {
+    console.log({ exploreTowns, bannedTowns, filteredExploreTowns })
     const isMobile = useMobile()
     const { isAuthenticated } = useConnectivity()
 

@@ -31,7 +31,7 @@ const BannedTownCheck = () => {
     const spaceId = useSpaceIdFromPathname()
 
     if (spaceId && isTownBanned(spaceId)) {
-        return <BannedTownPage townAddress={spaceId} />
+        return <BannedTownPage />
     }
 
     return <Outlet />
@@ -42,18 +42,15 @@ export const AuthenticatedRoutes = () => {
 
     return (
         <Routes>
-            {/* 
+            {/*
                 space context is "available" but its value `space` remains undefined outside /t/:townId/* 
             */}
             <Route element={<SpaceContextRoute />}>
                 {isTouch ? (
                     <>
                         <Route path={`${PATHS.SPACES}/new`} element={<CreateTown />} />
-                        <Route element={<ValidateMembership />}>
-                            <Route
-                                path={`${PATHS.SPACES}/:spaceSlug`}
-                                element={<BannedTownCheck />}
-                            >
+                        <Route path={`${PATHS.SPACES}/:spaceSlug`} element={<BannedTownCheck />}>
+                            <Route element={<ValidateMembership />}>
                                 <Route path="" element={<TouchHome />}>
                                     {messageRoutes}
                                     <Route
@@ -107,15 +104,14 @@ export const AuthenticatedRoutes = () => {
                     </>
                 ) : (
                     <>
-                        <Route element={<ValidateMembership />}>
-                            <Route element={<AppPanelLayout />}>
-                                <Route path={PATHS.EXPLORE} element={<ExplorePage />} />
-                                <Route path={`${PATHS.SPACES}/new`} element={<CreateTown />} />
-
-                                <Route
-                                    path={`${PATHS.SPACES}/:spaceSlug`}
-                                    element={<BannedTownCheck />}
-                                >
+                        <Route element={<AppPanelLayout />}>
+                            <Route path={PATHS.EXPLORE} element={<ExplorePage />} />
+                            <Route path={`${PATHS.SPACES}/new`} element={<CreateTown />} />
+                            <Route
+                                path={`${PATHS.SPACES}/:spaceSlug`}
+                                element={<BannedTownCheck />}
+                            >
+                                <Route element={<ValidateMembership />}>
                                     <Route index element={<SpaceHome />} />
                                     {messageRoutes}
                                     <Route
@@ -147,8 +143,8 @@ export const AuthenticatedRoutes = () => {
                                     />
                                     <Route path="*" element={<TownRoutes />} />
                                 </Route>
-                                <Route path="*" element={<OutsideTownRoutes />} />
                             </Route>
+                            <Route path="*" element={<OutsideTownRoutes />} />
                         </Route>
                     </>
                 )}
