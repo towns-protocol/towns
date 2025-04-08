@@ -52,10 +52,7 @@ contract RiverConfig is IRiverConfig, RegistryModifiers, OwnableBase, Facet {
         bytes32 key,
         uint64 blockNumber,
         bytes calldata value
-    )
-        external
-        onlyConfigurationManager(msg.sender)
-    {
+    ) external onlyConfigurationManager(msg.sender) {
         if (blockNumber == type(uint64).max) {
             RiverRegistryErrors.BAD_ARG.revertWith();
         }
@@ -82,11 +79,9 @@ contract RiverConfig is IRiverConfig, RegistryModifiers, OwnableBase, Facet {
     }
 
     /// @inheritdoc IRiverConfig
-    function deleteConfiguration(bytes32 key)
-        external
-        onlyConfigurationManager(msg.sender)
-        configKeyExists(key)
-    {
+    function deleteConfiguration(
+        bytes32 key
+    ) external onlyConfigurationManager(msg.sender) configKeyExists(key) {
         delete ds.configuration[key];
 
         ds.configurationKeys.remove(key);
@@ -98,10 +93,7 @@ contract RiverConfig is IRiverConfig, RegistryModifiers, OwnableBase, Facet {
     function deleteConfigurationOnBlock(
         bytes32 key,
         uint64 blockNumber
-    )
-        external
-        onlyConfigurationManager(msg.sender)
-    {
+    ) external onlyConfigurationManager(msg.sender) {
         bool found = false;
         Setting[] storage configs = ds.configuration[key];
         uint256 configurationLen = configs.length;
@@ -129,12 +121,9 @@ contract RiverConfig is IRiverConfig, RegistryModifiers, OwnableBase, Facet {
     }
 
     /// @inheritdoc IRiverConfig
-    function getConfiguration(bytes32 key)
-        external
-        view
-        configKeyExists(key)
-        returns (Setting[] memory)
-    {
+    function getConfiguration(
+        bytes32 key
+    ) external view configKeyExists(key) returns (Setting[] memory) {
         return ds.configuration[key];
     }
 

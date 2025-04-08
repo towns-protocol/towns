@@ -64,7 +64,9 @@ library EntitlementsManagerService {
         delete ds.entitlementByAddress[entitlement];
     }
 
-    function getEntitlement(address entitlement)
+    function getEntitlement(
+        address entitlement
+    )
         internal
         view
         returns (
@@ -119,11 +121,7 @@ library EntitlementsManagerService {
     function proxyGetEntitlementDataByRole(
         address entitlement,
         uint256 role
-    )
-        internal
-        view
-        returns (bytes memory)
-    {
+    ) internal view returns (bytes memory) {
         checkEntitlement(entitlement);
         return IEntitlement(entitlement).getEntitlementDataByRoleId(role);
     }
@@ -132,9 +130,7 @@ library EntitlementsManagerService {
         address entitlement,
         uint256 role,
         bytes memory entitlementData
-    )
-        internal
-    {
+    ) internal {
         checkEntitlement(entitlement);
         IEntitlement(entitlement).setEntitlement(role, entitlementData);
     }

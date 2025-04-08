@@ -3,8 +3,7 @@ pragma solidity ^0.8.23;
 
 // interfaces
 import {IOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
-import {ISpaceDelegationBase} from
-    "contracts/src/base/registry/facets/delegation/ISpaceDelegation.sol";
+import {ISpaceDelegationBase} from "contracts/src/base/registry/facets/delegation/ISpaceDelegation.sol";
 
 // libraries
 
@@ -14,8 +13,7 @@ import {FixedPointMathLib} from "solady/utils/FixedPointMathLib.sol";
 // contracts
 
 import {BaseRegistryTest} from "./BaseRegistry.t.sol";
-import {SpaceDelegationFacet} from
-    "contracts/src/base/registry/facets/delegation/SpaceDelegationFacet.sol";
+import {SpaceDelegationFacet} from "contracts/src/base/registry/facets/delegation/SpaceDelegationFacet.sol";
 
 contract SpaceDelegationTest is BaseRegistryTest, IOwnableBase, ISpaceDelegationBase {
     using FixedPointMathLib for uint256;
@@ -49,11 +47,7 @@ contract SpaceDelegationTest is BaseRegistryTest, IOwnableBase, ISpaceDelegation
     function test_fuzz_addSpaceDelegation(
         address operator,
         uint256 commissionRate
-    )
-        public
-        givenOperator(operator, commissionRate)
-        returns (address space)
-    {
+    ) public givenOperator(operator, commissionRate) returns (address space) {
         space = deploySpace(deployer);
 
         vm.prank(deployer);
@@ -72,10 +66,7 @@ contract SpaceDelegationTest is BaseRegistryTest, IOwnableBase, ISpaceDelegation
         uint256[2] memory commissionRates,
         uint256 rewardAmount,
         uint256 timeLapse
-    )
-        public
-        givenOperator(operators[1], commissionRates[1])
-    {
+    ) public givenOperator(operators[1], commissionRates[1]) {
         vm.assume(operators[0] != operators[1]);
         commissionRates[0] = bound(commissionRates[0], 1, 10_000);
         address space = test_fuzz_addSpaceDelegation(operators[0], commissionRates[0]);
@@ -109,9 +100,7 @@ contract SpaceDelegationTest is BaseRegistryTest, IOwnableBase, ISpaceDelegation
         uint256 commissionRate,
         uint256 rewardAmount,
         uint256 timeLapse
-    )
-        public
-    {
+    ) public {
         vm.assume(operator != OPERATOR);
         commissionRate = bound(commissionRate, 1, 10_000);
         address space = test_fuzz_addSpaceDelegation(operator, commissionRate);
@@ -141,8 +130,8 @@ contract SpaceDelegationTest is BaseRegistryTest, IOwnableBase, ISpaceDelegation
         spaceDelegationFacet.addSpaceDelegation(space, OPERATOR);
 
         StakingState memory state = rewardsDistributionFacet.stakingState();
-        StakingRewards.Treasure memory spaceTreasure =
-            rewardsDistributionFacet.treasureByBeneficiary(space);
+        StakingRewards.Treasure memory spaceTreasure = rewardsDistributionFacet
+            .treasureByBeneficiary(space);
 
         // verify forfeited rewards
         assertEq(spaceTreasure.earningPower, (amount * commissionRate) / 10_000);
@@ -150,10 +139,12 @@ contract SpaceDelegationTest is BaseRegistryTest, IOwnableBase, ISpaceDelegation
         assertEq(spaceTreasure.unclaimedRewardSnapshot, 0);
 
         assertEq(
-            rewardsDistributionFacet.treasureByBeneficiary(operator).unclaimedRewardSnapshot, 0
+            rewardsDistributionFacet.treasureByBeneficiary(operator).unclaimedRewardSnapshot,
+            0
         );
         assertEq(
-            rewardsDistributionFacet.treasureByBeneficiary(OPERATOR).unclaimedRewardSnapshot, 0
+            rewardsDistributionFacet.treasureByBeneficiary(OPERATOR).unclaimedRewardSnapshot,
+            0
         );
     }
 
@@ -171,9 +162,7 @@ contract SpaceDelegationTest is BaseRegistryTest, IOwnableBase, ISpaceDelegation
         uint256 commissionRate,
         uint256 rewardAmount,
         uint256 timeLapse
-    )
-        public
-    {
+    ) public {
         commissionRate = bound(commissionRate, 1, 10_000);
         address space = test_fuzz_addSpaceDelegation(operator, commissionRate);
 

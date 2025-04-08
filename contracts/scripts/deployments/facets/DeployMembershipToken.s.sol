@@ -40,11 +40,7 @@ contract DeployMembershipToken is FacetHelper, Deployer {
     function makeInitData(
         string memory name,
         string memory symbol
-    )
-        public
-        pure
-        returns (bytes memory)
-    {
+    ) public pure returns (bytes memory) {
         return abi.encode(name, symbol);
     }
 

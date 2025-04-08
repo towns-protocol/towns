@@ -7,8 +7,7 @@ pragma solidity ^0.8.23;
 
 //contracts
 import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
-import {IntrospectionFacet} from
-    "@towns-protocol/diamond/src/facets/introspection/IntrospectionFacet.sol";
+import {IntrospectionFacet} from "@towns-protocol/diamond/src/facets/introspection/IntrospectionFacet.sol";
 import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
 
 contract DeployIntrospection is FacetHelper, Deployer {

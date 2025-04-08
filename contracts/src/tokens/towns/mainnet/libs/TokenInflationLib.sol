@@ -62,9 +62,7 @@ library TokenInflationLib {
     function setOverrideInflation(
         bool overrideInflation,
         uint256 overrideInflationRateBps
-    )
-        internal
-    {
+    ) internal {
         layout().overrideInflation = overrideInflation;
         layout().overrideInflationRate = overrideInflationRateBps;
     }
@@ -84,8 +82,8 @@ library TokenInflationLib {
             return ds.finalInflationRate;
         }
 
-        uint256 inflationRateDecrease =
-            (yearsSinceInitialMint * ds.inflationDecayRate) / ds.finalInflationYears;
+        uint256 inflationRateDecrease = (yearsSinceInitialMint * ds.inflationDecayRate) /
+            ds.finalInflationYears;
         return ds.initialInflationRate - inflationRateDecrease;
     }
 }

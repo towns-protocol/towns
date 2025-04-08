@@ -8,8 +8,7 @@ import {IERC4906} from "@openzeppelin/contracts/interfaces/IERC4906.sol";
 import {IERC721A} from "contracts/src/diamond/facets/token/ERC721A/IERC721A.sol";
 
 // libraries
-import {TokenOwnableStorage} from
-    "@towns-protocol/diamond/src/facets/ownable/token/TokenOwnableStorage.sol";
+import {TokenOwnableStorage} from "@towns-protocol/diamond/src/facets/ownable/token/TokenOwnableStorage.sol";
 import {LibString} from "solady/utils/LibString.sol";
 
 // contracts

@@ -6,10 +6,10 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/gammazero/workerpool"
 
+	"github.com/towns-protocol/towns/core/contracts/river"
 	. "github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/logging"
 	. "github.com/towns-protocol/towns/core/node/protocol"
-	"github.com/towns-protocol/towns/core/node/registries"
 )
 
 type reconcileTask struct {
@@ -39,7 +39,7 @@ func (s *StreamCache) submitSyncStreamTaskToPool(
 	ctx context.Context,
 	pool *workerpool.WorkerPool,
 	stream *Stream,
-	streamRecord *registries.GetStreamResult,
+	streamRecord *river.StreamWithId,
 ) {
 	task, loaded := s.scheduledReconciliationTasks.Compute(stream.streamId, func(oldValue *reconcileTask, loaded bool) (*reconcileTask, bool) {
 		if loaded {
@@ -66,7 +66,7 @@ func (s *StreamCache) submitSyncStreamTaskToPool(
 func (s *StreamCache) syncStreamFromPeers(
 	ctx context.Context,
 	stream *Stream,
-	streamRecord *registries.GetStreamResult,
+	streamRecord *river.StreamWithId,
 ) {
 	var err error
 	if streamRecord == nil {
@@ -96,11 +96,11 @@ func (s *StreamCache) syncStreamFromPeers(
 func (s *StreamCache) syncStreamFromPeersImpl(
 	ctx context.Context,
 	stream *Stream,
-	streamRecord *registries.GetStreamResult,
+	streamRecord *river.StreamWithId,
 ) error {
 	// TODO: double check if this is correct to normalize here
 	// Try to normalize the given stream if needed.
-	err := s.normalizeEphemeralStream(ctx, stream, int64(streamRecord.LastMiniblockNum), streamRecord.IsSealed)
+	err := s.normalizeEphemeralStream(ctx, stream, streamRecord.LastMbNum(), streamRecord.IsSealed())
 	if err != nil {
 		return err
 	}
@@ -114,12 +114,12 @@ func (s *StreamCache) syncStreamFromPeersImpl(
 		}
 	}
 
-	if int64(streamRecord.LastMiniblockNum) <= lastMiniblockNum {
+	if streamRecord.LastMbNum() <= lastMiniblockNum {
 		return nil
 	}
 
 	fromInclusive := lastMiniblockNum + 1
-	toExclusive := int64(streamRecord.LastMiniblockNum) + 1
+	toExclusive := streamRecord.LastMbNum() + 1
 
 	remotes, _ := stream.GetRemotesAndIsLocal()
 	if len(remotes) == 0 {

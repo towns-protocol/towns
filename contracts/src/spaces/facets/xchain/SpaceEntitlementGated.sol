@@ -22,18 +22,17 @@ contract SpaceEntitlementGated is MembershipJoin, EntitlementGated {
     function _onEntitlementCheckResultPosted(
         bytes32 transactionId,
         NodeVoteStatus result
-    )
-        internal
-        override
-    {
+    ) internal override {
         bytes memory data = _getCapturedData(transactionId);
 
         if (data.length == 0) {
             return;
         }
 
-        (bytes4 transactionType,, address receiver,) =
-            abi.decode(data, (bytes4, address, address, bytes));
+        (bytes4 transactionType, , address receiver, ) = abi.decode(
+            data,
+            (bytes4, address, address, bytes)
+        );
 
         if (result == NodeVoteStatus.PASSED) {
             bool shouldCharge = _shouldChargeForJoinSpace();

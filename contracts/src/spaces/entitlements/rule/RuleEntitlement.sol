@@ -21,8 +21,7 @@ import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Ini
 
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import {ContextUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
-import {ERC165Upgradeable} from
-    "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
+import {ERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
 
 // libraries
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
@@ -81,7 +80,8 @@ contract RuleEntitlement is
     function _authorizeUpgrade(address newImplementation) internal override onlySpace {}
 
     function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
-        return interfaceId == type(IEntitlement).interfaceId || super.supportsInterface(interfaceId);
+        return
+            interfaceId == type(IEntitlement).interfaceId || super.supportsInterface(interfaceId);
     }
 
     // @inheritdoc IEntitlement
@@ -95,11 +95,7 @@ contract RuleEntitlement is
         bytes32, //channelId,
         address[] memory, //user,
         bytes32 //permission
-    )
-        external
-        pure
-        returns (bool)
-    {
+    ) external pure returns (bool) {
         // TODO possible optimization: if there are no crosschain operations, evaluate locally
         return false;
     }

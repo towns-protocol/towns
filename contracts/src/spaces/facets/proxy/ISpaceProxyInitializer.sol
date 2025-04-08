@@ -17,6 +17,5 @@ interface ISpaceProxyInitializer is ITokenOwnableBase, IMembershipBase, IManaged
         address manager,
         TokenOwnable memory tokenOwnable,
         Membership memory membership
-    )
-        external;
+    ) external;
 }

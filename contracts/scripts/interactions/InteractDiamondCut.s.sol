@@ -15,8 +15,7 @@ import {AlphaHelper} from "./helpers/AlphaHelper.sol";
 
 // facet
 import {DeployEIP712Facet} from "contracts/scripts/deployments/facets/DeployEIP712Facet.s.sol";
-import {DeploySpaceOwnerFacet} from
-    "contracts/scripts/deployments/facets/DeploySpaceOwnerFacet.s.sol";
+import {DeploySpaceOwnerFacet} from "contracts/scripts/deployments/facets/DeploySpaceOwnerFacet.s.sol";
 
 contract InteractDiamondCut is Interaction, AlphaHelper {
     DeployEIP712Facet eip712Helper = new DeployEIP712Facet();

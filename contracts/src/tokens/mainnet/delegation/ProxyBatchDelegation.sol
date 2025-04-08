@@ -3,14 +3,9 @@ pragma solidity ^0.8.23;
 
 // interfaces
 
-import {ICrossDomainMessenger} from
-    "contracts/src/base/registry/facets/mainnet/ICrossDomainMessenger.sol";
-import {
-    IMainnetDelegation,
-    IMainnetDelegationBase
-} from "contracts/src/base/registry/facets/mainnet/IMainnetDelegation.sol";
-import {IVotesEnumerable} from
-    "contracts/src/diamond/facets/governance/votes/enumerable/IVotesEnumerable.sol";
+import {ICrossDomainMessenger} from "contracts/src/base/registry/facets/mainnet/ICrossDomainMessenger.sol";
+import {IMainnetDelegation, IMainnetDelegationBase} from "contracts/src/base/registry/facets/mainnet/IMainnetDelegation.sol";
+import {IVotesEnumerable} from "contracts/src/diamond/facets/governance/votes/enumerable/IVotesEnumerable.sol";
 import {IAuthorizedClaimers} from "contracts/src/tokens/mainnet/claimer/IAuthorizedClaimers.sol";
 
 // libraries
@@ -77,16 +72,15 @@ contract ProxyBatchDelegation is IMainnetDelegationBase {
         assembly {
             mstore(0x14, account) // Store the `account` argument.
             mstore(0x00, 0x587cde1e000000000000000000000000) // `delegates(address)`.
-            delegatee :=
-                mul(
-                    // The arguments of `mul` are evaluated from right to left.
-                    mload(0x20),
-                    and(
-                        // The arguments of `and` are evaluated from right to left.
-                        gt(returndatasize(), 0x1f), // At least 32 bytes returned.
-                        staticcall(gas(), token, 0x10, 0x24, 0x20, 0x20)
-                    )
+            delegatee := mul(
+                // The arguments of `mul` are evaluated from right to left.
+                mload(0x20),
+                and(
+                    // The arguments of `and` are evaluated from right to left.
+                    gt(returndatasize(), 0x1f), // At least 32 bytes returned.
+                    staticcall(gas(), token, 0x10, 0x24, 0x20, 0x20)
                 )
+            )
         }
     }
 }

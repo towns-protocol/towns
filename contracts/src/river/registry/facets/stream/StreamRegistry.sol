@@ -3,16 +3,10 @@ pragma solidity ^0.8.23;
 
 // interfaces
 import {IStreamRegistry} from "./IStreamRegistry.sol";
-import {
-    SetMiniblock,
-    SetStreamReplicationFactor,
-    Stream,
-    StreamWithId
-} from "contracts/src/river/registry/libraries/RegistryStorage.sol";
+import {SetMiniblock, SetStreamReplicationFactor, Stream, StreamWithId} from "contracts/src/river/registry/libraries/RegistryStorage.sol";
 
 // libraries
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-
 import {RiverRegistryErrors} from "contracts/src/river/registry/libraries/RegistryErrors.sol";
 import {CustomRevert} from "contracts/src/utils/libraries/CustomRevert.sol";
 import {FixedPointMathLib} from "solady/utils/FixedPointMathLib.sol";
@@ -39,12 +33,7 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
         address[] calldata nodes,
         bytes32 genesisMiniblockHash,
         bytes calldata genesisMiniblock
-    )
-        external
-        onlyNode(msg.sender)
-        onlyStreamNotExists(streamId)
-        onlyRegisteredNodes(nodes)
-    {
+    ) external onlyNode(msg.sender) onlyStreamNotExists(streamId) onlyRegisteredNodes(nodes) {
         // Add the stream to the registry
         Stream storage stream = ds.streamById[streamId];
         (stream.lastMiniblockHash, stream.nodes, stream.reserved0) = (
@@ -88,10 +77,9 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
         emit StreamCreated(streamId, genesisMiniblockHash, stream);
     }
 
-    function setStreamLastMiniblockBatch(SetMiniblock[] calldata miniblocks)
-        external
-        onlyNode(msg.sender)
-    {
+    function setStreamLastMiniblockBatch(
+        SetMiniblock[] calldata miniblocks
+    ) external onlyNode(msg.sender) {
         uint256 miniblockCount = miniblocks.length;
 
         if (miniblockCount == 0) RiverRegistryErrors.BAD_ARG.revertWith();
@@ -174,11 +162,7 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
     function placeStreamOnNode(
         bytes32 streamId,
         address nodeAddress
-    )
-        external
-        onlyStream(streamId)
-        onlyNode(msg.sender)
-    {
+    ) external onlyStream(streamId) onlyNode(msg.sender) {
         Stream storage stream = ds.streamById[streamId];
         address[] storage nodes = stream.nodes;
 
@@ -206,11 +190,7 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
     function removeStreamFromNode(
         bytes32 streamId,
         address nodeAddress
-    )
-        external
-        onlyStream(streamId)
-        onlyNode(msg.sender)
-    {
+    ) external onlyStream(streamId) onlyNode(msg.sender) {
         Stream storage stream = ds.streamById[streamId];
         address[] storage nodes = stream.nodes;
 
@@ -252,20 +232,15 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
             for (; start < end; ++start) {
                 bytes32 streamId = ds.streams.at(start);
                 Stream storage stream = ds.streamById[streamId];
-                address[] storage nodes = stream.nodes;
-                uint256 nodeCount = nodes.length;
-                for (uint256 i; i < nodeCount; ++i) {
-                    ds.streamIdsByNode[nodes[i]].add(streamId);
-                }
+                _addStreamIdToNodes(streamId, stream.nodes);
             }
         }
     }
 
     /// @inheritdoc IStreamRegistry
-    function setStreamReplicationFactor(SetStreamReplicationFactor[] calldata requests)
-        external
-        onlyConfigurationManager(msg.sender)
-    {
+    function setStreamReplicationFactor(
+        SetStreamReplicationFactor[] calldata requests
+    ) external onlyConfigurationManager(msg.sender) {
         uint256 requestsCount = requests.length;
 
         if (requestsCount == 0) RiverRegistryErrors.BAD_ARG.revertWith();
@@ -281,19 +256,15 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
             Stream storage stream = ds.streamById[req.streamId];
 
             // remove the stream from the existing set of nodes
-            uint256 oldStreamNodesLength = stream.nodes.length;
-            for (uint256 j; j < oldStreamNodesLength; ++j) {
-                ds.streamIdsByNode[stream.nodes[j]].remove(req.streamId);
-            }
+            _removeStreamIdFromNodes(req.streamId, stream.nodes);
 
             // place stream on the new set of nodes
-            uint256 newStreamNodesLength = req.nodes.length;
-            for (uint256 j; j < newStreamNodesLength; ++j) {
-                ds.streamIdsByNode[req.nodes[j]].add(req.streamId);
-            }
+            _addStreamIdToNodes(req.streamId, req.nodes);
 
-            (stream.nodes, stream.reserved0) =
-                (req.nodes, _calculateStreamReserved0(stream.reserved0, req.replicationFactor));
+            (stream.nodes, stream.reserved0) = (
+                req.nodes,
+                _calculateStreamReserved0(stream.reserved0, req.replicationFactor)
+            );
 
             _emitStreamUpdated(StreamEventType.PlacementUpdated, abi.encode(req.streamId, stream));
         }
@@ -322,11 +293,9 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
     }
 
     /// @inheritdoc IStreamRegistry
-    function getStreamWithGenesis(bytes32 streamId)
-        external
-        view
-        returns (Stream memory stream, bytes32, bytes memory)
-    {
+    function getStreamWithGenesis(
+        bytes32 streamId
+    ) external view returns (Stream memory stream, bytes32, bytes memory) {
         assembly ("memory-safe") {
             mstore(0x40, stream)
         }
@@ -354,11 +323,7 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
         address nodeAddress,
         uint256 start,
         uint256 stop
-    )
-        external
-        view
-        returns (StreamWithId[] memory streams)
-    {
+    ) external view returns (StreamWithId[] memory streams) {
         EnumerableSet.Bytes32Set storage streamIds = ds.streamIdsByNode[nodeAddress];
         uint256 streamCount = streamIds.length();
         uint256 maxStreamIndex = FixedPointMathLib.min(stop, streamCount);
@@ -378,11 +343,7 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
     function getPaginatedStreams(
         uint256 start,
         uint256 stop
-    )
-        external
-        view
-        returns (StreamWithId[] memory, bool)
-    {
+    ) external view returns (StreamWithId[] memory, bool) {
         uint256 streamCount = ds.streams.length();
         uint256 maxStreamIndex = FixedPointMathLib.min(stop, streamCount);
         uint256 count = FixedPointMathLib.zeroFloorSub(maxStreamIndex, start);
@@ -403,9 +364,26 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
     /*                          INTERNAL                          */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
+    /// @dev Adds a stream id to the nodes
+    function _addStreamIdToNodes(bytes32 streamId, address[] storage nodes) internal {
+        uint256 nodeCount = nodes.length;
+        for (uint256 i; i < nodeCount; ++i) {
+            ds.streamIdsByNode[nodes[i]].add(streamId);
+        }
+    }
+
+    /// @dev Adds a stream id to the nodes
     function _addStreamIdToNodes(bytes32 streamId, address[] calldata nodes) internal {
         for (uint256 i; i < nodes.length; ++i) {
             ds.streamIdsByNode[nodes[i]].add(streamId);
+        }
+    }
+
+    /// @dev Removes a stream id from the nodes
+    function _removeStreamIdFromNodes(bytes32 streamId, address[] storage nodes) internal {
+        uint256 nodeCount = nodes.length;
+        for (uint256 i; i < nodeCount; ++i) {
+            ds.streamIdsByNode[nodes[i]].remove(streamId);
         }
     }
 
@@ -429,9 +407,7 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
         bytes32 lastMiniblockHash,
         uint64 lastMiniblockNum,
         bool isSealed
-    )
-        internal
-    {
+    ) internal {
         bytes32 topic0 = StreamLastMiniblockUpdated.selector;
         assembly ("memory-safe") {
             // cache the free memory pointer
@@ -455,11 +431,7 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
     function _calculateStreamReserved0(
         uint64 reserved0,
         uint8 replFactor
-    )
-        internal
-        pure
-        returns (uint64)
-    {
+    ) internal pure returns (uint64) {
         return (reserved0 & ~STREAM_REPL_FACTOR_MASK) | uint64(replFactor);
     }
 }

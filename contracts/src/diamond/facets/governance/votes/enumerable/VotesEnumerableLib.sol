@@ -48,11 +48,7 @@ library VotesEnumerableLib {
     function getPaginatedDelegators(
         uint256 cursor,
         uint256 size
-    )
-        internal
-        view
-        returns (address[] memory delegators, uint256 next)
-    {
+    ) internal view returns (address[] memory delegators, uint256 next) {
         Layout storage ds = layout();
         uint256 length = ds.delegators.length();
 
@@ -82,9 +78,7 @@ library VotesEnumerableLib {
         address account,
         address newDelegatee,
         address currentDelegatee
-    )
-        internal
-    {
+    ) internal {
         Layout storage ds = layout();
 
         // If current delegatee is address(0), add account to delegators

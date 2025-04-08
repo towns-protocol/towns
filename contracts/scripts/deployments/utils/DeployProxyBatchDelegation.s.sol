@@ -7,8 +7,7 @@ pragma solidity ^0.8.23;
 
 //contracts
 import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
-import {ProxyBatchDelegation} from
-    "contracts/src/tokens/mainnet/delegation/ProxyBatchDelegation.sol";
+import {ProxyBatchDelegation} from "contracts/src/tokens/mainnet/delegation/ProxyBatchDelegation.sol";
 import {MockMessenger} from "contracts/test/mocks/MockMessenger.sol";
 
 // deployments
@@ -62,7 +61,8 @@ contract DeployProxyBatchDelegation is Deployer {
         }
 
         vm.broadcast(deployer);
-        return address(new ProxyBatchDelegation(townsToken, claimers, messenger, mainnetDelegation));
+        return
+            address(new ProxyBatchDelegation(townsToken, claimers, messenger, mainnetDelegation));
     }
 
     function _getMainnetDelegation() internal returns (address) {

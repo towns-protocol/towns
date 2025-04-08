@@ -20,23 +20,13 @@ import {OwnableBase} from "@towns-protocol/diamond/src/facets/ownable/OwnableBas
 import {PausableBase} from "@towns-protocol/diamond/src/facets/pausable/PausableBase.sol";
 import {ReentrancyGuard} from "solady/utils/ReentrancyGuard.sol";
 
-contract Architect is
-    IArchitect,
-    ArchitectBase,
-    OwnableBase,
-    PausableBase,
-    ReentrancyGuard,
-    Facet
-{
+contract Architect is IArchitect, ArchitectBase, OwnableBase, PausableBase, ReentrancyGuard, Facet {
     function __Architect_init(
         ISpaceOwner ownerImplementation,
         IUserEntitlement userEntitlementImplementation,
         IRuleEntitlementV2 ruleEntitlementImplementation,
         IRuleEntitlement legacyRuleEntitlement
-    )
-        external
-        onlyInitializing
-    {
+    ) external onlyInitializing {
         _setImplementations(
             ownerImplementation,
             userEntitlementImplementation,
@@ -69,10 +59,7 @@ contract Architect is
         IUserEntitlement userEntitlementImplementation,
         IRuleEntitlementV2 ruleEntitlementImplementation,
         IRuleEntitlement legacyRuleEntitlement
-    )
-        external
-        onlyOwner
-    {
+    ) external onlyOwner {
         _setImplementations(
             spaceToken,
             userEntitlementImplementation,

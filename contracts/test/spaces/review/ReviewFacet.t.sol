@@ -62,10 +62,7 @@ contract ReviewFacetTest is MembershipBaseSetup, IReviewBase {
     function test_fuzz_addReview(
         string memory comment,
         uint8 rating
-    )
-        public
-        givenAliceHasMintedMembership
-    {
+    ) public givenAliceHasMintedMembership {
         rating = uint8(bound(rating, 0, 5));
         if (bytes(comment).length < DEFAULT_MIN_COMMENT_LENGTH) {
             comment = comment.concat(
@@ -169,8 +166,8 @@ contract ReviewFacetTest is MembershipBaseSetup, IReviewBase {
         vm.prank(charlie);
         reviewFacet.setReview(Action.Add, abi.encode(review));
 
-        (address[] memory users, ReviewStorage.Content[] memory reviews) =
-            reviewFacet.getAllReviews();
+        (address[] memory users, ReviewStorage.Content[] memory reviews) = reviewFacet
+            .getAllReviews();
         assertEq(users.length, 2, "User count incorrect");
         assertEq(reviews.length, 2, "Review count incorrect");
         assertEq(reviews[0].comment, sampleReview.comment, "First review comment mismatch");

@@ -12,7 +12,6 @@ import (
 	"github.com/towns-protocol/towns/core/node/crypto"
 	"github.com/towns-protocol/towns/core/node/logging"
 	. "github.com/towns-protocol/towns/core/node/protocol"
-	"github.com/towns-protocol/towns/core/node/registries"
 )
 
 func (s *StreamCache) onStreamCreated(
@@ -20,7 +19,7 @@ func (s *StreamCache) onStreamCreated(
 	event *river.StreamState,
 	blockNum crypto.BlockNumber,
 ) {
-	if !slices.Contains(event.Stream.Nodes, s.params.Wallet.Address) {
+	if !slices.Contains(event.Stream.Nodes(), s.params.Wallet.Address) {
 		return
 	}
 
@@ -31,14 +30,14 @@ func (s *StreamCache) onStreamCreated(
 		lastAccessedTime:    time.Now(),
 		local:               &localStreamState{},
 	}
-	stream.nodesLocked.ResetFromStreamState(event, s.params.Wallet.Address)
+	stream.nodesLocked.ResetFromStreamWithId(event.Stream, s.params.Wallet.Address)
 
 	go func() {
 		if err := s.normalizeEphemeralStream(
 			ctx,
 			stream,
-			int64(event.Stream.LastMiniblockNum),
-			event.Stream.Flags&uint64(registries.StreamFlagSealed) != 0,
+			event.Stream.LastMbNum(),
+			event.Stream.IsSealed(),
 		); err != nil {
 			logging.FromCtx(ctx).
 				Errorw("Failed to normalize ephemeral stream", "err", err, "streamId", event.GetStreamId())
@@ -54,11 +53,11 @@ func (s *StreamCache) onStreamPlacementUpdated(
 	event *river.StreamState,
 	blockNum crypto.BlockNumber,
 ) {
-	participatingInStream := slices.Contains(event.Nodes, s.params.Wallet.Address)
+	participatingInStream := slices.Contains(event.Stream.Nodes(), s.params.Wallet.Address)
 	if !participatingInStream {
 		if stream, ok := s.cache.Load(event.GetStreamId()); ok {
 			stream.mu.Lock()
-			stream.nodesLocked.ResetFromStreamState(event, s.params.Wallet.Address)
+			stream.nodesLocked.ResetFromStreamWithId(event.Stream, s.params.Wallet.Address)
 			stream.local = nil
 			stream.mu.Unlock()
 		}
@@ -76,7 +75,7 @@ func (s *StreamCache) onStreamPlacementUpdated(
 				params:              s.params,
 				local:               &localStreamState{},
 			}
-			s.nodesLocked.ResetFromStreamState(event, s.params.Wallet.Address)
+			s.nodesLocked.ResetFromStreamWithId(event.Stream, s.params.Wallet.Address)
 			return s, false
 		},
 	)
@@ -84,7 +83,7 @@ func (s *StreamCache) onStreamPlacementUpdated(
 	if loaded {
 		stream.mu.Lock()
 		// TODO: REPLICATION: FIX: what to do with lastAppliedBlockNum
-		stream.nodesLocked.ResetFromStreamState(event, s.params.Wallet.Address)
+		stream.nodesLocked.ResetFromStreamWithId(event.Stream, s.params.Wallet.Address)
 		if stream.local == nil {
 			stream.local = &localStreamState{}
 		}

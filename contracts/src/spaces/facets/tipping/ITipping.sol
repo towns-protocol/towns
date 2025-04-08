@@ -62,10 +62,7 @@ interface ITipping is ITippingBase {
     function tipsByCurrencyAndTokenId(
         uint256 tokenId,
         address currency
-    )
-        external
-        view
-        returns (uint256);
+    ) external view returns (uint256);
 
     /// @notice Gets the list of currencies that have been tipped to the space
     /// @return An array of currency addresses

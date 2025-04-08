@@ -90,10 +90,7 @@ contract MembershipRenewTest is MembershipBaseSetup, IERC5643Base {
         assertEq(address(membership).balance, spaceBalance + renewalPrice - protocolFee);
     }
 
-    function test_revertWhen_renewMembershipNotExpiredYet()
-        external
-        givenAliceHasMintedMembership
-    {
+    function test_revertWhen_renewMembershipNotExpiredYet() external givenAliceHasMintedMembership {
         uint256 totalSupply = membershipToken.totalSupply();
         uint256 tokenId;
 

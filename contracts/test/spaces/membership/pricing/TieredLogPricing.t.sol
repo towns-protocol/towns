@@ -5,15 +5,13 @@ pragma solidity ^0.8.19;
 import {TestUtils} from "contracts/test/utils/TestUtils.sol";
 
 //interfaces
-import {IMembershipPricing} from
-    "contracts/src/spaces/facets/membership/pricing/IMembershipPricing.sol";
+import {IMembershipPricing} from "contracts/src/spaces/facets/membership/pricing/IMembershipPricing.sol";
 
 //libraries
 
 //contracts
 
-import {TieredLogPricingOracleV3} from
-    "contracts/src/spaces/facets/membership/pricing/tiered/TieredLogPricingOracleV3.sol";
+import {TieredLogPricingOracleV3} from "contracts/src/spaces/facets/membership/pricing/tiered/TieredLogPricingOracleV3.sol";
 import {MockAggregatorV3} from "contracts/test/mocks/MockAggregatorV3.sol";
 
 contract TieredLogPricingTest is TestUtils {
@@ -21,8 +19,9 @@ contract TieredLogPricingTest is TestUtils {
 
     function test_pricingModule() external {
         MockAggregatorV3 oracle = _setupOracle();
-        IMembershipPricing pricingModule =
-            IMembershipPricing(address(new TieredLogPricingOracleV3(address(oracle))));
+        IMembershipPricing pricingModule = IMembershipPricing(
+            address(new TieredLogPricingOracleV3(address(oracle)))
+        );
 
         // tier 0 -> 100
         uint256 price0 = pricingModule.getPrice({freeAllocation: 0, totalMinted: 0});
@@ -52,8 +51,9 @@ contract TieredLogPricingTest is TestUtils {
 
     function test_pricingModuleMonotonicIncrease() external {
         MockAggregatorV3 oracle = _setupOracle();
-        IMembershipPricing pricingModule =
-            IMembershipPricing(address(new TieredLogPricingOracleV3(address(oracle))));
+        IMembershipPricing pricingModule = IMembershipPricing(
+            address(new TieredLogPricingOracleV3(address(oracle)))
+        );
 
         uint256 lastPrice = 0;
         for (uint256 i = 0; i <= 15_000; i++) {

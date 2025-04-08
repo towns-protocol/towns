@@ -4,8 +4,7 @@ pragma solidity ^0.8.23;
 // interfaces
 
 import {IEntitlement} from "contracts/src/spaces/entitlements/IEntitlement.sol";
-import {IEntitlementDataQueryable} from
-    "contracts/src/spaces/facets/entitlements/extensions/IEntitlementDataQueryable.sol";
+import {IEntitlementDataQueryable} from "contracts/src/spaces/facets/entitlements/extensions/IEntitlementDataQueryable.sol";
 import {IEntitlementGatedBase} from "contracts/src/spaces/facets/gated/IEntitlementGated.sol";
 import {IRolesBase} from "contracts/src/spaces/facets/roles/IRoles.sol";
 
@@ -13,8 +12,7 @@ import {IRolesBase} from "contracts/src/spaces/facets/roles/IRoles.sol";
 
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import {ChannelService} from "contracts/src/spaces/facets/channels/ChannelService.sol";
-import {EntitlementGatedStorage} from
-    "contracts/src/spaces/facets/gated/EntitlementGatedStorage.sol";
+import {EntitlementGatedStorage} from "contracts/src/spaces/facets/gated/EntitlementGatedStorage.sol";
 import {RolesStorage} from "contracts/src/spaces/facets/roles/RolesStorage.sol";
 import {StringSet} from "contracts/src/utils/StringSet.sol";
 import {StringSet} from "contracts/src/utils/StringSet.sol";
@@ -34,11 +32,9 @@ contract EntitlementDataQueryable is
     using StringSet for StringSet.Set;
     using EnumerableSet for EnumerableSet.Bytes32Set;
 
-    function getEntitlementDataByPermission(string calldata permission)
-        external
-        view
-        returns (EntitlementData[] memory)
-    {
+    function getEntitlementDataByPermission(
+        string calldata permission
+    ) external view returns (EntitlementData[] memory) {
         Role[] memory roles = _getRolesWithPermission(permission);
         return _getEntitlements(roles);
     }
@@ -46,11 +42,7 @@ contract EntitlementDataQueryable is
     function getChannelEntitlementDataByPermission(
         bytes32 channelId,
         string calldata permission
-    )
-        external
-        view
-        returns (EntitlementData[] memory)
-    {
+    ) external view returns (EntitlementData[] memory) {
         Role[] memory roles = _getChannelRolesWithPermission(channelId, permission);
         return _getEntitlements(roles);
     }
@@ -58,11 +50,7 @@ contract EntitlementDataQueryable is
     function getCrossChainEntitlementData(
         bytes32 transactionId,
         uint256 roleId
-    )
-        external
-        view
-        returns (EntitlementData memory)
-    {
+    ) external view returns (EntitlementData memory) {
         EntitlementGatedStorage.Layout storage ds = EntitlementGatedStorage.layout();
 
         Transaction storage transaction = ds.transactions[transactionId];
@@ -82,11 +70,7 @@ contract EntitlementDataQueryable is
     function _getChannelRolesWithPermission(
         bytes32 channelId,
         string calldata permission
-    )
-        internal
-        view
-        returns (Role[] memory)
-    {
+    ) internal view returns (Role[] memory) {
         // retrieve the roles associated with the channel
         uint256[] memory channelRoles = ChannelService.getRolesByChannel(channelId);
         uint256 channelRolesLength = channelRoles.length;
@@ -134,11 +118,9 @@ contract EntitlementDataQueryable is
         return rolesWithPermission;
     }
 
-    function _getEntitlements(Role[] memory roles)
-        internal
-        view
-        returns (EntitlementData[] memory entitlementData)
-    {
+    function _getEntitlements(
+        Role[] memory roles
+    ) internal view returns (EntitlementData[] memory entitlementData) {
         uint256 entitlementCount;
         uint256 rolesLength = roles.length;
 

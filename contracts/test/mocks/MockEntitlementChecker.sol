@@ -12,10 +12,7 @@ import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet
 import {OwnableBase} from "@towns-protocol/diamond/src/facets/ownable/OwnableBase.sol";
 import {EntitlementChecker} from "contracts/src/base/registry/facets/checker/EntitlementChecker.sol";
 import {NodeOperatorFacet} from "contracts/src/base/registry/facets/operator/NodeOperatorFacet.sol";
-import {
-    NodeOperatorStatus,
-    NodeOperatorStorage
-} from "contracts/src/base/registry/facets/operator/NodeOperatorStorage.sol";
+import {NodeOperatorStatus, NodeOperatorStorage} from "contracts/src/base/registry/facets/operator/NodeOperatorStorage.sol";
 import {XChain} from "contracts/src/base/registry/facets/xchain/XChain.sol";
 
 contract MockEntitlementChecker is OwnableBase, NodeOperatorFacet, EntitlementChecker, XChain {

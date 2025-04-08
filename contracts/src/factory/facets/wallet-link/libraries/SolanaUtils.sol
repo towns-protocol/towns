@@ -20,8 +20,8 @@ library SolanaUtils {
         0x5a6162636465666768696a6b6d6e6f707172737475767778797a000000000000;
     /// @notice XOR mask for the Base58 alphabet to handle both halves
     uint256 internal constant XOR_ALPHABET =
-    0x31323334353637383941424344454647484a4b4c4d4e50515253545556575859
-        ^ 0x5a6162636465666768696a6b6d6e6f707172737475767778797a000000000000;
+        0x31323334353637383941424344454647484a4b4c4d4e50515253545556575859 ^
+            0x5a6162636465666768696a6b6d6e6f707172737475767778797a000000000000;
 
     /// @notice Precomputed bitmask for Base58 allowed characters
     uint256 internal constant BASE58_MAP = 0x07ffeffe07ff7dfe03fe000000000000;
@@ -58,7 +58,9 @@ library SolanaUtils {
             let ptr := end
             // encode from the end of the result array
             for {} 1 {} {
-                if iszero(value) { break }
+                if iszero(value) {
+                    break
+                }
                 let remainder := mod(value, 58)
                 value := div(value, 58)
                 // equivalent: table = remainder < 32 ? ALPHABET0 : ALPHABET1
@@ -68,7 +70,8 @@ library SolanaUtils {
             }
             // Add leading '1's for each leading zero byte
             mstore(
-                sub(ptr, 0x20), 0x3131313131313131313131313131313131313131313131313131313131313131
+                sub(ptr, 0x20),
+                0x3131313131313131313131313131313131313131313131313131313131313131
             )
             // starting offset of the result
             ptr := sub(ptr, zeros)
@@ -83,11 +86,9 @@ library SolanaUtils {
      * @param pubkey The extended public key array (5 elements)
      * @return The Base58 encoded Solana address string
      */
-    function getCompressedPublicKeyAsString(uint256[5] memory pubkey)
-        internal
-        pure
-        returns (string memory)
-    {
+    function getCompressedPublicKeyAsString(
+        uint256[5] memory pubkey
+    ) internal pure returns (string memory) {
         bytes32 compressedKey = getCompressedPublicKey(pubkey);
         return toBase58String(compressedKey);
     }
@@ -97,11 +98,9 @@ library SolanaUtils {
      * @param compressedPubkey The compressed public key (typically extPubKey[4])
      * @return The Base58 encoded Solana address
      */
-    function getSolanaAddressFromCompressedKey(uint256 compressedPubkey)
-        internal
-        pure
-        returns (string memory)
-    {
+    function getSolanaAddressFromCompressedKey(
+        uint256 compressedPubkey
+    ) internal pure returns (string memory) {
         return toBase58String(bytes32(compressedPubkey));
     }
 
@@ -110,11 +109,9 @@ library SolanaUtils {
      * @param extPubKey The extended public key fixed array
      * @return The Base58 encoded Solana address string
      */
-    function getSolanaAddressFromFixedExtPubKey(uint256[5] memory extPubKey)
-        internal
-        pure
-        returns (string memory)
-    {
+    function getSolanaAddressFromFixedExtPubKey(
+        uint256[5] memory extPubKey
+    ) internal pure returns (string memory) {
         return toBase58String(bytes32(extPubKey[4]));
     }
 
@@ -127,11 +124,7 @@ library SolanaUtils {
     function isValidSolanaAddress(
         string memory solanaAddress,
         uint256[5] memory extPubKey
-    )
-        internal
-        pure
-        returns (bool)
-    {
+    ) internal pure returns (bool) {
         return LibString.eq(solanaAddress, getSolanaAddressFromFixedExtPubKey(extPubKey));
     }
 
