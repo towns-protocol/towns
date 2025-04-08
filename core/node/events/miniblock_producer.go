@@ -484,21 +484,16 @@ func (p *miniblockProducer) promoteConfirmedCandidates(ctx context.Context, jobs
 			continue
 		}
 
-		committedLocalCandidateRef := MiniblockRef{
-			Hash: stream.LastMiniblockHash,
-			Num:  int64(stream.LastMiniblockNum),
-		}
+		committedLocalCandidateRef := stream.LastMb()
 
-		if err := job.stream.promoteCandidate(ctx, &committedLocalCandidateRef); err == nil {
+		if err := job.stream.promoteCandidate(ctx, committedLocalCandidateRef); err == nil {
 			log.Info("Promoted miniblock candidate",
 				"streamId", job.stream.streamId,
-				"num", committedLocalCandidateRef.Num,
-				"hash", committedLocalCandidateRef.Hash)
+				"mb", committedLocalCandidateRef)
 		} else {
 			log.Error("Unable to promote candidate",
 				"streamId", job.stream.streamId,
-				"num", committedLocalCandidateRef.Num,
-				"hash", committedLocalCandidateRef.Hash,
+				"mb", committedLocalCandidateRef,
 				"err", err)
 		}
 
