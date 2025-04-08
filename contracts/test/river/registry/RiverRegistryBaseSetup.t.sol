@@ -4,11 +4,7 @@ pragma solidity ^0.8.23;
 // interfaces
 
 import {IRiverConfig} from "contracts/src/river/registry/facets/config/IRiverConfig.sol";
-import {
-    INodeRegistry,
-    INodeRegistryBase,
-    NodeStatus
-} from "contracts/src/river/registry/facets/node/INodeRegistry.sol";
+import {INodeRegistry, INodeRegistryBase, NodeStatus} from "contracts/src/river/registry/facets/node/INodeRegistry.sol";
 import {IOperatorRegistry} from "contracts/src/river/registry/facets/operator/IOperatorRegistry.sol";
 import {IStreamRegistry} from "contracts/src/river/registry/facets/stream/IStreamRegistry.sol";
 

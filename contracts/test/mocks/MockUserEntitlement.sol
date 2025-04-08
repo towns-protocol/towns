@@ -11,8 +11,7 @@ import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Ini
 
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import {ContextUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
-import {ERC165Upgradeable} from
-    "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
+import {ERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
 
 contract MockUserEntitlement is
     Initializable,
@@ -49,7 +48,8 @@ contract MockUserEntitlement is
     function _authorizeUpgrade(address newImplementation) internal override onlySpace {}
 
     function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
-        return interfaceId == type(IEntitlement).interfaceId || super.supportsInterface(interfaceId);
+        return
+            interfaceId == type(IEntitlement).interfaceId || super.supportsInterface(interfaceId);
     }
 
     function isCrosschain() external pure returns (bool) {
@@ -79,9 +79,9 @@ contract MockUserEntitlement is
 
         // First remove any prior values
         while (ds.entitlementsByRoleId[roleId].users.length > 0) {
-            address user = ds.entitlementsByRoleId[roleId].users[ds.entitlementsByRoleId[roleId]
-                .users
-                .length - 1];
+            address user = ds.entitlementsByRoleId[roleId].users[
+                ds.entitlementsByRoleId[roleId].users.length - 1
+            ];
             _removeRoleIdFromUser(user, roleId);
             ds.entitlementsByRoleId[roleId].users.pop();
         }
@@ -101,9 +101,9 @@ contract MockUserEntitlement is
 
         // First remove any prior values
         while (ds.entitlementsByRoleId[roleId].users.length > 0) {
-            address user = ds.entitlementsByRoleId[roleId].users[ds.entitlementsByRoleId[roleId]
-                .users
-                .length - 1];
+            address user = ds.entitlementsByRoleId[roleId].users[
+                ds.entitlementsByRoleId[roleId].users.length - 1
+            ];
             _removeRoleIdFromUser(user, roleId);
             ds.entitlementsByRoleId[roleId].users.pop();
         }
@@ -122,11 +122,9 @@ contract MockUserEntitlement is
         ds.roleIdsByChannelId[channelId].remove(roleId);
     }
 
-    function getRoleIdsByChannelId(string memory channelId)
-        external
-        view
-        returns (uint256[] memory roleIds)
-    {
+    function getRoleIdsByChannelId(
+        string memory channelId
+    ) external view returns (uint256[] memory roleIds) {
         MockUserEntitlementStorage.Layout storage ds = MockUserEntitlementStorage.layout();
 
         return ds.roleIdsByChannelId[channelId].values();

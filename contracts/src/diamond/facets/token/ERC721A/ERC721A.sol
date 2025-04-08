@@ -138,13 +138,7 @@ contract ERC721A is IERC721A, ERC721ABase, Facet {
     function isApprovedForAll(
         address owner,
         address operator
-    )
-        public
-        view
-        virtual
-        override
-        returns (bool)
-    {
+    ) public view virtual override returns (bool) {
         return _isApprovedForAll(owner, operator);
     }
 
@@ -165,19 +159,16 @@ contract ERC721A is IERC721A, ERC721ABase, Facet {
         address from,
         address to,
         uint256 tokenId
-    )
-        public
-        payable
-        virtual
-        override
-    {
+    ) public payable virtual override {
         uint256 prevOwnershipPacked = _packedOwnershipOf(tokenId);
 
         if (address(uint160(prevOwnershipPacked)) != from) {
             revert TransferFromIncorrectOwner();
         }
 
-        (uint256 approvedAddressSlot, address approvedAddress) = _getApprovedSlotAndAddress(tokenId);
+        (uint256 approvedAddressSlot, address approvedAddress) = _getApprovedSlotAndAddress(
+            tokenId
+        );
 
         // The nested ifs save around 20+ gas over a compound boolean condition.
         if (!_isSenderApprovedOrOwner(approvedAddress, from, _msgSenderERC721A())) {
@@ -212,7 +203,8 @@ contract ERC721A is IERC721A, ERC721ABase, Facet {
             // - `burned` to `false`.
             // - `nextInitialized` to `true`.
             ERC721AStorage.layout()._packedOwnerships[tokenId] = _packOwnershipData(
-                to, _BITMASK_NEXT_INITIALIZED | _nextExtraData(from, to, prevOwnershipPacked)
+                to,
+                _BITMASK_NEXT_INITIALIZED | _nextExtraData(from, to, prevOwnershipPacked)
             );
 
             // If the next slot may not have been initialized (i.e. `nextInitialized == false`) .
@@ -224,7 +216,9 @@ contract ERC721A is IERC721A, ERC721ABase, Facet {
                     if (nextTokenId != ERC721AStorage.layout()._currentIndex) {
                         // Initialize the next slot to maintain correctness for `ownerOf(tokenId +
                         // 1)`.
-                        ERC721AStorage.layout()._packedOwnerships[nextTokenId] = prevOwnershipPacked;
+                        ERC721AStorage.layout()._packedOwnerships[
+                            nextTokenId
+                        ] = prevOwnershipPacked;
                     }
                 }
             }
@@ -241,12 +235,7 @@ contract ERC721A is IERC721A, ERC721ABase, Facet {
         address from,
         address to,
         uint256 tokenId
-    )
-        public
-        payable
-        virtual
-        override
-    {
+    ) public payable virtual override {
         safeTransferFrom(from, to, tokenId, "");
     }
 
@@ -270,12 +259,7 @@ contract ERC721A is IERC721A, ERC721ABase, Facet {
         address to,
         uint256 tokenId,
         bytes memory _data
-    )
-        public
-        payable
-        virtual
-        override
-    {
+    ) public payable virtual override {
         transferFrom(from, to, tokenId);
         if (to.code.length != 0) {
             if (!_checkContractOnERC721Received(from, to, tokenId, _data)) {

@@ -10,9 +10,7 @@ interface ERC721A__IERC721ReceiverUpgradeable {
         address from,
         uint256 tokenId,
         bytes calldata data
-    )
-        external
-        returns (bytes4);
+    ) external returns (bytes4);
 }
 
 interface IERC721ABase {
@@ -136,7 +134,10 @@ interface IERC721ABase {
      * See {_mintERC2309} for more details.
      */
     event ConsecutiveTransfer(
-        uint256 indexed fromTokenId, uint256 toTokenId, address indexed from, address indexed to
+        uint256 indexed fromTokenId,
+        uint256 toTokenId,
+        address indexed from,
+        address indexed to
     );
 }
 
@@ -191,9 +192,7 @@ interface IERC721A is IERC721ABase {
         address to,
         uint256 tokenId,
         bytes calldata data
-    )
-        external
-        payable;
+    ) external payable;
 
     /**
      * @dev Equivalent to `safeTransferFrom(from, to, tokenId, '')`.

@@ -102,11 +102,7 @@ contract TownsMainnetTests is TestUtils, ITownsBase, EIP712Utils {
         address alice,
         address bob,
         uint256 amount
-    )
-        external
-        givenMintedInitialSupply
-        givenCallerHasTokens(alice, amount)
-    {
+    ) external givenMintedInitialSupply givenCallerHasTokens(alice, amount) {
         vm.assume(bob != address(0));
         vm.assume(bob != ZERO_SENTINEL);
         vm.assume(alice != bob);
@@ -122,10 +118,7 @@ contract TownsMainnetTests is TestUtils, ITownsBase, EIP712Utils {
         uint256 alicePrivateKey,
         address bob,
         uint256 amount
-    )
-        external
-        givenMintedInitialSupply
-    {
+    ) external givenMintedInitialSupply {
         vm.assume(bob != address(0));
         vm.assume(bob != ZERO_SENTINEL);
         amount = bound(amount, 1, INITIAL_SUPPLY);
@@ -141,8 +134,14 @@ contract TownsMainnetTests is TestUtils, ITownsBase, EIP712Utils {
 
         uint256 deadline = block.timestamp + 1 days;
 
-        (uint8 v, bytes32 r, bytes32 s) =
-            signPermit(alicePrivateKey, address(towns), alice, bob, amount, deadline);
+        (uint8 v, bytes32 r, bytes32 s) = signPermit(
+            alicePrivateKey,
+            address(towns),
+            alice,
+            bob,
+            amount,
+            deadline
+        );
 
         vm.prank(bob);
         towns.permit(alice, bob, amount, deadline, v, r, s);
@@ -183,7 +182,8 @@ contract TownsMainnetTests is TestUtils, ITownsBase, EIP712Utils {
             uint256 inflationAmount = BasisPoints.calculate(totalSupply, inflationRateBPS);
 
             assertEq(
-                inflationRateBPS, TokenInflationLib.getCurrentInflationRateBPS(INITIAL_MINT_TIME)
+                inflationRateBPS,
+                TokenInflationLib.getCurrentInflationRateBPS(INITIAL_MINT_TIME)
             );
 
             uint256 totalMinted = totalSupply + inflationAmount;
@@ -204,28 +204,32 @@ contract TownsMainnetTests is TestUtils, ITownsBase, EIP712Utils {
     function test_currentInflationRate() external givenMintedInitialSupply {
         uint256 currentInflationRate = towns.currentInflationRate();
         assertEq(
-            currentInflationRate, TokenInflationLib.getCurrentInflationRateBPS(INITIAL_MINT_TIME)
+            currentInflationRate,
+            TokenInflationLib.getCurrentInflationRateBPS(INITIAL_MINT_TIME)
         );
 
         // wait 2 years
         skip(2 * 365 days);
         currentInflationRate = towns.currentInflationRate();
         assertEq(
-            currentInflationRate, TokenInflationLib.getCurrentInflationRateBPS(INITIAL_MINT_TIME)
+            currentInflationRate,
+            TokenInflationLib.getCurrentInflationRateBPS(INITIAL_MINT_TIME)
         );
 
         // wait 10 years
         skip(10 * 365 days);
         currentInflationRate = towns.currentInflationRate();
         assertEq(
-            currentInflationRate, TokenInflationLib.getCurrentInflationRateBPS(INITIAL_MINT_TIME)
+            currentInflationRate,
+            TokenInflationLib.getCurrentInflationRateBPS(INITIAL_MINT_TIME)
         );
 
         // wait 20 years
         skip(20 * 365 days);
         currentInflationRate = towns.currentInflationRate();
         assertEq(
-            currentInflationRate, TokenInflationLib.getCurrentInflationRateBPS(INITIAL_MINT_TIME)
+            currentInflationRate,
+            TokenInflationLib.getCurrentInflationRateBPS(INITIAL_MINT_TIME)
         );
     }
 
@@ -297,10 +301,9 @@ contract TownsMainnetTests is TestUtils, ITownsBase, EIP712Utils {
         uint256 tokenAmount;
     }
 
-    function test_getPaginatedDelegators(TestPaginatedDelegators[10] memory test)
-        external
-        givenMintedInitialSupply
-    {
+    function test_getPaginatedDelegators(
+        TestPaginatedDelegators[10] memory test
+    ) external givenMintedInitialSupply {
         for (uint256 i = 0; i < test.length; ++i) {
             test[i].tokenAmount = bound(test[i].tokenAmount, 1, 100);
             vm.assume(test[i].holder != test[i].delegatee);

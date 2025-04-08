@@ -18,11 +18,8 @@ import {DeployGuardianFacet} from "contracts/scripts/deployments/facets/DeployGu
 import {DeployIntrospection} from "contracts/scripts/deployments/facets/DeployIntrospection.s.sol";
 import {DeployMetadata} from "contracts/scripts/deployments/facets/DeployMetadata.s.sol";
 import {DeployOwnable} from "contracts/scripts/deployments/facets/DeployOwnable.s.sol";
-import {DeploySpaceOwnerFacet} from
-    "contracts/scripts/deployments/facets/DeploySpaceOwnerFacet.s.sol";
-import {
-    DeployMultiInit, MultiInit
-} from "contracts/scripts/deployments/utils/DeployMultiInit.s.sol";
+import {DeploySpaceOwnerFacet} from "contracts/scripts/deployments/facets/DeploySpaceOwnerFacet.s.sol";
+import {DeployMultiInit, MultiInit} from "contracts/scripts/deployments/utils/DeployMultiInit.s.sol";
 
 contract DeploySpaceOwner is DiamondHelper, Deployer {
     DeployDiamondCut diamondCutHelper = new DeployDiamondCut();
@@ -107,11 +104,16 @@ contract DeploySpaceOwner is DiamondHelper, Deployer {
             metadataHelper.makeInitData(bytes32("Space Owner"), "")
         );
 
-        return Diamond.InitParams({
-            baseFacets: baseFacets(),
-            init: multiInit,
-            initData: abi.encodeWithSelector(MultiInit.multiInit.selector, _initAddresses, _initDatas)
-        });
+        return
+            Diamond.InitParams({
+                baseFacets: baseFacets(),
+                init: multiInit,
+                initData: abi.encodeWithSelector(
+                    MultiInit.multiInit.selector,
+                    _initAddresses,
+                    _initDatas
+                )
+            });
     }
 
     function diamondInitParamsFromFacets(address deployer, string[] memory facets) public {
@@ -153,11 +155,7 @@ contract DeploySpaceOwner is DiamondHelper, Deployer {
     function diamondInitHelper(
         address deployer,
         string[] memory facetNames
-    )
-        external
-        override
-        returns (FacetCut[] memory)
-    {
+    ) external override returns (FacetCut[] memory) {
         diamondInitParamsFromFacets(deployer, facetNames);
         return this.getCuts();
     }

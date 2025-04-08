@@ -8,8 +8,7 @@ import {IPricingModules} from "contracts/src/factory/facets/architect/pricing/IP
 import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
 
 // contracts
-import {PricingModulesFacet} from
-    "contracts/src/factory/facets/architect/pricing/PricingModulesFacet.sol";
+import {PricingModulesFacet} from "contracts/src/factory/facets/architect/pricing/PricingModulesFacet.sol";
 
 contract PricingModulesHelper is FacetHelper {
     constructor() {

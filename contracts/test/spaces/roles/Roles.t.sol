@@ -5,8 +5,7 @@ pragma solidity ^0.8.23;
 
 import {IEntitlement} from "contracts/src/spaces/entitlements/IEntitlement.sol";
 import {IChannel} from "contracts/src/spaces/facets/channels/IChannel.sol";
-import {IEntitlementsManager} from
-    "contracts/src/spaces/facets/entitlements/IEntitlementsManager.sol";
+import {IEntitlementsManager} from "contracts/src/spaces/facets/entitlements/IEntitlementsManager.sol";
 import {IRoles} from "contracts/src/spaces/facets/roles/IRoles.sol";
 
 // libraries
@@ -20,16 +19,9 @@ import {RolesBaseSetup} from "contracts/test/spaces/roles/RolesBaseSetup.sol";
 
 // errors
 // solhint-disable-next-line max-line-length
-import {
-    EntitlementsService__EntitlementDoesNotExist,
-    EntitlementsService__InvalidEntitlementAddress,
-    EntitlementsService__InvalidEntitlementInterface
-} from "contracts/src/spaces/facets/entitlements/EntitlementsManagerService.sol";
+import {EntitlementsService__EntitlementDoesNotExist, EntitlementsService__InvalidEntitlementAddress, EntitlementsService__InvalidEntitlementInterface} from "contracts/src/spaces/facets/entitlements/EntitlementsManagerService.sol";
 // solhint-disable-next-line max-line-length
-import {
-    Validator__InvalidByteLength,
-    Validator__InvalidStringLength
-} from "contracts/src/utils/Validator.sol";
+import {Validator__InvalidByteLength, Validator__InvalidStringLength} from "contracts/src/utils/Validator.sol";
 // solhint-disable-next-line max-line-length
 
 // mocks
@@ -70,16 +62,25 @@ contract RolesTest is RolesBaseSetup {
         vm.startPrank(founder);
         roles.createRole(role1, new string[](0), new IRoles.CreateEntitlement[](0));
 
-        uint256 roleId2 =
-            roles.createRole(role2, new string[](0), new IRoles.CreateEntitlement[](0));
+        uint256 roleId2 = roles.createRole(
+            role2,
+            new string[](0),
+            new IRoles.CreateEntitlement[](0)
+        );
 
-        uint256 roleId3 =
-            roles.createRole(role3, new string[](0), new IRoles.CreateEntitlement[](0));
+        uint256 roleId3 = roles.createRole(
+            role3,
+            new string[](0),
+            new IRoles.CreateEntitlement[](0)
+        );
 
         roles.removeRole(roleId2);
 
-        uint256 roleId4 =
-            roles.createRole(role2, new string[](0), new IRoles.CreateEntitlement[](0));
+        uint256 roleId4 = roles.createRole(
+            role2,
+            new string[](0),
+            new IRoles.CreateEntitlement[](0)
+        );
 
         assertEq(roleId4, 6);
 
@@ -93,9 +94,7 @@ contract RolesTest is RolesBaseSetup {
     function test_createRole_with_permissions(
         string memory roleName,
         string memory permission
-    )
-        external
-    {
+    ) external {
         vm.assume(bytes(roleName).length > 2);
         vm.assume(bytes(permission).length > 2);
 
@@ -140,9 +139,9 @@ contract RolesTest is RolesBaseSetup {
         roles.createRole("", new string[](0), new IRoles.CreateEntitlement[](0));
     }
 
-    function test_createRole_revert_when_invalid_entitlement_address(string memory roleName)
-        external
-    {
+    function test_createRole_revert_when_invalid_entitlement_address(
+        string memory roleName
+    ) external {
         vm.assume(bytes(roleName).length > 2);
         vm.prank(founder);
         vm.expectRevert(EntitlementsService__InvalidEntitlementAddress.selector);
@@ -152,9 +151,7 @@ contract RolesTest is RolesBaseSetup {
     function test_createRole_revert_when_entitlement_does_not_exist(
         string memory roleName,
         bytes memory data
-    )
-        external
-    {
+    ) external {
         vm.assume(bytes(roleName).length > 2);
         vm.assume(data.length > 2);
 
@@ -170,9 +167,7 @@ contract RolesTest is RolesBaseSetup {
     function test_createRole_revert_when_entitlement_data_empty(
         string memory roleName,
         string memory permission
-    )
-        external
-    {
+    ) external {
         vm.assume(bytes(roleName).length > 2);
         vm.assume(bytes(permission).length > 2);
 
@@ -224,8 +219,11 @@ contract RolesTest is RolesBaseSetup {
         vm.assume(bytes(roleName).length > 2);
 
         vm.prank(founder);
-        uint256 roleId =
-            roles.createRole(roleName, new string[](0), new IRoles.CreateEntitlement[](0));
+        uint256 roleId = roles.createRole(
+            roleName,
+            new string[](0),
+            new IRoles.CreateEntitlement[](0)
+        );
 
         IRoles.Role memory roleData = roles.getRoleById(roleId);
 
@@ -274,8 +272,10 @@ contract RolesTest is RolesBaseSetup {
 
         // create a new set of entitlements to update to
         IRoles.CreateEntitlement[] memory newEntitlements = new IRoles.CreateEntitlement[](1);
-        newEntitlements[0] =
-            CreateEntitlement({module: (newMockEntitlement), data: abi.encode(users)});
+        newEntitlements[0] = CreateEntitlement({
+            module: (newMockEntitlement),
+            data: abi.encode(users)
+        });
 
         // create the roles with the initial permissions and entitlements
         vm.prank(founder);
@@ -299,9 +299,7 @@ contract RolesTest is RolesBaseSetup {
     function test_updateRole_only_permissions(
         string memory roleName,
         string memory newRoleName
-    )
-        external
-    {
+    ) external {
         vm.assume(bytes(roleName).length > 2);
         vm.assume(bytes(newRoleName).length > 2);
 
@@ -344,42 +342,53 @@ contract RolesTest is RolesBaseSetup {
         vm.assume(bytes(roleName).length > 2);
 
         vm.prank(founder);
-        uint256 roleId =
-            roles.createRole(roleName, new string[](0), new IRoles.CreateEntitlement[](0));
+        uint256 roleId = roles.createRole(
+            roleName,
+            new string[](0),
+            new IRoles.CreateEntitlement[](0)
+        );
 
         vm.prank(founder);
         vm.expectRevert(Roles__InvalidPermission.selector);
         roles.updateRole(roleId, roleName, new string[](3), new IRoles.CreateEntitlement[](0));
     }
 
-    function test_updateRole_revert_when_invalid_entitlement_address(string memory roleName)
-        external
-    {
+    function test_updateRole_revert_when_invalid_entitlement_address(
+        string memory roleName
+    ) external {
         vm.assume(bytes(roleName).length > 2);
 
         vm.prank(founder);
-        uint256 roleId =
-            roles.createRole(roleName, new string[](0), new IRoles.CreateEntitlement[](0));
+        uint256 roleId = roles.createRole(
+            roleName,
+            new string[](0),
+            new IRoles.CreateEntitlement[](0)
+        );
 
         vm.prank(founder);
         vm.expectRevert(EntitlementsService__InvalidEntitlementAddress.selector);
         roles.updateRole(roleId, roleName, new string[](0), new IRoles.CreateEntitlement[](1));
     }
 
-    function test_updateRole_revert_when_invalid_entitlement_interface(string memory roleName)
-        external
-    {
+    function test_updateRole_revert_when_invalid_entitlement_interface(
+        string memory roleName
+    ) external {
         vm.assume(bytes(roleName).length > 2);
 
         vm.prank(founder);
 
-        uint256 roleId =
-            roles.createRole(roleName, new string[](0), new IRoles.CreateEntitlement[](0));
+        uint256 roleId = roles.createRole(
+            roleName,
+            new string[](0),
+            new IRoles.CreateEntitlement[](0)
+        );
 
         IRoles.CreateEntitlement[] memory entitlements = new IRoles.CreateEntitlement[](1);
 
-        entitlements[0] =
-            CreateEntitlement({module: IEntitlement(address(this)), data: abi.encodePacked("test")});
+        entitlements[0] = CreateEntitlement({
+            module: IEntitlement(address(this)),
+            data: abi.encodePacked("test")
+        });
 
         vm.prank(founder);
         vm.expectRevert(EntitlementsService__InvalidEntitlementInterface.selector);
@@ -394,8 +403,11 @@ contract RolesTest is RolesBaseSetup {
         vm.assume(bytes(roleName).length > 2);
 
         vm.prank(founder);
-        uint256 roleId =
-            roles.createRole(roleName, new string[](0), new IRoles.CreateEntitlement[](0));
+        uint256 roleId = roles.createRole(
+            roleName,
+            new string[](0),
+            new IRoles.CreateEntitlement[](0)
+        );
 
         vm.prank(founder);
         roles.removeRole(roleId);
@@ -436,13 +448,16 @@ contract RolesTest is RolesBaseSetup {
         vm.assume(bytes(roleName).length > 2);
 
         // assume the channel does not exist
-        (bool success,) = everyoneSpace.staticcall(abi.encodeCall(IChannel.getChannel, channelId));
+        (bool success, ) = everyoneSpace.staticcall(abi.encodeCall(IChannel.getChannel, channelId));
         vm.assume(!success);
 
         // create a roles
         vm.prank(founder);
-        uint256 roleId =
-            roles.createRole(roleName, new string[](0), new IRoles.CreateEntitlement[](0));
+        uint256 roleId = roles.createRole(
+            roleName,
+            new string[](0),
+            new IRoles.CreateEntitlement[](0)
+        );
 
         // create a channel
         uint256[] memory roleIds = new uint256[](1);
@@ -535,9 +550,9 @@ contract RolesTest is RolesBaseSetup {
         assertEq(roleData.permissions[1], Permissions.Read);
     }
 
-    function test_addPermissionsToRole_revert_when_duplicate_permissions(string memory permission)
-        external
-    {
+    function test_addPermissionsToRole_revert_when_duplicate_permissions(
+        string memory permission
+    ) external {
         vm.assume(bytes(permission).length > 2);
 
         string[] memory permissions = new string[](1);
@@ -556,9 +571,7 @@ contract RolesTest is RolesBaseSetup {
     function test_addPermissionsToRole_revert_when_invalid_role(
         string memory permission,
         string memory permission2
-    )
-        external
-    {
+    ) external {
         vm.assume(bytes(permission).length > 2);
         vm.assume(bytes(permission2).length > 2);
 
@@ -596,9 +609,9 @@ contract RolesTest is RolesBaseSetup {
         assertEq(roleData.permissions.length, 0);
     }
 
-    function test_removePermissionsFromRole_revert_when_invalid_permission(string memory permission)
-        external
-    {
+    function test_removePermissionsFromRole_revert_when_invalid_permission(
+        string memory permission
+    ) external {
         vm.assume(bytes(permission).length > 2);
 
         string[] memory permissions = new string[](1);
@@ -616,9 +629,9 @@ contract RolesTest is RolesBaseSetup {
         roles.removePermissionsFromRole(roleId, permissions);
     }
 
-    function test_removePermissionsFromRole_revert_when_invalid_role(string memory permission)
-        external
-    {
+    function test_removePermissionsFromRole_revert_when_invalid_role(
+        string memory permission
+    ) external {
         vm.assume(bytes(permission).length > 2);
 
         string[] memory permissions = new string[](1);
@@ -641,8 +654,11 @@ contract RolesTest is RolesBaseSetup {
 
         // create a roles
         vm.prank(founder);
-        uint256 roleId =
-            roles.createRole(roleName, new string[](0), new IRoles.CreateEntitlement[](0));
+        uint256 roleId = roles.createRole(
+            roleName,
+            new string[](0),
+            new IRoles.CreateEntitlement[](0)
+        );
 
         address[] memory users = new address[](4);
         users[0] = _randomAddress();
@@ -650,8 +666,10 @@ contract RolesTest is RolesBaseSetup {
         users[2] = _randomAddress();
         users[3] = _randomAddress();
 
-        IRoles.CreateEntitlement memory entitlement =
-            CreateEntitlement({module: mockEntitlement, data: abi.encode(users)});
+        IRoles.CreateEntitlement memory entitlement = CreateEntitlement({
+            module: mockEntitlement,
+            data: abi.encode(users)
+        });
 
         // add roles to entitlement
         vm.prank(founder);
@@ -668,8 +686,10 @@ contract RolesTest is RolesBaseSetup {
         vm.prank(founder);
         IEntitlementsManager(everyoneSpace).addEntitlementModule(address(mockEntitlement));
 
-        IRoles.CreateEntitlement memory entitlement =
-            CreateEntitlement({module: mockEntitlement, data: abi.encode("test")});
+        IRoles.CreateEntitlement memory entitlement = CreateEntitlement({
+            module: mockEntitlement,
+            data: abi.encode("test")
+        });
 
         // add roles to entitlement
         vm.prank(founder);
@@ -680,11 +700,16 @@ contract RolesTest is RolesBaseSetup {
     function test_addRoleToEntitlement_revert_when_invalid_entitlement() external {
         // create a roles
         vm.prank(founder);
-        uint256 roleId =
-            roles.createRole("test", new string[](0), new IRoles.CreateEntitlement[](0));
+        uint256 roleId = roles.createRole(
+            "test",
+            new string[](0),
+            new IRoles.CreateEntitlement[](0)
+        );
 
-        IRoles.CreateEntitlement memory entitlement =
-            CreateEntitlement({module: mockEntitlement, data: abi.encode("test")});
+        IRoles.CreateEntitlement memory entitlement = CreateEntitlement({
+            module: mockEntitlement,
+            data: abi.encode("test")
+        });
 
         // add roles to entitlement
         vm.prank(founder);
@@ -694,9 +719,7 @@ contract RolesTest is RolesBaseSetup {
 
     function test_addRoleToEntitlement_revert_when_entitlement_already_exists_in_role(
         string memory roleName
-    )
-        external
-    {
+    ) external {
         vm.assume(bytes(roleName).length > 2);
 
         vm.prank(founder);
@@ -704,14 +727,19 @@ contract RolesTest is RolesBaseSetup {
 
         // create a roles
         vm.prank(founder);
-        uint256 roleId =
-            roles.createRole(roleName, new string[](0), new IRoles.CreateEntitlement[](0));
+        uint256 roleId = roles.createRole(
+            roleName,
+            new string[](0),
+            new IRoles.CreateEntitlement[](0)
+        );
 
         address[] memory users = new address[](1);
         users[0] = _randomAddress();
 
-        IRoles.CreateEntitlement memory entitlement =
-            CreateEntitlement({module: mockEntitlement, data: abi.encode(users)});
+        IRoles.CreateEntitlement memory entitlement = CreateEntitlement({
+            module: mockEntitlement,
+            data: abi.encode(users)
+        });
 
         // add roles to entitlement
         vm.prank(founder);
@@ -735,16 +763,21 @@ contract RolesTest is RolesBaseSetup {
 
         // create a role
         vm.prank(founder);
-        uint256 roleId =
-            roles.createRole(roleName, new string[](0), new IRoles.CreateEntitlement[](0));
+        uint256 roleId = roles.createRole(
+            roleName,
+            new string[](0),
+            new IRoles.CreateEntitlement[](0)
+        );
 
         address[] memory users = new address[](4);
         users[0] = _randomAddress();
         users[1] = _randomAddress();
         users[2] = _randomAddress();
         users[3] = _randomAddress();
-        IRoles.CreateEntitlement memory entitlement =
-            CreateEntitlement({module: mockEntitlement, data: abi.encode(users)});
+        IRoles.CreateEntitlement memory entitlement = CreateEntitlement({
+            module: mockEntitlement,
+            data: abi.encode(users)
+        });
 
         // add roles to entitlement
         vm.prank(founder);
@@ -771,8 +804,10 @@ contract RolesTest is RolesBaseSetup {
         address[] memory users = new address[](1);
         users[0] = _randomAddress();
 
-        IRoles.CreateEntitlement memory entitlement =
-            CreateEntitlement({module: mockEntitlement, data: abi.encode(users)});
+        IRoles.CreateEntitlement memory entitlement = CreateEntitlement({
+            module: mockEntitlement,
+            data: abi.encode(users)
+        });
 
         // remove roles from entitlement
         vm.prank(founder);
@@ -783,13 +818,18 @@ contract RolesTest is RolesBaseSetup {
     function test_removeRoleFromEntitlement_revert_when_invalid_entitlement() external {
         // create a roles
         vm.prank(founder);
-        uint256 roleId =
-            roles.createRole("test", new string[](0), new IRoles.CreateEntitlement[](0));
+        uint256 roleId = roles.createRole(
+            "test",
+            new string[](0),
+            new IRoles.CreateEntitlement[](0)
+        );
 
         address[] memory users = new address[](1);
         users[0] = _randomAddress();
-        IRoles.CreateEntitlement memory entitlement =
-            CreateEntitlement({module: mockEntitlement, data: abi.encode(users)});
+        IRoles.CreateEntitlement memory entitlement = CreateEntitlement({
+            module: mockEntitlement,
+            data: abi.encode(users)
+        });
 
         // remove roles from entitlement
         vm.prank(founder);
@@ -799,9 +839,7 @@ contract RolesTest is RolesBaseSetup {
 
     function test_removeRoleFromEntitlement_revert_when_entitlement_does_not_exist_in_role(
         string memory roleName
-    )
-        external
-    {
+    ) external {
         vm.assume(bytes(roleName).length > 2);
 
         vm.prank(founder);
@@ -809,13 +847,18 @@ contract RolesTest is RolesBaseSetup {
 
         // create a roles
         vm.prank(founder);
-        uint256 roleId =
-            roles.createRole(roleName, new string[](0), new IRoles.CreateEntitlement[](0));
+        uint256 roleId = roles.createRole(
+            roleName,
+            new string[](0),
+            new IRoles.CreateEntitlement[](0)
+        );
 
         address[] memory users = new address[](1);
         users[0] = _randomAddress();
-        IRoles.CreateEntitlement memory entitlement =
-            CreateEntitlement({module: mockEntitlement, data: abi.encode(users)});
+        IRoles.CreateEntitlement memory entitlement = CreateEntitlement({
+            module: mockEntitlement,
+            data: abi.encode(users)
+        });
 
         // remove roles from entitlement
         vm.prank(founder);
@@ -827,11 +870,7 @@ contract RolesTest is RolesBaseSetup {
     // Channel Permissions
     // =============================================================
 
-    function test_updateChannelPermissionOverrides()
-        external
-        givenRoleExists
-        givenRoleIsInChannel
-    {
+    function test_updateChannelPermissionOverrides() external givenRoleExists givenRoleIsInChannel {
         string[] memory permissions = new string[](1);
         permissions[0] = Permissions.Read;
 
@@ -839,8 +878,10 @@ contract RolesTest is RolesBaseSetup {
         roles.setChannelPermissionOverrides(ROLE_ID, CHANNEL_ID, permissions);
 
         // get the channel permissions
-        string[] memory channelPermissions =
-            roles.getChannelPermissionOverrides(ROLE_ID, CHANNEL_ID);
+        string[] memory channelPermissions = roles.getChannelPermissionOverrides(
+            ROLE_ID,
+            CHANNEL_ID
+        );
 
         assertEq(channelPermissions.length, 1);
         assertEq(channelPermissions[0], permissions[0]);
@@ -866,8 +907,10 @@ contract RolesTest is RolesBaseSetup {
         roles.setChannelPermissionOverrides(ROLE_ID, CHANNEL_ID, permissions);
 
         // get the channel permissions
-        string[] memory channelPermissions =
-            roles.getChannelPermissionOverrides(ROLE_ID, CHANNEL_ID);
+        string[] memory channelPermissions = roles.getChannelPermissionOverrides(
+            ROLE_ID,
+            CHANNEL_ID
+        );
 
         assertEq(channelPermissions.length, 1);
         assertEq(channelPermissions[0], permissions[0]);

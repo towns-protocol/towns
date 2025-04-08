@@ -16,10 +16,7 @@ interface ICrossChainEntitlement {
     function isEntitled(
         address[] calldata users,
         bytes calldata parameters
-    )
-        external
-        view
-        returns (bool);
+    ) external view returns (bool);
 
     function parameters() external view returns (Parameter[] memory);
 }

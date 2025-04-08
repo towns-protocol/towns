@@ -4,12 +4,8 @@ pragma solidity ^0.8.23;
 // interfaces
 
 import {ITownsPoints, ITownsPointsBase} from "contracts/src/airdrop/points/ITownsPoints.sol";
-import {
-    IPartnerRegistry,
-    IPartnerRegistryBase
-} from "contracts/src/factory/facets/partner/IPartnerRegistry.sol";
-import {IImplementationRegistry} from
-    "contracts/src/factory/facets/registry/IImplementationRegistry.sol";
+import {IPartnerRegistry, IPartnerRegistryBase} from "contracts/src/factory/facets/partner/IPartnerRegistry.sol";
+import {IImplementationRegistry} from "contracts/src/factory/facets/registry/IImplementationRegistry.sol";
 import {IEntitlement} from "contracts/src/spaces/entitlements/IEntitlement.sol";
 
 import {IRuleEntitlement} from "contracts/src/spaces/entitlements/rule/IRuleEntitlement.sol";
@@ -64,11 +60,7 @@ abstract contract MembershipJoin is
         address sender,
         address receiver,
         bytes memory referralData
-    )
-        internal
-        pure
-        returns (bytes memory)
-    {
+    ) internal pure returns (bytes memory) {
         return abi.encode(selector, sender, receiver, referralData);
     }
 
@@ -82,11 +74,16 @@ abstract contract MembershipJoin is
 
         bytes4 selector = IMembership.joinSpace.selector;
 
-        bytes32 transactionId =
-            _registerTransaction(receiver, _encodeJoinSpaceData(selector, msg.sender, receiver, ""));
+        bytes32 transactionId = _registerTransaction(
+            receiver,
+            _encodeJoinSpaceData(selector, msg.sender, receiver, "")
+        );
 
-        (bool isEntitled, bool isCrosschainPending) =
-            _checkEntitlement(receiver, msg.sender, transactionId);
+        (bool isEntitled, bool isCrosschainPending) = _checkEntitlement(
+            receiver,
+            msg.sender,
+            transactionId
+        );
 
         if (!isCrosschainPending) {
             if (isEntitled) {
@@ -116,11 +113,15 @@ abstract contract MembershipJoin is
         bytes4 selector = IMembership.joinSpaceWithReferral.selector;
 
         bytes32 transactionId = _registerTransaction(
-            receiver, _encodeJoinSpaceData(selector, msg.sender, receiver, referralData)
+            receiver,
+            _encodeJoinSpaceData(selector, msg.sender, receiver, referralData)
         );
 
-        (bool isEntitled, bool isCrosschainPending) =
-            _checkEntitlement(receiver, msg.sender, transactionId);
+        (bool isEntitled, bool isCrosschainPending) = _checkEntitlement(
+            receiver,
+            msg.sender,
+            transactionId
+        );
 
         if (!isCrosschainPending) {
             if (isEntitled) {
@@ -178,11 +179,7 @@ abstract contract MembershipJoin is
         address receiver,
         address sender,
         bytes32 transactionId
-    )
-        internal
-        virtual
-        returns (bool isEntitled, bool isCrosschainPending)
-    {
+    ) internal virtual returns (bool isEntitled, bool isCrosschainPending) {
         IRolesBase.Role[] memory roles = _getRolesWithPermission(Permissions.JoinSpace);
         address[] memory linkedWallets = _getLinkedWalletsWithUser(receiver);
 
@@ -241,8 +238,10 @@ abstract contract MembershipJoin is
         uint256 membershipPrice = _getMembershipPrice(_totalSupply());
         uint256 paymentRequired = _getRequiredAmount(membershipPrice);
 
-        (bytes4 selector, address sender, address receiver,) =
-            abi.decode(_getCapturedData(transactionId), (bytes4, address, address, bytes));
+        (bytes4 selector, address sender, address receiver, ) = abi.decode(
+            _getCapturedData(transactionId),
+            (bytes4, address, address, bytes)
+        );
 
         if (selector != IMembership.joinSpace.selector) {
             CustomRevert.revertWith(Membership__InvalidTransactionType.selector);
@@ -252,7 +251,12 @@ abstract contract MembershipJoin is
         uint256 ownerProceeds = paymentRequired - protocolFee;
 
         _afterChargeForJoinSpace(
-            transactionId, sender, receiver, paymentRequired, ownerProceeds, membershipPrice
+            transactionId,
+            sender,
+            receiver,
+            paymentRequired,
+            ownerProceeds,
+            membershipPrice
         );
     }
 
@@ -262,8 +266,10 @@ abstract contract MembershipJoin is
         uint256 membershipPrice = _getMembershipPrice(_totalSupply());
         uint256 paymentRequired = _getRequiredAmount(membershipPrice);
 
-        (bytes4 selector, address sender, address receiver, bytes memory referralData) =
-            abi.decode(_getCapturedData(transactionId), (bytes4, address, address, bytes));
+        (bytes4 selector, address sender, address receiver, bytes memory referralData) = abi.decode(
+            _getCapturedData(transactionId),
+            (bytes4, address, address, bytes)
+        );
 
         if (selector != IMembership.joinSpaceWithReferral.selector) {
             CustomRevert.revertWith(Membership__InvalidTransactionType.selector);
@@ -278,14 +284,22 @@ abstract contract MembershipJoin is
             uint256 partnerFee = _collectPartnerFee(sender, referral.partner, membershipPrice);
 
             uint256 referralFee = _collectReferralCodeFee(
-                sender, referral.userReferral, referral.referralCode, membershipPrice
+                sender,
+                referral.userReferral,
+                referral.referralCode,
+                membershipPrice
             );
 
             ownerProceeds = paymentRequired - protocolFee - partnerFee - referralFee;
         }
 
         _afterChargeForJoinSpace(
-            transactionId, sender, receiver, paymentRequired, ownerProceeds, membershipPrice
+            transactionId,
+            sender,
+            receiver,
+            paymentRequired,
+            ownerProceeds,
+            membershipPrice
         );
     }
 
@@ -296,9 +310,7 @@ abstract contract MembershipJoin is
         uint256 paymentRequired,
         uint256 ownerProceeds,
         uint256 membershipPrice
-    )
-        internal
-    {
+    ) internal {
         // account for owner's proceeds
         if (ownerProceeds != 0) _transferIn(payer, ownerProceeds);
 
@@ -311,8 +323,10 @@ abstract contract MembershipJoin is
                 bytes32("RiverAirdrop")
             )
         );
-        uint256 points =
-            pointsToken.getPoints(ITownsPointsBase.Action.JoinSpace, abi.encode(membershipPrice));
+        uint256 points = pointsToken.getPoints(
+            ITownsPointsBase.Action.JoinSpace,
+            abi.encode(membershipPrice)
+        );
 
         pointsToken.mint(receiver, points);
         pointsToken.mint(_owner(), points);
@@ -357,7 +371,10 @@ abstract contract MembershipJoin is
         if (userValue > 0) {
             _releaseCapturedValue(transactionId, userValue);
             CurrencyTransfer.transferCurrency(
-                _getMembershipCurrency(), address(this), sender, userValue
+                _getMembershipCurrency(),
+                address(this),
+                sender,
+                userValue
             );
         }
     }
@@ -372,10 +389,7 @@ abstract contract MembershipJoin is
         address userReferral,
         string memory referralCode,
         uint256 membershipPrice
-    )
-        internal
-        returns (uint256 referralFee)
-    {
+    ) internal returns (uint256 referralFee) {
         if (bytes(referralCode).length != 0) {
             Referral memory referral = _referralInfo(referralCode);
 
@@ -386,7 +400,10 @@ abstract contract MembershipJoin is
             referralFee = BasisPoints.calculate(membershipPrice, referral.basisPoints);
 
             CurrencyTransfer.transferCurrency(
-                _getMembershipCurrency(), payer, referral.recipient, referralFee
+                _getMembershipCurrency(),
+                payer,
+                referral.recipient,
+                referralFee
             );
         } else if (userReferral != address(0)) {
             if (userReferral == payer) return 0;
@@ -394,7 +411,10 @@ abstract contract MembershipJoin is
             referralFee = BasisPoints.calculate(membershipPrice, _defaultBpsFee());
 
             CurrencyTransfer.transferCurrency(
-                _getMembershipCurrency(), payer, userReferral, referralFee
+                _getMembershipCurrency(),
+                payer,
+                userReferral,
+                referralFee
             );
         }
     }
@@ -408,10 +428,7 @@ abstract contract MembershipJoin is
         address payer,
         address partner,
         uint256 membershipPrice
-    )
-        internal
-        returns (uint256 partnerFee)
-    {
+    ) internal returns (uint256 partnerFee) {
         if (partner == address(0)) return 0;
 
         Partner memory partnerInfo = IPartnerRegistry(_getSpaceFactory()).partnerInfo(partner);
@@ -421,7 +438,10 @@ abstract contract MembershipJoin is
         partnerFee = BasisPoints.calculate(membershipPrice, partnerInfo.fee);
 
         CurrencyTransfer.transferCurrency(
-            _getMembershipCurrency(), payer, partnerInfo.recipient, partnerFee
+            _getMembershipCurrency(),
+            payer,
+            partnerInfo.recipient,
+            partnerFee
         );
     }
 }

@@ -57,11 +57,16 @@ contract DeployDiamond is DiamondHelper, Deployer {
             ownableHelper.makeInitData(deployer)
         );
 
-        return Diamond.InitParams({
-            baseFacets: baseFacets(),
-            init: multiInit,
-            initData: abi.encodeWithSelector(MultiInit.multiInit.selector, _initAddresses, _initDatas)
-        });
+        return
+            Diamond.InitParams({
+                baseFacets: baseFacets(),
+                init: multiInit,
+                initData: abi.encodeWithSelector(
+                    MultiInit.multiInit.selector,
+                    _initAddresses,
+                    _initDatas
+                )
+            });
     }
 
     function __deploy(address deployer) internal override returns (address) {

@@ -14,8 +14,10 @@ import {MockTowns} from "contracts/test/mocks/MockTowns.sol";
 
 contract MockTownsDeployer {
     constructor(address l1Token, address owner, bytes32 implementationSalt, bytes32 proxySalt) {
-        address implementation =
-            Create2Utils.create2Deploy(implementationSalt, type(MockTowns).creationCode);
+        address implementation = Create2Utils.create2Deploy(
+            implementationSalt,
+            type(MockTowns).creationCode
+        );
 
         // Create proxy initialization bytecode
         bytes memory proxyBytecode = abi.encodePacked(

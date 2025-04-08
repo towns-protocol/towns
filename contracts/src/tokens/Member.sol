@@ -101,10 +101,7 @@ contract Member is ERC721, Ownable {
         string memory symbol_,
         string memory baseURI_,
         bytes32 merkleRoot_
-    )
-        ERC721(name_, symbol_)
-        Ownable(msg.sender)
-    {
+    ) ERC721(name_, symbol_) Ownable(msg.sender) {
         baseURI = baseURI_;
         _merkleRoot = merkleRoot_;
         _mintState = MintState.Allowlist;
@@ -117,11 +114,7 @@ contract Member is ERC721, Ownable {
         address recipient,
         uint256 allowance,
         bytes32[] calldata proof
-    )
-        external
-        payable
-        returns (uint256)
-    {
+    ) external payable returns (uint256) {
         _validateInvalidAddress(recipient);
         _validateMintPrice();
         _validateMaxSupply();
@@ -165,7 +158,8 @@ contract Member is ERC721, Ownable {
         if (ownerOf(tokenId) == address(0)) {
             revert NonExistentTokenURI();
         }
-        return bytes(baseURI).length > 0 ? string(abi.encodePacked(baseURI, "councilmetadata")) : "";
+        return
+            bytes(baseURI).length > 0 ? string(abi.encodePacked(baseURI, "councilmetadata")) : "";
     }
 
     // =============================================================
@@ -190,7 +184,7 @@ contract Member is ERC721, Ownable {
     /// @param payee the address that will receive the withdrawn ether
     function withdrawPayments(address payable payee) external onlyOwner {
         uint256 balance = address(this).balance;
-        (bool transferTx,) = payee.call{value: balance}("");
+        (bool transferTx, ) = payee.call{value: balance}("");
         if (!transferTx) {
             revert WithdrawTransfer();
         }

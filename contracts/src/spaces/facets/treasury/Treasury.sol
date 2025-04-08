@@ -13,8 +13,7 @@ import {CurrencyTransfer} from "contracts/src/utils/libraries/CurrencyTransfer.s
 // contracts
 
 import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
-import {TokenOwnableBase} from
-    "@towns-protocol/diamond/src/facets/ownable/token/TokenOwnableBase.sol";
+import {TokenOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/token/TokenOwnableBase.sol";
 import {MembershipStorage} from "contracts/src/spaces/facets/membership/MembershipStorage.sol";
 import {CustomRevert} from "contracts/src/utils/libraries/CustomRevert.sol";
 import {ReentrancyGuard} from "solady/utils/ReentrancyGuard.sol";
@@ -55,11 +54,7 @@ contract Treasury is TokenOwnableBase, ReentrancyGuard, Facet, ITreasury {
         address,
         uint256,
         bytes memory
-    )
-        external
-        pure
-        returns (bytes4)
-    {
+    ) external pure returns (bytes4) {
         return this.onERC721Received.selector;
     }
 
@@ -70,11 +65,7 @@ contract Treasury is TokenOwnableBase, ReentrancyGuard, Facet, ITreasury {
         uint256,
         uint256,
         bytes memory
-    )
-        external
-        pure
-        returns (bytes4)
-    {
+    ) external pure returns (bytes4) {
         return this.onERC1155Received.selector;
     }
 
@@ -85,11 +76,7 @@ contract Treasury is TokenOwnableBase, ReentrancyGuard, Facet, ITreasury {
         uint256[] memory,
         uint256[] memory,
         bytes memory
-    )
-        external
-        pure
-        returns (bytes4)
-    {
+    ) external pure returns (bytes4) {
         return this.onERC1155BatchReceived.selector;
     }
 }

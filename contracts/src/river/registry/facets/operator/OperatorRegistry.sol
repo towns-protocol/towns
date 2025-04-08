@@ -23,10 +23,9 @@ contract OperatorRegistry is IOperatorRegistry, RegistryModifiers, OwnableBase, 
     /*                       ADMIN FUNCTIONS                      */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    function __OperatorRegistry_init(address[] calldata initialOperators)
-        external
-        onlyInitializing
-    {
+    function __OperatorRegistry_init(
+        address[] calldata initialOperators
+    ) external onlyInitializing {
         for (uint256 i; i < initialOperators.length; ++i) {
             _approveOperator(initialOperators[i]);
         }

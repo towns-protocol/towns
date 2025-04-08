@@ -14,11 +14,7 @@ import "forge-std/console.sol";
 
 // contracts
 
-import {
-    AlphaHelper,
-    DiamondFacetData,
-    FacetData
-} from "contracts/scripts/interactions/helpers/AlphaHelper.sol";
+import {AlphaHelper, DiamondFacetData, FacetData} from "contracts/scripts/interactions/helpers/AlphaHelper.sol";
 
 import {DeployBaseRegistry} from "contracts/scripts/deployments/diamonds/DeployBaseRegistry.s.sol";
 

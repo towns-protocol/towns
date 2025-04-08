@@ -10,10 +10,7 @@ import {IOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/IERC173.s
 import {PartnerRegistrySetup} from "contracts/test/factory/partner/PartnerRegistrySetup.sol";
 
 contract PartnerRegistry_removePartner is PartnerRegistrySetup, IOwnableBase {
-    function test_removePartner(Partner memory partner)
-        external
-        givenPartnerIsRegistered(partner)
-    {
+    function test_removePartner(Partner memory partner) external givenPartnerIsRegistered(partner) {
         vm.prank(deployer);
         vm.expectEmit(address(partnerRegistry));
         emit PartnerRemoved(partner.account);
@@ -29,10 +26,7 @@ contract PartnerRegistry_removePartner is PartnerRegistrySetup, IOwnableBase {
     function test_revertWhen_removePartner_notOwner(
         Partner memory partner,
         address notOwner
-    )
-        external
-        givenPartnerIsRegistered(partner)
-    {
+    ) external givenPartnerIsRegistered(partner) {
         vm.assume(notOwner != deployer);
 
         vm.prank(notOwner);
@@ -40,13 +34,14 @@ contract PartnerRegistry_removePartner is PartnerRegistrySetup, IOwnableBase {
         partnerRegistry.removePartner(partner.account);
     }
 
-    function test_revertWhen_removePartner_partnerNotRegistered(address nonExistentPartner)
-        external
-    {
+    function test_revertWhen_removePartner_partnerNotRegistered(
+        address nonExistentPartner
+    ) external {
         vm.prank(deployer);
         vm.expectRevert(
             abi.encodeWithSelector(
-                PartnerRegistry__PartnerNotRegistered.selector, nonExistentPartner
+                PartnerRegistry__PartnerNotRegistered.selector,
+                nonExistentPartner
             )
         );
         partnerRegistry.removePartner(nonExistentPartner);

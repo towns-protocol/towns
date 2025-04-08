@@ -51,11 +51,7 @@ library StringSet {
     function _indexRef(
         Set storage set,
         string memory value
-    )
-        private
-        pure
-        returns (Uint256Ref storage ref)
-    {
+    ) private pure returns (Uint256Ref storage ref) {
         // https://docs.soliditylang.org/en/latest/internals/layout_in_storage.html#mappings-and-dynamic-arrays
         assembly ("memory-safe") {
             let key_len := add(mload(value), 0x20)

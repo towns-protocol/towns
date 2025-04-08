@@ -7,8 +7,7 @@ pragma solidity ^0.8.23;
 
 //contracts
 import {TieredLogPricing} from "contracts/scripts/deployments/utils/pricing/TieredLogPricing.s.sol";
-import {TieredLogPricingOracleV3} from
-    "contracts/src/spaces/facets/membership/pricing/tiered/TieredLogPricingOracleV3.sol";
+import {TieredLogPricingOracleV3} from "contracts/src/spaces/facets/membership/pricing/tiered/TieredLogPricingOracleV3.sol";
 
 contract DeployTieredLogPricingV3 is TieredLogPricing {
     function versionName() public pure override returns (string memory) {

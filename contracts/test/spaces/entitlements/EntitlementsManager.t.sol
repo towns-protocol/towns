@@ -6,10 +6,8 @@ import {IOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/IERC173.s
 
 import {IEntitlement} from "contracts/src/spaces/entitlements/IEntitlement.sol";
 import {IChannel} from "contracts/src/spaces/facets/channels/IChannel.sol";
-import {IEntitlementsManager} from
-    "contracts/src/spaces/facets/entitlements/IEntitlementsManager.sol";
-import {IEntitlementsManagerBase} from
-    "contracts/src/spaces/facets/entitlements/IEntitlementsManager.sol";
+import {IEntitlementsManager} from "contracts/src/spaces/facets/entitlements/IEntitlementsManager.sol";
+import {IEntitlementsManagerBase} from "contracts/src/spaces/facets/entitlements/IEntitlementsManager.sol";
 import {IMembershipBase} from "contracts/src/spaces/facets/membership/IMembership.sol";
 import {IRoles, IRolesBase} from "contracts/src/spaces/facets/roles/IRoles.sol";
 
@@ -25,13 +23,7 @@ import {MockUserEntitlement} from "contracts/test/mocks/MockUserEntitlement.sol"
 // errors
 
 // solhint-disable-next-line max-line-length
-import {
-    EntitlementsService__EntitlementAlreadyExists,
-    EntitlementsService__EntitlementDoesNotExist,
-    EntitlementsService__ImmutableEntitlement,
-    EntitlementsService__InvalidEntitlementAddress,
-    EntitlementsService__InvalidEntitlementInterface
-} from "contracts/src/spaces/facets/entitlements/EntitlementsManagerService.sol";
+import {EntitlementsService__EntitlementAlreadyExists, EntitlementsService__EntitlementDoesNotExist, EntitlementsService__ImmutableEntitlement, EntitlementsService__InvalidEntitlementAddress, EntitlementsService__InvalidEntitlementInterface} from "contracts/src/spaces/facets/entitlements/EntitlementsManagerService.sol";
 
 import {BaseSetup} from "contracts/test/spaces/BaseSetup.sol";
 

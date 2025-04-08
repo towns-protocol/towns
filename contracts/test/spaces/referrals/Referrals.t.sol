@@ -33,7 +33,9 @@ abstract contract ReferralsFacetTest is MembershipBaseSetup, IReferralsBase {
         vm.prank(founder);
         vm.expectEmit(address(userSpace));
         emit ReferralRegistered(
-            keccak256(bytes(referral.referralCode)), referral.basisPoints, referral.recipient
+            keccak256(bytes(referral.referralCode)),
+            referral.basisPoints,
+            referral.recipient
         );
         referralsFacet.registerReferral(referral);
         _;

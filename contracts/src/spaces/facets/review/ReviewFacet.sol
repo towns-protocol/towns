@@ -40,8 +40,11 @@ contract ReviewFacet is IReview, Entitled, Facet {
                 CustomRevert.revertWith(ReviewFacet__ReviewAlreadyExists.selector);
             }
 
-            (review.comment, review.rating, review.createdAt) =
-                (newReview.comment, newReview.rating, uint40(block.timestamp));
+            (review.comment, review.rating, review.createdAt) = (
+                newReview.comment,
+                newReview.rating,
+                uint40(block.timestamp)
+            );
             rs.usersReviewed.add(msg.sender);
 
             emit ReviewAdded(msg.sender, newReview.comment, newReview.rating);
@@ -55,8 +58,11 @@ contract ReviewFacet is IReview, Entitled, Facet {
                 CustomRevert.revertWith(ReviewFacet__ReviewDoesNotExist.selector);
             }
 
-            (review.comment, review.rating, review.updatedAt) =
-                (newReview.comment, newReview.rating, uint40(block.timestamp));
+            (review.comment, review.rating, review.updatedAt) = (
+                newReview.comment,
+                newReview.rating,
+                uint40(block.timestamp)
+            );
 
             emit ReviewUpdated(msg.sender, newReview.comment, newReview.rating);
         } else if (action == Action.Delete) {

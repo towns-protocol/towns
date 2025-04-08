@@ -5,10 +5,8 @@ pragma solidity ^0.8.23;
 import {BaseSetup} from "contracts/test/spaces/BaseSetup.sol";
 
 //interfaces
-import {IEntitlementCheckerBase} from
-    "contracts/src/base/registry/facets/checker/IEntitlementChecker.sol";
-import {NodeOperatorStatus} from
-    "contracts/src/base/registry/facets/operator/NodeOperatorStorage.sol";
+import {IEntitlementCheckerBase} from "contracts/src/base/registry/facets/checker/IEntitlementChecker.sol";
+import {NodeOperatorStatus} from "contracts/src/base/registry/facets/operator/NodeOperatorStorage.sol";
 
 //libraries
 
@@ -108,11 +106,7 @@ contract EntitlementCheckerTest is BaseSetup, IEntitlementCheckerBase {
     function test_unregisterNode_revert_nodeNotRegistered(
         address operator,
         address node
-    )
-        external
-        givenOperatorIsRegistered(operator)
-        givenOperatorIsApproved(operator)
-    {
+    ) external givenOperatorIsRegistered(operator) givenOperatorIsApproved(operator) {
         vm.prank(operator);
         vm.expectRevert(EntitlementChecker_InvalidNodeOperator.selector);
         entitlementChecker.unregisterNode(node);

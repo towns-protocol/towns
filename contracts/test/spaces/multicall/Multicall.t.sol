@@ -7,8 +7,7 @@ pragma solidity ^0.8.23;
 import {IChannel, IChannelBase} from "contracts/src/spaces/facets/channels/IChannel.sol";
 
 //libraries
-import {ChannelService__ChannelDoesNotExist} from
-    "contracts/src/spaces/facets/channels/ChannelService.sol";
+import {ChannelService__ChannelDoesNotExist} from "contracts/src/spaces/facets/channels/ChannelService.sol";
 
 //contracts
 
@@ -21,8 +20,10 @@ contract MulticallTest is BaseSetup {
         string memory channelMetadata = "Metadata";
 
         bytes[] memory data = new bytes[](3);
-        data[0] =
-            abi.encodeCall(IChannel.createChannel, (channelId, channelMetadata, new uint256[](0)));
+        data[0] = abi.encodeCall(
+            IChannel.createChannel,
+            (channelId, channelMetadata, new uint256[](0))
+        );
         data[1] = abi.encodeCall(IChannel.getChannel, (channelId));
         data[2] = abi.encodeCall(IChannel.removeChannel, (channelId));
 

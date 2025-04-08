@@ -13,10 +13,8 @@ import {ISpaceProxyInitializer} from "contracts/src/spaces/facets/proxy/ISpacePr
 // contracts
 
 import {Initializable} from "@towns-protocol/diamond/src/facets/initializable/Initializable.sol";
-import {IntrospectionBase} from
-    "@towns-protocol/diamond/src/facets/introspection/IntrospectionBase.sol";
-import {TokenOwnableBase} from
-    "@towns-protocol/diamond/src/facets/ownable/token/TokenOwnableBase.sol";
+import {IntrospectionBase} from "@towns-protocol/diamond/src/facets/introspection/IntrospectionBase.sol";
+import {TokenOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/token/TokenOwnableBase.sol";
 import {ERC721ABase} from "contracts/src/diamond/facets/token/ERC721A/ERC721ABase.sol";
 import {EntitlementGatedBase} from "contracts/src/spaces/facets/gated/EntitlementGatedBase.sol";
 import {MembershipBase} from "contracts/src/spaces/facets/membership/MembershipBase.sol";
@@ -35,10 +33,7 @@ contract SpaceProxyInitializer is
         address manager,
         TokenOwnable memory tokenOwnable,
         Membership memory membership
-    )
-        external
-        initializer
-    {
+    ) external initializer {
         __IntrospectionBase_init();
         __TokenOwnableBase_init(tokenOwnable);
         __ERC721ABase_init(membership.name, membership.symbol);
