@@ -2,12 +2,12 @@
 pragma solidity ^0.8.24;
 
 // interfaces
-import {IRiverConfig} from "contracts/src/river/registry/facets/config/IRiverConfig.sol";
+import {IRiverConfig} from "src/river/registry/facets/config/IRiverConfig.sol";
 
 // libraries
 
 // contracts
-import {Interaction} from "contracts/scripts/common/Interaction.s.sol";
+import {Interaction} from "scripts/common/Interaction.s.sol";
 
 contract InteractRiverRegistrySetFreq is Interaction {
     function __interact(address deployer) internal override {
