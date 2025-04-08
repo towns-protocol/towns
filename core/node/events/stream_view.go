@@ -38,16 +38,17 @@ func MakeStreamView(streamData *storage.ReadStreamFromLastSnapshotResult) (*Stre
 	snapshotIndex := -1
 	for i, mb := range streamData.Miniblocks {
 		miniblock, err := NewMiniblockInfoFromDescriptor(&storage.MiniblockDescriptor{
-			Number: lastMiniblockNumber + 1,
-			Data:   mb.Data,
-			Hash:   mb.Hash,
+			Number:   lastMiniblockNumber + 1,
+			Data:     mb.Data,
+			Hash:     mb.Hash,
+			Snapshot: mb.Snapshot,
 		})
 		if err != nil {
 			return nil, err
 		}
 		miniblocks[i] = miniblock
 		lastMiniblockNumber = miniblock.Header().MiniblockNum
-		if snapshotIndex == -1 && miniblock.Header().Snapshot != nil {
+		if snapshotIndex == -1 && (miniblock.GetSnapshot() != nil) {
 			snapshotIndex = i
 		}
 	}
@@ -60,6 +61,7 @@ func MakeStreamView(streamData *storage.ReadStreamFromLastSnapshotResult) (*Stre
 	if snapshot == nil {
 		return nil, RiverError(Err_STREAM_BAD_EVENT, "no snapshot").Func("MakeStreamView")
 	}
+
 	streamId, err := StreamIdFromBytes(snapshot.GetInceptionPayload().GetStreamId())
 	if err != nil {
 		return nil, RiverError(Err_STREAM_BAD_EVENT, "bad streamId").Func("MakeStreamView")
@@ -124,7 +126,7 @@ func MakeRemoteStreamView(stream *StreamAndCookie) (*StreamView, error) {
 		}
 		lastMiniblockNumber = miniblock.Header().MiniblockNum
 		miniblocks[i] = miniblock
-		if miniblock.Header().Snapshot != nil {
+		if miniblock.GetSnapshot() != nil {
 			snapshotIndex = i
 		}
 	}
@@ -133,6 +135,7 @@ func MakeRemoteStreamView(stream *StreamAndCookie) (*StreamView, error) {
 	if snapshot == nil {
 		return nil, RiverError(Err_STREAM_BAD_EVENT, "no snapshot").Func("MakeStreamView")
 	}
+
 	streamId, err := StreamIdFromBytes(snapshot.GetInceptionPayload().GetStreamId())
 	if err != nil {
 		return nil, RiverError(Err_STREAM_BAD_EVENT, "bad streamId").Func("MakeStreamView")
@@ -406,7 +409,7 @@ func (r *StreamView) makeMiniblockCandidate(
 		},
 	}
 
-	return NewMiniblockInfoFromHeaderAndParsed(params.Wallet, header, events)
+	return NewMiniblockInfoFromHeaderAndParsed(params.Wallet, header, events, nil)
 }
 
 // copyAndApplyBlock copies the current view and applies the given miniblock to it.
@@ -477,8 +480,14 @@ func (r *StreamView) copyAndApplyBlock(
 	var startIndex int
 	var snapshotIndex int
 	var snapshot *Snapshot
-	if header.Snapshot != nil {
-		snapshot = header.Snapshot
+	if header.IsSnapshot() {
+		if miniblock.snapshot != nil {
+			// Using new snapshot format
+			snapshot = miniblock.snapshot.Snapshot
+		} else {
+			// Using old snapshot format
+			snapshot = header.Snapshot
+		}
 		startIndex = max(0, len(r.blocks)-recencyConstraintsGenerations)
 		snapshotIndex = len(r.blocks) - startIndex
 	} else {
@@ -641,7 +650,7 @@ func (r *StreamView) shouldSnapshot(cfg *crypto.OnChainSettings) bool {
 	// count the events in blocks since the last snapshot
 	for i := len(r.blocks) - 1; i >= 0; i-- {
 		block := r.blocks[i]
-		if block.Header().Snapshot != nil {
+		if block.Header().IsSnapshot() {
 			break
 		}
 		count += len(block.Events())
@@ -804,7 +813,7 @@ func (r *StreamView) GetStats() StreamViewStats {
 
 	for _, block := range r.blocks {
 		stats.EventsInMiniblocks += len(block.Events()) + 1 // +1 for header
-		if block.Header().Snapshot != nil {
+		if block.Header().IsSnapshot() {
 			stats.SnapshotsInMiniblocks++
 		}
 	}
