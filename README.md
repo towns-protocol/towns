@@ -59,74 +59,56 @@ cp clients/web/app/.env.local-sample clients/web/app/.env.local
 
 Then update `clients/web/app/.env.local` with the required (blank) keys.
 
-3. For local Cloudflare workers to run properly, you'll need to add their secret env variables. At `servers/workers/` you'll see: `gateway-worker`, `token-worker`, `unfurl-worker`, and `stackup-worker`. For each, `cp .dev.vars-sample .dev.vars` and add the required config. You can do all this with the following command:
+3. Grab the NOTION_API_KEY from [here](https://www.notion.so/herenottherelabs/harmony-env-vars-1cb3562b1f4e801c9c2fe4917c182037) and add it to scripts/run-harmony/.env
 
-```
-    for dir in gateway-worker token-worker unfurl-worker stackup-worker; do
-  (cd servers/workers/$dir && cp .dev.vars-sample .dev.vars && echo "Copied .dev.vars for $dir")
-done
-```
-
-4. Create an `.env` file in `servers/4337` with the required values.
-
-> !! YOU CAN FIND A SAMPLE OF ALL THE REQUIRED VALUES FOR THESE STEPS IN [THIS NOTION DOC](https://www.notion.so/herenottherelabs/env-files-for-local-dev-046b81ff5bb947d69b9c3cf107c3597d) !!
-
-5. Create a Certificate Authority. Run `./river/core/scripts/register-ca.sh` from the root of the repository. This will create the required `$HOME/river-ca-cert.pem` and `$HOME/river-ca-key.pem` files.
+4. Create a Certificate Authority. Run `./river/core/scripts/register-ca.sh` from the root of the repository. This will create the required `$HOME/river-ca-cert.pem` and `$HOME/river-ca-key.pem` files.
 
 ## Running everything locally
 
-Open VScode in the root of this directory: `code .`
+There are a couple ways to run the app locally: with VSCode/Cursor, or using a custom script that uses tmux.
 
-There are a few ways to run the local dev environment:
+### App development against remote envs
 
-### App development against gamma (uses Account Abstraction)
+> ℹ️ **What's the difference between using VSCode tasks and the tmux script?**
+>
+> When running the app with VSCode tasks, the app will point to remote CF servers. When running the app with the tmux script, it will spin up local CF workers that the app will point to.
 
-- Use the keystroke: `Ctrl+Shift+P` to bring up the command pallets and type `tasks`, select `Tasks: Run Task` and then select `Start local Apps and workers`. This will start the required services for the app and workers to run locally, against River's gamma environment (base-sepolia, deployed river nodes, etc).
-- You MUST make sure the env switcher in the bottom right of the app UI is set to `gamma`.
+- For VSCode: Use the keystroke: `Ctrl+Shift+P` to bring up the command pallets and type `tasks`, select `Tasks: Run Task` and then select `Start Local Dev - <alpha|gamma|omega>`. This will start the required services for the app to run locally against a remote env.
 
-### App development against local blockchains/servers with Account Abstraction
+- For tmux: Run `./scripts/run-harmony/run <alpha|gamma|omega>` from the root of the repository. This will start the required services for the app to run locally against a remote env, and attach you to a tmux session.
 
-- This mirrors the production setup, locally. (This will be ported to start_dev/tmux when I have time)
+- Once these steps are complete, visit `localhost:3000` in your browser to access the app.
+
+### App development against local blockchains/servers
 
 To run using tmux:
 
-You can start the entire local dev setup with the script: `./scripts/start_dev.sh`, and kill all local processes with: `./scripts/kill_dev.sh`. I suggest you make aliases for these scripts.
+- For VSCode: Use the keystroke: `Ctrl+Shift+P` to bring up the command pallets and type `tasks`, select `Tasks: Run Task` and then select `~4337: Start Local Dev~`.
+
+- For tmux: Run `./scripts/run-harmony/run localhost` from the root of the repository. This will start the required services for the app to run locally against a remote env, and attach you to a tmux session.
+
+- Once these steps are complete, visit `localhost:3000` in your browser to access the app.
+
+### Tmux Tips
+
+Recommended aliases in your `.zshrc` or shell of choice:
+
+```
+alias run_harmony="cd <root of harmony repo> && sh scripts/run-harmony/run.sh"
+alias kill_harmony="cd <root of harmony repo> && sh scripts/kill_dev.sh Harmony"
+```
+
+Then you can run development on any env with `run_harmony <localhost|alpha|gamma|omega>`
 
 When the startup script completes, you will be attached to a tmux session. You can view the windows from within the session by pressing `Ctrl+b` then `"w"`. Then you can switch to whatever process you want and hit `Enter` to attach to it. From here you can monitor or restart the process. i.e. if I made changes to the unfurl worker, I might attach and restart it. It's also an option to kill a process by pressing `Ctrl+c`, then in a separate terminal you can run the process again, if that's your desired workflow.
 
-The kill_dev script will kill all processes and terminate the tmux session.
+Kill your session with `kill_harmony`
 
-If accidentally exit the tmux session, you can reattach with: `tmux attach -t River`
+If accidentally exit the tmux session, you can reattach with: `tmux attach -t Harmony`
 
 You can see basic tmux commands [here](https://gist.github.com/simplysh/dd61e464e521efd1e17a8515f19d11d2).
 
-To run with VSCode:
-
-1. Use the keystroke: `Ctrl+Shift+P` to bring up the command pallets and type `tasks`, select `~4337: Start Local Dev~`. It will take several minutes to start up.
-2. Wait for all the tasks to spin up. Then you can either run the task: `"4337: Run Casablanca-Multinode`, or (recommended), in a separate terminal run: `cd ./river/core && just BASE_EXECUTION_CLIENT=geth_dev RUN_ENV=multi config-and-start`.
-
-- Once these steps are complete, visit `localhost:3000` in your browser to access the app.
-- You MUST make sure the env switcher in the bottom right of the app UI is set to `local` to run against the local environment.
-- If you are working on user operations, base chain transactions, SpaceDapp, you should run the app this way!!
-
-If you make changes to river go code, or contracts, re-run the just command from step 2 (or kill and restart the task) to pick up the new changes (contracts will be redeployed, etc).
-
-### App development against local blockchains/servers without Account Abstraction
-
-- This is the same as above, without account abstraction. Use the keystroke: `Ctrl+Shift+P` to bring up the command pallets and type `tasks`, select `~Start Local Dev~`.
-- You can use the env switcher in the bottom right of the app UI to switch between `local` and `gamma`.
-
-- This is not recommended for most development, because things can become confusing when you have to reconcile the account abstraction flow vs the non-account abstraction flow, you might write working code that follows a path that is not called in AA flow, etc.However, if you are working on something that is more related to River protocol (messsaging, streams, etc) and not user operations or base chain txs, you can use this setup.
-
-This is also an ok step to debug a base chain transaction - like maybe you want to see that the tx actually works w/out the AA layer - but you should always test the final version of your code in the AA flow.
-
-![Screen Shot 2022-09-02 at 2 58 02 PM](https://user-images.githubusercontent.com/950745/188241222-c71d65dc-cda4-41db-8272-f5bdb18e26bf.png)
-
-![Screen Shot 2022-09-02 at 3 05 12 PM](https://user-images.githubusercontent.com/950745/188241166-cf387398-6b43-4366-bead-b8c50fd1b0c2.png)
-
-If you want to restart everything, `CMD+P` + `task KillAllLocalDev` will search for and terminate our processes. Please note this script both needs to be kept up to date if something is added, and also has very broad search paramaters. If you want to try it out first, running `./scripts/kill-all-local-dev.sh` from the terminal will prompt you before it kills anything.
-
-If you want to restart just the server, `CMD+P` + `task RestartCasablanca` will relaunch the servers. Same for `CMD+P` + `task RestartWatches`
+If you make changes to river go code, or contracts, re-run `just RUN_ENV=multi config-and-start` to pick up the new changes (contracts will be redeployed, etc).
 
 ## Tests
 

@@ -1,0 +1,4 @@
+VITE_UNFURL_SERVER_URL=http://localhost:8007
+VITE_TOKEN_SERVER_URL=http://localhost:8006
+VITE_GATEWAY_URL=http://localhost:8004
+VITE_AA_PAYMASTER_PROXY_URL=http://localhost:8686

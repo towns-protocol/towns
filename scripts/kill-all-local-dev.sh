@@ -131,3 +131,10 @@ fi
 ./scripts/stop-local-notification-db.sh
 
 ./scripts/stop-4337.sh
+
+# kill tmux server
+if prompt 'Kill tmux server and all sessions?:y/n '
+then
+    tmux kill-server
+    echo "Tmux server killed."
+fi
