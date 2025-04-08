@@ -481,10 +481,12 @@ func (r *StreamView) copyAndApplyBlock(
 	var snapshotIndex int
 	var snapshot *Snapshot
 	if header.IsSnapshot() {
-		if header.Snapshot != nil {
-			snapshot = header.Snapshot
-		} else {
+		if miniblock.snapshot != nil {
+			// Using new snapshot format
 			snapshot = miniblock.snapshot.Snapshot
+		} else {
+			// Using old snapshot format
+			snapshot = header.Snapshot
 		}
 		startIndex = max(0, len(r.blocks)-recencyConstraintsGenerations)
 		snapshotIndex = len(r.blocks) - startIndex
