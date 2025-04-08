@@ -41,6 +41,7 @@ type TestAppServer struct {
 	hs256SecretKey   []byte
 	encryptionDevice app_client.EncryptionDevice
 	client           protocolconnect.StreamServiceClient
+	frameworkVersion int32
 }
 
 // validateSignature verifies that the incoming request has a HS256-encoded jwt auth token stored
@@ -117,6 +118,10 @@ func (b *TestAppServer) SetHS256SecretKey(secretKey []byte) {
 
 func (b *TestAppServer) SetEncryptionDevice(encryptionDevice app_client.EncryptionDevice) {
 	b.encryptionDevice = encryptionDevice
+}
+
+func (b *TestAppServer) SetFrameworkVersion(version int32) {
+	b.frameworkVersion = version
 }
 
 func (b *TestAppServer) Close() {
@@ -427,6 +432,15 @@ func (b *TestAppServer) rootHandler(w http.ResponseWriter, r *http.Request) {
 						return
 					}
 				}
+			}
+
+		case *protocol.AppServiceRequest_Status:
+			response.Payload = &protocol.AppServiceResponse_Status{
+				Status: &protocol.AppServiceResponse_StatusResponse{
+					FrameworkVersion: b.frameworkVersion,
+					DeviceKey:        b.encryptionDevice.DeviceKey,
+					FallbackKey:      b.encryptionDevice.FallbackKey,
+				},
 			}
 
 		default:

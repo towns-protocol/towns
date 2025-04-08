@@ -415,12 +415,19 @@ func update_Snapshot_User(iSnapshot *Snapshot, userPayload *UserPayload) error {
 			if snapshot.UserContent.TipsSent == nil {
 				snapshot.UserContent.TipsSent = make(map[string]uint64)
 			}
+			if snapshot.UserContent.TipsSentCount == nil {
+				snapshot.UserContent.TipsSentCount = make(map[string]uint64)
+			}
 			currencyAddress := common.BytesToAddress(transactionContent.Tip.GetEvent().GetCurrency())
 			currency := currencyAddress.Hex()
 			if _, ok := snapshot.UserContent.TipsSent[currency]; !ok {
 				snapshot.UserContent.TipsSent[currency] = 0
 			}
 			snapshot.UserContent.TipsSent[currency] += transactionContent.Tip.GetEvent().GetAmount()
+			if _, ok := snapshot.UserContent.TipsSentCount[currency]; !ok {
+				snapshot.UserContent.TipsSentCount[currency] = 0
+			}
+			snapshot.UserContent.TipsSentCount[currency]++
 			return nil
 		case *BlockchainTransaction_TokenTransfer_:
 			return nil
@@ -438,12 +445,19 @@ func update_Snapshot_User(iSnapshot *Snapshot, userPayload *UserPayload) error {
 			if snapshot.UserContent.TipsReceived == nil {
 				snapshot.UserContent.TipsReceived = make(map[string]uint64)
 			}
+			if snapshot.UserContent.TipsReceivedCount == nil {
+				snapshot.UserContent.TipsReceivedCount = make(map[string]uint64)
+			}
 			currencyAddress := common.BytesToAddress(transactionContent.Tip.GetEvent().GetCurrency())
 			currency := currencyAddress.Hex()
 			if _, ok := snapshot.UserContent.TipsReceived[currency]; !ok {
 				snapshot.UserContent.TipsReceived[currency] = 0
 			}
 			snapshot.UserContent.TipsReceived[currency] += transactionContent.Tip.GetEvent().GetAmount()
+			if _, ok := snapshot.UserContent.TipsReceivedCount[currency]; !ok {
+				snapshot.UserContent.TipsReceivedCount[currency] = 0
+			}
+			snapshot.UserContent.TipsReceivedCount[currency]++
 			return nil
 		case *BlockchainTransaction_TokenTransfer_:
 			return nil
@@ -689,12 +703,59 @@ func update_Snapshot_Member(
 			if snapshot.Tips == nil {
 				snapshot.Tips = make(map[string]uint64)
 			}
+			if snapshot.TipsCount == nil {
+				snapshot.TipsCount = make(map[string]uint64)
+			}
 			currencyAddress := common.BytesToAddress(transactionContent.Tip.GetEvent().GetCurrency())
 			currency := currencyAddress.Hex()
 			if _, ok := snapshot.Tips[currency]; !ok {
 				snapshot.Tips[currency] = 0
 			}
-			snapshot.Tips[currency] += transactionContent.Tip.GetEvent().GetAmount()
+			if _, ok := snapshot.TipsCount[currency]; !ok {
+				snapshot.TipsCount[currency] = 0
+			}
+			ammount := transactionContent.Tip.GetEvent().GetAmount()
+			snapshot.Tips[currency] += ammount
+			snapshot.TipsCount[currency]++
+
+			sender, err := findMember(snapshot.Joined, content.MemberBlockchainTransaction.FromUserAddress)
+			if err != nil {
+				return err
+			}
+			if sender.TipsSent == nil {
+				sender.TipsSent = make(map[string]uint64)
+			}
+			if sender.TipsSentCount == nil {
+				sender.TipsSentCount = make(map[string]uint64)
+			}
+			if _, ok := sender.TipsSent[currency]; !ok {
+				sender.TipsSent[currency] = 0
+			}
+			if _, ok := sender.TipsSentCount[currency]; !ok {
+				sender.TipsSentCount[currency] = 0
+			}
+			sender.TipsSent[currency] += ammount
+			sender.TipsSentCount[currency]++
+
+			receiver, err := findMember(snapshot.Joined, transactionContent.Tip.ToUserAddress)
+			if err != nil {
+				return err
+			}
+			if receiver.TipsReceived == nil {
+				receiver.TipsReceived = make(map[string]uint64)
+			}
+			if receiver.TipsReceivedCount == nil {
+				receiver.TipsReceivedCount = make(map[string]uint64)
+			}
+			if _, ok := receiver.TipsReceived[currency]; !ok {
+				receiver.TipsReceived[currency] = 0
+			}
+			if _, ok := receiver.TipsReceivedCount[currency]; !ok {
+				receiver.TipsReceivedCount[currency] = 0
+			}
+			receiver.TipsReceived[currency] += ammount
+			receiver.TipsReceivedCount[currency]++
+
 			return nil
 		case *BlockchainTransaction_TokenTransfer_:
 			return nil

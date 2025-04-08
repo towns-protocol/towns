@@ -27,28 +27,7 @@ const Space = ({ spaceId }: { spaceId: string }) => {
 function useSpace(
   spaceId: string,
   config?: ObservableConfig.FromObservable<Space>,
-): {
-    data: SpaceModel;
-    error: Error | undefined;
-    status: "error" | "loading" | "loaded";
-    isLoading: boolean;
-    isError: boolean;
-    isLoaded: boolean;
-} | {
-    data: SpaceModel;
-    error: Error | undefined;
-    status: "error" | "loading" | "loaded";
-    isLoading: boolean;
-    isError: boolean;
-    isLoaded: boolean;
-} | {
-    data: SpaceModel;
-    error: Error | undefined;
-    status: "error" | "loading" | "loaded";
-    isLoading: boolean;
-    isError: boolean;
-    isLoaded: boolean;
-}
+): ObservableValue<SpaceModel>
 ```
 
 **Source:** [useSpace](https://github.com/towns-protocol/towns/blob/main/packages/react-sdk/src/useSpace.ts)
@@ -73,26 +52,5 @@ Configuration options for the observable.
 The SpaceModel data.
 
 ```ts
-{
-    data: SpaceModel;
-    error: Error | undefined;
-    status: "error" | "loading" | "loaded";
-    isLoading: boolean;
-    isError: boolean;
-    isLoaded: boolean;
-} | {
-    data: SpaceModel;
-    error: Error | undefined;
-    status: "error" | "loading" | "loaded";
-    isLoading: boolean;
-    isError: boolean;
-    isLoaded: boolean;
-} | {
-    data: SpaceModel;
-    error: Error | undefined;
-    status: "error" | "loading" | "loaded";
-    isLoading: boolean;
-    isError: boolean;
-    isLoaded: boolean;
-}
+ObservableValue<SpaceModel>
 ```

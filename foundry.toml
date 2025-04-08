@@ -25,6 +25,7 @@ ffi = true
 fs_permissions = [
   { access = "read-write", path = "./contracts/deployments" },
   { access = "read-write", path = "./contracts/in" },
+  { access = "read", path = "./contracts/out" },
   { access = "read", path = "./scripts/bytecode-diff/source-diffs" },
 ] # Configures permissions for cheatcodes that touch the filesystem
 gas_reports = ["*"] # The contracts to print gas reports for.
@@ -40,13 +41,13 @@ river_devnet = "${RIVER_DEVNET_RPC_URL}"
 sepolia = "${SEPOLIA_RPC_URL}"
 
 [fmt]
-line_length = 80
-tab_width = 2
-bracket_spacing = true
+bracket_spacing = false
 int_types = "long"
+line_length = 100
 multiline_func_header = "all"
 number_underscore = "thousands"
 quote_style = "double"
-wrap_comments = false
+wrap_comments = true
+sort_imports = true
 
 # See more config options https://github.com/foundry-rs/foundry/tree/master/config

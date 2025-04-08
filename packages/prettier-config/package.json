@@ -1,8 +1,11 @@
 {
     "name": "@towns-protocol/prettier-config",
-    "version": "0.0.189",
+    "version": "0.0.195",
     "license": "MIT",
     "main": "config.js",
+    "publishConfig": {
+        "access": "public"
+    },
     "peerDependencies": {
         "prettier": "^2.8.8"
     }

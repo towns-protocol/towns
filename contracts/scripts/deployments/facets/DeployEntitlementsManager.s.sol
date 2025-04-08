@@ -11,24 +11,24 @@ import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
 import {EntitlementsManager} from "contracts/src/spaces/facets/entitlements/EntitlementsManager.sol";
 
 contract DeployEntitlementsManager is FacetHelper, Deployer {
-  constructor() {
-    addSelector(EntitlementsManager.addImmutableEntitlements.selector);
-    addSelector(EntitlementsManager.addEntitlementModule.selector);
-    addSelector(EntitlementsManager.removeEntitlementModule.selector);
-    addSelector(EntitlementsManager.getEntitlements.selector);
-    addSelector(EntitlementsManager.getEntitlement.selector);
-    addSelector(EntitlementsManager.isEntitledToSpace.selector);
-    addSelector(EntitlementsManager.isEntitledToChannel.selector);
-  }
+    constructor() {
+        addSelector(EntitlementsManager.addImmutableEntitlements.selector);
+        addSelector(EntitlementsManager.addEntitlementModule.selector);
+        addSelector(EntitlementsManager.removeEntitlementModule.selector);
+        addSelector(EntitlementsManager.getEntitlements.selector);
+        addSelector(EntitlementsManager.getEntitlement.selector);
+        addSelector(EntitlementsManager.isEntitledToSpace.selector);
+        addSelector(EntitlementsManager.isEntitledToChannel.selector);
+    }
 
-  function versionName() public pure override returns (string memory) {
-    return "facets/entitlementsManagerFacet";
-  }
+    function versionName() public pure override returns (string memory) {
+        return "facets/entitlementsManagerFacet";
+    }
 
-  function __deploy(address deployer) public override returns (address) {
-    vm.startBroadcast(deployer);
-    EntitlementsManager facet = new EntitlementsManager();
-    vm.stopBroadcast();
-    return address(facet);
-  }
+    function __deploy(address deployer) internal override returns (address) {
+        vm.startBroadcast(deployer);
+        EntitlementsManager facet = new EntitlementsManager();
+        vm.stopBroadcast();
+        return address(facet);
+    }
 }

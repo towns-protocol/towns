@@ -257,7 +257,7 @@ class MicroTask {
     ) {}
 
     public get isCompleted(): boolean {
-        return this.isCompleted
+        return this._isCompleted
     }
 
     public tick(state: DecryptionStatus): void {
@@ -266,7 +266,7 @@ class MicroTask {
         }
         if (this.isStarted && state === this.endState) {
             this.resolve()
-            this._isCompleted
+            this._isCompleted = true
         }
     }
 }
