@@ -324,7 +324,7 @@ func TestStreamAllocatedAcrossOperators(t *testing.T) {
 		node := tt.nodes[(i+5)%tt.opts.numNodes]
 		stream, err := node.service.registryContract.GetStreamOnLatestBlock(ctx, streamId)
 		require.NoError(err)
-		require.Len(stream.Nodes, 3)
+		require.Len(stream.Nodes(), 3)
 
 		operators := make(map[common.Address]bool)
 		for _, nodeAddr := range stream.Nodes() {
