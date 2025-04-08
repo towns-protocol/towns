@@ -12,7 +12,6 @@ import (
 	"github.com/towns-protocol/towns/core/node/crypto"
 	"github.com/towns-protocol/towns/core/node/logging"
 	. "github.com/towns-protocol/towns/core/node/protocol"
-	"github.com/towns-protocol/towns/core/node/registries"
 )
 
 func (s *StreamCache) onStreamCreated(
@@ -20,7 +19,7 @@ func (s *StreamCache) onStreamCreated(
 	event *river.StreamState,
 	blockNum crypto.BlockNumber,
 ) {
-	if !slices.Contains(event.Stream.Nodes, s.params.Wallet.Address) {
+	if !slices.Contains(event.Stream.Nodes(), s.params.Wallet.Address) {
 		return
 	}
 
@@ -37,8 +36,8 @@ func (s *StreamCache) onStreamCreated(
 		if err := s.normalizeEphemeralStream(
 			ctx,
 			stream,
-			int64(event.Stream.LastMiniblockNum),
-			event.Stream.Flags&uint64(registries.StreamFlagSealed) != 0,
+			event.Stream.LastMbNum(),
+			event.Stream.IsSealed(),
 		); err != nil {
 			logging.FromCtx(ctx).
 				Errorw("Failed to normalize ephemeral stream", "err", err, "streamId", event.GetStreamId())
@@ -54,7 +53,7 @@ func (s *StreamCache) onStreamPlacementUpdated(
 	event *river.StreamState,
 	blockNum crypto.BlockNumber,
 ) {
-	participatingInStream := slices.Contains(event.Nodes, s.params.Wallet.Address)
+	participatingInStream := slices.Contains(event.Stream.Nodes(), s.params.Wallet.Address)
 	if !participatingInStream {
 		if stream, ok := s.cache.Load(event.GetStreamId()); ok {
 			stream.mu.Lock()

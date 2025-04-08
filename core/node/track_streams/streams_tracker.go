@@ -232,12 +232,12 @@ func (tracker *StreamsTrackerImpl) OnStreamAllocated(
 	ctx context.Context,
 	event *river.StreamState,
 ) {
-	streamID := event.StreamID
+	streamID := event.GetStreamId()
 	if !tracker.filter.TrackStream(streamID) {
 		return
 	}
 
-	tracker.forwardStreamEventsFromInception(ctx, streamID, event.Nodes)
+	tracker.forwardStreamEventsFromInception(ctx, streamID, event.Stream.Nodes())
 }
 
 // OnStreamAdded is called each time a stream is added in the river registry.
@@ -247,12 +247,12 @@ func (tracker *StreamsTrackerImpl) OnStreamAdded(
 	ctx context.Context,
 	event *river.StreamState,
 ) {
-	streamID := event.StreamID
+	streamID := event.GetStreamId()
 	if !tracker.filter.TrackStream(streamID) {
 		return
 	}
 
-	tracker.forwardStreamEventsFromInception(ctx, streamID, event.Stream.Nodes)
+	tracker.forwardStreamEventsFromInception(ctx, streamID, event.Stream.Nodes())
 }
 
 func (tracker *StreamsTrackerImpl) OnStreamLastMiniblockUpdated(

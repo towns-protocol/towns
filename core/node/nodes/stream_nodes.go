@@ -74,7 +74,7 @@ type StreamNodesWithoutLock struct {
 var _ StreamNodes = (*StreamNodesWithoutLock)(nil)
 
 func (s *StreamNodesWithoutLock) ResetFromStreamState(state *river.StreamState, localNode common.Address) {
-	s.Reset(state.StreamReplicationFactor(), state.Nodes, localNode)
+	s.Reset(state.Stream.ReplicationFactor(), state.Stream.Nodes(), localNode)
 }
 
 func (s *StreamNodesWithoutLock) ResetFromStreamResult(result *registries.GetStreamResult, localNode common.Address) {

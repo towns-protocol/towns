@@ -243,7 +243,7 @@ func (s *StreamCache) onStreamAllocated(
 	event *river.StreamState,
 	blockNum crypto.BlockNumber,
 ) {
-	if !slices.Contains(event.Nodes, s.params.Wallet.Address) {
+	if !slices.Contains(event.Stream.Nodes(), s.params.Wallet.Address) {
 		return
 	}
 
@@ -253,13 +253,13 @@ func (s *StreamCache) onStreamAllocated(
 		return
 	}
 
-	_, genesisHash, genesisMB, err := s.params.Registry.GetStreamWithGenesis(ctx, event.StreamID, blockNum)
+	_, genesisHash, genesisMB, err := s.params.Registry.GetStreamWithGenesis(ctx, event.GetStreamId(), blockNum)
 	if err != nil {
 		logging.FromCtx(ctx).Errorw("onStreamAllocated: Failed to get genesis block for allocated stream", "err", err)
 		return
 	}
 
-	if event.LastMiniblockHash != genesisHash {
+	if event.Stream.LastMbHash() != genesisHash {
 		logging.FromCtx(ctx).Errorw("onStreamAllocated: Unexpected genesis miniblock hash on allocated stream")
 		return
 	}
