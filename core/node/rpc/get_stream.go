@@ -24,7 +24,5 @@ func (s *Service) localGetStream(
 	if err != nil {
 		return nil, err
 	}
-	return connect.NewResponse(
-		&GetStreamResponse{Stream: stream},
-	), nil
+	return connect.NewResponse(&GetStreamResponse{Stream: stream}), nil
 }

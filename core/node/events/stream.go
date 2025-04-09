@@ -8,8 +8,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/towns-protocol/towns/core/node/registries"
-
 	mapset "github.com/deckarep/golang-set/v2"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/linkdata/deadlock"
@@ -146,7 +144,7 @@ func (s *Stream) lockMuAndLoadView(ctx context.Context) (*StreamView, error) {
 	}
 
 	s.mu.Unlock()
-	s.params.streamCache.SubmitSyncStreamTask(ctx, s)
+	s.params.streamCache.SubmitSyncStreamTask(s, nil)
 
 	// Wait for reconciliation to complete.
 	backoff := BackoffTracker{
@@ -394,7 +392,8 @@ func (s *Stream) promoteCandidate(ctx context.Context, mb *MiniblockRef) error {
 // promoteCandidateLocked shouldbe called with a lock held.
 func (s *Stream) promoteCandidateLocked(ctx context.Context, mb *MiniblockRef) error {
 	if s.local == nil {
-		return RiverError(Err_FAILED_PRECONDITION, "can't promote candidate for non-local stream")
+		return RiverError(Err_FAILED_PRECONDITION, "can't promote candidate for non-local stream").
+			Tag("stream", s.streamId)
 	}
 
 	// Check if the miniblock is already applied.
@@ -494,6 +493,7 @@ func (s *Stream) initFromGenesisLocked(
 
 // GetViewIfLocal returns stream view if stream is local, nil if stream is not local,
 // and error if stream is local and failed to load.
+// If local storage is not initialized, it will wait for it to be initialized.
 // GetViewIfLocal is thread-safe.
 func (s *Stream) GetViewIfLocal(ctx context.Context) (*StreamView, error) {
 	view, isLocal := s.tryGetView()
@@ -517,6 +517,7 @@ func (s *Stream) GetViewIfLocal(ctx context.Context) (*StreamView, error) {
 }
 
 // GetView returns stream view if stream is local, and error if stream is not local or failed to load.
+// If local storage is not initialized, it will wait for it to be initialized.
 // GetView is thread-safe.
 func (s *Stream) GetView(ctx context.Context) (*StreamView, error) {
 	view, err := s.GetViewIfLocal(ctx)
@@ -1007,7 +1008,7 @@ func (s *Stream) applyStreamEvents(
 			})
 			if err != nil {
 				if IsRiverErrorCode(err, Err_STREAM_RECONCILIATION_REQUIRED) {
-					s.params.streamCache.SubmitSyncStreamTask(ctx, s)
+					s.params.streamCache.SubmitSyncStreamTask(s, nil)
 				} else {
 					logging.FromCtx(ctx).Errorw("onStreamLastMiniblockUpdated: failed to promote candidate", "err", err)
 				}
@@ -1070,18 +1071,11 @@ func (s *Stream) AdvanceStickyPeer(currentPeer common.Address) common.Address {
 	return s.nodesLocked.AdvanceStickyPeer(currentPeer)
 }
 
-func (s *Stream) ResetFromStreamState(state *river.StreamState, localNode common.Address) {
+func (s *Stream) ResetFromStreamWithId(stream *river.StreamWithId, localNode common.Address) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	s.nodesLocked.ResetFromStreamState(state, localNode)
-}
-
-func (s *Stream) ResetFromStreamResult(result *registries.GetStreamResult, localNode common.Address) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	s.nodesLocked.ResetFromStreamResult(result, localNode)
+	s.nodesLocked.ResetFromStreamWithId(stream, localNode)
 }
 
 func (s *Stream) Reset(replicationFactor int, nodes []common.Address, localNode common.Address) {
