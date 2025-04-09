@@ -548,7 +548,7 @@ func (s *StreamCache) ForceFlushAll(ctx context.Context) {
 func (s *StreamCache) GetLoadedViews(ctx context.Context) []*StreamView {
 	var result []*StreamView
 	s.cache.Range(func(streamID StreamId, stream *Stream) bool {
-		view, _ := stream.tryGetView()
+		view, _ := stream.tryGetView(true)
 		if view != nil {
 			result = append(result, view)
 		}
