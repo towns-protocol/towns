@@ -52,14 +52,17 @@ library FeatureManagerLib {
 
         _checkInterface(condition);
 
-        uint256 totalSupply = IERC20(condition.token).totalSupply();
+        // Check totalSupply directly
+        try IERC20(condition.token).totalSupply() returns (uint256 totalSupply) {
+            if (totalSupply == 0) {
+                CustomRevert.revertWith(IFeatureManagerFacetBase.InvalidTotalSupply.selector);
+            }
 
-        if (totalSupply == 0) {
-            CustomRevert.revertWith(IFeatureManagerFacetBase.InvalidTotalSupply.selector);
-        }
-
-        if (condition.threshold > totalSupply) {
-            CustomRevert.revertWith(IFeatureManagerFacetBase.InvalidThreshold.selector);
+            if (condition.threshold > totalSupply) {
+                CustomRevert.revertWith(IFeatureManagerFacetBase.InvalidThreshold.selector);
+            }
+        } catch {
+            CustomRevert.revertWith(IFeatureManagerFacetBase.InvalidToken.selector);
         }
 
         self.featureIds.add(featureId);
@@ -137,38 +140,10 @@ library FeatureManagerLib {
     }
 
     function _checkInterface(FeatureCondition calldata condition) internal view {
-        // First check IERC165 support
-        bool supportsIERC165;
-        try IERC165(condition.token).supportsInterface(type(IERC165).interfaceId) returns (
-            bool result
-        ) {
-            supportsIERC165 = result;
-        } catch {
-            CustomRevert.revertWith(IFeatureManagerFacetBase.InvalidInterface.selector);
-        }
-
-        if (!supportsIERC165) {
-            CustomRevert.revertWith(IFeatureManagerFacetBase.InvalidInterface.selector);
-        }
-
-        // Check IVotes support
-        try IERC165(condition.token).supportsInterface(type(IVotes).interfaceId) returns (
-            bool supportsVotes
-        ) {
-            if (!supportsVotes) {
-                CustomRevert.revertWith(IFeatureManagerFacetBase.InvalidInterface.selector);
-            }
-        } catch {
-            CustomRevert.revertWith(IFeatureManagerFacetBase.InvalidInterface.selector);
-        }
-
-        // Check IERC20 support
-        try IERC165(condition.token).supportsInterface(type(IERC20).interfaceId) returns (
-            bool supportsERC20
-        ) {
-            if (!supportsERC20) {
-                CustomRevert.revertWith(IFeatureManagerFacetBase.InvalidInterface.selector);
-            }
+        // Check IVotes support by attempting to call getVotes
+        try IVotes(condition.token).getVotes(address(this)) returns (uint256) {
+            // If we get here, getVotes is supported
+            return;
         } catch {
             CustomRevert.revertWith(IFeatureManagerFacetBase.InvalidInterface.selector);
         }
