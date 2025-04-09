@@ -8,5 +8,8 @@
     },
     "peerDependencies": {
         "prettier": "^2.8.8"
+    },
+    "dependencies": {
+        "prettier-plugin-solidity": "^1.4.2"
     }
 }
