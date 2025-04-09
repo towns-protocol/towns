@@ -7,7 +7,7 @@ import {
 import { ethers } from 'ethers'
 import { BaseContractShim } from './BaseContractShim'
 
-import LocalhostAbi from '@towns-protocol/generated/dev/abis/IEntitlementDataQueryable.abi.json' assert { type: 'json' }
+import LocalhostAbi from '@towns-protocol/generated/dev/abis/IEntitlementDataQueryable.abi.json' with { type: 'json' }
 
 export class IEntitlementDataQueryableShim extends BaseContractShim<
     LocalhostContract,

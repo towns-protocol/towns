@@ -3,37 +3,33 @@
     "version": "0.0.167",
     "packageManager": "yarn@3.8.0",
     "type": "module",
-    "main": "dist/index.js",
-    "types": "dist/index.d.ts",
+    "main": "dist/node.cjs",
     "scripts": {
         "build": "node ./esbuild.config.mjs",
-        "dev": "node ./dist/mini-server.js",
+        "run-build": "node ./dist/node_esbuild.cjs",
+        "dev": "yarn build && yarn run-build",
         "cb": "yarn clean && yarn build",
         "clean": "rm -rf dist",
         "lint": "yarn eslint --format unix ./src  --max-warnings=0",
         "lint:fix": "yarn lint --fix",
         "test:ci": "yarn test:ci:multi:ne",
-        "test:watch": "vitest --watch",
-        "watch": "tsc --watch"
+        "test:watch": "vitest --watch"
     },
     "dependencies": {
         "@bufbuild/protobuf": "^2.2.2",
         "@connectrpc/connect-web": "^2.0.0",
-        "@hono/node-server": "^1.13.8",
+        "@hono/node-server": "^1.14.0",
         "@towns-protocol/dlog": "workspace:^",
         "@towns-protocol/encryption": "workspace:^",
         "@towns-protocol/proto": "workspace:^",
         "@towns-protocol/sdk": "workspace:^",
         "@towns-protocol/web3": "workspace:^",
         "ethers": "^5.7.2",
-        "hono": "^4.7.2",
+        "hono": "^4.7.6",
         "typed-emitter": "^2.1.0"
     },
     "devDependencies": {
-        "@types/debug": "^4.1.8",
-        "@types/lodash": "^4.14.186",
         "@types/node": "^20.14.8",
-        "@types/seedrandom": "^3.0.4",
         "@typescript-eslint/eslint-plugin": "^8.29.0",
         "@typescript-eslint/parser": "^8.29.0",
         "esbuild": "^0.21.5",
@@ -42,10 +38,8 @@
         "eslint-import-resolver-typescript": "^3.5.5",
         "eslint-plugin-import": "^2.27.5",
         "eslint-plugin-tsdoc": "^0.3.0",
-        "fake-indexeddb": "^4.0.1",
         "typescript": "^5.8.2",
-        "vitest": "3.0.5",
-        "vitest-fetch-mock": "^0.4.3"
+        "vitest": "3.0.5"
     },
     "files": [
         "/dist"

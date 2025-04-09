@@ -3,7 +3,7 @@ import {
     ITownsPointsInterface as DevInterface,
 } from '@towns-protocol/generated/dev/typings/ITownsPoints'
 
-import DevAbi from '@towns-protocol/generated/dev/abis/ITownsPoints.abi.json' assert { type: 'json' }
+import DevAbi from '@towns-protocol/generated/dev/abis/ITownsPoints.abi.json' with { type: 'json' }
 
 import { ethers } from 'ethers'
 import { BaseContractShim } from './BaseContractShim'
