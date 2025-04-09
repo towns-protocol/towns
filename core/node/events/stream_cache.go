@@ -73,7 +73,8 @@ type StreamCache struct {
 	stoppedMu sync.RWMutex
 	stopped   bool
 
-	scheduledReconciliationTasks *xsync.MapOf[StreamId, *reconcileTask]
+	scheduledGetRecordTasks      *xsync.Map[StreamId, bool]
+	scheduledReconciliationTasks *xsync.Map[StreamId, *reconcileTask]
 
 	onlineSyncWorkerPool *workerpool.WorkerPool
 
@@ -117,7 +118,8 @@ func NewStreamCache(params *StreamCacheParams) *StreamCache {
 		chainConfig:                  params.ChainConfig,
 		onlineSyncWorkerPool:         workerpool.New(params.Config.StreamReconciliation.OnlineWorkerPoolSize),
 		disableCallbacks:             params.disableCallbacks,
-		scheduledReconciliationTasks: xsync.NewMapOf[StreamId, *reconcileTask](),
+		scheduledGetRecordTasks:      xsync.NewMap[StreamId, bool](),
+		scheduledReconciliationTasks: xsync.NewMap[StreamId, *reconcileTask](),
 	}
 	s.params.streamCache = s
 	return s

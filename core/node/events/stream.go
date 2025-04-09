@@ -1007,7 +1007,7 @@ func (s *Stream) applyStreamEvents(
 			})
 			if err != nil {
 				if IsRiverErrorCode(err, Err_STREAM_RECONCILIATION_REQUIRED) {
-					s.params.streamCache.SubmitSyncStreamTask(ctx, s)
+					s.params.streamCache.SubmitSyncStreamTask(ctx, s, nil)
 				} else {
 					logging.FromCtx(ctx).Errorw("onStreamLastMiniblockUpdated: failed to promote candidate", "err", err)
 				}
