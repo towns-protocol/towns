@@ -4,15 +4,10 @@ pragma solidity ^0.8.23;
 // interfaces
 
 import {Attestation} from "@ethereum-attestation-service/eas-contracts/Common.sol";
-import {ISchemaResolver} from
-    "@ethereum-attestation-service/eas-contracts/resolver/ISchemaResolver.sol";
+import {ISchemaResolver} from "@ethereum-attestation-service/eas-contracts/resolver/ISchemaResolver.sol";
 
 // errors
-import {
-    AccessDenied,
-    InvalidEAS,
-    InvalidLength
-} from "@ethereum-attestation-service/eas-contracts/Common.sol";
+import {AccessDenied, InvalidEAS, InvalidLength} from "@ethereum-attestation-service/eas-contracts/Common.sol";
 
 // contracts
 abstract contract SchemaResolver is ISchemaResolver {
@@ -43,12 +38,7 @@ abstract contract SchemaResolver is ISchemaResolver {
     }
 
     /// @inheritdoc ISchemaResolver
-    function attest(Attestation calldata attestation)
-        external
-        payable
-        onlyRegistry
-        returns (bool)
-    {
+    function attest(Attestation calldata attestation) external payable onlyRegistry returns (bool) {
         return onAttest(attestation, msg.value);
     }
 
@@ -56,12 +46,7 @@ abstract contract SchemaResolver is ISchemaResolver {
     function multiAttest(
         Attestation[] calldata attestations,
         uint256[] calldata values
-    )
-        external
-        payable
-        onlyRegistry
-        returns (bool)
-    {
+    ) external payable onlyRegistry returns (bool) {
         uint256 length = attestations.length;
         if (length != values.length) {
             revert InvalidLength();
@@ -100,12 +85,7 @@ abstract contract SchemaResolver is ISchemaResolver {
     }
 
     /// @inheritdoc ISchemaResolver
-    function revoke(Attestation calldata attestation)
-        external
-        payable
-        onlyRegistry
-        returns (bool)
-    {
+    function revoke(Attestation calldata attestation) external payable onlyRegistry returns (bool) {
         return onRevoke(attestation, msg.value);
     }
 
@@ -113,12 +93,7 @@ abstract contract SchemaResolver is ISchemaResolver {
     function multiRevoke(
         Attestation[] calldata attestations,
         uint256[] calldata values
-    )
-        external
-        payable
-        onlyRegistry
-        returns (bool)
-    {
+    ) external payable onlyRegistry returns (bool) {
         uint256 length = attestations.length;
         if (length != values.length) {
             revert InvalidLength();
@@ -163,10 +138,7 @@ abstract contract SchemaResolver is ISchemaResolver {
     function onAttest(
         Attestation calldata attestation,
         uint256 value
-    )
-        internal
-        virtual
-        returns (bool);
+    ) internal virtual returns (bool);
 
     /// @notice Hook that is called before an attestation is revoked
     /// @param attestation The attestation data
@@ -175,10 +147,7 @@ abstract contract SchemaResolver is ISchemaResolver {
     function onRevoke(
         Attestation calldata attestation,
         uint256 value
-    )
-        internal
-        virtual
-        returns (bool);
+    ) internal virtual returns (bool);
 }
 
 library SchemaResolverStorage {

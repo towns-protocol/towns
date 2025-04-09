@@ -4,10 +4,7 @@ pragma solidity ^0.8.23;
 // interfaces
 
 import {Attestation} from "@ethereum-attestation-service/eas-contracts/Common.sol";
-import {
-    AttestationRequest,
-    RevocationRequest
-} from "@ethereum-attestation-service/eas-contracts/IEAS.sol";
+import {AttestationRequest, RevocationRequest} from "@ethereum-attestation-service/eas-contracts/IEAS.sol";
 // libraries
 
 // contracts

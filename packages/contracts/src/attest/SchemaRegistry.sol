@@ -3,8 +3,7 @@ pragma solidity ^0.8.23;
 
 // interfaces
 import {ISchemaRegistry} from "@ethereum-attestation-service/eas-contracts/ISchemaRegistry.sol";
-import {ISchemaResolver} from
-    "@ethereum-attestation-service/eas-contracts/resolver/ISchemaResolver.sol";
+import {ISchemaResolver} from "@ethereum-attestation-service/eas-contracts/resolver/ISchemaResolver.sol";
 
 // libraries
 import {SchemaLib} from "./libraries/SchemaLib.sol";
@@ -37,10 +36,7 @@ contract SchemaRegistry is ISchemaRegistry, Facet {
         string calldata schema,
         ISchemaResolver resolver,
         bool revocable
-    )
-        external
-        returns (bytes32)
-    {
+    ) external returns (bytes32) {
         return SchemaLib.registerSchema(schema, resolver, revocable);
     }
 

@@ -2,8 +2,7 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {IERC6900ExecutionModule} from
-    "@erc6900/reference-implementation/interfaces/IERC6900ExecutionModule.sol";
+import {IERC6900ExecutionModule} from "@erc6900/reference-implementation/interfaces/IERC6900ExecutionModule.sol";
 import {IERC6900Module} from "@erc6900/reference-implementation/interfaces/IERC6900Module.sol";
 import {IERC165} from "@openzeppelin/contracts/interfaces/IERC165.sol";
 

@@ -10,12 +10,7 @@ import {AttestationLib} from "./libraries/AttestationLib.sol";
 // contracts
 
 import {Attestation} from "@ethereum-attestation-service/eas-contracts/Common.sol";
-import {
-    AttestationRequest,
-    AttestationRequestData,
-    RevocationRequest,
-    RevocationRequestData
-} from "@ethereum-attestation-service/eas-contracts/IEAS.sol";
+import {AttestationRequest, AttestationRequestData, RevocationRequest, RevocationRequestData} from "@ethereum-attestation-service/eas-contracts/IEAS.sol";
 import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
 
 contract AttestationRegistry is IAttestationRegistry, Facet {

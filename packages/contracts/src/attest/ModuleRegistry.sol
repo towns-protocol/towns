@@ -3,15 +3,13 @@ pragma solidity ^0.8.23;
 
 // interfaces
 import {IModuleRegistry} from "./interfaces/IModuleRegistry.sol";
-import {ISchemaResolver} from
-    "@ethereum-attestation-service/eas-contracts/resolver/ISchemaResolver.sol";
+import {ISchemaResolver} from "@ethereum-attestation-service/eas-contracts/resolver/ISchemaResolver.sol";
 
 // libraries
 import {ModuleLib} from "./libraries/ModuleLib.sol";
 import {SchemaLib} from "./libraries/SchemaLib.sol";
 // types
-import {ExecutionManifest} from
-    "@erc6900/reference-implementation/interfaces/IERC6900ExecutionModule.sol";
+import {ExecutionManifest} from "@erc6900/reference-implementation/interfaces/IERC6900ExecutionModule.sol";
 
 // contracts
 import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
@@ -26,7 +24,7 @@ contract ModuleRegistry is IModuleRegistry, OwnableBase, Facet {
     /// @return The schema structure
     function getModuleSchema() external pure returns (string memory) {
         return
-        "address module, address client, address owner, bytes32[] permissions, ExecutionManifest manifest";
+            "address module, address client, address owner, bytes32[] permissions, ExecutionManifest manifest";
     }
 
     /// @notice Get the active schema ID used for module attestations
@@ -41,11 +39,7 @@ contract ModuleRegistry is IModuleRegistry, OwnableBase, Facet {
         string calldata schema,
         ISchemaResolver resolver,
         bool revocable
-    )
-        external
-        onlyOwner
-        returns (bytes32)
-    {
+    ) external onlyOwner returns (bytes32) {
         bytes32 schemaId = SchemaLib.registerSchema(schema, resolver, revocable);
         ModuleLib.setSchema(schemaId);
         return schemaId;
@@ -70,10 +64,7 @@ contract ModuleRegistry is IModuleRegistry, OwnableBase, Facet {
         address owner,
         bytes32[] calldata permissions,
         ExecutionManifest calldata manifest
-    )
-        external
-        returns (bytes32)
-    {
+    ) external returns (bytes32) {
         return ModuleLib.addModule(module, client, owner, permissions, manifest);
     }
 
@@ -84,10 +75,7 @@ contract ModuleRegistry is IModuleRegistry, OwnableBase, Facet {
     function updateModulePermissions(
         address module,
         bytes32[] calldata permissions
-    )
-        external
-        returns (bytes32)
-    {
+    ) external returns (bytes32) {
         return ModuleLib.updatePermissions(module, permissions);
     }
 

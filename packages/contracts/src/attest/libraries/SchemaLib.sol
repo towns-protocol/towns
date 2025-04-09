@@ -4,8 +4,7 @@ pragma solidity ^0.8.23;
 // interfaces
 
 import {ISchemaRegistry} from "@ethereum-attestation-service/eas-contracts/ISchemaRegistry.sol";
-import {ISchemaResolver} from
-    "@ethereum-attestation-service/eas-contracts/resolver/ISchemaResolver.sol";
+import {ISchemaResolver} from "@ethereum-attestation-service/eas-contracts/resolver/ISchemaResolver.sol";
 import {IERC165} from "@openzeppelin/contracts/interfaces/IERC165.sol";
 
 // types
@@ -50,10 +49,7 @@ library SchemaLib {
         string calldata schema,
         ISchemaResolver resolver,
         bool revocable
-    )
-        internal
-        returns (bytes32 schemaUID)
-    {
+    ) internal returns (bytes32 schemaUID) {
         // check empty schema
         if (bytes(schema).length == 0) {
             InvalidSchema.selector.revertWith();
@@ -61,8 +57,12 @@ library SchemaLib {
 
         checkResolver(resolver);
 
-        SchemaRecord memory schemaRecord =
-            SchemaRecord({uid: EMPTY_UID, resolver: resolver, revocable: revocable, schema: schema});
+        SchemaRecord memory schemaRecord = SchemaRecord({
+            uid: EMPTY_UID,
+            resolver: resolver,
+            revocable: revocable,
+            schema: schema
+        });
 
         Layout storage db = getLayout();
 
@@ -89,8 +89,8 @@ library SchemaLib {
 
     function checkResolver(ISchemaResolver resolver) internal view {
         if (
-            address(resolver) != address(0)
-                && !IERC165(address(resolver)).supportsInterface(type(ISchemaResolver).interfaceId)
+            address(resolver) != address(0) &&
+            !IERC165(address(resolver)).supportsInterface(type(ISchemaResolver).interfaceId)
         ) {
             InvalidSchemaResolver.selector.revertWith();
         }

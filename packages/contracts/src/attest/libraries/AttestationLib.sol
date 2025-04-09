@@ -2,8 +2,7 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {ISchemaResolver} from
-    "@ethereum-attestation-service/eas-contracts/resolver/ISchemaResolver.sol";
+import {ISchemaResolver} from "@ethereum-attestation-service/eas-contracts/resolver/ISchemaResolver.sol";
 
 // libraries
 
@@ -11,19 +10,9 @@ import {CustomRevert} from "../../utils/libraries/CustomRevert.sol";
 import {SafeTransferLib} from "solady/utils/SafeTransferLib.sol";
 
 import {SchemaLib} from "./SchemaLib.sol";
-import {
-    Attestation,
-    EMPTY_UID,
-    NO_EXPIRATION_TIME,
-    NotFound
-} from "@ethereum-attestation-service/eas-contracts/Common.sol";
+import {Attestation, EMPTY_UID, NO_EXPIRATION_TIME, NotFound} from "@ethereum-attestation-service/eas-contracts/Common.sol";
 
-import {
-    AttestationRequest,
-    AttestationRequestData,
-    IEAS,
-    RevocationRequestData
-} from "@ethereum-attestation-service/eas-contracts/IEAS.sol";
+import {AttestationRequest, AttestationRequestData, IEAS, RevocationRequestData} from "@ethereum-attestation-service/eas-contracts/IEAS.sol";
 import {SchemaRecord} from "@ethereum-attestation-service/eas-contracts/ISchemaRegistry.sol";
 
 // contracts
@@ -65,10 +54,9 @@ library AttestationLib {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                     Internal Functions                     */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-    function attest(AttestationRequest memory request)
-        internal
-        returns (Attestation memory attestation)
-    {
+    function attest(
+        AttestationRequest memory request
+    ) internal returns (Attestation memory attestation) {
         AttestationRequestData[] memory data = new AttestationRequestData[](1);
         data[0] = request.data;
         (, bytes32[] memory uids) = _attest(request.schema, data, msg.sender, msg.value, true);
@@ -81,9 +69,7 @@ library AttestationLib {
         address revoker,
         uint256 availableValue,
         bool last
-    )
-        internal
-    {
+    ) internal {
         RevocationRequestData[] memory requests = new RevocationRequestData[](1);
         requests[0] = request;
         _revoke(schemaId, requests, revoker, availableValue, last);
@@ -105,10 +91,7 @@ library AttestationLib {
         bool isRevocation,
         uint256 availableValue,
         bool last
-    )
-        internal
-        returns (uint256)
-    {
+    ) internal returns (uint256) {
         ISchemaResolver resolver = ISchemaResolver(schema.resolver);
 
         if (schema.uid == EMPTY_UID) {
@@ -152,15 +135,18 @@ library AttestationLib {
         bool isRevocation,
         uint256 availableValue,
         bool last
-    )
-        internal
-        returns (uint256 totalUsedValue)
-    {
+    ) internal returns (uint256 totalUsedValue) {
         uint256 len = attestations.length;
         if (len == 1) {
-            return _resolveAttestation(
-                schema, attestations[0], values[0], isRevocation, availableValue, last
-            );
+            return
+                _resolveAttestation(
+                    schema,
+                    attestations[0],
+                    values[0],
+                    isRevocation,
+                    availableValue,
+                    last
+                );
         }
 
         ISchemaResolver resolver = ISchemaResolver(schema.resolver);
@@ -199,9 +185,7 @@ library AttestationLib {
         uint256[] memory values,
         uint256 availableValue,
         bool last
-    )
-        internal
-    {
+    ) internal {
         uint256 len = values.length;
         for (uint256 i; i < len; ++i) {
             if (values[i] != 0) NotPayable.selector.revertWith();
@@ -218,10 +202,7 @@ library AttestationLib {
         address attester,
         uint256 availableValue,
         bool last
-    )
-        internal
-        returns (uint256 usedValue, bytes32[] memory uids)
-    {
+    ) internal returns (uint256 usedValue, bytes32[] memory uids) {
         SchemaRecord memory schema = SchemaLib.getSchema(schemaId);
         if (schema.uid == EMPTY_UID) SchemaLib.InvalidSchema.selector.revertWith();
 
@@ -277,7 +258,10 @@ library AttestationLib {
             uids[i] = attestationUID;
 
             emit IEAS.Attested(
-                attestation.recipient, attestation.attester, attestation.uid, attestation.schema
+                attestation.recipient,
+                attestation.attester,
+                attestation.uid,
+                attestation.schema
             );
         }
 
@@ -290,10 +274,7 @@ library AttestationLib {
         address revoker,
         uint256 availableValue,
         bool last
-    )
-        internal
-        returns (uint256)
-    {
+    ) internal returns (uint256) {
         SchemaRecord memory schema = SchemaLib.getSchema(schemaId);
         if (schema.uid == EMPTY_UID) SchemaLib.InvalidSchema.selector.revertWith();
 
@@ -315,7 +296,10 @@ library AttestationLib {
             values[i] = requests[i].value;
 
             emit IEAS.Revoked(
-                attestation.recipient, attestation.attester, attestation.uid, attestation.schema
+                attestation.recipient,
+                attestation.attester,
+                attestation.uid,
+                attestation.schema
             );
         }
 
@@ -333,24 +317,21 @@ library AttestationLib {
     function _hashAttestation(
         Attestation memory attestation,
         uint32 bump
-    )
-        internal
-        pure
-        returns (bytes32)
-    {
-        return keccak256(
-            abi.encodePacked(
-                attestation.schema,
-                attestation.recipient,
-                attestation.attester,
-                attestation.time,
-                attestation.expirationTime,
-                attestation.revocable,
-                attestation.refUID,
-                attestation.data,
-                bump
-            )
-        );
+    ) internal pure returns (bytes32) {
+        return
+            keccak256(
+                abi.encodePacked(
+                    attestation.schema,
+                    attestation.recipient,
+                    attestation.attester,
+                    attestation.time,
+                    attestation.expirationTime,
+                    attestation.revocable,
+                    attestation.refUID,
+                    attestation.data,
+                    bump
+                )
+            );
     }
 
     function _refund(uint256 value) internal {
