@@ -693,6 +693,7 @@ func (s *Service) initAppRegistryStore() error {
 
 func (s *Service) initCacheAndSync(opts *ServerStartOpts) error {
 	cacheParams := &events.StreamCacheParams{
+		ServerCtx:               s.serverCtx,
 		Storage:                 s.storage,
 		Wallet:                  s.wallet,
 		RiverChain:              s.riverChain,
