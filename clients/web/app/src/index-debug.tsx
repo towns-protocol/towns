@@ -4,7 +4,7 @@ import { createRoot } from 'react-dom/client'
 import { env } from 'utils'
 import { Box, Paragraph } from '@ui'
 import { darkTheme } from 'ui/styles/vars.css'
-import { ReloadPrompt } from '@components/ReloadPrompt/ReloadPrompt'
+import { UpdatePill } from '@components/UpdatePill/UpdatePill'
 import { useRootTheme } from 'hooks/useRootTheme'
 import { FontLoader } from 'ui/utils/FontLoader'
 import { usePeriodicUpdates } from 'hooks/usePeriodicUpdates'
@@ -76,7 +76,7 @@ function Main() {
             <Paragraph>Minimal version of the app {VITE_APP_VERSION}</Paragraph>
             <Paragraph>Fast to rebuild --watch</Paragraph>
             <Updater />
-            <ReloadPrompt />
+            <UpdatePill />
         </Box>
     )
 }
@@ -85,7 +85,7 @@ function Updater() {
     usePeriodicUpdates()
     return (
         <Box centerContent absoluteFill className={darkTheme}>
-            <ReloadPrompt />
+            <UpdatePill />
         </Box>
     )
 }

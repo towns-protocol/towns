@@ -37,8 +37,9 @@ export const OffscreenPill = (props: {
     scrollRef: React.RefObject<HTMLDivElement>
     // marginTop is custom for the sidebar header
     containerMarginTop: number
+    skip?: 'both' | 'up' | 'down'
 }) => {
-    const { scrollRef, markers, defaultLabel, containerMarginTop } = props
+    const { scrollRef, markers, defaultLabel, containerMarginTop, skip } = props
 
     const [activeMarker, setActiveMarker] = useState<
         { marker: OffscreenMarker; alignment: Alignment } | undefined
@@ -51,7 +52,7 @@ export const OffscreenPill = (props: {
 
     useEffect(() => {
         const container = scrollRef.current
-        if (!container) {
+        if (!container || skip === 'both') {
             return
         }
 
@@ -95,10 +96,11 @@ export const OffscreenPill = (props: {
         return () => {
             intersectionObserver.disconnect()
         }
-    }, [containerMarginTop, markers, scrollRef])
+    }, [containerMarginTop, markers, scrollRef, skip])
 
     useEffect(() => {
         const container = scrollRef.current
+
         if (!container) {
             return
         }
@@ -125,6 +127,15 @@ export const OffscreenPill = (props: {
                 }
             })
             .filter(notUndefined)
+            .filter(({ alignment }) => {
+                if (skip === 'down') {
+                    return alignment !== 'bottom'
+                }
+                if (skip === 'up') {
+                    return alignment !== 'top'
+                }
+                return true
+            })
 
         const closest = outsideItems.reduce(
             (closest, { marker, alignment, offset }) => {
@@ -159,7 +170,7 @@ export const OffscreenPill = (props: {
             }
             setActiveMarker(closest)
         }
-    }, [defaultLabel, intersectionEntries, markers, scrollRef])
+    }, [defaultLabel, intersectionEntries, markers, scrollRef, skip])
 
     const onPillClick = useCallback(() => {
         if (activeMarker) {

@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import { useRegisterSW } from 'virtual:pwa-register/react'
 import { AnimatePresence } from 'framer-motion'
 import { debug } from 'debug'
@@ -7,23 +7,30 @@ import { FadeInBox } from '@components/Transitions'
 import { SECOND_MS } from 'data/constants'
 import { clearAllWorkers } from 'hooks/usePeriodicUpdates'
 import { env } from 'utils'
+import { useUpdatePillStateStore } from './useUpdatePillStateStore'
 
-const log = debug('app:ReloadPrompt')
+const log = debug('app:UpdatePill')
 log.enabled = true
 
-export const ReloadPrompt = () => {
+export const UpdatePill = () => {
     if (env.VITE_ENABLE_MSW_BROWSER) {
         return null
     }
 
-    return <ReloadPromptChild />
+    return <UpdatePillChild />
 }
 
-const ReloadPromptChild = () => {
+const UpdatePillChild = () => {
     const {
         needRefresh: [needRefresh],
         updateServiceWorker,
     } = useRegisterSW()
+
+    const setIsUpdatePillDisplaying = useUpdatePillStateStore((s) => s.setIsUpdatePillDisplaying)
+
+    useEffect(() => {
+        setIsUpdatePillDisplaying(needRefresh)
+    }, [needRefresh, setIsUpdatePillDisplaying])
 
     const [isUpdating, setIsUpdating] = useState(false)
 
@@ -44,7 +51,7 @@ const ReloadPromptChild = () => {
             try {
                 await updateServiceWorker()
             } catch (error) {
-                log('sw: reload prompt, error updating service worker', error)
+                log('sw: update pill, error updating service worker', error)
             }
 
             log('updateServiceWorker complete')
@@ -59,7 +66,7 @@ const ReloadPromptChild = () => {
 
     return (
         <Box
-            padding="lg"
+            padding="x4"
             position="fixed"
             bottom="none"
             right="none"

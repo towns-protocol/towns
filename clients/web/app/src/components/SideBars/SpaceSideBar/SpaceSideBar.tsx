@@ -26,7 +26,7 @@ import { useReviewStore } from 'store/reviewStore'
 import { useReviews } from 'hooks/useReviews'
 import { useMyAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
 import { CHANNEL_INFO_PARAMS, PATHS } from 'routes'
-import { ReloadPrompt } from '@components/ReloadPrompt/ReloadPrompt'
+import { UpdatePill } from '@components/UpdatePill/UpdatePill'
 import { env } from 'utils'
 import { isReduceMotion, useDevice } from 'hooks/useDevice'
 import { useUnseenChannelIds } from 'hooks/useUnseenChannelIdsCount'
@@ -36,6 +36,7 @@ import { Analytics } from 'hooks/useAnalytics'
 import { DirectMessageItemSkeleton } from '@components/DirectMessages/DirectMessageItemSkeleton'
 import { addressFromSpaceId } from 'ui/utils/utils'
 import { useGatherSpaceDetailsAnalytics } from '@components/Analytics/useGatherSpaceDetailsAnalytics'
+import { useUpdatePillStateStore } from '@components/UpdatePill/useUpdatePillStateStore'
 import * as styles from './SpaceSideBar.css'
 import { SpaceSideBarHeader } from './SpaceSideBarHeader'
 import { SidebarLoadingAnimation } from './SpaceSideBarLoading'
@@ -58,6 +59,7 @@ export const SpaceSideBar = (props: Props) => {
     const { createLink } = useCreateLink()
     const { unseenChannelIds } = useUnseenChannelIds()
     const scrollRef = useRef<HTMLDivElement>(null)
+    const isUpdatePillDisplaying = useUpdatePillStateStore((s) => s.isUpdatePillDisplaying)
 
     const unreadThreadsCount = useSpaceThreadRootsUnreadCount()
 
@@ -431,9 +433,10 @@ export const SpaceSideBar = (props: Props) => {
                     markers={offscreenMarkers.markers}
                     scrollRef={scrollRef}
                     containerMarginTop={HEADER_MARGIN}
+                    skip={isUpdatePillDisplaying ? 'down' : undefined}
                 />
                 {/* the service worker won't exist in dev-mode and there's not need to check for updates */}
-                {(!env.DEV || env.VITE_PUSH_NOTIFICATION_ENABLED) && !isTouch && <ReloadPrompt />}
+                {(!env.DEV || env.VITE_PUSH_NOTIFICATION_ENABLED) && !isTouch && <UpdatePill />}
             </Card>
         </>
     )

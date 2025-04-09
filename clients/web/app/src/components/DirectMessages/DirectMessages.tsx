@@ -6,7 +6,7 @@ import { useCreateLink } from 'hooks/useCreateLink'
 import { Panel } from '@components/Panel/Panel'
 import { PanelStack } from '@components/Panel/PanelContext'
 import { Analytics } from 'hooks/useAnalytics'
-import { ReloadPrompt } from '@components/ReloadPrompt/ReloadPrompt'
+import { UpdatePill } from '@components/UpdatePill/UpdatePill'
 import { env } from 'utils'
 import { useDevice } from 'hooks/useDevice'
 import { DirectMessageList } from './DirectMessageList'
@@ -42,7 +42,7 @@ const MessageListPanel = ({ onNavAction }: { onNavAction: () => void }) => {
             padding="sm"
         >
             <DirectMessageList />
-            {(!env.DEV || env.VITE_PUSH_NOTIFICATION_ENABLED) && !isTouch && <ReloadPrompt />}
+            {(!env.DEV || env.VITE_PUSH_NOTIFICATION_ENABLED) && !isTouch && <UpdatePill />}
         </Panel>
     )
 }

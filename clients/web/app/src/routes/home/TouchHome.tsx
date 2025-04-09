@@ -59,7 +59,7 @@ import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { DMChannelMenuItem, MixedChannelMenuItem, useSortedChannels } from 'hooks/useSortedChannels'
 import { notUndefined } from 'ui/utils/utils'
 import { ShakeToReport } from '@components/BugReportButton/ShakeToReport'
-import { ReloadPrompt } from '@components/ReloadPrompt/ReloadPrompt'
+import { UpdatePill } from '@components/UpdatePill/UpdatePill'
 import { env } from 'utils'
 import { useUnseenChannelIds } from 'hooks/useUnseenChannelIdsCount'
 import { usePanels } from 'routes/layouts/hooks/usePanels'
@@ -419,7 +419,7 @@ export const TouchHome = () => {
                                         </Box>
                                     )}
                                     {(!env.DEV || env.VITE_PUSH_NOTIFICATION_ENABLED) && (
-                                        <ReloadPrompt />
+                                        <UpdatePill />
                                     )}
                                 </MotionBox>
                             </MotionStack>
