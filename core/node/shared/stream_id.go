@@ -194,3 +194,15 @@ func (id *StreamId) ScanText(v pgtype.Text) error {
 func (id StreamId) MarshalJSON() ([]byte, error) {
 	return []byte("\"" + id.String() + "\""), nil
 }
+
+func (id *StreamId) UnmarshalJSON(b []byte) error {
+	if len(b) > 1 && b[0] == '"' && b[len(b)-1] == '"' {
+		b = b[1 : len(b)-1]
+	}
+
+	_, err := hex.Decode(id[:], b)
+	if err != nil {
+		return err
+	}
+	return nil
+}
