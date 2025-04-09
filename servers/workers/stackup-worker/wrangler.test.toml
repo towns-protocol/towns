@@ -1,8 +1,8 @@
 compatibility_flags = [ "export_commonjs_default" ]
 
-# !IMPORTANT: IF YOU DON"T CREATE AN EMPTY .dev.vars.test file, these vars are overwritten by .dev.vars wtf
 [env.test]
-vars = { AUTH_SECRET="foo", ENVIRONMENT="development", SKIP_TOWNID_VERIFICATION="true", SKIP_PRIVY_VERIFICATION="true", LOCAL_PAYMASTER_RPC_URL="http://fake.com", ALCHEMY_GM_POLICY_ID="fake", ALCHEMY_PAYMASTER_RPC_URL="http://fake.com", PRIVY_APP_KEY="", PRIVY_APP_ID="" }
+# see .dev.vars.test for vars
+# if you put vars here, you still need to create .dev.vars.test, otherwise these vars are overwritten by .dev.vars
 
 kv_namespaces = [
   { binding = "OVERRIDES", id = "<ignored>", preview_id = "<ignored>" },

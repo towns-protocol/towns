@@ -13,7 +13,7 @@ export interface VerifyingPaymasterResult {
 export type SponsorshipRequest<entryPointVersion extends '0.6' | '0.7'> = {
     data: RpcUserOperation<entryPointVersion> & {
         townId?: string
-        functionHash: (typeof FunctionHash)[keyof typeof FunctionHash]
+        functionHash: FunctionHash
         rootKeyAddress: string
         gasOverrides?: GasOverrides
     }
@@ -302,7 +302,7 @@ export const EventName = {
 export type EventName = (typeof EventName)[keyof typeof EventName]
 
 // TODO: different name for this
-const FunctionHash = {
+export const FunctionHash = {
     ...FunctionName,
     transferTokens: 'transferTokens',
     createSpace_linkWallet: 'createSpace_linkWallet',

@@ -9,6 +9,7 @@ import {
     isEntrypointV07SponsorshipRequest,
     isEntrypoinV06SponsorshipRequest,
     isSmartAccountRequest,
+    FunctionHash,
 } from './types'
 import { TRANSACTION_LIMIT_DEFAULTS_PER_DAY } from './useropVerification'
 
@@ -241,6 +242,13 @@ router.post(
                 ErrorCode.MISSING_ENV_VARIABLE,
             )
         }
+        if (!env.ALCHEMY_GM_POLICY_ID_OPEN) {
+            return createErrorResponse(
+                405,
+                'ALCHEMY_GM_POLICY_ID_OPEN not set',
+                ErrorCode.MISSING_ENV_VARIABLE,
+            )
+        }
         if (!env.ALCHEMY_PAYMASTER_RPC_URL) {
             return createErrorResponse(
                 405,
@@ -249,8 +257,13 @@ router.post(
             )
         }
 
+        const alchmeyPolicyId =
+            data.functionHash === FunctionHash.upgradeToAndCall
+                ? env.ALCHEMY_GM_POLICY_ID_OPEN
+                : env.ALCHEMY_GM_POLICY_ID
+
         const requestInit = createAlchemyRequestGasAndPaymasterDataRequest({
-            policyId: env.ALCHEMY_GM_POLICY_ID,
+            policyId: alchmeyPolicyId,
             sponsorshipReq,
         })
         console.log('paymaster API request:', requestInit.body)
