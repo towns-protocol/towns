@@ -3,7 +3,7 @@ import {
     INodeRegistryInterface as DevInterface,
 } from '@towns-protocol/generated/dev/typings/INodeRegistry'
 
-import DevAbi from '@towns-protocol/generated/dev/abis/NodeRegistry.abi.json' assert { type: 'json' }
+import DevAbi from '@towns-protocol/generated/dev/abis/NodeRegistry.abi.json' with { type: 'json' }
 
 import { ethers } from 'ethers'
 import { BaseContractShim } from './BaseContractShim'
