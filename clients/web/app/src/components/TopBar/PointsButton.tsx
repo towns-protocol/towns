@@ -39,9 +39,11 @@ export const PointsButton = () => {
             onClick={onClick}
         >
             <BeaverHead isActive={!!data?.isActive} />
-            <Paragraph color="gray1" size="sm">
-                {data?.riverPoints}
-            </Paragraph>
+            {!!data.riverPoints && (
+                <Paragraph color="gray1" size="sm">
+                    {data.riverPoints}
+                </Paragraph>
+            )}
         </Box>
     )
 }
