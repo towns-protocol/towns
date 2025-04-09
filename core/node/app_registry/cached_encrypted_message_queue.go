@@ -51,9 +51,10 @@ func (q *CachedEncryptedMessageQueue) CreateApp(
 	ctx context.Context,
 	owner common.Address,
 	app common.Address,
+	forwardSetting protocol.ForwardSettingValue,
 	sharedSecret [32]byte,
 ) error {
-	return q.store.CreateApp(ctx, owner, app, sharedSecret)
+	return q.store.CreateApp(ctx, owner, app, forwardSetting, sharedSecret)
 }
 
 func (q *CachedEncryptedMessageQueue) RotateSharedSecret(

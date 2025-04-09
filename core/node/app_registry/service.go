@@ -133,6 +133,16 @@ func NewService(
 	return s, nil
 }
 
+func (s *Service) SetFowardSetting(
+	ctx context.Context,
+	req *connect.Request[SetForwardSettingRequest],
+) (
+	*connect.Response[SetForwardSettingResponse],
+	error,
+) {
+	return nil, base.RiverError(Err_UNIMPLEMENTED, "IMPLEMENT ME")
+}
+
 func (s *Service) Start(ctx context.Context) {
 	log := logging.FromCtx(ctx).With("func", "AppRegistryService.Start")
 
@@ -295,7 +305,7 @@ func (s *Service) Register(
 		return nil, base.AsRiverError(err, Err_INTERNAL).Message("error encrypting shared secret for app")
 	}
 
-	if err := s.store.CreateApp(ctx, owner, app, encrypted); err != nil {
+	if err := s.store.CreateApp(ctx, owner, app, req.Msg.GetForwardSetting(), encrypted); err != nil {
 		return nil, base.AsRiverError(err, Err_INTERNAL).Message("Error creating app in database")
 	}
 

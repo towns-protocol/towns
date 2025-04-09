@@ -15,10 +15,28 @@ import "protocol.proto";
 service AppRegistryService {
     rpc Register(RegisterRequest) returns (RegisterResponse);
     rpc RegisterWebhook(RegisterWebhookRequest) returns (RegisterWebhookResponse);
+    rpc SetForwardSetting(SetForwardSettingRequest) returns (SetForwardSettingResponse);
     rpc RotateSecret(RotateSecretRequest) returns (RotateSecretResponse);
     rpc GetStatus(GetStatusRequest) returns (GetStatusResponse);
     rpc GetSession(GetSessionRequest) returns (GetSessionResponse);
 }
+
+// ForwardSettingValue is an app-specific setting applied to all space channels the app is a member
+// of. It specifies which messages the app registry service will consider relevant for forwarding to
+// the bot.
+enum ForwardSettingValue {
+    // FORWARD_SETTING_UNSPECIFIED not set, assumes FORWARD_SETTING__REPLIES_REACTIONS as the default setting.
+    FORWARD_SETTING_UNSPECIFIED = 0;
+    // FORWARD_SETTING_ALL_MESSAGES indicates that the app would like all messages forwarded for each channel
+    // it is a member of.
+    FORWARD_SETTING_ALL_MESSAGES = 1;
+    // FORWARD_SETTING_MENTIONS_REPLIES_REACTIONS indicates that the app would only like messages forwarded in
+    // channels it has membership in if either the app is mentioned, or the message is a direct reply or reaction
+    // to it's own post. This is the default.
+    FORWARD_SETTING_MENTIONS_REPLIES_REACTIONS = 2;
+    // SPACE_CHANNEL_SETTING_NO_MESSAGES indicates that the user won't receive notifications of any channel in the space.
+    FORWARD_SETTING_NO_MESSAGES = 3;
+  }
 
 message RegisterRequest {
     // public key of the app
@@ -26,6 +44,10 @@ message RegisterRequest {
 
     // public key of the app owner
     bytes app_owner_id = 2;
+
+    // The setting for determining which messages the app registry service should forward to the app. If unspecified,
+    // the default setting will be used.
+    optional ForwardSettingValue forward_setting = 3;
 }
 
 message RegisterResponse {
@@ -43,6 +65,17 @@ message RegisterWebhookRequest {
 }
 
 message RegisterWebhookResponse { }
+
+message SetForwardSettingRequest {
+    // public key of the app
+    bytes app_id = 1;
+
+    // The setting for determining which messages the app registry service should forward to the app. If unspecified,
+    // the default setting will be used.
+    ForwardSettingValue forward_setting = 3;
+}
+
+message SetForwardSettingResponse { }
 
 message RotateSecretRequest {
         // public key of the app

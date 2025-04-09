@@ -32,20 +32,22 @@ type (
 		FallbackKey string
 	}
 
-	// When this is returned, caller already has access to the device key,
-	// group encryption sessions envelope. They can combine these with the returned
-	// information here to form the following tuple needed for sending each message
+	// When this is returned, caller already has access to the device key and the
+	// group encryption sessions envelope. They can combine these with the information
+	// returned in this struct to form the following tuple needed for each app to send
+	// a message, which is:
 	// (webhookUrl, encryption_envelope, encryptedSharedSecret, messageEnvelope)
 	// where:
-	// - webhookUrl is the address of the bot service
+	// - webhookUrl is the URL address of the bot service
 	// - encryption_envelope is binary of the envelope of the group encryption sessions
 	//   event found in the app's user inbox stream which contains the encrypted ciphertext
-	//   needed for the bot server to decrypt all stream events returned here.
+	//   needed for the bot server to decrypt the stream event.
 	// - encryptedSharedSecret is the shared hmac secret used by the app registry server
-	//   to sign jwt tokens for authentication of origination of webhook calls, after it
-	//   has been encrypted with the app registry service's in-memory data encryption key,
-	//   and
+	//   to sign jwt tokens for authentication of origination of webhook calls. To be useful,
+	//   it must be decrypted with the app registry service's in-memory data encryption key.
 	// - messageEnvelopes is an array of serialized channel message payload stream event envelopes
+	//   that can all be send with the same group encryption sessions message as a set
+	//   of decryption keys.
 	SendableMessages struct {
 		AppId                 common.Address // included here for logging / metrics
 		EncryptedSharedSecret [32]byte
@@ -63,10 +65,11 @@ type (
 		SendMessageSecrets SendMessageSecrets
 	}
 
-	// UnsendableApp is returned to supply all information needed for the caller to
-	// request a key solicitation if the attempt to send a message was unsuccessful.
+	// UnsendableApp is returned to supply all information needed for the caller to request
+	// a key solicitation if a message could not be forwarded due to missing decryption keys.
 	// In this case, the caller has access to the session id and stream id already. Return
-	// (appId, deviceKey, webhookUrl, encryptedSharedSecret)
+	// (appId, deviceKey, webhookUrl, encryptedSharedSecret) to make an authenticated call
+	// to the bot to solicit keys for the missing session id(s) in the stream.
 	UnsendableApp struct {
 		AppId                 common.Address
 		DeviceKey             string
@@ -74,9 +77,9 @@ type (
 		EncryptedSharedSecret [32]byte
 	}
 
-	// We send back the entire group encryption sessions envelope to the bot server. The
-	// encrypted shared secret must be decrypted with the in-memory data decryption key
-	// in order to be used to sign jwt tokens for the bot server.
+	// We send entire group encryption sessions envelopes to the bot server to use as decryption
+	// material. The encrypted shared secret must be decrypted with the in-memory data decryption
+	// key in order to be used to sign jwt tokens for the bot server.
 	SendMessageSecrets struct {
 		EncryptionEnvelope    []byte
 		EncryptedSharedSecret [32]byte
@@ -86,6 +89,7 @@ type (
 		App              common.Address
 		Owner            common.Address
 		EncryptedSecret  [32]byte
+		ForwardSetting   protocol.ForwardSettingValue
 		WebhookUrl       string
 		EncryptionDevice EncryptionDevice
 	}
@@ -97,6 +101,7 @@ type (
 			ctx context.Context,
 			owner common.Address,
 			app common.Address,
+			forwardSetting protocol.ForwardSettingValue,
 			encryptedSharedSecret [32]byte,
 		) error
 
@@ -254,6 +259,7 @@ func (s *PostgresAppRegistryStore) CreateApp(
 	ctx context.Context,
 	owner common.Address,
 	app common.Address,
+	forwardSetting protocol.ForwardSettingValue,
 	encryptedSharedSecret [32]byte,
 ) error {
 	return s.txRunner(
@@ -261,7 +267,7 @@ func (s *PostgresAppRegistryStore) CreateApp(
 		"CreateApp",
 		pgx.ReadWrite,
 		func(ctx context.Context, tx pgx.Tx) error {
-			return s.createApp(ctx, owner, app, encryptedSharedSecret, tx)
+			return s.createApp(ctx, owner, app, forwardSetting, encryptedSharedSecret, tx)
 		},
 		nil,
 		"appAddress", app,
@@ -273,15 +279,17 @@ func (s *PostgresAppRegistryStore) createApp(
 	ctx context.Context,
 	owner common.Address,
 	app common.Address,
+	forwardSetting protocol.ForwardSettingValue,
 	encryptedSharedSecret [32]byte,
 	txn pgx.Tx,
 ) error {
 	if _, err := txn.Exec(
 		ctx,
-		"insert into app_registry (app_id, app_owner_id, encrypted_shared_secret) values ($1, $2, $3);",
+		"insert into app_registry (app_id, app_owner_id, encrypted_shared_secret, forward_setting) values ($1, $2, $3, $4);",
 		PGAddress(app),
 		PGAddress(owner),
 		PGSecret(encryptedSharedSecret),
+		forwardSetting,
 	); err != nil {
 		if isPgError(err, pgerrcode.UniqueViolation) {
 			return WrapRiverError(protocol.Err_ALREADY_EXISTS, err).Message("app already exists")
@@ -425,8 +433,8 @@ func (s *PostgresAppRegistryStore) getAppInfo(
 	if err := tx.QueryRow(
 		ctx,
 		`
-		    SELECT app_id, app_owner_id, encrypted_shared_secret, COALESCE(webhook, ''),
-		        COALESCE(device_key, ''), COALESCE(fallback_key, '')
+		    SELECT app_id, app_owner_id, encrypted_shared_secret, forward_setting,
+			    COALESCE(webhook, ''), COALESCE(device_key, ''), COALESCE(fallback_key, '')
 		    FROM app_registry WHERE app_id = $1
 		`,
 		app,
@@ -434,6 +442,7 @@ func (s *PostgresAppRegistryStore) getAppInfo(
 		&app,
 		&owner,
 		&encryptedSecret,
+		&appInfo.ForwardSetting,
 		&appInfo.WebhookUrl,
 		&appInfo.EncryptionDevice.DeviceKey,
 		&appInfo.EncryptionDevice.FallbackKey,
