@@ -33,7 +33,7 @@
 /.github/CODEOWNERS @sergekh2 @texuf
 /.vscode/ @texuf
 /assets/ @texuf
-/contracts/ @pfives @giuseppecrj @jterzis @shuhuiluo
+/packages/contracts/ @pfives @giuseppecrj @jterzis @shuhuiluo
 /core/ @sergekh2
 /core/node/ @sergekh2 @bas-vk
 /core/node/events/ @sergekh2 @texuf
