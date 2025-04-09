@@ -60,6 +60,7 @@ import { getUrlHref, isBlockquoteWithEmptyLines, isExactlyUrl } from '../utils/h
 import { ELEMENT_MENTION_TICKER, TickerMentionPlugin } from './createTickerMentionPlugin'
 import { TickerMentionElement } from '../components/plate-ui/TickerMentionElement'
 import { InsertTickerMentionPlugin } from './createInsertTickerMentionPlugin'
+import { createEthAddressPlugin } from './createEthAddressPlugin'
 
 const createTownsEditor = (
     uniqueId: string,
@@ -81,6 +82,11 @@ const createTownsEditor = (
                 options: {
                     isUrl: isExactlyUrl,
                     getUrlHref,
+                },
+            }),
+            createEthAddressPlugin({
+                onDetect: (address) => {
+                    console.log('ETH address detected:', address)
                 },
             }),
             ParagraphPlugin,
@@ -181,6 +187,7 @@ const createTownsEditor = (
                     as: 'em',
                     style: { fontStyle: 'italic' },
                 }),
+
                 [StrikethroughPlugin.key]: withProps(PlateLeaf, { as: 's' }),
                 [UnderlinePlugin.key]: withProps(PlateLeaf, { as: 'u' }),
             },
