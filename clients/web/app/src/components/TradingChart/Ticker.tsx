@@ -21,9 +21,7 @@ export const Ticker = (props: {
     eventId: string | undefined
     threadParentId: string | undefined
 }) => {
-    const tradingThreadContext = useContext(TickerThreadContext)
-
-    if (tradingThreadContext && props.threadParentId !== props.eventId) {
+    if (props.threadParentId && props.threadParentId !== props.eventId) {
         return (
             <MinimalTicker address={props.attachment.address} chainId={props.attachment.chainId} />
         )
@@ -47,15 +45,25 @@ export const MinimalTicker = (props: { address: string; chainId: string }) => {
         chain: chainId,
         disabled: !inView,
     })
+    const { openPanel } = usePanelActions()
 
     return (
         <Box
             padding
+            hoverable
             background="level2"
             rounded="md"
             className={isLoading ? shimmerClass : ''}
             minHeight="x8"
+            cursor="pointer"
             ref={ref}
+            onClick={() => {
+                openPanel(CHANNEL_INFO_PARAMS.TRADE_PANEL, {
+                    mode: 'buy',
+                    tokenAddress: address,
+                    chainId,
+                })
+            }}
         >
             {coinData ? (
                 <TickerHeader minimal coinData={coinData} address={address} chainId={chainId} />
