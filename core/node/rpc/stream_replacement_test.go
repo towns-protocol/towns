@@ -111,11 +111,11 @@ func testMigrateStreamToExtraNodes(t *testing.T) {
 				require.Error(c, err)
 
 				// Test stream is returned if RiverAllowNoQuorum is set
-				req1.Header().Set(RiverAllowNoQuorum, RiverHeaderTrueValue)
+				req1.Header().Set(RiverAllowNoQuorumHeader, RiverHeaderTrueValue)
 				_, err = testClient.GetStream(tt.ctx, req1)
 				require.NoError(c, err)
 
-				req2.Header().Set(RiverAllowNoQuorum, RiverHeaderTrueValue)
+				req2.Header().Set(RiverAllowNoQuorumHeader, RiverHeaderTrueValue)
 				_, err = testClient.GetLastMiniblockHash(tt.ctx, req2)
 				require.NoError(c, err)
 			}
@@ -139,12 +139,13 @@ func testMigrateStreamToExtraNodes(t *testing.T) {
 		})
 	}
 
+	// Check 1 quorum node works.
 	eventuallyStreamReplicatedOverNodes(initialReplFactor, initialReplFactor)
 
-	// place stream on replicationFactor nodes and ensure that stream is quorum and sync replicated
-
+	// Add 2 nodes to existing node.
 	placementNodeAddresses := randomPlacementNodes(t, tt, channelId, initialReplFactor, newReplicationFactor)
 
+	// Place stream on 1 quorum node and 2 reconciliation nodes.
 	tt.btc.SetStreamReplicationFactor(
 		t,
 		tt.ctx,
@@ -152,9 +153,9 @@ func testMigrateStreamToExtraNodes(t *testing.T) {
 			{StreamId: channelId, Nodes: placementNodeAddresses, ReplicationFactor: uint8(initialReplFactor)},
 		},
 	)
-
 	eventuallyStreamReplicatedOverNodes(initialReplFactor, newReplicationFactor)
 
+	// Place stream on 3 quorum nodes and 0 reconciliation nodes.
 	tt.btc.SetStreamReplicationFactor(
 		t,
 		tt.ctx,
@@ -162,7 +163,6 @@ func testMigrateStreamToExtraNodes(t *testing.T) {
 			{StreamId: channelId, Nodes: placementNodeAddresses, ReplicationFactor: uint8(newReplicationFactor)},
 		},
 	)
-
 	eventuallyStreamReplicatedOverNodes(newReplicationFactor, newReplicationFactor)
 }
 

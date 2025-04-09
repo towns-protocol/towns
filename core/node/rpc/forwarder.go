@@ -17,11 +17,11 @@ import (
 )
 
 const (
-	RiverNoForwardHeader = "X-River-No-Forward" // Must be set to "true" to disable forwarding
-	RiverHeaderTrueValue = "true"
-	RiverFromNodeHeader  = "X-River-From-Node"
-	RiverToNodeHeader    = "X-River-To-Node"
-	RiverAllowNoQuorum   = "X-River-Allow-No-Quorum" // Must be set to "true" to allow getting data if local node is not in quorum
+	RiverNoForwardHeader     = "X-River-No-Forward" // Must be set to "true" to disable forwarding
+	RiverHeaderTrueValue     = "true"
+	RiverFromNodeHeader      = "X-River-From-Node"
+	RiverToNodeHeader        = "X-River-To-Node"
+	RiverAllowNoQuorumHeader = "X-River-Allow-No-Quorum" // Must be set to "true" to allow getting data if local node is not in quorum
 )
 
 func checkNoForward[T any](req *connect.Request[T]) error {
@@ -36,13 +36,13 @@ func copyRequestForForwarding[T any](s *Service, req *connect.Request[T]) *conne
 	newReq.Header().Set(RiverNoForwardHeader, RiverHeaderTrueValue)
 	newReq.Header().Set(RiverFromNodeHeader, s.wallet.Address.Hex())
 	if allowNoQuorum(req) {
-		newReq.Header().Set(RiverAllowNoQuorum, RiverHeaderTrueValue)
+		newReq.Header().Set(RiverAllowNoQuorumHeader, RiverHeaderTrueValue)
 	}
 	return newReq
 }
 
 func allowNoQuorum[T any](req *connect.Request[T]) bool {
-	return req.Header().Get(RiverAllowNoQuorum) == RiverHeaderTrueValue
+	return req.Header().Get(RiverAllowNoQuorumHeader) == RiverHeaderTrueValue
 }
 
 // peerNodeStreamingResponseWithRetries makes a request with a streaming server response to remote nodes, retrying
