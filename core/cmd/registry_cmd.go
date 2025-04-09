@@ -243,6 +243,7 @@ func srStream(cfg *config.Config, streamId string, validate bool) error {
 
 	fmt.Printf("StreamId: %s\n", stream.StreamId().String())
 	fmt.Printf("Miniblock: %d %s\n", stream.LastMbNum(), stream.LastMbHash().Hex())
+	fmt.Printf("ReplFactor: %d\n", stream.ReplicationFactor())
 	fmt.Println("IsSealed: ", stream.IsSealed())
 	fmt.Println("Nodes:")
 	err = nil
