@@ -59,6 +59,14 @@ export async function sendUseropWithPermissionless(
 
     const _needsUpgrade = needsUpgrade(newAccountImplementationType, smartAccountClient)
 
+    console.log(`[UserOperations] debug::callData`, {
+        sender,
+        toAddress,
+        callData,
+        value,
+        needsUpgrade: _needsUpgrade,
+    })
+
     const _callData = await getCallDataForUserop({
         toAddress,
         callData,
