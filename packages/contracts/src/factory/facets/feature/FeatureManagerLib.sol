@@ -50,7 +50,7 @@ library FeatureManagerLib {
             CustomRevert.revertWith(IFeatureManagerFacetBase.InvalidToken.selector);
         }
 
-        _checkInterface(condition);
+        _validateGetVotes(condition);
 
         // Check totalSupply directly
         try IERC20(condition.token).totalSupply() returns (uint256 totalSupply) {
@@ -139,7 +139,7 @@ library FeatureManagerLib {
         condition.active = false;
     }
 
-    function _checkInterface(FeatureCondition calldata condition) internal view {
+    function _validateGetVotes(FeatureCondition calldata condition) internal view {
         // Check IVotes support by attempting to call getVotes
         try IVotes(condition.token).getVotes(address(this)) returns (uint256) {
             // If we get here, getVotes is supported
