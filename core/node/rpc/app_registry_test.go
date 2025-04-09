@@ -167,10 +167,12 @@ func isChannelMessageReply(
 	cipherTexts string,
 ) bool {
 	if msg := event.GetChannelMessage(); msg != nil {
-		if msg.Message.SessionId != sessionId {
+		if hex.EncodeToString(msg.Message.SessionIdBytes) != sessionId {
 			return false
 		}
-		if msg.Message.Ciphertext == fmt.Sprintf("%v %v reply (%v)", sessionId, originalText, cipherTexts) {
+
+		expectText := fmt.Sprintf("%v %v reply (%v)", sessionId, originalText, cipherTexts)
+		if msg.Message.Ciphertext == expectText {
 			return true
 		}
 	}
@@ -238,7 +240,7 @@ func TestAppRegistry_ForwardsChannelEvents(t *testing.T) {
 	tester := newServiceTester(t, serviceTesterOpts{numNodes: 1, start: true})
 	ctx := tester.ctx
 	// Uncomment to force logging only for the app registry service
-	// ctx := logging.CtxWithLog(tester.ctx, logging.DefaultZapLogger(zapcore.DebugLevel))
+	// ctx = logging.CtxWithLog(ctx, logging.DefaultLogger(zapcore.DebugLevel))
 	service := initAppRegistryService(ctx, tester)
 
 	require := tester.require
@@ -259,7 +261,7 @@ func TestAppRegistry_ForwardsChannelEvents(t *testing.T) {
 	)
 
 	// Start a test app service that serves webhook responses
-	appServer := app_registry.NewTestAppServer(t, wallet, client)
+	appServer := app_registry.NewTestAppServer(t, wallet, client, false)
 	defer appServer.Close()
 	go func() {
 		if err := appServer.Serve(tester.ctx); err != nil {
@@ -347,11 +349,12 @@ func TestAppRegistry_ForwardsChannelEvents(t *testing.T) {
 	// The app registry service does not have a session key for this session and should prompt
 	// the bot to solicit keys in the channel.
 	testMessageText := "xyz"
-	testSession := "session0"
+	testSessionBytes := []byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
+	testSession := hex.EncodeToString(testSessionBytes)
 	testCiphertexts := "ciphertext-device0-session0"
 	event, err := events.MakeEnvelopeWithPayload(
 		participant,
-		events.Make_ChannelPayload_Message_WithSession(testMessageText, testSession),
+		events.Make_ChannelPayload_Message_WithSessionBytes(testMessageText, testSessionBytes),
 		&MiniblockRef{
 			Num:  channel.GetMinipoolGen() - 1,
 			Hash: common.Hash(channel.GetPrevMiniblockHash()),
@@ -419,7 +422,7 @@ func TestAppRegistry_ForwardsChannelEvents(t *testing.T) {
 		})
 		assert.NoError(c, err)
 		assert.True(c, findMessageReply(c, res.Msg.Stream, testMessageText, testSession, testCiphertexts))
-	}, 1000*time.Second, 100*time.Millisecond, "App server did not respond to the participant sending keys")
+	}, 1*time.Second, 100*time.Millisecond, "App server did not respond to the participant sending keys")
 }
 
 // invalidAddressBytes is a slice of bytes that cannot be parsed into an address, because
@@ -538,7 +541,7 @@ func TestAppRegistry_GetSession(t *testing.T) {
 	tester := newServiceTester(t, serviceTesterOpts{numNodes: 1, start: true})
 	ctx := tester.ctx
 	// Uncomment to force logging only for the app registry service
-	// ctx := logging.CtxWithLog(tester.ctx, logging.DefaultZapLogger(zapcore.DebugLevel))
+	// ctx = logging.CtxWithLog(ctx, logging.DefaultLogger(zapcore.DebugLevel))
 	service := initAppRegistryService(ctx, tester)
 
 	require := tester.require
@@ -559,7 +562,7 @@ func TestAppRegistry_GetSession(t *testing.T) {
 	)
 
 	// Start a test app service that serves webhook responses
-	appServer := app_registry.NewTestAppServer(t, wallet, client)
+	appServer := app_registry.NewTestAppServer(t, wallet, client, false)
 	defer appServer.Close()
 	go func() {
 		if err := appServer.Serve(tester.ctx); err != nil {
@@ -796,7 +799,7 @@ func TestAppRegistry_RegisterWebhook(t *testing.T) {
 	tester := newServiceTester(t, serviceTesterOpts{numNodes: 1, start: true})
 	ctx := tester.ctx
 	// Uncomment for logging of app registry service
-	// ctx := logging.CtxWithLog(tester.ctx, logging.DefaultZapLogger(zapcore.DebugLevel))
+	// ctx = logging.CtxWithLog(ctx, logging.DefaultLogger(zapcore.DebugLevel))
 	service := initAppRegistryService(ctx, tester)
 
 	httpClient, _ := testcert.GetHttp2LocalhostTLSClient(ctx, tester.getConfig())
@@ -847,6 +850,7 @@ func TestAppRegistry_RegisterWebhook(t *testing.T) {
 		t,
 		appWallet,
 		tc.client,
+		false,
 	)
 	defer appServer.Close()
 
@@ -981,7 +985,7 @@ func TestAppRegistry_Status(t *testing.T) {
 	ownerWallet := safeNewWallet(tester.ctx, tester.require)
 	safeCreateUserStreams(t, tester.ctx, appWallet, tester.testClient(0), &testEncryptionDevice)
 
-	appServer := app_registry.NewTestAppServer(t, appWallet, tester.testClient(0))
+	appServer := app_registry.NewTestAppServer(t, appWallet, tester.testClient(0), false)
 	defer appServer.Close()
 	go func() {
 		if err := appServer.Serve(tester.ctx); err != nil {

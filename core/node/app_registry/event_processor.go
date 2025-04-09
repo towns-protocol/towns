@@ -2,6 +2,7 @@ package app_registry
 
 import (
 	"context"
+	"encoding/hex"
 
 	mapset "github.com/deckarep/golang-set/v2"
 	"github.com/ethereum/go-ethereum/common"
@@ -55,7 +56,7 @@ func (p *MessageToAppProcessor) OnMessageEvent(
 	message := event.GetEncryptedMessage()
 	// Ignore membership changes, etc, and focus only on channel content.
 	if message != nil {
-		if err := p.cache.DispatchOrEnqueueMessages(ctx, appIds, message.SessionId, channelId, streamEnvelope); err != nil {
+		if err := p.cache.DispatchOrEnqueueMessages(ctx, appIds, hex.EncodeToString(message.SessionIdBytes), channelId, streamEnvelope); err != nil {
 			log.Errorw(
 				"Error enqueueing messages for stream event",
 				"event",
