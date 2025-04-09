@@ -159,7 +159,7 @@ export class SyncedStream extends Stream implements ISyncedStream {
             .filter(isDefined)
 
         const lastSnapshotMiniblockNum =
-            miniblock.header.snapshot !== undefined
+            miniblock.header.snapshot !== undefined || miniblock.header.snapshotHash !== undefined
                 ? miniblock.header.miniblockNum
                 : miniblock.header.prevSnapshotMiniblockNum
 
