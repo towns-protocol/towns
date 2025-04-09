@@ -16,9 +16,9 @@ import { RichTextPreview } from '@components/RichTextPlate/RichTextPreview'
 import { LoadingUnfurledLinkAttachment } from 'hooks/useExtractInternalLinks'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
 import { shortAddress } from 'ui/utils/utils'
-import { useCoinData } from '@components/TradingChart/useCoinData'
 import { TokenIcon } from '@components/Web3/Trading/ui/TokenIcon'
 import { isTradingChain } from '@components/Web3/Trading/tradingConstants'
+import { TMentionTicker } from '@components/RichTextPlate/components/plate-ui/autocomplete/types'
 
 type MessageAttachmentPreviewProps = {
     attachment: EmbeddedMessageAttachment
@@ -208,7 +208,7 @@ const UnfurledLinkPreview = (props: {
 }
 
 const TickerPreview = (props: {
-    attachment: TickerAttachment
+    attachment: TickerAttachment & { coinData?: TMentionTicker }
     onRemove?: (address: string, chainId: string) => void
 }) => {
     const { onRemove, attachment } = props
@@ -222,13 +222,6 @@ const TickerPreview = (props: {
         [onRemove, attachment],
     )
 
-    const { data: coinData } = useCoinData({
-        address: attachment.address,
-        chain: attachment.chainId,
-    })
-
-    const token = coinData?.token
-
     return (
         <Box
             hoverable
@@ -240,18 +233,18 @@ const TickerPreview = (props: {
             cursor="pointer"
         >
             <Stack horizontal gap alignItems="center" minWidth="150" justifyContent="spaceBetween">
-                {token ? (
+                {attachment.coinData ? (
                     <Box horizontal gap alignItems="center" position="relative">
                         <TokenIcon
                             asset={{
-                                imageUrl: token.info.imageThumbUrl ?? '',
+                                imageUrl: attachment.coinData.imageUrl ?? '',
                                 chain: isTradingChain(attachment.chainId)
                                     ? attachment.chainId
                                     : undefined,
                             }}
                         />
                         <Paragraph truncate strong size="sm">
-                            {token.symbol}
+                            {attachment.coinData.symbol}
                         </Paragraph>
                     </Box>
                 ) : (
@@ -263,7 +256,6 @@ const TickerPreview = (props: {
                 <IconButton
                     background="lightHover"
                     rounded="full"
-                    insetX="xs"
                     size="square_xs"
                     icon="close"
                     color="default"

@@ -93,7 +93,9 @@ const TownsTextEditorWithoutBoundary = ({
         (UnfurledLinkAttachment | LoadingUnfurledLinkAttachment)[]
     >([])
 
-    const [tickerAttachments, setTickerAttachments] = useState<TickerAttachment[]>([])
+    const [tickerAttachments, setTickerAttachments] = useState<
+        (TickerAttachment & { coinData?: TMentionTicker })[]
+    >([])
 
     const channelId = useChannelId()
     const { lookupUser } = useUserLookupContext()
@@ -113,7 +115,10 @@ const TownsTextEditorWithoutBoundary = ({
                     id: ticker.address,
                     address: ticker.address,
                     chainId: ticker.chain,
-                } satisfies TickerAttachment,
+                    coinData: {
+                        ...ticker,
+                    },
+                } satisfies TickerAttachment & { coinData?: TMentionTicker },
             ])
         },
         [tickerAttachments],
