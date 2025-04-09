@@ -56,7 +56,10 @@ func (p *MessageToAppProcessor) OnMessageEvent(
 	message := event.GetEncryptedMessage()
 	// Ignore membership changes, etc, and focus only on channel content.
 	if message != nil {
-		if err := p.cache.DispatchOrEnqueueMessages(ctx, appIds, hex.EncodeToString(message.SessionIdBytes), channelId, streamEnvelope); err != nil {
+		// Session ids are stored in key solicitations and responses as encoded hex strings, but are sent
+		// as raw bytes in channel messages. Here, we encode and store as a hex string for convenience.
+		encodedSessionId := hex.EncodeToString(message.SessionIdBytes)
+		if err := p.cache.DispatchOrEnqueueMessages(ctx, appIds, encodedSessionId, channelId, streamEnvelope); err != nil {
 			log.Errorw(
 				"Error enqueueing messages for stream event",
 				"event",
