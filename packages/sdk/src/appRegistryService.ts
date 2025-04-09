@@ -1,13 +1,14 @@
 import { makeAuthenticationRpcClient } from './makeAuthenticationRpcClient'
 import { bin_fromHexString, check } from '@towns-protocol/dlog'
-import { riverSign, rpcAuthHash } from './sign'
+import { appRegistryHash, riverSign } from './sign'
 import { isDefined } from './check'
 import { Signer } from 'ethers'
 import { RpcOptions } from './rpcCommon'
 import { SignerContext } from './signerContext'
 import { hashPersonalMessage } from '@ethereumjs/util'
+import { makeAppRegistryRpcClient } from './makeAppRegistryRpcClient'
 
-export class AuthRpcService {
+export class AppRegistryService {
     private static async _authenticateCommon(
         userId: Uint8Array,
         serviceUrl: string,
@@ -21,7 +22,11 @@ export class AuthRpcService {
         check(startResponse.challenge.length >= 16, 'challenge must be 16 bytes')
         check(isDefined(startResponse.expiration), 'expiration must be defined')
 
-        const hash = rpcAuthHash(userId, startResponse.expiration.seconds, startResponse.challenge)
+        const hash = appRegistryHash(
+            userId,
+            startResponse.expiration.seconds,
+            startResponse.challenge,
+        )
 
         const signature = await getSignature(hash)
         const finishResponse = await authenticationRpcClient.finishAuthentication({
@@ -30,7 +35,16 @@ export class AuthRpcService {
             signature,
             ...extraFinishAuthParams,
         })
-        return { startResponse, finishResponse }
+        const appRegistryRpcClient = makeAppRegistryRpcClient(
+            serviceUrl,
+            finishResponse.sessionToken,
+            opts,
+        )
+        return {
+            startResponse,
+            finishResponse,
+            appRegistryRpcClient,
+        }
     }
 
     static async authenticate(signerContext: SignerContext, serviceUrl: string, opts?: RpcOptions) {

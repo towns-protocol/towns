@@ -48,37 +48,24 @@ export const SelectChannelRoute = () => {
                         <div className="flex items-center justify-between gap-2">
                             <h2 className="text-xs">Select a channel to start messaging</h2>
                             <div className="flex items-center gap-2">
-                                <Dialog
-                                    open={botMintDialogOpen}
-                                    onOpenChange={setBotMintDialogOpen}
-                                >
-                                    <Tooltip title="Mint a new bot">
-                                        <Button
-                                            variant="outline"
-                                            size="icon"
-                                            onClick={() => setBotMintDialogOpen(true)}
-                                        >
-                                            <BotIcon className="h-4 w-4" />
-                                        </Button>
-                                    </Tooltip>
-                                    <MintBotDialog />
-                                </Dialog>
-
-                                <Dialog
-                                    open={botSettingsDialogOpen}
-                                    onOpenChange={setBotSettingsDialogOpen}
-                                >
-                                    <Tooltip title="Bot settings">
-                                        <Button
-                                            variant="outline"
-                                            size="icon"
-                                            onClick={() => setBotSettingsDialogOpen(true)}
-                                        >
-                                            <GearIcon className="h-4 w-4" />
-                                        </Button>
-                                    </Tooltip>
-                                    <BotSettingsDialog />
-                                </Dialog>
+                                <Tooltip title="Mint a new bot">
+                                    <Button
+                                        variant="outline"
+                                        size="icon"
+                                        onClick={() => setBotMintDialogOpen(true)}
+                                    >
+                                        <BotIcon className="h-4 w-4" />
+                                    </Button>
+                                </Tooltip>
+                                <Tooltip title="Bot settings">
+                                    <Button
+                                        variant="outline"
+                                        size="icon"
+                                        onClick={() => setBotSettingsDialogOpen(true)}
+                                    >
+                                        <GearIcon className="h-4 w-4" />
+                                    </Button>
+                                </Tooltip>
 
                                 <Dialog
                                     open={createChannelDialogOpen}
@@ -132,6 +119,11 @@ export const SelectChannelRoute = () => {
                 }
                 main={<Outlet />}
             />
+            <BotSettingsDialog
+                open={botSettingsDialogOpen}
+                onOpenChange={setBotSettingsDialogOpen}
+            />
+            <MintBotDialog open={botMintDialogOpen} onOpenChange={setBotMintDialogOpen} />
         </SpaceProvider>
     )
 }

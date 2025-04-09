@@ -1,9 +1,7 @@
 /* eslint-disable import/no-extraneous-dependencies */
 import { Hono } from 'hono'
-import { createConnectTransport } from '@connectrpc/connect-web'
 import {
     Client,
-    makeAppRegistryRpcClient,
     makeRiverConfig,
     makeRiverRpcClient,
     makeSignerContext,
@@ -13,11 +11,14 @@ import {
 } from '@towns-protocol/sdk'
 import { ethers } from 'ethers'
 
-const APP_REGISTRY_URL = 'http://localhost:8546'
+// const APP_REGISTRY_URL = 'http://localhost:5180'
 const ENV = 'local_multi_ne'
 
 // TODO: env and jwt should be env vars
 const bot = async (mnemonic: string, env: string, jwt: string) => {
+    if (!jwt) {
+        throw new Error('JWT is required')
+    }
     const server = new Hono()
     const wallet = ethers.Wallet.fromMnemonic(mnemonic)
     const delegateWallet = ethers.Wallet.createRandom()
@@ -36,11 +37,22 @@ const bot = async (mnemonic: string, env: string, jwt: string) => {
         new MockEntitlementsDelegate(), // argh is it okay?
     )
 
-    // const AppRegistry = makeAppRegistryRpcClient(APP_REGISTRY_URL, jwt) // ?
+    // const AppRegistry = makeAppRegistryRpcClient(APP_REGISTRY_URL, sessionToken) // ?
 
-    server.get('/webhook', (c) => c.json(c.req.query))
+    server.post('/webhook', (c) => {
+        if (c.req.header('Authorization')?.replace('Bearer ', '') !== jwt) {
+            return c.json({ error: 'Unauthorized' }, 401)
+        }
+        // get envelope from body?
+        // process envelope using the client
+        // return 200
+        return c.json({ message: 'Hello, world!' })
+    })
     return { server }
 }
 
-await bot('I LOVE MY WIFE', ENV, 'def-not-a-jwt-token')
-// run hono server
+// eslint-disable-next-line @typescript-eslint/no-floating-promises
+;(async () => {
+    await bot('I LOVE MY WIFE', ENV, 'def-not-a-jwt-token')
+    // run hono server
+})()

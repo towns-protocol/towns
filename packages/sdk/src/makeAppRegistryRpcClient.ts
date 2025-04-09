@@ -1,11 +1,15 @@
-/* eslint-disable import/no-extraneous-dependencies */
 import { Client, createClient } from '@connectrpc/connect'
 import { ConnectTransportOptions } from '@connectrpc/connect-web'
 import { AppRegistryService } from '@towns-protocol/proto'
 import { dlog } from '@towns-protocol/dlog'
-import { DEFAULT_RETRY_PARAMS, retryInterceptor, setHeaderInterceptor } from './rpcInterceptors'
-import { type RpcOptions, createHttp2ConnectTransport } from './rpcCommon'
-import { randomUrlSelector, getEnvVar } from './utils'
+import { getEnvVar, randomUrlSelector } from './utils'
+import { createHttp2ConnectTransport, RpcOptions } from './rpcCommon'
+import {
+    DEFAULT_RETRY_PARAMS,
+    loggingInterceptor,
+    retryInterceptor,
+    setHeaderInterceptor,
+} from './rpcInterceptors'
 
 const logInfo = dlog('csb:rpc:info')
 
@@ -15,9 +19,7 @@ export type AppRegistryRpcClient = Client<typeof AppRegistryService> & { url: st
 
 export function makeAppRegistryRpcClient(
     dest: string,
-    // Does it require the session token or the JWT?
-    // sessionToken: string,
-    jwt?: string,
+    sessionToken: string,
     opts?: RpcOptions,
 ): AppRegistryRpcClient {
     const transportId = nextRpcClientNum++
@@ -35,10 +37,8 @@ export function makeAppRegistryRpcClient(
         baseUrl: url,
         interceptors: [
             ...(opts?.interceptors ?? []),
-            // ...(sessionToken ? [setHeaderInterceptor({ Authorization: sessionToken })] : []),
-            ...(jwt ? [setHeaderInterceptor({ Authorization: `Bearer ${jwt}` })] : []),
-
-            // loggingInterceptor(transportId, 'NotificationService'),
+            setHeaderInterceptor({ Authorization: sessionToken }),
+            loggingInterceptor(transportId, 'AppRegistryService'),
             retryInterceptor(retryParams),
         ],
         defaultTimeoutMs: undefined, // default timeout is undefined, we add a timeout in the retryInterceptor
