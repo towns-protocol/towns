@@ -114,7 +114,9 @@ export const BotSettingsDialog = ({
             onOpenChange={(open) => {
                 onOpenChange(open)
                 botForm.reset()
+                registerBotMutation.reset()
                 webhookForm.reset()
+                registerWebhookMutation.reset()
             }}
         >
             <DialogContent className="sm:max-w-md">
