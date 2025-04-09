@@ -15,7 +15,7 @@
         "typescript": "^5.8.2"
     },
     "peerDependencies": {
-        "@privy-io/react-auth": "2.4.3",
+        "@privy-io/react-auth": "2.8.3",
         "@privy-io/wagmi-connector": "^0.1.13",
         "@types/react": "^18.2.11",
         "@types/react-dom": "^18.2.4",

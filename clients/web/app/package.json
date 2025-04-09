@@ -32,7 +32,7 @@
         "@giphy/react-components": "^6.2.0",
         "@hookform/resolvers": "^3.6.0",
         "@ngneat/falso": "^6.1.0",
-        "@privy-io/react-auth": "2.4.3",
+        "@privy-io/react-auth": "2.8.3",
         "@privy-io/wagmi": "^1.0.2",
         "@react-hook/resize-observer": "^1.2.6",
         "@react-spring/three": "^9.7.3",
