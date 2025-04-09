@@ -3,6 +3,7 @@ package storage
 import (
 	"context"
 	"encoding/hex"
+	"math/rand/v2"
 	"strings"
 	"sync"
 	"testing"
@@ -10,7 +11,6 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
-	"golang.org/x/exp/rand"
 
 	"github.com/towns-protocol/towns/core/config"
 	. "github.com/towns-protocol/towns/core/node/base"
@@ -1094,19 +1094,35 @@ func TestNotFound(t *testing.T) {
 	require.Equal(Err_NOT_FOUND, AsRiverError(err).Code)
 }
 
-type dataMaker rand.Rand
+type dataMaker struct {
+	source rand.Source
+}
 
 func newDataMaker() *dataMaker {
-	return (*dataMaker)(rand.New(rand.NewSource(42)))
+	return &dataMaker{source: rand.NewPCG(42, 42)}
+}
+
+func (m *dataMaker) read(p []byte) {
+	pos := 0
+	var val uint64
+	for n := 0; n < len(p); n++ {
+		if pos == 0 {
+			val = m.source.Uint64()
+			pos = 8
+		}
+		p[n] = byte(val)
+		val >>= 8
+		pos--
+	}
 }
 
 func (m *dataMaker) mb(num int64, sn bool) *MiniblockDescriptor {
 	b := make([]byte, 200)
-	_, _ = (*rand.Rand)(m).Read(b)
+	m.read(b)
 	var snapshot []byte
 	if sn {
 		snapshot = make([]byte, 200)
-		_, _ = (*rand.Rand)(m).Read(snapshot)
+		m.read(snapshot)
 	}
 	// Hash is fake
 	return &MiniblockDescriptor{
@@ -1121,7 +1137,7 @@ func (m *dataMaker) mbs(start, n int) []*WriteMiniblockData {
 	var ret []*WriteMiniblockData
 	for i := range n {
 		b := make([]byte, 200)
-		_, _ = (*rand.Rand)(m).Read(b)
+		m.read(b)
 		ret = append(ret, &WriteMiniblockData{
 			Number: int64(start + i),
 			Hash:   common.BytesToHash(b), // Hash is fake
@@ -1135,7 +1151,7 @@ func (m *dataMaker) events(n int) [][]byte {
 	var ret [][]byte
 	for range n {
 		b := make([]byte, 50)
-		_, _ = (*rand.Rand)(m).Read(b)
+		m.read(b)
 		ret = append(ret, b)
 	}
 	return ret

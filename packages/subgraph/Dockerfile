@@ -26,13 +26,13 @@ ENV PATH="/root/.foundry/bin:${PATH}"
 RUN corepack enable
 
 # Copy monorepo configuration from root
-COPY package.json yarn.lock .yarnrc.yml foundry.toml remappings.txt ./
+COPY package.json yarn.lock .yarnrc.yml ./
 COPY .yarn ./.yarn
 
 # Copy the required packages
 COPY packages/subgraph ./packages/subgraph/
 COPY packages/prettier-config ./packages/prettier-config/
-COPY contracts ./contracts/
+COPY packages/contracts ./packages/contracts/
 
 # Add entrypoint script
 RUN chmod +x ./packages/subgraph/docker-entrypoint.sh
@@ -41,7 +41,7 @@ RUN chmod +x ./packages/subgraph/docker-entrypoint.sh
 RUN yarn install
 
 # Build contracts
-WORKDIR /river/contracts
+WORKDIR /river/packages/contracts
 RUN make build
 WORKDIR /river
 

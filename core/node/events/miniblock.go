@@ -48,13 +48,14 @@ func Make_GenesisMiniblockHeader(parsedEvents []*ParsedEvent) (*MiniblockHeader,
 
 // MakeGenesisMiniblock creates a genesis miniblock with the given events.
 // Returns the miniblock and the snapshot envelope.
+// IMPORTANT: Genesis miniblocks use the legacy format of snapshots.
 func MakeGenesisMiniblock(
 	wallet *crypto.Wallet,
 	genesisMiniblockEvents []*ParsedEvent,
-) (*Miniblock, *Envelope, error) {
+) (*Miniblock, error) {
 	header, err := Make_GenesisMiniblockHeader(genesisMiniblockEvents)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	headerEnvelope, err := MakeEnvelopeWithPayload(
@@ -63,7 +64,7 @@ func MakeGenesisMiniblock(
 		nil,
 	)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	envelopes := make([]*Envelope, len(genesisMiniblockEvents))
@@ -71,15 +72,10 @@ func MakeGenesisMiniblock(
 		envelopes[i] = e.Envelope
 	}
 
-	snapshotEnvelope, err := MakeSnapshotEnvelope(wallet, header.Snapshot)
-	if err != nil {
-		return nil, nil, err
-	}
-
 	return &Miniblock{
 		Events: envelopes,
 		Header: headerEnvelope,
-	}, snapshotEnvelope, nil
+	}, nil
 }
 
 func NextMiniblockTimestamp(prevBlockTimestamp *timestamppb.Timestamp) *timestamppb.Timestamp {

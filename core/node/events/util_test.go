@@ -135,6 +135,7 @@ func makeCacheTestContext(t *testing.T, p testParams) (context.Context, *cacheTe
 		ctc.require.NoError(err)
 
 		params := &StreamCacheParams{
+			ServerCtx:               ctx,
 			Storage:                 streamStore.Storage,
 			Wallet:                  bc.Wallet,
 			RiverChain:              bc,
@@ -433,8 +434,8 @@ func (i *cacheTestInstance) makeMbCandidate(
 		stream: stream,
 		cache:  i.cache,
 	}
-	j.remoteNodes, _ = j.stream.GetRemotesAndIsLocal()
-	j.replicated = len(j.remoteNodes) > 0
+	j.quorumNodes, _ = j.stream.GetRemotesAndIsLocal()
+	j.replicated = len(j.quorumNodes) > 0
 	err := j.makeCandidate(ctx)
 	if err != nil {
 		return nil, err
