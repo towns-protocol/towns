@@ -2,6 +2,7 @@ package events
 
 import (
 	"context"
+	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/gammazero/workerpool"
@@ -21,39 +22,37 @@ type reconcileTask struct {
 }
 
 func (s *StreamCache) SubmitSyncStreamTask(
-	ctx context.Context,
 	stream *Stream,
 	streamRecord *river.StreamWithId,
 ) {
-	s.submitSyncStreamTaskToPool(ctx, s.onlineSyncWorkerPool, stream, streamRecord)
+	s.submitSyncStreamTaskToPool(s.onlineSyncWorkerPool, stream, streamRecord)
 }
 
 func (s *StreamCache) submitSyncStreamTaskToPool(
-	ctx context.Context,
 	pool *workerpool.WorkerPool,
 	stream *Stream,
 	streamRecord *river.StreamWithId,
 ) {
-	s.stoppedMu.RLock()
-	stopped := s.stopped
-	s.stoppedMu.RUnlock()
-	if stopped {
-		return
-	}
-
-	// TODO: REPLICATION: remove context from params and refactor to use default server context
-	ctx = context.WithoutCancel(ctx)
-
 	if streamRecord == nil {
-		s.submitGetRecordTask(ctx, pool, stream)
+		s.submitGetRecordTask(pool, stream)
 	} else {
-		s.submitReconciliationTask(ctx, pool, stream, streamRecord)
+		s.submitReconciliationTask(pool, stream, streamRecord)
 	}
 
 }
 
+func (s *StreamCache) submitToPool(
+	pool *workerpool.WorkerPool,
+	task func(),
+) {
+	s.stoppedMu.RLock()
+	defer s.stoppedMu.RUnlock()
+	if !s.stopped {
+		pool.Submit(task)
+	}
+}
+
 func (s *StreamCache) submitGetRecordTask(
-	ctx context.Context,
 	pool *workerpool.WorkerPool,
 	stream *Stream,
 ) {
@@ -62,17 +61,19 @@ func (s *StreamCache) submitGetRecordTask(
 		return
 	}
 
-	pool.Submit(func() {
-		s.getRecordTask(ctx, pool, stream)
+	s.submitToPool(pool, func() {
+		s.getRecordTask(pool, stream)
 	})
 }
 
 func (s *StreamCache) getRecordTask(
-	ctx context.Context,
 	pool *workerpool.WorkerPool,
 	stream *Stream,
 ) {
 	s.scheduledGetRecordTasks.Delete(stream.streamId)
+
+	ctx, cancel := context.WithTimeout(s.params.ServerCtx, 5*time.Second)
+	defer cancel()
 
 	streamRecord, err := s.params.Registry.GetStreamOnLatestBlock(ctx, stream.streamId)
 	if err != nil {
@@ -80,11 +81,10 @@ func (s *StreamCache) getRecordTask(
 		return
 	}
 
-	s.submitReconciliationTask(ctx, pool, stream, streamRecord)
+	s.submitReconciliationTask(pool, stream, streamRecord)
 }
 
 func (s *StreamCache) submitReconciliationTask(
-	ctx context.Context,
 	pool *workerpool.WorkerPool,
 	stream *Stream,
 	streamRecord *river.StreamWithId,
@@ -111,15 +111,14 @@ func (s *StreamCache) submitReconciliationTask(
 		})
 
 	if schedule {
-		pool.Submit(func() {
-			s.reconciliationTask(ctx, pool, stream.StreamId())
+		s.submitToPool(pool, func() {
+			s.reconciliationTask(pool, stream.StreamId())
 		})
 	}
 
 }
 
 func (s *StreamCache) reconciliationTask(
-	ctx context.Context,
 	pool *workerpool.WorkerPool,
 	streamId StreamId,
 ) {
@@ -142,7 +141,7 @@ func (s *StreamCache) reconciliationTask(
 		},
 	)
 	if corrupt {
-		logging.FromCtx(ctx).Errorw("reconciliationTask: Corrupt task (double submission?)",
+		logging.FromCtx(s.params.ServerCtx).Errorw("reconciliationTask: Corrupt task (double submission?)",
 			"stream", streamId,
 			"record", streamRecord,
 			"taskPresent", ok,
@@ -150,9 +149,9 @@ func (s *StreamCache) reconciliationTask(
 		return
 	}
 
-	err := s.syncStreamFromPeers(ctx, stream, streamRecord)
+	err := s.syncStreamFromPeers(stream, streamRecord)
 	if err != nil {
-		logging.FromCtx(ctx).
+		logging.FromCtx(s.params.ServerCtx).
 			Errorw("syncStreamFromPeers: Unable to sync stream from peers",
 				"stream", stream.streamId,
 				"error", err,
@@ -177,13 +176,13 @@ func (s *StreamCache) reconciliationTask(
 		},
 	)
 	if corrupt {
-		logging.FromCtx(ctx).Errorw("reconciliationTask: Corrupt task 2", "stream", streamId, "record", streamRecord)
+		logging.FromCtx(s.params.ServerCtx).Errorw("reconciliationTask: Corrupt task 2", "stream", streamId, "record", streamRecord)
 		return
 	}
 
 	if schedule {
-		pool.Submit(func() {
-			s.reconciliationTask(ctx, pool, streamId)
+		s.submitToPool(pool, func() {
+			s.reconciliationTask(pool, streamId)
 		})
 	}
 }
@@ -191,15 +190,18 @@ func (s *StreamCache) reconciliationTask(
 // syncStreamFromPeers syncs the database for the given streamResult by fetching missing blocks from peers
 // participating in the stream.
 func (s *StreamCache) syncStreamFromPeers(
-	ctx context.Context,
 	stream *Stream,
 	streamRecord *river.StreamWithId,
 ) error {
+	ctx := s.params.ServerCtx
+
 	// TODO: double check if this is correct to normalize here
 	// Try to normalize the given stream if needed.
-	err := s.normalizeEphemeralStream(ctx, stream, streamRecord.LastMbNum(), streamRecord.IsSealed())
-	if err != nil {
-		return err
+	if streamRecord.IsSealed() {
+		err := s.normalizeEphemeralStream(ctx, stream, streamRecord.LastMbNum(), streamRecord.IsSealed())
+		if err != nil {
+			return err
+		}
 	}
 
 	lastMiniblockNum, err := stream.getLastMiniblockNumSkipLoad(ctx)
@@ -226,7 +228,7 @@ func (s *StreamCache) syncStreamFromPeers(
 	remote := stream.GetStickyPeer()
 	var nextFromInclusive int64
 	for range remotes {
-		nextFromInclusive, err = s.syncStreamFromSinglePeer(ctx, stream, remote, fromInclusive, toExclusive)
+		nextFromInclusive, err = s.syncStreamFromSinglePeer(stream, remote, fromInclusive, toExclusive)
 		if err == nil && nextFromInclusive >= toExclusive {
 			return nil
 		}
@@ -241,12 +243,14 @@ func (s *StreamCache) syncStreamFromPeers(
 // syncStreamFromSinglePeer syncs the database for the given streamResult by fetching missing blocks from a single peer.
 // It returns block number of last block successfully synced + 1.
 func (s *StreamCache) syncStreamFromSinglePeer(
-	ctx context.Context,
 	stream *Stream,
 	remote common.Address,
 	fromInclusive int64,
 	toExclusive int64,
 ) (int64, error) {
+	ctx, cancel := context.WithTimeout(s.params.ServerCtx, 120*time.Second)
+	defer cancel()
+
 	pageSize := s.params.Config.StreamReconciliation.GetMiniblocksPageSize
 	if pageSize <= 0 {
 		pageSize = 128

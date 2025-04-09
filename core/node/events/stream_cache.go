@@ -34,6 +34,7 @@ type Scrubber interface {
 }
 
 type StreamCacheParams struct {
+	ServerCtx               context.Context
 	Storage                 storage.StreamStorage
 	Wallet                  *crypto.Wallet
 	RiverChain              *crypto.Blockchain
@@ -77,8 +78,6 @@ type StreamCache struct {
 	scheduledReconciliationTasks *xsync.Map[StreamId, *reconcileTask]
 
 	onlineSyncWorkerPool *workerpool.WorkerPool
-
-	disableCallbacks bool
 }
 
 func NewStreamCache(params *StreamCacheParams) *StreamCache {
@@ -117,7 +116,6 @@ func NewStreamCache(params *StreamCacheParams) *StreamCache {
 		),
 		chainConfig:                  params.ChainConfig,
 		onlineSyncWorkerPool:         workerpool.New(params.Config.StreamReconciliation.OnlineWorkerPoolSize),
-		disableCallbacks:             params.disableCallbacks,
 		scheduledGetRecordTasks:      xsync.NewMap[StreamId, bool](),
 		scheduledReconciliationTasks: xsync.NewMap[StreamId, *reconcileTask](),
 	}
@@ -156,7 +154,6 @@ func (s *StreamCache) Start(ctx context.Context) error {
 		s.cache.Store(streamRecord.StreamId(), stream)
 		if s.params.Config.StreamReconciliation.InitialWorkerPoolSize > 0 {
 			s.submitSyncStreamTaskToPool(
-				ctx,
 				initialSyncWorkerPool,
 				stream,
 				streamRecord,
@@ -170,7 +167,7 @@ func (s *StreamCache) Start(ctx context.Context) error {
 	go initialSyncWorkerPool.StopWait()
 
 	// TODO: add buffered channel to avoid blocking ChainMonitor
-	if !s.disableCallbacks {
+	if !s.params.disableCallbacks {
 		s.params.RiverChain.ChainMonitor.OnBlockWithLogs(
 			s.params.AppliedBlockNum+1,
 			s.onBlockWithLogs,
@@ -465,7 +462,7 @@ func (s *StreamCache) loadStreamRecordImpl(
 				return ret, false
 			},
 		)
-		s.SubmitSyncStreamTask(ctx, stream, record)
+		s.SubmitSyncStreamTask(stream, record)
 		return stream, nil
 	}
 

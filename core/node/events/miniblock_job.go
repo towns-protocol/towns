@@ -186,7 +186,7 @@ func (j *mbJob) processRemoteProposals(ctx context.Context) ([]*mbProposal, *Str
 	if quorumErr != nil {
 		// if one of the nodes returned MINIBLOCK_TOO_OLD it indicates that this node has fallen behind, sync to catch up.
 		if AsRiverError(quorumErr).IsCodeWithBases(Err_MINIBLOCK_TOO_OLD) {
-			j.cache.SubmitSyncStreamTask(ctx, j.stream, nil)
+			j.cache.SubmitSyncStreamTask(j.stream, nil)
 		}
 		return nil, nil, quorumErr
 	}
