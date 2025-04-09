@@ -1,7 +1,7 @@
 import { makeAuthenticationRpcClient } from './makeAuthenticationRpcClient'
 import { makeNotificationRpcClient } from './makeNotificationRpcClient'
 import { bin_fromHexString, check } from '@towns-protocol/dlog'
-import { rpcAuthHash, riverSign } from './sign'
+import { riverSign, notificationServiceHash } from './sign'
 import { isDefined } from './check'
 import { Signer } from 'ethers'
 import { RpcOptions } from './rpcCommon'
@@ -23,7 +23,11 @@ export class NotificationService {
         check(startResponse.challenge.length >= 16, 'challenge must be 16 bytes')
         check(isDefined(startResponse.expiration), 'expiration must be defined')
 
-        const hash = rpcAuthHash(userId, startResponse.expiration.seconds, startResponse.challenge)
+        const hash = notificationServiceHash(
+            userId,
+            startResponse.expiration.seconds,
+            startResponse.challenge,
+        )
 
         const signature = await getSignature(hash)
         const finishResponse = await authenticationRpcClient.finishAuthentication({

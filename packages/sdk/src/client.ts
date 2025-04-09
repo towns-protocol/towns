@@ -53,6 +53,7 @@ import {
     SolanaBlockchainTransactionReceipt,
     SessionKeysSchema,
     EnvelopeSchema,
+    UserMetadataPayload_EncryptionDeviceSchema,
 } from '@towns-protocol/proto'
 import {
     bin_fromHexString,
@@ -1200,6 +1201,24 @@ export class Client
         await this.makeEventAndAddToStream(streamId, make_MemberPayload_Nft(payload), {
             method: 'nft',
         })
+    }
+
+    async bot_I_will_move_this_function_into_another_place_soon_pushDeviceToStream() {
+        if (!this.cryptoInitialized) {
+            throw new Error('crypto not initialized')
+        }
+        const device = this.cryptoBackend?.getUserDevice()
+        if (!device) {
+            throw new Error('device not found')
+        }
+        return await this.makeEventAndAddToStream(
+            makeUserMetadataStreamId(this.userId),
+            make_UserMetadataPayload_EncryptionDevice({
+                deviceKey: device.deviceKey,
+                fallbackKey: device.fallbackKey,
+            }),
+            { method: 'pushDeviceToStream' },
+        )
     }
 
     async pin(streamId: string, eventId: string) {

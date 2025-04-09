@@ -13,16 +13,23 @@ import {
     userIdFromAddress,
 } from '@towns-protocol/sdk'
 import { useMutation } from '@tanstack/react-query'
-import { AlertTriangle, LoaderCircleIcon } from 'lucide-react'
+import { LoaderCircleIcon } from 'lucide-react'
 import { toBinary } from '@bufbuild/protobuf'
 import { ExportedDeviceSchema } from '@towns-protocol/proto'
 import { bin_toBase64 } from '@towns-protocol/dlog'
 import { useEthersSigner } from '@/utils/viem-to-ethers'
 import { useCurrentSpaceId } from '@/hooks/current-space'
-import { DialogContent, DialogDescription, DialogTitle } from '../ui/dialog'
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from '../ui/dialog'
 import { Button } from '../ui/button'
+import { SecretInformationBanner } from '../ui/secret-information-banner'
 
-export const MintBotDialog = () => {
+export const MintBotDialog = ({
+    open,
+    onOpenChange,
+}: {
+    open: boolean
+    onOpenChange: (open: boolean) => void
+}) => {
     const signer = useEthersSigner()
     const sync = useSyncAgent()
     const spaceId = useCurrentSpaceId()
@@ -31,6 +38,7 @@ export const MintBotDialog = () => {
         isPending,
         data,
         error,
+        reset,
     } = useMutation({
         mutationFn: async () => {
             if (!signer) {
@@ -71,6 +79,7 @@ export const MintBotDialog = () => {
                 botClient.setUsername(spaceId, `bot-${userId}`),
                 botClient.setDisplayName(spaceId, `bot-${userId}`),
             ])
+            await botClient.bot_I_will_move_this_function_into_another_place_soon_pushDeviceToStream()
             const channelId = makeDefaultChannelStreamId(spaceId)
             await botClient.joinStream(channelId, {
                 skipWaitForUserStreamUpdate: true,
@@ -100,42 +109,50 @@ export const MintBotDialog = () => {
     })
 
     return (
-        <DialogContent>
-            <DialogTitle>Mint a new Bot</DialogTitle>
-            <DialogDescription>Create and add a bot in this space</DialogDescription>
-            {data && (
-                <>
-                    <div className="flex items-center gap-2 rounded-sm bg-red-50 p-2 text-sm text-red-500 dark:bg-red-900/50">
-                        <AlertTriangle className="mr-2 h-4 w-4" />
-                        <p>Store this information in a secure location.</p>
-                    </div>
-
-                    <div className="flex flex-col gap-2 text-sm">
-                        <p className="text-muted-foreground">Bot address:</p>
-                        <pre className="overflow-auto whitespace-pre-wrap">{data.publicKey}</pre>
-                    </div>
-                    <div className="flex flex-col gap-2 text-sm">
-                        <p className="text-muted-foreground">Bot mnemonic:</p>
-                        <pre className="overflow-auto whitespace-pre-wrap">{data.mnemonic}</pre>
-                    </div>
-                    <div className="flex flex-col gap-2 text-sm">
-                        <div className="flex justify-between">
-                            <p className="text-muted-foreground">Bot Encryption Device</p>
-                            <span className="whitespace-nowrap font-mono text-xs text-muted-foreground">
-                                BASE64
-                            </span>
+        <Dialog
+            open={open}
+            onOpenChange={(changed) => {
+                reset()
+                onOpenChange(changed)
+            }}
+        >
+            <DialogContent>
+                <DialogTitle>Mint a new Bot</DialogTitle>
+                <DialogDescription>Create and add a bot in this space</DialogDescription>
+                {data && (
+                    <>
+                        <SecretInformationBanner>
+                            Store this information in a secure location.
+                        </SecretInformationBanner>
+                        <div className="flex flex-col gap-2 text-sm">
+                            <p className="text-muted-foreground">Bot address:</p>
+                            <pre className="overflow-auto whitespace-pre-wrap">
+                                {data.publicKey}
+                            </pre>
                         </div>
-                        <pre className="max-h-[4lh] overflow-auto whitespace-pre-wrap break-all">
-                            {data.encryptionDeviceBase64}
-                        </pre>
-                    </div>
-                </>
-            )}
-            <Button disabled={isPending || !!data} onClick={() => mintAndAddBot()}>
-                {isPending ? <LoaderCircleIcon className="mr-2 h-4 w-4 animate-spin" /> : null}
-                {isPending ? 'Minting...' : data ? 'Minted' : 'Mint'}
-            </Button>
-            {error && <p className="text-red-500">{error.message}</p>}
-        </DialogContent>
+                        <div className="flex flex-col gap-2 text-sm">
+                            <p className="text-muted-foreground">Bot mnemonic:</p>
+                            <pre className="overflow-auto whitespace-pre-wrap">{data.mnemonic}</pre>
+                        </div>
+                        <div className="flex flex-col gap-2 text-sm">
+                            <div className="flex justify-between">
+                                <p className="text-muted-foreground">Bot Encryption Device</p>
+                                <span className="whitespace-nowrap font-mono text-xs text-muted-foreground">
+                                    BASE64
+                                </span>
+                            </div>
+                            <pre className="max-h-[4lh] overflow-auto whitespace-pre-wrap break-all">
+                                {data.encryptionDeviceBase64}
+                            </pre>
+                        </div>
+                    </>
+                )}
+                <Button disabled={isPending || !!data} onClick={() => mintAndAddBot()}>
+                    {isPending ? <LoaderCircleIcon className="mr-2 h-4 w-4 animate-spin" /> : null}
+                    {isPending ? 'Minting...' : data ? 'Minted' : 'Mint'}
+                </Button>
+                {error && <p className="text-red-500">{error.message}</p>}
+            </DialogContent>
+        </Dialog>
     )
 }

@@ -443,7 +443,7 @@ export function riverDelegateHashSrc(
     return retVal
 }
 
-export function rpcAuthHash(
+export function notificationServiceHash(
     userId: Uint8Array,
     expiration: bigint, // unix seconds
     challenge: Uint8Array,
@@ -452,6 +452,24 @@ export function rpcAuthHash(
     const prefixBytes = new TextEncoder().encode(PREFIX)
     const expirationBytes = bigIntToBytes(expiration)
     // aellis - i don't understand why we need to slice here, the go and ios code both truncate the leading 0's
+    check(userId.length === 20, 'User ID should be 20 bytes')
+    check(challenge.length === 16, 'Challenge should be 16 bytes')
+    return createHash('sha256')
+        .update(prefixBytes)
+        .update(userId)
+        .update(expirationBytes)
+        .update(challenge)
+        .digest()
+}
+
+export function appRegistryHash(
+    userId: Uint8Array,
+    expiration: bigint, // unix seconds
+    challenge: Uint8Array,
+) {
+    const PREFIX = 'AS_AUTH:'
+    const prefixBytes = new TextEncoder().encode(PREFIX)
+    const expirationBytes = bigIntToBytes(expiration)
     check(userId.length === 20, 'User ID should be 20 bytes')
     check(challenge.length === 16, 'Challenge should be 16 bytes')
     return createHash('sha256')
