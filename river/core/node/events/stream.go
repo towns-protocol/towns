@@ -988,18 +988,18 @@ func (s *Stream) applyStreamEvents(
 		return
 	}
 
+	// TODO: REPLICATION: FIX: this function now can be called multiple times per block.
 	// Sanity check
-	if s.lastAppliedBlockNum >= blockNum {
-		logging.FromCtx(ctx).
-			Errorw("applyStreamEvents: already applied events for block", "blockNum", blockNum, "streamId", s.streamId,
-				"lastAppliedBlockNum", s.lastAppliedBlockNum,
-			)
-		return
-	}
+	// if s.lastAppliedBlockNum >= blockNum {
+	// 	logging.FromCtx(ctx).
+	// 		Errorw("applyStreamEvents: already applied events for block", "blockNum", blockNum, "streamId", s.streamId,
+	// 			"lastAppliedBlockNum", s.lastAppliedBlockNum,
+	// 		)
+	// 	return
+	// }
 
 	for _, e := range events {
-		switch e.Reason() {
-		case river.StreamUpdatedEventTypeLastMiniblockBatchUpdated:
+		if e.Reason() == river.StreamUpdatedEventTypeLastMiniblockBatchUpdated {
 			event := e.(*river.StreamMiniblockUpdate)
 			err := s.promoteCandidateLocked(ctx, &MiniblockRef{
 				Hash: event.LastMiniblockHash,
@@ -1012,13 +1012,7 @@ func (s *Stream) applyStreamEvents(
 					logging.FromCtx(ctx).Errorw("onStreamLastMiniblockUpdated: failed to promote candidate", "err", err)
 				}
 			}
-		case river.StreamUpdatedEventTypePlacementUpdated:
-			fallthrough
-		case river.StreamUpdatedEventTypeAllocate:
-			fallthrough
-		case river.StreamUpdatedEventTypeCreate:
-			fallthrough
-		default:
+		} else {
 			logging.FromCtx(ctx).Errorw("applyStreamEvents: unknown event", "event", e, "streamId", s.streamId)
 		}
 	}

@@ -66,17 +66,20 @@ func (s *StreamCache) onStreamPlacementUpdated(
 		return
 	}
 
-	// in not in the cache, insert new recored in the correct state, otherwise load existing
-	stream, loaded := s.cache.LoadOrCompute(event.GetStreamId(), func() *Stream {
-		s := &Stream{
-			streamId:            event.GetStreamId(),
-			lastAppliedBlockNum: blockNum,
-			params:              s.params,
-			local:               &localStreamState{},
-		}
-		s.nodesLocked.ResetFromStreamState(event, s.params.Wallet.Address)
-		return s
-	})
+	// If in cache, load existing, otherwise insert new record in the correct state.
+	stream, loaded := s.cache.LoadOrCompute(
+		event.GetStreamId(),
+		func() (newValue *Stream, cancel bool) {
+			s := &Stream{
+				streamId:            event.GetStreamId(),
+				lastAppliedBlockNum: blockNum,
+				params:              s.params,
+				local:               &localStreamState{},
+			}
+			s.nodesLocked.ResetFromStreamState(event, s.params.Wallet.Address)
+			return s, false
+		},
+	)
 
 	if loaded {
 		stream.mu.Lock()
@@ -88,7 +91,7 @@ func (s *StreamCache) onStreamPlacementUpdated(
 		stream.mu.Unlock()
 	}
 
-	// always submit a sync task, since this only happens on stream placement updates it happens
+	// Always submit a sync task, since this only happens on stream placement updates it happens
 	// rarely. If local node was in quorum, it should be up-to-date making this a no-op task.
 	s.SubmitSyncStreamTask(ctx, stream)
 }

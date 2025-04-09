@@ -3,7 +3,7 @@ set -euo pipefail
 
 export RIVER_ENV=local_multi
 
-pushd river/contracts
+pushd river/packages/contracts
     set -a
     . .env.localhost
     set +a
@@ -32,9 +32,9 @@ pushd river/contracts
     make deploy-any-local context=$RIVER_ENV rpc=base_anvil type=utils contract=DeployEntitlementGatedExample
 
     # Create destination directory if it doesn't exist
-    mkdir -p ../packages/generated/deployments/${RIVER_ENV}
-    
-    cp -r deployments/${RIVER_ENV} ../packages/generated/deployments
+    mkdir -p ../generated/deployments/${RIVER_ENV}
+
+    cp -r deployments/${RIVER_ENV} ../generated/deployments
 popd
 
 # Update the config

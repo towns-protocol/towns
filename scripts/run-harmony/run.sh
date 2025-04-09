@@ -100,9 +100,9 @@ fi
 
 
 if [ "$ENV" = "localhost" ]; then
-    
+
     # Start contract build in background
-    pushd river/contracts
+    pushd river/packages/contracts
     set -a
     . .env.localhost
     set +a
@@ -113,7 +113,7 @@ if [ "$ENV" = "localhost" ]; then
 
     # Set the block chains to run with 2 second block times
     # referenced by the start-local scripts
-    export RIVER_BLOCK_TIME=2 
+    export RIVER_BLOCK_TIME=2
 
     # Start chains and Postgres in separate panes of the same window
     tmux new-window -t $SESSION_NAME -n 'BlockChains'
@@ -127,7 +127,7 @@ if [ "$ENV" = "localhost" ]; then
         local port=$1
         echo "Waiting for process to listen on TCP $port..."
 
-        while ! nc -z localhost $port; do   
+        while ! nc -z localhost $port; do
             echo "Waiting for TCP $port..."
             sleep 1
         done
@@ -204,7 +204,7 @@ done
 tmux attach -t $SESSION_NAME
 
 # test if the session has windows
-is_closed() { 
+is_closed() {
     n=$(tmux ls 2> /dev/null | grep "^$SESSION_NAME" | wc -l)
     [[ $n -eq 0 ]]
 }

@@ -27,8 +27,8 @@ generate_go() {
     mkdir -p "${OUT_DIR}"
 
     go run github.com/ethereum/go-ethereum/cmd/abigen@${ABIGEN_VERSION} \
-        --abi contracts/out/${FILENAME}.sol/${CONTRACT}.abi.json \
-        --bin contracts/out/${FILENAME}.sol/${CONTRACT}.bin \
+        --abi packages/contracts/out/${FILENAME}.sol/${CONTRACT}.abi.json \
+        --bin packages/contracts/out/${FILENAME}.sol/${CONTRACT}.bin \
         --pkg "${PACKAGE}" \
         --type "${GO_NAME}" \
         --out "${OUT_DIR}/${GO_NAME}.go"

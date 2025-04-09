@@ -92,7 +92,7 @@ echo "Anvil running and 4337 contracts deployed, deploying Base contracts"
 
 # Now deploy base contracts
 
-rm -rf river/contracts/deployments/${RIVER_ENV}
+rm -rf river/packages/contracts/deployments/${RIVER_ENV}
 rm -rf river/packages/generated/deployments/${RIVER_ENV}
 
 sh ./scripts/deploy-config-base-only.sh
@@ -119,7 +119,7 @@ done
 tmux attach -t $SESSION_NAME:'userops'
 
 # test if the session has windows
-is_closed() { 
+is_closed() {
     n=$(tmux ls 2> /dev/null | grep "^$SESSION_NAME" | wc -l)
     [[ $n -eq 0 ]]
 }

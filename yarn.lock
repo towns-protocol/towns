@@ -13342,9 +13342,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@towns-protocol/contracts@workspace:river/contracts":
+"@towns-protocol/contracts@workspace:river/packages/contracts":
   version: 0.0.0-use.local
-  resolution: "@towns-protocol/contracts@workspace:river/contracts"
+  resolution: "@towns-protocol/contracts@workspace:river/packages/contracts"
   dependencies:
     "@openzeppelin/contracts": ^5.2.0
     "@openzeppelin/contracts-upgradeable": ^5.2.0
@@ -13357,6 +13357,7 @@ __metadata:
     crypto-lib: "github:towns-protocol/crypto-lib#f40c5f6944a55583a687b672ba680db3bfabb0ef"
     forge-std: "github:foundry-rs/forge-std#v1.9.6"
     prettier: ^2.8.8
+    prettier-plugin-solidity: ^1.4.2
     solady: ^0.1.12
     solhint: ^5.0.5
     turbo: ^2.0.12
@@ -13518,6 +13519,8 @@ __metadata:
 "@towns-protocol/prettier-config@workspace:^, @towns-protocol/prettier-config@workspace:river/packages/prettier-config":
   version: 0.0.0-use.local
   resolution: "@towns-protocol/prettier-config@workspace:river/packages/prettier-config"
+  dependencies:
+    prettier-plugin-solidity: ^1.4.2
   peerDependencies:
     prettier: ^2.8.8
   languageName: unknown
@@ -33464,6 +33467,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"prettier-plugin-solidity@npm:^1.4.2":
+  version: 1.4.2
+  resolution: "prettier-plugin-solidity@npm:1.4.2"
+  dependencies:
+    "@solidity-parser/parser": ^0.19.0
+    semver: ^7.6.3
+  peerDependencies:
+    prettier: ">=2.3.0"
+  checksum: 0ff7a1f24cf4917fa15e4ecfc0c714f01aea424226cb20a5a408957a59d23ae2864efc805930240d9d7a0e64d4333bd26057e39d1cf5e01600453a1fa191fc91
+  languageName: node
+  linkType: hard
+
 "prettier-plugin-tailwindcss@npm:^0.4.1":
   version: 0.4.1
   resolution: "prettier-plugin-tailwindcss@npm:0.4.1"
@@ -35886,7 +35901,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"semver@npm:^7.7.1":
+"semver@npm:^7.6.3, semver@npm:^7.7.1":
   version: 7.7.1
   resolution: "semver@npm:7.7.1"
   bin:

@@ -7,7 +7,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/linkdata/deadlock"
-	"github.com/puzpuzpuz/xsync/v3"
+	"github.com/puzpuzpuz/xsync/v4"
 
 	"github.com/towns-protocol/towns/core/contracts/river"
 	. "github.com/towns-protocol/towns/core/node/base"
@@ -85,7 +85,7 @@ func NewMiniblockProducer(
 	mb := &miniblockProducer{
 		streamCache:      streamCache,
 		localNodeAddress: streamCache.Params().Wallet.Address,
-		jobs:             xsync.NewMapOf[StreamId, *mbJob](),
+		jobs:             xsync.NewMap[StreamId, *mbJob](),
 	}
 
 	if opts != nil {
@@ -104,7 +104,7 @@ type miniblockProducer struct {
 	opts             MiniblockProducerOpts
 	localNodeAddress common.Address
 
-	jobs *xsync.MapOf[StreamId, *mbJob]
+	jobs *xsync.Map[StreamId, *mbJob]
 
 	candidates candidateTracker
 
@@ -348,13 +348,16 @@ func (p *miniblockProducer) jobStart(ctx context.Context, j *mbJob) {
 func (p *miniblockProducer) jobDone(ctx context.Context, j *mbJob) {
 	notFound := false
 	// Delete the job from the jobs map if value is the same as j.
-	_, _ = p.jobs.Compute(j.stream.streamId, func(oldValue *mbJob, loaded bool) (*mbJob, bool) {
-		if oldValue == j {
-			return nil, true
-		}
-		notFound = true
-		return oldValue, false
-	})
+	_, _ = p.jobs.Compute(
+		j.stream.streamId,
+		func(oldValue *mbJob, loaded bool) (*mbJob, xsync.ComputeOp) {
+			if oldValue == j {
+				return nil, xsync.DeleteOp
+			}
+			notFound = true
+			return oldValue, xsync.CancelOp
+		},
+	)
 	if notFound {
 		logging.FromCtx(ctx).
 			Errorw("MiniblockProducer: jobDone: job not found in jobs map", "streamId", j.stream.streamId)
