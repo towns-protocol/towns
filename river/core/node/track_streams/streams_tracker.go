@@ -118,7 +118,7 @@ func (tracker *StreamsTrackerImpl) Run(ctx context.Context) error {
 	err := tracker.riverRegistry.ForAllStreams(
 		ctx,
 		tracker.riverRegistry.Blockchain.InitialBlockNum,
-		func(stream *registries.GetStreamResult) bool {
+		func(stream *river.StreamWithId) bool {
 			// Print progress report every 50k streams that are added to track
 			if streamsLoaded > 0 && streamsLoaded%50_000 == 0 && streamsLoadedProgress != streamsLoaded {
 				log.Infow("Progress stream loading", "tracked", streamsLoaded, "total", totalStreams)
@@ -127,17 +127,17 @@ func (tracker *StreamsTrackerImpl) Run(ctx context.Context) error {
 
 			totalStreams++
 
-			if !tracker.filter.TrackStream(stream.StreamId) {
+			if !tracker.filter.TrackStream(stream.StreamId()) {
 				return true
 			}
 
 			// There are some streams managed by a node that isn't registered anymore.
 			// Filter these out because we can't sync these streams.
-			stream.Nodes = slices.DeleteFunc(stream.Nodes, func(address common.Address) bool {
+			stream.Stream.Nodes = slices.DeleteFunc(stream.Stream.Nodes, func(address common.Address) bool {
 				return !slices.Contains(validNodes, address)
 			})
 
-			if len(stream.Nodes) == 0 {
+			if len(stream.Nodes()) == 0 {
 				// We know that we have a set of these on the network because some nodes were accidentally deployed
 				// with the wrong addresses early in the network's history. We've deemed these streams not worthy
 				// of repairing and generally ignore them.
@@ -193,9 +193,9 @@ func (tracker *StreamsTrackerImpl) forwardStreamEventsFromInception(
 	_, loaded := tracker.tracked.LoadOrStore(streamId, struct{}{})
 	if !loaded {
 		go func() {
-			stream := &registries.GetStreamResult{
-				StreamId: streamId,
-				Nodes:    nodes,
+			stream := &river.StreamWithId{
+				Id:     streamId,
+				Stream: river.Stream{Nodes: nodes},
 			}
 
 			idx := rand.Int63n(int64(len(tracker.nodeRegistries)))
@@ -232,12 +232,12 @@ func (tracker *StreamsTrackerImpl) OnStreamAllocated(
 	ctx context.Context,
 	event *river.StreamState,
 ) {
-	streamID := event.StreamID
+	streamID := event.GetStreamId()
 	if !tracker.filter.TrackStream(streamID) {
 		return
 	}
 
-	tracker.forwardStreamEventsFromInception(ctx, streamID, event.Nodes)
+	tracker.forwardStreamEventsFromInception(ctx, streamID, event.Stream.Nodes())
 }
 
 // OnStreamAdded is called each time a stream is added in the river registry.
@@ -247,12 +247,12 @@ func (tracker *StreamsTrackerImpl) OnStreamAdded(
 	ctx context.Context,
 	event *river.StreamState,
 ) {
-	streamID := event.StreamID
+	streamID := event.GetStreamId()
 	if !tracker.filter.TrackStream(streamID) {
 		return
 	}
 
-	tracker.forwardStreamEventsFromInception(ctx, streamID, event.Stream.Nodes)
+	tracker.forwardStreamEventsFromInception(ctx, streamID, event.Stream.Nodes())
 }
 
 func (tracker *StreamsTrackerImpl) OnStreamLastMiniblockUpdated(

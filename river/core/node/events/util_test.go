@@ -135,6 +135,7 @@ func makeCacheTestContext(t *testing.T, p testParams) (context.Context, *cacheTe
 		ctc.require.NoError(err)
 
 		params := &StreamCacheParams{
+			ServerCtx:               ctx,
 			Storage:                 streamStore.Storage,
 			Wallet:                  bc.Wallet,
 			RiverChain:              bc,
