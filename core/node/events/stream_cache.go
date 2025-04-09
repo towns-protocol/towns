@@ -7,10 +7,8 @@ import (
 	"sync/atomic"
 	"time"
 
-	mapset "github.com/deckarep/golang-set/v2"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/gammazero/workerpool"
-	"github.com/linkdata/deadlock"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/puzpuzpuz/xsync/v4"
 	"go.opentelemetry.io/otel/attribute"
@@ -36,6 +34,7 @@ type Scrubber interface {
 }
 
 type StreamCacheParams struct {
+	ServerCtx               context.Context
 	Storage                 storage.StreamStorage
 	Wallet                  *crypto.Wallet
 	RiverChain              *crypto.Blockchain
@@ -75,12 +74,10 @@ type StreamCache struct {
 	stoppedMu sync.RWMutex
 	stopped   bool
 
-	onlineSyncStreamTasksInProgressMu deadlock.Mutex
-	onlineSyncStreamTasksInProgress   mapset.Set[StreamId]
+	scheduledGetRecordTasks      *xsync.Map[StreamId, bool]
+	scheduledReconciliationTasks *xsync.Map[StreamId, *reconcileTask]
 
 	onlineSyncWorkerPool *workerpool.WorkerPool
-
-	disableCallbacks bool
 }
 
 func NewStreamCache(params *StreamCacheParams) *StreamCache {
@@ -117,10 +114,10 @@ func NewStreamCache(params *StreamCacheParams) *StreamCache {
 			"stream_cache_load_counter",
 			"Number of stream record loads",
 		),
-		chainConfig:                     params.ChainConfig,
-		onlineSyncWorkerPool:            workerpool.New(params.Config.StreamReconciliation.OnlineWorkerPoolSize),
-		disableCallbacks:                params.disableCallbacks,
-		onlineSyncStreamTasksInProgress: mapset.NewSet[StreamId](),
+		chainConfig:                  params.ChainConfig,
+		onlineSyncWorkerPool:         workerpool.New(params.Config.StreamReconciliation.OnlineWorkerPoolSize),
+		scheduledGetRecordTasks:      xsync.NewMap[StreamId, bool](),
+		scheduledReconciliationTasks: xsync.NewMap[StreamId, *reconcileTask](),
 	}
 	s.params.streamCache = s
 	return s
@@ -157,7 +154,6 @@ func (s *StreamCache) Start(ctx context.Context) error {
 		s.cache.Store(streamRecord.StreamId(), stream)
 		if s.params.Config.StreamReconciliation.InitialWorkerPoolSize > 0 {
 			s.submitSyncStreamTaskToPool(
-				ctx,
 				initialSyncWorkerPool,
 				stream,
 				streamRecord,
@@ -171,7 +167,7 @@ func (s *StreamCache) Start(ctx context.Context) error {
 	go initialSyncWorkerPool.StopWait()
 
 	// TODO: add buffered channel to avoid blocking ChainMonitor
-	if !s.disableCallbacks {
+	if !s.params.disableCallbacks {
 		s.params.RiverChain.ChainMonitor.OnBlockWithLogs(
 			s.params.AppliedBlockNum+1,
 			s.onBlockWithLogs,
@@ -466,7 +462,7 @@ func (s *StreamCache) loadStreamRecordImpl(
 				return ret, false
 			},
 		)
-		s.SubmitSyncStreamTask(ctx, stream)
+		s.SubmitSyncStreamTask(stream, record)
 		return stream, nil
 	}
 
