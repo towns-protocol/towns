@@ -392,7 +392,8 @@ func (s *Stream) promoteCandidate(ctx context.Context, mb *MiniblockRef) error {
 // promoteCandidateLocked shouldbe called with a lock held.
 func (s *Stream) promoteCandidateLocked(ctx context.Context, mb *MiniblockRef) error {
 	if s.local == nil {
-		return RiverError(Err_FAILED_PRECONDITION, "can't promote candidate for non-local stream")
+		return RiverError(Err_FAILED_PRECONDITION, "can't promote candidate for non-local stream").
+			Tag("stream", s.streamId)
 	}
 
 	// Check if the miniblock is already applied.
