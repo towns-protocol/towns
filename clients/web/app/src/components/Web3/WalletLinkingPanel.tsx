@@ -2,13 +2,13 @@ import React, { useMemo, useState } from 'react'
 import {
     Address,
     BlockchainTransactionType,
+    TSigner,
     useConnectivity,
     useIsTransactionPending,
     useLinkEOAToRootKeyTransaction,
     useLinkedWallets,
     useUnlinkWalletTransaction,
 } from 'use-towns-client'
-
 import { Box, BoxProps, Button, Icon, IconButton, Paragraph, Stack, Text } from '@ui'
 import { PanelButton } from '@components/Panel/PanelButton'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
@@ -21,6 +21,8 @@ import { createPrivyNotAuthenticatedNotification } from '@components/Notificatio
 import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
 import { GetSigner, LoginToPrivyIconButton, WalletReady } from 'privy/WalletReady'
 import { useErrorToast } from 'hooks/useErrorToast'
+import { popupToast } from '@components/Notifications/popupToast'
+import { StandardToast } from '@components/Notifications/StandardToast'
 import { ConnectWalletThenLinkButton } from './ConnectWallet/ConnectWalletThenLinkButton'
 import { WalletLinkingInfo } from './WalletLinkingInfo'
 import { WalletWithBalance } from './Wallet/WalletWithBalance'
@@ -50,7 +52,22 @@ function WalletLinkingPanelWithoutAuth() {
             addressToUnlink: undefined,
         })
     const { loggedInWalletAddress } = useConnectivity()
-    const { linkEOAToRootKeyTransaction } = useLinkEOAToRootKeyTransaction()
+
+    const { linkEOAToRootKeyTransaction, isLoading: isSanctionsListLoading } =
+        useLinkEOAToRootKeyTransaction({
+            onError: (error) => {
+                if (error?.message?.includes('Sanctions List')) {
+                    popupToast(({ toast }) => (
+                        <StandardToast.Error
+                            message="Cannot link this wallet"
+                            subMessage="This wallet has been blocked by OFAC's Sanctions List"
+                            toast={toast}
+                        />
+                    ))
+                }
+                return Promise.resolve()
+            },
+        })
     const { unlinkWalletTransaction } = useUnlinkWalletTransaction()
 
     const { data: aaAddress } = useMyAbstractAccountAddress()
@@ -63,6 +80,16 @@ function WalletLinkingPanelWithoutAuth() {
                 .sort((a) => (a.toLowerCase() === aaAddress?.toLowerCase() ? -1 : 1)),
         [_linkedWallets, aaAddress],
     )
+
+    const handleLinkWallet = async (
+        rootKey: TSigner | undefined,
+        wallet: TSigner | undefined,
+    ): Promise<void> => {
+        if (!wallet) {
+            return
+        }
+        await linkEOAToRootKeyTransaction(rootKey, wallet)
+    }
 
     async function onUnlinkClick(addressToUnlink: Address, getSigner: GetSigner) {
         const signer = await getSigner()
@@ -80,7 +107,7 @@ function WalletLinkingPanelWithoutAuth() {
         return null
     }
 
-    const isDisabled = isWalletLinkingPending || isWalletUnLinkingPending
+    const isDisabled = isWalletLinkingPending || isWalletUnLinkingPending || isSanctionsListLoading
 
     return (
         <Stack gap grow position="relative" overflow="auto">
@@ -95,12 +122,13 @@ function WalletLinkingPanelWithoutAuth() {
                 )
             })}
 
-            <ConnectWalletThenLinkButton onLinkWallet={linkEOAToRootKeyTransaction}>
+            <ConnectWalletThenLinkButton onLinkWallet={handleLinkWallet}>
                 {({ onClick }) => (
                     <PanelButton
                         cursor={isDisabled ? 'not-allowed' : 'pointer'}
                         opacity={isDisabled ? '0.5' : 'opaque'}
                         disabled={isDisabled}
+                        tooltip={isSanctionsListLoading ? 'Loading sanctions lists...' : undefined}
                         onClick={onClick}
                     >
                         <Box width="height_md" alignItems="center">
@@ -115,9 +143,6 @@ function WalletLinkingPanelWithoutAuth() {
             <Box grow justifyContent="end">
                 <ConnectWalletThenUnlinkViaCaller isDisabled={isDisabled} />
             </Box>
-
-            {/* {isLoadingLinkingWallet && <FullPanelOverlay text="Linking Wallet" />} */}
-            {/* {isLoadingUnlinkingWallet && <FullPanelOverlay text="Unlinking Wallet" />} */}
 
             {unlinkModal.visible && (
                 <ModalContainer asSheet minWidth="auto" onHide={hideUnlinkModal}>

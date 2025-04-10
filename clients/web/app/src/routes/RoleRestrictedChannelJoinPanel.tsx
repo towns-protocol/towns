@@ -172,6 +172,18 @@ function Roles(props: {
         onError: async (e) => {
             trackEvent(LINK_LABEL, false)
             headlessToast.dismiss()
+
+            if (e?.message?.includes('Sanctions List')) {
+                popupToast(({ toast: t }) => (
+                    <StandardToast.Error
+                        message="Cannot link this wallet"
+                        subMessage="This wallet has been blocked by OFAC's Sanctions List"
+                        toast={t}
+                    />
+                ))
+                return
+            }
+
             console.error('Error linking wallet to root key', e)
             popupToast(({ toast: t }) => (
                 <StandardToast.Error

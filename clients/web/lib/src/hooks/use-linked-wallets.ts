@@ -15,6 +15,8 @@ import { isAddress } from 'viem'
 import { useSpaceDapp } from './use-space-dapp'
 import { useOfflineStore } from '../store/use-offline-store'
 import { useTownsContext } from '../components/TownsContextProvider'
+import { useSanctionedAddresses } from './use-sanctioned-addresses'
+import { Address } from '@towns-protocol/web3'
 
 export function useLinkEOAToRootKeyTransaction({
     onSuccess,
@@ -25,8 +27,15 @@ export function useLinkEOAToRootKeyTransaction({
 } = {}) {
     const { traceTransaction, ...rest } = useLinkTransactionBuilder({ onSuccess, onError })
     const { linkEOAToRootKey } = useTownsClient()
+    const { isSanctioned, isLoading: isSanctionsListLoading } = useSanctionedAddresses()
+
+    const isLoading = useMemo(() => {
+        return rest.isLoading || isSanctionsListLoading
+    }, [rest.isLoading, isSanctionsListLoading])
+
     return {
         ...rest,
+        isLoading,
         linkEOAToRootKeyTransaction: useCallback(
             async function (
                 rootKey: ethers.Signer | undefined,
@@ -41,11 +50,23 @@ export function useLinkEOAToRootKeyTransaction({
                             error: new SignerUndefinedError(),
                         })
                     }
+
+                    const address = await wallet.getAddress()
+                    if (isSanctioned(address.toLowerCase() as Address)) {
+                        return createTransactionContext({
+                            status: TransactionStatus.Failed,
+                            error: new Error(
+                                "This wallet has been blocked by OFAC's Sanctions List",
+                            ),
+                        })
+                    }
+
                     // ok to proceed
-                    return linkEOAToRootKey(rootKey, wallet)
+                    const result = await linkEOAToRootKey(rootKey, wallet)
+                    return result as WalletLinkTransactionContext
                 })
             },
-            [linkEOAToRootKey, onError, traceTransaction],
+            [linkEOAToRootKey, onError, traceTransaction, isSanctioned],
         ),
     }
 }

@@ -193,6 +193,18 @@ function Content({
             },
             onError: async (error) => {
                 console.error('[useLinkEOAToRootKeyTransaction] error linking wallet', error)
+
+                if (error?.message?.includes('Sanctions List')) {
+                    popupToast(({ toast }) => (
+                        <StandardToast.Error
+                            toast={toast}
+                            message="Cannot link this wallet"
+                            subMessage="This wallet has been blocked by OFAC's Sanctions List"
+                        />
+                    ))
+                    return
+                }
+
                 popupToast(({ toast }) => (
                     <StandardToast.Error
                         toast={toast}
