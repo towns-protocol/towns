@@ -77,7 +77,6 @@ const envSchema = z.object({
     VITE_PRIVY_CLIENT_ID: z.string().optional(),
 
     VITE_LOG_SAMPLING_RATE: intStringWithin(0, 100).optional(),
-    VITE_AA_BUNDLER_URL: z.string().url(),
     VITE_AA_PAYMASTER_PROXY_URL: z.string().url(),
     VITE_AA_ENTRY_POINT_ADDRESS: z.string().optional(),
     VITE_AA_FACTORY_ADDRESS: z.string().optional(),

@@ -59,8 +59,9 @@ function makeEnvironments(): TownsEnvironmentInfo[] {
             riverEnv == 'delta'
         ) {
             envInfo.accountAbstractionConfig = {
+                // the same alchemy rpc url handles both rpc and bundler endpoints
                 aaRpcUrl: baseChain.rpcUrls.default.http[0],
-                bundlerUrl: env.VITE_AA_BUNDLER_URL,
+                bundlerUrl: baseChain.rpcUrls.default.http[0],
                 paymasterProxyUrl: env.VITE_AA_PAYMASTER_PROXY_URL,
                 entryPointAddress: env.VITE_AA_ENTRY_POINT_ADDRESS,
                 factoryAddress: env.VITE_AA_FACTORY_ADDRESS,

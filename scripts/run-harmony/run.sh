@@ -166,6 +166,10 @@ echo "Continuing with the rest of the script..."
 # build protobufs
 yarn csb:build
 
+# build worker-common
+echo "Building worker-common..."
+(cd servers/workers/worker-common && yarn build)
+
 # Array of commands from the VS Code tasks
 commands=(
     "watch_userops:cd clients/web/userops && yarn watch"
