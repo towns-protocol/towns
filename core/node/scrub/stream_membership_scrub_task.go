@@ -256,7 +256,7 @@ func (tp *streamMembershipScrubTaskProcessorImpl) processStreamImpl(
 		return err
 	}
 
-	view, err := stream.GetViewIfLocal(tp.ctx)
+	view, err := stream.GetViewIfLocalEx(tp.ctx, true)
 	if err != nil {
 		return err
 	}
