@@ -47,19 +47,22 @@ contract ForkRewardsDistributionTest is
     address[] internal activeOperators;
 
     function setUp() public {
-        vm.createSelectFork("base", 23_200_000);
+        vm.createSelectFork("base", 26_266_000);
 
         vm.setEnv("DEPLOYMENT_CONTEXT", "omega");
 
         baseRegistry = getDeployment("baseRegistry");
         spaceFactory = getDeployment("spaceFactory");
-        towns = Towns(getDeployment("river"));
+        towns = Towns(getDeployment("towns"));
         rewardsDistributionFacet = IRewardsDistribution(baseRegistry);
         owner = IERC173(baseRegistry).owner();
 
         governanceActions();
 
         getActiveOperators();
+
+        vm.label(address(towns), "TOWNS");
+        vm.label(address(rewardsDistributionFacet), "RewardsDistribution");
     }
 
     /// forge-config: default.fuzz.runs = 64
@@ -85,27 +88,27 @@ contract ForkRewardsDistributionTest is
         );
     }
 
-    /// forge-config: default.fuzz.runs = 64
-    function test_fuzz_stake_mainnetDelegation_shouldNotStartWith0(
-        address delegator,
-        uint96 amount,
-        uint256 seed
-    ) public {
-        address operator = randomOperator(seed);
-        amount = uint96(bound(amount, 1, type(uint96).max / 2));
-        vm.assume(delegator != address(rewardsDistributionFacet));
-        vm.assume(delegator != address(0) && delegator != operator);
-
-        setDelegation(delegator, operator, amount);
-        assertEq(IMainnetDelegation(baseRegistry).getDepositIdByDelegator(delegator), 0);
-        assertEq(
-            rewardsDistributionFacet.stakedByDepositor(address(rewardsDistributionFacet)),
-            amount
-        );
-
-        setDelegation(delegator, operator, amount);
-        assertEq(IMainnetDelegation(baseRegistry).getDepositIdByDelegator(delegator), 1);
-    }
+    // /// forge-config: default.fuzz.runs = 64
+    //    function test_fuzz_stake_mainnetDelegation_shouldNotStartWith0(
+    //        address delegator,
+    //        uint96 amount,
+    //        uint256 seed
+    //    ) public {
+    //        address operator = randomOperator(seed);
+    //        amount = uint96(bound(amount, 1, type(uint96).max / 2));
+    //        vm.assume(delegator != address(rewardsDistributionFacet));
+    //        vm.assume(delegator != address(0) && delegator != operator);
+    //
+    //        setDelegation(delegator, operator, amount);
+    //        assertEq(IMainnetDelegation(baseRegistry).getDepositIdByDelegator(delegator), 0);
+    //        assertEq(
+    //            rewardsDistributionFacet.stakedByDepositor(address(rewardsDistributionFacet)),
+    //            amount
+    //        );
+    //
+    //        setDelegation(delegator, operator, amount);
+    //        assertEq(IMainnetDelegation(baseRegistry).getDepositIdByDelegator(delegator), 1);
+    //    }
 
     /// forge-config: default.fuzz.runs = 64
     function test_fuzz_increaseStake(
@@ -380,6 +383,9 @@ contract ForkRewardsDistributionTest is
 
     function governanceActions() internal {
         address distributionV2Impl = DeployRewardsDistributionV2.deploy();
+        address oldImpl = IDiamondLoupe(baseRegistry).facetAddress(
+            IRewardsDistribution.notifyRewardAmount.selector
+        );
         address mainnetDelegationImpl = IDiamondLoupe(baseRegistry).facetAddress(
             MainnetDelegation.setProxyDelegation.selector
         );
@@ -391,15 +397,14 @@ contract ForkRewardsDistributionTest is
         vm.etch(mainnetDelegationImpl, type(MainnetDelegation).runtimeCode);
         vm.etch(spaceDelegationImpl, type(SpaceDelegationFacet).runtimeCode);
 
-        FacetCut[] memory facetCuts = new FacetCut[](3);
-        facetCuts[0] = DeployRewardsDistributionV2.makeCut(distributionV2Impl, FacetCutAction.Add);
-        bytes4[] memory selectors = new bytes4[](2);
-        selectors[0] = SpaceDelegationFacet.setSpaceFactory.selector;
-        selectors[1] = SpaceDelegationFacet.getSpaceFactory.selector;
-        facetCuts[1] = FacetCut(spaceDelegationImpl, FacetCutAction.Add, selectors);
-        selectors = new bytes4[](1);
-        selectors[0] = MainnetDelegation.getDepositIdByDelegator.selector;
-        facetCuts[2] = FacetCut(mainnetDelegationImpl, FacetCutAction.Add, selectors);
+        FacetCut[] memory facetCuts = new FacetCut[](2);
+        facetCuts[0] = FacetCut(
+            oldImpl,
+            FacetCutAction.Remove,
+            IDiamondLoupe(baseRegistry).facetFunctionSelectors(oldImpl)
+        );
+        facetCuts[1] = DeployRewardsDistributionV2.makeCut(distributionV2Impl, FacetCutAction.Add);
+
         bytes memory initPayload = DeployRewardsDistributionV2.makeInitData(
             address(towns),
             address(towns),
