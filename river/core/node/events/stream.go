@@ -491,12 +491,13 @@ func (s *Stream) initFromGenesisLocked(
 	return nil
 }
 
-// GetViewIfLocal returns stream view if stream is local, nil if stream is not local,
+// GetViewIfLocalEx returns stream view if stream is local, nil if stream is not local,
 // and error if stream is local and failed to load.
 // If local storage is not initialized, it will wait for it to be initialized.
-// GetViewIfLocal is thread-safe.
-func (s *Stream) GetViewIfLocal(ctx context.Context) (*StreamView, error) {
-	view, isLocal := s.tryGetView()
+// If allowNoQuorum is true, it will return the view even if the local node is not in quorum.
+// GetViewIfLocalEx is thread-safe.
+func (s *Stream) GetViewIfLocalEx(ctx context.Context, allowNoQuorum bool) (*StreamView, error) {
+	view, isLocal := s.tryGetView(allowNoQuorum)
 	if !isLocal {
 		return nil, nil
 	}
@@ -516,6 +517,14 @@ func (s *Stream) GetViewIfLocal(ctx context.Context) (*StreamView, error) {
 	return view, nil
 }
 
+// GetViewIfLocal returns stream view if stream is local, nil if stream is not local,
+// and error if stream is local and failed to load.
+// If local storage is not initialized, it will wait for it to be initialized.
+// GetViewIfLocal is thread-safe.
+func (s *Stream) GetViewIfLocal(ctx context.Context) (*StreamView, error) {
+	return s.GetViewIfLocalEx(ctx, false)
+}
+
 // GetView returns stream view if stream is local, and error if stream is not local or failed to load.
 // If local storage is not initialized, it will wait for it to be initialized.
 // GetView is thread-safe.
@@ -532,11 +541,22 @@ func (s *Stream) GetView(ctx context.Context) (*StreamView, error) {
 
 // tryGetView returns StreamView if it's already loaded, or nil if it's not.
 // The second return value is true if the view is local.
+// If allowNoQuorum is true, it will return the view even if the local node is not in quorum.
 // tryGetView is thread-safe.
-func (s *Stream) tryGetView() (*StreamView, bool) {
+func (s *Stream) tryGetView(allowNoQuorum bool) (*StreamView, bool) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
-	isLocal := s.nodesLocked.IsLocalInQuorum() && s.local != nil
+	if s.local == nil {
+		return nil, false
+	}
+
+	isLocal := false
+	if !allowNoQuorum {
+		isLocal = s.nodesLocked.IsLocalInQuorum()
+	} else {
+		isLocal = s.nodesLocked.IsLocal()
+	}
+
 	if isLocal && s.getViewLocked() != nil {
 		s.maybeScrubLocked()
 		return s.getViewLocked(), true
