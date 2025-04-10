@@ -4,15 +4,14 @@ import 'fake-indexeddb/auto'
 import { Hono } from 'hono'
 import { serve } from '@hono/node-server'
 import {
-    Client,
     makeRiverConfig,
-    makeRiverRpcClient,
     makeSignerContext,
-    MockEntitlementsDelegate,
-    RiverDbManager,
     streamIdAsString,
-    userIdFromAddress,
     make_MemberPayload_KeySolicitation,
+    SyncAgent,
+    isDefined,
+    spaceIdFromChannelId,
+    RiverTimelineEvent,
 } from '@towns-protocol/sdk'
 import { create, fromBinary, toBinary } from '@bufbuild/protobuf'
 import { ethers } from 'ethers'
@@ -23,20 +22,18 @@ import {
     UserMetadataPayload_EncryptionDeviceSchema,
     type EventPayload,
 } from '@towns-protocol/proto'
-import { bin_fromBase64 } from '@towns-protocol/dlog'
+import { bin_fromBase64, bin_toHexString, check } from '@towns-protocol/dlog'
 
-// const APP_REGISTRY_URL = 'http://localhost:5180'
 const ENV = 'local_multi'
 const PORT = 5123
-const SPACE_ID = '10b651d7e616eb74d8548bf9f608e0c9340fe74a820000000000000000000000'
 
 // TODO: env and jwt should be env vars
+// TODO: use ExportedDevice?
 const buildBot = async (mnemonic: string, encryptionDeviceBase64: string, _jwt?: string) => {
     const encryptionDevice = fromBinary(
         UserMetadataPayload_EncryptionDeviceSchema,
         bin_fromBase64(encryptionDeviceBase64),
     )
-    // console.log(exportedDevice)
     // TODO: verify jwt
     // if (!jwt) {
     //     throw new Error('JWT is required')
@@ -45,47 +42,77 @@ const buildBot = async (mnemonic: string, encryptionDeviceBase64: string, _jwt?:
     const wallet = ethers.Wallet.fromMnemonic(mnemonic)
     const delegateWallet = ethers.Wallet.createRandom()
     const signerContext = await makeSignerContext(wallet, delegateWallet)
-    const config = makeRiverConfig(ENV)
-    const riverProvider = new ethers.providers.StaticJsonRpcProvider(config.river.rpcUrl)
-    const rpcClient = await makeRiverRpcClient(riverProvider, config.river.chainConfig)
+    const riverConfig = makeRiverConfig(ENV)
 
-    const userId = userIdFromAddress(signerContext.creatorAddress)
-    const cryptoStore = RiverDbManager.getCryptoDb(userId)
+    const syncAgent = new SyncAgent({
+        context: signerContext,
+        riverConfig,
+    })
 
-    const client = new Client(
-        signerContext,
-        rpcClient,
-        cryptoStore,
-        new MockEntitlementsDelegate(), // argh is it okay?
-    )
-
-    await client.initializeUser({ spaceId: SPACE_ID }) // do we want to use the exported device?
+    await syncAgent.start()
 
     const executeEvents = async (events: EventPayload[]) => {
-        for (const event of events) {
-            console.log('executing event', event.payload)
-            switch (event.payload.case) {
+        if (!syncAgent.riverConnection.client) {
+            console.error('River connection client not initialized')
+            return
+        }
+
+        for (const appEvent of events) {
+            switch (appEvent.payload.case) {
                 case 'messages': {
-                    for (const message of event.payload.value.messages) {
-                        const event = fromBinary(StreamEventSchema, message.event)
-                        console.log('message', event.payload)
+                    // NOTE: Since I'm using synced streams, I can just read/write message to the stream.
+                    // If I didnt had it, I would need to get the keys from groupEncryptionSessionsMessages to decrypt
+                    // const groupMessages = event.payload.value.groupEncryptionSessionsMessages.map(x) => fromBinary(StreamEventSchema, x.event))
+
+                    const streamId = streamIdAsString(appEvent.payload.value.streamId)
+                    const spaceId = spaceIdFromChannelId(streamId)
+
+                    for (const envelope of appEvent.payload.value.messages) {
+                        const event = fromBinary(StreamEventSchema, envelope.event)
+                        const isMyEvent =
+                            bin_toHexString(event.creatorAddress) ===
+                            bin_toHexString(signerContext.creatorAddress)
+                        if (isMyEvent) {
+                            continue
+                        }
+                        switch (event.payload.case) {
+                            case 'channelPayload': {
+                                if (event.payload.value?.content.case !== 'message') {
+                                    return
+                                }
+                                const space = syncAgent.spaces.getSpace(spaceId)
+                                const channel = space?.getChannel(streamId)
+                                check(isDefined(channel), 'Channel not found')
+                                const eventId = bin_toHexString(envelope.hash)
+                                const message = channel.timeline.events.value.find(
+                                    (e) => e.eventId === eventId,
+                                )
+                                await channel.sendMessage(
+                                    message?.content?.kind === RiverTimelineEvent.ChannelMessage
+                                        ? `echo: ${message.content.body}`
+                                        : 'oops, thelastone   wasnta  message?',
+                                )
+                                break
+                            }
+                        }
                     }
                     break
                 }
                 case 'solicitation': {
-                    const streamId = streamIdAsString(event.payload.value.streamId)
-                    const missingSessionIds = event.payload.value.sessionIds.filter(
+                    const streamId = streamIdAsString(appEvent.payload.value.streamId)
+                    const missingSessionIds = appEvent.payload.value.sessionIds.filter(
                         (sessionId) => sessionId !== '',
                     )
-                    const { eventId } = await client.makeEventAndAddToStream(
-                        streamId,
-                        make_MemberPayload_KeySolicitation({
-                            deviceKey: encryptionDevice.deviceKey,
-                            fallbackKey: encryptionDevice.fallbackKey,
-                            isNewDevice: missingSessionIds.length === 0,
-                            sessionIds: missingSessionIds,
-                        }),
-                    )
+                    const { eventId } =
+                        await syncAgent.riverConnection.client.makeEventAndAddToStream(
+                            streamId,
+                            make_MemberPayload_KeySolicitation({
+                                deviceKey: encryptionDevice.deviceKey,
+                                fallbackKey: encryptionDevice.fallbackKey,
+                                isNewDevice: missingSessionIds.length === 0,
+                                sessionIds: missingSessionIds,
+                            }),
+                        )
                     console.log('sent key solicitation for sessions:', missingSessionIds, eventId)
                     break
                 }
@@ -159,8 +186,8 @@ const buildBot = async (mnemonic: string, encryptionDeviceBase64: string, _jwt?:
 async function main() {
     try {
         const { server } = await buildBot(
-            'response candy save output help again pulp fortune panic atom sugar wear',
-            'CitIemJ0dmw1OC85YnVWQUIzelFQdUQ3VFdqelIwWTRnNmlxVXhkclloakhVEis3N1ZWZm1QU2pZVjdsbkZuNDNZQm5xNU9nOUlOam5mTXVwbkdzWUwydFFB',
+            'grass road fame clock drink wrap bleak peasant shallow lock margin lawn',
+            'Cituc2tZeTBrSTBHTVJZU2NFbit0c0FGcnNRUXh3bkhmcGY5NHRva05NMG0wEitOS3B6ekhsNVZjQWxWQ1R3cTBKYTNCbVVOV3dIZkF4aVVPRDlnRExGeUJv',
         )
         console.log(`Server is running on http://localhost:${PORT}`)
         serve({ fetch: server.fetch, port: PORT })
