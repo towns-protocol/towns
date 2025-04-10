@@ -196,7 +196,11 @@ func (id StreamId) MarshalJSON() ([]byte, error) {
 }
 
 func (id *StreamId) UnmarshalJSON(b []byte) error {
-	if len(b) > 1 && b[0] == '"' && b[len(b)-1] == '"' {
+	if len(b) >= 2 && b[0] == '"' && b[len(b)-1] == '"' {
+		b = b[1 : len(b)-1]
+	}
+
+	if len(b) >= 2 && b[0] == '0' && (b[len(b)-1] == 'x' || b[len(b)-1] == 'X') {
 		b = b[1 : len(b)-1]
 	}
 

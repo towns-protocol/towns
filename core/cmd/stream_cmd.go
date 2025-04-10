@@ -692,7 +692,7 @@ type StreamNotMigrated struct {
 	NodeAddresses     []common.Address `json:"node_addresses"`
 }
 
-type StreamPlacementTxResult struct {
+type streamPlacementTxResult struct {
 	StreamID      shared.StreamId  `json:"stream_id"`
 	Status        string           `json:"status"`
 	TxHash        common.Hash      `json:"tx_hash"`
@@ -984,9 +984,9 @@ func runStreamPlaceInitiateCmd(cfg *config.Config, args []string) error {
 			return err
 		}
 
-		var results []*StreamPlacementTxResult
+		var results []*streamPlacementTxResult
 		for _, req := range requests {
-			results = append(results, &StreamPlacementTxResult{
+			results = append(results, &streamPlacementTxResult{
 				Status:        "pending",
 				StreamID:      req.StreamId,
 				NodeAddresses: req.Nodes,
@@ -1072,9 +1072,9 @@ func runStreamPlaceStatusCmd(cfg *config.Config, args []string) error {
 	defer inputFile.Close()
 
 	input := json.NewDecoder(inputFile)
-	var streamPlacementTxResults []*StreamPlacementTxResult
+	var streamPlacementTxResults []*streamPlacementTxResult
 	for {
-		var result StreamPlacementTxResult
+		var result streamPlacementTxResult
 		if err := input.Decode(&result); err != nil {
 			if errors.Is(err, io.EOF) {
 				break
@@ -1087,7 +1087,7 @@ func runStreamPlaceStatusCmd(cfg *config.Config, args []string) error {
 	var (
 		wp        = workerpool.New(32)
 		results   = make(chan *streamSyncStatus, 32)
-		getStatus = func(stream *StreamPlacementTxResult) func() {
+		getStatus = func(stream *streamPlacementTxResult) func() {
 			return func() {
 				status := &streamSyncStatus{
 					StreamID: stream.StreamID,
@@ -1285,9 +1285,9 @@ func runStreamPlaceEnterQuorumCmd(cfg *config.Config, args []string) error {
 			return err
 		}
 
-		var results []*StreamPlacementTxResult
+		var results []*streamPlacementTxResult
 		for _, req := range requests {
-			results = append(results, &StreamPlacementTxResult{
+			results = append(results, &streamPlacementTxResult{
 				Status:        "pending",
 				StreamID:      req.StreamId,
 				NodeAddresses: req.Nodes,
