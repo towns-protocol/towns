@@ -35,14 +35,14 @@ type mbJob struct {
 
 func (j *mbJob) produceCandidate(ctx context.Context) error {
 	// miniblock producer creates mbJob's only on nodes that participate in stream quorum.
-	var isLocal bool
-	j.quorumNodes, j.syncNodes, isLocal = j.stream.GetQuorumAndSyncNodesAndIsLocal()
+	j.quorumNodes, j.syncNodes, _ = j.stream.GetQuorumAndSyncNodesAndIsLocal()
 	j.replicated = len(j.quorumNodes) > 1
 
 	// TODO: this is a sanity check, but in general mb production code needs to be hardened
 	// to handle scenario when local replica is removed from the stream.
-	if !isLocal {
-		return RiverError(Err_INTERNAL, "Not a local stream")
+	if !slices.Contains(j.quorumNodes, j.cache.Params().Wallet.Address) {
+		return RiverError(Err_INTERNAL, "Node not partipating in stream quorum").
+			Tag("streamId", j.stream.streamId)
 	}
 
 	err := j.makeCandidate(ctx)
