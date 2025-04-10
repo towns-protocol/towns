@@ -13,7 +13,8 @@
         "publish": "wrangler deploy --env $CF_ENV",
         "test": "yarn test:unit",
         "test:unit": "yarn node --experimental-vm-modules $(yarn bin jest)",
-        "tail": "wrangler tail --env $CF_ENV"
+        "tail": "wrangler tail --env $CF_ENV",
+        "secret": "wrangler secret"
     },
     "dependencies": {
         "@towns-protocol/generated": "workspace:^",

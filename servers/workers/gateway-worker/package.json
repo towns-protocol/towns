@@ -13,7 +13,8 @@
         "publish": "wrangler deploy --env $CF_ENV",
         "test": "yarn test:unit",
         "test:unit": "yarn node --experimental-vm-modules $(yarn bin jest)",
-        "tail": "wrangler tail gateway-worker --env $CF_ENV"
+        "tail": "wrangler tail gateway-worker --env $CF_ENV",
+        "secret": "wrangler secret"
     },
     "dependencies": {
         "@privy-io/server-auth": "^1.9.1",

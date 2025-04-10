@@ -16,7 +16,8 @@
         "tail": "wrangler tail stackup-worker --env $CF_ENV",
         "test": "yarn test:unit",
         "test:smart-account": "vitest run --project smart-account",
-        "test:unit": "vitest run --project router"
+        "test:unit": "vitest run --project router",
+        "secret": "wrangler secret"
     },
     "dependencies": {
         "@privy-io/server-auth": "^1.9.1",

@@ -110,6 +110,14 @@ You can see basic tmux commands [here](https://gist.github.com/simplysh/dd61e464
 
 If you make changes to river go code, or contracts, re-run `just RUN_ENV=multi config-and-start` to pick up the new changes (contracts will be redeployed, etc).
 
+## Cloudflare Workers
+
+We use CF Workers for a variety of services. These are located in the `servers/workers` directory.
+
+For worker secrets, Notion [databases](https://www.notion.so/herenottherelabs/harmony-env-vars-1cb3562b1f4e801c9c2fe4917c182037) are the source of truth. While developing, you can add a secret to the correct column and then re-start your dev environment, or just re-run the worker after killing with scripts/run-harmony/run-<worker-name>.sh <localhost|alpha|gamma|omega>.
+
+Once you have populated the secret in Notion and are ready to publish the secret to alpha/gamma/omega, you can run `./scripts/wrangler-secret.sh <gateway|stackup|token|unfurl> <alpha|gamma|omega> <secret-name>`.
+
 ## Tests
 
 - Run all unit tests via: `yarn test:unit`
