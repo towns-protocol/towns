@@ -24,6 +24,7 @@ import (
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	. "github.com/towns-protocol/towns/core/node/protocol/protocolconnect"
 	"github.com/towns-protocol/towns/core/node/registries"
+	"github.com/towns-protocol/towns/core/node/rpc"
 	. "github.com/towns-protocol/towns/core/node/shared"
 
 	"github.com/spf13/cobra"
@@ -118,12 +119,12 @@ func validateStream(
 	}
 
 	streamServiceClient := NewStreamServiceClient(httpClient, nodeRecord.Url, connect.WithGRPC())
-	response, err := streamServiceClient.GetStream(
-		ctx,
-		connect.NewRequest(&GetStreamRequest{
-			StreamId: streamId[:],
-		}),
-	)
+	req := connect.NewRequest(&GetStreamRequest{
+		StreamId: streamId[:],
+	})
+	req.Header().Set(rpc.RiverAllowNoQuorumHeader, rpc.RiverHeaderTrueValue)
+	req.Header().Set(rpc.RiverNoForwardHeader, rpc.RiverHeaderTrueValue)
+	response, err := streamServiceClient.GetStream(ctx, req)
 	if err != nil {
 		return err
 	}
