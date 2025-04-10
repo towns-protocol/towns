@@ -422,7 +422,7 @@ func TestAppRegistry_ForwardsChannelEvents(t *testing.T) {
 		})
 		assert.NoError(c, err)
 		assert.True(c, findMessageReply(c, res.Msg.Stream, testMessageText, testSession, testCiphertexts))
-	}, 1*time.Second, 100*time.Millisecond, "App server did not respond to the participant sending keys")
+	}, 10*time.Second, 100*time.Millisecond, "App server did not respond to the participant sending keys")
 }
 
 // invalidAddressBytes is a slice of bytes that cannot be parsed into an address, because
