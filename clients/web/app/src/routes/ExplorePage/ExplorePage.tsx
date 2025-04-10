@@ -20,7 +20,6 @@ const filteredExploreTowns = exploreTowns.filter(
 )
 
 const ExplorePageContent = () => {
-    console.log({ exploreTowns, bannedTowns, filteredExploreTowns })
     const isMobile = useMobile()
     const { isAuthenticated } = useConnectivity()
     const { ref: containerRef, width: containerWidth } = useContainerWidth()

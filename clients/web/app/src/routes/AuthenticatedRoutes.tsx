@@ -45,6 +45,7 @@ export const AuthenticatedRoutes = () => {
             {/*
                 space context is "available" but its value `space` remains undefined outside /t/:townId/* 
             */}
+            {isTouch && <Route path={PATHS.EXPLORE} element={<ExploreMobile />} />}
             <Route element={<SpaceContextRoute />}>
                 {isTouch ? (
                     <>
@@ -86,7 +87,6 @@ export const AuthenticatedRoutes = () => {
                                         path={`${PATHS.PROFILE}/me`}
                                         element={<TouchProfile />}
                                     />
-                                    <Route path={PATHS.EXPLORE} element={<ExploreMobile />} />
                                     <Route
                                         path={`${PATHS.PROFILE}/:profileId`}
                                         element={<SpaceProfilePanel />}
