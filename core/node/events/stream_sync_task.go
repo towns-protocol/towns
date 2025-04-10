@@ -38,7 +38,6 @@ func (s *StreamCache) submitSyncStreamTaskToPool(
 	} else {
 		s.submitReconciliationTask(pool, stream, streamRecord)
 	}
-
 }
 
 func (s *StreamCache) submitToPool(
@@ -77,7 +76,8 @@ func (s *StreamCache) getRecordTask(
 
 	streamRecord, err := s.params.Registry.GetStreamOnLatestBlock(ctx, stream.streamId)
 	if err != nil {
-		logging.FromCtx(ctx).Errorw("getRecordTask: Unable to get stream record", "stream", stream.streamId, "error", err)
+		logging.FromCtx(ctx).
+			Errorw("getRecordTask: Unable to get stream record", "stream", stream.streamId, "error", err)
 		return
 	}
 
@@ -115,7 +115,6 @@ func (s *StreamCache) submitReconciliationTask(
 			s.reconciliationTask(pool, stream.StreamId())
 		})
 	}
-
 }
 
 func (s *StreamCache) reconciliationTask(
@@ -176,7 +175,8 @@ func (s *StreamCache) reconciliationTask(
 		},
 	)
 	if corrupt {
-		logging.FromCtx(s.params.ServerCtx).Errorw("reconciliationTask: Corrupt task 2", "stream", streamId, "record", streamRecord)
+		logging.FromCtx(s.params.ServerCtx).
+			Errorw("reconciliationTask: Corrupt task 2", "stream", streamId, "record", streamRecord)
 		return
 	}
 

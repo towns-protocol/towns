@@ -198,7 +198,6 @@ $ ./env/alpha/run.sh stream place status /tmp/streams.not_migrated.initiated
 $ cat /tmp/streams.not_migrated.initiated.status
 {"stream_id":"20958f1b91c1092792d1cbf172a4cb400b7d7215070000000000000000000000","Nodes":{"0x4dc8baa00e26c4a15549321375f6173ad281b60a":{"status":"failed","error":"unavailable: GetStream: (14:UNAVAILABLE) Forwarding disabled by request header\n    nodeAddress = 0x4dC8bAa00E26c4A15549321375f6173aD281b60A\n    nodeUrl = \n    handler = GetStream\n    elapsed = 186.078µs\n    streamId = 20958f1b91c1092792d1cbf172a4cb400b7d7215070000000000000000000000"},"0x7cf83341f5b41345e23df4074c307b7642db9556":{"status":"success","minipool_gen":4},"0xa0be273b3660171e24b315e0d95ef328e49d2860":{"status":"failed","error":"unavailable: GetStream: (14:UNAVAILABLE) Forwarding disabled by request header\n    nodeAddress = 0xA0BE273b3660171E24b315e0d95ef328E49D2860\n    nodeUrl = \n    handler = GetStream\n    elapsed = 68.767µs\n    streamId = 20958f1b91c1092792d1cbf172a4cb400b7d7215070000000000000000000000"}}}
 {"stream_id":"10958f1b91c1092792d1cbf172a4cb400b7d7215070000000000000000000000","Nodes":{"0x49ea67dc4b5bb19624f0fd1843a7242f2df35cb2":{"status":"failed","error":"unavailable: GetStream: (14:UNAVAILABLE) Forwarding disabled by request header\n    nodeAddress = 0x49EA67dC4B5bB19624f0Fd1843a7242F2DF35cb2\n    nodeUrl = \n    handler = GetStream\n    elapsed = 61.718µs\n    streamId = 10958f1b91c1092792d1cbf172a4cb400b7d7215070000000000000000000000"},"0x4dc8baa00e26c4a15549321375f6173ad281b60a":{"status":"failed","error":"unavailable: GetStream: (14:UNAVAILABLE) Forwarding disabled by request header\n    nodeAddress = 0x4dC8bAa00E26c4A15549321375f6173aD281b60A\n    nodeUrl = \n    handler = GetStream\n    elapsed = 55.995µs\n    streamId = 10958f1b91c1092792d1cbf172a4cb400b7d7215070000000000000000000000"},"0x8d57ffc1a7ae49f845935756f54090465fca44bd":{"status":"success","minipool_gen":232}}}
-
 ```
 
 If enough nodes have synced the stream into their local storage and are ready to join the streams quorum use
@@ -206,6 +205,6 @@ the `finilize` subcommand. This will set the stream replication factor in the st
 length. This is the signal for streams that all nodes in the node list will start participating in quorum.
 
 ```sh
-$ ./env/delta/run.sh stream place finilize /tmp/non_replicated_streams_1.txt
+$ ./env/delta/run.sh stream place enter-quorum <wallet-file> /tmp/streams.not_migrated.initiated.status
 ```
 
