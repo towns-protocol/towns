@@ -4,7 +4,7 @@ import { TSDocConfigFile } from '@microsoft/tsdoc-config'
 import { SyntaxKind } from 'ts-morph'
 import { resolve } from 'node:path'
 
-// eslint-disable-next-line import/no-cycle
+// eslint-disable-next-line import-x/no-cycle
 import { type ResolveDeclarationReference, createResolveDeclarationReference } from './model'
 import { project } from './tsmorph'
 
