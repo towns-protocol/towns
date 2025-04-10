@@ -12,7 +12,7 @@ import "forge-std/console.sol";
 import {AlphaHelper, DiamondFacetData, FacetData} from "scripts/interactions/helpers/AlphaHelper.sol";
 
 import {DeployRiverRegistry} from "scripts/deployments/diamonds/DeployRiverRegistry.s.sol";
-import {IDiamondInitHelper} from "test/diamond/Diamond.t.sol";
+import {IDiamondInitHelper} from "../deployments/diamonds/IDiamondInitHelper.sol";
 
 contract InteractRiverAlphaSparse is AlphaHelper {
     mapping(string => address) private diamondDeployments;
