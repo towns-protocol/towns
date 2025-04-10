@@ -242,9 +242,8 @@ export const unpackSnapshot = async (
     const sn = fromBinary(SnapshotSchema, snapshot.event)
     let hash = snapshot.hash
 
-    const doCheckEventHash = opts?.disableHashValidation !== true
-    if (doCheckEventHash) {
-        hash = riverHash(snapshot.event)
+    if (opts?.disableHashValidation !== true) {
+        hash = riverSnapshotHash(snapshot.event)
         check(bin_equal(hash, snapshot.hash), 'Snapshot id is not valid', Err.BAD_EVENT_ID)
     }
 
@@ -357,6 +356,8 @@ const HASH_SEPARATOR = new Uint8Array([65, 66, 67, 68, 69, 70, 71, 62])
 const HASH_FOOTER = new Uint8Array([60, 71, 70, 69, 68, 67, 66, 65])
 // Header for delegate signature 'RIVERSIG'
 const RIVER_SIG_HEADER = new Uint8Array([82, 73, 86, 69, 82, 83, 73, 71])
+// Create hash header as Uint8Array from string 'SNAPSHOT'
+const SNAPSHOT_HEADER = new Uint8Array([83, 78, 65, 80, 83, 72, 79, 84])
 
 function numberToUint8Array64LE(num: number): Uint8Array {
     const result = new Uint8Array(8)
@@ -392,6 +393,17 @@ export function riverHash(data: Uint8Array): Uint8Array {
     assertBytes(data)
     const hasher = keccak256.create()
     hasher.update(HASH_HEADER)
+    hasher.update(numberToUint8Array64LE(data.length))
+    hasher.update(HASH_SEPARATOR)
+    hasher.update(data)
+    hasher.update(HASH_FOOTER)
+    return hasher.digest()
+}
+
+export function riverSnapshotHash(data: Uint8Array): Uint8Array {
+    assertBytes(data)
+    const hasher = keccak256.create()
+    hasher.update(SNAPSHOT_HEADER)
     hasher.update(numberToUint8Array64LE(data.length))
     hasher.update(HASH_SEPARATOR)
     hasher.update(data)
