@@ -233,6 +233,9 @@ export class StreamStateView implements IStreamStateView {
         cleartexts: Record<string, Uint8Array | string> | undefined,
         encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
     ) {
+        if (this.saveSnapshots) {
+            this._snapshot = inSnapshot
+        }
         const snapshot = migrateSnapshot(inSnapshot)
         switch (snapshot.content.case) {
             case 'spaceContent':
