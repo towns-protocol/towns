@@ -133,14 +133,42 @@ func NewService(
 	return s, nil
 }
 
-func (s *Service) SetFowardSetting(
+func (s *Service) SetForwardSetting(
 	ctx context.Context,
 	req *connect.Request[SetForwardSettingRequest],
 ) (
 	*connect.Response[SetForwardSettingResponse],
 	error,
 ) {
-	return nil, base.RiverError(Err_UNIMPLEMENTED, "IMPLEMENT ME")
+	var app common.Address
+	var err error
+	if app, err = base.BytesToAddress(req.Msg.AppId); err != nil {
+		return nil, base.WrapRiverError(Err_INVALID_ARGUMENT, err).
+			Message("invalid app id").Tag("appId", req.Msg.AppId).Func("SetForwardSetting")
+	}
+
+	appInfo, err := s.store.GetAppInfo(ctx, app)
+	if err != nil {
+		return nil, base.WrapRiverError(Err_INTERNAL, err).Message("could not determine app owner").
+			Tag("appId", app).Func("SetForwardSetting")
+	}
+
+	userId := authentication.UserFromAuthenticatedContext(ctx)
+	if app != userId && appInfo.Owner != userId {
+		return nil, base.RiverError(Err_PERMISSION_DENIED, "authenticated user must be app or owner").
+			Tag("appId", app).Tag("userId", userId).Tag("ownerId", appInfo.Owner).Func("SetForwardSetting")
+	}
+
+	if err := s.store.UpdateForwardSetting(ctx, app, req.Msg.GetForwardSetting()); err != nil {
+		return nil, base.RiverError(Err_DB_OPERATION_FAILURE, "Unable to update app forward setting").
+			Tag("appId", app).
+			Tag("userId", userId).
+			Func("SetForwardingSetting")
+	}
+
+	return &connect.Response[SetForwardSettingResponse]{
+		Msg: &SetForwardSettingResponse{},
+	}, nil
 }
 
 func (s *Service) Start(ctx context.Context) {

@@ -113,6 +113,12 @@ type (
 			encryptedSharedSecret [32]byte,
 		) error
 
+		UpdateForwardSetting(
+			ctx context.Context,
+			app common.Address,
+			forwardSetting protocol.ForwardSettingValue,
+		) error
+
 		RegisterWebhook(
 			ctx context.Context,
 			app common.Address,
@@ -272,6 +278,7 @@ func (s *PostgresAppRegistryStore) CreateApp(
 		nil,
 		"appAddress", app,
 		"ownerAddress", owner,
+		"forwardSetting", forwardSetting,
 	)
 }
 
@@ -289,7 +296,7 @@ func (s *PostgresAppRegistryStore) createApp(
 		PGAddress(app),
 		PGAddress(owner),
 		PGSecret(encryptedSharedSecret),
-		forwardSetting,
+		int16(forwardSetting),
 	); err != nil {
 		if isPgError(err, pgerrcode.UniqueViolation) {
 			return WrapRiverError(protocol.Err_ALREADY_EXISTS, err).Message("app already exists")
@@ -297,6 +304,47 @@ func (s *PostgresAppRegistryStore) createApp(
 			return WrapRiverError(protocol.Err_DB_OPERATION_FAILURE, err).Message("unable to create app record")
 		}
 	}
+	return nil
+}
+
+func (s *PostgresAppRegistryStore) UpdateForwardSetting(
+	ctx context.Context,
+	app common.Address,
+	forwardSetting protocol.ForwardSettingValue,
+) error {
+	return s.txRunner(
+		ctx,
+		"UpdateForwardSetting",
+		pgx.ReadWrite,
+		func(ctx context.Context, tx pgx.Tx) error {
+			return s.updateForwardSetting(ctx, app, forwardSetting, tx)
+		},
+		nil,
+		"appAddress", app,
+		"forwardSetting", forwardSetting,
+	)
+}
+
+func (s *PostgresAppRegistryStore) updateForwardSetting(
+	ctx context.Context,
+	app common.Address,
+	forwardSetting protocol.ForwardSettingValue,
+	txn pgx.Tx,
+) error {
+	tag, err := txn.Exec(
+		ctx,
+		`UPDATE app_registry SET forward_setting = $2 WHERE app_id = $1`,
+		PGAddress(app),
+		int16(forwardSetting),
+	)
+	if err != nil {
+		return AsRiverError(err, protocol.Err_DB_OPERATION_FAILURE).
+			Message("Unable to update the forward setting for app")
+	}
+	if tag.RowsAffected() < 1 {
+		return RiverError(protocol.Err_NOT_FOUND, "app was not found in registry")
+	}
+
 	return nil
 }
 
@@ -331,8 +379,7 @@ func (s *PostgresAppRegistryStore) rotateSecret(
 	)
 	if err != nil {
 		return AsRiverError(err, protocol.Err_DB_OPERATION_FAILURE).
-			Message("Unable to update the encrypted shared secret for app").
-			Tag("app", app)
+			Message("Unable to update the encrypted shared secret for app")
 	}
 	if tag.RowsAffected() < 1 {
 		return RiverError(protocol.Err_NOT_FOUND, "app was not found in registry")
@@ -480,6 +527,7 @@ func (s *PostgresAppRegistryStore) PublishSessionKeys(
 		nil,
 		"deviceKey", deviceKey,
 		"sessionIds", sessionIds,
+		"streamId", streamId,
 	)
 	if err != nil {
 		return nil, err
@@ -787,6 +835,8 @@ func (s *PostgresAppRegistryStore) enqueueUnsendableMessages(
 		}),
 	)
 	if err != nil {
+		// This foreign key violation should be pretty much impossible since we read the device key
+		// from an existing app_registry row above.
 		if isPgError(err, pgerrcode.ForeignKeyViolation) {
 			return nil, nil, WrapRiverError(protocol.Err_NOT_FOUND, err).Message(
 				"unable to enqueue messages for session - app with device key is not registered",
@@ -794,7 +844,7 @@ func (s *PostgresAppRegistryStore) enqueueUnsendableMessages(
 		} else {
 			return nil, nil, WrapRiverError(protocol.Err_DB_OPERATION_FAILURE, err).Message(
 				"unable to enqueue messages for session",
-			)
+			).Tag("unsendableAppIds", unsendableAppIds)
 		}
 	}
 	if insertCount < int64(len(unsendableAppIds)) {

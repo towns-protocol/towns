@@ -27,7 +27,7 @@ const (
 type ForwardSettingValue int32
 
 const (
-	// FORWARD_SETTING_UNSPECIFIED not set, assumes FORWARD_SETTING__REPLIES_REACTIONS as the default setting.
+	// FORWARD_SETTING_UNSPECIFIED not set, assumes FORWARD_SETTING_MENTIONS_REPLIES_REACTIONS as the default setting.
 	ForwardSettingValue_FORWARD_SETTING_UNSPECIFIED ForwardSettingValue = 0
 	// FORWARD_SETTING_ALL_MESSAGES indicates that the app would like all messages forwarded for each channel
 	// it is a member of.

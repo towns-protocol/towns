@@ -103,7 +103,7 @@ func TestGetSessionKey(t *testing.T) {
 	require.NoError(err)
 	secret := [32]byte(secretBytes)
 
-	err = store.CreateApp(params.ctx, owner, app, secret)
+	err = store.CreateApp(params.ctx, owner, app, protocol.ForwardSettingValue_FORWARD_SETTING_UNSPECIFIED, secret)
 	require.NoError(err)
 
 	err = store.RegisterWebhook(params.ctx, app, "http://www.callme.com/webhook", "deviceKey", "fallbackKey")
@@ -166,6 +166,58 @@ func TestGetSessionKey(t *testing.T) {
 	}
 }
 
+func TestUpdateForwardSetting(t *testing.T) {
+	params := setupAppRegistryStorageTest(t)
+	t.Cleanup(params.closer)
+
+	require := require.New(t)
+	store := params.pgAppRegistryStore
+
+	owner := safeAddress(t)
+	app := safeAddress(t)
+	unregisteredApp := safeAddress(t)
+
+	secretBytes, err := hex.DecodeString(testSecretHexString)
+	require.NoError(err)
+	secret := [32]byte(secretBytes)
+
+	err = store.CreateApp(params.ctx, owner, app, protocol.ForwardSettingValue_FORWARD_SETTING_UNSPECIFIED, secret)
+	require.NoError(err)
+
+	info, err := store.GetAppInfo(params.ctx, app)
+	require.NoError(err)
+	require.Equal(
+		&storage.AppInfo{
+			App:             app,
+			Owner:           owner,
+			EncryptedSecret: secret,
+		},
+		info,
+	)
+
+	err = store.UpdateForwardSetting(params.ctx, app, protocol.ForwardSettingValue_FORWARD_SETTING_ALL_MESSAGES)
+	require.NoError(err)
+
+	info, err = store.GetAppInfo(params.ctx, app)
+	require.NoError(err)
+	require.Equal(
+		&storage.AppInfo{
+			App:             app,
+			Owner:           owner,
+			EncryptedSecret: secret,
+			ForwardSetting:  protocol.ForwardSettingValue_FORWARD_SETTING_ALL_MESSAGES,
+		},
+		info,
+	)
+
+	err = store.UpdateForwardSetting(
+		params.ctx,
+		unregisteredApp,
+		protocol.ForwardSettingValue_FORWARD_SETTING_MENTIONS_REPLIES_REACTIONS,
+	)
+	require.ErrorContains(err, "app was not found in registry")
+}
+
 func TestRegisterWebhook(t *testing.T) {
 	params := setupAppRegistryStorageTest(t)
 	t.Cleanup(params.closer)
@@ -184,17 +236,19 @@ func TestRegisterWebhook(t *testing.T) {
 	require.NoError(err)
 	secret := [32]byte(secretBytes)
 
-	err = store.CreateApp(params.ctx, owner, app, secret)
+	err = store.CreateApp(params.ctx, owner, app, protocol.ForwardSettingValue_FORWARD_SETTING_UNSPECIFIED, secret)
 	require.NoError(err)
 
 	info, err := store.GetAppInfo(params.ctx, app)
 	require.NoError(err)
-	require.Equal(app, info.App)
-	require.Equal(owner, info.Owner)
-	require.Equal([32]byte(secretBytes), info.EncryptedSecret)
-	require.Equal("", info.WebhookUrl)
-	require.Equal("", info.EncryptionDevice.DeviceKey)
-	require.Equal("", info.EncryptionDevice.FallbackKey)
+	require.Equal(
+		&storage.AppInfo{
+			App:             app,
+			Owner:           owner,
+			EncryptedSecret: [32]byte(secretBytes),
+		},
+		info,
+	)
 
 	webhook := "https://webhook.com/callme"
 	err = store.RegisterWebhook(params.ctx, app, webhook, deviceKey, fallbackKey)
@@ -202,12 +256,19 @@ func TestRegisterWebhook(t *testing.T) {
 
 	info, err = store.GetAppInfo(params.ctx, app)
 	require.NoError(err)
-	require.Equal(app, info.App)
-	require.Equal(owner, info.Owner)
-	require.Equal([32]byte(secretBytes), info.EncryptedSecret)
-	require.Equal(webhook, info.WebhookUrl)
-	require.Equal(deviceKey, info.EncryptionDevice.DeviceKey)
-	require.Equal(fallbackKey, info.EncryptionDevice.FallbackKey)
+	require.Equal(
+		&storage.AppInfo{
+			App:             app,
+			Owner:           owner,
+			EncryptedSecret: [32]byte(secretBytes),
+			WebhookUrl:      webhook,
+			EncryptionDevice: storage.EncryptionDevice{
+				DeviceKey:   deviceKey,
+				FallbackKey: fallbackKey,
+			},
+		},
+		info,
+	)
 
 	webhook2 := "https://www.webhook.com/beepme"
 	deviceKey2 := safeAddress(t).String()
@@ -217,17 +278,24 @@ func TestRegisterWebhook(t *testing.T) {
 
 	info, err = store.GetAppInfo(params.ctx, app)
 	require.NoError(err)
-	require.Equal(app, info.App)
-	require.Equal(owner, info.Owner)
-	require.Equal([32]byte(secretBytes), info.EncryptedSecret)
-	require.Equal(webhook2, info.WebhookUrl)
-	require.Equal(deviceKey2, info.EncryptionDevice.DeviceKey)
-	require.Equal(fallbackKey2, info.EncryptionDevice.FallbackKey)
+	require.Equal(
+		&storage.AppInfo{
+			App:             app,
+			Owner:           owner,
+			EncryptedSecret: [32]byte(secretBytes),
+			WebhookUrl:      webhook2,
+			EncryptionDevice: storage.EncryptionDevice{
+				DeviceKey:   deviceKey2,
+				FallbackKey: fallbackKey2,
+			},
+		},
+		info,
+	)
 
 	err = store.RegisterWebhook(params.ctx, unregisteredApp, webhook, deviceKey, fallbackKey)
 	require.ErrorContains(err, "app was not found in registry")
 
-	err = store.CreateApp(params.ctx, owner, app2, secret)
+	err = store.CreateApp(params.ctx, owner, app2, protocol.ForwardSettingValue_FORWARD_SETTING_UNSPECIFIED, secret)
 	require.NoError(err)
 	err = store.RegisterWebhook(params.ctx, app2, webhook, deviceKey2, fallbackKey)
 	require.ErrorContains(err, "another app is using this device id")
@@ -256,34 +324,52 @@ func TestCreateApp(t *testing.T) {
 	require.NoError(err)
 	secret2 := [32]byte(secretBytes2)
 
-	err = store.CreateApp(params.ctx, owner, app, secret)
+	err = store.CreateApp(params.ctx, owner, app, protocol.ForwardSettingValue_FORWARD_SETTING_ALL_MESSAGES, secret)
 	require.NoError(err)
 
-	err = store.CreateApp(params.ctx, owner2, app, secret)
+	err = store.CreateApp(
+		params.ctx,
+		owner2,
+		app,
+		protocol.ForwardSettingValue_FORWARD_SETTING_MENTIONS_REPLIES_REACTIONS,
+		secret,
+	)
 	require.ErrorContains(err, "app already exists")
 	require.True(base.IsRiverErrorCode(err, protocol.Err_ALREADY_EXISTS))
 
 	// Fine to have multiple apps per owner
-	err = store.CreateApp(params.ctx, owner, app2, secret2)
+	err = store.CreateApp(
+		params.ctx,
+		owner,
+		app2,
+		protocol.ForwardSettingValue_FORWARD_SETTING_MENTIONS_REPLIES_REACTIONS,
+		secret2,
+	)
 	require.NoError(err)
 
 	info, err := store.GetAppInfo(params.ctx, app)
 	require.NoError(err)
-	require.Equal(app, info.App)
-	require.Equal(owner, info.Owner)
-	require.Equal(secret, info.EncryptedSecret)
-	require.Equal("", info.WebhookUrl)
-	require.Equal("", info.EncryptionDevice.DeviceKey)
-	require.Equal("", info.EncryptionDevice.FallbackKey)
+	require.Equal(
+		&storage.AppInfo{
+			App:             app,
+			Owner:           owner,
+			EncryptedSecret: secret,
+			ForwardSetting:  protocol.ForwardSettingValue_FORWARD_SETTING_ALL_MESSAGES,
+		},
+		info,
+	)
 
 	info, err = store.GetAppInfo(params.ctx, app2)
 	require.NoError(err)
-	require.Equal(app2, info.App)
-	require.Equal(owner, info.Owner)
-	require.Equal(secret2, info.EncryptedSecret)
-	require.Equal("", info.WebhookUrl)
-	require.Equal("", info.EncryptionDevice.DeviceKey)
-	require.Equal("", info.EncryptionDevice.FallbackKey)
+	require.Equal(
+		&storage.AppInfo{
+			App:             app2,
+			Owner:           owner,
+			EncryptedSecret: secret2,
+			ForwardSetting:  protocol.ForwardSettingValue_FORWARD_SETTING_MENTIONS_REPLIES_REACTIONS,
+		},
+		info,
+	)
 
 	info, err = store.GetAppInfo(params.ctx, app3)
 	require.Nil(info)
@@ -310,7 +396,7 @@ func TestRotateSecret(t *testing.T) {
 	require.NoError(err)
 	secret2 := [32]byte(secretBytes2)
 
-	err = store.CreateApp(params.ctx, owner, app, secret)
+	err = store.CreateApp(params.ctx, owner, app, protocol.ForwardSettingValue_FORWARD_SETTING_UNSPECIFIED, secret)
 	require.NoError(err)
 
 	info, err := store.GetAppInfo(params.ctx, app)
@@ -372,7 +458,7 @@ func TestPublishSessionKeys(t *testing.T) {
 	require.NoError(err)
 	secret := [32]byte(secretBytes)
 
-	err = store.CreateApp(params.ctx, owner, app, secret)
+	err = store.CreateApp(params.ctx, owner, app, protocol.ForwardSettingValue_FORWARD_SETTING_UNSPECIFIED, secret)
 	require.NoError(err)
 
 	webhook := "https://webhook.com/callme"
@@ -476,7 +562,13 @@ func TestEnqueueMessages(t *testing.T) {
 	require.ErrorContains(err, "some app ids were not registered")
 	require.True(base.IsRiverErrorCode(err, protocol.Err_NOT_FOUND))
 
-	err = store.CreateApp(params.ctx, owner.Address, apps[0].Address, secrets[0])
+	err = store.CreateApp(
+		params.ctx,
+		owner.Address,
+		apps[0].Address,
+		protocol.ForwardSettingValue_FORWARD_SETTING_UNSPECIFIED,
+		secrets[0],
+	)
 	require.NoError(err)
 
 	webhook := "https://webhook.com/0"
@@ -550,7 +642,15 @@ func TestEnqueueMessages(t *testing.T) {
 
 	// Register apps and webhooks for apps 2 through 5, to have all device keys registered
 	for i := range 4 {
-		require.NoError(store.CreateApp(params.ctx, owner.Address, apps[i+1].Address, secrets[i+1]))
+		require.NoError(
+			store.CreateApp(
+				params.ctx,
+				owner.Address,
+				apps[i+1].Address,
+				protocol.ForwardSettingValue_FORWARD_SETTING_UNSPECIFIED,
+				secrets[i+1],
+			),
+		)
 		webhook := fmt.Sprintf("https://webhook.com/%d", i+1)
 		require.NoError(store.RegisterWebhook(params.ctx, apps[i+1].Address, webhook, deviceKeys[i+1], fallbackKey))
 	}

@@ -15,7 +15,7 @@ import "protocol.proto";
 service AppRegistryService {
     rpc Register(RegisterRequest) returns (RegisterResponse);
     rpc RegisterWebhook(RegisterWebhookRequest) returns (RegisterWebhookResponse);
-    rpc SetForwardSetting(SetForwardSettingRequest) returns (SetForwardSettingResponse);
+    rpc ForwardSetting(SetForwardSettingRequest) returns (SetForwardSettingResponse);
     rpc RotateSecret(RotateSecretRequest) returns (RotateSecretResponse);
     rpc GetStatus(GetStatusRequest) returns (GetStatusResponse);
     rpc GetSession(GetSessionRequest) returns (GetSessionResponse);
@@ -25,7 +25,7 @@ service AppRegistryService {
 // of. It specifies which messages the app registry service will consider relevant for forwarding to
 // the bot.
 enum ForwardSettingValue {
-    // FORWARD_SETTING_UNSPECIFIED not set, assumes FORWARD_SETTING__REPLIES_REACTIONS as the default setting.
+    // FORWARD_SETTING_UNSPECIFIED not set, assumes FORWARD_SETTING_MENTIONS_REPLIES_REACTIONS as the default setting.
     FORWARD_SETTING_UNSPECIFIED = 0;
     // FORWARD_SETTING_ALL_MESSAGES indicates that the app would like all messages forwarded for each channel
     // it is a member of.

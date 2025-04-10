@@ -72,6 +72,14 @@ func (q *CachedEncryptedMessageQueue) GetAppInfo(
 	return q.store.GetAppInfo(ctx, app)
 }
 
+func (q *CachedEncryptedMessageQueue) UpdateForwardSetting(
+	ctx context.Context,
+	app common.Address,
+	forwardSetting protocol.ForwardSettingValue,
+) error {
+	return q.store.UpdateForwardSetting(ctx, app, forwardSetting)
+}
+
 func (q *CachedEncryptedMessageQueue) RegisterWebhook(
 	ctx context.Context,
 	app common.Address,
