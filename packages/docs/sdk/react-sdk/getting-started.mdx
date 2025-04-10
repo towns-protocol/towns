@@ -13,19 +13,19 @@ This guide will help you get started with Towns Protocol React SDK. You'll learn
 
 You can start a new Towns project in two ways:
 
-### Using create-river-build-app (Recommended)
+### Using create-towns-protocol-app (Recommended)
 
-The easiest way to get started is using `create-river-build-app` and follow the instructions in the terminal. This will set up a new React project with all the necessary dependencies and configurations.
+The easiest way to get started is using `create-towns-protocol-app` and follow the instructions in the terminal. This will set up a new React project with all the necessary dependencies and configurations.
 
 ```bash
 # npm
-npm create river-build-app my-app
+npm create towns-protocol-app my-app
 
 # yarn
-yarn create river-build-app my-app
+yarn create towns-protocol-app my-app
 
 # pnpm
-pnpm create river-build-app my-app
+pnpm create towns-protocol-app my-app
 ```
 
 By default, this will create a new app using the Towns Playground template - a full-featured example application that demonstrates Towns's Protocol capabilities.
@@ -96,11 +96,11 @@ If you need any assistance with setting up Wagmi, check out the [Wagmi Getting S
 
 You can connect to Towns using either a Web3 wallet (recommended) or a bearer token.
 
-Towns has three networks:
+You can use the following networks:
 - `omega` - The Towns mainnet, uses Base as the EVM chain
 - `gamma` - The Towns testnet, uses Base Sepolia as the EVM chain
 
-If you're not sure which network to use, `gamma` is a good starting point.
+We recommend using `gamma` as a starting point. 
 
 <Note>
 You can use other gamma clients like [Towns (gamma)](https://app.gamma.towns.com) or the [Towns Playground](https://river-sample-app.vercel.app) to help you inspect messages on the `gamma` network.

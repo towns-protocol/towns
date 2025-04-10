@@ -256,7 +256,7 @@ func (c *RiverRegistryContract) AddStream(
 				opts, streamId, genesisMiniblockHash, river.Stream{
 					LastMiniblockHash: lastMiniblockHash,
 					LastMiniblockNum:  uint64(lastMiniblockNum),
-					Reserved0:         0,
+					Reserved0:         uint64(len(addresses)),
 					Flags:             uint64(flags),
 					Nodes:             addresses,
 				})
@@ -299,68 +299,45 @@ func (c *RiverRegistryContract) AddStream(
 	return RiverError(Err_ERR_UNSPECIFIED, "AddStream transaction result unknown")
 }
 
-type GetStreamResult struct {
-	StreamId          StreamId
-	Nodes             []common.Address
-	LastMiniblockHash common.Hash
-	LastMiniblockNum  uint64
-	IsSealed          bool
-}
-
-func makeGetStreamResult(streamId StreamId, stream *river.Stream) *GetStreamResult {
-	return &GetStreamResult{
-		StreamId:          streamId,
-		Nodes:             stream.Nodes,
-		LastMiniblockHash: stream.LastMiniblockHash,
-		LastMiniblockNum:  stream.LastMiniblockNum,
-		IsSealed:          stream.Flags&1 != 0, // TODO: constants for flags
-	}
-}
-
 func (c *RiverRegistryContract) GetStream(
 	ctx context.Context,
 	streamId StreamId,
 	blockNum crypto.BlockNumber,
-) (*GetStreamResult, error) {
+) (*river.StreamWithId, error) {
 	stream, err := c.StreamRegistry.GetStream(c.callOptsWithBlockNum(ctx, blockNum), streamId)
 	if err != nil {
 		return nil, WrapRiverError(Err_CANNOT_CALL_CONTRACT, err).Func("GetStream").Message("Call failed")
 	}
-	return makeGetStreamResult(streamId, &stream), nil
+	return river.NewStreamWithId(streamId, &stream), nil
 }
 
 func (c *RiverRegistryContract) GetStreamOnLatestBlock(
 	ctx context.Context,
 	streamId StreamId,
-) (*GetStreamResult, error) {
+) (*river.StreamWithId, error) {
 	stream, err := c.StreamRegistry.GetStream(c.callOpts(ctx), streamId)
 	if err != nil {
 		return nil, WrapRiverError(Err_CANNOT_CALL_CONTRACT, err).Func("GetStreamOnLatestBlock").Message("Call failed")
 	}
-	return makeGetStreamResult(streamId, &stream), nil
+	return river.NewStreamWithId(streamId, &stream), nil
 }
 
-// Returns stream, genesis miniblock hash, genesis miniblock, error
+// GetStreamWithGenesis returns stream, genesis miniblock hash, genesis miniblock, error
 func (c *RiverRegistryContract) GetStreamWithGenesis(
 	ctx context.Context,
 	streamId StreamId,
-) (*GetStreamResult, common.Hash, []byte, crypto.BlockNumber, error) {
-	blockNum, err := c.Blockchain.GetBlockNumber(ctx)
-	if err != nil {
-		return nil, common.Hash{}, nil, blockNum, err
-	}
-
+	blockNum crypto.BlockNumber,
+) (*river.StreamWithId, common.Hash, []byte, error) {
 	stream, mbHash, mb, err := c.StreamRegistry.GetStreamWithGenesis(c.callOptsWithBlockNum(ctx, blockNum), streamId)
 	if err != nil {
-		return nil, common.Hash{}, nil, blockNum, WrapRiverError(
+		return nil, common.Hash{}, nil, WrapRiverError(
 			Err_CANNOT_CALL_CONTRACT,
 			err,
 		).Func("GetStream").
 			Message("Call failed").
 			Tag("blockNum", blockNum)
 	}
-	ret := makeGetStreamResult(streamId, &stream)
-	return ret, mbHash, mb, blockNum, nil
+	return river.NewStreamWithId(streamId, &stream), mbHash, mb, nil
 }
 
 func (c *RiverRegistryContract) GetStreamCount(ctx context.Context, blockNum crypto.BlockNumber) (int64, error) {
@@ -448,7 +425,7 @@ func waitForBackoff(ctx context.Context, bo backoff.BackOff) bool {
 func (c *RiverRegistryContract) ForAllStreams(
 	ctx context.Context,
 	blockNum crypto.BlockNumber,
-	cb func(*GetStreamResult) bool,
+	cb func(*river.StreamWithId) bool,
 ) error {
 	if c.Settings.ParallelReaders > 1 {
 		return c.forAllStreamsParallel(ctx, blockNum, cb)
@@ -460,7 +437,7 @@ func (c *RiverRegistryContract) ForAllStreams(
 func (c *RiverRegistryContract) forAllStreamsSingle(
 	ctx context.Context,
 	blockNum crypto.BlockNumber,
-	cb func(*GetStreamResult) bool,
+	cb func(*river.StreamWithId) bool,
 ) error {
 	log := logging.FromCtx(ctx)
 	pageSize := int64(c.Settings.PageSize)
@@ -513,12 +490,8 @@ func (c *RiverRegistryContract) forAllStreamsSingle(
 			if stream.Id == ZeroBytes32 {
 				continue
 			}
-			streamId, err := StreamIdFromHash(stream.Id)
-			if err != nil {
-				return err
-			}
 			totalStreams++
-			if !cb(makeGetStreamResult(streamId, &stream.Stream)) {
+			if !cb(&stream) {
 				return nil
 			}
 		}
@@ -539,7 +512,7 @@ func (c *RiverRegistryContract) forAllStreamsSingle(
 func (c *RiverRegistryContract) forAllStreamsParallel(
 	ctx context.Context,
 	blockNum crypto.BlockNumber,
-	cb func(*GetStreamResult) bool,
+	cb func(*river.StreamWithId) bool,
 ) error {
 	log := logging.FromCtx(ctx)
 	ctx, cancelCtx := context.WithCancel(ctx)
@@ -633,7 +606,7 @@ OuterLoop:
 					continue
 				}
 				totalStreams++
-				if !cb(makeGetStreamResult(stream.Id, &stream.Stream)) {
+				if !cb(&stream) {
 					break OuterLoop
 				}
 			}

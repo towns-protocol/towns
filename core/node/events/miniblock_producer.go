@@ -7,7 +7,8 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/linkdata/deadlock"
-	"github.com/puzpuzpuz/xsync/v3"
+	"github.com/puzpuzpuz/xsync/v4"
+
 	"github.com/towns-protocol/towns/core/contracts/river"
 	. "github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/crypto"
@@ -37,7 +38,7 @@ type RemoteMiniblockProvider interface {
 		ctx context.Context,
 		node common.Address,
 		streamId StreamId,
-		mb *Miniblock,
+		candidate *MiniblockInfo,
 	) error
 
 	// GetMbs returns a range of miniblocks from the given stream from the given node.
@@ -50,7 +51,7 @@ type RemoteMiniblockProvider interface {
 		streamId StreamId,
 		fromInclusive int64,
 		toExclusive int64,
-	) ([]*Miniblock, error)
+	) ([]*MiniblockInfo, error)
 }
 
 type TestMiniblockProducer interface {
@@ -84,7 +85,7 @@ func NewMiniblockProducer(
 	mb := &miniblockProducer{
 		streamCache:      streamCache,
 		localNodeAddress: streamCache.Params().Wallet.Address,
-		jobs:             xsync.NewMapOf[StreamId, *mbJob](),
+		jobs:             xsync.NewMap[StreamId, *mbJob](),
 	}
 
 	if opts != nil {
@@ -103,7 +104,7 @@ type miniblockProducer struct {
 	opts             MiniblockProducerOpts
 	localNodeAddress common.Address
 
-	jobs *xsync.MapOf[StreamId, *mbJob]
+	jobs *xsync.Map[StreamId, *mbJob]
 
 	candidates candidateTracker
 
@@ -214,7 +215,7 @@ func (p *miniblockProducer) isLocalLeaderOnCurrentBlock(
 	stream *Stream,
 	blockNum crypto.BlockNumber,
 ) bool {
-	streamNodes := stream.GetNodes()
+	streamNodes := stream.GetQuorumNodes()
 	if len(streamNodes) == 0 {
 		return false
 	}
@@ -347,15 +348,19 @@ func (p *miniblockProducer) jobStart(ctx context.Context, j *mbJob) {
 func (p *miniblockProducer) jobDone(ctx context.Context, j *mbJob) {
 	notFound := false
 	// Delete the job from the jobs map if value is the same as j.
-	_, _ = p.jobs.Compute(j.stream.streamId, func(oldValue *mbJob, loaded bool) (*mbJob, bool) {
-		if oldValue == j {
-			return nil, true
-		}
-		notFound = true
-		return oldValue, false
-	})
+	_, _ = p.jobs.Compute(
+		j.stream.streamId,
+		func(oldValue *mbJob, loaded bool) (*mbJob, xsync.ComputeOp) {
+			if oldValue == j {
+				return nil, xsync.DeleteOp
+			}
+			notFound = true
+			return oldValue, xsync.CancelOp
+		},
+	)
 	if notFound {
-		logging.FromCtx(ctx).Errorw("MiniblockProducer: jobDone: job not found in jobs map", "streamId", j.stream.streamId)
+		logging.FromCtx(ctx).
+			Errorw("MiniblockProducer: jobDone: job not found in jobs map", "streamId", j.stream.streamId)
 	}
 }
 
@@ -479,21 +484,16 @@ func (p *miniblockProducer) promoteConfirmedCandidates(ctx context.Context, jobs
 			continue
 		}
 
-		committedLocalCandidateRef := MiniblockRef{
-			Hash: stream.LastMiniblockHash,
-			Num:  int64(stream.LastMiniblockNum),
-		}
+		committedLocalCandidateRef := stream.LastMb()
 
-		if err := job.stream.promoteCandidate(ctx, &committedLocalCandidateRef); err == nil {
+		if err := job.stream.promoteCandidate(ctx, committedLocalCandidateRef); err == nil {
 			log.Info("Promoted miniblock candidate",
 				"streamId", job.stream.streamId,
-				"num", committedLocalCandidateRef.Num,
-				"hash", committedLocalCandidateRef.Hash)
+				"mb", committedLocalCandidateRef)
 		} else {
 			log.Error("Unable to promote candidate",
 				"streamId", job.stream.streamId,
-				"num", committedLocalCandidateRef.Num,
-				"hash", committedLocalCandidateRef.Hash,
+				"mb", committedLocalCandidateRef,
 				"err", err)
 		}
 

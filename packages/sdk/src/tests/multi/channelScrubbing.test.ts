@@ -51,7 +51,7 @@ describe('channelScrubbing', () => {
         // should be booted from the stream since she unlinked her entitled wallet.
         await expect(bob.joinStream(channelId!)).resolves.not.toThrow()
 
-        const userStreamView = (await alice.waitForStream(makeUserStreamId(alice.userId))!).view
+        const userStreamView = (await alice.waitForStream(makeUserStreamId(alice.userId))).view
         // Wait for alice's user stream to have the leave event
         await waitFor(() => userStreamView.userContent.isMember(channelId!, MembershipOp.SO_LEAVE))
     })

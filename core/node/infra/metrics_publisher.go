@@ -28,6 +28,7 @@ var DefaultRpcDurationBucketsSeconds = []float64{
 	15.0,
 }
 
+// DefaultDbTxDurationBucketsSeconds are the default buckets for db tx duration metrics.
 // Most db operations appear to complete in <= 60ms in practice.
 var DefaultDbTxDurationBucketsSeconds = []float64{
 	.001,

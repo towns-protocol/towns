@@ -325,6 +325,7 @@ export class WalletLink {
         value: any,
     ): Promise<string> {
         if ('_signTypedData' in signer && typeof signer._signTypedData === 'function') {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-call
             return (await signer._signTypedData(domain, types, value)) as string
         } else {
             throw new Error('wallet does not have the function to sign typed data')

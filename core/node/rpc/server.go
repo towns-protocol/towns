@@ -343,6 +343,12 @@ func (s *Service) initRiverChain() error {
 		return err
 	}
 
+	s.chainConfig, err = crypto.NewOnChainConfig(
+		ctx, s.riverChain.Client, s.registryContract.Address, s.riverChain.InitialBlockNum, s.riverChain.ChainMonitor)
+	if err != nil {
+		return err
+	}
+
 	var walletAddress common.Address
 	if s.wallet != nil {
 		walletAddress = s.wallet.Address
@@ -357,15 +363,10 @@ func (s *Service) initRiverChain() error {
 		walletAddress,
 		s.riverChain.InitialBlockNum,
 		s.riverChain.ChainMonitor,
+		s.chainConfig,
 		httpClient,
 		s.otelConnectIterceptor,
 	)
-	if err != nil {
-		return err
-	}
-
-	s.chainConfig, err = crypto.NewOnChainConfig(
-		ctx, s.riverChain.Client, s.registryContract.Address, s.riverChain.InitialBlockNum, s.riverChain.ChainMonitor)
 	if err != nil {
 		return err
 	}
@@ -692,6 +693,7 @@ func (s *Service) initAppRegistryStore() error {
 
 func (s *Service) initCacheAndSync(opts *ServerStartOpts) error {
 	cacheParams := &events.StreamCacheParams{
+		ServerCtx:               s.serverCtx,
 		Storage:                 s.storage,
 		Wallet:                  s.wallet,
 		RiverChain:              s.riverChain,

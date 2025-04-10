@@ -91,11 +91,21 @@ type (
 	}
 
 	AppRegistryStore interface {
+		// Note: the shared secret passed into this method call is stored directly on disk and
+		// therefore should always be encrypted using the service's configured data encryption key.
 		CreateApp(
 			ctx context.Context,
 			owner common.Address,
 			app common.Address,
-			sharedSecret [32]byte,
+			encryptedSharedSecret [32]byte,
+		) error
+
+		// Note: the shared secret passed into this method call is stored directly on disk and
+		// therefore should always be encrypted using the service's configured data encryption key.
+		RotateSecret(
+			ctx context.Context,
+			app common.Address,
+			encryptedSharedSecret [32]byte,
 		) error
 
 		RegisterWebhook(
@@ -132,6 +142,12 @@ type (
 			sessionId string,
 			envelopeBytes []byte,
 		) (sendableDevices []SendableApp, unsendableDevices []UnsendableApp, err error)
+
+		GetSessionKey(
+			ctx context.Context,
+			app common.Address,
+			sessionId string,
+		) (encryptionEnvelope []byte, err error)
 	}
 )
 
@@ -192,7 +208,7 @@ func DbSchemaNameForAppRegistryService(appServiceId string) string {
 }
 
 // NewPostgresAppRegistryStore instantiates a new PostgreSQL persistent storage for the app registry service.
-// This implementation requires isolation level of at least repeatable read in order for the queueing
+// This implementation requires isolation level of at least serializable in order for the queueing
 // functionality to work as expected.
 func NewPostgresAppRegistryStore(
 	ctx context.Context,
@@ -273,6 +289,47 @@ func (s *PostgresAppRegistryStore) createApp(
 			return WrapRiverError(protocol.Err_DB_OPERATION_FAILURE, err).Message("unable to create app record")
 		}
 	}
+	return nil
+}
+
+func (s *PostgresAppRegistryStore) RotateSecret(
+	ctx context.Context,
+	app common.Address,
+	encryptedSharedSecret [32]byte,
+) error {
+	return s.txRunner(
+		ctx,
+		"RotateSecret",
+		pgx.ReadWrite,
+		func(ctx context.Context, tx pgx.Tx) error {
+			return s.rotateSecret(ctx, app, encryptedSharedSecret, tx)
+		},
+		nil,
+		"appAddress", app,
+	)
+}
+
+func (s *PostgresAppRegistryStore) rotateSecret(
+	ctx context.Context,
+	app common.Address,
+	encryptedSharedSecret [32]byte,
+	txn pgx.Tx,
+) error {
+	tag, err := txn.Exec(
+		ctx,
+		`UPDATE app_registry SET encrypted_shared_secret = $2 WHERE app_id = $1`,
+		PGAddress(app),
+		PGSecret(encryptedSharedSecret),
+	)
+	if err != nil {
+		return AsRiverError(err, protocol.Err_DB_OPERATION_FAILURE).
+			Message("Unable to update the encrypted shared secret for app").
+			Tag("app", app)
+	}
+	if tag.RowsAffected() < 1 {
+		return RiverError(protocol.Err_NOT_FOUND, "app was not found in registry")
+	}
+
 	return nil
 }
 
@@ -382,7 +439,7 @@ func (s *PostgresAppRegistryStore) getAppInfo(
 		&appInfo.EncryptionDevice.FallbackKey,
 	); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, RiverError(protocol.Err_NOT_FOUND, "app does not exist")
+			return nil, RiverError(protocol.Err_NOT_FOUND, "app is not registered")
 		} else {
 			return nil, WrapRiverError(protocol.Err_DB_OPERATION_FAILURE, err).
 				Message("failed to find app in registry")
@@ -522,6 +579,59 @@ func (s *PostgresAppRegistryStore) publishSessionKeys(
 	return messages, nil
 }
 
+func (s *PostgresAppRegistryStore) GetSessionKey(
+	ctx context.Context,
+	app common.Address,
+	sessionId string,
+) (encryptionEnvelope []byte, err error) {
+	err = s.txRunner(
+		ctx,
+		"GetSessionKeys",
+		pgx.ReadOnly,
+		func(ctx context.Context, tx pgx.Tx) error {
+			var err error
+			encryptionEnvelope, err = s.getSessionKey(ctx, app, sessionId, tx)
+			return err
+		},
+		nil,
+		"app", app,
+		"sessionId", sessionId,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return encryptionEnvelope, nil
+}
+
+func (s *PostgresAppRegistryStore) getSessionKey(
+	ctx context.Context,
+	app common.Address,
+	sessionId string,
+	tx pgx.Tx,
+) (encryptionEnvelope []byte, err error) {
+	if err = tx.QueryRow(
+		ctx,
+		`
+		SELECT message_envelope FROM app_registry
+		INNER JOIN app_session_keys
+		ON app_registry.device_key = app_session_keys.device_key
+		AND app_registry.app_id = $1
+		AND $2 = ANY(app_session_keys.session_ids)
+		LIMIT 1;
+		`,
+		PGAddress(app),
+		sessionId,
+	).Scan(&encryptionEnvelope); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, RiverError(protocol.Err_NOT_FOUND, "session key for app not found")
+		} else {
+			return nil, WrapRiverError(protocol.Err_DB_OPERATION_FAILURE, err).
+				Message("Unable to find session key for app")
+		}
+	}
+	return encryptionEnvelope, nil
+}
+
 func (s *PostgresAppRegistryStore) EnqueueUnsendableMessages(
 	ctx context.Context,
 	appIds []common.Address,
@@ -561,10 +671,6 @@ func (s *PostgresAppRegistryStore) enqueueUnsendableMessages(
 	envelopeBytes []byte,
 	tx pgx.Tx,
 ) (sendableApps []SendableApp, unsendableApps []UnsendableApp, err error) {
-	appIdStrings := make([]string, len(appIds))
-	for i, appId := range appIds {
-		appIdStrings[i] = hex.EncodeToString(appId[:])
-	}
 	rows, err := tx.Query(
 		ctx,
 		`   
@@ -582,7 +688,7 @@ func (s *PostgresAppRegistryStore) enqueueUnsendableMessages(
 			ORDER BY app_registry.app_id, app_session_keys.session_ids
 		`,
 		sessionId,
-		appIdStrings,
+		addressesToStrings(appIds),
 	)
 	if err != nil {
 		return nil, nil, WrapRiverError(

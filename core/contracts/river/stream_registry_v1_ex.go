@@ -3,12 +3,73 @@ package river
 import (
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/common"
 
 	. "github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/protocol"
 	. "github.com/towns-protocol/towns/core/node/shared"
 )
+
+func (s *Stream) ReplicationFactor() int {
+	return max(1, int(s.Reserved0&0xFF))
+}
+
+func (s *Stream) LastMbHash() common.Hash {
+	return s.LastMiniblockHash
+}
+
+func (s *Stream) LastMbNum() int64 {
+	return int64(s.LastMiniblockNum)
+}
+
+func (s *Stream) LastMb() *MiniblockRef {
+	return &MiniblockRef{
+		Hash: s.LastMiniblockHash,
+		Num:  int64(s.LastMiniblockNum),
+	}
+}
+
+func (s *Stream) IsSealed() bool {
+	return s.Flags&0x1 != 0
+}
+
+func NewStreamWithId(streamId StreamId, stream *Stream) *StreamWithId {
+	return &StreamWithId{
+		Id:     streamId,
+		Stream: *stream,
+	}
+}
+
+func (s *StreamWithId) StreamId() StreamId {
+	return StreamId(s.Id)
+}
+
+func (s *StreamWithId) ReplicationFactor() int {
+	return s.Stream.ReplicationFactor()
+}
+
+func (s *StreamWithId) LastMbHash() common.Hash {
+	return s.Stream.LastMiniblockHash
+}
+
+func (s *StreamWithId) LastMbNum() int64 {
+	return int64(s.Stream.LastMiniblockNum)
+}
+
+func (s *StreamWithId) LastMb() *MiniblockRef {
+	return &MiniblockRef{
+		Hash: s.Stream.LastMiniblockHash,
+		Num:  int64(s.Stream.LastMiniblockNum),
+	}
+}
+
+func (s *StreamWithId) IsSealed() bool {
+	return s.Stream.Flags&0x1 != 0
+}
+
+func (s *StreamWithId) Nodes() []common.Address {
+	return s.Stream.Nodes
+}
 
 type (
 	// StreamUpdated is the unified event emitted by the stream registry when a stream mutation occurs.
@@ -21,23 +82,15 @@ type (
 	// StreamState indicates a stream state in the river streams registry.
 	StreamState struct {
 		// Stream contains the new stream state after the transaction was processed.
-		Stream
-		// StreamID identifies the stream
-		StreamID StreamId
+		Stream *StreamWithId
 		// Reason contains the reason why the stream state was updated/created.
 		reason StreamUpdatedEventType
-		// raw is the raw event log that was emitted after the state change and this stream state was parsed from.
-		// it provides information about which transaction caused the state change and at which block number and index.
-		raw types.Log
 	}
 
 	// StreamMiniblockUpdate indicates that the stream identified by StreamID has a new miniblock.
 	StreamMiniblockUpdate struct {
 		// SetMiniblock contains the stream updated data.
 		SetMiniblock
-		// raw is the raw event log that was emitted after the state change and this stream state was parsed from.
-		// it provides information about which transaction caused the state change and at which block number and index.
-		raw types.Log
 	}
 
 	// StreamUpdatedEvent represents an event that was decoded from a StreamUpdated log by the stream registry.
@@ -46,8 +99,6 @@ type (
 		GetStreamId() StreamId
 		// Reason returns the reason the StreamUpdated log was emitted.
 		Reason() StreamUpdatedEventType
-		// Raw returns the log from which the StreamUpdate event was decoded.
-		Raw() types.Log
 	}
 )
 
@@ -90,15 +141,11 @@ func (_StreamRegistryV1 *StreamRegistryV1Caller) BoundContract() *bind.BoundCont
 
 // GetStreamId implements the EventWithStreamId interface.
 func (ss *StreamState) GetStreamId() StreamId {
-	return ss.StreamID
+	return ss.Stream.Id
 }
 
 func (ss *StreamState) Reason() StreamUpdatedEventType {
 	return ss.reason
-}
-
-func (ss *StreamState) Raw() types.Log {
-	return ss.raw
 }
 
 // GetStreamId implements the EventWithStreamId interface.
@@ -108,10 +155,6 @@ func (smu *StreamMiniblockUpdate) GetStreamId() StreamId {
 
 func (smu *StreamMiniblockUpdate) Reason() StreamUpdatedEventType {
 	return StreamUpdatedEventTypeLastMiniblockBatchUpdated
-}
-
-func (smu *StreamMiniblockUpdate) Raw() types.Log {
-	return smu.raw
 }
 
 func MiniblockRefFromContractRecord(stream *Stream) *MiniblockRef {
@@ -127,23 +170,23 @@ func ParseStreamUpdatedEvent(event *StreamRegistryV1StreamUpdated) ([]StreamUpda
 	reason := StreamUpdatedEventType(event.EventType)
 	switch reason {
 	case StreamUpdatedEventTypeAllocate:
-		streamID, stream, err := parseStreamIDAndStreamFromSolABIEncoded(event.Data)
+		stream, err := parseStreamIDAndStreamFromSolABIEncoded(event.Data)
 		if err != nil {
 			return nil, err
 		}
-		return []StreamUpdatedEvent{&StreamState{Stream: *stream, StreamID: streamID, reason: reason, raw: event.Raw}}, nil
+		return []StreamUpdatedEvent{&StreamState{Stream: stream, reason: reason}}, nil
 	case StreamUpdatedEventTypeCreate:
-		streamID, stream, err := parseStreamIDAndStreamFromSolABIEncoded(event.Data)
+		stream, err := parseStreamIDAndStreamFromSolABIEncoded(event.Data)
 		if err != nil {
 			return nil, err
 		}
-		return []StreamUpdatedEvent{&StreamState{Stream: *stream, StreamID: streamID, reason: reason, raw: event.Raw}}, nil
+		return []StreamUpdatedEvent{&StreamState{Stream: stream, reason: reason}}, nil
 	case StreamUpdatedEventTypePlacementUpdated:
-		streamID, stream, err := parseStreamIDAndStreamFromSolABIEncoded(event.Data)
+		stream, err := parseStreamIDAndStreamFromSolABIEncoded(event.Data)
 		if err != nil {
 			return nil, err
 		}
-		return []StreamUpdatedEvent{&StreamState{Stream: *stream, StreamID: streamID, reason: reason, raw: event.Raw}}, nil
+		return []StreamUpdatedEvent{&StreamState{Stream: stream, reason: reason}}, nil
 	case StreamUpdatedEventTypeLastMiniblockBatchUpdated:
 		return parseSetMiniblocksFromSolABIEncoded(event)
 	default:
@@ -153,20 +196,19 @@ func ParseStreamUpdatedEvent(event *StreamRegistryV1StreamUpdated) ([]StreamUpda
 	}
 }
 
-func parseStreamIDAndStreamFromSolABIEncoded(data []byte) (StreamId, *Stream, error) {
+func parseStreamIDAndStreamFromSolABIEncoded(data []byte) (*StreamWithId, error) {
 	values := abi.Arguments{{Type: abi.Type{Size: 32, T: abi.FixedBytesTy}}, {Type: streamABIType}}
 	unpacked, err := values.Unpack(data)
 	if err != nil {
-		return StreamId{}, nil, AsRiverError(err, protocol.Err_BAD_EVENT).
+		return nil, AsRiverError(err, protocol.Err_BAD_EVENT).
 			Message("Unable to decode stream updated event").
 			Func("parseStreamIDAndStreamFromSolABIEncoded")
 	}
 
-	var streamID StreamId
-	abi.ConvertType(unpacked[0], &streamID)
-	stream := *abi.ConvertType(unpacked[1], new(Stream)).(*Stream)
-
-	return streamID, &stream, nil
+	ret := &StreamWithId{}
+	abi.ConvertType(unpacked[0], &ret.Id)
+	abi.ConvertType(unpacked[1], &ret.Stream)
+	return ret, nil
 }
 
 func parseSetMiniblocksFromSolABIEncoded(event *StreamRegistryV1StreamUpdated) ([]StreamUpdatedEvent, error) {
@@ -185,9 +227,16 @@ func parseSetMiniblocksFromSolABIEncoded(event *StreamRegistryV1StreamUpdated) (
 	for i, setMiniblock := range parsed {
 		results[i] = &StreamMiniblockUpdate{
 			SetMiniblock: setMiniblock,
-			raw:          event.Raw,
 		}
 	}
 
 	return results, nil
+}
+
+// StreamReplicationFactor returns on how many nodes the stream is replicated.
+func (s *Stream) StreamReplicationFactor() int {
+	// if s.Reserved0 & 0xFF is 0 it indicates this is an old stream that was created before the replication factor was
+	// added and the migration to replicated stream hasn't started. Use a replication factor of 1. This ensures that
+	// the first node in the streams node list is used as primary and ensures both backwards and forwards compatability.
+	return max(1, int(s.Reserved0&0xFF))
 }

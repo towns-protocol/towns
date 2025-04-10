@@ -8,7 +8,7 @@ export default [
         "internalType": "address[]"
       }
     ],
-    "stateMutability": "nonpayable"
+    "stateMutability": "payable"
   },
   {
     "type": "function",
@@ -196,7 +196,7 @@ export default [
     "inputs": [],
     "outputs": [
       {
-        "name": "",
+        "name": "settings",
         "type": "tuple[]",
         "internalType": "struct Setting[]",
         "components": [
@@ -871,6 +871,36 @@ export default [
             "name": "isSealed",
             "type": "bool",
             "internalType": "bool"
+          }
+        ]
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "setStreamReplicationFactor",
+    "inputs": [
+      {
+        "name": "requests",
+        "type": "tuple[]",
+        "internalType": "struct SetStreamReplicationFactor[]",
+        "components": [
+          {
+            "name": "streamId",
+            "type": "bytes32",
+            "internalType": "bytes32"
+          },
+          {
+            "name": "nodes",
+            "type": "address[]",
+            "internalType": "address[]"
+          },
+          {
+            "name": "replicationFactor",
+            "type": "uint8",
+            "internalType": "uint8"
           }
         ]
       }

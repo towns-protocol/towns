@@ -44,7 +44,7 @@ func (s *Service) loadStream(ctx context.Context, streamId StreamId) (ViewStream
 		return nil, err
 	}
 
-	streamView, err := MakeRemoteStreamView(ctx, resp.Msg.GetStream())
+	streamView, err := MakeRemoteStreamView(resp.Msg.GetStream())
 	if err != nil {
 		return nil, err
 	}
@@ -64,7 +64,7 @@ func (s *remoteStream) GetMiniblocks(
 	ctx context.Context,
 	fromInclusive int64,
 	toExclusive int64,
-) ([]*Miniblock, bool, error) {
+) ([]*MiniblockInfo, bool, error) {
 	res, err := s.stub.GetMiniblocks(ctx, connect.NewRequest(&GetMiniblocksRequest{
 		StreamId:      s.streamId[:],
 		FromInclusive: fromInclusive,
@@ -74,7 +74,18 @@ func (s *remoteStream) GetMiniblocks(
 		return nil, false, err
 	}
 
-	return res.Msg.Miniblocks, res.Msg.Terminus, nil
+	mbs := make([]*MiniblockInfo, len(res.Msg.GetMiniblocks()))
+	for i, mbProto := range res.Msg.GetMiniblocks() {
+		mbs[i], err = NewMiniblockInfoFromProto(
+			mbProto, res.Msg.GetMiniblockSnapshot(fromInclusive+int64(i)),
+			NewParsedMiniblockInfoOpts().WithExpectedBlockNumber(fromInclusive+int64(i)),
+		)
+		if err != nil {
+			return nil, false, err
+		}
+	}
+
+	return mbs, res.Msg.Terminus, nil
 }
 
 func (s *remoteStream) AddEvent(ctx context.Context, event *ParsedEvent) error {

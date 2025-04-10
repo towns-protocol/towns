@@ -81,6 +81,18 @@ export type SetMiniblockStructOutput = [
   isSealed: boolean;
 };
 
+export type SetStreamReplicationFactorStruct = {
+  streamId: PromiseOrValue<BytesLike>;
+  nodes: PromiseOrValue<string>[];
+  replicationFactor: PromiseOrValue<BigNumberish>;
+};
+
+export type SetStreamReplicationFactorStructOutput = [
+  string,
+  string[],
+  number
+] & { streamId: string; nodes: string[]; replicationFactor: number };
+
 export interface IStreamRegistryInterface extends utils.Interface {
   functions: {
     "addStream(bytes32,bytes32,(bytes32,uint64,uint64,uint64,address[]))": FunctionFragment;
@@ -95,6 +107,7 @@ export interface IStreamRegistryInterface extends utils.Interface {
     "placeStreamOnNode(bytes32,address)": FunctionFragment;
     "removeStreamFromNode(bytes32,address)": FunctionFragment;
     "setStreamLastMiniblockBatch((bytes32,bytes32,bytes32,uint64,bool)[])": FunctionFragment;
+    "setStreamReplicationFactor((bytes32,address[],uint8)[])": FunctionFragment;
     "syncNodesOnStreams(uint256,uint256)": FunctionFragment;
   };
 
@@ -112,6 +125,7 @@ export interface IStreamRegistryInterface extends utils.Interface {
       | "placeStreamOnNode"
       | "removeStreamFromNode"
       | "setStreamLastMiniblockBatch"
+      | "setStreamReplicationFactor"
       | "syncNodesOnStreams"
   ): FunctionFragment;
 
@@ -173,6 +187,10 @@ export interface IStreamRegistryInterface extends utils.Interface {
     values: [SetMiniblockStruct[]]
   ): string;
   encodeFunctionData(
+    functionFragment: "setStreamReplicationFactor",
+    values: [SetStreamReplicationFactorStruct[]]
+  ): string;
+  encodeFunctionData(
     functionFragment: "syncNodesOnStreams",
     values: [PromiseOrValue<BigNumberish>, PromiseOrValue<BigNumberish>]
   ): string;
@@ -214,6 +232,10 @@ export interface IStreamRegistryInterface extends utils.Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "setStreamLastMiniblockBatch",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "setStreamReplicationFactor",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -413,6 +435,11 @@ export interface IStreamRegistry extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
+    setStreamReplicationFactor(
+      requests: SetStreamReplicationFactorStruct[],
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
     syncNodesOnStreams(
       start: PromiseOrValue<BigNumberish>,
       stop: PromiseOrValue<BigNumberish>,
@@ -487,6 +514,11 @@ export interface IStreamRegistry extends BaseContract {
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
+  setStreamReplicationFactor(
+    requests: SetStreamReplicationFactorStruct[],
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
   syncNodesOnStreams(
     start: PromiseOrValue<BigNumberish>,
     stop: PromiseOrValue<BigNumberish>,
@@ -558,6 +590,11 @@ export interface IStreamRegistry extends BaseContract {
 
     setStreamLastMiniblockBatch(
       miniblocks: SetMiniblockStruct[],
+      overrides?: CallOverrides
+    ): Promise<void>;
+
+    setStreamReplicationFactor(
+      requests: SetStreamReplicationFactorStruct[],
       overrides?: CallOverrides
     ): Promise<void>;
 
@@ -708,6 +745,11 @@ export interface IStreamRegistry extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
+    setStreamReplicationFactor(
+      requests: SetStreamReplicationFactorStruct[],
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
     syncNodesOnStreams(
       start: PromiseOrValue<BigNumberish>,
       stop: PromiseOrValue<BigNumberish>,
@@ -780,6 +822,11 @@ export interface IStreamRegistry extends BaseContract {
 
     setStreamLastMiniblockBatch(
       miniblocks: SetMiniblockStruct[],
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
+    setStreamReplicationFactor(
+      requests: SetStreamReplicationFactorStruct[],
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 

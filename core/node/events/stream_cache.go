@@ -7,12 +7,10 @@ import (
 	"sync/atomic"
 	"time"
 
-	mapset "github.com/deckarep/golang-set/v2"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/gammazero/workerpool"
-	"github.com/linkdata/deadlock"
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/puzpuzpuz/xsync/v3"
+	"github.com/puzpuzpuz/xsync/v4"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
@@ -36,6 +34,7 @@ type Scrubber interface {
 }
 
 type StreamCacheParams struct {
+	ServerCtx               context.Context
 	Storage                 storage.StreamStorage
 	Wallet                  *crypto.Wallet
 	RiverChain              *crypto.Blockchain
@@ -50,6 +49,7 @@ type StreamCacheParams struct {
 	NodeRegistry            NodeRegistry
 	Tracer                  trace.Tracer
 	disableCallbacks        bool // for test purposes
+	streamCache             *StreamCache
 }
 
 type StreamCache struct {
@@ -58,7 +58,7 @@ type StreamCache struct {
 	// streamId -> *streamImpl
 	// cache is populated by getting all streams that should be on local node from River chain.
 	// streamImpl can be in unloaded state, in which case it will be loaded on first GetStream call.
-	cache *xsync.MapOf[StreamId, *Stream]
+	cache *xsync.Map[StreamId, *Stream]
 
 	// appliedBlockNum is the number of the last block logs from which were applied to cache.
 	appliedBlockNum atomic.Uint64
@@ -68,22 +68,22 @@ type StreamCache struct {
 	streamCacheSizeGauge     prometheus.Gauge
 	streamCacheUnloadedGauge prometheus.Gauge
 	streamCacheRemoteGauge   prometheus.Gauge
+	loadStreamRecordDuration prometheus.Histogram
+	loadStreamRecordCounter  *infra.StatusCounterVec
 
 	stoppedMu sync.RWMutex
 	stopped   bool
 
-	onlineSyncStreamTasksInProgressMu deadlock.Mutex
-	onlineSyncStreamTasksInProgress   mapset.Set[StreamId]
+	scheduledGetRecordTasks      *xsync.Map[StreamId, bool]
+	scheduledReconciliationTasks *xsync.Map[StreamId, *reconcileTask]
 
 	onlineSyncWorkerPool *workerpool.WorkerPool
-
-	disableCallbacks bool
 }
 
 func NewStreamCache(params *StreamCacheParams) *StreamCache {
-	return &StreamCache{
+	s := &StreamCache{
 		params: params,
-		cache:  xsync.NewMapOf[StreamId, *Stream](),
+		cache:  xsync.NewMap[StreamId, *Stream](),
 		streamCacheSizeGauge: params.Metrics.NewGaugeVecEx(
 			"stream_cache_size", "Number of streams in stream cache",
 			"chain_id", "address",
@@ -105,22 +105,33 @@ func NewStreamCache(params *StreamCacheParams) *StreamCache {
 			params.RiverChain.ChainId.String(),
 			params.Wallet.Address.String(),
 		),
-		chainConfig:                     params.ChainConfig,
-		onlineSyncWorkerPool:            workerpool.New(params.Config.StreamReconciliation.OnlineWorkerPoolSize),
-		disableCallbacks:                params.disableCallbacks,
-		onlineSyncStreamTasksInProgress: mapset.NewSet[StreamId](),
+		loadStreamRecordDuration: params.Metrics.NewHistogramEx(
+			"stream_cache_load_duration_seconds",
+			"Load stream record duration",
+			infra.DefaultRpcDurationBucketsSeconds,
+		),
+		loadStreamRecordCounter: params.Metrics.NewStatusCounterVecEx(
+			"stream_cache_load_counter",
+			"Number of stream record loads",
+		),
+		chainConfig:                  params.ChainConfig,
+		onlineSyncWorkerPool:         workerpool.New(params.Config.StreamReconciliation.OnlineWorkerPoolSize),
+		scheduledGetRecordTasks:      xsync.NewMap[StreamId, bool](),
+		scheduledReconciliationTasks: xsync.NewMap[StreamId, *reconcileTask](),
 	}
+	s.params.streamCache = s
+	return s
 }
 
 func (s *StreamCache) Start(ctx context.Context) error {
 	// schedule sync tasks for all streams that are local to this node.
 	// these tasks sync up the local db with the latest block in the registry.
-	var localStreamResults []*registries.GetStreamResult
+	var localStreamResults []*river.StreamWithId
 	err := s.params.Registry.ForAllStreams(
 		ctx,
 		s.params.AppliedBlockNum,
-		func(stream *registries.GetStreamResult) bool {
-			if slices.Contains(stream.Nodes, s.params.Wallet.Address) {
+		func(stream *river.StreamWithId) bool {
+			if slices.Contains(stream.Nodes(), s.params.Wallet.Address) {
 				localStreamResults = append(localStreamResults, stream)
 			}
 			return true
@@ -135,15 +146,14 @@ func (s *StreamCache) Start(ctx context.Context) error {
 	for _, streamRecord := range localStreamResults {
 		stream := &Stream{
 			params:              s.params,
-			streamId:            streamRecord.StreamId,
+			streamId:            streamRecord.StreamId(),
 			lastAppliedBlockNum: s.params.AppliedBlockNum,
 			local:               &localStreamState{},
 		}
-		stream.nodesLocked.Reset(streamRecord.Nodes, s.params.Wallet.Address)
-		s.cache.Store(streamRecord.StreamId, stream)
+		stream.nodesLocked.ResetFromStreamWithId(streamRecord, s.params.Wallet.Address)
+		s.cache.Store(streamRecord.StreamId(), stream)
 		if s.params.Config.StreamReconciliation.InitialWorkerPoolSize > 0 {
 			s.submitSyncStreamTaskToPool(
-				ctx,
 				initialSyncWorkerPool,
 				stream,
 				streamRecord,
@@ -157,7 +167,7 @@ func (s *StreamCache) Start(ctx context.Context) error {
 	go initialSyncWorkerPool.StopWait()
 
 	// TODO: add buffered channel to avoid blocking ChainMonitor
-	if !s.disableCallbacks {
+	if !s.params.disableCallbacks {
 		s.params.RiverChain.ChainMonitor.OnBlockWithLogs(
 			s.params.AppliedBlockNum+1,
 			s.onBlockWithLogs,
@@ -189,23 +199,32 @@ func (s *StreamCache) onBlockWithLogs(ctx context.Context, blockNum crypto.Block
 
 	for streamID, events := range streamEvents {
 		wp.Submit(func() {
-			switch events[0].Reason() {
-			case river.StreamUpdatedEventTypeAllocate:
-				streamState := events[0].(*river.StreamState)
-				s.onStreamAllocated(ctx, streamState, events[1:], blockNum)
-			case river.StreamUpdatedEventTypeCreate:
-				streamState := events[0].(*river.StreamState)
-				s.onStreamCreated(ctx, streamState, blockNum)
-			case river.StreamUpdatedEventTypePlacementUpdated: // linter
-				fallthrough
-			case river.StreamUpdatedEventTypeLastMiniblockBatchUpdated:
-				fallthrough
-			default:
-				stream, ok := s.cache.Load(streamID)
-				if !ok {
-					return
+			for len(events) > 0 {
+				switch events[0].Reason() {
+				case river.StreamUpdatedEventTypeAllocate:
+					streamState := events[0].(*river.StreamState)
+					s.onStreamAllocated(ctx, streamState, blockNum)
+					events = events[1:]
+				case river.StreamUpdatedEventTypeCreate:
+					streamState := events[0].(*river.StreamState)
+					s.onStreamCreated(ctx, streamState, blockNum)
+					events = events[1:]
+				case river.StreamUpdatedEventTypePlacementUpdated:
+					streamState := events[0].(*river.StreamState)
+					s.onStreamPlacementUpdated(ctx, streamState, blockNum)
+					events = events[1:]
+				case river.StreamUpdatedEventTypeLastMiniblockBatchUpdated:
+					i := 1
+					for i < len(events) && events[i].Reason() == river.StreamUpdatedEventTypeLastMiniblockBatchUpdated {
+						i++
+					}
+					eventsToApply := events[:i]
+					events = events[i:]
+
+					if stream, ok := s.cache.Load(streamID); ok {
+						stream.applyStreamEvents(ctx, eventsToApply, blockNum)
+					}
 				}
-				stream.applyStreamEvents(ctx, events, blockNum)
 			}
 		})
 	}
@@ -218,39 +237,64 @@ func (s *StreamCache) onBlockWithLogs(ctx context.Context, blockNum crypto.Block
 func (s *StreamCache) onStreamAllocated(
 	ctx context.Context,
 	event *river.StreamState,
-	otherEvents []river.StreamUpdatedEvent,
 	blockNum crypto.BlockNumber,
 ) {
-	if !slices.Contains(event.Nodes, s.params.Wallet.Address) {
+	if !slices.Contains(event.Stream.Nodes(), s.params.Wallet.Address) {
 		return
 	}
 
-	_, genesisHash, genesisMB, _, err := s.params.Registry.GetStreamWithGenesis(ctx, event.StreamID)
+	// Bug out early if stream is created through race with GetStream to avoid doing RPC call.
+	_, exists := s.cache.Load(event.GetStreamId())
+	if exists {
+		return
+	}
+
+	_, genesisHash, genesisMB, err := s.params.Registry.GetStreamWithGenesis(ctx, event.GetStreamId(), blockNum)
 	if err != nil {
-		logging.FromCtx(ctx).Errorw("Failed to get genesis block for allocated stream", "err", err)
+		logging.FromCtx(ctx).Errorw("onStreamAllocated: Failed to get genesis block for allocated stream", "err", err)
 		return
 	}
 
-	if event.LastMiniblockHash != genesisHash {
-		logging.FromCtx(ctx).Errorw("Unexpected genesis miniblock hash on allocated stream")
+	if event.Stream.LastMbHash() != genesisHash {
+		logging.FromCtx(ctx).Errorw("onStreamAllocated: Unexpected genesis miniblock hash on allocated stream")
 		return
 	}
 
-	stream := &Stream{
-		params:              s.params,
-		streamId:            event.GetStreamId(),
-		lastAppliedBlockNum: blockNum,
-		lastAccessedTime:    time.Now(),
-		local:               &localStreamState{},
+	// Bug out if stream is created through race with GetStream to avoid needlessly trying to create storage.
+	_, exists = s.cache.Load(event.GetStreamId())
+	if exists {
+		return
 	}
-	stream.nodesLocked.Reset(event.Nodes, s.params.Wallet.Address)
-	stream, created, err := s.createStreamStorage(ctx, stream, genesisMB)
+
+	err = s.params.Storage.CreateStreamStorage(
+		ctx,
+		event.GetStreamId(),
+		&storage.WriteMiniblockData{Data: genesisMB},
+	)
 	if err != nil {
-		logging.FromCtx(ctx).Errorw("Failed to allocate stream", "err", err, "streamId", event.GetStreamId())
+		if IsRiverErrorCode(err, Err_ALREADY_EXISTS) {
+			logging.FromCtx(ctx).
+				Warnw("onStreamAllocated: stream already exists in storage (race with GetStream?)", "err", err)
+		} else {
+			logging.FromCtx(ctx).Errorw("onStreamAllocated: Failed to create stream storage", "err", err)
+			return
+		}
 	}
-	if created && len(otherEvents) > 0 {
-		stream.applyStreamEvents(ctx, otherEvents, blockNum)
-	}
+
+	_, _ = s.cache.LoadOrCompute(
+		event.GetStreamId(),
+		func() (newValue *Stream, cancel bool) {
+			ret := &Stream{
+				params:              s.params,
+				streamId:            event.GetStreamId(),
+				lastAppliedBlockNum: blockNum,
+				lastAccessedTime:    time.Now(),
+				local:               &localStreamState{},
+			}
+			ret.nodesLocked.ResetFromStreamWithId(event.Stream, s.params.Wallet.Address)
+			return ret, false
+		},
+	)
 }
 
 func (s *StreamCache) Params() *StreamCacheParams {
@@ -316,7 +360,7 @@ func (s *StreamCache) CacheCleanup(ctx context.Context, enabled bool, expiration
 	return result
 }
 
-func (s *StreamCache) tryLoadStreamRecord(
+func (s *StreamCache) loadStreamRecord(
 	ctx context.Context,
 	streamId StreamId,
 	waitForLocal bool,
@@ -330,119 +374,146 @@ func (s *StreamCache) tryLoadStreamRecord(
 		defer span.End()
 	}
 
-	// For GetStream the fact that record is not in cache means that there is race to get it during creation:
-	// Blockchain record is already created, but this fact is not reflected yet in local storage.
-	// This may happen if somebody observes record allocation on blockchain and tries to get stream
-	// while local storage is being initialized.
-	record, _, mb, blockNum, err := s.params.Registry.GetStreamWithGenesis(ctx, streamId)
+	defer prometheus.NewTimer(s.loadStreamRecordDuration).ObserveDuration()
+
+	stream, err := s.loadStreamRecordImpl(ctx, streamId, waitForLocal)
 	if err != nil {
-		if !waitForLocal {
-			return nil, err
-		}
-
-		// Loop here waiting for record to be created.
-		// This is less optimal than implementing pub/sub, but given that this is rare codepath,
-		// it is not worth over-engineering.
-		ctx, cancel := context.WithTimeout(ctx, time.Second*10)
-		defer cancel()
-		delay := time.Millisecond * 20
-	forLoop:
-		for {
-			select {
-			case <-ctx.Done():
-				return nil, AsRiverError(ctx.Err(), Err_INTERNAL).Message("Timeout waiting for cache record to be created")
-			case <-time.After(delay):
-				stream, _ := s.cache.Load(streamId)
-				if stream != nil {
-					return stream, nil
-				}
-				record, _, mb, blockNum, err = s.params.Registry.GetStreamWithGenesis(ctx, streamId)
-				if err == nil {
-					break forLoop
-				}
-				delay *= 2
-			}
-		}
+		s.loadStreamRecordCounter.IncFail()
+	} else {
+		s.loadStreamRecordCounter.IncPass()
 	}
-
-	stream := &Stream{
-		params:              s.params,
-		streamId:            streamId,
-		lastAppliedBlockNum: blockNum,
-		lastAccessedTime:    time.Now(),
-	}
-	stream.nodesLocked.Reset(record.Nodes, s.params.Wallet.Address)
-
-	if !stream.nodesLocked.IsLocal() {
-		stream, _ = s.cache.LoadOrStore(streamId, stream)
-		return stream, nil
-	}
-
-	stream.local = &localStreamState{}
-
-	if record.LastMiniblockNum > 0 {
-		// TODO: reconcile from other nodes.
-		return nil, RiverError(
-			Err_INTERNAL,
-			"tryLoadStreamRecord: Stream is past genesis",
-			"streamId",
-			streamId,
-			"record",
-			record,
-		)
-	}
-
-	stream, _, err = s.createStreamStorage(ctx, stream, mb)
 	return stream, err
 }
 
-func (s *StreamCache) createStreamStorage(
+// loadStreamRecordImpl is called when stream is not in the cache.
+// On start, all local streams from the registry contract are loaded into the cache.
+// onStreamAllocated initializes local streams proactively.
+//
+// Thus in most cases this function is called for streams that are not local.
+//
+// However, it's possible that this function is called while local stream is still being initialized.
+func (s *StreamCache) loadStreamRecordImpl(
 	ctx context.Context,
-	stream *Stream,
-	mb []byte,
-) (*Stream, bool, error) {
-	// Lock stream, so parallel creators have to wait for the stream to be intialized.
-	stream.mu.Lock()
-	defer stream.mu.Unlock()
-	entry, loaded := s.cache.LoadOrStore(stream.streamId, stream)
-	if !loaded {
-		// TODO: delete entry on failures below?
+	streamId StreamId,
+	waitForLocal bool,
+) (*Stream, error) {
+	// For GetStream the fact that record is not in cache means that there is race to get it during creation:
+	// Blockchain record is already created, but this fact is not reflected yet in local storage.
+	// Moveover, blockchain record might not be available yet through this particular RPC endpoint.
+	// if waitForLocal is true, wait for record to be created.
+	// if waitForLocal is false, return error immediately.
+	backoff := BackoffTracker{
+		NextDelay:   100 * time.Millisecond,
+		MaxAttempts: 8,
+		Multiplier:  3,
+		Divisor:     2,
+	}
 
-		// Our stream won the race, put into storage.
-		err := s.params.Storage.CreateStreamStorage(ctx, stream.streamId, mb)
-		if err != nil {
-			if AsRiverError(err).Code == Err_ALREADY_EXISTS {
-				// Attempt to load stream from storage. Might as well do it while under lock.
-				err = stream.loadInternal(ctx)
-				if err != nil {
-					return nil, false, err
-				}
-				return stream, true, nil
+	var blockNum crypto.BlockNumber
+	var record *river.StreamWithId
+	for {
+		blockNum, err := s.params.RiverChain.GetBlockNumber(ctx)
+		if err == nil {
+			record, err = s.params.Registry.GetStream(ctx, streamId, blockNum)
+			if err == nil {
+				break
 			}
-			return nil, false, err
 		}
+		if !waitForLocal {
+			return nil, err
+		}
+		err = backoff.Wait(ctx, err)
+		if err != nil {
+			return nil, err
+		}
+	}
 
-		// Successfully put data into storage, init stream view.
-		view, err := MakeStreamView(
-			ctx,
-			&storage.ReadStreamFromLastSnapshotResult{
-				StartMiniblockNumber: 0,
-				Miniblocks:           [][]byte{mb},
+	local := slices.Contains(record.Nodes(), s.params.Wallet.Address)
+	if !local {
+		stream, _ := s.cache.LoadOrCompute(
+			streamId,
+			func() (newValue *Stream, cancel bool) {
+				ret := &Stream{
+					params:              s.params,
+					streamId:            streamId,
+					lastAppliedBlockNum: blockNum,
+					lastAccessedTime:    time.Now(),
+				}
+				ret.nodesLocked.ResetFromStreamWithId(record, s.params.Wallet.Address)
+				return ret, false
 			},
 		)
-		if err != nil {
-			return nil, false, err
-		}
-		stream.setView(view)
-
-		return stream, true, nil
-	} else {
-		// There was another record in the cache, use it.
-		if entry == nil {
-			return nil, false, RiverError(Err_INTERNAL, "tryLoadStreamRecord: Cache corruption", "streamId", stream.streamId)
-		}
-		return entry, false, nil
+		return stream, nil
 	}
+
+	// If record is beyond genesis, return stream with empty local state and schedule reconciliation.
+	if record.LastMbNum() > 0 {
+		stream, _ := s.cache.LoadOrCompute(
+			streamId,
+			func() (newValue *Stream, cancel bool) {
+				ret := &Stream{
+					params:              s.params,
+					streamId:            streamId,
+					lastAppliedBlockNum: blockNum,
+					lastAccessedTime:    time.Now(),
+					local:               &localStreamState{},
+				}
+				ret.nodesLocked.ResetFromStreamWithId(record, s.params.Wallet.Address)
+				return ret, false
+			},
+		)
+		s.SubmitSyncStreamTask(stream, record)
+		return stream, nil
+	}
+
+	// Bug out if stream was created meanwhile.
+	stream, exists := s.cache.Load(streamId)
+	if exists {
+		return stream, nil
+	}
+
+	record, _, mb, err := s.params.Registry.GetStreamWithGenesis(ctx, streamId, blockNum)
+	if err != nil {
+		return nil, err
+	}
+
+	// Bug out if stream was created meanwhile.
+	stream, exists = s.cache.Load(streamId)
+	if exists {
+		return stream, nil
+	}
+
+	err = s.params.Storage.CreateStreamStorage(
+		ctx,
+		streamId,
+		&storage.WriteMiniblockData{Data: mb},
+	)
+	if err != nil {
+		if IsRiverErrorCode(err, Err_ALREADY_EXISTS) {
+			logging.FromCtx(ctx).
+				Warnw("loadStreamRecordImpl: stream already exists in storage (creation race?)", "err", err)
+		} else {
+			logging.FromCtx(ctx).Errorw("onStreamAllocated: Failed to create stream storage", "err", err)
+			return nil, err
+		}
+	}
+
+	stream, _ = s.cache.LoadOrCompute(
+		streamId,
+		func() (newValue *Stream, cancel bool) {
+			ret := &Stream{
+				params:              s.params,
+				streamId:            streamId,
+				lastAppliedBlockNum: blockNum,
+				lastAccessedTime:    time.Now(),
+				local:               &localStreamState{},
+			}
+			ret.nodesLocked.ResetFromStreamWithId(record, s.params.Wallet.Address)
+			return ret, false
+		},
+	)
+
+	return stream, nil
 }
 
 // GetStreamWaitForLocal is a transitional method to support existing GetStream API before block number are wired through APIs.
@@ -462,7 +533,7 @@ func (s *StreamCache) getStreamImpl(
 ) (*Stream, error) {
 	stream, _ := s.cache.Load(streamId)
 	if stream == nil {
-		return s.tryLoadStreamRecord(ctx, streamId, waitForLocal)
+		return s.loadStreamRecord(ctx, streamId, waitForLocal)
 	}
 	return stream, nil
 }
@@ -477,7 +548,7 @@ func (s *StreamCache) ForceFlushAll(ctx context.Context) {
 func (s *StreamCache) GetLoadedViews(ctx context.Context) []*StreamView {
 	var result []*StreamView
 	s.cache.Range(func(streamID StreamId, stream *Stream) bool {
-		view, _ := stream.tryGetView()
+		view, _ := stream.tryGetView(true)
 		if view != nil {
 			result = append(result, view)
 		}
