@@ -2,7 +2,7 @@
  * @group main
  */
 
-import { Keyable } from 'Keyable'
+import { Keyable } from './Keyable'
 import { EntitlementCache, CacheResult } from './EntitlementCache'
 
 class Key implements Keyable {
