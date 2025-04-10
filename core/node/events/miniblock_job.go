@@ -334,7 +334,11 @@ func (j *mbJob) saveCandidate(ctx context.Context) error {
 		return j.cache.Params().Storage.WriteMiniblockCandidate(ctx, j.stream.streamId, mb)
 	})
 
-	qp.AddNodeTasks(j.quorumNodes, func(ctx context.Context, node common.Address) error {
+	quorumNodes := slices.DeleteFunc(slices.Clone(j.quorumNodes), func(node common.Address) bool {
+		return node == j.cache.Params().Wallet.Address
+	})
+
+	qp.AddNodeTasks(quorumNodes, func(ctx context.Context, node common.Address) error {
 		return j.cache.Params().RemoteMiniblockProvider.SaveMbCandidate(ctx, node, j.stream.streamId, j.candidate)
 	})
 
