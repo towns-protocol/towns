@@ -1,7 +1,7 @@
 name: Continuous Integration
 env:
     FOUNDRY_VERSION: stable
-    FOUNDRY_PROFILE: "ci"
+    FOUNDRY_PROFILE: 'ci'
     RIVER_BLOCK_TIME: 1
     RIVER_RPC_URL: ${{ secrets.RIVER_RPC_URL }}
     RIVER_SEPOLIA_RPC_URL: ${{ secrets.RIVER_RPC_URL }}
