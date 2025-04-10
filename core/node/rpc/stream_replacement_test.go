@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"connectrpc.com/connect"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -53,11 +54,14 @@ func testMigrateStreamToExtraNodes(t *testing.T) {
 	channelId, _, _ := alice.createChannel(spaceId)
 
 	// tests that the stream channelId eventually is replicated over the nodes consistently
-	eventuallyStreamReplicatedOverNodes := func() {
+	eventuallyStreamReplicatedOverNodes := func(expectedReplFactor int, expectedNodes int) {
 		stream, err := tt.btc.StreamRegistry.GetStream(nil, channelId)
 		require.NoError(t, err)
 
 		streamReplFactor := stream.StreamReplicationFactor()
+		require.EqualValues(t, expectedReplFactor, streamReplFactor, "stream replication factor mismatch")
+		require.Len(t, stream.Nodes, expectedNodes, "stream nodes length mismatch")
+
 		quorumNodes := stream.Nodes[:streamReplFactor]
 		syncNodes := stream.Nodes[streamReplFactor:]
 
@@ -88,6 +92,32 @@ func testMigrateStreamToExtraNodes(t *testing.T) {
 					"quorum nodes mismatch in sync streams test",
 				)
 				require.EqualValues(c, syncNodes, stream.GetSyncNodes(), "sync nodes mismatch in sync streams test")
+
+				// Test stream is not returned if RiverAllowNoQuorum is not set
+				testClient := tt.testClientForUrl(node.url)
+
+				req1 := connect.NewRequest(&protocol.GetStreamRequest{
+					StreamId: channelId[:],
+				})
+				req1.Header().Set(RiverNoForwardHeader, RiverHeaderTrueValue)
+				_, err = testClient.GetStream(tt.ctx, req1)
+				require.Error(c, err)
+
+				req2 := connect.NewRequest(&protocol.GetLastMiniblockHashRequest{
+					StreamId: channelId[:],
+				})
+				req2.Header().Set(RiverNoForwardHeader, RiverHeaderTrueValue)
+				_, err = testClient.GetLastMiniblockHash(tt.ctx, req2)
+				require.Error(c, err)
+
+				// Test stream is returned if RiverAllowNoQuorum is set
+				req1.Header().Set(RiverAllowNoQuorumHeader, RiverHeaderTrueValue)
+				_, err = testClient.GetStream(tt.ctx, req1)
+				require.NoError(c, err)
+
+				req2.Header().Set(RiverAllowNoQuorumHeader, RiverHeaderTrueValue)
+				_, err = testClient.GetLastMiniblockHash(tt.ctx, req2)
+				require.NoError(c, err)
 			}
 		})
 
@@ -109,21 +139,31 @@ func testMigrateStreamToExtraNodes(t *testing.T) {
 		})
 	}
 
-	eventuallyStreamReplicatedOverNodes()
+	// Check 1 quorum node works.
+	eventuallyStreamReplicatedOverNodes(initialReplFactor, initialReplFactor)
 
-	// place stream on replicationFactor nodes and ensure that stream is quorum and sync replicated
-
+	// Add 2 nodes to existing node.
 	placementNodeAddresses := randomPlacementNodes(t, tt, channelId, initialReplFactor, newReplicationFactor)
 
+	// Place stream on 1 quorum node and 2 reconciliation nodes.
 	tt.btc.SetStreamReplicationFactor(
 		t,
 		tt.ctx,
 		[]river.SetStreamReplicationFactor{
-			{StreamId: channelId, Nodes: placementNodeAddresses, ReplicationFactor: uint8(len(placementNodeAddresses))},
+			{StreamId: channelId, Nodes: placementNodeAddresses, ReplicationFactor: uint8(initialReplFactor)},
 		},
 	)
+	eventuallyStreamReplicatedOverNodes(initialReplFactor, newReplicationFactor)
 
-	eventuallyStreamReplicatedOverNodes()
+	// Place stream on 3 quorum nodes and 0 reconciliation nodes.
+	tt.btc.SetStreamReplicationFactor(
+		t,
+		tt.ctx,
+		[]river.SetStreamReplicationFactor{
+			{StreamId: channelId, Nodes: placementNodeAddresses, ReplicationFactor: uint8(newReplicationFactor)},
+		},
+	)
+	eventuallyStreamReplicatedOverNodes(newReplicationFactor, newReplicationFactor)
 }
 
 // testColdStreamPlacementUpdate ensures that nodes bring their local state in the expected
