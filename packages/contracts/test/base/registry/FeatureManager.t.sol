@@ -19,7 +19,8 @@ contract FeatureManagerTest is BaseSetup, IFeatureManagerFacetBase {
     FeatureManagerFacet featureManagerFacet;
     Towns towns;
 
-    bytes32 constant ZERO_SENTINEL_BYTES32 = bytes32(0);
+    bytes32 constant ZERO_SENTINEL_BYTES32 =
+        0x0000000000000000000000000000000000000000000000fbb67fda52d4bfb8bf;
 
     // keccak256("test.feature")
     bytes32 constant TEST_FEATURE_ID =
