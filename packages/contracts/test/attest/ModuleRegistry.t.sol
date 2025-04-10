@@ -28,37 +28,41 @@ contract ModuleRegistryTest is BaseSetup {
     ModuleRegistry internal moduleRegistry;
 
     string internal MODULE_REGISTRY_SCHEMA =
-        "address module, address client, address owner, bytes32[] permissions";
+        "address module, address owner, address[] clients, bytes32[] permissions, ExecutionManifest manifest";
 
     function setUp() public override {
         super.setUp();
         schemaRegistry = SchemaRegistry(appRegistry);
         moduleRegistry = ModuleRegistry(appRegistry);
 
-        vm.prank(deployer);
-        activeSchemaId = moduleRegistry.registerModuleSchema(
+        vm.startPrank(deployer);
+        bytes32 schemaId = schemaRegistry.register(
             MODULE_REGISTRY_SCHEMA,
             ISchemaResolver(address(0)),
             true
         );
+        moduleRegistry.adminRegisterModuleSchema(schemaId);
+        vm.stopPrank();
     }
 
     function test_registerModule() external {
         address module = address(new MockPlugin());
         address owner = _randomAddress();
-        address client = _randomAddress();
+
+        address[] memory clients = new address[](1);
+        clients[0] = _randomAddress();
         bytes32[] memory permissions = new bytes32[](1);
         permissions[0] = keccak256("Read");
         ExecutionManifest memory manifest;
 
-        bytes32 uid = moduleRegistry.registerModule(module, client, owner, permissions, manifest);
+        bytes32 uid = moduleRegistry.registerModule(module, owner, clients, permissions, manifest);
         assertEq(uid, moduleRegistry.getModuleVersion(module));
     }
 
     function registerModule(
         address module,
-        address client,
         address owner,
+        address[] calldata clients,
         bytes32[] calldata permissions,
         ExecutionManifest calldata manifest
     ) external {
@@ -68,13 +72,13 @@ contract ModuleRegistryTest is BaseSetup {
         att.recipient = address(module);
         att.revocable = true;
         att.attester = owner;
-        att.data = abi.encode(module, client, owner, permissions, manifest);
+        att.data = abi.encode(module, owner, clients, permissions, manifest);
 
         bytes32 uid = AttestationLib._hashAttestation(att, 0);
 
         vm.prank(owner);
         vm.expectEmit(appRegistry);
         emit ModuleLib.ModuleRegistered(module, uid);
-        moduleRegistry.registerModule(module, client, owner, permissions, manifest);
+        moduleRegistry.registerModule(module, owner, clients, permissions, manifest);
     }
 }

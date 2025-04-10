@@ -16,29 +16,26 @@ interface IModuleRegistry {
     /// @return The schema ID
     function getModuleSchemaId() external view returns (bytes32);
 
-    /// @notice Set the schema ID used for module attestations
-    /// @param schema The new schema ID
-    function registerModuleSchema(
-        string calldata schema,
-        ISchemaResolver resolver,
-        bool revocable
-    ) external returns (bytes32);
-
     /// @notice Get the current version (attestation UID) for a module
     /// @param module The module address
     /// @return The attestation UID representing the current version
     function getModuleVersion(address module) external view returns (bytes32);
 
+    /// @notice Get the client address for a module
+    /// @param module The module address
+    /// @return The list of client addresses
+    function getModuleClients(address module) external view returns (address[] memory);
+
     /// @notice Register a new module with permissions
     /// @param module The module address to register
-    /// @param client The client contract address that will use this module
     /// @param owner The owner address that can update/revoke the module
+    /// @param clients The list of client contract addresses that will use this module
     /// @param permissions The list of permission IDs granted to this module
     /// @return The attestation UID of the registered module
     function registerModule(
         address module,
-        address client,
         address owner,
+        address[] calldata clients,
         bytes32[] calldata permissions,
         ExecutionManifest calldata manifest
     ) external returns (bytes32);
@@ -56,4 +53,16 @@ interface IModuleRegistry {
     /// @param module The module address to revoke
     /// @return The attestation UID that was revoked
     function revokeModule(address module) external returns (bytes32);
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                           Admin                            */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+    /// @notice Set the schema ID used for module attestations
+    /// @param schemaId The new schema ID
+    function adminRegisterModuleSchema(bytes32 schemaId) external;
+
+    /// @notice Ban a module from the registry
+    /// @param module The module address to ban
+    /// @return The attestation UID that was banned
+    function adminBanModule(address module) external returns (bytes32);
 }

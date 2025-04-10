@@ -13,13 +13,15 @@ import {ModuleRegistry} from "src/attest/ModuleRegistry.sol";
 
 contract DeployModuleRegistry is FacetHelper, Deployer {
     constructor() {
-        addSelector(ModuleRegistry.registerModuleSchema.selector);
         addSelector(ModuleRegistry.getModuleSchema.selector);
         addSelector(ModuleRegistry.getModuleSchemaId.selector);
         addSelector(ModuleRegistry.getModuleVersion.selector);
+        addSelector(ModuleRegistry.getModuleClients.selector);
         addSelector(ModuleRegistry.registerModule.selector);
         addSelector(ModuleRegistry.updateModulePermissions.selector);
         addSelector(ModuleRegistry.revokeModule.selector);
+        addSelector(ModuleRegistry.adminRegisterModuleSchema.selector);
+        addSelector(ModuleRegistry.adminBanModule.selector);
     }
 
     function initializer() public pure override returns (bytes4) {

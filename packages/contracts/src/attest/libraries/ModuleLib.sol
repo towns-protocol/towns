@@ -35,13 +35,16 @@ library ModuleLib {
     error ModuleRevoked();
     error ModuleNotOwner();
     error ModuleDoesNotImplementInterface();
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           EVENTS                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
     event ModuleRegistered(address indexed module, bytes32 uid);
     event ModuleUnregistered(address indexed module, bytes32 uid);
     event ModuleUpdated(address indexed module, bytes32 uid);
+    event ModuleBanned(address indexed module, bytes32 uid);
+    event ModuleSchemaSet(bytes32 uid);
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           STRUCTS                            */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -52,7 +55,7 @@ library ModuleLib {
 
     struct Layout {
         // Registered schema ID
-        bytes32 schema;
+        bytes32 schemaId;
         // Module => ModuleInfo
         mapping(address => ModuleInfo) modules;
     }
@@ -61,8 +64,7 @@ library ModuleLib {
     /*                           STORAGE                          */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    // keccak256(abi.encode(uint256(keccak256("attestations.module.registry.storage")) - 1)) &
-    // ~bytes32(uint256(0xff))
+    // keccak256(abi.encode(uint256(keccak256("attestations.module.registry.storage")) - 1)) & ~bytes32(uint256(0xff))
     bytes32 internal constant STORAGE_SLOT =
         0xe1abd3beb055e0136b3111c2c34ff6e869f8c0d7540225f8056528d6eb12b500;
 
@@ -77,21 +79,30 @@ library ModuleLib {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
     function setSchema(bytes32 schemaId) internal {
         Layout storage db = getLayout();
-        db.schema = schemaId;
+        db.schemaId = schemaId;
+        emit ModuleSchemaSet(schemaId);
     }
 
     function getSchema() internal view returns (bytes32) {
-        return getLayout().schema;
+        return getLayout().schemaId;
     }
 
     function getModuleVersion(address module) internal view returns (bytes32 version) {
         return getLayout().modules[module].uid;
     }
 
+    function getModuleClients(address module) internal view returns (address[] memory clients) {
+        Attestation memory att = AttestationLib.getAttestation(getModuleVersion(module));
+        (, clients, , , ) = abi.decode(
+            att.data,
+            (address, address[], address, bytes32[], ExecutionManifest)
+        );
+    }
+
     function addModule(
         address module,
-        address client,
         address owner,
+        address[] calldata clients,
         bytes32[] calldata permissions,
         ExecutionManifest calldata manifest
     ) internal returns (bytes32 version) {
@@ -103,10 +114,10 @@ library ModuleLib {
         if (info.uid != bytes32(0)) ModuleAlreadyRegistered.selector.revertWith();
 
         AttestationRequest memory request;
-        request.schema = db.schema;
+        request.schema = db.schemaId;
         request.data.recipient = module;
         request.data.revocable = true;
-        request.data.data = abi.encode(module, client, owner, permissions, manifest);
+        request.data.data = abi.encode(module, clients, owner, permissions, manifest);
         info.uid = AttestationLib.attest(request).uid;
 
         emit ModuleRegistered(module, info.uid);
@@ -134,10 +145,10 @@ library ModuleLib {
 
         RevocationRequestData memory revocationRequest;
         revocationRequest.uid = info.uid;
-        AttestationLib.revoke(db.schema, revocationRequest, msg.sender, 0, true);
+        AttestationLib.revoke(db.schemaId, revocationRequest, msg.sender, 0, true);
 
         AttestationRequest memory request;
-        request.schema = db.schema;
+        request.schema = db.schemaId;
         request.data.revocable = true;
         request.data.refUID = info.uid;
         request.data.data = abi.encode(module, client, owner, permissions, manifest);
@@ -157,9 +168,28 @@ library ModuleLib {
         RevocationRequestData memory request;
         request.uid = info.uid;
 
-        AttestationLib.revoke(db.schema, request, msg.sender, 0, true);
+        AttestationLib.revoke(db.schemaId, request, msg.sender, 0, true);
 
         emit ModuleUnregistered(module, info.uid);
+
+        return info.uid;
+    }
+
+    function banModule(address module) internal returns (bytes32 version) {
+        Layout storage db = getLayout();
+        ModuleInfo storage info = db.modules[module];
+
+        if (info.uid == bytes32(0)) ModuleNotRegistered.selector.revertWith();
+
+        Attestation memory att = AttestationLib.getAttestation(info.uid);
+        if (att.revocationTime > 0) ModuleRevoked.selector.revertWith();
+
+        RevocationRequestData memory request;
+        request.uid = info.uid;
+
+        AttestationLib.revoke(db.schemaId, request, att.attester, 0, true);
+
+        emit ModuleBanned(module, info.uid);
 
         return info.uid;
     }

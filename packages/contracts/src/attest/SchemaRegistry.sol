@@ -13,8 +13,9 @@ import {SchemaRecord} from "@ethereum-attestation-service/eas-contracts/ISchemaR
 
 // contracts
 import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
+import {OwnableBase} from "@towns-protocol/diamond/src/facets/ownable/OwnableBase.sol";
 
-contract SchemaRegistry is ISchemaRegistry, Facet {
+contract SchemaRegistry is ISchemaRegistry, OwnableBase, Facet {
     function __SchemaRegistry_init() external onlyInitializing {}
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -36,7 +37,7 @@ contract SchemaRegistry is ISchemaRegistry, Facet {
         string calldata schema,
         ISchemaResolver resolver,
         bool revocable
-    ) external returns (bytes32) {
+    ) external onlyOwner returns (bytes32) {
         return SchemaLib.registerSchema(schema, resolver, revocable);
     }
 

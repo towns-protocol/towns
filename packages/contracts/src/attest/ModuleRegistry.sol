@@ -33,17 +33,9 @@ contract ModuleRegistry is IModuleRegistry, OwnableBase, Facet {
         return ModuleLib.getSchema();
     }
 
-    /// @notice Set the schema ID used for module attestations
-    /// @param schema The new schema ID
-    function registerModuleSchema(
-        string calldata schema,
-        ISchemaResolver resolver,
-        bool revocable
-    ) external onlyOwner returns (bytes32) {
-        bytes32 schemaId = SchemaLib.registerSchema(schema, resolver, revocable);
-        ModuleLib.setSchema(schemaId);
-        return schemaId;
-    }
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                           Module Functions                      */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @notice Get the current version (attestation UID) for a module
     /// @param module The module address
@@ -52,20 +44,27 @@ contract ModuleRegistry is IModuleRegistry, OwnableBase, Facet {
         return ModuleLib.getModuleVersion(module);
     }
 
+    /// @notice Get the client addresses for a module
+    /// @param module The module address
+    /// @return The list of client addresses
+    function getModuleClients(address module) external view returns (address[] memory) {
+        return ModuleLib.getModuleClients(module);
+    }
+
     /// @notice Register a new module with permissions
     /// @param module The module address to register
-    /// @param client The client contract address that will use this module
     /// @param owner The owner address that can update/revoke the module
+    /// @param clients The list of client contract addresses that will use this module
     /// @param permissions The list of permission IDs granted to this module
     /// @return The attestation UID of the registered module
     function registerModule(
         address module,
-        address client,
         address owner,
+        address[] calldata clients,
         bytes32[] calldata permissions,
         ExecutionManifest calldata manifest
     ) external returns (bytes32) {
-        return ModuleLib.addModule(module, client, owner, permissions, manifest);
+        return ModuleLib.addModule(module, owner, clients, permissions, manifest);
     }
 
     /// @notice Update the permissions for an existing module
@@ -85,5 +84,22 @@ contract ModuleRegistry is IModuleRegistry, OwnableBase, Facet {
     /// @return The attestation UID that was revoked
     function revokeModule(address module) external returns (bytes32) {
         return ModuleLib.removeModule(module);
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                        DAO functions                       */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @notice Set the schema ID used for module attestations
+    /// @param schemaId The new schema ID
+    function adminRegisterModuleSchema(bytes32 schemaId) external onlyOwner {
+        ModuleLib.setSchema(schemaId);
+    }
+
+    /// @notice Ban a module from the registry
+    /// @param module The module address to ban
+    /// @dev Only the owner can ban a module
+    function adminBanModule(address module) external onlyOwner returns (bytes32) {
+        return ModuleLib.banModule(module);
     }
 }

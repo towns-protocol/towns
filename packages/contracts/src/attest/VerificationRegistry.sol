@@ -23,13 +23,8 @@ contract VerificationRegistry is IERC6900ExtensionRegistry, OwnableBase {
     }
 
     /// @notice Set the schema ID used for module attestations
-    /// @param schema The new schema ID
-    function registerVerificationSchema(
-        string calldata schema,
-        ISchemaResolver resolver,
-        bool revocable
-    ) external onlyOwner {
-        bytes32 schemaId = SchemaLib.registerSchema(schema, resolver, revocable);
+    /// @param schemaId The new schema ID
+    function registerVerificationSchema(bytes32 schemaId) external onlyOwner {
         VerificationLib.setSchemaId(schemaId);
     }
 
