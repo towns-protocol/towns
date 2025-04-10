@@ -43,6 +43,7 @@ import {DeploySpaceProxyInitializer} from "scripts/deployments/utils/DeploySpace
 import {DeployTieredLogPricingV2} from "scripts/deployments/utils/DeployTieredLogPricingV2.s.sol";
 import {DeployTieredLogPricingV3} from "scripts/deployments/utils/DeployTieredLogPricingV3.s.sol";
 import {DeployUserEntitlement} from "scripts/deployments/utils/DeployUserEntitlement.s.sol";
+import {DeployFeatureManager} from "scripts/deployments/facets/DeployFeatureManager.s.sol";
 
 contract DeploySpaceFactory is IDiamondInitHelper, DiamondHelper, Deployer {
     DeployFacet private facetHelper = new DeployFacet();
@@ -56,7 +57,7 @@ contract DeploySpaceFactory is IDiamondInitHelper, DiamondHelper, Deployer {
     DeployPlatformRequirements platformReqsHelper = new DeployPlatformRequirements();
     DeployMockLegacyArchitect deployMockLegacyArchitect = new DeployMockLegacyArchitect();
     DeployPartnerRegistry partnerRegistryHelper = new DeployPartnerRegistry();
-
+    DeployFeatureManager featureManagerHelper = new DeployFeatureManager();
     // dependencies
     DeploySpace deploySpace = new DeploySpace();
     DeploySpaceOwner deploySpaceOwner = new DeploySpaceOwner();
@@ -93,7 +94,7 @@ contract DeploySpaceFactory is IDiamondInitHelper, DiamondHelper, Deployer {
     address walletLink;
     address eip712;
     address partnerRegistry;
-
+    address featureManager;
     // external contracts
     address public spaceImpl;
     address public userEntitlement;
@@ -129,7 +130,7 @@ contract DeploySpaceFactory is IDiamondInitHelper, DiamondHelper, Deployer {
         tieredLogPricingV2 = deployTieredLogPricingV2.deploy(deployer);
         tieredLogPricingV3 = deployTieredLogPricingV3.deploy(deployer);
         fixedPricing = deployFixedPricing.deploy(deployer);
-
+        featureManager = featureManagerHelper.deploy(deployer);
         // pricing modules
         pricingModules.push(tieredLogPricingV2);
         pricingModules.push(tieredLogPricingV3);
@@ -261,6 +262,11 @@ contract DeploySpaceFactory is IDiamondInitHelper, DiamondHelper, Deployer {
             partnerRegistryHelper.makeCut(partnerRegistry, IDiamond.FacetCutAction.Add),
             partnerRegistry,
             partnerRegistryHelper.makeInitData("")
+        );
+        addFacet(
+            featureManagerHelper.makeCut(featureManager, IDiamond.FacetCutAction.Add),
+            featureManager,
+            featureManagerHelper.makeInitData("")
         );
 
         addInit(spaceFactoryInit, spaceFactoryInitData);
