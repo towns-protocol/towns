@@ -43,23 +43,78 @@ var testEncryptionDevice = app_client.EncryptionDevice{
 
 type appRegistryServiceTester struct {
 	tester             *serviceTester
+	t                  *testing.T
 	ctx                context.Context
 	require            *require.Assertions
 	appRegistryService *Service
 
-	botWallet *crypto.Wallet
-	botServer *app_registry.TestAppServer
+	botWallet   *crypto.Wallet
+	ownerWallet *crypto.Wallet
+
+	appServer *app_registry.TestAppServer
 
 	authClient        protocolconnect.AuthenticationServiceClient
 	appRegistryClient protocolconnect.AppRegistryServiceClient
 }
 
+func (ar *appRegistryServiceTester) Bot() *crypto.Wallet {
+	return ar.botWallet
+}
+
+func (ar *appRegistryServiceTester) Owner() *crypto.Wallet {
+	return ar.ownerWallet
+}
+
+func (ar *appRegistryServiceTester) RegisterBotService(
+	forwardSetting protocol.ForwardSettingValue,
+) (appUserStreamCookie *protocol.SyncCookie) {
+	botClient := ar.BotNodeClient(testClientOpts{})
+	appUserStreamCookie = botClient.createUserStreamsWithEncryptionDevice(
+		&protocol.UserMetadataPayload_EncryptionDevice{
+			DeviceKey:   testEncryptionDevice.DeviceKey,
+			FallbackKey: testEncryptionDevice.FallbackKey,
+		},
+	)
+	sharedSecret := register(
+		ar.ctx,
+		ar.require,
+		ar.botWallet.Address[:],
+		ar.ownerWallet.Address[:],
+		protocol.ForwardSettingValue_FORWARD_SETTING_ALL_MESSAGES,
+		ar.ownerWallet,
+		ar.authClient,
+		ar.appRegistryClient,
+	)
+	registerWebhook(
+		ar.ctx,
+		ar.require,
+		ar.botWallet,
+		sharedSecret,
+		testEncryptionDevice,
+		ar.authClient,
+		ar.appRegistryClient,
+		ar.appServer,
+	)
+	return appUserStreamCookie
+}
+
 func (ar *appRegistryServiceTester) StartBotService() {
 	go func() {
-		if err := ar.botServer.Serve(ar.ctx); err != nil {
+		if err := ar.appServer.Serve(ar.ctx); err != nil {
 			ar.tester.t.Errorf("Error starting bot service: %v", err)
 		}
 	}()
+}
+
+func (ar *appRegistryServiceTester) BotNodeClient(opts testClientOpts) *testClient {
+	return ar.tester.newTestClientWithWallet(0, opts, ar.botWallet)
+}
+
+func (ar *appRegistryServiceTester) NodeClient(i int, opts testClientOpts) *testClient {
+	if i >= ar.tester.opts.numNodes {
+		ar.t.Fatalf("Node index does not exist; have %d nodes, asked for node %d", ar.tester.opts.numNodes, i)
+	}
+	return ar.tester.newTestClient(i, opts)
 }
 
 type testerOpts struct {
@@ -97,13 +152,14 @@ func NewAppRegistryServiceTester(t *testing.T, opts *testerOpts) *appRegistrySer
 
 	return &appRegistryServiceTester{
 		tester:             tester,
+		t:                  t,
 		ctx:                ctx,
 		require:            require,
 		appRegistryService: service,
 		authClient:         authClient,
 		appRegistryClient:  appRegistryClient,
 		botWallet:          botWallet,
-		botServer:          appServer,
+		appServer:          appServer,
 	}
 }
 
@@ -245,21 +301,6 @@ func isChannelMessageReply(
 	return false
 }
 
-func findKeySolicitation(
-	c *assert.CollectT,
-	channel *protocol.StreamAndCookie,
-	deviceKey string,
-	sessionId string,
-) bool {
-	return overAllEvents(
-		c,
-		channel,
-		func(event *events.ParsedEvent) bool {
-			return isKeySolicitation(event, deviceKey, sessionId)
-		},
-	)
-}
-
 func findMessageReply(
 	c *assert.CollectT,
 	channel *protocol.StreamAndCookie,
@@ -276,141 +317,36 @@ func findMessageReply(
 	)
 }
 
-func overAllEvents(
-	c *assert.CollectT,
-	channel *protocol.StreamAndCookie,
-	eventFilter func(*events.ParsedEvent) bool,
-) bool {
-	for _, block := range channel.Miniblocks {
-		events, err := events.ParseEvents(block.Events)
-		assert.NoError(c, err)
-		for _, event := range events {
-			if eventFilter(event) {
-				return true
-			}
-		}
-	}
-
-	for _, envelope := range channel.Events {
-		event, err := events.ParseEvent(envelope)
-		assert.NoError(c, err)
-		if eventFilter(event) {
-			return true
-		}
-	}
-
-	return false
-}
-
 func TestAppRegistry_ForwardsChannelEvents(t *testing.T) {
-	tester := newServiceTester(t, serviceTesterOpts{numNodes: 1, start: true})
-	ctx := tester.ctx
-	// Uncomment to force logging only for the app registry service
-	// ctx = logging.CtxWithLog(ctx, logging.DefaultLogger(zapcore.DebugLevel))
-	service := initAppRegistryService(ctx, tester)
-
+	tester := NewAppRegistryServiceTester(t, nil)
 	require := tester.require
-	client := tester.testClient(0)
 
-	wallet := safeNewWallet(tester.ctx, require)
-	owner := safeNewWallet(tester.ctx, require)
 	participant := safeNewWallet(tester.ctx, require)
 
-	// Set up app service clients
-	httpClient, _ := testcert.GetHttp2LocalhostTLSClient(tester.ctx, tester.getConfig())
-	serviceAddr := "https://" + service.listener.Addr().String()
-	authClient := protocolconnect.NewAuthenticationServiceClient(
-		httpClient, serviceAddr,
-	)
-	appRegistryClient := protocolconnect.NewAppRegistryServiceClient(
-		httpClient, serviceAddr,
-	)
-
-	// Start a test app service that serves webhook responses
-	appServer := app_registry.NewTestAppServer(t, wallet, client, false)
-	defer appServer.Close()
-	go func() {
-		if err := appServer.Serve(tester.ctx); err != nil {
-			t.Errorf("Error starting app service: %v", err)
-		}
-	}()
-
-	// Create user_* streams for app and register the app and webhook
-	appUserStreamCookie := safeCreateUserStreams(
-		t,
-		tester.ctx,
-		wallet,
-		client,
-		&testEncryptionDevice,
-	)
-	sharedSecret := register(
-		tester.ctx,
-		require,
-		wallet.Address[:],
-		owner.Address[:],
-		protocol.ForwardSettingValue_FORWARD_SETTING_ALL_MESSAGES,
-		owner,
-		authClient,
-		appRegistryClient,
-	)
-	registerWebhook(
-		tester.ctx,
-		require,
-		wallet,
-		sharedSecret,
-		testEncryptionDevice,
-		authClient,
-		appRegistryClient,
-		appServer,
-	)
-
+	tester.StartBotService()
 	// Create user streams for chat participant
-	participantEncryptionDevice := app_client.EncryptionDevice{
+	participantEncryptionDevice := protocol.UserMetadataPayload_EncryptionDevice{
 		DeviceKey:   "participantDeviceKey",
 		FallbackKey: "participantFallbackKey",
 	}
-	safeCreateUserStreams(t, tester.ctx, participant, client, &participantEncryptionDevice)
+
+	participantClient := tester.NodeClient(0, testClientOpts{})
+	participantClient.createUserStreamsWithEncryptionDevice(&participantEncryptionDevice)
 
 	// The participant creates a space and a channel.
-	spaceId := testutils.FakeStreamId(STREAM_SPACE_BIN)
-	_, _, err := createSpace(tester.ctx, participant, client, spaceId, nil)
-	require.NoError(err)
+	spaceId, _ := participantClient.createSpace()
+	channelId, _, channel := participantClient.createChannel(spaceId)
 
-	channelId := StreamId{STREAM_CHANNEL_BIN}
-	copy(channelId[1:21], spaceId[1:21])
-	_, err = rand.Read(channelId[21:])
-	require.NoError(err)
+	// Create user streams for bot and add to channel
+	appUserStreamCookie := tester.RegisterBotService(protocol.ForwardSettingValue_FORWARD_SETTING_ALL_MESSAGES)
+	botClient := tester.BotNodeClient(testClientOpts{})
 
-	channel, _, err := createChannel(tester.ctx, participant, client, spaceId, channelId, nil)
-	require.NoError(err)
-	require.NotNil(channel)
-
-	// Bot adds itself to channel
-	err = joinChannel(
-		tester.ctx,
-		wallet,
-		appUserStreamCookie,
-		client,
-		spaceId,
-		channelId,
-	)
-	require.NoError(err)
-
-	// Double-check that the bot is visibly a channel member.
-	// Messages sent to the channel after the bot becomes a member will be forwarded to the bot.
-	require.EventuallyWithT(func(c *assert.CollectT) {
-		res, err := client.GetStream(tester.ctx, &connect.Request[protocol.GetStreamRequest]{
-			Msg: &protocol.GetStreamRequest{
-				StreamId: channelId[:],
-			},
-		})
-		assert.NoError(c, err)
-		view, err := events.MakeRemoteStreamView(res.Msg.Stream)
-		assert.NoError(c, err)
-		isMember, err := view.IsMember(wallet.Address[:])
-		assert.NoError(c, err)
-		assert.True(c, isMember)
-	}, 10*time.Second, 100*time.Millisecond, "Bot never became a channel member")
+	// Note: if this fails, recall the previous implementation had the participant sign this transaction
+	botClient.joinChannel(spaceId, channelId, &MiniblockRef{
+		Hash: common.Hash(appUserStreamCookie.PrevMiniblockHash),
+		Num:  appUserStreamCookie.MinipoolGen - 1,
+	})
+	botClient.requireMembership(channelId, []common.Address{botClient.wallet.Address})
 
 	// The participant sends a test message to send to the channel with session id "session0".
 	// The app registry service does not have a session key for this session and should prompt
@@ -419,70 +355,25 @@ func TestAppRegistry_ForwardsChannelEvents(t *testing.T) {
 	testSessionBytes := []byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
 	testSession := hex.EncodeToString(testSessionBytes)
 	testCiphertexts := "ciphertext-device0-session0"
-	event, err := events.MakeEnvelopeWithPayload(
-		participant,
-		events.Make_ChannelPayload_Message_WithSessionBytes(testMessageText, testSessionBytes),
-		&MiniblockRef{
-			Num:  channel.GetMinipoolGen() - 1,
-			Hash: common.Hash(channel.GetPrevMiniblockHash()),
-		},
-	)
-	require.NoError(err)
-	add, err := client.AddEvent(tester.ctx, connect.NewRequest(&protocol.AddEventRequest{
-		StreamId: channelId[:],
-		Event:    event,
-		Optional: false,
-	}))
-	require.NoError(err)
-	require.Nil(add.Msg.Error)
+	participantClient.sayWithSession(channelId, testMessageText, testSessionBytes)
 
-	// Confirm that the bot server sent the key solicitation.
-	require.EventuallyWithT(func(c *assert.CollectT) {
-		res, err := client.GetStream(tester.ctx, &connect.Request[protocol.GetStreamRequest]{
-			Msg: &protocol.GetStreamRequest{
-				StreamId: channelId[:],
-			},
-		})
-		assert.NoError(c, err)
-		assert.True(c, findKeySolicitation(c, res.Msg.Stream, testEncryptionDevice.DeviceKey, testSession))
-	}, 10*time.Second, 100*time.Millisecond, "App server did not send a key solicitation")
+	// Expect the bot to solicit keys to decrypt the message the particapant just sent.
+	participantClient.requireKeySolicitation(channelId, testEncryptionDevice.DeviceKey, testSession)
 
 	// Have the participant send the solicitation response directly to the bot's user inbox stream.
-	appUserInboxStreamId := UserInboxStreamIdFromAddress(wallet.Address)
-	res, err := client.GetStream(tester.ctx, &connect.Request[protocol.GetStreamRequest]{
-		Msg: &protocol.GetStreamRequest{
-			StreamId: appUserInboxStreamId[:],
-		},
-	})
-	require.NoError(err)
-
-	lastMiniblock := res.Msg.Stream.Miniblocks[len(res.Msg.Stream.Miniblocks)-1]
-	event, err = events.MakeEnvelopeWithPayload(
-		participant,
-		events.Make_UserInboxPayload_GroupEncryptionSessions(
-			channelId,
-			[]string{testSession},
-			map[string]string{testEncryptionDevice.DeviceKey: testCiphertexts},
-		),
-		&MiniblockRef{
-			Num:  res.Msg.Stream.NextSyncCookie.MinipoolGen - 1,
-			Hash: common.Hash(lastMiniblock.Header.Hash),
-		},
+	participantClient.sendSolicitationResponse(
+		tester.botWallet.Address,
+		channelId,
+		testEncryptionDevice.DeviceKey,
+		[]string{testSession},
+		testCiphertexts,
 	)
-	require.NoError(err)
-
-	add, err = client.AddEvent(tester.ctx, connect.NewRequest(&protocol.AddEventRequest{
-		StreamId: appUserInboxStreamId[:],
-		Event:    event,
-	}))
-	require.NoError(err)
-	require.Nil(add.Msg.Error)
 
 	// Once the key material is posted to the app's user inbox stream, the app registry server should
 	// dequeue and forward the previously unsendable message to the bot, and the test bot server should
 	// reply with a specific format.
 	require.EventuallyWithT(func(c *assert.CollectT) {
-		res, err := client.GetStream(tester.ctx, &connect.Request[protocol.GetStreamRequest]{
+		res, err := participantClient.GetStream(tester.ctx, &connect.Request[protocol.GetStreamRequest]{
 			Msg: &protocol.GetStreamRequest{
 				StreamId: channelId[:],
 			},
