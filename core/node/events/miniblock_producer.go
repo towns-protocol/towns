@@ -383,7 +383,7 @@ func (p *miniblockProducer) submitProposalBatch(ctx context.Context, proposals [
 	}
 
 	for _, job := range proposals {
-		if job.replicated || job.candidate.Ref.Num%freq == 0 || job.candidate.Ref.Num == 1 {
+		if job.replicated || len(job.syncNodes) > 0 || job.candidate.Ref.Num%freq == 0 || job.candidate.Ref.Num == 1 {
 			filteredProposals = append(filteredProposals, job)
 		} else {
 			success = append(success, job.stream.streamId)
