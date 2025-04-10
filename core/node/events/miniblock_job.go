@@ -41,7 +41,7 @@ func (j *mbJob) produceCandidate(ctx context.Context) error {
 	// TODO: this is a sanity check, but in general mb production code needs to be hardened
 	// to handle scenario when local replica is removed from the stream.
 	if !slices.Contains(j.quorumNodes, j.cache.Params().Wallet.Address) {
-		return RiverError(Err_INTERNAL, "Node not partipating in stream quorum").
+		return RiverError(Err_INTERNAL, "Node not participating in stream quorum").
 			Tag("streamId", j.stream.streamId)
 	}
 
