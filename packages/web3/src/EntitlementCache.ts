@@ -1,9 +1,5 @@
 import TTLCache from '@isaacs/ttlcache'
 
-export interface Keyable {
-    toKey(): string
-}
-
 export interface CacheResult<V> {
     value: V
     cacheHit: boolean

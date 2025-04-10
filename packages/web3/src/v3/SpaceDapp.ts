@@ -53,9 +53,11 @@ import {
 import { RuleEntitlementShim } from './RuleEntitlementShim'
 import { PlatformRequirements } from './PlatformRequirements'
 import { EntitlementDataStructOutput } from './IEntitlementDataQueryableShim'
-import { CacheResult, EntitlementCache, Keyable } from '../EntitlementCache'
+import { CacheResult, EntitlementCache } from '../EntitlementCache'
+import { SimpleCache } from '../SimpleCache'
 import { RuleEntitlementV2Shim } from './RuleEntitlementV2Shim'
 import { TipEventObject } from '@towns-protocol/generated/dev/typings/ITipping'
+import { EntitlementRequest, BannedTokenIdsRequest, OwnerOfTokenRequest } from '../Keyable'
 
 const logger = dlogger('csb:SpaceDapp:debug')
 
@@ -95,22 +97,6 @@ class BooleanCacheResult implements CacheResult<boolean> {
         this.value = value
         this.cacheHit = false
         this.isPositive = value
-    }
-}
-
-class EntitlementRequest implements Keyable {
-    spaceId: string
-    channelId: string
-    userId: string
-    permission: Permission
-    constructor(spaceId: string, channelId: string, userId: string, permission: Permission) {
-        this.spaceId = spaceId
-        this.channelId = channelId
-        this.userId = userId
-        this.permission = permission
-    }
-    toKey(): string {
-        return `{spaceId:${this.spaceId},channelId:${this.channelId},userId:${this.userId},permission:${this.permission}}`
     }
 }
 
@@ -167,6 +153,8 @@ export class SpaceDapp implements ISpaceDapp {
     public readonly entitlementCache: EntitlementCache<EntitlementRequest, EntitlementData[]>
     public readonly entitledWalletCache: EntitlementCache<EntitlementRequest, EntitledWallet>
     public readonly entitlementEvaluationCache: EntitlementCache<EntitlementRequest, boolean>
+    public readonly bannedTokenIdsCache: SimpleCache<BannedTokenIdsRequest, ethers.BigNumber[]>
+    public readonly ownerOfTokenCache: SimpleCache<OwnerOfTokenRequest, string>
 
     constructor(config: BaseChainConfig, provider: ethers.providers.Provider) {
         this.isLegacySpaceCache = new Map()
@@ -196,6 +184,10 @@ export class SpaceDapp implements ISpaceDapp {
         this.entitlementCache = new EntitlementCache(cacheOpts)
         this.entitledWalletCache = new EntitlementCache(cacheOpts)
         this.entitlementEvaluationCache = new EntitlementCache(cacheOpts)
+        this.bannedTokenIdsCache = new SimpleCache({
+            ttlSeconds: isLocalDev ? 5 : 15 * 60,
+        })
+        this.ownerOfTokenCache = new SimpleCache()
     }
 
     public async isLegacySpace(spaceId: string): Promise<boolean> {
@@ -265,7 +257,11 @@ export class SpaceDapp implements ISpaceDapp {
         const token = await space.ERC721AQueryable.read
             .tokensOfOwner(walletAddress)
             .then((tokens) => tokens[0])
-        return wrapTransaction(() => space.Banning.write(signer).ban(token), txnOpts)
+
+        // Call ban
+        const tx = await wrapTransaction(() => space.Banning.write(signer).ban(token), txnOpts)
+        this.updateCacheAfterBanOrUnBan(spaceId, token)
+        return tx
     }
 
     public async unbanWalletAddress(
@@ -281,7 +277,18 @@ export class SpaceDapp implements ISpaceDapp {
         const token = await space.ERC721AQueryable.read
             .tokensOfOwner(walletAddress)
             .then((tokens) => tokens[0])
-        return wrapTransaction(() => space.Banning.write(signer).unban(token), txnOpts)
+
+        // Call unban
+        const tx = await wrapTransaction(() => space.Banning.write(signer).unban(token), txnOpts)
+        this.updateCacheAfterBanOrUnBan(spaceId, token)
+        return tx
+    }
+
+    public updateCacheAfterBanOrUnBan(spaceId: string, tokenId: ethers.BigNumber) {
+        // Invalidate banned token IDs cache on successful unban
+        this.bannedTokenIdsCache.remove(new BannedTokenIdsRequest(spaceId))
+        // Also invalidate the owner cache for this specific token
+        this.ownerOfTokenCache.remove(new OwnerOfTokenRequest(spaceId, tokenId))
     }
 
     public async walletAddressIsBanned(spaceId: string, walletAddress: string): Promise<boolean> {
@@ -301,10 +308,40 @@ export class SpaceDapp implements ISpaceDapp {
         if (!space) {
             throw new Error(`Space with spaceId "${spaceId}" is not found.`)
         }
-        const bannedTokenIds = await space.Banning.read.banned()
-        const bannedWalletAddresses = await Promise.all(
-            bannedTokenIds.map(async (tokenId) => await space.ERC721A.read.ownerOf(tokenId)),
+
+        // 1. Get banned token IDs
+        const bannedTokenIds = await this.bannedTokenIdsCache.executeUsingCache(
+            new BannedTokenIdsRequest(spaceId),
+            async (request) => {
+                const currentSpace = this.getSpace(request.spaceId)
+                if (!currentSpace) {
+                    throw new Error(
+                        `Space with spaceId "${request.spaceId}" is not found inside cache fetch.`,
+                    )
+                }
+                return currentSpace.Banning.read.banned()
+            },
         )
+
+        // 2. Get owner for each banned token ID
+        const bannedWalletAddresses = await Promise.all(
+            bannedTokenIds.map(async (tokenId: ethers.BigNumber): Promise<string> => {
+                const ownerAddress = await this.ownerOfTokenCache.executeUsingCache(
+                    new OwnerOfTokenRequest(spaceId, tokenId),
+                    async (request: OwnerOfTokenRequest): Promise<string> => {
+                        const currentSpace = this.getSpace(request.spaceId)
+                        if (!currentSpace) {
+                            throw new Error(
+                                `Space with spaceId "${request.spaceId}" is not found inside cache fetch.`,
+                            )
+                        }
+                        return currentSpace.ERC721A.read.ownerOf(request.tokenId)
+                    },
+                )
+                return ownerAddress
+            }),
+        )
+
         return bannedWalletAddresses
     }
 
