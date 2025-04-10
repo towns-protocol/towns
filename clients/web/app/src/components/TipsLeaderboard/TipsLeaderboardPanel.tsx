@@ -95,7 +95,7 @@ const Row = ({
                 padding="sm"
                 alignItems="center"
             >
-                <Stack horizontal gap width="100%">
+                <Stack horizontal gap width="100%" onClick={openProfile}>
                     <Stack horizontal alignItems="center" gap="sm">
                         <Box centerContent width="x3" height="x3">
                             <Medal rank={rank} />
@@ -108,7 +108,6 @@ const Row = ({
                             overflow="hidden"
                             paddingY="xs"
                             insetY="xxs"
-                            onClick={openProfile}
                         >
                             <Box
                                 centerContent
