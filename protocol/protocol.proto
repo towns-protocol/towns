@@ -136,7 +136,7 @@ message MiniblockHeader {
     repeated bytes event_hashes = 4;
 
     // Snapshot of the state at the end of the block.
-    optional Snapshot snapshot = 5;
+    optional Snapshot snapshot_deprecated = 5;
 
     // count of all events in the stream before this block
     int64 event_num_offset = 6;

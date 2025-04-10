@@ -270,7 +270,7 @@ function toTownsContent_MiniblockHeader(
         content: {
             kind: RiverTimelineEvent.MiniblockHeader,
             miniblockNum: value.miniblockNum,
-            hasSnapshot: value.snapshot !== undefined,
+            hasSnapshot: value.snapshotDeprecated !== undefined || value.snapshotHash !== undefined,
         } satisfies MiniblockHeaderEvent,
     }
 }
