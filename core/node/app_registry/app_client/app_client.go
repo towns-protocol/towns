@@ -17,29 +17,14 @@ import (
 )
 
 type EncryptionDevice struct {
-	DeviceKey   string `json:"deviceKey"`
-	FallbackKey string `json:"fallbackKey"`
+	DeviceKey   string
+	FallbackKey string
 }
 
-// command: "solicit"
-type KeySolicitationData struct {
-	SessionId string `json:"sessionId"`
-	ChannelId string `json:"channelId"`
-}
-
-type KeySolicitationResponse struct{}
-
-// command: "messages"
-type SendSessionMessagesRequestData struct {
-	EncryptionEnvelope []byte   `json:"encryptionEnvelope"`
-	MessageEnvelopes   [][]byte `json:"messageEnvelopes"`
-}
-
-type SendSessionMessagesResponse struct{}
-
-type AppServiceRequestPayload struct {
-	Command string `json:"command"`
-	Data    any    `json:",omitempty"`
+type WebhookStatus struct {
+	FrameworkVersion int
+	DeviceKey        string
+	FallbackKey      string
 }
 
 type AppClient struct {
@@ -284,14 +269,66 @@ func (b *AppClient) SendSessionMessages(
 	return err
 }
 
-// GetWebhookStatus sends an "info" message to the app service and expects a 200 with
+// GetWebhookStatus sends a "status" message to the app service and expects a 200 with
 // version info returned.
-// TODO - implement.
 func (b *AppClient) GetWebhookStatus(
 	ctx context.Context,
 	webhookUrl string,
 	appId common.Address,
 	hs256SharedSecret [32]byte,
-) error {
-	return base.RiverError(protocol.Err_UNIMPLEMENTED, "GetWebhookStatus unimplemented")
+) (status *protocol.AppServiceResponse_StatusResponse, err error) {
+	// Apply function-wide tags to the returned error
+	defer func() {
+		if err != nil {
+			err = base.AsRiverError(err, protocol.Err_INTERNAL).
+				Func("AppClient.InitializeWebhook").
+				Tag("appId", appId).
+				Tag("webhookUrl", webhookUrl)
+		}
+	}()
+
+	resp, err := sendRequestAndParseResponse(
+		b,
+		ctx,
+		appId,
+		hs256SharedSecret,
+		webhookUrl,
+		&protocol.AppServiceRequest{
+			Payload: &protocol.AppServiceRequest_Status{},
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	status = resp.GetStatus()
+	if status == nil {
+		return nil, base.RiverError(
+			protocol.Err_MALFORMED_WEBHOOK_RESPONSE,
+			"Webhook response is missing status",
+		)
+	}
+
+	if status.GetFrameworkVersion() == 0 {
+		return nil, base.RiverError(
+			protocol.Err_MALFORMED_WEBHOOK_RESPONSE,
+			"Webhook status response is missing framework version",
+		)
+	}
+
+	if status.GetDeviceKey() == "" {
+		return nil, base.RiverError(
+			protocol.Err_MALFORMED_WEBHOOK_RESPONSE,
+			"Webhook status response is missing device key",
+		)
+	}
+
+	if status.GetFallbackKey() == "" {
+		return nil, base.RiverError(
+			protocol.Err_MALFORMED_WEBHOOK_RESPONSE,
+			"Webhook status response is missing fallback key",
+		)
+	}
+
+	return status, nil
 }

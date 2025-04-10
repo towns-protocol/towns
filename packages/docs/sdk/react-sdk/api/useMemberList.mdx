@@ -15,28 +15,7 @@ import { useMemberList } from '@towns-protocol/react-sdk'
 function useMemberList(
   streamId: string,
   config?: ObservableConfig.FromData<MembersModel>,
-): {
-    data: MembersModel;
-    error: Error | undefined;
-    status: "error" | "loading" | "loaded";
-    isLoading: boolean;
-    isError: boolean;
-    isLoaded: boolean;
-} | {
-    data: MembersModel;
-    error: Error | undefined;
-    status: "error" | "loading" | "loaded";
-    isLoading: boolean;
-    isError: boolean;
-    isLoaded: boolean;
-} | {
-    data: MembersModel;
-    error: Error | undefined;
-    status: "error" | "loading" | "loaded";
-    isLoading: boolean;
-    isError: boolean;
-    isLoaded: boolean;
-}
+): ObservableValue<MembersModel>
 ```
 
 **Source:** [useMemberList](https://github.com/towns-protocol/towns/blob/main/packages/react-sdk/src/useMemberList.ts)
@@ -61,26 +40,5 @@ Configuration options for the observable.
 The MembersModel of the stream, containing the userIds of the members.
 
 ```ts
-{
-    data: MembersModel;
-    error: Error | undefined;
-    status: "error" | "loading" | "loaded";
-    isLoading: boolean;
-    isError: boolean;
-    isLoaded: boolean;
-} | {
-    data: MembersModel;
-    error: Error | undefined;
-    status: "error" | "loading" | "loaded";
-    isLoading: boolean;
-    isError: boolean;
-    isLoaded: boolean;
-} | {
-    data: MembersModel;
-    error: Error | undefined;
-    status: "error" | "loading" | "loaded";
-    isLoading: boolean;
-    isError: boolean;
-    isLoaded: boolean;
-}
+ObservableValue<MembersModel>
 ```

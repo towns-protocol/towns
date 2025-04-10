@@ -5,7 +5,7 @@ import (
 
 	"github.com/gammazero/workerpool"
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/puzpuzpuz/xsync/v3"
+	"github.com/puzpuzpuz/xsync/v4"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
@@ -31,7 +31,7 @@ type EventAdder interface {
 
 type streamMembershipScrubTaskProcessorImpl struct {
 	ctx          context.Context
-	pendingTasks *xsync.MapOf[StreamId, bool]
+	pendingTasks *xsync.Map[StreamId, bool]
 	workerPool   *workerpool.WorkerPool
 	cache        *StreamCache
 	eventAdder   EventAdder
@@ -60,7 +60,7 @@ func NewStreamMembershipScrubTasksProcessor(
 	proc := &streamMembershipScrubTaskProcessorImpl{
 		ctx:          ctx,
 		cache:        cache,
-		pendingTasks: xsync.NewMapOf[StreamId, bool](),
+		pendingTasks: xsync.NewMap[StreamId, bool](),
 		workerPool:   workerpool.New(100),
 		eventAdder:   eventAdder,
 		chainAuth:    chainAuth,
@@ -277,12 +277,15 @@ func (tp *streamMembershipScrubTaskProcessorImpl) processStreamImpl(
 }
 
 func (tp *streamMembershipScrubTaskProcessorImpl) Scrub(channelId StreamId) bool {
-	_, wasScheduled := tp.pendingTasks.LoadOrCompute(channelId, func() bool {
-		tp.workerPool.Submit(func() {
-			tp.processStream(channelId)
-			tp.pendingTasks.Delete(channelId)
-		})
-		return true
-	})
+	_, wasScheduled := tp.pendingTasks.LoadOrCompute(
+		channelId,
+		func() (newValue bool, cancel bool) {
+			tp.workerPool.Submit(func() {
+				tp.processStream(channelId)
+				tp.pendingTasks.Delete(channelId)
+			})
+			return true, false
+		},
+	)
 	return !wasScheduled
 }

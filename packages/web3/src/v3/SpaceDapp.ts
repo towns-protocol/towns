@@ -1813,6 +1813,8 @@ async function wrapTransaction(
                     (error as { code: unknown }).code === 'CALL_EXCEPTION'
                 ) {
                     logger.error('Transaction failed', { tx, errorCount, error })
+                    // TODO: is this a bug?
+                    // eslint-disable-next-line @typescript-eslint/only-throw-error
                     throw error
                 }
 

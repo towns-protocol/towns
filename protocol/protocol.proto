@@ -167,7 +167,11 @@ message MemberPayload {
             WrappedEncryptedData username = 5;
             WrappedEncryptedData display_name = 6;
             bytes ens_address = 7;
-            Nft nft = 8;
+            Nft nft = 8;    
+            map<string, uint64> tips_sent = 9; // tips sent by this user: map<currency, amount>
+            map<string, uint64> tips_received = 10; // tips received by this user: map<currency, amount>
+            map<string, uint64> tips_sent_count = 11; // total tips sent by this user: map<currency, amount>
+            map<string, uint64> tips_received_count = 12; // total tips received by this user: map<currency, amount>
         }
         
         repeated Member joined = 1;
@@ -176,6 +180,7 @@ message MemberPayload {
         EncryptionAlgorithm encryption_algorithm = 4;
         // tips sent in this stream: map<currency, amount>
         map<string, uint64> tips = 5;
+        map<string, uint64> tips_count = 6;
     }
 
     message KeyPackage {
@@ -398,6 +403,10 @@ message UserPayload {
         map<string, uint64> tips_sent = 3;
         // tips received by this user: map<currency, amount>
         map<string, uint64> tips_received = 4;
+        // total tips sent by this user: map<currency, amount>
+        map<string, uint64> tips_sent_count = 5;
+        // total tips received by this user: map<currency, amount>
+        map<string, uint64> tips_received_count = 6;
     }
 
     message Inception {
@@ -1233,4 +1242,8 @@ enum Err {
     // The encryption device returned by the app service webhook does not match the first
     // encryption device found in the app's user metadata stream.
     BAD_ENCRYPTION_DEVICE = 68;
+
+    // STREAM_RECONCILIATION_REQUIRED indicates that the stream is out of sync and must be 
+    // reconciled before it can be used.
+    STREAM_RECONCILIATION_REQUIRED = 69;
 }

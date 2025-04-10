@@ -309,7 +309,7 @@ export class Space {
         }
         // get all the role info
         const allRoleEntitlements = await Promise.all(getRoleEntitlementsAsync)
-        return allRoleEntitlements.filter((r) => r !== null) as RoleEntitlements[]
+        return allRoleEntitlements.filter((r) => r !== null)
     }
 
     public async findEntitlementByType(
@@ -358,7 +358,7 @@ export class Space {
     private async getEntitlementByAddress(address: string): Promise<EntitlementShim> {
         if (!this.addressToEntitlement[address]) {
             const entitlement = await this.entitlements.read.getEntitlement(address)
-            switch (entitlement.moduleType) {
+            switch (entitlement.moduleType as EntitlementModuleType) {
                 case EntitlementModuleType.UserEntitlement:
                     this.addressToEntitlement[address] = new UserEntitlementShim(
                         address,

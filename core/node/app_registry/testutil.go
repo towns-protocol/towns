@@ -15,6 +15,7 @@ import (
 	"connectrpc.com/connect"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/golang-jwt/jwt/v4"
+	"go.uber.org/zap/zapcore"
 	"google.golang.org/protobuf/proto"
 
 	"github.com/towns-protocol/towns/core/node/app_registry/app_client"
@@ -41,6 +42,8 @@ type TestAppServer struct {
 	hs256SecretKey   []byte
 	encryptionDevice app_client.EncryptionDevice
 	client           protocolconnect.StreamServiceClient
+	frameworkVersion int32
+	enableLogging    bool
 }
 
 // validateSignature verifies that the incoming request has a HS256-encoded jwt auth token stored
@@ -93,15 +96,17 @@ func NewTestAppServer(
 	t *testing.T,
 	appWallet *crypto.Wallet,
 	client protocolconnect.StreamServiceClient,
+	enableLogging bool,
 ) *TestAppServer {
 	listener, url := testcert.MakeTestListener(t)
 
 	b := &TestAppServer{
-		t:         t,
-		listener:  listener,
-		url:       url,
-		appWallet: appWallet,
-		client:    client,
+		t:             t,
+		listener:      listener,
+		url:           url,
+		appWallet:     appWallet,
+		client:        client,
+		enableLogging: enableLogging,
 	}
 
 	return b
@@ -119,6 +124,10 @@ func (b *TestAppServer) SetEncryptionDevice(encryptionDevice app_client.Encrypti
 	b.encryptionDevice = encryptionDevice
 }
 
+func (b *TestAppServer) SetFrameworkVersion(version int32) {
+	b.frameworkVersion = version
+}
+
 func (b *TestAppServer) Close() {
 	if b.httpServer != nil {
 		b.httpServer.Close()
@@ -130,6 +139,7 @@ func (b *TestAppServer) Close() {
 
 func (b *TestAppServer) solicitKeys(ctx context.Context, data *protocol.EventPayload_SolicitKeys) error {
 	log := logging.FromCtx(ctx).With("func", "TestAppServer.solicitKeys")
+
 	streamId, err := shared.StreamIdFromBytes(data.StreamId)
 	if err != nil {
 		return logAndReturnErr(log, fmt.Errorf("failed to parse stream for key solicitation: %w", err))
@@ -226,8 +236,8 @@ func (b *TestAppServer) respondToSendMessages(
 	data *protocol.EventPayload_Messages,
 ) error {
 	log := logging.FromCtx(ctx)
-	// Swap with above to enable debug logs
-	// log := logging.DefaultZapLogger(zapcore.DebugLevel)
+	// Swap with above to enable debug logs for this method only
+	// log := logging.DefaultLogger(zapcore.DebugLevel)
 	log.Debugw(
 		"respondToSendMessages",
 		"numMessages",
@@ -271,13 +281,13 @@ func (b *TestAppServer) respondToSendMessages(
 			continue
 		}
 
-		sessions, ok := sessionIdToEncryptionMaterial[message.Message.SessionId]
+		sessions, ok := sessionIdToEncryptionMaterial[hex.EncodeToString(message.Message.GetSessionIdBytes())]
 		if !ok {
 			return logAndReturnErr(
 				log,
 				fmt.Errorf(
 					"did not find sessionId %v in group encryption sessions for sent messages",
-					message.Message.SessionId,
+					hex.EncodeToString(message.Message.SessionIdBytes),
 				),
 			)
 		}
@@ -298,8 +308,10 @@ func (b *TestAppServer) respondToSendMessages(
 			"respondToSendMessages message details",
 			"m.m.SenderKey",
 			message.Message.SenderKey,
-			"m.m.SessionId",
-			message.Message.SessionId,
+			"m.m.SessionIdBytes",
+			message.Message.SessionIdBytes,
+			"m.m.SessionIdBytes (encoded)",
+			hex.EncodeToString(message.Message.SessionIdBytes),
 			"m.m.Ciphertext",
 			message.Message.Ciphertext,
 		)
@@ -321,14 +333,14 @@ func (b *TestAppServer) respondToSendMessages(
 
 		envelope, err := events.MakeEnvelopeWithPayload(
 			b.appWallet,
-			events.Make_ChannelPayload_Message_WithSession(
+			events.Make_ChannelPayload_Message_WithSessionBytes(
 				fmt.Sprintf(
 					"%v %v reply (%v)",
-					message.Message.SessionId,
+					hex.EncodeToString(message.Message.SessionIdBytes),
 					message.Message.Ciphertext,
 					sessions.Ciphertexts[b.encryptionDevice.DeviceKey],
 				),
-				message.Message.SessionId,
+				message.Message.SessionIdBytes,
 			),
 			&shared.MiniblockRef{
 				Hash: common.Hash(resp.Msg.Hash),
@@ -360,9 +372,12 @@ func (b *TestAppServer) respondToSendMessages(
 
 func (b *TestAppServer) rootHandler(w http.ResponseWriter, r *http.Request) {
 	// Ensure that the request method is POST.
-	// Uncomment to unconditionally enable logging
-	// log := logging.DefaultZapLogger(zapcore.DebugLevel)
-	log := logging.FromCtx(r.Context())
+	var log *logging.Log
+	if b.enableLogging {
+		log = logging.DefaultLogger(zapcore.DebugLevel)
+	} else {
+		log = logging.FromCtx(r.Context())
+	}
 	ctx := logging.CtxWithLog(r.Context(), log)
 	if r.Method != http.MethodPost {
 		log.Errorw("method not allowed", "method", r.Method)
@@ -421,12 +436,21 @@ func (b *TestAppServer) rootHandler(w http.ResponseWriter, r *http.Request) {
 
 				case *protocol.EventPayload_Solicitation:
 					log.Infow("request includes solicitation", "sessionIds", event.GetSolicitation().SessionIds, "streamId", event.GetSolicitation().StreamId)
-					if err := b.solicitKeys(logging.CtxWithLog(r.Context(), log), event.GetSolicitation()); err != nil {
+					if err := b.solicitKeys(ctx, event.GetSolicitation()); err != nil {
 						log.Errorw("solicit keys request failed", "error", err, "data", data)
 						http.Error(w, fmt.Sprintf("TestAppServer unable to solicit keys: %v", err), http.StatusBadRequest)
 						return
 					}
 				}
+			}
+
+		case *protocol.AppServiceRequest_Status:
+			response.Payload = &protocol.AppServiceResponse_Status{
+				Status: &protocol.AppServiceResponse_StatusResponse{
+					FrameworkVersion: b.frameworkVersion,
+					DeviceKey:        b.encryptionDevice.DeviceKey,
+					FallbackKey:      b.encryptionDevice.FallbackKey,
+				},
 			}
 
 		default:
