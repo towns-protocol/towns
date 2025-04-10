@@ -87,7 +87,7 @@ library VerificationLib {
         request.data.recipient = module;
         request.data.revocable = true;
         request.data.data = abi.encode(module, true);
-        bytes32 uid = AttestationLib.attest(request).uid;
+        bytes32 uid = AttestationLib.attest(attester, msg.value, request).uid;
         db.attestations[module][attester] = uid;
 
         emit Verified(module, true);

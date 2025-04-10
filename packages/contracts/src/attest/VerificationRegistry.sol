@@ -28,11 +28,11 @@ contract VerificationRegistry is IERC6900ExtensionRegistry, OwnableBase {
         VerificationLib.setSchemaId(schemaId);
     }
 
-    function approveVerification(address module, address attester) external {
+    function approveVerification(address module, address attester) external payable {
         VerificationLib.attest(module, attester);
     }
 
-    function revokeVerification(address module, address attester) external {
+    function revokeVerification(address module, address attester) external payable {
         VerificationLib.revoke(module, attester);
     }
 

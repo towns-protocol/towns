@@ -20,7 +20,7 @@ contract AttestationRegistry is IAttestationRegistry, Facet {
     /// @param request The attestation request data
     /// @return The UID of the created attestation
     function attest(AttestationRequest calldata request) external payable returns (bytes32) {
-        return AttestationLib.attest(request).uid;
+        return AttestationLib.attest(msg.sender, msg.value, request).uid;
     }
 
     /// @notice Revoke an existing attestation

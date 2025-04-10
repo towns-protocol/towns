@@ -75,7 +75,7 @@ contract ModuleRegistry is IModuleRegistry, OwnableBase, Facet {
         address module,
         bytes32[] calldata permissions
     ) external returns (bytes32) {
-        return ModuleLib.updatePermissions(module, permissions);
+        return ModuleLib.updatePermissions(msg.sender, module, permissions);
     }
 
     /// @notice Revoke a module's registration
@@ -83,7 +83,7 @@ contract ModuleRegistry is IModuleRegistry, OwnableBase, Facet {
     /// @dev Only the registrar can revoke a module
     /// @return The attestation UID that was revoked
     function revokeModule(address module) external returns (bytes32) {
-        return ModuleLib.removeModule(module);
+        return ModuleLib.removeModule(msg.sender, module);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/

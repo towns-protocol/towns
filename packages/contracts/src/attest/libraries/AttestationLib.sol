@@ -55,11 +55,13 @@ library AttestationLib {
     /*                     Internal Functions                     */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
     function attest(
+        address attester,
+        uint256 value,
         AttestationRequest memory request
     ) internal returns (Attestation memory attestation) {
         AttestationRequestData[] memory data = new AttestationRequestData[](1);
         data[0] = request.data;
-        (, bytes32[] memory uids) = _attest(request.schema, data, msg.sender, msg.value, true);
+        (, bytes32[] memory uids) = _attest(request.schema, data, attester, value, true);
         return getAttestation(uids[0]);
     }
 

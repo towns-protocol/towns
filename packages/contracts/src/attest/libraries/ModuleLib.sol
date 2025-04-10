@@ -33,9 +33,10 @@ library ModuleLib {
     error ModuleAlreadyRegistered();
     error ModuleNotRegistered();
     error ModuleRevoked();
-    error ModuleNotOwner();
+    error NotModuleOwner();
     error ModuleDoesNotImplementInterface();
-
+    error InvalidAddressInput();
+    error InvalidArrayInput();
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           EVENTS                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -106,7 +107,7 @@ library ModuleLib {
         bytes32[] calldata permissions,
         ExecutionManifest calldata manifest
     ) internal returns (bytes32 version) {
-        _verifyModuleInterfaces(module);
+        _verifyAddModuleInputs(module, owner, clients, permissions);
 
         Layout storage db = getLayout();
         ModuleInfo storage info = db.modules[module];
@@ -118,7 +119,7 @@ library ModuleLib {
         request.data.recipient = module;
         request.data.revocable = true;
         request.data.data = abi.encode(module, clients, owner, permissions, manifest);
-        info.uid = AttestationLib.attest(request).uid;
+        info.uid = AttestationLib.attest(msg.sender, msg.value, request).uid;
 
         emit ModuleRegistered(module, info.uid);
 
@@ -126,6 +127,7 @@ library ModuleLib {
     }
 
     function updatePermissions(
+        address revoker,
         address module,
         bytes32[] calldata permissions
     ) internal returns (bytes32 version) {
@@ -141,7 +143,7 @@ library ModuleLib {
             (address, address, address, bytes32[], ExecutionManifest)
         );
 
-        if (msg.sender != owner) ModuleNotOwner.selector.revertWith();
+        if (revoker != owner) NotModuleOwner.selector.revertWith();
 
         RevocationRequestData memory revocationRequest;
         revocationRequest.uid = info.uid;
@@ -152,49 +154,72 @@ library ModuleLib {
         request.data.revocable = true;
         request.data.refUID = info.uid;
         request.data.data = abi.encode(module, client, owner, permissions, manifest);
-        info.uid = AttestationLib.attest(request).uid;
+        info.uid = AttestationLib.attest(msg.sender, msg.value, request).uid;
 
         emit ModuleUpdated(module, info.uid);
 
         return info.uid;
     }
 
-    function removeModule(address module) internal returns (bytes32 version) {
+    function removeModule(address revoker, address module) internal returns (bytes32 version) {
         Layout storage db = getLayout();
-        ModuleInfo storage info = db.modules[module];
+        bytes32 uidToRevoke = db.modules[module].uid;
 
-        if (info.uid == bytes32(0)) ModuleNotRegistered.selector.revertWith();
+        if (uidToRevoke == bytes32(0)) ModuleNotRegistered.selector.revertWith();
 
         RevocationRequestData memory request;
-        request.uid = info.uid;
+        request.uid = uidToRevoke;
 
-        AttestationLib.revoke(db.schemaId, request, msg.sender, 0, true);
+        AttestationLib.revoke(db.schemaId, request, revoker, 0, true);
 
-        emit ModuleUnregistered(module, info.uid);
+        db.modules[module].uid = bytes32(0);
+        delete db.modules[module];
 
-        return info.uid;
+        emit ModuleUnregistered(module, uidToRevoke);
+
+        return uidToRevoke;
     }
 
     function banModule(address module) internal returns (bytes32 version) {
         Layout storage db = getLayout();
-        ModuleInfo storage info = db.modules[module];
+        bytes32 uidToBan = db.modules[module].uid;
 
-        if (info.uid == bytes32(0)) ModuleNotRegistered.selector.revertWith();
+        if (uidToBan == bytes32(0)) ModuleNotRegistered.selector.revertWith();
 
-        Attestation memory att = AttestationLib.getAttestation(info.uid);
+        Attestation memory att = AttestationLib.getAttestation(uidToBan);
         if (att.revocationTime > 0) ModuleRevoked.selector.revertWith();
 
         RevocationRequestData memory request;
-        request.uid = info.uid;
+        request.uid = uidToBan;
 
         AttestationLib.revoke(db.schemaId, request, att.attester, 0, true);
 
-        emit ModuleBanned(module, info.uid);
+        db.modules[module].uid = bytes32(0);
+        delete db.modules[module];
 
-        return info.uid;
+        emit ModuleBanned(module, uidToBan);
+
+        return uidToBan;
     }
 
-    function _verifyModuleInterfaces(address module) internal view {
+    function _verifyAddModuleInputs(
+        address module,
+        address owner,
+        address[] calldata clients,
+        bytes32[] calldata permissions
+    ) internal view {
+        if (module == address(0)) InvalidAddressInput.selector.revertWith();
+        if (owner == address(0)) InvalidAddressInput.selector.revertWith();
+        if (clients.length == 0 || permissions.length == 0) InvalidArrayInput.selector.revertWith();
+
+        for (uint256 i = 0; i < clients.length; i++) {
+            if (clients[i] == address(0)) InvalidAddressInput.selector.revertWith();
+        }
+
+        for (uint256 i = 0; i < permissions.length; i++) {
+            if (permissions[i] == bytes32(0)) InvalidArrayInput.selector.revertWith();
+        }
+
         if (
             !IERC165(module).supportsInterface(type(IERC6900Module).interfaceId) ||
             !IERC165(module).supportsInterface(type(IERC6900ExecutionModule).interfaceId) ||
