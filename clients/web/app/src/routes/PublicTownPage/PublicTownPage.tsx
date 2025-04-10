@@ -3,17 +3,15 @@ import debug from 'debug'
 import React, { useCallback, useEffect, useMemo } from 'react'
 import { useLocation, useNavigate } from 'react-router'
 import { Link } from 'react-router-dom'
-import { useConnectivity, useContractSpaceInfoWithoutClient, useMyProfile } from 'use-towns-client'
+import { useConnectivity, useContractSpaceInfoWithoutClient } from 'use-towns-client'
 import { getTownDataFromSSR } from 'utils/parseTownDataFromSSR'
 import { AppProgressState } from '@components/AppProgressOverlay/AppProgressState'
-import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
 import { LogoSingleLetter } from '@components/Logo/Logo'
 import { BlurredBackground } from '@components/TouchLayoutHeader/BlurredBackground'
 import { TownPageLayout } from '@components/TownPageLayout/TownPageLayout'
 import { FadeInBox } from '@components/Transitions'
 import { ImageVariants, useImageSource } from '@components/UploadImage/useImageSource'
 import { Box, BoxProps, Button, Heading, Icon, IconButton, Paragraph, Stack } from '@ui'
-import { useMyAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
 import { Analytics } from 'hooks/useAnalytics'
 import { useDevice } from 'hooks/useDevice'
 import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
@@ -21,11 +19,8 @@ import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
 import { useCombinedAuth } from 'privy/useCombinedAuth'
 import { atoms } from 'ui/styles/atoms.css'
 import { darkTheme } from 'ui/styles/vars.css'
-import { shortAddress } from 'ui/utils/utils'
 import { AppProgressOverlayTrigger } from '@components/AppProgressOverlay/AppProgressOverlayTrigger'
-import { Avatar } from '@components/Avatar/Avatar'
 import { usePublicTownsPageAnalyticsEvent } from '@components/Analytics/usePublicTownPageAnalyticsEvent'
-import { AppBugReportButton } from '@components/AppBugReport/AppBugReportButton'
 import { useStartupTime } from 'StartupProvider'
 import { AppStoreBanner } from '@components/AppStoreBanner/AppStoreBanner'
 import { BottomBarContent } from './BottomBarContent'
@@ -67,7 +62,7 @@ const PublicTownPage = (props: { isPreview?: boolean; onClosePreview?: () => voi
         <>
             <AbsoluteBackground networkId={spaceInfo.networkId} />
 
-            <Box absoluteFill height="100dvh" bottom="none" className={className}>
+            <Box absoluteFill bottom="none" className={className}>
                 <AppStoreBanner />
                 <TownPageLayout
                     headerContent={<Header isPreview={isPreview} onClosePreview={onClosePreview} />}
@@ -124,6 +119,11 @@ const Header = (props: { isPreview: boolean; onClosePreview?: () => void }) => {
     const fromLink = useLocation().state?.fromLink === true
     const navigate = useNavigate()
     const { isTouch } = useDevice()
+
+    const onClickExplore = useCallback(() => {
+        navigate('/explore')
+    }, [navigate])
+
     const onNavigateBack = useCallback(() => {
         if (fromLink) {
             navigate(-1)
@@ -135,7 +135,7 @@ const Header = (props: { isPreview: boolean; onClosePreview?: () => void }) => {
     return (
         <Box horizontal centerContent width="100%">
             <Stack horizontal width="100%" paddingY="md" gap="md">
-                {fromLink && isTouch ? (
+                {isAuthenticated && fromLink && isTouch ? (
                     <IconButton
                         centerContent
                         color="default"
@@ -145,35 +145,36 @@ const Header = (props: { isPreview: boolean; onClosePreview?: () => void }) => {
                         height="x4"
                         onClick={onNavigateBack}
                     />
-                ) : (
+                ) : !isAuthenticated ? (
                     <Link to="/">
                         <LogoSingleLetter />
                     </Link>
-                )}
-
+                ) : null}
                 <Box grow />
                 {isPreview ? (
                     <IconButton hoverable icon="close" color="default" onClick={onClosePreview} />
-                ) : (
-                    <>
-                        {isAuthenticated && !isTouch ? <HomeButton /> : null}
-                        <AppBugReportButton />
-
-                        {isAuthenticated ? (
-                            <LoggedUserAvatar />
-                        ) : (
-                            <Button
-                                tone="lightHover"
-                                color="default"
-                                size="button_sm"
-                                data-testid="town-preview-log-in-button"
-                                onClick={onClickLogin}
-                            >
-                                Log In
-                            </Button>
-                        )}
-                    </>
-                )}
+                ) : !isAuthenticated ? (
+                    <Stack horizontal gap="sm">
+                        <Button
+                            tone="lightHover"
+                            color="default"
+                            size="button_sm"
+                            data-testid="town-preview-log-in-button"
+                            onClick={onClickExplore}
+                        >
+                            Explore
+                        </Button>
+                        <Button
+                            tone="lightHover"
+                            color="default"
+                            size="button_sm"
+                            data-testid="town-preview-log-in-button"
+                            onClick={onClickLogin}
+                        >
+                            Log In
+                        </Button>
+                    </Stack>
+                ) : null}
             </Stack>
         </Box>
     )
@@ -197,102 +198,6 @@ const MessageBox = ({ children, ...boxProps }: BoxProps) => (
     </Box>
 )
 
-const LoggedUserAvatar = () => {
-    const profileUser = useMyProfile()
-    const { isAuthenticated } = useConnectivity()
-
-    if (!isAuthenticated || !profileUser) {
-        return
-    }
-
-    return (
-        <Box
-            hoverable
-            cursor="pointer"
-            tooltip={<LoggedUserMenu />}
-            tooltipOptions={{
-                placement: 'vertical',
-                trigger: 'click',
-                align: 'end',
-            }}
-        >
-            <Avatar size="avatar_x4" userId={profileUser.userId} />
-        </Box>
-    )
-}
-
-const LoggedUserMenu = () => {
-    const { logout } = useCombinedAuth()
-    const { data: abstractAccountAddress } = useMyAbstractAccountAddress()
-    const onLogOut = useCallback(() => {
-        logout()
-    }, [logout])
-
-    const navigate = useNavigate()
-    const onBackToApp = useCallback(() => {
-        navigate('/')
-    }, [navigate])
-
-    return (
-        <Box rounded="md" minWidth="250" pointerEvents="all" overflow="hidden" boxShadow="card">
-            <Stack
-                horizontal
-                gap
-                padding
-                hoverable
-                cursor="pointer"
-                alignItems="center"
-                paddingBottom="sm"
-                background="level2"
-                onClick={onBackToApp}
-            >
-                <Icon background="level3" type="arrowLeft" padding="sm" size="square_lg" />
-                <Paragraph>Back to App</Paragraph>
-            </Stack>
-            {abstractAccountAddress && (
-                <Stack
-                    horizontal
-                    gap
-                    padding
-                    hoverable
-                    alignItems="center"
-                    paddingY="sm"
-                    background="level2"
-                >
-                    <Icon background="level3" type="wallet" padding="sm" size="square_lg" />
-
-                    <ClipboardCopy
-                        color="none"
-                        label={shortAddress(abstractAccountAddress)}
-                        clipboardContent={abstractAccountAddress}
-                    />
-                </Stack>
-            )}
-            <Stack
-                padding
-                horizontal
-                gap
-                hoverable
-                paddingTop="sm"
-                background="level2"
-                alignItems="center"
-                color="error"
-                cursor="pointer"
-                onClick={onLogOut}
-            >
-                <Icon
-                    background="level3"
-                    type="logout"
-                    padding="sm"
-                    size="square_lg"
-                    color="inherit"
-                />
-                <Paragraph>Log Out</Paragraph>
-            </Stack>
-        </Box>
-    )
-}
-
 export const TownNotFoundBox = () => (
     <FadeInBox centerContent gap="lg" maxWidth="400" data-testid="town-not-found-box">
         <Box padding background="error" borderRadius="sm">
@@ -309,22 +214,3 @@ export const TownNotFoundBox = () => (
         </Box>
     </FadeInBox>
 )
-
-export const HomeButton = () => {
-    const fromLink = useLocation().state?.fromLink === true
-    const navigate = useNavigate()
-
-    const onClick = useCallback(() => {
-        if (fromLink) {
-            navigate(-1)
-        } else {
-            navigate('/')
-        }
-    }, [fromLink, navigate])
-
-    return (
-        <Button size="button_sm" tone="lightHover" color="default" onClick={onClick}>
-            {fromLink ? 'Back' : 'Home'}
-        </Button>
-    )
-}

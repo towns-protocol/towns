@@ -39,8 +39,15 @@ export const AppPanelLayout = () => {
     // can't rely on `space` being defined
     const hasTownRoute = !!useSpaceIdFromPathname() || space !== undefined
 
+    // Don't show space panel when on public town page
+    const publicTownRoute = useMatch({ path: '/t/:address', end: true })
+    const isPublicTownRoute = !!publicTownRoute
+
     const displaySpacePanel =
-        !isTownBannedStatus && hasTownRoute && (!(spacesNewRoute || homeRoute) || isMessagesRoute)
+        !isTownBannedStatus &&
+        !isPublicTownRoute &&
+        hasTownRoute &&
+        (!(spacesNewRoute || homeRoute) || isMessagesRoute)
 
     return (
         <>

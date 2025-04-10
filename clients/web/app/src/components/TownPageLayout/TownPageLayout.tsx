@@ -85,13 +85,7 @@ export const TownPageLayout = (props: TownPageLayoutProps) => {
 
     return (
         <>
-            <Stack
-                scroll
-                alignItems="center"
-                height="100dvh"
-                paddingTop="safeAreaInsetTop"
-                paddingX="md"
-            >
+            <Stack scroll alignItems="center" paddingTop="safeAreaInsetTop" paddingX="md">
                 {props.headerContent}
                 <Stack
                     justifyContent={{
