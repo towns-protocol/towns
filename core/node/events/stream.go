@@ -8,8 +8,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/towns-protocol/towns/core/node/registries"
-
 	mapset "github.com/deckarep/golang-set/v2"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/linkdata/deadlock"
@@ -146,7 +144,7 @@ func (s *Stream) lockMuAndLoadView(ctx context.Context) (*StreamView, error) {
 	}
 
 	s.mu.Unlock()
-	s.params.streamCache.SubmitSyncStreamTask(ctx, s)
+	s.params.streamCache.SubmitSyncStreamTask(s, nil)
 
 	// Wait for reconciliation to complete.
 	backoff := BackoffTracker{
@@ -277,6 +275,7 @@ func (s *Stream) importMiniblocksLocked(
 		blocksToWriteToStorage = blocksToWriteToStorage[1:]
 		miniblocks = miniblocks[1:]
 	}
+
 	if len(miniblocks) == 0 {
 		return nil
 	}
@@ -350,7 +349,7 @@ func (s *Stream) applyMiniblockImplLocked(
 		storageMb = &storage.WriteMiniblockData{
 			Number:   info.Ref.Num,
 			Hash:     info.Ref.Hash,
-			Snapshot: info.GetSnapshot(),
+			Snapshot: miniblock.Snapshot,
 			Data:     miniblock.Data,
 		}
 	} else {
@@ -393,7 +392,8 @@ func (s *Stream) promoteCandidate(ctx context.Context, mb *MiniblockRef) error {
 // promoteCandidateLocked shouldbe called with a lock held.
 func (s *Stream) promoteCandidateLocked(ctx context.Context, mb *MiniblockRef) error {
 	if s.local == nil {
-		return RiverError(Err_FAILED_PRECONDITION, "can't promote candidate for non-local stream")
+		return RiverError(Err_FAILED_PRECONDITION, "can't promote candidate for non-local stream").
+			Tag("stream", s.streamId)
 	}
 
 	// Check if the miniblock is already applied.
@@ -438,13 +438,18 @@ func (s *Stream) promoteCandidateLocked(ctx context.Context, mb *MiniblockRef) e
 func (s *Stream) schedulePromotionLocked(mb *MiniblockRef) error {
 	if len(s.local.pendingCandidates) == 0 {
 		if mb.Num != s.getViewLocked().LastBlock().Ref.Num+1 {
-			return RiverError(Err_INTERNAL, "schedulePromotionNoLock: next promotion is not for the next block")
+			return RiverError(
+				Err_STREAM_RECONCILIATION_REQUIRED,
+				"schedulePromotionNoLock: next promotion is not for the next block",
+			)
 		}
 		s.local.pendingCandidates = append(s.local.pendingCandidates, mb)
+	} else if len(s.local.pendingCandidates) > 3 {
+		return RiverError(Err_STREAM_RECONCILIATION_REQUIRED, "schedulePromotionNoLock: too many pending candidates")
 	} else {
 		lastPending := s.local.pendingCandidates[len(s.local.pendingCandidates)-1]
 		if mb.Num != lastPending.Num+1 {
-			return RiverError(Err_INTERNAL, "schedulePromotionNoLock: pending candidates are not consecutive")
+			return RiverError(Err_STREAM_RECONCILIATION_REQUIRED, "schedulePromotionNoLock: pending candidates are not consecutive")
 		}
 		s.local.pendingCandidates = append(s.local.pendingCandidates, mb)
 	}
@@ -486,11 +491,13 @@ func (s *Stream) initFromGenesisLocked(
 	return nil
 }
 
-// GetViewIfLocal returns stream view if stream is local, nil if stream is not local,
+// GetViewIfLocalEx returns stream view if stream is local, nil if stream is not local,
 // and error if stream is local and failed to load.
-// GetViewIfLocal is thread-safe.
-func (s *Stream) GetViewIfLocal(ctx context.Context) (*StreamView, error) {
-	view, isLocal := s.tryGetView()
+// If local storage is not initialized, it will wait for it to be initialized.
+// If allowNoQuorum is true, it will return the view even if the local node is not in quorum.
+// GetViewIfLocalEx is thread-safe.
+func (s *Stream) GetViewIfLocalEx(ctx context.Context, allowNoQuorum bool) (*StreamView, error) {
+	view, isLocal := s.tryGetView(allowNoQuorum)
 	if !isLocal {
 		return nil, nil
 	}
@@ -510,7 +517,16 @@ func (s *Stream) GetViewIfLocal(ctx context.Context) (*StreamView, error) {
 	return view, nil
 }
 
+// GetViewIfLocal returns stream view if stream is local, nil if stream is not local,
+// and error if stream is local and failed to load.
+// If local storage is not initialized, it will wait for it to be initialized.
+// GetViewIfLocal is thread-safe.
+func (s *Stream) GetViewIfLocal(ctx context.Context) (*StreamView, error) {
+	return s.GetViewIfLocalEx(ctx, false)
+}
+
 // GetView returns stream view if stream is local, and error if stream is not local or failed to load.
+// If local storage is not initialized, it will wait for it to be initialized.
 // GetView is thread-safe.
 func (s *Stream) GetView(ctx context.Context) (*StreamView, error) {
 	view, err := s.GetViewIfLocal(ctx)
@@ -525,11 +541,22 @@ func (s *Stream) GetView(ctx context.Context) (*StreamView, error) {
 
 // tryGetView returns StreamView if it's already loaded, or nil if it's not.
 // The second return value is true if the view is local.
+// If allowNoQuorum is true, it will return the view even if the local node is not in quorum.
 // tryGetView is thread-safe.
-func (s *Stream) tryGetView() (*StreamView, bool) {
+func (s *Stream) tryGetView(allowNoQuorum bool) (*StreamView, bool) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
-	isLocal := s.nodesLocked.IsLocalInQuorum() && s.local != nil
+	if s.local == nil {
+		return nil, false
+	}
+
+	isLocal := false
+	if !allowNoQuorum {
+		isLocal = s.nodesLocked.IsLocalInQuorum()
+	} else {
+		isLocal = s.nodesLocked.IsLocal()
+	}
+
 	if isLocal && s.getViewLocked() != nil {
 		s.maybeScrubLocked()
 		return s.getViewLocked(), true
@@ -982,38 +1009,31 @@ func (s *Stream) applyStreamEvents(
 		return
 	}
 
+	// TODO: REPLICATION: FIX: this function now can be called multiple times per block.
 	// Sanity check
-	if s.lastAppliedBlockNum >= blockNum {
-		logging.FromCtx(ctx).
-			Errorw("applyStreamEvents: already applied events for block", "blockNum", blockNum, "streamId", s.streamId,
-				"lastAppliedBlockNum", s.lastAppliedBlockNum,
-			)
-		return
-	}
+	// if s.lastAppliedBlockNum >= blockNum {
+	// 	logging.FromCtx(ctx).
+	// 		Errorw("applyStreamEvents: already applied events for block", "blockNum", blockNum, "streamId", s.streamId,
+	// 			"lastAppliedBlockNum", s.lastAppliedBlockNum,
+	// 		)
+	// 	return
+	// }
 
 	for _, e := range events {
-		switch e.Reason() {
-		case river.StreamUpdatedEventTypePlacementUpdated:
-			ev := e.(*river.StreamState)
-			s.nodesLocked.ResetFromStreamState(ev, s.params.Wallet.Address)
-		case river.StreamUpdatedEventTypeLastMiniblockBatchUpdated:
+		if e.Reason() == river.StreamUpdatedEventTypeLastMiniblockBatchUpdated {
 			event := e.(*river.StreamMiniblockUpdate)
 			err := s.promoteCandidateLocked(ctx, &MiniblockRef{
 				Hash: event.LastMiniblockHash,
 				Num:  int64(event.LastMiniblockNum),
 			})
 			if err != nil {
-				logging.FromCtx(ctx).Errorw("onStreamLastMiniblockUpdated: failed to promote candidate", "err", err)
+				if IsRiverErrorCode(err, Err_STREAM_RECONCILIATION_REQUIRED) {
+					s.params.streamCache.SubmitSyncStreamTask(s, nil)
+				} else {
+					logging.FromCtx(ctx).Errorw("onStreamLastMiniblockUpdated: failed to promote candidate", "err", err)
+				}
 			}
-		case river.StreamUpdatedEventTypeAllocate:
-			logging.FromCtx(ctx).Errorw("applyStreamEvents: unexpected stream allocation event",
-				"event", e, "streamId", s.streamId)
-			continue
-		case river.StreamUpdatedEventTypeCreate:
-			logging.FromCtx(ctx).Errorw("applyStreamEvents: unexpected stream creation event",
-				"event", e, "streamId", s.streamId)
-			continue
-		default:
+		} else {
 			logging.FromCtx(ctx).Errorw("applyStreamEvents: unknown event", "event", e, "streamId", s.streamId)
 		}
 	}
@@ -1040,6 +1060,19 @@ func (s *Stream) GetRemotesAndIsLocal() ([]common.Address, bool) {
 	return slices.Clone(r), l
 }
 
+// GetQuorumAndSyncNodesAndIsLocal returns
+// quorumNodes - a list of non-local nodes that participate in the stream quorum
+// syncNodes - a list of non-local nodes that sync the stream into local storage but don't participate in quorum (yet)
+// isLocal - boolean, whether the stream is hosted on this node
+// GetQuorumAndSyncNodesAndIsLocal is thread-safe.
+func (s *Stream) GetQuorumAndSyncNodesAndIsLocal() ([]common.Address, []common.Address, bool) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	qn, sn, l := s.nodesLocked.GetQuorumAndSyncNodesAndIsLocal()
+	return slices.Clone(qn), slices.Clone(sn), l
+}
+
 // GetStickyPeer returns the peer this node typically uses to forward requests to for this
 // stream. If the node becomes unavailable, the sticky peer can be updated with AdvanceStickyPeer.
 // This method is thread-safe.
@@ -1058,18 +1091,11 @@ func (s *Stream) AdvanceStickyPeer(currentPeer common.Address) common.Address {
 	return s.nodesLocked.AdvanceStickyPeer(currentPeer)
 }
 
-func (s *Stream) ResetFromStreamState(state *river.StreamState, localNode common.Address) {
+func (s *Stream) ResetFromStreamWithId(stream *river.StreamWithId, localNode common.Address) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	s.nodesLocked.ResetFromStreamState(state, localNode)
-}
-
-func (s *Stream) ResetFromStreamResult(result *registries.GetStreamResult, localNode common.Address) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	s.nodesLocked.ResetFromStreamResult(result, localNode)
+	s.nodesLocked.ResetFromStreamWithId(stream, localNode)
 }
 
 func (s *Stream) Reset(replicationFactor int, nodes []common.Address, localNode common.Address) {

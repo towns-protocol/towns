@@ -1,0 +1,13 @@
+/node_modules
+cache/
+artifacts/
+coverage/
+coverage.json
+.env
+types.ts/
+dist/
+foundry_artifacts/
+scripts/accumulator-cli
+tsconfig.tsbuildinfo
+deployments/*/*/addresses/facets/
+out/

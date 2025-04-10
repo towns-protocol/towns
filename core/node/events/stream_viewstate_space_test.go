@@ -30,7 +30,7 @@ func makeTestSpaceStream(
 	userWallet *crypto.Wallet,
 	spaceId StreamId,
 	streamSettings *protocol.StreamSettings,
-) ([]*ParsedEvent, *protocol.Miniblock, *protocol.Envelope) {
+) ([]*ParsedEvent, *protocol.Miniblock) {
 	userAddess := userWallet.Address.Bytes()
 	if streamSettings == nil {
 		streamSettings = &protocol.StreamSettings{
@@ -57,9 +57,9 @@ func makeTestSpaceStream(
 		parsedEvent(t, inception),
 		parsedEvent(t, join),
 	}
-	mb, sn, err := MakeGenesisMiniblock(userWallet, events)
+	mb, err := MakeGenesisMiniblock(userWallet, events)
 	require.NoError(t, err)
-	return events, mb, sn
+	return events, mb
 }
 
 func makeTestChannelStream(
@@ -69,7 +69,7 @@ func makeTestChannelStream(
 	channelStreamId StreamId,
 	spaceSpaceId StreamId,
 	streamSettings *protocol.StreamSettings,
-) ([]*ParsedEvent, *protocol.Miniblock, *protocol.Envelope) {
+) ([]*ParsedEvent, *protocol.Miniblock) {
 	if streamSettings == nil {
 		streamSettings = &protocol.StreamSettings{
 			DisableMiniblockCreation: true,
@@ -95,9 +95,9 @@ func makeTestChannelStream(
 		parsedEvent(t, inception),
 		parsedEvent(t, join),
 	}
-	mb, sn, err := MakeGenesisMiniblock(wallet, events)
+	mb, err := MakeGenesisMiniblock(wallet, events)
 	require.NoError(t, err)
-	return events, mb, sn
+	return events, mb
 }
 
 func joinSpace_T(
@@ -206,7 +206,7 @@ func TestSpaceViewState(t *testing.T) {
 	user3Id, err := AddressHex(user3Wallet.Address.Bytes())
 	require.NoError(t, err)
 
-	_, mb, _ := makeTestSpaceStream(t, user1Wallet, spaceStreamId, nil)
+	_, mb := makeTestSpaceStream(t, user1Wallet, spaceStreamId, nil)
 	s, _ := tt.createStream(spaceStreamId, mb)
 	stream := s
 	require.NotNil(t, stream)
@@ -243,8 +243,9 @@ func TestSpaceViewState(t *testing.T) {
 	spaceViewStateTest_CheckUserJoined(t, view2, user2Wallet, true)
 	spaceViewStateTest_CheckUserJoined(t, view2, user3Wallet, true)
 	// now, turn that block into bytes, then load it back into a view
-	miniblocks := stream.getViewLocked().MiniblocksFromLastSnapshot()
+	miniblocks, snapshot := stream.getViewLocked().MiniblocksFromLastSnapshot()
 	require.Equal(t, 1, len(miniblocks))
+	require.Nil(t, snapshot)
 	miniblock := miniblocks[0]
 	miniblockProtoBytes, err := proto.Marshal(miniblock)
 	require.NoError(t, err)
@@ -299,19 +300,20 @@ func TestChannelViewState_JoinedMembers(t *testing.T) {
 	channelStreamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 
 	// create a space stream and add the members
-	_, mb, _ := makeTestSpaceStream(t, userWallet, spaceStreamId, nil)
+	_, mb := makeTestSpaceStream(t, userWallet, spaceStreamId, nil)
 	sStream, _ := tt.createStream(spaceStreamId, mb)
 	spaceStream := sStream
 	joinSpace_T(t, userWallet, ctx, spaceStream, []string{bob, carol})
 	// create a channel stream and add the members
-	_, mb, _ = makeTestChannelStream(t, userWallet, alice, channelStreamId, spaceStreamId, nil)
+	_, mb = makeTestChannelStream(t, userWallet, alice, channelStreamId, spaceStreamId, nil)
 	cStream, _ := tt.createStream(channelStreamId, mb)
 	channelStream := cStream
 	joinChannel_T(t, userWallet, ctx, channelStream, []string{alice, bob, carol})
 	// make a miniblock
 	_ = tt.makeMiniblock(0, channelStreamId, false)
 	// get the miniblock's last snapshot and convert it into bytes
-	miniblocks := channelStream.getViewLocked().MiniblocksFromLastSnapshot()
+	miniblocks, snapshot := channelStream.getViewLocked().MiniblocksFromLastSnapshot()
+	require.Nil(t, snapshot)
 	miniblock := miniblocks[0]
 	miniblockProtoBytes, _ := proto.Marshal(miniblock)
 	// create a stream view from the miniblock bytes
@@ -358,12 +360,12 @@ func TestChannelViewState_RemainingMembers(t *testing.T) {
 	channelStreamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 
 	// create a space stream and add the members
-	_, mb, _ := makeTestSpaceStream(t, userWallet, spaceStreamId, nil)
+	_, mb := makeTestSpaceStream(t, userWallet, spaceStreamId, nil)
 	sStream, _ := tt.createStream(spaceStreamId, mb)
 	spaceStream := sStream
 	joinSpace_T(t, userWallet, ctx, spaceStream, []string{bob, carol})
 	// create a channel stream and add the members
-	_, mb, _ = makeTestChannelStream(t, userWallet, alice, channelStreamId, spaceStreamId, nil)
+	_, mb = makeTestChannelStream(t, userWallet, alice, channelStreamId, spaceStreamId, nil)
 	cStream, _ := tt.createStream(channelStreamId, mb)
 	channelStream := cStream
 	joinChannel_T(t, userWallet, ctx, channelStream, []string{alice, bob, carol})
@@ -372,7 +374,8 @@ func TestChannelViewState_RemainingMembers(t *testing.T) {
 	// make a miniblock
 	_ = tt.makeMiniblock(0, channelStreamId, false)
 	// get the miniblock's last snapshot and convert it into bytes
-	miniblocks := channelStream.getViewLocked().MiniblocksFromLastSnapshot()
+	miniblocks, snapshot := channelStream.getViewLocked().MiniblocksFromLastSnapshot()
+	require.Nil(t, snapshot)
 	miniblock := miniblocks[0]
 	miniblockProtoBytes, _ := proto.Marshal(miniblock)
 	// create a stream view from the miniblock bytes

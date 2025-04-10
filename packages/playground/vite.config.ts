@@ -16,9 +16,6 @@ export default ({ mode }: { mode: string }) => {
             'process.env': env,
             'process.browser': true,
         },
-        optimizeDeps: {
-            exclude: ['@connectrpc/connect-node'],
-        },
         plugins: [
             wasm(),
             tsconfigPaths(),

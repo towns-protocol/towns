@@ -71,7 +71,6 @@ export interface IStreamStateView {
     prevSnapshotMiniblockNum: bigint
     miniblockInfo?: { max: bigint; min: bigint; terminusReached: boolean }
     syncCookie?: SyncCookie
-    saveSnapshots?: boolean
     membershipContent: StreamStateView_Members
     get spaceContent(): StreamStateView_Space
     get channelContent(): StreamStateView_Channel
@@ -82,7 +81,6 @@ export interface IStreamStateView {
     get userMetadataContent(): StreamStateView_UserMetadata
     get userInboxContent(): StreamStateView_UserInbox
     get mediaContent(): StreamStateView_Media
-    snapshot(): Snapshot | undefined
     getMembers(): StreamStateView_Members
     getMemberMetadata(): StreamStateView_MemberMetadata
     getChannelMetadata(): StreamStateView_ChannelMetadata | undefined
@@ -103,12 +101,6 @@ export class StreamStateView implements IStreamStateView {
     prevSnapshotMiniblockNum: bigint
     miniblockInfo?: { max: bigint; min: bigint; terminusReached: boolean }
     syncCookie?: SyncCookie
-    saveSnapshots?: boolean
-    private _snapshot?: Snapshot
-    snapshot(): Snapshot | undefined {
-        check(this.saveSnapshots === true, 'snapshots are not enabled')
-        return this._snapshot
-    }
     // membership content
     membershipContent: StreamStateView_Members
 
@@ -368,9 +360,6 @@ export class StreamStateView implements IStreamStateView {
                         `Miniblock number out of order ${payload.value.miniblockNum} > ${this.miniblockInfo?.max}`,
                         Err.STREAM_BAD_EVENT,
                     )
-                    if (this.saveSnapshots && payload.value.snapshot) {
-                        this._snapshot = payload.value.snapshot
-                    }
                     this.prevMiniblockHash = event.hash
                     this.updateMiniblockInfo(payload.value, { max: payload.value.miniblockNum })
                     timelineEvent.confirmedEventNum =
