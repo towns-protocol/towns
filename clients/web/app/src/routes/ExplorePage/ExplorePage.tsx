@@ -5,6 +5,7 @@ import { useMobile } from 'hooks/useMobile'
 import { env } from 'utils/environment'
 import { Analytics } from 'hooks/useAnalytics'
 import { Panel } from '@components/Panel/Panel'
+import { useContainerWidth } from 'ui/hooks/useContainerWidth'
 import { ExploreCard } from './ExploreCard'
 import { PublicExploreLayout } from './PublicExploreLayout'
 
@@ -22,6 +23,8 @@ const ExplorePageContent = () => {
     console.log({ exploreTowns, bannedTowns, filteredExploreTowns })
     const isMobile = useMobile()
     const { isAuthenticated } = useConnectivity()
+    const { ref: containerRef, width: containerWidth } = useContainerWidth()
+    const isNarrow = containerWidth > 0 && containerWidth < 1280
 
     useEffect(() => {
         Analytics.getInstance().page('home-page', 'explore page', {
@@ -44,16 +47,16 @@ const ExplorePageContent = () => {
                     </Heading>
                 </Box>
             )}
-            <Stack gap="lg">
+            <Stack gap="lg" ref={containerRef}>
                 {!isMobile && (
-                    <Grid autoFit columnMinSize="400px">
+                    <Grid autoFit columns={isNarrow ? 1 : 2} columnMinSize="400px">
                         {filteredExploreTowns.slice(0, 2).map((town, index) => (
                             <ExploreCard key={town} address={town} variant="big" />
                         ))}
                     </Grid>
                 )}
 
-                <Grid columns={isMobile ? 1 : 3}>
+                <Grid columns={isMobile ? 1 : isNarrow ? 2 : 3}>
                     {smallCardTowns.map((town) => (
                         <ExploreCard key={town} address={town} variant="small" />
                     ))}
