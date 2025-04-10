@@ -368,8 +368,8 @@ export class StreamStateView implements IStreamStateView {
                         `Miniblock number out of order ${payload.value.miniblockNum} > ${this.miniblockInfo?.max}`,
                         Err.STREAM_BAD_EVENT,
                     )
-                    if (this.saveSnapshots && payload.value.snapshot) {
-                        this._snapshot = payload.value.snapshot
+                    if (this.saveSnapshots && payload.value.snapshotDeprecated) {
+                        this._snapshot = payload.value.snapshotDeprecated
                     }
                     this.prevMiniblockHash = event.hash
                     this.updateMiniblockInfo(payload.value, { max: payload.value.miniblockNum })
