@@ -2,34 +2,39 @@
 pragma solidity ^0.8.23;
 
 //interfaces
+import {IDiamond} from "@towns-protocol/diamond/src/IDiamond.sol";
 
 //libraries
 
 //contracts
-
-import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
-import {Deployer} from "scripts/common/Deployer.s.sol";
+import {DeployLib} from "@towns-protocol/diamond/scripts/common/DeployLib.sol";
 import {AttestationRegistry} from "src/attest/AttestationRegistry.sol";
 
-contract DeployAttestationRegistry is FacetHelper, Deployer {
-    constructor() {
-        addSelector(AttestationRegistry.attest.selector);
-        addSelector(AttestationRegistry.revoke.selector);
-        addSelector(AttestationRegistry.getAttestation.selector);
+library DeployAttestationRegistry {
+    function selectors() internal pure returns (bytes4[] memory _selectors) {
+        _selectors = new bytes4[](3);
+        _selectors[0] = AttestationRegistry.attest.selector;
+        _selectors[1] = AttestationRegistry.revoke.selector;
+        _selectors[2] = AttestationRegistry.getAttestation.selector;
     }
 
-    function initializer() public pure override returns (bytes4) {
-        return AttestationRegistry.__AttestationRegistry_init.selector;
+    function makeCut(
+        address facetAddress,
+        IDiamond.FacetCutAction action
+    ) internal pure returns (IDiamond.FacetCut memory) {
+        return
+            IDiamond.FacetCut({
+                action: action,
+                facetAddress: facetAddress,
+                functionSelectors: selectors()
+            });
     }
 
-    function versionName() public pure override returns (string memory) {
-        return "facets/attestationRegistryFacet";
+    function makeInitData() internal pure returns (bytes memory) {
+        return abi.encodeCall(AttestationRegistry.__AttestationRegistry_init, ());
     }
 
-    function __deploy(address deployer) internal override returns (address) {
-        vm.startBroadcast(deployer);
-        AttestationRegistry attestationRegistry = new AttestationRegistry();
-        vm.stopBroadcast();
-        return address(attestationRegistry);
+    function deploy() internal returns (address) {
+        return DeployLib.deployCode("AttestationRegistry.sol", "");
     }
 }

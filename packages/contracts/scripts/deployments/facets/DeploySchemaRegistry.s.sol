@@ -2,33 +2,38 @@
 pragma solidity ^0.8.23;
 
 //interfaces
+import {IDiamond} from "@towns-protocol/diamond/src/IDiamond.sol";
 
 //libraries
 
 //contracts
-
-import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
-import {Deployer} from "scripts/common/Deployer.s.sol";
+import {DeployLib} from "@towns-protocol/diamond/scripts/common/DeployLib.sol";
 import {SchemaRegistry} from "src/attest/SchemaRegistry.sol";
 
-contract DeploySchemaRegistry is FacetHelper, Deployer {
-    constructor() {
-        addSelector(SchemaRegistry.register.selector);
-        addSelector(SchemaRegistry.getSchema.selector);
+library DeploySchemaRegistry {
+    function selectors() internal pure returns (bytes4[] memory _selectors) {
+        _selectors = new bytes4[](2);
+        _selectors[0] = SchemaRegistry.register.selector;
+        _selectors[1] = SchemaRegistry.getSchema.selector;
     }
 
-    function initializer() public pure override returns (bytes4) {
-        return SchemaRegistry.__SchemaRegistry_init.selector;
+    function makeCut(
+        address facetAddress,
+        IDiamond.FacetCutAction action
+    ) internal pure returns (IDiamond.FacetCut memory) {
+        return
+            IDiamond.FacetCut({
+                action: action,
+                facetAddress: facetAddress,
+                functionSelectors: selectors()
+            });
     }
 
-    function versionName() public pure override returns (string memory) {
-        return "facets/schemaRegistryFacet";
+    function makeInitData() internal pure returns (bytes memory) {
+        return abi.encodeCall(SchemaRegistry.__SchemaRegistry_init, ());
     }
 
-    function __deploy(address deployer) internal override returns (address) {
-        vm.startBroadcast(deployer);
-        SchemaRegistry schemaRegistry = new SchemaRegistry();
-        vm.stopBroadcast();
-        return address(schemaRegistry);
+    function deploy() internal returns (address) {
+        return DeployLib.deployCode("SchemaRegistry.sol", "");
     }
 }

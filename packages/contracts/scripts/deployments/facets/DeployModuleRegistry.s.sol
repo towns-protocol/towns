@@ -2,40 +2,45 @@
 pragma solidity ^0.8.23;
 
 //interfaces
+import {IDiamond} from "@towns-protocol/diamond/src/IDiamond.sol";
 
 //libraries
 
 //contracts
-
-import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
-import {Deployer} from "scripts/common/Deployer.s.sol";
+import {DeployLib} from "@towns-protocol/diamond/scripts/common/DeployLib.sol";
 import {ModuleRegistry} from "src/attest/ModuleRegistry.sol";
 
-contract DeployModuleRegistry is FacetHelper, Deployer {
-    constructor() {
-        addSelector(ModuleRegistry.getModuleSchema.selector);
-        addSelector(ModuleRegistry.getModuleSchemaId.selector);
-        addSelector(ModuleRegistry.getModuleVersion.selector);
-        addSelector(ModuleRegistry.getModuleClients.selector);
-        addSelector(ModuleRegistry.registerModule.selector);
-        addSelector(ModuleRegistry.updateModulePermissions.selector);
-        addSelector(ModuleRegistry.revokeModule.selector);
-        addSelector(ModuleRegistry.adminRegisterModuleSchema.selector);
-        addSelector(ModuleRegistry.adminBanModule.selector);
+library DeployModuleRegistry {
+    function selectors() internal pure returns (bytes4[] memory _selectors) {
+        _selectors = new bytes4[](9);
+        _selectors[0] = ModuleRegistry.getModuleSchema.selector;
+        _selectors[1] = ModuleRegistry.getModuleSchemaId.selector;
+        _selectors[2] = ModuleRegistry.getModuleVersion.selector;
+        _selectors[3] = ModuleRegistry.getModuleClients.selector;
+        _selectors[4] = ModuleRegistry.registerModule.selector;
+        _selectors[5] = ModuleRegistry.updateModulePermissions.selector;
+        _selectors[6] = ModuleRegistry.revokeModule.selector;
+        _selectors[7] = ModuleRegistry.adminRegisterModuleSchema.selector;
+        _selectors[8] = ModuleRegistry.adminBanModule.selector;
     }
 
-    function initializer() public pure override returns (bytes4) {
-        return ModuleRegistry.__ModuleRegistry_init.selector;
+    function makeCut(
+        address facetAddress,
+        IDiamond.FacetCutAction action
+    ) internal pure returns (IDiamond.FacetCut memory) {
+        return
+            IDiamond.FacetCut({
+                action: action,
+                facetAddress: facetAddress,
+                functionSelectors: selectors()
+            });
     }
 
-    function versionName() public pure override returns (string memory) {
-        return "facets/moduleRegistryFacet";
+    function makeInitData() internal pure returns (bytes memory) {
+        return abi.encodeCall(ModuleRegistry.__ModuleRegistry_init, ());
     }
 
-    function __deploy(address deployer) internal override returns (address) {
-        vm.startBroadcast(deployer);
-        ModuleRegistry moduleRegistry = new ModuleRegistry();
-        vm.stopBroadcast();
-        return address(moduleRegistry);
+    function deploy() internal returns (address) {
+        return DeployLib.deployCode("ModuleRegistry.sol", "");
     }
 }

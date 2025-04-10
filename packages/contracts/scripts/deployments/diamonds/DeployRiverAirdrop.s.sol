@@ -1,37 +1,34 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.19;
 
-//interfaces
+// interfaces
 import {IDiamond} from "@towns-protocol/diamond/src/IDiamond.sol";
+import {IDiamondInitHelper} from "./IDiamondInitHelper.sol";
 
-//libraries
+// libraries
+import {DeployDiamondCut} from "@towns-protocol/diamond/scripts/deployments/facets/DeployDiamondCut.s.sol";
+import {DeployDiamondLoupe} from "@towns-protocol/diamond/scripts/deployments/facets/DeployDiamondLoupe.s.sol";
+import {DeployIntrospection} from "@towns-protocol/diamond/scripts/deployments/facets/DeployIntrospection.s.sol";
+import {DeployOwnable} from "@towns-protocol/diamond/scripts/deployments/facets/DeployOwnable.s.sol";
 
-//contracts
+// contracts
 import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
 import {Diamond} from "@towns-protocol/diamond/src/Diamond.sol";
-import {Deployer} from "scripts/common/Deployer.s.sol";
-import {DiamondHelper} from "test/diamond/Diamond.t.sol";
+import {MultiInit} from "@towns-protocol/diamond/src/initializers/MultiInit.sol";
+import {DiamondHelper} from "@towns-protocol/diamond/scripts/common/helpers/DiamondHelper.s.sol";
 
 // deployers
-import {MultiInit} from "@towns-protocol/diamond/src/initializers/MultiInit.sol";
-import {DeployDiamondCut} from "scripts/deployments/facets/DeployDiamondCut.s.sol";
-import {DeployDiamondLoupe} from "scripts/deployments/facets/DeployDiamondLoupe.s.sol";
+import {DeployFacet} from "../../common/DeployFacet.s.sol";
+import {Deployer} from "../../common/Deployer.s.sol";
 import {DeployDropFacet} from "scripts/deployments/facets/DeployDropFacet.s.sol";
-import {DeployIntrospection} from "scripts/deployments/facets/DeployIntrospection.s.sol";
 import {DeployMetadata} from "scripts/deployments/facets/DeployMetadata.s.sol";
-import {DeployOwnable} from "scripts/deployments/facets/DeployOwnable.s.sol";
 import {DeployTownsPoints} from "scripts/deployments/facets/DeployTownsPoints.s.sol";
-import {DeployMultiInit} from "scripts/deployments/utils/DeployMultiInit.s.sol";
 
-contract DeployRiverAirdrop is DiamondHelper, Deployer {
+contract DeployRiverAirdrop is IDiamondInitHelper, DiamondHelper, Deployer {
     address internal BASE_REGISTRY = address(0);
     address internal SPACE_FACTORY = address(0);
 
-    DeployMultiInit deployMultiInit = new DeployMultiInit();
-    DeployDiamondCut diamondCutHelper = new DeployDiamondCut();
-    DeployDiamondLoupe diamondLoupeHelper = new DeployDiamondLoupe();
-    DeployIntrospection introspectionHelper = new DeployIntrospection();
-    DeployOwnable ownableHelper = new DeployOwnable();
+    DeployFacet private facetHelper = new DeployFacet();
     DeployDropFacet dropHelper = new DeployDropFacet();
     DeployTownsPoints pointsHelper = new DeployTownsPoints();
     DeployMetadata metadataHelper = new DeployMetadata();
@@ -83,31 +80,31 @@ contract DeployRiverAirdrop is DiamondHelper, Deployer {
     }
 
     function addImmutableCuts(address deployer) internal {
-        multiInit = deployMultiInit.deploy(deployer);
-        diamondCut = diamondCutHelper.deploy(deployer);
-        diamondLoupe = diamondLoupeHelper.deploy(deployer);
-        introspection = introspectionHelper.deploy(deployer);
-        ownable = ownableHelper.deploy(deployer);
+        multiInit = facetHelper.deploy("MultiInit", deployer);
+        diamondCut = facetHelper.deploy("DiamondCutFacet", deployer);
+        diamondLoupe = facetHelper.deploy("DiamondLoupeFacet", deployer);
+        introspection = facetHelper.deploy("IntrospectionFacet", deployer);
+        ownable = facetHelper.deploy("OwnableFacet", deployer);
 
         addFacet(
-            diamondCutHelper.makeCut(diamondCut, IDiamond.FacetCutAction.Add),
+            DeployDiamondCut.makeCut(diamondCut, IDiamond.FacetCutAction.Add),
             diamondCut,
-            diamondCutHelper.makeInitData("")
+            DeployDiamondCut.makeInitData()
         );
         addFacet(
-            diamondLoupeHelper.makeCut(diamondLoupe, IDiamond.FacetCutAction.Add),
+            DeployDiamondLoupe.makeCut(diamondLoupe, IDiamond.FacetCutAction.Add),
             diamondLoupe,
-            diamondLoupeHelper.makeInitData("")
+            DeployDiamondLoupe.makeInitData()
         );
         addFacet(
-            introspectionHelper.makeCut(introspection, IDiamond.FacetCutAction.Add),
+            DeployIntrospection.makeCut(introspection, IDiamond.FacetCutAction.Add),
             introspection,
-            introspectionHelper.makeInitData("")
+            DeployIntrospection.makeInitData()
         );
         addFacet(
-            ownableHelper.makeCut(ownable, IDiamond.FacetCutAction.Add),
+            DeployOwnable.makeCut(ownable, IDiamond.FacetCutAction.Add),
             ownable,
-            ownableHelper.makeInitData(deployer)
+            DeployOwnable.makeInitData(deployer)
         );
     }
 

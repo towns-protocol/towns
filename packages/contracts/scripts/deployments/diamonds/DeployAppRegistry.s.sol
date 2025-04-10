@@ -12,38 +12,25 @@ import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetH
 import {Diamond} from "@towns-protocol/diamond/src/Diamond.sol";
 import {Deployer} from "scripts/common/Deployer.s.sol";
 
-import {DeployDiamondCut} from "scripts/deployments/facets/DeployDiamondCut.s.sol";
-import {DeployDiamondLoupe} from "scripts/deployments/facets/DeployDiamondLoupe.s.sol";
-import {DeployIntrospection} from "scripts/deployments/facets/DeployIntrospection.s.sol";
-import {DeployOwnable} from "scripts/deployments/facets/DeployOwnable.s.sol";
-import {DiamondHelper} from "test/diamond/Diamond.t.sol";
+import {DeployFacet} from "../../common/DeployFacet.s.sol";
+import {DeployDiamondCut} from "@towns-protocol/diamond/scripts/deployments/facets/DeployDiamondCut.s.sol";
+import {DeployDiamondLoupe} from "@towns-protocol/diamond/scripts/deployments/facets/DeployDiamondLoupe.s.sol";
+import {DeployIntrospection} from "@towns-protocol/diamond/scripts/deployments/facets/DeployIntrospection.s.sol";
+import {DeployOwnable} from "@towns-protocol/diamond/scripts/deployments/facets/DeployOwnable.s.sol";
+import {DiamondHelper} from "@towns-protocol/diamond/scripts/common/helpers/DiamondHelper.s.sol";
 
 // deployers
-import {DeployMultiInit} from "scripts/deployments/utils/DeployMultiInit.s.sol";
 
 // facets
 import {MultiInit} from "@towns-protocol/diamond/src/initializers/MultiInit.sol";
 import {DeployAttestationRegistry} from "scripts/deployments/facets/DeployAttestationRegistry.s.sol";
-
 import {DeployModuleRegistry} from "scripts/deployments/facets/DeployModuleRegistry.s.sol";
 import {DeploySchemaRegistry} from "scripts/deployments/facets/DeploySchemaRegistry.s.sol";
 
 contract DeployAppRegistry is DiamondHelper, Deployer {
-    DeployDiamondCut internal cutHelper = new DeployDiamondCut();
-    DeployDiamondLoupe internal loupeHelper = new DeployDiamondLoupe();
-    DeployIntrospection internal introspectionHelper = new DeployIntrospection();
-    DeployOwnable internal ownableHelper = new DeployOwnable();
-
-    // facets
-    DeploySchemaRegistry deploySchemaRegistry = new DeploySchemaRegistry();
-    DeployAttestationRegistry deployAttestationRegistry = new DeployAttestationRegistry();
-    DeployModuleRegistry deployModuleRegistry = new DeployModuleRegistry();
-
-    // deployer
-    DeployMultiInit deployMultiInit = new DeployMultiInit();
+    DeployFacet private facetHelper = new DeployFacet();
 
     address internal multiInit;
-
     address internal diamondCut;
     address internal diamondLoupe;
     address internal introspection;
@@ -57,52 +44,53 @@ contract DeployAppRegistry is DiamondHelper, Deployer {
     }
 
     function addImmutableCuts(address deployer) internal {
-        multiInit = deployMultiInit.deploy(deployer);
-        diamondCut = cutHelper.deploy(deployer);
-        diamondLoupe = loupeHelper.deploy(deployer);
-        introspection = introspectionHelper.deploy(deployer);
-        ownable = ownableHelper.deploy(deployer);
+        multiInit = facetHelper.deploy("MultiInit", deployer);
+        diamondCut = facetHelper.deploy("DiamondCutFacet", deployer);
+        diamondLoupe = facetHelper.deploy("DiamondLoupeFacet", deployer);
+        introspection = facetHelper.deploy("IntrospectionFacet", deployer);
+        ownable = facetHelper.deploy("OwnableFacet", deployer);
 
         addFacet(
-            cutHelper.makeCut(diamondCut, IDiamond.FacetCutAction.Add),
+            DeployDiamondCut.makeCut(diamondCut, IDiamond.FacetCutAction.Add),
             diamondCut,
-            cutHelper.makeInitData("")
+            DeployDiamondCut.makeInitData()
         );
         addFacet(
-            loupeHelper.makeCut(diamondLoupe, IDiamond.FacetCutAction.Add),
+            DeployDiamondLoupe.makeCut(diamondLoupe, IDiamond.FacetCutAction.Add),
             diamondLoupe,
-            loupeHelper.makeInitData("")
+            DeployDiamondLoupe.makeInitData()
         );
         addFacet(
-            introspectionHelper.makeCut(introspection, IDiamond.FacetCutAction.Add),
+            DeployIntrospection.makeCut(introspection, IDiamond.FacetCutAction.Add),
             introspection,
-            introspectionHelper.makeInitData("")
+            DeployIntrospection.makeInitData()
         );
         addFacet(
-            ownableHelper.makeCut(ownable, IDiamond.FacetCutAction.Add),
+            DeployOwnable.makeCut(ownable, IDiamond.FacetCutAction.Add),
             ownable,
-            ownableHelper.makeInitData(deployer)
+            DeployOwnable.makeInitData(deployer)
         );
     }
 
     function diamondInitParams(address deployer) public returns (Diamond.InitParams memory) {
-        schemaRegistry = deploySchemaRegistry.deploy(deployer);
-        attestationRegistry = deployAttestationRegistry.deploy(deployer);
-        moduleRegistry = deployModuleRegistry.deploy(deployer);
+        schemaRegistry = facetHelper.deploy("SchemaRegistry", deployer);
+        attestationRegistry = facetHelper.deploy("AttestationRegistry", deployer);
+        moduleRegistry = facetHelper.deploy("ModuleRegistry", deployer);
+
         addFacet(
-            deploySchemaRegistry.makeCut(schemaRegistry, IDiamond.FacetCutAction.Add),
+            DeploySchemaRegistry.makeCut(schemaRegistry, IDiamond.FacetCutAction.Add),
             schemaRegistry,
-            deploySchemaRegistry.makeInitData("")
+            DeploySchemaRegistry.makeInitData()
         );
         addFacet(
-            deployAttestationRegistry.makeCut(attestationRegistry, IDiamond.FacetCutAction.Add),
+            DeployAttestationRegistry.makeCut(attestationRegistry, IDiamond.FacetCutAction.Add),
             attestationRegistry,
-            deployAttestationRegistry.makeInitData("")
+            DeployAttestationRegistry.makeInitData()
         );
         addFacet(
-            deployModuleRegistry.makeCut(moduleRegistry, IDiamond.FacetCutAction.Add),
+            DeployModuleRegistry.makeCut(moduleRegistry, IDiamond.FacetCutAction.Add),
             moduleRegistry,
-            deployModuleRegistry.makeInitData("")
+            DeployModuleRegistry.makeInitData()
         );
 
         return
