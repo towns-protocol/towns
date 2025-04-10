@@ -2,8 +2,8 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {IWalletLinkBase} from "contracts/src/factory/facets/wallet-link/IWalletLink.sol";
-import {WalletLink} from "contracts/src/factory/facets/wallet-link/WalletLink.sol";
+import {IWalletLinkBase} from "src/factory/facets/wallet-link/IWalletLink.sol";
+import {WalletLink} from "src/factory/facets/wallet-link/WalletLink.sol";
 
 // libraries
 import {Vm} from "forge-std/Test.sol";
