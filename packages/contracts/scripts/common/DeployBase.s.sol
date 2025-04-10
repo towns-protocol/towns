@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 import {DeployBase as _DeployBase} from "@towns-protocol/diamond/scripts/common/DeployBase.s.sol";
 
-contract DeployBase is _DeployBase {
+abstract contract DeployBase is _DeployBase {
     constructor() {
         // set up chains
         setChain(
@@ -22,15 +22,5 @@ contract DeployBase is _DeployBase {
                 rpcUrl: "https://devnet.rpc.river.build"
             })
         );
-    }
-
-    /// @dev Override to set the artifact output directory
-    function outDir() internal pure override returns (string memory) {
-        return "out/";
-    }
-
-    /// @dev Override to set the deployment cache path
-    function deploymentCachePath() internal pure override returns (string memory) {
-        return "deployments";
     }
 }
