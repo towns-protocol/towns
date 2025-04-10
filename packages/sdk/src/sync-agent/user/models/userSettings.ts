@@ -17,7 +17,11 @@ export interface UserSettingsModel extends Identifiable {
 
 @persistedObservable({ tableName: 'userSettings' })
 export class UserSettings extends PersistedObservable<UserSettingsModel> {
-    constructor(id: string, store: Store, private riverConnection: RiverConnection) {
+    constructor(
+        id: string,
+        store: Store,
+        private riverConnection: RiverConnection,
+    ) {
         super(
             { id, streamId: makeUserSettingsStreamId(id), initialized: false },
             store,

@@ -32,7 +32,6 @@ const envMainSchema = z.object({
 
 function makeConfig() {
 	// eslint-disable-next-line no-process-env -- this is the only line where we're allowed to use process.env
-
 	const envMain = envMainSchema.parse(process.env)
 	const web3Config = getWeb3Deployment(envMain.RIVER_ENV)
 	const baseUrl = new URL(envMain.RIVER_STREAM_METADATA_BASE_URL)
@@ -42,14 +41,14 @@ function makeConfig() {
 				invalidationConfirmationWait: 30 * 1000,
 				// wait 30 seconds between each invalidation attempt
 				invalidationConfirmationMaxAttempts: 10, // maximum of 10 attempts
-		  }
+			}
 		: undefined
 
 	const openSea = envMain.OPENSEA_API_KEY
 		? {
 				apiKey: envMain.OPENSEA_API_KEY,
 				refreshDelay: 5 * 60 * 1000, // 5 minutes
-		  }
+			}
 		: undefined
 
 	return {
