@@ -1144,12 +1144,13 @@ func runStreamPlaceStatusCmd(cfg *config.Config, args []string) error {
 		close(results)
 	}()
 
-	outputSink, err := os.OpenFile(args[0]+".status", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	outputSink, err := os.OpenFile(args[0]+".status", os.O_TRUNC|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		outputSink = os.Stdout
 	}
-	output := json.NewEncoder(outputSink)
+	defer outputSink.Close()
 
+	output := json.NewEncoder(outputSink)
 	for result := range results {
 		output.Encode(result)
 	}
