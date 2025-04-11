@@ -90,16 +90,12 @@ func (ar *appRegistryServiceTester) RegisterBotService(
 			FallbackKey: testEncryptionDevice.FallbackKey,
 		},
 	)
-	sharedSecret = register(
-		ar.ctx,
-		ar.require,
-		ar.botWallet.Address[:],
-		ar.ownerWallet.Address[:],
-		protocol.ForwardSettingValue_FORWARD_SETTING_ALL_MESSAGES,
+	sharedSecret = ar.RegisterApp(
+		ar.botWallet,
 		ar.ownerWallet,
-		ar.authClient,
-		ar.appRegistryClient,
+		forwardSetting,
 	)
+
 	registerWebhook(
 		ar.ctx,
 		ar.require,
@@ -692,44 +688,28 @@ func TestAppRegistry_RegisterWebhook(t *testing.T) {
 
 	tester.StartBotService()
 	// Create needed streams and add an encryption device to the user metadata stream for the app service.
-	tester.RegisterBotService(protocol.ForwardSettingValue_FORWARD_SETTING_ALL_MESSAGES)
+	appSharedSecret, _ := tester.RegisterBotService(protocol.ForwardSettingValue_FORWARD_SETTING_ALL_MESSAGES)
 	ctx := tester.ctx
 	// Uncomment for logging of app registry service
 	// ctx = logging.CtxWithLog(ctx, logging.DefaultLogger(zapcore.DebugLevel))
 
+	appServer := tester.appServer
+	appWallet := tester.botWallet
+	ownerWallet := tester.ownerWallet
 	unregisteredAppWallet := safeNewWallet(ctx, tester.require)
 	app2Wallet := safeNewWallet(ctx, tester.require)
 
 	tc := tester.NodeClient(0, testClientOpts{})
-	// No user metadata stream for app 2, but yes user inbox stream - registration will
-	// succeed, but webhook registration should fail.
+	// There is no user metadata stream for app 2, but we do create a user inbox stream.
+	// As a result, registration should succeed, but webhook registration should fail.
 	_, _, err := createUserInboxStream(ctx, app2Wallet, tc.client, nil)
 	require.NoError(err)
 
-	app2SharedSecret := register(
-		ctx,
-		tester.require,
-		app2Wallet.Address.Bytes(),
-		tester.ownerWallet.Address.Bytes(),
+	app2SharedSecret := tester.RegisterApp(
+		app2Wallet,
+		ownerWallet,
 		protocol.ForwardSettingValue_FORWARD_SETTING_ALL_MESSAGES,
-		tester.ownerWallet,
-		tester.authClient,
-		tester.appRegistryClient,
 	)
-
-	appServer := app_registry.NewTestAppServer(
-		t,
-		appWallet,
-		tc.client,
-		false,
-	)
-	defer appServer.Close()
-
-	go func() {
-		if err := appServer.Serve(tester.ctx); err != nil {
-			t.Errorf("Error starting app service: %v", err)
-		}
-	}()
 
 	tests := map[string]struct {
 		appId                    []byte
@@ -816,10 +796,10 @@ func TestAppRegistry_RegisterWebhook(t *testing.T) {
 
 			// Unauthenticated requests should fail
 			if tc.authenticatingWallet != nil {
-				authenticateBS(ctx, tester.require, authClient, tc.authenticatingWallet, req)
+				authenticateBS(ctx, require, tester.authClient, tc.authenticatingWallet, req)
 			}
 
-			resp, err := AppRegistryClient.RegisterWebhook(
+			resp, err := tester.appRegistryClient.RegisterWebhook(
 				tester.ctx,
 				req,
 			)
@@ -836,54 +816,18 @@ func TestAppRegistry_RegisterWebhook(t *testing.T) {
 }
 
 func TestAppRegistry_Status(t *testing.T) {
-	tester := newServiceTester(t, serviceTesterOpts{numNodes: 1, start: true, printTestLogs: false})
-	service := initAppRegistryService(tester.ctx, tester)
+	tester := NewAppRegistryServiceTester(t, nil)
 
-	httpClient, _ := testcert.GetHttp2LocalhostTLSClient(tester.ctx, tester.getConfig())
-	serviceAddr := "https://" + service.listener.Addr().String()
-	authClient := protocolconnect.NewAuthenticationServiceClient(
-		httpClient, serviceAddr,
-	)
-	appRegistryClient := protocolconnect.NewAppRegistryServiceClient(
-		httpClient, serviceAddr,
-	)
+	tester.StartBotService()
+	// Create needed streams and add an encryption device to the user metadata stream for the app service.
+	tester.RegisterBotService(protocol.ForwardSettingValue_FORWARD_SETTING_ALL_MESSAGES)
+
+	appServer := tester.appServer
+	appWallet := tester.botWallet
 
 	var unregisteredApp common.Address
 	_, err := rand.Read(unregisteredApp[:])
 	tester.require.NoError(err)
-
-	appWallet := safeNewWallet(tester.ctx, tester.require)
-	ownerWallet := safeNewWallet(tester.ctx, tester.require)
-	safeCreateUserStreams(t, tester.ctx, appWallet, tester.testClient(0), &testEncryptionDevice)
-
-	appServer := app_registry.NewTestAppServer(t, appWallet, tester.testClient(0), false)
-	defer appServer.Close()
-	go func() {
-		if err := appServer.Serve(tester.ctx); err != nil {
-			t.Errorf("Error starting app service: %v", err)
-		}
-	}()
-
-	sharedSecret := register(
-		tester.ctx,
-		tester.require,
-		appWallet.Address[:],
-		ownerWallet.Address[:],
-		protocol.ForwardSettingValue_FORWARD_SETTING_ALL_MESSAGES,
-		ownerWallet,
-		authClient,
-		appRegistryClient,
-	)
-	registerWebhook(
-		tester.ctx,
-		tester.require,
-		appWallet,
-		sharedSecret,
-		testEncryptionDevice,
-		authClient,
-		appRegistryClient,
-		appServer,
-	)
 
 	statusTests := map[string]struct {
 		appId                    []byte
@@ -914,7 +858,7 @@ func TestAppRegistry_Status(t *testing.T) {
 					FallbackKey: tc.expectedFallbackKey,
 				})
 			}
-			status, err := appRegistryClient.GetStatus(
+			status, err := tester.appRegistryClient.GetStatus(
 				tester.ctx,
 				&connect.Request[protocol.GetStatusRequest]{
 					Msg: &protocol.GetStatusRequest{
@@ -924,20 +868,32 @@ func TestAppRegistry_Status(t *testing.T) {
 			)
 			tester.require.NoError(err)
 			tester.require.NotNil(status)
-			tester.require.Equal(tc.expectedIsRegistered, status.Msg.IsRegistered)
 
 			if !tc.expectedIsRegistered {
+				tester.require.EqualExportedValues(
+					status.Msg,
+					&protocol.GetStatusResponse{},
+				)
 				return
 			}
 
-			tester.require.Equal(tc.expectedFrameworkVersion, status.Msg.Status.FrameworkVersion)
-			tester.require.Equal(tc.expectedDeviceKey, status.Msg.Status.DeviceKey)
-			tester.require.Equal(tc.expectedFallbackKey, status.Msg.Status.FallbackKey)
+			tester.require.EqualExportedValues(
+				&protocol.GetStatusResponse{
+					IsRegistered:  true,
+					ValidResponse: true,
+					Status: &protocol.AppServiceResponse_StatusResponse{
+						FrameworkVersion: tc.expectedFrameworkVersion,
+						DeviceKey:        tc.expectedDeviceKey,
+						FallbackKey:      tc.expectedFallbackKey,
+					},
+				},
+				status.Msg,
+			)
 
 			// Validate previous status is cached by changing the framework version of the app
 			// server. The ttl is only 2 seconds, but that should not present a problem here.
 			appServer.SetFrameworkVersion(tc.expectedFrameworkVersion + 100)
-			status, err = appRegistryClient.GetStatus(
+			status, err = tester.appRegistryClient.GetStatus(
 				tester.ctx,
 				&connect.Request[protocol.GetStatusRequest]{
 					Msg: &protocol.GetStatusRequest{
@@ -949,49 +905,43 @@ func TestAppRegistry_Status(t *testing.T) {
 			tester.require.NotNil(status)
 
 			// None of the original status values should have changed
-			tester.require.Equal(tc.expectedFrameworkVersion, status.Msg.Status.FrameworkVersion)
-			tester.require.Equal(tc.expectedDeviceKey, status.Msg.Status.DeviceKey)
-			tester.require.Equal(tc.expectedFallbackKey, status.Msg.Status.FallbackKey)
+			tester.require.EqualExportedValues(
+				&protocol.GetStatusResponse{
+					IsRegistered:  true,
+					ValidResponse: true,
+					Status: &protocol.AppServiceResponse_StatusResponse{
+						FrameworkVersion: tc.expectedFrameworkVersion,
+						DeviceKey:        tc.expectedDeviceKey,
+						FallbackKey:      tc.expectedFallbackKey,
+					},
+				},
+				status.Msg,
+			)
 		})
 	}
 }
 
 func TestAppRegistry_RotateSecret(t *testing.T) {
-	tester := newServiceTester(t, serviceTesterOpts{numNodes: 1, start: true})
-	service := initAppRegistryService(tester.ctx, tester)
+	tester := NewAppRegistryServiceTester(t, nil)
 
-	httpClient, _ := testcert.GetHttp2LocalhostTLSClient(tester.ctx, tester.getConfig())
-	serviceAddr := "https://" + service.listener.Addr().String()
-	authClient := protocolconnect.NewAuthenticationServiceClient(
-		httpClient, serviceAddr,
-	)
-	appRegistryClient := protocolconnect.NewAppRegistryServiceClient(
-		httpClient, serviceAddr,
-	)
-
-	appWallet := safeNewWallet(tester.ctx, tester.require)
-	ownerWallet := safeNewWallet(tester.ctx, tester.require)
+	ownerWallet := tester.ownerWallet
+	appWallet := tester.botWallet
 
 	// Create required streams so that the app can be registered.
 	// The app requires the user inbox stream to exist for successful registration.
-	safeCreateUserStreams(t, tester.ctx, appWallet, tester.testClient(0), &testEncryptionDevice)
-
-	req := &connect.Request[protocol.RegisterRequest]{
-		Msg: &protocol.RegisterRequest{
-			AppId:      appWallet.Address[:],
-			AppOwnerId: ownerWallet.Address[:],
-		},
-	}
-	authenticateBS(tester.ctx, tester.require, authClient, ownerWallet, req)
-	resp, err := appRegistryClient.Register(
+	_ = safeCreateUserStreams(
+		t,
 		tester.ctx,
-		req,
+		appWallet,
+		tester.NodeClient(0, testClientOpts{}).client,
+		&testEncryptionDevice,
 	)
 
-	tester.require.NoError(err)
-	tester.require.NotNil(resp)
-	originalSecret := resp.Msg.GetHs256SharedSecret()
-	tester.require.Len(originalSecret, 32)
+	originalSecret := tester.RegisterApp(
+		appWallet,
+		ownerWallet,
+		protocol.ForwardSettingValue_FORWARD_SETTING_UNSPECIFIED,
+	)
 
 	unregistered := safeNewWallet(tester.ctx, tester.require)
 
@@ -1032,10 +982,10 @@ func TestAppRegistry_RotateSecret(t *testing.T) {
 			}
 
 			if tc.authenticatingWallet != nil {
-				authenticateBS(tester.ctx, tester.require, authClient, tc.authenticatingWallet, req)
+				authenticateBS(tester.ctx, tester.require, tester.authClient, tc.authenticatingWallet, req)
 			}
 
-			resp, err := appRegistryClient.RotateSecret(
+			resp, err := tester.appRegistryClient.RotateSecret(
 				tester.ctx,
 				req,
 			)
@@ -1055,28 +1005,23 @@ func TestAppRegistry_RotateSecret(t *testing.T) {
 }
 
 func TestAppRegistry_Register(t *testing.T) {
-	tester := newServiceTester(t, serviceTesterOpts{numNodes: 1, start: true})
-	service := initAppRegistryService(tester.ctx, tester)
+	tester := NewAppRegistryServiceTester(t, nil)
 
-	httpClient, _ := testcert.GetHttp2LocalhostTLSClient(tester.ctx, tester.getConfig())
-	serviceAddr := "https://" + service.listener.Addr().String()
-	authClient := protocolconnect.NewAuthenticationServiceClient(
-		httpClient, serviceAddr,
-	)
-	appRegistryClient := protocolconnect.NewAppRegistryServiceClient(
-		httpClient, serviceAddr,
-	)
+	ownerWallet := tester.ownerWallet
+	appWallet := tester.botWallet
 
 	var unregisteredApp common.Address
 	_, err := rand.Read(unregisteredApp[:])
 	tester.require.NoError(err)
-
-	appWallet := safeNewWallet(tester.ctx, tester.require)
-	ownerWallet := safeNewWallet(tester.ctx, tester.require)
-
 	// Create required streams so that the app can be registered.
 	// The app requires the user inbox stream to exist for successful registration.
-	safeCreateUserStreams(t, tester.ctx, appWallet, tester.testClient(0), &testEncryptionDevice)
+	safeCreateUserStreams(
+		t,
+		tester.ctx,
+		appWallet,
+		tester.NodeClient(0, testClientOpts{}).client,
+		&testEncryptionDevice,
+	)
 
 	tests := map[string]struct {
 		appId                []byte
@@ -1123,10 +1068,10 @@ func TestAppRegistry_Register(t *testing.T) {
 			}
 
 			if tc.authenticatingWallet != nil {
-				authenticateBS(tester.ctx, tester.require, authClient, tc.authenticatingWallet, req)
+				authenticateBS(tester.ctx, tester.require, tester.authClient, tc.authenticatingWallet, req)
 			}
 
-			resp, err := appRegistryClient.Register(
+			resp, err := tester.appRegistryClient.Register(
 				tester.ctx,
 				req,
 			)
