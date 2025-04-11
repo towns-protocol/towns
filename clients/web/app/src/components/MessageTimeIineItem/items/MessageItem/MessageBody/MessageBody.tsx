@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react'
+import React, { useCallback, useEffect, useMemo } from 'react'
 import { Channel } from 'use-towns-client'
 import { ChannelMessageEvent, EventStatus, TimelineEvent } from '@towns-protocol/sdk'
 import { RichTextPreview as PlateRichTextPreview } from '@components/RichTextPlate/RichTextPreview'

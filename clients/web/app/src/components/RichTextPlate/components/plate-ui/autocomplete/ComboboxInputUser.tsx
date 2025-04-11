@@ -72,12 +72,10 @@ export const ComboboxItemTicker = ({
     item,
     editor,
     trigger,
-    onSelectTicker,
 }: {
     trigger: string
     editor: TPlateEditor<Value>
     item: TComboboxItemWithData<TMentionTicker>
-    onSelectTicker?: (ticker: TMentionTicker) => void
 }) => {
     const getItem = useCallback(
         (_storeProps: CollectionStoreItem) => Object.assign({}, _storeProps, item),
@@ -91,7 +89,6 @@ export const ComboboxItemTicker = ({
             Icon={<TickerIcon item={item.data} />}
             trailingContent={<ComboboxTrailingTickerContent item={item.data} />}
             onClick={() => {
-                onSelectTicker?.(item.data)
                 onMentionSelectTriggerMap(trigger)?.(editor, item, item.text)
             }}
         >
@@ -157,17 +154,7 @@ export const ComboboxItemGeneric = ({
 const EMPTY_ARRAY: TComboboxItemWithData<TUserWithChannel | Channel>[] = []
 
 export const ComboboxInput = withRef<typeof PlateElement, ComboboxInputUserProps>(
-    (
-        {
-            className,
-            getUserMentions,
-            getChannelMentions,
-            getTickerMentions,
-            onSelectTicker,
-            ...props
-        },
-        ref,
-    ) => {
+    ({ className, getUserMentions, getChannelMentions, getTickerMentions, ...props }, ref) => {
         const {
             query: searchQueryStore,
             editor,
@@ -262,7 +249,6 @@ export const ComboboxInput = withRef<typeof PlateElement, ComboboxInputUserProps
                             editor={editor}
                             trigger={trigger.current}
                             item={item as TComboboxItemWithData<TMentionTicker>}
-                            onSelectTicker={onSelectTicker}
                         />
                     )
                 } else {
@@ -276,7 +262,7 @@ export const ComboboxInput = withRef<typeof PlateElement, ComboboxInputUserProps
                     )
                 }
             })
-        }, [filteredItems, editor, onSelectTicker])
+        }, [filteredItems, editor])
 
         return (
             <ComboboxContainer

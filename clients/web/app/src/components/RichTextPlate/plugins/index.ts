@@ -178,7 +178,6 @@ const createTownsEditor = (
                     Component: ComboboxInput,
                     getUserMentions,
                     getChannelMentions,
-                    onSelectTicker: onSelectTicker,
                 }),
                 [ParagraphPlugin.key]: ParagraphElement,
                 [BoldPlugin.key]: withProps(PlateLeaf, { as: 'strong' }),

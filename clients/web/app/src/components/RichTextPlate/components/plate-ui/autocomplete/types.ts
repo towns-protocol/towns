@@ -14,7 +14,6 @@ export type ComboboxInputUserProps = Omit<ComboboxContainerProps, 'searchResults
     getUserMentions: () => TComboboxItemWithData<TUserWithChannel>[]
     getChannelMentions: () => TComboboxItemWithData<Channel>[]
     getTickerMentions: () => TComboboxItemWithData<TMentionTicker>[]
-    onSelectTicker?: (ticker: TMentionTicker) => void
 }
 
 export type ComboboxContainerProps = PlateElementProps<TElement> & {

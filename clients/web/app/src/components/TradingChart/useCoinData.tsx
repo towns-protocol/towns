@@ -74,10 +74,43 @@ export const useCoinData = ({
     chain: string
     disabled?: boolean
 }) => {
-    const query = useMemo(() => {
-        const networkId = chain === 'solana-mainnet' ? 1399811149 : Number(chain)
-        const remappedAddress = remapAddressToCodexFormat(networkId, address)
-        return `
+    const { data, isLoading, isError, error } = useQuery({
+        queryKey: ['searchTokens', address, chain],
+        queryFn: () => fetchCoinData(address, chain),
+        staleTime: MINUTE_MS,
+        enabled: !disabled,
+    })
+
+    return {
+        data: data as GetCoinDataResponse | undefined,
+        isLoading,
+        isError,
+        error,
+    }
+}
+
+export const fetchCoinData = async (address: string, chain: string) => {
+    const query = getCoinDataQuery(address, chain)
+    const apiKey = env.VITE_CODEX_API_KEY
+    if (!apiKey) {
+        console.error('VITE_CODEX_API_KEY missing')
+        return undefined
+    }
+    const url = 'https://graph.defined.fi/graphql'
+    const resp = await fetch(url, {
+        method: 'POST',
+        headers: { Authorization: `${apiKey}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: query }),
+    })
+    const json = await resp.json()
+    const parsed = zParsedTokenResponse.safeParse(json)
+    return parsed.data?.data.filterTokens.results[0]
+}
+
+const getCoinDataQuery = (address: string, chain: string) => {
+    const networkId = chain === 'solana-mainnet' ? 1399811149 : Number(chain)
+    const remappedAddress = remapAddressToCodexFormat(networkId, address)
+    return `
      {
         filterTokens(
             filters: {}
@@ -107,34 +140,4 @@ export const useCoinData = ({
         }
     }
     `
-    }, [address, chain])
-
-    const { data, isLoading, isError, error } = useQuery({
-        queryKey: ['searchTokens', address, chain],
-        queryFn: async () => {
-            const apiKey = env.VITE_CODEX_API_KEY
-            if (!apiKey) {
-                console.error('VITE_CODEX_API_KEY missing')
-                return undefined
-            }
-            const url = 'https://graph.defined.fi/graphql'
-            const resp = await fetch(url, {
-                method: 'POST',
-                headers: { Authorization: `${apiKey}`, 'Content-Type': 'application/json' },
-                body: JSON.stringify({ query: query }),
-            })
-            const json = await resp.json()
-            const parsed = zParsedTokenResponse.safeParse(json)
-            return parsed.data?.data.filterTokens.results[0]
-        },
-        staleTime: MINUTE_MS,
-        enabled: !disabled,
-    })
-
-    return {
-        data: data as GetCoinDataResponse | undefined,
-        isLoading,
-        isError,
-        error,
-    }
 }
