@@ -31,6 +31,9 @@ fs_permissions = [
 gas_reports = ["*"] # The contracts to print gas reports for.
 no_match_contract = "Fork"
 
+[profile.ci]
+  fuzz = { runs = 4_096 }
+
 [rpc_endpoints]
 mainnet = "${MAINNET_RPC_URL}"
 base = "${BASE_RPC_URL}"
