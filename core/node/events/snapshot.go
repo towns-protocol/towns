@@ -806,11 +806,20 @@ func findSorted[T any, K any](elements []*T, key K, cmp func(K, K) int, keyFn fu
 }
 
 func insertSorted[T any, K any](elements []*T, element *T, cmp func(K, K) int, keyFn func(*T) K) []*T {
+	length := len(elements)
+	if length == 0 {
+		elements = append(elements, element)
+		return elements
+	}
 	index, found := slices.BinarySearchFunc(elements, keyFn(element), func(a *T, b K) int {
 		return cmp(keyFn(a), b)
 	})
 	if found {
 		elements[index] = element
+		return elements
+	}
+	if index == length {
+		elements = append(elements, element)
 		return elements
 	}
 	elements = append(elements, nil)
