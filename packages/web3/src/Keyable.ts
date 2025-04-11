@@ -26,6 +26,18 @@ export class OwnerOfTokenRequest implements Keyable {
     }
 }
 
+export class IsTokenBanned implements Keyable {
+    spaceId: string
+    tokenId: ethers.BigNumber
+    constructor(spaceId: string, tokenId: ethers.BigNumber) {
+        this.spaceId = spaceId
+        this.tokenId = tokenId
+    }
+    toKey(): string {
+        return `isBanned:${this.spaceId}:${this.tokenId.toString()}`
+    }
+}
+
 export class EntitlementRequest implements Keyable {
     spaceId: string
     channelId: string
