@@ -30,14 +30,11 @@ interface IModuleRegistry {
     /// @param module The module address to register
     /// @param owner The owner address that can update/revoke the module
     /// @param clients The list of client contract addresses that will use this module
-    /// @param permissions The list of permission IDs granted to this module
     /// @return The attestation UID of the registered module
     function registerModule(
         address module,
         address owner,
-        address[] calldata clients,
-        bytes32[] calldata permissions,
-        ExecutionManifest calldata manifest
+        address[] calldata clients
     ) external returns (bytes32);
 
     /// @notice Update the permissions for an existing module

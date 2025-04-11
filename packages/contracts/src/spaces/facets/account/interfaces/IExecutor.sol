@@ -13,9 +13,7 @@ interface IExecutor {
         bytes32 groupId,
         address account,
         uint32 delay
-    )
-        external
-        returns (bool newMember);
+    ) external returns (bool newMember);
 
     /**
      * @notice Checks if an account has access to a group
@@ -27,10 +25,7 @@ interface IExecutor {
     function hasAccess(
         bytes32 groupId,
         address account
-    )
-        external
-        view
-        returns (bool isMember, uint32 executionDelay);
+    ) external view returns (bool isMember, uint32 executionDelay);
 
     /**
      * @notice Gets the access information for an account in a group
@@ -44,10 +39,7 @@ interface IExecutor {
     function getAccess(
         bytes32 groupId,
         address account
-    )
-        external
-        view
-        returns (uint48 since, uint32 currentDelay, uint32 pendingDelay, uint48 effect);
+    ) external view returns (uint48 since, uint32 currentDelay, uint32 pendingDelay, uint48 effect);
 
     /**
      * @notice Revokes access to a group for an account
@@ -118,10 +110,7 @@ interface IExecutor {
         address target,
         bytes calldata data,
         uint48 when
-    )
-        external
-        payable
-        returns (bytes32 operationId, uint32 nonce);
+    ) external payable returns (bytes32 operationId, uint32 nonce);
 
     /**
      * @notice Hashes an operation
@@ -134,10 +123,7 @@ interface IExecutor {
         address caller,
         address target,
         bytes calldata data
-    )
-        external
-        pure
-        returns (bytes32);
+    ) external pure returns (bytes32);
 
     /**
      * @notice Executes an operation immediately or after delay
@@ -150,10 +136,7 @@ interface IExecutor {
         address target,
         uint256 value,
         bytes calldata data
-    )
-        external
-        payable
-        returns (uint32 nonce);
+    ) external payable returns (uint32 nonce);
 
     /**
      * @notice Cancels a scheduled operation
@@ -166,7 +149,5 @@ interface IExecutor {
         address caller,
         address target,
         bytes calldata data
-    )
-        external
-        returns (uint32 nonce);
+    ) external returns (uint32 nonce);
 }

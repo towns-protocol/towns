@@ -43,10 +43,7 @@ library ExecutorLib {
         address account,
         uint32 grantDelay,
         uint32 executionDelay
-    )
-        internal
-        returns (bool newMember)
-    {
+    ) internal returns (bool newMember) {
         ExecutorTypes.Group storage group = ExecutorStorage.getLayout().groups[groupId];
 
         newMember = group.members[account].lastAccess == 0;
@@ -54,23 +51,32 @@ library ExecutorLib {
 
         if (newMember) {
             lastAccess = Time.timestamp() + grantDelay;
-            group.members[account] =
-                ExecutorTypes.Access({lastAccess: lastAccess, delay: executionDelay.toDelay()});
+            group.members[account] = ExecutorTypes.Access({
+                lastAccess: lastAccess,
+                delay: executionDelay.toDelay()
+            });
         } else {
             // just update the access delay
-            (group.members[account].delay, lastAccess) =
-                group.members[account].delay.withUpdate(executionDelay, 0);
+            (group.members[account].delay, lastAccess) = group.members[account].delay.withUpdate(
+                executionDelay,
+                0
+            );
         }
 
         emit ExecutorTypes.GroupAccessGranted(
-            groupId, account, executionDelay, lastAccess, newMember
+            groupId,
+            account,
+            executionDelay,
+            lastAccess,
+            newMember
         );
         return newMember;
     }
 
     function revokeGroupAccess(bytes32 groupId, address account) internal returns (bool revoked) {
-        ExecutorTypes.Access storage access =
-            ExecutorStorage.getLayout().groups[groupId].members[account];
+        ExecutorTypes.Access storage access = ExecutorStorage.getLayout().groups[groupId].members[
+            account
+        ];
 
         if (access.lastAccess == 0) {
             return false;
@@ -107,20 +113,19 @@ library ExecutorLib {
         }
 
         uint48 effect;
-        (ExecutorStorage.getLayout().groups[groupId].grantDelay, effect) = ExecutorStorage.getLayout(
-        ).groups[groupId].grantDelay.withUpdate(grantDelay, minSetback);
+        (ExecutorStorage.getLayout().groups[groupId].grantDelay, effect) = ExecutorStorage
+            .getLayout()
+            .groups[groupId]
+            .grantDelay
+            .withUpdate(grantDelay, minSetback);
         emit ExecutorTypes.GroupGrantDelaySet(groupId, grantDelay);
     }
 
     function hasGroupAccess(
         bytes32 groupId,
         address account
-    )
-        internal
-        view
-        returns (bool isMember, uint32 executionDelay)
-    {
-        (uint48 hasRoleSince, uint32 currentDelay,,) = getAccess(groupId, account);
+    ) internal view returns (bool isMember, uint32 executionDelay) {
+        (uint48 hasRoleSince, uint32 currentDelay, , ) = getAccess(groupId, account);
         return (hasRoleSince != 0 && hasRoleSince <= Time.timestamp(), currentDelay);
     }
 
@@ -135,8 +140,9 @@ library ExecutorLib {
         view
         returns (uint48 since, uint32 currentDelay, uint32 pendingDelay, uint48 effect)
     {
-        ExecutorTypes.Access storage access =
-            ExecutorStorage.getLayout().groups[groupId].members[account];
+        ExecutorTypes.Access storage access = ExecutorStorage.getLayout().groups[groupId].members[
+            account
+        ];
         since = access.lastAccess;
         (currentDelay, pendingDelay, effect) = access.delay.getFull();
         return (since, currentDelay, pendingDelay, effect);
@@ -163,11 +169,7 @@ library ExecutorLib {
     function getTargetFunctionGroupId(
         address target,
         bytes4 selector
-    )
-        internal
-        view
-        returns (bytes32)
-    {
+    ) internal view returns (bytes32) {
         return ExecutorStorage.getLayout().targets[target].allowedGroups[selector];
     }
 
@@ -178,11 +180,7 @@ library ExecutorLib {
     function isTargetFunctionDisabled(
         address target,
         bytes4 selector
-    )
-        internal
-        view
-        returns (bool)
-    {
+    ) internal view returns (bool) {
         return ExecutorStorage.getLayout().targets[target].disabledFunctions[selector];
     }
 
@@ -193,10 +191,7 @@ library ExecutorLib {
         address target,
         bytes calldata data,
         uint48 when
-    )
-        internal
-        returns (bytes32 operationId, uint32 nonce)
-    {
+    ) internal returns (bytes32 operationId, uint32 nonce) {
         address caller = msg.sender;
 
         // Fetch restrictions that apply to the caller on the targeted function
@@ -221,8 +216,10 @@ library ExecutorLib {
             nonce = ExecutorStorage.getLayout().schedules[operationId].nonce + 1;
         }
 
-        ExecutorStorage.getLayout().schedules[operationId] =
-            ExecutorTypes.Schedule({timepoint: when, nonce: nonce});
+        ExecutorStorage.getLayout().schedules[operationId] = ExecutorTypes.Schedule({
+            timepoint: when,
+            nonce: nonce
+        });
         emit ExecutorTypes.OperationScheduled(operationId, when, nonce);
     }
 
@@ -244,20 +241,13 @@ library ExecutorLib {
         }
 
         delete ExecutorStorage.getLayout().schedules[operationId].timepoint; // reset the timepoint,
-            // keep the nonce
+        // keep the nonce
         emit ExecutorTypes.OperationExecuted(operationId, nonce);
 
         return nonce;
     }
 
-    function execute(
-        address target,
-        uint256 value,
-        bytes calldata data
-    )
-        internal
-        returns (uint32)
-    {
+    function execute(address target, uint256 value, bytes calldata data) internal returns (uint32) {
         address caller = msg.sender;
         bytes4 selector = checkSelector(data);
 
@@ -296,20 +286,15 @@ library ExecutorLib {
         return nonce;
     }
 
-    function cancel(
-        address caller,
-        address target,
-        bytes calldata data
-    )
-        internal
-        returns (uint32)
-    {
+    function cancel(address caller, address target, bytes calldata data) internal returns (uint32) {
         address sender = msg.sender;
         bytes4 selector = checkSelector(data);
 
         bytes32 operationId = hashOperation(caller, target, data);
 
-        ExecutorTypes.Schedule storage schedule = ExecutorStorage.getLayout().schedules[operationId];
+        ExecutorTypes.Schedule storage schedule = ExecutorStorage.getLayout().schedules[
+            operationId
+        ];
 
         // If the operation is not scheduled, revert
         if (schedule.timepoint == 0) {
@@ -317,8 +302,10 @@ library ExecutorLib {
         } else if (caller != sender) {
             // calls can only be canceled by the account that scheduled them, a global admin, or by
             // a guardian of the required role.
-            (bool isGuardian,) =
-                hasGroupAccess(getGroupGuardian(getTargetFunctionGroupId(target, selector)), sender);
+            (bool isGuardian, ) = hasGroupAccess(
+                getGroupGuardian(getTargetFunctionGroupId(target, selector)),
+                sender
+            );
             bool isOwner = OwnableStorage.layout().owner == sender;
             if (!isGuardian && !isOwner) {
                 revert ExecutorTypes.UnauthorizedCancel(sender, caller, target, selector);
@@ -326,7 +313,7 @@ library ExecutorLib {
         }
 
         delete schedule.timepoint; // reset the timepoint,
-            // keep the nonce
+        // keep the nonce
         uint32 nonce = schedule.nonce;
         emit ExecutorTypes.OperationCanceled(operationId, nonce);
 
@@ -337,11 +324,7 @@ library ExecutorLib {
         address caller,
         address target,
         bytes4 selector
-    )
-        internal
-        view
-        returns (bool immediate, uint32 delay)
-    {
+    ) internal view returns (bool immediate, uint32 delay) {
         if (isTargetDisabled(target)) {
             return (false, 0);
         } else if (isTargetFunctionDisabled(target, selector)) {
@@ -366,11 +349,7 @@ library ExecutorLib {
         address caller,
         address target,
         bytes calldata data
-    )
-        internal
-        pure
-        returns (bytes32)
-    {
+    ) internal pure returns (bytes32) {
         return keccak256(abi.encode(caller, target, data));
     }
 
@@ -386,11 +365,7 @@ library ExecutorLib {
         address caller,
         address target,
         bytes calldata data
-    )
-        private
-        view
-        returns (bool allowed, uint32 delay)
-    {
+    ) private view returns (bool allowed, uint32 delay) {
         if (target == address(this)) {
             return canCallSelf(caller, data);
         } else {
@@ -401,11 +376,7 @@ library ExecutorLib {
     function canCallSelf(
         address caller,
         bytes calldata data
-    )
-        internal
-        view
-        returns (bool immediate, uint32 delay)
-    {
+    ) internal view returns (bool immediate, uint32 delay) {
         if (data.length < 4) {
             return (false, 0);
         }

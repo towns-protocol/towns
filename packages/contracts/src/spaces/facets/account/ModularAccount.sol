@@ -7,18 +7,18 @@ import {IERC6900Account} from "@erc6900/reference-implementation/interfaces/IERC
 import {ExecutionManifest, ManifestExecutionFunction, ManifestExecutionHook} from "@erc6900/reference-implementation/interfaces/IERC6900ExecutionModule.sol";
 import {IERC6900Module} from "@erc6900/reference-implementation/interfaces/IERC6900Module.sol";
 import {IImplementationRegistry} from "src/factory/facets/registry/IImplementationRegistry.sol";
-
+import {IModuleRegistry} from "src/attest/interfaces/IModuleRegistry.sol";
+import {ITownsModule} from "src/attest/interfaces/ITownsModule.sol";
 // libraries
 import {ExecutorLib} from "./libraries/ExecutorLib.sol";
 import {ExecutorTypes} from "./libraries/ExecutorTypes.sol";
 import {HookLib} from "./libraries/HookLib.sol";
 import {DiamondLoupeBase} from "@towns-protocol/diamond/src/facets/loupe/DiamondLoupeBase.sol";
-
+import {DependencyLib} from "../DependencyLib.sol";
 import {CustomRevert} from "src/utils/libraries/CustomRevert.sol";
 import {LibCall} from "solady/utils/LibCall.sol";
 
 // contracts
-
 import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
 import {TokenOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/token/TokenOwnableBase.sol";
 import {MembershipStorage} from "src/spaces/facets/membership/MembershipStorage.sol";
@@ -105,9 +105,10 @@ contract ModularAccount is TokenOwnableBase, Facet {
         bytes calldata moduleInstallData
     ) external onlyOwner {
         _checkAuthorized(module);
+        ExecutionManifest memory moduleManifest = _checkManifest(module, manifest);
 
         // we will change this to be the attestation uid from our attestation contract
-        bytes32 moduleGroupId = keccak256(abi.encode(MODULE_GROUP_ID, module));
+        bytes32 moduleGroupId = _getModule(module);
 
         // Grant access to the module for this group
         ExecutorLib.grantGroupAccess(
@@ -118,9 +119,9 @@ contract ModularAccount is TokenOwnableBase, Facet {
         );
 
         // Set up execution functions with the same module groupId
-        uint256 executionFunctionsLength = manifest.executionFunctions.length;
+        uint256 executionFunctionsLength = moduleManifest.executionFunctions.length;
         for (uint256 i; i < executionFunctionsLength; ++i) {
-            ManifestExecutionFunction memory func = manifest.executionFunctions[i];
+            ManifestExecutionFunction memory func = moduleManifest.executionFunctions[i];
             ExecutorLib.setTargetFunctionGroup(module, func.executionSelector, moduleGroupId);
 
             if (!func.allowGlobalValidation) {
@@ -129,9 +130,9 @@ contract ModularAccount is TokenOwnableBase, Facet {
         }
 
         // Set up hooks
-        uint256 executionHooksLength = manifest.executionHooks.length;
+        uint256 executionHooksLength = moduleManifest.executionHooks.length;
         for (uint256 i; i < executionHooksLength; ++i) {
-            ManifestExecutionHook memory hook = manifest.executionHooks[i];
+            ManifestExecutionHook memory hook = moduleManifest.executionHooks[i];
             HookLib.addHook(
                 module,
                 hook.executionSelector,
@@ -210,8 +211,9 @@ contract ModularAccount is TokenOwnableBase, Facet {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                        Internal                            */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-    function _getImplementation(address factory, bytes32 id) internal view returns (address) {
-        return IImplementationRegistry(factory).getLatestImplementation(id);
+    function _getModule(address target) internal view returns (bytes32 uid) {
+        address appRegistry = DependencyLib.getDependency("AppRegistry");
+        uid = IModuleRegistry(appRegistry).getModuleVersion(target);
     }
 
     function _checkAuthorized(address target) internal virtual {
@@ -219,13 +221,30 @@ contract ModularAccount is TokenOwnableBase, Facet {
 
         address factory = MembershipStorage.layout().spaceFactory;
 
+        bytes32[] memory dependencies = new bytes32[](3);
+        dependencies[0] = bytes32("RiverAirdrop");
+        dependencies[1] = bytes32("SpaceOperator");
+        dependencies[2] = bytes32("ModuleRegistry");
+        address[] memory deps = DependencyLib.getDependencies(dependencies);
+
         // Unauthorized targets
-        if (
-            target == factory ||
-            target == _getImplementation(factory, bytes32("RiverAirdrop")) ||
-            target == _getImplementation(factory, bytes32("SpaceOperator"))
-        ) {
+        if (target == factory || target == deps[0] || target == deps[1]) {
             ExecutorTypes.UnauthorizedTarget.selector.revertWith(target);
+        }
+    }
+
+    function _checkManifest(
+        address module,
+        ExecutionManifest calldata manifest
+    ) internal pure returns (ExecutionManifest memory moduleManifest) {
+        moduleManifest = ITownsModule(module).executionManifest();
+
+        // Hash both manifests and compare
+        bytes32 manifestHash = keccak256(abi.encode(manifest));
+        bytes32 moduleManifestHash = keccak256(abi.encode(moduleManifest));
+
+        if (manifestHash != moduleManifestHash) {
+            CustomRevert.revertWith("Invalid manifest");
         }
     }
 }

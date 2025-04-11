@@ -1,35 +1,62 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import {
-    ExecutionManifest,
-    IERC6900ExecutionModule,
-    ManifestExecutionFunction,
-    ManifestExecutionHook
-} from "@erc6900/reference-implementation/interfaces/IERC6900ExecutionModule.sol";
+import {ExecutionManifest, IERC6900ExecutionModule, ManifestExecutionFunction, ManifestExecutionHook} from "@erc6900/reference-implementation/interfaces/IERC6900ExecutionModule.sol";
 import {IERC6900Module} from "@erc6900/reference-implementation/interfaces/IERC6900Module.sol";
+import {ITownsModule} from "src/attest/interfaces/ITownsModule.sol";
 
-contract MockModule is IERC6900ExecutionModule {
-    struct RequiredPermission {
-        bytes32 permission;
-        string description;
-    }
+contract MockModule is ITownsModule {
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                           EVENTS                           */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    // Events to track function calls
     event MockFunctionCalled(address caller, uint256 value);
     event MockFunctionWithParamsCalled(address caller, uint256 value, string param);
     event OnInstallCalled(address caller, bytes data);
     event OnUninstallCalled(address caller, bytes data);
     event HookFunctionCalled(address caller, uint256 value);
-    // State to control installation behavior
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                           STATE                            */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     bool public shouldFailInstall;
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                         CONSTRUCTOR                        */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     constructor(bool _shouldFailInstall) {
         shouldFailInstall = _shouldFailInstall;
     }
 
-    // Test functions that will be registered
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                      MODULE METADATA                       */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    function moduleName() external pure returns (string memory) {
+        return "MockModule";
+    }
+
+    function moduleId() external pure returns (string memory) {
+        return "mock-module";
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                      PERMISSIONS                           */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    function requiredPermissions() external pure returns (bytes32[] memory) {
+        bytes32[] memory permissions = new bytes32[](2);
+        permissions[0] = keccak256("Read");
+        permissions[1] = keccak256("Write");
+        return permissions;
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                      MOCK FUNCTIONS                        */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
     function mockFunction() external payable {
         emit MockFunctionCalled(msg.sender, msg.value);
     }
@@ -38,78 +65,20 @@ contract MockModule is IERC6900ExecutionModule {
         emit MockFunctionWithParamsCalled(msg.sender, msg.value, param);
     }
 
-    // Module declares what permissions it needs
-    function getRequiredPermissions() public pure returns (RequiredPermission[] memory) {
-        RequiredPermission[] memory required = new RequiredPermission[](2);
-
-        required[0] = RequiredPermission({
-            permission: keccak256("Read"),
-            description: "Required to read messages in channels"
-        });
-
-        required[1] = RequiredPermission({
-            permission: keccak256("Write"),
-            description: "Required to send messages"
-        });
-
-        return required;
-    }
-
-    // Update the hook function to match the expected signature
     function preExecutionHook(
         uint32,
         address,
         uint256,
         bytes calldata
-    )
-        external
-        payable
-        returns (bytes memory)
-    {
+    ) external payable returns (bytes memory) {
         emit HookFunctionCalled(msg.sender, msg.value);
-        return ""; // or return some data for post-hook
+        return "";
     }
 
-    // Implementation of IERC6900ExecutionModule
-    function executionManifest() external pure returns (ExecutionManifest memory) {
-        // Create array for execution functions
-        ManifestExecutionFunction[] memory executionFunctions = new ManifestExecutionFunction[](2);
-        // Create array for hooks (empty for this mock)
-        ManifestExecutionHook[] memory executionHooks = new ManifestExecutionHook[](1);
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                    LIFECYCLE FUNCTIONS                     */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-        // Register mockFunction
-        executionFunctions[0] = ManifestExecutionFunction({
-            executionSelector: this.mockFunction.selector,
-            skipRuntimeValidation: false,
-            allowGlobalValidation: true
-        });
-
-        // Register hook for mockFunction
-        executionHooks[0] = ManifestExecutionHook({
-            executionSelector: this.mockFunction.selector,
-            entityId: 0,
-            isPreHook: true,
-            isPostHook: false
-        });
-
-        // Second function
-        executionFunctions[1] = ManifestExecutionFunction({
-            executionSelector: this.mockFunctionWithParams.selector,
-            skipRuntimeValidation: false,
-            allowGlobalValidation: true
-        });
-
-        // Create array for interface IDs (empty for this mock)
-        bytes4[] memory interfaceIds = new bytes4[](0);
-
-        return ExecutionManifest({
-            executionFunctions: executionFunctions,
-            executionHooks: executionHooks,
-            interfaceIds: interfaceIds
-        });
-    }
-
-    // Optional: Implement onInstall to test installation callback
     function onInstall(bytes calldata data) external {
         if (shouldFailInstall) {
             revert("Installation failed");
@@ -121,18 +90,51 @@ contract MockModule is IERC6900ExecutionModule {
         emit OnUninstallCalled(msg.sender, data);
     }
 
-    // Required by IERC6900Module
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                    INTERFACE FUNCTIONS                     */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    function executionManifest() external pure returns (ExecutionManifest memory) {
+        ManifestExecutionFunction[] memory executionFunctions = new ManifestExecutionFunction[](2);
+        ManifestExecutionHook[] memory executionHooks = new ManifestExecutionHook[](1);
+
+        executionFunctions[0] = ManifestExecutionFunction({
+            executionSelector: this.mockFunction.selector,
+            skipRuntimeValidation: false,
+            allowGlobalValidation: true
+        });
+
+        executionHooks[0] = ManifestExecutionHook({
+            executionSelector: this.mockFunction.selector,
+            entityId: 0,
+            isPreHook: true,
+            isPostHook: false
+        });
+
+        executionFunctions[1] = ManifestExecutionFunction({
+            executionSelector: this.mockFunctionWithParams.selector,
+            skipRuntimeValidation: false,
+            allowGlobalValidation: true
+        });
+
+        bytes4[] memory interfaceIds = new bytes4[](0);
+
+        return
+            ExecutionManifest({
+                executionFunctions: executionFunctions,
+                executionHooks: executionHooks,
+                interfaceIds: interfaceIds
+            });
+    }
+
     function isModuleType(bytes4 typeID) external pure returns (bool) {
         return typeID == type(IERC6900ExecutionModule).interfaceId;
     }
 
-    // Required by IERC165
     function supportsInterface(bytes4 interfaceId) external pure returns (bool) {
-        return interfaceId == type(IERC6900ExecutionModule).interfaceId
-            || interfaceId == type(IERC6900Module).interfaceId;
-    }
-
-    function moduleId() external pure returns (string memory) {
-        return "mock-module";
+        return
+            interfaceId == type(IERC6900ExecutionModule).interfaceId ||
+            interfaceId == type(IERC6900Module).interfaceId ||
+            interfaceId == type(ITownsModule).interfaceId;
     }
 }

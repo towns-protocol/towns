@@ -74,13 +74,19 @@ library ExecutorTypes {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     event GroupAccessGranted(
-        bytes32 indexed groupId, address indexed account, uint32 delay, uint48 since, bool newMember
+        bytes32 indexed groupId,
+        address indexed account,
+        uint32 delay,
+        uint48 since,
+        bool newMember
     );
     event GroupAccessRevoked(bytes32 indexed groupId, address indexed account);
     event GroupGuardianSet(bytes32 indexed groupId, bytes32 guardian);
     event GroupGrantDelaySet(bytes32 indexed groupId, uint32 delay);
     event TargetFunctionGroupSet(
-        address indexed target, bytes4 indexed selector, bytes32 indexed groupId
+        address indexed target,
+        bytes4 indexed selector,
+        bytes32 indexed groupId
     );
     event TargetFunctionDelaySet(address indexed target, uint32 newDelay, uint32 minSetback);
     event TargetFunctionDisabledSet(address indexed target, bytes4 indexed selector, bool disabled);

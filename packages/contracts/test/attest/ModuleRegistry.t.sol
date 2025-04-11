@@ -69,11 +69,8 @@ contract ModuleRegistryTest is BaseSetup {
 
         address[] memory clients = new address[](1);
         clients[0] = _randomAddress();
-        bytes32[] memory permissions = new bytes32[](1);
-        permissions[0] = keccak256("Read");
-        ExecutionManifest memory manifest;
 
-        bytes32 uid = moduleRegistry.registerModule(module, owner, clients, permissions, manifest);
+        bytes32 uid = moduleRegistry.registerModule(module, owner, clients);
         assertEq(uid, moduleRegistry.getModuleVersion(module));
     }
 
@@ -88,11 +85,11 @@ contract ModuleRegistryTest is BaseSetup {
         ExecutionManifest memory manifest;
 
         // First registration works
-        moduleRegistry.registerModule(module, owner, clients, permissions, manifest);
+        moduleRegistry.registerModule(module, owner, clients);
 
         // Second registration should revert
         vm.expectRevert(ModuleLib.ModuleAlreadyRegistered.selector);
-        moduleRegistry.registerModule(module, owner, clients, permissions, manifest);
+        moduleRegistry.registerModule(module, owner, clients);
     }
 
     function test_revertWhen_registerModule_EmptyModule() external {
@@ -100,13 +97,10 @@ contract ModuleRegistryTest is BaseSetup {
 
         address[] memory clients = new address[](1);
         clients[0] = _randomAddress();
-        bytes32[] memory permissions = new bytes32[](1);
-        permissions[0] = keccak256("Read");
-        ExecutionManifest memory manifest;
 
         // Module address cannot be zero
         vm.expectRevert(ModuleLib.InvalidAddressInput.selector);
-        moduleRegistry.registerModule(address(0), owner, clients, permissions, manifest);
+        moduleRegistry.registerModule(address(0), owner, clients);
     }
 
     function test_revertWhen_registerModule_EmptyOwner() external {
@@ -114,13 +108,10 @@ contract ModuleRegistryTest is BaseSetup {
 
         address[] memory clients = new address[](1);
         clients[0] = _randomAddress();
-        bytes32[] memory permissions = new bytes32[](1);
-        permissions[0] = keccak256("Read");
-        ExecutionManifest memory manifest;
 
         // Owner address cannot be zero
         vm.expectRevert(ModuleLib.InvalidAddressInput.selector);
-        moduleRegistry.registerModule(module, address(0), clients, permissions, manifest);
+        moduleRegistry.registerModule(module, address(0), clients);
     }
 
     function test_revertWhen_registerModule_EmptyClients() external {
@@ -128,13 +119,10 @@ contract ModuleRegistryTest is BaseSetup {
         address owner = _randomAddress();
 
         address[] memory clients = new address[](0);
-        bytes32[] memory permissions = new bytes32[](1);
-        permissions[0] = keccak256("Read");
-        ExecutionManifest memory manifest;
 
         // Client list cannot be empty
         vm.expectRevert(ModuleLib.InvalidArrayInput.selector);
-        moduleRegistry.registerModule(module, owner, clients, permissions, manifest);
+        moduleRegistry.registerModule(module, owner, clients);
     }
 
     // ==================== MODULE INFORMATION TESTS ====================
@@ -146,11 +134,8 @@ contract ModuleRegistryTest is BaseSetup {
         address[] memory clients = new address[](2);
         clients[0] = _randomAddress();
         clients[1] = _randomAddress();
-        bytes32[] memory permissions = new bytes32[](1);
-        permissions[0] = keccak256("Read");
-        ExecutionManifest memory manifest;
 
-        moduleRegistry.registerModule(module, owner, clients, permissions, manifest);
+        moduleRegistry.registerModule(module, owner, clients);
 
         address[] memory retrievedClients = moduleRegistry.getModuleClients(module);
         assertEq(retrievedClients.length, clients.length);
@@ -166,12 +151,9 @@ contract ModuleRegistryTest is BaseSetup {
 
         address[] memory clients = new address[](1);
         clients[0] = _randomAddress();
-        bytes32[] memory permissions = new bytes32[](1);
-        permissions[0] = keccak256("Read");
-        ExecutionManifest memory manifest;
 
         vm.prank(owner);
-        moduleRegistry.registerModule(module, owner, clients, permissions, manifest);
+        moduleRegistry.registerModule(module, owner, clients);
 
         bytes32[] memory newPermissions = new bytes32[](2);
         newPermissions[0] = keccak256("Read");
@@ -191,12 +173,9 @@ contract ModuleRegistryTest is BaseSetup {
 
         address[] memory clients = new address[](1);
         clients[0] = _randomAddress();
-        bytes32[] memory permissions = new bytes32[](1);
-        permissions[0] = keccak256("Read");
-        ExecutionManifest memory manifest;
 
         vm.prank(owner);
-        moduleRegistry.registerModule(module, owner, clients, permissions, manifest);
+        moduleRegistry.registerModule(module, owner, clients);
 
         bytes32[] memory newPermissions = new bytes32[](2);
         newPermissions[0] = keccak256("Read");
@@ -228,12 +207,9 @@ contract ModuleRegistryTest is BaseSetup {
 
         address[] memory clients = new address[](1);
         clients[0] = _randomAddress();
-        bytes32[] memory permissions = new bytes32[](1);
-        permissions[0] = keccak256("Read");
-        ExecutionManifest memory manifest;
 
         vm.prank(owner);
-        moduleRegistry.registerModule(module, owner, clients, permissions, manifest);
+        moduleRegistry.registerModule(module, owner, clients);
 
         bytes32 previousUid = moduleRegistry.getModuleVersion(module);
         assertTrue(previousUid != bytes32(0));
@@ -252,12 +228,9 @@ contract ModuleRegistryTest is BaseSetup {
 
         address[] memory clients = new address[](1);
         clients[0] = _randomAddress();
-        bytes32[] memory permissions = new bytes32[](1);
-        permissions[0] = keccak256("Read");
-        ExecutionManifest memory manifest;
 
         vm.prank(owner);
-        moduleRegistry.registerModule(module, owner, clients, permissions, manifest);
+        moduleRegistry.registerModule(module, owner, clients);
 
         vm.prank(notOwner);
         vm.expectRevert(AttestationLib.InvalidRevoker.selector);
@@ -301,12 +274,9 @@ contract ModuleRegistryTest is BaseSetup {
 
         address[] memory clients = new address[](1);
         clients[0] = _randomAddress();
-        bytes32[] memory permissions = new bytes32[](1);
-        permissions[0] = keccak256("Read");
-        ExecutionManifest memory manifest;
 
         vm.prank(owner);
-        moduleRegistry.registerModule(module, owner, clients, permissions, manifest);
+        moduleRegistry.registerModule(module, owner, clients);
 
         bytes32 previousUid = moduleRegistry.getModuleVersion(module);
 
