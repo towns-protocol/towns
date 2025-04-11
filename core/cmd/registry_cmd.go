@@ -107,8 +107,8 @@ func validateStream(
 	registryContract *registries.RiverRegistryContract,
 	streamId StreamId,
 	nodeAddress common.Address,
-	expectedBlockHash common.Hash,
-	expectedBlockNum int64,
+	expectedMinBlockHash common.Hash,
+	expectedMinBlockNum int64,
 ) error {
 	nodeRecord, err := registryContract.NodeRegistry.GetNode(&bind.CallOpts{
 		Context: ctx,
@@ -153,6 +153,25 @@ func validateStream(
 			len(header.EventHashes),
 			snapshot,
 		)
+		// If a snapshot has occurred after the most recent hash committed to the contract, we
+		// may never see the block committed to the contract. However if we do see it, let's validate
+		// that it has the expected hash.
+		if i == int(expectedMinBlockNum) {
+			if lastBlock.Hash != expectedMinBlockHash {
+				return RiverError(
+					Err_INTERNAL,
+					"Block hash mismatch",
+					"expected",
+					expectedMinBlockHash,
+					"actual",
+					lastBlock.Hash,
+					"mismatchedHashBlockNum",
+					i,
+					"node",
+					nodeAddress,
+				)
+			}
+		}
 	}
 	fmt.Printf("      Minipool: len=%d\n", len(stream.Events))
 	fmt.Printf(
@@ -164,26 +183,14 @@ func validateStream(
 	if lastBlock == nil {
 		return RiverError(Err_INTERNAL, "No miniblocks found", "node", nodeAddress)
 	}
-	if lastBlock.Num != expectedBlockNum {
+	if lastBlock.Num < expectedMinBlockNum {
 		return RiverError(
 			Err_INTERNAL,
 			"Block number mismatch",
-			"expected",
-			expectedBlockNum,
+			"expectedMinimumBlockNum",
+			expectedMinBlockNum,
 			"actual",
 			lastBlock.Num,
-			"node",
-			nodeAddress,
-		)
-	}
-	if lastBlock.Hash != expectedBlockHash {
-		return RiverError(
-			Err_INTERNAL,
-			"Block hash mismatch",
-			"expected",
-			expectedBlockHash,
-			"actual",
-			lastBlock.Hash,
 			"node",
 			nodeAddress,
 		)
