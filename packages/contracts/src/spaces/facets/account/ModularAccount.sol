@@ -35,6 +35,8 @@ contract ModularAccount is IERC6900Account, TokenOwnableBase, Facet {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                      Execution                             */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    ///@inheritdoc IERC6900Account
     function execute(
         address target,
         uint256 value,
@@ -43,6 +45,7 @@ contract ModularAccount is IERC6900Account, TokenOwnableBase, Facet {
         (result, ) = ExecutorLib.execute(target, value, data);
     }
 
+    ///@inheritdoc IERC6900Account
     function executeBatch(Call[] calldata calls) external payable returns (bytes[] memory results) {
         for (uint256 i; i < calls.length; i++) {
             Call calldata call = calls[i];
@@ -51,6 +54,7 @@ contract ModularAccount is IERC6900Account, TokenOwnableBase, Facet {
         }
     }
 
+    ///@inheritdoc IERC6900Account
     function executeWithRuntimeValidation(
         bytes calldata,
         bytes calldata
@@ -61,6 +65,8 @@ contract ModularAccount is IERC6900Account, TokenOwnableBase, Facet {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                       Module Management                    */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    ///@inheritdoc IERC6900Account
     function installExecution(
         address module,
         ExecutionManifest calldata manifest,
@@ -69,6 +75,7 @@ contract ModularAccount is IERC6900Account, TokenOwnableBase, Facet {
         ModularAccountLib.installExecution(module, manifest, moduleInstallData);
     }
 
+    ///@inheritdoc IERC6900Account
     function uninstallExecution(
         address module,
         ExecutionManifest calldata manifest,
@@ -77,6 +84,7 @@ contract ModularAccount is IERC6900Account, TokenOwnableBase, Facet {
         ModularAccountLib.uninstallExecution(module, manifest, uninstallData);
     }
 
+    ///@inheritdoc IERC6900Account
     function installValidation(
         ValidationConfig,
         bytes4[] calldata,
@@ -86,14 +94,21 @@ contract ModularAccount is IERC6900Account, TokenOwnableBase, Facet {
         ModularAccountLib.noop();
     }
 
+    ///@inheritdoc IERC6900Account
     function uninstallValidation(ModuleEntity, bytes calldata, bytes[] calldata) external pure {
         ModularAccountLib.noop();
     }
 
+    ///@inheritdoc IERC6900Account
     function accountId() external pure returns (string memory) {
         return "towns.modular.account";
     }
 
+    /// @notice Checks if a client is entitled to a permission for a module
+    /// @param module The module to check
+    /// @param client The client to check
+    /// @param permission The permission to check
+    /// @return True if the client is entitled to the permission, false otherwise
     function isClientEntitled(
         address module,
         address client,
