@@ -40,12 +40,7 @@ export default function serialize(chunk: BlockType | LeafType, opts: Options = {
 
     // Handle mentions
     if (MENTION_TYPES.includes(type)) {
-        const c = chunk as BlockType
-        if (type === ELEMENT_CONTRACT_ADDRESS && c?.value) {
-            text = `<${c.value}>`
-        } else {
-            text = c.value || ''
-        }
+        text = (chunk as BlockType).value || ''
     }
 
     const nodeTypes: NodeTypes = {

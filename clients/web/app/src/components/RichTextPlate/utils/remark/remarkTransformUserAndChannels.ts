@@ -7,7 +7,12 @@ import { findAndReplace } from 'mdast-util-find-and-replace'
 import { Channel, useUserLookupContext } from 'use-towns-client'
 import { MentionPlugin } from '@udecode/plate-mention/react'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
-import { ELEMENT_MENTION_TICKER } from '@components/RichTextPlate/plugins/createTickerMentionPlugin'
+import {
+    ELEMENT_CONTRACT_ADDRESS,
+    ELEMENT_MENTION_TICKER,
+} from '@components/RichTextPlate/plugins/createTickerMentionPlugin'
+import { isEthAddress } from '@components/Web3/utils'
+import { getContractChain } from '@components/RichTextPlate/plugins/PasteContractAddressPlugin'
 import { ELEMENT_MENTION_CHANNEL } from '../../plugins/createChannelPlugin'
 import {
     AtChannelUser,
@@ -78,6 +83,11 @@ function remarkTransformUserAndChannels(
         const TICKER_NAME_REGEX = '[a-z][-a-z0-9]*'
         const TICKER_ELEMENT_REGEX = new RegExp(
             `(?:^|\\s)\\${TICKER_TRIGGER}(${TICKER_NAME_REGEX})`,
+            'gui',
+        )
+
+        const CONTRACT_ADDRESS_ELEMENT_REGEX = new RegExp(
+            `(?:^|\\s)(0x[a-fA-F0-9]{40}|[1-9A-HJ-NP-Za-km-z]{32,44})(?=\\s|$)`,
             'gui',
         )
 
@@ -194,10 +204,34 @@ function remarkTransformUserAndChannels(
             ]
         }
 
+        const transformContractAddress = (value: string) => {
+            const address = value.trim()
+            const chain = getContractChain(value)
+            if (chain) {
+                return [
+                    {
+                        type: ELEMENT_CONTRACT_ADDRESS,
+                        value: address,
+                        address,
+                        chain,
+                        children: [{ text: address }],
+                    },
+                ]
+            } else {
+                return [
+                    {
+                        type: 'text',
+                        value,
+                    },
+                ]
+            }
+        }
+
         type SanitizeFragmentType = {
             (mentionFragment: ReturnType<typeof transformChannel>): ElementOrTextOf<TEditor>
             (mentionFragment: ReturnType<typeof transformUser>): ElementOrTextOf<TEditor>
             (mentionFragment: ReturnType<typeof transformTicker>): ElementOrTextOf<TEditor>
+            (mentionFragment: ReturnType<typeof transformContractAddress>): ElementOrTextOf<TEditor>
         }
         const sanitizeFragment: SanitizeFragmentType = (mentionFragment) => {
             if (mentionFragment.length === 1) {
@@ -235,6 +269,7 @@ function remarkTransformUserAndChannels(
                 [CHANNEL_ELEMENT_REGEX, transformChannel],
                 [USER_ELEMENT_REGEX, transformUser],
                 [TICKER_ELEMENT_REGEX, transformTicker],
+                [CONTRACT_ADDRESS_ELEMENT_REGEX, transformContractAddress],
             ])
         }
 

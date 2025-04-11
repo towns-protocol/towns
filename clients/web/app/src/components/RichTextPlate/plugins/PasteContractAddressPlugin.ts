@@ -63,7 +63,7 @@ export const PasteContractAddressPlugin = createPlatePlugin({
 
 const pseudoContract = /^([a-f0-9]{40}|[a-z0-9]{32,44})$/i
 
-const getContractChain = (text: string) => {
+export const getContractChain = (text: string) => {
     return isEthAddress(text) ? '8453' : isSolanaAddress(text) ? 'solana-mainnet' : null
 }
 
