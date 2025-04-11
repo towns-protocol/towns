@@ -26,6 +26,7 @@ import { TouchSearchTab } from './TouchSearchTab'
 import { ValidateMembership } from './ValidateMembership'
 import { DirectMessages } from './DMRoute'
 import { ExploreMobile, ExplorePage } from './ExplorePage/ExplorePage'
+import { TouchTabBarLayout } from './layouts/TouchTabBarLayout'
 
 const BannedTownCheck = () => {
     const spaceId = useSpaceIdFromPathname()
@@ -45,7 +46,16 @@ export const AuthenticatedRoutes = () => {
             {/*
                 space context is "available" but its value `space` remains undefined outside /t/:townId/* 
             */}
-            {isTouch && <Route path={PATHS.EXPLORE} element={<ExploreMobile />} />}
+            {isTouch && (
+                <Route
+                    path={PATHS.EXPLORE}
+                    element={
+                        <TouchTabBarLayout>
+                            <ExploreMobile />
+                        </TouchTabBarLayout>
+                    }
+                />
+            )}
             <Route element={<SpaceContextRoute />}>
                 {isTouch ? (
                     <>
