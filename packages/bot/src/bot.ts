@@ -105,7 +105,7 @@ type BotEvents = {
     streamMessage: (handler: BotActions, opts: BasePayload & { message: string }) => void
 }
 
-class Bot extends (EventEmitter as new () => TypedEmitter<BotEvents>) {
+export class Bot extends (EventEmitter as new () => TypedEmitter<BotEvents>) {
     private readonly server: Hono
     private readonly client: ClientV2<BotActions>
     botId: string
