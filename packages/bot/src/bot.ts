@@ -17,8 +17,10 @@ import {
     type makeRiverConfig,
     streamIdAsString,
     make_MemberPayload_KeySolicitation,
+    make_UserMetadataPayload_EncryptionDevice,
     logNever,
     userIdFromAddress,
+    makeUserMetadataStreamId,
 } from '@towns-protocol/sdk'
 import { Hono, type Context } from 'hono'
 import { serve } from '@hono/node-server'
@@ -69,6 +71,7 @@ type BotActions = {
     redactEvent: (channelId: string, refEventId: string) => Promise<{ eventId: string }>
     sendDm: BotActions['sendMessage']
     sendKeySolicitation: (streamId: string, sessionIds: string[]) => Promise<{ eventId: string }>
+    uploadDeviceKeys: () => Promise<{ eventId: string }>
     // TODO: sendTip
 }
 
@@ -102,7 +105,8 @@ class Bot extends (EventEmitter as new () => TypedEmitter<BotEvents>) {
         this.server.post('webhook', (c) => this.webhookResponseHandler(c))
     }
 
-    start(port: number) {
+    async start(port: number) {
+        await this.client.uploadDeviceKeys()
         // Maybe we should let the user do this instead, so they can use the runtime that they want (?)
         serve({ port, fetch: this.server.fetch })
     }
@@ -320,8 +324,6 @@ const botBotActions = (client: ClientV2): BotActions => {
             streamId: streamIdAsBytes(streamId),
         })
         // TODO: check entitlements. (should it be a extension?)
-        // if (isChannelStreamId(streamId)) {
-        // }
         // TODO: tags
         const tags = undefined
         const encryptionAlgorithm = stream.snapshot.members?.encryptionAlgorithm?.algorithm
@@ -396,6 +398,23 @@ const botBotActions = (client: ClientV2): BotActions => {
         return { eventId, error }
     }
 
+    const uploadDeviceKeys: BotActions['uploadDeviceKeys'] = async () => {
+        const streamId = streamIdAsBytes(makeUserMetadataStreamId(client.userId))
+        const { hash: prevMiniblockHash } = await client.rpc.getLastMiniblockHash({
+            streamId,
+        })
+        const encryptionDevice = client.crypto.getUserDevice()
+        const event = await makeEvent(
+            client.signer,
+            make_UserMetadataPayload_EncryptionDevice({
+                ...encryptionDevice,
+            }),
+            prevMiniblockHash,
+        )
+        const eventId = bin_toHexString(event.hash)
+        const { error } = await client.rpc.addEvent({ streamId, event })
+        return { eventId, error }
+    }
     const sendMessage: BotActions['sendMessage'] = async (streamId, message, opts) => {
         const payload = create(ChannelMessageSchema, {
             payload: {
@@ -453,5 +472,6 @@ const botBotActions = (client: ClientV2): BotActions => {
         sendReaction,
         redactEvent,
         sendKeySolicitation,
+        uploadDeviceKeys,
     }
 }

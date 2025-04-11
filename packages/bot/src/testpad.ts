@@ -18,7 +18,7 @@ async function main() {
     })
 
     console.log(`Server is running on http://localhost:${PORT}`)
-    bot.start(PORT)
+    await bot.start(PORT)
 }
 
 void main()
