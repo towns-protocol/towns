@@ -898,7 +898,7 @@ func runStreamPlaceInitiateCmd(cfg *config.Config, args []string) error {
 
 		if len(record.NodeAddresses) > targetReplicationFactor {
 			return fmt.Errorf(
-				"Invalid number of nodes for stream %s: %d, replication factor: %d",
+				"invalid number of nodes for stream %s: %d, replication factor: %d",
 				record.StreamID,
 				len(record.NodeAddresses),
 				targetReplicationFactor,
@@ -915,7 +915,7 @@ func runStreamPlaceInitiateCmd(cfg *config.Config, args []string) error {
 		for _, newNode := range choosenStreamNodes {
 			operator, found := nodesToOperator[newNode]
 			if !found {
-				return fmt.Errorf("Unable to find operator for node %s", newNode)
+				return fmt.Errorf("unable to find operator for node %s", newNode)
 			}
 
 			if len(record.NodeAddresses) < targetReplicationFactor {
@@ -935,7 +935,7 @@ func runStreamPlaceInitiateCmd(cfg *config.Config, args []string) error {
 		}
 
 		if len(record.NodeAddresses) != targetReplicationFactor {
-			return fmt.Errorf("Unable to add enough nodes to stream %s", record.StreamID)
+			return fmt.Errorf("unable to add enough nodes to stream %s", record.StreamID)
 		}
 
 		streamSetReplicationFactorRequests = append(
