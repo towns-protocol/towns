@@ -98,7 +98,7 @@ func (syncOp *StreamSyncOperation) Run(
 	res StreamsResponseSubscriber,
 ) error {
 	log := logging.FromCtx(syncOp.ctx).With("syncId", syncOp.SyncID)
-	log.Debug("Stream sync operation start")
+	log.Debugw("Stream sync operation start")
 
 	syncers, messages, err := client.NewSyncers(
 		syncOp.ctx, syncOp.cancel, syncOp.SyncID, syncOp.streamCache,
@@ -172,7 +172,7 @@ func (syncOp *StreamSyncOperation) Run(
 
 				messagesSendToClient++
 
-				log.Debug("Pending messages in sync operation", "count", messages.Len()+len(msgs)-i-1)
+				log.Debugw("Pending messages in sync operation", "count", messages.Len()+len(msgs)-i-1)
 
 				if msg.GetSyncOp() == SyncOp_SYNC_CLOSE {
 					return nil

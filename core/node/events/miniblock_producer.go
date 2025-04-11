@@ -454,7 +454,7 @@ func (p *miniblockProducer) submitProposalBatch(ctx context.Context, proposals [
 	}
 
 	if err := p.promoteConfirmedCandidates(ctx, streamsOutOfSync); err != nil {
-		log.Error("processMiniblockProposalBatch: Error promoting confirmed miniblock candidates", "err", err)
+		log.Errorw("processMiniblockProposalBatch: Error promoting confirmed miniblock candidates", "err", err)
 	}
 }
 
@@ -477,7 +477,7 @@ func (p *miniblockProducer) promoteConfirmedCandidates(ctx context.Context, jobs
 	for _, job := range jobs {
 		stream, err := registry.GetStream(ctx, job.stream.streamId, crypto.BlockNumber(headNum))
 		if err != nil {
-			log.Error("Unable to retrieve stream details from registry",
+			log.Errorw("Unable to retrieve stream details from registry",
 				"streamId", job.stream.streamId, "err", err)
 
 			p.jobDone(ctx, job)
@@ -487,11 +487,11 @@ func (p *miniblockProducer) promoteConfirmedCandidates(ctx context.Context, jobs
 		committedLocalCandidateRef := stream.LastMb()
 
 		if err := job.stream.promoteCandidate(ctx, committedLocalCandidateRef); err == nil {
-			log.Info("Promoted miniblock candidate",
+			log.Infow("Promoted miniblock candidate",
 				"streamId", job.stream.streamId,
 				"mb", committedLocalCandidateRef)
 		} else {
-			log.Error("Unable to promote candidate",
+			log.Errorw("Unable to promote candidate",
 				"streamId", job.stream.streamId,
 				"mb", committedLocalCandidateRef,
 				"err", err)
