@@ -50,8 +50,11 @@ export const AuthenticatedRoutes = () => {
                 {isTouch ? (
                     <>
                         <Route path={`${PATHS.SPACES}/new`} element={<CreateTown />} />
-                        <Route path={`${PATHS.SPACES}/:spaceSlug`} element={<BannedTownCheck />}>
-                            <Route element={<ValidateMembership />}>
+                        <Route element={<ValidateMembership />}>
+                            <Route
+                                path={`${PATHS.SPACES}/:spaceSlug`}
+                                element={<BannedTownCheck />}
+                            >
                                 <Route path="" element={<TouchHome />}>
                                     {messageRoutes}
                                     <Route
