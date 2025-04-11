@@ -2180,7 +2180,7 @@ export class Client
             }
         }
 
-        const { miniblocks, terminus } = await getMiniblocks(
+        const { miniblocks, terminus, snapshots } = await getMiniblocks(
             this.rpcClient,
             streamId,
             fromInclusive,
@@ -2193,6 +2193,7 @@ export class Client
             miniblocks,
             'backward',
         )
+        await this.persistenceStore.saveSnapshots(streamIdAsString(streamId), snapshots)
 
         return {
             terminus: terminus,
