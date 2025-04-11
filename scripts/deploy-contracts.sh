@@ -1,7 +1,11 @@
 #!/bin/bash
 set -euo pipefail
-cd -P -- "$(dirname -- "${BASH_SOURCE[0]}")"
-cd ..
+
+# Get the absolute path of the script directory and project root
+SCRIPT_DIR="$(cd -P -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+
+cd "$PROJECT_ROOT"
 
 : ${RIVER_ENV:?}
 export BASE_CHAIN_ID="${BASE_CHAIN_ID:-31337}"
@@ -17,20 +21,18 @@ echo "Deploying contracts for ${RIVER_ENV} environment"
 
 # Wait for the chains to be ready
 if [ "${SKIP_CHAIN_WAIT}" != "true" ]; then
-    ./scripts/wait-for-basechain.sh
-    ./scripts/wait-for-riverchain.sh
+    "$SCRIPT_DIR/wait-for-basechain.sh"
+    "$SCRIPT_DIR/wait-for-riverchain.sh"
 fi
 
-rm -rf contracts/deployments/${RIVER_ENV}
-rm -rf packages/generated/deployments/${RIVER_ENV}
+rm -rf "$PROJECT_ROOT/packages/contracts/deployments/${RIVER_ENV}"
+rm -rf "$PROJECT_ROOT/packages/generated/deployments/${RIVER_ENV}"
 
-
-pushd contracts
+cd "$PROJECT_ROOT/packages/contracts"
 
 set -a
 . .env.localhost
 set +a
-
 
 if [ "${1-}" != "nobuild" ]; then
     yarn turbo build --filter=@towns-protocol/contracts
@@ -39,7 +41,6 @@ fi
 # Account Abstraction is not supported on anvil
 # make deploy-any-local context=$RIVER_ENV rpc=base_anvil type=utils contract=DeployEntrypoint
 # make deploy-any-local context=$RIVER_ENV rpc=base_anvil type=utils contract=DeployAccountFactory
-
 
 # Only anvil supports automine but this might be a local geth node
 if [ "${BASE_EXECUTION_CLIENT}" != "geth_dev" ]; then
@@ -76,18 +77,16 @@ if [ "${BASE_EXECUTION_CLIENT}" != "geth_dev" ]; then
 fi
 cast rpc evm_setIntervalMining $RIVER_BLOCK_TIME --rpc-url $RIVER_ANVIL_RPC_URL
 
-popd
+cd "$PROJECT_ROOT"
 
-
-# mkdir -p packages/generated/deployments/${RIVER_ENV}/{base,river}
-cp -r contracts/deployments/${RIVER_ENV} packages/generated/deployments/${RIVER_ENV}
-
+# Ensure the destination directory exists
+mkdir -p "$PROJECT_ROOT/packages/generated/deployments/${RIVER_ENV}"
+cp -r "$PROJECT_ROOT/packages/contracts/deployments/${RIVER_ENV}/." "$PROJECT_ROOT/packages/generated/deployments/${RIVER_ENV}/"
 
 if [ -n "$BASE_EXECUTION_CLIENT" ]; then
-    echo "{\"executionClient\": \"${BASE_EXECUTION_CLIENT}\"}" > packages/generated/deployments/${RIVER_ENV}/base/executionClient.json
+    echo "{\"executionClient\": \"${BASE_EXECUTION_CLIENT}\"}" > "$PROJECT_ROOT/packages/generated/deployments/${RIVER_ENV}/base/executionClient.json"
 fi
 
 # Update the config
-pushd ./packages/generated
-    yarn make-config
-popd
+cd "$PROJECT_ROOT/packages/generated"
+yarn make-config

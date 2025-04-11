@@ -33,7 +33,7 @@ func TestStreamCacheViewEviction(t *testing.T) {
 
 	node := tc.getBC()
 	streamID := testutils.FakeStreamId(STREAM_SPACE_BIN)
-	_, genesisMiniblock, _ := makeTestSpaceStream(t, node.Wallet, streamID, nil)
+	_, genesisMiniblock := makeTestSpaceStream(t, node.Wallet, streamID, nil)
 
 	tc.createStreamNoCache(streamID, genesisMiniblock)
 
@@ -136,7 +136,7 @@ func TestCacheEvictionWithFilledMiniBlockPool(t *testing.T) {
 
 	node := tc.getBC()
 	streamID := testutils.FakeStreamId(STREAM_SPACE_BIN)
-	_, genesisMiniblock, _ := makeTestSpaceStream(t, node.Wallet, streamID, nil)
+	_, genesisMiniblock := makeTestSpaceStream(t, node.Wallet, streamID, nil)
 
 	tc.createStreamNoCache(streamID, genesisMiniblock)
 
@@ -524,7 +524,6 @@ func TestMiniblockRegistrationWithPendingLocalCandidate(t *testing.T) {
 		Timestamp:                NextMiniblockTimestamp(lastBlock.Header().Timestamp),
 		EventHashes:              [][]byte{event1.Hash.Bytes(), event2.Hash.Bytes()},
 		PrevMiniblockHash:        lastBlock.headerEvent.Hash[:],
-		Snapshot:                 nil,
 		EventNumOffset:           0,
 		PrevSnapshotMiniblockNum: view.LastBlock().Header().GetPrevSnapshotMiniblockNum(),
 		Content: &MiniblockHeader_None{
@@ -533,7 +532,7 @@ func TestMiniblockRegistrationWithPendingLocalCandidate(t *testing.T) {
 	}
 
 	candidate, err := NewMiniblockInfoFromHeaderAndParsed(
-		instance.params.Wallet, candidateHeader, []*ParsedEvent{event1, event2},
+		instance.params.Wallet, candidateHeader, []*ParsedEvent{event1, event2}, nil,
 	)
 	require.NoError(err)
 
@@ -565,13 +564,13 @@ func TestMiniblockRegistrationWithPendingLocalCandidate(t *testing.T) {
 	getStream, err := instance.params.Registry.GetStream(ctx, spaceStreamId, crypto.BlockNumber(riverChainBlockNum))
 	require.NoError(err)
 
-	require.Equal(int64(getStream.LastMiniblockNum), candidate.Ref.Num)
-	require.Equal(getStream.LastMiniblockHash, candidate.Ref.Hash)
+	require.Equal(getStream.LastMbNum(), candidate.Ref.Num)
+	require.Equal(getStream.LastMbHash(), candidate.Ref.Hash)
 
 	view, err = stream.GetView(ctx)
 	require.NoError(err)
 	lastBlock = view.LastBlock()
-	require.Equal(lastBlock.Ref.Num+1, int64(getStream.LastMiniblockNum))
+	require.Equal(lastBlock.Ref.Num+1, getStream.LastMbNum())
 
 	// Add some events to the stream and try produce a mini-block. This must fail because the
 	// stream facet already progressed by the just registered candidate. The node must detect this

@@ -22,7 +22,7 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/puzpuzpuz/xsync/v3"
+	"github.com/puzpuzpuz/xsync/v4"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/atomic"
@@ -560,7 +560,7 @@ type testClient struct {
 	name                 string
 	syncID               atomic.String // use testClient#SyncID() to retrieve the value
 	enableSync           bool
-	updates              *xsync.MapOf[StreamId, *receivedStreamUpdates]
+	updates              *xsync.Map[StreamId, *receivedStreamUpdates]
 	disableMiniblockComp bool
 }
 
@@ -587,7 +587,7 @@ func (st *serviceTester) newTestClient(i int, opts testClientOpts) *testClient {
 		userStreamId:         UserStreamIdFromAddr(wallet.Address),
 		name:                 fmt.Sprintf("%d-%s", i, wallet.Address.Hex()[2:8]),
 		enableSync:           opts.enableSync,
-		updates:              xsync.NewMapOf[StreamId, *receivedStreamUpdates](),
+		updates:              xsync.NewMap[StreamId, *receivedStreamUpdates](),
 		disableMiniblockComp: opts.disableMiniblockComp,
 	}
 }

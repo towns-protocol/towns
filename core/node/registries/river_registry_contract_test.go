@@ -273,12 +273,12 @@ func TestStreamEvents(t *testing.T) {
 	require.Empty(placementC)
 
 	require.NotNil(allocated)
-	require.Equal(streamId, allocated.StreamID)
+	require.Equal(streamId, allocated.GetStreamId())
 	require.EqualValues(river.StreamUpdatedEventTypeAllocate, allocated.Reason())
-	require.Equal(genesisHash, common.Hash(allocated.LastMiniblockHash))
-	require.EqualValues(0, allocated.LastMiniblockNum)
-	require.Equal(addrs, allocated.Nodes)
-	require.EqualValues(0, allocated.Flags)
+	require.Equal(genesisHash, allocated.Stream.LastMbHash())
+	require.EqualValues(0, allocated.Stream.LastMbNum())
+	require.Equal(addrs, allocated.Stream.Nodes())
+	require.EqualValues(false, allocated.Stream.IsSealed())
 
 	// Update stream placement
 	tx, err := bc1.TxPool.Submit(ctx, "UpdateStreamPlacement",
@@ -299,12 +299,12 @@ func TestStreamEvents(t *testing.T) {
 	require.Empty(placementC)
 
 	require.NotNil(placement)
-	require.Equal(streamId, placement.StreamID)
+	require.Equal(streamId, placement.GetStreamId())
 	require.EqualValues(river.StreamUpdatedEventTypePlacementUpdated, placement.Reason())
-	require.EqualValues(genesisHash, placement.LastMiniblockHash)
-	require.EqualValues(0, placement.LastMiniblockNum)
-	require.Equal(append(addrs, nodeAddr2), placement.Nodes)
-	require.EqualValues(0, allocated.Flags)
+	require.EqualValues(genesisHash, placement.Stream.LastMbHash())
+	require.EqualValues(0, placement.Stream.LastMbNum())
+	require.Equal(append(addrs, nodeAddr2), placement.Stream.Nodes())
+	require.EqualValues(false, placement.Stream.IsSealed())
 
 	// Update last miniblock
 	newMBHash := common.HexToHash("0x456")
@@ -384,10 +384,10 @@ func TestStreamEvents(t *testing.T) {
 
 	require.NotNil(added)
 
-	require.Equal(streamId, added.StreamID)
-	require.Equal(addrs, added.Stream.Nodes)
+	require.Equal(streamId, added.GetStreamId())
+	require.Equal(addrs, added.Stream.Nodes())
 	require.EqualValues(river.StreamUpdatedEventTypeCreate, added.Reason())
-	require.EqualValues(lastMiniblockHash, added.LastMiniblockHash)
-	require.EqualValues(lastMiniblockNum, added.LastMiniblockNum)
-	require.EqualValues(StreamFlagSealed, added.Flags&uint64(StreamFlagSealed))
+	require.EqualValues(lastMiniblockHash, added.Stream.LastMbHash())
+	require.EqualValues(lastMiniblockNum, added.Stream.LastMbNum())
+	require.EqualValues(true, added.Stream.IsSealed())
 }

@@ -1052,14 +1052,12 @@ func (s *PostgresStreamStore) readMiniblocksByStreamTx(
 	var seqNum int64
 	var snapshot []byte
 	_, err = pgx.ForEachRow(rows, []any{&blockdata, &seqNum, &snapshot}, func() error {
-		if (prevSeqNum != -1) && (seqNum != prevSeqNum+1) {
+		if prevSeqNum != -1 && seqNum != prevSeqNum+1 {
 			// There is a gap in sequence numbers
 			return RiverError(Err_MINIBLOCKS_STORAGE_FAILURE, "Miniblocks consistency violation").
 				Tag("ActualBlockNumber", seqNum).Tag("ExpectedBlockNumber", prevSeqNum+1).Tag("streamId", streamId)
 		}
-
 		prevSeqNum = seqNum
-
 		return onEachMb(blockdata, seqNum, snapshot)
 	})
 
@@ -1457,7 +1455,7 @@ func (s *PostgresStreamStore) writeMiniblocksTx(
 		pgx.CopyFromSlice(
 			len(miniblocks),
 			func(i int) ([]any, error) {
-				if miniblocks[i].Snapshot != nil {
+				if len(miniblocks[i].Snapshot) > 0 {
 					newLastSnapshotMiniblock = miniblocks[i].Number
 				}
 

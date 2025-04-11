@@ -40,12 +40,12 @@ cd "$(dirname "$0")"
 
 
 : ${RUN_ENV:?}
-: ${RIVER_ENV:?} 
+: ${RIVER_ENV:?}
 : ${BASE_REGISTRY_ADDRESS:?}
 
 make build
 
-source ../../contracts/.env.localhost
+source ../../packages/contracts/.env.localhost
 OPERATOR_ADDRESS=$(cast wallet addr $LOCAL_PRIVATE_KEY)
 
 echo "Registration of operator $OPERATOR_ADDRESS in base registry at address $BASE_REGISTRY_ADDRESS"
@@ -94,9 +94,9 @@ do
     touch "${INSTANCE_DIR}/config/config.yaml"
 
     echo "Creating instance_${i}"
-    
+
     yq eval ".log.level = \"debug\"" -i "${INSTANCE_DIR}/config/config.yaml"
-    
+
     pushd "${INSTANCE_DIR}"
     # Run each process with 'generate_key' argument
     "./bin/river_node" genkey

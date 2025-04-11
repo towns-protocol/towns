@@ -99,7 +99,7 @@ func TestCreateMediaStream(t *testing.T) {
 		}))
 		tt.require.Nil(csResp)
 		tt.require.Error(err)
-		tt.require.Equal(connect.CodePermissionDenied, connect.CodeOf(err))
+		tt.require.Equal(connect.CodePermissionDenied, connect.CodeOf(err), err.Error())
 	})
 
 	// Make sure AddEvent does not work for ephemeral streams.
@@ -122,7 +122,7 @@ func TestCreateMediaStream(t *testing.T) {
 		}))
 		require.Nil(t, aeResp)
 		require.Error(t, err)
-		require.Equal(t, connect.CodeNotFound, connect.CodeOf(err))
+		require.Equal(t, connect.CodeNotFound, connect.CodeOf(err), err.Error())
 	})
 
 	t.Run("AddMediaEvent failed to add event with out of range chunk index", func(t *testing.T) {
@@ -142,7 +142,7 @@ func TestCreateMediaStream(t *testing.T) {
 		}))
 		require.Nil(t, aeResp)
 		require.Error(t, err)
-		require.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
+		require.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err), err.Error())
 	})
 
 	t.Run("AddMediaEvent passed for ephemeral media streams with initial chunk", func(t *testing.T) {

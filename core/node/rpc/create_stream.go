@@ -157,7 +157,7 @@ func (s *Service) createReplicatedStream(
 	streamId StreamId,
 	parsedEvents []*ParsedEvent,
 ) (*StreamAndCookie, error) {
-	mb, sn, err := MakeGenesisMiniblock(s.wallet, parsedEvents)
+	mb, err := MakeGenesisMiniblock(s.wallet, parsedEvents)
 	if err != nil {
 		return nil, err
 	}
@@ -206,7 +206,6 @@ func (s *Service) createReplicatedStream(
 					&AllocateStreamRequest{
 						StreamId:  streamId[:],
 						Miniblock: mb,
-						Snapshot:  sn,
 					},
 				),
 			)
@@ -233,6 +232,5 @@ func (s *Service) createReplicatedStream(
 	return &StreamAndCookie{
 		NextSyncCookie: cookie,
 		Miniblocks:     []*Miniblock{mb},
-		Snapshot:       sn,
 	}, nil
 }

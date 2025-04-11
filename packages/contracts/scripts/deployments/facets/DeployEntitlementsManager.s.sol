@@ -1,0 +1,34 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.23;
+
+//interfaces
+
+//libraries
+
+//contracts
+import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
+import {Deployer} from "scripts/common/Deployer.s.sol";
+import {EntitlementsManager} from "src/spaces/facets/entitlements/EntitlementsManager.sol";
+
+contract DeployEntitlementsManager is FacetHelper, Deployer {
+    constructor() {
+        addSelector(EntitlementsManager.addImmutableEntitlements.selector);
+        addSelector(EntitlementsManager.addEntitlementModule.selector);
+        addSelector(EntitlementsManager.removeEntitlementModule.selector);
+        addSelector(EntitlementsManager.getEntitlements.selector);
+        addSelector(EntitlementsManager.getEntitlement.selector);
+        addSelector(EntitlementsManager.isEntitledToSpace.selector);
+        addSelector(EntitlementsManager.isEntitledToChannel.selector);
+    }
+
+    function versionName() public pure override returns (string memory) {
+        return "facets/entitlementsManagerFacet";
+    }
+
+    function __deploy(address deployer) internal override returns (address) {
+        vm.startBroadcast(deployer);
+        EntitlementsManager facet = new EntitlementsManager();
+        vm.stopBroadcast();
+        return address(facet);
+    }
+}

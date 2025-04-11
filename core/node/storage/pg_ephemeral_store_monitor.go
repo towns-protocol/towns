@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5"
-	"github.com/puzpuzpuz/xsync/v3"
+	"github.com/puzpuzpuz/xsync/v4"
 
 	. "github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/logging"
@@ -19,7 +19,7 @@ import (
 type ephemeralStreamMonitor struct {
 	// streams is a map of ephemeral stream IDs to the creation time.
 	// This is used by the monitor to detect "dead" ephemeral streams and delete them.
-	streams *xsync.MapOf[StreamId, time.Time]
+	streams *xsync.Map[StreamId, time.Time]
 	// ttl is the duration of time an ephemeral stream can exist
 	// before either being sealed/normalized or deleted.
 	ttl      time.Duration
@@ -39,7 +39,7 @@ func newEphemeralStreamMonitor(
 	}
 
 	m := &ephemeralStreamMonitor{
-		streams: xsync.NewMapOf[StreamId, time.Time](),
+		streams: xsync.NewMap[StreamId, time.Time](),
 		storage: storage,
 		ttl:     ttl,
 		stop:    make(chan struct{}),

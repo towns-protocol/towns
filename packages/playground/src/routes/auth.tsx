@@ -38,7 +38,7 @@ export const AuthRoute = () => {
                 <p className="text-lg text-muted-foreground">
                     An interactive environment for testing and experimenting with{' '}
                     <a
-                        href="https://river.build"
+                        href="https://towns.com"
                         target="_blank"
                         className="inline-flex items-center font-semibold underline-offset-4 hover:underline"
                     >

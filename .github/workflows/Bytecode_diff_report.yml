@@ -5,7 +5,7 @@ env:
     TESTNET_PRIVATE_KEY: ${{ secrets.GAMMA_BASE_SEPOLIA_DEPLOYER_PK }}
     BASE_RPC_URL: ${{ secrets.BASE_RPC_URL }}
     BASE_SEPOLIA_RPC_URL: ${{ secrets.BASE_SEPOLIA_RPC_URL }}
-    FACET_SOURCE_PATH: ../../contracts/src
+    FACET_SOURCE_PATH: ../../packages/contracts/src
     REPORT_OUT_DIR: ${{ vars.REPORT_OUT_DIR }}
     BASESCAN_API_KEY: ${{ secrets.BASESCAN_API_KEY }}
     BASESCAN_SEPOLIA_URL: 'https://api-sepolia.basescan.org/api'

@@ -17,13 +17,13 @@ import (
 	"go.uber.org/zap"
 	"golang.org/x/sync/semaphore"
 
+	"github.com/towns-protocol/towns/core/contracts/river"
 	"github.com/towns-protocol/towns/core/node/crypto"
 	"github.com/towns-protocol/towns/core/node/events"
 	"github.com/towns-protocol/towns/core/node/logging"
 	"github.com/towns-protocol/towns/core/node/nodes"
 	"github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/protocol/protocolconnect"
-	"github.com/towns-protocol/towns/core/node/registries"
 	"github.com/towns-protocol/towns/core/node/shared"
 )
 
@@ -89,7 +89,7 @@ type TrackedViewConstructorFn func(
 
 func (sr *SyncRunner) Run(
 	rootCtx context.Context,
-	stream *registries.GetStreamResult,
+	stream *river.StreamWithId,
 	applyHistoricalStreamContents bool,
 	nodeRegistry nodes.NodeRegistry,
 	onChainConfig crypto.OnChainConfiguration,
@@ -97,8 +97,8 @@ func (sr *SyncRunner) Run(
 	metrics *TrackStreamsSyncMetrics,
 ) {
 	var (
-		promLabels                = prometheus.Labels{"type": channelLabelType(stream.StreamId)}
-		remotes                   = nodes.NewStreamNodesWithLock(stream.StreamReplicationFactor(), stream.Nodes, common.Address{})
+		promLabels                = prometheus.Labels{"type": channelLabelType(stream.StreamId())}
+		remotes                   = nodes.NewStreamNodesWithLock(stream.ReplicationFactor(), stream.Nodes(), common.Address{})
 		restartSyncSessionCounter = 0
 	)
 
@@ -164,7 +164,7 @@ func (sr *SyncRunner) Run(
 
 		syncPos := []*protocol.SyncCookie{{
 			NodeAddress:       sticky[:],
-			StreamId:          stream.StreamId[:],
+			StreamId:          stream.Id[:],
 			MinipoolGen:       math.MaxInt64, // force sync reset
 			PrevMiniblockHash: common.Hash{}.Bytes(),
 		}}
@@ -295,7 +295,7 @@ func (sr *SyncRunner) Run(
 					continue
 				}
 
-				if streamID != stream.StreamId {
+				if streamID != stream.StreamId() {
 					log.Errorw("Received update for unexpected stream", "want", stream.StreamId, "got", streamID)
 					syncCancel()
 					continue

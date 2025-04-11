@@ -28,11 +28,11 @@ func MakeGenesisMiniblockForSpaceStream(
 	)
 	require.NoError(t, err)
 
-	mb, sn, err := MakeGenesisMiniblock(nodeWallet, []*ParsedEvent{inception})
+	mb, err := MakeGenesisMiniblock(nodeWallet, []*ParsedEvent{inception})
 	require.NoError(t, err)
 
 	mbInfo, err := NewMiniblockInfoFromProto(
-		mb, sn,
+		mb, nil,
 		NewParsedMiniblockInfoOpts().
 			WithExpectedBlockNumber(0).
 			WithDoNotParseEvents(true),
@@ -54,11 +54,11 @@ func MakeGenesisMiniblockForUserSettingsStream(
 	)
 	require.NoError(t, err)
 
-	mb, sn, err := MakeGenesisMiniblock(nodeWallet, []*ParsedEvent{inception})
+	mb, err := MakeGenesisMiniblock(nodeWallet, []*ParsedEvent{inception})
 	require.NoError(t, err)
 
 	mbInfo, err := NewMiniblockInfoFromProto(
-		mb, sn,
+		mb, nil,
 		NewParsedMiniblockInfoOpts().
 			WithExpectedBlockNumber(0).
 			WithDoNotParseEvents(true),
@@ -81,11 +81,11 @@ func MakeGenesisMiniblockForMediaStream(
 	)
 	require.NoError(t, err)
 
-	mb, sn, err := MakeGenesisMiniblock(nodeWallet, []*ParsedEvent{inception})
+	mb, err := MakeGenesisMiniblock(nodeWallet, []*ParsedEvent{inception})
 	require.NoError(t, err)
 
 	mbInfo, err := NewMiniblockInfoFromProto(
-		mb, sn,
+		mb, nil,
 		NewParsedMiniblockInfoOpts().
 			WithExpectedBlockNumber(0).
 			WithDoNotParseEvents(true),
@@ -120,7 +120,7 @@ func MakeTestBlockForUserSettingsStream(
 		},
 	}
 
-	mb, err := NewMiniblockInfoFromHeaderAndParsed(nodeWallet, header, []*ParsedEvent{event})
+	mb, err := NewMiniblockInfoFromHeaderAndParsed(nodeWallet, header, []*ParsedEvent{event}, nil)
 	require.NoError(t, err)
 
 	return mb

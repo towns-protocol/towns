@@ -166,6 +166,10 @@ func (s *Service) proposeMiniblock(
 
 	resp, err := view.ProposeNextMiniblock(ctx, s.chainConfig.Get(), req)
 	if err != nil {
+		// Err_MINIBLOCK_TOO_NEW indicates that the local node is behind the stream head.
+		if IsRiverErrorCode(err, Err_MINIBLOCK_TOO_NEW) {
+			s.cache.SubmitSyncStreamTask(stream, nil)
+		}
 		return nil, err
 	}
 

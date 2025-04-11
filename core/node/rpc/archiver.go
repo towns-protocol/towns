@@ -304,13 +304,13 @@ type ArchiveStream struct {
 
 func NewArchiveStream(
 	streamId StreamId,
-	nn *[]common.Address,
+	nn []common.Address,
 	lastKnownMiniblock uint64,
 	maxConsecutiveFailedUpdates uint32,
 ) *ArchiveStream {
 	stream := &ArchiveStream{
 		streamId: streamId,
-		nodes:    nodes.NewStreamNodesWithLock(len(*nn), *nn, common.Address{}),
+		nodes:    nodes.NewStreamNodesWithLock(len(nn), nn, common.Address{}),
 		corrupt:  NewStreamCorruptionTracker(maxConsecutiveFailedUpdates),
 	}
 	stream.numBlocksInContract.Store(int64(lastKnownMiniblock + 1))
@@ -531,7 +531,7 @@ func (a *Archiver) GetCorruptStreams(ctx context.Context) []scrub.CorruptStreamR
 func (a *Archiver) addNewStream(
 	ctx context.Context,
 	streamId StreamId,
-	nn *[]common.Address,
+	nn []common.Address,
 	lastKnownMiniblock uint64,
 ) {
 	_, loaded := a.streams.LoadOrStore(
@@ -690,15 +690,13 @@ func (a *Archiver) ArchiveStream(ctx context.Context, stream *ArchiveStream) (er
 			return nil
 		}
 
-		msg := resp.Msg
-
 		// Validate miniblocks are sequential.
 		// TODO: validate miniblock signatures.
 		var serialized []*storage.WriteMiniblockData
-		for i, mb := range msg.Miniblocks {
+		for i, mb := range resp.Msg.Miniblocks {
 			// Parse header
 			info, err := events.NewMiniblockInfoFromProto(
-				mb, msg.GetMiniblockSnapshot(int64(i)+mbsInDb),
+				mb, resp.Msg.GetMiniblockSnapshot(int64(i)+mbsInDb),
 				events.NewParsedMiniblockInfoOpts().
 					WithExpectedBlockNumber(int64(i)+mbsInDb).
 					WithDoNotParseEvents(true),
@@ -927,15 +925,15 @@ func (a *Archiver) startImpl(ctx context.Context, once bool, metrics infra.Metri
 	if err := a.contract.ForAllStreams(
 		ctx,
 		blockNum,
-		func(stream *registries.GetStreamResult) bool {
-			if stream.StreamId == registries.ZeroBytes32 {
+		func(stream *river.StreamWithId) bool {
+			if stream.Id == registries.ZeroBytes32 {
 				return true
 			}
 			if a.tasksWG != nil {
 				a.tasksWG.Add(1)
 			}
 
-			a.addNewStream(ctx, stream.StreamId, &stream.Nodes, stream.LastMiniblockNum)
+			a.addNewStream(ctx, stream.Id, stream.Nodes(), uint64(stream.LastMbNum()))
 			return true
 		},
 	); err != nil {
@@ -962,15 +960,15 @@ func (a *Archiver) startImpl(ctx context.Context, once bool, metrics infra.Metri
 
 func (a *Archiver) onStreamAllocated(ctx context.Context, event *river.StreamState) {
 	a.newStreamAllocated.Add(1)
-	id := event.StreamID
-	a.addNewStream(ctx, id, &event.Nodes, 0)
+	id := event.GetStreamId()
+	a.addNewStream(ctx, id, event.Stream.Nodes(), 0)
 	a.tasks <- id
 }
 
 func (a *Archiver) onStreamAdded(ctx context.Context, event *river.StreamState) {
 	a.newStreamAllocated.Add(1)
-	id := event.StreamID
-	a.addNewStream(ctx, id, &event.Stream.Nodes, 0)
+	id := event.GetStreamId()
+	a.addNewStream(ctx, id, event.Stream.Nodes(), 0)
 	a.tasks <- id
 }
 
@@ -980,14 +978,14 @@ func (a *Archiver) onStreamPlacementUpdated(
 ) {
 	a.streamPlacementUpdated.Add(1)
 
-	id := event.StreamID
+	id := event.GetStreamId()
 	record, loaded := a.streams.Load(id)
 	if !loaded {
 		logging.FromCtx(ctx).Errorw("onStreamPlacementUpdated: Stream not found in map", "streamId", id)
 		return
 	}
 	stream := record.(*ArchiveStream)
-	stream.nodes.ResetFromStreamState(event, common.Address{})
+	stream.nodes.ResetFromStreamWithId(event.Stream, common.Address{})
 }
 
 func (a *Archiver) onStreamLastMiniblockUpdated(

@@ -180,17 +180,12 @@ func (s *Service) createReplicatedMediaStream(
 	streamId StreamId,
 	parsedEvents []*ParsedEvent,
 ) (*CreationCookie, error) {
-	mb, sn, err := MakeGenesisMiniblock(s.wallet, parsedEvents)
+	mb, err := MakeGenesisMiniblock(s.wallet, parsedEvents)
 	if err != nil {
 		return nil, err
 	}
 
 	mbBytes, err := proto.Marshal(mb)
-	if err != nil {
-		return nil, err
-	}
-
-	snBytes, err := proto.Marshal(sn)
 	if err != nil {
 		return nil, err
 	}
@@ -207,10 +202,7 @@ func (s *Service) createReplicatedMediaStream(
 	// Create ephemeral stream within the local node
 	if isLocal {
 		sender.AddTask(func(ctx context.Context) error {
-			return s.storage.CreateEphemeralStreamStorage(ctx, streamId, &storage.WriteMiniblockData{
-				Data:     mbBytes,
-				Snapshot: snBytes,
-			})
+			return s.storage.CreateEphemeralStreamStorage(ctx, streamId, &storage.WriteMiniblockData{Data: mbBytes})
 		})
 	}
 
@@ -227,7 +219,6 @@ func (s *Service) createReplicatedMediaStream(
 				&AllocateEphemeralStreamRequest{
 					StreamId:  streamId[:],
 					Miniblock: mb,
-					Snapshot:  sn,
 				},
 			),
 		)

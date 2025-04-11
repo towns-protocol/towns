@@ -662,7 +662,7 @@ func runStreamGetCmd(cmd *cobra.Command, args []string) error {
 		}
 
 		fmt.Print(info.Ref, "  ", info.Header().GetTimestamp().AsTime().Local())
-		if info.Header().GetSnapshot() != nil {
+		if info.Header().IsSnapshot() {
 			fmt.Print(" SNAPSHOT")
 		}
 		fmt.Println()

@@ -55,7 +55,9 @@
         "Celestia",
         "POAP",
         "POAPs",
-        "pprof"
+        "pprof",
+        "unstaking",
+        "unstake"
     ],
     "allowCompoundWords": true,
     "ignoreRegExpList": [

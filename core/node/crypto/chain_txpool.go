@@ -16,7 +16,7 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/linkdata/deadlock"
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/puzpuzpuz/xsync/v3"
+	"github.com/puzpuzpuz/xsync/v4"
 	"github.com/towns-protocol/towns/core/config"
 	. "github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/infra"
@@ -106,7 +106,7 @@ type (
 
 	// pendingTransactionPool keeps track of transactions that are submitted but the receipt has not been retrieved.
 	pendingTransactionPool struct {
-		pendingTxs *xsync.MapOf[uint64, *txPoolPendingTransaction]
+		pendingTxs *xsync.Map[uint64, *txPoolPendingTransaction]
 
 		client  BlockchainClient
 		wallet  *Wallet
@@ -194,7 +194,7 @@ func newPendingTransactionPool(
 	)
 
 	ptp := &pendingTransactionPool{
-		pendingTxs:    xsync.NewMapOf[uint64, *txPoolPendingTransaction](),
+		pendingTxs:    xsync.NewMap[uint64, *txPoolPendingTransaction](),
 		client:        client,
 		wallet:        wallet,
 		chainID:       chainID.Uint64(),

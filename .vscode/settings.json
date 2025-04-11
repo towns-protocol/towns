@@ -12,9 +12,9 @@
     "./packages/web3",
   ],
   "[solidity]": {
-    "editor.defaultFormatter": "NomicFoundation.hardhat-solidity"
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
-  "solidity.formatter": "forge",
+  "solidity.formatter": "prettier",
   "go.lintTool": "golangci-lint",
   "go.lintFlags": [
     "--fast"

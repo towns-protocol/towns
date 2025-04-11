@@ -2,20 +2,11 @@ import 'fake-indexeddb/auto' // used to mock indexdb in dexie, don't remove
 import {
     isDecryptedEvent,
     makeRiverConfig,
-    makeSignerContext,
     makeStreamRpcClient,
-    NotificationService,
     randomUrlSelector,
 } from '@towns-protocol/sdk'
 import { check } from '@towns-protocol/dlog'
-import {
-    DmChannelSettingValue,
-    GdmChannelSettingValue,
-    InfoRequestSchema,
-    GetSettingsRequestSchema,
-    GetSettingsResponseSchema,
-    SetDmGdmSettingsRequestSchema,
-} from '@towns-protocol/proto'
+import { InfoRequestSchema } from '@towns-protocol/proto'
 import { EncryptionDelegate } from '@towns-protocol/encryption'
 import { makeStressClient } from './utils/stressClient'
 import { expect, isSet } from './utils/expect'
@@ -25,7 +16,7 @@ import { ethers, Wallet } from 'ethers'
 import { RedisStorage } from './utils/storage'
 import { createRiverRegistry } from '@towns-protocol/web3'
 import { getLogger } from './utils/logger'
-import { create, toJson } from '@bufbuild/protobuf'
+import { create } from '@bufbuild/protobuf'
 
 check(isSet(process.env.RIVER_ENV), 'process.env.RIVER_ENV')
 
@@ -149,41 +140,9 @@ async function demoExternalStoreage() {
     }
 }
 
-const registerNotificationService = async () => {
-    // demo connecting to the notification service
-    const notificationServiceUrl = 'https://river-notification-service-alpha.towns.com/' // ?? 'http://localhost:4040
-    if (!notificationServiceUrl) {
-        logger.info('NOTIFICATION_SERVICE_URL is not set')
-        return
-    }
-
-    const wallet = ethers.Wallet.createRandom()
-    const delegateWallet = ethers.Wallet.createRandom()
-    const signerContext = await makeSignerContext(wallet, delegateWallet, { days: 1 })
-
-    const { startResponse, finishResponse, notificationRpcClient } =
-        await NotificationService.authenticate(signerContext, notificationServiceUrl)
-    logger.info({ startResponse, finishResponse }, 'authenticated')
-
-    let settings = await notificationRpcClient.getSettings(create(GetSettingsRequestSchema, {}))
-    logger.info(toJson(GetSettingsResponseSchema, settings), 'settings')
-
-    const response = await notificationRpcClient.setDmGdmSettings(
-        create(SetDmGdmSettingsRequestSchema, {
-            dmGlobal: DmChannelSettingValue.DM_MESSAGES_NO,
-            gdmGlobal: GdmChannelSettingValue.GDM_MESSAGES_NO,
-        }),
-    )
-    logger.info(response, 'set settings response')
-    settings = await notificationRpcClient.getSettings(create(GetSettingsRequestSchema, {}))
-    logger.info(toJson(GetSettingsResponseSchema, settings), 'new settings')
-}
-
 logger.info(getSystemInfo(), 'system info')
 
 const run = async () => {
-    logger.debug('========================registerNotificationService========================')
-    await registerNotificationService()
     logger.debug('========================storage========================')
     await demoExternalStoreage()
     logger.debug('==========================spamInfo==========================')

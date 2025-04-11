@@ -6,7 +6,6 @@ WORKDIR /river
 COPY ./package.json ./package.json
 COPY ./.yarn/plugins ./.yarn/plugins
 COPY ./.yarn/releases ./.yarn/releases
-COPY ./remappings.txt ./remappings.txt
 COPY ./.yarnrc.yml ./.yarnrc.yml
 COPY ./buf.yaml ./buf.yaml
 COPY ./lerna.json ./lerna.json

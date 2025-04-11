@@ -32,13 +32,10 @@ func (s *Service) localGetMiniblocks(
 	}
 
 	miniblocks := make([]*Miniblock, len(mbsInfo))
-	var snapshots map[int64]*Envelope
-	if !req.Msg.GetOmitSnapshots() {
-		snapshots = make(map[int64]*Envelope)
-	}
+	snapshots := make(map[int64]*Envelope)
 	for i, info := range mbsInfo {
 		miniblocks[i] = info.Proto
-		if !req.Msg.GetOmitSnapshots() {
+		if !req.Msg.GetOmitSnapshots() && info.Snapshot != nil {
 			snapshots[info.Ref.Num] = info.Snapshot
 		}
 	}
@@ -59,6 +56,10 @@ func (s *Service) localGetMiniblocks(
 		FromInclusive: fromInclusive,
 		Limit:         limit,
 		OmitSnapshots: req.Msg.GetOmitSnapshots(),
+	}
+
+	if !req.Msg.GetOmitSnapshots() {
+		resp.Snapshots = snapshots
 	}
 
 	return connect.NewResponse(resp), nil
