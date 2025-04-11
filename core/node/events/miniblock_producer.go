@@ -166,6 +166,7 @@ func (p *miniblockProducer) onNewBlock(ctx context.Context, blockNum crypto.Bloc
 	if !p.onNewBlockMutex.TryLock() {
 		return
 	}
+
 	// don't block the chain monitor
 	go func() {
 		defer p.onNewBlockMutex.Unlock()
@@ -191,6 +192,7 @@ func (p *miniblockProducer) scheduleCandidates(ctx context.Context, blockNum cry
 			)
 			continue
 		}
+
 		j := p.trySchedule(ctx, stream)
 		if j != nil {
 			scheduled = append(scheduled, j)

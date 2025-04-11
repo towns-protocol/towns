@@ -145,7 +145,7 @@ func (j *mbJob) processRemoteProposals(ctx context.Context) ([]*mbProposal, *Str
 		return nil, nil, RiverError(
 			Err_MINIBLOCK_TOO_OLD,
 			"mbJob.processRemoteProposals: stream advanced in the meantime (1)",
-		)
+		).Tags("minipool.gen", view.minipool.generation, "req.newminiblocknum", request.NewMiniblockNum)
 	}
 
 	// Apply received MissingEvents, even if there are not enough quorum of proposals.
