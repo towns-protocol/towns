@@ -107,12 +107,10 @@ const TownsTextEditorWithoutBoundary = ({
     )
     const { channelMentions } = useEditorChannelData(channels)
 
-    const onDetectAddress = useCallback(async (address: string, chain: string) => {
-        console.log('ttt ETH address detected:', address, chain)
+    const onContractAddressAdded = useCallback(async (address: string, chain: string) => {
         void fetchCoinData(address, chain).then((coinData) => {
-            console.log('ttt coinData:', coinData)
             setTickerAttachments((prev) => [
-                ...prev,
+                ...prev.filter((t) => t.address !== address),
                 {
                     type: 'ticker',
                     id: address,
@@ -133,20 +131,18 @@ const TownsTextEditorWithoutBoundary = ({
     }, [])
 
     const onAddTickerAttachment = useCallback((ticker: TMentionTicker) => {
-        console.log('ttt ticker:', ticker)
-        console.trace('ttt ticker')
-        // setTickerAttachments((prev) => [
-        //     ...prev,
-        //     {
-        //         type: 'ticker',
-        //         id: ticker.address,
-        //         address: ticker.address,
-        //         chainId: ticker.chain,
-        //         coinData: {
-        //             ...ticker,
-        //         },
-        //     } satisfies TickerAttachment & { coinData?: TMentionTicker },
-        // ])
+        setTickerAttachments((prev) => [
+            ...prev.filter((t) => t.address !== ticker.address),
+            {
+                type: 'ticker',
+                id: ticker.address,
+                address: ticker.address,
+                chainId: ticker.chain,
+                coinData: {
+                    ...ticker,
+                },
+            } satisfies TickerAttachment & { coinData?: TMentionTicker },
+        ])
     }, [])
 
     const onRemoveTickerAttachment = useCallback(
@@ -322,7 +318,7 @@ const TownsTextEditorWithoutBoundary = ({
                     allowEmptyMessage={allowEmptyMessage}
                     onSelectTicker={onAddTickerAttachment}
                     onRemoveTicker={onRemoveTickerAttachment}
-                    onDetectAddress={onDetectAddress}
+                    onDetectAddress={onContractAddressAdded}
                     onMessageLinksUpdated={onMessageLinksUpdated}
                     onRemoveUnfurledLinkAttachment={onRemoveUnfurledLinkAttachment}
                     onSend={sendMessage}
