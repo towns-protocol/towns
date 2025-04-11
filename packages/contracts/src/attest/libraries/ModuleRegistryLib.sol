@@ -92,14 +92,6 @@ library ModuleRegistryLib {
         return getLayout().modules[module].uid;
     }
 
-    function getModuleClients(address module) internal view returns (address[] memory clients) {
-        Attestation memory att = AttestationLib.getAttestation(getModuleVersion(module));
-        (, clients, , , ) = abi.decode(
-            att.data,
-            (address, address[], address, bytes32[], ExecutionManifest)
-        );
-    }
-
     function getModule(address module) internal view returns (Attestation memory att) {
         return AttestationLib.getAttestation(getModuleVersion(module));
     }

@@ -93,4 +93,12 @@ contract ModularAccount is IERC6900Account, TokenOwnableBase, Facet {
     function accountId() external pure returns (string memory) {
         return "towns.modular.account";
     }
+
+    function isClientEntitled(
+        address module,
+        address client,
+        bytes32 permission
+    ) external view returns (bool) {
+        return ModularAccountLib.isEntitled(module, client, permission);
+    }
 }

@@ -19,6 +19,7 @@ import {LibCall} from "solady/utils/LibCall.sol";
 
 // types
 import {ExecutionManifest, ManifestExecutionFunction, ManifestExecutionHook} from "@erc6900/reference-implementation/interfaces/IERC6900ExecutionModule.sol";
+import {Attestation} from "@ethereum-attestation-service/eas-contracts/Common.sol";
 
 // contracts
 
@@ -44,7 +45,7 @@ library ModularAccountLib {
         ExecutionManifest memory moduleManifest = checkManifest(module, manifest);
 
         // get the module group id from the module registry
-        (bytes32 moduleGroupId, address[] memory clients) = getModule(module);
+        (bytes32 moduleGroupId, address[] memory clients, ) = getModule(module);
 
         uint256 clientsLength = clients.length;
         for (uint256 i; i < clientsLength; ++i) {
@@ -100,7 +101,7 @@ library ModularAccountLib {
         ExecutionManifest calldata manifest,
         bytes calldata uninstallData
     ) internal {
-        (bytes32 moduleGroupId, address[] memory clients) = getModule(module);
+        (bytes32 moduleGroupId, address[] memory clients, ) = getModule(module);
 
         // Remove hooks first
         uint256 executionHooksLength = manifest.executionHooks.length;
@@ -137,12 +138,46 @@ library ModularAccountLib {
     }
 
     // Getters
+    function isEntitled(
+        address module,
+        address client,
+        bytes32 permission
+    ) internal view returns (bool) {
+        (, address[] memory clients, bytes32[] memory permissions) = getModule(module);
+
+        uint256 clientsLength = clients.length;
+        uint256 permissionsLength = permissions.length;
+
+        // has to be both in the clients array and the permissions array
+        bool isClient = false;
+        for (uint256 i; i < clientsLength; ++i) {
+            if (clients[i] == client) {
+                isClient = true;
+                break;
+            }
+        }
+
+        if (!isClient) return false;
+
+        for (uint256 i; i < permissionsLength; ++i) {
+            if (permissions[i] == permission) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     function getModule(
         address target
-    ) internal view returns (bytes32 uid, address[] memory clients) {
+    ) internal view returns (bytes32 uid, address[] memory clients, bytes32[] memory permissions) {
         address appRegistry = DependencyLib.getDependency("AppRegistry");
-        uid = IModuleRegistry(appRegistry).getModuleVersion(target);
-        clients = IModuleRegistry(appRegistry).getModuleClients(target);
+        Attestation memory att = IModuleRegistry(appRegistry).getModule(target);
+        uid = att.uid;
+        (, clients, , permissions, ) = abi.decode(
+            att.data,
+            (address, address[], address, bytes32[], ExecutionManifest)
+        );
     }
 
     function getImplementation(address factory, bytes32 id) internal view returns (address) {

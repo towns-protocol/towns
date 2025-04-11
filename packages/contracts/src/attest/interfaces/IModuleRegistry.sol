@@ -27,11 +27,6 @@ interface IModuleRegistry {
     /// @return The attestation UID representing the current version
     function getModuleVersion(address module) external view returns (bytes32);
 
-    /// @notice Get the client address for a module
-    /// @param module The module address
-    /// @return The list of client addresses
-    function getModuleClients(address module) external view returns (address[] memory);
-
     /// @notice Register a new module with permissions
     /// @param module The module address to register
     /// @param owner The owner address that can update/revoke the module

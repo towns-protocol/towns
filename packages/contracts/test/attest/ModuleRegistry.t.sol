@@ -140,7 +140,11 @@ contract ModuleRegistryTest is BaseSetup {
         vm.prank(owner);
         moduleRegistry.registerModule(module, owner, clients);
 
-        address[] memory retrievedClients = moduleRegistry.getModuleClients(module);
+        Attestation memory att = moduleRegistry.getModule(module);
+        (, address[] memory retrievedClients, , , ) = abi.decode(
+            att.data,
+            (address, address[], address, bytes32[], ExecutionManifest)
+        );
         assertEq(retrievedClients.length, clients.length);
         assertEq(retrievedClients[0], clients[0]);
         assertEq(retrievedClients[1], clients[1]);

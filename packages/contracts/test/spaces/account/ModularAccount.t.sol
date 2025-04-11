@@ -90,6 +90,19 @@ contract ModularAccountTest is BaseSetup, IOwnableBase {
             value: 0,
             data: abi.encodeWithSelector(mockModule.mockFunction.selector)
         });
+
+        assertEq(
+            modularAccount.isClientEntitled(address(mockModule), client, keccak256("Read")),
+            true
+        );
+        assertEq(
+            modularAccount.isClientEntitled(address(mockModule), client, keccak256("Write")),
+            true
+        );
+        assertEq(
+            modularAccount.isClientEntitled(address(mockModule), client, keccak256("Create")),
+            false
+        );
     }
 
     function test_uninstallExecution() external givenModuleIsInstalled {
