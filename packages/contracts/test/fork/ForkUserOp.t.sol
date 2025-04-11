@@ -12,7 +12,7 @@ import {IReview, IReviewBase} from "src/spaces/facets/review/IReview.sol";
 import {SimpleAccount} from "account-abstraction/samples/SimpleAccount.sol";
 import {SimpleAccountFactory} from "account-abstraction/samples/SimpleAccountFactory.sol";
 import {ReviewFacet} from "src/spaces/facets/review/ReviewFacet.sol";
-import {TestUtils} from "test/utils/TestUtils.sol";
+import {TestUtils} from "@towns-protocol/diamond/test/TestUtils.sol";
 
 contract ForkUserOp is TestUtils {
     SimpleAccountFactory internal simpleAccountFactory;

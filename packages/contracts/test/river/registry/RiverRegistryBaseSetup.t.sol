@@ -13,7 +13,7 @@ import {IStreamRegistry} from "src/river/registry/facets/stream/IStreamRegistry.
 // libraries
 
 // contracts
-import {TestUtils} from "test/utils/TestUtils.sol";
+import {TestUtils} from "@towns-protocol/diamond/test/TestUtils.sol";
 
 // deployments
 import {DeployRiverRegistry} from "scripts/deployments/diamonds/DeployRiverRegistry.s.sol";

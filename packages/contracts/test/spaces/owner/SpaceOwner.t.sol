@@ -3,20 +3,17 @@ pragma solidity ^0.8.23;
 
 // interfaces
 import {IERC4906} from "@openzeppelin/contracts/interfaces/IERC4906.sol";
-
 import {IOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
-
 import {IERC721ABase} from "src/diamond/facets/token/ERC721A/IERC721A.sol";
 import {IGuardian} from "src/spaces/facets/guardian/IGuardian.sol";
 import {ISpaceOwnerBase} from "src/spaces/facets/owner/ISpaceOwner.sol";
-import {Validator__InvalidAddress, Validator__InvalidStringLength} from "src/utils/Validator.sol";
+import {Validator__InvalidAddress, Validator__InvalidStringLength} from "src/utils/libraries/Validator.sol";
 
 // libraries
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 import {LibString} from "solady/utils/LibString.sol";
 
 // contracts
-
 import {SpaceOwner} from "src/spaces/facets/owner/SpaceOwner.sol";
 import {BaseSetup} from "test/spaces/BaseSetup.sol";
 

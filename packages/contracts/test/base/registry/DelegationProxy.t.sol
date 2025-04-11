@@ -7,7 +7,7 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {Initializable_AlreadyInitialized} from "@towns-protocol/diamond/src/facets/initializable/Initializable.sol";
 import {DeployTownsBase} from "scripts/deployments/utils/DeployTownsBase.s.sol";
 import {DelegationProxy} from "src/base/registry/facets/distribution/v2/DelegationProxy.sol";
-import {TestUtils} from "test/utils/TestUtils.sol";
+import {TestUtils} from "@towns-protocol/diamond/test/TestUtils.sol";
 import {LibClone} from "solady/utils/LibClone.sol";
 import {UpgradeableBeacon} from "solady/utils/UpgradeableBeacon.sol";
 

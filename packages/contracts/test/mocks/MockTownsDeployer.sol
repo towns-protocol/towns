@@ -4,11 +4,10 @@ pragma solidity ^0.8.23;
 // interfaces
 
 // libraries
-import {Create2Utils} from "src/utils/Create2Utils.sol";
+import {Create2Utils} from "src/utils/libraries/Create2Utils.sol";
 
 // contracts
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
-
 import {Towns} from "src/tokens/towns/base/Towns.sol";
 import {MockTowns} from "test/mocks/MockTowns.sol";
 

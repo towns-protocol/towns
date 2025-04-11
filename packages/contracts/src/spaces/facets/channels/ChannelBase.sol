@@ -8,7 +8,7 @@ import {IChannelBase} from "./IChannel.sol";
 
 // services
 import {ChannelService} from "./ChannelService.sol";
-import {Validator} from "src/utils/Validator.sol";
+import {Validator} from "../../../utils/libraries/Validator.sol";
 
 abstract contract ChannelBase is IChannelBase {
     function _createChannel(

@@ -2,7 +2,7 @@
 pragma solidity ^0.8.23;
 
 import {SolanaUtils} from "src/factory/facets/wallet-link/libraries/SolanaUtils.sol";
-import {TestUtils} from "test/utils/TestUtils.sol";
+import {TestUtils} from "@towns-protocol/diamond/test/TestUtils.sol";
 import {SCL_EIP6565_UTILS} from "crypto-lib/lib/libSCL_eddsaUtils.sol";
 import {LibBytes} from "solady/utils/LibBytes.sol";
 

@@ -2,7 +2,7 @@
 pragma solidity ^0.8.19;
 
 // utils
-import {TestUtils} from "test/utils/TestUtils.sol";
+import {TestUtils} from "@towns-protocol/diamond/test/TestUtils.sol";
 
 //interfaces
 import {IMembershipPricing} from "src/spaces/facets/membership/pricing/IMembershipPricing.sol";

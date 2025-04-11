@@ -8,7 +8,7 @@ import {IAuthorizedClaimersBase} from "src/tokens/mainnet/claimer/IAuthorizedCla
 
 import {DeployAuthorizedClaimers} from "scripts/deployments/utils/DeployAuthorizedClaimers.s.sol";
 import {AuthorizedClaimers} from "src/tokens/mainnet/claimer/AuthorizedClaimers.sol";
-import {TestUtils} from "test/utils/TestUtils.sol";
+import {TestUtils} from "@towns-protocol/diamond/test/TestUtils.sol";
 
 contract AuthorizedClaimersTest is TestUtils, IAuthorizedClaimersBase {
     DeployAuthorizedClaimers internal deployAuthorizedClaimers = new DeployAuthorizedClaimers();

@@ -2,7 +2,7 @@
 pragma solidity ^0.8.23;
 
 // utils
-import {TestUtils} from "test/utils/TestUtils.sol";
+import {TestUtils} from "@towns-protocol/diamond/test/TestUtils.sol";
 
 //interfaces
 import {IEntitlementBase} from "src/spaces/entitlements/IEntitlement.sol";

@@ -6,7 +6,7 @@ import {ISpaceOwnerBase} from "./ISpaceOwner.sol";
 
 // libraries
 import {SpaceOwnerStorage} from "./SpaceOwnerStorage.sol";
-import {Validator} from "src/utils/Validator.sol";
+import {Validator} from "../../../utils/libraries/Validator.sol";
 
 // contracts
 

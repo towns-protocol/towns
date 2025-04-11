@@ -2,23 +2,19 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-
 import {IEntitlement} from "src/spaces/entitlements/IEntitlement.sol";
 import {IEntitlementDataQueryable} from "src/spaces/facets/entitlements/extensions/IEntitlementDataQueryable.sol";
 import {IEntitlementGatedBase} from "src/spaces/facets/gated/IEntitlementGated.sol";
 import {IRolesBase} from "src/spaces/facets/roles/IRoles.sol";
 
 // libraries
-
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import {ChannelService} from "src/spaces/facets/channels/ChannelService.sol";
 import {EntitlementGatedStorage} from "src/spaces/facets/gated/EntitlementGatedStorage.sol";
 import {RolesStorage} from "src/spaces/facets/roles/RolesStorage.sol";
-import {StringSet} from "src/utils/StringSet.sol";
-import {StringSet} from "src/utils/StringSet.sol";
+import {StringSet} from "../../../../utils/libraries/StringSet.sol";
 
 // contracts
-
 import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
 import {RolesBase} from "src/spaces/facets/roles/RolesBase.sol";
 

@@ -2,7 +2,7 @@
 pragma solidity ^0.8.24;
 
 // utils
-import {TestUtils} from "test/utils/TestUtils.sol";
+import {TestUtils} from "@towns-protocol/diamond/test/TestUtils.sol";
 
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import {IEntitlementBase} from "src/spaces/entitlements/IEntitlement.sol";
