@@ -40,9 +40,8 @@ describe('membershipManagement', () => {
         const spaceDapp = createSpaceDapp(bobProvider, baseConfig.chainConfig)
 
         // create a user stream
-        const { fixedPricingModuleAddress, freeAllocation, price } = await getFreeSpacePricingSetup(
-            spaceDapp,
-        )
+        const { fixedPricingModuleAddress, freeAllocation, price } =
+            await getFreeSpacePricingSetup(spaceDapp)
 
         // create a space stream,
         log('Bob created user, about to create space')
