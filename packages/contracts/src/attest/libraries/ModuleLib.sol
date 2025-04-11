@@ -217,6 +217,7 @@ library ModuleLib {
         if (module == address(0)) InvalidAddressInput.selector.revertWith();
         if (owner == address(0)) InvalidAddressInput.selector.revertWith();
         if (clients.length == 0) InvalidArrayInput.selector.revertWith();
+        if (msg.sender != owner) NotModuleOwner.selector.revertWith();
 
         for (uint256 i = 0; i < clients.length; i++) {
             if (clients[i] == address(0)) InvalidAddressInput.selector.revertWith();

@@ -42,7 +42,7 @@ library HookLib {
         bytes4 selector,
         uint32 entityId,
         bool isPre,
-        bool isPostHook
+        bool isPost
     ) internal {
         HookStorage.Layout storage db = HookStorage.getLayout();
         bytes32 hookId = HookStorage.createHookId(module, entityId);
@@ -59,11 +59,13 @@ library HookLib {
 
         if (isPre) {
             config.preHooks.add(hookId);
-        } else {
+        }
+
+        if (isPost) {
             config.postHooks.add(hookId);
         }
 
-        emit HookAdded(module, selector, entityId, isPre, isPostHook);
+        emit HookAdded(module, selector, entityId, isPre, isPost);
     }
 
     function removeHook(address module, bytes4 selector, uint32 entityId) internal {

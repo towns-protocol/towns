@@ -16,6 +16,7 @@ contract MockSavingsModule is ITownsModule {
     event Deposited(address indexed account, uint256 amount);
     event Withdrawn(address indexed account, uint256 amount);
     event InterestAccrued(address indexed account, uint256 amount);
+    event HookFunctionCalled(address indexed account, uint256 amount);
 
     // State variables
     mapping(address => uint256) public balances;
@@ -53,6 +54,7 @@ contract MockSavingsModule is ITownsModule {
      */
     function executionManifest() external pure returns (ExecutionManifest memory) {
         ManifestExecutionFunction[] memory functions = new ManifestExecutionFunction[](2);
+        ManifestExecutionHook[] memory hooks = new ManifestExecutionHook[](1);
 
         // Deposit function
         functions[0] = ManifestExecutionFunction({
@@ -68,12 +70,36 @@ contract MockSavingsModule is ITownsModule {
             allowGlobalValidation: true
         });
 
+        // Hook function to call after deposit
+        // the hook is called before and after the deposit function
+        hooks[0] = ManifestExecutionHook({
+            executionSelector: this.deposit.selector,
+            entityId: 0,
+            isPreHook: true,
+            isPostHook: true
+        });
+
         return
             ExecutionManifest({
                 executionFunctions: functions,
-                executionHooks: new ManifestExecutionHook[](0),
+                executionHooks: hooks,
                 interfaceIds: new bytes4[](0)
             });
+    }
+
+    function preExecutionHook(
+        uint32,
+        address,
+        uint256,
+        bytes calldata
+    ) external payable returns (bytes memory) {
+        emit HookFunctionCalled(msg.sender, msg.value);
+        return "";
+    }
+
+    function postExecutionHook(uint32, bytes calldata) external payable returns (bytes memory) {
+        emit HookFunctionCalled(msg.sender, msg.value);
+        return "";
     }
 
     /**
