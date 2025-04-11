@@ -8,9 +8,11 @@ import {BaseSetup} from "test/spaces/BaseSetup.sol";
 import {IOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
 import {ExecutorTypes} from "src/spaces/facets/account/libraries/ExecutorTypes.sol";
 import {ISchemaResolver} from "@ethereum-attestation-service/eas-contracts/resolver/ISchemaResolver.sol";
+import {IERC6900Account} from "@erc6900/reference-implementation/interfaces/IERC6900Account.sol";
 
 // types
 import {ExecutionManifest} from "@erc6900/reference-implementation/interfaces/IERC6900ExecutionModule.sol";
+import {Attestation} from "@ethereum-attestation-service/eas-contracts/Common.sol";
 
 //libraries
 import {Time} from "@openzeppelin/contracts/utils/types/Time.sol";
@@ -24,8 +26,6 @@ import {MockERC721} from "test/mocks/MockERC721.sol";
 import {MockModule} from "test/mocks/MockModule.sol";
 
 contract ModularAccountTest is BaseSetup, IOwnableBase {
-    bytes32 public constant MODULE_GROUP_ID = "MODULE_GROUP_ID";
-
     SchemaRegistry internal schemaRegistry;
     ModuleRegistry internal moduleRegistry;
     ModularAccount internal modularAccount;
@@ -63,49 +63,71 @@ contract ModularAccountTest is BaseSetup, IOwnableBase {
         client = _randomAddress();
     }
 
-    function test_installExecution() external {
-        address module = address(new MockModule(false));
-
-        ExecutionManifest memory manifest = mockModule.executionManifest();
-
+    modifier givenModuleIsInstalled() {
         // setup clients
         address[] memory clients = new address[](1);
         clients[0] = client;
 
         vm.prank(dev);
-        moduleGroupId = moduleRegistry.registerModule(module, dev, clients);
+        moduleGroupId = moduleRegistry.registerModule(address(mockModule), dev, clients);
+
+        ExecutionManifest memory manifest = mockModule.executionManifest();
 
         vm.prank(founder);
-        modularAccount.installExecution(module, manifest, "");
+        emit IERC6900Account.ExecutionInstalled(address(mockModule), manifest);
+        modularAccount.installExecution(address(mockModule), manifest, "");
+        _;
     }
 
-    // function test_installExecution() external {
-    //     ExecutionManifest memory manifest = mockModule.executionManifest();
+    function test_installExecution() external givenModuleIsInstalled {
+        vm.prank(client);
+        vm.expectEmit(address(mockModule));
+        emit MockModule.MockFunctionCalled(address(modularAccount), 0);
+        modularAccount.execute({
+            target: address(mockModule),
+            value: 0,
+            data: abi.encodeWithSelector(mockModule.mockFunction.selector)
+        });
+    }
 
-    //     bytes memory installData = abi.encode("test installation data");
+    function test_uninstallExecution() external givenModuleIsInstalled {
+        ExecutionManifest memory manifest = mockModule.executionManifest();
 
-    //     // Install the module
-    //     vm.prank(founder);
-    //     modularAccount.installExecution(address(mockModule), manifest, installData);
+        vm.prank(founder);
+        modularAccount.uninstallExecution(address(mockModule), manifest, "");
 
-    //     bytes32 expectedGroupId = keccak256(abi.encode(MODULE_GROUP_ID, address(mockModule)));
+        bytes memory expectedRevert = abi.encodeWithSelector(
+            ExecutorTypes.UnauthorizedCall.selector,
+            client,
+            address(mockModule),
+            mockModule.mockFunction.selector
+        );
 
-    //     // Assert that the module was installed
-    //     (bool hasAccess, uint32 executionDelay) = modularAccount.hasGroupAccess(
-    //         expectedGroupId,
-    //         address(mockModule)
-    //     );
-    //     assertEq(hasAccess, true);
-    //     assertEq(executionDelay, 0);
+        vm.prank(client);
+        vm.expectRevert(expectedRevert);
+        modularAccount.execute({
+            target: address(mockModule),
+            value: 0,
+            data: abi.encodeWithSelector(mockModule.mockFunction.selector)
+        });
+    }
 
-    //     // Execute some code
-    //     vm.prank(address(mockModule));
-    //     vm.expectEmit(address(mockModule));
-    //     emit MockModule.MockFunctionCalled(address(modularAccount), 0);
-    //     modularAccount.execute(
-    //         address(mockModule),
-    //         0,
-    //         abi.encodeWithSelector(mockModule.mockFunction.selector)
-    //     );
-    // }
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                       Savings Module                       */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+    function test_savingsModule() external givenModuleIsInstalled {
+        address savingsModule = address(new SavingsModule());
+
+        address[] memory clients = new address[](1);
+        clients[0] = client;
+
+        // vm.prank(dev);
+        // moduleGroupId = moduleRegistry.registerModule(address(mockModule), dev, clients);
+
+        // ExecutionManifest memory manifest = mockModule.executionManifest();
+
+        // vm.prank(founder);
+        // emit IERC6900Account.ExecutionInstalled(address(mockModule), manifest);
+        // modularAccount.installExecution(address(mockModule), manifest, "");
+    }
 }

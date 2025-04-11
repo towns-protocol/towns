@@ -140,7 +140,7 @@ contract Executor is TokenOwnableBase, IExecutor {
         uint256 value,
         bytes calldata data
     ) external payable onlyAuthorized(target) returns (uint32 nonce) {
-        return ExecutorLib.execute(target, value, data);
+        (, nonce) = ExecutorLib.execute(target, value, data);
     }
 
     /// @inheritdoc IExecutor

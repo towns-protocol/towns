@@ -247,7 +247,11 @@ library ExecutorLib {
         return nonce;
     }
 
-    function execute(address target, uint256 value, bytes calldata data) internal returns (uint32) {
+    function execute(
+        address target,
+        uint256 value,
+        bytes calldata data
+    ) internal returns (bytes memory result, uint32 nonce) {
         address caller = msg.sender;
         bytes4 selector = checkSelector(data);
 
@@ -260,7 +264,6 @@ library ExecutorLib {
         }
 
         bytes32 operationId = hashOperation(caller, target, data);
-        uint32 nonce;
 
         // If caller is authorized, check operation was scheduled early enough
         // Consume an available schedule even if there is no currently enforced delay
@@ -276,14 +279,14 @@ library ExecutorLib {
         ExecutorStorage.getLayout().executionId = _hashExecutionId(target, checkSelector(data));
 
         // Call the target
-        LibCall.callContract(target, value, data);
+        result = LibCall.callContract(target, value, data);
 
         // Run post hooks after execution (will run even if execution fails)
         HookLib.executePostHooks(selector);
 
         // Reset the executionId
         ExecutorStorage.getLayout().executionId = executionIdBefore;
-        return nonce;
+        return (result, nonce);
     }
 
     function cancel(address caller, address target, bytes calldata data) internal returns (uint32) {

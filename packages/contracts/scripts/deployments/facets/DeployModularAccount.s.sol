@@ -4,16 +4,19 @@ pragma solidity ^0.8.23;
 // interfaces
 import {IDiamond} from "@towns-protocol/diamond/src/IDiamond.sol";
 
+// libraries
 import {DeployLib} from "@towns-protocol/diamond/scripts/common/DeployLib.sol";
+
+// contracts
 import {ModularAccount} from "src/spaces/facets/account/ModularAccount.sol";
 
 library DeployModularAccount {
     function selectors() internal pure returns (bytes4[] memory _selectors) {
         _selectors = new bytes4[](4);
-        _selectors[0] = ModularAccount.installExecution.selector;
-        _selectors[1] = ModularAccount.uninstallExecution.selector;
-        _selectors[2] = ModularAccount.hasGroupAccess.selector;
-        _selectors[3] = ModularAccount.execute.selector;
+        _selectors[0] = ModularAccount.execute.selector;
+        _selectors[1] = ModularAccount.executeBatch.selector;
+        _selectors[2] = ModularAccount.installExecution.selector;
+        _selectors[3] = ModularAccount.uninstallExecution.selector;
     }
 
     function makeCut(

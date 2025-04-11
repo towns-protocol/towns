@@ -6,6 +6,7 @@ import {ExecutionManifest} from "@erc6900/reference-implementation/interfaces/IE
 import {ISchemaResolver} from "@ethereum-attestation-service/eas-contracts/resolver/ISchemaResolver.sol";
 
 // libraries
+import {Attestation} from "@ethereum-attestation-service/eas-contracts/Common.sol";
 
 // contracts
 
@@ -15,6 +16,11 @@ interface IModuleRegistry {
     /// @notice Get the active schema ID used for module attestations
     /// @return The schema ID
     function getModuleSchemaId() external view returns (bytes32);
+
+    /// @notice Get the attestation for a module
+    /// @param module The module address
+    /// @return The attestation
+    function getModule(address module) external view returns (Attestation memory);
 
     /// @notice Get the current version (attestation UID) for a module
     /// @param module The module address

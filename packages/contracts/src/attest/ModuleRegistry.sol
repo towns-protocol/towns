@@ -8,8 +8,10 @@ import {ISchemaResolver} from "@ethereum-attestation-service/eas-contracts/resol
 // libraries
 import {ModuleLib} from "./libraries/ModuleLib.sol";
 import {SchemaLib} from "./libraries/SchemaLib.sol";
+
 // types
 import {ExecutionManifest} from "@erc6900/reference-implementation/interfaces/IERC6900ExecutionModule.sol";
+import {Attestation} from "@ethereum-attestation-service/eas-contracts/Common.sol";
 
 // contracts
 import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
@@ -34,8 +36,15 @@ contract ModuleRegistry is IModuleRegistry, OwnableBase, Facet {
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                           Module Functions                      */
+    /*                           Module Functions                 */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @notice Get the attestation for a module
+    /// @param module The module address
+    /// @return att The attestation
+    function getModule(address module) external view returns (Attestation memory att) {
+        return ModuleLib.getModule(module);
+    }
 
     /// @notice Get the current version (attestation UID) for a module
     /// @param module The module address

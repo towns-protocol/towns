@@ -100,6 +100,10 @@ library ModuleLib {
         );
     }
 
+    function getModule(address module) internal view returns (Attestation memory att) {
+        return AttestationLib.getAttestation(getModuleVersion(module));
+    }
+
     function addModule(
         address module,
         address owner,

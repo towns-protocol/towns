@@ -9,7 +9,6 @@ contract MockModule is ITownsModule {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           EVENTS                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
     event MockFunctionCalled(address caller, uint256 value);
     event MockFunctionWithParamsCalled(address caller, uint256 value, string param);
     event OnInstallCalled(address caller, bytes data);
@@ -33,11 +32,6 @@ contract MockModule is ITownsModule {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                      MODULE METADATA                       */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-    function moduleName() external pure returns (string memory) {
-        return "MockModule";
-    }
-
     function moduleId() external pure returns (string memory) {
         return "mock-module";
     }
@@ -117,7 +111,7 @@ contract MockModule is ITownsModule {
             allowGlobalValidation: true
         });
 
-        bytes4[] memory interfaceIds = new bytes4[](0);
+        bytes4[] memory interfaceIds;
 
         return
             ExecutionManifest({
@@ -125,10 +119,6 @@ contract MockModule is ITownsModule {
                 executionHooks: executionHooks,
                 interfaceIds: interfaceIds
             });
-    }
-
-    function isModuleType(bytes4 typeID) external pure returns (bool) {
-        return typeID == type(IERC6900ExecutionModule).interfaceId;
     }
 
     function supportsInterface(bytes4 interfaceId) external pure returns (bool) {
