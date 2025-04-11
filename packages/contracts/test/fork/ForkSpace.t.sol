@@ -9,7 +9,7 @@ import {IArchitectBase} from "src/factory/facets/architect/IArchitect.sol";
 // contracts
 
 import {SpaceHelper} from "test/spaces/SpaceHelper.sol";
-import {TestUtils} from "test/utils/TestUtils.sol";
+import {TestUtils} from "@towns-protocol/diamond/test/TestUtils.sol";
 
 import {ICreateSpace} from "src/factory/facets/create/ICreateSpace.sol";
 
