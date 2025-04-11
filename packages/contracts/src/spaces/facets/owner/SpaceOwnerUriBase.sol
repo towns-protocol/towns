@@ -5,7 +5,6 @@ pragma solidity ^0.8.23;
 import {ISpaceOwnerBase} from "src/spaces/facets/owner/ISpaceOwner.sol";
 
 // libraries
-
 import {Validator} from "../../../utils/libraries/Validator.sol";
 import {LibString} from "solady/utils/LibString.sol";
 

@@ -5,7 +5,6 @@ pragma solidity ^0.8.19;
 import {TestUtils} from "@towns-protocol/diamond/test/TestUtils.sol";
 
 //interfaces
-
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
 import {IPausableBase} from "@towns-protocol/diamond/src/facets/pausable/IPausable.sol";
@@ -19,7 +18,6 @@ import {DeployRiverMigration} from "scripts/deployments/diamonds/DeployRiverMigr
 import {MockERC20} from "test/mocks/MockERC20.sol";
 
 // facets
-
 import {PausableFacet} from "@towns-protocol/diamond/src/facets/pausable/PausableFacet.sol";
 import {TokenMigrationFacet} from "src/tokens/migration/TokenMigration.sol";
 

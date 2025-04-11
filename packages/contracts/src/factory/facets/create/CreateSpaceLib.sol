@@ -2,15 +2,12 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-
 import {ITokenOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/token/ITokenOwnable.sol";
 import {IManagedProxyBase} from "@towns-protocol/diamond/src/proxy/managed/IManagedProxy.sol";
 import {IProxyManager} from "@towns-protocol/diamond/src/proxy/manager/IProxyManager.sol";
-
 import {IERC721A} from "src/diamond/facets/token/ERC721A/IERC721A.sol";
 import {IArchitectBase} from "src/factory/facets/architect/IArchitect.sol";
 import {IEntitlement} from "src/spaces/entitlements/IEntitlement.sol";
-
 import {IRuleEntitlement} from "src/spaces/entitlements/rule/IRuleEntitlement.sol";
 import {IUserEntitlement} from "src/spaces/entitlements/user/IUserEntitlement.sol";
 import {IChannel} from "src/spaces/facets/channels/IChannel.sol";
@@ -20,7 +17,6 @@ import {IPrepay} from "src/spaces/facets/prepay/IPrepay.sol";
 import {IRoles, IRolesBase} from "src/spaces/facets/roles/IRoles.sol";
 
 // libraries
-
 import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import {ArchitectStorage} from "src/factory/facets/architect/ArchitectStorage.sol";
@@ -30,7 +26,6 @@ import {StringSet} from "../../../utils/libraries/StringSet.sol";
 import {Validator} from "../../../utils/libraries/Validator.sol";
 
 // contracts
-
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import {PricingModulesBase} from "src/factory/facets/architect/pricing/PricingModulesBase.sol";
 import {SpaceProxy} from "src/spaces/facets/proxy/SpaceProxy.sol";

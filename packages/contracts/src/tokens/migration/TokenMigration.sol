@@ -2,19 +2,16 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-
 import {ITokenMigration} from "./ITokenMigration.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 // libraries
-
 import {TokenMigrationStorage} from "./TokenMigrationStorage.sol";
 import {Validator} from "../../utils/libraries/Validator.sol";
 import {CustomRevert} from "src/utils/libraries/CustomRevert.sol";
 import {SafeTransferLib} from "solady/utils/SafeTransferLib.sol";
 
 // contracts
-
 import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
 import {OwnableBase} from "@towns-protocol/diamond/src/facets/ownable/OwnableBase.sol";
 import {PausableBase} from "@towns-protocol/diamond/src/facets/pausable/PausableBase.sol";

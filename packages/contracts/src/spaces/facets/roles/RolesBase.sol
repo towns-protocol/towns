@@ -4,14 +4,13 @@ pragma solidity ^0.8.23;
 // interfaces
 import {IRolesBase} from "./IRoles.sol";
 import {IEntitlement} from "src/spaces/entitlements/IEntitlement.sol";
-// libraries
 
+// libraries
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import {StringSet} from "../../../utils/libraries/StringSet.sol";
 import {Validator} from "../../../utils/libraries/Validator.sol";
 
 // services
-
 import {RolesStorage} from "./RolesStorage.sol";
 import {ChannelService} from "src/spaces/facets/channels/ChannelService.sol";
 import {EntitlementsManagerService} from "src/spaces/facets/entitlements/EntitlementsManagerService.sol";

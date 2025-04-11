@@ -3,23 +3,19 @@ pragma solidity ^0.8.23;
 
 // interfaces
 import {ILegacyArchitectBase} from "./IMockLegacyArchitect.sol";
-
 import {ITokenOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/token/ITokenOwnable.sol";
 import {IManagedProxyBase} from "@towns-protocol/diamond/src/proxy/managed/IManagedProxy.sol";
 import {IProxyManager} from "@towns-protocol/diamond/src/proxy/manager/IProxyManager.sol";
-
 import {IERC721A} from "src/diamond/facets/token/ERC721A/IERC721A.sol";
 import {IEntitlement} from "src/spaces/entitlements/IEntitlement.sol";
 import {IRuleEntitlement} from "src/spaces/entitlements/rule/IRuleEntitlement.sol";
 import {IUserEntitlement} from "src/spaces/entitlements/user/IUserEntitlement.sol";
-
 import {IChannel} from "src/spaces/facets/channels/IChannel.sol";
 import {IEntitlementsManager} from "src/spaces/facets/entitlements/IEntitlementsManager.sol";
 import {IMembershipBase} from "src/spaces/facets/membership/IMembership.sol";
 import {IRoles, IRolesBase} from "src/spaces/facets/roles/IRoles.sol";
 
 // libraries
-
 import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import {ArchitectStorage} from "src/factory/facets/architect/ArchitectStorage.sol";
@@ -29,7 +25,6 @@ import {StringSet} from "src/utils/libraries/StringSet.sol";
 import {Validator} from "src/utils/libraries/Validator.sol";
 
 // contracts
-
 import {SpaceProxy} from "src/spaces/facets/proxy/SpaceProxy.sol";
 import {SpaceProxyInitializer} from "src/spaces/facets/proxy/SpaceProxyInitializer.sol";
 import {Factory} from "src/utils/libraries/Factory.sol";
