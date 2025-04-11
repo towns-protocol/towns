@@ -3,7 +3,7 @@ import debug from 'debug'
 import React, { useCallback, useEffect, useMemo } from 'react'
 import { useLocation, useNavigate } from 'react-router'
 import { Link } from 'react-router-dom'
-import { useConnectivity, useContractSpaceInfoWithoutClient } from 'use-towns-client'
+import { useConnectivity, useContractSpaceInfoWithoutClient, useMyProfile } from 'use-towns-client'
 import { getTownDataFromSSR } from 'utils/parseTownDataFromSSR'
 import { AppProgressState } from '@components/AppProgressOverlay/AppProgressState'
 import { LogoSingleLetter } from '@components/Logo/Logo'
@@ -23,6 +23,11 @@ import { AppProgressOverlayTrigger } from '@components/AppProgressOverlay/AppPro
 import { usePublicTownsPageAnalyticsEvent } from '@components/Analytics/usePublicTownPageAnalyticsEvent'
 import { useStartupTime } from 'StartupProvider'
 import { AppStoreBanner } from '@components/AppStoreBanner/AppStoreBanner'
+import { AppBugReportButton } from '@components/AppBugReport/AppBugReportButton'
+import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
+import { shortAddress } from 'ui/utils/utils'
+import { useMyAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
+import { Avatar } from '@components/Avatar/Avatar'
 import { BottomBarContent } from './BottomBarContent'
 
 const log = debug('app:public-town')
@@ -150,11 +155,14 @@ const Header = (props: { isPreview: boolean; onClosePreview?: () => void }) => {
                         <LogoSingleLetter />
                     </Link>
                 ) : null}
+
                 <Box grow />
+
                 {isPreview ? (
                     <IconButton hoverable icon="close" color="default" onClick={onClosePreview} />
                 ) : !isAuthenticated ? (
                     <Stack horizontal gap="sm">
+                        <AppBugReportButton />
                         <Button
                             tone="lightHover"
                             color="default"
@@ -174,7 +182,16 @@ const Header = (props: { isPreview: boolean; onClosePreview?: () => void }) => {
                             Log In
                         </Button>
                     </Stack>
-                ) : null}
+                ) : (
+                    <>
+                        {isTouch ? (
+                            <Stack horizontal gap="sm">
+                                <AppBugReportButton />
+                                <LoggedUserAvatar />
+                            </Stack>
+                        ) : null}
+                    </>
+                )}
             </Stack>
         </Box>
     )
@@ -197,6 +214,102 @@ const MessageBox = ({ children, ...boxProps }: BoxProps) => (
         </Box>
     </Box>
 )
+
+const LoggedUserAvatar = () => {
+    const profileUser = useMyProfile()
+    const { isAuthenticated } = useConnectivity()
+
+    if (!isAuthenticated || !profileUser) {
+        return
+    }
+
+    return (
+        <Box
+            hoverable
+            cursor="pointer"
+            tooltip={<LoggedUserMenu />}
+            tooltipOptions={{
+                placement: 'vertical',
+                trigger: 'click',
+                align: 'end',
+            }}
+        >
+            <Avatar size="avatar_x4" userId={profileUser.userId} />
+        </Box>
+    )
+}
+
+const LoggedUserMenu = () => {
+    const { logout } = useCombinedAuth()
+    const { data: abstractAccountAddress } = useMyAbstractAccountAddress()
+    const onLogOut = useCallback(() => {
+        logout()
+    }, [logout])
+
+    const navigate = useNavigate()
+    const onBackToApp = useCallback(() => {
+        navigate('/')
+    }, [navigate])
+
+    return (
+        <Box rounded="md" minWidth="250" pointerEvents="all" overflow="hidden" boxShadow="card">
+            <Stack
+                horizontal
+                gap
+                padding
+                hoverable
+                cursor="pointer"
+                alignItems="center"
+                paddingBottom="sm"
+                background="level2"
+                onClick={onBackToApp}
+            >
+                <Icon background="level3" type="arrowLeft" padding="sm" size="square_lg" />
+                <Paragraph>Back to App</Paragraph>
+            </Stack>
+            {abstractAccountAddress && (
+                <Stack
+                    horizontal
+                    gap
+                    padding
+                    hoverable
+                    alignItems="center"
+                    paddingY="sm"
+                    background="level2"
+                >
+                    <Icon background="level3" type="wallet" padding="sm" size="square_lg" />
+
+                    <ClipboardCopy
+                        color="none"
+                        label={shortAddress(abstractAccountAddress)}
+                        clipboardContent={abstractAccountAddress}
+                    />
+                </Stack>
+            )}
+            <Stack
+                padding
+                horizontal
+                gap
+                hoverable
+                paddingTop="sm"
+                background="level2"
+                alignItems="center"
+                color="error"
+                cursor="pointer"
+                onClick={onLogOut}
+            >
+                <Icon
+                    background="level3"
+                    type="logout"
+                    padding="sm"
+                    size="square_lg"
+                    color="inherit"
+                />
+                <Paragraph>Log Out</Paragraph>
+            </Stack>
+        </Box>
+    )
+}
 
 export const TownNotFoundBox = () => (
     <FadeInBox centerContent gap="lg" maxWidth="400" data-testid="town-not-found-box">
