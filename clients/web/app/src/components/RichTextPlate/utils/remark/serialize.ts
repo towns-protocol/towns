@@ -1,3 +1,4 @@
+import { ELEMENT_CONTRACT_ADDRESS } from '@components/RichTextPlate/plugins/createTickerMentionPlugin'
 import { BlockType, LeafType, NodeTypes, defaultNodeTypes } from './ast-types'
 import { BREAK_TAG } from '../helpers'
 
@@ -15,6 +16,7 @@ const MENTION_TYPES = [
     defaultNodeTypes.mention_channel,
     defaultNodeTypes.mention_emoji,
     defaultNodeTypes.mention_ticker,
+    ELEMENT_CONTRACT_ADDRESS,
 ]
 
 const isLeafNode = (node: BlockType | LeafType): node is LeafType => {
@@ -38,7 +40,12 @@ export default function serialize(chunk: BlockType | LeafType, opts: Options = {
 
     // Handle mentions
     if (MENTION_TYPES.includes(type)) {
-        text = (chunk as BlockType).value || ''
+        const c = chunk as BlockType
+        if (type === ELEMENT_CONTRACT_ADDRESS && c?.value) {
+            text = `<${c.value}>`
+        } else {
+            text = c.value || ''
+        }
     }
 
     const nodeTypes: NodeTypes = {

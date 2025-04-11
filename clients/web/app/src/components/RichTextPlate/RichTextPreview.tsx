@@ -13,12 +13,16 @@ import { getChannelNames, getMentionIds } from './utils/helpers'
 import { CodeBlockElement } from './components/plate-ui/CodeBlockElement'
 import {
     TChannelMentionElement,
+    TContractAddressElement,
     TTickerMentionElement,
     TUserIDNameMap,
     TUserMentionElement,
 } from './components/plate-ui/autocomplete/types'
 import { ELEMENT_MENTION_CHANNEL } from './plugins/createChannelPlugin'
-import { ELEMENT_MENTION_TICKER } from './plugins/createTickerMentionPlugin'
+import {
+    ELEMENT_CONTRACT_ADDRESS,
+    ELEMENT_MENTION_TICKER,
+} from './plugins/createTickerMentionPlugin'
 import { MentionElementWithoutPlate } from './components/plate-ui/MentionElement'
 import { ChannelLinkForDisplay } from './components/ChannelLink'
 import * as fieldStyles from '../../ui/components/_internal/Field/Field.css'
@@ -31,7 +35,10 @@ import { ParagraphWithoutPlate } from './components/plate-ui/ParagraphElement'
 import { edited, richText, singleEmojiMessage } from './RichTextEditor.css'
 import MarkdownToJSX from './utils/MarkdownToJSX'
 import { ELEMENT_EDITED } from './utils/remark/remarkEditedAnnotation'
-import { TickerMentionElementWithoutPlate } from './components/plate-ui/TickerMentionElement'
+import {
+    ContractAddressElementWithoutPlate,
+    TickerMentionElementWithoutPlate,
+} from './components/plate-ui/TickerMentionElement'
 
 const fieldClassName = clsx([fieldStyles.field, richText])
 
@@ -143,6 +150,9 @@ export const RichTextPreviewInternal = ({
             [ELEMENT_MENTION_TICKER]: (
                 props: React.PropsWithChildren<{ node: TTickerMentionElement }>,
             ) => <TickerMentionElementWithoutPlate symbol={props.node.value} />,
+            [ELEMENT_CONTRACT_ADDRESS]: (
+                props: React.PropsWithChildren<{ node: TContractAddressElement }>,
+            ) => <ContractAddressElementWithoutPlate address={props.node.address} />,
         }),
         [_onMentionHover, onMentionClick, channels],
     )

@@ -26,6 +26,7 @@ import { useInlineReplyAttchmentPreview } from '@components/EmbeddedMessageAttac
 import { LoadingUnfurledLinkAttachment } from 'hooks/useExtractInternalLinks'
 import { SECOND_MS } from 'data/constants'
 import { useTokenTrackingData } from '@components/Web3/Trading/useTradeAnalytics'
+import { fetchCoinData } from '@components/TradingChart/useCoinData'
 import { RichTextEditor } from './RichTextEditor'
 import { useEditorChannelData, useEditorMemberData } from './hooks/editorHooks'
 import { getChannelNames } from './utils/helpers'
@@ -106,23 +107,48 @@ const TownsTextEditorWithoutBoundary = ({
     )
     const { channelMentions } = useEditorChannelData(channels)
 
-    const onAddTickerAttachment = useCallback(
-        (ticker: TMentionTicker) => {
-            setTickerAttachments([
-                ...tickerAttachments,
+    const onDetectAddress = useCallback(async (address: string, chain: string) => {
+        console.log('ttt ETH address detected:', address, chain)
+        void fetchCoinData(address, chain).then((coinData) => {
+            console.log('ttt coinData:', coinData)
+            setTickerAttachments((prev) => [
+                ...prev,
                 {
                     type: 'ticker',
-                    id: ticker.address,
-                    address: ticker.address,
-                    chainId: ticker.chain,
+                    id: address,
+                    address: address,
+                    chainId: chain,
                     coinData: {
-                        ...ticker,
-                    },
+                        name: coinData?.token.name ?? '',
+                        symbol: coinData?.token.symbol ?? '',
+                        address: coinData?.token.address ?? '',
+                        chain: chain,
+                        marketCap: coinData?.marketCap ?? '',
+                        priceUSD: coinData?.priceUSD ?? '',
+                        imageUrl: coinData?.token.info.imageThumbUrl ?? '',
+                    } satisfies TMentionTicker,
                 } satisfies TickerAttachment & { coinData?: TMentionTicker },
             ])
-        },
-        [tickerAttachments],
-    )
+        })
+    }, [])
+
+    const onAddTickerAttachment = useCallback((ticker: TMentionTicker) => {
+        console.log('ttt ticker:', ticker)
+        console.trace('ttt ticker')
+        // setTickerAttachments((prev) => [
+        //     ...prev,
+        //     {
+        //         type: 'ticker',
+        //         id: ticker.address,
+        //         address: ticker.address,
+        //         chainId: ticker.chain,
+        //         coinData: {
+        //             ...ticker,
+        //         },
+        //     } satisfies TickerAttachment & { coinData?: TMentionTicker },
+        // ])
+    }, [])
+
     const onRemoveTickerAttachment = useCallback(
         (address: string, chainId: string) => {
             setTickerAttachments(
@@ -296,6 +322,7 @@ const TownsTextEditorWithoutBoundary = ({
                     allowEmptyMessage={allowEmptyMessage}
                     onSelectTicker={onAddTickerAttachment}
                     onRemoveTicker={onRemoveTickerAttachment}
+                    onDetectAddress={onDetectAddress}
                     onMessageLinksUpdated={onMessageLinksUpdated}
                     onRemoveUnfurledLinkAttachment={onRemoveUnfurledLinkAttachment}
                     onSend={sendMessage}

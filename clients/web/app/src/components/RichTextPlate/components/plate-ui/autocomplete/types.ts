@@ -52,6 +52,7 @@ export type TComboboxAllData = Channel & TUserWithChannel & TMentionEmoji & TMen
 export type TEmojiMentionElement = TMentionElement & { emoji: TMentionEmoji }
 export type TChannelMentionElement = TMentionElement & { channel: Channel }
 export type TTickerMentionElement = TMentionElement & { ticker: TMentionTicker }
+export type TContractAddressElement = TMentionElement & { address: string; chain: string }
 export type TComboboxItemWithData<T = TMentionComboboxTypes> = {
     key: string
     text: string

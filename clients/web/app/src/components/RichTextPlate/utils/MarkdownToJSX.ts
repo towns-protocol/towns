@@ -13,6 +13,7 @@ import { unified } from 'unified'
 import { ELEMENT_MENTION_CHANNEL } from '../plugins/createChannelPlugin'
 import {
     channelMentionHandler,
+    contractAddressHandler,
     editedHandler,
     listContentHandler,
     tickerMentionHandler,
@@ -26,7 +27,10 @@ import remarkDecodeHTMLCodeBlocks from './remark/remarkDecodeHTMLCodeBlocks'
 import remarkEditedAnnotation, { ELEMENT_EDITED } from './remark/remarkEditedAnnotation'
 import { getChannelNames } from './helpers'
 import { TUserIDNameMap } from '../components/plate-ui/autocomplete/types'
-import { ELEMENT_MENTION_TICKER } from '../plugins/createTickerMentionPlugin'
+import {
+    ELEMENT_CONTRACT_ADDRESS,
+    ELEMENT_MENTION_TICKER,
+} from '../plugins/createTickerMentionPlugin'
 
 type MarkdownRendererProps = React.PropsWithChildren<{
     isEdited?: boolean
@@ -71,12 +75,14 @@ const MarkdownRenderer = ({
                 MentionPlugin.key,
                 ELEMENT_MENTION_CHANNEL,
                 ELEMENT_MENTION_TICKER,
+                ELEMENT_CONTRACT_ADDRESS,
                 'abbr',
             ],
             handlers: {
                 [MentionPlugin.key]: userMentionHandler,
                 [ELEMENT_MENTION_CHANNEL]: channelMentionHandler,
                 [ELEMENT_MENTION_TICKER]: tickerMentionHandler,
+                [ELEMENT_CONTRACT_ADDRESS]: contractAddressHandler,
                 [ListItemContentPlugin.key]: listContentHandler,
                 [ELEMENT_EDITED]: editedHandler,
             },

@@ -1,6 +1,9 @@
 import { MentionPlugin } from '@udecode/plate-mention/react'
 import { LinkPlugin } from '@udecode/plate-link/dist/react'
-import { ELEMENT_MENTION_TICKER } from '@components/RichTextPlate/plugins/createTickerMentionPlugin'
+import {
+    ELEMENT_CONTRACT_ADDRESS,
+    ELEMENT_MENTION_TICKER,
+} from '@components/RichTextPlate/plugins/createTickerMentionPlugin'
 import {
     BlockQuoteNode,
     CodeBlockNode,
@@ -107,7 +110,8 @@ export default function deserialize<T extends InputNodeTypes>(
             } as CodeBlockNode<T>
         case MentionPlugin.key:
         case ELEMENT_MENTION_CHANNEL:
-        case ELEMENT_MENTION_TICKER: {
+        case ELEMENT_MENTION_TICKER:
+        case ELEMENT_CONTRACT_ADDRESS: {
             return node
         }
         case 'html':

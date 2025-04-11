@@ -57,10 +57,18 @@ import {
     TUserWithChannel,
 } from '../components/plate-ui/autocomplete/types'
 import { getUrlHref, isBlockquoteWithEmptyLines, isExactlyUrl } from '../utils/helpers'
-import { ELEMENT_MENTION_TICKER, TickerMentionPlugin } from './createTickerMentionPlugin'
-import { TickerMentionElement } from '../components/plate-ui/TickerMentionElement'
+import {
+    ContractAddressPlugin,
+    ELEMENT_CONTRACT_ADDRESS,
+    ELEMENT_MENTION_TICKER,
+    TickerMentionPlugin,
+} from './createTickerMentionPlugin'
+import {
+    ContractAddressElement,
+    TickerMentionElement,
+} from '../components/plate-ui/TickerMentionElement'
 import { InsertTickerMentionPlugin } from './createInsertTickerMentionPlugin'
-import { createEthAddressPlugin } from './createEthAddressPlugin'
+import { PasteContractAddressPlugin } from './PasteContractAddressPlugin'
 
 const createTownsEditor = (
     uniqueId: string,
@@ -71,6 +79,7 @@ const createTownsEditor = (
     initialValue: Value,
     lookupUser?: ReturnType<typeof useUserLookupContext>['lookupUser'],
     onSelectTicker?: (ticker: TMentionTicker) => void,
+    onDetectAddress?: (address: string, chain: string) => void,
 ) =>
     createPlateEditor({
         plugins: [
@@ -84,11 +93,7 @@ const createTownsEditor = (
                     getUrlHref,
                 },
             }),
-            createEthAddressPlugin({
-                onDetect: (address) => {
-                    console.log('ETH address detected:', address)
-                },
-            }),
+            PasteContractAddressPlugin,
             ParagraphPlugin,
             ListPlugin,
             BoldPlugin,
@@ -139,6 +144,7 @@ const createTownsEditor = (
             UserMentionPlugin,
             EmojiMentionPlugin,
             TickerMentionPlugin,
+            ContractAddressPlugin,
             ResetNodePlugin.configure({
                 options: {
                     rules: nodeResetRules,
@@ -153,6 +159,7 @@ const createTownsEditor = (
             EditorOverridesPlugin,
             InsertTickerMentionPlugin({
                 onInsertTickerMention: onSelectTicker,
+                onInsertContractAddress: onDetectAddress,
             }),
             ErrorHandlingPlugin,
             FormatTextLinkPlugin,
@@ -174,6 +181,7 @@ const createTownsEditor = (
                 [ELEMENT_MENTION_CHANNEL]: ChannelMentionElement,
                 [ELEMENT_MENTION_EMOJI]: EmojiMentionElement,
                 [ELEMENT_MENTION_TICKER]: TickerMentionElement,
+                [ELEMENT_CONTRACT_ADDRESS]: ContractAddressElement,
                 [MentionInputPlugin.key]: withProps(ComboboxContextWrapper, {
                     Component: ComboboxInput,
                     getUserMentions,
