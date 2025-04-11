@@ -7,18 +7,13 @@ import {IWalletLink} from "./IWalletLink.sol";
 // libraries
 import {WalletLib} from "./libraries/WalletLib.sol";
 // contracts
-
-import {WalletLinkBase} from "./WalletLinkBase.sol";
 import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
+import {WalletLinkBase} from "./WalletLinkBase.sol";
 import {OwnableBase} from "@towns-protocol/diamond/src/facets/ownable/OwnableBase.sol";
 
 contract WalletLink is IWalletLink, WalletLinkBase, OwnableBase, Facet {
-    function __WalletLink_init(
-        address delegateRegistry,
-        address sclEip6565
-    ) external onlyInitializing {
+    function __WalletLink_init(address sclEip6565) external onlyInitializing {
         _addInterface(type(IWalletLink).interfaceId);
-        _setDependency(DELEGATE_REGISTRY_V2, delegateRegistry);
         _setDependency(SCL_EIP6565, sclEip6565);
     }
 
@@ -72,18 +67,10 @@ contract WalletLink is IWalletLink, WalletLinkBase, OwnableBase, Facet {
     }
 
     /// @inheritdoc IWalletLink
-    function getWalletsByRootKeyWithDelegations(
+    function getAllWalletsByRootKey(
         address rootKey
-    ) external view returns (address[] memory wallets) {
-        return _getWalletsByRootKeyWithDelegations(rootKey);
-    }
-
-    /// @inheritdoc IWalletLink
-    function explicitWalletsByRootKey(
-        address rootKey,
-        WalletQueryOptions calldata options
     ) external view returns (WalletLib.Wallet[] memory wallets) {
-        return _explicitWalletsByRootKey(rootKey, options);
+        return _getAllWalletsByRootKey(rootKey);
     }
 
     /// @inheritdoc IWalletLink
