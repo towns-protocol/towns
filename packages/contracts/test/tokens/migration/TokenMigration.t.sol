@@ -12,7 +12,7 @@ import {IPausableBase} from "@towns-protocol/diamond/src/facets/pausable/IPausab
 import {ITokenMigrationBase} from "src/tokens/migration/ITokenMigration.sol";
 
 //libraries
-import {Validator__InvalidAddress} from "src/utils/Validator.sol";
+import {Validator__InvalidAddress} from "src/utils/libraries/Validator.sol";
 
 //contracts
 import {DeployRiverMigration} from "scripts/deployments/diamonds/DeployRiverMigration.s.sol";

@@ -9,7 +9,7 @@ import {IOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/IERC173.s
 import {IERC721ABase} from "src/diamond/facets/token/ERC721A/IERC721A.sol";
 import {IGuardian} from "src/spaces/facets/guardian/IGuardian.sol";
 import {ISpaceOwnerBase} from "src/spaces/facets/owner/ISpaceOwner.sol";
-import {Validator__InvalidAddress, Validator__InvalidStringLength} from "src/utils/Validator.sol";
+import {Validator__InvalidAddress, Validator__InvalidStringLength} from "src/utils/libraries/Validator.sol";
 
 // libraries
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";

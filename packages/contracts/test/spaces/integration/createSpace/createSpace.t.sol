@@ -20,7 +20,7 @@ import {IRolesBase} from "src/spaces/facets/roles/IRoles.sol";
 
 // libraries
 import {Permissions} from "src/spaces/facets/Permissions.sol";
-import {Validator__InvalidAddress} from "src/utils/Validator.sol";
+import {Validator__InvalidAddress} from "src/utils/libraries/Validator.sol";
 
 // contracts
 

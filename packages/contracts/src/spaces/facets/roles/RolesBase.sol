@@ -7,8 +7,8 @@ import {IEntitlement} from "src/spaces/entitlements/IEntitlement.sol";
 // libraries
 
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-import {StringSet} from "src/utils/StringSet.sol";
-import {Validator} from "src/utils/Validator.sol";
+import {StringSet} from "../../../utils/libraries/StringSet.sol";
+import {Validator} from "../../../utils/libraries/Validator.sol";
 
 // services
 

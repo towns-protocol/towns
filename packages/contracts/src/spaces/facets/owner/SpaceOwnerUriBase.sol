@@ -6,7 +6,7 @@ import {ISpaceOwnerBase} from "src/spaces/facets/owner/ISpaceOwner.sol";
 
 // libraries
 
-import {Validator} from "src/utils/Validator.sol";
+import {Validator} from "../../../utils/libraries/Validator.sol";
 import {LibString} from "solady/utils/LibString.sol";
 
 // contracts

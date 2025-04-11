@@ -21,7 +21,7 @@ import {RolesBaseSetup} from "test/spaces/roles/RolesBaseSetup.sol";
 // solhint-disable-next-line max-line-length
 import {EntitlementsService__EntitlementDoesNotExist, EntitlementsService__InvalidEntitlementAddress, EntitlementsService__InvalidEntitlementInterface} from "src/spaces/facets/entitlements/EntitlementsManagerService.sol";
 // solhint-disable-next-line max-line-length
-import {Validator__InvalidByteLength, Validator__InvalidStringLength} from "src/utils/Validator.sol";
+import {Validator__InvalidByteLength, Validator__InvalidStringLength} from "src/utils/libraries/Validator.sol";
 // solhint-disable-next-line max-line-length
 
 // mocks

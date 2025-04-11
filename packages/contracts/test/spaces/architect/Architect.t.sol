@@ -36,11 +36,11 @@ import {LibString} from "solady/utils/LibString.sol";
 import {Architect} from "src/factory/facets/architect/Architect.sol";
 
 import {UserEntitlement} from "src/spaces/entitlements/user/UserEntitlement.sol";
-import {Factory} from "src/utils/Factory.sol";
+import {Factory} from "src/utils/libraries/Factory.sol";
 import {MockERC721} from "test/mocks/MockERC721.sol";
 import {BaseSetup} from "test/spaces/BaseSetup.sol";
 // errors
-import {Validator__InvalidStringLength} from "src/utils/Validator.sol";
+import {Validator__InvalidStringLength} from "src/utils/libraries/Validator.sol";
 
 contract ArchitectTest is BaseSetup, IArchitectBase, IOwnableBase, IPausableBase {
     Architect public spaceArchitect;

@@ -9,7 +9,7 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 // libraries
 
 import {TokenMigrationStorage} from "./TokenMigrationStorage.sol";
-import {Validator} from "src/utils/Validator.sol";
+import {Validator} from "../../utils/libraries/Validator.sol";
 import {CustomRevert} from "src/utils/libraries/CustomRevert.sol";
 import {SafeTransferLib} from "solady/utils/SafeTransferLib.sol";
 

@@ -26,8 +26,8 @@ import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet
 import {ArchitectStorage} from "src/factory/facets/architect/ArchitectStorage.sol";
 import {ImplementationStorage} from "src/factory/facets/architect/ImplementationStorage.sol";
 import {Permissions} from "src/spaces/facets/Permissions.sol";
-import {StringSet} from "src/utils/StringSet.sol";
-import {Validator} from "src/utils/Validator.sol";
+import {StringSet} from "../../../utils/libraries/StringSet.sol";
+import {Validator} from "../../../utils/libraries/Validator.sol";
 
 // contracts
 
@@ -35,7 +35,7 @@ import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.s
 import {PricingModulesBase} from "src/factory/facets/architect/pricing/PricingModulesBase.sol";
 import {SpaceProxy} from "src/spaces/facets/proxy/SpaceProxy.sol";
 import {SpaceProxyInitializer} from "src/spaces/facets/proxy/SpaceProxyInitializer.sol";
-import {Factory} from "src/utils/Factory.sol";
+import {Factory} from "../../../utils/libraries/Factory.sol";
 
 library CreateSpaceLib {
     using StringSet for StringSet.Set;
