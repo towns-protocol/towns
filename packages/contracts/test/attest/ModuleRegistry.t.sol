@@ -11,7 +11,7 @@ import {IOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/IERC173.s
 //libraries
 import {Attestation} from "@ethereum-attestation-service/eas-contracts/Common.sol";
 import {AttestationLib} from "src/attest/libraries/AttestationLib.sol";
-import {ModuleLib} from "src/attest/libraries/ModuleLib.sol";
+import {ModuleRegistryLib} from "src/attest/libraries/ModuleRegistryLib.sol";
 
 // types
 import {ExecutionManifest} from "@erc6900/reference-implementation/interfaces/IERC6900ExecutionModule.sol";
@@ -70,6 +70,7 @@ contract ModuleRegistryTest is BaseSetup {
         address[] memory clients = new address[](1);
         clients[0] = _randomAddress();
 
+        vm.prank(owner);
         bytes32 uid = moduleRegistry.registerModule(module, owner, clients);
         assertEq(uid, moduleRegistry.getModuleVersion(module));
     }
@@ -82,13 +83,14 @@ contract ModuleRegistryTest is BaseSetup {
         clients[0] = _randomAddress();
         bytes32[] memory permissions = new bytes32[](1);
         permissions[0] = keccak256("Read");
-        ExecutionManifest memory manifest;
 
         // First registration works
+        vm.prank(owner);
         moduleRegistry.registerModule(module, owner, clients);
 
         // Second registration should revert
-        vm.expectRevert(ModuleLib.ModuleAlreadyRegistered.selector);
+        vm.prank(owner);
+        vm.expectRevert(ModuleRegistryLib.ModuleAlreadyRegistered.selector);
         moduleRegistry.registerModule(module, owner, clients);
     }
 
@@ -99,7 +101,7 @@ contract ModuleRegistryTest is BaseSetup {
         clients[0] = _randomAddress();
 
         // Module address cannot be zero
-        vm.expectRevert(ModuleLib.InvalidAddressInput.selector);
+        vm.expectRevert(ModuleRegistryLib.InvalidAddressInput.selector);
         moduleRegistry.registerModule(address(0), owner, clients);
     }
 
@@ -110,7 +112,7 @@ contract ModuleRegistryTest is BaseSetup {
         clients[0] = _randomAddress();
 
         // Owner address cannot be zero
-        vm.expectRevert(ModuleLib.InvalidAddressInput.selector);
+        vm.expectRevert(ModuleRegistryLib.InvalidAddressInput.selector);
         moduleRegistry.registerModule(module, address(0), clients);
     }
 
@@ -121,7 +123,7 @@ contract ModuleRegistryTest is BaseSetup {
         address[] memory clients = new address[](0);
 
         // Client list cannot be empty
-        vm.expectRevert(ModuleLib.InvalidArrayInput.selector);
+        vm.expectRevert(ModuleRegistryLib.InvalidArrayInput.selector);
         moduleRegistry.registerModule(module, owner, clients);
     }
 
@@ -135,6 +137,7 @@ contract ModuleRegistryTest is BaseSetup {
         clients[0] = _randomAddress();
         clients[1] = _randomAddress();
 
+        vm.prank(owner);
         moduleRegistry.registerModule(module, owner, clients);
 
         address[] memory retrievedClients = moduleRegistry.getModuleClients(module);
@@ -182,7 +185,7 @@ contract ModuleRegistryTest is BaseSetup {
         newPermissions[1] = keccak256("Write");
 
         vm.prank(notOwner);
-        vm.expectRevert(ModuleLib.NotModuleOwner.selector);
+        vm.expectRevert(ModuleRegistryLib.NotModuleOwner.selector);
         moduleRegistry.updateModulePermissions(module, newPermissions);
     }
 
@@ -195,7 +198,7 @@ contract ModuleRegistryTest is BaseSetup {
         newPermissions[1] = keccak256("Write");
 
         vm.prank(owner);
-        vm.expectRevert(ModuleLib.ModuleNotRegistered.selector);
+        vm.expectRevert(ModuleRegistryLib.ModuleNotRegistered.selector);
         moduleRegistry.updateModulePermissions(module, newPermissions);
     }
 
@@ -242,7 +245,7 @@ contract ModuleRegistryTest is BaseSetup {
         address owner = _randomAddress();
 
         vm.prank(owner);
-        vm.expectRevert(ModuleLib.ModuleNotRegistered.selector);
+        vm.expectRevert(ModuleRegistryLib.ModuleNotRegistered.selector);
         moduleRegistry.revokeModule(module);
     }
 
@@ -301,7 +304,7 @@ contract ModuleRegistryTest is BaseSetup {
 
         // Even the admin cannot ban a module that doesn't exist
         vm.prank(deployer);
-        vm.expectRevert(ModuleLib.ModuleNotRegistered.selector);
+        vm.expectRevert(ModuleRegistryLib.ModuleNotRegistered.selector);
         moduleRegistry.adminBanModule(module);
     }
 }

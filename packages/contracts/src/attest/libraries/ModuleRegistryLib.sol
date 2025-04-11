@@ -23,7 +23,7 @@ import {AttestationRequest, RevocationRequestData} from "@ethereum-attestation-s
 
 // contracts
 
-library ModuleLib {
+library ModuleRegistryLib {
     using CustomRevert for bytes4;
     using EnumerableSetLib for EnumerableSetLib.Bytes32Set;
 

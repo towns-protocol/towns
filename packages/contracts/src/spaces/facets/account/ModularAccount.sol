@@ -18,7 +18,7 @@ import {TokenOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/token
 
 /**
  * @title ModularAccount
- * @notice A lightweight modular erc6900 compatible account
+ * @notice A lightweight modular erc6900 semi-compatible account
  * @dev This account is used to execute transactions on behalf of a Space
  */
 contract ModularAccount is IERC6900Account, TokenOwnableBase, Facet {
