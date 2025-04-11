@@ -1,6 +1,6 @@
 import { readFileSync, writeFileSync } from 'node:fs'
 import path from 'node:path'
-import playgroundPackageJson from '../../playground/package.json' assert { type: 'json' }
+import playgroundPackageJson from '../../playground/package.json' with { type: 'json' }
 
 export type CreateRiverBuildAppConfig = {
     projectDir: string

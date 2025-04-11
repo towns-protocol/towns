@@ -4,7 +4,7 @@ import {
     IRolesInterface as LocalhostInterface,
 } from '@towns-protocol/generated/dev/typings/IRoles'
 
-import LocalhostAbi from '@towns-protocol/generated/dev/abis/Roles.abi.json' assert { type: 'json' }
+import LocalhostAbi from '@towns-protocol/generated/dev/abis/Roles.abi.json' with { type: 'json' }
 
 import { ethers } from 'ethers'
 import { BaseContractShim } from './BaseContractShim'
