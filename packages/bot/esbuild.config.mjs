@@ -4,7 +4,7 @@ import esbuildPluginPino from 'esbuild-plugin-pino'
 build({
     bundle: true,
     entryPoints: {
-        node_esbuild: './src/mini-server.ts',
+        node_esbuild: './src/testpad.ts',
     }, // Rename the entry point to control the output file name
     format: 'cjs',
     logLevel: 'info',

@@ -15,7 +15,7 @@ import {
 import { useMutation } from '@tanstack/react-query'
 import { LoaderCircleIcon } from 'lucide-react'
 import { create, toBinary } from '@bufbuild/protobuf'
-import { UserMetadataPayload_EncryptionDeviceSchema } from '@towns-protocol/proto'
+import { ExportedDeviceSchema } from '@towns-protocol/proto'
 import { bin_toBase64 } from '@towns-protocol/dlog'
 import { useEthersSigner } from '@/utils/viem-to-ethers'
 import { useCurrentSpaceId } from '@/hooks/current-space'
@@ -79,7 +79,6 @@ export const MintBotDialog = ({
                 botClient.setUsername(spaceId, `bot-${userId}`),
                 botClient.setDisplayName(spaceId, `bot-${userId}`),
             ])
-            const device = botClient.userDeviceKey()
             await botClient.uploadDeviceKeys()
             const channelId = makeDefaultChannelStreamId(spaceId)
             await botClient.joinStream(channelId, {
@@ -89,14 +88,11 @@ export const MintBotDialog = ({
             const userAddress = await signer.getAddress()
             const { streamId } = await botClient.createDMChannel(userAddress)
 
-            const encryptionDeviceBase64 = bin_toBase64(
-                toBinary(
-                    UserMetadataPayload_EncryptionDeviceSchema,
-                    create(UserMetadataPayload_EncryptionDeviceSchema, {
-                        ...device,
-                    }),
-                ),
-            )
+            const device = await botClient.cryptoBackend?.exportDevice()
+            if (!device) {
+                throw new Error('Failed to export device')
+            }
+            const encryptionDeviceBase64 = bin_toBase64(toBinary(ExportedDeviceSchema, device))
             await botClient.waitForStream(streamId)
             await botClient.sendMessage(
                 streamId,

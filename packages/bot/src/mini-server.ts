@@ -35,9 +35,6 @@ const buildBot = async (mnemonic: string, encryptionDeviceBase64: string, _jwt?:
         bin_fromBase64(encryptionDeviceBase64),
     )
     // TODO: verify jwt
-    // if (!jwt) {
-    //     throw new Error('JWT is required')
-    // }
     const server = new Hono()
     const wallet = ethers.Wallet.fromMnemonic(mnemonic)
     const delegateWallet = ethers.Wallet.createRandom()

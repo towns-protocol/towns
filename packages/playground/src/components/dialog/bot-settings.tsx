@@ -5,7 +5,7 @@ import { isAddress } from 'viem'
 import { useMutation } from '@tanstack/react-query'
 import { AppRegistryService } from '@towns-protocol/sdk'
 import { useSyncAgent } from '@towns-protocol/react-sdk'
-import { bin_fromHexString, bin_toHexString } from '@towns-protocol/dlog'
+import { bin_fromHexString, bin_toString } from '@towns-protocol/dlog'
 import { LoaderCircleIcon } from 'lucide-react'
 import { useAccount } from 'wagmi'
 import { useEthersSigner } from '@/utils/viem-to-ethers'
@@ -85,7 +85,8 @@ export const BotSettingsDialog = ({
                 appId,
                 appOwnerId: bin_fromHexString(userId),
             })
-            return { jwt: bin_toHexString(hs256SharedSecret) }
+            // TODO: the encoding is wrong probably, check if this is correct
+            return { jwtSecret: bin_toString(hs256SharedSecret) }
         },
     })
 
@@ -164,7 +165,7 @@ export const BotSettingsDialog = ({
                                 {registerBotMutation.isPending ? 'Registering...' : 'Register Bot'}
                             </Button>
 
-                            {registerBotMutation.data?.jwt && (
+                            {registerBotMutation.data?.jwtSecret && (
                                 <>
                                     <SecretInformationBanner>
                                         Store this JWT secret in a secure location.
@@ -172,7 +173,7 @@ export const BotSettingsDialog = ({
                                     <div className="flex flex-col gap-2 text-sm">
                                         <p className="text-muted-foreground">JWT Secret</p>
                                         <pre className="max-h-[4lh] overflow-auto whitespace-pre-wrap break-all rounded bg-muted p-2 text-xs">
-                                            {registerBotMutation.data.jwt}
+                                            {registerBotMutation.data.jwtSecret}
                                         </pre>
                                     </div>
                                 </>

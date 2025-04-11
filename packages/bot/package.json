@@ -7,7 +7,7 @@
     "scripts": {
         "build": "node ./esbuild.config.mjs",
         "run-build": "NODE_TLS_REJECT_UNAUTHORIZED=0 node ./dist/node_esbuild.cjs",
-        "dev": "yarn build & yarn run-build",
+        "dev": "yarn clean && yarn build && yarn run-build",
         "cb": "yarn clean && yarn build",
         "clean": "rm -rf dist",
         "lint": "yarn eslint --format unix ./src  --max-warnings=0",
@@ -27,9 +27,11 @@
         "ethers": "^5.7.2",
         "fake-indexeddb": "^4.0.1",
         "hono": "^4.7.6",
+        "jsonwebtoken": "^9.0.2",
         "typed-emitter": "^2.1.0"
     },
     "devDependencies": {
+        "@types/jsonwebtoken": "^9.0.9",
         "@types/node": "^20.14.8",
         "@typescript-eslint/eslint-plugin": "^8.29.0",
         "@typescript-eslint/parser": "^8.29.0",
