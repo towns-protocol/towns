@@ -1,6 +1,6 @@
-/* eslint-disable import/no-extraneous-dependencies */
-// eslint is probably broken for this project, will take a look later
-import { create, toBinary } from '@bufbuild/protobuf'
+/* eslint-disable no-console */
+// TODO: proper logging
+import { create, fromBinary, toBinary } from '@bufbuild/protobuf'
 
 import {
     getRefEventIdFromChannelMessage,
@@ -15,6 +15,10 @@ import {
     createTownsClient,
     type ClientV2,
     type makeRiverConfig,
+    streamIdAsString,
+    make_MemberPayload_KeySolicitation,
+    logNever,
+    userIdFromAddress,
 } from '@towns-protocol/sdk'
 import { Hono, type Context } from 'hono'
 import { serve } from '@hono/node-server'
@@ -26,8 +30,13 @@ import {
     ChannelMessage,
     type Envelope,
     ChannelMessageSchema,
+    AppServiceRequestSchema,
+    AppServiceResponseSchema,
+    type AppServiceResponse,
+    type EventPayload,
+    ExportedDeviceSchema,
 } from '@towns-protocol/proto'
-import { bin_toHexString } from '@towns-protocol/dlog'
+import { bin_fromBase64, bin_toHexString } from '@towns-protocol/dlog'
 import type { GroupEncryptionAlgorithmId } from '@towns-protocol/encryption'
 
 type BasePayload = {
@@ -59,6 +68,7 @@ type BotActions = {
     ) => Promise<{ eventId: string }>
     redactEvent: (channelId: string, refEventId: string) => Promise<{ eventId: string }>
     sendDm: BotActions['sendMessage']
+    sendKeySolicitation: (streamId: string, sessionIds: string[]) => Promise<{ eventId: string }>
     // TODO: sendTip
 }
 
@@ -84,14 +94,132 @@ class Bot extends (EventEmitter as new () => TypedEmitter<BotEvents>) {
     private readonly client: ClientV2<BotActions>
     botId: string
     // private readonly webhookClient: WebhookClient
-    constructor(clientV2: ClientV2<BotActions>) {
+    constructor(clientV2: ClientV2<BotActions>, private readonly jwtSecret: string) {
         super()
         this.client = clientV2
         this.botId = clientV2.userId
         this.server = new Hono()
-        this.server.get('/webhook', (c) => {
-            return c.text('')
+        this.server.post('webhook', (c) => this.webhookResponseHandler(c))
+    }
+
+    start(port: number) {
+        // Maybe we should let the user do this instead, so they can use the runtime that they want (?)
+        serve({ port, fetch: this.server.fetch })
+    }
+
+    private async webhookResponseHandler(c: Context) {
+        const body = await c.req.arrayBuffer()
+        const encryptionDevice = this.client.crypto.getUserDevice()
+        const request = fromBinary(AppServiceRequestSchema, new Uint8Array(body))
+
+        // TODO: check JWT token matches the request JWT from app registry
+        const statusResponse = create(AppServiceResponseSchema, {
+            payload: {
+                case: 'status',
+                value: {
+                    frameworkVersion: 1,
+                    deviceKey: encryptionDevice.deviceKey,
+                    fallbackKey: encryptionDevice.fallbackKey,
+                },
+            },
         })
+        let response: AppServiceResponse = statusResponse
+        if (request.payload.case === 'initialize') {
+            response = create(AppServiceResponseSchema, {
+                payload: {
+                    case: 'initialize',
+                    value: {
+                        encryptionDevice,
+                    },
+                },
+            })
+        } else if (request.payload.case === 'events') {
+            // TODO: handle events
+            for (const event of request.payload.value.events) {
+                // no Promise.all here i think
+                await this.handleEvent(event)
+            }
+            response = statusResponse
+        } else if (request.payload.case === 'status') {
+            // status is default case
+            response = statusResponse
+        }
+
+        c.header('Content-Type', 'application/x-protobuf')
+        return c.body(toBinary(AppServiceResponseSchema, response), 200)
+    }
+
+    private async handleEvent(appEvent: EventPayload) {
+        if (!appEvent.payload.case || !appEvent.payload.value) return
+        const streamId = streamIdAsString(appEvent.payload.value.streamId)
+
+        if (appEvent.payload.case === 'messages') {
+            const groupEncryptionSessionsMessages = await this.client
+                .unpackEnvelopes(appEvent.payload.value.groupEncryptionSessionsMessages)
+                .then((x) =>
+                    x.flatMap((e) => {
+                        if (
+                            e.event.payload.case === 'userInboxPayload' &&
+                            e.event.payload.value.content.case === 'groupEncryptionSessions'
+                        ) {
+                            return e.event.payload.value.content.value
+                        }
+                        return []
+                    }),
+                )
+            // TODO: why we need this?
+            console.log('groupEncryptionSessionsMessages', groupEncryptionSessionsMessages)
+            const messages = await this.client.unpackEnvelopes(appEvent.payload.value.messages)
+            for (const message of messages) {
+                if (!message.event.payload.case) {
+                    continue
+                }
+
+                switch (message.event.payload.case) {
+                    case 'channelPayload':
+                    case 'dmChannelPayload':
+                    case 'gdmChannelPayload': {
+                        // TODO: decrypt message
+                        if (message.event.payload.value.content.case === 'message') {
+                            const encryptedMessage = message.event.payload.value.content.value
+                            console.log(encryptedMessage)
+                            // use my fallback key to decrypt ciphertextS in the group encryption messages
+                            // comma separated liss of decrytion keys, one for each session
+                            const decryptedMessage = await this.client.crypto.decryptWithDeviceKey(
+                                encryptedMessage.ciphertext,
+                                encryptedMessage.senderKey,
+                            )
+                            this.emit('message', this.client, {
+                                userId: userIdFromAddress(message.event.creatorAddress),
+                                eventId: message.hashStr,
+                                channelId: streamId,
+                                message: decryptedMessage,
+                            })
+                        }
+                        break
+                    }
+                    case 'miniblockHeader':
+                    case 'memberPayload':
+                    case 'spacePayload':
+                    case 'userPayload':
+                    case 'userSettingsPayload':
+                    case 'userMetadataPayload':
+                    case 'userInboxPayload':
+                    case 'mediaPayload':
+                        continue
+                    default:
+                        logNever(message.event.payload)
+                }
+            }
+        } else if (appEvent.payload.case === 'solicitation') {
+            const missingSessionIds = appEvent.payload.value.sessionIds.filter(
+                (sessionId) => sessionId !== '',
+            )
+            const { eventId } = await this.client.sendKeySolicitation(streamId, missingSessionIds)
+            console.log('sent key solicitation for sessions:', missingSessionIds, eventId)
+        } else {
+            logNever(appEvent.payload)
+        }
     }
 
     async sendMessage(channelId: string, message: string) {
@@ -154,37 +282,29 @@ class Bot extends (EventEmitter as new () => TypedEmitter<BotEvents>) {
     onStreamMessage(fn: (handler: BotActions, opts: BasePayload & { message: string }) => void) {
         this.on('streamMessage', fn)
     }
+
     // onSlashCommand(command: Commands, fn: (client: BotActions, opts: BasePayload) => void) {
     //     this.cb.onSlashCommand.set(command, fn)
     // }
-
-    start(port: number) {
-        // I would like to let the user do this instead, so they can use the runtime that they want
-        serve({ port, fetch: this.server.fetch })
-    }
-
-    private async webhookResponseHandler(_c: Context) {
-        // - accepts a protobuf payload
-        // - checks that the payload is signed by the bot-registry-server
-        // - processes payload, returns BotWebookResponse
-        // this.emit('streamMessage', this.client, {
-        //     userId: 'bot',
-        //     channelId: 'bot',
-        //     eventId: 'bot',
-        //     message: 'bot',
-        // })
-    }
 }
 
 export const makeTownsBot = async (
-    privateKey: string,
+    mnemonic: string,
+    encryptionDeviceBase64: string,
+    jwtSecret: string,
     env: Parameters<typeof makeRiverConfig>[0],
 ) => {
     const client = await createTownsClient({
-        privateKey,
+        mnemonic,
         env,
+        encryptionDevice: {
+            fromExportedDevice: fromBinary(
+                ExportedDeviceSchema,
+                bin_fromBase64(encryptionDeviceBase64),
+            ),
+        },
     }).then((x) => x.extend(botBotActions))
-    return new Bot(client)
+    return new Bot(client, jwtSecret)
 }
 
 const botBotActions = (client: ClientV2): BotActions => {
@@ -251,6 +371,31 @@ const botBotActions = (client: ClientV2): BotActions => {
         }
     }
 
+    const sendKeySolicitation: BotActions['sendKeySolicitation'] = async (streamId, sessionIds) => {
+        const encryptionDevice = client.crypto.getUserDevice()
+
+        const missingSessionIds = sessionIds.filter((sessionId) => sessionId !== '')
+        const { hash: prevMiniblockHash } = await client.rpc.getLastMiniblockHash({
+            streamId: streamIdAsBytes(streamId),
+        })
+        const event = await makeEvent(
+            client.signer,
+            make_MemberPayload_KeySolicitation({
+                deviceKey: encryptionDevice.deviceKey,
+                fallbackKey: encryptionDevice.fallbackKey,
+                isNewDevice: missingSessionIds.length === 0,
+                sessionIds: missingSessionIds,
+            }),
+            prevMiniblockHash,
+        )
+        const eventId = bin_toHexString(event.hash)
+        const { error } = await client.rpc.addEvent({
+            streamId: streamIdAsBytes(streamId),
+            event,
+        })
+        return { eventId, error }
+    }
+
     const sendMessage: BotActions['sendMessage'] = async (streamId, message, opts) => {
         const payload = create(ChannelMessageSchema, {
             payload: {
@@ -307,5 +452,6 @@ const botBotActions = (client: ClientV2): BotActions => {
         sendDm,
         sendReaction,
         redactEvent,
+        sendKeySolicitation,
     }
 }

@@ -3,6 +3,7 @@ import {
     GroupEncryptionAlgorithmId,
     GroupEncryptionCrypto,
     makeSessionKeys,
+    type EncryptionDeviceInitOpts,
     type IGroupEncryptionClient,
     type UserDevice,
     type UserDeviceCollection,
@@ -24,11 +25,20 @@ import {
     streamIdAsBytes,
     userIdFromAddress,
 } from './id'
-import { make_UserInboxPayload_GroupEncryptionSessions, type ParsedStreamResponse } from './types'
-import { makeEvent, unpackStream } from './sign'
+import {
+    make_UserInboxPayload_GroupEncryptionSessions,
+    type ParsedEvent,
+    type ParsedStreamResponse,
+} from './types'
+import {
+    makeEvent,
+    unpackStream,
+    unpackEnvelope as sdk_unpackEnvelope,
+    unpackEnvelopes as sdk_unpackEnvelopes,
+} from './sign'
 import { bin_toHexString, check } from '@towns-protocol/dlog'
 import { toJsonString } from '@bufbuild/protobuf'
-import { SessionKeysSchema } from '@towns-protocol/proto'
+import { SessionKeysSchema, type Envelope } from '@towns-protocol/proto'
 
 type Client_Base = {
     /** The userId of the Client. */
@@ -49,6 +59,10 @@ type Client_Base = {
     disableSignatureValidation: boolean
     /** Get a stream by streamId and unpack it */
     getStream: (streamId: string) => Promise<ParsedStreamResponse>
+    /** Unpack envelope using client config */
+    unpackEnvelope: (envelope: Envelope) => Promise<ParsedEvent>
+    /** Unpack envelopes using client config */
+    unpackEnvelopes: (envelopes: Envelope[]) => Promise<ParsedEvent[]>
 }
 
 // Main idea behind this is to allow for extension of the client.
@@ -75,19 +89,21 @@ export type Prettify<T> = {
 export const createTownsClient = async (
     params:
         | {
-              privateKey: string
+              mnemonic: string
               env: Parameters<typeof makeRiverConfig>[0]
+              encryptionDevice?: EncryptionDeviceInitOpts
           }
         | {
               bearerToken: string
               env: Parameters<typeof makeRiverConfig>[0]
+              encryptionDevice?: EncryptionDeviceInitOpts
           },
 ): Promise<ClientV2> => {
     const config = makeRiverConfig(params.env)
 
     let signer: SignerContext
-    if ('privateKey' in params) {
-        const wallet = new ethers.Wallet(params.privateKey)
+    if ('mnemonic' in params) {
+        const wallet = ethers.Wallet.fromMnemonic(params.mnemonic)
         const delegateWallet = ethers.Wallet.createRandom()
         signer = await makeSignerContext(wallet, delegateWallet)
     } else {
@@ -114,6 +130,19 @@ export const createTownsClient = async (
             disableHashValidation,
             disableSignatureValidation,
         })
+    }
+
+    const unpackEnvelope = async (envelope: Envelope): Promise<ParsedEvent> => {
+        const { disableHashValidation, disableSignatureValidation } = client
+        return sdk_unpackEnvelope(envelope, {
+            disableHashValidation,
+            disableSignatureValidation,
+        })
+    }
+
+    const unpackEnvelopes = async (envelopes: Envelope[]): Promise<ParsedEvent[]> => {
+        const { disableHashValidation, disableSignatureValidation } = client
+        return sdk_unpackEnvelopes(envelopes, { disableHashValidation, disableSignatureValidation })
     }
 
     const buildGroupEncryptionClient = (): IGroupEncryptionClient => {
@@ -235,7 +264,9 @@ export const createTownsClient = async (
         }
     }
 
+    await cryptoStore.initialize()
     crypto = new GroupEncryptionCrypto(buildGroupEncryptionClient(), cryptoStore)
+    await crypto.init(params.encryptionDevice)
 
     const client = {
         crypto,
@@ -247,6 +278,8 @@ export const createTownsClient = async (
         disableHashValidation: false,
         disableSignatureValidation: false,
         getStream,
+        unpackEnvelope,
+        unpackEnvelopes,
     } satisfies Client_Base
 
     function extend(base: typeof client) {

@@ -17,12 +17,6 @@ module.exports = {
   ignorePatterns: ["dist/**", ".turbo/**", "node_modules/**", "vitest.*"],
   rules: {
     "no-console": "error",
-    "import/no-extraneous-dependencies": [
-      "error",
-      {
-        packageDir: ".",
-      },
-    ],
     "@typescript-eslint/require-await": "off",
     "@typescript-eslint/no-explicit-any": "off",
     "@typescript-eslint/no-unsafe-assignment": "off",
