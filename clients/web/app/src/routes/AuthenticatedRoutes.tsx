@@ -90,6 +90,7 @@ export const AuthenticatedRoutes = () => {
                                         path={`${PATHS.PROFILE}/me`}
                                         element={<TouchProfile />}
                                     />
+                                    <Route path={PATHS.EXPLORE} element={<ExploreMobile />} />
                                     <Route
                                         path={`${PATHS.PROFILE}/:profileId`}
                                         element={<SpaceProfilePanel />}
