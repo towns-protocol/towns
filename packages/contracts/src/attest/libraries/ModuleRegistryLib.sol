@@ -23,7 +23,7 @@ import {AttestationRequest, RevocationRequestData} from "@ethereum-attestation-s
 
 // contracts
 
-library ModuleLib {
+library ModuleRegistryLib {
     using CustomRevert for bytes4;
     using EnumerableSetLib for EnumerableSetLib.Bytes32Set;
 
@@ -92,22 +92,21 @@ library ModuleLib {
         return getLayout().modules[module].uid;
     }
 
-    function getModuleClients(address module) internal view returns (address[] memory clients) {
-        Attestation memory att = AttestationLib.getAttestation(getModuleVersion(module));
-        (, clients, , , ) = abi.decode(
-            att.data,
-            (address, address[], address, bytes32[], ExecutionManifest)
-        );
+    function getModule(address module) internal view returns (Attestation memory att) {
+        return AttestationLib.getAttestation(getModuleVersion(module));
     }
 
     function addModule(
         address module,
         address owner,
-        address[] calldata clients,
-        bytes32[] calldata permissions,
-        ExecutionManifest calldata manifest
+        address[] calldata clients
     ) internal returns (bytes32 version) {
-        _verifyAddModuleInputs(module, owner, clients, permissions);
+        _verifyAddModuleInputs(module, owner, clients);
+
+        bytes32[] memory permissions = ITownsModule(module).requiredPermissions();
+        ExecutionManifest memory manifest = ITownsModule(module).executionManifest();
+
+        if (permissions.length == 0) InvalidArrayInput.selector.revertWith();
 
         Layout storage db = getLayout();
         ModuleInfo storage info = db.modules[module];
@@ -205,19 +204,15 @@ library ModuleLib {
     function _verifyAddModuleInputs(
         address module,
         address owner,
-        address[] calldata clients,
-        bytes32[] calldata permissions
+        address[] memory clients
     ) internal view {
         if (module == address(0)) InvalidAddressInput.selector.revertWith();
         if (owner == address(0)) InvalidAddressInput.selector.revertWith();
-        if (clients.length == 0 || permissions.length == 0) InvalidArrayInput.selector.revertWith();
+        if (clients.length == 0) InvalidArrayInput.selector.revertWith();
+        if (msg.sender != owner) NotModuleOwner.selector.revertWith();
 
         for (uint256 i = 0; i < clients.length; i++) {
             if (clients[i] == address(0)) InvalidAddressInput.selector.revertWith();
-        }
-
-        for (uint256 i = 0; i < permissions.length; i++) {
-            if (permissions[i] == bytes32(0)) InvalidArrayInput.selector.revertWith();
         }
 
         if (

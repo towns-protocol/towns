@@ -15,8 +15,8 @@ library DeployModuleRegistry {
         _selectors = new bytes4[](9);
         _selectors[0] = ModuleRegistry.getModuleSchema.selector;
         _selectors[1] = ModuleRegistry.getModuleSchemaId.selector;
-        _selectors[2] = ModuleRegistry.getModuleVersion.selector;
-        _selectors[3] = ModuleRegistry.getModuleClients.selector;
+        _selectors[2] = ModuleRegistry.getModule.selector;
+        _selectors[3] = ModuleRegistry.getModuleVersion.selector;
         _selectors[4] = ModuleRegistry.registerModule.selector;
         _selectors[5] = ModuleRegistry.updateModulePermissions.selector;
         _selectors[6] = ModuleRegistry.revokeModule.selector;

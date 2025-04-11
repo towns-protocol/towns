@@ -51,11 +51,7 @@ contract MockPlugin is ITownsModule {
         initData = "";
     }
 
-    function moduleName() external pure override returns (string memory) {
-        return "Mock Module";
-    }
-
     function moduleId() external pure override returns (string memory) {
-        return "mock.module.0.1";
+        return "mock.plugin.0.1";
     }
 }

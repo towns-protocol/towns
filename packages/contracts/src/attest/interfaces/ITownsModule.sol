@@ -11,10 +11,6 @@ import {IERC165} from "@openzeppelin/contracts/interfaces/IERC165.sol";
 // contracts
 
 interface ITownsModule is IERC6900Module, IERC6900ExecutionModule {
-    /// @notice Returns the name of the module
-    /// @return name The name of the module
-    function moduleName() external view returns (string memory);
-
     /// @notice Returns the required permissions for the module
     /// @return permissions The required permissions for the module
     function requiredPermissions() external view returns (bytes32[] memory);

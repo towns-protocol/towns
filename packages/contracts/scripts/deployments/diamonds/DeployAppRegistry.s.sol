@@ -18,8 +18,7 @@ import {DeployDiamondLoupe} from "@towns-protocol/diamond/scripts/deployments/fa
 import {DeployIntrospection} from "@towns-protocol/diamond/scripts/deployments/facets/DeployIntrospection.s.sol";
 import {DeployOwnable} from "@towns-protocol/diamond/scripts/deployments/facets/DeployOwnable.s.sol";
 import {DiamondHelper} from "@towns-protocol/diamond/scripts/common/helpers/DiamondHelper.s.sol";
-
-// deployers
+import {DeployMetadataLib} from "scripts/deployments/facets/DeployMetadata.s.sol";
 
 // facets
 import {MultiInit} from "@towns-protocol/diamond/src/initializers/MultiInit.sol";
@@ -30,6 +29,7 @@ import {DeploySchemaRegistry} from "scripts/deployments/facets/DeploySchemaRegis
 contract DeployAppRegistry is DiamondHelper, Deployer {
     DeployFacet private facetHelper = new DeployFacet();
 
+    address internal metadata;
     address internal multiInit;
     address internal diamondCut;
     address internal diamondLoupe;
@@ -49,6 +49,7 @@ contract DeployAppRegistry is DiamondHelper, Deployer {
         diamondLoupe = facetHelper.deploy("DiamondLoupeFacet", deployer);
         introspection = facetHelper.deploy("IntrospectionFacet", deployer);
         ownable = facetHelper.deploy("OwnableFacet", deployer);
+        metadata = facetHelper.deploy("MetadataFacet", deployer);
 
         addFacet(
             DeployDiamondCut.makeCut(diamondCut, IDiamond.FacetCutAction.Add),
@@ -69,6 +70,11 @@ contract DeployAppRegistry is DiamondHelper, Deployer {
             DeployOwnable.makeCut(ownable, IDiamond.FacetCutAction.Add),
             ownable,
             DeployOwnable.makeInitData(deployer)
+        );
+        addFacet(
+            DeployMetadataLib.makeCut(metadata, IDiamond.FacetCutAction.Add),
+            metadata,
+            DeployMetadataLib.makeInitData(bytes32("AppRegistry"), "")
         );
     }
 

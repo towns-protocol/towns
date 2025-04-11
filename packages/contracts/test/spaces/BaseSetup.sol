@@ -181,6 +181,7 @@ contract BaseSetup is TestUtils, EIP712Utils, SpaceHelper {
         ISpaceOwner(spaceOwner).setFactory(spaceFactory);
         IImplementationRegistry(spaceFactory).addImplementation(baseRegistry);
         IImplementationRegistry(spaceFactory).addImplementation(riverAirdrop);
+        IImplementationRegistry(spaceFactory).addImplementation(appRegistry);
         ISpaceDelegation(baseRegistry).setRiverToken(townsToken);
         ISpaceDelegation(baseRegistry).setMainnetDelegation(baseRegistry);
         IMainnetDelegation(baseRegistry).setProxyDelegation(mainnetProxyDelegation);

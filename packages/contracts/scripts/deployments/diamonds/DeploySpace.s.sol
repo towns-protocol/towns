@@ -37,7 +37,7 @@ import {DeployRoles} from "scripts/deployments/facets/DeployRoles.s.sol";
 import {DeploySpaceEntitlementGated} from "scripts/deployments/facets/DeploySpaceEntitlementGated.s.sol";
 import {DeployTipping} from "scripts/deployments/facets/DeployTipping.s.sol";
 import {DeployTreasury} from "scripts/deployments/facets/DeployTreasury.s.sol";
-
+import {DeployModularAccount} from "scripts/deployments/facets/DeployModularAccount.s.sol";
 // Test Facets
 import {DeployMockLegacyMembership} from "scripts/deployments/utils/DeployMockLegacyMembership.s.sol";
 
@@ -61,6 +61,7 @@ contract DeploySpace is IDiamondInitHelper, DiamondHelper, Deployer {
     DeploySpaceEntitlementGated entitlementGatedHelper = new DeploySpaceEntitlementGated();
     DeployTipping tippingHelper = new DeployTipping();
     DeployTreasury treasuryHelper = new DeployTreasury();
+
     // Test Facets
     DeployMockLegacyMembership mockLegacyMembershipHelper = new DeployMockLegacyMembership();
 
@@ -87,6 +88,7 @@ contract DeploySpace is IDiamondInitHelper, DiamondHelper, Deployer {
     address tipping;
     address multiInit;
     address treasury;
+    address modularAccount;
 
     // Test Facets
     address mockLegacyMembership;
@@ -134,6 +136,7 @@ contract DeploySpace is IDiamondInitHelper, DiamondHelper, Deployer {
         treasury = treasuryHelper.deploy(deployer);
 
         membershipTokenHelper.removeSelector(IERC721A.tokenURI.selector);
+        modularAccount = facetHelper.deploy("ModularAccount", deployer);
 
         if (isAnvil()) {
             mockLegacyMembership = mockLegacyMembershipHelper.deploy(deployer);
@@ -160,6 +163,7 @@ contract DeploySpace is IDiamondInitHelper, DiamondHelper, Deployer {
         addCut(reviewHelper.makeCut(review, IDiamond.FacetCutAction.Add));
         addCut(tippingHelper.makeCut(tipping, IDiamond.FacetCutAction.Add));
         addCut(treasuryHelper.makeCut(treasury, IDiamond.FacetCutAction.Add));
+        addCut(DeployModularAccount.makeCut(modularAccount, IDiamond.FacetCutAction.Add));
 
         if (isAnvil()) {
             addCut(
