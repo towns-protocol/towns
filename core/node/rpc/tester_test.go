@@ -833,28 +833,16 @@ func (tc *testClient) say(channelId StreamId, message string) {
 	tc.addEvent(channelId, envelope)
 }
 
-func (tc *testClient) sayWithSession(channelId StreamId, message string, session []byte) {
+func (tc *testClient) sayWithSession(channelId StreamId, message string, session []byte, deviceKey string) {
 	ref := tc.getLastMiniblockHash(channelId)
 	envelope, err := MakeEnvelopeWithPayload(
 		tc.wallet,
-		Make_ChannelPayload_Message_WithSessionBytes(message, session),
+		Make_ChannelPayload_Message_WithSessionBytes(message, session, deviceKey),
 		ref,
 	)
 	tc.require.NoError(err)
 
 	tc.addEvent(channelId, envelope)
-}
-
-func (tc *testClient) findKeySolicitation(channelId StreamId, deviceKey string, session string) {
-	require.EventuallyWithT(func(c *assert.CollectT) {
-		res, err := participantClient.GetStream(tester.ctx, &connect.Request[protocol.GetStreamRequest]{
-			Msg: &protocol.GetStreamRequest{
-				StreamId: channelId[:],
-			},
-		})
-		assert.NoError(c, err)
-		assert.True(c, findKeySolicitation(c, res.Msg.Stream, testEncryptionDevice.DeviceKey, testSession))
-	}, 10*time.Second, 100*time.Millisecond, "App server did not send a key solicitation")
 }
 
 func (tc *testClient) addEvent(streamId StreamId, envelope *Envelope) {
@@ -1164,6 +1152,21 @@ func overAllEvents(
 		}
 	}
 
+	return false
+}
+
+func isKeySolicitation(
+	event *events.ParsedEvent,
+	deviceKey string,
+	sessionId string,
+) bool {
+	if payload := event.Event.GetMemberPayload(); payload != nil {
+		if solicitation := payload.GetKeySolicitation(); solicitation != nil {
+			if solicitation.DeviceKey == deviceKey && slices.Contains(solicitation.SessionIds[:], sessionId) {
+				return true
+			}
+		}
+	}
 	return false
 }
 

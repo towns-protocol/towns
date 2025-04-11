@@ -342,13 +342,18 @@ func Make_ChannelPayload_Message(content string) *StreamEvent_ChannelPayload {
 	}
 }
 
-func Make_ChannelPayload_Message_WithSessionBytes(content string, sessionIdBytes []byte) *StreamEvent_ChannelPayload {
+func Make_ChannelPayload_Message_WithSessionBytes(
+	content string,
+	sessionIdBytes []byte,
+	deviceKey string,
+) *StreamEvent_ChannelPayload {
 	return &StreamEvent_ChannelPayload{
 		ChannelPayload: &ChannelPayload{
 			Content: &ChannelPayload_Message{
 				Message: &EncryptedData{
 					Ciphertext:     content,
 					SessionIdBytes: sessionIdBytes,
+					SenderKey:      deviceKey,
 				},
 			},
 		},

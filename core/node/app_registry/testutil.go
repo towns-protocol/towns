@@ -341,6 +341,7 @@ func (b *TestAppServer) respondToSendMessages(
 					sessions.Ciphertexts[b.encryptionDevice.DeviceKey],
 				),
 				message.Message.SessionIdBytes,
+				b.encryptionDevice.DeviceKey,
 			),
 			&shared.MiniblockRef{
 				Hash: common.Hash(resp.Msg.Hash),
