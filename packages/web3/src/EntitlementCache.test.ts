@@ -2,7 +2,8 @@
  * @group main
  */
 
-import { EntitlementCache, Keyable, CacheResult } from './EntitlementCache'
+import { Keyable } from './Keyable'
+import { EntitlementCache, CacheResult } from './EntitlementCache'
 
 class Key implements Keyable {
     private readonly key: string
