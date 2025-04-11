@@ -26,6 +26,7 @@ import { TouchSearchTab } from './TouchSearchTab'
 import { ValidateMembership } from './ValidateMembership'
 import { DirectMessages } from './DMRoute'
 import { ExploreMobile, ExplorePage } from './ExplorePage/ExplorePage'
+import { TouchTabBarLayout } from './layouts/TouchTabBarLayout'
 
 const BannedTownCheck = () => {
     const spaceId = useSpaceIdFromPathname()
@@ -45,13 +46,25 @@ export const AuthenticatedRoutes = () => {
             {/*
                 space context is "available" but its value `space` remains undefined outside /t/:townId/* 
             */}
-            {isTouch && <Route path={PATHS.EXPLORE} element={<ExploreMobile />} />}
+            {isTouch && (
+                <Route
+                    path={PATHS.EXPLORE}
+                    element={
+                        <TouchTabBarLayout>
+                            <ExploreMobile />
+                        </TouchTabBarLayout>
+                    }
+                />
+            )}
             <Route element={<SpaceContextRoute />}>
                 {isTouch ? (
                     <>
                         <Route path={`${PATHS.SPACES}/new`} element={<CreateTown />} />
-                        <Route path={`${PATHS.SPACES}/:spaceSlug`} element={<BannedTownCheck />}>
-                            <Route element={<ValidateMembership />}>
+                        <Route element={<ValidateMembership />}>
+                            <Route
+                                path={`${PATHS.SPACES}/:spaceSlug`}
+                                element={<BannedTownCheck />}
+                            >
                                 <Route path="" element={<TouchHome />}>
                                     {messageRoutes}
                                     <Route
@@ -87,6 +100,7 @@ export const AuthenticatedRoutes = () => {
                                         path={`${PATHS.PROFILE}/me`}
                                         element={<TouchProfile />}
                                     />
+                                    <Route path={PATHS.EXPLORE} element={<ExploreMobile />} />
                                     <Route
                                         path={`${PATHS.PROFILE}/:profileId`}
                                         element={<SpaceProfilePanel />}
