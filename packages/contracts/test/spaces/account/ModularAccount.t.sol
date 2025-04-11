@@ -21,9 +21,11 @@ import {Time} from "@openzeppelin/contracts/utils/types/Time.sol";
 import {ModularAccount} from "src/spaces/facets/account/ModularAccount.sol";
 import {ModuleRegistry} from "src/attest/ModuleRegistry.sol";
 import {SchemaRegistry} from "src/attest/SchemaRegistry.sol";
+
 // mocks
 import {MockERC721} from "test/mocks/MockERC721.sol";
 import {MockModule} from "test/mocks/MockModule.sol";
+import {MockSavingsModule} from "test/mocks/MockSavingsModule.sol";
 
 contract ModularAccountTest is BaseSetup, IOwnableBase {
     SchemaRegistry internal schemaRegistry;
@@ -116,18 +118,44 @@ contract ModularAccountTest is BaseSetup, IOwnableBase {
     /*                       Savings Module                       */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
     function test_savingsModule() external givenModuleIsInstalled {
-        address savingsModule = address(new SavingsModule());
+        MockSavingsModule savingsModule = new MockSavingsModule();
 
         address[] memory clients = new address[](1);
         clients[0] = client;
 
-        // vm.prank(dev);
-        // moduleGroupId = moduleRegistry.registerModule(address(mockModule), dev, clients);
+        vm.prank(dev);
+        moduleGroupId = moduleRegistry.registerModule(address(savingsModule), dev, clients);
 
-        // ExecutionManifest memory manifest = mockModule.executionManifest();
+        ExecutionManifest memory manifest = savingsModule.executionManifest();
 
-        // vm.prank(founder);
-        // emit IERC6900Account.ExecutionInstalled(address(mockModule), manifest);
-        // modularAccount.installExecution(address(mockModule), manifest, "");
+        vm.prank(founder);
+        modularAccount.installExecution(address(savingsModule), manifest, "");
+
+        vm.deal(address(savingsModule), 5 ether);
+        vm.deal(address(modularAccount), 1 ether);
+
+        vm.prank(client);
+        modularAccount.execute({
+            target: address(savingsModule),
+            value: 1 ether,
+            data: abi.encodeWithSelector(savingsModule.deposit.selector, 1 ether)
+        });
+
+        assertEq(address(savingsModule).balance, 6 ether);
+        assertEq(savingsModule.balances(address(modularAccount)), 1 ether);
+
+        vm.warp(block.timestamp + 100 days);
+
+        uint256 accruedInterest = savingsModule.getCurrentBalance(address(modularAccount));
+
+        vm.prank(client);
+        modularAccount.execute({
+            target: address(savingsModule),
+            value: 0,
+            data: abi.encodeWithSelector(savingsModule.withdraw.selector, accruedInterest)
+        });
+
+        assertEq(address(modularAccount).balance, accruedInterest);
+        assertEq(address(savingsModule).balance, 6 ether - accruedInterest);
     }
 }

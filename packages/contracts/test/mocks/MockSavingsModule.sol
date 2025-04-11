@@ -11,7 +11,7 @@ import {ITownsModule} from "src/attest/interfaces/ITownsModule.sol";
  * @notice A module that manages savings for a ModularAccount space
  * @dev Implements ERC6900 module interface for integration with ModularAccount
  */
-contract SavingsModule is ITownsModule {
+contract MockSavingsModule is ITownsModule {
     // Events
     event Deposited(address indexed account, uint256 amount);
     event Withdrawn(address indexed account, uint256 amount);
@@ -26,7 +26,7 @@ contract SavingsModule is ITownsModule {
     uint256 public constant BASIS_POINTS = 10000;
 
     function moduleId() external pure returns (string memory) {
-        return "towns.savings.module";
+        return "towns.savings.account.module";
     }
 
     function supportsInterface(bytes4 interfaceId) external pure returns (bool) {
