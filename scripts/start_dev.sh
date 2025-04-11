@@ -75,7 +75,7 @@ tmux send-keys -t $SESSION_NAME:'BlockChains_river' "./scripts/start-local-river
 
 
 # Start contract build in background
-pushd contracts
+pushd packages/contracts
 set -a
 . .env.localhost
 set +a
