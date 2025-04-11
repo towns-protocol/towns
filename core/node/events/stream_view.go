@@ -44,7 +44,11 @@ func MakeStreamView(streamData *storage.ReadStreamFromLastSnapshotResult) (*Stre
 			Snapshot: mb.Snapshot,
 		})
 		if err != nil {
-			return nil, err
+			return nil, AsRiverError(
+				err,
+				Err_BAD_BLOCK,
+			).Message("Unable to parse miniblock from descriptor").
+				Func("MakeStreamView")
 		}
 		miniblocks[i] = miniblock
 		lastMiniblockNumber = miniblock.Header().MiniblockNum
