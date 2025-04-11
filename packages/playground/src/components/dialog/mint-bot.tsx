@@ -14,7 +14,7 @@ import {
 } from '@towns-protocol/sdk'
 import { useMutation } from '@tanstack/react-query'
 import { LoaderCircleIcon } from 'lucide-react'
-import { create, toBinary } from '@bufbuild/protobuf'
+import { toBinary } from '@bufbuild/protobuf'
 import { ExportedDeviceSchema } from '@towns-protocol/proto'
 import { bin_toBase64 } from '@towns-protocol/dlog'
 import { useEthersSigner } from '@/utils/viem-to-ethers'

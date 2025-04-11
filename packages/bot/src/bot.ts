@@ -1,6 +1,8 @@
 /* eslint-disable no-console */
 // TODO: proper logging
-import { create, fromBinary, toBinary } from '@bufbuild/protobuf'
+// Crypto Store uses IndexedDB, so we need to import fake-indexeddb/auto
+import 'fake-indexeddb/auto'
+import { create, fromBinary, fromJsonString, toBinary } from '@bufbuild/protobuf'
 
 import {
     getRefEventIdFromChannelMessage,
@@ -21,6 +23,7 @@ import {
     logNever,
     userIdFromAddress,
     makeUserMetadataStreamId,
+    type ParsedEvent,
 } from '@towns-protocol/sdk'
 import { Hono, type Context } from 'hono'
 import { serve } from '@hono/node-server'
@@ -37,9 +40,15 @@ import {
     type AppServiceResponse,
     type EventPayload,
     ExportedDeviceSchema,
+    SessionKeysSchema,
+    type UserInboxPayload_GroupEncryptionSessions,
 } from '@towns-protocol/proto'
-import { bin_fromBase64, bin_toHexString } from '@towns-protocol/dlog'
-import type { GroupEncryptionAlgorithmId } from '@towns-protocol/encryption'
+import { bin_fromBase64, bin_toHexString, check } from '@towns-protocol/dlog'
+import {
+    GroupEncryptionAlgorithmId,
+    parseGroupEncryptionAlgorithmId,
+    type GroupEncryptionSession,
+} from '@towns-protocol/encryption'
 
 type BasePayload = {
     userId: string
@@ -72,6 +81,10 @@ type BotActions = {
     sendDm: BotActions['sendMessage']
     sendKeySolicitation: (streamId: string, sessionIds: string[]) => Promise<{ eventId: string }>
     uploadDeviceKeys: () => Promise<{ eventId: string }>
+    decryptSessions: (
+        streamId: string,
+        sessions: UserInboxPayload_GroupEncryptionSessions,
+    ) => Promise<GroupEncryptionSession[]>
     // TODO: sendTip
 }
 
@@ -111,12 +124,12 @@ class Bot extends (EventEmitter as new () => TypedEmitter<BotEvents>) {
         serve({ port, fetch: this.server.fetch })
     }
 
+    // TODO: check JWT token matches the request JWT from app registry
     private async webhookResponseHandler(c: Context) {
         const body = await c.req.arrayBuffer()
         const encryptionDevice = this.client.crypto.getUserDevice()
         const request = fromBinary(AppServiceRequestSchema, new Uint8Array(body))
 
-        // TODO: check JWT token matches the request JWT from app registry
         const statusResponse = create(AppServiceResponseSchema, {
             payload: {
                 case: 'status',
@@ -138,14 +151,11 @@ class Bot extends (EventEmitter as new () => TypedEmitter<BotEvents>) {
                 },
             })
         } else if (request.payload.case === 'events') {
-            // TODO: handle events
             for (const event of request.payload.value.events) {
-                // no Promise.all here i think
                 await this.handleEvent(event)
             }
             response = statusResponse
         } else if (request.payload.case === 'status') {
-            // status is default case
             response = statusResponse
         }
 
@@ -171,48 +181,57 @@ class Bot extends (EventEmitter as new () => TypedEmitter<BotEvents>) {
                         return []
                     }),
                 )
-            // TODO: why we need this?
-            console.log('groupEncryptionSessionsMessages', groupEncryptionSessionsMessages)
-            const messages = await this.client.unpackEnvelopes(appEvent.payload.value.messages)
-            for (const message of messages) {
-                if (!message.event.payload.case) {
+            const events = await this.client.unpackEnvelopes(appEvent.payload.value.messages)
+            check(
+                events.length === groupEncryptionSessionsMessages.length,
+                'events and groupEncryptionSessionsMessages must be the same length',
+            )
+            const zip = events.map((m, i) => [m, groupEncryptionSessionsMessages[i]] as const)
+            for (const [parsed, groupEncryptionSession] of zip) {
+                if (parsed.creatorUserId === this.client.userId) {
                     continue
                 }
-
-                switch (message.event.payload.case) {
+                if (!parsed.event.payload.case) {
+                    continue
+                }
+                switch (parsed.event.payload.case) {
                     case 'channelPayload':
                     case 'dmChannelPayload':
                     case 'gdmChannelPayload': {
-                        // TODO: decrypt message
-                        if (message.event.payload.value.content.case === 'message') {
-                            const encryptedMessage = message.event.payload.value.content.value
-                            console.log(encryptedMessage)
-                            // use my fallback key to decrypt ciphertextS in the group encryption messages
-                            // comma separated liss of decrytion keys, one for each session
-                            const decryptedMessage = await this.client.crypto.decryptWithDeviceKey(
-                                encryptedMessage.ciphertext,
-                                encryptedMessage.senderKey,
+                        if (!parsed.event.payload.value.content.case) return
+                        if (parsed.event.payload.value.content.case === 'message') {
+                            const decryptedSessions = await this.client.decryptSessions(
+                                streamId,
+                                groupEncryptionSession,
                             )
-                            this.emit('message', this.client, {
-                                userId: userIdFromAddress(message.event.creatorAddress),
-                                eventId: message.hashStr,
-                                channelId: streamId,
-                                message: decryptedMessage,
-                            })
+                            await this.client.crypto.importSessionKeys(streamId, decryptedSessions)
+                            const eventCleartext = await this.client.crypto.decryptGroupEvent(
+                                streamId,
+                                parsed.event.payload.value.content.value,
+                            )
+                            let channelMessage: ChannelMessage
+                            if (typeof eventCleartext === 'string') {
+                                channelMessage = fromJsonString(
+                                    ChannelMessageSchema,
+                                    eventCleartext,
+                                )
+                            } else {
+                                channelMessage = fromBinary(ChannelMessageSchema, eventCleartext)
+                            }
+                            await this.handleChannelMessage(streamId, parsed, channelMessage)
+                        } else if (parsed.event.payload.value.content.case === 'redaction') {
+                            // TODO
+                        } else if (
+                            parsed.event.payload.value.content.case === 'channelProperties'
+                        ) {
+                            // TODO
+                        } else if (parsed.event.payload.value.content.case === 'inception') {
+                            // TODO
+                        } else {
+                            logNever(parsed.event.payload.value.content)
                         }
                         break
                     }
-                    case 'miniblockHeader':
-                    case 'memberPayload':
-                    case 'spacePayload':
-                    case 'userPayload':
-                    case 'userSettingsPayload':
-                    case 'userMetadataPayload':
-                    case 'userInboxPayload':
-                    case 'mediaPayload':
-                        continue
-                    default:
-                        logNever(message.event.payload)
                 }
             }
         } else if (appEvent.payload.case === 'solicitation') {
@@ -226,6 +245,51 @@ class Bot extends (EventEmitter as new () => TypedEmitter<BotEvents>) {
         }
     }
 
+    async handleChannelMessage(streamId: string, parsed: ParsedEvent, { payload }: ChannelMessage) {
+        if (!payload.case) {
+            return
+        }
+
+        switch (payload.case) {
+            case 'post': {
+                if (payload.value.content.case === 'text') {
+                    this.emit('message', this.client, {
+                        userId: userIdFromAddress(parsed.event.creatorAddress),
+                        eventId: parsed.hashStr,
+                        channelId: streamId,
+                        message: payload.value.content.value.body,
+                    })
+                }
+                break
+            }
+            case 'reaction': {
+                this.emit('reaction', this.client, {
+                    userId: userIdFromAddress(parsed.event.creatorAddress),
+                    eventId: parsed.hashStr,
+                    channelId: streamId,
+                    reaction: payload.value.reaction,
+                    messageId: payload.value.refEventId,
+                })
+                break
+            }
+            case 'edit': {
+                // TODO: bot doesnt forward message edits.
+                // Need to think about a good API for it
+                break
+            }
+            case 'redaction': {
+                this.emit('redact', this.client, {
+                    userId: userIdFromAddress(parsed.event.creatorAddress),
+                    eventId: parsed.hashStr,
+                    channelId: streamId,
+                    refEventId: payload.value.refEventId,
+                })
+                break
+            }
+            default:
+                logNever(payload)
+        }
+    }
     async sendMessage(channelId: string, message: string) {
         return this.client.sendMessage(channelId, message)
     }
@@ -465,6 +529,36 @@ const botBotActions = (client: ClientV2): BotActions => {
         })
         return sendMessageEvent({ streamId, payload })
     }
+
+    const decryptSessions = async (
+        streamId: string,
+        sessions: UserInboxPayload_GroupEncryptionSessions,
+    ) => {
+        const { deviceKey } = client.crypto.getUserDevice()
+        const ciphertext = sessions.ciphertexts[deviceKey]
+        if (!ciphertext) {
+            throw new Error('No ciphertext found for device key')
+        }
+        const parsed = parseGroupEncryptionAlgorithmId(
+            sessions.algorithm,
+            GroupEncryptionAlgorithmId.GroupEncryption,
+        )
+        if (parsed.kind === 'unrecognized') {
+            throw new Error('Invalid algorithm')
+        }
+        const algorithm = parsed.value
+        // decrypt the session keys
+        const cleartext = await client.crypto.decryptWithDeviceKey(ciphertext, sessions.senderKey)
+        const sessionKeys = fromJsonString(SessionKeysSchema, cleartext)
+        check(sessionKeys.keys.length === sessions.sessionIds.length, 'bad sessionKeys')
+        // make group sessions that can be used to decrypt events
+        return sessions.sessionIds.map((sessionId, i) => ({
+            streamId: streamId,
+            sessionId,
+            sessionKey: sessionKeys.keys[i],
+            algorithm,
+        }))
+    }
     return {
         sendMessage,
         editMessage,
@@ -473,5 +567,6 @@ const botBotActions = (client: ClientV2): BotActions => {
         redactEvent,
         sendKeySolicitation,
         uploadDeviceKeys,
+        decryptSessions,
     }
 }
