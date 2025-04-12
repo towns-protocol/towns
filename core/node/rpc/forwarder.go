@@ -534,7 +534,7 @@ func (s *Service) addMediaEventImpl(
 	// TODO: smarter remote select? random?
 	// TODO: retry?
 	firstRemote := NewStreamNodesWithLock(len(cc.NodeAddresses()), cc.NodeAddresses(), s.wallet.Address).GetStickyPeer()
-	logging.FromCtx(ctx).Debug("Forwarding request", "nodeAddress", firstRemote)
+	logging.FromCtx(ctx).Debugw("Forwarding request", "nodeAddress", firstRemote)
 	stub, err := s.nodeRegistry.GetStreamServiceClientForAddress(firstRemote)
 	if err != nil {
 		return nil, err
