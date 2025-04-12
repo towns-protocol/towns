@@ -26,16 +26,15 @@ import {SchemaRegistry} from "src/attest/SchemaRegistry.sol";
 import {AttestationRegistry} from "src/attest/AttestationRegistry.sol";
 
 // mocks
-import {MockERC721} from "test/mocks/MockERC721.sol";
 import {MockModule} from "test/mocks/MockModule.sol";
 import {MockSavingsModule} from "test/mocks/MockSavingsModule.sol";
 import {MockInvalidModule} from "test/mocks/MockInvalidModule.sol";
+
 contract ModularAccountTest is BaseSetup, IOwnableBase {
     SchemaRegistry internal schemaRegistry;
     ModuleRegistry internal moduleRegistry;
     ModularAccount internal modularAccount;
     AttestationRegistry internal attestationRegistry;
-    MockERC721 internal mockERC721;
     MockModule internal mockModule;
 
     bytes32 internal activeSchemaId;
@@ -53,7 +52,6 @@ contract ModularAccountTest is BaseSetup, IOwnableBase {
         moduleRegistry = ModuleRegistry(appRegistry);
         schemaRegistry = SchemaRegistry(appRegistry);
         attestationRegistry = AttestationRegistry(appRegistry);
-        mockERC721 = new MockERC721();
         mockModule = new MockModule(false);
 
         vm.startPrank(deployer);
