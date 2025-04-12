@@ -79,19 +79,28 @@ export function calculateUsdAmountFromToken(args: {
     if (!tokenAmount || !tokenPriceInUsd) {
         return undefined
     }
-    if (typeof tokenAmount !== 'bigint') {
-        console.error('[calculateUsdAmountFromToken] tokenAmount is not a bigint', tokenAmount)
+
+    let amountAsBigInt: bigint
+    try {
+        // @ts-expect-error - unknown type
+        amountAsBigInt = BigInt(tokenAmount)
+    } catch (error) {
+        console.warn(
+            '[calculateUsdAmountFromToken] Failed to convert tokenAmount to BigInt:',
+            tokenAmount,
+            error,
+        )
         return INVALID_CALCULATION
     }
     if (typeof tokenPriceInUsd !== 'string') {
-        console.error(
+        console.warn(
             '[calculateUsdAmountFromToken] tokenPriceInUsd is not a string',
             tokenPriceInUsd,
         )
         return INVALID_CALCULATION
     }
     if (!/^\d+(\.\d+)?$/.test(tokenPriceInUsd)) {
-        console.error(
+        console.warn(
             '[calculateUsdAmountFromToken] tokenPriceInUsd is not a valid numerical string:',
             tokenPriceInUsd,
         )
@@ -99,7 +108,7 @@ export function calculateUsdAmountFromToken(args: {
     }
 
     const tokenPriceInUsdBigInt = parseUnits(tokenPriceInUsd, decimals)
-    const usdValueBigInt = (tokenAmount * tokenPriceInUsdBigInt) / BigInt(10 ** decimals)
+    const usdValueBigInt = (amountAsBigInt * tokenPriceInUsdBigInt) / BigInt(10 ** decimals)
     return usdValueBigInt
 }
 
