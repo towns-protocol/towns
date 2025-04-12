@@ -46,6 +46,10 @@ type TestAppServer struct {
 	enableLogging    bool
 }
 
+func FormatTestAppMessageReply(session string, messageText string, sessionKeys string) string {
+	return fmt.Sprintf("%v %v reply (%v)", session, messageText, sessionKeys)
+}
+
 // validateSignature verifies that the incoming request has a HS256-encoded jwt auth token stored
 // in the header with the appropriate audience, signed by the expected secret key.
 func validateSignature(req *http.Request, secretKey []byte, appId common.Address) error {
@@ -334,8 +338,7 @@ func (b *TestAppServer) respondToSendMessages(
 		envelope, err := events.MakeEnvelopeWithPayload(
 			b.appWallet,
 			events.Make_ChannelPayload_Message_WithSessionBytes(
-				fmt.Sprintf(
-					"%v %v reply (%v)",
+				FormatTestAppMessageReply(
 					hex.EncodeToString(message.Message.SessionIdBytes),
 					message.Message.Ciphertext,
 					sessions.Ciphertexts[b.encryptionDevice.DeviceKey],

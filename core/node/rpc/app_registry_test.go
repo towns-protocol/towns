@@ -5,12 +5,9 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/hex"
-	"fmt"
-	"sync"
+	"strings"
 	"testing"
 	"time"
-
-	mapset "github.com/deckarep/golang-set/v2"
 
 	"connectrpc.com/connect"
 
@@ -31,7 +28,6 @@ import (
 	"github.com/towns-protocol/towns/core/node/storage"
 	"github.com/towns-protocol/towns/core/node/testutils/dbtestutils"
 	"github.com/towns-protocol/towns/core/node/testutils/testcert"
-	"github.com/towns-protocol/towns/core/node/track_streams"
 )
 
 var testEncryptionDevice = app_client.EncryptionDevice{
@@ -193,44 +189,6 @@ func authenticateBS[T any](
 	)
 }
 
-type messageEventRecord struct {
-	streamId       StreamId
-	parentStreamId *StreamId
-	apps           mapset.Set[string]
-	event          *events.ParsedEvent
-}
-
-type MockStreamEventListener struct {
-	mu                  sync.Mutex
-	messageEventRecords []messageEventRecord
-}
-
-func (m *MockStreamEventListener) OnMessageEvent(
-	ctx context.Context,
-	streamId StreamId,
-	parentStreamId *StreamId, // nil for dms and gdms
-	apps mapset.Set[string],
-	event *events.ParsedEvent,
-) {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	m.messageEventRecords = append(m.messageEventRecords, messageEventRecord{
-		streamId,
-		parentStreamId,
-		apps,
-		event,
-	})
-}
-
-func (m *MockStreamEventListener) MessageEventRecords() []messageEventRecord {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-
-	return m.messageEventRecords
-}
-
-var _ track_streams.StreamEventListener = (*MockStreamEventListener)(nil)
-
 func initAppRegistryService(
 	ctx context.Context,
 	tester *serviceTester,
@@ -280,6 +238,26 @@ func initAppRegistryService(
 	return service
 }
 
+func generateRandomSession(require *require.Assertions) ([]byte, string) {
+	var session [8]byte
+	_, err := rand.Read(session[:])
+	require.NoError(err)
+	return session[:], hex.EncodeToString(session[:])
+}
+
+func generateSessionKeys(deviceKey string, sessionIds []string) string {
+	var sb strings.Builder
+	sb.WriteString(deviceKey)
+	sb.WriteString(":")
+	for i, sessionId := range sessionIds {
+		if i != 0 {
+			sb.WriteString("-")
+			sb.WriteString(sessionId)
+		}
+	}
+	return sb.String()
+}
+
 func TestAppRegistry_ForwardsChannelEvents(t *testing.T) {
 	tester := NewAppRegistryServiceTester(t, nil)
 
@@ -312,12 +290,11 @@ func TestAppRegistry_ForwardsChannelEvents(t *testing.T) {
 	// The app registry service does not have a session key for this session and should prompt
 	// the bot to solicit keys in the channel.
 	testMessageText := "xyz"
-	testSessionBytes := []byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
-	testSession := hex.EncodeToString(testSessionBytes)
-	testCiphertexts := "ciphertext-device0-session0"
-	participantClient.sayWithSession(
+	testSessionBytes, testSession := generateRandomSession(tester.require)
+	participantClient.sayWithSessionAndTags(
 		channelId,
 		testMessageText,
+		nil,
 		testSessionBytes,
 		participantEncryptionDevice.DeviceKey,
 	)
@@ -326,6 +303,7 @@ func TestAppRegistry_ForwardsChannelEvents(t *testing.T) {
 	participantClient.requireKeySolicitation(channelId, testEncryptionDevice.DeviceKey, testSession)
 
 	// Have the participant send the solicitation response directly to the bot's user inbox stream.
+	testCiphertexts := generateSessionKeys(testEncryptionDevice.DeviceKey, []string{testSession})
 	participantClient.sendSolicitationResponse(
 		tester.botWallet.Address,
 		channelId,
@@ -334,7 +312,7 @@ func TestAppRegistry_ForwardsChannelEvents(t *testing.T) {
 		testCiphertexts,
 	)
 
-	replyText := fmt.Sprintf("%v %v reply (%v)", testSession, testMessageText, testCiphertexts)
+	replyText := app_registry.FormatTestAppMessageReply(testSession, testMessageText, testCiphertexts)
 
 	// Final channel content should include original message as well as the reply.
 	participantClient.listen(
@@ -491,13 +469,34 @@ func TestAppRegistry_MessageForwardSettings(t *testing.T) {
 	// The participant sends a test message to send to the channel with session id "session0".
 	// The app registry service does not have a session key for this session and should prompt
 	// the bot to solicit keys in the channel.
+	uniqueTestMessages = map[string]*protocol.Tags{
+		"plain_message": nil,
+		"@bot": {
+			MentionedUserAddresses: [][]byte{tester.botWallet.Address[:]},
+		},
+		"@channel": {
+			GroupMentionTypes: []protocol.GroupMentionType{protocol.GroupMentionType_GROUP_MENTION_TYPE_AT_CHANNEL},
+		},
+		"reaction": {
+			MessageInteractionType: protocol.MessageInteractionType_MESSAGE_INTERACTION_TYPE_REACTION,
+		},
+	}
 	testMessageText := "xyz"
-	testSessionBytes := []byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
-	testSession := hex.EncodeToString(testSessionBytes)
-	testCiphertexts := "ciphertext-device0-session0"
-	participantClient.sayWithSession(
+	testSessionBytes, testSession := generateRandomSession(tester.require)
+	participantClient.sayWithSessionAndTags(
 		channelId,
 		testMessageText,
+		nil,
+		testSessionBytes,
+		participantEncryptionDevice.DeviceKey,
+	)
+	testMessageText2 := "abc"
+	participantClient.sayWithSessionAndTags(
+		channelId,
+		testMessageText2,
+		&protocol.Tags{
+			MentionedUserAddresses: [][]byte{tester.botWallet.Address[:]},
+		},
 		testSessionBytes,
 		participantEncryptionDevice.DeviceKey,
 	)
@@ -506,6 +505,7 @@ func TestAppRegistry_MessageForwardSettings(t *testing.T) {
 	participantClient.requireKeySolicitation(channelId, testEncryptionDevice.DeviceKey, testSession)
 
 	// Have the participant send the solicitation response directly to the bot's user inbox stream.
+	testCiphertexts := generateSessionKeys(testEncryptionDevice.DeviceKey, []string{testSession})
 	participantClient.sendSolicitationResponse(
 		tester.botWallet.Address,
 		channelId,
@@ -514,9 +514,9 @@ func TestAppRegistry_MessageForwardSettings(t *testing.T) {
 		testCiphertexts,
 	)
 
-	replyText := fmt.Sprintf("%v %v reply (%v)", testSession, testMessageText, testCiphertexts)
-
 	// Final channel content should include original message as well as the reply.
+	replyText := app_registry.FormatTestAppMessageReply(testSession, testMessageText, testCiphertexts)
+
 	participantClient.listen(
 		channelId,
 		[]common.Address{participantClient.userId, botClient.userId},

@@ -649,7 +649,7 @@ func (tc *testClient) createUserStreamsWithEncryptionDevice(
 	cookie, _, err := createUserMetadataStream(tc.ctx, tc.wallet, tc.client, nil)
 	tc.require.NoError(err)
 
-	event, err := events.MakeEnvelopeWithPayloadAndTags(
+	event, err := events.MakeEnvelopeWithPayload(
 		tc.wallet,
 		events.Make_UserMetadataPayload_EncryptionDevice(
 			encryptionDevice.DeviceKey,
@@ -659,7 +659,6 @@ func (tc *testClient) createUserStreamsWithEncryptionDevice(
 			Num:  cookie.GetMinipoolGen() - 1,
 			Hash: common.Hash(cookie.GetPrevMiniblockHash()),
 		},
-		nil,
 	)
 	tc.require.NoError(err)
 
@@ -833,16 +832,25 @@ func (tc *testClient) say(channelId StreamId, message string) {
 	tc.addEvent(channelId, envelope)
 }
 
-func (tc *testClient) sayWithSession(channelId StreamId, message string, session []byte, deviceKey string) {
+func (tc *testClient) sayWithSessionAndTags(
+	channelId StreamId,
+	message string,
+	tags *Tags,
+	session []byte,
+	deviceKey string,
+) (eventHash []byte) {
 	ref := tc.getLastMiniblockHash(channelId)
-	envelope, err := MakeEnvelopeWithPayload(
+	envelope, err := MakeEnvelopeWithPayloadAndTags(
 		tc.wallet,
 		Make_ChannelPayload_Message_WithSessionBytes(message, session, deviceKey),
 		ref,
+		tags,
 	)
 	tc.require.NoError(err)
 
 	tc.addEvent(channelId, envelope)
+
+	return envelope.Hash
 }
 
 func (tc *testClient) addEvent(streamId StreamId, envelope *Envelope) {
