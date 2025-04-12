@@ -1400,6 +1400,16 @@ func TestEmptyMiniblockRecordCorruptionFix(t *testing.T) {
 	dataMaker := newDataMaker()
 
 	genMB := dataMaker.mb(0, true)
+	err := store.CreateStreamStorage(
+		ctx,
+		streamId,
+		&WriteMiniblockData{
+			Data:     []byte{},
+			Snapshot: genMB.Snapshot,
+		},
+	)
+	require.Error(err)
+	require.True(IsRiverErrorCode(err, Err_INVALID_ARGUMENT))
 	require.NoError(
 		store.CreateStreamStorage(
 			ctx,
@@ -1410,8 +1420,18 @@ func TestEmptyMiniblockRecordCorruptionFix(t *testing.T) {
 			},
 		),
 	)
+	err = store.CreateStreamStorage(
+		ctx,
+		streamId,
+		&WriteMiniblockData{
+			Data:     genMB.Data,
+			Snapshot: genMB.Snapshot,
+		},
+	)
+	require.Error(err)
+	require.True(IsRiverErrorCode(err, Err_ALREADY_EXISTS))
 
-	_, err := store.ReadStreamFromLastSnapshot(ctx, streamId, 10)
+	_, err = store.ReadStreamFromLastSnapshot(ctx, streamId, 10)
 	require.NoError(err)
 	_, err = store.GetLastMiniblockNumber(ctx, streamId)
 	require.NoError(err)
@@ -1435,7 +1455,7 @@ func TestEmptyMiniblockRecordCorruptionFix(t *testing.T) {
 	require.Error(err)
 	require.True(IsRiverErrorCode(err, Err_NOT_FOUND))
 
-	// Check it's possible to overwrite the record
+	// Check it's possible to overwrite corrupt record
 	require.NoError(
 		store.CreateStreamStorage(
 			ctx,
