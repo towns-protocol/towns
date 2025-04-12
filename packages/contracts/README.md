@@ -56,11 +56,11 @@ You can add verbosity to the tests by adding `-vvvv` (1-4 levels) to the command
 anvil
 ```
 
-It will generate a set of 10 public/private keys with 10k ether each. Save one of these private keys
-for deployment below.\
+It will generate a set of 10 public/private keys with 10k ether each. Save one of these private keys for deployment
+below.\
 It starts listening on `http://127.0.0.1:8545`\
-If you want to interact with anvil via a front end, you will need to add the local network to
-Metamask with `ChainID=1337`
+If you want to interact with anvil via a front end, you will need to add the local network to Metamask
+with `ChainID=1337`
 
 <b>To start a local base blockchain and river blockchain run</b>
 
@@ -70,21 +70,21 @@ Metamask with `ChainID=1337`
 
 <b>To deploy our contracts to your local base and river instances</b>
 
-1. duplicate `.env.localhost` file in the [contracts](.) folder of the project and rename it to
-   `.env` (this is excluded from git via .gitignore)
+1. duplicate `.env.localhost` file in the [contracts](.) folder of the project and rename it to `.env` (this is excluded
+   from git via .gitignore)
 2. run `export RIVER_ENV="local_multi"` from your terminal
-3. you will then run `./scripts/deploy-contracts.sh` to deploy the entire suite of contracts to your
-   local base-anvil and river-anvil chains.
+3. you will then run `./scripts/deploy-contracts.sh` to deploy the entire suite of contracts to your local base-anvil
+   and river-anvil chains.
 
 <b>To deploy a single diamond base contract to your local anvil instance</b>\
-from within the `contracts/` folder you can run `make deploy-base-anvil contract=Deploy[Contract] type=diamonds`
-you will replace the `[Contract]` part with the contract you want to deploy, you can see all the contracts
-available for deployment in [this](./scripts/deployments/diamonds) part of the project.
+from within the `contracts/` folder you can run `make deploy-base-anvil contract=Deploy[Contract] type=diamonds` you will replace
+the `[Contract]` part with the contract you want to deploy, you can see all the contracts available for deployment
+in [this](./scripts/deployments/diamonds) part of the project.
 
 <b>To deploy a facet base contract to your local anvil instance</b>\
-from within the `contracts/` folder you can run `make deploy-base-anvil contract=Deploy[Facet] type=facets`
-you will replace the `[Facet]` part with the contract you want to deploy, you can see all the facets
-available for deployment in [this](./scripts/deployments/facets) part of the project.
+from within the `contracts/` folder you can run `make deploy-base-anvil contract=Deploy[Facet] type=facets` you will
+replace the `[Facet]` part with the contract you want to deploy, you can see all the facets available for deployment
+in [this](./scripts/deployments/facets) part of the project.
 
 <b>To deploy our contracts to a live network</b>\
 from within the `contracts/` folder you can run:
@@ -99,5 +99,4 @@ For example, to deploy the WalletLink facet to Base Sepolia with a deployment co
 make deploy-base-sepolia contract=DeployWalletLink type=facets context=gamma
 ```
 
-You can see all the contracts available for deployment in the [deployments](./scripts/deployments)
-directory.
+You can see all the contracts available for deployment in the [deployments](./scripts/deployments) directory.
