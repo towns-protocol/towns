@@ -11,7 +11,6 @@ import {
     ELEMENT_CONTRACT_ADDRESS,
     ELEMENT_MENTION_TICKER,
 } from '@components/RichTextPlate/plugins/createTickerMentionPlugin'
-import { isEthAddress } from '@components/Web3/utils'
 import { getContractChain } from '@components/RichTextPlate/plugins/PasteContractAddressPlugin'
 import { ELEMENT_MENTION_CHANNEL } from '../../plugins/createChannelPlugin'
 import {

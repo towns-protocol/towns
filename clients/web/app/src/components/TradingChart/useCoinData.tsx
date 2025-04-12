@@ -1,6 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
 import { z } from 'zod'
-import { useMemo } from 'react'
 import { env } from 'utils'
 import { MINUTE_MS } from 'data/constants'
 
