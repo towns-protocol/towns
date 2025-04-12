@@ -1694,8 +1694,8 @@ export class TownsClient
      ************************************************/
     public async scrollback(roomId: string): Promise<{
         terminus: boolean
-        eventCount: number
         firstEventId?: string
+        fromInclusiveMiniblockNum: bigint
     }> {
         if (!this.casablancaClient) {
             throw new Error('casablanca client is undefined')
@@ -1703,8 +1703,8 @@ export class TownsClient
         const result = await this.casablancaClient.scrollback(roomId)
         return {
             terminus: result.terminus,
-            eventCount: this.casablancaClient?.stream(roomId)?.view?.timeline.length ?? 0,
             firstEventId: result.firstEvent?.hashStr,
+            fromInclusiveMiniblockNum: result.fromInclusiveMiniblockNum,
         }
     }
 

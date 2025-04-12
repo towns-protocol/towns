@@ -13,18 +13,18 @@ export const useScrollback = (channelId: string) => {
         })
     }, [channelId, scrollback])
 
-    const watermarkRef = useRef<string | undefined>(undefined)
+    const watermarkRef = useRef<bigint | undefined>(undefined)
 
     const onFirstMessageReached = useCallback(
-        (watermark: string) => {
+        (watermark: bigint) => {
             if (watermark === watermarkRef.current) {
                 return
             }
-            console.log('[useScrollback] onLoadMore')
+            console.log(`[useScrollback] onLoadMore ${channelId} ${watermark}`)
             watermarkRef.current = watermark
             setTimeout(onLoadMore, 0)
         },
-        [onLoadMore],
+        [channelId, onLoadMore],
     )
 
     return { onFirstMessageReached, scrollbackState }

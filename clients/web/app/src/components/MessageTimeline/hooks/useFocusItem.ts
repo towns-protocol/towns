@@ -110,9 +110,9 @@ export const useScrollbackToFocusItem = (
     highlightId: string | undefined,
     listItems: { eventId: string }[],
     scrollbackState: ScrollbackState,
-    onFirstMessageReached: (watermark: string) => void,
+    onFirstMessageReached: (watermark: bigint) => void,
 ) => {
-    const watermark = scrollbackState?.firstEventId
+    const watermark = scrollbackState?.fromInclusiveMiniblockNum
     const terminus = scrollbackState?.terminus
     useEffect(() => {
         if (highlightId && watermark && !terminus) {

@@ -4,8 +4,8 @@ import { Box } from '@ui'
 
 export const ScrollbackMarker = (props: {
     containerRef?: MutableRefObject<HTMLDivElement | null>
-    watermark?: string
-    onMarkerReached: (watermark: string) => void
+    watermark?: bigint
+    onMarkerReached: (watermark: bigint) => void
 }) => {
     const { watermark, onMarkerReached, containerRef } = props
     const { inView, ref } = useInView({

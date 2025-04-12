@@ -451,12 +451,12 @@ export const MessageTimeline = (props: Props) => {
     const scrollbackMarker = useMemo(
         () => (
             <ScrollbackMarker
-                watermark={timelineContext?.events.at(0)?.eventId}
+                watermark={scrollbackState?.fromInclusiveMiniblockNum || -1n}
                 containerRef={ref}
                 onMarkerReached={onFirstMessageReached}
             />
         ),
-        [onFirstMessageReached, timelineContext?.events],
+        [onFirstMessageReached, scrollbackState?.fromInclusiveMiniblockNum],
     )
     const itemRenderer = useCallback(
         (r: ListItem, measureRef?: React.RefObject<HTMLDivElement> | undefined) => {

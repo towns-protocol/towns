@@ -237,8 +237,8 @@ interface TownsClientImpl {
     scrollback: (roomId: string) => Promise<
         | {
               terminus: boolean
-              eventCount: number
               firstEventId?: string
+              fromInclusiveMiniblockNum: bigint
           }
         | undefined
     >
