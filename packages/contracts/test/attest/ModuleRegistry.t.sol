@@ -208,7 +208,7 @@ contract ModuleRegistryTest is BaseSetup {
 
     // ==================== MODULE REVOCATION TESTS ====================
 
-    function test_revokeModule() external {
+    function test_removeModule() external {
         address module = address(new MockPlugin());
         address owner = _randomAddress();
 
@@ -222,13 +222,13 @@ contract ModuleRegistryTest is BaseSetup {
         assertTrue(previousUid != bytes32(0));
 
         vm.prank(owner);
-        bytes32 revokedUid = moduleRegistry.revokeModule(module);
+        bytes32 revokedUid = moduleRegistry.removeModule(module);
 
         assertEq(revokedUid, previousUid);
         assertEq(moduleRegistry.getModuleVersion(module), bytes32(0));
     }
 
-    function test_revokeModule_onlyOwner() external {
+    function test_removeModule_onlyOwner() external {
         address module = address(new MockPlugin());
         address owner = _randomAddress();
         address notOwner = _randomAddress();
@@ -241,16 +241,16 @@ contract ModuleRegistryTest is BaseSetup {
 
         vm.prank(notOwner);
         vm.expectRevert(AttestationLib.InvalidRevoker.selector);
-        moduleRegistry.revokeModule(module);
+        moduleRegistry.removeModule(module);
     }
 
-    function test_revertWhen_revokeModule_ModuleNotRegistered() external {
+    function test_revertWhen_removeModule_ModuleNotRegistered() external {
         address module = address(new MockPlugin());
         address owner = _randomAddress();
 
         vm.prank(owner);
         vm.expectRevert(ModuleRegistryLib.ModuleNotRegistered.selector);
-        moduleRegistry.revokeModule(module);
+        moduleRegistry.removeModule(module);
     }
 
     // ==================== ADMIN FUNCTIONS TESTS ====================

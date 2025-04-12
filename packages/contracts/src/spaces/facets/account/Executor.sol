@@ -8,7 +8,6 @@ import {IImplementationRegistry} from "src/factory/facets/registry/IImplementati
 // libraries
 
 import {ExecutorLib} from "./libraries/ExecutorLib.sol";
-import {ExecutorTypes} from "./libraries/ExecutorTypes.sol";
 import {DiamondLoupeBase} from "@towns-protocol/diamond/src/facets/loupe/DiamondLoupeBase.sol";
 
 // contracts
@@ -50,7 +49,7 @@ contract Executor is TokenOwnableBase, IExecutor {
     function hasAccess(
         bytes32 groupId,
         address account
-    ) external view returns (bool isMember, uint32 executionDelay) {
+    ) external view returns (bool isMember, uint32 executionDelay, uint256 maxEthValue) {
         return ExecutorLib.hasGroupAccess(groupId, account);
     }
 
@@ -98,7 +97,7 @@ contract Executor is TokenOwnableBase, IExecutor {
     ) external onlyAuthorized(target) onlyOwner {
         // Disallow setting any diamond functions
         if (target == DiamondLoupeBase.facetAddress(selector)) {
-            revert ExecutorTypes.UnauthorizedTarget(target);
+            revert ExecutorLib.UnauthorizedTarget(target);
         }
         ExecutorLib.setTargetFunctionGroup(target, selector, groupId);
     }
@@ -119,10 +118,11 @@ contract Executor is TokenOwnableBase, IExecutor {
     /// @inheritdoc IExecutor
     function scheduleOperation(
         address target,
+        uint256 value,
         bytes calldata data,
         uint48 when
     ) external payable returns (bytes32 operationId, uint32 nonce) {
-        return ExecutorLib.scheduleExecution(target, data, when);
+        return ExecutorLib.scheduleExecution(target, value, data, when);
     }
 
     /// @inheritdoc IExecutor
@@ -169,7 +169,7 @@ contract Executor is TokenOwnableBase, IExecutor {
             target == _getImplementation(factory, bytes32("RiverAirdrop")) ||
             target == _getImplementation(factory, bytes32("SpaceOperator"))
         ) {
-            revert ExecutorTypes.UnauthorizedTarget(target);
+            revert ExecutorLib.UnauthorizedTarget(target);
         }
     }
 }

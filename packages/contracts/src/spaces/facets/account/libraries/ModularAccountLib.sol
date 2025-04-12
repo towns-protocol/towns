@@ -6,7 +6,10 @@ import {IImplementationRegistry} from "src/factory/facets/registry/IImplementati
 import {IModuleRegistry} from "src/attest/interfaces/IModuleRegistry.sol";
 import {ITownsModule} from "src/attest/interfaces/ITownsModule.sol";
 import {IERC6900Module} from "@erc6900/reference-implementation/interfaces/IERC6900Module.sol";
+import {IERC6900ExecutionModule} from "@erc6900/reference-implementation/interfaces/IERC6900ExecutionModule.sol";
 import {IERC6900Account} from "@erc6900/reference-implementation/interfaces/IERC6900Account.sol";
+import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
+import {IDiamondCut} from "@towns-protocol/diamond/src/facets/cut/IDiamondCut.sol";
 
 // libraries
 import {MembershipStorage} from "src/spaces/facets/membership/MembershipStorage.sol";
@@ -19,9 +22,7 @@ import {LibCall} from "solady/utils/LibCall.sol";
 
 // types
 import {ExecutionManifest, ManifestExecutionFunction, ManifestExecutionHook} from "@erc6900/reference-implementation/interfaces/IERC6900ExecutionModule.sol";
-import {Attestation} from "@ethereum-attestation-service/eas-contracts/Common.sol";
-
-// contracts
+import {Attestation, EMPTY_UID} from "@ethereum-attestation-service/eas-contracts/Common.sol";
 
 library ModularAccountLib {
     using CustomRevert for bytes4;
@@ -31,6 +32,9 @@ library ModularAccountLib {
     error InvalidModuleAddress(address module);
     error InvalidManifest(address module);
     error NotImplemented();
+    error ModuleNotRegistered(address module);
+    error ModuleRevoked(address module);
+    error UnauthorizedSelector();
 
     // Writes
     function noop() internal pure {
@@ -42,28 +46,36 @@ library ModularAccountLib {
         ExecutionManifest calldata manifest,
         bytes calldata moduleInstallData
     ) internal {
-        ExecutionManifest memory moduleManifest = checkManifest(module, manifest);
+        if (module == address(0)) InvalidModuleAddress.selector.revertWith();
 
         // get the module group id from the module registry
-        (bytes32 moduleGroupId, address[] memory clients, ) = getModule(module);
+        (
+            bytes32 moduleGroupId,
+            address[] memory clients,
+            ,
+            ExecutionManifest memory cachedManifest
+        ) = getModule(module);
+
+        verifyManifests(module, manifest, cachedManifest);
 
         uint256 clientsLength = clients.length;
         for (uint256 i; i < clientsLength; ++i) {
-            ExecutorLib.grantGroupAccess(
-                moduleGroupId,
-                clients[i],
-                0, // grantDelay
-                0 // executionDelay
-            );
+            ExecutorLib.grantGroupAccess({
+                groupId: moduleGroupId,
+                account: clients[i],
+                grantDelay: ExecutorLib.getGroupGrantDelay(moduleGroupId),
+                executionDelay: 0
+            });
         }
-        // Set up execution functions with the same module groupId
-        uint256 executionFunctionsLength = moduleManifest.executionFunctions.length;
-        for (uint256 i; i < executionFunctionsLength; ++i) {
-            ManifestExecutionFunction memory func = moduleManifest.executionFunctions[i];
 
-            // check if the function is a diamond function
-            if (DiamondLoupeBase.facetAddress(func.executionSelector) != address(0)) {
-                UnauthorizedModule.selector.revertWith(module);
+        // Set up execution functions with the same module groupId
+        uint256 executionFunctionsLength = cachedManifest.executionFunctions.length;
+        for (uint256 i; i < executionFunctionsLength; ++i) {
+            ManifestExecutionFunction memory func = cachedManifest.executionFunctions[i];
+
+            // check if the function is a native function
+            if (isInvalidSelector(func.executionSelector)) {
+                UnauthorizedSelector.selector.revertWith();
             }
 
             ExecutorLib.setTargetFunctionGroup(module, func.executionSelector, moduleGroupId);
@@ -74,9 +86,9 @@ library ModularAccountLib {
         }
 
         // Set up hooks
-        uint256 executionHooksLength = moduleManifest.executionHooks.length;
+        uint256 executionHooksLength = cachedManifest.executionHooks.length;
         for (uint256 i; i < executionHooksLength; ++i) {
-            ManifestExecutionHook memory hook = moduleManifest.executionHooks[i];
+            ManifestExecutionHook memory hook = cachedManifest.executionHooks[i];
             HookLib.addHook(
                 module,
                 hook.executionSelector,
@@ -101,7 +113,7 @@ library ModularAccountLib {
         ExecutionManifest calldata manifest,
         bytes calldata uninstallData
     ) internal {
-        (bytes32 moduleGroupId, address[] memory clients, ) = getModule(module);
+        (bytes32 moduleGroupId, address[] memory clients, , ) = getModule(module);
 
         // Remove hooks first
         uint256 executionHooksLength = manifest.executionHooks.length;
@@ -115,7 +127,7 @@ library ModularAccountLib {
         for (uint256 i; i < executionFunctionsLength; ++i) {
             ManifestExecutionFunction memory func = manifest.executionFunctions[i];
             // Set the group to 0 to remove the mapping
-            ExecutorLib.setTargetFunctionGroup(module, func.executionSelector, bytes32(0));
+            ExecutorLib.setTargetFunctionGroup(module, func.executionSelector, EMPTY_UID);
         }
 
         // Revoke module's group access
@@ -137,13 +149,18 @@ library ModularAccountLib {
         emit IERC6900Account.ExecutionUninstalled(module, onUninstallSuccess, manifest);
     }
 
+    function setModuleAllowance(address module, uint256 maxEthValue) internal {
+        (bytes32 moduleGroupId, , , ) = getModule(module);
+        ExecutorLib.setGroupMaxEthValue(moduleGroupId, maxEthValue);
+    }
+
     // Getters
     function isEntitled(
         address module,
         address client,
         bytes32 permission
     ) internal view returns (bool) {
-        (, address[] memory clients, bytes32[] memory permissions) = getModule(module);
+        (, address[] memory clients, bytes32[] memory permissions, ) = getModule(module);
 
         uint256 clientsLength = clients.length;
         uint256 permissionsLength = permissions.length;
@@ -170,11 +187,24 @@ library ModularAccountLib {
 
     function getModule(
         address target
-    ) internal view returns (bytes32 uid, address[] memory clients, bytes32[] memory permissions) {
+    )
+        internal
+        view
+        returns (
+            bytes32 uid,
+            address[] memory clients,
+            bytes32[] memory permissions,
+            ExecutionManifest memory manifest
+        )
+    {
         address appRegistry = DependencyLib.getDependency("AppRegistry");
         Attestation memory att = IModuleRegistry(appRegistry).getModule(target);
+
+        if (att.uid == EMPTY_UID) ModuleNotRegistered.selector.revertWith(target);
+        if (att.revocationTime != 0) ModuleRevoked.selector.revertWith(target);
+
         uid = att.uid;
-        (, clients, , permissions, ) = abi.decode(
+        (, clients, , permissions, manifest) = abi.decode(
             att.data,
             (address, address[], address, bytes32[], ExecutionManifest)
         );
@@ -185,8 +215,8 @@ library ModularAccountLib {
     }
 
     // Checks
-    function checkAuthorized(address target) internal view {
-        if (target == address(0)) InvalidModuleAddress.selector.revertWith();
+    function checkAuthorized(address module) internal view {
+        if (module == address(0)) InvalidModuleAddress.selector.revertWith();
 
         address factory = MembershipStorage.layout().spaceFactory;
 
@@ -199,28 +229,53 @@ library ModularAccountLib {
 
         // Unauthorized targets
         if (
-            target == factory ||
-            target == deps[0] ||
-            target == deps[1] ||
-            target == deps[2] ||
-            target == deps[3]
+            module == factory ||
+            module == deps[0] ||
+            module == deps[1] ||
+            module == deps[2] ||
+            module == deps[3]
         ) {
-            UnauthorizedModule.selector.revertWith(target);
+            UnauthorizedModule.selector.revertWith(module);
         }
     }
 
-    function checkManifest(
+    function verifyManifests(
         address module,
-        ExecutionManifest calldata manifest
-    ) internal pure returns (ExecutionManifest memory moduleManifest) {
-        moduleManifest = ITownsModule(module).executionManifest();
+        ExecutionManifest calldata manifest,
+        ExecutionManifest memory cachedManifest
+    ) internal pure {
+        ExecutionManifest memory moduleManifest = ITownsModule(module).executionManifest();
 
-        // Hash both manifests and compare
+        // Hash all three manifests and compare
         bytes32 manifestHash = keccak256(abi.encode(manifest));
         bytes32 moduleManifestHash = keccak256(abi.encode(moduleManifest));
+        bytes32 cachedManifestHash = keccak256(abi.encode(cachedManifest));
 
-        if (manifestHash != moduleManifestHash) {
+        if (
+            manifestHash != moduleManifestHash ||
+            manifestHash != cachedManifestHash ||
+            moduleManifestHash != cachedManifestHash
+        ) {
             InvalidManifest.selector.revertWith(module);
         }
+    }
+
+    function isInvalidSelector(bytes4 selector) internal pure returns (bool) {
+        return
+            selector == IERC6900Account.installExecution.selector ||
+            selector == IERC6900Account.uninstallExecution.selector ||
+            selector == IERC6900Account.installValidation.selector ||
+            selector == IERC6900Account.uninstallValidation.selector ||
+            selector == IERC6900Account.execute.selector ||
+            selector == IERC6900Account.executeBatch.selector ||
+            selector == IERC6900Account.executeWithRuntimeValidation.selector ||
+            selector == IERC6900Account.accountId.selector ||
+            selector == IERC165.supportsInterface.selector ||
+            selector == IERC6900Module.moduleId.selector ||
+            selector == IERC6900Module.onInstall.selector ||
+            selector == IERC6900Module.onUninstall.selector ||
+            selector == IERC6900ExecutionModule.executionManifest.selector ||
+            selector == IDiamondCut.diamondCut.selector ||
+            selector == ITownsModule.requiredPermissions.selector;
     }
 }

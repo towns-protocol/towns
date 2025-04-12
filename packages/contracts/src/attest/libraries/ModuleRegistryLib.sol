@@ -160,16 +160,27 @@ library ModuleRegistryLib {
         return info.uid;
     }
 
+    function revokeModule(address revoker, address module) internal returns (bytes32 version) {
+        Layout storage db = getLayout();
+        bytes32 uid = db.modules[module].uid;
+
+        if (uid == bytes32(0)) ModuleNotRegistered.selector.revertWith();
+
+        Attestation memory att = AttestationLib.getAttestation(uid);
+        if (att.revocationTime > 0) ModuleRevoked.selector.revertWith();
+
+        RevocationRequestData memory request;
+        request.uid = uid;
+        AttestationLib.revoke(db.schemaId, request, revoker, 0, true);
+
+        return uid;
+    }
+
     function removeModule(address revoker, address module) internal returns (bytes32 version) {
         Layout storage db = getLayout();
         bytes32 uidToRevoke = db.modules[module].uid;
 
-        if (uidToRevoke == bytes32(0)) ModuleNotRegistered.selector.revertWith();
-
-        RevocationRequestData memory request;
-        request.uid = uidToRevoke;
-
-        AttestationLib.revoke(db.schemaId, request, revoker, 0, true);
+        revokeModule(revoker, module);
 
         db.modules[module].uid = bytes32(0);
         delete db.modules[module];

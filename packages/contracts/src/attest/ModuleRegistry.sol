@@ -82,6 +82,14 @@ contract ModuleRegistry is IModuleRegistry, OwnableBase, Facet {
     /// @dev Only the registrar can revoke a module
     /// @return The attestation UID that was revoked
     function revokeModule(address module) external returns (bytes32) {
+        return ModuleRegistryLib.revokeModule(msg.sender, module);
+    }
+
+    /// @notice Remove a module from the registry
+    /// @param module The module address to remove
+    /// @dev Only the registrar can remove a module
+    /// @return The attestation UID that was removed
+    function removeModule(address module) external returns (bytes32) {
         return ModuleRegistryLib.removeModule(msg.sender, module);
     }
 

@@ -71,7 +71,7 @@ contract ModularAccount is IERC6900Account, TokenOwnableBase, Facet {
         address module,
         ExecutionManifest calldata manifest,
         bytes calldata moduleInstallData
-    ) external onlyOwner onlyAuthorized(module) {
+    ) external onlyOwner {
         ModularAccountLib.installExecution(module, manifest, moduleInstallData);
     }
 
@@ -80,7 +80,7 @@ contract ModularAccount is IERC6900Account, TokenOwnableBase, Facet {
         address module,
         ExecutionManifest calldata manifest,
         bytes calldata uninstallData
-    ) external onlyOwner onlyAuthorized(module) {
+    ) external onlyOwner {
         ModularAccountLib.uninstallExecution(module, manifest, uninstallData);
     }
 
@@ -102,6 +102,13 @@ contract ModularAccount is IERC6900Account, TokenOwnableBase, Facet {
     ///@inheritdoc IERC6900Account
     function accountId() external pure returns (string memory) {
         return "towns.modular.account";
+    }
+
+    /// @notice Sets the max eth value for a module per execution
+    /// @param module The module to set the max eth value for
+    /// @param maxEthValue The max eth value for the module
+    function setModuleAllowance(address module, uint256 maxEthValue) external onlyOwner {
+        ModularAccountLib.setModuleAllowance(module, maxEthValue);
     }
 
     /// @notice Checks if a client is entitled to a permission for a module

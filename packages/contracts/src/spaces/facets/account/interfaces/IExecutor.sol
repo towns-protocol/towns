@@ -21,11 +21,12 @@ interface IExecutor {
      * @param account The account to check access for
      * @return isMember Whether the account is a member of the group
      * @return executionDelay The delay for the access to be effective
+     * @return maxEthValue The max eth value that can be used by the group
      */
     function hasAccess(
         bytes32 groupId,
         address account
-    ) external view returns (bool isMember, uint32 executionDelay);
+    ) external view returns (bool isMember, uint32 executionDelay, uint256 maxEthValue);
 
     /**
      * @notice Gets the access information for an account in a group
@@ -101,6 +102,7 @@ interface IExecutor {
     /**
      * @notice Schedules an operation for future execution
      * @param target The target contract address
+     * @param value The value for the operation
      * @param data The calldata for the operation
      * @param when The timestamp when the operation can be executed
      * @return operationId The unique identifier for the operation
@@ -108,6 +110,7 @@ interface IExecutor {
      */
     function scheduleOperation(
         address target,
+        uint256 value,
         bytes calldata data,
         uint48 when
     ) external payable returns (bytes32 operationId, uint32 nonce);
