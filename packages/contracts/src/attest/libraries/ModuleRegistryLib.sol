@@ -52,6 +52,7 @@ library ModuleRegistryLib {
 
     struct ModuleInfo {
         bytes32 uid;
+        bytes32 schema;
     }
 
     struct Layout {
@@ -119,6 +120,7 @@ library ModuleRegistryLib {
         request.data.revocable = true;
         request.data.data = abi.encode(module, clients, owner, permissions, manifest);
         info.uid = AttestationLib.attest(msg.sender, msg.value, request).uid;
+        info.schema = db.schemaId;
 
         emit ModuleRegistered(module, info.uid);
 
@@ -146,15 +148,15 @@ library ModuleRegistryLib {
 
         RevocationRequestData memory revocationRequest;
         revocationRequest.uid = info.uid;
-        AttestationLib.revoke(db.schemaId, revocationRequest, msg.sender, 0, true);
+        AttestationLib.revoke(info.schema, revocationRequest, msg.sender, 0, true);
 
         AttestationRequest memory request;
-        request.schema = db.schemaId;
+        request.schema = info.schema;
         request.data.revocable = true;
         request.data.refUID = info.uid;
         request.data.data = abi.encode(module, client, owner, permissions, manifest);
         info.uid = AttestationLib.attest(msg.sender, msg.value, request).uid;
-
+        info.schema = db.schemaId;
         emit ModuleUpdated(module, info.uid);
 
         return info.uid;
@@ -162,7 +164,8 @@ library ModuleRegistryLib {
 
     function revokeModule(address revoker, address module) internal returns (bytes32 version) {
         Layout storage db = getLayout();
-        bytes32 uid = db.modules[module].uid;
+        ModuleInfo storage info = db.modules[module];
+        bytes32 uid = info.uid;
 
         if (uid == bytes32(0)) ModuleNotRegistered.selector.revertWith();
 
@@ -171,7 +174,7 @@ library ModuleRegistryLib {
 
         RevocationRequestData memory request;
         request.uid = uid;
-        AttestationLib.revoke(db.schemaId, request, revoker, 0, true);
+        AttestationLib.revoke(info.schema, request, revoker, 0, true);
 
         return uid;
     }
@@ -192,7 +195,8 @@ library ModuleRegistryLib {
 
     function banModule(address module) internal returns (bytes32 version) {
         Layout storage db = getLayout();
-        bytes32 uidToBan = db.modules[module].uid;
+        ModuleInfo storage info = db.modules[module];
+        bytes32 uidToBan = info.uid;
 
         if (uidToBan == bytes32(0)) ModuleNotRegistered.selector.revertWith();
 
@@ -202,7 +206,7 @@ library ModuleRegistryLib {
         RevocationRequestData memory request;
         request.uid = uidToBan;
 
-        AttestationLib.revoke(db.schemaId, request, att.attester, 0, true);
+        AttestationLib.revoke(info.schema, request, att.attester, 0, true);
 
         db.modules[module].uid = bytes32(0);
         delete db.modules[module];
