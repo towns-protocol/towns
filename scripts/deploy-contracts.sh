@@ -58,7 +58,7 @@ make deploy-any-local context=$RIVER_ENV rpc=base_anvil type=diamonds contract=D
 make deploy-any-local context=$RIVER_ENV rpc=base_anvil type=utils contract=DeployUserEntitlement
 make deploy-any-local context=$RIVER_ENV rpc=base_anvil type=utils contract=DeployTieredLogPricingV2
 make deploy-any-local context=$RIVER_ENV rpc=base_anvil type=utils contract=DeployTieredLogPricingV3
-make deploy-any-local context=$RIVER_ENV rpc=base_anvil type=utils contract=DeployFixedPricing
+make deploy-facet-local context=$RIVER_ENV rpc=base_anvil contract=FixedPricing
 make deploy-any-local context=$RIVER_ENV rpc=base_anvil type=diamonds contract=DeploySpaceFactory
 make deploy-any-local context=$RIVER_ENV rpc=base_anvil type=diamonds contract=DeployRiverAirdrop
 make interact-any-local context=$RIVER_ENV rpc=base_anvil contract=InteractPostDeploy

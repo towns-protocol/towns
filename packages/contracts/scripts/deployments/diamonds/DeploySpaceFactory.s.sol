@@ -34,7 +34,6 @@ import {DeployPricingModules} from "scripts/deployments/facets/DeployPricingModu
 import {DeployProxyManager} from "scripts/deployments/facets/DeployProxyManager.s.sol";
 import {DeploySpaceFactoryInit} from "scripts/deployments/facets/DeploySpaceFactoryInit.s.sol";
 import {DeployWalletLink} from "scripts/deployments/facets/DeployWalletLink.s.sol";
-import {DeployFixedPricing} from "scripts/deployments/utils/DeployFixedPricing.s.sol";
 import {DeployMockDelegationRegistry} from "scripts/deployments/utils/DeployMockDelegationRegistry.s.sol";
 import {DeployRuleEntitlement} from "scripts/deployments/utils/DeployRuleEntitlement.s.sol";
 import {DeployRuleEntitlementV2} from "scripts/deployments/utils/DeployRuleEntitlementV2.s.sol";
@@ -66,7 +65,6 @@ contract DeploySpaceFactory is IDiamondInitHelper, DiamondHelper, Deployer {
     DeployRuleEntitlementV2 deployRuleEntitlementV2 = new DeployRuleEntitlementV2();
     DeployTieredLogPricingV2 deployTieredLogPricingV2 = new DeployTieredLogPricingV2();
     DeployTieredLogPricingV3 deployTieredLogPricingV3 = new DeployTieredLogPricingV3();
-    DeployFixedPricing deployFixedPricing = new DeployFixedPricing();
     DeploySpaceProxyInitializer deploySpaceProxyInitializer = new DeploySpaceProxyInitializer();
     DeploySLCEIP6565 deployVerifierLib = new DeploySLCEIP6565();
     DeploySpaceFactoryInit deploySpaceFactoryInit = new DeploySpaceFactoryInit();
@@ -129,7 +127,7 @@ contract DeploySpaceFactory is IDiamondInitHelper, DiamondHelper, Deployer {
         // pricing modules
         tieredLogPricingV2 = deployTieredLogPricingV2.deploy(deployer);
         tieredLogPricingV3 = deployTieredLogPricingV3.deploy(deployer);
-        fixedPricing = deployFixedPricing.deploy(deployer);
+        fixedPricing = facetHelper.deploy("FixedPricing", deployer);
         featureManager = featureManagerHelper.deploy(deployer);
         // pricing modules
         pricingModules.push(tieredLogPricingV2);
