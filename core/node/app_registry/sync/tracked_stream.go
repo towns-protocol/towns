@@ -76,7 +76,18 @@ func (b *AppRegistryTrackedStreamView) onNewEvent(ctx context.Context, view *Str
 			return false
 		}
 		memberAddress := common.BytesToAddress(bytes)
-		if b.queue.HasRegisteredWebhook(ctx, memberAddress) {
+		isForwardable, _, err := b.queue.IsForwardableApp(ctx, memberAddress)
+		if err != nil {
+			log.Errorw(
+				"Error determining if member address is an app with registered webhook",
+				"error",
+				err,
+				"memberAddress",
+				memberAddress,
+				"streamId",
+				streamId,
+			)
+		} else if isForwardable {
 			apps.Add(member)
 		}
 		return false

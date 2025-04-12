@@ -39,7 +39,16 @@ func (p *MessageToAppProcessor) OnMessageEvent(
 
 	members.Each(func(memberId string) bool {
 		appId := common.HexToAddress(memberId)
-		if p.cache.HasRegisteredWebhook(ctx, appId) {
+		isForwardable, _, err := p.cache.IsForwardableApp(ctx, appId)
+		if err != nil {
+			log.Errorw(
+				"Error checking if member is a registered app that can receive forwarded messages",
+				"error",
+				err,
+				"appId",
+				appId,
+			)
+		} else if isForwardable {
 			appIds = append(appIds, appId)
 		}
 
@@ -47,7 +56,7 @@ func (p *MessageToAppProcessor) OnMessageEvent(
 	})
 	streamEnvelope, err := event.GetEnvelopeBytes()
 	if err != nil {
-		log.Errorw("Error marshalling stream envelope", "event", event, "streamId", channelId, "spaceId", spaceId)
+		log.Errorw("Error marshaling stream envelope", "event", event, "streamId", channelId, "spaceId", spaceId)
 		return
 	}
 

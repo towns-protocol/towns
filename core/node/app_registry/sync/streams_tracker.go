@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/ethereum/go-ethereum/common"
+
 	"github.com/towns-protocol/towns/core/config"
 	"github.com/towns-protocol/towns/core/node/crypto"
 	"github.com/towns-protocol/towns/core/node/events"
@@ -24,10 +25,10 @@ type EncryptedMessageQueue interface {
 		encryptionEnvelope []byte,
 	) (err error)
 
-	HasRegisteredWebhook(
+	IsForwardableApp(
 		ctx context.Context,
 		appId common.Address,
-	) bool
+	) (isForwardable bool, forwardSetting protocol.ForwardSettingValue, err error)
 
 	DispatchOrEnqueueMessages(
 		ctx context.Context,

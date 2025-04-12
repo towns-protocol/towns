@@ -35,6 +35,11 @@ type CachedEncryptedMessageQueue struct {
 	appIdCache    sync.Map
 }
 
+type ForwardState struct {
+	HasWebhook     bool
+	ForwardSetting protocol.ForwardSettingValue
+}
+
 func NewCachedEncryptedMessageQueue(
 	ctx context.Context,
 	store storage.AppRegistryStore,
@@ -54,6 +59,7 @@ func (q *CachedEncryptedMessageQueue) CreateApp(
 	forwardSetting protocol.ForwardSettingValue,
 	sharedSecret [32]byte,
 ) error {
+	q.appIdCache.Store(app, &ForwardState{ForwardSetting: forwardSetting})
 	return q.store.CreateApp(ctx, owner, app, forwardSetting, sharedSecret)
 }
 
@@ -87,11 +93,13 @@ func (q *CachedEncryptedMessageQueue) RegisterWebhook(
 	deviceKey string,
 	fallbackKey string,
 ) error {
+	if fs, exists := q.appIdCache.Load(app); exists {
+		fs.(*ForwardState).HasWebhook = true
+	}
 	if err := q.store.RegisterWebhook(ctx, app, webhook, deviceKey, fallbackKey); err != nil {
 		return err
 	}
 
-	q.appIdCache.Store(app, struct{}{})
 	return nil
 }
 
@@ -203,12 +211,27 @@ func (q *CachedEncryptedMessageQueue) DispatchOrEnqueueMessages(
 	)
 }
 
-// HasRegisteredWebhook returns whether or not an app exists in the registry and has a webhook
-// registered.
-func (q *CachedEncryptedMessageQueue) HasRegisteredWebhook(
+// IsForwardableApp returns whether or not an app exists in the registry and has a webhook
+// registered, and, if so, what forward setting should be used when filtering relevant
+// messages.
+func (q *CachedEncryptedMessageQueue) IsForwardableApp(
 	ctx context.Context,
 	appId common.Address,
-) bool {
-	_, exists := q.appIdCache.Load(appId)
-	return exists
+) (isForwardable bool, forwardSetting protocol.ForwardSettingValue, err error) {
+	fs, exists := q.appIdCache.Load(appId)
+	if exists {
+		forwardState := fs.(*ForwardState)
+		return forwardState.HasWebhook, forwardState.ForwardSetting, nil
+	} else {
+		info, err := q.store.GetAppInfo(ctx, appId)
+		if err != nil {
+			return false, 0, base.AsRiverError(err, protocol.Err_DB_OPERATION_FAILURE).Message("Could not determine if the app has a registered webhook")
+		}
+		fs, _ = q.appIdCache.LoadOrStore(appId, &ForwardState{
+			HasWebhook:     info.WebhookUrl != "",
+			ForwardSetting: info.ForwardSetting,
+		})
+		forwardState := fs.(*ForwardState)
+		return forwardState.HasWebhook, forwardState.ForwardSetting, nil
+	}
 }
