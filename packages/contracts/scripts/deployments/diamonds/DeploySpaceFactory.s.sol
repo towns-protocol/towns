@@ -34,14 +34,10 @@ import {DeployPricingModules} from "scripts/deployments/facets/DeployPricingModu
 import {DeployProxyManager} from "scripts/deployments/facets/DeployProxyManager.s.sol";
 import {DeploySpaceFactoryInit} from "scripts/deployments/facets/DeploySpaceFactoryInit.s.sol";
 import {DeployWalletLink} from "scripts/deployments/facets/DeployWalletLink.s.sol";
-import {DeployMockDelegationRegistry} from "scripts/deployments/utils/DeployMockDelegationRegistry.s.sol";
-import {DeployRuleEntitlement} from "scripts/deployments/utils/DeployRuleEntitlement.s.sol";
-import {DeployRuleEntitlementV2} from "scripts/deployments/utils/DeployRuleEntitlementV2.s.sol";
 import {DeploySLCEIP6565} from "scripts/deployments/utils/DeploySLCEIP6565.s.sol";
 import {DeploySpaceProxyInitializer} from "scripts/deployments/utils/DeploySpaceProxyInitializer.s.sol";
 import {DeployTieredLogPricingV2} from "scripts/deployments/utils/DeployTieredLogPricingV2.s.sol";
 import {DeployTieredLogPricingV3} from "scripts/deployments/utils/DeployTieredLogPricingV3.s.sol";
-import {DeployUserEntitlement} from "scripts/deployments/utils/DeployUserEntitlement.s.sol";
 import {DeployFeatureManager} from "scripts/deployments/facets/DeployFeatureManager.s.sol";
 
 contract DeploySpaceFactory is IDiamondInitHelper, DiamondHelper, Deployer {
@@ -60,15 +56,11 @@ contract DeploySpaceFactory is IDiamondInitHelper, DiamondHelper, Deployer {
     // dependencies
     DeploySpace deploySpace = new DeploySpace();
     DeploySpaceOwner deploySpaceOwner = new DeploySpaceOwner();
-    DeployUserEntitlement deployUserEntitlement = new DeployUserEntitlement();
-    DeployRuleEntitlement deployLegacyRuleEntitlement = new DeployRuleEntitlement();
-    DeployRuleEntitlementV2 deployRuleEntitlementV2 = new DeployRuleEntitlementV2();
     DeployTieredLogPricingV2 deployTieredLogPricingV2 = new DeployTieredLogPricingV2();
     DeployTieredLogPricingV3 deployTieredLogPricingV3 = new DeployTieredLogPricingV3();
     DeploySpaceProxyInitializer deploySpaceProxyInitializer = new DeploySpaceProxyInitializer();
     DeploySLCEIP6565 deployVerifierLib = new DeploySLCEIP6565();
     DeploySpaceFactoryInit deploySpaceFactoryInit = new DeploySpaceFactoryInit();
-    DeployMockDelegationRegistry deployMockDelegationRegistry = new DeployMockDelegationRegistry();
 
     // helpers
     address multiInit;
@@ -120,9 +112,9 @@ contract DeploySpaceFactory is IDiamondInitHelper, DiamondHelper, Deployer {
         spaceOwner = deploySpaceOwner.deploy(deployer);
 
         // entitlement modules
-        userEntitlement = deployUserEntitlement.deploy(deployer);
-        ruleEntitlement = deployRuleEntitlementV2.deploy(deployer);
-        legacyRuleEntitlement = deployLegacyRuleEntitlement.deploy(deployer);
+        userEntitlement = facetHelper.deploy("UserEntitlement", deployer);
+        ruleEntitlement = facetHelper.deploy("RuleEntitlementV2", deployer);
+        legacyRuleEntitlement = facetHelper.deploy("RuleEntitlement", deployer);
 
         // pricing modules
         tieredLogPricingV2 = deployTieredLogPricingV2.deploy(deployer);
@@ -182,7 +174,7 @@ contract DeploySpaceFactory is IDiamondInitHelper, DiamondHelper, Deployer {
 
         if (isAnvil()) {
             legacyArchitect = deployMockLegacyArchitect.deploy(deployer);
-            mockDelegationRegistry = deployMockDelegationRegistry.deploy(deployer);
+            mockDelegationRegistry = facetHelper.deploy("MockDelegationRegistry", deployer);
         } else {
             mockDelegationRegistry = 0x00000000000000447e69651d841bD8D104Bed493;
         }

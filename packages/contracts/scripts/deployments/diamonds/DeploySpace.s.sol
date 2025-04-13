@@ -61,8 +61,6 @@ contract DeploySpace is IDiamondInitHelper, DiamondHelper, Deployer {
     DeploySpaceEntitlementGated entitlementGatedHelper = new DeploySpaceEntitlementGated();
     DeployTipping tippingHelper = new DeployTipping();
     DeployTreasury treasuryHelper = new DeployTreasury();
-    // Test Facets
-    DeployMockLegacyMembership mockLegacyMembershipHelper = new DeployMockLegacyMembership();
 
     address tokenOwnable;
     address diamondCut;
@@ -136,7 +134,7 @@ contract DeploySpace is IDiamondInitHelper, DiamondHelper, Deployer {
         membershipTokenHelper.removeSelector(IERC721A.tokenURI.selector);
 
         if (isAnvil()) {
-            mockLegacyMembership = mockLegacyMembershipHelper.deploy(deployer);
+            mockLegacyMembership = facetHelper.deploy("MockLegacyMembership", deployer);
         }
 
         addCut(entitlementsHelper.makeCut(entitlements, IDiamond.FacetCutAction.Add));
@@ -163,7 +161,7 @@ contract DeploySpace is IDiamondInitHelper, DiamondHelper, Deployer {
 
         if (isAnvil()) {
             addCut(
-                mockLegacyMembershipHelper.makeCut(
+                DeployMockLegacyMembership.makeCut(
                     mockLegacyMembership,
                     IDiamond.FacetCutAction.Add
                 )
