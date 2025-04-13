@@ -62,7 +62,7 @@ library DeploySpaceOwnerFacet {
         string memory name,
         string memory symbol
     ) internal pure returns (bytes memory) {
-        return abi.encodeWithSelector(SpaceOwner.__SpaceOwner_init.selector, name, symbol);
+        return abi.encodeCall(SpaceOwner.__SpaceOwner_init, (name, symbol));
     }
 
     function deploy() internal returns (address) {

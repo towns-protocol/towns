@@ -12,6 +12,7 @@ import {DeployEIP712Facet} from "@towns-protocol/diamond/scripts/deployments/fac
 import {DeployIntrospection} from "@towns-protocol/diamond/scripts/deployments/facets/DeployIntrospection.s.sol";
 import {DeployOwnable} from "@towns-protocol/diamond/scripts/deployments/facets/DeployOwnable.s.sol";
 import {DeployPausable} from "@towns-protocol/diamond/scripts/deployments/facets/DeployPausable.s.sol";
+import {DeployMetadata} from "../facets/DeployMetadata.s.sol";
 
 // contracts
 import {Diamond} from "@towns-protocol/diamond/src/Diamond.sol";
@@ -26,7 +27,6 @@ import {DeploySpaceOwner} from "scripts/deployments/diamonds/DeploySpaceOwner.s.
 import {DeployArchitect} from "scripts/deployments/facets/DeployArchitect.s.sol";
 import {DeployCreateSpace} from "scripts/deployments/facets/DeployCreateSpace.s.sol";
 import {DeployImplementationRegistry} from "scripts/deployments/facets/DeployImplementationRegistry.s.sol";
-import {DeployMetadata} from "scripts/deployments/facets/DeployMetadata.s.sol";
 import {DeployMockLegacyArchitect} from "scripts/deployments/facets/DeployMockLegacyArchitect.s.sol";
 import {DeployPartnerRegistry} from "scripts/deployments/facets/DeployPartnerRegistry.s.sol";
 import {DeployPlatformRequirements} from "scripts/deployments/facets/DeployPlatformRequirements.s.sol";
@@ -41,7 +41,6 @@ import {DeployFeatureManager} from "scripts/deployments/facets/DeployFeatureMana
 
 contract DeploySpaceFactory is IDiamondInitHelper, DiamondHelper, Deployer {
     DeployFacet private facetHelper = new DeployFacet();
-    DeployMetadata metadataHelper = new DeployMetadata();
     DeployArchitect architectHelper = new DeployArchitect();
     DeployCreateSpace createSpaceHelper = new DeployCreateSpace();
     DeployPricingModules pricingModulesHelper = new DeployPricingModules();
@@ -154,7 +153,7 @@ contract DeploySpaceFactory is IDiamondInitHelper, DiamondHelper, Deployer {
     }
 
     function diamondInitParams(address deployer) public returns (Diamond.InitParams memory) {
-        metadata = metadataHelper.deploy(deployer);
+        metadata = facetHelper.deploy("MetadataFacet", deployer);
         architect = architectHelper.deploy(deployer);
         create = createSpaceHelper.deploy(deployer);
         registry = registryHelper.deploy(deployer);
@@ -178,9 +177,9 @@ contract DeploySpaceFactory is IDiamondInitHelper, DiamondHelper, Deployer {
         }
 
         addFacet(
-            metadataHelper.makeCut(metadata, IDiamond.FacetCutAction.Add),
+            DeployMetadata.makeCut(metadata, IDiamond.FacetCutAction.Add),
             metadata,
-            metadataHelper.makeInitData(bytes32("SpaceFactory"), "")
+            DeployMetadata.makeInitData(bytes32("SpaceFactory"), "")
         );
         addFacet(
             architectHelper.makeCut(architect, IDiamond.FacetCutAction.Add),
@@ -276,11 +275,11 @@ contract DeploySpaceFactory is IDiamondInitHelper, DiamondHelper, Deployer {
             bytes32 facetNameHash = keccak256(abi.encodePacked(facets[i]));
 
             if (facetNameHash == keccak256(abi.encodePacked("MetadataFacet"))) {
-                metadata = metadataHelper.deploy(deployer);
+                metadata = facetHelper.deploy("MetadataFacet", deployer);
                 addFacet(
-                    metadataHelper.makeCut(metadata, IDiamond.FacetCutAction.Add),
+                    DeployMetadata.makeCut(metadata, IDiamond.FacetCutAction.Add),
                     metadata,
-                    metadataHelper.makeInitData(bytes32("SpaceFactory"), "")
+                    DeployMetadata.makeInitData(bytes32("SpaceFactory"), "")
                 );
             } else if (facetNameHash == keccak256(abi.encodePacked("Architect"))) {
                 architect = architectHelper.deploy(deployer);
