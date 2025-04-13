@@ -4,7 +4,6 @@ pragma solidity ^0.8.23;
 // interfaces
 import {IDiamond} from "@towns-protocol/diamond/src/IDiamond.sol";
 import {IDiamondInitHelper} from "./IDiamondInitHelper.sol";
-import {IERC721A} from "src/diamond/facets/token/ERC721A/IERC721A.sol";
 
 // libraries
 import {DeployDiamondCut} from "@towns-protocol/diamond/scripts/deployments/facets/DeployDiamondCut.s.sol";
@@ -14,6 +13,8 @@ import {DeployOwnablePending} from "@towns-protocol/diamond/scripts/deployments/
 import {DeployTokenOwnable} from "@towns-protocol/diamond/scripts/deployments/facets/DeployTokenOwnable.s.sol";
 import {DeployTokenPausable} from "@towns-protocol/diamond/scripts/deployments/facets/DeployTokenPausable.s.sol";
 import {DeployMembershipToken} from "../facets/DeployMembershipToken.s.sol";
+import {DeployReviewFacet} from "../facets/DeployReviewFacet.s.sol";
+import {DeploySpaceEntitlementGated} from "../facets/DeploySpaceEntitlementGated.s.sol";
 
 // contracts
 import {Diamond} from "@towns-protocol/diamond/src/Diamond.sol";
@@ -32,9 +33,7 @@ import {DeployMembership} from "scripts/deployments/facets/DeployMembership.s.so
 import {DeployMembershipMetadata} from "scripts/deployments/facets/DeployMembershipMetadata.s.sol";
 import {DeployPrepayFacet} from "scripts/deployments/facets/DeployPrepayFacet.s.sol";
 import {DeployReferrals} from "scripts/deployments/facets/DeployReferrals.s.sol";
-import {DeployReviewFacet} from "scripts/deployments/facets/DeployReviewFacet.s.sol";
 import {DeployRoles} from "scripts/deployments/facets/DeployRoles.s.sol";
-import {DeploySpaceEntitlementGated} from "scripts/deployments/facets/DeploySpaceEntitlementGated.s.sol";
 import {DeployTipping} from "scripts/deployments/facets/DeployTipping.s.sol";
 import {DeployTreasury} from "scripts/deployments/facets/DeployTreasury.s.sol";
 
@@ -56,8 +55,6 @@ contract DeploySpace is IDiamondInitHelper, DiamondHelper, Deployer {
 
     DeployPrepayFacet prepayHelper = new DeployPrepayFacet();
     DeployReferrals referralsHelper = new DeployReferrals();
-    DeployReviewFacet reviewHelper = new DeployReviewFacet();
-    DeploySpaceEntitlementGated entitlementGatedHelper = new DeploySpaceEntitlementGated();
     DeployTipping tippingHelper = new DeployTipping();
     DeployTreasury treasuryHelper = new DeployTreasury();
 
@@ -125,8 +122,8 @@ contract DeploySpace is IDiamondInitHelper, DiamondHelper, Deployer {
         tokenPausable = facetHelper.deploy("TokenPausableFacet", deployer);
         prepay = prepayHelper.deploy(deployer);
         referrals = referralsHelper.deploy(deployer);
-        review = reviewHelper.deploy(deployer);
-        entitlementGated = entitlementGatedHelper.deploy(deployer);
+        review = facetHelper.deploy("ReviewFacet", deployer);
+        entitlementGated = facetHelper.deploy("SpaceEntitlementGated", deployer);
         tipping = tippingHelper.deploy(deployer);
         treasury = treasuryHelper.deploy(deployer);
 
@@ -142,7 +139,7 @@ contract DeploySpace is IDiamondInitHelper, DiamondHelper, Deployer {
         addCut(membershipHelper.makeCut(membership, IDiamond.FacetCutAction.Add));
         addCut(banningHelper.makeCut(banning, IDiamond.FacetCutAction.Add));
         addCut(membershipMetadataHelper.makeCut(membershipMetadata, IDiamond.FacetCutAction.Add));
-        addCut(entitlementGatedHelper.makeCut(entitlementGated, IDiamond.FacetCutAction.Add));
+        addCut(DeploySpaceEntitlementGated.makeCut(entitlementGated, IDiamond.FacetCutAction.Add));
         addCut(erc721aQueryableHelper.makeCut(erc721aQueryable, IDiamond.FacetCutAction.Add));
         addCut(
             entitlementDataQueryableHelper.makeCut(
@@ -152,7 +149,7 @@ contract DeploySpace is IDiamondInitHelper, DiamondHelper, Deployer {
         );
         addCut(prepayHelper.makeCut(prepay, IDiamond.FacetCutAction.Add));
         addCut(referralsHelper.makeCut(referrals, IDiamond.FacetCutAction.Add));
-        addCut(reviewHelper.makeCut(review, IDiamond.FacetCutAction.Add));
+        addCut(DeployReviewFacet.makeCut(review, IDiamond.FacetCutAction.Add));
         addCut(tippingHelper.makeCut(tipping, IDiamond.FacetCutAction.Add));
         addCut(treasuryHelper.makeCut(treasury, IDiamond.FacetCutAction.Add));
 
@@ -226,12 +223,15 @@ contract DeploySpace is IDiamondInitHelper, DiamondHelper, Deployer {
                 referrals = referralsHelper.deploy(deployer);
                 addCut(referralsHelper.makeCut(referrals, IDiamond.FacetCutAction.Add));
             } else if (facetNameHash == keccak256(abi.encodePacked("ReviewFacet"))) {
-                review = reviewHelper.deploy(deployer);
-                addCut(reviewHelper.makeCut(review, IDiamond.FacetCutAction.Add));
+                review = facetHelper.deploy("ReviewFacet", deployer);
+                addCut(DeployReviewFacet.makeCut(review, IDiamond.FacetCutAction.Add));
             } else if (facetNameHash == keccak256(abi.encodePacked("SpaceEntitlementGated"))) {
-                entitlementGated = entitlementGatedHelper.deploy(deployer);
+                entitlementGated = facetHelper.deploy("SpaceEntitlementGated", deployer);
                 addCut(
-                    entitlementGatedHelper.makeCut(entitlementGated, IDiamond.FacetCutAction.Add)
+                    DeploySpaceEntitlementGated.makeCut(
+                        entitlementGated,
+                        IDiamond.FacetCutAction.Add
+                    )
                 );
             } else if (facetNameHash == keccak256(abi.encodePacked("Treasury"))) {
                 treasury = treasuryHelper.deploy(deployer);
