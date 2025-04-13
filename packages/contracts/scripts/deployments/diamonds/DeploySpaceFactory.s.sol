@@ -262,11 +262,7 @@ contract DeploySpaceFactory is IDiamondInitHelper, DiamondHelper, Deployer {
             Diamond.InitParams({
                 baseFacets: baseFacets(),
                 init: multiInit,
-                initData: abi.encodeWithSelector(
-                    MultiInit.multiInit.selector,
-                    _initAddresses,
-                    _initDatas
-                )
+                initData: abi.encodeCall(MultiInit.multiInit, (_initAddresses, _initDatas))
             });
     }
 
