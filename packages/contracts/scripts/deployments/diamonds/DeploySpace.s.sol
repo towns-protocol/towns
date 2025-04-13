@@ -13,6 +13,7 @@ import {DeployIntrospection} from "@towns-protocol/diamond/scripts/deployments/f
 import {DeployOwnablePending} from "@towns-protocol/diamond/scripts/deployments/facets/DeployOwnablePending.s.sol";
 import {DeployTokenOwnable} from "@towns-protocol/diamond/scripts/deployments/facets/DeployTokenOwnable.s.sol";
 import {DeployTokenPausable} from "@towns-protocol/diamond/scripts/deployments/facets/DeployTokenPausable.s.sol";
+import {DeployMembershipToken} from "../facets/DeployMembershipToken.s.sol";
 
 // contracts
 import {Diamond} from "@towns-protocol/diamond/src/Diamond.sol";
@@ -29,7 +30,6 @@ import {DeployEntitlementDataQueryable} from "scripts/deployments/facets/DeployE
 import {DeployEntitlementsManager} from "scripts/deployments/facets/DeployEntitlementsManager.s.sol";
 import {DeployMembership} from "scripts/deployments/facets/DeployMembership.s.sol";
 import {DeployMembershipMetadata} from "scripts/deployments/facets/DeployMembershipMetadata.s.sol";
-import {DeployMembershipToken} from "scripts/deployments/facets/DeployMembershipToken.s.sol";
 import {DeployPrepayFacet} from "scripts/deployments/facets/DeployPrepayFacet.s.sol";
 import {DeployReferrals} from "scripts/deployments/facets/DeployReferrals.s.sol";
 import {DeployReviewFacet} from "scripts/deployments/facets/DeployReviewFacet.s.sol";
@@ -57,7 +57,6 @@ contract DeploySpace is IDiamondInitHelper, DiamondHelper, Deployer {
     DeployPrepayFacet prepayHelper = new DeployPrepayFacet();
     DeployReferrals referralsHelper = new DeployReferrals();
     DeployReviewFacet reviewHelper = new DeployReviewFacet();
-    DeployMembershipToken membershipTokenHelper = new DeployMembershipToken();
     DeploySpaceEntitlementGated entitlementGatedHelper = new DeploySpaceEntitlementGated();
     DeployTipping tippingHelper = new DeployTipping();
     DeployTreasury treasuryHelper = new DeployTreasury();
@@ -114,7 +113,7 @@ contract DeploySpace is IDiamondInitHelper, DiamondHelper, Deployer {
     }
 
     function diamondInitParams(address deployer) public returns (Diamond.InitParams memory) {
-        membershipToken = membershipTokenHelper.deploy(deployer);
+        membershipToken = facetHelper.deploy("MembershipToken", deployer);
         erc721aQueryable = erc721aQueryableHelper.deploy(deployer);
         banning = banningHelper.deploy(deployer);
         membership = membershipHelper.deploy(deployer);
@@ -131,8 +130,6 @@ contract DeploySpace is IDiamondInitHelper, DiamondHelper, Deployer {
         tipping = tippingHelper.deploy(deployer);
         treasury = treasuryHelper.deploy(deployer);
 
-        membershipTokenHelper.removeSelector(IERC721A.tokenURI.selector);
-
         if (isAnvil()) {
             mockLegacyMembership = facetHelper.deploy("MockLegacyMembership", deployer);
         }
@@ -141,7 +138,7 @@ contract DeploySpace is IDiamondInitHelper, DiamondHelper, Deployer {
         addCut(rolesHelper.makeCut(roles, IDiamond.FacetCutAction.Add));
         addCut(DeployTokenPausable.makeCut(tokenPausable, IDiamond.FacetCutAction.Add));
         addCut(channelsHelper.makeCut(channels, IDiamond.FacetCutAction.Add));
-        addCut(membershipTokenHelper.makeCut(membershipToken, IDiamond.FacetCutAction.Add));
+        addCut(DeployMembershipToken.makeCut(membershipToken, IDiamond.FacetCutAction.Add));
         addCut(membershipHelper.makeCut(membership, IDiamond.FacetCutAction.Add));
         addCut(banningHelper.makeCut(banning, IDiamond.FacetCutAction.Add));
         addCut(membershipMetadataHelper.makeCut(membershipMetadata, IDiamond.FacetCutAction.Add));
@@ -181,9 +178,8 @@ contract DeploySpace is IDiamondInitHelper, DiamondHelper, Deployer {
             bytes32 facetNameHash = keccak256(abi.encodePacked(facets[i]));
 
             if (facetNameHash == keccak256(abi.encodePacked("MembershipToken"))) {
-                membershipToken = membershipTokenHelper.deploy(deployer);
-                membershipTokenHelper.removeSelector(IERC721A.tokenURI.selector);
-                addCut(membershipTokenHelper.makeCut(membershipToken, IDiamond.FacetCutAction.Add));
+                membershipToken = facetHelper.deploy("MembershipToken", deployer);
+                addCut(DeployMembershipToken.makeCut(membershipToken, IDiamond.FacetCutAction.Add));
             } else if (facetNameHash == keccak256(abi.encodePacked("ERC721AQueryable"))) {
                 erc721aQueryable = erc721aQueryableHelper.deploy(deployer);
                 addCut(
