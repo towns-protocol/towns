@@ -35,7 +35,6 @@ import {DeployProxyManager} from "scripts/deployments/facets/DeployProxyManager.
 import {DeploySpaceFactoryInit} from "scripts/deployments/facets/DeploySpaceFactoryInit.s.sol";
 import {DeployWalletLink} from "scripts/deployments/facets/DeployWalletLink.s.sol";
 import {DeploySLCEIP6565} from "scripts/deployments/utils/DeploySLCEIP6565.s.sol";
-import {DeploySpaceProxyInitializer} from "scripts/deployments/utils/DeploySpaceProxyInitializer.s.sol";
 import {DeployTieredLogPricingV2} from "scripts/deployments/utils/DeployTieredLogPricingV2.s.sol";
 import {DeployTieredLogPricingV3} from "scripts/deployments/utils/DeployTieredLogPricingV3.s.sol";
 import {DeployFeatureManager} from "scripts/deployments/facets/DeployFeatureManager.s.sol";
@@ -58,7 +57,6 @@ contract DeploySpaceFactory is IDiamondInitHelper, DiamondHelper, Deployer {
     DeploySpaceOwner deploySpaceOwner = new DeploySpaceOwner();
     DeployTieredLogPricingV2 deployTieredLogPricingV2 = new DeployTieredLogPricingV2();
     DeployTieredLogPricingV3 deployTieredLogPricingV3 = new DeployTieredLogPricingV3();
-    DeploySpaceProxyInitializer deploySpaceProxyInitializer = new DeploySpaceProxyInitializer();
     DeploySLCEIP6565 deployVerifierLib = new DeploySLCEIP6565();
     DeploySpaceFactoryInit deploySpaceFactoryInit = new DeploySpaceFactoryInit();
 
@@ -168,7 +166,7 @@ contract DeploySpaceFactory is IDiamondInitHelper, DiamondHelper, Deployer {
         pricingModulesFacet = pricingModulesHelper.deploy(deployer);
         partnerRegistry = partnerRegistryHelper.deploy(deployer);
 
-        spaceProxyInitializer = deploySpaceProxyInitializer.deploy(deployer);
+        spaceProxyInitializer = facetHelper.deploy("SpaceProxyInitializer", deployer);
         spaceFactoryInit = deploySpaceFactoryInit.deploy(deployer);
         spaceFactoryInitData = deploySpaceFactoryInit.makeInitData(spaceProxyInitializer);
 
