@@ -11,12 +11,13 @@ import {IArchitect, IArchitectBase} from "src/factory/facets/architect/IArchitec
 import {ISpaceOwnerBase} from "src/spaces/facets/owner/ISpaceOwner.sol";
 
 //libraries
+import {DeploySpaceOwnerFacet} from "scripts/deployments/facets/DeploySpaceOwnerFacet.s.sol";
 
 //contracts
 import {DiamondCutFacet} from "@towns-protocol/diamond/src/facets/cut/DiamondCutFacet.sol";
 
 import {DeployArchitect} from "scripts/deployments/facets/DeployArchitect.s.sol";
-import {DeploySpaceOwnerFacet, SpaceOwner} from "scripts/deployments/facets/DeploySpaceOwnerFacet.s.sol";
+import {SpaceOwner} from "src/spaces/facets/owner/SpaceOwner.sol";
 import {SpaceHelper} from "test/spaces/SpaceHelper.sol";
 
 import {ICreateSpace} from "src/factory/facets/create/ICreateSpace.sol";
@@ -28,14 +29,14 @@ contract ForkSpaceOwner is IArchitectBase, ISpaceOwnerBase, TestUtils, SpaceHelp
     address spaceOwnerDiamond = 0x2824D1235d1CbcA6d61C00C3ceeCB9155cd33a42;
     address spaceFactory = 0x9978c826d93883701522d2CA645d5436e5654252;
 
-    DeploySpaceOwnerFacet spaceOwnerHelper = new DeploySpaceOwnerFacet();
     DeployArchitect architectHelper = new DeployArchitect();
 
     function setUp() external onlyForked {
         address deployer = getDeployer();
 
         // create diamond cut to current space owner
-        address spaceOwnerFacet = spaceOwnerHelper.deploy(deployer);
+        vm.prank(deployer);
+        address spaceOwnerFacet = DeploySpaceOwnerFacet.deploy();
         address architectFacet = architectHelper.deploy(deployer);
 
         bytes4[] memory addSelectors = new bytes4[](2);
