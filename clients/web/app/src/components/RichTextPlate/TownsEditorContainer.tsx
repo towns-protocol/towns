@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { createContext, useCallback, useEffect, useState } from 'react'
 import {
     Channel,
     SendTextMessageOptions,
@@ -33,7 +33,7 @@ import { getChannelNames } from './utils/helpers'
 import { EditorFallback } from './components/EditorFallback'
 import { unfurlLinksToAttachments } from './utils/unfurlLinks'
 import { TMentionTicker } from './components/plate-ui/autocomplete/types'
-
+import { LoadingElementDataContext } from './LoadingElementDataContext'
 type Props = {
     onSend?: (
         value: string,
@@ -107,8 +107,11 @@ const TownsTextEditorWithoutBoundary = ({
     )
     const { channelMentions } = useEditorChannelData(channels)
 
+    const [loadingAddresses, setLoadingAddresses] = useState<Set<string>>(new Set())
+
     const onInsertAddress = useCallback(async (address: string, chain: string) => {
-        void fetchCoinData(address, chain).then((coinData) => {
+        setLoadingAddresses((prev) => prev.add(address))
+        await fetchCoinData(address, chain).then((coinData) => {
             setTickerAttachments((prev) => [
                 ...prev.filter((t) => t.address !== address),
                 {
@@ -127,6 +130,10 @@ const TownsTextEditorWithoutBoundary = ({
                     } satisfies TMentionTicker,
                 } satisfies TickerAttachment & { coinData?: TMentionTicker },
             ])
+            setLoadingAddresses((prev) => {
+                prev.delete(address)
+                return new Set(prev)
+            })
         })
     }, [])
 
@@ -292,38 +299,40 @@ const TownsTextEditorWithoutBoundary = ({
                 data-testid="editor-container"
                 rounded={{ default: 'sm', touch: 'none' }}
             >
-                <RichTextEditor
-                    autoFocus={autoFocus}
-                    editable={editable}
-                    editing={editing}
-                    initialValue={initialValue}
-                    placeholder={placeholder}
-                    tabIndex={tabIndex}
-                    threadId={threadId}
-                    threadPreview={threadPreview}
-                    hasInlinePreview={!!inlineReplyPreview}
-                    displayButtons={displayButtons}
-                    background={background}
-                    fileCount={files?.length}
-                    channels={channels}
-                    storageId={inlineReplyPreview?.event?.eventId ?? storageId}
-                    userMentions={userMentions}
-                    channelMentions={channelMentions}
-                    userHashMap={userHashMap}
-                    lookupUser={lookupUser}
-                    unfurledLinkAttachments={unfurledLinkAttachments}
-                    tickerAttachments={tickerAttachments}
-                    renderSendButton={renderSendButton}
-                    renderTradingBottomBar={renderTradingBottomBar}
-                    allowEmptyMessage={allowEmptyMessage}
-                    onSelectTicker={onAddTickerAttachment}
-                    onRemoveTicker={onRemoveTickerAttachment}
-                    onInsertAddress={onInsertAddress}
-                    onMessageLinksUpdated={onMessageLinksUpdated}
-                    onRemoveUnfurledLinkAttachment={onRemoveUnfurledLinkAttachment}
-                    onSend={sendMessage}
-                    onCancel={onCancel}
-                />
+                <LoadingElementDataContext.Provider value={{ loadingAddresses }}>
+                    <RichTextEditor
+                        autoFocus={autoFocus}
+                        editable={editable}
+                        editing={editing}
+                        initialValue={initialValue}
+                        placeholder={placeholder}
+                        tabIndex={tabIndex}
+                        threadId={threadId}
+                        threadPreview={threadPreview}
+                        hasInlinePreview={!!inlineReplyPreview}
+                        displayButtons={displayButtons}
+                        background={background}
+                        fileCount={files?.length}
+                        channels={channels}
+                        storageId={inlineReplyPreview?.event?.eventId ?? storageId}
+                        userMentions={userMentions}
+                        channelMentions={channelMentions}
+                        userHashMap={userHashMap}
+                        lookupUser={lookupUser}
+                        unfurledLinkAttachments={unfurledLinkAttachments}
+                        tickerAttachments={tickerAttachments}
+                        renderSendButton={renderSendButton}
+                        renderTradingBottomBar={renderTradingBottomBar}
+                        allowEmptyMessage={allowEmptyMessage}
+                        onSelectTicker={onAddTickerAttachment}
+                        onRemoveTicker={onRemoveTickerAttachment}
+                        onInsertAddress={onInsertAddress}
+                        onMessageLinksUpdated={onMessageLinksUpdated}
+                        onRemoveUnfurledLinkAttachment={onRemoveUnfurledLinkAttachment}
+                        onSend={sendMessage}
+                        onCancel={onCancel}
+                    />
+                </LoadingElementDataContext.Provider>
             </Stack>
         </>
     )

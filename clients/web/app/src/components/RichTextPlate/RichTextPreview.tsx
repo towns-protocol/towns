@@ -35,10 +35,8 @@ import { ParagraphWithoutPlate } from './components/plate-ui/ParagraphElement'
 import { edited, richText, singleEmojiMessage } from './RichTextEditor.css'
 import MarkdownToJSX from './utils/MarkdownToJSX'
 import { ELEMENT_EDITED } from './utils/remark/remarkEditedAnnotation'
-import {
-    ContractAddressElementWithoutPlate,
-    TickerMentionElementWithoutPlate,
-} from './components/plate-ui/TickerMentionElement'
+import { TickerMentionElementWithoutPlate } from './components/plate-ui/TickerMentionElement'
+import { ContractAddressElementWithoutPlate } from './components/plate-ui/ContractAddressElement'
 
 const fieldClassName = clsx([fieldStyles.field, richText])
 

@@ -63,13 +63,11 @@ import {
     ELEMENT_MENTION_TICKER,
     TickerMentionPlugin,
 } from './createTickerMentionPlugin'
-import {
-    ContractAddressElement,
-    TickerMentionElement,
-} from '../components/plate-ui/TickerMentionElement'
+import { TickerMentionElement } from '../components/plate-ui/TickerMentionElement'
 import { InsertTickerMentionPlugin } from './createInsertTickerMentionPlugin'
 import { PasteContractAddressPlugin } from './PasteContractAddressPlugin'
 import { InsertAddressPlugin } from './createInsertAddressPlugin'
+import { ContractAddressElement } from '../components/plate-ui/ContractAddressElement'
 
 const createTownsEditor = (
     uniqueId: string,
