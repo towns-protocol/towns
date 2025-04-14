@@ -107,7 +107,7 @@ const TownsTextEditorWithoutBoundary = ({
     )
     const { channelMentions } = useEditorChannelData(channels)
 
-    const onContractAddressAdded = useCallback(async (address: string, chain: string) => {
+    const onInsertAddress = useCallback(async (address: string, chain: string) => {
         void fetchCoinData(address, chain).then((coinData) => {
             setTickerAttachments((prev) => [
                 ...prev.filter((t) => t.address !== address),
@@ -318,7 +318,7 @@ const TownsTextEditorWithoutBoundary = ({
                     allowEmptyMessage={allowEmptyMessage}
                     onSelectTicker={onAddTickerAttachment}
                     onRemoveTicker={onRemoveTickerAttachment}
-                    onDetectAddress={onContractAddressAdded}
+                    onInsertAddress={onInsertAddress}
                     onMessageLinksUpdated={onMessageLinksUpdated}
                     onRemoveUnfurledLinkAttachment={onRemoveUnfurledLinkAttachment}
                     onSend={sendMessage}

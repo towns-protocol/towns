@@ -69,6 +69,7 @@ import {
 } from '../components/plate-ui/TickerMentionElement'
 import { InsertTickerMentionPlugin } from './createInsertTickerMentionPlugin'
 import { PasteContractAddressPlugin } from './PasteContractAddressPlugin'
+import { InsertAddressPlugin } from './createInsertAddressPlugin'
 
 const createTownsEditor = (
     uniqueId: string,
@@ -79,7 +80,7 @@ const createTownsEditor = (
     initialValue: Value,
     lookupUser?: ReturnType<typeof useUserLookupContext>['lookupUser'],
     onSelectTicker?: (ticker: TMentionTicker) => void,
-    onDetectAddress?: (address: string, chain: string) => void,
+    onInsertAddress?: (address: string, chain: string) => void,
 ) =>
     createPlateEditor({
         plugins: [
@@ -159,7 +160,9 @@ const createTownsEditor = (
             EditorOverridesPlugin,
             InsertTickerMentionPlugin({
                 onInsertTickerMention: onSelectTicker,
-                onInsertContractAddress: onDetectAddress,
+            }),
+            InsertAddressPlugin({
+                onInsertAddress: onInsertAddress,
             }),
             ErrorHandlingPlugin,
             FormatTextLinkPlugin,
