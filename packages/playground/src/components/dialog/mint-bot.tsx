@@ -14,14 +14,15 @@ import {
 } from '@towns-protocol/sdk'
 import { useMutation } from '@tanstack/react-query'
 import { LoaderCircleIcon } from 'lucide-react'
-import { toBinary } from '@bufbuild/protobuf'
-import { ExportedDeviceSchema } from '@towns-protocol/proto'
+import { create, toBinary } from '@bufbuild/protobuf'
+import { AppPrivateDataSchema } from '@towns-protocol/proto'
 import { bin_toBase64 } from '@towns-protocol/dlog'
 import { useEthersSigner } from '@/utils/viem-to-ethers'
 import { useCurrentSpaceId } from '@/hooks/current-space'
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '../ui/dialog'
 import { Button } from '../ui/button'
 import { SecretInformationBanner } from '../ui/secret-information-banner'
+import { CopyButton } from '../copy-button'
 
 export const MintBotDialog = ({
     open,
@@ -92,17 +93,24 @@ export const MintBotDialog = ({
             if (!device) {
                 throw new Error('Failed to export device')
             }
-            const encryptionDeviceBase64 = bin_toBase64(toBinary(ExportedDeviceSchema, device))
+            const appPrivateDataBase64 = bin_toBase64(
+                toBinary(
+                    AppPrivateDataSchema,
+                    create(AppPrivateDataSchema, {
+                        privateKey: botWallet.privateKey,
+                        encryptionDevice: device,
+                    }),
+                ),
+            )
             await botClient.waitForStream(streamId)
             await botClient.sendMessage(
                 streamId,
-                `I'm ready! \n\`\`\` \nMNEMONIC="${botWallet.mnemonic.phrase}"\nPUBLIC_KEY="${botWallet.address}"\nENCRYPTION_DEVICE="${encryptionDeviceBase64}"\n\`\`\``,
+                `I'm ready! \n\`\`\` \nAPP_PRIVATE_DATA="${appPrivateDataBase64}"\n\`\`\``,
             )
 
             return {
                 publicKey: botWallet.address,
-                mnemonic: botWallet.mnemonic.phrase,
-                encryptionDeviceBase64,
+                appPrivateDataBase64,
             }
         },
     })
@@ -124,24 +132,23 @@ export const MintBotDialog = ({
                             Store this information in a secure location.
                         </SecretInformationBanner>
                         <div className="flex flex-col gap-2 text-sm">
-                            <p className="text-muted-foreground">Bot address:</p>
+                            <p className="text-muted-foreground">Bot Address:</p>
                             <pre className="overflow-auto whitespace-pre-wrap">
                                 {data.publicKey}
                             </pre>
                         </div>
                         <div className="flex flex-col gap-2 text-sm">
-                            <p className="text-muted-foreground">Bot mnemonic:</p>
-                            <pre className="overflow-auto whitespace-pre-wrap">{data.mnemonic}</pre>
-                        </div>
-                        <div className="flex flex-col gap-2 text-sm">
-                            <div className="flex justify-between">
+                            <div className="flex items-center justify-between">
                                 <p className="text-muted-foreground">Bot Encryption Device</p>
-                                <span className="whitespace-nowrap font-mono text-xs text-muted-foreground">
-                                    BASE64
-                                </span>
+                                <div className="flex items-center gap-2">
+                                    <span className="whitespace-nowrap font-mono text-xs text-muted-foreground">
+                                        BASE64
+                                    </span>
+                                    <CopyButton text={data.appPrivateDataBase64} />
+                                </div>
                             </div>
                             <pre className="max-h-[4lh] overflow-auto whitespace-pre-wrap break-all">
-                                {data.encryptionDeviceBase64}
+                                {data.appPrivateDataBase64}
                             </pre>
                         </div>
                     </>

@@ -86,24 +86,33 @@ export type Prettify<T> = {
     [K in keyof T]: T[K]
 } & {}
 
+type CreateTownsClientParams = {
+    env: Parameters<typeof makeRiverConfig>[0]
+    encryptionDevice?: EncryptionDeviceInitOpts
+}
 export const createTownsClient = async (
-    params:
+    params: (
+        | {
+              privateKey: string
+          }
         | {
               mnemonic: string
-              env: Parameters<typeof makeRiverConfig>[0]
-              encryptionDevice?: EncryptionDeviceInitOpts
           }
         | {
               bearerToken: string
-              env: Parameters<typeof makeRiverConfig>[0]
-              encryptionDevice?: EncryptionDeviceInitOpts
-          },
+          }
+    ) &
+        CreateTownsClientParams,
 ): Promise<ClientV2> => {
     const config = makeRiverConfig(params.env)
 
     let signer: SignerContext
     if ('mnemonic' in params) {
         const wallet = ethers.Wallet.fromMnemonic(params.mnemonic)
+        const delegateWallet = ethers.Wallet.createRandom()
+        signer = await makeSignerContext(wallet, delegateWallet)
+    } else if ('privateKey' in params) {
+        const wallet = new ethers.Wallet(params.privateKey)
         const delegateWallet = ethers.Wallet.createRandom()
         signer = await makeSignerContext(wallet, delegateWallet)
     } else {

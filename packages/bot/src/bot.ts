@@ -39,9 +39,9 @@ import {
     AppServiceResponseSchema,
     type AppServiceResponse,
     type EventPayload,
-    ExportedDeviceSchema,
     SessionKeysSchema,
     type UserInboxPayload_GroupEncryptionSessions,
+    AppPrivateDataSchema,
 } from '@towns-protocol/proto'
 import { bin_fromBase64, bin_toHexString, check } from '@towns-protocol/dlog'
 import {
@@ -326,19 +326,19 @@ export class Bot extends (EventEmitter as new () => TypedEmitter<BotEvents>) {
 }
 
 export const makeTownsBot = async (
-    mnemonic: string,
-    encryptionDeviceBase64: string,
+    appPrivateDataBase64: string,
     jwtSecret: string,
     env: Parameters<typeof makeRiverConfig>[0],
 ) => {
+    const { privateKey, encryptionDevice } = fromBinary(
+        AppPrivateDataSchema,
+        bin_fromBase64(appPrivateDataBase64),
+    )
     const client = await createTownsClient({
-        mnemonic,
+        privateKey,
         env,
         encryptionDevice: {
-            fromExportedDevice: fromBinary(
-                ExportedDeviceSchema,
-                bin_fromBase64(encryptionDeviceBase64),
-            ),
+            fromExportedDevice: encryptionDevice,
         },
     }).then((x) => x.extend(buildBotActions))
     return new Bot(client, jwtSecret)
