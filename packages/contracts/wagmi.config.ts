@@ -6,7 +6,7 @@ export default defineConfig({
   plugins: [
     foundry({
       project: "../",
-      artifacts: "contracts/out",
+      artifacts: "out",
       include: ["**/CreateSpace.sol/*.json"],
       forge: {
         build: false,
