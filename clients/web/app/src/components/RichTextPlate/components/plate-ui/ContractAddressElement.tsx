@@ -33,19 +33,19 @@ export const ContractAddressElementWithoutPlate = ({
             title={address}
             autoCorrect="off"
             display="inline-flex"
-            className={
-                pillShimmerClass +
-                ' ' +
+            className={[
+                pillShimmerClass,
                 atoms({
-                    background: 'level3',
+                    background: 'level1',
                     color: 'gray2',
                     fontSize: 'sm',
                     borderRadius: 'xs',
                     paddingX: 'xs',
                     insetY: 'xxs',
-                    border: 'level4',
-                })
-            }
+                    border: 'default',
+                    userSelect: 'none',
+                }),
+            ].join(' ')}
         >
             {short}
             {isLoading ? (
@@ -54,7 +54,7 @@ export const ContractAddressElementWithoutPlate = ({
                 <Box
                     paddingTop="xxs"
                     cursor="pointer"
-                    color={copied ? 'positive' : 'gray2'}
+                    color={copied ? 'positive' : undefined}
                     onClick={onCopy}
                 >
                     {!copied ? (
