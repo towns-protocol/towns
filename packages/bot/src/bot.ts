@@ -47,8 +47,26 @@ import { bin_fromBase64, bin_toHexString, check } from '@towns-protocol/dlog'
 import {
     GroupEncryptionAlgorithmId,
     parseGroupEncryptionAlgorithmId,
-    type GroupEncryptionSession,
 } from '@towns-protocol/encryption'
+
+type BotActions = ReturnType<typeof buildBotActions>
+
+type BotEvents = {
+    message: (handler: BotActions, event: BasePayload & { message: string }) => void
+    redact: (handler: BotActions, event: BasePayload & { refEventId: string }) => void
+    messageDelete: (handler: BotActions, event: BasePayload & { eventId: string }) => void
+    botMention: (handler: BotActions, event: BasePayload & { message: string }) => void
+    reply: (handler: BotActions, event: BasePayload & { message: string }) => void
+    reaction: (
+        handler: BotActions,
+        event: BasePayload & { reaction: string; messageId: string; userId: string },
+    ) => void
+    eventRevoke: (handler: BotActions, event: BasePayload & { eventId: string }) => void
+    tip: (handler: BotActions, event: BasePayload & { amount: bigint }) => void
+    channelJoin: (handler: BotActions, event: BasePayload) => void
+    channelLeave: (handler: BotActions, event: BasePayload) => void
+    streamMessage: (handler: BotActions, event: BasePayload & { message: string }) => void
+}
 
 type BasePayload = {
     userId: string
@@ -56,60 +74,11 @@ type BasePayload = {
     eventId: string
 }
 
-type BotActions = {
-    sendReaction: (
-        channelId: string,
-        messageId: string,
-        reaction: string,
-    ) => Promise<{ eventId: string }>
-    sendMessage: (
-        channelId: string,
-        message: string,
-        opts?: {
-            threadId?: string
-            replyId?: string
-            mentions?: ChannelMessage_Post_Mention[]
-            attachments?: ChannelMessage_Post_Attachment[]
-        },
-    ) => Promise<{ eventId: string }>
-    editMessage: (
-        channelId: string,
-        messageId: string,
-        message: string,
-    ) => Promise<{ eventId: string }>
-    redactEvent: (channelId: string, refEventId: string) => Promise<{ eventId: string }>
-    sendDm: BotActions['sendMessage']
-    sendKeySolicitation: (streamId: string, sessionIds: string[]) => Promise<{ eventId: string }>
-    uploadDeviceKeys: () => Promise<{ eventId: string }>
-    decryptSessions: (
-        streamId: string,
-        sessions: UserInboxPayload_GroupEncryptionSessions,
-    ) => Promise<GroupEncryptionSession[]>
-    // TODO: sendTip
-}
-
-type BotEvents = {
-    message: (handler: BotActions, opts: BasePayload & { message: string }) => void
-    redact: (handler: BotActions, opts: BasePayload & { refEventId: string }) => void
-    messageDelete: (handler: BotActions, opts: BasePayload & { eventId: string }) => void
-    botMention: (handler: BotActions, opts: BasePayload & { message: string }) => void
-    reply: (handler: BotActions, opts: BasePayload & { message: string }) => void
-    reaction: (
-        handler: BotActions,
-        opts: BasePayload & { reaction: string; messageId: string; userId: string },
-    ) => void
-    eventRevoke: (handler: BotActions, opts: BasePayload & { eventId: string }) => void
-    tip: (handler: BotActions, opts: BasePayload & { amount: bigint }) => void
-    channelJoin: (handler: BotActions, opts: BasePayload) => void
-    channelLeave: (handler: BotActions, opts: BasePayload) => void
-    streamMessage: (handler: BotActions, opts: BasePayload & { message: string }) => void
-}
-
 export class Bot extends (EventEmitter as new () => TypedEmitter<BotEvents>) {
     private readonly server: Hono
     private readonly client: ClientV2<BotActions>
     botId: string
-    // private readonly webhookClient: WebhookClient
+
     constructor(clientV2: ClientV2<BotActions>, private readonly jwtSecret: string) {
         super()
         this.client = clientV2
@@ -298,8 +267,8 @@ export class Bot extends (EventEmitter as new () => TypedEmitter<BotEvents>) {
         return this.client.sendReaction(channelId, refEventId, reaction)
     }
 
-    async redactEvent(channelId: string, refEventId: string) {
-        return this.client.redactEvent(channelId, refEventId)
+    async removeEvent(channelId: string, refEventId: string) {
+        return this.client.removeEvent(channelId, refEventId)
     }
 
     onMessage(fn: (handler: BotActions, opts: BasePayload & { message: string }) => void) {
@@ -371,11 +340,11 @@ export const makeTownsBot = async (
                 bin_fromBase64(encryptionDeviceBase64),
             ),
         },
-    }).then((x) => x.extend(botBotActions))
+    }).then((x) => x.extend(buildBotActions))
     return new Bot(client, jwtSecret)
 }
 
-const botBotActions = (client: ClientV2): BotActions => {
+const buildBotActions = (client: ClientV2) => {
     const sendMessageEvent = async ({
         streamId,
         payload,
@@ -437,7 +406,7 @@ const botBotActions = (client: ClientV2): BotActions => {
         }
     }
 
-    const sendKeySolicitation: BotActions['sendKeySolicitation'] = async (streamId, sessionIds) => {
+    const sendKeySolicitation = async (streamId: string, sessionIds: string[]) => {
         const encryptionDevice = client.crypto.getUserDevice()
 
         const missingSessionIds = sessionIds.filter((sessionId) => sessionId !== '')
@@ -462,7 +431,7 @@ const botBotActions = (client: ClientV2): BotActions => {
         return { eventId, error }
     }
 
-    const uploadDeviceKeys: BotActions['uploadDeviceKeys'] = async () => {
+    const uploadDeviceKeys = async () => {
         const streamId = streamIdAsBytes(makeUserMetadataStreamId(client.userId))
         const { hash: prevMiniblockHash } = await client.rpc.getLastMiniblockHash({
             streamId,
@@ -479,7 +448,17 @@ const botBotActions = (client: ClientV2): BotActions => {
         const { error } = await client.rpc.addEvent({ streamId, event })
         return { eventId, error }
     }
-    const sendMessage: BotActions['sendMessage'] = async (streamId, message, opts) => {
+
+    const sendMessage = async (
+        streamId: string,
+        message: string,
+        opts?: {
+            threadId?: string
+            replyId?: string
+            mentions?: ChannelMessage_Post_Mention[]
+            attachments?: ChannelMessage_Post_Attachment[]
+        },
+    ) => {
         const payload = create(ChannelMessageSchema, {
             payload: {
                 case: 'post',
@@ -501,7 +480,8 @@ const botBotActions = (client: ClientV2): BotActions => {
         })
         return sendMessageEvent({ streamId, payload })
     }
-    const editMessage: BotActions['editMessage'] = async (streamId, messageId, message) => {
+
+    const editMessage = async (streamId: string, messageId: string, message: string) => {
         const payload = create(ChannelMessageSchema, {
             payload: {
                 case: 'edit',
@@ -515,15 +495,26 @@ const botBotActions = (client: ClientV2): BotActions => {
         })
         return sendMessageEvent({ streamId, payload })
     }
-    const sendDm = sendMessage
-    const sendReaction: BotActions['sendReaction'] = async (streamId, messageId, reaction) => {
+
+    const sendDm = (
+        userId: string,
+        message: string,
+        opts?: {
+            threadId?: string
+            replyId?: string
+            mentions?: ChannelMessage_Post_Mention[]
+            attachments?: ChannelMessage_Post_Attachment[]
+        },
+    ) => sendMessage(userId, message, opts)
+
+    const sendReaction = async (streamId: string, messageId: string, reaction: string) => {
         const payload = create(ChannelMessageSchema, {
             payload: { case: 'reaction', value: { refEventId: messageId, reaction } },
         })
         return sendMessageEvent({ streamId, payload })
     }
 
-    const redactEvent: BotActions['redactEvent'] = async (streamId, messageId) => {
+    const removeEvent = async (streamId: string, messageId: string) => {
         const payload = create(ChannelMessageSchema, {
             payload: { case: 'redaction', value: { refEventId: messageId } },
         })
@@ -564,7 +555,7 @@ const botBotActions = (client: ClientV2): BotActions => {
         editMessage,
         sendDm,
         sendReaction,
-        redactEvent,
+        removeEvent,
         sendKeySolicitation,
         uploadDeviceKeys,
         decryptSessions,
