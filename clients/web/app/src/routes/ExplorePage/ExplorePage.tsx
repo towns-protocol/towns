@@ -35,7 +35,7 @@ const ExplorePageContent = () => {
         return <Box padding="x4">Cannot find any towns</Box>
     }
 
-    const smallCardTowns = isMobile ? filteredExploreTowns : filteredExploreTowns.slice(2, 11)
+    const smallCardTowns = isMobile ? filteredExploreTowns : filteredExploreTowns.slice(2)
 
     return (
         <Box padding={{ mobile: 'xs', desktop: 'lg' }} data-testid="explore-page">
