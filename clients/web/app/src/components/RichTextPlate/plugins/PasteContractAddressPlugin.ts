@@ -7,6 +7,7 @@ import {
     isEndPoint,
     moveSelection,
 } from '@udecode/plate-common'
+import { isAddress } from '@components/Web3/Wallet/useGetWalletParam'
 import { ELEMENT_CONTRACT_ADDRESS } from './createTickerMentionPlugin'
 import { TContractAddressElement } from '../components/plate-ui/autocomplete/types'
 
@@ -18,12 +19,12 @@ export const PasteContractAddressPlugin = createPlatePlugin({
         editor.insertData = (data) => {
             const text = data.getData('text/plain')?.trim()
 
-            if (!text || !pseudoContract.test(text)) {
+            if (!text || !pseudoContractAddress.test(text)) {
                 insertData(data)
                 return editor
             }
 
-            const chain = getContractChain(text)
+            const chain = getChainFromAddress(text)
 
             if (!chain) {
                 insertData(data)
@@ -61,18 +62,14 @@ export const PasteContractAddressPlugin = createPlatePlugin({
     },
 })
 
-const pseudoContract = /^([a-f0-9]{40}|[a-z0-9]{32,44})$/i
+// loose peemptive validation for contract address
+const pseudoContractAddress = /^([a-f0-9]{40}|[a-z0-9]{32,45})$/i
 
-export const getContractChain = (text: string) => {
-    return isEthAddress(text) ? '8453' : isSolanaAddress(text) ? 'solana-mainnet' : null
-}
-
-const ETH_ADDRESS_REGEX = /^0x[a-fA-F0-9]{40}$/
-
-const isEthAddress = (text: string) => {
-    return ETH_ADDRESS_REGEX.test(text.trim())
+// validates base / solana address and returns the chain id
+export const getChainFromAddress = (text: string) => {
+    return isAddress(text) ? '8453' : isSolanaAddress(text) ? 'solana-mainnet' : null
 }
 
 const isSolanaAddress = (text: string) => {
-    return PublicKey.isOnCurve(text.trim())
+    return PublicKey.isOnCurve(text)
 }

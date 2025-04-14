@@ -11,7 +11,7 @@ import {
     ELEMENT_CONTRACT_ADDRESS,
     ELEMENT_MENTION_TICKER,
 } from '@components/RichTextPlate/plugins/createTickerMentionPlugin'
-import { getContractChain } from '@components/RichTextPlate/plugins/PasteContractAddressPlugin'
+import { getChainFromAddress } from '@components/RichTextPlate/plugins/PasteContractAddressPlugin'
 import { ELEMENT_MENTION_CHANNEL } from '../../plugins/createChannelPlugin'
 import {
     AtChannelUser,
@@ -205,7 +205,7 @@ function remarkTransformUserAndChannels(
 
         const transformContractAddress = (value: string) => {
             const address = value.trim()
-            const chain = getContractChain(value)
+            const chain = getChainFromAddress(value)
             if (chain) {
                 return [
                     {
