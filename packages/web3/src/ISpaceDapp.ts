@@ -374,4 +374,5 @@ export interface ISpaceDapp {
         receipt: ContractReceipt,
         senderAddress: string,
     ) => TipEventObject | undefined
+    updateCacheAfterBanOrUnBan: (spaceId: string, tokenId: ethers.BigNumber) => void
 }
