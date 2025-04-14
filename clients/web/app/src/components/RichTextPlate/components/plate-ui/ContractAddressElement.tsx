@@ -2,7 +2,6 @@ import React, { PropsWithChildren, useContext, useState } from 'react'
 import { useElement } from '@udecode/plate-common/react'
 import { Box, Icon } from '@ui'
 import { shortAddress } from 'ui/utils/utils'
-import { atoms } from 'ui/styles/atoms.css'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
 import { pillShimmerClass } from 'ui/styles/globals/shimmer.css'
 import { LoadingElementDataContext } from '@components/RichTextPlate/LoadingElementDataContext'
@@ -29,23 +28,19 @@ export const ContractAddressElementWithoutPlate = ({
         <Box
             horizontal
             gap="xs"
+            color="gray2"
             cursor="pointer"
+            background="level1"
+            border="default"
+            borderRadius="xs"
+            insetY="xxs"
+            paddingX="xs"
+            fontSize="sm"
+            userSelect="none"
             title={address}
             autoCorrect="off"
             display="inline-flex"
-            className={[
-                pillShimmerClass,
-                atoms({
-                    background: 'level1',
-                    color: 'gray2',
-                    fontSize: 'sm',
-                    borderRadius: 'xs',
-                    paddingX: 'xs',
-                    insetY: 'xxs',
-                    border: 'default',
-                    userSelect: 'none',
-                }),
-            ].join(' ')}
+            className={pillShimmerClass}
         >
             {short}
             {isLoading ? (
@@ -57,11 +52,11 @@ export const ContractAddressElementWithoutPlate = ({
                     color={copied ? 'positive' : undefined}
                     onClick={onCopy}
                 >
-                    {!copied ? (
-                        <Icon type="copy" display="inline-block" size="square_xxs" />
-                    ) : (
-                        <Icon type="check" display="inline-block" size="square_xxs" />
-                    )}
+                    <Icon
+                        type={!copied ? 'copy' : 'check'}
+                        display="inline-block"
+                        size="square_xxs"
+                    />
                 </Box>
             )}
             {children}
