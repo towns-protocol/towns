@@ -26,11 +26,13 @@ export async function unbanWallet(params: {
 
     const callData = space.Banning.encodeFunctionData(functionName, [tokenId])
 
-    return sendUserOp({
+    const op = await sendUserOp({
         toAddress: [space.Banning.address],
         callData: [callData],
         signer,
         spaceId: spaceId,
         functionHashForPaymasterProxy,
     })
+    spaceDapp.updateCacheAfterBanOrUnBan(spaceId, tokenId)
+    return op
 }

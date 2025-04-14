@@ -14,6 +14,7 @@ import {
     fundWallet,
     generatePrivyWalletIfKey,
     getSpaceId,
+    sleepBetweenTxs,
     waitForOpAndTx,
 } from './utils'
 import { entryPoint06Address, entryPoint07Address } from 'viem/account-abstraction'
@@ -320,6 +321,8 @@ test('can upgrade during unbanning', async () => {
             ])
             const useropReceipt = await op.getUserOperationReceipt()
             expect(useropReceipt?.success).toBe(true)
+            // wait for cache to update
+            await sleepBetweenTxs(5_000)
 
             const bannedWalletAddresses = await spaceDapp.bannedWalletAddresses(spaceId)
             expect(bannedWalletAddresses).not.toContain(spaceMember.wallet.address)
