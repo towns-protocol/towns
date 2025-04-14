@@ -1456,11 +1456,12 @@ func (s *PostgresStreamStore) writeMiniblocksTx(
 			len(miniblocks),
 			func(i int) ([]any, error) {
 				snapshot := miniblocks[i].Snapshot
-				if len(snapshot) > 1 {
+				if len(snapshot) > 0 {
 					newLastSnapshotMiniblock = miniblocks[i].Number
-				} else if len(snapshot) == 1 {
+				}
+
+				if len(snapshot) == 1 {
 					// TODO: Remove it after enabling new snapshot format
-					newLastSnapshotMiniblock = miniblocks[i].Number
 					snapshot = nil
 				}
 
