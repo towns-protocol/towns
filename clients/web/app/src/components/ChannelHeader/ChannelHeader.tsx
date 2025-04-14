@@ -160,10 +160,16 @@ const DesktopChannelHeader = (props: Props & HeaderProps) => {
                     )}
                     {isMuted && <Icon type="muteActive" size="square_sm" color="gray2" />}
                 </Stack>
-                {topic && <Paragraph color="gray2">{topic}</Paragraph>}
+                {topic && (
+                    <Paragraph truncate color="gray2">
+                        {topic}
+                    </Paragraph>
+                )}
                 <Stack grow />
                 {channelType !== 'dm' && (
-                    <ChannelUsersPill channelId={channel.id} spaceId={spaceId} />
+                    <Box>
+                        <ChannelUsersPill channelId={channel.id} spaceId={spaceId} />
+                    </Box>
                 )}
             </CardHeader>
             <AnimatePresence>{showLoadingIndicator && <AnimatedLoaderGradient />}</AnimatePresence>
