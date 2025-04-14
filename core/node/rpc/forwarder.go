@@ -257,7 +257,8 @@ func (s *Service) getStreamImpl(
 		if resp, err := s.localGetStream(ctx, view, req.Msg.SyncCookie); err == nil {
 			return resp, nil
 		} else {
-			logging.FromCtx(ctx).Errorw("Failed to get stream from local node, falling back to remotes", "nodeAddress", s.wallet.Address, "streamId", streamId)
+			logging.FromCtx(ctx).Errorw("Failed to get stream from local node, falling back to remotes",
+				"err", err, "nodeAddress", s.wallet.Address, "streamId", streamId)
 		}
 	}
 
@@ -296,7 +297,8 @@ func (s *Service) getStreamExImpl(
 		if err := s.localGetStreamEx(ctx, req, resp); err == nil {
 			return nil
 		} else {
-			logging.FromCtx(ctx).Errorw("Failed to stream the stream from local node, falling back to remotes", "nodeAddress", s.wallet.Address, "streamId", streamId)
+			logging.FromCtx(ctx).Errorw("Failed to stream the stream from local node, falling back to remotes",
+				"err", err, "nodeAddress", s.wallet.Address, "streamId", streamId)
 		}
 	}
 
@@ -376,7 +378,8 @@ func (s *Service) getMiniblocksImpl(
 		if resp, err := s.localGetMiniblocks(ctx, req, stream); err == nil {
 			return resp, nil
 		} else {
-			logging.FromCtx(ctx).Errorw("Failed to get miniblocks from local node, falling back to remotes", "nodeAddress", s.wallet.Address, "streamId", streamId)
+			logging.FromCtx(ctx).Errorw("Failed to get miniblocks from local node, falling back to remotes",
+				"err", err, "nodeAddress", s.wallet.Address, "streamId", streamId)
 		}
 	}
 
@@ -429,7 +432,8 @@ func (s *Service) getLastMiniblockHashImpl(
 		if resp, err := s.localGetLastMiniblockHash(view); err == nil {
 			return resp, nil
 		} else {
-			logging.FromCtx(ctx).Errorw("Failed to get last miniblock hash from local node, falling back to remotes", "nodeAddress", s.wallet.Address, "streamId", streamId)
+			logging.FromCtx(ctx).Errorw("Failed to get last miniblock hash from local node, falling back to remotes",
+				"err", err, "nodeAddress", s.wallet.Address, "streamId", streamId)
 		}
 	}
 
@@ -484,7 +488,8 @@ func (s *Service) addEventImpl(
 		if resp, err := s.localAddEvent(ctx, req, streamId, stream, view); err == nil {
 			return resp, nil
 		} else {
-			logging.FromCtx(ctx).Errorw("Failed to add event with local node, falling back to remotes", "nodeAddress", s.wallet.Address, "streamId", streamId)
+			logging.FromCtx(ctx).Errorw("Failed to add event with local node, falling back to remotes",
+				"err", err, "nodeAddress", s.wallet.Address, "streamId", streamId)
 		}
 	}
 
@@ -540,7 +545,8 @@ func (s *Service) addMediaEventImpl(
 		if resp, err := s.localAddMediaEvent(ctx, req); err == nil {
 			return resp, nil
 		} else {
-			logging.FromCtx(ctx).Errorw("Failed to add media event with local node, falling back to remotes", "nodeAddress", s.wallet.Address, "streamId", streamId)
+			logging.FromCtx(ctx).Errorw("Failed to add media event with local node, falling back to remotes",
+				"err", err, "nodeAddress", s.wallet.Address, "streamId", streamId)
 		}
 	}
 
