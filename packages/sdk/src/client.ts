@@ -2200,9 +2200,11 @@ export class Client
         }
     }
 
-    async scrollback(
-        streamId: string,
-    ): Promise<{ terminus: boolean; firstEvent?: StreamTimelineEvent }> {
+    async scrollback(streamId: string): Promise<{
+        terminus: boolean
+        firstEvent?: StreamTimelineEvent
+        fromInclusiveMiniblockNum: bigint
+    }> {
         const currentRequest = this.getScrollbackRequests.get(streamId)
         if (currentRequest) {
             return currentRequest
@@ -2211,13 +2213,18 @@ export class Client
         const _scrollback = async (): Promise<{
             terminus: boolean
             firstEvent?: StreamTimelineEvent
+            fromInclusiveMiniblockNum: bigint
         }> => {
             const stream = this.stream(streamId)
             check(isDefined(stream), `stream not found: ${streamId}`)
             check(isDefined(stream.view.miniblockInfo), `stream not initialized: ${streamId}`)
             if (stream.view.miniblockInfo.terminusReached) {
                 this.logCall('scrollback', streamId, 'terminus reached')
-                return { terminus: true, firstEvent: stream.view.timeline.at(0) }
+                return {
+                    terminus: true,
+                    firstEvent: stream.view.timeline.at(0),
+                    fromInclusiveMiniblockNum: stream.view.miniblockInfo.min,
+                }
             }
             check(stream.view.miniblockInfo.min >= stream.view.prevSnapshotMiniblockNum)
             this.logCall('scrollback', {
@@ -2235,9 +2242,17 @@ export class Client
             // request, we need to discard the new miniblocks.
             if ((stream.view.miniblockInfo?.min ?? -1n) === toExclusive) {
                 stream.prependEvents(response.miniblocks, cleartexts, response.terminus)
-                return { terminus: response.terminus, firstEvent: stream.view.timeline.at(0) }
+                return {
+                    terminus: response.terminus,
+                    firstEvent: stream.view.timeline.at(0),
+                    fromInclusiveMiniblockNum: fromInclusive,
+                }
             }
-            return { terminus: false, firstEvent: stream.view.timeline.at(0) }
+            return {
+                terminus: false,
+                firstEvent: stream.view.timeline.at(0),
+                fromInclusiveMiniblockNum: fromInclusive,
+            }
         }
 
         try {
