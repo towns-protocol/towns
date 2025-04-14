@@ -28,6 +28,8 @@ export function getAllowedOrigins(env: Environment): string[] {
                 'https://river1-test-beta.towns.com',
                 'https://*.nodes.gamma.towns.com',
                 'https://test-harmony-web-pr-*.onrender.com',
+                'https://towns.com',
+                'https://towns-com-git-miguel-token-page-river-build-team.vercel.app',
             ]
         case 'omega':
             return [
@@ -37,6 +39,8 @@ export function getAllowedOrigins(env: Environment): string[] {
                 'https://harmony-web-pr-*.onrender.com',
                 'http://localhost:3000',
                 'https://localhost:3000',
+                'https://towns.com',
+                'https://towns-com-git-miguel-token-page-omega-river-build-team.vercel.app',
             ]
         default:
             return []
