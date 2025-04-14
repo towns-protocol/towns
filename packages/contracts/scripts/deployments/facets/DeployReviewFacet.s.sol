@@ -3,12 +3,12 @@ pragma solidity ^0.8.19;
 
 //interfaces
 import {IDiamond} from "@towns-protocol/diamond/src/Diamond.sol";
+import {IReview} from "src/spaces/facets/review/IReview.sol";
 
 //libraries
 import {DeployLib} from "@towns-protocol/diamond/scripts/common/DeployLib.sol";
 
 //contracts
-import {IReview} from "src/spaces/facets/review/IReview.sol";
 
 library DeployReviewFacet {
     function selectors() internal pure returns (bytes4[] memory res) {
