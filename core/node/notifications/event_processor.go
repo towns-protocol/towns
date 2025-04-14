@@ -219,7 +219,7 @@ func (p *MessageToNotificationsProcessor) OnMessageEvent(
 					}
 					recipients.Add(participant)
 				} else {
-					p.log.Error("Unexpected stream ID", "channel", channelID)
+					p.log.Errorw("Unexpected stream ID", "channel", channelID)
 				}
 			}
 		}
