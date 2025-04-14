@@ -1,8 +1,5 @@
 import TTLCache from '@isaacs/ttlcache'
-
-export interface Keyable {
-    toKey(): string
-}
+import { Keyable } from './Keyable'
 
 export interface CacheResult<V> {
     value: V
