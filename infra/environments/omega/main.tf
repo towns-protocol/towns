@@ -91,7 +91,7 @@ module "system_parameters" {
 
 locals {
   num_archive_nodes = 2
-  num_stream_nodes  = 2
+  num_stream_nodes  = 3
 }
 
 resource "aws_ecs_cluster" "river_ecs_cluster" {
