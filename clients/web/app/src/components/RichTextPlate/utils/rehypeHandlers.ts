@@ -2,11 +2,9 @@ import { Handler } from 'mdast-util-to-hast'
 import { ListItemContentPlugin } from '@udecode/plate-list/react'
 import { MentionPlugin } from '@udecode/plate-mention/react'
 import { ELEMENT_MENTION_CHANNEL } from '../plugins/createChannelPlugin'
-import {
-    ELEMENT_CONTRACT_ADDRESS,
-    ELEMENT_MENTION_TICKER,
-} from '../plugins/createTickerMentionPlugin'
+import { ELEMENT_MENTION_TICKER } from '../plugins/createTickerMentionPlugin'
 import { ELEMENT_EDITED } from './remark/remarkEditedAnnotation'
+import { ELEMENT_CONTRACT_ADDRESS } from '../plugins/createContractAddressPlugin'
 
 export const userMentionHandler: Handler = (state, node) => ({
     type: 'element',

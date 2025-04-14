@@ -1,5 +1,5 @@
 import { TNode, getNodeString, isElement, isText } from '@udecode/slate'
-import { ELEMENT_CONTRACT_ADDRESS } from '../plugins/createTickerMentionPlugin'
+import { ELEMENT_CONTRACT_ADDRESS } from '../plugins/createContractAddressPlugin'
 
 /**
  * bare minimum plain text representation of the editor content

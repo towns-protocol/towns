@@ -7,11 +7,9 @@ import { findAndReplace } from 'mdast-util-find-and-replace'
 import { Channel, useUserLookupContext } from 'use-towns-client'
 import { MentionPlugin } from '@udecode/plate-mention/react'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
-import {
-    ELEMENT_CONTRACT_ADDRESS,
-    ELEMENT_MENTION_TICKER,
-} from '@components/RichTextPlate/plugins/createTickerMentionPlugin'
+import { ELEMENT_MENTION_TICKER } from '@components/RichTextPlate/plugins/createTickerMentionPlugin'
 import { getChainFromAddress } from '@components/RichTextPlate/plugins/PasteContractAddressPlugin'
+import { ELEMENT_CONTRACT_ADDRESS } from '@components/RichTextPlate/plugins/createContractAddressPlugin'
 import { ELEMENT_MENTION_CHANNEL } from '../../plugins/createChannelPlugin'
 import {
     AtChannelUser,
