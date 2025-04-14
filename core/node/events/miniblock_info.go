@@ -316,7 +316,7 @@ func (b *MiniblockInfo) AsStorageMb() (*storage.WriteMiniblockData, error) {
 		}
 	} else if b.Header().GetSnapshot() != nil {
 		// TODO: Remove it after enabling new snapshot format
-		serializedSn = make([]byte, 1)
+		serializedSn = make([]byte, 0)
 	}
 
 	return &storage.WriteMiniblockData{
