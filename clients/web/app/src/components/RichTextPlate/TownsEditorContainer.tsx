@@ -112,24 +112,26 @@ const TownsTextEditorWithoutBoundary = ({
     const onInsertAddress = useCallback(async (address: string, chain: string) => {
         setLoadingAddresses((prev) => prev.add(address))
         await fetchCoinData(address, chain).then((coinData) => {
-            setTickerAttachments((prev) => [
-                ...prev.filter((t) => t.address !== address),
-                {
-                    type: 'ticker',
-                    id: address,
-                    address: address,
-                    chainId: chain,
-                    coinData: {
-                        name: coinData?.token.name ?? '',
-                        symbol: coinData?.token.symbol ?? '',
-                        address: coinData?.token.address ?? '',
-                        chain: chain,
-                        marketCap: coinData?.marketCap ?? '',
-                        priceUSD: coinData?.priceUSD ?? '',
-                        imageUrl: coinData?.token.info.imageThumbUrl ?? '',
-                    } satisfies TMentionTicker,
-                } satisfies TickerAttachment & { coinData?: TMentionTicker },
-            ])
+            if (coinData) {
+                setTickerAttachments((prev) => [
+                    ...prev.filter((t) => t.address !== address),
+                    {
+                        type: 'ticker',
+                        id: address,
+                        address: address,
+                        chainId: chain,
+                        coinData: {
+                            name: coinData?.token.name ?? '',
+                            symbol: coinData?.token.symbol ?? '',
+                            address: coinData?.token.address ?? '',
+                            chain: chain,
+                            marketCap: coinData?.marketCap ?? '',
+                            priceUSD: coinData?.priceUSD ?? '',
+                            imageUrl: coinData?.token.info.imageThumbUrl ?? '',
+                        } satisfies TMentionTicker,
+                    } satisfies TickerAttachment & { coinData?: TMentionTicker },
+                ])
+            }
             setLoadingAddresses((prev) => {
                 prev.delete(address)
                 return new Set(prev)
