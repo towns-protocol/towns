@@ -86,7 +86,7 @@ function remarkTransformUserAndChannels(
         )
 
         const CONTRACT_ADDRESS_ELEMENT_REGEX = new RegExp(
-            `(?:^|\\s)(0x[a-fA-F0-9]{40}|[1-9A-HJ-NP-Za-km-z]{32,44})(?=\\s|$)`,
+            `(0x[a-fA-F0-9]{40}|[1-9A-HJ-NP-Za-km-z]{32,44})(?=\\s|$)`,
             'gui',
         )
 
