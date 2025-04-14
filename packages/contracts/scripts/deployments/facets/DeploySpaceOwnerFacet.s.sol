@@ -4,60 +4,68 @@ pragma solidity ^0.8.23;
 //interfaces
 import {IVotes} from "@openzeppelin/contracts/governance/utils/IVotes.sol";
 import {IERC6372} from "@openzeppelin/contracts/interfaces/IERC6372.sol";
+import {IDiamond} from "@towns-protocol/diamond/src/Diamond.sol";
 
 //libraries
+import {DeployLib} from "@towns-protocol/diamond/scripts/common/DeployLib.sol";
+import {DynamicArrayLib} from "solady/utils/DynamicArrayLib.sol";
+import {DeployERC721A} from "./DeployERC721A.s.sol";
 
 //contracts
-import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
-import {Deployer} from "scripts/common/Deployer.s.sol";
-import {DeployERC721A} from "scripts/deployments/facets/DeployERC721A.s.sol";
 import {SpaceOwner} from "src/spaces/facets/owner/SpaceOwner.sol";
 
-contract DeploySpaceOwnerFacet is FacetHelper, Deployer {
-    DeployERC721A erc721aHelper = new DeployERC721A();
+library DeploySpaceOwnerFacet {
+    using DynamicArrayLib for DynamicArrayLib.DynamicArray;
 
-    constructor() {
-        addSelector(SpaceOwner.setFactory.selector);
-        addSelector(SpaceOwner.getFactory.selector);
-        addSelector(SpaceOwner.setDefaultUri.selector);
-        addSelector(SpaceOwner.getDefaultUri.selector);
-        addSelector(SpaceOwner.nextTokenId.selector);
-        addSelector(SpaceOwner.mintSpace.selector);
-        addSelector(SpaceOwner.getSpaceInfo.selector);
-        addSelector(SpaceOwner.getSpaceByTokenId.selector);
-        addSelector(SpaceOwner.updateSpaceInfo.selector);
-        addSelectors(erc721aHelper.selectors());
+    function selectors() internal pure returns (bytes4[] memory res) {
+        DynamicArrayLib.DynamicArray memory arr = DynamicArrayLib.p().reserve(33);
+        arr.p(SpaceOwner.setFactory.selector);
+        arr.p(SpaceOwner.getFactory.selector);
+        arr.p(SpaceOwner.setDefaultUri.selector);
+        arr.p(SpaceOwner.getDefaultUri.selector);
+        arr.p(SpaceOwner.nextTokenId.selector);
+        arr.p(SpaceOwner.mintSpace.selector);
+        arr.p(SpaceOwner.getSpaceInfo.selector);
+        arr.p(SpaceOwner.getSpaceByTokenId.selector);
+        arr.p(SpaceOwner.updateSpaceInfo.selector);
 
         // Votes
-        addSelector(IERC6372.clock.selector);
-        addSelector(IERC6372.CLOCK_MODE.selector);
-        addSelector(IVotes.getVotes.selector);
-        addSelector(IVotes.getPastVotes.selector);
-        addSelector(IVotes.getPastTotalSupply.selector);
-        addSelector(IVotes.delegates.selector);
-        addSelector(IVotes.delegate.selector);
-        addSelector(IVotes.delegateBySig.selector);
+        arr.p(IERC6372.clock.selector);
+        arr.p(IERC6372.CLOCK_MODE.selector);
+        arr.p(IVotes.getVotes.selector);
+        arr.p(IVotes.getPastVotes.selector);
+        arr.p(IVotes.getPastTotalSupply.selector);
+        arr.p(IVotes.delegates.selector);
+        arr.p(IVotes.delegate.selector);
+        arr.p(IVotes.delegateBySig.selector);
+
+        {
+            bytes4[] memory selectors_ = DeployERC721A.selectors();
+            for (uint256 i; i < selectors_.length; ++i) {
+                arr.p(selectors_[i]);
+            }
+        }
+        bytes32[] memory selectors__ = arr.asBytes32Array();
+        assembly ("memory-safe") {
+            res := selectors__
+        }
     }
 
-    function initializer() public pure override returns (bytes4) {
-        return SpaceOwner.__SpaceOwner_init.selector;
+    function makeCut(
+        address facetAddress,
+        IDiamond.FacetCutAction action
+    ) internal pure returns (IDiamond.FacetCut memory) {
+        return IDiamond.FacetCut(facetAddress, action, selectors());
     }
 
     function makeInitData(
         string memory name,
         string memory symbol
-    ) public pure returns (bytes memory) {
-        return abi.encodeWithSelector(initializer(), name, symbol);
+    ) internal pure returns (bytes memory) {
+        return abi.encodeCall(SpaceOwner.__SpaceOwner_init, (name, symbol));
     }
 
-    function versionName() public pure override returns (string memory) {
-        return "facets/spaceOwnerFacet";
-    }
-
-    function __deploy(address deployer) internal override returns (address) {
-        vm.startBroadcast(deployer);
-        SpaceOwner facet = new SpaceOwner();
-        vm.stopBroadcast();
-        return address(facet);
+    function deploy() internal returns (address) {
+        return DeployLib.deployCode("SpaceOwner.sol", "");
     }
 }

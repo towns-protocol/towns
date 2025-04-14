@@ -19,7 +19,7 @@ import {MockERC20} from "test/mocks/MockERC20.sol";
 
 // facets
 import {PausableFacet} from "@towns-protocol/diamond/src/facets/pausable/PausableFacet.sol";
-import {TokenMigrationFacet} from "src/tokens/migration/TokenMigration.sol";
+import {TokenMigrationFacet} from "src/tokens/migration/TokenMigrationFacet.sol";
 
 contract TokenMigrationTest is TestUtils, IPausableBase, ITokenMigrationBase, IOwnableBase {
     DeployRiverMigration internal riverMigrationHelper;
