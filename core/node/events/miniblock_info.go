@@ -314,6 +314,9 @@ func (b *MiniblockInfo) AsStorageMb() (*storage.WriteMiniblockData, error) {
 				Message("Failed to serialize snapshot to bytes").
 				Func("AsStorageMb")
 		}
+	} else if b.Header().GetSnapshot() != nil {
+		// TODO: Remove it after enabling new snapshot format
+		serializedSn = make([]byte, 0)
 	}
 
 	return &storage.WriteMiniblockData{
