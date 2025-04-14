@@ -5,7 +5,6 @@ import { useSearchParams } from 'react-router-dom'
 import { useEvent } from 'react-use-event-hook'
 import {
     LookupUser,
-    useBannedWalletAddresses,
     useConnectivity,
     useContractSpaceInfo,
     useGetRootKeyFromLinkedWallet,
@@ -366,9 +365,7 @@ export const SpaceInfo = () => {
                     </Paragraph>
                 </PanelButton>
 
-                {canBan && (
-                    <BannedUsersPanelButton spaceId={spaceId} onClick={onBannedUsersClick} />
-                )}
+                {canBan && <BannedUsersPanelButton onClick={onBannedUsersClick} />}
                 <PanelButton tone="negative" onClick={onLeaveClick}>
                     <Icon type="logout" size="square_sm" />
                     <Paragraph color="error">Leave {space?.name}</Paragraph>
@@ -647,13 +644,8 @@ const TownContractOpener = (props: { address: string; children?: React.ReactNode
     )
 }
 
-const BannedUsersPanelButton = (props: { onClick: () => void; spaceId?: string }) => {
-    const { onClick, spaceId } = props
-    const { userIds } = useBannedWalletAddresses(spaceId)
-
-    if (!userIds || userIds.length === 0) {
-        return null
-    }
+const BannedUsersPanelButton = (props: { onClick: () => void }) => {
+    const { onClick } = props
 
     return (
         <PanelButton onClick={onClick}>

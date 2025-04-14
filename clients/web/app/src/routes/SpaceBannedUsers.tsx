@@ -20,10 +20,6 @@ import { createPrivyNotAuthenticatedNotification } from '@components/Notificatio
 import { GetSigner } from 'privy/WalletReady'
 
 export const SpaceBannedUsers = React.memo(() => {
-    return <SpaceBannedUsersWithoutAuth />
-})
-
-export const SpaceBannedUsersWithoutAuth = () => {
     const spaceId = useSpaceId()
     const [selectedUserId, setSelectedUserId] = React.useState<string | undefined>(undefined)
     const [showConfirmModal, setShowConfirmModal] = React.useState(false)
@@ -103,7 +99,7 @@ export const SpaceBannedUsersWithoutAuth = () => {
             )}
         </Panel>
     )
-}
+})
 
 const BannedUserRow = (props: {
     userId: string
