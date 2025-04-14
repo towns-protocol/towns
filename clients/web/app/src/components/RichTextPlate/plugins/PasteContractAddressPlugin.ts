@@ -19,11 +19,6 @@ export const PasteContractAddressPlugin = createPlatePlugin({
         editor.insertData = (data) => {
             const text = data.getData('text/plain')?.trim()
 
-            if (!text || !pseudoContractAddress.test(text)) {
-                insertData(data)
-                return editor
-            }
-
             const chain = getChainFromAddress(text)
 
             if (!chain) {
@@ -67,6 +62,9 @@ const pseudoContractAddress = /^([a-f0-9]{40}|[a-z0-9]{32,45})$/i
 
 // validates base / solana address and returns the chain id
 export const getChainFromAddress = (text: string) => {
+    if (!text || !pseudoContractAddress.test(text)) {
+        return null
+    }
     return isAddress(text) ? '8453' : isSolanaAddress(text) ? 'solana-mainnet' : null
 }
 
