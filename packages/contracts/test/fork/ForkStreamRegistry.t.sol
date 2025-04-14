@@ -18,7 +18,7 @@ import {SetMiniblock, Stream, StreamWithId} from "src/river/registry/libraries/R
 
 //contracts
 
-import {TestUtils} from "../utils/TestUtils.sol";
+import {TestUtils} from "@towns-protocol/diamond/test/TestUtils.sol";
 import {StreamRegistry} from "src/river/registry/facets/stream/StreamRegistry.sol";
 
 contract ForkStreamRegistry is DeployBase, TestUtils, IDiamond {
