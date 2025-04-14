@@ -1,9 +1,7 @@
 import { MentionPlugin } from '@udecode/plate-mention/react'
 import { LinkPlugin } from '@udecode/plate-link/dist/react'
-import {
-    ELEMENT_CONTRACT_ADDRESS,
-    ELEMENT_MENTION_TICKER,
-} from '@components/RichTextPlate/plugins/createTickerMentionPlugin'
+import { ELEMENT_MENTION_TICKER } from '@components/RichTextPlate/plugins/createTickerMentionPlugin'
+import { ELEMENT_CONTRACT_ADDRESS } from '@components/RichTextPlate/plugins/createContractAddressPlugin'
 import {
     BlockQuoteNode,
     CodeBlockNode,

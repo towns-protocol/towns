@@ -8,8 +8,8 @@ import {
     moveSelection,
 } from '@udecode/plate-common'
 import { isAddress } from '@components/Web3/Wallet/useGetWalletParam'
-import { ELEMENT_CONTRACT_ADDRESS } from './createTickerMentionPlugin'
 import { TContractAddressElement } from '../components/plate-ui/autocomplete/types'
+import { ELEMENT_CONTRACT_ADDRESS } from './createContractAddressPlugin'
 
 export const PasteContractAddressPlugin = createPlatePlugin({
     key: 'ethAddressPlugin',

@@ -19,10 +19,7 @@ import {
     TUserMentionElement,
 } from './components/plate-ui/autocomplete/types'
 import { ELEMENT_MENTION_CHANNEL } from './plugins/createChannelPlugin'
-import {
-    ELEMENT_CONTRACT_ADDRESS,
-    ELEMENT_MENTION_TICKER,
-} from './plugins/createTickerMentionPlugin'
+import { ELEMENT_MENTION_TICKER } from './plugins/createTickerMentionPlugin'
 import { MentionElementWithoutPlate } from './components/plate-ui/MentionElement'
 import { ChannelLinkForDisplay } from './components/ChannelLink'
 import * as fieldStyles from '../../ui/components/_internal/Field/Field.css'
@@ -37,6 +34,7 @@ import MarkdownToJSX from './utils/MarkdownToJSX'
 import { ELEMENT_EDITED } from './utils/remark/remarkEditedAnnotation'
 import { TickerMentionElementWithoutPlate } from './components/plate-ui/TickerMentionElement'
 import { ContractAddressElementWithoutPlate } from './components/plate-ui/ContractAddressElement'
+import { ELEMENT_CONTRACT_ADDRESS } from './plugins/createContractAddressPlugin'
 
 const fieldClassName = clsx([fieldStyles.field, richText])
 

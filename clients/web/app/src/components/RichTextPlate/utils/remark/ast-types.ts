@@ -2,10 +2,8 @@ import { TMentionElement } from '@udecode/plate-mention'
 import { MentionPlugin } from '@udecode/plate-mention/react'
 import { TCodeBlockElement } from '@udecode/plate-code-block'
 import { CodeBlockPlugin, CodeLinePlugin } from '@udecode/plate-code-block/react'
-import {
-    ELEMENT_CONTRACT_ADDRESS,
-    ELEMENT_MENTION_TICKER,
-} from '@components/RichTextPlate/plugins/createTickerMentionPlugin'
+import { ELEMENT_MENTION_TICKER } from '@components/RichTextPlate/plugins/createTickerMentionPlugin'
+import { ELEMENT_CONTRACT_ADDRESS } from '@components/RichTextPlate/plugins/createContractAddressPlugin'
 import {
     TChannelMentionElement,
     TMentionEmoji,

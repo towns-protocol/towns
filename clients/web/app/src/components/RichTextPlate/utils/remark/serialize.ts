@@ -1,4 +1,4 @@
-import { ELEMENT_CONTRACT_ADDRESS } from '@components/RichTextPlate/plugins/createTickerMentionPlugin'
+import { ELEMENT_CONTRACT_ADDRESS } from '@components/RichTextPlate/plugins/createContractAddressPlugin'
 import { BlockType, LeafType, NodeTypes, defaultNodeTypes } from './ast-types'
 import { BREAK_TAG } from '../helpers'
 

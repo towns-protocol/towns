@@ -1,6 +1,6 @@
 import { TPlateEditor, createPlatePlugin } from '@udecode/plate-common/react'
 import { TElement } from '@udecode/plate-common'
-import { ELEMENT_CONTRACT_ADDRESS } from './createTickerMentionPlugin'
+import { ELEMENT_CONTRACT_ADDRESS } from './createContractAddressPlugin'
 
 export const InsertAddressPlugin = ({
     onInsertAddress,

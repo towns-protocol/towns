@@ -57,17 +57,13 @@ import {
     TUserWithChannel,
 } from '../components/plate-ui/autocomplete/types'
 import { getUrlHref, isBlockquoteWithEmptyLines, isExactlyUrl } from '../utils/helpers'
-import {
-    ContractAddressPlugin,
-    ELEMENT_CONTRACT_ADDRESS,
-    ELEMENT_MENTION_TICKER,
-    TickerMentionPlugin,
-} from './createTickerMentionPlugin'
+import { ELEMENT_MENTION_TICKER, TickerMentionPlugin } from './createTickerMentionPlugin'
 import { TickerMentionElement } from '../components/plate-ui/TickerMentionElement'
 import { InsertTickerMentionPlugin } from './createInsertTickerMentionPlugin'
 import { PasteContractAddressPlugin } from './PasteContractAddressPlugin'
 import { InsertAddressPlugin } from './createInsertAddressPlugin'
 import { ContractAddressElement } from '../components/plate-ui/ContractAddressElement'
+import { ContractAddressPlugin, ELEMENT_CONTRACT_ADDRESS } from './createContractAddressPlugin'
 
 const createTownsEditor = (
     uniqueId: string,

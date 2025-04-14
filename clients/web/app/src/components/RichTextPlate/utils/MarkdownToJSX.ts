@@ -27,10 +27,8 @@ import remarkDecodeHTMLCodeBlocks from './remark/remarkDecodeHTMLCodeBlocks'
 import remarkEditedAnnotation, { ELEMENT_EDITED } from './remark/remarkEditedAnnotation'
 import { getChannelNames } from './helpers'
 import { TUserIDNameMap } from '../components/plate-ui/autocomplete/types'
-import {
-    ELEMENT_CONTRACT_ADDRESS,
-    ELEMENT_MENTION_TICKER,
-} from '../plugins/createTickerMentionPlugin'
+import { ELEMENT_MENTION_TICKER } from '../plugins/createTickerMentionPlugin'
+import { ELEMENT_CONTRACT_ADDRESS } from '../plugins/createContractAddressPlugin'
 
 type MarkdownRendererProps = React.PropsWithChildren<{
     isEdited?: boolean
