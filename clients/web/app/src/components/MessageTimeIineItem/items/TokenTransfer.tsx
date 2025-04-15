@@ -4,6 +4,7 @@ import { bin_toHexString, bin_toString } from '@towns-protocol/dlog'
 import { Box, Stack, Text } from '@ui'
 import { useCoinData } from '@components/TradingChart/useCoinData'
 import { formatUnitsToFixedLength } from 'hooks/useBalance'
+import { useHistoricalTokenPrice } from '@components/Web3/Trading/hooks/useHistoricalTokenPrice'
 
 type Props = {
     event: TokenTransferEvent
@@ -14,17 +15,59 @@ type TokenTransferImplProps = {
     rawAddress: Uint8Array
     amount: string
     isBuy: boolean
+    createdAtEpochMs: bigint
 }
 
 export const TokenTransferImpl = (props: TokenTransferImplProps) => {
-    const { chainId, rawAddress, amount, isBuy } = props
+    const { chainId, rawAddress, amount, isBuy, createdAtEpochMs } = props
     const address = useMemo(() => {
         return chainId === 'solana-mainnet'
             ? bin_toString(rawAddress)
             : '0x' + bin_toHexString(rawAddress)
     }, [chainId, rawAddress])
 
+    const { data: price } = useHistoricalTokenPrice(
+        address,
+        chainId,
+        parseInt((createdAtEpochMs / 1000n).toString()),
+    )
+
     const { data: coinData } = useCoinData({ address, chain: chainId })
+    const formattedUsdAmount = useMemo(() => {
+        if (!price || !coinData?.token.decimals || !amount) {
+            return undefined
+        }
+
+        try {
+            // Convert amount to a decimal value based on token decimals
+            const amountAsBigInt = BigInt(amount)
+            const decimals = coinData.token.decimals
+
+            // Safely convert without using Number() on the full bigint
+            // Divide by 10^decimals first to avoid overflow
+            const divisor = BigInt(10 ** decimals)
+            const wholePart = amountAsBigInt / divisor
+
+            // Handle the fractional part safely
+            const fractionalPart = amountAsBigInt % divisor
+            const fractionalContribution = Number(fractionalPart) / Number(divisor)
+
+            // Calculate USD value using the whole and fractional parts
+            const usdValue = (Number(wholePart) + fractionalContribution) * price
+
+            // Format the USD value
+            return `$${Intl.NumberFormat('en-US', {
+                style: 'decimal',
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+                minimumSignificantDigits: 2,
+                maximumSignificantDigits: 2,
+            }).format(usdValue)}`
+        } catch (error) {
+            console.warn('[TokenTransfer] Failed to calculate USD amount:', error)
+            return undefined
+        }
+    }, [price, amount, coinData?.token.decimals])
 
     const text = useMemo(() => {
         const formattedAmount = formatUnitsToFixedLength(
@@ -51,6 +94,7 @@ export const TokenTransferImpl = (props: TokenTransferImplProps) => {
             >
                 <Text paddingBottom="sm" paddingTop="sm" color={isBuy ? 'positive' : 'peach'}>
                     {text}
+                    {formattedUsdAmount && ` for ${formattedUsdAmount}`}
                 </Text>
             </Box>
             <Box grow />
@@ -70,6 +114,7 @@ export const TokenTransfer = (props: Props) => {
             rawAddress={event.transfer.address}
             amount={event.transfer.amount}
             isBuy={event.transfer.isBuy}
+            createdAtEpochMs={event.createdAtEpochMs}
         />
     )
 }

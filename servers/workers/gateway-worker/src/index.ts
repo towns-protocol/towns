@@ -25,6 +25,7 @@ export interface Env extends AuthEnv {
     OPENAI_API_KEY: string
     TIP_LEADERBOARD_KV: KVNamespace
     ALCHEMY_RPC_URL: string
+    CODEX_API_KEY: string
 }
 
 export default {

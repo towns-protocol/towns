@@ -490,6 +490,7 @@ const ChartTransfer = ({ transfer }: { transfer: TokenTransferRollupEvent }) => 
                         amount={transfer.amount.toString()}
                         isBuy={transfer.isBuy}
                         chainId={transfer.chainId}
+                        createdAtEpochMs={transfer.createdAtEpochMs}
                     />
                 </Stack>
             }

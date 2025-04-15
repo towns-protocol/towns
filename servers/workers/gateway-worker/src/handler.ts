@@ -432,6 +432,70 @@ router.get('/tips/:spaceAddress/leaderboard', async (request: WorkerRequest, env
     }
 })
 
+// Example request: /tokens/price?contractAddress=0xac1bd2486aaf3b5c0fc3fd868558b082a531b2b4&chainId=8453&timestamp=1744108717
+router.get('/tokens/price', async (request: WorkerRequest, env: Env) => {
+    // Extract query parameters
+    const url = new URL(request.url)
+    const timestamp = url.searchParams.get('timestamp')
+    const contractAddress = url.searchParams.get('contractAddress')
+    const chainId = url.searchParams.get('chainId')
+
+    if (!contractAddress || !chainId || !timestamp) {
+        return new Response(JSON.stringify({ error: 'Missing required parameters' }), {
+            status: 400,
+            headers: { 'Content-Type': 'application/json' },
+        })
+    }
+
+    try {
+        const response = await fetch('https://graph.defined.fi/graphql', {
+            method: 'POST',
+            headers: {
+                Authorization: `${env.CODEX_API_KEY}`,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                query: `
+                {
+                    getTokenPrices(inputs: [
+                        {
+                            address: "${contractAddress}",
+                            networkId: ${chainId}
+                            timestamp: ${timestamp}
+                        }
+                    ]) {
+                        priceUsd
+                    }
+                }
+                `,
+            }),
+        })
+
+        if (!response.ok) {
+            console.error('Codex API error:', await response.text())
+            return new Response(JSON.stringify({ error: 'Failed to fetch token price data' }), {
+                status: 500,
+                headers: { 'Content-Type': 'application/json' },
+            })
+        }
+
+        const data = await response.json()
+        return new Response(JSON.stringify(data), {
+            status: 200,
+            headers: {
+                'Content-Type': 'application/json',
+                'Cache-Control': 'public, max-age=31536000',
+            },
+        })
+    } catch (error) {
+        console.error('Failed to fetch token price:', error)
+        return new Response(JSON.stringify({ error: 'Failed to fetch token price data' }), {
+            status: 500,
+            headers: { 'Content-Type': 'application/json' },
+        })
+    }
+})
+
 router.post('/')
 
 router.get('*', () => new Response('Not Found', { status: 404 }))
