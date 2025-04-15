@@ -456,8 +456,6 @@ export const createSpaceDappAndUserops = async (
         bundlerUrl: process.env.AA_BUNDLER_URL,
         paymasterProxyUrl: process.env.AA_PAYMASTER_PROXY_URL,
         aaRpcUrl: process.env.AA_RPC_URL!,
-        entryPointAddress: process.env.AA_ENTRY_POINT_ADDRESS,
-        factoryAddress: process.env.AA_FACTORY_ADDRESS,
         paymasterProxyAuthSecret: process.env.AA_PAYMASTER_PROXY_AUTH_SECRET!,
         fetchAccessTokenFn: undefined,
         newAccountImplementationType: _newAccountImplementationType,

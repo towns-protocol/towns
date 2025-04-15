@@ -63,8 +63,6 @@ function makeEnvironments(): TownsEnvironmentInfo[] {
                 aaRpcUrl: baseChain.rpcUrls.default.http[0],
                 bundlerUrl: baseChain.rpcUrls.default.http[0],
                 paymasterProxyUrl: env.VITE_AA_PAYMASTER_PROXY_URL,
-                entryPointAddress: env.VITE_AA_ENTRY_POINT_ADDRESS,
-                factoryAddress: env.VITE_AA_FACTORY_ADDRESS,
                 paymasterProxyAuthSecret: env.VITE_AUTH_WORKER_HEADER_SECRET,
                 fetchAccessTokenFn,
                 newAccountImplementationType: env.VITE_NEW_SMART_ACCOUNT_IMPLEMENTATION_TYPE,
@@ -76,8 +74,6 @@ function makeEnvironments(): TownsEnvironmentInfo[] {
                 aaRpcUrl: 'http://localhost:8545',
                 bundlerUrl: 'http://localhost:43370',
                 paymasterProxyUrl: 'http://localhost:8686',
-                entryPointAddress: undefined, // uses default userop.js address
-                factoryAddress: undefined, // uses default userop.js address
                 paymasterProxyAuthSecret: env.VITE_AUTH_WORKER_HEADER_SECRET,
                 fetchAccessTokenFn,
                 newAccountImplementationType: env.VITE_NEW_SMART_ACCOUNT_IMPLEMENTATION_TYPE,

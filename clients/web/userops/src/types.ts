@@ -19,8 +19,6 @@ export type UserOpsConfig = {
      * Send userops to paymaster proxy for verification. Omitting this requires users to fund their AA wallet with gas.
      */
     paymasterProxyUrl?: string
-    entryPointAddress?: string
-    factoryAddress?: string
     paymasterProxyAuthSecret?: string
     fetchAccessTokenFn: (() => Promise<string | null>) | undefined
 }
