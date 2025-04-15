@@ -22,6 +22,9 @@ RUN curl -L https://foundry.paradigm.xyz | bash && \
 # Add Foundry binaries to PATH
 ENV PATH="/root/.foundry/bin:${PATH}"
 
+RUN mkdir -p /home/node/.cache/node/corepack/v1 && \
+    chown -R node:node /home/node
+
 # Enable Corepack for Yarn 3.x support
 RUN corepack enable
 
@@ -42,7 +45,7 @@ RUN yarn install
 
 # Build contracts
 WORKDIR /river/packages/contracts
-RUN make build
+RUN script -q -c "make build"
 WORKDIR /river
 
 # Generate contract typings

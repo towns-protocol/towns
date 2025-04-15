@@ -2,7 +2,7 @@ import { createConfig } from 'ponder'
 import { http } from 'viem'
 
 // import abis
-import { createSpaceFacetAbi } from '@towns-protocol/contracts/typings'
+import { createSpaceFacetAbi } from '../contracts/typings'
 
 // Import our contract address utility
 import { getContractAddress } from './utils/contractAddresses'
