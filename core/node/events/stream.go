@@ -995,9 +995,9 @@ func (s *Stream) getLastMiniblockNumSkipLoad(ctx context.Context) (int64, error)
 	return s.params.Storage.GetLastMiniblockNumber(ctx, s.streamId)
 }
 
-// applyStreamEvents applies the list of stream events to the stream.
-// applyStreamEvents is thread-safe.
-func (s *Stream) applyStreamEvents(
+// applyStreamMiniblockUpdates applies the list miniblock updates to the stream.
+// applyStreamMiniblockUpdates is thread-safe.
+func (s *Stream) applyStreamMiniblockUpdates(
 	ctx context.Context,
 	events []river.StreamUpdatedEvent,
 	blockNum crypto.BlockNumber,
@@ -1006,11 +1006,15 @@ func (s *Stream) applyStreamEvents(
 		return
 	}
 
-	_, err := s.lockMuAndLoadView(ctx)
+	view, err := s.lockMuAndLoadView(ctx)
 	defer s.mu.Unlock()
 	if err != nil {
 		logging.FromCtx(ctx).Errorw("applyStreamEvents: failed to load view", "err", err)
 		return
+	}
+
+	if view == nil {
+		return // stream is not local, no need to apply miniblock updates
 	}
 
 	// TODO: REPLICATION: FIX: this function now can be called multiple times per block.
