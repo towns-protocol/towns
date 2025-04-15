@@ -16,6 +16,9 @@ import {CurrencyTransfer} from "src/utils/libraries/CurrencyTransfer.sol";
 import {CustomRevert} from "src/utils/libraries/CustomRevert.sol";
 import {SafeTransferLib} from "solady/utils/SafeTransferLib.sol";
 
+// debuggging
+import {console} from "forge-std/console.sol";
+
 // contracts
 
 abstract contract MembershipBase is IMembershipBase {
@@ -176,8 +179,15 @@ abstract contract MembershipBase is IMembershipBase {
         MembershipStorage.Layout storage ds = MembershipStorage.layout();
 
         uint256 renewalPrice = ds.renewalPriceByTokenId[tokenId];
-        if (renewalPrice != 0) return renewalPrice;
 
+        // If a specific renewal price is set for this token
+        if (renewalPrice != 0) {
+            // Ensure it's at least the protocol fee that would be calculated for this price
+            uint256 protocolFee = _getProtocolFee(renewalPrice);
+            return renewalPrice < protocolFee ? protocolFee : renewalPrice;
+        }
+
+        // Otherwise use the regular membership price
         return _getMembershipPrice(totalSupply);
     }
 

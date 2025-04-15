@@ -30,9 +30,6 @@ import {PrepayBase} from "src/spaces/facets/prepay/PrepayBase.sol";
 import {ReferralsBase} from "src/spaces/facets/referrals/ReferralsBase.sol";
 import {RolesBase} from "src/spaces/facets/roles/RolesBase.sol";
 
-// debuggging
-import {console} from "forge-std/console.sol";
-
 /// @title MembershipJoin
 /// @notice Handles the logic for joining a space, including entitlement checks and payment
 /// processing
