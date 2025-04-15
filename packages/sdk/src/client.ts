@@ -2180,7 +2180,7 @@ export class Client
             }
         }
 
-        const { miniblocks, terminus, snapshots } = await getMiniblocks(
+        const { miniblocks, terminus } = await getMiniblocks(
             this.rpcClient,
             streamId,
             fromInclusive,
@@ -2188,23 +2188,11 @@ export class Client
             this.opts?.unpackEnvelopeOpts,
         )
 
-        const highestSnapshotMiniblockNum = Object.keys(snapshots)
-            .map((k) => BigInt(k))
-            .sort((a, b) => (a > b ? -1 : 1))[0]
-
         await this.persistenceStore.saveMiniblocks(
             streamIdAsString(streamId),
             miniblocks,
             'backward',
         )
-
-        if (highestSnapshotMiniblockNum && snapshots[highestSnapshotMiniblockNum.toString()]) {
-            await this.persistenceStore.saveSnapshot(
-                streamIdAsString(streamId),
-                highestSnapshotMiniblockNum,
-                snapshots[highestSnapshotMiniblockNum.toString()],
-            )
-        }
 
         return {
             terminus: terminus,
