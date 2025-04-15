@@ -632,7 +632,7 @@ func (r *StreamView) MiniblocksFromLastSnapshot() (miniblocks []*Miniblock, snap
 		miniblocks = append(miniblocks, r.blocks[i].Proto)
 	}
 	if len(miniblocks) > 0 {
-		snapshot = r.blocks[0].Snapshot
+		snapshot = r.blocks[r.snapshotIndex].Snapshot
 	}
 	return
 }
