@@ -7,7 +7,6 @@ import {
 } from '@towns-protocol/dlog'
 import { isDefined, assert, hasElements } from './check'
 import {
-    MiniblockHeader,
     Envelope,
     EventRef,
     StreamEvent,
@@ -183,7 +182,7 @@ export const unpackStreamAndCookie = async (
         nextSyncCookie: streamAndCookie.nextSyncCookie,
         miniblocks: miniblocks,
         snapshot: streamAndCookie.snapshot
-            ? await unpackSnapshot(miniblocks[0].header, streamAndCookie.snapshot, opts)
+            ? await unpackSnapshot(miniblocks[0].events[0].event, streamAndCookie.snapshot, opts)
             : undefined,
     }
 }
@@ -233,7 +232,7 @@ export const unpackEnvelope = async (
 }
 
 export const unpackSnapshot = async (
-    header: MiniblockHeader,
+    headerEvent: StreamEvent,
     snapshot: Envelope,
     opts: UnpackEnvelopeOpts | undefined,
 ): Promise<ParsedSnapshot> => {
@@ -251,7 +250,7 @@ export const unpackSnapshot = async (
 
     const doCheckEventSignature = opts?.disableSignatureValidation !== true
     if (doCheckEventSignature) {
-        // TODO: Check signature
+        checkEventSignature(headerEvent, hash, snapshot.signature)
     }
 
     return makeParsedSnapshot(sn, snapshot.hash, snapshot.signature)
