@@ -2201,6 +2201,7 @@ export class Client
         if (highestSnapshotMiniblockNum && snapshots[highestSnapshotMiniblockNum.toString()]) {
             await this.persistenceStore.saveSnapshot(
                 streamIdAsString(streamId),
+                highestSnapshotMiniblockNum,
                 snapshots[highestSnapshotMiniblockNum.toString()],
             )
         }
