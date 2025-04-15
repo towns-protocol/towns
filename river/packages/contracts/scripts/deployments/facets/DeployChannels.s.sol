@@ -1,36 +1,35 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-//interfaces
+// interfaces
+import {IDiamond} from "@towns-protocol/diamond/src/Diamond.sol";
+import {IChannel} from "src/spaces/facets/channels/IChannel.sol";
 
-//libraries
+// libraries
+import {DeployLib} from "@towns-protocol/diamond/scripts/common/DeployLib.sol";
 
-//contracts
-import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
-import {Deployer} from "scripts/common/Deployer.s.sol";
-import {Channels} from "src/spaces/facets/channels/Channels.sol";
-
-contract DeployChannels is FacetHelper, Deployer {
-    constructor() {
-        addSelector(Channels.createChannel.selector);
-        addSelector(Channels.getChannel.selector);
-        addSelector(Channels.getChannels.selector);
-        addSelector(Channels.updateChannel.selector);
-        addSelector(Channels.removeChannel.selector);
-        addSelector(Channels.addRoleToChannel.selector);
-        addSelector(Channels.getRolesByChannel.selector);
-        addSelector(Channels.removeRoleFromChannel.selector);
-        addSelector(Channels.createChannelWithOverridePermissions.selector);
+library DeployChannels {
+    function selectors() internal pure returns (bytes4[] memory res) {
+        res = new bytes4[](9);
+        res[0] = IChannel.createChannel.selector;
+        res[1] = IChannel.getChannel.selector;
+        res[2] = IChannel.getChannels.selector;
+        res[3] = IChannel.updateChannel.selector;
+        res[4] = IChannel.removeChannel.selector;
+        res[5] = IChannel.addRoleToChannel.selector;
+        res[6] = IChannel.getRolesByChannel.selector;
+        res[7] = IChannel.removeRoleFromChannel.selector;
+        res[8] = IChannel.createChannelWithOverridePermissions.selector;
     }
 
-    function versionName() public pure override returns (string memory) {
-        return "facets/channelsFacet";
+    function makeCut(
+        address facetAddress,
+        IDiamond.FacetCutAction action
+    ) internal pure returns (IDiamond.FacetCut memory) {
+        return IDiamond.FacetCut(facetAddress, action, selectors());
     }
 
-    function __deploy(address deployer) internal override returns (address) {
-        vm.startBroadcast(deployer);
-        Channels facet = new Channels();
-        vm.stopBroadcast();
-        return address(facet);
+    function deploy() internal returns (address) {
+        return DeployLib.deployCode("Channels.sol", "");
     }
 }

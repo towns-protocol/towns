@@ -10,6 +10,7 @@ import {DeployDiamondCut} from "@towns-protocol/diamond/scripts/deployments/face
 import {DeployDiamondLoupe} from "@towns-protocol/diamond/scripts/deployments/facets/DeployDiamondLoupe.s.sol";
 import {DeployIntrospection} from "@towns-protocol/diamond/scripts/deployments/facets/DeployIntrospection.s.sol";
 import {DeployOwnable} from "@towns-protocol/diamond/scripts/deployments/facets/DeployOwnable.s.sol";
+import {DeployMetadata} from "../facets/DeployMetadata.s.sol";
 
 // contracts
 import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
@@ -21,7 +22,6 @@ import {DiamondHelper} from "@towns-protocol/diamond/scripts/common/helpers/Diam
 import {DeployFacet} from "../../common/DeployFacet.s.sol";
 import {Deployer} from "../../common/Deployer.s.sol";
 import {DeployDropFacet} from "scripts/deployments/facets/DeployDropFacet.s.sol";
-import {DeployMetadata} from "scripts/deployments/facets/DeployMetadata.s.sol";
 import {DeployTownsPoints} from "scripts/deployments/facets/DeployTownsPoints.s.sol";
 
 contract DeployRiverAirdrop is IDiamondInitHelper, DiamondHelper, Deployer {
@@ -31,7 +31,6 @@ contract DeployRiverAirdrop is IDiamondInitHelper, DiamondHelper, Deployer {
     DeployFacet private facetHelper = new DeployFacet();
     DeployDropFacet dropHelper = new DeployDropFacet();
     DeployTownsPoints pointsHelper = new DeployTownsPoints();
-    DeployMetadata metadataHelper = new DeployMetadata();
 
     address multiInit;
     address diamondCut;
@@ -48,7 +47,6 @@ contract DeployRiverAirdrop is IDiamondInitHelper, DiamondHelper, Deployer {
     constructor() {
         facetDeployments["DropFacet"] = address(dropHelper);
         facetDeployments["TownsPoints"] = address(pointsHelper);
-        facetDeployments["MetadataFacet"] = address(metadataHelper);
     }
 
     function versionName() public pure override returns (string memory) {
@@ -111,7 +109,7 @@ contract DeployRiverAirdrop is IDiamondInitHelper, DiamondHelper, Deployer {
     function diamondInitParams(address deployer) public returns (Diamond.InitParams memory) {
         dropFacet = dropHelper.deploy(deployer);
         pointsFacet = pointsHelper.deploy(deployer);
-        metadata = metadataHelper.deploy(deployer);
+        metadata = facetHelper.deploy("MetadataFacet", deployer);
 
         addFacet(
             dropHelper.makeCut(dropFacet, IDiamond.FacetCutAction.Add),
@@ -124,20 +122,16 @@ contract DeployRiverAirdrop is IDiamondInitHelper, DiamondHelper, Deployer {
             pointsHelper.makeInitData(getSpaceFactory())
         );
         addFacet(
-            metadataHelper.makeCut(metadata, IDiamond.FacetCutAction.Add),
+            DeployMetadata.makeCut(metadata, IDiamond.FacetCutAction.Add),
             metadata,
-            metadataHelper.makeInitData(bytes32("RiverAirdrop"), "")
+            DeployMetadata.makeInitData(bytes32("RiverAirdrop"), "")
         );
 
         return
             Diamond.InitParams({
                 baseFacets: baseFacets(),
                 init: multiInit,
-                initData: abi.encodeWithSelector(
-                    MultiInit.multiInit.selector,
-                    _initAddresses,
-                    _initDatas
-                )
+                initData: abi.encodeCall(MultiInit.multiInit, (_initAddresses, _initDatas))
             });
     }
 
@@ -155,6 +149,13 @@ contract DeployRiverAirdrop is IDiamondInitHelper, DiamondHelper, Deployer {
                 } else {
                     addCut(cut);
                 }
+            } else if (keccak256(bytes(facetName)) == keccak256(bytes("MetadataFacet"))) {
+                metadata = facetHelper.deploy("MetadataFacet", deployer);
+                addFacet(
+                    DeployMetadata.makeCut(metadata, IDiamond.FacetCutAction.Add),
+                    metadata,
+                    DeployMetadata.makeInitData(bytes32("RiverAirdrop"), "")
+                );
             }
         }
     }

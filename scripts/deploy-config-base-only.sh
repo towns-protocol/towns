@@ -4,6 +4,8 @@ set -euo pipefail
 export RIVER_ENV=local_multi
 
 pushd river/packages/contracts
+    make build
+
     set -a
     . .env.localhost
     set +a
@@ -16,10 +18,10 @@ pushd river/packages/contracts
     make deploy-any-local context=$RIVER_ENV rpc=base_anvil type=utils contract=DeployTownsBase
     make deploy-any-local context=$RIVER_ENV rpc=base_anvil type=diamonds contract=DeploySpace
     make deploy-any-local context=$RIVER_ENV rpc=base_anvil type=diamonds contract=DeploySpaceOwner
-    make deploy-any-local context=$RIVER_ENV rpc=base_anvil type=utils contract=DeployUserEntitlement
+    make deploy-facet-local context=$RIVER_ENV rpc=base_anvil contract=UserEntitlement
     make deploy-any-local context=$RIVER_ENV rpc=base_anvil type=utils contract=DeployTieredLogPricingV2
     make deploy-any-local context=$RIVER_ENV rpc=base_anvil type=utils contract=DeployTieredLogPricingV3
-    make deploy-any-local context=$RIVER_ENV rpc=base_anvil type=utils contract=DeployFixedPricing
+    make deploy-facet-local context=$RIVER_ENV rpc=base_anvil contract=FixedPricing
     make deploy-any-local context=$RIVER_ENV rpc=base_anvil type=diamonds contract=DeploySpaceFactory
     make deploy-any-local context=$RIVER_ENV rpc=base_anvil type=diamonds contract=DeployRiverAirdrop
     make interact-any-local context=$RIVER_ENV rpc=base_anvil contract=InteractPostDeploy

@@ -11,6 +11,7 @@ import {DeployDiamondLoupe} from "@towns-protocol/diamond/scripts/deployments/fa
 import {DeployEIP712Facet} from "@towns-protocol/diamond/scripts/deployments/facets/DeployEIP712Facet.s.sol";
 import {DeployIntrospection} from "@towns-protocol/diamond/scripts/deployments/facets/DeployIntrospection.s.sol";
 import {DeployOwnable} from "@towns-protocol/diamond/scripts/deployments/facets/DeployOwnable.s.sol";
+import {DeployMetadata} from "../facets/DeployMetadata.s.sol";
 
 // contracts
 import {Diamond} from "@towns-protocol/diamond/src/Diamond.sol";
@@ -23,7 +24,6 @@ import {Deployer} from "../../common/Deployer.s.sol";
 import {DeployERC721ANonTransferable} from "scripts/deployments/facets/DeployERC721ANonTransferable.s.sol";
 import {DeployEntitlementChecker} from "scripts/deployments/facets/DeployEntitlementChecker.s.sol";
 import {DeployMainnetDelegation} from "scripts/deployments/facets/DeployMainnetDelegation.s.sol";
-import {DeployMetadata} from "scripts/deployments/facets/DeployMetadata.s.sol";
 import {DeployMockMessenger} from "scripts/deployments/facets/DeployMockMessenger.s.sol";
 import {DeployNodeOperator} from "scripts/deployments/facets/DeployNodeOperator.s.sol";
 import {DeployRewardsDistributionV2} from "scripts/deployments/facets/DeployRewardsDistributionV2.s.sol";
@@ -37,7 +37,6 @@ contract DeployBaseRegistry is IDiamondInitHelper, DiamondHelper, Deployer {
     DeployFacet private facetHelper = new DeployFacet();
     DeployMainnetDelegation mainnetDelegationHelper = new DeployMainnetDelegation();
     DeployEntitlementChecker checkerHelper = new DeployEntitlementChecker();
-    DeployMetadata metadataHelper = new DeployMetadata();
     DeployNodeOperator operatorHelper = new DeployNodeOperator();
     DeploySpaceDelegation spaceDelegationHelper = new DeploySpaceDelegation();
     DeployRewardsDistributionV2 distributionV2Helper = new DeployRewardsDistributionV2();
@@ -102,7 +101,7 @@ contract DeployBaseRegistry is IDiamondInitHelper, DiamondHelper, Deployer {
     }
 
     function diamondInitParams(address deployer) public returns (Diamond.InitParams memory) {
-        metadata = metadataHelper.deploy(deployer);
+        metadata = facetHelper.deploy("MetadataFacet", deployer);
         entitlementChecker = checkerHelper.deploy(deployer);
         operator = operatorHelper.deploy(deployer);
         distributionV2 = distributionV2Helper.deploy(deployer);
@@ -124,9 +123,9 @@ contract DeployBaseRegistry is IDiamondInitHelper, DiamondHelper, Deployer {
         );
 
         addFacet(
-            metadataHelper.makeCut(metadata, IDiamond.FacetCutAction.Add),
+            DeployMetadata.makeCut(metadata, IDiamond.FacetCutAction.Add),
             metadata,
-            metadataHelper.makeInitData("SpaceOperator", "")
+            DeployMetadata.makeInitData("SpaceOperator", "")
         );
         addFacet(
             checkerHelper.makeCut(entitlementChecker, IDiamond.FacetCutAction.Add),
@@ -164,11 +163,7 @@ contract DeployBaseRegistry is IDiamondInitHelper, DiamondHelper, Deployer {
             Diamond.InitParams({
                 baseFacets: baseFacets(),
                 init: multiInit,
-                initData: abi.encodeWithSelector(
-                    MultiInit.multiInit.selector,
-                    _initAddresses,
-                    _initDatas
-                )
+                initData: abi.encodeCall(MultiInit.multiInit, (_initAddresses, _initDatas))
             });
     }
 
@@ -178,11 +173,11 @@ contract DeployBaseRegistry is IDiamondInitHelper, DiamondHelper, Deployer {
             bytes32 facetNameHash = keccak256(abi.encodePacked(facetName));
 
             if (facetNameHash == keccak256(abi.encodePacked("MetadataFacet"))) {
-                metadata = metadataHelper.deploy(deployer);
+                metadata = facetHelper.deploy("MetadataFacet", deployer);
                 addFacet(
-                    metadataHelper.makeCut(metadata, IDiamond.FacetCutAction.Add),
+                    DeployMetadata.makeCut(metadata, IDiamond.FacetCutAction.Add),
                     metadata,
-                    metadataHelper.makeInitData("SpaceOperator", "")
+                    DeployMetadata.makeInitData("SpaceOperator", "")
                 );
             } else if (facetNameHash == keccak256(abi.encodePacked("EntitlementChecker"))) {
                 entitlementChecker = checkerHelper.deploy(deployer);
