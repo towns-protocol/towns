@@ -7,6 +7,7 @@ import {
 } from '@towns-protocol/dlog'
 import { isDefined, assert, hasElements } from './check'
 import {
+    MiniblockHeader,
     Envelope,
     EventRef,
     StreamEvent,
@@ -38,7 +39,6 @@ import { keccak256 } from 'ethereum-cryptography/keccak'
 import { createHash } from 'crypto'
 import { create, fromBinary, toBinary } from '@bufbuild/protobuf'
 import { eventIdsFromSnapshot } from './persistenceStore'
-import { MiniblockHeader } from '@towns-protocol/proto/src/gen/protocol_pb'
 
 export interface UnpackEnvelopeOpts {
     // the client recreates the hash from the event bytes in the envelope
