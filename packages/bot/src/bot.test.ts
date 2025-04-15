@@ -20,15 +20,12 @@ import { ethers } from 'ethers'
 import { AppPrivateDataSchema } from '@towns-protocol/proto'
 import { toBinary, create } from '@bufbuild/protobuf'
 import { SpaceDapp } from '@towns-protocol/web3'
+import { createSecureServer } from 'node:http2'
 import { serve } from '@hono/node-server'
+import fs from 'node:fs'
+import path from 'node:path'
 
-const BOT_ENV = 'local_multi'
-const BOT_PORT = 5123
-
-// need to setup https for the bot server
-const WEBHOOK_URL = '<tunnel-url>/webhook'
-// TODO: function to get the app registry url
-const APP_REGISTRY_URL = 'https://localhost:5180'
+const WEBHOOK_URL = `https://localhost:${process.env.BOT_PORT}/webhook`
 
 describe('Bot', { sequential: true }, () => {
     const riverConfig = makeRiverConfig()
@@ -105,7 +102,7 @@ describe('Bot', { sequential: true }, () => {
         const { appRegistryRpcClient: rpcClient } = await AppRegistryService.authenticateWithSigner(
             bob.userId,
             bob.signer,
-            APP_REGISTRY_URL,
+            process.env.APP_REGISTRY_URL!,
         )
         appRegistryRpcClient = rpcClient
         const appId = bin_fromHexString(botWallet.address)
@@ -118,15 +115,24 @@ describe('Bot', { sequential: true }, () => {
     })
 
     it('should run the bot server and register the webhook in app registry', async () => {
-        bot = await makeTownsBot(appPrivateDataBase64, jwtSecret, BOT_ENV)
+        bot = await makeTownsBot(appPrivateDataBase64, jwtSecret, process.env.RIVER_ENV)
         expect(bot).toBeDefined()
         expect(bot.botId).toBe(botWallet.address)
         bot.onMessage((_h, { message }) => {
             messages.push(message)
         })
         const { fetch } = await bot.start()
-        // TODO: this should serve a https endpoint
-        serve({ port: BOT_PORT, fetch })
+        serve({
+            port: Number(process.env.BOT_PORT!),
+            fetch,
+            createServer: createSecureServer,
+            serverOptions: {
+                // TODO: mkcert localhost in CI
+                key: fs.readFileSync(path.join(__dirname, '../certs', 'localhost+2-key.pem')),
+                cert: fs.readFileSync(path.join(__dirname, '../certs', 'localhost+2.pem')),
+                allowHTTP1: false,
+            },
+        })
         const appId = bin_fromHexString(botWallet.address)
         await appRegistryRpcClient.registerWebhook({
             appId,

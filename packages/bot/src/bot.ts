@@ -548,6 +548,43 @@ const buildBotActions = (client: ClientV2) => {
             algorithm,
         }))
     }
+
+    // TODO: impl
+    const getUserData = async (userId: string) => {
+        const streamId = makeUserMetadataStreamId(userId)
+        const userStream = await client.getStream(streamId)
+        const snapshot =
+            userStream.snapshot.content.case === 'userMetadataContent'
+                ? userStream.snapshot.content.value
+                : undefined
+        const users = userStream.snapshot.members
+        if (!users) {
+            throw new Error('Space joined members not found')
+        }
+
+        const user = users.joined.find((user) => userIdFromAddress(user.userAddress) === userId)
+        if (!user) {
+            throw new Error('User not found')
+        }
+
+        if (!snapshot) {
+            throw new Error('User metadata not found')
+        }
+        const [decryptedUsername, decryptedDisplayName] = await Promise.all([
+            ...(user.username?.data
+                ? [client.crypto.decryptGroupEvent(streamId, user.username.data)]
+                : []),
+            ...(user.displayName?.data
+                ? [client.crypto.decryptGroupEvent(streamId, user.displayName.data)]
+                : []),
+        ])
+
+        return {
+            displayName: decryptedDisplayName,
+            username: decryptedUsername,
+        }
+    }
+
     return {
         sendMessage,
         editMessage,
@@ -557,5 +594,6 @@ const buildBotActions = (client: ClientV2) => {
         sendKeySolicitation,
         uploadDeviceKeys,
         decryptSessions,
+        getUserData,
     }
 }
