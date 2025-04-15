@@ -12,6 +12,7 @@ import (
 	"os"
 	"slices"
 	"strconv"
+	"sync"
 	"time"
 
 	"connectrpc.com/connect"
@@ -711,8 +712,8 @@ type streamSyncStatus struct {
 }
 
 func runStreamMigrationListCmd(cmd *cobra.Command, args []string) error {
-	limit := -1
-	if len(args) == 2 {
+	limit := 0
+	if len(args) >= 2 {
 		n, err := strconv.ParseInt(args[1], 10, 64)
 		if err != nil {
 			return err
@@ -720,7 +721,15 @@ func runStreamMigrationListCmd(cmd *cobra.Command, args []string) error {
 		limit = int(n)
 	}
 
-	outputFile, err := os.OpenFile(args[0], os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	var nodeAddress common.Address
+	if len(args) >= 3 {
+		nodeAddress = common.HexToAddress(args[2])
+		if nodeAddress == (common.Address{}) {
+			return fmt.Errorf("invalid node address: %s", args[2])
+		}
+	}
+
+	outputFile, err := os.OpenFile(args[0], os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0644)
 	if err != nil {
 		return err
 	}
@@ -751,25 +760,54 @@ func runStreamMigrationListCmd(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	dumped := 0
-	registryContract.ForAllStreams(ctx, blockchain.InitialBlockNum, func(streamWithID *river.StreamWithId) bool {
-		stream := streamWithID.Stream
-		if len(stream.Nodes) == 1 {
-			streamNotMigrated := &StreamNotMigrated{
-				StreamID:          streamWithID.Id,
-				ReplicationFactor: uint8(stream.StreamReplicationFactor()),
-				Status:            "not_migrated",
-				NodeAddresses:     stream.Nodes,
-			}
+	var (
+		streams = make(chan *StreamNotMigrated, 10*1024)
+		dumped  = 0
+		tasks   sync.WaitGroup
+	)
 
+	tasks.Add(1)
+	go func() {
+		for streamNotMigrated := range streams {
 			if err := output.Encode(streamNotMigrated); err != nil {
 				panic(err)
 			}
-
-			dumped++
 		}
-		return limit == -1 || dumped < limit
-	})
+		tasks.Done()
+	}()
+
+	if nodeAddress == (common.Address{}) {
+		registryContract.ForAllStreams(ctx, blockchain.InitialBlockNum, func(streamWithID *river.StreamWithId) bool {
+			stream := streamWithID.Stream
+			if len(stream.Nodes) == 1 {
+				streams <- &StreamNotMigrated{
+					StreamID:          streamWithID.Id,
+					ReplicationFactor: uint8(stream.StreamReplicationFactor()),
+					Status:            "not_migrated",
+					NodeAddresses:     stream.Nodes,
+				}
+				dumped++
+			}
+			return limit == 0 || dumped < limit
+		})
+	} else {
+		registryContract.ForStreamsOnNode(ctx, blockchain.InitialBlockNum, nodeAddress, func(streamWithID *river.StreamWithId) bool {
+			stream := streamWithID.Stream
+			if len(stream.Nodes) == 1 {
+				streams <- &StreamNotMigrated{
+					StreamID:          streamWithID.Id,
+					ReplicationFactor: uint8(stream.StreamReplicationFactor()),
+					Status:            "not_migrated",
+					NodeAddresses:     stream.Nodes,
+				}
+				dumped++
+			}
+			return limit == 0 || dumped < limit
+		})
+	}
+
+	close(streams)
+	tasks.Wait()
 
 	return nil
 }
@@ -948,7 +986,7 @@ func runStreamPlaceInitiateCmd(cfg *config.Config, args []string) error {
 		)
 	}
 
-	outputFile, err := os.OpenFile(args[1]+".initiated", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	outputFile, err := os.OpenFile(args[1]+".initiated", os.O_EXCL|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		return err
 	}
@@ -1072,6 +1110,15 @@ func runStreamPlaceStatusCmd(cfg *config.Config, args []string) error {
 	defer inputFile.Close()
 
 	input := json.NewDecoder(inputFile)
+
+	outputSink, err := os.OpenFile(args[0]+".status", os.O_EXCL|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		outputSink = os.Stdout
+	}
+	defer outputSink.Close()
+
+	output := json.NewEncoder(outputSink)
+
 	var streamPlacementTxResults []*streamPlacementTxResult
 	for {
 		var result streamPlacementTxResult
@@ -1144,13 +1191,6 @@ func runStreamPlaceStatusCmd(cfg *config.Config, args []string) error {
 		close(results)
 	}()
 
-	outputSink, err := os.OpenFile(args[0]+".status", os.O_TRUNC|os.O_CREATE|os.O_WRONLY, 0644)
-	if err != nil {
-		outputSink = os.Stdout
-	}
-	defer outputSink.Close()
-
-	output := json.NewEncoder(outputSink)
 	for result := range results {
 		output.Encode(result)
 	}
@@ -1250,7 +1290,7 @@ func runStreamPlaceEnterQuorumCmd(cfg *config.Config, args []string) error {
 		)
 	}
 
-	outputFile, err := os.OpenFile(args[1]+".enter_quorum", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	outputFile, err := os.OpenFile(args[1]+".enter_quorum", os.O_EXCL|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		return err
 	}
@@ -1383,11 +1423,12 @@ max-block-range is optional and limits the number of blocks to consider (default
 	}
 
 	cmdStreamMigrationList := &cobra.Command{
-		Use:   "not-migrated <output-stream-id-file> [max-streams]",
+		Use:   "not-migrated <output-stream-id-file> [max-streams] [node-address]",
 		Short: "Dump non-replicated streams to file",
 		Long: `Dump streams that are not replicated nor the migration to replicated streams was started
-to a file, optionally the number of streams is limited by max-streams.`,
-		Args: cobra.RangeArgs(1, 2),
+to a file, optionally the number of streams is limited by max-streams and optionally only streams from
+a specific node are included. Use 0 for max-streams to include all streams.`,
+		Args: cobra.RangeArgs(1, 3),
 		RunE: runStreamMigrationListCmd,
 	}
 
