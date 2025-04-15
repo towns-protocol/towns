@@ -9,6 +9,11 @@ ARG VER_BRANCH=branch_unset
 ARG VER_COMMIT=commit_unset
 ARG GIT_SHA
 
+# Create and set proper permissions for node user's cache directory
+RUN mkdir -p /home/node/.cache/node/corepack/v1 && \
+    chown -R node:node /home/node/.cache && \
+    chmod -R 775 /home/node/.cache
+
 # Install curl and other required packages for Foundry installation
 RUN apt-get update && \
     apt-get install -y curl build-essential git make && \
@@ -21,9 +26,6 @@ RUN curl -L https://foundry.paradigm.xyz | bash && \
 
 # Add Foundry binaries to PATH
 ENV PATH="/root/.foundry/bin:${PATH}"
-
-RUN mkdir -p /home/node/.cache/node/corepack/v1 && \
-    chown -R node:node /home/node
 
 # Enable Corepack for Yarn 3.x support
 RUN corepack enable
@@ -54,12 +56,17 @@ RUN yarn workspace @towns-protocol/contracts typings
 # Set working directory to subgraph package
 WORKDIR /river/packages/subgraph
 
+# Fix permissions for the node user
+RUN chown -R node:node /river
+
 # Expose the default Ponder port
 EXPOSE 42069
 
 # Set environment variables
 ENV NODE_ENV=production
 ENV DATABASE_SCHEMA=public
+
+USER node
 
 # Use entrypoint script
 ENTRYPOINT ["./docker-entrypoint.sh"]
