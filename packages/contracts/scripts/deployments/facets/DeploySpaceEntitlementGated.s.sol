@@ -2,30 +2,30 @@
 pragma solidity ^0.8.23;
 
 // interfaces
+import {IDiamond} from "@towns-protocol/diamond/src/Diamond.sol";
 
 // libraries
+import {DeployLib} from "@towns-protocol/diamond/scripts/common/DeployLib.sol";
 
 // contracts
-import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
-import {Deployer} from "scripts/common/Deployer.s.sol";
 import {EntitlementGated} from "src/spaces/facets/gated/EntitlementGated.sol";
-import {SpaceEntitlementGated} from "src/spaces/facets/xchain/SpaceEntitlementGated.sol";
 
-contract DeploySpaceEntitlementGated is FacetHelper, Deployer {
-    constructor() {
-        addSelector(EntitlementGated.postEntitlementCheckResult.selector);
-        addSelector(EntitlementGated.postEntitlementCheckResultV2.selector);
-        addSelector(EntitlementGated.getRuleData.selector);
+library DeploySpaceEntitlementGated {
+    function selectors() internal pure returns (bytes4[] memory res) {
+        res = new bytes4[](3);
+        res[0] = EntitlementGated.postEntitlementCheckResult.selector;
+        res[1] = EntitlementGated.postEntitlementCheckResultV2.selector;
+        res[2] = EntitlementGated.getRuleData.selector;
     }
 
-    function versionName() public pure override returns (string memory) {
-        return "facets/spaceEntitlementGatedFacet";
+    function makeCut(
+        address facetAddress,
+        IDiamond.FacetCutAction action
+    ) internal pure returns (IDiamond.FacetCut memory) {
+        return IDiamond.FacetCut(facetAddress, action, selectors());
     }
 
-    function __deploy(address deployer) internal override returns (address) {
-        vm.startBroadcast(deployer);
-        SpaceEntitlementGated facet = new SpaceEntitlementGated();
-        vm.stopBroadcast();
-        return address(facet);
+    function deploy() internal returns (address) {
+        return DeployLib.deployCode("SpaceEntitlementGated.sol", "");
     }
 }

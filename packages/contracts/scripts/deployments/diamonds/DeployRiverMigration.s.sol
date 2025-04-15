@@ -10,6 +10,7 @@ import {DeployDiamondLoupe} from "@towns-protocol/diamond/scripts/deployments/fa
 import {DeployIntrospection} from "@towns-protocol/diamond/scripts/deployments/facets/DeployIntrospection.s.sol";
 import {DeployOwnable} from "@towns-protocol/diamond/scripts/deployments/facets/DeployOwnable.s.sol";
 import {DeployPausable} from "@towns-protocol/diamond/scripts/deployments/facets/DeployPausable.s.sol";
+import {DeployTokenMigration} from "../facets/DeployTokenMigration.s.sol";
 
 // contracts
 import {DiamondHelper} from "@towns-protocol/diamond/scripts/common/helpers/DiamondHelper.s.sol";
@@ -19,14 +20,12 @@ import {MultiInit} from "@towns-protocol/diamond/src/initializers/MultiInit.sol"
 // deployers
 import {DeployFacet} from "../../common/DeployFacet.s.sol";
 import {Deployer} from "../../common/Deployer.s.sol";
-import {DeployTokenMigration} from "scripts/deployments/facets/DeployTokenMigration.s.sol";
 
 contract DeployRiverMigration is DiamondHelper, Deployer {
     address OLD_TOKEN = 0x0000000000000000000000000000000000000000;
     address NEW_TOKEN = 0x0000000000000000000000000000000000000000;
 
     DeployFacet private facetHelper = new DeployFacet();
-    DeployTokenMigration tokenMigrationHelper = new DeployTokenMigration();
 
     address multiInit;
     address diamondCut;
@@ -89,25 +88,21 @@ contract DeployRiverMigration is DiamondHelper, Deployer {
     }
 
     function diamondInitParams(address deployer) public returns (Diamond.InitParams memory) {
-        tokenMigration = tokenMigrationHelper.deploy(deployer);
+        tokenMigration = facetHelper.deploy("TokenMigrationFacet", deployer);
 
         (address oldToken, address newToken) = getTokens();
 
         addFacet(
-            tokenMigrationHelper.makeCut(tokenMigration, IDiamond.FacetCutAction.Add),
+            DeployTokenMigration.makeCut(tokenMigration, IDiamond.FacetCutAction.Add),
             tokenMigration,
-            tokenMigrationHelper.makeInitData(oldToken, newToken)
+            DeployTokenMigration.makeInitData(oldToken, newToken)
         );
 
         return
             Diamond.InitParams({
                 baseFacets: baseFacets(),
                 init: multiInit,
-                initData: abi.encodeWithSelector(
-                    MultiInit.multiInit.selector,
-                    _initAddresses,
-                    _initDatas
-                )
+                initData: abi.encodeCall(MultiInit.multiInit, (_initAddresses, _initDatas))
             });
     }
 

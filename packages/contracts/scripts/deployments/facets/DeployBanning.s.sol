@@ -1,33 +1,30 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-//interfaces
+// interfaces
+import {IDiamond} from "@towns-protocol/diamond/src/Diamond.sol";
+import {IBanning} from "src/spaces/facets/banning/IBanning.sol";
 
-//libraries
+// libraries
+import {DeployLib} from "@towns-protocol/diamond/scripts/common/DeployLib.sol";
 
-//contracts
-import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
-import {Deployer} from "scripts/common/Deployer.s.sol";
-import {Banning} from "src/spaces/facets/banning/Banning.sol";
-
-contract DeployBanning is Deployer, FacetHelper {
-    // FacetHelper
-    constructor() {
-        addSelector(Banning.ban.selector);
-        addSelector(Banning.unban.selector);
-        addSelector(Banning.isBanned.selector);
-        addSelector(Banning.banned.selector);
+library DeployBanning {
+    function selectors() internal pure returns (bytes4[] memory res) {
+        res = new bytes4[](4);
+        res[0] = IBanning.ban.selector;
+        res[1] = IBanning.unban.selector;
+        res[2] = IBanning.isBanned.selector;
+        res[3] = IBanning.banned.selector;
     }
 
-    // Deploying
-    function versionName() public pure override returns (string memory) {
-        return "facets/banningFacet";
+    function makeCut(
+        address facetAddress,
+        IDiamond.FacetCutAction action
+    ) internal pure returns (IDiamond.FacetCut memory) {
+        return IDiamond.FacetCut(facetAddress, action, selectors());
     }
 
-    function __deploy(address deployer) internal override returns (address) {
-        vm.startBroadcast(deployer);
-        Banning banning = new Banning();
-        vm.stopBroadcast();
-        return address(banning);
+    function deploy() internal returns (address) {
+        return DeployLib.deployCode("Banning.sol", "");
     }
 }

@@ -4,7 +4,7 @@ pragma solidity ^0.8.19;
 // utils
 
 import {RewardsVerifier} from "../base/registry/RewardsVerifier.t.sol";
-import {TestUtils} from "../utils/TestUtils.sol";
+import {TestUtils} from "@towns-protocol/diamond/test/TestUtils.sol";
 import {DeployBase} from "scripts/common/DeployBase.s.sol";
 
 import {DeployRewardsDistributionV2} from "scripts/deployments/facets/DeployRewardsDistributionV2.s.sol";

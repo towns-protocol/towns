@@ -6,18 +6,16 @@ pragma solidity ^0.8.23;
 //libraries
 
 //contracts
-import {Deployer} from "scripts/common/Deployer.s.sol";
+import {Deployer} from "../../common/Deployer.s.sol";
 import {ProxyBatchDelegation} from "src/tokens/mainnet/delegation/ProxyBatchDelegation.sol";
 import {MockMessenger} from "test/mocks/MockMessenger.sol";
 
 // deployments
-import {DeployAuthorizedClaimers} from "./DeployAuthorizedClaimers.s.sol";
 import {DeployTownsMainnet} from "./DeployTownsMainnet.s.sol";
 
 contract DeployProxyBatchDelegation is Deployer {
     // Mainnet
     DeployTownsMainnet internal townsHelper = new DeployTownsMainnet();
-    DeployAuthorizedClaimers internal claimersHelper = new DeployAuthorizedClaimers();
 
     address public townsToken;
     address public claimers;
@@ -37,7 +35,8 @@ contract DeployProxyBatchDelegation is Deployer {
     function __deploy(address deployer) internal override returns (address) {
         townsToken = townsHelper.deploy(deployer);
         vault = townsHelper.vault();
-        claimers = claimersHelper.deploy(deployer);
+        vm.broadcast(deployer);
+        claimers = deployCode("AuthorizedClaimers.sol", "");
 
         if (messenger == address(0)) {
             if (isAnvil() || isTesting()) {
