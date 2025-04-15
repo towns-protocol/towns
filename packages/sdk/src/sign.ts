@@ -251,7 +251,15 @@ export const unpackSnapshot = async (
     const doCheckEventSignature = opts?.disableSignatureValidation !== true
     if (doCheckEventSignature) {
         // headerEvent contains the creatorAddress of the snapshot.
-        checkEventSignature(headerEvent, hash, snapshot.signature)
+        checkEventSignature(
+            {
+                creatorAddress: headerEvent.creatorAddress,
+                delegateSig: headerEvent.delegateSig,
+                delegateExpiryEpochMs: headerEvent.delegateExpiryEpochMs,
+            },
+            hash,
+            snapshot.signature,
+        )
     }
 
     return makeParsedSnapshot(sn, snapshot.hash, snapshot.signature)
@@ -274,6 +282,7 @@ export function checkEventSignature(
             bin_equal(address, event.creatorAddress),
             'Event signature is not valid',
             Err.BAD_EVENT_SIGNATURE,
+            { address: address, event: event },
         )
     } else {
         checkDelegateSig({
@@ -305,7 +314,7 @@ export function makeParsedSnapshot(
     hash: Uint8Array | undefined,
     signature: Uint8Array | undefined,
 ) {
-    hash = hash ?? riverHash(toBinary(SnapshotSchema, snapshot))
+    hash = hash ?? riverSnapshotHash(toBinary(SnapshotSchema, snapshot))
     return {
         snapshot,
         hash,

@@ -46,6 +46,7 @@ export const checkDelegateSig = (params: {
         bin_equal(recoveredCreatorAddress, creatorAddress),
         'delegateSig does not match creatorAddress',
         Err.BAD_DELEGATE_SIG,
+        { creatorAddress: creatorAddress, recoveredCreatorAddress: recoveredCreatorAddress, params: params }
     )
 }
 
