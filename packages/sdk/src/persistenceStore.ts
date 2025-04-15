@@ -2,6 +2,7 @@ import {
     PersistedMiniblockSchema,
     PersistedSyncedStream,
     PersistedSyncedStreamSchema,
+    SnapshotSchema,
     Snapshot,
 } from '@towns-protocol/proto'
 import Dexie, { Table } from 'dexie'
@@ -105,12 +106,14 @@ export interface IPersistenceStore {
         rangeStart: bigint,
         randeEnd: bigint,
     ): Promise<ParsedMiniblock[]>
+    saveSnapshot(streamId: string, miniblockNum: bigint, snapshot: Snapshot): Promise<void>
 }
 
 export class PersistenceStore extends Dexie implements IPersistenceStore {
     cleartexts!: Table<{ cleartext: Uint8Array | string; eventId: string }>
     syncedStreams!: Table<{ streamId: string; data: Uint8Array }>
     miniblocks!: Table<{ streamId: string; miniblockNum: string; data: Uint8Array }>
+    snapshots!: Table<{ streamId: string; data: { miniblockNum: bigint; snapshot: Uint8Array } }>
 
     constructor(databaseName: string) {
         super(databaseName)
@@ -119,6 +122,7 @@ export class PersistenceStore extends Dexie implements IPersistenceStore {
             cleartexts: 'eventId',
             syncedStreams: 'streamId',
             miniblocks: '[streamId+miniblockNum]',
+            snapshots: 'streamId',
         })
 
         // Version 2: added a signature to the saved event, drop all saved miniblocks
@@ -198,6 +202,8 @@ export class PersistenceStore extends Dexie implements IPersistenceStore {
         }
 
         const snapshot = miniblocks[0].header.snapshot
+            ? miniblocks[0].header.snapshot
+            : await this.getSnapshot(streamId)
         if (!snapshot) {
             return undefined
         }
@@ -338,6 +344,29 @@ export class PersistenceStore extends Dexie implements IPersistenceStore {
             })
             .filter(isDefined)
         return miniblocks.length === ids.length ? miniblocks : []
+    }
+
+    async saveSnapshot(streamId: string, miniblockNum: bigint, snapshot: Snapshot): Promise<void> {
+        const record = await this.snapshots.get(streamId)
+        if (record && record.data.miniblockNum >= miniblockNum) {
+            return
+        }
+        log('saving snapshot', streamId)
+        await this.snapshots.put({
+            streamId: streamId,
+            data: {
+                snapshot: toBinary(SnapshotSchema, snapshot),
+                miniblockNum: miniblockNum,
+            },
+        })
+    }
+
+    async getSnapshot(streamId: string): Promise<Snapshot | undefined> {
+        const record = await this.snapshots.get(streamId)
+        if (!record) {
+            return undefined
+        }
+        return fromBinary(SnapshotSchema, record.data.snapshot)
     }
 
     private requestPersistentStorage() {
@@ -510,6 +539,10 @@ export class StubPersistenceStore implements IPersistenceStore {
         rangeEnd: bigint,
     ): Promise<ParsedMiniblock[]> {
         return Promise.resolve([])
+    }
+
+    async saveSnapshot(streamId: string, miniblockNum: bigint, snapshot: Snapshot): Promise<void> {
+        return Promise.resolve()
     }
     /* eslint-enable @typescript-eslint/no-unused-vars */
 }

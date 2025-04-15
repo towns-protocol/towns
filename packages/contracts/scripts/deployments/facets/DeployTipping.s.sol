@@ -1,36 +1,31 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-//interfaces
+// interfaces
+import {IDiamond} from "@towns-protocol/diamond/src/Diamond.sol";
+import {ITipping} from "src/spaces/facets/tipping/ITipping.sol";
 
-//libraries
+// libraries
+import {DeployLib} from "@towns-protocol/diamond/scripts/common/DeployLib.sol";
 
-//contracts
-import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
-import {Deployer} from "scripts/common/Deployer.s.sol";
-import {TippingFacet} from "src/spaces/facets/tipping/TippingFacet.sol";
-
-contract DeployTipping is FacetHelper, Deployer {
-    constructor() {
-        addSelector(TippingFacet.tip.selector);
-        addSelector(TippingFacet.tipsByCurrencyAndTokenId.selector);
-        addSelector(TippingFacet.tippingCurrencies.selector);
-        addSelector(TippingFacet.totalTipsByCurrency.selector);
-        addSelector(TippingFacet.tipAmountByCurrency.selector);
+library DeployTipping {
+    function selectors() internal pure returns (bytes4[] memory res) {
+        res = new bytes4[](5);
+        res[0] = ITipping.tip.selector;
+        res[1] = ITipping.tipsByCurrencyAndTokenId.selector;
+        res[2] = ITipping.tippingCurrencies.selector;
+        res[3] = ITipping.totalTipsByCurrency.selector;
+        res[4] = ITipping.tipAmountByCurrency.selector;
     }
 
-    function initializer() public pure override returns (bytes4) {
-        return TippingFacet.__Tipping_init.selector;
+    function makeCut(
+        address facetAddress,
+        IDiamond.FacetCutAction action
+    ) internal pure returns (IDiamond.FacetCut memory) {
+        return IDiamond.FacetCut(facetAddress, action, selectors());
     }
 
-    function versionName() public pure override returns (string memory) {
-        return "facets/tippingFacet";
-    }
-
-    function __deploy(address deployer) internal override returns (address) {
-        vm.startBroadcast(deployer);
-        TippingFacet tipping = new TippingFacet();
-        vm.stopBroadcast();
-        return address(tipping);
+    function deploy() internal returns (address) {
+        return DeployLib.deployCode("TippingFacet.sol", "");
     }
 }

@@ -2,31 +2,30 @@
 pragma solidity ^0.8.19;
 
 //interfaces
+import {IDiamond} from "@towns-protocol/diamond/src/Diamond.sol";
+import {IReview} from "src/spaces/facets/review/IReview.sol";
 
 //libraries
+import {DeployLib} from "@towns-protocol/diamond/scripts/common/DeployLib.sol";
 
 //contracts
-import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
-import {Deployer} from "scripts/common/Deployer.s.sol";
-import {ReviewFacet} from "src/spaces/facets/review/ReviewFacet.sol";
 
-contract DeployReviewFacet is Deployer, FacetHelper {
-    constructor() {
-        addSelector(ReviewFacet.setReview.selector);
-        addSelector(ReviewFacet.getReview.selector);
-        addSelector(ReviewFacet.getAllReviews.selector);
+library DeployReviewFacet {
+    function selectors() internal pure returns (bytes4[] memory res) {
+        res = new bytes4[](3);
+        res[0] = IReview.setReview.selector;
+        res[1] = IReview.getReview.selector;
+        res[2] = IReview.getAllReviews.selector;
     }
 
-    function versionName() public pure override returns (string memory) {
-        return "facets/reviewFacet";
+    function makeCut(
+        address facetAddress,
+        IDiamond.FacetCutAction action
+    ) internal pure returns (IDiamond.FacetCut memory) {
+        return IDiamond.FacetCut(facetAddress, action, selectors());
     }
 
-    function initializer() public pure override returns (bytes4) {
-        return ReviewFacet.__Review_init.selector;
-    }
-
-    function __deploy(address deployer) internal override returns (address) {
-        vm.broadcast(deployer);
-        return address(new ReviewFacet());
+    function deploy() internal returns (address) {
+        return DeployLib.deployCode("ReviewFacet.sol", "");
     }
 }
