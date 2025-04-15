@@ -137,20 +137,24 @@ async function fetchMiniblocksFromRpc(
     })
 
     const miniblocks: ParsedMiniblock[] = []
+    const parsedSnapshots: Record<string, Snapshot> = {}
     for (const miniblock of response.miniblocks) {
         const unpackedMiniblock = await unpackMiniblock(miniblock, unpackEnvelopeOpts)
+        const unpackedMiniblockNum = unpackedMiniblock.header.miniblockNum.toString()
         miniblocks.push(unpackedMiniblock)
+        if (response.snapshots[unpackedMiniblockNum]) {
+            parsedSnapshots[unpackedMiniblockNum] = (
+                await unpackSnapshot(
+                    unpackedMiniblock.header,
+                    response.snapshots[unpackedMiniblockNum],
+                    unpackEnvelopeOpts,
+                )
+            ).snapshot
+        }
     }
 
     const respondedFromInclusive =
         miniblocks.length > 0 ? miniblocks[0].header.miniblockNum : fromInclusive
-
-    const parsedSnapshots: Record<string, Snapshot> = {}
-    if (response.snapshots !== undefined) {
-        for (const [key, snapshot] of Object.entries(response.snapshots)) {
-            parsedSnapshots[key] = (await unpackSnapshot(snapshot, unpackEnvelopeOpts)).snapshot
-        }
-    }
 
     return {
         miniblocks: miniblocks,

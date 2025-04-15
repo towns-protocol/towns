@@ -38,6 +38,7 @@ import { keccak256 } from 'ethereum-cryptography/keccak'
 import { createHash } from 'crypto'
 import { create, fromBinary, toBinary } from '@bufbuild/protobuf'
 import { eventIdsFromSnapshot } from './persistenceStore'
+import { MiniblockHeader } from '@towns-protocol/proto/src/gen/protocol_pb'
 
 export interface UnpackEnvelopeOpts {
     // the client recreates the hash from the event bytes in the envelope
@@ -182,7 +183,7 @@ export const unpackStreamAndCookie = async (
         nextSyncCookie: streamAndCookie.nextSyncCookie,
         miniblocks: miniblocks,
         snapshot: streamAndCookie.snapshot
-            ? await unpackSnapshot(streamAndCookie.snapshot, opts)
+            ? await unpackSnapshot(miniblocks[0].header, streamAndCookie.snapshot, opts)
             : undefined,
     }
 }
@@ -232,6 +233,7 @@ export const unpackEnvelope = async (
 }
 
 export const unpackSnapshot = async (
+    header: MiniblockHeader,
     snapshot: Envelope,
     opts: UnpackEnvelopeOpts | undefined,
 ): Promise<ParsedSnapshot> => {
@@ -247,7 +249,10 @@ export const unpackSnapshot = async (
         check(bin_equal(hash, snapshot.hash), 'Snapshot id is not valid', Err.BAD_EVENT_ID)
     }
 
-    // TODO: Check signature?
+    const doCheckEventSignature = opts?.disableSignatureValidation !== true
+    if (doCheckEventSignature) {
+        // TODO: Check signature
+    }
 
     return makeParsedSnapshot(sn, snapshot.hash, snapshot.signature)
 }
