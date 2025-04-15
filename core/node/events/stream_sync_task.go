@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"connectrpc.com/connect"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/gammazero/workerpool"
 	"github.com/puzpuzpuz/xsync/v4"
@@ -11,6 +12,7 @@ import (
 	"github.com/towns-protocol/towns/core/contracts/river"
 	. "github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/logging"
+	"github.com/towns-protocol/towns/core/node/protocol"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	. "github.com/towns-protocol/towns/core/node/shared"
 )
@@ -38,7 +40,6 @@ func (s *StreamCache) submitSyncStreamTaskToPool(
 	} else {
 		s.submitReconciliationTask(pool, stream, streamRecord)
 	}
-
 }
 
 func (s *StreamCache) submitToPool(
@@ -77,7 +78,8 @@ func (s *StreamCache) getRecordTask(
 
 	streamRecord, err := s.params.Registry.GetStreamOnLatestBlock(ctx, stream.streamId)
 	if err != nil {
-		logging.FromCtx(ctx).Errorw("getRecordTask: Unable to get stream record", "stream", stream.streamId, "error", err)
+		logging.FromCtx(ctx).
+			Errorw("getRecordTask: Unable to get stream record", "stream", stream.streamId, "error", err)
 		return
 	}
 
@@ -115,7 +117,6 @@ func (s *StreamCache) submitReconciliationTask(
 			s.reconciliationTask(pool, stream.StreamId())
 		})
 	}
-
 }
 
 func (s *StreamCache) reconciliationTask(
@@ -176,7 +177,8 @@ func (s *StreamCache) reconciliationTask(
 		},
 	)
 	if corrupt {
-		logging.FromCtx(s.params.ServerCtx).Errorw("reconciliationTask: Corrupt task 2", "stream", streamId, "record", streamRecord)
+		logging.FromCtx(s.params.ServerCtx).
+			Errorw("reconciliationTask: Corrupt task 2", "stream", streamId, "record", streamRecord)
 		return
 	}
 
@@ -217,8 +219,12 @@ func (s *StreamCache) syncStreamFromPeers(
 		return nil
 	}
 
+	stream.mu.Lock()
+	nonReplicatedStream := len(stream.nodesLocked.GetQuorumNodes()) == 1
+	stream.mu.Unlock()
+
 	fromInclusive := lastMiniblockNum + 1
-	toExclusive := streamRecord.LastMbNum() + 1
+	toExclusive := streamRecord.LastMbNum() + 1 // incorrect, during migration stream isn't replicated so registry might not have the latest miniblock
 
 	remotes, _ := stream.GetRemotesAndIsLocal()
 	if len(remotes) == 0 {
@@ -228,6 +234,23 @@ func (s *StreamCache) syncStreamFromPeers(
 	remote := stream.GetStickyPeer()
 	var nextFromInclusive int64
 	for range remotes {
+		// if stream is not replicated the stream registry may not have the latest miniblock
+		// because nodes only register periodically new miniblocks to reduce transaction costs
+		// for non-replicated streams. In that case fetch the latest block number from the remote.
+		if nonReplicatedStream {
+			client, err := s.params.NodeRegistry.GetStreamServiceClientForAddress(remote)
+			if err != nil {
+				continue
+			}
+			resp, err := client.GetLastMiniblockHash(ctx, connect.NewRequest(&protocol.GetLastMiniblockHashRequest{
+				StreamId: stream.streamId[:],
+			}))
+			if err != nil {
+				continue
+			}
+			toExclusive = max(toExclusive, resp.Msg.MiniblockNum+1)
+		}
+
 		nextFromInclusive, err = s.syncStreamFromSinglePeer(stream, remote, fromInclusive, toExclusive)
 		if err == nil && nextFromInclusive >= toExclusive {
 			return nil
