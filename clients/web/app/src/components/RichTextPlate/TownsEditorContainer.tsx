@@ -139,6 +139,12 @@ const TownsTextEditorWithoutBoundary = ({
         })
     }, [])
 
+    const onRemoveAddress = useCallback((address: string, chain: string) => {
+        setTickerAttachments((prev) =>
+            prev.filter((t) => t.address !== address && t.chainId !== chain),
+        )
+    }, [])
+
     const onAddTickerAttachment = useCallback((ticker: TMentionTicker) => {
         setTickerAttachments((prev) => [
             ...prev.filter((t) => t.address !== ticker.address),
@@ -329,6 +335,7 @@ const TownsTextEditorWithoutBoundary = ({
                         onSelectTicker={onAddTickerAttachment}
                         onRemoveTicker={onRemoveTickerAttachment}
                         onInsertAddress={onInsertAddress}
+                        onRemoveAddress={onRemoveAddress}
                         onMessageLinksUpdated={onMessageLinksUpdated}
                         onRemoveUnfurledLinkAttachment={onRemoveUnfurledLinkAttachment}
                         onSend={sendMessage}

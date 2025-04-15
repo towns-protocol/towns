@@ -4,8 +4,10 @@ import { ELEMENT_CONTRACT_ADDRESS } from './createContractAddressPlugin'
 
 export const InsertAddressPlugin = ({
     onInsertAddress,
+    onRemoveAddress,
 }: {
     onInsertAddress: ((address: string, chain: string) => void) | undefined
+    onRemoveAddress: ((address: string, chain: string) => void) | undefined
 }) =>
     createPlatePlugin({
         key: 'insertAddressPlugin',
@@ -21,6 +23,14 @@ export const InsertAddressPlugin = ({
                     }
                 }
 
+                if (operation.type === 'remove_node') {
+                    const node = operation.node as TElement
+                    if (node.type === ELEMENT_CONTRACT_ADDRESS) {
+                        const address = node.address as string
+                        const chain = node.chain as string
+                        onRemoveAddress?.(address, chain)
+                    }
+                }
                 plateApply(operation)
             }
             return editor
