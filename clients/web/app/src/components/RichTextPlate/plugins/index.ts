@@ -75,6 +75,7 @@ const createTownsEditor = (
     lookupUser?: ReturnType<typeof useUserLookupContext>['lookupUser'],
     onSelectTicker?: (ticker: TMentionTicker) => void,
     onInsertAddress?: (address: string, chain: string) => void,
+    onRemoveAddress?: (address: string, chain: string) => void,
 ) =>
     createPlateEditor({
         plugins: [
@@ -157,6 +158,7 @@ const createTownsEditor = (
             }),
             InsertAddressPlugin({
                 onInsertAddress: onInsertAddress,
+                onRemoveAddress: onRemoveAddress,
             }),
             ErrorHandlingPlugin,
             FormatTextLinkPlugin,

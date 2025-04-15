@@ -79,6 +79,7 @@ type RichTextEditorProps = {
     onSelectTicker?: (ticker: TMentionTicker) => void
     onRemoveTicker?: (address: string, chain: string) => void
     onInsertAddress?: (address: string, chain: string) => void
+    onRemoveAddress?: (address: string, chain: string) => void
     /* callback invoked when user presses enter key or click send button  */
     onSend?: (
         message: string,
@@ -118,6 +119,7 @@ export const RichTextEditor = ({
     onMessageLinksUpdated = noop,
     onSelectTicker = noop,
     onInsertAddress = noop,
+    onRemoveAddress = noop,
     onRemoveTicker = noop,
     onCancel = noop,
     onSend = noop,
@@ -171,6 +173,7 @@ export const RichTextEditor = ({
             lookupUser,
             onSelectTicker,
             onInsertAddress,
+            onRemoveAddress,
         )
     })
 
