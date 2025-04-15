@@ -53,6 +53,7 @@ export const useTradingWallet = () => {
             const response = zTownsWalletResponse.safeParse(data)
             return response.success ? response.data : undefined
         },
+        enabled: !!evmWalletAddress || !!solanaWalletAddress,
         staleTime: MINUTE_MS,
     })
 
