@@ -49,7 +49,7 @@ fi
 cast rpc evm_setAutomine true --rpc-url $RIVER_ANVIL_RPC_URL
 
 # Deploy base contracts
-"$SCRIPT_DIR/deploy-base-contracts.sh"
+"$SCRIPT_DIR/deploy-base-contracts.sh" nobuild
 
 # River Registry
 make deploy-any-local context=$RIVER_ENV rpc=river_anvil type=diamonds contract=DeployRiverRegistry

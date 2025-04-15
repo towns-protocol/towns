@@ -7,6 +7,18 @@ PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 cd "$PROJECT_ROOT/packages/contracts"
 
+set -a
+. .env.localhost
+set +a
+
+: ${RIVER_ENV:?}
+: ${BASE_ANVIL_RPC_URL:?}
+
+# Build if not called with nobuild
+if [ "${1-}" != "nobuild" ]; then
+    yarn turbo build --filter=@towns-protocol/contracts
+fi
+
 # Space Architect
 make clear-anvil-deployments context=$RIVER_ENV
 make deploy-any-local context=$RIVER_ENV rpc=base_anvil type=diamonds contract=DeployBaseRegistry
