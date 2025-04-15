@@ -26,7 +26,6 @@ import {
     type ParsedEvent,
 } from '@towns-protocol/sdk'
 import { Hono, type Context } from 'hono'
-import { serve } from '@hono/node-server'
 import EventEmitter from 'node:events'
 import TypedEmitter from 'typed-emitter'
 import {
@@ -87,10 +86,9 @@ export class Bot extends (EventEmitter as new () => TypedEmitter<BotEvents>) {
         this.server.post('webhook', (c) => this.webhookResponseHandler(c))
     }
 
-    async start(port: number) {
+    async start() {
         await this.client.uploadDeviceKeys()
-        // Maybe we should let the user do this instead, so they can use the runtime that they want (?)
-        serve({ port, fetch: this.server.fetch })
+        return { fetch: this.server.fetch }
     }
 
     // TODO: check JWT token matches the request JWT from app registry

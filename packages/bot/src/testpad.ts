@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-misused-promises */
 /* eslint-disable no-console */
+import { serve } from '@hono/node-server'
 import { makeSurveyBot } from './survey-bot'
 
 const APP_PRIVATE_DATA_BASE64 = '<app-private-data-base64>'
@@ -12,7 +13,8 @@ async function main() {
     const bot = await makeSurveyBot(APP_PRIVATE_DATA_BASE64, JWT_SECRET, ENV)
 
     console.log(`Server is running on http://localhost:${PORT}`)
-    await bot.start(PORT)
+    const { fetch } = await bot.start()
+    serve({ port: PORT, fetch })
 }
 
 void main()
