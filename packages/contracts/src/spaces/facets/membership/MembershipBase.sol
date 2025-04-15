@@ -16,9 +16,6 @@ import {CurrencyTransfer} from "src/utils/libraries/CurrencyTransfer.sol";
 import {CustomRevert} from "src/utils/libraries/CustomRevert.sol";
 import {SafeTransferLib} from "solady/utils/SafeTransferLib.sol";
 
-// debuggging
-import {console} from "forge-std/console.sol";
-
 // contracts
 
 abstract contract MembershipBase is IMembershipBase {
