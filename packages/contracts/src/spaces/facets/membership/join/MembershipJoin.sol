@@ -18,7 +18,6 @@ import {Permissions} from "src/spaces/facets/Permissions.sol";
 import {BasisPoints} from "src/utils/libraries/BasisPoints.sol";
 import {CurrencyTransfer} from "src/utils/libraries/CurrencyTransfer.sol";
 import {CustomRevert} from "src/utils/libraries/CustomRevert.sol";
-import {FixedPointMathLib} from "solady/utils/FixedPointMathLib.sol";
 
 // contracts
 
@@ -46,6 +45,8 @@ abstract contract MembershipJoin is
     Entitled,
     PrepayBase
 {
+    using CustomRevert for bytes4;
+
     /// @notice Constant representing the permission to join a space
     bytes32 internal constant JOIN_SPACE = bytes32(abi.encodePacked(Permissions.JoinSpace));
 
@@ -443,5 +444,32 @@ abstract contract MembershipJoin is
             partnerInfo.recipient,
             partnerFee
         );
+    }
+
+    function _renewMembership(uint256 tokenId) internal {
+        address receiver = _ownerOf(tokenId);
+
+        if (receiver == address(0)) {
+            Membership__InvalidAddress.selector.revertWith();
+        }
+
+        // Calculate the halfway point between start and expiration
+        // If current time is less than halfway through the membership, prevent renewal
+        uint256 expiration = _expiresAt(tokenId);
+        uint256 duration = _getMembershipDuration();
+        uint256 allowedRenewalTime = expiration - (duration / 2);
+
+        if (block.timestamp < allowedRenewalTime) {
+            Membership__NotExpired.selector.revertWith();
+        }
+
+        // allocate protocol and membership fees
+        uint256 membershipPrice = _getMembershipRenewalPrice(tokenId, _totalSupply());
+        uint256 protocolFee = _collectProtocolFee(receiver, membershipPrice);
+
+        uint256 remainingDue = membershipPrice - protocolFee;
+        if (remainingDue > 0) _transferIn(receiver, remainingDue);
+
+        _renewSubscription(tokenId, uint64(duration));
     }
 }

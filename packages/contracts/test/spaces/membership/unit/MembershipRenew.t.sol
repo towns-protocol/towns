@@ -14,16 +14,7 @@ import {BasisPoints} from "src/utils/libraries/BasisPoints.sol";
 
 contract MembershipRenewTest is MembershipBaseSetup, IERC5643Base {
     modifier givenMembershipHasExpired() {
-        uint256 totalSupply = membershipToken.totalSupply();
-        uint256 tokenId;
-
-        for (uint256 i = 1; i <= totalSupply; i++) {
-            if (membershipToken.ownerOf(i) == alice) {
-                tokenId = i;
-                break;
-            }
-        }
-
+        uint256 tokenId = membershipTokenQueryable.tokensOfOwner(alice)[0];
         uint256 expiration = membership.expiresAt(tokenId);
         vm.warp(expiration);
         _;
@@ -34,15 +25,7 @@ contract MembershipRenewTest is MembershipBaseSetup, IERC5643Base {
         givenAliceHasMintedMembership
         givenMembershipHasExpired
     {
-        uint256 totalSupply = membershipToken.totalSupply();
-        uint256 tokenId;
-
-        for (uint256 i = 1; i <= totalSupply; i++) {
-            if (membershipToken.ownerOf(i) == alice) {
-                tokenId = i;
-                break;
-            }
-        }
+        uint256 tokenId = membershipTokenQueryable.tokensOfOwner(alice)[0];
 
         // membership has expired but alice still owns the token
         assertEq(membershipToken.balanceOf(alice), 1);
@@ -54,6 +37,32 @@ contract MembershipRenewTest is MembershipBaseSetup, IERC5643Base {
         uint256 expiration = membership.expiresAt(tokenId);
         vm.expectEmit(address(membership));
         emit SubscriptionUpdate(tokenId, uint64(expiration + membership.getMembershipDuration()));
+        membership.renewMembership{value: renewalPrice}(tokenId);
+
+        assertEq(membershipToken.balanceOf(alice), 1);
+    }
+
+    function test_renewMembershipHalfwayThrough() external givenAliceHasMintedMembership {
+        uint256 tokenId = membershipTokenQueryable.tokensOfOwner(alice)[0];
+        uint256 expiration = membership.expiresAt(tokenId);
+        uint256 allowedRenewalTime = expiration - (membership.getMembershipDuration() / 2);
+
+        // set the time just a second before the allowed renewal time
+        vm.warp(allowedRenewalTime - 1);
+
+        uint256 renewalPrice = membership.getMembershipRenewalPrice(tokenId);
+        vm.deal(alice, renewalPrice);
+
+        vm.expectRevert(Membership__NotExpired.selector);
+        membership.renewMembership{value: renewalPrice}(tokenId);
+
+        vm.warp(allowedRenewalTime);
+
+        uint256 newExpiration = expiration + membership.getMembershipDuration();
+
+        vm.prank(alice);
+        vm.expectEmit(address(membership));
+        emit SubscriptionUpdate(tokenId, uint64(newExpiration));
         membership.renewMembership{value: renewalPrice}(tokenId);
 
         assertEq(membershipToken.balanceOf(alice), 1);
@@ -91,15 +100,7 @@ contract MembershipRenewTest is MembershipBaseSetup, IERC5643Base {
     }
 
     function test_revertWhen_renewMembershipNotExpiredYet() external givenAliceHasMintedMembership {
-        uint256 totalSupply = membershipToken.totalSupply();
-        uint256 tokenId;
-
-        for (uint256 i = 1; i <= totalSupply; i++) {
-            if (membershipToken.ownerOf(i) == alice) {
-                tokenId = i;
-                break;
-            }
-        }
+        uint256 tokenId = membershipTokenQueryable.tokensOfOwner(alice)[0];
 
         vm.prank(alice);
         vm.expectRevert(Membership__NotExpired.selector);
