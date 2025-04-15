@@ -6,7 +6,7 @@ Hook to get the threads from a stream.
 ## Imports
 
 ```ts
-import { useThreads } from '@river-build/react-sdk'
+import { useThreads } from '@towns-protocol/react-sdk'
 ```
 
 ## Definition
@@ -15,19 +15,12 @@ import { useThreads } from '@river-build/react-sdk'
 function useThreads(
   streamId: string,
   config?: ObservableConfig.FromObservable<Threads>,
-): {
-    data: {
-        [x: string]: TimelineEvent[];
-    };
-    error: undefined;
-    status: "loading" | "loaded";
-    isLoading: boolean;
-    isError: false;
-    isLoaded: boolean;
-}
+): ObservableValue<{
+    [x: string]: TimelineEvent[];
+}>
 ```
 
-**Source:** [useThreads](https://github.com/river-build/river/blob/main/packages/react-sdk/src/useThreads.ts)
+**Source:** [useThreads](https://github.com/towns-protocol/towns/blob/main/packages/react-sdk/src/useThreads.ts)
 
 ## Parameters
 
@@ -49,14 +42,7 @@ Configuration options for the observable.
 The threads of the stream as a map from the message eventId to a thread.
 
 ```ts
-{
-    data: {
-        [x: string]: TimelineEvent[];
-    };
-    error: undefined;
-    status: "loading" | "loaded";
-    isLoading: boolean;
-    isError: false;
-    isLoaded: boolean;
-}
+ObservableValue<{
+    [x: string]: TimelineEvent[];
+}>
 ```

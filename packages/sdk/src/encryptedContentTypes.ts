@@ -1,9 +1,12 @@
 import {
     ChannelMessage,
+    ChannelMessageSchema,
     ChannelProperties,
     EncryptedData,
     EncryptedDataVersion,
-} from '@river-build/proto'
+    ChannelPropertiesSchema,
+} from '@towns-protocol/proto'
+import { fromBinary, fromJsonString } from '@bufbuild/protobuf'
 import { checkNever, logNever } from './check'
 
 /*************
@@ -66,13 +69,12 @@ export function toDecryptedContent(
                 case 'channelMessage':
                     return {
                         kind,
-                        content: ChannelMessage.fromJsonString(cleartext),
+                        content: fromJsonString(ChannelMessageSchema, cleartext),
                     } satisfies DecryptedContent_ChannelMessage
-
                 case 'channelProperties':
                     return {
                         kind,
-                        content: ChannelProperties.fromJsonString(cleartext),
+                        content: fromJsonString(ChannelPropertiesSchema, cleartext),
                     } satisfies DecryptedContent_ChannelProperties
                 default:
                     // the client is responsible for this
@@ -96,12 +98,12 @@ export function toDecryptedContent(
                 case 'channelProperties':
                     return {
                         kind: 'channelProperties',
-                        content: ChannelProperties.fromBinary(cleartext),
+                        content: fromBinary(ChannelPropertiesSchema, cleartext),
                     } satisfies DecryptedContent_ChannelProperties
                 case 'channelMessage':
                     return {
                         kind: 'channelMessage',
-                        content: ChannelMessage.fromBinary(cleartext),
+                        content: fromBinary(ChannelMessageSchema, cleartext),
                     } satisfies DecryptedContent_ChannelMessage
                 default:
                     checkNever(kind) // local to our codebase, should never happen

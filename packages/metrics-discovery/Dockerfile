@@ -6,7 +6,6 @@ WORKDIR /river
 COPY ./package.json ./package.json
 COPY ./.yarn/plugins ./.yarn/plugins
 COPY ./.yarn/releases ./.yarn/releases
-COPY ./remappings.txt ./remappings.txt
 COPY ./.yarnrc.yml ./.yarnrc.yml
 COPY ./buf.yaml ./buf.yaml
 COPY ./lerna.json ./lerna.json
@@ -31,7 +30,7 @@ COPY ./packages/metrics-discovery /river/packages/metrics-discovery
 RUN apk add --no-cache git curl
 RUN corepack enable
 RUN yarn install
-RUN yarn run turbo build --filter @river-build/metrics-discovery
+RUN yarn run turbo build --filter @towns-protocol/metrics-discovery
 
 WORKDIR /river/packages/metrics-discovery
 

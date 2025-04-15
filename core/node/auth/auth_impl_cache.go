@@ -15,7 +15,7 @@ import (
 
 type entitlementCache struct {
 	// Not using expirable version, as it retains the cache hits for a min TTL, but
-	// then continues to return that value as long as a hit happens in that tTL window.
+	// then continues to return that value as long as a hit happens in that TTL window.
 	// We want to return the value only if the cache is fresh, and not continue to return
 	positiveCache    *lru.ARCCache[ChainAuthArgs, entitlementCacheValue]
 	negativeCache    *lru.ARCCache[ChainAuthArgs, entitlementCacheValue]

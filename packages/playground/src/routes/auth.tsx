@@ -1,6 +1,6 @@
 import { useAccount, useConnect } from 'wagmi'
 import { useEffect, useState } from 'react'
-import { useAgentConnection } from '@river-build/react-sdk'
+import { useAgentConnection } from '@towns-protocol/react-sdk'
 import { useNavigate } from 'react-router-dom'
 import { GitHubLogoIcon } from '@radix-ui/react-icons'
 import { Book, ExternalLink } from 'lucide-react'
@@ -8,7 +8,7 @@ import { Button, buttonVariants } from '@/components/ui/button'
 import { RiverEnvSwitcherContent } from '@/components/dialog/env-switcher'
 import { Dialog } from '@/components/ui/dialog'
 import { Block } from '@/components/ui/block'
-import { RiverBeaver } from '@/components/river-beaver'
+import { TownsMinimal } from '@/components/towns-minimal'
 import { TownsIcon } from '@/components/towns-icon'
 import { cn } from '@/utils'
 
@@ -33,17 +33,17 @@ export const AuthRoute = () => {
             {/* Main Content */}
             <div className={cn('mx-auto max-w-3xl space-y-6 text-center', isDev && 'max-w-4xl')}>
                 <h1 className="text-4xl font-bold tracking-tight sm:text-6xl">
-                    Welcome to River Playground
+                    Welcome to Towns Playground
                 </h1>
                 <p className="text-lg text-muted-foreground">
                     An interactive environment for testing and experimenting with{' '}
                     <a
-                        href="https://river.build"
+                        href="https://towns.com"
                         target="_blank"
                         className="inline-flex items-center font-semibold underline-offset-4 hover:underline"
                     >
-                        River Protocol
-                        <RiverBeaver className="ml-2 size-4" />
+                        Towns Protocol
+                        <TownsMinimal className="ml-2 size-4" />
                     </a>
                 </p>
 
@@ -70,7 +70,7 @@ export const AuthRoute = () => {
                                 variant: 'outline',
                                 className: 'mt-4 w-full',
                             })}
-                            href="https://github.com/river-build/river/tree/main/packages/playground"
+                            href="https://github.com/towns-protocol/towns/tree/main/packages/playground"
                             target="_blank"
                         >
                             View Repository <ExternalLink className="ml-2 size-4" />

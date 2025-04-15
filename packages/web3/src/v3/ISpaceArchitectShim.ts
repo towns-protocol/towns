@@ -1,14 +1,14 @@
 import {
     IArchitect as LocalhostContract,
     IArchitectInterface as LocalhostInterface,
-} from '@river-build/generated/dev/typings/IArchitect'
+} from '@towns-protocol/generated/dev/typings/IArchitect'
 
-import LocalhostAbi from '@river-build/generated/dev/abis/Architect.abi.json' assert { type: 'json' }
+import LocalhostAbi from '@towns-protocol/generated/dev/abis/Architect.abi.json' assert { type: 'json' }
 
 import { ethers } from 'ethers'
 import { BaseContractShim } from './BaseContractShim'
 import { LogDescription } from 'ethers/lib/utils'
-import { dlogger } from '@river-build/dlog'
+import { dlogger } from '@towns-protocol/dlog'
 const logger = dlogger('csb:SpaceDapp:debug')
 
 export class ISpaceArchitectShim extends BaseContractShim<LocalhostContract, LocalhostInterface> {

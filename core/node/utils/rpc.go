@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"connectrpc.com/connect"
-	"go.uber.org/zap"
 
 	. "github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/logging"
@@ -27,7 +26,7 @@ type RequestWithStreamId interface {
 
 // CtxAndLogForRequest returns a new context and logger for the given request.
 // If the request is made in the context of a stream it will try to add the stream id to the logger.
-func CtxAndLogForRequest[T any](ctx context.Context, req *connect.Request[T]) (context.Context, *zap.SugaredLogger) {
+func CtxAndLogForRequest[T any](ctx context.Context, req *connect.Request[T]) (context.Context, *logging.Log) {
 	log := logging.FromCtx(ctx)
 
 	// Add streamId to log context if present in request
@@ -139,12 +138,14 @@ func PeerNodeRequestWithRetries[T any](
 				Func("peerNodeRequestWithRetries").
 				Message("makeStubRequest failed").
 				Tag("retry", retry).
-				Tag("numRetries", numRetries)
+				Tag("numRetries", numRetries).
+				Tag("lastPeer", peer)
 		}
 	}
 	// If all requests fail, return the last error.
 	return nil, AsRiverError(err).
 		Func("peerNodeRequestWithRetries").
 		Message("All retries failed").
-		Tag("numRetries", numRetries)
+		Tag("numRetries", numRetries).
+		Tag("lastPeer", nodes.GetStickyPeer())
 }

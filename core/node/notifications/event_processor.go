@@ -56,7 +56,7 @@ type MessageToNotificationsProcessor struct {
 	cache                  UserPreferencesStore
 	subscriptionExpiration time.Duration
 	notifier               push.MessageNotifier
-	log                    *zap.SugaredLogger
+	log                    *logging.Log
 }
 
 // NewNotificationMessageProcessor processes incoming messages, determines when and to whom to send a notification
@@ -118,11 +118,11 @@ func (p *MessageToNotificationsProcessor) OnMessageEvent(
 		kind = "new_message"
 	case MessageInteractionType_MESSAGE_INTERACTION_TYPE_POST:
 		kind = "new_message"
+	case MessageInteractionType_MESSAGE_INTERACTION_TYPE_TRADE:
+		kind = "trade"
 	case MessageInteractionType_MESSAGE_INTERACTION_TYPE_EDIT:
 		return
 	case MessageInteractionType_MESSAGE_INTERACTION_TYPE_REDACTION:
-		return
-	case MessageInteractionType_MESSAGE_INTERACTION_TYPE_TRADE:
 		return
 	}
 
@@ -219,7 +219,7 @@ func (p *MessageToNotificationsProcessor) OnMessageEvent(
 					}
 					recipients.Add(participant)
 				} else {
-					p.log.Error("Unexpected stream ID", "channel", channelID)
+					p.log.Errorw("Unexpected stream ID", "channel", channelID)
 				}
 			}
 		}

@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"connectrpc.com/connect"
+	"github.com/ethereum/go-ethereum/common"
 	"google.golang.org/protobuf/proto"
 
 	. "github.com/towns-protocol/towns/core/node/base"
@@ -47,8 +48,17 @@ func (s *Service) allocateEphemeralStream(ctx context.Context, req *AllocateEphe
 		return nil, err
 	}
 
-	err = s.storage.CreateEphemeralStreamStorage(ctx, streamId, mbBytes)
-	if err != nil {
+	var snBytes []byte
+	if req.Snapshot != nil {
+		if snBytes, err = proto.Marshal(req.Snapshot); err != nil {
+			return nil, err
+		}
+	}
+
+	if err = s.storage.CreateEphemeralStreamStorage(ctx, streamId, &storage.WriteMiniblockData{
+		Data:     mbBytes,
+		Snapshot: snBytes,
+	}); err != nil {
 		return nil, err
 	}
 
@@ -79,24 +89,22 @@ func (s *Service) saveEphemeralMiniblock(ctx context.Context, req *SaveEphemeral
 		return err
 	}
 
-	mbInfo, err := NewMiniblockInfoFromProto(req.GetMiniblock(), NewParsedMiniblockInfoOpts())
+	mbInfo, err := NewMiniblockInfoFromProto(
+		req.GetMiniblock(), req.GetSnapshot(),
+		NewParsedMiniblockInfoOpts(),
+	)
 	if err != nil {
 		return err
 	}
 
-	mbBytes, err := mbInfo.ToBytes()
+	storageMb, err := mbInfo.AsStorageMb()
 	if err != nil {
 		return err
 	}
 
 	// Save the ephemeral miniblock.
 	// Here we are sure that the record of the stream exists in the storage.
-	err = s.storage.WriteEphemeralMiniblock(ctx, streamId, &storage.WriteMiniblockData{
-		Number:   mbInfo.Ref.Num,
-		Hash:     mbInfo.Ref.Hash,
-		Snapshot: mbInfo.IsSnapshot(),
-		Data:     mbBytes,
-	})
+	err = s.storage.WriteEphemeralMiniblock(ctx, streamId, storageMb)
 	if err != nil {
 		return err
 	}
@@ -113,25 +121,28 @@ func (s *Service) SealEphemeralStream(
 	defer cancel()
 	log.Debug("SealEphemeralStream ENTER")
 
-	if err := s.sealEphemeralStream(ctx, req.Msg); err != nil {
+	genesisMiniblockHash, err := s.sealEphemeralStream(ctx, req.Msg)
+	if err != nil {
 		return nil, AsRiverError(err).Func("SealEphemeralStream").
 			Tag("streamId", req.Msg.StreamId).
 			LogWarn(log).
 			AsConnectError()
 	}
 	log.Debug("SealEphemeralStream LEAVE")
-	return connect.NewResponse(&SealEphemeralStreamResponse{}), nil
+
+	return connect.NewResponse(&SealEphemeralStreamResponse{
+		GenesisMiniblockHash: genesisMiniblockHash[:],
+	}), nil
 }
 
 func (s *Service) sealEphemeralStream(
 	ctx context.Context,
 	req *SealEphemeralStreamRequest,
-) error {
+) (common.Hash, error) {
 	streamId, err := StreamIdFromBytes(req.GetStreamId())
 	if err != nil {
-		return AsRiverError(err).Func("sealEphemeralStream")
+		return common.Hash{}, AsRiverError(err).Func("sealEphemeralStream")
 	}
 
-	_, err = s.storage.NormalizeEphemeralStream(ctx, streamId)
-	return err
+	return s.storage.NormalizeEphemeralStream(ctx, streamId)
 }

@@ -13,11 +13,12 @@ import {
     SyncStreamsResponse,
     SyncOp,
     EncryptedDataVersion,
-} from '@river-build/proto'
+    PlainMessage,
+    BlockchainTransaction_TokenTransfer,
+} from '@towns-protocol/proto'
 import { Entitlements } from '../sync-agent/entitlements/entitlements'
-import { PlainMessage } from '@bufbuild/protobuf'
 import { IStreamStateView } from '../streamStateView'
-import { Client } from '../client'
+import { Client, ClientOptions } from '../client'
 import {
     makeBaseChainConfig,
     makeRiverChainConfig,
@@ -34,8 +35,8 @@ import {
 } from '../id'
 import { ParsedEvent, DecryptedTimelineEvent, StreamTimelineEvent } from '../types'
 import { getPublicKey, utils } from 'ethereum-cryptography/secp256k1'
-import { EntitlementsDelegate } from '@river-build/encryption'
-import { bin_fromHexString, check, dlog } from '@river-build/dlog'
+import { EntitlementsDelegate } from '@towns-protocol/encryption'
+import { bin_fromHexString, check, dlog } from '@towns-protocol/dlog'
 import { ethers, ContractTransaction } from 'ethers'
 import { RiverDbManager } from '../riverDbManager'
 import { StreamRpcClient, makeStreamRpcClient } from '../makeStreamRpcClient'
@@ -82,13 +83,14 @@ import {
     UpdateRoleParams,
     getFixedPricingModule,
     getDynamicPricingModule,
-} from '@river-build/web3'
+} from '@towns-protocol/web3'
 import {
     RiverTimelineEvent,
     type TimelineEvent,
 } from '../sync-agent/timeline/models/timeline-types'
 import { SyncState } from '../syncedStreamsLoop'
 import { RpcOptions } from '../rpcCommon'
+import { isDefined } from '../check'
 
 const log = dlog('csb:test:util')
 
@@ -169,7 +171,8 @@ export const getXchainConfigForTesting = (): XchainConfig => {
             31337: 'http://127.0.0.1:8545',
             31338: 'http://127.0.0.1:8546',
         },
-        etherBasedChains: [31337, 31338],
+        etherNativeNetworkIds: [31337, 31338],
+        ethereumNetworkIds: [],
     }
 }
 
@@ -232,37 +235,58 @@ export function ethBalanceCheckOp(threshold: bigint): Operation {
 export const makeUniqueSpaceStreamId = (): string => {
     return makeSpaceStreamId(genId(40))
 }
+
+export type SignerContextWithWallet = SignerContext & { wallet: ethers.Wallet }
 /**
  *
  * @returns a random user context
  * Done using a worker thread to avoid blocking the main thread
  */
-export const makeRandomUserContext = async (): Promise<SignerContext> => {
+export const makeRandomUserContext = async (): Promise<SignerContextWithWallet> => {
     const wallet = ethers.Wallet.createRandom()
     log('makeRandomUserContext', wallet.address)
-    return makeUserContextFromWallet(wallet)
+    return await makeUserContextFromWallet(wallet)
 }
 
 export const makeRandomUserAddress = (): Uint8Array => {
     return publicKeyToAddress(getPublicKey(utils.randomPrivateKey(), false))
 }
 
-export const makeUserContextFromWallet = async (wallet: ethers.Wallet): Promise<SignerContext> => {
+export const makeUserContextFromWallet = async (
+    wallet: ethers.Wallet,
+): Promise<SignerContextWithWallet> => {
     const userPrimaryWallet = wallet
     const delegateWallet = ethers.Wallet.createRandom()
     const creatorAddress = publicKeyToAddress(bin_fromHexString(userPrimaryWallet.publicKey))
     log('makeRandomUserContext', userIdFromAddress(creatorAddress))
 
-    return makeSignerContext(userPrimaryWallet, delegateWallet, { days: 1 })
+    return { ...(await makeSignerContext(userPrimaryWallet, delegateWallet, { days: 1 })), wallet }
 }
 
-export interface TestClientOpts {
-    context?: SignerContext
+export interface TestClient extends Client {
+    wallet: ethers.Wallet
+    deviceId: string
+    signerContext: SignerContextWithWallet
+}
+
+export interface TestClientOpts extends ClientOptions {
+    context?: SignerContextWithWallet
     entitlementsDelegate?: EntitlementsDelegate
     deviceId?: string
 }
 
-export const makeTestClient = async (opts?: TestClientOpts): Promise<Client> => {
+export const cloneTestClient = async (client: TestClient): Promise<TestClient> => {
+    return makeTestClient({
+        ...client.opts,
+        context: {
+            ...client.signerContext,
+            wallet: client.wallet,
+        },
+        deviceId: client.deviceId,
+    })
+}
+
+export const makeTestClient = async (opts?: TestClientOpts): Promise<TestClient> => {
     const context = opts?.context ?? (await makeRandomUserContext())
     const entitlementsDelegate = opts?.entitlementsDelegate ?? new MockEntitlementsDelegate()
     const deviceId = opts?.deviceId ? `-${opts.deviceId}` : `-${genId(5)}`
@@ -273,7 +297,13 @@ export const makeTestClient = async (opts?: TestClientOpts): Promise<Client> => 
     // create a new client with store(s)
     const cryptoStore = RiverDbManager.getCryptoDb(userId, dbName)
     const rpcClient = await makeTestRpcClient()
-    return new Client(context, rpcClient, cryptoStore, entitlementsDelegate, persistenceDbName)
+    const client = new Client(context, rpcClient, cryptoStore, entitlementsDelegate, {
+        ...opts,
+        persistenceStoreName: persistenceDbName,
+    }) as TestClient
+    client.wallet = context.wallet
+    client.deviceId = deviceId
+    return client
 }
 
 export async function setupWalletsAndContexts() {
@@ -422,7 +452,7 @@ export async function* iterableWrapper<T>(
 //        getUserPayload_Membership,
 //    )
 //
-// to get user memebrship payload from a last event containing it, or undefined if not found.
+// to get user membership payload from a last event containing it, or undefined if not found.
 export const lastEventFiltered = <T extends (a: ParsedEvent) => any>(
     events: ParsedEvent[],
     f: T,
@@ -946,6 +976,7 @@ export function waitFor<T>(
             } else if (result === undefined && promiseStatus === 'resolved') {
                 resolve(undefined as T)
             } else {
+                // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
                 reject(lastError)
             }
         }
@@ -1439,7 +1470,7 @@ export async function expectUserCanJoinChannel(
 
     // Stream node should allow the join
     await expect(client.joinStream(channelId)).resolves.not.toThrow()
-    const userStreamView = (await client.waitForStream(makeUserStreamId(client.userId))!).view
+    const userStreamView = (await client.waitForStream(makeUserStreamId(client.userId))).view
     // Wait for alice's user stream to have the join
     await waitFor(() => userStreamView.userContent.isMember(channelId, MembershipOp.SO_JOIN))
 }
@@ -1476,7 +1507,9 @@ export const findMessageByText = (
     )
 }
 
-export function extractBlockchainTransactionTransferEvents(timeline: StreamTimelineEvent[]) {
+export function extractBlockchainTransactionTransferEvents(
+    timeline: StreamTimelineEvent[],
+): BlockchainTransaction_TokenTransfer[] {
     return timeline
         .map((e) => {
             if (
@@ -1488,10 +1521,13 @@ export function extractBlockchainTransactionTransferEvents(timeline: StreamTimel
             }
             return undefined
         })
-        .filter((e) => e !== undefined)
+        .filter(isDefined)
 }
 
-export function extractMemberBlockchainTransactions(client: Client, channelId: string) {
+export function extractMemberBlockchainTransactions(
+    client: Client,
+    channelId: string,
+): BlockchainTransaction_TokenTransfer[] {
     const stream = client.streams.get(channelId)
     if (!stream) throw new Error('no stream found')
 
@@ -1507,5 +1543,5 @@ export function extractMemberBlockchainTransactions(client: Client, channelId: s
             }
             return undefined
         })
-        .filter((e) => e !== undefined)
+        .filter(isDefined)
 }

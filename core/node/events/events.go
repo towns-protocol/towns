@@ -4,9 +4,8 @@ import (
 	"crypto/rand"
 	"time"
 
-	"google.golang.org/protobuf/proto"
-
 	"github.com/ethereum/go-ethereum/common"
+	"google.golang.org/protobuf/proto"
 
 	. "github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/crypto"
@@ -343,6 +342,19 @@ func Make_ChannelPayload_Message(content string) *StreamEvent_ChannelPayload {
 	}
 }
 
+func Make_ChannelPayload_Message_WithSessionBytes(content string, sessionIdBytes []byte) *StreamEvent_ChannelPayload {
+	return &StreamEvent_ChannelPayload{
+		ChannelPayload: &ChannelPayload{
+			Content: &ChannelPayload_Message{
+				Message: &EncryptedData{
+					Ciphertext:     content,
+					SessionIdBytes: sessionIdBytes,
+				},
+			},
+		},
+	}
+}
+
 // todo delete and replace with Make_MemberPayload_Membership
 func Make_DmChannelPayload_Membership(op MembershipOp, userId string, initiatorId string) *StreamEvent_MemberPayload {
 	userAddress, err := AddressFromUserId(userId)
@@ -448,6 +460,37 @@ func Make_UserPayload_Inception(streamId StreamId, settings *StreamSettings) *St
 				Inception: &UserPayload_Inception{
 					StreamId: streamId[:],
 					Settings: settings,
+				},
+			},
+		},
+	}
+}
+
+func Make_UserInboxPayload_Inception(streamId StreamId, settings *StreamSettings) *StreamEvent_UserInboxPayload {
+	return &StreamEvent_UserInboxPayload{
+		UserInboxPayload: &UserInboxPayload{
+			Content: &UserInboxPayload_Inception_{
+				Inception: &UserInboxPayload_Inception{
+					StreamId: streamId[:],
+					Settings: settings,
+				},
+			},
+		},
+	}
+}
+
+func Make_UserInboxPayload_GroupEncryptionSessions(
+	streamId StreamId,
+	sessionIds []string,
+	cipherTexts map[string]string,
+) *StreamEvent_UserInboxPayload {
+	return &StreamEvent_UserInboxPayload{
+		UserInboxPayload: &UserInboxPayload{
+			Content: &UserInboxPayload_GroupEncryptionSessions_{
+				GroupEncryptionSessions: &UserInboxPayload_GroupEncryptionSessions{
+					StreamId:    streamId[:],
+					SessionIds:  sessionIds,
+					Ciphertexts: cipherTexts,
 				},
 			},
 		},
@@ -589,13 +632,14 @@ func Make_MediaPayload_Inception(inception *MediaPayload_Inception) *StreamEvent
 	}
 }
 
-func Make_MediaPayload_Chunk(data []byte, chunkIndex int32) *StreamEvent_MediaPayload {
+func Make_MediaPayload_Chunk(data []byte, chunkIndex int32, iv []byte) *StreamEvent_MediaPayload {
 	return &StreamEvent_MediaPayload{
 		MediaPayload: &MediaPayload{
 			Content: &MediaPayload_Chunk_{
 				Chunk: &MediaPayload_Chunk{
 					Data:       data,
 					ChunkIndex: chunkIndex,
+					Iv:         iv,
 				},
 			},
 		},

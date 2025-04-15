@@ -16,23 +16,26 @@ import {
 import {
     AddEventResponse_Error,
     EncryptedData,
+    SessionKeysSchema,
     UserInboxPayload_GroupEncryptionSessions,
-} from '@river-build/proto'
+    UserInboxPayload_GroupEncryptionSessionsSchema,
+} from '@towns-protocol/proto'
 import {
     GroupEncryptionAlgorithmId,
     GroupEncryptionSession,
     UserDevice,
     UserDeviceCollection,
 } from '../olmLib'
-import { bin_fromHexString, bin_toHexString, dlog, shortenHexString } from '@river-build/dlog'
+import { bin_fromHexString, bin_toHexString, dlog, shortenHexString } from '@towns-protocol/dlog'
 
 import { CryptoStore } from '../cryptoStore'
 import EventEmitter from 'events'
 import { GroupEncryptionCrypto } from '../groupEncryptionCrypto'
 import { IGroupEncryptionClient } from '../base'
-import { Permission } from '@river-build/web3'
+import { Permission } from '@towns-protocol/web3'
 import TypedEmitter from 'typed-emitter'
 import { customAlphabet } from 'nanoid'
+import { create, toJsonString } from '@bufbuild/protobuf'
 
 const log = dlog('test:decryptionExtensions:')
 
@@ -80,12 +83,12 @@ describe.concurrent('TestDecryptionExtensions', () => {
                 fallbackKey: aliceDex.userDevice.fallbackKey,
                 isNewDevice: true,
                 sessionIds: [sessionId],
-                srcEventId: '',
             }
             const keySolicitation = aliceClient.sendKeySolicitation(keySolicitationData)
             // pretend bob receives a key solicitation request from alice, and starts processing it.
             await bobDex.handleKeySolicitationRequest(
                 streamId,
+                '',
                 alice,
                 aliceUserAddress,
                 keySolicitationData,
@@ -254,7 +257,7 @@ class MicroTask {
     ) {}
 
     public get isCompleted(): boolean {
-        return this.isCompleted
+        return this._isCompleted
     }
 
     public tick(state: DecryptionStatus): void {
@@ -263,7 +266,7 @@ class MicroTask {
         }
         if (this.isStarted && state === this.endState) {
             this.resolve()
-            this._isCompleted
+            this._isCompleted = true
         }
     }
 }
@@ -325,6 +328,7 @@ class MockDecryptionExtensions extends BaseDecryptionExtensions {
 
     public async handleKeySolicitationRequest(
         streamId: string,
+        eventHashStr: string,
         fromUserId: string,
         fromUserAddress: Uint8Array,
         keySolicitation: KeySolicitationContent,
@@ -341,6 +345,7 @@ class MockDecryptionExtensions extends BaseDecryptionExtensions {
             // start processing the request
             this.enqueueKeySolicitation(
                 streamId,
+                eventHashStr,
                 fromUserId,
                 fromUserAddress,
                 keySolicitation,
@@ -495,7 +500,7 @@ class MockGroupEncryptionClient
         // prepare the common parts of the payload
         const streamIdBytes = streamIdToBytes(streamId)
         const sessionIds = sessions.map((s) => s.sessionId)
-        const payload = makeSessionKeys(sessions).toJsonString()
+        const payload = toJsonString(SessionKeysSchema, makeSessionKeys(sessions))
 
         // encrypt and send the payload to each client
         const otherClients = Object.values(this.clientDiscoveryService).filter(
@@ -503,14 +508,16 @@ class MockGroupEncryptionClient
         )
         const promises = otherClients.map(async (c) => {
             const cipertext = await this.crypto?.encryptWithDeviceKeys(payload, [c.userDevice!])
-            const groupSession: UserInboxPayload_GroupEncryptionSessions =
-                new UserInboxPayload_GroupEncryptionSessions({
+            const groupSession: UserInboxPayload_GroupEncryptionSessions = create(
+                UserInboxPayload_GroupEncryptionSessionsSchema,
+                {
                     streamId: streamIdBytes,
                     senderKey: this.userDevice?.deviceKey,
                     sessionIds: sessionIds,
                     ciphertexts: cipertext,
                     algorithm: args.algorithm,
-                })
+                },
+            )
             // pretend sending the payload to the client
             // ....
             // pretend receiving the response

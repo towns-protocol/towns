@@ -158,6 +158,74 @@ const _abi = [
   },
   {
     type: "function",
+    name: "getPaginatedStreamsOnNode",
+    inputs: [
+      {
+        name: "nodeAddress",
+        type: "address",
+        internalType: "address",
+      },
+      {
+        name: "start",
+        type: "uint256",
+        internalType: "uint256",
+      },
+      {
+        name: "stop",
+        type: "uint256",
+        internalType: "uint256",
+      },
+    ],
+    outputs: [
+      {
+        name: "streams",
+        type: "tuple[]",
+        internalType: "struct StreamWithId[]",
+        components: [
+          {
+            name: "id",
+            type: "bytes32",
+            internalType: "bytes32",
+          },
+          {
+            name: "stream",
+            type: "tuple",
+            internalType: "struct Stream",
+            components: [
+              {
+                name: "lastMiniblockHash",
+                type: "bytes32",
+                internalType: "bytes32",
+              },
+              {
+                name: "lastMiniblockNum",
+                type: "uint64",
+                internalType: "uint64",
+              },
+              {
+                name: "reserved0",
+                type: "uint64",
+                internalType: "uint64",
+              },
+              {
+                name: "flags",
+                type: "uint64",
+                internalType: "uint64",
+              },
+              {
+                name: "nodes",
+                type: "address[]",
+                internalType: "address[]",
+              },
+            ],
+          },
+        ],
+      },
+    ],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
     name: "getStream",
     inputs: [
       {
@@ -347,39 +415,6 @@ const _abi = [
   },
   {
     type: "function",
-    name: "setStreamLastMiniblock",
-    inputs: [
-      {
-        name: "streamId",
-        type: "bytes32",
-        internalType: "bytes32",
-      },
-      {
-        name: "prevMiniblockHash",
-        type: "bytes32",
-        internalType: "bytes32",
-      },
-      {
-        name: "lastMiniblockHash",
-        type: "bytes32",
-        internalType: "bytes32",
-      },
-      {
-        name: "lastMiniblockNum",
-        type: "uint64",
-        internalType: "uint64",
-      },
-      {
-        name: "isSealed",
-        type: "bool",
-        internalType: "bool",
-      },
-    ],
-    outputs: [],
-    stateMutability: "nonpayable",
-  },
-  {
-    type: "function",
     name: "setStreamLastMiniblockBatch",
     inputs: [
       {
@@ -413,6 +448,54 @@ const _abi = [
             internalType: "bool",
           },
         ],
+      },
+    ],
+    outputs: [],
+    stateMutability: "nonpayable",
+  },
+  {
+    type: "function",
+    name: "setStreamReplicationFactor",
+    inputs: [
+      {
+        name: "requests",
+        type: "tuple[]",
+        internalType: "struct SetStreamReplicationFactor[]",
+        components: [
+          {
+            name: "streamId",
+            type: "bytes32",
+            internalType: "bytes32",
+          },
+          {
+            name: "nodes",
+            type: "address[]",
+            internalType: "address[]",
+          },
+          {
+            name: "replicationFactor",
+            type: "uint8",
+            internalType: "uint8",
+          },
+        ],
+      },
+    ],
+    outputs: [],
+    stateMutability: "nonpayable",
+  },
+  {
+    type: "function",
+    name: "syncNodesOnStreams",
+    inputs: [
+      {
+        name: "start",
+        type: "uint256",
+        internalType: "uint256",
+      },
+      {
+        name: "stop",
+        type: "uint256",
+        internalType: "uint256",
       },
     ],
     outputs: [],
@@ -584,6 +667,25 @@ const _abi = [
         type: "bool",
         indexed: false,
         internalType: "bool",
+      },
+    ],
+    anonymous: false,
+  },
+  {
+    type: "event",
+    name: "StreamUpdated",
+    inputs: [
+      {
+        name: "eventType",
+        type: "uint8",
+        indexed: true,
+        internalType: "enum IStreamRegistryBase.StreamEventType",
+      },
+      {
+        name: "data",
+        type: "bytes",
+        indexed: false,
+        internalType: "bytes",
       },
     ],
     anonymous: false,

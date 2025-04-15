@@ -1,8 +1,8 @@
 import { FastifyReply, FastifyRequest, type FastifyBaseLogger } from 'fastify'
-import { ChunkedMedia } from '@river-build/proto'
-import { StreamPrefix, StreamStateView, makeStreamId } from '@river-build/sdk'
+import { ChunkedMedia } from '@towns-protocol/proto'
+import { StreamPrefix, StreamStateView, makeStreamId } from '@towns-protocol/sdk'
 import { z } from 'zod'
-import { bin_toHexString } from '@river-build/dlog'
+import { bin_toHexString } from '@towns-protocol/dlog'
 
 import { config } from '../environment'
 import { getStream } from '../riverStreamRpcClient'
@@ -44,7 +44,7 @@ export async function fetchSpaceImage(request: FastifyRequest, reply: FastifyRep
 	const { spaceAddress, eventId } = parseResult.data
 	logger.info({ spaceAddress, eventId }, 'Fetching space image')
 
-	let stream: StreamStateView
+	let stream: StreamStateView | undefined
 	const streamId = makeStreamId(StreamPrefix.Space, spaceAddress)
 	try {
 		stream = await getStream(logger, streamId)
@@ -57,13 +57,17 @@ export async function fetchSpaceImage(request: FastifyRequest, reply: FastifyRep
 			},
 			'Failed to get stream',
 		)
+		return reply.code(500).send('Failed to get stream')
+	}
+
+	if (!stream) {
 		return reply.code(404).header('Cache-Control', CACHE_CONTROL[404]).send('Stream not found')
 	}
 
 	// get the image metatdata from the stream
 	const spaceImage = await getSpaceImage(logger, stream)
 	if (!spaceImage) {
-		logger.error({ spaceAddress, streamId: stream.streamId }, 'spaceImage not found')
+		logger.info({ spaceAddress, streamId: stream.streamId }, 'spaceImage not found')
 		return reply
 			.code(404)
 			.header('Cache-Control', CACHE_CONTROL[400])

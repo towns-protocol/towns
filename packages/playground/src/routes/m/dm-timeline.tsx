@@ -1,5 +1,5 @@
 import { useParams } from 'react-router-dom'
-import { useDm, useTimeline } from '@river-build/react-sdk'
+import { useDm, useTimeline } from '@towns-protocol/react-sdk'
 import { Timeline } from '@/components/blocks/timeline'
 
 export const DmTimelineRoute = () => {

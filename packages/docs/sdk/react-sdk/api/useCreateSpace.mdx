@@ -6,14 +6,14 @@ Hook to create a space.
 ## Imports
 
 ```ts
-import { useCreateSpace } from '@river-build/react-sdk'
+import { useCreateSpace } from '@towns-protocol/react-sdk'
 ```
 
 ## Definition
 
 ```ts
 function useCreateSpace(
-  config?: ActionConfig<Spaces['createSpace']>,
+  config?: ActionConfig<Spaces["createSpace"]>,
 ): {
     data: {
         spaceId: string;
@@ -32,13 +32,13 @@ function useCreateSpace(
 }
 ```
 
-**Source:** [useCreateSpace](https://github.com/river-build/river/blob/main/packages/react-sdk/src/useCreateSpace.ts)
+**Source:** [useCreateSpace](https://github.com/towns-protocol/towns/blob/main/packages/react-sdk/src/useCreateSpace.ts)
 
 ## Parameters
 
 ### config
 
-- **Type:** `ActionConfig<Spaces['createSpace']>`
+- **Type:** `ActionConfig<Spaces["createSpace"]>`
 - **Optional**
 
 Configuration options for the action.

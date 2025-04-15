@@ -3,6 +3,7 @@ package rpc
 import (
 	"context"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"connectrpc.com/connect"
@@ -171,13 +172,13 @@ func (s *Service) createReplicatedStream(
 		return nil, err
 	}
 
-	nodes := NewStreamNodesWithLock(nodesList, s.wallet.Address)
+	nodes := NewStreamNodesWithLock(len(nodesList), nodesList, s.wallet.Address)
 	remotes, isLocal := nodes.GetRemotesAndIsLocal()
-	sender := NewQuorumPool("method", "createReplicatedStream", "streamId", streamId)
+	sender := NewQuorumPool(ctx, NewQuorumPoolOpts().WriteMode().WithTags("method", "createReplicatedStream", "streamId", streamId))
 
-	var localSyncCookie *SyncCookie
+	var localSyncCookie atomic.Pointer[SyncCookie]
 	if isLocal {
-		sender.GoLocal(ctx, func(ctx context.Context) error {
+		sender.AddTask(func(ctx context.Context) error {
 			st, err := s.cache.GetStreamNoWait(ctx, streamId)
 			if err != nil {
 				return err
@@ -186,7 +187,7 @@ func (s *Service) createReplicatedStream(
 			if err != nil {
 				return err
 			}
-			localSyncCookie = sv.SyncCookie(s.wallet.Address)
+			localSyncCookie.Store(sv.SyncCookie(s.wallet.Address))
 			return nil
 		})
 	}
@@ -194,7 +195,7 @@ func (s *Service) createReplicatedStream(
 	var remoteSyncCookie *SyncCookie
 	var remoteSyncCookieOnce sync.Once
 	if len(remotes) > 0 {
-		sender.GoRemotes(ctx, remotes, func(ctx context.Context, node common.Address) error {
+		sender.AddNodeTasks(remotes, func(ctx context.Context, node common.Address) error {
 			stub, err := s.nodeRegistry.GetNodeToNodeClientForAddress(node)
 			if err != nil {
 				return err
@@ -223,7 +224,7 @@ func (s *Service) createReplicatedStream(
 		return nil, err
 	}
 
-	cookie := localSyncCookie
+	cookie := localSyncCookie.Load()
 	if cookie == nil {
 		cookie = remoteSyncCookie
 	}

@@ -6,7 +6,7 @@ Hook to set the NFT of the current user in a stream. You should be validating if
 ## Imports
 
 ```ts
-import { useSetNft } from '@river-build/react-sdk'
+import { useSetNft } from '@towns-protocol/react-sdk'
 ```
 
 ## Definition
@@ -14,7 +14,7 @@ import { useSetNft } from '@river-build/react-sdk'
 ```ts
 function useSetNft(
   streamId: string,
-  config?: ActionConfig<Myself['setNft']>,
+  config?: ActionConfig<Myself["setNft"]>,
 ): {
     data: void | undefined;
     error: Error | undefined;
@@ -25,7 +25,7 @@ function useSetNft(
 }
 ```
 
-**Source:** [useSetNft](https://github.com/river-build/river/blob/main/packages/react-sdk/src/useMyMember.ts)
+**Source:** [useSetNft](https://github.com/towns-protocol/towns/blob/main/packages/react-sdk/src/useMyMember.ts)
 
 ## Parameters
 
@@ -37,7 +37,7 @@ The id of the stream to set the NFT of.
 
 ### config
 
-- **Type:** `ActionConfig<Myself['setNft']>`
+- **Type:** `ActionConfig<Myself["setNft"]>`
 - **Optional**
 
 Configuration options for the action.

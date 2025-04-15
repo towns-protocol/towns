@@ -17,10 +17,10 @@ import (
 func TestCreateEphemeralStream(t *testing.T) {
 	tt := newServiceTester(t, serviceTesterOpts{numNodes: 1, start: true})
 
-	alice := tt.newTestClient(0)
+	alice := tt.newTestClient(0, testClientOpts{})
 	_ = alice.createUserStream()
 	spaceId, _ := alice.createSpace()
-	channelId, _ := alice.createChannel(spaceId)
+	channelId, _, _ := alice.createChannel(spaceId)
 
 	// Nodes should accept ephemeral miniblocks even if a stream does not exist.
 	t.Run("Send ephemeral miniblock for non-existing stream", func(t *testing.T) {
@@ -32,7 +32,7 @@ func TestCreateEphemeralStream(t *testing.T) {
 			Num:  0,
 		}
 
-		mp := events.Make_MediaPayload_Chunk([]byte("non-existing stream"), 0)
+		mp := events.Make_MediaPayload_Chunk([]byte("non-existing stream"), 0, nil)
 		envelope, err := events.MakeEnvelopeWithPayload(alice.wallet, mp, mb)
 		tt.require.NoError(err)
 
@@ -91,7 +91,7 @@ func TestCreateEphemeralStream(t *testing.T) {
 	for i := 0; i < chunks; i++ {
 		// Create media chunk event
 		mediaChunks[i] = []byte("chunk " + fmt.Sprint(i))
-		mp := events.Make_MediaPayload_Chunk(mediaChunks[i], int32(i))
+		mp := events.Make_MediaPayload_Chunk(mediaChunks[i], int32(i), nil)
 		envelope, err := events.MakeEnvelopeWithPayload(alice.wallet, mp, mb)
 		tt.require.NoError(err)
 

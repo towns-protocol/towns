@@ -17,14 +17,20 @@ func RemoveJsonTimestamp(logOutput string) string {
 	return string(re.ReplaceAllString(logOutput, `"timestamp":"[TIMESTAMP]",`))
 }
 
-func ZapJsonLogger() (*zap.SugaredLogger, *bytes.Buffer) {
+func ZapJsonLogger() (*logging.Log, *bytes.Buffer) {
 	buffer := &bytes.Buffer{}
 
-	return zap.New(
+	l := zap.New(
 		zapcore.NewCore(
 			logging.NewJSONEncoder(logging.DefaultZapEncoderConfig()),
 			zapcore.AddSync(buffer),
 			zapcore.DebugLevel,
 		),
-	).Sugar(), buffer
+	).Sugar()
+
+	return &logging.Log{
+		Default:   l.Named("default"),
+		Miniblock: l.Named("miniblock"),
+		Rpc:       l.Named("rpc"),
+	}, buffer
 }

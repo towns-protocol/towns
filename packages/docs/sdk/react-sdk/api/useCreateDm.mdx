@@ -6,14 +6,14 @@ A hook that allows you to create a new direct message (DM).
 ## Imports
 
 ```ts
-import { useCreateDm } from '@river-build/react-sdk'
+import { useCreateDm } from '@towns-protocol/react-sdk'
 ```
 
 ## Definition
 
 ```ts
 function useCreateDm(
-  config?: ActionConfig<Dms['createDM']>,
+  config?: ActionConfig<Dms["createDM"]>,
 ): {
     data: {
         streamId: string;
@@ -22,19 +22,21 @@ function useCreateDm(
     isPending: boolean;
     isSuccess: boolean;
     isError: boolean;
-    createDM: (userId: string, streamSettings?: PlainMessage<StreamSettings> | undefined) => Promise<{
+    createDM: (userId: string, streamSettings?: {
+        disableMiniblockCreation: boolean;
+    } | undefined) => Promise<{
         streamId: string;
     }>;
 }
 ```
 
-**Source:** [useCreateDm](https://github.com/river-build/river/blob/main/packages/react-sdk/src/useCreateDm.ts)
+**Source:** [useCreateDm](https://github.com/towns-protocol/towns/blob/main/packages/react-sdk/src/useCreateDm.ts)
 
 ## Parameters
 
 ### config
 
-- **Type:** `ActionConfig<Dms['createDM']>`
+- **Type:** `ActionConfig<Dms["createDM"]>`
 - **Optional**
 
 The action config.
@@ -52,7 +54,9 @@ An object containing the `createDM` action and the rest of the action result.
     isPending: boolean;
     isSuccess: boolean;
     isError: boolean;
-    createDM: (userId: string, streamSettings?: PlainMessage<StreamSettings> | undefined) => Promise<{
+    createDM: (userId: string, streamSettings?: {
+        disableMiniblockCreation: boolean;
+    } | undefined) => Promise<{
         streamId: string;
     }>;
 }

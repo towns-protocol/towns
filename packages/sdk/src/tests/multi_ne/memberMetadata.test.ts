@@ -2,7 +2,7 @@
  * @group main
  */
 
-import { MemberPayload_Nft } from '@river-build/proto'
+import { MemberPayload_Nft, MemberPayload_NftSchema } from '@towns-protocol/proto'
 import { Client } from '../../client'
 import { makeUniqueChannelStreamId, userIdFromAddress } from '../../id'
 import {
@@ -13,7 +13,8 @@ import {
     waitFor,
 } from '../testUtils'
 import { make_MemberPayload_Nft } from '../../types'
-import { bin_fromString, bin_toString } from '@river-build/dlog'
+import { bin_fromString, bin_toString } from '@towns-protocol/dlog'
+import { create } from '@bufbuild/protobuf'
 
 describe('memberMetadataTests', () => {
     let bobsClient: Client
@@ -573,7 +574,7 @@ describe('memberMetadataTests', () => {
             alicePromise.done()
         })
 
-        const nft = new MemberPayload_Nft({
+        const nft = create(MemberPayload_NftSchema, {
             chainId: 1,
             tokenId: bin_fromString('11111111112222222233333333'),
             contractAddress: makeRandomUserAddress(),
@@ -582,7 +583,7 @@ describe('memberMetadataTests', () => {
             streamId,
             bin_toString(nft.tokenId),
             1,
-            userIdFromAddress(nft.contractAddress)!,
+            userIdFromAddress(nft.contractAddress),
         )
 
         await bobPromise.expectToSucceed()
@@ -604,7 +605,7 @@ describe('memberMetadataTests', () => {
         await bobsClient.createSpace(streamId)
         await bobsClient.waitForStream(streamId)
 
-        const nft = new MemberPayload_Nft({
+        const nft = create(MemberPayload_NftSchema, {
             chainId: 1,
             tokenId: bin_fromString('123'),
             contractAddress: new Uint8Array([1, 2, 3]),
@@ -622,7 +623,7 @@ describe('memberMetadataTests', () => {
         await bobsClient.createSpace(streamId)
         await bobsClient.waitForStream(streamId)
 
-        const nft = new MemberPayload_Nft({
+        const nft = create(MemberPayload_NftSchema, {
             chainId: 0,
             tokenId: bin_fromString('123'),
             contractAddress: makeRandomUserAddress(),
@@ -639,7 +640,7 @@ describe('memberMetadataTests', () => {
         await bobsClient.createSpace(streamId)
         await bobsClient.waitForStream(streamId)
 
-        const nft = new MemberPayload_Nft({
+        const nft = create(MemberPayload_NftSchema, {
             chainId: 1,
             tokenId: new Uint8Array(),
             contractAddress: makeRandomUserAddress(),

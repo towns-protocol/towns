@@ -1,8 +1,8 @@
 import { FastifyReply, FastifyRequest } from 'fastify'
-import { ChunkedMedia } from '@river-build/proto'
-import { StreamPrefix, StreamStateView, makeStreamId } from '@river-build/sdk'
+import { ChunkedMedia } from '@towns-protocol/proto'
+import { StreamPrefix, StreamStateView, makeStreamId } from '@towns-protocol/sdk'
 import { z } from 'zod'
-import { bin_toHexString } from '@river-build/dlog'
+import { bin_toHexString } from '@towns-protocol/dlog'
 
 import { getStream } from '../riverStreamRpcClient'
 import { isValidEthereumAddress } from '../validators'
@@ -39,7 +39,7 @@ export async function fetchUserProfileImage(request: FastifyRequest, reply: Fast
 	const { userId } = parseResult.data
 
 	logger.info({ userId }, 'Fetching user image')
-	let stream: StreamStateView
+	let stream: StreamStateView | undefined
 	try {
 		const userMetadataStreamId = makeStreamId(StreamPrefix.UserMetadata, userId)
 		stream = await getStream(logger, userMetadataStreamId)
@@ -51,13 +51,18 @@ export async function fetchUserProfileImage(request: FastifyRequest, reply: Fast
 			},
 			'Failed to get stream',
 		)
+		return reply.code(500).send('Failed to get stream')
+	}
+
+	if (!stream) {
+		logger.info({ userId }, 'Stream not found')
 		return reply.code(404).header('Cache-Control', CACHE_CONTROL[404]).send('Stream not found')
 	}
 
 	// get the image metadata from the stream
 	const profileImage = await getUserProfileImage(stream)
 	if (!profileImage) {
-		logger.error({ userId, streamId: stream.streamId }, 'profileImage not found')
+		logger.info({ userId, streamId: stream.streamId }, 'profileImage not found')
 		return reply
 			.code(404)
 			.header('Cache-Control', CACHE_CONTROL[404])

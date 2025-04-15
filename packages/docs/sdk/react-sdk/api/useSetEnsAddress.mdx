@@ -6,7 +6,7 @@ Hook to set the ENS address of the current user in a stream. You should be valid
 ## Imports
 
 ```ts
-import { useSetEnsAddress } from '@river-build/react-sdk'
+import { useSetEnsAddress } from '@towns-protocol/react-sdk'
 ```
 
 ## Definition
@@ -14,7 +14,7 @@ import { useSetEnsAddress } from '@river-build/react-sdk'
 ```ts
 function useSetEnsAddress(
   streamId: string,
-  config?: ActionConfig<Myself['setEnsAddress']>,
+  config?: ActionConfig<Myself["setEnsAddress"]>,
 ): {
     data: void | undefined;
     error: Error | undefined;
@@ -25,7 +25,7 @@ function useSetEnsAddress(
 }
 ```
 
-**Source:** [useSetEnsAddress](https://github.com/river-build/river/blob/main/packages/react-sdk/src/useMyMember.ts)
+**Source:** [useSetEnsAddress](https://github.com/towns-protocol/towns/blob/main/packages/react-sdk/src/useMyMember.ts)
 
 ## Parameters
 
@@ -37,7 +37,7 @@ The id of the stream to set the ENS address of.
 
 ### config
 
-- **Type:** `ActionConfig<Myself['setEnsAddress']>`
+- **Type:** `ActionConfig<Myself["setEnsAddress"]>`
 - **Optional**
 
 Configuration options for the action.

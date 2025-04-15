@@ -1,0 +1,37 @@
+{
+    "name": "@towns-protocol/subgraph",
+    "type": "module",
+    "packageManager": "yarn@3.8.0",
+    "private": true,
+    "scripts": {
+        "dev": "ponder dev",
+        "start": "ponder start",
+        "db": "ponder db",
+        "codegen": "ponder codegen",
+        "serve": "ponder serve",
+        "lint": "eslint \"src/**/*.{ts,tsx}\" \"ponder.config.ts\" \"ponder.schema.ts\"",
+        "format": "prettier --write \"src/**/*.{ts,tsx}\" \"ponder.config.ts\" \"ponder.schema.ts\"",
+        "typecheck": "tsc",
+        "dev:fork": "../../scripts/setup-subgraph.sh",
+        "find-paths": "tsx utils/findContractsPath.ts"
+    },
+    "dependencies": {
+        "hono": "^4.5.0",
+        "ponder": "^0.9.27",
+        "viem": "^2.21.51"
+    },
+    "devDependencies": {
+        "@towns-protocol/prettier-config": "workspace:^",
+        "@types/node": "^20.14.8",
+        "eslint": "^8.57.0",
+        "eslint-config-ponder": "^0.9.27",
+        "eslint-import-resolver-typescript": "^3.5.5",
+        "eslint-plugin-prettier": "^4.2.1",
+        "prettier": "^2.8.8",
+        "tsx": "^4.7.1",
+        "typescript": "^5.8.2"
+    },
+    "engines": {
+        "node": ">=18.14"
+    }
+}

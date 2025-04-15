@@ -6,7 +6,7 @@ import {
     SpaceDapp,
     getDynamicPricingModule,
     getFixedPricingModule,
-} from '@river-build/web3'
+} from '@towns-protocol/web3'
 
 export async function makeDefaultMembershipInfo(
     spaceDapp: SpaceDapp,

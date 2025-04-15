@@ -5,8 +5,10 @@ import {
     ChannelMessage,
     GroupMentionType,
     MessageInteractionType,
-    StreamEvent,
-} from '@river-build/proto'
+    PlainMessage,
+    StreamEventSchema,
+    ChannelMessageSchema,
+} from '@towns-protocol/proto'
 import { makeTags } from '../../tags'
 import { IStreamStateView, StreamStateView } from '../../streamStateView'
 import {
@@ -15,13 +17,13 @@ import {
     makeUniqueChannelStreamId,
     userIdFromAddress,
 } from '../../id'
-import { PlainMessage } from '@bufbuild/protobuf'
 import { ethers } from 'ethers'
 import { makeUniqueSpaceStreamId } from '../testUtils'
 import { makeSignerContext, SignerContext } from '../../signerContext'
 import { makeParsedEvent } from '../../sign'
 import { makeRemoteTimelineEvent } from '../../types'
-import { bin_fromHexString, bin_toHexString } from '@river-build/dlog'
+import { bin_fromHexString, bin_toHexString } from '@towns-protocol/dlog'
+import { create } from '@bufbuild/protobuf'
 
 // Mock the IStreamStateView interface
 
@@ -100,7 +102,7 @@ describe('makeTags', () => {
         mockStreamView.events.set(threadId1, {
             ...makeRemoteTimelineEvent({
                 parsedEvent: makeParsedEvent(
-                    new StreamEvent({
+                    create(StreamEventSchema, {
                         creatorAddress: user2.context.creatorAddress,
                         salt: genIdBlob(),
                         prevMiniblockHash: undefined,
@@ -121,7 +123,7 @@ describe('makeTags', () => {
         mockStreamView.events.set('event1', {
             ...makeRemoteTimelineEvent({
                 parsedEvent: makeParsedEvent(
-                    new StreamEvent({
+                    create(StreamEventSchema, {
                         creatorAddress: user3.context.creatorAddress,
                         salt: genIdBlob(),
                         prevMiniblockHash: undefined,
@@ -138,7 +140,7 @@ describe('makeTags', () => {
             }),
             decryptedContent: {
                 kind: 'channelMessage',
-                content: new ChannelMessage({
+                content: create(ChannelMessageSchema, {
                     payload: {
                         case: 'post',
                         value: {
@@ -161,7 +163,7 @@ describe('makeTags', () => {
         mockStreamView.events.set('event2', {
             ...makeRemoteTimelineEvent({
                 parsedEvent: makeParsedEvent(
-                    new StreamEvent({
+                    create(StreamEventSchema, {
                         creatorAddress: user4.context.creatorAddress,
                         salt: genIdBlob(),
                         prevMiniblockHash: undefined,
@@ -178,7 +180,7 @@ describe('makeTags', () => {
             }),
             decryptedContent: {
                 kind: 'channelMessage',
-                content: new ChannelMessage({
+                content: create(ChannelMessageSchema, {
                     payload: {
                         case: 'post',
                         value: {

@@ -31,8 +31,14 @@ func (s *Service) localAddEvent(
 
 	log.Debugw("localAddEvent", "parsedEvent", parsedEvent)
 
-	newEvents, err := s.addParsedEvent(ctx, streamId, parsedEvent, localStream, streamView)
+	if parsedEvent.MiniblockRef.Num >= 0 {
+		streamView, err = s.ensureStreamIsUpToDate(ctx, streamView, parsedEvent, localStream)
+		if err != nil {
+			return nil, err
+		}
+	}
 
+	newEvents, err := s.addParsedEvent(ctx, streamId, parsedEvent, localStream, streamView)
 	if err != nil {
 		err = AsRiverError(err).Func("localAddEvent").Tags(
 			"eventMiniblock", parsedEvent.MiniblockRef,
@@ -61,6 +67,50 @@ func (s *Service) localAddEvent(
 	}
 }
 
+// ensureStreamIsUpToDate returns the StreamView for the given StreamId that is up to date enough to
+// add the given parsedEvent.
+func (s *Service) ensureStreamIsUpToDate(
+	ctx context.Context,
+	streamView *StreamView,
+	parsedEvent *ParsedEvent,
+	localStream *Stream,
+) (*StreamView, error) {
+	retryCount := 0
+	backoff := BackoffTracker{
+		NextDelay:  100 * time.Millisecond,
+		Multiplier: 2,
+		Divisor:    1,
+	}
+	var err error
+
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	for {
+		stats := streamView.GetStats()
+		streamUpToDate := stats.LastMiniblockNum >= parsedEvent.MiniblockRef.Num
+		if streamUpToDate {
+			return streamView, nil
+		}
+
+		retryCount++
+		if retryCount == 5 { // schedules task after 100ms + 200ms + 400ms + 800ms = 1500ms
+			s.cache.SubmitSyncStreamTask(localStream, nil)
+		}
+
+		if err := backoff.Wait(ctx, RiverError(Err_BAD_BLOCK_NUMBER, "Stream out-of-sync",
+			"streamBlockNum", stats.LastMiniblockNum,
+			"eventBlockNum", parsedEvent.MiniblockRef.Num)); err != nil {
+			return nil, err
+		}
+
+		streamView, err = localStream.GetViewIfLocal(ctx)
+		if err != nil {
+			return nil, err
+		}
+	}
+}
+
 func (s *Service) addParsedEvent(
 	ctx context.Context,
 	streamId StreamId,
@@ -68,7 +118,7 @@ func (s *Service) addParsedEvent(
 	localStream *Stream,
 	streamView *StreamView,
 ) ([]*EventRef, error) {
-	// TODO: here it should loop and re-check the rules if view was updated in the meantime.
+	// TODO: REPLICATION: FIX: here it should loop and re-check the rules if view was updated in the meantime.
 	canAddEvent, verifications, sideEffects, err := rules.CanAddEvent(
 		ctx,
 		*s.config,
@@ -79,8 +129,17 @@ func (s *Service) addParsedEvent(
 		streamView,
 	)
 
-	if !canAddEvent || err != nil {
+	if err != nil {
+		if IsRiverErrorCode(err, Err_DUPLICATE_EVENT) {
+			// TODO: REPLICATION: FIX: implement returning relevant EventRefs here. How are they used in SDK?
+			return nil, nil
+		}
 		return nil, err
+	}
+
+	// TODO: REPLICATION: FIX: why canAddEvent exists? It doesn't seem to be correct to return nil, nil here.
+	if !canAddEvent {
+		return nil, nil
 	}
 
 	if len(verifications.OneOfChainAuths) > 0 {

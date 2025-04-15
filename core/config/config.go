@@ -66,6 +66,7 @@ func GetDefaultConfig() *Config {
 			TxPool:                true,
 			CorruptStreams:        true,
 			EnableStorageEndpoint: true,
+			MemProfileInterval:    2 * time.Minute,
 		},
 		Scrubbing: ScrubbingConfig{
 			ScrubEligibleDuration: 4 * time.Hour,
@@ -449,6 +450,11 @@ type AppRegistryConfig struct {
 	// testing only and should not be used in production environments, in order to prevent server side
 	// request forgery attacks.
 	AllowInsecureWebhooks bool
+
+	// NumMessagesSendWorkers controls the number of workers allocated to make webhook calls. These
+	// workers empty the queue of outgoing webhook calls, whether they are for message sends or key
+	// solicitations. If unset or set to < 1, it will default to 50.
+	NumMessageSendWorkers int
 }
 
 type LogConfig struct {
@@ -490,6 +496,22 @@ type DebugEndpointsConfig struct {
 	// Make storage statistics available via debug endpoints. This may involve running queries
 	// on the underlying database.
 	EnableStorageEndpoint bool
+
+	// PrivateDebugServerAddress is the address to start the debug server on, such as "127.0.0.1:8080" or ":8080" to listen on all interfaces.
+	// If not set, the debug server will not be started.
+	// There is no TLS and no authentication, all debug endpoints, including pprof, are exposed.
+	// This is highly privileged endpoint and should not be exposed to the public internet.
+	PrivateDebugServerAddress string
+
+	// MemProfileDir is the directory to write the memory profile to.
+	// If not set, the memory profile will not be written.
+	// Two last profiles are kept.
+	// To preserver profiles in the docker container, mount a volume to the directory.
+	MemProfileDir string
+
+	// MemProfileInterval is the interval to write memory profiles with, like "5m".
+	// First profile is written at MemProfileInterval / 2 after start.
+	MemProfileInterval time.Duration
 }
 
 type RiverRegistryConfig struct {

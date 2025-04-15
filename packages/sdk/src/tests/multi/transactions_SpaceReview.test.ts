@@ -1,4 +1,4 @@
-import { dlog } from '@river-build/dlog'
+import { dlog } from '@towns-protocol/dlog'
 import { makeRiverConfig } from '../../riverConfig'
 import { Bot } from '../../sync-agent/utils/bot'
 import { SyncAgent } from '../../sync-agent/syncAgent'
@@ -9,10 +9,10 @@ import {
     getSpaceReviewEventDataBin,
     SpaceReviewAction,
     SpaceReviewEventObject,
-} from '@river-build/web3'
+} from '@towns-protocol/web3'
 import { StreamTimelineEvent } from '../../types'
 import { waitFor } from '../testUtils'
-import { BlockchainTransaction_SpaceReview_Action } from '@river-build/proto'
+import { BlockchainTransaction_SpaceReview_Action } from '@towns-protocol/proto'
 import { UnauthenticatedClient } from '../../unauthenticatedClient'
 
 const base_log = dlog('csb:test:transaction_SpaceReview')
@@ -73,6 +73,11 @@ describe('transaction_SpaceReview', () => {
         // todo, leave a review on the without alice space
     })
 
+    afterAll(async () => {
+        await bob.stop()
+        await alice.stop()
+    })
+
     test('alice adds review', async () => {
         const web3Space = alice.riverConnection.spaceDapp.getSpace(spaceIdWithAlice)
         expect(web3Space).toBeDefined()
@@ -86,7 +91,7 @@ describe('transaction_SpaceReview', () => {
         expect(tx).toBeDefined()
         const receipt = await tx.wait(2)
         expect(receipt).toBeDefined()
-        const reviewEvent = getSpaceReviewEventData(receipt.logs, receipt.from)
+        const reviewEvent = getSpaceReviewEventData(receipt.logs, aliceIdentity.userId)
         expect(reviewEvent).toBeDefined()
         expect(reviewEvent.rating).toBe(5)
         expect(reviewEvent.comment).toBe('This is a test review')
@@ -120,9 +125,12 @@ describe('transaction_SpaceReview', () => {
         }
         expect(reviewEvent.receipt).toBeDefined()
         expect(reviewEvent.content.value.action).toBe(BlockchainTransaction_SpaceReview_Action.Add)
+        if (!reviewEvent.content.value.event) {
+            throw new Error('no event in space review')
+        }
         const { comment, rating, action } = getSpaceReviewEventDataBin(
             reviewEvent.receipt!.logs,
-            reviewEvent.receipt!.from,
+            reviewEvent.content.value.event.user,
         )
         expect(action).toBe(SpaceReviewAction.Add)
         expect(comment).toBe('This is a test review')

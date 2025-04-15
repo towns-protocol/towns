@@ -12,9 +12,9 @@ import {
     createRole,
     createSpaceAndDefaultChannel,
 } from '../../testUtils'
-import { dlog } from '@river-build/dlog'
-import { MembershipOp } from '@river-build/proto'
-import { NoopRuleData, Permission } from '@river-build/web3'
+import { dlog } from '@towns-protocol/dlog'
+import { MembershipOp } from '@towns-protocol/proto'
+import { NoopRuleData, Permission } from '@towns-protocol/web3'
 
 const log = dlog('csb:test:spaceWithEntitlements')
 
@@ -63,6 +63,25 @@ describe('spaceWithEntitlements', () => {
             getXchainConfigForTesting(),
         )
         expect(entitledWallet).toBeUndefined()
+
+        // unban alice
+        const unbanTx = await bobSpaceDapp.unbanWalletAddress(
+            spaceId,
+            alicesWallet.address,
+            bobProvider.wallet,
+        )
+        await unbanTx.wait()
+
+        // Wait 5 seconds for the caches to expire
+        await new Promise((f) => setTimeout(f, 5000))
+
+        // Alice is entitled to join the space again
+        const entitledWallet2 = await aliceSpaceDapp.getEntitledWalletForJoiningSpace(
+            spaceId,
+            alicesWallet.address,
+            getXchainConfigForTesting(),
+        )
+        expect(entitledWallet2).toBeDefined()
 
         const doneStart = Date.now()
         // kill the clients

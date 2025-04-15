@@ -108,9 +108,7 @@
             "towns-token/utility",
             "towns-token/economics",
             "towns-token/mechanics",
-            "towns-token/delegation",
-            "towns-token/distribution",
-            "towns-token/claiming"
+            "towns-token/staking"
           ]
         },
         {
@@ -118,8 +116,7 @@
           "pages": [
             "grants/grants-program"
           ]
-        },
-        "FAQs"
+        }
       ]
     },
     {
@@ -158,13 +155,7 @@
       "pages": [
         "build/towns-messaging-datastructures",
         "build/delegate-key-signing",
-        "build/towns-encryption",
-        {
-          "group": "Recipes",
-          "pages": [
-            "towns-recipes/adding-events"
-          ]
-        }
+        "build/towns-encryption"
       ]
     },
     {
@@ -174,11 +165,11 @@
         {
           "group": "API",
           "pages": [
-            "sdk/react-sdk/api/connectRiver",
-            "sdk/react-sdk/api/connectRiverWithBearerToken",
+            "sdk/react-sdk/api/connectTowns",
+            "sdk/react-sdk/api/connectTownsWithBearerToken",
             "sdk/react-sdk/api/getRoom",
-            "sdk/react-sdk/api/RiverSyncProvider",
             "sdk/react-sdk/api/signAndConnect",
+            "sdk/react-sdk/api/TownsSyncProvider",
             "sdk/react-sdk/api/useAdminRedact",
             "sdk/react-sdk/api/useAgentConnection",
             "sdk/react-sdk/api/useChannel",
@@ -195,8 +186,6 @@
             "sdk/react-sdk/api/useObservable",
             "sdk/react-sdk/api/useReactions",
             "sdk/react-sdk/api/useRedact",
-            "sdk/react-sdk/api/useRiver",
-            "sdk/react-sdk/api/useRiverAuthStatus",
             "sdk/react-sdk/api/useScrollback",
             "sdk/react-sdk/api/useSendMessage",
             "sdk/react-sdk/api/useSendReaction",
@@ -208,6 +197,8 @@
             "sdk/react-sdk/api/useSyncAgent",
             "sdk/react-sdk/api/useThreads",
             "sdk/react-sdk/api/useTimeline",
+            "sdk/react-sdk/api/useTowns",
+            "sdk/react-sdk/api/useTownsAuthStatus",
             "sdk/react-sdk/api/useUserDms",
             "sdk/react-sdk/api/useUserGdms",
             "sdk/react-sdk/api/useUserSpaces"

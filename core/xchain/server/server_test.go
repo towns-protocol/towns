@@ -99,7 +99,7 @@ func (st *serviceTester) deployXchainTestContracts() {
 		log                   = logging.FromCtx(st.ctx)
 		approvedNodeOperators []common.Address
 	)
-	for _, w := range st.btc.Wallets {
+	for _, w := range st.btc.NodeWallets {
 		approvedNodeOperators = append(approvedNodeOperators, w.Address)
 	}
 
@@ -150,7 +150,6 @@ func (st *serviceTester) deployXchainTestContracts() {
 	// Commit all deploys
 	st.btc.Commit(st.ctx)
 
-	log = logging.FromCtx(st.ctx)
 	log.Infow(
 		"Contracts deployed",
 		"entitlementChecker",
@@ -201,6 +200,7 @@ func (st *serviceTester) Start(t *testing.T) {
 		<-done
 	}
 
+	// TODO: FIX: remove
 	// hack to ensure that the chain always produces blocks (automining=true)
 	// commit on simulated backend with no pending txs can sometimes crash the simulator.
 	// by having a pending tx with automining enabled we can work around that issue.
@@ -304,28 +304,18 @@ func (st *serviceTester) linkWalletToRootWallet(
 	rootWallet *node_crypto.Wallet,
 ) {
 	// Root key nonce
-	rootKeyNonce, err := st.walletLink.GetLatestNonceForRootKey(nil, rootWallet.Address)
-	st.require.NoError(err)
+	rootKeyNonce := big.NewInt(0)
 
 	// Create RootKey IWalletLinkLinkedWallet
-	hash, err := node_crypto.PackWithNonce(wallet.Address, rootKeyNonce.Uint64())
-	st.require.NoError(err)
-	rootKeySignature, err := rootWallet.SignHash(node_crypto.ToEthMessageHash(hash))
-	rootKeySignature[64] += 27 // Transform V from 0/1 to 27/28
-
 	rootKeyWallet := base.IWalletLinkBaseLinkedWallet{
 		Addr:      rootWallet.Address,
-		Signature: rootKeySignature,
+		Signature: []byte(""),
 	}
 
 	// Create Wallet IWalletLinkLinkedWallet
-	hash, err = node_crypto.PackWithNonce(rootWallet.Address, rootKeyNonce.Uint64())
-	st.require.NoError(err)
-	nodeWalletSignature, err := wallet.SignHash(node_crypto.ToEthMessageHash(hash))
-	nodeWalletSignature[64] += 27 // Transform V from 0/1 to 27/28
 	nodeWallet := base.IWalletLinkBaseLinkedWallet{
 		Addr:      wallet.Address,
-		Signature: nodeWalletSignature,
+		Signature: []byte(""),
 	}
 
 	pendingTx, err := st.ClientSimulatorBlockchain().TxPool.Submit(

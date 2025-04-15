@@ -1,4 +1,4 @@
-import type { PersistedModel } from '@river-build/sdk'
+import type { PersistedModel } from '@towns-protocol/sdk'
 
 export const isPersistedModel = <T>(value: T | PersistedModel<T>): value is PersistedModel<T> => {
     if (typeof value !== 'object') {

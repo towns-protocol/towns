@@ -4,13 +4,14 @@
 
 import { isEncryptedData, makeTestClient, makeUniqueSpaceStreamId, waitFor } from '../testUtils'
 import { Client } from '../../client'
-import { dlog } from '@river-build/dlog'
-import { AES_GCM_DERIVED_ALGORITHM } from '@river-build/encryption'
-import { makeUniqueChannelStreamId, makeUniqueMediaStreamId } from '../../id'
-import { ChunkedMedia, MediaInfo, MembershipOp } from '@river-build/proto'
+import { dlog } from '@towns-protocol/dlog'
+import { AES_GCM_DERIVED_ALGORITHM } from '@towns-protocol/encryption'
+import { makeUniqueChannelStreamId, makeUniqueMediaStreamId, streamIdToBytes } from '../../id'
+import { ChunkedMedia, MediaInfoSchema, MembershipOp, PlainMessage } from '@towns-protocol/proto'
 import { deriveKeyAndIV } from '../../crypto_utils'
-import { PlainMessage } from '@bufbuild/protobuf'
 import { nanoid } from 'nanoid'
+import { create } from '@bufbuild/protobuf'
+import { unpackStream } from '../../sign'
 
 const log = dlog('csb:test')
 
@@ -92,12 +93,19 @@ describe('spaceTests', () => {
             spaceStream.view.spaceContent.spaceChannelsMetadata.get(channelId)!.updatedAtEventNum
 
         // make a snapshot
-        spaceStream.view.saveSnapshots = true
         await bobsClient.debugForceMakeMiniblock(spaceId, { forceSnapshot: true })
 
         // the new snapshot should have the new data
-        await waitFor(() => {
-            const snapshot = spaceStream.view.snapshot()
+        await waitFor(async () => {
+            // fetch the raw stream with new snapshot
+            const response = await bobsClient.rpcClient.getStream({
+                streamId: streamIdToBytes(spaceId),
+            })
+            const stream = await unpackStream(response.stream, {
+                disableHashValidation: true,
+                disableSignatureValidation: true,
+            })
+            const snapshot = stream.snapshot
             expect(
                 snapshot?.content.case === 'spaceContent' &&
                     snapshot.content.value.channels.length === 1 &&
@@ -118,12 +126,19 @@ describe('spaceTests', () => {
         })
 
         // make a miniblock
-        spaceStream.view.saveSnapshots = true
         await bobsClient.debugForceMakeMiniblock(spaceId, { forceSnapshot: true })
 
         // see new snapshot should have the new data
-        await waitFor(() => {
-            const snapshot = spaceStream.view.snapshot()
+        await waitFor(async () => {
+            // fetch the raw stream with new snapshot
+            const response = await bobsClient.rpcClient.getStream({
+                streamId: streamIdToBytes(spaceId),
+            })
+            const stream = await unpackStream(response.stream, {
+                disableHashValidation: true,
+                disableSignatureValidation: true,
+            })
+            const snapshot = stream.snapshot
             expect(
                 snapshot?.content.case === 'spaceContent' &&
                     snapshot.content.value.channels.length === 1 &&
@@ -143,7 +158,6 @@ describe('spaceTests', () => {
         const spaceId = makeUniqueSpaceStreamId()
         await expect(bobsClient.createSpace(spaceId)).resolves.not.toThrow()
         const spaceStream = await bobsClient.waitForStream(spaceId)
-        spaceStream.view.saveSnapshots = true
 
         spaceStream.on(
             'spaceImageUpdated',
@@ -153,7 +167,7 @@ describe('spaceTests', () => {
         try {
             // make a space image event
             const mediaStreamId = makeUniqueMediaStreamId()
-            const image = new MediaInfo({
+            const image = create(MediaInfoSchema, {
                 mimetype: 'image/png',
                 filename: 'bob-1.png',
             })
@@ -174,8 +188,17 @@ describe('spaceTests', () => {
             await bobsClient.debugForceMakeMiniblock(spaceId, { forceSnapshot: true })
 
             // see the space image in the snapshot
-            await waitFor(() => {
-                const snapshot = spaceStream.view.snapshot()
+            await waitFor(async () => {
+                // fetch the raw stream with new snapshot
+                const response = await bobsClient.rpcClient.getStream({
+                    streamId: streamIdToBytes(spaceId),
+                })
+                const stream = await unpackStream(response.stream, {
+                    disableHashValidation: true,
+                    disableSignatureValidation: true,
+                })
+                const snapshot = stream.snapshot
+
                 expect(
                     snapshot?.content.case === 'spaceContent' &&
                         snapshot.content.value.spaceImage !== undefined &&
@@ -185,7 +208,15 @@ describe('spaceTests', () => {
             expect(spaceImageUpdatedCounter.count).toBe(1)
 
             // decrypt the snapshot and assert the image values
-            const snapshot = spaceStream.view.snapshot()
+            // fetch the raw stream with new snapshot
+            const response = await bobsClient.rpcClient.getStream({
+                streamId: streamIdToBytes(spaceId),
+            })
+            const stream = await unpackStream(response.stream, {
+                disableHashValidation: true,
+                disableSignatureValidation: true,
+            })
+            const snapshot = stream.snapshot
             const encryptedData =
                 snapshot?.content.case === 'spaceContent'
                     ? snapshot.content.value.spaceImage?.data
@@ -206,7 +237,7 @@ describe('spaceTests', () => {
 
             // make another space image event
             const mediaStreamId2 = makeUniqueMediaStreamId()
-            const image2 = new MediaInfo({
+            const image2 = create(MediaInfoSchema, {
                 mimetype: 'image/jpg',
                 filename: 'bob-2.jpg',
             })
@@ -223,12 +254,19 @@ describe('spaceTests', () => {
             await bobsClient.setSpaceImage(spaceId, chunkedMediaInfo2)
 
             // make a snapshot
-            spaceStream.view.saveSnapshots = true
             await bobsClient.debugForceMakeMiniblock(spaceId, { forceSnapshot: true })
 
             // see the space image in the snapshot
-            await waitFor(() => {
-                const snapshot = spaceStream.view.snapshot()
+            await waitFor(async () => {
+                // fetch the raw stream with new snapshot
+                const response = await bobsClient.rpcClient.getStream({
+                    streamId: streamIdToBytes(spaceId),
+                })
+                const stream = await unpackStream(response.stream, {
+                    disableHashValidation: true,
+                    disableSignatureValidation: true,
+                })
+                const snapshot = stream.snapshot
                 expect(
                     snapshot?.content.case === 'spaceContent' &&
                         snapshot.content.value.spaceImage !== undefined &&

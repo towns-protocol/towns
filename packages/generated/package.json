@@ -1,7 +1,10 @@
 {
-    "name": "@river-build/generated",
-    "version": "0.0.176",
+    "name": "@towns-protocol/generated",
+    "version": "0.0.196",
     "packageManager": "yarn@3.8.0",
+    "publishConfig": {
+        "access": "public"
+    },
     "scripts": {
         "build": "yarn make-config",
         "make-config": "node ./scripts/make-config.js",

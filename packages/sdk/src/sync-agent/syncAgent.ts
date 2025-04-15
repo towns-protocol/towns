@@ -1,6 +1,6 @@
 import { RiverConnection, RiverConnectionModel } from './river-connection/riverConnection'
 import { RiverConfig } from '../riverConfig'
-import { RiverRegistry, SpaceDapp } from '@river-build/web3'
+import { RiverRegistry, SpaceDapp } from '@towns-protocol/web3'
 import { RetryParams } from '../rpcInterceptors'
 import { Store } from '../store/store'
 import { SignerContext } from '../signerContext'
@@ -20,11 +20,11 @@ import { UserSettingsModel } from './user/models/userSettings'
 import { Spaces, SpacesModel } from './spaces/spaces'
 import { AuthStatus } from './river-connection/models/authStatus'
 import { ethers } from 'ethers'
-import type { EncryptionDeviceInitOpts } from '@river-build/encryption'
+import type { EncryptionDeviceInitOpts } from '@towns-protocol/encryption'
 import { Gdms, type GdmsModel } from './gdms/gdms'
 import { Dms, DmsModel } from './dms/dms'
 import { UnpackEnvelopeOpts } from '../sign'
-import { dlog, DLogger, shortenHexString } from '@river-build/dlog'
+import { dlog, DLogger, shortenHexString } from '@towns-protocol/dlog'
 
 export interface SyncAgentConfig {
     context: SignerContext
@@ -85,15 +85,17 @@ export class SyncAgent {
             signerContext: config.context,
             cryptoStore: RiverDbManager.getCryptoDb(this.userId, this.cryptoDbName()),
             entitlementsDelegate: new Entitlements(this.config.riverConfig, spaceDapp),
-            persistenceStoreName:
-                config.disablePersistenceStore !== true ? this.persistenceDbName() : undefined,
-            logNamespaceFilter: undefined,
-            highPriorityStreamIds: this.config.highPriorityStreamIds,
+            opts: {
+                persistenceStoreName:
+                    config.disablePersistenceStore !== true ? this.persistenceDbName() : undefined,
+                logNamespaceFilter: undefined,
+                highPriorityStreamIds: this.config.highPriorityStreamIds,
+                unpackEnvelopeOpts: config.unpackEnvelopeOpts,
+                logId: config.logId,
+            },
             rpcRetryParams: config.retryParams,
             encryptionDevice: config.encryptionDevice,
             onTokenExpired: config.onTokenExpired,
-            unpackEnvelopeOpts: config.unpackEnvelopeOpts,
-            logId: config.logId,
         })
 
         this.user = new User(this.userId, this.store, this.riverConnection)

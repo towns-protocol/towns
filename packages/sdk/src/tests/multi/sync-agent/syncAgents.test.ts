@@ -1,11 +1,11 @@
 /**
  * @group with-entitlements
  */
-import { dlogger } from '@river-build/dlog'
+import { dlogger } from '@towns-protocol/dlog'
 import { SyncAgent } from '../../../sync-agent/syncAgent'
 import { Bot } from '../../../sync-agent/utils/bot'
 import { findMessageByText, waitFor } from '../../testUtils'
-import { NoopRuleData, Permission } from '@river-build/web3'
+import { NoopRuleData, Permission } from '@towns-protocol/web3'
 
 const logger = dlogger('csb:test:syncAgents')
 
@@ -85,13 +85,19 @@ describe('syncAgents.test.ts', () => {
     })
 
     test('syncAgents send a message with disableSignatureValidation=true', async () => {
-        const prevBobOpts = bob.riverConnection.clientParams.unpackEnvelopeOpts
-        const prevAliceOpts = alice.riverConnection.clientParams.unpackEnvelopeOpts
-        bob.riverConnection.clientParams.unpackEnvelopeOpts = {
-            disableSignatureValidation: true,
+        const prevBobOpts = bob.riverConnection.clientParams.opts?.unpackEnvelopeOpts
+        const prevAliceOpts = alice.riverConnection.clientParams.opts?.unpackEnvelopeOpts
+        bob.riverConnection.clientParams.opts = {
+            ...bob.riverConnection.clientParams.opts,
+            unpackEnvelopeOpts: {
+                disableSignatureValidation: true,
+            },
         }
-        alice.riverConnection.clientParams.unpackEnvelopeOpts = {
-            disableSignatureValidation: true,
+        alice.riverConnection.clientParams.opts = {
+            ...alice.riverConnection.clientParams.opts,
+            unpackEnvelopeOpts: {
+                disableSignatureValidation: true,
+            },
         }
         await Promise.all([bob.start(), alice.start()])
         await waitFor(() => bob.spaces.value.status === 'loaded')
@@ -113,8 +119,14 @@ describe('syncAgents.test.ts', () => {
             { timeoutMS: 10000 },
         )
         // reset the unpackEnvelopeOpts
-        bob.riverConnection.clientParams.unpackEnvelopeOpts = prevBobOpts
-        alice.riverConnection.clientParams.unpackEnvelopeOpts = prevAliceOpts
+        bob.riverConnection.clientParams.opts = {
+            ...bob.riverConnection.clientParams.opts,
+            unpackEnvelopeOpts: prevBobOpts,
+        }
+        alice.riverConnection.clientParams.opts = {
+            ...alice.riverConnection.clientParams.opts,
+            unpackEnvelopeOpts: prevAliceOpts,
+        }
     })
 
     test('syncAgents pin a message', async () => {

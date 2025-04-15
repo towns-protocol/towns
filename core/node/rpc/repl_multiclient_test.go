@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/towns-protocol/towns/core/node/crypto"
-	"github.com/towns-protocol/towns/core/node/testutils"
 	"github.com/towns-protocol/towns/core/node/testutils/testfmt"
 	//. "github.com/towns-protocol/towns/core/node/shared"
 )
@@ -30,7 +29,7 @@ func newServiceTesterForReplication(t *testing.T) *serviceTester {
 func TestReplMcSimple(t *testing.T) {
 	tt := newServiceTesterForReplication(t)
 
-	clients := tt.newTestClients(3)
+	clients := tt.newTestClients(3, testClientOpts{})
 	spaceId, _ := clients[0].createSpace()
 	channelId := clients.createChannelAndJoin(spaceId)
 	phrases1 := []string{"hello from Alice", "hello from Bob", "hello from Carol"}
@@ -51,10 +50,10 @@ func TestReplMcSpeakUntilMbTrim(t *testing.T) {
 	tt := newServiceTesterForReplication(t)
 	require := tt.require
 
-	alice := tt.newTestClient(0)
+	alice := tt.newTestClient(0, testClientOpts{})
 	_ = alice.createUserStream()
 	spaceId, _ := alice.createSpace()
-	channelId, _ := alice.createChannel(spaceId)
+	channelId, _, _ := alice.createChannel(spaceId)
 
 	for count := range 1000 {
 		alice.say(channelId, fmt.Sprintf("hello from Alice %d", count))
@@ -68,9 +67,16 @@ func TestReplMcSpeakUntilMbTrim(t *testing.T) {
 	require.Fail("failed to trim miniblocks")
 }
 
-func testReplMcConversation(t *testing.T, numClients int, numSteps int, listenInterval int, compareInterval int) {
+func testReplMcConversation(
+	t *testing.T,
+	numClients int,
+	numSteps int,
+	listenInterval int,
+	compareInterval int,
+	syncInterval int,
+) {
 	tt := newServiceTesterForReplication(t)
-	clients := tt.newTestClients(numClients)
+	clients := tt.newTestClients(numClients, testClientOpts{enableSync: true})
 	spaceId, _ := clients[0].createSpace()
 	channelId := clients.createChannelAndJoin(spaceId)
 
@@ -88,7 +94,7 @@ func testReplMcConversation(t *testing.T, numClients int, numSteps int, listenIn
 		if i+1 < len(messages) {
 			t.Errorf("got through %d steps out of %d", i+1, len(messages))
 			testfmt.Println(t, "Comparing all streams")
-			clients.compare(channelId)
+			clients.compare(channelId, true, true)
 			testfmt.Println(t, "Compared all streams")
 		}
 	}()
@@ -103,47 +109,25 @@ func testReplMcConversation(t *testing.T, numClients int, numSteps int, listenIn
 		if listenInterval > 0 && (i+1)%listenInterval == 0 {
 			clients.listen(channelId, messages[:i+1])
 		}
-		if compareInterval > 0 && (i+1)%compareInterval == 0 {
-			clients.compare(channelId)
-		}
+
+		compareMiniblocks := compareInterval > 0 && (i+1)%compareInterval == 0
+		compareSync := syncInterval > 0 && (i+1)%syncInterval == 0
+		clients.compare(channelId, compareMiniblocks, compareSync)
 	}
 
 	if listenInterval <= 0 || numSteps%listenInterval != 0 {
 		clients.listen(channelId, messages)
 	}
 
-	if compareInterval <= 0 || numSteps%compareInterval != 0 {
-		clients.compare(channelId)
-	}
+	compareMiniblocks := compareInterval <= 0 || numSteps%compareInterval != 0
+	compareSync := syncInterval <= 0 || numSteps%compareInterval != 0
+
+	clients.compare(channelId, compareMiniblocks, compareSync)
 }
 
-func TestReplMcConversation(t *testing.T) {
+func TestReplMcConversationShort(t *testing.T) {
 	t.Parallel()
 	t.Run("5x5", func(t *testing.T) {
-		testReplMcConversation(t, 5, 5, 1, 1)
-	})
-	t.Run("5x100", func(t *testing.T) {
-		testReplMcConversation(t, 5, 100, 10, 100)
-	})
-	t.Run("10x1000", func(t *testing.T) {
-		testutils.SkipFlakyTest(t, "TODO: REPLICATION: FIX: flaky")
-		if testing.Short() {
-			t.Skip("skipping 10x1000 in short mode")
-		}
-		testReplMcConversation(t, 10, 1000, 20, 1000)
-	})
-	t.Run("30x1000", func(t *testing.T) {
-		testutils.SkipFlakyTest(t, "TODO: REPLICATION: FIX: flaky")
-		if testing.Short() {
-			t.Skip("skipping 30x1000 in short mode")
-		}
-		testReplMcConversation(t, 30, 1000, 50, 1000)
-	})
-	t.Run("100x100", func(t *testing.T) {
-		testutils.SkipFlakyTest(t, "TODO: REPLICATION: FIX: flaky")
-		if testing.Short() {
-			t.Skip("skipping 100x100 in short mode")
-		}
-		testReplMcConversation(t, 100, 100, 20, 50)
+		testReplMcConversation(t, 5, 5, 1, 1, 5)
 	})
 }

@@ -35,8 +35,14 @@
   "go.buildTags": "integration",
   "typescript.tsdk": "node_modules/typescript/lib",
   "tailwindCSS.experimental.classRegex": [
-    ["cva\\(([^)]*)\\)", "[\"'`]([^\"'`]*).*?[\"'`]"],
-    ["cn\\(([^)]*)\\)", "(?:'|\"|`)([^']*)(?:'|\"|`)"]
+    [
+      "cva\\(([^)]*)\\)",
+      "[\"'`]([^\"'`]*).*?[\"'`]"
+    ],
+    [
+      "cn\\(([^)]*)\\)",
+      "(?:'|\"|`)([^']*)(?:'|\"|`)"
+    ]
   ],
   "go.alternateTools": {
     "customFormatter": "${workspaceFolder}/core/fmt.sh",
@@ -44,12 +50,13 @@
   "wake.compiler.solc.remappings": [
     "@openzeppelin/=node_modules/@openzeppelin/",
     "account-abstraction/=node_modules/account-abstraction/contracts/",
-    "ds-test/=node_modules/ds-test/src/",
     "forge-std/=node_modules/forge-std/src/",
     "@prb/math/=node_modules/@prb/math/src/",
     "@prb/test/=node_modules/@prb/test/src/",
     "solady/=node_modules/solady/src/",
-    "@river-build/diamond/=node_modules/@river-build/diamond/"
+    "@towns-protocol/diamond/=node_modules/@towns-protocol/diamond/",
+    "crypto-lib/=node_modules/crypto-lib/src/",
+    "@solidity/=node_modules/crypto-lib/src/"
   ],
   "vitest.maximumConfigs": 15,
   "vitest.disableWorkspaceWarning": true

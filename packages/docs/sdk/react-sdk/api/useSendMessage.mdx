@@ -6,7 +6,7 @@ Hook to send a message to a stream. Can be used to send a message to a channel o
 ## Imports
 
 ```ts
-import { useSendMessage } from '@river-build/react-sdk'
+import { useSendMessage } from '@towns-protocol/react-sdk'
 ```
 
 ## Definition
@@ -14,7 +14,7 @@ import { useSendMessage } from '@river-build/react-sdk'
 ```ts
 function useSendMessage(
   streamId: string,
-  config?: ActionConfig<Channel['sendMessage']>,
+  config?: ActionConfig<Channel["sendMessage"]>,
 ): {
     data: {
         eventId: string;
@@ -24,17 +24,17 @@ function useSendMessage(
     isSuccess: boolean;
     isError: boolean;
     sendMessage: (message: string, options?: {
-        threadId?: string | undefined;
-        replyId?: string | undefined;
-        mentions?: PlainMessage<ChannelMessage.Post.Mention>[] | undefined;
-        attachments?: PlainMessage<ChannelMessage.Post.Attachment>[] | undefined;
+        threadId?: string;
+        replyId?: string;
+        mentions?: PlainMessage<ChannelMessage.Post.Mention>[];
+        attachments?: PlainMessage<ChannelMessage.Post.Attachment>[];
     } | undefined) => Promise<{
         eventId: string;
     }>;
 }
 ```
 
-**Source:** [useSendMessage](https://github.com/river-build/river/blob/main/packages/react-sdk/src/useSendMessage.ts)
+**Source:** [useSendMessage](https://github.com/towns-protocol/towns/blob/main/packages/react-sdk/src/useSendMessage.ts)
 
 ## Parameters
 
@@ -46,7 +46,7 @@ The id of the stream to send the message to.
 
 ### config
 
-- **Type:** `ActionConfig<Channel['sendMessage']>`
+- **Type:** `ActionConfig<Channel["sendMessage"]>`
 - **Optional**
 
 Configuration options for the action.
@@ -65,10 +65,10 @@ The sendMessage action and the status of the action.
     isSuccess: boolean;
     isError: boolean;
     sendMessage: (message: string, options?: {
-        threadId?: string | undefined;
-        replyId?: string | undefined;
-        mentions?: PlainMessage<ChannelMessage.Post.Mention>[] | undefined;
-        attachments?: PlainMessage<ChannelMessage.Post.Attachment>[] | undefined;
+        threadId?: string;
+        replyId?: string;
+        mentions?: PlainMessage<ChannelMessage.Post.Mention>[];
+        attachments?: PlainMessage<ChannelMessage.Post.Attachment>[];
     } | undefined) => Promise<{
         eventId: string;
     }>;

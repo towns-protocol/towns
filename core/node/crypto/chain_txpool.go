@@ -16,7 +16,7 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/linkdata/deadlock"
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/puzpuzpuz/xsync/v3"
+	"github.com/puzpuzpuz/xsync/v4"
 	"github.com/towns-protocol/towns/core/config"
 	. "github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/infra"
@@ -24,7 +24,6 @@ import (
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
-	"go.uber.org/zap"
 )
 
 type (
@@ -107,7 +106,7 @@ type (
 
 	// pendingTransactionPool keeps track of transactions that are submitted but the receipt has not been retrieved.
 	pendingTransactionPool struct {
-		pendingTxs *xsync.MapOf[uint64, *txPoolPendingTransaction]
+		pendingTxs *xsync.Map[uint64, *txPoolPendingTransaction]
 
 		client  BlockchainClient
 		wallet  *Wallet
@@ -195,7 +194,7 @@ func newPendingTransactionPool(
 	)
 
 	ptp := &pendingTransactionPool{
-		pendingTxs:    xsync.NewMapOf[uint64, *txPoolPendingTransaction](),
+		pendingTxs:    xsync.NewMap[uint64, *txPoolPendingTransaction](),
 		client:        client,
 		wallet:        wallet,
 		chainID:       chainID.Uint64(),
@@ -250,7 +249,7 @@ func (pool *pendingTransactionPool) run(ctx context.Context) {
 }
 
 func (pool *pendingTransactionPool) closeTx(
-	log *zap.SugaredLogger,
+	log *logging.Log,
 	ptx *txPoolPendingTransaction,
 	receipt *types.Receipt,
 	txHash common.Hash,

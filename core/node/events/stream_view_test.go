@@ -64,9 +64,10 @@ func TestLoad(t *testing.T) {
 	assert.NoError(t, err)
 
 	view, err := MakeStreamView(
-		ctx,
 		&storage.ReadStreamFromLastSnapshotResult{
-			Miniblocks: [][]byte{miniblockProtoBytes},
+			Miniblocks: []*storage.MiniblockDescriptor{
+				{Data: miniblockProtoBytes},
+			},
 		},
 	)
 
@@ -118,7 +119,6 @@ func TestLoad(t *testing.T) {
 	assert.NotNil(t, cookie)
 	assert.Equal(t, streamId, cookieStreamId)
 	assert.Equal(t, int64(1), cookie.MinipoolGen)
-	assert.Equal(t, int64(0), cookie.MinipoolSlot)
 
 	// Check minipool, should be empty
 	assert.Equal(t, 0, len(view.minipool.events.Values))
@@ -224,7 +224,9 @@ func TestLoad(t *testing.T) {
 		view.LastBlock().Ref,
 	)
 	assert.NoError(t, err)
-	miniblock, err := NewMiniblockInfoFromParsed(miniblockHeaderEvent, mbCandidate.Events())
+	parsedSnapshot, err := MakeParsedSnapshot(userWallet, miniblockHeader.Snapshot)
+	assert.NoError(t, err)
+	miniblock, err := NewMiniblockInfoFromParsed(miniblockHeaderEvent, mbCandidate.Events(), parsedSnapshot)
 	assert.NoError(t, err)
 	// with 5 generations (5 blocks kept in memory)
 	newSV1, newEvents, err := view.copyAndApplyBlock(miniblock, cfg)
@@ -264,9 +266,9 @@ func TestLoad(t *testing.T) {
 }
 
 func toBytes(t *testing.T, mb *MiniblockInfo) []byte {
-	mbBytes, err := mb.ToBytes()
+	storageMb, err := mb.AsStorageMb()
 	require.NoError(t, err)
-	return mbBytes
+	return storageMb.Data
 }
 
 func TestMbHashConstraints(t *testing.T) {
@@ -278,25 +280,28 @@ func TestMbHashConstraints(t *testing.T) {
 	streamId := UserSettingStreamIdFromAddr(userWallet.Address)
 
 	timeNow := time.Now()
-	var mbBytes [][]byte
+	var mbDescriptors []*storage.MiniblockDescriptor
 	var mbs []*MiniblockInfo
 
 	genMb := MakeGenesisMiniblockForUserSettingsStream(t, userWallet, nodeWallet, streamId)
-	mbBytes = append(mbBytes, toBytes(t, genMb))
+	mbDescriptors = append(mbDescriptors, &storage.MiniblockDescriptor{
+		Data: toBytes(t, genMb),
+	})
 	mbs = append(mbs, genMb)
 
 	prevMb := genMb
 	for range 10 {
 		mb := MakeTestBlockForUserSettingsStream(t, userWallet, nodeWallet, prevMb)
-		mbBytes = append(mbBytes, toBytes(t, mb))
+		mbDescriptors = append(mbDescriptors, &storage.MiniblockDescriptor{
+			Data: toBytes(t, mb),
+		})
 		mbs = append(mbs, mb)
 		prevMb = mb
 	}
 
 	view, err := MakeStreamView(
-		ctx,
 		&storage.ReadStreamFromLastSnapshotResult{
-			Miniblocks: mbBytes,
+			Miniblocks: mbDescriptors,
 		},
 	)
 	require.NoError(err)

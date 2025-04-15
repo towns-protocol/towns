@@ -2,6 +2,13 @@ name: Continuous Integration
 env:
     FOUNDRY_VERSION: stable
     RIVER_BLOCK_TIME: 1
+    RIVER_RPC_URL: ${{ secrets.RIVER_RPC_URL }}
+    RIVER_SEPOLIA_RPC_URL: ${{ secrets.RIVER_RPC_URL }}
+    BASE_RPC_URL: ${{ secrets.BASE_RPC_URL }}
+    BASE_SEPOLIA_RPC_URL: ${{ secrets.BASE_SEPOLIA_RPC_URL }}
+    ETH_RPC_URL: ${{ secrets.ETH_RPC_URL }}
+    ETH_SEPOLIA_RPC_URL: ${{ secrets.ETH_SEPOLIA_RPC_URL }}
+    CHAINS: '31337:http://localhost:8545,31338:http://localhost:8546,84532:${{ secrets.BASE_SEPOLIA_RPC_URL }},11155111:${{ secrets.ETH_SEPOLIA_RPC_URL }}'
 on:
     schedule:
         # Run every hour
@@ -127,9 +134,9 @@ jobs:
 
             - name: Linting River Node
               if: ${{ !cancelled() && steps.setup_success.outcome == 'success' }}
-              uses: golangci/golangci-lint-action@v6
+              uses: golangci/golangci-lint-action@v7
               with:
-                  version: v1.62.0
+                  version: v2.0.2
                   working-directory: core
                   args: --timeout=10m --config=.golangci.yml
 
@@ -161,7 +168,7 @@ jobs:
               if: ${{ !cancelled() && steps.setup_success.outcome == 'success' }}
               uses: dominikh/staticcheck-action@v1
               with:
-                  version: v0.5.1
+                  version: v0.6.1
                   working-directory: core
                   install-go: false
 
@@ -309,11 +316,11 @@ jobs:
 
             - name: Run Stream Metadata Nodes
               run: |
-                  yarn workspace @river-build/stream-metadata dev:local_multi_ne &
+                  yarn workspace @towns-protocol/stream-metadata dev:local_multi_ne &
                   yarn wait-on http://localhost:3003/health --timeout=120000 --i=5000 --verbose
 
             - name: Run Stream Metadata Tests (without entitlements)
-              run: yarn turbo run test:integration --filter=@river-build/stream-metadata
+              run: yarn turbo run test:integration --filter=@towns-protocol/stream-metadata
 
             - name: Archive River Node Logs and Settings
               if: always()
@@ -455,10 +462,10 @@ jobs:
               run: yarn csb:turbo-no-sdk
 
             - name: Run River Tests (with entitlements)
-              run: yarn turbo run test:ci:multi:ent --filter=@river-build/sdk
+              run: yarn turbo run test:ci:multi:ent --filter=@towns-protocol/sdk
 
             - name: Run Stress Test Tests (yarn) (with entitlements)
-              run: yarn turbo run test:ci:multi:ent --filter=@river-build/stress
+              run: yarn turbo run test:ci:multi:ent --filter=@towns-protocol/stress
 
             - name: Run Stress Test Demo (node) (with entitlements)
               run: ./packages/stress/scripts/localhost_demo.sh
@@ -603,7 +610,7 @@ jobs:
               run: yarn csb:turbo-no-sdk
 
             - name: Run River Tests Against Legacy Spaces (with entitlements)
-              run: yarn turbo run test:ci:multi:ent:legacy --filter=@river-build/sdk
+              run: yarn turbo run test:ci:multi:ent:legacy --filter=@towns-protocol/sdk
 
             - name: Archive River Node Logs and Settings
               if: always()
@@ -625,16 +632,31 @@ jobs:
                 env:
                     POSTGRES_USER: postgres
                     POSTGRES_PASSWORD: postgres
+                    POSTGRES_INITDB_ARGS: >-
+                        -c shared_buffers=2GB
+                        -c effective_cache_size=6GB
+                        -c maintenance_work_mem=512MB
+                        -c work_mem=32MB
+                        -c wal_buffers=16MB
+                        -c max_connections=1000
+                        -c max_worker_processes=4
+                        -c max_parallel_workers=4
+                        -c max_parallel_workers_per_gather=2
+                        -c min_wal_size=1GB
+                        -c max_wal_size=4GB
+                        -c checkpoint_completion_target=0.9
+                        -c default_statistics_target=200
                 ports:
                     # Maps tcp port 5433 on service container to the host
                     - 5433:5432
                 options: >-
+                    --cpus 3
+                    --memory 8G
                     --health-cmd pg_isready
                     --health-interval 10s
                     --health-timeout 5s
                     --health-retries 5
                     --name river_postgres_container
-
         steps:
             - uses: taiki-e/install-action@just
 
@@ -649,21 +671,6 @@ jobs:
 
             - name: Install Rust Toolchain
               uses: actions-rust-lang/setup-rust-toolchain@v1
-
-            - name: Show PostgreSQL max_connections
-              run: psql -h localhost -p 5433 -U postgres -c 'SHOW max_connections;'
-              env:
-                  POSTGRES_PASSWORD: postgres
-                  PGPASSWORD: postgres
-
-            - name: Increase max_connections in Postgres
-              run: |
-                  docker exec -i river_postgres_container bash << EOF
-                    echo 'max_connections = 1000' >> /var/lib/postgresql/data/postgresql.conf
-                    echo 'shared_buffers = 2GB' >> /var/lib/postgresql/data/postgresql.conf
-                  EOF
-                  docker restart --time 0 river_postgres_container
-                  sleep 5
 
             - name: Show PostgreSQL max_connections
               run: psql -h localhost -p 5433 -U postgres -c 'SHOW max_connections;'
@@ -710,8 +717,12 @@ jobs:
               run: ./scripts/register-ca.sh
               working-directory: core
 
-            - name: Run go tests
-              run: just test-all -race -timeout 24m -parallel 1 -count 1 -p 8
+            - name: Run go tests with race detection exluding large tests
+              run: go test ./... -race -v -timeout 15m -parallel 4 -count 1 -p 2
+              working-directory: core
+
+            - name: Run large go tests without race detection
+              run: go test ./... -v -timeout 15m -parallel 4 -count 1 -p 2 -run NoRace
               working-directory: core
 
     XChain_Integration:

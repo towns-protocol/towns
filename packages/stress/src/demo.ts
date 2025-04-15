@@ -2,28 +2,21 @@ import 'fake-indexeddb/auto' // used to mock indexdb in dexie, don't remove
 import {
     isDecryptedEvent,
     makeRiverConfig,
-    makeSignerContext,
     makeStreamRpcClient,
-    NotificationService,
     randomUrlSelector,
-} from '@river-build/sdk'
-import { check } from '@river-build/dlog'
-import {
-    DmChannelSettingValue,
-    GdmChannelSettingValue,
-    GetSettingsRequest,
-    InfoRequest,
-    SetDmGdmSettingsRequest,
-} from '@river-build/proto'
-import { EncryptionDelegate } from '@river-build/encryption'
+} from '@towns-protocol/sdk'
+import { check } from '@towns-protocol/dlog'
+import { InfoRequestSchema } from '@towns-protocol/proto'
+import { EncryptionDelegate } from '@towns-protocol/encryption'
 import { makeStressClient } from './utils/stressClient'
 import { expect, isSet } from './utils/expect'
 import { getSystemInfo } from './utils/systemInfo'
 import { waitFor } from './utils/waitFor'
 import { ethers, Wallet } from 'ethers'
 import { RedisStorage } from './utils/storage'
-import { createRiverRegistry } from '@river-build/web3'
+import { createRiverRegistry } from '@towns-protocol/web3'
 import { getLogger } from './utils/logger'
+import { create } from '@bufbuild/protobuf'
 
 check(isSet(process.env.RIVER_ENV), 'process.env.RIVER_ENV')
 
@@ -46,7 +39,7 @@ async function spamInfo(count: number) {
     const rpcClient = makeStreamRpcClient(selectedUrl, () => riverRegistry.getOperationalNodeUrls())
     for (let i = 0; i < count; i++) {
         logger.debug({ iteration: i }, 'iteration')
-        const info = await rpcClient.info(new InfoRequest({}), {
+        const info = await rpcClient.info(create(InfoRequestSchema, {}), {
             timeoutMs: 10000,
         })
         logger.info(getSystemInfo(), 'system info')
@@ -147,41 +140,9 @@ async function demoExternalStorage() {
     }
 }
 
-const registerNotificationService = async () => {
-    // demo connecting to the notification service
-    const notificationServiceUrl = 'https://river-notification-service-alpha.towns.com/' // ?? 'http://localhost:4040
-    if (!notificationServiceUrl) {
-        logger.info('NOTIFICATION_SERVICE_URL is not set')
-        return
-    }
-
-    const wallet = ethers.Wallet.createRandom()
-    const delegateWallet = ethers.Wallet.createRandom()
-    const signerContext = await makeSignerContext(wallet, delegateWallet, { days: 1 })
-
-    const { startResponse, finishResponse, notificationRpcClient } =
-        await NotificationService.authenticate(signerContext, notificationServiceUrl)
-    logger.info({ startResponse, finishResponse }, 'authenticated')
-
-    let settings = await notificationRpcClient.getSettings(new GetSettingsRequest())
-    logger.info(settings.toJson(), 'settings')
-
-    const response = await notificationRpcClient.setDmGdmSettings(
-        new SetDmGdmSettingsRequest({
-            dmGlobal: DmChannelSettingValue.DM_MESSAGES_NO,
-            gdmGlobal: GdmChannelSettingValue.GDM_MESSAGES_NO,
-        }),
-    )
-    logger.info(response, 'set settings response')
-    settings = await notificationRpcClient.getSettings(new GetSettingsRequest())
-    logger.info(settings.toJson(), 'new settings')
-}
-
 logger.info(getSystemInfo(), 'system info')
 
 const run = async () => {
-    logger.debug('========================registerNotificationService========================')
-    await registerNotificationService()
     logger.debug('========================storage========================')
     await demoExternalStorage()
     logger.debug('==========================spamInfo==========================')

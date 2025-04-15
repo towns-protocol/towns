@@ -1,14 +1,14 @@
 {
-    "name": "river-build",
+    "name": "towns-protocol",
     "version": "0.0.0",
     "license": "MIT",
     "packageManager": "yarn@3.8.0",
     "scripts": {
-        "anvil": "yarn workspace @river-build/contracts exec anvil",
+        "anvil": "yarn workspace @towns-protocol/contracts exec anvil",
         "build": "turbo build",
-        "cast": "yarn workspace @river-build/contracts exec cast",
+        "cast": "yarn workspace @towns-protocol/contracts exec cast",
         "clean": "./scripts/yarn-clean.sh",
-        "csb:build": "turbo build --filter @river-build/sdk",
+        "csb:build": "turbo build --filter @towns-protocol/sdk",
         "csb:cb": "yarn csb:clean && yarn csb:build",
         "csb:clean": "yarn csb:command run clean",
         "csb:command": "bash -c 'yarn workspaces foreach --verbose $(yarn csb:list:include) $0 $@'",
@@ -20,7 +20,7 @@
         "csb:prettier:check": "prettier --check ./packages",
         "csb:prettier:fix": "prettier --write ./packages",
         "csb:test": "yarn csb:command run test && echo ALL GOOD || (echo NOT PASSED; exit 1)",
-        "csb:test-remote": "yarn workspace @river-build/sdk run test",
+        "csb:test-remote": "yarn workspace @towns-protocol/sdk run test",
         "csb:turbo": "bash -c 'yarn run turbo run build test:ci $(yarn csb:list:filter)'",
         "csb:turbo-no-sdk": "bash -c 'yarn run turbo run build test:ci $(yarn csb:list:filter-without-sdk)'",
         "csb:wait": "yarn csb:wait:entitlements",
@@ -40,8 +40,8 @@
     "devDependencies": {
         "@arethetypeswrong/cli": "^0.15.3",
         "@typechain/ethers-v5": "^10.1.1",
-        "@types/node": "^20.5.0",
-        "eslint": "^8.53.0",
+        "@types/node": "^20.14.8",
+        "eslint": "^8.57.0",
         "eslint-config-prettier": "^8.8.0",
         "eslint-plugin-mocha": "^10.1.0",
         "eslint-plugin-n": "^16.0.0",
@@ -56,7 +56,7 @@
         "ts-node": "^10.9.1",
         "turbo": "^2.0.12",
         "typechain": "^8.1.1",
-        "typescript": "^5.1.6",
+        "typescript": "^5.8.2",
         "vitest": "3.0.5",
         "wait-on": "^7.0.1"
     },
@@ -79,8 +79,7 @@
     "syncpack": {
         "dependencyTypes": [
             "dev",
-            "prod",
-            "peer"
+            "prod"
         ],
         "indent": "    ",
         "sortFirst": [
@@ -118,7 +117,6 @@
         "protocol",
         "packages/*",
         "packages/workers/*",
-        "contracts",
         "services/*"
     ],
     "dependencies": {

@@ -1,11 +1,13 @@
 import TypedEmitter from 'typed-emitter'
-import { Permission } from '@river-build/web3'
+import { Permission } from '@towns-protocol/web3'
 import {
     AddEventResponse_Error,
     EncryptedData,
+    PlainMessage,
     SessionKeys,
+    SessionKeysSchema,
     UserInboxPayload_GroupEncryptionSessions,
-} from '@river-build/proto'
+} from '@towns-protocol/proto'
 import {
     shortenHexString,
     dlog,
@@ -13,13 +15,14 @@ import {
     DLogger,
     check,
     bin_toHexString,
-} from '@river-build/dlog'
+} from '@towns-protocol/dlog'
 import {
     GroupEncryptionAlgorithmId,
     GroupEncryptionSession,
     parseGroupEncryptionAlgorithmId,
     UserDevice,
 } from './olmLib'
+import { create, fromJsonString } from '@bufbuild/protobuf'
 import { GroupEncryptionCrypto } from './groupEncryptionCrypto'
 
 export interface EntitlementsDelegate {
@@ -60,7 +63,6 @@ export interface KeySolicitationContent {
     fallbackKey: string
     isNewDevice: boolean
     sessionIds: string[]
-    srcEventId: string
 }
 
 // paired down from StreamEvent, required for signature validation
@@ -81,6 +83,7 @@ export interface KeySolicitationItem {
     solicitation: KeySolicitationContent
     respondAfter: number // ms since epoch
     sigBundle: EventSignatureBundle
+    hashStr: string
 }
 
 export interface KeySolicitationData {
@@ -314,6 +317,7 @@ export abstract class BaseDecryptionExtensions {
 
     public enqueueInitKeySolicitations(
         streamId: string,
+        eventHashStr: string,
         members: {
             userId: string
             userAddress: Uint8Array
@@ -347,6 +351,7 @@ export abstract class BaseDecryptionExtensions {
                     respondAfter:
                         Date.now() + this.getRespondDelayMSForKeySolicitation(streamId, fromUserId),
                     sigBundle,
+                    hashStr: eventHashStr,
                 } satisfies KeySolicitationItem)
             }
         }
@@ -356,6 +361,7 @@ export abstract class BaseDecryptionExtensions {
 
     public enqueueKeySolicitation(
         streamId: string,
+        eventHashStr: string,
         fromUserId: string,
         fromUserAddress: Uint8Array,
         keySolicitation: KeySolicitationContent,
@@ -389,6 +395,7 @@ export abstract class BaseDecryptionExtensions {
                 respondAfter:
                     Date.now() + this.getRespondDelayMSForKeySolicitation(streamId, fromUserId),
                 sigBundle,
+                hashStr: eventHashStr,
             } satisfies KeySolicitationItem)
             this.checkStartTicking()
         } else if (index > -1) {
@@ -658,7 +665,7 @@ export abstract class BaseDecryptionExtensions {
         }
         // decrypt the message
         const cleartext = await this.crypto.decryptWithDeviceKey(ciphertext, session.senderKey)
-        const sessionKeys = SessionKeys.fromJsonString(cleartext)
+        const sessionKeys = fromJsonString(SessionKeysSchema, cleartext)
         check(sessionKeys.keys.length === session.sessionIds.length, 'bad sessionKeys')
         // make group sessions
         const sessions = neededKeyIndexs.map(
@@ -820,7 +827,7 @@ export abstract class BaseDecryptionExtensions {
         if (!isValid) {
             this.log.error('processing key solicitation: invalid event id', {
                 streamId,
-                eventId: item.solicitation.srcEventId,
+                eventId: item.hashStr,
                 reason,
             })
             return
@@ -876,7 +883,7 @@ export abstract class BaseDecryptionExtensions {
 
         // if the key fulfillment failed, someone else already sent a key fulfillment
         if (error) {
-            if (!error.msg.includes('DUPLICATE_EVENT')) {
+            if (!error.msg.includes('DUPLICATE_EVENT') && !error.msg.includes('NOT_FOUND')) {
                 // duplicate events are expected, we can ignore them, others are not
                 this.log.error('failed to send key fulfillment', error)
             }
@@ -920,9 +927,9 @@ export abstract class BaseDecryptionExtensions {
 
 export function makeSessionKeys(sessions: GroupEncryptionSession[]): SessionKeys {
     const sessionKeys = sessions.map((s) => s.sessionKey)
-    return new SessionKeys({
+    return create(SessionKeysSchema, {
         keys: sessionKeys,
-    })
+    } satisfies PlainMessage<SessionKeys>)
 }
 
 /// Returns the first item from the array,

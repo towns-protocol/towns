@@ -2,14 +2,14 @@ import {
     IReview,
     IReviewInterface,
     ReviewStorage,
-} from '@river-build/generated/dev/typings/IReview'
+} from '@towns-protocol/generated/dev/typings/IReview'
 
 import { ContractTransaction, ethers } from 'ethers'
 import { BaseContractShim } from './BaseContractShim'
 
-import DevAbi from '@river-build/generated/dev/abis/IReview.abi.json' assert { type: 'json' }
+import DevAbi from '@towns-protocol/generated/dev/abis/IReview.abi.json' assert { type: 'json' }
 import { Address } from 'abitype'
-import { bin_toHexString } from '@river-build/dlog'
+import { bin_toHexString } from '@towns-protocol/dlog'
 
 // solidity doesn't export enums, so we need to define them here, boooooo
 export enum SpaceReviewAction {
@@ -118,37 +118,41 @@ export function getSpaceReviewEventData(
 ): SpaceReviewEventObject {
     const contractInterface = new ethers.utils.Interface(DevAbi) as IReviewInterface
     for (const log of logs) {
-        const parsedLog = contractInterface.parseLog(log)
-        if (
-            parsedLog.name === 'ReviewAdded' &&
-            (parsedLog.args.user as string).toLowerCase() === senderAddress.toLowerCase()
-        ) {
-            return {
-                user: parsedLog.args.user,
-                comment: parsedLog.args.comment,
-                rating: parsedLog.args.rating,
-                action: SpaceReviewAction.Add,
+        try {
+            const parsedLog = contractInterface.parseLog(log)
+            if (
+                parsedLog.name === 'ReviewAdded' &&
+                (parsedLog.args.user as string).toLowerCase() === senderAddress.toLowerCase()
+            ) {
+                return {
+                    user: parsedLog.args.user,
+                    comment: parsedLog.args.comment,
+                    rating: parsedLog.args.rating,
+                    action: SpaceReviewAction.Add,
+                }
+            } else if (
+                parsedLog.name === 'ReviewUpdated' &&
+                (parsedLog.args.user as string).toLowerCase() === senderAddress.toLowerCase()
+            ) {
+                return {
+                    user: parsedLog.args.user,
+                    comment: parsedLog.args.comment,
+                    rating: parsedLog.args.rating,
+                    action: SpaceReviewAction.Update,
+                }
+            } else if (
+                parsedLog.name === 'ReviewDeleted' &&
+                (parsedLog.args.user as string).toLowerCase() === senderAddress.toLowerCase()
+            ) {
+                return {
+                    user: parsedLog.args.user,
+                    comment: undefined,
+                    rating: 0,
+                    action: SpaceReviewAction.Delete,
+                }
             }
-        } else if (
-            parsedLog.name === 'ReviewUpdated' &&
-            (parsedLog.args.user as string).toLowerCase() === senderAddress.toLowerCase()
-        ) {
-            return {
-                user: parsedLog.args.user,
-                comment: parsedLog.args.comment,
-                rating: parsedLog.args.rating,
-                action: SpaceReviewAction.Update,
-            }
-        } else if (
-            parsedLog.name === 'ReviewDeleted' &&
-            (parsedLog.args.user as string).toLowerCase() === senderAddress.toLowerCase()
-        ) {
-            return {
-                user: parsedLog.args.user,
-                comment: undefined,
-                rating: 0,
-                action: SpaceReviewAction.Delete,
-            }
+        } catch {
+            // no need for error, this log is not from the contract we're interested in
         }
     }
     return { user: '', comment: undefined, rating: 0, action: SpaceReviewAction.None }

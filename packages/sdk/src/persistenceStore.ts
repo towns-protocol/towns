@@ -1,4 +1,9 @@
-import { PersistedMiniblock, PersistedSyncedStream, Snapshot } from '@river-build/proto'
+import {
+    PersistedMiniblockSchema,
+    PersistedSyncedStream,
+    PersistedSyncedStreamSchema,
+    Snapshot,
+} from '@towns-protocol/proto'
 import Dexie, { Table } from 'dexie'
 import { ParsedMiniblock } from './types'
 import {
@@ -8,13 +13,15 @@ import {
     ParsedPersistedSyncedStream,
 } from './streamUtils'
 
-import { bin_toHexString, dlog, dlogError } from '@river-build/dlog'
+import { bin_toHexString, dlog, dlogError } from '@towns-protocol/dlog'
 import { isDefined } from './check'
 import { isChannelStreamId, isDMChannelStreamId, isGDMChannelStreamId } from './id'
+import { fromBinary, toBinary } from '@bufbuild/protobuf'
 
 const MAX_CACHED_SCROLLBACK_COUNT = 3
 const DEFAULT_RETRY_COUNT = 2
 const log = dlog('csb:persistence', { defaultEnabled: false })
+const logWarn = dlog('csb:persistence:warn', { defaultEnabled: true })
 const logError = dlogError('csb:persistence:error')
 
 export interface LoadedStream {
@@ -35,7 +42,7 @@ async function fnReadRetryer<T>(
     while (retryCounter > 0) {
         try {
             if (retryCounter < retries) {
-                log('retrying...', `${retryCounter}/${retries} retries left`)
+                logWarn('retrying...', `${retryCounter}/${retries} retries left`)
                 retryCounter--
                 // wait a bit before retrying
                 await new Promise((resolve) => setTimeout(resolve, 100))
@@ -129,6 +136,11 @@ export class PersistenceStore extends Dexie implements IPersistenceStore {
             return tx.table('cleartexts').toCollection().delete()
         })
 
+        // Version 5: changed how we store scrollback miniblocs, drop all saved miniblocks
+        this.version(5).upgrade((tx) => {
+            return tx.table('miniblocks').toCollection().delete()
+        })
+
         this.requestPersistentStorage()
         this.logPersistenceStats()
     }
@@ -161,7 +173,7 @@ export class PersistenceStore extends Dexie implements IPersistenceStore {
         if (!record) {
             return undefined
         }
-        const cachedSyncedStream = PersistedSyncedStream.fromBinary(record.data)
+        const cachedSyncedStream = fromBinary(PersistedSyncedStreamSchema, record.data)
         const psstpss = persistedSyncedStreamToParsedSyncedStream(streamId, cachedSyncedStream)
         return psstpss
     }
@@ -244,7 +256,7 @@ export class PersistenceStore extends Dexie implements IPersistenceStore {
         const records = await this.syncedStreams.bulkGet(streamIds)
         const cachedSyncedStreams = records.map((x) =>
             x
-                ? { streamId: x.streamId, data: PersistedSyncedStream.fromBinary(x.data) }
+                ? { streamId: x.streamId, data: fromBinary(PersistedSyncedStreamSchema, x.data) }
                 : undefined,
         )
         const psstpss = cachedSyncedStreams.reduce((acc, x) => {
@@ -260,7 +272,7 @@ export class PersistenceStore extends Dexie implements IPersistenceStore {
         log('saving synced stream', streamId)
         await this.syncedStreams.put({
             streamId,
-            data: syncedStream.toBinary(),
+            data: toBinary(PersistedSyncedStreamSchema, syncedStream),
         })
     }
 
@@ -270,7 +282,7 @@ export class PersistenceStore extends Dexie implements IPersistenceStore {
         await this.miniblocks.put({
             streamId: streamId,
             miniblockNum: miniblock.header.miniblockNum.toString(),
-            data: cachedMiniblock.toBinary(),
+            data: toBinary(PersistedMiniblockSchema, cachedMiniblock),
         })
     }
 
@@ -284,7 +296,10 @@ export class PersistenceStore extends Dexie implements IPersistenceStore {
                 return {
                     streamId: streamId,
                     miniblockNum: mb.header.miniblockNum.toString(),
-                    data: parsedMiniblockToPersistedMiniblock(mb, direction).toBinary(),
+                    data: toBinary(
+                        PersistedMiniblockSchema,
+                        parsedMiniblockToPersistedMiniblock(mb, direction),
+                    ),
                 }
             }),
         )
@@ -298,7 +313,7 @@ export class PersistenceStore extends Dexie implements IPersistenceStore {
         if (!record) {
             return undefined
         }
-        const cachedMiniblock = PersistedMiniblock.fromBinary(record.data)
+        const cachedMiniblock = fromBinary(PersistedMiniblockSchema, record.data)
         return persistedMiniblockToParsedMiniblock(cachedMiniblock)
     }
 
@@ -318,7 +333,7 @@ export class PersistenceStore extends Dexie implements IPersistenceStore {
                 if (!record) {
                     return undefined
                 }
-                const cachedMiniblock = PersistedMiniblock.fromBinary(record.data)
+                const cachedMiniblock = fromBinary(PersistedMiniblockSchema, record.data)
                 return persistedMiniblockToParsedMiniblock(cachedMiniblock)
             })
             .filter(isDefined)
@@ -416,7 +431,7 @@ function topLevelRenderableEventInMiniblock(miniblock: ParsedMiniblock): boolean
     return false
 }
 
-function eventIdsFromSnapshot(snapshot: Snapshot): string[] {
+export function eventIdsFromSnapshot(snapshot: Snapshot): string[] {
     const usernameEventIds =
         snapshot.members?.joined
             .filter((m) => isDefined(m.username))

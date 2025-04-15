@@ -1,7 +1,7 @@
 import { FastifyReply, FastifyRequest } from 'fastify'
-import { SpaceInfo } from '@river-build/web3'
+import { SpaceInfo } from '@towns-protocol/web3'
 import { z } from 'zod'
-import { makeStreamId, StreamPrefix } from '@river-build/sdk'
+import { makeStreamId, StreamPrefix } from '@towns-protocol/sdk'
 
 import { config } from '../environment'
 import { isValidEthereumAddress } from '../validators'
@@ -73,14 +73,20 @@ export async function fetchSpaceMetadata(request: FastifyRequest, reply: Fastify
 	try {
 		const streamId = makeStreamId(StreamPrefix.Space, spaceAddress)
 		const streamView = await getStream(logger, streamId)
-		if (
-			streamView.contentKind === 'spaceContent' &&
-			streamView.spaceContent.encryptedSpaceImage?.eventId
-		) {
-			imageEventId = streamView.spaceContent.encryptedSpaceImage.eventId
+		if (streamView) {
+			if (
+				streamView.contentKind === 'spaceContent' &&
+				streamView.spaceContent.encryptedSpaceImage?.eventId
+			) {
+				imageEventId = streamView.spaceContent.encryptedSpaceImage.eventId
+			}
+		} else {
+			imageEventId = 'unregistered'
 		}
 	} catch (error) {
 		// no-op
+		logger.error('Failed to get stream', { err: error, spaceAddress })
+		imageEventId = 'unknown'
 	}
 
 	// Normalize the contractUri for case-insensitive comparison and handle empty string

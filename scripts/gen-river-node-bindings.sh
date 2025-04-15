@@ -27,8 +27,8 @@ generate_go() {
     mkdir -p "${OUT_DIR}"
 
     go run github.com/ethereum/go-ethereum/cmd/abigen@${ABIGEN_VERSION} \
-        --abi contracts/out/${FILENAME}.sol/${CONTRACT}.abi.json \
-        --bin contracts/out/${FILENAME}.sol/${CONTRACT}.bin \
+        --abi packages/contracts/out/${FILENAME}.sol/${CONTRACT}.abi.json \
+        --bin packages/contracts/out/${FILENAME}.sol/${CONTRACT}.bin \
         --pkg "${PACKAGE}" \
         --type "${GO_NAME}" \
         --out "${OUT_DIR}/${GO_NAME}.go"
@@ -53,7 +53,8 @@ generate_go base base IReview space_review
 generate_go base base IRoles i_roles
 generate_go base base ITipping tipping
 generate_go base base XChain xchain
-
+generate_go base base IDiamond diamond
+generate_go base base IDelegateRegistryV1 IDelegateRegistryV1
 
 # Full Base (and other) contracts for deployment from tests
 generate_go base/deploy deploy MockCrossChainEntitlement mock_cross_chain_entitlement

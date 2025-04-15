@@ -7,7 +7,7 @@ description: Towns tokens follow the [ERC20Votes](https://docs.openzeppelin.com/
 
 Towns tokens are used in the Node Operator Registry and Towns DAO contracts on [Base](https://base.org).
 
-Towns tokens can be delegated by calling the `delegate()` function on the Base [Towns.sol](https://github.com/river-build/river/blob/main/contracts/src/tokens/river/base/Towns.sol) contract. An interface is provided at https://river.build/delegate.
+Towns tokens can be delegated by calling the `delegate()` function on the Base [Towns.sol](https://github.com/towns-protocol/towns/blob/main/contracts/src/tokens/river/base/Towns.sol) contract. An interface is provided at https://river.build/delegate.
 
 ![delegate](../images/delegate.png)
 
@@ -23,7 +23,7 @@ Any tokens received from network operation will be claimable by calling the `cla
 
 Towns tokens held on Ethereum mainnet can also be delegated at https://river.build/delegate.
 
-Post-delegation, the details (such as delegating wallet, operator wallet, token quantity) are bridged to the Base network and referenced in the Node Operator Registry using the [L1CrossDomainMessenger](https://docs.optimism.io/builders/app-developers/bridging/messaging) contract.
+Post-delegation, the details (such as delegating wallet, operator wallet, token quantity) are bridged to the Base network and referenced in the Node Operator Registry using the [L1CrossDomainMessenger](https://docs.optimism.io/app-developers/bridging/messaging) contract.
 
 <Warning>
 Tokens rewarded for network operation are only claimable on Base. This means in the case where a user delegating from Ethereum mainnet doesn’t own the same wallet address on both Ethereum mainnet and Base, they must authorize a different wallet address that they own on Base which can claim on behalf of the Ethereum mainnet wallet.

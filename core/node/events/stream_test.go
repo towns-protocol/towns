@@ -32,8 +32,10 @@ func MakeGenesisMiniblockForSpaceStream(
 	require.NoError(t, err)
 
 	mbInfo, err := NewMiniblockInfoFromProto(
-		mb,
-		NewParsedMiniblockInfoOpts().WithExpectedBlockNumber(0).WithDoNotParseEvents(true),
+		mb, nil,
+		NewParsedMiniblockInfoOpts().
+			WithExpectedBlockNumber(0).
+			WithDoNotParseEvents(true),
 	)
 	require.NoError(t, err)
 	return mbInfo
@@ -56,8 +58,10 @@ func MakeGenesisMiniblockForUserSettingsStream(
 	require.NoError(t, err)
 
 	mbInfo, err := NewMiniblockInfoFromProto(
-		mb,
-		NewParsedMiniblockInfoOpts().WithExpectedBlockNumber(0).WithDoNotParseEvents(true),
+		mb, nil,
+		NewParsedMiniblockInfoOpts().
+			WithExpectedBlockNumber(0).
+			WithDoNotParseEvents(true),
 	)
 	require.NoError(t, err)
 
@@ -81,8 +85,10 @@ func MakeGenesisMiniblockForMediaStream(
 	require.NoError(t, err)
 
 	mbInfo, err := NewMiniblockInfoFromProto(
-		mb,
-		NewParsedMiniblockInfoOpts().WithExpectedBlockNumber(0).WithDoNotParseEvents(true),
+		mb, nil,
+		NewParsedMiniblockInfoOpts().
+			WithExpectedBlockNumber(0).
+			WithDoNotParseEvents(true),
 	)
 	require.NoError(t, err)
 
@@ -114,7 +120,7 @@ func MakeTestBlockForUserSettingsStream(
 		},
 	}
 
-	mb, err := NewMiniblockInfoFromHeaderAndParsed(nodeWallet, header, []*ParsedEvent{event})
+	mb, err := NewMiniblockInfoFromHeaderAndParsed(nodeWallet, header, []*ParsedEvent{event}, nil)
 	require.NoError(t, err)
 
 	return mb
@@ -283,9 +289,9 @@ func TestCandidatePromotionCandidateInPlace(t *testing.T) {
 	require.EqualValues(view.LastBlock().Ref.Hash[:], mb.PrevMiniblockHash)
 	require.Equal(int64(1), mb.MiniblockNum)
 
-	require.NoError(stream.SaveMiniblockCandidate(ctx, candidate.Proto))
+	require.NoError(stream.SaveMiniblockCandidate(ctx, candidate))
 
-	err = stream.SaveMiniblockCandidate(ctx, candidate.Proto)
+	err = stream.SaveMiniblockCandidate(ctx, candidate)
 	require.ErrorIs(err, RiverError(Err_ALREADY_EXISTS, ""))
 
 	require.NoError(stream.promoteCandidate(ctx, candidate.Ref))
@@ -336,7 +342,7 @@ func TestCandidatePromotionCandidateIsDelayed(t *testing.T) {
 	require.Len(stream.local.pendingCandidates, 1)
 	require.EqualValues(candidate1.Ref, stream.local.pendingCandidates[0])
 
-	require.NoError(stream.SaveMiniblockCandidate(ctx, candidate1.Proto))
+	require.NoError(stream.SaveMiniblockCandidate(ctx, candidate1))
 
 	view = getView(t, ctx, stream)
 	require.Equal(int64(1), view.LastBlock().Ref.Num)
@@ -382,13 +388,13 @@ func TestCandidatePromotionCandidateIsDelayed(t *testing.T) {
 		require.Len(stream.local.pendingCandidates, 3)
 
 		if i == 0 {
-			require.NoError(stream.SaveMiniblockCandidate(ctx, candidate2.Proto))
-			require.NoError(stream.SaveMiniblockCandidate(ctx, candidate3.Proto))
-			require.NoError(stream.SaveMiniblockCandidate(ctx, candidate4.Proto))
+			require.NoError(stream.SaveMiniblockCandidate(ctx, candidate2))
+			require.NoError(stream.SaveMiniblockCandidate(ctx, candidate3))
+			require.NoError(stream.SaveMiniblockCandidate(ctx, candidate4))
 		} else {
-			require.NoError(stream.SaveMiniblockCandidate(ctx, candidate4.Proto))
-			require.NoError(stream.SaveMiniblockCandidate(ctx, candidate2.Proto))
-			require.NoError(stream.SaveMiniblockCandidate(ctx, candidate3.Proto))
+			require.NoError(stream.SaveMiniblockCandidate(ctx, candidate4))
+			require.NoError(stream.SaveMiniblockCandidate(ctx, candidate2))
+			require.NoError(stream.SaveMiniblockCandidate(ctx, candidate3))
 		}
 
 		view = getView(t, ctx, stream)

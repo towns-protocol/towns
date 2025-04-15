@@ -1,9 +1,9 @@
-import { check, shortenHexString } from '@river-build/dlog'
+import { check, shortenHexString } from '@towns-protocol/dlog'
 import { StressClient } from '../../utils/stressClient'
 import { ChatConfig } from '../common/types'
 import { getSystemInfo } from '../../utils/systemInfo'
 import { channelMessagePostWhere } from '../../utils/timeline'
-import { isDefined } from '@river-build/sdk'
+import { isDefined } from '@towns-protocol/sdk'
 import { makeCodeBlock } from '../../utils/messages'
 
 export async function summarizeChat(

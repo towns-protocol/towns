@@ -3,6 +3,7 @@ package sync
 import (
 	"context"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/towns-protocol/towns/core/config"
 	"github.com/towns-protocol/towns/core/node/crypto"
 	"github.com/towns-protocol/towns/core/node/events"
@@ -11,15 +12,37 @@ import (
 	"github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/registries"
 	"github.com/towns-protocol/towns/core/node/shared"
-	"github.com/towns-protocol/towns/core/node/storage"
 	"github.com/towns-protocol/towns/core/node/track_streams"
 )
+
+type EncryptedMessageQueue interface {
+	PublishSessionKeys(
+		ctx context.Context,
+		streamId shared.StreamId,
+		deviceKey string,
+		sessionIds []string,
+		encryptionEnvelope []byte,
+	) (err error)
+
+	HasRegisteredWebhook(
+		ctx context.Context,
+		appId common.Address,
+	) bool
+
+	DispatchOrEnqueueMessages(
+		ctx context.Context,
+		appIds []common.Address,
+		sessionId string,
+		streamId shared.StreamId,
+		streamEventBytes []byte,
+	) (err error)
+}
 
 type AppRegistryStreamsTracker struct {
 	// TODO: eventually this struct will contain references to whatever types of cache / storage access
 	// the TrackedStreamView for the app registry service needs.
 	track_streams.StreamsTrackerImpl
-	store storage.AppRegistryStore
+	queue EncryptedMessageQueue
 }
 
 func NewAppRegistryStreamsTracker(
@@ -30,10 +53,10 @@ func NewAppRegistryStreamsTracker(
 	nodes []nodes.NodeRegistry,
 	metricsFactory infra.MetricsFactory,
 	listener track_streams.StreamEventListener,
-	store storage.AppRegistryStore,
+	store EncryptedMessageQueue,
 ) (track_streams.StreamsTracker, error) {
 	tracker := &AppRegistryStreamsTracker{
-		store: store,
+		queue: store,
 	}
 	if err := tracker.StreamsTrackerImpl.Init(
 		ctx,
@@ -55,8 +78,7 @@ func (tracker *AppRegistryStreamsTracker) TrackStream(streamId shared.StreamId) 
 
 	return streamType == shared.STREAM_DM_CHANNEL_BIN ||
 		streamType == shared.STREAM_GDM_CHANNEL_BIN ||
-		streamType == shared.STREAM_CHANNEL_BIN ||
-		streamType == shared.STREAM_USER_INBOX_BIN // for tracking key fulfillments for app key solicitations
+		streamType == shared.STREAM_CHANNEL_BIN
 }
 
 func (tracker *AppRegistryStreamsTracker) NewTrackedStream(
@@ -65,14 +87,12 @@ func (tracker *AppRegistryStreamsTracker) NewTrackedStream(
 	cfg crypto.OnChainConfiguration,
 	stream *protocol.StreamAndCookie,
 ) (events.TrackedStreamView, error) {
-	// TODO: pass in storage to the tracked stream constructor and implement logic for updating storage
-	// and caches within the tracked stream.
 	return NewTrackedStreamForAppRegistryService(
 		ctx,
 		streamID,
 		cfg,
 		stream,
 		tracker.StreamsTrackerImpl.Listener(),
-		tracker.store,
+		tracker.queue,
 	)
 }

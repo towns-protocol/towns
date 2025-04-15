@@ -1,7 +1,7 @@
 import axios, { AxiosResponse } from 'axios'
-import { dlog } from '@river-build/dlog'
+import { dlog } from '@towns-protocol/dlog'
 import { ethers } from 'ethers'
-import { Client } from '@river-build/sdk'
+import { makeTestClient, TestClient } from '@towns-protocol/sdk'
 
 import {
 	encryptAndSendMediaPayload,
@@ -9,7 +9,6 @@ import {
 	makeCreateSpaceParams,
 	makeEthersProvider,
 	makeJpegBlob,
-	makeTestClient,
 	SpaceMetadataParams,
 } from '../testUtils'
 import { spaceMetadataBaseUrl, SpaceMetadataResponse } from '../../src/routes/spaceMetadata'
@@ -24,12 +23,13 @@ describe('integration/stream-metadata/space/:spaceAddress', () => {
 	const baseURL = getTestServerUrl()
 	log('baseURL', baseURL)
 
-	let bobsClient: Client
+	let bobsClient: TestClient
 	let bobsWallet: ethers.Wallet
 
 	beforeEach(async () => {
-		bobsWallet = ethers.Wallet.createRandom()
-		bobsClient = await makeTestClient(bobsWallet)
+		bobsClient = await makeTestClient()
+		bobsWallet = bobsClient.wallet
+
 		await bobsClient.initializeUser()
 		bobsClient.startSync()
 	})

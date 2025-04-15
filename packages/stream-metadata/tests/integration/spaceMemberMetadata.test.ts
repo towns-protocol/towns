@@ -1,13 +1,12 @@
 import axios from 'axios'
-import { dlog } from '@river-build/dlog'
+import { dlog } from '@towns-protocol/dlog'
 import { ethers } from 'ethers'
-import { Client } from '@river-build/sdk'
+import { makeTestClient, TestClient } from '@towns-protocol/sdk'
 
 import {
 	getTestServerUrl,
 	makeCreateSpaceParams,
 	makeEthersProvider,
-	makeTestClient,
 	SpaceMetadataParams,
 } from '../testUtils'
 import { SpaceMemberMetadataResponse } from '../../src/routes/spaceMemberMetadata'
@@ -22,12 +21,12 @@ describe('integration/stream-metadata/:spaceAddress/token/:tokenId', () => {
 	const baseURL = getTestServerUrl()
 	log('baseURL', baseURL)
 
-	let bobsClient: Client
+	let bobsClient: TestClient
 	let bobsWallet: ethers.Wallet
 
 	beforeEach(async () => {
-		bobsWallet = ethers.Wallet.createRandom()
-		bobsClient = await makeTestClient(bobsWallet)
+		bobsClient = await makeTestClient()
+		bobsWallet = bobsClient.wallet
 		await bobsClient.initializeUser()
 		bobsClient.startSync()
 	})

@@ -8,8 +8,6 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
-	"go.uber.org/zap"
-
 	"github.com/towns-protocol/towns/core/config"
 	"github.com/towns-protocol/towns/core/contracts/base"
 	. "github.com/towns-protocol/towns/core/node/protocol"
@@ -276,7 +274,7 @@ func (x *xchain) Stop() {
 	}
 }
 
-func (x *xchain) Log(ctx context.Context) *zap.SugaredLogger {
+func (x *xchain) Log(ctx context.Context) *logging.Log {
 	return logging.FromCtx(ctx).
 		With("worker_id", x.workerID).
 		With("application", "xchain").
@@ -637,7 +635,7 @@ func (x *xchain) writeEntitlementCheckResults(ctx context.Context, checkResults 
 	}
 }
 
-func (x *xchain) handleContractError(log *zap.SugaredLogger, err error, msg string) error {
+func (x *xchain) handleContractError(log *logging.Log, err error, msg string) error {
 	ce, se, err := x.evmErrDecoder.DecodeEVMError(err)
 	switch {
 	case ce != nil:
@@ -670,7 +668,7 @@ func (x *xchain) getLinkedWallets(ctx context.Context, wallet common.Address) ([
 		return nil, x.handleContractError(log, err, "Failed to create IWalletLink")
 	}
 
-	wallets, err := entitlement.GetLinkedWallets(
+	wallets, err := x.evaluator.GetLinkedWallets(
 		ctx,
 		wallet,
 		iWalletLink,
