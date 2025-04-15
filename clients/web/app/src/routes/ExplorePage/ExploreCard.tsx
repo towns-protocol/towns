@@ -71,7 +71,7 @@ export const ExploreCard = ({ address, variant }: ExploreCardProps) => {
     )
 
     const ReviewsInfo = () =>
-        isReviewsEnabled ? (
+        isReviewsEnabled && totalReviews > 0 ? (
             <Box flexDirection="row" gap="xs">
                 <ReviewStars rating={averageRating} size={isBig ? 20 : 16} color="gray2" />
                 <Text
@@ -79,13 +79,7 @@ export const ExploreCard = ({ address, variant }: ExploreCardProps) => {
                     size={isBig ? 'md' : 'sm'}
                     style={{ marginTop: isBig ? '5px' : '3px' }}
                 >
-                    {totalReviews > 0 ? (
-                        <>
-                            {averageRating.toFixed(1)} ({totalReviews})
-                        </>
-                    ) : (
-                        '0.0 (0)'
-                    )}
+                    {averageRating.toFixed(1)} ({totalReviews})
                 </Text>
             </Box>
         ) : null
