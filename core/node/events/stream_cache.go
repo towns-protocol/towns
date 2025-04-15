@@ -222,7 +222,7 @@ func (s *StreamCache) onBlockWithLogs(ctx context.Context, blockNum crypto.Block
 					events = events[i:]
 
 					if stream, ok := s.cache.Load(streamID); ok {
-						stream.applyStreamEvents(ctx, eventsToApply, blockNum)
+						stream.applyStreamMiniblockUpdates(ctx, eventsToApply, blockNum)
 					}
 				}
 			}
