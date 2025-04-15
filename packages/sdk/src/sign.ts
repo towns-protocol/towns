@@ -250,6 +250,7 @@ export const unpackSnapshot = async (
 
     const doCheckEventSignature = opts?.disableSignatureValidation !== true
     if (doCheckEventSignature) {
+        // headerEvent contains the creatorAddress of the snapshot
         checkEventSignature(headerEvent, hash, snapshot.signature)
     }
 

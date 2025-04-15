@@ -106,7 +106,6 @@ export function parsedMiniblockToPersistedMiniblock(
 ) {
     if (direction === 'backward') {
         miniblock.header.snapshot = undefined
-        miniblock.header.snapshotHash = undefined
     }
     return create(PersistedMiniblockSchema, {
         hash: miniblock.hash,
