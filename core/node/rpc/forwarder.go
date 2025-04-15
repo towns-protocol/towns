@@ -37,7 +37,6 @@ var (
 		Err_UNAVAILABLE,
 		Err_DATA_LOSS,
 		Err_BUFFER_FULL,
-		Err_DOWNSTREAM_NETWORK_ERROR,
 	}
 )
 
