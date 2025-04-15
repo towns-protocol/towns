@@ -29,48 +29,27 @@ contract SwapRouter is ReentrancyGuardTransient, ISwapRouter, Facet {
     /// @inheritdoc ISwapRouter
     function executeSwap(
         ExactInputParams calldata params,
-        address router,
-        address approveTarget,
-        bytes calldata swapData,
+        RouterParams calldata routerParams,
         address poster
     ) external payable nonReentrant returns (uint256 amountOut) {
-        // For standard swaps, the msg.sender provides the tokens
-        return _executeSwap(params, router, approveTarget, swapData, msg.sender, poster);
+        // for standard swaps, the msg.sender provides the tokens
+        return _executeSwap(params, routerParams, msg.sender, poster);
     }
 
     /// @inheritdoc ISwapRouter
     function executeSwapWithPermit(
         ExactInputParams calldata params,
-        address router,
-        address approveTarget,
-        bytes calldata swapData,
+        RouterParams calldata routerParams,
         PermitParams calldata permit,
         address poster
     ) external payable nonReentrant returns (uint256 amountOut) {
-        // Verify the permit parameters
-        if (permit.value < params.amountIn) {
-            SwapRouter__InvalidAmount.selector.revertWith();
-        }
+        // sanity check
+        if (permit.value < params.amountIn) SwapRouter__InvalidAmount.selector.revertWith();
 
-        if (params.tokenIn != CurrencyTransfer.NATIVE_TOKEN) {
-            // Try ERC20Permit (EIP-2612)
-            if (_tryERC20Permit(params.tokenIn, permit)) {
-                // Pull tokens after the permit
-                IERC20(params.tokenIn).transferFrom(permit.owner, address(this), params.amountIn);
-            }
-            // If permit fails, revert
-            else {
-                SwapRouter__PermitFailed.selector.revertWith();
-            }
-        } else {
-            // For native token, ensure the value is sent
-            if (msg.value != params.amountIn) {
-                SwapRouter__InvalidAmount.selector.revertWith();
-            }
-        }
+        _permit(params.tokenIn, permit);
 
-        // Execute the swap with the permit owner as the payer
-        return _executeSwap(params, router, approveTarget, swapData, permit.owner, poster);
+        // execute the swap with the permit owner as the payer
+        return _executeSwap(params, routerParams, permit.owner, poster);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -79,63 +58,56 @@ contract SwapRouter is ReentrancyGuardTransient, ISwapRouter, Facet {
 
     /// @notice Internal function to execute a swap with a specified payer
     /// @param params The parameters for the swap
-    /// @param router The address of the router to use
-    /// @param approveTarget The address to approve the token transfer
-    /// @param swapData The calldata to execute on the router
+    /// @param routerParams The router parameters for the swap
     /// @param payer The address providing the input tokens
     /// @param poster The address that posted this swap opportunity
     /// @return amountOut The amount of tokenOut received
     function _executeSwap(
-        ExactInputParams memory params,
-        address router,
-        address approveTarget,
-        bytes memory swapData,
+        ExactInputParams calldata params,
+        RouterParams calldata routerParams,
         address payer,
         address poster
     ) internal returns (uint256 amountOut) {
         // only allow whitelisted routers
-        if (!_isRouterWhitelisted(router)) {
+        if (!_isRouterWhitelisted(routerParams.router)) {
             SwapRouter__InvalidRouter.selector.revertWith();
         }
-        if (!_isRouterWhitelisted(approveTarget)) {
+        if (!_isRouterWhitelisted(routerParams.approveTarget)) {
             SwapRouter__InvalidRouter.selector.revertWith();
         }
 
-        // use message sender as recipient if not specified
-        address tokenRecipient = params.recipient == address(0) ? msg.sender : params.recipient;
+        // use `msg.sender` as recipient if not specified
+        address recipient = params.recipient == address(0) ? msg.sender : params.recipient;
 
-        // snapshot the balance before swap
+        // snapshot the balance of tokenOut before the swap
         uint256 balanceBefore = _getBalance(params.tokenOut);
-        uint256 amountIn = params.amountIn;
+
+        bool isNativeToken = params.tokenIn == CurrencyTransfer.NATIVE_TOKEN;
         {
             uint256 value;
-            if (params.tokenIn == CurrencyTransfer.NATIVE_TOKEN) {
-                // for native token, the value should be sent with the transaction
-                value = amountIn;
-            } else {
-                // In executeSwapWithPermit, tokens are already transferred to this contract
-                // In executeSwap, we need to transfer them now
-                if (msg.sender == payer) {
-                    // use the actual received amount to handle fee-on-transfer tokens
-                    uint256 tokenInBalanceBefore = _getBalance(params.tokenIn);
-                    IERC20(params.tokenIn).transferFrom(payer, address(this), amountIn);
-                    amountIn = _getBalance(params.tokenIn) - tokenInBalanceBefore;
-                }
+            uint256 amountIn = params.amountIn;
+            if (!isNativeToken) {
+                // use the actual received amount to handle fee-on-transfer tokens
+                uint256 tokenInBalanceBefore = _getBalance(params.tokenIn);
+                IERC20(params.tokenIn).transferFrom(payer, address(this), amountIn);
+                amountIn = _getBalance(params.tokenIn) - tokenInBalanceBefore;
 
-                IERC20(params.tokenIn).approve(approveTarget, amountIn);
+                IERC20(params.tokenIn).approve(routerParams.approveTarget, amountIn);
+            } else {
+                // for native token, the value should be sent with the transaction
+                if (msg.value != amountIn) SwapRouter__InvalidAmount.selector.revertWith();
+                value = amountIn;
             }
 
             // execute swap with the router
-            (bool success, ) = router.call{value: value}(swapData);
+            (bool success, ) = routerParams.router.call{value: value}(routerParams.swapData);
             if (!success) SwapRouter__SwapFailed.selector.revertWith();
         }
 
         // use the actual received amount to handle fee-on-transfer tokens
         amountOut = _getBalance(params.tokenOut) - balanceBefore;
         // slippage check
-        if (amountOut < params.minAmountOut) {
-            SwapRouter__InsufficientOutput.selector.revertWith();
-        }
+        if (amountOut < params.minAmountOut) SwapRouter__InsufficientOutput.selector.revertWith();
 
         // calculate and distribute fees
         uint256 finalAmount;
@@ -149,47 +121,38 @@ contract SwapRouter is ReentrancyGuardTransient, ISwapRouter, Facet {
         }
 
         // transfer remaining tokens to the recipient
-        CurrencyTransfer.transferCurrency(
-            params.tokenOut,
-            address(this),
-            tokenRecipient,
-            finalAmount
-        );
+        CurrencyTransfer.transferCurrency(params.tokenOut, address(this), recipient, finalAmount);
 
         // reset approval for tokenIn
-        if (params.tokenIn != CurrencyTransfer.NATIVE_TOKEN) {
-            IERC20(params.tokenIn).approve(approveTarget, 0);
+        if (!isNativeToken) {
+            IERC20(params.tokenIn).approve(routerParams.approveTarget, 0);
         }
 
         emit Swap(
-            router,
+            routerParams.router,
+            msg.sender,
             params.tokenIn,
             params.tokenOut,
             params.amountIn,
             amountOut,
-            tokenRecipient
+            recipient
         );
     }
 
-    /// @notice Try to use ERC20Permit (EIP-2612) for token approval
-    /// @param token The token address to permit
-    /// @param permit The permit data
-    /// @return success Whether the permit was successful
-    function _tryERC20Permit(address token, PermitParams memory permit) internal returns (bool) {
-        try
-            IERC20Permit(token).permit(
-                permit.owner,
-                permit.spender == address(0) ? address(this) : permit.spender,
-                permit.value,
-                permit.deadline,
-                permit.v,
-                permit.r,
-                permit.s
-            )
-        {
-            return true;
-        } catch {
-            return false;
+    /// @dev Calls the `permit` function of the ERC20 token
+    /// @param token The address of the ERC20 token
+    /// @param permit The permit parameters
+    function _permit(address token, PermitParams calldata permit) internal {
+        bytes4 selector = IERC20Permit.permit.selector;
+        assembly ("memory-safe") {
+            let fmp := mload(0x40)
+            mstore(fmp, selector)
+            // copy permit params to memory
+            calldatacopy(add(fmp, 0x04), permit, 0xe0)
+            if iszero(call(gas(), token, 0, fmp, 0xe4, 0, 0)) {
+                returndatacopy(0, 0, returndatasize())
+                revert(0, returndatasize())
+            }
         }
     }
 
