@@ -78,6 +78,7 @@ type RichTextEditorProps = {
     tickerAttachments?: TickerAttachment[]
     onSelectTicker?: (ticker: TMentionTicker) => void
     onRemoveTicker?: (address: string, chain: string) => void
+    onInsertAddress?: (address: string, chain: string) => void
     /* callback invoked when user presses enter key or click send button  */
     onSend?: (
         message: string,
@@ -116,6 +117,7 @@ export const RichTextEditor = ({
     onRemoveUnfurledLinkAttachment = noop,
     onMessageLinksUpdated = noop,
     onSelectTicker = noop,
+    onInsertAddress = noop,
     onRemoveTicker = noop,
     onCancel = noop,
     onSend = noop,
@@ -139,27 +141,27 @@ export const RichTextEditor = ({
     const valueFromStore = useInputStore((state) => state.channelMessageInputMap[storageId.current])
     const setInput = useInputStore((state) => state.setChannelmessageInput)
 
-    const initialValue = useMemo(() => {
-        /* used when editing a message: convert initial value passed as prop from MD string to Plate JSON  */
-        if (_initialValue) {
-            return deserializeMd(_initialValue, channels, userHashMap, lookupUser)
-        }
-        /* used to restore a draft message from local storage */
-        if (editable && valueFromStore && valueFromStore.trim().length > 0) {
-            return deserializeMd(valueFromStore, channels, userHashMap, lookupUser)
-        }
-        /* If all else fails, set Plate JSON as default empty string  */
-        return [{ ...EMPTY_NODE }]
-    }, [_initialValue, channels, userHashMap, lookupUser, editable, valueFromStore])
-
     const userMentionsRef = useRef(userMentions)
     userMentionsRef.current = userMentions
 
     const channelMentionsRef = useRef(channelMentions)
     channelMentionsRef.current = channelMentions
 
-    const [editor] = useState<TPlateEditor>(() =>
-        createTownsEditor(
+    const [editor] = useState<TPlateEditor>(() => {
+        const initialValue = (() => {
+            /* used when editing a message: convert initial value passed as prop from MD string to Plate JSON  */
+            if (_initialValue) {
+                return deserializeMd(_initialValue, channels, userHashMap, lookupUser)
+            }
+            /* used to restore a draft message from local storage */
+            if (editable && valueFromStore && valueFromStore.trim().length > 0) {
+                return deserializeMd(valueFromStore, channels, userHashMap, lookupUser)
+            }
+            /* If all else fails, set Plate JSON as default empty string  */
+            return [{ ...EMPTY_NODE }]
+        })()
+
+        return createTownsEditor(
             storageId.current,
             channels,
             userHashMap,
@@ -168,8 +170,10 @@ export const RichTextEditor = ({
             initialValue,
             lookupUser,
             onSelectTicker,
-        ),
-    )
+            onInsertAddress,
+        )
+    })
+
     const disabled = useMemo(() => !editable || isSendingMessage, [editable, isSendingMessage])
     const disabledSend = useMemo(() => typeof onSend !== 'function', [onSend])
 

@@ -26,13 +26,14 @@ import { useInlineReplyAttchmentPreview } from '@components/EmbeddedMessageAttac
 import { LoadingUnfurledLinkAttachment } from 'hooks/useExtractInternalLinks'
 import { SECOND_MS } from 'data/constants'
 import { useTokenTrackingData } from '@components/Web3/Trading/useTradeAnalytics'
+import { fetchCoinData } from '@components/TradingChart/useCoinData'
 import { RichTextEditor } from './RichTextEditor'
 import { useEditorChannelData, useEditorMemberData } from './hooks/editorHooks'
 import { getChannelNames } from './utils/helpers'
 import { EditorFallback } from './components/EditorFallback'
 import { unfurlLinksToAttachments } from './utils/unfurlLinks'
 import { TMentionTicker } from './components/plate-ui/autocomplete/types'
-
+import { LoadingElementDataContext } from './LoadingElementDataContext'
 type Props = {
     onSend?: (
         value: string,
@@ -106,23 +107,53 @@ const TownsTextEditorWithoutBoundary = ({
     )
     const { channelMentions } = useEditorChannelData(channels)
 
-    const onAddTickerAttachment = useCallback(
-        (ticker: TMentionTicker) => {
-            setTickerAttachments([
-                ...tickerAttachments,
-                {
-                    type: 'ticker',
-                    id: ticker.address,
-                    address: ticker.address,
-                    chainId: ticker.chain,
-                    coinData: {
-                        ...ticker,
-                    },
-                } satisfies TickerAttachment & { coinData?: TMentionTicker },
-            ])
-        },
-        [tickerAttachments],
-    )
+    const [loadingAddresses, setLoadingAddresses] = useState<Set<string>>(new Set())
+
+    const onInsertAddress = useCallback(async (address: string, chain: string) => {
+        setLoadingAddresses((prev) => prev.add(address))
+        await fetchCoinData(address, chain).then((coinData) => {
+            if (coinData) {
+                setTickerAttachments((prev) => [
+                    ...prev.filter((t) => t.address !== address),
+                    {
+                        type: 'ticker',
+                        id: address,
+                        address: address,
+                        chainId: chain,
+                        coinData: {
+                            name: coinData.token.name,
+                            symbol: coinData.token.symbol,
+                            address: coinData.token.address,
+                            chain: chain,
+                            marketCap: coinData.marketCap,
+                            priceUSD: coinData.priceUSD,
+                            imageUrl: coinData.token.info.imageThumbUrl ?? '',
+                        } satisfies TMentionTicker,
+                    } satisfies TickerAttachment & { coinData?: TMentionTicker },
+                ])
+            }
+            setLoadingAddresses((prev) => {
+                prev.delete(address)
+                return new Set(prev)
+            })
+        })
+    }, [])
+
+    const onAddTickerAttachment = useCallback((ticker: TMentionTicker) => {
+        setTickerAttachments((prev) => [
+            ...prev.filter((t) => t.address !== ticker.address),
+            {
+                type: 'ticker',
+                id: ticker.address,
+                address: ticker.address,
+                chainId: ticker.chain,
+                coinData: {
+                    ...ticker,
+                },
+            } satisfies TickerAttachment & { coinData?: TMentionTicker },
+        ])
+    }, [])
+
     const onRemoveTickerAttachment = useCallback(
         (address: string, chainId: string) => {
             setTickerAttachments(
@@ -270,37 +301,40 @@ const TownsTextEditorWithoutBoundary = ({
                 data-testid="editor-container"
                 rounded={{ default: 'sm', touch: 'none' }}
             >
-                <RichTextEditor
-                    autoFocus={autoFocus}
-                    editable={editable}
-                    editing={editing}
-                    initialValue={initialValue}
-                    placeholder={placeholder}
-                    tabIndex={tabIndex}
-                    threadId={threadId}
-                    threadPreview={threadPreview}
-                    hasInlinePreview={!!inlineReplyPreview}
-                    displayButtons={displayButtons}
-                    background={background}
-                    fileCount={files?.length}
-                    channels={channels}
-                    storageId={inlineReplyPreview?.event?.eventId ?? storageId}
-                    userMentions={userMentions}
-                    channelMentions={channelMentions}
-                    userHashMap={userHashMap}
-                    lookupUser={lookupUser}
-                    unfurledLinkAttachments={unfurledLinkAttachments}
-                    tickerAttachments={tickerAttachments}
-                    renderSendButton={renderSendButton}
-                    renderTradingBottomBar={renderTradingBottomBar}
-                    allowEmptyMessage={allowEmptyMessage}
-                    onSelectTicker={onAddTickerAttachment}
-                    onRemoveTicker={onRemoveTickerAttachment}
-                    onMessageLinksUpdated={onMessageLinksUpdated}
-                    onRemoveUnfurledLinkAttachment={onRemoveUnfurledLinkAttachment}
-                    onSend={sendMessage}
-                    onCancel={onCancel}
-                />
+                <LoadingElementDataContext.Provider value={{ loadingAddresses }}>
+                    <RichTextEditor
+                        autoFocus={autoFocus}
+                        editable={editable}
+                        editing={editing}
+                        initialValue={initialValue}
+                        placeholder={placeholder}
+                        tabIndex={tabIndex}
+                        threadId={threadId}
+                        threadPreview={threadPreview}
+                        hasInlinePreview={!!inlineReplyPreview}
+                        displayButtons={displayButtons}
+                        background={background}
+                        fileCount={files?.length}
+                        channels={channels}
+                        storageId={inlineReplyPreview?.event?.eventId ?? storageId}
+                        userMentions={userMentions}
+                        channelMentions={channelMentions}
+                        userHashMap={userHashMap}
+                        lookupUser={lookupUser}
+                        unfurledLinkAttachments={unfurledLinkAttachments}
+                        tickerAttachments={tickerAttachments}
+                        renderSendButton={renderSendButton}
+                        renderTradingBottomBar={renderTradingBottomBar}
+                        allowEmptyMessage={allowEmptyMessage}
+                        onSelectTicker={onAddTickerAttachment}
+                        onRemoveTicker={onRemoveTickerAttachment}
+                        onInsertAddress={onInsertAddress}
+                        onMessageLinksUpdated={onMessageLinksUpdated}
+                        onRemoveUnfurledLinkAttachment={onRemoveUnfurledLinkAttachment}
+                        onSend={sendMessage}
+                        onCancel={onCancel}
+                    />
+                </LoadingElementDataContext.Provider>
             </Stack>
         </>
     )

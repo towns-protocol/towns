@@ -1,7 +1,7 @@
-import React, { useRef } from 'react'
 import { withRef } from '@udecode/cn'
 import { getHandler } from '@udecode/plate-common'
 import { PlateElement, useElement } from '@udecode/plate-common/react'
+import React, { useRef } from 'react'
 import { Box } from '@ui'
 import { mentionInput } from '@components/RichTextPlate/RichTextEditor.css'
 import { TTickerMentionElement } from './autocomplete/types'
@@ -26,7 +26,9 @@ export const TickerMentionElement = withRef<
             {...props.attributes}
             ref={props.attributes.ref ?? ref}
         >
-            <TickerMentionElementWithoutPlate symbol={prefix + element.ticker.symbol} />
+            <TickerMentionElementWithoutPlate
+                symbol={prefix + (element.ticker?.symbol ?? 'unknown')}
+            />
             {children}
         </Box>
     )
@@ -35,6 +37,7 @@ export const TickerMentionElement = withRef<
 export interface TickerMentionElementWithoutPlateProps {
     symbol: string
 }
+
 export const TickerMentionElementWithoutPlate = ({
     symbol,
 }: React.PropsWithChildren<TickerMentionElementWithoutPlateProps>) => {

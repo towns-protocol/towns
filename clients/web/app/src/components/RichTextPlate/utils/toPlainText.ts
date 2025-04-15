@@ -1,4 +1,5 @@
 import { TNode, getNodeString, isElement, isText } from '@udecode/slate'
+import { ELEMENT_CONTRACT_ADDRESS } from '../plugins/createContractAddressPlugin'
 
 /**
  * bare minimum plain text representation of the editor content
@@ -17,6 +18,11 @@ const nodeToText = (node: TNode, level = 0): string => {
     if (node.type === 'a') {
         return `[${getNodeString(node)}](${node.url})`
     }
+
+    if (node.type === ELEMENT_CONTRACT_ADDRESS) {
+        return node.address as string
+    }
+
     if (isText(node)) {
         return getNodeString(node)
     }

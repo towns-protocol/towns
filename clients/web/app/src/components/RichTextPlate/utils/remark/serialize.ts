@@ -1,3 +1,4 @@
+import { ELEMENT_CONTRACT_ADDRESS } from '@components/RichTextPlate/plugins/createContractAddressPlugin'
 import { BlockType, LeafType, NodeTypes, defaultNodeTypes } from './ast-types'
 import { BREAK_TAG } from '../helpers'
 
@@ -15,6 +16,7 @@ const MENTION_TYPES = [
     defaultNodeTypes.mention_channel,
     defaultNodeTypes.mention_emoji,
     defaultNodeTypes.mention_ticker,
+    ELEMENT_CONTRACT_ADDRESS,
 ]
 
 const isLeafNode = (node: BlockType | LeafType): node is LeafType => {

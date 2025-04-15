@@ -3,6 +3,7 @@ import { MentionPlugin } from '@udecode/plate-mention/react'
 import { TCodeBlockElement } from '@udecode/plate-code-block'
 import { CodeBlockPlugin, CodeLinePlugin } from '@udecode/plate-code-block/react'
 import { ELEMENT_MENTION_TICKER } from '@components/RichTextPlate/plugins/createTickerMentionPlugin'
+import { ELEMENT_CONTRACT_ADDRESS } from '@components/RichTextPlate/plugins/createContractAddressPlugin'
 import {
     TChannelMentionElement,
     TMentionEmoji,
@@ -41,6 +42,7 @@ export interface NodeTypes {
     mention_channel: string
     mention_emoji: string
     mention_ticker: string
+    contract_address: string
 }
 
 export type MdastNodeType =
@@ -67,6 +69,7 @@ export type MdastNodeType =
     | typeof ELEMENT_MENTION_CHANNEL
     | typeof ELEMENT_MENTION_EMOJI
     | typeof ELEMENT_MENTION_TICKER
+    | typeof ELEMENT_CONTRACT_ADDRESS
 
 export const defaultNodeTypes: NodeTypes = {
     paragraph: 'p',
@@ -98,6 +101,7 @@ export const defaultNodeTypes: NodeTypes = {
     mention_channel: ELEMENT_MENTION_CHANNEL,
     mention_emoji: ELEMENT_MENTION_EMOJI,
     mention_ticker: ELEMENT_MENTION_TICKER,
+    contract_address: ELEMENT_CONTRACT_ADDRESS,
 }
 
 export interface LeafType {

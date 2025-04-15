@@ -13,6 +13,7 @@ import { getChannelNames, getMentionIds } from './utils/helpers'
 import { CodeBlockElement } from './components/plate-ui/CodeBlockElement'
 import {
     TChannelMentionElement,
+    TContractAddressElement,
     TTickerMentionElement,
     TUserIDNameMap,
     TUserMentionElement,
@@ -32,6 +33,8 @@ import { edited, richText, singleEmojiMessage } from './RichTextEditor.css'
 import MarkdownToJSX from './utils/MarkdownToJSX'
 import { ELEMENT_EDITED } from './utils/remark/remarkEditedAnnotation'
 import { TickerMentionElementWithoutPlate } from './components/plate-ui/TickerMentionElement'
+import { ContractAddressElementWithoutPlate } from './components/plate-ui/ContractAddressElement'
+import { ELEMENT_CONTRACT_ADDRESS } from './plugins/createContractAddressPlugin'
 
 const fieldClassName = clsx([fieldStyles.field, richText])
 
@@ -143,6 +146,9 @@ export const RichTextPreviewInternal = ({
             [ELEMENT_MENTION_TICKER]: (
                 props: React.PropsWithChildren<{ node: TTickerMentionElement }>,
             ) => <TickerMentionElementWithoutPlate symbol={props.node.value} />,
+            [ELEMENT_CONTRACT_ADDRESS]: (
+                props: React.PropsWithChildren<{ node: TContractAddressElement }>,
+            ) => <ContractAddressElementWithoutPlate address={props.node.address} />,
         }),
         [_onMentionHover, onMentionClick, channels],
     )

@@ -60,6 +60,10 @@ import { getUrlHref, isBlockquoteWithEmptyLines, isExactlyUrl } from '../utils/h
 import { ELEMENT_MENTION_TICKER, TickerMentionPlugin } from './createTickerMentionPlugin'
 import { TickerMentionElement } from '../components/plate-ui/TickerMentionElement'
 import { InsertTickerMentionPlugin } from './createInsertTickerMentionPlugin'
+import { PasteContractAddressPlugin } from './PasteContractAddressPlugin'
+import { InsertAddressPlugin } from './createInsertAddressPlugin'
+import { ContractAddressElement } from '../components/plate-ui/ContractAddressElement'
+import { ContractAddressPlugin, ELEMENT_CONTRACT_ADDRESS } from './createContractAddressPlugin'
 
 const createTownsEditor = (
     uniqueId: string,
@@ -70,6 +74,7 @@ const createTownsEditor = (
     initialValue: Value,
     lookupUser?: ReturnType<typeof useUserLookupContext>['lookupUser'],
     onSelectTicker?: (ticker: TMentionTicker) => void,
+    onInsertAddress?: (address: string, chain: string) => void,
 ) =>
     createPlateEditor({
         plugins: [
@@ -83,6 +88,7 @@ const createTownsEditor = (
                     getUrlHref,
                 },
             }),
+            PasteContractAddressPlugin,
             ParagraphPlugin,
             ListPlugin,
             BoldPlugin,
@@ -133,6 +139,7 @@ const createTownsEditor = (
             UserMentionPlugin,
             EmojiMentionPlugin,
             TickerMentionPlugin,
+            ContractAddressPlugin,
             ResetNodePlugin.configure({
                 options: {
                     rules: nodeResetRules,
@@ -147,6 +154,9 @@ const createTownsEditor = (
             EditorOverridesPlugin,
             InsertTickerMentionPlugin({
                 onInsertTickerMention: onSelectTicker,
+            }),
+            InsertAddressPlugin({
+                onInsertAddress: onInsertAddress,
             }),
             ErrorHandlingPlugin,
             FormatTextLinkPlugin,
@@ -168,11 +178,11 @@ const createTownsEditor = (
                 [ELEMENT_MENTION_CHANNEL]: ChannelMentionElement,
                 [ELEMENT_MENTION_EMOJI]: EmojiMentionElement,
                 [ELEMENT_MENTION_TICKER]: TickerMentionElement,
+                [ELEMENT_CONTRACT_ADDRESS]: ContractAddressElement,
                 [MentionInputPlugin.key]: withProps(ComboboxContextWrapper, {
                     Component: ComboboxInput,
                     getUserMentions,
                     getChannelMentions,
-                    onSelectTicker: onSelectTicker,
                 }),
                 [ParagraphPlugin.key]: ParagraphElement,
                 [BoldPlugin.key]: withProps(PlateLeaf, { as: 'strong' }),
@@ -181,6 +191,7 @@ const createTownsEditor = (
                     as: 'em',
                     style: { fontStyle: 'italic' },
                 }),
+
                 [StrikethroughPlugin.key]: withProps(PlateLeaf, { as: 's' }),
                 [UnderlinePlugin.key]: withProps(PlateLeaf, { as: 'u' }),
             },
