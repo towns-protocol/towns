@@ -12,7 +12,8 @@
         "clean": "rm -rf dist",
         "lint": "yarn eslint --format unix ./src  --max-warnings=0",
         "lint:fix": "yarn lint --fix",
-        "test:ci": "yarn test:ci:multi:ne",
+        "test": "vitest",
+        "test:ci": "vitest run",
         "test:watch": "vitest --watch"
     },
     "dependencies": {
