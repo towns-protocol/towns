@@ -27,11 +27,17 @@ const (
 
 var (
 	shouldFallbackToRemotesErrCodes = []Err{
+		Err_UNKNOWN,
 		Err_DEADLINE_EXCEEDED,
+		Err_NOT_FOUND,
+		Err_RESOURCE_EXHAUSTED,
 		Err_ABORTED,
 		Err_UNIMPLEMENTED,
-		Err_UNAVAILABLE,
 		Err_INTERNAL,
+		Err_UNAVAILABLE,
+		Err_DATA_LOSS,
+		Err_BUFFER_FULL,
+		Err_DOWNSTREAM_NETWORK_ERROR,
 	}
 )
 
