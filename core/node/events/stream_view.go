@@ -44,11 +44,15 @@ func MakeStreamView(streamData *storage.ReadStreamFromLastSnapshotResult) (*Stre
 			Snapshot: mb.Snapshot,
 		})
 		if err != nil {
-			return nil, err
+			return nil, AsRiverError(
+				err,
+				Err_BAD_BLOCK,
+			).Message("Unable to parse miniblock from descriptor").
+				Func("MakeStreamView")
 		}
 		miniblocks[i] = miniblock
 		lastMiniblockNumber = miniblock.Header().MiniblockNum
-		if snapshotIndex == -1 && (miniblock.GetSnapshot() != nil) {
+		if snapshotIndex == -1 && miniblock.Header().IsSnapshot() {
 			snapshotIndex = i
 		}
 	}
@@ -57,7 +61,7 @@ func MakeStreamView(streamData *storage.ReadStreamFromLastSnapshotResult) (*Stre
 		return nil, RiverError(Err_STREAM_BAD_EVENT, "no snapshot").Func("MakeStreamView")
 	}
 
-	snapshot := miniblocks[snapshotIndex].headerEvent.Event.GetMiniblockHeader().GetSnapshot()
+	snapshot := miniblocks[snapshotIndex].GetSnapshot()
 	if snapshot == nil {
 		return nil, RiverError(Err_STREAM_BAD_EVENT, "no snapshot").Func("MakeStreamView")
 	}
@@ -119,19 +123,18 @@ func MakeRemoteStreamView(stream *StreamAndCookie) (*StreamView, error) {
 		if i > 0 {
 			opts = opts.WithExpectedBlockNumber(lastMiniblockNumber + 1)
 		}
-
 		miniblock, err := NewMiniblockInfoFromProto(binMiniblock, stream.GetSnapshotByMiniblockIndex(i), opts)
 		if err != nil {
 			return nil, err
 		}
 		lastMiniblockNumber = miniblock.Header().MiniblockNum
 		miniblocks[i] = miniblock
-		if miniblock.GetSnapshot() != nil {
+		if miniblock.Header().IsSnapshot() {
 			snapshotIndex = i
 		}
 	}
 
-	snapshot := miniblocks[0].headerEvent.Event.GetMiniblockHeader().GetSnapshot()
+	snapshot := miniblocks[snapshotIndex].GetSnapshot()
 	if snapshot == nil {
 		return nil, RiverError(Err_STREAM_BAD_EVENT, "no snapshot").Func("MakeStreamView")
 	}
@@ -358,13 +361,13 @@ func (r *StreamView) makeMiniblockCandidate(
 	eventNumOffset := last.Header().EventNumOffset + int64(len(last.Events())) + 1 // +1 for header
 	nextMiniblockNum := last.Header().MiniblockNum + 1
 	miniblockNumOfPrevSnapshot := last.Header().PrevSnapshotMiniblockNum
-	if last.Header().Snapshot != nil {
+	if last.Header().IsSnapshot() {
 		miniblockNumOfPrevSnapshot = last.Header().MiniblockNum
 	}
 
-	var snapshot *Snapshot
+	var parsedSnapshot *ParsedSnapshot
 	if proposal.shouldSnapshot {
-		snapshot = proto.Clone(r.snapshot).(*Snapshot)
+		snapshot := proto.Clone(r.snapshot).(*Snapshot)
 
 		// Apply all events in blocks since last snapshot
 		for i := r.snapshotIndex + 1; i < len(r.blocks); i++ {
@@ -394,6 +397,11 @@ func (r *StreamView) makeMiniblockCandidate(
 				)
 			}
 		}
+
+		var err error
+		if parsedSnapshot, err = MakeParsedSnapshot(params.Wallet, snapshot); err != nil {
+			log.Errorw("Failed to make parsed snapshot", "error", err, "streamId", r.streamId)
+		}
 	}
 
 	header := &MiniblockHeader{
@@ -401,7 +409,6 @@ func (r *StreamView) makeMiniblockCandidate(
 		Timestamp:                NextMiniblockTimestamp(last.Header().Timestamp),
 		EventHashes:              hashes,
 		PrevMiniblockHash:        last.headerEvent.Hash[:],
-		Snapshot:                 snapshot,
 		EventNumOffset:           eventNumOffset,
 		PrevSnapshotMiniblockNum: miniblockNumOfPrevSnapshot,
 		Content: &MiniblockHeader_None{
@@ -409,7 +416,15 @@ func (r *StreamView) makeMiniblockCandidate(
 		},
 	}
 
-	return NewMiniblockInfoFromHeaderAndParsed(params.Wallet, header, events, nil)
+	if parsedSnapshot != nil {
+		header.Snapshot = parsedSnapshot.Snapshot
+		// header.SnapshotHash = parsedSnapshot.Envelope.Hash
+		// TODO: Remove the following line.
+		// Just resetting it to nil for now to avoid storing it in the DB until all nodes can handle snapshots.
+		parsedSnapshot = nil
+	}
+
+	return NewMiniblockInfoFromHeaderAndParsed(params.Wallet, header, events, parsedSnapshot)
 }
 
 // copyAndApplyBlock copies the current view and applies the given miniblock to it.
@@ -481,13 +496,7 @@ func (r *StreamView) copyAndApplyBlock(
 	var snapshotIndex int
 	var snapshot *Snapshot
 	if header.IsSnapshot() {
-		if miniblock.snapshot != nil {
-			// Using new snapshot format
-			snapshot = miniblock.snapshot.Snapshot
-		} else {
-			// Using old snapshot format
-			snapshot = header.Snapshot
-		}
+		snapshot = miniblock.GetSnapshot()
 		startIndex = max(0, len(r.blocks)-recencyConstraintsGenerations)
 		snapshotIndex = len(r.blocks) - startIndex
 	} else {
@@ -621,12 +630,15 @@ func (r *StreamView) Miniblocks() []*MiniblockInfo {
 	return r.blocks
 }
 
-func (r *StreamView) MiniblocksFromLastSnapshot() []*Miniblock {
-	miniblocks := make([]*Miniblock, 0, len(r.blocks)-r.snapshotIndex)
+func (r *StreamView) MiniblocksFromLastSnapshot() (miniblocks []*Miniblock, snapshot *Envelope) {
+	miniblocks = make([]*Miniblock, 0, len(r.blocks)-r.snapshotIndex)
 	for i := r.snapshotIndex; i < len(r.blocks); i++ {
 		miniblocks = append(miniblocks, r.blocks[i].Proto)
 	}
-	return miniblocks
+	if len(miniblocks) > 0 {
+		snapshot = r.blocks[r.snapshotIndex].Snapshot
+	}
+	return
 }
 
 func (r *StreamView) SyncCookie(localNodeAddress common.Address) *SyncCookie {
@@ -951,10 +963,12 @@ func (r *StreamView) GetStreamSince(
 }
 
 func (r *StreamView) GetResetStreamAndCookie(wallet *crypto.Wallet) *StreamAndCookie {
+	mbs, sn := r.MiniblocksFromLastSnapshot()
 	return &StreamAndCookie{
 		Events:         r.MinipoolEnvelopes(),
 		NextSyncCookie: r.SyncCookie(wallet.Address),
-		Miniblocks:     r.MiniblocksFromLastSnapshot(),
+		Miniblocks:     mbs,
+		Snapshot:       sn,
 		SyncReset:      true,
 	}
 }

@@ -428,23 +428,6 @@ func (s *PostgresStreamStore) sqlForStream(sql string, streamId StreamId) string
 	return sql
 }
 
-func (s *PostgresStreamStore) CreateStreamStorage(
-	ctx context.Context,
-	streamId StreamId,
-	genesisMiniblock *WriteMiniblockData,
-) error {
-	return s.txRunner(
-		ctx,
-		"CreateStreamStorage",
-		pgx.ReadWrite,
-		func(ctx context.Context, tx pgx.Tx) error {
-			return s.createStreamStorageTx(ctx, tx, streamId, genesisMiniblock)
-		},
-		nil,
-		"streamId", streamId,
-	)
-}
-
 func (s *PostgresStreamStore) lockStream(
 	ctx context.Context,
 	tx pgx.Tx,
@@ -457,13 +440,13 @@ func (s *PostgresStreamStore) lockStream(
 	if write {
 		err = tx.QueryRow(
 			ctx,
-			"SELECT latest_snapshot_miniblock from es WHERE stream_id = $1 FOR UPDATE",
+			"SELECT latest_snapshot_miniblock FROM es WHERE stream_id = $1 FOR UPDATE",
 			streamId,
 		).Scan(&lastSnapshotMiniblock)
 	} else {
 		err = tx.QueryRow(
 			ctx,
-			"SELECT latest_snapshot_miniblock from es WHERE stream_id = $1 FOR SHARE",
+			"SELECT latest_snapshot_miniblock FROM es WHERE stream_id = $1 FOR SHARE",
 			streamId,
 		).Scan(&lastSnapshotMiniblock)
 	}
@@ -483,6 +466,42 @@ func (s *PostgresStreamStore) lockStream(
 	return lastSnapshotMiniblock, nil
 }
 
+func (s *PostgresStreamStore) CreateStreamStorage(
+	ctx context.Context,
+	streamId StreamId,
+	genesisMiniblock *WriteMiniblockData,
+) error {
+	if len(genesisMiniblock.Data) == 0 {
+		return RiverError(Err_INVALID_ARGUMENT, "genesis miniblock data is empty", "streamId", streamId).Func("pg.CreateStreamStorage")
+	}
+	err := s.txRunner(
+		ctx,
+		"CreateStreamStorage",
+		pgx.ReadWrite,
+		func(ctx context.Context, tx pgx.Tx) error {
+			return s.createStreamStorageTx(ctx, tx, streamId, genesisMiniblock)
+		},
+		nil,
+		"streamId", streamId,
+	)
+	if IsRiverErrorCode(err, Err_ALREADY_EXISTS) {
+		err2 := s.txRunner(
+			ctx,
+			"CreateStreamStorage_OverwriteCorruptGenesisMiniblock",
+			pgx.ReadWrite,
+			func(ctx context.Context, tx pgx.Tx) error {
+				return s.maybeOverwriteCorruptGenesisMiniblockTx(ctx, tx, streamId, genesisMiniblock)
+			},
+			nil,
+			"streamId", streamId,
+		)
+		if err2 == nil {
+			return nil
+		}
+	}
+	return err
+}
+
 func (s *PostgresStreamStore) createStreamStorageTx(
 	ctx context.Context,
 	tx pgx.Tx,
@@ -496,10 +515,53 @@ func (s *PostgresStreamStore) createStreamStorageTx(
 			INSERT INTO {{minipools}} (stream_id, generation, slot_num) VALUES ($1, 1, -1);`,
 		streamId,
 	)
-	if _, err := tx.Exec(ctx, sql, streamId, genesisMiniblock.Data, genesisMiniblock.Snapshot); err != nil {
+	_, err := tx.Exec(ctx, sql, streamId, genesisMiniblock.Data, genesisMiniblock.Snapshot)
+	if err != nil {
 		if isPgError(err, pgerrcode.UniqueViolation) {
-			return WrapRiverError(Err_ALREADY_EXISTS, err).Message("stream already exists")
+			return WrapRiverError(Err_ALREADY_EXISTS, err).Message("stream already exists").Tag("streamId", streamId)
 		}
+		return err
+	}
+	return nil
+}
+
+func (s *PostgresStreamStore) maybeOverwriteCorruptGenesisMiniblockTx(
+	ctx context.Context,
+	tx pgx.Tx,
+	streamId StreamId,
+	genesisMiniblock *WriteMiniblockData,
+) error {
+	okErr := RiverError(Err_ALREADY_EXISTS, "OK: Stream not corrupt")
+	snapshotMiniblock, err := s.lockStream(ctx, tx, streamId, true)
+	if err != nil {
+		return err
+	}
+	if snapshotMiniblock != 0 {
+		return okErr
+	}
+
+	var blockdataLength int
+	err = tx.QueryRow(
+		ctx,
+		s.sqlForStream(
+			"SELECT octet_length(blockdata) FROM {{miniblocks}} WHERE stream_id = $1 AND seq_num = 0",
+			streamId,
+		),
+		streamId,
+	).Scan(&blockdataLength)
+	if err != nil {
+		return err
+	}
+	if blockdataLength != 0 {
+		return okErr
+	}
+
+	sql := s.sqlForStream(
+		"UPDATE {{miniblocks}} SET blockdata = $2, snapshot = $3 WHERE stream_id = $1 AND seq_num = 0;",
+		streamId,
+	)
+	_, err = tx.Exec(ctx, sql, streamId, genesisMiniblock.Data, genesisMiniblock.Snapshot)
+	if err != nil {
 		return err
 	}
 	return nil
@@ -725,6 +787,7 @@ func (s *PostgresStreamStore) readStreamFromLastSnapshotTx(
 	var blockdata []byte
 	var seqNum int64
 	var snapshot []byte
+	corrupt := false
 	if _, err := pgx.ForEachRow(
 		miniblocksRow,
 		[]any{&blockdata, &seqNum, &snapshot},
@@ -736,6 +799,9 @@ func (s *PostgresStreamStore) readStreamFromLastSnapshotTx(
 					"ActualSeqNum", seqNum,
 					"ExpectedSeqNum", miniblocks[0].Number+int64(len(miniblocks)))
 			}
+			if len(blockdata) == 0 {
+				corrupt = true
+			}
 			miniblocks = append(miniblocks, &MiniblockDescriptor{
 				Number:   seqNum,
 				Data:     blockdata,
@@ -745,6 +811,14 @@ func (s *PostgresStreamStore) readStreamFromLastSnapshotTx(
 		},
 	); err != nil {
 		return nil, err
+	}
+
+	if corrupt {
+		return nil, RiverError(
+			Err_NOT_FOUND,
+			"Stream is corrupt - miniblock data is empty",
+			"streamId", streamId,
+		)
 	}
 
 	if !(miniblocks[0].Number <= snapshotMiniblockIndex && snapshotMiniblockIndex <= seqNum) {
@@ -1052,14 +1126,12 @@ func (s *PostgresStreamStore) readMiniblocksByStreamTx(
 	var seqNum int64
 	var snapshot []byte
 	_, err = pgx.ForEachRow(rows, []any{&blockdata, &seqNum, &snapshot}, func() error {
-		if (prevSeqNum != -1) && (seqNum != prevSeqNum+1) {
+		if prevSeqNum != -1 && seqNum != prevSeqNum+1 {
 			// There is a gap in sequence numbers
 			return RiverError(Err_MINIBLOCKS_STORAGE_FAILURE, "Miniblocks consistency violation").
 				Tag("ActualBlockNumber", seqNum).Tag("ExpectedBlockNumber", prevSeqNum+1).Tag("streamId", streamId)
 		}
-
 		prevSeqNum = seqNum
-
 		return onEachMb(blockdata, seqNum, snapshot)
 	})
 
@@ -1128,6 +1200,10 @@ func (s *PostgresStreamStore) WriteMiniblockCandidate(
 	streamId StreamId,
 	miniblock *WriteMiniblockData,
 ) error {
+	if len(miniblock.Data) == 0 {
+		return RiverError(Err_INVALID_ARGUMENT, "miniblock data is empty",
+			"streamId", streamId, "blockHash", miniblock.Hash, "blockNumber", miniblock.Number).Func("pg.WriteMiniblockCandidate")
+	}
 	return s.txRunner(
 		ctx,
 		"WriteMiniblockCandidate",
@@ -1279,7 +1355,11 @@ func (s *PostgresStreamStore) WriteMiniblocks(
 	firstMbNum := miniblocks[0].Number
 	for i, mb := range miniblocks {
 		if mb.Number != firstMbNum+int64(i) {
-			return RiverError(Err_INTERNAL, "Miniblock number mismatch").Func("pg.WriteMiniblocks")
+			return RiverError(Err_INTERNAL, "Miniblock number are not consecutive").Func("pg.WriteMiniblocks")
+		}
+		if len(mb.Data) == 0 {
+			return RiverError(Err_INVALID_ARGUMENT, "Miniblock data is empty",
+				"streamId", streamId, "blockNumber", mb.Number, "blockHash", mb.Hash).Func("pg.WriteMiniblocks")
 		}
 	}
 
@@ -1457,11 +1537,12 @@ func (s *PostgresStreamStore) writeMiniblocksTx(
 		pgx.CopyFromSlice(
 			len(miniblocks),
 			func(i int) ([]any, error) {
-				if miniblocks[i].Snapshot != nil {
+				snapshot := miniblocks[i].Snapshot
+				if snapshot != nil {
 					newLastSnapshotMiniblock = miniblocks[i].Number
 				}
 
-				return []any{streamId, miniblocks[i].Number, miniblocks[i].Data, miniblocks[i].Snapshot}, nil
+				return []any{streamId, miniblocks[i].Number, miniblocks[i].Data, snapshot}, nil
 			},
 		),
 	)
@@ -2058,6 +2139,30 @@ func (s *PostgresStreamStore) getLastMiniblockNumberTx(
 			return 0, RiverError(Err_INTERNAL, "Stream exists in es table, but no miniblocks in DB")
 		}
 		return 0, err
+	}
+
+	if maxSeqNum == 0 {
+		// Check if the genesis miniblock has empty data, which would indicate corruption
+		var blockdataLength int
+		err := tx.QueryRow(
+			ctx,
+			s.sqlForStream(
+				"SELECT octet_length(blockdata) FROM {{miniblocks}} WHERE stream_id = $1 AND seq_num = 0",
+				streamID,
+			),
+			streamID,
+		).Scan(&blockdataLength)
+		if err != nil {
+			return 0, WrapRiverError(Err_MINIBLOCKS_STORAGE_FAILURE, err).Message("failed to check miniblock data integrity")
+		}
+
+		if blockdataLength == 0 {
+			return 0, RiverError(
+				Err_NOT_FOUND,
+				"Stream is corrupt - genesis miniblock data is empty",
+				"streamId", streamID,
+			).Func("getLastMiniblockNumberTx")
+		}
 	}
 
 	return maxSeqNum, nil

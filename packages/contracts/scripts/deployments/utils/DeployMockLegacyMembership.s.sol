@@ -2,28 +2,28 @@
 pragma solidity ^0.8.23;
 
 //interfaces
+import {IDiamond} from "@towns-protocol/diamond/src/Diamond.sol";
 
 //libraries
+import {DeployLib} from "@towns-protocol/diamond/scripts/common/DeployLib.sol";
 
 //contracts
-import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
-import {Deployer} from "scripts/common/Deployer.s.sol";
 import {MockLegacyMembership} from "test/mocks/legacy/membership/MockLegacyMembership.sol";
 
-contract DeployMockLegacyMembership is Deployer, FacetHelper {
-    constructor() {
-        addSelector(MockLegacyMembership.joinSpaceLegacy.selector);
+library DeployMockLegacyMembership {
+    function selectors() internal pure returns (bytes4[] memory res) {
+        res = new bytes4[](1);
+        res[0] = MockLegacyMembership.joinSpaceLegacy.selector;
     }
 
-    function versionName() public pure override returns (string memory) {
-        return "utils/mockLegacyMembership";
+    function makeCut(
+        address facetAddress,
+        IDiamond.FacetCutAction action
+    ) internal pure returns (IDiamond.FacetCut memory) {
+        return IDiamond.FacetCut(facetAddress, action, selectors());
     }
 
-    function __deploy(address deployer) internal override returns (address) {
-        vm.startBroadcast(deployer);
-        address mockLegacyMembership = address(new MockLegacyMembership());
-        vm.stopBroadcast();
-
-        return mockLegacyMembership;
+    function deploy() internal returns (address) {
+        return DeployLib.deployCode("MockLegacyMembership.sol", "");
     }
 }

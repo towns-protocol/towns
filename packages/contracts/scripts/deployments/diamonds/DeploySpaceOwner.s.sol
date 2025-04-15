@@ -2,43 +2,41 @@
 pragma solidity ^0.8.24;
 
 // interface
-import {Diamond, IDiamond} from "@towns-protocol/diamond/src/Diamond.sol";
+import {IDiamond} from "@towns-protocol/diamond/src/IDiamond.sol";
+import {IDiamondInitHelper} from "./IDiamondInitHelper.sol";
 
 // libraries
+import {DeployDiamondCut} from "@towns-protocol/diamond/scripts/deployments/facets/DeployDiamondCut.s.sol";
+import {DeployDiamondLoupe} from "@towns-protocol/diamond/scripts/deployments/facets/DeployDiamondLoupe.s.sol";
+import {DeployEIP712Facet} from "@towns-protocol/diamond/scripts/deployments/facets/DeployEIP712Facet.s.sol";
+import {DeployIntrospection} from "@towns-protocol/diamond/scripts/deployments/facets/DeployIntrospection.s.sol";
+import {DeployOwnable} from "@towns-protocol/diamond/scripts/deployments/facets/DeployOwnable.s.sol";
+import {LibString} from "solady/utils/LibString.sol";
+import {DeploySpaceOwnerFacet} from "../facets/DeploySpaceOwnerFacet.s.sol";
+import {DeployGuardianFacet} from "../facets/DeployGuardianFacet.s.sol";
+import {DeployMetadata} from "../facets/DeployMetadata.s.sol";
 
 // contracts
-import {Deployer} from "scripts/common/Deployer.s.sol";
-import {DiamondHelper} from "test/diamond/Diamond.t.sol";
+import {Diamond} from "@towns-protocol/diamond/src/Diamond.sol";
+import {MultiInit} from "@towns-protocol/diamond/src/initializers/MultiInit.sol";
+import {DiamondHelper} from "@towns-protocol/diamond/scripts/common/helpers/DiamondHelper.s.sol";
 
-// helpers
-import {DeployDiamondCut} from "scripts/deployments/facets/DeployDiamondCut.s.sol";
-import {DeployDiamondLoupe} from "scripts/deployments/facets/DeployDiamondLoupe.s.sol";
-import {DeployEIP712Facet} from "scripts/deployments/facets/DeployEIP712Facet.s.sol";
-import {DeployGuardianFacet} from "scripts/deployments/facets/DeployGuardianFacet.s.sol";
-import {DeployIntrospection} from "scripts/deployments/facets/DeployIntrospection.s.sol";
-import {DeployMetadata} from "scripts/deployments/facets/DeployMetadata.s.sol";
-import {DeployOwnable} from "scripts/deployments/facets/DeployOwnable.s.sol";
-import {DeploySpaceOwnerFacet} from "scripts/deployments/facets/DeploySpaceOwnerFacet.s.sol";
-import {DeployMultiInit, MultiInit} from "scripts/deployments/utils/DeployMultiInit.s.sol";
+// deployers
+import {DeployFacet} from "../../common/DeployFacet.s.sol";
+import {Deployer} from "../../common/Deployer.s.sol";
 
-contract DeploySpaceOwner is DiamondHelper, Deployer {
-    DeployDiamondCut diamondCutHelper = new DeployDiamondCut();
-    DeployDiamondLoupe diamondLoupeHelper = new DeployDiamondLoupe();
-    DeployOwnable ownableHelper = new DeployOwnable();
-    DeployEIP712Facet eip712Helper = new DeployEIP712Facet();
-    DeployIntrospection introspectionHelper = new DeployIntrospection();
-    DeploySpaceOwnerFacet spaceOwnerHelper = new DeploySpaceOwnerFacet();
-    DeployMetadata metadataHelper = new DeployMetadata();
-    DeployGuardianFacet guardianHelper = new DeployGuardianFacet();
-    DeployMultiInit multiInitHelper = new DeployMultiInit();
+contract DeploySpaceOwner is IDiamondInitHelper, DiamondHelper, Deployer {
+    using LibString for string;
+
+    DeployFacet private facetHelper = new DeployFacet();
 
     address multiInit;
     address diamondCut;
     address diamondLoupe;
-    address eip712;
     address introspection;
     address ownable;
 
+    address eip712;
     address metadata;
     address spaceOwner;
     address guardian;
@@ -48,105 +46,99 @@ contract DeploySpaceOwner is DiamondHelper, Deployer {
     }
 
     function addImmutableCuts(address deployer) internal {
-        multiInit = multiInitHelper.deploy(deployer);
-
-        diamondCut = diamondCutHelper.deploy(deployer);
-        diamondLoupe = diamondLoupeHelper.deploy(deployer);
-        introspection = introspectionHelper.deploy(deployer);
-        ownable = ownableHelper.deploy(deployer);
+        multiInit = facetHelper.deploy("MultiInit", deployer);
+        diamondCut = facetHelper.deploy("DiamondCutFacet", deployer);
+        diamondLoupe = facetHelper.deploy("DiamondLoupeFacet", deployer);
+        introspection = facetHelper.deploy("IntrospectionFacet", deployer);
+        ownable = facetHelper.deploy("OwnableFacet", deployer);
 
         addFacet(
-            diamondCutHelper.makeCut(diamondCut, IDiamond.FacetCutAction.Add),
+            DeployDiamondCut.makeCut(diamondCut, IDiamond.FacetCutAction.Add),
             diamondCut,
-            diamondCutHelper.makeInitData("")
+            DeployDiamondCut.makeInitData()
         );
         addFacet(
-            diamondLoupeHelper.makeCut(diamondLoupe, IDiamond.FacetCutAction.Add),
+            DeployDiamondLoupe.makeCut(diamondLoupe, IDiamond.FacetCutAction.Add),
             diamondLoupe,
-            diamondLoupeHelper.makeInitData("")
+            DeployDiamondLoupe.makeInitData()
         );
         addFacet(
-            introspectionHelper.makeCut(introspection, IDiamond.FacetCutAction.Add),
+            DeployIntrospection.makeCut(introspection, IDiamond.FacetCutAction.Add),
             introspection,
-            introspectionHelper.makeInitData("")
+            DeployIntrospection.makeInitData()
         );
         addFacet(
-            ownableHelper.makeCut(ownable, IDiamond.FacetCutAction.Add),
+            DeployOwnable.makeCut(ownable, IDiamond.FacetCutAction.Add),
             ownable,
-            ownableHelper.makeInitData(deployer)
+            DeployOwnable.makeInitData(deployer)
         );
     }
 
     function diamondInitParams(address deployer) public returns (Diamond.InitParams memory) {
-        metadata = metadataHelper.deploy(deployer);
-        spaceOwner = spaceOwnerHelper.deploy(deployer);
-        guardian = guardianHelper.deploy(deployer);
-        eip712 = eip712Helper.deploy(deployer);
+        metadata = facetHelper.deploy("MetadataFacet", deployer);
+        spaceOwner = facetHelper.deploy("SpaceOwner", deployer);
+        guardian = facetHelper.deploy("GuardianFacet", deployer);
+        eip712 = facetHelper.deploy("EIP712Facet", deployer);
 
         addFacet(
-            spaceOwnerHelper.makeCut(spaceOwner, IDiamond.FacetCutAction.Add),
+            DeploySpaceOwnerFacet.makeCut(spaceOwner, IDiamond.FacetCutAction.Add),
             spaceOwner,
-            spaceOwnerHelper.makeInitData("Space Owner", "OWNER")
+            DeploySpaceOwnerFacet.makeInitData("Space Owner", "OWNER")
         );
         addFacet(
-            eip712Helper.makeCut(eip712, IDiamond.FacetCutAction.Add),
+            DeployEIP712Facet.makeCut(eip712, IDiamond.FacetCutAction.Add),
             eip712,
-            eip712Helper.makeInitData("Space Owner", "1")
+            DeployEIP712Facet.makeInitData("Space Owner", "1")
         );
         addFacet(
-            guardianHelper.makeCut(guardian, IDiamond.FacetCutAction.Add),
+            DeployGuardianFacet.makeCut(guardian, IDiamond.FacetCutAction.Add),
             guardian,
-            guardianHelper.makeInitData(7 days)
+            DeployGuardianFacet.makeInitData(7 days)
         );
         addFacet(
-            metadataHelper.makeCut(metadata, IDiamond.FacetCutAction.Add),
+            DeployMetadata.makeCut(metadata, IDiamond.FacetCutAction.Add),
             metadata,
-            metadataHelper.makeInitData(bytes32("Space Owner"), "")
+            DeployMetadata.makeInitData(bytes32("Space Owner"), "")
         );
 
         return
             Diamond.InitParams({
                 baseFacets: baseFacets(),
                 init: multiInit,
-                initData: abi.encodeWithSelector(
-                    MultiInit.multiInit.selector,
-                    _initAddresses,
-                    _initDatas
-                )
+                initData: abi.encodeCall(MultiInit.multiInit, (_initAddresses, _initDatas))
             });
     }
 
     function diamondInitParamsFromFacets(address deployer, string[] memory facets) public {
-        for (uint256 i = 0; i < facets.length; i++) {
-            bytes32 facetNameHash = keccak256(abi.encodePacked(facets[i]));
-
-            if (facetNameHash == keccak256(abi.encodePacked("MetadataFacet"))) {
-                metadata = metadataHelper.deploy(deployer);
+        for (uint256 i; i < facets.length; ++i) {
+            string memory facetName = facets[i];
+            if (facetName.eq("MetadataFacet")) {
+                metadata = facetHelper.deploy("MetadataFacet", deployer);
                 addFacet(
-                    metadataHelper.makeCut(metadata, IDiamond.FacetCutAction.Add),
+                    DeployMetadata.makeCut(metadata, IDiamond.FacetCutAction.Add),
                     metadata,
-                    metadataHelper.makeInitData(bytes32("Space Owner"), "")
+                    DeployMetadata.makeInitData(bytes32("Space Owner"), "")
                 );
-            } else if (facetNameHash == keccak256(abi.encodePacked("SpaceOwner"))) {
-                spaceOwner = spaceOwnerHelper.deploy(deployer);
+            } else if (facetName.eq("SpaceOwner")) {
+                spaceOwner = facetHelper.deploy("SpaceOwner", deployer);
                 addFacet(
-                    spaceOwnerHelper.makeCut(spaceOwner, IDiamond.FacetCutAction.Add),
+                    DeploySpaceOwnerFacet.makeCut(spaceOwner, IDiamond.FacetCutAction.Add),
                     spaceOwner,
-                    spaceOwnerHelper.makeInitData("Space Owner", "OWNER")
+                    DeploySpaceOwnerFacet.makeInitData("Space Owner", "OWNER")
                 );
-            } else if (facetNameHash == keccak256(abi.encodePacked("EIP712Facet"))) {
-                eip712 = eip712Helper.deploy(deployer);
+            } else if (facetName.eq("EIP712Facet")) {
+                eip712 = facetHelper.deploy("EIP712Facet", deployer);
                 addFacet(
-                    eip712Helper.makeCut(eip712, IDiamond.FacetCutAction.Add),
+                    DeployEIP712Facet.makeCut(eip712, IDiamond.FacetCutAction.Add),
                     eip712,
-                    eip712Helper.makeInitData("Space Owner", "1")
+                    DeployEIP712Facet.makeInitData("Space Owner", "1")
                 );
-            } else if (facetNameHash == keccak256(abi.encodePacked("GuardianFacet"))) {
-                guardian = guardianHelper.deploy(deployer);
+            } else if (facetName.eq("GuardianFacet")) {
+                guardian = facetHelper.deploy("GuardianFacet", deployer);
                 addFacet(
-                    guardianHelper.makeCut(guardian, IDiamond.FacetCutAction.Add),
+                    DeployGuardianFacet.makeCut(guardian, IDiamond.FacetCutAction.Add),
                     guardian,
-                    guardianHelper.makeInitData(7 days)
+                    DeployGuardianFacet.makeInitData(7 days)
                 );
             }
         }

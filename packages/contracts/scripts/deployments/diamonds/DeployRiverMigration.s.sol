@@ -1,37 +1,31 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.19;
 
-//interfaces
+// interfaces
 import {IDiamond} from "@towns-protocol/diamond/src/IDiamond.sol";
 
-//libraries
+// libraries
+import {DeployDiamondCut} from "@towns-protocol/diamond/scripts/deployments/facets/DeployDiamondCut.s.sol";
+import {DeployDiamondLoupe} from "@towns-protocol/diamond/scripts/deployments/facets/DeployDiamondLoupe.s.sol";
+import {DeployIntrospection} from "@towns-protocol/diamond/scripts/deployments/facets/DeployIntrospection.s.sol";
+import {DeployOwnable} from "@towns-protocol/diamond/scripts/deployments/facets/DeployOwnable.s.sol";
+import {DeployPausable} from "@towns-protocol/diamond/scripts/deployments/facets/DeployPausable.s.sol";
+import {DeployTokenMigration} from "../facets/DeployTokenMigration.s.sol";
 
-//contracts
+// contracts
 import {DiamondHelper} from "@towns-protocol/diamond/scripts/common/helpers/DiamondHelper.s.sol";
 import {Diamond} from "@towns-protocol/diamond/src/Diamond.sol";
-import {Deployer} from "scripts/common/Deployer.s.sol";
+import {MultiInit} from "@towns-protocol/diamond/src/initializers/MultiInit.sol";
 
 // deployers
-import {MultiInit} from "@towns-protocol/diamond/src/initializers/MultiInit.sol";
-import {DeployDiamondCut} from "scripts/deployments/facets/DeployDiamondCut.s.sol";
-import {DeployDiamondLoupe} from "scripts/deployments/facets/DeployDiamondLoupe.s.sol";
-import {DeployIntrospection} from "scripts/deployments/facets/DeployIntrospection.s.sol";
-import {DeployOwnable} from "scripts/deployments/facets/DeployOwnable.s.sol";
-import {DeployPausable} from "scripts/deployments/facets/DeployPausable.s.sol";
-import {DeployTokenMigration} from "scripts/deployments/facets/DeployTokenMigration.s.sol";
-import {DeployMultiInit} from "scripts/deployments/utils/DeployMultiInit.s.sol";
+import {DeployFacet} from "../../common/DeployFacet.s.sol";
+import {Deployer} from "../../common/Deployer.s.sol";
 
 contract DeployRiverMigration is DiamondHelper, Deployer {
     address OLD_TOKEN = 0x0000000000000000000000000000000000000000;
     address NEW_TOKEN = 0x0000000000000000000000000000000000000000;
 
-    DeployMultiInit deployMultiInit = new DeployMultiInit();
-    DeployDiamondCut diamondCutHelper = new DeployDiamondCut();
-    DeployDiamondLoupe diamondLoupeHelper = new DeployDiamondLoupe();
-    DeployIntrospection introspectionHelper = new DeployIntrospection();
-    DeployOwnable ownableHelper = new DeployOwnable();
-    DeployPausable pausableHelper = new DeployPausable();
-    DeployTokenMigration tokenMigrationHelper = new DeployTokenMigration();
+    DeployFacet private facetHelper = new DeployFacet();
 
     address multiInit;
     address diamondCut;
@@ -59,60 +53,56 @@ contract DeployRiverMigration is DiamondHelper, Deployer {
     }
 
     function addImmutableCuts(address deployer) internal {
-        multiInit = deployMultiInit.deploy(deployer);
-        diamondCut = diamondCutHelper.deploy(deployer);
-        diamondLoupe = diamondLoupeHelper.deploy(deployer);
-        introspection = introspectionHelper.deploy(deployer);
-        ownable = ownableHelper.deploy(deployer);
-        pausable = pausableHelper.deploy(deployer);
+        multiInit = facetHelper.deploy("MultiInit", deployer);
+        diamondCut = facetHelper.deploy("DiamondCutFacet", deployer);
+        diamondLoupe = facetHelper.deploy("DiamondLoupeFacet", deployer);
+        introspection = facetHelper.deploy("IntrospectionFacet", deployer);
+        ownable = facetHelper.deploy("OwnableFacet", deployer);
+        pausable = facetHelper.deploy("PausableFacet", deployer);
 
         addFacet(
-            diamondCutHelper.makeCut(diamondCut, IDiamond.FacetCutAction.Add),
+            DeployDiamondCut.makeCut(diamondCut, IDiamond.FacetCutAction.Add),
             diamondCut,
-            diamondCutHelper.makeInitData("")
+            DeployDiamondCut.makeInitData()
         );
         addFacet(
-            diamondLoupeHelper.makeCut(diamondLoupe, IDiamond.FacetCutAction.Add),
+            DeployDiamondLoupe.makeCut(diamondLoupe, IDiamond.FacetCutAction.Add),
             diamondLoupe,
-            diamondLoupeHelper.makeInitData("")
+            DeployDiamondLoupe.makeInitData()
         );
         addFacet(
-            introspectionHelper.makeCut(introspection, IDiamond.FacetCutAction.Add),
+            DeployIntrospection.makeCut(introspection, IDiamond.FacetCutAction.Add),
             introspection,
-            introspectionHelper.makeInitData("")
+            DeployIntrospection.makeInitData()
         );
         addFacet(
-            ownableHelper.makeCut(ownable, IDiamond.FacetCutAction.Add),
+            DeployOwnable.makeCut(ownable, IDiamond.FacetCutAction.Add),
             ownable,
-            ownableHelper.makeInitData(deployer)
+            DeployOwnable.makeInitData(deployer)
         );
         addFacet(
-            pausableHelper.makeCut(pausable, IDiamond.FacetCutAction.Add),
+            DeployPausable.makeCut(pausable, IDiamond.FacetCutAction.Add),
             pausable,
-            pausableHelper.makeInitData("")
+            DeployPausable.makeInitData()
         );
     }
 
     function diamondInitParams(address deployer) public returns (Diamond.InitParams memory) {
-        tokenMigration = tokenMigrationHelper.deploy(deployer);
+        tokenMigration = facetHelper.deploy("TokenMigrationFacet", deployer);
 
         (address oldToken, address newToken) = getTokens();
 
         addFacet(
-            tokenMigrationHelper.makeCut(tokenMigration, IDiamond.FacetCutAction.Add),
+            DeployTokenMigration.makeCut(tokenMigration, IDiamond.FacetCutAction.Add),
             tokenMigration,
-            tokenMigrationHelper.makeInitData(oldToken, newToken)
+            DeployTokenMigration.makeInitData(oldToken, newToken)
         );
 
         return
             Diamond.InitParams({
                 baseFacets: baseFacets(),
                 init: multiInit,
-                initData: abi.encodeWithSelector(
-                    MultiInit.multiInit.selector,
-                    _initAddresses,
-                    _initDatas
-                )
+                initData: abi.encodeCall(MultiInit.multiInit, (_initAddresses, _initDatas))
             });
     }
 

@@ -17,14 +17,15 @@ import (
 )
 
 const (
-	RiverNoForwardHeader = "X-River-No-Forward"
-	RiverNoForwardValue  = "true"
-	RiverFromNodeHeader  = "X-River-From-Node"
-	RiverToNodeHeader    = "X-River-To-Node"
+	RiverNoForwardHeader     = "X-River-No-Forward" // Must be set to "true" to disable forwarding
+	RiverHeaderTrueValue     = "true"
+	RiverFromNodeHeader      = "X-River-From-Node"
+	RiverToNodeHeader        = "X-River-To-Node"
+	RiverAllowNoQuorumHeader = "X-River-Allow-No-Quorum" // Must be set to "true" to allow getting data if local node is not in quorum
 )
 
 func checkNoForward[T any](req *connect.Request[T]) error {
-	if req.Header().Get(RiverNoForwardHeader) == RiverNoForwardValue {
+	if req.Header().Get(RiverNoForwardHeader) == RiverHeaderTrueValue {
 		return RiverError(Err_UNAVAILABLE, "Forwarding disabled by request header")
 	}
 	return nil
@@ -32,9 +33,16 @@ func checkNoForward[T any](req *connect.Request[T]) error {
 
 func copyRequestForForwarding[T any](s *Service, req *connect.Request[T]) *connect.Request[T] {
 	newReq := connect.NewRequest(req.Msg)
-	newReq.Header().Set(RiverNoForwardHeader, RiverNoForwardValue)
+	newReq.Header().Set(RiverNoForwardHeader, RiverHeaderTrueValue)
 	newReq.Header().Set(RiverFromNodeHeader, s.wallet.Address.Hex())
+	if allowNoQuorum(req) {
+		newReq.Header().Set(RiverAllowNoQuorumHeader, RiverHeaderTrueValue)
+	}
 	return newReq
+}
+
+func allowNoQuorum[T any](req *connect.Request[T]) bool {
+	return req.Header().Get(RiverAllowNoQuorumHeader) == RiverHeaderTrueValue
 }
 
 // peerNodeStreamingResponseWithRetries makes a request with a streaming server response to remote nodes, retrying
@@ -207,7 +215,7 @@ func (s *Service) getStreamImpl(
 	}
 
 	// Check that stream is marked as accessed in this case (i.e. timestamp is set)
-	view, err := stream.GetViewIfLocal(ctx)
+	view, err := stream.GetViewIfLocalEx(ctx, allowNoQuorum(req))
 	if err != nil {
 		return nil, err
 	}
@@ -280,7 +288,8 @@ func (s *Service) getStreamExImpl(
 		return err
 	}
 
-	if nodes.IsLocal() {
+	allowNoQuorum := allowNoQuorum(req)
+	if !allowNoQuorum && nodes.IsLocalInQuorum() || allowNoQuorum && nodes.IsLocal() {
 		return s.localGetStreamEx(ctx, req, resp)
 	}
 
@@ -356,7 +365,8 @@ func (s *Service) getMiniblocksImpl(
 		return nil, err
 	}
 
-	if stream.IsLocal() {
+	allowNoQuorum := allowNoQuorum(req)
+	if !allowNoQuorum && stream.IsLocalInQuorum() || allowNoQuorum && stream.IsLocal() {
 		return s.localGetMiniblocks(ctx, req, stream)
 	}
 
@@ -401,7 +411,7 @@ func (s *Service) getLastMiniblockHashImpl(
 		return nil, err
 	}
 
-	view, err := stream.GetViewIfLocal(ctx)
+	view, err := stream.GetViewIfLocalEx(ctx, allowNoQuorum(req))
 	if err != nil {
 		return nil, err
 	}
@@ -453,7 +463,7 @@ func (s *Service) addEventImpl(
 		return nil, err
 	}
 
-	view, err := stream.GetViewIfLocal(ctx)
+	view, err := stream.GetViewIfLocalEx(ctx, allowNoQuorum(req))
 	if err != nil {
 		return nil, err
 	}
@@ -524,7 +534,7 @@ func (s *Service) addMediaEventImpl(
 	// TODO: smarter remote select? random?
 	// TODO: retry?
 	firstRemote := NewStreamNodesWithLock(len(cc.NodeAddresses()), cc.NodeAddresses(), s.wallet.Address).GetStickyPeer()
-	logging.FromCtx(ctx).Debug("Forwarding request", "nodeAddress", firstRemote)
+	logging.FromCtx(ctx).Debugw("Forwarding request", "nodeAddress", firstRemote)
 	stub, err := s.nodeRegistry.GetStreamServiceClientForAddress(firstRemote)
 	if err != nil {
 		return nil, err
