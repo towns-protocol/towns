@@ -30,6 +30,9 @@ import {PrepayBase} from "src/spaces/facets/prepay/PrepayBase.sol";
 import {ReferralsBase} from "src/spaces/facets/referrals/ReferralsBase.sol";
 import {RolesBase} from "src/spaces/facets/roles/RolesBase.sol";
 
+// debuggging
+import {console} from "forge-std/console.sol";
+
 /// @title MembershipJoin
 /// @notice Handles the logic for joining a space, including entitlement checks and payment
 /// processing
@@ -453,18 +456,13 @@ abstract contract MembershipJoin is
             Membership__InvalidAddress.selector.revertWith();
         }
 
-        // Calculate the halfway point between start and expiration
-        // If current time is less than halfway through the membership, prevent renewal
-        uint256 expiration = _expiresAt(tokenId);
         uint256 duration = _getMembershipDuration();
-        uint256 allowedRenewalTime = expiration - (duration / 2);
+        uint256 membershipPrice = _getMembershipRenewalPrice(tokenId, _totalSupply());
 
-        if (block.timestamp < allowedRenewalTime) {
-            Membership__NotExpired.selector.revertWith();
+        if (membershipPrice != msg.value) {
+            Membership__InvalidPayment.selector.revertWith();
         }
 
-        // allocate protocol and membership fees
-        uint256 membershipPrice = _getMembershipRenewalPrice(tokenId, _totalSupply());
         uint256 protocolFee = _collectProtocolFee(receiver, membershipPrice);
 
         uint256 remainingDue = membershipPrice - protocolFee;
