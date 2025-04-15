@@ -132,6 +132,11 @@ type (
 			app common.Address,
 		) (*AppInfo, error)
 
+		GetSendableApps(
+			ctx context.Context,
+			apps []common.Address,
+		) (sendableDevices []SendableApp, err error)
+
 		// PublishSessionKeys creates a row with the group encryption sessions envelope and list of
 		// session ids for the device key, and returns all enqueued messages that become sendable now
 		// that these session keys are available. If no keys become sendable, messages is nil.
@@ -154,6 +159,8 @@ type (
 			envelopeBytes []byte,
 		) (sendableDevices []SendableApp, unsendableDevices []UnsendableApp, err error)
 
+		// GetSessionKey returns the envelope of the encrypted sessions message for the specified
+		// app that contains the encrypted ciphertext for the given session id, if it exists.
 		GetSessionKey(
 			ctx context.Context,
 			app common.Address,
@@ -687,6 +694,84 @@ func (s *PostgresAppRegistryStore) getSessionKey(
 		}
 	}
 	return encryptionEnvelope, nil
+}
+
+func (s *PostgresAppRegistryStore) GetSendableApps(
+	ctx context.Context,
+	apps []common.Address,
+) (sendableDevices []SendableApp, err error) {
+	err = s.txRunner(
+		ctx,
+		"GetSendableApps",
+		pgx.ReadOnly,
+		func(ctx context.Context, tx pgx.Tx) error {
+			var err error
+			sendableDevices, err = s.getSendableApps(ctx, apps, tx)
+			return err
+		},
+		nil,
+		"apps", apps,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return sendableDevices, nil
+}
+
+func (s *PostgresAppRegistryStore) getSendableApps(
+	ctx context.Context,
+	apps []common.Address,
+	tx pgx.Tx,
+) (sendableApps []SendableApp, err error) {
+	if len(apps) == 0 {
+		return sendableApps, nil
+	}
+
+	rows, err := tx.Query(
+		ctx,
+		`   
+		    SELECT app_id, device_key, webhook, encrypted_shared_secret
+			FROM app_registry
+			WHERE app_id = ANY($1)
+		`,
+		addressesToStrings(apps),
+	)
+	if err != nil {
+		return nil, WrapRiverError(
+			protocol.Err_DB_OPERATION_FAILURE,
+			err,
+		).Message("unable to get sending information for existing devices")
+	}
+
+	var appId PGAddress
+	var deviceKey, webhookUrl string
+	var encryptedSharedSecret PGSecret
+	if _, err := pgx.ForEachRow(
+		rows,
+		[]any{&appId, &deviceKey, &webhookUrl, &encryptedSharedSecret},
+		func() error {
+			sendableApps = append(sendableApps, SendableApp{
+				AppId:      common.Address(appId),
+				DeviceKey:  deviceKey,
+				WebhookUrl: webhookUrl,
+				SendMessageSecrets: SendMessageSecrets{
+					EncryptedSharedSecret: encryptedSharedSecret,
+				},
+			})
+			return nil
+		},
+	); err != nil {
+		return nil, WrapRiverError(
+			protocol.Err_DB_OPERATION_FAILURE,
+			err,
+		).Message("unable to scan the app_registry")
+	}
+
+	if len(sendableApps) < len(apps) {
+		return nil, RiverError(protocol.Err_NOT_FOUND, "some apps were not found the registry")
+	}
+
+	return sendableApps, nil
 }
 
 func (s *PostgresAppRegistryStore) EnqueueUnsendableMessages(

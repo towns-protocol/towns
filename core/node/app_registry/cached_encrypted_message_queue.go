@@ -8,6 +8,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 
 	"github.com/towns-protocol/towns/core/node/base"
+	"github.com/towns-protocol/towns/core/node/logging"
 	"github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/shared"
 	"github.com/towns-protocol/towns/core/node/storage"
@@ -83,7 +84,13 @@ func (q *CachedEncryptedMessageQueue) UpdateForwardSetting(
 	app common.Address,
 	forwardSetting protocol.ForwardSettingValue,
 ) error {
-	return q.store.UpdateForwardSetting(ctx, app, forwardSetting)
+	err := q.store.UpdateForwardSetting(ctx, app, forwardSetting)
+	if err == nil {
+		if fs, exists := q.appIdCache.Load(app); exists {
+			fs.(*ForwardState).ForwardSetting = forwardSetting
+		}
+	}
+	return err
 }
 
 func (q *CachedEncryptedMessageQueue) RegisterWebhook(
@@ -139,7 +146,9 @@ func (q *CachedEncryptedMessageQueue) PublishSessionKeys(
 }
 
 // DispatchOrEnqueueMessages will immediately send a message for each device that has session keys, and will
-// enqueue unsendable messages and send them as soon as keys become available.
+// enqueue unsendable messages and send them as soon as keys become available for each app. The session id
+// here is the session_id_bytes of an EncryptedData message, if this is the actual content of the channel event.
+// Otherwise it will be an empty string, and the message should be immediately sendable to all devices.
 func (q *CachedEncryptedMessageQueue) DispatchOrEnqueueMessages(
 	ctx context.Context,
 	appIds []common.Address,
@@ -147,16 +156,24 @@ func (q *CachedEncryptedMessageQueue) DispatchOrEnqueueMessages(
 	channelId shared.StreamId,
 	envelopeBytes []byte,
 ) (err error) {
-	// log := logging.FromCtx(ctx)
-	sendableApps, unsendableApps, err := q.store.EnqueueUnsendableMessages(
-		ctx,
-		appIds,
-		sessionId,
-		envelopeBytes,
-	)
+	var sendableApps []storage.SendableApp
+	var unsendableApps []storage.UnsendableApp
+
+	if sessionId == "" {
+		// If the session id is empty, the event can be sent without session keys.
+		sendableApps, err = q.store.GetSendableApps(ctx, appIds)
+	} else {
+		sendableApps, unsendableApps, err = q.store.EnqueueUnsendableMessages(
+			ctx,
+			appIds,
+			sessionId,
+			envelopeBytes,
+		)
+	}
 	if err != nil {
 		return err
 	}
+	log := logging.FromCtx(ctx)
 	// log.Debugw(
 	// 	"enqueue unsendable messages",
 	// 	"sendableApps",
@@ -168,14 +185,13 @@ func (q *CachedEncryptedMessageQueue) DispatchOrEnqueueMessages(
 	// 	"channelId",
 	// 	channelId,
 	// )
-
 	if len(sendableApps)+len(unsendableApps) != len(appIds) {
 		return base.AsRiverError(
 			fmt.Errorf(
 				"unexpected error: number of enqueued messages plus sendable devices does not equal the total number of devices",
 			),
 			protocol.Err_INTERNAL,
-		).Func("CachedEncryptedMessageQueue.EnqueueMessages")
+		).Func("CachedEncryptedMessageQueue.EnqueueMessages").LogError(log)
 	}
 
 	// Submit a single message for each sendable device
@@ -211,6 +227,27 @@ func (q *CachedEncryptedMessageQueue) DispatchOrEnqueueMessages(
 	)
 }
 
+func (q *CachedEncryptedMessageQueue) IsApp(ctx context.Context, userId common.Address) (bool, error) {
+	_, exists := q.appIdCache.Load(userId)
+	if exists {
+		return true, nil
+	} else {
+		info, err := q.store.GetAppInfo(ctx, userId)
+		if err != nil {
+			if base.AsRiverError(err).Code == protocol.Err_NOT_FOUND {
+				return false, nil
+			} else {
+				return false, base.AsRiverError(err, protocol.Err_DB_OPERATION_FAILURE).Message("Could not determine if the id is an app")
+			}
+		}
+		_, _ = q.appIdCache.LoadOrStore(userId, &ForwardState{
+			HasWebhook:     info.WebhookUrl != "",
+			ForwardSetting: info.ForwardSetting,
+		})
+		return true, nil
+	}
+}
+
 // IsForwardableApp returns whether or not an app exists in the registry and has a webhook
 // registered, and, if so, what forward setting should be used when filtering relevant
 // messages.
@@ -225,6 +262,9 @@ func (q *CachedEncryptedMessageQueue) IsForwardableApp(
 	} else {
 		info, err := q.store.GetAppInfo(ctx, appId)
 		if err != nil {
+			if base.AsRiverError(err).Code == protocol.Err_NOT_FOUND {
+				return false, 0, nil
+			}
 			return false, 0, base.AsRiverError(err, protocol.Err_DB_OPERATION_FAILURE).Message("Could not determine if the app has a registered webhook")
 		}
 		fs, _ = q.appIdCache.LoadOrStore(appId, &ForwardState{

@@ -18,7 +18,7 @@ import (
 	"github.com/towns-protocol/towns/core/node/base/test"
 	"github.com/towns-protocol/towns/core/node/crypto"
 	"github.com/towns-protocol/towns/core/node/infra"
-	"github.com/towns-protocol/towns/core/node/protocol"
+	. "github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/shared"
 	"github.com/towns-protocol/towns/core/node/storage"
 	"github.com/towns-protocol/towns/core/node/testutils/dbtestutils"
@@ -103,7 +103,7 @@ func TestGetSessionKey(t *testing.T) {
 	require.NoError(err)
 	secret := [32]byte(secretBytes)
 
-	err = store.CreateApp(params.ctx, owner, app, protocol.ForwardSettingValue_FORWARD_SETTING_UNSPECIFIED, secret)
+	err = store.CreateApp(params.ctx, owner, app, ForwardSettingValue_FORWARD_SETTING_UNSPECIFIED, secret)
 	require.NoError(err)
 
 	err = store.RegisterWebhook(params.ctx, app, "http://www.callme.com/webhook", "deviceKey", "fallbackKey")
@@ -160,7 +160,7 @@ func TestGetSessionKey(t *testing.T) {
 				require.Equal(tc.expectedEnvelope, envelope)
 			} else {
 				require.Error(err)
-				require.True(base.IsRiverErrorCode(err, protocol.Err_NOT_FOUND))
+				require.True(base.IsRiverErrorCode(err, Err_NOT_FOUND))
 			}
 		})
 	}
@@ -181,7 +181,7 @@ func TestUpdateForwardSetting(t *testing.T) {
 	require.NoError(err)
 	secret := [32]byte(secretBytes)
 
-	err = store.CreateApp(params.ctx, owner, app, protocol.ForwardSettingValue_FORWARD_SETTING_UNSPECIFIED, secret)
+	err = store.CreateApp(params.ctx, owner, app, ForwardSettingValue_FORWARD_SETTING_UNSPECIFIED, secret)
 	require.NoError(err)
 
 	info, err := store.GetAppInfo(params.ctx, app)
@@ -195,7 +195,7 @@ func TestUpdateForwardSetting(t *testing.T) {
 		info,
 	)
 
-	err = store.UpdateForwardSetting(params.ctx, app, protocol.ForwardSettingValue_FORWARD_SETTING_ALL_MESSAGES)
+	err = store.UpdateForwardSetting(params.ctx, app, ForwardSettingValue_FORWARD_SETTING_ALL_MESSAGES)
 	require.NoError(err)
 
 	info, err = store.GetAppInfo(params.ctx, app)
@@ -205,7 +205,7 @@ func TestUpdateForwardSetting(t *testing.T) {
 			App:             app,
 			Owner:           owner,
 			EncryptedSecret: secret,
-			ForwardSetting:  protocol.ForwardSettingValue_FORWARD_SETTING_ALL_MESSAGES,
+			ForwardSetting:  ForwardSettingValue_FORWARD_SETTING_ALL_MESSAGES,
 		},
 		info,
 	)
@@ -213,7 +213,7 @@ func TestUpdateForwardSetting(t *testing.T) {
 	err = store.UpdateForwardSetting(
 		params.ctx,
 		unregisteredApp,
-		protocol.ForwardSettingValue_FORWARD_SETTING_MENTIONS_REPLIES_REACTIONS,
+		ForwardSettingValue_FORWARD_SETTING_MENTIONS_REPLIES_REACTIONS,
 	)
 	require.ErrorContains(err, "app was not found in registry")
 }
@@ -236,7 +236,7 @@ func TestRegisterWebhook(t *testing.T) {
 	require.NoError(err)
 	secret := [32]byte(secretBytes)
 
-	err = store.CreateApp(params.ctx, owner, app, protocol.ForwardSettingValue_FORWARD_SETTING_UNSPECIFIED, secret)
+	err = store.CreateApp(params.ctx, owner, app, ForwardSettingValue_FORWARD_SETTING_UNSPECIFIED, secret)
 	require.NoError(err)
 
 	info, err := store.GetAppInfo(params.ctx, app)
@@ -295,11 +295,11 @@ func TestRegisterWebhook(t *testing.T) {
 	err = store.RegisterWebhook(params.ctx, unregisteredApp, webhook, deviceKey, fallbackKey)
 	require.ErrorContains(err, "app was not found in registry")
 
-	err = store.CreateApp(params.ctx, owner, app2, protocol.ForwardSettingValue_FORWARD_SETTING_UNSPECIFIED, secret)
+	err = store.CreateApp(params.ctx, owner, app2, ForwardSettingValue_FORWARD_SETTING_UNSPECIFIED, secret)
 	require.NoError(err)
 	err = store.RegisterWebhook(params.ctx, app2, webhook, deviceKey2, fallbackKey)
 	require.ErrorContains(err, "another app is using this device id")
-	require.True(base.IsRiverErrorCode(err, protocol.Err_ALREADY_EXISTS))
+	require.True(base.IsRiverErrorCode(err, Err_ALREADY_EXISTS))
 }
 
 func TestCreateApp(t *testing.T) {
@@ -324,25 +324,25 @@ func TestCreateApp(t *testing.T) {
 	require.NoError(err)
 	secret2 := [32]byte(secretBytes2)
 
-	err = store.CreateApp(params.ctx, owner, app, protocol.ForwardSettingValue_FORWARD_SETTING_ALL_MESSAGES, secret)
+	err = store.CreateApp(params.ctx, owner, app, ForwardSettingValue_FORWARD_SETTING_ALL_MESSAGES, secret)
 	require.NoError(err)
 
 	err = store.CreateApp(
 		params.ctx,
 		owner2,
 		app,
-		protocol.ForwardSettingValue_FORWARD_SETTING_MENTIONS_REPLIES_REACTIONS,
+		ForwardSettingValue_FORWARD_SETTING_MENTIONS_REPLIES_REACTIONS,
 		secret,
 	)
 	require.ErrorContains(err, "app already exists")
-	require.True(base.IsRiverErrorCode(err, protocol.Err_ALREADY_EXISTS))
+	require.True(base.IsRiverErrorCode(err, Err_ALREADY_EXISTS))
 
 	// Fine to have multiple apps per owner
 	err = store.CreateApp(
 		params.ctx,
 		owner,
 		app2,
-		protocol.ForwardSettingValue_FORWARD_SETTING_MENTIONS_REPLIES_REACTIONS,
+		ForwardSettingValue_FORWARD_SETTING_MENTIONS_REPLIES_REACTIONS,
 		secret2,
 	)
 	require.NoError(err)
@@ -354,7 +354,7 @@ func TestCreateApp(t *testing.T) {
 			App:             app,
 			Owner:           owner,
 			EncryptedSecret: secret,
-			ForwardSetting:  protocol.ForwardSettingValue_FORWARD_SETTING_ALL_MESSAGES,
+			ForwardSetting:  ForwardSettingValue_FORWARD_SETTING_ALL_MESSAGES,
 		},
 		info,
 	)
@@ -366,7 +366,7 @@ func TestCreateApp(t *testing.T) {
 			App:             app2,
 			Owner:           owner,
 			EncryptedSecret: secret2,
-			ForwardSetting:  protocol.ForwardSettingValue_FORWARD_SETTING_MENTIONS_REPLIES_REACTIONS,
+			ForwardSetting:  ForwardSettingValue_FORWARD_SETTING_MENTIONS_REPLIES_REACTIONS,
 		},
 		info,
 	)
@@ -374,7 +374,7 @@ func TestCreateApp(t *testing.T) {
 	info, err = store.GetAppInfo(params.ctx, app3)
 	require.Nil(info)
 	require.ErrorContains(err, "app is not registered")
-	require.True(base.IsRiverErrorCode(err, protocol.Err_NOT_FOUND))
+	require.True(base.IsRiverErrorCode(err, Err_NOT_FOUND))
 }
 
 func TestRotateSecret(t *testing.T) {
@@ -396,7 +396,7 @@ func TestRotateSecret(t *testing.T) {
 	require.NoError(err)
 	secret2 := [32]byte(secretBytes2)
 
-	err = store.CreateApp(params.ctx, owner, app, protocol.ForwardSettingValue_FORWARD_SETTING_UNSPECIFIED, secret)
+	err = store.CreateApp(params.ctx, owner, app, ForwardSettingValue_FORWARD_SETTING_UNSPECIFIED, secret)
 	require.NoError(err)
 
 	info, err := store.GetAppInfo(params.ctx, app)
@@ -448,7 +448,7 @@ func TestPublishSessionKeys(t *testing.T) {
 	)
 	require.Nil(messages)
 	require.ErrorContains(err, "app with device key is not registered")
-	require.True(base.IsRiverErrorCode(err, protocol.Err_NOT_FOUND))
+	require.True(base.IsRiverErrorCode(err, Err_NOT_FOUND))
 
 	// Create an app...
 	owner := safeAddress(t)
@@ -458,7 +458,7 @@ func TestPublishSessionKeys(t *testing.T) {
 	require.NoError(err)
 	secret := [32]byte(secretBytes)
 
-	err = store.CreateApp(params.ctx, owner, app, protocol.ForwardSettingValue_FORWARD_SETTING_UNSPECIFIED, secret)
+	err = store.CreateApp(params.ctx, owner, app, ForwardSettingValue_FORWARD_SETTING_UNSPECIFIED, secret)
 	require.NoError(err)
 
 	webhook := "https://webhook.com/callme"
@@ -508,6 +508,88 @@ func nSafeWallets(t *testing.T, ctx context.Context, n int) []*crypto.Wallet {
 		wallets[i] = wallet
 	}
 	return wallets
+}
+
+func TestGetSendableApps(t *testing.T) {
+	params := setupAppRegistryStorageTest(t)
+	t.Cleanup(params.closer)
+
+	require := require.New(t)
+	store := params.pgAppRegistryStore
+
+	// Generate random addresses
+	owner := safeAddress(t)
+	app := safeAddress(t)
+
+	owner2 := safeAddress(t)
+	app2 := safeAddress(t)
+
+	secretBytes, err := hex.DecodeString(testSecretHexString)
+	require.NoError(err)
+	secret := [32]byte(secretBytes)
+
+	secretBytes2, err := hex.DecodeString(testSecretHexString2)
+	require.NoError(err)
+	secret2 := [32]byte(secretBytes2)
+
+	sApp := storage.SendableApp{
+		AppId:      app,
+		DeviceKey:  "deviceKey",
+		WebhookUrl: "http://www.wh.com/path",
+		SendMessageSecrets: storage.SendMessageSecrets{
+			EncryptedSharedSecret: secret,
+		},
+	}
+	sApp2 := storage.SendableApp{
+		AppId:      app2,
+		DeviceKey:  "deviceKey2",
+		WebhookUrl: "http://www.wh.com/path2",
+		SendMessageSecrets: storage.SendMessageSecrets{
+			EncryptedSharedSecret: secret2,
+		},
+	}
+
+	require.NoError(store.CreateApp(params.ctx, owner, app, ForwardSettingValue_FORWARD_SETTING_UNSPECIFIED, secret))
+	require.NoError(store.RegisterWebhook(params.ctx, app, sApp.WebhookUrl, sApp.DeviceKey, "fallbackKey"))
+
+	require.NoError(store.CreateApp(params.ctx, owner2, app2, ForwardSettingValue_FORWARD_SETTING_UNSPECIFIED, secret2))
+	require.NoError(store.RegisterWebhook(params.ctx, app2, sApp2.WebhookUrl, sApp2.DeviceKey, "fallbackKey2"))
+
+	sendableApps, err := store.GetSendableApps(params.ctx, []common.Address{})
+	require.Len(sendableApps, 0)
+	require.NoError(err)
+
+	sendableApps, err = store.GetSendableApps(params.ctx, []common.Address{safeAddress(t)})
+	require.Len(sendableApps, 0)
+	require.Error(err, "some apps were not found the registry")
+
+	sendableApps, err = store.GetSendableApps(params.ctx, []common.Address{app})
+	require.NoError(err)
+	require.ElementsMatch(
+		sendableApps,
+		[]storage.SendableApp{
+			sApp,
+		},
+	)
+
+	sendableApps, err = store.GetSendableApps(params.ctx, []common.Address{app2})
+	require.NoError(err)
+	require.ElementsMatch(
+		sendableApps,
+		[]storage.SendableApp{
+			sApp2,
+		},
+	)
+
+	sendableApps, err = store.GetSendableApps(params.ctx, []common.Address{app, app2})
+	require.NoError(err)
+	require.ElementsMatch(
+		sendableApps,
+		[]storage.SendableApp{
+			sApp,
+			sApp2,
+		},
+	)
 }
 
 func TestEnqueueMessages(t *testing.T) {
@@ -560,13 +642,13 @@ func TestEnqueueMessages(t *testing.T) {
 	require.Nil(unsendableApps)
 
 	require.ErrorContains(err, "some app ids were not registered")
-	require.True(base.IsRiverErrorCode(err, protocol.Err_NOT_FOUND))
+	require.True(base.IsRiverErrorCode(err, Err_NOT_FOUND))
 
 	err = store.CreateApp(
 		params.ctx,
 		owner.Address,
 		apps[0].Address,
-		protocol.ForwardSettingValue_FORWARD_SETTING_UNSPECIFIED,
+		ForwardSettingValue_FORWARD_SETTING_UNSPECIFIED,
 		secrets[0],
 	)
 	require.NoError(err)
@@ -577,7 +659,6 @@ func TestEnqueueMessages(t *testing.T) {
 
 	// Registering a session key for a non-existent device fails the entire
 	// transaction, even when the first key corresponds to a registered app.
-	// The tag on the error identifies the specific device key that failed.
 	sendableApps, unsendableApps, err = store.EnqueueUnsendableMessages(
 		params.ctx,
 		[]common.Address{apps[0].Address, apps[1].Address},
@@ -587,7 +668,7 @@ func TestEnqueueMessages(t *testing.T) {
 	require.Nil(sendableApps)
 	require.Nil(unsendableApps)
 	require.ErrorContains(err, "some app ids were not registered")
-	require.True(base.IsRiverErrorCode(err, protocol.Err_NOT_FOUND))
+	require.True(base.IsRiverErrorCode(err, Err_NOT_FOUND))
 
 	unsendableAppAtIndex := func(i int) storage.UnsendableApp {
 		return storage.UnsendableApp{
@@ -647,7 +728,7 @@ func TestEnqueueMessages(t *testing.T) {
 				params.ctx,
 				owner.Address,
 				apps[i+1].Address,
-				protocol.ForwardSettingValue_FORWARD_SETTING_UNSPECIFIED,
+				ForwardSettingValue_FORWARD_SETTING_UNSPECIFIED,
 				secrets[i+1],
 			),
 		)

@@ -125,7 +125,9 @@ func (ar *appRegistryServiceTester) NodeClient(i int, opts testClientOpts) *test
 }
 
 type testerOpts struct {
-	numNodes int
+	numNodes    int
+	botWallet   *crypto.Wallet
+	ownerWallet *crypto.Wallet
 }
 
 func NewAppRegistryServiceTester(t *testing.T, opts *testerOpts) *appRegistryServiceTester {
@@ -141,8 +143,17 @@ func NewAppRegistryServiceTester(t *testing.T, opts *testerOpts) *appRegistrySer
 
 	require := tester.require
 	client := tester.testClient(0)
-	botWallet := safeNewWallet(ctx, require)
-	ownerWallet := safeNewWallet(ctx, require)
+	var botWallet, ownerWallet *crypto.Wallet
+	if opts != nil && opts.botWallet != nil {
+		botWallet = opts.botWallet
+	} else {
+		botWallet = safeNewWallet(ctx, require)
+	}
+	if opts != nil && opts.ownerWallet != nil {
+		ownerWallet = opts.ownerWallet
+	} else {
+		ownerWallet = safeNewWallet(ctx, require)
+	}
 
 	// Set up app service clients
 	httpClient, _ := testcert.GetHttp2LocalhostTLSClient(tester.ctx, tester.getConfig())
@@ -155,7 +166,7 @@ func NewAppRegistryServiceTester(t *testing.T, opts *testerOpts) *appRegistrySer
 	)
 
 	// Start a test app service that serves webhook responses
-	appServer := app_registry.NewTestAppServer(t, botWallet, client, false)
+	appServer := app_registry.NewTestAppServer(t, botWallet, client, true)
 	tester.cleanup(appServer.Close)
 
 	return &appRegistryServiceTester{
@@ -252,8 +263,8 @@ func generateSessionKeys(deviceKey string, sessionIds []string) string {
 	for i, sessionId := range sessionIds {
 		if i != 0 {
 			sb.WriteString("-")
-			sb.WriteString(sessionId)
 		}
+		sb.WriteString(sessionId)
 	}
 	return sb.String()
 }
@@ -437,91 +448,202 @@ func safeCreateUserStreams(
 }
 
 func TestAppRegistry_MessageForwardSettings(t *testing.T) {
-	tester := NewAppRegistryServiceTester(t, nil)
-	tester.StartBotService()
-
-	// Create user streams for chat participant
-	participantEncryptionDevice := protocol.UserMetadataPayload_EncryptionDevice{
-		DeviceKey:   "participantDeviceKey",
-		FallbackKey: "participantFallbackKey",
-	}
-
-	participantClient := tester.NodeClient(0, testClientOpts{})
-	participantClient.createUserStreamsWithEncryptionDevice(&participantEncryptionDevice)
-
-	// The participant creates a space and a channel.
-	spaceId, _ := participantClient.createSpace()
-	channelId, _, _ := participantClient.createChannel(spaceId)
-
-	// Create user streams for bot and add to channel
-	_, appUserStreamCookie := tester.RegisterBotService(protocol.ForwardSettingValue_FORWARD_SETTING_ALL_MESSAGES)
-	botClient := tester.BotNodeClient(testClientOpts{})
-
-	// Bot joins channel.
-	botClient.joinChannel(spaceId, channelId, &MiniblockRef{
-		Hash: common.Hash(appUserStreamCookie.PrevMiniblockHash),
-		Num:  appUserStreamCookie.MinipoolGen - 1,
-	})
-
-	// Confirm channel has 2 members: bot and participant.
-	botClient.requireMembership(channelId, []common.Address{botClient.wallet.Address, participantClient.wallet.Address})
-
-	// The participant sends a test message to send to the channel with session id "session0".
-	// The app registry service does not have a session key for this session and should prompt
-	// the bot to solicit keys in the channel.
-	uniqueTestMessages = map[string]*protocol.Tags{
-		"plain_message": nil,
-		"@bot": {
-			MentionedUserAddresses: [][]byte{tester.botWallet.Address[:]},
+	botWallet := safeNewWallet(context.Background(), require.New(t))
+	uniqueTestMessages := map[string]struct {
+		tags             *protocol.Tags
+		expectedForwards map[protocol.ForwardSettingValue]bool
+	}{
+		"plain_message_no_tags": {
+			expectedForwards: map[protocol.ForwardSettingValue]bool{
+				protocol.ForwardSettingValue_FORWARD_SETTING_ALL_MESSAGES:               true,
+				protocol.ForwardSettingValue_FORWARD_SETTING_UNSPECIFIED:                false,
+				protocol.ForwardSettingValue_FORWARD_SETTING_MENTIONS_REPLIES_REACTIONS: false,
+				protocol.ForwardSettingValue_FORWARD_SETTING_NO_MESSAGES:                false,
+			},
+		},
+		"@mention": {
+			tags: &protocol.Tags{
+				MentionedUserAddresses: [][]byte{botWallet.Address[:]},
+			},
+			expectedForwards: map[protocol.ForwardSettingValue]bool{
+				protocol.ForwardSettingValue_FORWARD_SETTING_ALL_MESSAGES:               true,
+				protocol.ForwardSettingValue_FORWARD_SETTING_UNSPECIFIED:                true,
+				protocol.ForwardSettingValue_FORWARD_SETTING_MENTIONS_REPLIES_REACTIONS: true,
+				protocol.ForwardSettingValue_FORWARD_SETTING_NO_MESSAGES:                false,
+			},
 		},
 		"@channel": {
-			GroupMentionTypes: []protocol.GroupMentionType{protocol.GroupMentionType_GROUP_MENTION_TYPE_AT_CHANNEL},
+			tags: &protocol.Tags{
+				GroupMentionTypes: []protocol.GroupMentionType{protocol.GroupMentionType_GROUP_MENTION_TYPE_AT_CHANNEL},
+			},
+			expectedForwards: map[protocol.ForwardSettingValue]bool{
+				protocol.ForwardSettingValue_FORWARD_SETTING_ALL_MESSAGES:               true,
+				protocol.ForwardSettingValue_FORWARD_SETTING_UNSPECIFIED:                true,
+				protocol.ForwardSettingValue_FORWARD_SETTING_MENTIONS_REPLIES_REACTIONS: true,
+				protocol.ForwardSettingValue_FORWARD_SETTING_NO_MESSAGES:                false,
+			},
 		},
-		"reaction": {
-			MessageInteractionType: protocol.MessageInteractionType_MESSAGE_INTERACTION_TYPE_REACTION,
+		"non-participating_reaction": {
+			tags: &protocol.Tags{
+				MessageInteractionType: protocol.MessageInteractionType_MESSAGE_INTERACTION_TYPE_REACTION,
+			},
+			expectedForwards: map[protocol.ForwardSettingValue]bool{
+				protocol.ForwardSettingValue_FORWARD_SETTING_ALL_MESSAGES:               true,
+				protocol.ForwardSettingValue_FORWARD_SETTING_UNSPECIFIED:                false,
+				protocol.ForwardSettingValue_FORWARD_SETTING_MENTIONS_REPLIES_REACTIONS: false,
+				protocol.ForwardSettingValue_FORWARD_SETTING_NO_MESSAGES:                false,
+			},
+		},
+		"participating_reaction": {
+			tags: &protocol.Tags{
+				MessageInteractionType:     protocol.MessageInteractionType_MESSAGE_INTERACTION_TYPE_REACTION,
+				ParticipatingUserAddresses: [][]byte{botWallet.Address[:]},
+			},
+			expectedForwards: map[protocol.ForwardSettingValue]bool{
+				protocol.ForwardSettingValue_FORWARD_SETTING_ALL_MESSAGES:               true,
+				protocol.ForwardSettingValue_FORWARD_SETTING_UNSPECIFIED:                true,
+				protocol.ForwardSettingValue_FORWARD_SETTING_MENTIONS_REPLIES_REACTIONS: true,
+				protocol.ForwardSettingValue_FORWARD_SETTING_NO_MESSAGES:                false,
+			},
+		},
+		"non-participating_reply": {
+			tags: &protocol.Tags{
+				MessageInteractionType: protocol.MessageInteractionType_MESSAGE_INTERACTION_TYPE_REPLY,
+			},
+			expectedForwards: map[protocol.ForwardSettingValue]bool{
+				protocol.ForwardSettingValue_FORWARD_SETTING_ALL_MESSAGES:               true,
+				protocol.ForwardSettingValue_FORWARD_SETTING_UNSPECIFIED:                false,
+				protocol.ForwardSettingValue_FORWARD_SETTING_MENTIONS_REPLIES_REACTIONS: false,
+				protocol.ForwardSettingValue_FORWARD_SETTING_NO_MESSAGES:                false,
+			},
+		},
+		"participating_reply": {
+			tags: &protocol.Tags{
+				MessageInteractionType:     protocol.MessageInteractionType_MESSAGE_INTERACTION_TYPE_REPLY,
+				ParticipatingUserAddresses: [][]byte{botWallet.Address[:]},
+			},
+			expectedForwards: map[protocol.ForwardSettingValue]bool{
+				protocol.ForwardSettingValue_FORWARD_SETTING_ALL_MESSAGES:               true,
+				protocol.ForwardSettingValue_FORWARD_SETTING_UNSPECIFIED:                true,
+				protocol.ForwardSettingValue_FORWARD_SETTING_MENTIONS_REPLIES_REACTIONS: true,
+				protocol.ForwardSettingValue_FORWARD_SETTING_NO_MESSAGES:                false,
+			},
 		},
 	}
-	testMessageText := "xyz"
-	testSessionBytes, testSession := generateRandomSession(tester.require)
-	participantClient.sayWithSessionAndTags(
-		channelId,
-		testMessageText,
-		nil,
-		testSessionBytes,
-		participantEncryptionDevice.DeviceKey,
-	)
-	testMessageText2 := "abc"
-	participantClient.sayWithSessionAndTags(
-		channelId,
-		testMessageText2,
-		&protocol.Tags{
-			MentionedUserAddresses: [][]byte{tester.botWallet.Address[:]},
-		},
-		testSessionBytes,
-		participantEncryptionDevice.DeviceKey,
-	)
+	tests := map[string]protocol.ForwardSettingValue{
+		"ALL_MESSAGES": protocol.ForwardSettingValue_FORWARD_SETTING_ALL_MESSAGES,
+		// "UNSPECIFIED":                protocol.ForwardSettingValue_FORWARD_SETTING_UNSPECIFIED,
+		// "MENTIONS_REPLIES_REACTIONS": protocol.ForwardSettingValue_FORWARD_SETTING_MENTIONS_REPLIES_REACTIONS,
+		// "NO_MESSAGES":                protocol.ForwardSettingValue_FORWARD_SETTING_NO_MESSAGES,
+	}
+	for name, forwardSetting := range tests {
+		t.Run(name, func(t *testing.T) {
+			tester := NewAppRegistryServiceTester(t, &testerOpts{
+				botWallet: botWallet,
+			})
+			tester.StartBotService()
 
-	// Expect the bot to solicit keys to decrypt the message the particapant just sent.
-	participantClient.requireKeySolicitation(channelId, testEncryptionDevice.DeviceKey, testSession)
+			// Create user streams for chat participant
+			participantEncryptionDevice := protocol.UserMetadataPayload_EncryptionDevice{
+				DeviceKey:   "participantDeviceKey",
+				FallbackKey: "participantFallbackKey",
+			}
 
-	// Have the participant send the solicitation response directly to the bot's user inbox stream.
-	testCiphertexts := generateSessionKeys(testEncryptionDevice.DeviceKey, []string{testSession})
-	participantClient.sendSolicitationResponse(
-		tester.botWallet.Address,
-		channelId,
-		testEncryptionDevice.DeviceKey,
-		[]string{testSession},
-		testCiphertexts,
-	)
+			participantClient := tester.NodeClient(0, testClientOpts{})
+			participantClient.createUserStreamsWithEncryptionDevice(&participantEncryptionDevice)
 
-	// Final channel content should include original message as well as the reply.
-	replyText := app_registry.FormatTestAppMessageReply(testSession, testMessageText, testCiphertexts)
+			// The participant creates a space and a channel.
+			spaceId, _ := participantClient.createSpace()
+			channelId, _, _ := participantClient.createChannel(spaceId)
 
-	participantClient.listen(
-		channelId,
-		[]common.Address{participantClient.userId, botClient.userId},
-		[][]string{{testMessageText, ""}, {"", replyText}},
-	)
+			// Create user streams for bot and add to channel
+			_, appUserStreamCookie := tester.RegisterBotService(forwardSetting)
+			botClient := tester.BotNodeClient(testClientOpts{})
+
+			// Bot joins channel.
+			botClient.joinChannel(spaceId, channelId, &MiniblockRef{
+				Hash: common.Hash(appUserStreamCookie.PrevMiniblockHash),
+				Num:  appUserStreamCookie.MinipoolGen - 1,
+			})
+
+			// Confirm channel has 2 members: bot and participant.
+			botClient.requireMembership(
+				channelId,
+				[]common.Address{botClient.wallet.Address, participantClient.wallet.Address},
+			)
+
+			testSessionBytes, testSession := generateRandomSession(tester.require)
+			expectForwarding := false
+			conversation := make([][]string, 0, 2*len(uniqueTestMessages))
+			for messageText, tc := range uniqueTestMessages {
+				if tc.expectedForwards[forwardSetting] {
+					expectForwarding = true
+				}
+				participantClient.sayWithSessionAndTags(
+					channelId,
+					messageText,
+					tc.tags,
+					testSessionBytes,
+					participantEncryptionDevice.DeviceKey,
+				)
+				conversation = append(conversation, []string{messageText, ""})
+			}
+
+			// Also send a solicitation, which is a member event, to validate that member events are or
+			// are not being passed through.
+			solicitation := participantClient.solicitKeys(
+				channelId,
+				participantEncryptionDevice.DeviceKey,
+				participantEncryptionDevice.FallbackKey                                                                                                                                                         ,
+				false,
+				[]string{"12345678", "abcdef0123"},
+			)
+
+			var testCiphertexts string
+			if expectForwarding {
+				// Expect the bot to solicit keys to decrypt the messages the participant just sent.
+				participantClient.requireKeySolicitation(channelId, testEncryptionDevice.DeviceKey, testSession)
+
+				// Have the participant send the solicitation response directly to the bot's user inbox stream.
+				testCiphertexts = generateSessionKeys(testEncryptionDevice.DeviceKey, []string{testSession})
+				participantClient.sendSolicitationResponse(
+					tester.botWallet.Address,
+					channelId,
+					testEncryptionDevice.DeviceKey,
+					[]string{testSession},
+					testCiphertexts,
+				)
+			} else {
+				participantClient.requireNoKeySolicitation(channelId, testEncryptionDevice.DeviceKey, 10*time.Second, 100*time.Millisecond)
+			}
+
+			if expectForwarding {
+				for messageText, tc := range uniqueTestMessages {
+					if !tc.expectedForwards[forwardSetting] {
+						continue
+					}
+					// Final channel content should include original message as well as the reply.
+					replyText := app_registry.FormatTestAppMessageReply(testSession, messageText, testCiphertexts)
+					conversation = append(conversation, []string{"", replyText})
+				}
+
+				// If the setting is ALL_MESSAGES, expect a reply specific to key solicitations
+				// containing the key solicitation metadata.
+				if forwardSetting == protocol.ForwardSettingValue_FORWARD_SETTING_ALL_MESSAGES {
+					conversation = append(
+						conversation,
+						[]string{"", app_registry.FormatKeySolicitationReply(solicitation)},
+					)
+				}
+			}
+
+			participantClient.listen(
+				channelId,
+				[]common.Address{participantClient.userId, botClient.userId},
+				conversation,
+			)
+		})
+	}
 }
 
 func TestAppRegistry_GetSession(t *testing.T) {

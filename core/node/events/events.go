@@ -189,6 +189,26 @@ func Make_MemberPayload_Membership(
 	}
 }
 
+func Make_MemberPayload_KeySolicitation(
+	deviceKey string,
+	fallbackKey string,
+	isNewDevice bool,
+	sessionIds []string,
+) *StreamEvent_MemberPayload {
+	return &StreamEvent_MemberPayload{
+		MemberPayload: &MemberPayload{
+			Content: &MemberPayload_KeySolicitation_{
+				KeySolicitation: &MemberPayload_KeySolicitation{
+					DeviceKey:   deviceKey,
+					FallbackKey: fallbackKey,
+					IsNewDevice: isNewDevice,
+					SessionIds:  sessionIds,
+				},
+			},
+		},
+	}
+}
+
 func Make_MemberPayload_Username(username *EncryptedData) *StreamEvent_MemberPayload {
 	return &StreamEvent_MemberPayload{
 		MemberPayload: &MemberPayload{

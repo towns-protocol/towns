@@ -93,19 +93,7 @@ func (b *AppRegistryTrackedStreamView) onNewEvent(ctx context.Context, view *Str
 		return false
 	})
 
-	// log.Debugw(
-	// 	"Witnessed channel message",
-	// 	"streamId",
-	// 	streamId,
-	// 	"members",
-	// 	members,
-	// 	"apps",
-	// 	apps,
-	// 	"event",
-	// 	event,
-	// )
 	if apps.Cardinality() > 0 {
-		// log.Debugw("OnMessageEvent message", "streamId", streamId, "apps", apps, "event", event)
 		b.listener.OnMessageEvent(ctx, *streamId, view.StreamParentId(), apps, event)
 	}
 
