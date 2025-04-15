@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import {TestUtils} from "./TestUtils.sol";
-import {StringSet} from "src/utils/StringSet.sol";
+import {TestUtils} from "@towns-protocol/diamond/test/TestUtils.sol";
+import {StringSet} from "src/utils/libraries/StringSet.sol";
 import {stdError} from "forge-std/StdError.sol";
 
 contract StringSetTest is TestUtils {

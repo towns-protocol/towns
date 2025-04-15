@@ -5,20 +5,17 @@ pragma solidity ^0.8.23;
 import {IAuthorizedClaimersBase} from "src/tokens/mainnet/claimer/IAuthorizedClaimers.sol";
 
 //contracts
-
-import {DeployAuthorizedClaimers} from "scripts/deployments/utils/DeployAuthorizedClaimers.s.sol";
 import {AuthorizedClaimers} from "src/tokens/mainnet/claimer/AuthorizedClaimers.sol";
-import {TestUtils} from "test/utils/TestUtils.sol";
+import {TestUtils} from "@towns-protocol/diamond/test/TestUtils.sol";
 
 contract AuthorizedClaimersTest is TestUtils, IAuthorizedClaimersBase {
-    DeployAuthorizedClaimers internal deployAuthorizedClaimers = new DeployAuthorizedClaimers();
     AuthorizedClaimers internal authorizedClaimers;
 
     bytes32 private constant _AUTHORIZE_TYPEHASH =
         0x496b440527e20b246a460857dca887b9c1f290387cfc6ac9aa91bb6554be05ac;
 
     function setUp() public {
-        authorizedClaimers = AuthorizedClaimers(deployAuthorizedClaimers.deploy());
+        authorizedClaimers = AuthorizedClaimers(deployCode("AuthorizedClaimers.sol", ""));
     }
 
     function test_fuzz_authorizeClaimer(address signer, address claimer) public {

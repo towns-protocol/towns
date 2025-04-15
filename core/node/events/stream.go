@@ -465,6 +465,10 @@ func (s *Stream) initFromGenesisLocked(
 		return RiverError(Err_INTERNAL, "init from genesis must be from block with num 0")
 	}
 
+	if len(genesisBytes) == 0 {
+		return RiverError(Err_INTERNAL, "init from genesis: empty genesis bytes", "streamId", s.streamId)
+	}
+
 	err := s.params.Storage.CreateStreamStorage(
 		ctx,
 		s.streamId,
