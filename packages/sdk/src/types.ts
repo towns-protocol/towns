@@ -61,6 +61,13 @@ export interface ParsedEvent {
     creatorUserId: string
 }
 
+export interface ParsedSnapshot {
+    snapshot: Snapshot
+    hash: Uint8Array
+    hashStr: string
+    signature: Uint8Array | undefined
+}
+
 export interface StreamTimelineEvent {
     hashStr: string
     creatorUserId: string
@@ -204,6 +211,7 @@ export interface ParsedStreamAndCookie {
     nextSyncCookie: SyncCookie
     miniblocks: ParsedMiniblock[]
     events: ParsedEvent[]
+    snapshot?: ParsedSnapshot
 }
 
 export interface ParsedStreamResponse {
