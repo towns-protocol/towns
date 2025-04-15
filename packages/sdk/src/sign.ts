@@ -251,16 +251,7 @@ export const unpackSnapshot = async (
     const doCheckEventSignature = opts?.disableSignatureValidation !== true
     if (doCheckEventSignature) {
         // headerEvent contains the creatorAddress of the snapshot.
-        // Do not use delegateSig and delegateExpiryEpochMs for the snapshot.
-        checkEventSignature(
-            {
-                creatorAddress: headerEvent.creatorAddress,
-                delegateSig: new Uint8Array(0),
-                delegateExpiryEpochMs: 0n,
-            },
-            hash,
-            snapshot.signature,
-        )
+        checkEventSignature(headerEvent, hash, snapshot.signature)
     }
 
     return makeParsedSnapshot(sn, snapshot.hash, snapshot.signature)
