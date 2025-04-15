@@ -224,7 +224,7 @@ func (s *StreamCache) syncStreamFromPeers(
 	stream.mu.Unlock()
 
 	fromInclusive := lastMiniblockNum + 1
-	toExclusive := streamRecord.LastMbNum() + 1 // incorrect, during migration stream isn't replicated so registry might not have the latest miniblock
+	toExclusive := streamRecord.LastMbNum() + 1
 
 	remotes, _ := stream.GetRemotesAndIsLocal()
 	if len(remotes) == 0 {
