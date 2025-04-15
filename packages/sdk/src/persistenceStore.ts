@@ -348,7 +348,7 @@ export class PersistenceStore extends Dexie implements IPersistenceStore {
 
     async saveSnapshot(streamId: string, miniblockNum: bigint, snapshot: Snapshot): Promise<void> {
         const record = await this.snapshots.get(streamId)
-        if (record && record.data.miniblockNum <= miniblockNum) {
+        if (record && record.data.miniblockNum >= miniblockNum) {
             return
         }
         log('saving snapshot', streamId)
