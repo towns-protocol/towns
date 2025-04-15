@@ -77,8 +77,6 @@ resource "aws_ecs_cluster" "river_ecs_cluster" {
 }
 
 locals {
-  num_full_nodes      = 10
-  num_archive_nodes   = 0
   global_remote_state = module.global_constants.global_remote_state.outputs
 }
 
@@ -153,7 +151,8 @@ module "gcp_env" {
   gcloud_credentials             = file("./gcloud-credentials.json")
 
   river_node_config = {
-    num_archive_nodes = local.num_archive_nodes
-    num_stream_nodes  = local.num_full_nodes
+    num_archive_nodes = 0
+    num_stream_nodes  = 10
+    min_db_cpu_count  = 2
   }
 }

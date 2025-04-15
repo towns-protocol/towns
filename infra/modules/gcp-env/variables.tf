@@ -29,3 +29,8 @@ variable "river_node_config" {
     min_db_cpu_count  = number
   })
 }
+
+variable "datadog_api_key" {
+  type      = string
+  sensitive = true
+}

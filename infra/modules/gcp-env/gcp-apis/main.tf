@@ -55,3 +55,8 @@ resource "google_project_service" "alloydb" {
   project = var.project_id
   service = "alloydb.googleapis.com"
 }
+
+resource "google_project_service" "cloud_asset_api" {
+  project = var.project_id
+  service = "cloudasset.googleapis.com"
+}

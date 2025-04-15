@@ -118,3 +118,18 @@ resource "google_compute_global_address" "metrics_aggregator_static_ip" {
   address_type = "EXTERNAL"
   ip_version   = "IPV4"
 }
+
+# module "datadog-integration" {
+#   source                    = ""
+#   project_id                = var.project_id
+#   dataflow_job_name         = "datadog-export-job" // TODO:?
+#   dataflow_temp_bucket_name = "my-temp-bucket" // TODO:?
+#   topic_name                = "datadog-export-topic" // TODO:?
+#   subscription_name         = "datadog-export-sub" // TODO:?
+#   vpc_name                  = 
+#   subnet_name               = 
+#   subnet_region             = var.region
+#   datadog_api_key           = var.datadog_api_key
+#   datadog_site_url          = "https://http-intake.logs.us5.datadoghq.com"
+#   inclusion_filter          = ""
+# }

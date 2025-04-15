@@ -154,4 +154,5 @@ module "gcp_env" {
     num_stream_nodes  = local.num_stream_nodes
     min_db_cpu_count  = 4
   }
+  datadog_api_key = var.datadog_api_key
 }
