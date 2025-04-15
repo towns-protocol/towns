@@ -2188,12 +2188,22 @@ export class Client
             this.opts?.unpackEnvelopeOpts,
         )
 
+        const highestSnapshotMiniblockNum = Object.keys(snapshots)
+            .map((k) => BigInt(k))
+            .sort((a, b) => (a > b ? -1 : 1))[0]
+
         await this.persistenceStore.saveMiniblocks(
             streamIdAsString(streamId),
             miniblocks,
             'backward',
         )
-        await this.persistenceStore.saveSnapshots(streamIdAsString(streamId), snapshots)
+
+        if (highestSnapshotMiniblockNum && snapshots[highestSnapshotMiniblockNum.toString()]) {
+            await this.persistenceStore.saveSnapshot(
+                streamIdAsString(streamId),
+                snapshots[highestSnapshotMiniblockNum.toString()],
+            )
+        }
 
         return {
             terminus: terminus,

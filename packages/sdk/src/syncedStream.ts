@@ -83,11 +83,7 @@ export class SyncedStream extends Stream implements ISyncedStream {
         })
         await this.persistenceStore.saveSyncedStream(this.streamId, cachedSyncedStream)
         await this.persistenceStore.saveMiniblocks(this.streamId, miniblocks, 'forward')
-        await this.persistenceStore.saveSnapshot(
-            this.streamId,
-            miniblocks[0].header.miniblockNum,
-            snapshot,
-        )
+        await this.persistenceStore.saveSnapshot(this.streamId, snapshot)
         this.markUpToDate()
     }
 
