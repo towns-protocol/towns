@@ -15,16 +15,24 @@ import {
     StreamAndCookie,
     Tags,
     PlainMessage,
+    Snapshot,
     StreamEventSchema,
     EnvelopeSchema,
     StreamAndCookieSchema,
     SyncCookieSchema,
     EventRefSchema,
+    SnapshotSchema,
 } from '@towns-protocol/proto'
 import { assertBytes } from 'ethereum-cryptography/utils'
 import { recoverPublicKey, signSync, verify } from 'ethereum-cryptography/secp256k1'
 import { genIdBlob, streamIdAsBytes, streamIdAsString, userIdFromAddress } from './id'
-import { ParsedEvent, ParsedMiniblock, ParsedStreamAndCookie, ParsedStreamResponse } from './types'
+import {
+    ParsedEvent,
+    ParsedMiniblock,
+    ParsedSnapshot,
+    ParsedStreamAndCookie,
+    ParsedStreamResponse,
+} from './types'
 import { SignerContext, checkDelegateSig } from './signerContext'
 import { keccak256 } from 'ethereum-cryptography/keccak'
 import { createHash } from 'crypto'
@@ -119,14 +127,17 @@ export const unpackStream = async (
         `bad stream: no blocks ${streamIdAsString(streamAndCookie.nextSyncCookie.streamId)}`,
     )
 
-    const snapshot = streamAndCookie.miniblocks[0].header.snapshot
-    const prevSnapshotMiniblockNum = streamAndCookie.miniblocks[0].header.prevSnapshotMiniblockNum
+    let snapshot = streamAndCookie.miniblocks[0].header.snapshot
+    if (snapshot === undefined) {
+        snapshot = streamAndCookie.snapshot?.snapshot
+    }
     assert(
         snapshot !== undefined,
         `bad block: snapshot is undefined ${streamIdAsString(
             streamAndCookie.nextSyncCookie.streamId,
         )}`,
     )
+    const prevSnapshotMiniblockNum = streamAndCookie.miniblocks[0].header.prevSnapshotMiniblockNum
     const eventIds = [
         ...streamAndCookie.miniblocks.flatMap(
             (mb) => mb.events.map((e) => e.hashStr),
@@ -170,10 +181,13 @@ export const unpackStreamAndCookie = async (
         events: await unpackEnvelopes(streamAndCookie.events, opts),
         nextSyncCookie: streamAndCookie.nextSyncCookie,
         miniblocks: miniblocks,
+        snapshot: streamAndCookie.snapshot
+            ? await unpackSnapshot(miniblocks[0].events[0].event, streamAndCookie.snapshot, opts)
+            : undefined,
     }
 }
 
-// returns all events + the header event and pointer to header content
+// returns all events, the header event, snapshot, and pointer to header content
 export const unpackMiniblock = async (
     miniblock: Miniblock,
     opts: UnpackEnvelopeOpts | undefined,
@@ -217,6 +231,32 @@ export const unpackEnvelope = async (
     return makeParsedEvent(event, envelope.hash, envelope.signature)
 }
 
+export const unpackSnapshot = async (
+    headerEvent: StreamEvent,
+    snapshot: Envelope,
+    opts: UnpackEnvelopeOpts | undefined,
+): Promise<ParsedSnapshot> => {
+    check(hasElements(snapshot.event), 'Snapshot base is not set', Err.BAD_EVENT)
+    check(hasElements(snapshot.hash), 'Snapshot hash is not set', Err.BAD_EVENT)
+    check(hasElements(snapshot.signature), 'Snapshot signature is not set', Err.BAD_EVENT)
+
+    const sn = fromBinary(SnapshotSchema, snapshot.event)
+    let hash = snapshot.hash
+
+    if (opts?.disableHashValidation !== true) {
+        hash = riverSnapshotHash(snapshot.event)
+        check(bin_equal(hash, snapshot.hash), 'Snapshot id is not valid', Err.BAD_EVENT_ID)
+    }
+
+    const doCheckEventSignature = opts?.disableSignatureValidation !== true
+    if (doCheckEventSignature) {
+        // headerEvent contains the creatorAddress of the snapshot
+        checkEventSignature(headerEvent, hash, snapshot.signature)
+    }
+
+    return makeParsedSnapshot(sn, snapshot.hash, snapshot.signature)
+}
+
 export function checkEventSignature(
     event: {
         creatorAddress: Uint8Array
@@ -258,6 +298,20 @@ export function makeParsedEvent(
         signature,
         creatorUserId: userIdFromAddress(event.creatorAddress),
     } satisfies ParsedEvent
+}
+
+export function makeParsedSnapshot(
+    snapshot: Snapshot,
+    hash: Uint8Array | undefined,
+    signature: Uint8Array | undefined,
+) {
+    hash = hash ?? riverHash(toBinary(SnapshotSchema, snapshot))
+    return {
+        snapshot,
+        hash,
+        hashStr: bin_toHexString(hash),
+        signature,
+    } satisfies ParsedSnapshot
 }
 
 export const unpackEnvelopes = async (
@@ -307,6 +361,8 @@ const HASH_SEPARATOR = new Uint8Array([65, 66, 67, 68, 69, 70, 71, 62])
 const HASH_FOOTER = new Uint8Array([60, 71, 70, 69, 68, 67, 66, 65])
 // Header for delegate signature 'RIVERSIG'
 const RIVER_SIG_HEADER = new Uint8Array([82, 73, 86, 69, 82, 83, 73, 71])
+// Create hash header as Uint8Array from string 'SNAPSHOT'
+const SNAPSHOT_HEADER = new Uint8Array([83, 78, 65, 80, 83, 72, 79, 84])
 
 function numberToUint8Array64LE(num: number): Uint8Array {
     const result = new Uint8Array(8)
@@ -342,6 +398,17 @@ export function riverHash(data: Uint8Array): Uint8Array {
     assertBytes(data)
     const hasher = keccak256.create()
     hasher.update(HASH_HEADER)
+    hasher.update(numberToUint8Array64LE(data.length))
+    hasher.update(HASH_SEPARATOR)
+    hasher.update(data)
+    hasher.update(HASH_FOOTER)
+    return hasher.digest()
+}
+
+export function riverSnapshotHash(data: Uint8Array): Uint8Array {
+    assertBytes(data)
+    const hasher = keccak256.create()
+    hasher.update(SNAPSHOT_HEADER)
     hasher.update(numberToUint8Array64LE(data.length))
     hasher.update(HASH_SEPARATOR)
     hasher.update(data)
