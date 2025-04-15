@@ -12,7 +12,6 @@ import (
 	"github.com/towns-protocol/towns/core/contracts/river"
 	. "github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/logging"
-	"github.com/towns-protocol/towns/core/node/protocol"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	. "github.com/towns-protocol/towns/core/node/shared"
 )
@@ -242,7 +241,7 @@ func (s *StreamCache) syncStreamFromPeers(
 			if err != nil {
 				continue
 			}
-			resp, err := client.GetLastMiniblockHash(ctx, connect.NewRequest(&protocol.GetLastMiniblockHashRequest{
+			resp, err := client.GetLastMiniblockHash(ctx, connect.NewRequest(&GetLastMiniblockHashRequest{
 				StreamId: stream.streamId[:],
 			}))
 			if err != nil {
