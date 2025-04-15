@@ -30,7 +30,6 @@ fs_permissions = [
   { access = "read", path = "./scripts/bytecode-diff/source-diffs" },
 ] # Configures permissions for cheatcodes that touch the filesystem
 gas_reports = ["*"] # The contracts to print gas reports for.
-no_match_contract = "Fork"
 
 [rpc_endpoints]
 mainnet = "${ETH_RPC_URL}"

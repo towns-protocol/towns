@@ -54,17 +54,17 @@ abstract contract RewardsVerifier is StdAssertions, IRewardsDistributionBase {
             "earningPower"
         );
 
-        //        assertEq(
-        //            rewardsDistributionFacet.treasureByBeneficiary(delegatee).earningPower,
-        //            deposit.commissionEarningPower,
-        //            "commissionEarningPower"
-        //        );
-        //
-        //        address proxy = rewardsDistributionFacet.delegationProxyById(depositId);
-        //        if (proxy != address(0)) {
-        //            assertEq(towns.delegates(proxy), delegatee, "proxy delegatee");
-        //            assertEq(towns.getVotes(delegatee), amount, "votes");
-        //        }
+        assertEq(
+            rewardsDistributionFacet.treasureByBeneficiary(delegatee).earningPower,
+            deposit.commissionEarningPower,
+            "commissionEarningPower"
+        );
+
+        address proxy = rewardsDistributionFacet.delegationProxyById(depositId);
+        if (proxy != address(0)) {
+            assertEq(towns.delegates(proxy), delegatee, "proxy delegatee");
+            assertEq(towns.getVotes(delegatee), amount, "votes");
+        }
     }
 
     function verifyWithdraw(

@@ -7,7 +7,7 @@ import {TestUtils} from "@towns-protocol/diamond/test/TestUtils.sol";
 import {DeployBase} from "scripts/common/DeployBase.s.sol";
 import {DeployRewardsDistributionV2} from "scripts/deployments/facets/DeployRewardsDistributionV2.s.sol";
 
-//interfaces
+// interfaces
 import {IDiamond} from "@towns-protocol/diamond/src/Diamond.sol";
 import {IDiamondCut} from "@towns-protocol/diamond/src/facets/cut/IDiamondCut.sol";
 import {IDiamondLoupe} from "@towns-protocol/diamond/src/facets/loupe/IDiamondLoupe.sol";
@@ -17,11 +17,12 @@ import {IMainnetDelegation, IMainnetDelegationBase} from "src/base/registry/face
 import {INodeOperator} from "src/base/registry/facets/operator/INodeOperator.sol";
 import {IRewardsDistribution} from "src/base/registry/facets/distribution/v2/IRewardsDistribution.sol";
 
-//libraries
+// libraries
 import {StakingRewards} from "src/base/registry/facets/distribution/v2/StakingRewards.sol";
 import {FixedPointMathLib} from "solady/utils/FixedPointMathLib.sol";
+import {console} from "forge-std/console.sol";
 
-//contracts
+// contracts
 import {MainnetDelegation} from "src/base/registry/facets/mainnet/MainnetDelegation.sol";
 import {NodeOperatorStatus} from "src/base/registry/facets/operator/NodeOperatorStorage.sol";
 import {Towns} from "src/tokens/towns/base/Towns.sol";
@@ -45,6 +46,7 @@ contract ForkRewardsDistributionTest is
     MockMainnetDelegation internal mockMainnetDelegation = new MockMainnetDelegation();
     address internal owner;
     address[] internal activeOperators;
+    uint96 internal totalStaked;
 
     function setUp() public {
         vm.createSelectFork("base", 26_266_000);
@@ -56,6 +58,7 @@ contract ForkRewardsDistributionTest is
         towns = Towns(getDeployment("towns"));
         rewardsDistributionFacet = IRewardsDistribution(baseRegistry);
         owner = IERC173(baseRegistry).owner();
+        mockMainnetDelegation = new MockMainnetDelegation();
 
         governanceActions();
 
@@ -63,6 +66,8 @@ contract ForkRewardsDistributionTest is
 
         vm.label(address(towns), "TOWNS");
         vm.label(address(rewardsDistributionFacet), "RewardsDistribution");
+
+        totalStaked = rewardsDistributionFacet.stakingState().totalStaked;
     }
 
     /// forge-config: default.fuzz.runs = 64
@@ -75,6 +80,7 @@ contract ForkRewardsDistributionTest is
         address operator = randomOperator(seed);
         vm.assume(depositor != address(rewardsDistributionFacet));
         vm.assume(beneficiary != address(0) && beneficiary != operator);
+        amount = uint96(bound(amount, 1, type(uint96).max - totalStaked));
 
         depositId = stake(depositor, amount, beneficiary, operator);
 
@@ -89,26 +95,29 @@ contract ForkRewardsDistributionTest is
     }
 
     // /// forge-config: default.fuzz.runs = 64
-    //    function test_fuzz_stake_mainnetDelegation_shouldNotStartWith0(
-    //        address delegator,
-    //        uint96 amount,
-    //        uint256 seed
-    //    ) public {
-    //        address operator = randomOperator(seed);
-    //        amount = uint96(bound(amount, 1, type(uint96).max / 2));
-    //        vm.assume(delegator != address(rewardsDistributionFacet));
-    //        vm.assume(delegator != address(0) && delegator != operator);
-    //
-    //        setDelegation(delegator, operator, amount);
-    //        assertEq(IMainnetDelegation(baseRegistry).getDepositIdByDelegator(delegator), 0);
-    //        assertEq(
-    //            rewardsDistributionFacet.stakedByDepositor(address(rewardsDistributionFacet)),
-    //            amount
-    //        );
-    //
-    //        setDelegation(delegator, operator, amount);
-    //        assertEq(IMainnetDelegation(baseRegistry).getDepositIdByDelegator(delegator), 1);
-    //    }
+    function test_fuzz_stake_mainnetDelegation_shouldNotStartWith0(
+        address delegator,
+        uint96 amount,
+        uint256 seed
+    ) public {
+        address operator = randomOperator(seed);
+        amount = uint96(bound(amount, 1, (type(uint96).max - totalStaked) / 2));
+        vm.assume(delegator != address(rewardsDistributionFacet));
+        vm.assume(delegator != address(0) && delegator != operator);
+        uint256 mainnetStake = rewardsDistributionFacet.stakedByDepositor(
+            address(rewardsDistributionFacet)
+        );
+
+        setDelegation(delegator, operator, amount);
+        assertEq(IMainnetDelegation(baseRegistry).getDepositIdByDelegator(delegator), 0);
+        assertEq(
+            rewardsDistributionFacet.stakedByDepositor(address(rewardsDistributionFacet)),
+            mainnetStake
+        );
+
+        setDelegation(delegator, operator, amount);
+        assertEq(IMainnetDelegation(baseRegistry).getDepositIdByDelegator(delegator), 1);
+    }
 
     /// forge-config: default.fuzz.runs = 64
     function test_fuzz_increaseStake(
@@ -444,8 +453,8 @@ contract ForkRewardsDistributionTest is
     ) internal returns (uint256 depositId) {
         vm.assume(depositor != address(0));
         vm.assume(beneficiary != address(0));
-        vm.assume(amount > 0);
         deal(address(towns), depositor, amount, true);
+        totalStaked += amount;
 
         vm.startPrank(depositor);
         towns.approve(address(rewardsDistributionFacet), amount);
@@ -487,6 +496,7 @@ contract MockMainnetDelegation is MainnetDelegation {
         address operator,
         uint256 quantity
     ) external onlyCrossDomainMessenger {
+        console.log("setDelegation");
         _setDelegation(delegator, operator, quantity);
     }
 
