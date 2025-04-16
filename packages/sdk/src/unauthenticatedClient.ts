@@ -4,10 +4,9 @@ import { hasElements, isDefined } from './check'
 import { StreamRpcClient, getMiniblocks } from './makeStreamRpcClient'
 import { UnpackEnvelopeOpts, unpackStream } from './sign'
 import { StreamStateView } from './streamStateView'
-import { ParsedMiniblock, StreamTimelineEvent } from './types'
+import { ParsedMiniblock } from './types'
 import { streamIdAsString, streamIdAsBytes, userIdFromAddress, makeUserStreamId } from './id'
 
-const SCROLLBACK_MAX_COUNT = 20
 const SCROLLBACK_MULTIPLIER = 4n
 export class UnauthenticatedClient {
     readonly rpcClient: StreamRpcClient
@@ -98,42 +97,9 @@ export class UnauthenticatedClient {
         }
     }
 
-    /**
-     * @deprecated please use scrollbackByMs()
-     **/
-    async scrollbackToDate(streamView: StreamStateView, toDate: number): Promise<void> {
-        return this.scrollbackByMs(streamView, toDate)
-    }
-
-    async scrollbackByMs(streamView: StreamStateView, ms: number): Promise<void> {
-        this.logCall('scrollbackToDate', { streamId: streamView.streamId, ms })
-        const firstEvent = streamView.timeline.at(0)
-        // skip scrollback if limit is already reached
-        if (firstEvent?.createdAtEpochMs && !this.isWithin(firstEvent?.createdAtEpochMs, ms)) {
-            return
-        }
-        // scrollback to get events till max scrollback, toDate or till no events are left
-        for (let i = 0; i < SCROLLBACK_MAX_COUNT; i++) {
-            const result = await this.scrollback(streamView)
-            if (result.terminus) {
-                break
-            }
-            const currentOldestEvent = result.firstEvent
-            this.logCall('scrollbackToDate result', {
-                oldest: currentOldestEvent?.createdAtEpochMs,
-                ms,
-            })
-            if (currentOldestEvent) {
-                if (!this.isWithin(currentOldestEvent.createdAtEpochMs, ms)) {
-                    break
-                }
-            }
-        }
-    }
-
-    private async scrollback(
+    async scrollback(
         streamView: StreamStateView,
-    ): Promise<{ terminus: boolean; firstEvent?: StreamTimelineEvent }> {
+    ): Promise<{ terminus: boolean; fromInclusiveMiniblockNum: bigint }> {
         const currentRequest = this.getScrollbackRequests.get(streamView.streamId)
         if (currentRequest) {
             return currentRequest
@@ -141,7 +107,7 @@ export class UnauthenticatedClient {
 
         const _scrollback = async (): Promise<{
             terminus: boolean
-            firstEvent?: StreamTimelineEvent
+            fromInclusiveMiniblockNum: bigint
         }> => {
             check(
                 isDefined(streamView.miniblockInfo),
@@ -149,7 +115,10 @@ export class UnauthenticatedClient {
             )
             if (streamView.miniblockInfo.terminusReached) {
                 this.logCall('scrollback', streamView.streamId, 'terminus reached')
-                return { terminus: true, firstEvent: streamView.timeline.at(0) }
+                return {
+                    terminus: true,
+                    fromInclusiveMiniblockNum: streamView.miniblockInfo.min,
+                }
             }
             check(streamView.miniblockInfo.min >= streamView.prevSnapshotMiniblockNum)
             this.logCall('scrollback', {
@@ -170,7 +139,7 @@ export class UnauthenticatedClient {
 
             // a race may occur here: if the state view has been reinitialized during the scrollback
             // request, we need to discard the new miniblocks.
-            if ((streamView.miniblockInfo?.min ?? -1n) === toExclusive) {
+            if (streamView.miniblockInfo.min === toExclusive) {
                 streamView.prependEvents(
                     response.miniblocks,
                     undefined,
@@ -178,9 +147,15 @@ export class UnauthenticatedClient {
                     undefined,
                     undefined,
                 )
-                return { terminus: response.terminus, firstEvent: streamView.timeline.at(0) }
+                return {
+                    terminus: response.terminus,
+                    fromInclusiveMiniblockNum: streamView.miniblockInfo.min,
+                }
             }
-            return { terminus: false, firstEvent: streamView.timeline.at(0) }
+            return {
+                terminus: false,
+                fromInclusiveMiniblockNum: streamView.miniblockInfo.min,
+            }
         }
 
         try {
