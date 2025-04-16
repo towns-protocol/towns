@@ -41,6 +41,7 @@ import {
     SessionKeysSchema,
     type UserInboxPayload_GroupEncryptionSessions,
     AppPrivateDataSchema,
+    MembershipOp,
 } from '@towns-protocol/proto'
 import { bin_fromBase64, bin_toHexString, check } from '@towns-protocol/dlog'
 import {
@@ -64,7 +65,7 @@ type BotEvents = {
     tip: (handler: BotActions, event: BasePayload & { amount: bigint }) => void
     channelJoin: (handler: BotActions, event: BasePayload) => void
     channelLeave: (handler: BotActions, event: BasePayload) => void
-    streamMessage: (handler: BotActions, event: BasePayload & { message: string }) => void
+    streamMessage: (handler: BotActions, event: BasePayload & { event: ParsedEvent }) => void
 }
 
 type BasePayload = {
@@ -149,10 +150,6 @@ export class Bot extends (EventEmitter as new () => TypedEmitter<BotEvents>) {
                     }),
                 )
             const events = await this.client.unpackEnvelopes(appEvent.payload.value.messages)
-            check(
-                events.length === groupEncryptionSessionsMessages.length,
-                'events and groupEncryptionSessionsMessages must be the same length',
-            )
             const zip = events.map((m, i) => [m, groupEncryptionSessionsMessages[i]] as const)
             for (const [parsed, groupEncryptionSession] of zip) {
                 if (parsed.creatorUserId === this.client.userId) {
@@ -161,6 +158,12 @@ export class Bot extends (EventEmitter as new () => TypedEmitter<BotEvents>) {
                 if (!parsed.event.payload.case) {
                     continue
                 }
+                this.emit('streamMessage', this.client, {
+                    userId: userIdFromAddress(parsed.event.creatorAddress),
+                    channelId: streamId,
+                    eventId: parsed.hashStr,
+                    event: parsed,
+                })
                 switch (parsed.event.payload.case) {
                     case 'channelPayload':
                     case 'dmChannelPayload':
@@ -187,17 +190,40 @@ export class Bot extends (EventEmitter as new () => TypedEmitter<BotEvents>) {
                             }
                             await this.handleChannelMessage(streamId, parsed, channelMessage)
                         } else if (parsed.event.payload.value.content.case === 'redaction') {
+                            // admin redaction
                             // TODO
                         } else if (
                             parsed.event.payload.value.content.case === 'channelProperties'
                         ) {
-                            // TODO
+                            // TODO: currently, no support for channel properties (update name, topic)
                         } else if (parsed.event.payload.value.content.case === 'inception') {
                             // TODO
                         } else {
                             logNever(parsed.event.payload.value.content)
                         }
                         break
+                    }
+                    case 'memberPayload': {
+                        if (parsed.event.payload.value.content.case === 'membership') {
+                            const membership = parsed.event.payload.value.content.value
+                            const isChannel = isChannelStreamId(streamId)
+                            // TODO: do we want Bot to listen to onSpaceJoin/onSpaceLeave?
+                            if (!isChannel) continue
+                            if (membership.op === MembershipOp.SO_JOIN) {
+                                this.emit('channelJoin', this.client, {
+                                    userId: userIdFromAddress(membership.userAddress),
+                                    channelId: streamId,
+                                    eventId: parsed.hashStr,
+                                })
+                            }
+                            if (membership.op === MembershipOp.SO_LEAVE) {
+                                this.emit('channelLeave', this.client, {
+                                    userId: userIdFromAddress(membership.userAddress),
+                                    channelId: streamId,
+                                    eventId: parsed.hashStr,
+                                })
+                            }
+                        }
                     }
                 }
             }
@@ -216,7 +242,9 @@ export class Bot extends (EventEmitter as new () => TypedEmitter<BotEvents>) {
         if (!payload.case) {
             return
         }
+        // TODO: onStreamMessage
 
+        // TODO: onTip
         switch (payload.case) {
             case 'post': {
                 if (payload.value.content.case === 'text') {
@@ -242,6 +270,7 @@ export class Bot extends (EventEmitter as new () => TypedEmitter<BotEvents>) {
                 }
                 break
             }
+            // TODO: is tip a reaction? if so handle it here
             case 'reaction': {
                 this.emit('reaction', this.client, {
                     userId: userIdFromAddress(parsed.event.creatorAddress),
@@ -327,7 +356,7 @@ export class Bot extends (EventEmitter as new () => TypedEmitter<BotEvents>) {
         this.on('channelLeave', fn)
     }
 
-    onStreamMessage(fn: (handler: BotActions, opts: BasePayload & { message: string }) => void) {
+    onStreamMessage(fn: (handler: BotActions, opts: BasePayload & { event: ParsedEvent }) => void) {
         this.on('streamMessage', fn)
     }
 

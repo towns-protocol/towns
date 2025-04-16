@@ -34,6 +34,9 @@ describe('Bot', { sequential: true }, () => {
     const bob = new SyncAgentTest(undefined, riverConfig)
     let bobClient: SyncAgent
 
+    const alice = new SyncAgentTest(undefined, riverConfig)
+    let aliceClient: SyncAgent
+
     let bot: Bot
     let spaceId: string
     let channelId: string
@@ -41,13 +44,14 @@ describe('Bot', { sequential: true }, () => {
     let appPrivateDataBase64: string
     let jwtSecret: string
     let appRegistryRpcClient: AppRegistryRpcClient
-    let messages: string[] = []
+    const botEvents: { messages: string[]; joined: string[] } = { messages: [], joined: [] }
     let appId: Uint8Array
 
-    it('should initialize bot owner (bob) sync agent', async () => {
-        await bob.fundWallet()
+    it('should initialize bot owner (bob) sync agent and alice (regular user)', async () => {
+        await Promise.all([bob.fundWallet(), alice.fundWallet()])
         bobClient = await bob.makeSyncAgent()
-        await bobClient.start()
+        aliceClient = await alice.makeSyncAgent()
+        await Promise.all([bobClient.start(), aliceClient.start()])
         const { spaceId: spaceId_, defaultChannelId } = await bobClient.spaces.createSpace(
             { spaceName: 'bobs-space' },
             bob.signer,
@@ -120,9 +124,6 @@ describe('Bot', { sequential: true }, () => {
         bot = await makeTownsBot(appPrivateDataBase64, jwtSecret, process.env.RIVER_ENV)
         expect(bot).toBeDefined()
         expect(bot.botId).toBe(botWallet.address)
-        bot.onMessage((_h, { message }) => {
-            messages.push(message)
-        })
         const { fetch } = await bot.start()
         serve({
             port: Number(process.env.BOT_PORT!),
@@ -149,6 +150,9 @@ describe('Bot', { sequential: true }, () => {
     })
 
     it('should receive a message forwarded', async () => {
+        bot.onMessage((_h, { message }) => {
+            botEvents.messages.push(message)
+        })
         await appRegistryRpcClient.setAppSettings({
             appId,
             settings: {
@@ -160,9 +164,9 @@ describe('Bot', { sequential: true }, () => {
         await new Promise((resolve) => setTimeout(resolve, 2500))
 
         await bobClient.spaces.getSpace(spaceId).getChannel(channelId).sendMessage(TEST_MESSAGE)
-        await waitFor(() => messages.length > 0)
-        expect(messages).toContain(TEST_MESSAGE)
-        messages = []
+        await waitFor(() => botEvents.messages.length > 0)
+        expect(botEvents.messages).toContain(TEST_MESSAGE)
+        botEvents.messages = []
     })
 
     it('should not receive messages when forwarding is set to no messages', async () => {
@@ -176,11 +180,23 @@ describe('Bot', { sequential: true }, () => {
         const TEST_MESSAGE = 'This message should not be forwarded'
         await bobClient.spaces.getSpace(spaceId).getChannel(channelId).sendMessage(TEST_MESSAGE)
 
-        // Wait a bit to ensure message processing
         await new Promise((resolve) => setTimeout(resolve, 2500))
+        expect(botEvents.messages).toHaveLength(0)
+    })
 
-        // Verify no messages were forwarded
-        expect(messages).toHaveLength(0)
+    it('should receive channel join event when alice joins the channel if bot is listening to channel join events', async () => {
+        await appRegistryRpcClient.setAppSettings({
+            appId,
+            settings: {
+                forwardSetting: ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES,
+            },
+        })
+        bot.onChannelJoin((_h, { userId }) => {
+            botEvents.joined.push(userId)
+        })
+        await aliceClient.spaces.joinSpace(spaceId, alice.signer)
+        await waitFor(() => botEvents.joined.length > 0)
+        expect(botEvents.joined).toContain(alice.userId)
     })
 
     // TODO: onMentioned
