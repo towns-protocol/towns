@@ -990,33 +990,33 @@ func runStreamPlaceInitiateCmd(cfg *config.Config, args []string) error {
 
 	output := json.NewEncoder(outputFile)
 
-	// 	decoder, err := crypto.NewEVMErrorDecoder(
-	// 	river.StreamRegistryV1MetaData,
-	// 	river.RiverConfigV1MetaData,
-	// 	river.NodeRegistryV1MetaData,
-	// 	river.StreamRegistryV1MetaData)
-	// if err != nil {
-	// 	return err
-	// }
+	decoder, err := crypto.NewEVMErrorDecoder(
+		river.StreamRegistryV1MetaData,
+		river.RiverConfigV1MetaData,
+		river.NodeRegistryV1MetaData,
+		river.StreamRegistryV1MetaData)
+	if err != nil {
+		return err
+	}
 
 	for requests := range slices.Chunk(streamSetReplicationFactorRequests, 500) {
-		// pendingTx, err := blockchain.TxPool.Submit(
-		// 	ctx,
-		// 	"StreamRegistry::SetStreamReplicationFactor",
-		// 	func(opts *bind.TransactOpts) (*types.Transaction, error) {
-		// 		return registryContract.StreamRegistry.SetStreamReplicationFactor(opts, requests)
-		// 	},
-		// )
-		// if err != nil {
-		// 	cs, st, err := decoder.DecodeEVMError(err)
-		// 	fmt.Printf("submit err: %v %v %v\n", cs, st, err)
-		// 	return err
-		// }
+		pendingTx, err := blockchain.TxPool.Submit(
+			ctx,
+			"StreamRegistry::SetStreamReplicationFactor",
+			func(opts *bind.TransactOpts) (*types.Transaction, error) {
+				return registryContract.StreamRegistry.SetStreamReplicationFactor(opts, requests)
+			},
+		)
+		if err != nil {
+			cs, st, err := decoder.DecodeEVMError(err)
+			fmt.Printf("submit err: %v %v %v\n", cs, st, err)
+			return err
+		}
 
-		// receipt, err := pendingTx.Wait(ctx)
-		// if err != nil {
-		// 	return err
-		// }
+		receipt, err := pendingTx.Wait(ctx)
+		if err != nil {
+			return err
+		}
 
 		var results []*streamPlacementTxResult
 		for _, req := range requests {
@@ -1027,31 +1027,27 @@ func runStreamPlaceInitiateCmd(cfg *config.Config, args []string) error {
 			})
 		}
 
-		if err := output.Encode(results); err != nil {
-			return err
+		switch receipt.Status {
+		case types.ReceiptStatusSuccessful:
+			for _, result := range results {
+				result.Status = "success"
+				result.TxHash = receipt.TxHash
+				if err := output.Encode(result); err != nil {
+					return err
+				}
+			}
+		case types.ReceiptStatusFailed:
+			for _, result := range results {
+				result.Status = "failed"
+				result.TxHash = receipt.TxHash
+				if err := output.Encode(result); err != nil {
+					return err
+				}
+			}
+			return fmt.Errorf("transaction %s failed", receipt.TxHash)
+		default:
+			return fmt.Errorf("invalid transaction status: %d", receipt.Status)
 		}
-
-		// switch receipt.Status {
-		// case types.ReceiptStatusSuccessful:
-		// 	for _, result := range results {
-		// 		result.Status = "success"
-		// 		result.TxHash = receipt.TxHash
-		// 		if err := output.Encode(result); err != nil {
-		// 			return err
-		// 		}
-		// 	}
-		// case types.ReceiptStatusFailed:
-		// 	for _, result := range results {
-		// 		result.Status = "failed"
-		// 		result.TxHash = receipt.TxHash
-		// 		if err := output.Encode(result); err != nil {
-		// 			return err
-		// 		}
-		// 	}
-		// 	return fmt.Errorf("transaction %s failed", receipt.TxHash)
-		// default:
-		// 	return fmt.Errorf("invalid transaction status: %d", receipt.Status)
-		// }
 	}
 
 	return nil
