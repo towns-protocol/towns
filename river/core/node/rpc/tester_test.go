@@ -132,7 +132,12 @@ func newServiceTester(t *testing.T, opts serviceTesterOpts) *serviceTester {
 
 	btcParams := opts.btcParams
 	if btcParams == nil {
-		btcParams = &crypto.TestParams{NumKeys: opts.numNodes, MineOnTx: true, AutoMine: true, NumOperators: opts.numOperators}
+		btcParams = &crypto.TestParams{
+			NumKeys:      opts.numNodes,
+			MineOnTx:     true,
+			AutoMine:     true,
+			NumOperators: opts.numOperators,
+		}
 	} else if btcParams.NumKeys == 0 {
 		btcParams.NumKeys = opts.numNodes
 		btcParams.NumOperators = opts.numOperators
@@ -574,6 +579,10 @@ type testClientOpts struct {
 func (st *serviceTester) newTestClient(i int, opts testClientOpts) *testClient {
 	wallet, err := crypto.NewWallet(st.ctx)
 	st.require.NoError(err)
+	return st.newTestClientWithWallet(i, opts, wallet)
+}
+
+func (st *serviceTester) newTestClientWithWallet(i int, opts testClientOpts, wallet *crypto.Wallet) *testClient {
 	return &testClient{
 		t:                    st.t,
 		ctx:                  st.ctx,
@@ -625,6 +634,45 @@ func (tc *testClient) createUserStreamGetCookie(
 	cookie, _, err := createUser(tc.ctx, tc.wallet, tc.client, ss)
 	tc.require.NoError(err)
 	return cookie
+}
+
+func (tc *testClient) createUserStreamsWithEncryptionDevice(
+	encryptionDevice *UserMetadataPayload_EncryptionDevice,
+) *SyncCookie {
+	userCookie := tc.createUserStreamGetCookie()
+
+	_, _, err := createUserInboxStream(tc.ctx, tc.wallet, tc.client, nil)
+	tc.require.NoError(err)
+
+	cookie, _, err := createUserMetadataStream(tc.ctx, tc.wallet, tc.client, nil)
+	tc.require.NoError(err)
+
+	event, err := MakeEnvelopeWithPayload(
+		tc.wallet,
+		Make_UserMetadataPayload_EncryptionDevice(
+			encryptionDevice.DeviceKey,
+			encryptionDevice.FallbackKey,
+		),
+		&MiniblockRef{
+			Num:  cookie.GetMinipoolGen() - 1,
+			Hash: common.Hash(cookie.GetPrevMiniblockHash()),
+		},
+	)
+	tc.require.NoError(err)
+
+	addEventResp, err := tc.client.AddEvent(
+		tc.ctx,
+		&connect.Request[AddEventRequest]{
+			Msg: &AddEventRequest{
+				StreamId: cookie.StreamId,
+				Event:    event,
+			},
+		},
+	)
+	tc.require.NoError(err)
+	tc.require.Nil(addEventResp.Msg.GetError())
+
+	return userCookie
 }
 
 func (tc *testClient) createUserStream(
@@ -746,7 +794,7 @@ func (tc *testClient) createChannel(
 	}, cookie
 }
 
-func (tc *testClient) joinChannel(spaceId StreamId, channelId StreamId, mb *MiniblockRef) {
+func (tc *testClient) joinChannel(spaceId StreamId, channelId StreamId, userStreamMb *MiniblockRef) {
 	userJoin, err := MakeEnvelopeWithPayload(
 		tc.wallet,
 		Make_UserPayload_Membership(
@@ -755,7 +803,7 @@ func (tc *testClient) joinChannel(spaceId StreamId, channelId StreamId, mb *Mini
 			nil,
 			spaceId[:],
 		),
-		mb,
+		userStreamMb,
 	)
 	tc.require.NoError(err)
 
@@ -780,6 +828,27 @@ func (tc *testClient) say(channelId StreamId, message string) {
 	tc.require.NoError(err)
 
 	tc.addEvent(channelId, envelope)
+}
+
+func (tc *testClient) sayWithSessionAndTags(
+	channelId StreamId,
+	message string,
+	tags *Tags,
+	session []byte,
+	deviceKey string,
+) (eventHash []byte) {
+	ref := tc.getLastMiniblockHash(channelId)
+	envelope, err := MakeEnvelopeWithPayloadAndTags(
+		tc.wallet,
+		Make_ChannelPayload_Message_WithSessionBytes(message, session, deviceKey),
+		ref,
+		tags,
+	)
+	tc.require.NoError(err)
+
+	tc.addEvent(channelId, envelope)
+
+	return envelope.Hash
 }
 
 func (tc *testClient) addEvent(streamId StreamId, envelope *Envelope) {
@@ -1064,6 +1133,136 @@ func (tc *testClient) addHistoryToView(
 	newView, err := view.CopyAndPrependMiniblocks(mbs)
 	tc.require.NoError(err)
 	return newView
+}
+
+func overAllEvents(
+	require *require.Assertions,
+	channel *StreamAndCookie,
+	eventFilter func(*ParsedEvent) bool,
+) bool {
+	for _, block := range channel.Miniblocks {
+		events, err := ParseEvents(block.Events)
+		require.NoError(err)
+		for _, event := range events {
+			if eventFilter(event) {
+				return true
+			}
+		}
+	}
+
+	for _, envelope := range channel.Events {
+		event, err := ParseEvent(envelope)
+		require.NoError(err)
+		if eventFilter(event) {
+			return true
+		}
+	}
+
+	return false
+}
+
+func isKeySolicitation(
+	event *ParsedEvent,
+	deviceKey string,
+	optionalSessionId string,
+) bool {
+	if payload := event.Event.GetMemberPayload(); payload != nil {
+		if solicitation := payload.GetKeySolicitation(); solicitation != nil {
+			if solicitation.DeviceKey == deviceKey {
+				return optionalSessionId == "" || slices.Contains(solicitation.SessionIds[:], optionalSessionId)
+			}
+		}
+	}
+	return false
+}
+
+func findKeySolicitation(
+	require *require.Assertions,
+	channel *StreamAndCookie,
+	deviceKey string,
+	sessionId string,
+) {
+	exists := overAllEvents(
+		require,
+		channel,
+		func(event *ParsedEvent) bool {
+			return isKeySolicitation(event, deviceKey, sessionId)
+		},
+	)
+	require.True(exists)
+}
+
+func containsKeySolicitation(
+	require *require.Assertions,
+	channel *StreamAndCookie,
+	deviceKey string,
+) bool {
+	return overAllEvents(
+		require, channel,
+		func(event *ParsedEvent) bool {
+			return isKeySolicitation(event, deviceKey, "")
+		},
+	)
+}
+
+func (tc *testClient) requireKeySolicitation(channelId StreamId, deviceKey string, sessionId string) {
+	tc.eventually(func(tc *testClient) {
+		channel := tc.getStream(channelId)
+		findKeySolicitation(tc.require, channel, deviceKey, sessionId)
+	})
+}
+
+func (tc *testClient) requireNoKeySolicitation(
+	channelId StreamId,
+	deviceKey string,
+	waitTime time.Duration,
+	tick time.Duration,
+) {
+	tc.require.Never(func() bool {
+		channel := tc.getStream(channelId)
+		return containsKeySolicitation(tc.require, channel, deviceKey)
+	}, waitTime, tick, "Expected no key solicitation for device in channel")
+}
+
+func (tc *testClient) solicitKeys(
+	channelId StreamId,
+	deviceKey string,
+	fallbackKey string,
+	isNewDevice bool,
+	sessionIds []string,
+) *MemberPayload_KeySolicitation {
+	payload := Make_MemberPayload_KeySolicitation(deviceKey, fallbackKey, isNewDevice, sessionIds)
+	envelope, err := MakeEnvelopeWithPayload(
+		tc.wallet,
+		payload,
+		tc.getLastMiniblockHash(channelId),
+	)
+	tc.require.NoError(err)
+	tc.addEvent(channelId, envelope)
+	return payload.MemberPayload.GetKeySolicitation()
+}
+
+func (tc *testClient) sendSolicitationResponse(
+	user common.Address,
+	channelId StreamId,
+	deviceKey string,
+	sessionIds []string,
+	ciphertexts string,
+) {
+	userInboxStreamId := UserInboxStreamIdFromAddress(user)
+	lastMb := tc.getLastMiniblockHash(userInboxStreamId)
+
+	event, err := MakeEnvelopeWithPayload(
+		tc.wallet,
+		Make_UserInboxPayload_GroupEncryptionSessions(
+			channelId,
+			sessionIds,
+			map[string]string{deviceKey: ciphertexts},
+		),
+		lastMb,
+	)
+	tc.require.NoError(err)
+	tc.addEvent(userInboxStreamId, event)
 }
 
 func (tc *testClient) requireMembership(streamId StreamId, expectedMemberships []common.Address) {
