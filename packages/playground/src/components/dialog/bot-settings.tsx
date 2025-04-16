@@ -8,6 +8,7 @@ import { useSyncAgent } from '@towns-protocol/react-sdk'
 import { bin_fromHexString, bin_toString } from '@towns-protocol/dlog'
 import { LoaderCircleIcon } from 'lucide-react'
 import { useAccount } from 'wagmi'
+import { ForwardSettingValue } from '@towns-protocol/proto'
 import { useEthersSigner } from '@/utils/viem-to-ethers'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../ui/dialog'
 import {
@@ -21,7 +22,15 @@ import {
 } from '../ui/form'
 import { Button } from '../ui/button'
 import { Input } from '../ui/input'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
 import { SecretInformationBanner } from '../ui/secret-information-banner'
+
+const messageForwardingLabel = {
+    [ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES]: 'All Messages',
+    [ForwardSettingValue.FORWARD_SETTING_MENTIONS_REPLIES_REACTIONS]:
+        'Mentions, Replies & Reactions',
+    [ForwardSettingValue.FORWARD_SETTING_NO_MESSAGES]: 'No Messages',
+}
 
 const botFormSchema = z.object({
     address: z.string().refine((x) => isAddress(x), {
@@ -38,10 +47,18 @@ const webhookFormSchema = z.object({
     }),
 })
 
+const appSettingsFormSchema = z.object({
+    address: z.string().refine((x) => isAddress(x), {
+        message: 'Must be a valid Ethereum address',
+    }),
+    forwardSetting: z.nativeEnum(ForwardSettingValue),
+})
+
 const APP_REGISTRY_URL = 'https://localhost:5180'
 
 type BotFormSchema = z.infer<typeof botFormSchema>
 type WebhookFormSchema = z.infer<typeof webhookFormSchema>
+type AppSettingsFormSchema = z.infer<typeof appSettingsFormSchema>
 
 export const BotSettingsDialog = ({
     open,
@@ -62,6 +79,14 @@ export const BotSettingsDialog = ({
         defaultValues: {
             address: '' as `0x${string}`,
             webhookUrl: '',
+        },
+    })
+
+    const appSettingsForm = useForm<AppSettingsFormSchema>({
+        resolver: zodResolver(appSettingsFormSchema),
+        defaultValues: {
+            address: '' as `0x${string}`,
+            forwardSetting: ForwardSettingValue.FORWARD_SETTING_MENTIONS_REPLIES_REACTIONS,
         },
     })
 
@@ -109,6 +134,27 @@ export const BotSettingsDialog = ({
         },
     })
 
+    const updateSettingsMutation = useMutation({
+        mutationFn: async ({ address, forwardSetting }: AppSettingsFormSchema) => {
+            if (!signer || !signerAddress) {
+                return
+            }
+
+            const { appRegistryRpcClient } = await AppRegistryService.authenticateWithSigner(
+                signerAddress,
+                signer,
+                APP_REGISTRY_URL,
+            )
+            const appId = bin_fromHexString(address)
+            await appRegistryRpcClient.setAppSettings({
+                appId,
+                settings: {
+                    forwardSetting,
+                },
+            })
+        },
+    })
+
     return (
         <Dialog
             open={open}
@@ -118,9 +164,11 @@ export const BotSettingsDialog = ({
                 registerBotMutation.reset()
                 webhookForm.reset()
                 registerWebhookMutation.reset()
+                appSettingsForm.reset()
+                updateSettingsMutation.reset()
             }}
         >
-            <DialogContent className="sm:max-w-md">
+            <DialogContent className="overflow-y-auto sm:max-h-[90vh] sm:max-w-md">
                 <DialogHeader>
                     <DialogTitle>Bot Settings</DialogTitle>
                     <DialogDescription>
@@ -237,6 +285,82 @@ export const BotSettingsDialog = ({
                                 {registerWebhookMutation.isPending
                                     ? 'Registering...'
                                     : 'Register Webhook'}
+                            </Button>
+                        </form>
+                    </Form>
+
+                    <div className="my-4 h-px bg-border" />
+
+                    {/* App Settings Form */}
+                    <Form {...appSettingsForm}>
+                        <form
+                            className="space-y-4"
+                            onSubmit={appSettingsForm.handleSubmit(async (data) => {
+                                await updateSettingsMutation.mutateAsync(data)
+                                appSettingsForm.reset()
+                            })}
+                        >
+                            <FormField
+                                control={appSettingsForm.control}
+                                name="address"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Bot Address</FormLabel>
+                                        <FormControl>
+                                            <Input placeholder="0x..." {...field} />
+                                        </FormControl>
+                                        <FormDescription>
+                                            The bot address to update settings for
+                                        </FormDescription>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+                            <FormField
+                                control={appSettingsForm.control}
+                                name="forwardSetting"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Message Forwarding</FormLabel>
+                                        <Select
+                                            value={field.value.toString()}
+                                            onValueChange={(value) => field.onChange(Number(value))}
+                                        >
+                                            <FormControl>
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Select message forwarding setting" />
+                                                </SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent>
+                                                {Object.entries(messageForwardingLabel).map(
+                                                    ([key, label]) => (
+                                                        <SelectItem key={key} value={key}>
+                                                            {label}
+                                                        </SelectItem>
+                                                    ),
+                                                )}
+                                            </SelectContent>
+                                        </Select>
+                                        <FormDescription>
+                                            Choose which messages to forward to your bot
+                                        </FormDescription>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+                            <Button
+                                type="submit"
+                                className="w-full"
+                                disabled={updateSettingsMutation.isPending}
+                            >
+                                {updateSettingsMutation.isPending ? (
+                                    <LoaderCircleIcon className="mr-2 h-4 w-4 animate-spin" />
+                                ) : null}
+                                {updateSettingsMutation.isPending
+                                    ? 'Updating...'
+                                    : 'Update Settings'}
                             </Button>
                         </form>
                     </Form>

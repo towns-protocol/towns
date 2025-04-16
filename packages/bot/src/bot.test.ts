@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import {
     Client,
     makeBaseProvider,
@@ -17,7 +18,7 @@ import { Bot as SyncAgentTest, AppRegistryService, makeSignerContext } from '@to
 import { bin_fromHexString, bin_toString, bin_toBase64 } from '@towns-protocol/dlog'
 import { makeTownsBot } from './bot'
 import { ethers } from 'ethers'
-import { AppPrivateDataSchema } from '@towns-protocol/proto'
+import { AppPrivateDataSchema, ForwardSettingValue } from '@towns-protocol/proto'
 import { toBinary, create } from '@bufbuild/protobuf'
 import { SpaceDapp } from '@towns-protocol/web3'
 import { createSecureServer } from 'node:http2'
@@ -40,7 +41,8 @@ describe('Bot', { sequential: true }, () => {
     let appPrivateDataBase64: string
     let jwtSecret: string
     let appRegistryRpcClient: AppRegistryRpcClient
-    const messages: string[] = []
+    let messages: string[] = []
+    let appId: Uint8Array
 
     it('should initialize bot owner (bob) sync agent', async () => {
         await bob.fundWallet()
@@ -96,6 +98,7 @@ describe('Bot', { sequential: true }, () => {
             ),
         )
         expect(appPrivateDataBase64).toBeDefined()
+        appId = bin_fromHexString(botWallet.address)
     })
 
     it('should register a bot in app registry', async () => {
@@ -105,7 +108,6 @@ describe('Bot', { sequential: true }, () => {
             process.env.APP_REGISTRY_URL!,
         )
         appRegistryRpcClient = rpcClient
-        const appId = bin_fromHexString(botWallet.address)
         const { hs256SharedSecret } = await appRegistryRpcClient.register({
             appId,
             appOwnerId: bin_fromHexString(bob.userId),
@@ -133,7 +135,6 @@ describe('Bot', { sequential: true }, () => {
                 allowHTTP1: false,
             },
         })
-        const appId = bin_fromHexString(botWallet.address)
         await appRegistryRpcClient.registerWebhook({
             appId,
             webhookUrl: WEBHOOK_URL,
@@ -148,19 +149,42 @@ describe('Bot', { sequential: true }, () => {
     })
 
     it('should receive a message forwarded', async () => {
+        await appRegistryRpcClient.setAppSettings({
+            appId,
+            settings: {
+                forwardSetting: ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES,
+            },
+        })
         const TEST_MESSAGE = 'Hello bot!'
         // wait for the bot to be ready
         await new Promise((resolve) => setTimeout(resolve, 2500))
 
-        process.stdout.write(`[TEST] Sending test message: ${TEST_MESSAGE}\n`)
         await bobClient.spaces.getSpace(spaceId).getChannel(channelId).sendMessage(TEST_MESSAGE)
         await waitFor(() => messages.length > 0)
         expect(messages).toContain(TEST_MESSAGE)
+        messages = []
+    })
+
+    it('should not receive messages when forwarding is set to no messages', async () => {
+        await appRegistryRpcClient.setAppSettings({
+            appId,
+            settings: {
+                forwardSetting: ForwardSettingValue.FORWARD_SETTING_NO_MESSAGES,
+            },
+        })
+
+        const TEST_MESSAGE = 'This message should not be forwarded'
+        await bobClient.spaces.getSpace(spaceId).getChannel(channelId).sendMessage(TEST_MESSAGE)
+
+        // Wait a bit to ensure message processing
+        await new Promise((resolve) => setTimeout(resolve, 2500))
+
+        // Verify no messages were forwarded
+        expect(messages).toHaveLength(0)
     })
 
     // TODO: onMentioned
     // TODO: onReaction
     // TODO: onRedaction
     // TODO: onTip
-    // TODO: update bot settings
 })

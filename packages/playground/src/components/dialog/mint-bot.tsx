@@ -139,7 +139,7 @@ export const MintBotDialog = ({
                         </div>
                         <div className="flex flex-col gap-2 text-sm">
                             <div className="flex items-center justify-between">
-                                <p className="text-muted-foreground">Bot Encryption Device</p>
+                                <p className="text-muted-foreground">Bot Private Data</p>
                                 <div className="flex items-center gap-2">
                                     <span className="whitespace-nowrap font-mono text-xs text-muted-foreground">
                                         BASE64
