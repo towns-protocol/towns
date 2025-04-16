@@ -49,7 +49,7 @@ contract MembershipFacet is IMembership, MembershipJoin, ReentrancyGuard, Facet 
 
     /// @inheritdoc IMembership
     function renewMembership(uint256 tokenId) external payable nonReentrant {
-        _renewMembership(tokenId);
+        _renewMembership(msg.sender, tokenId);
     }
 
     /// @inheritdoc IMembership

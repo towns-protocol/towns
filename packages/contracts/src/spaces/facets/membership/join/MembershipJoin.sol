@@ -446,7 +446,7 @@ abstract contract MembershipJoin is
         );
     }
 
-    function _renewMembership(uint256 tokenId) internal {
+    function _renewMembership(address payer, uint256 tokenId) internal {
         address receiver = _ownerOf(tokenId);
 
         if (receiver == address(0)) {
@@ -460,17 +460,17 @@ abstract contract MembershipJoin is
             Membership__InvalidPayment.selector.revertWith();
         }
 
-        uint256 protocolFee = _collectProtocolFee(receiver, membershipPrice);
+        uint256 protocolFee = _collectProtocolFee(payer, membershipPrice);
 
         uint256 remainingDue = membershipPrice - protocolFee;
-        if (remainingDue > 0) _transferIn(receiver, remainingDue);
+        if (remainingDue > 0) _transferIn(payer, remainingDue);
 
         uint256 excess = msg.value - membershipPrice;
         if (excess > 0) {
             CurrencyTransfer.transferCurrency(
                 _getMembershipCurrency(),
                 address(this),
-                receiver,
+                payer,
                 excess
             );
         }

@@ -89,6 +89,44 @@ contract MembershipRenewTest is MembershipBaseSetup, IERC5643Base {
         assertEq(alice.balance, 1 ether);
     }
 
+    function test_renewPaidMembershipByOtherUser()
+        external
+        givenMembershipHasPrice
+        givenAliceHasPaidMembership
+        givenMembershipHasExpired
+    {
+        uint256 tokenId = membershipTokenQueryable.tokensOfOwner(alice)[0];
+        uint256 renewalPrice = membership.getMembershipRenewalPrice(tokenId);
+
+        vm.prank(bob);
+        vm.deal(bob, renewalPrice);
+        membership.renewMembership{value: renewalPrice}(tokenId);
+
+        assertEq(alice.balance, 0);
+        assertEq(bob.balance, 0);
+        assertEq(
+            membership.expiresAt(tokenId),
+            block.timestamp + membership.getMembershipDuration()
+        );
+    }
+
+    function test_renewPaidMembershipByOtherUserWithRefund()
+        external
+        givenMembershipHasPrice
+        givenAliceHasPaidMembership
+        givenMembershipHasExpired
+    {
+        uint256 tokenId = membershipTokenQueryable.tokensOfOwner(alice)[0];
+        uint256 renewalPrice = membership.getMembershipRenewalPrice(tokenId);
+
+        vm.prank(bob);
+        vm.deal(bob, renewalPrice + 1 ether);
+        membership.renewMembership{value: renewalPrice + 1 ether}(tokenId);
+
+        assertEq(alice.balance, 0);
+        assertEq(bob.balance, 1 ether);
+    }
+
     function test_revertWhen_renewMembershipNoEth() external givenAliceHasMintedMembership {
         uint256 tokenId = membershipTokenQueryable.tokensOfOwner(alice)[0];
 
