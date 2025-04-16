@@ -181,9 +181,10 @@ export const unpackStreamAndCookie = async (
         events: await unpackEnvelopes(streamAndCookie.events, opts),
         nextSyncCookie: streamAndCookie.nextSyncCookie,
         miniblocks: miniblocks,
-        snapshot: streamAndCookie.snapshot
-            ? await unpackSnapshot(miniblocks[0], streamAndCookie.snapshot, opts)
-            : undefined,
+        snapshot:
+            streamAndCookie.snapshot !== undefined
+                ? await unpackSnapshot(miniblocks[0], streamAndCookie.snapshot, opts)
+                : undefined,
     }
 }
 
@@ -255,6 +256,7 @@ export const unpackSnapshot = async (
 
     if (opts?.disableSignatureValidation !== true) {
         // header event contains the creatorAddress of the snapshot.
+        console.log("snapshot miniblock creator address", bin_toHexString(miniblock.events[0].event.creatorAddress))
         checkEventSignature(
             {
                 creatorAddress: miniblock.events[0].event.creatorAddress,
@@ -290,7 +292,7 @@ export function checkEventSignature(
             bin_equal(address, event.creatorAddress),
             'Event signature is not valid',
             Err.BAD_EVENT_SIGNATURE,
-            { address: address, event: event },
+            { address: bin_toHexString(address), creatorAddress: bin_toHexString(event.creatorAddress) },
         )
     } else {
         checkDelegateSig({
