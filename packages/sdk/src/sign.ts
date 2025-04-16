@@ -182,7 +182,7 @@ export const unpackStreamAndCookie = async (
         nextSyncCookie: streamAndCookie.nextSyncCookie,
         miniblocks: miniblocks,
         snapshot: streamAndCookie.snapshot
-            ? await unpackSnapshot(miniblocks[0].events[0].event, streamAndCookie.snapshot, opts)
+            ? await unpackSnapshot(miniblocks[0], streamAndCookie.snapshot, opts)
             : undefined,
     }
 }
@@ -232,7 +232,7 @@ export const unpackEnvelope = async (
 }
 
 export const unpackSnapshot = async (
-    headerEvent: StreamEvent,
+    miniblock: ParsedMiniblock,
     snapshot: Envelope,
     opts: UnpackEnvelopeOpts | undefined,
 ): Promise<ParsedSnapshot> => {
@@ -241,23 +241,25 @@ export const unpackSnapshot = async (
     check(hasElements(snapshot.signature), 'Snapshot signature is not set', Err.BAD_EVENT)
 
     const sn = fromBinary(SnapshotSchema, snapshot.event)
-    let hash = snapshot.hash
 
+    // make sure the given snapshot corresponds to the miniblock
+    check(bin_equal(miniblock.header.snapshotHash, miniblock.header.snapshotHash))
+
+    // check snapshot hash
     if (opts?.disableHashValidation !== true) {
-        hash = riverSnapshotHash(snapshot.event)
-        check(bin_equal(hash, snapshot.hash), 'Snapshot id is not valid', Err.BAD_EVENT_ID)
+        const hash = riverSnapshotHash(snapshot.event)
+        check(bin_equal(hash, snapshot.hash), 'Snapshot hash is not valid', Err.BAD_EVENT_ID)
     }
 
-    const doCheckEventSignature = opts?.disableSignatureValidation !== true
-    if (doCheckEventSignature) {
-        // headerEvent contains the creatorAddress of the snapshot.
+    if (opts?.disableSignatureValidation !== true) {
+        // header event contains the creatorAddress of the snapshot.
         checkEventSignature(
             {
-                creatorAddress: headerEvent.creatorAddress,
-                delegateSig: headerEvent.delegateSig,
-                delegateExpiryEpochMs: headerEvent.delegateExpiryEpochMs,
+                creatorAddress: miniblock.events[0].event.creatorAddress,
+                delegateSig: miniblock.events[0].event.delegateSig,
+                delegateExpiryEpochMs: miniblock.events[0].event.delegateExpiryEpochMs,
             },
-            hash,
+            snapshot.hash,
             snapshot.signature,
         )
     }
