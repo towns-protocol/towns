@@ -19,6 +19,7 @@ import (
 	"github.com/towns-protocol/towns/core/node/app_registry/app_client"
 	"github.com/towns-protocol/towns/core/node/authentication"
 	"github.com/towns-protocol/towns/core/node/base"
+	"github.com/towns-protocol/towns/core/node/base/test"
 	"github.com/towns-protocol/towns/core/node/crypto"
 	"github.com/towns-protocol/towns/core/node/events"
 	"github.com/towns-protocol/towns/core/node/logging"
@@ -111,6 +112,17 @@ func (ar *appRegistryServiceTester) StartBotService() {
 			ar.tester.t.Errorf("Error starting bot service: %v", err)
 		}
 	}()
+
+	go func() {
+		for {
+			select {
+			case <-ar.ctx.Done():
+				return
+			case err := <-ar.appServer.ExitSignal():
+				ar.require.NoError(err, "TestAppServer encountered a fatal error")
+			}
+		}
+	}()
 }
 
 func (ar *appRegistryServiceTester) BotNodeClient(opts testClientOpts) *testClient {
@@ -125,9 +137,10 @@ func (ar *appRegistryServiceTester) NodeClient(i int, opts testClientOpts) *test
 }
 
 type testerOpts struct {
-	numNodes    int
-	botWallet   *crypto.Wallet
-	ownerWallet *crypto.Wallet
+	numNodes        int
+	botWallet       *crypto.Wallet
+	ownerWallet     *crypto.Wallet
+	enableRiverLogs bool
 }
 
 func NewAppRegistryServiceTester(t *testing.T, opts *testerOpts) *appRegistryServiceTester {
@@ -135,7 +148,8 @@ func NewAppRegistryServiceTester(t *testing.T, opts *testerOpts) *appRegistrySer
 	if opts != nil && opts.numNodes > 0 {
 		numNodes = opts.numNodes
 	}
-	tester := newServiceTester(t, serviceTesterOpts{numNodes: numNodes, start: true})
+	enableRiverLogs := opts != nil && opts.enableRiverLogs
+	tester := newServiceTester(t, serviceTesterOpts{numNodes: numNodes, start: true, printTestLogs: enableRiverLogs})
 	ctx := tester.ctx
 	// Uncomment to force logging only for the app registry service
 	// ctx = logging.CtxWithLog(ctx, logging.DefaultLogger(zapcore.DebugLevel))
@@ -297,9 +311,9 @@ func TestAppRegistry_ForwardsChannelEvents(t *testing.T) {
 	})
 	botClient.requireMembership(channelId, []common.Address{botClient.wallet.Address, participantClient.wallet.Address})
 
-	// The participant sends a test message to send to the channel with session id "session0".
-	// The app registry service does not have a session key for this session and should prompt
-	// the bot to solicit keys in the channel.
+	// The participant sends a message to the channel with a novel session id. The bot does not have
+	// decryption material for this session; this added event should provoke a key solicitation from the
+	// bot for the session id used here.
 	testMessageText := "xyz"
 	testSessionBytes, testSession := generateRandomSession(tester.require)
 	participantClient.sayWithSessionAndTags(
@@ -310,10 +324,10 @@ func TestAppRegistry_ForwardsChannelEvents(t *testing.T) {
 		participantEncryptionDevice.DeviceKey,
 	)
 
-	// Expect the bot to solicit keys to decrypt the message the particapant just sent.
+	// Expect the bot to solicit keys to decrypt the message the participant just sent.
 	participantClient.requireKeySolicitation(channelId, testEncryptionDevice.DeviceKey, testSession)
 
-	// Have the participant send the solicitation response directly to the bot's user inbox stream.
+	// Let's have the participant send the solicitation response directly to the bot's user inbox stream.
 	testCiphertexts := generateSessionKeys(testEncryptionDevice.DeviceKey, []string{testSession})
 	participantClient.sendSolicitationResponse(
 		tester.botWallet.Address,
@@ -323,6 +337,8 @@ func TestAppRegistry_ForwardsChannelEvents(t *testing.T) {
 		testCiphertexts,
 	)
 
+	// Once the key material is sent, the app service can forward the undelivered message to the
+	// bot and this is the reply message we expect it to make in-channel.
 	replyText := app_registry.FormatTestAppMessageReply(testSession, testMessageText, testCiphertexts)
 
 	// Final channel content should include original message as well as the reply.
@@ -337,6 +353,8 @@ func TestAppRegistry_ForwardsChannelEvents(t *testing.T) {
 // it is too long. Valid addresses are 20 bytes.
 var invalidAddressBytes = bytes.Repeat([]byte("a"), 21)
 
+// safeNewWallet is a convenience method to make wallet creation with error checking a 1-liner.
+// Hopefully this makes the test logic more readable.
 func safeNewWallet(ctx context.Context, require *require.Assertions) *crypto.Wallet {
 	wallet, err := crypto.NewWallet(ctx)
 	require.NoError(err)
@@ -404,6 +422,9 @@ func registerWebhook(
 	require.NotNil(resp)
 }
 
+// safeCreateUserStreams creates a user stream, user inbox stream, and user metadata stream,
+// all of which are expected to be created when a bot is registered and available. We also
+// add the default encryption device for the bot to the user metadata channel.
 func safeCreateUserStreams(
 	t *testing.T,
 	ctx context.Context,
@@ -541,7 +562,10 @@ func TestAppRegistry_SetGetSettings(t *testing.T) {
 }
 
 func TestAppRegistry_MessageForwardSettings(t *testing.T) {
-	botWallet := safeNewWallet(context.Background(), require.New(t))
+	ctx, cancel := test.NewTestContext()
+	defer cancel()
+	botWallet := safeNewWallet(ctx, require.New(t))
+
 	uniqueTestMessages := map[string]struct {
 		tags             *protocol.Tags
 		expectedForwards map[protocol.ForwardSettingValue]bool
@@ -654,7 +678,7 @@ func TestAppRegistry_MessageForwardSettings(t *testing.T) {
 			botClient := tester.BotNodeClient(testClientOpts{})
 
 			// Bot joins channel.
-			botClient.joinChannel(spaceId, channelId, &MiniblockRef{
+			membership := botClient.joinChannel(spaceId, channelId, &MiniblockRef{
 				Hash: common.Hash(appUserStreamCookie.PrevMiniblockHash),
 				Num:  appUserStreamCookie.MinipoolGen - 1,
 			})
@@ -726,6 +750,7 @@ func TestAppRegistry_MessageForwardSettings(t *testing.T) {
 					conversation = append(
 						conversation,
 						[]string{"", app_registry.FormatKeySolicitationReply(solicitation)},
+						[]string{"", app_registry.FormatMembershipReply(membership)},
 					)
 				}
 			}
