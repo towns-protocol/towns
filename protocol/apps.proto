@@ -16,6 +16,7 @@ service AppRegistryService {
     rpc Register(RegisterRequest) returns (RegisterResponse);
     rpc RegisterWebhook(RegisterWebhookRequest) returns (RegisterWebhookResponse);
     rpc SetAppSettings(SetAppSettingsRequest) returns (SetAppSettingsResponse);
+    rpc GetAppSettings(GetAppSettingsRequest) returns (GetAppSettingsResponse);
     rpc RotateSecret(RotateSecretRequest) returns (RotateSecretResponse);
     rpc GetStatus(GetStatusRequest) returns (GetStatusResponse);
     rpc GetSession(GetSessionRequest) returns (GetSessionResponse);
@@ -76,6 +77,16 @@ message SetAppSettingsRequest {
 }
 
 message SetAppSettingsResponse { }
+
+message GetAppSettingsRequest {
+    // public key of the app
+    bytes app_id = 1;
+}
+
+message GetAppSettingsResponse {
+    AppSettings settings = 1;
+}
+
 
 message RotateSecretRequest {
         // public key of the app

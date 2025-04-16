@@ -166,7 +166,7 @@ func NewAppRegistryServiceTester(t *testing.T, opts *testerOpts) *appRegistrySer
 	)
 
 	// Start a test app service that serves webhook responses
-	appServer := app_registry.NewTestAppServer(t, botWallet, client, true)
+	appServer := app_registry.NewTestAppServer(t, botWallet, client, false)
 	tester.cleanup(appServer.Close)
 
 	return &appRegistryServiceTester{
@@ -449,6 +449,97 @@ func safeCreateUserStreams(
 	return userCookie
 }
 
+func TestAppRegistry_SetGetSettings(t *testing.T) {
+	tester := NewAppRegistryServiceTester(t, nil)
+	tester.StartBotService()
+	_, _ = tester.RegisterBotService(protocol.ForwardSettingValue_FORWARD_SETTING_UNSPECIFIED)
+
+	appWallet := tester.botWallet
+	ownerWallet := tester.ownerWallet
+	unregisteredAppWallet := safeNewWallet(tester.ctx, tester.require)
+
+	tests := map[string]struct {
+		appId                []byte
+		authenticatingWallet *crypto.Wallet
+		forwardSetting       protocol.ForwardSettingValue
+		expectedErr          string
+	}{
+		"Update Success (app wallet signer)": {
+			appId:                appWallet.Address[:],
+			authenticatingWallet: appWallet,
+			forwardSetting:       protocol.ForwardSettingValue_FORWARD_SETTING_MENTIONS_REPLIES_REACTIONS,
+		},
+		"Update Success (owner wallet signer)": {
+			appId:                appWallet.Address[:],
+			authenticatingWallet: ownerWallet,
+			forwardSetting:       protocol.ForwardSettingValue_FORWARD_SETTING_ALL_MESSAGES,
+		},
+		"Failure: unregistered app": {
+			appId:                unregisteredAppWallet.Address[:],
+			authenticatingWallet: unregisteredAppWallet,
+			expectedErr:          "app is not registered",
+		},
+		"Failure: missing authentication": {
+			appId:       appWallet.Address[:],
+			expectedErr: "missing session token",
+		},
+		"Failure: unauthorized user": {
+			appId:                appWallet.Address[:],
+			authenticatingWallet: unregisteredAppWallet,
+			expectedErr:          "authenticated user must be app or owner",
+		},
+	}
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			req := &connect.Request[protocol.SetAppSettingsRequest]{
+				Msg: &protocol.SetAppSettingsRequest{
+					AppId: tc.appId,
+					Settings: &protocol.AppSettings{
+						ForwardSetting: tc.forwardSetting,
+					},
+				},
+			}
+			if tc.authenticatingWallet != nil {
+				authenticateBS(tester.ctx, tester.require, tester.authClient, tc.authenticatingWallet, req)
+			}
+
+			resp, err := tester.appRegistryClient.SetAppSettings(tester.ctx, req)
+
+			if tc.expectedErr == "" {
+				tester.require.NoError(err)
+				tester.require.NotNil(resp)
+
+				getReq := &connect.Request[protocol.GetAppSettingsRequest]{
+					Msg: &protocol.GetAppSettingsRequest{
+						AppId: tc.appId,
+					},
+				}
+				authenticateBS(tester.ctx, tester.require, tester.authClient, tc.authenticatingWallet, getReq)
+				getResp, err := tester.appRegistryClient.GetAppSettings(tester.ctx, getReq)
+				tester.require.NoError(err)
+				tester.require.NotNil(getResp)
+				tester.require.Equal(getResp.Msg.GetSettings().GetForwardSetting(), tc.forwardSetting)
+			} else {
+				tester.require.Nil(resp)
+				tester.require.ErrorContains(err, tc.expectedErr)
+
+				// The get request should fail for the same reason
+				getReq := &connect.Request[protocol.GetAppSettingsRequest]{
+					Msg: &protocol.GetAppSettingsRequest{
+						AppId: tc.appId,
+					},
+				}
+				if tc.authenticatingWallet != nil {
+					authenticateBS(tester.ctx, tester.require, tester.authClient, tc.authenticatingWallet, getReq)
+				}
+				getResp, err := tester.appRegistryClient.GetAppSettings(tester.ctx, getReq)
+				tester.require.Nil(getResp)
+				tester.require.ErrorContains(err, tc.expectedErr)
+			}
+		})
+	}
+}
+
 func TestAppRegistry_MessageForwardSettings(t *testing.T) {
 	botWallet := safeNewWallet(context.Background(), require.New(t))
 	uniqueTestMessages := map[string]struct {
@@ -533,10 +624,10 @@ func TestAppRegistry_MessageForwardSettings(t *testing.T) {
 		},
 	}
 	tests := map[string]protocol.ForwardSettingValue{
-		"ALL_MESSAGES": protocol.ForwardSettingValue_FORWARD_SETTING_ALL_MESSAGES,
-		// "UNSPECIFIED":                protocol.ForwardSettingValue_FORWARD_SETTING_UNSPECIFIED,
-		// "MENTIONS_REPLIES_REACTIONS": protocol.ForwardSettingValue_FORWARD_SETTING_MENTIONS_REPLIES_REACTIONS,
-		// "NO_MESSAGES":                protocol.ForwardSettingValue_FORWARD_SETTING_NO_MESSAGES,
+		"ALL_MESSAGES":               protocol.ForwardSettingValue_FORWARD_SETTING_ALL_MESSAGES,
+		"UNSPECIFIED":                protocol.ForwardSettingValue_FORWARD_SETTING_UNSPECIFIED,
+		"MENTIONS_REPLIES_REACTIONS": protocol.ForwardSettingValue_FORWARD_SETTING_MENTIONS_REPLIES_REACTIONS,
+		"NO_MESSAGES":                protocol.ForwardSettingValue_FORWARD_SETTING_NO_MESSAGES,
 	}
 	for name, forwardSetting := range tests {
 		t.Run(name, func(t *testing.T) {

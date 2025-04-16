@@ -172,6 +172,39 @@ func (s *Service) SetAppSettings(
 	}, nil
 }
 
+func (s *Service) GetAppSettings(
+	ctx context.Context,
+	req *connect.Request[GetAppSettingsRequest],
+) (
+	*connect.Response[GetAppSettingsResponse],
+	error,
+) {
+	var app common.Address
+	var err error
+	if app, err = base.BytesToAddress(req.Msg.AppId); err != nil {
+		return nil, base.WrapRiverError(Err_INVALID_ARGUMENT, err).
+			Message("invalid app id").Tag("appId", req.Msg.AppId).Func("SetSettings")
+	}
+
+	appInfo, err := s.store.GetAppInfo(ctx, app)
+	if err != nil {
+		return nil, base.WrapRiverError(Err_INTERNAL, err).Message("could not determine app owner").
+			Tag("appId", app).Func("SetSettings")
+	}
+
+	userId := authentication.UserFromAuthenticatedContext(ctx)
+	if app != userId && appInfo.Owner != userId {
+		return nil, base.RiverError(Err_PERMISSION_DENIED, "authenticated user must be app or owner").
+			Tag("appId", app).Tag("userId", userId).Tag("ownerId", appInfo.Owner).Func("SetSettings")
+	}
+
+	return &connect.Response[GetAppSettingsResponse]{
+		Msg: &GetAppSettingsResponse{
+			Settings: types.StorageToProtocolAppSettings(appInfo.Settings),
+		},
+	}, nil
+}
+
 func (s *Service) Start(ctx context.Context) {
 	log := logging.FromCtx(ctx).With("func", "AppRegistryService.Start")
 

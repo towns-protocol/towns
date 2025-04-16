@@ -13,3 +13,9 @@ func ProtocolToStorageAppSettings(settings *protocol.AppSettings) AppSettings {
 		ForwardSetting: settings.GetForwardSetting(),
 	}
 }
+
+func StorageToProtocolAppSettings(settings AppSettings) *protocol.AppSettings {
+	return &protocol.AppSettings{
+		ForwardSetting: settings.ForwardSetting,
+	}
+}
