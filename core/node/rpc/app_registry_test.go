@@ -355,9 +355,11 @@ func register(
 ) (sharedSecret []byte) {
 	req := &connect.Request[protocol.RegisterRequest]{
 		Msg: &protocol.RegisterRequest{
-			AppId:          appAddress,
-			AppOwnerId:     ownerAddress,
-			ForwardSetting: &forwardSetting,
+			AppId:      appAddress,
+			AppOwnerId: ownerAddress,
+			Settings: &protocol.AppSettings{
+				ForwardSetting: forwardSetting,
+			},
 		},
 	}
 	authenticateBS(ctx, require, authClient, signer, req)
@@ -594,7 +596,7 @@ func TestAppRegistry_MessageForwardSettings(t *testing.T) {
 			solicitation := participantClient.solicitKeys(
 				channelId,
 				participantEncryptionDevice.DeviceKey,
-				participantEncryptionDevice.FallbackKey                                                                                                                                                         ,
+				participantEncryptionDevice.FallbackKey,
 				false,
 				[]string{"12345678", "abcdef0123"},
 			)

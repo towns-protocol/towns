@@ -14,6 +14,7 @@ import (
 
 	mapset "github.com/deckarep/golang-set/v2"
 
+	"github.com/towns-protocol/towns/core/node/app_registry/types"
 	. "github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/infra"
 	"github.com/towns-protocol/towns/core/node/protocol"
@@ -89,7 +90,7 @@ type (
 		App              common.Address
 		Owner            common.Address
 		EncryptedSecret  [32]byte
-		ForwardSetting   protocol.ForwardSettingValue
+		Settings         types.AppSettings
 		WebhookUrl       string
 		EncryptionDevice EncryptionDevice
 	}
@@ -101,7 +102,7 @@ type (
 			ctx context.Context,
 			owner common.Address,
 			app common.Address,
-			forwardSetting protocol.ForwardSettingValue,
+			settings types.AppSettings,
 			encryptedSharedSecret [32]byte,
 		) error
 
@@ -113,10 +114,10 @@ type (
 			encryptedSharedSecret [32]byte,
 		) error
 
-		UpdateForwardSetting(
+		UpdateSettings(
 			ctx context.Context,
 			app common.Address,
-			forwardSetting protocol.ForwardSettingValue,
+			settings types.AppSettings,
 		) error
 
 		RegisterWebhook(
@@ -272,7 +273,7 @@ func (s *PostgresAppRegistryStore) CreateApp(
 	ctx context.Context,
 	owner common.Address,
 	app common.Address,
-	forwardSetting protocol.ForwardSettingValue,
+	settings types.AppSettings,
 	encryptedSharedSecret [32]byte,
 ) error {
 	return s.txRunner(
@@ -280,12 +281,12 @@ func (s *PostgresAppRegistryStore) CreateApp(
 		"CreateApp",
 		pgx.ReadWrite,
 		func(ctx context.Context, tx pgx.Tx) error {
-			return s.createApp(ctx, owner, app, forwardSetting, encryptedSharedSecret, tx)
+			return s.createApp(ctx, owner, app, settings, encryptedSharedSecret, tx)
 		},
 		nil,
 		"appAddress", app,
 		"ownerAddress", owner,
-		"forwardSetting", forwardSetting,
+		"settings", settings,
 	)
 }
 
@@ -293,7 +294,7 @@ func (s *PostgresAppRegistryStore) createApp(
 	ctx context.Context,
 	owner common.Address,
 	app common.Address,
-	forwardSetting protocol.ForwardSettingValue,
+	settings types.AppSettings,
 	encryptedSharedSecret [32]byte,
 	txn pgx.Tx,
 ) error {
@@ -303,7 +304,7 @@ func (s *PostgresAppRegistryStore) createApp(
 		PGAddress(app),
 		PGAddress(owner),
 		PGSecret(encryptedSharedSecret),
-		int16(forwardSetting),
+		int16(settings.ForwardSetting),
 	); err != nil {
 		if isPgError(err, pgerrcode.UniqueViolation) {
 			return WrapRiverError(protocol.Err_ALREADY_EXISTS, err).Message("app already exists")
@@ -314,35 +315,35 @@ func (s *PostgresAppRegistryStore) createApp(
 	return nil
 }
 
-func (s *PostgresAppRegistryStore) UpdateForwardSetting(
+func (s *PostgresAppRegistryStore) UpdateSettings(
 	ctx context.Context,
 	app common.Address,
-	forwardSetting protocol.ForwardSettingValue,
+	settings types.AppSettings,
 ) error {
 	return s.txRunner(
 		ctx,
-		"UpdateForwardSetting",
+		"UpdateSettings",
 		pgx.ReadWrite,
 		func(ctx context.Context, tx pgx.Tx) error {
-			return s.updateForwardSetting(ctx, app, forwardSetting, tx)
+			return s.updateSettings(ctx, app, settings, tx)
 		},
 		nil,
 		"appAddress", app,
-		"forwardSetting", forwardSetting,
+		"settings", settings,
 	)
 }
 
-func (s *PostgresAppRegistryStore) updateForwardSetting(
+func (s *PostgresAppRegistryStore) updateSettings(
 	ctx context.Context,
 	app common.Address,
-	forwardSetting protocol.ForwardSettingValue,
+	settings types.AppSettings,
 	txn pgx.Tx,
 ) error {
 	tag, err := txn.Exec(
 		ctx,
 		`UPDATE app_registry SET forward_setting = $2 WHERE app_id = $1`,
 		PGAddress(app),
-		int16(forwardSetting),
+		int16(settings.ForwardSetting),
 	)
 	if err != nil {
 		return AsRiverError(err, protocol.Err_DB_OPERATION_FAILURE).
@@ -496,7 +497,7 @@ func (s *PostgresAppRegistryStore) getAppInfo(
 		&app,
 		&owner,
 		&encryptedSecret,
-		&appInfo.ForwardSetting,
+		&appInfo.Settings.ForwardSetting,
 		&appInfo.WebhookUrl,
 		&appInfo.EncryptionDevice.DeviceKey,
 		&appInfo.EncryptionDevice.FallbackKey,
@@ -750,6 +751,9 @@ func (s *PostgresAppRegistryStore) getSendableApps(
 		rows,
 		[]any{&appId, &deviceKey, &webhookUrl, &encryptedSharedSecret},
 		func() error {
+			if webhookUrl == "" {
+				return RiverError(protocol.Err_INTERNAL, "App has no registered webhook and is not sendable").Tag("unsendableApp", appId)
+			}
 			sendableApps = append(sendableApps, SendableApp{
 				AppId:      common.Address(appId),
 				DeviceKey:  deviceKey,

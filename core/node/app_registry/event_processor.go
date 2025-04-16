@@ -9,6 +9,7 @@ import (
 	mapset "github.com/deckarep/golang-set/v2"
 	"github.com/ethereum/go-ethereum/common"
 
+	"github.com/towns-protocol/towns/core/node/app_registry/types"
 	"github.com/towns-protocol/towns/core/node/events"
 	"github.com/towns-protocol/towns/core/node/logging"
 	. "github.com/towns-protocol/towns/core/node/protocol"
@@ -51,16 +52,16 @@ func isMentioned(
 
 func shouldForwardSpaceChannelMessage(
 	appUserId common.Address,
-	forwardSetting ForwardSettingValue,
+	settings types.AppSettings,
 	tags *Tags,
 ) bool {
 	// NO_MESSAGES means no forwarding whatsoever.
-	if forwardSetting == ForwardSettingValue_FORWARD_SETTING_NO_MESSAGES {
+	if settings.ForwardSetting == ForwardSettingValue_FORWARD_SETTING_NO_MESSAGES {
 		return false
 	}
 
 	// ALL_MESSAGES means we forward everything - tips, trades, redactions...
-	if forwardSetting == ForwardSettingValue_FORWARD_SETTING_ALL_MESSAGES {
+	if settings.ForwardSetting == ForwardSettingValue_FORWARD_SETTING_ALL_MESSAGES {
 		return true
 	}
 
@@ -137,7 +138,7 @@ func (p *MessageToAppProcessor) OnMessageEvent(
 	appIds := make([]common.Address, 0, members.Cardinality())
 	members.Each(func(memberId string) bool {
 		appId := common.HexToAddress(memberId)
-		isForwardable, forwardSetting, err := p.cache.IsForwardableApp(ctx, appId)
+		isForwardable, settings, err := p.cache.IsForwardableApp(ctx, appId)
 		if err != nil {
 			log.Errorw(
 				"Error checking if member is a registered app that can receive forwarded messages",
@@ -148,7 +149,7 @@ func (p *MessageToAppProcessor) OnMessageEvent(
 				"event",
 				event,
 			)
-		} else if isForwardable && shouldForwardSpaceChannelMessage(appId, forwardSetting, event.Event.Tags) {
+		} else if isForwardable && shouldForwardSpaceChannelMessage(appId, settings, event.Event.Tags) {
 			appIds = append(appIds, appId)
 		}
 

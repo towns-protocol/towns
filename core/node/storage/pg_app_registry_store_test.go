@@ -14,6 +14,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/towns-protocol/towns/core/config"
+	"github.com/towns-protocol/towns/core/node/app_registry/types"
 	"github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/base/test"
 	"github.com/towns-protocol/towns/core/node/crypto"
@@ -103,7 +104,13 @@ func TestGetSessionKey(t *testing.T) {
 	require.NoError(err)
 	secret := [32]byte(secretBytes)
 
-	err = store.CreateApp(params.ctx, owner, app, ForwardSettingValue_FORWARD_SETTING_UNSPECIFIED, secret)
+	err = store.CreateApp(
+		params.ctx,
+		owner,
+		app,
+		types.AppSettings{ForwardSetting: ForwardSettingValue_FORWARD_SETTING_UNSPECIFIED},
+		secret,
+	)
 	require.NoError(err)
 
 	err = store.RegisterWebhook(params.ctx, app, "http://www.callme.com/webhook", "deviceKey", "fallbackKey")
@@ -166,7 +173,7 @@ func TestGetSessionKey(t *testing.T) {
 	}
 }
 
-func TestUpdateForwardSetting(t *testing.T) {
+func TestUpdateSettings(t *testing.T) {
 	params := setupAppRegistryStorageTest(t)
 	t.Cleanup(params.closer)
 
@@ -181,7 +188,13 @@ func TestUpdateForwardSetting(t *testing.T) {
 	require.NoError(err)
 	secret := [32]byte(secretBytes)
 
-	err = store.CreateApp(params.ctx, owner, app, ForwardSettingValue_FORWARD_SETTING_UNSPECIFIED, secret)
+	err = store.CreateApp(
+		params.ctx,
+		owner,
+		app,
+		types.AppSettings{ForwardSetting: ForwardSettingValue_FORWARD_SETTING_UNSPECIFIED},
+		secret,
+	)
 	require.NoError(err)
 
 	info, err := store.GetAppInfo(params.ctx, app)
@@ -195,7 +208,11 @@ func TestUpdateForwardSetting(t *testing.T) {
 		info,
 	)
 
-	err = store.UpdateForwardSetting(params.ctx, app, ForwardSettingValue_FORWARD_SETTING_ALL_MESSAGES)
+	err = store.UpdateSettings(
+		params.ctx,
+		app,
+		types.AppSettings{ForwardSetting: ForwardSettingValue_FORWARD_SETTING_ALL_MESSAGES},
+	)
 	require.NoError(err)
 
 	info, err = store.GetAppInfo(params.ctx, app)
@@ -205,15 +222,15 @@ func TestUpdateForwardSetting(t *testing.T) {
 			App:             app,
 			Owner:           owner,
 			EncryptedSecret: secret,
-			ForwardSetting:  ForwardSettingValue_FORWARD_SETTING_ALL_MESSAGES,
+			Settings:        types.AppSettings{ForwardSetting: ForwardSettingValue_FORWARD_SETTING_ALL_MESSAGES},
 		},
 		info,
 	)
 
-	err = store.UpdateForwardSetting(
+	err = store.UpdateSettings(
 		params.ctx,
 		unregisteredApp,
-		ForwardSettingValue_FORWARD_SETTING_MENTIONS_REPLIES_REACTIONS,
+		types.AppSettings{ForwardSetting: ForwardSettingValue_FORWARD_SETTING_MENTIONS_REPLIES_REACTIONS},
 	)
 	require.ErrorContains(err, "app was not found in registry")
 }
@@ -236,7 +253,13 @@ func TestRegisterWebhook(t *testing.T) {
 	require.NoError(err)
 	secret := [32]byte(secretBytes)
 
-	err = store.CreateApp(params.ctx, owner, app, ForwardSettingValue_FORWARD_SETTING_UNSPECIFIED, secret)
+	err = store.CreateApp(
+		params.ctx,
+		owner,
+		app,
+		types.AppSettings{ForwardSetting: ForwardSettingValue_FORWARD_SETTING_UNSPECIFIED},
+		secret,
+	)
 	require.NoError(err)
 
 	info, err := store.GetAppInfo(params.ctx, app)
@@ -295,7 +318,13 @@ func TestRegisterWebhook(t *testing.T) {
 	err = store.RegisterWebhook(params.ctx, unregisteredApp, webhook, deviceKey, fallbackKey)
 	require.ErrorContains(err, "app was not found in registry")
 
-	err = store.CreateApp(params.ctx, owner, app2, ForwardSettingValue_FORWARD_SETTING_UNSPECIFIED, secret)
+	err = store.CreateApp(
+		params.ctx,
+		owner,
+		app2,
+		types.AppSettings{ForwardSetting: ForwardSettingValue_FORWARD_SETTING_UNSPECIFIED},
+		secret,
+	)
 	require.NoError(err)
 	err = store.RegisterWebhook(params.ctx, app2, webhook, deviceKey2, fallbackKey)
 	require.ErrorContains(err, "another app is using this device id")
@@ -324,14 +353,20 @@ func TestCreateApp(t *testing.T) {
 	require.NoError(err)
 	secret2 := [32]byte(secretBytes2)
 
-	err = store.CreateApp(params.ctx, owner, app, ForwardSettingValue_FORWARD_SETTING_ALL_MESSAGES, secret)
+	err = store.CreateApp(
+		params.ctx,
+		owner,
+		app,
+		types.AppSettings{ForwardSetting: ForwardSettingValue_FORWARD_SETTING_ALL_MESSAGES},
+		secret,
+	)
 	require.NoError(err)
 
 	err = store.CreateApp(
 		params.ctx,
 		owner2,
 		app,
-		ForwardSettingValue_FORWARD_SETTING_MENTIONS_REPLIES_REACTIONS,
+		types.AppSettings{ForwardSetting: ForwardSettingValue_FORWARD_SETTING_MENTIONS_REPLIES_REACTIONS},
 		secret,
 	)
 	require.ErrorContains(err, "app already exists")
@@ -342,7 +377,7 @@ func TestCreateApp(t *testing.T) {
 		params.ctx,
 		owner,
 		app2,
-		ForwardSettingValue_FORWARD_SETTING_MENTIONS_REPLIES_REACTIONS,
+		types.AppSettings{ForwardSetting: ForwardSettingValue_FORWARD_SETTING_MENTIONS_REPLIES_REACTIONS},
 		secret2,
 	)
 	require.NoError(err)
@@ -354,7 +389,9 @@ func TestCreateApp(t *testing.T) {
 			App:             app,
 			Owner:           owner,
 			EncryptedSecret: secret,
-			ForwardSetting:  ForwardSettingValue_FORWARD_SETTING_ALL_MESSAGES,
+			Settings: types.AppSettings{
+				ForwardSetting: ForwardSettingValue_FORWARD_SETTING_ALL_MESSAGES,
+			},
 		},
 		info,
 	)
@@ -366,7 +403,9 @@ func TestCreateApp(t *testing.T) {
 			App:             app2,
 			Owner:           owner,
 			EncryptedSecret: secret2,
-			ForwardSetting:  ForwardSettingValue_FORWARD_SETTING_MENTIONS_REPLIES_REACTIONS,
+			Settings: types.AppSettings{
+				ForwardSetting: ForwardSettingValue_FORWARD_SETTING_MENTIONS_REPLIES_REACTIONS,
+			},
 		},
 		info,
 	)
@@ -396,7 +435,9 @@ func TestRotateSecret(t *testing.T) {
 	require.NoError(err)
 	secret2 := [32]byte(secretBytes2)
 
-	err = store.CreateApp(params.ctx, owner, app, ForwardSettingValue_FORWARD_SETTING_UNSPECIFIED, secret)
+	err = store.CreateApp(params.ctx, owner, app, types.AppSettings{
+		ForwardSetting: ForwardSettingValue_FORWARD_SETTING_UNSPECIFIED,
+	}, secret)
 	require.NoError(err)
 
 	info, err := store.GetAppInfo(params.ctx, app)
@@ -458,7 +499,9 @@ func TestPublishSessionKeys(t *testing.T) {
 	require.NoError(err)
 	secret := [32]byte(secretBytes)
 
-	err = store.CreateApp(params.ctx, owner, app, ForwardSettingValue_FORWARD_SETTING_UNSPECIFIED, secret)
+	err = store.CreateApp(params.ctx, owner, app, types.AppSettings{
+		ForwardSetting: ForwardSettingValue_FORWARD_SETTING_UNSPECIFIED,
+	}, secret)
 	require.NoError(err)
 
 	webhook := "https://webhook.com/callme"
@@ -549,10 +592,14 @@ func TestGetSendableApps(t *testing.T) {
 		},
 	}
 
-	require.NoError(store.CreateApp(params.ctx, owner, app, ForwardSettingValue_FORWARD_SETTING_UNSPECIFIED, secret))
+	require.NoError(store.CreateApp(params.ctx, owner, app, types.AppSettings{
+		ForwardSetting: ForwardSettingValue_FORWARD_SETTING_UNSPECIFIED,
+	}, secret))
 	require.NoError(store.RegisterWebhook(params.ctx, app, sApp.WebhookUrl, sApp.DeviceKey, "fallbackKey"))
 
-	require.NoError(store.CreateApp(params.ctx, owner2, app2, ForwardSettingValue_FORWARD_SETTING_UNSPECIFIED, secret2))
+	require.NoError(store.CreateApp(params.ctx, owner2, app2, types.AppSettings{
+		ForwardSetting: ForwardSettingValue_FORWARD_SETTING_UNSPECIFIED,
+	}, secret2))
 	require.NoError(store.RegisterWebhook(params.ctx, app2, sApp2.WebhookUrl, sApp2.DeviceKey, "fallbackKey2"))
 
 	sendableApps, err := store.GetSendableApps(params.ctx, []common.Address{})
@@ -648,7 +695,9 @@ func TestEnqueueMessages(t *testing.T) {
 		params.ctx,
 		owner.Address,
 		apps[0].Address,
-		ForwardSettingValue_FORWARD_SETTING_UNSPECIFIED,
+		types.AppSettings{
+			ForwardSetting: ForwardSettingValue_FORWARD_SETTING_UNSPECIFIED,
+		},
 		secrets[0],
 	)
 	require.NoError(err)
@@ -728,7 +777,9 @@ func TestEnqueueMessages(t *testing.T) {
 				params.ctx,
 				owner.Address,
 				apps[i+1].Address,
-				ForwardSettingValue_FORWARD_SETTING_UNSPECIFIED,
+				types.AppSettings{
+					ForwardSetting: ForwardSettingValue_FORWARD_SETTING_UNSPECIFIED,
+				},
 				secrets[i+1],
 			),
 		)

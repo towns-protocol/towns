@@ -6,6 +6,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 
 	"github.com/towns-protocol/towns/core/config"
+	"github.com/towns-protocol/towns/core/node/app_registry/types"
 	"github.com/towns-protocol/towns/core/node/crypto"
 	"github.com/towns-protocol/towns/core/node/events"
 	"github.com/towns-protocol/towns/core/node/infra"
@@ -28,7 +29,7 @@ type EncryptedMessageQueue interface {
 	IsForwardableApp(
 		ctx context.Context,
 		appId common.Address,
-	) (isForwardable bool, forwardSetting protocol.ForwardSettingValue, err error)
+	) (isForwardable bool, settings types.AppSettings, err error)
 
 	DispatchOrEnqueueMessages(
 		ctx context.Context,

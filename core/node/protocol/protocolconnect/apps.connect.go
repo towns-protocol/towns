@@ -39,9 +39,9 @@ const (
 	// AppRegistryServiceRegisterWebhookProcedure is the fully-qualified name of the
 	// AppRegistryService's RegisterWebhook RPC.
 	AppRegistryServiceRegisterWebhookProcedure = "/river.AppRegistryService/RegisterWebhook"
-	// AppRegistryServiceSetForwardSettingProcedure is the fully-qualified name of the
-	// AppRegistryService's SetForwardSetting RPC.
-	AppRegistryServiceSetForwardSettingProcedure = "/river.AppRegistryService/SetForwardSetting"
+	// AppRegistryServiceSetAppSettingsProcedure is the fully-qualified name of the AppRegistryService's
+	// SetAppSettings RPC.
+	AppRegistryServiceSetAppSettingsProcedure = "/river.AppRegistryService/SetAppSettings"
 	// AppRegistryServiceRotateSecretProcedure is the fully-qualified name of the AppRegistryService's
 	// RotateSecret RPC.
 	AppRegistryServiceRotateSecretProcedure = "/river.AppRegistryService/RotateSecret"
@@ -55,20 +55,20 @@ const (
 
 // These variables are the protoreflect.Descriptor objects for the RPCs defined in this package.
 var (
-	appRegistryServiceServiceDescriptor                 = protocol.File_apps_proto.Services().ByName("AppRegistryService")
-	appRegistryServiceRegisterMethodDescriptor          = appRegistryServiceServiceDescriptor.Methods().ByName("Register")
-	appRegistryServiceRegisterWebhookMethodDescriptor   = appRegistryServiceServiceDescriptor.Methods().ByName("RegisterWebhook")
-	appRegistryServiceSetForwardSettingMethodDescriptor = appRegistryServiceServiceDescriptor.Methods().ByName("SetForwardSetting")
-	appRegistryServiceRotateSecretMethodDescriptor      = appRegistryServiceServiceDescriptor.Methods().ByName("RotateSecret")
-	appRegistryServiceGetStatusMethodDescriptor         = appRegistryServiceServiceDescriptor.Methods().ByName("GetStatus")
-	appRegistryServiceGetSessionMethodDescriptor        = appRegistryServiceServiceDescriptor.Methods().ByName("GetSession")
+	appRegistryServiceServiceDescriptor               = protocol.File_apps_proto.Services().ByName("AppRegistryService")
+	appRegistryServiceRegisterMethodDescriptor        = appRegistryServiceServiceDescriptor.Methods().ByName("Register")
+	appRegistryServiceRegisterWebhookMethodDescriptor = appRegistryServiceServiceDescriptor.Methods().ByName("RegisterWebhook")
+	appRegistryServiceSetAppSettingsMethodDescriptor  = appRegistryServiceServiceDescriptor.Methods().ByName("SetAppSettings")
+	appRegistryServiceRotateSecretMethodDescriptor    = appRegistryServiceServiceDescriptor.Methods().ByName("RotateSecret")
+	appRegistryServiceGetStatusMethodDescriptor       = appRegistryServiceServiceDescriptor.Methods().ByName("GetStatus")
+	appRegistryServiceGetSessionMethodDescriptor      = appRegistryServiceServiceDescriptor.Methods().ByName("GetSession")
 )
 
 // AppRegistryServiceClient is a client for the river.AppRegistryService service.
 type AppRegistryServiceClient interface {
 	Register(context.Context, *connect.Request[protocol.RegisterRequest]) (*connect.Response[protocol.RegisterResponse], error)
 	RegisterWebhook(context.Context, *connect.Request[protocol.RegisterWebhookRequest]) (*connect.Response[protocol.RegisterWebhookResponse], error)
-	SetForwardSetting(context.Context, *connect.Request[protocol.SetForwardSettingRequest]) (*connect.Response[protocol.SetForwardSettingResponse], error)
+	SetAppSettings(context.Context, *connect.Request[protocol.SetAppSettingsRequest]) (*connect.Response[protocol.SetAppSettingsResponse], error)
 	RotateSecret(context.Context, *connect.Request[protocol.RotateSecretRequest]) (*connect.Response[protocol.RotateSecretResponse], error)
 	GetStatus(context.Context, *connect.Request[protocol.GetStatusRequest]) (*connect.Response[protocol.GetStatusResponse], error)
 	GetSession(context.Context, *connect.Request[protocol.GetSessionRequest]) (*connect.Response[protocol.GetSessionResponse], error)
@@ -96,10 +96,10 @@ func NewAppRegistryServiceClient(httpClient connect.HTTPClient, baseURL string, 
 			connect.WithSchema(appRegistryServiceRegisterWebhookMethodDescriptor),
 			connect.WithClientOptions(opts...),
 		),
-		setForwardSetting: connect.NewClient[protocol.SetForwardSettingRequest, protocol.SetForwardSettingResponse](
+		setAppSettings: connect.NewClient[protocol.SetAppSettingsRequest, protocol.SetAppSettingsResponse](
 			httpClient,
-			baseURL+AppRegistryServiceSetForwardSettingProcedure,
-			connect.WithSchema(appRegistryServiceSetForwardSettingMethodDescriptor),
+			baseURL+AppRegistryServiceSetAppSettingsProcedure,
+			connect.WithSchema(appRegistryServiceSetAppSettingsMethodDescriptor),
 			connect.WithClientOptions(opts...),
 		),
 		rotateSecret: connect.NewClient[protocol.RotateSecretRequest, protocol.RotateSecretResponse](
@@ -125,12 +125,12 @@ func NewAppRegistryServiceClient(httpClient connect.HTTPClient, baseURL string, 
 
 // appRegistryServiceClient implements AppRegistryServiceClient.
 type appRegistryServiceClient struct {
-	register          *connect.Client[protocol.RegisterRequest, protocol.RegisterResponse]
-	registerWebhook   *connect.Client[protocol.RegisterWebhookRequest, protocol.RegisterWebhookResponse]
-	setForwardSetting *connect.Client[protocol.SetForwardSettingRequest, protocol.SetForwardSettingResponse]
-	rotateSecret      *connect.Client[protocol.RotateSecretRequest, protocol.RotateSecretResponse]
-	getStatus         *connect.Client[protocol.GetStatusRequest, protocol.GetStatusResponse]
-	getSession        *connect.Client[protocol.GetSessionRequest, protocol.GetSessionResponse]
+	register        *connect.Client[protocol.RegisterRequest, protocol.RegisterResponse]
+	registerWebhook *connect.Client[protocol.RegisterWebhookRequest, protocol.RegisterWebhookResponse]
+	setAppSettings  *connect.Client[protocol.SetAppSettingsRequest, protocol.SetAppSettingsResponse]
+	rotateSecret    *connect.Client[protocol.RotateSecretRequest, protocol.RotateSecretResponse]
+	getStatus       *connect.Client[protocol.GetStatusRequest, protocol.GetStatusResponse]
+	getSession      *connect.Client[protocol.GetSessionRequest, protocol.GetSessionResponse]
 }
 
 // Register calls river.AppRegistryService.Register.
@@ -143,9 +143,9 @@ func (c *appRegistryServiceClient) RegisterWebhook(ctx context.Context, req *con
 	return c.registerWebhook.CallUnary(ctx, req)
 }
 
-// SetForwardSetting calls river.AppRegistryService.SetForwardSetting.
-func (c *appRegistryServiceClient) SetForwardSetting(ctx context.Context, req *connect.Request[protocol.SetForwardSettingRequest]) (*connect.Response[protocol.SetForwardSettingResponse], error) {
-	return c.setForwardSetting.CallUnary(ctx, req)
+// SetAppSettings calls river.AppRegistryService.SetAppSettings.
+func (c *appRegistryServiceClient) SetAppSettings(ctx context.Context, req *connect.Request[protocol.SetAppSettingsRequest]) (*connect.Response[protocol.SetAppSettingsResponse], error) {
+	return c.setAppSettings.CallUnary(ctx, req)
 }
 
 // RotateSecret calls river.AppRegistryService.RotateSecret.
@@ -167,7 +167,7 @@ func (c *appRegistryServiceClient) GetSession(ctx context.Context, req *connect.
 type AppRegistryServiceHandler interface {
 	Register(context.Context, *connect.Request[protocol.RegisterRequest]) (*connect.Response[protocol.RegisterResponse], error)
 	RegisterWebhook(context.Context, *connect.Request[protocol.RegisterWebhookRequest]) (*connect.Response[protocol.RegisterWebhookResponse], error)
-	SetForwardSetting(context.Context, *connect.Request[protocol.SetForwardSettingRequest]) (*connect.Response[protocol.SetForwardSettingResponse], error)
+	SetAppSettings(context.Context, *connect.Request[protocol.SetAppSettingsRequest]) (*connect.Response[protocol.SetAppSettingsResponse], error)
 	RotateSecret(context.Context, *connect.Request[protocol.RotateSecretRequest]) (*connect.Response[protocol.RotateSecretResponse], error)
 	GetStatus(context.Context, *connect.Request[protocol.GetStatusRequest]) (*connect.Response[protocol.GetStatusResponse], error)
 	GetSession(context.Context, *connect.Request[protocol.GetSessionRequest]) (*connect.Response[protocol.GetSessionResponse], error)
@@ -191,10 +191,10 @@ func NewAppRegistryServiceHandler(svc AppRegistryServiceHandler, opts ...connect
 		connect.WithSchema(appRegistryServiceRegisterWebhookMethodDescriptor),
 		connect.WithHandlerOptions(opts...),
 	)
-	appRegistryServiceSetForwardSettingHandler := connect.NewUnaryHandler(
-		AppRegistryServiceSetForwardSettingProcedure,
-		svc.SetForwardSetting,
-		connect.WithSchema(appRegistryServiceSetForwardSettingMethodDescriptor),
+	appRegistryServiceSetAppSettingsHandler := connect.NewUnaryHandler(
+		AppRegistryServiceSetAppSettingsProcedure,
+		svc.SetAppSettings,
+		connect.WithSchema(appRegistryServiceSetAppSettingsMethodDescriptor),
 		connect.WithHandlerOptions(opts...),
 	)
 	appRegistryServiceRotateSecretHandler := connect.NewUnaryHandler(
@@ -221,8 +221,8 @@ func NewAppRegistryServiceHandler(svc AppRegistryServiceHandler, opts ...connect
 			appRegistryServiceRegisterHandler.ServeHTTP(w, r)
 		case AppRegistryServiceRegisterWebhookProcedure:
 			appRegistryServiceRegisterWebhookHandler.ServeHTTP(w, r)
-		case AppRegistryServiceSetForwardSettingProcedure:
-			appRegistryServiceSetForwardSettingHandler.ServeHTTP(w, r)
+		case AppRegistryServiceSetAppSettingsProcedure:
+			appRegistryServiceSetAppSettingsHandler.ServeHTTP(w, r)
 		case AppRegistryServiceRotateSecretProcedure:
 			appRegistryServiceRotateSecretHandler.ServeHTTP(w, r)
 		case AppRegistryServiceGetStatusProcedure:
@@ -246,8 +246,8 @@ func (UnimplementedAppRegistryServiceHandler) RegisterWebhook(context.Context, *
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("river.AppRegistryService.RegisterWebhook is not implemented"))
 }
 
-func (UnimplementedAppRegistryServiceHandler) SetForwardSetting(context.Context, *connect.Request[protocol.SetForwardSettingRequest]) (*connect.Response[protocol.SetForwardSettingResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("river.AppRegistryService.SetForwardSetting is not implemented"))
+func (UnimplementedAppRegistryServiceHandler) SetAppSettings(context.Context, *connect.Request[protocol.SetAppSettingsRequest]) (*connect.Response[protocol.SetAppSettingsResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("river.AppRegistryService.SetAppSettings is not implemented"))
 }
 
 func (UnimplementedAppRegistryServiceHandler) RotateSecret(context.Context, *connect.Request[protocol.RotateSecretRequest]) (*connect.Response[protocol.RotateSecretResponse], error) {

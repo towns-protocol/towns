@@ -15,7 +15,7 @@ import "protocol.proto";
 service AppRegistryService {
     rpc Register(RegisterRequest) returns (RegisterResponse);
     rpc RegisterWebhook(RegisterWebhookRequest) returns (RegisterWebhookResponse);
-    rpc ForwardSetting(SetForwardSettingRequest) returns (SetForwardSettingResponse);
+    rpc SetAppSettings(SetAppSettingsRequest) returns (SetAppSettingsResponse);
     rpc RotateSecret(RotateSecretRequest) returns (RotateSecretResponse);
     rpc GetStatus(GetStatusRequest) returns (GetStatusResponse);
     rpc GetSession(GetSessionRequest) returns (GetSessionResponse);
@@ -38,6 +38,10 @@ enum ForwardSettingValue {
     FORWARD_SETTING_NO_MESSAGES = 3;
   }
 
+message AppSettings {
+    ForwardSettingValue forward_setting = 1;
+}
+
 message RegisterRequest {
     // public key of the app
     bytes app_id = 1;
@@ -45,9 +49,7 @@ message RegisterRequest {
     // public key of the app owner
     bytes app_owner_id = 2;
 
-    // The setting for determining which messages the app registry service should forward to the app. If unspecified,
-    // the default setting will be used.
-    optional ForwardSettingValue forward_setting = 3;
+    AppSettings settings = 3;
 }
 
 message RegisterResponse {
@@ -66,16 +68,14 @@ message RegisterWebhookRequest {
 
 message RegisterWebhookResponse { }
 
-message SetForwardSettingRequest {
+message SetAppSettingsRequest {
     // public key of the app
     bytes app_id = 1;
 
-    // The setting for determining which messages the app registry service should forward to the app. If unspecified,
-    // the default setting will be used.
-    ForwardSettingValue forward_setting = 3;
+    AppSettings settings = 2;
 }
 
-message SetForwardSettingResponse { }
+message SetAppSettingsResponse { }
 
 message RotateSecretRequest {
         // public key of the app

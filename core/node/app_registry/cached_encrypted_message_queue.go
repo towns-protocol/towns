@@ -4,9 +4,11 @@ import (
 	"context"
 	"fmt"
 	"sync"
+	"sync/atomic"
 
 	"github.com/ethereum/go-ethereum/common"
 
+	"github.com/towns-protocol/towns/core/node/app_registry/types"
 	"github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/logging"
 	"github.com/towns-protocol/towns/core/node/protocol"
@@ -37,8 +39,8 @@ type CachedEncryptedMessageQueue struct {
 }
 
 type ForwardState struct {
-	HasWebhook     bool
-	ForwardSetting protocol.ForwardSettingValue
+	HasWebhook bool
+	Settings   atomic.Pointer[types.AppSettings]
 }
 
 func NewCachedEncryptedMessageQueue(
@@ -57,11 +59,13 @@ func (q *CachedEncryptedMessageQueue) CreateApp(
 	ctx context.Context,
 	owner common.Address,
 	app common.Address,
-	forwardSetting protocol.ForwardSettingValue,
+	settings types.AppSettings,
 	sharedSecret [32]byte,
 ) error {
-	q.appIdCache.Store(app, &ForwardState{ForwardSetting: forwardSetting})
-	return q.store.CreateApp(ctx, owner, app, forwardSetting, sharedSecret)
+	fs := &ForwardState{}
+	fs.Settings.Store(&settings)
+	q.appIdCache.Store(app, fs)
+	return q.store.CreateApp(ctx, owner, app, settings, sharedSecret)
 }
 
 func (q *CachedEncryptedMessageQueue) RotateSharedSecret(
@@ -79,15 +83,15 @@ func (q *CachedEncryptedMessageQueue) GetAppInfo(
 	return q.store.GetAppInfo(ctx, app)
 }
 
-func (q *CachedEncryptedMessageQueue) UpdateForwardSetting(
+func (q *CachedEncryptedMessageQueue) UpdateSettings(
 	ctx context.Context,
 	app common.Address,
-	forwardSetting protocol.ForwardSettingValue,
+	settings types.AppSettings,
 ) error {
-	err := q.store.UpdateForwardSetting(ctx, app, forwardSetting)
+	err := q.store.UpdateSettings(ctx, app, settings)
 	if err == nil {
 		if fs, exists := q.appIdCache.Load(app); exists {
-			fs.(*ForwardState).ForwardSetting = forwardSetting
+			fs.(*ForwardState).Settings.Store(&settings)
 		}
 	}
 	return err
@@ -240,10 +244,11 @@ func (q *CachedEncryptedMessageQueue) IsApp(ctx context.Context, userId common.A
 				return false, base.AsRiverError(err, protocol.Err_DB_OPERATION_FAILURE).Message("Could not determine if the id is an app")
 			}
 		}
-		_, _ = q.appIdCache.LoadOrStore(userId, &ForwardState{
-			HasWebhook:     info.WebhookUrl != "",
-			ForwardSetting: info.ForwardSetting,
-		})
+		fs := &ForwardState{
+			HasWebhook: info.WebhookUrl != "",
+		}
+		fs.Settings.Store(&info.Settings)
+		_, _ = q.appIdCache.LoadOrStore(userId, fs)
 		return true, nil
 	}
 }
@@ -254,24 +259,25 @@ func (q *CachedEncryptedMessageQueue) IsApp(ctx context.Context, userId common.A
 func (q *CachedEncryptedMessageQueue) IsForwardableApp(
 	ctx context.Context,
 	appId common.Address,
-) (isForwardable bool, forwardSetting protocol.ForwardSettingValue, err error) {
+) (isForwardable bool, settings types.AppSettings, err error) {
 	fs, exists := q.appIdCache.Load(appId)
 	if exists {
 		forwardState := fs.(*ForwardState)
-		return forwardState.HasWebhook, forwardState.ForwardSetting, nil
+		return forwardState.HasWebhook, *forwardState.Settings.Load(), nil
 	} else {
 		info, err := q.store.GetAppInfo(ctx, appId)
 		if err != nil {
 			if base.AsRiverError(err).Code == protocol.Err_NOT_FOUND {
-				return false, 0, nil
+				return false, types.AppSettings{}, nil
 			}
-			return false, 0, base.AsRiverError(err, protocol.Err_DB_OPERATION_FAILURE).Message("Could not determine if the app has a registered webhook")
+			return false, types.AppSettings{}, base.AsRiverError(err, protocol.Err_DB_OPERATION_FAILURE).Message("Could not determine if the app has a registered webhook")
 		}
-		fs, _ = q.appIdCache.LoadOrStore(appId, &ForwardState{
-			HasWebhook:     info.WebhookUrl != "",
-			ForwardSetting: info.ForwardSetting,
-		})
-		forwardState := fs.(*ForwardState)
-		return forwardState.HasWebhook, forwardState.ForwardSetting, nil
+		forwardState := &ForwardState{
+			HasWebhook: info.WebhookUrl != "",
+		}
+		forwardState.Settings.Store(&info.Settings)
+		fs, _ = q.appIdCache.LoadOrStore(appId, forwardState)
+		forwardState = fs.(*ForwardState)
+		return forwardState.HasWebhook, *forwardState.Settings.Load(), nil
 	}
 }
