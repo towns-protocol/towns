@@ -903,12 +903,10 @@ func runStreamPlaceInitiateCmd(cfg *config.Config, args []string) error {
 	operatorToNodes := make(map[common.Address][]common.Address)
 	for _, node := range nodeRegistry.GetAllNodes() {
 		nodesToOperator[node.Address()] = node.Operator()
-		if operator, found := operatorToNodes[node.Operator()]; found {
-			operatorToNodes[node.Operator()] = append(operator, node.Address())
-		} else {
-			operatorToNodes[node.Operator()] = []common.Address{node.Address()}
-		}
+		operatorToNodes[node.Operator()] = append(operatorToNodes[node.Operator()], node.Address())
 	}
+
+	allowMultipleNodesFromSameOperator := len(operatorToNodes) < targetReplicationFactor
 
 	inputFile, err := os.ReadFile(args[1])
 	if err != nil {
@@ -933,8 +931,6 @@ func runStreamPlaceInitiateCmd(cfg *config.Config, args []string) error {
 			return err
 		}
 
-		allStreamOperators := make(map[common.Address]struct{})
-
 		if len(record.NodeAddresses) > targetReplicationFactor {
 			return fmt.Errorf(
 				"invalid number of nodes for stream %s: %d, replication factor: %d",
@@ -951,25 +947,24 @@ func runStreamPlaceInitiateCmd(cfg *config.Config, args []string) error {
 			return err
 		}
 
-		for _, newNode := range choosenStreamNodes {
-			operator, found := nodesToOperator[newNode]
-			if !found {
-				return fmt.Errorf("unable to find operator for node %s", newNode)
+		streamNodeOperators := []common.Address{nodesToOperator[record.NodeAddresses[0]]}
+		for _, addr := range choosenStreamNodes {
+			if slices.Contains(record.NodeAddresses, addr) { // no duplicate nodes
+				continue
 			}
 
-			if len(record.NodeAddresses) < targetReplicationFactor {
-				if _, found := allStreamOperators[operator]; !found {
-					record.NodeAddresses = append(record.NodeAddresses, newNode)
-					allStreamOperators[operator] = struct{}{}
+			if !allowMultipleNodesFromSameOperator {
+				// if enough operators available don't use 2 nodes from the same operator
+				if slices.Contains(streamNodeOperators, nodesToOperator[addr]) {
+					continue
 				}
 			}
-		}
 
-		if allowedMultipleNodesFromSameOperator := len(record.NodeAddresses) < targetReplicationFactor; allowedMultipleNodesFromSameOperator {
-			for _, node := range choosenStreamNodes {
-				if len(record.NodeAddresses) < targetReplicationFactor && !slices.Contains(record.NodeAddresses, node) {
-					record.NodeAddresses = append(record.NodeAddresses, node)
-				}
+			record.NodeAddresses = append(record.NodeAddresses, addr)
+			streamNodeOperators = append(streamNodeOperators, nodesToOperator[addr])
+
+			if len(record.NodeAddresses) >= targetReplicationFactor {
+				break
 			}
 		}
 
@@ -995,33 +990,33 @@ func runStreamPlaceInitiateCmd(cfg *config.Config, args []string) error {
 
 	output := json.NewEncoder(outputFile)
 
-	decoder, err := crypto.NewEVMErrorDecoder(
-		river.StreamRegistryV1MetaData,
-		river.RiverConfigV1MetaData,
-		river.NodeRegistryV1MetaData,
-		river.StreamRegistryV1MetaData)
-	if err != nil {
-		return err
-	}
+	// 	decoder, err := crypto.NewEVMErrorDecoder(
+	// 	river.StreamRegistryV1MetaData,
+	// 	river.RiverConfigV1MetaData,
+	// 	river.NodeRegistryV1MetaData,
+	// 	river.StreamRegistryV1MetaData)
+	// if err != nil {
+	// 	return err
+	// }
 
 	for requests := range slices.Chunk(streamSetReplicationFactorRequests, 500) {
-		pendingTx, err := blockchain.TxPool.Submit(
-			ctx,
-			"StreamRegistry::SetStreamReplicationFactor",
-			func(opts *bind.TransactOpts) (*types.Transaction, error) {
-				return registryContract.StreamRegistry.SetStreamReplicationFactor(opts, requests)
-			},
-		)
-		if err != nil {
-			cs, st, err := decoder.DecodeEVMError(err)
-			fmt.Printf("submit err: %v %v %v\n", cs, st, err)
-			return err
-		}
+		// pendingTx, err := blockchain.TxPool.Submit(
+		// 	ctx,
+		// 	"StreamRegistry::SetStreamReplicationFactor",
+		// 	func(opts *bind.TransactOpts) (*types.Transaction, error) {
+		// 		return registryContract.StreamRegistry.SetStreamReplicationFactor(opts, requests)
+		// 	},
+		// )
+		// if err != nil {
+		// 	cs, st, err := decoder.DecodeEVMError(err)
+		// 	fmt.Printf("submit err: %v %v %v\n", cs, st, err)
+		// 	return err
+		// }
 
-		receipt, err := pendingTx.Wait(ctx)
-		if err != nil {
-			return err
-		}
+		// receipt, err := pendingTx.Wait(ctx)
+		// if err != nil {
+		// 	return err
+		// }
 
 		var results []*streamPlacementTxResult
 		for _, req := range requests {
@@ -1032,27 +1027,31 @@ func runStreamPlaceInitiateCmd(cfg *config.Config, args []string) error {
 			})
 		}
 
-		switch receipt.Status {
-		case types.ReceiptStatusSuccessful:
-			for _, result := range results {
-				result.Status = "success"
-				result.TxHash = receipt.TxHash
-				if err := output.Encode(result); err != nil {
-					return err
-				}
-			}
-		case types.ReceiptStatusFailed:
-			for _, result := range results {
-				result.Status = "failed"
-				result.TxHash = receipt.TxHash
-				if err := output.Encode(result); err != nil {
-					return err
-				}
-			}
-			return fmt.Errorf("transaction %s failed", receipt.TxHash)
-		default:
-			return fmt.Errorf("invalid transaction status: %d", receipt.Status)
+		if err := output.Encode(results); err != nil {
+			return err
 		}
+
+		// switch receipt.Status {
+		// case types.ReceiptStatusSuccessful:
+		// 	for _, result := range results {
+		// 		result.Status = "success"
+		// 		result.TxHash = receipt.TxHash
+		// 		if err := output.Encode(result); err != nil {
+		// 			return err
+		// 		}
+		// 	}
+		// case types.ReceiptStatusFailed:
+		// 	for _, result := range results {
+		// 		result.Status = "failed"
+		// 		result.TxHash = receipt.TxHash
+		// 		if err := output.Encode(result); err != nil {
+		// 			return err
+		// 		}
+		// 	}
+		// 	return fmt.Errorf("transaction %s failed", receipt.TxHash)
+		// default:
+		// 	return fmt.Errorf("invalid transaction status: %d", receipt.Status)
+		// }
 	}
 
 	return nil

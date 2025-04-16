@@ -205,6 +205,6 @@ the `finilize` subcommand. This will set the stream replication factor in the st
 length. This is the signal for streams that all nodes in the node list will start participating in quorum.
 
 ```sh
-$ ./env/delta/run.sh stream place enter-quorum <wallet-file> /tmp/streams.not_migrated.initiated.status
+$ ./env/alpha/run.sh stream place enter-quorum <wallet-file> /tmp/streams.not_migrated.initiated.status
 ```
 
