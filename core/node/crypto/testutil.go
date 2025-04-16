@@ -716,7 +716,7 @@ func (c *BlockchainTestContext) SetConfigValue(t *testing.T, ctx context.Context
 // GetTestAddress returns a random common.Address that can be used in tests.
 func GetTestAddress() common.Address {
 	var address common.Address
-	_, err := rand.Read(address[:])
+	_, err := crand.Read(address[:])
 	if err != nil {
 		panic(err)
 	}
