@@ -21,6 +21,7 @@
         "viem": "^2.21.51"
     },
     "devDependencies": {
+        "@towns-protocol/contracts": "workspace:^",
         "@towns-protocol/prettier-config": "workspace:^",
         "@types/node": "^20.14.8",
         "eslint": "^8.57.0",

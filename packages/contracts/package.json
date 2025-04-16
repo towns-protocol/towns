@@ -5,6 +5,9 @@
   "installConfig": {
     "hoistingLimits": "dependencies"
   },
+  "files": [
+    "./typings/index.ts"
+  ],
   "scripts": {
     "build": "forge build",
     "clean": "forge clean",
