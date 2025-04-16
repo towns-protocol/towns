@@ -1377,3 +1377,98 @@ func TestQueryPlan(t *testing.T) {
 	require.Contains(plan, `"Node Type": "Index Scan",`, "PLAN: %s", plan)
 	require.Contains(plan, `"Actual Rows": 11,`, "PLAN: %s", plan)
 }
+
+// TestEmptyMiniblockRecordCorruptionFix checks that code recovers from the corruption that occured
+// when empty genesis miniblocks occasionally were inserted into production database.
+// Such records were not parsible on load leading to errors.
+// Code is modified to return Err_NOT_FOUND in case of such records in GetStreamFromLastSnapshot.
+// And to allow overwriting of such record in CreateStreamStorage.
+func TestEmptyMiniblockRecordCorruptionFix(t *testing.T) {
+	params := setupStreamStorageTest(t)
+	require := require.New(t)
+
+	ctx := params.ctx
+	store := params.pgStreamStore
+	defer params.closer()
+
+	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
+	require.Error(store.CreateStreamStorage(ctx, streamId, &WriteMiniblockData{
+		Data:     []byte{},
+		Snapshot: []byte{},
+	}))
+
+	dataMaker := newDataMaker()
+
+	genMB := dataMaker.mb(0, true)
+	err := store.CreateStreamStorage(
+		ctx,
+		streamId,
+		&WriteMiniblockData{
+			Data:     []byte{},
+			Snapshot: genMB.Snapshot,
+		},
+	)
+	require.Error(err)
+	require.True(IsRiverErrorCode(err, Err_INVALID_ARGUMENT))
+	require.NoError(
+		store.CreateStreamStorage(
+			ctx,
+			streamId,
+			&WriteMiniblockData{
+				Data:     genMB.Data,
+				Snapshot: genMB.Snapshot,
+			},
+		),
+	)
+	err = store.CreateStreamStorage(
+		ctx,
+		streamId,
+		&WriteMiniblockData{
+			Data:     genMB.Data,
+			Snapshot: genMB.Snapshot,
+		},
+	)
+	require.Error(err)
+	require.True(IsRiverErrorCode(err, Err_ALREADY_EXISTS))
+
+	_, err = store.ReadStreamFromLastSnapshot(ctx, streamId, 10)
+	require.NoError(err)
+	_, err = store.GetLastMiniblockNumber(ctx, streamId)
+	require.NoError(err)
+
+	// Check empty value returns Err_NOT_FOUND
+	_, err = params.pgStreamStore.pool.Exec(
+		ctx,
+		params.pgStreamStore.sqlForStream(
+			"UPDATE {{miniblocks}} SET blockdata = ''::BYTEA WHERE stream_id = $1 AND seq_num = 0",
+			streamId,
+		),
+		streamId,
+	)
+	require.NoError(err)
+
+	_, err = store.ReadStreamFromLastSnapshot(ctx, streamId, 10)
+	require.Error(err)
+	require.True(IsRiverErrorCode(err, Err_NOT_FOUND))
+
+	_, err = store.GetLastMiniblockNumber(ctx, streamId)
+	require.Error(err)
+	require.True(IsRiverErrorCode(err, Err_NOT_FOUND))
+
+	// Check it's possible to overwrite corrupt record
+	require.NoError(
+		store.CreateStreamStorage(
+			ctx,
+			streamId,
+			&WriteMiniblockData{
+				Data:     genMB.Data,
+				Snapshot: genMB.Snapshot,
+			},
+		),
+	)
+
+	_, err = store.ReadStreamFromLastSnapshot(ctx, streamId, 10)
+	require.NoError(err)
+	_, err = store.GetLastMiniblockNumber(ctx, streamId)
+	require.NoError(err)
+}

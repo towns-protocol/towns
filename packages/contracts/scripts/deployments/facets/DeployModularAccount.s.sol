@@ -12,13 +12,14 @@ import {ModularAccount} from "src/spaces/facets/account/ModularAccount.sol";
 
 library DeployModularAccount {
     function selectors() internal pure returns (bytes4[] memory _selectors) {
-        _selectors = new bytes4[](6);
+        _selectors = new bytes4[](7);
         _selectors[0] = ModularAccount.execute.selector;
         _selectors[1] = ModularAccount.executeBatch.selector;
         _selectors[2] = ModularAccount.installExecution.selector;
         _selectors[3] = ModularAccount.uninstallExecution.selector;
         _selectors[4] = ModularAccount.isClientEntitled.selector;
         _selectors[5] = ModularAccount.setModuleAllowance.selector;
+        _selectors[6] = ModularAccount.getModuleAllowance.selector;
     }
 
     function makeCut(

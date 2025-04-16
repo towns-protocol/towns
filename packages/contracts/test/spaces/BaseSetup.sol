@@ -7,7 +7,7 @@ import {EIP712Utils} from "@towns-protocol/diamond/test/facets/signature/EIP712U
 
 import {SimpleAccount} from "account-abstraction/samples/SimpleAccount.sol";
 import {SimpleAccountFactory} from "account-abstraction/samples/SimpleAccountFactory.sol";
-import {TestUtils} from "test/utils/TestUtils.sol";
+import {TestUtils} from "@towns-protocol/diamond/test/TestUtils.sol";
 
 // interfaces
 

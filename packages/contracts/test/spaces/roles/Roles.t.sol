@@ -2,18 +2,15 @@
 pragma solidity ^0.8.23;
 
 //interfaces
-
 import {IEntitlement} from "src/spaces/entitlements/IEntitlement.sol";
 import {IChannel} from "src/spaces/facets/channels/IChannel.sol";
 import {IEntitlementsManager} from "src/spaces/facets/entitlements/IEntitlementsManager.sol";
 import {IRoles} from "src/spaces/facets/roles/IRoles.sol";
 
 // libraries
-
 import {Permissions} from "src/spaces/facets/Permissions.sol";
 
 // contracts
-
 import {Roles} from "src/spaces/facets/roles/Roles.sol";
 import {RolesBaseSetup} from "test/spaces/roles/RolesBaseSetup.sol";
 
@@ -21,7 +18,7 @@ import {RolesBaseSetup} from "test/spaces/roles/RolesBaseSetup.sol";
 // solhint-disable-next-line max-line-length
 import {EntitlementsService__EntitlementDoesNotExist, EntitlementsService__InvalidEntitlementAddress, EntitlementsService__InvalidEntitlementInterface} from "src/spaces/facets/entitlements/EntitlementsManagerService.sol";
 // solhint-disable-next-line max-line-length
-import {Validator__InvalidByteLength, Validator__InvalidStringLength} from "src/utils/Validator.sol";
+import {Validator__InvalidByteLength, Validator__InvalidStringLength} from "src/utils/libraries/Validator.sol";
 // solhint-disable-next-line max-line-length
 
 // mocks

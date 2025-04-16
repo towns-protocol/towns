@@ -5,7 +5,6 @@ pragma solidity ^0.8.23;
 import {IAuthorizedClaimers} from "./IAuthorizedClaimers.sol";
 
 // libraries
-
 import {AuthorizedClaimerStorage} from "./AuthorizedClaimerStorage.sol";
 import {ECDSA} from "solady/utils/ECDSA.sol";
 

@@ -154,6 +154,11 @@ library ModularAccountLib {
         ExecutorLib.setGroupMaxEthValue(moduleGroupId, maxEthValue);
     }
 
+    function getModuleAllowance(address module) internal view returns (uint256) {
+        (bytes32 moduleGroupId, , , ) = getModule(module);
+        return ExecutorLib.getGroupMaxEthValue(moduleGroupId);
+    }
+
     // Getters
     function isEntitled(
         address module,

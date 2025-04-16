@@ -18,7 +18,6 @@ import {RevocationRequest} from "@ethereum-attestation-service/eas-contracts/IEA
 import {Time} from "@openzeppelin/contracts/utils/types/Time.sol";
 import {ModularAccountLib} from "src/spaces/facets/account/libraries/ModularAccountLib.sol";
 import {ExecutorLib} from "src/spaces/facets/account/libraries/ExecutorLib.sol";
-
 //contracts
 import {ModularAccount} from "src/spaces/facets/account/ModularAccount.sol";
 import {ModuleRegistry} from "src/attest/ModuleRegistry.sol";
@@ -189,6 +188,8 @@ contract ModularAccountTest is BaseSetup, IOwnableBase {
         ExecutionManifest memory manifest = mockModule.executionManifest();
 
         vm.prank(founder);
+        vm.expectEmit(address(modularAccount));
+        emit IERC6900Account.ExecutionUninstalled(address(mockModule), true, manifest);
         modularAccount.uninstallExecution(address(mockModule), manifest, "");
 
         bytes memory expectedRevert = abi.encodeWithSelector(
@@ -213,6 +214,35 @@ contract ModularAccountTest is BaseSetup, IOwnableBase {
         vm.prank(client);
         vm.expectRevert(abi.encodeWithSelector(IOwnableBase.Ownable__NotOwner.selector, client));
         modularAccount.uninstallExecution(address(mockModule), manifest, "");
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                        Allowance                           */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    function test_allowance() external givenModuleIsInstalled {
+        uint256 allowance = 1 ether;
+        vm.prank(founder);
+        modularAccount.setModuleAllowance(address(mockModule), allowance);
+
+        assertEq(modularAccount.getModuleAllowance(address(mockModule)), allowance);
+    }
+
+    function test_revertWhen_setAllowance_notOwner() external givenModuleIsInstalled {
+        uint256 allowance = 1 ether;
+        vm.prank(client);
+        vm.expectRevert(abi.encodeWithSelector(IOwnableBase.Ownable__NotOwner.selector, client));
+        modularAccount.setModuleAllowance(address(mockModule), allowance);
+    }
+
+    function test_revertWhen_setAllowance_invalidModule() external givenModuleIsInstalled {
+        address invalidModule = _randomAddress();
+        uint256 allowance = 1 ether;
+        vm.prank(founder);
+        vm.expectRevert(
+            abi.encodeWithSelector(ModularAccountLib.ModuleNotRegistered.selector, invalidModule)
+        );
+        modularAccount.setModuleAllowance(invalidModule, allowance);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/

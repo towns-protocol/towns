@@ -111,6 +111,13 @@ contract ModularAccount is IERC6900Account, TokenOwnableBase, Facet {
         ModularAccountLib.setModuleAllowance(module, maxEthValue);
     }
 
+    /// @notice Gets the max eth value for a module per execution
+    /// @param module The module to get the max eth value for
+    /// @return The max eth value for the module
+    function getModuleAllowance(address module) external view returns (uint256) {
+        return ModularAccountLib.getModuleAllowance(module);
+    }
+
     /// @notice Checks if a client is entitled to a permission for a module
     /// @param module The module to check
     /// @param client The client to check
