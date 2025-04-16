@@ -465,6 +465,16 @@ abstract contract MembershipJoin is
         uint256 remainingDue = membershipPrice - protocolFee;
         if (remainingDue > 0) _transferIn(receiver, remainingDue);
 
+        uint256 excess = msg.value - membershipPrice;
+        if (excess > 0) {
+            CurrencyTransfer.transferCurrency(
+                _getMembershipCurrency(),
+                address(this),
+                receiver,
+                excess
+            );
+        }
+
         _renewSubscription(tokenId, uint64(duration));
     }
 }
