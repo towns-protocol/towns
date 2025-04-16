@@ -256,16 +256,9 @@ export const unpackSnapshot = async (
 
     if (opts?.disableSignatureValidation !== true) {
         // header event contains the creatorAddress of the snapshot.
-        console.log("snapshot miniblock creator address", bin_toHexString(miniblock.events[0].event.creatorAddress))
-        checkEventSignature(
-            {
-                creatorAddress: miniblock.events[0].event.creatorAddress,
-                delegateSig: new Uint8Array(0),
-                delegateExpiryEpochMs: 0n,
-            },
-            snapshot.hash,
-            snapshot.signature,
-        )
+        const headerEvent = miniblock.events.at(-1)
+        check(headerEvent !== undefined, 'Miniblock header event not found', Err.BAD_EVENT)
+        checkEventSignature(headerEvent.event, snapshot.hash, snapshot.signature)
     }
 
     return makeParsedSnapshot(
@@ -292,7 +285,6 @@ export function checkEventSignature(
             bin_equal(address, event.creatorAddress),
             'Event signature is not valid',
             Err.BAD_EVENT_SIGNATURE,
-            { address: bin_toHexString(address), creatorAddress: bin_toHexString(event.creatorAddress) },
         )
     } else {
         checkDelegateSig({
