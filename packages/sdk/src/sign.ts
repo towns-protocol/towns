@@ -242,7 +242,7 @@ export const unpackSnapshot = async (
 
     // make sure the given snapshot corresponds to the miniblock
     check(
-        bin_equal(miniblock.header.snapshotHash, miniblock.header.snapshotHash),
+        bin_equal(miniblock.header.snapshotHash, snapshot.hash),
         'Snapshot hash does not match miniblock snapshot hash',
         Err.BAD_EVENT_ID,
     )
