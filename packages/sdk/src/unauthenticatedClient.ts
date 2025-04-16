@@ -209,6 +209,7 @@ export class UnauthenticatedClient {
             streamId,
             fromInclusive,
             toExclusive,
+            true,
             this.unpackEnvelopeOpts,
         )
 
