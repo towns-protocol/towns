@@ -182,7 +182,7 @@ export const unpackStreamAndCookie = async (
         nextSyncCookie: streamAndCookie.nextSyncCookie,
         miniblocks: miniblocks,
         snapshot: streamAndCookie.snapshot
-            ? await unpackSnapshot(miniblocks[0].events[0].event, streamAndCookie.snapshot, opts)
+            ? await unpackSnapshot(miniblocks[0], streamAndCookie.snapshot, opts)
             : undefined,
     }
 }
@@ -232,7 +232,7 @@ export const unpackEnvelope = async (
 }
 
 export const unpackSnapshot = async (
-    headerEvent: StreamEvent,
+    miniblock: ParsedMiniblock,
     snapshot: Envelope,
     opts: UnpackEnvelopeOpts | undefined,
 ): Promise<ParsedSnapshot> => {
@@ -240,21 +240,31 @@ export const unpackSnapshot = async (
     check(hasElements(snapshot.hash), 'Snapshot hash is not set', Err.BAD_EVENT)
     check(hasElements(snapshot.signature), 'Snapshot signature is not set', Err.BAD_EVENT)
 
-    const sn = fromBinary(SnapshotSchema, snapshot.event)
-    let hash = snapshot.hash
+    // make sure the given snapshot corresponds to the miniblock
+    check(
+        bin_equal(miniblock.header.snapshotHash, snapshot.hash),
+        'Snapshot hash does not match miniblock snapshot hash',
+        Err.BAD_EVENT_ID,
+    )
 
+    // check snapshot hash
     if (opts?.disableHashValidation !== true) {
-        hash = riverSnapshotHash(snapshot.event)
-        check(bin_equal(hash, snapshot.hash), 'Snapshot id is not valid', Err.BAD_EVENT_ID)
+        const hash = riverSnapshotHash(snapshot.event)
+        check(bin_equal(hash, snapshot.hash), 'Snapshot hash is not valid', Err.BAD_EVENT_ID)
     }
 
-    const doCheckEventSignature = opts?.disableSignatureValidation !== true
-    if (doCheckEventSignature) {
-        // headerEvent contains the creatorAddress of the snapshot
-        checkEventSignature(headerEvent, hash, snapshot.signature)
+    if (opts?.disableSignatureValidation !== true) {
+        // header event contains the creatorAddress of the snapshot.
+        const headerEvent = miniblock.events.at(-1)
+        check(headerEvent !== undefined, 'Miniblock header event not found', Err.BAD_EVENT)
+        checkEventSignature(headerEvent.event, snapshot.hash, snapshot.signature)
     }
 
-    return makeParsedSnapshot(sn, snapshot.hash, snapshot.signature)
+    return makeParsedSnapshot(
+        fromBinary(SnapshotSchema, snapshot.event),
+        snapshot.hash,
+        snapshot.signature,
+    )
 }
 
 export function checkEventSignature(
@@ -305,7 +315,7 @@ export function makeParsedSnapshot(
     hash: Uint8Array | undefined,
     signature: Uint8Array | undefined,
 ) {
-    hash = hash ?? riverHash(toBinary(SnapshotSchema, snapshot))
+    hash = hash ?? riverSnapshotHash(toBinary(SnapshotSchema, snapshot))
     return {
         snapshot,
         hash,
