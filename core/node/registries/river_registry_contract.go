@@ -2,6 +2,7 @@ package registries
 
 import (
 	"context"
+	"fmt"
 	"math/big"
 	"slices"
 	"time"
@@ -458,7 +459,7 @@ func (c *RiverRegistryContract) ForStreamsOnNode(
 	log := logging.FromCtx(ctx)
 	pageSize := int64(c.Settings.PageSize)
 	if pageSize <= 0 {
-		pageSize = 5000
+		pageSize = 1500
 	}
 
 	progressReportInterval := c.Settings.ProgressReportInterval
@@ -480,6 +481,8 @@ func (c *RiverRegistryContract) ForStreamsOnNode(
 		return WrapRiverError(Err_CANNOT_CALL_CONTRACT, err).Func("StreamsOnNode")
 	}
 
+	fmt.Printf("node %s got %d streams\n", nodeAddress, nodeStreamCount)
+
 	for i := int64(0); !lastPage; i += pageSize {
 		bo.Reset()
 		for {
@@ -500,11 +503,14 @@ func (c *RiverRegistryContract) ForStreamsOnNode(
 				lastReport = now
 			}
 
+			fmt.Printf("callGetPaginatedStreamsOnNode %d %d\n", i, i+pageSize)
 			streams, err = c.callGetPaginatedStreamsOnNode(ctx, blockNum, nodeAddress, i, i+pageSize)
+			fmt.Printf("err: %v\n", err)
 			if err == nil {
 				lastPage = i+pageSize > nodeStreamCount.Int64()
 				break
 			}
+
 			if !waitForBackoff(ctx, bo) {
 				return err
 			}
