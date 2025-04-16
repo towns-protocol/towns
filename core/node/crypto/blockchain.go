@@ -95,6 +95,23 @@ func NewBlockchainWithClient(
 	metrics infra.MetricsFactory,
 	tracer trace.Tracer,
 ) (*Blockchain, error) {
+	poll := NewChainMonitorPollIntervalCalculator(
+		time.Duration(cfg.BlockTimeMs)*time.Millisecond, 30*time.Second)
+
+	return NewBlockchainWithClientAndChainMonitorPoll(
+		ctx, cfg, wallet, client, clientCloser, poll, metrics, tracer)
+}
+
+func NewBlockchainWithClientAndChainMonitorPoll(
+	ctx context.Context,
+	cfg *config.ChainConfig,
+	wallet *Wallet,
+	client BlockchainClient,
+	clientCloser Closable,
+	poll ChainMonitorPollInterval,
+	metrics infra.MetricsFactory,
+	tracer trace.Tracer,
+) (*Blockchain, error) {
 	if cfg.BlockTimeMs <= 0 {
 		return nil, RiverError(Err_BAD_CONFIG, "BlockTimeMs must be set").
 			Func("NewBlockchainWithClient")
@@ -144,11 +161,11 @@ func NewBlockchainWithClient(
 		}
 	}
 
-	monitor.Start(
+	monitor.StartWithPollInterval(
 		ctx,
 		client,
 		initialBlockNum,
-		time.Duration(cfg.BlockTimeMs)*time.Millisecond,
+		poll,
 		metrics,
 	)
 
