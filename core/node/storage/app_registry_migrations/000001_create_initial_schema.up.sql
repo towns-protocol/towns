@@ -2,6 +2,7 @@ CREATE TABLE IF NOT EXISTS app_registry (
     app_id                  CHAR(40) PRIMARY KEY NOT NULL,
     app_owner_id            CHAR(40)             NOT NULL,
     encrypted_shared_secret CHAR(64)             NOT NULL,
+    forward_setting         SMALLINT             NOT NULL DEFAULT 0,
     webhook                 VARCHAR,
     device_key              VARCHAR,
     fallback_key            VARCHAR

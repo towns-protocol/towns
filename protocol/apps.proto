@@ -15,9 +15,32 @@ import "protocol.proto";
 service AppRegistryService {
     rpc Register(RegisterRequest) returns (RegisterResponse);
     rpc RegisterWebhook(RegisterWebhookRequest) returns (RegisterWebhookResponse);
+    rpc SetAppSettings(SetAppSettingsRequest) returns (SetAppSettingsResponse);
+    rpc GetAppSettings(GetAppSettingsRequest) returns (GetAppSettingsResponse);
     rpc RotateSecret(RotateSecretRequest) returns (RotateSecretResponse);
     rpc GetStatus(GetStatusRequest) returns (GetStatusResponse);
     rpc GetSession(GetSessionRequest) returns (GetSessionResponse);
+}
+
+// ForwardSettingValue is an app-specific setting applied to all space channels the app is a member
+// of. It specifies which messages the app registry service will consider relevant for forwarding to
+// the bot.
+enum ForwardSettingValue {
+    // FORWARD_SETTING_UNSPECIFIED not set, assumes FORWARD_SETTING_MENTIONS_REPLIES_REACTIONS as the default setting.
+    FORWARD_SETTING_UNSPECIFIED = 0;
+    // FORWARD_SETTING_ALL_MESSAGES indicates that the app would like all messages forwarded for each channel
+    // it is a member of.
+    FORWARD_SETTING_ALL_MESSAGES = 1;
+    // FORWARD_SETTING_MENTIONS_REPLIES_REACTIONS indicates that the app would only like messages forwarded in
+    // channels it has membership in if either the app is mentioned, or the message is a direct reply or reaction
+    // to it's own post. This is the default.
+    FORWARD_SETTING_MENTIONS_REPLIES_REACTIONS = 2;
+    // SPACE_CHANNEL_SETTING_NO_MESSAGES indicates that the user won't receive notifications of any channel in the space.
+    FORWARD_SETTING_NO_MESSAGES = 3;
+  }
+
+message AppSettings {
+    ForwardSettingValue forward_setting = 1;
 }
 
 message RegisterRequest {
@@ -26,6 +49,8 @@ message RegisterRequest {
 
     // public key of the app owner
     bytes app_owner_id = 2;
+
+    AppSettings settings = 3;
 }
 
 message RegisterResponse {
@@ -43,6 +68,25 @@ message RegisterWebhookRequest {
 }
 
 message RegisterWebhookResponse { }
+
+message SetAppSettingsRequest {
+    // public key of the app
+    bytes app_id = 1;
+
+    AppSettings settings = 2;
+}
+
+message SetAppSettingsResponse { }
+
+message GetAppSettingsRequest {
+    // public key of the app
+    bytes app_id = 1;
+}
+
+message GetAppSettingsResponse {
+    AppSettings settings = 1;
+}
+
 
 message RotateSecretRequest {
         // public key of the app
