@@ -92,6 +92,8 @@ deploy-facet :;
 	forge script scripts/common/DeployFacet.s.sol \
 	--ffi --rpc-url ${rpc} --broadcast --verify \
 	$(if $(private_key),--private-key ${private_key},$(if $(account),--account ${account})) \
+	$(if $(password),--password ${password},) \
+	$(if $(sender),--sender ${sender},) \
 	$(if $(verifier),--verifier $(verifier),) \
 	$(if $(verifier-url),--verifier-url $(verifier-url),) \
 	$(if $(etherscan),--etherscan-api-key $(etherscan),)
