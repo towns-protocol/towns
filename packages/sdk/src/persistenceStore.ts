@@ -163,12 +163,15 @@ export class PersistenceStore extends Dexie implements IPersistenceStore {
             const records = await this.cleartexts.bulkGet(eventIds)
             return records.length === 0
                 ? undefined
-                : records.reduce((acc, record) => {
-                      if (record !== undefined) {
-                          acc[record.eventId] = record.cleartext
-                      }
-                      return acc
-                  }, {} as Record<string, Uint8Array | string>)
+                : records.reduce(
+                      (acc, record) => {
+                          if (record !== undefined) {
+                              acc[record.eventId] = record.cleartext
+                          }
+                          return acc
+                      },
+                      {} as Record<string, Uint8Array | string>,
+                  )
         }, DEFAULT_RETRY_COUNT)
     }
 
@@ -265,12 +268,15 @@ export class PersistenceStore extends Dexie implements IPersistenceStore {
                 ? { streamId: x.streamId, data: fromBinary(PersistedSyncedStreamSchema, x.data) }
                 : undefined,
         )
-        const psstpss = cachedSyncedStreams.reduce((acc, x) => {
-            if (x) {
-                acc[x.streamId] = persistedSyncedStreamToParsedSyncedStream(x.streamId, x.data)
-            }
-            return acc
-        }, {} as Record<string, ParsedPersistedSyncedStream | undefined>)
+        const psstpss = cachedSyncedStreams.reduce(
+            (acc, x) => {
+                if (x) {
+                    acc[x.streamId] = persistedSyncedStreamToParsedSyncedStream(x.streamId, x.data)
+                }
+                return acc
+            },
+            {} as Record<string, ParsedPersistedSyncedStream | undefined>,
+        )
         return psstpss
     }
 
