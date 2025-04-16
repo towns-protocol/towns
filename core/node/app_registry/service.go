@@ -17,6 +17,7 @@ import (
 	"github.com/towns-protocol/towns/core/config"
 	"github.com/towns-protocol/towns/core/node/app_registry/app_client"
 	"github.com/towns-protocol/towns/core/node/app_registry/sync"
+	"github.com/towns-protocol/towns/core/node/app_registry/types"
 	"github.com/towns-protocol/towns/core/node/authentication"
 	"github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/crypto"
@@ -131,6 +132,77 @@ func NewService(
 		return nil, err
 	}
 	return s, nil
+}
+
+func (s *Service) SetAppSettings(
+	ctx context.Context,
+	req *connect.Request[SetAppSettingsRequest],
+) (
+	*connect.Response[SetAppSettingsResponse],
+	error,
+) {
+	var app common.Address
+	var err error
+	if app, err = base.BytesToAddress(req.Msg.AppId); err != nil {
+		return nil, base.WrapRiverError(Err_INVALID_ARGUMENT, err).
+			Message("invalid app id").Tag("appId", req.Msg.AppId).Func("SetSettings")
+	}
+
+	appInfo, err := s.store.GetAppInfo(ctx, app)
+	if err != nil {
+		return nil, base.WrapRiverError(Err_INTERNAL, err).Message("could not determine app owner").
+			Tag("appId", app).Func("SetSettings")
+	}
+
+	userId := authentication.UserFromAuthenticatedContext(ctx)
+	if app != userId && appInfo.Owner != userId {
+		return nil, base.RiverError(Err_PERMISSION_DENIED, "authenticated user must be app or owner").
+			Tag("appId", app).Tag("userId", userId).Tag("ownerId", appInfo.Owner).Func("SetSettings")
+	}
+
+	if err := s.store.UpdateSettings(ctx, app, types.ProtocolToStorageAppSettings(req.Msg.GetSettings())); err != nil {
+		return nil, base.RiverError(Err_DB_OPERATION_FAILURE, "Unable to update app forward setting").
+			Tag("appId", app).
+			Tag("userId", userId).
+			Func("SetSettings")
+	}
+
+	return &connect.Response[SetAppSettingsResponse]{
+		Msg: &SetAppSettingsResponse{},
+	}, nil
+}
+
+func (s *Service) GetAppSettings(
+	ctx context.Context,
+	req *connect.Request[GetAppSettingsRequest],
+) (
+	*connect.Response[GetAppSettingsResponse],
+	error,
+) {
+	var app common.Address
+	var err error
+	if app, err = base.BytesToAddress(req.Msg.AppId); err != nil {
+		return nil, base.WrapRiverError(Err_INVALID_ARGUMENT, err).
+			Message("invalid app id").Tag("appId", req.Msg.AppId).Func("SetSettings")
+	}
+
+	appInfo, err := s.store.GetAppInfo(ctx, app)
+	if err != nil {
+		return nil, base.WrapRiverError(Err_INTERNAL, err).Message("could not determine app owner").
+			Tag("appId", app).Func("SetSettings")
+	}
+
+	userId := authentication.UserFromAuthenticatedContext(ctx)
+	if app != userId && appInfo.Owner != userId {
+		return nil, base.RiverError(Err_PERMISSION_DENIED, "authenticated user must be app or owner").
+			Tag("appId", app).Tag("userId", userId).Tag("ownerId", appInfo.Owner).Func("SetSettings")
+	}
+
+	return &connect.Response[GetAppSettingsResponse]{
+		Msg: &GetAppSettingsResponse{
+			Settings: types.StorageToProtocolAppSettings(appInfo.Settings),
+		},
+	}, nil
 }
 
 func (s *Service) Start(ctx context.Context) {
@@ -295,7 +367,7 @@ func (s *Service) Register(
 		return nil, base.AsRiverError(err, Err_INTERNAL).Message("error encrypting shared secret for app")
 	}
 
-	if err := s.store.CreateApp(ctx, owner, app, encrypted); err != nil {
+	if err := s.store.CreateApp(ctx, owner, app, types.ProtocolToStorageAppSettings(req.Msg.GetSettings()), encrypted); err != nil {
 		return nil, base.AsRiverError(err, Err_INTERNAL).Message("Error creating app in database")
 	}
 
@@ -406,12 +478,12 @@ func (s *Service) RegisterWebhook(
 	var err error
 	if app, err = base.BytesToAddress(req.Msg.AppId); err != nil {
 		return nil, base.WrapRiverError(Err_INVALID_ARGUMENT, err).
-			Message("invalid app id").
+			Message("invalid app id").Func("RegisterWebhook").
 			Tag("app_id", req.Msg.AppId)
 	}
 	if appInfo, err = s.store.GetAppInfo(ctx, app); err != nil {
 		return nil, base.WrapRiverError(Err_INTERNAL, err).Message("could not determine app owner").
-			Tag("app_id", app)
+			Tag("app_id", app).Func("RegisterWebhook")
 	}
 
 	userId := authentication.UserFromAuthenticatedContext(ctx)
@@ -437,7 +509,7 @@ func (s *Service) RegisterWebhook(
 	if err != nil {
 		return nil, base.WrapRiverError(Err_INTERNAL, err).
 			Message("Unable to decrypt app shared secret from db").
-			Tag("appId", app)
+			Tag("appId", app).Func("RegisterWebhook")
 	}
 
 	webhook := req.Msg.WebhookUrl
@@ -448,7 +520,9 @@ func (s *Service) RegisterWebhook(
 		webhook,
 	)
 	if err != nil {
-		return nil, base.WrapRiverError(Err_UNKNOWN, err).Message("Unable to initialize app service")
+		return nil, base.WrapRiverError(Err_UNKNOWN, err).
+			Message("Unable to initialize app service").
+			Func("RegisterWebhook")
 	}
 
 	if serverEncryptionDevice.DeviceKey != defaultEncryptionDevice.DeviceKey ||
@@ -460,7 +534,8 @@ func (s *Service) RegisterWebhook(
 			Tag("expectedDeviceKey", defaultEncryptionDevice.DeviceKey).
 			Tag("responseDeviceKey", serverEncryptionDevice.DeviceKey).
 			Tag("expectedFallbackKey", defaultEncryptionDevice.FallbackKey).
-			Tag("responseFallbackKey", serverEncryptionDevice.FallbackKey)
+			Tag("responseFallbackKey", serverEncryptionDevice.FallbackKey).
+			Func("RegisterWebhook")
 	}
 
 	// Bust the status cache since the webhook may be changing. This method can be called
