@@ -220,12 +220,25 @@ export class Bot extends (EventEmitter as new () => TypedEmitter<BotEvents>) {
         switch (payload.case) {
             case 'post': {
                 if (payload.value.content.case === 'text') {
-                    this.emit('message', this.client, {
-                        userId: userIdFromAddress(parsed.event.creatorAddress),
-                        eventId: parsed.hashStr,
-                        channelId: streamId,
-                        message: payload.value.content.value.body,
-                    })
+                    const hasBotMention = payload.value.content.value.mentions.some(
+                        (m) => m.userId === this.botId,
+                    )
+                    const userId = userIdFromAddress(parsed.event.creatorAddress)
+                    if (hasBotMention) {
+                        this.emit('botMention', this.client, {
+                            userId,
+                            eventId: parsed.hashStr,
+                            channelId: streamId,
+                            message: payload.value.content.value.body,
+                        })
+                    } else {
+                        this.emit('message', this.client, {
+                            userId,
+                            eventId: parsed.hashStr,
+                            channelId: streamId,
+                            message: payload.value.content.value.body,
+                        })
+                    }
                 }
                 break
             }
