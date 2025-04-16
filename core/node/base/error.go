@@ -7,20 +7,19 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"github.com/towns-protocol/towns/core/node/logging"
 	"os"
 	"runtime"
 	"strconv"
 	"strings"
 
 	"connectrpc.com/connect"
-	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
-
-	"github.com/towns-protocol/towns/core/node/protocol"
-
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/rpc"
+	"github.com/towns-protocol/towns/core/node/logging"
+	"github.com/towns-protocol/towns/core/node/protocol"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
+	"golang.org/x/exp/slices"
 )
 
 // Constants are not exported when go bindings are generated from solidity, so there is duplication here.
@@ -463,4 +462,28 @@ func TruncateErrorToConnectLimit(err error) error {
 		return errors.New(msg[:CONNECT_ERROR_MESSAGE_LIMIT])
 	}
 	return err
+}
+
+// IsOperationRetriableOnRemotes returns true if the given error is the river error and its code is in the list
+// of codes allowed to be retried on remotes.
+func IsOperationRetriableOnRemotes(err error) bool {
+	// If the error is not a river error, then it is not retriable.
+	var riverErrorImpl *RiverErrorImpl
+	if !errors.As(err, &riverErrorImpl) {
+		return false
+	}
+
+	return slices.Contains([]protocol.Err{
+		protocol.Err_UNKNOWN,
+		protocol.Err_DEADLINE_EXCEEDED,
+		protocol.Err_NOT_FOUND,
+		protocol.Err_RESOURCE_EXHAUSTED,
+		protocol.Err_ABORTED,
+		protocol.Err_UNIMPLEMENTED,
+		protocol.Err_INTERNAL,
+		protocol.Err_UNAVAILABLE,
+		protocol.Err_DATA_LOSS,
+		protocol.Err_BUFFER_FULL,
+		protocol.Err_STREAM_RECONCILIATION_REQUIRED,
+	}, AsRiverError(err).Code)
 }

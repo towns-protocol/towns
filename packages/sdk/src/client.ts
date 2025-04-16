@@ -2185,6 +2185,7 @@ export class Client
             streamId,
             fromInclusive,
             toExclusive,
+            true,
             this.opts?.unpackEnvelopeOpts,
         )
 
