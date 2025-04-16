@@ -258,8 +258,8 @@ export const unpackSnapshot = async (
         checkEventSignature(
             {
                 creatorAddress: miniblock.events[0].event.creatorAddress,
-                delegateSig: miniblock.events[0].event.delegateSig,
-                delegateExpiryEpochMs: miniblock.events[0].event.delegateExpiryEpochMs,
+                delegateSig: new Uint8Array(0),
+                delegateExpiryEpochMs: 0n,
             },
             snapshot.hash,
             snapshot.signature,
