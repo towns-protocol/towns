@@ -240,10 +240,12 @@ export const unpackSnapshot = async (
     check(hasElements(snapshot.hash), 'Snapshot hash is not set', Err.BAD_EVENT)
     check(hasElements(snapshot.signature), 'Snapshot signature is not set', Err.BAD_EVENT)
 
-    const sn = fromBinary(SnapshotSchema, snapshot.event)
-
     // make sure the given snapshot corresponds to the miniblock
-    check(bin_equal(miniblock.header.snapshotHash, miniblock.header.snapshotHash))
+    check(
+        bin_equal(miniblock.header.snapshotHash, miniblock.header.snapshotHash),
+        'Snapshot hash does not match miniblock snapshot hash',
+        Err.BAD_EVENT_ID,
+    )
 
     // check snapshot hash
     if (opts?.disableHashValidation !== true) {
@@ -264,7 +266,11 @@ export const unpackSnapshot = async (
         )
     }
 
-    return makeParsedSnapshot(sn, snapshot.hash, snapshot.signature)
+    return makeParsedSnapshot(
+        fromBinary(SnapshotSchema, snapshot.event),
+        snapshot.hash,
+        snapshot.signature,
+    )
 }
 
 export function checkEventSignature(
