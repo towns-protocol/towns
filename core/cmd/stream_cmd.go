@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math"
 	"net/http"
 	"os"
 	"slices"
@@ -1273,6 +1274,17 @@ func runStreamPlaceEnterQuorumCmd(cfg *config.Config, args []string) error {
 
 		if err != nil {
 			return err
+		}
+
+		minBlock := int64(math.MaxInt64)
+		maxBlock := int64(math.MinInt64)
+		for _, nodeStatus := range record.Nodes {
+			minBlock = min(minBlock, nodeStatus.MinipoolGen)
+			maxBlock = max(maxBlock, nodeStatus.MinipoolGen)
+		}
+
+		if maxBlock < 0 || maxBlock-minBlock > 3 {
+			return fmt.Errorf("status for stream %s is not consistent", record.StreamID)
 		}
 
 		nodes := make([]common.Address, 0, len(record.Nodes))
