@@ -2,7 +2,6 @@ package rpc
 
 import (
 	"context"
-	"slices"
 	"time"
 
 	"connectrpc.com/connect"
@@ -25,22 +24,6 @@ const (
 	RiverAllowNoQuorumHeader = "X-River-Allow-No-Quorum" // Must be set to "true" to allow getting data if local node is not in quorum
 )
 
-var (
-	shouldFallbackToRemotesErrCodes = []Err{
-		Err_UNKNOWN,
-		Err_DEADLINE_EXCEEDED,
-		Err_NOT_FOUND,
-		Err_RESOURCE_EXHAUSTED,
-		Err_ABORTED,
-		Err_UNIMPLEMENTED,
-		Err_INTERNAL,
-		Err_UNAVAILABLE,
-		Err_DATA_LOSS,
-		Err_BUFFER_FULL,
-		Err_STREAM_RECONCILIATION_REQUIRED,
-	}
-)
-
 func checkNoForward[T any](req *connect.Request[T]) error {
 	if req.Header().Get(RiverNoForwardHeader) == RiverHeaderTrueValue {
 		return RiverError(Err_UNAVAILABLE, "Forwarding disabled by request header")
@@ -60,10 +43,6 @@ func copyRequestForForwarding[T any](s *Service, req *connect.Request[T]) *conne
 
 func allowNoQuorum[T any](req *connect.Request[T]) bool {
 	return req.Header().Get(RiverAllowNoQuorumHeader) == RiverHeaderTrueValue
-}
-
-func shouldFallbackToRemotes(err error) bool {
-	return slices.Contains(shouldFallbackToRemotesErrCodes, AsRiverError(err).Code)
 }
 
 // peerNodeStreamingResponseWithRetries makes a request with a streaming server response to remote nodes, retrying
@@ -277,7 +256,7 @@ func (s *Service) getStreamImpl(
 	if view != nil {
 		if resp, err := s.localGetStream(ctx, view, req.Msg.SyncCookie); err == nil {
 			return resp, nil
-		} else if shouldFallbackToRemotes(err) {
+		} else if IsOperationRetriableOnRemotes(err) {
 			logging.FromCtx(ctx).Errorw("Failed to get stream from local node, falling back to remotes",
 				"err", err, "nodeAddress", s.wallet.Address, "streamId", streamId)
 		} else {
@@ -319,7 +298,7 @@ func (s *Service) getStreamExImpl(
 	if !allowNoQuorum && nodes.IsLocalInQuorum() || allowNoQuorum && nodes.IsLocal() {
 		if err := s.localGetStreamEx(ctx, req, resp); err == nil {
 			return nil
-		} else if shouldFallbackToRemotes(err) {
+		} else if IsOperationRetriableOnRemotes(err) {
 			logging.FromCtx(ctx).Errorw("Failed to stream the stream from local node, falling back to remotes",
 				"err", err, "nodeAddress", s.wallet.Address, "streamId", streamId)
 		} else {
@@ -402,7 +381,7 @@ func (s *Service) getMiniblocksImpl(
 	if !allowNoQuorum && stream.IsLocalInQuorum() || allowNoQuorum && stream.IsLocal() {
 		if resp, err := s.localGetMiniblocks(ctx, req, stream); err == nil {
 			return resp, nil
-		} else if shouldFallbackToRemotes(err) {
+		} else if IsOperationRetriableOnRemotes(err) {
 			logging.FromCtx(ctx).Errorw("Failed to get miniblocks from local node, falling back to remotes",
 				"err", err, "nodeAddress", s.wallet.Address, "streamId", streamId)
 		} else {
@@ -458,7 +437,7 @@ func (s *Service) getLastMiniblockHashImpl(
 	if view != nil {
 		if resp, err := s.localGetLastMiniblockHash(view); err == nil {
 			return resp, nil
-		} else if shouldFallbackToRemotes(err) {
+		} else if IsOperationRetriableOnRemotes(err) {
 			logging.FromCtx(ctx).Errorw("Failed to get last miniblock hash from local node, falling back to remotes",
 				"err", err, "nodeAddress", s.wallet.Address, "streamId", streamId)
 		} else {
@@ -516,7 +495,7 @@ func (s *Service) addEventImpl(
 	if view != nil {
 		if resp, err := s.localAddEvent(ctx, req, streamId, stream, view); err == nil {
 			return resp, nil
-		} else if shouldFallbackToRemotes(err) {
+		} else if IsOperationRetriableOnRemotes(err) {
 			logging.FromCtx(ctx).Errorw("Failed to add event with local node, falling back to remotes",
 				"err", err, "nodeAddress", s.wallet.Address, "streamId", streamId)
 		} else {
@@ -575,7 +554,7 @@ func (s *Service) addMediaEventImpl(
 
 		if resp, err := s.localAddMediaEvent(ctx, req); err == nil {
 			return resp, nil
-		} else if shouldFallbackToRemotes(err) {
+		} else if IsOperationRetriableOnRemotes(err) {
 			logging.FromCtx(ctx).Errorw("Failed to add media event with local node, falling back to remotes",
 				"err", err, "nodeAddress", s.wallet.Address, "streamId", streamId)
 		} else {

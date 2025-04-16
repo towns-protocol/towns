@@ -7,11 +7,13 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"github.com/towns-protocol/towns/core/node/logging"
 	"os"
 	"runtime"
 	"strconv"
 	"strings"
+
+	"github.com/towns-protocol/towns/core/node/logging"
+	"golang.org/x/exp/slices"
 
 	"connectrpc.com/connect"
 	"go.uber.org/zap"
@@ -463,4 +465,22 @@ func TruncateErrorToConnectLimit(err error) error {
 		return errors.New(msg[:CONNECT_ERROR_MESSAGE_LIMIT])
 	}
 	return err
+}
+
+// IsOperationRetriableOnRemotes returns true if the given error is the river error and its code is in the list
+// of codes allowed to be retried on remotes.
+func IsOperationRetriableOnRemotes(err error) bool {
+	return slices.Contains([]protocol.Err{
+		protocol.Err_UNKNOWN,
+		protocol.Err_DEADLINE_EXCEEDED,
+		protocol.Err_NOT_FOUND,
+		protocol.Err_RESOURCE_EXHAUSTED,
+		protocol.Err_ABORTED,
+		protocol.Err_UNIMPLEMENTED,
+		protocol.Err_INTERNAL,
+		protocol.Err_UNAVAILABLE,
+		protocol.Err_DATA_LOSS,
+		protocol.Err_BUFFER_FULL,
+		protocol.Err_STREAM_RECONCILIATION_REQUIRED,
+	}, AsRiverError(err).Code)
 }
