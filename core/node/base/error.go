@@ -470,8 +470,12 @@ func TruncateErrorToConnectLimit(err error) error {
 // IsOperationRetriableOnRemotes returns true if the given error is the river error and its code is in the list
 // of codes allowed to be retried on remotes.
 func IsOperationRetriableOnRemotes(err error) bool {
-	// protocol.Err_ERR_UNSPECIFIED is used as a default error code if the given error is not the river error.
-	// In this case, operation is not retriable.
+	// If the error is not a river error, then it is not retriable.
+	var riverErrorImpl *RiverErrorImpl
+	if !errors.As(err, &riverErrorImpl) {
+		return false
+	}
+
 	return slices.Contains([]protocol.Err{
 		protocol.Err_UNKNOWN,
 		protocol.Err_DEADLINE_EXCEEDED,
@@ -484,5 +488,5 @@ func IsOperationRetriableOnRemotes(err error) bool {
 		protocol.Err_DATA_LOSS,
 		protocol.Err_BUFFER_FULL,
 		protocol.Err_STREAM_RECONCILIATION_REQUIRED,
-	}, AsRiverError(err, protocol.Err_ERR_UNSPECIFIED).Code)
+	}, AsRiverError(err).Code)
 }
