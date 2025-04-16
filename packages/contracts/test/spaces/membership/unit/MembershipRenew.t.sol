@@ -6,11 +6,9 @@ import {MembershipBaseSetup} from "../MembershipBaseSetup.sol";
 
 //interfaces
 import {IERC5643Base} from "src/diamond/facets/token/ERC5643/IERC5643.sol";
-import {IERC721ABase} from "src/diamond/facets/token/ERC721A/IERC721A.sol";
 
 //libraries
 import {BasisPoints} from "src/utils/libraries/BasisPoints.sol";
-import {CurrencyTransfer} from "src/utils/libraries/CurrencyTransfer.sol";
 
 //contracts
 

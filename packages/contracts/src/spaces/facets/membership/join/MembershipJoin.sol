@@ -456,7 +456,7 @@ abstract contract MembershipJoin is
         uint256 duration = _getMembershipDuration();
         uint256 membershipPrice = _getMembershipRenewalPrice(tokenId, _totalSupply());
 
-        if (membershipPrice != msg.value) {
+        if (membershipPrice > msg.value) {
             Membership__InvalidPayment.selector.revertWith();
         }
 

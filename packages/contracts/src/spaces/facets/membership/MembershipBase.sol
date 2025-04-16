@@ -15,6 +15,7 @@ import {BasisPoints} from "src/utils/libraries/BasisPoints.sol";
 import {CurrencyTransfer} from "src/utils/libraries/CurrencyTransfer.sol";
 import {CustomRevert} from "src/utils/libraries/CustomRevert.sol";
 import {SafeTransferLib} from "solady/utils/SafeTransferLib.sol";
+import {FixedPointMathLib} from "solady/utils/FixedPointMathLib.sol";
 
 // contracts
 
@@ -181,7 +182,7 @@ abstract contract MembershipBase is IMembershipBase {
         if (renewalPrice != 0) {
             // Ensure it's at least the protocol fee that would be calculated for this price
             uint256 protocolFee = _getProtocolFee(renewalPrice);
-            return renewalPrice < protocolFee ? protocolFee : renewalPrice;
+            return FixedPointMathLib.min(renewalPrice, protocolFee);
         }
 
         // Otherwise use the regular membership price
