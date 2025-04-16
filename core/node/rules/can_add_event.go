@@ -162,15 +162,15 @@ func CanAddEvent(
 	if parsedEvent.Event.PrevMiniblockHash == nil {
 		return false, nil, nil, RiverError(Err_INVALID_ARGUMENT, "event has no prevMiniblockHash")
 	}
+
 	// check preceding miniblock hash
-	err := streamView.ValidateNextEvent(ctx, chainConfig.Get(), parsedEvent, currentTime)
-	if err != nil {
+	if err := streamView.ValidateNextEvent(ctx, chainConfig.Get(), parsedEvent, currentTime); err != nil {
 		return false, nil, nil, err
 	}
+
 	// make sure the stream event is of the same type as the inception event
-	err = parsedEvent.Event.VerifyPayloadTypeMatchesStreamType(streamView.InceptionPayload())
-	if err != nil {
-		return false, nil, nil, err
+	if err := parsedEvent.Event.VerifyPayloadTypeMatchesStreamType(streamView.InceptionPayload()); err != nil {
+		return false, nil, nil, AsRiverError(err, Err_INVALID_ARGUMENT)
 	}
 
 	settings := chainConfig.Get()
