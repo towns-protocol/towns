@@ -53,6 +53,27 @@ describe('channelsWithEntitlements', () => {
             ),
         ).resolves.toBeFalsy()
 
+        // unban alice
+        const unbanTx = await bobSpaceDapp.unbanWalletAddress(
+            spaceId,
+            alicesWallet.address,
+            bobProvider.wallet,
+        )
+        await unbanTx.wait()
+
+        // Wait 5 seconds for the caches to expire
+        await new Promise((f) => setTimeout(f, 5000))
+
+        await expect(
+            aliceSpaceDapp.isEntitledToChannel(
+                spaceId,
+                channelId!,
+                alice.userId,
+                Permission.Read,
+                getXchainConfigForTesting(),
+            ),
+        ).resolves.toBeTruthy()
+
         const doneStart = Date.now()
         // kill the clients
         await bob.stopSync()

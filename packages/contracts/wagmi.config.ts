@@ -5,8 +5,8 @@ export default defineConfig({
   out: "typings/index.ts",
   plugins: [
     foundry({
-      project: "../",
-      artifacts: "contracts/out",
+      project: "./",
+      artifacts: "out",
       include: ["**/CreateSpace.sol/*.json"],
       forge: {
         build: false,

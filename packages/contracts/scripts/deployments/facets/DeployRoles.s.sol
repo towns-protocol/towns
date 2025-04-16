@@ -1,42 +1,48 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-//interfaces
+// interfaces
+import {IDiamond} from "@towns-protocol/diamond/src/Diamond.sol";
+import {IRoles} from "src/spaces/facets/roles/IRoles.sol";
 
-//libraries
+// libraries
+import {DeployLib} from "@towns-protocol/diamond/scripts/common/DeployLib.sol";
+import {DynamicArrayLib} from "solady/utils/DynamicArrayLib.sol";
 
-//contracts
-import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
-import {Deployer} from "scripts/common/Deployer.s.sol";
-import {Roles} from "src/spaces/facets/roles/Roles.sol";
+library DeployRoles {
+    using DynamicArrayLib for DynamicArrayLib.DynamicArray;
 
-contract DeployRoles is FacetHelper, Deployer {
-    constructor() {
-        addSelector(Roles.createRole.selector);
-        addSelector(Roles.getRoles.selector);
-        addSelector(Roles.getRoleById.selector);
-        addSelector(Roles.updateRole.selector);
-        addSelector(Roles.removeRole.selector);
-        addSelector(Roles.addPermissionsToRole.selector);
-        addSelector(Roles.removePermissionsFromRole.selector);
-        addSelector(Roles.getPermissionsByRoleId.selector);
-        addSelector(Roles.addRoleToEntitlement.selector);
-        addSelector(Roles.removeRoleFromEntitlement.selector);
-
+    function selectors() internal pure returns (bytes4[] memory res) {
+        DynamicArrayLib.DynamicArray memory arr = DynamicArrayLib.p().reserve(13);
+        arr.p(IRoles.createRole.selector);
+        arr.p(IRoles.getRoles.selector);
+        arr.p(IRoles.getRoleById.selector);
+        arr.p(IRoles.updateRole.selector);
+        arr.p(IRoles.removeRole.selector);
+        arr.p(IRoles.addPermissionsToRole.selector);
+        arr.p(IRoles.removePermissionsFromRole.selector);
+        arr.p(IRoles.getPermissionsByRoleId.selector);
+        arr.p(IRoles.addRoleToEntitlement.selector);
+        arr.p(IRoles.removeRoleFromEntitlement.selector);
         // channel permission overrides
-        addSelector(Roles.setChannelPermissionOverrides.selector);
-        addSelector(Roles.getChannelPermissionOverrides.selector);
-        addSelector(Roles.clearChannelPermissionOverrides.selector);
+        arr.p(IRoles.setChannelPermissionOverrides.selector);
+        arr.p(IRoles.getChannelPermissionOverrides.selector);
+        arr.p(IRoles.clearChannelPermissionOverrides.selector);
+
+        bytes32[] memory selectors_ = arr.asBytes32Array();
+        assembly ("memory-safe") {
+            res := selectors_
+        }
     }
 
-    function versionName() public pure override returns (string memory) {
-        return "facets/rolesFacet";
+    function makeCut(
+        address facetAddress,
+        IDiamond.FacetCutAction action
+    ) internal pure returns (IDiamond.FacetCut memory) {
+        return IDiamond.FacetCut(facetAddress, action, selectors());
     }
 
-    function __deploy(address deployer) internal override returns (address) {
-        vm.startBroadcast(deployer);
-        Roles facet = new Roles();
-        vm.stopBroadcast();
-        return address(facet);
+    function deploy() internal returns (address) {
+        return DeployLib.deployCode("Roles.sol", "");
     }
 }

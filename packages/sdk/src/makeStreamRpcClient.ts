@@ -1,6 +1,6 @@
 import { Client, createClient } from '@connectrpc/connect'
 import { ConnectTransportOptions as ConnectTransportOptionsWeb } from '@connectrpc/connect-web'
-import { StreamService } from '@towns-protocol/proto'
+import { Snapshot, StreamService } from '@towns-protocol/proto'
 import { dlog } from '@towns-protocol/dlog'
 import { getEnvVar, randomUrlSelector } from './utils'
 import {
@@ -10,7 +10,7 @@ import {
     retryInterceptor,
     type RetryParams,
 } from './rpcInterceptors'
-import { UnpackEnvelopeOpts, unpackMiniblock } from './sign'
+import { UnpackEnvelopeOpts, unpackMiniblock, unpackSnapshot } from './sign'
 import { RpcOptions, createHttp2ConnectTransport } from './rpcCommon'
 import { streamIdAsBytes } from './id'
 import { ParsedMiniblock } from './types'
@@ -79,13 +79,18 @@ export async function getMiniblocks(
     fromInclusive: bigint,
     toExclusive: bigint,
     unpackEnvelopeOpts: UnpackEnvelopeOpts | undefined,
-): Promise<{ miniblocks: ParsedMiniblock[]; terminus: boolean }> {
+): Promise<{
+    miniblocks: ParsedMiniblock[]
+    snapshots: Record<string, Snapshot>
+    terminus: boolean
+}> {
     const allMiniblocks: ParsedMiniblock[] = []
     let currentFromInclusive = fromInclusive
     let reachedTerminus = false
+    const parsedSnapshots: Record<string, Snapshot> = {}
 
     while (currentFromInclusive < toExclusive) {
-        const { miniblocks, terminus, nextFromInclusive } = await fetchMiniblocksFromRpc(
+        const { miniblocks, terminus, nextFromInclusive, snapshots } = await fetchMiniblocksFromRpc(
             client,
             streamId,
             currentFromInclusive,
@@ -94,6 +99,9 @@ export async function getMiniblocks(
         )
 
         allMiniblocks.push(...miniblocks)
+        Object.entries(snapshots).forEach(([key, snapshot]) => {
+            parsedSnapshots[key] = snapshot
+        })
 
         // Set the terminus to true if we got at least one response with reached terminus
         // The behaviour around this flag is not implemented yet
@@ -111,6 +119,7 @@ export async function getMiniblocks(
     return {
         miniblocks: allMiniblocks,
         terminus: reachedTerminus,
+        snapshots: parsedSnapshots,
     }
 }
 
@@ -128,9 +137,20 @@ async function fetchMiniblocksFromRpc(
     })
 
     const miniblocks: ParsedMiniblock[] = []
+    const parsedSnapshots: Record<string, Snapshot> = {}
     for (const miniblock of response.miniblocks) {
         const unpackedMiniblock = await unpackMiniblock(miniblock, unpackEnvelopeOpts)
+        const unpackedMiniblockNum = unpackedMiniblock.header.miniblockNum.toString()
         miniblocks.push(unpackedMiniblock)
+        if (response.snapshots[unpackedMiniblockNum]) {
+            parsedSnapshots[unpackedMiniblockNum] = (
+                await unpackSnapshot(
+                    unpackedMiniblock,
+                    response.snapshots[unpackedMiniblockNum],
+                    unpackEnvelopeOpts,
+                )
+            ).snapshot
+        }
     }
 
     const respondedFromInclusive =
@@ -140,5 +160,6 @@ async function fetchMiniblocksFromRpc(
         miniblocks: miniblocks,
         terminus: response.terminus,
         nextFromInclusive: respondedFromInclusive + BigInt(response.miniblocks.length),
+        snapshots: parsedSnapshots,
     }
 }

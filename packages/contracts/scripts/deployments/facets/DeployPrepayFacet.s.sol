@@ -2,33 +2,30 @@
 pragma solidity ^0.8.23;
 
 //interfaces
+import {IDiamond} from "@towns-protocol/diamond/src/Diamond.sol";
+import {IPrepay} from "src/spaces/facets/prepay/IPrepay.sol";
 
 //libraries
+import {DeployLib} from "@towns-protocol/diamond/scripts/common/DeployLib.sol";
 
 //contracts
-import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
-import {Deployer} from "scripts/common/Deployer.s.sol";
-import {PrepayFacet} from "src/spaces/facets/prepay/PrepayFacet.sol";
 
-contract DeployPrepayFacet is FacetHelper, Deployer {
-    constructor() {
-        addSelector(PrepayFacet.prepayMembership.selector);
-        addSelector(PrepayFacet.prepaidMembershipSupply.selector);
-        addSelector(PrepayFacet.calculateMembershipPrepayFee.selector);
+library DeployPrepayFacet {
+    function selectors() internal pure returns (bytes4[] memory res) {
+        res = new bytes4[](3);
+        res[0] = IPrepay.prepayMembership.selector;
+        res[1] = IPrepay.prepaidMembershipSupply.selector;
+        res[2] = IPrepay.calculateMembershipPrepayFee.selector;
     }
 
-    function initializer() public pure override returns (bytes4) {
-        return PrepayFacet.__PrepayFacet_init.selector;
+    function makeCut(
+        address facetAddress,
+        IDiamond.FacetCutAction action
+    ) internal pure returns (IDiamond.FacetCut memory) {
+        return IDiamond.FacetCut(facetAddress, action, selectors());
     }
 
-    function versionName() public pure override returns (string memory) {
-        return "facets/prepayFacet";
-    }
-
-    function __deploy(address deployer) internal override returns (address) {
-        vm.startBroadcast(deployer);
-        PrepayFacet facet = new PrepayFacet();
-        vm.stopBroadcast();
-        return address(facet);
+    function deploy() internal returns (address) {
+        return DeployLib.deployCode("PrepayFacet.sol", "");
     }
 }
