@@ -78,11 +78,12 @@ export async function getMiniblocks(
     streamId: string | Uint8Array,
     fromInclusive: bigint,
     toExclusive: bigint,
+    omitSnapshots: boolean,
     unpackEnvelopeOpts: UnpackEnvelopeOpts | undefined,
 ): Promise<{
     miniblocks: ParsedMiniblock[]
-    snapshots: Record<string, Snapshot>
     terminus: boolean
+    snapshots?: Record<string, Snapshot>
 }> {
     const allMiniblocks: ParsedMiniblock[] = []
     let currentFromInclusive = fromInclusive
@@ -95,13 +96,16 @@ export async function getMiniblocks(
             streamId,
             currentFromInclusive,
             toExclusive,
+            omitSnapshots,
             unpackEnvelopeOpts,
         )
 
         allMiniblocks.push(...miniblocks)
-        Object.entries(snapshots).forEach(([key, snapshot]) => {
-            parsedSnapshots[key] = snapshot
-        })
+        if (!omitSnapshots) {
+            Object.entries(snapshots).forEach(([key, snapshot]) => {
+                parsedSnapshots[key] = snapshot
+            })
+        }
 
         // Set the terminus to true if we got at least one response with reached terminus
         // The behaviour around this flag is not implemented yet
@@ -128,12 +132,14 @@ async function fetchMiniblocksFromRpc(
     streamId: string | Uint8Array,
     fromInclusive: bigint,
     toExclusive: bigint,
+    omitSnapshots: boolean,
     unpackEnvelopeOpts: UnpackEnvelopeOpts | undefined,
 ) {
     const response = await client.getMiniblocks({
         streamId: streamIdAsBytes(streamId),
         fromInclusive,
         toExclusive,
+        omitSnapshots,
     })
 
     const miniblocks: ParsedMiniblock[] = []
@@ -142,7 +148,7 @@ async function fetchMiniblocksFromRpc(
         const unpackedMiniblock = await unpackMiniblock(miniblock, unpackEnvelopeOpts)
         const unpackedMiniblockNum = unpackedMiniblock.header.miniblockNum.toString()
         miniblocks.push(unpackedMiniblock)
-        if (response.snapshots[unpackedMiniblockNum]) {
+        if (!omitSnapshots && response.snapshots[unpackedMiniblockNum]) {
             parsedSnapshots[unpackedMiniblockNum] = (
                 await unpackSnapshot(
                     unpackedMiniblock,
