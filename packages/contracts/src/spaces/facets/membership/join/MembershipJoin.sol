@@ -13,17 +13,16 @@ import {IMembership} from "src/spaces/facets/membership/IMembership.sol";
 import {IRolesBase} from "src/spaces/facets/roles/IRoles.sol";
 
 // libraries
-
 import {Permissions} from "src/spaces/facets/Permissions.sol";
 import {BasisPoints} from "src/utils/libraries/BasisPoints.sol";
 import {CurrencyTransfer} from "src/utils/libraries/CurrencyTransfer.sol";
 import {CustomRevert} from "src/utils/libraries/CustomRevert.sol";
+import {FixedPointMathLib} from "solady/utils/FixedPointMathLib.sol";
+import {TiersLib} from "src/spaces/facets/membership/tiers/TiersLib.sol";
 
 // contracts
-
 import {Entitled} from "src/spaces/facets/Entitled.sol";
 import {DispatcherBase} from "src/spaces/facets/dispatcher/DispatcherBase.sol";
-
 import {EntitlementGatedBase} from "src/spaces/facets/gated/EntitlementGatedBase.sol";
 import {MembershipBase} from "src/spaces/facets/membership/MembershipBase.sol";
 import {PrepayBase} from "src/spaces/facets/prepay/PrepayBase.sol";
@@ -339,11 +338,32 @@ abstract contract MembershipJoin is
         // get token id
         uint256 tokenId = _nextTokenId();
 
+        // get price
+        uint256 price = _getMembershipPrice(_totalSupply());
+        address pricingModule = _getPricingModule();
+        uint64 duration = _getMembershipDuration();
+
+        // create tier 1 if it doesn't exist
+        uint16 tierId = 1;
+        if (!TiersLib.isTierActive(tierId)) {
+            TiersLib.createTier(
+                TiersLib.Tier({
+                    pricingModule: pricingModule,
+                    renewalPrice: price,
+                    duration: duration,
+                    active: true
+                })
+            );
+        }
+
         // set renewal price for token
-        _setMembershipRenewalPrice(tokenId, _getMembershipPrice(_totalSupply()));
+        _setMembershipRenewalPrice(tokenId, price);
 
         // mint membership
         _safeMint(receiver, 1);
+
+        // set tier for token
+        TiersLib.changeMembershipTier(tokenId, tierId);
 
         // set expiration of membership
         _renewSubscription(tokenId, _getMembershipDuration());
@@ -453,11 +473,27 @@ abstract contract MembershipJoin is
             Membership__InvalidAddress.selector.revertWith();
         }
 
-        uint256 duration = _getMembershipDuration();
         uint256 membershipPrice = _getMembershipRenewalPrice(tokenId, _totalSupply());
 
         if (membershipPrice > msg.value) {
             Membership__InvalidPayment.selector.revertWith();
+        }
+
+        uint256 duration = _getMembershipDuration();
+        address pricingModule = _getPricingModule();
+        uint256 price = _getMembershipPrice(_totalSupply());
+
+        // create tier 1 if it doesn't exist
+        uint16 tierId = 1;
+        if (!TiersLib.isTierActive(tierId)) {
+            TiersLib.createTier(
+                TiersLib.Tier({
+                    pricingModule: pricingModule,
+                    renewalPrice: price,
+                    duration: duration,
+                    active: true
+                })
+            );
         }
 
         uint256 protocolFee = _collectProtocolFee(payer, membershipPrice);
@@ -476,5 +512,6 @@ abstract contract MembershipJoin is
         }
 
         _renewSubscription(tokenId, uint64(duration));
+        TiersLib.changeMembershipTier(tokenId, tierId);
     }
 }
