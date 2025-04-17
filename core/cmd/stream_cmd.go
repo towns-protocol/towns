@@ -947,21 +947,27 @@ func runStreamPlaceInitiateCmd(cfg *config.Config, args []string) error {
 			return err
 		}
 
-		streamNodeOperators := []common.Address{nodesToOperator[record.NodeAddresses[0]]}
+		var streamNodeOperators []common.Address
+		for _, addr := range record.NodeAddresses {
+			streamNodeOperators = append(streamNodeOperators, nodesToOperator[addr])
+		}
+
 		for _, addr := range choosenStreamNodes {
 			if slices.Contains(record.NodeAddresses, addr) { // no duplicate nodes
 				continue
 			}
 
+			operator := nodesToOperator[addr]
+
 			if !allowMultipleNodesFromSameOperator {
 				// if enough operators available don't use 2 nodes from the same operator
-				if slices.Contains(streamNodeOperators, nodesToOperator[addr]) {
+				if slices.Contains(streamNodeOperators, operator) {
 					continue
 				}
 			}
 
 			record.NodeAddresses = append(record.NodeAddresses, addr)
-			streamNodeOperators = append(streamNodeOperators, nodesToOperator[addr])
+			streamNodeOperators = append(streamNodeOperators, operator)
 
 			if len(record.NodeAddresses) >= targetReplicationFactor {
 				break
@@ -999,7 +1005,7 @@ func runStreamPlaceInitiateCmd(cfg *config.Config, args []string) error {
 		return err
 	}
 
-	for requests := range slices.Chunk(streamSetReplicationFactorRequests, 500) {
+	for requests := range slices.Chunk(streamSetReplicationFactorRequests, 15) {
 		pendingTx, err := blockchain.TxPool.Submit(
 			ctx,
 			"StreamRegistry::SetStreamReplicationFactor",
@@ -1314,7 +1320,7 @@ func runStreamPlaceEnterQuorumCmd(cfg *config.Config, args []string) error {
 		return err
 	}
 
-	for requests := range slices.Chunk(streamSetReplicationFactorRequests, 500) {
+	for requests := range slices.Chunk(streamSetReplicationFactorRequests, 15) {
 		pendingTx, err := blockchain.TxPool.Submit(
 			ctx,
 			"StreamRegistry::SetStreamReplicationFactor",
