@@ -13,6 +13,7 @@ import (
 	"os"
 	"slices"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -41,6 +42,8 @@ import (
 	"github.com/towns-protocol/towns/core/node/shared"
 	"github.com/towns-protocol/towns/core/node/storage"
 )
+
+const StreamSetReplicationFactorRequestsBatchSize = 75
 
 func runStreamGetEventCmd(cmd *cobra.Command, args []string) error {
 	ctx := context.Background() // lint:ignore context.Background() is fine here
@@ -712,6 +715,79 @@ type streamSyncStatus struct {
 	Nodes    map[common.Address]streamSyncNodeStatus
 }
 
+func runStreamAllMigrationListCmd(cmd *cobra.Command, args []string) error {
+	ctx := context.Background() // lint:ignore context.Background() is fine here
+	blockchain, err := crypto.NewBlockchain(
+		ctx,
+		&cmdConfig.RiverChain,
+		nil,
+		infra.NewMetricsFactory(nil, "river", "cmdline"),
+		nil,
+	)
+	if err != nil {
+		return err
+	}
+
+	registryContract, err := registries.NewRiverRegistryContract(
+		ctx,
+		blockchain,
+		&cmdConfig.RegistryContract,
+		&cmdConfig.RiverRegistry,
+	)
+	if err != nil {
+		return err
+	}
+
+	fileOutputs := make(map[string]*os.File)
+	streamOutputs := make(map[string]*json.Encoder)
+
+	defer func() {
+		for _, outputFile := range fileOutputs {
+			outputFile.Close()
+		}
+	}()
+
+	registryContract.ForAllStreams(ctx, blockchain.InitialBlockNum, func(streamWithID *river.StreamWithId) bool {
+		stream := streamWithID.Stream
+		if len(stream.Nodes) == 1 {
+			streams := &StreamNotMigrated{
+				StreamID:          streamWithID.Id,
+				ReplicationFactor: uint8(stream.StreamReplicationFactor()),
+				Status:            "not_migrated",
+				NodeAddresses:     stream.Nodes,
+			}
+
+			key := fmt.Sprintf("%s.%02x", stream.Nodes[0].Hex(), streamWithID.Id[0])
+
+			output, ok := streamOutputs[key]
+			if !ok {
+				outputFilename := fmt.Sprintf(
+					"%s/%s_%02x.streams",
+					args[0],
+					strings.ToLower(stream.Nodes[0].Hex()),
+					streamWithID.Id[0],
+				)
+				outputFile, err := os.OpenFile(outputFilename, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0644)
+				if err != nil {
+					panic(err)
+				}
+				output = json.NewEncoder(outputFile)
+
+				fileOutputs[key] = outputFile
+				streamOutputs[key] = output
+			}
+
+			if err := streamOutputs[key].Encode(streams); err != nil {
+				panic(err)
+			}
+		}
+
+		return true
+	})
+
+	return nil
+}
+
 func runStreamMigrationListCmd(cmd *cobra.Command, args []string) error {
 	limit := 0
 	if len(args) >= 2 {
@@ -867,6 +943,15 @@ func runStreamPlaceInitiateCmd(cfg *config.Config, args []string) error {
 		return fmt.Errorf("address %s is not a configuration manager", wallet.Address)
 	}
 
+	decoder, err := crypto.NewEVMErrorDecoder(
+		river.StreamRegistryV1MetaData,
+		river.RiverConfigV1MetaData,
+		river.NodeRegistryV1MetaData,
+		river.StreamRegistryV1MetaData)
+	if err != nil {
+		return err
+	}
+
 	registryContract, err := registries.NewRiverRegistryContract(
 		ctx,
 		blockchain,
@@ -996,16 +1081,7 @@ func runStreamPlaceInitiateCmd(cfg *config.Config, args []string) error {
 
 	output := json.NewEncoder(outputFile)
 
-	decoder, err := crypto.NewEVMErrorDecoder(
-		river.StreamRegistryV1MetaData,
-		river.RiverConfigV1MetaData,
-		river.NodeRegistryV1MetaData,
-		river.StreamRegistryV1MetaData)
-	if err != nil {
-		return err
-	}
-
-	for requests := range slices.Chunk(streamSetReplicationFactorRequests, 15) {
+	for requests := range slices.Chunk(streamSetReplicationFactorRequests, StreamSetReplicationFactorRequestsBatchSize) {
 		pendingTx, err := blockchain.TxPool.Submit(
 			ctx,
 			"StreamRegistry::SetStreamReplicationFactor",
@@ -1320,7 +1396,7 @@ func runStreamPlaceEnterQuorumCmd(cfg *config.Config, args []string) error {
 		return err
 	}
 
-	for requests := range slices.Chunk(streamSetReplicationFactorRequests, 15) {
+	for requests := range slices.Chunk(streamSetReplicationFactorRequests, StreamSetReplicationFactorRequestsBatchSize) {
 		pendingTx, err := blockchain.TxPool.Submit(
 			ctx,
 			"StreamRegistry::SetStreamReplicationFactor",
@@ -1445,6 +1521,13 @@ a specific node are included. Use 0 for max-streams to include all streams.`,
 		RunE: runStreamMigrationListCmd,
 	}
 
+	cmdStreamAllMigrationList := &cobra.Command{
+		Use:   "not-migrated-all <output-directory>",
+		Short: "Dump non-replicated streams grouped by node address to directory",
+		Args:  cobra.ExactArgs(1),
+		RunE:  runStreamAllMigrationListCmd,
+	}
+
 	cmdStreamPlace := &cobra.Command{
 		Use:   "place",
 		Short: "Place streams on nodes",
@@ -1505,6 +1588,7 @@ a specific node are included. Use 0 for max-streams to include all streams.`,
 	cmdStream.AddCommand(cmdStreamDump)
 	cmdStream.AddCommand(cmdStreamNodeDump)
 	cmdStream.AddCommand(cmdStreamMigrationList)
+	cmdStream.AddCommand(cmdStreamAllMigrationList)
 	cmdStream.AddCommand(cmdStreamPlace)
 	cmdStream.AddCommand(cmdStreamGet)
 	cmdStream.AddCommand(cmdStreamGetPartition)
