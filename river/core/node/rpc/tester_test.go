@@ -794,7 +794,11 @@ func (tc *testClient) createChannel(
 	}, cookie
 }
 
-func (tc *testClient) joinChannel(spaceId StreamId, channelId StreamId, userStreamMb *MiniblockRef) {
+func (tc *testClient) joinChannel(
+	spaceId StreamId,
+	channelId StreamId,
+	userStreamMb *MiniblockRef,
+) *MemberPayload_Membership {
 	userJoin, err := MakeEnvelopeWithPayload(
 		tc.wallet,
 		Make_UserPayload_Membership(
@@ -809,6 +813,18 @@ func (tc *testClient) joinChannel(spaceId StreamId, channelId StreamId, userStre
 
 	userStreamId := UserStreamIdFromAddr(tc.wallet.Address)
 	tc.addEvent(userStreamId, userJoin)
+
+	// The above add appends an event to the user's user stream. Once it reaches the node, the node will
+	// create a derived membership event and add it to the channel.
+	// The following returned payload content is the content of the membership event we would expect to see
+	// in the channel if the user is indeed entitled to the channel, and the above event is successfully added.
+	// Returning this is useful for understanding what kind of content a bot might see in the channel.
+	return &MemberPayload_Membership{
+		Op:               MembershipOp_SO_JOIN,
+		UserAddress:      tc.wallet.Address[:],
+		InitiatorAddress: tc.wallet.Address[:],
+		StreamParentId:   spaceId[:],
+	}
 }
 
 func (tc *testClient) getLastMiniblockHash(streamId StreamId) *MiniblockRef {

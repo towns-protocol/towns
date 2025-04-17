@@ -27,15 +27,19 @@ import type {
   PromiseOrValue,
 } from "./common";
 
+export declare namespace WalletLib {
+  export type WalletStruct = {
+    addr: PromiseOrValue<string>;
+    vmType: PromiseOrValue<BigNumberish>;
+  };
+
+  export type WalletStructOutput = [string, number] & {
+    addr: string;
+    vmType: number;
+  };
+}
+
 export declare namespace IWalletLinkBase {
-  export type WalletQueryOptionsStruct = {
-    includeDelegations: PromiseOrValue<boolean>;
-  };
-
-  export type WalletQueryOptionsStructOutput = [boolean] & {
-    includeDelegations: boolean;
-  };
-
   export type LinkedWalletStruct = {
     addr: PromiseOrValue<string>;
     signature: PromiseOrValue<BytesLike>;
@@ -78,29 +82,16 @@ export declare namespace IWalletLinkBase {
   };
 }
 
-export declare namespace WalletLib {
-  export type WalletStruct = {
-    addr: PromiseOrValue<string>;
-    vmType: PromiseOrValue<BigNumberish>;
-  };
-
-  export type WalletStructOutput = [string, number] & {
-    addr: string;
-    vmType: number;
-  };
-}
-
 export interface IWalletLinkInterface extends utils.Interface {
   functions: {
     "checkIfLinked(address,address)": FunctionFragment;
     "checkIfNonEVMWalletLinked(address,bytes32)": FunctionFragment;
-    "explicitWalletsByRootKey(address,(bool))": FunctionFragment;
+    "getAllWalletsByRootKey(address)": FunctionFragment;
     "getDefaultWallet(address)": FunctionFragment;
     "getDependency(bytes32)": FunctionFragment;
     "getLatestNonceForRootKey(address)": FunctionFragment;
     "getRootKeyForWallet(address)": FunctionFragment;
     "getWalletsByRootKey(address)": FunctionFragment;
-    "getWalletsByRootKeyWithDelegations(address)": FunctionFragment;
     "linkCallerToRootKey((address,bytes,string),uint256)": FunctionFragment;
     "linkNonEVMWalletToRootKey(((string,uint8),bytes,string,(string,bytes)[]),uint256)": FunctionFragment;
     "linkWalletToRootKey((address,bytes,string),(address,bytes,string),uint256)": FunctionFragment;
@@ -115,13 +106,12 @@ export interface IWalletLinkInterface extends utils.Interface {
     nameOrSignatureOrTopic:
       | "checkIfLinked"
       | "checkIfNonEVMWalletLinked"
-      | "explicitWalletsByRootKey"
+      | "getAllWalletsByRootKey"
       | "getDefaultWallet"
       | "getDependency"
       | "getLatestNonceForRootKey"
       | "getRootKeyForWallet"
       | "getWalletsByRootKey"
-      | "getWalletsByRootKeyWithDelegations"
       | "linkCallerToRootKey"
       | "linkNonEVMWalletToRootKey"
       | "linkWalletToRootKey"
@@ -141,8 +131,8 @@ export interface IWalletLinkInterface extends utils.Interface {
     values: [PromiseOrValue<string>, PromiseOrValue<BytesLike>]
   ): string;
   encodeFunctionData(
-    functionFragment: "explicitWalletsByRootKey",
-    values: [PromiseOrValue<string>, IWalletLinkBase.WalletQueryOptionsStruct]
+    functionFragment: "getAllWalletsByRootKey",
+    values: [PromiseOrValue<string>]
   ): string;
   encodeFunctionData(
     functionFragment: "getDefaultWallet",
@@ -162,10 +152,6 @@ export interface IWalletLinkInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "getWalletsByRootKey",
-    values: [PromiseOrValue<string>]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "getWalletsByRootKeyWithDelegations",
     values: [PromiseOrValue<string>]
   ): string;
   encodeFunctionData(
@@ -221,7 +207,7 @@ export interface IWalletLinkInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "explicitWalletsByRootKey",
+    functionFragment: "getAllWalletsByRootKey",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -242,10 +228,6 @@ export interface IWalletLinkInterface extends utils.Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "getWalletsByRootKey",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "getWalletsByRootKeyWithDelegations",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -393,9 +375,8 @@ export interface IWalletLink extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[boolean]>;
 
-    explicitWalletsByRootKey(
+    getAllWalletsByRootKey(
       rootKey: PromiseOrValue<string>,
-      options: IWalletLinkBase.WalletQueryOptionsStruct,
       overrides?: CallOverrides
     ): Promise<
       [WalletLib.WalletStructOutput[]] & {
@@ -424,11 +405,6 @@ export interface IWalletLink extends BaseContract {
     ): Promise<[string] & { rootKey: string }>;
 
     getWalletsByRootKey(
-      rootKey: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<[string[]] & { wallets: string[] }>;
-
-    getWalletsByRootKeyWithDelegations(
       rootKey: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<[string[]] & { wallets: string[] }>;
@@ -493,9 +469,8 @@ export interface IWalletLink extends BaseContract {
     overrides?: CallOverrides
   ): Promise<boolean>;
 
-  explicitWalletsByRootKey(
+  getAllWalletsByRootKey(
     rootKey: PromiseOrValue<string>,
-    options: IWalletLinkBase.WalletQueryOptionsStruct,
     overrides?: CallOverrides
   ): Promise<WalletLib.WalletStructOutput[]>;
 
@@ -520,11 +495,6 @@ export interface IWalletLink extends BaseContract {
   ): Promise<string>;
 
   getWalletsByRootKey(
-    rootKey: PromiseOrValue<string>,
-    overrides?: CallOverrides
-  ): Promise<string[]>;
-
-  getWalletsByRootKeyWithDelegations(
     rootKey: PromiseOrValue<string>,
     overrides?: CallOverrides
   ): Promise<string[]>;
@@ -589,9 +559,8 @@ export interface IWalletLink extends BaseContract {
       overrides?: CallOverrides
     ): Promise<boolean>;
 
-    explicitWalletsByRootKey(
+    getAllWalletsByRootKey(
       rootKey: PromiseOrValue<string>,
-      options: IWalletLinkBase.WalletQueryOptionsStruct,
       overrides?: CallOverrides
     ): Promise<WalletLib.WalletStructOutput[]>;
 
@@ -616,11 +585,6 @@ export interface IWalletLink extends BaseContract {
     ): Promise<string>;
 
     getWalletsByRootKey(
-      rootKey: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<string[]>;
-
-    getWalletsByRootKeyWithDelegations(
       rootKey: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<string[]>;
@@ -731,9 +695,8 @@ export interface IWalletLink extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
-    explicitWalletsByRootKey(
+    getAllWalletsByRootKey(
       rootKey: PromiseOrValue<string>,
-      options: IWalletLinkBase.WalletQueryOptionsStruct,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
@@ -758,11 +721,6 @@ export interface IWalletLink extends BaseContract {
     ): Promise<BigNumber>;
 
     getWalletsByRootKey(
-      rootKey: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    getWalletsByRootKeyWithDelegations(
       rootKey: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
@@ -828,9 +786,8 @@ export interface IWalletLink extends BaseContract {
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
-    explicitWalletsByRootKey(
+    getAllWalletsByRootKey(
       rootKey: PromiseOrValue<string>,
-      options: IWalletLinkBase.WalletQueryOptionsStruct,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
@@ -855,11 +812,6 @@ export interface IWalletLink extends BaseContract {
     ): Promise<PopulatedTransaction>;
 
     getWalletsByRootKey(
-      rootKey: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    getWalletsByRootKeyWithDelegations(
       rootKey: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
