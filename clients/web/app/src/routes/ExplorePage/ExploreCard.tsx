@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react'
+import React, { useCallback, useMemo } from 'react'
 import {
     SpaceIdFromSpaceAddress,
     useContractSpaceInfoWithoutClient,
@@ -20,6 +20,7 @@ import { ReviewStars } from '@components/ReviewStars/ReviewStars'
 import { useReviews } from 'hooks/useReviews'
 import { env } from 'utils/environment'
 import { useDevice } from 'hooks/useDevice'
+import { useIsSpaceCurrentlyFree } from '@components/SpaceSettingsPanel/hooks'
 
 interface ExploreCardProps {
     address: string
@@ -37,6 +38,21 @@ export const ExploreCard = ({ address, variant }: ExploreCardProps) => {
     const membership = useMyMembership(spaceId)
     const { averageRating, totalReviews } = useReviews(spaceId ?? '')
     const { isTouch } = useDevice()
+    const isSpaceFree = useIsSpaceCurrentlyFree({ spaceId })
+
+    const price = useMemo(() => {
+        if (!memberInfo) {
+            return undefined
+        }
+
+        if (isSpaceFree && memberInfo.price === 'Free') {
+            return 'Free'
+        }
+
+        return `${formatUnitsToFixedLength(parseUnits(memberInfo?.price), 18, 3)} ${
+            memberInfo?.currency
+        }`
+    }, [memberInfo, isSpaceFree])
 
     const onClick = useCallback(() => {
         Analytics.getInstance().track('clicked town on explore', {
@@ -85,18 +101,10 @@ export const ExploreCard = ({ address, variant }: ExploreCardProps) => {
         ) : null
 
     const PriceTag = () =>
-        memberInfo?.price ? (
+        price ? (
             <Pill background="level3" cursor="pointer" paddingY="md" minWidth="100">
                 {membership !== Membership.Join ? (
-                    <Text color="greenBlue">
-                        {entitlements.hasEntitlements
-                            ? 'Gated'
-                            : memberInfo?.price !== 'Free'
-                            ? `${formatUnitsToFixedLength(parseUnits(memberInfo?.price), 18, 3)} ${
-                                  memberInfo?.currency
-                              }`
-                            : 'Free'}
-                    </Text>
+                    <Text color="greenBlue">{entitlements.hasEntitlements ? 'Gated' : price}</Text>
                 ) : (
                     <Text color="neutral">Member</Text>
                 )}
