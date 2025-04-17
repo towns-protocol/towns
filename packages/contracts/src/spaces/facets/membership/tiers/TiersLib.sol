@@ -13,7 +13,6 @@ library TiersLib {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     struct Tier {
-        bytes32 name;
         address pricingModule;
         uint256 renewalPrice;
         uint256 duration;
@@ -45,7 +44,6 @@ library TiersLib {
     error InactiveTier();
     error InvalidTierPrice();
     error InvalidTierDuration();
-    error InvalidTierName();
     error TierCapacityReached();
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           EVENTS                           */
@@ -66,13 +64,11 @@ library TiersLib {
     function createTier(Tier memory tier) internal returns (uint16 tierId) {
         Layout storage db = getLayout();
 
-        if (tier.name == bytes32(0)) revert InvalidTierName();
         if (tier.duration == 0) revert InvalidTierDuration();
 
         tierId = ++db.tierCount;
 
         Tier storage newTier = db.tiers[tierId];
-        newTier.name = tier.name;
         newTier.pricingModule = tier.pricingModule;
         newTier.renewalPrice = tier.renewalPrice;
         newTier.duration = tier.duration;
@@ -91,10 +87,6 @@ library TiersLib {
 
         if (!tier.active) {
             revert InactiveTier();
-        }
-
-        if (params.name != bytes32(0)) {
-            tier.name = params.name;
         }
 
         if (params.pricingModule != address(0)) {

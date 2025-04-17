@@ -44,6 +44,8 @@ abstract contract MembershipJoin is
     Entitled,
     PrepayBase
 {
+    using CustomRevert for bytes4;
+
     /// @notice Constant representing the permission to join a space
     bytes32 internal constant JOIN_SPACE = bytes32(abi.encodePacked(Permissions.JoinSpace));
 
@@ -339,16 +341,16 @@ abstract contract MembershipJoin is
         // get price
         uint256 price = _getMembershipPrice(_totalSupply());
         address pricingModule = _getPricingModule();
+        uint64 duration = _getMembershipDuration();
 
         // create tier 1 if it doesn't exist
         uint16 tierId = 1;
         if (!TiersLib.isTierActive(tierId)) {
             TiersLib.createTier(
                 TiersLib.Tier({
-                    name: "One-Year",
                     pricingModule: pricingModule,
                     renewalPrice: price,
-                    duration: 365 days,
+                    duration: duration,
                     active: true
                 })
             );
@@ -462,5 +464,53 @@ abstract contract MembershipJoin is
             partnerInfo.recipient,
             partnerFee
         );
+    }
+
+    function _renewMembership(address payer, uint256 tokenId) internal {
+        address receiver = _ownerOf(tokenId);
+
+        if (receiver == address(0)) {
+            Membership__InvalidAddress.selector.revertWith();
+        }
+
+        uint256 membershipPrice = _getMembershipRenewalPrice(tokenId, _totalSupply());
+
+        if (membershipPrice > msg.value) {
+            Membership__InvalidPayment.selector.revertWith();
+        }
+
+        uint256 duration = _getMembershipDuration();
+        address pricingModule = _getPricingModule();
+
+        // create tier 1 if it doesn't exist
+        uint16 tierId = 1;
+        if (!TiersLib.isTierActive(tierId)) {
+            TiersLib.createTier(
+                TiersLib.Tier({
+                    pricingModule: pricingModule,
+                    renewalPrice: membershipPrice,
+                    duration: duration,
+                    active: true
+                })
+            );
+        }
+
+        uint256 protocolFee = _collectProtocolFee(payer, membershipPrice);
+
+        uint256 remainingDue = membershipPrice - protocolFee;
+        if (remainingDue > 0) _transferIn(payer, remainingDue);
+
+        uint256 excess = msg.value - membershipPrice;
+        if (excess > 0) {
+            CurrencyTransfer.transferCurrency(
+                _getMembershipCurrency(),
+                address(this),
+                payer,
+                excess
+            );
+        }
+
+        _renewSubscription(tokenId, uint64(duration));
+        TiersLib.changeMembershipTier(tokenId, tierId);
     }
 }

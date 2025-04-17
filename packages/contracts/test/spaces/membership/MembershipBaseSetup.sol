@@ -22,6 +22,7 @@ import {IReferrals} from "src/spaces/facets/referrals/IReferrals.sol";
 import {IRoles, IRolesBase} from "src/spaces/facets/roles/IRoles.sol";
 
 import {ITreasury} from "src/spaces/facets/treasury/ITreasury.sol";
+import {IERC721AQueryable} from "src/diamond/facets/token/ERC721A/extensions/IERC721AQueryable.sol";
 
 // libraries
 // libraries
@@ -54,7 +55,7 @@ contract MembershipBaseSetup is
 
     MembershipFacet internal membership;
     IERC721A internal membershipToken;
-
+    IERC721AQueryable internal membershipTokenQueryable;
     IPlatformRequirements internal platformReqs;
     IPartnerRegistry internal partnerRegistry;
     IPrepay prepayFacet;
@@ -114,6 +115,7 @@ contract MembershipBaseSetup is
 
         membership = MembershipFacet(userSpace);
         membershipToken = IERC721A(userSpace);
+        membershipTokenQueryable = IERC721AQueryable(userSpace);
         prepayFacet = IPrepay(userSpace);
         referrals = IReferrals(userSpace);
         treasury = ITreasury(userSpace);
