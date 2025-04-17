@@ -10,6 +10,7 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/linkdata/deadlock"
 	"github.com/prometheus/client_golang/prometheus"
+
 	"github.com/towns-protocol/towns/core/node/infra"
 	"github.com/towns-protocol/towns/core/node/logging"
 )
@@ -18,13 +19,23 @@ type (
 	// ChainMonitor monitors the EVM chain for new blocks and/or events.
 	ChainMonitor interface {
 		// Start starts the chain monitor in background. Goroutine is going to be running until the given ctx is cancelled.
-		Start(
+		StartWithBlockPeriod(
 			ctx context.Context,
 			client BlockchainClient,
 			initialBlock BlockNumber,
 			blockPeriod time.Duration,
 			metrics infra.MetricsFactory,
 		)
+
+		// Start starts the chain monitor in background. Goroutine is going to be running until the given ctx is cancelled.
+		StartWithPollInterval(
+			ctx context.Context,
+			client BlockchainClient,
+			initialBlock BlockNumber,
+			poll ChainMonitorPollInterval,
+			metrics infra.MetricsFactory,
+		)
+
 		// OnHeader adds a callback that is when a new header is received.
 		// Note: it is not guaranteed to be called for every new header!
 		OnHeader(cb OnChainNewHeader)
@@ -215,11 +226,11 @@ func (cm *chainMonitor) OnStopped(cb OnChainMonitorStoppedCallback) {
 	cm.builder.OnChainMonitorStopped(cb)
 }
 
-func (cm *chainMonitor) Start(
+func (cm *chainMonitor) StartWithPollInterval(
 	ctx context.Context,
 	client BlockchainClient,
 	initialBlock BlockNumber,
-	blockPeriod time.Duration,
+	poll ChainMonitorPollInterval,
 	metrics infra.MetricsFactory,
 ) {
 	cm.mu.Lock()
@@ -229,10 +240,30 @@ func (cm *chainMonitor) Start(
 		return
 	}
 	cm.started = true
-	go cm.runWithBlockPeriod(ctx, client, initialBlock, blockPeriod, metrics)
+	go cm.run(ctx, client, initialBlock, poll, metrics)
 }
 
-// RunWithBlockPeriod monitors the chain the given client is connected to and calls the
+func (cm *chainMonitor) StartWithBlockPeriod(
+	ctx context.Context,
+	client BlockchainClient,
+	initialBlock BlockNumber,
+	blockPeriod time.Duration,
+	metrics infra.MetricsFactory,
+) {
+	poll := NewChainMonitorPollIntervalCalculator(blockPeriod, 30*time.Second)
+
+	cm.mu.Lock()
+	defer cm.mu.Unlock()
+	if cm.started {
+		logging.FromCtx(ctx).Errorw("chain monitor already started")
+		return
+	}
+	cm.started = true
+
+	go cm.run(ctx, client, initialBlock, poll, metrics)
+}
+
+// run monitors the chain the given client is connected to and calls the
 // associated callback for each event that matches its filter.
 //
 // It will finish when the given ctx is cancelled.
@@ -242,11 +273,11 @@ func (cm *chainMonitor) Start(
 // Callbacks are called in the order they were added and
 // aren't called concurrently to ensure that events are processed in the order
 // they were received.
-func (cm *chainMonitor) runWithBlockPeriod(
+func (cm *chainMonitor) run(
 	ctx context.Context,
 	client BlockchainClient,
 	initialBlock BlockNumber,
-	blockPeriod time.Duration,
+	poll ChainMonitorPollInterval,
 	metrics infra.MetricsFactory,
 ) {
 	var (
@@ -276,7 +307,6 @@ func (cm *chainMonitor) runWithBlockPeriod(
 		log                   = logging.FromCtx(ctx)
 		one                   = big.NewInt(1)
 		pollInterval          = time.Duration(0)
-		poll                  = NewChainMonitorPollIntervalCalculator(blockPeriod, 30*time.Second)
 		baseFeeGauge          prometheus.Gauge
 		headBlockGauge        prometheus.Gauge
 		processedBlockGauge   prometheus.Gauge
@@ -299,7 +329,7 @@ func (cm *chainMonitor) runWithBlockPeriod(
 	cm.setFromBlock(initialBlock.AsBigInt(), true)
 	cm.mu.Unlock()
 
-	log.Debugw("chain monitor started", "blockPeriod", blockPeriod, "fromBlock", initialBlock)
+	log.Debugw("chain monitor started", "fromBlock", initialBlock)
 
 	for {
 		pollIntervalCounter.Inc()
@@ -360,10 +390,10 @@ func (cm *chainMonitor) runWithBlockPeriod(
 				toBlock.SetUint64(fromBlock + 25)
 			}
 
-			// log when the chain monitor is fetching more than 1 block, this is an indication that either the
+			// log when the chain monitor is fetching more than 4 blocks, this is an indication that either the
 			// chain monitor isn't able to keep up or the rpc node is having issues and importing chain segments
 			// instead of single blocks.
-			if fromBlock < toBlock.Uint64() && blockPeriod >= time.Second {
+			if fromBlock+4 < toBlock.Uint64() {
 				log.Infow("process chain segment", "from", fromBlock, "to", toBlock.Uint64())
 			}
 
