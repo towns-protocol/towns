@@ -13368,7 +13368,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@towns-protocol/contracts@workspace:river/packages/contracts":
+"@towns-protocol/contracts@workspace:^, @towns-protocol/contracts@workspace:river/packages/contracts":
   version: 0.0.0-use.local
   resolution: "@towns-protocol/contracts@workspace:river/packages/contracts"
   dependencies:
@@ -13731,6 +13731,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@towns-protocol/subgraph@workspace:river/packages/subgraph"
   dependencies:
+    "@towns-protocol/contracts": "workspace:^"
     "@towns-protocol/prettier-config": "workspace:^"
     "@types/node": ^20.14.8
     eslint: ^8.57.0
