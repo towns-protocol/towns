@@ -9,12 +9,15 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"net/url"
+	"strconv"
 	"strings"
 	"testing"
 
 	"connectrpc.com/connect"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/golang-jwt/jwt/v4"
+	"github.com/stretchr/testify/require"
 	"go.uber.org/zap/zapcore"
 	"google.golang.org/protobuf/proto"
 
@@ -33,18 +36,23 @@ type AppServiceRequestEnvelope struct {
 	Command string          `json:"command"`
 	Data    json.RawMessage `json:",omitempty"`
 }
-type TestAppServer struct {
-	t                *testing.T
-	httpServer       *http.Server
-	listener         net.Listener
-	url              string
+
+type botServerConfig struct {
 	appWallet        *crypto.Wallet
 	hs256SecretKey   []byte
 	encryptionDevice app_client.EncryptionDevice
-	client           protocolconnect.StreamServiceClient
 	frameworkVersion int32
-	enableLogging    bool
-	exitSignal       chan (error)
+}
+
+type TestAppServer struct {
+	t             *testing.T
+	httpServer    *http.Server
+	listener      net.Listener
+	url           string
+	botConfig     []*botServerConfig
+	client        protocolconnect.StreamServiceClient
+	enableLogging bool
+	exitSignal    chan (error)
 }
 
 func FormatTestAppMessageReply(session string, messageText string, sessionKeys string) string {
@@ -119,19 +127,49 @@ func validateSignature(req *http.Request, secretKey []byte, appId common.Address
 	return mapClaims.Valid()
 }
 
+type TestAppServerOpts struct {
+	// If 0, default to 1
+	NumBots int
+
+	// If any AppWallets are specified, use these instead of creating a new wallet
+	// for the bot at that index.
+	AppWallets []*crypto.Wallet
+}
+
 func NewTestAppServer(
 	t *testing.T,
-	appWallet *crypto.Wallet,
+	ctx context.Context,
+	opts TestAppServerOpts,
 	client protocolconnect.StreamServiceClient,
 	enableLogging bool,
 ) *TestAppServer {
 	listener, url := testcert.MakeTestListener(t)
 
+	numBots := opts.NumBots
+	if numBots < 1 {
+		numBots = 1
+	}
+
+	botConfig := make([]*botServerConfig, numBots)
+	for i := range botConfig {
+		if i < len(opts.AppWallets) {
+			botConfig[i] = &botServerConfig{
+				appWallet: opts.AppWallets[i],
+			}
+		} else {
+			wallet, err := crypto.NewWallet(ctx)
+			require.NoError(t, err, "Error creating wallet in TestAppServer")
+			botConfig[i] = &botServerConfig{
+				appWallet: wallet,
+			}
+		}
+	}
+
 	b := &TestAppServer{
 		t:             t,
 		listener:      listener,
 		url:           url,
-		appWallet:     appWallet,
+		botConfig:     botConfig,
 		client:        client,
 		enableLogging: enableLogging,
 		exitSignal:    make(chan (error), 16),
@@ -144,20 +182,28 @@ func (b *TestAppServer) ExitSignal() <-chan (error) {
 	return b.exitSignal
 }
 
-func (b *TestAppServer) Url() string {
-	return b.url
+func (b *TestAppServer) Url(botIndex int) string {
+	baseUrl, err := url.Parse(b.url)
+	require.NoError(b.t, err, "Error parsing TestAppServerUrl (%v)", b.url)
+	return baseUrl.JoinPath(fmt.Sprintf("%d", botIndex)).String()
 }
 
-func (b *TestAppServer) SetHS256SecretKey(secretKey []byte) {
-	b.hs256SecretKey = secretKey
+func (b *TestAppServer) SetHS256SecretKey(botIndex int, secretKey []byte) {
+	b.botConfig[botIndex].hs256SecretKey = secretKey
 }
 
-func (b *TestAppServer) SetEncryptionDevice(encryptionDevice app_client.EncryptionDevice) {
-	b.encryptionDevice = encryptionDevice
+func (b *TestAppServer) SetEncryptionDevice(botIndex int, encryptionDevice app_client.EncryptionDevice) {
+	b.botConfig[botIndex].encryptionDevice = encryptionDevice
 }
 
-func (b *TestAppServer) SetFrameworkVersion(version int32) {
-	b.frameworkVersion = version
+func (b *TestAppServer) SetFrameworkVersion(botIndex int, version int32) {
+	if botIndex < 0 {
+		for i := range b.botConfig {
+			b.SetFrameworkVersion(i, version)
+		}
+	} else {
+		b.botConfig[botIndex].frameworkVersion = version
+	}
 }
 
 func (b *TestAppServer) Close() {
@@ -169,7 +215,8 @@ func (b *TestAppServer) Close() {
 	}
 }
 
-func (b *TestAppServer) solicitKeys(ctx context.Context, data *protocol.EventPayload_SolicitKeys) error {
+func (b *TestAppServer) solicitKeys(ctx context.Context, botIndex int, data *protocol.EventPayload_SolicitKeys) error {
+	botConfig := b.botConfig[botIndex]
 	log := logging.FromCtx(ctx).With("func", "TestAppServer.solicitKeys")
 
 	streamId, err := shared.StreamIdFromBytes(data.StreamId)
@@ -191,13 +238,13 @@ func (b *TestAppServer) solicitKeys(ctx context.Context, data *protocol.EventPay
 	}
 
 	envelope, err := events.MakeEnvelopeWithPayload(
-		b.appWallet,
+		botConfig.appWallet,
 		&protocol.StreamEvent_MemberPayload{
 			MemberPayload: &protocol.MemberPayload{
 				Content: &protocol.MemberPayload_KeySolicitation_{
 					KeySolicitation: &protocol.MemberPayload_KeySolicitation{
-						DeviceKey:   b.encryptionDevice.DeviceKey,
-						FallbackKey: b.encryptionDevice.FallbackKey,
+						DeviceKey:   botConfig.encryptionDevice.DeviceKey,
+						FallbackKey: botConfig.encryptionDevice.FallbackKey,
 						IsNewDevice: false,
 						SessionIds:  data.SessionIds,
 					},
@@ -265,6 +312,7 @@ func logAndReturnErr(log *logging.Log, err error) error {
 
 func (b *TestAppServer) respondToKeySolicitation(
 	ctx context.Context,
+	botIndex int,
 	channelId shared.StreamId,
 	solicitation *protocol.MemberPayload_KeySolicitation,
 ) error {
@@ -279,11 +327,12 @@ func (b *TestAppServer) respondToKeySolicitation(
 			)
 		}
 	}
-	return b.sendChannelMessage(ctx, channelId, FormatKeySolicitationReply(solicitation), sessionIdBytes)
+	return b.sendChannelMessage(ctx, botIndex, channelId, FormatKeySolicitationReply(solicitation), sessionIdBytes)
 }
 
 func (b *TestAppServer) respondToMembershipEvent(
 	ctx context.Context,
+	botIndex int,
 	channelId shared.StreamId,
 	membership *protocol.MemberPayload_Membership,
 ) error {
@@ -291,15 +340,17 @@ func (b *TestAppServer) respondToMembershipEvent(
 	if err != nil {
 		return fmt.Errorf("oops - placeholder session id hex could not be decoded: %w", err)
 	}
-	return b.sendChannelMessage(ctx, channelId, FormatMembershipReply(membership), placeHolderSessionBytes)
+	return b.sendChannelMessage(ctx, botIndex, channelId, FormatMembershipReply(membership), placeHolderSessionBytes)
 }
 
 func (b *TestAppServer) respondToChannelMessage(
 	ctx context.Context,
+	botIndex int,
 	streamId shared.StreamId,
 	message *protocol.EncryptedData,
 	encryptionMaterial map[string]*protocol.UserInboxPayload_GroupEncryptionSessions,
 ) error {
+	botConfig := b.botConfig[botIndex]
 	log := logging.FromCtx(ctx)
 	log.Debugw(
 		"respondToChannelMessage message details",
@@ -313,7 +364,7 @@ func (b *TestAppServer) respondToChannelMessage(
 		message.Ciphertext,
 	)
 
-	if message.SenderKey == b.encryptionDevice.DeviceKey {
+	if message.SenderKey == botConfig.encryptionDevice.DeviceKey {
 		return logAndReturnErr(log, fmt.Errorf(
 			"we should never forward a bot-authored message back to the bot service; message ciphertext(%v), sessionId(%v)",
 			message.Ciphertext,
@@ -358,11 +409,12 @@ func (b *TestAppServer) respondToChannelMessage(
 
 	if err := b.sendChannelMessage(
 		ctx,
+		botIndex,
 		streamIdBytes,
 		FormatTestAppMessageReply(
 			hex.EncodeToString(message.SessionIdBytes),
 			message.Ciphertext,
-			sessions.Ciphertexts[b.encryptionDevice.DeviceKey],
+			sessions.Ciphertexts[botConfig.encryptionDevice.DeviceKey],
 		),
 		message.SessionIdBytes,
 	); err != nil {
@@ -373,8 +425,10 @@ func (b *TestAppServer) respondToChannelMessage(
 
 func (b *TestAppServer) respondToSendMessages(
 	ctx context.Context,
+	botIndex int,
 	data *protocol.EventPayload_Messages,
 ) error {
+	botConfig := b.botConfig[botIndex]
 	log := logging.FromCtx(ctx)
 	log.Debugw(
 		"respondToSendMessages",
@@ -383,7 +437,7 @@ func (b *TestAppServer) respondToSendMessages(
 		"numEncryptionMessages",
 		len(data.GroupEncryptionSessionsMessages),
 		"botDeviceKey",
-		b.encryptionDevice.DeviceKey,
+		botConfig.encryptionDevice.DeviceKey,
 		"streamId",
 		data.StreamId,
 	)
@@ -412,14 +466,14 @@ func (b *TestAppServer) respondToSendMessages(
 			switch content := payload.MemberPayload.Content.(type) {
 			case *protocol.MemberPayload_KeySolicitation_:
 				{
-					if err := b.respondToKeySolicitation(ctx, shared.StreamId(data.StreamId), content.KeySolicitation); err != nil {
+					if err := b.respondToKeySolicitation(ctx, botIndex, shared.StreamId(data.StreamId), content.KeySolicitation); err != nil {
 						return logAndReturnErr(log, fmt.Errorf("could not respond to key solicitation: %w", err))
 					}
 					continue
 				}
 			case *protocol.MemberPayload_Membership_:
 				{
-					if err := b.respondToMembershipEvent(ctx, shared.StreamId(data.StreamId), content.Membership); err != nil {
+					if err := b.respondToMembershipEvent(ctx, botIndex, shared.StreamId(data.StreamId), content.Membership); err != nil {
 						return logAndReturnErr(log, fmt.Errorf("could not respond to membership event: %w", err))
 					}
 				}
@@ -431,7 +485,7 @@ func (b *TestAppServer) respondToSendMessages(
 			switch content := payload.ChannelPayload.Content.(type) {
 			case *protocol.ChannelPayload_Message:
 				{
-					if err := b.respondToChannelMessage(ctx, shared.StreamId(data.StreamId), content.Message, sessionIdToEncryptionMaterial); err != nil {
+					if err := b.respondToChannelMessage(ctx, botIndex, shared.StreamId(data.StreamId), content.Message, sessionIdToEncryptionMaterial); err != nil {
 						return err
 					}
 					continue
@@ -450,10 +504,12 @@ func (b *TestAppServer) respondToSendMessages(
 
 func (b *TestAppServer) sendChannelMessage(
 	ctx context.Context,
+	botIndex int,
 	streamId shared.StreamId,
 	message string,
 	sessionIdBytes []byte,
 ) error {
+	botConfig := b.botConfig[botIndex]
 	log := logging.FromCtx(ctx)
 	resp, err := b.client.GetLastMiniblockHash(
 		ctx,
@@ -471,11 +527,11 @@ func (b *TestAppServer) sendChannelMessage(
 	}
 
 	envelope, err := events.MakeEnvelopeWithPayload(
-		b.appWallet,
+		botConfig.appWallet,
 		events.Make_ChannelPayload_Message_WithSessionBytes(
 			message,
 			sessionIdBytes,
-			b.encryptionDevice.DeviceKey,
+			botConfig.encryptionDevice.DeviceKey,
 		),
 		&shared.MiniblockRef{
 			Hash: common.Hash(resp.Msg.Hash),
@@ -505,6 +561,19 @@ func (b *TestAppServer) sendChannelMessage(
 	return nil
 }
 
+func extractBotIndexFromUrl(path string) (int, error) {
+	path = strings.TrimPrefix(path, "/")
+	path = strings.TrimSuffix(path, "/")
+	botIndex, err := strconv.ParseInt(path, 10, 32)
+	if err != nil {
+		return 0, fmt.Errorf("Failed to parse URL path for bot index, path(%v), error(%w)", path, err)
+	}
+	if botIndex < 0 {
+		return 0, fmt.Errorf("Invalid bot index %v; bot index must be nonnegative", botIndex)
+	}
+	return int(botIndex), nil
+}
+
 func (b *TestAppServer) rootHandler(w http.ResponseWriter, r *http.Request) {
 	// Ensure that the request method is POST.
 	var log *logging.Log
@@ -513,15 +582,29 @@ func (b *TestAppServer) rootHandler(w http.ResponseWriter, r *http.Request) {
 	} else {
 		log = logging.FromCtx(r.Context())
 	}
+
+	botIndex, err := extractBotIndexFromUrl(r.URL.Path)
+	if err != nil {
+		b.exitSignal <- logAndReturnErr(log, fmt.Errorf("Invalid bot index in url path: %w", err))
+		http.Error(w, "Invalid bot index in URL path", http.StatusRequestedRangeNotSatisfiable)
+	}
+	if botIndex >= len(b.botConfig) {
+		b.exitSignal <- logAndReturnErr(log, fmt.Errorf("Invalid bot index in url path: url index was %d, test app server has %d bots", botIndex, len(b.botConfig)))
+		http.Error(w, "Invalid bot index in URL path; bot index too large", http.StatusRequestedRangeNotSatisfiable)
+	}
+
+	log = log.With("botIndex", botIndex)
 	ctx := logging.CtxWithLog(r.Context(), log)
+
 	if r.Method != http.MethodPost {
-		log.Errorw("method not allowed", "method", r.Method)
+		b.exitSignal <- logAndReturnErr(log, fmt.Errorf("rootHandler: request method not allowed: %v", r.Method))
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
 
-	if err := validateSignature(r, b.hs256SecretKey, b.appWallet.Address); err != nil {
-		log.Errorw("invalid signature", "secretKey", b.hs256SecretKey, "expectedWallet", b.appWallet)
+	botConfig := b.botConfig[botIndex]
+	if err := validateSignature(r, botConfig.hs256SecretKey, botConfig.appWallet.Address); err != nil {
+		log.Errorw("invalid signature", "secretKey", botConfig.hs256SecretKey, "expectedWallet", botConfig.appWallet)
 		http.Error(w, "JWT Signature Invalid", http.StatusForbidden)
 	}
 
@@ -552,8 +635,8 @@ func (b *TestAppServer) rootHandler(w http.ResponseWriter, r *http.Request) {
 			response.Payload = &protocol.AppServiceResponse_Initialize{
 				Initialize: &protocol.AppServiceResponse_InitializeResponse{
 					EncryptionDevice: &protocol.UserMetadataPayload_EncryptionDevice{
-						DeviceKey:   b.encryptionDevice.DeviceKey,
-						FallbackKey: b.encryptionDevice.FallbackKey,
+						DeviceKey:   botConfig.encryptionDevice.DeviceKey,
+						FallbackKey: botConfig.encryptionDevice.FallbackKey,
 					},
 				},
 			}
@@ -562,7 +645,7 @@ func (b *TestAppServer) rootHandler(w http.ResponseWriter, r *http.Request) {
 			for _, event := range request.GetEvents().GetEvents() {
 				switch event.Payload.(type) {
 				case *protocol.EventPayload_Messages_:
-					if err := b.respondToSendMessages(ctx, event.GetMessages()); err != nil {
+					if err := b.respondToSendMessages(ctx, botIndex, event.GetMessages()); err != nil {
 						// An error here is considered fatal
 						b.exitSignal <- logAndReturnErr(log, fmt.Errorf("unable to respond to send messages: %w", err))
 						http.Error(w, fmt.Sprintf("unable to respond to sent messages: %v", err), http.StatusBadRequest)
@@ -570,7 +653,7 @@ func (b *TestAppServer) rootHandler(w http.ResponseWriter, r *http.Request) {
 					}
 
 				case *protocol.EventPayload_Solicitation:
-					if err := b.solicitKeys(ctx, event.GetSolicitation()); err != nil {
+					if err := b.solicitKeys(ctx, botIndex, event.GetSolicitation()); err != nil {
 						b.exitSignal <- logAndReturnErr(log, fmt.Errorf("TestAppServer unable to solicit keys: %w", err))
 						http.Error(w, fmt.Sprintf("TestAppServer unable to solicit keys: %v", err), http.StatusBadRequest)
 						return
@@ -581,9 +664,9 @@ func (b *TestAppServer) rootHandler(w http.ResponseWriter, r *http.Request) {
 		case *protocol.AppServiceRequest_Status:
 			response.Payload = &protocol.AppServiceResponse_Status{
 				Status: &protocol.AppServiceResponse_StatusResponse{
-					FrameworkVersion: b.frameworkVersion,
-					DeviceKey:        b.encryptionDevice.DeviceKey,
-					FallbackKey:      b.encryptionDevice.FallbackKey,
+					FrameworkVersion: botConfig.frameworkVersion,
+					DeviceKey:        botConfig.encryptionDevice.DeviceKey,
+					FallbackKey:      botConfig.encryptionDevice.FallbackKey,
 				},
 			}
 
@@ -606,7 +689,7 @@ func (b *TestAppServer) rootHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/x-protobuf")
 	// Write the protobuf data to the response.
 	if _, err = w.Write(respData); err != nil {
-		log.Errorw("Error writing response", "error", err)
+		b.exitSignal <- logAndReturnErr(log, fmt.Errorf("Error writing response: %w", err))
 	}
 }
 
