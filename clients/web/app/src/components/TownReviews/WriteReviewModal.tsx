@@ -46,6 +46,7 @@ export const WriteReviewModal = ({
     townDescription,
 }: WriteReviewModalProps) => {
     const [validationError, setValidationError] = useState<string | null>(null)
+    const [showErrors, setShowErrors] = useState(false)
     const [isValidating, setIsValidating] = useState(false)
     const spaceData = useSpaceData()
     const spaceDetails = useGatherSpaceDetailsAnalytics({ spaceId: spaceData?.id })
@@ -55,8 +56,23 @@ export const WriteReviewModal = ({
     const { baseChain } = useEnvironment()
 
     const handleSubmit = async (data: { rating: number; text: string }, getSigner: GetSigner) => {
-        setIsValidating(true)
+        setShowErrors(true)
         setValidationError(null)
+
+        const errors: string[] = []
+        if (data.rating === 0) {
+            errors.push('Please select a rating')
+        }
+        if (data.text.length < MIN_REVIEW_LENGTH) {
+            errors.push(`Review must be at least ${MIN_REVIEW_LENGTH} characters`)
+        }
+
+        if (errors.length > 0) {
+            setValidationError(errors.join(', '))
+            return
+        }
+
+        setIsValidating(true)
 
         try {
             // Validate review content
@@ -188,24 +204,20 @@ export const WriteReviewModal = ({
                     }}
                 >
                     {({ register, watch, setValue }) => {
-                        const reviewText = watch('text')
-                        const characterCount = reviewText.length
-                        const isTextValid =
-                            characterCount >= MIN_REVIEW_LENGTH &&
-                            characterCount <= MAX_REVIEW_LENGTH
+                        const rating = watch('rating')
 
                         return (
                             <Stack gap="lg">
                                 <Stack alignItems="center" gap="md">
                                     <HoverableReviewStars
                                         size={32}
-                                        initialRating={watch('rating')}
+                                        initialRating={rating}
                                         onChange={(rating) => setValue('rating', rating)}
                                     />
                                     <Text color="gray2">
-                                        {watch('rating') === 0
+                                        {rating === 0
                                             ? 'Select your rating'
-                                            : `${watch('rating')} out of 5 stars`}
+                                            : `${rating} out of 5 stars`}
                                     </Text>
                                 </Stack>
 
@@ -216,10 +228,6 @@ export const WriteReviewModal = ({
                                         alignItems="center"
                                     >
                                         <Text strong>Your Review</Text>
-                                        <Text
-                                            size="sm"
-                                            color="gray2"
-                                        >{`${characterCount}/${MIN_REVIEW_LENGTH} characters minimum`}</Text>
                                     </Stack>
 
                                     <Box
@@ -236,14 +244,12 @@ export const WriteReviewModal = ({
                                         }}
                                         minLength={MIN_REVIEW_LENGTH}
                                         maxLength={MAX_REVIEW_LENGTH}
-                                        {...register('text', {
-                                            required: true,
-                                            minLength: MIN_REVIEW_LENGTH,
-                                            maxLength: MAX_REVIEW_LENGTH,
-                                        })}
+                                        placeholder="Write your review"
+                                        disabled={isValidating || isSubmitting || reviewPending}
+                                        {...register('text')}
                                     />
 
-                                    {validationError && (
+                                    {showErrors && validationError && (
                                         <Text
                                             color="error"
                                             size="sm"
@@ -262,8 +268,6 @@ export const WriteReviewModal = ({
                                         {({ getSigner }) => (
                                             <Button
                                                 disabled={
-                                                    watch('rating') === 0 ||
-                                                    !isTextValid ||
                                                     isValidating ||
                                                     isSubmitting ||
                                                     !myAbstractAccount ||
