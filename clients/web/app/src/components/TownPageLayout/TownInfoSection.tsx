@@ -161,7 +161,7 @@ export const TownInfoSection = ({ spaceId }: TownInfoSectionProps) => {
                                     : price === 'Free'
                                     ? 'Membership'
                                     : isSpaceFree
-                                    ? `${price} ETH Fee`
+                                    ? `Protocol Fees Apply`
                                     : 'ETH'}
                             </Text>
                         </Box>

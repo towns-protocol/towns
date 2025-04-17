@@ -45,13 +45,17 @@ export const ExploreCard = ({ address, variant }: ExploreCardProps) => {
             return undefined
         }
 
-        if (isSpaceFree && memberInfo.price === 'Free') {
+        if (isSpaceFree) {
             return 'Free'
         }
 
-        return `${formatUnitsToFixedLength(parseUnits(memberInfo?.price), 18, 3)} ${
-            memberInfo?.currency
-        }`
+        if (memberInfo.price !== 'Free') {
+            return `${formatUnitsToFixedLength(parseUnits(memberInfo?.price), 18, 3)} ${
+                memberInfo?.currency
+            }`
+        }
+
+        return 'Free'
     }, [memberInfo, isSpaceFree])
 
     const onClick = useCallback(() => {
