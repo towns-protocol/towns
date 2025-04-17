@@ -19,12 +19,10 @@ import { useCasablancaRooms } from '../hooks/TownsContext/useCasablancaRooms'
 import { useCasablancaDMs } from '../hooks/CasablancClient/useCasablancaDMs'
 import { DMChannelIdentifier } from '../types/dm-channel-identifier'
 import { useDMUnreads } from '../hooks/TownsContext/useDMUnreads'
-import { useTimelineFilter } from '../store/use-timeline-filter'
 import { useClientInitStatus } from '../hooks/TownsContext/useClientInitStatus'
 import { TownsOpts } from '../client/TownsClientTypes'
 import { Chain } from 'viem/chains'
 import { IChainConfig, TProvider } from '../types/web3-types'
-import { SnapshotCaseType } from '@towns-protocol/proto'
 import { makeProviderFromChain, makeProviderFromConfig } from '../utils/provider-utils'
 import { BaseChainConfig, RiverChainConfig, XchainConfig } from '@towns-protocol/web3'
 import { AccountAbstractionConfig } from '@towns/userops'
@@ -88,7 +86,6 @@ interface TownsContextProviderProps {
     riverConfig: RiverChainConfig
     riverChain: IChainConfig
     timelineFilter?: Set<RiverTimelineEvent>
-    streamFilter?: Set<SnapshotCaseType>
     children: JSX.Element
     QueryClientProvider?: React.ElementType<{ children: JSX.Element }>
     riverNotificationServiceUrl?: string
@@ -216,15 +213,8 @@ const TownsContextImpl = (props: TownsContextProviderProps): JSX.Element => {
     const { dmUnreadChannelIds } = useDMUnreads(casablancaClient, dmChannels)
 
     const rooms = useCasablancaRooms(townsOpts, casablancaClient)
-    const dynamicTimelineFilter = useTimelineFilter((state) => state.eventFilter)
 
-    useCasablancaTimelines(
-        casablancaClient,
-        dynamicTimelineFilter && dynamicTimelineFilter.size > 0
-            ? dynamicTimelineFilter
-            : timelineFilter,
-        props.streamFilter,
-    )
+    useCasablancaTimelines(casablancaClient, timelineFilter)
     useSpaceRollups(townsOpts, casablancaClient, baseProvider)
 
     const value = useMemo(() => {

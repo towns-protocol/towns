@@ -93,25 +93,15 @@ type TownsContentResult = SuccessResult | ErrorResult
 export function useCasablancaTimelines(
     casablancaClient: CasablancaClient | undefined,
     eventFilter?: Set<RiverTimelineEvent>,
-    streamFilter?: Set<SnapshotCaseType>,
 ) {
-    const hasTimelineContent = useCallback(
-        (kind: SnapshotCaseType) => {
-            if (!streamFilter) {
-                return (
-                    kind === 'channelContent' ||
-                    kind === 'spaceContent' ||
-                    kind === 'dmChannelContent' ||
-                    kind === 'gdmChannelContent'
-                )
-            }
-            if (streamFilter.size === 0) {
-                return true
-            }
-            return streamFilter.has(kind)
-        },
-        [streamFilter],
-    )
+    const hasTimelineContent = useCallback((kind: SnapshotCaseType) => {
+        return (
+            kind === 'channelContent' ||
+            kind === 'spaceContent' ||
+            kind === 'dmChannelContent' ||
+            kind === 'gdmChannelContent'
+        )
+    }, [])
     const setState = useRawTimelineStore((s) => s.setState)
     useEffect(() => {
         if (!casablancaClient) {
