@@ -16,9 +16,9 @@ env:
     RIVER_DEVNET_RPC_URL: 'https://towns-devnet.rpc.caldera.xyz/http'
     S3_AWS_ACCESS_KEY_ID: ${{ secrets.S3_AWS_ACCESS_KEY_ID }}
     S3_AWS_SECRET_ACCESS_KEY: ${{ secrets.S3_AWS_SECRET_ACCESS_KEY }}
-    FACET_SOURCE_PATH: '../../contracts/src'
-    COMPILED_FACETS_PATH: '../../contracts/out'
-    DEPLOYMENTS_PATH: '../../contracts/deployments'
+    FACET_SOURCE_PATH: '../../src'
+    COMPILED_FACETS_PATH: '../../out'
+    DEPLOYMENTS_PATH: '../../deployments'
     SOURCE_DIFF_DIR: 's3://source-diff-reports'
     GOWORK: 'off'
 
@@ -85,7 +85,7 @@ jobs:
 
             - name: Build contracts
               run: make build
-              working-directory: river/contracts
+              working-directory: river/packages/contracts
 
             - name: Set up Go
               uses: actions/setup-go@v4
@@ -103,12 +103,12 @@ jobs:
               run: |
                   go mod download
                   go mod tidy
-              working-directory: river/scripts/bytecode-diff
+              working-directory: river/packages/contracts/scripts/bytecode-diff
 
             - name: Run source diff report generation
               run: |
                   go run main.go -s -v
-              working-directory: river/scripts/bytecode-diff
+              working-directory: river/packages/contracts/scripts/bytecode-diff
               env:
                   SOURCE_DIFF_DIR: ${{ env.SOURCE_DIFF_DIR }}
                   BASESCAN_API_KEY: ${{ env.BASESCAN_API_KEY }}
@@ -139,8 +139,8 @@ jobs:
                     exit 1
                   fi
 
-                  echo "INTERACTION_INPUT_PATH=/contracts/deployments/${REPORT_FILE_NAME}.json" >> $GITHUB_ENV
-              working-directory: river/contracts
+                  echo "INTERACTION_INPUT_PATH=/packages/contracts/deployments/${REPORT_FILE_NAME}.json" >> $GITHUB_ENV
+              working-directory: river/packages/contracts
 
             - name: Run Base Sepolia Interaction
               id: base_sepolia_interaction
@@ -152,7 +152,7 @@ jobs:
                     private_key=${{ env.ALPHA_BASE_SEPOLIA_DEPLOYER_PK }} \
                     etherscan=${{ env.BLOCKSCOUT_SEPOLIA_API_KEY }} \
                     verifier-url=${{ env.BLOCKSCOUT_SEPOLIA_URL }}
-              working-directory: river/contracts
+              working-directory: river/packages/contracts
               env:
                   INTERACTION_INPUT_PATH: ${{ env.INTERACTION_INPUT_PATH }}
 
@@ -160,7 +160,7 @@ jobs:
               if: success() && steps.base_sepolia_interaction.outcome == 'success'
               run: |
                   ../../scripts/verify-facets-basescan.sh "${INTERACTION_INPUT_PATH}"
-              working-directory: river/contracts
+              working-directory: river/packages/contracts
               env:
                   BASESCAN_SEPOLIA_URL: ${{ env.BASESCAN_SEPOLIA_URL }}
                   BASESCAN_SEPOLIA_API_KEY: ${{ env.BASESCAN_SEPOLIA_API_KEY }}
@@ -175,7 +175,7 @@ jobs:
                   contract=InteractRiverAlphaSparse \
                   private_key=${{ env.ALPHA_BASE_SEPOLIA_DEPLOYER_PK }} \
                   verifier-url=${{ env.RIVERSCAN_DEVNET_URL }}
-              working-directory: river/contracts
+              working-directory: river/packages/contracts
 
             # If action failed, we send a slack notification
             - name: Slack notification
@@ -226,7 +226,7 @@ jobs:
                   etherscan=${{ env.BLOCKSCOUT_SEPOLIA_API_KEY }} \
                   verifier-url=${{ env.BLOCKSCOUT_SEPOLIA_URL }} \
                   gas_limit=18446744073709551615
-              working-directory: river/contracts
+              working-directory: river/packages/contracts
 
             - name: Run River Devnet Interaction
               env:
@@ -237,7 +237,7 @@ jobs:
                   contract=InteractRiverAlpha \
                   private_key=${{ env.ALPHA_BASE_SEPOLIA_DEPLOYER_PK }} \
                   verifier-url=${{ env.RIVERSCAN_DEVNET_URL }}
-              working-directory: river/contracts
+              working-directory: river/packages/contracts
 
             # If action failed, we send a slack notification
             - name: Slack notification
