@@ -21,6 +21,8 @@ const (
 	// MiniblockCandidateBatchSize keep track the max number of new miniblocks that are registered in the StreamRegistry
 	// in a single transaction.
 	MiniblockCandidateBatchSize = 50
+
+	MiniblockLeaderBlockInterval = 10
 )
 
 // RemoteMiniblockProvider abstracts communications required for coordinated miniblock production.
@@ -219,7 +221,7 @@ func (p *miniblockProducer) isLocalLeaderOnCurrentBlock(
 	if len(streamNodes) == 0 {
 		return false
 	}
-	index := blockNum.AsUint64() % uint64(len(streamNodes))
+	index := (blockNum.AsUint64() / MiniblockLeaderBlockInterval) % uint64(len(streamNodes))
 	return streamNodes[index] == p.localNodeAddress
 }
 
