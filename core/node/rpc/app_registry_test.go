@@ -305,7 +305,7 @@ func TestAppRegistry_ForwardsChannelEvents(t *testing.T) {
 	botClient := tester.BotNodeClient(testClientOpts{})
 
 	// Note: if this fails, recall the previous implementation had the participant sign this transaction
-	botClient.joinChannel(spaceId, channelId, &MiniblockRef{
+	membership := botClient.joinChannel(spaceId, channelId, &MiniblockRef{
 		Hash: common.Hash(appUserStreamCookie.PrevMiniblockHash),
 		Num:  appUserStreamCookie.MinipoolGen - 1,
 	})
@@ -345,7 +345,11 @@ func TestAppRegistry_ForwardsChannelEvents(t *testing.T) {
 	participantClient.listen(
 		channelId,
 		[]common.Address{participantClient.userId, botClient.userId},
-		[][]string{{testMessageText, ""}, {"", replyText}},
+		[][]string{
+			{testMessageText, ""},
+			{"", app_registry.FormatMembershipReply(membership)},
+			{"", replyText},
+		},
 	)
 }
 
