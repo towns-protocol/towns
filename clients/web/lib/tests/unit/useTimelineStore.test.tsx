@@ -3,8 +3,12 @@
  */
 
 import { useRawTimelineStore } from '../../src/store/use-timeline-store'
-import { ThreadStatsData, MessageTips } from '../../src/types/timeline-types'
-import { ChannelMessageEvent, TimelineEvent } from '@towns-protocol/sdk'
+import {
+    ChannelMessageEvent,
+    TimelineEvent,
+    ThreadStatsData,
+    MessageTips,
+} from '@towns-protocol/sdk'
 import { ConversationBuilder } from './helpers/ConversationBuilder'
 
 function describeEvent(event: TimelineEvent) {

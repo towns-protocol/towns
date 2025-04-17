@@ -1,13 +1,8 @@
 import React, { useMemo, useRef, useState } from 'react'
-import {
-    LookupUser,
-    MessageTips,
-    useChannelData,
-    useMyUserId,
-    useUserLookupArray,
-} from 'use-towns-client'
+import { LookupUser, useChannelData, useMyUserId, useUserLookupArray } from 'use-towns-client'
 import {
     type MessageReactions,
+    MessageTips,
     isDMChannelStreamId,
     isGDMChannelStreamId,
 } from '@towns-protocol/sdk'

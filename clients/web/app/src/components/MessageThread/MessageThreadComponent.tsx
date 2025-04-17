@@ -1,4 +1,5 @@
 import {
+    ThreadStatsData,
     TickerAttachment,
     TimelineEvent,
     isDMChannelStreamId,
@@ -18,7 +19,6 @@ import { useEvent } from 'react-use-event-hook'
 import {
     SendMessageOptions,
     TSigner,
-    ThreadStatsData,
     useConnectivity,
     useMyProfile,
     useSpaceMembers,

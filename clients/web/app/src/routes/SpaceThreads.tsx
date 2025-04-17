@@ -2,11 +2,11 @@ import React, { useMemo } from 'react'
 import { firstBy } from 'thenby'
 import {
     ChannelContextProvider,
-    ThreadResult,
     useMyProfile,
     useSpaceId,
     useSpaceThreadRoots,
 } from 'use-towns-client'
+import { ThreadResult } from '@towns-protocol/sdk'
 import { ButtonSpinner } from '@components/Login/LoginButton/Spinner/ButtonSpinner'
 import { MessageThreadCard } from '@components/MessageThread/MessageThreadCard'
 import { NoJoinedChannelsFallback } from '@components/NoJoinedChannelsFallback'

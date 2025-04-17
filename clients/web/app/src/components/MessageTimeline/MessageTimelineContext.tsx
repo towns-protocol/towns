@@ -1,7 +1,6 @@
 import React, { createContext, useCallback, useMemo } from 'react'
 import {
     Channel,
-    MessageTips,
     useMyProfile,
     usePins,
     useSpaceMembers,
@@ -12,7 +11,7 @@ import {
 } from 'use-towns-client'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'react-hot-toast/headless'
-import { Pin, TimelineEvent } from '@towns-protocol/sdk'
+import { MessageTips, Pin, TimelineEvent } from '@towns-protocol/sdk'
 import { ErrorBoundary } from '@components/ErrorBoundary/ErrorBoundary'
 import { SomethingWentWrong } from '@components/Errors/SomethingWentWrong'
 import { Box } from '@ui'

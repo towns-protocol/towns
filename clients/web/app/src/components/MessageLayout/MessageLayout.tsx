@@ -2,9 +2,7 @@ import { format, formatDistance } from 'date-fns'
 import React, { MouseEventHandler, useCallback, useEffect, useRef, useState } from 'react'
 import {
     LookupUser,
-    MessageTips,
     Permission,
-    ThreadStatsData,
     useConnectivity,
     useHasPermission,
     useMyUserId,
@@ -12,7 +10,7 @@ import {
 } from 'use-towns-client'
 import { Link } from 'react-router-dom'
 import debug from 'debug'
-import { MessageReactions, Pin } from '@towns-protocol/sdk'
+import { MessageReactions, MessageTips, Pin, ThreadStatsData } from '@towns-protocol/sdk'
 import { ProfileHoverCard } from '@components/ProfileHoverCard/ProfileHoverCard'
 import { Reactions } from '@components/Reactions/Reactions'
 import { RepliesButton } from '@components/Replies/MessageReplies'

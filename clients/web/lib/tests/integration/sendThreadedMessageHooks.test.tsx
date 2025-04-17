@@ -6,8 +6,12 @@ import React, { useCallback, useMemo } from 'react'
 import { setTimeout } from 'timers/promises'
 import { FullyReadMarker } from '@towns-protocol/proto'
 import { Permission } from '@towns-protocol/web3'
-import { ThreadResult, ThreadStatsData } from '../../src/types/timeline-types'
-import { ChannelMessageEvent, TimelineEvent } from '@towns-protocol/sdk'
+import {
+    ChannelMessageEvent,
+    TimelineEvent,
+    ThreadResult,
+    ThreadStatsData,
+} from '@towns-protocol/sdk'
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import {
     createTestChannelWithSpaceRoles,

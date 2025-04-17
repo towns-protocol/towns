@@ -1,12 +1,10 @@
 import { createWithEqualityFn } from 'zustand/traditional'
+import reverse from 'lodash/reverse'
 import {
     MessageTipEvent,
     MessageTips,
     ThreadStatsData,
     isMessageTipEvent,
-} from '../types/timeline-types'
-import reverse from 'lodash/reverse'
-import {
     RiverTimelineEvent,
     type MessageReactions,
     RedactedEvent,

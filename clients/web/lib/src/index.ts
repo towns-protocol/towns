@@ -158,7 +158,6 @@ export { useStreamMetadataUpdater } from './hooks/use-stream-metadata-updater'
 export { useRefreshMetadataTx } from './hooks/use-refresh-metadata'
 export * from './hooks/use-river-points'
 export { useImageStore } from './store/use-image-store'
-export * from './types/timeline-types'
 export {
     WalletStatus,
     BlockchainTransactionType,

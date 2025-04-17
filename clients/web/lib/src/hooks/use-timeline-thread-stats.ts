@@ -1,5 +1,5 @@
-import { ThreadStatsData } from '../types/timeline-types'
 import { TimelineStoreStates, useRawTimelineStore } from '../store/use-timeline-store'
+import { ThreadStatsData } from '@towns-protocol/sdk'
 
 const EMPTY_THREAD_STATS: Record<string, ThreadStatsData> = {}
 

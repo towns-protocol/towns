@@ -1,7 +1,6 @@
 import { useCallback, useRef } from 'react'
-import { ThreadStatsData } from '../types/timeline-types'
 import { TimelineStoreStates, useRawTimelineStore } from '../store/use-timeline-store'
-import { RiverTimelineEvent, TimelineEvent } from '@towns-protocol/sdk'
+import { RiverTimelineEvent, TimelineEvent, ThreadStatsData } from '@towns-protocol/sdk'
 import { useShallow } from 'zustand/react/shallow'
 const EMPTY_TIMELINE: TimelineEvent[] = []
 

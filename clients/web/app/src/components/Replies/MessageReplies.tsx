@@ -1,11 +1,11 @@
 import React, { useCallback, useMemo } from 'react'
 import {
-    ThreadStatsData,
     useChannelId,
     useFullyReadMarker,
     useSpaceId,
     useUserLookupContext,
 } from 'use-towns-client'
+import { ThreadStatsData } from '@towns-protocol/sdk'
 import { useOpenMessageThread } from 'hooks/useOpenThread'
 import { Box, Paragraph, Pill, Stack } from '@ui'
 import { notUndefined } from 'ui/utils/utils'

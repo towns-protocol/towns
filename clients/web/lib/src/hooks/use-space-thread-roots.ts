@@ -1,7 +1,6 @@
 import { useEffect } from 'react'
 import { FullyReadMarker } from '@towns-protocol/proto'
 import { useRawTimelineStore } from '../store/use-timeline-store'
-import { ThreadResult, ThreadStatsData } from '../types/timeline-types'
 import { useFullyReadMarkerStore } from '../store/use-fully-read-marker-store'
 import { getChannelsFromSpaceData } from './use-channels'
 import { create } from 'zustand'
@@ -10,6 +9,7 @@ import debounce from 'lodash/debounce'
 import { useSpaceDataStore } from './use-space-data'
 import isEqual from 'lodash/isEqual'
 import { useSpaceId } from './use-space-id'
+import { ThreadResult, ThreadStatsData } from '@towns-protocol/sdk'
 
 const EMPTY_THREADS: ThreadResult[] = []
 
@@ -60,7 +60,7 @@ export function useCalculateSpaceThreadRoots(_opts: TownsOpts) {
                                     isUnread: unreadMarkers[thread.parentId]?.isUnread === true,
                                     fullyReadMarker: unreadMarkers[thread.parentId],
                                     thread,
-                                    channel,
+                                    channel: { id: channel.id, label: channel.label },
                                     timestamp: thread.latestTs,
                                 } satisfies ThreadResult),
                         )
