@@ -191,7 +191,7 @@ func DefaultOnChainSettings() *OnChainSettings {
 		StreamCachePollIntterval: 30 * time.Second,
 
 		StreamEphemeralStreamTTL:           time.Minute * 10,
-		StreamSnapshotIntervalInMiniblocks: 0,
+		StreamSnapshotIntervalInMiniblocks: 0, // 0 means snapshots trimming is disabled
 
 		// TODO: Set it to the default value when the client side is updated.
 		GetMiniblocksMaxPageSize: 0,
