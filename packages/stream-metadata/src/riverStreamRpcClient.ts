@@ -91,7 +91,7 @@ async function mediaContentFromStreamView(
 	logger: FastifyBaseLogger,
 	streamView: StreamStateView,
 	secret: Uint8Array,
-	iv: Uint8Array,
+	iv?: Uint8Array,
 ): Promise<MediaContent> {
 	const mediaInfo = streamView.mediaContent.info
 	if (!mediaInfo) {
@@ -113,19 +113,34 @@ async function mediaContentFromStreamView(
 		'decrypting media content in stream',
 	)
 
-	// Aggregate data chunks into a single Uint8Array
-	const data = new Uint8Array(
-		mediaInfo.chunks.reduce((totalLength, chunk) => totalLength + chunk.length, 0),
-	)
-	let offset = 0
-	mediaInfo.chunks.forEach((chunk) => {
-		data.set(chunk, offset)
-		offset += chunk.length
-	})
+	let decrypted: Uint8Array
+	if (mediaInfo.perChunkEncryption) {
+		decrypted = new Uint8Array()
+		for (let i = 0; i < mediaInfo.chunkCount; i++) {
+			const chunk = mediaInfo.chunks[i]
+			const chunkIv = mediaInfo.perChunkIVs[i]
+			const decryptedChunk = await decryptAESGCM(chunk, secret, chunkIv)
+			decrypted = new Uint8Array([...decrypted, ...decryptedChunk])
+		}
+	} else {
+		if (!iv) {
+			throw new Error('IV is required for non-per-chunk-encrypted media')
+		}
 
-	// Decrypt the data
-	const decrypted = await decryptAESGCM(data, secret, iv)
+		// Aggregate data chunks into a single Uint8Array
+		const data = new Uint8Array(
+			mediaInfo.chunks.reduce((totalLength, chunk) => totalLength + chunk.length, 0),
+		)
 
+		let offset = 0
+		mediaInfo.chunks.forEach((chunk) => {
+			data.set(chunk, offset)
+			offset += chunk.length
+		})
+
+		// Decrypt the data
+		decrypted = await decryptAESGCM(data, secret, iv)
+	}
 	// Determine the MIME type
 	const mimeType = filetypemime(decrypted)
 
@@ -172,7 +187,6 @@ export async function _getStream(
 
 	try {
 		const start = Date.now()
-
 		const response = await client.getStream({
 			streamId: streamIdAsBytes(streamId),
 		})
@@ -232,7 +246,7 @@ export async function _getMediaStreamContent(
 	logger: FastifyBaseLogger,
 	streamId: string,
 	secret: Uint8Array,
-	iv: Uint8Array,
+	iv?: Uint8Array,
 ): Promise<MediaContent | undefined> {
 	const sv = await getStream(logger, streamId)
 	if (!sv) {
@@ -246,7 +260,7 @@ export async function getMediaStreamContent(
 	logger: FastifyBaseLogger,
 	streamId: string,
 	secret: Uint8Array,
-	iv: Uint8Array,
+	iv: Uint8Array | undefined,
 ): Promise<MediaContent | undefined> {
 	const existing = mediaRequests.get(streamId)
 	if (existing) {
