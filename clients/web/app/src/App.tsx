@@ -77,7 +77,12 @@ export const App = () => {
 
     if (!didSetHighpriorityStreamIds.current) {
         didSetHighpriorityStreamIds.current = true
-        highPriorityStreamIds.current = [channelId, spaceId].filter(isDefined)
+
+        const favoriteChannelIds = useStore.getState().favoriteChannelIds || []
+
+        highPriorityStreamIds.current = [channelId, spaceId, ...favoriteChannelIds].filter(
+            isDefined,
+        )
     }
 
     useWindowListener()
