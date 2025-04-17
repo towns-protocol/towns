@@ -130,10 +130,6 @@ export class StreamStateView_GDMChannel extends StreamStateView_AbstractContent 
         stateEmitter?.emit('streamLatestTimestampUpdated', this.streamId)
     }
 
-    getChannelMetadata(): StreamStateView_ChannelMetadata | undefined {
-        return this.channelMetadata
-    }
-
     private updateLastEvent(
         event: ParsedEvent,
         stateEmitter: TypedEmitter<StreamStateEvents> | undefined,
