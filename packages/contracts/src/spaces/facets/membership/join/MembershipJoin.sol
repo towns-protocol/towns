@@ -481,6 +481,7 @@ abstract contract MembershipJoin is
 
         uint256 duration = _getMembershipDuration();
         address pricingModule = _getPricingModule();
+        uint256 price = _getMembershipPrice(_totalSupply());
 
         // create tier 1 if it doesn't exist
         uint16 tierId = 1;
@@ -488,7 +489,7 @@ abstract contract MembershipJoin is
             TiersLib.createTier(
                 TiersLib.Tier({
                     pricingModule: pricingModule,
-                    renewalPrice: membershipPrice,
+                    renewalPrice: price,
                     duration: duration,
                     active: true
                 })
