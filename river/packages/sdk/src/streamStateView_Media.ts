@@ -16,6 +16,8 @@ export class StreamStateView_Media extends StreamStateView_AbstractContent {
               userId: string
               chunkCount: number
               chunks: Uint8Array[]
+              perChunkEncryption: boolean
+              perChunkIVs: Uint8Array[]
           }
         | undefined
 
@@ -43,6 +45,8 @@ export class StreamStateView_Media extends StreamStateView_AbstractContent {
             userId: inception.userId ? userIdFromAddress(inception.userId) : '',
             chunkCount: inception.chunkCount,
             chunks: Array<Uint8Array>(inception.chunkCount),
+            perChunkEncryption: inception.perChunkEncryption ?? false,
+            perChunkIVs: Array<Uint8Array>(inception.chunkCount),
         }
     }
 
@@ -68,6 +72,10 @@ export class StreamStateView_Media extends StreamStateView_AbstractContent {
                     throw new Error(`chunkIndex out of bounds: ${payload.content.value.chunkIndex}`)
                 }
                 this.info.chunks[payload.content.value.chunkIndex] = payload.content.value.data
+                if (payload.content.value.iv) {
+                    this.info.perChunkIVs[payload.content.value.chunkIndex] =
+                        payload.content.value.iv
+                }
                 break
             case undefined:
                 break
