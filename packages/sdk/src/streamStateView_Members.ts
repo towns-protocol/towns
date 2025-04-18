@@ -55,6 +55,23 @@ export interface Pin {
     event: StreamTimelineEvent
 }
 
+export interface MemberTokenTransfer {
+    address: Uint8Array
+    amount: bigint
+    isBuy: boolean
+    chainId: string
+    userId: string
+    sender: Uint8Array
+    createdAtEpochMs: bigint
+    messageId: string
+}
+
+export interface MemberSpaceReview {
+    review: SpaceReviewEventObject
+    createdAtEpochMs: bigint
+    eventHashStr: string
+}
+
 export class StreamStateView_Members extends StreamStateView_AbstractContent {
     readonly streamId: string
     readonly joined = new Map<string, StreamMember>()
@@ -65,21 +82,9 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
     tips: { [key: string]: bigint } = {}
     tipsCount: { [key: string]: bigint } = {}
     encryptionAlgorithm?: string = undefined
-    spaceReviews: {
-        review: SpaceReviewEventObject
-        createdAtEpochMs: bigint
-        eventHashStr: string
-    }[] = []
+    spaceReviews: MemberSpaceReview[] = []
 
-    tokenTransfers: {
-        address: Uint8Array
-        amount: bigint
-        isBuy: boolean
-        chainId: string
-        userId: string
-        createdAtEpochMs: bigint
-        messageId: string
-    }[] = []
+    tokenTransfers: MemberTokenTransfer[] = []
 
     constructor(streamId: string) {
         super()
@@ -616,6 +621,7 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
         const transferData = {
             address: transferContent.address,
             userId: userIdFromAddress(payload.fromUserAddress),
+            sender: transferContent.sender,
             chainId: receipt
                 ? receipt.chainId.toString()
                 : solanaReceipt
@@ -625,7 +631,7 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
             isBuy: transferContent.isBuy,
             messageId: bin_toHexString(transferContent.messageId),
             amount: BigInt(transferContent.amount),
-        }
+        } satisfies MemberTokenTransfer
         if (prepend) {
             this.tokenTransfers.unshift(transferData)
         } else {
