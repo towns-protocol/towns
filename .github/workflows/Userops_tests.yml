@@ -2,6 +2,7 @@ name: 'Run Userops Tests'
 env:
     FOUNDRY_VERSION: stable
     RIVER_BLOCK_TIME: 0.1
+    RIVER_ENV: local_multi
 
 on:
     pull_request:
@@ -61,7 +62,10 @@ jobs:
               timeout-minutes: 5
               run: ./scripts/wait-for-4337.sh
 
-            - name: Deploy base contracts and config deployments
+            - name: Deploy base contracts
+              run: ./river/scripts/deploy-base-contracts.sh
+
+            - name: Configure deployments
               run: ./scripts/deploy-config-base-only.sh
 
             - name: Spin up stackup worker with fake privy verification that skips limit checks
