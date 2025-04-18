@@ -34,6 +34,7 @@ func NewTestStreamStore(ctx context.Context) *TestStreamStore {
 		exitChan,
 		infra.NewMetricsFactory(nil, "", ""),
 		time.Minute*10,
+		0,
 	)
 	if err != nil {
 		panic(err)

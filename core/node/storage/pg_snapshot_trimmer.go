@@ -34,7 +34,7 @@ func newSnapshotTrimmer(
 	ctx context.Context,
 	storage *PostgresStreamStore,
 	retentionInterval uint64,
-) *snapshotTrimmer {
+) (*snapshotTrimmer, error) {
 	if retentionInterval < minRetentionInterval {
 		retentionInterval = minRetentionInterval
 	}
@@ -47,7 +47,7 @@ func newSnapshotTrimmer(
 
 	go st.start(ctx)
 
-	return st
+	return st, nil
 }
 
 // start starts the snapshot trimmer.

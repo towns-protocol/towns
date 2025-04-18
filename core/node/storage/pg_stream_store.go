@@ -34,8 +34,9 @@ type PostgresStreamStore struct {
 
 	numPartitions int
 
-	//
+	// workers
 	esm *ephemeralStreamMonitor
+	st  *snapshotTrimmer
 }
 
 var _ StreamStorage = (*PostgresStreamStore)(nil)
@@ -115,6 +116,7 @@ func NewPostgresStreamStore(
 	exitSignal chan error,
 	metrics infra.MetricsFactory,
 	ephemeralStreamTtl time.Duration,
+	snapshotRetentionInterval uint64,
 ) (store *PostgresStreamStore, err error) {
 	store = &PostgresStreamStore{
 		nodeUUID:   instanceId,
@@ -142,6 +144,12 @@ func NewPostgresStreamStore(
 
 	// Start the ephemeral stream monitor.
 	store.esm, err = newEphemeralStreamMonitor(ctx, ephemeralStreamTtl, store)
+	if err != nil {
+		return nil, AsRiverError(err).Func("NewPostgresStreamStore")
+	}
+
+	// Start the snapshot trimmer.
+	store.st, err = newSnapshotTrimmer(ctx, store, snapshotRetentionInterval)
 	if err != nil {
 		return nil, AsRiverError(err).Func("NewPostgresStreamStore")
 	}
