@@ -19,6 +19,15 @@ export const Figma = {
         TransparentHover: 'hsla(264, 6%, 17%,0.20)',
         LightTransparentHover: 'hsla(255, 100%, 17% , 4%)',
 
+        Transparent5: 'hsla(255, 100%, 94%, 5%)',
+        Transparent5Hover: 'hsla(255, 100%, 94%, 2%)',
+        Transparent10: 'hsla(255, 100%, 94%, 10%)',
+        Transparent10Hover: 'hsla(255, 100%, 94%, 7%)',
+        Transparent20: 'hsla(255, 100%, 94%, 20%)',
+        Transparent20Hover: 'hsla(255, 100%, 94%, 17%)',
+        Transparent40: 'hsla(255, 100%, 94%, 40%)',
+        Transparent40Hover: 'hsla(255, 100%, 94%, 37%)',
+
         Primary: 'hsl(260, 5%, 8%)',
         Secondary: 'hsl(264, 5%, 18%)',
         Tertiary: 'hsl(265, 8%, 45%)',
@@ -43,6 +52,15 @@ export const Figma = {
 
         TransparentHover: 'hsla(255, 100%, 94% , 0.2)',
         LightTransparentHover: 'hsla(255, 100%, 94% , 4%)',
+
+        Transparent5: 'hsla(255, 100%, 94%, 5%)',
+        Transparent5Hover: 'hsla(255, 100%, 94%, 8%)',
+        Transparent10: 'hsla(255, 100%, 94%, 10%)',
+        Transparent10Hover: 'hsla(255, 100%, 94%, 13%)',
+        Transparent20: 'hsla(255, 100%, 94%, 20%)',
+        Transparent20Hover: 'hsla(255, 100%, 94%, 23%)',
+        Transparent40: 'hsla(255, 100%, 94%, 40%)',
+        Transparent40Hover: 'hsla(255, 100%, 94%, 43%)',
 
         Primary: 'hsla(0, 0%, 92%, 1)',
         Secondary: 'hsla(254, 14%, 82%, 1)',

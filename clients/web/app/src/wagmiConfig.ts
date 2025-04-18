@@ -1,47 +1,43 @@
 import { http } from 'wagmi'
 import { createConfig } from '@privy-io/wagmi'
-import { Chain, zora } from 'wagmi/chains'
+import { Chain } from 'wagmi/chains'
 import { getViemChain } from '@decent.xyz/box-common'
 
 import { Transport } from 'viem'
 import { env } from 'utils'
 import { validateAndParseXChainConfig } from 'utils/validateAndParseXChainConfig'
+import { SUPPORTED_CHAINS } from 'privy/PrivyProvider'
+
+const privyChains = SUPPORTED_CHAINS
+const transports = privyChains.reduce((acc: Record<number, Transport>, chain) => {
+    acc[chain.id] = http(chain.rpcUrls.default.http[0])
+    return acc
+}, {})
 
 const xchainConfig = validateAndParseXChainConfig(env.VITE_XCHAIN_CONFIG ?? '')
 
-const initialChains = Object.entries(xchainConfig).reduce((acc: Chain[], [chainId, url]) => {
+const xChains = Object.entries(xchainConfig).reduce((acc: Chain[], [chainId, url]) => {
     const chain = getViemChain(Number(chainId))
     if (chain) {
+        const privyChain = privyChains.find((c) => c.id === chain.id)
+        if (privyChain) {
+            return acc
+        }
         return [...acc, chain]
     }
     return acc
-}, []) as [Chain, ...Chain[]]
+}, [])
 
-const alchemyKey = xchainConfig[initialChains?.[0]?.id]?.split('/').pop()
-
-const initialTransports = initialChains.reduce((acc: Record<number, Transport>, chain) => {
+const xChainTransports = xChains.reduce((acc: Record<number, Transport>, chain) => {
     acc[chain.id] = http(xchainConfig[chain.id])
     return acc
 }, {})
 
-// additional chains to support for bridging
-const additionalChains: [Chain, string][] = [
-    [zora, `https://zora-mainnet.g.alchemy.com/v2/${alchemyKey}`],
-]
-
-export const chains = initialChains.concat(additionalChains.map(([c]) => c)) as [Chain, ...Chain[]]
-
-const transports = {
-    ...initialTransports,
-    ...additionalChains.reduce((acc: Record<number, Transport>, [chain, url]) => {
-        acc[chain.id] = http(url)
-        return acc
-    }, {}),
-}
+const chains = privyChains.concat(xChains) as [Chain, ...Chain[]]
 
 export const chainIds = chains.map((chain) => chain.id)
 
 export const wagmiConfig = createConfig({
     chains,
-    transports,
+    transports: { ...transports, ...xChainTransports },
 })

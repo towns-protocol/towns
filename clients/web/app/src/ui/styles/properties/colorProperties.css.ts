@@ -171,7 +171,57 @@ export const colorProperties = defineProperties({
                     },
                 },
             },
-
+            transparent5: {
+                background: vars.color.background.transparent5,
+                color: vars.color.text.gray1,
+                vars: {
+                    '--background': vars.color.background.transparent5,
+                    '--background-hover': vars.color.background.transparent5Hover,
+                },
+                selectors: {
+                    [`&${hoverableClass}:hover, &${hoverableClass}${hoverActiveClass}`]: {
+                        '@media': {
+                            '(hover: hover)': {
+                                background: 'var(--background-hover)',
+                            },
+                        },
+                    },
+                },
+            },
+            transparent10: {
+                background: vars.color.background.transparent10,
+                color: vars.color.text.gray1,
+                vars: {
+                    '--background': vars.color.background.transparent10,
+                    '--background-hover': vars.color.background.transparent10Hover,
+                },
+                selectors: {
+                    [`&${hoverableClass}:hover, &${hoverableClass}${hoverActiveClass}`]: {
+                        '@media': {
+                            '(hover: hover)': {
+                                background: 'var(--background-hover)',
+                            },
+                        },
+                    },
+                },
+            },
+            transparent20: {
+                background: vars.color.background.transparent20,
+                color: vars.color.text.gray1,
+                vars: {
+                    '--background': vars.color.background.transparent20,
+                    '--background-hover': vars.color.background.transparent20Hover,
+                },
+                selectors: {
+                    [`&${hoverableClass}:hover, &${hoverableClass}${hoverActiveClass}`]: {
+                        '@media': {
+                            '(hover: hover)': {
+                                background: 'var(--background-hover)',
+                            },
+                        },
+                    },
+                },
+            },
             backdropBlur: {
                 WebkitBackdropFilter: 'blur(10px)',
                 backdropFilter: 'blur(10px)',

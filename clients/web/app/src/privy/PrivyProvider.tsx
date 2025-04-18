@@ -6,7 +6,7 @@ import { ENVIRONMENTS, useEnvironment } from 'hooks/useEnvironmnet'
 import { useStore } from 'store/store'
 import { Figma } from 'ui/styles/palette'
 
-const SUPPORTED_CHAINS = uniqBy(
+export const SUPPORTED_CHAINS = uniqBy(
     ENVIRONMENTS.map((env) => env.baseChain),
     (x) => x.id,
 )

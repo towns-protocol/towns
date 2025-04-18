@@ -101,6 +101,14 @@ const light = (() => {
         hover: Figma.LightMode.TransparentHover,
         lightHover: Figma.LightMode.LightTransparentHover,
         inverted: Figma.LightMode.Primary,
+        transparent5: Figma.LightMode.Transparent5,
+        transparent5Hover: Figma.LightMode.Transparent5Hover,
+        transparent10: Figma.LightMode.Transparent10,
+        transparent10Hover: Figma.LightMode.Transparent10Hover,
+        transparent20: Figma.LightMode.Transparent20,
+        transparent20Hover: Figma.LightMode.Transparent20Hover,
+        transparent40: Figma.LightMode.Transparent40,
+        transparent40Hover: Figma.LightMode.Transparent40Hover,
     } as const
 
     const text = {
@@ -152,6 +160,14 @@ const dark = (() => {
         hover: Figma.DarkMode.TransparentHover,
         lightHover: Figma.DarkMode.LightTransparentHover,
         inverted: Figma.DarkMode.Primary,
+        transparent5: Figma.DarkMode.Transparent5,
+        transparent5Hover: Figma.DarkMode.Transparent5Hover,
+        transparent10: Figma.DarkMode.Transparent10,
+        transparent10Hover: Figma.DarkMode.Transparent10Hover,
+        transparent20: Figma.DarkMode.Transparent20,
+        transparent20Hover: Figma.DarkMode.Transparent20Hover,
+        transparent40: Figma.DarkMode.Transparent40,
+        transparent40Hover: Figma.DarkMode.Transparent40Hover,
     } as const
 
     const text = {

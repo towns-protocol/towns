@@ -1,24 +1,23 @@
 import React, { useState } from 'react'
-import { Address, useTownsContext } from 'use-towns-client'
+import { getBalance } from 'wagmi/actions'
 import { popupToast } from '@components/Notifications/popupToast'
 import { StandardToast } from '@components/Notifications/StandardToast'
 import { FullPanelOverlay } from '@components/Web3/WalletLinkingPanel'
-import {
-    DecentTransactionReceipt,
-    Onboarding,
-    getDecentScanLink,
-} from '@components/Web3/Decent/Onboarding'
+
 import {
     trackConnectWallet,
     trackFundWalletTx,
     trackFundWalletTxStart,
 } from '@components/Web3/Wallet/fundWalletAnalytics'
 import { useMyAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
+import { wagmiConfig } from 'wagmiConfig'
+import { useEnvironment } from 'hooks/useEnvironmnet'
 import { useUserOpTxModalContext } from './UserOpTxModalContext'
 import { useIsJoinSpace } from './hooks/useIsJoinSpace'
+import { EOAEthTransfer } from '../Decent/EOAEthTransfer'
 
 export const FundWallet = (props: { cost: bigint }) => {
-    const { baseProvider } = useTownsContext()
+    const { baseChain } = useEnvironment()
     const myAbstractAccountAddress = useMyAbstractAccountAddress().data
     const { setView } = useUserOpTxModalContext()
     const [isCheckingBalance, setIsCheckingBalance] = useState(false)
@@ -26,7 +25,7 @@ export const FundWallet = (props: { cost: bigint }) => {
 
     return (
         <>
-            <Onboarding
+            <EOAEthTransfer
                 onConnectWallet={(wallet) => {
                     if (isJoinSpace) {
                         trackConnectWallet({
@@ -48,26 +47,27 @@ export const FundWallet = (props: { cost: bigint }) => {
                                 entrypoint: 'joinspace',
                             })
                         }
-                        const receipt = r as DecentTransactionReceipt
-                        const link = getDecentScanLink(receipt)
                         popupToast(({ toast }) => (
                             <StandardToast.Success
                                 toast={toast}
                                 message="You've added funds to your Towns Wallet!"
-                                cta="View on DecentScan"
-                                onCtaClick={() => {
-                                    window.open(link, '_blank')
-                                }}
                             />
                         ))
                         setIsCheckingBalance(true)
-                        const isBalanceEnough = await checkBalance({
-                            cost: props.cost,
-                            provider: baseProvider,
-                            myAbstractAccountAddress,
-                        })
-                        if (isBalanceEnough) {
-                            setView(undefined)
+                        if (myAbstractAccountAddress) {
+                            try {
+                                const balance = await getBalance(wagmiConfig, {
+                                    chainId: baseChain.id,
+                                    address: myAbstractAccountAddress,
+                                })
+                                if (balance.value >= props.cost) {
+                                    setView(undefined)
+                                } else {
+                                    setView('payEth')
+                                }
+                            } catch (error) {
+                                setView('payEth')
+                            }
                         } else {
                             setView('payEth')
                         }
@@ -93,30 +93,4 @@ export const FundWallet = (props: { cost: bigint }) => {
             {isCheckingBalance && <FullPanelOverlay text="Checking balance..." />}
         </>
     )
-}
-
-async function checkBalance(props: {
-    cost: bigint
-    provider: ReturnType<typeof useTownsContext>['baseProvider']
-    myAbstractAccountAddress: Address | undefined
-}) {
-    const now = Date.now()
-    const endTime = now + 8_000
-    if (!props.myAbstractAccountAddress) {
-        return false
-    }
-    while (Date.now() < endTime) {
-        try {
-            const currentBalance = (
-                await props.provider.getBalance(props.myAbstractAccountAddress)
-            ).toBigInt()
-            if (currentBalance >= props.cost) {
-                return true
-            }
-            await new Promise((resolve) => setTimeout(resolve, 1_000))
-        } catch (e) {
-            console.error('[checkBalance] error', e)
-        }
-    }
-    return false
 }

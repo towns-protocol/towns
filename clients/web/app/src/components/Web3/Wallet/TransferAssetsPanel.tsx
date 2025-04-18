@@ -11,7 +11,7 @@ import {
 } from 'use-towns-client'
 import { ErrorMessage, FancyButton, FormRender, Stack, Text, TextField } from '@ui'
 import { Panel } from '@components/Panel/Panel'
-import { formatUnits, parseUnits, useBalance } from 'hooks/useBalance'
+import { formatUnits, useBalance } from 'hooks/useBalance'
 import { createPrivyNotAuthenticatedNotification } from '@components/Notifications/utils'
 import { invalidateCollectionsForAddressQueryData } from 'api/lib/tokenContracts'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
@@ -25,7 +25,10 @@ import { useGetAssetSourceParam, useIsAAWallet } from './useGetWalletParam'
 import { TransferSchema, transferSchema } from './transferAssetsSchema'
 import { WalletSelector } from './WalletSelector'
 import { AssetSelector, EthDetail } from './AssetSelector'
-import { useEthInputChange } from '../EditMembership/useEthInputChange'
+import {
+    useEthInputChange,
+    useEthInputChangeWithBalanceCheck,
+} from '../EditMembership/useEthInputChange'
 import { FullPanelOverlay } from '../WalletLinkingPanel'
 import { useBaseNftsForTransfer } from './useBaseNftsForTransfer'
 import {
@@ -222,26 +225,19 @@ function EthInputField(props: {
     const assetToTransfer = watch('assetToTransfer')
     const ethAmount = watch('ethAmount')
     const onCostChange = useEthInputChange(ethAmount ?? '', 'ethAmount', setValue, trigger)
-    const _balance = fromBalance?.value
 
-    const onChangeWithValueGuard = useCallback(
-        (e: React.ChangeEvent<HTMLInputElement>) => {
-            const { value } = e.target
-            if (_balance) {
-                const isNumber = /^-?\d+(\.\d+)?$/.test(value)
-
-                if (isNumber && parseUnits(value) > _balance) {
-                    setError('ethAmount', {
-                        message: 'Insufficient balance',
-                    })
-                    return
-                }
-            }
-
-            onCostChange(e.target.value)
+    const onCostChangeWithBalanceCheck = useEthInputChangeWithBalanceCheck({
+        balance: fromBalance?.value,
+        ethAmount: ethAmount ?? '',
+        path: 'ethAmount',
+        setValue,
+        trigger,
+        onError: () => {
+            setError('ethAmount', {
+                message: 'Insufficient balance',
+            })
         },
-        [onCostChange, _balance, setError],
-    )
+    })
 
     // when treasury transfer:
     // - set value to balance
@@ -288,7 +284,7 @@ function EthInputField(props: {
                 label="Amount"
                 tone={formState.errors.ethAmount ? 'error' : 'neutral'}
                 {...register('ethAmount')}
-                onChange={onChangeWithValueGuard}
+                onChange={onCostChangeWithBalanceCheck}
             />
             <ErrorMessage preventSpace errors={formState.errors} fieldName="ethAmount" />
         </Stack>

@@ -22,7 +22,7 @@ export function ConnectedWallet() {
             alignItems="center"
             justifyContent="spaceBetween"
             gap="sm"
-            background="level2"
+            background="transparent5"
             rounded="md"
             padding="sm"
         >
@@ -38,6 +38,7 @@ export function ConnectedWallet() {
                 size="button_sm"
                 rounded="md"
                 color="gray2"
+                tone="transparent5"
                 icon="close"
                 onClick={() => connector?.disconnect()}
             >

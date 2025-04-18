@@ -1,5 +1,6 @@
 import { useCallback } from 'react'
 import { FieldValues, Path, PathValue, UseFormSetValue, UseFormTrigger } from 'react-hook-form'
+import { parseUnits } from 'hooks/useBalance'
 
 export function useEthInputChange<Schema extends FieldValues, PathType extends Path<Schema>>(
     price: string,
@@ -34,5 +35,37 @@ export function useEthInputChange<Schema extends FieldValues, PathType extends P
             trigger(path) // trigger any superRefine
         },
         [setValue, path, trigger, price],
+    )
+}
+
+export function useEthInputChangeWithBalanceCheck<
+    Schema extends FieldValues,
+    PathType extends Path<Schema>,
+>(args: {
+    balance: bigint | undefined
+    ethAmount: string
+    path: PathType
+    setValue: UseFormSetValue<Schema>
+    trigger: UseFormTrigger<Schema>
+    onError: () => void
+}) {
+    const { balance, ethAmount, path, setValue, trigger, onError } = args
+    const onCostChange = useEthInputChange(ethAmount ?? '', path, setValue, trigger)
+
+    return useCallback(
+        (e: React.ChangeEvent<HTMLInputElement>) => {
+            const { value } = e.target
+            if (balance) {
+                const isNumber = /^-?\d+(\.\d+)?$/.test(value)
+
+                if (isNumber && parseUnits(value) > balance) {
+                    onError()
+                    return
+                }
+            }
+
+            onCostChange(e.target.value as PathValue<Schema, PathType>)
+        },
+        [onCostChange, balance, onError],
     )
 }

@@ -5,5 +5,5 @@ const iconMap: Record<string, IconName> = {
     metamask: 'metamask',
 }
 export function ConnectedWalletIcon({ walletName }: { walletName: string | undefined }) {
-    return <Icon type={iconMap[walletName ?? ''] ?? 'wallet'} />
+    return <Icon size="square_xs" type={iconMap[walletName ?? ''] ?? 'wallet'} />
 }
