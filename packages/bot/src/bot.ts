@@ -51,26 +51,98 @@ import {
 
 type BotActions = ReturnType<typeof buildBotActions>
 
+type BotPayload<T extends keyof BotEvents> = Parameters<BotEvents[T]>[1]
+
+type MessageOpts = {
+    threadId?: string
+    replyId?: string
+    mentions?: ChannelMessage_Post_Mention[]
+    attachments?: ChannelMessage_Post_Attachment[]
+}
+
 type BotEvents = {
-    message: (handler: BotActions, event: BasePayload & { message: string }) => void
-    redact: (handler: BotActions, event: BasePayload & { refEventId: string }) => void
-    messageDelete: (handler: BotActions, event: BasePayload & { eventId: string }) => void
-    botMention: (handler: BotActions, event: BasePayload & { message: string }) => void
-    reply: (handler: BotActions, event: BasePayload & { message: string }) => void
+    message: (
+        handler: BotActions,
+        event: BasePayload & {
+            /** The decrypted message content */
+            message: string
+            /** You can use this to check if the message is a direct message or a group message */
+            isDm: boolean
+        },
+    ) => void
+    redact: (
+        handler: BotActions,
+        event: BasePayload & {
+            /** The event ID that got redacted */
+            refEventId: string
+        },
+    ) => void
+    messageEdit: (
+        handler: BotActions,
+        event: BasePayload & {
+            /** The event ID of the message that got edited */
+            refEventId: string
+            /** New message */
+            message: string
+        },
+    ) => void
+    botMention: (
+        handler: BotActions,
+        event: BasePayload & {
+            /** The decrypted message content */
+            message: string
+        },
+    ) => void
+    reply: (
+        handler: BotActions,
+        event: BasePayload & {
+            /** The decrypted message content */
+            message: string
+        },
+    ) => void
     reaction: (
         handler: BotActions,
-        event: BasePayload & { reaction: string; messageId: string; userId: string },
+        event: BasePayload & {
+            /** The reaction that was added */
+            reaction: string
+            /** The event ID of the message that got reacted to */
+            messageId: string
+            /** The user ID of the user that added the reaction */
+            userId: string
+        },
     ) => void
-    eventRevoke: (handler: BotActions, event: BasePayload & { eventId: string }) => void
-    tip: (handler: BotActions, event: BasePayload & { amount: bigint }) => void
+    // TODO:
+    eventRevoke: (handler: BotActions, event: BasePayload) => void
+    // TODO:
+    tip: (
+        handler: BotActions,
+        event: BasePayload & {
+            /** The amount of the tip */
+            amount: bigint
+            /** The currency of the tip */
+            currency: `0x${string}`
+        },
+    ) => void
     channelJoin: (handler: BotActions, event: BasePayload) => void
     channelLeave: (handler: BotActions, event: BasePayload) => void
-    streamMessage: (handler: BotActions, event: BasePayload & { event: ParsedEvent }) => void
+    streamEvent: (handler: BotActions, event: BasePayload & { event: ParsedEvent }) => void
+    threadMessage: (
+        handler: BotActions,
+        event: BasePayload & {
+            /** The thread id where the message belongs to */
+            threadId: string
+            /** The decrypted message content */
+            message: string
+        },
+    ) => void
 }
 
 type BasePayload = {
+    /** The user ID of the user that triggered the event */
     userId: string
+    /** channelId that the event was triggered in */
     channelId: string
+    /** The ID of the event that triggered */
     eventId: string
 }
 
@@ -131,6 +203,7 @@ export class Bot extends (EventEmitter as new () => TypedEmitter<BotEvents>) {
         return c.body(toBinary(AppServiceResponseSchema, response), 200)
     }
 
+    // TODO: onTip
     private async handleEvent(appEvent: EventPayload) {
         if (!appEvent.payload.case || !appEvent.payload.value) return
         const streamId = streamIdAsString(appEvent.payload.value.streamId)
@@ -158,7 +231,7 @@ export class Bot extends (EventEmitter as new () => TypedEmitter<BotEvents>) {
                 if (!parsed.event.payload.case) {
                     continue
                 }
-                this.emit('streamMessage', this.client, {
+                this.emit('streamEvent', this.client, {
                     userId: userIdFromAddress(parsed.event.creatorAddress),
                     channelId: streamId,
                     eventId: parsed.hashStr,
@@ -190,8 +263,8 @@ export class Bot extends (EventEmitter as new () => TypedEmitter<BotEvents>) {
                             }
                             await this.handleChannelMessage(streamId, parsed, channelMessage)
                         } else if (parsed.event.payload.value.content.case === 'redaction') {
+                            // TODO: eventRevoke
                             // admin redaction
-                            // TODO
                         } else if (
                             parsed.event.payload.value.content.case === 'channelProperties'
                         ) {
@@ -242,9 +315,7 @@ export class Bot extends (EventEmitter as new () => TypedEmitter<BotEvents>) {
         if (!payload.case) {
             return
         }
-        // TODO: onStreamMessage
 
-        // TODO: onTip
         switch (payload.case) {
             case 'post': {
                 if (payload.value.content.case === 'text') {
@@ -252,25 +323,31 @@ export class Bot extends (EventEmitter as new () => TypedEmitter<BotEvents>) {
                         (m) => m.userId === this.botId,
                     )
                     const userId = userIdFromAddress(parsed.event.creatorAddress)
-                    if (hasBotMention) {
-                        this.emit('botMention', this.client, {
-                            userId,
-                            eventId: parsed.hashStr,
-                            channelId: streamId,
-                            message: payload.value.content.value.body,
+                    const replyId = payload.value.replyId
+                    const threadId = payload.value.threadId
+                    const forwardPayload: BotPayload<'message'> = {
+                        userId,
+                        eventId: parsed.hashStr,
+                        channelId: streamId,
+                        message: payload.value.content.value.body,
+                        isDm: isDMChannelStreamId(streamId),
+                    }
+
+                    if (replyId) {
+                        this.emit('reply', this.client, forwardPayload)
+                    } else if (threadId) {
+                        this.emit('threadMessage', this.client, {
+                            ...forwardPayload,
+                            threadId,
                         })
+                    } else if (hasBotMention) {
+                        this.emit('botMention', this.client, forwardPayload)
                     } else {
-                        this.emit('message', this.client, {
-                            userId,
-                            eventId: parsed.hashStr,
-                            channelId: streamId,
-                            message: payload.value.content.value.body,
-                        })
+                        this.emit('message', this.client, forwardPayload)
                     }
                 }
                 break
             }
-            // TODO: is tip a reaction? if so handle it here
             case 'reaction': {
                 this.emit('reaction', this.client, {
                     userId: userIdFromAddress(parsed.event.creatorAddress),
@@ -282,8 +359,15 @@ export class Bot extends (EventEmitter as new () => TypedEmitter<BotEvents>) {
                 break
             }
             case 'edit': {
-                // TODO: bot doesnt forward message edits.
-                // Need to think about a good API for it
+                // TODO: bot doesnt forward non-text edits
+                if (payload.value.post?.content.case !== 'text') break
+                this.emit('messageEdit', this.client, {
+                    userId: userIdFromAddress(parsed.event.creatorAddress),
+                    eventId: parsed.hashStr,
+                    channelId: streamId,
+                    refEventId: payload.value.refEventId,
+                    message: payload.value.post?.content.value.body,
+                })
                 break
             }
             case 'redaction': {
@@ -299,65 +383,121 @@ export class Bot extends (EventEmitter as new () => TypedEmitter<BotEvents>) {
                 logNever(payload)
         }
     }
-    async sendMessage(channelId: string, message: string) {
-        return this.client.sendMessage(channelId, message)
+
+    /**
+     * Send a message to a stream
+     * @param streamId - Id of the stream. Usually channelId or userId
+     * @param message - The cleartext of the message
+     */
+    async sendMessage(streamId: string, message: string, opts?: MessageOpts) {
+        return this.client.sendMessage(streamId, message, opts)
     }
 
-    async sendReaction(channelId: string, refEventId: string, reaction: string) {
-        return this.client.sendReaction(channelId, refEventId, reaction)
+    /**
+     * Send a reaction to a stream
+     * @param streamId - Id of the stream. Usually channelId or userId
+     * @param refEventId - The eventId of the event to react to
+     * @param reaction - The reaction to send
+     */
+    async sendReaction(streamId: string, refEventId: string, reaction: string) {
+        return this.client.sendReaction(streamId, refEventId, reaction)
     }
 
-    async removeEvent(channelId: string, refEventId: string) {
-        return this.client.removeEvent(channelId, refEventId)
+    /**
+     * Remove an specific event from a stream
+     * @param streamId - Id of the stream. Usually channelId or userId
+     * @param refEventId - The eventId of the event to remove
+     */
+    async removeEvent(streamId: string, refEventId: string) {
+        return this.client.removeEvent(streamId, refEventId)
     }
 
-    onMessage(fn: (handler: BotActions, opts: BasePayload & { message: string }) => void) {
+    /**
+     * Edit an specific message from a stream
+     * @param streamId - Id of the stream. Usually channelId or userId
+     * @param messageId - The eventId of the message to edit
+     * @param message - The new message text
+     */
+    async editMessage(streamId: string, messageId: string, message: string) {
+        return this.client.editMessage(streamId, messageId, message)
+    }
+
+    /**
+     * Triggered when someone sends a message.
+     * This is triggered for all messages, including direct messages and group messages.
+     */
+    onMessage(fn: BotEvents['message']) {
         this.on('message', fn)
     }
 
-    onRedact(fn: (handler: BotActions, opts: BasePayload & { refEventId: string }) => void) {
+    onRedact(fn: BotEvents['redact']) {
         this.on('redact', fn)
     }
 
-    onMessageDelete(fn: (handler: BotActions, opts: BasePayload & { eventId: string }) => void) {
-        this.on('messageDelete', fn)
+    /**
+     * Triggered when a message gets edited
+     */
+    onMessageDelete(fn: BotEvents['messageEdit']) {
+        this.on('messageEdit', fn)
     }
 
-    onBotMention(fn: (handler: BotActions, opts: BasePayload & { message: string }) => void) {
+    /**
+     * Triggered when someone mentions the bot in a message
+     */
+    onBotMention(fn: BotEvents['botMention']) {
         this.on('botMention', fn)
     }
 
-    onReply(fn: (handler: BotActions, opts: BasePayload & { message: string }) => void) {
+    /**
+     * Triggered when someone replies to a message
+     */
+    onReply(fn: BotEvents['reply']) {
         this.on('reply', fn)
     }
 
-    onReaction(
-        fn: (
-            handler: BotActions,
-            opts: BasePayload & { reaction: string; messageId: string; userId: string },
-        ) => void,
-    ) {
+    /**
+     * Triggered when someone reacts to a message
+     */
+    onReaction(fn: BotEvents['reaction']) {
         this.on('reaction', fn)
     }
 
-    onEventRevoke(fn: (handler: BotActions, opts: BasePayload & { eventId: string }) => void) {
+    /**
+     * Triggered when a message is revoked by an moderator
+     * TODO: impl
+     */
+    onEventRevoke(fn: BotEvents['eventRevoke']) {
         this.on('eventRevoke', fn)
     }
 
-    onTip(fn: (handler: BotActions, opts: BasePayload & { amount: bigint }) => void) {
+    /**
+     * Triggered when someone tips the bot
+     * TODO: impl
+     */
+    onTip(fn: BotEvents['tip']) {
         this.on('tip', fn)
     }
 
-    onChannelJoin(fn: (handler: BotActions, opts: BasePayload) => void) {
+    /**
+     * Triggered when someone joins a channel
+     */
+    onChannelJoin(fn: BotEvents['channelJoin']) {
         this.on('channelJoin', fn)
     }
 
-    onChannelLeave(fn: (handler: BotActions, opts: BasePayload) => void) {
+    /**
+     * Triggered when someone leaves a channel
+     */
+    onChannelLeave(fn: BotEvents['channelLeave']) {
         this.on('channelLeave', fn)
     }
 
-    onStreamMessage(fn: (handler: BotActions, opts: BasePayload & { event: ParsedEvent }) => void) {
-        this.on('streamMessage', fn)
+    onStreamEvent(fn: BotEvents['streamEvent']) {
+        this.on('streamEvent', fn)
+    }
+
+    onThreadMessage(fn: BotEvents['threadMessage']) {
+        this.on('threadMessage', fn)
     }
 
     // onSlashCommand(command: Commands, fn: (client: BotActions, opts: BasePayload) => void) {
@@ -591,7 +731,7 @@ const buildBotActions = (client: ClientV2) => {
         }))
     }
 
-    // TODO: impl
+    // TODO: impl - this currently doesnt work
     const getUserData = async (userId: string) => {
         const streamId = makeUserMetadataStreamId(userId)
         const userStream = await client.getStream(streamId)
@@ -627,6 +767,7 @@ const buildBotActions = (client: ClientV2) => {
         }
     }
 
+    // TODO: add jsdocs around here too
     return {
         sendMessage,
         editMessage,
