@@ -6,21 +6,17 @@ import {IWalletLinkBase} from "src/factory/facets/wallet-link/IWalletLink.sol";
 import {WalletLink} from "src/factory/facets/wallet-link/WalletLink.sol";
 
 // libraries
-
-import {SolanaUtils} from "src/factory/facets/wallet-link/libraries/SolanaUtils.sol";
-import {WalletLib} from "src/factory/facets/wallet-link/libraries/WalletLib.sol";
-import {SCL_EIP6565_UTILS} from "crypto-lib/lib/libSCL_eddsaUtils.sol";
 import {Vm} from "forge-std/Test.sol";
 import {LibString} from "solady/utils/LibString.sol";
+import {SCL_EIP6565_UTILS} from "crypto-lib/lib/libSCL_eddsaUtils.sol";
+import {WalletLib} from "src/factory/facets/wallet-link/libraries/WalletLib.sol";
+import {SolanaUtils} from "src/factory/facets/wallet-link/libraries/SolanaUtils.sol";
 
 // contracts
-
-import {Nonces} from "@towns-protocol/diamond/src/utils/Nonces.sol";
-
-import {SimpleAccount} from "account-abstraction/samples/SimpleAccount.sol";
 import {DeployBase} from "scripts/common/DeployBase.s.sol";
-import {MockDelegationRegistry} from "test/mocks/MockDelegationRegistry.sol";
 import {BaseSetup} from "test/spaces/BaseSetup.sol";
+import {Nonces} from "@towns-protocol/diamond/src/utils/Nonces.sol";
+import {SimpleAccount} from "account-abstraction/samples/SimpleAccount.sol";
 
 contract WalletLinkTest is IWalletLinkBase, BaseSetup, DeployBase {
     Vm.Wallet internal rootWallet;
@@ -30,10 +26,7 @@ contract WalletLinkTest is IWalletLinkBase, BaseSetup, DeployBase {
     Vm.Wallet internal secondRootWallet;
     Vm.Wallet internal secondLinkedWallet;
 
-    MockDelegationRegistry public mockDelegationRegistry;
-
     uint256 private constant MAX_LINKED_WALLETS = 10;
-    bytes32 private constant DELEGATE_REGISTRY_V2 = bytes32("DELEGATE_REGISTRY_V2");
     string private constant SOLANA_WALLET_ADDRESS = "3p5wau6jqBV8sQswjN1HEeSZLjv5TB173zBgupGQD4we";
 
     uint256[5] extPubKey;
@@ -48,10 +41,6 @@ contract WalletLinkTest is IWalletLinkBase, BaseSetup, DeployBase {
 
         secondRootWallet = vm.createWallet("secondRootKey");
         secondLinkedWallet = vm.createWallet("secondLinkedWallet");
-
-        mockDelegationRegistry = MockDelegationRegistry(
-            walletLink.getDependency(DELEGATE_REGISTRY_V2)
-        );
     }
 
     // =============================================================
@@ -60,8 +49,7 @@ contract WalletLinkTest is IWalletLinkBase, BaseSetup, DeployBase {
 
     /// @notice Modifier that links the caller (EOA wallet) to the root wallet
     // solhint-disable-next-line max-line-length
-    /// @dev The root wallet signs its latest nonce and the caller's wallet address, but the EOA is
-    /// the one calling the function to link
+    /// @dev The root wallet signs its latest nonce and the caller's wallet address, but the EOA is the one calling the function to link
     modifier givenWalletIsLinkedViaCaller() {
         uint256 nonce = walletLink.getLatestNonceForRootKey(rootWallet.addr);
 
@@ -79,13 +67,9 @@ contract WalletLinkTest is IWalletLinkBase, BaseSetup, DeployBase {
         _;
     }
 
-    /// @notice Modifier that links a wallet to the root wallet through a proxy wallet (smart
-    /// wallet)
+    /// @notice Modifier that links a wallet to the root wallet through a proxy wallet (smart wallet)
     // solhint-disable-next-line max-line-length
-    /// @dev The root wallet signs its latest nonce and the wallet's address, then the EOA wallet
-    /// signs its latest nonce and the root wallet's address, but the smart wallet is the one
-    /// calling
-    /// the function to link both of these wallets
+    /// @dev The root wallet signs its latest nonce and the wallet's address, then the EOA wallet signs its latest nonce and the root wallet's address, but the smart wallet is the one calling the function to link both of these wallets
     modifier givenWalletIsLinkedViaProxy() {
         uint256 rootNonce = walletLink.getLatestNonceForRootKey(rootWallet.addr);
 
@@ -408,7 +392,6 @@ contract WalletLinkTest is IWalletLinkBase, BaseSetup, DeployBase {
     // =============================================================
     //                   linkCallerToRootKey
     // =============================================================
-
     function test_linkCallerToRootKey() external givenWalletIsLinkedViaCaller {
         assertTrue(walletLink.checkIfLinked(rootWallet.addr, wallet.addr));
     }
@@ -917,37 +900,6 @@ contract WalletLinkTest is IWalletLinkBase, BaseSetup, DeployBase {
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                           Delegations                      */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-    /*
-     * @dev This test checks that a cold wallet can delegate to a linked wallet
-     *      and that the linked wallet and the cold wallet are both included in
-     *      the returned array
-     */
-    function test_getWalletsByRootKeyWithDelegations() external givenWalletIsLinkedViaCaller {
-        address coldWallet = vm.createWallet("coldWallet").addr;
-
-        // As a cold wallet, delegate to a linked wallet
-        // This is what delegate.xyz v2 does
-        vm.prank(coldWallet);
-        mockDelegationRegistry.delegateAll(wallet.addr);
-
-        WalletLib.Wallet[] memory walletMetadata = walletLink.explicitWalletsByRootKey(
-            rootWallet.addr,
-            WalletQueryOptions({includeDelegations: true})
-        );
-
-        address[] memory wallets = new address[](walletMetadata.length);
-        for (uint256 i; i < walletMetadata.length; ++i) {
-            wallets[i] = vm.parseAddress(walletMetadata[i].addr);
-        }
-
-        assertContains(wallets, coldWallet);
-        assertContains(wallets, wallet.addr);
-    }
-
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                          Metadata                          */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
@@ -968,10 +920,7 @@ contract WalletLinkTest is IWalletLinkBase, BaseSetup, DeployBase {
         walletLink.setDefaultWallet(address(simpleAccount));
         vm.stopPrank();
 
-        WalletLib.Wallet[] memory wallets = walletLink.explicitWalletsByRootKey(
-            rootWallet.addr,
-            WalletQueryOptions({includeDelegations: false})
-        );
+        WalletLib.Wallet[] memory wallets = walletLink.getAllWalletsByRootKey(rootWallet.addr);
         uint256 walletLen = wallets.length;
 
         address[] memory walletAddresses = new address[](walletLen);

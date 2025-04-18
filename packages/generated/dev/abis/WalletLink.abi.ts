@@ -4,11 +4,6 @@ export default [
     "name": "__WalletLink_init",
     "inputs": [
       {
-        "name": "delegateRegistry",
-        "type": "address",
-        "internalType": "address"
-      },
-      {
         "name": "sclEip6565",
         "type": "address",
         "internalType": "address"
@@ -67,24 +62,12 @@ export default [
   },
   {
     "type": "function",
-    "name": "explicitWalletsByRootKey",
+    "name": "getAllWalletsByRootKey",
     "inputs": [
       {
         "name": "rootKey",
         "type": "address",
         "internalType": "address"
-      },
-      {
-        "name": "options",
-        "type": "tuple",
-        "internalType": "struct IWalletLinkBase.WalletQueryOptions",
-        "components": [
-          {
-            "name": "includeDelegations",
-            "type": "bool",
-            "internalType": "bool"
-          }
-        ]
       }
     ],
     "outputs": [
@@ -187,25 +170,6 @@ export default [
   {
     "type": "function",
     "name": "getWalletsByRootKey",
-    "inputs": [
-      {
-        "name": "rootKey",
-        "type": "address",
-        "internalType": "address"
-      }
-    ],
-    "outputs": [
-      {
-        "name": "wallets",
-        "type": "address[]",
-        "internalType": "address[]"
-      }
-    ],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
-    "name": "getWalletsByRootKeyWithDelegations",
     "inputs": [
       {
         "name": "rootKey",

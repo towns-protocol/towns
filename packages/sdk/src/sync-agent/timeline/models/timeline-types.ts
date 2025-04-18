@@ -399,7 +399,7 @@ export interface ThreadResult {
     isUnread: boolean
     fullyReadMarker?: FullyReadMarker
     thread: ThreadStatsData
-    channelId: string // NOTE: dispreancy with useCasablancaTimeline, where channel is ChannelData
+    channel: { id: string; label: string }
     timestamp: number
 }
 
@@ -409,7 +409,7 @@ export type MessageReactions = Record<string, Record<string, { eventId: string }
 export type MentionResult = {
     type: 'mention'
     unread: boolean
-    channelId: string // NOTE: dispreancy with useCasablancaTimeline, where channel is ChannelData
+    channelId: string
     timestamp: number
     event: TimelineEvent
     thread?: TimelineEvent
@@ -478,3 +478,16 @@ export type Attachment =
     | EmbeddedMessageAttachment
     | UnfurledLinkAttachment
     | TickerAttachment
+
+export type MessageTipEvent = Omit<TimelineEvent, 'content'> & {
+    content: TipEvent
+}
+// array of timeline events that all have content of type MemberBlockchainTransactionEvent
+export type MessageTips = MessageTipEvent[]
+
+export function isMessageTipEvent(event: TimelineEvent): event is MessageTipEvent {
+    return (
+        event.content?.kind === RiverTimelineEvent.TipEvent &&
+        event.content.transaction?.content.case === 'tip'
+    )
+}
