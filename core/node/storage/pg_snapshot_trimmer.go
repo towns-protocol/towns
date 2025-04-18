@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/towns-protocol/towns/core/node/logging"
-
 	. "github.com/towns-protocol/towns/core/node/shared"
 )
 
