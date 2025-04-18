@@ -1,0 +1,28 @@
+import { makeSignerContext } from '../../signerContext'
+import { AppRegistryService } from '../../appRegistryService'
+import { ethers } from 'ethers'
+
+const appRegistryUrl = 'https://localhost:5180'
+
+describe('appRegistryService test', { skip: true }, () => {
+    test('authenticate with primary key', async () => {
+        const wallet = ethers.Wallet.createRandom()
+        const { finishResponse } = await AppRegistryService.authenticateWithSigner(
+            wallet.address,
+            wallet,
+            appRegistryUrl,
+        )
+        expect(finishResponse.sessionToken).toBeDefined()
+    })
+    test('authenticate with delegate key', async () => {
+        const wallet = ethers.Wallet.createRandom()
+        const delegateWallet = ethers.Wallet.createRandom()
+        const signerContext = await makeSignerContext(wallet, delegateWallet, { days: 1 })
+
+        const { finishResponse } = await AppRegistryService.authenticate(
+            signerContext,
+            appRegistryUrl,
+        )
+        expect(finishResponse.sessionToken).toBeDefined()
+    })
+})

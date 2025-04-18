@@ -3,7 +3,7 @@ import {
     IOperatorRegistryInterface as DevInterface,
 } from '@towns-protocol/generated/dev/typings/IOperatorRegistry'
 
-import DevAbi from '@towns-protocol/generated/dev/abis/OperatorRegistry.abi.json' assert { type: 'json' }
+import DevAbi from '@towns-protocol/generated/dev/abis/OperatorRegistry.abi.json' with { type: 'json' }
 
 import { ethers } from 'ethers'
 import { BaseContractShim } from './BaseContractShim'

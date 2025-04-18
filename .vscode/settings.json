@@ -59,5 +59,8 @@
     "@solidity/=node_modules/crypto-lib/src/"
   ],
   "vitest.maximumConfigs": 15,
-  "vitest.disableWorkspaceWarning": true
+  "vitest.disableWorkspaceWarning": true,
+  "typescript.preferences.autoImportFileExcludePatterns": [
+    "**/@radix-ui/react-*",
+  ],
 }
