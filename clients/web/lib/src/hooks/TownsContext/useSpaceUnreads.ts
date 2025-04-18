@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, useSyncExternalStore } from 'react'
+import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from 'react'
 import { FullyReadMarker } from '@towns-protocol/proto'
 import { TownsClient } from '../../client/TownsClient'
 import { useFullyReadMarkerStore } from '../../store/use-fully-read-marker-store'
@@ -21,13 +21,18 @@ export function useSpaceUnreads(
         spaceUnreadChannelIds: Record<string, Set<string>>
     }>({ spaceUnreads: {}, spaceMentions: {}, spaceUnreadChannelIds: {} })
 
-    const settings = useSyncExternalStore(
-        (subscriber) => {
+    const subscribeFn = useCallback(
+        (subFn: () => void) => {
             if (!notificationSettingsClient) {
                 return () => {}
             }
-            return notificationSettingsClient?.data.subscribe(subscriber)
+            return notificationSettingsClient?.data.subscribe(subFn)
         },
+        [notificationSettingsClient],
+    )
+
+    const settings = useSyncExternalStore(
+        subscribeFn,
         () => notificationSettingsClient?.data.value.settings,
     )
 

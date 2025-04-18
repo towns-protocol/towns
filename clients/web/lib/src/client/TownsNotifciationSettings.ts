@@ -406,13 +406,18 @@ export function useNotificationSettings() {
         }
     }, [client])
 
-    const data = useSyncExternalStore(
-        (subscriber) => {
+    const subscribeFn = useCallback(
+        (subFn: () => void) => {
             if (!client) {
                 return () => {}
             }
-            return client?.data.subscribe(subscriber, { fireImediately: false })
+            return client?.data.subscribe(subFn)
         },
+        [client],
+    )
+
+    const data = useSyncExternalStore(
+        subscribeFn,
         () => client?.data.value ?? emptyNotificationSettingsModel,
     )
 
