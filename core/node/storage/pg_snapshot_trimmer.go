@@ -2,21 +2,79 @@ package storage
 
 import (
 	"context"
+	"errors"
 	"sort"
+	"time"
+
+	"github.com/towns-protocol/towns/core/node/logging"
+
+	. "github.com/towns-protocol/towns/core/node/shared"
 )
 
+const (
+	// minRetentionInterval is the min retention interval for snapshots.
+	minRetentionInterval = 1000 // 1000 miniblocks
+
+	// minKeep is the number of most recent miniblocks to protect (no nullification)
+	minKeep = 1000 // 1000 miniblocks
+
+	// snapshotsTrimmingInterval is the interval at which we check for snapshots to nullify.
+	snapshotsTrimmingInterval = time.Hour
+)
+
+// snapshotTrimmer contains a logic that handles the trimming of snapshots in the database.
 type snapshotTrimmer struct {
+	storage           *PostgresStreamStore
+	retentionInterval uint64
+	minKeep           uint64
 }
 
-func newSnapshotTrimmer(ctx context.Context) *snapshotTrimmer {
-	st := &snapshotTrimmer{}
+// newSnapshotTrimmer creates a new snapshot trimmer.
+func newSnapshotTrimmer(
+	ctx context.Context,
+	storage *PostgresStreamStore,
+	retentionInterval uint64,
+) *snapshotTrimmer {
+	if retentionInterval < minRetentionInterval {
+		retentionInterval = minRetentionInterval
+	}
+
+	st := &snapshotTrimmer{
+		storage:           storage,
+		retentionInterval: retentionInterval,
+		minKeep:           minKeep,
+	}
 
 	go st.start(ctx)
 
 	return st
 }
 
+// start starts the snapshot trimmer.
 func (st *snapshotTrimmer) start(ctx context.Context) {
+	ticker := time.NewTicker(snapshotsTrimmingInterval)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ticker.C:
+			st.runTrimming(ctx)
+		case <-ctx.Done():
+			if err := ctx.Err(); !errors.Is(err, context.Canceled) {
+				logging.FromCtx(ctx).Error("snapshots trimmer stopped", "err", err)
+			}
+			return
+		}
+	}
+}
+
+// runSnapshotTrimming runs the snapshot trimming logic.
+func (st *snapshotTrimmer) runTrimming(ctx context.Context) {
+
+}
+
+// runStreamTrimming runs the stream trimming logic.
+func (st *snapshotTrimmer) runStreamTrimming(ctx context.Context, streamId StreamId) {
 
 }
 
