@@ -15,3 +15,4 @@
 "xchain.blockchains",0,"31337,31338"
 "stream.getMiniblocksMaxPageSize",0,200
 "stream.ephemeralStreamTTLMs",0,600000
+"stream.snapshotIntervalInMiniblocks",0,0
