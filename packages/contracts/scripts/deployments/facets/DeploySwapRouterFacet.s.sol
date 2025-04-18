@@ -3,19 +3,18 @@ pragma solidity ^0.8.23;
 
 // interfaces
 import {IDiamond} from "@towns-protocol/diamond/src/Diamond.sol";
-import {IReview} from "src/spaces/facets/review/IReview.sol";
+import {ISwapRouter} from "src/base/swap/ISwapRouter.sol";
 
 // libraries
 import {DeployLib} from "@towns-protocol/diamond/scripts/common/DeployLib.sol";
 
 // contracts
 
-library DeployReviewFacet {
+library DeploySwapRouterFacet {
     function selectors() internal pure returns (bytes4[] memory res) {
-        res = new bytes4[](3);
-        res[0] = IReview.setReview.selector;
-        res[1] = IReview.getReview.selector;
-        res[2] = IReview.getAllReviews.selector;
+        res = new bytes4[](2);
+        res[0] = ISwapRouter.executeSwap.selector;
+        res[1] = ISwapRouter.executeSwapWithPermit.selector;
     }
 
     function makeCut(
@@ -26,6 +25,6 @@ library DeployReviewFacet {
     }
 
     function deploy() internal returns (address) {
-        return DeployLib.deployCode("ReviewFacet.sol", "");
+        return DeployLib.deployCode("SwapRouter.sol", "");
     }
 }
