@@ -3,11 +3,15 @@ pragma solidity ^0.8.23;
 
 // interfaces
 import {ISwapRouter, ISwapRouterBase} from "../../../base/swap/ISwapRouter.sol";
+import {IPlatformRequirements} from "../../../factory/facets/platform/requirements/IPlatformRequirements.sol";
+import {IImplementationRegistry} from "../../../factory/facets/registry/IImplementationRegistry.sol";
 import {ISwapFacet} from "./ISwapFacet.sol";
 
 // libraries
-import {SwapFacetStorage} from "./SwapFacetStorage.sol";
 import {CustomRevert} from "../../../utils/libraries/CustomRevert.sol";
+import {MembershipBase} from "../membership/MembershipBase.sol";
+import {MembershipStorage} from "../membership/MembershipStorage.sol";
+import {SwapFacetStorage} from "./SwapFacetStorage.sol";
 
 // contracts
 import {Entitled} from "../Entitled.sol";
@@ -16,34 +20,41 @@ import {ReentrancyGuardTransient} from "solady/utils/ReentrancyGuardTransient.so
 
 /// @title SwapFacet
 /// @notice Facet for executing swaps within a space
-contract SwapFacet is ISwapFacet, Facet, ReentrancyGuardTransient, Entitled {
+contract SwapFacet is ISwapFacet, ReentrancyGuardTransient, Entitled, MembershipBase, Facet {
     using CustomRevert for bytes4;
 
-    /// @notice The permission required to use swap functionality
-    string internal constant SWAP_PERMISSION = "swap";
+    /// @notice Maximum fee in basis points (1%)
+    uint16 internal constant MAX_FEE_BPS = 100;
+
+    /// @dev The implementation ID for the SwapRouter
+    bytes32 internal constant SWAP_ROUTER_DIAMOND = bytes32("SwapRouter");
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                          ADMIN API                          */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-    /// @notice Sets the swap router address
-    /// @param router The address of the swap router
-    function setSwapRouter(address router) external {
-        _validatePermission("admin");
-        SwapFacetStorage.layout().swapRouter = router;
-    }
-
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                          READ API                           */
+    /*                       ADMIN FUNCTIONS                      */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @inheritdoc ISwapFacet
-    function getSwapRouter() external view returns (address) {
-        return SwapFacetStorage.layout().swapRouter;
+    function setSwapFeeConfig(
+        uint16 posterFeeBps,
+        bool collectPosterFeeToSpace
+    ) external onlyOwner {
+        // get protocol fee for validation
+        IPlatformRequirements platform = _getPlatformRequirements();
+        (uint16 treasuryBps, ) = platform.getSwapFees();
+
+        // ensure total fee is reasonable
+        if (treasuryBps + posterFeeBps > MAX_FEE_BPS) {
+            revert SwapFacet__TotalFeeTooHigh();
+        }
+
+        SwapFacetStorage.Layout storage ds = SwapFacetStorage.layout();
+        (ds.posterFeeBps, ds.collectPosterFeeToSpace) = (posterFeeBps, collectPosterFeeToSpace);
+
+        emit SwapFeeConfigUpdated(posterFeeBps, collectPosterFeeToSpace);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                          SWAP API                           */
+    /*                            SWAP                            */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @inheritdoc ISwapFacet
@@ -52,26 +63,32 @@ contract SwapFacet is ISwapFacet, Facet, ReentrancyGuardTransient, Entitled {
         RouterParams calldata routerParams,
         address poster
     ) external payable nonReentrant returns (uint256 amountOut) {
-        // Validate membership and permission
-        _validateEntitlement();
+        _validateMembership(msg.sender);
 
-        address swapRouter = SwapFacetStorage.layout().swapRouter;
+        address swapRouter = getSwapRouter();
         if (swapRouter == address(0)) {
             SwapFacet__SwapRouterNotSet.selector.revertWith();
         }
 
-        // Execute swap through the router
+        // handle poster based on collectPosterFeeToSpace
+        address actualPoster = _resolveSwapPoster(poster);
+
+        // execute swap through the router
         try
-            ISwapRouter(swapRouter).executeSwap{value: msg.value}(params, routerParams, poster)
+            ISwapRouter(swapRouter).executeSwap{value: msg.value}(
+                params,
+                routerParams,
+                actualPoster
+            )
         returns (uint256 returnedAmount) {
-            // Emit event for successful swap
+            // emit event for successful swap
             emit SwapExecuted(
+                params.recipient,
                 params.tokenIn,
                 params.tokenOut,
                 params.amountIn,
                 returnedAmount,
-                params.recipient == address(0) ? msg.sender : params.recipient,
-                poster
+                poster // use original poster for the event
             );
             return returnedAmount;
         } catch {
@@ -86,13 +103,15 @@ contract SwapFacet is ISwapFacet, Facet, ReentrancyGuardTransient, Entitled {
         PermitParams calldata permit,
         address poster
     ) external payable nonReentrant returns (uint256 amountOut) {
-        // Validate membership and permission
-        _validateEntitlement();
+        _validateMembership(msg.sender);
 
-        address swapRouter = SwapFacetStorage.layout().swapRouter;
+        address swapRouter = getSwapRouter();
         if (swapRouter == address(0)) {
             SwapFacet__SwapRouterNotSet.selector.revertWith();
         }
+
+        // handle poster based on collectPosterFeeToSpace
+        address actualPoster = _resolveSwapPoster(poster);
 
         // Execute swap through the router with permit
         try
@@ -100,17 +119,17 @@ contract SwapFacet is ISwapFacet, Facet, ReentrancyGuardTransient, Entitled {
                 params,
                 routerParams,
                 permit,
-                poster
+                actualPoster
             )
         returns (uint256 returnedAmount) {
-            // Emit event for successful swap
+            // emit event for successful swap
             emit SwapExecuted(
+                params.recipient,
                 params.tokenIn,
                 params.tokenOut,
                 params.amountIn,
                 returnedAmount,
-                params.recipient == address(0) ? msg.sender : params.recipient,
-                poster
+                poster // use original poster for the event
             );
             return returnedAmount;
         } catch {
@@ -119,13 +138,48 @@ contract SwapFacet is ISwapFacet, Facet, ReentrancyGuardTransient, Entitled {
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                          GETTERS                           */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @inheritdoc ISwapFacet
+    function getSwapRouter() public view returns (address) {
+        return
+            IImplementationRegistry(_getSpaceFactory()).getLatestImplementation(
+                SWAP_ROUTER_DIAMOND
+            );
+    }
+
+    /// @inheritdoc ISwapFacet
+    function getSwapFees()
+        external
+        view
+        returns (uint16 treasuryBps, uint16 posterBps, bool collectPosterFeeToSpace)
+    {
+        SwapFacetStorage.Layout storage ds = SwapFacetStorage.layout();
+
+        // get treasuryBps and posterBps from protocol config
+        IPlatformRequirements platform = _getPlatformRequirements();
+        (treasuryBps, posterBps) = platform.getSwapFees();
+
+        // if spacePosterBps is not set, use protocol config
+        uint16 spacePosterBps = ds.posterFeeBps;
+        posterBps = spacePosterBps == 0 ? posterBps : spacePosterBps;
+
+        collectPosterFeeToSpace = ds.collectPosterFeeToSpace;
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                         INTERNAL                            */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @notice Validates that the caller is entitled to use swap functionality
-    function _validateEntitlement() internal view {
-        // Check if the user is a member and has swap permission
-        _validateMembership(msg.sender);
-        _validatePermission(SWAP_PERMISSION, msg.sender);
+    /// @notice Resolves the actual poster address based on the space's fee configuration
+    /// @param poster The original poster address
+    /// @return The actual poster address to use
+    function _resolveSwapPoster(address poster) internal view returns (address) {
+        // if poster is zero or fees should be collected to space, return the space address
+        if (poster == address(0) || SwapFacetStorage.layout().collectPosterFeeToSpace) {
+            return address(this);
+        }
+        return poster;
     }
 }

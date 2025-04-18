@@ -6,6 +6,8 @@ import {IPlatformRequirements} from "../../factory/facets/platform/requirements/
 import {ISwapRouter} from "./ISwapRouter.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol";
+import {IArchitect} from "../../factory/facets/architect/IArchitect.sol";
+import {ISwapFacet} from "../../spaces/facets/swap/ISwapFacet.sol";
 
 // libraries
 import {BasisPoints} from "../../utils/libraries/BasisPoints.sol";
@@ -167,20 +169,40 @@ contract SwapRouter is ReentrancyGuardTransient, ISwapRouter, Facet {
         uint256 amount,
         address poster
     ) internal returns (uint256 posterFee, uint256 treasuryFee) {
-        IPlatformRequirements platform = _getPlatformRequirements();
-        (uint16 treasuryBps, uint16 posterBps) = platform.getSwapFees();
+        address spaceFactory = _getSpaceFactory();
+        (uint16 treasuryBps, uint16 posterBps) = _getSwapFees(spaceFactory);
 
-        posterFee = BasisPoints.calculate(amount, posterBps);
+        // only take poster fee if the address is not zero
+        if (poster != address(0)) {
+            posterFee = BasisPoints.calculate(amount, posterBps);
+            CurrencyTransfer.transferCurrency(token, address(this), poster, posterFee);
+        }
+
+        // transfer treasury fee
         treasuryFee = BasisPoints.calculate(amount, treasuryBps);
+        address feeRecipient = IPlatformRequirements(spaceFactory).getFeeRecipient();
+        CurrencyTransfer.transferCurrency(token, address(this), feeRecipient, treasuryFee);
+    }
 
-        CurrencyTransfer.transferCurrency(token, address(this), poster, posterFee);
+    function _getSwapFees(
+        address spaceFactory
+    ) internal view returns (uint16 treasuryBps, uint16 posterBps) {
+        // check if caller is a space
+        bool isSpace = IArchitect(spaceFactory).getTokenIdBySpace(msg.sender) != 0;
 
-        CurrencyTransfer.transferCurrency(
-            token,
-            address(this),
-            platform.getFeeRecipient(),
-            treasuryFee
-        );
+        // get fee configuration based on whether caller is a space
+        if (isSpace) {
+            try ISwapFacet(msg.sender).getSwapFees() returns (
+                uint16 spaceTreasuryBps,
+                uint16 spacePosterBps,
+                bool
+            ) {
+                return (spaceTreasuryBps, spacePosterBps);
+            } catch {}
+            // fallback to platform fees if the space doesn't implement getSwapFees
+        }
+        IPlatformRequirements platform = IPlatformRequirements(spaceFactory);
+        return platform.getSwapFees();
     }
 
     function _getSpaceFactory() internal view returns (address) {
