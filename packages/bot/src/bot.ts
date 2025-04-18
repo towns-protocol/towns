@@ -69,14 +69,14 @@ type BotEvents = {
             /** You can use this to check if the message is a direct message or a group message */
             isDm: boolean
         },
-    ) => void
+    ) => void | Promise<void>
     redact: (
         handler: BotActions,
         event: BasePayload & {
             /** The event ID that got redacted */
             refEventId: string
         },
-    ) => void
+    ) => void | Promise<void>
     messageEdit: (
         handler: BotActions,
         event: BasePayload & {
@@ -85,21 +85,21 @@ type BotEvents = {
             /** New message */
             message: string
         },
-    ) => void
+    ) => void | Promise<void>
     botMention: (
         handler: BotActions,
         event: BasePayload & {
             /** The decrypted message content */
             message: string
         },
-    ) => void
+    ) => void | Promise<void>
     reply: (
         handler: BotActions,
         event: BasePayload & {
             /** The decrypted message content */
             message: string
         },
-    ) => void
+    ) => void | Promise<void>
     reaction: (
         handler: BotActions,
         event: BasePayload & {
@@ -110,7 +110,7 @@ type BotEvents = {
             /** The user ID of the user that added the reaction */
             userId: string
         },
-    ) => void
+    ) => void | Promise<void>
     // TODO:
     eventRevoke: (handler: BotActions, event: BasePayload) => void
     // TODO:

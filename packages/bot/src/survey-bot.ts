@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-misused-promises */
 /* eslint-disable no-console */
 import { makeTownsBot } from './bot'
 
