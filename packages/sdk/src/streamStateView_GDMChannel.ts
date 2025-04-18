@@ -12,10 +12,12 @@ import { StreamEncryptionEvents, StreamEvents, StreamStateEvents } from './strea
 import { StreamStateView_ChannelMetadata } from './streamStateView_ChannelMetadata'
 import { check } from '@towns-protocol/dlog'
 import { logNever } from './check'
+import { StreamStateView_ChannelMessages } from './streamStateView_Common_ChannelMessages'
 
 export class StreamStateView_GDMChannel extends StreamStateView_AbstractContent {
     readonly streamId: string
     readonly channelMetadata: StreamStateView_ChannelMetadata
+    readonly messages: StreamStateView_ChannelMessages
 
     lastEventCreatedAtEpochMs = 0n
 
@@ -23,6 +25,7 @@ export class StreamStateView_GDMChannel extends StreamStateView_AbstractContent 
         super()
         this.channelMetadata = new StreamStateView_ChannelMetadata(streamId)
         this.streamId = streamId
+        this.messages = new StreamStateView_ChannelMessages(streamId, this)
     }
 
     applySnapshot(
@@ -54,12 +57,12 @@ export class StreamStateView_GDMChannel extends StreamStateView_AbstractContent 
                 break
             case 'message':
                 this.updateLastEvent(event.remoteEvent, undefined)
-                this.decryptEvent(
-                    'channelMessage',
+                this.messages.prependChannelMessage(
                     event,
-                    payload.content.value,
                     cleartext,
                     encryptionEmitter,
+                    undefined,
+                    payload.content.value,
                 )
                 break
             case 'channelProperties':
@@ -85,12 +88,12 @@ export class StreamStateView_GDMChannel extends StreamStateView_AbstractContent 
                 this.updateLastEvent(event.remoteEvent, stateEmitter)
                 break
             case 'message':
-                this.decryptEvent(
-                    'channelMessage',
+                this.messages.appendChannelMessage(
                     event,
-                    payload.content.value,
                     cleartext,
                     encryptionEmitter,
+                    stateEmitter,
+                    payload.content.value,
                 )
                 this.updateLastEvent(event.remoteEvent, stateEmitter)
                 break
@@ -111,6 +114,8 @@ export class StreamStateView_GDMChannel extends StreamStateView_AbstractContent 
     ): void {
         if (content.kind === 'channelProperties') {
             this.channelMetadata.onDecryptedContent(eventId, content, emitter)
+        } else if (content.kind === 'channelMessage') {
+            this.messages.onDecryptedContent(eventId, content, emitter)
         }
     }
 
@@ -128,10 +133,6 @@ export class StreamStateView_GDMChannel extends StreamStateView_AbstractContent 
     ): void {
         this.lastEventCreatedAtEpochMs = event.createdAtEpochMs
         stateEmitter?.emit('streamLatestTimestampUpdated', this.streamId)
-    }
-
-    getChannelMetadata(): StreamStateView_ChannelMetadata | undefined {
-        return this.channelMetadata
     }
 
     private updateLastEvent(

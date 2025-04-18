@@ -147,12 +147,11 @@ export class Dm extends PersistedObservable<DmModel> {
             logger.log('Dm stream initialized', streamId)
             const stream = this.riverConnection.client?.stream(streamId)
             check(isDefined(stream), 'stream is not defined')
-            const view = stream.view.dmChannelContent
             const hasJoined = stream.view.getMembers().isMemberJoined(this.riverConnection.userId)
             this.setData({
                 initialized: true,
                 isJoined: hasJoined,
-                metadata: view.getChannelMetadata()?.channelProperties,
+                metadata: undefined,
             })
             this.timeline.initialize(stream)
         }
