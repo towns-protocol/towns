@@ -39,6 +39,7 @@ const run = async () => {
         logger.info(`Server running at http://localhost:${PORT}/`)
     })
 
+    // eslint-disable-next-line no-constant-condition
     while (true) {
         try {
             logger.info('Getting prometheus targets...')
