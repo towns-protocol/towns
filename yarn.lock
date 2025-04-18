@@ -7821,8 +7821,11 @@ __metadata:
     "@towns-protocol/generated": "workspace:^"
     "@towns-protocol/web3": "workspace:^"
     esbuild: ^0.21.5
+    esbuild-plugin-pino: ^2.2.0
     eslint: ^8.57.0
     ethers: ^5.7.2
+    pino: ^8.17.1
+    pino-pretty: ^13.0.0
     prettier: ^2.8.8
     typescript: ^5.8.2
     zod: ^3.21.4
