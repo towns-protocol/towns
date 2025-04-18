@@ -6,9 +6,11 @@ import {
     useSendMessage,
     useSendReaction,
     useSyncAgent,
+    useTips,
 } from '@towns-protocol/react-sdk'
 import {
     type MessageReactions,
+    type MessageTipEvent,
     RiverTimelineEvent,
     type TimelineEvent,
     isChannelStreamId,
@@ -166,6 +168,8 @@ const Message = ({
     const prettyDisplayName = displayName || username
     const isMyMessage = event.sender.id === sync.userId
     const { reactions, onReact } = useMessageReaction(streamId, event.eventId)
+    const { data: tipsMap } = useTips(streamId)
+    const tips = tipsMap?.[event.eventId]
     const { redact } = useRedact(streamId)
 
     return (
@@ -190,7 +194,9 @@ const Message = ({
                     </span>
                 </div>
                 <div className="flex items-center gap-1">
-                    {reactions && <ReactionRow reactions={reactions} onReact={onReact} />}
+                    {reactions && (
+                        <ReactionRow reactions={reactions} tips={tips} onReact={onReact} />
+                    )}
                     <Button
                         variant="outline"
                         className="aspect-square p-1"
@@ -232,14 +238,17 @@ type OnReactParams =
       }
 const ReactionRow = ({
     reactions,
+    tips,
     onReact,
 }: {
     reactions: MessageReactions
+    tips: MessageTipEvent[]
     onReact: (params: OnReactParams) => void
 }) => {
     const entries = Object.entries<Record<string, { eventId: string }>>(reactions)
     return (
         <div className="flex gap-1">
+            {tips && tips.length > 0 && <TipReaction tips={tips} />}
             {entries.length
                 ? entries.map(([reaction, users]) => (
                       <Reaction
@@ -287,6 +296,30 @@ const Reaction = ({
     )
 }
 
+const TipReaction = ({ tips }: { tips: MessageTipEvent[] }) => {
+    const sync = useSyncAgent()
+    if (!tips.every((tip) => tip.content.transaction.content.case === 'tip')) {
+        return null
+    }
+    const isTippedByMe = tips.find((tip) => tip.sender.id === sync.userId)
+
+    return (
+        <button
+            type="button"
+            className={cn(
+                'flex h-8 w-full items-center justify-center gap-2 rounded-sm border-2 px-2',
+                'border-green-200 bg-green-100 dark:border-green-800 dark:bg-green-900',
+                isTippedByMe &&
+                    'border-green-600 bg-green-300 dark:border-green-400 dark:bg-green-300 dark:text-black',
+            )}
+            onClick={() => {
+                console.log(tips)
+            }}
+        >
+            <span className="text-sm">💰 {tips.length}</span>
+        </button>
+    )
+}
 const EncryptedMessage = () => {
     const [random] = useState(Math.random())
     return (
