@@ -18,6 +18,7 @@ import { ReplacedEvents } from './models/replacedEvents'
 import { ThreadStats } from './models/threadStats'
 import { Threads } from './models/threads'
 import type { RiverConnection } from '../river-connection/riverConnection'
+import { Tips } from './models/tips'
 
 export class MessageTimeline {
     events = new TimelineEvents()
@@ -26,7 +27,7 @@ export class MessageTimeline {
     threadsStats = new ThreadStats()
     threads = new Threads()
     reactions = new Reactions()
-
+    tips = new Tips()
     // TODO: figure out a better way to do online check
     // lastestEventByUser = new TimelineEvents()
 
@@ -68,6 +69,7 @@ export class MessageTimeline {
         this.threads.reset()
         this.threadsStats.reset()
         this.reactions.reset()
+        this.tips.reset()
         this.pendingReplacedEvents.reset()
         this.replacedEvents.reset()
     }
@@ -138,6 +140,7 @@ export class MessageTimeline {
 
         this.events.prepend(timelineEvent)
         this.reactions.addEvent(timelineEvent)
+        this.tips.addTip(timelineEvent, 'prepend')
         this.threads.add(timelineEvent)
         this.threadsStats.add(this.userId, timelineEvent, this.events.value)
     }
@@ -147,6 +150,7 @@ export class MessageTimeline {
         this.threads.add(event)
         this.threadsStats.add(this.userId, event, this.events.value)
         this.reactions.addEvent(event)
+        this.tips.addTip(event, 'append')
     }
 
     private replaceEvent(_userId: string, replacedEventId: string, event: TimelineEvent) {
