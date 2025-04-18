@@ -289,7 +289,7 @@ const nftCases = [
     },
 ]
 
-it.concurrent.each(nftCases)('erc721Check - $desc', async (props) => {
+it.skip.concurrent.each(nftCases)('erc721Check - $desc', async (props) => {
     const { check, wallets, expectedResult } = props
     const controller = new AbortController()
 
@@ -508,7 +508,7 @@ const erc1155Cases = [
     },
 ]
 
-it.concurrent.each(erc1155Cases)('ERC1155 Check - $desc', async (props) => {
+it.skip.concurrent.each(erc1155Cases)('ERC1155 Check - $desc', async (props) => {
     const { check, wallets, expectedResult } = props
     const controller = new AbortController()
     const result = await evaluateTree(controller, wallets, xchainConfig, check)
@@ -552,7 +552,7 @@ const ethBalanceCases = [
     },
 ]
 
-it.concurrent.each(ethBalanceCases)('Eth Balance Check - $desc', async (props) => {
+it.skip.concurrent.each(ethBalanceCases)('Eth Balance Check - $desc', async (props) => {
     const { check, wallets, expectedResult } = props
     const controller = new AbortController()
     const result = await evaluateTree(controller, wallets, xchainConfig, check)
@@ -579,7 +579,7 @@ const ethBalanceCasesMinimalEtherChains = [
     },
 ]
 
-it.concurrent.each(ethBalanceCasesMinimalEtherChains)(
+it.skip.concurrent.each(ethBalanceCasesMinimalEtherChains)(
     'Eth Balance Check - Ether chains < xChain supported chains - $desc',
     async (props) => {
         const { check, wallets, expectedResult } = props
@@ -687,7 +687,7 @@ const erc20Cases = [
     },
 ]
 
-it.concurrent.each(erc20Cases)('erc20Check - $desc', async (props) => {
+it.skip.concurrent.each(erc20Cases)('erc20Check - $desc', async (props) => {
     const { check, wallets, expectedResult } = props
     const controller = new AbortController()
     const result = await evaluateTree(controller, wallets, xchainConfig, check)
@@ -824,7 +824,7 @@ const errorTests = [
     },
 ]
 
-it.concurrent.each(errorTests)('error - $desc', async (props) => {
+it.skip.concurrent.each(errorTests)('error - $desc', async (props) => {
     const { check, error } = props
     const controller = new AbortController()
     await expect(
@@ -976,7 +976,7 @@ const coldWallet2 = '0x32e52d188600F27d12A65120160aA28b1108C050'
 const coldWallet3 = '0xBda05058243FEf202FB4925b3877373396A08768'
 
 describe('computeDelegatorsForProvider', () => {
-    it.concurrent('single hot wallet maps to single cold wallet', async () => {
+    it.skip.concurrent('single hot wallet maps to single cold wallet', async () => {
         const providers = await findEthereumProviders(xchainConfig)
         expect(providers.length).toBe(1)
 
@@ -986,7 +986,7 @@ describe('computeDelegatorsForProvider', () => {
         expect(delegated).toEqual(expect.arrayContaining([coldWallet]))
     })
 
-    it.concurrent('single hot wallet maps to multiple cold wallets', async () => {
+    it.skip.concurrent('single hot wallet maps to multiple cold wallets', async () => {
         const providers = await findEthereumProviders(xchainConfig)
         expect(providers.length).toBe(1)
 
@@ -996,7 +996,7 @@ describe('computeDelegatorsForProvider', () => {
         expect(delegated).toEqual(expect.arrayContaining([coldWallet2, coldWallet3]))
     })
 
-    it.concurrent('multiple hot wallets map to multiple cold wallets', async () => {
+    it.skip.concurrent('multiple hot wallets map to multiple cold wallets', async () => {
         const providers = await findEthereumProviders(xchainConfig)
         expect(providers.length).toBe(1)
 

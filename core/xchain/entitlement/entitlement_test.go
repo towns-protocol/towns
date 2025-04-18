@@ -590,6 +590,7 @@ func TestCheckOperation(t *testing.T) {
 
 // Disable this test case, which is relying on a public rpc endpoint.
 func TestCheckOperation_Untimed(t *testing.T) {
+	t.Skip("Skipping due to dependency on outbound network calls")
 	testCases := map[string]struct {
 		op          Operation
 		wallets     []common.Address
@@ -959,6 +960,7 @@ var singleEtherChainBlockChainInfo = map[uint64]config.BlockchainInfo{
 }
 
 func Test_evaluateEthBalance_withConfig(t *testing.T) {
+	t.Skip("Skipping due to dependency on outbound network calls")
 	tests := map[string]struct {
 		op          Operation
 		wallets     []common.Address
