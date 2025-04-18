@@ -115,12 +115,26 @@ async function mediaContentFromStreamView(
 
 	let decrypted: Uint8Array
 	if (mediaInfo.perChunkEncryption) {
-		decrypted = new Uint8Array()
+		// We can't safely pre-allocate the exact size since decrypted chunks
+		// might not be the same size as encrypted chunks (due to auth tags, padding, etc.)
+		const decryptedChunks: Uint8Array[] = []
+		let totalLength = 0
+
+		// First decrypt all chunks and determine the actual total size
 		for (let i = 0; i < mediaInfo.chunkCount; i++) {
 			const chunk = mediaInfo.chunks[i]
 			const chunkIv = mediaInfo.perChunkIVs[i]
 			const decryptedChunk = await decryptAESGCM(chunk, secret, chunkIv)
-			decrypted = new Uint8Array([...decrypted, ...decryptedChunk])
+			decryptedChunks.push(decryptedChunk)
+			totalLength += decryptedChunk.length
+		}
+
+		// Now allocate the correctly sized buffer and copy the data
+		decrypted = new Uint8Array(totalLength)
+		let offset = 0
+		for (const chunk of decryptedChunks) {
+			decrypted.set(chunk, offset)
+			offset += chunk.length
 		}
 	} else {
 		if (!iv) {
