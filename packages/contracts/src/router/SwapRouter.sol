@@ -2,16 +2,16 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {IPlatformRequirements} from "../../factory/facets/platform/requirements/IPlatformRequirements.sol";
+import {IPlatformRequirements} from "../factory/facets/platform/requirements/IPlatformRequirements.sol";
+import {IArchitect} from "../factory/facets/architect/IArchitect.sol";
+import {ISwapFacet} from "../spaces/facets/swap/ISwapFacet.sol";
 import {ISwapRouter} from "./ISwapRouter.sol";
 import {IERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol";
-import {IArchitect} from "../../factory/facets/architect/IArchitect.sol";
-import {ISwapFacet} from "../../spaces/facets/swap/ISwapFacet.sol";
 
 // libraries
-import {BasisPoints} from "../../utils/libraries/BasisPoints.sol";
-import {CurrencyTransfer} from "../../utils/libraries/CurrencyTransfer.sol";
-import {CustomRevert} from "../../utils/libraries/CustomRevert.sol";
+import {BasisPoints} from "../utils/libraries/BasisPoints.sol";
+import {CurrencyTransfer} from "../utils/libraries/CurrencyTransfer.sol";
+import {CustomRevert} from "../utils/libraries/CustomRevert.sol";
 import {SwapRouterStorage} from "./SwapRouterStorage.sol";
 import {LibCall} from "solady/utils/LibCall.sol";
 import {SafeTransferLib} from "solady/utils/SafeTransferLib.sol";
@@ -25,6 +25,17 @@ import {ReentrancyGuardTransient} from "solady/utils/ReentrancyGuardTransient.so
 contract SwapRouter is ReentrancyGuardTransient, ISwapRouter, Facet {
     using CustomRevert for bytes4;
     using SafeTransferLib for address;
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                       ADMIN FUNCTIONS                      */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @notice Initializes the SwapRouter with the space factory address
+    /// @param spaceFactory The address of the space factory
+    function __SwapRouter_init(address spaceFactory) external onlyInitializing {
+        SwapRouterStorage.layout().spaceFactory = spaceFactory;
+        emit SwapRouterInitialized(spaceFactory);
+    }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                            SWAP                            */

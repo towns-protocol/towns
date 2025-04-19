@@ -4,10 +4,10 @@ pragma solidity ^0.8.23;
 /// @title SwapRouterStorage
 /// @notice Storage layout for the SwapRouter contract
 library SwapRouterStorage {
-    // keccak256(abi.encode(uint256(keccak256("base.swap.router")) - 1)) &
+    // keccak256(abi.encode(uint256(keccak256("router.swap.storage")) - 1)) &
     // ~bytes32(uint256(0xff))
     bytes32 internal constant STORAGE_SLOT =
-        0xac4f7e23f512993e4dc82e4f274a9cdd54c16849baef61dbe149b26403921e00;
+        0xbaabbaf01fc4f6195bfdcefdfc41afc4577058a099d6e5a21edcf605dd045400;
 
     struct Layout {
         address spaceFactory;

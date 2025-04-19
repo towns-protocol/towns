@@ -65,6 +65,10 @@ interface ISwapRouterBase {
     /*                           EVENTS                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
+    /// @notice Emitted when the SwapRouter is initialized
+    /// @param spaceFactory The address of the space factory
+    event SwapRouterInitialized(address spaceFactory);
+
     /// @notice Emitted when a swap is successfully executed
     /// @param router The address of the router used
     /// @param caller The address that initiated the swap

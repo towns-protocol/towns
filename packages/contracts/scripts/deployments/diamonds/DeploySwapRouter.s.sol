@@ -27,9 +27,19 @@ contract DeploySwapRouter is IDiamondInitHelper, DiamondHelper, Deployer {
 
     DeployFacet private facetHelper = new DeployFacet();
     address private multiInit;
+    address private spaceFactory;
 
     function versionName() public pure override returns (string memory) {
         return "swapRouter";
+    }
+
+    function setDependencies(address spaceFactory_) external {
+        spaceFactory = spaceFactory_;
+    }
+
+    function getSpaceFactory() internal returns (address) {
+        if (spaceFactory != address(0)) return spaceFactory;
+        return getDeployment("spaceFactory");
     }
 
     function addImmutableCuts(address deployer) internal {
@@ -55,6 +65,7 @@ contract DeploySwapRouter is IDiamondInitHelper, DiamondHelper, Deployer {
     function diamondInitParams(address deployer) public returns (Diamond.InitParams memory) {
         address facet = facetHelper.deploy("SwapRouter", deployer);
         addCut(DeploySwapRouterFacet.makeCut(facet, IDiamond.FacetCutAction.Add));
+        addInit(facet, DeploySwapRouterFacet.makeInitData(getSpaceFactory()));
 
         return
             Diamond.InitParams({

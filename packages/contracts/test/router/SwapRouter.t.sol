@@ -2,22 +2,22 @@
 pragma solidity ^0.8.23;
 
 // interfaces
+import {IPlatformRequirements} from "../../src/factory/facets/platform/requirements/IPlatformRequirements.sol";
+import {ISwapRouterBase} from "../../src/router/ISwapRouter.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {ISwapRouterBase} from "src/base/swap/ISwapRouter.sol";
-import {IPlatformRequirements} from "src/factory/facets/platform/requirements/IPlatformRequirements.sol";
 
 // libraries
-import {BasisPoints} from "src/utils/libraries/BasisPoints.sol";
-import {CurrencyTransfer} from "src/utils/libraries/CurrencyTransfer.sol";
+import {BasisPoints} from "../../src/utils/libraries/BasisPoints.sol";
+import {CurrencyTransfer} from "../../src/utils/libraries/CurrencyTransfer.sol";
 
 // contracts
-import {MockRouter} from "../../mocks/MockRouter.sol";
-import {DeployMockERC20, MockERC20} from "scripts/deployments/utils/DeployMockERC20.s.sol";
-import {SwapRouter} from "src/base/swap/SwapRouter.sol";
-import {MembershipFacet} from "src/spaces/facets/membership/MembershipFacet.sol";
+import {DeployMockERC20, MockERC20} from "../../scripts/deployments/utils/DeployMockERC20.s.sol";
+import {SwapRouter} from "../../src/router/SwapRouter.sol";
+import {MembershipFacet} from "../../src/spaces/facets/membership/MembershipFacet.sol";
+import {MockRouter} from "../mocks/MockRouter.sol";
 
 // helpers
-import {BaseSetup} from "test/spaces/BaseSetup.sol";
+import {BaseSetup} from "../spaces/BaseSetup.sol";
 
 contract SwapRouterTest is BaseSetup, ISwapRouterBase {
     MembershipFacet internal membership;
@@ -27,7 +27,7 @@ contract SwapRouterTest is BaseSetup, ISwapRouterBase {
     SwapRouter internal swapRouter;
     address internal mockRouter;
     address internal poster;
-    uint16 internal constant TREASURY_BPS = 100; // 1%
+    uint16 internal constant TREASURY_BPS = 50; // 0.5%
     uint16 internal constant POSTER_BPS = 50; // 0.5%
 
     function setUp() public override {
@@ -50,8 +50,5 @@ contract SwapRouterTest is BaseSetup, ISwapRouterBase {
         // Set swap fees
         vm.prank(deployer);
         IPlatformRequirements(spaceFactory).setSwapFees(TREASURY_BPS, POSTER_BPS);
-
-        // Deploy SwapRouter
-        swapRouter = SwapRouter(everyoneSpace);
     }
 }
