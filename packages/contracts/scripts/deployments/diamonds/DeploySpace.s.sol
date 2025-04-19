@@ -28,7 +28,7 @@ import {DeployRoles} from "../facets/DeployRoles.s.sol";
 import {DeploySpaceEntitlementGated} from "../facets/DeploySpaceEntitlementGated.s.sol";
 import {DeployTipping} from "../facets/DeployTipping.s.sol";
 import {DeployTreasury} from "../facets/DeployTreasury.s.sol";
-
+import {DeployModularAccount} from "../facets/DeployModularAccount.s.sol";
 // contracts
 import {Diamond} from "@towns-protocol/diamond/src/Diamond.sol";
 import {MultiInit} from "@towns-protocol/diamond/src/initializers/MultiInit.sol";
@@ -37,7 +37,6 @@ import {DiamondHelper} from "@towns-protocol/diamond/scripts/common/helpers/Diam
 // deployers
 import {DeployFacet} from "../../common/DeployFacet.s.sol";
 import {Deployer} from "../../common/Deployer.s.sol";
-
 // Test Facets
 import {DeployMockLegacyMembership} from "scripts/deployments/utils/DeployMockLegacyMembership.s.sol";
 
@@ -69,6 +68,7 @@ contract DeploySpace is IDiamondInitHelper, DiamondHelper, Deployer {
     address tipping;
     address multiInit;
     address treasury;
+    address modularAccount;
 
     // Test Facets
     address mockLegacyMembership;
@@ -114,6 +114,7 @@ contract DeploySpace is IDiamondInitHelper, DiamondHelper, Deployer {
         entitlementGated = facetHelper.deploy("SpaceEntitlementGated", deployer);
         tipping = facetHelper.deploy("TippingFacet", deployer);
         treasury = facetHelper.deploy("Treasury", deployer);
+        modularAccount = facetHelper.deploy("ModularAccount", deployer);
 
         if (isAnvil()) {
             mockLegacyMembership = facetHelper.deploy("MockLegacyMembership", deployer);
@@ -140,7 +141,7 @@ contract DeploySpace is IDiamondInitHelper, DiamondHelper, Deployer {
         addCut(DeployReviewFacet.makeCut(review, IDiamond.FacetCutAction.Add));
         addCut(DeployTipping.makeCut(tipping, IDiamond.FacetCutAction.Add));
         addCut(DeployTreasury.makeCut(treasury, IDiamond.FacetCutAction.Add));
-
+        addCut(DeployModularAccount.makeCut(modularAccount, IDiamond.FacetCutAction.Add));
         if (isAnvil()) {
             addCut(
                 DeployMockLegacyMembership.makeCut(

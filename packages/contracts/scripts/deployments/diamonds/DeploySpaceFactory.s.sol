@@ -51,6 +51,7 @@ contract DeploySpaceFactory is IDiamondInitHelper, DiamondHelper, Deployer {
     DeployMockLegacyArchitect deployMockLegacyArchitect = new DeployMockLegacyArchitect();
     DeployPartnerRegistry partnerRegistryHelper = new DeployPartnerRegistry();
     DeployFeatureManager featureManagerHelper = new DeployFeatureManager();
+
     // dependencies
     DeploySpace deploySpace = new DeploySpace();
     DeploySpaceOwner deploySpaceOwner = new DeploySpaceOwner();
