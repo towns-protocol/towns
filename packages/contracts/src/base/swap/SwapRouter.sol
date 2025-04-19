@@ -4,7 +4,6 @@ pragma solidity ^0.8.23;
 // interfaces
 import {IPlatformRequirements} from "../../factory/facets/platform/requirements/IPlatformRequirements.sol";
 import {ISwapRouter} from "./ISwapRouter.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol";
 import {IArchitect} from "../../factory/facets/architect/IArchitect.sol";
 import {ISwapFacet} from "../../spaces/facets/swap/ISwapFacet.sol";
@@ -14,15 +13,18 @@ import {BasisPoints} from "../../utils/libraries/BasisPoints.sol";
 import {CurrencyTransfer} from "../../utils/libraries/CurrencyTransfer.sol";
 import {CustomRevert} from "../../utils/libraries/CustomRevert.sol";
 import {SwapRouterStorage} from "./SwapRouterStorage.sol";
-import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
+import {LibCall} from "solady/utils/LibCall.sol";
+import {SafeTransferLib} from "solady/utils/SafeTransferLib.sol";
 
 // contracts
+import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
 import {ReentrancyGuardTransient} from "solady/utils/ReentrancyGuardTransient.sol";
 
 /// @title SwapRouter
 /// @notice Handles swaps through whitelisted routers with fee collection
 contract SwapRouter is ReentrancyGuardTransient, ISwapRouter, Facet {
     using CustomRevert for bytes4;
+    using SafeTransferLib for address;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                            SWAP                            */
@@ -84,17 +86,17 @@ contract SwapRouter is ReentrancyGuardTransient, ISwapRouter, Facet {
         // snapshot the balance of tokenOut before the swap
         uint256 balanceBefore = _getBalance(params.tokenOut);
 
-        bool isNativeToken = params.tokenIn == CurrencyTransfer.NATIVE_TOKEN;
         {
             uint256 value;
             uint256 amountIn = params.amountIn;
+            bool isNativeToken = params.tokenIn == CurrencyTransfer.NATIVE_TOKEN;
             if (!isNativeToken) {
                 // use the actual received amount to handle fee-on-transfer tokens
-                uint256 tokenInBalanceBefore = _getBalance(params.tokenIn);
-                IERC20(params.tokenIn).transferFrom(payer, address(this), amountIn);
-                amountIn = _getBalance(params.tokenIn) - tokenInBalanceBefore;
+                uint256 tokenInBalanceBefore = params.tokenIn.balanceOf(address(this));
+                params.tokenIn.safeTransferFrom(payer, address(this), amountIn);
+                amountIn = params.tokenIn.balanceOf(address(this)) - tokenInBalanceBefore;
 
-                IERC20(params.tokenIn).approve(routerParams.approveTarget, amountIn);
+                params.tokenIn.safeApprove(routerParams.approveTarget, amountIn);
             } else {
                 // for native token, the value should be sent with the transaction
                 if (msg.value != amountIn) SwapRouter__InvalidAmount.selector.revertWith();
@@ -102,8 +104,12 @@ contract SwapRouter is ReentrancyGuardTransient, ISwapRouter, Facet {
             }
 
             // execute swap with the router
-            (bool success, ) = routerParams.router.call{value: value}(routerParams.swapData);
-            if (!success) SwapRouter__SwapFailed.selector.revertWith();
+            LibCall.callContract(routerParams.router, value, routerParams.swapData);
+
+            // reset approval for tokenIn
+            if (!isNativeToken) {
+                params.tokenIn.safeApprove(routerParams.approveTarget, 0);
+            }
         }
 
         // use the actual received amount to handle fee-on-transfer tokens
@@ -124,11 +130,6 @@ contract SwapRouter is ReentrancyGuardTransient, ISwapRouter, Facet {
 
         // transfer remaining tokens to the recipient
         CurrencyTransfer.transferCurrency(params.tokenOut, address(this), recipient, finalAmount);
-
-        // reset approval for tokenIn
-        if (!isNativeToken) {
-            IERC20(params.tokenIn).approve(routerParams.approveTarget, 0);
-        }
 
         emit Swap(
             routerParams.router,
@@ -172,6 +173,7 @@ contract SwapRouter is ReentrancyGuardTransient, ISwapRouter, Facet {
         address spaceFactory = _getSpaceFactory();
         (uint16 treasuryBps, uint16 posterBps) = _getSwapFees(spaceFactory);
 
+        // TODO: events
         // only take poster fee if the address is not zero
         if (poster != address(0)) {
             posterFee = BasisPoints.calculate(amount, posterBps);
@@ -227,6 +229,6 @@ contract SwapRouter is ReentrancyGuardTransient, ISwapRouter, Facet {
         if (token == CurrencyTransfer.NATIVE_TOKEN) {
             return address(this).balance;
         }
-        return IERC20(token).balanceOf(address(this));
+        return token.balanceOf(address(this));
     }
 }

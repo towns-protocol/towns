@@ -55,7 +55,7 @@ interface ISwapFacet is ISwapFacetBase, ISwapRouterBase {
     /// @param poster The address that posted this swap opportunity
     /// @return amountOut The amount of tokenOut received
     function executeSwap(
-        ExactInputParams calldata params,
+        ExactInputParams memory params,
         RouterParams calldata routerParams,
         address poster
     ) external payable returns (uint256 amountOut);

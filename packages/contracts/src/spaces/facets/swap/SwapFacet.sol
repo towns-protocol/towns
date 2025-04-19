@@ -8,10 +8,12 @@ import {IImplementationRegistry} from "../../../factory/facets/registry/IImpleme
 import {ISwapFacet} from "./ISwapFacet.sol";
 
 // libraries
+import {CurrencyTransfer} from "../../../utils/libraries/CurrencyTransfer.sol";
 import {CustomRevert} from "../../../utils/libraries/CustomRevert.sol";
 import {MembershipBase} from "../membership/MembershipBase.sol";
 import {MembershipStorage} from "../membership/MembershipStorage.sol";
 import {SwapFacetStorage} from "./SwapFacetStorage.sol";
+import {SafeTransferLib} from "solady/utils/SafeTransferLib.sol";
 
 // contracts
 import {Entitled} from "../Entitled.sol";
@@ -22,6 +24,7 @@ import {ReentrancyGuardTransient} from "solady/utils/ReentrancyGuardTransient.so
 /// @notice Facet for executing swaps within a space
 contract SwapFacet is ISwapFacet, ReentrancyGuardTransient, Entitled, MembershipBase, Facet {
     using CustomRevert for bytes4;
+    using SafeTransferLib for address;
 
     /// @notice Maximum fee in basis points (1%)
     uint16 internal constant MAX_FEE_BPS = 100;
@@ -44,7 +47,7 @@ contract SwapFacet is ISwapFacet, ReentrancyGuardTransient, Entitled, Membership
 
         // ensure total fee is reasonable
         if (treasuryBps + posterFeeBps > MAX_FEE_BPS) {
-            revert SwapFacet__TotalFeeTooHigh();
+            SwapFacet__TotalFeeTooHigh.selector.revertWith();
         }
 
         SwapFacetStorage.Layout storage ds = SwapFacetStorage.layout();
@@ -59,7 +62,7 @@ contract SwapFacet is ISwapFacet, ReentrancyGuardTransient, Entitled, Membership
 
     /// @inheritdoc ISwapFacet
     function executeSwap(
-        ExactInputParams calldata params,
+        ExactInputParams memory params,
         RouterParams calldata routerParams,
         address poster
     ) external payable nonReentrant returns (uint256 amountOut) {
@@ -70,10 +73,25 @@ contract SwapFacet is ISwapFacet, ReentrancyGuardTransient, Entitled, Membership
             SwapFacet__SwapRouterNotSet.selector.revertWith();
         }
 
+        // handle ERC20 transfers before calling SwapRouter
+        bool isNativeToken = params.tokenIn == CurrencyTransfer.NATIVE_TOKEN;
+        if (!isNativeToken) {
+            // use the actual received amount to handle fee-on-transfer tokens
+            uint256 tokenInBalanceBefore = params.tokenIn.balanceOf(address(this));
+            params.tokenIn.safeTransferFrom(msg.sender, address(this), params.amountIn);
+            // update amountIn based on the actual balance after transfer
+            params.amountIn = params.tokenIn.balanceOf(address(this)) - tokenInBalanceBefore;
+
+            // approve SwapRouter to spend the tokens
+            params.tokenIn.safeApprove(swapRouter, params.amountIn);
+        }
+
         // handle poster based on collectPosterFeeToSpace
         address actualPoster = _resolveSwapPoster(poster);
 
         // execute swap through the router
+        // forwarding `msg.value` may introduce double-spending if used with `multicall`
+        // which has been handled by Solady Multicallable
         try
             ISwapRouter(swapRouter).executeSwap{value: msg.value}(
                 params,
@@ -81,7 +99,6 @@ contract SwapFacet is ISwapFacet, ReentrancyGuardTransient, Entitled, Membership
                 actualPoster
             )
         returns (uint256 returnedAmount) {
-            // emit event for successful swap
             emit SwapExecuted(
                 params.recipient,
                 params.tokenIn,
@@ -90,6 +107,11 @@ contract SwapFacet is ISwapFacet, ReentrancyGuardTransient, Entitled, Membership
                 returnedAmount,
                 poster // use original poster for the event
             );
+
+            // reset approval
+            if (!isNativeToken) {
+                params.tokenIn.safeApprove(swapRouter, 0);
+            }
             return returnedAmount;
         } catch {
             SwapFacet__SwapFailed.selector.revertWith();
@@ -113,7 +135,7 @@ contract SwapFacet is ISwapFacet, ReentrancyGuardTransient, Entitled, Membership
         // handle poster based on collectPosterFeeToSpace
         address actualPoster = _resolveSwapPoster(poster);
 
-        // Execute swap through the router with permit
+        // execute swap through the router with permit
         try
             ISwapRouter(swapRouter).executeSwapWithPermit{value: msg.value}(
                 params,

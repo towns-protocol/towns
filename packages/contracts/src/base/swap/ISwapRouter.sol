@@ -58,9 +58,6 @@ interface ISwapRouterBase {
     /// @notice Error thrown when an invalid amount is provided
     error SwapRouter__InvalidAmount();
 
-    /// @notice Error thrown when the swap execution fails
-    error SwapRouter__SwapFailed();
-
     /// @notice Error thrown when the output amount is less than the minimum expected
     error SwapRouter__InsufficientOutput();
 

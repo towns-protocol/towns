@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import {MinimalERC20Storage} from "@towns-protocol/diamond/src/primitive/ERC20.sol";
-
+/// @title SwapRouterStorage
+/// @notice Storage layout for the SwapRouter contract
 library SwapRouterStorage {
     // keccak256(abi.encode(uint256(keccak256("base.swap.router")) - 1)) &
     // ~bytes32(uint256(0xff))

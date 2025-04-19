@@ -16,9 +16,9 @@ library SwapFacetStorage {
         bool collectPosterFeeToSpace;
     }
 
-    function layout() internal pure returns (Layout storage ds) {
+    function layout() internal pure returns (Layout storage l) {
         assembly {
-            ds.slot := STORAGE_SLOT
+            l.slot := STORAGE_SLOT
         }
     }
 }
