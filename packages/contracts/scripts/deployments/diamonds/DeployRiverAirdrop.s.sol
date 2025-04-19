@@ -27,6 +27,8 @@ import {DeployTownsPoints} from "scripts/deployments/facets/DeployTownsPoints.s.
 contract DeployRiverAirdrop is IDiamondInitHelper, DiamondHelper, Deployer {
     address internal BASE_REGISTRY = address(0);
     address internal SPACE_FACTORY = address(0);
+    uint48 public minLockDuration = 30 days;
+    uint48 public maxLockDuration = 180 days;
 
     DeployFacet private facetHelper = new DeployFacet();
     DeployDropFacet dropHelper = new DeployDropFacet();
@@ -107,6 +109,7 @@ contract DeployRiverAirdrop is IDiamondInitHelper, DiamondHelper, Deployer {
     }
 
     function diamondInitParams(address deployer) public returns (Diamond.InitParams memory) {
+        dropHelper.setLockDurations(minLockDuration, maxLockDuration);
         dropFacet = dropHelper.deploy(deployer);
         pointsFacet = pointsHelper.deploy(deployer);
         metadata = facetHelper.deploy("MetadataFacet", deployer);
