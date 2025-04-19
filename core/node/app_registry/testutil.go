@@ -44,6 +44,7 @@ type TestAppServer struct {
 	client           protocolconnect.StreamServiceClient
 	frameworkVersion int32
 	enableLogging    bool
+	exitSignal       chan (error)
 }
 
 func FormatTestAppMessageReply(session string, messageText string, sessionKeys string) string {
@@ -56,6 +57,19 @@ func FormatKeySolicitationReply(solicitation *protocol.MemberPayload_KeySolicita
 		solicitation.DeviceKey,
 		solicitation.FallbackKey,
 		solicitation.SessionIds,
+	)
+}
+
+func FormatMembershipReply(membership *protocol.MemberPayload_Membership) string {
+	userAddress := common.BytesToAddress(membership.UserAddress)
+	initiatorAddress := common.BytesToAddress(membership.InitiatorAddress)
+	streamParent := shared.StreamId(membership.GetStreamParentId())
+	return fmt.Sprintf(
+		"Membership op(%v) user(%v) initiator(%v) streamParent(%v)",
+		membership.Op,
+		userAddress,
+		initiatorAddress,
+		streamParent,
 	)
 }
 
@@ -120,9 +134,14 @@ func NewTestAppServer(
 		appWallet:     appWallet,
 		client:        client,
 		enableLogging: enableLogging,
+		exitSignal:    make(chan (error), 16),
 	}
 
 	return b
+}
+
+func (b *TestAppServer) ExitSignal() <-chan (error) {
+	return b.exitSignal
 }
 
 func (b *TestAppServer) Url() string {
@@ -263,6 +282,18 @@ func (b *TestAppServer) respondToKeySolicitation(
 	return b.sendChannelMessage(ctx, channelId, FormatKeySolicitationReply(solicitation), sessionIdBytes)
 }
 
+func (b *TestAppServer) respondToMembershipEvent(
+	ctx context.Context,
+	channelId shared.StreamId,
+	membership *protocol.MemberPayload_Membership,
+) error {
+	placeHolderSessionBytes, err := hex.DecodeString("00000000")
+	if err != nil {
+		return fmt.Errorf("oops - placeholder session id hex could not be decoded: %w", err)
+	}
+	return b.sendChannelMessage(ctx, channelId, FormatMembershipReply(membership), placeHolderSessionBytes)
+}
+
 func (b *TestAppServer) respondToChannelMessage(
 	ctx context.Context,
 	streamId shared.StreamId,
@@ -270,7 +301,7 @@ func (b *TestAppServer) respondToChannelMessage(
 	encryptionMaterial map[string]*protocol.UserInboxPayload_GroupEncryptionSessions,
 ) error {
 	log := logging.FromCtx(ctx)
-	log.Infow(
+	log.Debugw(
 		"respondToChannelMessage message details",
 		"m.SenderKey",
 		message.SenderKey,
@@ -283,9 +314,11 @@ func (b *TestAppServer) respondToChannelMessage(
 	)
 
 	if message.SenderKey == b.encryptionDevice.DeviceKey {
-		b.t.Logf("We should never forward bot-authored messages back to the bot service")
-		// We cannot call FailNow from a subroutine, so let's call Fail to avoid undefined behaviors.
-		b.t.Fail()
+		return logAndReturnErr(log, fmt.Errorf(
+			"we should never forward a bot-authored message back to the bot service; message ciphertext(%v), sessionId(%v)",
+			message.Ciphertext,
+			hex.EncodeToString(message.SessionIdBytes),
+		))
 	}
 
 	sessions, ok := encryptionMaterial[hex.EncodeToString(message.GetSessionIdBytes())]
@@ -301,13 +334,25 @@ func (b *TestAppServer) respondToChannelMessage(
 
 	streamIdBytes, err := shared.StreamIdFromBytes(sessions.StreamId)
 	if err != nil {
-		return logAndReturnErr(log, fmt.Errorf("could not parse stream id: %w", err))
+		return logAndReturnErr(
+			log,
+			fmt.Errorf(
+				"could not parse stream id: %w; message ciphertext(%v), sessionId(%v)",
+				err,
+				message.Ciphertext,
+				hex.EncodeToString(message.SessionIdBytes),
+			),
+		)
 	}
 
 	if !bytes.Equal(streamIdBytes[:], streamId[:]) {
 		return logAndReturnErr(
 			log,
-			fmt.Errorf("group encryption sessions stream id does not match stream id of Messages: %w", err),
+			fmt.Errorf(
+				"group encryption sessions stream id does not match stream id of Messages: message sessionId(%v) and GES_SessionId(%v)",
+				streamIdBytes,
+				streamId,
+			),
 		)
 	}
 
@@ -372,8 +417,14 @@ func (b *TestAppServer) respondToSendMessages(
 					}
 					continue
 				}
+			case *protocol.MemberPayload_Membership_:
+				{
+					if err := b.respondToMembershipEvent(ctx, shared.StreamId(data.StreamId), content.Membership); err != nil {
+						return logAndReturnErr(log, fmt.Errorf("could not respond to membership event: %w", err))
+					}
+				}
 			default:
-				return logAndReturnErr(log, fmt.Errorf("could not cast channel stream member payload content"))
+				return logAndReturnErr(log, fmt.Errorf("could not cast channel stream member payload content (%v)", content))
 			}
 
 		case *protocol.StreamEvent_ChannelPayload:
@@ -386,7 +437,7 @@ func (b *TestAppServer) respondToSendMessages(
 					continue
 				}
 			default:
-				return logAndReturnErr(log, fmt.Errorf("could not cast channel stream payload content"))
+				return logAndReturnErr(log, fmt.Errorf("could not cast channel stream payload content: (%v)", content))
 			}
 
 		default:
@@ -498,8 +549,6 @@ func (b *TestAppServer) rootHandler(w http.ResponseWriter, r *http.Request) {
 	if request.Payload != nil {
 		switch request.Payload.(type) {
 		case *protocol.AppServiceRequest_Initialize:
-			log.Infow("initialize...")
-
 			response.Payload = &protocol.AppServiceResponse_Initialize{
 				Initialize: &protocol.AppServiceResponse_InitializeResponse{
 					EncryptionDevice: &protocol.UserMetadataPayload_EncryptionDevice{
@@ -514,13 +563,15 @@ func (b *TestAppServer) rootHandler(w http.ResponseWriter, r *http.Request) {
 				switch event.Payload.(type) {
 				case *protocol.EventPayload_Messages_:
 					if err := b.respondToSendMessages(ctx, event.GetMessages()); err != nil {
+						// An error here is considered fatal
+						b.exitSignal <- logAndReturnErr(log, fmt.Errorf("unable to respond to send messages: %w", err))
 						http.Error(w, fmt.Sprintf("unable to respond to sent messages: %v", err), http.StatusBadRequest)
 						return
 					}
 
 				case *protocol.EventPayload_Solicitation:
 					if err := b.solicitKeys(ctx, event.GetSolicitation()); err != nil {
-						log.Errorw("solicit keys request failed", "error", err, "data", data)
+						b.exitSignal <- logAndReturnErr(log, fmt.Errorf("TestAppServer unable to solicit keys: %w", err))
 						http.Error(w, fmt.Sprintf("TestAppServer unable to solicit keys: %v", err), http.StatusBadRequest)
 						return
 					}
@@ -537,7 +588,7 @@ func (b *TestAppServer) rootHandler(w http.ResponseWriter, r *http.Request) {
 			}
 
 		default:
-			log.Errorw("unrecognized action type", "payload", request.Payload)
+			b.exitSignal <- logAndReturnErr(log, fmt.Errorf("unrecognized action type; payload(%v)", request.Payload))
 			http.Error(w, "unrecognized payload type", http.StatusBadRequest)
 			return
 		}
@@ -546,7 +597,7 @@ func (b *TestAppServer) rootHandler(w http.ResponseWriter, r *http.Request) {
 	// Marshal the response message to binary format.
 	respData, err := proto.Marshal(&response)
 	if err != nil {
-		log.Errorw("failed to marshal response message", "err", err)
+		b.exitSignal <- logAndReturnErr(log, fmt.Errorf("failed to marshal response message (%w)", err))
 		http.Error(w, "Failed to marshal response message", http.StatusInternalServerError)
 		return
 	}

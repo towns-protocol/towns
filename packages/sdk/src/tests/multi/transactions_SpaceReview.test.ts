@@ -376,7 +376,7 @@ describe('transaction_SpaceReview', () => {
         const unauthenticatedClient = new UnauthenticatedClient(
             alice.riverConnection.client!.rpcClient,
         )
-        await unauthenticatedClient.scrollbackByMs(streamView, 5000)
+        await unauthenticatedClient.scrollback(streamView)
         expect(streamView.membershipContent.spaceReviews.length).toBe(1)
     })
 })

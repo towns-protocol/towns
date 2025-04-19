@@ -91,6 +91,7 @@ import {
 import { SyncState } from '../syncedStreamsLoop'
 import { RpcOptions } from '../rpcCommon'
 import { isDefined } from '../check'
+import { MemberTokenTransfer } from '../streamStateView_Members'
 
 const log = dlog('csb:test:util')
 
@@ -1527,21 +1528,8 @@ export function extractBlockchainTransactionTransferEvents(
 export function extractMemberBlockchainTransactions(
     client: Client,
     channelId: string,
-): BlockchainTransaction_TokenTransfer[] {
+): MemberTokenTransfer[] {
     const stream = client.streams.get(channelId)
     if (!stream) throw new Error('no stream found')
-
-    return stream.view.timeline
-        .map((e) => {
-            if (
-                e.remoteEvent?.event.payload.case === 'memberPayload' &&
-                e.remoteEvent?.event.payload.value.content.case === 'memberBlockchainTransaction' &&
-                e.remoteEvent.event.payload.value.content.value.transaction?.content.case ===
-                    'tokenTransfer'
-            ) {
-                return e.remoteEvent.event.payload.value.content.value.transaction.content.value
-            }
-            return undefined
-        })
-        .filter(isDefined)
+    return stream.view.getMembers().tokenTransfers
 }

@@ -240,7 +240,7 @@ describe('gdmsTests', () => {
                     expect(updatedStreamId).toEqual(streamId)
                     const stream = client.streams.get(streamId)
 
-                    const channelMetadata = stream?.view.getChannelMetadata()
+                    const channelMetadata = stream?.view.gdmChannelContent.channelMetadata
                     const channelProperties = channelMetadata?.channelProperties
                     expect(channelProperties).toBeDefined()
 
