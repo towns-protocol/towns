@@ -1058,8 +1058,10 @@ describe('clientTest', () => {
             thumbnail: undefined,
         } satisfies PlainMessage<ChunkedMedia>
 
-        const { eventId } = await bobsClient.setUserProfileImage(chunkedMediaInfo)
-        await waitFor(() => expect(userMetadataStream.view.events.has(eventId)).toBe(true))
+        await bobsClient.setUserProfileImage(chunkedMediaInfo)
+        await waitFor(() =>
+            expect(userMetadataStream.view.userMetadataContent.encryptedProfileImage).toBeDefined(),
+        )
 
         const decrypted = await bobsClient.getUserProfileImage(bobsClient.userId)
         expect(decrypted).toBeDefined()
@@ -1078,8 +1080,10 @@ describe('clientTest', () => {
         expect(userMetadataStream).toBeDefined()
 
         const bio = { bio: 'Hello, world!' }
-        const { eventId } = await bobsClient.setUserBio(bio)
-        await waitFor(() => expect(userMetadataStream.view.events.has(eventId)).toBe(true))
+        await bobsClient.setUserBio(bio)
+        await waitFor(() =>
+            expect(userMetadataStream.view.userMetadataContent.encryptedBio).toBeDefined(),
+        )
 
         const decrypted = await bobsClient.getUserBio(bobsClient.userId)
         expect(decrypted?.bio).toStrictEqual(bio.bio)
@@ -1094,8 +1098,10 @@ describe('clientTest', () => {
         expect(userMetadataStream).toBeDefined()
 
         const bio = { bio: '' }
-        const { eventId } = await bobsClient.setUserBio(bio)
-        await waitFor(() => expect(userMetadataStream.view.events.has(eventId)).toBe(true))
+        await bobsClient.setUserBio(bio)
+        await waitFor(() =>
+            expect(userMetadataStream.view.userMetadataContent.encryptedBio).toBeDefined(),
+        )
 
         const decrypted = await bobsClient.getUserBio(bobsClient.userId)
         expect(decrypted?.bio).toStrictEqual(bio.bio)
