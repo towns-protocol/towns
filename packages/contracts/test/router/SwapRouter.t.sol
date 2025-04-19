@@ -56,6 +56,90 @@ contract SwapRouterTest is TestUtils, EIP712Utils, ISwapRouterBase {
         swapRouter = SwapRouter(deploySwapRouter.deploy(deployer));
     }
 
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                            SWAP                            */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    function test_executeSwap_revertWhen_invalidRouter() external {
+        address caller = address(this);
+        uint256 amountIn = 100 ether;
+        uint256 minAmountOut = 95 ether;
+
+        // get swap parameters
+        (ExactInputParams memory inputParams, RouterParams memory routerParams) = _createSwapParams(
+            caller,
+            amountIn,
+            minAmountOut,
+            address(token0),
+            address(token1)
+        );
+
+        // set to non-whitelisted router
+        address invalidRouter = makeAddr("invalidRouter");
+        routerParams.router = invalidRouter;
+
+        // expect revert with InvalidRouter
+        vm.expectRevert(SwapRouter__InvalidRouter.selector);
+        swapRouter.executeSwap(inputParams, routerParams, poster);
+
+        // also test with invalid approveTarget
+        routerParams.router = mockRouter;
+        routerParams.approveTarget = invalidRouter;
+
+        vm.expectRevert(SwapRouter__InvalidRouter.selector);
+        swapRouter.executeSwap(inputParams, routerParams, poster);
+    }
+
+    function test_executeSwap_revertWhen_invalidAmount_nativeToken() external {
+        (ExactInputParams memory inputParams, RouterParams memory routerParams) = _createSwapParams(
+            address(this),
+            1 ether,
+            0.95 ether,
+            CurrencyTransfer.NATIVE_TOKEN, // ETH in
+            address(token1) // token out
+        );
+
+        // send incorrect ETH amount with the transaction
+        uint256 incorrectAmount = 0.5 ether;
+
+        vm.expectRevert(SwapRouter__InvalidAmount.selector);
+        swapRouter.executeSwap{value: incorrectAmount}(inputParams, routerParams, poster);
+    }
+
+    function test_executeSwap_revertWhen_insufficientOutput() external {
+        uint256 amountIn = 100 ether;
+        uint256 actualOutAmount = 90 ether;
+        uint256 minAmountOut = 95 ether; // higher than what the router will return
+
+        // create custom parameters where minAmountOut > actualOutAmount
+        ExactInputParams memory inputParams = ExactInputParams({
+            tokenIn: address(token0),
+            tokenOut: address(token1),
+            amountIn: amountIn,
+            minAmountOut: minAmountOut,
+            recipient: address(this)
+        });
+
+        // create custom swap data returning a lower amount than minAmountOut
+        bytes memory swapData = abi.encodeCall(
+            MockRouter.swap,
+            (address(token0), address(token1), amountIn, actualOutAmount, address(swapRouter))
+        );
+
+        RouterParams memory routerParams = RouterParams({
+            router: mockRouter,
+            approveTarget: mockRouter,
+            swapData: swapData
+        });
+
+        // mint tokens and approve
+        token0.mint(address(this), amountIn);
+        token0.approve(address(swapRouter), amountIn);
+
+        vm.expectRevert(SwapRouter__InsufficientOutput.selector);
+        swapRouter.executeSwap(inputParams, routerParams, poster);
+    }
+
     function test_executeSwap() public {
         test_fuzz_executeSwap(address(this), 100 ether, 95 ether, TREASURY_BPS, POSTER_BPS);
     }
@@ -225,7 +309,7 @@ contract SwapRouterTest is TestUtils, EIP712Utils, ISwapRouterBase {
             CurrencyTransfer.NATIVE_TOKEN // ETH out
         );
 
-        // mint and approve token
+        // mint tokens and approve
         vm.startPrank(caller);
         token0.mint(caller, amountIn);
         token0.approve(address(swapRouter), amountIn);
@@ -247,6 +331,44 @@ contract SwapRouterTest is TestUtils, EIP712Utils, ISwapRouterBase {
             treasuryBps,
             posterBps
         );
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                      SWAP WITH PERMIT                      */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    function test_executeSwapWithPermit_revertWhen_invalidAmount() public {
+        uint256 privateKey = 0xabc;
+        privateKey = boundPrivateKey(privateKey);
+        address owner = vm.addr(privateKey);
+        uint256 deadline = block.timestamp + 1 hours;
+
+        uint256 amountIn = 100 ether;
+        uint256 permitValue = 50 ether; // less than amountIn
+        uint256 minAmountOut = 95 ether;
+
+        // get the permit signature with insufficient value
+        PermitParams memory permitParams = _createPermitParams(
+            address(token0),
+            privateKey,
+            owner,
+            address(swapRouter),
+            permitValue,
+            deadline
+        );
+
+        // get swap parameters
+        (ExactInputParams memory inputParams, RouterParams memory routerParams) = _createSwapParams(
+            owner,
+            amountIn,
+            minAmountOut,
+            address(token0),
+            address(token1)
+        );
+
+        // expect revert with InvalidAmount (permit value < amountIn)
+        vm.expectRevert(SwapRouter__InvalidAmount.selector);
+        swapRouter.executeSwapWithPermit(inputParams, routerParams, permitParams, poster);
     }
 
     function test_executeSwapWithPermit() public {
@@ -407,6 +529,10 @@ contract SwapRouterTest is TestUtils, EIP712Utils, ISwapRouterBase {
             posterBps
         );
     }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                          INTERNAL                          */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     function _createSwapParams(
         address recipient,
