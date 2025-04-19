@@ -6,7 +6,10 @@
     "hoistingLimits": "dependencies"
   },
   "files": [
-    "./typings/index.ts"
+    "src/**/*.sol",
+    "scripts/**/*.sol",
+    "./typings/index.ts",
+    "README.md"
   ],
   "scripts": {
     "build": "forge build",
