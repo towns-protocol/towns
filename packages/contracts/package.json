@@ -5,6 +5,12 @@
   "installConfig": {
     "hoistingLimits": "dependencies"
   },
+  "files": [
+    "src/**/*.sol",
+    "scripts/**/*.sol",
+    "./typings/index.ts",
+    "README.md"
+  ],
   "scripts": {
     "build": "forge build",
     "clean": "forge clean",
