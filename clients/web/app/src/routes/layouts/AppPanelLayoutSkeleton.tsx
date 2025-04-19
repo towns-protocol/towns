@@ -5,17 +5,23 @@ import { Box, Stack } from '@ui'
 import { LogoSingleLetter } from '@components/Logo/Logo'
 import { FadeInBox } from '@components/Transitions'
 
-export const AppPanelLayoutSkeleton = () => {
+export const AppPanelLayoutSkeleton = (props: {
+    includeTopBar?: boolean
+    includeLeftSidebar?: boolean
+}) => {
+    const { includeTopBar = true, includeLeftSidebar = true } = props
     return (
         <Box absoluteFill padding="xs">
-            <TopBarSkeleton />
+            {includeTopBar && <TopBarSkeleton />}
             <Allotment>
                 {/* left-side side-bar goes here */}
-                <Allotment.Pane minSize={64 + 8} maxSize={64 + 8} preferredSize={65}>
-                    <FadeInBox absoluteFill padding="xs" delay={0} preset="fade">
-                        <Box elevateReadability grow rounded="sm" />
-                    </FadeInBox>
-                </Allotment.Pane>
+                {includeLeftSidebar && (
+                    <Allotment.Pane minSize={64 + 8} maxSize={64 + 8} preferredSize={65}>
+                        <FadeInBox absoluteFill padding="xs" delay={0} preset="fade">
+                            <Box elevateReadability grow rounded="sm" />
+                        </FadeInBox>
+                    </Allotment.Pane>
+                )}
 
                 {/* channel side-bar goes here */}
                 <Allotment.Pane visible minSize={180} maxSize={320} preferredSize={320}>
