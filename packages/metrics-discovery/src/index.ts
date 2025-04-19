@@ -44,7 +44,7 @@ const run = async () => {
         try {
             logger.info('Getting prometheus targets...')
             const targets = await metricsDiscovery.getPrometheusTargets()
-            logger.info(targets, 'Writing prometheus targets...')
+            logger.info({ targets }, 'Writing prometheus targets...')
             await fs.promises.writeFile(PROMETHEUS_TARGETS_FILE, targets, {
                 encoding: 'utf8',
             })
