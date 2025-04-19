@@ -205,7 +205,7 @@ func (e *StreamEvent) VerifyPayloadTypeMatchesStreamType(i IsInceptionPayload) e
 	case *StreamEvent_MemberPayload:
 		return nil
 	default:
-		return fmt.Errorf("inception type type not handled: %T vs %T", e.Payload, i)
+		return fmt.Errorf("inception type not handled: %T vs %T", e.Payload, i)
 	}
 	return nil
 }

@@ -593,7 +593,7 @@ func safeAppendStringLike[S []byte | string](
 var byteType = reflect.TypeOf(byte(0)) // a cached reflect.Type for 'byte'
 
 // addFields looks for protos, Addresses, and byte arrays.
-// It hex-encodes addreses and byte arrays, and marshals the proto into a json-friendly
+// It hex-encodes addresses and byte arrays, and marshals the proto into a json-friendly
 // type for logging.
 // All other fields are handled the regular way via field.AddTo(enc).
 func addFields(enc zapcore.ObjectEncoder, fields []zapcore.Field) {
