@@ -61,6 +61,13 @@ contract ModuleRegistry is IModuleRegistry, OwnableBase, Facet {
         return ModuleRegistryLib.getLatestModuleId(module);
     }
 
+    /// @notice Check if a module is banned
+    /// @param module The module address
+    /// @return isBanned True if the module is banned, false otherwise
+    function isModuleBanned(address module) external view returns (bool) {
+        return ModuleRegistryLib.isBanned(module);
+    }
+
     /// @notice Register a new module with permissions
     /// @param module The module address to register
     /// @param owner The owner address that can update/revoke the module

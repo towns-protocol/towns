@@ -13,7 +13,7 @@ import {ModuleRegistry} from "src/attest/ModuleRegistry.sol";
 
 library DeployModuleRegistry {
     function selectors() internal pure returns (bytes4[] memory _selectors) {
-        _selectors = new bytes4[](9);
+        _selectors = new bytes4[](10);
         _selectors[0] = ModuleRegistry.getModuleSchema.selector;
         _selectors[1] = ModuleRegistry.getModuleSchemaId.selector;
         _selectors[2] = ModuleRegistry.getModuleById.selector;
@@ -23,6 +23,7 @@ library DeployModuleRegistry {
         _selectors[6] = ModuleRegistry.removeModule.selector;
         _selectors[7] = ModuleRegistry.adminRegisterModuleSchema.selector;
         _selectors[8] = ModuleRegistry.adminBanModule.selector;
+        _selectors[9] = ModuleRegistry.isModuleBanned.selector;
     }
 
     function makeCut(

@@ -40,6 +40,17 @@ library ModularAccountLib {
     error ModuleNotRegistered();
     error ModuleRevoked();
 
+    function execute(
+        address target,
+        uint256 value,
+        bytes calldata data
+    ) internal returns (bytes memory result, uint32 nonce) {
+        if (target == address(0)) InvalidModuleAddress.selector.revertWith();
+        if (IModuleRegistry(DependencyLib.getDependency("AppRegistry")).isModuleBanned(target))
+            InvalidModuleId.selector.revertWith();
+        return ExecutorLib.execute(target, value, data);
+    }
+
     function installModule(
         bytes32 moduleId,
         uint32 grantDelay,

@@ -30,6 +30,11 @@ interface IModuleRegistry {
     /// @return The attestation UID representing the current version
     function getLatestModuleId(address module) external view returns (bytes32);
 
+    /// @notice Check if a module is banned
+    /// @param module The module address
+    /// @return isBanned True if the module is banned, false otherwise
+    function isModuleBanned(address module) external view returns (bool);
+
     /// @notice Register a new module with permissions
     /// @param module The module address to register
     /// @param owner The owner address that can update/revoke the module

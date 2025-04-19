@@ -42,7 +42,7 @@ contract ModularAccount is IAccount, ReentrancyGuard, TokenOwnableBase, Facet {
         uint256 value,
         bytes calldata data
     ) external payable onlyAuthorized(target) nonReentrant returns (bytes memory result) {
-        (result, ) = ExecutorLib.execute(target, value, data);
+        (result, ) = ModularAccountLib.execute(target, value, data);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/

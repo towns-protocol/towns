@@ -105,8 +105,12 @@ library ModuleRegistryLib {
             att.data,
             (address, address, address[], bytes32[], ExecutionManifest)
         );
-        if (getLayout().modules[module].isBanned) BannedModule.selector.revertWith();
+        if (isBanned(module)) BannedModule.selector.revertWith();
         return att;
+    }
+
+    function isBanned(address module) internal view returns (bool) {
+        return getLayout().modules[module].isBanned;
     }
 
     function addModule(

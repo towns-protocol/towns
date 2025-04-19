@@ -104,6 +104,19 @@ contract ModularAccountTest is BaseSetup, IOwnableBase, IAccountBase {
         );
     }
 
+    function test_revertWhen_execute_bannedModule() external givenModuleIsInstalled {
+        vm.prank(deployer);
+        moduleRegistry.adminBanModule(address(mockModule));
+
+        vm.prank(client);
+        vm.expectRevert(abi.encodeWithSelector(ModularAccountLib.InvalidModuleId.selector));
+        modularAccount.execute({
+            target: address(mockModule),
+            value: 0,
+            data: abi.encodeWithSelector(mockModule.mockFunction.selector)
+        });
+    }
+
     function test_revertWhen_installModule_notOwner() external givenModuleIsRegistered {
         address notOwner = _randomAddress();
 
