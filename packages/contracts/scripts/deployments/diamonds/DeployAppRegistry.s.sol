@@ -3,7 +3,7 @@ pragma solidity ^0.8.23;
 
 // interfaces
 import {IDiamond} from "@towns-protocol/diamond/src/IDiamond.sol";
-
+import {IModuleRegistry} from "src/attest/interfaces/IModuleRegistry.sol";
 // libraries
 
 // helpers
@@ -22,9 +22,7 @@ import {DeployMetadataLib} from "scripts/deployments/facets/DeployMetadata.s.sol
 
 // facets
 import {MultiInit} from "@towns-protocol/diamond/src/initializers/MultiInit.sol";
-import {DeployAttestationRegistry} from "scripts/deployments/facets/DeployAttestationRegistry.s.sol";
 import {DeployModuleRegistry} from "scripts/deployments/facets/DeployModuleRegistry.s.sol";
-import {DeploySchemaRegistry} from "scripts/deployments/facets/DeploySchemaRegistry.s.sol";
 
 contract DeployAppRegistry is DiamondHelper, Deployer {
     DeployFacet private facetHelper = new DeployFacet();
@@ -35,9 +33,10 @@ contract DeployAppRegistry is DiamondHelper, Deployer {
     address internal diamondLoupe;
     address internal introspection;
     address internal ownable;
-    address internal schemaRegistry;
-    address internal attestationRegistry;
     address internal moduleRegistry;
+
+    string internal MODULE_REGISTRY_SCHEMA =
+        "address module, address owner, address[] clients, bytes32[] permissions, ExecutionManifest manifest";
 
     function versionName() public pure override returns (string memory) {
         return "appRegistry";
@@ -79,24 +78,12 @@ contract DeployAppRegistry is DiamondHelper, Deployer {
     }
 
     function diamondInitParams(address deployer) public returns (Diamond.InitParams memory) {
-        schemaRegistry = facetHelper.deploy("SchemaRegistry", deployer);
-        attestationRegistry = facetHelper.deploy("AttestationRegistry", deployer);
         moduleRegistry = facetHelper.deploy("ModuleRegistry", deployer);
 
         addFacet(
-            DeploySchemaRegistry.makeCut(schemaRegistry, IDiamond.FacetCutAction.Add),
-            schemaRegistry,
-            DeploySchemaRegistry.makeInitData()
-        );
-        addFacet(
-            DeployAttestationRegistry.makeCut(attestationRegistry, IDiamond.FacetCutAction.Add),
-            attestationRegistry,
-            DeployAttestationRegistry.makeInitData()
-        );
-        addFacet(
             DeployModuleRegistry.makeCut(moduleRegistry, IDiamond.FacetCutAction.Add),
             moduleRegistry,
-            DeployModuleRegistry.makeInitData()
+            DeployModuleRegistry.makeInitData(MODULE_REGISTRY_SCHEMA, address(0), true)
         );
 
         return

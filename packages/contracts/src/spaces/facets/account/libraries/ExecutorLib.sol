@@ -48,14 +48,18 @@ library ExecutorLib {
     }
 
     struct Group {
+        // Address of the module that created the group.
+        address module;
         // Members of the group.
         mapping(address user => Access access) members;
         // Guardian Role ID who can cancel operations targeting functions that need this group.
         bytes32 guardian;
         // Delay in which the group takes effect after being granted.
         Time.Delay grantDelay;
-        // Max eth value that can be used by the group.
-        uint256 maxEthValue;
+        // Allowed value of ETH that can be spent by the group.
+        uint256 allowance;
+        // Whether the group is active.
+        bool active;
     }
 
     // Structure that stores the details for a scheduled operation. This structure fits into a
@@ -124,7 +128,7 @@ library ExecutorLib {
     event GroupAccessRevoked(bytes32 indexed groupId, address indexed account);
     event GroupGuardianSet(bytes32 indexed groupId, bytes32 guardian);
     event GroupGrantDelaySet(bytes32 indexed groupId, uint32 delay);
-    event GroupMaxEthValueSet(bytes32 indexed groupId, uint256 maxEthValue);
+    event GroupMaxEthValueSet(bytes32 indexed groupId, uint256 allowance);
     event TargetFunctionGroupSet(
         address indexed target,
         bytes4 indexed selector,
@@ -140,6 +144,18 @@ library ExecutorLib {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           GROUP MANAGEMENT                 */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    function createGroup(bytes32 groupId, address module) internal {
+        Group storage group = getLayout().groups[groupId];
+        group.module = module;
+        group.active = true;
+    }
+
+    function removeGroup(bytes32 groupId) internal {
+        Group storage group = getLayout().groups[groupId];
+        group.module = address(0);
+        group.active = false;
+    }
 
     /// @dev Grants access to a group for an account
     /// @param groupId The ID of the group
@@ -177,13 +193,18 @@ library ExecutorLib {
     }
 
     function revokeGroupAccess(bytes32 groupId, address account) internal returns (bool revoked) {
-        Access storage access = getLayout().groups[groupId].members[account];
+        Group storage group = getLayout().groups[groupId];
+        Access storage access = group.members[account];
 
         if (access.lastAccess == 0) {
             return false;
         }
 
-        delete getLayout().groups[groupId].members[account];
+        group.module = address(0);
+        group.active = false;
+
+        // delete the access
+        delete group.members[account];
         return true;
     }
 
@@ -200,10 +221,10 @@ library ExecutorLib {
         emit GroupGuardianSet(groupId, guardian);
     }
 
-    function setGroupMaxEthValue(bytes32 groupId, uint256 maxEthValue) internal {
+    function setGroupAllowance(bytes32 groupId, uint256 allowance) internal {
         Group storage group = getLayout().groups[groupId];
-        group.maxEthValue = maxEthValue;
-        emit GroupMaxEthValueSet(groupId, maxEthValue);
+        group.allowance = allowance;
+        emit GroupMaxEthValueSet(groupId, allowance);
     }
 
     function getGroupGuardian(bytes32 groupId) internal view returns (bytes32) {
@@ -214,8 +235,8 @@ library ExecutorLib {
         return getLayout().groups[groupId].grantDelay.get();
     }
 
-    function getGroupMaxEthValue(bytes32 groupId) internal view returns (uint256) {
-        return getLayout().groups[groupId].maxEthValue;
+    function getGroupAllowance(bytes32 groupId) internal view returns (uint256) {
+        return getLayout().groups[groupId].allowance;
     }
 
     function setGroupGrantDelay(bytes32 groupId, uint32 grantDelay, uint32 minSetback) internal {
@@ -234,18 +255,24 @@ library ExecutorLib {
     function hasGroupAccess(
         bytes32 groupId,
         address account
-    ) internal view returns (bool isMember, uint32 executionDelay, uint256 maxEthValue) {
+    ) internal view returns (bool isMember, uint32 executionDelay, uint256 allowance, bool active) {
         (uint48 hasRoleSince, uint32 currentDelay, , ) = getAccess(groupId, account);
         return (
             hasRoleSince != 0 && hasRoleSince <= Time.timestamp(),
             currentDelay,
-            getGroupMaxEthValue(groupId)
+            getGroupAllowance(groupId),
+            isGroupActive(groupId)
         );
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           ACCESS                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    function isGroupActive(bytes32 groupId) internal view returns (bool) {
+        return getLayout().groups[groupId].active;
+    }
+
     function getAccess(
         bytes32 groupId,
         address account
@@ -388,6 +415,10 @@ library ExecutorLib {
         bytes32 executionIdBefore = getLayout().executionId;
         getLayout().executionId = _hashExecutionId(target, checkSelector(data));
 
+        // Reduce the allowance of the group before external call
+        bytes32 groupId = getTargetFunctionGroupId(target, selector);
+        getLayout().groups[groupId].allowance -= value;
+
         // Call the target
         result = LibCall.callContract(target, value, data);
 
@@ -396,6 +427,7 @@ library ExecutorLib {
 
         // Reset the executionId
         getLayout().executionId = executionIdBefore;
+
         return (result, nonce);
     }
 
@@ -413,7 +445,7 @@ library ExecutorLib {
         } else if (caller != sender) {
             // calls can only be canceled by the account that scheduled them, a global admin, or by
             // a guardian of the required role.
-            (bool isGuardian, , ) = hasGroupAccess(
+            (bool isGuardian, , , ) = hasGroupAccess(
                 getGroupGuardian(getTargetFunctionGroupId(target, selector)),
                 sender
             );
@@ -449,11 +481,12 @@ library ExecutorLib {
             return (_isExecuting(target, selector), 0);
         } else {
             bytes32 groupId = getTargetFunctionGroupId(target, selector);
-            (bool isMember, uint32 currentDelay, uint256 maxEthValue) = hasGroupAccess(
+            (bool isMember, uint32 currentDelay, uint256 allowance, bool active) = hasGroupAccess(
                 groupId,
                 caller
             );
-            if (value > maxEthValue) return (false, 0);
+            if (!active) return (false, 0);
+            if (value > allowance) return (false, 0);
             return isMember ? (currentDelay == 0, currentDelay) : (false, 0);
         }
     }
@@ -512,8 +545,12 @@ library ExecutorLib {
         }
 
         bytes32 groupId = getTargetFunctionGroupId(address(this), checkSelector(data));
-        (bool isMember, uint32 currentDelay, uint256 maxEthValue) = hasGroupAccess(groupId, caller);
-        if (value > maxEthValue) return (false, 0);
+        (bool isMember, uint32 currentDelay, uint256 allowance, bool active) = hasGroupAccess(
+            groupId,
+            caller
+        );
+        if (!active) return (false, 0);
+        if (value > allowance) return (false, 0);
         return isMember ? (currentDelay == 0, currentDelay) : (false, 0);
     }
 

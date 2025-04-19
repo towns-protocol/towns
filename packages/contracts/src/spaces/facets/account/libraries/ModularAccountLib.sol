@@ -10,7 +10,7 @@ import {IERC6900ExecutionModule} from "@erc6900/reference-implementation/interfa
 import {IERC6900Account} from "@erc6900/reference-implementation/interfaces/IERC6900Account.sol";
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import {IDiamondCut} from "@towns-protocol/diamond/src/facets/cut/IDiamondCut.sol";
-
+import {IAccount} from "../interfaces/IAccount.sol";
 // libraries
 import {MembershipStorage} from "src/spaces/facets/membership/MembershipStorage.sol";
 import {ExecutorLib} from "src/spaces/facets/account/libraries/ExecutorLib.sol";
@@ -31,40 +31,47 @@ library ModularAccountLib {
     error UnauthorizedModule(address module);
     error InvalidModuleAddress(address module);
     error InvalidManifest(address module);
-    error NotImplemented();
-    error ModuleNotRegistered(address module);
-    error ModuleRevoked(address module);
     error UnauthorizedSelector();
+    error NotEnoughEth();
+    error ModuleAlreadyInstalled();
 
-    // Writes
-    function noop() internal pure {
-        NotImplemented.selector.revertWith();
-    }
+    error InvalidModuleId();
+    error ModuleNotInstalled();
+    error ModuleNotRegistered();
+    error ModuleRevoked();
 
-    function installExecution(
-        address module,
-        ExecutionManifest calldata manifest,
-        bytes calldata moduleInstallData
+    function installModule(
+        bytes32 moduleId,
+        uint32 grantDelay,
+        uint32 executionDelay,
+        uint256 allowance,
+        bytes calldata data
     ) internal {
-        if (module == address(0)) InvalidModuleAddress.selector.revertWith();
+        if (moduleId == EMPTY_UID) InvalidModuleId.selector.revertWith();
 
         // get the module group id from the module registry
         (
-            bytes32 moduleGroupId,
+            address module,
+            ,
             address[] memory clients,
             ,
             ExecutionManifest memory cachedManifest
-        ) = getModule(module);
+        ) = getModule(moduleId);
 
-        verifyManifests(module, manifest, cachedManifest);
+        // verify if already installed
+        if (ExecutorLib.isGroupActive(moduleId)) ModuleAlreadyInstalled.selector.revertWith();
+
+        verifyManifests(module, cachedManifest);
+
+        ExecutorLib.createGroup(moduleId, module);
 
         uint256 clientsLength = clients.length;
         for (uint256 i; i < clientsLength; ++i) {
             ExecutorLib.grantGroupAccess({
-                groupId: moduleGroupId,
+                groupId: moduleId,
                 account: clients[i],
-                grantDelay: ExecutorLib.getGroupGrantDelay(moduleGroupId),
-                executionDelay: 0
+                grantDelay: grantDelay > 0 ? grantDelay : ExecutorLib.getGroupGrantDelay(moduleId),
+                executionDelay: executionDelay > 0 ? executionDelay : 0
             });
         }
 
@@ -78,7 +85,7 @@ library ModularAccountLib {
                 UnauthorizedSelector.selector.revertWith();
             }
 
-            ExecutorLib.setTargetFunctionGroup(module, func.executionSelector, moduleGroupId);
+            ExecutorLib.setTargetFunctionGroup(module, func.executionSelector, moduleId);
 
             if (!func.allowGlobalValidation) {
                 ExecutorLib.setTargetFunctionDisabled(module, func.executionSelector, true);
@@ -98,22 +105,30 @@ library ModularAccountLib {
             );
         }
 
+        // Set the allowance for the module group
+        if (allowance > 0) {
+            if (address(this).balance < allowance) NotEnoughEth.selector.revertWith();
+            ExecutorLib.setGroupAllowance(moduleId, allowance);
+        }
+
         // Call module's onInstall if it has install data using LibCall
         // revert if it fails
-        if (moduleInstallData.length > 0) {
-            bytes memory callData = abi.encodeCall(IERC6900Module.onInstall, (moduleInstallData));
+        if (data.length > 0) {
+            bytes memory callData = abi.encodeCall(IERC6900Module.onInstall, (data));
             LibCall.callContract(module, 0, callData);
         }
 
-        emit IERC6900Account.ExecutionInstalled(module, manifest);
+        emit IERC6900Account.ExecutionInstalled(module, cachedManifest);
     }
 
-    function uninstallExecution(
-        address module,
-        ExecutionManifest calldata manifest,
-        bytes calldata uninstallData
-    ) internal {
-        (bytes32 moduleGroupId, address[] memory clients, , ) = getModule(module);
+    function uninstallModule(bytes32 moduleId, bytes calldata uninstallData) internal {
+        (
+            address module,
+            ,
+            address[] memory clients,
+            ,
+            ExecutionManifest memory manifest
+        ) = getModule(moduleId);
 
         // Remove hooks first
         uint256 executionHooksLength = manifest.executionHooks.length;
@@ -133,7 +148,7 @@ library ModularAccountLib {
         // Revoke module's group access
         uint256 clientsLength = clients.length;
         for (uint256 i; i < clientsLength; ++i) {
-            ExecutorLib.revokeGroupAccess(moduleGroupId, clients[i]);
+            ExecutorLib.revokeGroupAccess(moduleId, clients[i]);
         }
 
         // Call module's onUninstall if uninstall data is provided
@@ -149,23 +164,25 @@ library ModularAccountLib {
         emit IERC6900Account.ExecutionUninstalled(module, onUninstallSuccess, manifest);
     }
 
-    function setModuleAllowance(address module, uint256 maxEthValue) internal {
-        (bytes32 moduleGroupId, , , ) = getModule(module);
-        ExecutorLib.setGroupMaxEthValue(moduleGroupId, maxEthValue);
+    function setModuleAllowance(bytes32 moduleId, uint256 allowance) internal {
+        if (moduleId == EMPTY_UID) InvalidModuleId.selector.revertWith();
+        if (!ExecutorLib.isGroupActive(moduleId)) ModuleNotInstalled.selector.revertWith();
+        ExecutorLib.setGroupAllowance(moduleId, allowance);
     }
 
-    function getModuleAllowance(address module) internal view returns (uint256) {
-        (bytes32 moduleGroupId, , , ) = getModule(module);
-        return ExecutorLib.getGroupMaxEthValue(moduleGroupId);
+    function getModuleAllowance(bytes32 moduleId) internal view returns (uint256) {
+        if (moduleId == EMPTY_UID) InvalidModuleId.selector.revertWith();
+        if (!ExecutorLib.isGroupActive(moduleId)) ModuleNotInstalled.selector.revertWith();
+        return ExecutorLib.getGroupAllowance(moduleId);
     }
 
     // Getters
     function isEntitled(
-        address module,
+        bytes32 moduleId,
         address client,
         bytes32 permission
     ) internal view returns (bool) {
-        (, address[] memory clients, bytes32[] memory permissions, ) = getModule(module);
+        (, , address[] memory clients, bytes32[] memory permissions, ) = getModule(moduleId);
 
         uint256 clientsLength = clients.length;
         uint256 permissionsLength = permissions.length;
@@ -191,27 +208,27 @@ library ModularAccountLib {
     }
 
     function getModule(
-        address target
+        bytes32 moduleId
     )
         internal
         view
         returns (
-            bytes32 uid,
+            address module,
+            address owner,
             address[] memory clients,
             bytes32[] memory permissions,
             ExecutionManifest memory manifest
         )
     {
         address appRegistry = DependencyLib.getDependency("AppRegistry");
-        Attestation memory att = IModuleRegistry(appRegistry).getModule(target);
+        Attestation memory att = IModuleRegistry(appRegistry).getModuleById(moduleId);
 
-        if (att.uid == EMPTY_UID) ModuleNotRegistered.selector.revertWith(target);
-        if (att.revocationTime != 0) ModuleRevoked.selector.revertWith(target);
+        if (att.uid == EMPTY_UID) ModuleNotRegistered.selector.revertWith();
+        if (att.revocationTime != 0) ModuleRevoked.selector.revertWith();
 
-        uid = att.uid;
-        (, clients, , permissions, manifest) = abi.decode(
+        (module, owner, clients, permissions, manifest) = abi.decode(
             att.data,
-            (address, address[], address, bytes32[], ExecutionManifest)
+            (address, address, address[], bytes32[], ExecutionManifest)
         );
     }
 
@@ -246,21 +263,15 @@ library ModularAccountLib {
 
     function verifyManifests(
         address module,
-        ExecutionManifest calldata manifest,
         ExecutionManifest memory cachedManifest
     ) internal pure {
         ExecutionManifest memory moduleManifest = ITownsModule(module).executionManifest();
 
-        // Hash all three manifests and compare
-        bytes32 manifestHash = keccak256(abi.encode(manifest));
+        // Hash all cached and latest manifests and compare
         bytes32 moduleManifestHash = keccak256(abi.encode(moduleManifest));
         bytes32 cachedManifestHash = keccak256(abi.encode(cachedManifest));
 
-        if (
-            manifestHash != moduleManifestHash ||
-            manifestHash != cachedManifestHash ||
-            moduleManifestHash != cachedManifestHash
-        ) {
+        if (moduleManifestHash != cachedManifestHash) {
             InvalidManifest.selector.revertWith(module);
         }
     }

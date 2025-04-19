@@ -49,7 +49,11 @@ contract Executor is TokenOwnableBase, IExecutor {
     function hasAccess(
         bytes32 groupId,
         address account
-    ) external view returns (bool isMember, uint32 executionDelay, uint256 maxEthValue) {
+    )
+        external
+        view
+        returns (bool isMember, uint32 executionDelay, uint256 maxEthValue, bool active)
+    {
         return ExecutorLib.hasGroupAccess(groupId, account);
     }
 

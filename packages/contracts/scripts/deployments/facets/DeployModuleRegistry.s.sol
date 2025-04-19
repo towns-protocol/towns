@@ -3,6 +3,7 @@ pragma solidity ^0.8.23;
 
 //interfaces
 import {IDiamond} from "@towns-protocol/diamond/src/IDiamond.sol";
+import {ISchemaResolver} from "@ethereum-attestation-service/eas-contracts/resolver/ISchemaResolver.sol";
 
 //libraries
 
@@ -12,17 +13,16 @@ import {ModuleRegistry} from "src/attest/ModuleRegistry.sol";
 
 library DeployModuleRegistry {
     function selectors() internal pure returns (bytes4[] memory _selectors) {
-        _selectors = new bytes4[](10);
+        _selectors = new bytes4[](9);
         _selectors[0] = ModuleRegistry.getModuleSchema.selector;
         _selectors[1] = ModuleRegistry.getModuleSchemaId.selector;
-        _selectors[2] = ModuleRegistry.getModule.selector;
-        _selectors[3] = ModuleRegistry.getModuleVersion.selector;
+        _selectors[2] = ModuleRegistry.getModuleById.selector;
+        _selectors[3] = ModuleRegistry.getLatestModuleId.selector;
         _selectors[4] = ModuleRegistry.registerModule.selector;
         _selectors[5] = ModuleRegistry.updateModulePermissions.selector;
-        _selectors[6] = ModuleRegistry.revokeModule.selector;
-        _selectors[7] = ModuleRegistry.removeModule.selector;
-        _selectors[8] = ModuleRegistry.adminRegisterModuleSchema.selector;
-        _selectors[9] = ModuleRegistry.adminBanModule.selector;
+        _selectors[6] = ModuleRegistry.removeModule.selector;
+        _selectors[7] = ModuleRegistry.adminRegisterModuleSchema.selector;
+        _selectors[8] = ModuleRegistry.adminBanModule.selector;
     }
 
     function makeCut(
@@ -37,8 +37,16 @@ library DeployModuleRegistry {
             });
     }
 
-    function makeInitData() internal pure returns (bytes memory) {
-        return abi.encodeCall(ModuleRegistry.__ModuleRegistry_init, ());
+    function makeInitData(
+        string memory schema,
+        address resolver,
+        bool revocable
+    ) internal pure returns (bytes memory) {
+        return
+            abi.encodeCall(
+                ModuleRegistry.__ModuleRegistry_init,
+                (schema, ISchemaResolver(resolver), revocable)
+            );
     }
 
     function deploy() internal returns (address) {

@@ -11,14 +11,13 @@ import {ITownsModule} from "src/attest/interfaces/ITownsModule.sol";
 // libraries
 import {CustomRevert} from "../../utils/libraries/CustomRevert.sol";
 import {AttestationLib} from "./AttestationLib.sol";
-
 import {VerificationLib} from "./VerificationLib.sol";
 import {EnumerableSetLib} from "solady/utils/EnumerableSetLib.sol";
 
 // types
 
 import {ExecutionManifest} from "@erc6900/reference-implementation/interfaces/IERC6900ExecutionModule.sol";
-import {Attestation} from "@ethereum-attestation-service/eas-contracts/Common.sol";
+import {Attestation, EMPTY_UID} from "@ethereum-attestation-service/eas-contracts/Common.sol";
 import {AttestationRequest, RevocationRequestData} from "@ethereum-attestation-service/eas-contracts/IEAS.sol";
 
 // contracts
@@ -37,6 +36,8 @@ library ModuleRegistryLib {
     error ModuleDoesNotImplementInterface();
     error InvalidAddressInput();
     error InvalidArrayInput();
+    error BannedModule();
+    error InvalidModuleId();
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           EVENTS                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -51,8 +52,9 @@ library ModuleRegistryLib {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     struct ModuleInfo {
-        bytes32 uid;
-        bytes32 schema;
+        address module;
+        bool isBanned;
+        bytes32 latestVersion;
     }
 
     struct Layout {
@@ -89,12 +91,22 @@ library ModuleRegistryLib {
         return getLayout().schemaId;
     }
 
-    function getModuleVersion(address module) internal view returns (bytes32 version) {
-        return getLayout().modules[module].uid;
+    function getLatestModuleId(address module) internal view returns (bytes32) {
+        ModuleInfo storage moduleInfo = getLayout().modules[module];
+        if (moduleInfo.isBanned) return EMPTY_UID;
+        return moduleInfo.latestVersion;
     }
 
-    function getModule(address module) internal view returns (Attestation memory att) {
-        return AttestationLib.getAttestation(getModuleVersion(module));
+    function getModule(bytes32 moduleId) internal view returns (Attestation memory attestation) {
+        Attestation memory att = AttestationLib.getAttestation(moduleId);
+        if (att.uid == EMPTY_UID) ModuleNotRegistered.selector.revertWith();
+        if (att.revocationTime > 0) ModuleRevoked.selector.revertWith();
+        (address module, , , , ) = abi.decode(
+            att.data,
+            (address, address, address[], bytes32[], ExecutionManifest)
+        );
+        if (getLayout().modules[module].isBanned) BannedModule.selector.revertWith();
+        return att;
     }
 
     function addModule(
@@ -104,116 +116,122 @@ library ModuleRegistryLib {
     ) internal returns (bytes32 version) {
         _verifyAddModuleInputs(module, owner, clients);
 
+        ModuleInfo storage moduleInfo = getLayout().modules[module];
+
+        if (moduleInfo.isBanned) BannedModule.selector.revertWith();
+
         bytes32[] memory permissions = ITownsModule(module).requiredPermissions();
         ExecutionManifest memory manifest = ITownsModule(module).executionManifest();
 
         if (permissions.length == 0) InvalidArrayInput.selector.revertWith();
 
-        Layout storage db = getLayout();
-        ModuleInfo storage info = db.modules[module];
-
-        if (info.uid != bytes32(0)) ModuleAlreadyRegistered.selector.revertWith();
-
         AttestationRequest memory request;
-        request.schema = db.schemaId;
+        request.schema = getSchema();
         request.data.recipient = module;
         request.data.revocable = true;
-        request.data.data = abi.encode(module, clients, owner, permissions, manifest);
-        info.uid = AttestationLib.attest(msg.sender, msg.value, request).uid;
-        info.schema = db.schemaId;
+        request.data.data = abi.encode(module, owner, clients, permissions, manifest);
+        version = AttestationLib.attest(msg.sender, msg.value, request).uid;
 
-        emit ModuleRegistered(module, info.uid);
+        moduleInfo.latestVersion = version;
+        moduleInfo.module = module;
 
-        return info.uid;
+        emit ModuleRegistered(module, version);
+
+        return version;
     }
 
     function updatePermissions(
         address revoker,
-        address module,
+        bytes32 moduleId,
         bytes32[] calldata permissions
     ) internal returns (bytes32 version) {
-        Layout storage db = getLayout();
-        ModuleInfo storage info = db.modules[module];
+        Attestation memory att = AttestationLib.getAttestation(moduleId);
 
-        if (info.uid == bytes32(0)) ModuleNotRegistered.selector.revertWith();
-
-        Attestation memory att = AttestationLib.getAttestation(info.uid);
+        if (att.uid == EMPTY_UID) ModuleNotRegistered.selector.revertWith();
         if (att.revocationTime > 0) ModuleRevoked.selector.revertWith();
-        (, address client, address owner, , ExecutionManifest memory manifest) = abi.decode(
-            att.data,
-            (address, address, address, bytes32[], ExecutionManifest)
-        );
+        (
+            address module,
+            address owner,
+            address[] memory clients,
+            ,
+            ExecutionManifest memory manifest
+        ) = abi.decode(att.data, (address, address, address[], bytes32[], ExecutionManifest));
 
         if (revoker != owner) NotModuleOwner.selector.revertWith();
+        if (getLayout().modules[module].isBanned) BannedModule.selector.revertWith();
 
         RevocationRequestData memory revocationRequest;
-        revocationRequest.uid = info.uid;
-        AttestationLib.revoke(info.schema, revocationRequest, msg.sender, 0, true);
+        revocationRequest.uid = moduleId;
+        AttestationLib.revoke(att.schema, revocationRequest, msg.sender, 0, true);
 
         AttestationRequest memory request;
-        request.schema = info.schema;
+        request.schema = att.schema;
         request.data.revocable = true;
-        request.data.refUID = info.uid;
-        request.data.data = abi.encode(module, client, owner, permissions, manifest);
-        info.uid = AttestationLib.attest(msg.sender, msg.value, request).uid;
-        info.schema = db.schemaId;
-        emit ModuleUpdated(module, info.uid);
+        request.data.refUID = moduleId;
+        request.data.data = abi.encode(module, owner, clients, permissions, manifest);
+        version = AttestationLib.attest(msg.sender, msg.value, request).uid;
 
-        return info.uid;
+        getLayout().modules[module].latestVersion = version;
+
+        emit ModuleUpdated(module, version);
+
+        return version;
     }
 
-    function revokeModule(address revoker, address module) internal returns (bytes32 version) {
-        Layout storage db = getLayout();
-        ModuleInfo storage info = db.modules[module];
-        bytes32 uid = info.uid;
+    function removeModule(
+        address revoker,
+        bytes32 moduleId
+    ) internal returns (address module, bytes32 version) {
+        if (moduleId == EMPTY_UID) InvalidModuleId.selector.revertWith();
 
-        if (uid == bytes32(0)) ModuleNotRegistered.selector.revertWith();
+        Attestation memory att = AttestationLib.getAttestation(moduleId);
 
-        Attestation memory att = AttestationLib.getAttestation(uid);
+        if (att.uid == EMPTY_UID) ModuleNotRegistered.selector.revertWith();
         if (att.revocationTime > 0) ModuleRevoked.selector.revertWith();
+        (module, , , , ) = abi.decode(
+            att.data,
+            (address, address, address[], bytes32[], ExecutionManifest)
+        );
+
+        ModuleInfo storage moduleInfo = getLayout().modules[module];
+
+        if (moduleInfo.isBanned) BannedModule.selector.revertWith();
 
         RevocationRequestData memory request;
-        request.uid = uid;
-        AttestationLib.revoke(info.schema, request, revoker, 0, true);
+        request.uid = moduleId;
+        AttestationLib.revoke(att.schema, request, revoker, 0, true);
 
-        return uid;
-    }
+        version = moduleInfo.latestVersion;
+        if (version == moduleId) {
+            moduleInfo.latestVersion = EMPTY_UID;
+        }
 
-    function removeModule(address revoker, address module) internal returns (bytes32 version) {
-        Layout storage db = getLayout();
-        bytes32 uidToRevoke = db.modules[module].uid;
+        emit ModuleUnregistered(module, moduleId);
 
-        revokeModule(revoker, module);
-
-        db.modules[module].uid = bytes32(0);
-        delete db.modules[module];
-
-        emit ModuleUnregistered(module, uidToRevoke);
-
-        return uidToRevoke;
+        return (module, version);
     }
 
     function banModule(address module) internal returns (bytes32 version) {
-        Layout storage db = getLayout();
-        ModuleInfo storage info = db.modules[module];
-        bytes32 uidToBan = info.uid;
+        if (module == address(0)) ModuleNotRegistered.selector.revertWith();
 
-        if (uidToBan == bytes32(0)) ModuleNotRegistered.selector.revertWith();
+        ModuleInfo storage moduleInfo = getLayout().modules[module];
 
-        Attestation memory att = AttestationLib.getAttestation(uidToBan);
+        if (moduleInfo.module == address(0)) ModuleNotRegistered.selector.revertWith();
+        if (moduleInfo.isBanned) BannedModule.selector.revertWith();
+
+        Attestation memory att = AttestationLib.getAttestation(moduleInfo.latestVersion);
+
         if (att.revocationTime > 0) ModuleRevoked.selector.revertWith();
 
         RevocationRequestData memory request;
-        request.uid = uidToBan;
+        request.uid = moduleInfo.latestVersion;
 
-        AttestationLib.revoke(info.schema, request, att.attester, 0, true);
+        AttestationLib.revoke(att.schema, request, att.attester, 0, true);
+        moduleInfo.isBanned = true;
 
-        db.modules[module].uid = bytes32(0);
-        delete db.modules[module];
+        emit ModuleBanned(module, moduleInfo.latestVersion);
 
-        emit ModuleBanned(module, uidToBan);
-
-        return uidToBan;
+        return moduleInfo.latestVersion;
     }
 
     function _verifyAddModuleInputs(

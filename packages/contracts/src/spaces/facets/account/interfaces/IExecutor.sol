@@ -26,7 +26,10 @@ interface IExecutor {
     function hasAccess(
         bytes32 groupId,
         address account
-    ) external view returns (bool isMember, uint32 executionDelay, uint256 maxEthValue);
+    )
+        external
+        view
+        returns (bool isMember, uint32 executionDelay, uint256 maxEthValue, bool active);
 
     /**
      * @notice Gets the access information for an account in a group

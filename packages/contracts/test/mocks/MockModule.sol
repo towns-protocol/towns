@@ -4,8 +4,9 @@ pragma solidity ^0.8.23;
 import {ExecutionManifest, IERC6900ExecutionModule, ManifestExecutionFunction, ManifestExecutionHook} from "@erc6900/reference-implementation/interfaces/IERC6900ExecutionModule.sol";
 import {IERC6900Module} from "@erc6900/reference-implementation/interfaces/IERC6900Module.sol";
 import {ITownsModule} from "src/attest/interfaces/ITownsModule.sol";
+import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
-contract MockModule is ITownsModule {
+contract MockModule is UUPSUpgradeable, ITownsModule {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           EVENTS                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -20,13 +21,11 @@ contract MockModule is ITownsModule {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     bool public shouldFailInstall;
+    bool public shouldFailManifest;
 
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                         CONSTRUCTOR                        */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-    constructor(bool _shouldFailInstall) {
+    function initialize(bool _shouldFailInstall, bool _shouldFailManifest) external initializer {
         shouldFailInstall = _shouldFailInstall;
+        shouldFailManifest = _shouldFailManifest;
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -87,8 +86,11 @@ contract MockModule is ITownsModule {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                    INTERFACE FUNCTIONS                     */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+    function changeManifest() external {
+        shouldFailManifest = !shouldFailManifest;
+    }
 
-    function executionManifest() external pure returns (ExecutionManifest memory) {
+    function executionManifest() external pure virtual returns (ExecutionManifest memory) {
         ManifestExecutionFunction[] memory executionFunctions = new ManifestExecutionFunction[](2);
         ManifestExecutionHook[] memory executionHooks = new ManifestExecutionHook[](1);
 
@@ -126,5 +128,42 @@ contract MockModule is ITownsModule {
             interfaceId == type(IERC6900ExecutionModule).interfaceId ||
             interfaceId == type(IERC6900Module).interfaceId ||
             interfaceId == type(ITownsModule).interfaceId;
+    }
+
+    function _authorizeUpgrade(address newImplementation) internal override {}
+}
+
+contract MockModuleV2 is MockModule {
+    function executionManifest() external pure override returns (ExecutionManifest memory) {
+        ManifestExecutionFunction[] memory executionFunctions = new ManifestExecutionFunction[](2);
+        ManifestExecutionHook[] memory executionHooks = new ManifestExecutionHook[](1);
+
+        executionFunctions[0] = ManifestExecutionFunction({
+            executionSelector: this.mockFunction.selector,
+            skipRuntimeValidation: false,
+            allowGlobalValidation: true
+        });
+
+        executionHooks[0] = ManifestExecutionHook({
+            executionSelector: this.mockFunction.selector,
+            entityId: 0,
+            isPreHook: true,
+            isPostHook: true
+        });
+
+        executionFunctions[1] = ManifestExecutionFunction({
+            executionSelector: this.mockFunctionWithParams.selector,
+            skipRuntimeValidation: false,
+            allowGlobalValidation: true
+        });
+
+        bytes4[] memory interfaceIds;
+
+        return
+            ExecutionManifest({
+                executionFunctions: executionFunctions,
+                executionHooks: executionHooks,
+                interfaceIds: interfaceIds
+            });
     }
 }

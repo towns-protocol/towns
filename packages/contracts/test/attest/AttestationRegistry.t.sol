@@ -2,14 +2,12 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-
 import {IERC6900Module} from "@erc6900/reference-implementation/interfaces/IERC6900Module.sol";
-
 import {ISchemaRegistry} from "@ethereum-attestation-service/eas-contracts/ISchemaRegistry.sol";
 import {ISchemaResolver} from "@ethereum-attestation-service/eas-contracts/resolver/ISchemaResolver.sol";
+import {IDiamond} from "@towns-protocol/diamond/src/IDiamond.sol";
 
 // libraries
-
 import {AttestationLib} from "src/attest/libraries/AttestationLib.sol";
 import {SchemaLib} from "src/attest/libraries/SchemaLib.sol";
 
@@ -19,15 +17,26 @@ import {AttestationRequest, AttestationRequestData, IEAS, RevocationRequest, Rev
 import {SchemaRecord} from "@ethereum-attestation-service/eas-contracts/ISchemaRegistry.sol";
 
 // contracts
+import {TestUtils} from "@towns-protocol/diamond/test/TestUtils.sol";
+import {DeployFacet} from "@towns-protocol/diamond/scripts/common/DeployFacet.s.sol";
+import {DeployMockDiamond} from "scripts/deployments/utils/DeployMockDiamond.s.sol";
+import {DeployAttestationRegistry} from "scripts/deployments/facets/DeployAttestationRegistry.s.sol";
+import {DeploySchemaRegistry} from "scripts/deployments/facets/DeploySchemaRegistry.s.sol";
+
 import {AttestationRegistry} from "src/attest/AttestationRegistry.sol";
 import {SchemaRegistry} from "src/attest/SchemaRegistry.sol";
-import {BaseSetup} from "test/spaces/BaseSetup.sol";
 
 // mocks
 import {MockPlugin} from "test/mocks/MockPlugin.sol";
 import {MockPluginResolver} from "test/mocks/MockPluginResolver.sol";
 
-contract AttestationRegistryTest is BaseSetup {
+contract AttestationRegistryTest is TestUtils {
+    DeployMockDiamond diamondHelper = new DeployMockDiamond();
+    DeployFacet facetHelper = new DeployFacet();
+
+    address diamond;
+    address deployer;
+
     SchemaRegistry internal schemaRegistry;
     AttestationRegistry internal attestationRegistry;
     MockPluginResolver internal pluginValidator;
@@ -41,12 +50,24 @@ contract AttestationRegistryTest is BaseSetup {
         Both
     }
 
-    function setUp() public override {
-        super.setUp();
-        schemaRegistry = SchemaRegistry(appRegistry);
-        attestationRegistry = AttestationRegistry(appRegistry);
+    function setUp() public {
+        deployer = getDeployer();
+
+        address attestationAddress = facetHelper.deploy("AttestationRegistry", deployer);
+        address schemaAddress = facetHelper.deploy("SchemaRegistry", deployer);
+
+        diamondHelper.addCut(
+            DeployAttestationRegistry.makeCut(attestationAddress, IDiamond.FacetCutAction.Add)
+        );
+        diamondHelper.addCut(
+            DeploySchemaRegistry.makeCut(schemaAddress, IDiamond.FacetCutAction.Add)
+        );
+        diamond = diamondHelper.deploy(deployer);
+
+        schemaRegistry = SchemaRegistry(diamond);
+        attestationRegistry = AttestationRegistry(diamond);
         developer = makeAddr("developer");
-        pluginValidator = new MockPluginResolver(appRegistry);
+        pluginValidator = new MockPluginResolver(diamond);
     }
 
     modifier givenSchema(string memory testSchema, bool revocable) {
@@ -245,7 +266,7 @@ contract AttestationRegistryTest is BaseSetup {
         RevocationRequest memory request = RevocationRequest({schema: schemaId, data: data});
 
         vm.prank(developer);
-        vm.expectEmit(appRegistry);
+        vm.expectEmit(diamond);
         emit IEAS.Revoked(address(plugin), developer, attestationId, schemaId);
         attestationRegistry.revoke(request);
 
@@ -388,7 +409,7 @@ contract AttestationRegistryTest is BaseSetup {
         schema.uid = getUID(schema);
 
         vm.prank(deployer);
-        vm.expectEmit(appRegistry);
+        vm.expectEmit(diamond);
         emit ISchemaRegistry.Registered(schema.uid, deployer, schema);
         return
             schemaRegistry.register({
