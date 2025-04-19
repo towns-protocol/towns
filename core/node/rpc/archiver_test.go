@@ -313,6 +313,7 @@ func TestArchiveOneStream(t *testing.T) {
 		make(chan error, 1),
 		infra.NewMetricsFactory(nil, "", ""),
 		time.Minute*10,
+		0,
 	)
 	require.NoError(err)
 

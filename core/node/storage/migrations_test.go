@@ -38,6 +38,7 @@ func TestMigrateExistingDb(t *testing.T) {
 		exitSignal2,
 		infra.NewMetricsFactory(nil, "", ""),
 		time.Minute*10,
+		0,
 	)
 	require.NoError(err)
 	defer pgStreamStore2.Close(ctx)

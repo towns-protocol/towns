@@ -63,6 +63,7 @@ func setupStreamStorageTest(t *testing.T) *testStreamStoreParams {
 		exitSignal,
 		infra.NewMetricsFactory(nil, "", ""),
 		time.Minute*10,
+		0,
 	)
 	require.NoError(err, "Error creating new postgres stream store")
 
@@ -662,6 +663,7 @@ func TestExitIfSecondStorageCreated(t *testing.T) {
 			exitSignal2,
 			infra.NewMetricsFactory(nil, "", ""),
 			time.Minute*10,
+			0,
 		)
 		require.NoError(err)
 		secondStoreInitialized.Done()
