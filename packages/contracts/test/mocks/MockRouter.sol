@@ -10,12 +10,13 @@ contract MockRouter {
         address tokenIn,
         MockERC20 tokenOut,
         uint256 amountIn,
-        uint256 minAmountOut
+        uint256 minAmountOut,
+        address recipient
     ) external payable returns (uint256) {
         if (tokenIn != CurrencyTransfer.NATIVE_TOKEN) {
             IERC20(tokenIn).transferFrom(msg.sender, address(this), amountIn);
         }
-        tokenOut.mint(msg.sender, minAmountOut);
+        tokenOut.mint(recipient, minAmountOut);
         return minAmountOut;
     }
 }
