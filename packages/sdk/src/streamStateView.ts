@@ -49,21 +49,21 @@ import { DecryptedContent } from './encryptedContentTypes'
 import { StreamStateView_UnknownContent } from './streamStateView_UnknownContent'
 import { StreamStateView_MemberMetadata } from './streamStateView_MemberMetadata'
 import { StreamEvents, StreamEncryptionEvents, StreamStateEvents } from './streamEvents'
-import isEqual from 'lodash/isEqual'
 import { DecryptionSessionError } from '@towns-protocol/encryption'
 import { migrateSnapshot } from './migrations/migrateSnapshot'
-
+import { StreamsView } from './streams-view/streamsView'
+import { TimelineEvent } from './sync-agent/timeline/models/timeline-types'
 const log = dlog('csb:streams')
 const logError = dlogError('csb:streams:error')
 
 // it's very important that the Stream is the emitter for all events
 // for any mutations, go through the stream
 export interface IStreamStateView {
+    readonly minipoolEvents: Map<string, StreamTimelineEvent>
     readonly streamId: string
     readonly userId: string
     readonly contentKind: SnapshotCaseType
-    readonly timeline: StreamTimelineEvent[]
-    readonly events: Map<string, StreamTimelineEvent>
+    readonly timeline: TimelineEvent[]
     isInitialized: boolean
     prevMiniblockHash?: Uint8Array
     prevMiniblockNum?: bigint
@@ -179,11 +179,11 @@ export class StreamStateView implements IStreamStateView {
         return this._mediaContent
     }
 
-    constructor(userId: string, streamId: string) {
+    constructor(userId: string, streamId: string, streamsView: StreamsView | undefined) {
         log('streamStateView::constructor', streamId)
         this.userId = userId
         this.streamId = streamId
-
+        this.streamsView = streamsView || new StreamsView('', undefined) // always have a streams view to ensure we can use the timeline
         if (isSpaceStreamId(streamId)) {
             this.contentKind = 'spaceContent'
             this._spaceContent = new StreamStateView_Space(streamId)
@@ -529,6 +529,10 @@ export class StreamStateView implements IStreamStateView {
             // dispatching eventDecrypted makes it easier to test
             emitter.emit('eventDecrypted', this.streamId, this.contentKind, timelineEvent)
         }
+
+        this.streamsView?.streamEventDecrypted(this.streamId, this.contentKind, eventId, content)
+        // dispatching eventDecrypted makes it easier to test
+        //emitter.emit('eventDecrypted', this.streamId, this.contentKind, timelineEvent) // todo change this to dispatch content
     }
 
     // update stream with decryption status
@@ -545,6 +549,12 @@ export class StreamStateView implements IStreamStateView {
                 updated: [timelineEvent],
             })
         }
+        this.streamsView?.streamEventDecryptedContentError(
+            this.streamId,
+            this.contentKind,
+            eventId,
+            content,
+        )
     }
 
     initialize(
@@ -637,6 +647,7 @@ export class StreamStateView implements IStreamStateView {
 
         // let everyone know
         this.isInitialized = true
+        this.streamsView?.streamInitialized(this.streamId, this.contentKind, timelineEvents)
         emitter?.emit('streamInitialized', this.streamId, this.contentKind)
     }
 
@@ -653,11 +664,13 @@ export class StreamStateView implements IStreamStateView {
             emitter,
             emitter,
         )
-        emitter?.emit('streamUpdated', this.streamId, this.contentKind, {
+        const updatedData = {
             appended: appended.length > 0 ? appended : undefined,
             updated: updated.length > 0 ? updated : undefined,
             confirmed: confirmed.length > 0 ? confirmed : undefined,
-        })
+        }
+        this.streamsView?.streamUpdated(this.streamId, this.contentKind, updatedData)
+        emitter?.emit('streamUpdated', this.streamId, this.contentKind, updatedData)
     }
 
     prependEvents(
@@ -706,7 +719,7 @@ export class StreamStateView implements IStreamStateView {
         if (this.miniblockInfo && terminus) {
             this.miniblockInfo.terminusReached = true
         }
-
+        this.streamsView?.streamUpdated(this.streamId, this.contentKind, { prepended })
         stateEmitter?.emit('streamUpdated', this.streamId, this.contentKind, { prepended })
     }
 
@@ -728,6 +741,9 @@ export class StreamStateView implements IStreamStateView {
         this.timeline.push(timelineEvent)
         this.getContent().onAppendLocalEvent(timelineEvent, emitter)
 
+        this.streamsView?.streamUpdated(this.streamId, this.contentKind, {
+            appended: [timelineEvent],
+        })
         emitter?.emit('streamUpdated', this.streamId, this.contentKind, {
             appended: [timelineEvent],
         })
@@ -749,6 +765,12 @@ export class StreamStateView implements IStreamStateView {
         timelineEvent.localEvent.status = status
         this.events.set(parsedEventHash, timelineEvent)
 
+        this.streamsView?.streamLocalEventUpdated(
+            this.streamId,
+            this.contentKind,
+            previousId,
+            timelineEvent,
+        )
         emitter?.emit(
             'streamLocalEventUpdated',
             this.streamId,

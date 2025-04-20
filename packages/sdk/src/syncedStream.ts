@@ -13,6 +13,7 @@ import { IPersistenceStore, LoadedStream } from './persistenceStore'
 import { StreamEvents } from './streamEvents'
 import { ISyncedStream } from './syncedStreamsLoop'
 import { create } from '@bufbuild/protobuf'
+import { StreamsView } from './streams-view/streamsView'
 
 export class SyncedStream extends Stream implements ISyncedStream {
     log: DLogger
@@ -21,11 +22,12 @@ export class SyncedStream extends Stream implements ISyncedStream {
     constructor(
         userId: string,
         streamId: string,
+        streamsView: StreamsView,
         clientEmitter: TypedEmitter<StreamEvents>,
         logEmitFromStream: DLogger,
         persistenceStore: IPersistenceStore,
     ) {
-        super(userId, streamId, clientEmitter, logEmitFromStream)
+        super(userId, streamId, streamsView, clientEmitter, logEmitFromStream)
         this.log = dlog('csb:syncedStream', { defaultEnabled: false }).extend(userId)
         this.persistenceStore = persistenceStore
     }
