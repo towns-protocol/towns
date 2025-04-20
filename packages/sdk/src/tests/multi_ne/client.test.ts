@@ -379,6 +379,7 @@ describe('clientTest', () => {
                 .get(bobsClient.userId)
                 ?.solicitations.find((x) => x.deviceKey === 'foo')
             expect(solicitation).toBeDefined()
+            expect(solicitation?.isNewDevice).toEqual(true)
         })
 
         // fulfillment should resolve
@@ -397,7 +398,8 @@ describe('clientTest', () => {
             const solicitation = stream?.view.membershipContent.joined
                 .get(bobsClient.userId)
                 ?.solicitations.find((x) => x.deviceKey === 'foo')
-            expect(solicitation).toBeUndefined()
+            expect(solicitation).toBeDefined()
+            expect(solicitation?.isNewDevice).toEqual(false)
         })
 
         // fulfillment with empty session ids should now fail
