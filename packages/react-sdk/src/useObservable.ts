@@ -78,11 +78,14 @@ export function useObservable<
 >(observable: Observable<Model>, config?: ObservableConfig.FromData<Model>): ObservableValue<Data> {
     const opts = useMemo(() => ({ fireImmediately: true, ...config }), [config])
 
-    const subscribeFn = useCallback((subFn: () => void) => {
-        return observable.subscribe(subFn, {
-            fireImediately: opts?.fireImmediately,
-        })
-    }, [observable, opts?.fireImmediately])
+    const subscribeFn = useCallback(
+        (subFn: () => void) => {
+            return observable.subscribe(subFn, {
+                fireImediately: opts?.fireImmediately,
+            })
+        },
+        [observable, opts?.fireImmediately],
+    )
 
     const value = useSyncExternalStore(subscribeFn, () => observable.value)
 
