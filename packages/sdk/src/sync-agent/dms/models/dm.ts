@@ -118,11 +118,11 @@ export class Dm extends PersistedObservable<DmModel> {
     async redact(eventId: string, reason?: string) {
         const channelId = this.data.id
         const result = await this.riverConnection.withStream(channelId).call((client, stream) => {
-            const event = stream.view.events.get(eventId)
+            const event = stream.view.timeline.find((x) => x.eventId === eventId)
             if (!event) {
                 throw new Error(`ref event not found: ${eventId}`)
             }
-            if (event.remoteEvent?.creatorUserId !== this.riverConnection.userId) {
+            if (event.sender.id !== this.riverConnection.userId) {
                 throw new Error(
                     `You can only redact your own messages: ${eventId} - userId: ${this.riverConnection.userId}`,
                 )

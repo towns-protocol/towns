@@ -113,15 +113,21 @@ export class SyncedStream extends Stream implements ISyncedStream {
         nextSyncCookie: SyncCookie,
         cleartexts: Record<string, Uint8Array | string> | undefined,
     ): Promise<void> {
+        const minipoolEvents = new Map<string, ParsedEvent>(
+            Array.from(this.view.minipoolEvents.entries())
+                .filter(([_, event]) => isDefined(event.remoteEvent))
+                .map(([hash, event]) => [hash, event.remoteEvent!]),
+        )
         await super.appendEvents(events, nextSyncCookie, cleartexts)
         for (const event of events) {
             const payload = event.event.payload
             switch (payload.case) {
                 case 'miniblockHeader': {
-                    await this.onMiniblockHeader(payload.value, event, event.hash)
+                    await this.onMiniblockHeader(payload.value, event, event.hash, minipoolEvents)
                     break
                 }
                 default:
+                    minipoolEvents.set(event.hashStr, event)
                     break
             }
         }
@@ -132,6 +138,7 @@ export class SyncedStream extends Stream implements ISyncedStream {
         miniblockHeader: MiniblockHeader,
         miniblockEvent: ParsedEvent,
         hash: Uint8Array,
+        viewMinipoolEvents: Map<string, ParsedEvent>,
     ) {
         this.log(
             'Received miniblock header',
@@ -140,12 +147,14 @@ export class SyncedStream extends Stream implements ISyncedStream {
         )
 
         const eventHashes = miniblockHeader.eventHashes.map(bin_toHexString)
-        const events = eventHashes
-            .map((hash) => this.view.events.get(hash)?.remoteEvent)
-            .filter(isDefined)
+        const events = eventHashes.map((hash) => viewMinipoolEvents.get(hash)).filter(isDefined)
 
         if (events.length !== eventHashes.length) {
-            throw new Error("Couldn't find event for hash in miniblock")
+            throw new Error(
+                `Couldn't find event for hash in miniblock ${miniblockHeader.miniblockNum.toString()} ${eventHashes.join(
+                    ', ',
+                )} ${Array.from(viewMinipoolEvents.keys()).join(', ')}`,
+            )
         }
 
         const miniblock: ParsedMiniblock = {
@@ -160,10 +169,7 @@ export class SyncedStream extends Stream implements ISyncedStream {
             return
         }
 
-        const minipoolEvents = this.view.timeline
-            .filter((e) => e.confirmedEventNum === undefined)
-            .map((e) => e.remoteEvent)
-            .filter(isDefined)
+        const minipoolEvents = Array.from(this.view.minipoolEvents.values())
 
         const lastSnapshotMiniblockNum =
             miniblock.header.snapshot !== undefined || miniblock.header.snapshotHash !== undefined

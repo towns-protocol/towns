@@ -9,7 +9,6 @@ import {
     EncryptedData,
     MemberPayload,
     MiniblockHeader,
-    SnapshotCaseType,
     UserPayload,
 } from '@towns-protocol/proto'
 import {
@@ -61,7 +60,6 @@ import {
     StreamTimelineEvent,
 } from '../types'
 import { streamIdAsString, streamIdFromBytes, userIdFromAddress } from '../id'
-import { Client } from '../client'
 import {
     getIsMentioned,
     getReactionParentId,
@@ -69,10 +67,12 @@ import {
     getThreadParentId,
 } from './timelineStoreInterface'
 import { getFallbackContent, toMembership } from '../sync-agent/timeline/models/timelineEvent'
-import { bin_toHexString } from '@towns-protocol/dlog'
+import { bin_toHexString, dlogger } from '@towns-protocol/dlog'
 import { getSpaceReviewEventDataBin } from '@towns-protocol/web3'
 import { DecryptedContent } from '../encryptedContentTypes'
 import { DecryptionSessionError } from '@towns-protocol/encryption'
+
+const logger = dlogger('csb:timeline')
 
 type SuccessResult = {
     content: TimelineEvent_OneOf
@@ -844,7 +844,7 @@ function getEventStatus(timelineEvent: StreamTimelineEvent): EventStatus {
                 return EventStatus.NOT_SENT
         }
     } else {
-        console.error('$$$ timelineStoreEvents unknown event status', { timelineEvent })
+        logger.error('$$$ timelineStoreEvents unknown event status', { timelineEvent })
         return EventStatus.NOT_SENT
     }
 }
@@ -869,7 +869,7 @@ function toAttachment(
             const info = attachment.content.value.info
 
             if (!info) {
-                console.error('$$$ timelineStoreEvents invalid chunkedMedia attachment', {
+                logger.error('$$$ timelineStoreEvents invalid chunkedMedia attachment', {
                     attachment,
                 })
                 return undefined
@@ -890,7 +890,7 @@ function toAttachment(
                     ? attachment.content.value.encryption.value
                     : undefined
             if (!encryption) {
-                console.error('$$$ timelineStoreEvents invalid chunkedMedia encryption', {
+                logger.error('$$$ timelineStoreEvents invalid chunkedMedia encryption', {
                     attachment,
                 })
                 return undefined

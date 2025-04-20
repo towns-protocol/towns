@@ -10,6 +10,7 @@ import { Stream } from '../../stream'
 import { DecryptionSessionError } from '@towns-protocol/encryption'
 import { makeUniqueChannelStreamId } from '../../id'
 import { SyncState } from '../../syncedStreamsLoop'
+import { RiverTimelineEvent } from '../../sync-agent/timeline/models/timeline-types'
 
 const log = dlog('csb:test:decryptionExtensions')
 
@@ -34,19 +35,8 @@ describe('ClientDecryptionExtensions', () => {
         return stream.view.timeline
             .map((e) => {
                 // for tests, return decrypted content
-                if (
-                    e.decryptedContent?.kind === 'channelMessage' &&
-                    e.decryptedContent.content.payload?.case === 'post' &&
-                    e.decryptedContent.content.payload?.value?.content?.case === 'text'
-                ) {
-                    return e.decryptedContent.content.payload?.value?.content?.value?.body
-                }
-                // and local content
-                if (
-                    e.localEvent?.channelMessage?.payload?.case === 'post' &&
-                    e.localEvent?.channelMessage?.payload?.value?.content?.case === 'text'
-                ) {
-                    return e.localEvent?.channelMessage?.payload?.value?.content?.value?.body
+                if (e.content?.kind === RiverTimelineEvent.ChannelMessage) {
+                    return e.content.body
                 }
                 return undefined
             })
@@ -72,8 +62,11 @@ describe('ClientDecryptionExtensions', () => {
         const stream = client.stream(streamId) ?? (await client.waitForStream(streamId))
         return stream.view.timeline
             .map((e) => {
-                if (e.decryptedContentError) {
-                    return e.decryptedContentError
+                if (
+                    e.content?.kind === RiverTimelineEvent.ChannelMessageEncrypted ||
+                    e.content?.kind === RiverTimelineEvent.EncryptedChannelProperties
+                ) {
+                    return e.content?.error
                 }
                 return undefined
             })

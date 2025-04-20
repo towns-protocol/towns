@@ -39,8 +39,8 @@ describe('syncedStream', () => {
         // the stream is now loaded from cache
         const bobStreamFresh = await bob2.waitForStream(streamId)
 
-        const fresh = bobStreamFresh.view.timeline.map((e) => e.remoteEvent?.hashStr)
-        const cached = bobStreamCached.view.timeline.map((e) => e.remoteEvent?.hashStr)
+        const fresh = bobStreamFresh.view.timeline.map((e) => e.eventId)
+        const cached = bobStreamCached.view.timeline.map((e) => e.eventId)
         expect(fresh.length).toBeGreaterThan(0)
         expect(cached.length).toBeGreaterThan(0)
         expect(fresh).toEqual(cached)
@@ -65,8 +65,8 @@ describe('syncedStream', () => {
         )
 
         // check that the events are the same
-        const aliceEvents = aliceStream.view.timeline.map((e) => e.hashStr)
-        const bobEvents = bobStreamFresh.view.timeline.map((e) => e.hashStr)
+        const aliceEvents = aliceStream.view.timeline.map((e) => e.eventId)
+        const bobEvents = bobStreamFresh.view.timeline.map((e) => e.eventId)
         await waitFor(() => aliceEvents.sort() === bobEvents.sort())
 
         const bobEventCount = bobEvents.length

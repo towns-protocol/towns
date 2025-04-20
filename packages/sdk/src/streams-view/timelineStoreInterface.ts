@@ -13,6 +13,9 @@ import {
     TimelineEvent_OneOf,
 } from '../sync-agent/timeline/models/timeline-types'
 import { getFallbackContent } from '../sync-agent/timeline/models/timelineEvent'
+import { dlogger } from '@towns-protocol/dlog'
+
+const logger = dlogger('csb:timelineInterface')
 
 /// TimelinesMap: { streamId: TimelineEvent[] }
 export type TimelinesMap = Record<string, TimelineEvent[]>
@@ -468,7 +471,7 @@ function canReplaceEvent(prev: TimelineEvent, next: TimelineEvent): boolean {
     if (next.sender.id === prev.sender.id) {
         return true
     }
-    console.warn('cannot replace event', { prev, next })
+    logger.info('cannot replace event', { prev, next })
     return false
 }
 

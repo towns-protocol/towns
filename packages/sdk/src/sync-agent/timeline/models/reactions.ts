@@ -2,7 +2,7 @@ import { Observable } from '../../../observable/observable'
 import { TimelineEvent, RiverTimelineEvent, type MessageReactions } from './timeline-types'
 
 // { parentEventId -> { reactionName: { userId: { eventId: string } } } }
-export type ReactionsMap = Record<string, MessageReactions>
+type ReactionsMap = Record<string, MessageReactions>
 export class Reactions extends Observable<ReactionsMap> {
     constructor(initialValue: ReactionsMap = {}) {
         super(initialValue)
