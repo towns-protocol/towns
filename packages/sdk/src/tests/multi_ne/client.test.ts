@@ -372,6 +372,16 @@ describe('clientTest', () => {
             bobsClient.makeEventAndAddToStream(bobsClient.userSettingsStreamId!, payload),
         ).resolves.not.toThrow()
 
+        // see solicitation in view
+        await waitFor(() => {
+            const stream = bobsClient.streams.get(bobsClient.userSettingsStreamId!)
+            const solicitation = stream?.view.membershipContent.joined
+                .get(bobsClient.userId)
+                ?.solicitations.find((x) => x.deviceKey === 'foo')
+            expect(solicitation).toBeDefined()
+            expect(solicitation?.isNewDevice).toEqual(true)
+        })
+
         // fulfillment should resolve
         payload = make_MemberPayload_KeyFulfillment({
             deviceKey: 'foo',
@@ -382,18 +392,14 @@ describe('clientTest', () => {
             bobsClient.makeEventAndAddToStream(bobsClient.userSettingsStreamId!, payload),
         ).resolves.not.toThrow()
 
+        // fullfillment should remove solicitation from view
         await waitFor(() => {
-            const lastEvent = bobsClient.streams
-                .get(bobsClient.userSettingsStreamId!)
-                ?.view.timeline.filter((x) => x.remoteEvent?.event.payload.case === 'memberPayload')
-                .at(-1)
-            expect(lastEvent).toBeDefined()
-            check(lastEvent?.remoteEvent?.event.payload.case === 'memberPayload', '??')
-            check(
-                lastEvent?.remoteEvent?.event.payload.value.content.case === 'keyFulfillment',
-                '??',
-            )
-            expect(lastEvent?.remoteEvent?.event.payload.value.content.value.deviceKey).toBe('foo')
+            const stream = bobsClient.streams.get(bobsClient.userSettingsStreamId!)
+            const solicitation = stream?.view.membershipContent.joined
+                .get(bobsClient.userId)
+                ?.solicitations.find((x) => x.deviceKey === 'foo')
+            expect(solicitation).toBeDefined()
+            expect(solicitation?.isNewDevice).toEqual(false)
         })
 
         // fulfillment with empty session ids should now fail
