@@ -151,6 +151,7 @@ export class SyncedStreamsExtension {
         }, 0)
     }
 
+    private lastLogInflightAt = 0
     private async loadStreamsFromPersistence() {
         this.log('####loadingStreamsFromPersistence')
         const now = performance.now()
@@ -191,7 +192,6 @@ export class SyncedStreamsExtension {
         const streamIds = Array.from(this.streamIds).filter((x) => loadedStreams[x] !== undefined)
         // make a step task that will load the next batch of streams
         const stepTask = async () => {
-            const tsn = performance.now()
             if (streamIds.length === 0) {
                 return
             }
@@ -210,13 +210,10 @@ export class SyncedStreamsExtension {
                     delete loadedStreams[streamId]
                 }),
             )
-            this.logDebug(
-                '####Performance: STEP STREAMS!! processed',
-                streamIdsForStep.length,
-                'remaining',
-                streamIds.length,
-                performance.now() - tsn,
-            )
+            if (performance.now() - this.lastLogInflightAt > 5000) {
+                this.log(`####loading streams from persistence remaining: ${streamIds.length}`)
+                this.lastLogInflightAt = performance.now()
+            }
             // do the next few
             this.tasks.unshift(stepTask)
         }
