@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useMemo, useSyncExternalStore } from 'react'
+import { useCallback, useEffect, useMemo, useSyncExternalStore } from 'react'
 import { type Observable, type PersistedModel } from '@towns-protocol/sdk'
 import { isPersistedModel } from './internals/utils'
 
@@ -78,10 +78,13 @@ export function useObservable<
 >(observable: Observable<Model>, config?: ObservableConfig.FromData<Model>): ObservableValue<Data> {
     const opts = useMemo(() => ({ fireImmediately: true, ...config }), [config])
 
-    const value = useSyncExternalStore(
-        (subscriber) => observable.subscribe(subscriber, { fireImediately: opts?.fireImmediately }),
-        () => observable.value,
-    )
+    const subscribeFn = useCallback((subFn: () => void) => {
+        return observable.subscribe(subFn, {
+            fireImediately: opts?.fireImmediately,
+        })
+    }, [observable, opts?.fireImmediately])
+
+    const value = useSyncExternalStore(subscribeFn, () => observable.value)
 
     useEffect(() => {
         if (isPersistedModel(value)) {
