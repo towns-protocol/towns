@@ -391,12 +391,13 @@ describe('clientTest', () => {
             bobsClient.makeEventAndAddToStream(bobsClient.userSettingsStreamId!, payload),
         ).resolves.not.toThrow()
 
+        // fullfillment should remove solicitation from view
         await waitFor(() => {
             const stream = bobsClient.streams.get(bobsClient.userSettingsStreamId!)
             const solicitation = stream?.view.membershipContent.joined
                 .get(bobsClient.userId)
                 ?.solicitations.find((x) => x.deviceKey === 'foo')
-            expect(solicitation).toBeDefined()
+            expect(solicitation).toBeUndefined()
         })
 
         // fulfillment with empty session ids should now fail
