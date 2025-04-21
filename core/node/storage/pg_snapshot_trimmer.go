@@ -6,6 +6,8 @@ import (
 	"sort"
 	"time"
 
+	"github.com/jackc/pgx/v5"
+
 	"github.com/towns-protocol/towns/core/node/crypto"
 	"github.com/towns-protocol/towns/core/node/logging"
 	. "github.com/towns-protocol/towns/core/node/shared"
@@ -26,7 +28,7 @@ const (
 type snapshotTrimmer struct {
 	storage *PostgresStreamStore
 	config  crypto.OnChainConfiguration
-	minKeep uint64
+	minKeep int64
 }
 
 // newSnapshotTrimmer creates a new snapshot trimmer.
@@ -66,12 +68,102 @@ func (st *snapshotTrimmer) start(ctx context.Context) {
 
 // runSnapshotTrimming runs the snapshot trimming logic.
 func (st *snapshotTrimmer) runTrimming(ctx context.Context) {
+	ctx, cancel := context.WithTimeout(ctx, time.Minute*10)
+	defer cancel()
 
-}
+	if err := st.storage.txRunner(
+		ctx,
+		"snapshotTrimmer.runTrimming",
+		pgx.ReadOnly,
+		func(ctx context.Context, tx pgx.Tx) error {
+			streamRows, err := tx.Query(ctx, "SELECT stream_id FROM es WHERE ephemeral = false")
+			if err != nil {
+				return err
+			}
 
-// runStreamTrimming runs the stream trimming logic.
-func (st *snapshotTrimmer) runStreamTrimming(ctx context.Context, streamId StreamId) {
-	// st.config.Get().StreamSnapshotIntervalInMiniblocks
+			// For each snapshot, select all snapshot miniblock numbers and pass them to the callback
+			var streamIdRaw string
+			_, err = pgx.ForEachRow(streamRows, []any{&streamIdRaw}, func() error {
+				streamId, err := StreamIdFromString(streamIdRaw)
+				if err != nil {
+					logging.FromCtx(ctx).Error(
+						"failed to parse streamId",
+						"streamId", streamIdRaw,
+						"err", err,
+					)
+					return nil
+				}
+
+				// TODO: AND seq_num > seqNum
+				snapshotMiniblockRows, err := tx.Query(
+					ctx,
+					st.storage.sqlForStream(
+						"SELECT seq_num FROM {{miniblocks}} WHERE stream_id = $1 AND snapshot IS NOT NULL",
+						streamId,
+					),
+					streamId,
+				)
+				if err != nil {
+					logging.FromCtx(ctx).Error(
+						"failed to read snapshot miniblocks",
+						"streamId", streamId,
+						"err", err,
+					)
+					return nil
+				}
+
+				var mbs []int64
+				var mbNum int64
+				if _, err = pgx.ForEachRow(snapshotMiniblockRows, []any{&mbNum}, func() error {
+					mbs = append(mbs, mbNum)
+					return nil
+				}); err != nil {
+					logging.FromCtx(ctx).Error(
+						"failed to read snapshot miniblocks",
+						"streamId", streamId,
+						"err", err,
+					)
+					return nil
+				}
+
+				retentionInterval := int64(st.config.Get().StreamSnapshotIntervalInMiniblocks)
+				if retentionInterval < minRetentionInterval {
+					retentionInterval = minRetentionInterval
+				}
+
+				// Determine which miniblocks should be nullified
+				toNullify := determineSnapshotsToNullify(mbs, retentionInterval, st.minKeep)
+				if len(toNullify) == 0 {
+					return nil
+				}
+
+				// Reset snapshot field for the given miniblocks
+				if _, err = tx.Exec(
+					ctx,
+					st.storage.sqlForStream(
+						"UPDATE {{miniblocks}} SET snapshot = NULL WHERE stream_id = $1 AND seq_num = ANY($2)",
+						streamId,
+					),
+					streamId,
+					mbs,
+				); err != nil {
+					logging.FromCtx(ctx).Error(
+						"failed to nullify snapshots",
+						"streamId", streamId,
+						"miniblocks", mbs,
+						"err", err,
+					)
+					return nil
+				}
+
+				return nil
+			})
+			return err
+		},
+		nil,
+	); err != nil {
+		logging.FromCtx(ctx).Error("failed to run stream trimming", "err", err)
+	}
 }
 
 // determineSnapshotsToNullify returns the seq_nums whose snapshot field should be set to NULL.
