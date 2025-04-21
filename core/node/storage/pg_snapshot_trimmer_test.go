@@ -30,6 +30,13 @@ func TestDetermineSnapshotsToNullify(t *testing.T) {
 			expected:          []int64{0, 500, 1100, 1500, 2000, 2100},
 		},
 		{
+			name:              "basic trimming with alignment #3",
+			snapshotSeqs:      []int64{0, 10, 20, 30, 40, 50, 60, 70, 80},
+			retentionInterval: 50,
+			minKeep:           20,
+			expected:          []int64{0, 10, 20, 30, 50},
+		},
+		{
 			name:              "only one snapshot in a bucket",
 			snapshotSeqs:      []int64{500, 1500, 2500},
 			retentionInterval: 1000,
