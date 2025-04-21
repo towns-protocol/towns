@@ -585,8 +585,7 @@ func (s *Service) initStore() error {
 			s.instanceId,
 			s.exitSignal,
 			s.metrics,
-			s.chainConfig.Get().StreamEphemeralStreamTTL,
-			s.chainConfig.Get().StreamSnapshotIntervalInMiniblocks,
+			s.chainConfig,
 		)
 		if err != nil {
 			return err

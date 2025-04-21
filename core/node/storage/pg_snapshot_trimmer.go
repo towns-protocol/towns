@@ -6,6 +6,7 @@ import (
 	"sort"
 	"time"
 
+	"github.com/towns-protocol/towns/core/node/crypto"
 	"github.com/towns-protocol/towns/core/node/logging"
 	. "github.com/towns-protocol/towns/core/node/shared"
 )
@@ -23,25 +24,21 @@ const (
 
 // snapshotTrimmer contains a logic that handles the trimming of snapshots in the database.
 type snapshotTrimmer struct {
-	storage           *PostgresStreamStore
-	retentionInterval uint64
-	minKeep           uint64
+	storage *PostgresStreamStore
+	config  crypto.OnChainConfiguration
+	minKeep uint64
 }
 
 // newSnapshotTrimmer creates a new snapshot trimmer.
 func newSnapshotTrimmer(
 	ctx context.Context,
 	storage *PostgresStreamStore,
-	retentionInterval uint64,
+	config crypto.OnChainConfiguration,
 ) (*snapshotTrimmer, error) {
-	if retentionInterval < minRetentionInterval {
-		retentionInterval = minRetentionInterval
-	}
-
 	st := &snapshotTrimmer{
-		storage:           storage,
-		retentionInterval: retentionInterval,
-		minKeep:           minKeep,
+		storage: storage,
+		config:  config,
+		minKeep: minKeep,
 	}
 
 	go st.start(ctx)
@@ -74,7 +71,7 @@ func (st *snapshotTrimmer) runTrimming(ctx context.Context) {
 
 // runStreamTrimming runs the stream trimming logic.
 func (st *snapshotTrimmer) runStreamTrimming(ctx context.Context, streamId StreamId) {
-
+	// st.config.Get().StreamSnapshotIntervalInMiniblocks
 }
 
 // determineSnapshotsToNullify returns the seq_nums whose snapshot field should be set to NULL.

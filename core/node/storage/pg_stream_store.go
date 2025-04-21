@@ -18,6 +18,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	. "github.com/towns-protocol/towns/core/node/base"
+	"github.com/towns-protocol/towns/core/node/crypto"
 	"github.com/towns-protocol/towns/core/node/infra"
 	"github.com/towns-protocol/towns/core/node/logging"
 	. "github.com/towns-protocol/towns/core/node/protocol"
@@ -115,8 +116,7 @@ func NewPostgresStreamStore(
 	instanceId string,
 	exitSignal chan error,
 	metrics infra.MetricsFactory,
-	ephemeralStreamTtl time.Duration,
-	snapshotRetentionInterval uint64,
+	config crypto.OnChainConfiguration,
 ) (store *PostgresStreamStore, err error) {
 	store = &PostgresStreamStore{
 		nodeUUID:   instanceId,
@@ -143,13 +143,13 @@ func NewPostgresStreamStore(
 	go store.listenForNewNodes(cancelCtx)
 
 	// Start the ephemeral stream monitor.
-	store.esm, err = newEphemeralStreamMonitor(ctx, ephemeralStreamTtl, store)
+	store.esm, err = newEphemeralStreamMonitor(ctx, config.Get().StreamEphemeralStreamTTL, store)
 	if err != nil {
 		return nil, AsRiverError(err).Func("NewPostgresStreamStore")
 	}
 
 	// Start the snapshot trimmer.
-	store.st, err = newSnapshotTrimmer(ctx, store, snapshotRetentionInterval)
+	store.st, err = newSnapshotTrimmer(ctx, store, config)
 	if err != nil {
 		return nil, AsRiverError(err).Func("NewPostgresStreamStore")
 	}

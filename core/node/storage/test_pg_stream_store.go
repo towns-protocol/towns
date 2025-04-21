@@ -4,6 +4,9 @@ import (
 	"context"
 	"time"
 
+	"github.com/towns-protocol/towns/core/node/crypto"
+	"github.com/towns-protocol/towns/core/node/testutils/mocks"
+
 	. "github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/infra"
 	"github.com/towns-protocol/towns/core/node/testutils/dbtestutils"
@@ -26,6 +29,12 @@ func NewTestStreamStore(ctx context.Context) *TestStreamStore {
 		panic(err)
 	}
 
+	onChainConf := new(mocks.MockOnChainConfiguration)
+	onChainConf.On("Get").Return(&crypto.OnChainSettings{
+		StreamEphemeralStreamTTL:           time.Minute * 10,
+		StreamSnapshotIntervalInMiniblocks: 0,
+	})
+
 	exitChan := make(chan error, 1)
 	streamStorage, err := NewPostgresStreamStore(
 		ctx,
@@ -33,8 +42,7 @@ func NewTestStreamStore(ctx context.Context) *TestStreamStore {
 		GenShortNanoid(),
 		exitChan,
 		infra.NewMetricsFactory(nil, "", ""),
-		time.Minute*10,
-		0,
+		onChainConf,
 	)
 	if err != nil {
 		panic(err)

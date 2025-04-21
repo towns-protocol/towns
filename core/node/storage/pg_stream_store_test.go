@@ -15,11 +15,13 @@ import (
 	"github.com/towns-protocol/towns/core/config"
 	. "github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/base/test"
+	"github.com/towns-protocol/towns/core/node/crypto"
 	"github.com/towns-protocol/towns/core/node/infra"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	. "github.com/towns-protocol/towns/core/node/shared"
 	"github.com/towns-protocol/towns/core/node/testutils"
 	"github.com/towns-protocol/towns/core/node/testutils/dbtestutils"
+	"github.com/towns-protocol/towns/core/node/testutils/mocks"
 )
 
 type testStreamStoreParams struct {
@@ -54,6 +56,12 @@ func setupStreamStorageTest(t *testing.T) *testStreamStoreParams {
 	)
 	require.NoError(err, "Error creating pgx pool for test")
 
+	onChainConf := mocks.NewMockOnChainConfiguration(t)
+	onChainConf.On("Get").Return(&crypto.OnChainSettings{
+		StreamEphemeralStreamTTL:           time.Minute * 10,
+		StreamSnapshotIntervalInMiniblocks: 0,
+	})
+
 	instanceId := GenShortNanoid()
 	exitSignal := make(chan error, 1)
 	store, err := NewPostgresStreamStore(
@@ -62,8 +70,7 @@ func setupStreamStorageTest(t *testing.T) *testStreamStoreParams {
 		instanceId,
 		exitSignal,
 		infra.NewMetricsFactory(nil, "", ""),
-		time.Minute*10,
-		0,
+		onChainConf,
 	)
 	require.NoError(err, "Error creating new postgres stream store")
 
@@ -649,6 +656,12 @@ func TestExitIfSecondStorageCreated(t *testing.T) {
 	)
 	require.NoError(err)
 
+	onChainConf := mocks.NewMockOnChainConfiguration(t)
+	onChainConf.On("Get").Return(&crypto.OnChainSettings{
+		StreamEphemeralStreamTTL:           time.Minute * 10,
+		StreamSnapshotIntervalInMiniblocks: 0,
+	})
+
 	instanceId2 := GenShortNanoid()
 	exitSignal2 := make(chan error, 1)
 
@@ -662,8 +675,7 @@ func TestExitIfSecondStorageCreated(t *testing.T) {
 			instanceId2,
 			exitSignal2,
 			infra.NewMetricsFactory(nil, "", ""),
-			time.Minute*10,
-			0,
+			onChainConf,
 		)
 		require.NoError(err)
 		secondStoreInitialized.Done()
