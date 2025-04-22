@@ -83,15 +83,6 @@ contract StreamRegistryTest is
             nodeAddresses[i] = nodes[i].node;
         }
 
-        // expect the deprecated event
-        vm.expectEmit(address(streamRegistry));
-        emit StreamAllocated(
-            testStream.streamId,
-            nodeAddresses,
-            testStream.genesisMiniblockHash,
-            testStream.genesisMiniblock
-        );
-
         vm.recordLogs();
         vm.prank(nodes[0].node);
 
@@ -260,9 +251,6 @@ contract StreamRegistryTest is
             nodes: nodeAddresses
         });
 
-        vm.expectEmit(address(streamRegistry));
-        emit StreamCreated(testStream.streamId, testStream.genesisMiniblockHash, streamToCreate);
-
         vm.recordLogs();
         vm.prank(nodes[0].node);
 
@@ -416,14 +404,6 @@ contract StreamRegistryTest is
             lastMiniblockNum: 1,
             isSealed: false
         });
-
-        vm.expectEmit(address(streamRegistry));
-        emit StreamLastMiniblockUpdated(
-            miniblocks[0].streamId,
-            miniblocks[0].lastMiniblockHash,
-            miniblocks[0].lastMiniblockNum,
-            miniblocks[0].isSealed
-        );
 
         vm.recordLogs();
         vm.prank(NODE);
@@ -587,9 +567,6 @@ contract StreamRegistryTest is
         address newNode = makeAddr("newNode");
         _registerNode(OPERATOR, newNode, "newNodeUrl");
 
-        vm.expectEmit(address(streamRegistry));
-        emit StreamPlacementUpdated(SAMPLE_STREAM.streamId, newNode, true);
-
         vm.recordLogs();
         vm.prank(newNode);
         streamRegistry.placeStreamOnNode(SAMPLE_STREAM.streamId, newNode);
@@ -635,9 +612,6 @@ contract StreamRegistryTest is
         test_allocateStream();
 
         // Remove the stream from the node
-        vm.expectEmit(address(streamRegistry));
-        emit StreamPlacementUpdated(SAMPLE_STREAM.streamId, NODE, false);
-
         vm.recordLogs();
         vm.prank(NODE);
         streamRegistry.removeStreamFromNode(SAMPLE_STREAM.streamId, NODE);
