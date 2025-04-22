@@ -55,20 +55,32 @@ contract DeploySpace is IDiamondInitHelper, DiamondHelper, Deployer {
         multiInit = facetHelper.deploy("MultiInit", deployer);
 
         address facet = facetHelper.deploy("DiamondCutFacet", deployer);
-        addCut(DeployDiamondCut.makeCut(facet, IDiamond.FacetCutAction.Add));
-        addInit(facet, DeployDiamondCut.makeInitData());
+        addFacet(
+            DeployDiamondCut.makeCut(facet, IDiamond.FacetCutAction.Add),
+            facet,
+            DeployDiamondCut.makeInitData()
+        );
 
         facet = facetHelper.deploy("DiamondLoupeFacet", deployer);
-        addCut(DeployDiamondLoupe.makeCut(facet, IDiamond.FacetCutAction.Add));
-        addInit(facet, DeployDiamondLoupe.makeInitData());
+        addFacet(
+            DeployDiamondLoupe.makeCut(facet, IDiamond.FacetCutAction.Add),
+            facet,
+            DeployDiamondLoupe.makeInitData()
+        );
 
         facet = facetHelper.deploy("IntrospectionFacet", deployer);
-        addCut(DeployIntrospection.makeCut(facet, IDiamond.FacetCutAction.Add));
-        addInit(facet, DeployIntrospection.makeInitData());
+        addFacet(
+            DeployIntrospection.makeCut(facet, IDiamond.FacetCutAction.Add),
+            facet,
+            DeployIntrospection.makeInitData()
+        );
 
         facet = facetHelper.deploy("OwnablePendingFacet", deployer);
-        addCut(DeployOwnablePending.makeCut(facet, IDiamond.FacetCutAction.Add));
-        addInit(facet, DeployOwnablePending.makeInitData(deployer));
+        addFacet(
+            DeployOwnablePending.makeCut(facet, IDiamond.FacetCutAction.Add),
+            facet,
+            DeployOwnablePending.makeInitData(deployer)
+        );
 
         facet = facetHelper.deploy("TokenOwnableFacet", deployer);
         addCut(DeployTokenOwnable.makeCut(facet, IDiamond.FacetCutAction.Add));
