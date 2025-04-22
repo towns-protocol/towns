@@ -89,6 +89,13 @@ func (st *snapshotTrimmer) start(ctx context.Context) {
 
 // trimStreams runs the snapshot trimming logic for all streams.
 func (st *snapshotTrimmer) trimStreams(ctx context.Context) {
+	// Retention interval could be changed at any time so the current value must be used
+	retentionInterval := int64(st.config.Get().StreamSnapshotIntervalInMiniblocks)
+	if retentionInterval < minRetentionInterval {
+		retentionInterval = minRetentionInterval
+	}
+
+	// Iterate over all streams and trim them
 	st.streams.Range(func(streamId StreamId, lastMbNum int64) bool {
 		ctx, cancel := context.WithTimeout(ctx, time.Minute)
 		if err := st.storage.txRunner(
@@ -96,13 +103,17 @@ func (st *snapshotTrimmer) trimStreams(ctx context.Context) {
 			"snapshotTrimmer.trimStreams",
 			pgx.ReadOnly,
 			func(ctx context.Context, tx pgx.Tx) error {
-				return st.trimStream(ctx, tx, streamId, lastMbNum)
+				return st.trimStream(ctx, tx, streamId, lastMbNum, retentionInterval)
 			},
 			nil,
 			"streamId", streamId,
 			"lastMbNum", lastMbNum,
+			"retentionInterval", retentionInterval,
 		); err != nil {
-			logging.FromCtx(ctx).Error("failed to trim the stream", "streamId", streamId, "err", err)
+			logging.FromCtx(ctx).Error("failed to trim the stream",
+				"retentionInterval", retentionInterval,
+				"streamId", streamId,
+				"err", err)
 		}
 		cancel()
 		return true
@@ -110,7 +121,15 @@ func (st *snapshotTrimmer) trimStreams(ctx context.Context) {
 }
 
 // trimStream trims the snapshots for the given stream.
-func (st *snapshotTrimmer) trimStream(ctx context.Context, tx pgx.Tx, streamId StreamId, lastMbNum int64) error {
+func (st *snapshotTrimmer) trimStream(
+	ctx context.Context,
+	tx pgx.Tx,
+	streamId StreamId,
+	lastMbNum int64,
+	retentionInterval int64,
+) error {
+	// Collect all miniblocks with a snapshot for the given stream starting from the last processed miniblock number.
+	// Genesis miniblock must not be trimmed.
 	snapshotMiniblockRows, err := tx.Query(
 		ctx,
 		st.storage.sqlForStream(
@@ -132,14 +151,19 @@ func (st *snapshotTrimmer) trimStream(ctx context.Context, tx pgx.Tx, streamId S
 		return err
 	}
 
-	retentionInterval := int64(st.config.Get().StreamSnapshotIntervalInMiniblocks)
-	if retentionInterval < minRetentionInterval {
-		retentionInterval = minRetentionInterval
-	}
-
 	// Determine which miniblocks should be nullified
 	toNullify := determineSnapshotsToNullify(mbs, retentionInterval, st.minKeep)
 	if len(toNullify) == 0 {
+		// If there are no miniblocks with snapshots, store (last miniblock number - minKeep) as the last processed one.
+		lastMiniblockNum, err := st.storage.GetLastMiniblockNumber(ctx, streamId)
+		if err != nil {
+			return err
+		}
+
+		if cutoff := lastMiniblockNum - minKeep; cutoff > 0 {
+			st.streams.Store(streamId, cutoff)
+		}
+
 		return nil
 	}
 
