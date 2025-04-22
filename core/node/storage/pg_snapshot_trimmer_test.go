@@ -76,6 +76,8 @@ func TestSnapshotsTrimmer(t *testing.T) {
 	})
 	require.NoError(err)
 	require.Equal([]int64{0, 100, 210, 320, 400, 410, 420, 430, 440, 450, 460, 470, 480, 490, 500}, mbsWithSnapshot)
+	lastMb, _ := pgStreamStore.st.streams.Load(streamId)
+	require.Equal(int64(400), lastMb)
 }
 
 func TestDetermineSnapshotsToNullify(t *testing.T) {

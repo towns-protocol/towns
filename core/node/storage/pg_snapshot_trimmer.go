@@ -181,8 +181,6 @@ func (st *snapshotTrimmer) trimStream(
 		return err
 	}
 
-	fmt.Print("successfully nullified snapshots for streamId: ", streamId, " seq_nums: ", toNullify, "\n")
-
 	// Update last processed miniblock number
 	if cutoff := mbs[len(mbs)-1] - minKeep; cutoff > 0 {
 		st.streams.Store(streamId, cutoff)
