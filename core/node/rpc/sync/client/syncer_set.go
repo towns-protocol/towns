@@ -515,18 +515,19 @@ func (ss *SyncerSet) modify(ctx context.Context, req ModifyRequest) error {
 
 			resp, syncerStopped, err := syncer.Modify(ctx, modifySync)
 			if err != nil {
+				rvrErr := AsRiverError(err, Err_INTERNAL)
 				for _, cookie := range modifySync.GetAddStreams() {
 					req.AddingFailureHandler(&SyncStreamOpStatus{
 						StreamId: cookie.GetStreamId(),
-						Code:     int32(Err_INTERNAL),
-						Message:  err.Error(),
+						Code:     int32(rvrErr.Code),
+						Message:  rvrErr.GetMessage(),
 					})
 				}
 				for _, streamIDRaw := range modifySync.GetRemoveStreams() {
 					req.RemovingFailureHandler(&SyncStreamOpStatus{
 						StreamId: streamIDRaw,
-						Code:     int32(Err_INTERNAL),
-						Message:  err.Error(),
+						Code:     int32(rvrErr.Code),
+						Message:  rvrErr.GetMessage(),
 					})
 				}
 				return nil
