@@ -530,6 +530,10 @@ func (s *PostgresStreamStore) createStreamStorageTx(
 		}
 		return err
 	}
+
+	// Add the stream to the snapshots trimmer
+	s.st.onCreated(streamId)
+
 	return nil
 }
 
