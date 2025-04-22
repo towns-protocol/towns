@@ -131,7 +131,7 @@ const envSchema = z.object({
     // Gateway RPC URL - if enabled, the SpaceDapp will use this instead of the base chain rpc url
     VITE_BASE_RPC_GATEWAY_URL: z.string().url().optional(),
     // Gateway RPC Sampling Rate - 0-100
-    VITE_BASE_RPC_GATEWAY_SAMPLING_RATE: z.number().optional(),
+    VITE_BASE_RPC_GATEWAY_SAMPLING_RATE: intStringWithin(0, 100).optional(),
 })
 
 const parsed = envSchema.safeParse(import.meta.env)
