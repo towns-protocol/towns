@@ -36,8 +36,6 @@ contract DeployRiverRegistry is IDiamondInitHelper, DiamondHelper, Deployer {
     DeployRiverConfig private riverConfigHelper = new DeployRiverConfig();
 
     address private multiInit;
-    address[] private operators = new address[](1);
-    address[] private configManagers = new address[](1);
 
     mapping(string => address) private facetDeployments;
 
@@ -85,9 +83,8 @@ contract DeployRiverRegistry is IDiamondInitHelper, DiamondHelper, Deployer {
     }
 
     function diamondInitParams(address deployer) public returns (Diamond.InitParams memory) {
+        address[] memory operators = new address[](1);
         operators[0] = deployer;
-        configManagers[0] = deployer;
-
         address facet = operatorRegistryHelper.deploy(deployer);
         addFacet(
             operatorRegistryHelper.makeCut(facet, IDiamond.FacetCutAction.Add),
@@ -95,6 +92,8 @@ contract DeployRiverRegistry is IDiamondInitHelper, DiamondHelper, Deployer {
             operatorRegistryHelper.makeInitData(operators)
         );
 
+        address[] memory configManagers = new address[](1);
+        configManagers[0] = deployer;
         facet = riverConfigHelper.deploy(deployer);
         addFacet(
             riverConfigHelper.makeCut(facet, IDiamond.FacetCutAction.Add),
