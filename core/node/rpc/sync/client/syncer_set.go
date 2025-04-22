@@ -510,9 +510,26 @@ func (ss *SyncerSet) modify(ctx context.Context, req ModifyRequest) error {
 		}
 
 		errGrp.Go(func() error {
+			ctx, cancel := context.WithTimeout(ctx, time.Second*20)
+			defer cancel()
+
 			resp, syncerStopped, err := syncer.Modify(ctx, modifySync)
 			if err != nil {
-				return err
+				for _, cookie := range modifySync.GetAddStreams() {
+					req.AddingFailureHandler(&SyncStreamOpStatus{
+						StreamId: cookie.GetStreamId(),
+						Code:     int32(Err_INTERNAL),
+						Message:  err.Error(),
+					})
+				}
+				for _, streamIDRaw := range modifySync.GetRemoveStreams() {
+					req.RemovingFailureHandler(&SyncStreamOpStatus{
+						StreamId: streamIDRaw,
+						Code:     int32(Err_INTERNAL),
+						Message:  err.Error(),
+					})
+				}
+				return nil
 			}
 
 			addingFailures := resp.GetAdds()
