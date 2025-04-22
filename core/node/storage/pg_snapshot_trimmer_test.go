@@ -67,7 +67,7 @@ func TestSnapshotsTrimmer(t *testing.T) {
 	pgStreamStore.st.trimStreams(ctx)
 
 	// Check if the snapshots are trimmed correctly
-	mbsWithSnapshot := make([]int64, 0, 0)
+	mbsWithSnapshot := make([]int64, 0)
 	err = pgStreamStore.ReadMiniblocksByStream(ctx, streamId, func(blockdata []byte, seqNum int64, snapshot []byte) error {
 		if len(snapshot) > 0 {
 			mbsWithSnapshot = append(mbsWithSnapshot, seqNum)
