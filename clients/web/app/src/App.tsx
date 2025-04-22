@@ -156,7 +156,7 @@ export const App = () => {
     return (
         <TownsContextProvider
             environmentId={environment.id}
-            baseChain={environment.baseChain}
+            baseChain={environment.gatewayBaseChain}
             baseConfig={environment.baseChainConfig}
             riverChain={environment.riverChain}
             riverConfig={environment.riverChainConfig}

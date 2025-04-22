@@ -8,12 +8,40 @@ import { env } from 'utils'
 const foundryClone: Chain = structuredClone(foundry)
 
 const baseSepoliaClone: Chain = env.VITE_BASE_SEPOLIA_RPC_URL
-    ? _makeBaseChain(baseSepolia, env.VITE_BASE_SEPOLIA_RPC_URL, env.VITE_BASE_SEPOLIA_WS_URL)
+    ? _makeBaseChain({
+          chain: baseSepolia,
+          rpcUrl: env.VITE_BASE_SEPOLIA_RPC_URL,
+          wsUrl: env.VITE_BASE_SEPOLIA_WS_URL,
+      })
     : baseSepolia
 
 const baseClone: Chain = env.VITE_BASE_CHAIN_RPC_URL
-    ? _makeBaseChain(base, env.VITE_BASE_CHAIN_RPC_URL, env.VITE_BASE_CHAIN_WS_URL)
+    ? _makeBaseChain({
+          chain: base,
+          rpcUrl: env.VITE_BASE_CHAIN_RPC_URL,
+          wsUrl: env.VITE_BASE_CHAIN_WS_URL,
+      })
     : base
+
+const gatewayBase: Chain = env.VITE_BASE_CHAIN_RPC_URL
+    ? _makeBaseChain({
+          chain: base,
+          rpcUrl: env.VITE_BASE_CHAIN_RPC_URL,
+          gatewayRpcUrl: env.VITE_BASE_RPC_GATEWAY_URL,
+          gatewaySamplingRate: env.VITE_BASE_RPC_GATEWAY_SAMPLING_RATE,
+          wsUrl: env.VITE_BASE_CHAIN_WS_URL,
+      })
+    : base
+
+const gatewayBaseSepolia: Chain = env.VITE_BASE_SEPOLIA_RPC_URL
+    ? _makeBaseChain({
+          chain: baseSepolia,
+          rpcUrl: env.VITE_BASE_SEPOLIA_RPC_URL,
+          gatewayRpcUrl: env.VITE_BASE_RPC_GATEWAY_URL,
+          gatewaySamplingRate: env.VITE_BASE_RPC_GATEWAY_SAMPLING_RATE,
+          wsUrl: env.VITE_BASE_SEPOLIA_WS_URL,
+      })
+    : baseSepolia
 
 const anvilRiverChain: IChainConfig = {
     chainId: 31338,
@@ -45,27 +73,36 @@ export const getCustomBaseChain = (chainId: number): Chain => {
     }
 }
 
-export function makeBaseChain(chainId: number, rpcUrl: string, wsUrl?: string): Chain {
-    if (chainId === foundry.id) {
-        return _makeBaseChain(foundry, rpcUrl, wsUrl)
-    } else if (chainId === baseSepolia.id) {
-        return _makeBaseChain(baseSepolia, rpcUrl, wsUrl)
-    } else if (chainId === base.id) {
-        return _makeBaseChain(base, rpcUrl, wsUrl)
+export const getBaseGatewayChain = (chainId: number): Chain => {
+    if (chainId === foundryClone.id) {
+        return foundryClone
+    } else if (chainId === baseSepoliaClone.id) {
+        return gatewayBaseSepolia
+    } else if (chainId === baseClone.id) {
+        return gatewayBase
     } else {
-        // aellis - i am not sure if we can just call wagmi "defineChain" here with the chain id and a custom name
-        // throwing until i can test it
-        throw new Error(`unsupported base chain id: ${chainId}`)
+        throw new Error(`unsupported custom base chain id: ${chainId}`)
     }
 }
 
-function _makeBaseChain(chain: Chain, rpcUrl: string, wsUrl?: string): Chain {
+function _makeBaseChain(args: {
+    chain: Chain
+    rpcUrl: string
+    gatewayRpcUrl?: string
+    gatewaySamplingRate?: number // integer 0-100 representing percentage
+    wsUrl?: string
+}): Chain {
+    const { chain, rpcUrl, gatewayRpcUrl, gatewaySamplingRate, wsUrl } = args
+
+    const effectiveRpcUrl =
+        gatewayRpcUrl && Math.random() * 100 < (gatewaySamplingRate ?? 0) ? gatewayRpcUrl : rpcUrl
+
     const rpcUrls = {
-        http: [rpcUrl],
+        http: [effectiveRpcUrl],
         webSocket: wsUrl ? [wsUrl] : undefined,
     }
     // privy says we should use addRpcUrlOverrideToChain to use a custom rpc url https://docs.privy.io/guide/configuration/networks#overriding-a-chains-rpc-provider
-    const baseChain = addRpcUrlOverrideToChain(chain, rpcUrl)
+    const baseChain = addRpcUrlOverrideToChain(chain, effectiveRpcUrl)
     return {
         ...baseChain,
         rpcUrls: {

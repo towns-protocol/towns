@@ -128,6 +128,10 @@ const envSchema = z.object({
     // Controls the type of smart account implementation to use for new users
     // if set to 'modular', existing users with simple smart accounts will be migrated to modular
     VITE_NEW_SMART_ACCOUNT_IMPLEMENTATION_TYPE: z.enum(['simple', 'modular']).default('simple'),
+    // Gateway RPC URL - if enabled, the SpaceDapp will use this instead of the base chain rpc url
+    VITE_BASE_RPC_GATEWAY_URL: z.string().url().optional(),
+    // Gateway RPC Sampling Rate - 0-100
+    VITE_BASE_RPC_GATEWAY_SAMPLING_RATE: z.number().optional(),
 })
 
 const parsed = envSchema.safeParse(import.meta.env)

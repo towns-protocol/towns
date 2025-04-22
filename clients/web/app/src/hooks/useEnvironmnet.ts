@@ -10,7 +10,7 @@ import {
 import { AccountAbstractionConfig } from '@towns/userops'
 import { retryGetAccessToken } from '@towns/privy'
 import { env } from 'utils'
-import { getCustomBaseChain, getCustomRiverChain } from 'customChains'
+import { getBaseGatewayChain, getCustomBaseChain, getCustomRiverChain } from 'customChains'
 
 const TOWNS_DEV_ENV = 'TOWNS_DEV_ENV'
 
@@ -18,6 +18,7 @@ export interface TownsEnvironmentInfo {
     id: string
     name: string
     baseChain: Chain
+    gatewayBaseChain: Chain
     baseChainConfig: BaseChainConfig
     riverChain: IChainConfig
     riverChainConfig: RiverChainConfig
@@ -33,6 +34,7 @@ function makeEnvironments(): TownsEnvironmentInfo[] {
         // don't add the default env
         // get the chains
         const baseChain = getCustomBaseChain(deployment.base.chainId)
+        const gatewayBaseChain = getBaseGatewayChain(deployment.base.chainId)
         // don't add chain if we haven't predefined a custom base chain
         if (!baseChain) {
             continue
@@ -46,6 +48,7 @@ function makeEnvironments(): TownsEnvironmentInfo[] {
             id: riverEnv,
             name: riverEnv,
             baseChain,
+            gatewayBaseChain,
             baseChainConfig: deployment.base,
             riverChain,
             riverChainConfig: deployment.river,
