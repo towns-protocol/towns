@@ -21,8 +21,8 @@ const querySchema = z.object({
 		.transform((value) => bin_fromHexString(value)),
 	iv: z
 		.string()
-		.min(1, 'iv parameter is required')
-		.transform((value) => bin_fromHexString(value)),
+		.transform((value) => bin_fromHexString(value))
+		.optional(),
 })
 
 const CACHE_CONTROL = {

@@ -5,15 +5,91 @@ import (
 	"fmt"
 	"slices"
 
+	"github.com/ethereum/go-ethereum/common"
 	"google.golang.org/protobuf/proto"
 
-	"github.com/ethereum/go-ethereum/common"
-
 	. "github.com/towns-protocol/towns/core/node/base"
+	"github.com/towns-protocol/towns/core/node/crypto"
 	"github.com/towns-protocol/towns/core/node/events/migrations"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/shared"
 )
+
+// ParsedSnapshot is a wrapper around the snapshot and its envelope.
+type ParsedSnapshot struct {
+	Snapshot *Snapshot
+	Envelope *Envelope
+}
+
+// MakeParsedSnapshot creates a parsed snapshot from the given wallet and snapshot.
+func MakeParsedSnapshot(wallet *crypto.Wallet, snapshot *Snapshot) (*ParsedSnapshot, error) {
+	envelope, err := MakeSnapshotEnvelope(wallet, snapshot)
+	if err != nil {
+		return nil, err
+	}
+
+	return &ParsedSnapshot{
+		Snapshot: snapshot,
+		Envelope: envelope,
+	}, nil
+}
+
+// MakeSnapshotEnvelope creates a snapshot envelope from the given snapshot.
+func MakeSnapshotEnvelope(wallet *crypto.Wallet, snapshot *Snapshot) (*Envelope, error) {
+	snapshotBytes, err := proto.Marshal(snapshot)
+	if err != nil {
+		return nil, AsRiverError(err, Err_INTERNAL).
+			Message("Failed to serialize snapshot to bytes").
+			Func("MakeSnapshotEnvelope")
+	}
+
+	hash := crypto.TownsHashForSnapshots.Hash(snapshotBytes)
+	signature, err := wallet.SignHash(hash)
+	if err != nil {
+		return nil, err
+	}
+
+	return &Envelope{
+		Event:     snapshotBytes,
+		Signature: signature,
+		Hash:      hash[:],
+	}, nil
+}
+
+// ParseSnapshot parses the given envelope into a snapshot.
+// It verifies the hash and signature of the envelope.
+func ParseSnapshot(envelope *Envelope, signer common.Address) (*ParsedSnapshot, error) {
+	hash := crypto.TownsHashForSnapshots.Hash(envelope.Event)
+	if !bytes.Equal(hash[:], envelope.Hash) {
+		return nil, RiverError(Err_BAD_EVENT_HASH, "Bad hash provided",
+			"computed", hash, "got", envelope.Hash).
+			Func("ParseSnapshot")
+	}
+
+	signerPubKey, err := crypto.RecoverSignerPublicKey(hash[:], envelope.Signature)
+	if err != nil {
+		return nil, err
+	}
+
+	var sn Snapshot
+	if err = proto.Unmarshal(envelope.Event, &sn); err != nil {
+		return nil, AsRiverError(err, Err_INVALID_ARGUMENT).
+			Message("Failed to decode snapshot from bytes").
+			Func("ParseSnapshot")
+	}
+
+	if addr := crypto.PublicKeyToAddress(signerPubKey); addr.Cmp(signer) != 0 {
+		return nil, RiverError(Err_BAD_EVENT_SIGNATURE, "Bad signature provided",
+			"computedAddress", addr,
+			"expectedAddress", signer).
+			Func("ParseSnapshot")
+	}
+
+	return &ParsedSnapshot{
+		Snapshot: &sn,
+		Envelope: envelope,
+	}, nil
+}
 
 func Make_GenesisSnapshot(events []*ParsedEvent) (*Snapshot, error) {
 	if len(events) == 0 {
@@ -339,12 +415,19 @@ func update_Snapshot_User(iSnapshot *Snapshot, userPayload *UserPayload) error {
 			if snapshot.UserContent.TipsSent == nil {
 				snapshot.UserContent.TipsSent = make(map[string]uint64)
 			}
+			if snapshot.UserContent.TipsSentCount == nil {
+				snapshot.UserContent.TipsSentCount = make(map[string]uint64)
+			}
 			currencyAddress := common.BytesToAddress(transactionContent.Tip.GetEvent().GetCurrency())
 			currency := currencyAddress.Hex()
 			if _, ok := snapshot.UserContent.TipsSent[currency]; !ok {
 				snapshot.UserContent.TipsSent[currency] = 0
 			}
 			snapshot.UserContent.TipsSent[currency] += transactionContent.Tip.GetEvent().GetAmount()
+			if _, ok := snapshot.UserContent.TipsSentCount[currency]; !ok {
+				snapshot.UserContent.TipsSentCount[currency] = 0
+			}
+			snapshot.UserContent.TipsSentCount[currency]++
 			return nil
 		case *BlockchainTransaction_TokenTransfer_:
 			return nil
@@ -362,12 +445,19 @@ func update_Snapshot_User(iSnapshot *Snapshot, userPayload *UserPayload) error {
 			if snapshot.UserContent.TipsReceived == nil {
 				snapshot.UserContent.TipsReceived = make(map[string]uint64)
 			}
+			if snapshot.UserContent.TipsReceivedCount == nil {
+				snapshot.UserContent.TipsReceivedCount = make(map[string]uint64)
+			}
 			currencyAddress := common.BytesToAddress(transactionContent.Tip.GetEvent().GetCurrency())
 			currency := currencyAddress.Hex()
 			if _, ok := snapshot.UserContent.TipsReceived[currency]; !ok {
 				snapshot.UserContent.TipsReceived[currency] = 0
 			}
 			snapshot.UserContent.TipsReceived[currency] += transactionContent.Tip.GetEvent().GetAmount()
+			if _, ok := snapshot.UserContent.TipsReceivedCount[currency]; !ok {
+				snapshot.UserContent.TipsReceivedCount[currency] = 0
+			}
+			snapshot.UserContent.TipsReceivedCount[currency]++
 			return nil
 		case *BlockchainTransaction_TokenTransfer_:
 			return nil
@@ -613,12 +703,59 @@ func update_Snapshot_Member(
 			if snapshot.Tips == nil {
 				snapshot.Tips = make(map[string]uint64)
 			}
+			if snapshot.TipsCount == nil {
+				snapshot.TipsCount = make(map[string]uint64)
+			}
 			currencyAddress := common.BytesToAddress(transactionContent.Tip.GetEvent().GetCurrency())
 			currency := currencyAddress.Hex()
 			if _, ok := snapshot.Tips[currency]; !ok {
 				snapshot.Tips[currency] = 0
 			}
-			snapshot.Tips[currency] += transactionContent.Tip.GetEvent().GetAmount()
+			if _, ok := snapshot.TipsCount[currency]; !ok {
+				snapshot.TipsCount[currency] = 0
+			}
+			ammount := transactionContent.Tip.GetEvent().GetAmount()
+			snapshot.Tips[currency] += ammount
+			snapshot.TipsCount[currency]++
+
+			sender, err := findMember(snapshot.Joined, content.MemberBlockchainTransaction.FromUserAddress)
+			if err != nil {
+				return err
+			}
+			if sender.TipsSent == nil {
+				sender.TipsSent = make(map[string]uint64)
+			}
+			if sender.TipsSentCount == nil {
+				sender.TipsSentCount = make(map[string]uint64)
+			}
+			if _, ok := sender.TipsSent[currency]; !ok {
+				sender.TipsSent[currency] = 0
+			}
+			if _, ok := sender.TipsSentCount[currency]; !ok {
+				sender.TipsSentCount[currency] = 0
+			}
+			sender.TipsSent[currency] += ammount
+			sender.TipsSentCount[currency]++
+
+			receiver, err := findMember(snapshot.Joined, transactionContent.Tip.ToUserAddress)
+			if err != nil {
+				return err
+			}
+			if receiver.TipsReceived == nil {
+				receiver.TipsReceived = make(map[string]uint64)
+			}
+			if receiver.TipsReceivedCount == nil {
+				receiver.TipsReceivedCount = make(map[string]uint64)
+			}
+			if _, ok := receiver.TipsReceived[currency]; !ok {
+				receiver.TipsReceived[currency] = 0
+			}
+			if _, ok := receiver.TipsReceivedCount[currency]; !ok {
+				receiver.TipsReceivedCount[currency] = 0
+			}
+			receiver.TipsReceived[currency] += ammount
+			receiver.TipsReceivedCount[currency]++
+
 			return nil
 		case *BlockchainTransaction_TokenTransfer_:
 			return nil

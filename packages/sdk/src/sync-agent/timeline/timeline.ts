@@ -6,7 +6,7 @@ import {
     getEditsId,
     getRedactsId,
     makeRedactionEvent,
-    toEvent,
+    toEventSA,
     toReplacedMessageEvent,
 } from './models/timelineEvent'
 import { LocalTimelineEvent } from '../../types'
@@ -49,7 +49,7 @@ export class MessageTimeline {
         stream.on('streamUpdated', this.onStreamUpdated)
         stream.on('streamLocalEventUpdated', this.onStreamLocalEventUpdated)
         const events = stream.view.timeline
-            .map((event) => toEvent(event, this.userId))
+            .map((event) => toEventSA(event, this.userId))
             .filter((event) => this.filterFn(event, stream.view.contentKind))
         this.appendEvents(events, this.userId)
     }
@@ -58,7 +58,7 @@ export class MessageTimeline {
         return this.riverConnection.callWithStream(this.streamId, async (client) => {
             return client.scrollback(this.streamId).then(({ terminus, firstEvent }) => ({
                 terminus,
-                firstEvent: firstEvent ? toEvent(firstEvent, this.userId) : undefined,
+                firstEvent: firstEvent ? toEventSA(firstEvent, this.userId) : undefined,
             }))
         })
     }
@@ -76,19 +76,19 @@ export class MessageTimeline {
         const { prepended, appended, updated, confirmed } = change
         if (prepended) {
             const events = prepended
-                .map((event) => toEvent(event, this.userId))
+                .map((event) => toEventSA(event, this.userId))
                 .filter((event) => this.filterFn(event, kind))
             this.prependEvents(events, this.userId)
         }
         if (appended) {
             const events = appended
-                .map((event) => toEvent(event, this.userId))
+                .map((event) => toEventSA(event, this.userId))
                 .filter((event) => this.filterFn(event, kind))
             this.appendEvents(events, this.userId)
         }
         if (updated) {
             const events = updated
-                .map((event) => toEvent(event, this.userId))
+                .map((event) => toEventSA(event, this.userId))
                 .filter((event) => this.filterFn(event, kind))
             this.updateEvents(events, this.userId)
         }
@@ -108,7 +108,7 @@ export class MessageTimeline {
         localEventId: string,
         localEvent: LocalTimelineEvent,
     ) => {
-        const event = toEvent(localEvent, this.userId)
+        const event = toEventSA(localEvent, this.userId)
         if (this.filterFn(event, kind)) {
             this.updateEvent(event, localEventId)
         }
@@ -181,7 +181,7 @@ export class MessageTimeline {
             return
         }
         const newEvent = toReplacedMessageEvent(oldEvent, event)
-        this.events.replace(event, eventIndex, this.events.value)
+        this.events.replace(newEvent, eventIndex, this.events.value)
         this.replacedEvents.add(event.eventId, oldEvent, newEvent)
         this.reactions.removeEvent(oldEvent)
         this.reactions.addEvent(newEvent)

@@ -31,7 +31,7 @@ func (r DebugReadStreamDataResult) String() string {
 
 	sb.WriteString("MB: ")
 	for _, mb := range r.Miniblocks {
-		fmt.Fprintf(&sb, " %d", mb.MiniblockNumber)
+		fmt.Fprintf(&sb, " %d", mb.Number)
 	}
 	sb.WriteString("\n")
 
@@ -49,7 +49,7 @@ func (r DebugReadStreamDataResult) String() string {
 	if len(r.MbCandidates) > 0 {
 		sb.WriteString("CANDIDATES: ")
 		for _, c := range r.MbCandidates {
-			fmt.Fprintf(&sb, " %d", c.MiniblockNumber)
+			fmt.Fprintf(&sb, " %d", c.Number)
 		}
 		sb.WriteString("\n")
 	}

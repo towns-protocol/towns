@@ -91,6 +91,7 @@ import {
 import { SyncState } from '../syncedStreamsLoop'
 import { RpcOptions } from '../rpcCommon'
 import { isDefined } from '../check'
+import { MemberTokenTransfer } from '../streamStateView_Members'
 
 const log = dlog('csb:test:util')
 
@@ -976,6 +977,7 @@ export function waitFor<T>(
             } else if (result === undefined && promiseStatus === 'resolved') {
                 resolve(undefined as T)
             } else {
+                // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
                 reject(lastError)
             }
         }
@@ -1469,7 +1471,7 @@ export async function expectUserCanJoinChannel(
 
     // Stream node should allow the join
     await expect(client.joinStream(channelId)).resolves.not.toThrow()
-    const userStreamView = (await client.waitForStream(makeUserStreamId(client.userId))!).view
+    const userStreamView = (await client.waitForStream(makeUserStreamId(client.userId))).view
     // Wait for alice's user stream to have the join
     await waitFor(() => userStreamView.userContent.isMember(channelId, MembershipOp.SO_JOIN))
 }
@@ -1526,21 +1528,8 @@ export function extractBlockchainTransactionTransferEvents(
 export function extractMemberBlockchainTransactions(
     client: Client,
     channelId: string,
-): BlockchainTransaction_TokenTransfer[] {
+): MemberTokenTransfer[] {
     const stream = client.streams.get(channelId)
     if (!stream) throw new Error('no stream found')
-
-    return stream.view.timeline
-        .map((e) => {
-            if (
-                e.remoteEvent?.event.payload.case === 'memberPayload' &&
-                e.remoteEvent?.event.payload.value.content.case === 'memberBlockchainTransaction' &&
-                e.remoteEvent.event.payload.value.content.value.transaction?.content.case ===
-                    'tokenTransfer'
-            ) {
-                return e.remoteEvent.event.payload.value.content.value.transaction.content.value
-            }
-            return undefined
-        })
-        .filter(isDefined)
+    return stream.view.getMembers().tokenTransfers
 }

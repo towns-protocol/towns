@@ -14,6 +14,7 @@ import (
 
 	mapset "github.com/deckarep/golang-set/v2"
 
+	"github.com/towns-protocol/towns/core/node/app_registry/types"
 	. "github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/infra"
 	"github.com/towns-protocol/towns/core/node/protocol"
@@ -32,24 +33,27 @@ type (
 		FallbackKey string
 	}
 
-	// When this is returned, caller already has access to the device key,
-	// and session keys + ciphertexts. They can combine these with the returned
-	// information here to form the following tuple needed for sending each message
-	// (webhookUrl, ciphertexts, session_ids, encryptedSharedSecret, streamEvent)
+	// When this is returned, caller already has access to the device key and the
+	// group encryption sessions envelope. They can combine these with the information
+	// returned in this struct to form the following tuple needed for each app to send
+	// a message, which is:
+	// (webhookUrl, encryption_envelope, encryptedSharedSecret, messageEnvelope)
 	// where:
-	// - webhookUrl is the address of the bot service
-	// - (session_keys, ciphertexts) is the tuple of session ids and session keys encrypted
-	//   with the fallback public key of the bot's device key, which were sent together in
-	//   to the bot's User inbox stream in a single message. `ciphertexts` is decryptable
-	//   only by the bot, who has unique access to the private key of the fallback key pair
+	// - webhookUrl is the URL address of the bot service
+	// - encryption_envelope is binary of the envelope of the group encryption sessions
+	//   event found in the app's user inbox stream which contains the encrypted ciphertext
+	//   needed for the bot server to decrypt the stream event.
 	// - encryptedSharedSecret is the shared hmac secret used by the app registry server
-	//   to sign jwt tokens for authentication of origination of webhook calls, and
-	// - StreamEvents is an array of serialized channel message payload stream events
+	//   to sign jwt tokens for authentication of origination of webhook calls. To be useful,
+	//   it must be decrypted with the app registry service's in-memory data encryption key.
+	// - messageEnvelopes is an array of serialized channel message payload stream event envelopes
+	//   that can all be send with the same group encryption sessions message as a set
+	//   of decryption keys.
 	SendableMessages struct {
 		AppId                 common.Address // included here for logging / metrics
 		EncryptedSharedSecret [32]byte
 		WebhookUrl            string
-		StreamEvents          [][]byte
+		MessageEnvelopes      [][]byte
 	}
 
 	// When SendableApp is returned, the caller has access to the session id and
@@ -62,10 +66,11 @@ type (
 		SendMessageSecrets SendMessageSecrets
 	}
 
-	// UnsendableApp is returned to supply all information needed for the caller to
-	// request a key solicitation if the attempt to send a message was unsuccessful.
+	// UnsendableApp is returned to supply all information needed for the caller to request
+	// a key solicitation if a message could not be forwarded due to missing decryption keys.
 	// In this case, the caller has access to the session id and stream id already. Return
-	// (appId, deviceKey, webhookUrl, encryptedSharedSecret)
+	// (appId, deviceKey, webhookUrl, encryptedSharedSecret) to make an authenticated call
+	// to the bot to solicit keys for the missing session id(s) in the stream.
 	UnsendableApp struct {
 		AppId                 common.Address
 		DeviceKey             string
@@ -73,12 +78,11 @@ type (
 		EncryptedSharedSecret [32]byte
 	}
 
-	// Each session key is stored in a string list that has been encrypted by a device's fallback
-	// public key. We send back the entire encrypted string of keys as the Ciphertexts value, along
-	// with the list of session ids so the app server can extract the correct key from the list.
+	// We send entire group encryption sessions envelopes to the bot server to use as decryption
+	// material. The encrypted shared secret must be decrypted with the in-memory data decryption
+	// key in order to be used to sign jwt tokens for the bot server.
 	SendMessageSecrets struct {
-		SessionIds            []string
-		CipherTexts           string
+		EncryptionEnvelope    []byte
 		EncryptedSharedSecret [32]byte
 	}
 
@@ -86,16 +90,34 @@ type (
 		App              common.Address
 		Owner            common.Address
 		EncryptedSecret  [32]byte
+		Settings         types.AppSettings
 		WebhookUrl       string
 		EncryptionDevice EncryptionDevice
 	}
 
 	AppRegistryStore interface {
+		// Note: the shared secret passed into this method call is stored directly on disk and
+		// therefore should always be encrypted using the service's configured data encryption key.
 		CreateApp(
 			ctx context.Context,
 			owner common.Address,
 			app common.Address,
-			sharedSecret [32]byte,
+			settings types.AppSettings,
+			encryptedSharedSecret [32]byte,
+		) error
+
+		// Note: the shared secret passed into this method call is stored directly on disk and
+		// therefore should always be encrypted using the service's configured data encryption key.
+		RotateSecret(
+			ctx context.Context,
+			app common.Address,
+			encryptedSharedSecret [32]byte,
+		) error
+
+		UpdateSettings(
+			ctx context.Context,
+			app common.Address,
+			settings types.AppSettings,
 		) error
 
 		RegisterWebhook(
@@ -111,15 +133,20 @@ type (
 			app common.Address,
 		) (*AppInfo, error)
 
-		// PublishSessionKeys creates a row with the encrypted ciphertexts and list of session ids for the
-		// device key, and returns all enqueued messages that become sendable now that these session keys
-		// are available. If no keys become sendable, messages is nil.
+		GetSendableApps(
+			ctx context.Context,
+			apps []common.Address,
+		) (sendableDevices []SendableApp, err error)
+
+		// PublishSessionKeys creates a row with the group encryption sessions envelope and list of
+		// session ids for the device key, and returns all enqueued messages that become sendable now
+		// that these session keys are available. If no keys become sendable, messages is nil.
 		PublishSessionKeys(
 			ctx context.Context,
 			streamId shared.StreamId,
 			deviceKey string,
 			sessionIds []string,
-			ciphertexts string,
+			encryptionEnvelope []byte,
 		) (messages *SendableMessages, err error)
 
 		// EnqueueUnsendableMessages enqueues the message to be sent for all devices that do not yet
@@ -130,8 +157,16 @@ type (
 			ctx context.Context,
 			appIds []common.Address,
 			sessionId string,
-			streamEventBytes []byte,
+			envelopeBytes []byte,
 		) (sendableDevices []SendableApp, unsendableDevices []UnsendableApp, err error)
+
+		// GetSessionKey returns the envelope of the encrypted sessions message for the specified
+		// app that contains the encrypted ciphertext for the given session id, if it exists.
+		GetSessionKey(
+			ctx context.Context,
+			app common.Address,
+			sessionId string,
+		) (encryptionEnvelope []byte, err error)
 	}
 )
 
@@ -192,7 +227,7 @@ func DbSchemaNameForAppRegistryService(appServiceId string) string {
 }
 
 // NewPostgresAppRegistryStore instantiates a new PostgreSQL persistent storage for the app registry service.
-// This implementation requires isolation level of at least repeatable read in order for the queueing
+// This implementation requires isolation level of at least serializable in order for the queueing
 // functionality to work as expected.
 func NewPostgresAppRegistryStore(
 	ctx context.Context,
@@ -238,6 +273,7 @@ func (s *PostgresAppRegistryStore) CreateApp(
 	ctx context.Context,
 	owner common.Address,
 	app common.Address,
+	settings types.AppSettings,
 	encryptedSharedSecret [32]byte,
 ) error {
 	return s.txRunner(
@@ -245,11 +281,12 @@ func (s *PostgresAppRegistryStore) CreateApp(
 		"CreateApp",
 		pgx.ReadWrite,
 		func(ctx context.Context, tx pgx.Tx) error {
-			return s.createApp(ctx, owner, app, encryptedSharedSecret, tx)
+			return s.createApp(ctx, owner, app, settings, encryptedSharedSecret, tx)
 		},
 		nil,
 		"appAddress", app,
 		"ownerAddress", owner,
+		"settings", settings,
 	)
 }
 
@@ -257,15 +294,17 @@ func (s *PostgresAppRegistryStore) createApp(
 	ctx context.Context,
 	owner common.Address,
 	app common.Address,
+	settings types.AppSettings,
 	encryptedSharedSecret [32]byte,
 	txn pgx.Tx,
 ) error {
 	if _, err := txn.Exec(
 		ctx,
-		"insert into app_registry (app_id, app_owner_id, encrypted_shared_secret) values ($1, $2, $3);",
+		"insert into app_registry (app_id, app_owner_id, encrypted_shared_secret, forward_setting) values ($1, $2, $3, $4);",
 		PGAddress(app),
 		PGAddress(owner),
 		PGSecret(encryptedSharedSecret),
+		int16(settings.ForwardSetting),
 	); err != nil {
 		if isPgError(err, pgerrcode.UniqueViolation) {
 			return WrapRiverError(protocol.Err_ALREADY_EXISTS, err).Message("app already exists")
@@ -273,6 +312,87 @@ func (s *PostgresAppRegistryStore) createApp(
 			return WrapRiverError(protocol.Err_DB_OPERATION_FAILURE, err).Message("unable to create app record")
 		}
 	}
+	return nil
+}
+
+func (s *PostgresAppRegistryStore) UpdateSettings(
+	ctx context.Context,
+	app common.Address,
+	settings types.AppSettings,
+) error {
+	return s.txRunner(
+		ctx,
+		"UpdateSettings",
+		pgx.ReadWrite,
+		func(ctx context.Context, tx pgx.Tx) error {
+			return s.updateSettings(ctx, app, settings, tx)
+		},
+		nil,
+		"appAddress", app,
+		"settings", settings,
+	)
+}
+
+func (s *PostgresAppRegistryStore) updateSettings(
+	ctx context.Context,
+	app common.Address,
+	settings types.AppSettings,
+	txn pgx.Tx,
+) error {
+	tag, err := txn.Exec(
+		ctx,
+		`UPDATE app_registry SET forward_setting = $2 WHERE app_id = $1`,
+		PGAddress(app),
+		int16(settings.ForwardSetting),
+	)
+	if err != nil {
+		return AsRiverError(err, protocol.Err_DB_OPERATION_FAILURE).
+			Message("Unable to update the forward setting for app")
+	}
+	if tag.RowsAffected() < 1 {
+		return RiverError(protocol.Err_NOT_FOUND, "app was not found in registry")
+	}
+
+	return nil
+}
+
+func (s *PostgresAppRegistryStore) RotateSecret(
+	ctx context.Context,
+	app common.Address,
+	encryptedSharedSecret [32]byte,
+) error {
+	return s.txRunner(
+		ctx,
+		"RotateSecret",
+		pgx.ReadWrite,
+		func(ctx context.Context, tx pgx.Tx) error {
+			return s.rotateSecret(ctx, app, encryptedSharedSecret, tx)
+		},
+		nil,
+		"appAddress", app,
+	)
+}
+
+func (s *PostgresAppRegistryStore) rotateSecret(
+	ctx context.Context,
+	app common.Address,
+	encryptedSharedSecret [32]byte,
+	txn pgx.Tx,
+) error {
+	tag, err := txn.Exec(
+		ctx,
+		`UPDATE app_registry SET encrypted_shared_secret = $2 WHERE app_id = $1`,
+		PGAddress(app),
+		PGSecret(encryptedSharedSecret),
+	)
+	if err != nil {
+		return AsRiverError(err, protocol.Err_DB_OPERATION_FAILURE).
+			Message("Unable to update the encrypted shared secret for app")
+	}
+	if tag.RowsAffected() < 1 {
+		return RiverError(protocol.Err_NOT_FOUND, "app was not found in registry")
+	}
+
 	return nil
 }
 
@@ -368,8 +488,8 @@ func (s *PostgresAppRegistryStore) getAppInfo(
 	if err := tx.QueryRow(
 		ctx,
 		`
-		    SELECT app_id, app_owner_id, encrypted_shared_secret, COALESCE(webhook, ''),
-		        COALESCE(device_key, ''), COALESCE(fallback_key, '')
+		    SELECT app_id, app_owner_id, encrypted_shared_secret, forward_setting,
+			    COALESCE(webhook, ''), COALESCE(device_key, ''), COALESCE(fallback_key, '')
 		    FROM app_registry WHERE app_id = $1
 		`,
 		app,
@@ -377,12 +497,13 @@ func (s *PostgresAppRegistryStore) getAppInfo(
 		&app,
 		&owner,
 		&encryptedSecret,
+		&appInfo.Settings.ForwardSetting,
 		&appInfo.WebhookUrl,
 		&appInfo.EncryptionDevice.DeviceKey,
 		&appInfo.EncryptionDevice.FallbackKey,
 	); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, RiverError(protocol.Err_NOT_FOUND, "app does not exist")
+			return nil, RiverError(protocol.Err_NOT_FOUND, "app is not registered")
 		} else {
 			return nil, WrapRiverError(protocol.Err_DB_OPERATION_FAILURE, err).
 				Message("failed to find app in registry")
@@ -400,7 +521,7 @@ func (s *PostgresAppRegistryStore) PublishSessionKeys(
 	streamId shared.StreamId,
 	deviceKey string,
 	sessionIds []string,
-	ciphertexts string,
+	encryptionEnvelope []byte,
 ) (messages *SendableMessages, err error) {
 	err = s.txRunner(
 		ctx,
@@ -408,12 +529,13 @@ func (s *PostgresAppRegistryStore) PublishSessionKeys(
 		pgx.ReadWrite,
 		func(ctx context.Context, tx pgx.Tx) error {
 			var err error
-			messages, err = s.publishSessionKeys(ctx, streamId, deviceKey, sessionIds, ciphertexts, tx)
+			messages, err = s.publishSessionKeys(ctx, streamId, deviceKey, sessionIds, encryptionEnvelope, tx)
 			return err
 		},
 		nil,
 		"deviceKey", deviceKey,
 		"sessionIds", sessionIds,
+		"streamId", streamId,
 	)
 	if err != nil {
 		return nil, err
@@ -426,18 +548,18 @@ func (s *PostgresAppRegistryStore) publishSessionKeys(
 	streamId shared.StreamId,
 	deviceKey string,
 	sessionIds []string,
-	ciphertexts string,
+	encryptionEnvelope []byte,
 	tx pgx.Tx,
 ) (messages *SendableMessages, err error) {
 	_, err = tx.Exec(
 		ctx,
-		`   INSERT INTO app_session_keys (device_key, stream_id, session_ids, ciphertexts)
+		`   INSERT INTO app_session_keys (device_key, stream_id, session_ids, message_envelope)
 			VALUES ($1, $2, $3, $4);	
 		`,
 		deviceKey,
 		streamId,
 		sessionIds,
-		ciphertexts,
+		encryptionEnvelope,
 	)
 	if err != nil {
 		if isPgError(err, pgerrcode.UniqueViolation) {
@@ -482,7 +604,7 @@ func (s *PostgresAppRegistryStore) publishSessionKeys(
 		rows,
 		[]any{&message},
 		func() error {
-			messages.StreamEvents = append(messages.StreamEvents, message)
+			messages.MessageEnvelopes = append(messages.MessageEnvelopes, message)
 			return nil
 		},
 	); err != nil {
@@ -491,7 +613,7 @@ func (s *PostgresAppRegistryStore) publishSessionKeys(
 			err,
 		).Message("unable to scan from sendable messages")
 	}
-	if len(messages.StreamEvents) == 0 {
+	if len(messages.MessageEnvelopes) == 0 {
 		return nil, nil
 	}
 
@@ -522,11 +644,145 @@ func (s *PostgresAppRegistryStore) publishSessionKeys(
 	return messages, nil
 }
 
+func (s *PostgresAppRegistryStore) GetSessionKey(
+	ctx context.Context,
+	app common.Address,
+	sessionId string,
+) (encryptionEnvelope []byte, err error) {
+	err = s.txRunner(
+		ctx,
+		"GetSessionKeys",
+		pgx.ReadOnly,
+		func(ctx context.Context, tx pgx.Tx) error {
+			var err error
+			encryptionEnvelope, err = s.getSessionKey(ctx, app, sessionId, tx)
+			return err
+		},
+		nil,
+		"app", app,
+		"sessionId", sessionId,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return encryptionEnvelope, nil
+}
+
+func (s *PostgresAppRegistryStore) getSessionKey(
+	ctx context.Context,
+	app common.Address,
+	sessionId string,
+	tx pgx.Tx,
+) (encryptionEnvelope []byte, err error) {
+	if err = tx.QueryRow(
+		ctx,
+		`
+		SELECT message_envelope FROM app_registry
+		INNER JOIN app_session_keys
+		ON app_registry.device_key = app_session_keys.device_key
+		AND app_registry.app_id = $1
+		AND $2 = ANY(app_session_keys.session_ids)
+		LIMIT 1;
+		`,
+		PGAddress(app),
+		sessionId,
+	).Scan(&encryptionEnvelope); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, RiverError(protocol.Err_NOT_FOUND, "session key for app not found")
+		} else {
+			return nil, WrapRiverError(protocol.Err_DB_OPERATION_FAILURE, err).
+				Message("Unable to find session key for app")
+		}
+	}
+	return encryptionEnvelope, nil
+}
+
+func (s *PostgresAppRegistryStore) GetSendableApps(
+	ctx context.Context,
+	apps []common.Address,
+) (sendableDevices []SendableApp, err error) {
+	err = s.txRunner(
+		ctx,
+		"GetSendableApps",
+		pgx.ReadOnly,
+		func(ctx context.Context, tx pgx.Tx) error {
+			var err error
+			sendableDevices, err = s.getSendableApps(ctx, apps, tx)
+			return err
+		},
+		nil,
+		"apps", apps,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return sendableDevices, nil
+}
+
+func (s *PostgresAppRegistryStore) getSendableApps(
+	ctx context.Context,
+	apps []common.Address,
+	tx pgx.Tx,
+) (sendableApps []SendableApp, err error) {
+	if len(apps) == 0 {
+		return sendableApps, nil
+	}
+
+	rows, err := tx.Query(
+		ctx,
+		`   
+		    SELECT app_id, device_key, webhook, encrypted_shared_secret
+			FROM app_registry
+			WHERE app_id = ANY($1)
+		`,
+		addressesToStrings(apps),
+	)
+	if err != nil {
+		return nil, WrapRiverError(
+			protocol.Err_DB_OPERATION_FAILURE,
+			err,
+		).Message("unable to get sending information for existing devices")
+	}
+
+	var appId PGAddress
+	var deviceKey, webhookUrl string
+	var encryptedSharedSecret PGSecret
+	if _, err := pgx.ForEachRow(
+		rows,
+		[]any{&appId, &deviceKey, &webhookUrl, &encryptedSharedSecret},
+		func() error {
+			if webhookUrl == "" {
+				return RiverError(protocol.Err_INTERNAL, "App has no registered webhook and is not sendable").Tag("unsendableApp", appId)
+			}
+			sendableApps = append(sendableApps, SendableApp{
+				AppId:      common.Address(appId),
+				DeviceKey:  deviceKey,
+				WebhookUrl: webhookUrl,
+				SendMessageSecrets: SendMessageSecrets{
+					EncryptedSharedSecret: encryptedSharedSecret,
+				},
+			})
+			return nil
+		},
+	); err != nil {
+		return nil, WrapRiverError(
+			protocol.Err_DB_OPERATION_FAILURE,
+			err,
+		).Message("unable to scan the app_registry")
+	}
+
+	if len(sendableApps) < len(apps) {
+		return nil, RiverError(protocol.Err_NOT_FOUND, "some apps were not found the registry")
+	}
+
+	return sendableApps, nil
+}
+
 func (s *PostgresAppRegistryStore) EnqueueUnsendableMessages(
 	ctx context.Context,
 	appIds []common.Address,
 	sessionId string,
-	streamEventBytes []byte,
+	envelopeBytes []byte,
 ) (sendableDevices []SendableApp, unsendableDevices []UnsendableApp, err error) {
 	if err = s.txRunner(
 		ctx,
@@ -534,7 +790,7 @@ func (s *PostgresAppRegistryStore) EnqueueUnsendableMessages(
 		pgx.ReadWrite,
 		func(ctx context.Context, tx pgx.Tx) error {
 			var err error
-			sendableDevices, unsendableDevices, err = s.enqueueUnsendableMessages(ctx, appIds, sessionId, streamEventBytes, tx)
+			sendableDevices, unsendableDevices, err = s.enqueueUnsendableMessages(ctx, appIds, sessionId, envelopeBytes, tx)
 			return err
 		},
 		nil,
@@ -558,13 +814,9 @@ func (s *PostgresAppRegistryStore) enqueueUnsendableMessages(
 	ctx context.Context,
 	appIds []common.Address,
 	sessionId string,
-	streamEventBytes []byte,
+	envelopeBytes []byte,
 	tx pgx.Tx,
 ) (sendableApps []SendableApp, unsendableApps []UnsendableApp, err error) {
-	appIdStrings := make([]string, len(appIds))
-	for i, appId := range appIds {
-		appIdStrings[i] = hex.EncodeToString(appId[:])
-	}
 	rows, err := tx.Query(
 		ctx,
 		`   
@@ -573,8 +825,7 @@ func (s *PostgresAppRegistryStore) enqueueUnsendableMessages(
 			  app_registry.device_key,
 			  app_registry.webhook,
 			  app_registry.encrypted_shared_secret,
-			  app_session_keys.session_ids,
-			  app_session_keys.ciphertexts
+			  app_session_keys.message_envelope
 			FROM app_registry
 			INNER JOIN app_session_keys
 			  ON app_registry.device_key = app_session_keys.device_key
@@ -583,7 +834,7 @@ func (s *PostgresAppRegistryStore) enqueueUnsendableMessages(
 			ORDER BY app_registry.app_id, app_session_keys.session_ids
 		`,
 		sessionId,
-		appIdStrings,
+		addressesToStrings(appIds),
 	)
 	if err != nil {
 		return nil, nil, WrapRiverError(
@@ -599,7 +850,7 @@ func (s *PostgresAppRegistryStore) enqueueUnsendableMessages(
 	var encryptedSharedSecret PGSecret
 	if _, err := pgx.ForEachRow(
 		rows,
-		[]any{&appId, &sendableDevice.DeviceKey, &sendableDevice.WebhookUrl, &encryptedSharedSecret, &sendableDevice.SendMessageSecrets.SessionIds, &sendableDevice.SendMessageSecrets.CipherTexts},
+		[]any{&appId, &sendableDevice.DeviceKey, &sendableDevice.WebhookUrl, &encryptedSharedSecret, &sendableDevice.SendMessageSecrets.EncryptionEnvelope},
 		func() error {
 			sendableDevice.AppId = common.Address(appId)
 			sendableDevice.SendMessageSecrets.EncryptedSharedSecret = encryptedSharedSecret
@@ -667,12 +918,14 @@ func (s *PostgresAppRegistryStore) enqueueUnsendableMessages(
 				return nil, nil
 			}
 
-			row := []interface{}{unsendableApps[nextRow].DeviceKey, sessionId, streamEventBytes}
+			row := []interface{}{unsendableApps[nextRow].DeviceKey, sessionId, envelopeBytes}
 			nextRow++
 			return row, nil
 		}),
 	)
 	if err != nil {
+		// This foreign key violation should be pretty much impossible since we read the device key
+		// from an existing app_registry row above.
 		if isPgError(err, pgerrcode.ForeignKeyViolation) {
 			return nil, nil, WrapRiverError(protocol.Err_NOT_FOUND, err).Message(
 				"unable to enqueue messages for session - app with device key is not registered",
@@ -680,7 +933,7 @@ func (s *PostgresAppRegistryStore) enqueueUnsendableMessages(
 		} else {
 			return nil, nil, WrapRiverError(protocol.Err_DB_OPERATION_FAILURE, err).Message(
 				"unable to enqueue messages for session",
-			)
+			).Tag("unsendableAppIds", unsendableAppIds)
 		}
 	}
 	if insertCount < int64(len(unsendableAppIds)) {

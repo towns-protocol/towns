@@ -14,11 +14,12 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/towns-protocol/towns/core/config"
+	"github.com/towns-protocol/towns/core/node/app_registry/types"
 	"github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/base/test"
 	"github.com/towns-protocol/towns/core/node/crypto"
 	"github.com/towns-protocol/towns/core/node/infra"
-	"github.com/towns-protocol/towns/core/node/protocol"
+	. "github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/shared"
 	"github.com/towns-protocol/towns/core/node/storage"
 	"github.com/towns-protocol/towns/core/node/testutils/dbtestutils"
@@ -35,12 +36,7 @@ type testAppRegistryStoreParams struct {
 	schema             string
 	config             *config.DatabaseConfig
 	closer             func()
-	// For retaining schema and manually closing the store, use
-	// the following two cleanup functions to manually delete the
-	// schema and cancel the test context.
-	schemaDeleter func()
-	ctxCloser     func()
-	exitSignal    chan error
+	exitSignal         chan error
 }
 
 func setupAppRegistryStorageTest(t *testing.T) *testAppRegistryStoreParams {
@@ -78,11 +74,9 @@ func setupAppRegistryStorageTest(t *testing.T) *testAppRegistryStoreParams {
 		exitSignal:         exitSignal,
 		closer: sync.OnceFunc(func() {
 			store.Close(ctx)
-			// dbCloser()
+			dbCloser()
 			ctxCloser()
 		}),
-		schemaDeleter: dbCloser,
-		ctxCloser:     ctxCloser,
 	}
 
 	return params
@@ -93,6 +87,152 @@ func safeAddress(t *testing.T) common.Address {
 	_, err := rand.Read(addr[:])
 	require.NoError(t, err)
 	return addr
+}
+
+func TestGetSessionKey(t *testing.T) {
+	params := setupAppRegistryStorageTest(t)
+	t.Cleanup(params.closer)
+
+	require := require.New(t)
+	store := params.pgAppRegistryStore
+
+	owner := safeAddress(t)
+	app := safeAddress(t)
+	unregisteredApp := safeAddress(t)
+
+	secretBytes, err := hex.DecodeString(testSecretHexString)
+	require.NoError(err)
+	secret := [32]byte(secretBytes)
+
+	err = store.CreateApp(
+		params.ctx,
+		owner,
+		app,
+		types.AppSettings{ForwardSetting: ForwardSettingValue_FORWARD_SETTING_UNSPECIFIED},
+		secret,
+	)
+	require.NoError(err)
+
+	err = store.RegisterWebhook(params.ctx, app, "http://www.callme.com/webhook", "deviceKey", "fallbackKey")
+	require.NoError(err)
+
+	spaceId, err := shared.MakeSpaceId()
+	require.NoError(err)
+	channelId, err := shared.MakeChannelId(spaceId)
+	require.NoError(err)
+
+	envelope := []byte("encryption_envelope")
+
+	sendable, err := store.PublishSessionKeys(
+		params.ctx,
+		channelId,
+		"deviceKey",
+		[]string{"sessionId1", "sessionId2"},
+		envelope,
+	)
+	require.Nil(sendable)
+	require.NoError(err)
+
+	tests := map[string]struct {
+		expectFound      bool
+		expectedEnvelope []byte
+		app              common.Address
+		sessionId        string
+	}{
+		"found - app registered with session key": {
+			expectFound:      true,
+			app:              app,
+			sessionId:        "sessionId1",
+			expectedEnvelope: envelope,
+		},
+		"found - check 2nd session key": {
+			expectFound:      true,
+			app:              app,
+			sessionId:        "sessionId2",
+			expectedEnvelope: envelope,
+		},
+		"unfound - registered app without key": {
+			app:       app,
+			sessionId: "session3Id",
+		},
+		"unfound - unregistered app": {
+			app: unregisteredApp,
+		},
+	}
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			envelope, err := store.GetSessionKey(params.ctx, tc.app, tc.sessionId)
+			if tc.expectFound {
+				require.NoError(err)
+				require.Equal(tc.expectedEnvelope, envelope)
+			} else {
+				require.Error(err)
+				require.True(base.IsRiverErrorCode(err, Err_NOT_FOUND))
+			}
+		})
+	}
+}
+
+func TestUpdateSettings(t *testing.T) {
+	params := setupAppRegistryStorageTest(t)
+	t.Cleanup(params.closer)
+
+	require := require.New(t)
+	store := params.pgAppRegistryStore
+
+	owner := safeAddress(t)
+	app := safeAddress(t)
+	unregisteredApp := safeAddress(t)
+
+	secretBytes, err := hex.DecodeString(testSecretHexString)
+	require.NoError(err)
+	secret := [32]byte(secretBytes)
+
+	err = store.CreateApp(
+		params.ctx,
+		owner,
+		app,
+		types.AppSettings{ForwardSetting: ForwardSettingValue_FORWARD_SETTING_UNSPECIFIED},
+		secret,
+	)
+	require.NoError(err)
+
+	info, err := store.GetAppInfo(params.ctx, app)
+	require.NoError(err)
+	require.Equal(
+		&storage.AppInfo{
+			App:             app,
+			Owner:           owner,
+			EncryptedSecret: secret,
+		},
+		info,
+	)
+
+	err = store.UpdateSettings(
+		params.ctx,
+		app,
+		types.AppSettings{ForwardSetting: ForwardSettingValue_FORWARD_SETTING_ALL_MESSAGES},
+	)
+	require.NoError(err)
+
+	info, err = store.GetAppInfo(params.ctx, app)
+	require.NoError(err)
+	require.Equal(
+		&storage.AppInfo{
+			App:             app,
+			Owner:           owner,
+			EncryptedSecret: secret,
+			Settings:        types.AppSettings{ForwardSetting: ForwardSettingValue_FORWARD_SETTING_ALL_MESSAGES},
+		},
+		info,
+	)
+
+	err = store.UpdateSettings(
+		params.ctx,
+		unregisteredApp,
+		types.AppSettings{ForwardSetting: ForwardSettingValue_FORWARD_SETTING_MENTIONS_REPLIES_REACTIONS},
+	)
+	require.ErrorContains(err, "app was not found in registry")
 }
 
 func TestRegisterWebhook(t *testing.T) {
@@ -113,17 +253,25 @@ func TestRegisterWebhook(t *testing.T) {
 	require.NoError(err)
 	secret := [32]byte(secretBytes)
 
-	err = store.CreateApp(params.ctx, owner, app, secret)
+	err = store.CreateApp(
+		params.ctx,
+		owner,
+		app,
+		types.AppSettings{ForwardSetting: ForwardSettingValue_FORWARD_SETTING_UNSPECIFIED},
+		secret,
+	)
 	require.NoError(err)
 
 	info, err := store.GetAppInfo(params.ctx, app)
 	require.NoError(err)
-	require.Equal(app, info.App)
-	require.Equal(owner, info.Owner)
-	require.Equal([32]byte(secretBytes), info.EncryptedSecret)
-	require.Equal("", info.WebhookUrl)
-	require.Equal("", info.EncryptionDevice.DeviceKey)
-	require.Equal("", info.EncryptionDevice.FallbackKey)
+	require.Equal(
+		&storage.AppInfo{
+			App:             app,
+			Owner:           owner,
+			EncryptedSecret: [32]byte(secretBytes),
+		},
+		info,
+	)
 
 	webhook := "https://webhook.com/callme"
 	err = store.RegisterWebhook(params.ctx, app, webhook, deviceKey, fallbackKey)
@@ -131,12 +279,19 @@ func TestRegisterWebhook(t *testing.T) {
 
 	info, err = store.GetAppInfo(params.ctx, app)
 	require.NoError(err)
-	require.Equal(app, info.App)
-	require.Equal(owner, info.Owner)
-	require.Equal([32]byte(secretBytes), info.EncryptedSecret)
-	require.Equal(webhook, info.WebhookUrl)
-	require.Equal(deviceKey, info.EncryptionDevice.DeviceKey)
-	require.Equal(fallbackKey, info.EncryptionDevice.FallbackKey)
+	require.Equal(
+		&storage.AppInfo{
+			App:             app,
+			Owner:           owner,
+			EncryptedSecret: [32]byte(secretBytes),
+			WebhookUrl:      webhook,
+			EncryptionDevice: storage.EncryptionDevice{
+				DeviceKey:   deviceKey,
+				FallbackKey: fallbackKey,
+			},
+		},
+		info,
+	)
 
 	webhook2 := "https://www.webhook.com/beepme"
 	deviceKey2 := safeAddress(t).String()
@@ -146,21 +301,34 @@ func TestRegisterWebhook(t *testing.T) {
 
 	info, err = store.GetAppInfo(params.ctx, app)
 	require.NoError(err)
-	require.Equal(app, info.App)
-	require.Equal(owner, info.Owner)
-	require.Equal([32]byte(secretBytes), info.EncryptedSecret)
-	require.Equal(webhook2, info.WebhookUrl)
-	require.Equal(deviceKey2, info.EncryptionDevice.DeviceKey)
-	require.Equal(fallbackKey2, info.EncryptionDevice.FallbackKey)
+	require.Equal(
+		&storage.AppInfo{
+			App:             app,
+			Owner:           owner,
+			EncryptedSecret: [32]byte(secretBytes),
+			WebhookUrl:      webhook2,
+			EncryptionDevice: storage.EncryptionDevice{
+				DeviceKey:   deviceKey2,
+				FallbackKey: fallbackKey2,
+			},
+		},
+		info,
+	)
 
 	err = store.RegisterWebhook(params.ctx, unregisteredApp, webhook, deviceKey, fallbackKey)
 	require.ErrorContains(err, "app was not found in registry")
 
-	err = store.CreateApp(params.ctx, owner, app2, secret)
+	err = store.CreateApp(
+		params.ctx,
+		owner,
+		app2,
+		types.AppSettings{ForwardSetting: ForwardSettingValue_FORWARD_SETTING_UNSPECIFIED},
+		secret,
+	)
 	require.NoError(err)
 	err = store.RegisterWebhook(params.ctx, app2, webhook, deviceKey2, fallbackKey)
 	require.ErrorContains(err, "another app is using this device id")
-	require.True(base.IsRiverErrorCode(err, protocol.Err_ALREADY_EXISTS))
+	require.True(base.IsRiverErrorCode(err, Err_ALREADY_EXISTS))
 }
 
 func TestCreateApp(t *testing.T) {
@@ -185,37 +353,106 @@ func TestCreateApp(t *testing.T) {
 	require.NoError(err)
 	secret2 := [32]byte(secretBytes2)
 
-	err = store.CreateApp(params.ctx, owner, app, secret)
+	err = store.CreateApp(
+		params.ctx,
+		owner,
+		app,
+		types.AppSettings{ForwardSetting: ForwardSettingValue_FORWARD_SETTING_ALL_MESSAGES},
+		secret,
+	)
 	require.NoError(err)
 
-	err = store.CreateApp(params.ctx, owner2, app, secret)
+	err = store.CreateApp(
+		params.ctx,
+		owner2,
+		app,
+		types.AppSettings{ForwardSetting: ForwardSettingValue_FORWARD_SETTING_MENTIONS_REPLIES_REACTIONS},
+		secret,
+	)
 	require.ErrorContains(err, "app already exists")
-	require.True(base.IsRiverErrorCode(err, protocol.Err_ALREADY_EXISTS))
+	require.True(base.IsRiverErrorCode(err, Err_ALREADY_EXISTS))
 
 	// Fine to have multiple apps per owner
-	err = store.CreateApp(params.ctx, owner, app2, secret2)
+	err = store.CreateApp(
+		params.ctx,
+		owner,
+		app2,
+		types.AppSettings{ForwardSetting: ForwardSettingValue_FORWARD_SETTING_MENTIONS_REPLIES_REACTIONS},
+		secret2,
+	)
 	require.NoError(err)
 
 	info, err := store.GetAppInfo(params.ctx, app)
 	require.NoError(err)
-	require.Equal(app, info.App)
-	require.Equal(owner, info.Owner)
-	require.Equal("", info.WebhookUrl)
-	require.Equal("", info.EncryptionDevice.DeviceKey)
-	require.Equal("", info.EncryptionDevice.FallbackKey)
+	require.Equal(
+		&storage.AppInfo{
+			App:             app,
+			Owner:           owner,
+			EncryptedSecret: secret,
+			Settings: types.AppSettings{
+				ForwardSetting: ForwardSettingValue_FORWARD_SETTING_ALL_MESSAGES,
+			},
+		},
+		info,
+	)
 
 	info, err = store.GetAppInfo(params.ctx, app2)
 	require.NoError(err)
-	require.Equal(app2, info.App)
-	require.Equal(owner, info.Owner)
-	require.Equal("", info.WebhookUrl)
-	require.Equal("", info.EncryptionDevice.DeviceKey)
-	require.Equal("", info.EncryptionDevice.FallbackKey)
+	require.Equal(
+		&storage.AppInfo{
+			App:             app2,
+			Owner:           owner,
+			EncryptedSecret: secret2,
+			Settings: types.AppSettings{
+				ForwardSetting: ForwardSettingValue_FORWARD_SETTING_MENTIONS_REPLIES_REACTIONS,
+			},
+		},
+		info,
+	)
 
 	info, err = store.GetAppInfo(params.ctx, app3)
 	require.Nil(info)
-	require.ErrorContains(err, "app does not exist")
-	require.True(base.IsRiverErrorCode(err, protocol.Err_NOT_FOUND))
+	require.ErrorContains(err, "app is not registered")
+	require.True(base.IsRiverErrorCode(err, Err_NOT_FOUND))
+}
+
+func TestRotateSecret(t *testing.T) {
+	params := setupAppRegistryStorageTest(t)
+	t.Cleanup(params.closer)
+
+	require := require.New(t)
+	store := params.pgAppRegistryStore
+
+	// Generate random addresses
+	owner := safeAddress(t)
+	app := safeAddress(t)
+
+	secretBytes, err := hex.DecodeString(testSecretHexString)
+	require.NoError(err)
+	secret := [32]byte(secretBytes)
+
+	secretBytes2, err := hex.DecodeString(testSecretHexString2)
+	require.NoError(err)
+	secret2 := [32]byte(secretBytes2)
+
+	err = store.CreateApp(params.ctx, owner, app, types.AppSettings{
+		ForwardSetting: ForwardSettingValue_FORWARD_SETTING_UNSPECIFIED,
+	}, secret)
+	require.NoError(err)
+
+	info, err := store.GetAppInfo(params.ctx, app)
+	require.NoError(err)
+	require.Equal(secret, info.EncryptedSecret)
+
+	err = store.RotateSecret(params.ctx, app, secret2)
+	require.NoError(err)
+
+	info, err = store.GetAppInfo(params.ctx, app)
+	require.NoError(err)
+	require.Equal(secret2, info.EncryptedSecret)
+
+	err = store.RotateSecret(params.ctx, safeAddress(t), secret)
+	require.ErrorContains(err, "app was not found in registry")
 }
 
 func requireSendableMessagesEqual(t *testing.T, expected *storage.SendableMessages, actual *storage.SendableMessages) {
@@ -225,7 +462,7 @@ func requireSendableMessagesEqual(t *testing.T, expected *storage.SendableMessag
 		require.Equal(t, expected.AppId, actual.AppId)
 		require.Equal(t, expected.EncryptedSharedSecret, actual.EncryptedSharedSecret)
 		require.Equal(t, expected.WebhookUrl, actual.WebhookUrl)
-		require.ElementsMatch(t, expected.StreamEvents, actual.StreamEvents)
+		require.ElementsMatch(t, expected.MessageEnvelopes, actual.MessageEnvelopes)
 	}
 }
 
@@ -248,11 +485,11 @@ func TestPublishSessionKeys(t *testing.T) {
 		shared.StreamId{},
 		deviceKey,
 		[]string{sessionId},
-		"ciphertexts-devicekey-sessionId",
+		[]byte("ciphertexts"),
 	)
 	require.Nil(messages)
 	require.ErrorContains(err, "app with device key is not registered")
-	require.True(base.IsRiverErrorCode(err, protocol.Err_NOT_FOUND))
+	require.True(base.IsRiverErrorCode(err, Err_NOT_FOUND))
 
 	// Create an app...
 	owner := safeAddress(t)
@@ -262,7 +499,9 @@ func TestPublishSessionKeys(t *testing.T) {
 	require.NoError(err)
 	secret := [32]byte(secretBytes)
 
-	err = store.CreateApp(params.ctx, owner, app, secret)
+	err = store.CreateApp(params.ctx, owner, app, types.AppSettings{
+		ForwardSetting: ForwardSettingValue_FORWARD_SETTING_UNSPECIFIED,
+	}, secret)
 	require.NoError(err)
 
 	webhook := "https://webhook.com/callme"
@@ -276,7 +515,7 @@ func TestPublishSessionKeys(t *testing.T) {
 		shared.StreamId{},
 		deviceKey,
 		[]string{sessionId},
-		"ciphertexts-devicekey-sessionId",
+		[]byte("ciphertexts"),
 	)
 	require.Empty(messages)
 	require.NoError(err)
@@ -288,7 +527,7 @@ func TestPublishSessionKeys(t *testing.T) {
 		shared.StreamId{},
 		deviceKey,
 		[]string{sessionId},
-		"ciphertext2",
+		[]byte("ciphertexts2"),
 	)
 	require.Nil(messages)
 	require.Nil(err)
@@ -298,7 +537,7 @@ func TestPublishSessionKeys(t *testing.T) {
 		shared.StreamId{},
 		deviceKey,
 		[]string{sessionId, sessionId2, sessionId3},
-		"ciphertext123",
+		[]byte("ciphertexts123"),
 	)
 	require.Nil(messages)
 	require.Nil(err)
@@ -312,6 +551,92 @@ func nSafeWallets(t *testing.T, ctx context.Context, n int) []*crypto.Wallet {
 		wallets[i] = wallet
 	}
 	return wallets
+}
+
+func TestGetSendableApps(t *testing.T) {
+	params := setupAppRegistryStorageTest(t)
+	t.Cleanup(params.closer)
+
+	require := require.New(t)
+	store := params.pgAppRegistryStore
+
+	// Generate random addresses
+	owner := safeAddress(t)
+	app := safeAddress(t)
+
+	owner2 := safeAddress(t)
+	app2 := safeAddress(t)
+
+	secretBytes, err := hex.DecodeString(testSecretHexString)
+	require.NoError(err)
+	secret := [32]byte(secretBytes)
+
+	secretBytes2, err := hex.DecodeString(testSecretHexString2)
+	require.NoError(err)
+	secret2 := [32]byte(secretBytes2)
+
+	sApp := storage.SendableApp{
+		AppId:      app,
+		DeviceKey:  "deviceKey",
+		WebhookUrl: "http://www.wh.com/path",
+		SendMessageSecrets: storage.SendMessageSecrets{
+			EncryptedSharedSecret: secret,
+		},
+	}
+	sApp2 := storage.SendableApp{
+		AppId:      app2,
+		DeviceKey:  "deviceKey2",
+		WebhookUrl: "http://www.wh.com/path2",
+		SendMessageSecrets: storage.SendMessageSecrets{
+			EncryptedSharedSecret: secret2,
+		},
+	}
+
+	require.NoError(store.CreateApp(params.ctx, owner, app, types.AppSettings{
+		ForwardSetting: ForwardSettingValue_FORWARD_SETTING_UNSPECIFIED,
+	}, secret))
+	require.NoError(store.RegisterWebhook(params.ctx, app, sApp.WebhookUrl, sApp.DeviceKey, "fallbackKey"))
+
+	require.NoError(store.CreateApp(params.ctx, owner2, app2, types.AppSettings{
+		ForwardSetting: ForwardSettingValue_FORWARD_SETTING_UNSPECIFIED,
+	}, secret2))
+	require.NoError(store.RegisterWebhook(params.ctx, app2, sApp2.WebhookUrl, sApp2.DeviceKey, "fallbackKey2"))
+
+	sendableApps, err := store.GetSendableApps(params.ctx, []common.Address{})
+	require.Len(sendableApps, 0)
+	require.NoError(err)
+
+	sendableApps, err = store.GetSendableApps(params.ctx, []common.Address{safeAddress(t)})
+	require.Len(sendableApps, 0)
+	require.Error(err, "some apps were not found the registry")
+
+	sendableApps, err = store.GetSendableApps(params.ctx, []common.Address{app})
+	require.NoError(err)
+	require.ElementsMatch(
+		sendableApps,
+		[]storage.SendableApp{
+			sApp,
+		},
+	)
+
+	sendableApps, err = store.GetSendableApps(params.ctx, []common.Address{app2})
+	require.NoError(err)
+	require.ElementsMatch(
+		sendableApps,
+		[]storage.SendableApp{
+			sApp2,
+		},
+	)
+
+	sendableApps, err = store.GetSendableApps(params.ctx, []common.Address{app, app2})
+	require.NoError(err)
+	require.ElementsMatch(
+		sendableApps,
+		[]storage.SendableApp{
+			sApp,
+			sApp2,
+		},
+	)
 }
 
 func TestEnqueueMessages(t *testing.T) {
@@ -364,9 +689,17 @@ func TestEnqueueMessages(t *testing.T) {
 	require.Nil(unsendableApps)
 
 	require.ErrorContains(err, "some app ids were not registered")
-	require.True(base.IsRiverErrorCode(err, protocol.Err_NOT_FOUND))
+	require.True(base.IsRiverErrorCode(err, Err_NOT_FOUND))
 
-	err = store.CreateApp(params.ctx, owner.Address, apps[0].Address, secrets[0])
+	err = store.CreateApp(
+		params.ctx,
+		owner.Address,
+		apps[0].Address,
+		types.AppSettings{
+			ForwardSetting: ForwardSettingValue_FORWARD_SETTING_UNSPECIFIED,
+		},
+		secrets[0],
+	)
 	require.NoError(err)
 
 	webhook := "https://webhook.com/0"
@@ -375,7 +708,6 @@ func TestEnqueueMessages(t *testing.T) {
 
 	// Registering a session key for a non-existent device fails the entire
 	// transaction, even when the first key corresponds to a registered app.
-	// The tag on the error identifies the specific device key that failed.
 	sendableApps, unsendableApps, err = store.EnqueueUnsendableMessages(
 		params.ctx,
 		[]common.Address{apps[0].Address, apps[1].Address},
@@ -385,7 +717,7 @@ func TestEnqueueMessages(t *testing.T) {
 	require.Nil(sendableApps)
 	require.Nil(unsendableApps)
 	require.ErrorContains(err, "some app ids were not registered")
-	require.True(base.IsRiverErrorCode(err, protocol.Err_NOT_FOUND))
+	require.True(base.IsRiverErrorCode(err, Err_NOT_FOUND))
 
 	unsendableAppAtIndex := func(i int) storage.UnsendableApp {
 		return storage.UnsendableApp{
@@ -418,7 +750,7 @@ func TestEnqueueMessages(t *testing.T) {
 			AppId:                 apps[i].Address,
 			EncryptedSharedSecret: secrets[i],
 			WebhookUrl:            fmt.Sprintf("https://webhook.com/%d", i),
-			StreamEvents:          streamEvents,
+			MessageEnvelopes:      streamEvents,
 		}
 	}
 
@@ -429,7 +761,7 @@ func TestEnqueueMessages(t *testing.T) {
 		shared.StreamId{},
 		deviceKeys[0],
 		[]string{sessionId1, sessionId3},
-		"ciphertexts-device0-session1-session3",
+		[]byte("ciphertextsDevice0Session1Session3"),
 	)
 	require.NoError(err)
 	requireSendableMessagesEqual(
@@ -440,7 +772,17 @@ func TestEnqueueMessages(t *testing.T) {
 
 	// Register apps and webhooks for apps 2 through 5, to have all device keys registered
 	for i := range 4 {
-		require.NoError(store.CreateApp(params.ctx, owner.Address, apps[i+1].Address, secrets[i+1]))
+		require.NoError(
+			store.CreateApp(
+				params.ctx,
+				owner.Address,
+				apps[i+1].Address,
+				types.AppSettings{
+					ForwardSetting: ForwardSettingValue_FORWARD_SETTING_UNSPECIFIED,
+				},
+				secrets[i+1],
+			),
+		)
 		webhook := fmt.Sprintf("https://webhook.com/%d", i+1)
 		require.NoError(store.RegisterWebhook(params.ctx, apps[i+1].Address, webhook, deviceKeys[i+1], fallbackKey))
 	}
@@ -478,7 +820,7 @@ func TestEnqueueMessages(t *testing.T) {
 		shared.StreamId{},
 		deviceKeys[1],
 		[]string{sessionId2, sessionId4},
-		"ciphertexts-device1-session2-session4",
+		[]byte("ciphertextsDevice1Session2Session4"),
 	)
 	require.NotNil(messages)
 	requireSendableMessagesEqual(
@@ -488,14 +830,13 @@ func TestEnqueueMessages(t *testing.T) {
 	)
 	require.NoError(err)
 
-	sendableAppWithSessionsAndCiphertexts := func(i int, sessionIds []string, ciphertexts string) storage.SendableApp {
+	sendableAppWithSessionsAndCiphertexts := func(i int, encryptionEnvelope []byte) storage.SendableApp {
 		return storage.SendableApp{
 			DeviceKey:  deviceKeys[i],
 			AppId:      apps[i].Address,
 			WebhookUrl: fmt.Sprintf("https://webhook.com/%d", i),
 			SendMessageSecrets: storage.SendMessageSecrets{
-				SessionIds:            sessionIds,
-				CipherTexts:           ciphertexts,
+				EncryptionEnvelope:    encryptionEnvelope,
 				EncryptedSharedSecret: secrets[i],
 			},
 		}
@@ -522,8 +863,7 @@ func TestEnqueueMessages(t *testing.T) {
 		[]storage.SendableApp{
 			sendableAppWithSessionsAndCiphertexts(
 				1,
-				[]string{sessionId2, sessionId4},
-				"ciphertexts-device1-session2-session4",
+				[]byte("ciphertextsDevice1Session2Session4"),
 			),
 		},
 		sendable,
@@ -553,7 +893,7 @@ func TestEnqueueMessages(t *testing.T) {
 		shared.StreamId{},
 		deviceKeys[1],
 		[]string{sessionId1, sessionId4},
-		"ciphertexts-device1-session1-session4",
+		[]byte("ciphertextsDevice1Session1Session4"),
 	)
 	require.Nil(messages)
 	require.NoError(err)
@@ -575,13 +915,11 @@ func TestEnqueueMessages(t *testing.T) {
 		[]storage.SendableApp{
 			sendableAppWithSessionsAndCiphertexts(
 				0,
-				[]string{sessionId1, sessionId3},
-				"ciphertexts-device0-session1-session3",
+				[]byte("ciphertextsDevice0Session1Session3"),
 			),
 			sendableAppWithSessionsAndCiphertexts(
 				1,
-				[]string{sessionId1, sessionId4},
-				"ciphertexts-device1-session1-session4",
+				[]byte("ciphertextsDevice1Session1Session4"),
 			),
 		},
 		sendable,
@@ -624,13 +962,11 @@ func TestEnqueueMessages(t *testing.T) {
 		[]storage.SendableApp{
 			sendableAppWithSessionsAndCiphertexts(
 				0,
-				[]string{sessionId1, sessionId3},
-				"ciphertexts-device0-session1-session3",
+				[]byte("ciphertextsDevice0Session1Session3"),
 			),
 			sendableAppWithSessionsAndCiphertexts(
 				1,
-				[]string{sessionId1, sessionId4},
-				"ciphertexts-device1-session1-session4",
+				[]byte("ciphertextsDevice1Session1Session4"),
 			),
 		},
 		sendable,
@@ -657,8 +993,7 @@ func TestEnqueueMessages(t *testing.T) {
 		[]storage.SendableApp{
 			sendableAppWithSessionsAndCiphertexts(
 				1,
-				[]string{"sessionId1", "sessionId4"},
-				"ciphertexts-device1-session1-session4",
+				[]byte("ciphertextsDevice1Session1Session4"),
 			),
 		},
 		sendable,
@@ -754,7 +1089,7 @@ func TestEnqueueMessages(t *testing.T) {
 				shared.StreamId{},
 				deviceKeys[tc.deviceIndex],
 				tc.sessionKeys,
-				hex.EncodeToString(safeAddress(t).Bytes()),
+				safeAddress(t).Bytes(),
 			)
 			require.NoError(err)
 			if len(tc.messages) == 0 {

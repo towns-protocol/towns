@@ -24,9 +24,9 @@ export class StreamStateView_UserMetadata extends StreamStateView_AbstractConten
     readonly streamId: string
     readonly streamCreatorId: string
     private profileImage: ChunkedMedia | undefined
-    private encryptedProfileImage: EncryptedData | undefined
+    encryptedProfileImage: EncryptedData | undefined
     private bio: UserBio | undefined
-    private encryptedBio: EncryptedData | undefined
+    encryptedBio: EncryptedData | undefined
     private decryptionInProgress: {
         bio: Promise<UserBio> | undefined
         image: Promise<ChunkedMedia> | undefined
@@ -112,18 +112,12 @@ export class StreamStateView_UserMetadata extends StreamStateView_AbstractConten
         stateEmitter?.emit('userDeviceKeysUpdated', this.streamId, this.deviceKeys)
     }
 
-    private addProfileImage(
-        data: EncryptedData,
-        stateEmitter?: TypedEmitter<StreamStateEvents> | undefined,
-    ) {
+    private addProfileImage(data: EncryptedData, stateEmitter?: TypedEmitter<StreamStateEvents>) {
         this.encryptedProfileImage = data
         stateEmitter?.emit('userProfileImageUpdated', this.streamId)
     }
 
-    private addBio(
-        data: EncryptedData,
-        stateEmitter?: TypedEmitter<StreamStateEvents> | undefined,
-    ) {
+    private addBio(data: EncryptedData, stateEmitter?: TypedEmitter<StreamStateEvents>) {
         this.encryptedBio = data
         stateEmitter?.emit('userBioUpdated', this.streamId)
     }

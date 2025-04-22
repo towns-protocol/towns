@@ -28,6 +28,7 @@ var DefaultRpcDurationBucketsSeconds = []float64{
 	15.0,
 }
 
+// DefaultDbTxDurationBucketsSeconds are the default buckets for db tx duration metrics.
 // Most db operations appear to complete in <= 60ms in practice.
 var DefaultDbTxDurationBucketsSeconds = []float64{
 	.001,
@@ -40,7 +41,7 @@ var DefaultDbTxDurationBucketsSeconds = []float64{
 }
 
 // MetricsPublisher both provides handler to publish metrics from the given registry
-// and optionally published metric on give adddress:port.
+// and optionally published metric on give address:port.
 type MetricsPublisher struct {
 	registry   *prometheus.Registry
 	httpServer *http.Server

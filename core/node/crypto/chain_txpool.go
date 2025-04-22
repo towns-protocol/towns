@@ -16,7 +16,7 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/linkdata/deadlock"
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/puzpuzpuz/xsync/v3"
+	"github.com/puzpuzpuz/xsync/v4"
 	"github.com/towns-protocol/towns/core/config"
 	. "github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/infra"
@@ -106,7 +106,7 @@ type (
 
 	// pendingTransactionPool keeps track of transactions that are submitted but the receipt has not been retrieved.
 	pendingTransactionPool struct {
-		pendingTxs *xsync.MapOf[uint64, *txPoolPendingTransaction]
+		pendingTxs *xsync.Map[uint64, *txPoolPendingTransaction]
 
 		client  BlockchainClient
 		wallet  *Wallet
@@ -194,7 +194,7 @@ func newPendingTransactionPool(
 	)
 
 	ptp := &pendingTransactionPool{
-		pendingTxs:    xsync.NewMapOf[uint64, *txPoolPendingTransaction](),
+		pendingTxs:    xsync.NewMap[uint64, *txPoolPendingTransaction](),
 		client:        client,
 		wallet:        wallet,
 		chainID:       chainID.Uint64(),
@@ -418,7 +418,7 @@ func (pool *pendingTransactionPool) checkPendingTransactions(ctx context.Context
 }
 
 // NewTransactionPoolWithPoliciesFromConfig creates an in-memory transaction pool that tracks transactions that are
-// submitted through it. Pending transactions checked on each block if they are eligable to be replaced (through the
+// submitted through it. Pending transactions checked on each block if they are eligible to be replaced (through the
 // replacement policy). If the pending transaction must be replaced is uses the price policy to determine the new gas
 // fees for the replacement transaction. The pool then submits the replacement policy. It keeps track of the old pending
 // transactions in case the original transaction was included in the chain.
@@ -456,7 +456,7 @@ func NewTransactionPoolWithPoliciesFromConfig(
 }
 
 // NewTransactionPoolWithPolicies creates an in-memory transaction pool that tracks transactions that are submitted
-// through it. Pending transactions checked on each block if they are eligable to be replaced. This is determined with
+// through it. Pending transactions checked on each block if they are eligible to be replaced. This is determined with
 // the given replacePolicy. If the pending transaction must be replaced the given pricePolicy is used to determine the
 // fees for the replacement transaction. The pool than submits the replacement policy. It keeps track of the old pending
 // transactions in case the original transaction was included in the chain.

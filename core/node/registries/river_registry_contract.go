@@ -164,20 +164,8 @@ func NewRiverRegistryContract(
 		river.StreamRegistryV1MetaData,
 		[]*EventInfo{
 			{
-				river.Event_StreamAllocated,
-				func(log *types.Log) any { return &river.StreamRegistryV1StreamAllocated{Raw: *log} },
-			},
-			{
-				river.Event_StreamCreated,
-				func(log *types.Log) any { return &river.StreamRegistryV1StreamCreated{Raw: *log} },
-			},
-			{
-				river.Event_StreamLastMiniblockUpdated,
-				func(log *types.Log) any { return &river.StreamRegistryV1StreamLastMiniblockUpdated{Raw: *log} },
-			},
-			{
-				river.Event_StreamPlacementUpdated,
-				func(log *types.Log) any { return &river.StreamRegistryV1StreamPlacementUpdated{Raw: *log} },
+				river.Event_StreamUpdated,
+				func(log *types.Log) any { return &river.StreamRegistryV1StreamUpdated{Raw: *log} },
 			},
 		},
 	)
@@ -268,7 +256,7 @@ func (c *RiverRegistryContract) AddStream(
 				opts, streamId, genesisMiniblockHash, river.Stream{
 					LastMiniblockHash: lastMiniblockHash,
 					LastMiniblockNum:  uint64(lastMiniblockNum),
-					Reserved0:         0,
+					Reserved0:         uint64(len(addresses)),
 					Flags:             uint64(flags),
 					Nodes:             addresses,
 				})
@@ -311,68 +299,45 @@ func (c *RiverRegistryContract) AddStream(
 	return RiverError(Err_ERR_UNSPECIFIED, "AddStream transaction result unknown")
 }
 
-type GetStreamResult struct {
-	StreamId          StreamId
-	Nodes             []common.Address
-	LastMiniblockHash common.Hash
-	LastMiniblockNum  uint64
-	IsSealed          bool
-}
-
-func makeGetStreamResult(streamId StreamId, stream *river.Stream) *GetStreamResult {
-	return &GetStreamResult{
-		StreamId:          streamId,
-		Nodes:             stream.Nodes,
-		LastMiniblockHash: stream.LastMiniblockHash,
-		LastMiniblockNum:  stream.LastMiniblockNum,
-		IsSealed:          stream.Flags&1 != 0, // TODO: constants for flags
-	}
-}
-
 func (c *RiverRegistryContract) GetStream(
 	ctx context.Context,
 	streamId StreamId,
 	blockNum crypto.BlockNumber,
-) (*GetStreamResult, error) {
+) (*river.StreamWithId, error) {
 	stream, err := c.StreamRegistry.GetStream(c.callOptsWithBlockNum(ctx, blockNum), streamId)
 	if err != nil {
 		return nil, WrapRiverError(Err_CANNOT_CALL_CONTRACT, err).Func("GetStream").Message("Call failed")
 	}
-	return makeGetStreamResult(streamId, &stream), nil
+	return river.NewStreamWithId(streamId, &stream), nil
 }
 
 func (c *RiverRegistryContract) GetStreamOnLatestBlock(
 	ctx context.Context,
 	streamId StreamId,
-) (*GetStreamResult, error) {
+) (*river.StreamWithId, error) {
 	stream, err := c.StreamRegistry.GetStream(c.callOpts(ctx), streamId)
 	if err != nil {
 		return nil, WrapRiverError(Err_CANNOT_CALL_CONTRACT, err).Func("GetStreamOnLatestBlock").Message("Call failed")
 	}
-	return makeGetStreamResult(streamId, &stream), nil
+	return river.NewStreamWithId(streamId, &stream), nil
 }
 
-// Returns stream, genesis miniblock hash, genesis miniblock, error
+// GetStreamWithGenesis returns stream, genesis miniblock hash, genesis miniblock, error
 func (c *RiverRegistryContract) GetStreamWithGenesis(
 	ctx context.Context,
 	streamId StreamId,
-) (*GetStreamResult, common.Hash, []byte, crypto.BlockNumber, error) {
-	blockNum, err := c.Blockchain.GetBlockNumber(ctx)
-	if err != nil {
-		return nil, common.Hash{}, nil, blockNum, err
-	}
-
+	blockNum crypto.BlockNumber,
+) (*river.StreamWithId, common.Hash, []byte, error) {
 	stream, mbHash, mb, err := c.StreamRegistry.GetStreamWithGenesis(c.callOptsWithBlockNum(ctx, blockNum), streamId)
 	if err != nil {
-		return nil, common.Hash{}, nil, blockNum, WrapRiverError(
+		return nil, common.Hash{}, nil, WrapRiverError(
 			Err_CANNOT_CALL_CONTRACT,
 			err,
 		).Func("GetStream").
 			Message("Call failed").
 			Tag("blockNum", blockNum)
 	}
-	ret := makeGetStreamResult(streamId, &stream)
-	return ret, mbHash, mb, blockNum, nil
+	return river.NewStreamWithId(streamId, &stream), mbHash, mb, nil
 }
 
 func (c *RiverRegistryContract) GetStreamCount(ctx context.Context, blockNum crypto.BlockNumber) (int64, error) {
@@ -460,7 +425,7 @@ func waitForBackoff(ctx context.Context, bo backoff.BackOff) bool {
 func (c *RiverRegistryContract) ForAllStreams(
 	ctx context.Context,
 	blockNum crypto.BlockNumber,
-	cb func(*GetStreamResult) bool,
+	cb func(*river.StreamWithId) bool,
 ) error {
 	if c.Settings.ParallelReaders > 1 {
 		return c.forAllStreamsParallel(ctx, blockNum, cb)
@@ -472,7 +437,7 @@ func (c *RiverRegistryContract) ForAllStreams(
 func (c *RiverRegistryContract) forAllStreamsSingle(
 	ctx context.Context,
 	blockNum crypto.BlockNumber,
-	cb func(*GetStreamResult) bool,
+	cb func(*river.StreamWithId) bool,
 ) error {
 	log := logging.FromCtx(ctx)
 	pageSize := int64(c.Settings.PageSize)
@@ -525,12 +490,8 @@ func (c *RiverRegistryContract) forAllStreamsSingle(
 			if stream.Id == ZeroBytes32 {
 				continue
 			}
-			streamId, err := StreamIdFromHash(stream.Id)
-			if err != nil {
-				return err
-			}
 			totalStreams++
-			if !cb(makeGetStreamResult(streamId, &stream.Stream)) {
+			if !cb(&stream) {
 				return nil
 			}
 		}
@@ -551,7 +512,7 @@ func (c *RiverRegistryContract) forAllStreamsSingle(
 func (c *RiverRegistryContract) forAllStreamsParallel(
 	ctx context.Context,
 	blockNum crypto.BlockNumber,
-	cb func(*GetStreamResult) bool,
+	cb func(*river.StreamWithId) bool,
 ) error {
 	log := logging.FromCtx(ctx)
 	ctx, cancelCtx := context.WithCancel(ctx)
@@ -645,7 +606,7 @@ OuterLoop:
 					continue
 				}
 				totalStreams++
-				if !cb(makeGetStreamResult(stream.Id, &stream.Stream)) {
+				if !cb(&stream) {
 					break OuterLoop
 				}
 			}
@@ -889,10 +850,10 @@ func (c *RiverRegistryContract) ParseEvent(
 func (c *RiverRegistryContract) OnStreamEvent(
 	ctx context.Context,
 	startBlockNumInclusive crypto.BlockNumber,
-	allocated func(ctx context.Context, event *river.StreamRegistryV1StreamAllocated),
-	added func(ctx context.Context, event *river.StreamRegistryV1StreamCreated),
-	lastMiniblockUpdated func(ctx context.Context, event *river.StreamRegistryV1StreamLastMiniblockUpdated),
-	placementUpdated func(ctx context.Context, event *river.StreamRegistryV1StreamPlacementUpdated),
+	allocated func(ctx context.Context, event *river.StreamState),
+	added func(ctx context.Context, event *river.StreamState),
+	lastMiniblockUpdated func(ctx context.Context, event *river.StreamMiniblockUpdate),
+	placementUpdated func(ctx context.Context, event *river.StreamState),
 ) error {
 	c.Blockchain.ChainMonitor.OnContractWithTopicsEvent(
 		startBlockNumInclusive,
@@ -904,17 +865,29 @@ func (c *RiverRegistryContract) OnStreamEvent(
 				logging.FromCtx(ctx).Errorw("Failed to parse event", "err", err, "log", log)
 				return
 			}
-			switch e := parsed.(type) {
-			case *river.StreamRegistryV1StreamAllocated:
-				allocated(ctx, e)
-			case *river.StreamRegistryV1StreamCreated:
-				added(ctx, e)
-			case *river.StreamRegistryV1StreamLastMiniblockUpdated:
-				lastMiniblockUpdated(ctx, e)
-			case *river.StreamRegistryV1StreamPlacementUpdated:
-				placementUpdated(ctx, e)
-			default:
-				logging.FromCtx(ctx).Errorw("Unknown event type", "event", e)
+			if event, ok := parsed.(*river.StreamRegistryV1StreamUpdated); ok {
+				events, err := river.ParseStreamUpdatedEvent(event)
+				if err != nil {
+					logging.FromCtx(ctx).Errorw("Failed to parse stream update event", "event", events)
+					return
+				}
+
+				for _, event := range events {
+					switch event.Reason() {
+					case river.StreamUpdatedEventTypeAllocate:
+						allocated(ctx, event.(*river.StreamState))
+					case river.StreamUpdatedEventTypeCreate:
+						added(ctx, event.(*river.StreamState))
+					case river.StreamUpdatedEventTypePlacementUpdated:
+						placementUpdated(ctx, event.(*river.StreamState))
+					case river.StreamUpdatedEventTypeLastMiniblockBatchUpdated:
+						lastMiniblockUpdated(ctx, event.(*river.StreamMiniblockUpdate))
+					default:
+						logging.FromCtx(ctx).Errorw("Unknown stream updated reason type", "event", event)
+					}
+				}
+			} else {
+				logging.FromCtx(ctx).Errorw("Unknown event type", "event", event)
 			}
 		})
 	return nil
@@ -923,28 +896,41 @@ func (c *RiverRegistryContract) OnStreamEvent(
 func (c *RiverRegistryContract) FilterStreamEvents(
 	ctx context.Context,
 	logs []*types.Log,
-) (map[StreamId][]river.EventWithStreamId, []error) {
-	ret := map[StreamId][]river.EventWithStreamId{}
+) (map[StreamId][]river.StreamUpdatedEvent, []error) {
+	ret := map[StreamId][]river.StreamUpdatedEvent{}
 	var finalErrs []error
 	for _, log := range logs {
 		if log.Address != c.Address || len(log.Topics) == 0 || !slices.Contains(c.StreamEventTopics[0], log.Topics[0]) {
 			continue
 		}
+
 		parsed, err := c.ParseEvent(ctx, c.StreamRegistry.BoundContract(), c.StreamEventInfo, log)
 		if err != nil {
 			finalErrs = append(finalErrs, err)
 			continue
 		}
-		withStreamId, ok := parsed.(river.EventWithStreamId)
+
+		streamUpdate, ok := parsed.(*river.StreamUpdated)
 		if !ok {
 			finalErrs = append(
 				finalErrs,
-				RiverError(Err_INTERNAL, "Event does not implement EventWithStreamId", "event", parsed),
+				RiverError(Err_INTERNAL, "Stream event isn't update", "event", streamUpdate),
 			)
 			continue
 		}
-		streamId := withStreamId.GetStreamId()
-		ret[streamId] = append(ret[streamId], withStreamId)
+
+		eventsWithStreamId, err := river.ParseStreamUpdatedEvent(streamUpdate)
+		if err != nil {
+			finalErrs = append(
+				finalErrs,
+				RiverError(Err_INTERNAL, "Unable to parse stream update event", "event", streamUpdate),
+			)
+			continue
+		}
+
+		for _, e := range eventsWithStreamId {
+			ret[e.GetStreamId()] = append(ret[e.GetStreamId()], e)
+		}
 	}
 	return ret, finalErrs
 }

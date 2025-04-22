@@ -72,6 +72,7 @@ func (s *Service) startNotificationMode(notifier push.MessageNotifier, opts *Ser
 			common.Address{},
 			s.riverChain.InitialBlockNum,
 			s.riverChain.ChainMonitor,
+			s.chainConfig,
 			httpClient,
 			httpClient,
 			s.otelConnectIterceptor,

@@ -119,17 +119,22 @@ func (d *AppDispatcher) SubmitMessages(
 	if err != nil {
 		return err
 	}
+
+	var encryptionEnvelopes [][]byte
+	if messages.EncryptionEnvelope != nil {
+		encryptionEnvelopes = append(encryptionEnvelopes, messages.EncryptionEnvelope)
+	}
+
 	d.workerPool.Submit(
 		func() {
 			if err := d.appClient.SendSessionMessages(
 				ctx,
+				messages.StreamId,
 				messages.AppId,
 				sharedSecret,
-				messages.StreamId,
-				messages.SessionIds,
-				messages.CipherTexts,
+				messages.MessageEnvelopes,
+				encryptionEnvelopes,
 				messages.WebhookUrl,
-				messages.StreamEvents,
 			); err != nil {
 				// TODO: retry logic?
 				logging.FromCtx(ctx).Errorw(
@@ -140,6 +145,8 @@ func (d *AppDispatcher) SubmitMessages(
 					messages.DeviceKey,
 					"webHookUrl",
 					messages.WebhookUrl,
+					"streamId",
+					messages.StreamId,
 					"error",
 					err,
 				)

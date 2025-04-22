@@ -390,6 +390,7 @@ export class SyncedStreamsLoop {
                                 }
                                 this.interruptSync = (e: unknown) => {
                                     this.logError('sync interrupted', e)
+                                    // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
                                     reject(e)
                                 }
                             })
@@ -527,10 +528,13 @@ export class SyncedStreamsLoop {
 
     private async tick() {
         if (this.syncState === SyncState.Syncing) {
+            const pendingStreamsToDelete = this.pendingStreamsToDelete.filter(
+                (x) => !this.inFlightSyncCookies.has(x),
+            )
             if (
                 (this.inFlightSyncCookies.size <= this.MIN_IN_FLIGHT_COOKIES &&
                     this.pendingSyncCookies.length > 0) ||
-                this.pendingStreamsToDelete.length > 0
+                pendingStreamsToDelete.length > 0
             ) {
                 const syncId = this.syncId
                 this.pendingSyncCookies.sort((a, b) => {
@@ -539,9 +543,12 @@ export class SyncedStreamsLoop {
                     return aPriority - bPriority
                 })
                 const streamsToAdd = this.pendingSyncCookies.splice(0, this.MAX_IN_FLIGHT_COOKIES)
-                const streamsToDelete = this.pendingStreamsToDelete.splice(
+                const streamsToDelete = pendingStreamsToDelete.splice(
                     0,
                     this.MAX_IN_FLIGHT_STREAMS_TO_DELETE,
+                )
+                this.pendingStreamsToDelete = pendingStreamsToDelete.filter(
+                    (x) => !streamsToDelete.find((y) => x === y),
                 )
                 this.logSync('tick: modifySync', {
                     syncId,
@@ -789,7 +796,7 @@ export class SyncedStreamsLoop {
                         this.inFlightSyncCookies.delete(streamId)
                         if (
                             this.inFlightSyncCookies.size === 0 ||
-                            Date.now() - this.lastLogInflightAt > 3000
+                            Date.now() - this.lastLogInflightAt > 5000
                         ) {
                             if (
                                 this.inFlightSyncCookies.size === 0 &&
@@ -800,8 +807,7 @@ export class SyncedStreamsLoop {
                                 this.syncStartedAt = undefined
                             } else {
                                 this.log(
-                                    'onUpdate: remaining streams in flight',
-                                    this.inFlightSyncCookies.size,
+                                    `sync status inflight:${this.inFlightSyncCookies.size} enqueued:${this.pendingSyncCookies.length}`,
                                 )
                             }
                             this.lastLogInflightAt = Date.now()

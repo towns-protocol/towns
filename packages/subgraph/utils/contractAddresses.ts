@@ -7,7 +7,7 @@ import { findRelativePath } from './pathUtils'
 const contractsPath = findRelativePath('contracts')
 const defaultBaseDir = contractsPath
     ? `${contractsPath}/deployments`
-    : '../../../contracts/deployments'
+    : '../../contracts/deployments'
 
 /**
  * Configuration options for address resolution

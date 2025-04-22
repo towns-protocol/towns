@@ -2,8 +2,6 @@ package statusinfo
 
 import (
 	"encoding/json"
-
-	"github.com/towns-protocol/towns/core/node/storage"
 )
 
 type BlockchainPing struct {
@@ -33,10 +31,6 @@ func StatusResponseFromJson(data []byte) (StatusResponse, error) {
 	return result, err
 }
 
-func (r StatusResponse) ToPrettyJson() string {
-	return toPrettyJson(r)
-}
-
 type RegistryNodeInfo struct {
 	Address    string `json:"address"`
 	Url        string `json:"url"`
@@ -56,10 +50,6 @@ type HttpResult struct {
 	UsedTLS       bool           `json:"used_tls"`
 	RemoteAddress string         `json:"remote_address"`
 	DNSAddresses  []string       `json:"dns_addresses"`
-}
-
-func (r HttpResult) ToPrettyJson() string {
-	return toPrettyJson(r)
 }
 
 type GrpcResult struct {
@@ -86,19 +76,23 @@ type Timeline struct {
 	Total                string `json:"total"`
 }
 
-func (r GrpcResult) ToPrettyJson() string {
-	return toPrettyJson(r)
+type NodeStatus struct {
+	Record          RegistryNodeInfo `json:"record"`
+	Local           bool             `json:"local,omitempty"`
+	Http11          HttpResult       `json:"http11"`
+	Http20          HttpResult       `json:"http20"`
+	Grpc            GrpcResult       `json:"grpc"`
+	RiverEthBalance string           `json:"river_eth_balance"`
+	BaseEthBalance  string           `json:"base_eth_balance"`
 }
 
-type NodeStatus struct {
-	Record          RegistryNodeInfo              `json:"record"`
-	Local           bool                          `json:"local,omitempty"`
-	Http11          HttpResult                    `json:"http11"`
-	Http20          HttpResult                    `json:"http20"`
-	Grpc            GrpcResult                    `json:"grpc"`
-	RiverEthBalance string                        `json:"river_eth_balance"`
-	BaseEthBalance  string                        `json:"base_eth_balance"`
-	PostgresStatus  *storage.PostgresStatusResult `json:"postgres_status,omitempty"`
+func (r NodeStatus) ToJson() string {
+	b, err := json.Marshal(r)
+	if err == nil {
+		return string(b)
+	} else {
+		return "{json: \"FAILED\"}"
+	}
 }
 
 type RiverStatus struct {
@@ -108,14 +102,10 @@ type RiverStatus struct {
 }
 
 func (r RiverStatus) ToPrettyJson() string {
-	return toPrettyJson(r)
-}
-
-func toPrettyJson(v any) string {
-	b, err := json.MarshalIndent(v, "", "  ")
+	b, err := json.MarshalIndent(r, "", "  ")
 	if err == nil {
 		return string(b)
 	} else {
-		return "\"FAILED\""
+		return "{json: \"FAILED\"}"
 	}
 }

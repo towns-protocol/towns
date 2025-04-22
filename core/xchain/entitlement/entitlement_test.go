@@ -1,7 +1,6 @@
 package entitlement
 
 import (
-	"context"
 	"fmt"
 	"math/big"
 	"os"
@@ -344,8 +343,10 @@ var evaluator *Evaluator
 
 func TestMain(m *testing.M) {
 	var err error
+	ctx, cancel := test.NewTestContext()
+	defer cancel()
 	evaluator, err = NewEvaluatorFromConfig(
-		context.Background(),
+		ctx,
 		cfg,
 		allSepoliaChains_onChainConfig,
 		infra.NewMetricsFactory(nil, "", ""),
@@ -589,6 +590,7 @@ func TestCheckOperation(t *testing.T) {
 
 // Disable this test case, which is relying on a public rpc endpoint.
 func TestCheckOperation_Untimed(t *testing.T) {
+	t.Skip("Skipping due to dependency on outbound network calls")
 	testCases := map[string]struct {
 		op          Operation
 		wallets     []common.Address
@@ -926,7 +928,9 @@ func TestCheckOperation_Untimed(t *testing.T) {
 
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
-			result, err := evaluator.evaluateOp(context.Background(), tc.op, tc.wallets)
+			ctx, cancel := test.NewTestContext()
+			defer cancel()
+			result, err := evaluator.evaluateOp(ctx, tc.op, tc.wallets)
 			if tc.expectedErr == nil {
 				require.NoError(t, err)
 			} else {
@@ -956,6 +960,7 @@ var singleEtherChainBlockChainInfo = map[uint64]config.BlockchainInfo{
 }
 
 func Test_evaluateEthBalance_withConfig(t *testing.T) {
+	t.Skip("Skipping due to dependency on outbound network calls")
 	tests := map[string]struct {
 		op          Operation
 		wallets     []common.Address

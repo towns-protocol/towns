@@ -81,19 +81,21 @@ function makeWeb3Deployment(environmentId: string): Web3Deployment {
 
     return {
         base: {
-            chainId: parseInt(process.env.BASE_CHAIN_ID!),
+            chainId: parseInt(process.env.BASE_CHAIN_ID),
             addresses: {
-                baseRegistry: process.env.BASE_REGISTRY_ADDRESS! as Address,
-                spaceFactory: process.env.SPACE_FACTORY_ADDRESS! as Address,
-                spaceOwner: process.env.SPACE_OWNER_ADDRESS! as Address,
-                mockNFT: process.env.MOCK_NFT_ADDRESS as Address | undefined,
-                member: process.env.MEMBER_ADDRESS as Address | undefined,
+                baseRegistry: process.env.BASE_REGISTRY_ADDRESS as Address,
+                spaceFactory: process.env.SPACE_FACTORY_ADDRESS as Address,
+                spaceOwner: process.env.SPACE_OWNER_ADDRESS as Address,
+                utils: {
+                    mockNFT: process.env.MOCK_NFT_ADDRESS as Address | undefined,
+                    member: process.env.MEMBER_ADDRESS as Address | undefined,
+                },
             },
         } satisfies BaseChainConfig,
         river: {
-            chainId: parseInt(process.env.RIVER_CHAIN_ID!),
+            chainId: parseInt(process.env.RIVER_CHAIN_ID),
             addresses: {
-                riverRegistry: process.env.RIVER_REGISTRY_ADDRESS! as Address,
+                riverRegistry: process.env.RIVER_REGISTRY_ADDRESS as Address,
             },
         } satisfies RiverChainConfig,
     }

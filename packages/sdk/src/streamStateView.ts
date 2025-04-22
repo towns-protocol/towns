@@ -48,7 +48,6 @@ import { StreamStateView_UserInbox } from './streamStateView_UserInbox'
 import { DecryptedContent } from './encryptedContentTypes'
 import { StreamStateView_UnknownContent } from './streamStateView_UnknownContent'
 import { StreamStateView_MemberMetadata } from './streamStateView_MemberMetadata'
-import { StreamStateView_ChannelMetadata } from './streamStateView_ChannelMetadata'
 import { StreamEvents, StreamEncryptionEvents, StreamStateEvents } from './streamEvents'
 import isEqual from 'lodash/isEqual'
 import { DecryptionSessionError } from '@towns-protocol/encryption'
@@ -71,7 +70,6 @@ export interface IStreamStateView {
     prevSnapshotMiniblockNum: bigint
     miniblockInfo?: { max: bigint; min: bigint; terminusReached: boolean }
     syncCookie?: SyncCookie
-    saveSnapshots?: boolean
     membershipContent: StreamStateView_Members
     get spaceContent(): StreamStateView_Space
     get channelContent(): StreamStateView_Channel
@@ -82,10 +80,8 @@ export interface IStreamStateView {
     get userMetadataContent(): StreamStateView_UserMetadata
     get userInboxContent(): StreamStateView_UserInbox
     get mediaContent(): StreamStateView_Media
-    snapshot(): Snapshot | undefined
     getMembers(): StreamStateView_Members
     getMemberMetadata(): StreamStateView_MemberMetadata
-    getChannelMetadata(): StreamStateView_ChannelMetadata | undefined
     getContent(): StreamStateView_AbstractContent
     userIsEntitledToKeyExchange(userId: string): boolean
     getUsersEntitledToKeyExchange(): Set<string>
@@ -103,12 +99,6 @@ export class StreamStateView implements IStreamStateView {
     prevSnapshotMiniblockNum: bigint
     miniblockInfo?: { max: bigint; min: bigint; terminusReached: boolean }
     syncCookie?: SyncCookie
-    saveSnapshots?: boolean
-    private _snapshot?: Snapshot
-    snapshot(): Snapshot | undefined {
-        check(this.saveSnapshots === true, 'snapshots are not enabled')
-        return this._snapshot
-    }
     // membership content
     membershipContent: StreamStateView_Members
 
@@ -368,9 +358,6 @@ export class StreamStateView implements IStreamStateView {
                         `Miniblock number out of order ${payload.value.miniblockNum} > ${this.miniblockInfo?.max}`,
                         Err.STREAM_BAD_EVENT,
                     )
-                    if (this.saveSnapshots && payload.value.snapshot) {
-                        this._snapshot = payload.value.snapshot
-                    }
                     this.prevMiniblockHash = event.hash
                     this.updateMiniblockInfo(payload.value, { max: payload.value.miniblockNum })
                     timelineEvent.confirmedEventNum =
@@ -773,10 +760,6 @@ export class StreamStateView implements IStreamStateView {
 
     getMemberMetadata(): StreamStateView_MemberMetadata {
         return this.membershipContent.memberMetadata
-    }
-
-    getChannelMetadata(): StreamStateView_ChannelMetadata | undefined {
-        return this.getContent().getChannelMetadata()
     }
 
     getContent(): StreamStateView_AbstractContent {

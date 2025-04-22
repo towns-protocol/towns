@@ -46,7 +46,7 @@ func TestStreamCacheViewEviction(t *testing.T) {
 	streamWithoutLoadedView := 0
 	streamWithLoadedViewCount := 0
 	streamCache.cache.Range(func(key StreamId, value *Stream) bool {
-		if value.view() == nil {
+		if value.getViewLocked() == nil {
 			streamWithoutLoadedView++
 		} else {
 			streamWithLoadedViewCount++
@@ -72,7 +72,7 @@ func TestStreamCacheViewEviction(t *testing.T) {
 	streamWithoutLoadedView = 0
 	streamWithLoadedViewCount = 0
 	streamCache.cache.Range(func(key StreamId, value *Stream) bool {
-		if value.view() == nil {
+		if value.getViewLocked() == nil {
 			streamWithoutLoadedView++
 		} else {
 			streamWithLoadedViewCount++
@@ -94,7 +94,7 @@ func TestStreamCacheViewEviction(t *testing.T) {
 	streamWithoutLoadedView = 0
 	streamWithLoadedViewCount = 0
 	streamCache.cache.Range(func(key StreamId, value *Stream) bool {
-		if value.view() == nil {
+		if value.getViewLocked() == nil {
 			streamWithoutLoadedView++
 		} else {
 			streamWithLoadedViewCount++
@@ -112,7 +112,7 @@ func TestStreamCacheViewEviction(t *testing.T) {
 	streamWithoutLoadedView = 0
 	streamWithLoadedViewCount = 0
 	streamCache.cache.Range(func(key StreamId, value *Stream) bool {
-		if value.view() == nil {
+		if value.getViewLocked() == nil {
 			streamWithoutLoadedView++
 		} else {
 			streamWithLoadedViewCount++
@@ -149,7 +149,7 @@ func TestCacheEvictionWithFilledMiniBlockPool(t *testing.T) {
 	streamWithoutLoadedView := 0
 	streamWithLoadedViewCount := 0
 	streamCache.cache.Range(func(key StreamId, value *Stream) bool {
-		if value.view() == nil {
+		if value.getViewLocked() == nil {
 			streamWithoutLoadedView++
 		} else {
 			streamWithLoadedViewCount++
@@ -165,7 +165,7 @@ func TestCacheEvictionWithFilledMiniBlockPool(t *testing.T) {
 	streamCache.CacheCleanup(ctxShort, true, time.Millisecond)
 	cancelShort()
 	loadedStream, _ := streamCache.cache.Load(streamID)
-	require.Nil(loadedStream.view(), "view not unloaded")
+	require.Nil(loadedStream.getViewLocked(), "view not unloaded")
 
 	// try to create a miniblock, pool is empty so it should not fail but also should not create a miniblock
 	_ = tc.makeMiniblock(0, streamID, false)
@@ -186,7 +186,7 @@ func TestCacheEvictionWithFilledMiniBlockPool(t *testing.T) {
 	streamCache.CacheCleanup(ctxShort, true, time.Millisecond)
 	cancelShort()
 	loadedStream, _ = streamCache.cache.Load(streamID)
-	require.NotNil(loadedStream.view(), "view unloaded")
+	require.NotNil(loadedStream.getViewLocked(), "view unloaded")
 
 	// now it should be possible to create a miniblock
 	mbRef := tc.makeMiniblock(0, streamID, false)
@@ -199,7 +199,7 @@ func TestCacheEvictionWithFilledMiniBlockPool(t *testing.T) {
 	streamCache.CacheCleanup(ctxShort, true, time.Millisecond)
 	cancelShort()
 	loadedStream, _ = streamCache.cache.Load(streamID)
-	require.Nil(loadedStream.view(), "view loaded in cache")
+	require.Nil(loadedStream.getViewLocked(), "view loaded in cache")
 }
 
 type testStreamCacheViewEvictionSub struct {
@@ -315,7 +315,7 @@ func TestStreamMiniblockBatchProduction(t *testing.T) {
 				require.NoError(err, "get miniblocks")
 
 				for _, mb := range miniblocks {
-					gotStreamEventsCount += len(mb.Events)
+					gotStreamEventsCount += len(mb.Proto.Events)
 				}
 
 				if expStreamEventsCount == gotStreamEventsCount {
@@ -524,7 +524,6 @@ func TestMiniblockRegistrationWithPendingLocalCandidate(t *testing.T) {
 		Timestamp:                NextMiniblockTimestamp(lastBlock.Header().Timestamp),
 		EventHashes:              [][]byte{event1.Hash.Bytes(), event2.Hash.Bytes()},
 		PrevMiniblockHash:        lastBlock.headerEvent.Hash[:],
-		Snapshot:                 nil,
 		EventNumOffset:           0,
 		PrevSnapshotMiniblockNum: view.LastBlock().Header().GetPrevSnapshotMiniblockNum(),
 		Content: &MiniblockHeader_None{
@@ -533,19 +532,14 @@ func TestMiniblockRegistrationWithPendingLocalCandidate(t *testing.T) {
 	}
 
 	candidate, err := NewMiniblockInfoFromHeaderAndParsed(
-		instance.params.Wallet, candidateHeader, []*ParsedEvent{event1, event2})
-	require.NoError(err)
-
-	miniblockBytes, err := candidate.ToBytes()
-	require.NoError(err)
-
-	err = instance.params.Storage.WriteMiniblockCandidate(
-		ctx,
-		spaceStreamId,
-		candidate.Ref.Hash,
-		candidate.Ref.Num,
-		miniblockBytes,
+		instance.params.Wallet, candidateHeader, []*ParsedEvent{event1, event2}, nil,
 	)
+	require.NoError(err)
+
+	storageMb, err := candidate.AsStorageMb()
+	require.NoError(err)
+
+	err = instance.params.Storage.WriteMiniblockCandidate(ctx, spaceStreamId, storageMb)
 	require.NoError(err)
 
 	// bypass the mini-block producer and register candidate in the stream facet
@@ -570,13 +564,13 @@ func TestMiniblockRegistrationWithPendingLocalCandidate(t *testing.T) {
 	getStream, err := instance.params.Registry.GetStream(ctx, spaceStreamId, crypto.BlockNumber(riverChainBlockNum))
 	require.NoError(err)
 
-	require.Equal(int64(getStream.LastMiniblockNum), candidate.Ref.Num)
-	require.Equal(getStream.LastMiniblockHash, candidate.Ref.Hash)
+	require.Equal(getStream.LastMbNum(), candidate.Ref.Num)
+	require.Equal(getStream.LastMbHash(), candidate.Ref.Hash)
 
 	view, err = stream.GetView(ctx)
 	require.NoError(err)
 	lastBlock = view.LastBlock()
-	require.Equal(lastBlock.Ref.Num+1, int64(getStream.LastMiniblockNum))
+	require.Equal(lastBlock.Ref.Num+1, getStream.LastMbNum())
 
 	// Add some events to the stream and try produce a mini-block. This must fail because the
 	// stream facet already progressed by the just registered candidate. The node must detect this

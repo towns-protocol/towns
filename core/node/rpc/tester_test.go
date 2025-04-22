@@ -22,7 +22,7 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/puzpuzpuz/xsync/v3"
+	"github.com/puzpuzpuz/xsync/v4"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/atomic"
@@ -85,6 +85,7 @@ type serviceTester struct {
 
 type serviceTesterOpts struct {
 	numNodes          int
+	numOperators      int
 	replicationFactor int
 	start             bool
 	btcParams         *crypto.TestParams
@@ -132,9 +133,15 @@ func newServiceTester(t *testing.T, opts serviceTesterOpts) *serviceTester {
 
 	btcParams := opts.btcParams
 	if btcParams == nil {
-		btcParams = &crypto.TestParams{NumKeys: opts.numNodes, MineOnTx: true, AutoMine: true}
+		btcParams = &crypto.TestParams{
+			NumKeys:      opts.numNodes,
+			MineOnTx:     true,
+			AutoMine:     true,
+			NumOperators: opts.numOperators,
+		}
 	} else if btcParams.NumKeys == 0 {
 		btcParams.NumKeys = opts.numNodes
+		btcParams.NumOperators = opts.numOperators
 	}
 	btc, err := crypto.NewBlockchainTestContext(
 		st.ctx,
@@ -246,6 +253,7 @@ func (st *serviceTester) startAutoMining() {
 		return
 	}
 
+	// TODO: FIX: remove
 	// hack to ensure that the chain always produces blocks (automining=true)
 	// commit on simulated backend with no pending txs can sometimes crash in the simulator.
 	// by having a pending tx with automining enabled we can work around that issue.
@@ -479,7 +487,7 @@ func (st *serviceTester) compareStreamDataInStorage(
 				)
 				for j, mb := range data[i].Miniblocks {
 					exp := data[0].Miniblocks[j]
-					_ = assert.EqualValues(t, exp.MiniblockNumber, mb.MiniblockNumber, "Bad mb num in node %d", i) &&
+					_ = assert.EqualValues(t, exp.Number, mb.Number, "Bad mb num in node %d", i) &&
 						assert.EqualValues(t, exp.Hash, mb.Hash, "Bad mb hash in node %d", i) &&
 						assert.Equal(
 							t,
@@ -561,7 +569,7 @@ type testClient struct {
 	name                 string
 	syncID               atomic.String // use testClient#SyncID() to retrieve the value
 	enableSync           bool
-	updates              *xsync.MapOf[StreamId, *receivedStreamUpdates]
+	updates              *xsync.Map[StreamId, *receivedStreamUpdates]
 	disableMiniblockComp bool
 }
 
@@ -575,6 +583,10 @@ type testClientOpts struct {
 func (st *serviceTester) newTestClient(i int, opts testClientOpts) *testClient {
 	wallet, err := crypto.NewWallet(st.ctx)
 	st.require.NoError(err)
+	return st.newTestClientWithWallet(i, opts, wallet)
+}
+
+func (st *serviceTester) newTestClientWithWallet(i int, opts testClientOpts, wallet *crypto.Wallet) *testClient {
 	return &testClient{
 		t:                    st.t,
 		ctx:                  st.ctx,
@@ -588,7 +600,7 @@ func (st *serviceTester) newTestClient(i int, opts testClientOpts) *testClient {
 		userStreamId:         UserStreamIdFromAddr(wallet.Address),
 		name:                 fmt.Sprintf("%d-%s", i, wallet.Address.Hex()[2:8]),
 		enableSync:           opts.enableSync,
-		updates:              xsync.NewMapOf[StreamId, *receivedStreamUpdates](),
+		updates:              xsync.NewMap[StreamId, *receivedStreamUpdates](),
 		disableMiniblockComp: opts.disableMiniblockComp,
 	}
 }
@@ -616,15 +628,61 @@ func (tc *testClient) withRequireFor(t require.TestingT) *testClient {
 	return &tcc
 }
 
-func (tc *testClient) createUserStream(
+func (tc *testClient) createUserStreamGetCookie(
 	streamSettings ...*StreamSettings,
-) *MiniblockRef {
+) *SyncCookie {
 	var ss *StreamSettings
 	if len(streamSettings) > 0 {
 		ss = streamSettings[0]
 	}
 	cookie, _, err := createUser(tc.ctx, tc.wallet, tc.client, ss)
 	tc.require.NoError(err)
+	return cookie
+}
+
+func (tc *testClient) createUserStreamsWithEncryptionDevice(
+	encryptionDevice *UserMetadataPayload_EncryptionDevice,
+) *SyncCookie {
+	userCookie := tc.createUserStreamGetCookie()
+
+	_, _, err := createUserInboxStream(tc.ctx, tc.wallet, tc.client, nil)
+	tc.require.NoError(err)
+
+	cookie, _, err := createUserMetadataStream(tc.ctx, tc.wallet, tc.client, nil)
+	tc.require.NoError(err)
+
+	event, err := MakeEnvelopeWithPayload(
+		tc.wallet,
+		Make_UserMetadataPayload_EncryptionDevice(
+			encryptionDevice.DeviceKey,
+			encryptionDevice.FallbackKey,
+		),
+		&MiniblockRef{
+			Num:  cookie.GetMinipoolGen() - 1,
+			Hash: common.Hash(cookie.GetPrevMiniblockHash()),
+		},
+	)
+	tc.require.NoError(err)
+
+	addEventResp, err := tc.client.AddEvent(
+		tc.ctx,
+		&connect.Request[AddEventRequest]{
+			Msg: &AddEventRequest{
+				StreamId: cookie.StreamId,
+				Event:    event,
+			},
+		},
+	)
+	tc.require.NoError(err)
+	tc.require.Nil(addEventResp.Msg.GetError())
+
+	return userCookie
+}
+
+func (tc *testClient) createUserStream(
+	streamSettings ...*StreamSettings,
+) *MiniblockRef {
+	cookie := tc.createUserStreamGetCookie(streamSettings...)
 	return &MiniblockRef{
 		Hash: common.BytesToHash(cookie.PrevMiniblockHash),
 		Num:  cookie.MinipoolGen - 1,
@@ -695,12 +753,15 @@ func (tc *testClient) startSync() {
 }
 
 func (tc *testClient) SyncID() string {
-	for {
+	for range 50 {
 		if syncID := tc.syncID.Load(); syncID != "" {
 			return syncID
 		}
-		time.Sleep(5 * time.Millisecond)
+		err := SleepWithContext(tc.ctx, 100*time.Millisecond)
+		tc.require.NoError(err, "Failed to get sync ID")
 	}
+	tc.require.Fail("Failed to get sync ID")
+	return ""
 }
 
 func (tc *testClient) createSpace(
@@ -737,7 +798,11 @@ func (tc *testClient) createChannel(
 	}, cookie
 }
 
-func (tc *testClient) joinChannel(spaceId StreamId, channelId StreamId, mb *MiniblockRef) {
+func (tc *testClient) joinChannel(
+	spaceId StreamId,
+	channelId StreamId,
+	userStreamMb *MiniblockRef,
+) *MemberPayload_Membership {
 	userJoin, err := MakeEnvelopeWithPayload(
 		tc.wallet,
 		Make_UserPayload_Membership(
@@ -746,12 +811,24 @@ func (tc *testClient) joinChannel(spaceId StreamId, channelId StreamId, mb *Mini
 			nil,
 			spaceId[:],
 		),
-		mb,
+		userStreamMb,
 	)
 	tc.require.NoError(err)
 
 	userStreamId := UserStreamIdFromAddr(tc.wallet.Address)
 	tc.addEvent(userStreamId, userJoin)
+
+	// The above add appends an event to the user's user stream. Once it reaches the node, the node will
+	// create a derived membership event and add it to the channel.
+	// The following returned payload content is the content of the membership event we would expect to see
+	// in the channel if the user is indeed entitled to the channel, and the above event is successfully added.
+	// Returning this is useful for understanding what kind of content a bot might see in the channel.
+	return &MemberPayload_Membership{
+		Op:               MembershipOp_SO_JOIN,
+		UserAddress:      tc.wallet.Address[:],
+		InitiatorAddress: tc.wallet.Address[:],
+		StreamParentId:   spaceId[:],
+	}
 }
 
 func (tc *testClient) getLastMiniblockHash(streamId StreamId) *MiniblockRef {
@@ -771,6 +848,27 @@ func (tc *testClient) say(channelId StreamId, message string) {
 	tc.require.NoError(err)
 
 	tc.addEvent(channelId, envelope)
+}
+
+func (tc *testClient) sayWithSessionAndTags(
+	channelId StreamId,
+	message string,
+	tags *Tags,
+	session []byte,
+	deviceKey string,
+) (eventHash []byte) {
+	ref := tc.getLastMiniblockHash(channelId)
+	envelope, err := MakeEnvelopeWithPayloadAndTags(
+		tc.wallet,
+		Make_ChannelPayload_Message_WithSessionBytes(message, session, deviceKey),
+		ref,
+		tags,
+	)
+	tc.require.NoError(err)
+
+	tc.addEvent(channelId, envelope)
+
+	return envelope.Hash
 }
 
 func (tc *testClient) addEvent(streamId StreamId, envelope *Envelope) {
@@ -968,7 +1066,7 @@ func (tc *testClient) getStreamAndView(
 	stream := tc.getStream(streamId)
 	var view *StreamView
 	var err error
-	view, err = MakeRemoteStreamView(tc.ctx, stream)
+	view, err = MakeRemoteStreamView(stream)
 	tc.require.NoError(err)
 	tc.require.NotNil(view)
 
@@ -1004,7 +1102,7 @@ func (tc *testClient) maybeDumpStream(stream *StreamAndCookie) {
 			tc.name,
 			"Dumping stream",
 			"\n",
-			dumpevents.DumpStream(tc.ctx, stream, dumpevents.DumpOpts{EventContent: true, TestMessages: true}),
+			dumpevents.DumpStream(stream, dumpevents.DumpOpts{EventContent: true, TestMessages: true}),
 		)
 	}
 }
@@ -1016,11 +1114,17 @@ func (tc *testClient) getMiniblocks(streamId StreamId, fromInclusive, toExclusiv
 		ToExclusive:   toExclusive,
 	}))
 	tc.require.NoError(err)
-	mbs, err := NewMiniblocksInfoFromProtos(
-		resp.Msg.Miniblocks,
-		NewParsedMiniblockInfoOpts().WithExpectedBlockNumber(fromInclusive),
-	)
-	tc.require.NoError(err)
+
+	mbs := make([]*MiniblockInfo, len(resp.Msg.GetMiniblocks()))
+	for i, pb := range resp.Msg.GetMiniblocks() {
+		mbs[i], err = NewMiniblockInfoFromProto(
+			pb, resp.Msg.GetMiniblockSnapshot(fromInclusive+int64(i)),
+			NewParsedMiniblockInfoOpts().
+				WithExpectedBlockNumber(fromInclusive+int64(i)),
+		)
+		tc.require.NoError(err)
+	}
+
 	return mbs
 }
 
@@ -1049,6 +1153,136 @@ func (tc *testClient) addHistoryToView(
 	newView, err := view.CopyAndPrependMiniblocks(mbs)
 	tc.require.NoError(err)
 	return newView
+}
+
+func overAllEvents(
+	require *require.Assertions,
+	channel *StreamAndCookie,
+	eventFilter func(*ParsedEvent) bool,
+) bool {
+	for _, block := range channel.Miniblocks {
+		events, err := ParseEvents(block.Events)
+		require.NoError(err)
+		for _, event := range events {
+			if eventFilter(event) {
+				return true
+			}
+		}
+	}
+
+	for _, envelope := range channel.Events {
+		event, err := ParseEvent(envelope)
+		require.NoError(err)
+		if eventFilter(event) {
+			return true
+		}
+	}
+
+	return false
+}
+
+func isKeySolicitation(
+	event *ParsedEvent,
+	deviceKey string,
+	optionalSessionId string,
+) bool {
+	if payload := event.Event.GetMemberPayload(); payload != nil {
+		if solicitation := payload.GetKeySolicitation(); solicitation != nil {
+			if solicitation.DeviceKey == deviceKey {
+				return optionalSessionId == "" || slices.Contains(solicitation.SessionIds[:], optionalSessionId)
+			}
+		}
+	}
+	return false
+}
+
+func findKeySolicitation(
+	require *require.Assertions,
+	channel *StreamAndCookie,
+	deviceKey string,
+	sessionId string,
+) {
+	exists := overAllEvents(
+		require,
+		channel,
+		func(event *ParsedEvent) bool {
+			return isKeySolicitation(event, deviceKey, sessionId)
+		},
+	)
+	require.True(exists)
+}
+
+func containsKeySolicitation(
+	require *require.Assertions,
+	channel *StreamAndCookie,
+	deviceKey string,
+) bool {
+	return overAllEvents(
+		require, channel,
+		func(event *ParsedEvent) bool {
+			return isKeySolicitation(event, deviceKey, "")
+		},
+	)
+}
+
+func (tc *testClient) requireKeySolicitation(channelId StreamId, deviceKey string, sessionId string) {
+	tc.eventually(func(tc *testClient) {
+		channel := tc.getStream(channelId)
+		findKeySolicitation(tc.require, channel, deviceKey, sessionId)
+	})
+}
+
+func (tc *testClient) requireNoKeySolicitation(
+	channelId StreamId,
+	deviceKey string,
+	waitTime time.Duration,
+	tick time.Duration,
+) {
+	tc.require.Never(func() bool {
+		channel := tc.getStream(channelId)
+		return containsKeySolicitation(tc.require, channel, deviceKey)
+	}, waitTime, tick, "Expected no key solicitation for device in channel")
+}
+
+func (tc *testClient) solicitKeys(
+	channelId StreamId,
+	deviceKey string,
+	fallbackKey string,
+	isNewDevice bool,
+	sessionIds []string,
+) *MemberPayload_KeySolicitation {
+	payload := Make_MemberPayload_KeySolicitation(deviceKey, fallbackKey, isNewDevice, sessionIds)
+	envelope, err := MakeEnvelopeWithPayload(
+		tc.wallet,
+		payload,
+		tc.getLastMiniblockHash(channelId),
+	)
+	tc.require.NoError(err)
+	tc.addEvent(channelId, envelope)
+	return payload.MemberPayload.GetKeySolicitation()
+}
+
+func (tc *testClient) sendSolicitationResponse(
+	user common.Address,
+	channelId StreamId,
+	deviceKey string,
+	sessionIds []string,
+	ciphertexts string,
+) {
+	userInboxStreamId := UserInboxStreamIdFromAddress(user)
+	lastMb := tc.getLastMiniblockHash(userInboxStreamId)
+
+	event, err := MakeEnvelopeWithPayload(
+		tc.wallet,
+		Make_UserInboxPayload_GroupEncryptionSessions(
+			channelId,
+			sessionIds,
+			map[string]string{deviceKey: ciphertexts},
+		),
+		lastMb,
+	)
+	tc.require.NoError(err)
+	tc.addEvent(userInboxStreamId, event)
 }
 
 func (tc *testClient) requireMembership(streamId StreamId, expectedMemberships []common.Address) {

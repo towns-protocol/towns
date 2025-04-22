@@ -108,10 +108,8 @@
             "towns-token/utility",
             "towns-token/economics",
             "towns-token/mechanics",
-            "towns-token/delegation",
-            "towns-token/distribution",
-            "towns-token/claiming",
-            "towns-token/staking"
+            "towns-token/staking",
+            "towns-token/claiming"
           ]
         },
         {
@@ -119,8 +117,7 @@
           "pages": [
             "grants/grants-program"
           ]
-        },
-        "FAQs"
+        }
       ]
     },
     {

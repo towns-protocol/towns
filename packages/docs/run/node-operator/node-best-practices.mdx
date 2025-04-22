@@ -52,8 +52,28 @@ If there's a new bug or security vulnerability found, please file an issue on th
     in the network's documentation.
   </Step>
   <Step title="Diagnostic Tools">
-    - Utilize built-in diagnostic tools and logs to identify issues. Follow
-    systematic troubleshooting procedures to resolve operational problems.
+    Stream nodes are equipped with a variety of diagnostic tools to help you troubleshoot issues.
+
+    You can run pprof endpoints securely to collect and analyze profiling data emitted by your node. This is reccommended if you are experiencing performance issues or suspect memory leaks.
+
+    Set `DEBUGENDPOINTS__PPROF=true` in your environment variables to enable pprof endpoints.
+
+    Then either set `DEBUGENDPOINTS__PRIVATEDEBUGSERVERADDRESS` to a specific address (i.e. '127.0.0.1:8080') and port or `DEBUGENDPOINTS__MEMPROFILEDIR` to a directory to save the memory profile files periodically.
+
+    `pprof` endpoints available:
+    - /debug/pprof/
+    - /debug/pprof/cmdline
+    - /debug/pprof/profile
+    - /debug/pprof/symbol
+    - /debug/pprof/trace
+
+    See [debug.go](https://github.com/towns-protocol/river/blob/main/core/node/rpc/debug.go) for more information and full capabilities.
+
+    <Note>If saving pprof results to node image storage, you will need to mount a volume or read the files between node restarts to prevent losing them</Note>
+
+    <Note>If you are running a node in a containerized environment, you will need to mount a volume to the node's image storage directory to save the pprof results</Note>
+ 
+ 
   </Step>
 </Steps>
 ### Security
