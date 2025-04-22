@@ -84,7 +84,7 @@ type ErrorResult = {
 
 type EventContentResult = SuccessResult | ErrorResult
 
-export function toEvent(timelineEvent: StreamTimelineEvent, userId: string): TimelineEvent {
+export function toEventSA(timelineEvent: StreamTimelineEvent, userId: string): TimelineEvent {
     const eventId = timelineEvent.hashStr
     const senderId = timelineEvent.creatorUserId
 
@@ -270,7 +270,7 @@ function toTownsContent_MiniblockHeader(
         content: {
             kind: RiverTimelineEvent.MiniblockHeader,
             miniblockNum: value.miniblockNum,
-            hasSnapshot: value.snapshot !== undefined,
+            hasSnapshot: value.snapshot !== undefined || value.snapshotHash !== undefined,
         } satisfies MiniblockHeaderEvent,
     }
 }

@@ -29,17 +29,7 @@ contract DeploySpaceOwner is IDiamondInitHelper, DiamondHelper, Deployer {
     using LibString for string;
 
     DeployFacet private facetHelper = new DeployFacet();
-
-    address multiInit;
-    address diamondCut;
-    address diamondLoupe;
-    address introspection;
-    address ownable;
-
-    address eip712;
-    address metadata;
-    address spaceOwner;
-    address guardian;
+    address private multiInit;
 
     function versionName() public pure override returns (string memory) {
         return "spaceOwner";
@@ -47,57 +37,62 @@ contract DeploySpaceOwner is IDiamondInitHelper, DiamondHelper, Deployer {
 
     function addImmutableCuts(address deployer) internal {
         multiInit = facetHelper.deploy("MultiInit", deployer);
-        diamondCut = facetHelper.deploy("DiamondCutFacet", deployer);
-        diamondLoupe = facetHelper.deploy("DiamondLoupeFacet", deployer);
-        introspection = facetHelper.deploy("IntrospectionFacet", deployer);
-        ownable = facetHelper.deploy("OwnableFacet", deployer);
 
+        address facet = facetHelper.deploy("DiamondCutFacet", deployer);
         addFacet(
-            DeployDiamondCut.makeCut(diamondCut, IDiamond.FacetCutAction.Add),
-            diamondCut,
+            DeployDiamondCut.makeCut(facet, IDiamond.FacetCutAction.Add),
+            facet,
             DeployDiamondCut.makeInitData()
         );
+
+        facet = facetHelper.deploy("DiamondLoupeFacet", deployer);
         addFacet(
-            DeployDiamondLoupe.makeCut(diamondLoupe, IDiamond.FacetCutAction.Add),
-            diamondLoupe,
+            DeployDiamondLoupe.makeCut(facet, IDiamond.FacetCutAction.Add),
+            facet,
             DeployDiamondLoupe.makeInitData()
         );
+
+        facet = facetHelper.deploy("IntrospectionFacet", deployer);
         addFacet(
-            DeployIntrospection.makeCut(introspection, IDiamond.FacetCutAction.Add),
-            introspection,
+            DeployIntrospection.makeCut(facet, IDiamond.FacetCutAction.Add),
+            facet,
             DeployIntrospection.makeInitData()
         );
+
+        facet = facetHelper.deploy("OwnableFacet", deployer);
         addFacet(
-            DeployOwnable.makeCut(ownable, IDiamond.FacetCutAction.Add),
-            ownable,
+            DeployOwnable.makeCut(facet, IDiamond.FacetCutAction.Add),
+            facet,
             DeployOwnable.makeInitData(deployer)
         );
     }
 
     function diamondInitParams(address deployer) public returns (Diamond.InitParams memory) {
-        metadata = facetHelper.deploy("MetadataFacet", deployer);
-        spaceOwner = facetHelper.deploy("SpaceOwner", deployer);
-        guardian = facetHelper.deploy("GuardianFacet", deployer);
-        eip712 = facetHelper.deploy("EIP712Facet", deployer);
-
+        address facet = facetHelper.deploy("SpaceOwner", deployer);
         addFacet(
-            DeploySpaceOwnerFacet.makeCut(spaceOwner, IDiamond.FacetCutAction.Add),
-            spaceOwner,
+            DeploySpaceOwnerFacet.makeCut(facet, IDiamond.FacetCutAction.Add),
+            facet,
             DeploySpaceOwnerFacet.makeInitData("Space Owner", "OWNER")
         );
+
+        facet = facetHelper.deploy("EIP712Facet", deployer);
         addFacet(
-            DeployEIP712Facet.makeCut(eip712, IDiamond.FacetCutAction.Add),
-            eip712,
+            DeployEIP712Facet.makeCut(facet, IDiamond.FacetCutAction.Add),
+            facet,
             DeployEIP712Facet.makeInitData("Space Owner", "1")
         );
+
+        facet = facetHelper.deploy("GuardianFacet", deployer);
         addFacet(
-            DeployGuardianFacet.makeCut(guardian, IDiamond.FacetCutAction.Add),
-            guardian,
+            DeployGuardianFacet.makeCut(facet, IDiamond.FacetCutAction.Add),
+            facet,
             DeployGuardianFacet.makeInitData(7 days)
         );
+
+        facet = facetHelper.deploy("MetadataFacet", deployer);
         addFacet(
-            DeployMetadata.makeCut(metadata, IDiamond.FacetCutAction.Add),
-            metadata,
+            DeployMetadata.makeCut(facet, IDiamond.FacetCutAction.Add),
+            facet,
             DeployMetadata.makeInitData(bytes32("Space Owner"), "")
         );
 
@@ -110,34 +105,35 @@ contract DeploySpaceOwner is IDiamondInitHelper, DiamondHelper, Deployer {
     }
 
     function diamondInitParamsFromFacets(address deployer, string[] memory facets) public {
+        address facet;
         for (uint256 i; i < facets.length; ++i) {
             string memory facetName = facets[i];
             if (facetName.eq("MetadataFacet")) {
-                metadata = facetHelper.deploy("MetadataFacet", deployer);
+                facet = facetHelper.deploy("MetadataFacet", deployer);
                 addFacet(
-                    DeployMetadata.makeCut(metadata, IDiamond.FacetCutAction.Add),
-                    metadata,
+                    DeployMetadata.makeCut(facet, IDiamond.FacetCutAction.Add),
+                    facet,
                     DeployMetadata.makeInitData(bytes32("Space Owner"), "")
                 );
             } else if (facetName.eq("SpaceOwner")) {
-                spaceOwner = facetHelper.deploy("SpaceOwner", deployer);
+                facet = facetHelper.deploy("SpaceOwner", deployer);
                 addFacet(
-                    DeploySpaceOwnerFacet.makeCut(spaceOwner, IDiamond.FacetCutAction.Add),
-                    spaceOwner,
+                    DeploySpaceOwnerFacet.makeCut(facet, IDiamond.FacetCutAction.Add),
+                    facet,
                     DeploySpaceOwnerFacet.makeInitData("Space Owner", "OWNER")
                 );
             } else if (facetName.eq("EIP712Facet")) {
-                eip712 = facetHelper.deploy("EIP712Facet", deployer);
+                facet = facetHelper.deploy("EIP712Facet", deployer);
                 addFacet(
-                    DeployEIP712Facet.makeCut(eip712, IDiamond.FacetCutAction.Add),
-                    eip712,
+                    DeployEIP712Facet.makeCut(facet, IDiamond.FacetCutAction.Add),
+                    facet,
                     DeployEIP712Facet.makeInitData("Space Owner", "1")
                 );
             } else if (facetName.eq("GuardianFacet")) {
-                guardian = facetHelper.deploy("GuardianFacet", deployer);
+                facet = facetHelper.deploy("GuardianFacet", deployer);
                 addFacet(
-                    DeployGuardianFacet.makeCut(guardian, IDiamond.FacetCutAction.Add),
-                    guardian,
+                    DeployGuardianFacet.makeCut(facet, IDiamond.FacetCutAction.Add),
+                    facet,
                     DeployGuardianFacet.makeInitData(7 days)
                 );
             }
