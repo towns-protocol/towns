@@ -3,6 +3,7 @@ package storage
 import (
 	"context"
 	"errors"
+	"fmt"
 	"sort"
 	"time"
 
@@ -16,10 +17,10 @@ import (
 
 const (
 	// minRetentionInterval is the min retention interval for snapshots.
-	minRetentionInterval = 1000 // 1000 miniblocks
+	minRetentionInterval = 100 // 100 miniblocks
 
 	// minKeep is the number of most recent miniblocks to protect (no nullification)
-	minKeep = 1000 // 1000 miniblocks
+	minKeep = 100 // 100 miniblocks
 
 	// snapshotsTrimmingInterval is the interval at which we check for snapshots to nullify.
 	snapshotsTrimmingInterval = time.Hour
@@ -101,7 +102,7 @@ func (st *snapshotTrimmer) trimStreams(ctx context.Context) {
 		if err := st.storage.txRunner(
 			ctx,
 			"snapshotTrimmer.trimStreams",
-			pgx.ReadOnly,
+			pgx.ReadWrite,
 			func(ctx context.Context, tx pgx.Tx) error {
 				return st.trimStream(ctx, tx, streamId, lastMbNum, retentionInterval)
 			},
@@ -174,11 +175,13 @@ func (st *snapshotTrimmer) trimStream(
 			"UPDATE {{miniblocks}} SET snapshot = NULL WHERE stream_id = $1 AND seq_num = ANY($2)",
 			streamId,
 		),
-		streamId,
-		mbs,
+		streamId, toNullify,
 	); err != nil {
+		fmt.Println(err)
 		return err
 	}
+
+	fmt.Print("successfully nullified snapshots for streamId: ", streamId, " seq_nums: ", toNullify, "\n")
 
 	// Update last processed miniblock number
 	if cutoff := mbs[len(mbs)-1] - minKeep; cutoff > 0 {

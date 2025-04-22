@@ -2,10 +2,81 @@ package storage
 
 import (
 	"sort"
+	"strconv"
 	"testing"
+	"time"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"github.com/towns-protocol/towns/core/node/crypto"
+	. "github.com/towns-protocol/towns/core/node/shared"
+	"github.com/towns-protocol/towns/core/node/testutils"
+	"github.com/towns-protocol/towns/core/node/testutils/mocks"
 )
+
+func TestSnapshotsTrimmer(t *testing.T) {
+	params := setupStreamStorageTest(t)
+	ctx := params.ctx
+	pgStreamStore := params.pgStreamStore
+	defer params.closer()
+	require := require.New(t)
+
+	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
+
+	genesisMb := &WriteMiniblockData{Data: []byte("genesisMiniblock"), Snapshot: []byte("genesisSnapshot")}
+	err := pgStreamStore.CreateStreamStorage(ctx, streamId, genesisMb)
+	require.NoError(err)
+
+	var testEnvelopes [][]byte
+	testEnvelopes = append(testEnvelopes, []byte("event2"))
+
+	// Generate 500 miniblocks with snapshot on each 10th miniblock
+	mbs := make([]*WriteMiniblockData, 500)
+	for i := 1; i <= 500; i++ {
+		mb := &WriteMiniblockData{
+			Number: int64(i),
+			Hash:   common.BytesToHash([]byte("block_hash" + strconv.Itoa(i))),
+			Data:   []byte("block" + strconv.Itoa(i)),
+		}
+		if i%10 == 0 {
+			mb.Snapshot = []byte("snapshot" + strconv.Itoa(i))
+		}
+		mbs[i-1] = mb
+	}
+
+	err = pgStreamStore.WriteMiniblocks(
+		ctx,
+		streamId,
+		mbs,
+		mbs[len(mbs)-1].Number+1,
+		testEnvelopes,
+		mbs[0].Number,
+		-1,
+	)
+	require.NoError(err)
+
+	// Force trim streams
+	onChainConf := mocks.NewMockOnChainConfiguration(t)
+	onChainConf.On("Get").Return(&crypto.OnChainSettings{
+		StreamEphemeralStreamTTL:           time.Minute * 10,
+		StreamSnapshotIntervalInMiniblocks: 110,
+	})
+	pgStreamStore.st.config = onChainConf
+	pgStreamStore.st.trimStreams(ctx)
+
+	// Check if the snapshots are trimmed correctly
+	mbsWithSnapshot := make([]int64, 0, 0)
+	err = pgStreamStore.ReadMiniblocksByStream(ctx, streamId, func(blockdata []byte, seqNum int64, snapshot []byte) error {
+		if len(snapshot) > 0 {
+			mbsWithSnapshot = append(mbsWithSnapshot, seqNum)
+		}
+		return nil
+	})
+	require.NoError(err)
+	require.Equal([]int64{0, 100, 210, 320, 400, 410, 420, 430, 440, 450, 460, 470, 480, 490, 500}, mbsWithSnapshot)
+}
 
 func TestDetermineSnapshotsToNullify(t *testing.T) {
 	tests := []struct {

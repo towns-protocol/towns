@@ -1359,6 +1359,7 @@ func (s *PostgresStreamStore) WriteMiniblocks(
 		return RiverError(Err_INTERNAL, "No miniblocks to write").Func("pg.WriteMiniblocks")
 	}
 	if prevMinipoolGeneration != miniblocks[0].Number {
+		fmt.Println(prevMinipoolGeneration, miniblocks[0].Number)
 		return RiverError(Err_INTERNAL, "Previous minipool generation mismatch").Func("pg.WriteMiniblocks")
 	}
 	if newMinipoolGeneration != miniblocks[len(miniblocks)-1].Number+1 {
