@@ -55,7 +55,7 @@ export const GoogleMeetContent = (props: {
                     width="x8"
                     height="x8"
                     style={{
-                        backgroundImage: `url('/components/MessageAttachments/assets/meet-logo-small.svg')`,
+                        backgroundImage: `url('/meet-logo-small.svg')`,
                         backgroundSize: 'contain',
                         backgroundPosition: 'center',
                         backgroundRepeat: 'no-repeat',
