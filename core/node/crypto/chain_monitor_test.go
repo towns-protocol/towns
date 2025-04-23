@@ -589,7 +589,13 @@ func TestContracEventsWithTopicsBeforeStart(t *testing.T) {
 
 	// Create a new chain monitor and start it.
 	chainMonitor := crypto.NewChainMonitor()
-	chainMonitor.Start(ctx, tc.Client(), tc.BlockNum(ctx), 100*time.Millisecond, infra.NewMetricsFactory(nil, "", ""))
+	chainMonitor.StartWithBlockPeriod(
+		ctx,
+		tc.Client(),
+		tc.BlockNum(ctx),
+		100*time.Millisecond,
+		infra.NewMetricsFactory(nil, "", ""),
+	)
 
 	events2C := make(chan types.Log, nodeCount)
 

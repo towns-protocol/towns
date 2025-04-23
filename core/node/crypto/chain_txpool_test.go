@@ -194,7 +194,7 @@ func TestReplacementTxOnBoot(t *testing.T) {
 	monitor := crypto.NewChainMonitor()
 	blockNum, err := bc.Client.BlockNumber(ctx)
 	require.NoError(err, "unable to get block number")
-	monitor.Start(
+	monitor.StartWithBlockPeriod(
 		ctx, bc.Client, crypto.BlockNumber(blockNum), 100*time.Millisecond,
 		infra.NewMetricsFactory(nil, "", ""))
 

@@ -2,10 +2,12 @@ package crypto
 
 import (
 	"context"
-	"crypto/rand"
+	crand "crypto/rand"
 	"errors"
 	"fmt"
+	"math"
 	"math/big"
+	"math/rand"
 	"os"
 	"slices"
 	"strings"
@@ -468,6 +470,37 @@ func (c *BlockchainTestContext) GetDeployerWallet() *Wallet {
 	return c.DeployerBlockchain.Wallet
 }
 
+type flakyChainMonitorPollInterval struct {
+	random      *rand.Rand
+	blockPeriod time.Duration
+}
+
+// newFlakyChainMonitorPollInterval creates a chain poll interval calculator that yields random poll intervals
+// in the range of [1ms, blockPeriod). It is intended to simulate that nodes witness chain state transitions on
+// different moments.
+func newFlakyChainMonitorPollInterval(blockPeriod time.Duration) *flakyChainMonitorPollInterval {
+	seed, err := crand.Int(crand.Reader, big.NewInt(math.MaxInt64))
+	if err != nil {
+		panic(err)
+	}
+
+	random := rand.New(rand.NewSource(seed.Int64()))
+	return &flakyChainMonitorPollInterval{random, blockPeriod}
+}
+
+func (f *flakyChainMonitorPollInterval) Interval(
+	took time.Duration,
+	gotBlock bool,
+	hitBlockRangeLimit bool,
+	gotErr bool,
+) time.Duration {
+	offset := time.Duration(f.random.Int()) % f.blockPeriod
+	if int(f.random.Int31n(2)) == 1 {
+		offset = -offset
+	}
+	return f.blockPeriod + offset
+}
+
 func makeTestBlockchain(
 	ctx context.Context,
 	wallet *Wallet,
@@ -477,17 +510,20 @@ func makeTestBlockchain(
 	if err != nil {
 		panic(err)
 	}
-	bc, err := NewBlockchainWithClient(
+
+	blockTimeMs := uint64(100)
+	bc, err := NewBlockchainWithClientAndChainMonitorPoll(
 		ctx,
 		&config.ChainConfig{
 			ChainId:                                chainID.Uint64(),
-			BlockTimeMs:                            100,
+			BlockTimeMs:                            blockTimeMs,
 			TransactionPool:                        config.TransactionPoolConfig{}, // use defaults
 			DisableReplacePendingTransactionOnBoot: true,
 		},
 		wallet,
 		client,
 		nil,
+		newFlakyChainMonitorPollInterval(time.Duration(blockTimeMs)*time.Millisecond),
 		infra.NewMetricsFactory(nil, "", ""),
 		nil,
 	)
@@ -680,7 +716,7 @@ func (c *BlockchainTestContext) SetConfigValue(t *testing.T, ctx context.Context
 // GetTestAddress returns a random common.Address that can be used in tests.
 func GetTestAddress() common.Address {
 	var address common.Address
-	_, err := rand.Read(address[:])
+	_, err := crand.Read(address[:])
 	if err != nil {
 		panic(err)
 	}
@@ -691,13 +727,24 @@ type NoopChainMonitor struct{}
 
 var _ ChainMonitor = NoopChainMonitor{}
 
-func (NoopChainMonitor) Start(
+func (NoopChainMonitor) StartWithBlockPeriod(
 	context.Context,
 	BlockchainClient,
 	BlockNumber,
 	time.Duration,
 	infra.MetricsFactory,
 ) {
+	// noop
+}
+
+func (NoopChainMonitor) StartWithPollInterval(
+	context.Context,
+	BlockchainClient,
+	BlockNumber,
+	ChainMonitorPollInterval,
+	infra.MetricsFactory,
+) {
+	// noop
 }
 
 func (NoopChainMonitor) OnHeader(OnChainNewHeader)                                         {}
