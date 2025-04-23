@@ -73,7 +73,7 @@ export const useExtractExternalLinks = (
             })
         } else {
             const meetLinks: Record<string, { mainUrl: string; dialInUrl?: string }> = {}
-            
+
             unfurledLinksQuery.forEach((value) => {
                 try {
                     const url = new URL(value.url)
@@ -82,8 +82,7 @@ export const useExtractExternalLinks = (
                         if (meetingId) {
                             meetLinks[meetingId] = { mainUrl: value.url }
                         }
-                    }
-                    else if (url.hostname === 'tel.meet') {
+                    } else if (url.hostname === 'tel.meet') {
                         const meetingId = url.pathname.split('/')[1]
                         if (meetingId && meetLinks[meetingId]) {
                             meetLinks[meetingId].dialInUrl = value.url
@@ -91,26 +90,38 @@ export const useExtractExternalLinks = (
                             meetLinks[meetingId] = { mainUrl: '', dialInUrl: value.url }
                         }
                     }
-                } catch (e) {
-                }
+                } catch (e) {}
             })
-            
-            return unfurledLinksQuery.map((value) => {
-                try {
-                    const url = new URL(value.url)
-                    const isMeetLink = url.hostname === 'meet.google.com'
-                    const isTelMeetLink = url.hostname === 'tel.meet'
-                    
-                    if (isTelMeetLink) {
-                        const meetingId = url.pathname.split('/')[1]
-                        if (meetingId && meetLinks[meetingId]?.mainUrl) {
-                            return null
+
+            return unfurledLinksQuery
+                .map((value) => {
+                    try {
+                        const url = new URL(value.url)
+                        const isMeetLink = url.hostname === 'meet.google.com'
+                        const isTelMeetLink = url.hostname === 'tel.meet'
+
+                        if (isTelMeetLink) {
+                            const meetingId = url.pathname.split('/')[1]
+                            if (meetingId && meetLinks[meetingId]?.mainUrl) {
+                                return null
+                            }
                         }
-                    }
-                    
-                    if (isMeetLink) {
-                        const meetingId = url.pathname.split('/')[1]
-                        if (meetingId && meetLinks[meetingId]?.dialInUrl) {
+
+                        if (isMeetLink) {
+                            const meetingId = url.pathname.split('/')[1]
+                            if (meetingId && meetLinks[meetingId]?.dialInUrl) {
+                                return {
+                                    type: 'unfurled_link',
+                                    url: value.url,
+                                    title: value.title ?? '',
+                                    description: value.description ?? '',
+                                    image: value.image,
+                                    id: value.url,
+                                    dialInLink: meetLinks[meetingId].dialInUrl,
+                                    isGoogleMeet: true,
+                                } satisfies GoogleMeetAttachment
+                            }
+
                             return {
                                 type: 'unfurled_link',
                                 url: value.url,
@@ -118,11 +129,10 @@ export const useExtractExternalLinks = (
                                 description: value.description ?? '',
                                 image: value.image,
                                 id: value.url,
-                                dialInLink: meetLinks[meetingId].dialInUrl,
                                 isGoogleMeet: true,
                             } satisfies GoogleMeetAttachment
                         }
-                        
+
                         return {
                             type: 'unfurled_link',
                             url: value.url,
@@ -130,29 +140,19 @@ export const useExtractExternalLinks = (
                             description: value.description ?? '',
                             image: value.image,
                             id: value.url,
-                            isGoogleMeet: true,
-                        } satisfies GoogleMeetAttachment
+                        } satisfies UnfurledLinkAttachment
+                    } catch (e) {
+                        return {
+                            type: 'unfurled_link',
+                            url: value.url,
+                            title: value.title ?? '',
+                            description: value.description ?? '',
+                            image: value.image,
+                            id: value.url,
+                        } satisfies UnfurledLinkAttachment
                     }
-                    
-                    return {
-                        type: 'unfurled_link',
-                        url: value.url,
-                        title: value.title ?? '',
-                        description: value.description ?? '',
-                        image: value.image,
-                        id: value.url,
-                    } satisfies UnfurledLinkAttachment
-                } catch (e) {
-                    return {
-                        type: 'unfurled_link',
-                        url: value.url,
-                        title: value.title ?? '',
-                        description: value.description ?? '',
-                        image: value.image,
-                        id: value.url,
-                    } satisfies UnfurledLinkAttachment
-                }
-            }).filter(Boolean) as UnfurledLinkAttachment[]
+                })
+                .filter(Boolean) as UnfurledLinkAttachment[]
         }
     }, [unfurledLinksQuery, isError, cleanLinks])
 

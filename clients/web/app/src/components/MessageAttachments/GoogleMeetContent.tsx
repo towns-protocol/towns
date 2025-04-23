@@ -7,14 +7,13 @@ export const GoogleMeetContent = (props: {
 }) => {
     const { attachment } = props
     const { url, title, description, dialInLink } = attachment
-    
+
     let meetingCode = ''
     try {
         const meetUrl = new URL(url)
         meetingCode = meetUrl.pathname.split('/')[1] || ''
-    } catch (e) {
-    }
-    
+    } catch (e) {}
+
     let phoneNumber = ''
     if (dialInLink) {
         try {
@@ -23,13 +22,15 @@ export const GoogleMeetContent = (props: {
             if (parts.length > 2) {
                 phoneNumber = parts[2]
                 if (phoneNumber.length === 10) {
-                    phoneNumber = `${phoneNumber.slice(0, 3)}-${phoneNumber.slice(3, 6)}-${phoneNumber.slice(6)}`
+                    phoneNumber = `${phoneNumber.slice(0, 3)}-${phoneNumber.slice(
+                        3,
+                        6,
+                    )}-${phoneNumber.slice(6)}`
                 }
             }
-        } catch (e) {
-        }
+        } catch (e) {}
     }
-    
+
     return (
         <Box
             as="a"
@@ -39,20 +40,20 @@ export const GoogleMeetContent = (props: {
             position="relative"
             width="100%"
         >
-            <Box 
-                horizontal 
-                gap="sm" 
-                background="level2" 
-                borderRadius="md" 
+            <Box
+                horizontal
+                gap="sm"
+                background="level2"
+                borderRadius="md"
                 padding="paragraph"
                 maxWidth="100%"
                 alignItems="center"
             >
                 {/* Google Meet Logo */}
-                <Box 
-                    shrink={false} 
-                    width="x8" 
-                    height="x8" 
+                <Box
+                    shrink={false}
+                    width="x8"
+                    height="x8"
                     style={{
                         backgroundImage: `url('/components/MessageAttachments/assets/meet-logo-small.svg')`,
                         backgroundSize: 'contain',
@@ -60,26 +61,26 @@ export const GoogleMeetContent = (props: {
                         backgroundRepeat: 'no-repeat',
                     }}
                 />
-                
+
                 {/* Content */}
                 <Stack gap="xs" overflow="hidden">
                     <Heading level={3} color="default" whiteSpace="normal">
                         {title || 'Google Meet'}
                     </Heading>
-                    
+
                     {description && (
                         <Paragraph color="gray2" size="sm">
                             {description}
                         </Paragraph>
                     )}
-                    
+
                     {/* Meeting Code and Dial-in Info */}
                     <Box horizontal gap="sm" alignItems="center">
                         {meetingCode && (
-                            <Box 
-                                background="lightHover" 
-                                borderRadius="md" 
-                                paddingY="xxs" 
+                            <Box
+                                background="lightHover"
+                                borderRadius="md"
+                                paddingY="xxs"
                                 paddingX="xs"
                             >
                                 <Text size="sm" color="gray1">
@@ -87,7 +88,7 @@ export const GoogleMeetContent = (props: {
                                 </Text>
                             </Box>
                         )}
-                        
+
                         {phoneNumber && (
                             <Box horizontal gap="xxs" alignItems="center">
                                 <Icon type="phone" size="square_xs" color="gray1" />

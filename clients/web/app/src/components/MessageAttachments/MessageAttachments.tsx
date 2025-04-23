@@ -281,7 +281,7 @@ const UnfurledLinkAttachmentContainer = (props: {
     const { attachment } = props
     const { url } = attachment
     const townData = getTownParamsFromUrl(url)
-    
+
     // Check if it's a Google Meet link
     const isGoogleMeet = 'isGoogleMeet' in attachment && attachment.isGoogleMeet
 
