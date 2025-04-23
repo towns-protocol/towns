@@ -2,8 +2,8 @@
 pragma solidity ^0.8.23;
 
 //contracts
-import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
 import {Deployer} from "scripts/common/Deployer.s.sol";
+import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
 import {WalletLink} from "src/factory/facets/wallet-link/WalletLink.sol";
 
 contract DeployWalletLink is FacetHelper, Deployer {
@@ -18,10 +18,9 @@ contract DeployWalletLink is FacetHelper, Deployer {
         addSelector(WalletLink.removeCallerLink.selector);
         addSelector(WalletLink.setDefaultWallet.selector);
         addSelector(WalletLink.getDefaultWallet.selector);
-        addSelector(WalletLink.getWalletsByRootKeyWithDelegations.selector);
         addSelector(WalletLink.getDependency.selector);
         addSelector(WalletLink.setDependency.selector);
-        addSelector(WalletLink.explicitWalletsByRootKey.selector);
+        addSelector(WalletLink.getAllWalletsByRootKey.selector);
         addSelector(WalletLink.linkNonEVMWalletToRootKey.selector);
         addSelector(WalletLink.removeNonEVMWalletLink.selector);
         addSelector(WalletLink.checkIfNonEVMWalletLinked.selector);
@@ -32,11 +31,8 @@ contract DeployWalletLink is FacetHelper, Deployer {
     }
 
     // 0x6aa4029900000000000000000000000000000000000000447e69651d841bd8d104bed4930000000000000000000000001d19402769366dc08d3256a0ac148f227df105ce00000000000000000000000000000000000000000000000000000000
-    function makeInitData(
-        address delegateRegistry,
-        address sclEip6565
-    ) public pure returns (bytes memory) {
-        return abi.encodeWithSelector(initializer(), delegateRegistry, sclEip6565);
+    function makeInitData(address sclEip6565) public pure returns (bytes memory) {
+        return abi.encodeWithSelector(initializer(), sclEip6565);
     }
 
     function versionName() public pure override returns (string memory) {

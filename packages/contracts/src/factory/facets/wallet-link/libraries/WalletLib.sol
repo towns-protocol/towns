@@ -11,6 +11,10 @@ import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet
 library WalletLib {
     using EnumerableSet for EnumerableSet.Bytes32Set;
 
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                          STORAGE                           */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
     enum VirtualMachineType {
         EVM, // Ethereum Virtual Machine (Ethereum, BSC, Polygon, etc.)
         SVM, // Solana Virtual Machine
@@ -32,21 +36,27 @@ library WalletLib {
         mapping(bytes32 => Wallet) walletByHash;
     }
 
-    function addWallet(
-        RootWallet storage self,
-        bytes32 walletHash,
-        Wallet calldata wallet
-    ) internal {
-        self.walletHashes.add(walletHash);
-        self.walletByHash[walletHash] = wallet;
+    struct Layout {
+        // mapping RootKeys to Ethereum Wallets is a 1 to many relationship, a root key can have many wallets
+        mapping(address => EnumerableSet.AddressSet) walletsByRootKey;
+        // mapping Ethereum Wallets to RootKey is a 1 to 1 relationship, a wallet can only be linked to 1 root key
+        mapping(address => address) rootKeyByWallet;
+        // mapping of wallet link external dependencies
+        mapping(bytes32 => address) dependencies;
+        // mapping of root key to root wallet
+        mapping(address => RootWallet) rootWalletByRootKey;
+        // mapping of root key hash to root key
+        mapping(bytes32 => address) rootKeyByHash;
     }
 
-    function removeWallet(RootWallet storage self, bytes32 walletHash) internal {
-        self.walletHashes.remove(walletHash);
-        delete self.walletByHash[walletHash];
-    }
+    // keccak256(abi.encode(uint256(keccak256("river.wallet.link.storage")) - 1)) & ~bytes32(uint256(0xff))
+    bytes32 constant STORAGE_SLOT =
+        0x19511ce7944c192b1007be99b82019218d1decfc513f05239612743360a0dc00;
 
-    function exists(RootWallet storage self, bytes32 walletHash) internal view returns (bool) {
-        return self.walletHashes.contains(walletHash);
+    function layout() internal pure returns (Layout storage s) {
+        bytes32 slot = STORAGE_SLOT;
+        assembly {
+            s.slot := slot
+        }
     }
 }

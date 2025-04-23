@@ -50,6 +50,7 @@ const (
 	StreamMiniblockRegistrationFrequencyKey         = "stream.miniblockRegistrationFrequency"
 	StreamEphemeralStreamTTLMsKey                   = "stream.ephemeralStreamTTLMs"
 	NodeBlocklistConfigKey                          = "node.blocklist"
+	StreamSnapshotIntervalInMiniblocksConfigKey     = "stream.snapshotIntervalInMiniblocks"
 )
 
 var (
@@ -120,6 +121,9 @@ type OnChainSettings struct {
 	XChain XChainSettings `mapstructure:",squash"`
 
 	NodeBlocklist []common.Address `mapstructure:"node.blocklist"`
+
+	// StreamSnapshotIntervalInMiniblocks is the interval in miniblocks between snapshots.
+	StreamSnapshotIntervalInMiniblocks uint64 `mapstructure:"stream.snapshotIntervalInMiniblocks"`
 }
 
 type XChainSettings struct {
@@ -186,7 +190,8 @@ func DefaultOnChainSettings() *OnChainSettings {
 		StreamCacheExpiration:    5 * time.Minute,
 		StreamCachePollIntterval: 30 * time.Second,
 
-		StreamEphemeralStreamTTL: time.Minute * 10,
+		StreamEphemeralStreamTTL:           time.Minute * 10,
+		StreamSnapshotIntervalInMiniblocks: 0, // 0 means snapshots trimming is disabled
 
 		// TODO: Set it to the default value when the client side is updated.
 		GetMiniblocksMaxPageSize: 0,

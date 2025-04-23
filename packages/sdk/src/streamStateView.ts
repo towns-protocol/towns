@@ -48,7 +48,6 @@ import { StreamStateView_UserInbox } from './streamStateView_UserInbox'
 import { DecryptedContent } from './encryptedContentTypes'
 import { StreamStateView_UnknownContent } from './streamStateView_UnknownContent'
 import { StreamStateView_MemberMetadata } from './streamStateView_MemberMetadata'
-import { StreamStateView_ChannelMetadata } from './streamStateView_ChannelMetadata'
 import { StreamEvents, StreamEncryptionEvents, StreamStateEvents } from './streamEvents'
 import isEqual from 'lodash/isEqual'
 import { DecryptionSessionError } from '@towns-protocol/encryption'
@@ -83,7 +82,6 @@ export interface IStreamStateView {
     get mediaContent(): StreamStateView_Media
     getMembers(): StreamStateView_Members
     getMemberMetadata(): StreamStateView_MemberMetadata
-    getChannelMetadata(): StreamStateView_ChannelMetadata | undefined
     getContent(): StreamStateView_AbstractContent
     userIsEntitledToKeyExchange(userId: string): boolean
     getUsersEntitledToKeyExchange(): Set<string>
@@ -762,10 +760,6 @@ export class StreamStateView implements IStreamStateView {
 
     getMemberMetadata(): StreamStateView_MemberMetadata {
         return this.membershipContent.memberMetadata
-    }
-
-    getChannelMetadata(): StreamStateView_ChannelMetadata | undefined {
-        return this.getContent().getChannelMetadata()
     }
 
     getContent(): StreamStateView_AbstractContent {
