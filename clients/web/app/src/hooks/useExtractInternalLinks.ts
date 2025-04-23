@@ -17,6 +17,11 @@ export type EmbeddedMessageLink = {
     url: string
 }
 
+export interface GoogleMeetAttachment extends UnfurledLinkAttachment {
+    dialInLink?: string
+    isGoogleMeet?: boolean
+}
+
 export type LoadingUnfurledLinkAttachment = UnfurledLinkAttachment & { isLoading: true }
 
 export const useExtractInternalLinks = (text: string): EmbeddedMessageLink[] => {
@@ -67,16 +72,87 @@ export const useExtractExternalLinks = (
                 } as LoadingUnfurledLinkAttachment
             })
         } else {
-            return unfurledLinksQuery.map((value) => {
-                return {
-                    type: 'unfurled_link',
-                    url: value.url,
-                    title: value.title ?? '',
-                    description: value.description ?? '',
-                    image: value.image,
-                    id: value.url,
-                } satisfies UnfurledLinkAttachment
+            const meetLinks: Record<string, { mainUrl: string; dialInUrl?: string }> = {}
+            
+            unfurledLinksQuery.forEach((value) => {
+                try {
+                    const url = new URL(value.url)
+                    if (url.hostname === 'meet.google.com') {
+                        const meetingId = url.pathname.split('/')[1]
+                        if (meetingId) {
+                            meetLinks[meetingId] = { mainUrl: value.url }
+                        }
+                    }
+                    else if (url.hostname === 'tel.meet') {
+                        const meetingId = url.pathname.split('/')[1]
+                        if (meetingId && meetLinks[meetingId]) {
+                            meetLinks[meetingId].dialInUrl = value.url
+                        } else if (meetingId) {
+                            meetLinks[meetingId] = { mainUrl: '', dialInUrl: value.url }
+                        }
+                    }
+                } catch (e) {
+                }
             })
+            
+            return unfurledLinksQuery.map((value) => {
+                try {
+                    const url = new URL(value.url)
+                    const isMeetLink = url.hostname === 'meet.google.com'
+                    const isTelMeetLink = url.hostname === 'tel.meet'
+                    
+                    if (isTelMeetLink) {
+                        const meetingId = url.pathname.split('/')[1]
+                        if (meetingId && meetLinks[meetingId]?.mainUrl) {
+                            return null
+                        }
+                    }
+                    
+                    if (isMeetLink) {
+                        const meetingId = url.pathname.split('/')[1]
+                        if (meetingId && meetLinks[meetingId]?.dialInUrl) {
+                            return {
+                                type: 'unfurled_link',
+                                url: value.url,
+                                title: value.title ?? '',
+                                description: value.description ?? '',
+                                image: value.image,
+                                id: value.url,
+                                dialInLink: meetLinks[meetingId].dialInUrl,
+                                isGoogleMeet: true,
+                            } satisfies GoogleMeetAttachment
+                        }
+                        
+                        return {
+                            type: 'unfurled_link',
+                            url: value.url,
+                            title: value.title ?? '',
+                            description: value.description ?? '',
+                            image: value.image,
+                            id: value.url,
+                            isGoogleMeet: true,
+                        } satisfies GoogleMeetAttachment
+                    }
+                    
+                    return {
+                        type: 'unfurled_link',
+                        url: value.url,
+                        title: value.title ?? '',
+                        description: value.description ?? '',
+                        image: value.image,
+                        id: value.url,
+                    } satisfies UnfurledLinkAttachment
+                } catch (e) {
+                    return {
+                        type: 'unfurled_link',
+                        url: value.url,
+                        title: value.title ?? '',
+                        description: value.description ?? '',
+                        image: value.image,
+                        id: value.url,
+                    } satisfies UnfurledLinkAttachment
+                }
+            }).filter(Boolean) as UnfurledLinkAttachment[]
         }
     }, [unfurledLinksQuery, isError, cleanLinks])
 

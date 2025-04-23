@@ -28,6 +28,7 @@ import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { Avatar } from '@components/Avatar/Avatar'
 import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
 import { useReadableMembershipInfo } from '@components/TownPageLayout/useReadableMembershipInfo'
+import { GoogleMeetContent } from './GoogleMeetContent'
 import { getPriceText } from '@components/TownPageLayout/townPageUtils'
 import { useEntitlements } from 'hooks/useEntitlements'
 import { PATHS } from 'routes'
@@ -280,11 +281,16 @@ const UnfurledLinkAttachmentContainer = (props: {
     const { attachment } = props
     const { url } = attachment
     const townData = getTownParamsFromUrl(url)
+    
+    // Check if it's a Google Meet link
+    const isGoogleMeet = 'isGoogleMeet' in attachment && attachment.isGoogleMeet
 
     return (
         <ErrorBoundary FallbackComponent={() => <UnfurlErrorContainer url={url} />}>
             {townData?.townId && townData?.townPath ? (
                 <TownsContent {...townData} />
+            ) : isGoogleMeet ? (
+                <GoogleMeetContent attachment={attachment as UnfurledLinkAttachment} />
             ) : (
                 <Box
                     as="a"
