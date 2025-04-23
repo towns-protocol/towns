@@ -2,15 +2,10 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {IERC6900Account, ValidationConfig, ModuleEntity} from "@erc6900/reference-implementation/interfaces/IERC6900Account.sol";
 import {IAccount} from "./interfaces/IAccount.sol";
-// libraries
-import {ExecutorLib} from "./libraries/ExecutorLib.sol";
-import {ModularAccountLib} from "./libraries/ModularAccountLib.sol";
 
-// types
-import {ExecutionManifest} from "@erc6900/reference-implementation/interfaces/IERC6900ExecutionModule.sol";
-import {Call} from "@erc6900/reference-implementation/interfaces/IERC6900Account.sol";
+// libraries
+import {ModularAccountLib} from "./libraries/ModularAccountLib.sol";
 
 // contracts
 import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
