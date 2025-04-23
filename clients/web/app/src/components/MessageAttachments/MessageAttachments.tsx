@@ -28,7 +28,6 @@ import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { Avatar } from '@components/Avatar/Avatar'
 import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
 import { useReadableMembershipInfo } from '@components/TownPageLayout/useReadableMembershipInfo'
-import { GoogleMeetContent } from './GoogleMeetContent'
 import { getPriceText } from '@components/TownPageLayout/townPageUtils'
 import { useEntitlements } from 'hooks/useEntitlements'
 import { PATHS } from 'routes'
@@ -40,6 +39,7 @@ import { isTownBanned } from 'utils'
 import { Ticker } from '@components/TradingChart/Ticker'
 import { useMessageEditContext } from '@components/MessageTimeIineItem/items/MessageEditContext'
 import { useDevice } from 'hooks/useDevice'
+import { GoogleMeetContent } from './GoogleMeetContent'
 import {
     EmbeddedAttachmentsContext,
     MessageAttachmentPresentationContext,

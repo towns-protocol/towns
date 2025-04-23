@@ -1,6 +1,6 @@
 import React from 'react'
-import { Box, Heading, Icon, Paragraph, Stack, Text } from '@ui'
 import { UnfurledLinkAttachment } from '@towns-protocol/sdk'
+import { Box, Heading, Icon, Paragraph, Stack, Text } from '@ui'
 
 export const GoogleMeetContent = (props: {
     attachment: UnfurledLinkAttachment & { dialInLink?: string }
@@ -12,7 +12,7 @@ export const GoogleMeetContent = (props: {
     try {
         const meetUrl = new URL(url)
         meetingCode = meetUrl.pathname.split('/')[1] || ''
-    } catch (e) {}
+    } catch (e) { /* Ignore URL parsing errors */ }
 
     let phoneNumber = ''
     if (dialInLink) {
@@ -28,7 +28,7 @@ export const GoogleMeetContent = (props: {
                     )}-${phoneNumber.slice(6)}`
                 }
             }
-        } catch (e) {}
+        } catch (e) { /* Ignore URL parsing errors */ }
     }
 
     return (

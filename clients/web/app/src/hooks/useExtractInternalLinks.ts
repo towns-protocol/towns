@@ -90,7 +90,7 @@ export const useExtractExternalLinks = (
                             meetLinks[meetingId] = { mainUrl: '', dialInUrl: value.url }
                         }
                     }
-                } catch (e) {}
+                } catch (e) { /* Ignore URL parsing errors */ }
             })
 
             return unfurledLinksQuery
