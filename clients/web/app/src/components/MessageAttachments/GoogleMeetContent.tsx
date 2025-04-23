@@ -12,7 +12,9 @@ export const GoogleMeetContent = (props: {
     try {
         const meetUrl = new URL(url)
         meetingCode = meetUrl.pathname.split('/')[1] || ''
-    } catch (e) { /* Ignore URL parsing errors */ }
+    } catch (e) {
+        /* Ignore URL parsing errors */
+    }
 
     let phoneNumber = ''
     if (dialInLink) {
@@ -28,7 +30,9 @@ export const GoogleMeetContent = (props: {
                     )}-${phoneNumber.slice(6)}`
                 }
             }
-        } catch (e) { /* Ignore URL parsing errors */ }
+        } catch (e) {
+            /* Ignore URL parsing errors */
+        }
     }
 
     return (
