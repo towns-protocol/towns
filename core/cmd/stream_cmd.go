@@ -1004,7 +1004,18 @@ func runStreamPlaceInitiateCmd(cfg *config.Config, args []string) error {
 		inputJSON                          = json.NewDecoder(bytes.NewReader(inputFile))
 	)
 
+	// replicate stream to our own nodes
+	ourOwnStreamNodes := []common.Address{
+		common.HexToAddress("0xC5FB45BDb448766135ce634bD1Da34D483ADd382"), // river1
+		common.HexToAddress("0xB85dd7d21Bc093DAe6f1b56a20a45ec1770D11dD"), // river2
+		common.HexToAddress("0xc69ceBB1e84Ca8dda9a9Ad68D345Fbe4Ac21Fd54"), // river3
+	}
+
+	bravo2 := common.HexToAddress("0x14D237838A619784c831E3A690AbceB2df953F26")
+	i := 0
 	for {
+		i++
+
 		var record StreamNotMigrated
 
 		err := inputJSON.Decode(&record)
@@ -1015,6 +1026,8 @@ func runStreamPlaceInitiateCmd(cfg *config.Config, args []string) error {
 		if err != nil {
 			return err
 		}
+
+		record.NodeAddresses = append(record.NodeAddresses, ourOwnStreamNodes[i%len(ourOwnStreamNodes)])
 
 		if len(record.NodeAddresses) > targetReplicationFactor {
 			return fmt.Errorf(
@@ -1027,7 +1040,7 @@ func runStreamPlaceInitiateCmd(cfg *config.Config, args []string) error {
 
 		// add random nodes to ensure that the number of stream nodes is the targeted replication factor
 		// ensure that newly added nodes are from different operators
-		choosenStreamNodes, err := nodeRegistry.ChooseStreamNodes(ctx, record.StreamID, targetReplicationFactor)
+		choosenStreamNodes, err := nodeRegistry.ChooseStreamNodes(ctx, record.StreamID, 1+targetReplicationFactor)
 		if err != nil {
 			return err
 		}
@@ -1038,6 +1051,14 @@ func runStreamPlaceInitiateCmd(cfg *config.Config, args []string) error {
 		}
 
 		for _, addr := range choosenStreamNodes {
+			if len(record.NodeAddresses) >= targetReplicationFactor {
+				break
+			}
+
+			if addr == bravo2 {
+				continue
+			}
+
 			if slices.Contains(record.NodeAddresses, addr) { // no duplicate nodes
 				continue
 			}
@@ -1053,10 +1074,6 @@ func runStreamPlaceInitiateCmd(cfg *config.Config, args []string) error {
 
 			record.NodeAddresses = append(record.NodeAddresses, addr)
 			streamNodeOperators = append(streamNodeOperators, operator)
-
-			if len(record.NodeAddresses) >= targetReplicationFactor {
-				break
-			}
 		}
 
 		if len(record.NodeAddresses) != targetReplicationFactor {
@@ -1210,8 +1227,8 @@ func runStreamPlaceStatusCmd(cfg *config.Config, args []string) error {
 	}
 
 	var (
-		wp        = workerpool.New(32)
-		results   = make(chan *streamSyncStatus, 32)
+		wp        = workerpool.New(16)
+		results   = make(chan *streamSyncStatus, wp.Size())
 		getStatus = func(stream *streamPlacementTxResult) func() {
 			return func() {
 				status := &streamSyncStatus{
@@ -1276,6 +1293,40 @@ func runStreamPlaceStatusCmd(cfg *config.Config, args []string) error {
 	return nil
 }
 
+func isConsistent(streamID shared.StreamId, nodes map[common.Address]streamSyncNodeStatus, nodeRegistry nodes.NodeRegistry) bool {
+	ctx := context.Background()
+	var gens []int64
+	status := make(map[common.Address]int64)
+	for nodeAddress := range nodes {
+		streamServiceClient, err := nodeRegistry.GetStreamServiceClientForAddress(nodeAddress)
+		if err != nil {
+			fmt.Printf("%v\n", err)
+			return false
+		}
+
+		request := connect.NewRequest(&protocol.GetStreamRequest{StreamId: streamID[:]})
+		request.Header().Set(rpc.RiverNoForwardHeader, rpc.RiverHeaderTrueValue)
+		request.Header().Set(rpc.RiverAllowNoQuorumHeader, rpc.RiverHeaderTrueValue)
+
+		response, err := streamServiceClient.GetStream(ctx, request)
+		if err != nil {
+			fmt.Printf("%v\n", err)
+			return false
+		}
+
+		status[nodeAddress] = response.Msg.GetStream().GetNextSyncCookie().GetMinipoolGen()
+		gens = append(gens, response.Msg.GetStream().GetNextSyncCookie().GetMinipoolGen())
+	}
+
+	slices.Sort(gens)
+
+	diff := gens[len(gens)-1] - gens[0]
+	if diff >= 3 {
+		fmt.Printf("stream %s (status=%v) is inconsistent\n", streamID, status)
+	}
+	return diff < 3
+}
+
 func runStreamPlaceEnterQuorumCmd(cfg *config.Config, args []string) error {
 	walletFileContents, err := os.ReadFile(args[0])
 	if err != nil {
@@ -1330,6 +1381,28 @@ func runStreamPlaceEnterQuorumCmd(cfg *config.Config, args []string) error {
 		return err
 	}
 
+	//httpClient, err := http_client.GetHttpClient(ctx, cfg)
+	//if err != nil {
+	//	return err
+	//}
+	//
+	//onChainConfig, err := crypto.NewOnChainConfig(
+	//	ctx,
+	//	blockchain.Client,
+	//	registryContract.Address,
+	//	blockchain.InitialBlockNum,
+	//	blockchain.ChainMonitor,
+	//)
+	//if err != nil {
+	//	return err
+	//}
+
+	//nodeRegistry, err := nodes.LoadNodeRegistry(ctx, registryContract, common.Address{}, blockchain.InitialBlockNum,
+	//	blockchain.ChainMonitor, onChainConfig, httpClient, nil)
+	//if err != nil {
+	//	return err
+	//}
+
 	inputFile, err := os.ReadFile(args[1])
 	if err != nil {
 		return err
@@ -1338,8 +1411,11 @@ func runStreamPlaceEnterQuorumCmd(cfg *config.Config, args []string) error {
 	// decode input file and ensure that all stream node lists are max targetReplicationFactor length
 	var (
 		streamSetReplicationFactorRequests []river.SetStreamReplicationFactor
-		inputJSON                          = json.NewDecoder(bytes.NewReader(inputFile))
+		//streamSetReplicationFactorRequestsFailures []river.SetStreamReplicationFactor
+		inputJSON = json.NewDecoder(bytes.NewReader(inputFile))
 	)
+
+	axol3 := common.HexToAddress("0xc6cf68a1bcd3b9285fe1d13c128953a14dd1bb60")
 
 	for {
 		var record streamSyncStatus
@@ -1360,13 +1436,39 @@ func runStreamPlaceEnterQuorumCmd(cfg *config.Config, args []string) error {
 			maxBlock = max(maxBlock, nodeStatus.MinipoolGen)
 		}
 
-		if maxBlock < 0 || maxBlock-minBlock > 3 {
-			return fmt.Errorf("status for stream %s is not consistent", record.StreamID)
-		}
+		//if maxBlock < 0 || maxBlock-minBlock > 3 {
+		//	if !isConsistent(record.StreamID, record.Nodes, nodeRegistry) {
+		//		nodeAddresses := []common.Address{axol3}
+		//		for nodeAddr := range record.Nodes {
+		//			if nodeAddr != axol3 {
+		//				nodeAddresses = append(nodeAddresses, nodeAddr)
+		//			}
+		//		}
+		//
+		//		streamSetReplicationFactorRequestsFailures = append(
+		//			streamSetReplicationFactorRequestsFailures,
+		//			river.SetStreamReplicationFactor{
+		//				StreamId:          record.StreamID,
+		//				Nodes:             nodeAddresses,
+		//				ReplicationFactor: 3, //TODO record.ReplicationFactor,
+		//			},
+		//		)
+		//
+		//		//continue
+		//
+		//		//return fmt.Errorf("status for stream %s is not consistent", record.StreamID)
+		//	}
+		//}
 
 		nodes := make([]common.Address, 0, len(record.Nodes))
 		for node := range record.Nodes {
-			nodes = append(nodes, node)
+			if node != axol3 {
+				nodes = append(nodes, node)
+			}
+		}
+
+		if len(nodes) != 3 {
+			panic("len nodes not three")
 		}
 
 		streamSetReplicationFactorRequests = append(
