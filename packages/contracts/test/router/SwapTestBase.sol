@@ -18,6 +18,7 @@ import {EIP712Utils} from "@towns-protocol/diamond/test/facets/signature/EIP712U
 abstract contract SwapTestBase is TestUtils, EIP712Utils, ISwapRouterBase {
     using SafeTransferLib for address;
 
+    uint16 internal constant MAX_FEE_BPS = 100; // 1%
     uint16 internal constant TREASURY_BPS = 50; // 0.5%
     uint16 internal constant POSTER_BPS = 50; // 0.5%
 
@@ -89,6 +90,7 @@ abstract contract SwapTestBase is TestUtils, EIP712Utils, ISwapRouterBase {
     function _verifySwapResults(
         address tokenIn,
         address tokenOut,
+        address payer,
         address recipient,
         uint256 amountOut,
         uint256 actualAmountOut,
@@ -116,9 +118,9 @@ abstract contract SwapTestBase is TestUtils, EIP712Utils, ISwapRouterBase {
         }
 
         if (tokenIn != CurrencyTransfer.NATIVE_TOKEN) {
-            assertEq(tokenIn.balanceOf(recipient), 0, "Incorrect token0 balance");
+            assertEq(tokenIn.balanceOf(payer), 0, "Incorrect token0 balance");
         } else {
-            assertEq(recipient.balance, 0, "Incorrect ETH balance");
+            assertEq(payer.balance, 0, "Incorrect ETH balance");
         }
 
         // assert returned amount is correct
