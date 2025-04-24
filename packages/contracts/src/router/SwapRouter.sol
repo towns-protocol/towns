@@ -125,22 +125,22 @@ contract SwapRouter is ReentrancyGuardTransient, ISwapRouter, Facet {
 
         // use the actual received amount to handle fee-on-transfer tokens
         amountOut = _getBalance(params.tokenOut) - balanceBefore;
-        // slippage check
-        if (amountOut < params.minAmountOut) SwapRouter__InsufficientOutput.selector.revertWith();
 
         // calculate and distribute fees
-        uint256 finalAmount;
         {
             (uint256 posterFee, uint256 treasuryFee) = _collectFees(
                 params.tokenOut,
                 amountOut,
                 poster
             );
-            finalAmount = amountOut - posterFee - treasuryFee;
+            amountOut = amountOut - posterFee - treasuryFee;
         }
 
+        // slippage check after fees
+        if (amountOut < params.minAmountOut) SwapRouter__InsufficientOutput.selector.revertWith();
+
         // transfer remaining tokens to the recipient
-        CurrencyTransfer.transferCurrency(params.tokenOut, address(this), recipient, finalAmount);
+        CurrencyTransfer.transferCurrency(params.tokenOut, address(this), recipient, amountOut);
 
         emit Swap(
             routerParams.router,

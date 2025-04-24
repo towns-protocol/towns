@@ -11,6 +11,7 @@ import {DeployDiamondLoupe} from "@towns-protocol/diamond/scripts/deployments/fa
 import {DeployIntrospection} from "@towns-protocol/diamond/scripts/deployments/facets/DeployIntrospection.s.sol";
 import {DeployOwnablePending} from "@towns-protocol/diamond/scripts/deployments/facets/DeployOwnablePending.s.sol";
 import {LibString} from "solady/utils/LibString.sol";
+import {DeployMetadata} from "../facets/DeployMetadata.s.sol";
 import {DeploySwapRouterFacet} from "../facets/DeploySwapRouterFacet.s.sol";
 
 // contracts
@@ -66,6 +67,13 @@ contract DeploySwapRouter is IDiamondInitHelper, DiamondHelper, Deployer {
         address facet = facetHelper.deploy("SwapRouter", deployer);
         addCut(DeploySwapRouterFacet.makeCut(facet, IDiamond.FacetCutAction.Add));
         addInit(facet, DeploySwapRouterFacet.makeInitData(getSpaceFactory()));
+
+        facet = facetHelper.deploy("MetadataFacet", deployer);
+        addFacet(
+            DeployMetadata.makeCut(facet, IDiamond.FacetCutAction.Add),
+            facet,
+            DeployMetadata.makeInitData(bytes32("SwapRouter"), "")
+        );
 
         return
             Diamond.InitParams({

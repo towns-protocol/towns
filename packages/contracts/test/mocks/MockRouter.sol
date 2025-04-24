@@ -12,7 +12,7 @@ contract MockRouter {
         address tokenIn,
         address tokenOut,
         uint256 amountIn,
-        uint256 minAmountOut,
+        uint256 amountOut,
         address recipient
     ) external payable returns (uint256) {
         if (tokenIn != CurrencyTransfer.NATIVE_TOKEN) {
@@ -22,10 +22,10 @@ contract MockRouter {
         }
 
         if (tokenOut != CurrencyTransfer.NATIVE_TOKEN) {
-            MockERC20(tokenOut).mint(recipient, minAmountOut);
+            MockERC20(tokenOut).mint(recipient, amountOut);
         } else {
-            recipient.safeTransferETH(minAmountOut);
+            recipient.safeTransferETH(amountOut);
         }
-        return minAmountOut;
+        return amountOut;
     }
 }
