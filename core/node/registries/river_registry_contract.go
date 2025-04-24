@@ -23,8 +23,6 @@ import (
 	. "github.com/towns-protocol/towns/core/node/shared"
 )
 
-var streamRegistryABI, _ = river.StreamRegistryV1MetaData.GetAbi()
-
 // RiverRegistryContract is the convinience wrapper for the IRiverRegistryV1 interface (abigen exports it as RiverRegistryV1)
 type RiverRegistryContract struct {
 	OperatorRegistry *river.OperatorRegistryV1
@@ -166,6 +164,10 @@ func NewRiverRegistryContract(
 			{
 				river.Event_StreamUpdated,
 				func(log *types.Log) any { return &river.StreamRegistryV1StreamUpdated{Raw: *log} },
+			},
+			{
+				river.Event_StreamLastMiniblockUpdateFailed,
+				func(log *types.Log) any { return &river.StreamRegistryV1StreamLastMiniblockUpdateFailed{Raw: *log} },
 			},
 		},
 	)
@@ -674,58 +676,47 @@ func (c *RiverRegistryContract) SetStreamLastMiniblockBatch(
 	}
 
 	if receipt != nil && receipt.Status == crypto.TransactionResultSuccess {
+		// during migration to the new eventing model the contract emits both the old and the new events.
+		// only parse the new events (StreamUpdated + StreamLastMiniblockUpdateFailed) and ignore the old events.
+		// this allows the contract to be upgraded without breaking event parsing.
+		// TODO: remove wanted1/wanted2 check after smart contract has been upgraded and won't emit old event types.
+		wanted1 := common.HexToHash("0x378ece20ebca29c2f887798617154658265a73d80c84fad8c9c49639ffdb29bb") // StreamUpdated
+		wanted2 := common.HexToHash("0x75460fe319331413a18a82d99b07735cec53fa0c4061ada38c2141e331082afa") // StreamLastMiniblockUpdateFailed
+
 		for _, l := range receipt.Logs {
-			if len(l.Topics) != 1 {
+			if l.Topics[0] != wanted1 && l.Topics[0] != wanted2 {
 				continue
 			}
 
-			event, _ := streamRegistryABI.EventByID(l.Topics[0])
-			if event == nil {
-				continue
+			parsed, err := c.ParseEvent(ctx, c.StreamRegistry.BoundContract(), c.StreamEventInfo, l)
+			if err != nil {
+				return nil, nil, nil, err
 			}
 
-			switch event.Name {
-			case "StreamLastMiniblockUpdated":
-				args, err := event.Inputs.Unpack(l.Data)
-				if err != nil || len(args) != 4 {
-					log.Errorw("Unable to unpack StreamLastMiniblockUpdated event", "err", err)
-					continue
+			switch p := parsed.(type) {
+			case *river.StreamRegistryV1StreamUpdated:
+				if river.StreamUpdatedEventType(p.EventType) == river.StreamUpdatedEventTypeLastMiniblockBatchUpdated {
+					events, err := river.ParseStreamUpdatedEvent(p)
+					if err != nil {
+						return nil, nil, nil, err
+					}
+					for _, event := range events {
+						success = append(success, event.GetStreamId())
+					}
 				}
-
+			case *river.StreamRegistryV1StreamLastMiniblockUpdateFailed:
 				var (
-					streamID          = StreamId(args[0].([32]byte))
-					lastMiniBlockHash = common.Hash(args[1].([32]byte))
-					lastMiniBlockNum  = args[2].(uint64)
-					isSealed          = args[3].(bool)
+					streamID, _       = StreamIdFromBytes(p.StreamId[:])
+					lastMiniBlockHash = p.LastMiniblockHash
+					lastMiniBlockNum  = p.LastMiniblockNum
+					reason            = p.Reason
 				)
 
-				log.Debugw(
-					"RiverRegistryContract: set stream last miniblock",
-					"name", "SetStreamLastMiniblockBatch",
-					"streamId", streamID,
-					"lastMiniBlockHash", lastMiniBlockHash,
-					"lastMiniBlockNum", lastMiniBlockNum,
-					"isSealed", isSealed,
-					"txHash", receipt.TxHash,
-				)
-
-				success = append(success, streamID)
-
-			case "StreamLastMiniblockUpdateFailed":
-				args, err := event.Inputs.Unpack(l.Data)
-				if err != nil || len(args) != 4 {
-					log.Errorw("Unable to unpack StreamLastMiniblockUpdateFailed event", "err", err)
-					continue
-				}
-
-				var (
-					streamID          = StreamId(args[0].([32]byte))
-					lastMiniBlockHash = common.Hash(args[1].([32]byte))
-					lastMiniBlockNum  = args[2].(uint64)
-					reason            = args[3].(string)
-				)
-
-				log.Errorw(
+				// this can happen when 2 nodes try to register a miniblock with the same number for a stream.
+				// only the first one will succeed. This isn't optimal but the result of nodes witnessing the
+				// river chain block at different moments causing multiple nodes to decide that its their turn
+				// to propose/register a miniblock.
+				log.Infow(
 					"RiverRegistryContract: set stream last miniblock failed",
 					"name", "SetStreamLastMiniblockBatch",
 					"streamId", streamID,
@@ -745,9 +736,8 @@ func (c *RiverRegistryContract) SetStreamLastMiniblockBatch(
 				default:
 					failed = append(failed, streamID)
 				}
-
 			default:
-				log.Errorw("Unexpected event on RiverRegistry::SetStreamLastMiniblockBatch", "event", event.Name)
+				log.Errorw("Unexpected event on RiverRegistry::SetStreamLastMiniblockBatch", "tx", l.TxHash)
 			}
 		}
 
@@ -791,9 +781,9 @@ func (c *RiverRegistryContract) callOptsWithBlockNum(ctx context.Context, blockN
 
 type NodeEvents interface {
 	river.NodeRegistryV1NodeAdded |
-		river.NodeRegistryV1NodeRemoved |
-		river.NodeRegistryV1NodeStatusUpdated |
-		river.NodeRegistryV1NodeUrlUpdated
+	river.NodeRegistryV1NodeRemoved |
+	river.NodeRegistryV1NodeStatusUpdated |
+	river.NodeRegistryV1NodeUrlUpdated
 }
 
 func (c *RiverRegistryContract) GetNodeEventsForBlock(ctx context.Context, blockNum crypto.BlockNumber) ([]any, error) {
