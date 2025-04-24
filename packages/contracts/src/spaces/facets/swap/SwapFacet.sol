@@ -183,11 +183,15 @@ contract SwapFacet is ISwapFacet, ReentrancyGuardTransient, Entitled, Membership
         IPlatformRequirements platform = _getPlatformRequirements();
         (treasuryBps, posterBps) = platform.getSwapFees();
 
-        // if spacePosterBps is not set, use protocol config
-        uint16 spacePosterBps = ds.posterFeeBps;
-        posterBps = spacePosterBps == 0 ? posterBps : spacePosterBps;
-
         collectPosterFeeToSpace = ds.collectPosterFeeToSpace;
+
+        uint16 spacePosterBps = ds.posterFeeBps;
+        if (collectPosterFeeToSpace) {
+            posterBps = spacePosterBps;
+        } else {
+            // if spacePosterBps is not set, use protocol config
+            posterBps = spacePosterBps == 0 ? posterBps : spacePosterBps;
+        }
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
