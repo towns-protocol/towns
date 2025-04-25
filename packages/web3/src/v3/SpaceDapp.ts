@@ -1135,7 +1135,12 @@ export class SpaceDapp implements ISpaceDapp {
         if (err?.name !== UNKNOWN_ERROR) {
             return err
         }
-        const nonSpaceContracts = [this.pricingModules, this.walletLink]
+
+        const nonSpaceContracts = [
+            this.pricingModules,
+            this.walletLink,
+            this.airdrop.riverPoints,
+        ].filter((v) => v !== undefined)
         for (const contract of nonSpaceContracts) {
             err = contract.parseError(args.error)
             if (err?.name !== UNKNOWN_ERROR) {
