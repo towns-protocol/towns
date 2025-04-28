@@ -64,7 +64,7 @@ type (
 	}
 )
 
-func initBlockchain(ctx context.Context) (
+func initBlockchain(ctx context.Context, wallet *crypto.Wallet) (
 	*crypto.Blockchain,
 	*registries.RiverRegistryContract,
 	error,
@@ -72,7 +72,7 @@ func initBlockchain(ctx context.Context) (
 	blockchain, err := crypto.NewBlockchain(
 		ctx,
 		&cmdConfig.RiverChain,
-		nil,
+		wallet,
 		infra.NewMetricsFactory(nil, "river", "cmdline"),
 		nil,
 	)
@@ -96,7 +96,7 @@ func initBlockchain(ctx context.Context) (
 func runStreamAllMigrationListCmd(cmd *cobra.Command, args []string) error {
 	ctx := context.Background() // lint:ignore context.Background() is fine here
 
-	blockchain, registryContract, err := initBlockchain(ctx)
+	blockchain, registryContract, err := initBlockchain(ctx, nil)
 	if err != nil {
 		return err
 	}
@@ -179,7 +179,7 @@ func runStreamMigrationListCmd(cmd *cobra.Command, args []string) error {
 
 	ctx := context.Background() // lint:ignore context.Background() is fine here
 
-	blockchain, registryContract, err := initBlockchain(ctx)
+	blockchain, registryContract, err := initBlockchain(ctx, nil)
 	if err != nil {
 		return err
 	}
@@ -265,7 +265,7 @@ func runStreamPlaceInitiateCmd(cfg *config.Config, args []string) error {
 
 	ctx := context.Background() // lint:ignore context.Background() is fine here
 
-	blockchain, registryContract, err := initBlockchain(ctx)
+	blockchain, registryContract, err := initBlockchain(ctx, wallet)
 	if err != nil {
 		return err
 	}
@@ -335,13 +335,14 @@ func runStreamPlaceInitiateCmd(cfg *config.Config, args []string) error {
 		inputJSON                          = json.NewDecoder(bytes.NewReader(inputFile))
 	)
 
-	// replicate stream to our own nodes
+	// replicate stream to at lest one of our own nodes
 	ourOwnStreamNodes := []common.Address{
 		common.HexToAddress("0xC5FB45BDb448766135ce634bD1Da34D483ADd382"), // river1
 		common.HexToAddress("0xB85dd7d21Bc093DAe6f1b56a20a45ec1770D11dD"), // river2
 		common.HexToAddress("0xc69ceBB1e84Ca8dda9a9Ad68D345Fbe4Ac21Fd54"), // river3
 	}
 
+	// and not to bravo-2 or any axol node
 	bravo2 := common.HexToAddress("0x14D237838A619784c831E3A690AbceB2df953F26")
 
 	i := 0
@@ -430,6 +431,9 @@ func runStreamPlaceInitiateCmd(cfg *config.Config, args []string) error {
 
 	output := json.NewEncoder(outputFile)
 
+	fmt.Printf("blockchain: %p\n", blockchain)
+	fmt.Printf("blockchain.TxPool: %p\n", blockchain.TxPool)
+
 	for requests := range slices.Chunk(streamSetReplicationFactorRequests, StreamSetReplicationFactorRequestsBatchSize) {
 		pendingTx, err := blockchain.TxPool.Submit(
 			ctx,
@@ -487,7 +491,7 @@ func runStreamPlaceInitiateCmd(cfg *config.Config, args []string) error {
 func runStreamPlaceStatusCmd(cfg *config.Config, args []string) error {
 	ctx := context.Background() // lint:ignore context.Background() is fine here
 
-	blockchain, registryContract, err := initBlockchain(ctx)
+	blockchain, registryContract, err := initBlockchain(ctx, nil)
 	if err != nil {
 		return err
 	}
@@ -640,16 +644,7 @@ func runStreamPlaceEnterQuorumCmd(cfg *config.Config, args []string) error {
 
 	ctx := context.Background() // lint:ignore context.Background() is fine here
 
-	blockchain, err := crypto.NewBlockchain(
-		ctx,
-		&cmdConfig.RiverChain,
-		wallet,
-		infra.NewMetricsFactory(nil, "river", "cmdline"),
-		nil,
-	)
-	if err != nil {
-		return err
-	}
+	blockchain, registryContract, err := initBlockchain(ctx, wallet)
 
 	configCaller, err := river.NewRiverConfigV1Caller(cfg.RegistryContract.Address, blockchain.Client)
 	if err != nil {
@@ -663,16 +658,6 @@ func runStreamPlaceEnterQuorumCmd(cfg *config.Config, args []string) error {
 
 	if !isConfigurationManager {
 		return fmt.Errorf("address %s is not a configuration manager", wallet.Address)
-	}
-
-	registryContract, err := registries.NewRiverRegistryContract(
-		ctx,
-		blockchain,
-		&cfg.RegistryContract,
-		&cfg.RiverRegistry,
-	)
-	if err != nil {
-		return err
 	}
 
 	inputFile, err := os.ReadFile(args[1])
