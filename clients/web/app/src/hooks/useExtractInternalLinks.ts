@@ -72,22 +72,19 @@ export const useExtractExternalLinks = (
                 } as LoadingUnfurledLinkAttachment
             })
         } else {
-            const meetLinks: Record<string, { mainUrl: string; dialInUrl?: string }> = {}
-
+            const phoneNumbers: Record<string, string> = {}
+            
             unfurledLinksQuery.forEach((value) => {
                 try {
                     const url = new URL(value.url)
-                    if (url.hostname === 'meet.google.com') {
-                        const meetingId = url.pathname.split('/')[1]
-                        if (meetingId) {
-                            meetLinks[meetingId] = { mainUrl: value.url }
-                        }
-                    } else if (url.hostname === 'tel.meet') {
-                        const meetingId = url.pathname.split('/')[1]
-                        if (meetingId && meetLinks[meetingId]) {
-                            meetLinks[meetingId].dialInUrl = value.url
-                        } else if (meetingId) {
-                            meetLinks[meetingId] = { mainUrl: '', dialInUrl: value.url }
+                    if (url.hostname === 'tel.meet') {
+                        const parts = url.pathname.split('/')
+                        if (parts.length > 2) {
+                            const meetingId = parts[1]
+                            const phoneNumber = parts[2]
+                            if (meetingId && phoneNumber) {
+                                phoneNumbers[meetingId] = phoneNumber
+                            }
                         }
                     }
                 } catch (e) {
@@ -99,31 +96,15 @@ export const useExtractExternalLinks = (
                 .map((value) => {
                     try {
                         const url = new URL(value.url)
-                        const isMeetLink = url.hostname === 'meet.google.com'
-                        const isTelMeetLink = url.hostname === 'tel.meet'
-
-                        if (isTelMeetLink) {
-                            const meetingId = url.pathname.split('/')[1]
-                            if (meetingId && meetLinks[meetingId]?.mainUrl) {
-                                return null
-                            }
+                        
+                        if (url.hostname === 'tel.meet') {
+                            return null
                         }
-
-                        if (isMeetLink) {
-                            const meetingId = url.pathname.split('/')[1]
-                            if (meetingId && meetLinks[meetingId]?.dialInUrl) {
-                                return {
-                                    type: 'unfurled_link',
-                                    url: value.url,
-                                    title: value.title ?? '',
-                                    description: value.description ?? '',
-                                    image: value.image,
-                                    id: value.url,
-                                    dialInLink: meetLinks[meetingId].dialInUrl,
-                                    isGoogleMeet: true,
-                                } satisfies GoogleMeetAttachment
-                            }
-
+                        
+                        if (url.hostname === 'meet.google.com') {
+                            const meetingId = url.pathname.split('/')[1] || ''
+                            const phoneNumber = phoneNumbers[meetingId]
+                            
                             return {
                                 type: 'unfurled_link',
                                 url: value.url,
@@ -131,10 +112,11 @@ export const useExtractExternalLinks = (
                                 description: value.description ?? '',
                                 image: value.image,
                                 id: value.url,
+                                dialInLink: phoneNumber ? `tel.meet/${meetingId}/${phoneNumber}` : undefined,
                                 isGoogleMeet: true,
                             } satisfies GoogleMeetAttachment
                         }
-
+                        
                         return {
                             type: 'unfurled_link',
                             url: value.url,
