@@ -244,48 +244,15 @@ export interface IStreamRegistryInterface extends utils.Interface {
   ): Result;
 
   events: {
-    "StreamAllocated(bytes32,address[],bytes32,bytes)": EventFragment;
-    "StreamCreated(bytes32,bytes32,tuple)": EventFragment;
     "StreamLastMiniblockUpdateFailed(bytes32,bytes32,uint64,string)": EventFragment;
-    "StreamLastMiniblockUpdated(bytes32,bytes32,uint64,bool)": EventFragment;
-    "StreamPlacementUpdated(bytes32,address,bool)": EventFragment;
     "StreamUpdated(uint8,bytes)": EventFragment;
   };
 
-  getEvent(nameOrSignatureOrTopic: "StreamAllocated"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "StreamCreated"): EventFragment;
   getEvent(
     nameOrSignatureOrTopic: "StreamLastMiniblockUpdateFailed"
   ): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "StreamLastMiniblockUpdated"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "StreamPlacementUpdated"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "StreamUpdated"): EventFragment;
 }
-
-export interface StreamAllocatedEventObject {
-  streamId: string;
-  nodes: string[];
-  genesisMiniblockHash: string;
-  genesisMiniblock: string;
-}
-export type StreamAllocatedEvent = TypedEvent<
-  [string, string[], string, string],
-  StreamAllocatedEventObject
->;
-
-export type StreamAllocatedEventFilter = TypedEventFilter<StreamAllocatedEvent>;
-
-export interface StreamCreatedEventObject {
-  streamId: string;
-  genesisMiniblockHash: string;
-  stream: StreamStructOutput;
-}
-export type StreamCreatedEvent = TypedEvent<
-  [string, string, StreamStructOutput],
-  StreamCreatedEventObject
->;
-
-export type StreamCreatedEventFilter = TypedEventFilter<StreamCreatedEvent>;
 
 export interface StreamLastMiniblockUpdateFailedEventObject {
   streamId: string;
@@ -300,33 +267,6 @@ export type StreamLastMiniblockUpdateFailedEvent = TypedEvent<
 
 export type StreamLastMiniblockUpdateFailedEventFilter =
   TypedEventFilter<StreamLastMiniblockUpdateFailedEvent>;
-
-export interface StreamLastMiniblockUpdatedEventObject {
-  streamId: string;
-  lastMiniblockHash: string;
-  lastMiniblockNum: BigNumber;
-  isSealed: boolean;
-}
-export type StreamLastMiniblockUpdatedEvent = TypedEvent<
-  [string, string, BigNumber, boolean],
-  StreamLastMiniblockUpdatedEventObject
->;
-
-export type StreamLastMiniblockUpdatedEventFilter =
-  TypedEventFilter<StreamLastMiniblockUpdatedEvent>;
-
-export interface StreamPlacementUpdatedEventObject {
-  streamId: string;
-  nodeAddress: string;
-  isAdded: boolean;
-}
-export type StreamPlacementUpdatedEvent = TypedEvent<
-  [string, string, boolean],
-  StreamPlacementUpdatedEventObject
->;
-
-export type StreamPlacementUpdatedEventFilter =
-  TypedEventFilter<StreamPlacementUpdatedEvent>;
 
 export interface StreamUpdatedEventObject {
   eventType: number;
@@ -606,30 +546,6 @@ export interface IStreamRegistry extends BaseContract {
   };
 
   filters: {
-    "StreamAllocated(bytes32,address[],bytes32,bytes)"(
-      streamId?: null,
-      nodes?: null,
-      genesisMiniblockHash?: null,
-      genesisMiniblock?: null
-    ): StreamAllocatedEventFilter;
-    StreamAllocated(
-      streamId?: null,
-      nodes?: null,
-      genesisMiniblockHash?: null,
-      genesisMiniblock?: null
-    ): StreamAllocatedEventFilter;
-
-    "StreamCreated(bytes32,bytes32,tuple)"(
-      streamId?: null,
-      genesisMiniblockHash?: null,
-      stream?: null
-    ): StreamCreatedEventFilter;
-    StreamCreated(
-      streamId?: null,
-      genesisMiniblockHash?: null,
-      stream?: null
-    ): StreamCreatedEventFilter;
-
     "StreamLastMiniblockUpdateFailed(bytes32,bytes32,uint64,string)"(
       streamId?: null,
       lastMiniblockHash?: null,
@@ -642,30 +558,6 @@ export interface IStreamRegistry extends BaseContract {
       lastMiniblockNum?: null,
       reason?: null
     ): StreamLastMiniblockUpdateFailedEventFilter;
-
-    "StreamLastMiniblockUpdated(bytes32,bytes32,uint64,bool)"(
-      streamId?: null,
-      lastMiniblockHash?: null,
-      lastMiniblockNum?: null,
-      isSealed?: null
-    ): StreamLastMiniblockUpdatedEventFilter;
-    StreamLastMiniblockUpdated(
-      streamId?: null,
-      lastMiniblockHash?: null,
-      lastMiniblockNum?: null,
-      isSealed?: null
-    ): StreamLastMiniblockUpdatedEventFilter;
-
-    "StreamPlacementUpdated(bytes32,address,bool)"(
-      streamId?: null,
-      nodeAddress?: null,
-      isAdded?: null
-    ): StreamPlacementUpdatedEventFilter;
-    StreamPlacementUpdated(
-      streamId?: null,
-      nodeAddress?: null,
-      isAdded?: null
-    ): StreamPlacementUpdatedEventFilter;
 
     "StreamUpdated(uint8,bytes)"(
       eventType?: PromiseOrValue<BigNumberish> | null,
