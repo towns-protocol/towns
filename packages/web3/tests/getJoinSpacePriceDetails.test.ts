@@ -1,5 +1,5 @@
 import { ethers } from 'ethers'
-import { makeBaseChainConfig, makeSpaceStreamId } from '../../sdk'
+import { makeBaseChainConfig, makeSpaceStreamId } from '../../sdk/src'
 import { LocalhostWeb3Provider } from '../src/LocalhostWeb3Provider'
 import { SpaceDapp } from '../src/v3'
 import { makeDefaultMembershipInfo } from './utils'
