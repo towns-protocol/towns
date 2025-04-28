@@ -9,7 +9,7 @@ import {ISchemaResolver} from "@ethereum-attestation-service/eas-contracts/resol
 
 //contracts
 import {DeployLib} from "@towns-protocol/diamond/scripts/common/DeployLib.sol";
-import {ModuleRegistry} from "src/attest/ModuleRegistry.sol";
+import {ModuleRegistry} from "src/modules/ModuleRegistry.sol";
 
 library DeployModuleRegistry {
     function selectors() internal pure returns (bytes4[] memory _selectors) {

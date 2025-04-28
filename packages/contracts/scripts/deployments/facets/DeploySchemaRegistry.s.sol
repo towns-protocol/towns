@@ -8,7 +8,7 @@ import {IDiamond} from "@towns-protocol/diamond/src/IDiamond.sol";
 
 //contracts
 import {DeployLib} from "@towns-protocol/diamond/scripts/common/DeployLib.sol";
-import {SchemaRegistry} from "src/attest/SchemaRegistry.sol";
+import {SchemaRegistry} from "src/modules/SchemaRegistry.sol";
 
 library DeploySchemaRegistry {
     function selectors() internal pure returns (bytes4[] memory _selectors) {

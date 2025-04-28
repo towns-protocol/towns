@@ -21,7 +21,7 @@ import {ExecutorLib} from "src/spaces/facets/account/libraries/ExecutorLib.sol";
 
 //contracts
 import {ModularAccount} from "src/spaces/facets/account/ModularAccount.sol";
-import {ModuleRegistry} from "src/attest/ModuleRegistry.sol";
+import {ModuleRegistry} from "src/modules/ModuleRegistry.sol";
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 

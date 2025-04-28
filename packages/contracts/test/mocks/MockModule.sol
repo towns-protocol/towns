@@ -3,10 +3,10 @@ pragma solidity ^0.8.23;
 
 import {ExecutionManifest, IERC6900ExecutionModule, ManifestExecutionFunction, ManifestExecutionHook} from "@erc6900/reference-implementation/interfaces/IERC6900ExecutionModule.sol";
 import {IERC6900Module} from "@erc6900/reference-implementation/interfaces/IERC6900Module.sol";
-import {ITownsModule} from "src/attest/interfaces/ITownsModule.sol";
+import {ITownsApp} from "src/modules/interfaces/ITownsApp.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
-contract MockModule is UUPSUpgradeable, ITownsModule {
+contract MockModule is UUPSUpgradeable, ITownsApp {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           EVENTS                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -127,7 +127,7 @@ contract MockModule is UUPSUpgradeable, ITownsModule {
         return
             interfaceId == type(IERC6900ExecutionModule).interfaceId ||
             interfaceId == type(IERC6900Module).interfaceId ||
-            interfaceId == type(ITownsModule).interfaceId;
+            interfaceId == type(ITownsApp).interfaceId;
     }
 
     function _authorizeUpgrade(address newImplementation) internal override {}

@@ -7,9 +7,9 @@ import {IDiamond} from "@towns-protocol/diamond/src/Diamond.sol";
 // libraries
 import {ExecutionManifest, IERC6900ExecutionModule, ManifestExecutionFunction, ManifestExecutionHook} from "@erc6900/reference-implementation/interfaces/IERC6900ExecutionModule.sol";
 import {IERC6900Module} from "@erc6900/reference-implementation/interfaces/IERC6900Module.sol";
-import {ITownsModule} from "src/attest/interfaces/ITownsModule.sol";
+import {ITownsApp} from "src/modules/interfaces/ITownsApp.sol";
 
-contract MockInvalidModule is ITownsModule {
+contract MockInvalidModule is ITownsApp {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                      MODULE METADATA                       */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -73,6 +73,6 @@ contract MockInvalidModule is ITownsModule {
         return
             interfaceId == type(IERC6900ExecutionModule).interfaceId ||
             interfaceId == type(IERC6900Module).interfaceId ||
-            interfaceId == type(ITownsModule).interfaceId;
+            interfaceId == type(ITownsApp).interfaceId;
     }
 }

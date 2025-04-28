@@ -10,15 +10,15 @@ import {IOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/IERC173.s
 
 //libraries
 import {Attestation} from "@ethereum-attestation-service/eas-contracts/Common.sol";
-import {AttestationLib} from "src/attest/libraries/AttestationLib.sol";
-import {ModuleRegistryLib} from "src/attest/libraries/ModuleRegistryLib.sol";
+import {AttestationLib} from "src/modules/libraries/AttestationLib.sol";
+import {ModuleRegistryLib} from "src/modules/libraries/ModuleRegistryLib.sol";
 
 // types
 import {ExecutionManifest} from "@erc6900/reference-implementation/interfaces/IERC6900ExecutionModule.sol";
 
 //contracts
-import {ModuleRegistry} from "src/attest/ModuleRegistry.sol";
-import {SchemaRegistry} from "src/attest/SchemaRegistry.sol";
+import {ModuleRegistry} from "src/modules/ModuleRegistry.sol";
+import {SchemaRegistry} from "src/modules/SchemaRegistry.sol";
 import {MockPlugin} from "test/mocks/MockPlugin.sol";
 
 contract ModuleRegistryTest is BaseSetup {
