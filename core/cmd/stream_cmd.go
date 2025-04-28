@@ -26,6 +26,50 @@ import (
 	"github.com/towns-protocol/towns/core/node/storage"
 )
 
+func getStreamFromNode(
+	ctx context.Context,
+	registryContract registries.RiverRegistryContract,
+	remoteNodeAddress common.Address,
+	streamID shared.StreamId,
+) error {
+	remote, err := registryContract.NodeRegistry.GetNode(nil, remoteNodeAddress)
+	if err != nil {
+		return err
+	}
+
+	remoteClient := protocolconnect.NewStreamServiceClient(http.DefaultClient, remote.Url)
+
+	response, err := remoteClient.GetStream(ctx, connect.NewRequest(&protocol.GetStreamRequest{
+		StreamId: streamID[:],
+		Optional: false,
+	}))
+	if err != nil {
+		return err
+	}
+
+	stream := response.Msg.GetStream()
+	fmt.Println("MBs: ", len(stream.GetMiniblocks()), " Events: ", len(stream.GetEvents()))
+
+	for i, mb := range stream.GetMiniblocks() {
+		info, err := events.NewMiniblockInfoFromProto(
+			mb, stream.GetSnapshotByMiniblockIndex(i),
+			events.NewParsedMiniblockInfoOpts().
+				WithDoNotParseEvents(true),
+		)
+		if err != nil {
+			return err
+		}
+
+		fmt.Print(info.Ref, "  ", info.Header().GetTimestamp().AsTime().Local())
+		if info.Header().IsSnapshot() {
+			fmt.Print(" SNAPSHOT")
+		}
+		fmt.Println()
+	}
+
+	return nil
+}
+
 func runStreamGetEventCmd(cmd *cobra.Command, args []string) error {
 	ctx := context.Background() // lint:ignore context.Background() is fine here
 	streamID, err := shared.StreamIdFromString(args[0])
@@ -126,6 +170,44 @@ func runStreamGetEventCmd(cmd *cobra.Command, args []string) error {
 	fmt.Printf("Event %s not found in stream %s (block range [%d...%d])\n", eventHash, streamID, from, to)
 
 	return nil
+}
+
+func runStreamNodeGetCmd(cmd *cobra.Command, args []string) error {
+	ctx := context.Background() // lint:ignore context.Background() is fine here
+
+	nodeAddress := common.HexToAddress(args[0])
+	zeroAddress := common.Address{}
+	if nodeAddress == zeroAddress {
+		return fmt.Errorf("invalid argument 0: node-address")
+	}
+
+	streamID, err := shared.StreamIdFromString(args[1])
+	if err != nil {
+		return fmt.Errorf("invalid argument 1: stream-id; %w", err)
+	}
+
+	blockchain, err := crypto.NewBlockchain(
+		ctx,
+		&cmdConfig.RiverChain,
+		nil,
+		infra.NewMetricsFactory(nil, "river", "cmdline"),
+		nil,
+	)
+	if err != nil {
+		return err
+	}
+
+	registryContract, err := registries.NewRiverRegistryContract(
+		ctx,
+		blockchain,
+		&cmdConfig.RegistryContract,
+		&cmdConfig.RiverRegistry,
+	)
+	if err != nil {
+		return err
+	}
+
+	return getStreamFromNode(ctx, *registryContract, nodeAddress, streamID)
 }
 
 func runStreamGetMiniblockCmd(cmd *cobra.Command, args []string) error {
@@ -602,42 +684,7 @@ func runStreamGetCmd(cmd *cobra.Command, args []string) error {
 	nodes := nodes.NewStreamNodesWithLock(streamRecord.StreamReplicationFactor(), streamRecord.Nodes, common.Address{})
 	remoteNodeAddress := nodes.GetStickyPeer()
 
-	remote, err := registryContract.NodeRegistry.GetNode(nil, remoteNodeAddress)
-	if err != nil {
-		return err
-	}
-
-	remoteClient := protocolconnect.NewStreamServiceClient(http.DefaultClient, remote.Url)
-
-	response, err := remoteClient.GetStream(ctx, connect.NewRequest(&protocol.GetStreamRequest{
-		StreamId: streamID[:],
-		Optional: false,
-	}))
-	if err != nil {
-		return err
-	}
-
-	stream := response.Msg.GetStream()
-	fmt.Println("MBs: ", len(stream.GetMiniblocks()), " Events: ", len(stream.GetEvents()))
-
-	for i, mb := range stream.GetMiniblocks() {
-		info, err := events.NewMiniblockInfoFromProto(
-			mb, stream.GetSnapshotByMiniblockIndex(i),
-			events.NewParsedMiniblockInfoOpts().
-				WithDoNotParseEvents(true),
-		)
-		if err != nil {
-			return err
-		}
-
-		fmt.Print(info.Ref, "  ", info.Header().GetTimestamp().AsTime().Local())
-		if info.Header().IsSnapshot() {
-			fmt.Print(" SNAPSHOT")
-		}
-		fmt.Println()
-	}
-
-	return nil
+	return getStreamFromNode(ctx, *registryContract, remoteNodeAddress, streamID)
 }
 
 func runStreamPartitionCmd(cmd *cobra.Command, args []string) error {
@@ -708,6 +755,15 @@ max-block-range is optional and limits the number of blocks to consider (default
 		Args:  cobra.ExactArgs(1),
 		RunE:  runStreamGetCmd,
 	}
+
+	cmdStreamNodeGet := &cobra.Command{
+		Use:   "node-get <node-address> <stream-id>",
+		Short: "Get stream contents from node",
+		Long:  `Get stream content from specified node using GetStream RPC.`,
+		Args:  cobra.ExactArgs(2),
+		RunE:  runStreamNodeGetCmd,
+	}
+
 	cmdStreamGetPartition := &cobra.Command{
 		Use:   "part <stream-id>",
 		Short: "Get stream stream database partition",
@@ -722,6 +778,7 @@ max-block-range is optional and limits the number of blocks to consider (default
 	cmdStream.AddCommand(cmdStreamDump)
 	cmdStream.AddCommand(cmdStreamNodeDump)
 	cmdStream.AddCommand(cmdStreamGet)
+	cmdStream.AddCommand(cmdStreamNodeGet)
 	cmdStream.AddCommand(cmdStreamGetPartition)
 	rootCmd.AddCommand(cmdStream)
 }
