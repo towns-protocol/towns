@@ -27,11 +27,20 @@ Nodes:
 
 ### Extract non-replicated streams
 ```sh
-./env/alpha/run.sh stream not-migrated <output-stream-id-file> [max-streams] [node-address]
+./env/alpha/run.sh stream not-migrated-all <output-directory>
 ```
-This will query the stream registry smart contract for all streams and only write streams with `len(stream.nodes) == 1` to the given output file. Optionally the number of written streams can be limited. Use -1 for no-limit (default). And optionally only match streams from a particular node (support stream migration from specific node).
+This will query the stream registry smart contract for all streams and only write streams with `len(stream.nodes) == 1`. It writes these matched streams to output files in the given directory with `<node_address>_<stream_type>`.
 
-The output file contains a json object per line with:
+```
+0xe98ea85dc784723c684c992484f586d96820c264_a5.streams
+0xe98ea85dc784723c684c992484f586d96820c264_10.streams
+0x9c2cc27b2d73cfcc3e5b1a9d884253eec17b626c_20.streams
+0x3647cdefe73995ad6c17767db117608c3f79cb63_ff.streams
+0x3647cdefe73995ad6c17767db117608c3f79cb63_10.streams
+...
+```
+
+The output files contain a json object per line with:
 ```json
 {
   "stream_id": "20f01362cd20a58d812c12a13ba2119c2b9ac5857b4b581f7b37ef9cb92e8744",
@@ -42,14 +51,14 @@ The output file contains a json object per line with:
   ]
 }
 ```
-This file is the input to initiate the migration process.
+Each file is the input to initiate the migration process. Files can be concatenated to migrate streams from multiple types or nodes at once.
 
 ### Initiate migration
 This requires the output file generated in the previous step.
 ```sh
-./env/omega/run.sh stream place initiate <wallet-file> <stream-id-file> <replication-factor>
+./env/omega/run.sh stream place initiate <wallet-file> <streams-file> <replication-factor>
 ```
-The wallet needs to be funded with River Chain ETH and given the configuration manager role in the streams registry contract. The replication factor is the new replication factor, typically 3 but in some cases this can be 4 when a stream needs to be replicated and migrated away from a node to a different set of nodes.
+The wallet needs to be funded with River Chain ETH and given the configuration manager role in the streams registry contract. The replication factor is the new replication factor, typically 3 but in some cases this can be 4 when a stream needs to be replicated and migrated away from a node to a different set of nodes. The streams-file is one of the files generated in the previous step (or a combined file manually created by concatenation multiple files into one).
 
 Lets assume that the input file contains only 1 stream:
 
@@ -66,11 +75,11 @@ Lets assume that the input file contains only 1 stream:
 
 If this file is given as input the output after the following command was run: 
 ```sh
-./env/omega/run.sh stream place initiate <wallet-file> <stream-id-file> 4
+./env/omega/run.sh stream place initiate <wallet-file> <streams-file> 4
 ```
-_(in this case 4 is selected because the stream will be migrated off from node `0xc6cf68a1bcd3b9285fe1d13c128953a14dd1bb60` to a new set of nodes. This typically will be 3 to add 2 new nodes to the list that will participate in quorum)_
+_(in this case 4 is selected because the stream will be migrated off from node `0xc6cf68a1bcd3b9285fe1d13c128953a14dd1bb60` to a new set of nodes. Replication is usually 3 when replicating a stream from an existing node over 2 additional._
 
-Will be a new file with the name `<stream-id-file>.initiated`
+The output is a file names `<streams-file>.initiated`
 ```json
 {
   "stream_id": "20f01362cd20a58d812c12a13ba2119c2b9ac5857b4b581f7b37ef9cb92e8744",
@@ -84,17 +93,17 @@ Will be a new file with the name `<stream-id-file>.initiated`
   ]
 }
 ```
-The smart contract emits a `StreamUpdated` event for each updated stream that contains the new set of nodes. Nodes that witness this event will determine the quorum and sync nodes, in the above example:
+The smart contract emits a `StreamUpdated` event with the new node list for each updated stream that contains the new set of nodes. The replication factor isn't changes in the registry and thus remains 1 for now. Nodes that witness this event will determine the quorum and sync nodes, in the above example:
 ```
 quorumNodes := [0xc6cf68a1bcd3b9285fe1d13c128953a14dd1bb60]
 syncNodes := [0xb85dd7d21bc093dae6f1b56a20a45ec1770d11dd,0x7645015ba222d5d0b473d05d246c54c4d289ba64,0xfc224c846de2810c7c991fc34914def8bdaccc5e]
 ```
 If a node is in the quorum node list it will participate in quorum. In case a node is in the sync list it will schedule a stream reconcilation task to bring their local state up to date and track further updates.
 
-> Important, migrating streams happens on a live system. Therefore the migration process needs to be paced to prevent the number of stream update transactions to fill up River Chain blocks or overwhelm nodes with reconcilation requests.
+> Important, migrating streams happens on a live system. Therefore the migration process needs to be paced to prevent the number of stream update transactions to fill up River Chain blocks or overwhelm stream nodes with reconcilation requests. This is done by submitting transactions to update the Stream Registry paced.
 
 ### Migration status
-It takes some time before nodes have brought their local state up to date. Once nodes enter the quorum node the stream can only progress when enough nodes have synced up their state and can produce/vote on miniblock candidates. To see the if the sync nodes have synced the stream the following command can be used:
+Before nodes can participate in the stream quorum and vote/create miniblock candidates they need to have their local storage up to date. To see the if the sync nodes have synced the stream use the status subcommand:
 
 ```sh
 ./env/omega/run.sh stream place status <initiated-file>
@@ -125,13 +134,31 @@ This will ask all stream nodes for their view on the stream through the `GetStre
   }
 }
 ```
-In this case all nodes have a consistent view over the stream and have synced up. It is possible that some nodes are lagging behind if the reconcilation task failed because a node was down or due to some other issue.
+In this case all nodes have a consistent view over the stream and have synced up. It is possible that some nodes are lagging behind if the reconcilation task failed or only partially succeeded. The migration software will detected this when bumping the stream to a replicated stream and will print the streams that have not synced by all nodes to the console and exists without making modifications. This allows for manually intervention to ensure that all nodes have synced the stream.
 
 ### Bump stream to replicated stream
-When the sync nodes have caught up it is possible to mark the stream as replicated by letting the sync nodes enter the stream quorum.
+When the sync nodes have caught up it is possible to mark the stream as replicated by entering the sync nodes into the streams quorum.
 
 ```sh
 ./env/omega/run.sh stream place enter-quorum <wallet-file> <status-file>
 ```
 Make sure that the wallet has enough River Chain ETH and the configuration manager role in the stream registry.
 
+The output of this command is a file named `<status-file>.enter_quorum`. Each line is a json object:
+
+```json
+{
+  "stream_id": "20f01362cd20a58d812c12a13ba2119c2b9ac5857b4b581f7b37ef9cb92e8744",
+  "status": "success",
+  "tx_hash": "0xa3009305db9980b0b1cb3c9003606dffea1894faed9ccf6df65af80afa3b41a8",
+  "node_addresses": [
+    "0xb85dd7d21bc093dae6f1b56a20a45ec1770d11dd",
+    "0x7645015ba222d5d0b473d05d246c54c4d289ba64",
+    "0xfc224c846de2810c7c991fc34914def8bdaccc5e",
+    "0xc6cf68a1bcd3b9285fe1d13c128953a14dd1bb60"
+  ]
+}
+```
+In this case a stream is not only migrated to a replicated stream but also migrated away from a node. Therefore there are 4 nodes in the list from which the last node is just a sync node. The final step it to remove the last node from the node list.
+
+For streams from non-replicated streams to replicated streams the migration is finished.
