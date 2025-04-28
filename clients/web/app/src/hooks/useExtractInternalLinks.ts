@@ -73,7 +73,7 @@ export const useExtractExternalLinks = (
             })
         } else {
             const phoneNumbers: Record<string, string> = {}
-            
+
             unfurledLinksQuery.forEach((value) => {
                 try {
                     const url = new URL(value.url)
@@ -96,15 +96,15 @@ export const useExtractExternalLinks = (
                 .map((value) => {
                     try {
                         const url = new URL(value.url)
-                        
+
                         if (url.hostname === 'tel.meet') {
                             return null
                         }
-                        
+
                         if (url.hostname === 'meet.google.com') {
                             const meetingId = url.pathname.split('/')[1] || ''
                             const phoneNumber = phoneNumbers[meetingId]
-                            
+
                             return {
                                 type: 'unfurled_link',
                                 url: value.url,
@@ -112,11 +112,13 @@ export const useExtractExternalLinks = (
                                 description: value.description ?? '',
                                 image: value.image,
                                 id: value.url,
-                                dialInLink: phoneNumber ? `tel.meet/${meetingId}/${phoneNumber}` : undefined,
+                                dialInLink: phoneNumber
+                                    ? `tel.meet/${meetingId}/${phoneNumber}`
+                                    : undefined,
                                 isGoogleMeet: true,
                             } satisfies GoogleMeetAttachment
                         }
-                        
+
                         return {
                             type: 'unfurled_link',
                             url: value.url,
