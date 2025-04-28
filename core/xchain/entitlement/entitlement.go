@@ -27,16 +27,16 @@ func (e *Evaluator) EvaluateRuleData(
 	return e.evaluateOp(ctx, opTree, linkedWallets)
 }
 
-// isEntitlementEvaluationError returns true iff the error is the result of a failure when evaluating
+// isNoncancelationError returns true iff the error is the result of a failure when evaluating
 // an entitlement. It ignores context cancellations, which can occur when a operation evaluation
 // short-circuits because the other child returned a definitive answer.
-func isEntitlementEvaluationError(err error) bool {
+func isNoncancelationError(err error) bool {
 	return err != nil && !errors.Is(err, context.Canceled)
 }
 
 // logIfEntitlementError conditionally logs an error if it was not a context cancellation.
 func logIfEntitlementError(ctx context.Context, err error) {
-	if isEntitlementEvaluationError(err) {
+	if isNoncancelationError(err) {
 		logging.FromCtx(ctx).Warnw("Entitlement evaluation succeeded, but encountered error", "error", err)
 	}
 }
@@ -45,15 +45,24 @@ func logIfEntitlementError(ctx context.Context, err error) {
 // either child as long as that error is not a context cancellation, which we ignore because we
 // introduce it ourselves.
 func composeEntitlementEvaluationError(leftErr error, rightErr error) error {
-	if isEntitlementEvaluationError(leftErr) && isEntitlementEvaluationError(rightErr) {
+	if isNoncancelationError(leftErr) && isNoncancelationError(rightErr) {
 		return fmt.Errorf("%w; %w", leftErr, rightErr)
 	}
-	if isEntitlementEvaluationError(leftErr) {
+	if isNoncancelationError(leftErr) {
 		return leftErr
 	}
-	if isEntitlementEvaluationError(rightErr) {
+	if isNoncancelationError(rightErr) {
 		return rightErr
 	}
+
+	// If both contexts were cancelled, assume this is due to rpc timeout and return this as an error.
+	// Note: for nested entitlements, we only manually trigger a cancellation if one of the entitlement
+	// checks resulted in a definitive answer, so we should never see two cancellations unless the parent
+	// context was itself cancelled.
+	if errors.Is(leftErr, context.Canceled) && errors.Is(rightErr, context.Canceled) {
+		return fmt.Errorf("%w; %w", leftErr, rightErr)
+	}
+
 	return nil
 }
 
