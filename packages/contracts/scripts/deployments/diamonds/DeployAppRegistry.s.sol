@@ -44,32 +44,36 @@ contract DeployAppRegistry is DiamondHelper, Deployer {
 
     function addImmutableCuts(address deployer) internal {
         multiInit = facetHelper.deploy("MultiInit", deployer);
-        diamondCut = facetHelper.deploy("DiamondCutFacet", deployer);
-        diamondLoupe = facetHelper.deploy("DiamondLoupeFacet", deployer);
-        introspection = facetHelper.deploy("IntrospectionFacet", deployer);
-        ownable = facetHelper.deploy("OwnableFacet", deployer);
-        metadata = facetHelper.deploy("MetadataFacet", deployer);
 
+        diamondCut = facetHelper.deploy("DiamondCutFacet", deployer);
         addFacet(
             DeployDiamondCut.makeCut(diamondCut, IDiamond.FacetCutAction.Add),
             diamondCut,
             DeployDiamondCut.makeInitData()
         );
+
+        diamondLoupe = facetHelper.deploy("DiamondLoupeFacet", deployer);
         addFacet(
             DeployDiamondLoupe.makeCut(diamondLoupe, IDiamond.FacetCutAction.Add),
             diamondLoupe,
             DeployDiamondLoupe.makeInitData()
         );
+
+        introspection = facetHelper.deploy("IntrospectionFacet", deployer);
         addFacet(
             DeployIntrospection.makeCut(introspection, IDiamond.FacetCutAction.Add),
             introspection,
             DeployIntrospection.makeInitData()
         );
+
+        ownable = facetHelper.deploy("OwnableFacet", deployer);
         addFacet(
             DeployOwnable.makeCut(ownable, IDiamond.FacetCutAction.Add),
             ownable,
             DeployOwnable.makeInitData(deployer)
         );
+
+        metadata = facetHelper.deploy("MetadataFacet", deployer);
         addFacet(
             DeployMetadataLib.makeCut(metadata, IDiamond.FacetCutAction.Add),
             metadata,
@@ -79,11 +83,10 @@ contract DeployAppRegistry is DiamondHelper, Deployer {
 
     function diamondInitParams(address deployer) public returns (Diamond.InitParams memory) {
         moduleRegistry = facetHelper.deploy("ModuleRegistry", deployer);
-
         addFacet(
             DeployModuleRegistry.makeCut(moduleRegistry, IDiamond.FacetCutAction.Add),
             moduleRegistry,
-            DeployModuleRegistry.makeInitData(MODULE_REGISTRY_SCHEMA, address(0), true)
+            DeployModuleRegistry.makeInitData(MODULE_REGISTRY_SCHEMA, address(0))
         );
 
         return

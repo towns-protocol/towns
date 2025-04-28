@@ -97,8 +97,8 @@ library ModuleRegistryLib {
         return moduleInfo.latestVersion;
     }
 
-    function getModule(bytes32 moduleId) internal view returns (Attestation memory attestation) {
-        Attestation memory att = AttestationLib.getAttestation(moduleId);
+    function getModule(bytes32 versionId) internal view returns (Attestation memory attestation) {
+        Attestation memory att = AttestationLib.getAttestation(versionId);
         if (att.uid == EMPTY_UID) ModuleNotRegistered.selector.revertWith();
         if (att.revocationTime > 0) ModuleRevoked.selector.revertWith();
         (address module, , , , ) = abi.decode(
@@ -133,6 +133,7 @@ library ModuleRegistryLib {
         request.schema = getSchema();
         request.data.recipient = module;
         request.data.revocable = true;
+        request.data.refUID = moduleInfo.latestVersion;
         request.data.data = abi.encode(module, owner, clients, permissions, manifest);
         version = AttestationLib.attest(msg.sender, msg.value, request).uid;
 
@@ -146,10 +147,10 @@ library ModuleRegistryLib {
 
     function updatePermissions(
         address revoker,
-        bytes32 moduleId,
+        bytes32 versionId,
         bytes32[] calldata permissions
     ) internal returns (bytes32 version) {
-        Attestation memory att = AttestationLib.getAttestation(moduleId);
+        Attestation memory att = AttestationLib.getAttestation(versionId);
 
         if (att.uid == EMPTY_UID) ModuleNotRegistered.selector.revertWith();
         if (att.revocationTime > 0) ModuleRevoked.selector.revertWith();
@@ -165,13 +166,13 @@ library ModuleRegistryLib {
         if (getLayout().modules[module].isBanned) BannedModule.selector.revertWith();
 
         RevocationRequestData memory revocationRequest;
-        revocationRequest.uid = moduleId;
+        revocationRequest.uid = versionId;
         AttestationLib.revoke(att.schema, revocationRequest, msg.sender, 0, true);
 
         AttestationRequest memory request;
         request.schema = att.schema;
         request.data.revocable = true;
-        request.data.refUID = moduleId;
+        request.data.refUID = versionId;
         request.data.data = abi.encode(module, owner, clients, permissions, manifest);
         version = AttestationLib.attest(msg.sender, msg.value, request).uid;
 
@@ -184,11 +185,11 @@ library ModuleRegistryLib {
 
     function removeModule(
         address revoker,
-        bytes32 moduleId
+        bytes32 versionId
     ) internal returns (address module, bytes32 version) {
-        if (moduleId == EMPTY_UID) InvalidModuleId.selector.revertWith();
+        if (versionId == EMPTY_UID) InvalidModuleId.selector.revertWith();
 
-        Attestation memory att = AttestationLib.getAttestation(moduleId);
+        Attestation memory att = AttestationLib.getAttestation(versionId);
 
         if (att.uid == EMPTY_UID) ModuleNotRegistered.selector.revertWith();
         if (att.revocationTime > 0) ModuleRevoked.selector.revertWith();
@@ -202,15 +203,15 @@ library ModuleRegistryLib {
         if (moduleInfo.isBanned) BannedModule.selector.revertWith();
 
         RevocationRequestData memory request;
-        request.uid = moduleId;
+        request.uid = versionId;
         AttestationLib.revoke(att.schema, request, revoker, 0, true);
 
         version = moduleInfo.latestVersion;
-        if (version == moduleId) {
+        if (version == versionId) {
             moduleInfo.latestVersion = EMPTY_UID;
         }
 
-        emit ModuleUnregistered(module, moduleId);
+        emit ModuleUnregistered(module, versionId);
 
         return (module, version);
     }

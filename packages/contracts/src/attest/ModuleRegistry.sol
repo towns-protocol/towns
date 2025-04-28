@@ -22,10 +22,9 @@ contract ModuleRegistry is IModuleRegistry, OwnableBase, Facet {
 
     function __ModuleRegistry_init(
         string calldata schema,
-        ISchemaResolver resolver,
-        bool revocable
+        ISchemaResolver resolver
     ) external initializer {
-        bytes32 schemaId = SchemaLib.registerSchema(schema, resolver, revocable);
+        bytes32 schemaId = SchemaLib.registerSchema(schema, resolver, true);
         ModuleRegistryLib.setSchema(schemaId);
     }
 
@@ -46,17 +45,17 @@ contract ModuleRegistry is IModuleRegistry, OwnableBase, Facet {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @notice Get the attestation for a module
-    /// @param moduleId The module ID
+    /// @param versionId The module ID
     /// @return attestation The attestation
     function getModuleById(
-        bytes32 moduleId
+        bytes32 versionId
     ) external view returns (Attestation memory attestation) {
-        return ModuleRegistryLib.getModule(moduleId);
+        return ModuleRegistryLib.getModule(versionId);
     }
 
     /// @notice Get the latest module ID for a module
     /// @param module The module address
-    /// @return moduleId The attestation UID of the registered module
+    /// @return versionId The attestation UID of the registered module
     function getLatestModuleId(address module) external view returns (bytes32) {
         return ModuleRegistryLib.getLatestModuleId(module);
     }
@@ -71,33 +70,33 @@ contract ModuleRegistry is IModuleRegistry, OwnableBase, Facet {
     /// @notice Register a new module with permissions
     /// @param module The module address to register
     /// @param owner The owner address that can update/revoke the module
-    /// @param clients The list of client contract addresses that will use this module
-    /// @return moduleId The attestation UID of the registered module
+    /// @param clients The list of client addresses that will make calls from this module
+    /// @return versionId The version ID of the registered module
     function registerModule(
         address module,
         address owner,
         address[] calldata clients
-    ) external returns (bytes32 moduleId) {
+    ) external payable returns (bytes32 versionId) {
         return ModuleRegistryLib.addModule(module, owner, clients);
     }
 
     /// @notice Update the permissions for an existing module
-    /// @param moduleId The module ID to update
+    /// @param versionId The module ID to update
     /// @param permissions The new list of permission IDs
-    /// @return newModuleId The new attestation UID after updating permissions
+    /// @return newVersionId The new version ID after updating permissions
     function updateModulePermissions(
-        bytes32 moduleId,
+        bytes32 versionId,
         bytes32[] calldata permissions
-    ) external returns (bytes32 newModuleId) {
-        return ModuleRegistryLib.updatePermissions(msg.sender, moduleId, permissions);
+    ) external returns (bytes32 newVersionId) {
+        return ModuleRegistryLib.updatePermissions(msg.sender, versionId, permissions);
     }
 
     /// @notice Remove a module from the registry
-    /// @param moduleId The module ID to remove
-    /// @dev Only the registrar can remove a module
-    /// @return The attestation UID that was removed
-    function removeModule(bytes32 moduleId) external returns (bytes32) {
-        (, bytes32 version) = ModuleRegistryLib.removeModule(msg.sender, moduleId);
+    /// @param versionId The module ID to remove
+    /// @dev Only the owner of the module can remove it
+    /// @return The version ID that was removed
+    function removeModule(bytes32 versionId) external returns (bytes32) {
+        (, bytes32 version) = ModuleRegistryLib.removeModule(msg.sender, versionId);
         return version;
     }
 

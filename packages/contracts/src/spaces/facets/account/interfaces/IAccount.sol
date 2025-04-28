@@ -20,8 +20,20 @@ interface IAccountBase {
 
 interface IAccount is IAccountBase {
     function installModule(
-        bytes32 moduleId,
+        bytes32 versionId,
         bytes calldata data,
         ModuleParams calldata params
     ) external;
+
+    function uninstallModule(bytes32 versionId, bytes calldata data) external;
+
+    function isModuleEntitled(
+        bytes32 versionId,
+        address publicKey,
+        bytes32 permission
+    ) external view returns (bool);
+
+    function setModuleAllowance(bytes32 versionId, uint256 allowance) external;
+
+    function getModuleAllowance(bytes32 versionId) external view returns (uint256);
 }

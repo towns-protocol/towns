@@ -44,12 +44,12 @@ contract ModularAccount is IAccount, ReentrancyGuard, TokenOwnableBase, Facet {
     /*                       Module Management                    */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
     function installModule(
-        bytes32 moduleId,
+        bytes32 versionId,
         bytes calldata data,
         ModuleParams calldata params
     ) external onlyOwner {
         ModularAccountLib.installModule(
-            moduleId,
+            versionId,
             params.grantDelay,
             params.executionDelay,
             params.allowance,
@@ -57,32 +57,32 @@ contract ModularAccount is IAccount, ReentrancyGuard, TokenOwnableBase, Facet {
         );
     }
 
-    function uninstallModule(bytes32 moduleId, bytes calldata data) external onlyOwner {
-        ModularAccountLib.uninstallModule(moduleId, data);
+    function uninstallModule(bytes32 versionId, bytes calldata data) external onlyOwner {
+        ModularAccountLib.uninstallModule(versionId, data);
     }
 
     /// @notice Checks if a client is entitled to a permission for a module
-    /// @param moduleId The module ID to check
-    /// @param client The client to check
+    /// @param versionId The module ID to check
+    /// @param publicKey The public key to check
     /// @param permission The permission to check
     /// @return True if the client is entitled to the permission, false otherwise
     function isModuleEntitled(
-        bytes32 moduleId,
-        address client,
+        bytes32 versionId,
+        address publicKey,
         bytes32 permission
     ) external view returns (bool) {
-        return ModularAccountLib.isEntitled(moduleId, client, permission);
+        return ModularAccountLib.isEntitled(versionId, publicKey, permission);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           Allowance                            */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    function setModuleAllowance(bytes32 moduleId, uint256 allowance) external onlyOwner {
-        ModularAccountLib.setModuleAllowance(moduleId, allowance);
+    function setModuleAllowance(bytes32 versionId, uint256 allowance) external onlyOwner {
+        ModularAccountLib.setModuleAllowance(versionId, allowance);
     }
 
-    function getModuleAllowance(bytes32 moduleId) external view returns (uint256) {
-        return ModularAccountLib.getModuleAllowance(moduleId);
+    function getModuleAllowance(bytes32 versionId) external view returns (uint256) {
+        return ModularAccountLib.getModuleAllowance(versionId);
     }
 }

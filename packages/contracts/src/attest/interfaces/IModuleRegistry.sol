@@ -44,7 +44,7 @@ interface IModuleRegistry {
         address module,
         address owner,
         address[] calldata clients
-    ) external returns (bytes32 moduleId);
+    ) external payable returns (bytes32 moduleId);
 
     /// @notice Update the permissions for an existing module
     /// @param moduleId The module ID to update

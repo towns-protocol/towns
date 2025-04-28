@@ -40,13 +40,12 @@ library DeployModuleRegistry {
 
     function makeInitData(
         string memory schema,
-        address resolver,
-        bool revocable
+        address resolver
     ) internal pure returns (bytes memory) {
         return
             abi.encodeCall(
                 ModuleRegistry.__ModuleRegistry_init,
-                (schema, ISchemaResolver(resolver), revocable)
+                (schema, ISchemaResolver(resolver))
             );
     }
 
