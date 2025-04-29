@@ -739,6 +739,7 @@ max-block-range is optional and limits the number of blocks to consider (default
 		Args:  cobra.ExactArgs(1),
 		RunE:  runStreamGetCmd,
 	}
+
 	cmdStreamGetPartition := &cobra.Command{
 		Use:   "part <stream-id>",
 		Short: "Get stream stream database partition",
@@ -747,6 +748,66 @@ max-block-range is optional and limits the number of blocks to consider (default
 		RunE:  runStreamPartitionCmd,
 	}
 
+	cmdStreamMigrationList := &cobra.Command{
+		Use:   "not-migrated <output-stream-id-file> [max-streams] [node-address]",
+		Short: "Dump non-replicated streams to file",
+		Long: `Dump streams that are not replicated nor the migration to replicated streams was started
+to a file, optionally the number of streams is limited by max-streams and optionally only streams from
+a specific node are included. Use 0 for max-streams to include all streams.`,
+		Args: cobra.RangeArgs(1, 3),
+		RunE: runStreamMigrationListCmd,
+	}
+
+	cmdStreamAllMigrationList := &cobra.Command{
+		Use:   "not-migrated-all <output-directory>",
+		Short: "Dump non-replicated streams grouped by node address to directory",
+		Args:  cobra.ExactArgs(1),
+		RunE:  runStreamAllMigrationListCmd,
+	}
+
+	cmdStreamPlace := &cobra.Command{
+		Use:   "place",
+		Short: "Place streams on nodes",
+	}
+
+	cmdStreamPlaceInitiate := &cobra.Command{
+		Use:   "initiate",
+		Short: "Initiate stream placement <wallet-file> <input-stream-id-file> <replication-factor>",
+		Long:  `Initiate stream placement for streams in the given file.`,
+		Args:  cobra.ExactArgs(3),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return runStreamPlaceInitiateCmd(cmdConfig, args)
+		},
+	}
+
+	cmdStreamPlaceStatus := &cobra.Command{
+		Use:   "status",
+		Short: "Status stream placement <input-stream-id-file>",
+		Long:  `Get overview of stream placement status for streams in the given file.`,
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return runStreamPlaceStatusCmd(cmdConfig, args)
+		},
+	}
+
+	cmdStreamPlaceEnterQuorum := &cobra.Command{
+		Use:   "enter-quorum",
+		Short: "Enter quorum <wallet-file> <input-stream-id-file>",
+		Long:  `Let all nodes enter quorum for streams in the given file.`,
+		Args:  cobra.ExactArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return runStreamPlaceEnterQuorumCmd(cmdConfig, args)
+		},
+	}
+
+	cmdStreamPlace.AddCommand(cmdStreamPlaceInitiate)
+	cmdStreamPlace.AddCommand(cmdStreamPlaceStatus)
+	cmdStreamPlace.AddCommand(cmdStreamPlaceEnterQuorum)
+
+	cmdStream.AddCommand(cmdStreamMigrationList)
+	cmdStream.AddCommand(cmdStreamAllMigrationList)
+	cmdStream.AddCommand(cmdStreamPlace)
+
 	cmdStream.AddCommand(cmdStreamGetMiniblock)
 	cmdStream.AddCommand(cmdStreamGetMiniblockNum)
 	cmdStream.AddCommand(cmdStreamGetEvent)
@@ -754,5 +815,6 @@ max-block-range is optional and limits the number of blocks to consider (default
 	cmdStream.AddCommand(cmdStreamNodeDump)
 	cmdStream.AddCommand(cmdStreamGet)
 	cmdStream.AddCommand(cmdStreamGetPartition)
+
 	rootCmd.AddCommand(cmdStream)
 }
