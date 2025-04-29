@@ -18,21 +18,28 @@ import (
 
 // Reference imports to suppress errors if they are not otherwise used.
 var (
-	_	= errors.New
-	_	= big.NewInt
-	_	= strings.NewReader
-	_	= ethereum.NotFound
-	_	= bind.Bind
-	_	= common.Big1
-	_	= types.BloomLookup
-	_	= event.NewSubscription
-	_	= abi.ConvertType
+	_ = errors.New
+	_ = big.NewInt
+	_ = strings.NewReader
+	_ = ethereum.NotFound
+	_ = bind.Bind
+	_ = common.Big1
+	_ = types.BloomLookup
+	_ = event.NewSubscription
+	_ = abi.ConvertType
 )
+
+// IWalletLinkBaseLinkedWallet is an auto generated low-level Go binding around an user-defined struct.
+type IWalletLinkBaseLinkedWallet struct {
+	Addr      common.Address
+	Signature []byte
+	Message   string
+}
 
 // MockWalletLinkMetaData contains all meta data concerning the MockWalletLink contract.
 var MockWalletLinkMetaData = &bind.MetaData{
-	ABI:	"[{\"type\":\"function\",\"name\":\"checkIfLinked\",\"inputs\":[{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"wallet\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getLatestNonceForRootKey\",\"inputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"pure\"},{\"type\":\"function\",\"name\":\"getRootKeyForWallet\",\"inputs\":[{\"name\":\"wallet\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getWalletsByRootKey\",\"inputs\":[{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"wallets\",\"type\":\"address[]\",\"internalType\":\"address[]\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getWalletsByRootKeyWithDelegations\",\"inputs\":[{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"wallets\",\"type\":\"address[]\",\"internalType\":\"address[]\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"linkCallerToRootKey\",\"inputs\":[{\"name\":\"rootWallet\",\"type\":\"tuple\",\"internalType\":\"structIWalletLinkBase.LinkedWallet\",\"components\":[{\"name\":\"addr\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"signature\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"message\",\"type\":\"string\",\"internalType\":\"string\"}]},{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"linkWalletToRootKey\",\"inputs\":[{\"name\":\"wallet\",\"type\":\"tuple\",\"internalType\":\"structIWalletLinkBase.LinkedWallet\",\"components\":[{\"name\":\"addr\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"signature\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"message\",\"type\":\"string\",\"internalType\":\"string\"}]},{\"name\":\"rootWallet\",\"type\":\"tuple\",\"internalType\":\"structIWalletLinkBase.LinkedWallet\",\"components\":[{\"name\":\"addr\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"signature\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"message\",\"type\":\"string\",\"internalType\":\"string\"}]},{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"event\",\"name\":\"LinkNonEVMWalletToRootWallet\",\"inputs\":[{\"name\":\"walletHash\",\"type\":\"bytes32\",\"indexed\":true,\"internalType\":\"bytes32\"},{\"name\":\"rootKey\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"LinkWalletToRootKey\",\"inputs\":[{\"name\":\"wallet\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"rootKey\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"RemoveLink\",\"inputs\":[{\"name\":\"wallet\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"secondWallet\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"RemoveNonEVMWalletLink\",\"inputs\":[{\"name\":\"walletHash\",\"type\":\"bytes32\",\"indexed\":true,\"internalType\":\"bytes32\"},{\"name\":\"rootKey\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"SetDefaultWallet\",\"inputs\":[{\"name\":\"rootKey\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"defaultWallet\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"error\",\"name\":\"WalletLink__AddressMismatch\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"WalletLink__CannotLinkToRootWallet\",\"inputs\":[{\"name\":\"wallet\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"}]},{\"type\":\"error\",\"name\":\"WalletLink__CannotLinkToSelf\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"WalletLink__CannotRemoveDefaultWallet\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"WalletLink__CannotRemoveRootWallet\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"WalletLink__DefaultWalletAlreadySet\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"WalletLink__InvalidAddress\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"WalletLink__InvalidMessage\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"WalletLink__InvalidNonEVMAddress\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"WalletLink__InvalidSignature\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"WalletLink__InvalidVMSpecificData\",\"inputs\":[{\"name\":\"key\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"value\",\"type\":\"bytes\",\"internalType\":\"bytes\"}]},{\"type\":\"error\",\"name\":\"WalletLink__LinkAlreadyExists\",\"inputs\":[{\"name\":\"wallet\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"}]},{\"type\":\"error\",\"name\":\"WalletLink__LinkedToAnotherRootKey\",\"inputs\":[{\"name\":\"wallet\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"}]},{\"type\":\"error\",\"name\":\"WalletLink__MaxLinkedWalletsReached\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"WalletLink__NonEVMWalletAlreadyLinked\",\"inputs\":[{\"name\":\"wallet\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"}]},{\"type\":\"error\",\"name\":\"WalletLink__NonEVMWalletNotLinked\",\"inputs\":[{\"name\":\"wallet\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"}]},{\"type\":\"error\",\"name\":\"WalletLink__NotLinked\",\"inputs\":[{\"name\":\"wallet\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"}]},{\"type\":\"error\",\"name\":\"WalletLink__RootKeyMismatch\",\"inputs\":[{\"name\":\"callerRootKey\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"}]},{\"type\":\"error\",\"name\":\"WalletLink__UnsupportedVMType\",\"inputs\":[]}]",
-	Bin:	"0x6080604052348015600e575f5ffd5b506107788061001c5f395ff3fe608060405234801561000f575f5ffd5b506004361061007a575f3560e01c80632f461453116100585780632f461453146100dd5780633d005eab1461007e578063912b9758146100f0578063f82103981461015b575f5ffd5b806302345b981461007e57806320a00ac8146100a7578063243a7134146100c8575b5f5ffd5b61009161008c366004610494565b6101d7565b60405161009e91906104ad565b60405180910390f35b6100ba6100b5366004610494565b505f90565b60405190815260200161009e565b6100db6100d6366004610697565b61022c565b005b6100db6100eb366004610705565b6102e1565b61014b6100fe366004610747565b73ffffffffffffffffffffffffffffffffffffffff9081165f9081527f53bdded980027e2c478b287c6d24ce77f39d36276f54116d9f518f7ecd94eb016020526040902054811691161490565b604051901515815260200161009e565b6101b2610169366004610494565b73ffffffffffffffffffffffffffffffffffffffff9081165f9081527f53bdded980027e2c478b287c6d24ce77f39d36276f54116d9f518f7ecd94eb0160205260409020541690565b60405173ffffffffffffffffffffffffffffffffffffffff909116815260200161009e565b73ffffffffffffffffffffffffffffffffffffffff81165f9081527f53bdded980027e2c478b287c6d24ce77f39d36276f54116d9f518f7ecd94eb006020526040902060609061022690610393565b92915050565b8251825173ffffffffffffffffffffffffffffffffffffffff165f9081527f53bdded980027e2c478b287c6d24ce77f39d36276f54116d9f518f7ecd94eb0060208190526040909120909161028191906103a6565b509151925173ffffffffffffffffffffffffffffffffffffffff9081165f9081526001909301602052604090922080547fffffffffffffffffffffffff000000000000000000000000000000000000000016929093169190911790915550565b815173ffffffffffffffffffffffffffffffffffffffff165f9081527f53bdded980027e2c478b287c6d24ce77f39d36276f54116d9f518f7ecd94eb0060208190526040909120339061033490826103a6565b50925173ffffffffffffffffffffffffffffffffffffffff9384165f908152600192909201602052604090912080547fffffffffffffffffffffffff000000000000000000000000000000000000000016939091169290921790915550565b60605f61039f836103c7565b9392505050565b5f61039f8373ffffffffffffffffffffffffffffffffffffffff8416610420565b6060815f0180548060200260200160405190810160405280929190818152602001828054801561041457602002820191905f5260205f20905b815481526020019060010190808311610400575b50505050509050919050565b5f81815260018301602052604081205461046557508154600181810184555f848152602080822090930184905584548482528286019093526040902091909155610226565b505f610226565b803573ffffffffffffffffffffffffffffffffffffffff8116811461048f575f5ffd5b919050565b5f602082840312156104a4575f5ffd5b61039f8261046c565b602080825282518282018190525f918401906040840190835b818110156104fa57835173ffffffffffffffffffffffffffffffffffffffff168352602093840193909201916001016104c6565b509095945050505050565b7f4e487b71000000000000000000000000000000000000000000000000000000005f52604160045260245ffd5b6040516060810167ffffffffffffffff8111828210171561055557610555610505565b60405290565b5f5f67ffffffffffffffff84111561057557610575610505565b506040517fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe0601f85018116603f0116810181811067ffffffffffffffff821117156105c2576105c2610505565b6040528381529050808284018510156105d9575f5ffd5b838360208301375f60208583010152509392505050565b5f60608284031215610600575f5ffd5b610608610532565b90506106138261046c565b8152602082013567ffffffffffffffff81111561062e575f5ffd5b8201601f8101841361063e575f5ffd5b61064d8482356020840161055b565b602083015250604082013567ffffffffffffffff81111561066c575f5ffd5b8201601f8101841361067c575f5ffd5b61068b8482356020840161055b565b60408301525092915050565b5f5f5f606084860312156106a9575f5ffd5b833567ffffffffffffffff8111156106bf575f5ffd5b6106cb868287016105f0565b935050602084013567ffffffffffffffff8111156106e7575f5ffd5b6106f3868287016105f0565b93969395505050506040919091013590565b5f5f60408385031215610716575f5ffd5b823567ffffffffffffffff81111561072c575f5ffd5b610738858286016105f0565b95602094909401359450505050565b5f5f60408385031215610758575f5ffd5b6107618361046c565b915061076f6020840161046c565b9050925092905056",
+	ABI: "[{\"type\":\"function\",\"name\":\"checkIfLinked\",\"inputs\":[{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"wallet\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getLatestNonceForRootKey\",\"inputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"pure\"},{\"type\":\"function\",\"name\":\"getRootKeyForWallet\",\"inputs\":[{\"name\":\"wallet\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getWalletsByRootKey\",\"inputs\":[{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"wallets\",\"type\":\"address[]\",\"internalType\":\"address[]\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getWalletsByRootKeyWithDelegations\",\"inputs\":[{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"wallets\",\"type\":\"address[]\",\"internalType\":\"address[]\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"linkCallerToRootKey\",\"inputs\":[{\"name\":\"rootWallet\",\"type\":\"tuple\",\"internalType\":\"structIWalletLinkBase.LinkedWallet\",\"components\":[{\"name\":\"addr\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"signature\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"message\",\"type\":\"string\",\"internalType\":\"string\"}]},{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"linkWalletToRootKey\",\"inputs\":[{\"name\":\"wallet\",\"type\":\"tuple\",\"internalType\":\"structIWalletLinkBase.LinkedWallet\",\"components\":[{\"name\":\"addr\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"signature\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"message\",\"type\":\"string\",\"internalType\":\"string\"}]},{\"name\":\"rootWallet\",\"type\":\"tuple\",\"internalType\":\"structIWalletLinkBase.LinkedWallet\",\"components\":[{\"name\":\"addr\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"signature\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"message\",\"type\":\"string\",\"internalType\":\"string\"}]},{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"event\",\"name\":\"LinkNonEVMWalletToRootWallet\",\"inputs\":[{\"name\":\"walletHash\",\"type\":\"bytes32\",\"indexed\":true,\"internalType\":\"bytes32\"},{\"name\":\"rootKey\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"LinkWalletToRootKey\",\"inputs\":[{\"name\":\"wallet\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"rootKey\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"RemoveLink\",\"inputs\":[{\"name\":\"wallet\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"secondWallet\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"RemoveNonEVMWalletLink\",\"inputs\":[{\"name\":\"walletHash\",\"type\":\"bytes32\",\"indexed\":true,\"internalType\":\"bytes32\"},{\"name\":\"rootKey\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"SetDefaultWallet\",\"inputs\":[{\"name\":\"rootKey\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"defaultWallet\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"error\",\"name\":\"WalletLink__AddressMismatch\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"WalletLink__CannotLinkToRootWallet\",\"inputs\":[{\"name\":\"wallet\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"}]},{\"type\":\"error\",\"name\":\"WalletLink__CannotLinkToSelf\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"WalletLink__CannotRemoveDefaultWallet\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"WalletLink__CannotRemoveRootWallet\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"WalletLink__DefaultWalletAlreadySet\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"WalletLink__InvalidAddress\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"WalletLink__InvalidMessage\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"WalletLink__InvalidNonEVMAddress\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"WalletLink__InvalidSignature\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"WalletLink__InvalidVMSpecificData\",\"inputs\":[{\"name\":\"key\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"value\",\"type\":\"bytes\",\"internalType\":\"bytes\"}]},{\"type\":\"error\",\"name\":\"WalletLink__LinkAlreadyExists\",\"inputs\":[{\"name\":\"wallet\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"}]},{\"type\":\"error\",\"name\":\"WalletLink__LinkedToAnotherRootKey\",\"inputs\":[{\"name\":\"wallet\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"}]},{\"type\":\"error\",\"name\":\"WalletLink__MaxLinkedWalletsReached\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"WalletLink__NonEVMWalletAlreadyLinked\",\"inputs\":[{\"name\":\"wallet\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"}]},{\"type\":\"error\",\"name\":\"WalletLink__NonEVMWalletNotLinked\",\"inputs\":[{\"name\":\"wallet\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"}]},{\"type\":\"error\",\"name\":\"WalletLink__NotLinked\",\"inputs\":[{\"name\":\"wallet\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"}]},{\"type\":\"error\",\"name\":\"WalletLink__RootKeyMismatch\",\"inputs\":[{\"name\":\"callerRootKey\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"rootKey\",\"type\":\"address\",\"internalType\":\"address\"}]},{\"type\":\"error\",\"name\":\"WalletLink__UnsupportedVMType\",\"inputs\":[]}]",
+	Bin: "0x6080604052348015600e575f5ffd5b506107788061001c5f395ff3fe608060405234801561000f575f5ffd5b506004361061007a575f3560e01c80632f461453116100585780632f461453146100dd5780633d005eab1461007e578063912b9758146100f0578063f82103981461015b575f5ffd5b806302345b981461007e57806320a00ac8146100a7578063243a7134146100c8575b5f5ffd5b61009161008c366004610494565b6101d7565b60405161009e91906104ad565b60405180910390f35b6100ba6100b5366004610494565b505f90565b60405190815260200161009e565b6100db6100d6366004610697565b61022c565b005b6100db6100eb366004610705565b6102e1565b61014b6100fe366004610747565b73ffffffffffffffffffffffffffffffffffffffff9081165f9081527f53bdded980027e2c478b287c6d24ce77f39d36276f54116d9f518f7ecd94eb016020526040902054811691161490565b604051901515815260200161009e565b6101b2610169366004610494565b73ffffffffffffffffffffffffffffffffffffffff9081165f9081527f53bdded980027e2c478b287c6d24ce77f39d36276f54116d9f518f7ecd94eb0160205260409020541690565b60405173ffffffffffffffffffffffffffffffffffffffff909116815260200161009e565b73ffffffffffffffffffffffffffffffffffffffff81165f9081527f53bdded980027e2c478b287c6d24ce77f39d36276f54116d9f518f7ecd94eb006020526040902060609061022690610393565b92915050565b8251825173ffffffffffffffffffffffffffffffffffffffff165f9081527f53bdded980027e2c478b287c6d24ce77f39d36276f54116d9f518f7ecd94eb0060208190526040909120909161028191906103a6565b509151925173ffffffffffffffffffffffffffffffffffffffff9081165f9081526001909301602052604090922080547fffffffffffffffffffffffff000000000000000000000000000000000000000016929093169190911790915550565b815173ffffffffffffffffffffffffffffffffffffffff165f9081527f53bdded980027e2c478b287c6d24ce77f39d36276f54116d9f518f7ecd94eb0060208190526040909120339061033490826103a6565b50925173ffffffffffffffffffffffffffffffffffffffff9384165f908152600192909201602052604090912080547fffffffffffffffffffffffff000000000000000000000000000000000000000016939091169290921790915550565b60605f61039f836103c7565b9392505050565b5f61039f8373ffffffffffffffffffffffffffffffffffffffff8416610420565b6060815f0180548060200260200160405190810160405280929190818152602001828054801561041457602002820191905f5260205f20905b815481526020019060010190808311610400575b50505050509050919050565b5f81815260018301602052604081205461046557508154600181810184555f848152602080822090930184905584548482528286019093526040902091909155610226565b505f610226565b803573ffffffffffffffffffffffffffffffffffffffff8116811461048f575f5ffd5b919050565b5f602082840312156104a4575f5ffd5b61039f8261046c565b602080825282518282018190525f918401906040840190835b818110156104fa57835173ffffffffffffffffffffffffffffffffffffffff168352602093840193909201916001016104c6565b509095945050505050565b7f4e487b71000000000000000000000000000000000000000000000000000000005f52604160045260245ffd5b6040516060810167ffffffffffffffff8111828210171561055557610555610505565b60405290565b5f5f67ffffffffffffffff84111561057557610575610505565b506040517fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe0601f85018116603f0116810181811067ffffffffffffffff821117156105c2576105c2610505565b6040528381529050808284018510156105d9575f5ffd5b838360208301375f60208583010152509392505050565b5f60608284031215610600575f5ffd5b610608610532565b90506106138261046c565b8152602082013567ffffffffffffffff81111561062e575f5ffd5b8201601f8101841361063e575f5ffd5b61064d8482356020840161055b565b602083015250604082013567ffffffffffffffff81111561066c575f5ffd5b8201601f8101841361067c575f5ffd5b61068b8482356020840161055b565b60408301525092915050565b5f5f5f606084860312156106a9575f5ffd5b833567ffffffffffffffff8111156106bf575f5ffd5b6106cb868287016105f0565b935050602084013567ffffffffffffffff8111156106e7575f5ffd5b6106f3868287016105f0565b93969395505050506040919091013590565b5f5f60408385031215610716575f5ffd5b823567ffffffffffffffff81111561072c575f5ffd5b610738858286016105f0565b95602094909401359450505050565b5f5f60408385031215610758575f5ffd5b6107618361046c565b915061076f6020840161046c565b9050925092905056",
 }
 
 // MockWalletLinkABI is the input ABI used to generate the binding from.
@@ -62,61 +69,61 @@ func DeployMockWalletLink(auth *bind.TransactOpts, backend bind.ContractBackend)
 
 // MockWalletLink is an auto generated Go binding around an Ethereum contract.
 type MockWalletLink struct {
-	MockWalletLinkCaller		// Read-only binding to the contract
-	MockWalletLinkTransactor	// Write-only binding to the contract
-	MockWalletLinkFilterer		// Log filterer for contract events
+	MockWalletLinkCaller     // Read-only binding to the contract
+	MockWalletLinkTransactor // Write-only binding to the contract
+	MockWalletLinkFilterer   // Log filterer for contract events
 }
 
 // MockWalletLinkCaller is an auto generated read-only Go binding around an Ethereum contract.
 type MockWalletLinkCaller struct {
-	contract *bind.BoundContract	// Generic contract wrapper for the low level calls
+	contract *bind.BoundContract // Generic contract wrapper for the low level calls
 }
 
 // MockWalletLinkTransactor is an auto generated write-only Go binding around an Ethereum contract.
 type MockWalletLinkTransactor struct {
-	contract *bind.BoundContract	// Generic contract wrapper for the low level calls
+	contract *bind.BoundContract // Generic contract wrapper for the low level calls
 }
 
 // MockWalletLinkFilterer is an auto generated log filtering Go binding around an Ethereum contract events.
 type MockWalletLinkFilterer struct {
-	contract *bind.BoundContract	// Generic contract wrapper for the low level calls
+	contract *bind.BoundContract // Generic contract wrapper for the low level calls
 }
 
 // MockWalletLinkSession is an auto generated Go binding around an Ethereum contract,
 // with pre-set call and transact options.
 type MockWalletLinkSession struct {
-	Contract	*MockWalletLink		// Generic contract binding to set the session for
-	CallOpts	bind.CallOpts		// Call options to use throughout this session
-	TransactOpts	bind.TransactOpts	// Transaction auth options to use throughout this session
+	Contract     *MockWalletLink   // Generic contract binding to set the session for
+	CallOpts     bind.CallOpts     // Call options to use throughout this session
+	TransactOpts bind.TransactOpts // Transaction auth options to use throughout this session
 }
 
 // MockWalletLinkCallerSession is an auto generated read-only Go binding around an Ethereum contract,
 // with pre-set call options.
 type MockWalletLinkCallerSession struct {
-	Contract	*MockWalletLinkCaller	// Generic contract caller binding to set the session for
-	CallOpts	bind.CallOpts		// Call options to use throughout this session
+	Contract *MockWalletLinkCaller // Generic contract caller binding to set the session for
+	CallOpts bind.CallOpts         // Call options to use throughout this session
 }
 
 // MockWalletLinkTransactorSession is an auto generated write-only Go binding around an Ethereum contract,
 // with pre-set transact options.
 type MockWalletLinkTransactorSession struct {
-	Contract	*MockWalletLinkTransactor	// Generic contract transactor binding to set the session for
-	TransactOpts	bind.TransactOpts		// Transaction auth options to use throughout this session
+	Contract     *MockWalletLinkTransactor // Generic contract transactor binding to set the session for
+	TransactOpts bind.TransactOpts         // Transaction auth options to use throughout this session
 }
 
 // MockWalletLinkRaw is an auto generated low-level Go binding around an Ethereum contract.
 type MockWalletLinkRaw struct {
-	Contract *MockWalletLink	// Generic contract binding to access the raw methods on
+	Contract *MockWalletLink // Generic contract binding to access the raw methods on
 }
 
 // MockWalletLinkCallerRaw is an auto generated low-level read-only Go binding around an Ethereum contract.
 type MockWalletLinkCallerRaw struct {
-	Contract *MockWalletLinkCaller	// Generic read-only contract binding to access the raw methods on
+	Contract *MockWalletLinkCaller // Generic read-only contract binding to access the raw methods on
 }
 
 // MockWalletLinkTransactorRaw is an auto generated low-level write-only Go binding around an Ethereum contract.
 type MockWalletLinkTransactorRaw struct {
-	Contract *MockWalletLinkTransactor	// Generic write-only contract binding to access the raw methods on
+	Contract *MockWalletLinkTransactor // Generic write-only contract binding to access the raw methods on
 }
 
 // NewMockWalletLink creates a new instance of MockWalletLink, bound to a specific deployed contract.
@@ -401,15 +408,15 @@ func (_MockWalletLink *MockWalletLinkTransactorSession) LinkWalletToRootKey(wall
 
 // MockWalletLinkLinkNonEVMWalletToRootWalletIterator is returned from FilterLinkNonEVMWalletToRootWallet and is used to iterate over the raw logs and unpacked data for LinkNonEVMWalletToRootWallet events raised by the MockWalletLink contract.
 type MockWalletLinkLinkNonEVMWalletToRootWalletIterator struct {
-	Event	*MockWalletLinkLinkNonEVMWalletToRootWallet	// Event containing the contract specifics and raw log
+	Event *MockWalletLinkLinkNonEVMWalletToRootWallet // Event containing the contract specifics and raw log
 
-	contract	*bind.BoundContract	// Generic contract to use for unpacking event data
-	event		string			// Event name to use for unpacking event data
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
 
-	logs	chan types.Log		// Log channel receiving the found contract events
-	sub	ethereum.Subscription	// Subscription for errors, completion and termination
-	done	bool			// Whether the subscription completed delivering logs
-	fail	error			// Occurred error to stop iteration
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
 }
 
 // Next advances the iterator to the subsequent event, returning whether there
@@ -468,9 +475,9 @@ func (it *MockWalletLinkLinkNonEVMWalletToRootWalletIterator) Close() error {
 
 // MockWalletLinkLinkNonEVMWalletToRootWallet represents a LinkNonEVMWalletToRootWallet event raised by the MockWalletLink contract.
 type MockWalletLinkLinkNonEVMWalletToRootWallet struct {
-	WalletHash	[32]byte
-	RootKey		common.Address
-	Raw		types.Log	// Blockchain specific contextual infos
+	WalletHash [32]byte
+	RootKey    common.Address
+	Raw        types.Log // Blockchain specific contextual infos
 }
 
 // FilterLinkNonEVMWalletToRootWallet is a free log retrieval operation binding the contract event 0xeb317a93636ebc39c613bf403c3fb4147a957dbf439fb47b4c9cc5c2b372f6bc.
@@ -554,15 +561,15 @@ func (_MockWalletLink *MockWalletLinkFilterer) ParseLinkNonEVMWalletToRootWallet
 
 // MockWalletLinkLinkWalletToRootKeyIterator is returned from FilterLinkWalletToRootKey and is used to iterate over the raw logs and unpacked data for LinkWalletToRootKey events raised by the MockWalletLink contract.
 type MockWalletLinkLinkWalletToRootKeyIterator struct {
-	Event	*MockWalletLinkLinkWalletToRootKey	// Event containing the contract specifics and raw log
+	Event *MockWalletLinkLinkWalletToRootKey // Event containing the contract specifics and raw log
 
-	contract	*bind.BoundContract	// Generic contract to use for unpacking event data
-	event		string			// Event name to use for unpacking event data
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
 
-	logs	chan types.Log		// Log channel receiving the found contract events
-	sub	ethereum.Subscription	// Subscription for errors, completion and termination
-	done	bool			// Whether the subscription completed delivering logs
-	fail	error			// Occurred error to stop iteration
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
 }
 
 // Next advances the iterator to the subsequent event, returning whether there
@@ -621,9 +628,9 @@ func (it *MockWalletLinkLinkWalletToRootKeyIterator) Close() error {
 
 // MockWalletLinkLinkWalletToRootKey represents a LinkWalletToRootKey event raised by the MockWalletLink contract.
 type MockWalletLinkLinkWalletToRootKey struct {
-	Wallet	common.Address
-	RootKey	common.Address
-	Raw	types.Log	// Blockchain specific contextual infos
+	Wallet  common.Address
+	RootKey common.Address
+	Raw     types.Log // Blockchain specific contextual infos
 }
 
 // FilterLinkWalletToRootKey is a free log retrieval operation binding the contract event 0x64126824352170c4025060d1f6e215159635e4b08e649830695f26ef6d2b5721.
@@ -707,15 +714,15 @@ func (_MockWalletLink *MockWalletLinkFilterer) ParseLinkWalletToRootKey(log type
 
 // MockWalletLinkRemoveLinkIterator is returned from FilterRemoveLink and is used to iterate over the raw logs and unpacked data for RemoveLink events raised by the MockWalletLink contract.
 type MockWalletLinkRemoveLinkIterator struct {
-	Event	*MockWalletLinkRemoveLink	// Event containing the contract specifics and raw log
+	Event *MockWalletLinkRemoveLink // Event containing the contract specifics and raw log
 
-	contract	*bind.BoundContract	// Generic contract to use for unpacking event data
-	event		string			// Event name to use for unpacking event data
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
 
-	logs	chan types.Log		// Log channel receiving the found contract events
-	sub	ethereum.Subscription	// Subscription for errors, completion and termination
-	done	bool			// Whether the subscription completed delivering logs
-	fail	error			// Occurred error to stop iteration
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
 }
 
 // Next advances the iterator to the subsequent event, returning whether there
@@ -774,9 +781,9 @@ func (it *MockWalletLinkRemoveLinkIterator) Close() error {
 
 // MockWalletLinkRemoveLink represents a RemoveLink event raised by the MockWalletLink contract.
 type MockWalletLinkRemoveLink struct {
-	Wallet		common.Address
-	SecondWallet	common.Address
-	Raw		types.Log	// Blockchain specific contextual infos
+	Wallet       common.Address
+	SecondWallet common.Address
+	Raw          types.Log // Blockchain specific contextual infos
 }
 
 // FilterRemoveLink is a free log retrieval operation binding the contract event 0x9a9d98629b39adf596077fc95a0712ba55c38f40a354e99d366a10f9c3e27da2.
@@ -860,15 +867,15 @@ func (_MockWalletLink *MockWalletLinkFilterer) ParseRemoveLink(log types.Log) (*
 
 // MockWalletLinkRemoveNonEVMWalletLinkIterator is returned from FilterRemoveNonEVMWalletLink and is used to iterate over the raw logs and unpacked data for RemoveNonEVMWalletLink events raised by the MockWalletLink contract.
 type MockWalletLinkRemoveNonEVMWalletLinkIterator struct {
-	Event	*MockWalletLinkRemoveNonEVMWalletLink	// Event containing the contract specifics and raw log
+	Event *MockWalletLinkRemoveNonEVMWalletLink // Event containing the contract specifics and raw log
 
-	contract	*bind.BoundContract	// Generic contract to use for unpacking event data
-	event		string			// Event name to use for unpacking event data
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
 
-	logs	chan types.Log		// Log channel receiving the found contract events
-	sub	ethereum.Subscription	// Subscription for errors, completion and termination
-	done	bool			// Whether the subscription completed delivering logs
-	fail	error			// Occurred error to stop iteration
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
 }
 
 // Next advances the iterator to the subsequent event, returning whether there
@@ -927,9 +934,9 @@ func (it *MockWalletLinkRemoveNonEVMWalletLinkIterator) Close() error {
 
 // MockWalletLinkRemoveNonEVMWalletLink represents a RemoveNonEVMWalletLink event raised by the MockWalletLink contract.
 type MockWalletLinkRemoveNonEVMWalletLink struct {
-	WalletHash	[32]byte
-	RootKey		common.Address
-	Raw		types.Log	// Blockchain specific contextual infos
+	WalletHash [32]byte
+	RootKey    common.Address
+	Raw        types.Log // Blockchain specific contextual infos
 }
 
 // FilterRemoveNonEVMWalletLink is a free log retrieval operation binding the contract event 0xbd9633f1d49d3b0a615e7eba9e46218c1bfc459278b5764c2aeee591b1b1230a.
@@ -1013,15 +1020,15 @@ func (_MockWalletLink *MockWalletLinkFilterer) ParseRemoveNonEVMWalletLink(log t
 
 // MockWalletLinkSetDefaultWalletIterator is returned from FilterSetDefaultWallet and is used to iterate over the raw logs and unpacked data for SetDefaultWallet events raised by the MockWalletLink contract.
 type MockWalletLinkSetDefaultWalletIterator struct {
-	Event	*MockWalletLinkSetDefaultWallet	// Event containing the contract specifics and raw log
+	Event *MockWalletLinkSetDefaultWallet // Event containing the contract specifics and raw log
 
-	contract	*bind.BoundContract	// Generic contract to use for unpacking event data
-	event		string			// Event name to use for unpacking event data
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
 
-	logs	chan types.Log		// Log channel receiving the found contract events
-	sub	ethereum.Subscription	// Subscription for errors, completion and termination
-	done	bool			// Whether the subscription completed delivering logs
-	fail	error			// Occurred error to stop iteration
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
 }
 
 // Next advances the iterator to the subsequent event, returning whether there
@@ -1080,9 +1087,9 @@ func (it *MockWalletLinkSetDefaultWalletIterator) Close() error {
 
 // MockWalletLinkSetDefaultWallet represents a SetDefaultWallet event raised by the MockWalletLink contract.
 type MockWalletLinkSetDefaultWallet struct {
-	RootKey		common.Address
-	DefaultWallet	common.Address
-	Raw		types.Log	// Blockchain specific contextual infos
+	RootKey       common.Address
+	DefaultWallet common.Address
+	Raw           types.Log // Blockchain specific contextual infos
 }
 
 // FilterSetDefaultWallet is a free log retrieval operation binding the contract event 0x63a3f19f9166855a56a40467088468f9ae049d32865102cf64b70444db555036.

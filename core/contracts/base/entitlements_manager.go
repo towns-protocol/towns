@@ -18,23 +18,23 @@ import (
 
 // Reference imports to suppress errors if they are not otherwise used.
 var (
-	_	= errors.New
-	_	= big.NewInt
-	_	= strings.NewReader
-	_	= ethereum.NotFound
-	_	= bind.Bind
-	_	= common.Big1
-	_	= types.BloomLookup
-	_	= event.NewSubscription
-	_	= abi.ConvertType
+	_ = errors.New
+	_ = big.NewInt
+	_ = strings.NewReader
+	_ = ethereum.NotFound
+	_ = bind.Bind
+	_ = common.Big1
+	_ = types.BloomLookup
+	_ = event.NewSubscription
+	_ = abi.ConvertType
 )
 
 // IEntitlementsManagerBaseEntitlement is an auto generated low-level Go binding around an user-defined struct.
 type IEntitlementsManagerBaseEntitlement struct {
-	Name		string
-	ModuleAddress	common.Address
-	ModuleType	string
-	IsImmutable	bool
+	Name          string
+	ModuleAddress common.Address
+	ModuleType    string
+	IsImmutable   bool
 }
 
 // EntitlementsManagerMetaData contains all meta data concerning the EntitlementsManager contract.
@@ -48,61 +48,61 @@ var EntitlementsManagerABI = EntitlementsManagerMetaData.ABI
 
 // EntitlementsManager is an auto generated Go binding around an Ethereum contract.
 type EntitlementsManager struct {
-	EntitlementsManagerCaller	// Read-only binding to the contract
-	EntitlementsManagerTransactor	// Write-only binding to the contract
-	EntitlementsManagerFilterer	// Log filterer for contract events
+	EntitlementsManagerCaller     // Read-only binding to the contract
+	EntitlementsManagerTransactor // Write-only binding to the contract
+	EntitlementsManagerFilterer   // Log filterer for contract events
 }
 
 // EntitlementsManagerCaller is an auto generated read-only Go binding around an Ethereum contract.
 type EntitlementsManagerCaller struct {
-	contract *bind.BoundContract	// Generic contract wrapper for the low level calls
+	contract *bind.BoundContract // Generic contract wrapper for the low level calls
 }
 
 // EntitlementsManagerTransactor is an auto generated write-only Go binding around an Ethereum contract.
 type EntitlementsManagerTransactor struct {
-	contract *bind.BoundContract	// Generic contract wrapper for the low level calls
+	contract *bind.BoundContract // Generic contract wrapper for the low level calls
 }
 
 // EntitlementsManagerFilterer is an auto generated log filtering Go binding around an Ethereum contract events.
 type EntitlementsManagerFilterer struct {
-	contract *bind.BoundContract	// Generic contract wrapper for the low level calls
+	contract *bind.BoundContract // Generic contract wrapper for the low level calls
 }
 
 // EntitlementsManagerSession is an auto generated Go binding around an Ethereum contract,
 // with pre-set call and transact options.
 type EntitlementsManagerSession struct {
-	Contract	*EntitlementsManager	// Generic contract binding to set the session for
-	CallOpts	bind.CallOpts		// Call options to use throughout this session
-	TransactOpts	bind.TransactOpts	// Transaction auth options to use throughout this session
+	Contract     *EntitlementsManager // Generic contract binding to set the session for
+	CallOpts     bind.CallOpts        // Call options to use throughout this session
+	TransactOpts bind.TransactOpts    // Transaction auth options to use throughout this session
 }
 
 // EntitlementsManagerCallerSession is an auto generated read-only Go binding around an Ethereum contract,
 // with pre-set call options.
 type EntitlementsManagerCallerSession struct {
-	Contract	*EntitlementsManagerCaller	// Generic contract caller binding to set the session for
-	CallOpts	bind.CallOpts			// Call options to use throughout this session
+	Contract *EntitlementsManagerCaller // Generic contract caller binding to set the session for
+	CallOpts bind.CallOpts              // Call options to use throughout this session
 }
 
 // EntitlementsManagerTransactorSession is an auto generated write-only Go binding around an Ethereum contract,
 // with pre-set transact options.
 type EntitlementsManagerTransactorSession struct {
-	Contract	*EntitlementsManagerTransactor	// Generic contract transactor binding to set the session for
-	TransactOpts	bind.TransactOpts		// Transaction auth options to use throughout this session
+	Contract     *EntitlementsManagerTransactor // Generic contract transactor binding to set the session for
+	TransactOpts bind.TransactOpts              // Transaction auth options to use throughout this session
 }
 
 // EntitlementsManagerRaw is an auto generated low-level Go binding around an Ethereum contract.
 type EntitlementsManagerRaw struct {
-	Contract *EntitlementsManager	// Generic contract binding to access the raw methods on
+	Contract *EntitlementsManager // Generic contract binding to access the raw methods on
 }
 
 // EntitlementsManagerCallerRaw is an auto generated low-level read-only Go binding around an Ethereum contract.
 type EntitlementsManagerCallerRaw struct {
-	Contract *EntitlementsManagerCaller	// Generic read-only contract binding to access the raw methods on
+	Contract *EntitlementsManagerCaller // Generic read-only contract binding to access the raw methods on
 }
 
 // EntitlementsManagerTransactorRaw is an auto generated low-level write-only Go binding around an Ethereum contract.
 type EntitlementsManagerTransactorRaw struct {
-	Contract *EntitlementsManagerTransactor	// Generic write-only contract binding to access the raw methods on
+	Contract *EntitlementsManagerTransactor // Generic write-only contract binding to access the raw methods on
 }
 
 // NewEntitlementsManager creates a new instance of EntitlementsManager, bound to a specific deployed contract.
@@ -377,15 +377,15 @@ func (_EntitlementsManager *EntitlementsManagerTransactorSession) RemoveEntitlem
 
 // EntitlementsManagerEntitlementModuleAddedIterator is returned from FilterEntitlementModuleAdded and is used to iterate over the raw logs and unpacked data for EntitlementModuleAdded events raised by the EntitlementsManager contract.
 type EntitlementsManagerEntitlementModuleAddedIterator struct {
-	Event	*EntitlementsManagerEntitlementModuleAdded	// Event containing the contract specifics and raw log
+	Event *EntitlementsManagerEntitlementModuleAdded // Event containing the contract specifics and raw log
 
-	contract	*bind.BoundContract	// Generic contract to use for unpacking event data
-	event		string			// Event name to use for unpacking event data
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
 
-	logs	chan types.Log		// Log channel receiving the found contract events
-	sub	ethereum.Subscription	// Subscription for errors, completion and termination
-	done	bool			// Whether the subscription completed delivering logs
-	fail	error			// Occurred error to stop iteration
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
 }
 
 // Next advances the iterator to the subsequent event, returning whether there
@@ -444,9 +444,9 @@ func (it *EntitlementsManagerEntitlementModuleAddedIterator) Close() error {
 
 // EntitlementsManagerEntitlementModuleAdded represents a EntitlementModuleAdded event raised by the EntitlementsManager contract.
 type EntitlementsManagerEntitlementModuleAdded struct {
-	Caller		common.Address
-	Entitlement	common.Address
-	Raw		types.Log	// Blockchain specific contextual infos
+	Caller      common.Address
+	Entitlement common.Address
+	Raw         types.Log // Blockchain specific contextual infos
 }
 
 // FilterEntitlementModuleAdded is a free log retrieval operation binding the contract event 0x055c4c0e6f85afe96beaac6c9d650859c001e6ef93103856624cce6ceba811b4.
@@ -522,15 +522,15 @@ func (_EntitlementsManager *EntitlementsManagerFilterer) ParseEntitlementModuleA
 
 // EntitlementsManagerEntitlementModuleRemovedIterator is returned from FilterEntitlementModuleRemoved and is used to iterate over the raw logs and unpacked data for EntitlementModuleRemoved events raised by the EntitlementsManager contract.
 type EntitlementsManagerEntitlementModuleRemovedIterator struct {
-	Event	*EntitlementsManagerEntitlementModuleRemoved	// Event containing the contract specifics and raw log
+	Event *EntitlementsManagerEntitlementModuleRemoved // Event containing the contract specifics and raw log
 
-	contract	*bind.BoundContract	// Generic contract to use for unpacking event data
-	event		string			// Event name to use for unpacking event data
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
 
-	logs	chan types.Log		// Log channel receiving the found contract events
-	sub	ethereum.Subscription	// Subscription for errors, completion and termination
-	done	bool			// Whether the subscription completed delivering logs
-	fail	error			// Occurred error to stop iteration
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
 }
 
 // Next advances the iterator to the subsequent event, returning whether there
@@ -589,9 +589,9 @@ func (it *EntitlementsManagerEntitlementModuleRemovedIterator) Close() error {
 
 // EntitlementsManagerEntitlementModuleRemoved represents a EntitlementModuleRemoved event raised by the EntitlementsManager contract.
 type EntitlementsManagerEntitlementModuleRemoved struct {
-	Caller		common.Address
-	Entitlement	common.Address
-	Raw		types.Log	// Blockchain specific contextual infos
+	Caller      common.Address
+	Entitlement common.Address
+	Raw         types.Log // Blockchain specific contextual infos
 }
 
 // FilterEntitlementModuleRemoved is a free log retrieval operation binding the contract event 0xa8e3e13a35b592afaa9d213d12c7ea06384518ada9733585d20883cfafcf249b.

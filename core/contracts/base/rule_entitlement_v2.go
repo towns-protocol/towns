@@ -18,28 +18,43 @@ import (
 
 // Reference imports to suppress errors if they are not otherwise used.
 var (
-	_	= errors.New
-	_	= big.NewInt
-	_	= strings.NewReader
-	_	= ethereum.NotFound
-	_	= bind.Bind
-	_	= common.Big1
-	_	= types.BloomLookup
-	_	= event.NewSubscription
-	_	= abi.ConvertType
+	_ = errors.New
+	_ = big.NewInt
+	_ = strings.NewReader
+	_ = ethereum.NotFound
+	_ = bind.Bind
+	_ = common.Big1
+	_ = types.BloomLookup
+	_ = event.NewSubscription
+	_ = abi.ConvertType
 )
 
+// IRuleEntitlementBaseCheckOperationV2 is an auto generated low-level Go binding around an user-defined struct.
 type IRuleEntitlementBaseCheckOperationV2 struct {
-	OpType		uint8
-	ChainId		*big.Int
-	ContractAddress	common.Address
-	Params		[]byte
+	OpType          uint8
+	ChainId         *big.Int
+	ContractAddress common.Address
+	Params          []byte
 }
 
+// IRuleEntitlementBaseLogicalOperation is an auto generated low-level Go binding around an user-defined struct.
+type IRuleEntitlementBaseLogicalOperation struct {
+	LogOpType           uint8
+	LeftOperationIndex  uint8
+	RightOperationIndex uint8
+}
+
+// IRuleEntitlementBaseOperation is an auto generated low-level Go binding around an user-defined struct.
+type IRuleEntitlementBaseOperation struct {
+	OpType uint8
+	Index  uint8
+}
+
+// IRuleEntitlementBaseRuleDataV2 is an auto generated low-level Go binding around an user-defined struct.
 type IRuleEntitlementBaseRuleDataV2 struct {
-	Operations		[]IRuleEntitlementBaseOperation
-	CheckOperations		[]IRuleEntitlementBaseCheckOperationV2
-	LogicalOperations	[]IRuleEntitlementBaseLogicalOperation
+	Operations        []IRuleEntitlementBaseOperation
+	CheckOperations   []IRuleEntitlementBaseCheckOperationV2
+	LogicalOperations []IRuleEntitlementBaseLogicalOperation
 }
 
 // RuleEntitlementV2MetaData contains all meta data concerning the RuleEntitlementV2 contract.
@@ -53,61 +68,61 @@ var RuleEntitlementV2ABI = RuleEntitlementV2MetaData.ABI
 
 // RuleEntitlementV2 is an auto generated Go binding around an Ethereum contract.
 type RuleEntitlementV2 struct {
-	RuleEntitlementV2Caller		// Read-only binding to the contract
-	RuleEntitlementV2Transactor	// Write-only binding to the contract
-	RuleEntitlementV2Filterer	// Log filterer for contract events
+	RuleEntitlementV2Caller     // Read-only binding to the contract
+	RuleEntitlementV2Transactor // Write-only binding to the contract
+	RuleEntitlementV2Filterer   // Log filterer for contract events
 }
 
 // RuleEntitlementV2Caller is an auto generated read-only Go binding around an Ethereum contract.
 type RuleEntitlementV2Caller struct {
-	contract *bind.BoundContract	// Generic contract wrapper for the low level calls
+	contract *bind.BoundContract // Generic contract wrapper for the low level calls
 }
 
 // RuleEntitlementV2Transactor is an auto generated write-only Go binding around an Ethereum contract.
 type RuleEntitlementV2Transactor struct {
-	contract *bind.BoundContract	// Generic contract wrapper for the low level calls
+	contract *bind.BoundContract // Generic contract wrapper for the low level calls
 }
 
 // RuleEntitlementV2Filterer is an auto generated log filtering Go binding around an Ethereum contract events.
 type RuleEntitlementV2Filterer struct {
-	contract *bind.BoundContract	// Generic contract wrapper for the low level calls
+	contract *bind.BoundContract // Generic contract wrapper for the low level calls
 }
 
 // RuleEntitlementV2Session is an auto generated Go binding around an Ethereum contract,
 // with pre-set call and transact options.
 type RuleEntitlementV2Session struct {
-	Contract	*RuleEntitlementV2	// Generic contract binding to set the session for
-	CallOpts	bind.CallOpts		// Call options to use throughout this session
-	TransactOpts	bind.TransactOpts	// Transaction auth options to use throughout this session
+	Contract     *RuleEntitlementV2 // Generic contract binding to set the session for
+	CallOpts     bind.CallOpts      // Call options to use throughout this session
+	TransactOpts bind.TransactOpts  // Transaction auth options to use throughout this session
 }
 
 // RuleEntitlementV2CallerSession is an auto generated read-only Go binding around an Ethereum contract,
 // with pre-set call options.
 type RuleEntitlementV2CallerSession struct {
-	Contract	*RuleEntitlementV2Caller	// Generic contract caller binding to set the session for
-	CallOpts	bind.CallOpts			// Call options to use throughout this session
+	Contract *RuleEntitlementV2Caller // Generic contract caller binding to set the session for
+	CallOpts bind.CallOpts            // Call options to use throughout this session
 }
 
 // RuleEntitlementV2TransactorSession is an auto generated write-only Go binding around an Ethereum contract,
 // with pre-set transact options.
 type RuleEntitlementV2TransactorSession struct {
-	Contract	*RuleEntitlementV2Transactor	// Generic contract transactor binding to set the session for
-	TransactOpts	bind.TransactOpts		// Transaction auth options to use throughout this session
+	Contract     *RuleEntitlementV2Transactor // Generic contract transactor binding to set the session for
+	TransactOpts bind.TransactOpts            // Transaction auth options to use throughout this session
 }
 
 // RuleEntitlementV2Raw is an auto generated low-level Go binding around an Ethereum contract.
 type RuleEntitlementV2Raw struct {
-	Contract *RuleEntitlementV2	// Generic contract binding to access the raw methods on
+	Contract *RuleEntitlementV2 // Generic contract binding to access the raw methods on
 }
 
 // RuleEntitlementV2CallerRaw is an auto generated low-level read-only Go binding around an Ethereum contract.
 type RuleEntitlementV2CallerRaw struct {
-	Contract *RuleEntitlementV2Caller	// Generic read-only contract binding to access the raw methods on
+	Contract *RuleEntitlementV2Caller // Generic read-only contract binding to access the raw methods on
 }
 
 // RuleEntitlementV2TransactorRaw is an auto generated low-level write-only Go binding around an Ethereum contract.
 type RuleEntitlementV2TransactorRaw struct {
-	Contract *RuleEntitlementV2Transactor	// Generic write-only contract binding to access the raw methods on
+	Contract *RuleEntitlementV2Transactor // Generic write-only contract binding to access the raw methods on
 }
 
 // NewRuleEntitlementV2 creates a new instance of RuleEntitlementV2, bound to a specific deployed contract.
