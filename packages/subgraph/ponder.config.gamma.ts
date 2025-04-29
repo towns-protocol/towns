@@ -23,6 +23,11 @@ if (!spaceFactory) {
     throw new Error('Space factory address not found')
 }
 
+const spaceOwner = getContractAddress('spaceOwner')
+if (!spaceOwner) {
+    throw new Error('Space owner address not found')
+}
+
 export default createConfig({
     networks: {
         anvil: {
@@ -51,7 +56,7 @@ export default createConfig({
         },
         SpaceOwner: {
             abi: spaceOwnerAbi,
-            address: spaceFactory,
+            address: spaceOwner,
             startBlock,
             network: 'gamma',
         },
