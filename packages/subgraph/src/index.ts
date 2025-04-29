@@ -1,19 +1,33 @@
 import { eq } from 'ponder'
 import { ponder } from 'ponder:registry'
 import schema from 'ponder:schema'
+import { createPublicClient, http } from 'viem'
+
+const publicClient = createPublicClient({
+    transport: http(process.env.PONDER_RPC_URL_1),
+})
+
+async function getLatestBlockNumber() {
+    return await publicClient.getBlockNumber()
+}
 
 ponder.on('CreateSpace:SpaceCreated', async ({ event, context }) => {
+    // Get latest block number
+    const blockNumber = await getLatestBlockNumber()
+
     const space = await context.client.readContract({
         abi: context.contracts.SpaceOwner.abi,
         address: context.contracts.SpaceOwner.address,
         functionName: 'getSpaceInfo',
         args: [event.args.space],
+        blockNumber, // Use the latest block number
     })
     const paused = await context.client.readContract({
         abi: context.contracts.TokenPausableFacet.abi,
         address: context.contracts.TokenPausableFacet.address,
         functionName: 'paused',
         args: [],
+        blockNumber, // Use the latest block number
     })
     await context.db.insert(schema.space).values({
         id: event.args.space,
@@ -29,6 +43,9 @@ ponder.on('CreateSpace:SpaceCreated', async ({ event, context }) => {
 })
 
 ponder.on('SpaceOwner:SpaceOwner__UpdateSpace', async ({ event, context }) => {
+    // Get latest block number
+    const blockNumber = await getLatestBlockNumber()
+
     const space = await context.db.sql.query.space.findFirst({
         where: eq(schema.space.id, event.args.space),
     })
@@ -40,12 +57,14 @@ ponder.on('SpaceOwner:SpaceOwner__UpdateSpace', async ({ event, context }) => {
         address: context.contracts.TokenPausableFacet.address,
         functionName: 'paused',
         args: [],
+        blockNumber, // Use the latest block number
     })
     const spaceInfo = await context.client.readContract({
         abi: context.contracts.SpaceOwner.abi,
         address: context.contracts.SpaceOwner.address,
         functionName: 'getSpaceInfo',
         args: [event.args.space],
+        blockNumber, // Use the latest block number
     })
 
     await context.db.sql
