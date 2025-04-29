@@ -7,6 +7,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -49,13 +50,15 @@ func getPgxDbPool(
 	if err != nil {
 		return nil, err
 	}
-
+	cfg.ConnConfig.OnNotice = func(c *pgconn.PgConn, n *pgconn.Notice) {
+		fmt.Printf("NOTICE: %s\n", n.Message)
+	}
 	if password != "" {
 		cfg.ConnConfig.Password = password
 	}
 
 	if db.schema != "" {
-		cfg.ConnConfig.RuntimeParams["search_path"] = db.schema
+		cfg.ConnConfig.RuntimeParams["search_path"] = fmt.Sprintf("pg_temp, %v, public", db.schema)
 	}
 
 	pool, err := pgxpool.NewWithConfig(ctx, cfg)
