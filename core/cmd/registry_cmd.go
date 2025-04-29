@@ -29,7 +29,16 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func srStreamDump(cfg *config.Config, countOnly, timeOnly bool) error {
+type streamDumpOpts struct {
+	countOnly bool
+	timeOnly  bool
+	stats     bool
+	dump      bool
+	csv       bool
+	node      common.Address
+}
+
+func srStreamDump(cfg *config.Config, opts *streamDumpOpts) error {
 	ctx := context.Background() // lint:ignore context.Background() is fine here
 	blockchain, err := crypto.NewBlockchain(
 		ctx,
