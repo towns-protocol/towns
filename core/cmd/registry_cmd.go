@@ -442,10 +442,8 @@ func getStreamsForNode(ctx context.Context, node common.Address) error {
 	fmt.Printf("#Streams:\n")
 	fmt.Printf("#========\n")
 
-	if err := registryContract.ForAllStreams(ctx, blockNum, func(result *river.StreamWithId) bool {
-		if slices.Contains(result.Nodes(), node) {
-			fmt.Println(result.StreamId().String())
-		}
+	if err := registryContract.ForAllStreamsOnNode(ctx, blockNum, node, func(result *river.StreamWithId) bool {
+		fmt.Println(result.StreamId().String())
 		return true
 	}); err != nil {
 		return err

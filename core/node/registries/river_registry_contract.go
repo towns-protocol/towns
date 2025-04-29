@@ -395,6 +395,48 @@ func (c *RiverRegistryContract) callGetPaginatedStreamsWithBackoff(
 	}
 }
 
+func (c *RiverRegistryContract) callGetPaginatedStreamsOnNodeWithBackoff(
+	ctx context.Context,
+	blockNum crypto.BlockNumber,
+	node common.Address,
+	start int64,
+	end int64,
+) ([]river.StreamWithId, error) {
+	bo := c.createBackoff()
+	bo.Reset()
+	for {
+		streams, err := c.callGetPaginatedStreamsOnNode(ctx, blockNum, node, start, end)
+		if err == nil {
+			return streams, nil
+		}
+		if !waitForBackoff(ctx, bo) {
+			return nil, err
+		}
+	}
+}
+
+func (c *RiverRegistryContract) callGetPaginatedStreamsOnNode(
+	ctx context.Context,
+	blockNum crypto.BlockNumber,
+	node common.Address,
+	start int64,
+	end int64,
+) ([]river.StreamWithId, error) {
+	if c.Settings.SingleCallTimeout > 0 {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, c.Settings.SingleCallTimeout)
+		defer cancel()
+	}
+
+	callOpts := c.callOptsWithBlockNum(ctx, blockNum)
+	streams, err := c.StreamRegistry.GetPaginatedStreamsOnNode(callOpts, node, big.NewInt(start), big.NewInt(end))
+	if err != nil {
+		return nil, WrapRiverError(Err_CANNOT_CALL_CONTRACT, err).Func("ForAllStreamsOnNode")
+	}
+
+	return streams, nil
+}
+
 func (c *RiverRegistryContract) createBackoff() backoff.BackOff {
 	var bo backoff.BackOff
 	bo = backoff.NewExponentialBackOff(
@@ -419,6 +461,21 @@ func waitForBackoff(ctx context.Context, bo backoff.BackOff) bool {
 		return false
 	case <-time.After(b):
 		return true
+	}
+}
+
+// ForAllStreamsOnNode calls the given cb for all streams that are registered in the river registry at the given block
+// num and on the given node. If cb returns false ForAllStreamsOnNode returns.
+func (c *RiverRegistryContract) ForAllStreamsOnNode(
+	ctx context.Context,
+	blockNum crypto.BlockNumber,
+	node common.Address,
+	cb func(*river.StreamWithId) bool,
+) error {
+	if c.Settings.ParallelReaders > 1 {
+		return c.forAllStreamsOnNodeParallel(ctx, blockNum, node, cb)
+	} else {
+		return c.forAllStreamsOnNodeSingle(ctx, blockNum, node, cb)
 	}
 }
 
@@ -637,6 +694,228 @@ OuterLoop:
 	elapsed := time.Since(startTime)
 	log.Infow(
 		"RiverRegistryContract: GetPaginatedStreams completed",
+		"elapsed",
+		elapsed,
+		"streamsPerSecond",
+		float64(totalStreams)/elapsed.Seconds(),
+	)
+
+	return nil
+}
+
+func (c *RiverRegistryContract) forAllStreamsOnNodeParallel(
+	ctx context.Context,
+	blockNum crypto.BlockNumber,
+	node common.Address,
+	cb func(*river.StreamWithId) bool,
+) error {
+	log := logging.FromCtx(ctx)
+	ctx, cancelCtx := context.WithCancel(ctx)
+	defer cancelCtx()
+
+	numWorkers := c.Settings.ParallelReaders
+	if numWorkers <= 1 {
+		numWorkers = 8
+	}
+
+	pageSize := int64(c.Settings.PageSize)
+	if pageSize <= 0 {
+		pageSize = 5000
+	}
+
+	progressReportInterval := c.Settings.ProgressReportInterval
+	if progressReportInterval <= 0 {
+		progressReportInterval = 10 * time.Second
+	}
+
+	numStreamsBigInt, err := c.StreamRegistry.GetStreamCountOnNode(c.callOptsWithBlockNum(ctx, blockNum), node)
+	if err != nil {
+		return WrapRiverError(Err_CANNOT_CALL_CONTRACT, err).Func("ForAllStreamsOnNode")
+	}
+	numStreams := numStreamsBigInt.Int64()
+
+	if numStreams <= 0 {
+		log.Infow("RiverRegistryContract: GetPaginatedStreamsOnNode no streams found", "blockNum", blockNum)
+		return nil
+	}
+
+	log.Infow(
+		"RiverRegistryContract: GetPaginatedStreamsOnNode starting parallel read",
+		"numStreams",
+		numStreams,
+		"RiverRegistry.PageSize",
+		pageSize,
+		"RiverRegistry.ParallelReaders",
+		numWorkers,
+		"blockNum",
+		blockNum,
+	)
+
+	chResults := make(chan []river.StreamWithId, numWorkers)
+	chErrors := make(chan error, numWorkers)
+
+	pool := workerpool.New(numWorkers)
+
+	startTime := time.Now()
+	lastReport := time.Now()
+	taskCounter := 0
+	for i := int64(0); i < numStreams; i += pageSize {
+		taskCounter++
+		pool.Submit(func() {
+			streams, err := c.callGetPaginatedStreamsOnNodeWithBackoff(ctx, blockNum, node, i, i+pageSize)
+			if err == nil {
+				select {
+				case chResults <- streams:
+				case <-ctx.Done():
+				}
+			} else {
+				select {
+				case chErrors <- err:
+				case <-ctx.Done():
+				}
+			}
+		})
+	}
+
+	totalStreams := int64(0)
+OuterLoop:
+	for {
+		now := time.Now()
+		if now.Sub(lastReport) > progressReportInterval {
+			elapsed := time.Since(startTime)
+			log.Infow(
+				"RiverRegistryContract: GetPaginatedStreamsOnNode in progress",
+				"streamsRead",
+				totalStreams,
+				"elapsed",
+				elapsed,
+				"streamPerSecond",
+				float64(totalStreams)/elapsed.Seconds(),
+			)
+			lastReport = now
+		}
+		select {
+		case streams := <-chResults:
+			for _, stream := range streams {
+				if stream.Id == ZeroBytes32 {
+					continue
+				}
+				totalStreams++
+				if !cb(&stream) {
+					break OuterLoop
+				}
+			}
+			taskCounter--
+			if taskCounter == 0 {
+				break OuterLoop
+			}
+		case receivedErr := <-chErrors:
+			err = receivedErr
+			break OuterLoop
+		case <-ctx.Done():
+			err = ctx.Err()
+			break OuterLoop
+		case <-time.After(10 * time.Second):
+			continue
+		}
+	}
+
+	cancelCtx()
+	go pool.Stop()
+
+	if err != nil {
+		return err
+	}
+
+	elapsed := time.Since(startTime)
+	log.Infow(
+		"RiverRegistryContract: GetPaginatedStreamsOnNode completed",
+		"elapsed",
+		elapsed,
+		"streamsPerSecond",
+		float64(totalStreams)/elapsed.Seconds(),
+	)
+
+	return nil
+}
+
+func (c *RiverRegistryContract) forAllStreamsOnNodeSingle(
+	ctx context.Context,
+	blockNum crypto.BlockNumber,
+	node common.Address,
+	cb func(*river.StreamWithId) bool,
+) error {
+	log := logging.FromCtx(ctx)
+	pageSize := int64(c.Settings.PageSize)
+	if pageSize <= 0 {
+		pageSize = 5000
+	}
+
+	progressReportInterval := c.Settings.ProgressReportInterval
+	if progressReportInterval <= 0 {
+		progressReportInterval = 10 * time.Second
+	}
+
+	bo := c.createBackoff()
+
+	var err error
+	var streams []river.StreamWithId
+	startTime := time.Now()
+	lastReport := time.Now()
+	totalStreams := int64(0)
+	streamsWithZeroStreamID := int64(0)
+
+	nodeStreamsCountInRegistry, err := c.StreamRegistry.GetStreamCountOnNode(
+		c.callOptsWithBlockNum(ctx, blockNum),
+		node,
+	)
+	if err != nil {
+		return WrapRiverError(Err_CANNOT_CALL_CONTRACT, err).Func("ForAllStreamsOnNode")
+	}
+
+	for i := int64(0); totalStreams+streamsWithZeroStreamID <= nodeStreamsCountInRegistry.Int64(); i += pageSize {
+		bo.Reset()
+		for {
+			now := time.Now()
+			if now.Sub(lastReport) > progressReportInterval {
+				elapsed := time.Since(startTime)
+				log.Infow(
+					"RiverRegistryContract: GetPaginatedStreamsOnNode in progress",
+					"pagesCompleted",
+					i,
+					"pageSize",
+					pageSize,
+					"elapsed",
+					elapsed,
+					"streamPerSecond",
+					float64(i)/elapsed.Seconds(),
+				)
+				lastReport = now
+			}
+
+			streams, err = c.callGetPaginatedStreamsOnNode(ctx, blockNum, node, i, i+pageSize)
+			if err == nil {
+				break
+			}
+			if !waitForBackoff(ctx, bo) {
+				return err
+			}
+		}
+		for _, stream := range streams {
+			if stream.Id == ZeroBytes32 {
+				streamsWithZeroStreamID++
+				continue
+			}
+			totalStreams++
+			if !cb(&stream) {
+				return nil
+			}
+		}
+	}
+
+	elapsed := time.Since(startTime)
+	log.Infow(
+		"RiverRegistryContract: GetPaginatedStreamsOnNode completed",
 		"elapsed",
 		elapsed,
 		"streamsPerSecond",
