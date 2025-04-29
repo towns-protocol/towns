@@ -50,9 +50,6 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
         _addStreamIdToNodes(streamId, nodes);
 
         _emitStreamUpdated(StreamEventType.Allocate, abi.encode(streamId, stream));
-
-        // deprecating
-        emit StreamAllocated(streamId, nodes, genesisMiniblockHash, genesisMiniblock);
     }
 
     /// @inheritdoc IStreamRegistry
@@ -73,9 +70,6 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
         _addStreamIdToNodes(streamId, stream.nodes);
 
         _emitStreamUpdated(StreamEventType.Create, abi.encode(streamId, stream));
-
-        // deprecating
-        emit StreamCreated(streamId, genesisMiniblockHash, stream);
     }
 
     function setStreamLastMiniblockBatch(
@@ -141,14 +135,6 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
             }
 
             miniblockUpdates[streamCount++] = miniblock;
-
-            // deprecating
-            _emitStreamLastMiniblockUpdated(
-                miniblock.streamId,
-                miniblock.lastMiniblockHash,
-                miniblock.lastMiniblockNum,
-                miniblock.isSealed
-            );
         }
 
         // overwrite the length of the array
@@ -182,9 +168,6 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
         stream.reserved0 = _calculateStreamReserved0(stream.reserved0, uint8(nodes.length));
 
         _emitStreamUpdated(StreamEventType.PlacementUpdated, abi.encode(streamId, stream));
-
-        // deprecating
-        emit StreamPlacementUpdated(streamId, nodeAddress, true);
     }
 
     /// @inheritdoc IStreamRegistry
@@ -214,9 +197,6 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
         stream.reserved0 = _calculateStreamReserved0(stream.reserved0, uint8(nodes.length));
 
         _emitStreamUpdated(StreamEventType.PlacementUpdated, abi.encode(streamId, stream));
-
-        // deprecating
-        emit StreamPlacementUpdated(streamId, nodeAddress, false);
     }
 
     /// @inheritdoc IStreamRegistry
@@ -399,28 +379,6 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
             mstore(offset, 0x20)
             log2(offset, add(mload(data), 0x40), topic0, eventType)
             mstore(offset, cache)
-        }
-    }
-
-    /// @dev Emits the StreamLastMiniblockUpdated event without memory expansion
-    function _emitStreamLastMiniblockUpdated(
-        bytes32 streamId,
-        bytes32 lastMiniblockHash,
-        uint64 lastMiniblockNum,
-        bool isSealed
-    ) internal {
-        bytes32 topic0 = StreamLastMiniblockUpdated.selector;
-        assembly ("memory-safe") {
-            // cache the free memory pointer
-            let fmp := mload(0x40)
-            mstore(0, streamId)
-            mstore(0x20, lastMiniblockHash)
-            mstore(0x40, lastMiniblockNum)
-            mstore(0x60, isSealed)
-            log1(0, 0x80, topic0)
-            // restore the free memory pointer and zero slot
-            mstore(0x40, fmp)
-            mstore(0x60, 0)
         }
     }
 
