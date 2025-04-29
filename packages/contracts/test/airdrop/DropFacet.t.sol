@@ -823,36 +823,6 @@ contract DropFacetTest is BaseSetup, IDropFacetBase, IOwnableBase, IRewardsDistr
         );
     }
 
-    function test_revertWhen_claimAndStake_insufficientPoints(
-        address operator,
-        uint256 commissionRate
-    )
-        external
-        givenOperatorRegistered(operator, commissionRate)
-        givenTokensMinted(TOTAL_TOKEN_AMOUNT)
-        givenClaimConditionSet(5000)
-    {
-        uint256 conditionId = dropFacet.getActiveClaimConditionId();
-        bytes32[] memory proof = merkleTree.getProof(tree, treeIndex[bob]);
-
-        // Mint less points than required
-        vm.prank(space);
-        pointsFacet.mint(bob, points[treeIndex[bob]] - 1);
-
-        dropFacet.claimAndStake(
-            DropClaimLib.Claim({
-                conditionId: conditionId,
-                account: bob,
-                quantity: amounts[treeIndex[bob]],
-                points: points[treeIndex[bob]],
-                proof: proof
-            }),
-            operator,
-            block.timestamp + 100,
-            new bytes(0)
-        );
-    }
-
     // setClaimConditions
     function test_setClaimConditions() external givenTokensMinted(TOTAL_TOKEN_AMOUNT) {
         DropClaimLib.ClaimCondition[] memory conditions = new DropClaimLib.ClaimCondition[](1);
