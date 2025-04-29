@@ -16,22 +16,15 @@ ponder.on('SpaceFactory:SpaceCreated', async ({ event, context }) => {
     const blockNumber = await getLatestBlockNumber()
     const { SpaceFactory, SpaceOwner } = context.contracts
 
-    let paused = false
-
     try {
-        paused = await context.client.readContract({
+        const paused = await context.client.readContract({
             abi: SpaceFactory.abi,
             address: SpaceFactory.address,
             functionName: 'paused',
             args: [],
             blockNumber, // Use the latest block number
         })
-    } catch (pausedError) {
-        console.error(`Error fetching paused status at blockNumber ${blockNumber}:`, pausedError)
-        console.log(`Defaulting paused status to false for space ${event.args.space}`)
-    }
 
-    try {
         const space = await context.client.readContract({
             abi: SpaceOwner.abi,
             address: SpaceOwner.address,
@@ -52,7 +45,10 @@ ponder.on('SpaceFactory:SpaceCreated', async ({ event, context }) => {
             paused: paused,
         })
     } catch (error) {
-        console.error(`Error fetching space info at blockNumber ${blockNumber}:`, error)
+        console.error(
+            `Error processing SpaceFactory:SpaceCreated at blockNumber ${blockNumber}:`,
+            error,
+        )
     }
 })
 
@@ -65,25 +61,19 @@ ponder.on('SpaceOwner:SpaceOwner__UpdateSpace', async ({ event, context }) => {
         where: eq(schema.space.id, event.args.space),
     })
     if (!space) {
+        console.warn(`Space not found for SpaceOwner:SpaceOwner__UpdateSpace`, event.args.space)
         return
     }
 
-    let paused = false
-
     try {
-        paused = await context.client.readContract({
+        const paused = await context.client.readContract({
             abi: SpaceFactory.abi,
             address: SpaceFactory.address,
             functionName: 'paused',
             args: [],
             blockNumber, // Use the latest block number
         })
-    } catch (pausedError) {
-        console.error(`Error fetching paused status at blockNumber ${blockNumber}:`, pausedError)
-        console.log(`Defaulting paused status to false for space ${event.args.space}`)
-    }
 
-    try {
         const spaceInfo = await context.client.readContract({
             abi: SpaceOwner.abi,
             address: SpaceOwner.address,
@@ -103,6 +93,9 @@ ponder.on('SpaceOwner:SpaceOwner__UpdateSpace', async ({ event, context }) => {
             })
             .where(eq(schema.space.id, event.args.space))
     } catch (error) {
-        console.error(`Error fetching space info at blockNumber ${blockNumber}:`, error)
+        console.error(
+            `Error processing SpaceOwner:SpaceOwner__UpdateSpace at blockNumber ${blockNumber}:`,
+            error,
+        )
     }
 })
