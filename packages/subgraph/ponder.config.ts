@@ -2,7 +2,11 @@ import { createConfig } from 'ponder'
 import { http } from 'viem'
 
 // import abis
-import { createSpaceFacetAbi } from '@towns-protocol/contracts/typings'
+import {
+    createSpaceFacetAbi,
+    spaceOwnerAbi,
+    tokenPausableFacetAbi,
+} from '@towns-protocol/contracts/typings'
 
 // Import our contract address utility
 import { getContractAddress } from './utils/contractAddresses'
@@ -35,6 +39,18 @@ export default createConfig({
     contracts: {
         CreateSpace: {
             abi: createSpaceFacetAbi,
+            address: spaceFactory,
+            startBlock,
+            network: 'anvil',
+        },
+        TokenPausableFacet: {
+            abi: tokenPausableFacetAbi,
+            address: spaceFactory,
+            startBlock,
+            network: 'anvil',
+        },
+        SpaceOwner: {
+            abi: spaceOwnerAbi,
             address: spaceFactory,
             startBlock,
             network: 'anvil',
