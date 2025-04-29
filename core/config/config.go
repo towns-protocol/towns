@@ -73,7 +73,7 @@ func GetDefaultConfig() *Config {
 		},
 		RiverRegistry: RiverRegistryConfig{
 			PageSize:               5000,
-			ParallelReaders:        8,
+			ParallelReaders:        100,
 			MaxRetries:             100,
 			MaxRetryElapsedTime:    5 * time.Minute,
 			SingleCallTimeout:      30 * time.Second, // geth internal timeout is 30 seconds
