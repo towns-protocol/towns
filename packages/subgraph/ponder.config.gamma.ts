@@ -1,4 +1,4 @@
-import { createConfig } from 'ponder'
+import { createConfig, mergeAbis } from 'ponder'
 import { http } from 'viem'
 
 // import abis
@@ -42,14 +42,8 @@ export default createConfig({
         },
     },
     contracts: {
-        CreateSpace: {
-            abi: createSpaceFacetAbi,
-            address: spaceFactory,
-            startBlock,
-            network: 'gamma',
-        },
-        PausableFacet: {
-            abi: tokenPausableFacetAbi,
+        SpaceFactory: {
+            abi: mergeAbis([createSpaceFacetAbi, tokenPausableFacetAbi]),
             address: spaceFactory,
             startBlock,
             network: 'gamma',

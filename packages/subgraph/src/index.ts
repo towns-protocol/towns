@@ -11,17 +11,17 @@ async function getLatestBlockNumber() {
     return await publicClient.getBlockNumber()
 }
 
-ponder.on('CreateSpace:SpaceCreated', async ({ event, context }) => {
+ponder.on('SpaceFactory:SpaceCreated', async ({ event, context }) => {
     // Get latest block number
     const blockNumber = await getLatestBlockNumber()
-    const { SpaceOwner, PausableFacet } = context.contracts
+    const { SpaceFactory, SpaceOwner } = context.contracts
 
     let paused = false
 
     try {
         paused = await context.client.readContract({
-            abi: PausableFacet.abi,
-            address: PausableFacet.address,
+            abi: SpaceFactory.abi,
+            address: SpaceFactory.address,
             functionName: 'paused',
             args: [],
             blockNumber, // Use the latest block number
@@ -59,7 +59,7 @@ ponder.on('CreateSpace:SpaceCreated', async ({ event, context }) => {
 ponder.on('SpaceOwner:SpaceOwner__UpdateSpace', async ({ event, context }) => {
     // Get latest block number
     const blockNumber = await getLatestBlockNumber()
-    const { SpaceOwner, PausableFacet } = context.contracts
+    const { SpaceFactory, SpaceOwner } = context.contracts
 
     const space = await context.db.sql.query.space.findFirst({
         where: eq(schema.space.id, event.args.space),
@@ -72,8 +72,8 @@ ponder.on('SpaceOwner:SpaceOwner__UpdateSpace', async ({ event, context }) => {
 
     try {
         paused = await context.client.readContract({
-            abi: PausableFacet.abi,
-            address: PausableFacet.address,
+            abi: SpaceFactory.abi,
+            address: SpaceFactory.address,
             functionName: 'paused',
             args: [],
             blockNumber, // Use the latest block number
