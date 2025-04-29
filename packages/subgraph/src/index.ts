@@ -14,22 +14,32 @@ async function getLatestBlockNumber() {
 ponder.on('CreateSpace:SpaceCreated', async ({ event, context }) => {
     // Get latest block number
     const blockNumber = await getLatestBlockNumber()
+    const { SpaceOwner, PausableFacet } = context.contracts
+
+    let paused = false
 
     try {
-        const space = await context.client.readContract({
-            abi: context.contracts.SpaceOwner.abi,
-            address: context.contracts.SpaceOwner.address,
-            functionName: 'getSpaceInfo',
-            args: [event.args.space],
-            blockNumber, // Use the latest block number
-        })
-        const paused = await context.client.readContract({
-            abi: context.contracts.PausableFacet.abi,
-            address: context.contracts.PausableFacet.address,
+        paused = await context.client.readContract({
+            abi: PausableFacet.abi,
+            address: PausableFacet.address,
             functionName: 'paused',
             args: [],
             blockNumber, // Use the latest block number
         })
+    } catch (pausedError) {
+        console.error(`Error fetching paused status at blockNumber ${blockNumber}:`, pausedError)
+        console.log(`Defaulting paused status to false for space ${event.args.space}`)
+    }
+
+    try {
+        const space = await context.client.readContract({
+            abi: SpaceOwner.abi,
+            address: SpaceOwner.address,
+            functionName: 'getSpaceInfo',
+            args: [event.args.space],
+            blockNumber, // Use the latest block number
+        })
+
         await context.db.insert(schema.space).values({
             id: event.args.space,
             owner: event.args.owner,
@@ -49,6 +59,7 @@ ponder.on('CreateSpace:SpaceCreated', async ({ event, context }) => {
 ponder.on('SpaceOwner:SpaceOwner__UpdateSpace', async ({ event, context }) => {
     // Get latest block number
     const blockNumber = await getLatestBlockNumber()
+    const { SpaceOwner, PausableFacet } = context.contracts
 
     const space = await context.db.sql.query.space.findFirst({
         where: eq(schema.space.id, event.args.space),
@@ -56,29 +67,42 @@ ponder.on('SpaceOwner:SpaceOwner__UpdateSpace', async ({ event, context }) => {
     if (!space) {
         return
     }
-    const paused = await context.client.readContract({
-        abi: context.contracts.PausableFacet.abi,
-        address: context.contracts.PausableFacet.address,
-        functionName: 'paused',
-        args: [],
-        blockNumber, // Use the latest block number
-    })
-    const spaceInfo = await context.client.readContract({
-        abi: context.contracts.SpaceOwner.abi,
-        address: context.contracts.SpaceOwner.address,
-        functionName: 'getSpaceInfo',
-        args: [event.args.space],
-        blockNumber, // Use the latest block number
-    })
 
-    await context.db.sql
-        .update(schema.space)
-        .set({
-            paused: paused,
-            name: spaceInfo.name,
-            uri: spaceInfo.uri,
-            shortDescription: spaceInfo.shortDescription,
-            longDescription: spaceInfo.longDescription,
+    let paused = false
+
+    try {
+        paused = await context.client.readContract({
+            abi: PausableFacet.abi,
+            address: PausableFacet.address,
+            functionName: 'paused',
+            args: [],
+            blockNumber, // Use the latest block number
         })
-        .where(eq(schema.space.id, event.args.space))
+    } catch (pausedError) {
+        console.error(`Error fetching paused status at blockNumber ${blockNumber}:`, pausedError)
+        console.log(`Defaulting paused status to false for space ${event.args.space}`)
+    }
+
+    try {
+        const spaceInfo = await context.client.readContract({
+            abi: SpaceOwner.abi,
+            address: SpaceOwner.address,
+            functionName: 'getSpaceInfo',
+            args: [event.args.space],
+            blockNumber, // Use the latest block number
+        })
+
+        await context.db.sql
+            .update(schema.space)
+            .set({
+                paused: paused,
+                name: spaceInfo.name,
+                uri: spaceInfo.uri,
+                shortDescription: spaceInfo.shortDescription,
+                longDescription: spaceInfo.longDescription,
+            })
+            .where(eq(schema.space.id, event.args.space))
+    } catch (error) {
+        console.error(`Error fetching space info at blockNumber ${blockNumber}:`, error)
+    }
 })
