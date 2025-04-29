@@ -356,10 +356,10 @@ func (c *RiverRegistryContract) GetStreamCount(ctx context.Context, blockNum cry
 func (c *RiverRegistryContract) GetStreamCountOnNode(ctx context.Context, blockNum crypto.BlockNumber, node common.Address) (int64, error) {
 	num, err := c.StreamRegistry.GetStreamCountOnNode(c.callOptsWithBlockNum(ctx, blockNum), node)
 	if err != nil {
-		return 0, WrapRiverError(Err_CANNOT_CALL_CONTRACT, err).Func("GetStreamNum").Message("Call failed")
+		return 0, WrapRiverError(Err_CANNOT_CALL_CONTRACT, err).Func("GetStreamCountOnNode").Message("Call failed")
 	}
 	if !num.IsInt64() {
-		return 0, RiverError(Err_INTERNAL, "Stream number is too big", "num", num).Func("GetStreamNum")
+		return 0, RiverError(Err_INTERNAL, "Stream number is too big", "num", num).Func("GetStreamCountOnNode")
 	}
 	return num.Int64(), nil
 }

@@ -132,9 +132,9 @@ func srStreamDump(cfg *config.Config, opts *streamDumpOpts) error {
 	}
 
 	if (opts.node == common.Address{}) {
-		err = registryContract.ForAllStreams(ctx, blockchain.InitialBlockNum, streamFunc)
+		err = registryContract.ForAllStreams(ctx, blockNum, streamFunc)
 	} else {
-		err = registryContract.ForAllStreamsOnNode(ctx, blockchain.InitialBlockNum, opts.node, streamFunc)
+		err = registryContract.ForAllStreamsOnNode(ctx, blockNum, opts.node, streamFunc)
 	}
 	if err != nil {
 		return err
@@ -153,6 +153,10 @@ func srStreamDump(cfg *config.Config, opts *streamDumpOpts) error {
 			streamNum,
 			"ForAllStreams",
 			finalI,
+			"node",
+			opts.node.Hex(),
+			"block",
+			blockNum,
 		)
 	}
 
@@ -329,7 +333,7 @@ func srStream(cfg *config.Config, streamId string, validate bool) error {
 	return err
 }
 
-func nodesDump(cfg *config.Config) error {
+func nodesDump(cfg *config.Config, csv bool) error {
 	ctx := context.Background() // lint:ignore context.Background() is fine here
 
 	blockchain, err := crypto.NewBlockchain(
@@ -359,15 +363,25 @@ func nodesDump(cfg *config.Config) error {
 	}
 
 	for i, node := range nodes {
-		fmt.Printf(
-			"%4d %s %s %d (%-11s) %s\n",
-			i,
-			node.NodeAddress.Hex(),
-			node.Operator.Hex(),
-			node.Status,
-			river.NodeStatusString(node.Status),
-			node.Url,
-		)
+		if csv {
+			fmt.Printf("%s,%s,%d,%s,%s\n",
+				node.NodeAddress.Hex(),
+				node.Operator.Hex(),
+				node.Status,
+				river.NodeStatusString(node.Status),
+				node.Url,
+			)
+		} else {
+			fmt.Printf(
+				"%4d %s %s %d (%-11s) %s\n",
+				i,
+				node.NodeAddress.Hex(),
+				node.Operator.Hex(),
+				node.Status,
+				river.NodeStatusString(node.Status),
+				node.Url,
+			)
+		}
 	}
 
 	return nil
@@ -577,13 +591,19 @@ func init() {
 	streamCmd.Flags().Bool("validate", false, "Fetch stream from each node and compare to the registry record")
 	srCmd.AddCommand(streamCmd)
 
-	srCmd.AddCommand(&cobra.Command{
+	nodesCmd := &cobra.Command{
 		Use:   "nodes",
 		Short: "Get node records from the registry contract",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return nodesDump(cmdConfig)
+			csv, err := cmd.Flags().GetBool("csv")
+			if err != nil {
+				return err
+			}
+			return nodesDump(cmdConfig, csv)
 		},
-	})
+	}
+	nodesCmd.Flags().Bool("csv", false, "Output in CSV format")
+	srCmd.AddCommand(nodesCmd)
 
 	srCmd.AddCommand(&cobra.Command{
 		Use:   "settings",
