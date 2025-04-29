@@ -18,15 +18,15 @@ import (
 
 // Reference imports to suppress errors if they are not otherwise used.
 var (
-	_ = errors.New
-	_ = big.NewInt
-	_ = strings.NewReader
-	_ = ethereum.NotFound
-	_ = bind.Bind
-	_ = common.Big1
-	_ = types.BloomLookup
-	_ = event.NewSubscription
-	_ = abi.ConvertType
+	_	= errors.New
+	_	= big.NewInt
+	_	= strings.NewReader
+	_	= ethereum.NotFound
+	_	= bind.Bind
+	_	= common.Big1
+	_	= types.BloomLookup
+	_	= event.NewSubscription
+	_	= abi.ConvertType
 )
 
 // ArchitectMetaData contains all meta data concerning the Architect contract.
@@ -40,61 +40,61 @@ var ArchitectABI = ArchitectMetaData.ABI
 
 // Architect is an auto generated Go binding around an Ethereum contract.
 type Architect struct {
-	ArchitectCaller     // Read-only binding to the contract
-	ArchitectTransactor // Write-only binding to the contract
-	ArchitectFilterer   // Log filterer for contract events
+	ArchitectCaller		// Read-only binding to the contract
+	ArchitectTransactor	// Write-only binding to the contract
+	ArchitectFilterer	// Log filterer for contract events
 }
 
 // ArchitectCaller is an auto generated read-only Go binding around an Ethereum contract.
 type ArchitectCaller struct {
-	contract *bind.BoundContract // Generic contract wrapper for the low level calls
+	contract *bind.BoundContract	// Generic contract wrapper for the low level calls
 }
 
 // ArchitectTransactor is an auto generated write-only Go binding around an Ethereum contract.
 type ArchitectTransactor struct {
-	contract *bind.BoundContract // Generic contract wrapper for the low level calls
+	contract *bind.BoundContract	// Generic contract wrapper for the low level calls
 }
 
 // ArchitectFilterer is an auto generated log filtering Go binding around an Ethereum contract events.
 type ArchitectFilterer struct {
-	contract *bind.BoundContract // Generic contract wrapper for the low level calls
+	contract *bind.BoundContract	// Generic contract wrapper for the low level calls
 }
 
 // ArchitectSession is an auto generated Go binding around an Ethereum contract,
 // with pre-set call and transact options.
 type ArchitectSession struct {
-	Contract     *Architect        // Generic contract binding to set the session for
-	CallOpts     bind.CallOpts     // Call options to use throughout this session
-	TransactOpts bind.TransactOpts // Transaction auth options to use throughout this session
+	Contract	*Architect		// Generic contract binding to set the session for
+	CallOpts	bind.CallOpts		// Call options to use throughout this session
+	TransactOpts	bind.TransactOpts	// Transaction auth options to use throughout this session
 }
 
 // ArchitectCallerSession is an auto generated read-only Go binding around an Ethereum contract,
 // with pre-set call options.
 type ArchitectCallerSession struct {
-	Contract *ArchitectCaller // Generic contract caller binding to set the session for
-	CallOpts bind.CallOpts    // Call options to use throughout this session
+	Contract	*ArchitectCaller	// Generic contract caller binding to set the session for
+	CallOpts	bind.CallOpts		// Call options to use throughout this session
 }
 
 // ArchitectTransactorSession is an auto generated write-only Go binding around an Ethereum contract,
 // with pre-set transact options.
 type ArchitectTransactorSession struct {
-	Contract     *ArchitectTransactor // Generic contract transactor binding to set the session for
-	TransactOpts bind.TransactOpts    // Transaction auth options to use throughout this session
+	Contract	*ArchitectTransactor	// Generic contract transactor binding to set the session for
+	TransactOpts	bind.TransactOpts	// Transaction auth options to use throughout this session
 }
 
 // ArchitectRaw is an auto generated low-level Go binding around an Ethereum contract.
 type ArchitectRaw struct {
-	Contract *Architect // Generic contract binding to access the raw methods on
+	Contract *Architect	// Generic contract binding to access the raw methods on
 }
 
 // ArchitectCallerRaw is an auto generated low-level read-only Go binding around an Ethereum contract.
 type ArchitectCallerRaw struct {
-	Contract *ArchitectCaller // Generic read-only contract binding to access the raw methods on
+	Contract *ArchitectCaller	// Generic read-only contract binding to access the raw methods on
 }
 
 // ArchitectTransactorRaw is an auto generated low-level write-only Go binding around an Ethereum contract.
 type ArchitectTransactorRaw struct {
-	Contract *ArchitectTransactor // Generic write-only contract binding to access the raw methods on
+	Contract *ArchitectTransactor	// Generic write-only contract binding to access the raw methods on
 }
 
 // NewArchitect creates a new instance of Architect, bound to a specific deployed contract.
@@ -215,19 +215,19 @@ func (_Architect *ArchitectCallerSession) GetProxyInitializer() (common.Address,
 //
 // Solidity: function getSpaceArchitectImplementations() view returns(address ownerTokenImplementation, address userEntitlementImplementation, address ruleEntitlementImplementation, address legacyRuleEntitlement)
 func (_Architect *ArchitectCaller) GetSpaceArchitectImplementations(opts *bind.CallOpts) (struct {
-	OwnerTokenImplementation      common.Address
-	UserEntitlementImplementation common.Address
-	RuleEntitlementImplementation common.Address
-	LegacyRuleEntitlement         common.Address
+	OwnerTokenImplementation	common.Address
+	UserEntitlementImplementation	common.Address
+	RuleEntitlementImplementation	common.Address
+	LegacyRuleEntitlement		common.Address
 }, error) {
 	var out []interface{}
 	err := _Architect.contract.Call(opts, &out, "getSpaceArchitectImplementations")
 
 	outstruct := new(struct {
-		OwnerTokenImplementation      common.Address
-		UserEntitlementImplementation common.Address
-		RuleEntitlementImplementation common.Address
-		LegacyRuleEntitlement         common.Address
+		OwnerTokenImplementation	common.Address
+		UserEntitlementImplementation	common.Address
+		RuleEntitlementImplementation	common.Address
+		LegacyRuleEntitlement		common.Address
 	})
 	if err != nil {
 		return *outstruct, err
@@ -246,10 +246,10 @@ func (_Architect *ArchitectCaller) GetSpaceArchitectImplementations(opts *bind.C
 //
 // Solidity: function getSpaceArchitectImplementations() view returns(address ownerTokenImplementation, address userEntitlementImplementation, address ruleEntitlementImplementation, address legacyRuleEntitlement)
 func (_Architect *ArchitectSession) GetSpaceArchitectImplementations() (struct {
-	OwnerTokenImplementation      common.Address
-	UserEntitlementImplementation common.Address
-	RuleEntitlementImplementation common.Address
-	LegacyRuleEntitlement         common.Address
+	OwnerTokenImplementation	common.Address
+	UserEntitlementImplementation	common.Address
+	RuleEntitlementImplementation	common.Address
+	LegacyRuleEntitlement		common.Address
 }, error) {
 	return _Architect.Contract.GetSpaceArchitectImplementations(&_Architect.CallOpts)
 }
@@ -258,10 +258,10 @@ func (_Architect *ArchitectSession) GetSpaceArchitectImplementations() (struct {
 //
 // Solidity: function getSpaceArchitectImplementations() view returns(address ownerTokenImplementation, address userEntitlementImplementation, address ruleEntitlementImplementation, address legacyRuleEntitlement)
 func (_Architect *ArchitectCallerSession) GetSpaceArchitectImplementations() (struct {
-	OwnerTokenImplementation      common.Address
-	UserEntitlementImplementation common.Address
-	RuleEntitlementImplementation common.Address
-	LegacyRuleEntitlement         common.Address
+	OwnerTokenImplementation	common.Address
+	UserEntitlementImplementation	common.Address
+	RuleEntitlementImplementation	common.Address
+	LegacyRuleEntitlement		common.Address
 }, error) {
 	return _Architect.Contract.GetSpaceArchitectImplementations(&_Architect.CallOpts)
 }
@@ -372,15 +372,15 @@ func (_Architect *ArchitectTransactorSession) SetSpaceArchitectImplementations(o
 
 // ArchitectArchitectProxyInitializerSetIterator is returned from FilterArchitectProxyInitializerSet and is used to iterate over the raw logs and unpacked data for ArchitectProxyInitializerSet events raised by the Architect contract.
 type ArchitectArchitectProxyInitializerSetIterator struct {
-	Event *ArchitectArchitectProxyInitializerSet // Event containing the contract specifics and raw log
+	Event	*ArchitectArchitectProxyInitializerSet	// Event containing the contract specifics and raw log
 
-	contract *bind.BoundContract // Generic contract to use for unpacking event data
-	event    string              // Event name to use for unpacking event data
+	contract	*bind.BoundContract	// Generic contract to use for unpacking event data
+	event		string			// Event name to use for unpacking event data
 
-	logs chan types.Log        // Log channel receiving the found contract events
-	sub  ethereum.Subscription // Subscription for errors, completion and termination
-	done bool                  // Whether the subscription completed delivering logs
-	fail error                 // Occurred error to stop iteration
+	logs	chan types.Log		// Log channel receiving the found contract events
+	sub	ethereum.Subscription	// Subscription for errors, completion and termination
+	done	bool			// Whether the subscription completed delivering logs
+	fail	error			// Occurred error to stop iteration
 }
 
 // Next advances the iterator to the subsequent event, returning whether there
@@ -439,8 +439,8 @@ func (it *ArchitectArchitectProxyInitializerSetIterator) Close() error {
 
 // ArchitectArchitectProxyInitializerSet represents a ArchitectProxyInitializerSet event raised by the Architect contract.
 type ArchitectArchitectProxyInitializerSet struct {
-	ProxyInitializer common.Address
-	Raw              types.Log // Blockchain specific contextual infos
+	ProxyInitializer	common.Address
+	Raw			types.Log	// Blockchain specific contextual infos
 }
 
 // FilterArchitectProxyInitializerSet is a free log retrieval operation binding the contract event 0x50d234a64b07fd5931eedf717c2eca7f76ef13920a1330cc774176dbf9c66b3e.
@@ -516,15 +516,15 @@ func (_Architect *ArchitectFilterer) ParseArchitectProxyInitializerSet(log types
 
 // ArchitectSpaceCreatedIterator is returned from FilterSpaceCreated and is used to iterate over the raw logs and unpacked data for SpaceCreated events raised by the Architect contract.
 type ArchitectSpaceCreatedIterator struct {
-	Event *ArchitectSpaceCreated // Event containing the contract specifics and raw log
+	Event	*ArchitectSpaceCreated	// Event containing the contract specifics and raw log
 
-	contract *bind.BoundContract // Generic contract to use for unpacking event data
-	event    string              // Event name to use for unpacking event data
+	contract	*bind.BoundContract	// Generic contract to use for unpacking event data
+	event		string			// Event name to use for unpacking event data
 
-	logs chan types.Log        // Log channel receiving the found contract events
-	sub  ethereum.Subscription // Subscription for errors, completion and termination
-	done bool                  // Whether the subscription completed delivering logs
-	fail error                 // Occurred error to stop iteration
+	logs	chan types.Log		// Log channel receiving the found contract events
+	sub	ethereum.Subscription	// Subscription for errors, completion and termination
+	done	bool			// Whether the subscription completed delivering logs
+	fail	error			// Occurred error to stop iteration
 }
 
 // Next advances the iterator to the subsequent event, returning whether there
@@ -583,10 +583,10 @@ func (it *ArchitectSpaceCreatedIterator) Close() error {
 
 // ArchitectSpaceCreated represents a SpaceCreated event raised by the Architect contract.
 type ArchitectSpaceCreated struct {
-	Owner   common.Address
-	TokenId *big.Int
-	Space   common.Address
-	Raw     types.Log // Blockchain specific contextual infos
+	Owner	common.Address
+	TokenId	*big.Int
+	Space	common.Address
+	Raw	types.Log	// Blockchain specific contextual infos
 }
 
 // FilterSpaceCreated is a free log retrieval operation binding the contract event 0xe50fc3942f8a2d7e5a7c8fb9488499eba5255b41e18bc3f1b4791402976d1d0b.
