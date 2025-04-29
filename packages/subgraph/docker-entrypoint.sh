@@ -4,6 +4,10 @@ set -e
 set -u
 set -o pipefail
 
+# Default NODE_ENV to development if not set
+export NODE_ENV=${NODE_ENV:-development}
+echo "Using NODE_ENV=$NODE_ENV"
+
 # Check if DB_HOST is set
 if [ -z "${DB_HOST}" ]; then
   echo "DB_HOST is not set. Please set it to the database host."
@@ -31,4 +35,10 @@ fi
 # Build the pg db url:
 export DATABASE_URL="postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/postgres"
 
-yarn ponder start --config "${PONDER_CONFIG}"
+if [ "$NODE_ENV" = "development" ]; then
+  echo "Starting Ponder in development mode"
+  yarn ponder dev --config "${PONDER_CONFIG}"
+else
+  echo "Starting Ponder in production mode"
+  yarn ponder start --config "${PONDER_CONFIG}"
+fi
