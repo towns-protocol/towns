@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"slices"
+	"strings"
 	"sync/atomic"
 	"time"
 
@@ -13,6 +13,7 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/spf13/cobra"
 
 	"github.com/towns-protocol/towns/core/config"
 	"github.com/towns-protocol/towns/core/contracts/river"
@@ -26,13 +27,11 @@ import (
 	. "github.com/towns-protocol/towns/core/node/protocol/protocolconnect"
 	"github.com/towns-protocol/towns/core/node/registries"
 	. "github.com/towns-protocol/towns/core/node/shared"
-
-	"github.com/spf13/cobra"
 )
 
 type streamDumpOpts struct {
 	countOnly bool
-	timeOnly  bool
+	time      bool
 	stats     bool
 	dump      bool
 	csv       bool
@@ -41,10 +40,35 @@ type streamDumpOpts struct {
 }
 
 func printStats(opts *streamDumpOpts, humanName, csvName, value string) {
+	if !opts.stats {
+		return
+	}
+
 	if opts.csv {
 		fmt.Fprintf(os.Stderr, "%s,%s\n", csvName, value)
 	} else {
 		fmt.Fprintf(os.Stderr, "%s: %s\n", humanName, value)
+	}
+}
+
+func printStream(opts *streamDumpOpts, i int64, strm *river.StreamWithId) {
+	if !opts.dump {
+		return
+	}
+
+	if !opts.csv {
+		s := fmt.Sprintf("%4d %s", i-1, strm.StreamId().String())
+		fmt.Printf("%-69s %4d, %s %t %d\n", s, strm.LastMbNum(), strm.LastMbHash().Hex(), strm.IsSealed(), strm.ReplicationFactor())
+		for _, node := range strm.Nodes() {
+			fmt.Printf("        %s\n", node.Hex())
+		}
+	} else {
+		var nodeAddresses []string
+		for _, node := range strm.Nodes() {
+			nodeAddresses = append(nodeAddresses, node.Hex())
+		}
+		nodeList := strings.Join(nodeAddresses, ",")
+		fmt.Printf("%s,%s,%d,%t,%d,%s\n", strm.StreamId().String(), strm.LastMbHash().Hex(), strm.LastMbNum(), strm.IsSealed(), strm.ReplicationFactor(), nodeList)
 	}
 }
 
@@ -78,10 +102,10 @@ func srStreamDump(cfg *config.Config, opts *streamDumpOpts) error {
 	printStats(opts, "Block number", "block_number", fmt.Sprintf("%d", blockNum))
 
 	var streamNum int64
-	if opts.node == common.Address{} {
+	if (opts.node == common.Address{}) {
 		streamNum, err = registryContract.GetStreamCount(ctx, blockNum)
 	} else {
-		streamNum, err = registryContract.GetStreamCountForNode(ctx, blockNum, opts.node)
+		streamNum, err = registryContract.GetStreamCountOnNode(ctx, blockNum, opts.node)
 	}
 	if err != nil {
 		return err
@@ -94,27 +118,32 @@ func srStreamDump(cfg *config.Config, opts *streamDumpOpts) error {
 
 	var i atomic.Int64
 	startTime := time.Now()
-	err = registryContract.ForAllStreams(ctx, blockchain.InitialBlockNum, func(strm *river.StreamWithId) bool {
+
+	streamFunc := func(strm *river.StreamWithId) bool {
 		curI := i.Add(1)
-		if !timeOnly {
-			s := fmt.Sprintf("%4d %s", curI-1, strm.StreamId().String())
-			fmt.Printf("%-69s %4d, %s\n", s, strm.LastMbNum(), strm.LastMbHash().Hex())
-			for _, node := range strm.Nodes() {
-				fmt.Printf("        %s\n", node.Hex())
-			}
-		}
-		if timeOnly && curI%50000 == 0 {
+
+		printStream(opts, curI, strm)
+
+		if opts.time && curI%50000 == 0 {
 			elapsed := time.Since(startTime)
-			fmt.Printf("Received %d streams in %s (%.1f streams/s)\n", curI, elapsed, float64(curI)/elapsed.Seconds())
+			fmt.Fprintf(os.Stderr, "Received %d streams in %s (%.1f streams/s)\n", curI, elapsed, float64(curI)/elapsed.Seconds())
 		}
 		return true
-	})
+	}
+
+	if (opts.node == common.Address{}) {
+		err = registryContract.ForAllStreams(ctx, blockchain.InitialBlockNum, streamFunc)
+	} else {
+		err = registryContract.ForAllStreamsOnNode(ctx, blockchain.InitialBlockNum, opts.node, streamFunc)
+	}
 	if err != nil {
 		return err
 	}
 	elapsed := time.Since(startTime)
 	finalI := i.Load()
-	fmt.Printf("TOTAL: %d ELAPSED: %s (%.1f streams/s)\n", finalI, elapsed, float64(finalI)/elapsed.Seconds())
+	printStats(opts, "Total", "total", fmt.Sprintf("%d", finalI))
+	printStats(opts, "Elapsed seconds", "elapsed_seconds", fmt.Sprintf("%s", elapsed))
+	printStats(opts, "Streams/s", "streams_per_second", fmt.Sprintf("%.1f", float64(finalI)/elapsed.Seconds()))
 
 	if streamNum != finalI {
 		return RiverError(
@@ -464,19 +493,54 @@ func init() {
 		Use:   "streams",
 		Short: "Dump stream records",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			countOnly, err := cmd.Flags().GetBool("count")
+			var err error
+			opts := &streamDumpOpts{}
+			opts.countOnly, err = cmd.Flags().GetBool("count")
 			if err != nil {
 				return err
 			}
-			timeOnly, err := cmd.Flags().GetBool("time")
+			opts.time, err = cmd.Flags().GetBool("time")
 			if err != nil {
 				return err
 			}
-			return srStreamDump(cmdConfig, countOnly, timeOnly)
+			opts.dump, err = cmd.Flags().GetBool("dump")
+			if err != nil {
+				return err
+			}
+			opts.stats, err = cmd.Flags().GetBool("stats")
+			if err != nil {
+				return err
+			}
+			opts.csv, err = cmd.Flags().GetBool("csv")
+			if err != nil {
+				return err
+			}
+			node, err := cmd.Flags().GetString("node")
+			if err != nil {
+				return err
+			}
+			if node != "" {
+				if !common.IsHexAddress(node) {
+					return RiverError(Err_INVALID_ARGUMENT, "Invalid node address", "node", node)
+				}
+				opts.node = common.HexToAddress(node)
+			}
+			blockNum, err := cmd.Flags().GetUint64("block")
+			if err != nil {
+				return err
+			}
+			opts.blockNum = crypto.BlockNumber(blockNum)
+
+			return srStreamDump(cmdConfig, opts)
 		},
 	}
 	streamsCmd.Flags().Bool("count", false, "Only print the stream count")
-	streamsCmd.Flags().Bool("time", false, "Print only timing information")
+	streamsCmd.Flags().Bool("time", false, "Print timing information")
+	streamsCmd.Flags().Bool("dump", true, "Dump all streams")
+	streamsCmd.Flags().Bool("stats", true, "Print stats")
+	streamsCmd.Flags().Bool("csv", false, "Output in CSV format")
+	streamsCmd.Flags().String("node", "", "Node address to dump streams for")
+	streamsCmd.Flags().Uint64("block", 0, "Block number to dump streams for")
 	srCmd.AddCommand(streamsCmd)
 
 	allStreamsCmd := &cobra.Command{
