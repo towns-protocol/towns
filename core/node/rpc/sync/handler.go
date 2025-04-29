@@ -199,7 +199,9 @@ func (h *handlerImpl) AddStreamToSync(
 	if op, ok := h.activeSyncOperations.Load(req.Msg.GetSyncId()); ok {
 		return op.(*StreamSyncOperation).AddStreamToSync(ctx, req)
 	}
-	return nil, RiverError(Err_NOT_FOUND, "unknown sync operation").Tag("syncId", req.Msg.GetSyncId())
+	return nil, RiverError(Err_NOT_FOUND, "unknown sync operation").
+		Tag("nodeAddress", h.nodeAddr).
+		Tag("syncId", req.Msg.GetSyncId())
 }
 
 func (h *handlerImpl) RemoveStreamFromSync(
@@ -212,7 +214,9 @@ func (h *handlerImpl) RemoveStreamFromSync(
 	if op, ok := h.activeSyncOperations.Load(req.Msg.GetSyncId()); ok {
 		return op.(*StreamSyncOperation).RemoveStreamFromSync(ctx, req)
 	}
-	return nil, RiverError(Err_NOT_FOUND, "unknown sync operation").Tag("syncId", req.Msg.GetSyncId())
+	return nil, RiverError(Err_NOT_FOUND, "unknown sync operation").
+		Tag("nodeAddress", h.nodeAddr).
+		Tag("syncId", req.Msg.GetSyncId())
 }
 
 func (h *handlerImpl) ModifySync(
@@ -224,7 +228,9 @@ func (h *handlerImpl) ModifySync(
 	if op, ok := h.activeSyncOperations.Load(req.Msg.GetSyncId()); ok {
 		return op.(*StreamSyncOperation).ModifySync(ctx, req)
 	}
-	return nil, RiverError(Err_NOT_FOUND, "unknown sync operation").Tag("syncId", req.Msg.GetSyncId())
+	return nil, RiverError(Err_NOT_FOUND, "unknown sync operation").
+		Tag("nodeAddress", h.nodeAddr).
+		Tag("syncId", req.Msg.GetSyncId())
 }
 
 func (h *handlerImpl) CancelSync(
@@ -235,7 +241,9 @@ func (h *handlerImpl) CancelSync(
 		// sync op is dropped from h.activeSyncOps when SyncStreams returns
 		return op.(*StreamSyncOperation).CancelSync(ctx, req)
 	}
-	return nil, RiverError(Err_NOT_FOUND, "unknown sync operation").Tag("syncId", req.Msg.GetSyncId())
+	return nil, RiverError(Err_NOT_FOUND, "unknown sync operation").
+		Tag("nodeAddress", h.nodeAddr).
+		Tag("syncId", req.Msg.GetSyncId())
 }
 
 func (h *handlerImpl) PingSync(
@@ -245,7 +253,9 @@ func (h *handlerImpl) PingSync(
 	if op, ok := h.activeSyncOperations.Load(req.Msg.GetSyncId()); ok {
 		return op.(*StreamSyncOperation).PingSync(ctx, req)
 	}
-	return nil, RiverError(Err_NOT_FOUND, "unknown sync operation").Tag("syncId", req.Msg.GetSyncId())
+	return nil, RiverError(Err_NOT_FOUND, "unknown sync operation").
+		Tag("nodeAddress", h.nodeAddr).
+		Tag("syncId", req.Msg.GetSyncId())
 }
 
 func (h *handlerImpl) DebugDropStream(
@@ -256,5 +266,7 @@ func (h *handlerImpl) DebugDropStream(
 	if op, ok := h.activeSyncOperations.Load(syncID); ok {
 		return op.(*StreamSyncOperation).debugDropStream(ctx, streamID)
 	}
-	return RiverError(Err_NOT_FOUND, "unknown sync operation").Tag("syncId", syncID)
+	return RiverError(Err_NOT_FOUND, "unknown sync operation").
+		Tag("nodeAddress", h.nodeAddr).
+		Tag("syncId", syncID)
 }
