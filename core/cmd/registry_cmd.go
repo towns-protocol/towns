@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"os"
 	"slices"
 	"sync/atomic"
 	"time"
@@ -36,6 +37,15 @@ type streamDumpOpts struct {
 	dump      bool
 	csv       bool
 	node      common.Address
+	blockNum  crypto.BlockNumber
+}
+
+func printStats(opts *streamDumpOpts, humanName, csvName, value string) {
+	if opts.csv {
+		fmt.Fprintf(os.Stderr, "%s,%s\n", csvName, value)
+	} else {
+		fmt.Fprintf(os.Stderr, "%s: %s\n", humanName, value)
+	}
 }
 
 func srStreamDump(cfg *config.Config, opts *streamDumpOpts) error {
@@ -60,15 +70,25 @@ func srStreamDump(cfg *config.Config, opts *streamDumpOpts) error {
 	if err != nil {
 		return err
 	}
-	fmt.Printf("Using block number: %d\n", blockchain.InitialBlockNum)
 
-	streamNum, err := registryContract.GetStreamCount(ctx, blockchain.InitialBlockNum)
+	blockNum := blockchain.InitialBlockNum
+	if opts.blockNum != 0 {
+		blockNum = opts.blockNum
+	}
+	printStats(opts, "Block number", "block_number", fmt.Sprintf("%d", blockNum))
+
+	var streamNum int64
+	if opts.node == common.Address{} {
+		streamNum, err = registryContract.GetStreamCount(ctx, blockNum)
+	} else {
+		streamNum, err = registryContract.GetStreamCountForNode(ctx, blockNum, opts.node)
+	}
 	if err != nil {
 		return err
 	}
-	fmt.Printf("Stream count reported: %d\n", streamNum)
+	printStats(opts, "Stream count", "stream_count", fmt.Sprintf("%d", streamNum))
 
-	if countOnly {
+	if opts.countOnly {
 		return nil
 	}
 
