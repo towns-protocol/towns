@@ -15,31 +15,35 @@ ponder.on('CreateSpace:SpaceCreated', async ({ event, context }) => {
     // Get latest block number
     const blockNumber = await getLatestBlockNumber()
 
-    const space = await context.client.readContract({
-        abi: context.contracts.SpaceOwner.abi,
-        address: context.contracts.SpaceOwner.address,
-        functionName: 'getSpaceInfo',
-        args: [event.args.space],
-        blockNumber, // Use the latest block number
-    })
-    const paused = await context.client.readContract({
-        abi: context.contracts.TokenPausableFacet.abi,
-        address: context.contracts.TokenPausableFacet.address,
-        functionName: 'paused',
-        args: [],
-        blockNumber, // Use the latest block number
-    })
-    await context.db.insert(schema.space).values({
-        id: event.args.space,
-        owner: event.args.owner,
-        tokenId: event.args.tokenId,
-        name: space.name,
-        uri: space.uri,
-        shortDescription: space.shortDescription,
-        longDescription: space.longDescription,
-        createdAt: space.createdAt,
-        paused: paused,
-    })
+    try {
+        const space = await context.client.readContract({
+            abi: context.contracts.SpaceOwner.abi,
+            address: context.contracts.SpaceOwner.address,
+            functionName: 'getSpaceInfo',
+            args: [event.args.space],
+            blockNumber, // Use the latest block number
+        })
+        const paused = await context.client.readContract({
+            abi: context.contracts.PausableFacet.abi,
+            address: context.contracts.PausableFacet.address,
+            functionName: 'paused',
+            args: [],
+            blockNumber, // Use the latest block number
+        })
+        await context.db.insert(schema.space).values({
+            id: event.args.space,
+            owner: event.args.owner,
+            tokenId: event.args.tokenId,
+            name: space.name,
+            uri: space.uri,
+            shortDescription: space.shortDescription,
+            longDescription: space.longDescription,
+            createdAt: space.createdAt,
+            paused: paused,
+        })
+    } catch (error) {
+        console.error(`Error fetching space info at blockNumber ${blockNumber}:`, error)
+    }
 })
 
 ponder.on('SpaceOwner:SpaceOwner__UpdateSpace', async ({ event, context }) => {
@@ -53,8 +57,8 @@ ponder.on('SpaceOwner:SpaceOwner__UpdateSpace', async ({ event, context }) => {
         return
     }
     const paused = await context.client.readContract({
-        abi: context.contracts.TokenPausableFacet.abi,
-        address: context.contracts.TokenPausableFacet.address,
+        abi: context.contracts.PausableFacet.abi,
+        address: context.contracts.PausableFacet.address,
         functionName: 'paused',
         args: [],
         blockNumber, // Use the latest block number

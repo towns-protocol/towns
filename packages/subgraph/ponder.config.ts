@@ -47,7 +47,7 @@ export default createConfig({
             startBlock,
             network: 'anvil',
         },
-        TokenPausableFacet: {
+        PausableFacet: {
             abi: tokenPausableFacetAbi,
             address: spaceFactory,
             startBlock,

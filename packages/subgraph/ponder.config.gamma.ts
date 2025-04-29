@@ -48,7 +48,7 @@ export default createConfig({
             startBlock,
             network: 'gamma',
         },
-        TokenPausableFacet: {
+        PausableFacet: {
             abi: tokenPausableFacetAbi,
             address: spaceFactory,
             startBlock,
