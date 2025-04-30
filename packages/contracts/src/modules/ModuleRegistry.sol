@@ -17,6 +17,9 @@ import {Attestation} from "@ethereum-attestation-service/eas-contracts/Common.so
 import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
 import {OwnableBase} from "@towns-protocol/diamond/src/facets/ownable/OwnableBase.sol";
 
+// modules
+import {SimpleApp} from "./apps/SimpleApp.sol";
+
 contract ModuleRegistry is IModuleRegistry, OwnableBase, Facet {
     using ModuleRegistryLib for ModuleRegistryLib.Layout;
 
@@ -78,6 +81,20 @@ contract ModuleRegistry is IModuleRegistry, OwnableBase, Facet {
         address[] calldata clients
     ) external payable returns (bytes32 versionId) {
         return ModuleRegistryLib.addModule(module, owner, clients);
+    }
+
+    /// @notice Deploy a simple module
+    /// @param moduleId The module ID
+    /// @param permissions The permissions for the module
+    /// @param clients The clients for the module
+    /// @return versionId The version ID of the deployed module
+    function deploySimpleModule(
+        string memory moduleId,
+        bytes32[] calldata permissions,
+        address[] calldata clients
+    ) external payable returns (bytes32 versionId) {
+        address module = address(new SimpleApp(moduleId, permissions));
+        return ModuleRegistryLib.addModule(module, msg.sender, clients);
     }
 
     /// @notice Update the permissions for an existing module
