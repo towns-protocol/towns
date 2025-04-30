@@ -15,11 +15,11 @@ import {
 } from './base'
 import { GroupDecryption } from './groupDecryption'
 import { GroupEncryption } from './groupEncryption'
-import { type EncryptionDeviceInitOpts } from './encryptionDevice'
+import { type EncryptionDeviceInitOpts } from './encryptionDevice-olmlib'
 import { check, dlog } from '@towns-protocol/dlog'
 import { HybridGroupEncryption } from './hybridGroupEncryption'
 import { HybridGroupDecryption } from './hybridGroupDecryption'
-import { EncryptionDeviceVodozemac } from './encryptionDevice-vodozemac'
+import { EncryptionDeviceVodozemac } from './encryptionDevice'
 
 const log = dlog('csb:encryption:groupEncryptionCrypto')
 

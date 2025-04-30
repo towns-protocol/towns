@@ -1,7 +1,7 @@
 import { GroupEncryptionAlgorithmId, GroupEncryptionSession, UserDeviceCollection } from './olmLib'
 
 import { EncryptedData } from '@towns-protocol/proto'
-import type { EncryptionDeviceVodozemac } from './encryptionDevice-vodozemac'
+import type { EncryptionDeviceVodozemac } from './encryptionDevice'
 
 export interface IGroupEncryptionClient {
     downloadUserDeviceInfo(userIds: string[], forceDownload: boolean): Promise<UserDeviceCollection>

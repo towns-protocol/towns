@@ -3,7 +3,7 @@
  */
 
 import { CryptoStore } from '../cryptoStore'
-import { EncryptionDeviceVodozemac } from '../encryptionDevice-vodozemac'
+import { EncryptionDeviceVodozemac } from '../encryptionDevice'
 import { UserDevice } from '../olmLib'
 import { nanoid } from 'nanoid'
 
