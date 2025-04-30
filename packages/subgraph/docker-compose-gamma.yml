@@ -12,13 +12,14 @@ services:
         environment:
             - POSTGRES_USER=postgres
             - POSTGRES_PASSWORD=postgres
-            - POSTGRES_DB=ponder
+            - POSTGRES_DB=postgres
         ports:
             - '5432:5432'
         volumes:
             - subgraph-db:/var/lib/postgresql/data
 
     subgraph:
+        # image: public.ecr.aws/h5v6m2x1/subgraph:dc7f113
         build:
             context: ../../
             dockerfile: packages/subgraph/Dockerfile
@@ -28,9 +29,12 @@ services:
         env_file:
             - .env.gamma
         environment:
-            - NODE_ENV=production
+            - NODE_ENV=development
             - DATABASE_SCHEMA=public
-            - DATABASE_URL=postgresql://postgres:postgres@subgraph-db:5432/ponder
+            - DB_HOST=subgraph-db
+            - DB_PORT=5432
+            - DB_USER=postgres
+            - DB_PASSWORD=postgres
         ports:
             - '42069:42069'
 
