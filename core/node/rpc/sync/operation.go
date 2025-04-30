@@ -23,6 +23,8 @@ import (
 type (
 	// StreamSyncOperation represents a stream sync operation that is currently in progress.
 	StreamSyncOperation struct {
+		// log is the logger for this stream sync operation
+		log *logging.Log
 		// SyncID is the identifier as used with the external client to identify the streams sync operation.
 		SyncID string
 		// rootCtx is the context as passed in from the client
@@ -47,11 +49,9 @@ type (
 	// subCommand represents a request to add or remove a stream and ping sync operation
 	subCommand struct {
 		Ctx             context.Context
-		RmStreamReq     *connect.Request[RemoveStreamFromSyncRequest]
-		AddStreamReq    *connect.Request[AddStreamToSyncRequest]
 		ModifySyncReq   *client.ModifyRequest
-		PingReq         *connect.Request[PingSyncRequest]
-		CancelReq       *connect.Request[CancelSyncRequest]
+		PingReq         string
+		CancelReq       string
 		DebugDropStream shared.StreamId
 		reply           chan error
 	}
@@ -78,8 +78,10 @@ func NewStreamsSyncOperation(
 ) (*StreamSyncOperation, error) {
 	// make the sync operation cancellable for CancelSync
 	syncOpCtx, cancel := context.WithCancelCause(ctx)
+	log := logging.FromCtx(syncOpCtx).With("syncId", syncId, "node", node)
 
 	return &StreamSyncOperation{
+		log:             log,
 		rootCtx:         ctx,
 		ctx:             syncOpCtx,
 		cancel:          cancel,
@@ -97,41 +99,36 @@ func (syncOp *StreamSyncOperation) Run(
 	req *connect.Request[SyncStreamsRequest],
 	res StreamsResponseSubscriber,
 ) error {
-	log := logging.FromCtx(syncOp.ctx).With("syncId", syncOp.SyncID)
-	log.Debugw("Stream sync operation start")
+	syncOp.log.Debugw("Stream sync operation start")
 
-	syncers, messages, err := client.NewSyncers(
+	syncers, messages := client.NewSyncers(
 		syncOp.ctx, syncOp.cancel, syncOp.SyncID, syncOp.streamCache,
-		syncOp.nodeRegistry, syncOp.thisNodeAddress, nil, syncOp.otelTracer)
-	if err != nil {
-		return err
-	}
+		syncOp.nodeRegistry, syncOp.thisNodeAddress, syncOp.otelTracer)
 
 	go syncers.Run()
 
+	// Adding the initial sync position to the syncer
 	go func() {
-		for _, cookie := range req.Msg.GetSyncPos() {
-			cmd := &subCommand{
-				Ctx: syncOp.ctx,
-				AddStreamReq: &connect.Request[AddStreamToSyncRequest]{
-					Msg: &AddStreamToSyncRequest{
-						SyncId:  syncOp.SyncID,
-						SyncPos: cookie,
-					},
+		cmd := &subCommand{
+			Ctx: syncOp.ctx,
+			ModifySyncReq: &client.ModifyRequest{
+				ToAdd: req.Msg.GetSyncPos(),
+				AddingFailureHandler: func(status *SyncStreamOpStatus) {
+					select {
+					case <-syncOp.ctx.Done():
+						return
+					default:
+						_ = messages.AddMessage(&SyncStreamsResponse{
+							SyncOp:   SyncOp_SYNC_DOWN,
+							StreamId: status.GetStreamId(),
+						})
+					}
 				},
-				reply: make(chan error, 1),
-			}
-			if err := syncOp.process(cmd); err != nil {
-				select {
-				case <-syncOp.ctx.Done():
-					return
-				default:
-					_ = messages.AddMessage(&SyncStreamsResponse{
-						SyncOp:   SyncOp_SYNC_DOWN,
-						StreamId: cookie.GetStreamId(),
-					})
-				}
-			}
+			},
+			reply: make(chan error, 1),
+		}
+		if err := syncOp.process(cmd); err != nil {
+			syncOp.log.Errorw("Unable to add initial sync position", "err", err)
 		}
 	}()
 
@@ -139,7 +136,7 @@ func (syncOp *StreamSyncOperation) Run(
 	go syncOp.runCommandsProcessing(syncers, messages)
 
 	var messagesSendToClient int
-	defer log.Debugw("Stream sync operation stopped", "send", messagesSendToClient)
+	defer syncOp.log.Debugw("Stream sync operation stopped", "send", messagesSendToClient)
 
 	var msgs []*SyncStreamsResponse
 	for {
@@ -166,13 +163,13 @@ func (syncOp *StreamSyncOperation) Run(
 			for i, msg := range msgs {
 				msg.SyncId = syncOp.SyncID
 				if err := res.Send(msg); err != nil {
-					log.Errorw("Unable to send sync stream update to client", "err", err)
+					syncOp.log.Errorw("Unable to send sync stream update to client", "err", err)
 					return err
 				}
 
 				messagesSendToClient++
 
-				log.Debugw("Pending messages in sync operation", "count", messages.Len()+len(msgs)-i-1)
+				syncOp.log.Debugw("Pending messages in sync operation", "count", messages.Len()+len(msgs)-i-1)
 
 				if msg.GetSyncOp() == SyncOp_SYNC_CLOSE {
 					return nil
@@ -212,28 +209,19 @@ func (syncOp *StreamSyncOperation) runCommandsProcessing(
 		case <-syncOp.ctx.Done():
 			return
 		case cmd := <-syncOp.commands:
-			if cmd.AddStreamReq != nil {
-				cmd.Reply(syncers.AddStream(cmd.Ctx, cmd.AddStreamReq.Msg.GetSyncPos()))
-			} else if cmd.RmStreamReq != nil {
-				streamID, err := shared.StreamIdFromBytes(cmd.RmStreamReq.Msg.GetStreamId())
-				if err != nil {
-					cmd.Reply(err)
-					continue
-				}
-				cmd.Reply(syncers.RemoveStream(cmd.Ctx, streamID))
-			} else if cmd.ModifySyncReq != nil {
+			if cmd.ModifySyncReq != nil {
 				cmd.Reply(syncers.Modify(cmd.Ctx, *cmd.ModifySyncReq))
 			} else if cmd.DebugDropStream != (shared.StreamId{}) {
 				cmd.Reply(syncers.DebugDropStream(cmd.Ctx, cmd.DebugDropStream))
-			} else if cmd.CancelReq != nil {
+			} else if cmd.CancelReq != "" {
 				_ = messages.AddMessage(&SyncStreamsResponse{SyncOp: SyncOp_SYNC_CLOSE})
 				messages.Close()
 				cmd.Reply(nil)
 				return
-			} else if cmd.PingReq != nil {
+			} else if cmd.PingReq != "" {
 				_ = messages.AddMessage(&SyncStreamsResponse{
 					SyncOp:    SyncOp_SYNC_PONG,
-					PongNonce: cmd.PingReq.Msg.GetNonce(),
+					PongNonce: cmd.PingReq,
 				})
 				cmd.Reply(nil)
 			}
@@ -259,14 +247,26 @@ func (syncOp *StreamSyncOperation) AddStreamToSync(
 		defer span.End()
 	}
 
+	var status *SyncStreamOpStatus
 	cmd := &subCommand{
-		Ctx:          ctx,
-		AddStreamReq: req,
-		reply:        make(chan error, 1),
+		Ctx: ctx,
+		ModifySyncReq: &client.ModifyRequest{
+			ToAdd: []*SyncCookie{req.Msg.GetSyncPos()},
+			AddingFailureHandler: func(st *SyncStreamOpStatus) {
+				status = st
+			},
+		},
+		reply: make(chan error, 1),
 	}
 
 	if err := syncOp.process(cmd); err != nil {
 		return nil, err
+	}
+
+	if status != nil {
+		return nil, RiverError(Err(status.GetCode()), status.GetMessage()).
+			Tag("streamId", shared.StreamId(status.GetStreamId())).
+			Func("AddStreamToSync")
 	}
 
 	return connect.NewResponse(&AddStreamToSyncResponse{}), nil
@@ -277,7 +277,9 @@ func (syncOp *StreamSyncOperation) RemoveStreamFromSync(
 	req *connect.Request[RemoveStreamFromSyncRequest],
 ) (*connect.Response[RemoveStreamFromSyncResponse], error) {
 	if req.Msg.GetSyncId() != syncOp.SyncID {
-		return nil, RiverError(Err_INVALID_ARGUMENT, "invalid syncId").Tag("syncId", req.Msg.GetSyncId())
+		return nil, RiverError(Err_INVALID_ARGUMENT, "invalid syncId").
+			Tag("syncId", req.Msg.GetSyncId()).
+			Func("RemoveStreamFromSync")
 	}
 
 	if syncOp.otelTracer != nil {
@@ -289,14 +291,26 @@ func (syncOp *StreamSyncOperation) RemoveStreamFromSync(
 		defer span.End()
 	}
 
+	var status *SyncStreamOpStatus
 	cmd := &subCommand{
-		Ctx:         ctx,
-		RmStreamReq: req,
-		reply:       make(chan error, 1),
+		Ctx: ctx,
+		ModifySyncReq: &client.ModifyRequest{
+			ToRemove: [][]byte{req.Msg.GetStreamId()},
+			RemovingFailureHandler: func(st *SyncStreamOpStatus) {
+				status = st
+			},
+		},
+		reply: make(chan error, 1),
 	}
 
 	if err := syncOp.process(cmd); err != nil {
 		return nil, err
+	}
+
+	if status != nil {
+		return nil, RiverError(Err(status.GetCode()), status.GetMessage()).
+			Tag("streamId", shared.StreamId(status.GetStreamId())).
+			Func("RemoveStreamFromSync")
 	}
 
 	return connect.NewResponse(&RemoveStreamFromSyncResponse{}), nil
@@ -307,7 +321,9 @@ func (syncOp *StreamSyncOperation) ModifySync(
 	req *connect.Request[ModifySyncRequest],
 ) (*connect.Response[ModifySyncResponse], error) {
 	if req.Msg.GetSyncId() != syncOp.SyncID {
-		return nil, RiverError(Err_INVALID_ARGUMENT, "invalid syncId").Tag("syncId", req.Msg.GetSyncId())
+		return nil, RiverError(Err_INVALID_ARGUMENT, "invalid syncId").
+			Tag("syncId", req.Msg.GetSyncId()).
+			Func("ModifySync")
 	}
 
 	if syncOp.otelTracer != nil {
@@ -351,12 +367,13 @@ func (syncOp *StreamSyncOperation) CancelSync(
 ) (*connect.Response[CancelSyncResponse], error) {
 	if req.Msg.GetSyncId() != syncOp.SyncID {
 		return nil, RiverError(Err_INVALID_ARGUMENT, "invalid syncId").
-			Tag("syncId", req.Msg.GetSyncId())
+			Tag("syncId", req.Msg.GetSyncId()).
+			Func("CancelSync")
 	}
 
 	cmd := &subCommand{
 		Ctx:       ctx,
-		CancelReq: req,
+		CancelReq: req.Msg.GetSyncId(),
 		reply:     make(chan error, 1),
 	}
 
@@ -371,10 +388,12 @@ func (syncOp *StreamSyncOperation) CancelSync(
 			}
 			return nil, err
 		case <-timeout:
-			return nil, RiverError(Err_UNAVAILABLE, "sync operation command queue full")
+			return nil, RiverError(Err_UNAVAILABLE, "sync operation command queue full").
+				Func("CancelSync")
 		}
 	case <-timeout:
-		return nil, RiverError(Err_UNAVAILABLE, "sync operation command queue full")
+		return nil, RiverError(Err_UNAVAILABLE, "sync operation command queue full").
+			Func("CancelSync")
 	}
 }
 
@@ -383,12 +402,14 @@ func (syncOp *StreamSyncOperation) PingSync(
 	req *connect.Request[PingSyncRequest],
 ) (*connect.Response[PingSyncResponse], error) {
 	if req.Msg.GetSyncId() != syncOp.SyncID {
-		return nil, RiverError(Err_INVALID_ARGUMENT, "invalid syncId").Tag("syncId", req.Msg.GetSyncId())
+		return nil, RiverError(Err_INVALID_ARGUMENT, "invalid syncId").
+			Tag("syncId", req.Msg.GetSyncId()).
+			Func("PingSync")
 	}
 
 	cmd := &subCommand{
 		Ctx:     ctx,
-		PingReq: req,
+		PingReq: req.Msg.GetNonce(),
 		reply:   make(chan error, 1),
 	}
 
@@ -400,13 +421,11 @@ func (syncOp *StreamSyncOperation) PingSync(
 }
 
 func (syncOp *StreamSyncOperation) debugDropStream(ctx context.Context, streamID shared.StreamId) error {
-	cmd := &subCommand{
+	return syncOp.process(&subCommand{
 		Ctx:             ctx,
 		DebugDropStream: streamID,
 		reply:           make(chan error, 1),
-	}
-
-	return syncOp.process(cmd)
+	})
 }
 
 func (syncOp *StreamSyncOperation) process(cmd *subCommand) error {
@@ -416,13 +435,16 @@ func (syncOp *StreamSyncOperation) process(cmd *subCommand) error {
 		case err := <-cmd.reply:
 			return err
 		case <-syncOp.ctx.Done():
-			return RiverError(Err_CANCELED, "sync operation cancelled").Tags("syncId", syncOp.SyncID)
+			return RiverError(Err_CANCELED, "sync operation cancelled").
+				Tags("syncId", syncOp.SyncID)
 		}
 	case <-time.After(10 * time.Second):
-		err := RiverError(Err_DEADLINE_EXCEEDED, "sync operation command queue full").Tags("syncId", syncOp.SyncID)
-		logging.FromCtx(syncOp.ctx).Errorw("Sync operation command queue full", "err", err)
+		err := RiverError(Err_DEADLINE_EXCEEDED, "sync operation command queue full").
+			Tags("syncId", syncOp.SyncID)
+		syncOp.log.Errorw("Sync operation command queue full", "err", err)
 		return err
 	case <-syncOp.ctx.Done():
-		return RiverError(Err_CANCELED, "sync operation cancelled").Tags("syncId", syncOp.SyncID)
+		return RiverError(Err_CANCELED, "sync operation cancelled").
+			Tags("syncId", syncOp.SyncID)
 	}
 }

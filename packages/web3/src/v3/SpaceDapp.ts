@@ -2,29 +2,26 @@ import {
     BasicRoleInfo,
     ChannelDetails,
     ChannelMetadata,
+    ClearChannelPermissionOverridesParams,
+    CreateLegacySpaceParams,
+    CreateSpaceParams,
     EntitlementModuleType,
     isPermission,
     isUpdateChannelStatusParams,
+    LegacyUpdateRoleParams,
     MembershipInfo,
     Permission,
     PricingModuleStruct,
+    RemoveChannelParams,
     RoleDetails,
+    SetChannelPermissionOverridesParams,
+    TransactionOpts,
+    UpdateChannelParams,
+    UpdateRoleParams,
     VersionedRuleData,
 } from '../ContractTypes'
 import { computeDelegatorsForProvider } from '../DelegateRegistry'
 import { BigNumber, BytesLike, ContractReceipt, ContractTransaction, ethers } from 'ethers'
-import {
-    CreateLegacySpaceParams,
-    CreateSpaceParams,
-    ISpaceDapp,
-    TransactionOpts,
-    LegacyUpdateRoleParams,
-    UpdateRoleParams,
-    SetChannelPermissionOverridesParams,
-    ClearChannelPermissionOverridesParams,
-    RemoveChannelParams,
-    UpdateChannelParams,
-} from '../ISpaceDapp'
 import { LOCALHOST_CHAIN_ID } from '../Web3Constants'
 import { IRolesBase } from './IRolesShim'
 import { Space } from './Space'
@@ -145,7 +142,7 @@ const EmptyXchainConfig: XchainConfig = {
 }
 
 type EntitledWallet = string | undefined
-export class SpaceDapp implements ISpaceDapp {
+export class SpaceDapp {
     private isLegacySpaceCache: Map<string, boolean>
     public readonly config: BaseChainConfig
     public readonly provider: ethers.providers.Provider
