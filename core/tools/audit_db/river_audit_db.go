@@ -156,6 +156,11 @@ func init() {
 
 var listCmd = &cobra.Command{
 	Use:   "list",
+	Short: "List database contents",
+}
+
+var listSchemasCmd = &cobra.Command{
+	Use:   "schemas",
 	Short: "List database schemas",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		ctx := cmd.Context()
@@ -184,6 +189,7 @@ var listCmd = &cobra.Command{
 }
 
 func init() {
+	listCmd.AddCommand(listSchemasCmd)
 	rootCmd.AddCommand(listCmd)
 }
 

@@ -44,7 +44,16 @@ To find the total size in bytes of stream data stored for each stream, run:
 
 Be sure to have your schema specified in the environment.
 
-If you see any concerning streams, they can be manually inspected using the migrate tool. See the `target inspect` command in `core/tools/migrate_db`.
+## List all streams in a schema
+
+    ./river_audit_db list streams
+
+## Manually inspect streams
+
+Concerning streams can be further examined with
+
+    ./river_audit_db inspect stream <stream-id>
+
 
 ## Run audit tool to check for and repair streams with >> miniblock candidates
 
