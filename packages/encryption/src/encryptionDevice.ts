@@ -2,14 +2,23 @@
 import { CryptoStore } from './cryptoStore'
 import {
     Account,
+    GroupSession,
+    GroupSessionVersion,
     InboundGroupSession,
-    IOutboundGroupSessionKey,
-    OutboundGroupSession,
-    Utility,
-} from './encryptionTypes'
-import { EncryptionDelegate } from './encryptionDelegate'
+    OlmMessage,
+    Session,
+    SessionConfigVersion,
+    initAsync,
+} from '@towns-protocol/vodozemac'
 import { GroupEncryptionAlgorithmId, GroupEncryptionSession } from './olmLib'
-import { bin_equal, bin_fromHexString, bin_toHexString, dlog } from '@towns-protocol/dlog'
+import {
+    bin_equal,
+    bin_fromBase64,
+    bin_fromHexString,
+    bin_fromString,
+    bin_toHexString,
+    dlog,
+} from '@towns-protocol/dlog'
 import type { HybridGroupSessionRecord } from './storeTypes'
 import {
     ExportedDevice,
@@ -28,12 +37,14 @@ import { create, fromBinary, toBinary } from '@bufbuild/protobuf'
 
 const log = dlog('csb:encryption:encryptionDevice')
 
+const PICKLE_KEY = 'DEFAULT_PICKLE_KEY_1234567890___'
+
 // The maximum size of an event is 65K, and we base64 the content, so this is a
 // reasonable approximation to the biggest plaintext we can encrypt.
 const MAX_PLAINTEXT_LENGTH = (65536 * 3) / 4
 
 /** data stored in the session store about an inbound group session */
-export interface InboundGroupSessionData {
+export interface InboundGroupSessionDataVodezemac {
     stream_id: string // eslint-disable-line camelcase
     /** pickled InboundGroupSession */
     session: string
@@ -42,7 +53,7 @@ export interface InboundGroupSessionData {
     untrusted?: boolean
 }
 
-export type EncryptionDeviceInitOpts = {
+export type EncryptionDeviceInitOptsVodozemac = {
     fromExportedDevice?: ExportedDevice
     pickleKey?: string
 }
@@ -66,20 +77,20 @@ function checkPayloadLength(
     }
 }
 
-export interface IDecryptedGroupMessage {
+export interface IDecryptedGroupMessageVodozemac {
     result: string
     keysClaimed: Record<string, string>
     streamId: string
     untrusted: boolean
 }
 
-export type GroupSessionExtraData = {
+export type GroupSessionExtraDataVodozemac = {
     untrusted?: boolean
 }
 
-export class EncryptionDevice {
+export class EncryptionDeviceVodozemac {
     // https://linear.app/hnt-labs/issue/HNT-4273/pick-a-better-pickle-key-in-olmdevice
-    public pickleKey = 'DEFAULT_KEY' // set by consumers
+    public pickleKey = PICKLE_KEY // set by consumers
 
     /** Curve25519 key for the account, unknown until we load the account from storage in init() */
     public deviceCurve25519Key: string | null = null
@@ -106,10 +117,7 @@ export class EncryptionDevice {
     private inboundGroupSessionMessageIndexes: Record<string, { id: string; timestamp: number }> =
         {}
 
-    public constructor(
-        private delegate: EncryptionDelegate,
-        private readonly cryptoStore: CryptoStore,
-    ) {}
+    public constructor(private readonly cryptoStore: CryptoStore) {}
 
     /**
      * Iniitialize the Account. Must be called prior to any other operation
@@ -130,47 +138,60 @@ export class EncryptionDevice {
      *
      *
      */
-    public async init(opts?: EncryptionDeviceInitOpts): Promise<void> {
+    public async init(opts?: EncryptionDeviceInitOptsVodozemac): Promise<void> {
+        await initAsync()
         const { fromExportedDevice, pickleKey } = opts ?? {}
-        let e2eKeys
-        if (!this.delegate.initialized) {
-            await this.delegate.init()
-        }
-        const account = this.delegate.createAccount()
+        let account: Account | undefined
         try {
             if (fromExportedDevice) {
-                this.pickleKey = fromExportedDevice.pickleKey
-                await this.initializeFromExportedDevice(fromExportedDevice, account)
+                account = Account.from_libolm_pickle(
+                    fromExportedDevice.pickledAccount,
+                    bin_fromString(fromExportedDevice.pickleKey),
+                )
+                await this.initializeFromExportedDevice(fromExportedDevice)
             } else {
-                if (pickleKey) {
-                    this.pickleKey = pickleKey
+                try {
+                    if (pickleKey) {
+                        this.pickleKey = pickleKey
+                    }
+                    const pickledAccount = await this.cryptoStore.getAccount()
+                    account = Account.from_libolm_pickle(
+                        pickledAccount,
+                        bin_fromString(this.pickleKey),
+                    )
+                } catch {
+                    account = new Account()
+                    account.generate_fallback_key()
+                    const pickledAccount = account.pickle_libolm(bin_fromString(this.pickleKey))
+                    await this.cryptoStore.storeAccount(pickledAccount)
                 }
-                await this.initializeAccount(account)
             }
-            await this.generateFallbackKeyIfNeeded()
-            e2eKeys = JSON.parse(account.identity_keys())
+            // await this.generateFallbackKeyIfNeeded()
             this.fallbackKey = await this.getFallbackKey()
-        } finally {
-            account.free()
+        } catch (e) {
+            log('Error initializing account', e)
+            throw e
         }
-
         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-        this.deviceCurve25519Key = e2eKeys.curve25519
+        this.deviceCurve25519Key = account.curve25519_key
         // note jterzis 07/19/23: deprecating ed25519 key in favor of TDK
         // see: https://linear.app/hnt-labs/issue/HNT-1796/tdk-signature-storage-curve25519-key
         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-        this.deviceDoNotUseKey = e2eKeys.ed25519
+        this.deviceDoNotUseKey = account.ed25519_key
         log(
             `init: deviceCurve25519Key: ${this.deviceCurve25519Key}, fallbackKey ${JSON.stringify(
                 this.fallbackKey,
             )}`,
         )
+        await this.cryptoStore.withAccountTx(async () => {
+            await this.cryptoStore.storeAccount(
+                account.pickle_libolm(bin_fromString(this.pickleKey)),
+            )
+        })
+        account?.free()
     }
 
-    private async initializeFromExportedDevice(
-        exportedData: ExportedDevice,
-        account: Account,
-    ): Promise<void> {
+    private async initializeFromExportedDevice(exportedData: ExportedDevice): Promise<void> {
         await this.cryptoStore.withAccountTx(() =>
             this.cryptoStore.storeAccount(exportedData.pickledAccount),
         )
@@ -191,7 +212,7 @@ export class EncryptionDevice {
                             stream_id: session.streamId,
                             session: session.session,
                             keysClaimed: {},
-                        } satisfies InboundGroupSessionData,
+                        } satisfies InboundGroupSessionDataVodezemac,
                     ),
                 ),
                 ...exportedData.hybridGroupSessions.map((session) =>
@@ -199,18 +220,6 @@ export class EncryptionDevice {
                 ),
             ])
         })
-        account.unpickle(this.pickleKey, exportedData.pickledAccount)
-    }
-
-    private async initializeAccount(account: Account): Promise<void> {
-        try {
-            const pickledAccount = await this.cryptoStore.getAccount()
-            account.unpickle(this.pickleKey, pickledAccount)
-        } catch {
-            account.create()
-            const pickledAccount = account.pickle(this.pickleKey)
-            await this.cryptoStore.storeAccount(pickledAccount)
-        }
     }
 
     /**
@@ -219,8 +228,7 @@ export class EncryptionDevice {
      */
     public async exportDevice(): Promise<ExportedDevice> {
         const account = await this.getAccount()
-        const pickledAccount = account.pickle(this.pickleKey)
-        account.free()
+        const pickledAccount = account.pickle_libolm(bin_fromString(this.pickleKey))
 
         const [inboundSessions, outboundSessions, hybridGroupSessions] = await Promise.all([
             this.cryptoStore.getAllEndToEndInboundGroupSessions(),
@@ -254,6 +262,8 @@ export class EncryptionDevice {
                 } satisfies PlainMessage<ExportedDevice_HybridGroupSession>),
             ),
         })
+
+        account.free()
     }
 
     /**
@@ -270,8 +280,7 @@ export class EncryptionDevice {
      */
     private async getAccount(): Promise<Account> {
         const pickledAccount = await this.cryptoStore.getAccount()
-        const account = this.delegate.createAccount()
-        account.unpickle(this.pickleKey, pickledAccount)
+        const account = Account.from_libolm_pickle(pickledAccount, bin_fromString(this.pickleKey))
         return account
     }
 
@@ -285,22 +294,7 @@ export class EncryptionDevice {
      * @internal
      */
     private async storeAccount(account: Account): Promise<void> {
-        await this.cryptoStore.storeAccount(account.pickle(this.pickleKey))
-    }
-
-    /**
-     * get an OlmUtility and call the given function
-     *
-     * @returns result of func
-     * @internal
-     */
-    private getUtility<T>(func: (utility: Utility) => T): T {
-        const utility = this.delegate.createUtility()
-        try {
-            return func(utility)
-        } finally {
-            utility.free()
-        }
+        await this.cryptoStore.storeAccount(account.pickle_libolm(bin_fromString(this.pickleKey)))
     }
 
     /**
@@ -340,20 +334,14 @@ export class EncryptionDevice {
 
     public async getFallbackKey(): Promise<{ keyId: string; key: string }> {
         const account = await this.getAccount()
-        const record: Record<string, Record<string, string>> = JSON.parse(
-            account.unpublished_fallback_key(),
-        )
-        const key = Object.values(record.curve25519)[0]
-        const keyId = Object.keys(record.curve25519)[0]
-        if (!key || !keyId) {
-            throw new Error('No fallback key')
-        }
-        return { key, keyId }
+        const record = account.fallback_key as Map<string, string>
+        const [keyId, curve25519Key] = Array.from(record.entries())[0]
+        return { keyId, key: curve25519Key }
     }
 
     public async forgetOldFallbackKey(): Promise<void> {
         const account = await this.getAccount()
-        account.forget_old_fallback_key()
+        account.generate_fallback_key()
         await this.storeAccount(account)
     }
 
@@ -364,14 +352,11 @@ export class EncryptionDevice {
      * Store an OutboundGroupSession in outboundSessionStore
      *
      */
-    private async saveOutboundGroupSession(
-        session: OutboundGroupSession,
-        streamId: string,
-    ): Promise<void> {
+    private async saveOutboundGroupSession(session: GroupSession, streamId: string): Promise<void> {
         return this.cryptoStore.withGroupSessions(async () => {
             await this.cryptoStore.storeEndToEndOutboundGroupSession(
-                session.session_id(),
-                session.pickle(this.pickleKey),
+                session.session_id,
+                session.pickle(bin_fromString(this.pickleKey)),
                 streamId,
             )
         })
@@ -380,16 +365,13 @@ export class EncryptionDevice {
     /**
      * Extract OutboundGroupSession from the session store and call given fn.
      */
-    private async getOutboundGroupSession(streamId: string): Promise<OutboundGroupSession> {
+    private async getOutboundGroupSession(streamId: string): Promise<GroupSession> {
         return this.cryptoStore.withGroupSessions(async () => {
             const pickled = await this.cryptoStore.getEndToEndOutboundGroupSession(streamId)
             if (!pickled) {
                 throw new Error(`Unknown outbound group session ${streamId}`)
             }
-
-            const session = this.delegate.createOutboundGroupSession()
-            session.unpickle(this.pickleKey, pickled)
-            return session
+            return GroupSession.from_pickle(pickled, bin_fromString(this.pickleKey))
         })
     }
 
@@ -401,12 +383,12 @@ export class EncryptionDevice {
      * @returns current chain index, and
      *     base64-encoded secret key.
      */
-    public async getOutboundGroupSessionKey(streamId: string): Promise<IOutboundGroupSessionKey> {
+    public async getOutboundGroupSessionKey(streamId: string) {
         const session = await this.getOutboundGroupSession(streamId)
-        const chain_index = session.message_index()
-        const key = session.session_key()
+        const messageIndex = session.message_index
+        const key = session.session_key
         session.free()
-        return { chain_index, key }
+        return { messageIndex, key }
     }
 
     /** */
@@ -447,26 +429,22 @@ export class EncryptionDevice {
      */
     public async createOutboundGroupSession(streamId: string): Promise<string> {
         return await this.cryptoStore.withGroupSessions(async () => {
-            // Create an outbound group session
-            const session = this.delegate.createOutboundGroupSession()
-            const inboundSession = this.delegate.createInboundGroupSession()
+            const session = new GroupSession(GroupSessionVersion.V1)
+            const inboundSession = new InboundGroupSession(
+                session.session_key,
+                GroupSessionVersion.V1,
+            )
             try {
-                session.create()
-                const sessionId = session.session_id()
+                const sessionId = session.session_id
                 await this.saveOutboundGroupSession(session, streamId)
-
                 // While still inside the transaction, create an inbound counterpart session
                 // to make sure that the session is exported at message index 0.
-                const key = session.session_key()
-                inboundSession.create(key)
-                const pickled = inboundSession.pickle(this.pickleKey)
-
+                const pickled = inboundSession.pickle(bin_fromString(this.pickleKey))
                 await this.cryptoStore.storeEndToEndInboundGroupSession(streamId, sessionId, {
                     session: pickled,
                     stream_id: streamId,
                     keysClaimed: {},
                 })
-
                 return sessionId
             } catch (e) {
                 log('Error creating outbound group session', e)
@@ -491,7 +469,7 @@ export class EncryptionDevice {
         const streamIdBytes = bin_fromHexString(streamId)
         const aesKey = await generateNewAesGcmKey()
         const aesKeyBytes = await exportAesGsmKeyBytes(aesKey)
-        const sessionIdBytes = await hybridSessionKeyHash(
+        const sessionIdBytes = await hybridSessionKeyHashVodozemac(
             streamIdBytes,
             aesKeyBytes,
             miniblockNum,
@@ -529,9 +507,13 @@ export class EncryptionDevice {
      * @param func - Invoked with the unpickled session
      * @returns result of func
      */
-    private unpickleInboundGroupSession(sessionData: InboundGroupSessionData): InboundGroupSession {
-        const session = this.delegate.createInboundGroupSession()
-        session.unpickle(this.pickleKey, sessionData.session)
+    private unpickleInboundGroupSession(
+        sessionData: InboundGroupSessionDataVodezemac,
+    ): InboundGroupSession {
+        const session = InboundGroupSession.from_pickle(
+            sessionData.session,
+            bin_fromString(this.pickleKey),
+        )
         return session
     }
 
@@ -550,7 +532,7 @@ export class EncryptionDevice {
         sessionId: string,
     ): Promise<{
         session: InboundGroupSession | undefined
-        data: InboundGroupSessionData | undefined
+        data: InboundGroupSessionDataVodezemac | undefined
     }> {
         const sessionInfo = await this.cryptoStore.getEndToEndInboundGroupSession(
             streamId,
@@ -583,26 +565,27 @@ export class EncryptionDevice {
         sessionKey: string,
         keysClaimed: Record<string, string>,
         _exportFormat: boolean,
-        extraSessionData: GroupSessionExtraData = {},
+        extraSessionData: GroupSessionExtraDataVodozemac = {},
     ): Promise<void> {
+        await initAsync()
         const { session: existingSession, data: existingSessionData } =
             await this.getInboundGroupSession(streamId, sessionId)
 
-        const session = this.delegate.createInboundGroupSession()
+        let session: InboundGroupSession
+        try {
+            session = InboundGroupSession.import(sessionKey, GroupSessionVersion.V1)
+        } catch {
+            session = new InboundGroupSession(sessionKey, GroupSessionVersion.V1)
+        }
         try {
             log(`Adding group session ${streamId}|${sessionId}`)
-            try {
-                session.import_session(sessionKey)
-            } catch {
-                session.create(sessionKey)
-            }
-            if (sessionId != session.session_id()) {
+            if (sessionId != session.session_id) {
                 throw new Error('Mismatched group session ID from streamId: ' + streamId)
             }
 
             if (existingSession && existingSessionData) {
                 log(`Update for group session ${streamId}|${sessionId}`)
-                if (existingSession.first_known_index() <= session.first_known_index()) {
+                if (existingSession.first_known_index <= session.first_known_index) {
                     if (!existingSessionData.untrusted || extraSessionData.untrusted) {
                         // existing session has less-than-or-equal index
                         // (i.e. can decrypt at least as much), and the
@@ -611,15 +594,15 @@ export class EncryptionDevice {
                         log(`Keeping existing group session ${streamId}|${sessionId}`)
                         return
                     }
-                    if (existingSession.first_known_index() < session.first_known_index()) {
+                    if (existingSession.first_known_index < session.first_known_index) {
                         // We want to upgrade the existing session's trust,
                         // but we can't just use the new session because we'll
                         // lose the lower index. Check that the sessions connect
                         // properly, and then manually set the existing session
                         // as trusted.
                         if (
-                            existingSession.export_session(session.first_known_index()) ===
-                            session.export_session(session.first_known_index())
+                            existingSession.export_at(session.first_known_index) ===
+                            session.export_at(session.first_known_index)
                         ) {
                             log(
                                 'Upgrading trust of existing group session ' +
@@ -643,12 +626,12 @@ export class EncryptionDevice {
                 }
             }
             log(
-                `Storing group session ${streamId}|${sessionId} with first index ${session.first_known_index()}`,
+                `Storing group session ${streamId}|${sessionId} with first index ${session.first_known_index}`,
             )
 
             const sessionData = Object.assign({}, extraSessionData, {
                 stream_id: streamId,
-                session: session.pickle(this.pickleKey),
+                session: session.pickle(bin_fromString(this.pickleKey)),
                 keysClaimed: keysClaimed,
             })
             await this.cryptoStore.withGroupSessions(async () => {
@@ -659,7 +642,7 @@ export class EncryptionDevice {
                 )
             })
         } finally {
-            session.free()
+            session?.free()
         }
     }
 
@@ -673,7 +656,7 @@ export class EncryptionDevice {
         if (bin_toHexString(session.sessionId) !== sessionId) {
             throw new Error(`Session ID mismatch for hybrid group session ${sessionId}`)
         }
-        const expectedSessionPromise = hybridSessionKeyHash(
+        const expectedSessionPromise = hybridSessionKeyHashVodozemac(
             session.streamId,
             session.key,
             session.miniblockNum,
@@ -715,7 +698,7 @@ export class EncryptionDevice {
             checkPayloadLength(payloadString, { streamId, source: 'encryptGroupMessage' })
             const session = await this.getOutboundGroupSession(streamId)
             const ciphertext = session.encrypt(payloadString)
-            const sessionId = session.session_id()
+            const sessionId = session.session_id
             await this.saveOutboundGroupSession(session, streamId)
             session.free()
             return { ciphertext, sessionId }
@@ -729,17 +712,29 @@ export class EncryptionDevice {
     ): Promise<{ type: 0 | 1; body: string }> {
         checkPayloadLength(payload, { source: 'encryptUsingFallbackKey' })
         return this.cryptoStore.withAccountTx(async () => {
-            const session = this.delegate.createSession()
+            let session: Session | undefined
             try {
                 const account = await this.getAccount()
-                session.create_outbound(account, theirIdentityKey, fallbackKey)
+                if (!account) {
+                    throw new Error('no account?!')
+                }
+                session = account.create_outbound_session(
+                    theirIdentityKey,
+                    fallbackKey, // this should be a one-time key - does it matter?
+                    SessionConfigVersion.V1,
+                )
                 const result = session.encrypt(payload)
-                return result
+                return {
+                    type: result.message_type as 0 | 1,
+                    body: bin_toHexString(result.ciphertext),
+                }
             } catch (error) {
                 log('Error encrypting message with fallback key', error)
                 throw error
             } finally {
-                session.free()
+                if (session) {
+                    session.free()
+                }
             }
         })
     }
@@ -764,49 +759,29 @@ export class EncryptionDevice {
         }
 
         checkPayloadLength(ciphertext, { source: 'decryptMessage' })
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return await this.cryptoStore.withAccountTx(async () => {
             const account = await this.getAccount()
-            const session = this.delegate.createSession()
-            const sessionDesc = session.describe()
-            log(
-                'Session ID ' +
-                    session.session_id() +
-                    ' from ' +
-                    theirDeviceIdentityKey +
-                    ': ' +
-                    sessionDesc,
-            )
+            // TODO: we could optimize js bindings to avoid the need to convert the ciphertext to a Uint8Array
+            const message = new OlmMessage(messageType, bin_fromBase64(ciphertext))
             try {
-                session.create_inbound_from(account, theirDeviceIdentityKey, ciphertext)
+                const { plaintext, session } = account.create_inbound_session(
+                    theirDeviceIdentityKey,
+                    message,
+                )
+                log('Session ID ' + session.session_id + ' from ' + theirDeviceIdentityKey)
                 await this.storeAccount(account)
-                return session.decrypt(messageType, ciphertext)
+                return plaintext
             } catch (e) {
+                //TODO: The message key with the given key can't be created, message index: 0"
+                // > error doc:
+                // The session is missing the correct message key to decrypt the message,
+                // either because it was already used up, or because the Session has been
+                // ratcheted forwards and the message key has been discarded.
                 throw new Error(
                     'Error decrypting prekey message: ' + JSON.stringify((<Error>e).message),
                 )
-            } finally {
-                session.free()
             }
-        })
-    }
-
-    // Utilities
-    // =========
-
-    /**
-     * Verify an ed25519 signature.
-     *
-     * @param key - ed25519 key
-     * @param message - message which was signed
-     * @param signature - base64-encoded signature to be checked
-     *
-     * @throws Error if there is a problem with the verification. If the key was
-     * too small then the message will be "OLM.INVALID_BASE64". If the signature
-     * was invalid then the message will be "OLM.BAD_MESSAGE_MAC".
-     */
-    public verifySignature(key: string, message: string, signature: string): void {
-        this.getUtility(function (util: Utility) {
-            util.ed25519_verify(key, message, signature)
         })
     }
 
@@ -873,9 +848,13 @@ export class EncryptionDevice {
         }
 
         const session = this.unpickleInboundGroupSession(sessionData)
-        const messageIndex = session.first_known_index()
-        const sessionKey = session.export_session(messageIndex)
+        const messageIndex = session.first_known_index
+        const sessionKey = session.export_at(messageIndex)
         session.free()
+
+        if (!sessionKey) {
+            return undefined
+        }
 
         return {
             streamId: streamId,
@@ -918,12 +897,16 @@ export class EncryptionDevice {
                 }
 
                 const session = this.unpickleInboundGroupSession(sessionData)
-                const messageIndex = session.first_known_index()
-                const sessionKey = session.export_session(messageIndex)
+                const messageIndex = session.first_known_index
+                const sessionKey = session.export_at(messageIndex)
                 session.free()
 
+                if (!sessionKey) {
+                    continue
+                }
+
                 exportedSessions.push({
-                    streamId: sessionData.streamId,
+                    streamId: sessionData.stream_id,
                     sessionId: sessionData.sessionId,
                     sessionKey: sessionKey,
                     algorithm: GroupEncryptionAlgorithmId.GroupEncryption,
@@ -950,7 +933,7 @@ export class EncryptionDevice {
 const hybridSessionKeyHashPrefixBytes = new TextEncoder().encode('RVR_HSK:')
 
 // TODO: needs unit tests
-export async function hybridSessionKeyHash(
+export async function hybridSessionKeyHashVodozemac(
     streamId: Uint8Array,
     key: Uint8Array,
     miniblockNum: bigint,
