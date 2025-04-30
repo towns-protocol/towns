@@ -429,6 +429,7 @@ export class EncryptionDeviceVodozemac {
      */
     public async createOutboundGroupSession(streamId: string): Promise<string> {
         return await this.cryptoStore.withGroupSessions(async () => {
+            // Create an outbound group session
             const session = new GroupSession(GroupSessionVersion.V1)
             const inboundSession = new InboundGroupSession(
                 session.session_key,
@@ -773,11 +774,6 @@ export class EncryptionDeviceVodozemac {
                 await this.storeAccount(account)
                 return plaintext
             } catch (e) {
-                //TODO: The message key with the given key can't be created, message index: 0"
-                // > error doc:
-                // The session is missing the correct message key to decrypt the message,
-                // either because it was already used up, or because the Session has been
-                // ratcheted forwards and the message key has been discarded.
                 throw new Error(
                     'Error decrypting prekey message: ' + JSON.stringify((<Error>e).message),
                 )
