@@ -15,11 +15,11 @@ import {
 } from './base'
 import { GroupDecryption } from './groupDecryption'
 import { GroupEncryption } from './groupEncryption'
-import { EncryptionDevice, type EncryptionDeviceInitOpts } from './encryptionDevice'
-import { EncryptionDelegate } from './encryptionDelegate'
+import { type EncryptionDeviceInitOpts } from './encryptionDevice'
 import { check, dlog } from '@towns-protocol/dlog'
 import { HybridGroupEncryption } from './hybridGroupEncryption'
 import { HybridGroupDecryption } from './hybridGroupDecryption'
+import { EncryptionDeviceVodozemac } from './encryptionDevice-vodozemac'
 
 const log = dlog('csb:encryption:groupEncryptionCrypto')
 
@@ -42,9 +42,7 @@ export interface ImportRoomKeyProgressData {
 }
 
 export class GroupEncryptionCrypto {
-    private delegate: EncryptionDelegate | undefined
-
-    private readonly encryptionDevice: EncryptionDevice
+    private readonly encryptionDevice: EncryptionDeviceVodozemac
     public readonly groupEncryption: Record<GroupEncryptionAlgorithmId, EncryptionAlgorithm>
     public readonly groupDecryption: Record<GroupEncryptionAlgorithmId, DecryptionAlgorithm>
     public readonly cryptoStore: CryptoStore
@@ -53,14 +51,8 @@ export class GroupEncryptionCrypto {
 
     public constructor(client: IGroupEncryptionClient, cryptoStore: CryptoStore) {
         this.cryptoStore = cryptoStore
-        // initialize Olm library
-        this.delegate = new EncryptionDelegate()
-        // olm lib returns a Promise<void> on init, hence the catch if it rejects
-        this.delegate.init().catch((e) => {
-            log('error initializing olm', e)
-            throw e
-        })
-        this.encryptionDevice = new EncryptionDevice(this.delegate, cryptoStore)
+        // TODO: do we want to support both vodozemac and olmlib?
+        this.encryptionDevice = new EncryptionDeviceVodozemac(cryptoStore)
 
         this.groupEncryption = {
             [GroupEncryptionAlgorithmId.GroupEncryption]: new GroupEncryption({

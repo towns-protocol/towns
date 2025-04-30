@@ -26,6 +26,7 @@
         "@matrix-org/olm": "^3.2.15",
         "@towns-protocol/dlog": "workspace:^",
         "@towns-protocol/proto": "workspace:^",
+        "@towns-protocol/vodozemac": "0.1.0",
         "@towns-protocol/web3": "workspace:^",
         "debug": "^4.3.4",
         "dexie": "^4.0.7",

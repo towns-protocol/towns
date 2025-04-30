@@ -188,4 +188,19 @@ export class CryptoStore extends Dexie {
             fallbackKey: record.fallbackKey,
         }))
     }
+
+    // TODO: write migration to vodozemac format
+    // async migrateLibolmToVodozemac(): Promise<void> {
+    // const isMigrationComplete = await isMigrationDone()
+    // if (isMigrationComplete) {
+    // return
+    // }
+    // ... update pickledAccount to vodozemac format
+    // ... update outboundGroupSessions to vodozemac format
+    // ... update inboundGroupSessions to vodozemac format
+    // ... update hybridGroupSessions to vodozemac format
+    // ... update devices to vodozemac format
+    // ... update migration to vodozemac format
+    // ... set migration as completed
+    // }
 }

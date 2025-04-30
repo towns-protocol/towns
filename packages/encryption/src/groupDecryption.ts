@@ -5,7 +5,8 @@ import { GroupEncryptionAlgorithmId, GroupEncryptionSession } from './olmLib'
 import { EncryptedData, EncryptedDataVersion } from '@towns-protocol/proto'
 import { bin_fromBase64, dlogError } from '@towns-protocol/dlog'
 import { LRUCache } from 'lru-cache'
-import { InboundGroupSession } from '@matrix-org/olm'
+import { InboundGroupSession as InboundGroupSessionOlmLib } from '@matrix-org/olm'
+import { InboundGroupSession as InboundGroupSessionVodozemac } from '@towns-protocol/vodozemac'
 
 const logError = dlogError('csb:encryption:groupDecryption')
 
@@ -16,10 +17,15 @@ const logError = dlogError('csb:encryption:groupDecryption')
  */
 export class GroupDecryption extends DecryptionAlgorithm {
     public readonly algorithm = GroupEncryptionAlgorithmId.GroupEncryption
-    private lruCache: LRUCache<string, InboundGroupSession>
+    private lruCache: LRUCache<string, InboundGroupSessionOlmLib | InboundGroupSessionVodozemac>
     public constructor(params: IDecryptionParams) {
         super(params)
-        this.lruCache = new LRUCache<string, InboundGroupSession>({ max: 1000 })
+        this.lruCache = new LRUCache<
+            string,
+            InboundGroupSessionOlmLib | InboundGroupSessionVodozemac
+        >({
+            max: 1000,
+        })
     }
 
     /**

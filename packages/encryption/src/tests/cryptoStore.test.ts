@@ -3,8 +3,7 @@
  */
 
 import { CryptoStore } from '../cryptoStore'
-import { EncryptionDelegate } from '../encryptionDelegate'
-import { EncryptionDevice } from '../encryptionDevice'
+import { EncryptionDeviceVodozemac } from '../encryptionDevice-vodozemac'
 import { UserDevice } from '../olmLib'
 import { nanoid } from 'nanoid'
 
@@ -109,14 +108,12 @@ describe('EncryptionDevice import/export', () => {
     const userId = nanoid()
 
     let store: CryptoStore
-    let device: EncryptionDevice
-    let delegate: EncryptionDelegate
+    let device: EncryptionDeviceVodozemac
 
     beforeEach(async () => {
         store = new CryptoStore('test', userId)
         await store.initialize()
-        delegate = new EncryptionDelegate()
-        device = new EncryptionDevice(delegate, store)
+        device = new EncryptionDeviceVodozemac(store)
         await device.init()
     })
 
@@ -128,7 +125,7 @@ describe('EncryptionDevice import/export', () => {
         const exportedDevice = await device.exportDevice()
 
         // Create a new device and import the state
-        const newDevice = new EncryptionDevice(delegate, store)
+        const newDevice = new EncryptionDeviceVodozemac(store)
         await newDevice.init({ fromExportedDevice: exportedDevice })
 
         // Check that the imported state matches the original

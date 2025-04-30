@@ -1,7 +1,7 @@
 import { GroupEncryptionAlgorithmId, GroupEncryptionSession, UserDeviceCollection } from './olmLib'
 
-import { EncryptionDevice } from './encryptionDevice'
 import { EncryptedData } from '@towns-protocol/proto'
+import type { EncryptionDeviceVodozemac } from './encryptionDevice-vodozemac'
 
 export interface IGroupEncryptionClient {
     downloadUserDeviceInfo(userIds: string[], forceDownload: boolean): Promise<UserDeviceCollection>
@@ -17,20 +17,20 @@ export interface IGroupEncryptionClient {
 
 export interface IDecryptionParams {
     /** olm.js wrapper */
-    device: EncryptionDevice
+    device: EncryptionDeviceVodozemac
 }
 
 export interface IEncryptionParams {
     client: IGroupEncryptionClient
     /** olm.js wrapper */
-    device: EncryptionDevice
+    device: EncryptionDeviceVodozemac
 }
 
 /**
  * base type for encryption implementations
  */
 export abstract class EncryptionAlgorithm implements IEncryptionParams {
-    public readonly device: EncryptionDevice
+    public readonly device: EncryptionDeviceVodozemac
     public readonly client: IGroupEncryptionClient
 
     /**
@@ -54,7 +54,7 @@ export abstract class EncryptionAlgorithm implements IEncryptionParams {
  * base type for decryption implementations
  */
 export abstract class DecryptionAlgorithm implements IDecryptionParams {
-    public readonly device: EncryptionDevice
+    public readonly device: EncryptionDeviceVodozemac
 
     public constructor(params: IDecryptionParams) {
         this.device = params.device
