@@ -1,8 +1,12 @@
-import { createConfig } from 'ponder'
+import { createConfig, mergeAbis } from 'ponder'
 import { http } from 'viem'
 
 // import abis
-import { createSpaceFacetAbi } from '@towns-protocol/contracts/typings'
+import {
+    createSpaceFacetAbi,
+    spaceOwnerAbi,
+    tokenPausableFacetAbi,
+} from '@towns-protocol/contracts/typings'
 
 // Import our contract address utility
 import { getContractAddress } from './utils/contractAddresses'
@@ -19,6 +23,11 @@ if (!spaceFactory) {
     throw new Error('Space factory address not found')
 }
 
+const spaceOwner = getContractAddress('spaceOwner')
+if (!spaceOwner) {
+    throw new Error('Space owner address not found')
+}
+
 export default createConfig({
     networks: {
         anvil: {
@@ -33,9 +42,15 @@ export default createConfig({
         },
     },
     contracts: {
-        CreateSpace: {
-            abi: createSpaceFacetAbi,
+        SpaceFactory: {
+            abi: mergeAbis([createSpaceFacetAbi, tokenPausableFacetAbi]),
             address: spaceFactory,
+            startBlock,
+            network: 'gamma',
+        },
+        SpaceOwner: {
+            abi: spaceOwnerAbi,
+            address: spaceOwner,
             startBlock,
             network: 'gamma',
         },

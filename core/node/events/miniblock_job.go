@@ -152,9 +152,9 @@ func (j *mbJob) processRemoteProposals(ctx context.Context) ([]*mbProposal, *Str
 	added := make(map[common.Hash]bool)
 	converted := make([]*mbProposal, len(proposals))
 	for i, p := range proposals {
-		converted[i] = mbProposalFromProto(p.Proposal)
+		converted[i] = mbProposalFromProto(p.response.Proposal)
 
-		for _, e := range p.MissingEvents {
+		for _, e := range p.response.MissingEvents {
 			parsed, err := ParseEvent(e)
 			if err != nil {
 				logging.FromCtx(ctx).Errorw("mbJob.processRemoteProposals: error parsing event", "err", err)
@@ -168,7 +168,13 @@ func (j *mbJob) processRemoteProposals(ctx context.Context) ([]*mbProposal, *Str
 					if err == nil {
 						view = newView
 					} else {
-						logging.FromCtx(ctx).Errorw("mbJob.processRemoteProposals: error adding event", "err", err)
+						logging.FromCtx(ctx).Errorw(
+							"mbJob.processRemoteProposals: error adding event",
+							"err",
+							err,
+							"source",
+							p.source,
+						)
 					}
 				}
 			}
@@ -250,14 +256,19 @@ func (j *mbJob) combineProposals(proposals []*mbProposal) (*mbProposal, error) {
 	}, nil
 }
 
+type sourcedProposalResponse struct {
+	response *ProposeMiniblockResponse
+	source   common.Address
+}
+
 func (j *mbJob) gatherRemoteProposals(
 	ctx context.Context,
 	request *ProposeMiniblockRequest,
-) ([]*ProposeMiniblockResponse, error) {
+) ([]*sourcedProposalResponse, error) {
 	ctx, cancel := context.WithTimeout(ctx, j.cache.Params().RiverChain.Config.BlockTime()*2)
 	defer cancel()
 
-	proposals := make([]*ProposeMiniblockResponse, 0, len(j.quorumNodes))
+	proposals := make([]*sourcedProposalResponse, 0, len(j.quorumNodes))
 	var mu sync.Mutex
 
 	qp := NewQuorumPool(
@@ -298,7 +309,10 @@ func (j *mbJob) gatherRemoteProposals(
 
 			mu.Lock()
 			defer mu.Unlock()
-			proposals = append(proposals, proposal)
+			proposals = append(proposals, &sourcedProposalResponse{
+				response: proposal,
+				source:   node,
+			})
 
 			return nil
 		},
