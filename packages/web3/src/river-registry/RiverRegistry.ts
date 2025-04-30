@@ -1,6 +1,6 @@
 import { ethers } from 'ethers'
 import { NodeStructOutput } from '@towns-protocol/generated/dev/typings/INodeRegistry'
-import { RiverChainConfig } from 'utils'
+import { RiverChainConfig } from '../utils'
 import { INodeRegistryShim } from './INodeRegistryShim'
 import { IStreamRegistryShim } from './IStreamRegistryShim'
 import { IOperatorRegistryShim } from './IOperatorRegistryShim'
@@ -25,12 +25,9 @@ export class RiverRegistry {
     constructor(config: RiverChainConfig, provider: ethers.providers.Provider) {
         this.config = config
         this.provider = provider
-        this.nodeRegistry = new INodeRegistryShim(this.config.addresses.riverRegistry, provider)
-        this.streamRegistry = new IStreamRegistryShim(this.config.addresses.riverRegistry, provider)
-        this.operatorRegistry = new IOperatorRegistryShim(
-            this.config.addresses.riverRegistry,
-            provider,
-        )
+        this.nodeRegistry = new INodeRegistryShim(config.addresses.riverRegistry, provider)
+        this.streamRegistry = new IStreamRegistryShim(config.addresses.riverRegistry, provider)
+        this.operatorRegistry = new IOperatorRegistryShim(config.addresses.riverRegistry, provider)
     }
 
     public async getAllNodes(nodeStatus?: number): Promise<RiverNodesMap | undefined> {

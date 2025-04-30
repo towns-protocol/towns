@@ -5,10 +5,10 @@ import {
 
 import LocalhostAbi from '@towns-protocol/generated/dev/abis/UserEntitlement.abi.json' assert { type: 'json' }
 
-import { BaseContractShim } from 'BaseContractShim'
+import { BaseContractShim } from '../../BaseContractShim'
 import { BigNumberish, ethers } from 'ethers'
 import { decodeUsers } from './ConvertersEntitlements'
-import { EntitlementModuleType, EntitlementModule } from 'types'
+import { EntitlementModuleType, EntitlementModule } from '../../types'
 import { dlogger } from '@towns-protocol/dlog'
 
 const logger = dlogger('csb:UserEntitlementShim:debug')

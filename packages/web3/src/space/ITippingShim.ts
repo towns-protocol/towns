@@ -5,7 +5,7 @@ import {
 } from '@towns-protocol/generated/dev/typings/ITipping'
 
 import { ContractReceipt, ethers } from 'ethers'
-import { BaseContractShim } from 'BaseContractShim'
+import { BaseContractShim } from '../BaseContractShim'
 
 import DevAbi from '@towns-protocol/generated/dev/abis/ITipping.abi.json' assert { type: 'json' }
 

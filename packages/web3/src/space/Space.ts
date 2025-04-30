@@ -11,7 +11,7 @@ import {
     isRuleEntitlement,
     isRuleEntitlementV2,
     isUserEntitlement,
-} from 'types'
+} from '../types'
 import { IChannelBase, IChannelShim } from './IChannelShim'
 import { IRolesBase, IRolesShim } from './IRolesShim'
 
@@ -21,7 +21,7 @@ import { OwnableFacetShim } from './OwnableFacetShim'
 import { TokenPausableFacetShim } from './TokenPausableFacetShim'
 import { UNKNOWN_ERROR } from '../BaseContractShim'
 import { UserEntitlementShim } from './entitlements/UserEntitlementShim'
-import { isRoleIdInArray, toPermissions, BaseChainConfig, parseChannelMetadataJSON } from 'utils'
+import { isRoleIdInArray, toPermissions, BaseChainConfig, parseChannelMetadataJSON } from '../utils'
 import { IMembershipShim } from './IMembershipShim'
 import { NoopRuleData } from './entitlements/entitlement'
 import { RuleEntitlementShim } from './entitlements/RuleEntitlementShim'

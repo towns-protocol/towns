@@ -1,4 +1,4 @@
-import { SpaceAddressFromSpaceId, BaseChainConfig } from 'utils'
+import { SpaceAddressFromSpaceId, BaseChainConfig } from '../utils'
 import { ISpaceArchitectShim } from './ISpaceArchitectShim'
 import { ILegacySpaceArchitectShim } from './ILegacySpaceArchitectShim'
 import { ICreateSpaceShim } from './ICreateSpaceShim'

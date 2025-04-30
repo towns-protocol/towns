@@ -6,7 +6,7 @@ import {
 import LocalhostAbi from '@towns-protocol/generated/dev/abis/IMulticall.abi.json' assert { type: 'json' }
 
 import { ethers } from 'ethers'
-import { BaseContractShim } from 'BaseContractShim'
+import { BaseContractShim } from '../BaseContractShim'
 
 export class IMulticallShim extends BaseContractShim<LocalhostContract, LocalhostInterface> {
     constructor(address: string, provider: ethers.providers.Provider | undefined) {

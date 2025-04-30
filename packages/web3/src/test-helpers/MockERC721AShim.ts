@@ -6,7 +6,7 @@ import {
 import LocalhostAbi from '@towns-protocol/generated/dev/abis/MockERC721A.abi.json' assert { type: 'json' }
 
 import { ethers } from 'ethers'
-import { BaseContractShim } from '../src/BaseContractShim'
+import { BaseContractShim } from '../BaseContractShim'
 
 export class MockERC721AShim extends BaseContractShim<LocalhostContract, LocalhostInterface> {
     constructor(address: string, provider: ethers.providers.Provider | undefined) {

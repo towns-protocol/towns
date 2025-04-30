@@ -1,6 +1,6 @@
 import { ethers } from 'ethers'
 import { PublicClient } from 'viem'
-import { Permission, PricingModuleStruct } from 'types'
+import { Permission, PricingModuleStruct } from '../types'
 import { SpaceDapp } from '../space-dapp'
 
 export const ETH_ADDRESS = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE'

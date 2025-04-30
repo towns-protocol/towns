@@ -1,6 +1,6 @@
 import { ethers } from 'ethers'
-import { BaseChainConfig } from 'utils'
-import { PricingModuleStruct } from 'types'
+import { BaseChainConfig } from '../utils'
+import { PricingModuleStruct } from '../types'
 import { IPricingShim } from './IPricingShim'
 
 export class PricingModules {

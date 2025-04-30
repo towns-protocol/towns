@@ -1,4 +1,4 @@
-import { Permission } from 'types'
+import { Permission } from '../types'
 import { ethers } from 'ethers'
 export interface Keyable {
     toKey(): string

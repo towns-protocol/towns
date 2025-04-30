@@ -1,5 +1,5 @@
 import type { Abi } from 'abitype'
-import { Address } from '../src/types'
+import { Address } from '../types'
 
 const abi: Abi = [
     {

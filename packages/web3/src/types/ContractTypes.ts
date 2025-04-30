@@ -1,17 +1,17 @@
-import { UserEntitlementShim as UserEntitlementShimV3 } from 'space/entitlements/UserEntitlementShim'
+import { UserEntitlementShim as UserEntitlementShimV3 } from '../space/entitlements/UserEntitlementShim'
 import {
     IMembershipBase as IMembershipBaseV3,
     IArchitectBase as ISpaceArchitectBaseV3,
-} from 'space-registrar/ICreateSpaceShim'
-import { ILegacyArchitectBase } from 'space-registrar/ILegacySpaceArchitectShim'
-import { IRolesBase as IRolesBaseV3 } from 'space/IRolesShim'
-import { RuleEntitlementShim } from 'space/entitlements/RuleEntitlementShim'
-import { IRuleEntitlementBase } from 'space/entitlements/IRuleEntitlementShim'
-import { IRuleEntitlementV2Base } from 'space/entitlements/IRuleEntitlementV2Shim'
-import { IPricingModulesBase } from 'pricing-modules/IPricingShim'
+} from '../space-registrar/ICreateSpaceShim'
+import { ILegacyArchitectBase } from '../space-registrar/ILegacySpaceArchitectShim'
+import { IRolesBase as IRolesBaseV3 } from '../space/IRolesShim'
+import { RuleEntitlementShim } from '../space/entitlements/RuleEntitlementShim'
+import { IRuleEntitlementBase } from '../space/entitlements/IRuleEntitlementShim'
+import { IRuleEntitlementV2Base } from '../space/entitlements/IRuleEntitlementV2Shim'
+import { IPricingModulesBase } from '../pricing-modules/IPricingShim'
 
-import { RuleEntitlementV2Shim } from 'space/entitlements/RuleEntitlementV2Shim'
-import { NoopRuleData } from 'space/entitlements/entitlement'
+import { RuleEntitlementV2Shim } from '../space/entitlements/RuleEntitlementV2Shim'
+import { NoopRuleData } from '../space/entitlements/entitlement'
 
 import { ethers } from 'ethers'
 

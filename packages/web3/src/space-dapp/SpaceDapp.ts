@@ -20,7 +20,7 @@ import {
     UpdateRoleParams,
     VersionedRuleData,
     SpaceInfo,
-} from 'types'
+} from '../types'
 import { computeDelegatorsForProvider } from 'delegate-registry/DelegateRegistry'
 import { BigNumber, BytesLike, ContractReceipt, ContractTransaction, ethers } from 'ethers'
 import { LOCALHOST_CHAIN_ID } from 'utils/Web3Constants'
@@ -47,7 +47,7 @@ import { WalletLink, INVALID_ADDRESS } from 'wallet-link/WalletLink'
 import { UNKNOWN_ERROR } from 'BaseContractShim'
 import { PricingModules } from 'pricing-modules/PricingModules'
 import { dlogger, isTestEnv } from '@towns-protocol/dlog'
-import { EVERYONE_ADDRESS, stringifyChannelMetadataJSON, NoEntitledWalletError } from 'utils'
+import { EVERYONE_ADDRESS, stringifyChannelMetadataJSON, NoEntitledWalletError } from '../utils'
 
 import { PlatformRequirements } from 'platform-requirements/PlatformRequirements'
 import { EntitlementDataStructOutput } from 'space/IEntitlementDataQueryableShim'
@@ -646,14 +646,14 @@ export class SpaceDapp {
         return {
             address: space.Address,
             networkId: space.SpaceId,
-            name: (spaceInfo.name as string) ?? '',
+            name: spaceInfo.name ?? '',
             owner,
             disabled,
-            uri: (spaceInfo.uri as string) ?? '',
+            uri: spaceInfo.uri ?? '',
             tokenId: ethers.BigNumber.from(spaceInfo.tokenId).toString(),
             createdAt: ethers.BigNumber.from(spaceInfo.createdAt).toString(),
-            shortDescription: (spaceInfo.shortDescription as string) ?? '',
-            longDescription: (spaceInfo.longDescription as string) ?? '',
+            shortDescription: spaceInfo.shortDescription ?? '',
+            longDescription: spaceInfo.longDescription ?? '',
         }
     }
 

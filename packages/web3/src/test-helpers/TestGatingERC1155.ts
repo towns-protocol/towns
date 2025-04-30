@@ -4,7 +4,7 @@ import { generatePrivateKey, privateKeyToAccount } from 'viem/accounts'
 
 import { MockERC1155 } from './MockERC1155'
 import { deployContract, Mutex } from './TestGatingUtils'
-import { Address } from '../src/types'
+import { Address } from '../types'
 import { dlogger } from '@towns-protocol/dlog'
 import { expect } from 'vitest'
 

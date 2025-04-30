@@ -1,9 +1,9 @@
 import { BigNumber, ContractTransaction, ethers } from 'ethers'
-import { WalletAlreadyLinkedError, WalletNotLinkedError, Address } from 'types'
+import { WalletAlreadyLinkedError, WalletNotLinkedError, Address } from '../types'
 
-import { BaseChainConfig } from 'utils'
+import { BaseChainConfig } from '../utils'
 import { IWalletLinkShim } from './WalletLinkShim'
-import { createEip712LinkedWalletdData } from 'eip-712/EIP-712'
+import { createEip712LinkedWalletdData } from '../eip-712/EIP-712'
 
 export const INVALID_ADDRESS = '0x0000000000000000000000000000000000000000'
 

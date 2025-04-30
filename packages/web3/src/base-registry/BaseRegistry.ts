@@ -1,9 +1,9 @@
 import { ethers } from 'ethers'
-import { BaseChainConfig } from 'utils'
+import { BaseChainConfig } from '../utils'
 import { INodeOperatorShim } from './INodeOperatorShim'
 import { IEntitlementCheckerShim } from './IEntitlementCheckerShim'
 import { ISpaceDelegationShim } from './ISpaceDelegationShim'
-import { IERC721AShim } from 'erc-721/IERC721AShim'
+import { IERC721AShim } from '../erc-721/IERC721AShim'
 
 export type BaseOperator = {
     operatorAddress: string

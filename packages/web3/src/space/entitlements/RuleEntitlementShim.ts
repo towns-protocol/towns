@@ -6,9 +6,9 @@ import {
 
 import LocalhostAbi from '@towns-protocol/generated/dev/abis/IRuleEntitlement.abi.json' assert { type: 'json' }
 
-import { BaseContractShim } from 'BaseContractShim'
+import { BaseContractShim } from '../../BaseContractShim'
 import { BigNumberish, ethers } from 'ethers'
-import { EntitlementModuleType, EntitlementModule } from 'types'
+import { EntitlementModuleType, EntitlementModule } from '../../types'
 import { dlogger } from '@towns-protocol/dlog'
 const logger = dlogger('csb:SpaceDapp:debug')
 

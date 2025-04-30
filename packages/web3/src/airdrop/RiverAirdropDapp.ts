@@ -1,7 +1,7 @@
 import { IDropFacetShim } from './IDropFacetShim'
-import { BaseChainConfig } from 'utils'
+import { BaseChainConfig } from '../utils'
 import { BigNumber, ethers } from 'ethers'
-import { IERC721AShim } from 'erc-721/IERC721AShim'
+import { IERC721AShim } from '../erc-721/IERC721AShim'
 import { IRiverPointsShim } from './IRiverPointsShim'
 
 export class RiverAirdropDapp {

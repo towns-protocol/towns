@@ -4,7 +4,7 @@ import { generatePrivateKey, privateKeyToAccount } from 'viem/accounts'
 import { expect } from 'vitest'
 import { MockERC20 } from './MockERC20'
 import { deployContract, Mutex } from './TestGatingUtils'
-import { Address } from '../src/types'
+import { Address } from '../types'
 import { dlogger } from '@towns-protocol/dlog'
 
 const logger = dlogger('csb:TestGatingERC20')

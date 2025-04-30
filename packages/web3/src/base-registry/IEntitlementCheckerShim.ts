@@ -6,7 +6,7 @@ import {
 import DevAbi from '@towns-protocol/generated/dev/abis/IEntitlementChecker.abi.json' assert { type: 'json' }
 
 import { ethers } from 'ethers'
-import { BaseContractShim } from 'BaseContractShim'
+import { BaseContractShim } from '../BaseContractShim'
 
 export class IEntitlementCheckerShim extends BaseContractShim<DevContract, DevInterface> {
     constructor(address: string, provider: ethers.providers.Provider | undefined) {

@@ -6,7 +6,7 @@ import {
 } from '@towns-protocol/generated/dev/typings/SpaceOwner'
 
 import LocalhostAbi from '@towns-protocol/generated/dev/abis/SpaceOwner.abi.json' assert { type: 'json' }
-import { BaseContractShim } from 'BaseContractShim'
+import { BaseContractShim } from '../BaseContractShim'
 
 export class SpaceOwner extends BaseContractShim<LocalhostContract, LocalhostInterface> {
     constructor(address: string, provider: ethers.providers.Provider | undefined) {

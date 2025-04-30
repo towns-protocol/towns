@@ -7,7 +7,7 @@ import {
 import LocalhostAbi from '@towns-protocol/generated/dev/abis/Roles.abi.json' assert { type: 'json' }
 
 import { ethers } from 'ethers'
-import { BaseContractShim } from 'BaseContractShim'
+import { BaseContractShim } from '../BaseContractShim'
 
 export type { LocalhostIRolesBase as IRolesBase }
 

@@ -1,6 +1,6 @@
 import { ethers } from 'ethers'
 
-import { Address, EntitlementModuleType, EntitlementStruct } from 'types'
+import { Address, EntitlementModuleType, EntitlementStruct } from '../../types'
 import { IRuleEntitlementBase } from './IRuleEntitlementShim'
 import { IRuleEntitlementV2Base } from './IRuleEntitlementV2Shim'
 import {

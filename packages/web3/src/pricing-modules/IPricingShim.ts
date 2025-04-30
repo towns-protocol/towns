@@ -5,7 +5,7 @@ import {
 export type { IPricingModulesBase } from '@towns-protocol/generated/dev/typings/IPricingModules'
 
 import { ethers } from 'ethers'
-import { BaseContractShim } from 'BaseContractShim'
+import { BaseContractShim } from '../BaseContractShim'
 
 import LocalhostAbi from '@towns-protocol/generated/dev/abis/IPricingModules.abi.json' assert { type: 'json' }
 

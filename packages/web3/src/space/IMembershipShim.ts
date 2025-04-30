@@ -6,7 +6,7 @@ import {
 import { IERC721AShim } from '../erc-721/IERC721AShim'
 
 import { BigNumber, BigNumberish, ethers } from 'ethers'
-import { BaseContractShim } from 'BaseContractShim'
+import { BaseContractShim } from '../BaseContractShim'
 
 import LocalhostAbi from '@towns-protocol/generated/dev/abis/MembershipFacet.abi.json' assert { type: 'json' }
 import { dlogger } from '@towns-protocol/dlog'

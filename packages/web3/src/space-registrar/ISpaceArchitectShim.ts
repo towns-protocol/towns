@@ -6,7 +6,7 @@ import {
 import LocalhostAbi from '@towns-protocol/generated/dev/abis/Architect.abi.json' assert { type: 'json' }
 
 import { ethers } from 'ethers'
-import { BaseContractShim } from 'BaseContractShim'
+import { BaseContractShim } from '../BaseContractShim'
 import { LogDescription } from 'ethers/lib/utils'
 import { dlogger } from '@towns-protocol/dlog'
 const logger = dlogger('csb:SpaceDapp:debug')

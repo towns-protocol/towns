@@ -6,7 +6,7 @@ import {
 import LocalhostAbi from '@towns-protocol/generated/dev/abis/IMembershipMetadata.abi.json' assert { type: 'json' }
 
 import { ethers } from 'ethers'
-import { BaseContractShim } from 'BaseContractShim'
+import { BaseContractShim } from '../BaseContractShim'
 
 export class IMembershipMetadataShim extends BaseContractShim<
     LocalhostContract,

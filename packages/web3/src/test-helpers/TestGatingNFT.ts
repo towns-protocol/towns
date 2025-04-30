@@ -6,7 +6,7 @@ import { expect } from 'vitest'
 import { MockERC721a } from './MockERC721A'
 
 import { isHexString, deployContract, Mutex } from './TestGatingUtils'
-import { Address } from '../src/types'
+import { Address } from '../types'
 
 import { dlogger } from '@towns-protocol/dlog'
 

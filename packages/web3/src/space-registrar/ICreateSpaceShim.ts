@@ -8,7 +8,7 @@ import {
 import LocalhostAbi from '@towns-protocol/generated/dev/abis/ICreateSpace.abi.json' assert { type: 'json' }
 
 import { ethers } from 'ethers'
-import { BaseContractShim } from 'BaseContractShim'
+import { BaseContractShim } from '../BaseContractShim'
 
 export type { LocalhostIMembershipBase as IMembershipBase }
 export type { LocalhostISpaceArchitectBase as IArchitectBase }
