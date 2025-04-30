@@ -7,7 +7,11 @@ export default defineConfig({
     foundry({
       project: "./",
       artifacts: "out",
-      include: ["**/CreateSpace.sol/*.json"],
+      include: [
+        "**/CreateSpace.sol/*.json",
+        "**/SpaceOwner.sol/*.json",
+        "**/TokenPausableFacet.sol/*.json",
+      ],
       forge: {
         build: false,
       },
