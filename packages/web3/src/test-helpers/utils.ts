@@ -36,34 +36,3 @@ export async function makeDefaultMembershipInfo(
         },
     } satisfies MembershipStruct
 }
-
-export function mintMockNFT(
-    provider: ethers.providers.Provider,
-    config: BaseChainConfig,
-    fromWallet: ethers.Wallet,
-    toAddress: string,
-): Promise<ethers.ContractTransaction> {
-    if (!config.addresses.utils.mockNFT) {
-        throw new Error('No mock ERC721 address provided')
-    }
-    const mockNFTAddress = config.addresses.utils.mockNFT
-    const mockNFT = new MockERC721AShim(mockNFTAddress, provider)
-    return mockNFT.write(fromWallet).mintTo(toAddress)
-}
-
-export function balanceOfMockNFT(
-    config: BaseChainConfig,
-    provider: ethers.providers.Provider,
-    address: Address,
-) {
-    if (!config.addresses.utils.mockNFT) {
-        throw new Error('No mock ERC721 address provided')
-    }
-    const mockNFTAddress = config.addresses.utils.mockNFT
-    const mockNFT = new MockERC721AShim(mockNFTAddress, provider)
-    return mockNFT.read.balanceOf(address)
-}
-
-export async function getTestGatingNftAddress(_chainId: number): Promise<Address> {
-    return await getTestGatingNFTContractAddress()
-}
