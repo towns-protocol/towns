@@ -2,6 +2,7 @@ package events
 
 import (
 	"bytes"
+	"encoding/hex"
 	"fmt"
 	"slices"
 
@@ -270,11 +271,24 @@ func update_Snapshot_Space(
 	creatorAddress []byte,
 	eventNum int64,
 	eventHash []byte,
-) error {
+) (err error) {
+	// Annotate returned error
+	defer func() {
+		if err != nil {
+			err = AsRiverError(
+				err,
+				Err_INTERNAL,
+			).Func("update_Snapshot_Space").
+				Tag("creatorAddress", hex.EncodeToString(creatorAddress)).
+				Tag("eventHash", eventHash).Tag("eventNum", eventNum)
+		}
+	}()
+
 	snapshot := iSnapshot.Content.(*Snapshot_SpaceContent)
 	if snapshot == nil {
 		return RiverError(Err_INVALID_ARGUMENT, "blockheader snapshot is not a space snapshot")
 	}
+
 	switch content := spacePayload.Content.(type) {
 	case *SpacePayload_Inception_:
 		return RiverError(Err_INVALID_ARGUMENT, "cannot update blockheader with inception event")
@@ -607,7 +621,18 @@ func update_Snapshot_Member(
 	miniblockNum int64,
 	eventNum int64,
 	eventHash []byte,
-) error {
+) (err error) {
+	// Annotate returned errors.
+	defer func() {
+		if err != nil {
+			err = AsRiverError(err, Err_INTERNAL).Func("update_Snapshot_Member").
+				Tag("eventHash", hex.EncodeToString(eventHash)).
+				Tag("eventNum", eventNum).
+				Tag("creatorAddress", hex.EncodeToString(creatorAddress)).
+				Tag("miniblockNum", miniblockNum)
+		}
+	}()
+
 	snapshot := iSnapshot.Members
 	if snapshot == nil {
 		return RiverError(Err_INVALID_ARGUMENT, "blockheader snapshot is not a membership snapshot")
@@ -830,7 +855,7 @@ func removeSorted[T any, K any](elements []*T, key K, cmp func(K, K) int, keyFn 
 }
 
 func findChannel(channels []*SpacePayload_ChannelMetadata, channelId []byte) (*SpacePayload_ChannelMetadata, error) {
-	return findSorted(
+	metadata, err := findSorted(
 		channels,
 		channelId,
 		bytes.Compare,
@@ -838,6 +863,10 @@ func findChannel(channels []*SpacePayload_ChannelMetadata, channelId []byte) (*S
 			return channel.ChannelId
 		},
 	)
+	if err != nil {
+		return nil, AsRiverError(err, Err_NOT_FOUND).Func("findChannel").Tag("channelId", hex.EncodeToString(channelId))
+	}
+	return metadata, nil
 }
 
 func insertChannel(
@@ -861,7 +890,7 @@ func findMember(
 	members []*MemberPayload_Snapshot_Member,
 	memberAddress []byte,
 ) (*MemberPayload_Snapshot_Member, error) {
-	return findSorted(
+	payload, err := findSorted(
 		members,
 		memberAddress,
 		bytes.Compare,
@@ -869,6 +898,14 @@ func findMember(
 			return member.UserAddress
 		},
 	)
+	if err != nil {
+		return nil, AsRiverError(
+			err,
+			Err_NOT_FOUND,
+		).Func("findMember").
+			Tag("memberAddress", hex.EncodeToString(memberAddress))
+	}
+	return payload, nil
 }
 
 func removeMember(members []*MemberPayload_Snapshot_Member, memberAddress []byte) []*MemberPayload_Snapshot_Member {
@@ -903,7 +940,7 @@ func findUserMembership(
 	memberships []*UserPayload_UserMembership,
 	streamId []byte,
 ) (*UserPayload_UserMembership, error) {
-	return findSorted(
+	payload, err := findSorted(
 		memberships,
 		streamId,
 		bytes.Compare,
@@ -911,6 +948,14 @@ func findUserMembership(
 			return membership.StreamId
 		},
 	)
+	if err != nil {
+		return nil, AsRiverError(
+			err,
+			Err_NOT_FOUND,
+		).Func("findUserMembership").
+			Tag("streamId", hex.EncodeToString(streamId))
+	}
+	return payload, nil
 }
 
 func insertUserMembership(
