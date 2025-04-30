@@ -349,7 +349,7 @@ func (ss *SyncerSet) modify(ctx context.Context, req ModifyRequest) error {
 				var err error
 				syncer, err = ss.newRemoteSyncer(nodeAddress)
 				if err != nil {
-					rvrErr := AsRiverError(err).Tag("remoteSyncerAddr", syncer.Address())
+					rvrErr := AsRiverError(err).Tag("remoteSyncerAddr", nodeAddress)
 					for _, cookie := range modifySync.GetAddStreams() {
 						req.AddingFailureHandler(&SyncStreamOpStatus{
 							StreamId: cookie.GetStreamId(),
