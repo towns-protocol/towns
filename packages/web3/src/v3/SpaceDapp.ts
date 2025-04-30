@@ -2,29 +2,26 @@ import {
     BasicRoleInfo,
     ChannelDetails,
     ChannelMetadata,
+    ClearChannelPermissionOverridesParams,
+    CreateLegacySpaceParams,
+    CreateSpaceParams,
     EntitlementModuleType,
     isPermission,
     isUpdateChannelStatusParams,
+    LegacyUpdateRoleParams,
     MembershipInfo,
     Permission,
     PricingModuleStruct,
+    RemoveChannelParams,
     RoleDetails,
+    SetChannelPermissionOverridesParams,
+    TransactionOpts,
+    UpdateChannelParams,
+    UpdateRoleParams,
     VersionedRuleData,
 } from '../ContractTypes'
 import { computeDelegatorsForProvider } from '../DelegateRegistry'
-import { BytesLike, ContractReceipt, ContractTransaction, ethers } from 'ethers'
-import {
-    CreateLegacySpaceParams,
-    CreateSpaceParams,
-    ISpaceDapp,
-    TransactionOpts,
-    LegacyUpdateRoleParams,
-    UpdateRoleParams,
-    SetChannelPermissionOverridesParams,
-    ClearChannelPermissionOverridesParams,
-    RemoveChannelParams,
-    UpdateChannelParams,
-} from '../ISpaceDapp'
+import { BigNumber, BytesLike, ContractReceipt, ContractTransaction, ethers } from 'ethers'
 import { LOCALHOST_CHAIN_ID } from '../Web3Constants'
 import { IRolesBase } from './IRolesShim'
 import { Space } from './Space'
@@ -145,7 +142,7 @@ const EmptyXchainConfig: XchainConfig = {
 }
 
 type EntitledWallet = string | undefined
-export class SpaceDapp implements ISpaceDapp {
+export class SpaceDapp {
     private isLegacySpaceCache: Map<string, boolean>
     public readonly config: BaseChainConfig
     public readonly provider: ethers.providers.Provider
@@ -1485,28 +1482,67 @@ export class SpaceDapp implements ISpaceDapp {
         }
         // membershipPrice is either the maximum of either the price set during space creation, or the PlatformRequirements membership fee
         // it will alawys be a value regardless of whether the space has free allocations or prepaid memberships
-        const membershipPrice = await space.Membership.read.getMembershipPrice()
+        const membershipPriceEncoded =
+            space.Membership.interface.encodeFunctionData('getMembershipPrice')
         // totalSupply = number of memberships minted
-        const totalSupply = await space.ERC721A.read.totalSupply()
+        const totalSupplyEncoded = space.ERC721A.interface.encodeFunctionData('totalSupply')
         // free allocation is set at space creation and is unchanging - it neither increases nor decreases
         // if totalSupply < freeAllocation, the contracts won't charge for minting a membership nft,
         // else it will charge the membershipPrice
-        const freeAllocation = await this.getMembershipFreeAllocation(spaceId)
+        const freeAllocationEncoded = space.Membership.interface.encodeFunctionData(
+            'getMembershipFreeAllocation',
+        )
         // prepaidSupply = number of additional prepaid memberships
         // if any prepaid memberships have been purchased, the contracts won't charge for minting a membership nft,
         // else it will charge the membershipPrice
-        const prepaidSupply = await space.Prepay.read.prepaidMembershipSupply()
-        // remainingFreeSupply
-        // if totalSupply < freeAllocation, freeAllocation + prepaid - minted memberships
-        // else the remaining prepaidSupply if any
-        const remainingFreeSupply = totalSupply.lt(freeAllocation)
-            ? freeAllocation.add(prepaidSupply).sub(totalSupply)
-            : prepaidSupply
+        const prepaidSupplyEncoded =
+            space.Prepay.interface.encodeFunctionData('prepaidMembershipSupply')
 
-        return {
-            price: remainingFreeSupply.gt(0) ? ethers.BigNumber.from(0) : membershipPrice,
-            prepaidSupply,
-            remainingFreeSupply,
+        const [
+            membershipPriceResult,
+            totalSupplyResult,
+            freeAllocationResult,
+            prepaidSupplyResult,
+        ] = await space.Multicall.read.callStatic.multicall([
+            membershipPriceEncoded,
+            totalSupplyEncoded,
+            freeAllocationEncoded,
+            prepaidSupplyEncoded,
+        ])
+
+        try {
+            const membershipPrice = space.Membership.interface.decodeFunctionResult(
+                'getMembershipPrice',
+                membershipPriceResult,
+            )[0] as BigNumber
+            const totalSupply = space.ERC721A.interface.decodeFunctionResult(
+                'totalSupply',
+                totalSupplyResult,
+            )[0] as BigNumber
+            const freeAllocation = space.Membership.interface.decodeFunctionResult(
+                'getMembershipFreeAllocation',
+                freeAllocationResult,
+            )[0] as BigNumber
+            const prepaidSupply = space.Prepay.interface.decodeFunctionResult(
+                'prepaidMembershipSupply',
+                prepaidSupplyResult,
+            )[0] as BigNumber
+
+            // remainingFreeSupply
+            // if totalSupply < freeAllocation, freeAllocation + prepaid - minted memberships
+            // else the remaining prepaidSupply if any
+            const remainingFreeSupply = totalSupply.lt(freeAllocation)
+                ? freeAllocation.add(prepaidSupply).sub(totalSupply)
+                : prepaidSupply
+
+            return {
+                price: remainingFreeSupply.gt(0) ? ethers.BigNumber.from(0) : membershipPrice,
+                prepaidSupply,
+                remainingFreeSupply,
+            }
+        } catch (error) {
+            logger.error('getJoinSpacePriceDetails: Error decoding membership price', error)
+            throw error
         }
     }
 
