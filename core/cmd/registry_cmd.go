@@ -142,7 +142,7 @@ func srStreamDump(cfg *config.Config, opts *streamDumpOpts) error {
 	elapsed := time.Since(startTime)
 	finalI := i.Load()
 	printStats(opts, "Total", "total", fmt.Sprintf("%d", finalI))
-	printStats(opts, "Elapsed seconds", "elapsed_seconds", fmt.Sprintf("%s", elapsed))
+	printStats(opts, "Elapsed seconds", "elapsed_seconds", fmt.Sprintf("%.3f", elapsed.Seconds()))
 	printStats(opts, "Streams/s", "streams_per_second", fmt.Sprintf("%.1f", float64(finalI)/elapsed.Seconds()))
 
 	if streamNum != finalI {
