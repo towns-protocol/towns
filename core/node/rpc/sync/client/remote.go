@@ -11,7 +11,6 @@ import (
 
 	"connectrpc.com/connect"
 	"github.com/ethereum/go-ethereum/common"
-	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
 	. "github.com/towns-protocol/towns/core/node/base"
@@ -246,62 +245,6 @@ func (s *remoteSyncer) connectionAlive(latestMsgReceived *atomic.Value) {
 
 func (s *remoteSyncer) Address() common.Address {
 	return s.remoteAddr
-}
-
-func (s *remoteSyncer) AddStream(ctx context.Context, cookie *SyncCookie) error {
-	if s.otelTracer != nil {
-		var span trace.Span
-		streamID, _ := StreamIdFromBytes(cookie.GetStreamId())
-		ctx, span = s.otelTracer.Start(ctx, "remoteSyncer::AddStream",
-			trace.WithAttributes(attribute.String("stream", streamID.String())))
-		defer span.End()
-	}
-
-	streamID, err := StreamIdFromBytes(cookie.GetStreamId())
-	if err != nil {
-		return err
-	}
-
-	_, err = s.client.AddStreamToSync(ctx, connect.NewRequest(&AddStreamToSyncRequest{
-		SyncId:  s.syncID,
-		SyncPos: cookie,
-	}))
-
-	if err == nil {
-		s.streams.Store(streamID, struct{}{})
-	}
-
-	return err
-}
-
-func (s *remoteSyncer) RemoveStream(ctx context.Context, streamID StreamId) (bool, error) {
-	if s.otelTracer != nil {
-		var span trace.Span
-		ctx, span = s.otelTracer.Start(ctx, "remoteSyncer::removeStream",
-			trace.WithAttributes(attribute.String("stream", streamID.String())))
-		defer span.End()
-	}
-
-	_, err := s.client.RemoveStreamFromSync(ctx, connect.NewRequest(&RemoveStreamFromSyncRequest{
-		SyncId:   s.syncID,
-		StreamId: streamID[:],
-	}))
-
-	if err == nil {
-		s.streams.Delete(streamID)
-	}
-
-	noMoreStreams := true
-	s.streams.Range(func(key, value any) bool {
-		noMoreStreams = false
-		return false
-	})
-
-	if noMoreStreams {
-		s.syncStreamCancel()
-	}
-
-	return noMoreStreams, err
 }
 
 func (s *remoteSyncer) Modify(ctx context.Context, request *ModifySyncRequest) (*ModifySyncResponse, bool, error) {
