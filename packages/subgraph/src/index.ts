@@ -19,7 +19,7 @@ ponder.on('SpaceFactory:SpaceCreated', async ({ event, context }) => {
     try {
         const paused = await context.client.readContract({
             abi: SpaceFactory.abi,
-            address: SpaceFactory.address,
+            address: event.args.space,
             functionName: 'paused',
             args: [],
             blockNumber, // Use the latest block number
@@ -68,7 +68,7 @@ ponder.on('SpaceOwner:SpaceOwner__UpdateSpace', async ({ event, context }) => {
     try {
         const paused = await context.client.readContract({
             abi: SpaceFactory.abi,
-            address: SpaceFactory.address,
+            address: event.args.space,
             functionName: 'paused',
             args: [],
             blockNumber, // Use the latest block number
