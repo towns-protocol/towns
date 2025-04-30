@@ -342,203 +342,203 @@ contract SwapRouterTest is SwapTestBase {
     /*                      SWAP WITH PERMIT                      */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    function test_executeSwapWithPermit_revertWhen_invalidAmount() public {
-        uint256 privateKey = 0xabc;
-        privateKey = boundPrivateKey(privateKey);
-        address owner = vm.addr(privateKey);
-        uint256 deadline = block.timestamp + 1 hours;
-
-        uint256 amountIn = 100 ether;
-        uint256 permitValue = 50 ether; // less than amountIn
-        uint256 amountOut = 95 ether;
-
-        // get the permit signature with insufficient value
-        PermitParams memory permitParams = _createPermitParams(
-            address(token0),
-            privateKey,
-            owner,
-            address(swapRouter),
-            permitValue,
-            deadline
-        );
-
-        // get swap parameters
-        (ExactInputParams memory inputParams, RouterParams memory routerParams) = _createSwapParams(
-            address(swapRouter),
-            mockRouter,
-            address(token0),
-            address(token1),
-            amountIn,
-            amountOut,
-            owner
-        );
-
-        // expect revert with InvalidAmount (permit value < amountIn)
-        vm.expectRevert(SwapRouter__InvalidAmount.selector);
-        swapRouter.executeSwapWithPermit(inputParams, routerParams, permitParams, poster);
-    }
-
-    function test_executeSwapWithPermit_gas() public {
-        PermitTestParams memory params = PermitTestParams({
-            privateKey: 0xabc,
-            recipient: makeAddr("recipient"),
-            deadline: 1 hours,
-            amountIn: 100 ether,
-            amountOut: 95 ether,
-            treasuryBps: TREASURY_BPS,
-            posterBps: POSTER_BPS
-        });
-        test_executeSwapWithPermit(params);
-    }
-
-    function test_executeSwapWithPermit(PermitTestParams memory params) public {
-        vm.assume(
-            params.recipient != address(0) &&
-                params.recipient != feeRecipient &&
-                params.recipient != poster
-        );
-
-        params.privateKey = boundPrivateKey(params.privateKey);
-        params.deadline = bound(params.deadline, block.timestamp + 1, type(uint256).max);
-        address owner = vm.addr(params.privateKey);
-        vm.assume(owner != feeRecipient && owner != poster);
-
-        // ensure amountIn and amountOut are reasonable
-        params.amountIn = bound(params.amountIn, 1, type(uint256).max / BasisPoints.MAX_BPS);
-        params.amountOut = bound(params.amountOut, 1, type(uint256).max / BasisPoints.MAX_BPS);
-
-        // get the permit signature
-        PermitParams memory permitParams = _createPermitParams(
-            address(token0),
-            params.privateKey,
-            owner,
-            address(swapRouter),
-            params.amountIn,
-            params.deadline
-        );
-
-        // ensure fee basis points are within reasonable limits (0-10%)
-        params.treasuryBps = uint16(bound(params.treasuryBps, 0, 1000));
-        params.posterBps = uint16(bound(params.posterBps, 0, 1000));
-
-        // set custom fees for this test
-        vm.prank(deployer);
-        IPlatformRequirements(spaceFactory).setSwapFees(params.treasuryBps, params.posterBps);
-
-        // get swap parameters
-        (ExactInputParams memory inputParams, RouterParams memory routerParams) = _createSwapParams(
-            address(swapRouter),
-            mockRouter,
-            address(token0), // token in
-            address(token1), // token out
-            params.amountIn,
-            params.amountOut,
-            params.recipient
-        );
-
-        // mint tokens for owner
-        token0.mint(owner, params.amountIn);
-
-        // execute swap with permit
-        uint256 actualAmountOut = swapRouter.executeSwapWithPermit(
-            inputParams,
-            routerParams,
-            permitParams,
-            poster
-        );
-
-        _verifySwapResults(
-            address(token0),
-            address(token1),
-            owner,
-            params.recipient,
-            params.amountOut,
-            actualAmountOut,
-            params.treasuryBps,
-            params.posterBps
-        );
-    }
-
-    function test_executeSwapWithPermit_swapTokenToEth_gas() public {
-        PermitTestParams memory params = PermitTestParams({
-            privateKey: 0xabc,
-            recipient: makeAddr("recipient"),
-            deadline: block.timestamp + 1 hours,
-            amountIn: 100 ether,
-            amountOut: 0.95 ether,
-            treasuryBps: TREASURY_BPS,
-            posterBps: POSTER_BPS
-        });
-        test_executeSwapWithPermit_swapTokenToEth(params);
-    }
-
-    function test_executeSwapWithPermit_swapTokenToEth(
-        PermitTestParams memory params
-    ) public assumeEOA(params.recipient) {
-        vm.assume(params.recipient != feeRecipient && params.recipient != poster);
-        vm.assume(params.recipient.balance == 0);
-
-        params.privateKey = boundPrivateKey(params.privateKey);
-        params.deadline = bound(params.deadline, block.timestamp + 1, type(uint256).max);
-        address owner = vm.addr(params.privateKey);
-        vm.assume(owner != feeRecipient && owner != poster);
-
-        // ensure amountIn and amountOut are reasonable
-        params.amountIn = bound(params.amountIn, 1, type(uint256).max / BasisPoints.MAX_BPS);
-        params.amountOut = bound(params.amountOut, 1, type(uint256).max / BasisPoints.MAX_BPS);
-
-        // get the permit signature
-        PermitParams memory permitParams = _createPermitParams(
-            address(token0),
-            params.privateKey,
-            owner,
-            address(swapRouter),
-            params.amountIn,
-            params.deadline
-        );
-
-        // ensure fee basis points are within reasonable limits (0-10%)
-        params.treasuryBps = uint16(bound(params.treasuryBps, 0, 1000));
-        params.posterBps = uint16(bound(params.posterBps, 0, 1000));
-
-        // set custom fees for this test
-        vm.prank(deployer);
-        IPlatformRequirements(spaceFactory).setSwapFees(params.treasuryBps, params.posterBps);
-
-        // get swap parameters for token to ETH
-        (ExactInputParams memory inputParams, RouterParams memory routerParams) = _createSwapParams(
-            address(swapRouter),
-            mockRouter,
-            address(token0), // token in
-            CurrencyTransfer.NATIVE_TOKEN, // ETH out
-            params.amountIn,
-            params.amountOut,
-            params.recipient
-        );
-
-        // mint tokens for owner
-        token0.mint(owner, params.amountIn);
-
-        // fund mockRouter with ETH to swap out
-        deal(mockRouter, params.amountOut * 2);
-
-        // execute swap with permit
-        uint256 actualAmountOut = swapRouter.executeSwapWithPermit(
-            inputParams,
-            routerParams,
-            permitParams,
-            poster
-        );
-
-        _verifySwapResults(
-            address(token0),
-            CurrencyTransfer.NATIVE_TOKEN,
-            owner,
-            params.recipient,
-            params.amountOut,
-            actualAmountOut,
-            params.treasuryBps,
-            params.posterBps
-        );
-    }
+    //    function test_executeSwapWithPermit_revertWhen_invalidAmount() public {
+    //        uint256 privateKey = 0xabc;
+    //        privateKey = boundPrivateKey(privateKey);
+    //        address owner = vm.addr(privateKey);
+    //        uint256 deadline = block.timestamp + 1 hours;
+    //
+    //        uint256 amountIn = 100 ether;
+    //        uint256 permitValue = 50 ether; // less than amountIn
+    //        uint256 amountOut = 95 ether;
+    //
+    //        // get the permit signature with insufficient value
+    //        PermitParams memory permitParams = _createPermitParams(
+    //            address(token0),
+    //            privateKey,
+    //            owner,
+    //            address(swapRouter),
+    //            permitValue,
+    //            deadline
+    //        );
+    //
+    //        // get swap parameters
+    //        (ExactInputParams memory inputParams, RouterParams memory routerParams) = _createSwapParams(
+    //            address(swapRouter),
+    //            mockRouter,
+    //            address(token0),
+    //            address(token1),
+    //            amountIn,
+    //            amountOut,
+    //            owner
+    //        );
+    //
+    //        // expect revert with InvalidAmount (permit value < amountIn)
+    //        vm.expectRevert(SwapRouter__InvalidAmount.selector);
+    //        swapRouter.executeSwapWithPermit(inputParams, routerParams, permitParams, poster);
+    //    }
+    //
+    //    function test_executeSwapWithPermit_gas() public {
+    //        PermitTestParams memory params = PermitTestParams({
+    //            privateKey: 0xabc,
+    //            recipient: makeAddr("recipient"),
+    //            deadline: 1 hours,
+    //            amountIn: 100 ether,
+    //            amountOut: 95 ether,
+    //            treasuryBps: TREASURY_BPS,
+    //            posterBps: POSTER_BPS
+    //        });
+    //        test_executeSwapWithPermit(params);
+    //    }
+    //
+    //    function test_executeSwapWithPermit(PermitTestParams memory params) public {
+    //        vm.assume(
+    //            params.recipient != address(0) &&
+    //                params.recipient != feeRecipient &&
+    //                params.recipient != poster
+    //        );
+    //
+    //        params.privateKey = boundPrivateKey(params.privateKey);
+    //        params.deadline = bound(params.deadline, block.timestamp + 1, type(uint256).max);
+    //        address owner = vm.addr(params.privateKey);
+    //        vm.assume(owner != feeRecipient && owner != poster);
+    //
+    //        // ensure amountIn and amountOut are reasonable
+    //        params.amountIn = bound(params.amountIn, 1, type(uint256).max / BasisPoints.MAX_BPS);
+    //        params.amountOut = bound(params.amountOut, 1, type(uint256).max / BasisPoints.MAX_BPS);
+    //
+    //        // get the permit signature
+    //        PermitParams memory permitParams = _createPermitParams(
+    //            address(token0),
+    //            params.privateKey,
+    //            owner,
+    //            address(swapRouter),
+    //            params.amountIn,
+    //            params.deadline
+    //        );
+    //
+    //        // ensure fee basis points are within reasonable limits (0-10%)
+    //        params.treasuryBps = uint16(bound(params.treasuryBps, 0, 1000));
+    //        params.posterBps = uint16(bound(params.posterBps, 0, 1000));
+    //
+    //        // set custom fees for this test
+    //        vm.prank(deployer);
+    //        IPlatformRequirements(spaceFactory).setSwapFees(params.treasuryBps, params.posterBps);
+    //
+    //        // get swap parameters
+    //        (ExactInputParams memory inputParams, RouterParams memory routerParams) = _createSwapParams(
+    //            address(swapRouter),
+    //            mockRouter,
+    //            address(token0), // token in
+    //            address(token1), // token out
+    //            params.amountIn,
+    //            params.amountOut,
+    //            params.recipient
+    //        );
+    //
+    //        // mint tokens for owner
+    //        token0.mint(owner, params.amountIn);
+    //
+    //        // execute swap with permit
+    //        uint256 actualAmountOut = swapRouter.executeSwapWithPermit(
+    //            inputParams,
+    //            routerParams,
+    //            permitParams,
+    //            poster
+    //        );
+    //
+    //        _verifySwapResults(
+    //            address(token0),
+    //            address(token1),
+    //            owner,
+    //            params.recipient,
+    //            params.amountOut,
+    //            actualAmountOut,
+    //            params.treasuryBps,
+    //            params.posterBps
+    //        );
+    //    }
+    //
+    //    function test_executeSwapWithPermit_swapTokenToEth_gas() public {
+    //        PermitTestParams memory params = PermitTestParams({
+    //            privateKey: 0xabc,
+    //            recipient: makeAddr("recipient"),
+    //            deadline: block.timestamp + 1 hours,
+    //            amountIn: 100 ether,
+    //            amountOut: 0.95 ether,
+    //            treasuryBps: TREASURY_BPS,
+    //            posterBps: POSTER_BPS
+    //        });
+    //        test_executeSwapWithPermit_swapTokenToEth(params);
+    //    }
+    //
+    //    function test_executeSwapWithPermit_swapTokenToEth(
+    //        PermitTestParams memory params
+    //    ) public assumeEOA(params.recipient) {
+    //        vm.assume(params.recipient != feeRecipient && params.recipient != poster);
+    //        vm.assume(params.recipient.balance == 0);
+    //
+    //        params.privateKey = boundPrivateKey(params.privateKey);
+    //        params.deadline = bound(params.deadline, block.timestamp + 1, type(uint256).max);
+    //        address owner = vm.addr(params.privateKey);
+    //        vm.assume(owner != feeRecipient && owner != poster);
+    //
+    //        // ensure amountIn and amountOut are reasonable
+    //        params.amountIn = bound(params.amountIn, 1, type(uint256).max / BasisPoints.MAX_BPS);
+    //        params.amountOut = bound(params.amountOut, 1, type(uint256).max / BasisPoints.MAX_BPS);
+    //
+    //        // get the permit signature
+    //        PermitParams memory permitParams = _createPermitParams(
+    //            address(token0),
+    //            params.privateKey,
+    //            owner,
+    //            address(swapRouter),
+    //            params.amountIn,
+    //            params.deadline
+    //        );
+    //
+    //        // ensure fee basis points are within reasonable limits (0-10%)
+    //        params.treasuryBps = uint16(bound(params.treasuryBps, 0, 1000));
+    //        params.posterBps = uint16(bound(params.posterBps, 0, 1000));
+    //
+    //        // set custom fees for this test
+    //        vm.prank(deployer);
+    //        IPlatformRequirements(spaceFactory).setSwapFees(params.treasuryBps, params.posterBps);
+    //
+    //        // get swap parameters for token to ETH
+    //        (ExactInputParams memory inputParams, RouterParams memory routerParams) = _createSwapParams(
+    //            address(swapRouter),
+    //            mockRouter,
+    //            address(token0), // token in
+    //            CurrencyTransfer.NATIVE_TOKEN, // ETH out
+    //            params.amountIn,
+    //            params.amountOut,
+    //            params.recipient
+    //        );
+    //
+    //        // mint tokens for owner
+    //        token0.mint(owner, params.amountIn);
+    //
+    //        // fund mockRouter with ETH to swap out
+    //        deal(mockRouter, params.amountOut * 2);
+    //
+    //        // execute swap with permit
+    //        uint256 actualAmountOut = swapRouter.executeSwapWithPermit(
+    //            inputParams,
+    //            routerParams,
+    //            permitParams,
+    //            poster
+    //        );
+    //
+    //        _verifySwapResults(
+    //            address(token0),
+    //            CurrencyTransfer.NATIVE_TOKEN,
+    //            owner,
+    //            params.recipient,
+    //            params.amountOut,
+    //            actualAmountOut,
+    //            params.treasuryBps,
+    //            params.posterBps
+    //        );
+    //    }
 }

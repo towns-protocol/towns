@@ -30,6 +30,8 @@ export { IRoles__factory } from "./IRoles__factory";
 export { ISpaceDelegation__factory } from "./ISpaceDelegation__factory";
 export { ISpaceOwner__factory } from "./ISpaceOwner__factory";
 export { IStreamRegistry__factory } from "./IStreamRegistry__factory";
+export { ISwapFacet__factory } from "./ISwapFacet__factory";
+export { ISwapRouter__factory } from "./ISwapRouter__factory";
 export { ITipping__factory } from "./ITipping__factory";
 export { ITownsPoints__factory } from "./ITownsPoints__factory";
 export { ITreasury__factory } from "./ITreasury__factory";

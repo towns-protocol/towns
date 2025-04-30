@@ -32,6 +32,8 @@ export type { IRoles } from "./IRoles";
 export type { ISpaceDelegation } from "./ISpaceDelegation";
 export type { ISpaceOwner } from "./ISpaceOwner";
 export type { IStreamRegistry } from "./IStreamRegistry";
+export type { ISwapFacet } from "./ISwapFacet";
+export type { ISwapRouter } from "./ISwapRouter";
 export type { ITipping } from "./ITipping";
 export type { ITownsPoints } from "./ITownsPoints";
 export type { ITreasury } from "./ITreasury";
@@ -79,6 +81,8 @@ export { IRuleEntitlementV2__factory } from "./factories/IRuleEntitlement.sol/IR
 export { ISpaceDelegation__factory } from "./factories/ISpaceDelegation__factory";
 export { ISpaceOwner__factory } from "./factories/ISpaceOwner__factory";
 export { IStreamRegistry__factory } from "./factories/IStreamRegistry__factory";
+export { ISwapFacet__factory } from "./factories/ISwapFacet__factory";
+export { ISwapRouter__factory } from "./factories/ISwapRouter__factory";
 export { ITipping__factory } from "./factories/ITipping__factory";
 export { ITownsPoints__factory } from "./factories/ITownsPoints__factory";
 export { ITreasury__factory } from "./factories/ITreasury__factory";

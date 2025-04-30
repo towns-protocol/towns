@@ -119,45 +119,45 @@ contract SwapFacet is ISwapFacet, ReentrancyGuardTransient, Entitled, Membership
     }
 
     /// @inheritdoc ISwapFacet
-    function executeSwapWithPermit(
-        ExactInputParams calldata params,
-        RouterParams calldata routerParams,
-        PermitParams calldata permit,
-        address poster
-    ) external payable nonReentrant returns (uint256 amountOut) {
-        _validateMembership(msg.sender);
-
-        address swapRouter = getSwapRouter();
-        if (swapRouter == address(0)) {
-            SwapFacet__SwapRouterNotSet.selector.revertWith();
-        }
-
-        // handle poster based on collectPosterFeeToSpace
-        address actualPoster = _resolveSwapPoster(poster);
-
-        // execute swap through the router with permit
-        try
-            ISwapRouter(swapRouter).executeSwapWithPermit{value: msg.value}(
-                params,
-                routerParams,
-                permit,
-                actualPoster
-            )
-        returns (uint256 returnedAmount) {
-            // emit event for successful swap
-            emit SwapExecuted(
-                params.recipient,
-                params.tokenIn,
-                params.tokenOut,
-                params.amountIn,
-                returnedAmount,
-                poster // use original poster for the event
-            );
-            return returnedAmount;
-        } catch {
-            SwapFacet__SwapFailed.selector.revertWith();
-        }
-    }
+    //    function executeSwapWithPermit(
+    //        ExactInputParams calldata params,
+    //        RouterParams calldata routerParams,
+    //        PermitParams calldata permit,
+    //        address poster
+    //    ) external payable nonReentrant returns (uint256 amountOut) {
+    //        _validateMembership(msg.sender);
+    //
+    //        address swapRouter = getSwapRouter();
+    //        if (swapRouter == address(0)) {
+    //            SwapFacet__SwapRouterNotSet.selector.revertWith();
+    //        }
+    //
+    //        // handle poster based on collectPosterFeeToSpace
+    //        address actualPoster = _resolveSwapPoster(poster);
+    //
+    //        // execute swap through the router with permit
+    //        try
+    //            ISwapRouter(swapRouter).executeSwapWithPermit{value: msg.value}(
+    //                params,
+    //                routerParams,
+    //                permit,
+    //                actualPoster
+    //            )
+    //        returns (uint256 returnedAmount) {
+    //            // emit event for successful swap
+    //            emit SwapExecuted(
+    //                params.recipient,
+    //                params.tokenIn,
+    //                params.tokenOut,
+    //                params.amountIn,
+    //                returnedAmount,
+    //                poster // use original poster for the event
+    //            );
+    //            return returnedAmount;
+    //        } catch {
+    //            SwapFacet__SwapFailed.selector.revertWith();
+    //        }
+    //    }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                          GETTERS                           */

@@ -108,24 +108,24 @@ interface ISwapRouter is ISwapRouterBase {
         address poster
     ) external payable returns (uint256 amountOut);
 
-    /// @notice Executes a swap using EIP-2612 permit for token approval
-    /// @param params The parameters for the swap
-    /// tokenIn The token being sold
-    /// tokenOut The token being bought
-    /// amountIn The amount of tokenIn to swap
-    /// minAmountOut The minimum amount of tokenOut to receive
-    /// recipient The address to receive the output tokens
-    /// @param routerParams The router parameters for the swap
-    /// router The address of the router to use
-    /// approveTarget The address to approve the token transfer
-    /// swapData The calldata to execute on the router
-    /// @param permit The EIP-2612 permit data for token approval
-    /// @param poster The address that posted this swap opportunity
-    /// @return amountOut The amount of tokenOut received
-    function executeSwapWithPermit(
-        ExactInputParams calldata params,
-        RouterParams calldata routerParams,
-        PermitParams calldata permit,
-        address poster
-    ) external payable returns (uint256 amountOut);
+    //    /// @notice Executes a swap using EIP-2612 permit for token approval
+    //    /// @param params The parameters for the swap
+    //    /// tokenIn The token being sold
+    //    /// tokenOut The token being bought
+    //    /// amountIn The amount of tokenIn to swap
+    //    /// minAmountOut The minimum amount of tokenOut to receive
+    //    /// recipient The address to receive the output tokens
+    //    /// @param routerParams The router parameters for the swap
+    //    /// router The address of the router to use
+    //    /// approveTarget The address to approve the token transfer
+    //    /// swapData The calldata to execute on the router
+    //    /// @param permit The EIP-2612 permit data for token approval
+    //    /// @param poster The address that posted this swap opportunity
+    //    /// @return amountOut The amount of tokenOut received
+    //    function executeSwapWithPermit(
+    //        ExactInputParams calldata params,
+    //        RouterParams calldata routerParams,
+    //        PermitParams calldata permit,
+    //        address poster
+    //    ) external payable returns (uint256 amountOut);
 }

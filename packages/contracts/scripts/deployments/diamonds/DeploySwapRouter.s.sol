@@ -9,10 +9,11 @@ import {IDiamondInitHelper} from "./IDiamondInitHelper.sol";
 import {DeployDiamondCut} from "@towns-protocol/diamond/scripts/deployments/facets/DeployDiamondCut.s.sol";
 import {DeployDiamondLoupe} from "@towns-protocol/diamond/scripts/deployments/facets/DeployDiamondLoupe.s.sol";
 import {DeployIntrospection} from "@towns-protocol/diamond/scripts/deployments/facets/DeployIntrospection.s.sol";
-import {DeployOwnablePending} from "@towns-protocol/diamond/scripts/deployments/facets/DeployOwnablePending.s.sol";
-import {LibString} from "solady/utils/LibString.sol";
+import {DeployOwnable} from "@towns-protocol/diamond/scripts/deployments/facets/DeployOwnable.s.sol";
+import {DeployPausable} from "@towns-protocol/diamond/scripts/deployments/facets/DeployPausable.s.sol";
 import {DeployMetadata} from "../facets/DeployMetadata.s.sol";
 import {DeploySwapRouterFacet} from "../facets/DeploySwapRouterFacet.s.sol";
+import {LibString} from "solady/utils/LibString.sol";
 
 // contracts
 import {Diamond} from "@towns-protocol/diamond/src/Diamond.sol";
@@ -58,9 +59,9 @@ contract DeploySwapRouter is IDiamondInitHelper, DiamondHelper, Deployer {
         addCut(DeployIntrospection.makeCut(facet, IDiamond.FacetCutAction.Add));
         addInit(facet, DeployIntrospection.makeInitData());
 
-        facet = facetHelper.deploy("OwnablePendingFacet", deployer);
-        addCut(DeployOwnablePending.makeCut(facet, IDiamond.FacetCutAction.Add));
-        addInit(facet, DeployOwnablePending.makeInitData(deployer));
+        facet = facetHelper.deploy("OwnableFacet", deployer);
+        addCut(DeployOwnable.makeCut(facet, IDiamond.FacetCutAction.Add));
+        addInit(facet, DeployOwnable.makeInitData(deployer));
     }
 
     function diamondInitParams(address deployer) public returns (Diamond.InitParams memory) {
@@ -73,6 +74,13 @@ contract DeploySwapRouter is IDiamondInitHelper, DiamondHelper, Deployer {
             DeployMetadata.makeCut(facet, IDiamond.FacetCutAction.Add),
             facet,
             DeployMetadata.makeInitData(bytes32("SwapRouter"), "")
+        );
+
+        facet = facetHelper.deploy("PausableFacet", deployer);
+        addFacet(
+            DeployPausable.makeCut(facet, IDiamond.FacetCutAction.Add),
+            facet,
+            DeployPausable.makeInitData()
         );
 
         return

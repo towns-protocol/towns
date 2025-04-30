@@ -52,20 +52,20 @@ contract SwapRouter is ReentrancyGuardTransient, ISwapRouter, Facet {
     }
 
     /// @inheritdoc ISwapRouter
-    function executeSwapWithPermit(
-        ExactInputParams calldata params,
-        RouterParams calldata routerParams,
-        PermitParams calldata permit,
-        address poster
-    ) external payable nonReentrant returns (uint256 amountOut) {
-        // sanity check
-        if (permit.value < params.amountIn) SwapRouter__InvalidAmount.selector.revertWith();
-
-        _permit(params.tokenIn, permit);
-
-        // execute the swap with the permit owner as the payer
-        return _executeSwap(params, routerParams, permit.owner, poster);
-    }
+    //    function executeSwapWithPermit(
+    //        ExactInputParams calldata params,
+    //        RouterParams calldata routerParams,
+    //        PermitParams calldata permit,
+    //        address poster
+    //    ) external payable nonReentrant returns (uint256 amountOut) {
+    //        // sanity check
+    //        if (permit.value < params.amountIn) SwapRouter__InvalidAmount.selector.revertWith();
+    //
+    //        _permit(params.tokenIn, permit);
+    //
+    //        // execute the swap with the permit owner as the payer
+    //        return _executeSwap(params, routerParams, permit.owner, poster);
+    //    }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                          INTERNAL                          */
