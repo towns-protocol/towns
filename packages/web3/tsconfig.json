@@ -3,7 +3,25 @@
     "compilerOptions": {
         "baseUrl": "./src" /* Specify the root folder within your source files. */,
         "outDir": "./dist" /* Specify an output folder for all emitted files. */,
-        "types": ["vitest/globals"]
+        "types": ["vitest/globals"],
+        "paths": {
+            "space/*": ["space/*"],
+            "utils/*": ["utils/*"],
+            "cache/*": ["cache/*"],
+            "erc-721/*": ["erc-721/*"],
+            "space-dapp/*": ["space-dapp/*"],
+            "types/*": ["types/*"],
+            "river-registry/*": ["river-registry/*"],
+            "delegate-registry/*": ["delegate-registry/*"],
+            "wallet-link/*": ["wallet-link/*"],
+            "platform-requirements/*": ["platform-requirements/*"],
+            "pricing-modules/*": ["pricing-modules/*"],
+            "airdrop/*": ["airdrop/*"],
+            "eip-712/*": ["eip-712/*"],
+            "base-registry/*": ["base-registry/*"],
+            "space-registrar/*": ["space-registrar/*"],
+            "BaseContractShim": ["BaseContractShim.ts"]
+        }
     },
-    "include": ["src/**/*"]
+    "include": ["src/**/*", "tests/**/*"]
 }

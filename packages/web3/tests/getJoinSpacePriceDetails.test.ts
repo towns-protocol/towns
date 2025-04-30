@@ -1,10 +1,9 @@
 import { ethers } from 'ethers'
 import { makeBaseChainConfig } from '../../sdk/src/riverConfig'
 import { makeSpaceStreamId } from '../../sdk/src/id'
-import { LocalhostWeb3Provider } from '../src/LocalhostWeb3Provider'
-import { SpaceDapp } from '../src/v3'
+import { LocalhostWeb3Provider } from './LocalhostWeb3Provider'
+import { SpaceDapp } from '../src/space-dapp'
 import { makeDefaultMembershipInfo } from './utils'
-import { test, expect } from 'vitest'
 
 test('getJoinSpacePriceDetails returns correct values for free space', async () => {
     const wallet = ethers.Wallet.createRandom()
