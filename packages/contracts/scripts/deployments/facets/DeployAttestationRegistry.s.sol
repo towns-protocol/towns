@@ -8,7 +8,7 @@ import {IDiamond} from "@towns-protocol/diamond/src/IDiamond.sol";
 
 //contracts
 import {DeployLib} from "@towns-protocol/diamond/scripts/common/DeployLib.sol";
-import {AttestationRegistry} from "src/attest/AttestationRegistry.sol";
+import {AttestationRegistry} from "src/modules/AttestationRegistry.sol";
 
 library DeployAttestationRegistry {
     function selectors() internal pure returns (bytes4[] memory _selectors) {

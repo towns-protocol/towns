@@ -6,7 +6,7 @@ import {IERC6900ExecutionModule} from "@erc6900/reference-implementation/interfa
 import {IERC6900Module} from "@erc6900/reference-implementation/interfaces/IERC6900Module.sol";
 
 import {IERC165} from "@openzeppelin/contracts/interfaces/IERC165.sol";
-import {ITownsModule} from "src/attest/interfaces/ITownsModule.sol";
+import {ITownsApp} from "src/modules/interfaces/ITownsApp.sol";
 
 // libraries
 import {CustomRevert} from "../../utils/libraries/CustomRevert.sol";
@@ -124,8 +124,8 @@ library ModuleRegistryLib {
 
         if (moduleInfo.isBanned) BannedModule.selector.revertWith();
 
-        bytes32[] memory permissions = ITownsModule(module).requiredPermissions();
-        ExecutionManifest memory manifest = ITownsModule(module).executionManifest();
+        bytes32[] memory permissions = ITownsApp(module).requiredPermissions();
+        ExecutionManifest memory manifest = ITownsApp(module).executionManifest();
 
         if (permissions.length == 0) InvalidArrayInput.selector.revertWith();
 
@@ -256,7 +256,7 @@ library ModuleRegistryLib {
         if (
             !IERC165(module).supportsInterface(type(IERC6900Module).interfaceId) ||
             !IERC165(module).supportsInterface(type(IERC6900ExecutionModule).interfaceId) ||
-            !IERC165(module).supportsInterface(type(ITownsModule).interfaceId)
+            !IERC165(module).supportsInterface(type(ITownsApp).interfaceId)
         ) {
             ModuleDoesNotImplementInterface.selector.revertWith();
         }

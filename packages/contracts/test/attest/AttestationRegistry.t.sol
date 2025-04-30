@@ -8,8 +8,8 @@ import {ISchemaResolver} from "@ethereum-attestation-service/eas-contracts/resol
 import {IDiamond} from "@towns-protocol/diamond/src/IDiamond.sol";
 
 // libraries
-import {AttestationLib} from "src/attest/libraries/AttestationLib.sol";
-import {SchemaLib} from "src/attest/libraries/SchemaLib.sol";
+import {AttestationLib} from "src/modules/libraries/AttestationLib.sol";
+import {SchemaLib} from "src/modules/libraries/SchemaLib.sol";
 
 // types
 import {Attestation, EMPTY_UID, NotFound} from "@ethereum-attestation-service/eas-contracts/Common.sol";
@@ -23,8 +23,8 @@ import {DeployMockDiamond} from "scripts/deployments/utils/DeployMockDiamond.s.s
 import {DeployAttestationRegistry} from "scripts/deployments/facets/DeployAttestationRegistry.s.sol";
 import {DeploySchemaRegistry} from "scripts/deployments/facets/DeploySchemaRegistry.s.sol";
 
-import {AttestationRegistry} from "src/attest/AttestationRegistry.sol";
-import {SchemaRegistry} from "src/attest/SchemaRegistry.sol";
+import {AttestationRegistry} from "src/modules/AttestationRegistry.sol";
+import {SchemaRegistry} from "src/modules/SchemaRegistry.sol";
 
 // mocks
 import {MockPlugin} from "test/mocks/MockPlugin.sol";

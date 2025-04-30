@@ -7,14 +7,14 @@ import {IERC6900ExecutionModule} from "@erc6900/reference-implementation/interfa
 import {IERC6900Module} from "@erc6900/reference-implementation/interfaces/IERC6900Module.sol";
 
 import {IERC165} from "@openzeppelin/contracts/interfaces/IERC165.sol";
-import {ITownsModule} from "src/attest/interfaces/ITownsModule.sol";
+import {ITownsApp} from "src/modules/interfaces/ITownsApp.sol";
 
 // types
 import {ExecutionManifest} from "@erc6900/reference-implementation/interfaces/IERC6900ExecutionModule.sol";
 
 // contracts
 
-contract MockPlugin is ITownsModule {
+contract MockPlugin is ITownsApp {
     address public installedBy;
     bytes public initData;
 
@@ -37,7 +37,7 @@ contract MockPlugin is ITownsModule {
         return
             interfaceId == type(IERC6900Module).interfaceId ||
             interfaceId == type(IERC6900ExecutionModule).interfaceId ||
-            interfaceId == type(ITownsModule).interfaceId ||
+            interfaceId == type(ITownsApp).interfaceId ||
             interfaceId == type(IERC165).interfaceId;
     }
 

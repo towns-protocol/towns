@@ -4,14 +4,14 @@ pragma solidity ^0.8.23;
 // interfaces
 import {ExecutionManifest, IERC6900ExecutionModule, ManifestExecutionFunction, ManifestExecutionHook} from "@erc6900/reference-implementation/interfaces/IERC6900ExecutionModule.sol";
 import {IERC6900Module} from "@erc6900/reference-implementation/interfaces/IERC6900Module.sol";
-import {ITownsModule} from "src/attest/interfaces/ITownsModule.sol";
+import {ITownsApp} from "src/modules/interfaces/ITownsApp.sol";
 
 /**
  * @title SavingsModule
  * @notice A module that manages savings for a ModularAccount space
  * @dev Implements ERC6900 module interface for integration with ModularAccount
  */
-contract MockSavingsModule is ITownsModule {
+contract MockSavingsModule is ITownsApp {
     // Events
     event Deposited(address indexed account, uint256 amount);
     event Withdrawn(address indexed account, uint256 amount);
@@ -34,7 +34,7 @@ contract MockSavingsModule is ITownsModule {
         return
             interfaceId == type(IERC6900ExecutionModule).interfaceId ||
             interfaceId == type(IERC6900Module).interfaceId ||
-            interfaceId == type(ITownsModule).interfaceId;
+            interfaceId == type(ITownsApp).interfaceId;
     }
 
     /**

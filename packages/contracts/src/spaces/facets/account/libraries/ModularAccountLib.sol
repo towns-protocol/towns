@@ -3,8 +3,8 @@ pragma solidity ^0.8.23;
 
 // interfaces
 import {IImplementationRegistry} from "src/factory/facets/registry/IImplementationRegistry.sol";
-import {IModuleRegistry} from "src/attest/interfaces/IModuleRegistry.sol";
-import {ITownsModule} from "src/attest/interfaces/ITownsModule.sol";
+import {IModuleRegistry} from "src/modules/interfaces/IModuleRegistry.sol";
+import {ITownsApp} from "src/modules/interfaces/ITownsApp.sol";
 import {IERC6900Module} from "@erc6900/reference-implementation/interfaces/IERC6900Module.sol";
 import {IERC6900ExecutionModule} from "@erc6900/reference-implementation/interfaces/IERC6900ExecutionModule.sol";
 import {IERC6900Account} from "@erc6900/reference-implementation/interfaces/IERC6900Account.sol";
@@ -277,7 +277,7 @@ library ModularAccountLib {
         address module,
         ExecutionManifest memory cachedManifest
     ) internal pure {
-        ExecutionManifest memory moduleManifest = ITownsModule(module).executionManifest();
+        ExecutionManifest memory moduleManifest = ITownsApp(module).executionManifest();
 
         // Hash all cached and latest manifests and compare
         bytes32 moduleManifestHash = keccak256(abi.encode(moduleManifest));
@@ -304,6 +304,6 @@ library ModularAccountLib {
             selector == IERC6900Module.onUninstall.selector ||
             selector == IERC6900ExecutionModule.executionManifest.selector ||
             selector == IDiamondCut.diamondCut.selector ||
-            selector == ITownsModule.requiredPermissions.selector;
+            selector == ITownsApp.requiredPermissions.selector;
     }
 }
