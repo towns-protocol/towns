@@ -6,6 +6,7 @@ import (
 	"sync"
 	"time"
 
+	"connectrpc.com/connect"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/linkdata/deadlock"
 	"go.opentelemetry.io/otel/attribute"
@@ -227,8 +228,10 @@ func (ss *SyncerSet) modify(ctx context.Context, req ModifyRequest) error {
 			if selectedNode.Cmp(ss.localNodeAddress) == 0 {
 				nodeAvailable = true
 			} else {
-				if _, err := ss.nodeRegistry.GetStreamServiceClientForAddress(selectedNode); err == nil {
-					nodeAvailable = true
+				if client, err := ss.nodeRegistry.GetStreamServiceClientForAddress(selectedNode); err == nil {
+					if _, err = client.Info(ctx, connect.NewRequest(&InfoRequest{})); err == nil {
+						nodeAvailable = true
+					}
 				}
 			}
 		}
@@ -258,9 +261,11 @@ func (ss *SyncerSet) modify(ctx context.Context, req ModifyRequest) error {
 			if !nodeAvailable && len(remotes) > 0 {
 				selectedNode = stream.GetStickyPeer()
 				for range remotes {
-					if _, err = ss.nodeRegistry.GetStreamServiceClientForAddress(selectedNode); err == nil {
-						nodeAvailable = true
-						break
+					if client, err := ss.nodeRegistry.GetStreamServiceClientForAddress(selectedNode); err == nil {
+						if _, err = client.Info(ctx, connect.NewRequest(&InfoRequest{})); err == nil {
+							nodeAvailable = true
+							break
+						}
 					}
 					selectedNode = stream.AdvanceStickyPeer(selectedNode)
 				}
