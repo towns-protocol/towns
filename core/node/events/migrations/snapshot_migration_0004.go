@@ -7,6 +7,12 @@ import (
 	. "github.com/towns-protocol/towns/core/node/protocol"
 )
 
+/**
+ * One time fix migration to remove lost sessionIds from key solicitations
+ * Loop over all Member objects, count sessionIds across solicitations
+ * and log those appearing in get 25% of members, checking if they map to
+ * username or display_name encrypted payloads
+ */
 func snapshot_migration_0004(iSnapshot *Snapshot) *Snapshot {
 	return snapshot_migration_0004_(iSnapshot, false)
 }

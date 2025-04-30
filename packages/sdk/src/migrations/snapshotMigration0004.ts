@@ -7,8 +7,9 @@ import { toBinary } from '@bufbuild/protobuf'
 const logger = dlogger('csb:snapshotMigration0004')
 const LOG_SIZE_REDUCTION = false
 /**
+ * One time fix migration to remove lost sessionIds from key solicitations
  * Loop over all Member objects, count sessionIds across solicitations
- * and log those appearing in >50% of members, checking if they map to
+ * and log those appearing in get 25% of members, checking if they map to
  * username or display_name encrypted payloads
  */
 export function snapshotMigration0004(snapshot: Snapshot, force: boolean = false): Snapshot {
