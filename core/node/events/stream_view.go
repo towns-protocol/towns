@@ -134,7 +134,7 @@ func MakeRemoteStreamView(stream *StreamAndCookie) (*StreamView, error) {
 		}
 	}
 
-	snapshot := miniblocks[snapshotIndex].GetSnapshot()
+	snapshot := miniblocks[0].GetSnapshot()
 	if snapshot == nil {
 		return nil, RiverError(Err_STREAM_BAD_EVENT, "no snapshot").Func("MakeStreamView")
 	}
