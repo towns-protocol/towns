@@ -54,7 +54,6 @@ Concerning streams can be further examined with
 
     ./river_audit_db inspect stream <stream-id>
 
-
 ## Run audit tool to check for and repair streams with >> miniblock candidates
 
 To find streams that have at least one candidate in storage, run
