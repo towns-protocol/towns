@@ -341,15 +341,15 @@ export async function setupWalletsAndContexts() {
         makeTestClient({
             context: alicesContext,
             deviceId: 'alice',
-            entitlementsDelegate: new Entitlements(riverConfig, aliceSpaceDapp as SpaceDapp),
+            entitlementsDelegate: new Entitlements(riverConfig, aliceSpaceDapp),
         }),
         makeTestClient({
             context: bobsContext,
-            entitlementsDelegate: new Entitlements(riverConfig, bobSpaceDapp as SpaceDapp),
+            entitlementsDelegate: new Entitlements(riverConfig, bobSpaceDapp),
         }),
         makeTestClient({
             context: carolsContext,
-            entitlementsDelegate: new Entitlements(riverConfig, carolSpaceDapp as SpaceDapp),
+            entitlementsDelegate: new Entitlements(riverConfig, carolSpaceDapp),
         }),
     ])
 
