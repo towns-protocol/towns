@@ -55,13 +55,15 @@ The output files contain a json object per line with:
 ```
 Each file is the input to initiate the migration process. Files can be concatenated to migrate streams from multiple types or nodes at once.
 
+
+### Migrate streams per node
 Another approach is to extract non-replicated per node. Here is the example to grab all non-replicated streams that have yet to start the migration to replicated streams.
 
 ```sh
-./env/omega/run.sh stream not-migrated <output-file> <stream-limit> <node-address>
+./env/omega/run.sh stream not-migrated <output-stream-file> <stream-limit> <node-address>
 ```
 
-If stream-limit is set to 0 not limit is applied. This output file can be used as input file in the initiate migration step and has the same format as the output file when getting all not replicated streams in the previous step.
+If stream-limit is set to 0 no limit is applied. This output file can be used as input file in the initiate migration step and has the same format as the output file when getting all not replicated streams in the previous step.
 
 ### Initiate migration
 This requires the output file generated in the previous step.
