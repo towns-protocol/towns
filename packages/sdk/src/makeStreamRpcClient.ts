@@ -1,5 +1,5 @@
 import { Client, createClient } from '@connectrpc/connect'
-import { ConnectTransportOptions as ConnectTransportOptionsWeb } from '@connectrpc/connect-web'
+import { type ConnectTransportOptions as ConnectTransportOptionsWeb } from '@connectrpc/connect-web'
 import { Snapshot, StreamService } from '@towns-protocol/proto'
 import { dlog } from '@towns-protocol/dlog'
 import { getEnvVar, randomUrlSelector } from './utils'
@@ -27,11 +27,11 @@ export type StreamRpcClient = Client<typeof StreamService> & {
     opts: StreamRpcClientOptions
 }
 
-export function makeStreamRpcClient(
+export async function makeStreamRpcClient(
     dest: string,
     refreshNodeUrl?: () => Promise<string>,
     opts?: RpcOptions,
-): StreamRpcClient {
+): Promise<StreamRpcClient> {
     const transportId = nextRpcClientNum++
     const retryParams = opts?.retryParams ?? DEFAULT_RETRY_PARAMS
     logInfo('makeStreamRpcClient, transportId =', transportId)
@@ -56,7 +56,7 @@ export function makeStreamRpcClient(
             useProtoFieldName: true,
         }
     }
-    const transport = createHttp2ConnectTransport(options)
+    const transport = await createHttp2ConnectTransport(options)
 
     const client: StreamRpcClient = createClient(StreamService, transport) as StreamRpcClient
     client.url = url

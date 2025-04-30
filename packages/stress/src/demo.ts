@@ -36,7 +36,9 @@ async function spamInfo(count: number) {
     const riverRegistry = createRiverRegistry(staticRiverProvider, config.river.chainConfig)
     const urls = await riverRegistry.getOperationalNodeUrls()
     const selectedUrl = randomUrlSelector(urls)
-    const rpcClient = makeStreamRpcClient(selectedUrl, () => riverRegistry.getOperationalNodeUrls())
+    const rpcClient = await makeStreamRpcClient(selectedUrl, () =>
+        riverRegistry.getOperationalNodeUrls(),
+    )
     for (let i = 0; i < count; i++) {
         logger.debug({ iteration: i }, 'iteration')
         const info = await rpcClient.info(create(InfoRequestSchema, {}), {
