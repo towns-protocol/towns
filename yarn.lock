@@ -7882,6 +7882,7 @@ __metadata:
     tailwindcss: ^3.4.4
     tailwindcss-animate: ^1.0.7
     typescript: ^5.8.2
+    use-stick-to-bottom: ^1.1.0
     viem: ^2.21.51
     vite: ^6.1.0
     vite-plugin-checker: ^0.8.0
@@ -28808,6 +28809,15 @@ __metadata:
     "@types/react":
       optional: true
   checksum: 925d1922f9853e516eaad526b6fed1be38008073067274f0ecc3f56b17bb8ab63480140dd7c271f94150027c996cea4efe83d3e3525e8f3eda22055f6a39220b
+  languageName: node
+  linkType: hard
+
+"use-stick-to-bottom@npm:^1.1.0":
+  version: 1.1.0
+  resolution: "use-stick-to-bottom@npm:1.1.0"
+  peerDependencies:
+    react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
+  checksum: 81bfeb80aa14807b6712667280ffc3770e730e201c469449681254b112f9009d36b991ce8a9d6ac741496d1a14a25a68a25b63ced55ced4cf91fe326b3e63d7c
   languageName: node
   linkType: hard
 
