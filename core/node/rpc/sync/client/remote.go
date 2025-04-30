@@ -43,33 +43,14 @@ func newRemoteSyncer(
 	forwarderSyncID string,
 	remoteAddr common.Address,
 	client protocolconnect.StreamServiceClient,
-	cookies []*SyncCookie,
 	unsubStream func(streamID StreamId),
 	messages *dynmsgbuf.DynamicBuffer[*SyncStreamsResponse],
 	otelTracer trace.Tracer,
 ) (*remoteSyncer, error) {
 	syncStreamCtx, syncStreamCancel := context.WithCancel(ctx)
-	responseStream, err := client.SyncStreams(syncStreamCtx, connect.NewRequest(&SyncStreamsRequest{SyncPos: cookies}))
+	responseStream, err := client.SyncStreams(syncStreamCtx, connect.NewRequest(&SyncStreamsRequest{}))
 	if err != nil {
-		go func() {
-			defer syncStreamCancel()
-			timeout := time.After(15 * time.Second)
-
-			for _, cookie := range cookies {
-				select {
-				case <-timeout:
-					return
-				case <-ctx.Done():
-					return
-				default:
-					_ = messages.AddMessage(&SyncStreamsResponse{
-						SyncOp:   SyncOp_SYNC_DOWN,
-						StreamId: cookie.GetStreamId(),
-					})
-				}
-			}
-		}()
-
+		syncStreamCancel()
 		return nil, err
 	}
 
@@ -102,11 +83,6 @@ func newRemoteSyncer(
 	}
 
 	s.syncID = responseStream.Msg().GetSyncId()
-
-	for _, cookie := range cookies {
-		streamID, _ := StreamIdFromBytes(cookie.GetStreamId())
-		s.streams.Store(streamID, struct{}{})
-	}
 
 	return s, nil
 }
