@@ -127,13 +127,12 @@ func (s *StreamCache) Start(ctx context.Context) error {
 	// schedule sync tasks for all streams that are local to this node.
 	// these tasks sync up the local db with the latest block in the registry.
 	var localStreamResults []*river.StreamWithId
-	err := s.params.Registry.ForAllStreams(
+	err := s.params.Registry.ForAllStreamsOnNode(
 		ctx,
 		s.params.AppliedBlockNum,
+		s.params.Wallet.Address,
 		func(stream *river.StreamWithId) bool {
-			if slices.Contains(stream.Nodes(), s.params.Wallet.Address) {
-				localStreamResults = append(localStreamResults, stream)
-			}
+			localStreamResults = append(localStreamResults, stream)
 			return true
 		},
 	)
