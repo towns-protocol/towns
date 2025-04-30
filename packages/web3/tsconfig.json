@@ -1,8 +1,9 @@
 {
     "extends": "./../tsconfig.base.json",
     "compilerOptions": {
-        "baseUrl": "./src" /* Specify the root folder within your source files. */,
-        "outDir": "./dist" /* Specify an output folder for all emitted files. */,
+        "baseUrl": "./src",
+        "outDir": "./dist",
+        "rootDir": "src",
         "types": ["vitest/globals"],
         "paths": {
             "space/*": ["space/*"],
@@ -20,8 +21,9 @@
             "eip-712/*": ["eip-712/*"],
             "base-registry/*": ["base-registry/*"],
             "space-registrar/*": ["space-registrar/*"],
+            "space-owner/*": ["space-owner/*"],
             "BaseContractShim": ["BaseContractShim.ts"]
         }
     },
-    "include": ["src/**/*", "tests/**/*"]
+    "include": ["src/**/*"]
 }

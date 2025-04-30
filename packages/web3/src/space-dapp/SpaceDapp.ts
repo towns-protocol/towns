@@ -60,6 +60,7 @@ import {
     OwnerOfTokenRequest,
     IsTokenBanned,
 } from 'cache/Keyable'
+import { SpaceOwner } from 'space-owner/SpaceOwner'
 
 const logger = dlogger('csb:SpaceDapp:debug')
 
@@ -151,6 +152,7 @@ export class SpaceDapp {
     public readonly walletLink: WalletLink
     public readonly platformRequirements: PlatformRequirements
     public readonly airdrop: RiverAirdropDapp
+    public readonly spaceOwner: SpaceOwner
 
     public readonly entitlementCache: EntitlementCache<EntitlementRequest, EntitlementData[]>
     public readonly entitledWalletCache: EntitlementCache<EntitlementRequest, EntitledWallet>
@@ -170,6 +172,7 @@ export class SpaceDapp {
             config.addresses.spaceFactory,
             provider,
         )
+        this.spaceOwner = new SpaceOwner(config.addresses.spaceOwner, provider)
         this.airdrop = new RiverAirdropDapp(config, provider)
 
         // For RPC providers that pool for events, we need to set the polling interval to a lower value
@@ -577,8 +580,8 @@ export class SpaceDapp {
         if (!space) {
             throw new Error(`Space with spaceId "${spaceId}" is not found.`)
         }
-        const spaceInfo = await space.getSpaceInfo()
-        return space.SpaceOwnerErc721A.read.tokenURI(spaceInfo.tokenId)
+        const spaceInfo = await this.spaceOwner.read.getSpaceInfo(spaceId)
+        return this.spaceOwner.read.tokenURI(spaceInfo.tokenId)
     }
 
     public memberTokenURI(spaceId: string, tokenId: string) {
@@ -638,7 +641,7 @@ export class SpaceDapp {
         const [owner, disabled, spaceInfo] = await Promise.all([
             space.Ownable.read.owner(),
             space.Pausable.read.paused(),
-            space.getSpaceInfo(),
+            this.spaceOwner.read.getSpaceInfo(spaceId),
         ])
         return {
             address: space.Address,
@@ -669,13 +672,9 @@ export class SpaceDapp {
         }
         return wrapTransaction(
             () =>
-                space.SpaceOwner.write(signer).updateSpaceInfo(
-                    space.Address,
-                    name,
-                    uri,
-                    shortDescription,
-                    longDescription,
-                ),
+                this.spaceOwner
+                    .write(signer)
+                    .updateSpaceInfo(space.Address, name, uri, shortDescription, longDescription),
             txnOpts,
         )
     }

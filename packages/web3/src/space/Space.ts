@@ -14,7 +14,6 @@ import {
 } from 'types'
 import { IChannelBase, IChannelShim } from './IChannelShim'
 import { IRolesBase, IRolesShim } from './IRolesShim'
-import { ISpaceOwnerBase, ISpaceOwnerShim } from './ISpaceOwnerShim'
 
 import { IEntitlementsShim } from './IEntitlementsShim'
 import { IMulticallShim } from './IMulticallShim'
@@ -53,14 +52,12 @@ export class Space {
     private readonly ownable: OwnableFacetShim
     private readonly pausable: TokenPausableFacetShim
     private readonly roles: IRolesShim
-    private readonly spaceOwner: ISpaceOwnerShim
     private readonly membership: IMembershipShim
     private readonly banning: IBanningShim
     private readonly erc721AQueryable: IERC721AQueryableShim
     private readonly entitlementDataQueryable: IEntitlementDataQueryableShim
     private readonly prepay: IPrepayShim
     private readonly erc721A: IERC721AShim
-    private readonly spaceOwnerErc721A: IERC721AShim
     private readonly tipping: ITippingShim
     private readonly review: IReviewShim
     private readonly treasury: ITreasuryShim
@@ -83,8 +80,6 @@ export class Space {
         this.ownable = new OwnableFacetShim(address, provider)
         this.pausable = new TokenPausableFacetShim(address, provider)
         this.roles = new IRolesShim(address, provider)
-        this.spaceOwner = new ISpaceOwnerShim(config.addresses.spaceOwner, provider)
-        this.spaceOwnerErc721A = new IERC721AShim(config.addresses.spaceOwner, provider)
         this.membership = new IMembershipShim(address, provider)
         this.banning = new IBanningShim(address, provider)
         this.erc721AQueryable = new IERC721AQueryableShim(address, provider)
@@ -104,8 +99,6 @@ export class Space {
             this.ownable,
             this.pausable,
             this.roles,
-            this.spaceOwner,
-            this.spaceOwnerErc721A,
             this.membership,
             this.banning,
             this.erc721AQueryable,
@@ -149,10 +142,6 @@ export class Space {
         return this.entitlements
     }
 
-    public get SpaceOwner(): ISpaceOwnerShim {
-        return this.spaceOwner
-    }
-
     public get Membership(): IMembershipShim {
         return this.membership
     }
@@ -175,10 +164,6 @@ export class Space {
 
     public get ERC721A(): IERC721AShim {
         return this.erc721A
-    }
-
-    public get SpaceOwnerErc721A(): IERC721AShim {
-        return this.spaceOwnerErc721A
     }
 
     public get Tipping(): ITippingShim {
@@ -205,10 +190,6 @@ export class Space {
             count,
             amount,
         }
-    }
-
-    public getSpaceInfo(): Promise<ISpaceOwnerBase.SpaceStruct> {
-        return this.spaceOwner.read.getSpaceInfo(this.address)
     }
 
     public async getRole(roleId: BigNumberish): Promise<RoleDetails | null> {
