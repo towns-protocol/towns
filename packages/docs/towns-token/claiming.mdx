@@ -8,7 +8,7 @@ At the end of each distribution period, addresses that are delegating or designa
 
 ## Claim Execution
 
-Rewards are claimed by calling the `claimReward(address beneficiary, address recipient)` function on the [RewardsDistribution](https://github.com/towns-protocol/towns/blob/main/contracts/src/base/registry/facets/distribution/v2/RewardsDistribution.sol) contract, which transfers the tokens to the recipient's wallet.
+Rewards are claimed by calling the `claimReward(address beneficiary, address recipient)` function on the [RewardsDistribution](https://github.com/towns-protocol/towns/blob/main/packages/contracts/src/base/registry/facets/distribution/v2/RewardsDistribution.sol) contract, which transfers the tokens to the recipient's wallet.
 
 The `claimReward` function is called from the claimer address, who is either the beneficiary or an authorized claimer that can claim the reward for the beneficiary.
 
