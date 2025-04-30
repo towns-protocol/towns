@@ -2,11 +2,11 @@ import { BigNumber, BigNumberish, ethers } from 'ethers'
 
 import { BasicRoleInfo, Permission, Address } from './ContractTypes'
 import { BaseChainConfig } from './IStaticContractsInfo'
-import { ISpaceDapp } from './ISpaceDapp'
 import {
     IArchitectBase as ISpaceArchitectBaseV3,
     MockERC721AShim as MockERC721AShimV3,
     IMembershipBase as IMembershipBaseV3,
+    SpaceDapp,
 } from './v3'
 
 import { getTestGatingNFTContractAddress } from './TestGatingNFT'
@@ -43,7 +43,7 @@ export async function getTestGatingNftAddress(_chainId: number): Promise<Address
 }
 
 export async function getFilteredRolesFromSpace(
-    spaceDapp: ISpaceDapp,
+    spaceDapp: SpaceDapp,
     spaceNetworkId: string,
 ): Promise<BasicRoleInfo[]> {
     const spaceRoles = await spaceDapp.getRoles(spaceNetworkId)
