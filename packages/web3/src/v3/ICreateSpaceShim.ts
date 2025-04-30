@@ -5,7 +5,7 @@ import {
     ICreateSpaceInterface as LocalhostInterface,
 } from '@towns-protocol/generated/dev/typings/ICreateSpace'
 
-import LocalhostAbi from '@towns-protocol/generated/dev/abis/ICreateSpace.abi.json' assert { type: 'json' }
+import LocalhostAbi from '@towns-protocol/generated/dev/abis/ICreateSpace.abi.json' with { type: 'json' }
 
 import { ethers } from 'ethers'
 import { BaseContractShim } from './BaseContractShim'

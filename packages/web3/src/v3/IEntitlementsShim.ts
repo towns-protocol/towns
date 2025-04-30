@@ -4,7 +4,7 @@ import {
     IEntitlementsManagerInterface as LocalhostInterface,
 } from '@towns-protocol/generated/dev/typings/IEntitlementsManager'
 
-import LocalhostAbi from '@towns-protocol/generated/dev/abis/EntitlementsManager.abi.json' assert { type: 'json' }
+import LocalhostAbi from '@towns-protocol/generated/dev/abis/EntitlementsManager.abi.json' with { type: 'json' }
 
 import { ethers } from 'ethers'
 import { BaseContractShim } from './BaseContractShim'

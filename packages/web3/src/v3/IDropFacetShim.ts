@@ -3,7 +3,7 @@ import {
     IDropFacetInterface as DevInterface,
 } from '@towns-protocol/generated/dev/typings/IDropFacet'
 
-import DevAbi from '@towns-protocol/generated/dev/abis/DropFacet.abi.json' assert { type: 'json' }
+import DevAbi from '@towns-protocol/generated/dev/abis/DropFacet.abi.json' with { type: 'json' }
 
 import { ethers } from 'ethers'
 import { BaseContractShim } from './BaseContractShim'

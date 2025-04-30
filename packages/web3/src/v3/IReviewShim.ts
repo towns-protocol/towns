@@ -7,7 +7,7 @@ import {
 import { ContractTransaction, ethers } from 'ethers'
 import { BaseContractShim } from './BaseContractShim'
 
-import DevAbi from '@towns-protocol/generated/dev/abis/IReview.abi.json' assert { type: 'json' }
+import DevAbi from '@towns-protocol/generated/dev/abis/IReview.abi.json' with { type: 'json' }
 import { Address } from 'abitype'
 import { bin_toHexString } from '@towns-protocol/dlog'
 
