@@ -18,7 +18,7 @@ import {RolesBaseSetup} from "test/spaces/roles/RolesBaseSetup.sol";
 // solhint-disable-next-line max-line-length
 import {EntitlementsService__EntitlementDoesNotExist, EntitlementsService__InvalidEntitlementAddress, EntitlementsService__InvalidEntitlementInterface} from "src/spaces/facets/entitlements/EntitlementsManagerService.sol";
 // solhint-disable-next-line max-line-length
-import {Validator__InvalidByteLength, Validator__InvalidStringLength} from "src/utils/libraries/Validator.sol";
+import {Validator} from "src/utils/libraries/Validator.sol";
 // solhint-disable-next-line max-line-length
 
 // mocks
@@ -132,7 +132,7 @@ contract RolesTest is RolesBaseSetup {
 
     function test_createRole_revert_when_empty_name() external {
         vm.prank(founder);
-        vm.expectRevert(Validator__InvalidStringLength.selector);
+        vm.expectRevert(Validator.InvalidLength.selector);
         roles.createRole("", new string[](0), new IRoles.CreateEntitlement[](0));
     }
 
@@ -179,7 +179,7 @@ contract RolesTest is RolesBaseSetup {
         entitlements[0] = CreateEntitlement({module: mockEntitlement, data: ""});
 
         vm.prank(founder);
-        vm.expectRevert(Validator__InvalidByteLength.selector);
+        vm.expectRevert(Validator.InvalidLength.selector);
         roles.createRole(roleName, permissions, entitlements);
     }
 
