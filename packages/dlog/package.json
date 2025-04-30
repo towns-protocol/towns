@@ -23,7 +23,6 @@
     "dependencies": {
         "@bufbuild/protobuf": "^2.2.2",
         "@towns-protocol/proto": "workspace:^",
-        "browser-or-node": "^3.0.0",
         "debug": "^4.3.4",
         "ethereum-cryptography": "^1.2.0"
     },
