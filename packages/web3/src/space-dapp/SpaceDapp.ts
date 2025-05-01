@@ -585,7 +585,7 @@ export class SpaceDapp {
         if (!space) {
             throw new Error(`Space with spaceId "${spaceId}" is not found.`)
         }
-        const spaceInfo = await this.spaceOwner.read.getSpaceInfo(spaceId)
+        const spaceInfo = await this.spaceOwner.read.getSpaceInfo(space.Address)
         return this.spaceOwner.read.tokenURI(spaceInfo.tokenId)
     }
 
@@ -643,10 +643,11 @@ export class SpaceDapp {
         if (!space) {
             return undefined
         }
+
         const [owner, disabled, spaceInfo] = await Promise.all([
             space.Ownable.read.owner(),
             space.Pausable.read.paused(),
-            this.spaceOwner.read.getSpaceInfo(spaceId),
+            this.spaceOwner.read.getSpaceInfo(space.Address),
         ])
         return {
             address: space.Address,
