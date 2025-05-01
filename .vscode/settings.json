@@ -49,5 +49,8 @@
   },
   "wake.compiler.solc.remappings": [],
   "vitest.maximumConfigs": 15,
-  "vitest.disableWorkspaceWarning": true
+  "vitest.disableWorkspaceWarning": true,
+  "typescript.preferences.autoImportFileExcludePatterns": [
+    "**/@radix-ui/react-*",
+  ],
 }
