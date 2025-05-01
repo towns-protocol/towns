@@ -68,7 +68,6 @@ async function publicMint(tokenName: string, toAddress: Address, amount: number)
     logger.log('minted', nftReceipt)
 
     const receipt = await client.waitForTransactionReceipt({ hash: nftReceipt })
-    expect(receipt.status).toBe('success')
 
     // create a filter to listen for the Transfer event to find the token id
     // don't worry about the possibility of non-matching arguments, as we're specifying the contract

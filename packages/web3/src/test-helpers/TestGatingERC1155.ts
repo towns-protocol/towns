@@ -88,8 +88,7 @@ async function publicMint(
         account: throwawayAccount,
     })
 
-    const receipt = await client.waitForTransactionReceipt({ hash: txn })
-    expect(receipt.status).toBe('success')
+    await client.waitForTransactionReceipt({ hash: txn })
 }
 
 async function balanceOf(

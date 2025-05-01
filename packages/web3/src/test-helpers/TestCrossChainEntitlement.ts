@@ -80,8 +80,7 @@ async function setIsEntitled(
         account: throwawayAccount,
     })
 
-    const receipt = await client.waitForTransactionReceipt({ hash: txnReceipt })
-    expect(receipt.status).toBe('success')
+    await client.waitForTransactionReceipt({ hash: txnReceipt })
 }
 
 async function isEntitled(

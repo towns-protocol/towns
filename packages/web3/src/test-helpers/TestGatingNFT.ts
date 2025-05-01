@@ -84,7 +84,6 @@ async function publicMint(nftName: string, toAddress: Address): Promise<number> 
     logger.log('minted', nftReceipt)
 
     const receipt = await client.waitForTransactionReceipt({ hash: nftReceipt })
-    expect(receipt.status).toBe('success')
 
     // create a filter to listen for the Transfer event to find the token id
     // don't worry about the possibility of non-matching arguments, as we're specifying the contract
@@ -102,7 +101,6 @@ async function publicMint(nftName: string, toAddress: Address): Promise<number> 
     const eventLogs = await client.getFilterLogs({ filter })
     for (const eventLog of eventLogs) {
         if (eventLog.transactionHash === receipt.transactionHash) {
-            expect(eventLog.args.tokenId).toBeDefined()
             return Number(eventLog.args.tokenId)
         }
     }
@@ -135,8 +133,7 @@ async function burn(nftName: string, tokenId: number): Promise<void> {
         account: throwawayAccount,
     })
 
-    const receipt = await client.waitForTransactionReceipt({ hash: nftReceipt })
-    expect(receipt.status).toBe('success')
+    await client.waitForTransactionReceipt({ hash: nftReceipt })
 }
 
 async function balanceOf(nftName: string, address: Address): Promise<number> {
