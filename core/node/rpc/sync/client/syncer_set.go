@@ -138,13 +138,15 @@ func (ss *SyncerSet) distributeMessages() {
 	for {
 		select {
 		case <-ss.ctx.Done():
-			if err := context.Cause(ss.ctx); err != nil {
+			err := context.Cause(ss.ctx)
+			if err != nil {
 				log.Errorw("Sync operation stopped", "err", err)
 			} else {
 				log.Debug("Sync operation stopped")
 			}
 			for _, sub := range ss.subscriptions {
 				sub.messages.Close()
+				sub.cancel(err)
 			}
 			return
 		case _, open := <-ss.messages.Wait():
@@ -155,6 +157,7 @@ func (ss *SyncerSet) distributeMessages() {
 			if msgs == nil {
 				for _, sub := range ss.subscriptions {
 					sub.messages.Close()
+					sub.cancel(nil)
 				}
 				return
 			}
@@ -206,13 +209,15 @@ func (ss *SyncerSet) distributeMessages() {
 
 				select {
 				case <-ss.ctx.Done():
-					if err := context.Cause(ss.ctx); err != nil {
+					err := context.Cause(ss.ctx)
+					if err != nil {
 						log.Errorw("Sync operation stopped", "error", err)
 					} else {
 						log.Debug("Sync operation stopped")
 					}
 					for _, sub := range ss.subscriptions {
 						sub.messages.Close()
+						sub.cancel(err)
 					}
 					return
 				default:
@@ -224,6 +229,7 @@ func (ss *SyncerSet) distributeMessages() {
 			if !open {
 				for _, sub := range ss.subscriptions {
 					sub.messages.Close()
+					sub.cancel(nil)
 				}
 				return
 			}
