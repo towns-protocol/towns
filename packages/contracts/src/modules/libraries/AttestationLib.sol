@@ -166,7 +166,9 @@ library AttestationLib {
         uint256 availableValue,
         bool last
     ) internal returns (uint256 totalUsedValue) {
+        // Get the total number of attestations to process
         uint256 len = attestations.length;
+        // Optimization: If only one attestation, use the single attestation resolver
         if (len == 1) {
             return
                 _resolveAttestation(
@@ -179,25 +181,33 @@ library AttestationLib {
                 );
         }
 
+        // Get the resolver contract for this schema
         ISchemaResolver resolver = ISchemaResolver(schema.resolver);
+        // If no resolver is set, handle zero-value case and refund if this is the last batch
         if (address(resolver) == address(0)) {
             _refundIfZeroValue(values, availableValue, last);
             return 0;
         }
 
+        // Check if the resolver accepts ETH payments
         bool isPayable = resolver.isPayable();
 
+        // Calculate total value needed and validate each attestation's value
         for (uint256 i; i < len; ++i) {
             uint256 val = values[i];
-            if (val == 0) continue;
+            if (val == 0) continue; // Skip zero-value attestations
+            // Ensure resolver accepts payments if value is non-zero
             if (!isPayable) NotPayable.selector.revertWith();
+            // Ensure sufficient balance for this attestation
             if (val > availableValue) InsufficientBalance.selector.revertWith();
+            // Safe arithmetic: subtract from available and add to total
             unchecked {
                 availableValue -= val;
                 totalUsedValue += val;
             }
         }
 
+        // Process either revocation or attestation for multiple items
         if (isRevocation) {
             if (!resolver.multiRevoke{value: totalUsedValue}(attestations, values)) {
                 InvalidRevocation.selector.revertWith();
@@ -206,6 +216,12 @@ library AttestationLib {
             InvalidAttestation.selector.revertWith();
         }
 
+        // The 'last' parameter indicates this is the final batch in a sequence of operations.
+        // When true, any remaining ETH should be refunded to the sender.
+        // This is important because:
+        // 1. Multiple batches might be processed in sequence
+        // 2. We want to refund unused ETH only after all batches are complete
+        // 3. Prevents unnecessary gas costs from multiple refunds
         if (last) _refund(availableValue);
 
         return totalUsedValue;

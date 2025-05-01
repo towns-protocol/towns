@@ -28,7 +28,7 @@ import {SchemaRegistry} from "src/modules/SchemaRegistry.sol";
 
 // mocks
 import {MockPlugin} from "test/mocks/MockPlugin.sol";
-import {MockPluginResolver} from "test/mocks/MockPluginResolver.sol";
+import {MockPluginResolver, MockPayableResolver} from "test/mocks/MockResolvers.sol";
 
 contract AttestationRegistryTest is TestUtils {
     DeployMockDiamond diamondHelper = new DeployMockDiamond();
@@ -358,6 +358,40 @@ contract AttestationRegistryTest is TestUtils {
         vm.prank(developer);
         vm.expectRevert(AttestationLib.InvalidRevocation.selector);
         attestationRegistry.revoke(request);
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                           Charging                           */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    function test_resolverIsPayable() external {
+        MockPayableResolver chargingResolver = new MockPayableResolver(diamond);
+
+        bytes32 schemaId = registerSchema({
+            testSchema: "test",
+            resolver: address(chargingResolver),
+            revocable: true
+        });
+
+        AttestationRequestData memory data = AttestationRequestData({
+            recipient: address(0),
+            expirationTime: 0,
+            revocable: true,
+            refUID: EMPTY_UID,
+            data: "",
+            value: 1 ether
+        });
+
+        AttestationRequest memory request = AttestationRequest({schema: schemaId, data: data});
+
+        vm.deal(developer, 2 ether);
+
+        // we send 2 eth expecting a refund of 1 ether
+        vm.prank(developer);
+        attestationRegistry.attest{value: 2 ether}(request);
+
+        assertEq(address(chargingResolver).balance, 1 ether);
+        assertEq(developer.balance, 1 ether);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/

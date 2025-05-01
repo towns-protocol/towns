@@ -46,3 +46,34 @@ contract MockPluginResolver is SchemaResolver {
         return true;
     }
 }
+
+contract MockPayableResolver is SchemaResolver {
+    constructor(address _appRegistry) {
+        __SchemaResolver_init(_appRegistry);
+    }
+
+    function isPayable() public pure override returns (bool) {
+        return true;
+    }
+
+    function supportsInterface(bytes4 interfaceId) external pure returns (bool) {
+        return
+            interfaceId == type(ISchemaResolver).interfaceId ||
+            interfaceId == type(IERC165).interfaceId;
+    }
+
+    function version() external pure returns (string memory) {
+        return "1.0.0";
+    }
+
+    function onAttest(Attestation calldata, uint256) internal override returns (bool) {
+        if (msg.value < 1 ether) {
+            revert InsufficientValue();
+        }
+        return true;
+    }
+
+    function onRevoke(Attestation calldata, uint256) internal pure override returns (bool) {
+        return true;
+    }
+}
