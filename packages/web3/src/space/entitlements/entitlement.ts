@@ -12,8 +12,8 @@ import {
 } from 'viem'
 
 import { ethers } from 'ethers'
-import { Address } from '../../types'
-import { MOCK_ADDRESS } from '../../utils'
+import { Address } from '../../types/ContractTypes'
+import { MOCK_ADDRESS } from '../../utils/ut'
 
 const log = dlogger('csb:entitlement')
 

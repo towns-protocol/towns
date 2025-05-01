@@ -1,6 +1,6 @@
 import { ethers } from 'ethers'
 
-import { Address, EntitlementModuleType, EntitlementStruct } from '../../types'
+import { Address, EntitlementModuleType, EntitlementStruct } from '../../types/ContractTypes'
 import { IRuleEntitlementBase } from './IRuleEntitlementShim'
 import { IRuleEntitlementV2Base } from './IRuleEntitlementV2Shim'
 import {
@@ -11,7 +11,7 @@ import {
     decodeThresholdParams,
 } from './entitlement'
 import { Hex } from 'viem'
-import { Space } from 'space/Space'
+import { Space } from '../Space'
 
 const UserAddressesEncoding = 'address[]'
 

@@ -1,8 +1,8 @@
 import { ethers } from 'ethers'
 import { dlogger } from '@towns-protocol/dlog'
-import { BaseChainConfig } from '../utils'
+import { BaseChainConfig } from '../utils/IStaticContractsInfo'
 import { MockERC721AShim } from './MockERC721AShim'
-import { Address } from '../types'
+import { Address } from '../types/ContractTypes'
 import { getTestGatingNFTContractAddress } from './TestGatingNFT'
 
 const logger = dlogger('csb:LocalhostWeb3Provider')

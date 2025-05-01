@@ -2,7 +2,7 @@ import { createTestClient, http, publicActions, walletActions, defineChain } fro
 import { foundry } from 'viem/chains'
 import { generatePrivateKey, privateKeyToAccount } from 'viem/accounts'
 
-import { Address } from '../types'
+import { Address } from '../types/ContractTypes'
 
 export const foundryRiver = /*#__PURE__*/ defineChain({
     id: 31_338,

@@ -1,6 +1,6 @@
 import { ethers } from 'ethers'
 import { PublicClient } from 'viem'
-import { Permission } from '../types'
+import { Permission } from '../types/ContractTypes'
 
 export const ETH_ADDRESS = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE'
 export const EVERYONE_ADDRESS = '0x0000000000000000000000000000000000000001'

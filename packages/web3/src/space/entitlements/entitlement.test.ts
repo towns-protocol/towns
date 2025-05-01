@@ -28,18 +28,18 @@ import {
     DecodedCheckOperationBuilder,
     evaluateOperationsForEntitledWallet,
     findEthereumProviders,
-    convertRuleDataV2ToV1,
-    IRuleEntitlementV2Base,
-} from '../../space'
+} from './entitlement'
+import { IRuleEntitlementV2Base } from './IRuleEntitlementV2Shim'
+import { convertRuleDataV2ToV1 } from './ConvertersEntitlements'
 import {
     MOCK_ADDRESS,
     MOCK_ADDRESS_2,
     MOCK_ADDRESS_3,
     MOCK_ADDRESS_4,
     MOCK_ADDRESS_5,
-} from '../../utils'
+} from '../../utils/ut'
 import { zeroAddress } from 'viem'
-import { Address } from '../../types'
+import { Address } from '../../types/ContractTypes'
 
 import debug from 'debug'
 import { computeDelegatorsForProvider } from '../../delegate-registry/DelegateRegistry'

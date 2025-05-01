@@ -1,7 +1,6 @@
 import { BigNumber, TypedDataDomain, TypedDataField } from 'ethers'
 import { defaultAbiCoder, keccak256, solidityPack, toUtf8Bytes } from 'ethers/lib/utils'
-
-import { Address } from '../types'
+import { Address } from '../types/ContractTypes'
 
 /**
  * https://github.com/ethereum/EIPs/blob/master/EIPS/eip-712.md

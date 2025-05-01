@@ -12,7 +12,7 @@ import { generatePrivateKey, privateKeyToAccount } from 'viem/accounts'
 import { expect } from 'vitest'
 import { MockCrossChainEntitlement } from './MockCrossChainEntitlement'
 import { deployContract, Mutex } from './TestGatingUtils'
-import { Address } from '../types'
+import { Address } from '../types/ContractTypes'
 
 import { dlogger } from '@towns-protocol/dlog'
 

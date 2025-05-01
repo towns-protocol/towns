@@ -1,5 +1,5 @@
 import debug from 'debug'
-import { BASE_SEPOLIA } from '../utils'
+import { BASE_SEPOLIA } from '../utils/Web3Constants'
 import { LocalhostWeb3Provider } from '../test-helpers/LocalhostWeb3Provider'
 const log = debug('web3:test')
 

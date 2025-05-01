@@ -19,33 +19,34 @@ import {
     UpdateChannelParams,
     UpdateRoleParams,
     VersionedRuleData,
-    SpaceInfo,
-} from '../types'
+} from '../types/ContractTypes'
+import { SpaceInfo } from '../types/types'
+
 import { computeDelegatorsForProvider } from '../delegate-registry/DelegateRegistry'
 import { BigNumber, BytesLike, ContractReceipt, ContractTransaction, ethers } from 'ethers'
-import {
-    LOCALHOST_CHAIN_ID,
-    EVERYONE_ADDRESS,
-    stringifyChannelMetadataJSON,
-    NoEntitledWalletError,
-} from '../utils'
+import { LOCALHOST_CHAIN_ID } from '../utils/Web3Constants'
+import { EVERYONE_ADDRESS, stringifyChannelMetadataJSON, NoEntitledWalletError } from '../utils/ut'
 import { IRolesBase } from '../space/IRolesShim'
 import { Space } from '../space/Space'
 import { SpaceRegistrar } from '../space-registrar/SpaceRegistrar'
 import {
-    createEntitlementStruct,
-    createLegacyEntitlementStruct,
-    convertRuleDataV1ToV2,
-    IRuleEntitlementBase,
-    IRuleEntitlementV2Base,
     XchainConfig,
     evaluateOperationsForEntitledWallet,
     ruleDataToOperations,
     findEthereumProviders,
-    RuleEntitlementV2Shim,
-    UserEntitlementShim,
-    RuleEntitlementShim,
-} from '../space'
+} from '../space/entitlements/entitlement'
+
+import { IRuleEntitlementBase } from '../space/entitlements/IRuleEntitlementShim'
+import {
+    createEntitlementStruct,
+    createLegacyEntitlementStruct,
+    convertRuleDataV1ToV2,
+} from '../space/entitlements/ConvertersEntitlements'
+import { IRuleEntitlementV2Base } from '../space/entitlements/IRuleEntitlementV2Shim'
+import { RuleEntitlementV2Shim } from '../space/entitlements/RuleEntitlementV2Shim'
+import { RuleEntitlementShim } from '../space/entitlements/RuleEntitlementShim'
+import { UserEntitlementShim } from '../space/entitlements/UserEntitlementShim'
+
 import { RiverAirdropDapp } from '../airdrop/RiverAirdropDapp'
 import { BaseChainConfig } from '../utils/IStaticContractsInfo'
 import { WalletLink, INVALID_ADDRESS } from '../wallet-link/WalletLink'

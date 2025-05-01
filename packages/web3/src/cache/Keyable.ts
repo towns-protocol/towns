@@ -1,5 +1,5 @@
-import { Permission } from '../types'
 import { ethers } from 'ethers'
+import { Permission } from '../types/ContractTypes'
 export interface Keyable {
     toKey(): string
 }

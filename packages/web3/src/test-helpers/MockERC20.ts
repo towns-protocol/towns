@@ -1,5 +1,5 @@
 import type { Abi } from 'abitype'
-import { Address } from '../types'
+import { Address } from '../types/ContractTypes'
 
 const abi: Abi = [
     {

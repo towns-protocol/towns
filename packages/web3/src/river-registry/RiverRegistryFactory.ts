@@ -1,6 +1,6 @@
 import { RiverRegistry } from './RiverRegistry'
 import { ethers } from 'ethers'
-import { RiverChainConfig } from '../utils'
+import { RiverChainConfig } from '../utils/IStaticContractsInfo'
 
 export function createRiverRegistry(
     provider: ethers.providers.Provider,

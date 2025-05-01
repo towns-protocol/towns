@@ -1,5 +1,5 @@
 import { SpaceDapp } from '../space-dapp/SpaceDapp'
-import { PricingModuleStruct } from '../types'
+import { PricingModuleStruct } from '../types/ContractTypes'
 
 /**
  * @deprecated

@@ -5,7 +5,7 @@ import { createTestClient, http, publicActions, walletActions } from 'viem'
 
 import type { Abi } from 'abitype'
 
-import { Address } from '../types'
+import { Address } from '../types/ContractTypes'
 
 import { dlogger } from '@towns-protocol/dlog'
 
