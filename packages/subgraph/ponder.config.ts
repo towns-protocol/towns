@@ -41,13 +41,13 @@ export default createConfig({
         },
     },
     contracts: {
-        Space: {
+        SpaceFactory: {
             abi: mergeAbis([createSpaceFacetAbi, tokenPausableFacetAbi]),
             address: spaceFactory,
             startBlock,
             network: 'anvil',
         },
-        SpaceFactory: {
+        Space: {
             abi: mergeAbis([createSpaceFacetAbi, tokenPausableFacetAbi]),
             address: factory({
                 address: spaceFactory,

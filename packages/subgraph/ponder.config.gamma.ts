@@ -42,13 +42,13 @@ export default createConfig({
         },
     },
     contracts: {
-        Space: {
+        SpaceFactory: {
             abi: mergeAbis([createSpaceFacetAbi, tokenPausableFacetAbi]),
             address: spaceFactory,
             startBlock,
             network: 'gamma',
         },
-        SpaceFactory: {
+        Space: {
             abi: mergeAbis([createSpaceFacetAbi, tokenPausableFacetAbi]),
             address: factory({
                 address: spaceFactory,
