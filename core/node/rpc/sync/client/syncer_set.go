@@ -6,7 +6,6 @@ import (
 	"sync"
 	"time"
 
-	"connectrpc.com/connect"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/linkdata/deadlock"
 	"go.opentelemetry.io/otel/attribute"
@@ -26,6 +25,9 @@ type (
 		Run()
 		Address() common.Address
 		Modify(ctx context.Context, request *ModifySyncRequest) (*ModifySyncResponse, bool, error)
+	}
+
+	DebugStreamsSyncer interface {
 		DebugDropStream(ctx context.Context, streamID StreamId) (bool, error)
 	}
 
@@ -71,8 +73,11 @@ type (
 )
 
 var (
-	_ StreamsSyncer = (*localSyncer)(nil)
-	_ StreamsSyncer = (*remoteSyncer)(nil)
+	_ StreamsSyncer      = (*localSyncer)(nil)
+	_ DebugStreamsSyncer = (*localSyncer)(nil)
+
+	_ StreamsSyncer      = (*remoteSyncer)(nil)
+	_ DebugStreamsSyncer = (*remoteSyncer)(nil)
 )
 
 func (cs SyncCookieSet) AsSlice() []*SyncCookie {
@@ -209,8 +214,7 @@ func (ss *SyncerSet) modify(ctx context.Context, req ModifyRequest) error {
 
 	modifySyncs := make(map[common.Address]*ModifySyncRequest)
 
-	// Group modify sync request by the remote syncer.
-	// Identifying which node to use for the given streams.
+	// group cookies by node address
 	for _, cookie := range req.ToAdd {
 		streamID := StreamId(cookie.GetStreamId())
 		if _, found := ss.streamID2Syncer[streamID]; found {
@@ -228,10 +232,8 @@ func (ss *SyncerSet) modify(ctx context.Context, req ModifyRequest) error {
 			if selectedNode.Cmp(ss.localNodeAddress) == 0 {
 				nodeAvailable = true
 			} else {
-				if client, err := ss.nodeRegistry.GetStreamServiceClientForAddress(selectedNode); err == nil {
-					if _, err = client.Info(ctx, connect.NewRequest(&InfoRequest{})); err == nil {
-						nodeAvailable = true
-					}
+				if _, err := ss.nodeRegistry.GetStreamServiceClientForAddress(selectedNode); err == nil {
+					nodeAvailable = true
 				}
 			}
 		}
@@ -261,11 +263,9 @@ func (ss *SyncerSet) modify(ctx context.Context, req ModifyRequest) error {
 			if !nodeAvailable && len(remotes) > 0 {
 				selectedNode = stream.GetStickyPeer()
 				for range remotes {
-					if client, err := ss.nodeRegistry.GetStreamServiceClientForAddress(selectedNode); err == nil {
-						if _, err = client.Info(ctx, connect.NewRequest(&InfoRequest{})); err == nil {
-							nodeAvailable = true
-							break
-						}
+					if _, err = ss.nodeRegistry.GetStreamServiceClientForAddress(selectedNode); err == nil {
+						nodeAvailable = true
+						break
 					}
 					selectedNode = stream.AdvanceStickyPeer(selectedNode)
 				}
@@ -300,8 +300,7 @@ func (ss *SyncerSet) modify(ctx context.Context, req ModifyRequest) error {
 		)
 	}
 
-	// Group remove sync request by the remote syncer.
-	// Identifying which node to use for the given streams to remove from sync.
+	// group streamIDs by node address
 	for _, streamIDRaw := range req.ToRemove {
 		syncer, found := ss.streamID2Syncer[StreamId(streamIDRaw)]
 		if !found {
@@ -326,10 +325,7 @@ func (ss *SyncerSet) modify(ctx context.Context, req ModifyRequest) error {
 				Func("SyncerSet.Modify")
 		}
 
-		modifySyncs[syncer.Address()].RemoveStreams = append(
-			modifySyncs[syncer.Address()].RemoveStreams,
-			streamIDRaw,
-		)
+		modifySyncs[syncer.Address()].RemoveStreams = append(modifySyncs[syncer.Address()].RemoveStreams, streamIDRaw)
 	}
 
 	if len(modifySyncs) == 0 {
@@ -343,28 +339,32 @@ func (ss *SyncerSet) modify(ctx context.Context, req ModifyRequest) error {
 		syncer, found := ss.syncers[nodeAddress]
 		if !found {
 			// first stream to sync with remote -> create a new syncer instance
+			var err error
 			if nodeAddress == ss.localNodeAddress {
-				syncer = ss.newLocalSyncer()
+				syncer, err = ss.newLocalSyncer(nil)
 			} else {
-				var err error
-				syncer, err = ss.newRemoteSyncer(nodeAddress)
-				if err != nil {
-					rvrErr := AsRiverError(err).Tag("remoteSyncerAddr", nodeAddress)
-					for _, cookie := range modifySync.GetAddStreams() {
-						req.AddingFailureHandler(&SyncStreamOpStatus{
-							StreamId: cookie.GetStreamId(),
-							Code:     int32(rvrErr.Code),
-							Message:  rvrErr.GetMessage(),
-						})
-					}
-					for _, streamIDRaw := range modifySync.GetRemoveStreams() {
-						req.RemovingFailureHandler(&SyncStreamOpStatus{
-							StreamId: streamIDRaw,
-							Code:     int32(rvrErr.Code),
-							Message:  rvrErr.GetMessage(),
-						})
-					}
+				syncer, err = ss.newRemoteSyncer(nodeAddress, nil)
+			}
+			if err != nil {
+				rvrErr := AsRiverError(err)
+
+				for _, cookie := range modifySync.GetAddStreams() {
+					req.AddingFailureHandler(&SyncStreamOpStatus{
+						StreamId: cookie.GetStreamId(),
+						Code:     int32(rvrErr.Code),
+						Message:  rvrErr.GetMessage(),
+					})
 				}
+
+				for _, streamIDRaw := range modifySync.GetRemoveStreams() {
+					req.RemovingFailureHandler(&SyncStreamOpStatus{
+						StreamId: streamIDRaw,
+						Code:     int32(rvrErr.Code),
+						Message:  rvrErr.GetMessage(),
+					})
+				}
+
+				continue
 			}
 
 			ss.syncers[nodeAddress] = syncer
@@ -444,7 +444,14 @@ func (ss *SyncerSet) DebugDropStream(ctx context.Context, streamID StreamId) err
 			Tags("syncId", ss.syncID, "streamId", streamID)
 	}
 
-	syncerStopped, err := syncer.DebugDropStream(ctx, streamID)
+	debugSyncer, ok := syncer.(DebugStreamsSyncer)
+	if !ok {
+		return RiverError(Err_UNAVAILABLE,
+			"Syncer responsible for stream doesn't support debug drop stream").
+			Tags("syncId", ss.syncID, "streamId", streamID)
+	}
+
+	syncerStopped, err := debugSyncer.DebugDropStream(ctx, streamID)
 	if err != nil {
 		return err
 	}
@@ -463,13 +470,13 @@ func (ss *SyncerSet) rmStream(streamID StreamId) {
 	ss.muSyncers.Unlock()
 }
 
-func (ss *SyncerSet) newLocalSyncer() *localSyncer {
+func (ss *SyncerSet) newLocalSyncer(cookies []*SyncCookie) (*localSyncer, error) {
 	return newLocalSyncer(
 		ss.ctx, ss.syncID, ss.globalSyncOpCtxCancel, ss.localNodeAddress,
-		ss.streamCache, ss.messages, ss.otelTracer)
+		ss.streamCache, cookies, ss.messages, ss.otelTracer)
 }
 
-func (ss *SyncerSet) newRemoteSyncer(addr common.Address) (*remoteSyncer, error) {
+func (ss *SyncerSet) newRemoteSyncer(addr common.Address, cookies []*SyncCookie) (*remoteSyncer, error) {
 	client, err := ss.nodeRegistry.GetStreamServiceClientForAddress(addr)
 	if err != nil {
 		return nil, err
@@ -477,7 +484,7 @@ func (ss *SyncerSet) newRemoteSyncer(addr common.Address) (*remoteSyncer, error)
 
 	return newRemoteSyncer(
 		ss.ctx, ss.globalSyncOpCtxCancel, ss.syncID, addr, client,
-		ss.rmStream, ss.messages, ss.otelTracer)
+		cookies, ss.rmStream, ss.messages, ss.otelTracer)
 }
 
 // caller must have ss.muSyncers claimed
