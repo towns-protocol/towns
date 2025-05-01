@@ -1,12 +1,12 @@
 import { ethers } from 'ethers'
-import { LocalhostWeb3Provider } from '../test-helpers/LocalhostWeb3Provider'
-import { SpaceDapp } from './SpaceDapp'
-import { makeDefaultMembershipInfo } from '../test-helpers/utils'
-import { SpaceIdFromSpaceAddress } from '../utils/ut'
+import { LocalhostWeb3Provider } from '../src/test-helpers/LocalhostWeb3Provider'
+import { SpaceDapp } from '../src/space-dapp/SpaceDapp'
+import { makeDefaultMembershipInfo } from '../src/test-helpers/utils'
+import { SpaceIdFromSpaceAddress } from '../src/utils/ut'
 
 import DeploymentsJson from '@towns-protocol/generated/config/deployments.json'
-import { BaseChainConfig } from '../utils/IStaticContractsInfo'
-
+import { BaseChainConfig } from '../src/utils/IStaticContractsInfo'
+import { expect, test } from 'vitest'
 // temp until there's a better way to do this without importing sdk
 // @ts-ignore
 // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access

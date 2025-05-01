@@ -3,7 +3,8 @@ import {
     NoEntitledWalletError,
     SpaceAddressFromSpaceId,
     SpaceIdFromSpaceAddress,
-} from '../utils/ut'
+} from '../src/utils/ut'
+import { describe, it, expect } from 'vitest'
 
 describe('utils.test.ts', () => {
     it('channelMetadataJson', async () => {

@@ -28,21 +28,22 @@ import {
     DecodedCheckOperationBuilder,
     evaluateOperationsForEntitledWallet,
     findEthereumProviders,
-} from './entitlement'
-import { IRuleEntitlementV2Base } from './IRuleEntitlementV2Shim'
-import { convertRuleDataV2ToV1 } from './ConvertersEntitlements'
+} from '../src/space/entitlements/entitlement'
+import { IRuleEntitlementV2Base } from '../src/space/entitlements/IRuleEntitlementV2Shim'
+import { convertRuleDataV2ToV1 } from '../src/space/entitlements/ConvertersEntitlements'
 import {
     MOCK_ADDRESS,
     MOCK_ADDRESS_2,
     MOCK_ADDRESS_3,
     MOCK_ADDRESS_4,
     MOCK_ADDRESS_5,
-} from '../../utils/ut'
+} from '../src/utils/ut'
 import { zeroAddress } from 'viem'
-import { Address } from '../../types/ContractTypes'
+import { Address } from '../src/types/ContractTypes'
 
 import debug from 'debug'
-import { computeDelegatorsForProvider } from '../../delegate-registry/DelegateRegistry'
+import { computeDelegatorsForProvider } from '../src/delegate-registry/DelegateRegistry'
+import { describe, it, expect } from 'vitest'
 
 const log = debug('test')
 

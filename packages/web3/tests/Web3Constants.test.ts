@@ -1,6 +1,7 @@
 import debug from 'debug'
-import { BASE_SEPOLIA } from '../utils/Web3Constants'
-import { LocalhostWeb3Provider } from '../test-helpers/LocalhostWeb3Provider'
+import { BASE_SEPOLIA } from '../src/utils/Web3Constants'
+import { LocalhostWeb3Provider } from '../src/test-helpers/LocalhostWeb3Provider'
+import { describe, it, expect } from 'vitest'
 const log = debug('web3:test')
 
 describe('Web3Constants', () => {
