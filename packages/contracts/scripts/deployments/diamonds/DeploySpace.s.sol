@@ -45,33 +45,7 @@ contract DeploySpace is IDiamondInitHelper, DiamondHelper, Deployer {
 
     DeployFacet private facetHelper = new DeployFacet();
 
-    address tokenOwnable;
-    address diamondCut;
-    address diamondLoupe;
-    address entitlements;
-    address channels;
-    address roles;
-    address tokenPausable;
-    address introspection;
-    address membership;
-    address membershipReferral;
-    address banning;
-    address entitlementGated;
-    address membershipToken;
-    address erc721aQueryable;
-    address membershipMetadata;
-    address entitlementDataQueryable;
-    address ownablePending;
-    address prepay;
-    address referrals;
-    address review;
-    address tipping;
-    address multiInit;
-    address treasury;
-    address modularAccount;
-
-    // Test Facets
-    address mockLegacyMembership;
+    address private multiInit;
 
     function versionName() public pure override returns (string memory) {
         return "space";

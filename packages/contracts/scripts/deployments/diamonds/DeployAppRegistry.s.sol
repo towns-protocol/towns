@@ -18,7 +18,7 @@ import {DeployDiamondLoupe} from "@towns-protocol/diamond/scripts/deployments/fa
 import {DeployIntrospection} from "@towns-protocol/diamond/scripts/deployments/facets/DeployIntrospection.s.sol";
 import {DeployOwnable} from "@towns-protocol/diamond/scripts/deployments/facets/DeployOwnable.s.sol";
 import {DiamondHelper} from "@towns-protocol/diamond/scripts/common/helpers/DiamondHelper.s.sol";
-import {DeployMetadataLib} from "scripts/deployments/facets/DeployMetadata.s.sol";
+import {DeployMetadata} from "scripts/deployments/facets/DeployMetadata.s.sol";
 
 // facets
 import {MultiInit} from "@towns-protocol/diamond/src/initializers/MultiInit.sol";
@@ -75,9 +75,9 @@ contract DeployAppRegistry is DiamondHelper, Deployer {
 
         metadata = facetHelper.deploy("MetadataFacet", deployer);
         addFacet(
-            DeployMetadataLib.makeCut(metadata, IDiamond.FacetCutAction.Add),
+            DeployMetadata.makeCut(metadata, IDiamond.FacetCutAction.Add),
             metadata,
-            DeployMetadataLib.makeInitData(bytes32("AppRegistry"), "")
+            DeployMetadata.makeInitData(bytes32("AppRegistry"), "")
         );
     }
 

@@ -10,20 +10,27 @@ import {ISchemaResolver} from "@ethereum-attestation-service/eas-contracts/resol
 //contracts
 import {DeployLib} from "@towns-protocol/diamond/scripts/common/DeployLib.sol";
 import {ModuleRegistry} from "src/modules/ModuleRegistry.sol";
+import {DynamicArrayLib} from "solady/utils/DynamicArrayLib.sol";
 
 library DeployModuleRegistry {
-    function selectors() internal pure returns (bytes4[] memory _selectors) {
-        _selectors = new bytes4[](10);
-        _selectors[0] = ModuleRegistry.getModuleSchema.selector;
-        _selectors[1] = ModuleRegistry.getModuleSchemaId.selector;
-        _selectors[2] = ModuleRegistry.getModuleById.selector;
-        _selectors[3] = ModuleRegistry.getLatestModuleId.selector;
-        _selectors[4] = ModuleRegistry.registerModule.selector;
-        _selectors[5] = ModuleRegistry.updateModulePermissions.selector;
-        _selectors[6] = ModuleRegistry.removeModule.selector;
-        _selectors[7] = ModuleRegistry.adminRegisterModuleSchema.selector;
-        _selectors[8] = ModuleRegistry.adminBanModule.selector;
-        _selectors[9] = ModuleRegistry.isModuleBanned.selector;
+    using DynamicArrayLib for DynamicArrayLib.DynamicArray;
+
+    function selectors() internal pure returns (bytes4[] memory res) {
+        DynamicArrayLib.DynamicArray memory arr = DynamicArrayLib.p().reserve(10);
+        arr.p(ModuleRegistry.getModuleSchema.selector);
+        arr.p(ModuleRegistry.getModuleSchemaId.selector);
+        arr.p(ModuleRegistry.getModuleById.selector);
+        arr.p(ModuleRegistry.getLatestModuleId.selector);
+        arr.p(ModuleRegistry.registerModule.selector);
+        arr.p(ModuleRegistry.updateModulePermissions.selector);
+        arr.p(ModuleRegistry.removeModule.selector);
+        arr.p(ModuleRegistry.adminRegisterModuleSchema.selector);
+        arr.p(ModuleRegistry.adminBanModule.selector);
+        arr.p(ModuleRegistry.isModuleBanned.selector);
+        bytes32[] memory selectors_ = arr.asBytes32Array();
+        assembly ("memory-safe") {
+            res := selectors_
+        }
     }
 
     function makeCut(
