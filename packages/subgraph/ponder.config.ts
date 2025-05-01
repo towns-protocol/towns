@@ -52,7 +52,7 @@ export default createConfig({
             address: factory({
                 address: spaceFactory,
                 event: parseAbiItem([
-                    'event SpaceCreated(address indexed owner, uint256 indexed tokenId, address indexed space)',
+                    'event SpaceCreated(address owner, uint256 tokenId, address space)',
                 ]),
                 parameter: 'space',
             }),
