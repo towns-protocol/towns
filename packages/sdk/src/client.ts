@@ -53,6 +53,7 @@ import {
     SolanaBlockchainTransactionReceipt,
     SessionKeysSchema,
     EnvelopeSchema,
+    GetLastMiniblockHashResponse,
 } from '@towns-protocol/proto'
 import {
     bin_fromHexString,
@@ -2411,10 +2412,16 @@ export class Client
             isDefined(prevHash),
             'no prev miniblock hash for stream ' + streamIdAsString(streamId),
         )
+        const prevMiniblockNum = stream.view.prevMiniblockNum
+        assert(
+            isDefined(prevMiniblockNum),
+            'no prev miniblock num for stream ' + streamIdAsString(streamId),
+        )
         const { eventId, error } = await this.makeEventWithHashAndAddToStream(
             streamId,
             payload,
             prevHash,
+            prevMiniblockNum,
             options.optional,
             options.localId,
             options.cleartext,
@@ -2427,6 +2434,7 @@ export class Client
         streamId: string | Uint8Array,
         payload: PlainMessage<StreamEvent>['payload'],
         prevMiniblockHash: Uint8Array,
+        prevMiniblockNum: bigint,
         optional?: boolean,
         localId?: string,
         cleartext?: Uint8Array,
@@ -2435,7 +2443,13 @@ export class Client
     ): Promise<{ prevMiniblockHash: Uint8Array; eventId: string; error?: AddEventResponse_Error }> {
         const streamIdStr = streamIdAsString(streamId)
         check(isDefined(streamIdStr) && streamIdStr !== '', 'streamId must be defined')
-        const event = await makeEvent(this.signerContext, payload, prevMiniblockHash, tags)
+        const event = await makeEvent(
+            this.signerContext,
+            payload,
+            prevMiniblockHash,
+            prevMiniblockNum,
+            tags,
+        )
         const eventId = bin_toHexString(event.hash)
         if (localId) {
             // when we have a localId, we need to update the local event with the eventId
@@ -2466,7 +2480,27 @@ export class Client
             // error and include the expected hash in the error message
             // if we had a localEventId, pass the last id so the ui can continue to update to the latest hash
             retryCount = retryCount ?? 0
-            if (errorContains(err, Err.BAD_PREV_MINIBLOCK_HASH) && retryCount < 3) {
+
+            if (errorContains(err, Err.MINIBLOCK_TOO_NEW)) {
+                this.logInfo('RETRYING event after MINIBLOCK_TOO_NEW response', {
+                    syncStats: this.streams.stats(),
+                    retryCount,
+                    prevMiniblockHash,
+                    prevMiniblockNum,
+                })
+                await new Promise((resolve) => setTimeout(resolve, 1000))
+                return await this.makeEventWithHashAndAddToStream(
+                    streamId,
+                    payload,
+                    prevMiniblockHash,
+                    prevMiniblockNum,
+                    optional,
+                    isDefined(localId) ? eventId : undefined,
+                    cleartext,
+                    tags,
+                    retryCount + 1,
+                )
+            } else if (errorContains(err, Err.BAD_PREV_MINIBLOCK_HASH) && retryCount < 3) {
                 const expectedHash = getRpcErrorProperty(err, 'expected')
                 this.logInfo('RETRYING event after BAD_PREV_MINIBLOCK_HASH response', {
                     syncStats: this.streams.stats(),
@@ -2475,10 +2509,13 @@ export class Client
                     expectedHash,
                 })
                 check(isDefined(expectedHash), 'expected hash not found in error')
+                const expectedMiniblockNum = getRpcErrorProperty(err, 'expNum')
+                check(isDefined(expectedMiniblockNum), 'expected miniblock num not found in error')
                 return await this.makeEventWithHashAndAddToStream(
                     streamId,
                     payload,
                     bin_fromHexString(expectedHash),
+                    BigInt(expectedMiniblockNum),
                     optional,
                     isDefined(localId) ? eventId : undefined,
                     cleartext,
@@ -2518,9 +2555,11 @@ export class Client
         return { creationCookie: resp.creationCookie }
     }
 
-    async getStreamLastMiniblockHash(streamId: string | Uint8Array): Promise<Uint8Array> {
+    async getStreamLastMiniblockHash(
+        streamId: string | Uint8Array,
+    ): Promise<GetLastMiniblockHashResponse> {
         const r = await this.rpcClient.getLastMiniblockHash({ streamId: streamIdAsBytes(streamId) })
-        return r.hash
+        return r
     }
 
     private async initCrypto(opts?: EncryptionDeviceInitOpts): Promise<void> {
@@ -2702,7 +2741,9 @@ export class Client
                     return
                 }
                 const toStreamId: string = makeUserInboxStreamId(userId)
-                const miniblockHash = await this.getStreamLastMiniblockHash(toStreamId)
+                const { hash: miniblockHash, miniblockNum } = await this.getStreamLastMiniblockHash(
+                    toStreamId,
+                )
                 this.logCall("encryptAndShareGroupSessions: sent to user's devices", {
                     toStreamId,
                     deviceKeys: deviceKeys.map((d) => d.deviceKey).join(','),
@@ -2717,6 +2758,7 @@ export class Client
                         algorithm: algorithm,
                     }),
                     miniblockHash,
+                    miniblockNum,
                 )
             } catch (error) {
                 this.logError('encryptAndShareGroupSessions: ERROR', error)

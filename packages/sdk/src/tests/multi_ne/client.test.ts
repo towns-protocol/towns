@@ -205,6 +205,7 @@ describe('clientTest', () => {
                 channelId,
                 message,
                 Uint8Array.from(Array(32).fill(0)), // just going to throw any old thing in there... the retry should pick it up
+                BigInt(0),
             ),
         ).resolves.not.toThrow()
     })

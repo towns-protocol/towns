@@ -66,6 +66,7 @@ export interface IStreamStateView {
     readonly events: Map<string, StreamTimelineEvent>
     isInitialized: boolean
     prevMiniblockHash?: Uint8Array
+    prevMiniblockNum?: bigint
     lastEventNum: bigint
     prevSnapshotMiniblockNum: bigint
     miniblockInfo?: { max: bigint; min: bigint; terminusReached: boolean }
@@ -95,6 +96,7 @@ export class StreamStateView implements IStreamStateView {
     readonly events = new Map<string, StreamTimelineEvent>()
     isInitialized = false
     prevMiniblockHash?: Uint8Array
+    prevMiniblockNum?: bigint
     lastEventNum = 0n
     prevSnapshotMiniblockNum: bigint
     miniblockInfo?: { max: bigint; min: bigint; terminusReached: boolean }
@@ -359,6 +361,7 @@ export class StreamStateView implements IStreamStateView {
                         Err.STREAM_BAD_EVENT,
                     )
                     this.prevMiniblockHash = event.hash
+                    this.prevMiniblockNum = payload.value.miniblockNum
                     this.updateMiniblockInfo(payload.value, { max: payload.value.miniblockNum })
                     timelineEvent.confirmedEventNum =
                         payload.value.eventNumOffset + BigInt(payload.value.eventHashes.length)
@@ -610,6 +613,7 @@ export class StreamStateView implements IStreamStateView {
         this.lastEventNum = lastBlock.header.eventNumOffset + BigInt(lastBlock.events.length)
         // and the prev miniblock has (if there were more than 1 miniblocks, this should already be set)
         this.prevMiniblockHash = lastBlock.hash
+        this.prevMiniblockNum = lastBlock.header.miniblockNum
         // append the minipool events
         this.appendStreamAndCookie(nextSyncCookie, minipoolEvents, cleartexts, emitter, undefined)
         this.prevSnapshotMiniblockNum = prevSnapshotMiniblockNum
