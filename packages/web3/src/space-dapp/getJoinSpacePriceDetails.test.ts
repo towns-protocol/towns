@@ -17,6 +17,7 @@ if (!base) {
 }
 
 import DeploymentsJson from '@towns-protocol/generated/config/deployments.json'
+import { BaseChainConfig } from '../utils/IStaticContractsInfo'
 
 const baseRpcUrl = process.env.BASE_CHAIN_RPC_URL!
 const baseConfig = {
@@ -40,12 +41,12 @@ const baseRpcUrl = process.env.BASE_CHAIN_RPC_URL!
 const baseConfig = {
     chainId: base.chainId,
     addresses: {
-        baseRegistry: base.addresses.baseRegistry as Address,
-        spaceFactory: base.addresses.spaceFactory as Address,
-        spaceOwner: base.addresses.spaceOwner as Address,
+        baseRegistry: base.addresses.baseRegistry,
+        spaceFactory: base.addresses.spaceFactory,
+        spaceOwner: base.addresses.spaceOwner,
         utils: {
-            mockNFT: base.addresses.utils.mockNFT as Address | undefined,
-            member: base.addresses.utils.member as Address | undefined,
+            mockNFT: base.addresses.utils.mockNFT,
+            member: base.addresses.utils.member,
         },
     },
 }
