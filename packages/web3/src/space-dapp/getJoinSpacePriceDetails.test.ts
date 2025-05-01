@@ -2,14 +2,15 @@ import { ethers } from 'ethers'
 import { LocalhostWeb3Provider } from '../test-helpers/LocalhostWeb3Provider'
 import { SpaceDapp } from './SpaceDapp'
 import { makeDefaultMembershipInfo } from '../test-helpers/utils'
-import { Address } from '../types/ContractTypes'
 import { SpaceIdFromSpaceAddress } from '../utils/ut'
 
 import DeploymentsJson from '@towns-protocol/generated/config/deployments.json'
+import { BaseChainConfig } from '../utils/IStaticContractsInfo'
 
 // temp until there's a better way to do this without importing sdk
 // @ts-ignore
-const base = DeploymentsJson?.local_multi?.base
+// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+const base = DeploymentsJson?.local_multi?.base as BaseChainConfig
 
 if (!base) {
     throw new Error('getJoinSpacePriceDetails.test.ts: Base config not found')
@@ -19,12 +20,12 @@ const baseRpcUrl = process.env.BASE_CHAIN_RPC_URL!
 const baseConfig = {
     chainId: base.chainId,
     addresses: {
-        baseRegistry: base.addresses.baseRegistry as Address,
-        spaceFactory: base.addresses.spaceFactory as Address,
-        spaceOwner: base.addresses.spaceOwner as Address,
+        baseRegistry: base.addresses.baseRegistry,
+        spaceFactory: base.addresses.spaceFactory,
+        spaceOwner: base.addresses.spaceOwner,
         utils: {
-            mockNFT: base.addresses.utils.mockNFT as Address | undefined,
-            member: base.addresses.utils.member as Address | undefined,
+            mockNFT: base.addresses.utils.mockNFT,
+            member: base.addresses.utils.member,
         },
     },
 }
