@@ -81,23 +81,12 @@ type (
 		// otelTracer is used to trace individual sync Send operations, tracing is disabled if nil
 		otelTracer trace.Tracer
 	}
-
-	// SyncCookieSet maps from a stream id to a sync cookie
-	SyncCookieSet map[StreamId]*SyncCookie
 )
 
 var (
 	_ StreamsSyncer = (*localSyncer)(nil)
 	_ StreamsSyncer = (*remoteSyncer)(nil)
 )
-
-func (cs SyncCookieSet) AsSlice() []*SyncCookie {
-	cookies := make([]*SyncCookie, 0, len(cs))
-	for _, cookie := range cs {
-		cookies = append(cookies, cookie)
-	}
-	return cookies
-}
 
 // NewSyncers creates the required syncer set that subscribe on all given cookies.
 // A syncer can either be local or remote and writes received events to an internal messages channel from which events
@@ -123,6 +112,7 @@ func NewSyncers(
 	}
 }
 
+// Run starts the sync operation and distributes messages from the syncers to the subscribers.
 func (ss *SyncerSet) Run() {
 	ss.distributeMessages()
 
@@ -133,131 +123,9 @@ func (ss *SyncerSet) Run() {
 	ss.syncerTasks.Wait() // background syncers finished -> safe to close messages channel
 }
 
-// distributeMessages distributes stream updates from the global sync operation to the individual subscriptions.
-func (ss *SyncerSet) distributeMessages() {
-	log := logging.FromCtx(ss.ctx)
-
-	var msgs []*SyncStreamsResponse
-	for {
-		select {
-		case <-ss.ctx.Done():
-			err := context.Cause(ss.ctx)
-			if err != nil {
-				log.Errorw("Sync operation stopped", "err", err)
-			} else {
-				log.Debug("Sync operation stopped")
-			}
-			ss.subscriptions.Range(func(_ string, sub *Subscription) bool {
-				sub.messages.Close()
-				sub.cancel(err)
-				return true
-			})
-			ss.subscriptions.Clear()
-			return
-		case _, open := <-ss.messages.Wait():
-			msgs = ss.messages.GetBatch(msgs)
-
-			// nil msgs indicates the buffer is closed
-			// closing all subscribers
-			if msgs == nil {
-				log.Warnw("SyncerSet global messages channel closed")
-				ss.subscriptions.Range(func(_ string, sub *Subscription) bool {
-					sub.messages.Close()
-					sub.cancel(nil)
-					return true
-				})
-				ss.subscriptions.Clear()
-				return
-			}
-
-			// Create a map of sync IDs to messages
-			toSend := make(map[string][]*SyncStreamsResponse)
-			for _, msg := range msgs {
-				streamID := StreamId(msg.GetStreamId())
-
-				// Get all sync IDs
-				syncIDs, ok := ss.streamToSubscriptions.Load(streamID)
-				if !ok {
-					fmt.Println("syncIDs not found in streamToSubscriptions")
-					log.Errorw("Received update for the stream with no subscribers", "streamID", streamID)
-					continue
-				}
-
-				// Order is important here, we need to send the message to all subscribers
-				for syncID := range syncIDs {
-					toSend[syncID] = append(toSend[syncID], proto.Clone(msg).(*SyncStreamsResponse))
-				}
-			}
-
-			// Iterate over all sync IDs and send the message to the corresponding subscription
-			var wg sync.WaitGroup
-			for syncID, msgs := range toSend {
-				wg.Add(1)
-				go func(syncID string, msgs []*SyncStreamsResponse) {
-					defer wg.Done()
-
-					// Get subscription by the given sync ID
-					sub, ok := ss.subscriptions.Load(syncID)
-					if !ok {
-						log.Errorw("Sync does not have subscription", "syncID", syncID)
-						return
-					}
-
-					// Send messages to the given subscriber
-					for _, msg := range msgs {
-						msg.SyncId = sub.syncID
-
-						// Send message to the subscriber
-						select {
-						case <-sub.ctx.Done():
-							fmt.Println("sub.ctx closed")
-							sub.messages.Close()
-							// TODO: Log sub.ctx.Err()
-						default:
-							if err := sub.messages.AddMessage(msg); err != nil {
-								// TODO: Log error
-								sub.cancel(err)
-							}
-						}
-					}
-				}(syncID, msgs)
-			}
-			wg.Wait()
-
-			/*select {
-			case <-ss.ctx.Done():
-				err := context.Cause(ss.ctx)
-				if err != nil {
-					log.Errorw("Sync operation stopped", "error", err)
-				} else {
-					log.Debug("Sync operation stopped")
-				}
-				ss.subscriptions.Range(func(_ string, sub *Subscription) bool {
-					sub.messages.Close()
-					sub.cancel(err)
-					return true
-				})
-				ss.subscriptions.Clear()
-				return
-			default:
-			}*/
-
-			// If the client sent a close message, stop sending messages to client from the buffer.
-			// In theory should not happen, but just in case.
-			if !open {
-				ss.subscriptions.Range(func(_ string, sub *Subscription) bool {
-					sub.messages.Close()
-					sub.cancel(nil)
-					return true
-				})
-				ss.subscriptions.Clear()
-				return
-			}
-		}
-	}
-}
-
-func (ss *SyncerSet) NewSync(
+// NewSubscription creates a new subscription for the given sync ID.
+// Returns a message channel that can be used to receive messages from the sync operation.
+func (ss *SyncerSet) NewSubscription(
 	ctx context.Context,
 	cancel context.CancelCauseFunc,
 	syncID string,
@@ -685,4 +553,128 @@ func (ss *SyncerSet) startSyncer(syncer StreamsSyncer) {
 		delete(ss.syncers, syncer.Address())
 		ss.muSyncers.Unlock()
 	}()
+}
+
+// distributeMessages distributes stream updates from the global sync operation to the individual subscriptions.
+func (ss *SyncerSet) distributeMessages() {
+	log := logging.FromCtx(ss.ctx)
+
+	var msgs []*SyncStreamsResponse
+	for {
+		select {
+		case <-ss.ctx.Done():
+			err := context.Cause(ss.ctx)
+			if err != nil {
+				log.Errorw("Sync operation stopped", "err", err)
+			} else {
+				log.Debug("Sync operation stopped")
+			}
+			ss.subscriptions.Range(func(_ string, sub *Subscription) bool {
+				sub.messages.Close()
+				sub.cancel(err)
+				return true
+			})
+			ss.subscriptions.Clear()
+			return
+		case _, open := <-ss.messages.Wait():
+			msgs = ss.messages.GetBatch(msgs)
+
+			// nil msgs indicates the buffer is closed
+			// closing all subscribers
+			if msgs == nil {
+				log.Warnw("SyncerSet global messages channel closed")
+				ss.subscriptions.Range(func(_ string, sub *Subscription) bool {
+					sub.messages.Close()
+					sub.cancel(nil)
+					return true
+				})
+				ss.subscriptions.Clear()
+				return
+			}
+
+			// Create a map of sync IDs to messages
+			toSend := make(map[string][]*SyncStreamsResponse)
+			for _, msg := range msgs {
+				streamID := StreamId(msg.GetStreamId())
+
+				// Get all sync IDs
+				syncIDs, ok := ss.streamToSubscriptions.Load(streamID)
+				if !ok {
+					fmt.Println("syncIDs not found in streamToSubscriptions")
+					log.Errorw("Received update for the stream with no subscribers", "streamID", streamID)
+					continue
+				}
+
+				// Order is important here, we need to send the message to all subscribers
+				for syncID := range syncIDs {
+					toSend[syncID] = append(toSend[syncID], proto.Clone(msg).(*SyncStreamsResponse))
+				}
+			}
+
+			// Iterate over all sync IDs and send the message to the corresponding subscription
+			var wg sync.WaitGroup
+			for syncID, msgs := range toSend {
+				wg.Add(1)
+				go func(syncID string, msgs []*SyncStreamsResponse) {
+					defer wg.Done()
+
+					// Get subscription by the given sync ID
+					sub, ok := ss.subscriptions.Load(syncID)
+					if !ok {
+						log.Errorw("Sync does not have subscription", "syncID", syncID)
+						return
+					}
+
+					// Send messages to the given subscriber
+					for _, msg := range msgs {
+						msg.SyncId = sub.syncID
+
+						// Send message to the subscriber
+						select {
+						case <-sub.ctx.Done():
+							fmt.Println("sub.ctx closed")
+							sub.messages.Close()
+							// TODO: Log sub.ctx.Err()
+						default:
+							if err := sub.messages.AddMessage(msg); err != nil {
+								// TODO: Log error
+								sub.cancel(err)
+							}
+						}
+					}
+				}(syncID, msgs)
+			}
+			wg.Wait()
+
+			/*select {
+			case <-ss.ctx.Done():
+				err := context.Cause(ss.ctx)
+				if err != nil {
+					log.Errorw("Sync operation stopped", "error", err)
+				} else {
+					log.Debug("Sync operation stopped")
+				}
+				ss.subscriptions.Range(func(_ string, sub *Subscription) bool {
+					sub.messages.Close()
+					sub.cancel(err)
+					return true
+				})
+				ss.subscriptions.Clear()
+				return
+			default:
+			}*/
+
+			// If the client sent a close message, stop sending messages to client from the buffer.
+			// In theory should not happen, but just in case.
+			if !open {
+				ss.subscriptions.Range(func(_ string, sub *Subscription) bool {
+					sub.messages.Close()
+					sub.cancel(nil)
+					return true
+				})
+				ss.subscriptions.Clear()
+				return
+			}
+		}
+	}
 }

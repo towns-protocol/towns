@@ -15,19 +15,17 @@ import (
 	"testing"
 	"time"
 
-	"github.com/towns-protocol/towns/core/node/rpc/sync/client"
-
 	"connectrpc.com/connect"
-	"google.golang.org/protobuf/proto"
-
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/proto"
 
 	. "github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/crypto"
 	"github.com/towns-protocol/towns/core/node/events"
 	"github.com/towns-protocol/towns/core/node/protocol"
 	river_sync "github.com/towns-protocol/towns/core/node/rpc/sync"
+	"github.com/towns-protocol/towns/core/node/rpc/sync/client"
 	. "github.com/towns-protocol/towns/core/node/shared"
 	"github.com/towns-protocol/towns/core/node/testutils"
 	"github.com/towns-protocol/towns/core/node/testutils/testfmt"

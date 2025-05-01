@@ -82,7 +82,7 @@ func NewStreamsSyncOperation(
 		SyncID:     syncId,
 		commands:   make(chan *subCommand, 64),
 		syncers:    syncers,
-		messages:   syncers.NewSync(syncOpCtx, cancel, syncId),
+		messages:   syncers.NewSubscription(syncOpCtx, cancel, syncId),
 		otelTracer: otelTracer,
 	}, nil
 }
