@@ -42,6 +42,8 @@ type (
 		streamCache *StreamCache
 		// nodeRegistry is used to get the remote remoteNode endpoint from a thisNodeAddress address
 		nodeRegistry nodes.NodeRegistry
+		// syncers is the set of syncers that are used to sync streams
+		syncers *client.SyncerSet
 		// otelTracer is used to trace individual sync Send operations, tracing is disabled if nil
 		otelTracer trace.Tracer
 	}
@@ -71,6 +73,7 @@ func (cmd *subCommand) Reply(err error) {
 func NewStreamsSyncOperation(
 	ctx context.Context,
 	syncId string,
+	syncers *client.SyncerSet,
 	node common.Address,
 	streamCache *StreamCache,
 	nodeRegistry nodes.NodeRegistry,
@@ -90,6 +93,7 @@ func NewStreamsSyncOperation(
 		commands:        make(chan *subCommand, 64),
 		streamCache:     streamCache,
 		nodeRegistry:    nodeRegistry,
+		syncers:         syncers,
 		otelTracer:      otelTracer,
 	}, nil
 }
@@ -101,11 +105,7 @@ func (syncOp *StreamSyncOperation) Run(
 ) error {
 	syncOp.log.Debugw("Stream sync operation start")
 
-	syncers, messages := client.NewSyncers(
-		syncOp.ctx, syncOp.cancel, syncOp.SyncID, syncOp.streamCache,
-		syncOp.nodeRegistry, syncOp.thisNodeAddress, syncOp.otelTracer)
-
-	go syncers.Run()
+	messages := syncOp.syncers.NewSync(syncOp.ctx, syncOp.cancel, syncOp.SyncID)
 
 	// Adding the initial sync position to the syncer
 	go func() {
@@ -133,7 +133,7 @@ func (syncOp *StreamSyncOperation) Run(
 	}()
 
 	// Start separate goroutine to process sync stream commands
-	go syncOp.runCommandsProcessing(syncers, messages)
+	go syncOp.runCommandsProcessing(messages)
 
 	var messagesSendToClient int
 	defer syncOp.log.Debugw("Stream sync operation stopped", "send", messagesSendToClient)
@@ -200,19 +200,16 @@ func (syncOp *StreamSyncOperation) Run(
 	}
 }
 
-func (syncOp *StreamSyncOperation) runCommandsProcessing(
-	syncers *client.SyncerSet,
-	messages *dynmsgbuf.DynamicBuffer[*SyncStreamsResponse],
-) {
+func (syncOp *StreamSyncOperation) runCommandsProcessing(messages *dynmsgbuf.DynamicBuffer[*SyncStreamsResponse]) {
 	for {
 		select {
 		case <-syncOp.ctx.Done():
 			return
 		case cmd := <-syncOp.commands:
 			if cmd.ModifySyncReq != nil {
-				cmd.Reply(syncers.Modify(cmd.Ctx, *cmd.ModifySyncReq))
+				cmd.Reply(syncOp.syncers.Modify(cmd.Ctx, syncOp.SyncID, *cmd.ModifySyncReq))
 			} else if cmd.DebugDropStream != (shared.StreamId{}) {
-				cmd.Reply(syncers.DebugDropStream(cmd.Ctx, cmd.DebugDropStream))
+				cmd.Reply(syncOp.syncers.DebugDropStream(cmd.Ctx, syncOp.SyncID, cmd.DebugDropStream))
 			} else if cmd.CancelReq != "" {
 				_ = messages.AddMessage(&SyncStreamsResponse{SyncOp: SyncOp_SYNC_CLOSE})
 				messages.Close()

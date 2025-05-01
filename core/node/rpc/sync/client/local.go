@@ -16,10 +16,8 @@ import (
 )
 
 type localSyncer struct {
-	globalSyncOpID string
-
-	syncStreamCtx      context.Context
-	cancelGlobalSyncOp context.CancelCauseFunc
+	// syncStreamCtx is the global server context
+	syncStreamCtx context.Context
 
 	streamCache *StreamCache
 	messages    *dynmsgbuf.DynamicBuffer[*SyncStreamsResponse]
@@ -34,22 +32,18 @@ type localSyncer struct {
 
 func newLocalSyncer(
 	ctx context.Context,
-	globalSyncOpID string,
-	cancelGlobalSyncOp context.CancelCauseFunc,
 	localAddr common.Address,
 	streamCache *StreamCache,
 	messages *dynmsgbuf.DynamicBuffer[*SyncStreamsResponse],
 	otelTracer trace.Tracer,
 ) *localSyncer {
 	return &localSyncer{
-		globalSyncOpID:     globalSyncOpID,
-		syncStreamCtx:      ctx,
-		cancelGlobalSyncOp: cancelGlobalSyncOp,
-		streamCache:        streamCache,
-		localAddr:          localAddr,
-		messages:           messages,
-		activeStreams:      make(map[StreamId]*Stream),
-		otelTracer:         otelTracer,
+		syncStreamCtx: ctx,
+		streamCache:   streamCache,
+		localAddr:     localAddr,
+		messages:      messages,
+		activeStreams: make(map[StreamId]*Stream),
+		otelTracer:    otelTracer,
 	}
 }
 
@@ -165,13 +159,10 @@ func (s *localSyncer) sendResponse(msg *SyncStreamsResponse) {
 	default:
 		if err := s.messages.AddMessage(msg); err != nil {
 			err := AsRiverError(err).
-				Tag("syncId", s.globalSyncOpID).
 				Tag("op", msg.GetSyncOp()).
 				Func("localSyncer.sendResponse")
 
 			_ = err.LogError(logging.FromCtx(s.syncStreamCtx))
-
-			s.cancelGlobalSyncOp(err)
 		}
 	}
 }

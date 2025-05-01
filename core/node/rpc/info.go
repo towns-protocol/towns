@@ -15,7 +15,6 @@ import (
 	"github.com/towns-protocol/towns/core/node/logging"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	. "github.com/towns-protocol/towns/core/node/protocol/protocolconnect"
-	"github.com/towns-protocol/towns/core/node/rpc/sync"
 	"github.com/towns-protocol/towns/core/node/shared"
 	"github.com/towns-protocol/towns/core/node/utils"
 	"github.com/towns-protocol/towns/core/river_node/version"
@@ -123,12 +122,7 @@ func (s *Service) debugDropStream(
 		return nil, err
 	}
 
-	dbgHandler, ok := s.syncHandler.(sync.DebugHandler)
-	if !ok {
-		return nil, RiverError(Err_UNAVAILABLE, "Drop stream not supported")
-	}
-
-	if err = dbgHandler.DebugDropStream(ctx, syncID, streamID); err != nil {
+	if err = s.syncHandler.DebugDropStream(ctx, syncID, streamID); err != nil {
 		return nil, err
 	}
 
