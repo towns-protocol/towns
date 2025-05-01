@@ -331,7 +331,7 @@ func (j *mbJob) saveCandidate(ctx context.Context) error {
 	qp := NewQuorumPool(
 		ctx,
 		NewQuorumPoolOpts().
-			WriteMode().
+			WriteModeWithTimeout(240*time.Second). // TODO: REPLICATION: FIX: make this timeout configurable
 			WithTags(
 				"method", "mbJob.saveCandidate",
 				"streamId", j.stream.streamId,
