@@ -915,7 +915,7 @@ func (r *StreamView) AllEvents() iter.Seq[*ParsedEvent] {
 
 func (r *StreamView) GetStreamSince(
 	ctx context.Context,
-	wallet *crypto.Wallet,
+	addr common.Address,
 	cookie *SyncCookie,
 ) (*StreamAndCookie, error) {
 	log := logging.FromCtx(ctx)
@@ -929,7 +929,7 @@ func (r *StreamView) GetStreamSince(
 		// always send response, even if there are no events so that the client knows it's upToDate
 		return &StreamAndCookie{
 			Events:         envelopes,
-			NextSyncCookie: r.SyncCookie(wallet.Address),
+			NextSyncCookie: r.SyncCookie(addr),
 		}, nil
 	}
 
@@ -939,7 +939,7 @@ func (r *StreamView) GetStreamSince(
 		log.Debugw("GetStreamSince: out of date cookie.MiniblockNum. Sending sync reset.",
 			"stream", r.streamId, "error", err.Error())
 
-		return r.GetResetStreamAndCookie(wallet), nil
+		return r.GetResetStreamAndCookie(addr), nil
 
 	}
 
@@ -959,15 +959,15 @@ func (r *StreamView) GetStreamSince(
 	// always send response, even if there are no events so that the client knows it's upToDate
 	return &StreamAndCookie{
 		Events:         envelopes,
-		NextSyncCookie: r.SyncCookie(wallet.Address),
+		NextSyncCookie: r.SyncCookie(addr),
 	}, nil
 }
 
-func (r *StreamView) GetResetStreamAndCookie(wallet *crypto.Wallet) *StreamAndCookie {
+func (r *StreamView) GetResetStreamAndCookie(addr common.Address) *StreamAndCookie {
 	mbs, sn := r.MiniblocksFromLastSnapshot()
 	return &StreamAndCookie{
 		Events:         r.MinipoolEnvelopes(),
-		NextSyncCookie: r.SyncCookie(wallet.Address),
+		NextSyncCookie: r.SyncCookie(addr),
 		Miniblocks:     mbs,
 		Snapshot:       sn,
 		SyncReset:      true,
