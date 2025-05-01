@@ -1,7 +1,6 @@
 import { createTestClient, http, publicActions, walletActions, parseEther } from 'viem'
 import { generatePrivateKey, privateKeyToAccount } from 'viem/accounts'
 import { foundry } from 'viem/chains'
-import { expect } from 'vitest'
 
 import { MockERC721a } from './MockERC721A'
 

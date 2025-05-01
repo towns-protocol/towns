@@ -6,7 +6,6 @@ import { MockERC1155 } from './MockERC1155'
 import { deployContract, Mutex } from './TestGatingUtils'
 import { Address } from '../types/ContractTypes'
 import { dlogger } from '@towns-protocol/dlog'
-import { expect } from 'vitest'
 
 const logger = dlogger('csb:TestGatingERC1155')
 

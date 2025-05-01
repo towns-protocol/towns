@@ -1,7 +1,6 @@
 import { createTestClient, http, publicActions, walletActions, parseEther } from 'viem'
 import { foundry } from 'viem/chains'
 import { generatePrivateKey, privateKeyToAccount } from 'viem/accounts'
-import { expect } from 'vitest'
 import { MockERC20 } from './MockERC20'
 import { deployContract, Mutex } from './TestGatingUtils'
 import { Address } from '../types/ContractTypes'
