@@ -38,10 +38,11 @@ func newLocalSyncer(
 	cancelGlobalSyncOp context.CancelCauseFunc,
 	localAddr common.Address,
 	streamCache *StreamCache,
+	cookies []*SyncCookie,
 	messages *dynmsgbuf.DynamicBuffer[*SyncStreamsResponse],
 	otelTracer trace.Tracer,
-) *localSyncer {
-	return &localSyncer{
+) (*localSyncer, error) {
+	s := &localSyncer{
 		globalSyncOpID:     globalSyncOpID,
 		syncStreamCtx:      ctx,
 		cancelGlobalSyncOp: cancelGlobalSyncOp,
@@ -51,6 +52,15 @@ func newLocalSyncer(
 		activeStreams:      make(map[StreamId]*Stream),
 		otelTracer:         otelTracer,
 	}
+
+	for _, cookie := range cookies {
+		streamID, _ := StreamIdFromBytes(cookie.GetStreamId())
+		if err := s.addStream(s.syncStreamCtx, streamID, cookie); err != nil {
+			return nil, err
+		}
+	}
+
+	return s, nil
 }
 
 func (s *localSyncer) Run() {
