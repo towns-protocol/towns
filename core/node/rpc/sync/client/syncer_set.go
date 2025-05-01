@@ -2,6 +2,7 @@ package client
 
 import (
 	"context"
+	"fmt"
 	"slices"
 	"sync"
 	"time"
@@ -151,6 +152,7 @@ func (ss *SyncerSet) distributeMessages() {
 				sub.cancel(err)
 				return true
 			})
+			ss.subscriptions.Clear()
 			return
 		case _, open := <-ss.messages.Wait():
 			msgs = ss.messages.GetBatch(msgs)
@@ -164,71 +166,81 @@ func (ss *SyncerSet) distributeMessages() {
 					sub.cancel(nil)
 					return true
 				})
+				ss.subscriptions.Clear()
 				return
 			}
 
+			// Create a map of sync IDs to messages
+			toSend := make(map[string][]*SyncStreamsResponse)
 			for _, msg := range msgs {
-				// Parse stream ID for further message distribution across subscriptions
-				streamID, err := StreamIdFromBytes(msg.GetStreamId())
-				if err != nil {
-					log.Errorw("Failed to parse stream ID from message", "err", err)
-					continue
-				}
+				streamID := StreamId(msg.GetStreamId())
 
 				// Get all sync IDs
 				syncIDs, ok := ss.streamToSubscriptions.Load(streamID)
 				if !ok {
+					fmt.Println("syncIDs not found in streamToSubscriptions")
 					log.Errorw("Received update for the stream with no subscribers", "streamID", streamID)
 					continue
 				}
 
+				// Order is important here, we need to send the message to all subscribers
 				for syncID := range syncIDs {
+					toSend[syncID] = append(toSend[syncID], proto.Clone(msg).(*SyncStreamsResponse))
+				}
+			}
+
+			// Iterate over all sync IDs and send the message to the corresponding subscription
+			var wg sync.WaitGroup
+			for syncID, msgs := range toSend {
+				wg.Add(1)
+				go func(syncID string, msgs []*SyncStreamsResponse) {
+					defer wg.Done()
+
 					// Get subscription by the given sync ID
 					sub, ok := ss.subscriptions.Load(syncID)
 					if !ok {
-						// TODO: Log warn. This should not happen.
-						continue
+						log.Errorw("Sync does not have subscription", "syncID", syncID)
+						return
 					}
 
-					// Make the copy of the message
-					msg := proto.Clone(msg).(*SyncStreamsResponse)
-					msg.SyncId = sub.syncID
+					// Send messages to the given subscriber
+					for _, msg := range msgs {
+						msg.SyncId = sub.syncID
 
-					// Send message to the subscriber
-					select {
-					case <-sub.ctx.Done():
-						// TODO: Log sub.ctx.Err()
-					default:
-						if err := sub.messages.AddMessage(msg); err != nil {
-							// TODO: Log error
-							sub.cancel(err)
-							continue
+						// Send message to the subscriber
+						select {
+						case <-sub.ctx.Done():
+							fmt.Println("sub.ctx closed")
+							sub.messages.Close()
+							// TODO: Log sub.ctx.Err()
+						default:
+							if err := sub.messages.AddMessage(msg); err != nil {
+								// TODO: Log error
+								sub.cancel(err)
+							}
 						}
 					}
-				}
-
-				// TODO: If the message is a close message, what to do?
-				if msg.GetSyncOp() == SyncOp_SYNC_CLOSE {
-					return
-				}
-
-				select {
-				case <-ss.ctx.Done():
-					err := context.Cause(ss.ctx)
-					if err != nil {
-						log.Errorw("Sync operation stopped", "error", err)
-					} else {
-						log.Debug("Sync operation stopped")
-					}
-					ss.subscriptions.Range(func(_ string, sub *Subscription) bool {
-						sub.messages.Close()
-						sub.cancel(err)
-						return true
-					})
-					return
-				default:
-				}
+				}(syncID, msgs)
 			}
+			wg.Wait()
+
+			/*select {
+			case <-ss.ctx.Done():
+				err := context.Cause(ss.ctx)
+				if err != nil {
+					log.Errorw("Sync operation stopped", "error", err)
+				} else {
+					log.Debug("Sync operation stopped")
+				}
+				ss.subscriptions.Range(func(_ string, sub *Subscription) bool {
+					sub.messages.Close()
+					sub.cancel(err)
+					return true
+				})
+				ss.subscriptions.Clear()
+				return
+			default:
+			}*/
 
 			// If the client sent a close message, stop sending messages to client from the buffer.
 			// In theory should not happen, but just in case.
@@ -238,6 +250,7 @@ func (ss *SyncerSet) distributeMessages() {
 					sub.cancel(nil)
 					return true
 				})
+				ss.subscriptions.Clear()
 				return
 			}
 		}
@@ -522,6 +535,35 @@ func (ss *SyncerSet) modify(ctx context.Context, syncID string, req ModifyReques
 		}
 
 		errGrp.Go(func() error {
+			localMuSyncers.Lock()
+
+			// Optimistic add streams in memory
+			for _, cc := range modifySync.GetAddStreams() {
+				streamID := StreamId(cc.GetStreamId())
+				ss.streamID2Syncer[streamID] = syncer
+
+				syncIDs, _ := ss.streamToSubscriptions.LoadOrStore(streamID, make(map[string]struct{}))
+				syncIDs[syncID] = struct{}{}
+				ss.streamToSubscriptions.Store(streamID, syncIDs)
+			}
+
+			// Optimistic remove streams in memory
+			for _, streamIDRaw := range modifySync.GetRemoveStreams() {
+				streamID := StreamId(streamIDRaw)
+				delete(ss.streamID2Syncer, streamID)
+
+				if syncIDs, ok := ss.streamToSubscriptions.Load(streamID); ok {
+					delete(syncIDs, syncID)
+					if len(syncIDs) == 0 {
+						ss.streamToSubscriptions.Delete(streamID)
+					} else {
+						ss.streamToSubscriptions.Store(streamID, syncIDs)
+					}
+				}
+			}
+
+			localMuSyncers.Unlock()
+
 			ctx, cancel := context.WithTimeout(ctx, time.Second*20)
 			defer cancel()
 
@@ -545,51 +587,41 @@ func (ss *SyncerSet) modify(ctx context.Context, syncID string, req ModifyReques
 				return nil
 			}
 
-			addingFailures := resp.GetAdds()
-			successfullyAdded := slices.DeleteFunc(modifySync.GetAddStreams(), func(cookie *SyncCookie) bool {
-				return slices.ContainsFunc(addingFailures, func(status *SyncStreamOpStatus) bool {
-					return StreamId(status.StreamId) == StreamId(cookie.GetStreamId())
-				})
-			})
-			for _, status := range addingFailures {
+			localMuSyncers.Lock()
+
+			// Remove streams that were not added
+			for _, status := range resp.GetAdds() {
+				streamID := StreamId(status.GetStreamId())
+				delete(ss.streamID2Syncer, streamID)
+
+				if syncIDs, ok := ss.streamToSubscriptions.Load(streamID); ok {
+					delete(syncIDs, syncID)
+					if len(syncIDs) == 0 {
+						ss.streamToSubscriptions.Delete(streamID)
+					} else {
+						ss.streamToSubscriptions.Store(streamID, syncIDs)
+					}
+				}
+
 				req.AddingFailureHandler(status)
 			}
 
-			removalFailures := resp.GetRemovals()
-			successfullyRemoved := slices.DeleteFunc(modifySync.GetRemoveStreams(), func(streamIdRaw []byte) bool {
-				return slices.ContainsFunc(removalFailures, func(status *SyncStreamOpStatus) bool {
-					return StreamId(status.StreamId) == StreamId(streamIdRaw)
-				})
-			})
-			for _, status := range removalFailures {
+			// Remove streams that were not removed
+			for _, status := range resp.GetRemovals() {
+				streamID := StreamId(status.GetStreamId())
+				ss.streamID2Syncer[streamID] = syncer
+
+				syncIDs, _ := ss.streamToSubscriptions.LoadOrStore(streamID, make(map[string]struct{}))
+				syncIDs[syncID] = struct{}{}
+				ss.streamToSubscriptions.Store(streamID, syncIDs)
+
 				req.RemovingFailureHandler(status)
 			}
 
-			localMuSyncers.Lock()
-			for _, cookie := range successfullyAdded {
-				streamID := StreamId(cookie.GetStreamId())
-				ss.streamID2Syncer[streamID] = syncer
-
-				subscriptions, _ := ss.streamToSubscriptions.LoadOrStore(streamID, make(map[string]struct{}))
-				subscriptions[syncID] = struct{}{}
-				ss.streamToSubscriptions.Store(streamID, subscriptions)
-			}
-			for _, streamIdRaw := range successfullyRemoved {
-				streamID := StreamId(streamIdRaw)
-				delete(ss.streamID2Syncer, streamID)
-
-				if subscriptions, ok := ss.streamToSubscriptions.Load(streamID); ok {
-					delete(subscriptions, syncID)
-					if len(subscriptions) == 0 {
-						ss.streamToSubscriptions.Delete(streamID)
-					} else {
-						ss.streamToSubscriptions.Store(streamID, subscriptions)
-					}
-				}
-			}
 			if syncerStopped {
 				delete(ss.syncers, syncer.Address())
 			}
+
 			localMuSyncers.Unlock()
 
 			return nil

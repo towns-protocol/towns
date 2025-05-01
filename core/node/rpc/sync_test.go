@@ -432,7 +432,7 @@ func TestSyncWithManyStreams(t *testing.T) {
 	syncClients.expectNUpdates(
 		t,
 		len(channelCookies),
-		60*time.Second,
+		30*time.Second,
 		&updateOpts{events: 1, eventType: "ChannelPayload"},
 	)
 	testfmt.Printf(

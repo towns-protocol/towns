@@ -95,35 +95,40 @@ func (syncOp *StreamSyncOperation) Run(
 	syncOp.log.Debugw("Stream sync operation start")
 
 	// Adding the initial sync position to the syncer
-	go func() {
-		cmd := &subCommand{
-			Ctx: syncOp.ctx,
-			ModifySyncReq: &client.ModifyRequest{
-				ToAdd: req.Msg.GetSyncPos(),
-				AddingFailureHandler: func(status *SyncStreamOpStatus) {
-					select {
-					case <-syncOp.ctx.Done():
-						return
-					default:
-						_ = syncOp.messages.AddMessage(&SyncStreamsResponse{
-							SyncOp:   SyncOp_SYNC_DOWN,
-							StreamId: status.GetStreamId(),
-						})
-					}
+	if cookies := req.Msg.GetSyncPos(); len(cookies) > 0 {
+		go func() {
+			cmd := &subCommand{
+				Ctx: syncOp.ctx,
+				ModifySyncReq: &client.ModifyRequest{
+					ToAdd: cookies,
+					AddingFailureHandler: func(status *SyncStreamOpStatus) {
+						select {
+						case <-syncOp.ctx.Done():
+							return
+						default:
+							_ = syncOp.messages.AddMessage(&SyncStreamsResponse{
+								SyncOp:   SyncOp_SYNC_DOWN,
+								StreamId: status.GetStreamId(),
+							})
+						}
+					},
 				},
-			},
-			reply: make(chan error, 1),
-		}
-		if err := syncOp.process(cmd); err != nil {
-			syncOp.log.Errorw("Unable to add initial sync position", "err", err)
-		}
-	}()
+				reply: make(chan error, 1),
+			}
+			if err := syncOp.process(cmd); err != nil {
+				syncOp.log.Errorw("Unable to add initial sync position", "err", err)
+			}
+		}()
+	}
 
 	// Start separate goroutine to process sync stream commands
 	go syncOp.runCommandsProcessing()
 
 	var messagesSendToClient int
 	defer syncOp.log.Debugw("Stream sync operation stopped", "send", messagesSendToClient)
+	defer func() {
+		fmt.Println("messagesSendToClient", syncOp.SyncID, messagesSendToClient)
+	}()
 
 	var msgs []*SyncStreamsResponse
 	for {
@@ -146,8 +151,6 @@ func (syncOp *StreamSyncOperation) Run(
 				})
 				return nil
 			}
-
-			fmt.Println("msgs", len(msgs), messagesSendToClient, syncOp.SyncID)
 
 			for i, msg := range msgs {
 				msg.SyncId = syncOp.SyncID
