@@ -23,7 +23,12 @@ import {
 } from '../types'
 import { computeDelegatorsForProvider } from '../delegate-registry/DelegateRegistry'
 import { BigNumber, BytesLike, ContractReceipt, ContractTransaction, ethers } from 'ethers'
-import { LOCALHOST_CHAIN_ID } from '../utils/Web3Constants'
+import {
+    LOCALHOST_CHAIN_ID,
+    EVERYONE_ADDRESS,
+    stringifyChannelMetadataJSON,
+    NoEntitledWalletError,
+} from '../utils'
 import { IRolesBase } from '../space/IRolesShim'
 import { Space } from '../space/Space'
 import { SpaceRegistrar } from '../space-registrar/SpaceRegistrar'
@@ -47,7 +52,6 @@ import { WalletLink, INVALID_ADDRESS } from '../wallet-link/WalletLink'
 import { UNKNOWN_ERROR } from '../BaseContractShim'
 import { PricingModules } from '../pricing-modules/PricingModules'
 import { dlogger, isTestEnv } from '@towns-protocol/dlog'
-import { EVERYONE_ADDRESS, stringifyChannelMetadataJSON, NoEntitledWalletError } from '../utils'
 
 import { PlatformRequirements } from '../platform-requirements/PlatformRequirements'
 import { EntitlementDataStructOutput } from '../space/IEntitlementDataQueryableShim'

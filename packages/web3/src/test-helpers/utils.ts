@@ -1,7 +1,8 @@
 import { MembershipStruct, Permission } from '../types'
 import { EncodedNoopRuleData } from '../space'
-import { ETH_ADDRESS, getDynamicPricingModule, getFixedPricingModule } from '../utils'
+import { ETH_ADDRESS } from '../utils'
 import { SpaceDapp } from '../space-dapp'
+import { getDynamicPricingModule, getFixedPricingModule } from '../pricing-modules/helpers'
 
 export async function makeDefaultMembershipInfo(
     spaceDapp: SpaceDapp,
