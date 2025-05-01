@@ -7,7 +7,7 @@ import {
 } from './storeTypes'
 import Dexie, { Table } from 'dexie'
 
-import { InboundGroupSessionData } from './encryptionDevice'
+import { InboundGroupSessionData } from './encryptionDevice-olmlib'
 import { UserDevice } from './olmLib'
 
 // TODO: Increase this time to 10 days or something.

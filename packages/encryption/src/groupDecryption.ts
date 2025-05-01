@@ -1,4 +1,4 @@
-import type { GroupSessionExtraData } from './encryptionDevice'
+import type { GroupSessionExtraData } from './encryptionDevice-olmlib'
 
 import { DecryptionAlgorithm, DecryptionError, IDecryptionParams } from './base'
 import { GroupEncryptionAlgorithmId, GroupEncryptionSession } from './olmLib'
