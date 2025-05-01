@@ -11,6 +11,7 @@ import { check, dlogger } from '@towns-protocol/dlog'
 import { isDefined } from '../../../check'
 import { ChannelDetails, SpaceDapp } from '@towns-protocol/web3'
 import { Members } from '../../members/members'
+import type { ethers } from 'ethers'
 
 const logger = dlogger('csb:channel')
 
@@ -119,6 +120,44 @@ export class Channel extends PersistedObservable<ChannelModel> {
         return result
     }
 
+    /** Edits a message in the channel.
+     * @param eventId - The event id of the message to edit.
+     * @param message - The new message content.
+     * @returns The event id of the edited message.
+     */
+    async editMessage(
+        eventId: string,
+        message: string,
+        options?: {
+            /** If set, this message will be linked to a thread with the specified message. */
+            threadId?: string
+            /** If set, this message will be linked as a reply to the specified message. */
+            replyId?: string
+            // TODO: would be great to improve the usability here. Its not that ergonomic to pass the `ChannelMessage_Post_Mention` payload itself
+            // and its a bit unclear about what are the intetion of the fields.
+            /** The users that are mentioned in the message */
+            mentions?: PlainMessage<ChannelMessage_Post_Mention>[]
+            /** The attachments in the message. You can attach images, videos, links, files, or even other messages. */
+            attachments?: PlainMessage<ChannelMessage_Post_Attachment>[]
+        },
+    ) {
+        const channelId = this.data.id
+        const result = await this.riverConnection.withStream(channelId).call((client) =>
+            client.sendChannelMessage_Edit_Text(channelId, eventId, {
+                threadId: options?.threadId,
+                threadPreview: options?.threadId ? '🙉' : undefined,
+                replyId: options?.replyId,
+                replyPreview: options?.replyId ? '🙈' : undefined,
+                content: {
+                    body: message,
+                    mentions: options?.mentions ?? [],
+                    attachments: options?.attachments ?? [],
+                },
+            }),
+        )
+        return result
+    }
+
     /** Pins a message to the top of the channel.
      * @param eventId - The event id of the message to pin.
      * @returns The event id of the pin action.
@@ -190,6 +229,48 @@ export class Channel extends PersistedObservable<ChannelModel> {
         const result = await this.riverConnection
             .withStream(channelId)
             .call((client) => client.redactMessage(channelId, eventId))
+        return result
+    }
+
+    async sendTip(
+        messageId: string,
+        tip: {
+            receiver: string
+            amount: bigint
+            currency: string
+            chainId: number
+        },
+        signer: ethers.Signer,
+    ) {
+        const tokenId = await this.spaceDapp.getTokenIdOfOwner(this.data.spaceId, tip.receiver)
+        if (!tokenId) {
+            throw new Error('tokenId not found')
+        }
+        const tx = await this.spaceDapp.tip(
+            {
+                spaceId: this.data.spaceId,
+                tokenId,
+                currency: tip.currency,
+                amount: tip.amount,
+                messageId,
+                channelId: this.data.id,
+                receiver: tip.receiver,
+            },
+            signer,
+        )
+        const receipt = await tx.wait()
+        const senderAddress = await signer.getAddress()
+        const tipEvent = this.spaceDapp.getTipEvent(this.data.spaceId, receipt, senderAddress)
+        if (!tipEvent) {
+            throw new Error('tipEvent not found')
+        }
+
+        const channelId = this.data.id
+        const result = await this.riverConnection
+            .withStream(channelId)
+            .call((client) =>
+                client.addTransaction_Tip(tip.chainId, receipt, tipEvent, tip.receiver),
+            )
         return result
     }
 

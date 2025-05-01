@@ -506,6 +506,24 @@ export function notificationServiceHash(
     return sha256(data)
 }
 
+export function appRegistryHash(
+    userId: Uint8Array,
+    expiration: bigint, // unix seconds
+    challenge: Uint8Array,
+) {
+    const PREFIX = 'AS_AUTH:'
+    const prefixBytes = new TextEncoder().encode(PREFIX)
+    const expirationBytes = bigIntToBytes(expiration)
+    check(userId.length === 20, 'User ID should be 20 bytes')
+    check(challenge.length === 16, 'Challenge should be 16 bytes')
+    return createHash('sha256')
+        .update(prefixBytes)
+        .update(userId)
+        .update(expirationBytes)
+        .update(challenge)
+        .digest()
+}
+
 export async function riverSign(
     hash: Uint8Array,
     privateKey: Uint8Array | string,
