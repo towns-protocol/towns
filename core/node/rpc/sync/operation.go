@@ -2,6 +2,7 @@ package sync
 
 import (
 	"context"
+	"fmt"
 	"sync"
 	"time"
 
@@ -13,7 +14,6 @@ import (
 	. "github.com/towns-protocol/towns/core/node/base"
 	. "github.com/towns-protocol/towns/core/node/events"
 	"github.com/towns-protocol/towns/core/node/logging"
-	"github.com/towns-protocol/towns/core/node/nodes"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/rpc/sync/client"
 	"github.com/towns-protocol/towns/core/node/rpc/sync/dynmsgbuf"
@@ -32,18 +32,12 @@ type (
 		// ctx is the root context for this subscription, when expires the subscription and all background syncers are
 		// cancelled
 		ctx context.Context
-		// cancel sync operation by expiring ctx
-		cancel context.CancelCauseFunc
 		// commands holds incoming requests from the client to add/remove/cancel commands
 		commands chan *subCommand
-		// thisNodeAddress keeps the address of this stream  thisNodeAddress instance
-		thisNodeAddress common.Address
-		// streamCache gives access to streams managed by this thisNodeAddress
-		streamCache *StreamCache
-		// nodeRegistry is used to get the remote remoteNode endpoint from a thisNodeAddress address
-		nodeRegistry nodes.NodeRegistry
 		// syncers is the set of syncers that are used to sync streams
 		syncers *client.SyncerSet
+		// messages is the buffer that holds the messages to be sent to the client
+		messages *dynmsgbuf.DynamicBuffer[*SyncStreamsResponse]
 		// otelTracer is used to trace individual sync Send operations, tracing is disabled if nil
 		otelTracer trace.Tracer
 	}
@@ -75,8 +69,6 @@ func NewStreamsSyncOperation(
 	syncId string,
 	syncers *client.SyncerSet,
 	node common.Address,
-	streamCache *StreamCache,
-	nodeRegistry nodes.NodeRegistry,
 	otelTracer trace.Tracer,
 ) (*StreamSyncOperation, error) {
 	// make the sync operation cancellable for CancelSync
@@ -84,17 +76,14 @@ func NewStreamsSyncOperation(
 	log := logging.FromCtx(syncOpCtx).With("syncId", syncId, "node", node)
 
 	return &StreamSyncOperation{
-		log:             log,
-		rootCtx:         ctx,
-		ctx:             syncOpCtx,
-		cancel:          cancel,
-		SyncID:          syncId,
-		thisNodeAddress: node,
-		commands:        make(chan *subCommand, 64),
-		streamCache:     streamCache,
-		nodeRegistry:    nodeRegistry,
-		syncers:         syncers,
-		otelTracer:      otelTracer,
+		log:        log,
+		rootCtx:    ctx,
+		ctx:        syncOpCtx,
+		SyncID:     syncId,
+		commands:   make(chan *subCommand, 64),
+		syncers:    syncers,
+		messages:   syncers.NewSync(syncOpCtx, cancel, syncId),
+		otelTracer: otelTracer,
 	}, nil
 }
 
@@ -104,8 +93,6 @@ func (syncOp *StreamSyncOperation) Run(
 	res StreamsResponseSubscriber,
 ) error {
 	syncOp.log.Debugw("Stream sync operation start")
-
-	messages := syncOp.syncers.NewSync(syncOp.ctx, syncOp.cancel, syncOp.SyncID)
 
 	// Adding the initial sync position to the syncer
 	go func() {
@@ -118,7 +105,7 @@ func (syncOp *StreamSyncOperation) Run(
 					case <-syncOp.ctx.Done():
 						return
 					default:
-						_ = messages.AddMessage(&SyncStreamsResponse{
+						_ = syncOp.messages.AddMessage(&SyncStreamsResponse{
 							SyncOp:   SyncOp_SYNC_DOWN,
 							StreamId: status.GetStreamId(),
 						})
@@ -133,7 +120,7 @@ func (syncOp *StreamSyncOperation) Run(
 	}()
 
 	// Start separate goroutine to process sync stream commands
-	go syncOp.runCommandsProcessing(messages)
+	go syncOp.runCommandsProcessing()
 
 	var messagesSendToClient int
 	defer syncOp.log.Debugw("Stream sync operation stopped", "send", messagesSendToClient)
@@ -148,8 +135,8 @@ func (syncOp *StreamSyncOperation) Run(
 			}
 			// otherwise syncOp is stopped internally.
 			return context.Cause(syncOp.ctx)
-		case _, open := <-messages.Wait():
-			msgs = messages.GetBatch(msgs)
+		case _, open := <-syncOp.messages.Wait():
+			msgs = syncOp.messages.GetBatch(msgs)
 
 			// nil msgs indicates the buffer is closed
 			if msgs == nil {
@@ -160,6 +147,8 @@ func (syncOp *StreamSyncOperation) Run(
 				return nil
 			}
 
+			fmt.Println("msgs", len(msgs), messagesSendToClient, syncOp.SyncID)
+
 			for i, msg := range msgs {
 				msg.SyncId = syncOp.SyncID
 				if err := res.Send(msg); err != nil {
@@ -169,7 +158,7 @@ func (syncOp *StreamSyncOperation) Run(
 
 				messagesSendToClient++
 
-				syncOp.log.Debugw("Pending messages in sync operation", "count", messages.Len()+len(msgs)-i-1)
+				syncOp.log.Debugw("Pending messages in sync operation", "count", syncOp.messages.Len()+len(msgs)-i-1)
 
 				if msg.GetSyncOp() == SyncOp_SYNC_CLOSE {
 					return nil
@@ -200,7 +189,7 @@ func (syncOp *StreamSyncOperation) Run(
 	}
 }
 
-func (syncOp *StreamSyncOperation) runCommandsProcessing(messages *dynmsgbuf.DynamicBuffer[*SyncStreamsResponse]) {
+func (syncOp *StreamSyncOperation) runCommandsProcessing() {
 	for {
 		select {
 		case <-syncOp.ctx.Done():
@@ -211,12 +200,12 @@ func (syncOp *StreamSyncOperation) runCommandsProcessing(messages *dynmsgbuf.Dyn
 			} else if cmd.DebugDropStream != (shared.StreamId{}) {
 				cmd.Reply(syncOp.syncers.DebugDropStream(cmd.Ctx, syncOp.SyncID, cmd.DebugDropStream))
 			} else if cmd.CancelReq != "" {
-				_ = messages.AddMessage(&SyncStreamsResponse{SyncOp: SyncOp_SYNC_CLOSE})
-				messages.Close()
+				_ = syncOp.messages.AddMessage(&SyncStreamsResponse{SyncOp: SyncOp_SYNC_CLOSE})
+				syncOp.messages.Close()
 				cmd.Reply(nil)
 				return
 			} else if cmd.PingReq != "" {
-				_ = messages.AddMessage(&SyncStreamsResponse{
+				_ = syncOp.messages.AddMessage(&SyncStreamsResponse{
 					SyncOp:    SyncOp_SYNC_PONG,
 					PongNonce: cmd.PingReq,
 				})

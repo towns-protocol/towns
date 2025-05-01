@@ -6,6 +6,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/puzpuzpuz/xsync/v4"
+
 	"github.com/towns-protocol/towns/core/node/logging"
 
 	"google.golang.org/protobuf/proto"
@@ -56,10 +58,10 @@ type (
 
 		// messages is the channel to which StreamsSyncers write updates that must be sent to the client
 		messages *dynmsgbuf.DynamicBuffer[*SyncStreamsResponse]
-		// sync ID -> subscriptions
-		subscriptions map[string]*Subscription
-		// stream ID -> []sync ID
-		streamToSubscriptions map[StreamId]map[string]struct{}
+		// subscriptions is a map of all active subscriptions, indexed by the sync ID
+		subscriptions *xsync.Map[string, *Subscription]
+		// streamToSubscriptions is a map of all active subscriptions, indexed by the stream ID
+		streamToSubscriptions *xsync.Map[StreamId, map[string]struct{}]
 
 		// streamCache is used to subscribe to streams managed by this node instance
 		streamCache *StreamCache
@@ -114,8 +116,8 @@ func NewSyncers(
 		syncers:               make(map[common.Address]StreamsSyncer),
 		streamID2Syncer:       make(map[StreamId]StreamsSyncer),
 		messages:              dynmsgbuf.NewDynamicBuffer[*SyncStreamsResponse](),
-		subscriptions:         make(map[string]*Subscription),
-		streamToSubscriptions: make(map[StreamId]map[string]struct{}),
+		subscriptions:         xsync.NewMap[string, *Subscription](),
+		streamToSubscriptions: xsync.NewMap[StreamId, map[string]struct{}](),
 		otelTracer:            otelTracer,
 	}
 }
@@ -144,10 +146,11 @@ func (ss *SyncerSet) distributeMessages() {
 			} else {
 				log.Debug("Sync operation stopped")
 			}
-			for _, sub := range ss.subscriptions {
+			ss.subscriptions.Range(func(_ string, sub *Subscription) bool {
 				sub.messages.Close()
 				sub.cancel(err)
-			}
+				return true
+			})
 			return
 		case _, open := <-ss.messages.Wait():
 			msgs = ss.messages.GetBatch(msgs)
@@ -155,10 +158,12 @@ func (ss *SyncerSet) distributeMessages() {
 			// nil msgs indicates the buffer is closed
 			// closing all subscribers
 			if msgs == nil {
-				for _, sub := range ss.subscriptions {
+				log.Warnw("SyncerSet global messages channel closed")
+				ss.subscriptions.Range(func(_ string, sub *Subscription) bool {
 					sub.messages.Close()
 					sub.cancel(nil)
-				}
+					return true
+				})
 				return
 			}
 
@@ -166,20 +171,20 @@ func (ss *SyncerSet) distributeMessages() {
 				// Parse stream ID for further message distribution across subscriptions
 				streamID, err := StreamIdFromBytes(msg.GetStreamId())
 				if err != nil {
-					// TODO: Log error
+					log.Errorw("Failed to parse stream ID from message", "err", err)
 					continue
 				}
 
 				// Get all sync IDs
-				syncIDs, ok := ss.streamToSubscriptions[streamID]
+				syncIDs, ok := ss.streamToSubscriptions.Load(streamID)
 				if !ok {
-					// TODO: Log warn and unsubscribe from the given stream. This should not happen.
+					log.Errorw("Received update for the stream with no subscribers", "streamID", streamID)
 					continue
 				}
 
 				for syncID := range syncIDs {
 					// Get subscription by the given sync ID
-					sub, ok := ss.subscriptions[syncID]
+					sub, ok := ss.subscriptions.Load(syncID)
 					if !ok {
 						// TODO: Log warn. This should not happen.
 						continue
@@ -215,10 +220,11 @@ func (ss *SyncerSet) distributeMessages() {
 					} else {
 						log.Debug("Sync operation stopped")
 					}
-					for _, sub := range ss.subscriptions {
+					ss.subscriptions.Range(func(_ string, sub *Subscription) bool {
 						sub.messages.Close()
 						sub.cancel(err)
-					}
+						return true
+					})
 					return
 				default:
 				}
@@ -227,10 +233,11 @@ func (ss *SyncerSet) distributeMessages() {
 			// If the client sent a close message, stop sending messages to client from the buffer.
 			// In theory should not happen, but just in case.
 			if !open {
-				for _, sub := range ss.subscriptions {
+				ss.subscriptions.Range(func(_ string, sub *Subscription) bool {
 					sub.messages.Close()
 					sub.cancel(nil)
-				}
+					return true
+				})
 				return
 			}
 		}
@@ -251,12 +258,12 @@ func (ss *SyncerSet) NewSync(
 
 	// create a new message channel for the sync operation
 	message := dynmsgbuf.NewDynamicBuffer[*SyncStreamsResponse]()
-	ss.subscriptions[syncID] = &Subscription{
+	ss.subscriptions.Store(syncID, &Subscription{
 		ctx:      ctx,
 		cancel:   cancel,
 		syncID:   syncID,
 		messages: message,
-	}
+	})
 
 	return message
 }
@@ -560,10 +567,25 @@ func (ss *SyncerSet) modify(ctx context.Context, syncID string, req ModifyReques
 
 			localMuSyncers.Lock()
 			for _, cookie := range successfullyAdded {
-				ss.streamID2Syncer[StreamId(cookie.GetStreamId())] = syncer
+				streamID := StreamId(cookie.GetStreamId())
+				ss.streamID2Syncer[streamID] = syncer
+
+				subscriptions, _ := ss.streamToSubscriptions.LoadOrStore(streamID, make(map[string]struct{}))
+				subscriptions[syncID] = struct{}{}
+				ss.streamToSubscriptions.Store(streamID, subscriptions)
 			}
 			for _, streamIdRaw := range successfullyRemoved {
-				delete(ss.streamID2Syncer, StreamId(streamIdRaw))
+				streamID := StreamId(streamIdRaw)
+				delete(ss.streamID2Syncer, streamID)
+
+				if subscriptions, ok := ss.streamToSubscriptions.Load(streamID); ok {
+					delete(subscriptions, syncID)
+					if len(subscriptions) == 0 {
+						ss.streamToSubscriptions.Delete(streamID)
+					} else {
+						ss.streamToSubscriptions.Store(streamID, subscriptions)
+					}
+				}
 			}
 			if syncerStopped {
 				delete(ss.syncers, syncer.Address())

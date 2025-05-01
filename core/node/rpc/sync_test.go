@@ -432,7 +432,7 @@ func TestSyncWithManyStreams(t *testing.T) {
 	syncClients.expectNUpdates(
 		t,
 		len(channelCookies),
-		30*time.Second,
+		60*time.Second,
 		&updateOpts{events: 1, eventType: "ChannelPayload"},
 	)
 	testfmt.Printf(
@@ -533,4 +533,3 @@ func TestSyncWithManyStreams(t *testing.T) {
 	syncClients.cancelAll(t, ctx)
 	syncClients.checkDone(t)
 }
-

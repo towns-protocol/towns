@@ -114,8 +114,6 @@ func (h *handlerImpl) SyncStreams(
 		syncId,
 		h.syncers,
 		h.nodeAddr,
-		h.streamCache,
-		h.nodeRegistry,
 		h.otelTracer,
 	)
 	if err != nil {

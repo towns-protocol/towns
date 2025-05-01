@@ -93,7 +93,11 @@ func (s *localSyncer) Modify(ctx context.Context, request *ModifySyncRequest) (*
 
 // OnUpdate is called each time a new cookie is available for a stream
 func (s *localSyncer) OnUpdate(r *StreamAndCookie) {
-	s.sendResponse(&SyncStreamsResponse{SyncOp: SyncOp_SYNC_UPDATE, Stream: r})
+	s.sendResponse(&SyncStreamsResponse{
+		SyncOp:   SyncOp_SYNC_UPDATE,
+		Stream:   r,
+		StreamId: r.NextSyncCookie.GetStreamId(),
+	})
 }
 
 // OnSyncError is called when a sync subscription failed unrecoverable

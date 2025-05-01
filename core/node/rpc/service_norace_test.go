@@ -15,6 +15,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/towns-protocol/towns/core/node/rpc/sync/client"
+
 	"connectrpc.com/connect"
 	"google.golang.org/protobuf/proto"
 
@@ -140,11 +142,14 @@ func TestSyncSubscriptionWithTooSlowClient_NoRace(t *testing.T) {
 		channels = append(channels, channel)
 	}
 
+	// create syncers
+	syncers := client.NewSyncers(ctx, node1.service.cache, node1.service.nodeRegistry, node1.address, nil)
+	go syncers.Run()
+
 	// subscribe to channel updates on node 1 direct through a sync op to have better control over it
 	testfmt.Logf(t, "subscribe on node %s", node1.address)
 	syncPos := append(users, channels...)
-	syncOp, err := river_sync.NewStreamsSyncOperation(
-		ctx, syncID, node1.address, node1.service.cache, node1.service.nodeRegistry, nil)
+	syncOp, err := river_sync.NewStreamsSyncOperation(ctx, syncID, syncers, node1.address, nil)
 	req.NoError(err, "NewStreamsSyncOperation")
 
 	syncOpResult := make(chan error)
