@@ -568,7 +568,6 @@ export class EncryptionDeviceVodozemac {
         _exportFormat: boolean,
         extraSessionData: GroupSessionExtraDataVodozemac = {},
     ): Promise<void> {
-        await initAsync()
         const { session: existingSession, data: existingSessionData } =
             await this.getInboundGroupSession(streamId, sessionId)
 
