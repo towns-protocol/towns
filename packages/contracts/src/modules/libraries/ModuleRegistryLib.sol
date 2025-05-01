@@ -72,6 +72,8 @@ library ModuleRegistryLib {
     bytes32 internal constant STORAGE_SLOT =
         0xe1abd3beb055e0136b3111c2c34ff6e869f8c0d7540225f8056528d6eb12b500;
 
+    /// @notice Returns the storage layout for the module registry
+    /// @return l The storage layout struct
     function getLayout() internal pure returns (Layout storage l) {
         assembly {
             l.slot := STORAGE_SLOT
@@ -81,22 +83,34 @@ library ModuleRegistryLib {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           FUNCTIONS                          */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @notice Sets the schema ID for the module registry
+    /// @param schemaId The schema ID to set
     function setSchema(bytes32 schemaId) internal {
         Layout storage db = getLayout();
         db.schemaId = schemaId;
         emit ModuleSchemaSet(schemaId);
     }
 
+    /// @notice Retrieves the current schema ID
+    /// @return The current schema ID
     function getSchema() internal view returns (bytes32) {
         return getLayout().schemaId;
     }
 
+    /// @notice Gets the latest version ID for a module
+    /// @param module The address of the module
+    /// @return The latest version ID, or EMPTY_UID if the module is banned
     function getLatestModuleId(address module) internal view returns (bytes32) {
         ModuleInfo storage moduleInfo = getLayout().modules[module];
         if (moduleInfo.isBanned) return EMPTY_UID;
         return moduleInfo.latestVersion;
     }
 
+    /// @notice Retrieves module attestation data by version ID
+    /// @param versionId The version ID of the module
+    /// @return attestation The attestation data for the module
+    /// @dev Reverts if module is not registered, revoked, or banned
     function getModule(bytes32 versionId) internal view returns (Attestation memory attestation) {
         Attestation memory att = AttestationLib.getAttestation(versionId);
         if (att.uid == EMPTY_UID) ModuleNotRegistered.selector.revertWith();
@@ -109,10 +123,19 @@ library ModuleRegistryLib {
         return att;
     }
 
+    /// @notice Checks if a module is banned
+    /// @param module The address of the module to check
+    /// @return True if the module is banned, false otherwise
     function isBanned(address module) internal view returns (bool) {
         return getLayout().modules[module].isBanned;
     }
 
+    /// @notice Registers a new module in the registry
+    /// @param module The address of the module to register
+    /// @param owner The address of the module owner
+    /// @param clients Array of client addresses that can use the module
+    /// @return version The version ID of the registered module
+    /// @dev Reverts if module is banned, inputs are invalid, or caller is not the owner
     function addModule(
         address module,
         address owner,
@@ -145,6 +168,12 @@ library ModuleRegistryLib {
         return version;
     }
 
+    /// @notice Updates the permissions for an existing module
+    /// @param revoker The address revoking the current version
+    /// @param versionId The current version ID of the module
+    /// @param permissions New array of permission IDs
+    /// @return version The new version ID after updating permissions
+    /// @dev Reverts if module is not registered, revoked, banned, or caller is not the owner
     function updatePermissions(
         address revoker,
         bytes32 versionId,
@@ -183,6 +212,12 @@ library ModuleRegistryLib {
         return version;
     }
 
+    /// @notice Removes a module from the registry
+    /// @param revoker The address revoking the module
+    /// @param versionId The version ID of the module to remove
+    /// @return module The address of the removed module
+    /// @return version The version ID that was removed
+    /// @dev Reverts if module is not registered, revoked, or banned
     function removeModule(
         address revoker,
         bytes32 versionId
@@ -216,6 +251,10 @@ library ModuleRegistryLib {
         return (module, version);
     }
 
+    /// @notice Bans a module from the registry
+    /// @param module The address of the module to ban
+    /// @return version The version ID of the banned module
+    /// @dev Reverts if module is not registered, already banned, or revoked
     function banModule(address module) internal returns (bytes32 version) {
         if (module == address(0)) ModuleNotRegistered.selector.revertWith();
 
@@ -239,6 +278,11 @@ library ModuleRegistryLib {
         return moduleInfo.latestVersion;
     }
 
+    /// @notice Verifies inputs for adding a new module
+    /// @param module The module address to verify
+    /// @param owner The owner address to verify
+    /// @param clients Array of client addresses to verify
+    /// @dev Reverts if any input is invalid or module doesn't implement required interfaces
     function _verifyAddModuleInputs(
         address module,
         address owner,

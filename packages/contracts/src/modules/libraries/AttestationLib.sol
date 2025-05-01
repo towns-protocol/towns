@@ -33,6 +33,8 @@ library AttestationLib {
         mapping(bytes32 uid => Attestation attestation) attestations;
     }
 
+    /// @notice Returns the storage layout for the attestation module
+    /// @return ds The storage layout struct
     function getLayout() internal pure returns (Layout storage ds) {
         assembly {
             ds.slot := STORAGE_SLOT
@@ -54,6 +56,12 @@ library AttestationLib {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                     Internal Functions                     */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @notice Creates a new attestation
+    /// @param attester The address creating the attestation
+    /// @param value The ETH value to send with the attestation
+    /// @param request The attestation request data
+    /// @return attestation The created attestation
     function attest(
         address attester,
         uint256 value,
@@ -65,6 +73,12 @@ library AttestationLib {
         return getAttestation(uids[0]);
     }
 
+    /// @notice Revokes an existing attestation
+    /// @param schemaId The schema ID of the attestation to revoke
+    /// @param request The revocation request data
+    /// @param revoker The address revoking the attestation
+    /// @param availableValue The available ETH value for the revocation
+    /// @param last Whether this is the last revocation in a batch
     function revoke(
         bytes32 schemaId,
         RevocationRequestData memory request,
@@ -77,15 +91,21 @@ library AttestationLib {
         _revoke(schemaId, requests, revoker, availableValue, last);
     }
 
+    /// @notice Retrieves an attestation by its UID
+    /// @param uid The unique identifier of the attestation
+    /// @return The attestation data
     function getAttestation(bytes32 uid) internal view returns (Attestation memory) {
         return getLayout().attestations[uid];
     }
 
-    /// @dev Resolves a new attestation or a revocation of an existing attestation.
-    /// @param schema The schema of the attestation.
-    /// @param attestation The data of the attestation to make/revoke
-    /// @param value An explicit ETH amount to send to the resolver.
-    /// @param isRevocation Whether the attestation is a revocation.
+    /// @notice Resolves a new attestation or revocation through its resolver
+    /// @param schema The schema record of the attestation
+    /// @param attestation The attestation data
+    /// @param value The ETH value to send to the resolver
+    /// @param isRevocation Whether this is a revocation
+    /// @param availableValue The total available ETH value
+    /// @param last Whether this is the last attestation/revocation in a batch
+    /// @return The amount of ETH value used
     function _resolveAttestation(
         SchemaRecord memory schema,
         Attestation memory attestation,
@@ -130,6 +150,14 @@ library AttestationLib {
         return value;
     }
 
+    /// @notice Resolves multiple attestations or revocations through their resolver
+    /// @param schema The schema record
+    /// @param attestations Array of attestations to resolve
+    /// @param values Array of ETH values for each attestation
+    /// @param isRevocation Whether these are revocations
+    /// @param availableValue Total available ETH value
+    /// @param last Whether this is the last batch
+    /// @return totalUsedValue Total ETH value used in the resolution
     function _resolveAttestations(
         SchemaRecord memory schema,
         Attestation[] memory attestations,
@@ -183,6 +211,10 @@ library AttestationLib {
         return totalUsedValue;
     }
 
+    /// @notice Refunds any remaining ETH value if no value was used
+    /// @param values Array of values to check
+    /// @param availableValue Total available ETH value
+    /// @param last Whether this is the last operation
     function _refundIfZeroValue(
         uint256[] memory values,
         uint256 availableValue,
@@ -195,9 +227,14 @@ library AttestationLib {
         }
     }
 
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                     Internal Functions                     */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+    /// @notice Creates multiple attestations
+    /// @param schemaId The schema ID for the attestations
+    /// @param requests Array of attestation requests
+    /// @param attester The address creating the attestations
+    /// @param availableValue Total available ETH value
+    /// @param last Whether this is the last batch
+    /// @return usedValue Amount of ETH value used
+    /// @return uids Array of created attestation UIDs
     function _attest(
         bytes32 schemaId,
         AttestationRequestData[] memory requests,
@@ -270,6 +307,13 @@ library AttestationLib {
         usedValue = _resolveAttestations(schema, attestations, values, false, availableValue, last);
     }
 
+    /// @notice Revokes multiple attestations
+    /// @param schemaId The schema ID of the attestations
+    /// @param requests Array of revocation requests
+    /// @param revoker The address performing the revocations
+    /// @param availableValue Total available ETH value
+    /// @param last Whether this is the last batch
+    /// @return Returns the total ETH value used
     function _revoke(
         bytes32 schemaId,
         RevocationRequestData[] memory requests,
@@ -308,6 +352,9 @@ library AttestationLib {
         return _resolveAttestations(schema, attestations, values, true, availableValue, last);
     }
 
+    /// @notice Validates that a referenced attestation UID exists
+    /// @param db The storage layout
+    /// @param refUID The reference UID to check
     function _checkRefUID(Layout storage db, bytes32 refUID) internal view {
         if (refUID != EMPTY_UID) {
             if (db.attestations[refUID].uid == EMPTY_UID) {
@@ -316,6 +363,10 @@ library AttestationLib {
         }
     }
 
+    /// @notice Generates a unique hash for an attestation
+    /// @param attestation The attestation to hash
+    /// @param bump Counter to handle hash collisions
+    /// @return The unique hash for the attestation
     function _hashAttestation(
         Attestation memory attestation,
         uint32 bump
@@ -336,12 +387,17 @@ library AttestationLib {
             );
     }
 
+    /// @notice Refunds any remaining ETH value to the sender
+    /// @param value The amount to refund
     function _refund(uint256 value) internal {
         if (value > 0) {
             SafeTransferLib.safeTransferETH(msg.sender, value);
         }
     }
 
+    /// @notice Checks if an attestation exists and is valid
+    /// @param uid The unique identifier of the attestation to check
+    /// @return True if the attestation exists and is valid
     function isValidAttestation(bytes32 uid) internal view returns (bool) {
         return getAttestation(uid).uid != EMPTY_UID;
     }

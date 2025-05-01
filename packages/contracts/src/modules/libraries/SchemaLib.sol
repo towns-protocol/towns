@@ -32,6 +32,8 @@ library SchemaLib {
         mapping(bytes32 uid => SchemaRecord schema) schemas;
     }
 
+    /// @notice Returns the storage layout for the schema module
+    /// @return ds The storage layout struct
     function getLayout() internal pure returns (Layout storage ds) {
         assembly {
             ds.slot := STORAGE_SLOT
@@ -45,6 +47,13 @@ library SchemaLib {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                     Schema Management                      */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @notice Registers a new schema in the registry
+    /// @param schema The schema string to register
+    /// @param resolver The resolver contract for this schema
+    /// @param revocable Whether attestations using this schema can be revoked
+    /// @return schemaUID The unique identifier of the registered schema
+    /// @dev Reverts if schema is empty, resolver is invalid, or schema is already registered
     function registerSchema(
         string calldata schema,
         ISchemaResolver resolver,
@@ -79,6 +88,9 @@ library SchemaLib {
         return schemaUID;
     }
 
+    /// @notice Retrieves a schema record by its UID
+    /// @param uid The unique identifier of the schema
+    /// @return The schema record
     function getSchema(bytes32 uid) internal view returns (SchemaRecord memory) {
         return getLayout().schemas[uid];
     }
@@ -87,6 +99,9 @@ library SchemaLib {
     /*                     Validator Checks                       */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
+    /// @notice Validates that a resolver implements the required interface
+    /// @param resolver The resolver contract to check
+    /// @dev Reverts if the resolver doesn't implement ISchemaResolver interface
     function checkResolver(ISchemaResolver resolver) internal view {
         if (
             address(resolver) != address(0) &&
@@ -96,10 +111,15 @@ library SchemaLib {
         }
     }
 
+    /// @notice Generates a unique identifier for a schema record
+    /// @param schema The schema record to generate the UID for
+    /// @return The unique identifier for the schema
     function getUID(SchemaRecord memory schema) internal pure returns (bytes32) {
         return keccak256(abi.encodePacked(schema.schema, schema.resolver, schema.revocable));
     }
 
+    /// @notice Returns the current block timestamp as uint64
+    /// @return The current timestamp
     function time() internal view returns (uint64) {
         return uint64(block.timestamp);
     }
