@@ -11,14 +11,6 @@
     "parser": "@typescript-eslint/parser",
     "parserOptions": { "project": ["./tsconfig.eslint.json"] },
     "plugins": ["@typescript-eslint", "import"],
-    "settings": {
-        "import/resolver": {
-            "typescript": {
-                "alwaysTryTypes": true,
-                "project": "./tsconfig.json"
-            }
-        }
-    },
     "ignorePatterns": ["dist/**", ".turbo/**", "node_modules/**", "vitest.config.ts"],
     "rules": {
         "no-console": "error",
