@@ -2,8 +2,8 @@
  * @group main
  */
 
-import { SimpleCache } from '../src/cache/SimpleCache'
-import { Keyable } from '../src/cache/Keyable'
+import { SimpleCache } from '../cache/SimpleCache'
+import { Keyable } from '../cache/Keyable'
 
 class TestKey implements Keyable {
     private readonly key: string

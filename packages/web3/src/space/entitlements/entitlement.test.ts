@@ -30,19 +30,19 @@ import {
     findEthereumProviders,
     convertRuleDataV2ToV1,
     IRuleEntitlementV2Base,
-} from '../src/space'
+} from '../../space'
 import {
     MOCK_ADDRESS,
     MOCK_ADDRESS_2,
     MOCK_ADDRESS_3,
     MOCK_ADDRESS_4,
     MOCK_ADDRESS_5,
-} from '../src/utils'
+} from '../../utils'
 import { zeroAddress } from 'viem'
-import { Address } from '../src/types'
+import { Address } from '../../types'
 
 import debug from 'debug'
-import { computeDelegatorsForProvider } from '../src/delegate-registry/DelegateRegistry'
+import { computeDelegatorsForProvider } from '../../delegate-registry/DelegateRegistry'
 
 const log = debug('test')
 

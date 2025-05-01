@@ -1,10 +1,9 @@
-import { expect, it, describe } from 'vitest'
 import {
     parseChannelMetadataJSON,
     NoEntitledWalletError,
     SpaceAddressFromSpaceId,
     SpaceIdFromSpaceAddress,
-} from '../src/utils'
+} from '../utils'
 
 describe('utils.test.ts', () => {
     it('channelMetadataJson', async () => {

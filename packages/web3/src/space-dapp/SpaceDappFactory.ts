@@ -1,4 +1,4 @@
-import { SpaceDapp } from 'space-dapp'
+import { SpaceDapp } from '../space-dapp'
 import { ethers } from 'ethers'
 import { BaseChainConfig } from '../utils'
 

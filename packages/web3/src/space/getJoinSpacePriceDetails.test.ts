@@ -1,16 +1,29 @@
 import { ethers } from 'ethers'
-import { makeBaseChainConfig } from '../../sdk/src/riverConfig'
-import { makeSpaceStreamId } from '../../sdk/src/id'
-import { LocalhostWeb3Provider } from './LocalhostWeb3Provider'
-import { SpaceDapp } from '../src/space-dapp'
-import { makeDefaultMembershipInfo } from './utils'
+import { LocalhostWeb3Provider } from '../test-helpers/LocalhostWeb3Provider'
+import { SpaceDapp } from '../space-dapp'
+import { makeDefaultMembershipInfo } from '../test-helpers/utils'
+import { Address } from '../types'
+import { SpaceIdFromSpaceAddress } from '../utils'
+
+const baseRpcUrl = process.env.BASE_CHAIN_RPC_URL!
+const baseConfig = {
+    chainId: parseInt(process.env.BASE_CHAIN_ID!),
+    addresses: {
+        baseRegistry: process.env.BASE_REGISTRY_ADDRESS as Address,
+        spaceFactory: process.env.SPACE_FACTORY_ADDRESS as Address,
+        spaceOwner: process.env.SPACE_OWNER_ADDRESS as Address,
+        utils: {
+            mockNFT: process.env.MOCK_NFT_ADDRESS as Address | undefined,
+            member: process.env.MEMBER_ADDRESS as Address | undefined,
+        },
+    },
+}
 
 test('getJoinSpacePriceDetails returns correct values for free space', async () => {
     const wallet = ethers.Wallet.createRandom()
-    const config = makeBaseChainConfig()
-    const baseProvider = new LocalhostWeb3Provider(config.rpcUrl, wallet)
+    const baseProvider = new LocalhostWeb3Provider(baseRpcUrl, wallet)
     await baseProvider.fundWallet()
-    const spaceDapp = new SpaceDapp(config.chainConfig, baseProvider)
+    const spaceDapp = new SpaceDapp(baseConfig, baseProvider)
     const tx = await spaceDapp.createSpace(
         {
             spaceName: 'test',
@@ -36,10 +49,9 @@ test('getJoinSpacePriceDetails returns correct values for free space', async () 
 
 test('getJoinSpacePriceDetails returns correct values for paid space', async () => {
     const wallet = ethers.Wallet.createRandom()
-    const config = makeBaseChainConfig()
-    const baseProvider = new LocalhostWeb3Provider(config.rpcUrl, wallet)
+    const baseProvider = new LocalhostWeb3Provider(baseRpcUrl, wallet)
     await baseProvider.fundWallet()
-    const spaceDapp = new SpaceDapp(config.chainConfig, baseProvider)
+    const spaceDapp = new SpaceDapp(baseConfig, baseProvider)
     const price = ethers.utils.parseEther('1')
     const tx = await spaceDapp.createSpace(
         {
@@ -63,7 +75,7 @@ test('getJoinSpacePriceDetails returns correct values for paid space', async () 
     if (!spaceAddress) {
         throw new Error('Space address not found')
     }
-    const spaceId = makeSpaceStreamId(spaceAddress)
+    const spaceId = SpaceIdFromSpaceAddress(spaceAddress)
 
     const priceDetails = await spaceDapp.getJoinSpacePriceDetails(spaceAddress)
 

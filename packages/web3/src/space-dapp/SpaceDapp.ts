@@ -21,12 +21,12 @@ import {
     VersionedRuleData,
     SpaceInfo,
 } from '../types'
-import { computeDelegatorsForProvider } from 'delegate-registry/DelegateRegistry'
+import { computeDelegatorsForProvider } from '../delegate-registry/DelegateRegistry'
 import { BigNumber, BytesLike, ContractReceipt, ContractTransaction, ethers } from 'ethers'
-import { LOCALHOST_CHAIN_ID } from 'utils/Web3Constants'
-import { IRolesBase } from 'space/IRolesShim'
-import { Space } from 'space/Space'
-import { SpaceRegistrar } from 'space-registrar/SpaceRegistrar'
+import { LOCALHOST_CHAIN_ID } from '../utils/Web3Constants'
+import { IRolesBase } from '../space/IRolesShim'
+import { Space } from '../space/Space'
+import { SpaceRegistrar } from '../space-registrar/SpaceRegistrar'
 import {
     createEntitlementStruct,
     createLegacyEntitlementStruct,
@@ -40,27 +40,27 @@ import {
     RuleEntitlementV2Shim,
     UserEntitlementShim,
     RuleEntitlementShim,
-} from 'space'
-import { RiverAirdropDapp } from 'airdrop/RiverAirdropDapp'
-import { BaseChainConfig } from 'utils/IStaticContractsInfo'
-import { WalletLink, INVALID_ADDRESS } from 'wallet-link/WalletLink'
-import { UNKNOWN_ERROR } from 'BaseContractShim'
-import { PricingModules } from 'pricing-modules/PricingModules'
+} from '../space'
+import { RiverAirdropDapp } from '../airdrop/RiverAirdropDapp'
+import { BaseChainConfig } from '../utils/IStaticContractsInfo'
+import { WalletLink, INVALID_ADDRESS } from '../wallet-link/WalletLink'
+import { UNKNOWN_ERROR } from '../BaseContractShim'
+import { PricingModules } from '../pricing-modules/PricingModules'
 import { dlogger, isTestEnv } from '@towns-protocol/dlog'
 import { EVERYONE_ADDRESS, stringifyChannelMetadataJSON, NoEntitledWalletError } from '../utils'
 
-import { PlatformRequirements } from 'platform-requirements/PlatformRequirements'
-import { EntitlementDataStructOutput } from 'space/IEntitlementDataQueryableShim'
-import { CacheResult, EntitlementCache } from 'cache/EntitlementCache'
-import { SimpleCache } from 'cache/SimpleCache'
+import { PlatformRequirements } from '../platform-requirements/PlatformRequirements'
+import { EntitlementDataStructOutput } from '../space/IEntitlementDataQueryableShim'
+import { CacheResult, EntitlementCache } from '../cache/EntitlementCache'
+import { SimpleCache } from '../cache/SimpleCache'
 import { TipEventObject } from '@towns-protocol/generated/dev/typings/ITipping'
 import {
     EntitlementRequest,
     BannedTokenIdsRequest,
     OwnerOfTokenRequest,
     IsTokenBanned,
-} from 'cache/Keyable'
-import { SpaceOwner } from 'space-owner/SpaceOwner'
+} from '../cache/Keyable'
+import { SpaceOwner } from '../space-owner/SpaceOwner'
 
 const logger = dlogger('csb:SpaceDapp:debug')
 
