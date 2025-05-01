@@ -7751,7 +7751,6 @@ __metadata:
     "@types/debug": ^4.1.8
     "@typescript-eslint/eslint-plugin": ^8.29.0
     "@typescript-eslint/parser": ^8.29.0
-    browser-or-node: ^3.0.0
     debug: ^4.3.4
     eslint: ^8.57.0
     eslint-import-resolver-typescript: ^3.5.5
