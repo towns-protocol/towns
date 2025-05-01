@@ -1,7 +1,7 @@
 import { ethers } from 'ethers'
 import { PublicClient } from 'viem'
 import { PricingModuleStruct } from './ContractTypes'
-import { ISpaceDapp } from './ISpaceDapp'
+import { SpaceDapp } from './v3'
 
 export const ETH_ADDRESS = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE'
 export const EVERYONE_ADDRESS = '0x0000000000000000000000000000000000000001'
@@ -97,7 +97,7 @@ export const TIERED_PRICING_ORACLE_V2 = 'TieredLogPricingOracleV2'
 export const TIERED_PRICING_ORACLE_V3 = 'TieredLogPricingOracleV3'
 export const FIXED_PRICING = 'FixedPricing'
 
-export const getDynamicPricingModule = async (spaceDapp: ISpaceDapp | undefined) => {
+export const getDynamicPricingModule = async (spaceDapp: SpaceDapp | undefined) => {
     if (!spaceDapp) {
         throw new Error('getDynamicPricingModule: No spaceDapp')
     }
@@ -109,7 +109,7 @@ export const getDynamicPricingModule = async (spaceDapp: ISpaceDapp | undefined)
     return dynamicPricingModule
 }
 
-export const getFixedPricingModule = async (spaceDapp: ISpaceDapp | undefined) => {
+export const getFixedPricingModule = async (spaceDapp: SpaceDapp | undefined) => {
     if (!spaceDapp) {
         throw new Error('getFixedPricingModule: No spaceDapp')
     }
