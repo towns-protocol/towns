@@ -15,6 +15,9 @@ import {SchemaRecord} from "@ethereum-attestation-service/eas-contracts/ISchemaR
 import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
 import {OwnableBase} from "@towns-protocol/diamond/src/facets/ownable/OwnableBase.sol";
 
+/// @title Schema Registry
+/// @notice A registry for schema records
+/// @dev This contract is used for testing purposes
 contract SchemaRegistry is ISchemaRegistry, OwnableBase, Facet {
     function __SchemaRegistry_init() external onlyInitializing {}
 

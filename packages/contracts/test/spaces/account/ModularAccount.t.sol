@@ -36,7 +36,7 @@ contract ModularAccountTest is BaseSetup, IOwnableBase, IAccountBase {
     MockModule internal mockModule;
 
     bytes32 internal activeSchemaId;
-    bytes32 internal moduleGroupId;
+    bytes32 internal versionId;
 
     address internal dev;
     address internal client;
@@ -61,7 +61,7 @@ contract ModularAccountTest is BaseSetup, IOwnableBase, IAccountBase {
         clients[0] = client;
 
         vm.prank(dev);
-        moduleGroupId = moduleRegistry.registerModule(address(mockModule), dev, clients);
+        versionId = moduleRegistry.registerModule(address(mockModule), dev, clients);
         _;
     }
 
@@ -71,14 +71,14 @@ contract ModularAccountTest is BaseSetup, IOwnableBase, IAccountBase {
         clients[0] = client;
 
         vm.prank(dev);
-        moduleGroupId = moduleRegistry.registerModule(address(mockModule), dev, clients);
+        versionId = moduleRegistry.registerModule(address(mockModule), dev, clients);
 
         ExecutionManifest memory manifest = mockModule.executionManifest();
 
         vm.prank(founder);
         emit IERC6900Account.ExecutionInstalled(address(mockModule), manifest);
         modularAccount.installModule(
-            moduleGroupId,
+            versionId,
             "",
             ModuleParams({grantDelay: 0, executionDelay: 0, allowance: 0})
         );
@@ -97,11 +97,8 @@ contract ModularAccountTest is BaseSetup, IOwnableBase, IAccountBase {
             data: abi.encodeWithSelector(mockModule.mockFunction.selector)
         });
 
-        assertEq(modularAccount.isModuleEntitled(moduleGroupId, client, keccak256("Read")), true);
-        assertEq(
-            modularAccount.isModuleEntitled(moduleGroupId, client, keccak256("Create")),
-            false
-        );
+        assertEq(modularAccount.isModuleEntitled(versionId, client, keccak256("Read")), true);
+        assertEq(modularAccount.isModuleEntitled(versionId, client, keccak256("Create")), false);
     }
 
     function test_revertWhen_execute_bannedModule() external givenModuleIsInstalled {
@@ -123,7 +120,7 @@ contract ModularAccountTest is BaseSetup, IOwnableBase, IAccountBase {
         vm.prank(notOwner);
         vm.expectRevert(abi.encodeWithSelector(IOwnableBase.Ownable__NotOwner.selector, notOwner));
         modularAccount.installModule(
-            moduleGroupId,
+            versionId,
             "",
             ModuleParams({grantDelay: 0, executionDelay: 0, allowance: 0})
         );
@@ -133,7 +130,7 @@ contract ModularAccountTest is BaseSetup, IOwnableBase, IAccountBase {
         vm.prank(founder);
         vm.expectRevert(abi.encodeWithSelector(ModularAccountLib.InvalidModuleId.selector));
         modularAccount.installModule(
-            moduleGroupId,
+            versionId,
             "",
             ModuleParams({grantDelay: 0, executionDelay: 0, allowance: 0})
         );
@@ -148,7 +145,7 @@ contract ModularAccountTest is BaseSetup, IOwnableBase, IAccountBase {
             abi.encodeWithSelector(ModularAccountLib.InvalidManifest.selector, address(mockModule))
         );
         modularAccount.installModule(
-            moduleGroupId,
+            versionId,
             "",
             ModuleParams({grantDelay: 0, executionDelay: 0, allowance: 0})
         );
@@ -166,12 +163,12 @@ contract ModularAccountTest is BaseSetup, IOwnableBase, IAccountBase {
 
     function test_revertWhen_installModule_moduleRevoked() external givenModuleIsInstalled {
         vm.prank(dev);
-        moduleRegistry.removeModule(moduleGroupId);
+        moduleRegistry.removeModule(versionId);
 
         vm.prank(founder);
         vm.expectRevert(abi.encodeWithSelector(ModularAccountLib.ModuleRevoked.selector));
         modularAccount.installModule(
-            moduleGroupId,
+            versionId,
             "",
             ModuleParams({grantDelay: 0, executionDelay: 0, allowance: 0})
         );
@@ -184,12 +181,12 @@ contract ModularAccountTest is BaseSetup, IOwnableBase, IAccountBase {
         clients[0] = client;
 
         vm.prank(dev);
-        moduleGroupId = moduleRegistry.registerModule(address(invalidModule), dev, clients);
+        versionId = moduleRegistry.registerModule(address(invalidModule), dev, clients);
 
         vm.prank(founder);
         vm.expectRevert(ModularAccountLib.UnauthorizedSelector.selector);
         modularAccount.installModule(
-            moduleGroupId,
+            versionId,
             "",
             ModuleParams({grantDelay: 0, executionDelay: 0, allowance: 0})
         );
@@ -202,7 +199,7 @@ contract ModularAccountTest is BaseSetup, IOwnableBase, IAccountBase {
         vm.prank(founder);
         vm.expectEmit(address(modularAccount));
         emit IERC6900Account.ExecutionUninstalled(address(mockModule), true, manifest);
-        modularAccount.uninstallModule(moduleGroupId, "");
+        modularAccount.uninstallModule(versionId, "");
 
         bytes memory expectedRevert = abi.encodeWithSelector(
             ExecutorLib.UnauthorizedCall.selector,
@@ -223,7 +220,7 @@ contract ModularAccountTest is BaseSetup, IOwnableBase, IAccountBase {
     function test_revertWhen_uninstallModule_notOwner() external givenModuleIsInstalled {
         vm.prank(client);
         vm.expectRevert(abi.encodeWithSelector(IOwnableBase.Ownable__NotOwner.selector, client));
-        modularAccount.uninstallModule(moduleGroupId, "");
+        modularAccount.uninstallModule(versionId, "");
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -233,16 +230,16 @@ contract ModularAccountTest is BaseSetup, IOwnableBase, IAccountBase {
     function test_allowance() external givenModuleIsInstalled {
         uint256 allowance = 1 ether;
         vm.prank(founder);
-        modularAccount.setModuleAllowance(moduleGroupId, allowance);
+        modularAccount.setModuleAllowance(versionId, allowance);
 
-        assertEq(modularAccount.getModuleAllowance(moduleGroupId), allowance);
+        assertEq(modularAccount.getModuleAllowance(versionId), allowance);
     }
 
     function test_revertWhen_setAllowance_notOwner() external givenModuleIsInstalled {
         uint256 allowance = 1 ether;
         vm.prank(client);
         vm.expectRevert(abi.encodeWithSelector(IOwnableBase.Ownable__NotOwner.selector, client));
-        modularAccount.setModuleAllowance(moduleGroupId, allowance);
+        modularAccount.setModuleAllowance(versionId, allowance);
     }
 
     function test_revertWhen_setAllowance_invalidModule() external givenModuleIsInstalled {
@@ -263,7 +260,7 @@ contract ModularAccountTest is BaseSetup, IOwnableBase, IAccountBase {
         clients[0] = client;
 
         vm.prank(dev);
-        moduleGroupId = moduleRegistry.registerModule(address(savingsModule), dev, clients);
+        versionId = moduleRegistry.registerModule(address(savingsModule), dev, clients);
 
         uint256 maxEtherValue = 1 ether;
         address savingsModuleAddress = address(savingsModule);
@@ -273,7 +270,7 @@ contract ModularAccountTest is BaseSetup, IOwnableBase, IAccountBase {
 
         vm.startPrank(founder);
         modularAccount.installModule(
-            moduleGroupId,
+            versionId,
             "",
             ModuleParams({grantDelay: 0, executionDelay: 0, allowance: maxEtherValue})
         );

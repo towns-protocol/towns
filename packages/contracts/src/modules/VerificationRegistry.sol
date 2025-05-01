@@ -11,6 +11,9 @@ import {VerificationLib} from "./libraries/VerificationLib.sol";
 // contracts
 import {OwnableBase} from "@towns-protocol/diamond/src/facets/ownable/OwnableBase.sol";
 
+/// @title Verification Registry
+/// @notice A registry for verification requests
+/// @dev This contract is used for testing purposes
 contract VerificationRegistry is IERC6900ExtensionRegistry, OwnableBase {
     function getVerificationSchema() external pure returns (string memory) {
         return "address module, bool trusted";

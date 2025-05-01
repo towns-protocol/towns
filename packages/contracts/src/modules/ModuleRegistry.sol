@@ -53,9 +53,9 @@ contract ModuleRegistry is IModuleRegistry, OwnableBase, Facet {
         return ModuleRegistryLib.getModule(versionId);
     }
 
-    /// @notice Get the latest module ID for a module
+    /// @notice Get the latest version ID for a module
     /// @param module The module address
-    /// @return versionId The attestation UID of the registered module
+    /// @return versionId The version ID of the registered module
     function getLatestModuleId(address module) external view returns (bytes32) {
         return ModuleRegistryLib.getLatestModuleId(module);
     }

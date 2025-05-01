@@ -13,6 +13,9 @@ import {Attestation} from "@ethereum-attestation-service/eas-contracts/Common.so
 import {AttestationRequest, AttestationRequestData, RevocationRequest, RevocationRequestData} from "@ethereum-attestation-service/eas-contracts/IEAS.sol";
 import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
 
+/// @title Attestation Registry
+/// @notice A registry for attestation requests
+/// @dev This contract is used for testing purposes
 contract AttestationRegistry is IAttestationRegistry, Facet {
     function __AttestationRegistry_init() external onlyInitializing {}
 
