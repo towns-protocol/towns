@@ -40,10 +40,22 @@ func logIfEntitlementError(ctx context.Context, err error) {
 	}
 }
 
-// composeEntitlementEvaluationError returns a composed error type that incorporates the error of
-// either child as long as that error is not a context cancellation, which we ignore because we
-// may introduce a single cancellation ourselves when short-circuiting. However, in the case that
-// both errors are cancellations, we consider this a true error.
+// composeEntitlementEvaluationError returns a composed error type that prioritizes errors resulting
+// from invalid entitlement evaluations as opposed to errors derived from context cancellation or
+// deadline exceeded. The reason for this is we short-circuit the evaluation of nested entitlements
+// by cancelling the context, and we want to avoid surfacing any errors that we actually created ourselves
+// as part of a performance optimization.
+// How errors are evaluated:
+//  1. If both are noncancellation errors, then both errors arose when we attempted to evaluate an entitlement.
+//     Compose them and return.
+//  2. If only one error is a non-cancellation error, it arose during entitlement evaluation, and the second
+//     error was caused by our short-circuiting logic. Return the entitlement evaluation error.
+//  3. If neither of the above conditions are true, then either one or both of the errors is non-nil and were
+//     caused by a cancellation or deadline exceeded.
+//     A. If only one error is non-nil, return it.
+//     B. If both errors are cancellation errors, then compose them.
+//
+// Note that if both errors are nil, the final result will also be nil.
 func composeEntitlementEvaluationError(leftErr error, rightErr error) error {
 	if isNoncancelationError(leftErr) && isNoncancelationError(rightErr) {
 		return fmt.Errorf("%w; %w", leftErr, rightErr)
@@ -201,10 +213,8 @@ func (e *Evaluator) evaluateOrOperation(
 		return true, nil
 	}
 
-	// -  If one of the errors was non-nil and not a cancellation or timeout, return it as the true cause of the
-	//    entitlement evaluation failure.
-	// -  If both checks were cancelations/timeouts, consider this a true timeout, as the context cancellation cause
-	//    must have propogated from the parent.
+	// Return a false result and handle error values to prioritize error types that come
+	// from entitlement evaluations.
 	return false, composeEntitlementEvaluationError(leftErr, rightErr)
 }
 
