@@ -260,7 +260,7 @@ func validateStream(
 	return nil
 }
 
-func srStream(cfg *config.Config, streamId string, validate bool) error {
+func srStream(cfg *config.Config, streamId string, validate, urls bool) error {
 	ctx := context.Background() // lint:ignore context.Background() is fine here
 
 	var httpClient *http.Client
@@ -303,6 +303,16 @@ func srStream(cfg *config.Config, streamId string, validate bool) error {
 		return err
 	}
 
+	nodes := make(map[common.Address]registries.NodeRecord)
+	if urls {
+		nn, err := registryContract.GetAllNodes(ctx, blockchain.InitialBlockNum)
+		if err == nil {
+			for _, n := range nn {
+				nodes[n.NodeAddress] = n
+			}
+		}
+	}
+
 	fmt.Printf("StreamId: %s\n", stream.StreamId().String())
 	fmt.Printf("Miniblock: %d %s\n", stream.LastMbNum(), stream.LastMbHash().Hex())
 	fmt.Println("IsSealed: ", stream.IsSealed())
@@ -310,6 +320,14 @@ func srStream(cfg *config.Config, streamId string, validate bool) error {
 	err = nil
 	for i, node := range stream.Nodes() {
 		fmt.Printf("  %d %s\n", i, node)
+		if urls {
+			nodeRecord, ok := nodes[node]
+			if ok {
+				url := nodeRecord.Url
+				fmt.Printf("                %s/debug\n", url)
+				fmt.Printf("                %s/debug/stream/%s\n", url, stream.StreamId())
+			}
+		}
 		if validate {
 			validateErr := validateStream(
 				ctx,
@@ -373,7 +391,7 @@ func nodesDump(cfg *config.Config, csv bool) error {
 			)
 		} else {
 			fmt.Printf(
-				"%4d %s %s %d (%-11s) %s\n",
+				"%4d %s %s %d (%-11s) %s/debug\n",
 				i,
 				node.NodeAddress.Hex(),
 				node.Operator.Hex(),
@@ -585,10 +603,15 @@ func init() {
 			if err != nil {
 				return err
 			}
-			return srStream(cmdConfig, args[0], validate)
+			urls, err := cmd.Flags().GetBool("urls")
+			if err != nil {
+				return err
+			}
+			return srStream(cmdConfig, args[0], validate, urls)
 		},
 	}
 	streamCmd.Flags().Bool("validate", false, "Fetch stream from each node and compare to the registry record")
+	streamCmd.Flags().Bool("urls", true, "Print node URLs")
 	srCmd.AddCommand(streamCmd)
 
 	nodesCmd := &cobra.Command{
