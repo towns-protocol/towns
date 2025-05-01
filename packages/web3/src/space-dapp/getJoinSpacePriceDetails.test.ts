@@ -5,16 +5,19 @@ import { makeDefaultMembershipInfo } from '../test-helpers/utils'
 import { Address } from '../types'
 import { SpaceIdFromSpaceAddress } from '../utils'
 
+import DeploymentsJson from '@towns-protocol/generated/config/deployments.json'
+const base = DeploymentsJson.local_multi.base
+
 const baseRpcUrl = process.env.BASE_CHAIN_RPC_URL!
 const baseConfig = {
-    chainId: parseInt(process.env.BASE_CHAIN_ID!),
+    chainId: base.chainId,
     addresses: {
-        baseRegistry: process.env.BASE_REGISTRY_ADDRESS as Address,
-        spaceFactory: process.env.SPACE_FACTORY_ADDRESS as Address,
-        spaceOwner: process.env.SPACE_OWNER_ADDRESS as Address,
+        baseRegistry: base.addresses.baseRegistry as Address,
+        spaceFactory: base.addresses.spaceFactory as Address,
+        spaceOwner: base.addresses.spaceOwner as Address,
         utils: {
-            mockNFT: process.env.MOCK_NFT_ADDRESS as Address | undefined,
-            member: process.env.MEMBER_ADDRESS as Address | undefined,
+            mockNFT: base.addresses.utils.mockNFT as Address | undefined,
+            member: base.addresses.utils.member as Address | undefined,
         },
     },
 }
