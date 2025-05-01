@@ -1,0 +1,485 @@
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+import {
+    Client,
+    makeBaseProvider,
+    makeRiverConfig,
+    makeRiverProvider,
+    makeRiverRpcClient,
+    MockEntitlementsDelegate,
+    RiverDbManager,
+    userIdFromAddress,
+    waitFor,
+    type AppRegistryRpcClient,
+    type Channel,
+    type SyncAgent,
+} from '@towns-protocol/sdk'
+import { describe, it, expect, beforeAll } from 'vitest'
+import type { Bot, BotPayload, UserData } from './bot'
+import { Bot as SyncAgentTest, AppRegistryService, makeSignerContext } from '@towns-protocol/sdk'
+import { bin_fromHexString, bin_toString, bin_toBase64 } from '@towns-protocol/dlog'
+import { makeTownsBot } from './bot'
+import { ethers } from 'ethers'
+import { AppPrivateDataSchema, ForwardSettingValue } from '@towns-protocol/proto'
+import { toBinary, create } from '@bufbuild/protobuf'
+import { ETH_ADDRESS, SpaceDapp } from '@towns-protocol/web3'
+import { createSecureServer } from 'node:http2'
+import { serve } from '@hono/node-server'
+import fs from 'node:fs'
+import path from 'node:path'
+
+const WEBHOOK_URL = `https://localhost:${process.env.BOT_PORT}/webhook`
+
+type OnMessageType = BotPayload<'message'>
+type OnChannelJoin = BotPayload<'channelJoin'>
+type OnMessageEditType = BotPayload<'messageEdit'>
+type OnThreadMessageType = BotPayload<'threadMessage'>
+type OnMentionedType = BotPayload<'mentioned'>
+
+describe('Bot', { sequential: true }, () => {
+    const riverConfig = makeRiverConfig()
+
+    const bob = new SyncAgentTest(undefined, riverConfig)
+    let bobClient: SyncAgent
+
+    const alice = new SyncAgentTest(undefined, riverConfig)
+    let aliceClient: SyncAgent
+
+    const BOB_USERNAME = 'bob'
+    const BOB_DISPLAY_NAME = 'im_bob'
+    let bot: Bot
+    let spaceId: string
+    let channelId: string
+    let botWallet: ethers.Wallet
+    let appPrivateDataBase64: string
+    let jwtSecret: string
+    let appRegistryRpcClient: AppRegistryRpcClient
+    let appId: Uint8Array
+    let bobDefaultChannel: Channel
+
+    beforeAll(async () => {
+        await shouldInitializeBotOwner()
+        await shouldCreateBotClient()
+        await shouldRegisterBotInAppRegistry()
+        await shouldRunBotServerAndRegisterWebhook()
+    })
+
+    const setForwardSetting = async (forwardSetting: ForwardSettingValue) => {
+        await appRegistryRpcClient.setAppSettings({
+            appId,
+            settings: { forwardSetting },
+        })
+    }
+
+    const shouldInitializeBotOwner = async () => {
+        await Promise.all([bob.fundWallet(), alice.fundWallet()])
+        bobClient = await bob.makeSyncAgent()
+        aliceClient = await alice.makeSyncAgent()
+        await Promise.all([bobClient.start(), aliceClient.start()])
+        const { spaceId: spaceId_, defaultChannelId } = await bobClient.spaces.createSpace(
+            { spaceName: 'bobs-space' },
+            bob.signer,
+        )
+        spaceId = spaceId_
+        channelId = defaultChannelId
+        bobDefaultChannel = bobClient.spaces.getSpace(spaceId).getChannel(channelId)
+        await bobDefaultChannel.members.myself.setUsername(BOB_USERNAME)
+        await bobDefaultChannel.members.myself.setDisplayName(BOB_DISPLAY_NAME)
+        expect(spaceId).toBeDefined()
+        expect(channelId).toBeDefined()
+    }
+
+    const shouldCreateBotClient = async () => {
+        botWallet = ethers.Wallet.createRandom()
+        const delegateWallet = ethers.Wallet.createRandom()
+        const signerContext = await makeSignerContext(botWallet, delegateWallet)
+
+        const spaceDapp = new SpaceDapp(riverConfig.base.chainConfig, makeBaseProvider(riverConfig))
+        const riverProvider = makeRiverProvider(riverConfig)
+        const rpcClient = await makeRiverRpcClient(riverProvider, riverConfig.river.chainConfig)
+        const botUserId = userIdFromAddress(signerContext.creatorAddress)
+        const cryptoStore = RiverDbManager.getCryptoDb(botUserId)
+
+        const { issued } = await spaceDapp.joinSpace(spaceId, botWallet.address, bob.signer)
+        expect(issued).toBe(true)
+
+        const botClient = new Client(
+            signerContext,
+            rpcClient,
+            cryptoStore,
+            new MockEntitlementsDelegate(),
+        )
+        await botClient.initializeUser({ spaceId })
+        await botClient.joinUser(spaceId, botWallet.address)
+        await botClient.joinStream(channelId, {
+            skipWaitForUserStreamUpdate: true,
+            skipWaitForMiniblockConfirmation: true,
+        })
+        await botClient.uploadDeviceKeys()
+
+        const exportedDevice = await botClient.cryptoBackend?.exportDevice()
+        expect(exportedDevice).toBeDefined()
+        appPrivateDataBase64 = bin_toBase64(
+            toBinary(
+                AppPrivateDataSchema,
+                create(AppPrivateDataSchema, {
+                    privateKey: botWallet.privateKey,
+                    encryptionDevice: exportedDevice,
+                }),
+            ),
+        )
+        expect(appPrivateDataBase64).toBeDefined()
+        appId = bin_fromHexString(botWallet.address)
+    }
+
+    const shouldRegisterBotInAppRegistry = async () => {
+        const { appRegistryRpcClient: rpcClient } = await AppRegistryService.authenticateWithSigner(
+            bob.userId,
+            bob.signer,
+            process.env.APP_REGISTRY_URL!,
+        )
+        appRegistryRpcClient = rpcClient
+        const { hs256SharedSecret } = await appRegistryRpcClient.register({
+            appId,
+            appOwnerId: bin_fromHexString(bob.userId),
+        })
+        jwtSecret = bin_toString(hs256SharedSecret)
+        expect(jwtSecret).toBeDefined()
+    }
+
+    const shouldRunBotServerAndRegisterWebhook = async () => {
+        bot = await makeTownsBot(appPrivateDataBase64, jwtSecret, process.env.RIVER_ENV)
+        expect(bot).toBeDefined()
+        expect(bot.botId).toBe(botWallet.address)
+        const { fetch } = await bot.start()
+        serve({
+            port: Number(process.env.BOT_PORT!),
+            fetch,
+            createServer: createSecureServer,
+            serverOptions: {
+                // TODO: mkcert localhost in CI
+                key: fs.readFileSync(path.join(__dirname, '../certs', 'localhost+2-key.pem')),
+                cert: fs.readFileSync(path.join(__dirname, '../certs', 'localhost+2.pem')),
+                allowHTTP1: false,
+            },
+        })
+        await appRegistryRpcClient.registerWebhook({
+            appId,
+            webhookUrl: WEBHOOK_URL,
+        })
+
+        // Verify webhook registration
+        const { isRegistered, validResponse } = await appRegistryRpcClient.getStatus({
+            appId,
+        })
+        expect(isRegistered).toBe(true)
+        expect(validResponse).toBe(true)
+        await bobClient.riverConnection.call((client) => client.debugForceMakeMiniblock(channelId))
+    }
+
+    it('should receive a message forwarded', async () => {
+        await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
+
+        let receivedMessages: OnMessageType[] = []
+        bot.onMessage((_h, e) => {
+            receivedMessages.push(e)
+        })
+        const TEST_MESSAGE = 'Hello bot!'
+        // wait for the bot to be ready
+        await new Promise((resolve) => setTimeout(resolve, 2500))
+
+        const { eventId } = await bobDefaultChannel.sendMessage(TEST_MESSAGE)
+        await waitFor(() => receivedMessages.length > 0)
+        const event = receivedMessages.find((x) => x.eventId === eventId)
+        expect(event?.message).toBe(TEST_MESSAGE)
+        expect(event?.isDm).toBe(false)
+        expect(event?.isGdm).toBe(false)
+        receivedMessages = []
+    })
+
+    it('should not receive messages when forwarding is set to no messages', async () => {
+        await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_NO_MESSAGES)
+
+        const receivedMessages: OnMessageType[] = []
+        bot.onMessage((_h, e) => {
+            receivedMessages.push(e)
+        })
+
+        const TEST_MESSAGE = 'This message should not be forwarded'
+        await bobDefaultChannel.sendMessage(TEST_MESSAGE)
+
+        await new Promise((resolve) => setTimeout(resolve, 2500))
+        expect(receivedMessages).toHaveLength(0)
+    })
+
+    it('should receive channel join event when carol joins the channel if bot is listening to channel join events', async () => {
+        await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
+        const receivedChannelJoinEvents: OnChannelJoin[] = []
+        bot.onChannelJoin((_h, e) => {
+            receivedChannelJoinEvents.push(e)
+        })
+        await aliceClient.spaces.joinSpace(spaceId, alice.signer)
+        await waitFor(() => receivedChannelJoinEvents.length > 0)
+        expect(receivedChannelJoinEvents.find((x) => x.userId === alice.userId)).toBeDefined()
+    })
+
+    it('SHOULD NOT receive dm messages', { fails: true }, async () => {
+        await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
+        const receivedMessages: OnMessageType[] = []
+        bot.onMessage((_h, e) => {
+            receivedMessages.push(e)
+        })
+        const TEST_MESSAGE = 'hii bot'
+
+        const { streamId } = await bobClient.dms.createDM(bot.botId)
+        const dm = bobClient.dms.getDm(streamId)
+        const { eventId } = await dm.sendMessage(TEST_MESSAGE)
+        expect(await waitFor(() => receivedMessages.length > 0)).toBe(true)
+        const event = receivedMessages.find((x) => x.eventId === eventId)
+        expect(event?.isDm).toBe(true)
+        expect(event?.isGdm).toBe(false)
+        expect(event?.message).toBe(TEST_MESSAGE)
+    })
+
+    it('SHOULD NOT receive gdm messages', { fails: true }, async () => {
+        await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
+        const receivedMessages: OnMessageType[] = []
+        bot.onMessage((_h, e) => {
+            receivedMessages.push(e)
+        })
+        const TEST_MESSAGE = 'hii bot'
+
+        const { streamId } = await bobClient.gdms.createGDM([alice.userId, bot.botId])
+        const gdm = bobClient.gdms.getGdm(streamId)
+        const { eventId } = await gdm.sendMessage(TEST_MESSAGE)
+        expect(await waitFor(() => receivedMessages.length > 0)).toBe(true)
+        const event = receivedMessages.find((x) => x.eventId === eventId)
+        expect(event?.isGdm).toBe(true)
+        expect(event?.isDm).toBe(false)
+        expect(event?.message).toBe(TEST_MESSAGE)
+    })
+
+    it('should be able to get user data', async () => {
+        await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
+        const userData: UserData[] = []
+        bot.onMessage(async (h, e) => {
+            const data = await h.getUserData(e.channelId, e.userId)
+            if (data) {
+                userData.push(data)
+            }
+        })
+        const vitalikEnsAddress = '0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045'
+        const azukiNft = {
+            chainId: 1,
+            contractAddress: '0xed5af388653567af2f388e6224dc7c4b3241c544',
+            tokenId: '3280',
+        }
+        await bobDefaultChannel.members.myself.setEnsAddress(vitalikEnsAddress)
+        await bobDefaultChannel.members.myself.setNft(azukiNft)
+
+        await bobDefaultChannel.sendMessage('Hello')
+        await waitFor(() => userData.length > 0)
+        const data = userData.find((x) => x.userId === bob.userId)
+        expect(data?.displayName).toBe(BOB_DISPLAY_NAME)
+        expect(data?.username).toBe(BOB_USERNAME)
+        expect(data?.ensAddress?.toLowerCase()).toBe(vitalikEnsAddress.toLowerCase())
+        expect(data?.userId).toBe(bob.userId)
+        expect(data?.nft).toEqual(azukiNft)
+    })
+
+    it('onMessageEdit should be triggered when a message is edited', async () => {
+        await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
+        const receivedEditEvents: OnMessageEditType[] = []
+        bot.onMessageEdit((_h, e) => {
+            receivedEditEvents.push(e)
+        })
+
+        const originalMessage = 'Original message to delete'
+        const editedMessage = 'Edited message content'
+        const { eventId: originalMessageId } = await bobDefaultChannel.sendMessage(originalMessage)
+        await bobDefaultChannel.editMessage(originalMessageId, editedMessage)
+
+        await waitFor(() => receivedEditEvents.length > 0)
+
+        const editEvent = receivedEditEvents.find((e) => e.refEventId === originalMessageId)
+        expect(editEvent).toBeDefined()
+        expect(editEvent?.message).toBe(editedMessage)
+    })
+
+    it('onThreadMessage should be triggered when a message is sent in a thread', async () => {
+        await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
+        const receivedThreadMessages: OnThreadMessageType[] = []
+        bot.onThreadMessage((_h, e) => {
+            receivedThreadMessages.push(e)
+        })
+
+        const initialMessage = 'Starting a thread'
+        const threadReply = 'Replying in thread'
+        const { eventId: initialMessageId } = await bobDefaultChannel.sendMessage(initialMessage)
+        const { eventId: replyEventId } = await bobDefaultChannel.sendMessage(threadReply, {
+            threadId: initialMessageId,
+        })
+
+        await waitFor(() => receivedThreadMessages.length > 0)
+
+        const threadEvent = receivedThreadMessages.find((e) => e.eventId === replyEventId)
+        expect(threadEvent).toBeDefined()
+        expect(threadEvent?.message).toBe(threadReply)
+        expect(threadEvent?.userId).toBe(bob.userId)
+        expect(threadEvent?.threadId).toBe(initialMessageId)
+    })
+
+    it('onMentioned should be triggered when a bot is mentioned', async () => {
+        await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
+        const receivedMentionedEvents: OnMentionedType[] = []
+        bot.onMentioned((_h, e) => {
+            receivedMentionedEvents.push(e)
+        })
+        const TEST_MESSAGE = 'Hello @bot'
+        const { eventId } = await bobDefaultChannel.sendMessage(TEST_MESSAGE, {
+            mentions: [
+                {
+                    userId: bot.botId,
+                    displayName: bot.botId,
+                    mentionBehavior: { case: undefined, value: undefined },
+                },
+            ],
+        })
+        await waitFor(() => receivedMentionedEvents.length > 0)
+        expect(receivedMentionedEvents.find((x) => x.eventId === eventId)).toBeDefined()
+    })
+
+    it('onMentioned should NOT BE triggered when someone else is mentioned', async () => {
+        await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
+        const receivedMentionedEvents: OnMentionedType[] = []
+        bot.onMentioned((_h, e) => {
+            receivedMentionedEvents.push(e)
+        })
+        const TEST_MESSAGE = 'Hello @alice'
+        const { eventId } = await bobDefaultChannel.sendMessage(TEST_MESSAGE, {
+            mentions: [
+                {
+                    userId: alice.userId,
+                    displayName: 'alice',
+                    mentionBehavior: { case: undefined, value: undefined },
+                },
+            ],
+        })
+        await new Promise((resolve) => setTimeout(resolve, 1000))
+        expect(receivedMentionedEvents.find((x) => x.eventId === eventId)).toBeUndefined()
+    })
+
+    it('onReaction should be triggered when a reaction is added', async () => {
+        await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
+        const receivedReactionEvents: BotPayload<'reaction'>[] = []
+        bot.onReaction((_h, e) => {
+            receivedReactionEvents.push(e)
+        })
+
+        const { eventId: messageId } = await bobClient.spaces
+            .getSpace(spaceId)
+            .getChannel(channelId)
+            .sendMessage('Hello')
+        const { eventId: reactionId } = await bobDefaultChannel.sendReaction(messageId, '👍')
+        await waitFor(() => receivedReactionEvents.length > 0)
+        expect(receivedReactionEvents.find((x) => x.eventId === reactionId)).toBeDefined()
+        expect(receivedReactionEvents.find((x) => x.reaction === '👍')).toBeDefined()
+        expect(receivedReactionEvents.find((x) => x.messageId === messageId)).toBeDefined()
+        expect(receivedReactionEvents.find((x) => x.userId === bob.userId)).toBeDefined()
+    })
+
+    it('onRedaction should be triggered when a message is redacted', async () => {
+        await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
+        const receivedRedactionEvents: BotPayload<'redaction'>[] = []
+        bot.onRedaction((_h, e) => {
+            receivedRedactionEvents.push(e)
+        })
+        const { eventId: messageId } = await bobDefaultChannel.sendMessage('Hello')
+        const { eventId: redactionId } = await bobDefaultChannel.redact(messageId)
+        await waitFor(() => receivedRedactionEvents.length > 0)
+        expect(receivedRedactionEvents.find((x) => x.eventId === redactionId)).toBeDefined()
+    })
+
+    it('onReply should be triggered when a message is replied to', async () => {
+        await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_MENTIONS_REPLIES_REACTIONS)
+        const receivedReplyEvents: BotPayload<'reply'>[] = []
+        bot.onReply((_h, e) => {
+            receivedReplyEvents.push(e)
+        })
+        const { eventId: messageId } = await bot.sendMessage(channelId, 'hii')
+        const { eventId: replyEventId } = await bobDefaultChannel.sendMessage('hi back', {
+            replyId: messageId,
+        })
+        await waitFor(() => receivedReplyEvents.length > 0)
+        expect(receivedReplyEvents.find((x) => x.eventId === replyEventId)).toBeDefined()
+    })
+
+    // TODO: I couldnt get onTip to work somehow
+    // ConnectError: [failed_precondition] AddEvent: (62:DOWNSTREAM_NETWORK_ERROR)
+    // <base 0: unavailable: AddEvent: (14:UNAVAILABLE) Forwarding disabled by request header
+    // nodeAddress = 0x9CfBCA75Bc64E67Ff415C60367A78DC110BC9239
+    // nodeUrl =
+    // handler = AddEvent
+    // elapsed = 8.350417ms
+    // streamId = a898546bf3b74bb84457ead94fc0d89e64b837c7740000000000000000000000
+    // >>base 0 end
+    // nodeAddress = 0xC0C4e900678EcA2d9C17d7771351BDf7a225Ca1d
+    // nodeUrl =
+    // handler = AddEvent
+    // elapsed = 9.889292ms
+    // streamId = a898546bf3b74bb84457ead94fc0d89e64b837c7740000000000000000000000
+    it('onTip should be triggered when a tip is received', async () => {
+        await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
+        const receivedTipEvents: BotPayload<'tip'>[] = []
+        bot.onTip((_h, e) => {
+            receivedTipEvents.push(e)
+        })
+        const { eventId: messageId } = await bot.sendMessage(channelId, 'hii')
+        await bobDefaultChannel.sendTip(
+            messageId,
+            {
+                amount: ethers.utils.parseUnits('0.1').toBigInt(),
+                currency: ETH_ADDRESS,
+                chainId: 1,
+                receiver: bot.botId,
+            },
+            bob.signer,
+        )
+        await waitFor(() => receivedTipEvents.length > 0)
+        expect(receivedTipEvents.find((x) => x.eventId === messageId)).toBeDefined()
+    })
+
+    it('onEventRevoke (FORWARD_SETTING_ALL_MESSAGES) should be triggered when a message is revoked', async () => {
+        await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
+        const receivedEventRevokeEvents: BotPayload<'eventRevoke'>[] = []
+        bot.onEventRevoke((_h, e) => {
+            receivedEventRevokeEvents.push(e)
+        })
+        const { eventId: messageId } = await bot.sendMessage(channelId, 'hii')
+        await bobDefaultChannel.adminRedact(messageId)
+        await waitFor(() => receivedEventRevokeEvents.length > 0)
+        expect(receivedEventRevokeEvents.find((x) => x.refEventId === messageId)).toBeDefined()
+    })
+
+    it.fails(
+        'onEventRevoke (FORWARD_SETTING_MENTIONS_REPLIES_REACTIONS) should be triggered when a message that mentions the bot is revoked',
+        async () => {
+            await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_MENTIONS_REPLIES_REACTIONS)
+            const receivedEventRevokeEvents: BotPayload<'eventRevoke'>[] = []
+            bot.onEventRevoke((_h, e) => {
+                receivedEventRevokeEvents.push(e)
+            })
+            const { eventId: messageId } = await bobDefaultChannel.sendMessage('hii @bot', {
+                mentions: [
+                    {
+                        userId: bot.botId,
+                        displayName: bot.botId,
+                        mentionBehavior: { case: undefined, value: undefined },
+                    },
+                ],
+            })
+            await bobDefaultChannel.adminRedact(messageId)
+            await waitFor(() => receivedEventRevokeEvents.length > 0)
+            expect(receivedEventRevokeEvents.find((x) => x.refEventId === messageId)).toBeDefined()
+        },
+    )
+})
