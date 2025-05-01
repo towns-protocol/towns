@@ -1,5 +1,5 @@
-import { createConfig, mergeAbis } from 'ponder'
-import { http } from 'viem'
+import { createConfig, mergeAbis, factory } from 'ponder'
+import { http, parseAbiItem } from 'viem'
 
 // import abis
 import {
@@ -44,6 +44,18 @@ export default createConfig({
         SpaceFactory: {
             abi: mergeAbis([createSpaceFacetAbi, tokenPausableFacetAbi]),
             address: spaceFactory,
+            startBlock,
+            network: 'anvil',
+        },
+        Space: {
+            abi: mergeAbis([createSpaceFacetAbi, tokenPausableFacetAbi]),
+            address: factory({
+                address: spaceFactory,
+                event: parseAbiItem([
+                    'event SpaceCreated(address indexed owner, uint256 indexed tokenId, address indexed space)',
+                ]),
+                parameter: 'space',
+            }),
             startBlock,
             network: 'anvil',
         },
