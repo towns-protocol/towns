@@ -632,6 +632,7 @@ func (ss *SyncerSet) distributeMessages() {
 
 		ss.subscriptions.Range(func(_ string, sub *Subscription) bool {
 			sub.messages.Close()
+			sub.cancel(err)
 			return true
 		})
 		ss.subscriptions.Clear()
@@ -699,6 +700,7 @@ func (ss *SyncerSet) distributeMessages() {
 
 						// Send message to the subscriber.
 						// The given subscriber might be closed, so we need to check if the context is done.
+						// TODO: Delete subscription and remove streams from sync if there are no more subscriptions.
 						select {
 						case <-sub.ctx.Done():
 							// Client closed the connection. Stop sending messages.
@@ -707,6 +709,9 @@ func (ss *SyncerSet) distributeMessages() {
 							return
 						default:
 							if err := sub.messages.AddMessage(msg); err != nil {
+								sub.messages.Close()
+								sub.cancel(err)
+								ss.subscriptions.Delete(syncID)
 								log.Errorw("Failed to add message to subscription", "syncID", syncID, "error", err)
 							}
 						}
