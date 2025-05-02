@@ -79,17 +79,6 @@ contract ModuleRegistry is IModuleRegistry, OwnableBase, ReentrancyGuard, Facet 
         return ModuleRegistryLib.addModule(module, clients);
     }
 
-    /// @notice Update the permissions for an existing module
-    /// @param versionId The module ID to update
-    /// @param permissions The new list of permission IDs
-    /// @return newVersionId The new version ID after updating permissions
-    function updateModulePermissions(
-        bytes32 versionId,
-        bytes32[] calldata permissions
-    ) external returns (bytes32 newVersionId) {
-        return ModuleRegistryLib.updatePermissions(msg.sender, versionId, permissions);
-    }
-
     /// @notice Remove a module from the registry
     /// @param versionId The module ID to remove
     /// @dev Only the owner of the module can remove it

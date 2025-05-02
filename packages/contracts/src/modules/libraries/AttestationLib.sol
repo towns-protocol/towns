@@ -239,8 +239,8 @@ library AttestationLib {
         uint256 len = values.length;
         for (uint256 i; i < len; ++i) {
             if (values[i] != 0) NotPayable.selector.revertWith();
-            if (last) _refund(availableValue);
         }
+        if (last) _refund(availableValue);
     }
 
     /// @notice Creates multiple attestations

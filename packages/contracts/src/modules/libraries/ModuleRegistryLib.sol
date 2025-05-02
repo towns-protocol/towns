@@ -12,7 +12,6 @@ import {IERC173} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
 // libraries
 import {CustomRevert} from "../../utils/libraries/CustomRevert.sol";
 import {AttestationLib} from "./AttestationLib.sol";
-import {VerificationLib} from "./VerificationLib.sol";
 import {EnumerableSetLib} from "solady/utils/EnumerableSetLib.sol";
 
 // types
@@ -165,50 +164,6 @@ library ModuleRegistryLib {
         moduleInfo.module = module;
 
         emit ModuleRegistered(module, version);
-
-        return version;
-    }
-
-    /// @notice Updates the permissions for an existing module
-    /// @param revoker The address revoking the current version
-    /// @param versionId The current version ID of the module
-    /// @param permissions New array of permission IDs
-    /// @return version The new version ID after updating permissions
-    /// @dev Reverts if module is not registered, revoked, banned, or caller is not the owner
-    function updatePermissions(
-        address revoker,
-        bytes32 versionId,
-        bytes32[] calldata permissions
-    ) internal returns (bytes32 version) {
-        Attestation memory att = AttestationLib.getAttestation(versionId);
-
-        if (att.uid == EMPTY_UID) ModuleNotRegistered.selector.revertWith();
-        if (att.revocationTime > 0) ModuleRevoked.selector.revertWith();
-        (
-            address module,
-            address owner,
-            address[] memory clients,
-            ,
-            ExecutionManifest memory manifest
-        ) = abi.decode(att.data, (address, address, address[], bytes32[], ExecutionManifest));
-
-        if (revoker != owner) NotModuleOwner.selector.revertWith();
-        if (getLayout().modules[module].isBanned) BannedModule.selector.revertWith();
-
-        RevocationRequestData memory revocationRequest;
-        revocationRequest.uid = versionId;
-        AttestationLib.revoke(att.schema, revocationRequest, msg.sender, 0, true);
-
-        AttestationRequest memory request;
-        request.schema = att.schema;
-        request.data.revocable = true;
-        request.data.refUID = versionId;
-        request.data.data = abi.encode(module, owner, clients, permissions, manifest);
-        version = AttestationLib.attest(msg.sender, msg.value, request).uid;
-
-        getLayout().modules[module].latestVersion = version;
-
-        emit ModuleUpdated(module, version);
 
         return version;
     }

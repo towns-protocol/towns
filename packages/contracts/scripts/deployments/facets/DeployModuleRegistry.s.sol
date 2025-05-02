@@ -16,13 +16,12 @@ library DeployModuleRegistry {
     using DynamicArrayLib for DynamicArrayLib.DynamicArray;
 
     function selectors() internal pure returns (bytes4[] memory res) {
-        DynamicArrayLib.DynamicArray memory arr = DynamicArrayLib.p().reserve(10);
+        DynamicArrayLib.DynamicArray memory arr = DynamicArrayLib.p().reserve(9);
         arr.p(ModuleRegistry.getModuleSchema.selector);
         arr.p(ModuleRegistry.getModuleSchemaId.selector);
         arr.p(ModuleRegistry.getModuleById.selector);
         arr.p(ModuleRegistry.getLatestModuleId.selector);
         arr.p(ModuleRegistry.registerModule.selector);
-        arr.p(ModuleRegistry.updateModulePermissions.selector);
         arr.p(ModuleRegistry.removeModule.selector);
         arr.p(ModuleRegistry.adminRegisterModuleSchema.selector);
         arr.p(ModuleRegistry.adminBanModule.selector);

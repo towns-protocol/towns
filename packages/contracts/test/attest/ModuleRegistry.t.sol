@@ -106,61 +106,6 @@ contract ModuleRegistryTest is BaseSetup {
         assertEq(retrievedClients[1], clients[1]);
     }
 
-    // ==================== MODULE PERMISSIONS TESTS ====================
-
-    function test_updateModulePermissions() external {
-        address owner = _randomAddress();
-        address module = address(new MockPlugin(owner));
-
-        address[] memory clients = new address[](1);
-        clients[0] = _randomAddress();
-
-        vm.prank(owner);
-        bytes32 moduleId = moduleRegistry.registerModule(module, clients);
-
-        bytes32[] memory newPermissions = new bytes32[](2);
-        newPermissions[0] = keccak256("Read");
-        newPermissions[1] = keccak256("Write");
-
-        vm.prank(owner);
-        bytes32 newUid = moduleRegistry.updateModulePermissions(moduleId, newPermissions);
-
-        assertEq(newUid, moduleRegistry.getLatestModuleId(module));
-        assertTrue(newUid != bytes32(0));
-    }
-
-    function test_updateModulePermissions_onlyOwner() external {
-        address owner = _randomAddress();
-        address module = address(new MockPlugin(owner));
-        address notOwner = _randomAddress();
-
-        address[] memory clients = new address[](1);
-        clients[0] = _randomAddress();
-
-        vm.prank(owner);
-        bytes32 moduleId = moduleRegistry.registerModule(module, clients);
-
-        bytes32[] memory newPermissions = new bytes32[](2);
-        newPermissions[0] = keccak256("Read");
-        newPermissions[1] = keccak256("Write");
-
-        vm.prank(notOwner);
-        vm.expectRevert(ModuleRegistryLib.NotModuleOwner.selector);
-        moduleRegistry.updateModulePermissions(moduleId, newPermissions);
-    }
-
-    function test_revertWhen_updateModulePermissions_ModuleNotRegistered() external {
-        address owner = _randomAddress();
-        bytes32 moduleId = _randomBytes32();
-        bytes32[] memory newPermissions = new bytes32[](2);
-        newPermissions[0] = keccak256("Read");
-        newPermissions[1] = keccak256("Write");
-
-        vm.prank(owner);
-        vm.expectRevert(ModuleRegistryLib.ModuleNotRegistered.selector);
-        moduleRegistry.updateModulePermissions(moduleId, newPermissions);
-    }
-
     // ==================== MODULE REVOCATION TESTS ====================
 
     function test_removeModule() external {

@@ -44,15 +44,6 @@ interface IModuleRegistry {
         address[] calldata clients
     ) external payable returns (bytes32 moduleId);
 
-    /// @notice Update the permissions for an existing module
-    /// @param moduleId The module ID to update
-    /// @param permissions The new list of permission IDs
-    /// @return newModuleId The new attestation UID after updating permissions
-    function updateModulePermissions(
-        bytes32 moduleId,
-        bytes32[] calldata permissions
-    ) external returns (bytes32 newModuleId);
-
     /// @notice Remove a module from the registry
     /// @param moduleId The module ID to remove
     /// @return The attestation UID that was removed
