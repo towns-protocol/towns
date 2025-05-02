@@ -11,9 +11,9 @@ export class BaseContractShim<T_CONTRACT extends ethers.Contract> {
     public readonly address: string
     public readonly provider: ethers.providers.Provider
     public readonly connect: Connect<T_CONTRACT>
-    public contractInterface?: ethers.utils.Interface
-    private readContract?: ethers.Contract
-    private writeContract?: ethers.Contract
+    private contractInterface?: ethers.utils.Interface
+    private readContract?: T_CONTRACT
+    private writeContract?: T_CONTRACT
 
     constructor(
         address: string,
@@ -40,7 +40,7 @@ export class BaseContractShim<T_CONTRACT extends ethers.Contract> {
                 this.contractInterface = this.readContract.interface
             }
         }
-        return this.readContract as unknown as T_CONTRACT
+        return this.readContract
     }
 
     public write(signer: ethers.Signer): T_CONTRACT {
@@ -56,7 +56,7 @@ export class BaseContractShim<T_CONTRACT extends ethers.Contract> {
                 this.writeContract = this.connect(this.address, signer)
             }
         }
-        return this.writeContract as unknown as T_CONTRACT
+        return this.writeContract
     }
 
     public decodeFunctionResult<FnName extends keyof T_CONTRACT['functions']>(
