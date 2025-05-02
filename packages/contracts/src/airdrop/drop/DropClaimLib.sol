@@ -159,9 +159,16 @@ library DropClaimLib {
             let ptr := 0x00
 
             // Pack address + amount + points into memory [0, 0x60)
-            mstore(ptr, shl(96, member)) // member at ptr
-            mstore(add(ptr, 0x20), amount) // amount at ptr+32
-            mstore(add(ptr, 0x40), points) // points at ptr+64
+        assembly ("memory-safe") {
+            let fmp := mload(0x40)
+            mstore(0, member)
+            mstore(0x20, amount)
+            mstore(0x40, points)
+            leaf := keccak256(0, 0x60)
+            mstore(0, leaf)
+            leaf := keccak256(0, 0x20)
+            mstore(0x40, fmp)
+        }
 
             // Hash the full 96 bytes (0x60) to get inner hash
             leaf := keccak256(ptr, 0x60)
