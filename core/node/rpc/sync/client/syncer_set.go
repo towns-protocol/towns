@@ -4,11 +4,11 @@ import (
 	"context"
 	"slices"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"connectrpc.com/connect"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/linkdata/deadlock"
 	"github.com/puzpuzpuz/xsync/v4"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
@@ -66,14 +66,12 @@ type (
 		nodeRegistry nodes.NodeRegistry
 		// syncerTasks is a wait group for running background StreamsSyncers that is used to ensure all syncers stopped
 		syncerTasks sync.WaitGroup
-		// muSyncers guards syncers and streamID2Syncer
-		muSyncers deadlock.Mutex
 		// stopped holds an indication if the sync operation is stopped
-		stopped bool
+		stopped uint32
 		// syncers is the existing set of syncers, indexed by the syncer node address
-		syncers map[common.Address]StreamsSyncer
+		syncers *xsync.Map[common.Address, StreamsSyncer]
 		// streamID2Syncer maps from a stream to its syncer
-		streamID2Syncer map[StreamId]StreamsSyncer
+		streamID2Syncer *xsync.Map[StreamId, StreamsSyncer]
 		// otelTracer is used to trace individual sync Send operations, tracing is disabled if nil
 		otelTracer trace.Tracer
 	}
@@ -99,8 +97,8 @@ func NewSyncers(
 		streamCache:         streamCache,
 		nodeRegistry:        nodeRegistry,
 		localNodeAddress:    localNodeAddress,
-		syncers:             make(map[common.Address]StreamsSyncer),
-		streamID2Syncer:     make(map[StreamId]StreamsSyncer),
+		syncers:             xsync.NewMap[common.Address, StreamsSyncer](),
+		streamID2Syncer:     xsync.NewMap[StreamId, StreamsSyncer](),
 		messages:            dynmsgbuf.NewDynamicBuffer[*SyncStreamsResponse](),
 		subscriptions:       xsync.NewMap[string, *Subscription](),
 		streamSubscriptions: xsync.NewMap[StreamId, map[string]struct{}](),
@@ -111,11 +109,7 @@ func NewSyncers(
 // Run starts the sync operation and distributes messages from the syncers to the subscribers.
 func (ss *SyncerSet) Run() {
 	ss.distributeMessages()
-
-	ss.muSyncers.Lock()
-	ss.stopped = true
-	ss.muSyncers.Unlock()
-
+	atomic.StoreUint32(&ss.stopped, 1)
 	ss.syncerTasks.Wait() // background syncers finished -> safe to close messages channel
 }
 
@@ -126,10 +120,7 @@ func (ss *SyncerSet) NewSubscription(
 	cancel context.CancelCauseFunc,
 	syncID string,
 ) *dynmsgbuf.DynamicBuffer[*SyncStreamsResponse] {
-	ss.muSyncers.Lock()
-	defer ss.muSyncers.Unlock()
-
-	if ss.stopped {
+	if atomic.LoadUint32(&ss.stopped) == 1 {
 		return nil
 	}
 
@@ -214,10 +205,7 @@ func (ss *SyncerSet) Modify(ctx context.Context, syncID string, req ModifyReques
 
 // modify splits the given request into add and remove operations and forwards them to the responsible syncers.
 func (ss *SyncerSet) modify(ctx context.Context, syncID string, req ModifyRequest) error {
-	ss.muSyncers.Lock()
-	defer ss.muSyncers.Unlock()
-
-	if len(req.ToAdd) > 0 && ss.stopped {
+	if len(req.ToAdd) > 0 && atomic.LoadUint32(&ss.stopped) == 1 {
 		return RiverError(Err_CANCELED, "Sync operation stopped", "syncId", syncID)
 	}
 
@@ -306,7 +294,7 @@ func (ss *SyncerSet) modify(ctx context.Context, syncID string, req ModifyReques
 
 		// Stream is already part of the sync operation.
 		// Resync and add the given subscription to the existing syncer.
-		if _, found := ss.streamID2Syncer[streamID]; found {
+		if _, found := ss.streamID2Syncer.Load(streamID); found {
 			if err = ss.startSyncingByCookie(ctx, syncID, cookie.CopyWithAddr(selectedNode)); err != nil {
 				rvrErr := AsRiverError(err)
 				req.AddingFailureHandler(&SyncStreamOpStatus{
@@ -347,7 +335,7 @@ func (ss *SyncerSet) modify(ctx context.Context, syncID string, req ModifyReques
 		}
 
 		// Check if the given stream is already part of the sync operation
-		syncer, found := ss.streamID2Syncer[streamID]
+		syncer, found := ss.streamID2Syncer.Load(streamID)
 		if !found {
 			req.RemovingFailureHandler(&SyncStreamOpStatus{
 				StreamId: streamID[:],
@@ -400,7 +388,7 @@ func (ss *SyncerSet) modify(ctx context.Context, syncID string, req ModifyReques
 	var localMuSyncers sync.Mutex
 	for nodeAddress, modifySync := range modifySyncs {
 		// check if there is already a syncer that can sync the given stream -> add stream to the syncer
-		syncer, found := ss.syncers[nodeAddress]
+		syncer, found := ss.syncers.Load(nodeAddress)
 		if !found {
 			// first stream to sync with remote -> create a new syncer instance
 			if nodeAddress == ss.localNodeAddress {
@@ -428,7 +416,7 @@ func (ss *SyncerSet) modify(ctx context.Context, syncID string, req ModifyReques
 				}
 			}
 
-			ss.syncers[nodeAddress] = syncer
+			ss.syncers.Store(nodeAddress, syncer)
 			ss.startSyncer(syncer)
 		}
 
@@ -438,14 +426,14 @@ func (ss *SyncerSet) modify(ctx context.Context, syncID string, req ModifyReques
 			// Optimistic add streams in memory
 			for _, cc := range modifySync.GetAddStreams() {
 				streamID := StreamId(cc.GetStreamId())
-				ss.streamID2Syncer[streamID] = syncer
+				ss.streamID2Syncer.Store(streamID, syncer)
 				ss.addStreamToSubscription(syncID, streamID)
 			}
 
 			// Optimistic remove streams in memory
 			for _, streamIDRaw := range modifySync.GetRemoveStreams() {
 				streamID := StreamId(streamIDRaw)
-				delete(ss.streamID2Syncer, streamID)
+				ss.streamID2Syncer.Delete(streamID)
 				ss.removeStreamFromSubscription(syncID, streamID)
 			}
 
@@ -459,7 +447,7 @@ func (ss *SyncerSet) modify(ctx context.Context, syncID string, req ModifyReques
 				rvrErr := AsRiverError(err, Err_INTERNAL).Tag("remoteSyncerAddr", syncer.Address())
 				for _, cookie := range modifySync.GetAddStreams() {
 					streamID := StreamId(cookie.GetStreamId())
-					delete(ss.streamID2Syncer, streamID)
+					ss.streamID2Syncer.Delete(streamID)
 					ss.removeStreamFromSubscription(syncID, streamID)
 
 					req.AddingFailureHandler(&SyncStreamOpStatus{
@@ -470,7 +458,7 @@ func (ss *SyncerSet) modify(ctx context.Context, syncID string, req ModifyReques
 				}
 				for _, streamIDRaw := range modifySync.GetRemoveStreams() {
 					streamID := StreamId(streamIDRaw)
-					ss.streamID2Syncer[streamID] = syncer
+					ss.streamID2Syncer.Store(streamID, syncer)
 					ss.addStreamToSubscription(syncID, streamID)
 
 					req.RemovingFailureHandler(&SyncStreamOpStatus{
@@ -487,7 +475,7 @@ func (ss *SyncerSet) modify(ctx context.Context, syncID string, req ModifyReques
 			// Remove streams that were not added
 			for _, status := range resp.GetAdds() {
 				streamID := StreamId(status.GetStreamId())
-				delete(ss.streamID2Syncer, streamID)
+				ss.streamID2Syncer.Delete(streamID)
 				ss.removeStreamFromSubscription(syncID, streamID)
 				req.AddingFailureHandler(status)
 			}
@@ -495,13 +483,13 @@ func (ss *SyncerSet) modify(ctx context.Context, syncID string, req ModifyReques
 			// Remove streams that were not removed
 			for _, status := range resp.GetRemovals() {
 				streamID := StreamId(status.GetStreamId())
-				ss.streamID2Syncer[streamID] = syncer
+				ss.streamID2Syncer.Store(streamID, syncer)
 				ss.addStreamToSubscription(syncID, streamID)
 				req.RemovingFailureHandler(status)
 			}
 
 			if syncerStopped {
-				delete(ss.syncers, syncer.Address())
+				ss.syncers.Delete(syncer.Address())
 			}
 
 			localMuSyncers.Unlock()
@@ -515,10 +503,7 @@ func (ss *SyncerSet) modify(ctx context.Context, syncID string, req ModifyReques
 
 // DebugDropStream drops the given stream from the sync operation.
 func (ss *SyncerSet) DebugDropStream(ctx context.Context, syncID string, streamID StreamId) error {
-	ss.muSyncers.Lock()
-	defer ss.muSyncers.Unlock()
-
-	syncer, found := ss.streamID2Syncer[streamID]
+	syncer, found := ss.streamID2Syncer.Load(streamID)
 	if !found {
 		return RiverError(Err_NOT_FOUND, "Stream not part of sync operation").
 			Tags("syncId", syncID, "streamId", streamID)
@@ -529,9 +514,9 @@ func (ss *SyncerSet) DebugDropStream(ctx context.Context, syncID string, streamI
 		return err
 	}
 
-	delete(ss.streamID2Syncer, streamID)
+	ss.streamID2Syncer.Delete(streamID)
 	if syncerStopped {
-		delete(ss.syncers, syncer.Address())
+		ss.syncers.Delete(syncer.Address())
 	}
 
 	return nil
@@ -782,12 +767,6 @@ func (ss *SyncerSet) removeStreamFromSubscription(
 	}
 }
 
-func (ss *SyncerSet) rmStream(streamID StreamId) {
-	ss.muSyncers.Lock()
-	delete(ss.streamID2Syncer, streamID)
-	ss.muSyncers.Unlock()
-}
-
 // newLocalSyncer creates a new local syncer.
 func (ss *SyncerSet) newLocalSyncer() StreamsSyncer {
 	return newLocalSyncer(ss.ctx, ss.localNodeAddress, ss.streamCache, ss.messages, ss.otelTracer)
@@ -800,7 +779,7 @@ func (ss *SyncerSet) newRemoteSyncer(addr common.Address) (StreamsSyncer, error)
 		return nil, err
 	}
 
-	return newRemoteSyncer(ss.ctx, addr, client, ss.rmStream, ss.messages, ss.otelTracer)
+	return newRemoteSyncer(ss.ctx, addr, client, ss.streamID2Syncer.Delete, ss.messages, ss.otelTracer)
 }
 
 // caller must have ss.muSyncers claimed
@@ -809,8 +788,6 @@ func (ss *SyncerSet) startSyncer(syncer StreamsSyncer) {
 	go func() {
 		syncer.Run()
 		ss.syncerTasks.Done()
-		ss.muSyncers.Lock()
-		delete(ss.syncers, syncer.Address())
-		ss.muSyncers.Unlock()
+		ss.syncers.Delete(syncer.Address())
 	}()
 }
