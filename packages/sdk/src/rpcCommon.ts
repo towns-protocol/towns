@@ -1,7 +1,7 @@
 import { Interceptor, Transport } from '@connectrpc/connect'
 import { type ConnectTransportOptions as ConnectTransportOptionsWeb } from '@connectrpc/connect-web'
 import { type RetryParams } from './rpcInterceptors'
-import { isNodeEnv, isBrowser, isTestEnv } from '@towns-protocol/dlog'
+import { isNodeEnv, isTestEnv } from '@towns-protocol/dlog'
 
 export interface RpcOptions {
     retryParams?: RetryParams
@@ -16,8 +16,7 @@ export async function createHttp2ConnectTransport(
             // use node version of connect to force httpVersion: '2'
             const { createConnectTransport } = await import('@connectrpc/connect-node')
             return createConnectTransport({ ...options, httpVersion: '2' })
-        }
-        if (isBrowser) {
+        } else {
             const { createConnectTransport } = await import('@connectrpc/connect-web')
             return createConnectTransport(options)
         }
@@ -28,5 +27,4 @@ export async function createHttp2ConnectTransport(
         )
         throw e
     }
-    throw new Error('Unsupported platform')
 }
