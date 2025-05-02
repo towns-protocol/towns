@@ -13,7 +13,6 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/sync/errgroup"
-	"google.golang.org/protobuf/proto"
 
 	. "github.com/towns-protocol/towns/core/node/base"
 	. "github.com/towns-protocol/towns/core/node/events"
@@ -45,14 +44,10 @@ type (
 		ctx context.Context
 		// localNodeAddress is the node address for this stream node instance
 		localNodeAddress common.Address
-
 		// messages is the channel to which StreamsSyncers write updates that must be sent to the client
 		messages *dynmsgbuf.DynamicBuffer[*SyncStreamsResponse]
-		// subscriptions is a map of all active subscriptions, indexed by the sync ID
-		subscriptions *xsync.Map[string, *subscription]
-		// streamSubscriptions is a map of all active subscriptions, indexed by the stream ID
-		streamSubscriptions *xsync.Map[StreamId, *xsync.Map[string, struct{}]]
-
+		// router is used to route messages from the syncers to the subscribers
+		router *messageRouter
 		// streamCache is used to subscribe to streams managed by this node instance
 		streamCache *StreamCache
 		// nodeRegistry keeps a mapping from node address to node meta-data
@@ -86,16 +81,15 @@ func NewSyncers(
 	otelTracer trace.Tracer,
 ) *SyncerSet {
 	return &SyncerSet{
-		ctx:                 ctx,
-		streamCache:         streamCache,
-		nodeRegistry:        nodeRegistry,
-		localNodeAddress:    localNodeAddress,
-		syncers:             xsync.NewMap[common.Address, StreamsSyncer](),
-		streamID2Syncer:     xsync.NewMap[StreamId, StreamsSyncer](),
-		messages:            dynmsgbuf.NewDynamicBuffer[*SyncStreamsResponse](),
-		subscriptions:       xsync.NewMap[string, *subscription](),
-		streamSubscriptions: xsync.NewMap[StreamId, *xsync.Map[string, struct{}]](),
-		otelTracer:          otelTracer,
+		ctx:              ctx,
+		streamCache:      streamCache,
+		nodeRegistry:     nodeRegistry,
+		localNodeAddress: localNodeAddress,
+		syncers:          xsync.NewMap[common.Address, StreamsSyncer](),
+		streamID2Syncer:  xsync.NewMap[StreamId, StreamsSyncer](),
+		messages:         dynmsgbuf.NewDynamicBuffer[*SyncStreamsResponse](),
+		router:           newMessageRouter(ctx),
+		otelTracer:       otelTracer,
 	}
 }
 
@@ -118,7 +112,7 @@ func (ss *SyncerSet) NewSubscription(
 	}
 
 	sub := newSubscription(ctx, cancel, syncID)
-	ss.subscriptions.Store(syncID, sub)
+	ss.router.registerSubscription(syncID, sub)
 	return sub.messages
 }
 
@@ -344,22 +338,22 @@ func (ss *SyncerSet) modify(ctx context.Context, syncID string, req ModifyReques
 				Func("SyncerSet.Modify")
 		}
 
-		// Add the given stream to the remove list of the syncer only if there are no more subscriptions for the stream.
-		// Otherwise, just remote the subscription from the stream.
-		if subscribers, ok := ss.streamSubscriptions.Load(streamID); ok && subscribers.Size() > 0 {
-			if _, ok = subscribers.Load(syncID); ok && subscribers.Size() > 1 {
-				ss.removeStreamFromSubscription(syncID, streamID)
-				continue
-			} else if !ok {
-				req.RemovingFailureHandler(&SyncStreamOpStatus{
-					StreamId: streamID[:],
-					Code:     int32(Err_NOT_FOUND),
-					Message:  "Stream not part of sync operation",
-				})
-				continue
-			}
+		// Remove the stream from the subscription
+		last, notFound := ss.router.removeStreamAndCheckLast(syncID, streamID)
+		if notFound {
+			req.RemovingFailureHandler(&SyncStreamOpStatus{
+				StreamId: streamID[:],
+				Code:     int32(Err_NOT_FOUND),
+				Message:  "Stream not part of sync operation",
+			})
+			continue
+		}
+		if !last {
+			// There are still other subscribers, so no need to remove from syncer
+			continue
 		}
 
+		// If last == true, proceed to remove the stream from the syncer:
 		modifySyncs[syncer.Address()].RemoveStreams = append(
 			modifySyncs[syncer.Address()].RemoveStreams,
 			streamIDRaw,
@@ -413,14 +407,14 @@ func (ss *SyncerSet) modify(ctx context.Context, syncID string, req ModifyReques
 			for _, cc := range modifySync.GetAddStreams() {
 				streamID := StreamId(cc.GetStreamId())
 				ss.streamID2Syncer.Store(streamID, syncer)
-				ss.addStreamToSubscription(syncID, streamID)
+				ss.router.addStreamToSubscription(syncID, streamID)
 			}
 
 			// Optimistic remove streams in memory
 			for _, streamIDRaw := range modifySync.GetRemoveStreams() {
 				streamID := StreamId(streamIDRaw)
 				ss.streamID2Syncer.Delete(streamID)
-				ss.removeStreamFromSubscription(syncID, streamID)
+				ss.router.removeStreamAndCheckLast(syncID, streamID)
 			}
 
 			localMuSyncers.Unlock()
@@ -434,7 +428,7 @@ func (ss *SyncerSet) modify(ctx context.Context, syncID string, req ModifyReques
 				for _, cookie := range modifySync.GetAddStreams() {
 					streamID := StreamId(cookie.GetStreamId())
 					ss.streamID2Syncer.Delete(streamID)
-					ss.removeStreamFromSubscription(syncID, streamID)
+					ss.router.removeStreamAndCheckLast(syncID, streamID)
 
 					req.AddingFailureHandler(&SyncStreamOpStatus{
 						StreamId: cookie.GetStreamId(),
@@ -445,7 +439,7 @@ func (ss *SyncerSet) modify(ctx context.Context, syncID string, req ModifyReques
 				for _, streamIDRaw := range modifySync.GetRemoveStreams() {
 					streamID := StreamId(streamIDRaw)
 					ss.streamID2Syncer.Store(streamID, syncer)
-					ss.addStreamToSubscription(syncID, streamID)
+					ss.router.addStreamToSubscription(syncID, streamID)
 
 					req.RemovingFailureHandler(&SyncStreamOpStatus{
 						StreamId: streamIDRaw,
@@ -462,7 +456,7 @@ func (ss *SyncerSet) modify(ctx context.Context, syncID string, req ModifyReques
 			for _, status := range resp.GetAdds() {
 				streamID := StreamId(status.GetStreamId())
 				ss.streamID2Syncer.Delete(streamID)
-				ss.removeStreamFromSubscription(syncID, streamID)
+				ss.router.removeStreamAndCheckLast(syncID, streamID)
 				req.AddingFailureHandler(status)
 			}
 
@@ -470,7 +464,7 @@ func (ss *SyncerSet) modify(ctx context.Context, syncID string, req ModifyReques
 			for _, status := range resp.GetRemovals() {
 				streamID := StreamId(status.GetStreamId())
 				ss.streamID2Syncer.Store(streamID, syncer)
-				ss.addStreamToSubscription(syncID, streamID)
+				ss.router.addStreamToSubscription(syncID, streamID)
 				req.RemovingFailureHandler(status)
 			}
 
@@ -522,18 +516,14 @@ func (ss *SyncerSet) startSyncingByCookie(
 	streamID := StreamId(cookie.GetStreamId())
 
 	// Check if the given sync is already subscribed to the given stream.
-	subscribers, ok := ss.streamSubscriptions.Load(streamID)
-	if ok {
-		// Check if the given subscription is already part of the sync operation
-		if _, ok = subscribers.Load(syncID); ok {
-			return nil
-		}
+	if ss.router.isSubscribed(syncID, streamID) {
+		return nil
 	}
 
 	if cookie.GetMinipoolGen() > 0 {
 		// Get subscription by the given sync ID
-		subscription, ok := ss.subscriptions.Load(syncID)
-		if !ok {
+		sub := ss.router.getSubscription(syncID)
+		if sub == nil {
 			return RiverError(Err_NOT_FOUND, "Subscription not found for the given stream").
 				Tags("syncId", syncID, "streamID", streamID).Func("startSyncingByCookie")
 		}
@@ -574,7 +564,7 @@ func (ss *SyncerSet) startSyncingByCookie(
 		}
 
 		// Send the stream since the given cookie to the subscription
-		if err := subscription.messages.AddMessage(&SyncStreamsResponse{
+		if err := sub.messages.AddMessage(&SyncStreamsResponse{
 			SyncId:   syncID,
 			SyncOp:   SyncOp_SYNC_UPDATE,
 			Stream:   sc,
@@ -585,7 +575,7 @@ func (ss *SyncerSet) startSyncingByCookie(
 	}
 
 	// Add the stream to the subscription
-	ss.addStreamToSubscription(syncID, streamID)
+	ss.router.addStreamToSubscription(syncID, streamID)
 
 	return nil
 }
@@ -594,42 +584,12 @@ func (ss *SyncerSet) startSyncingByCookie(
 func (ss *SyncerSet) distributeMessages() {
 	log := logging.FromCtx(ss.ctx)
 
-	cleanSubscriptions := func(err error) {
-		if err != nil {
-			log.Errorw("Sync operation stopped", "error", err)
-		} else {
-			log.Info("Sync operation stopped")
-		}
-
-		ss.subscriptions.Range(func(_ string, sub *subscription) bool {
-			sub.Close(err)
-			return true
-		})
-		ss.subscriptions.Clear()
-		ss.streamSubscriptions.Clear()
-	}
-
-	cleanSync := func(syncID string) {
-		ss.subscriptions.Delete(syncID)
-		ss.streamSubscriptions.Range(func(streamID StreamId, subscriptions *xsync.Map[string, struct{}]) bool {
-			if _, ok := subscriptions.Load(syncID); ok {
-				subscriptions.Delete(syncID)
-				if subscriptions.Size() == 0 {
-					ss.streamSubscriptions.Delete(streamID)
-				} else {
-					ss.streamSubscriptions.Store(streamID, subscriptions)
-				}
-			}
-			return true
-		})
-	}
-
 	var msgs []*SyncStreamsResponse
 	for {
 		select {
 		case <-ss.ctx.Done():
 			// Global server context is done. Closing all subscriptions.
-			cleanSubscriptions(ss.ctx.Err())
+			ss.router.close(ss.ctx.Err())
 			return
 		case _, open := <-ss.messages.Wait():
 			msgs = ss.messages.GetBatch(msgs)
@@ -638,83 +598,18 @@ func (ss *SyncerSet) distributeMessages() {
 			// Closing all subscribers.
 			if msgs == nil {
 				log.Warnw("SyncerSet global messages channel closed")
-				cleanSubscriptions(nil)
+				ss.router.close(nil)
 				return
 			}
 
-			// Create a map of sync ID to messages. This is used to send the messages to the corresponding
-			// subscription (clients) in parallel.
-			toSend := make(map[string][]*SyncStreamsResponse)
-			for _, msg := range msgs {
-				streamID := StreamId(msg.GetStreamId())
-
-				if msg.GetSyncOp() == SyncOp_SYNC_CLOSE {
-					// TODO: Handle sync close message
-				}
-
-				// Get all subscriptions for the given stream.
-				syncIDs, ok := ss.streamSubscriptions.Load(streamID)
-				if !ok {
-					log.Errorw("Received update for the stream with no subscribers", "streamID", streamID)
-					continue
-				}
-
-				// Order is important here, we need to send the message to all subscribers
-				syncIDs.Range(func(syncID string, _ struct{}) bool {
-					toSend[syncID] = append(toSend[syncID], proto.Clone(msg).(*SyncStreamsResponse))
-					return true
-				})
-			}
-
-			// Send messages to all subscribers in parallel.
-			var wg sync.WaitGroup
-			wg.Add(len(toSend))
-			for syncID, msgs := range toSend {
-				go func(syncID string, msgs []*SyncStreamsResponse) {
-					defer wg.Done()
-
-					// Get subscription by the given sync ID
-					sub, ok := ss.subscriptions.Load(syncID)
-					if !ok {
-						log.Errorw("Sync ID provided by no subscription found", "syncID", syncID)
-						return
-					}
-
-					// Send messages to the given subscriber
-					for _, msg := range msgs {
-						msg.SyncId = sub.syncID
-
-						// Send message to the subscriber.
-						// The given subscriber might be closed, so we need to check if the context is done.
-						select {
-						case <-sub.ctx.Done():
-							// Client closed the connection. Stop sending messages.
-							if sub.ctx.Err() != nil {
-								log.Errorw("Client closed the connection", "syncID", syncID, "error", sub.ctx.Err())
-							} else {
-								log.Info("Client closed the connection")
-							}
-							sub.messages.Close()
-							cleanSync(syncID)
-							return
-						default:
-							if err := sub.messages.AddMessage(msg); err != nil {
-								log.Errorw("Failed to add message to subscription", "syncID", syncID, "error", err)
-								sub.Close(err)
-								cleanSync(syncID)
-								return
-							}
-						}
-					}
-				}(syncID, msgs)
-			}
-			wg.Wait()
+			// Distribute messages to all subscribers via router.
+			ss.router.routeMessages(msgs)
 
 			// Make sure the global server context is not done.
 			select {
 			case <-ss.ctx.Done():
 				// Global server context is done. Closing all subscriptions.
-				cleanSubscriptions(ss.ctx.Err())
+				ss.router.close(ss.ctx.Err())
 				return
 			default:
 			}
@@ -722,32 +617,9 @@ func (ss *SyncerSet) distributeMessages() {
 			// If the buffer is closed, stop distributing messages to clients.
 			// In theory should not happen, but just in case.
 			if !open {
-				cleanSubscriptions(nil)
+				ss.router.close(nil)
 				return
 			}
-		}
-	}
-}
-
-func (ss *SyncerSet) addStreamToSubscription(
-	syncID string,
-	streamID StreamId,
-) {
-	syncIDs, _ := ss.streamSubscriptions.LoadOrStore(streamID, xsync.NewMap[string, struct{}]())
-	syncIDs.Store(syncID, struct{}{})
-	ss.streamSubscriptions.Store(streamID, syncIDs)
-}
-
-func (ss *SyncerSet) removeStreamFromSubscription(
-	syncID string,
-	streamID StreamId,
-) {
-	if syncIDs, ok := ss.streamSubscriptions.Load(streamID); ok {
-		syncIDs.Delete(syncID)
-		if syncIDs.Size() == 0 {
-			ss.streamSubscriptions.Delete(streamID)
-		} else {
-			ss.streamSubscriptions.Store(streamID, syncIDs)
 		}
 	}
 }
