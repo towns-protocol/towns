@@ -21,7 +21,6 @@ import (
 	"github.com/towns-protocol/towns/core/node/infra"
 	"github.com/towns-protocol/towns/core/node/logging"
 	. "github.com/towns-protocol/towns/core/node/protocol"
-	"github.com/towns-protocol/towns/core/node/shared"
 	. "github.com/towns-protocol/towns/core/node/shared"
 )
 
@@ -1577,7 +1576,7 @@ func (s *PostgresStreamStore) writeMiniblocksTx(
 	}
 
 	// Delete miniblock candidates up to the last miniblock number.
-	affectedStream, err := shared.StreamIdFromString("105299266fc069db826b726fd10b0e40301b8555720000000000000000000000")
+	affectedStream, err := StreamIdFromString("105299266fc069db826b726fd10b0e40301b8555720000000000000000000000")
 	if err != nil {
 		return AsRiverError(
 			err,
