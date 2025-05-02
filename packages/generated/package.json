@@ -1,12 +1,12 @@
 {
     "name": "@towns-protocol/generated",
     "version": "0.0.208",
-    "packageManager": "yarn@3.8.0",
+    "packageManager": "pnpm@10.7.1",
     "publishConfig": {
         "access": "public"
     },
     "scripts": {
-        "build": "yarn make-config",
+        "build": "pnpm make-config",
         "make-config": "node ./scripts/make-config.js",
         "preinstall": "node ./scripts/make-config.js"
     }

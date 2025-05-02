@@ -16,7 +16,7 @@ fork-test :; forge test --ffi --mc Fork
 
 snapshot :; forge snapshot --isolate
 
-lint :; yarn solhint "{scripts,src,test}/**/*.sol"
+lint :; pnpm solhint "{scripts,src,test}/**/*.sol"
 
 anvil :; anvil -m 'test test test test test test test test test test test junk'
 

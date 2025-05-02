@@ -1,15 +1,15 @@
+# TODO: it should be using pnpm local cache if possible
 FROM node:lts-alpine3.20
 
 WORKDIR /river
 
 # monorepo root config
 COPY ./package.json ./package.json
-COPY ./.yarn/plugins ./.yarn/plugins
-COPY ./.yarn/releases ./.yarn/releases
-COPY ./.yarnrc.yml ./.yarnrc.yml
+# TODO: setup for docker pnpm cache
+COPY ./pnpm-lock.yaml ./pnpm-lock.yaml
+COPY ./pnpm-workspace.yaml ./pnpm-workspace.yaml
 COPY ./buf.yaml ./buf.yaml
 COPY ./lerna.json ./lerna.json
-COPY ./yarn.lock ./yarn.lock
 COPY ./turbo.json ./turbo.json
 COPY ./packages/tsconfig.base.json ./packages/tsconfig.base.json
 
@@ -29,11 +29,11 @@ COPY ./packages/metrics-discovery /river/packages/metrics-discovery
 # install dependencies and build
 RUN apk add --no-cache git curl
 RUN corepack enable
-RUN yarn install
-RUN yarn run turbo build --filter @towns-protocol/metrics-discovery
+RUN pnpm install
+RUN pnpm run turbo build --filter @towns-protocol/metrics-discovery
 
 WORKDIR /river/packages/metrics-discovery
 
 HEALTHCHECK --interval=30s --timeout=10s --retries=3 CMD curl -f http://localhost:8080 || exit 1
 
-CMD [ "yarn", "start"]
+CMD [ "pnpm", "start"]

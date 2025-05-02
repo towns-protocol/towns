@@ -55,6 +55,9 @@
         },
         "lint": {
             "cache": true
+        },
+        "clean": {
+            "cache": false
         }
     }
 }

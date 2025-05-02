@@ -92,7 +92,7 @@ fi
 
 do_kill run_files "$1" # get the tail command from the start stream node run-and-tail
 do_kill just "$1"
-do_kill yarn "$1"
+do_kill pnpm "$1"
 do_kill anvil "$1"
 do_kill wrangler "$1"
 do_kill mitmweb "$1"

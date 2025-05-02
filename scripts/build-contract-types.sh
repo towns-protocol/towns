@@ -7,11 +7,11 @@ IGNORED="${1:-}"
 FROZEN="${2:-}"
 ABI_DIR="packages/generated/dev/abis"
 
-yarn turbo build --filter=@towns-protocol/contracts
+pnpm turbo build --filter=@towns-protocol/contracts
 
 CONTRACT_INTERFACES="(IDiamond|IDiamondCut|IArchitect|ILegacyArchitect|IProxyManager|IPausable|IEntitlementsManager|IChannel|IRoles|IMulticall|IRuleEntitlement|IRuleEntitlementV2|IWalletLink|INodeRegistry|IOperatorRegistry|IStreamRegistry|OwnableFacet|TokenPausableFacet|UserEntitlement|ISpaceOwner|MockERC721A|MembershipFacet|IMembershipMetadata|Member|IBanning|IPricingModules|ICrossChainEntitlement|MockEntitlementGated|PrepayFacet|IERC721AQueryable|IEntitlementDataQueryable|PlatformRequirementsFacet|IERC721A|INodeOperator|ISpaceDelegation|IEntitlementChecker|IERC5267|ICreateSpace|IDropFacet|ITownsPoints|ITipping|IReview|ITreasury)"
 
-yarn typechain --target=ethers-v5 "packages/contracts/out/**/?${CONTRACT_INTERFACES}.json" --out-dir "packages/generated/dev/typings"
+pnpm typechain --target=ethers-v5 "packages/contracts/out/**/?${CONTRACT_INTERFACES}.json" --out-dir "packages/generated/dev/typings"
 
 mkdir -p $ABI_DIR && cp -a packages/contracts/out/{Diamond,DiamondCutFacet,Architect,MockLegacyArchitect,ProxyManager,IPausable,EntitlementsManager,Channels,Roles,IMulticall,OwnableFacet,WalletLink,MockWalletLink,NodeRegistry,OperatorRegistry,StreamRegistry,TokenPausableFacet,IRuleEntitlement,UserEntitlement,SpaceOwner,MockERC721A,MembershipFacet,IMembershipMetadata,Member,MockRiverRegistry,IBanning,IPricingModules,ICrossChainEntitlement,MockCrossChainEntitlement,MockEntitlementGated,PrepayFacet,IERC721AQueryable,IEntitlementDataQueryable,PlatformRequirementsFacet,IERC721A,INodeOperator,ISpaceDelegation,IEntitlementChecker,IEntitlementGated,IERC5267,ICreateSpace,DropFacet,ITownsPoints,ITipping,IReview,ITreasury}.sol/* "$ABI_DIR"
 

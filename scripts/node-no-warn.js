@@ -1,7 +1,7 @@
 // Script to suppress unnecessary experimental and max listener warnings from node.js.
 // Add with -r flag to node command line. For example:
 //
-//    yarn node -r ../../../scripts/node-no-warn.js my-script.js
+//    pnpm node -r ../../../scripts/node-no-warn.js my-script.js
 //
 
 var path = require('path')

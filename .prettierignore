@@ -48,6 +48,7 @@ out/*
 .yarn/*
 .vscode
 yarn.lock
+pnpm-lock.yaml
 
 packages/generated/*
 

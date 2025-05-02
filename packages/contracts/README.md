@@ -2,10 +2,10 @@
 
 <h3>Requirements</h3>
 
-Install [yarn](https://classic.yarnpkg.com/lang/en/docs/install/#mac-stable)
+Install [pnpm](https://pnpm.io/installation)
 
 ```shell
-npm install --global yarn
+npm install --global pnpm
 ```
 
 Download [Foundry](https://github.com/foundry-rs/foundry)
@@ -31,7 +31,7 @@ brew install libusb
 Clone the repo, then:
 
 ```shell
-yarn
+pnpm i
 ```
 
 <b>To compile the smart contracts located in `./contracts`:</b>

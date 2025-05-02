@@ -35,7 +35,7 @@ set -a
 set +a
 
 if [ "${1-}" != "nobuild" ]; then
-    yarn turbo build --filter=@towns-protocol/contracts
+    pnpm turbo build --filter=@towns-protocol/contracts
 fi
 
 # Account Abstraction is not supported on anvil
@@ -68,4 +68,4 @@ fi
 
 # Update the config
 cd "$PROJECT_ROOT/packages/generated"
-yarn make-config
+pnpm make-config
