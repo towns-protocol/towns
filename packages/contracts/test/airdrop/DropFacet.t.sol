@@ -263,6 +263,7 @@ contract DropFacetTest is BaseSetup, IDropFacetBase, IOwnableBase, IRewardsDistr
     }
 
     // claimWithPenalty
+    /// forge-config: default.fuzz.runs = 64
     function test_fuzz_claimWithPenalty(ClaimData[] memory claimData) external {
         vm.assume(claimData.length > 0 && claimData.length <= 1000);
 
