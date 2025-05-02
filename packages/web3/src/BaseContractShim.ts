@@ -1,63 +1,65 @@
 import { BytesLike, ethers } from 'ethers'
 import { dlogger } from '@towns-protocol/dlog'
-
+import { Connect } from './types/typechain'
 export type PromiseOrValue<T> = T | Promise<T>
 
 export const UNKNOWN_ERROR = 'UNKNOWN_ERROR'
 
 const logger = dlogger('csb:BaseContractShim')
 
-// V2 smart contract shim
-// todo: replace BaseContractShim with this when refactoring is done
-export class BaseContractShim<
-    T_DEV_CONTRACT extends ethers.Contract,
-    T_DEV_INTERFACE extends ethers.utils.Interface,
-> {
+export class BaseContractShim<T_CONTRACT extends ethers.Contract> {
     public readonly address: string
-    public readonly contractInterface: ethers.utils.Interface
-    public readonly provider: ethers.providers.Provider | undefined
-    public readonly signer: ethers.Signer | undefined
-    private readonly abi: ethers.ContractInterface
+    public readonly provider: ethers.providers.Provider
+    public readonly connect: Connect<T_CONTRACT>
+    public contractInterface?: ethers.utils.Interface
     private readContract?: ethers.Contract
     private writeContract?: ethers.Contract
 
     constructor(
         address: string,
-        provider: ethers.providers.Provider | undefined,
-        abi: ethers.ContractInterface,
+        provider: ethers.providers.Provider,
+        connect: Connect<T_CONTRACT>,
     ) {
         this.address = address
         this.provider = provider
-        this.abi = abi
-        this.contractInterface = new ethers.utils.Interface(this.abi as string)
+        this.connect = connect
     }
 
-    public get interface(): T_DEV_INTERFACE {
-        return this.contractInterface as unknown as T_DEV_INTERFACE
+    public get interface(): ethers.utils.Interface {
+        if (!this.contractInterface) {
+            this.contractInterface = this.connect(this.address, this.provider).interface
+        }
+        return this.contractInterface
     }
 
-    public get read(): T_DEV_CONTRACT {
+    public get read(): T_CONTRACT {
         // lazy create an instance if it is not already cached
         if (!this.readContract) {
-            this.readContract = this.createReadContractInstance()
+            this.readContract = this.connect(this.address, this.provider)
+            if (!this.contractInterface) {
+                this.contractInterface = this.readContract.interface
+            }
         }
-        return this.readContract as unknown as T_DEV_CONTRACT
+        return this.readContract as unknown as T_CONTRACT
     }
 
-    public write(signer: ethers.Signer): T_DEV_CONTRACT {
+    public write(signer: ethers.Signer): T_CONTRACT {
         // lazy create an instance if it is not already cached
         if (!this.writeContract) {
-            this.writeContract = this.createWriteContractInstance(signer)
+            this.writeContract = this.connect(this.address, signer)
+            if (!this.contractInterface) {
+                this.contractInterface = this.writeContract.interface
+            }
         } else {
             // update the signer if it has changed
             if (this.writeContract.signer !== signer) {
-                this.writeContract = this.createWriteContractInstance(signer)
+                this.writeContract = this.connect(this.address, signer)
             }
         }
-        return this.writeContract as unknown as T_DEV_CONTRACT
+        return this.writeContract as unknown as T_CONTRACT
     }
 
-    public decodeFunctionResult<FnName extends keyof T_DEV_CONTRACT['functions']>(
+    public decodeFunctionResult<FnName extends keyof T_CONTRACT['functions']>(
         functionName: FnName,
         data: BytesLike,
     ) {
@@ -70,7 +72,7 @@ export class BaseContractShim<
         return this.interface.decodeFunctionResult(functionName, data)
     }
 
-    public decodeFunctionData<FnName extends keyof T_DEV_CONTRACT['functions']>(
+    public decodeFunctionData<FnName extends keyof T_CONTRACT['functions']>(
         functionName: FnName,
         data: BytesLike,
     ) {
@@ -84,8 +86,8 @@ export class BaseContractShim<
     }
 
     public encodeFunctionData<
-        FnName extends keyof T_DEV_CONTRACT['functions'],
-        FnParams extends Parameters<T_DEV_CONTRACT['functions'][FnName]>,
+        FnName extends keyof T_CONTRACT['functions'],
+        FnParams extends Parameters<T_CONTRACT['functions'][FnName]>,
     >(functionName: FnName, args: FnParams): string {
         if (typeof functionName !== 'string') {
             throw new Error('functionName must be a string')
@@ -211,17 +213,6 @@ export class BaseContractShim<
     }
 
     public parseLog(log: ethers.providers.Log) {
-        return this.contractInterface.parseLog(log)
-    }
-
-    private createReadContractInstance(): ethers.Contract {
-        if (!this.provider) {
-            throw new Error('No provider')
-        }
-        return new ethers.Contract(this.address, this.abi, this.provider)
-    }
-
-    private createWriteContractInstance(signer: ethers.Signer): ethers.Contract {
-        return new ethers.Contract(this.address, this.abi, signer)
+        return this.interface.parseLog(log)
     }
 }

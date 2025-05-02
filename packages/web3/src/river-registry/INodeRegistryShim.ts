@@ -1,15 +1,12 @@
-import {
-    INodeRegistry as DevContract,
-    INodeRegistryInterface as DevInterface,
-} from '@towns-protocol/generated/dev/typings/INodeRegistry'
-
-import DevAbi from '@towns-protocol/generated/dev/abis/NodeRegistry.abi.json' assert { type: 'json' }
-
 import { ethers } from 'ethers'
 import { BaseContractShim } from '../BaseContractShim'
+import { INodeRegistry__factory } from '@towns-protocol/generated/dev/typings/factories/INodeRegistry__factory'
+import { ContractType } from '../types/typechain'
 
-export class INodeRegistryShim extends BaseContractShim<DevContract, DevInterface> {
-    constructor(address: string, provider: ethers.providers.Provider | undefined) {
-        super(address, provider, DevAbi)
+export class INodeRegistryShim extends BaseContractShim<
+    ContractType<typeof INodeRegistry__factory.connect>
+> {
+    constructor(address: string, provider: ethers.providers.Provider) {
+        super(address, provider, INodeRegistry__factory.connect.bind(INodeRegistry__factory))
     }
 }

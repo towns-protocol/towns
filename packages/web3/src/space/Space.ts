@@ -48,7 +48,7 @@ export class Space {
     private readonly address: string
     private readonly addressToEntitlement: AddressToEntitlement = {}
     private readonly spaceId: string
-    public readonly provider: ethers.providers.Provider | undefined
+    public readonly provider: ethers.providers.Provider
     private readonly channel: IChannelShim
     private readonly entitlements: IEntitlementsShim
     private readonly multicall: IMulticallShim
@@ -69,7 +69,7 @@ export class Space {
         address: string,
         spaceId: string,
         config: BaseChainConfig,
-        provider: ethers.providers.Provider | undefined,
+        provider: ethers.providers.Provider,
     ) {
         this.address = address
         this.spaceId = spaceId

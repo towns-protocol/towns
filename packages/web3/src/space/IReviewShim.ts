@@ -1,15 +1,11 @@
-import {
-    IReview,
-    IReviewInterface,
-    ReviewStorage,
-} from '@towns-protocol/generated/dev/typings/IReview'
+import { ReviewStorage } from '@towns-protocol/generated/dev/typings/IReview'
 
 import { ContractTransaction, ethers } from 'ethers'
 import { BaseContractShim } from '../BaseContractShim'
-
-import DevAbi from '@towns-protocol/generated/dev/abis/IReview.abi.json' assert { type: 'json' }
 import { Address } from 'abitype'
 import { bin_toHexString } from '@towns-protocol/dlog'
+import { ContractType } from '../types/typechain'
+import { IReview__factory } from '@towns-protocol/generated/dev/typings/factories/IReview__factory'
 
 // solidity doesn't export enums, so we need to define them here, boooooo
 export enum SpaceReviewAction {
@@ -31,9 +27,9 @@ export interface ReviewParams {
     comment: string
 }
 
-export class IReviewShim extends BaseContractShim<IReview, IReviewInterface> {
-    constructor(address: string, provider: ethers.providers.Provider | undefined) {
-        super(address, provider, DevAbi)
+export class IReviewShim extends BaseContractShim<ContractType<typeof IReview__factory.connect>> {
+    constructor(address: string, provider: ethers.providers.Provider) {
+        super(address, provider, IReview__factory.connect.bind(IReview__factory))
     }
 
     /**
@@ -116,7 +112,7 @@ export function getSpaceReviewEventData(
     logs: { topics: string[]; data: string; address: string }[],
     senderAddress: string,
 ): SpaceReviewEventObject {
-    const contractInterface = new ethers.utils.Interface(DevAbi) as IReviewInterface
+    const contractInterface = IReview__factory.createInterface()
     for (const log of logs) {
         try {
             const parsedLog = contractInterface.parseLog(log)

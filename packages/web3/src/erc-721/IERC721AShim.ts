@@ -1,15 +1,10 @@
-import {
-    IERC721A as DevContract,
-    IERC721AInterface as DevInterface,
-} from '@towns-protocol/generated/dev/typings/IERC721A'
-
-import DevAbi from '@towns-protocol/generated/dev/abis/IERC721A.abi.json' assert { type: 'json' }
-
 import { ethers } from 'ethers'
+import { IERC721A__factory } from '@towns-protocol/generated/dev/typings/factories/IERC721A__factory'
+import { ContractType } from '../types/typechain'
 import { BaseContractShim } from '../BaseContractShim'
 
-export class IERC721AShim extends BaseContractShim<DevContract, DevInterface> {
-    constructor(address: string, provider: ethers.providers.Provider | undefined) {
-        super(address, provider, DevAbi)
+export class IERC721AShim extends BaseContractShim<ContractType<typeof IERC721A__factory.connect>> {
+    constructor(address: string, provider: ethers.providers.Provider) {
+        super(address, provider, IERC721A__factory.connect.bind(IERC721A__factory))
     }
 }

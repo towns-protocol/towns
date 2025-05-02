@@ -1,24 +1,19 @@
-import {
-    UserEntitlement as LocalhostContract,
-    UserEntitlementInterface as LocalhostInterface,
-} from '@towns-protocol/generated/dev/typings/UserEntitlement'
-
-import LocalhostAbi from '@towns-protocol/generated/dev/abis/UserEntitlement.abi.json' assert { type: 'json' }
-
 import { BaseContractShim } from '../../BaseContractShim'
 import { BigNumberish, ethers } from 'ethers'
 import { decodeUsers } from './ConvertersEntitlements'
 import { EntitlementModuleType, EntitlementModule } from '../../types/ContractTypes'
 import { dlogger } from '@towns-protocol/dlog'
+import { ContractType } from '../../types/typechain'
+import { UserEntitlement__factory } from '@towns-protocol/generated/dev/typings/factories/UserEntitlement__factory'
 
 const logger = dlogger('csb:UserEntitlementShim:debug')
 
 export class UserEntitlementShim
-    extends BaseContractShim<LocalhostContract, LocalhostInterface>
+    extends BaseContractShim<ContractType<typeof UserEntitlement__factory.connect>>
     implements EntitlementModule
 {
-    constructor(address: string, provider: ethers.providers.Provider | undefined) {
-        super(address, provider, LocalhostAbi)
+    constructor(address: string, provider: ethers.providers.Provider) {
+        super(address, provider, UserEntitlement__factory.connect.bind(UserEntitlement__factory))
     }
 
     public get moduleType(): EntitlementModuleType {

@@ -1,15 +1,12 @@
-import {
-    IStreamRegistry as DevContract,
-    IStreamRegistryInterface as DevInterface,
-} from '@towns-protocol/generated/dev/typings/IStreamRegistry'
-
-import DevAbi from '@towns-protocol/generated/dev/abis/StreamRegistry.abi.json' assert { type: 'json' }
-
+import { IStreamRegistry__factory } from '@towns-protocol/generated/dev/typings/factories/IStreamRegistry__factory'
+import { ContractType } from '../types/typechain'
 import { ethers } from 'ethers'
 import { BaseContractShim } from '../BaseContractShim'
 
-export class IStreamRegistryShim extends BaseContractShim<DevContract, DevInterface> {
-    constructor(address: string, provider: ethers.providers.Provider | undefined) {
-        super(address, provider, DevAbi)
+export class IStreamRegistryShim extends BaseContractShim<
+    ContractType<typeof IStreamRegistry__factory.connect>
+> {
+    constructor(address: string, provider: ethers.providers.Provider) {
+        super(address, provider, IStreamRegistry__factory.connect.bind(IStreamRegistry__factory))
     }
 }

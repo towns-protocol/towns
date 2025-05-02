@@ -1,23 +1,19 @@
-import {
-    IRuleEntitlement as LocalhostContract,
-    IRuleEntitlementBase as LocalhostBase,
-    IRuleEntitlementInterface as LocalhostInterface,
-} from '@towns-protocol/generated/dev/typings/IRuleEntitlement.sol/IRuleEntitlement'
-
-import LocalhostAbi from '@towns-protocol/generated/dev/abis/IRuleEntitlement.abi.json' assert { type: 'json' }
+import { IRuleEntitlementBase } from '@towns-protocol/generated/dev/typings/IRuleEntitlement.sol/IRuleEntitlement'
 
 import { BaseContractShim } from '../../BaseContractShim'
 import { BigNumberish, ethers } from 'ethers'
 import { EntitlementModuleType, EntitlementModule } from '../../types/ContractTypes'
 import { dlogger } from '@towns-protocol/dlog'
+import { ContractType } from '../../types/typechain'
+import { IRuleEntitlement__factory } from '@towns-protocol/generated/dev/typings/factories/IRuleEntitlement.sol/IRuleEntitlement__factory'
 const logger = dlogger('csb:SpaceDapp:debug')
 
 export class RuleEntitlementShim
-    extends BaseContractShim<LocalhostContract, LocalhostInterface>
+    extends BaseContractShim<ContractType<typeof IRuleEntitlement__factory.connect>>
     implements EntitlementModule
 {
-    constructor(address: string, provider: ethers.providers.Provider | undefined) {
-        super(address, provider, LocalhostAbi)
+    constructor(address: string, provider: ethers.providers.Provider) {
+        super(address, provider, IRuleEntitlement__factory.connect.bind(IRuleEntitlement__factory))
     }
 
     public get moduleType(): EntitlementModuleType {
@@ -26,7 +22,7 @@ export class RuleEntitlementShim
 
     public async getRoleEntitlement(
         roleId: BigNumberish,
-    ): Promise<LocalhostBase.RuleDataStruct | null> {
+    ): Promise<IRuleEntitlementBase.RuleDataStruct | null> {
         if (roleId === 0) {
             return {
                 operations: [],
@@ -37,12 +33,14 @@ export class RuleEntitlementShim
         return this.read.getRuleData(roleId)
     }
 
-    public decodeGetRuleData(entitlementData: string): LocalhostBase.RuleDataStruct | undefined {
+    public decodeGetRuleData(
+        entitlementData: string,
+    ): IRuleEntitlementBase.RuleDataStruct | undefined {
         try {
             const decoded = this.decodeFunctionResult(
                 'getRuleData',
                 entitlementData,
-            ) as unknown as LocalhostBase.RuleDataStruct[]
+            ) as unknown as IRuleEntitlementBase.RuleDataStruct[]
 
             if (decoded.length === 0) {
                 logger.error('RuleEntitlementShim No rule data', decoded)

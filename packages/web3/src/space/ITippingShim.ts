@@ -1,17 +1,11 @@
-import {
-    ITipping,
-    ITippingInterface,
-    TipEventObject,
-} from '@towns-protocol/generated/dev/typings/ITipping'
-
-import { ContractReceipt, ethers } from 'ethers'
+import { TipEventObject } from '@towns-protocol/generated/dev/typings/ITipping'
+import { ContractType } from '../types/typechain'
+import { ITipping__factory } from '@towns-protocol/generated/dev/typings/factories/ITipping__factory'
 import { BaseContractShim } from '../BaseContractShim'
-
-import DevAbi from '@towns-protocol/generated/dev/abis/ITipping.abi.json' assert { type: 'json' }
-
-export class ITippingShim extends BaseContractShim<ITipping, ITippingInterface> {
-    constructor(address: string, provider: ethers.providers.Provider | undefined) {
-        super(address, provider, DevAbi)
+import { ContractReceipt, ethers } from 'ethers'
+export class ITippingShim extends BaseContractShim<ContractType<typeof ITipping__factory.connect>> {
+    constructor(address: string, provider: ethers.providers.Provider) {
+        super(address, provider, ITipping__factory.connect.bind(ITipping__factory))
     }
 
     /**

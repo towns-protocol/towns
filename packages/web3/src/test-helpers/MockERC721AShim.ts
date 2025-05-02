@@ -1,15 +1,12 @@
-import {
-    MockERC721A as LocalhostContract,
-    MockERC721AInterface as LocalhostInterface,
-} from '@towns-protocol/generated/dev/typings/MockERC721A'
-
-import LocalhostAbi from '@towns-protocol/generated/dev/abis/MockERC721A.abi.json' assert { type: 'json' }
-
 import { ethers } from 'ethers'
 import { BaseContractShim } from '../BaseContractShim'
+import { ContractType } from '../types/typechain'
+import { MockERC721A__factory } from '@towns-protocol/generated/dev/typings/factories/MockERC721A__factory'
 
-export class MockERC721AShim extends BaseContractShim<LocalhostContract, LocalhostInterface> {
-    constructor(address: string, provider: ethers.providers.Provider | undefined) {
-        super(address, provider, LocalhostAbi)
+export class MockERC721AShim extends BaseContractShim<
+    ContractType<typeof MockERC721A__factory.connect>
+> {
+    constructor(address: string, provider: ethers.providers.Provider) {
+        super(address, provider, MockERC721A__factory.connect.bind(MockERC721A__factory))
     }
 }

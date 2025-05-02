@@ -1,18 +1,13 @@
-import {
-    IChannel as LocalhostContract,
-    IChannelBase as LocalhostIChannelBase,
-    IChannelInterface as LocalhostInterface,
-} from '@towns-protocol/generated/dev/typings/IChannel'
-
-import LocalhostAbi from '@towns-protocol/generated/dev/abis/Channels.abi.json' assert { type: 'json' }
-
+import { IChannelBase } from '@towns-protocol/generated/dev/typings/IChannel'
 import { ethers } from 'ethers'
 import { BaseContractShim } from '../BaseContractShim'
+import { ContractType } from '../types/typechain'
+import { IChannel__factory } from '@towns-protocol/generated/dev/typings/factories/IChannel__factory'
 
-export type { LocalhostIChannelBase as IChannelBase }
+export type { IChannelBase }
 
-export class IChannelShim extends BaseContractShim<LocalhostContract, LocalhostInterface> {
-    constructor(address: string, provider: ethers.providers.Provider | undefined) {
-        super(address, provider, LocalhostAbi)
+export class IChannelShim extends BaseContractShim<ContractType<typeof IChannel__factory.connect>> {
+    constructor(address: string, provider: ethers.providers.Provider) {
+        super(address, provider, IChannel__factory.connect.bind(IChannel__factory))
     }
 }

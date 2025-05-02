@@ -1,15 +1,16 @@
-import {
-    IEntitlementChecker as DevContract,
-    IEntitlementCheckerInterface as DevInterface,
-} from '@towns-protocol/generated/dev/typings/IEntitlementChecker'
-
-import DevAbi from '@towns-protocol/generated/dev/abis/IEntitlementChecker.abi.json' assert { type: 'json' }
-
 import { ethers } from 'ethers'
 import { BaseContractShim } from '../BaseContractShim'
+import { IEntitlementChecker__factory } from '@towns-protocol/generated/dev/typings/factories/IEntitlementChecker__factory'
+import { ContractType } from '../types/typechain'
 
-export class IEntitlementCheckerShim extends BaseContractShim<DevContract, DevInterface> {
-    constructor(address: string, provider: ethers.providers.Provider | undefined) {
-        super(address, provider, DevAbi)
+export class IEntitlementCheckerShim extends BaseContractShim<
+    ContractType<typeof IEntitlementChecker__factory.connect>
+> {
+    constructor(address: string, provider: ethers.providers.Provider) {
+        super(
+            address,
+            provider,
+            IEntitlementChecker__factory.connect.bind(IEntitlementChecker__factory),
+        )
     }
 }

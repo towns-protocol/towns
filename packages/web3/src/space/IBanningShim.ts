@@ -1,15 +1,10 @@
-import {
-    IBanning as LocalhostContract,
-    IBanningInterface as LocalhostInterface,
-} from '@towns-protocol/generated/dev/typings/IBanning'
-
 import { ethers } from 'ethers'
 import { BaseContractShim } from '../BaseContractShim'
+import { IBanning__factory } from '@towns-protocol/generated/dev/typings/factories/IBanning__factory'
+import { ContractType } from '../types/typechain'
 
-import LocalhostAbi from '@towns-protocol/generated/dev/abis/IBanning.abi.json' assert { type: 'json' }
-
-export class IBanningShim extends BaseContractShim<LocalhostContract, LocalhostInterface> {
-    constructor(address: string, provider: ethers.providers.Provider | undefined) {
-        super(address, provider, LocalhostAbi)
+export class IBanningShim extends BaseContractShim<ContractType<typeof IBanning__factory.connect>> {
+    constructor(address: string, provider: ethers.providers.Provider) {
+        super(address, provider, IBanning__factory.connect.bind(IBanning__factory))
     }
 }

@@ -1,15 +1,12 @@
-import {
-    IWalletLink as LocalhostContract,
-    IWalletLinkInterface as LocalhostInterface,
-} from '@towns-protocol/generated/dev/typings/IWalletLink'
-
-import LocalhostAbi from '@towns-protocol/generated/dev/abis/WalletLink.abi.json' assert { type: 'json' }
-
 import { ethers } from 'ethers'
 import { BaseContractShim } from '../BaseContractShim'
+import { ContractType } from '../types/typechain'
+import { IWalletLink__factory } from '@towns-protocol/generated/dev/typings/factories/IWalletLink__factory'
 
-export class IWalletLinkShim extends BaseContractShim<LocalhostContract, LocalhostInterface> {
-    constructor(address: string, provider: ethers.providers.Provider | undefined) {
-        super(address, provider, LocalhostAbi)
+export class IWalletLinkShim extends BaseContractShim<
+    ContractType<typeof IWalletLink__factory.connect>
+> {
+    constructor(address: string, provider: ethers.providers.Provider) {
+        super(address, provider, IWalletLink__factory.connect.bind(IWalletLink__factory))
     }
 }
