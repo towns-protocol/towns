@@ -4,7 +4,7 @@ import {
     IRuleEntitlementInterface as LocalhostInterface,
 } from '@towns-protocol/generated/dev/typings/IRuleEntitlement.sol/IRuleEntitlement'
 
-import LocalhostAbi from '@towns-protocol/generated/dev/abis/IRuleEntitlement.abi.json' assert { type: 'json' }
+import LocalhostAbi from '@towns-protocol/generated/dev/abis/IRuleEntitlement.abi.json' with { type: 'json' }
 
 import { BaseContractShim } from './BaseContractShim'
 import { BigNumberish, ethers } from 'ethers'

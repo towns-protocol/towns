@@ -3,7 +3,7 @@ import {
     IStreamRegistryInterface as DevInterface,
 } from '@towns-protocol/generated/dev/typings/IStreamRegistry'
 
-import DevAbi from '@towns-protocol/generated/dev/abis/StreamRegistry.abi.json' assert { type: 'json' }
+import DevAbi from '@towns-protocol/generated/dev/abis/StreamRegistry.abi.json' with { type: 'json' }
 
 import { ethers } from 'ethers'
 import { BaseContractShim } from './BaseContractShim'
