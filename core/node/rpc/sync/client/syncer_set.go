@@ -718,15 +718,21 @@ func (ss *SyncerSet) distributeMessages() {
 						select {
 						case <-sub.ctx.Done():
 							// Client closed the connection. Stop sending messages.
+							if sub.ctx.Err() != nil {
+								log.Errorw("Client closed the connection", "syncID", syncID, "error", sub.ctx.Err())
+							} else {
+								log.Info("Client closed the connection")
+							}
 							sub.messages.Close()
 							cleanSync(syncID)
 							return
 						default:
 							if err := sub.messages.AddMessage(msg); err != nil {
+								log.Errorw("Failed to add message to subscription", "syncID", syncID, "error", err)
 								sub.messages.Close()
 								sub.cancel(err)
 								cleanSync(syncID)
-								log.Errorw("Failed to add message to subscription", "syncID", syncID, "error", err)
+								return
 							}
 						}
 					}
