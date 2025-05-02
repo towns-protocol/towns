@@ -457,7 +457,7 @@ func (ss *SyncerSet) modify(ctx context.Context, syncID string, req ModifyReques
 							Message:  rvrErr.GetMessage(),
 						})
 					}
-					return nil
+					continue
 				}
 			}
 
