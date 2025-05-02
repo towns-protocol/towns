@@ -180,6 +180,12 @@ describe('clientTest', () => {
 
         await bobsClient.waitForStream(channelId)
 
+        // send a bunch of messages and force some snapshots to push the events out of the view
+        for (let i = 0; i < 10; i++) {
+            await bobsClient.sendMessage(channelId, `Hello ${i}`)
+            await bobsClient.debugForceMakeMiniblock(channelId, { forceSnapshot: true })
+        }
+
         // hand construct a message, (don't do this normally! just use sendMessage(..))
         const algorithm = GroupEncryptionAlgorithmId.GroupEncryption // algorithm doesn't matter here, don't copy paste
         const channelMessage = create(ChannelMessageSchema, {
