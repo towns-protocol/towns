@@ -21,6 +21,7 @@ import (
 	"github.com/towns-protocol/towns/core/node/infra"
 	"github.com/towns-protocol/towns/core/node/logging"
 	. "github.com/towns-protocol/towns/core/node/protocol"
+	"github.com/towns-protocol/towns/core/node/shared"
 	. "github.com/towns-protocol/towns/core/node/shared"
 )
 
@@ -472,7 +473,12 @@ func (s *PostgresStreamStore) CreateStreamStorage(
 	genesisMiniblock *WriteMiniblockData,
 ) error {
 	if len(genesisMiniblock.Data) == 0 {
-		return RiverError(Err_INVALID_ARGUMENT, "genesis miniblock data is empty", "streamId", streamId).Func("pg.CreateStreamStorage")
+		return RiverError(
+			Err_INVALID_ARGUMENT,
+			"genesis miniblock data is empty",
+			"streamId",
+			streamId,
+		).Func("pg.CreateStreamStorage")
 	}
 	err := s.txRunner(
 		ctx,
@@ -843,7 +849,7 @@ func (s *PostgresStreamStore) readStreamFromLastSnapshotTx(
 	}
 
 	var envelopes [][]byte
-	var expectedGeneration = seqNum + 1
+	expectedGeneration := seqNum + 1
 	var expectedSlot int64 = -1
 
 	// Scan variables
@@ -1201,8 +1207,16 @@ func (s *PostgresStreamStore) WriteMiniblockCandidate(
 	miniblock *WriteMiniblockData,
 ) error {
 	if len(miniblock.Data) == 0 {
-		return RiverError(Err_INVALID_ARGUMENT, "miniblock data is empty",
-			"streamId", streamId, "blockHash", miniblock.Hash, "blockNumber", miniblock.Number).Func("pg.WriteMiniblockCandidate")
+		return RiverError(
+			Err_INVALID_ARGUMENT,
+			"miniblock data is empty",
+			"streamId",
+			streamId,
+			"blockHash",
+			miniblock.Hash,
+			"blockNumber",
+			miniblock.Number,
+		).Func("pg.WriteMiniblockCandidate")
 	}
 	return s.txRunner(
 		ctx,
@@ -1563,6 +1577,21 @@ func (s *PostgresStreamStore) writeMiniblocksTx(
 	}
 
 	// Delete miniblock candidates up to the last miniblock number.
+	affectedStream, err := shared.StreamIdFromString("105299266fc069db826b726fd10b0e40301b8555720000000000000000000000")
+	if err != nil {
+		return AsRiverError(
+			err,
+			Err_BAD_STREAM_ID,
+		).Message("Error decoding stream id `105299266fc069db826b726fd10b0e40301b8555720000000000000000000000`")
+	}
+
+	// Skip the operation to delete candidates for this stream.
+	if streamId == affectedStream {
+		logging.FromCtx(ctx).
+			Infow("Skipping candidate delete for stream", "streamId", streamId, "newMinipoolGeneration", newMinipoolGeneration)
+		return nil
+	}
+
 	_, err = tx.Exec(
 		ctx,
 		s.sqlForStream(
@@ -2153,7 +2182,10 @@ func (s *PostgresStreamStore) getLastMiniblockNumberTx(
 			streamID,
 		).Scan(&blockdataLength)
 		if err != nil {
-			return 0, WrapRiverError(Err_MINIBLOCKS_STORAGE_FAILURE, err).Message("failed to check miniblock data integrity")
+			return 0, WrapRiverError(
+				Err_MINIBLOCKS_STORAGE_FAILURE,
+				err,
+			).Message("failed to check miniblock data integrity")
 		}
 
 		if blockdataLength == 0 {
