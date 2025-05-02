@@ -1,7 +1,7 @@
 import { Interceptor, Transport } from '@connectrpc/connect'
 import { type ConnectTransportOptions as ConnectTransportOptionsWeb } from '@connectrpc/connect-web'
 import { type RetryParams } from './rpcInterceptors'
-import { isNodeEnv, isBrowser } from '@towns-protocol/dlog'
+import { isNodeEnv, isBrowser, isTestEnv } from '@towns-protocol/dlog'
 
 export interface RpcOptions {
     retryParams?: RetryParams
@@ -12,7 +12,7 @@ export async function createHttp2ConnectTransport(
     options: ConnectTransportOptionsWeb,
 ): Promise<Transport> {
     try {
-        if (isNodeEnv) {
+        if (isNodeEnv && !isTestEnv()) {
             // use node version of connect to force httpVersion: '2'
             const { createConnectTransport } = await import('@connectrpc/connect-node')
             return createConnectTransport({ ...options, httpVersion: '2' })
