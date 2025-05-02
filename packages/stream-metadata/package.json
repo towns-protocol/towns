@@ -20,7 +20,7 @@
 		"run-build": "yarn build && node ./dist/node_esbuild.cjs",
 		"start": "node ./dist/node_esbuild.cjs",
 		"test": "vitest run",
-		"test:integration": "vitest run --testNamePattern integration/stream-metadata",
+		"test:integration": "RIVER_STREAM_METADATA_BASE_URL=http://localhost:3003 RIVER_ENV=local_multi_ne DEBUG='csb:*,test:*' vitest run --testNamePattern integration/stream-metadata",
 		"test:watch": "vitest --watch",
 		"typecheck": "tsc --noEmit"
 	},
@@ -28,6 +28,7 @@
 		"@aws-sdk/client-cloudfront": "^3.645.0",
 		"@bufbuild/buf": "^1.32.0",
 		"@bufbuild/protobuf": "^2.2.2",
+		"@connectrpc/connect-node": "^2.0.0",
 		"@fastify/cors": "^9.0.1",
 		"@towns-protocol/generated": "workspace:^",
 		"@towns-protocol/proto": "workspace:^",

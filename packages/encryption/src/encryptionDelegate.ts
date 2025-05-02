@@ -41,7 +41,7 @@ export class EncryptionDelegate {
             return
         }
 
-        if (isNodeEnv()) {
+        if (isNodeEnv) {
             await this.delegate.init()
         } else {
             await this.delegate.init({ locateFile: () => olmWasm as unknown })

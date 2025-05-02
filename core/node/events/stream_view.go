@@ -116,7 +116,6 @@ func MakeRemoteStreamView(stream *StreamAndCookie) (*StreamView, error) {
 
 	miniblocks := make([]*MiniblockInfo, len(stream.Miniblocks))
 	lastMiniblockNumber := int64(-1)
-	snapshotIndex := 0
 	for i, binMiniblock := range stream.Miniblocks {
 		opts := NewParsedMiniblockInfoOpts()
 		// Ignore block number of first block, but enforce afterward
@@ -129,12 +128,9 @@ func MakeRemoteStreamView(stream *StreamAndCookie) (*StreamView, error) {
 		}
 		lastMiniblockNumber = miniblock.Header().MiniblockNum
 		miniblocks[i] = miniblock
-		if miniblock.Header().IsSnapshot() {
-			snapshotIndex = i
-		}
 	}
 
-	snapshot := miniblocks[snapshotIndex].GetSnapshot()
+	snapshot := miniblocks[0].GetSnapshot()
 	if snapshot == nil {
 		return nil, RiverError(Err_STREAM_BAD_EVENT, "no snapshot").Func("MakeStreamView")
 	}
@@ -170,7 +166,7 @@ func MakeRemoteStreamView(stream *StreamAndCookie) (*StreamView, error) {
 		blocks:        miniblocks,
 		minipool:      newMiniPoolInstance(minipoolEvents, generation, eventNumOffset),
 		snapshot:      snapshot,
-		snapshotIndex: snapshotIndex,
+		snapshotIndex: 0,
 	}, nil
 }
 

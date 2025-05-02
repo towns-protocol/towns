@@ -7783,7 +7783,6 @@ __metadata:
     "@types/debug": ^4.1.8
     "@typescript-eslint/eslint-plugin": ^8.29.0
     "@typescript-eslint/parser": ^8.29.0
-    browser-or-node: ^3.0.0
     debug: ^4.3.4
     eslint: ^8.57.1
     eslint-import-resolver-typescript: ^4.3.2
@@ -7868,6 +7867,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@towns-protocol/playground@workspace:packages/playground"
   dependencies:
+    "@connectrpc/connect-web": ^2.0.0
     "@emoji-mart/data": ^1.1.2
     "@hookform/resolvers": ^3.6.0
     "@radix-ui/react-dialog": ^1.1.1
@@ -7996,8 +7996,6 @@ __metadata:
   dependencies:
     "@bufbuild/protobuf": ^2.2.2
     "@connectrpc/connect": ^2.0.0
-    "@connectrpc/connect-node": ^2.0.0
-    "@connectrpc/connect-web": ^2.0.0
     "@ethereumjs/util": ^8.0.1
     "@towns-protocol/dlog": "workspace:^"
     "@towns-protocol/encryption": "workspace:^"
@@ -8032,6 +8030,9 @@ __metadata:
     vite-plugin-wasm: ^3.4.1
     vitest: 3.0.5
     vitest-fetch-mock: ^0.4.3
+  peerDependencies:
+    "@connectrpc/connect-node": ^2.0.0
+    "@connectrpc/connect-web": ^2.0.0
   languageName: unknown
   linkType: soft
 
@@ -8042,6 +8043,7 @@ __metadata:
     "@aws-sdk/client-cloudfront": ^3.645.0
     "@bufbuild/buf": ^1.32.0
     "@bufbuild/protobuf": ^2.2.2
+    "@connectrpc/connect-node": ^2.0.0
     "@fastify/cors": ^9.0.1
     "@towns-protocol/dlog": "workspace:^"
     "@towns-protocol/encryption": "workspace:^"
@@ -8085,6 +8087,7 @@ __metadata:
   dependencies:
     "@babel/node": ^7.23.9
     "@bufbuild/protobuf": ^2.2.2
+    "@connectrpc/connect-node": ^2.0.0
     "@towns-protocol/dlog": "workspace:^"
     "@towns-protocol/encryption": "workspace:^"
     "@towns-protocol/proto": "workspace:^"
