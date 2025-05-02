@@ -12,7 +12,7 @@ export interface RpcOptions {
 }
 
 export function createHttp2ConnectTransport(options: ConnectTransportOptionsWeb): Transport {
-    if (isNodeEnv() && !isTestEnv()) {
+    if (isNodeEnv && !isTestEnv()) {
         // use node version of connect to force httpVersion: '2'
         const {
             createConnectTransport: createConnectTransportNode,
