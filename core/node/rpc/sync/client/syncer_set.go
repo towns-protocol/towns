@@ -39,13 +39,6 @@ type (
 		RemovingFailureHandler func(status *SyncStreamOpStatus)
 	}
 
-	Subscription struct {
-		ctx      context.Context
-		cancel   context.CancelCauseFunc
-		syncID   string
-		messages *dynmsgbuf.DynamicBuffer[*SyncStreamsResponse]
-	}
-
 	// SyncerSet is the set of StreamsSyncers that are used for a sync operation.
 	SyncerSet struct {
 		// ctx is the root server context for all syncers in this set and used to cancel them
@@ -56,9 +49,9 @@ type (
 		// messages is the channel to which StreamsSyncers write updates that must be sent to the client
 		messages *dynmsgbuf.DynamicBuffer[*SyncStreamsResponse]
 		// subscriptions is a map of all active subscriptions, indexed by the sync ID
-		subscriptions *xsync.Map[string, *Subscription]
+		subscriptions *xsync.Map[string, *subscription]
 		// streamSubscriptions is a map of all active subscriptions, indexed by the stream ID
-		streamSubscriptions *xsync.Map[StreamId, map[string]struct{}]
+		streamSubscriptions *xsync.Map[StreamId, *xsync.Map[string, struct{}]]
 
 		// streamCache is used to subscribe to streams managed by this node instance
 		streamCache *StreamCache
@@ -100,8 +93,8 @@ func NewSyncers(
 		syncers:             xsync.NewMap[common.Address, StreamsSyncer](),
 		streamID2Syncer:     xsync.NewMap[StreamId, StreamsSyncer](),
 		messages:            dynmsgbuf.NewDynamicBuffer[*SyncStreamsResponse](),
-		subscriptions:       xsync.NewMap[string, *Subscription](),
-		streamSubscriptions: xsync.NewMap[StreamId, map[string]struct{}](),
+		subscriptions:       xsync.NewMap[string, *subscription](),
+		streamSubscriptions: xsync.NewMap[StreamId, *xsync.Map[string, struct{}]](),
 		otelTracer:          otelTracer,
 	}
 }
@@ -124,16 +117,9 @@ func (ss *SyncerSet) NewSubscription(
 		return nil
 	}
 
-	// create a new message channel for the sync operation
-	message := dynmsgbuf.NewDynamicBuffer[*SyncStreamsResponse]()
-	ss.subscriptions.Store(syncID, &Subscription{
-		ctx:      ctx,
-		cancel:   cancel,
-		syncID:   syncID,
-		messages: message,
-	})
-
-	return message
+	sub := newSubscription(ctx, cancel, syncID)
+	ss.subscriptions.Store(syncID, sub)
+	return sub.messages
 }
 
 // TODO: Ignore node address and minipool gen in cookie
@@ -360,8 +346,8 @@ func (ss *SyncerSet) modify(ctx context.Context, syncID string, req ModifyReques
 
 		// Add the given stream to the remove list of the syncer only if there are no more subscriptions for the stream.
 		// Otherwise, just remote the subscription from the stream.
-		if subscribers, ok := ss.streamSubscriptions.Load(streamID); ok && len(subscribers) > 0 {
-			if _, ok = subscribers[syncID]; ok && len(subscribers) > 1 {
+		if subscribers, ok := ss.streamSubscriptions.Load(streamID); ok && subscribers.Size() > 0 {
+			if _, ok = subscribers.Load(syncID); ok && subscribers.Size() > 1 {
 				ss.removeStreamFromSubscription(syncID, streamID)
 				continue
 			} else if !ok {
@@ -539,7 +525,7 @@ func (ss *SyncerSet) startSyncingByCookie(
 	subscribers, ok := ss.streamSubscriptions.Load(streamID)
 	if ok {
 		// Check if the given subscription is already part of the sync operation
-		if _, ok = subscribers[syncID]; ok {
+		if _, ok = subscribers.Load(syncID); ok {
 			return nil
 		}
 	}
@@ -615,9 +601,8 @@ func (ss *SyncerSet) distributeMessages() {
 			log.Info("Sync operation stopped")
 		}
 
-		ss.subscriptions.Range(func(_ string, sub *Subscription) bool {
-			sub.messages.Close()
-			sub.cancel(err)
+		ss.subscriptions.Range(func(_ string, sub *subscription) bool {
+			sub.Close(err)
 			return true
 		})
 		ss.subscriptions.Clear()
@@ -626,10 +611,10 @@ func (ss *SyncerSet) distributeMessages() {
 
 	cleanSync := func(syncID string) {
 		ss.subscriptions.Delete(syncID)
-		ss.streamSubscriptions.Range(func(streamID StreamId, subscriptions map[string]struct{}) bool {
-			if _, ok := subscriptions[syncID]; ok {
-				delete(subscriptions, syncID)
-				if len(subscriptions) == 0 {
+		ss.streamSubscriptions.Range(func(streamID StreamId, subscriptions *xsync.Map[string, struct{}]) bool {
+			if _, ok := subscriptions.Load(syncID); ok {
+				subscriptions.Delete(syncID)
+				if subscriptions.Size() == 0 {
 					ss.streamSubscriptions.Delete(streamID)
 				} else {
 					ss.streamSubscriptions.Store(streamID, subscriptions)
@@ -675,9 +660,10 @@ func (ss *SyncerSet) distributeMessages() {
 				}
 
 				// Order is important here, we need to send the message to all subscribers
-				for syncID := range syncIDs {
+				syncIDs.Range(func(syncID string, _ struct{}) bool {
 					toSend[syncID] = append(toSend[syncID], proto.Clone(msg).(*SyncStreamsResponse))
-				}
+					return true
+				})
 			}
 
 			// Send messages to all subscribers in parallel.
@@ -714,8 +700,7 @@ func (ss *SyncerSet) distributeMessages() {
 						default:
 							if err := sub.messages.AddMessage(msg); err != nil {
 								log.Errorw("Failed to add message to subscription", "syncID", syncID, "error", err)
-								sub.messages.Close()
-								sub.cancel(err)
+								sub.Close(err)
 								cleanSync(syncID)
 								return
 							}
@@ -748,8 +733,8 @@ func (ss *SyncerSet) addStreamToSubscription(
 	syncID string,
 	streamID StreamId,
 ) {
-	syncIDs, _ := ss.streamSubscriptions.LoadOrStore(streamID, make(map[string]struct{}))
-	syncIDs[syncID] = struct{}{}
+	syncIDs, _ := ss.streamSubscriptions.LoadOrStore(streamID, xsync.NewMap[string, struct{}]())
+	syncIDs.Store(syncID, struct{}{})
 	ss.streamSubscriptions.Store(streamID, syncIDs)
 }
 
@@ -758,8 +743,8 @@ func (ss *SyncerSet) removeStreamFromSubscription(
 	streamID StreamId,
 ) {
 	if syncIDs, ok := ss.streamSubscriptions.Load(streamID); ok {
-		delete(syncIDs, syncID)
-		if len(syncIDs) == 0 {
+		syncIDs.Delete(syncID)
+		if syncIDs.Size() == 0 {
 			ss.streamSubscriptions.Delete(streamID)
 		} else {
 			ss.streamSubscriptions.Store(streamID, syncIDs)
