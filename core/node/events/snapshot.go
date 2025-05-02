@@ -687,6 +687,7 @@ func update_Snapshot_Member(
 		if err != nil {
 			return AsRiverError(err, Err_NOT_FOUND).Message("Could not find creator of KeyFulfillment member payload in stream members").
 				Func("update_Snapshot_Member").
+				Tag("contentType", "KeySolicitation").
 				Tag("eventHash", hex.EncodeToString(eventHash)).
 				Tag("eventNum", eventNum).
 				Tag("creatorAddress", hex.EncodeToString(creatorAddress)).
@@ -700,6 +701,7 @@ func update_Snapshot_Member(
 		if err != nil {
 			return AsRiverError(err, Err_NOT_FOUND).Message("Could not find creator of DisplayName member payload in stream members").
 				Func("update_Snapshot_Member").
+        Tag("contentType", "DisplayName").
 				Tag("eventHash", hex.EncodeToString(eventHash)).
 				Tag("eventNum", eventNum).
 				Tag("creatorAddress", hex.EncodeToString(creatorAddress)).
@@ -711,6 +713,7 @@ func update_Snapshot_Member(
 		member, err := findMember(snapshot.Joined, creatorAddress)
 		if err != nil {
 			return AsRiverError(err, Err_NOT_FOUND).Message("Could not find creator of UserName member payload in stream members").
+        Tag("contentType", "Username").
 				Func("update_Snapshot_Member").
 				Tag("eventHash", hex.EncodeToString(eventHash)).
 				Tag("eventNum", eventNum).
@@ -724,7 +727,8 @@ func update_Snapshot_Member(
 		if err != nil {
 			return AsRiverError(err, Err_NOT_FOUND).Message("Could not find creator of EnsAddress member payload in stream members").
 				Func("update_Snapshot_Member").
-				Tag("eventHash", hex.EncodeToString(eventHash)).
+        Tag("contentType", "EnsAddress").
+        Tag("eventHash", hex.EncodeToString(eventHash)).
 				Tag("eventNum", eventNum).
 				Tag("creatorAddress", hex.EncodeToString(creatorAddress)).
 				Tag("miniblockNum", miniblockNum)
@@ -736,7 +740,8 @@ func update_Snapshot_Member(
 		if err != nil {
 			return AsRiverError(err, Err_NOT_FOUND).Message("Could not find creator of Nft member payload in stream members").
 				Func("update_Snapshot_Member").
-				Tag("eventHash", hex.EncodeToString(eventHash)).
+        Tag("contentType", "Nft").
+        Tag("eventHash", hex.EncodeToString(eventHash)).
 				Tag("eventNum", eventNum).
 				Tag("creatorAddress", hex.EncodeToString(creatorAddress)).
 				Tag("miniblockNum", miniblockNum)
@@ -789,7 +794,9 @@ func update_Snapshot_Member(
 			sender, err := findMember(snapshot.Joined, content.MemberBlockchainTransaction.FromUserAddress)
 			if err != nil {
 				return AsRiverError(err, Err_NOT_FOUND).Message("Could not find FromUserAddress of member blockchain transaction payload in stream members").
-					Func("update_Snapshot_Member").
+          Func("update_Snapshot_Member").
+					Tag("party", "sender").
+					Tag("contentType", "MemberBlockchainTransaction").
 					Tag("eventHash", hex.EncodeToString(eventHash)).
 					Tag("eventNum", eventNum).
 					Tag("creatorAddress", hex.EncodeToString(creatorAddress)).
@@ -815,6 +822,8 @@ func update_Snapshot_Member(
 			if err != nil {
 				return AsRiverError(err, Err_NOT_FOUND).Message("Could not find ToUserAddress of member Tip transaction payload in stream members").
 					Func("update_Snapshot_Member").
+					Tag("party", "receiver").
+					Tag("contentType", "MemberBlockchainTransaction").
 					Tag("eventHash", hex.EncodeToString(eventHash)).
 					Tag("eventNum", eventNum).
 					Tag("creatorAddress", hex.EncodeToString(creatorAddress)).
@@ -930,7 +939,7 @@ func findChannel(channels []*SpacePayload_ChannelMetadata, channelId []byte) (*S
 		},
 	)
 	if err != nil {
-		return nil, AsRiverError(err, Err_NOT_FOUND).Func("findChannel").Tag("channelId", hex.EncodeToString(channelId))
+		return nil, AsRiverError(err).Func("findChannel").Tag("channelId", hex.EncodeToString(channelId))
 	}
 	return metadata, nil
 }
@@ -965,10 +974,7 @@ func findMember(
 		},
 	)
 	if err != nil {
-		return nil, AsRiverError(
-			err,
-			Err_NOT_FOUND,
-		).Func("findMember").
+		return nil, AsRiverError(err).Func("findMember").
 			Tag("memberAddress", hex.EncodeToString(memberAddress))
 	}
 	return payload, nil
@@ -1015,10 +1021,7 @@ func findUserMembership(
 		},
 	)
 	if err != nil {
-		return nil, AsRiverError(
-			err,
-			Err_NOT_FOUND,
-		).Func("findUserMembership").
+		return nil, AsRiverError(err).Func("findUserMembership").
 			Tag("streamId", hex.EncodeToString(streamId))
 	}
 	return payload, nil
