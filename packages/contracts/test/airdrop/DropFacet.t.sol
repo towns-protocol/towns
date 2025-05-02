@@ -30,6 +30,9 @@ import {Towns} from "src/tokens/towns/base/Towns.sol";
 import {BaseSetup} from "test/spaces/BaseSetup.sol";
 import {TownsPoints} from "src/airdrop/points/TownsPoints.sol";
 
+// debuggging
+import {console} from "forge-std/console.sol";
+
 contract DropFacetTest is BaseSetup, IDropFacetBase, IOwnableBase, IRewardsDistributionBase {
     using FixedPointMathLib for uint256;
 
@@ -1187,6 +1190,26 @@ contract DropFacetTest is BaseSetup, IDropFacetBase, IOwnableBase, IRewardsDistr
         assertEq(condition.endTimestamp, 0, "Condition should be empty");
         assertEq(condition.startTimestamp, 0, "Condition should be empty");
         assertEq(condition.currency, address(0), "Condition should be empty");
+    }
+
+    function test_createTree() external {
+        address[] memory _accounts = new address[](2);
+        uint256[] memory _amounts = new uint256[](2);
+        uint256[] memory _points = new uint256[](2);
+
+        // generated from test/airdrop/scripts/index.mjs
+        bytes32 expectedRoot = 0xc9d819341fba6e6ea4621c818f59273fbaddecd7621f20ff33d3c8ae0afc966f;
+
+        _accounts[0] = 0x328809Bc894f92807417D2dAD6b7C998c1aFdac6;
+        _amounts[0] = 100;
+        _points[0] = 10;
+        _accounts[1] = 0x1D96F2f6BeF1202E4Ce1Ff6Dad0c2CB002861d3e;
+        _amounts[1] = 200;
+        _points[1] = 20;
+
+        (bytes32 _root, ) = merkleTree.constructTree(_accounts, _amounts, _points);
+
+        assertEq(_root, expectedRoot);
     }
 
     // =============================================================

@@ -8,6 +8,7 @@ const json = JSON.parse(
 const values = [];
 
 for (const condition of json.conditions) {
+  console.log(condition);
   values.push([condition.account, condition.amount, condition.points]);
 }
 

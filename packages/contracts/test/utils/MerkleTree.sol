@@ -82,26 +82,14 @@ contract MerkleTree {
         uint256 points
     ) internal pure returns (bytes32 leaf) {
         assembly ("memory-safe") {
-            // Cache the free memory pointer
-            let origPtr := mload(0x40)
-            let ptr := 0x00
-
-            // Pack address + amount + points into memory [0, 0x60)
-            mstore(ptr, shl(96, member)) // member at ptr
-            mstore(add(ptr, 0x20), amount) // amount at ptr+32
-            mstore(add(ptr, 0x40), points) // points at ptr+64
-
-            // Hash the full 96 bytes (0x60) to get inner hash
-            leaf := keccak256(ptr, 0x60)
-
-            // Store inner hash at ptr
-            mstore(ptr, leaf)
-
-            // Final hash of 32 bytes (0x20) to strengthen against second preimage attacks
-            leaf := keccak256(ptr, 0x20)
-
-            // Restore the free memory pointer
-            mstore(0x40, origPtr)
+            let fmp := mload(0x40)
+            mstore(0, member)
+            mstore(0x20, amount)
+            mstore(0x40, points)
+            leaf := keccak256(0, 0x60)
+            mstore(0, leaf)
+            leaf := keccak256(0, 0x20)
+            mstore(0x40, fmp)
         }
     }
 }
