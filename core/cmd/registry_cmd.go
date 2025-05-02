@@ -175,8 +175,12 @@ func validateStream(
 	nodeAddress common.Address,
 	expectedMinBlockHash common.Hash,
 	expectedMinBlockNum int64,
+	timeout time.Duration,
 ) error {
-	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	if timeout <= 0 {
+		timeout = 30 * time.Second
+	}
+	ctx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 
 	nodeRecord, err := registryContract.NodeRegistry.GetNode(&bind.CallOpts{
@@ -267,7 +271,7 @@ func validateStream(
 	return nil
 }
 
-func srStream(cfg *config.Config, streamId string, validate, urls, csv bool) error {
+func srStream(cfg *config.Config, streamId string, validate, urls, csv bool, timeout time.Duration) error {
 	if csv && validate {
 		return RiverError(Err_INVALID_ARGUMENT, "--validate and --csv flags cannot be used together")
 	}
@@ -343,6 +347,7 @@ func srStream(cfg *config.Config, streamId string, validate, urls, csv bool) err
 				}
 			}
 			if validate {
+				startTime := time.Now()
 				validateErr := validateStream(
 					ctx,
 					httpClient,
@@ -351,13 +356,17 @@ func srStream(cfg *config.Config, streamId string, validate, urls, csv bool) err
 					node,
 					stream.LastMbHash(),
 					stream.LastMbNum(),
+					timeout,
 				)
+				elapsed := time.Since(startTime)
 				if validateErr != nil {
 					if err == nil {
 						err = validateErr
 					}
 
-					fmt.Printf("      %s\n", validateErr)
+					fmt.Printf("      ERROR, Elapsed: %s, Error: %s\n", elapsed, validateErr)
+				} else {
+					fmt.Printf("      OK, Elapsed: %s\n", elapsed)
 				}
 			}
 		}
@@ -626,12 +635,17 @@ func init() {
 			if err != nil {
 				return err
 			}
-			return srStream(cmdConfig, args[0], validate, urls, csv)
+			timeout, err := cmd.Flags().GetDuration("timeout")
+			if err != nil {
+				return err
+			}
+			return srStream(cmdConfig, args[0], validate, urls, csv, timeout)
 		},
 	}
 	streamCmd.Flags().Bool("validate", false, "Fetch stream from each node and compare to the registry record")
 	streamCmd.Flags().Bool("urls", true, "Print node URLs")
 	streamCmd.Flags().Bool("csv", false, "Output in CSV format")
+	streamCmd.Flags().Duration("timeout", 30*time.Second, "Timeout for validation")
 	srCmd.AddCommand(streamCmd)
 
 	nodesCmd := &cobra.Command{
