@@ -113,7 +113,7 @@ library ExecutorLib {
     error NullModule();
     error ExecutionHookAlreadySet(bytes32 hookId);
     error ModuleInstallCallbackFailed(address module, bytes revertReason);
-
+    error InvalidDataLength();
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           EVENTS                            */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -570,6 +570,7 @@ library ExecutorLib {
     }
 
     function checkSelector(bytes calldata data) internal pure returns (bytes4) {
+        if (data.length < 4) revert InvalidDataLength();
         return bytes4(data[0:4]);
     }
 }

@@ -23,7 +23,7 @@ library HookLib {
     struct HookConfig {
         EnumerableSetLib.Bytes32Set preHooks;
         EnumerableSetLib.Bytes32Set postHooks;
-        mapping(bytes32 hookId => bytes) preHookData;
+        mapping(bytes4 selector => mapping(bytes32 hookId => bytes)) preHookData;
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -108,7 +108,7 @@ library HookLib {
         HookConfig storage config = db.hooks[selector];
         config.preHooks.remove(hookId);
         config.postHooks.remove(hookId);
-        delete config.preHookData[hookId];
+        delete config.preHookData[selector][hookId];
 
         db.hookData[hookId].isActive = false;
 
@@ -138,7 +138,10 @@ library HookLib {
                 )
             );
 
-            config.preHookData[hookId] = preHookData;
+            // Store with selector context
+            if (preHookData.length > 0) {
+                config.preHookData[selector][hookId] = preHookData;
+            }
         }
     }
 
@@ -154,8 +157,8 @@ library HookLib {
 
             if (!hook.isActive) continue;
 
-            // Get stored pre-hook data
-            bytes memory preHookData = config.preHookData[hookId];
+            // Get stored pre-hook data with selector context
+            bytes memory preHookData = config.preHookData[selector][hookId];
 
             LibCall.callContract(
                 hook.module,
@@ -166,7 +169,8 @@ library HookLib {
                 )
             );
 
-            delete config.preHookData[hookId];
+            // Clean up storage with selector context
+            delete config.preHookData[selector][hookId];
         }
     }
 
