@@ -2,7 +2,6 @@ package sync
 
 import (
 	"context"
-	"fmt"
 	"sync"
 	"time"
 
@@ -107,6 +106,7 @@ func (syncOp *StreamSyncOperation) Run(
 							return
 						default:
 							_ = syncOp.messages.AddMessage(&SyncStreamsResponse{
+								SyncId:   syncOp.SyncID,
 								SyncOp:   SyncOp_SYNC_DOWN,
 								StreamId: status.GetStreamId(),
 							})
@@ -126,9 +126,6 @@ func (syncOp *StreamSyncOperation) Run(
 
 	var messagesSendToClient int
 	defer syncOp.log.Debugw("Stream sync operation stopped", "send", messagesSendToClient)
-	defer func() {
-		fmt.Println("messagesSendToClient", syncOp.SyncID, messagesSendToClient)
-	}()
 
 	var msgs []*SyncStreamsResponse
 	for {
