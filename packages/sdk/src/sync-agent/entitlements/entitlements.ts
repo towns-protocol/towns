@@ -3,7 +3,10 @@ import { Permission, SpaceDapp } from '@towns-protocol/web3'
 import { RiverConfig } from '../../riverConfig'
 
 export class Entitlements implements EntitlementsDelegate {
-    constructor(private config: RiverConfig, private spaceDapp: SpaceDapp) {}
+    constructor(
+        private config: RiverConfig,
+        private spaceDapp: SpaceDapp,
+    ) {}
 
     async isEntitled(
         spaceId: string | undefined,

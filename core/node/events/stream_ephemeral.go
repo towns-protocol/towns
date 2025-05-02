@@ -177,7 +177,7 @@ func (s *StreamCache) normalizeEphemeralStream(
 			var toNextPeer bool
 			for resp.Receive() {
 				msg := resp.Msg()
-				if msg == nil {
+				if msg == nil || msg.GetMiniblock() == nil {
 					_ = resp.Close()
 					toNextPeer = len(missingMbs) > 0
 					break
