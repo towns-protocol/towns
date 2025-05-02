@@ -20,7 +20,11 @@ export interface UserInboxModel extends Identifiable {
 
 @persistedObservable({ tableName: 'userInbox' })
 export class UserInbox extends PersistedObservable<UserInboxModel> {
-    constructor(id: string, store: Store, private riverConnection: RiverConnection) {
+    constructor(
+        id: string,
+        store: Store,
+        private riverConnection: RiverConnection,
+    ) {
         super(
             { id, streamId: makeUserInboxStreamId(id), initialized: false },
             store,

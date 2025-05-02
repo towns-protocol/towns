@@ -88,8 +88,11 @@ function getUserTips(streamView: StreamStateView): UserTips {
 }
 
 function formatBigIntToString(map: Record<string, bigint>): Record<string, string> {
-	return Object.entries(map).reduce((acc, [key, value]) => {
-		acc[key] = value.toString()
-		return acc
-	}, {} as Record<string, string>)
+	return Object.entries(map).reduce(
+		(acc, [key, value]) => {
+			acc[key] = value.toString()
+			return acc
+		},
+		{} as Record<string, string>,
+	)
 }

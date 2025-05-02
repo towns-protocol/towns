@@ -118,7 +118,7 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
                             fallbackKey: s.fallbackKey,
                             isNewDevice: s.isNewDevice,
                             sessionIds: [...s.sessionIds],
-                        } satisfies KeySolicitationContent),
+                        }) satisfies KeySolicitationContent,
                 ),
                 encryptedUsername: member.username,
                 encryptedDisplayName: member.displayName,
@@ -625,8 +625,8 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
             chainId: receipt
                 ? receipt.chainId.toString()
                 : solanaReceipt
-                ? 'solana-mainnet'
-                : 'unknown chain',
+                  ? 'solana-mainnet'
+                  : 'unknown chain',
             createdAtEpochMs: createdAtEpochMs,
             isBuy: transferContent.isBuy,
             messageId: bin_toHexString(transferContent.messageId),

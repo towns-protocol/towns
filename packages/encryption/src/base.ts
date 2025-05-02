@@ -83,7 +83,10 @@ export abstract class DecryptionAlgorithm implements IDecryptionParams {
  *   to the user.
  */
 export class DecryptionError extends Error {
-    public constructor(public readonly code: string, msg: string) {
+    public constructor(
+        public readonly code: string,
+        msg: string,
+    ) {
         super(msg)
         this.code = code
         this.name = 'DecryptionError'

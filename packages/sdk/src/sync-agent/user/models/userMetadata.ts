@@ -20,7 +20,11 @@ export interface UserMetadataModel {
 
 @persistedObservable({ tableName: 'userMetadata' })
 export class UserMetadata extends PersistedObservable<UserMetadataModel> {
-    constructor(id: string, store: Store, private riverConnection: RiverConnection) {
+    constructor(
+        id: string,
+        store: Store,
+        private riverConnection: RiverConnection,
+    ) {
         super(
             { id, streamId: makeUserMetadataStreamId(id), initialized: false, deviceKeys: [] },
             store,

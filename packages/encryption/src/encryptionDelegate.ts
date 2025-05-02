@@ -1,4 +1,3 @@
-/* eslint-disable import/no-unresolved */
 // @ts-ignore
 // need to include the olmWasm file for the app/browser. BUT this is probably not what we want to do in the long run
 // Since we are not bundling the csb SDK, just transpiling TS to JS (like in lib), the SDK is not handling this import at all.

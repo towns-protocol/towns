@@ -871,29 +871,32 @@ export class SyncedStreamsLoop {
 
     private sendKeepAlivePings() {
         // periodically ping the server to keep the connection alive
-        this.pingInfo.pingTimeout = setTimeout(() => {
-            const ping = async () => {
-                if (this.syncState === SyncState.Syncing && this.syncId) {
-                    const n = nanoid()
-                    this.pingInfo.nonces[n] = {
-                        sequence: this.pingInfo.currentSequence++,
-                        nonce: n,
-                        pingAt: performance.now(),
+        this.pingInfo.pingTimeout = setTimeout(
+            () => {
+                const ping = async () => {
+                    if (this.syncState === SyncState.Syncing && this.syncId) {
+                        const n = nanoid()
+                        this.pingInfo.nonces[n] = {
+                            sequence: this.pingInfo.currentSequence++,
+                            nonce: n,
+                            pingAt: performance.now(),
+                        }
+                        await this.rpcClient.pingSync({
+                            syncId: this.syncId,
+                            nonce: n,
+                        })
                     }
-                    await this.rpcClient.pingSync({
-                        syncId: this.syncId,
-                        nonce: n,
-                    })
+                    if (this.syncState === SyncState.Syncing) {
+                        // schedule the next ping
+                        this.sendKeepAlivePings()
+                    }
                 }
-                if (this.syncState === SyncState.Syncing) {
-                    // schedule the next ping
-                    this.sendKeepAlivePings()
-                }
-            }
-            ping().catch((err) => {
-                this.interruptSync?.(err)
-            })
-        }, 5 * 1000 * 60) // every 5 minutes
+                ping().catch((err) => {
+                    this.interruptSync?.(err)
+                })
+            },
+            5 * 1000 * 60,
+        ) // every 5 minutes
     }
 
     private stopPing() {

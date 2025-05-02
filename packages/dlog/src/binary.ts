@@ -1,4 +1,3 @@
-// eslint-disable-next-line import/no-unresolved
 import { base64Decode, base64Encode } from '@bufbuild/protobuf/wire'
 import {
     bytesToHex,
