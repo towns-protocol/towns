@@ -176,6 +176,9 @@ func validateStream(
 	expectedMinBlockHash common.Hash,
 	expectedMinBlockNum int64,
 ) error {
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+
 	nodeRecord, err := registryContract.NodeRegistry.GetNode(&bind.CallOpts{
 		Context: ctx,
 	}, nodeAddress)
