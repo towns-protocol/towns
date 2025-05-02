@@ -22,15 +22,15 @@ import (
 )
 
 type remoteSyncer struct {
-	syncStreamCtx    context.Context
-	syncStreamCancel context.CancelFunc
-	syncID           string
-	remoteAddr       common.Address
-	client           protocolconnect.StreamServiceClient
-	messages         *dynmsgbuf.DynamicBuffer[*SyncStreamsResponse]
-	streams          sync.Map
-	responseStream   *connect.ServerStreamForClient[SyncStreamsResponse]
-	unsubStream      func(streamID StreamId)
+	ctx            context.Context
+	ctxCancel      context.CancelFunc
+	syncID         string
+	remoteAddr     common.Address
+	client         protocolconnect.StreamServiceClient
+	messages       *dynmsgbuf.DynamicBuffer[*SyncStreamsResponse]
+	streams        sync.Map
+	responseStream *connect.ServerStreamForClient[SyncStreamsResponse]
+	unsubStream    func(streamID StreamId)
 	// otelTracer is used to trace individual sync Send operations, tracing is disabled if nil
 	otelTracer trace.Tracer
 }
@@ -64,20 +64,20 @@ func newRemoteSyncer(
 	}
 
 	return &remoteSyncer{
-		syncID:           responseStream.Msg().GetSyncId(),
-		syncStreamCtx:    syncStreamCtx,
-		syncStreamCancel: syncStreamCancel,
-		client:           client,
-		messages:         messages,
-		responseStream:   responseStream,
-		remoteAddr:       remoteAddr,
-		unsubStream:      unsubStream,
-		otelTracer:       otelTracer,
+		syncID:         responseStream.Msg().GetSyncId(),
+		ctx:            syncStreamCtx,
+		ctxCancel:      syncStreamCancel,
+		client:         client,
+		messages:       messages,
+		responseStream: responseStream,
+		remoteAddr:     remoteAddr,
+		unsubStream:    unsubStream,
+		otelTracer:     otelTracer,
 	}, nil
 }
 
 func (s *remoteSyncer) Run() {
-	log := logging.FromCtx(s.syncStreamCtx)
+	log := logging.FromCtx(s.ctx)
 
 	defer s.responseStream.Close()
 
@@ -88,7 +88,7 @@ func (s *remoteSyncer) Run() {
 	go s.connectionAlive(&latestMsgReceived)
 
 	for s.responseStream.Receive() {
-		if s.syncStreamCtx.Err() != nil {
+		if s.ctx.Err() != nil {
 			break
 		}
 
@@ -119,7 +119,7 @@ func (s *remoteSyncer) Run() {
 	}
 
 	// stream interrupted while client didn't cancel sync -> remote is unavailable
-	if s.syncStreamCtx.Err() == nil {
+	if s.ctx.Err() == nil {
 		log.Infow("remote node disconnected", "remote", s.remoteAddr)
 
 		s.streams.Range(func(key, value any) bool {
@@ -143,8 +143,8 @@ func (s *remoteSyncer) Run() {
 // If the channel is full or the sync operation is cancelled, the function returns an error.
 func (s *remoteSyncer) sendSyncStreamResponseToClient(msg *SyncStreamsResponse) error {
 	select {
-	case <-s.syncStreamCtx.Done():
-		return s.syncStreamCtx.Err()
+	case <-s.ctx.Done():
+		return s.ctx.Err()
 	default:
 		if err := s.messages.AddMessage(msg); err != nil {
 			return AsRiverError(err).
@@ -161,7 +161,7 @@ func (s *remoteSyncer) sendSyncStreamResponseToClient(msg *SyncStreamsResponse) 
 // if the remote can't be reach the sync stream is canceled.
 func (s *remoteSyncer) connectionAlive(latestMsgReceived *atomic.Value) {
 	var (
-		log = logging.FromCtx(s.syncStreamCtx)
+		log = logging.FromCtx(s.ctx)
 		// check every pingTicker if it's time to send a ping req to remote
 		pingTicker = time.NewTicker(3 * time.Second)
 		// don't send a ping req if there was activity within recentActivityInterval
@@ -178,7 +178,7 @@ func (s *remoteSyncer) connectionAlive(latestMsgReceived *atomic.Value) {
 			lastMsgRecv := latestMsgReceived.Load().(time.Time)
 			if lastMsgRecv.Add(recentActivityDeadline).Before(now) { // no recent activity -> conn dead
 				log.Warnw("remote sync node time out", "remote", s.remoteAddr)
-				s.syncStreamCancel()
+				s.ctxCancel()
 				return
 			}
 
@@ -187,19 +187,19 @@ func (s *remoteSyncer) connectionAlive(latestMsgReceived *atomic.Value) {
 			}
 
 			// send ping to remote to generate activity to check if remote is still alive
-			if _, err := s.client.PingSync(s.syncStreamCtx, connect.NewRequest(&PingSyncRequest{
+			if _, err := s.client.PingSync(s.ctx, connect.NewRequest(&PingSyncRequest{
 				SyncId: s.syncID,
 				Nonce:  fmt.Sprintf("%d", now.Unix()),
 			})); err != nil {
 				if !errors.Is(err, context.Canceled) {
 					log.Errorw("ping sync failed", "remote", s.remoteAddr, "err", err)
 				}
-				s.syncStreamCancel()
+				s.ctxCancel()
 				return
 			}
 			return
 
-		case <-s.syncStreamCtx.Done():
+		case <-s.ctx.Done():
 			return
 		}
 	}
@@ -247,7 +247,7 @@ func (s *remoteSyncer) Modify(ctx context.Context, request *ModifySyncRequest) (
 	})
 
 	if noMoreStreams {
-		s.syncStreamCancel()
+		s.ctxCancel()
 	}
 
 	return resp.Msg, noMoreStreams, nil
@@ -269,7 +269,7 @@ func (s *remoteSyncer) DebugDropStream(ctx context.Context, streamID StreamId) (
 	})
 
 	if noMoreStreams {
-		s.syncStreamCancel()
+		s.ctxCancel()
 	}
 
 	return noMoreStreams, nil

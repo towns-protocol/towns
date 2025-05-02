@@ -414,7 +414,7 @@ func (ss *SyncerSet) modify(ctx context.Context, syncID string, req ModifyReques
 			for _, streamIDRaw := range modifySync.GetRemoveStreams() {
 				streamID := StreamId(streamIDRaw)
 				ss.streamID2Syncer.Delete(streamID)
-				ss.router.removeStreamAndCheckLast(syncID, streamID)
+				ss.router.removeStreamFromSubscription(syncID, streamID)
 			}
 
 			localMuSyncers.Unlock()
@@ -428,7 +428,7 @@ func (ss *SyncerSet) modify(ctx context.Context, syncID string, req ModifyReques
 				for _, cookie := range modifySync.GetAddStreams() {
 					streamID := StreamId(cookie.GetStreamId())
 					ss.streamID2Syncer.Delete(streamID)
-					ss.router.removeStreamAndCheckLast(syncID, streamID)
+					ss.router.removeStreamFromSubscription(syncID, streamID)
 
 					req.AddingFailureHandler(&SyncStreamOpStatus{
 						StreamId: cookie.GetStreamId(),
@@ -456,7 +456,7 @@ func (ss *SyncerSet) modify(ctx context.Context, syncID string, req ModifyReques
 			for _, status := range resp.GetAdds() {
 				streamID := StreamId(status.GetStreamId())
 				ss.streamID2Syncer.Delete(streamID)
-				ss.router.removeStreamAndCheckLast(syncID, streamID)
+				ss.router.removeStreamFromSubscription(syncID, streamID)
 				req.AddingFailureHandler(status)
 			}
 

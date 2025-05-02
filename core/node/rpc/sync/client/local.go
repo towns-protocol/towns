@@ -16,8 +16,8 @@ import (
 )
 
 type localSyncer struct {
-	// syncStreamCtx is the global server context
-	syncStreamCtx context.Context
+	// ctx is the global server context
+	ctx context.Context
 
 	streamCache *StreamCache
 	messages    *dynmsgbuf.DynamicBuffer[*SyncStreamsResponse]
@@ -38,7 +38,7 @@ func newLocalSyncer(
 	otelTracer trace.Tracer,
 ) *localSyncer {
 	return &localSyncer{
-		syncStreamCtx: ctx,
+		ctx:           ctx,
 		streamCache:   streamCache,
 		localAddr:     localAddr,
 		messages:      messages,
@@ -48,15 +48,14 @@ func newLocalSyncer(
 }
 
 func (s *localSyncer) Run() {
-	<-s.syncStreamCtx.Done()
+	<-s.ctx.Done()
 
 	s.activeStreamsMu.Lock()
-	defer s.activeStreamsMu.Unlock()
-
 	for streamID, syncStream := range s.activeStreams {
 		syncStream.Unsub(s)
 		delete(s.activeStreams, streamID)
 	}
+	s.activeStreamsMu.Unlock()
 }
 
 func (s *localSyncer) Address() common.Address {
@@ -158,7 +157,7 @@ func (s *localSyncer) DebugDropStream(_ context.Context, streamID StreamId) (boo
 // OnUpdate is called each time a new cookie is available for a stream
 func (s *localSyncer) sendResponse(msg *SyncStreamsResponse) {
 	select {
-	case <-s.syncStreamCtx.Done():
+	case <-s.ctx.Done():
 		return
 	default:
 		if err := s.messages.AddMessage(msg); err != nil {
@@ -166,7 +165,7 @@ func (s *localSyncer) sendResponse(msg *SyncStreamsResponse) {
 				Tag("op", msg.GetSyncOp()).
 				Func("localSyncer.sendResponse")
 
-			_ = err.LogError(logging.FromCtx(s.syncStreamCtx))
+			_ = err.LogError(logging.FromCtx(s.ctx))
 		}
 	}
 }

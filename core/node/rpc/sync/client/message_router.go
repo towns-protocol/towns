@@ -4,6 +4,8 @@ import (
 	"context"
 	"sync"
 
+	"github.com/towns-protocol/towns/core/node/rpc/sync/dynmsgbuf"
+
 	"github.com/puzpuzpuz/xsync/v4"
 	"google.golang.org/protobuf/proto"
 
@@ -11,6 +13,31 @@ import (
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	. "github.com/towns-protocol/towns/core/node/shared"
 )
+
+type subscription struct {
+	ctx      context.Context
+	cancel   context.CancelCauseFunc
+	syncID   string
+	messages *dynmsgbuf.DynamicBuffer[*SyncStreamsResponse]
+}
+
+func newSubscription(
+	ctx context.Context,
+	cancel context.CancelCauseFunc,
+	syncID string,
+) *subscription {
+	return &subscription{
+		ctx:      ctx,
+		cancel:   cancel,
+		syncID:   syncID,
+		messages: dynmsgbuf.NewDynamicBuffer[*SyncStreamsResponse](),
+	}
+}
+
+func (s *subscription) Close(err error) {
+	s.messages.Close()
+	s.cancel(err)
+}
 
 type messageRouter struct {
 	log                 *logging.Log
@@ -50,12 +77,10 @@ func (r *messageRouter) addStreamToSubscription(syncID string, streamID StreamId
 }
 
 func (r *messageRouter) removeStreamFromSubscription(syncID string, streamID StreamId) {
-	if syncIDs, ok := r.streamSubscriptions.Load(streamID); ok {
-		syncIDs.Delete(syncID)
-		if syncIDs.Size() == 0 {
+	if subscribers, ok := r.streamSubscriptions.Load(streamID); ok {
+		subscribers.Delete(syncID)
+		if subscribers.Size() == 0 {
 			r.streamSubscriptions.Delete(streamID)
-		} else {
-			r.streamSubscriptions.Store(streamID, syncIDs)
 		}
 	}
 }
