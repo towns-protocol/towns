@@ -701,7 +701,7 @@ func update_Snapshot_Member(
 		if err != nil {
 			return AsRiverError(err, Err_NOT_FOUND).Message("Could not find creator of DisplayName member payload in stream members").
 				Func("update_Snapshot_Member").
-        Tag("contentType", "DisplayName").
+				Tag("contentType", "DisplayName").
 				Tag("eventHash", hex.EncodeToString(eventHash)).
 				Tag("eventNum", eventNum).
 				Tag("creatorAddress", hex.EncodeToString(creatorAddress)).
@@ -713,7 +713,7 @@ func update_Snapshot_Member(
 		member, err := findMember(snapshot.Joined, creatorAddress)
 		if err != nil {
 			return AsRiverError(err, Err_NOT_FOUND).Message("Could not find creator of UserName member payload in stream members").
-        Tag("contentType", "Username").
+				Tag("contentType", "Username").
 				Func("update_Snapshot_Member").
 				Tag("eventHash", hex.EncodeToString(eventHash)).
 				Tag("eventNum", eventNum).
@@ -727,8 +727,8 @@ func update_Snapshot_Member(
 		if err != nil {
 			return AsRiverError(err, Err_NOT_FOUND).Message("Could not find creator of EnsAddress member payload in stream members").
 				Func("update_Snapshot_Member").
-        Tag("contentType", "EnsAddress").
-        Tag("eventHash", hex.EncodeToString(eventHash)).
+				Tag("contentType", "EnsAddress").
+				Tag("eventHash", hex.EncodeToString(eventHash)).
 				Tag("eventNum", eventNum).
 				Tag("creatorAddress", hex.EncodeToString(creatorAddress)).
 				Tag("miniblockNum", miniblockNum)
@@ -740,8 +740,8 @@ func update_Snapshot_Member(
 		if err != nil {
 			return AsRiverError(err, Err_NOT_FOUND).Message("Could not find creator of Nft member payload in stream members").
 				Func("update_Snapshot_Member").
-        Tag("contentType", "Nft").
-        Tag("eventHash", hex.EncodeToString(eventHash)).
+				Tag("contentType", "Nft").
+				Tag("eventHash", hex.EncodeToString(eventHash)).
 				Tag("eventNum", eventNum).
 				Tag("creatorAddress", hex.EncodeToString(creatorAddress)).
 				Tag("miniblockNum", miniblockNum)
@@ -794,7 +794,7 @@ func update_Snapshot_Member(
 			sender, err := findMember(snapshot.Joined, content.MemberBlockchainTransaction.FromUserAddress)
 			if err != nil {
 				return AsRiverError(err, Err_NOT_FOUND).Message("Could not find FromUserAddress of member blockchain transaction payload in stream members").
-          Func("update_Snapshot_Member").
+					Func("update_Snapshot_Member").
 					Tag("party", "sender").
 					Tag("contentType", "MemberBlockchainTransaction").
 					Tag("eventHash", hex.EncodeToString(eventHash)).
