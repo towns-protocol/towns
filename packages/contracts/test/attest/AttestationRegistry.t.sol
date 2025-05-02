@@ -94,7 +94,7 @@ contract AttestationRegistryTest is TestUtils {
 
     function test_revertWhen_invalidSchemaResolver(string memory testSchema) external {
         vm.assume(bytes(testSchema).length > 0);
-        MockPlugin plugin = new MockPlugin();
+        MockPlugin plugin = new MockPlugin(_randomAddress());
         vm.prank(deployer);
         vm.expectRevert(SchemaLib.InvalidSchemaResolver.selector);
         schemaRegistry.register({
@@ -133,7 +133,7 @@ contract AttestationRegistryTest is TestUtils {
         );
 
         // Deploy a mock plugin that we'll attest to
-        MockPlugin plugin = new MockPlugin();
+        MockPlugin plugin = new MockPlugin(_randomAddress());
 
         // Encode the attestation data according to the schema
         bytes memory encodedData = abi.encode(
@@ -258,7 +258,7 @@ contract AttestationRegistryTest is TestUtils {
     /*                           Revoke                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
     function test_revoke() external {
-        MockPlugin plugin = new MockPlugin();
+        MockPlugin plugin = new MockPlugin(_randomAddress());
         (bytes32 schemaId, bytes32 attestationId) = registerApp(plugin, true);
 
         RevocationRequestData memory data = RevocationRequestData({uid: attestationId, value: 0});
@@ -289,7 +289,7 @@ contract AttestationRegistryTest is TestUtils {
     }
 
     function test_revertWhen_revokeInvalidAttestation() external {
-        MockPlugin plugin = new MockPlugin();
+        MockPlugin plugin = new MockPlugin(_randomAddress());
         (bytes32 schemaId, ) = registerApp(plugin, true);
 
         RevocationRequestData memory data = RevocationRequestData({
@@ -305,7 +305,7 @@ contract AttestationRegistryTest is TestUtils {
     }
 
     function test_revertWhen_revokeInvalidAttestationSchema() external {
-        MockPlugin plugin = new MockPlugin();
+        MockPlugin plugin = new MockPlugin(_randomAddress());
         (, bytes32 attestationId) = registerApp(plugin, true);
         bytes32 invalidSchemaId = registerSchema("test", address(0), false);
 
@@ -319,7 +319,7 @@ contract AttestationRegistryTest is TestUtils {
     }
 
     function test_revertWhen_revokeInvalidRevoker() external {
-        MockPlugin plugin = new MockPlugin();
+        MockPlugin plugin = new MockPlugin(_randomAddress());
         (bytes32 schemaId, bytes32 attestationId) = registerApp(plugin, true);
 
         RevocationRequestData memory data = RevocationRequestData({uid: attestationId, value: 0});
@@ -332,7 +332,7 @@ contract AttestationRegistryTest is TestUtils {
     }
 
     function test_revertWhen_revokeIrrevocable() external {
-        MockPlugin plugin = new MockPlugin();
+        MockPlugin plugin = new MockPlugin(_randomAddress());
         (bytes32 schemaId, bytes32 attestationId) = registerApp(plugin, false);
 
         RevocationRequestData memory data = RevocationRequestData({uid: attestationId, value: 0});
@@ -345,7 +345,7 @@ contract AttestationRegistryTest is TestUtils {
     }
 
     function test_revertWhen_revokeAlreadyRevoked() external {
-        MockPlugin plugin = new MockPlugin();
+        MockPlugin plugin = new MockPlugin(_randomAddress());
         (bytes32 schemaId, bytes32 attestationId) = registerApp(plugin, true);
 
         RevocationRequestData memory data = RevocationRequestData({uid: attestationId, value: 0});

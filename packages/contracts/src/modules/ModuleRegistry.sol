@@ -16,8 +16,9 @@ import {Attestation} from "@ethereum-attestation-service/eas-contracts/Common.so
 // contracts
 import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
 import {OwnableBase} from "@towns-protocol/diamond/src/facets/ownable/OwnableBase.sol";
+import {ReentrancyGuard} from "@towns-protocol/diamond/src/facets/reentrancy/ReentrancyGuard.sol";
 
-contract ModuleRegistry is IModuleRegistry, OwnableBase, Facet {
+contract ModuleRegistry is IModuleRegistry, OwnableBase, ReentrancyGuard, Facet {
     using ModuleRegistryLib for ModuleRegistryLib.Layout;
 
     function __ModuleRegistry_init(
@@ -69,15 +70,13 @@ contract ModuleRegistry is IModuleRegistry, OwnableBase, Facet {
 
     /// @notice Register a new module with permissions
     /// @param module The module address to register
-    /// @param owner The owner address that can update/revoke the module
     /// @param clients The list of client addresses that will make calls from this module
     /// @return versionId The version ID of the registered module
     function registerModule(
         address module,
-        address owner,
         address[] calldata clients
-    ) external payable returns (bytes32 versionId) {
-        return ModuleRegistryLib.addModule(module, owner, clients);
+    ) external payable nonReentrant returns (bytes32 versionId) {
+        return ModuleRegistryLib.addModule(module, clients);
     }
 
     /// @notice Update the permissions for an existing module

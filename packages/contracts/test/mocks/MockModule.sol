@@ -4,9 +4,13 @@ pragma solidity ^0.8.23;
 import {ExecutionManifest, IERC6900ExecutionModule, ManifestExecutionFunction, ManifestExecutionHook} from "@erc6900/reference-implementation/interfaces/IERC6900ExecutionModule.sol";
 import {IERC6900Module} from "@erc6900/reference-implementation/interfaces/IERC6900Module.sol";
 import {ITownsApp} from "src/modules/interfaces/ITownsApp.sol";
-import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import {IERC173} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
 
-contract MockModule is UUPSUpgradeable, ITownsApp {
+// contracts
+import {UUPSUpgradeable} from "solady/utils/UUPSUpgradeable.sol";
+import {OwnableFacet} from "@towns-protocol/diamond/src/facets/ownable/OwnableFacet.sol";
+
+contract MockModule is UUPSUpgradeable, OwnableFacet, ITownsApp {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           EVENTS                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -24,6 +28,7 @@ contract MockModule is UUPSUpgradeable, ITownsApp {
     bool public shouldFailManifest;
 
     function initialize(bool _shouldFailInstall, bool _shouldFailManifest) external initializer {
+        __Ownable_init_unchained(msg.sender);
         shouldFailInstall = _shouldFailInstall;
         shouldFailManifest = _shouldFailManifest;
     }
@@ -127,7 +132,8 @@ contract MockModule is UUPSUpgradeable, ITownsApp {
         return
             interfaceId == type(IERC6900ExecutionModule).interfaceId ||
             interfaceId == type(IERC6900Module).interfaceId ||
-            interfaceId == type(ITownsApp).interfaceId;
+            interfaceId == type(ITownsApp).interfaceId ||
+            interfaceId == type(IERC173).interfaceId;
     }
 
     function _authorizeUpgrade(address newImplementation) internal override {}

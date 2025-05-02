@@ -7,6 +7,7 @@ import {IERC6900Module} from "@erc6900/reference-implementation/interfaces/IERC6
 
 import {IERC165} from "@openzeppelin/contracts/interfaces/IERC165.sol";
 import {ITownsApp} from "src/modules/interfaces/ITownsApp.sol";
+import {IERC173} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
 
 // libraries
 import {CustomRevert} from "../../utils/libraries/CustomRevert.sol";
@@ -15,7 +16,6 @@ import {VerificationLib} from "./VerificationLib.sol";
 import {EnumerableSetLib} from "solady/utils/EnumerableSetLib.sol";
 
 // types
-
 import {ExecutionManifest} from "@erc6900/reference-implementation/interfaces/IERC6900ExecutionModule.sol";
 import {Attestation, EMPTY_UID} from "@ethereum-attestation-service/eas-contracts/Common.sol";
 import {AttestationRequest, RevocationRequestData} from "@ethereum-attestation-service/eas-contracts/IEAS.sol";
@@ -132,20 +132,21 @@ library ModuleRegistryLib {
 
     /// @notice Registers a new module in the registry
     /// @param module The address of the module to register
-    /// @param owner The address of the module owner
     /// @param clients Array of client addresses that can use the module
     /// @return version The version ID of the registered module
     /// @dev Reverts if module is banned, inputs are invalid, or caller is not the owner
     function addModule(
         address module,
-        address owner,
         address[] calldata clients
     ) internal returns (bytes32 version) {
-        _verifyAddModuleInputs(module, owner, clients);
+        _verifyAddModuleInputs(module, clients);
 
         ModuleInfo storage moduleInfo = getLayout().modules[module];
 
         if (moduleInfo.isBanned) BannedModule.selector.revertWith();
+
+        address owner = ITownsApp(module).owner();
+        if (msg.sender != owner) NotModuleOwner.selector.revertWith();
 
         bytes32[] memory permissions = ITownsApp(module).requiredPermissions();
         ExecutionManifest memory manifest = ITownsApp(module).executionManifest();
@@ -280,18 +281,11 @@ library ModuleRegistryLib {
 
     /// @notice Verifies inputs for adding a new module
     /// @param module The module address to verify
-    /// @param owner The owner address to verify
     /// @param clients Array of client addresses to verify
     /// @dev Reverts if any input is invalid or module doesn't implement required interfaces
-    function _verifyAddModuleInputs(
-        address module,
-        address owner,
-        address[] memory clients
-    ) internal view {
+    function _verifyAddModuleInputs(address module, address[] memory clients) internal view {
         if (module == address(0)) InvalidAddressInput.selector.revertWith();
-        if (owner == address(0)) InvalidAddressInput.selector.revertWith();
         if (clients.length == 0) InvalidArrayInput.selector.revertWith();
-        if (msg.sender != owner) NotModuleOwner.selector.revertWith();
 
         for (uint256 i = 0; i < clients.length; i++) {
             if (clients[i] == address(0)) InvalidAddressInput.selector.revertWith();
@@ -300,7 +294,8 @@ library ModuleRegistryLib {
         if (
             !IERC165(module).supportsInterface(type(IERC6900Module).interfaceId) ||
             !IERC165(module).supportsInterface(type(IERC6900ExecutionModule).interfaceId) ||
-            !IERC165(module).supportsInterface(type(ITownsApp).interfaceId)
+            !IERC165(module).supportsInterface(type(ITownsApp).interfaceId) ||
+            !IERC165(module).supportsInterface(type(IERC173).interfaceId)
         ) {
             ModuleDoesNotImplementInterface.selector.revertWith();
         }

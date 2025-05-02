@@ -8,15 +8,21 @@ import {IERC6900Module} from "@erc6900/reference-implementation/interfaces/IERC6
 
 import {IERC165} from "@openzeppelin/contracts/interfaces/IERC165.sol";
 import {ITownsApp} from "src/modules/interfaces/ITownsApp.sol";
+import {IERC173} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
 
 // types
 import {ExecutionManifest} from "@erc6900/reference-implementation/interfaces/IERC6900ExecutionModule.sol";
 
 // contracts
+import {OwnableFacet} from "@towns-protocol/diamond/src/facets/ownable/OwnableFacet.sol";
 
-contract MockPlugin is ITownsApp {
+contract MockPlugin is OwnableFacet, ITownsApp {
     address public installedBy;
     bytes public initData;
+
+    constructor(address owner) {
+        __Ownable_init_unchained(owner);
+    }
 
     function executionManifest()
         external
@@ -38,7 +44,8 @@ contract MockPlugin is ITownsApp {
             interfaceId == type(IERC6900Module).interfaceId ||
             interfaceId == type(IERC6900ExecutionModule).interfaceId ||
             interfaceId == type(ITownsApp).interfaceId ||
-            interfaceId == type(IERC165).interfaceId;
+            interfaceId == type(IERC165).interfaceId ||
+            interfaceId == type(IERC173).interfaceId;
     }
 
     function onInstall(bytes calldata data) external override {

@@ -49,11 +49,20 @@ contract ModularAccountTest is BaseSetup, IOwnableBase, IAccountBase {
         modularAccount = ModularAccount(everyoneSpace);
         moduleRegistry = ModuleRegistry(appRegistry);
 
-        MockModule mockModuleV1 = new MockModule();
-        mockModule = MockModule(address(new ERC1967Proxy(address(mockModuleV1), "")));
-
         dev = _randomAddress();
         client = _randomAddress();
+
+        MockModule mockModuleV1 = new MockModule();
+
+        vm.prank(dev);
+        mockModule = MockModule(
+            address(
+                new ERC1967Proxy(
+                    address(mockModuleV1),
+                    abi.encodeWithSelector(MockModule.initialize.selector, false, false)
+                )
+            )
+        );
     }
 
     modifier givenModuleIsRegistered() {
@@ -61,7 +70,7 @@ contract ModularAccountTest is BaseSetup, IOwnableBase, IAccountBase {
         clients[0] = client;
 
         vm.prank(dev);
-        versionId = moduleRegistry.registerModule(address(mockModule), dev, clients);
+        versionId = moduleRegistry.registerModule(address(mockModule), clients);
         _;
     }
 
@@ -71,7 +80,7 @@ contract ModularAccountTest is BaseSetup, IOwnableBase, IAccountBase {
         clients[0] = client;
 
         vm.prank(dev);
-        versionId = moduleRegistry.registerModule(address(mockModule), dev, clients);
+        versionId = moduleRegistry.registerModule(address(mockModule), clients);
 
         ExecutionManifest memory manifest = mockModule.executionManifest();
 
@@ -175,13 +184,14 @@ contract ModularAccountTest is BaseSetup, IOwnableBase, IAccountBase {
     }
 
     function test_revertWhen_installModule_invalidSelector() external {
+        vm.prank(dev);
         MockInvalidModule invalidModule = new MockInvalidModule();
 
         address[] memory clients = new address[](1);
         clients[0] = client;
 
         vm.prank(dev);
-        versionId = moduleRegistry.registerModule(address(invalidModule), dev, clients);
+        versionId = moduleRegistry.registerModule(address(invalidModule), clients);
 
         vm.prank(founder);
         vm.expectRevert(ModularAccountLib.UnauthorizedSelector.selector);
@@ -254,13 +264,14 @@ contract ModularAccountTest is BaseSetup, IOwnableBase, IAccountBase {
     /*                       Savings Module                       */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
     function test_savingsModule() external givenModuleIsInstalled {
+        vm.prank(dev);
         MockSavingsModule savingsModule = new MockSavingsModule();
 
         address[] memory clients = new address[](1);
         clients[0] = client;
 
         vm.prank(dev);
-        versionId = moduleRegistry.registerModule(address(savingsModule), dev, clients);
+        versionId = moduleRegistry.registerModule(address(savingsModule), clients);
 
         uint256 maxEtherValue = 1 ether;
         address savingsModuleAddress = address(savingsModule);

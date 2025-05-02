@@ -5,13 +5,17 @@ pragma solidity ^0.8.23;
 import {ExecutionManifest, IERC6900ExecutionModule, ManifestExecutionFunction, ManifestExecutionHook} from "@erc6900/reference-implementation/interfaces/IERC6900ExecutionModule.sol";
 import {IERC6900Module} from "@erc6900/reference-implementation/interfaces/IERC6900Module.sol";
 import {ITownsApp} from "src/modules/interfaces/ITownsApp.sol";
+import {IERC173} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
+
+// contracts
+import {OwnableFacet} from "@towns-protocol/diamond/src/facets/ownable/OwnableFacet.sol";
 
 /**
  * @title SavingsModule
  * @notice A module that manages savings for a ModularAccount space
  * @dev Implements ERC6900 module interface for integration with ModularAccount
  */
-contract MockSavingsModule is ITownsApp {
+contract MockSavingsModule is OwnableFacet, ITownsApp {
     // Events
     event Deposited(address indexed account, uint256 amount);
     event Withdrawn(address indexed account, uint256 amount);
@@ -26,6 +30,10 @@ contract MockSavingsModule is ITownsApp {
     uint256 public constant INTEREST_RATE = 500; // 5% annual rate (in basis points)
     uint256 public constant BASIS_POINTS = 10000;
 
+    constructor() {
+        __Ownable_init_unchained(msg.sender);
+    }
+
     function moduleId() external pure returns (string memory) {
         return "towns.savings.account.module";
     }
@@ -34,7 +42,8 @@ contract MockSavingsModule is ITownsApp {
         return
             interfaceId == type(IERC6900ExecutionModule).interfaceId ||
             interfaceId == type(IERC6900Module).interfaceId ||
-            interfaceId == type(ITownsApp).interfaceId;
+            interfaceId == type(ITownsApp).interfaceId ||
+            interfaceId == type(IERC173).interfaceId;
     }
 
     /**

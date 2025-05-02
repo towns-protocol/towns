@@ -44,14 +44,16 @@ contract ModuleRegistryTest is BaseSetup {
     // ==================== MODULE REGISTRATION TESTS ====================
 
     function test_registerModule() external {
-        address module = address(new MockPlugin());
         address owner = _randomAddress();
+
+        vm.prank(owner);
+        address module = address(new MockPlugin(owner));
 
         address[] memory clients = new address[](1);
         clients[0] = _randomAddress();
 
         vm.prank(owner);
-        bytes32 uid = moduleRegistry.registerModule(module, owner, clients);
+        bytes32 uid = moduleRegistry.registerModule(module, clients);
         assertEq(uid, moduleRegistry.getLatestModuleId(module));
     }
 
@@ -62,44 +64,37 @@ contract ModuleRegistryTest is BaseSetup {
         clients[0] = _randomAddress();
 
         // Module address cannot be zero
+        vm.prank(owner);
         vm.expectRevert(ModuleRegistryLib.InvalidAddressInput.selector);
-        moduleRegistry.registerModule(address(0), owner, clients);
-    }
-
-    function test_revertWhen_registerModule_EmptyOwner() external {
-        address module = address(new MockPlugin());
-
-        address[] memory clients = new address[](1);
-        clients[0] = _randomAddress();
-
-        // Owner address cannot be zero
-        vm.expectRevert(ModuleRegistryLib.InvalidAddressInput.selector);
-        moduleRegistry.registerModule(module, address(0), clients);
+        moduleRegistry.registerModule(address(0), clients);
     }
 
     function test_revertWhen_registerModule_EmptyClients() external {
-        address module = address(new MockPlugin());
         address owner = _randomAddress();
+        address module = address(new MockPlugin(owner));
 
         address[] memory clients = new address[](0);
 
         // Client list cannot be empty
+        vm.prank(owner);
         vm.expectRevert(ModuleRegistryLib.InvalidArrayInput.selector);
-        moduleRegistry.registerModule(module, owner, clients);
+        moduleRegistry.registerModule(module, clients);
     }
 
     // ==================== MODULE INFORMATION TESTS ====================
 
     function test_getModuleClients() external {
-        address module = address(new MockPlugin());
         address owner = _randomAddress();
+
+        vm.prank(owner);
+        address module = address(new MockPlugin(owner));
 
         address[] memory clients = new address[](2);
         clients[0] = _randomAddress();
         clients[1] = _randomAddress();
 
         vm.prank(owner);
-        bytes32 moduleId = moduleRegistry.registerModule(module, owner, clients);
+        bytes32 moduleId = moduleRegistry.registerModule(module, clients);
 
         Attestation memory att = moduleRegistry.getModuleById(moduleId);
         (, , address[] memory retrievedClients, , ) = abi.decode(
@@ -114,14 +109,14 @@ contract ModuleRegistryTest is BaseSetup {
     // ==================== MODULE PERMISSIONS TESTS ====================
 
     function test_updateModulePermissions() external {
-        address module = address(new MockPlugin());
         address owner = _randomAddress();
+        address module = address(new MockPlugin(owner));
 
         address[] memory clients = new address[](1);
         clients[0] = _randomAddress();
 
         vm.prank(owner);
-        bytes32 moduleId = moduleRegistry.registerModule(module, owner, clients);
+        bytes32 moduleId = moduleRegistry.registerModule(module, clients);
 
         bytes32[] memory newPermissions = new bytes32[](2);
         newPermissions[0] = keccak256("Read");
@@ -135,15 +130,15 @@ contract ModuleRegistryTest is BaseSetup {
     }
 
     function test_updateModulePermissions_onlyOwner() external {
-        address module = address(new MockPlugin());
         address owner = _randomAddress();
+        address module = address(new MockPlugin(owner));
         address notOwner = _randomAddress();
 
         address[] memory clients = new address[](1);
         clients[0] = _randomAddress();
 
         vm.prank(owner);
-        bytes32 moduleId = moduleRegistry.registerModule(module, owner, clients);
+        bytes32 moduleId = moduleRegistry.registerModule(module, clients);
 
         bytes32[] memory newPermissions = new bytes32[](2);
         newPermissions[0] = keccak256("Read");
@@ -169,14 +164,16 @@ contract ModuleRegistryTest is BaseSetup {
     // ==================== MODULE REVOCATION TESTS ====================
 
     function test_removeModule() external {
-        address module = address(new MockPlugin());
         address owner = _randomAddress();
+
+        vm.prank(owner);
+        address module = address(new MockPlugin(owner));
 
         address[] memory clients = new address[](1);
         clients[0] = _randomAddress();
 
         vm.prank(owner);
-        bytes32 moduleId = moduleRegistry.registerModule(module, owner, clients);
+        bytes32 moduleId = moduleRegistry.registerModule(module, clients);
 
         vm.prank(owner);
         bytes32 revokedUid = moduleRegistry.removeModule(moduleId);
@@ -186,15 +183,17 @@ contract ModuleRegistryTest is BaseSetup {
     }
 
     function test_removeModule_onlyOwner() external {
-        address module = address(new MockPlugin());
         address owner = _randomAddress();
+
+        vm.prank(owner);
+        address module = address(new MockPlugin(owner));
         address notOwner = _randomAddress();
 
         address[] memory clients = new address[](1);
         clients[0] = _randomAddress();
 
         vm.prank(owner);
-        bytes32 moduleId = moduleRegistry.registerModule(module, owner, clients);
+        bytes32 moduleId = moduleRegistry.registerModule(module, clients);
 
         vm.prank(notOwner);
         vm.expectRevert(AttestationLib.InvalidRevoker.selector);
@@ -223,24 +222,17 @@ contract ModuleRegistryTest is BaseSetup {
         assertEq(moduleRegistry.getModuleSchemaId(), newSchemaId);
     }
 
-    // function test_adminRegisterModuleSchema_onlyOwner() external {
-    //     address notOwner = _randomAddress();
-    //     bytes32 fakeSchemaId = bytes32(uint256(1));
-
-    //     vm.prank(notOwner);
-    //     vm.expectRevert(abi.encodeWithSelector(IOwnableBase.Ownable__NotOwner.selector, notOwner));
-    //     moduleRegistry.adminRegisterModuleSchema(fakeSchemaId);
-    // }
-
     function test_adminBanModule() external {
-        address module = address(new MockPlugin());
         address owner = _randomAddress();
+
+        vm.prank(owner);
+        address module = address(new MockPlugin(owner));
 
         address[] memory clients = new address[](1);
         clients[0] = _randomAddress();
 
         vm.prank(owner);
-        bytes32 moduleId = moduleRegistry.registerModule(module, owner, clients);
+        bytes32 moduleId = moduleRegistry.registerModule(module, clients);
 
         vm.prank(deployer);
         bytes32 bannedUid = moduleRegistry.adminBanModule(module);
@@ -250,8 +242,8 @@ contract ModuleRegistryTest is BaseSetup {
     }
 
     function test_adminBanModule_onlyOwner() external {
-        address module = address(new MockPlugin());
         address notOwner = _randomAddress();
+        address module = address(new MockPlugin(_randomAddress()));
 
         vm.prank(notOwner);
         vm.expectRevert(abi.encodeWithSelector(IOwnableBase.Ownable__NotOwner.selector, notOwner));
@@ -259,7 +251,7 @@ contract ModuleRegistryTest is BaseSetup {
     }
 
     function test_revertWhen_adminBanModule_ModuleNotRegistered() external {
-        address module = address(new MockPlugin());
+        address module = address(new MockPlugin(_randomAddress()));
 
         // Even the admin cannot ban a module that doesn't exist
         vm.prank(deployer);

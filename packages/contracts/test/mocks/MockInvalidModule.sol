@@ -8,8 +8,16 @@ import {IDiamond} from "@towns-protocol/diamond/src/Diamond.sol";
 import {ExecutionManifest, IERC6900ExecutionModule, ManifestExecutionFunction, ManifestExecutionHook} from "@erc6900/reference-implementation/interfaces/IERC6900ExecutionModule.sol";
 import {IERC6900Module} from "@erc6900/reference-implementation/interfaces/IERC6900Module.sol";
 import {ITownsApp} from "src/modules/interfaces/ITownsApp.sol";
+import {IERC173} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
 
-contract MockInvalidModule is ITownsApp {
+// contracts
+import {OwnableFacet} from "@towns-protocol/diamond/src/facets/ownable/OwnableFacet.sol";
+
+contract MockInvalidModule is OwnableFacet, ITownsApp {
+    constructor() {
+        __Ownable_init_unchained(msg.sender);
+    }
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                      MODULE METADATA                       */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -73,6 +81,7 @@ contract MockInvalidModule is ITownsApp {
         return
             interfaceId == type(IERC6900ExecutionModule).interfaceId ||
             interfaceId == type(IERC6900Module).interfaceId ||
-            interfaceId == type(ITownsApp).interfaceId;
+            interfaceId == type(ITownsApp).interfaceId ||
+            interfaceId == type(IERC173).interfaceId;
     }
 }

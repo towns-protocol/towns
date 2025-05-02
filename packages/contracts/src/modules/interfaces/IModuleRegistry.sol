@@ -37,12 +37,10 @@ interface IModuleRegistry {
 
     /// @notice Register a new module with permissions
     /// @param module The module address to register
-    /// @param owner The owner address that can update/revoke the module
     /// @param clients The list of client contract addresses that will use this module
     /// @return moduleId The attestation UID of the registered module
     function registerModule(
         address module,
-        address owner,
         address[] calldata clients
     ) external payable returns (bytes32 moduleId);
 
