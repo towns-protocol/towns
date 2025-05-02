@@ -56,6 +56,8 @@ type (
 		syncerTasks sync.WaitGroup
 		// stopped holds an indication if the sync operation is stopped
 		stopped uint32
+		// muSyncers is used to synchronize access to the syncers map
+		muSyncers sync.Mutex
 		// syncers is the existing set of syncers, indexed by the syncer node address
 		syncers *xsync.Map[common.Address, StreamsSyncer]
 		// streamID2Syncer maps from a stream to its syncer
@@ -115,8 +117,6 @@ func (ss *SyncerSet) NewSubscription(
 	ss.router.registerSubscription(syncID, sub)
 	return sub.messages
 }
-
-// TODO: Ignore node address and minipool gen in cookie
 
 // Modify splits the given request into add and remove operations and forwards them to the responsible syncers.
 func (ss *SyncerSet) Modify(ctx context.Context, syncID string, req ModifyRequest) error {
@@ -185,6 +185,9 @@ func (ss *SyncerSet) Modify(ctx context.Context, syncID string, req ModifyReques
 
 // modify splits the given request into add and remove operations and forwards them to the responsible syncers.
 func (ss *SyncerSet) modify(ctx context.Context, syncID string, req ModifyRequest) error {
+	ss.muSyncers.Lock()
+	defer ss.muSyncers.Unlock()
+
 	if len(req.ToAdd) > 0 && atomic.LoadUint32(&ss.stopped) == 1 {
 		return RiverError(Err_CANCELED, "Sync operation stopped", "syncId", syncID)
 	}
