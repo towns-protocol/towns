@@ -35,7 +35,7 @@ contract MockPlugin is OwnableFacet, ITownsApp {
 
     function requiredPermissions() external pure returns (bytes32[] memory) {
         bytes32[] memory permissions = new bytes32[](1);
-        permissions[0] = keccak256("Read");
+        permissions[0] = bytes32("Read");
         return permissions;
     }
 

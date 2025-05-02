@@ -146,6 +146,7 @@ library ExecutorLib {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     function createGroup(bytes32 groupId, address module) internal {
+        if (module == address(0)) revert NullModule();
         Group storage group = getLayout().groups[groupId];
         group.module = module;
         group.active = true;

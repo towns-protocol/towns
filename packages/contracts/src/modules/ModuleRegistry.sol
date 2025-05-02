@@ -16,15 +16,15 @@ import {Attestation} from "@ethereum-attestation-service/eas-contracts/Common.so
 // contracts
 import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
 import {OwnableBase} from "@towns-protocol/diamond/src/facets/ownable/OwnableBase.sol";
-import {ReentrancyGuard} from "@towns-protocol/diamond/src/facets/reentrancy/ReentrancyGuard.sol";
+import {ReentrancyGuardTransient} from "solady/utils/ReentrancyGuardTransient.sol";
 
-contract ModuleRegistry is IModuleRegistry, OwnableBase, ReentrancyGuard, Facet {
+contract ModuleRegistry is IModuleRegistry, OwnableBase, ReentrancyGuardTransient, Facet {
     using ModuleRegistryLib for ModuleRegistryLib.Layout;
 
     function __ModuleRegistry_init(
         string calldata schema,
         ISchemaResolver resolver
-    ) external initializer {
+    ) external onlyInitializing {
         bytes32 schemaId = SchemaLib.registerSchema(schema, resolver, true);
         ModuleRegistryLib.setSchema(schemaId);
     }
@@ -83,7 +83,7 @@ contract ModuleRegistry is IModuleRegistry, OwnableBase, ReentrancyGuard, Facet 
     /// @param versionId The module ID to remove
     /// @dev Only the owner of the module can remove it
     /// @return The version ID that was removed
-    function removeModule(bytes32 versionId) external returns (bytes32) {
+    function removeModule(bytes32 versionId) external nonReentrant returns (bytes32) {
         (, bytes32 version) = ModuleRegistryLib.removeModule(msg.sender, versionId);
         return version;
     }
