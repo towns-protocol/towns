@@ -643,35 +643,35 @@ func update_Snapshot_Member(
 	case *MemberPayload_KeyFulfillment_:
 		member, err := findMember(snapshot.Joined, content.KeyFulfillment.UserAddress)
 		if err != nil {
-			return err
+			return AsRiverError(err).Tag("contentType", "KeySolicitation")
 		}
 		applyKeyFulfillment(member, content.KeyFulfillment)
 		return nil
 	case *MemberPayload_DisplayName:
 		member, err := findMember(snapshot.Joined, creatorAddress)
 		if err != nil {
-			return err
+			return AsRiverError(err).Tag("contentType", "DisplayName")
 		}
 		member.DisplayName = &WrappedEncryptedData{Data: content.DisplayName, EventNum: eventNum, EventHash: eventHash}
 		return nil
 	case *MemberPayload_Username:
 		member, err := findMember(snapshot.Joined, creatorAddress)
 		if err != nil {
-			return err
+			return AsRiverError(err).Tag("contentType", "Username")
 		}
 		member.Username = &WrappedEncryptedData{Data: content.Username, EventNum: eventNum, EventHash: eventHash}
 		return nil
 	case *MemberPayload_EnsAddress:
 		member, err := findMember(snapshot.Joined, creatorAddress)
 		if err != nil {
-			return err
+			return AsRiverError(err).Tag("contentType", "EnsAddress")
 		}
 		member.EnsAddress = content.EnsAddress
 		return nil
 	case *MemberPayload_Nft_:
 		member, err := findMember(snapshot.Joined, creatorAddress)
 		if err != nil {
-			return err
+			return AsRiverError(err).Tag("contentType", "Nft")
 		}
 		member.Nft = content.Nft
 		return nil
@@ -720,7 +720,9 @@ func update_Snapshot_Member(
 
 			sender, err := findMember(snapshot.Joined, content.MemberBlockchainTransaction.FromUserAddress)
 			if err != nil {
-				return err
+				return AsRiverError(err).
+					Tag("party", "sender").
+					Tag("contentType", "MemberBlockchainTransaction")
 			}
 			if sender.TipsSent == nil {
 				sender.TipsSent = make(map[string]uint64)
@@ -739,7 +741,9 @@ func update_Snapshot_Member(
 
 			receiver, err := findMember(snapshot.Joined, transactionContent.Tip.ToUserAddress)
 			if err != nil {
-				return err
+				return AsRiverError(err).
+					Tag("party", "receiver").
+					Tag("contentType", "MemberBlockchainTransaction")
 			}
 			if receiver.TipsReceived == nil {
 				receiver.TipsReceived = make(map[string]uint64)
@@ -830,7 +834,7 @@ func removeSorted[T any, K any](elements []*T, key K, cmp func(K, K) int, keyFn 
 }
 
 func findChannel(channels []*SpacePayload_ChannelMetadata, channelId []byte) (*SpacePayload_ChannelMetadata, error) {
-	return findSorted(
+	md, err := findSorted(
 		channels,
 		channelId,
 		bytes.Compare,
@@ -838,6 +842,10 @@ func findChannel(channels []*SpacePayload_ChannelMetadata, channelId []byte) (*S
 			return channel.ChannelId
 		},
 	)
+	if err != nil {
+		return nil, AsRiverError(err).Func("findChannel")
+	}
+	return md, nil
 }
 
 func insertChannel(
@@ -861,7 +869,7 @@ func findMember(
 	members []*MemberPayload_Snapshot_Member,
 	memberAddress []byte,
 ) (*MemberPayload_Snapshot_Member, error) {
-	return findSorted(
+	md, err := findSorted(
 		members,
 		memberAddress,
 		bytes.Compare,
@@ -869,6 +877,10 @@ func findMember(
 			return member.UserAddress
 		},
 	)
+	if err != nil {
+		return nil, AsRiverError(err).Func("findMember")
+	}
+	return md, nil
 }
 
 func removeMember(members []*MemberPayload_Snapshot_Member, memberAddress []byte) []*MemberPayload_Snapshot_Member {
@@ -903,7 +915,7 @@ func findUserMembership(
 	memberships []*UserPayload_UserMembership,
 	streamId []byte,
 ) (*UserPayload_UserMembership, error) {
-	return findSorted(
+	md, err := findSorted(
 		memberships,
 		streamId,
 		bytes.Compare,
@@ -911,6 +923,10 @@ func findUserMembership(
 			return membership.StreamId
 		},
 	)
+	if err != nil {
+		return nil, AsRiverError(err).Func("findUserMembership")
+	}
+	return md, nil
 }
 
 func insertUserMembership(

@@ -343,7 +343,7 @@ export const loggingInterceptor: (transportId: number, serviceName?: string) => 
                 logCalls(name, 'SHUTDOWN', id)
                 updateHistogram(`${name} SHUTDOWN`)
             } else {
-                const stack = err instanceof Error && 'stack' in err ? err.stack ?? '' : ''
+                const stack = err instanceof Error && 'stack' in err ? (err.stack ?? '') : ''
                 logError(name, 'ERROR STREAMING RESPONSE', id, err, stack)
                 updateHistogram(`${name} RECV`, undefined, true)
             }

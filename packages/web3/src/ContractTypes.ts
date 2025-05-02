@@ -12,12 +12,7 @@ import { IPricingModulesBase } from './v3/IPricingShim'
 import { RuleEntitlementV2Shim } from './v3/RuleEntitlementV2Shim'
 import { NoopRuleData } from './entitlement'
 
-import {
-    CreateSpaceParams,
-    CreateLegacySpaceParams,
-    UpdateChannelParams,
-    UpdateChannelAccessParams,
-} from './ISpaceDapp'
+import { ethers } from 'ethers'
 
 export const Permission = {
     /** No permission required. */
@@ -230,3 +225,81 @@ export type MembershipInfo = Pick<
 export type TotalSupplyInfo = Pick<TotalSupplyOutputStruct, 'totalSupply'>
 
 export type Address = `0x${string}`
+
+export type SignerType = ethers.Signer
+
+export interface CreateLegacySpaceParams {
+    spaceName: string
+    uri: string
+    channelName: string
+    membership: LegacyMembershipStruct
+    shortDescription?: string
+    longDescription?: string
+}
+
+export interface CreateSpaceParams {
+    spaceName: string
+    uri: string
+    channelName: string
+    membership: MembershipStruct
+    shortDescription?: string
+    longDescription?: string
+    prepaySupply?: number
+}
+
+export interface UpdateChannelMetadataParams {
+    spaceId: string
+    channelId: string
+    channelName: string
+    channelDescription: string
+    roleIds: number[]
+    disabled?: boolean
+}
+
+export interface UpdateChannelAccessParams {
+    spaceId: string
+    channelId: string
+    disabled: boolean
+}
+
+export type UpdateChannelParams = UpdateChannelMetadataParams | UpdateChannelAccessParams
+
+export interface RemoveChannelParams {
+    spaceId: string
+    channelId: string
+}
+
+export interface LegacyUpdateRoleParams {
+    spaceNetworkId: string
+    roleId: number
+    roleName: string
+    permissions: Permission[]
+    users: string[]
+    ruleData: IRuleEntitlementBase.RuleDataStruct
+}
+
+export interface UpdateRoleParams {
+    spaceNetworkId: string
+    roleId: number
+    roleName: string
+    permissions: Permission[]
+    users: string[]
+    ruleData: IRuleEntitlementV2Base.RuleDataV2Struct
+}
+
+export interface SetChannelPermissionOverridesParams {
+    spaceNetworkId: string
+    channelId: string
+    roleId: number
+    permissions: Permission[]
+}
+
+export interface ClearChannelPermissionOverridesParams {
+    spaceNetworkId: string
+    channelId: string
+    roleId: number
+}
+
+export interface TransactionOpts {
+    retryCount?: number
+}

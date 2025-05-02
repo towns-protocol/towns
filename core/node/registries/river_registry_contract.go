@@ -353,6 +353,21 @@ func (c *RiverRegistryContract) GetStreamCount(ctx context.Context, blockNum cry
 	return num.Int64(), nil
 }
 
+func (c *RiverRegistryContract) GetStreamCountOnNode(
+	ctx context.Context,
+	blockNum crypto.BlockNumber,
+	node common.Address,
+) (int64, error) {
+	num, err := c.StreamRegistry.GetStreamCountOnNode(c.callOptsWithBlockNum(ctx, blockNum), node)
+	if err != nil {
+		return 0, WrapRiverError(Err_CANNOT_CALL_CONTRACT, err).Func("GetStreamCountOnNode").Message("Call failed")
+	}
+	if !num.IsInt64() {
+		return 0, RiverError(Err_INTERNAL, "Stream number is too big", "num", num).Func("GetStreamCountOnNode")
+	}
+	return num.Int64(), nil
+}
+
 var ZeroBytes32 = [32]byte{}
 
 func (c *RiverRegistryContract) callGetPaginatedStreams(
@@ -496,7 +511,10 @@ func (c *RiverRegistryContract) forAllStreamsSingle(
 	)
 
 	if node != nil {
-		nodeStreamsCountInRegistry, err = c.StreamRegistry.GetStreamCountOnNode(c.callOptsWithBlockNum(ctx, blockNum), *node)
+		nodeStreamsCountInRegistry, err = c.StreamRegistry.GetStreamCountOnNode(
+			c.callOptsWithBlockNum(ctx, blockNum),
+			*node,
+		)
 	} else {
 		nodeStreamsCountInRegistry, err = c.StreamRegistry.GetStreamCount(c.callOptsWithBlockNum(ctx, blockNum))
 	}
@@ -744,8 +762,12 @@ func (c *RiverRegistryContract) SetStreamLastMiniblockBatch(
 		// only parse the new events (StreamUpdated + StreamLastMiniblockUpdateFailed) and ignore the old events.
 		// this allows the contract to be upgraded without breaking event parsing.
 		// TODO: remove wanted1/wanted2 check after smart contract has been upgraded and won't emit old event types.
-		wanted1 := common.HexToHash("0x378ece20ebca29c2f887798617154658265a73d80c84fad8c9c49639ffdb29bb") // StreamUpdated
-		wanted2 := common.HexToHash("0x75460fe319331413a18a82d99b07735cec53fa0c4061ada38c2141e331082afa") // StreamLastMiniblockUpdateFailed
+		wanted1 := common.HexToHash(
+			"0x378ece20ebca29c2f887798617154658265a73d80c84fad8c9c49639ffdb29bb",
+		) // StreamUpdated
+		wanted2 := common.HexToHash(
+			"0x75460fe319331413a18a82d99b07735cec53fa0c4061ada38c2141e331082afa",
+		) // StreamLastMiniblockUpdateFailed
 
 		for _, l := range receipt.Logs {
 			if l.Topics[0] != wanted1 && l.Topics[0] != wanted2 {
@@ -845,9 +867,9 @@ func (c *RiverRegistryContract) callOptsWithBlockNum(ctx context.Context, blockN
 
 type NodeEvents interface {
 	river.NodeRegistryV1NodeAdded |
-	river.NodeRegistryV1NodeRemoved |
-	river.NodeRegistryV1NodeStatusUpdated |
-	river.NodeRegistryV1NodeUrlUpdated
+		river.NodeRegistryV1NodeRemoved |
+		river.NodeRegistryV1NodeStatusUpdated |
+		river.NodeRegistryV1NodeUrlUpdated
 }
 
 func (c *RiverRegistryContract) GetNodeEventsForBlock(ctx context.Context, blockNum crypto.BlockNumber) ([]any, error) {
@@ -922,7 +944,7 @@ func (c *RiverRegistryContract) OnStreamEvent(
 			if event, ok := parsed.(*river.StreamRegistryV1StreamUpdated); ok {
 				events, err := river.ParseStreamUpdatedEvent(event)
 				if err != nil {
-					logging.FromCtx(ctx).Errorw("Failed to parse stream update event", "event", events)
+					logging.FromCtx(ctx).Errorw("Failed to parse stream update event", "event", event)
 					return
 				}
 
@@ -941,7 +963,7 @@ func (c *RiverRegistryContract) OnStreamEvent(
 					}
 				}
 			} else {
-				logging.FromCtx(ctx).Errorw("Unknown event type", "event", event)
+				logging.FromCtx(ctx).Errorw("Unknown event type", "event", parsed)
 			}
 		})
 	return nil
@@ -968,7 +990,7 @@ func (c *RiverRegistryContract) FilterStreamEvents(
 		if !ok {
 			finalErrs = append(
 				finalErrs,
-				RiverError(Err_INTERNAL, "Stream event isn't update", "event", streamUpdate),
+				RiverError(Err_INTERNAL, "Stream event isn't update", "event", parsed),
 			)
 			continue
 		}
