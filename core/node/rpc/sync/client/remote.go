@@ -22,54 +22,31 @@ import (
 )
 
 type remoteSyncer struct {
-	cancelGlobalSyncOp context.CancelCauseFunc
-	syncStreamCtx      context.Context
-	syncStreamCancel   context.CancelFunc
-	syncID             string
-	forwarderSyncID    string
-	remoteAddr         common.Address
-	client             protocolconnect.StreamServiceClient
-	messages           *dynmsgbuf.DynamicBuffer[*SyncStreamsResponse]
-	streams            sync.Map
-	responseStream     *connect.ServerStreamForClient[SyncStreamsResponse]
-	unsubStream        func(streamID StreamId)
+	ctx            context.Context
+	ctxCancel      context.CancelFunc
+	syncID         string
+	remoteAddr     common.Address
+	client         protocolconnect.StreamServiceClient
+	messages       *dynmsgbuf.DynamicBuffer[*SyncStreamsResponse]
+	streams        sync.Map
+	responseStream *connect.ServerStreamForClient[SyncStreamsResponse]
+	unsubStream    func(streamID StreamId)
 	// otelTracer is used to trace individual sync Send operations, tracing is disabled if nil
 	otelTracer trace.Tracer
 }
 
 func newRemoteSyncer(
 	ctx context.Context,
-	cancelGlobalSyncOp context.CancelCauseFunc,
-	forwarderSyncID string,
 	remoteAddr common.Address,
 	client protocolconnect.StreamServiceClient,
-	cookies []*SyncCookie,
 	unsubStream func(streamID StreamId),
 	messages *dynmsgbuf.DynamicBuffer[*SyncStreamsResponse],
 	otelTracer trace.Tracer,
 ) (*remoteSyncer, error) {
 	syncStreamCtx, syncStreamCancel := context.WithCancel(ctx)
-	responseStream, err := client.SyncStreams(syncStreamCtx, connect.NewRequest(&SyncStreamsRequest{SyncPos: cookies}))
+	responseStream, err := client.SyncStreams(syncStreamCtx, connect.NewRequest(&SyncStreamsRequest{}))
 	if err != nil {
-		go func() {
-			defer syncStreamCancel()
-			timeout := time.After(15 * time.Second)
-
-			for _, cookie := range cookies {
-				select {
-				case <-timeout:
-					return
-				case <-ctx.Done():
-					return
-				default:
-					_ = messages.AddMessage(&SyncStreamsResponse{
-						SyncOp:   SyncOp_SYNC_DOWN,
-						StreamId: cookie.GetStreamId(),
-					})
-				}
-			}
-		}()
-
+		syncStreamCancel()
 		return nil, err
 	}
 
@@ -78,41 +55,29 @@ func newRemoteSyncer(
 		return nil, responseStream.Err()
 	}
 
-	log := logging.FromCtx(ctx)
-
 	if responseStream.Msg().GetSyncOp() != SyncOp_SYNC_NEW || responseStream.Msg().GetSyncId() == "" {
-		log.Errorw("Received unexpected sync stream message",
+		logging.FromCtx(ctx).Errorw("Received unexpected sync stream message",
 			"syncOp", responseStream.Msg().SyncOp,
 			"syncId", responseStream.Msg().SyncId)
 		syncStreamCancel()
 		return nil, err
 	}
 
-	s := &remoteSyncer{
-		forwarderSyncID:    forwarderSyncID,
-		cancelGlobalSyncOp: cancelGlobalSyncOp,
-		syncStreamCtx:      syncStreamCtx,
-		syncStreamCancel:   syncStreamCancel,
-		client:             client,
-		messages:           messages,
-		responseStream:     responseStream,
-		remoteAddr:         remoteAddr,
-		unsubStream:        unsubStream,
-		otelTracer:         otelTracer,
-	}
-
-	s.syncID = responseStream.Msg().GetSyncId()
-
-	for _, cookie := range cookies {
-		streamID, _ := StreamIdFromBytes(cookie.GetStreamId())
-		s.streams.Store(streamID, struct{}{})
-	}
-
-	return s, nil
+	return &remoteSyncer{
+		syncID:         responseStream.Msg().GetSyncId(),
+		ctx:            syncStreamCtx,
+		ctxCancel:      syncStreamCancel,
+		client:         client,
+		messages:       messages,
+		responseStream: responseStream,
+		remoteAddr:     remoteAddr,
+		unsubStream:    unsubStream,
+		otelTracer:     otelTracer,
+	}, nil
 }
 
 func (s *remoteSyncer) Run() {
-	log := logging.FromCtx(s.syncStreamCtx)
+	log := logging.FromCtx(s.ctx)
 
 	defer s.responseStream.Close()
 
@@ -123,7 +88,7 @@ func (s *remoteSyncer) Run() {
 	go s.connectionAlive(&latestMsgReceived)
 
 	for s.responseStream.Receive() {
-		if s.syncStreamCtx.Err() != nil {
+		if s.ctx.Err() != nil {
 			break
 		}
 
@@ -135,7 +100,6 @@ func (s *remoteSyncer) Run() {
 			if err := s.sendSyncStreamResponseToClient(res); err != nil {
 				if !errors.Is(err, context.Canceled) {
 					log.Errorw("Cancel remote sync with client", "remote", s.remoteAddr, "err", err)
-					s.cancelGlobalSyncOp(err)
 				}
 				return
 			}
@@ -145,7 +109,6 @@ func (s *remoteSyncer) Run() {
 				if err := s.sendSyncStreamResponseToClient(res); err != nil {
 					if !errors.Is(err, context.Canceled) {
 						log.Errorw("Cancel remote sync with client", "remote", s.remoteAddr, "err", err)
-						s.cancelGlobalSyncOp(err)
 					}
 					return
 				}
@@ -156,19 +119,18 @@ func (s *remoteSyncer) Run() {
 	}
 
 	// stream interrupted while client didn't cancel sync -> remote is unavailable
-	if s.syncStreamCtx.Err() == nil {
+	if s.ctx.Err() == nil {
 		log.Infow("remote node disconnected", "remote", s.remoteAddr)
 
 		s.streams.Range(func(key, value any) bool {
 			streamID := key.(StreamId)
-			log.Debugw("stream down", "syncId", s.forwarderSyncID, "remote", s.remoteAddr, "stream", streamID)
+			log.Debugw("stream down", "remote", s.remoteAddr, "stream", streamID)
 
 			msg := &SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: streamID[:]}
 
 			// TODO: slow down a bit to give client time to read stream down updates
 			if err := s.sendSyncStreamResponseToClient(msg); err != nil {
 				log.Errorw("Cancel remote sync with client", "remote", s.remoteAddr, "err", err)
-				s.cancelGlobalSyncOp(err)
 				return false
 			}
 
@@ -181,8 +143,8 @@ func (s *remoteSyncer) Run() {
 // If the channel is full or the sync operation is cancelled, the function returns an error.
 func (s *remoteSyncer) sendSyncStreamResponseToClient(msg *SyncStreamsResponse) error {
 	select {
-	case <-s.syncStreamCtx.Done():
-		return s.syncStreamCtx.Err()
+	case <-s.ctx.Done():
+		return s.ctx.Err()
 	default:
 		if err := s.messages.AddMessage(msg); err != nil {
 			return AsRiverError(err).
@@ -199,7 +161,7 @@ func (s *remoteSyncer) sendSyncStreamResponseToClient(msg *SyncStreamsResponse) 
 // if the remote can't be reach the sync stream is canceled.
 func (s *remoteSyncer) connectionAlive(latestMsgReceived *atomic.Value) {
 	var (
-		log = logging.FromCtx(s.syncStreamCtx)
+		log = logging.FromCtx(s.ctx)
 		// check every pingTicker if it's time to send a ping req to remote
 		pingTicker = time.NewTicker(3 * time.Second)
 		// don't send a ping req if there was activity within recentActivityInterval
@@ -216,7 +178,7 @@ func (s *remoteSyncer) connectionAlive(latestMsgReceived *atomic.Value) {
 			lastMsgRecv := latestMsgReceived.Load().(time.Time)
 			if lastMsgRecv.Add(recentActivityDeadline).Before(now) { // no recent activity -> conn dead
 				log.Warnw("remote sync node time out", "remote", s.remoteAddr)
-				s.syncStreamCancel()
+				s.ctxCancel()
 				return
 			}
 
@@ -225,19 +187,19 @@ func (s *remoteSyncer) connectionAlive(latestMsgReceived *atomic.Value) {
 			}
 
 			// send ping to remote to generate activity to check if remote is still alive
-			if _, err := s.client.PingSync(s.syncStreamCtx, connect.NewRequest(&PingSyncRequest{
+			if _, err := s.client.PingSync(s.ctx, connect.NewRequest(&PingSyncRequest{
 				SyncId: s.syncID,
 				Nonce:  fmt.Sprintf("%d", now.Unix()),
 			})); err != nil {
 				if !errors.Is(err, context.Canceled) {
 					log.Errorw("ping sync failed", "remote", s.remoteAddr, "err", err)
 				}
-				s.syncStreamCancel()
+				s.ctxCancel()
 				return
 			}
 			return
 
-		case <-s.syncStreamCtx.Done():
+		case <-s.ctx.Done():
 			return
 		}
 	}
@@ -285,7 +247,7 @@ func (s *remoteSyncer) Modify(ctx context.Context, request *ModifySyncRequest) (
 	})
 
 	if noMoreStreams {
-		s.syncStreamCancel()
+		s.ctxCancel()
 	}
 
 	return resp.Msg, noMoreStreams, nil
@@ -307,7 +269,7 @@ func (s *remoteSyncer) DebugDropStream(ctx context.Context, streamID StreamId) (
 	})
 
 	if noMoreStreams {
-		s.syncStreamCancel()
+		s.ctxCancel()
 	}
 
 	return noMoreStreams, nil

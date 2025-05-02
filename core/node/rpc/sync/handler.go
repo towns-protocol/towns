@@ -15,6 +15,7 @@ import (
 	. "github.com/towns-protocol/towns/core/node/events"
 	"github.com/towns-protocol/towns/core/node/nodes"
 	. "github.com/towns-protocol/towns/core/node/protocol"
+	"github.com/towns-protocol/towns/core/node/rpc/sync/client"
 	"github.com/towns-protocol/towns/core/node/shared"
 )
 
@@ -54,10 +55,7 @@ type (
 			ctx context.Context,
 			req *connect.Request[PingSyncRequest],
 		) (*connect.Response[PingSyncResponse], error)
-	}
 
-	// DebugHandler defines the external grpc interface that clients can call for debugging purposes.
-	DebugHandler interface {
 		// DebugDropStream drops the stream from the sync session and sends the stream down message to the client.
 		DebugDropStream(
 			ctx context.Context,
@@ -73,31 +71,33 @@ type (
 		streamCache *StreamCache
 		// nodeRegistry is used to find a node endpoint to subscribe on remote streams
 		nodeRegistry nodes.NodeRegistry
-		// otelTracer is used to trace individual sync Send operations, tracing is disabled if nil
-		otelTracer trace.Tracer
 		// activeSyncOperations keeps a mapping from SyncID -> *StreamSyncOperation
 		activeSyncOperations sync.Map
+		// syncers is the syncers set used to manage the sync operations
+		syncers *client.SyncerSet
+		// otelTracer is used to trace individual sync Send operations, tracing is disabled if nil
+		otelTracer trace.Tracer
 	}
-)
-
-var (
-	_ Handler      = (*handlerImpl)(nil)
-	_ DebugHandler = (*handlerImpl)(nil)
 )
 
 // NewHandler returns a structure that implements the Handler interface.
 // It keeps internally a map of in progress stream sync operations and forwards add stream, remove sream, cancel sync
 // requests to the associated stream sync operation.
 func NewHandler(
+	ctx context.Context,
 	nodeAddr common.Address,
 	cache *StreamCache,
 	nodeRegistry nodes.NodeRegistry,
 	otelTracer trace.Tracer,
-) *handlerImpl {
+) Handler {
+	syncers := client.NewSyncers(ctx, cache, nodeRegistry, nodeAddr, otelTracer)
+	go syncers.Run()
+
 	return &handlerImpl{
 		nodeAddr:     nodeAddr,
 		streamCache:  cache,
 		nodeRegistry: nodeRegistry,
+		syncers:      syncers,
 		otelTracer:   otelTracer,
 	}
 }
@@ -108,7 +108,13 @@ func (h *handlerImpl) SyncStreams(
 	req *connect.Request[SyncStreamsRequest],
 	res *connect.ServerStream[SyncStreamsResponse],
 ) error {
-	op, err := NewStreamsSyncOperation(ctx, syncId, h.nodeAddr, h.streamCache, h.nodeRegistry, h.otelTracer)
+	op, err := NewStreamsSyncOperation(
+		ctx,
+		syncId,
+		h.syncers,
+		h.nodeAddr,
+		h.otelTracer,
+	)
 	if err != nil {
 		return err
 	}

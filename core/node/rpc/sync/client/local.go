@@ -16,10 +16,8 @@ import (
 )
 
 type localSyncer struct {
-	globalSyncOpID string
-
-	syncStreamCtx      context.Context
-	cancelGlobalSyncOp context.CancelCauseFunc
+	// ctx is the global server context
+	ctx context.Context
 
 	streamCache *StreamCache
 	messages    *dynmsgbuf.DynamicBuffer[*SyncStreamsResponse]
@@ -34,45 +32,30 @@ type localSyncer struct {
 
 func newLocalSyncer(
 	ctx context.Context,
-	globalSyncOpID string,
-	cancelGlobalSyncOp context.CancelCauseFunc,
 	localAddr common.Address,
 	streamCache *StreamCache,
-	cookies []*SyncCookie,
 	messages *dynmsgbuf.DynamicBuffer[*SyncStreamsResponse],
 	otelTracer trace.Tracer,
-) (*localSyncer, error) {
-	s := &localSyncer{
-		globalSyncOpID:     globalSyncOpID,
-		syncStreamCtx:      ctx,
-		cancelGlobalSyncOp: cancelGlobalSyncOp,
-		streamCache:        streamCache,
-		localAddr:          localAddr,
-		messages:           messages,
-		activeStreams:      make(map[StreamId]*Stream),
-		otelTracer:         otelTracer,
+) *localSyncer {
+	return &localSyncer{
+		ctx:           ctx,
+		streamCache:   streamCache,
+		localAddr:     localAddr,
+		messages:      messages,
+		activeStreams: make(map[StreamId]*Stream),
+		otelTracer:    otelTracer,
 	}
-
-	for _, cookie := range cookies {
-		streamID, _ := StreamIdFromBytes(cookie.GetStreamId())
-		if err := s.addStream(s.syncStreamCtx, streamID, cookie); err != nil {
-			return nil, err
-		}
-	}
-
-	return s, nil
 }
 
 func (s *localSyncer) Run() {
-	<-s.syncStreamCtx.Done()
+	<-s.ctx.Done()
 
 	s.activeStreamsMu.Lock()
-	defer s.activeStreamsMu.Unlock()
-
 	for streamID, syncStream := range s.activeStreams {
 		syncStream.Unsub(s)
 		delete(s.activeStreams, streamID)
 	}
+	s.activeStreamsMu.Unlock()
 }
 
 func (s *localSyncer) Address() common.Address {
@@ -109,7 +92,11 @@ func (s *localSyncer) Modify(ctx context.Context, request *ModifySyncRequest) (*
 
 // OnUpdate is called each time a new cookie is available for a stream
 func (s *localSyncer) OnUpdate(r *StreamAndCookie) {
-	s.sendResponse(&SyncStreamsResponse{SyncOp: SyncOp_SYNC_UPDATE, Stream: r})
+	s.sendResponse(&SyncStreamsResponse{
+		SyncOp:   SyncOp_SYNC_UPDATE,
+		Stream:   r,
+		StreamId: r.NextSyncCookie.GetStreamId(),
+	})
 }
 
 // OnSyncError is called when a sync subscription failed unrecoverable
@@ -143,7 +130,7 @@ func (s *localSyncer) addStream(ctx context.Context, streamID StreamId, cookie *
 		return err
 	}
 
-	if err := syncStream.Sub(ctx, cookie, s); err != nil {
+	if err = syncStream.Sub(ctx, cookie, s); err != nil {
 		return err
 	}
 
@@ -170,18 +157,15 @@ func (s *localSyncer) DebugDropStream(_ context.Context, streamID StreamId) (boo
 // OnUpdate is called each time a new cookie is available for a stream
 func (s *localSyncer) sendResponse(msg *SyncStreamsResponse) {
 	select {
-	case <-s.syncStreamCtx.Done():
+	case <-s.ctx.Done():
 		return
 	default:
 		if err := s.messages.AddMessage(msg); err != nil {
 			err := AsRiverError(err).
-				Tag("syncId", s.globalSyncOpID).
 				Tag("op", msg.GetSyncOp()).
 				Func("localSyncer.sendResponse")
 
-			_ = err.LogError(logging.FromCtx(s.syncStreamCtx))
-
-			s.cancelGlobalSyncOp(err)
+			_ = err.LogError(logging.FromCtx(s.ctx))
 		}
 	}
 }

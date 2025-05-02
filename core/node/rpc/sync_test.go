@@ -533,4 +533,3 @@ func TestSyncWithManyStreams(t *testing.T) {
 	syncClients.cancelAll(t, ctx)
 	syncClients.checkDone(t)
 }
-
