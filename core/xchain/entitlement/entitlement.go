@@ -27,34 +27,57 @@ func (e *Evaluator) EvaluateRuleData(
 	return e.evaluateOp(ctx, opTree, linkedWallets)
 }
 
-// isEntitlementEvaluationError returns true iff the error is the result of a failure when evaluating
-// an entitlement. It ignores context cancellations, which can occur when a operation evaluation
-// short-circuits because the other child returned a definitive answer.
-func isEntitlementEvaluationError(err error) bool {
-	return err != nil && !errors.Is(err, context.Canceled)
+// isNoncancelationError returns true iff the error is non-nil and is also not due to a
+// context cancelation or timeout.
+func isNoncancelationError(err error) bool {
+	return err != nil && !errors.Is(err, context.Canceled) && !errors.Is(err, context.DeadlineExceeded)
 }
 
 // logIfEntitlementError conditionally logs an error if it was not a context cancellation.
 func logIfEntitlementError(ctx context.Context, err error) {
-	if isEntitlementEvaluationError(err) {
+	if isNoncancelationError(err) {
 		logging.FromCtx(ctx).Warnw("Entitlement evaluation succeeded, but encountered error", "error", err)
 	}
 }
 
-// composeEntitlementEvaluationError returns a composed error type that incorporates the error of
-// either child as long as that error is not a context cancellation, which we ignore because we
-// introduce it ourselves.
+// composeEntitlementEvaluationError returns a composed error type that prioritizes errors resulting
+// from invalid entitlement evaluations as opposed to errors derived from context cancellation or
+// deadline exceeded. The reason for this is we short-circuit the evaluation of nested entitlements
+// by cancelling the context, and we want to avoid surfacing any errors that we actually created ourselves
+// as part of a performance optimization.
+// How errors are evaluated:
+//  1. If both are noncancellation errors, then both errors arose when we attempted to evaluate an entitlement.
+//     Compose them and return.
+//  2. If only one error is a non-cancellation error, it arose during entitlement evaluation, and the second
+//     error was caused by our short-circuiting logic. Return the entitlement evaluation error.
+//  3. If neither of the above conditions are true, then either one or both of the errors is non-nil and were
+//     caused by a cancellation or deadline exceeded.
+//     A. If only one error is non-nil, return it.
+//     B. If both errors are cancellation errors, then compose them.
+//
+// Note that if both errors are nil, the final result will also be nil.
 func composeEntitlementEvaluationError(leftErr error, rightErr error) error {
-	if isEntitlementEvaluationError(leftErr) && isEntitlementEvaluationError(rightErr) {
+	if isNoncancelationError(leftErr) && isNoncancelationError(rightErr) {
 		return fmt.Errorf("%w; %w", leftErr, rightErr)
 	}
-	if isEntitlementEvaluationError(leftErr) {
+	if isNoncancelationError(leftErr) {
 		return leftErr
 	}
-	if isEntitlementEvaluationError(rightErr) {
+	if isNoncancelationError(rightErr) {
 		return rightErr
 	}
-	return nil
+
+	// If either error is nil, allow the other error to dictate the response
+	if leftErr == nil {
+		return rightErr
+	}
+
+	if rightErr == nil {
+		return leftErr
+	}
+
+	// If both errors are due to some type of cancellation, compose them.
+	return fmt.Errorf("%w; %w", leftErr, rightErr)
 }
 
 // evaluateAndOperation evaluates the results of it's two child operations, ANDs them, and
@@ -110,7 +133,11 @@ func (e *Evaluator) evaluateAndOperation(
 
 	// Evaluate definitive results and return them without error, logging if an evaluation error occurred.
 	// 1. Both checks are true - return true
-	// 2. If either check is false, was not cancelled, and did not fail - return false, as the user is not entitled.
+	// 2. If either check is false and produced no error - return false, as the user is not entitled.
+	// 3. If one of the errors was non-nil and not a cancellation or timeout, return it as the true cause of the
+	//    entitlement evaluation failure.
+	// 4. If both checks were cancelations/timeouts, consider this a true timeout, as the context cancellation cause
+	//    must have propogated from the parent.
 	if leftResult && rightResult {
 		return true, nil
 	}
@@ -186,6 +213,8 @@ func (e *Evaluator) evaluateOrOperation(
 		return true, nil
 	}
 
+	// Return a false result and handle error values to prioritize error types that come
+	// from entitlement evaluations.
 	return false, composeEntitlementEvaluationError(leftErr, rightErr)
 }
 

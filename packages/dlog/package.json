@@ -1,6 +1,6 @@
 {
     "name": "@towns-protocol/dlog",
-    "version": "0.0.206",
+    "version": "0.0.209",
     "packageManager": "yarn@3.8.0",
     "type": "module",
     "main": "dist/index.js",
@@ -23,7 +23,6 @@
     "dependencies": {
         "@bufbuild/protobuf": "^2.2.2",
         "@towns-protocol/proto": "workspace:^",
-        "browser-or-node": "^3.0.0",
         "debug": "^4.3.4",
         "ethereum-cryptography": "^1.2.0"
     },
@@ -31,9 +30,9 @@
         "@types/debug": "^4.1.8",
         "@typescript-eslint/eslint-plugin": "^8.29.0",
         "@typescript-eslint/parser": "^8.29.0",
-        "eslint": "^8.57.0",
-        "eslint-import-resolver-typescript": "^3.5.5",
-        "eslint-plugin-import": "^2.27.5",
+        "eslint": "^8.57.1",
+        "eslint-import-resolver-typescript": "^4.3.2",
+        "eslint-plugin-import-x": "^4.10.2",
         "ts-node": "^10.9.1",
         "typescript": "^5.8.2",
         "vitest": "3.0.5"

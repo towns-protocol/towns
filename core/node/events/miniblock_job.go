@@ -328,10 +328,11 @@ func (j *mbJob) gatherRemoteProposals(
 }
 
 func (j *mbJob) saveCandidate(ctx context.Context) error {
+	timeout := 240 * time.Second // TODO: REPLICATION: FIX: make this timeout configurable
 	qp := NewQuorumPool(
 		ctx,
 		NewQuorumPoolOpts().
-			WriteMode().
+			WriteModeWithTimeout(timeout).
 			WithTags(
 				"method", "mbJob.saveCandidate",
 				"streamId", j.stream.streamId,
@@ -368,5 +369,11 @@ func (j *mbJob) saveCandidate(ctx context.Context) error {
 		}()
 	}
 
-	return qp.Wait()
+	err := qp.Wait()
+	if err != nil {
+		logging.FromCtx(ctx).Errorw("mbJob.saveCandidate: error saving candidate", "error", err, "streamId", j.stream.streamId, "miniblock", j.candidate.Ref, "timeout", timeout)
+		return err
+	}
+
+	return nil
 }

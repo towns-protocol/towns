@@ -22,6 +22,7 @@ const spaceFactory = getContractAddress('spaceFactory')
 if (!spaceFactory) {
     throw new Error('Space factory address not found')
 }
+
 const spaceOwner = getContractAddress('spaceOwner')
 if (!spaceOwner) {
     throw new Error('Space owner address not found')
@@ -34,7 +35,7 @@ export default createConfig({
             transport: http(process.env.PONDER_RPC_URL_1),
             disableCache: true,
         },
-        gamma: {
+        alpha: {
             chainId: 84532,
             transport: http(process.env.PONDER_RPC_URL_1),
             disableCache: true,
@@ -45,7 +46,7 @@ export default createConfig({
             abi: mergeAbis([createSpaceFacetAbi, tokenPausableFacetAbi]),
             address: spaceFactory,
             startBlock,
-            network: 'anvil',
+            network: 'alpha',
         },
         Space: {
             abi: mergeAbis([createSpaceFacetAbi, tokenPausableFacetAbi]),
@@ -57,13 +58,13 @@ export default createConfig({
                 parameter: 'space',
             }),
             startBlock,
-            network: 'anvil',
+            network: 'alpha',
         },
         SpaceOwner: {
             abi: spaceOwnerAbi,
             address: spaceOwner,
             startBlock,
-            network: 'anvil',
+            network: 'alpha',
         },
     },
 })

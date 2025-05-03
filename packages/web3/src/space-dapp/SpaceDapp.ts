@@ -1922,7 +1922,7 @@ async function wrapTransaction(
     txFn: () => Promise<ContractTransaction>,
     txnOpts?: TransactionOpts,
 ): Promise<ContractTransaction> {
-    const retryLimit = txnOpts?.retryCount ?? isTestEnv() ? 3 : 0
+    const retryLimit = (txnOpts?.retryCount ?? isTestEnv()) ? 3 : 0
 
     const runTx = async () => {
         let retryCount = 0
