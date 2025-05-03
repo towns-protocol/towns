@@ -3,13 +3,16 @@
     "version": "0.0.209",
     "license": "MIT",
     "main": "config.js",
-    "publishConfig": {
-        "access": "public"
+    "dependencies": {
+        "prettier-plugin-solidity": "^1.4.2"
+    },
+    "devDependencies": {
+        "prettier": "^3.5.3"
     },
     "peerDependencies": {
         "prettier": "^3.5.3"
     },
-    "dependencies": {
-        "prettier-plugin-solidity": "^1.4.2"
+    "publishConfig": {
+        "access": "public"
     }
 }

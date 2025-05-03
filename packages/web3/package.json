@@ -5,9 +5,6 @@
     "type": "module",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
-    "publishConfig": {
-        "access": "public"
-    },
     "scripts": {
         "build": "tsc",
         "cb": "yarn clean && yarn build",
@@ -15,9 +12,9 @@
         "lint": "yarn eslint --format unix ./src",
         "lint:fix": "yarn lint --fix",
         "test": "vitest run",
-        "test:watch": "vitest --watch",
         "test:ci": "yarn test",
         "test:debug": "DEBUG=test yarn test",
+        "test:watch": "vitest --watch",
         "watch": "tsc --watch"
     },
     "dependencies": {
@@ -26,7 +23,7 @@
         "@towns-protocol/generated": "workspace:^",
         "abitype": "^0.9.10",
         "debug": "^4.3.4",
-        "ethers": "^5.7.2",
+        "ethers": "^6.13.7",
         "lodash": "^4.17.21",
         "lru-cache": "^11.0.1",
         "nanoid": "^4.0.0",
@@ -35,9 +32,9 @@
     },
     "devDependencies": {
         "@types/lodash": "^4.14.186",
-        "@types/node": "^20.14.8",
-        "@typescript-eslint/eslint-plugin": "^8.29.0",
-        "@typescript-eslint/parser": "^8.29.0",
+        "@types/node": "^22.15.3",
+        "@typescript-eslint/eslint-plugin": "^8.31.1",
+        "@typescript-eslint/parser": "^8.31.1",
         "debug": "^4.3.4",
         "eslint": "^8.57.1",
         "eslint-import-resolver-typescript": "^4.3.2",
@@ -49,5 +46,8 @@
     "files": [
         "/dist",
         "/v4"
-    ]
+    ],
+    "publishConfig": {
+        "access": "public"
+    }
 }
