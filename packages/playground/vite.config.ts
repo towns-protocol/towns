@@ -2,7 +2,7 @@ import react from '@vitejs/plugin-react'
 import { defineConfig, loadEnv } from 'vite'
 import { default as checker } from 'vite-plugin-checker'
 import { nodePolyfills } from 'vite-plugin-node-polyfills'
-import { replaceCodePlugin } from 'vite-plugin-replace'
+/* import { replaceCodePlugin } from 'vite-plugin-replace' */
 import tsconfigPaths from 'vite-tsconfig-paths'
 import wasm from 'vite-plugin-wasm'
 import path from 'path'
@@ -19,7 +19,7 @@ export default ({ mode }: { mode: string }) => {
         plugins: [
             wasm(),
             tsconfigPaths(),
-            replaceCodePlugin({
+            /* replaceCodePlugin({
                 replacements: [
                     {
                         from: `if ((crypto && crypto.getRandomValues) || !process.browser) {
@@ -33,7 +33,7 @@ export default ({ mode }: { mode: string }) => {
 exports.randomFillSync = randomFillSync`,
                     },
                 ],
-            }),
+            }), */
             checker({
                 typescript: true,
                 eslint: {
