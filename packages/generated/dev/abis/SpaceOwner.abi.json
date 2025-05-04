@@ -1124,16 +1124,6 @@
   },
   {
     "type": "error",
-    "name": "Validator__InvalidAddress",
-    "inputs": []
-  },
-  {
-    "type": "error",
-    "name": "Validator__InvalidStringLength",
-    "inputs": []
-  },
-  {
-    "type": "error",
     "name": "VotesExpiredSignature",
     "inputs": [
       {

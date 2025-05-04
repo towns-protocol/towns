@@ -34,7 +34,7 @@ import {MockERC721} from "test/mocks/MockERC721.sol";
 import {BaseSetup} from "test/spaces/BaseSetup.sol";
 
 // errors
-import {Validator__InvalidStringLength} from "src/utils/libraries/Validator.sol";
+import {Validator} from "src/utils/libraries/Validator.sol";
 
 contract ArchitectTest is BaseSetup, IArchitectBase, IOwnableBase, IPausableBase {
     Architect public spaceArchitect;
@@ -266,7 +266,7 @@ contract ArchitectTest is BaseSetup, IArchitectBase, IOwnableBase, IPausableBase
     }
 
     function test_fuzz_revertIfInvalidSpaceId(address founder) external assumeEOA(founder) {
-        vm.expectRevert(Validator__InvalidStringLength.selector);
+        vm.expectRevert(Validator.InvalidLength.selector);
 
         SpaceInfo memory spaceInfo = _createSpaceInfo("");
         spaceInfo.membership.settings.pricingModule = pricingModule;

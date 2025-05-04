@@ -39,7 +39,7 @@ interface IChannel is IChannelBase {
     /// @param roleIds the roleIds to add to the channel
     function createChannel(
         bytes32 channelId,
-        string memory metadata,
+        string calldata metadata,
         uint256[] memory roleIds
     ) external;
 
@@ -49,8 +49,8 @@ interface IChannel is IChannelBase {
     /// @param rolePermissions the rolePermissions (role->permissions[])[] to add to the channel
     function createChannelWithOverridePermissions(
         bytes32 channelId,
-        string memory metadata,
-        RolePermissions[] memory rolePermissions
+        string calldata metadata,
+        RolePermissions[] calldata rolePermissions
     ) external;
 
     /// @notice gets a channel

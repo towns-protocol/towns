@@ -27,9 +27,8 @@ library ChannelStorage {
     }
 
     function layout() internal pure returns (Layout storage ds) {
-        bytes32 slot = STORAGE_SLOT;
         assembly {
-            ds.slot := slot
+            ds.slot := STORAGE_SLOT
         }
     }
 }

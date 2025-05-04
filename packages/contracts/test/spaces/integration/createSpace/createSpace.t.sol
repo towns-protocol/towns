@@ -18,7 +18,7 @@ import {IRolesBase} from "src/spaces/facets/roles/IRoles.sol";
 
 // libraries
 import {Permissions} from "src/spaces/facets/Permissions.sol";
-import {Validator__InvalidAddress} from "src/utils/libraries/Validator.sol";
+import {Validator} from "src/utils/libraries/Validator.sol";
 
 // contracts
 import {Architect} from "src/factory/facets/architect/Architect.sol";
@@ -273,7 +273,7 @@ contract IntegrationCreateSpace is BaseSetup, IRolesBase, IArchitectBase, IRuleE
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
     function test_createSpaceV2_with_invalid_pricing_module() public {
         vm.prank(founder);
-        vm.expectRevert(Validator__InvalidAddress.selector);
+        vm.expectRevert(Validator.InvalidAddress.selector);
         createSpaceFacet.createSpaceV2(
             _createSpaceWithPrepayInfo("test"),
             SpaceOptions({to: founder})
@@ -286,7 +286,7 @@ contract IntegrationCreateSpace is BaseSetup, IRolesBase, IArchitectBase, IRuleE
         spaceInfo.membership.requirements.everyone = true;
 
         vm.prank(founder);
-        vm.expectRevert(Validator__InvalidAddress.selector);
+        vm.expectRevert(Validator.InvalidAddress.selector);
         createSpaceFacet.createSpaceV2(spaceInfo, SpaceOptions({to: address(0)}));
     }
 
