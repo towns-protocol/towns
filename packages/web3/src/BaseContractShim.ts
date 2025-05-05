@@ -1,7 +1,7 @@
 import { BytesLike, ethers } from 'ethers'
 import { dlogger } from '@towns-protocol/dlog'
 import { Connect, ContractType } from './types/typechain'
-import { Abi } from 'viem'
+import { Abi } from 'abitype'
 export type PromiseOrValue<T> = T | Promise<T>
 
 export const UNKNOWN_ERROR = 'UNKNOWN_ERROR'

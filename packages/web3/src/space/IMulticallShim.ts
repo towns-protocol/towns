@@ -1,5 +1,4 @@
 import { IMulticall__factory } from '@towns-protocol/generated/dev/typings/factories/IMulticall__factory'
-import { ContractType } from '../types/typechain'
 import { ethers } from 'ethers'
 import { BaseContractShim } from '../BaseContractShim'
 

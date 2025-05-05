@@ -27,8 +27,8 @@ import { BaseChainConfig } from '../utils/IStaticContractsInfo'
 
 import { IMembershipShim } from './IMembershipShim'
 import { NoopRuleData } from './entitlements/entitlement'
-import { RuleEntitlementShim } from './entitlements/RuleEntitlementShim'
-import { RuleEntitlementV2Shim } from './entitlements/RuleEntitlementV2Shim'
+import { RuleEntitlementShim, IRuleEntitlementBase } from './entitlements/RuleEntitlementShim'
+import { RuleEntitlementV2Shim, IRuleEntitlementV2Base } from './entitlements/RuleEntitlementV2Shim'
 import { IBanningShim } from './IBanningShim'
 import { ITippingShim } from './ITippingShim'
 import { IERC721AQueryableShim } from '../erc-721/IERC721AQueryableShim'
@@ -37,8 +37,6 @@ import { IPrepayShim } from './IPrepayShim'
 import { IERC721AShim } from '../erc-721/IERC721AShim'
 import { IReviewShim } from './IReviewShim'
 import { ITreasuryShim } from './ITreasuryShim'
-import { IRuleEntitlementBase } from './entitlements/RuleEntitlementShim'
-import { IRuleEntitlementV2Base } from './entitlements/RuleEntitlementV2Shim'
 
 interface AddressToEntitlement {
     [address: string]: EntitlementShim

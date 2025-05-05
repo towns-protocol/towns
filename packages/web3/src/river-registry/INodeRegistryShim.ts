@@ -1,7 +1,6 @@
 import { ethers } from 'ethers'
 import { BaseContractShim } from '../BaseContractShim'
 import { NodeRegistry__factory } from '@towns-protocol/generated/dev/typings/factories/NodeRegistry__factory'
-import { ContractType } from '../types/typechain'
 
 const { abi, connect } = NodeRegistry__factory
 

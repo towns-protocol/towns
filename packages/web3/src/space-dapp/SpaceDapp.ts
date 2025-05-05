@@ -36,15 +36,19 @@ import {
     findEthereumProviders,
 } from '../space/entitlements/entitlement'
 
-import { IRuleEntitlementBase } from '../space/entitlements/IRuleEntitlementShim'
+import {
+    IRuleEntitlementBase,
+    RuleEntitlementShim,
+} from '../space/entitlements/RuleEntitlementShim'
 import {
     createEntitlementStruct,
     createLegacyEntitlementStruct,
     convertRuleDataV1ToV2,
 } from '../space/entitlements/ConvertersEntitlements'
-import { IRuleEntitlementV2Base } from '../space/entitlements/IRuleEntitlementV2Shim'
-import { RuleEntitlementV2Shim } from '../space/entitlements/RuleEntitlementV2Shim'
-import { RuleEntitlementShim } from '../space/entitlements/RuleEntitlementShim'
+import {
+    IRuleEntitlementV2Base,
+    RuleEntitlementV2Shim,
+} from '../space/entitlements/RuleEntitlementV2Shim'
 import { UserEntitlementShim } from '../space/entitlements/UserEntitlementShim'
 
 import { RiverAirdropDapp } from '../airdrop/RiverAirdropDapp'
