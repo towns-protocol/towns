@@ -53,12 +53,14 @@ export class MessageTimeline {
         this.appendEvents(events, this.userId)
     }
 
-    async scrollback(): Promise<{ terminus: boolean; firstEvent?: TimelineEvent }> {
+    async scrollback(): Promise<{ terminus: boolean; fromInclusiveMiniblockNum: bigint }> {
         return this.riverConnection.callWithStream(this.streamId, async (client) => {
-            return client.scrollback(this.streamId).then(({ terminus, firstEvent }) => ({
-                terminus,
-                firstEvent: firstEvent ? toEventSA(firstEvent, this.userId) : undefined,
-            }))
+            return client
+                .scrollback(this.streamId)
+                .then(({ terminus, fromInclusiveMiniblockNum }) => ({
+                    terminus,
+                    fromInclusiveMiniblockNum,
+                }))
         })
     }
 
