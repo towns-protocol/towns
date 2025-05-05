@@ -1889,6 +1889,7 @@ export class SpaceDapp {
             receiver: string
         },
         signer: ethers.Signer,
+        txnOpts?: TransactionOpts,
     ): Promise<ContractTransaction> {
         const { spaceId, tokenId, currency, amount, messageId, channelId, receiver } = args
         const space = this.getSpace(spaceId)
@@ -1896,18 +1897,22 @@ export class SpaceDapp {
             throw new Error(`Space with spaceId "${spaceId}" is not found.`)
         }
 
-        return space.Tipping.write(signer).tip(
-            {
-                receiver,
-                tokenId,
-                currency,
-                amount,
-                messageId: ensureHexPrefix(messageId),
-                channelId: ensureHexPrefix(channelId),
-            },
-            {
-                value: amount,
-            },
+        return wrapTransaction(
+            () =>
+                space.Tipping.write(signer).tip(
+                    {
+                        receiver,
+                        tokenId,
+                        currency,
+                        amount,
+                        messageId: ensureHexPrefix(messageId),
+                        channelId: ensureHexPrefix(channelId),
+                    },
+                    {
+                        value: amount,
+                    },
+                ),
+            txnOpts,
         )
     }
 }
