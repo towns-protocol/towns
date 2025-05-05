@@ -1,16 +1,11 @@
 import { ethers } from 'ethers'
 import { BaseContractShim } from '../BaseContractShim'
 import { IERC721AQueryable__factory } from '@towns-protocol/generated/dev/typings/factories/IERC721AQueryable__factory'
-import { ContractType } from '../types/typechain'
 
-export class IERC721AQueryableShim extends BaseContractShim<
-    ContractType<typeof IERC721AQueryable__factory.connect>
-> {
+const { abi, connect } = IERC721AQueryable__factory
+
+export class IERC721AQueryableShim extends BaseContractShim<typeof connect> {
     constructor(address: string, provider: ethers.providers.Provider) {
-        super(
-            address,
-            provider,
-            IERC721AQueryable__factory.connect.bind(IERC721AQueryable__factory),
-        )
+        super(address, provider, connect, abi)
     }
 }
