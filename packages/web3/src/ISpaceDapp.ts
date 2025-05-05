@@ -27,6 +27,7 @@ import { PricingModules } from './v3/PricingModules'
 import { BaseChainConfig } from './IStaticContractsInfo'
 import { PlatformRequirements } from './v3/PlatformRequirements'
 import { TipEventObject } from '@towns-protocol/generated/dev/typings/ITipping'
+import { ISwapRouterBase } from '@towns-protocol/generated/dev/typings/ISwapRouter'
 
 export type SignerType = ethers.Signer
 
@@ -375,4 +376,13 @@ export interface ISpaceDapp {
         senderAddress: string,
     ) => TipEventObject | undefined
     updateCacheAfterBanOrUnBan: (spaceId: string, tokenId: ethers.BigNumber) => void
+    executeSwap(
+        spaceId: string,
+        params: ISwapRouterBase.ExactInputParamsStruct,
+        routerParams: ISwapRouterBase.RouterParamsStruct,
+        poster: string,
+        value: bigint,
+        signer: ethers.Signer,
+        txnOpts?: TransactionOpts,
+    ): Promise<TransactionType>
 }
