@@ -193,7 +193,7 @@ func (e *StreamEvent) VerifyPayloadTypeMatchesStreamType(i IsInceptionPayload) e
 	case *StreamEvent_MemberPayload:
 		return nil
 	default:
-		return fmt.Errorf("inception type type not handled: %T vs %T", e.Payload, i)
+		return fmt.Errorf("inception type not handled: %T vs %T", e.Payload, i)
 	}
 	return nil
 }
@@ -209,14 +209,18 @@ func (e *StreamEvent) VerifyPayloadTypeMatchesStreamType(i IsInceptionPayload) e
 	for _, inceptionTypeName := range inceptionTypes {
 		inceptionTypeBase := strings.Split(inceptionTypeName, "_")[0]
 		inceptionTypeBase = strings.Replace(inceptionTypeBase, "Payload", "Content", 1)
-		outputFile.WriteString2(fmt.Sprintf(snapshotGetterCase(), inceptionTypeBase, inceptionTypeBase, inceptionTypeBase))
+		outputFile.WriteString2(
+			fmt.Sprintf(snapshotGetterCase(), inceptionTypeBase, inceptionTypeBase, inceptionTypeBase),
+		)
 	}
 	outputFile.WriteString2(getterEnd())
 
 	outputFile.WriteString2(streamEventGetterStart())
 	for _, inceptionTypeName := range inceptionTypes {
 		inceptionTypeBase := strings.Split(inceptionTypeName, "_")[0]
-		outputFile.WriteString2(fmt.Sprintf(streamEventGetterCase(), inceptionTypeBase, inceptionTypeBase, inceptionTypeBase))
+		outputFile.WriteString2(
+			fmt.Sprintf(streamEventGetterCase(), inceptionTypeBase, inceptionTypeBase, inceptionTypeBase),
+		)
 	}
 	outputFile.WriteString2(getterEnd())
 

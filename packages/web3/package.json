@@ -1,6 +1,6 @@
 {
     "name": "@towns-protocol/web3",
-    "version": "0.0.208",
+    "version": "0.0.211",
     "packageManager": "yarn@3.8.0",
     "type": "module",
     "main": "dist/index.js",
@@ -47,7 +47,6 @@
         "vitest": "3.0.5"
     },
     "files": [
-        "/dist",
-        "/v4"
+        "/dist"
     ]
 }
