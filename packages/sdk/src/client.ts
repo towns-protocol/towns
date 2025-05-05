@@ -126,7 +126,6 @@ import {
     make_DMChannelPayload_Message,
     make_GDMChannelPayload_Inception,
     make_GDMChannelPayload_Message,
-    StreamTimelineEvent,
     make_UserInboxPayload_Ack,
     make_UserInboxPayload_Inception,
     make_UserMetadataPayload_EncryptionDevice,
@@ -2204,7 +2203,6 @@ export class Client
 
     async scrollback(streamId: string): Promise<{
         terminus: boolean
-        firstEvent?: StreamTimelineEvent
         fromInclusiveMiniblockNum: bigint
     }> {
         const currentRequest = this.getScrollbackRequests.get(streamId)
@@ -2214,7 +2212,6 @@ export class Client
 
         const _scrollback = async (): Promise<{
             terminus: boolean
-            firstEvent?: StreamTimelineEvent
             fromInclusiveMiniblockNum: bigint
         }> => {
             const stream = this.stream(streamId)
@@ -2224,7 +2221,6 @@ export class Client
                 this.logCall('scrollback', streamId, 'terminus reached')
                 return {
                     terminus: true,
-                    firstEvent: stream.view.timeline.at(0),
                     fromInclusiveMiniblockNum: stream.view.miniblockInfo.min,
                 }
             }
@@ -2246,13 +2242,11 @@ export class Client
                 stream.prependEvents(response.miniblocks, cleartexts, response.terminus)
                 return {
                     terminus: response.terminus,
-                    firstEvent: stream.view.timeline.at(0),
                     fromInclusiveMiniblockNum: fromInclusive,
                 }
             }
             return {
                 terminus: false,
-                firstEvent: stream.view.timeline.at(0),
                 fromInclusiveMiniblockNum: fromInclusive,
             }
         }
