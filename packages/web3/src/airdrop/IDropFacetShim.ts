@@ -1,12 +1,11 @@
 import { ethers } from 'ethers'
 import { BaseContractShim } from '../BaseContractShim'
-import { IDropFacet__factory } from '@towns-protocol/generated/dev/typings/factories/IDropFacet__factory'
-import { ContractType } from '../types/typechain'
+import { DropFacet__factory } from '@towns-protocol/generated/dev/typings/factories/DropFacet__factory'
 
-export class IDropFacetShim extends BaseContractShim<
-    ContractType<typeof IDropFacet__factory.connect>
-> {
+const { abi, connect } = DropFacet__factory
+
+export class IDropFacetShim extends BaseContractShim<typeof connect> {
     constructor(address: string, provider: ethers.providers.Provider) {
-        super(address, provider, IDropFacet__factory.connect.bind(IDropFacet__factory))
+        super(address, provider, connect, abi)
     }
 }

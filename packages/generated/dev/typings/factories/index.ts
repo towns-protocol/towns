@@ -4,13 +4,13 @@
 export * as iMockLegacyArchitectSol from "./IMockLegacyArchitect.sol";
 export * as iRuleEntitlementSol from "./IRuleEntitlement.sol";
 export { Channels__factory } from "./Channels__factory";
+export { DropFacet__factory } from "./DropFacet__factory";
 export { IArchitect__factory } from "./IArchitect__factory";
 export { IBanning__factory } from "./IBanning__factory";
 export { ICreateSpace__factory } from "./ICreateSpace__factory";
 export { ICrossChainEntitlement__factory } from "./ICrossChainEntitlement__factory";
 export { IDiamond__factory } from "./IDiamond__factory";
 export { IDiamondCut__factory } from "./IDiamondCut__factory";
-export { IDropFacet__factory } from "./IDropFacet__factory";
 export { IERC5267__factory } from "./IERC5267__factory";
 export { IERC721A__factory } from "./IERC721A__factory";
 export { IERC721AQueryable__factory } from "./IERC721AQueryable__factory";
