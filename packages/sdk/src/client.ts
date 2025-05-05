@@ -2741,9 +2741,8 @@ export class Client
                     return
                 }
                 const toStreamId: string = makeUserInboxStreamId(userId)
-                const { hash: miniblockHash, miniblockNum } = await this.getStreamLastMiniblockHash(
-                    toStreamId,
-                )
+                const gslmhResp = await this.getStreamLastMiniblockHash(toStreamId)
+                const { hash: miniblockHash, miniblockNum } = gslmhResp
                 this.logCall("encryptAndShareGroupSessions: sent to user's devices", {
                     toStreamId,
                     deviceKeys: deviceKeys.map((d) => d.deviceKey).join(','),
