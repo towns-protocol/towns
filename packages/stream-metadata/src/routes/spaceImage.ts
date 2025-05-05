@@ -1,8 +1,8 @@
 import { FastifyReply, FastifyRequest, type FastifyBaseLogger } from 'fastify'
-import { ChunkedMedia } from '@river-build/proto'
-import { StreamPrefix, StreamStateView, makeStreamId } from '@river-build/sdk'
+import { ChunkedMedia } from '@towns-protocol/proto'
+import { StreamPrefix, StreamStateView, makeStreamId } from '@towns-protocol/sdk'
 import { z } from 'zod'
-import { bin_toHexString } from '@river-build/dlog'
+import { bin_toHexString } from '@towns-protocol/dlog'
 
 import { config } from '../environment'
 import { getStream } from '../riverStreamRpcClient'
@@ -44,7 +44,7 @@ export async function fetchSpaceImage(request: FastifyRequest, reply: FastifyRep
 	const { spaceAddress, eventId } = parseResult.data
 	logger.info({ spaceAddress, eventId }, 'Fetching space image')
 
-	let stream: StreamStateView
+	let stream: StreamStateView | undefined
 	const streamId = makeStreamId(StreamPrefix.Space, spaceAddress)
 	try {
 		stream = await getStream(logger, streamId)
@@ -57,6 +57,10 @@ export async function fetchSpaceImage(request: FastifyRequest, reply: FastifyRep
 			},
 			'Failed to get stream',
 		)
+		return reply.code(500).send('Failed to get stream')
+	}
+
+	if (!stream) {
 		return reply.code(404).header('Cache-Control', CACHE_CONTROL[404]).send('Stream not found')
 	}
 
@@ -72,20 +76,19 @@ export async function fetchSpaceImage(request: FastifyRequest, reply: FastifyRep
 
 	try {
 		const { key, iv } = getMediaEncryption(logger, spaceImage)
-		if (key?.length === 0 || iv?.length === 0) {
+		if (key?.length === 0) {
 			logger.error(
 				{
-					key: key?.length === 0 ? 'has key' : 'no key',
-					iv: iv?.length === 0 ? 'has iv' : 'no iv',
+					key: 'no key',
 					spaceAddress,
 					mediaStreamId: spaceImage.streamId,
 				},
-				'Invalid key or iv',
+				'Invalid key',
 			)
 			return reply
 				.code(422)
 				.header('Cache-Control', CACHE_CONTROL[422])
-				.send('Failed to get encryption key or iv')
+				.send('Failed to get encryption key')
 		}
 		const redirectUrl = `${config.streamMetadataBaseUrl}/media/${
 			spaceImage.streamId
@@ -99,12 +102,12 @@ export async function fetchSpaceImage(request: FastifyRequest, reply: FastifyRep
 				spaceAddress,
 				mediaStreamId: spaceImage.streamId,
 			},
-			'Failed to get encryption key or iv',
+			'Failed to get encryption key',
 		)
 		return reply
 			.code(422)
 			.header('Cache-Control', CACHE_CONTROL['422'])
-			.send('Failed to get encryption key or iv')
+			.send('Failed to get encryption key')
 	}
 }
 

@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -37,7 +37,7 @@
       .tooltip .tooltiptext {
         visibility: hidden;
         background-color: white;
-        color: indigo;
+        color: black;
         text-align: left;
         border: 1px solid black;
         padding: 5px;
@@ -46,20 +46,13 @@
         top: 100%;
         left: 50%;
         transform: translateX(-50%);
-        white-space: pre-wrap;
+        white-space: pre;
         margin-top: 5px;
-        max-height: 300px;
-        overflow-y: auto;
+        min-width: max-content;
       }
 
       .tooltip:hover .tooltiptext {
         visibility: visible;
-      }
-
-      .tooltip:nth-last-child(-n + 3) .tooltiptext {
-        right: 0;
-        left: auto;
-        transform: none;
       }
     </style>
   </head>
@@ -89,41 +82,23 @@
       <th><a href="{{.Record.Url}}/debug/multi">{{.Record.Url}}</a>{{if .Local}} <b>*</b>{{end}}</th>
       {{with .Http11}}
       <td class="{{if .Success}}success{{else}}error{{end}}">
-        <span class="tooltip">
-          {{.StatusText}} {{.Elapsed}}
-          <span class="tooltiptext">
-            <pre>{{.ToPrettyJson}}</pre>
-          </span>
-        </span>
+        {{.StatusText}} {{.Elapsed}}
       </td>
       {{end}}
       {{with .Http20}}
       <td class="{{if .Success}}success{{else}}error{{end}}">
-        <span class="tooltip">
-          {{.StatusText}} {{.Elapsed}}
-          <span class="tooltiptext">
-            <pre>{{.ToPrettyJson}}</pre>
-          </span>
-        </span>
+        {{.StatusText}} {{.Elapsed}}
       </td>
       {{end}} {{with .Grpc}}
       <td class="{{if .Success}}success{{else}}error{{end}}">
-        <span class="tooltip">
-          {{.StatusText}} {{.Elapsed}}
-          <span class="tooltiptext">
-            <pre>{{.ToPrettyJson}}</pre>
-          </span>
-        </span>
+        {{.StatusText}} {{.Elapsed}}
       </td>
       <td>{{.Version}}</td>
       <td>
-        <span class="tooltip">
+        <div class="tooltip">
           {{.Uptime}}
-          <span class="tooltiptext">
-            <pre>Start time: <span class="timeconvert">{{.StartTime}}</span>
-UTC: {{.StartTime}}</pre>
-          </span>
-        </span>
+          <span class="tooltiptext">Start time: <span class="timeconvert">{{.StartTime}}</span>&#10;UTC: {{.StartTime}}</span>
+        </div>
       </td>
       {{end}}
       <td>{{.Record.Address}}</td>
@@ -131,16 +106,21 @@ UTC: {{.StartTime}}</pre>
       <td>{{.Record.Operator}}</td>
       <td>{{.RiverEthBalance}}</td>
       <td>{{.BaseEthBalance}}</td>
+      <td style="display: none;">{{.ToJson}}</td>
     </tr>
     {{end}}
   </table>
-  <span class="tooltip">
+  <div class="tooltip">
     Current Time: <span class="timeconvert">{{.Status.QueryTime}}</span><br />
     Elapsed Time: {{.Status.Elapsed}}
-    <span class="tooltiptext">
-      <pre>UTC: {{.Status.QueryTime}}</pre>
-    </span>
-  </span>
+    <span class="tooltiptext">UTC: {{.Status.QueryTime}}</span>
+  </div>
+  <div style="margin-top: 10px; color: #666;">Click on any row to view detailed response data</div>
+  <div id="details" style="margin-top: 20px; display: none;">
+    <h3>Response Details</h3>
+    <div id="node-url"></div>
+    <pre id="details-content"></pre>
+  </div>
 
   <script>
     document.addEventListener("DOMContentLoaded", function () {
@@ -153,6 +133,29 @@ UTC: {{.StartTime}}</pre>
         } catch (e) {
           console.error('Error converting time:', e);
         }
+      });
+
+      // Add click handlers to table rows
+      var rows = document.querySelectorAll('table tr');
+      rows.forEach(function(row, index) {
+        if (index === 0) return; // Skip header row
+        row.style.cursor = 'pointer';
+        row.addEventListener('click', function() {
+          var details = document.getElementById('details');
+          var detailsContent = document.getElementById('details-content');
+          var nodeUrl = document.getElementById('node-url');
+          var jsonData = this.querySelector('td:last-child').textContent;
+          var url = this.querySelector('th a').textContent + '/debug';
+          
+          try {
+            var parsed = JSON.parse(jsonData);
+            detailsContent.textContent = JSON.stringify(parsed, null, 2);
+            nodeUrl.innerHTML = `<a href="${url}">${url}</a>`;
+          } catch (e) {
+            detailsContent.textContent = jsonData;
+          }
+          details.style.display = 'block';
+        });
       });
     });
   </script>

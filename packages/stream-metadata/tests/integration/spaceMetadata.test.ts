@@ -1,7 +1,7 @@
 import axios, { AxiosResponse } from 'axios'
-import { dlog } from '@river-build/dlog'
+import { dlog } from '@towns-protocol/dlog'
 import { ethers } from 'ethers'
-import { makeTestClient, TestClient } from '@river-build/sdk'
+import { makeTestClient, TestClient } from '@towns-protocol/sdk'
 
 import {
 	encryptAndSendMediaPayload,
@@ -14,7 +14,7 @@ import {
 import { spaceMetadataBaseUrl, SpaceMetadataResponse } from '../../src/routes/spaceMetadata'
 import { spaceDapp } from '../../src/contract-utils'
 
-const log = dlog('stream-metadata:test:spaceMetadata', {
+const log = dlog('test:stream-metadata:test:spaceMetadata', {
 	allowJest: true,
 	defaultEnabled: true,
 })

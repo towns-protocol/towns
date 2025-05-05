@@ -1,7 +1,6 @@
 import { keccak256 } from 'ethereum-cryptography/keccak'
-import { Permission } from '@river-build/web3'
-import { bin_toHexString, isTestEnv, isNodeEnv } from '@river-build/dlog'
-import { isBrowser, isNode } from 'browser-or-node'
+import { Permission } from '@towns-protocol/web3'
+import { bin_toHexString, isTestEnv, isNodeEnv, isBrowser } from '@towns-protocol/dlog'
 
 export function unsafeProp<K extends keyof any | undefined>(prop: K): boolean {
     return prop === '__proto__' || prop === 'prototype' || prop === 'constructor'
@@ -82,7 +81,7 @@ export function removeCommon(x: string[], y: string[]): string[] {
 }
 
 export function getEnvVar(key: string, defaultValue: string = ''): string {
-    if (isNode || isTestEnv()) {
+    if (isNodeEnv || isTestEnv()) {
         return process.env[key] ?? defaultValue
     }
 
@@ -96,7 +95,7 @@ export function getEnvVar(key: string, defaultValue: string = ''): string {
 }
 
 export function isMobileSafari(): boolean {
-    if (isNodeEnv()) {
+    if (isNodeEnv) {
         return false
     }
     if (!navigator || !navigator.userAgent) {

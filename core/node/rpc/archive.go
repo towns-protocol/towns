@@ -25,6 +25,8 @@ func (s *Service) startArchiveMode(opts *ServerStartOpts, once bool) error {
 		return RiverError(Err_BAD_CONFIG, "ArchiveId must be set").LogError(s.defaultLogger)
 	}
 
+	s.initTracing("river-archive", s.config.Archive.ArchiveId)
+
 	err = s.initRiverChain()
 	if err != nil {
 		return AsRiverError(err).Message("Failed to init river chain").LogError(s.defaultLogger)
@@ -50,7 +52,7 @@ func (s *Service) startArchiveMode(opts *ServerStartOpts, once bool) error {
 		return AsRiverError(err).Message("Failed to init archiver").LogError(s.defaultLogger)
 	}
 
-	s.registerDebugHandlers(s.config.EnableDebugEndpoints, s.config.DebugEndpoints)
+	s.registerDebugHandlers()
 
 	s.SetStatus("OK")
 

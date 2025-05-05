@@ -1,7 +1,7 @@
 import { GroupEncryptionAlgorithmId, GroupEncryptionSession, UserDeviceCollection } from './olmLib'
 
 import { EncryptionDevice } from './encryptionDevice'
-import { EncryptedData } from '@river-build/proto'
+import { EncryptedData } from '@towns-protocol/proto'
 
 export interface IGroupEncryptionClient {
     downloadUserDeviceInfo(userIds: string[], forceDownload: boolean): Promise<UserDeviceCollection>
@@ -83,7 +83,10 @@ export abstract class DecryptionAlgorithm implements IDecryptionParams {
  *   to the user.
  */
 export class DecryptionError extends Error {
-    public constructor(public readonly code: string, msg: string) {
+    public constructor(
+        public readonly code: string,
+        msg: string,
+    ) {
         super(msg)
         this.code = code
         this.name = 'DecryptionError'

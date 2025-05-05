@@ -1,5 +1,5 @@
-import { SyncCookie, SyncOp, SyncStreamsResponse } from '@river-build/proto'
-import { DLogger, dlog, dlogError } from '@river-build/dlog'
+import { SyncCookie, SyncOp, SyncStreamsResponse } from '@towns-protocol/proto'
+import { DLogger, dlog, dlogError } from '@towns-protocol/dlog'
 import { StreamRpcClient } from './makeStreamRpcClient'
 import { UnpackEnvelopeOpts, unpackStream, unpackStreamAndCookie } from './sign'
 import { SyncedStreamEvents } from './streamEvents'
@@ -115,7 +115,7 @@ export class SyncedStreamsLoop {
     // syncState is used to track the current sync state
     private _syncState: SyncState = SyncState.NotSyncing
     // retry logic
-    releaseRetryWait: (() => void) | undefined
+    private releaseRetryWait: (() => void) | undefined
     private currentRetryCount: number = 0
     private forceStopSyncStreams: (() => void) | undefined
     private interruptSync: ((err: unknown) => void) | undefined
@@ -128,10 +128,12 @@ export class SyncedStreamsLoop {
     private inProgressTick?: Promise<void>
     private pendingSyncCookies: string[] = []
     private inFlightSyncCookies = new Set<string>()
+    private pendingStreamsToDelete: string[] = []
     private lastLogInflightAt = 0
     private syncStartedAt: number | undefined = undefined
     private readonly MAX_IN_FLIGHT_COOKIES = 40
     private readonly MIN_IN_FLIGHT_COOKIES = 10
+    private readonly MAX_IN_FLIGHT_STREAMS_TO_DELETE = 40
 
     public pingInfo: PingInfo = {
         currentSequence: 0,
@@ -232,6 +234,13 @@ export class SyncedStreamsLoop {
             this.log('stream already in sync', streamId)
             return
         }
+        // check if pending delete
+        const pendingIndex = this.pendingStreamsToDelete.indexOf(streamId)
+        if (pendingIndex !== -1) {
+            this.pendingStreamsToDelete.splice(pendingIndex, 1)
+            this.log('removed stream from pending deletion list', streamId)
+        }
+        // add to streams, enqueue for add
         this.streams.set(streamId, { syncCookie, stream })
         this.pendingSyncCookies.push(streamId)
         this.checkStartTicking()
@@ -254,23 +263,19 @@ export class SyncedStreamsLoop {
             this.log('removed stream from pending sync', streamId)
             return
         }
+        if (this.pendingStreamsToDelete.includes(streamId)) {
+            this.log('stream already in pending delete', streamId)
+            return
+        }
         if (this.syncState === SyncState.Starting || this.syncState === SyncState.Retrying) {
             await this.waitForSyncingState()
         }
         if (this.syncState === SyncState.Syncing) {
-            try {
-                await this.rpcClient.removeStreamFromSync({
-                    syncId: this.syncId,
-                    streamId: streamIdAsBytes(streamId),
-                })
-            } catch (err) {
-                // Trigger restart of sync loop
-                this.log('removeStreamFromSync err', err)
-            }
+            this.pendingStreamsToDelete.push(streamId)
             streamRecord.stream.stop()
             this.streams.delete(streamId)
             this.log('removed stream from sync', streamId)
-            this.clientEmitter.emit('streamRemovedFromSync', streamIdAsString(inStreamId))
+            this.clientEmitter.emit('streamRemovedFromSync', streamId)
         } else {
             this.log(
                 'removeStreamFromSync: not in "syncing" state; let main sync loop handle this with its streams map',
@@ -282,6 +287,13 @@ export class SyncedStreamsLoop {
 
     public setHighPriorityStreams(streamIds: string[]) {
         this.highPriorityIds = new Set(streamIds)
+    }
+
+    public onNetworkStatusChanged(isOnline: boolean) {
+        if (isOnline) {
+            this.log('back online, release retry wait', { syncState: this.syncState })
+            this.releaseRetryWait?.()
+        }
     }
 
     private createSyncLoop() {
@@ -316,6 +328,7 @@ export class SyncedStreamsLoop {
                     // get cookies from all the known streams to sync
                     this.inFlightSyncCookies.clear()
                     this.pendingSyncCookies = []
+                    this.pendingStreamsToDelete = []
                     const syncCookies: SyncCookie[] = []
                     if (this.streamOpts?.useModifySync == true) {
                         this.pendingSyncCookies.push(...Array.from(this.streams.keys()))
@@ -346,6 +359,7 @@ export class SyncedStreamsLoop {
                         ++iteration,
                         this.syncState,
                         `pending: ${this.pendingSyncCookies.length}`,
+                        `pendingDelete: ${this.pendingStreamsToDelete.length}`,
                     )
 
                     if (this.syncState === SyncState.Retrying) {
@@ -376,6 +390,7 @@ export class SyncedStreamsLoop {
                                 }
                                 this.interruptSync = (e: unknown) => {
                                     this.logError('sync interrupted', e)
+                                    // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
                                     reject(e)
                                 }
                             })
@@ -489,7 +504,11 @@ export class SyncedStreamsLoop {
             return
         }
 
-        if (this.responsesQueue.length === 0 && this.pendingSyncCookies.length === 0) {
+        if (
+            this.responsesQueue.length === 0 &&
+            this.pendingSyncCookies.length === 0 &&
+            this.pendingStreamsToDelete.length === 0
+        ) {
             return
         }
 
@@ -509,9 +528,13 @@ export class SyncedStreamsLoop {
 
     private async tick() {
         if (this.syncState === SyncState.Syncing) {
+            const pendingStreamsToDelete = this.pendingStreamsToDelete.filter(
+                (x) => !this.inFlightSyncCookies.has(x),
+            )
             if (
-                this.inFlightSyncCookies.size <= this.MIN_IN_FLIGHT_COOKIES &&
-                this.pendingSyncCookies.length > 0
+                (this.inFlightSyncCookies.size <= this.MIN_IN_FLIGHT_COOKIES &&
+                    this.pendingSyncCookies.length > 0) ||
+                pendingStreamsToDelete.length > 0
             ) {
                 const syncId = this.syncId
                 this.pendingSyncCookies.sort((a, b) => {
@@ -520,18 +543,33 @@ export class SyncedStreamsLoop {
                     return aPriority - bPriority
                 })
                 const streamsToAdd = this.pendingSyncCookies.splice(0, this.MAX_IN_FLIGHT_COOKIES)
+                const streamsToDelete = pendingStreamsToDelete.splice(
+                    0,
+                    this.MAX_IN_FLIGHT_STREAMS_TO_DELETE,
+                )
+                this.pendingStreamsToDelete = pendingStreamsToDelete.filter(
+                    (x) => !streamsToDelete.find((y) => x === y),
+                )
                 this.logSync('tick: modifySync', {
                     syncId,
                     addStreams: streamsToAdd,
+                    deleteStreams: streamsToDelete,
                     inFlight: this.inFlightSyncCookies.size,
                 })
                 streamsToAdd.forEach((x) => this.inFlightSyncCookies.add(x))
                 const syncPos = streamsToAdd.map((x) => this.streams.get(x)?.syncCookie)
                 try {
-                    await this.rpcClient.modifySync({
+                    const resp = await this.rpcClient.modifySync({
                         syncId,
                         addStreams: syncPos.filter(isDefined),
+                        removeStreams: streamsToDelete.map(streamIdAsBytes),
                     })
+                    if (resp.removals.length > 0) {
+                        this.logError('modifySync removal errors', resp.removals)
+                    }
+                    if (resp.adds.length > 0) {
+                        this.logError('modifySync addition errors', resp.adds)
+                    }
                 } catch (err) {
                     this.logError('modifySync error', err)
                     if (this.syncId === syncId && this.syncState === SyncState.Syncing) {
@@ -540,6 +578,7 @@ export class SyncedStreamsLoop {
                                 this.pendingSyncCookies.push(x)
                             }
                         })
+                        this.pendingStreamsToDelete.push(...streamsToDelete)
                         this.checkStartTicking()
                     }
                 }
@@ -597,6 +636,7 @@ export class SyncedStreamsLoop {
                 })
                 this.inFlightSyncCookies.clear()
                 this.pendingSyncCookies = []
+                this.pendingStreamsToDelete = []
                 this.clientEmitter.emit('streamSyncActive', false)
             }
 
@@ -756,7 +796,7 @@ export class SyncedStreamsLoop {
                         this.inFlightSyncCookies.delete(streamId)
                         if (
                             this.inFlightSyncCookies.size === 0 ||
-                            Date.now() - this.lastLogInflightAt > 3000
+                            Date.now() - this.lastLogInflightAt > 5000
                         ) {
                             if (
                                 this.inFlightSyncCookies.size === 0 &&
@@ -767,8 +807,7 @@ export class SyncedStreamsLoop {
                                 this.syncStartedAt = undefined
                             } else {
                                 this.log(
-                                    'onUpdate: remaining streams in flight',
-                                    this.inFlightSyncCookies.size,
+                                    `sync status inflight:${this.inFlightSyncCookies.size} enqueued:${this.pendingSyncCookies.length}`,
                                 )
                             }
                             this.lastLogInflightAt = Date.now()
@@ -832,29 +871,32 @@ export class SyncedStreamsLoop {
 
     private sendKeepAlivePings() {
         // periodically ping the server to keep the connection alive
-        this.pingInfo.pingTimeout = setTimeout(() => {
-            const ping = async () => {
-                if (this.syncState === SyncState.Syncing && this.syncId) {
-                    const n = nanoid()
-                    this.pingInfo.nonces[n] = {
-                        sequence: this.pingInfo.currentSequence++,
-                        nonce: n,
-                        pingAt: performance.now(),
+        this.pingInfo.pingTimeout = setTimeout(
+            () => {
+                const ping = async () => {
+                    if (this.syncState === SyncState.Syncing && this.syncId) {
+                        const n = nanoid()
+                        this.pingInfo.nonces[n] = {
+                            sequence: this.pingInfo.currentSequence++,
+                            nonce: n,
+                            pingAt: performance.now(),
+                        }
+                        await this.rpcClient.pingSync({
+                            syncId: this.syncId,
+                            nonce: n,
+                        })
                     }
-                    await this.rpcClient.pingSync({
-                        syncId: this.syncId,
-                        nonce: n,
-                    })
+                    if (this.syncState === SyncState.Syncing) {
+                        // schedule the next ping
+                        this.sendKeepAlivePings()
+                    }
                 }
-                if (this.syncState === SyncState.Syncing) {
-                    // schedule the next ping
-                    this.sendKeepAlivePings()
-                }
-            }
-            ping().catch((err) => {
-                this.interruptSync?.(err)
-            })
-        }, 5 * 1000 * 60) // every 5 minutes
+                ping().catch((err) => {
+                    this.interruptSync?.(err)
+                })
+            },
+            5 * 1000 * 60,
+        ) // every 5 minutes
     }
 
     private stopPing() {

@@ -1,18 +1,17 @@
 /* eslint-disable no-console */
-import { SnapshotCaseType } from '@river-build/proto'
+import { SnapshotCaseType } from '@towns-protocol/proto'
 import { Stream } from '../../stream'
 import { StreamChange } from '../../streamEvents'
-import {
-    getEditsId,
-    getRedactsId,
-    makeRedactionEvent,
-    toEvent,
-    toReplacedMessageEvent,
-} from './models/timelineEvent'
+import { makeRedactionEvent, toEventSA, toReplacedMessageEvent } from './models/timelineEvent'
 import { LocalTimelineEvent } from '../../types'
 import { TimelineEvents } from './models/timelineEvents'
 import { Reactions } from './models/reactions'
-import type { TimelineEvent, TimelineEventConfirmation } from './models/timeline-types'
+import {
+    RiverTimelineEvent,
+    type TimelineEvent,
+    type TimelineEvent_OneOf,
+    type TimelineEventConfirmation,
+} from './models/timeline-types'
 import { PendingReplacedEvents } from './models/pendingReplacedEvents'
 import { ReplacedEvents } from './models/replacedEvents'
 import { ThreadStats } from './models/threadStats'
@@ -49,7 +48,7 @@ export class MessageTimeline {
         stream.on('streamUpdated', this.onStreamUpdated)
         stream.on('streamLocalEventUpdated', this.onStreamLocalEventUpdated)
         const events = stream.view.timeline
-            .map((event) => toEvent(event, this.userId))
+            .map((event) => toEventSA(event, this.userId))
             .filter((event) => this.filterFn(event, stream.view.contentKind))
         this.appendEvents(events, this.userId)
     }
@@ -58,7 +57,7 @@ export class MessageTimeline {
         return this.riverConnection.callWithStream(this.streamId, async (client) => {
             return client.scrollback(this.streamId).then(({ terminus, firstEvent }) => ({
                 terminus,
-                firstEvent: firstEvent ? toEvent(firstEvent, this.userId) : undefined,
+                firstEvent: firstEvent ? toEventSA(firstEvent, this.userId) : undefined,
             }))
         })
     }
@@ -76,19 +75,19 @@ export class MessageTimeline {
         const { prepended, appended, updated, confirmed } = change
         if (prepended) {
             const events = prepended
-                .map((event) => toEvent(event, this.userId))
+                .map((event) => toEventSA(event, this.userId))
                 .filter((event) => this.filterFn(event, kind))
             this.prependEvents(events, this.userId)
         }
         if (appended) {
             const events = appended
-                .map((event) => toEvent(event, this.userId))
+                .map((event) => toEventSA(event, this.userId))
                 .filter((event) => this.filterFn(event, kind))
             this.appendEvents(events, this.userId)
         }
         if (updated) {
             const events = updated
-                .map((event) => toEvent(event, this.userId))
+                .map((event) => toEventSA(event, this.userId))
                 .filter((event) => this.filterFn(event, kind))
             this.updateEvents(events, this.userId)
         }
@@ -108,7 +107,7 @@ export class MessageTimeline {
         localEventId: string,
         localEvent: LocalTimelineEvent,
     ) => {
-        const event = toEvent(localEvent, this.userId)
+        const event = toEventSA(localEvent, this.userId)
         if (this.filterFn(event, kind)) {
             this.updateEvent(event, localEventId)
         }
@@ -181,7 +180,7 @@ export class MessageTimeline {
             return
         }
         const newEvent = toReplacedMessageEvent(oldEvent, event)
-        this.events.replace(event, eventIndex, this.events.value)
+        this.events.replace(newEvent, eventIndex, this.events.value)
         this.replacedEvents.add(event.eventId, oldEvent, newEvent)
         this.reactions.removeEvent(oldEvent)
         this.reactions.addEvent(newEvent)
@@ -293,4 +292,16 @@ export class MessageTimeline {
         this.threadsStats.remove(event)
         this.threads.remove(event)
     }
+}
+
+// todo this is duplicated
+function getEditsId(content: TimelineEvent_OneOf | undefined): string | undefined {
+    return content?.kind === RiverTimelineEvent.ChannelMessage ? content.editsEventId : undefined
+}
+
+// todo this is duplicated
+function getRedactsId(content: TimelineEvent_OneOf | undefined): string | undefined {
+    return content?.kind === RiverTimelineEvent.RedactionActionEvent
+        ? content.refEventId
+        : undefined
 }

@@ -1,15 +1,15 @@
 import axios from 'axios'
-import { dlog } from '@river-build/dlog'
+import { dlog } from '@towns-protocol/dlog'
 import {
 	contractAddressFromSpaceId,
 	makeTestClient,
 	TestClient,
 	makeUniqueSpaceStreamId,
-} from '@river-build/sdk'
+} from '@towns-protocol/sdk'
 
 import { encryptAndSendMediaPayload, getTestServerUrl, makeJpegBlob } from '../testUtils'
 
-const log = dlog('stream-metadata:test:spaceImage', {
+const log = dlog('test:stream-metadata:test:spaceImage', {
 	allowJest: true,
 	defaultEnabled: true,
 })

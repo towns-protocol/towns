@@ -1,4 +1,4 @@
-import { check } from '@river-build/dlog'
+import { check } from '@towns-protocol/dlog'
 import { isDefined } from '../../../check'
 import { PersistedObservable, persistedObservable } from '../../../observable/persistedObservable'
 import { Identifiable, LoadPriority, Store } from '../../../store/store'
@@ -9,7 +9,7 @@ import type {
     ChannelMessage_Post_Mention,
     ChannelProperties,
     PlainMessage,
-} from '@river-build/proto'
+} from '@towns-protocol/proto'
 import { MessageTimeline } from '../../timeline/timeline'
 
 export interface GdmModel extends Identifiable {
@@ -27,7 +27,11 @@ export interface GdmModel extends Identifiable {
 export class Gdm extends PersistedObservable<GdmModel> {
     timeline: MessageTimeline
     members: Members
-    constructor(id: string, private riverConnection: RiverConnection, store: Store) {
+    constructor(
+        id: string,
+        private riverConnection: RiverConnection,
+        store: Store,
+    ) {
         super({ id, isJoined: false, initialized: false }, store, LoadPriority.high)
         this.timeline = new MessageTimeline(id, riverConnection.userId, riverConnection)
         this.members = new Members(id, riverConnection, store)

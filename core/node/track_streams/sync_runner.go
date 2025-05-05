@@ -17,13 +17,13 @@ import (
 	"go.uber.org/zap"
 	"golang.org/x/sync/semaphore"
 
+	"github.com/towns-protocol/towns/core/contracts/river"
 	"github.com/towns-protocol/towns/core/node/crypto"
 	"github.com/towns-protocol/towns/core/node/events"
 	"github.com/towns-protocol/towns/core/node/logging"
 	"github.com/towns-protocol/towns/core/node/nodes"
 	"github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/protocol/protocolconnect"
-	"github.com/towns-protocol/towns/core/node/registries"
 	"github.com/towns-protocol/towns/core/node/shared"
 )
 
@@ -89,7 +89,7 @@ type TrackedViewConstructorFn func(
 
 func (sr *SyncRunner) Run(
 	rootCtx context.Context,
-	stream *registries.GetStreamResult,
+	stream *river.StreamWithId,
 	applyHistoricalStreamContents bool,
 	nodeRegistry nodes.NodeRegistry,
 	onChainConfig crypto.OnChainConfiguration,
@@ -97,8 +97,8 @@ func (sr *SyncRunner) Run(
 	metrics *TrackStreamsSyncMetrics,
 ) {
 	var (
-		promLabels                = prometheus.Labels{"type": channelLabelType(stream.StreamId)}
-		remotes                   = nodes.NewStreamNodesWithLock(stream.Nodes, common.Address{})
+		promLabels                = prometheus.Labels{"type": channelLabelType(stream.StreamId())}
+		remotes                   = nodes.NewStreamNodesWithLock(stream.ReplicationFactor(), stream.Nodes(), common.Address{})
 		restartSyncSessionCounter = 0
 	)
 
@@ -164,13 +164,12 @@ func (sr *SyncRunner) Run(
 
 		syncPos := []*protocol.SyncCookie{{
 			NodeAddress:       sticky[:],
-			StreamId:          stream.StreamId[:],
+			StreamId:          stream.Id[:],
 			MinipoolGen:       math.MaxInt64, // force sync reset
-			MinipoolSlot:      0,
 			PrevMiniblockHash: common.Hash{}.Bytes(),
 		}}
 
-		log.Debugw("Start sync stream session")
+		log.Debugw("Start sync stream session", "node", sticky)
 
 		streamUpdates, err := client.SyncStreams(syncCtx, connect.NewRequest(&protocol.SyncStreamsRequest{
 			SyncPos: syncPos,
@@ -179,6 +178,7 @@ func (sr *SyncRunner) Run(
 		metrics.SyncSessionInFlight.Dec()
 
 		if err != nil {
+			log.Debugw("start sync err", "err", err)
 			remotes.AdvanceStickyPeer(remoteAddr)
 			syncCancel()
 			if !errors.Is(err, context.Canceled) {
@@ -193,7 +193,7 @@ func (sr *SyncRunner) Run(
 		// ensure that the first message is received within 30 seconds.
 		// if not cancel the sync session and restart a new one.
 		syncIDCtx, syncIDGot := context.WithTimeout(syncCtx, time.Minute)
-		go func(log *zap.SugaredLogger) {
+		go func(log *logging.Log) {
 			select {
 			case <-time.After(30 * time.Second):
 				log.Debugw("Didn't receive sync id within 30s, cancel sync session", "stream", stream.StreamId)
@@ -219,6 +219,7 @@ func (sr *SyncRunner) Run(
 				}
 				continue
 			}
+			log.Debugw("Received SYNC_NEW")
 			syncID = firstMsg.GetSyncId()
 		}
 
@@ -294,7 +295,7 @@ func (sr *SyncRunner) Run(
 					continue
 				}
 
-				if streamID != stream.StreamId {
+				if streamID != stream.StreamId() {
 					log.Errorw("Received update for unexpected stream", "want", stream.StreamId, "got", streamID)
 					syncCancel()
 					continue
@@ -318,10 +319,13 @@ func (sr *SyncRunner) Run(
 					continue
 				}
 
-				for _, block := range update.GetStream().GetMiniblocks() {
+				for i, block := range update.GetStream().GetMiniblocks() {
 					if !reset {
-						if err := trackedStream.ApplyBlock(block); err != nil {
-							log.Debugw("Unable to apply block", "stream", streamID, "err", err)
+						if err := trackedStream.ApplyBlock(
+							block,
+							update.GetStream().GetSnapshotByMiniblockIndex(i),
+						); err != nil {
+							log.Errorw("Unable to apply block", "err", err)
 						}
 					}
 					// If the stream was just allocated, process the miniblocks and events for notifications.
@@ -331,7 +335,17 @@ func (sr *SyncRunner) Run(
 						// Send notifications for all events in all blocks.
 						for _, event := range block.GetEvents() {
 							if parsedEvent, err := events.ParseEvent(event); err == nil {
-								_ = trackedStream.SendEventNotification(syncCtx, parsedEvent)
+								if err := trackedStream.SendEventNotification(syncCtx, parsedEvent); err != nil {
+									log.Errorw(
+										"Error sending event notification",
+										"error",
+										err,
+										"streamId",
+										streamID,
+										"eventHash",
+										event.Hash,
+									)
+								}
 							}
 						}
 					}
@@ -344,7 +358,7 @@ func (sr *SyncRunner) Run(
 					if applyHistoricalStreamContents {
 						if parsedEvent, err := events.ParseEvent(event); err == nil {
 							if err := trackedStream.SendEventNotification(syncCtx, parsedEvent); err != nil {
-								log.Debugw(
+								log.Errorw(
 									"Error sending notification for historical event",
 									"hash",
 									parsedEvent.Hash,
@@ -355,7 +369,7 @@ func (sr *SyncRunner) Run(
 						}
 					} else {
 						if err := trackedStream.ApplyEvent(syncCtx, event); err != nil {
-							log.Errorw("Unable to apply event", "stream", streamID, "err", err)
+							log.Errorw("Unable to apply event", "err", err)
 						}
 					}
 				}

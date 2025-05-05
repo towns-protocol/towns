@@ -1,40 +1,33 @@
-import { RiverRegistry, SpaceDapp } from '@river-build/web3'
+import { RiverRegistry, SpaceDapp } from '@towns-protocol/web3'
 import { makeStreamRpcClient } from '../../makeStreamRpcClient'
 import { RiverChain } from './models/riverChain'
 import { Identifiable, LoadPriority, Store } from '../../store/store'
-import { check, dlogger, shortenHexString } from '@river-build/dlog'
+import { check, dlogger, shortenHexString } from '@towns-protocol/dlog'
 import { PromiseQueue } from '../utils/promiseQueue'
 import {
     CryptoStore,
     EntitlementsDelegate,
-    GroupEncryptionAlgorithmId,
     type EncryptionDeviceInitOpts,
-} from '@river-build/encryption'
-import { Client } from '../../client'
+} from '@towns-protocol/encryption'
+import { Client, ClientOptions } from '../../client'
 import { SignerContext } from '../../signerContext'
 import { PersistedObservable, persistedObservable } from '../../observable/persistedObservable'
 import { userIdFromAddress } from '../../id'
 import { TransactionalClient } from './models/transactionalClient'
 import { Observable } from '../../observable/observable'
 import { AuthStatus } from './models/authStatus'
-import { RetryParams, expiryInterceptor } from '../../rpcInterceptors'
+import { expiryInterceptor, RetryParams } from '../../rpcInterceptors'
 import { Stream } from '../../stream'
 import { isDefined } from '../../check'
-import { UnpackEnvelopeOpts } from '../../sign'
 
 export interface ClientParams {
     signerContext: SignerContext
     cryptoStore: CryptoStore
     entitlementsDelegate: EntitlementsDelegate
-    persistenceStoreName?: string
-    logNamespaceFilter?: string
-    highPriorityStreamIds?: string[]
-    rpcRetryParams?: RetryParams
+    opts?: ClientOptions
     encryptionDevice?: EncryptionDeviceInitOpts
     onTokenExpired?: () => void
-    unpackEnvelopeOpts?: UnpackEnvelopeOpts
-    defaultGroupEncryptionAlgorithm?: GroupEncryptionAlgorithmId
-    logId?: string
+    rpcRetryParams?: RetryParams
 }
 
 export type OnStoppedFn = () => void
@@ -69,7 +62,7 @@ export class RiverConnection extends PersistedObservable<RiverConnectionModel> {
         public clientParams: ClientParams,
     ) {
         super({ id: '0', userExists: false }, store, LoadPriority.high)
-        const logId = this.clientParams.logId ?? shortenHexString(this.userId)
+        const logId = this.clientParams.opts?.logId ?? shortenHexString(this.userId)
         this.logger = dlogger(`csb:rconn:${logId}`)
         this.riverChain = new RiverChain(store, riverRegistryDapp, this.userId, logId)
     }
@@ -159,7 +152,7 @@ export class RiverConnection extends PersistedObservable<RiverConnectionModel> {
             return
         }
         this.logger.info(`setting rpcClient with urls: "${urls}"`)
-        const rpcClient = makeStreamRpcClient(
+        const rpcClient = await makeStreamRpcClient(
             urls,
             () => this.riverRegistryDapp.getOperationalNodeUrls(),
             {
@@ -177,12 +170,7 @@ export class RiverConnection extends PersistedObservable<RiverConnectionModel> {
             rpcClient,
             this.clientParams.cryptoStore,
             this.clientParams.entitlementsDelegate,
-            this.clientParams.persistenceStoreName,
-            this.clientParams.logNamespaceFilter,
-            this.clientParams.highPriorityStreamIds,
-            this.clientParams.unpackEnvelopeOpts,
-            this.clientParams.defaultGroupEncryptionAlgorithm,
-            this.clientParams.logId,
+            this.clientParams.opts,
         )
         client.setMaxListeners(100)
         this.client = client

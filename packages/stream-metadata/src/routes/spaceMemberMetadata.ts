@@ -1,6 +1,6 @@
 import { FastifyReply, FastifyRequest, type FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
-import { StreamPrefix, makeStreamId } from '@river-build/sdk'
+import { StreamPrefix, makeStreamId } from '@towns-protocol/sdk'
 
 import { config } from '../environment'
 import { isValidEthereumAddress } from '../validators'
@@ -76,18 +76,24 @@ const getSpaceMemberMetadata = async (
 	try {
 		const streamId = makeStreamId(StreamPrefix.Space, spaceAddress)
 		const streamView = await getStream(logger, streamId)
-		if (
-			streamView.contentKind === 'spaceContent' &&
-			streamView.spaceContent.encryptedSpaceImage?.eventId
-		) {
-			imageEventId = streamView.spaceContent.encryptedSpaceImage.eventId
+		if (streamView) {
+			if (
+				streamView.contentKind === 'spaceContent' &&
+				streamView.spaceContent.encryptedSpaceImage?.eventId
+			) {
+				imageEventId = streamView.spaceContent.encryptedSpaceImage.eventId
+			}
+		} else {
+			// Stream does not exist in contracts, so we can't get the image
+			imageEventId = 'unregistered'
 		}
 	} catch (error) {
-		// no-op
+		logger.error('Failed to get stream', { err: error, spaceAddress, tokenId })
+		imageEventId = 'unknown'
 	}
 
 	const [name, renewalPrice, membershipExpiration, isBanned] = await Promise.all([
-		space.SpaceOwner.read.getSpaceInfo(spaceAddress).then((spaceInfo) => spaceInfo.name),
+		spaceDapp.spaceOwner.read.getSpaceInfo(spaceAddress).then((spaceInfo) => spaceInfo.name),
 		space.Membership.read.getMembershipRenewalPrice(tokenId),
 		space.Membership.read.expiresAt(tokenId),
 		space.Banning.read.isBanned(tokenId),

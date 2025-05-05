@@ -13,15 +13,16 @@ import {
     SpacePayload_UpdateChannelAutojoin,
     SpacePayload_UpdateChannelHideUserJoinLeaveEvents,
     ChunkedMediaSchema,
-} from '@river-build/proto'
+} from '@towns-protocol/proto'
 import { StreamEncryptionEvents, StreamEvents, StreamStateEvents } from './streamEvents'
 import { StreamStateView_AbstractContent } from './streamStateView_AbstractContent'
 import { DecryptedContent } from './encryptedContentTypes'
-import { check, throwWithCode } from '@river-build/dlog'
+import { check, throwWithCode } from '@towns-protocol/dlog'
 import { logNever } from './check'
 import { contractAddressFromSpaceId, isDefaultChannelId, streamIdAsString } from './id'
 import { fromBinary } from '@bufbuild/protobuf'
 import { decryptDerivedAESGCM } from './crypto_utils'
+import { bytesToHex } from 'ethereum-cryptography/utils'
 
 export type ParsedChannelProperties = {
     isDefault: boolean
@@ -45,7 +46,6 @@ export class StreamStateView_Space extends StreamStateView_AbstractContent {
     }
 
     applySnapshot(
-        eventHash: string,
         _snapshot: Snapshot,
         content: SpacePayload_Snapshot,
         _cleartexts: Record<string, Uint8Array | string> | undefined,
@@ -53,11 +53,14 @@ export class StreamStateView_Space extends StreamStateView_AbstractContent {
     ): void {
         // loop over content.channels, update space channels metadata
         for (const payload of content.channels) {
-            this.addSpacePayload_Channel(eventHash, payload, payload.updatedAtEventNum, undefined)
+            this.addSpacePayload_Channel(payload, payload.updatedAtEventNum, undefined)
         }
 
         if (content.spaceImage?.data) {
-            this.encryptedSpaceImage = { data: content.spaceImage.data, eventId: eventHash }
+            this.encryptedSpaceImage = {
+                data: content.spaceImage.data,
+                eventId: bytesToHex(content.spaceImage.eventHash),
+            }
         }
     }
 
@@ -110,12 +113,7 @@ export class StreamStateView_Space extends StreamStateView_AbstractContent {
             case 'inception':
                 break
             case 'channel':
-                this.addSpacePayload_Channel(
-                    event.hashStr,
-                    payload.content.value,
-                    event.eventNum,
-                    stateEmitter,
-                )
+                this.addSpacePayload_Channel(payload.content.value, event.eventNum, stateEmitter)
                 break
             case 'updateChannelAutojoin':
                 this.addSpacePayload_UpdateChannelAutojoin(payload.content.value, stateEmitter)
@@ -216,7 +214,6 @@ export class StreamStateView_Space extends StreamStateView_AbstractContent {
     }
 
     private addSpacePayload_Channel(
-        _eventHash: string,
         payload: SpacePayload_ChannelMetadata | SpacePayload_ChannelUpdate,
         updatedAtEventNum: bigint,
         stateEmitter?: TypedEmitter<StreamStateEvents>,

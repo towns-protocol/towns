@@ -1,5 +1,5 @@
-import { SyncCookie } from '@river-build/proto'
-import { DLogger, check, dlog, dlogError } from '@river-build/dlog'
+import { SyncCookie } from '@towns-protocol/proto'
+import { DLogger, check, dlog, dlogError } from '@towns-protocol/dlog'
 import { StreamRpcClient } from './makeStreamRpcClient'
 import { SyncedStreamEvents } from './streamEvents'
 import TypedEmitter from 'typed-emitter'
@@ -17,7 +17,7 @@ export class SyncedStreams {
     // mapping of stream id to stream
     private readonly streams: Map<string, SyncedStream> = new Map()
     // loggers
-    private readonly logSync: DLogger
+    private readonly log: DLogger
     private readonly logError: DLogger
     // clientEmitter is used to proxy the events from the streams to the client
     private readonly clientEmitter: TypedEmitter<SyncedStreamEvents>
@@ -35,7 +35,7 @@ export class SyncedStreams {
         this.userId = userId
         this.rpcClient = rpcClient
         this.clientEmitter = clientEmitter
-        this.logSync = dlog('csb:cl:sync').extend(this.logId)
+        this.log = dlog('csb:cl:sync').extend(this.logId)
         this.logError = dlogError('csb:cl:sync:stream').extend(this.logId)
     }
 
@@ -95,11 +95,7 @@ export class SyncedStreams {
 
     public onNetworkStatusChanged(isOnline: boolean) {
         this.log('network status changed. Network online?', isOnline)
-        if (isOnline) {
-            // immediate retry if the network comes back online
-            this.log('back online, release retry wait', { syncState: this.syncState })
-            this.syncedStreamsLoop?.releaseRetryWait?.()
-        }
+        this.syncedStreamsLoop?.onNetworkStatusChanged(isOnline)
     }
 
     public startSyncStreams() {
@@ -150,9 +146,5 @@ export class SyncedStreams {
         }
         await this.syncedStreamsLoop?.removeStreamFromSync(streamId)
         this.streams.delete(streamId)
-    }
-
-    private log(...args: unknown[]): void {
-        this.logSync(...args)
     }
 }

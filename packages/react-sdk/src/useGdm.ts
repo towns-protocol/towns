@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import type { GdmModel } from '@river-build/sdk'
+import type { GdmModel } from '@towns-protocol/sdk'
 import { useSyncAgent } from './useSyncAgent'
 import { type ObservableConfig, useObservable } from './useObservable'
 

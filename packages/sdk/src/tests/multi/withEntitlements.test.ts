@@ -2,7 +2,7 @@
  * @group with-entitlements
  */
 
-import { dlog } from '@river-build/dlog'
+import { dlog } from '@towns-protocol/dlog'
 import {
     makeUserContextFromWallet,
     makeTestClient,
@@ -24,8 +24,8 @@ import {
     LegacyMembershipStruct,
     NoopRuleData,
     ETH_ADDRESS,
-} from '@river-build/web3'
-import { MembershipOp } from '@river-build/proto'
+} from '@towns-protocol/web3'
+import { MembershipOp } from '@towns-protocol/proto'
 import { makeBaseChainConfig } from '../../riverConfig'
 
 const base_log = dlog('csb:test:withEntitlements')
@@ -48,9 +48,8 @@ describe('withEntitlements', () => {
         const bob = await makeTestClient({ context: bobsContext })
         const bobsUserStreamId = makeUserStreamId(bob.userId)
 
-        const { fixedPricingModuleAddress, freeAllocation, price } = await getFreeSpacePricingSetup(
-            spaceDapp,
-        )
+        const { fixedPricingModuleAddress, freeAllocation, price } =
+            await getFreeSpacePricingSetup(spaceDapp)
 
         // create a space stream,
         log('Bob created user, about to create space')

@@ -8,13 +8,13 @@ import { SyncState, stateConstraints } from '../../syncedStreamsLoop'
 import { makeDonePromise, makeRandomUserContext, makeTestRpcClient, waitFor } from '../testUtils'
 import { makeUserInboxStreamId, streamIdToBytes, userIdFromAddress } from '../../id'
 import { make_UserInboxPayload_Ack, make_UserInboxPayload_Inception } from '../../types'
-import { dlog, shortenHexString } from '@river-build/dlog'
+import { dlog, shortenHexString } from '@towns-protocol/dlog'
 import TypedEmitter from 'typed-emitter'
 import EventEmitter from 'events'
 import { StreamEvents } from '../../streamEvents'
 import { SyncedStream } from '../../syncedStream'
 import { StubPersistenceStore } from '../../persistenceStore'
-import { Envelope, StreamEvent, PlainMessage } from '@river-build/proto'
+import { Envelope, StreamEvent, PlainMessage } from '@towns-protocol/proto'
 import { nanoid } from 'nanoid'
 
 const log = dlog('csb:test:syncedStreams')
@@ -46,11 +46,15 @@ describe('syncStreams', () => {
         // globals setup
         const stubPersistenceStore = new StubPersistenceStore()
         const done1 = makeDonePromise()
+        let userInboxDeviceSummaryUpdatedCount = 0
         const mockClientEmitter = new EventEmitter() as TypedEmitter<StreamEvents>
         mockClientEmitter.on('streamSyncActive', (isActive: boolean) => {
             if (isActive) {
                 done1.done()
             }
+        })
+        mockClientEmitter.on('userInboxDeviceSummaryUpdated', () => {
+            userInboxDeviceSummaryUpdatedCount++
         })
         // alice setup
         const rpcClient = await makeTestRpcClient()
@@ -114,6 +118,8 @@ describe('syncStreams', () => {
                 ),
             })
         }
+        // assert assumptions
+        expect(userInboxDeviceSummaryUpdatedCount).toBe(0)
 
         // post an ack (easiest way to put a string in a stream)
         await addEvent(
@@ -124,16 +130,9 @@ describe('syncStreams', () => {
         )
 
         // make sure it shows up
-        await waitFor(() =>
-            expect(
-                userInboxStream.view.timeline.find(
-                    (e) =>
-                        e.remoteEvent?.event.payload.case === 'userInboxPayload' &&
-                        e.remoteEvent?.event.payload.value.content.case === 'ack' &&
-                        e.remoteEvent?.event.payload.value.content.value.deviceKey === 'numero uno',
-                ),
-            ).toBeDefined(),
-        )
+        await waitFor(() => {
+            expect(userInboxDeviceSummaryUpdatedCount).toBe(1)
+        })
         const sendPing = async () => {
             if (!alicesSyncedStreams.pingInfo) {
                 throw new Error('syncId not set')
@@ -183,6 +182,9 @@ describe('syncStreams', () => {
             debug: ['drop_stream', alicesSyncedStreams.getSyncId()!, alicesUserInboxStreamIdStr],
         })
 
+        // assert assumptions
+        expect(userInboxDeviceSummaryUpdatedCount).toBe(1)
+
         // add second event
         await addEvent(
             make_UserInboxPayload_Ack({
@@ -192,16 +194,7 @@ describe('syncStreams', () => {
         )
 
         // make sure it shows up
-        await waitFor(() =>
-            expect(
-                userInboxStream.view.timeline.find(
-                    (e) =>
-                        e.remoteEvent?.event.payload.case === 'userInboxPayload' &&
-                        e.remoteEvent?.event.payload.value.content.case === 'ack' &&
-                        e.remoteEvent?.event.payload.value.content.value.deviceKey === 'numero dos',
-                ),
-            ).toBeDefined(),
-        )
+        await waitFor(() => expect(userInboxDeviceSummaryUpdatedCount).toBe(2))
 
         await alicesSyncedStreams.stopSync()
     })

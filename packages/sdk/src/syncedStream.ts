@@ -4,10 +4,10 @@ import {
     Snapshot,
     SyncCookie,
     PersistedSyncedStreamSchema,
-} from '@river-build/proto'
+} from '@towns-protocol/proto'
 import { Stream } from './stream'
 import { ParsedMiniblock, ParsedEvent, ParsedStreamResponse } from './types'
-import { DLogger, bin_toHexString, dlog } from '@river-build/dlog'
+import { DLogger, bin_toHexString, dlog } from '@towns-protocol/dlog'
 import { isDefined } from './check'
 import { IPersistenceStore, LoadedStream } from './persistenceStore'
 import { StreamEvents } from './streamEvents'
@@ -54,6 +54,8 @@ export class SyncedStream extends Stream implements ISyncedStream {
         return true
     }
 
+    // TODO: possibly a bug. Stream interface expects a non promise initialize.
+    // eslint-disable-next-line @typescript-eslint/no-misused-promises
     async initialize(
         nextSyncCookie: SyncCookie,
         events: ParsedEvent[],
@@ -81,6 +83,11 @@ export class SyncedStream extends Stream implements ISyncedStream {
         })
         await this.persistenceStore.saveSyncedStream(this.streamId, cachedSyncedStream)
         await this.persistenceStore.saveMiniblocks(this.streamId, miniblocks, 'forward')
+        await this.persistenceStore.saveSnapshot(
+            this.streamId,
+            miniblocks[0].header.miniblockNum,
+            snapshot,
+        )
         this.markUpToDate()
     }
 
@@ -157,7 +164,7 @@ export class SyncedStream extends Stream implements ISyncedStream {
             .filter(isDefined)
 
         const lastSnapshotMiniblockNum =
-            miniblock.header.snapshot !== undefined
+            miniblock.header.snapshot !== undefined || miniblock.header.snapshotHash !== undefined
                 ? miniblock.header.miniblockNum
                 : miniblock.header.prevSnapshotMiniblockNum
 

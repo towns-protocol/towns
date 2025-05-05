@@ -13,7 +13,7 @@ Running a Towns Stream Node from source is easy to do with [Go](https://go.dev/d
 - Yarn 1.22
 - Go 1.22.2 (see `go.work` file for up-to-date version)
 - [protobuf](https://protobuf.dev/)
-- [Buf](https://connect.build/docs/go/getting-started/#install-tools) tools (see [README.md](https://github.com/river-build/river/blob/main/core/node/README.md) for installation)
+- [Buf](https://connect.build/docs/go/getting-started/#install-tools) tools (see [README.md](https://github.com/towns-protocol/towns/blob/main/core/node/README.md) for installation)
 - Anvil - `curl -L https://foundry.paradigm.xyz | bash`
 
 ### Setup
@@ -22,12 +22,12 @@ Once you've installed Docker, Go, protobuf, Anvil, and buf, you can proceed to s
 
 ```bash
 # clone monorepo
-git clone https://github.com/river-build/river.git
+git clone https://github.com/towns-protocol/towns.git
 ```
 
 ### Run a Towns Stream Node Locally from Source using VSCode
 
-There's a VSCode task in [tasks.json](https://github.com/river-build/river/blob/main/.vscode/tasks.json#L21) that is recommended to be used to multiple local stream nodes with attached postgres and local base, river chains, respectively running in different anvil ports.
+There's a VSCode task in [tasks.json](https://github.com/towns-protocol/towns/blob/main/.vscode/tasks.json#L21) that is recommended to be used to multiple local stream nodes with attached postgres and local base, river chains, respectively running in different anvil ports.
 
 Running `~Start Local Dev~` command from the river repo in VSCode will do the following in order:
 

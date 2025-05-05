@@ -43,3 +43,40 @@ func (cc *CreationCookie) IsLocal(addr common.Address) bool {
 
 	return false
 }
+
+// CopyWithAddr returns a copy of the SyncCookie with the given address.
+func (sc *SyncCookie) CopyWithAddr(address common.Address) *SyncCookie {
+	return &SyncCookie{
+		NodeAddress:       address.Bytes(),
+		StreamId:          sc.GetStreamId(),
+		MinipoolGen:       sc.GetMinipoolGen(),
+		PrevMiniblockHash: sc.GetPrevMiniblockHash(),
+	}
+}
+
+// GetMiniblockSnapshot returns the snapshot for the given miniblock number.
+// Returns nil if the snapshot is not found.
+func (x *GetMiniblocksResponse) GetMiniblockSnapshot(num int64) *Envelope {
+	if x == nil || x.Snapshots == nil || len(x.Snapshots) == 0 {
+		return nil
+	}
+
+	return x.Snapshots[num]
+}
+
+// GetSnapshotByMiniblockIndex returns the snapshot by the given miniblock index in the list.
+// StreamAndCookie contains a list of miniblocks starting from the latest snapshot.
+// Meaning the first miniblock in the list is the latest snapshot.
+// Meaning it returns the snapshot only when i is 0.
+func (x *StreamAndCookie) GetSnapshotByMiniblockIndex(i int) *Envelope {
+	if i == 0 {
+		return x.GetSnapshot()
+	}
+
+	return nil
+}
+
+// IsSnapshot returns true if the miniblock header has a snapshot.
+func (x *MiniblockHeader) IsSnapshot() bool {
+	return x.GetSnapshot() != nil || len(x.GetSnapshotHash()) > 0
+}

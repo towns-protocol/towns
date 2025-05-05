@@ -17,9 +17,9 @@ import {
     NoopRuleData,
     Permission,
     createSpaceDapp,
-} from '@river-build/web3'
+} from '@towns-protocol/web3'
 import { makeBaseChainConfig } from '../../riverConfig'
-import { dlog } from '@river-build/dlog'
+import { dlog } from '@towns-protocol/dlog'
 
 const log = dlog('csb:test:mediaWithEntitlements')
 
@@ -54,9 +54,8 @@ describe('mediaWithEntitlements', () => {
         await provider.fundWallet()
         const spaceDapp = createSpaceDapp(provider, baseConfig.chainConfig)
 
-        const { fixedPricingModuleAddress, freeAllocation, price } = await getFreeSpacePricingSetup(
-            spaceDapp,
-        )
+        const { fixedPricingModuleAddress, freeAllocation, price } =
+            await getFreeSpacePricingSetup(spaceDapp)
         // create a space stream,
         const membershipInfo: LegacyMembershipStruct = {
             settings: {
@@ -152,9 +151,8 @@ describe('mediaWithEntitlements', () => {
         await provider.fundWallet()
         const spaceDapp = createSpaceDapp(provider, baseConfig.chainConfig)
 
-        const { fixedPricingModuleAddress, freeAllocation, price } = await getFreeSpacePricingSetup(
-            spaceDapp,
-        )
+        const { fixedPricingModuleAddress, freeAllocation, price } =
+            await getFreeSpacePricingSetup(spaceDapp)
 
         // create a space stream,
         const membershipInfo: LegacyMembershipStruct = {

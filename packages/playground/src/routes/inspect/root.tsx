@@ -1,4 +1,5 @@
 import {
+    getStreamMetadataUrl,
     isChannelStreamId,
     isDMChannelStreamId,
     isGDMChannelStreamId,
@@ -9,11 +10,11 @@ import {
     isUserSettingsStreamId,
     isUserStreamId,
     isValidStreamId,
-} from '@river-build/sdk'
+} from '@towns-protocol/sdk'
 import { useMemo, useState } from 'react'
-import { useAgentConnection, useSyncAgent } from '@river-build/react-sdk'
+import { useAgentConnection, useSyncAgent } from '@towns-protocol/react-sdk'
 import { useQuery } from '@tanstack/react-query'
-import { SpaceAddressFromSpaceId } from '@river-build/web3'
+import { SpaceAddressFromSpaceId } from '@towns-protocol/web3'
 import { Input } from '@/components/ui/input'
 import { GridSidePanel } from '@/components/layout/grid-side-panel'
 import { jsonStringify } from '@/utils/json-stringify'
@@ -36,22 +37,6 @@ const checkId = (id: string) => {
         resultIfStrip0x: id.startsWith('0x') ? check(id.slice(2)) : false,
         isStreamId: isValidStreamId(id),
     }))
-}
-
-const buildStreamMetadataUrl = (
-    // eslint-disable-next-line @typescript-eslint/ban-types
-    env: 'gamma' | 'omega' | 'alpha' | 'local_single' | (string & {}),
-) => {
-    switch (env) {
-        case 'omega':
-            return `https://river.delivery`
-        case 'gamma':
-            return `https://gamma.river.delivery`
-        case 'alpha':
-            return `https://alpha.river.delivery`
-        default:
-            return `http://localhost:3002`
-    }
 }
 
 export const InspectRoute = () => {
@@ -153,7 +138,7 @@ const SpaceInfo = ({ spaceId }: { spaceId: string }) => {
                 return
             }
             const spaceAddress = SpaceAddressFromSpaceId(spaceId)
-            return fetch(`${buildStreamMetadataUrl(env)}/space/${spaceAddress}`).then((res) =>
+            return fetch(`${getStreamMetadataUrl(env)}/space/${spaceAddress}`).then((res) =>
                 res.json(),
             )
         },

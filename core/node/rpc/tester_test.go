@@ -14,6 +14,7 @@ import (
 	"runtime"
 	"slices"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -21,8 +22,10 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/puzpuzpuz/xsync/v4"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/atomic"
 
 	"github.com/towns-protocol/towns/core/config"
 	"github.com/towns-protocol/towns/core/contracts/river"
@@ -81,6 +84,7 @@ type serviceTester struct {
 
 type serviceTesterOpts struct {
 	numNodes          int
+	numOperators      int
 	replicationFactor int
 	start             bool
 	btcParams         *crypto.TestParams
@@ -128,9 +132,15 @@ func newServiceTester(t *testing.T, opts serviceTesterOpts) *serviceTester {
 
 	btcParams := opts.btcParams
 	if btcParams == nil {
-		btcParams = &crypto.TestParams{NumKeys: opts.numNodes, MineOnTx: true, AutoMine: true}
+		btcParams = &crypto.TestParams{
+			NumKeys:      opts.numNodes,
+			MineOnTx:     true,
+			AutoMine:     true,
+			NumOperators: opts.numOperators,
+		}
 	} else if btcParams.NumKeys == 0 {
 		btcParams.NumKeys = opts.numNodes
+		btcParams.NumOperators = opts.numOperators
 	}
 	btc, err := crypto.NewBlockchainTestContext(
 		st.ctx,
@@ -242,6 +252,7 @@ func (st *serviceTester) startAutoMining() {
 		return
 	}
 
+	// TODO: FIX: remove
 	// hack to ensure that the chain always produces blocks (automining=true)
 	// commit on simulated backend with no pending txs can sometimes crash in the simulator.
 	// by having a pending tx with automining enabled we can work around that issue.
@@ -410,7 +421,7 @@ func (st *serviceTester) compareStreamDataInStorage(
 	var data []*storage.DebugReadStreamDataResult
 	for _, n := range st.nodes {
 		// TODO: occasionally n.service.storage.DebugReadStreamData crashes due to nil pointer dereference,
-		// example: https://github.com/river-build/river/actions/runs/10127906870/job/28006223317#step:18:113
+		// example: https://github.com/towns-protocol/towns/actions/runs/10127906870/job/28006223317#step:18:113
 		// the stack trace doesn't provide context which deref fails, therefore deref field by field.
 		svc := n.service
 		str := svc.storage
@@ -472,7 +483,7 @@ func (st *serviceTester) compareStreamDataInStorage(
 				)
 				for j, mb := range data[i].Miniblocks {
 					exp := data[0].Miniblocks[j]
-					_ = assert.EqualValues(t, exp.MiniblockNumber, mb.MiniblockNumber, "Bad mb num in node %d", i) &&
+					_ = assert.EqualValues(t, exp.Number, mb.Number, "Bad mb num in node %d", i) &&
 						assert.EqualValues(t, exp.Hash, mb.Hash, "Bad mb hash in node %d", i) &&
 						assert.Equal(
 							t,
@@ -521,45 +532,88 @@ func (st *serviceTester) httpGet(url string) string {
 	return string(body)
 }
 
-type testClient struct {
-	t               *testing.T
-	ctx             context.Context
-	assert          *assert.Assertions
-	require         *require.Assertions
-	client          protocolconnect.StreamServiceClient
-	node2nodeClient protocolconnect.NodeToNodeClient
-	wallet          *crypto.Wallet
-	userId          common.Address
-	userStreamId    StreamId
-	name            string
+type receivedStreamUpdates struct {
+	mu      sync.Mutex
+	updates []*SyncStreamsResponse
 }
 
-func (st *serviceTester) newTestClient(i int) *testClient {
+func (r *receivedStreamUpdates) AddUpdate(update *SyncStreamsResponse) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	r.updates = append(r.updates, update)
+}
+
+func (r *receivedStreamUpdates) Clone() []*SyncStreamsResponse {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	return slices.Clone(r.updates)
+}
+
+type testClient struct {
+	t                    *testing.T
+	ctx                  context.Context
+	assert               *assert.Assertions
+	require              *require.Assertions
+	client               protocolconnect.StreamServiceClient
+	node2nodeClient      protocolconnect.NodeToNodeClient
+	nodes                []*testNodeRecord
+	wallet               *crypto.Wallet
+	userId               common.Address
+	userStreamId         StreamId
+	name                 string
+	syncID               atomic.String // use testClient#SyncID() to retrieve the value
+	enableSync           bool
+	updates              *xsync.Map[StreamId, *receivedStreamUpdates]
+	disableMiniblockComp bool
+}
+
+type testClientOpts struct {
+	disableMiniblockComp bool
+	// enableSync set to true means that the client will sync with all channels that it joined and compares all
+	// received updates with other clients.
+	enableSync bool
+}
+
+func (st *serviceTester) newTestClient(i int, opts testClientOpts) *testClient {
 	wallet, err := crypto.NewWallet(st.ctx)
 	st.require.NoError(err)
+	return st.newTestClientWithWallet(i, opts, wallet)
+}
+
+func (st *serviceTester) newTestClientWithWallet(i int, opts testClientOpts, wallet *crypto.Wallet) *testClient {
 	return &testClient{
-		t:               st.t,
-		ctx:             st.ctx,
-		assert:          assert.New(st.t),
-		require:         st.require,
-		client:          st.testClient(i),
-		node2nodeClient: st.testNode2NodeClient(i),
-		wallet:          wallet,
-		userId:          wallet.Address,
-		userStreamId:    UserStreamIdFromAddr(wallet.Address),
-		name:            fmt.Sprintf("%d-%s", i, wallet.Address.Hex()[2:8]),
+		t:                    st.t,
+		ctx:                  st.ctx,
+		assert:               assert.New(st.t),
+		require:              st.require,
+		client:               st.testClient(i),
+		node2nodeClient:      st.testNode2NodeClient(i),
+		nodes:                st.nodes,
+		wallet:               wallet,
+		userId:               wallet.Address,
+		userStreamId:         UserStreamIdFromAddr(wallet.Address),
+		name:                 fmt.Sprintf("%d-%s", i, wallet.Address.Hex()[2:8]),
+		enableSync:           opts.enableSync,
+		updates:              xsync.NewMap[StreamId, *receivedStreamUpdates](),
+		disableMiniblockComp: opts.disableMiniblockComp,
 	}
 }
 
 // newTestClients creates a testClients with clients connected to nodes in round-robin fashion.
-func (st *serviceTester) newTestClients(numClients int) testClients {
+func (st *serviceTester) newTestClients(numClients int, opts testClientOpts) testClients {
 	clients := make(testClients, numClients)
 	for i := range clients {
-		clients[i] = st.newTestClient(i % st.opts.numNodes)
+		clients[i] = st.newTestClient(i%st.opts.numNodes, opts)
 	}
 	clients.parallelForAll(func(tc *testClient) {
 		tc.createUserStream()
 	})
+	clients.parallelForAll(func(tc *testClient) {
+		tc.startSync()
+	})
+
 	return clients
 }
 
@@ -570,19 +624,140 @@ func (tc *testClient) withRequireFor(t require.TestingT) *testClient {
 	return &tcc
 }
 
-func (tc *testClient) createUserStream(
+func (tc *testClient) createUserStreamGetCookie(
 	streamSettings ...*StreamSettings,
-) *MiniblockRef {
+) *SyncCookie {
 	var ss *StreamSettings
 	if len(streamSettings) > 0 {
 		ss = streamSettings[0]
 	}
 	cookie, _, err := createUser(tc.ctx, tc.wallet, tc.client, ss)
 	tc.require.NoError(err)
+	return cookie
+}
+
+func (tc *testClient) createUserStreamsWithEncryptionDevice(
+	encryptionDevice *UserMetadataPayload_EncryptionDevice,
+) *SyncCookie {
+	userCookie := tc.createUserStreamGetCookie()
+
+	_, _, err := createUserInboxStream(tc.ctx, tc.wallet, tc.client, nil)
+	tc.require.NoError(err)
+
+	cookie, _, err := createUserMetadataStream(tc.ctx, tc.wallet, tc.client, nil)
+	tc.require.NoError(err)
+
+	event, err := MakeEnvelopeWithPayload(
+		tc.wallet,
+		Make_UserMetadataPayload_EncryptionDevice(
+			encryptionDevice.DeviceKey,
+			encryptionDevice.FallbackKey,
+		),
+		&MiniblockRef{
+			Num:  cookie.GetMinipoolGen() - 1,
+			Hash: common.Hash(cookie.GetPrevMiniblockHash()),
+		},
+	)
+	tc.require.NoError(err)
+
+	addEventResp, err := tc.client.AddEvent(
+		tc.ctx,
+		&connect.Request[AddEventRequest]{
+			Msg: &AddEventRequest{
+				StreamId: cookie.StreamId,
+				Event:    event,
+			},
+		},
+	)
+	tc.require.NoError(err)
+	tc.require.Nil(addEventResp.Msg.GetError())
+
+	return userCookie
+}
+
+func (tc *testClient) createUserStream(
+	streamSettings ...*StreamSettings,
+) *MiniblockRef {
+	cookie := tc.createUserStreamGetCookie(streamSettings...)
 	return &MiniblockRef{
 		Hash: common.BytesToHash(cookie.PrevMiniblockHash),
 		Num:  cookie.MinipoolGen - 1,
 	}
+}
+
+func (tcs testClients) requireSubscribed(streamId StreamId, expectedMemberships ...[]common.Address) {
+	tcs.parallelForAll(func(tc *testClient) {
+		tc.requireSubscribed(streamId)
+	})
+}
+
+func (tc *testClient) requireSubscribed(channelId StreamId) {
+	if !tc.enableSync {
+		return
+	}
+
+	tc.require.Eventually(func() bool {
+		_, ok := tc.updates.Load(channelId)
+		return ok
+	}, 10*time.Second, 10*time.Millisecond)
+}
+
+func (tc *testClient) syncChannel(cookie *SyncCookie) {
+	if !tc.enableSync {
+		return
+	}
+
+	_, err := tc.client.ModifySync(tc.ctx, connect.NewRequest(&ModifySyncRequest{
+		SyncId:     tc.SyncID(),
+		AddStreams: []*SyncCookie{cookie},
+	}))
+
+	tc.require.NoError(err)
+}
+
+// startSync initiates a sync session without streams.
+func (tc *testClient) startSync() {
+	if !tc.enableSync {
+		return
+	}
+
+	updates, err := tc.client.SyncStreams(tc.ctx, connect.NewRequest(&SyncStreamsRequest{}))
+	tc.require.NoError(err)
+
+	if updates.Receive() {
+		tc.require.NoError(updates.Err())
+		update := updates.Msg()
+		tc.require.Equal(SyncOp_SYNC_NEW, update.GetSyncOp())
+		tc.syncID.Store(update.GetSyncId())
+	} else {
+		tc.assert.Fail("Didn't receive sync new update")
+	}
+
+	go func() {
+		for updates.Receive() {
+			tc.require.NoError(updates.Err())
+
+			update := updates.Msg()
+			if update.GetSyncOp() == SyncOp_SYNC_UPDATE {
+				streamID, _ := StreamIdFromBytes(update.GetStream().GetNextSyncCookie().GetStreamId())
+				streamUpdates := &receivedStreamUpdates{}
+				updates, _ := tc.updates.LoadOrStore(streamID, streamUpdates)
+				updates.AddUpdate(update)
+			}
+		}
+	}()
+}
+
+func (tc *testClient) SyncID() string {
+	for range 50 {
+		if syncID := tc.syncID.Load(); syncID != "" {
+			return syncID
+		}
+		err := SleepWithContext(tc.ctx, 100*time.Millisecond)
+		tc.require.NoError(err, "Failed to get sync ID")
+	}
+	tc.require.Fail("Failed to get sync ID")
+	return ""
 }
 
 func (tc *testClient) createSpace(
@@ -605,7 +780,7 @@ func (tc *testClient) createSpace(
 func (tc *testClient) createChannel(
 	spaceId StreamId,
 	streamSettings ...*StreamSettings,
-) (StreamId, *MiniblockRef) {
+) (StreamId, *MiniblockRef, *SyncCookie) {
 	channelId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 	var ss *StreamSettings
 	if len(streamSettings) > 0 {
@@ -616,10 +791,14 @@ func (tc *testClient) createChannel(
 	return channelId, &MiniblockRef{
 		Hash: common.BytesToHash(cookie.PrevMiniblockHash),
 		Num:  cookie.MinipoolGen - 1,
-	}
+	}, cookie
 }
 
-func (tc *testClient) joinChannel(spaceId StreamId, channelId StreamId, mb *MiniblockRef) {
+func (tc *testClient) joinChannel(
+	spaceId StreamId,
+	channelId StreamId,
+	userStreamMb *MiniblockRef,
+) *MemberPayload_Membership {
 	userJoin, err := MakeEnvelopeWithPayload(
 		tc.wallet,
 		Make_UserPayload_Membership(
@@ -628,12 +807,24 @@ func (tc *testClient) joinChannel(spaceId StreamId, channelId StreamId, mb *Mini
 			nil,
 			spaceId[:],
 		),
-		mb,
+		userStreamMb,
 	)
 	tc.require.NoError(err)
 
 	userStreamId := UserStreamIdFromAddr(tc.wallet.Address)
 	tc.addEvent(userStreamId, userJoin)
+
+	// The above add appends an event to the user's user stream. Once it reaches the node, the node will
+	// create a derived membership event and add it to the channel.
+	// The following returned payload content is the content of the membership event we would expect to see
+	// in the channel if the user is indeed entitled to the channel, and the above event is successfully added.
+	// Returning this is useful for understanding what kind of content a bot might see in the channel.
+	return &MemberPayload_Membership{
+		Op:               MembershipOp_SO_JOIN,
+		UserAddress:      tc.wallet.Address[:],
+		InitiatorAddress: tc.wallet.Address[:],
+		StreamParentId:   spaceId[:],
+	}
 }
 
 func (tc *testClient) getLastMiniblockHash(streamId StreamId) *MiniblockRef {
@@ -653,6 +844,27 @@ func (tc *testClient) say(channelId StreamId, message string) {
 	tc.require.NoError(err)
 
 	tc.addEvent(channelId, envelope)
+}
+
+func (tc *testClient) sayWithSessionAndTags(
+	channelId StreamId,
+	message string,
+	tags *Tags,
+	session []byte,
+	deviceKey string,
+) (eventHash []byte) {
+	ref := tc.getLastMiniblockHash(channelId)
+	envelope, err := MakeEnvelopeWithPayloadAndTags(
+		tc.wallet,
+		Make_ChannelPayload_Message_WithSessionBytes(message, session, deviceKey),
+		ref,
+		tags,
+	)
+	tc.require.NoError(err)
+
+	tc.addEvent(channelId, envelope)
+
+	return envelope.Hash
 }
 
 func (tc *testClient) addEvent(streamId StreamId, envelope *Envelope) {
@@ -850,7 +1062,7 @@ func (tc *testClient) getStreamAndView(
 	stream := tc.getStream(streamId)
 	var view *StreamView
 	var err error
-	view, err = MakeRemoteStreamView(tc.ctx, stream)
+	view, err = MakeRemoteStreamView(stream)
 	tc.require.NoError(err)
 	tc.require.NotNil(view)
 
@@ -886,7 +1098,7 @@ func (tc *testClient) maybeDumpStream(stream *StreamAndCookie) {
 			tc.name,
 			"Dumping stream",
 			"\n",
-			dumpevents.DumpStream(tc.ctx, stream, dumpevents.DumpOpts{EventContent: true, TestMessages: true}),
+			dumpevents.DumpStream(stream, dumpevents.DumpOpts{EventContent: true, TestMessages: true}),
 		)
 	}
 }
@@ -898,11 +1110,17 @@ func (tc *testClient) getMiniblocks(streamId StreamId, fromInclusive, toExclusiv
 		ToExclusive:   toExclusive,
 	}))
 	tc.require.NoError(err)
-	mbs, err := NewMiniblocksInfoFromProtos(
-		resp.Msg.Miniblocks,
-		NewParsedMiniblockInfoOpts().WithExpectedBlockNumber(fromInclusive),
-	)
-	tc.require.NoError(err)
+
+	mbs := make([]*MiniblockInfo, len(resp.Msg.GetMiniblocks()))
+	for i, pb := range resp.Msg.GetMiniblocks() {
+		mbs[i], err = NewMiniblockInfoFromProto(
+			pb, resp.Msg.GetMiniblockSnapshot(fromInclusive+int64(i)),
+			NewParsedMiniblockInfoOpts().
+				WithExpectedBlockNumber(fromInclusive+int64(i)),
+		)
+		tc.require.NoError(err)
+	}
+
 	return mbs
 }
 
@@ -931,6 +1149,136 @@ func (tc *testClient) addHistoryToView(
 	newView, err := view.CopyAndPrependMiniblocks(mbs)
 	tc.require.NoError(err)
 	return newView
+}
+
+func overAllEvents(
+	require *require.Assertions,
+	channel *StreamAndCookie,
+	eventFilter func(*ParsedEvent) bool,
+) bool {
+	for _, block := range channel.Miniblocks {
+		events, err := ParseEvents(block.Events)
+		require.NoError(err)
+		for _, event := range events {
+			if eventFilter(event) {
+				return true
+			}
+		}
+	}
+
+	for _, envelope := range channel.Events {
+		event, err := ParseEvent(envelope)
+		require.NoError(err)
+		if eventFilter(event) {
+			return true
+		}
+	}
+
+	return false
+}
+
+func isKeySolicitation(
+	event *ParsedEvent,
+	deviceKey string,
+	optionalSessionId string,
+) bool {
+	if payload := event.Event.GetMemberPayload(); payload != nil {
+		if solicitation := payload.GetKeySolicitation(); solicitation != nil {
+			if solicitation.DeviceKey == deviceKey {
+				return optionalSessionId == "" || slices.Contains(solicitation.SessionIds[:], optionalSessionId)
+			}
+		}
+	}
+	return false
+}
+
+func findKeySolicitation(
+	require *require.Assertions,
+	channel *StreamAndCookie,
+	deviceKey string,
+	sessionId string,
+) {
+	exists := overAllEvents(
+		require,
+		channel,
+		func(event *ParsedEvent) bool {
+			return isKeySolicitation(event, deviceKey, sessionId)
+		},
+	)
+	require.True(exists)
+}
+
+func containsKeySolicitation(
+	require *require.Assertions,
+	channel *StreamAndCookie,
+	deviceKey string,
+) bool {
+	return overAllEvents(
+		require, channel,
+		func(event *ParsedEvent) bool {
+			return isKeySolicitation(event, deviceKey, "")
+		},
+	)
+}
+
+func (tc *testClient) requireKeySolicitation(channelId StreamId, deviceKey string, sessionId string) {
+	tc.eventually(func(tc *testClient) {
+		channel := tc.getStream(channelId)
+		findKeySolicitation(tc.require, channel, deviceKey, sessionId)
+	})
+}
+
+func (tc *testClient) requireNoKeySolicitation(
+	channelId StreamId,
+	deviceKey string,
+	waitTime time.Duration,
+	tick time.Duration,
+) {
+	tc.require.Never(func() bool {
+		channel := tc.getStream(channelId)
+		return containsKeySolicitation(tc.require, channel, deviceKey)
+	}, waitTime, tick, "Expected no key solicitation for device in channel")
+}
+
+func (tc *testClient) solicitKeys(
+	channelId StreamId,
+	deviceKey string,
+	fallbackKey string,
+	isNewDevice bool,
+	sessionIds []string,
+) *MemberPayload_KeySolicitation {
+	payload := Make_MemberPayload_KeySolicitation(deviceKey, fallbackKey, isNewDevice, sessionIds)
+	envelope, err := MakeEnvelopeWithPayload(
+		tc.wallet,
+		payload,
+		tc.getLastMiniblockHash(channelId),
+	)
+	tc.require.NoError(err)
+	tc.addEvent(channelId, envelope)
+	return payload.MemberPayload.GetKeySolicitation()
+}
+
+func (tc *testClient) sendSolicitationResponse(
+	user common.Address,
+	channelId StreamId,
+	deviceKey string,
+	sessionIds []string,
+	ciphertexts string,
+) {
+	userInboxStreamId := UserInboxStreamIdFromAddress(user)
+	lastMb := tc.getLastMiniblockHash(userInboxStreamId)
+
+	event, err := MakeEnvelopeWithPayload(
+		tc.wallet,
+		Make_UserInboxPayload_GroupEncryptionSessions(
+			channelId,
+			sessionIds,
+			map[string]string{deviceKey: ciphertexts},
+		),
+		lastMb,
+	)
+	tc.require.NoError(err)
+	tc.addEvent(userInboxStreamId, event)
 }
 
 func (tc *testClient) requireMembership(streamId StreamId, expectedMemberships []common.Address) {
@@ -1050,13 +1398,13 @@ func (tcs testClients) parallelForAllT(t require.TestingT, f func(*testClient)) 
 	}
 }
 
-// setupChannelWithClients creates a channel and returns a testClients with clients connected to it.
+// setupChannelWithClients creates a channel and returns a testClients with clients subscribed/connected to it.
 // The first client is the creator of both the space and the channel.
 // Other clients join the channel.
 // Clients are connected to nodes in a round-robin fashion.
 func (tcs testClients) createChannelAndJoin(spaceId StreamId) StreamId {
 	alice := tcs[0]
-	channelId, _ := alice.createChannel(spaceId)
+	channelId, _, syncCookie := alice.createChannel(spaceId)
 
 	tcs[1:].parallelForAll(func(tc *testClient) {
 		userLastMb := tc.getLastMiniblockHash(tc.userStreamId)
@@ -1065,66 +1413,144 @@ func (tcs testClients) createChannelAndJoin(spaceId StreamId) StreamId {
 
 	tcs.requireMembership(channelId)
 
+	tcs.parallelForAll(func(tc *testClient) {
+		tc.syncChannel(syncCookie)
+	})
+
+	tcs.requireSubscribed(channelId)
+
 	return channelId
 }
 
-func (tcs testClients) compareNowImpl(t require.TestingT, streamId StreamId) []*StreamAndCookie {
+func (tcs testClients) compareNowImpl(
+	t require.TestingT,
+	streamId StreamId,
+	miniBlockChain bool,
+	syncUpdates bool,
+) []*StreamAndCookie {
 	assert := assert.New(t)
-	streamC := make(chan *StreamAndCookie, len(tcs))
-	tcs.parallelForAllT(t, func(tc *testClient) {
-		streamC <- tc.getStream(streamId)
-	})
-	streams := []*StreamAndCookie{}
-	for range tcs {
-		streams = append(streams, <-streamC)
-	}
-	if testfmt.Enabled() {
-		testfmt.Println(tcs[0].t, "compareNowImpl: Got all streams")
-		for i, stream := range streams {
-			testfmt.Println(
-				tcs[0].t,
-				"    ",
-				i,
-				"MBs:",
+	success := true
+	var streams []*StreamAndCookie
+
+	if miniBlockChain {
+		streamC := make(chan *StreamAndCookie, len(tcs))
+		tcs.parallelForAllT(t, func(tc *testClient) {
+			streamC <- tc.getStream(streamId)
+		})
+
+		for range tcs {
+			streams = append(streams, <-streamC)
+		}
+		if false /*testfmt.Enabled()*/ {
+			testfmt.Println(tcs[0].t, "compareNowImpl: Got all streams")
+			for i, stream := range streams {
+				testfmt.Println(
+					tcs[0].t,
+					"    ",
+					i,
+					"MBs:",
+					len(stream.Miniblocks),
+					"Gen:",
+					stream.NextSyncCookie.MinipoolGen,
+					"Events:",
+					len(stream.Events),
+				)
+			}
+		}
+		first := streams[0]
+		for i, stream := range streams[1:] {
+			success = success && assert.Equal(
+				len(first.Miniblocks),
 				len(stream.Miniblocks),
-				"Gen:",
+				"different number of miniblocks, 0 and %d",
+				i+1,
+			)
+			success = success &&
+				assert.Equal(len(first.Events), len(stream.Events), "different number of events, 0 and %d", i+1)
+			success = success && assert.Equal(
+				common.BytesToHash(first.NextSyncCookie.PrevMiniblockHash).Hex(),
+				common.BytesToHash(stream.NextSyncCookie.PrevMiniblockHash).Hex(),
+				"different prev miniblock hash, 0 and %d",
+				i+1,
+			)
+			success = success && assert.Equal(
+				first.NextSyncCookie.MinipoolGen,
 				stream.NextSyncCookie.MinipoolGen,
-				"Events:",
-				len(stream.Events),
+				"different minipool gen, 0 and %d",
+				i+1,
 			)
 		}
 	}
-	first := streams[0]
-	var success bool
-	for i, stream := range streams[1:] {
-		success = assert.Equal(
-			len(first.Miniblocks),
-			len(stream.Miniblocks),
-			"different number of miniblocks, 0 and %d",
-			i+1,
-		)
-		success = success &&
-			assert.Equal(len(first.Events), len(stream.Events), "different number of events, 0 and %d", i+1)
-		success = success && assert.Equal(
-			common.BytesToHash(first.NextSyncCookie.PrevMiniblockHash).Hex(),
-			common.BytesToHash(stream.NextSyncCookie.PrevMiniblockHash).Hex(),
-			"different prev miniblock hash, 0 and %d",
-			i+1,
-		)
-		success = success && assert.Equal(
-			first.NextSyncCookie.MinipoolGen,
-			stream.NextSyncCookie.MinipoolGen,
-			"different minipool gen, 0 and %d",
-			i+1,
-		)
-		success = success && assert.Equal(
-			first.NextSyncCookie.MinipoolSlot,
-			stream.NextSyncCookie.MinipoolSlot,
-			"different minipool slot, 0 and %d",
-			i+1,
-		)
 
+	if success && syncUpdates {
+		firstClient := tcs[0]
+	LOOP:
+		for i, client := range tcs[1:] {
+			if !client.enableSync {
+				continue
+			}
+
+			if !firstClient.enableSync {
+				firstClient = client
+				continue
+			}
+
+			f, _ := firstClient.updates.Load(streamId)
+			c, _ := client.updates.Load(streamId)
+
+			firstUpdates := f.Clone()
+			clientUpdates := c.Clone()
+
+			success = success && assert.Equal(len(firstUpdates), len(clientUpdates))
+
+			for j, first := range firstUpdates {
+				if !success {
+					break LOOP
+				}
+
+				clientUpdate := clientUpdates[j]
+
+				success = success && assert.Equal(
+					first.GetSyncOp(), clientUpdates[i].GetSyncOp(),
+					"sync op not matching [%d:%d]: %s / %s",
+					i+1, j,
+					first.GetSyncOp(),
+					clientUpdate.GetSyncOp())
+
+				success = success && assert.Equal(
+					first.GetStreamId(), clientUpdates[i].GetStreamId(),
+					"different stream id [%d:%d]: %x / %x",
+					i+1, j,
+					first.GetStreamId(),
+					clientUpdate.GetStreamId())
+
+				success = success && assert.Equal(
+					first.GetStream().GetSyncReset(),
+					clientUpdate.GetStream().GetSyncReset(),
+					"sync reset differs [%d:%d]: %v / %v",
+					i+1, j,
+					first.GetStream().GetSyncReset(),
+					clientUpdate.GetStream().GetSyncReset())
+
+				success = success && assert.Equal(
+					first.GetStream().GetNextSyncCookie().GetMinipoolGen(),
+					clientUpdate.GetStream().GetNextSyncCookie().GetMinipoolGen(),
+					"minipool gen differs [%d:%d]: %d / %d",
+					i+1, j,
+					first.GetStream().GetNextSyncCookie().GetMinipoolGen(),
+					clientUpdate.GetStream().GetNextSyncCookie().GetMinipoolGen())
+
+				success = success && assert.Equal(
+					first.GetStream().GetNextSyncCookie().GetPrevMiniblockHash(),
+					clientUpdate.GetStream().GetNextSyncCookie().GetPrevMiniblockHash(),
+					"prev miniblock hash differs [%d:%d]: %x / %x",
+					i+1, j,
+					first.GetStream().GetNextSyncCookie().GetPrevMiniblockHash(),
+					clientUpdate.GetStream().GetNextSyncCookie().GetPrevMiniblockHash())
+			}
+		}
 	}
+
 	if !success {
 		return streams
 	}
@@ -1132,11 +1558,11 @@ func (tcs testClients) compareNowImpl(t require.TestingT, streamId StreamId) []*
 }
 
 //nolint:unused
-func (tcs testClients) compareNow(streamId StreamId) {
+func (tcs testClients) compareNow(streamId StreamId, miniBlockChain bool, sync bool) {
 	if len(tcs) < 2 {
 		panic("need at least 2 clients to compare")
 	}
-	streams := tcs.compareNowImpl(tcs[0].t, streamId)
+	streams := tcs.compareNowImpl(tcs[0].t, streamId, miniBlockChain, sync)
 	if streams != nil {
 		for i, s := range streams {
 			tcs[i].maybeDumpStream(s)
@@ -1145,13 +1571,13 @@ func (tcs testClients) compareNow(streamId StreamId) {
 	}
 }
 
-func (tcs testClients) compare(streamId StreamId) {
+func (tcs testClients) compare(streamId StreamId, miniBlockChain bool, sync bool) {
 	if len(tcs) < 2 {
 		panic("need at least 2 clients to compare")
 	}
 	var streams []*StreamAndCookie
 	success := tcs[0].assert.EventuallyWithT(func(t *assert.CollectT) {
-		streams = tcs.compareNowImpl(t, streamId)
+		streams = tcs.compareNowImpl(t, streamId, miniBlockChain, sync)
 	}, 10*time.Second, 100*time.Millisecond)
 	for i, s := range streams {
 		tcs[i].maybeDumpStream(s)

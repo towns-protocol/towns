@@ -26,6 +26,50 @@ import (
 	"github.com/towns-protocol/towns/core/node/storage"
 )
 
+func getStreamFromNode(
+	ctx context.Context,
+	registryContract registries.RiverRegistryContract,
+	remoteNodeAddress common.Address,
+	streamID shared.StreamId,
+) error {
+	remote, err := registryContract.NodeRegistry.GetNode(nil, remoteNodeAddress)
+	if err != nil {
+		return err
+	}
+
+	remoteClient := protocolconnect.NewStreamServiceClient(http.DefaultClient, remote.Url)
+
+	response, err := remoteClient.GetStream(ctx, connect.NewRequest(&protocol.GetStreamRequest{
+		StreamId: streamID[:],
+		Optional: false,
+	}))
+	if err != nil {
+		return err
+	}
+
+	stream := response.Msg.GetStream()
+	fmt.Println("MBs: ", len(stream.GetMiniblocks()), " Events: ", len(stream.GetEvents()))
+
+	for i, mb := range stream.GetMiniblocks() {
+		info, err := events.NewMiniblockInfoFromProto(
+			mb, stream.GetSnapshotByMiniblockIndex(i),
+			events.NewParsedMiniblockInfoOpts().
+				WithDoNotParseEvents(true),
+		)
+		if err != nil {
+			return err
+		}
+
+		fmt.Print(info.Ref, "  ", info.Header().GetTimestamp().AsTime().Local())
+		if info.Header().IsSnapshot() {
+			fmt.Print(" SNAPSHOT")
+		}
+		fmt.Println()
+	}
+
+	return nil
+}
+
 func runStreamGetEventCmd(cmd *cobra.Command, args []string) error {
 	ctx := context.Background() // lint:ignore context.Background() is fine here
 	streamID, err := shared.StreamIdFromString(args[0])
@@ -59,7 +103,7 @@ func runStreamGetEventCmd(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	nodes := nodes.NewStreamNodesWithLock(stream.Nodes, common.Address{})
+	nodes := nodes.NewStreamNodesWithLock(stream.StreamReplicationFactor(), stream.Nodes, common.Address{})
 	remoteNodeAddress := nodes.GetStickyPeer()
 
 	remote, err := registryContract.NodeRegistry.GetNode(nil, remoteNodeAddress)
@@ -101,7 +145,7 @@ func runStreamGetEventCmd(cmd *cobra.Command, args []string) error {
 	for n, miniblock := range miniblocks.Msg.GetMiniblocks() {
 		// Parse header
 		info, err := events.NewMiniblockInfoFromProto(
-			miniblock,
+			miniblock, miniblocks.Msg.GetMiniblockSnapshot(from+int64(n)),
 			events.NewParsedMiniblockInfoOpts().
 				WithExpectedBlockNumber(from+int64(n)),
 		)
@@ -126,6 +170,44 @@ func runStreamGetEventCmd(cmd *cobra.Command, args []string) error {
 	fmt.Printf("Event %s not found in stream %s (block range [%d...%d])\n", eventHash, streamID, from, to)
 
 	return nil
+}
+
+func runStreamNodeGetCmd(cmd *cobra.Command, args []string) error {
+	ctx := context.Background() // lint:ignore context.Background() is fine here
+
+	nodeAddress := common.HexToAddress(args[0])
+	zeroAddress := common.Address{}
+	if nodeAddress == zeroAddress {
+		return fmt.Errorf("invalid argument 0: node-address")
+	}
+
+	streamID, err := shared.StreamIdFromString(args[1])
+	if err != nil {
+		return fmt.Errorf("invalid argument 1: stream-id; %w", err)
+	}
+
+	blockchain, err := crypto.NewBlockchain(
+		ctx,
+		&cmdConfig.RiverChain,
+		nil,
+		infra.NewMetricsFactory(nil, "river", "cmdline"),
+		nil,
+	)
+	if err != nil {
+		return err
+	}
+
+	registryContract, err := registries.NewRiverRegistryContract(
+		ctx,
+		blockchain,
+		&cmdConfig.RegistryContract,
+		&cmdConfig.RiverRegistry,
+	)
+	if err != nil {
+		return err
+	}
+
+	return getStreamFromNode(ctx, *registryContract, nodeAddress, streamID)
 }
 
 func runStreamGetMiniblockCmd(cmd *cobra.Command, args []string) error {
@@ -161,7 +243,7 @@ func runStreamGetMiniblockCmd(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	nodes := nodes.NewStreamNodesWithLock(stream.Nodes, common.Address{})
+	nodes := nodes.NewStreamNodesWithLock(stream.StreamReplicationFactor(), stream.Nodes, common.Address{})
 	remoteNodeAddress := nodes.GetStickyPeer()
 
 	remote, err := registryContract.NodeRegistry.GetNode(nil, remoteNodeAddress)
@@ -203,8 +285,9 @@ func runStreamGetMiniblockCmd(cmd *cobra.Command, args []string) error {
 	for n, miniblock := range miniblocks.Msg.GetMiniblocks() {
 		// Parse header
 		info, err := events.NewMiniblockInfoFromProto(
-			miniblock,
-			events.NewParsedMiniblockInfoOpts().WithExpectedBlockNumber(from+int64(n)),
+			miniblock, miniblocks.Msg.GetMiniblockSnapshot(from+int64(n)),
+			events.NewParsedMiniblockInfoOpts().
+				WithExpectedBlockNumber(from+int64(n)),
 		)
 		if err != nil {
 			return err
@@ -266,6 +349,52 @@ func formatBytes(bytes int) string {
 	}
 }
 
+func printMbSummary(miniblock *protocol.Miniblock, snapshot *protocol.Envelope, miniblockNum int64) error {
+	info, err := events.NewMiniblockInfoFromProto(
+		miniblock, snapshot,
+		events.NewParsedMiniblockInfoOpts().
+			WithExpectedBlockNumber(miniblockNum),
+	)
+	if err != nil {
+		return err
+	}
+	mbHeader, ok := info.HeaderEvent().Event.Payload.(*protocol.StreamEvent_MiniblockHeader)
+	if !ok {
+		return fmt.Errorf("unable to parse header event as miniblock header")
+	}
+
+	if len(mbHeader.MiniblockHeader.EventHashes) != len(miniblock.Events) {
+		return fmt.Errorf("malformatted miniblock: header event count and miniblock event count do not match")
+	}
+
+	fmt.Printf(
+		"Miniblock %d (size %s)\n=========\n",
+		mbHeader.MiniblockHeader.MiniblockNum,
+		formatBytes(proto.Size(miniblock)),
+	)
+	fmt.Printf("  Timestamp: %v\n", mbHeader.MiniblockHeader.GetTimestamp().AsTime().UTC())
+	fmt.Printf("  Author: %v\n", common.BytesToAddress(info.HeaderEvent().Event.CreatorAddress))
+	fmt.Printf("  Events: (%d)\n", len(info.Proto.Events))
+	for i, event := range info.Proto.GetEvents() {
+		var streamEvent protocol.StreamEvent
+		if err := proto.Unmarshal(event.Event, &streamEvent); err != nil {
+			return err
+		}
+
+		seconds := streamEvent.CreatedAtEpochMs / 1000
+		nanoseconds := (streamEvent.CreatedAtEpochMs % 1000) * 1e6 // 1 millisecond = 1e6 nanoseconds
+		timestamp := time.Unix(seconds, nanoseconds)
+		fmt.Printf(
+			"    (%d) %v %v\n",
+			i,
+			hex.EncodeToString(event.Hash),
+			timestamp.UTC(),
+		)
+		// fmt.Println(protojson.Format(&streamEvent))
+	}
+	return nil
+}
+
 func runStreamGetMiniblockNumCmd(cmd *cobra.Command, args []string) error {
 	ctx := context.Background() // lint:ignore context.Background() is fine here
 	streamID, err := shared.StreamIdFromString(args[0])
@@ -303,7 +432,7 @@ func runStreamGetMiniblockNumCmd(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	nodes := nodes.NewStreamNodesWithLock(stream.Nodes, common.Address{})
+	nodes := nodes.NewStreamNodesWithLock(stream.StreamReplicationFactor(), stream.Nodes, common.Address{})
 	remoteNodeAddress := nodes.GetStickyPeer()
 
 	remote, err := registryContract.NodeRegistry.GetNode(nil, remoteNodeAddress)
@@ -329,50 +458,7 @@ func runStreamGetMiniblockNumCmd(cmd *cobra.Command, args []string) error {
 
 	miniblock := miniblocks.Msg.GetMiniblocks()[0]
 
-	// Parse header
-	info, err := events.NewMiniblockInfoFromProto(
-		miniblock,
-		events.NewParsedMiniblockInfoOpts().WithExpectedBlockNumber(miniblockNum),
-	)
-	if err != nil {
-		return err
-	}
-
-	mbHeader, ok := info.HeaderEvent().Event.Payload.(*protocol.StreamEvent_MiniblockHeader)
-	if !ok {
-		return fmt.Errorf("unable to parse header event as miniblock header")
-	}
-
-	if len(mbHeader.MiniblockHeader.EventHashes) != len(miniblock.Events) {
-		return fmt.Errorf("malformatted miniblock: header event count and miniblock event count do not match")
-	}
-
-	fmt.Printf(
-		"Miniblock %d (size %s)\n=========\n",
-		mbHeader.MiniblockHeader.MiniblockNum,
-		formatBytes(proto.Size(miniblock)),
-	)
-	fmt.Printf("  Timestamp: %v\n", mbHeader.MiniblockHeader.GetTimestamp().AsTime().UTC())
-	fmt.Printf("  Events: (%d)\n", len(info.Proto.Events))
-	for i, event := range info.Proto.GetEvents() {
-		var streamEvent protocol.StreamEvent
-		if err := proto.Unmarshal(event.Event, &streamEvent); err != nil {
-			return err
-		}
-
-		seconds := streamEvent.CreatedAtEpochMs / 1000
-		nanoseconds := (streamEvent.CreatedAtEpochMs % 1000) * 1e6 // 1 millisecond = 1e6 nanoseconds
-		timestamp := time.Unix(seconds, nanoseconds)
-		fmt.Printf(
-			"    (%d) %v %v\n",
-			i,
-			hex.EncodeToString(event.Hash),
-			timestamp.UTC(),
-		)
-		// fmt.Println(protojson.Format(&streamEvent))
-	}
-
-	return nil
+	return printMbSummary(miniblock, miniblocks.Msg.GetMiniblockSnapshot(miniblockNum), miniblockNum)
 }
 
 func runStreamDumpCmd(cmd *cobra.Command, args []string) error {
@@ -408,7 +494,7 @@ func runStreamDumpCmd(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	nodes := nodes.NewStreamNodesWithLock(stream.Nodes, common.Address{})
+	nodes := nodes.NewStreamNodesWithLock(stream.StreamReplicationFactor(), stream.Nodes, common.Address{})
 	remoteNodeAddress := nodes.GetStickyPeer()
 
 	remote, err := registryContract.NodeRegistry.GetNode(nil, remoteNodeAddress)
@@ -449,41 +535,9 @@ func runStreamDumpCmd(cmd *cobra.Command, args []string) error {
 		}
 
 		for n, miniblock := range miniblocks.Msg.GetMiniblocks() {
-			// Parse header
-			info, err := events.NewMiniblockInfoFromProto(
-				miniblock,
-				events.NewParsedMiniblockInfoOpts().WithExpectedBlockNumber(from+int64(n)),
-			)
-			if err != nil {
+			if err := printMbSummary(miniblock, miniblocks.Msg.GetMiniblockSnapshot(from+int64(n)), from+int64(n)); err != nil {
 				return err
 			}
-
-			mbHeader, ok := info.HeaderEvent().Event.Payload.(*protocol.StreamEvent_MiniblockHeader)
-			if !ok {
-				return fmt.Errorf("unable to parse header event as miniblock header")
-			}
-
-			if len(mbHeader.MiniblockHeader.EventHashes) != len(miniblock.Events) {
-				return fmt.Errorf("malformatted miniblock: header event count and miniblock event count do not match")
-			}
-
-			for i, hash := range mbHeader.MiniblockHeader.EventHashes {
-				if !bytes.Equal(miniblock.Events[i].Hash, hash) {
-					return fmt.Errorf(
-						"event %d hashes do not match: %v v %v in the header",
-						i,
-						hex.EncodeToString(miniblock.Events[i].Hash),
-						hex.EncodeToString(hash),
-					)
-				}
-			}
-
-			fmt.Printf(
-				"\nMiniblock %d\n=========\n%s",
-				mbHeader.MiniblockHeader.MiniblockNum,
-				protojson.Format(miniblock),
-			)
-			fmt.Printf("\n(Parsed Header)\n-------------\n%s\n", protojson.Format(mbHeader.MiniblockHeader))
 		}
 
 		from = from + int64(len(miniblocks.Msg.Miniblocks))
@@ -566,8 +620,9 @@ func runStreamNodeDumpCmd(cmd *cobra.Command, args []string) error {
 		for n, miniblock := range miniblocks.Msg.GetMiniblocks() {
 			// Parse header
 			info, err := events.NewMiniblockInfoFromProto(
-				miniblock,
-				events.NewParsedMiniblockInfoOpts().WithExpectedBlockNumber(from+int64(n)),
+				miniblock, miniblocks.Msg.GetMiniblockSnapshot(from+int64(n)),
+				events.NewParsedMiniblockInfoOpts().
+					WithExpectedBlockNumber(from+int64(n)),
 			)
 			if err != nil {
 				return err
@@ -626,41 +681,10 @@ func runStreamGetCmd(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	nodes := nodes.NewStreamNodesWithLock(streamRecord.Nodes, common.Address{})
+	nodes := nodes.NewStreamNodesWithLock(streamRecord.StreamReplicationFactor(), streamRecord.Nodes, common.Address{})
 	remoteNodeAddress := nodes.GetStickyPeer()
 
-	remote, err := registryContract.NodeRegistry.GetNode(nil, remoteNodeAddress)
-	if err != nil {
-		return err
-	}
-
-	remoteClient := protocolconnect.NewStreamServiceClient(http.DefaultClient, remote.Url)
-
-	response, err := remoteClient.GetStream(ctx, connect.NewRequest(&protocol.GetStreamRequest{
-		StreamId: streamID[:],
-		Optional: false,
-	}))
-	if err != nil {
-		return err
-	}
-
-	stream := response.Msg.GetStream()
-	fmt.Println("MBs: ", len(stream.GetMiniblocks()), " Events: ", len(stream.GetEvents()))
-
-	for _, mb := range stream.GetMiniblocks() {
-		i, err := events.NewMiniblockInfoFromProto(mb, events.NewParsedMiniblockInfoOpts().WithDoNotParseEvents(true))
-		if err != nil {
-			return err
-		}
-
-		fmt.Print(i.Ref, "  ", i.Header().GetTimestamp().AsTime().Local())
-		if i.Header().GetSnapshot() != nil {
-			fmt.Print(" SNAPSHOT")
-		}
-		fmt.Println()
-	}
-
-	return nil
+	return getStreamFromNode(ctx, *registryContract, remoteNodeAddress, streamID)
 }
 
 func runStreamPartitionCmd(cmd *cobra.Command, args []string) error {
@@ -731,6 +755,15 @@ max-block-range is optional and limits the number of blocks to consider (default
 		Args:  cobra.ExactArgs(1),
 		RunE:  runStreamGetCmd,
 	}
+
+	cmdStreamNodeGet := &cobra.Command{
+		Use:   "node-get <node-address> <stream-id>",
+		Short: "Get stream contents from node",
+		Long:  `Get stream content from specified node using GetStream RPC.`,
+		Args:  cobra.ExactArgs(2),
+		RunE:  runStreamNodeGetCmd,
+	}
+
 	cmdStreamGetPartition := &cobra.Command{
 		Use:   "part <stream-id>",
 		Short: "Get stream stream database partition",
@@ -745,6 +778,7 @@ max-block-range is optional and limits the number of blocks to consider (default
 	cmdStream.AddCommand(cmdStreamDump)
 	cmdStream.AddCommand(cmdStreamNodeDump)
 	cmdStream.AddCommand(cmdStreamGet)
+	cmdStream.AddCommand(cmdStreamNodeGet)
 	cmdStream.AddCommand(cmdStreamGetPartition)
 	rootCmd.AddCommand(cmdStream)
 }

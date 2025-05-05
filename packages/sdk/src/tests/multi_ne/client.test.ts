@@ -2,9 +2,13 @@
  * @group main
  */
 
-import { dlog, check } from '@river-build/dlog'
+import { dlog, check } from '@towns-protocol/dlog'
 import { isDefined } from '../../check'
-import { DecryptionStatus, GroupEncryptionAlgorithmId, UserDevice } from '@river-build/encryption'
+import {
+    DecryptionStatus,
+    GroupEncryptionAlgorithmId,
+    UserDevice,
+} from '@towns-protocol/encryption'
 import {
     makeUserStreamId,
     makeUserSettingsStreamId,
@@ -39,7 +43,7 @@ import {
     CancelSyncResponseSchema,
     CancelSyncRequestSchema,
     MediaInfoSchema,
-} from '@river-build/proto'
+} from '@towns-protocol/proto'
 import { create, MessageInitShape, toBinary } from '@bufbuild/protobuf'
 import { CallOptions } from '@connectrpc/connect'
 import { vi } from 'vitest'
@@ -368,6 +372,16 @@ describe('clientTest', () => {
             bobsClient.makeEventAndAddToStream(bobsClient.userSettingsStreamId!, payload),
         ).resolves.not.toThrow()
 
+        // see solicitation in view
+        await waitFor(() => {
+            const stream = bobsClient.streams.get(bobsClient.userSettingsStreamId!)
+            const solicitation = stream?.view.membershipContent.joined
+                .get(bobsClient.userId)
+                ?.solicitations.find((x) => x.deviceKey === 'foo')
+            expect(solicitation).toBeDefined()
+            expect(solicitation?.isNewDevice).toEqual(true)
+        })
+
         // fulfillment should resolve
         payload = make_MemberPayload_KeyFulfillment({
             deviceKey: 'foo',
@@ -378,18 +392,14 @@ describe('clientTest', () => {
             bobsClient.makeEventAndAddToStream(bobsClient.userSettingsStreamId!, payload),
         ).resolves.not.toThrow()
 
+        // fullfillment should remove solicitation from view
         await waitFor(() => {
-            const lastEvent = bobsClient.streams
-                .get(bobsClient.userSettingsStreamId!)
-                ?.view.timeline.filter((x) => x.remoteEvent?.event.payload.case === 'memberPayload')
-                .at(-1)
-            expect(lastEvent).toBeDefined()
-            check(lastEvent?.remoteEvent?.event.payload.case === 'memberPayload', '??')
-            check(
-                lastEvent?.remoteEvent?.event.payload.value.content.case === 'keyFulfillment',
-                '??',
-            )
-            expect(lastEvent?.remoteEvent?.event.payload.value.content.value.deviceKey).toBe('foo')
+            const stream = bobsClient.streams.get(bobsClient.userSettingsStreamId!)
+            const solicitation = stream?.view.membershipContent.joined
+                .get(bobsClient.userId)
+                ?.solicitations.find((x) => x.deviceKey === 'foo')
+            expect(solicitation).toBeDefined()
+            expect(solicitation?.isNewDevice).toEqual(false)
         })
 
         // fulfillment with empty session ids should now fail
@@ -1054,8 +1064,10 @@ describe('clientTest', () => {
             thumbnail: undefined,
         } satisfies PlainMessage<ChunkedMedia>
 
-        const { eventId } = await bobsClient.setUserProfileImage(chunkedMediaInfo)
-        await waitFor(() => expect(userMetadataStream.view.events.has(eventId)).toBe(true))
+        await bobsClient.setUserProfileImage(chunkedMediaInfo)
+        await waitFor(() =>
+            expect(userMetadataStream.view.userMetadataContent.encryptedProfileImage).toBeDefined(),
+        )
 
         const decrypted = await bobsClient.getUserProfileImage(bobsClient.userId)
         expect(decrypted).toBeDefined()
@@ -1074,8 +1086,10 @@ describe('clientTest', () => {
         expect(userMetadataStream).toBeDefined()
 
         const bio = { bio: 'Hello, world!' }
-        const { eventId } = await bobsClient.setUserBio(bio)
-        await waitFor(() => expect(userMetadataStream.view.events.has(eventId)).toBe(true))
+        await bobsClient.setUserBio(bio)
+        await waitFor(() =>
+            expect(userMetadataStream.view.userMetadataContent.encryptedBio).toBeDefined(),
+        )
 
         const decrypted = await bobsClient.getUserBio(bobsClient.userId)
         expect(decrypted?.bio).toStrictEqual(bio.bio)
@@ -1090,8 +1104,10 @@ describe('clientTest', () => {
         expect(userMetadataStream).toBeDefined()
 
         const bio = { bio: '' }
-        const { eventId } = await bobsClient.setUserBio(bio)
-        await waitFor(() => expect(userMetadataStream.view.events.has(eventId)).toBe(true))
+        await bobsClient.setUserBio(bio)
+        await waitFor(() =>
+            expect(userMetadataStream.view.userMetadataContent.encryptedBio).toBeDefined(),
+        )
 
         const decrypted = await bobsClient.getUserBio(bobsClient.userId)
         expect(decrypted?.bio).toStrictEqual(bio.bio)

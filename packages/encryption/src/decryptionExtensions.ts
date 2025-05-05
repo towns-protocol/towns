@@ -1,5 +1,5 @@
 import TypedEmitter from 'typed-emitter'
-import { Permission } from '@river-build/web3'
+import { Permission } from '@towns-protocol/web3'
 import {
     AddEventResponse_Error,
     EncryptedData,
@@ -7,7 +7,7 @@ import {
     SessionKeys,
     SessionKeysSchema,
     UserInboxPayload_GroupEncryptionSessions,
-} from '@river-build/proto'
+} from '@towns-protocol/proto'
 import {
     shortenHexString,
     dlog,
@@ -15,7 +15,7 @@ import {
     DLogger,
     check,
     bin_toHexString,
-} from '@river-build/dlog'
+} from '@towns-protocol/dlog'
 import {
     GroupEncryptionAlgorithmId,
     GroupEncryptionSession,
@@ -63,7 +63,6 @@ export interface KeySolicitationContent {
     fallbackKey: string
     isNewDevice: boolean
     sessionIds: string[]
-    srcEventId: string
 }
 
 // paired down from StreamEvent, required for signature validation
@@ -84,6 +83,7 @@ export interface KeySolicitationItem {
     solicitation: KeySolicitationContent
     respondAfter: number // ms since epoch
     sigBundle: EventSignatureBundle
+    hashStr: string
 }
 
 export interface KeySolicitationData {
@@ -153,15 +153,18 @@ class StreamQueues {
         return true
     }
     toString() {
-        const counts = Array.from(this.streams.entries()).reduce((acc, [_, stream]) => {
-            acc['encryptedContent'] =
-                (acc['encryptedContent'] ?? 0) + stream.encryptedContent.length
-            acc['streamsMissingKeys'] =
-                (acc['streamsMissingKeys'] ?? 0) + (stream.isMissingKeys ? 1 : 0)
-            acc['keySolicitations'] =
-                (acc['keySolicitations'] ?? 0) + stream.keySolicitations.length
-            return acc
-        }, {} as Record<string, number>)
+        const counts = Array.from(this.streams.entries()).reduce(
+            (acc, [_, stream]) => {
+                acc['encryptedContent'] =
+                    (acc['encryptedContent'] ?? 0) + stream.encryptedContent.length
+                acc['streamsMissingKeys'] =
+                    (acc['streamsMissingKeys'] ?? 0) + (stream.isMissingKeys ? 1 : 0)
+                acc['keySolicitations'] =
+                    (acc['keySolicitations'] ?? 0) + stream.keySolicitations.length
+                return acc
+            },
+            {} as Record<string, number>,
+        )
 
         return Object.entries(counts)
             .map(([key, count]) => `${key}: ${count}`)
@@ -317,6 +320,7 @@ export abstract class BaseDecryptionExtensions {
 
     public enqueueInitKeySolicitations(
         streamId: string,
+        eventHashStr: string,
         members: {
             userId: string
             userAddress: Uint8Array
@@ -350,6 +354,7 @@ export abstract class BaseDecryptionExtensions {
                     respondAfter:
                         Date.now() + this.getRespondDelayMSForKeySolicitation(streamId, fromUserId),
                     sigBundle,
+                    hashStr: eventHashStr,
                 } satisfies KeySolicitationItem)
             }
         }
@@ -359,6 +364,7 @@ export abstract class BaseDecryptionExtensions {
 
     public enqueueKeySolicitation(
         streamId: string,
+        eventHashStr: string,
         fromUserId: string,
         fromUserAddress: Uint8Array,
         keySolicitation: KeySolicitationContent,
@@ -392,6 +398,7 @@ export abstract class BaseDecryptionExtensions {
                 respondAfter:
                     Date.now() + this.getRespondDelayMSForKeySolicitation(streamId, fromUserId),
                 sigBundle,
+                hashStr: eventHashStr,
             } satisfies KeySolicitationItem)
             this.checkStartTicking()
         } else if (index > -1) {
@@ -671,7 +678,7 @@ export abstract class BaseDecryptionExtensions {
                     sessionId: session.sessionIds[i],
                     sessionKey: sessionKeys.keys[i],
                     algorithm: algorithm,
-                } satisfies GroupEncryptionSession),
+                }) satisfies GroupEncryptionSession,
         )
         // import the sessions
         this.log.debug(
@@ -823,7 +830,7 @@ export abstract class BaseDecryptionExtensions {
         if (!isValid) {
             this.log.error('processing key solicitation: invalid event id', {
                 streamId,
-                eventId: item.solicitation.srcEventId,
+                eventId: item.hashStr,
                 reason,
             })
             return
@@ -879,7 +886,7 @@ export abstract class BaseDecryptionExtensions {
 
         // if the key fulfillment failed, someone else already sent a key fulfillment
         if (error) {
-            if (!error.msg.includes('DUPLICATE_EVENT')) {
+            if (!error.msg.includes('DUPLICATE_EVENT') && !error.msg.includes('NOT_FOUND')) {
                 // duplicate events are expected, we can ignore them, others are not
                 this.log.error('failed to send key fulfillment', error)
             }
@@ -887,13 +894,16 @@ export abstract class BaseDecryptionExtensions {
         }
 
         // if the key fulfillment succeeded, send one group session payload for each algorithm
-        const sessions = allSessions.reduce((acc, session) => {
-            if (!acc[session.algorithm]) {
-                acc[session.algorithm] = []
-            }
-            acc[session.algorithm].push(session)
-            return acc
-        }, {} as Record<GroupEncryptionAlgorithmId, GroupEncryptionSession[]>)
+        const sessions = allSessions.reduce(
+            (acc, session) => {
+                if (!acc[session.algorithm]) {
+                    acc[session.algorithm] = []
+                }
+                acc[session.algorithm].push(session)
+                return acc
+            },
+            {} as Record<GroupEncryptionAlgorithmId, GroupEncryptionSession[]>,
+        )
 
         // send one key fulfillment for each algorithm
         for (const kv of Object.entries(sessions)) {

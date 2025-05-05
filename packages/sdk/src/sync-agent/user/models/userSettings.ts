@@ -1,4 +1,4 @@
-import { check, dlogger } from '@river-build/dlog'
+import { check, dlogger } from '@towns-protocol/dlog'
 import { Identifiable, LoadPriority, Store } from '../../../store/store'
 import { PersistedObservable, persistedObservable } from '../../../observable/persistedObservable'
 import { RiverConnection } from '../../river-connection/riverConnection'
@@ -17,7 +17,11 @@ export interface UserSettingsModel extends Identifiable {
 
 @persistedObservable({ tableName: 'userSettings' })
 export class UserSettings extends PersistedObservable<UserSettingsModel> {
-    constructor(id: string, store: Store, private riverConnection: RiverConnection) {
+    constructor(
+        id: string,
+        store: Store,
+        private riverConnection: RiverConnection,
+    ) {
         super(
             { id, streamId: makeUserSettingsStreamId(id), initialized: false },
             store,

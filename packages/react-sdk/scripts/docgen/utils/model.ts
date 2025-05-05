@@ -2,7 +2,7 @@
 import * as model from '@microsoft/api-extractor-model'
 import type { DocDeclarationReference } from '@microsoft/tsdoc'
 
-// eslint-disable-next-line import/no-cycle
+// eslint-disable-next-line import-x/no-cycle
 import { processDocComment, renderDocNode } from './tsdoc'
 
 export type Data = Pick<model.ApiItem, 'displayName' | 'kind'> &
@@ -62,7 +62,7 @@ export function createDataLookup(apiItem: model.ApiItem) {
         const sourceFilePath =
             apiItem.fileUrlPath ??
             apiItem.sourceLocation.fileUrl?.replace(
-                'https://github.com/river-build/river/blob/main/packages/react-sdk',
+                'https://github.com/towns-protocol/towns/blob/main/packages/react-sdk',
                 '',
             )
 
@@ -290,14 +290,14 @@ function extraData(item: model.ApiItem): ExtraData {
                   type: formatType(item.typeExcerpt.text),
               }
             : item instanceof model.ApiPropertyItem
-            ? {
-                  type: formatType(item.propertyTypeExcerpt.text),
-              }
-            : item instanceof model.ApiClass
-            ? {
-                  implements: item.implementsTypes.map((p) => p.excerpt.text),
-              }
-            : {},
+              ? {
+                    type: formatType(item.propertyTypeExcerpt.text),
+                }
+              : item instanceof model.ApiClass
+                ? {
+                      implements: item.implementsTypes.map((p) => p.excerpt.text),
+                  }
+                : {},
     )
 }
 

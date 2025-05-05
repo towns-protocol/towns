@@ -1,7 +1,7 @@
 import TypedEmitter from 'typed-emitter'
-import { EncryptedData } from '@river-build/proto'
+import { EncryptedData } from '@towns-protocol/proto'
 import { usernameChecksum } from './utils'
-import { dlog } from '@river-build/dlog'
+import { dlog } from '@towns-protocol/dlog'
 import { StreamEncryptionEvents, StreamStateEvents } from './streamEvents'
 
 const textDecoder = new TextDecoder()
@@ -14,7 +14,7 @@ export class MemberMetadata_Usernames {
     readonly confirmedUserIds = new Set<string>()
     readonly usernameEvents = new Map<
         string,
-        { encryptedData: EncryptedData; userId: string; pending: boolean }
+        { checksum: string; userId: string; pending: boolean }
     >()
     readonly checksums = new Set<string>()
 
@@ -79,7 +79,11 @@ export class MemberMetadata_Usernames {
         if (!event) {
             return
         }
-        this.usernameEvents.set(eventId, { ...event, pending: false })
+        this.usernameEvents.set(eventId, {
+            checksum: event.checksum,
+            userId: event.userId,
+            pending: false,
+        })
         this.confirmedUserIds.add(event.userId)
 
         // if we don't have the plaintext username, no need to emit an event
@@ -99,7 +103,7 @@ export class MemberMetadata_Usernames {
             return
         }
 
-        const checksum = event.encryptedData.checksum
+        const checksum = event.checksum
         if (!checksum) {
             return
         }
@@ -157,7 +161,7 @@ export class MemberMetadata_Usernames {
             this.log(`no existing username event for user ${userId} — this is a programmer error`)
             return
         }
-        this.checksums.delete(event.encryptedData.checksum ?? '')
+        this.checksums.delete(event.checksum ?? '')
         this.usernameEvents.delete(eventId)
         this.log(`deleted old username event for user ${userId}`)
     }
@@ -182,7 +186,7 @@ export class MemberMetadata_Usernames {
 
         this.usernameEvents.set(eventId, {
             userId,
-            encryptedData: encryptedData,
+            checksum: encryptedData.checksum,
             pending: pending,
         })
     }

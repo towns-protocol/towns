@@ -1,12 +1,12 @@
 ---
 title: signAndConnect
 ---
-Sign and connect to River using a Signer and a random delegate wallet every time
+Sign and connect to Towns using a Signer and a random delegate wallet every time
 
 ## Imports
 
 ```ts
-import { signAndConnect } from '@river-build/react-sdk'
+import { signAndConnect } from '@towns-protocol/react-sdk'
 ```
 
 ## Definition
@@ -14,11 +14,11 @@ import { signAndConnect } from '@river-build/react-sdk'
 ```ts
 function signAndConnect(
   signer: ethers.Signer,
-  config: Omit<SyncAgentConfig, 'context'>,
+  config: Omit<SyncAgentConfig, "context">,
 ): Promise<SyncAgent>
 ```
 
-**Source:** [signAndConnect](https://github.com/river-build/river/blob/main/packages/react-sdk/src/connectRiver.ts)
+**Source:** [signAndConnect](https://github.com/towns-protocol/towns/blob/main/packages/react-sdk/src/connectTowns.ts)
 
 ## Parameters
 
@@ -30,7 +30,7 @@ The signer to use
 
 ### config
 
-- **Type:** `Omit<SyncAgentConfig, 'context'>`
+- **Type:** `Omit<SyncAgentConfig, "context">`
 
 The configuration for the sync agent
 

@@ -56,7 +56,7 @@ type MessageToNotificationsProcessor struct {
 	cache                  UserPreferencesStore
 	subscriptionExpiration time.Duration
 	notifier               push.MessageNotifier
-	log                    *zap.SugaredLogger
+	log                    *logging.Log
 }
 
 // NewNotificationMessageProcessor processes incoming messages, determines when and to whom to send a notification
@@ -118,11 +118,11 @@ func (p *MessageToNotificationsProcessor) OnMessageEvent(
 		kind = "new_message"
 	case MessageInteractionType_MESSAGE_INTERACTION_TYPE_POST:
 		kind = "new_message"
+	case MessageInteractionType_MESSAGE_INTERACTION_TYPE_TRADE:
+		kind = "trade"
 	case MessageInteractionType_MESSAGE_INTERACTION_TYPE_EDIT:
 		return
 	case MessageInteractionType_MESSAGE_INTERACTION_TYPE_REDACTION:
-		return
-	case MessageInteractionType_MESSAGE_INTERACTION_TYPE_TRADE:
 		return
 	}
 
@@ -219,7 +219,7 @@ func (p *MessageToNotificationsProcessor) OnMessageEvent(
 					}
 					recipients.Add(participant)
 				} else {
-					p.log.Error("Unexpected stream ID", "channel", channelID)
+					p.log.Errorw("Unexpected stream ID", "channel", channelID)
 				}
 			}
 		}
@@ -341,7 +341,7 @@ func (p *MessageToNotificationsProcessor) onSpaceChannelPayload(
 		return true
 	}
 
-	p.log.Debugw("User don't want to receive notification for space channel message",
+	p.log.Debugw("User doesn't want to receive notification for space channel message",
 		"user", participant,
 		"space", spaceID,
 		"channel", channelID,
@@ -572,7 +572,13 @@ func (p *MessageToNotificationsProcessor) sendNotification(
 				continue
 			}
 
-			subscriptionExpired, statusCode, err := p.sendAPNNotification(channelID, sub, event, apnPayload, sub.PushVersion)
+			subscriptionExpired, statusCode, err := p.sendAPNNotification(
+				channelID,
+				sub,
+				event,
+				apnPayload,
+				sub.PushVersion,
+			)
 
 			// APN can return an error that the payload is too large, drop the (stream)event from the payload and retry.
 			// The client can handle notifications with no (stream)event and doesn't show a preview to the user.
@@ -580,13 +586,25 @@ func (p *MessageToNotificationsProcessor) sendNotification(
 				if _, exists := apnPayload["event"]; exists {
 					delete(apnPayload, "event")
 					p.log.Infow("Payload too large, retry notification with event stripped", "event", event.Hash)
-					subscriptionExpired, statusCode, err = p.sendAPNNotification(channelID, sub, event, apnPayload, sub.PushVersion)
+					subscriptionExpired, statusCode, err = p.sendAPNNotification(
+						channelID,
+						sub,
+						event,
+						apnPayload,
+						sub.PushVersion,
+					)
 
 					if err != nil && statusCode == http.StatusRequestEntityTooLarge {
 						if _, exists := apnPayload["tags"]; exists {
 							delete(apnPayload, "tags")
 							p.log.Infow("Payload too large, retry notification with tags stripped", "event", event.Hash)
-							subscriptionExpired, _, err = p.sendAPNNotification(channelID, sub, event, apnPayload, sub.PushVersion)
+							subscriptionExpired, _, err = p.sendAPNNotification(
+								channelID,
+								sub,
+								event,
+								apnPayload,
+								sub.PushVersion,
+							)
 						}
 					}
 				}

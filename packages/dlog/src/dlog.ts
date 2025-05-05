@@ -33,7 +33,7 @@ debug.enabled = (ns: string): boolean => {
     return false
 }
 
-// Set namespaces to empty string if not set so debug.enabled() is called and can retireve defaultEnabled from options.
+// Set namespaces to empty string if not set so debug.enabled() is called and can retrieve defaultEnabled from options.
 // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 if ((debug as any).namespaces === undefined) {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
@@ -169,14 +169,26 @@ const makeDlog = (d: Debugger, opts?: DLogOpts): DLogger => {
                 newArgs.push(c)
             } else if (typeof c === 'object' && c !== null) {
                 if (c instanceof Error) {
-                    isSingleLineLogsMode ? fmt.push('%o\n') : fmt.push('%O\n')
+                    if (isSingleLineLogsMode) {
+                        fmt.push('%o\n')
+                    } else {
+                        fmt.push('%O\n')
+                    }
                     tailArgs.push(c)
                 } else {
-                    isSingleLineLogsMode ? fmt.push('%o\n') : fmt.push('%O\n')
+                    if (isSingleLineLogsMode) {
+                        fmt.push('%o\n')
+                    } else {
+                        fmt.push('%O\n')
+                    }
                     newArgs.push(cloneAndFormat(c, { shortenHex: true }))
                 }
             } else {
-                isSingleLineLogsMode ? fmt.push('%o ') : fmt.push('%O ')
+                if (isSingleLineLogsMode) {
+                    fmt.push('%o ')
+                } else {
+                    fmt.push('%O ')
+                }
                 newArgs.push(c)
             }
         }

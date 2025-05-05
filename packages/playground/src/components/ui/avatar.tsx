@@ -1,7 +1,7 @@
-import { useAgentConnection } from '@river-build/react-sdk'
+import { useAgentConnection } from '@towns-protocol/react-sdk'
 import { useState } from 'react'
+import { getStreamMetadataUrl } from '@towns-protocol/sdk'
 import { cn } from '@/utils'
-import { getStreamMetadataUrl } from '@/utils/stream-metadata'
 
 const getAvatarUrl = (environmentId: string, userId: string) => {
     return `${getStreamMetadataUrl(environmentId)}/user/${userId}/image`

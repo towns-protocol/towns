@@ -1,7 +1,7 @@
 import { FastifyReply, FastifyRequest } from 'fastify'
 import { z } from 'zod'
-import { isValidStreamId } from '@river-build/sdk'
-import { bin_fromHexString } from '@river-build/dlog'
+import { isValidStreamId } from '@towns-protocol/sdk'
+import { bin_fromHexString } from '@towns-protocol/dlog'
 
 import { getMediaStreamContent } from '../riverStreamRpcClient'
 
@@ -21,8 +21,8 @@ const querySchema = z.object({
 		.transform((value) => bin_fromHexString(value)),
 	iv: z
 		.string()
-		.min(1, 'iv parameter is required')
-		.transform((value) => bin_fromHexString(value)),
+		.transform((value) => bin_fromHexString(value))
+		.optional(),
 })
 
 const CACHE_CONTROL = {
@@ -57,7 +57,14 @@ export async function fetchMedia(request: FastifyRequest, reply: FastifyReply) {
 	logger.info({ mediaStreamId, key, iv }, 'Fetching media stream content')
 
 	try {
-		const { data, mimeType } = await getMediaStreamContent(logger, mediaStreamId, key, iv)
+		const mediaContent = await getMediaStreamContent(logger, mediaStreamId, key, iv)
+		if (!mediaContent) {
+			return reply
+				.code(404)
+				.header('Cache-Control', CACHE_CONTROL['4xx'])
+				.send('Media content not found')
+		}
+		const { data, mimeType } = mediaContent
 		if (!data || !mimeType) {
 			logger.error(
 				{

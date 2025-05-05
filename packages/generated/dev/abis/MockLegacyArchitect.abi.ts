@@ -362,10 +362,5 @@ export default [
     "type": "error",
     "name": "Reentrancy",
     "inputs": []
-  },
-  {
-    "type": "error",
-    "name": "Validator__InvalidAddress",
-    "inputs": []
   }
 ] as const

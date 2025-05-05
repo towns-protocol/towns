@@ -2,7 +2,7 @@
  * @group main
  */
 
-import { MemberPayload_Nft, MemberPayload_NftSchema } from '@river-build/proto'
+import { MemberPayload_Nft, MemberPayload_NftSchema } from '@towns-protocol/proto'
 import { Client } from '../../client'
 import { makeUniqueChannelStreamId, userIdFromAddress } from '../../id'
 import {
@@ -13,7 +13,7 @@ import {
     waitFor,
 } from '../testUtils'
 import { make_MemberPayload_Nft } from '../../types'
-import { bin_fromString, bin_toString } from '@river-build/dlog'
+import { bin_fromString, bin_toString } from '@towns-protocol/dlog'
 import { create } from '@bufbuild/protobuf'
 
 describe('memberMetadataTests', () => {
@@ -583,7 +583,7 @@ describe('memberMetadataTests', () => {
             streamId,
             bin_toString(nft.tokenId),
             1,
-            userIdFromAddress(nft.contractAddress)!,
+            userIdFromAddress(nft.contractAddress),
         )
 
         await bobPromise.expectToSucceed()

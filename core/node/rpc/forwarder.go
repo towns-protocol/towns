@@ -6,6 +6,7 @@ import (
 
 	"connectrpc.com/connect"
 
+	"github.com/ethereum/go-ethereum/common"
 	. "github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/logging"
 	. "github.com/towns-protocol/towns/core/node/nodes"
@@ -16,11 +17,33 @@ import (
 )
 
 const (
-	RiverNoForwardHeader = "X-River-No-Forward"
-	RiverNoForwardValue  = "true"
-	RiverFromNodeHeader  = "X-River-From-Node"
-	RiverToNodeHeader    = "X-River-To-Node"
+	RiverNoForwardHeader     = "X-River-No-Forward" // Must be set to "true" to disable forwarding
+	RiverHeaderTrueValue     = "true"
+	RiverFromNodeHeader      = "X-River-From-Node"
+	RiverToNodeHeader        = "X-River-To-Node"
+	RiverAllowNoQuorumHeader = "X-River-Allow-No-Quorum" // Must be set to "true" to allow getting data if local node is not in quorum
 )
+
+func checkNoForward[T any](req *connect.Request[T]) error {
+	if req.Header().Get(RiverNoForwardHeader) == RiverHeaderTrueValue {
+		return RiverError(Err_UNAVAILABLE, "Forwarding disabled by request header")
+	}
+	return nil
+}
+
+func copyRequestForForwarding[T any](s *Service, req *connect.Request[T]) *connect.Request[T] {
+	newReq := connect.NewRequest(req.Msg)
+	newReq.Header().Set(RiverNoForwardHeader, RiverHeaderTrueValue)
+	newReq.Header().Set(RiverFromNodeHeader, s.wallet.Address.Hex())
+	if allowNoQuorum(req) {
+		newReq.Header().Set(RiverAllowNoQuorumHeader, RiverHeaderTrueValue)
+	}
+	return newReq
+}
+
+func allowNoQuorum[T any](req *connect.Request[T]) bool {
+	return req.Header().Get(RiverAllowNoQuorumHeader) == RiverHeaderTrueValue
+}
 
 // peerNodeStreamingResponseWithRetries makes a request with a streaming server response to remote nodes, retrying
 // in the event of unavailable nodes.
@@ -192,28 +215,68 @@ func (s *Service) getStreamImpl(
 	}
 
 	// Check that stream is marked as accessed in this case (i.e. timestamp is set)
-	view, err := stream.GetViewIfLocal(ctx)
+	view, err := stream.GetViewIfLocalEx(ctx, allowNoQuorum(req))
 	if err != nil {
 		return nil, err
 	}
 
-	if view != nil {
-		return s.localGetStream(view)
-	} else {
-		return utils.PeerNodeRequestWithRetries(
-			ctx,
-			stream,
-			func(ctx context.Context, stub StreamServiceClient) (*connect.Response[GetStreamResponse], error) {
-				ret, err := stub.GetStream(ctx, req)
+	if view == nil {
+		if err = checkNoForward(req); err != nil {
+			return nil, err
+		}
+	}
+
+	// TODO: FIX: should handle the case when node in the sync cookie is not reponsible for the stream anymore
+	// if the user passed a sync cookie, we need to forward the request to the node that issued the cookie
+	if req.Msg.SyncCookie != nil {
+		nodeAddress := common.BytesToAddress(req.Msg.SyncCookie.GetNodeAddress())
+		if nodeAddress == s.wallet.Address {
+			if view != nil {
+				return s.localGetStream(ctx, view, req.Msg.SyncCookie)
+			} else {
+				return nil, RiverError(Err_BAD_SYNC_COOKIE, "Stream not found").
+					Func("service.getStreamImpl").
+					Tag("streamId", streamId)
+			}
+		} else {
+			stub, err := s.nodeRegistry.GetStreamServiceClientForAddress(nodeAddress)
+			if err == nil {
+				ret, err := stub.GetStream(ctx, copyRequestForForwarding(s, req))
 				if err != nil {
 					return nil, err
 				}
 				return connect.NewResponse(ret.Msg), nil
-			},
-			s.config.Network.NumRetries,
-			s.nodeRegistry,
-		)
+			}
+			// in the case were we couldn't get a stub for this node, fall through and try to get the stream from scratch
+			// when nodes can exit the network this is a legitimate code path, for now it's an error
+			logging.FromCtx(ctx).Errorw("Node in sync cookie not found", "nodeAddress", nodeAddress, "streamId", streamId)
+		}
 	}
+
+	if view != nil {
+		if resp, err := s.localGetStream(ctx, view, req.Msg.SyncCookie); err == nil {
+			return resp, nil
+		} else if IsOperationRetriableOnRemotes(err) {
+			logging.FromCtx(ctx).Errorw("Failed to get stream from local node, falling back to remotes",
+				"err", err, "nodeAddress", s.wallet.Address, "streamId", streamId)
+		} else {
+			return nil, err
+		}
+	}
+
+	return utils.PeerNodeRequestWithRetries(
+		ctx,
+		stream,
+		func(ctx context.Context, stub StreamServiceClient) (*connect.Response[GetStreamResponse], error) {
+			ret, err := stub.GetStream(ctx, copyRequestForForwarding(s, req))
+			if err != nil {
+				return nil, err
+			}
+			return connect.NewResponse(ret.Msg), nil
+		},
+		s.config.Network.NumRetries,
+		s.nodeRegistry,
+	)
 }
 
 func (s *Service) getStreamExImpl(
@@ -231,17 +294,29 @@ func (s *Service) getStreamExImpl(
 		return err
 	}
 
-	if nodes.IsLocal() {
-		return s.localGetStreamEx(ctx, req, resp)
+	allowNoQuorum := allowNoQuorum(req)
+	if !allowNoQuorum && nodes.IsLocalInQuorum() || allowNoQuorum && nodes.IsLocal() {
+		if err := s.localGetStreamEx(ctx, req, resp); err == nil {
+			return nil
+		} else if IsOperationRetriableOnRemotes(err) {
+			logging.FromCtx(ctx).Errorw("Failed to stream the stream from local node, falling back to remotes",
+				"err", err, "nodeAddress", s.wallet.Address, "streamId", streamId)
+		} else {
+			return err
+		}
 	}
 
-	err = peerNodeStreamingResponseWithRetries(
+	if err = checkNoForward(req); err != nil {
+		return err
+	}
+
+	return peerNodeStreamingResponseWithRetries(
 		ctx,
 		nodes,
 		s,
 		func(ctx context.Context, stub StreamServiceClient) (hasStreamed bool, err error) {
 			// Get the raw stream from another client and forward packets.
-			clientStream, err := stub.GetStreamEx(ctx, req)
+			clientStream, err := stub.GetStreamEx(ctx, copyRequestForForwarding(s, req))
 			if err != nil {
 				return hasStreamed, err
 			}
@@ -272,14 +347,13 @@ func (s *Service) getStreamExImpl(
 				return hasStreamed, RiverError(
 					Err_UNAVAILABLE,
 					"Stream did not send all packets (expected empty packet)",
-				).Func("service.getStreamExImpl").Tag("streamId", req.Msg.StreamId)
+				).Func("service.getStreamExImpl").Tag("streamId", streamId)
 			}
 
 			return hasStreamed, nil
 		},
 		-1,
 	)
-	return err
 }
 
 func (s *Service) GetMiniblocks(
@@ -303,15 +377,27 @@ func (s *Service) getMiniblocksImpl(
 		return nil, err
 	}
 
-	if stream.IsLocal() {
-		return s.localGetMiniblocks(ctx, req, stream)
+	allowNoQuorum := allowNoQuorum(req)
+	if !allowNoQuorum && stream.IsLocalInQuorum() || allowNoQuorum && stream.IsLocal() {
+		if resp, err := s.localGetMiniblocks(ctx, req, stream); err == nil {
+			return resp, nil
+		} else if IsOperationRetriableOnRemotes(err) {
+			logging.FromCtx(ctx).Errorw("Failed to get miniblocks from local node, falling back to remotes",
+				"err", err, "nodeAddress", s.wallet.Address, "streamId", streamId)
+		} else {
+			return nil, err
+		}
+	}
+
+	if err = checkNoForward(req); err != nil {
+		return nil, err
 	}
 
 	return utils.PeerNodeRequestWithRetries(
 		ctx,
 		stream,
 		func(ctx context.Context, stub StreamServiceClient) (*connect.Response[GetMiniblocksResponse], error) {
-			ret, err := stub.GetMiniblocks(ctx, req)
+			ret, err := stub.GetMiniblocks(ctx, copyRequestForForwarding(s, req))
 			if err != nil {
 				return nil, err
 			}
@@ -343,20 +429,31 @@ func (s *Service) getLastMiniblockHashImpl(
 		return nil, err
 	}
 
-	view, err := stream.GetViewIfLocal(ctx)
+	view, err := stream.GetViewIfLocalEx(ctx, allowNoQuorum(req))
 	if err != nil {
 		return nil, err
 	}
 
 	if view != nil {
-		return s.localGetLastMiniblockHash(view)
+		if resp, err := s.localGetLastMiniblockHash(view); err == nil {
+			return resp, nil
+		} else if IsOperationRetriableOnRemotes(err) {
+			logging.FromCtx(ctx).Errorw("Failed to get last miniblock hash from local node, falling back to remotes",
+				"err", err, "nodeAddress", s.wallet.Address, "streamId", streamId)
+		} else {
+			return nil, err
+		}
+	}
+
+	if err = checkNoForward(req); err != nil {
+		return nil, err
 	}
 
 	return utils.PeerNodeRequestWithRetries(
 		ctx,
 		stream,
 		func(ctx context.Context, stub StreamServiceClient) (*connect.Response[GetLastMiniblockHashResponse], error) {
-			ret, err := stub.GetLastMiniblockHash(ctx, req)
+			ret, err := stub.GetLastMiniblockHash(ctx, copyRequestForForwarding(s, req))
 			if err != nil {
 				return nil, err
 			}
@@ -390,22 +487,24 @@ func (s *Service) addEventImpl(
 		return nil, err
 	}
 
-	view, err := stream.GetViewIfLocal(ctx)
+	view, err := stream.GetViewIfLocalEx(ctx, allowNoQuorum(req))
 	if err != nil {
 		return nil, err
 	}
 
 	if view != nil {
-		return s.localAddEvent(ctx, req, streamId, stream, view)
+		if resp, err := s.localAddEvent(ctx, req, streamId, stream, view); err == nil {
+			return resp, nil
+		} else if IsOperationRetriableOnRemotes(err) {
+			logging.FromCtx(ctx).Errorw("Failed to add event with local node, falling back to remotes",
+				"err", err, "nodeAddress", s.wallet.Address, "streamId", streamId)
+		} else {
+			return nil, err
+		}
 	}
 
-	if req.Header().Get(RiverNoForwardHeader) == RiverNoForwardValue {
-		return nil, RiverError(Err_UNAVAILABLE, "Forwarding disabled by request header").
-			Func("service.addEventImpl").
-			Tags("streamId", req.Msg.StreamId,
-				RiverFromNodeHeader, req.Header().Get(RiverFromNodeHeader),
-				RiverToNodeHeader, req.Header().Get(RiverToNodeHeader),
-			)
+	if err = checkNoForward(req); err != nil {
+		return nil, err
 	}
 
 	// TODO: smarter remote select? random?
@@ -417,9 +516,7 @@ func (s *Service) addEventImpl(
 		return nil, err
 	}
 
-	newReq := connect.NewRequest(req.Msg)
-	newReq.Header().Set(RiverNoForwardHeader, RiverNoForwardValue)
-	newReq.Header().Set(RiverFromNodeHeader, s.wallet.Address.Hex())
+	newReq := copyRequestForForwarding(s, req)
 	newReq.Header().Set(RiverToNodeHeader, firstRemote.Hex())
 	ret, err := stub.AddEvent(ctx, newReq)
 	if err != nil {
@@ -455,31 +552,31 @@ func (s *Service) addMediaEventImpl(
 			return nil, err
 		}
 
-		return s.localAddMediaEvent(ctx, req)
+		if resp, err := s.localAddMediaEvent(ctx, req); err == nil {
+			return resp, nil
+		} else if IsOperationRetriableOnRemotes(err) {
+			logging.FromCtx(ctx).Errorw("Failed to add media event with local node, falling back to remotes",
+				"err", err, "nodeAddress", s.wallet.Address, "streamId", streamId)
+		} else {
+			return nil, err
+		}
 	}
 
 	// Forward the request to the first sticky node otherwise
-	if req.Header().Get(RiverNoForwardHeader) == RiverNoForwardValue {
-		return nil, RiverError(Err_UNAVAILABLE, "Forwarding disabled by request header").
-			Func("service.addEventImpl").
-			Tags("streamId", cc.GetStreamId(),
-				RiverFromNodeHeader, req.Header().Get(RiverFromNodeHeader),
-				RiverToNodeHeader, req.Header().Get(RiverToNodeHeader),
-			)
+	if err := checkNoForward(req); err != nil {
+		return nil, err
 	}
 
 	// TODO: smarter remote select? random?
 	// TODO: retry?
-	firstRemote := NewStreamNodesWithLock(cc.NodeAddresses(), s.wallet.Address).GetStickyPeer()
-	logging.FromCtx(ctx).Debug("Forwarding request", "nodeAddress", firstRemote)
+	firstRemote := NewStreamNodesWithLock(len(cc.NodeAddresses()), cc.NodeAddresses(), s.wallet.Address).GetStickyPeer()
+	logging.FromCtx(ctx).Debugw("Forwarding request", "nodeAddress", firstRemote)
 	stub, err := s.nodeRegistry.GetStreamServiceClientForAddress(firstRemote)
 	if err != nil {
 		return nil, err
 	}
 
-	newReq := connect.NewRequest(req.Msg)
-	newReq.Header().Set(RiverNoForwardHeader, RiverNoForwardValue)
-	newReq.Header().Set(RiverFromNodeHeader, s.wallet.Address.Hex())
+	newReq := copyRequestForForwarding(s, req)
 	newReq.Header().Set(RiverToNodeHeader, firstRemote.Hex())
 	ret, err := stub.AddMediaEvent(ctx, newReq)
 	if err != nil {

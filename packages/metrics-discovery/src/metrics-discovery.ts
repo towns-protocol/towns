@@ -1,5 +1,5 @@
-import type { NodeStructOutput } from '@river-build/generated/dev/typings/INodeRegistry'
-import { RiverRegistry, getWeb3Deployment } from '@river-build/web3'
+import type { NodeStructOutput } from '@towns-protocol/generated/dev/typings/INodeRegistry'
+import { RiverRegistry, getWeb3Deployment } from '@towns-protocol/web3'
 import { ethers } from 'ethers'
 
 const NODE_STATUS = {
@@ -12,7 +12,10 @@ const NODE_STATUS = {
 // formatting them into a prometheus-friendly format
 
 export class MetricsDiscovery {
-    constructor(private readonly riverRegistry: RiverRegistry, private readonly env: string) {}
+    constructor(
+        private readonly riverRegistry: RiverRegistry,
+        private readonly env: string,
+    ) {}
 
     public static init(config: { riverRpcURL: string; env: string }) {
         const deployment = getWeb3Deployment(config.env)

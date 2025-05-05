@@ -23,8 +23,10 @@ import (
 )
 
 const (
-	slow = 500
-	fast = 10
+	verySlow     = 5000
+	checkTimeout = 1000
+	slow         = 500
+	fast         = 10
 )
 
 var (
@@ -37,7 +39,11 @@ var (
 	slowThresholdParams  = ThresholdParams{
 		Threshold: big.NewInt(slow),
 	}
-	slowEncodedParams, _ = slowThresholdParams.AbiEncode()
+	slowEncodedParams, _    = slowThresholdParams.AbiEncode()
+	verySlowThresholdParams = ThresholdParams{
+		Threshold: big.NewInt(verySlow),
+	}
+	verySlowEncodedParams, _ = verySlowThresholdParams.AbiEncode()
 )
 
 var fastTrueCheck = CheckOperation{
@@ -86,6 +92,15 @@ var slowErrorCheck = CheckOperation{
 	ChainID:         big.NewInt(0),
 	ContractAddress: common.HexToAddress("2"),
 	Params:          slowEncodedParams,
+}
+
+// This mock check will result in an error, but not until 5s have passed.
+var verySlowErrorCheck = CheckOperation{
+	OpType:          CHECK,
+	CheckType:       CheckOperationType(MOCK),
+	ChainID:         big.NewInt(0),
+	ContractAddress: common.HexToAddress("3"),
+	Params:          verySlowEncodedParams,
 }
 
 var (
@@ -291,15 +306,23 @@ var nftMultiCheckHighThresholdBaseSepolia = CheckOperation{
 	Params:          encodeThresholdParams(big.NewInt(10)),
 }
 
+func getFromEnv(envVar string, defaultValue string) string {
+	value := os.Getenv(envVar)
+	if value == "" {
+		return defaultValue
+	}
+	return value
+}
+
 var cfg = &config.Config{
 	ChainConfigs: map[uint64]*config.ChainConfig{
 		examples.EthSepoliaChainIdUint64: {
-			NetworkUrl:  "https://ethereum-sepolia-rpc.publicnode.com",
+			NetworkUrl:  getFromEnv("ETH_SEPOLIA_RPC_URL", "https://ethereum-sepolia-rpc.publicnode.com"),
 			ChainId:     examples.EthSepoliaChainIdUint64,
 			BlockTimeMs: 12000,
 		},
 		examples.BaseSepoliaChainIdUint64: {
-			NetworkUrl:  "https://sepolia.base.org",
+			NetworkUrl:  getFromEnv("BASE_SEPOLIA_RPC_URL", "https://sepolia.base.org"),
 			ChainId:     examples.BaseSepoliaChainIdUint64,
 			BlockTimeMs: 2000,
 		},
@@ -336,8 +359,10 @@ var evaluator *Evaluator
 
 func TestMain(m *testing.M) {
 	var err error
+	ctx, cancel := test.NewTestContext()
+	defer cancel()
 	evaluator, err = NewEvaluatorFromConfig(
-		context.Background(),
+		ctx,
 		cfg,
 		allSepoliaChains_onChainConfig,
 		infra.NewMetricsFactory(nil, "", ""),
@@ -350,8 +375,9 @@ func TestMain(m *testing.M) {
 }
 
 var (
-	errSlow = fmt.Errorf("intentional failure (02)")
-	errFast = fmt.Errorf("intentional failure (01)")
+	errSlow    = fmt.Errorf("intentional failure (02)")
+	errFast    = fmt.Errorf("intentional failure (01)")
+	errTimeout = fmt.Errorf("operation cancelled: context deadline exceeded")
 )
 
 func TestAndOperation(t *testing.T) {
@@ -382,6 +408,7 @@ func TestAndOperation(t *testing.T) {
 		// Error handling
 		// For (error, true) - expect an error returned with the maximum execution time of both operations.
 		// For (error, false) - expect false returned with timing of false operation.
+
 		{"slow true, fast error", &slowTrueCheck, &fastErrorCheck, false, slow, errFast},
 		{"fast true, fast error", &fastTrueCheck, &fastErrorCheck, false, fast, errFast},
 		{"slow true, slow error", &slowTrueCheck, &slowErrorCheck, false, slow, errSlow},
@@ -406,6 +433,62 @@ func TestAndOperation(t *testing.T) {
 			slow,
 			fmt.Errorf("%w; %w", errFast, errSlow),
 		},
+		{
+			"fast error, timeout",
+			&fastErrorCheck,
+			&verySlowErrorCheck,
+			false,
+			checkTimeout,
+			errFast,
+		},
+		{
+			"timeout, fast error",
+			&verySlowErrorCheck,
+			&fastErrorCheck,
+			false,
+			checkTimeout,
+			errFast,
+		},
+		{
+			"fast true, timeout",
+			&fastTrueCheck,
+			&verySlowErrorCheck,
+			false,
+			checkTimeout,
+			errTimeout,
+		},
+		{
+			"timeout, fast true",
+			&verySlowErrorCheck,
+			&fastTrueCheck,
+			false,
+			checkTimeout,
+			errTimeout,
+		},
+		{
+			"fast false, timeout",
+			&fastFalseCheck,
+			&verySlowErrorCheck,
+			false,
+			fast,
+			nil,
+		},
+		{
+			"timeout, fast false",
+			&verySlowErrorCheck,
+			&fastFalseCheck,
+			false,
+			fast,
+			nil,
+		},
+		{
+			"timeout, timeout",
+			&verySlowErrorCheck,
+			&verySlowErrorCheck,
+			false,
+			checkTimeout,
+			fmt.Errorf("%w; %w", errTimeout, errTimeout),
+		},
 	}
 
 	for _, tc := range testCases {
@@ -420,7 +503,9 @@ func TestAndOperation(t *testing.T) {
 
 			callerAddress := common.Address{}
 
-			result, actualErr := evaluator.evaluateOp(ctx, tree, []common.Address{callerAddress})
+			timeoutCtx, cancel := context.WithTimeout(ctx, checkTimeout*time.Millisecond)
+			defer cancel()
+			result, actualErr := evaluator.evaluateOp(timeoutCtx, tree, []common.Address{callerAddress})
 			elapsedTime := time.Since(startTime)
 			if tc.expectedErr != nil {
 				require.EqualError(t, actualErr, tc.expectedErr.Error(), "Expected error was not found")
@@ -492,6 +577,62 @@ func TestOrOperation(t *testing.T) {
 			slow,
 			fmt.Errorf("%w; %w", errFast, errSlow),
 		},
+		{
+			"fast error, timeout",
+			&fastErrorCheck,
+			&verySlowErrorCheck,
+			false,
+			checkTimeout,
+			errFast,
+		},
+		{
+			"timeout, fast error",
+			&verySlowErrorCheck,
+			&fastErrorCheck,
+			false,
+			checkTimeout,
+			errFast,
+		},
+		{
+			"fast true, timeout",
+			&fastTrueCheck,
+			&verySlowErrorCheck,
+			true,
+			fast,
+			nil,
+		},
+		{
+			"timeout, fast true",
+			&verySlowErrorCheck,
+			&fastTrueCheck,
+			true,
+			fast,
+			nil,
+		},
+		{
+			"fast false, timeout",
+			&fastFalseCheck,
+			&verySlowErrorCheck,
+			false,
+			checkTimeout,
+			errTimeout,
+		},
+		{
+			"timeout, fast false",
+			&verySlowErrorCheck,
+			&fastFalseCheck,
+			false,
+			checkTimeout,
+			errTimeout,
+		},
+		{
+			"timeout, timeout",
+			&verySlowErrorCheck,
+			&verySlowErrorCheck,
+			false,
+			checkTimeout,
+			fmt.Errorf("%w; %w", errTimeout, errTimeout),
+		},
 	}
 
 	for _, tc := range testCases {
@@ -506,7 +647,9 @@ func TestOrOperation(t *testing.T) {
 
 			callerAddress := common.Address{}
 
-			result, actualErr := evaluator.evaluateOp(ctx, tree, []common.Address{callerAddress})
+			timeoutCtx, cancel := context.WithTimeout(ctx, checkTimeout*time.Millisecond)
+			defer cancel()
+			result, actualErr := evaluator.evaluateOp(timeoutCtx, tree, []common.Address{callerAddress})
 			elapsedTime := time.Since(startTime)
 			if tc.expectedErr != nil {
 				require.EqualError(t, actualErr, tc.expectedErr.Error(), "Expected error was not found")
@@ -581,7 +724,7 @@ func TestCheckOperation(t *testing.T) {
 
 // Disable this test case, which is relying on a public rpc endpoint.
 func TestCheckOperation_Untimed(t *testing.T) {
-	t.Skip("Disabling this test due to dependence on public endpoints")
+	t.Skip("Skipping due to dependency on outbound network calls")
 	testCases := map[string]struct {
 		op          Operation
 		wallets     []common.Address
@@ -919,7 +1062,9 @@ func TestCheckOperation_Untimed(t *testing.T) {
 
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
-			result, err := evaluator.evaluateOp(context.Background(), tc.op, tc.wallets)
+			ctx, cancel := test.NewTestContext()
+			defer cancel()
+			result, err := evaluator.evaluateOp(ctx, tc.op, tc.wallets)
 			if tc.expectedErr == nil {
 				require.NoError(t, err)
 			} else {
@@ -934,22 +1079,22 @@ func TestCheckOperation_Untimed(t *testing.T) {
 
 var singleEtherChainBlockChainInfo = map[uint64]config.BlockchainInfo{
 	examples.EthSepoliaChainId.Uint64(): {
-		ChainId:      examples.EthSepoliaChainId.Uint64(),
-		Name:         "Ethereum Seplia",
-		Blocktime:    12000,
-		IsEtherBased: true,
+		ChainId:           examples.EthSepoliaChainId.Uint64(),
+		Name:              "Ethereum Seplia",
+		Blocktime:         12000,
+		IsEtherNative:     true,
+		IsEthereumNetwork: true,
 	},
 	examples.BaseSepoliaChainId.Uint64(): {
-		ChainId:      examples.BaseSepoliaChainId.Uint64(),
-		Name:         "Base Sepolia",
-		Blocktime:    2000,
-		IsEtherBased: false, // for the sake of testing
+		ChainId:       examples.BaseSepoliaChainId.Uint64(),
+		Name:          "Base Sepolia",
+		Blocktime:     2000,
+		IsEtherNative: false, // for the sake of testing
 	},
 }
 
-// Disable this test case, which is relying on a public rpc endpoint.
 func Test_evaluateEthBalance_withConfig(t *testing.T) {
-	t.Skip("Disabling this test due to dependence on public endpoints")
+	t.Skip("Skipping due to dependency on outbound network calls")
 	tests := map[string]struct {
 		op          Operation
 		wallets     []common.Address
@@ -974,9 +1119,11 @@ func Test_evaluateEthBalance_withConfig(t *testing.T) {
 
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
+			ctx, cancel := test.NewTestContext()
+			defer cancel()
 			require := require.New(t)
 			customEvaluator, err := NewEvaluatorFromConfigWithBlockchainInfo(
-				context.Background(),
+				ctx,
 				cfg,
 				allSepoliaChains_onChainConfig,
 				singleEtherChainBlockChainInfo,
@@ -985,7 +1132,7 @@ func Test_evaluateEthBalance_withConfig(t *testing.T) {
 			)
 			require.NoError(err)
 
-			result, err := customEvaluator.evaluateOp(context.Background(), tc.op, tc.wallets)
+			result, err := customEvaluator.evaluateOp(ctx, tc.op, tc.wallets)
 			if tc.expectedErr == nil {
 				require.NoError(err)
 			} else {

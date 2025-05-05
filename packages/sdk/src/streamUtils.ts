@@ -5,9 +5,9 @@ import {
     PersistedMiniblockSchema,
     PersistedSyncedStream,
     SyncCookie,
-} from '@river-build/proto'
+} from '@towns-protocol/proto'
 import { ParsedEvent, ParsedMiniblock } from './types'
-import { bin_toHexString } from '@river-build/dlog'
+import { bin_toHexString } from '@towns-protocol/dlog'
 import { create } from '@bufbuild/protobuf'
 import { isDefined, logNever } from './check'
 
@@ -83,8 +83,6 @@ export function persistedEventToParsedEvent(event: PersistedEvent): ParsedEvent 
         hash: event.hash,
         hashStr: bin_toHexString(event.hash),
         signature: event.signature,
-        prevMiniblockHashStr:
-            event.prevMiniblockHashStr.length > 0 ? event.prevMiniblockHashStr : undefined,
         creatorUserId: event.creatorUserId,
     }
 }
@@ -106,6 +104,9 @@ export function parsedMiniblockToPersistedMiniblock(
     miniblock: ParsedMiniblock,
     direction: 'forward' | 'backward',
 ) {
+    if (direction === 'backward') {
+        miniblock.header.snapshot = undefined
+    }
     return create(PersistedMiniblockSchema, {
         hash: miniblock.hash,
         header: miniblock.header,
@@ -120,7 +121,6 @@ function parsedEventToPersistedEvent(event: ParsedEvent) {
         event: event.event,
         hash: event.hash,
         signature: event.signature,
-        prevMiniblockHashStr: event.prevMiniblockHashStr,
         creatorUserId: event.creatorUserId,
     })
 }

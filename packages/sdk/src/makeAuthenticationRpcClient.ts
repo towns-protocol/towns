@@ -1,7 +1,7 @@
 import { Client, createClient } from '@connectrpc/connect'
 import { ConnectTransportOptions } from '@connectrpc/connect-web'
-import { AuthenticationService } from '@river-build/proto'
-import { dlog } from '@river-build/dlog'
+import { AuthenticationService } from '@towns-protocol/proto'
+import { dlog } from '@towns-protocol/dlog'
 import { getEnvVar, randomUrlSelector } from './utils'
 import { DEFAULT_RETRY_PARAMS, loggingInterceptor, retryInterceptor } from './rpcInterceptors'
 import { createHttp2ConnectTransport, RpcOptions } from './rpcCommon'
@@ -12,10 +12,10 @@ let nextRpcClientNum = 0
 
 export type AuthenticationRpcClient = Client<typeof AuthenticationService> & { url: string }
 
-export function makeAuthenticationRpcClient(
+export async function makeAuthenticationRpcClient(
     dest: string,
     opts?: RpcOptions,
-): AuthenticationRpcClient {
+): Promise<AuthenticationRpcClient> {
     const transportId = nextRpcClientNum++
     const retryParams = opts?.retryParams ?? DEFAULT_RETRY_PARAMS
     const url = randomUrlSelector(dest)
@@ -46,7 +46,7 @@ export function makeAuthenticationRpcClient(
             useProtoFieldName: true,
         }
     }
-    const transport = createHttp2ConnectTransport(options)
+    const transport = await createHttp2ConnectTransport(options)
     const client: AuthenticationRpcClient = createClient(
         AuthenticationService,
         transport,

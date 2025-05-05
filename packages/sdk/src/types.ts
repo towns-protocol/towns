@@ -38,13 +38,13 @@ import {
     MemberPayload_Nft,
     BlockchainTransaction,
     ChannelMessageSchema,
-} from '@river-build/proto'
+} from '@towns-protocol/proto'
 import { keccak256 } from 'ethereum-cryptography/keccak'
-import { bin_toHexString } from '@river-build/dlog'
+import { bin_toHexString } from '@towns-protocol/dlog'
 import { isDefined } from './check'
 import { DecryptedContent } from './encryptedContentTypes'
 import { addressFromUserId, streamIdAsBytes } from './id'
-import { DecryptionSessionError, EventSignatureBundle } from '@river-build/encryption'
+import { DecryptionSessionError, EventSignatureBundle } from '@towns-protocol/encryption'
 
 export type LocalEventStatus = 'sending' | 'sent' | 'failed'
 export interface LocalEvent {
@@ -58,8 +58,14 @@ export interface ParsedEvent {
     hash: Uint8Array
     hashStr: string
     signature: Uint8Array | undefined
-    prevMiniblockHashStr?: string
     creatorUserId: string
+}
+
+export interface ParsedSnapshot {
+    snapshot: Snapshot
+    hash: Uint8Array
+    hashStr: string
+    signature: Uint8Array | undefined
 }
 
 export interface StreamTimelineEvent {
@@ -205,6 +211,7 @@ export interface ParsedStreamAndCookie {
     nextSyncCookie: SyncCookie
     miniblocks: ParsedMiniblock[]
     events: ParsedEvent[]
+    snapshot?: ParsedSnapshot
 }
 
 export interface ParsedStreamResponse {

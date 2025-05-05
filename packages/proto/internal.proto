@@ -5,9 +5,9 @@ package river;
 import "protocol.proto";
 
 message PersistedEvent {
+    reserved 3;
     StreamEvent event = 1;
     bytes hash = 2;
-    string prev_miniblock_hash_str = 3;
     string creator_user_id = 4;
     bytes signature = 5;
 }

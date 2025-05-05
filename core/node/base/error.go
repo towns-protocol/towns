@@ -13,13 +13,13 @@ import (
 	"strings"
 
 	"connectrpc.com/connect"
-	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
-
-	"github.com/towns-protocol/towns/core/node/protocol"
-
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/rpc"
+	"github.com/towns-protocol/towns/core/node/logging"
+	"github.com/towns-protocol/towns/core/node/protocol"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
+	"golang.org/x/exp/slices"
 )
 
 // Constants are not exported when go bindings are generated from solidity, so there is duplication here.
@@ -397,33 +397,33 @@ func (e *RiverErrorImpl) GetTag(name string) any {
 	return nil
 }
 
-func (e *RiverErrorImpl) LogWithLevel(l *zap.SugaredLogger, level zapcore.Level) *RiverErrorImpl {
+func (e *RiverErrorImpl) LogWithLevel(l *logging.Log, level zapcore.Level) *RiverErrorImpl {
 	// Context for zap is optional, generally in this codebase context is not passed to zap.
 	l.Logw(level, e.GetMessage(), e.FlattenTags()...)
 	return e
 }
 
-func (e *RiverErrorImpl) Log(l *zap.SugaredLogger) *RiverErrorImpl {
+func (e *RiverErrorImpl) Log(l *logging.Log) *RiverErrorImpl {
 	return e.LogWithLevel(l, zapcore.ErrorLevel)
 }
 
-func (e *RiverErrorImpl) LogError(l *zap.SugaredLogger) *RiverErrorImpl {
+func (e *RiverErrorImpl) LogError(l *logging.Log) *RiverErrorImpl {
 	return e.LogWithLevel(l, zapcore.ErrorLevel)
 }
 
-func (e *RiverErrorImpl) LogWarn(l *zap.SugaredLogger) *RiverErrorImpl {
+func (e *RiverErrorImpl) LogWarn(l *logging.Log) *RiverErrorImpl {
 	return e.LogWithLevel(l, zapcore.WarnLevel)
 }
 
-func (e *RiverErrorImpl) LogInfo(l *zap.SugaredLogger) *RiverErrorImpl {
+func (e *RiverErrorImpl) LogInfo(l *logging.Log) *RiverErrorImpl {
 	return e.LogWithLevel(l, zapcore.InfoLevel)
 }
 
-func (e *RiverErrorImpl) LogDebug(l *zap.SugaredLogger) *RiverErrorImpl {
+func (e *RiverErrorImpl) LogDebug(l *logging.Log) *RiverErrorImpl {
 	return e.LogWithLevel(l, zapcore.DebugLevel)
 }
 
-func (e *RiverErrorImpl) LogLevel(l *zap.SugaredLogger, level zapcore.Level) *RiverErrorImpl {
+func (e *RiverErrorImpl) LogLevel(l *logging.Log, level zapcore.Level) *RiverErrorImpl {
 	return e.LogWithLevel(l, level)
 }
 
@@ -462,4 +462,29 @@ func TruncateErrorToConnectLimit(err error) error {
 		return errors.New(msg[:CONNECT_ERROR_MESSAGE_LIMIT])
 	}
 	return err
+}
+
+// IsOperationRetriableOnRemotes returns true if the given error is the river error and its code is in the list
+// of codes allowed to be retried on remotes.
+func IsOperationRetriableOnRemotes(err error) bool {
+	// If the error is not a river error, then it is not retriable.
+	var riverErrorImpl *RiverErrorImpl
+	if !errors.As(err, &riverErrorImpl) {
+		return false
+	}
+
+	return slices.Contains([]protocol.Err{
+		protocol.Err_UNKNOWN,
+		protocol.Err_DEADLINE_EXCEEDED,
+		protocol.Err_NOT_FOUND,
+		protocol.Err_RESOURCE_EXHAUSTED,
+		protocol.Err_ABORTED,
+		protocol.Err_UNIMPLEMENTED,
+		protocol.Err_INTERNAL,
+		protocol.Err_UNAVAILABLE,
+		protocol.Err_DATA_LOSS,
+		protocol.Err_BUFFER_FULL,
+		protocol.Err_STREAM_RECONCILIATION_REQUIRED,
+		protocol.Err_MINIBLOCK_TOO_NEW,
+	}, AsRiverError(err).Code)
 }

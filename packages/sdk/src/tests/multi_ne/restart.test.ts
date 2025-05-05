@@ -1,9 +1,9 @@
 /**
  */
 
-import { MembershipOp } from '@river-build/proto'
+import { MembershipOp } from '@towns-protocol/proto'
 import { setTimeout } from 'timers/promises'
-import { dlog } from '@river-build/dlog'
+import { dlog } from '@towns-protocol/dlog'
 import {
     makeUniqueChannelStreamId,
     makeUserStreamId,
@@ -245,7 +245,7 @@ const countStreamBlocksAndSnapshots = async (bob: StreamRpcClient, streamId: Uin
     for (const mb of stream.streamAndCookie.miniblocks) {
         expect(mb.header).toBeDefined()
         totalEvents += mb.events.length
-        if (mb.header?.snapshot !== undefined) {
+        if (mb.header?.snapshot !== undefined || mb.header?.snapshotHash !== undefined) {
             snapshots++
         }
     }

@@ -1,7 +1,7 @@
 import axios from 'axios'
-import { dlog } from '@river-build/dlog'
+import { dlog } from '@towns-protocol/dlog'
 import { ethers } from 'ethers'
-import { makeTestClient, TestClient } from '@river-build/sdk'
+import { makeTestClient, TestClient } from '@towns-protocol/sdk'
 
 import {
 	getTestServerUrl,
@@ -12,7 +12,7 @@ import {
 import { SpaceMemberMetadataResponse } from '../../src/routes/spaceMemberMetadata'
 import { spaceDapp } from '../../src/contract-utils'
 
-const log = dlog('stream-metadata:test:spaceMemberMetadata', {
+const log = dlog('test:stream-metadata:test:spaceMemberMetadata', {
 	allowJest: true,
 	defaultEnabled: true,
 })

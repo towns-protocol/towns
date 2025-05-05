@@ -17,10 +17,10 @@ import (
 func TestCreateEphemeralStream(t *testing.T) {
 	tt := newServiceTester(t, serviceTesterOpts{numNodes: 1, start: true})
 
-	alice := tt.newTestClient(0)
+	alice := tt.newTestClient(0, testClientOpts{})
 	_ = alice.createUserStream()
 	spaceId, _ := alice.createSpace()
-	channelId, _ := alice.createChannel(spaceId)
+	channelId, _, _ := alice.createChannel(spaceId)
 
 	// Nodes should accept ephemeral miniblocks even if a stream does not exist.
 	t.Run("Send ephemeral miniblock for non-existing stream", func(t *testing.T) {

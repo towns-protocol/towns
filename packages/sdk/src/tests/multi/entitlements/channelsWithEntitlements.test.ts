@@ -13,8 +13,8 @@ import {
     setupChannelWithCustomRole,
     expectUserCanJoinChannel,
 } from '../../testUtils'
-import { dlog } from '@river-build/dlog'
-import { NoopRuleData, Permission } from '@river-build/web3'
+import { dlog } from '@towns-protocol/dlog'
+import { NoopRuleData, Permission } from '@towns-protocol/web3'
 
 const log = dlog('csb:test:channelsWithEntitlements')
 
@@ -52,6 +52,27 @@ describe('channelsWithEntitlements', () => {
                 getXchainConfigForTesting(),
             ),
         ).resolves.toBeFalsy()
+
+        // unban alice
+        const unbanTx = await bobSpaceDapp.unbanWalletAddress(
+            spaceId,
+            alicesWallet.address,
+            bobProvider.wallet,
+        )
+        await unbanTx.wait()
+
+        // Wait 5 seconds for the caches to expire
+        await new Promise((f) => setTimeout(f, 5000))
+
+        await expect(
+            aliceSpaceDapp.isEntitledToChannel(
+                spaceId,
+                channelId!,
+                alice.userId,
+                Permission.Read,
+                getXchainConfigForTesting(),
+            ),
+        ).resolves.toBeTruthy()
 
         const doneStart = Date.now()
         // kill the clients

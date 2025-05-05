@@ -8,10 +8,11 @@ import {
 	streamIdAsBytes,
 	streamIdAsString,
 	unpackStream,
-} from '@river-build/sdk'
+} from '@towns-protocol/sdk'
 import { filetypemime } from 'magic-bytes.js'
 import { FastifyBaseLogger } from 'fastify'
 import { LRUCache } from 'lru-cache'
+import { errors } from 'ethers'
 
 import { MediaContent } from './types'
 import { getNodeForStream } from './streamRegistry'
@@ -25,7 +26,7 @@ const streamLocationCache = new LRUCache<string, string>({ max: 5000 })
 const clients = new Map<string, StreamRpcClient>()
 const streamClientRequests = new Map<string, Promise<StreamRpcClient>>()
 const streamRequests = new Map<string, Promise<StreamStateView>>()
-const mediaRequests = new Map<string, Promise<MediaContent>>()
+const mediaRequests = new Map<string, Promise<MediaContent | undefined>>()
 
 async function _getStreamClient(logger: FastifyBaseLogger, streamId: string) {
 	let url = streamLocationCache.get(streamId)
@@ -37,7 +38,7 @@ async function _getStreamClient(logger: FastifyBaseLogger, streamId: string) {
 	let client = clients.get(url)
 	if (!client) {
 		logger.info({ url }, 'Connecting')
-		client = makeStreamRpcClient(url)
+		client = await makeStreamRpcClient(url)
 		clients.set(url, client)
 	}
 	return client
@@ -90,7 +91,7 @@ async function mediaContentFromStreamView(
 	logger: FastifyBaseLogger,
 	streamView: StreamStateView,
 	secret: Uint8Array,
-	iv: Uint8Array,
+	iv?: Uint8Array,
 ): Promise<MediaContent> {
 	const mediaInfo = streamView.mediaContent.info
 	if (!mediaInfo) {
@@ -112,19 +113,39 @@ async function mediaContentFromStreamView(
 		'decrypting media content in stream',
 	)
 
-	// Aggregate data chunks into a single Uint8Array
-	const data = new Uint8Array(
-		mediaInfo.chunks.reduce((totalLength, chunk) => totalLength + chunk.length, 0),
-	)
-	let offset = 0
-	mediaInfo.chunks.forEach((chunk) => {
-		data.set(chunk, offset)
-		offset += chunk.length
-	})
+	let decrypted: Uint8Array
+	if (mediaInfo.perChunkEncryption) {
+		// auth tag is 16 bytes
+		decrypted = new Uint8Array(
+			mediaInfo.chunks.reduce((totalLength, chunk) => totalLength + chunk.length - 16, 0),
+		)
+		let offset = 0
+		for (let i = 0; i < mediaInfo.chunkCount; i++) {
+			const chunk = mediaInfo.chunks[i]
+			const chunkIv = mediaInfo.perChunkIVs[i]
+			const decryptedChunk = await decryptAESGCM(chunk, secret, chunkIv)
+			decrypted.set(decryptedChunk, offset)
+			offset += decryptedChunk.length
+		}
+	} else {
+		if (!iv) {
+			throw new Error('IV is required for non-per-chunk-encrypted media')
+		}
 
-	// Decrypt the data
-	const decrypted = await decryptAESGCM(data, secret, iv)
+		// Aggregate data chunks into a single Uint8Array
+		const data = new Uint8Array(
+			mediaInfo.chunks.reduce((totalLength, chunk) => totalLength + chunk.length, 0),
+		)
 
+		let offset = 0
+		mediaInfo.chunks.forEach((chunk) => {
+			data.set(chunk, offset)
+			offset += chunk.length
+		})
+
+		// Decrypt the data
+		decrypted = await decryptAESGCM(data, secret, iv)
+	}
 	// Determine the MIME type
 	const mimeType = filetypemime(decrypted)
 
@@ -171,7 +192,6 @@ export async function _getStream(
 
 	try {
 		const start = Date.now()
-
 		const response = await client.getStream({
 			streamId: streamIdAsBytes(streamId),
 		})
@@ -200,7 +220,7 @@ export async function getStream(
 	logger: FastifyBaseLogger,
 	streamId: string,
 	opts: UnpackEnvelopeOpts = STREAM_METADATA_SERVICE_DEFAULT_UNPACK_OPTS,
-): Promise<StreamStateView> {
+): Promise<StreamStateView | undefined> {
 	const existing = streamRequests.get(streamId)
 	if (existing) {
 		return existing
@@ -209,6 +229,19 @@ export async function getStream(
 		const promise = _getStream(logger, streamId, opts)
 		streamRequests.set(streamId, promise)
 		return await promise
+	} catch (e) {
+		// We don't want to immediately throw when the stream is not found,
+		// because this is not always an unexpected error. When streams are
+		// not found, the caller should handle this case and return a 404.
+		if (
+			e instanceof Error &&
+			'code' in e &&
+			e.code === `${errors.CALL_EXCEPTION}` &&
+			'reason' in e &&
+			e.reason === 'NOT_FOUND'
+		) {
+			return undefined
+		}
 	} finally {
 		streamRequests.delete(streamId)
 	}
@@ -218,9 +251,12 @@ export async function _getMediaStreamContent(
 	logger: FastifyBaseLogger,
 	streamId: string,
 	secret: Uint8Array,
-	iv: Uint8Array,
-): Promise<MediaContent> {
+	iv?: Uint8Array,
+): Promise<MediaContent | undefined> {
 	const sv = await getStream(logger, streamId)
+	if (!sv) {
+		return undefined
+	}
 	const result = await mediaContentFromStreamView(logger, sv, secret, iv)
 	return result
 }
@@ -229,8 +265,8 @@ export async function getMediaStreamContent(
 	logger: FastifyBaseLogger,
 	streamId: string,
 	secret: Uint8Array,
-	iv: Uint8Array,
-): Promise<MediaContent> {
+	iv: Uint8Array | undefined,
+): Promise<MediaContent | undefined> {
 	const existing = mediaRequests.get(streamId)
 	if (existing) {
 		return existing

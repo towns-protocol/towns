@@ -9,24 +9,27 @@ module.exports = {
       impliedStrict: true,
       experimentalObjectRestSpread: true,
     },
-    project: path.resolve(__dirname, "tsconfig.json"),
+    project: [
+      path.resolve(__dirname, "tsconfig.json"),
+      path.resolve(__dirname, "tsconfig.node.json"),
+    ],
     allowImportExportEverywhere: true,
   },
-  plugins: ["@typescript-eslint", "import", "react"],
+  plugins: ["@typescript-eslint", "import-x", "react"],
   extends: [
     "eslint:recommended",
     "plugin:@typescript-eslint/recommended",
     "plugin:react/jsx-runtime",
     "plugin:react-hooks/recommended",
-    "plugin:import/warnings",
-    "plugin:import/typescript",
+    "plugin:import-x/warnings",
+    "plugin:import-x/typescript",
   ],
   rules: {
     curly: "warn",
     "@typescript-eslint/no-base-to-string": "error",
     "@typescript-eslint/no-unused-vars": ["warn", { args: "none" }],
     "no-unused-vars": "off",
-    "import/no-named-as-default-member": "off",
+    "import-x/no-named-as-default-member": "off",
     "react/display-name": "off",
     "react/jsx-boolean-value": ["warn", "never"],
     "react/jsx-curly-brace-presence": [
@@ -47,13 +50,14 @@ module.exports = {
         noSortAlphabetically: true,
       },
     ],
-    "import/no-cycle": ["warn"],
-    "import/order": [
+    "import-x/no-cycle": ["warn"],
+    "import-x/order": [
       "error",
       {
         groups: ["external", "internal"],
       },
     ],
+    "import-x/no-rename-default": "off",
     "sort-imports": [
       "warn",
       {
@@ -64,10 +68,10 @@ module.exports = {
     ],
   },
   settings: {
-    "import/parsers": {
+    "import-x/parsers": {
       "@typescript-eslint/parser": [".ts", ".tsx", ".d.ts"],
     },
-    "import/resolver": {
+    "import-x/resolver": {
       typescript: {
         alwaysTryTypes: true,
         project: path.resolve(__dirname, "tsconfig.json"),

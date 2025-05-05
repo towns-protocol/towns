@@ -1,4 +1,4 @@
-import type { ChunkedMedia } from '@river-build/proto'
+import type { ChunkedMedia } from '@towns-protocol/proto'
 import type { FastifyBaseLogger } from 'fastify'
 
 export function getMediaEncryption(

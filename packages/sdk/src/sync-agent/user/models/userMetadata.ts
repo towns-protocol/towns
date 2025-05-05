@@ -1,6 +1,6 @@
-import { check, dlogger } from '@river-build/dlog'
+import { check, dlogger } from '@towns-protocol/dlog'
 import { LoadPriority, Store } from '../../../store/store'
-import { UserDevice } from '@river-build/encryption'
+import { UserDevice } from '@towns-protocol/encryption'
 import { PersistedObservable, persistedObservable } from '../../../observable/persistedObservable'
 import { makeUserMetadataStreamId } from '../../../id'
 import { RiverConnection } from '../../river-connection/riverConnection'
@@ -20,7 +20,11 @@ export interface UserMetadataModel {
 
 @persistedObservable({ tableName: 'userMetadata' })
 export class UserMetadata extends PersistedObservable<UserMetadataModel> {
-    constructor(id: string, store: Store, private riverConnection: RiverConnection) {
+    constructor(
+        id: string,
+        store: Store,
+        private riverConnection: RiverConnection,
+    ) {
         super(
             { id, streamId: makeUserMetadataStreamId(id), initialized: false, deviceKeys: [] },
             store,

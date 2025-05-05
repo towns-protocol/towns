@@ -1,6 +1,6 @@
 import { useAccount, useConnect } from 'wagmi'
 import { useEffect, useState } from 'react'
-import { useAgentConnection } from '@river-build/react-sdk'
+import { useAgentConnection } from '@towns-protocol/react-sdk'
 import { useNavigate } from 'react-router-dom'
 import { GitHubLogoIcon } from '@radix-ui/react-icons'
 import { Book, ExternalLink } from 'lucide-react'
@@ -38,7 +38,7 @@ export const AuthRoute = () => {
                 <p className="text-lg text-muted-foreground">
                     An interactive environment for testing and experimenting with{' '}
                     <a
-                        href="https://river.build"
+                        href="https://towns.com"
                         target="_blank"
                         className="inline-flex items-center font-semibold underline-offset-4 hover:underline"
                     >
@@ -70,7 +70,7 @@ export const AuthRoute = () => {
                                 variant: 'outline',
                                 className: 'mt-4 w-full',
                             })}
-                            href="https://github.com/river-build/river/tree/main/packages/playground"
+                            href="https://github.com/towns-protocol/towns/tree/main/packages/playground"
                             target="_blank"
                         >
                             View Repository <ExternalLink className="ml-2 size-4" />

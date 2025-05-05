@@ -1,4 +1,4 @@
-import { bin_toHexString } from '@river-build/dlog'
+import { bin_toHexString } from '@towns-protocol/dlog'
 import {
     ChannelMessage_Post_Attachment,
     ChannelMessage_Post,
@@ -16,7 +16,7 @@ import {
     PlainMessage,
     ChannelMessage_Post_AttachmentSchema,
     ChannelMessage_PostSchema,
-} from '@river-build/proto'
+} from '@towns-protocol/proto'
 import { isDefined, logNever, checkNever } from '../../../check'
 import {
     type TimelineEvent_OneOf,
@@ -69,7 +69,7 @@ import {
     isCiphertext,
 } from '../../../types'
 
-import { getSpaceReviewEventDataBin } from '@river-build/web3'
+import { getSpaceReviewEventDataBin } from '@towns-protocol/web3'
 import { create } from '@bufbuild/protobuf'
 
 type SuccessResult = {
@@ -84,7 +84,7 @@ type ErrorResult = {
 
 type EventContentResult = SuccessResult | ErrorResult
 
-export function toEvent(timelineEvent: StreamTimelineEvent, userId: string): TimelineEvent {
+export function toEventSA(timelineEvent: StreamTimelineEvent, userId: string): TimelineEvent {
     const eventId = timelineEvent.hashStr
     const senderId = timelineEvent.creatorUserId
 
@@ -270,7 +270,7 @@ function toTownsContent_MiniblockHeader(
         content: {
             kind: RiverTimelineEvent.MiniblockHeader,
             miniblockNum: value.miniblockNum,
-            hasSnapshot: value.snapshot !== undefined,
+            hasSnapshot: value.snapshot !== undefined || value.snapshotHash !== undefined,
         } satisfies MiniblockHeaderEvent,
     }
 }
@@ -941,22 +941,6 @@ function toAttachment(
     }
 }
 
-// function isDMMessageEventBlocked(
-//     event: TimelineEvent,
-//     kind: SnapshotCaseType,
-//     streamClient: Client,
-// ) {
-//     if (kind !== 'dmChannelContent') {
-//         return false
-//     }
-//     if (!streamClient?.userSettingsStreamId) {
-//         return false
-//     }
-//     const stream = streamClient.stream(streamClient.userSettingsStreamId)
-//     check(isDefined(stream), 'stream must be defined')
-//     return stream.view.userSettingsContent.isUserBlockedAt(event.sender.id, event.eventNum)
-// }
-
 export function getFallbackContent(
     senderDisplayName: string,
     content?: TimelineEvent_OneOf,
@@ -986,6 +970,8 @@ export function getFallbackContent(
             return `${senderDisplayName}: ${content.body}`
         case RiverTimelineEvent.ChannelProperties:
             return `properties: ${content.properties.name ?? ''} ${content.properties.topic ?? ''}`
+        case RiverTimelineEvent.EncryptedChannelProperties:
+            return `Decrypting Channel Properties...`
         case RiverTimelineEvent.SpaceUsername:
             return `username: ${content.username}`
         case RiverTimelineEvent.SpaceDisplayName:
@@ -1185,14 +1171,6 @@ export function transformAttachments(attachments?: Attachment[]): ChannelMessage
         .filter(isDefined)
 }
 
-// function getEditsId(content: TimelineEvent_OneOf | undefined): string | undefined {
-//     return content?.kind === RiverEvent.ChannelMessage ? content.editsEventId : undefined
-// }
-
-// function getRedactsId(content: TimelineEvent_OneOf | undefined): string | undefined {
-//     return content?.kind === RiverEvent.RedactionActionEvent ? content.refEventId : undefined
-// }
-
 function getThreadParentId(content: TimelineEvent_OneOf | undefined): string | undefined {
     return content?.kind === RiverTimelineEvent.ChannelMessage ? content.threadId : undefined
 }
@@ -1314,16 +1292,6 @@ function canReplaceEvent(prev: TimelineEvent, next: TimelineEvent): boolean {
         return true
     }
     return false
-}
-
-export function getEditsId(content: TimelineEvent_OneOf | undefined): string | undefined {
-    return content?.kind === RiverTimelineEvent.ChannelMessage ? content.editsEventId : undefined
-}
-
-export function getRedactsId(content: TimelineEvent_OneOf | undefined): string | undefined {
-    return content?.kind === RiverTimelineEvent.RedactionActionEvent
-        ? content.refEventId
-        : undefined
 }
 
 export function makeRedactionEvent(redactionAction: TimelineEvent): TimelineEvent {

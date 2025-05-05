@@ -1,8 +1,8 @@
 import { FastifyReply, FastifyRequest } from 'fastify'
-import { ChunkedMedia } from '@river-build/proto'
-import { StreamPrefix, StreamStateView, makeStreamId } from '@river-build/sdk'
+import { ChunkedMedia } from '@towns-protocol/proto'
+import { StreamPrefix, StreamStateView, makeStreamId } from '@towns-protocol/sdk'
 import { z } from 'zod'
-import { bin_toHexString } from '@river-build/dlog'
+import { bin_toHexString } from '@towns-protocol/dlog'
 
 import { getStream } from '../riverStreamRpcClient'
 import { isValidEthereumAddress } from '../validators'
@@ -39,7 +39,7 @@ export async function fetchUserProfileImage(request: FastifyRequest, reply: Fast
 	const { userId } = parseResult.data
 
 	logger.info({ userId }, 'Fetching user image')
-	let stream: StreamStateView
+	let stream: StreamStateView | undefined
 	try {
 		const userMetadataStreamId = makeStreamId(StreamPrefix.UserMetadata, userId)
 		stream = await getStream(logger, userMetadataStreamId)
@@ -51,6 +51,11 @@ export async function fetchUserProfileImage(request: FastifyRequest, reply: Fast
 			},
 			'Failed to get stream',
 		)
+		return reply.code(500).send('Failed to get stream')
+	}
+
+	if (!stream) {
+		logger.info({ userId }, 'Stream not found')
 		return reply.code(404).header('Cache-Control', CACHE_CONTROL[404]).send('Stream not found')
 	}
 
@@ -66,20 +71,19 @@ export async function fetchUserProfileImage(request: FastifyRequest, reply: Fast
 
 	try {
 		const { key, iv } = getMediaEncryption(logger, profileImage)
-		if (key?.length === 0 || iv?.length === 0) {
+		if (key?.length === 0) {
 			logger.error(
 				{
-					key: key?.length === 0 ? 'has key' : 'no key',
-					iv: iv?.length === 0 ? 'has iv' : 'no iv',
+					key: 'no key',
 					userId,
 					mediaStreamId: profileImage.streamId,
 				},
-				'Invalid key or iv',
+				'Invalid key',
 			)
 			return reply
 				.code(422)
 				.header('Cache-Control', CACHE_CONTROL[422])
-				.send('Failed to get encryption key or iv')
+				.send('Failed to get encryption key')
 		}
 		const redirectUrl = `${config.streamMetadataBaseUrl}/media/${
 			profileImage.streamId
@@ -99,12 +103,12 @@ export async function fetchUserProfileImage(request: FastifyRequest, reply: Fast
 				userId,
 				mediaStreamId: profileImage.streamId,
 			},
-			'Failed to get encryption key or iv',
+			'Failed to get encryption key',
 		)
 		return reply
 			.code(422)
 			.header('Cache-Control', CACHE_CONTROL[422])
-			.send('Failed to get encryption key or iv')
+			.send('Failed to get encryption key')
 	}
 }
 

@@ -1,4 +1,3 @@
-/* eslint-disable import/no-unresolved */
 // @ts-ignore
 // need to include the olmWasm file for the app/browser. BUT this is probably not what we want to do in the long run
 // Since we are not bundling the csb SDK, just transpiling TS to JS (like in lib), the SDK is not handling this import at all.
@@ -16,7 +15,7 @@ import {
     Session,
     Utility,
 } from './encryptionTypes'
-import { isNodeEnv } from '@river-build/dlog'
+import { isNodeEnv } from '@towns-protocol/dlog'
 
 type OlmLib = typeof Olm
 
@@ -42,7 +41,7 @@ export class EncryptionDelegate {
             return
         }
 
-        if (isNodeEnv()) {
+        if (isNodeEnv) {
             await this.delegate.init()
         } else {
             await this.delegate.init({ locateFile: () => olmWasm as unknown })

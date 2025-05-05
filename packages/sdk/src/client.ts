@@ -4,7 +4,7 @@ import {
     SpaceAddressFromSpaceId,
     SpaceReviewAction,
     SpaceReviewEventObject,
-} from '@river-build/web3'
+} from '@towns-protocol/web3'
 import {
     PlainMessage,
     MembershipOp,
@@ -34,7 +34,6 @@ import {
     UserBio,
     Tags,
     BlockchainTransaction,
-    MiniblockHeader,
     GetStreamResponse,
     CreateStreamResponse,
     ChannelProperties,
@@ -54,7 +53,7 @@ import {
     SolanaBlockchainTransactionReceipt,
     SessionKeysSchema,
     EnvelopeSchema,
-} from '@river-build/proto'
+} from '@towns-protocol/proto'
 import {
     bin_fromHexString,
     bin_toHexString,
@@ -64,7 +63,7 @@ import {
     dlog,
     dlogError,
     bin_fromString,
-} from '@river-build/dlog'
+} from '@towns-protocol/dlog'
 import {
     AES_GCM_DERIVED_ALGORITHM,
     BaseDecryptionExtensions,
@@ -79,7 +78,7 @@ import {
     UserDeviceCollection,
     makeSessionKeys,
     type EncryptionDeviceInitOpts,
-} from '@river-build/encryption'
+} from '@towns-protocol/encryption'
 import { getMaxTimeoutMs, StreamRpcClient, getMiniblocks } from './makeStreamRpcClient'
 import { errorContains, getRpcErrorProperty } from './rpcInterceptors'
 import { assert, isDefined } from './check'
@@ -106,7 +105,7 @@ import {
     contractAddressFromSpaceId,
     isUserId,
 } from './id'
-import { makeEvent, unpackEnvelope, UnpackEnvelopeOpts, unpackStream, unpackStreamEx } from './sign'
+import { makeEvent, UnpackEnvelopeOpts, unpackStream, unpackStreamEx } from './sign'
 import { StreamEvents } from './streamEvents'
 import { IStreamStateView, StreamStateView } from './streamStateView'
 import {
@@ -175,9 +174,19 @@ import { SyncedStreamsExtension } from './syncedStreamsExtension'
 import { SignerContext } from './signerContext'
 import { decryptAESGCM, deriveKeyAndIV, encryptAESGCM, uint8ArrayToBase64 } from './crypto_utils'
 import { makeTags, makeTipTags, makeTransferTags } from './tags'
-import { TipEventObject } from '@river-build/generated/dev/typings/ITipping'
+import { TipEventObject } from '@towns-protocol/generated/dev/typings/ITipping'
 
 export type ClientEvents = StreamEvents & DecryptionEvents
+
+export type ClientOptions = {
+    persistenceStoreName?: string
+    logNamespaceFilter?: string
+    highPriorityStreamIds?: string[]
+    unpackEnvelopeOpts?: UnpackEnvelopeOpts
+    defaultGroupEncryptionAlgorithm?: GroupEncryptionAlgorithmId
+    logId?: string
+    streamOpts?: { useModifySync?: boolean }
+}
 
 type SendChannelMessageOptions = {
     beforeSendEventHook?: Promise<void>
@@ -197,7 +206,6 @@ export class Client
     readonly rpcClient: StreamRpcClient
     readonly userId: string
     readonly streams: SyncedStreams
-    readonly unpackEnvelopeOpts: UnpackEnvelopeOpts | undefined
 
     userStreamId?: string
     userSettingsStreamId?: string
@@ -233,17 +241,11 @@ export class Client
         rpcClient: StreamRpcClient,
         cryptoStore: CryptoStore,
         entitlementsDelegate: EntitlementsDelegate,
-        persistenceStoreName?: string,
-        logNamespaceFilter?: string,
-        highPriorityStreamIds?: string[],
-        unpackEnvelopeOpts?: UnpackEnvelopeOpts,
-        defaultGroupEncryptionAlgorithm?: GroupEncryptionAlgorithmId,
-        inLogId?: string,
-        private streamOpts?: { useModifySync?: boolean },
+        public opts?: ClientOptions,
     ) {
         super()
-        if (logNamespaceFilter) {
-            debug.enable(logNamespaceFilter)
+        if (opts?.logNamespaceFilter) {
+            debug.enable(opts.logNamespaceFilter)
         }
         assert(
             isDefined(signerContext.creatorAddress) && signerContext.creatorAddress.length === 20,
@@ -257,13 +259,13 @@ export class Client
         this.entitlementsDelegate = entitlementsDelegate
         this.signerContext = signerContext
         this.rpcClient = rpcClient
-        this.unpackEnvelopeOpts = unpackEnvelopeOpts
         this.userId = userIdFromAddress(signerContext.creatorAddress)
         this.defaultGroupEncryptionAlgorithm =
-            defaultGroupEncryptionAlgorithm ?? GroupEncryptionAlgorithmId.HybridGroupEncryption
+            opts?.defaultGroupEncryptionAlgorithm ??
+            GroupEncryptionAlgorithmId.HybridGroupEncryption
 
         this.logId =
-            inLogId ??
+            opts?.logId ??
             shortenHexString(this.userId.startsWith('0x') ? this.userId.slice(2) : this.userId)
 
         this.logCall = dlog('csb:cl:call').extend(this.logId)
@@ -276,8 +278,8 @@ export class Client
         this.logDebug = dlog('csb:cl:debug').extend(this.logId)
         this.cryptoStore = cryptoStore
 
-        if (persistenceStoreName) {
-            this.persistenceStore = new PersistenceStore(persistenceStoreName)
+        if (opts?.persistenceStoreName) {
+            this.persistenceStore = new PersistenceStore(opts.persistenceStoreName)
         } else {
             this.persistenceStore = new StubPersistenceStore()
         }
@@ -286,12 +288,12 @@ export class Client
             this.userId,
             this.rpcClient,
             this,
-            this.unpackEnvelopeOpts,
+            opts?.unpackEnvelopeOpts,
             this.logId,
-            this.streamOpts,
+            opts?.streamOpts,
         )
         this.syncedStreamsExtensions = new SyncedStreamsExtension(
-            highPriorityStreamIds,
+            opts?.highPriorityStreamIds,
             {
                 startSyncStreams: async () => {
                     this.streams.startSyncStreams()
@@ -428,6 +430,10 @@ export class Client
         }
     }
 
+    public onNetworkStatusChanged(isOnline: boolean) {
+        this.streams.onNetworkStatusChanged(isOnline)
+    }
+
     private async initUserStream(metadata: { spaceId: Uint8Array } | undefined) {
         this.userStreamId = makeUserStreamId(this.userId)
         const userStream = this.createSyncedStream(this.userStreamId)
@@ -526,7 +532,7 @@ export class Client
             optional: true,
         })
         if (response.stream) {
-            return unpackStream(response.stream, this.unpackEnvelopeOpts)
+            return unpackStream(response.stream, this.opts?.unpackEnvelopeOpts)
         } else {
             return undefined
         }
@@ -549,7 +555,7 @@ export class Client
             streamId: streamIdAsBytes(userStreamId),
             metadata: metadata,
         })
-        return unpackStream(response.stream, this.unpackEnvelopeOpts)
+        return unpackStream(response.stream, this.opts?.unpackEnvelopeOpts)
     }
 
     private async createUserMetadataStream(
@@ -570,7 +576,7 @@ export class Client
             streamId: streamIdAsBytes(userMetadataStreamId),
             metadata: metadata,
         })
-        return unpackStream(response.stream, this.unpackEnvelopeOpts)
+        return unpackStream(response.stream, this.opts?.unpackEnvelopeOpts)
     }
 
     private async createUserInboxStream(
@@ -591,7 +597,7 @@ export class Client
             streamId: streamIdAsBytes(userInboxStreamId),
             metadata: metadata,
         })
-        return unpackStream(response.stream, this.unpackEnvelopeOpts)
+        return unpackStream(response.stream, this.opts?.unpackEnvelopeOpts)
     }
 
     private async createUserSettingsStream(
@@ -613,7 +619,7 @@ export class Client
             streamId: userSettingsStreamId,
             metadata: metadata,
         })
-        return unpackStream(response.stream, this.unpackEnvelopeOpts)
+        return unpackStream(response.stream, this.opts?.unpackEnvelopeOpts)
     }
 
     private async createStreamAndSync(
@@ -630,7 +636,7 @@ export class Client
                 // fetch the stream to get the client in the rigth state
                 response = await this.rpcClient.getStream({ streamId: request.streamId })
             }
-            const unpacked = await unpackStream(response.stream, this.unpackEnvelopeOpts)
+            const unpacked = await unpackStream(response.stream, this.opts?.unpackEnvelopeOpts)
             await stream.initializeFromResponse(unpacked)
             if (stream.view.syncCookie) {
                 this.streams.addStreamToSync(streamId, stream.view.syncCookie)
@@ -810,73 +816,8 @@ export class Client
         spaceId: string | Uint8Array | undefined,
         userId: string | undefined,
         chunkCount: number,
-        streamSettings?: PlainMessage<StreamSettings>,
-        perChunkEncryption?: boolean,
-    ): Promise<{ streamId: string; prevMiniblockHash: Uint8Array }> {
-        assert(this.userStreamId !== undefined, 'userStreamId must be set')
-        if (!channelId && !spaceId && !userId) {
-            throw Error('channelId, spaceId or userId must be set')
-        }
-        if (spaceId) {
-            assert(isSpaceStreamId(spaceId), 'spaceId must be a valid streamId')
-        }
-        if (channelId) {
-            assert(
-                isChannelStreamId(channelId) ||
-                    isDMChannelStreamId(channelId) ||
-                    isGDMChannelStreamId(channelId),
-                'channelId must be a valid streamId',
-            )
-        }
-        if (userId) {
-            assert(isUserId(userId), 'userId must be a valid userId')
-        }
-
-        const streamId = makeUniqueMediaStreamId()
-
-        this.logCall('createMedia', channelId ?? spaceId, userId, streamId)
-        const inceptionEvent = await makeEvent(
-            this.signerContext,
-            make_MediaPayload_Inception({
-                streamId: streamIdAsBytes(streamId),
-                channelId: channelId ? streamIdAsBytes(channelId) : undefined,
-                spaceId: spaceId ? streamIdAsBytes(spaceId) : undefined,
-                userId: userId ? addressFromUserId(userId) : undefined,
-                chunkCount,
-                settings: streamSettings,
-                perChunkEncryption: perChunkEncryption,
-            }),
-        )
-
-        const response = await this.rpcClient.createStream({
-            events: [inceptionEvent],
-            streamId: streamIdAsBytes(streamId),
-        })
-
-        const unpackedResponse = await unpackStream(response.stream, this.unpackEnvelopeOpts)
-        const streamView = new StreamStateView(this.userId, streamId)
-        streamView.initialize(
-            unpackedResponse.streamAndCookie.nextSyncCookie,
-            unpackedResponse.streamAndCookie.events,
-            unpackedResponse.snapshot,
-            unpackedResponse.streamAndCookie.miniblocks,
-            [],
-            unpackedResponse.prevSnapshotMiniblockNum,
-            undefined,
-            [],
-            undefined,
-        )
-
-        check(isDefined(streamView.prevMiniblockHash), 'prevMiniblockHash must be defined')
-
-        return { streamId: streamId, prevMiniblockHash: streamView.prevMiniblockHash }
-    }
-
-    async createMediaStreamNew(
-        channelId: string | Uint8Array | undefined,
-        spaceId: string | Uint8Array | undefined,
-        userId: string | undefined,
-        chunkCount: number,
+        firstChunk?: Uint8Array,
+        firstChunkIv?: Uint8Array,
         streamSettings?: PlainMessage<StreamSettings>,
         perChunkEncryption?: boolean,
     ): Promise<{ creationCookie: CreationCookie }> {
@@ -900,23 +841,41 @@ export class Client
         }
 
         const streamId = makeUniqueMediaStreamId()
-
+        const events: Envelope[] = []
         this.logCall('createMedia', channelId ?? spaceId, userId, streamId)
-        const inceptionEvent = await makeEvent(
-            this.signerContext,
-            make_MediaPayload_Inception({
-                streamId: streamIdAsBytes(streamId),
-                channelId: channelId ? streamIdAsBytes(channelId) : undefined,
-                spaceId: spaceId ? streamIdAsBytes(spaceId) : undefined,
-                userId: userId ? addressFromUserId(userId) : undefined,
-                chunkCount,
-                settings: streamSettings,
-                perChunkEncryption: perChunkEncryption,
-            }),
+
+        // Prepare inception event
+        events.push(
+            await makeEvent(
+                this.signerContext,
+                make_MediaPayload_Inception({
+                    streamId: streamIdAsBytes(streamId),
+                    channelId: channelId ? streamIdAsBytes(channelId) : undefined,
+                    spaceId: spaceId ? streamIdAsBytes(spaceId) : undefined,
+                    userId: userId ? addressFromUserId(userId) : undefined,
+                    chunkCount,
+                    settings: streamSettings,
+                    perChunkEncryption: perChunkEncryption,
+                }),
+            ),
         )
 
+        // Prepare first chunk event
+        if (firstChunk && firstChunk.length > 0) {
+            events.push(
+                await makeEvent(
+                    this.signerContext,
+                    make_MediaPayload_Chunk({
+                        data: firstChunk,
+                        chunkIndex: 0,
+                        iv: firstChunkIv,
+                    }),
+                ),
+            )
+        }
+
         const response = await this.rpcClient.createMediaStream({
-            events: [inceptionEvent],
+            events: events,
             streamId: streamIdAsBytes(streamId),
         })
 
@@ -1356,7 +1315,10 @@ export class Client
             const response = await this.rpcClient.getStream({
                 streamId: streamIdAsBytes(streamId),
             })
-            const unpackedResponse = await unpackStream(response.stream, this.unpackEnvelopeOpts)
+            const unpackedResponse = await unpackStream(
+                response.stream,
+                this.opts?.unpackEnvelopeOpts,
+            )
             return this.streamViewFromUnpackedResponse(streamId, unpackedResponse)
         } catch (err) {
             this.logCall('getStream', streamId, 'ERROR', err)
@@ -1435,7 +1397,7 @@ export class Client
                     )}.`,
                 )
             }
-            const unpackedResponse = await unpackStreamEx(miniblocks, this.unpackEnvelopeOpts)
+            const unpackedResponse = await unpackStreamEx(miniblocks, this.opts?.unpackEnvelopeOpts)
             return this.streamViewFromUnpackedResponse(streamId, unpackedResponse)
         } catch (err) {
             this.logCall('getStreamEx', streamId, 'ERROR', err)
@@ -1509,7 +1471,10 @@ export class Client
                     const response = await this.rpcClient.getStream({
                         streamId: streamIdAsBytes(streamId),
                     })
-                    const unpacked = await unpackStream(response.stream, this.unpackEnvelopeOpts)
+                    const unpacked = await unpackStream(
+                        response.stream,
+                        this.opts?.unpackEnvelopeOpts,
+                    )
                     this.logCall('initStream calling initializingFromResponse', streamId)
                     await stream.initializeFromResponse(unpacked)
                     if (stream.view.syncCookie) {
@@ -1800,21 +1765,6 @@ export class Client
     }
 
     async sendMediaPayload(
-        streamId: string,
-        data: Uint8Array,
-        chunkIndex: number,
-        prevMiniblockHash: Uint8Array,
-        iv?: Uint8Array,
-    ): Promise<{ prevMiniblockHash: Uint8Array; eventId: string }> {
-        const payload = make_MediaPayload_Chunk({
-            data: data,
-            chunkIndex: chunkIndex,
-            iv: iv,
-        })
-        return this.makeEventWithHashAndAddToStream(streamId, payload, prevMiniblockHash)
-    }
-
-    async sendMediaPayloadNew(
         creationCookie: CreationCookie,
         last: boolean,
         data: Uint8Array,
@@ -2235,7 +2185,8 @@ export class Client
             streamId,
             fromInclusive,
             toExclusive,
-            this.unpackEnvelopeOpts,
+            true,
+            this.opts?.unpackEnvelopeOpts,
         )
 
         await this.persistenceStore.saveMiniblocks(
@@ -2250,27 +2201,11 @@ export class Client
         }
     }
 
-    async getMiniblockHeader(
-        streamId: string,
-        miniblockNum: bigint,
-        unpackOpts: UnpackEnvelopeOpts | undefined = undefined,
-    ): Promise<MiniblockHeader> {
-        const response = await this.rpcClient.getMiniblockHeader({
-            streamId: streamIdAsBytes(streamId),
-            miniblockNum: miniblockNum,
-        })
-        check(isDefined(response.header), `header not found: ${streamId}`)
-        const header = await unpackEnvelope(response.header, unpackOpts)
-        check(
-            header.event.payload.case === 'miniblockHeader',
-            `bad miniblock header: wrong case received: ${header.event.payload.case}`,
-        )
-        return header.event.payload.value
-    }
-
-    async scrollback(
-        streamId: string,
-    ): Promise<{ terminus: boolean; firstEvent?: StreamTimelineEvent }> {
+    async scrollback(streamId: string): Promise<{
+        terminus: boolean
+        firstEvent?: StreamTimelineEvent
+        fromInclusiveMiniblockNum: bigint
+    }> {
         const currentRequest = this.getScrollbackRequests.get(streamId)
         if (currentRequest) {
             return currentRequest
@@ -2279,13 +2214,18 @@ export class Client
         const _scrollback = async (): Promise<{
             terminus: boolean
             firstEvent?: StreamTimelineEvent
+            fromInclusiveMiniblockNum: bigint
         }> => {
             const stream = this.stream(streamId)
             check(isDefined(stream), `stream not found: ${streamId}`)
             check(isDefined(stream.view.miniblockInfo), `stream not initialized: ${streamId}`)
             if (stream.view.miniblockInfo.terminusReached) {
                 this.logCall('scrollback', streamId, 'terminus reached')
-                return { terminus: true, firstEvent: stream.view.timeline.at(0) }
+                return {
+                    terminus: true,
+                    firstEvent: stream.view.timeline.at(0),
+                    fromInclusiveMiniblockNum: stream.view.miniblockInfo.min,
+                }
             }
             check(stream.view.miniblockInfo.min >= stream.view.prevSnapshotMiniblockNum)
             this.logCall('scrollback', {
@@ -2303,9 +2243,17 @@ export class Client
             // request, we need to discard the new miniblocks.
             if ((stream.view.miniblockInfo?.min ?? -1n) === toExclusive) {
                 stream.prependEvents(response.miniblocks, cleartexts, response.terminus)
-                return { terminus: response.terminus, firstEvent: stream.view.timeline.at(0) }
+                return {
+                    terminus: response.terminus,
+                    firstEvent: stream.view.timeline.at(0),
+                    fromInclusiveMiniblockNum: fromInclusive,
+                }
             }
-            return { terminus: false, firstEvent: stream.view.timeline.at(0) }
+            return {
+                terminus: false,
+                firstEvent: stream.view.timeline.at(0),
+                fromInclusiveMiniblockNum: fromInclusive,
+            }
         }
 
         try {
@@ -2595,7 +2543,7 @@ export class Client
             this.entitlementsDelegate,
             this.userId,
             this.userDeviceKey(),
-            this.unpackEnvelopeOpts,
+            this.opts?.unpackEnvelopeOpts,
             this.logId,
         )
     }

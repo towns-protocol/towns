@@ -2,6 +2,13 @@ name: Continuous Integration
 env:
     FOUNDRY_VERSION: stable
     RIVER_BLOCK_TIME: 1
+    RIVER_RPC_URL: ${{ secrets.RIVER_RPC_URL }}
+    RIVER_SEPOLIA_RPC_URL: ${{ secrets.RIVER_RPC_URL }}
+    BASE_RPC_URL: ${{ secrets.BASE_RPC_URL }}
+    BASE_SEPOLIA_RPC_URL: ${{ secrets.BASE_SEPOLIA_RPC_URL }}
+    ETH_RPC_URL: ${{ secrets.ETH_RPC_URL }}
+    ETH_SEPOLIA_RPC_URL: ${{ secrets.ETH_SEPOLIA_RPC_URL }}
+    CHAINS: '31337:http://localhost:8545,31338:http://localhost:8546'
 on:
     schedule:
         # Run every hour
@@ -127,9 +134,9 @@ jobs:
 
             - name: Linting River Node
               if: ${{ !cancelled() && steps.setup_success.outcome == 'success' }}
-              uses: golangci/golangci-lint-action@v6
+              uses: golangci/golangci-lint-action@v7
               with:
-                  version: v1.62.0
+                  version: v2.0.2
                   working-directory: core
                   args: --timeout=10m --config=.golangci.yml
 
@@ -161,7 +168,7 @@ jobs:
               if: ${{ !cancelled() && steps.setup_success.outcome == 'success' }}
               uses: dominikh/staticcheck-action@v1
               with:
-                  version: v0.5.1
+                  version: v0.6.1
                   working-directory: core
                   install-go: false
 
@@ -309,11 +316,11 @@ jobs:
 
             - name: Run Stream Metadata Nodes
               run: |
-                  yarn workspace @river-build/stream-metadata dev:local_multi_ne &
+                  yarn workspace @towns-protocol/stream-metadata dev:local_multi_ne &
                   yarn wait-on http://localhost:3003/health --timeout=120000 --i=5000 --verbose
 
             - name: Run Stream Metadata Tests (without entitlements)
-              run: yarn turbo run test:integration --filter=@river-build/stream-metadata
+              run: yarn turbo run test:integration --filter=@towns-protocol/stream-metadata
 
             - name: Archive River Node Logs and Settings
               if: always()
@@ -455,10 +462,10 @@ jobs:
               run: yarn csb:turbo-no-sdk
 
             - name: Run River Tests (with entitlements)
-              run: yarn turbo run test:ci:multi:ent --filter=@river-build/sdk
+              run: yarn turbo run test:ci:multi:ent --filter=@towns-protocol/sdk
 
             - name: Run Stress Test Tests (yarn) (with entitlements)
-              run: yarn turbo run test:ci:multi:ent --filter=@river-build/stress
+              run: yarn turbo run test:ci:multi:ent --filter=@towns-protocol/stress
 
             - name: Run Stress Test Demo (node) (with entitlements)
               run: ./packages/stress/scripts/localhost_demo.sh
@@ -603,7 +610,7 @@ jobs:
               run: yarn csb:turbo-no-sdk
 
             - name: Run River Tests Against Legacy Spaces (with entitlements)
-              run: yarn turbo run test:ci:multi:ent:legacy --filter=@river-build/sdk
+              run: yarn turbo run test:ci:multi:ent:legacy --filter=@towns-protocol/sdk
 
             - name: Archive River Node Logs and Settings
               if: always()
