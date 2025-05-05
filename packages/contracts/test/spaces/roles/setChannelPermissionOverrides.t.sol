@@ -43,7 +43,10 @@ contract RolesTestSetChannelPermissionsOverrides is RolesBaseSetup {
         roles.setChannelPermissionOverrides(ROLE_ID, CHANNEL_ID, permissions);
     }
 
-    function test_revertWhen_setChannelPermissionOverrideChannelDoesNotExist() external {
+    function test_revertWhen_setChannelPermissionOverrideChannelDoesNotExist()
+        external
+        givenRoleExists
+    {
         string[] memory permissions = new string[](1);
         permissions[0] = Permissions.Read;
 

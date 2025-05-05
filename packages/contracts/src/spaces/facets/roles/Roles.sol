@@ -16,8 +16,8 @@ contract Roles is IRoles, RolesBase, Entitled {
     /// @inheritdoc IRoles
     function createRole(
         string calldata roleName,
-        string[] memory permissions,
-        CreateEntitlement[] memory entitlements
+        string[] calldata permissions,
+        CreateEntitlement[] calldata entitlements
     ) external override returns (uint256) {
         _validatePermission(Permissions.ModifySpaceSettings);
         return _createRole(roleName, permissions, entitlements);
@@ -38,8 +38,8 @@ contract Roles is IRoles, RolesBase, Entitled {
     function updateRole(
         uint256 roleId,
         string calldata roleName,
-        string[] memory permissions,
-        CreateEntitlement[] memory entitlements
+        string[] calldata permissions,
+        CreateEntitlement[] calldata entitlements
     ) external override {
         _validatePermission(Permissions.ModifySpaceSettings);
         _updateRole(roleId, roleName, permissions, entitlements);
@@ -53,7 +53,7 @@ contract Roles is IRoles, RolesBase, Entitled {
 
     // permissions
     /// @inheritdoc IRoles
-    function addPermissionsToRole(uint256 roleId, string[] memory permissions) external override {
+    function addPermissionsToRole(uint256 roleId, string[] calldata permissions) external override {
         _validatePermission(Permissions.ModifySpaceSettings);
         _addPermissionsToRole(roleId, permissions);
     }
@@ -61,7 +61,7 @@ contract Roles is IRoles, RolesBase, Entitled {
     /// @inheritdoc IRoles
     function removePermissionsFromRole(
         uint256 roleId,
-        string[] memory permissions
+        string[] calldata permissions
     ) external override {
         _validatePermission(Permissions.ModifySpaceSettings);
         _removePermissionsFromRole(roleId, permissions);
@@ -76,7 +76,7 @@ contract Roles is IRoles, RolesBase, Entitled {
 
     // entitlements
     /// @inheritdoc IRoles
-    function addRoleToEntitlement(uint256 roleId, CreateEntitlement memory entitlement) external {
+    function addRoleToEntitlement(uint256 roleId, CreateEntitlement calldata entitlement) external {
         _validatePermission(Permissions.ModifySpaceSettings);
         _addRoleToEntitlement(roleId, entitlement);
     }
@@ -84,7 +84,7 @@ contract Roles is IRoles, RolesBase, Entitled {
     /// @inheritdoc IRoles
     function removeRoleFromEntitlement(
         uint256 roleId,
-        CreateEntitlement memory entitlement
+        CreateEntitlement calldata entitlement
     ) external {
         _validatePermission(Permissions.ModifySpaceSettings);
         _removeRoleFromEntitlement(roleId, entitlement);
@@ -95,7 +95,7 @@ contract Roles is IRoles, RolesBase, Entitled {
     function setChannelPermissionOverrides(
         uint256 roleId,
         bytes32 channelId,
-        string[] memory permissions
+        string[] calldata permissions
     ) external {
         _validatePermission(Permissions.ModifySpaceSettings);
         _setChannelPermissionOverrides(roleId, channelId, permissions);

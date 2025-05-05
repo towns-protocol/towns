@@ -64,7 +64,7 @@ library ChannelService {
         disabled = channelInfo.disabled;
     }
 
-    function updateChannel(bytes32 channelId, string memory metadata, bool disabled) internal {
+    function updateChannel(bytes32 channelId, string calldata metadata, bool disabled) internal {
         checkChannelExists(channelId);
 
         ChannelStorage.Layout storage channel = ChannelStorage.layout();
