@@ -7,6 +7,7 @@ import {IEntitlement} from "src/spaces/entitlements/IEntitlement.sol";
 
 // libraries
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import {CustomRevert} from "../../../utils/libraries/CustomRevert.sol";
 import {StringSet} from "../../../utils/libraries/StringSet.sol";
 import {Validator} from "../../../utils/libraries/Validator.sol";
 
@@ -20,6 +21,7 @@ abstract contract RolesBase is IRolesBase {
     using EnumerableSet for EnumerableSet.UintSet;
     using EnumerableSet for EnumerableSet.Bytes32Set;
     using EnumerableSet for EnumerableSet.AddressSet;
+    using CustomRevert for bytes4;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                            ROLE                            */
@@ -343,7 +345,7 @@ abstract contract RolesBase is IRolesBase {
     function _checkRoleExists(uint256 roleId) internal view {
         // check that role exists
         if (!RolesStorage.layout().roles.contains(roleId)) {
-            revert Roles__RoleDoesNotExist();
+            Roles__RoleDoesNotExist.selector.revertWith();
         }
     }
 
@@ -402,7 +404,7 @@ abstract contract RolesBase is IRolesBase {
         for (uint256 i; i < entitlements.length; ++i) {
             // if entitlement is empty, skip
             if (address(entitlements[i]) == address(0)) {
-                revert Roles__InvalidEntitlementAddress();
+                Roles__InvalidEntitlementAddress.selector.revertWith();
             }
 
             role.entitlements.add(address(entitlements[i]));
@@ -426,7 +428,7 @@ abstract contract RolesBase is IRolesBase {
 
             // if permission already exists, revert
             if (role.permissions.contains(permissions[i])) {
-                revert Roles__PermissionAlreadyExists();
+                Roles__PermissionAlreadyExists.selector.revertWith();
             }
 
             role.permissions.add(permissions[i]);
@@ -445,7 +447,7 @@ abstract contract RolesBase is IRolesBase {
             _checkEmptyString(permissions[i]);
 
             if (!role.permissions.contains(permissions[i])) {
-                revert Roles__PermissionDoesNotExist();
+                Roles__PermissionDoesNotExist.selector.revertWith();
             }
 
             role.permissions.remove(permissions[i]);
@@ -505,7 +507,7 @@ abstract contract RolesBase is IRolesBase {
 
     function _checkEmptyString(string calldata str) internal pure {
         if (bytes(str).length == 0) {
-            revert Roles__InvalidPermission();
+            Roles__InvalidPermission.selector.revertWith();
         }
     }
 
@@ -513,7 +515,7 @@ abstract contract RolesBase is IRolesBase {
         RolesStorage.Role storage role = RolesStorage.layout().roleById[roleId];
 
         if (!role.entitlements.contains(entitlement)) {
-            revert Roles__EntitlementDoesNotExist();
+            Roles__EntitlementDoesNotExist.selector.revertWith();
         }
 
         role.entitlements.remove(entitlement);
@@ -523,7 +525,7 @@ abstract contract RolesBase is IRolesBase {
         RolesStorage.Role storage role = RolesStorage.layout().roleById[roleId];
 
         if (role.entitlements.contains(entitlement)) {
-            revert Roles__EntitlementAlreadyExists();
+            Roles__EntitlementAlreadyExists.selector.revertWith();
         }
 
         role.entitlements.add(entitlement);
