@@ -3,17 +3,18 @@ import { BigNumberish, ethers } from 'ethers'
 import { decodeUsers } from './ConvertersEntitlements'
 import { EntitlementModuleType, EntitlementModule } from '../../types/ContractTypes'
 import { dlogger } from '@towns-protocol/dlog'
-import { ContractType } from '../../types/typechain'
 import { UserEntitlement__factory } from '@towns-protocol/generated/dev/typings/factories/UserEntitlement__factory'
 
 const logger = dlogger('csb:UserEntitlementShim:debug')
 
+const { abi, connect } = UserEntitlement__factory
+
 export class UserEntitlementShim
-    extends BaseContractShim<ContractType<typeof UserEntitlement__factory.connect>>
+    extends BaseContractShim<typeof connect>
     implements EntitlementModule
 {
     constructor(address: string, provider: ethers.providers.Provider) {
-        super(address, provider, UserEntitlement__factory.connect.bind(UserEntitlement__factory))
+        super(address, provider, connect, abi)
     }
 
     public get moduleType(): EntitlementModuleType {

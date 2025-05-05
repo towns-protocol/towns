@@ -1,19 +1,24 @@
-import { IRuleEntitlementBase } from '@towns-protocol/generated/dev/typings/IRuleEntitlement.sol/IRuleEntitlement'
-
+import {
+    IRuleEntitlement,
+    IRuleEntitlementBase,
+} from '@towns-protocol/generated/dev/typings/IRuleEntitlement.sol/IRuleEntitlement'
 import { BaseContractShim } from '../../BaseContractShim'
 import { BigNumberish, ethers } from 'ethers'
 import { EntitlementModuleType, EntitlementModule } from '../../types/ContractTypes'
 import { dlogger } from '@towns-protocol/dlog'
-import { ContractType } from '../../types/typechain'
 import { IRuleEntitlement__factory } from '@towns-protocol/generated/dev/typings/factories/IRuleEntitlement.sol/IRuleEntitlement__factory'
 const logger = dlogger('csb:SpaceDapp:debug')
 
+const { abi, connect } = IRuleEntitlement__factory
+export { abi as IRuleEntitlementAbi }
+export type { IRuleEntitlementBase, IRuleEntitlement }
+
 export class RuleEntitlementShim
-    extends BaseContractShim<ContractType<typeof IRuleEntitlement__factory.connect>>
+    extends BaseContractShim<typeof connect>
     implements EntitlementModule
 {
     constructor(address: string, provider: ethers.providers.Provider) {
-        super(address, provider, IRuleEntitlement__factory.connect.bind(IRuleEntitlement__factory))
+        super(address, provider, connect, abi)
     }
 
     public get moduleType(): EntitlementModuleType {
