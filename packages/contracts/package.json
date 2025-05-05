@@ -34,6 +34,7 @@
     "solady": "^0.1.14"
   },
   "devDependencies": {
+    "@openzeppelin/merkle-tree": "^1.0.8",
     "@prb/test": "^0.6.4",
     "@towns-protocol/prettier-config": "workspace:^",
     "@wagmi/cli": "^2.2.0",
