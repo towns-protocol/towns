@@ -52,7 +52,6 @@ import {
     createSpaceDapp,
     IRuleEntitlementBase,
     Permission,
-    ISpaceDapp,
     LegacyMembershipStruct,
     MembershipStruct,
     isLegacyMembershipType,
@@ -342,15 +341,15 @@ export async function setupWalletsAndContexts() {
         makeTestClient({
             context: alicesContext,
             deviceId: 'alice',
-            entitlementsDelegate: new Entitlements(riverConfig, aliceSpaceDapp as SpaceDapp),
+            entitlementsDelegate: new Entitlements(riverConfig, aliceSpaceDapp),
         }),
         makeTestClient({
             context: bobsContext,
-            entitlementsDelegate: new Entitlements(riverConfig, bobSpaceDapp as SpaceDapp),
+            entitlementsDelegate: new Entitlements(riverConfig, bobSpaceDapp),
         }),
         makeTestClient({
             context: carolsContext,
-            entitlementsDelegate: new Entitlements(riverConfig, carolSpaceDapp as SpaceDapp),
+            entitlementsDelegate: new Entitlements(riverConfig, carolSpaceDapp),
         }),
     ])
 
@@ -475,7 +474,7 @@ export const lastEventFiltered = <T extends (a: ParsedEvent) => any>(
 // the user to the space, and starts syncing the client.
 export async function createSpaceAndDefaultChannel(
     client: Client,
-    spaceDapp: ISpaceDapp,
+    spaceDapp: SpaceDapp,
     wallet: ethers.Wallet,
     name: string,
     membership: LegacyMembershipStruct | MembershipStruct,
@@ -530,7 +529,7 @@ export const DefaultFreeAllocation = 1000
 
 export async function createVersionedSpaceFromMembership(
     client: Client,
-    spaceDapp: ISpaceDapp,
+    spaceDapp: SpaceDapp,
     wallet: ethers.Wallet,
     name: string,
     membership: LegacyMembershipStruct | MembershipStruct,
@@ -606,7 +605,7 @@ export async function createVersionedSpaceFromMembership(
 // the legacy space creation endpoint, because the updated parameters are not backwards
 // compatible - we don't attempt conversion here.
 export async function createVersionedSpace(
-    spaceDapp: ISpaceDapp,
+    spaceDapp: SpaceDapp,
     createSpaceParams: CreateSpaceParams | CreateLegacySpaceParams,
     signer: SignerType,
 ): Promise<ethers.ContractTransaction> {
@@ -650,7 +649,7 @@ export async function createVersionedSpace(
 // latest space creation endpoint.
 export async function createUserStreamAndSyncClient(
     client: Client,
-    spaceDapp: ISpaceDapp,
+    spaceDapp: SpaceDapp,
     name: string,
     membershipInfo: LegacyMembershipStruct | MembershipStruct,
     wallet: ethers.Wallet,
@@ -686,7 +685,7 @@ export async function expectUserCanJoin(
     channelId: string,
     name: string,
     client: Client,
-    spaceDapp: ISpaceDapp,
+    spaceDapp: SpaceDapp,
     address: string,
     wallet: ethers.Wallet,
 ) {
@@ -721,12 +720,11 @@ export async function expectUserCanJoin(
 }
 
 export async function everyoneMembershipStruct(
-    spaceDapp: ISpaceDapp,
+    spaceDapp: SpaceDapp,
     client: Client,
 ): Promise<LegacyMembershipStruct> {
-    const { fixedPricingModuleAddress, freeAllocation, price } = await getFreeSpacePricingSetup(
-        spaceDapp,
-    )
+    const { fixedPricingModuleAddress, freeAllocation, price } =
+        await getFreeSpacePricingSetup(spaceDapp)
 
     return {
         settings: {
@@ -752,7 +750,7 @@ export async function everyoneMembershipStruct(
 
 // should start charging after the first member joins
 export async function zeroPriceWithLimitedAllocationMembershipStruct(
-    spaceDapp: ISpaceDapp,
+    spaceDapp: SpaceDapp,
     client: Client,
     opts: { freeAllocation: number },
 ): Promise<LegacyMembershipStruct> {
@@ -784,7 +782,7 @@ export async function zeroPriceWithLimitedAllocationMembershipStruct(
 
 // should start charing for the first member
 export async function dynamicMembershipStruct(
-    spaceDapp: ISpaceDapp,
+    spaceDapp: SpaceDapp,
     client: Client,
 ): Promise<LegacyMembershipStruct> {
     const dynamicPricingModule = await getDynamicPricingModule(spaceDapp)
@@ -813,7 +811,7 @@ export async function dynamicMembershipStruct(
 
 // should start charging after the first member joins
 export async function fixedPriceMembershipStruct(
-    spaceDapp: ISpaceDapp,
+    spaceDapp: SpaceDapp,
     client: Client,
     opts: { price: number } = { price: 1 },
 ): Promise<LegacyMembershipStruct> {
@@ -844,7 +842,7 @@ export async function fixedPriceMembershipStruct(
     return settings
 }
 
-export async function getFreeSpacePricingSetup(spaceDapp: ISpaceDapp): Promise<{
+export async function getFreeSpacePricingSetup(spaceDapp: SpaceDapp): Promise<{
     fixedPricingModuleAddress: string
     freeAllocation: number
     price: number
@@ -889,7 +887,7 @@ export function twoNftRuleData(
 }
 
 export async function unlinkCaller(
-    rootSpaceDapp: ISpaceDapp,
+    rootSpaceDapp: SpaceDapp,
     rootWallet: ethers.Wallet,
     caller: ethers.Wallet,
 ) {
@@ -911,7 +909,7 @@ export async function unlinkCaller(
 }
 
 export async function unlinkWallet(
-    rootSpaceDapp: ISpaceDapp,
+    rootSpaceDapp: SpaceDapp,
     rootWallet: ethers.Wallet,
     linkedWallet: ethers.Wallet,
 ) {
@@ -934,7 +932,7 @@ export async function unlinkWallet(
 
 // Hint: pass in the wallets attached to the providers.
 export async function linkWallets(
-    rootSpaceDapp: ISpaceDapp,
+    rootSpaceDapp: SpaceDapp,
     rootWallet: ethers.Wallet,
     linkedWallet: ethers.Wallet,
 ) {
@@ -1097,7 +1095,7 @@ export interface CreateRoleContext {
 // if the USE_LEGACY_SPACES environment variable is set and converting the ruleData into the correct
 // format as necessary. Be aware, though, that the legacy endpoint does not support erc1155 checks.
 export async function createRole(
-    spaceDapp: ISpaceDapp,
+    spaceDapp: SpaceDapp,
     provider: ethers.providers.Provider,
     spaceId: string,
     roleName: string,
@@ -1153,7 +1151,7 @@ export interface UpdateRoleContext {
 }
 
 export async function updateRole(
-    spaceDapp: ISpaceDapp,
+    spaceDapp: SpaceDapp,
     provider: ethers.providers.Provider,
     params: UpdateRoleParams,
     signer: ethers.Signer,
@@ -1184,7 +1182,7 @@ export interface CreateChannelContext {
 }
 
 export async function createChannel(
-    spaceDapp: ISpaceDapp,
+    spaceDapp: SpaceDapp,
     provider: ethers.providers.Provider,
     spaceId: string,
     channelName: string,
@@ -1248,9 +1246,8 @@ export async function createTownWithRequirements(requirements: {
         carolsWallet,
     } = await setupWalletsAndContexts()
 
-    const { fixedPricingModuleAddress, freeAllocation, price } = await getFreeSpacePricingSetup(
-        bobSpaceDapp,
-    )
+    const { fixedPricingModuleAddress, freeAllocation, price } =
+        await getFreeSpacePricingSetup(bobSpaceDapp)
 
     const userNameToWallet: Record<string, string> = {
         alice: alicesWallet.address,
@@ -1323,7 +1320,7 @@ export async function createTownWithRequirements(requirements: {
 export async function expectUserCannotJoinSpace(
     spaceId: string,
     client: Client,
-    spaceDapp: ISpaceDapp,
+    spaceDapp: SpaceDapp,
     address: string,
 ) {
     // Check that the local evaluation of the user's entitlements for joining the space
@@ -1454,7 +1451,7 @@ export async function setupChannelWithCustomRole(
 
 export async function expectUserCanJoinChannel(
     client: Client,
-    spaceDapp: ISpaceDapp,
+    spaceDapp: SpaceDapp,
     spaceId: string,
     channelId: string,
 ) {
@@ -1478,7 +1475,7 @@ export async function expectUserCanJoinChannel(
 
 export async function expectUserCannotJoinChannel(
     client: Client,
-    spaceDapp: ISpaceDapp,
+    spaceDapp: SpaceDapp,
     spaceId: string,
     channelId: string,
 ) {
