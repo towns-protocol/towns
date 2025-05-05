@@ -6,12 +6,12 @@ import {IDiamond} from "@towns-protocol/diamond/src/IDiamond.sol";
 import {IDiamondInitHelper} from "./IDiamondInitHelper.sol";
 
 // libraries
-import {DeployDiamondCut} from "@towns-protocol/diamond/scripts/deployments/facets/DeployDiamondCut.s.sol";
-import {DeployDiamondLoupe} from "@towns-protocol/diamond/scripts/deployments/facets/DeployDiamondLoupe.s.sol";
-import {DeployIntrospection} from "@towns-protocol/diamond/scripts/deployments/facets/DeployIntrospection.s.sol";
-import {DeployOwnablePending} from "@towns-protocol/diamond/scripts/deployments/facets/DeployOwnablePending.s.sol";
-import {DeployTokenOwnable} from "@towns-protocol/diamond/scripts/deployments/facets/DeployTokenOwnable.s.sol";
-import {DeployTokenPausable} from "@towns-protocol/diamond/scripts/deployments/facets/DeployTokenPausable.s.sol";
+import {DeployDiamondCut} from "@towns-protocol/diamond/scripts/deployments/facets/DeployDiamondCut.sol";
+import {DeployDiamondLoupe} from "@towns-protocol/diamond/scripts/deployments/facets/DeployDiamondLoupe.sol";
+import {DeployIntrospection} from "@towns-protocol/diamond/scripts/deployments/facets/DeployIntrospection.sol";
+import {DeployOwnablePending} from "@towns-protocol/diamond/scripts/deployments/facets/DeployOwnablePending.sol";
+import {DeployTokenOwnable} from "@towns-protocol/diamond/scripts/deployments/facets/DeployTokenOwnable.sol";
+import {DeployTokenPausable} from "@towns-protocol/diamond/scripts/deployments/facets/DeployTokenPausable.sol";
 import {LibString} from "solady/utils/LibString.sol";
 import {DeployBanning} from "../facets/DeployBanning.s.sol";
 import {DeployChannels} from "../facets/DeployChannels.s.sol";
@@ -52,92 +52,130 @@ contract DeploySpace is IDiamondInitHelper, DiamondHelper, Deployer {
     }
 
     function addImmutableCuts(address deployer) internal {
-        multiInit = facetHelper.deploy("MultiInit", deployer);
+        // Queue up all core facets for batch deployment
+        facetHelper.add("MultiInit");
+        facetHelper.add("DiamondCutFacet");
+        facetHelper.add("DiamondLoupeFacet");
+        facetHelper.add("IntrospectionFacet");
+        facetHelper.add("OwnablePendingFacet");
+        facetHelper.add("TokenOwnableFacet");
 
-        address facet = facetHelper.deploy("DiamondCutFacet", deployer);
+        // Get predicted addresses
+        multiInit = facetHelper.predictAddress("MultiInit");
+
+        address facet = facetHelper.predictAddress("DiamondCutFacet");
         addFacet(
             DeployDiamondCut.makeCut(facet, IDiamond.FacetCutAction.Add),
             facet,
             DeployDiamondCut.makeInitData()
         );
 
-        facet = facetHelper.deploy("DiamondLoupeFacet", deployer);
+        facet = facetHelper.predictAddress("DiamondLoupeFacet");
         addFacet(
             DeployDiamondLoupe.makeCut(facet, IDiamond.FacetCutAction.Add),
             facet,
             DeployDiamondLoupe.makeInitData()
         );
 
-        facet = facetHelper.deploy("IntrospectionFacet", deployer);
+        facet = facetHelper.predictAddress("IntrospectionFacet");
         addFacet(
             DeployIntrospection.makeCut(facet, IDiamond.FacetCutAction.Add),
             facet,
             DeployIntrospection.makeInitData()
         );
 
-        facet = facetHelper.deploy("OwnablePendingFacet", deployer);
+        facet = facetHelper.predictAddress("OwnablePendingFacet");
         addFacet(
             DeployOwnablePending.makeCut(facet, IDiamond.FacetCutAction.Add),
             facet,
             DeployOwnablePending.makeInitData(deployer)
         );
 
-        facet = facetHelper.deploy("TokenOwnableFacet", deployer);
+        facet = facetHelper.predictAddress("TokenOwnableFacet");
         addCut(DeployTokenOwnable.makeCut(facet, IDiamond.FacetCutAction.Add));
     }
 
     function diamondInitParams(address deployer) public returns (Diamond.InitParams memory) {
+        // Queue up all feature facets for batch deployment
+        facetHelper.add("MembershipToken");
+        facetHelper.add("ERC721AQueryable");
+        facetHelper.add("Banning");
+        facetHelper.add("MembershipFacet");
+        facetHelper.add("MembershipMetadata");
+        facetHelper.add("EntitlementDataQueryable");
+        facetHelper.add("EntitlementsManager");
+
+        // Deploy the first batch of facets
+        facetHelper.deployBatch(deployer);
+
+        facetHelper.add("Roles");
+        facetHelper.add("Channels");
+        facetHelper.add("TokenPausableFacet");
+        facetHelper.add("PrepayFacet");
+        facetHelper.add("ReferralsFacet");
+        facetHelper.add("ReviewFacet");
+        facetHelper.add("SpaceEntitlementGated");
+        facetHelper.add("TippingFacet");
+        facetHelper.add("Treasury");
+
+        if (isAnvil()) {
+            facetHelper.add("MockLegacyMembership");
+        }
+
+        // Deploy the second batch of facets
+        facetHelper.deployBatch(deployer);
+
         // deploy and add facets one by one to avoid stack too deep
-        address facet = facetHelper.deploy("MembershipToken", deployer);
+        address facet = facetHelper.getDeployedAddress("MembershipToken");
         addCut(DeployMembershipToken.makeCut(facet, IDiamond.FacetCutAction.Add));
 
-        facet = facetHelper.deploy("ERC721AQueryable", deployer);
+        facet = facetHelper.getDeployedAddress("ERC721AQueryable");
         addCut(DeployERC721AQueryable.makeCut(facet, IDiamond.FacetCutAction.Add));
 
-        facet = facetHelper.deploy("Banning", deployer);
+        facet = facetHelper.getDeployedAddress("Banning");
         addCut(DeployBanning.makeCut(facet, IDiamond.FacetCutAction.Add));
 
-        facet = facetHelper.deploy("MembershipFacet", deployer);
+        facet = facetHelper.getDeployedAddress("MembershipFacet");
         addCut(DeployMembership.makeCut(facet, IDiamond.FacetCutAction.Add));
 
-        facet = facetHelper.deploy("MembershipMetadata", deployer);
+        facet = facetHelper.getDeployedAddress("MembershipMetadata");
         addCut(DeployMembershipMetadata.makeCut(facet, IDiamond.FacetCutAction.Add));
 
-        facet = facetHelper.deploy("EntitlementDataQueryable", deployer);
+        facet = facetHelper.getDeployedAddress("EntitlementDataQueryable");
         addCut(DeployEntitlementDataQueryable.makeCut(facet, IDiamond.FacetCutAction.Add));
 
-        facet = facetHelper.deploy("EntitlementsManager", deployer);
+        facet = facetHelper.getDeployedAddress("EntitlementsManager");
         addCut(DeployEntitlementsManager.makeCut(facet, IDiamond.FacetCutAction.Add));
 
-        facet = facetHelper.deploy("Roles", deployer);
+        facet = facetHelper.getDeployedAddress("Roles");
         addCut(DeployRoles.makeCut(facet, IDiamond.FacetCutAction.Add));
 
-        facet = facetHelper.deploy("Channels", deployer);
+        facet = facetHelper.getDeployedAddress("Channels");
         addCut(DeployChannels.makeCut(facet, IDiamond.FacetCutAction.Add));
 
-        facet = facetHelper.deploy("TokenPausableFacet", deployer);
+        facet = facetHelper.getDeployedAddress("TokenPausableFacet");
         addCut(DeployTokenPausable.makeCut(facet, IDiamond.FacetCutAction.Add));
 
-        facet = facetHelper.deploy("PrepayFacet", deployer);
+        facet = facetHelper.getDeployedAddress("PrepayFacet");
         addCut(DeployPrepayFacet.makeCut(facet, IDiamond.FacetCutAction.Add));
 
-        facet = facetHelper.deploy("ReferralsFacet", deployer);
+        facet = facetHelper.getDeployedAddress("ReferralsFacet");
         addCut(DeployReferrals.makeCut(facet, IDiamond.FacetCutAction.Add));
 
-        facet = facetHelper.deploy("ReviewFacet", deployer);
+        facet = facetHelper.getDeployedAddress("ReviewFacet");
         addCut(DeployReviewFacet.makeCut(facet, IDiamond.FacetCutAction.Add));
 
-        facet = facetHelper.deploy("SpaceEntitlementGated", deployer);
+        facet = facetHelper.getDeployedAddress("SpaceEntitlementGated");
         addCut(DeploySpaceEntitlementGated.makeCut(facet, IDiamond.FacetCutAction.Add));
 
-        facet = facetHelper.deploy("TippingFacet", deployer);
+        facet = facetHelper.getDeployedAddress("TippingFacet");
         addCut(DeployTipping.makeCut(facet, IDiamond.FacetCutAction.Add));
 
-        facet = facetHelper.deploy("Treasury", deployer);
+        facet = facetHelper.getDeployedAddress("Treasury");
         addCut(DeployTreasury.makeCut(facet, IDiamond.FacetCutAction.Add));
 
         if (isAnvil()) {
-            facet = facetHelper.deploy("MockLegacyMembership", deployer);
+            facet = facetHelper.getDeployedAddress("MockLegacyMembership");
             addCut(DeployMockLegacyMembership.makeCut(facet, IDiamond.FacetCutAction.Add));
         }
 
@@ -150,57 +188,50 @@ contract DeploySpace is IDiamondInitHelper, DiamondHelper, Deployer {
     }
 
     function diamondInitParamsFromFacets(address deployer, string[] memory facets) public {
+        // Queue up all requested facets for batch deployment
+        for (uint256 i; i < facets.length; ++i) {
+            facetHelper.add(facets[i]);
+        }
+
+        // Deploy all requested facets in a single batch transaction
+        facetHelper.deployBatch(deployer);
+
         address facet;
         for (uint256 i; i < facets.length; ++i) {
             string memory facetName = facets[i];
+            facet = facetHelper.getDeployedAddress(facetName);
 
             if (facetName.eq("MembershipToken")) {
-                facet = facetHelper.deploy("MembershipToken", deployer);
                 addCut(DeployMembershipToken.makeCut(facet, IDiamond.FacetCutAction.Add));
             } else if (facetName.eq("ERC721AQueryable")) {
-                facet = facetHelper.deploy("ERC721AQueryable", deployer);
                 addCut(DeployERC721AQueryable.makeCut(facet, IDiamond.FacetCutAction.Add));
             } else if (facetName.eq("Banning")) {
-                facet = facetHelper.deploy("Banning", deployer);
                 addCut(DeployBanning.makeCut(facet, IDiamond.FacetCutAction.Add));
             } else if (facetName.eq("MembershipFacet")) {
-                facet = facetHelper.deploy("MembershipFacet", deployer);
                 addCut(DeployMembership.makeCut(facet, IDiamond.FacetCutAction.Add));
             } else if (facetName.eq("MembershipMetadata")) {
-                facet = facetHelper.deploy("MembershipMetadata", deployer);
                 addCut(DeployMembershipMetadata.makeCut(facet, IDiamond.FacetCutAction.Add));
             } else if (facetName.eq("EntitlementDataQueryable")) {
-                facet = facetHelper.deploy("EntitlementDataQueryable", deployer);
                 addCut(DeployEntitlementDataQueryable.makeCut(facet, IDiamond.FacetCutAction.Add));
             } else if (facetName.eq("EntitlementsManager")) {
-                facet = facetHelper.deploy("EntitlementsManager", deployer);
                 addCut(DeployEntitlementsManager.makeCut(facet, IDiamond.FacetCutAction.Add));
             } else if (facetName.eq("Roles")) {
-                facet = facetHelper.deploy("Roles", deployer);
                 addCut(DeployRoles.makeCut(facet, IDiamond.FacetCutAction.Add));
             } else if (facetName.eq("Channels")) {
-                facet = facetHelper.deploy("Channels", deployer);
                 addCut(DeployChannels.makeCut(facet, IDiamond.FacetCutAction.Add));
             } else if (facetName.eq("TokenPausableFacet")) {
-                facet = facetHelper.deploy("TokenPausableFacet", deployer);
                 addCut(DeployTokenPausable.makeCut(facet, IDiamond.FacetCutAction.Add));
             } else if (facetName.eq("PrepayFacet")) {
-                facet = facetHelper.deploy("PrepayFacet", deployer);
                 addCut(DeployPrepayFacet.makeCut(facet, IDiamond.FacetCutAction.Add));
             } else if (facetName.eq("ReferralsFacet")) {
-                facet = facetHelper.deploy("ReferralsFacet", deployer);
                 addCut(DeployReferrals.makeCut(facet, IDiamond.FacetCutAction.Add));
             } else if (facetName.eq("ReviewFacet")) {
-                facet = facetHelper.deploy("ReviewFacet", deployer);
                 addCut(DeployReviewFacet.makeCut(facet, IDiamond.FacetCutAction.Add));
             } else if (facetName.eq("SpaceEntitlementGated")) {
-                facet = facetHelper.deploy("SpaceEntitlementGated", deployer);
                 addCut(DeploySpaceEntitlementGated.makeCut(facet, IDiamond.FacetCutAction.Add));
             } else if (facetName.eq("TippingFacet")) {
-                facet = facetHelper.deploy("TippingFacet", deployer);
                 addCut(DeployTipping.makeCut(facet, IDiamond.FacetCutAction.Add));
             } else if (facetName.eq("Treasury")) {
-                facet = facetHelper.deploy("Treasury", deployer);
                 addCut(DeployTreasury.makeCut(facet, IDiamond.FacetCutAction.Add));
             }
         }
@@ -211,7 +242,7 @@ contract DeploySpace is IDiamondInitHelper, DiamondHelper, Deployer {
         string[] memory facetNames
     ) external override returns (FacetCut[] memory) {
         diamondInitParamsFromFacets(deployer, facetNames);
-        return this.getCuts();
+        return baseFacets();
     }
 
     function __deploy(address deployer) internal override returns (address) {

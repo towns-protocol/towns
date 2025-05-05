@@ -27,7 +27,7 @@
     "@openzeppelin/contracts": "^5.3.0",
     "@openzeppelin/contracts-upgradeable": "^5.3.0",
     "@prb/math": "^4.1.0",
-    "@towns-protocol/diamond": "^0.4.0",
+    "@towns-protocol/diamond": "github:towns-protocol/diamond#8165401f67c302d2b9a1ee6f3b5c635edcebb87b",
     "crypto-lib": "github:towns-protocol/crypto-lib#f40c5f6944a55583a687b672ba680db3bfabb0ef",
     "solady": "^0.1.14"
   },
@@ -37,7 +37,7 @@
     "@towns-protocol/prettier-config": "workspace:^",
     "@wagmi/cli": "^2.2.0",
     "account-abstraction": "github:eth-infinitism/account-abstraction",
-    "forge-std": "github:foundry-rs/forge-std#v1.9.6",
+    "forge-std": "github:foundry-rs/forge-std#v1.9.7",
     "prettier": "^3.5.3",
     "prettier-plugin-solidity": "^1.4.2",
     "solhint": "^5.0.5",
