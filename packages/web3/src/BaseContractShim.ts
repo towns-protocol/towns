@@ -1,16 +1,21 @@
 import { BytesLike, ethers } from 'ethers'
 import { dlogger } from '@towns-protocol/dlog'
-import { Connect } from './types/typechain'
+import { Connect, ContractType } from './types/typechain'
+import { Abi } from 'viem'
 export type PromiseOrValue<T> = T | Promise<T>
 
 export const UNKNOWN_ERROR = 'UNKNOWN_ERROR'
 
 const logger = dlogger('csb:BaseContractShim')
 
-export class BaseContractShim<T_CONTRACT extends ethers.Contract> {
+export class BaseContractShim<
+    connect extends Connect<ethers.Contract>,
+    T_CONTRACT extends ContractType<connect> = ContractType<connect>,
+> {
     public readonly address: string
     public readonly provider: ethers.providers.Provider
     public readonly connect: Connect<T_CONTRACT>
+    public readonly abi: Abi
     private contractInterface?: ethers.utils.Interface
     private readContract?: T_CONTRACT
     private writeContract?: T_CONTRACT
@@ -19,15 +24,18 @@ export class BaseContractShim<T_CONTRACT extends ethers.Contract> {
         address: string,
         provider: ethers.providers.Provider,
         connect: Connect<T_CONTRACT>,
+        abi: Abi,
     ) {
         this.address = address
         this.provider = provider
         this.connect = connect
+        this.abi = abi
     }
 
     public get interface(): ethers.utils.Interface {
         if (!this.contractInterface) {
-            this.contractInterface = this.connect(this.address, this.provider).interface
+            this.readContract = this.connect(this.address, this.provider)
+            this.contractInterface = this.readContract.interface
         }
         return this.contractInterface
     }
@@ -36,9 +44,7 @@ export class BaseContractShim<T_CONTRACT extends ethers.Contract> {
         // lazy create an instance if it is not already cached
         if (!this.readContract) {
             this.readContract = this.connect(this.address, this.provider)
-            if (!this.contractInterface) {
-                this.contractInterface = this.readContract.interface
-            }
+            this.contractInterface = this.readContract.interface
         }
         return this.readContract
     }
@@ -47,9 +53,7 @@ export class BaseContractShim<T_CONTRACT extends ethers.Contract> {
         // lazy create an instance if it is not already cached
         if (!this.writeContract) {
             this.writeContract = this.connect(this.address, signer)
-            if (!this.contractInterface) {
-                this.contractInterface = this.writeContract.interface
-            }
+            this.contractInterface = this.writeContract.interface
         } else {
             // update the signer if it has changed
             if (this.writeContract.signer !== signer) {

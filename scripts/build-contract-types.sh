@@ -9,7 +9,7 @@ ABI_DIR="packages/generated/dev/abis"
 
 yarn turbo build --filter=@towns-protocol/contracts
 
-CONTRACT_INTERFACES="(IDiamond|IDiamondCut|IArchitect|ILegacyArchitect|IProxyManager|IPausable|IEntitlementsManager|IChannel|IRoles|IMulticall|IRuleEntitlement|IRuleEntitlementV2|IWalletLink|INodeRegistry|IOperatorRegistry|IStreamRegistry|OwnableFacet|TokenPausableFacet|UserEntitlement|SpaceOwner|MockERC721A|MembershipFacet|IMembershipMetadata|Member|IBanning|IPricingModules|ICrossChainEntitlement|MockEntitlementGated|PrepayFacet|IERC721AQueryable|IEntitlementDataQueryable|PlatformRequirementsFacet|IERC721A|INodeOperator|ISpaceDelegation|IEntitlementChecker|IERC5267|ICreateSpace|IDropFacet|ITownsPoints|ITipping|IReview|ITreasury)"
+CONTRACT_INTERFACES="(IDiamond|IDiamondCut|IArchitect|ILegacyArchitect|IProxyManager|IPausable|IEntitlementsManager|Channels|IRoles|IMulticall|IRuleEntitlement|IRuleEntitlementV2|IWalletLink|INodeRegistry|IOperatorRegistry|IStreamRegistry|OwnableFacet|TokenPausableFacet|UserEntitlement|SpaceOwner|MockERC721A|MembershipFacet|IMembershipMetadata|Member|IBanning|IPricingModules|ICrossChainEntitlement|MockEntitlementGated|PrepayFacet|IERC721AQueryable|IEntitlementDataQueryable|PlatformRequirementsFacet|IERC721A|INodeOperator|ISpaceDelegation|IEntitlementChecker|IERC5267|ICreateSpace|IDropFacet|ITownsPoints|ITipping|IReview|ITreasury)"
 
 yarn typechain --target=ethers-v5 "packages/contracts/out/**/?${CONTRACT_INTERFACES}.json" --out-dir "packages/generated/dev/typings"
 

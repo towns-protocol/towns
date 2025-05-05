@@ -1,13 +1,15 @@
-import { IChannelBase } from '@towns-protocol/generated/dev/typings/IChannel'
 import { ethers } from 'ethers'
 import { BaseContractShim } from '../BaseContractShim'
-import { ContractType } from '../types/typechain'
-import { IChannel__factory } from '@towns-protocol/generated/dev/typings/factories/IChannel__factory'
+import { Channels__factory } from '@towns-protocol/generated/dev/typings/factories/Channels__factory'
 
-export type { IChannelBase }
+const { abi, connect, createInterface } = Channels__factory
 
-export class IChannelShim extends BaseContractShim<ContractType<typeof IChannel__factory.connect>> {
+export type ChannelStructOutput = ReturnType<
+    typeof createInterface
+>['structs']['ChannelStructOutput']
+
+export class IChannelShim extends BaseContractShim<typeof connect> {
     constructor(address: string, provider: ethers.providers.Provider) {
-        super(address, provider, IChannel__factory.connect.bind(IChannel__factory))
+        super(address, provider, connect, abi)
     }
 }
