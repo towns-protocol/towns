@@ -3,10 +3,10 @@ import { ContractType } from '../types/typechain'
 import { ethers } from 'ethers'
 import { BaseContractShim } from '../BaseContractShim'
 
-export class IMulticallShim extends BaseContractShim<
-    ContractType<typeof IMulticall__factory.connect>
-> {
+const { abi, connect } = IMulticall__factory
+
+export class IMulticallShim extends BaseContractShim<typeof connect> {
     constructor(address: string, provider: ethers.providers.Provider) {
-        super(address, provider, IMulticall__factory.connect.bind(IMulticall__factory))
+        super(address, provider, connect, abi)
     }
 }

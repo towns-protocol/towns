@@ -37,8 +37,8 @@ import { IPrepayShim } from './IPrepayShim'
 import { IERC721AShim } from '../erc-721/IERC721AShim'
 import { IReviewShim } from './IReviewShim'
 import { ITreasuryShim } from './ITreasuryShim'
-import { IRuleEntitlementBase } from './entitlements/IRuleEntitlementShim'
-import { IRuleEntitlementV2Base } from './entitlements/IRuleEntitlementV2Shim'
+import { IRuleEntitlementBase } from './entitlements/RuleEntitlementShim'
+import { IRuleEntitlementV2Base } from './entitlements/RuleEntitlementV2Shim'
 
 interface AddressToEntitlement {
     [address: string]: EntitlementShim

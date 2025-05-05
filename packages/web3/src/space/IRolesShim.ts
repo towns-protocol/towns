@@ -1,12 +1,13 @@
 import { ethers } from 'ethers'
 import { BaseContractShim } from '../BaseContractShim'
-import { ContractType } from '../types/typechain'
-import { IRoles__factory } from '@towns-protocol/generated/dev/typings/factories/IRoles__factory'
+import { Roles__factory } from '@towns-protocol/generated/dev/typings/factories/Roles__factory'
 import { IRolesBase } from '@towns-protocol/generated/dev/typings/IRoles'
 export type { IRolesBase }
 
-export class IRolesShim extends BaseContractShim<ContractType<typeof IRoles__factory.connect>> {
+const { abi, connect } = Roles__factory
+
+export class IRolesShim extends BaseContractShim<typeof connect> {
     constructor(address: string, provider: ethers.providers.Provider) {
-        super(address, provider, IRoles__factory.connect.bind(IRoles__factory))
+        super(address, provider, connect, abi)
     }
 }

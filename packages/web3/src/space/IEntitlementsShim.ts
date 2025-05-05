@@ -1,20 +1,14 @@
-import { IEntitlementsManager__factory } from '@towns-protocol/generated/dev/typings'
+import { EntitlementsManager__factory } from '@towns-protocol/generated/dev/typings/factories/EntitlementsManager__factory'
 import { ethers } from 'ethers'
-import { ContractType } from '../types/typechain'
 import { IEntitlementsManagerBase } from '@towns-protocol/generated/dev/typings/IEntitlementsManager'
 import { BaseContractShim } from '../BaseContractShim'
 
-// TODO: extract from factory interface
+const { abi, connect } = EntitlementsManager__factory
+
 export type { IEntitlementsManagerBase as IEntitlementsBase }
 
-export class IEntitlementsShim extends BaseContractShim<
-    ContractType<typeof IEntitlementsManager__factory.connect>
-> {
+export class IEntitlementsShim extends BaseContractShim<typeof connect> {
     constructor(address: string, provider: ethers.providers.Provider) {
-        super(
-            address,
-            provider,
-            IEntitlementsManager__factory.connect.bind(IEntitlementsManager__factory),
-        )
+        super(address, provider, connect, abi)
     }
 }

@@ -1,11 +1,13 @@
 import { TipEventObject } from '@towns-protocol/generated/dev/typings/ITipping'
-import { ContractType } from '../types/typechain'
 import { ITipping__factory } from '@towns-protocol/generated/dev/typings/factories/ITipping__factory'
 import { BaseContractShim } from '../BaseContractShim'
 import { ContractReceipt, ethers } from 'ethers'
-export class ITippingShim extends BaseContractShim<ContractType<typeof ITipping__factory.connect>> {
+
+const { abi, connect } = ITipping__factory
+
+export class ITippingShim extends BaseContractShim<typeof connect> {
     constructor(address: string, provider: ethers.providers.Provider) {
-        super(address, provider, ITipping__factory.connect.bind(ITipping__factory))
+        super(address, provider, connect, abi)
     }
 
     /**

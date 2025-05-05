@@ -4,7 +4,6 @@ import { ContractTransaction, ethers } from 'ethers'
 import { BaseContractShim } from '../BaseContractShim'
 import { Address } from 'abitype'
 import { bin_toHexString } from '@towns-protocol/dlog'
-import { ContractType } from '../types/typechain'
 import { IReview__factory } from '@towns-protocol/generated/dev/typings/factories/IReview__factory'
 
 // solidity doesn't export enums, so we need to define them here, boooooo
@@ -27,9 +26,11 @@ export interface ReviewParams {
     comment: string
 }
 
-export class IReviewShim extends BaseContractShim<ContractType<typeof IReview__factory.connect>> {
+const { abi, connect } = IReview__factory
+
+export class IReviewShim extends BaseContractShim<typeof connect> {
     constructor(address: string, provider: ethers.providers.Provider) {
-        super(address, provider, IReview__factory.connect.bind(IReview__factory))
+        super(address, provider, connect, abi)
     }
 
     /**
