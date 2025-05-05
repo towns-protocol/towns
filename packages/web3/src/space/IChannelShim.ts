@@ -4,9 +4,7 @@ import { Channels__factory } from '@towns-protocol/generated/dev/typings/factori
 
 const { abi, connect, createInterface } = Channels__factory
 
-export type ChannelStructOutput = ReturnType<
-    typeof createInterface
->['structs']['ChannelStructOutput']
+export type ChannelsStructs = ReturnType<typeof createInterface>['structs']
 
 export class IChannelShim extends BaseContractShim<typeof connect> {
     constructor(address: string, provider: ethers.providers.Provider) {

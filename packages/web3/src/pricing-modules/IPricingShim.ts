@@ -1,15 +1,13 @@
 import { ethers } from 'ethers'
 import { BaseContractShim } from '../BaseContractShim'
-import { ContractType } from '../types/typechain'
 import { IPricingModules__factory } from '@towns-protocol/generated/dev/typings/factories/IPricingModules__factory'
 
-// TODO: extract from factory interface
-export type { IPricingModulesBase } from '@towns-protocol/generated/dev/typings/IPricingModules'
+const { abi, connect, createInterface } = IPricingModules__factory
 
-export class IPricingShim extends BaseContractShim<
-    ContractType<typeof IPricingModules__factory.connect>
-> {
+export type PricingModuleStructs = ReturnType<typeof createInterface>['structs']
+
+export class IPricingShim extends BaseContractShim<typeof connect> {
     constructor(address: string, provider: ethers.providers.Provider) {
-        super(address, provider, IPricingModules__factory.connect.bind(IPricingModules__factory))
+        super(address, provider, connect, abi)
     }
 }

@@ -8,7 +8,7 @@ import { IRolesBase as IRolesBaseV3 } from '../space/IRolesShim'
 import { RuleEntitlementShim } from '../space/entitlements/RuleEntitlementShim'
 import { IRuleEntitlementBase } from '../space/entitlements/IRuleEntitlementShim'
 import { IRuleEntitlementV2Base } from '../space/entitlements/IRuleEntitlementV2Shim'
-import { IPricingModulesBase } from '../pricing-modules/IPricingShim'
+import { PricingModuleStructs } from '../pricing-modules/IPricingShim'
 
 import { RuleEntitlementV2Shim } from '../space/entitlements/RuleEntitlementV2Shim'
 import { NoopRuleData } from '../space/entitlements/entitlement'
@@ -64,7 +64,7 @@ export type SpaceInfoStruct = ISpaceArchitectBaseV3.SpaceInfoStruct
 
 export type LegacySpaceInfoStruct = ILegacyArchitectBase.SpaceInfoStruct
 
-export type PricingModuleStruct = IPricingModulesBase.PricingModuleStruct
+export type PricingModuleStruct = PricingModuleStructs['PricingModuleStruct']
 
 /**
  * Supported entitlement modules
