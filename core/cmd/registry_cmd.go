@@ -51,6 +51,15 @@ func printStats(opts *streamDumpOpts, humanName, csvName, value string) {
 	}
 }
 
+func printStreamCsv(strm *river.StreamWithId) {
+	var nodeAddresses []string
+	for _, node := range strm.Nodes() {
+		nodeAddresses = append(nodeAddresses, node.Hex())
+	}
+	nodeList := strings.Join(nodeAddresses, ",")
+	fmt.Printf("%s,%s,%d,%t,%d,%s\n", strm.StreamId().String(), strm.LastMbHash().Hex(), strm.LastMbNum(), strm.IsSealed(), strm.ReplicationFactor(), nodeList)
+}
+
 func printStream(opts *streamDumpOpts, i int64, strm *river.StreamWithId) {
 	if !opts.dump {
 		return
@@ -63,12 +72,7 @@ func printStream(opts *streamDumpOpts, i int64, strm *river.StreamWithId) {
 			fmt.Printf("        %s\n", node.Hex())
 		}
 	} else {
-		var nodeAddresses []string
-		for _, node := range strm.Nodes() {
-			nodeAddresses = append(nodeAddresses, node.Hex())
-		}
-		nodeList := strings.Join(nodeAddresses, ",")
-		fmt.Printf("%s,%s,%d,%t,%d,%s\n", strm.StreamId().String(), strm.LastMbHash().Hex(), strm.LastMbNum(), strm.IsSealed(), strm.ReplicationFactor(), nodeList)
+		printStreamCsv(strm)
 	}
 }
 
@@ -171,7 +175,14 @@ func validateStream(
 	nodeAddress common.Address,
 	expectedMinBlockHash common.Hash,
 	expectedMinBlockNum int64,
+	timeout time.Duration,
 ) error {
+	if timeout <= 0 {
+		timeout = 30 * time.Second
+	}
+	ctx, cancel := context.WithTimeout(ctx, timeout)
+	defer cancel()
+
 	nodeRecord, err := registryContract.NodeRegistry.GetNode(&bind.CallOpts{
 		Context: ctx,
 	}, nodeAddress)
@@ -260,7 +271,10 @@ func validateStream(
 	return nil
 }
 
-func srStream(cfg *config.Config, streamId string, validate bool) error {
+func srStream(cfg *config.Config, streamId string, validate, urls, csv bool, timeout time.Duration) error {
+	if csv && validate {
+		return RiverError(Err_INVALID_ARGUMENT, "--validate and --csv flags cannot be used together")
+	}
 	ctx := context.Background() // lint:ignore context.Background() is fine here
 
 	var httpClient *http.Client
@@ -303,29 +317,57 @@ func srStream(cfg *config.Config, streamId string, validate bool) error {
 		return err
 	}
 
-	fmt.Printf("StreamId: %s\n", stream.StreamId().String())
-	fmt.Printf("Miniblock: %d %s\n", stream.LastMbNum(), stream.LastMbHash().Hex())
-	fmt.Println("IsSealed: ", stream.IsSealed())
-	fmt.Println("Nodes:")
-	err = nil
-	for i, node := range stream.Nodes() {
-		fmt.Printf("  %d %s\n", i, node)
-		if validate {
-			validateErr := validateStream(
-				ctx,
-				httpClient,
-				registryContract,
-				id,
-				node,
-				stream.LastMbHash(),
-				stream.LastMbNum(),
-			)
-			if validateErr != nil {
-				if err == nil {
-					err = validateErr
-				}
+	nodes := make(map[common.Address]registries.NodeRecord)
+	if urls {
+		nn, err := registryContract.GetAllNodes(ctx, blockchain.InitialBlockNum)
+		if err == nil {
+			for _, n := range nn {
+				nodes[n.NodeAddress] = n
+			}
+		}
+	}
 
-				fmt.Printf("      %s\n", validateErr)
+	if csv {
+		printStreamCsv(stream)
+	} else {
+		fmt.Printf("StreamId: %s\n", stream.StreamId().String())
+		fmt.Printf("Miniblock: %d %s\n", stream.LastMbNum(), stream.LastMbHash().Hex())
+		fmt.Println("IsSealed: ", stream.IsSealed())
+		fmt.Println("ReplicationFactor: ", stream.ReplicationFactor())
+		fmt.Println("Nodes:")
+		err = nil
+		for i, node := range stream.Nodes() {
+			fmt.Printf("  %d %s\n", i, node)
+			if urls {
+				nodeRecord, ok := nodes[node]
+				if ok {
+					url := nodeRecord.Url
+					fmt.Printf("                %s/debug\n", url)
+					fmt.Printf("                %s/debug/stream/%s\n", url, stream.StreamId())
+				}
+			}
+			if validate {
+				startTime := time.Now()
+				validateErr := validateStream(
+					ctx,
+					httpClient,
+					registryContract,
+					id,
+					node,
+					stream.LastMbHash(),
+					stream.LastMbNum(),
+					timeout,
+				)
+				elapsed := time.Since(startTime)
+				if validateErr != nil {
+					if err == nil {
+						err = validateErr
+					}
+
+					fmt.Printf("      ERROR, Elapsed: %s, Error: %s\n", elapsed, validateErr)
+				} else {
+					fmt.Printf("      OK, Elapsed: %s\n", elapsed)
+				}
 			}
 		}
 	}
@@ -373,7 +415,7 @@ func nodesDump(cfg *config.Config, csv bool) error {
 			)
 		} else {
 			fmt.Printf(
-				"%4d %s %s %d (%-11s) %s\n",
+				"%4d %s %s %d (%-11s) %s/debug\n",
 				i,
 				node.NodeAddress.Hex(),
 				node.Operator.Hex(),
@@ -585,10 +627,25 @@ func init() {
 			if err != nil {
 				return err
 			}
-			return srStream(cmdConfig, args[0], validate)
+			urls, err := cmd.Flags().GetBool("urls")
+			if err != nil {
+				return err
+			}
+			csv, err := cmd.Flags().GetBool("csv")
+			if err != nil {
+				return err
+			}
+			timeout, err := cmd.Flags().GetDuration("timeout")
+			if err != nil {
+				return err
+			}
+			return srStream(cmdConfig, args[0], validate, urls, csv, timeout)
 		},
 	}
 	streamCmd.Flags().Bool("validate", false, "Fetch stream from each node and compare to the registry record")
+	streamCmd.Flags().Bool("urls", true, "Print node URLs")
+	streamCmd.Flags().Bool("csv", false, "Output in CSV format")
+	streamCmd.Flags().Duration("timeout", 30*time.Second, "Timeout for validation")
 	srCmd.AddCommand(streamCmd)
 
 	nodesCmd := &cobra.Command{

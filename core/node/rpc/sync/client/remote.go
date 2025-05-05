@@ -69,7 +69,8 @@ func newRemoteSyncer(
 		return nil, err
 	}
 
-	s := &remoteSyncer{
+	return &remoteSyncer{
+		syncID:             responseStream.Msg().GetSyncId(),
 		forwarderSyncID:    forwarderSyncID,
 		cancelGlobalSyncOp: cancelGlobalSyncOp,
 		syncStreamCtx:      syncStreamCtx,
@@ -80,11 +81,7 @@ func newRemoteSyncer(
 		remoteAddr:         remoteAddr,
 		unsubStream:        unsubStream,
 		otelTracer:         otelTracer,
-	}
-
-	s.syncID = responseStream.Msg().GetSyncId()
-
-	return s, nil
+	}, nil
 }
 
 func (s *remoteSyncer) Run() {
