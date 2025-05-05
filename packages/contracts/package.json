@@ -1,6 +1,6 @@
 {
   "name": "@towns-protocol/contracts",
-  "version": "0.0.207",
+  "version": "0.0.211",
   "packageManager": "yarn@3.8.0",
   "installConfig": {
     "hoistingLimits": "dependencies"
@@ -32,12 +32,13 @@
     "solady": "^0.1.14"
   },
   "devDependencies": {
+    "@openzeppelin/merkle-tree": "^1.0.8",
     "@prb/test": "^0.6.4",
     "@towns-protocol/prettier-config": "workspace:^",
     "@wagmi/cli": "^2.2.0",
     "account-abstraction": "github:eth-infinitism/account-abstraction",
     "forge-std": "github:foundry-rs/forge-std#v1.9.6",
-    "prettier": "^2.8.8",
+    "prettier": "^3.5.3",
     "prettier-plugin-solidity": "^1.4.2",
     "solhint": "^5.0.5",
     "turbo": "^2.0.12"

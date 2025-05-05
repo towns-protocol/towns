@@ -723,9 +723,8 @@ export async function everyoneMembershipStruct(
     spaceDapp: SpaceDapp,
     client: Client,
 ): Promise<LegacyMembershipStruct> {
-    const { fixedPricingModuleAddress, freeAllocation, price } = await getFreeSpacePricingSetup(
-        spaceDapp,
-    )
+    const { fixedPricingModuleAddress, freeAllocation, price } =
+        await getFreeSpacePricingSetup(spaceDapp)
 
     return {
         settings: {
@@ -1247,9 +1246,8 @@ export async function createTownWithRequirements(requirements: {
         carolsWallet,
     } = await setupWalletsAndContexts()
 
-    const { fixedPricingModuleAddress, freeAllocation, price } = await getFreeSpacePricingSetup(
-        bobSpaceDapp,
-    )
+    const { fixedPricingModuleAddress, freeAllocation, price } =
+        await getFreeSpacePricingSetup(bobSpaceDapp)
 
     const userNameToWallet: Record<string, string> = {
         alice: alicesWallet.address,
