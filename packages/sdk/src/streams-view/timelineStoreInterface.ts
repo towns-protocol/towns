@@ -268,8 +268,8 @@ export function makeTimelineStoreInterface(
                           ),
                       }
                     : threadParentId
-                    ? insertThreadEvent(streamId, newEvent, state.threads)
-                    : state.threads,
+                      ? insertThreadEvent(streamId, newEvent, state.threads)
+                      : state.threads,
             reactions: addReactions(
                 streamId,
                 newEvent,
@@ -936,8 +936,8 @@ export function getThreadParentId(content: TimelineEvent_OneOf | undefined): str
     return content?.kind === RiverTimelineEvent.ChannelMessage
         ? content.threadId
         : content?.kind === RiverTimelineEvent.TokenTransfer
-        ? content.threadParentId
-        : undefined
+          ? content.threadParentId
+          : undefined
 }
 
 export function getReplyParentId(content: TimelineEvent_OneOf | undefined): string | undefined {

@@ -23,10 +23,13 @@ function describeThreads(threads?: Record<string, TimelineEvent[]>) {
     if (!threads) {
         return undefined
     }
-    return Object.entries(threads).reduce((acc, [threadParentId, thread]) => {
-        acc[threadParentId] = thread.map((e) => describeEvent(e))
-        return acc
-    }, {} as Record<string, string[]>)
+    return Object.entries(threads).reduce(
+        (acc, [threadParentId, thread]) => {
+            acc[threadParentId] = thread.map((e) => describeEvent(e))
+            return acc
+        },
+        {} as Record<string, string[]>,
+    )
 }
 
 function describeTips(tipsMap?: Record<string, MessageTips>): Record<string, string[]> | undefined {
