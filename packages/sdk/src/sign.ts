@@ -56,12 +56,14 @@ export const _impl_makeEvent_impl_ = async (
     context: SignerContext,
     payload: PlainMessage<StreamEvent>['payload'],
     prevMiniblockHash?: Uint8Array,
+    prevMiniblockNum?: bigint,
     tags?: PlainMessage<Tags>,
 ): Promise<Envelope> => {
     const streamEvent = create(StreamEventSchema, {
         creatorAddress: context.creatorAddress,
         salt: genIdBlob(),
         prevMiniblockHash,
+        prevMiniblockNum,
         payload,
         createdAtEpochMs: BigInt(Date.now()),
         tags,
@@ -82,6 +84,7 @@ export const makeEvent = async (
     context: SignerContext,
     payload: PlainMessage<StreamEvent>['payload'],
     prevMiniblockHash?: Uint8Array,
+    prevMiniblockNum?: bigint,
     tags?: PlainMessage<Tags>,
 ): Promise<Envelope> => {
     // const pl: Payload = payload instanceof Payload ? payload : new Payload(payload)
@@ -99,8 +102,12 @@ export const makeEvent = async (
             Err.BAD_HASH_FORMAT,
         )
     }
+    if (prevMiniblockNum) {
+        check(isDefined(prevMiniblockNum), 'prevMiniblockNum is not set', Err.BAD_PAYLOAD)
+        check(prevMiniblockNum >= 0, 'prevMiniblockNum should be non-negative', Err.BAD_PAYLOAD)
+    }
 
-    return _impl_makeEvent_impl_(context, pl, prevMiniblockHash, tags)
+    return _impl_makeEvent_impl_(context, pl, prevMiniblockHash, prevMiniblockNum, tags)
 }
 
 export const makeEvents = async (
