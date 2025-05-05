@@ -2,15 +2,14 @@ import { ethers } from 'ethers'
 import { BaseContractShim } from '../BaseContractShim'
 import { LogDescription } from 'ethers/lib/utils'
 import { dlogger } from '@towns-protocol/dlog'
-import { ContractType } from '../types/typechain'
-import { IArchitect__factory } from '@towns-protocol/generated/dev/typings/factories/IArchitect__factory'
+import { Architect__factory } from '@towns-protocol/generated/dev/typings/factories/Architect__factory'
 const logger = dlogger('csb:SpaceDapp:debug')
 
-export class ISpaceArchitectShim extends BaseContractShim<
-    ContractType<typeof IArchitect__factory.connect>
-> {
+const { abi, connect } = Architect__factory
+
+export class ISpaceArchitectShim extends BaseContractShim<typeof connect> {
     constructor(address: string, provider: ethers.providers.Provider) {
-        super(address, provider, IArchitect__factory.connect.bind(IArchitect__factory))
+        super(address, provider, connect, abi)
     }
 
     public getSpaceAddressFromLog(log: ethers.providers.Log, userId: string) {

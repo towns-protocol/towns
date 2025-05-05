@@ -9,10 +9,12 @@ import {
     RuleEntitlementShim,
     IRuleEntitlementBase,
 } from '../space/entitlements/RuleEntitlementShim'
-import { IRuleEntitlementV2Base } from '../space/entitlements/IRuleEntitlementV2Shim'
+import {
+    IRuleEntitlementV2Base,
+    RuleEntitlementV2Shim,
+} from '../space/entitlements/RuleEntitlementV2Shim'
 import { IPricingModulesBase } from '../pricing-modules/IPricingShim'
 
-import { RuleEntitlementV2Shim } from '../space/entitlements/RuleEntitlementV2Shim'
 import { NoopRuleData } from '../space/entitlements/entitlement'
 
 import { ethers } from 'ethers'
