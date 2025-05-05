@@ -19,11 +19,13 @@ library DropClaimLib {
     /// @param conditionId The ID of the claim condition
     /// @param account The address of the account that claimed
     /// @param quantity The quantity of tokens claimed
+    /// @param points The points you've earned
     /// @param proof The proof of the claim
     struct Claim {
         uint256 conditionId;
         address account;
         uint256 quantity;
+        uint256 points;
         bytes32[] proof;
     }
 
@@ -91,6 +93,10 @@ library DropClaimLib {
             );
         }
 
+        if (claim.points == 0) {
+            CustomRevert.revertWith(IDropFacetBase.DropFacet__PointsMustBeGreaterThanZero.selector);
+        }
+
         if (condition.currency == address(0)) {
             CustomRevert.revertWith(IDropFacetBase.DropFacet__CurrencyNotSet.selector);
         }
@@ -115,7 +121,7 @@ library DropClaimLib {
             CustomRevert.revertWith(IDropFacetBase.DropFacet__AlreadyClaimed.selector);
         }
 
-        bytes32 leaf = createLeaf(claim.account, claim.quantity);
+        bytes32 leaf = createLeaf(claim.account, claim.quantity, claim.points);
         if (!claim.proof.verifyCalldata(condition.merkleRoot, leaf)) {
             CustomRevert.revertWith(IDropFacetBase.DropFacet__InvalidProof.selector);
         }
@@ -142,19 +148,20 @@ library DropClaimLib {
         return amount;
     }
 
-    function createLeaf(address account, uint256 amount) internal pure returns (bytes32 leaf) {
+    function createLeaf(
+        address member,
+        uint256 amount,
+        uint256 points
+    ) internal pure returns (bytes32 leaf) {
         assembly ("memory-safe") {
-            // Store the account address at memory location 0
-            mstore(0, account)
-            // Store the amount at memory location 0x20 (32 bytes after the account address)
+            let fmp := mload(0x40)
+            mstore(0, member)
             mstore(0x20, amount)
-            // Compute the keccak256 hash of the account and amount, and store it at memory location
-            // 0
-            mstore(0, keccak256(0, 0x40))
-            // Compute the keccak256 hash of the previous hash (stored at memory location 0) and
-            // store it
-            // in the leaf variable
+            mstore(0x40, points)
+            leaf := keccak256(0, 0x60)
+            mstore(0, leaf)
             leaf := keccak256(0, 0x20)
+            mstore(0x40, fmp)
         }
     }
 }
