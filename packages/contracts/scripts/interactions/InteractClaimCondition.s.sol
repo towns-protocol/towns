@@ -20,10 +20,12 @@ uint256 constant MAX_CLAIMABLE_SUPPLY = 5 ether;
 contract InteractClaimCondition is IDropFacetBase, Interaction {
     address[] public wallets;
     uint256[] public amounts;
+    uint256[] public points;
 
     function setUp() public {
         wallets.push(0x86312a65B491CF25D9D265f6218AB013DaCa5e19);
         amounts.push(1 ether); // equivalent to 1 token
+        points.push(1);
     }
 
     function __interact(address deployer) internal override {
@@ -35,7 +37,7 @@ contract InteractClaimCondition is IDropFacetBase, Interaction {
 
         address riverAirdrop = deployRiverAirdrop.deploy(deployer);
         address townsBase = deployTownsBase.deploy(deployer);
-        (bytes32 root, ) = merkleTree.constructTree(wallets, amounts);
+        (bytes32 root, ) = merkleTree.constructTree(wallets, amounts, points);
 
         DropClaimLib.ClaimCondition[] memory conditions = new DropClaimLib.ClaimCondition[](1);
         conditions[0] = DropClaimLib.ClaimCondition({

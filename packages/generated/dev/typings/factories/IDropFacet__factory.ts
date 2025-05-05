@@ -82,6 +82,11 @@ const _abi = [
             internalType: "uint256",
           },
           {
+            name: "points",
+            type: "uint256",
+            internalType: "uint256",
+          },
+          {
             name: "proof",
             type: "bytes32[]",
             internalType: "bytes32[]",
@@ -134,6 +139,11 @@ const _abi = [
           },
           {
             name: "quantity",
+            type: "uint256",
+            internalType: "uint256",
+          },
+          {
+            name: "points",
             type: "uint256",
             internalType: "uint256",
           },
@@ -603,6 +613,11 @@ const _abi = [
   {
     type: "error",
     name: "DropFacet__NoActiveClaimCondition",
+    inputs: [],
+  },
+  {
+    type: "error",
+    name: "DropFacet__PointsMustBeGreaterThanZero",
     inputs: [],
   },
   {

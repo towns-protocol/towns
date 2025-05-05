@@ -8,9 +8,15 @@ contract MerkleTree {
     // 0.
     function constructTree(
         address[] memory members,
-        uint256[] memory claimAmounts
+        uint256[] memory claimAmounts,
+        uint256[] memory points
     ) external pure returns (bytes32 root, bytes32[][] memory tree) {
-        require(members.length != 0 && members.length == claimAmounts.length, "invalid input");
+        require(
+            members.length != 0 &&
+                members.length == claimAmounts.length &&
+                members.length == points.length,
+            "invalid input"
+        );
         // Determine tree height.
         uint256 height = 0;
         {
@@ -26,7 +32,7 @@ contract MerkleTree {
         bytes32[] memory nodes = tree[0] = new bytes32[](members.length);
         for (uint256 i = 0; i < members.length; ++i) {
             // Leaf hashes are inverted to prevent second preimage attacks.
-            nodes[i] = _createLeaf(members[i], claimAmounts[i]);
+            nodes[i] = _createLeaf(members[i], claimAmounts[i], points[i]);
         }
         // Build up subsequent layers until we arrive at the root hash.
         // Each parent node is the hash of the two children below it.
@@ -70,21 +76,20 @@ contract MerkleTree {
         }
     }
 
-    function _createLeaf(address member, uint256 amount) internal pure returns (bytes32) {
-        bytes32 leaf;
+    function _createLeaf(
+        address member,
+        uint256 amount,
+        uint256 points
+    ) internal pure returns (bytes32 leaf) {
         assembly ("memory-safe") {
-            // Store the member address at memory location 0
+            let fmp := mload(0x40)
             mstore(0, member)
-            // Store the amount at memory location 0x20 (32 bytes after the account address)
             mstore(0x20, amount)
-            // Compute the keccak256 hash of the account and amount, and store it at memory location
-            // 0
-            mstore(0, keccak256(0, 0x40))
-            // Compute the keccak256 hash of the previous hash (stored at memory location 0) and
-            // store it
-            // in the leaf variable
+            mstore(0x40, points)
+            leaf := keccak256(0, 0x60)
+            mstore(0, leaf)
             leaf := keccak256(0, 0x20)
+            mstore(0x40, fmp)
         }
-        return leaf;
     }
 }
