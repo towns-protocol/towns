@@ -16,27 +16,6 @@ if (!base) {
     throw new Error('getJoinSpacePriceDetails.test.ts: Base config not found')
 }
 
-import DeploymentsJson from '@towns-protocol/generated/config/deployments.json'
-import { BaseChainConfig } from '../utils/IStaticContractsInfo'
-
-const baseRpcUrl = process.env.BASE_CHAIN_RPC_URL!
-const baseConfig = {
-    chainId: base.chainId,
-    addresses: {
-        baseRegistry: base.addresses.baseRegistry,
-        spaceFactory: base.addresses.spaceFactory,
-        spaceOwner: base.addresses.spaceOwner,
-        utils: {
-            mockNFT: base.addresses.utils.mockNFT,
-            member: base.addresses.utils.member,
-        },
-    },
-}
-
-if (!base) {
-    throw new Error('getJoinSpacePriceDetails.test.ts: Base config not found')
-}
-
 const baseRpcUrl = process.env.BASE_CHAIN_RPC_URL!
 const baseConfig = {
     chainId: base.chainId,
