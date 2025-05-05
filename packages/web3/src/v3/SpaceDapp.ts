@@ -1873,7 +1873,7 @@ export class SpaceDapp implements ISpaceDapp {
 
     public async executeSwap(
         spaceId: string,
-        params: ISwapRouterBase.ExactInputParamsStruct,
+        exactInputParams: ISwapRouterBase.ExactInputParamsStruct,
         routerParams: ISwapRouterBase.RouterParamsStruct,
         poster: string,
         value: bigint,
@@ -1886,7 +1886,7 @@ export class SpaceDapp implements ISpaceDapp {
         }
         return wrapTransaction(
             () =>
-                space.SwapRouter.write(signer).executeSwap(params, routerParams, poster, {
+                space.SwapRouter.write(signer).executeSwap(exactInputParams, routerParams, poster, {
                     value,
                 }),
             txnOpts,

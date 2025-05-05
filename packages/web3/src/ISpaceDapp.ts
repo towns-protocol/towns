@@ -378,7 +378,7 @@ export interface ISpaceDapp {
     updateCacheAfterBanOrUnBan: (spaceId: string, tokenId: ethers.BigNumber) => void
     executeSwap(
         spaceId: string,
-        params: ISwapRouterBase.ExactInputParamsStruct,
+        exactInputParams: ISwapRouterBase.ExactInputParamsStruct,
         routerParams: ISwapRouterBase.RouterParamsStruct,
         poster: string,
         value: bigint,
