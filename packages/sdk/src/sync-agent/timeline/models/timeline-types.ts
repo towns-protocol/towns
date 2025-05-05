@@ -71,6 +71,7 @@ export type TimelineEvent_OneOf =
     | ChannelMessageEvent
     | ChannelMessageMissingEvent
     | ChannelPropertiesEvent
+    | EncryptedChannelPropertiesEvent
     | FulfillmentEvent
     | InceptionEvent
     | KeySolicitationEvent
@@ -103,6 +104,7 @@ export enum RiverTimelineEvent {
     ChannelMessageEncryptedWithRef = 'm.channel.encrypted_with_ref',
     ChannelMessageMissing = 'm.channel.missing',
     ChannelProperties = 'm.channel.properties',
+    EncryptedChannelProperties = 'm.channel.encrypted_properties',
     Fulfillment = 'm.fulfillment',
     Inception = 'm.inception', // TODO: would be great to name this after space / channel name
     KeySolicitation = 'm.key_solicitation',
@@ -243,6 +245,11 @@ export interface ChannelMessageEncryptedRefEvent {
 export interface ChannelPropertiesEvent {
     kind: RiverTimelineEvent.ChannelProperties
     properties: ChannelProperties
+}
+
+export interface EncryptedChannelPropertiesEvent {
+    kind: RiverTimelineEvent.EncryptedChannelProperties
+    error?: DecryptionSessionError
 }
 
 export interface ChannelMessageMissingEvent {
