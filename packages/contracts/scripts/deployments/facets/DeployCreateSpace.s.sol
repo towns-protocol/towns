@@ -1,47 +1,44 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-//interfaces
+// interfaces
+import {IDiamond} from "@towns-protocol/diamond/src/IDiamond.sol";
 
-//libraries
+// libraries
+import {LibDeploy} from "@towns-protocol/diamond/src/utils/LibDeploy.sol";
 
-//contracts
-import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
-import {Deployer} from "scripts/common/Deployer.s.sol";
+// contracts
 import {CreateSpaceFacet} from "src/factory/facets/create/CreateSpace.sol";
 
-contract DeployCreateSpace is FacetHelper, Deployer {
-    constructor() {
-        addSelector(CreateSpaceFacet.createSpace.selector);
-        addSelector(
-            bytes4(
-                keccak256(
-                    "createSpaceWithPrepay(((string,string,string,string),((string,string,uint256,uint256,uint64,address,address,uint256,address),(bool,address[],bytes,bool),string[]),(string),(uint256)))"
-                )
+library DeployCreateSpace {
+    function selectors() internal pure returns (bytes4[] memory _selectors) {
+        _selectors = new bytes4[](4);
+        _selectors[0] = CreateSpaceFacet.createSpace.selector;
+        _selectors[1] = bytes4(
+            keccak256(
+                "createSpaceWithPrepay(((string,string,string,string),((string,string,uint256,uint256,uint64,address,address,uint256,address),(bool,address[],bytes,bool),string[]),(string),(uint256)))"
             )
         );
-        addSelector(
-            bytes4(
-                keccak256(
-                    "createSpaceWithPrepay(((string,string,string,string),((string,string,uint256,uint256,uint64,address,address,uint256,address),(bool,address[],bytes),string[]),(string),(uint256)))"
-                )
+        _selectors[2] = bytes4(
+            keccak256(
+                "createSpaceWithPrepay(((string,string,string,string),((string,string,uint256,uint256,uint64,address,address,uint256,address),(bool,address[],bytes),string[]),(string),(uint256)))"
             )
         );
-        addSelector(CreateSpaceFacet.createSpaceV2.selector);
+        _selectors[3] = CreateSpaceFacet.createSpaceV2.selector;
     }
 
-    function initializer() public pure override returns (bytes4) {
-        return CreateSpaceFacet.__CreateSpace_init.selector;
+    function makeCut(
+        address facetAddress,
+        IDiamond.FacetCutAction action
+    ) internal pure returns (IDiamond.FacetCut memory) {
+        return IDiamond.FacetCut(facetAddress, action, selectors());
     }
 
-    function versionName() public pure override returns (string memory) {
-        return "facets/createSpaceFacet";
+    function makeInitData() internal pure returns (bytes memory) {
+        return abi.encodeCall(CreateSpaceFacet.__CreateSpace_init, ());
     }
 
-    function __deploy(address deployer) internal override returns (address) {
-        vm.startBroadcast(deployer);
-        CreateSpaceFacet facet = new CreateSpaceFacet();
-        vm.stopBroadcast();
-        return address(facet);
+    function deploy() internal returns (address) {
+        return LibDeploy.deployCode("CreateSpaceFacet", "");
     }
 }
