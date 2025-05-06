@@ -30,6 +30,15 @@ interface IChannelBase {
     event ChannelRemoved(address indexed caller, bytes32 channelId);
     event ChannelRoleAdded(address indexed caller, bytes32 channelId, uint256 roleId);
     event ChannelRoleRemoved(address indexed caller, bytes32 channelId, uint256 roleId);
+
+    // =============================================================
+    //                           Errors
+    // =============================================================
+    error ChannelService__ChannelAlreadyExists();
+    error ChannelService__ChannelDoesNotExist();
+    error ChannelService__ChannelDisabled();
+    error ChannelService__RoleAlreadyExists();
+    error ChannelService__RoleDoesNotExist();
 }
 
 interface IChannel is IChannelBase {
