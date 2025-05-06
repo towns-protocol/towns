@@ -2,7 +2,6 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-
 import {IVotes} from "@openzeppelin/contracts/governance/utils/IVotes.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IDiamond} from "@towns-protocol/diamond/src/IDiamond.sol";
@@ -10,7 +9,6 @@ import {IDiamondCut} from "@towns-protocol/diamond/src/facets/cut/IDiamondCut.so
 import {IOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
 
 // libraries
-
 import {RewardsDistributionStorage} from "src/base/registry/facets/distribution/v2/RewardsDistributionStorage.sol";
 import {StakingRewards} from "src/base/registry/facets/distribution/v2/StakingRewards.sol";
 import {stdError} from "forge-std/StdError.sol";
@@ -18,11 +16,10 @@ import {FixedPointMathLib} from "solady/utils/FixedPointMathLib.sol";
 import {SafeTransferLib} from "solady/utils/SafeTransferLib.sol";
 
 // contracts
-
 import {BaseRegistryTest} from "./BaseRegistry.t.sol";
 import {DeployRewardsDistributionV2} from "scripts/deployments/facets/DeployRewardsDistributionV2.s.sol";
 import {DelegationProxy} from "src/base/registry/facets/distribution/v2/DelegationProxy.sol";
-import {RewardsDistribution} from "src/base/registry/facets/distribution/v2/RewardsDistribution.sol";
+import {RewardsDistributionV2} from "src/base/registry/facets/distribution/v2/RewardsDistributionV2.sol";
 import {UpgradeableBeaconBase} from "src/diamond/facets/beacon/UpgradeableBeacon.sol";
 import {Towns} from "src/tokens/towns/base/Towns.sol";
 
@@ -33,13 +30,6 @@ contract RewardsDistributionV2Test is BaseRegistryTest, IOwnableBase, IDiamond {
         keccak256(
             "Stake(uint96 amount,address delegatee,address beneficiary,address owner,uint256 nonce,uint256 deadline)"
         );
-
-    DeployRewardsDistributionV2 internal distributionV2Helper;
-
-    function setUp() public virtual override {
-        super.setUp();
-        distributionV2Helper = new DeployRewardsDistributionV2();
-    }
 
     function test_storageSlot() public pure {
         bytes32 slot = keccak256(
@@ -90,11 +80,18 @@ contract RewardsDistributionV2Test is BaseRegistryTest, IOwnableBase, IDiamond {
         deployTokenBase.setSalts(_randomBytes32(), _randomBytes32());
         address newTowns = deployTokenBase.deploy(deployer);
 
-        address implementation = address(new RewardsDistribution());
-        FacetCut memory cut = distributionV2Helper.makeCut(implementation, FacetCutAction.Replace);
+        address implementation = address(new RewardsDistributionV2());
+        FacetCut memory cut = DeployRewardsDistributionV2.makeCut(
+            implementation,
+            FacetCutAction.Replace
+        );
         FacetCut[] memory cuts = new FacetCut[](1);
         cuts[0] = cut;
-        bytes memory initData = distributionV2Helper.makeInitData(newTowns, newTowns, 14 days);
+        bytes memory initData = DeployRewardsDistributionV2.makeInitData(
+            newTowns,
+            newTowns,
+            14 days
+        );
 
         vm.prank(deployer);
         IDiamondCut(baseRegistry).diamondCut(cuts, implementation, initData);

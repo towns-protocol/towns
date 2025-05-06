@@ -2,63 +2,75 @@
 pragma solidity ^0.8.23;
 
 // interfaces
+import {IDiamond} from "@towns-protocol/diamond/src/IDiamond.sol";
+import {IRewardsDistribution} from "src/base/registry/facets/distribution/v2/IRewardsDistribution.sol";
 
 // libraries
+import {LibDeploy} from "@towns-protocol/diamond/src/utils/LibDeploy.sol";
+import {DynamicArrayLib} from "solady/utils/DynamicArrayLib.sol";
 
-// helpers
-import {FacetHelper} from "@towns-protocol/diamond/scripts/common/helpers/FacetHelper.s.sol";
-import {Deployer} from "scripts/common/Deployer.s.sol";
-import {RewardsDistribution} from "src/base/registry/facets/distribution/v2/RewardsDistribution.sol";
+// contracts
+import {RewardsDistributionV2} from "src/base/registry/facets/distribution/v2/RewardsDistributionV2.sol";
 
-contract DeployRewardsDistributionV2 is Deployer, FacetHelper {
-    constructor() {
-        addSelector(RewardsDistribution.upgradeDelegationProxy.selector);
-        addSelector(RewardsDistribution.setRewardNotifier.selector);
-        addSelector(RewardsDistribution.setPeriodRewardAmount.selector);
-        addSelector(RewardsDistribution.stake.selector);
-        addSelector(RewardsDistribution.permitAndStake.selector);
-        addSelector(RewardsDistribution.stakeOnBehalf.selector);
-        addSelector(RewardsDistribution.increaseStake.selector);
-        addSelector(RewardsDistribution.permitAndIncreaseStake.selector);
-        addSelector(RewardsDistribution.redelegate.selector);
-        addSelector(RewardsDistribution.changeBeneficiary.selector);
-        addSelector(RewardsDistribution.initiateWithdraw.selector);
-        addSelector(RewardsDistribution.withdraw.selector);
-        addSelector(RewardsDistribution.claimReward.selector);
-        addSelector(RewardsDistribution.notifyRewardAmount.selector);
-        addSelector(RewardsDistribution.stakingState.selector);
-        addSelector(RewardsDistribution.stakedByDepositor.selector);
-        addSelector(RewardsDistribution.getDepositsByDepositor.selector);
-        addSelector(RewardsDistribution.treasureByBeneficiary.selector);
-        addSelector(RewardsDistribution.depositById.selector);
-        addSelector(RewardsDistribution.delegationProxyById.selector);
-        addSelector(RewardsDistribution.isRewardNotifier.selector);
-        addSelector(RewardsDistribution.lastTimeRewardDistributed.selector);
-        addSelector(RewardsDistribution.currentRewardPerTokenAccumulated.selector);
-        addSelector(RewardsDistribution.currentReward.selector);
-        addSelector(RewardsDistribution.currentSpaceDelegationReward.selector);
-        addSelector(RewardsDistribution.implementation.selector);
-        addSelector(RewardsDistribution.getPeriodRewardAmount.selector);
+library DeployRewardsDistributionV2 {
+    using DynamicArrayLib for DynamicArrayLib.DynamicArray;
+
+    function selectors() internal pure returns (bytes4[] memory res) {
+        DynamicArrayLib.DynamicArray memory arr = DynamicArrayLib.p().reserve(27);
+        arr.p(IRewardsDistribution.upgradeDelegationProxy.selector);
+        arr.p(IRewardsDistribution.setRewardNotifier.selector);
+        arr.p(IRewardsDistribution.setPeriodRewardAmount.selector);
+        arr.p(IRewardsDistribution.stake.selector);
+        arr.p(IRewardsDistribution.permitAndStake.selector);
+        arr.p(IRewardsDistribution.stakeOnBehalf.selector);
+        arr.p(IRewardsDistribution.increaseStake.selector);
+        arr.p(IRewardsDistribution.permitAndIncreaseStake.selector);
+        arr.p(IRewardsDistribution.redelegate.selector);
+        arr.p(IRewardsDistribution.changeBeneficiary.selector);
+        arr.p(IRewardsDistribution.initiateWithdraw.selector);
+        arr.p(IRewardsDistribution.withdraw.selector);
+        arr.p(IRewardsDistribution.claimReward.selector);
+        arr.p(IRewardsDistribution.notifyRewardAmount.selector);
+        arr.p(IRewardsDistribution.stakingState.selector);
+        arr.p(IRewardsDistribution.stakedByDepositor.selector);
+        arr.p(IRewardsDistribution.getDepositsByDepositor.selector);
+        arr.p(IRewardsDistribution.treasureByBeneficiary.selector);
+        arr.p(IRewardsDistribution.depositById.selector);
+        arr.p(IRewardsDistribution.delegationProxyById.selector);
+        arr.p(IRewardsDistribution.isRewardNotifier.selector);
+        arr.p(IRewardsDistribution.lastTimeRewardDistributed.selector);
+        arr.p(IRewardsDistribution.currentRewardPerTokenAccumulated.selector);
+        arr.p(IRewardsDistribution.currentReward.selector);
+        arr.p(IRewardsDistribution.currentSpaceDelegationReward.selector);
+        arr.p(IRewardsDistribution.implementation.selector);
+        arr.p(IRewardsDistribution.getPeriodRewardAmount.selector);
+
+        bytes32[] memory selectors_ = arr.asBytes32Array();
+        assembly ("memory-safe") {
+            res := selectors_
+        }
     }
 
-    function initializer() public pure override returns (bytes4) {
-        return RewardsDistribution.__RewardsDistribution_init.selector;
+    function makeCut(
+        address facetAddress,
+        IDiamond.FacetCutAction action
+    ) internal pure returns (IDiamond.FacetCut memory) {
+        return IDiamond.FacetCut(facetAddress, action, selectors());
     }
 
     function makeInitData(
         address stakeToken,
         address rewardToken,
         uint256 rewardDuration
-    ) public pure returns (bytes memory) {
-        return abi.encodeWithSelector(initializer(), stakeToken, rewardToken, rewardDuration);
+    ) internal pure returns (bytes memory) {
+        return
+            abi.encodeCall(
+                RewardsDistributionV2.__RewardsDistribution_init,
+                (stakeToken, rewardToken, rewardDuration)
+            );
     }
 
-    function versionName() public pure override returns (string memory) {
-        return "facets/rewardsDistributionV2Facet";
-    }
-
-    function __deploy(address deployer) internal override returns (address) {
-        vm.broadcast(deployer);
-        return address(new RewardsDistribution());
+    function deploy() internal returns (address) {
+        return LibDeploy.deployCode("RewardsDistributionV2.sol", "");
     }
 }

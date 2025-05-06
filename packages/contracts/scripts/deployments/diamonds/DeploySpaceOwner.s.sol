@@ -132,10 +132,9 @@ contract DeploySpaceOwner is IDiamondInitHelper, DiamondHelper, Deployer {
         facetHelper.deployBatch(deployer);
 
         // Add the requested facets
-        address facet;
         for (uint256 i; i < facets.length; ++i) {
             string memory facetName = facets[i];
-            facet = facetHelper.getDeployedAddress(facetName);
+            address facet = facetHelper.getDeployedAddress(facetName);
 
             if (facetName.eq("MetadataFacet")) {
                 addFacet(
