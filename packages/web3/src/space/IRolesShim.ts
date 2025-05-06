@@ -1,18 +1,13 @@
-import {
-    IRoles as LocalhostContract,
-    IRolesBase as LocalhostIRolesBase,
-    IRolesInterface as LocalhostInterface,
-} from '@towns-protocol/generated/dev/typings/IRoles'
-
-import LocalhostAbi from '@towns-protocol/generated/dev/abis/Roles.abi.json' assert { type: 'json' }
-
 import { ethers } from 'ethers'
 import { BaseContractShim } from '../BaseContractShim'
+import { Roles__factory } from '@towns-protocol/generated/dev/typings/factories/Roles__factory'
+import { IRolesBase } from '@towns-protocol/generated/dev/typings/IRoles'
+export type { IRolesBase }
 
-export type { LocalhostIRolesBase as IRolesBase }
+const { abi, connect } = Roles__factory
 
-export class IRolesShim extends BaseContractShim<LocalhostContract, LocalhostInterface> {
-    constructor(address: string, provider: ethers.providers.Provider | undefined) {
-        super(address, provider, LocalhostAbi)
+export class IRolesShim extends BaseContractShim<typeof connect> {
+    constructor(address: string, provider: ethers.providers.Provider) {
+        super(address, provider, connect, abi)
     }
 }

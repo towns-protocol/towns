@@ -1,15 +1,11 @@
-import {
-    IDropFacet as DevContract,
-    IDropFacetInterface as DevInterface,
-} from '@towns-protocol/generated/dev/typings/IDropFacet'
-
-import DevAbi from '@towns-protocol/generated/dev/abis/DropFacet.abi.json' assert { type: 'json' }
-
 import { ethers } from 'ethers'
 import { BaseContractShim } from '../BaseContractShim'
+import { DropFacet__factory } from '@towns-protocol/generated/dev/typings/factories/DropFacet__factory'
 
-export class IDropFacetShim extends BaseContractShim<DevContract, DevInterface> {
-    constructor(address: string, provider: ethers.providers.Provider | undefined) {
-        super(address, provider, DevAbi)
+const { abi, connect } = DropFacet__factory
+
+export class IDropFacetShim extends BaseContractShim<typeof connect> {
+    constructor(address: string, provider: ethers.providers.Provider) {
+        super(address, provider, connect, abi)
     }
 }

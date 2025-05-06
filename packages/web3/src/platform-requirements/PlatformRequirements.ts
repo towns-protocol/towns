@@ -1,16 +1,12 @@
-import {
-    PlatformRequirementsFacet as LocalhostContract,
-    PlatformRequirementsFacetInterface as LocalhostInterface,
-} from '@towns-protocol/generated/dev/typings/PlatformRequirementsFacet'
-
 import { ethers } from 'ethers'
 import { BaseContractShim } from '../BaseContractShim'
+import { PlatformRequirementsFacet__factory } from '@towns-protocol/generated/dev/typings/factories/PlatformRequirementsFacet__factory'
 
-import LocalhostAbi from '@towns-protocol/generated/dev/abis/PlatformRequirementsFacet.abi.json' assert { type: 'json' }
+const { abi, connect } = PlatformRequirementsFacet__factory
 
-export class PlatformRequirements extends BaseContractShim<LocalhostContract, LocalhostInterface> {
-    constructor(address: string, provider: ethers.providers.Provider | undefined) {
-        super(address, provider, LocalhostAbi)
+export class PlatformRequirements extends BaseContractShim<typeof connect> {
+    constructor(address: string, provider: ethers.providers.Provider) {
+        super(address, provider, connect, abi)
     }
 
     public getMembershipMintLimit() {

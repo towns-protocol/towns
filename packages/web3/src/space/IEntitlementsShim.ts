@@ -1,18 +1,14 @@
-import {
-    IEntitlementsManager as LocalhostContract,
-    IEntitlementsManagerBase as LocalhostIEntitlementsBase,
-    IEntitlementsManagerInterface as LocalhostInterface,
-} from '@towns-protocol/generated/dev/typings/IEntitlementsManager'
-
-import LocalhostAbi from '@towns-protocol/generated/dev/abis/EntitlementsManager.abi.json' assert { type: 'json' }
-
+import { EntitlementsManager__factory } from '@towns-protocol/generated/dev/typings/factories/EntitlementsManager__factory'
 import { ethers } from 'ethers'
+import { IEntitlementsManagerBase } from '@towns-protocol/generated/dev/typings/IEntitlementsManager'
 import { BaseContractShim } from '../BaseContractShim'
 
-export type { LocalhostIEntitlementsBase as IEntitlementsBase }
+const { abi, connect } = EntitlementsManager__factory
 
-export class IEntitlementsShim extends BaseContractShim<LocalhostContract, LocalhostInterface> {
-    constructor(address: string, provider: ethers.providers.Provider | undefined) {
-        super(address, provider, LocalhostAbi)
+export type { IEntitlementsManagerBase as IEntitlementsBase }
+
+export class IEntitlementsShim extends BaseContractShim<typeof connect> {
+    constructor(address: string, provider: ethers.providers.Provider) {
+        super(address, provider, connect, abi)
     }
 }

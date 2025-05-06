@@ -1,15 +1,11 @@
-import {
-    PrepayFacet as LocalhostContract,
-    PrepayFacetInterface as LocalhostInterface,
-} from '@towns-protocol/generated/dev/typings/PrepayFacet'
-
 import { ethers } from 'ethers'
 import { BaseContractShim } from '../BaseContractShim'
+import { PrepayFacet__factory } from '@towns-protocol/generated/dev/typings/factories/PrepayFacet__factory'
 
-import LocalhostAbi from '@towns-protocol/generated/dev/abis/PrepayFacet.abi.json' assert { type: 'json' }
+const { abi, connect } = PrepayFacet__factory
 
-export class IPrepayShim extends BaseContractShim<LocalhostContract, LocalhostInterface> {
-    constructor(address: string, provider: ethers.providers.Provider | undefined) {
-        super(address, provider, LocalhostAbi)
+export class IPrepayShim extends BaseContractShim<typeof connect> {
+    constructor(address: string, provider: ethers.providers.Provider) {
+        super(address, provider, connect, abi)
     }
 }

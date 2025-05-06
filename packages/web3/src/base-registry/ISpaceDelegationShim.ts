@@ -1,15 +1,11 @@
-import {
-    ISpaceDelegation as DevContract,
-    ISpaceDelegationInterface as DevInterface,
-} from '@towns-protocol/generated/dev/typings/ISpaceDelegation'
-
-import DevAbi from '@towns-protocol/generated/dev/abis/ISpaceDelegation.abi.json' assert { type: 'json' }
-
 import { ethers } from 'ethers'
 import { BaseContractShim } from '../BaseContractShim'
+import { ISpaceDelegation__factory } from '@towns-protocol/generated/dev/typings/factories/ISpaceDelegation__factory'
 
-export class ISpaceDelegationShim extends BaseContractShim<DevContract, DevInterface> {
-    constructor(address: string, provider: ethers.providers.Provider | undefined) {
-        super(address, provider, DevAbi)
+const { abi, connect } = ISpaceDelegation__factory
+
+export class ISpaceDelegationShim extends BaseContractShim<typeof connect> {
+    constructor(address: string, provider: ethers.providers.Provider) {
+        super(address, provider, connect, abi)
     }
 }

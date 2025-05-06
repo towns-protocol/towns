@@ -1,15 +1,11 @@
-import {
-    IMulticall as LocalhostContract,
-    IMulticallInterface as LocalhostInterface,
-} from '@towns-protocol/generated/dev/typings/IMulticall'
-
-import LocalhostAbi from '@towns-protocol/generated/dev/abis/IMulticall.abi.json' assert { type: 'json' }
-
+import { IMulticall__factory } from '@towns-protocol/generated/dev/typings/factories/IMulticall__factory'
 import { ethers } from 'ethers'
 import { BaseContractShim } from '../BaseContractShim'
 
-export class IMulticallShim extends BaseContractShim<LocalhostContract, LocalhostInterface> {
-    constructor(address: string, provider: ethers.providers.Provider | undefined) {
-        super(address, provider, LocalhostAbi)
+const { abi, connect } = IMulticall__factory
+
+export class IMulticallShim extends BaseContractShim<typeof connect> {
+    constructor(address: string, provider: ethers.providers.Provider) {
+        super(address, provider, connect, abi)
     }
 }

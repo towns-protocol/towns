@@ -3,5 +3,13 @@
     "compilerOptions": {
         "types": ["vitest/globals"]
     },
+    "rules": {
+        "@typescript-eslint/unbound-method": [
+            "error",
+            {
+                "ignoreStatic": true
+            }
+        ]
+    },
     "include": ["src/**/*", "tests/**/*"]
 }

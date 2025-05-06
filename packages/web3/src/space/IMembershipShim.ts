@@ -1,25 +1,20 @@
-import {
-    MembershipFacet as LocalhostContract,
-    MembershipFacetInterface as LocalhostInterface,
-} from '@towns-protocol/generated/dev/typings/MembershipFacet'
-
-import { IERC721AShim } from '../erc-721/IERC721AShim'
-
 import { BigNumber, BigNumberish, ethers } from 'ethers'
 import { BaseContractShim } from '../BaseContractShim'
-
-import LocalhostAbi from '@towns-protocol/generated/dev/abis/MembershipFacet.abi.json' assert { type: 'json' }
 import { dlogger } from '@towns-protocol/dlog'
 import { IMembershipMetadataShim } from './IMembershipMetadataShim'
+import { MembershipFacet__factory } from '@towns-protocol/generated/dev/typings/factories/MembershipFacet__factory'
+import { IERC721AShim } from '../erc-721/IERC721AShim'
 
 const log = dlogger('csb:IMembershipShim')
 
-export class IMembershipShim extends BaseContractShim<LocalhostContract, LocalhostInterface> {
+const { abi, connect } = MembershipFacet__factory
+
+export class IMembershipShim extends BaseContractShim<typeof connect> {
     private erc721Shim: IERC721AShim
     metadata: IMembershipMetadataShim
 
-    constructor(address: string, provider: ethers.providers.Provider | undefined) {
-        super(address, provider, LocalhostAbi)
+    constructor(address: string, provider: ethers.providers.Provider) {
+        super(address, provider, connect, abi)
         this.erc721Shim = new IERC721AShim(address, provider)
         this.metadata = new IMembershipMetadataShim(address, provider)
     }

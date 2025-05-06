@@ -1,18 +1,11 @@
-import {
-    TokenPausableFacet as LocalhostContract,
-    TokenPausableFacetInterface as LocalhostInterface,
-} from '@towns-protocol/generated/dev/typings/TokenPausableFacet'
-
-import LocalhostAbi from '@towns-protocol/generated/dev/abis/TokenPausableFacet.abi.json' assert { type: 'json' }
-
 import { ethers } from 'ethers'
 import { BaseContractShim } from '../BaseContractShim'
+import { TokenPausableFacet__factory } from '@towns-protocol/generated/dev/typings/factories/TokenPausableFacet__factory'
 
-export class TokenPausableFacetShim extends BaseContractShim<
-    LocalhostContract,
-    LocalhostInterface
-> {
-    constructor(address: string, provider: ethers.providers.Provider | undefined) {
-        super(address, provider, LocalhostAbi)
+const { abi, connect } = TokenPausableFacet__factory
+
+export class TokenPausableFacetShim extends BaseContractShim<typeof connect> {
+    constructor(address: string, provider: ethers.providers.Provider) {
+        super(address, provider, connect, abi)
     }
 }

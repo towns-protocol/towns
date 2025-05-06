@@ -6,7 +6,7 @@ import { IPricingShim } from './IPricingShim'
 export class PricingModules {
     private readonly pricingShim: IPricingShim
 
-    constructor(config: BaseChainConfig, provider: ethers.providers.Provider | undefined) {
+    constructor(config: BaseChainConfig, provider: ethers.providers.Provider) {
         this.pricingShim = new IPricingShim(config.addresses.spaceFactory, provider)
     }
 
