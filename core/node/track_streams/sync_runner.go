@@ -55,31 +55,6 @@ func (sr *SyncRunner) getWorkerPool(addr common.Address) *semaphore.Weighted {
 	return workerPool.(*semaphore.Weighted)
 }
 
-func channelLabelType(streamID shared.StreamId) string {
-	switch streamID.Type() {
-	case shared.STREAM_DM_CHANNEL_BIN:
-		return "dm"
-	case shared.STREAM_GDM_CHANNEL_BIN:
-		return "gdm"
-	case shared.STREAM_CHANNEL_BIN:
-		return "space_channel"
-	case shared.STREAM_USER_SETTINGS_BIN:
-		return "user_settings"
-	case shared.STREAM_USER_INBOX_BIN:
-		return "user_inbox"
-	case shared.STREAM_USER_BIN:
-		return "user"
-	case shared.STREAM_USER_METADATA_KEY_BIN:
-		return "user_metadata"
-	case shared.STREAM_SPACE_BIN:
-		return "space"
-	case shared.STREAM_MEDIA_BIN:
-		return "media"
-	default:
-		return "unknown"
-	}
-}
-
 type TrackedViewConstructorFn func(
 	ctx context.Context,
 	streamID shared.StreamId,
@@ -97,13 +72,20 @@ func (sr *SyncRunner) Run(
 	metrics *TrackStreamsSyncMetrics,
 ) {
 	var (
-		promLabels                = prometheus.Labels{"type": channelLabelType(stream.StreamId())}
-		remotes                   = nodes.NewStreamNodesWithLock(stream.ReplicationFactor(), stream.Nodes(), common.Address{})
+		promLabels = prometheus.Labels{"type": shared.StreamTypeToString(stream.StreamId().Type())}
+		remotes    = nodes.NewStreamNodesWithLock(
+			stream.ReplicationFactor(),
+			stream.Nodes(),
+			common.Address{},
+		)
 		restartSyncSessionCounter = 0
 	)
 
 	metrics.TotalStreams.With(promLabels).Inc()
 
+	// outer loop - establishes sync and processes streaming sync updates
+	// inner loop - processes streaming sync updates.
+	// runs continuously until the context is cancelled.
 	for {
 		var (
 			sticky              = remotes.GetStickyPeer()

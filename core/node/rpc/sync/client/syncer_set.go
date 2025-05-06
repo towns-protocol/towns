@@ -472,7 +472,7 @@ func (ss *SyncerSet) newRemoteSyncer(addr common.Address) (*remoteSyncer, error)
 		return nil, err
 	}
 
-	return newRemoteSyncer(
+	return NewRemoteSyncer(
 		ss.ctx, ss.globalSyncOpCtxCancel, ss.syncID, addr, client,
 		ss.rmStream, ss.messages, ss.otelTracer)
 }

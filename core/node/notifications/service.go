@@ -60,6 +60,7 @@ func NewService(
 		listener,
 		userPreferences,
 		metrics,
+		notificationsConfig.StreamTracking,
 	)
 	if err != nil {
 		return nil, err

@@ -9,6 +9,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 
+	"github.com/towns-protocol/towns/core/config"
 	"github.com/towns-protocol/towns/core/contracts/river"
 	"github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/crypto"
@@ -61,7 +62,7 @@ type StreamsTrackerImpl struct {
 	listener       StreamEventListener
 	metrics        *TrackStreamsSyncMetrics
 	tracked        sync.Map // map[shared.StreamId] = struct{}
-	syncRunner     *SyncRunner
+	syncRunner     *SyncRunner 
 }
 
 // Init can be used by a struct embedding the StreamsTrackerImpl to initialize it.
@@ -73,6 +74,7 @@ func (tracker *StreamsTrackerImpl) Init(
 	listener StreamEventListener,
 	filter StreamFilter,
 	metricsFactory infra.MetricsFactory,
+	streamTracking config.StreamTrackingConfig,
 ) error {
 	tracker.ctx = ctx
 	tracker.metrics = NewTrackStreamsSyncMetrics(metricsFactory)
