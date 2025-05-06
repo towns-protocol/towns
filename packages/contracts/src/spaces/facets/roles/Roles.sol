@@ -5,14 +5,16 @@ pragma solidity ^0.8.23;
 import {IRoles} from "./IRoles.sol";
 
 // libraries
+import {StringSet} from "../../../utils/libraries/StringSet.sol";
+import {Permissions} from "../Permissions.sol";
 import {RolesStorage} from "./RolesStorage.sol";
-import {Permissions} from "src/spaces/facets/Permissions.sol";
 
 // contracts
 import {Entitled} from "../Entitled.sol";
 import {RolesBase} from "./RolesBase.sol";
 
 contract Roles is IRoles, RolesBase, Entitled {
+    using StringSet for StringSet.Set;
     using RolesStorage for RolesStorage.Role;
 
     /// @inheritdoc IRoles
