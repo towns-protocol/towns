@@ -38,7 +38,7 @@ async function _getStreamClient(logger: FastifyBaseLogger, streamId: string) {
 	let client = clients.get(url)
 	if (!client) {
 		logger.info({ url }, 'Connecting')
-		client = await makeStreamRpcClient(url)
+		client = makeStreamRpcClient(url)
 		clients.set(url, client)
 	}
 	return client
