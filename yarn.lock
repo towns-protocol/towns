@@ -8068,7 +8068,6 @@ __metadata:
   dependencies:
     "@bufbuild/protobuf": ^2.2.2
     "@connectrpc/connect": ^2.0.0
-    "@connectrpc/connect-web": ^2.0.0
     "@ethereumjs/util": ^8.0.1
     "@towns-protocol/dlog": "workspace:^"
     "@towns-protocol/encryption": "workspace:^"
