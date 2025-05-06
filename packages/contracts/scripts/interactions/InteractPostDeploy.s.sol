@@ -18,34 +18,23 @@ import {Interaction} from "scripts/common/Interaction.s.sol";
 import {MockTowns} from "test/mocks/MockTowns.sol";
 
 // deployments
-
-import {DeployBaseRegistry} from "scripts/deployments/diamonds/DeployBaseRegistry.s.sol";
-
-import {DeployRiverAirdrop} from "scripts/deployments/diamonds/DeployRiverAirdrop.s.sol";
-import {DeploySpaceFactory} from "scripts/deployments/diamonds/DeploySpaceFactory.s.sol";
-import {DeploySpaceOwner} from "scripts/deployments/diamonds/DeploySpaceOwner.s.sol";
-import {DeployAppRegistry} from "scripts/deployments/diamonds/DeployAppRegistry.s.sol";
 import {DeployProxyBatchDelegation} from "scripts/deployments/utils/DeployProxyBatchDelegation.s.sol";
 import {DeployTownsBase} from "scripts/deployments/utils/DeployTownsBase.s.sol";
 
 contract InteractPostDeploy is Interaction {
-    DeploySpaceOwner deploySpaceOwner = new DeploySpaceOwner();
-    DeploySpaceFactory deploySpaceFactory = new DeploySpaceFactory();
-    DeployBaseRegistry deployBaseRegistry = new DeployBaseRegistry();
-    DeployTownsBase deployTownsBase = new DeployTownsBase();
     DeployProxyBatchDelegation deployProxyDelegation = new DeployProxyBatchDelegation();
-    DeployRiverAirdrop deployRiverAirdrop = new DeployRiverAirdrop();
-    DeployAppRegistry deployAppRegistry = new DeployAppRegistry();
+    DeployTownsBase deployTownsBase = new DeployTownsBase();
 
     function __interact(address deployer) internal override {
         vm.pauseGasMetering();
-        address spaceOwner = deploySpaceOwner.deploy(deployer);
-        address spaceFactory = deploySpaceFactory.deploy(deployer);
-        address baseRegistry = deployBaseRegistry.deploy(deployer);
+        address spaceOwner = getDeployment("spaceOwner");
+        address spaceFactory = getDeployment("spaceFactory");
+        address baseRegistry = getDeployment("baseRegistry");
+        address riverAirdrop = getDeployment("riverAirdrop");
+        address appRegistry = getDeployment("appRegistry");
         address townsBase = deployTownsBase.deploy(deployer);
-        address mainnetProxyDelegation = deployProxyDelegation.deploy(deployer);
-        address riverAirdrop = deployRiverAirdrop.deploy(deployer);
-        address appRegistry = deployAppRegistry.deploy(deployer);
+        address proxyDelegation = deployProxyDelegation.deploy(deployer);
+
 
         // this is for anvil deployment only
         vm.startBroadcast(deployer);
@@ -56,7 +45,7 @@ contract InteractPostDeploy is Interaction {
         IImplementationRegistry(spaceFactory).addImplementation(riverAirdrop);
         IImplementationRegistry(spaceFactory).addImplementation(appRegistry);
         SpaceDelegationFacet(baseRegistry).setRiverToken(townsBase);
-        IMainnetDelegation(baseRegistry).setProxyDelegation(mainnetProxyDelegation);
+        IMainnetDelegation(baseRegistry).setProxyDelegation(proxyDelegation);
         vm.stopBroadcast();
     }
 }
