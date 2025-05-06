@@ -75,7 +75,7 @@ contract Roles is IRoles, RolesBase, Entitled {
     function getPermissionsByRoleId(
         uint256 roleId
     ) external view override returns (string[] memory permissions) {
-        (, , permissions, ) = _getRole(roleId);
+        permissions = RolesStorage.layout().roleById[roleId].permissions.values();
     }
 
     // entitlements
