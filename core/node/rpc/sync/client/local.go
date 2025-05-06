@@ -5,7 +5,6 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/linkdata/deadlock"
-	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
 	. "github.com/towns-protocol/towns/core/node/base"
@@ -39,11 +38,10 @@ func newLocalSyncer(
 	cancelGlobalSyncOp context.CancelCauseFunc,
 	localAddr common.Address,
 	streamCache *StreamCache,
-	cookies []*SyncCookie,
 	messages *dynmsgbuf.DynamicBuffer[*SyncStreamsResponse],
 	otelTracer trace.Tracer,
-) (*localSyncer, error) {
-	s := &localSyncer{
+) *localSyncer {
+	return &localSyncer{
 		globalSyncOpID:     globalSyncOpID,
 		syncStreamCtx:      ctx,
 		cancelGlobalSyncOp: cancelGlobalSyncOp,
@@ -53,15 +51,6 @@ func newLocalSyncer(
 		activeStreams:      make(map[StreamId]*Stream),
 		otelTracer:         otelTracer,
 	}
-
-	for _, cookie := range cookies {
-		streamID, _ := StreamIdFromBytes(cookie.GetStreamId())
-		if err := s.addStream(s.syncStreamCtx, streamID, cookie); err != nil {
-			return nil, err
-		}
-	}
-
-	return s, nil
 }
 
 func (s *localSyncer) Run() {
@@ -78,41 +67,6 @@ func (s *localSyncer) Run() {
 
 func (s *localSyncer) Address() common.Address {
 	return s.localAddr
-}
-
-func (s *localSyncer) AddStream(ctx context.Context, cookie *SyncCookie) error {
-	if s.otelTracer != nil {
-		var span trace.Span
-		streamID, _ := StreamIdFromBytes(cookie.GetStreamId())
-		ctx, span = s.otelTracer.Start(ctx, "localSyncer::AddStream",
-			trace.WithAttributes(attribute.String("stream", streamID.String())))
-		defer span.End()
-	}
-
-	streamID, err := StreamIdFromBytes(cookie.GetStreamId())
-	if err != nil {
-		return err
-	}
-	return s.addStream(ctx, streamID, cookie)
-}
-
-func (s *localSyncer) RemoveStream(ctx context.Context, streamID StreamId) (bool, error) {
-	if s.otelTracer != nil {
-		_, span := s.otelTracer.Start(ctx, "localSyncer::removeStream",
-			trace.WithAttributes(attribute.String("stream", streamID.String())))
-		defer span.End()
-	}
-
-	s.activeStreamsMu.Lock()
-	defer s.activeStreamsMu.Unlock()
-
-	syncStream, found := s.activeStreams[streamID]
-	if found {
-		syncStream.Unsub(s)
-		delete(s.activeStreams, streamID)
-	}
-
-	return len(s.activeStreams) == 0, nil
 }
 
 func (s *localSyncer) Modify(ctx context.Context, request *ModifySyncRequest) (*ModifySyncResponse, bool, error) {

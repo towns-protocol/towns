@@ -1,31 +1,31 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-// interfaces
-
-// libraries
-
-// contracts
-error Validator__InvalidStringLength();
-error Validator__InvalidByteLength();
-error Validator__InvalidAddress();
+import {CustomRevert} from "./CustomRevert.sol";
 
 library Validator {
-    function checkStringLength(string memory name) internal pure {
-        bytes memory byteName = bytes(name);
-        if (byteName.length == 0) revert Validator__InvalidStringLength();
-    }
+    using CustomRevert for bytes4;
+
+    error InvalidLength();
+    error InvalidAddress();
 
     function checkLength(string memory name, uint256 min) internal pure {
-        bytes memory byteName = bytes(name);
-        if (byteName.length < min) revert Validator__InvalidStringLength();
+        if (bytes(name).length < min) InvalidLength.selector.revertWith();
     }
 
-    function checkByteLength(bytes memory name) internal pure {
-        if (name.length == 0) revert Validator__InvalidByteLength();
+    function checkLengthCalldata(string calldata name, uint256 min) internal pure {
+        if (bytes(name).length < min) InvalidLength.selector.revertWith();
+    }
+
+    function checkLength(bytes memory name) internal pure {
+        if (name.length == 0) InvalidLength.selector.revertWith();
+    }
+
+    function checkLengthCalldata(bytes calldata name) internal pure {
+        if (name.length == 0) InvalidLength.selector.revertWith();
     }
 
     function checkAddress(address addr) internal pure {
-        if (addr == address(0)) revert Validator__InvalidAddress();
+        if (addr == address(0)) InvalidAddress.selector.revertWith();
     }
 }

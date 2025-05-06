@@ -29,7 +29,7 @@ abstract contract RolesBase is IRolesBase {
         string[] memory permissions,
         CreateEntitlement[] memory entitlements
     ) internal returns (uint256 roleId) {
-        Validator.checkLength(roleName, 2);
+        Validator.checkLengthCalldata(roleName, 2);
 
         uint256 entitlementsLen = entitlements.length;
 
@@ -42,7 +42,7 @@ abstract contract RolesBase is IRolesBase {
             entitlementAddresses[i] = entitlements[i].module;
 
             // check for empty address or data
-            Validator.checkByteLength(entitlements[i].data);
+            Validator.checkLength(entitlements[i].data);
 
             EntitlementsManagerService.proxyAddRoleToEntitlement(
                 address(entitlements[i].module),
@@ -238,7 +238,7 @@ abstract contract RolesBase is IRolesBase {
         for (uint256 i = 0; i < entitlementsLen; ) {
             if (entitlements[i].data.length > 0) {
                 // check for empty address or data
-                Validator.checkByteLength(entitlements[i].data);
+                Validator.checkLength(entitlements[i].data);
 
                 EntitlementsManagerService.proxyAddRoleToEntitlement(
                     address(entitlements[i].module),

@@ -48,26 +48,41 @@ contract DeploySwapRouter is IDiamondInitHelper, DiamondHelper, Deployer {
         multiInit = facetHelper.deploy("MultiInit", deployer);
 
         address facet = facetHelper.deploy("DiamondCutFacet", deployer);
-        addCut(DeployDiamondCut.makeCut(facet, IDiamond.FacetCutAction.Add));
-        addInit(facet, DeployDiamondCut.makeInitData());
+        addFacet(
+            DeployDiamondCut.makeCut(facet, IDiamond.FacetCutAction.Add),
+            facet,
+            DeployDiamondCut.makeInitData()
+        );
 
         facet = facetHelper.deploy("DiamondLoupeFacet", deployer);
-        addCut(DeployDiamondLoupe.makeCut(facet, IDiamond.FacetCutAction.Add));
-        addInit(facet, DeployDiamondLoupe.makeInitData());
+        addFacet(
+            DeployDiamondLoupe.makeCut(facet, IDiamond.FacetCutAction.Add),
+            facet,
+            DeployDiamondLoupe.makeInitData()
+        );
 
         facet = facetHelper.deploy("IntrospectionFacet", deployer);
-        addCut(DeployIntrospection.makeCut(facet, IDiamond.FacetCutAction.Add));
-        addInit(facet, DeployIntrospection.makeInitData());
+        addFacet(
+            DeployIntrospection.makeCut(facet, IDiamond.FacetCutAction.Add),
+            facet,
+            DeployIntrospection.makeInitData()
+        );
 
         facet = facetHelper.deploy("OwnableFacet", deployer);
-        addCut(DeployOwnable.makeCut(facet, IDiamond.FacetCutAction.Add));
-        addInit(facet, DeployOwnable.makeInitData(deployer));
+        addFacet(
+            DeployOwnable.makeCut(facet, IDiamond.FacetCutAction.Add),
+            facet,
+            DeployOwnable.makeInitData(deployer)
+        );
     }
 
     function diamondInitParams(address deployer) public returns (Diamond.InitParams memory) {
         address facet = facetHelper.deploy("SwapRouter", deployer);
-        addCut(DeploySwapRouterFacet.makeCut(facet, IDiamond.FacetCutAction.Add));
-        addInit(facet, DeploySwapRouterFacet.makeInitData(getSpaceFactory()));
+        addFacet(
+            DeploySwapRouterFacet.makeCut(facet, IDiamond.FacetCutAction.Add),
+            facet,
+            DeploySwapRouterFacet.makeInitData(getSpaceFactory())
+        );
 
         facet = facetHelper.deploy("MetadataFacet", deployer);
         addFacet(
