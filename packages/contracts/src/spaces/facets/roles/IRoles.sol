@@ -94,6 +94,8 @@ interface IRolesBase {
     error Roles__PermissionAlreadyExists();
     /// @notice Error thrown when a permission does not exist
     error Roles__PermissionDoesNotExist();
+    /// @notice Error thrown when attempting to modify an immutable role
+    error Roles__RoleIsImmutable();
 }
 
 /// @title IRoles

@@ -5,14 +5,16 @@ pragma solidity ^0.8.23;
 import {IRoles} from "./IRoles.sol";
 
 // libraries
+import {RolesStorage} from "./RolesStorage.sol";
 import {Permissions} from "src/spaces/facets/Permissions.sol";
 
 // contracts
-
 import {Entitled} from "../Entitled.sol";
 import {RolesBase} from "./RolesBase.sol";
 
 contract Roles is IRoles, RolesBase, Entitled {
+    using RolesStorage for RolesStorage.Role;
+
     /// @inheritdoc IRoles
     function createRole(
         string calldata roleName,
@@ -55,7 +57,8 @@ contract Roles is IRoles, RolesBase, Entitled {
     /// @inheritdoc IRoles
     function addPermissionsToRole(uint256 roleId, string[] calldata permissions) external override {
         _validatePermission(Permissions.ModifySpaceSettings);
-        _addPermissionsToRole(roleId, permissions);
+        _checkRoleExists(roleId);
+        RolesStorage.layout().roleById[roleId].addPermissions(permissions);
     }
 
     /// @inheritdoc IRoles
@@ -64,14 +67,15 @@ contract Roles is IRoles, RolesBase, Entitled {
         string[] calldata permissions
     ) external override {
         _validatePermission(Permissions.ModifySpaceSettings);
-        _removePermissionsFromRole(roleId, permissions);
+        _checkRoleExists(roleId);
+        RolesStorage.layout().roleById[roleId].removePermissions(permissions);
     }
 
     /// @inheritdoc IRoles
     function getPermissionsByRoleId(
         uint256 roleId
     ) external view override returns (string[] memory permissions) {
-        return _getPermissionsByRoleId(roleId);
+        (, , permissions, ) = _getRole(roleId);
     }
 
     // entitlements
