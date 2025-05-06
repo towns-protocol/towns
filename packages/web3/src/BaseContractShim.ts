@@ -16,7 +16,7 @@ export class BaseContractShim<
     public readonly provider: ethers.providers.Provider
     public readonly connect: Connect<T_CONTRACT>
     public readonly abi: Abi
-    private contractInterface?: ethers.utils.Interface
+    private contractInterface?: T_CONTRACT['interface']
     private readContract?: T_CONTRACT
     private writeContract?: T_CONTRACT
 
@@ -32,7 +32,7 @@ export class BaseContractShim<
         this.abi = abi
     }
 
-    public get interface(): ethers.utils.Interface {
+    public get interface(): T_CONTRACT['interface'] {
         if (!this.contractInterface) {
             this.readContract = this.connect(this.address, this.provider)
             this.contractInterface = this.readContract.interface
