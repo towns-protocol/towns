@@ -23,12 +23,7 @@ library DeployImplementationRegistry {
         address facetAddress,
         IDiamond.FacetCutAction action
     ) internal pure returns (IDiamond.FacetCut memory) {
-        return
-            IDiamond.FacetCut({
-                action: action,
-                facetAddress: facetAddress,
-                functionSelectors: selectors()
-            });
+        return IDiamond.FacetCut(facetAddress, action, selectors());
     }
 
     function makeInitData() internal pure returns (bytes memory) {
