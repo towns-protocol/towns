@@ -12,10 +12,10 @@ let nextRpcClientNum = 0
 
 export type AuthenticationRpcClient = Client<typeof AuthenticationService> & { url: string }
 
-export async function makeAuthenticationRpcClient(
+export function makeAuthenticationRpcClient(
     dest: string,
     opts?: RpcOptions,
-): Promise<AuthenticationRpcClient> {
+): AuthenticationRpcClient {
     const transportId = nextRpcClientNum++
     const retryParams = opts?.retryParams ?? DEFAULT_RETRY_PARAMS
     const url = randomUrlSelector(dest)
@@ -46,7 +46,7 @@ export async function makeAuthenticationRpcClient(
             useProtoFieldName: true,
         }
     }
-    const transport = await createHttp2ConnectTransport(options)
+    const transport = createHttp2ConnectTransport(options)
     const client: AuthenticationRpcClient = createClient(
         AuthenticationService,
         transport,

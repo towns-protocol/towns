@@ -28,7 +28,6 @@
 		"@aws-sdk/client-cloudfront": "^3.645.0",
 		"@bufbuild/buf": "^1.32.0",
 		"@bufbuild/protobuf": "^2.2.2",
-		"@connectrpc/connect-node": "^2.0.0",
 		"@fastify/cors": "^9.0.1",
 		"@towns-protocol/generated": "workspace:^",
 		"@towns-protocol/proto": "workspace:^",

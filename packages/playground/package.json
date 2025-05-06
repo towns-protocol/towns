@@ -10,7 +10,6 @@
         "preview": "vite preview"
     },
     "dependencies": {
-        "@connectrpc/connect-web": "^2.0.0",
         "@emoji-mart/data": "^1.1.2",
         "@hookform/resolvers": "^3.6.0",
         "@radix-ui/react-dialog": "^1.1.1",
