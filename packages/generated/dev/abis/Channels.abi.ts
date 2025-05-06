@@ -948,6 +948,11 @@ export default [
   },
   {
     "type": "error",
+    "name": "Roles__RoleIsImmutable",
+    "inputs": []
+  },
+  {
+    "type": "error",
     "name": "TransferCallerNotOwnerNorApproved",
     "inputs": []
   },
