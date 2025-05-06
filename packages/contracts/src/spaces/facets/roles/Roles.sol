@@ -5,19 +5,23 @@ pragma solidity ^0.8.23;
 import {IRoles} from "./IRoles.sol";
 
 // libraries
-import {Permissions} from "src/spaces/facets/Permissions.sol";
+import {StringSet} from "../../../utils/libraries/StringSet.sol";
+import {Permissions} from "../Permissions.sol";
+import {RolesStorage} from "./RolesStorage.sol";
 
 // contracts
-
 import {Entitled} from "../Entitled.sol";
 import {RolesBase} from "./RolesBase.sol";
 
 contract Roles is IRoles, RolesBase, Entitled {
+    using StringSet for StringSet.Set;
+    using RolesStorage for RolesStorage.Role;
+
     /// @inheritdoc IRoles
     function createRole(
         string calldata roleName,
-        string[] memory permissions,
-        CreateEntitlement[] memory entitlements
+        string[] calldata permissions,
+        CreateEntitlement[] calldata entitlements
     ) external override returns (uint256) {
         _validatePermission(Permissions.ModifySpaceSettings);
         return _createRole(roleName, permissions, entitlements);
@@ -38,8 +42,8 @@ contract Roles is IRoles, RolesBase, Entitled {
     function updateRole(
         uint256 roleId,
         string calldata roleName,
-        string[] memory permissions,
-        CreateEntitlement[] memory entitlements
+        string[] calldata permissions,
+        CreateEntitlement[] calldata entitlements
     ) external override {
         _validatePermission(Permissions.ModifySpaceSettings);
         _updateRole(roleId, roleName, permissions, entitlements);
@@ -53,30 +57,32 @@ contract Roles is IRoles, RolesBase, Entitled {
 
     // permissions
     /// @inheritdoc IRoles
-    function addPermissionsToRole(uint256 roleId, string[] memory permissions) external override {
+    function addPermissionsToRole(uint256 roleId, string[] calldata permissions) external override {
         _validatePermission(Permissions.ModifySpaceSettings);
-        _addPermissionsToRole(roleId, permissions);
+        _checkRoleExists(roleId);
+        RolesStorage.layout().roleById[roleId].addPermissions(permissions);
     }
 
     /// @inheritdoc IRoles
     function removePermissionsFromRole(
         uint256 roleId,
-        string[] memory permissions
+        string[] calldata permissions
     ) external override {
         _validatePermission(Permissions.ModifySpaceSettings);
-        _removePermissionsFromRole(roleId, permissions);
+        _checkRoleExists(roleId);
+        RolesStorage.layout().roleById[roleId].removePermissions(permissions);
     }
 
     /// @inheritdoc IRoles
     function getPermissionsByRoleId(
         uint256 roleId
     ) external view override returns (string[] memory permissions) {
-        return _getPermissionsByRoleId(roleId);
+        permissions = RolesStorage.layout().roleById[roleId].permissions.values();
     }
 
     // entitlements
     /// @inheritdoc IRoles
-    function addRoleToEntitlement(uint256 roleId, CreateEntitlement memory entitlement) external {
+    function addRoleToEntitlement(uint256 roleId, CreateEntitlement calldata entitlement) external {
         _validatePermission(Permissions.ModifySpaceSettings);
         _addRoleToEntitlement(roleId, entitlement);
     }
@@ -84,7 +90,7 @@ contract Roles is IRoles, RolesBase, Entitled {
     /// @inheritdoc IRoles
     function removeRoleFromEntitlement(
         uint256 roleId,
-        CreateEntitlement memory entitlement
+        CreateEntitlement calldata entitlement
     ) external {
         _validatePermission(Permissions.ModifySpaceSettings);
         _removeRoleFromEntitlement(roleId, entitlement);
@@ -95,7 +101,7 @@ contract Roles is IRoles, RolesBase, Entitled {
     function setChannelPermissionOverrides(
         uint256 roleId,
         bytes32 channelId,
-        string[] memory permissions
+        string[] calldata permissions
     ) external {
         _validatePermission(Permissions.ModifySpaceSettings);
         _setChannelPermissionOverrides(roleId, channelId, permissions);

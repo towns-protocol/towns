@@ -129,7 +129,7 @@ library EntitlementsManagerService {
     function proxyAddRoleToEntitlement(
         address entitlement,
         uint256 role,
-        bytes memory entitlementData
+        bytes calldata entitlementData
     ) internal {
         checkEntitlement(entitlement);
         IEntitlement(entitlement).setEntitlement(role, entitlementData);

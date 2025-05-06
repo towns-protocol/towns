@@ -18,7 +18,7 @@ contract Channels is IChannel, ChannelBase, RolesBase, Entitled, Facet {
     function createChannel(
         bytes32 channelId,
         string calldata metadata,
-        uint256[] memory roleIds
+        uint256[] calldata roleIds
     ) external {
         _validatePermission(Permissions.AddRemoveChannels);
         _createChannel(channelId, metadata, roleIds);
@@ -54,7 +54,7 @@ contract Channels is IChannel, ChannelBase, RolesBase, Entitled, Facet {
         return _getChannels();
     }
 
-    function updateChannel(bytes32 channelId, string memory metadata, bool disabled) external {
+    function updateChannel(bytes32 channelId, string calldata metadata, bool disabled) external {
         _validatePermission(Permissions.AddRemoveChannels);
         _updateChannel(channelId, metadata, disabled);
     }
