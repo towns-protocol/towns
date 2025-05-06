@@ -1196,6 +1196,13 @@ func TestReadStreamFromLastSnapshot(t *testing.T) {
 		Snapshot: genMB.Snapshot,
 	}))
 
+	count, err := store.GetMiniblockCandidateCount(ctx, streamId, 0)
+	require.NoError(err)
+	require.EqualValues(0, count)
+	count, err = store.GetMiniblockCandidateCount(ctx, streamId, 1)
+	require.NoError(err)
+	require.EqualValues(0, count)
+
 	mb1 := dataMaker.mb(1, false)
 	mbs = append(mbs, mb1)
 	require.NoError(store.WriteMiniblockCandidate(ctx, streamId, &WriteMiniblockData{
@@ -1203,6 +1210,19 @@ func TestReadStreamFromLastSnapshot(t *testing.T) {
 		Hash:   mb1.Hash,
 		Data:   mb1.Data,
 	}))
+	count, err = store.GetMiniblockCandidateCount(ctx, streamId, mb1.Number)
+	require.NoError(err)
+	require.EqualValues(1, count)
+
+	mb1_1 := dataMaker.mb(1, false)
+	require.NoError(store.WriteMiniblockCandidate(ctx, streamId, &WriteMiniblockData{
+		Number: mb1_1.Number,
+		Hash:   mb1_1.Hash,
+		Data:   mb1_1.Data,
+	}))
+	count, err = store.GetMiniblockCandidateCount(ctx, streamId, mb1.Number)
+	require.NoError(err)
+	require.EqualValues(2, count)
 
 	mb1read, err := store.ReadMiniblockCandidate(ctx, streamId, mb1.Hash, mb1.Number)
 	require.NoError(err)

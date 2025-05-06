@@ -1333,6 +1333,59 @@ func (s *PostgresStreamStore) readMiniblockCandidateTx(
 	return miniblock, nil
 }
 
+func (s *PostgresStreamStore) GetMiniblockCandidateCount(
+	ctx context.Context,
+	streamId StreamId,
+	miniblockNumber int64,
+) (int, error) {
+	var count int
+	err := s.txRunner(
+		ctx,
+		"GetMiniblockCandidateCount",
+		pgx.ReadWrite,
+		func(ctx context.Context, tx pgx.Tx) error {
+			var err error
+			count, err = s.getMiniblockCandidateCountTx(ctx, tx, streamId, miniblockNumber)
+			return err
+		},
+		nil,
+		"streamId", streamId,
+		"miniblockNumber", miniblockNumber,
+	)
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
+}
+
+func (s *PostgresStreamStore) getMiniblockCandidateCountTx(
+	ctx context.Context,
+	tx pgx.Tx,
+	streamId StreamId,
+	miniblockNumber int64,
+) (int, error) {
+	if _, err := s.lockStream(ctx, tx, streamId, false); err != nil {
+		return 0, err
+	}
+
+	var count int
+	if err := tx.QueryRow(
+		ctx,
+		s.sqlForStream(
+			"SELECT COUNT(*) FROM {{miniblock_candidates}} WHERE stream_id = $1 AND seq_num = $2",
+			streamId,
+		),
+		streamId,
+		miniblockNumber,
+	).Scan(&count); err != nil {
+		// if errors.Is(err, pgx.ErrNoRows) {
+		// 	return 0, RiverError(Err_NOT_FOUND, "Miniblock candidate not found")
+		// }
+		return 0, err
+	}
+	return count, nil
+}
+
 func (s *PostgresStreamStore) WriteMiniblocks(
 	ctx context.Context,
 	streamId StreamId,
