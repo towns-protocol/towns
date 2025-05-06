@@ -15,7 +15,7 @@ import {IRewardsDistributionBase} from "src/base/registry/facets/distribution/v2
 import {DropClaimLib} from "src/airdrop/drop/DropClaimLib.sol";
 import {DropFacet} from "src/airdrop/drop/DropFacet.sol";
 import {DropFacetLib} from "src/airdrop/drop/DropFacetLib.sol";
-import {RewardsDistribution} from "src/base/registry/facets/distribution/v2/RewardsDistribution.sol";
+import {RewardsDistributionV2} from "src/base/registry/facets/distribution/v2/RewardsDistributionV2.sol";
 import {NodeOperatorStatus} from "src/base/registry/facets/operator/NodeOperatorStorage.sol";
 import {BasisPoints} from "src/utils/libraries/BasisPoints.sol";
 import {MerkleTree} from "test/utils/MerkleTree.sol";
@@ -54,7 +54,7 @@ contract DropFacetTest is BaseSetup, IDropFacetBase, IOwnableBase, IRewardsDistr
 
     Towns internal towns;
     DropFacet internal dropFacet;
-    RewardsDistribution internal rewardsDistribution;
+    RewardsDistributionV2 internal rewardsDistribution;
     TownsPoints internal pointsFacet;
     NodeOperatorFacet internal operatorFacet;
 
@@ -98,7 +98,7 @@ contract DropFacetTest is BaseSetup, IDropFacetBase, IOwnableBase, IRewardsDistr
         eip712Facet = EIP712Facet(baseRegistry);
 
         // RewardsDistribution
-        rewardsDistribution = RewardsDistribution(baseRegistry);
+        rewardsDistribution = RewardsDistributionV2(baseRegistry);
 
         vm.prank(deployer);
         rewardsDistribution.setRewardNotifier(NOTIFIER, true);

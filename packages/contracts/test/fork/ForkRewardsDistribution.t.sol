@@ -2,32 +2,26 @@
 pragma solidity ^0.8.19;
 
 // utils
-
 import {RewardsVerifier} from "../base/registry/RewardsVerifier.t.sol";
 import {TestUtils} from "@towns-protocol/diamond/test/TestUtils.sol";
 import {DeployBase} from "scripts/common/DeployBase.s.sol";
-
 import {DeployRewardsDistributionV2} from "scripts/deployments/facets/DeployRewardsDistributionV2.s.sol";
 
 //interfaces
-
 import {IDiamond} from "@towns-protocol/diamond/src/Diamond.sol";
 import {IDiamondCut} from "@towns-protocol/diamond/src/facets/cut/IDiamondCut.sol";
 import {IDiamondLoupe} from "@towns-protocol/diamond/src/facets/loupe/IDiamondLoupe.sol";
 import {IERC173} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
-
 import {ICrossDomainMessenger} from "src/base/registry/facets/mainnet/ICrossDomainMessenger.sol";
 import {IMainnetDelegation, IMainnetDelegationBase} from "src/base/registry/facets/mainnet/IMainnetDelegation.sol";
 import {INodeOperator} from "src/base/registry/facets/operator/INodeOperator.sol";
 
 //libraries
-
 import {StakingRewards} from "src/base/registry/facets/distribution/v2/StakingRewards.sol";
 import {FixedPointMathLib} from "solady/utils/FixedPointMathLib.sol";
 
 //contracts
-
-import {RewardsDistribution} from "src/base/registry/facets/distribution/v2/RewardsDistribution.sol";
+import {RewardsDistributionV2} from "src/base/registry/facets/distribution/v2/RewardsDistributionV2.sol";
 import {MainnetDelegation} from "src/base/registry/facets/mainnet/MainnetDelegation.sol";
 import {NodeOperatorStatus} from "src/base/registry/facets/operator/NodeOperatorStorage.sol";
 import {Towns} from "src/tokens/towns/base/Towns.sol";
@@ -48,7 +42,6 @@ contract ForkRewardsDistributionTest is
     uint256 internal constant rewardDuration = 14 days;
     address internal baseRegistry;
     address internal spaceFactory;
-    DeployRewardsDistributionV2 internal distributionV2Helper;
     MockMainnetDelegation internal mockMainnetDelegation = new MockMainnetDelegation();
     address internal owner;
     address[] internal activeOperators;
@@ -61,7 +54,7 @@ contract ForkRewardsDistributionTest is
         baseRegistry = getDeployment("baseRegistry");
         spaceFactory = getDeployment("spaceFactory");
         towns = Towns(getDeployment("river"));
-        rewardsDistributionFacet = RewardsDistribution(baseRegistry);
+        rewardsDistributionFacet = RewardsDistributionV2(baseRegistry);
         owner = IERC173(baseRegistry).owner();
 
         governanceActions();
@@ -386,8 +379,7 @@ contract ForkRewardsDistributionTest is
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     function governanceActions() internal {
-        distributionV2Helper = new DeployRewardsDistributionV2();
-        address distributionV2Impl = address(new RewardsDistribution());
+        address distributionV2Impl = address(new RewardsDistributionV2());
         address mainnetDelegationImpl = IDiamondLoupe(baseRegistry).facetAddress(
             MainnetDelegation.setProxyDelegation.selector
         );
@@ -400,7 +392,7 @@ contract ForkRewardsDistributionTest is
         vm.etch(spaceDelegationImpl, type(SpaceDelegationFacet).runtimeCode);
 
         FacetCut[] memory facetCuts = new FacetCut[](3);
-        facetCuts[0] = distributionV2Helper.makeCut(distributionV2Impl, FacetCutAction.Add);
+        facetCuts[0] = DeployRewardsDistributionV2.makeCut(distributionV2Impl, FacetCutAction.Add);
         bytes4[] memory selectors = new bytes4[](2);
         selectors[0] = SpaceDelegationFacet.setSpaceFactory.selector;
         selectors[1] = SpaceDelegationFacet.getSpaceFactory.selector;
@@ -408,7 +400,7 @@ contract ForkRewardsDistributionTest is
         selectors = new bytes4[](1);
         selectors[0] = MainnetDelegation.getDepositIdByDelegator.selector;
         facetCuts[2] = FacetCut(mainnetDelegationImpl, FacetCutAction.Add, selectors);
-        bytes memory initPayload = distributionV2Helper.makeInitData(
+        bytes memory initPayload = DeployRewardsDistributionV2.makeInitData(
             address(towns),
             address(towns),
             rewardDuration
