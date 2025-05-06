@@ -1192,7 +1192,7 @@ contract DropFacetTest is BaseSetup, IDropFacetBase, IOwnableBase, IRewardsDistr
         assertEq(condition.currency, address(0), "Condition should be empty");
     }
 
-    function test_createTree() external {
+    function test_createTree() external view {
         address[] memory _accounts = new address[](2);
         uint256[] memory _amounts = new uint256[](2);
         uint256[] memory _points = new uint256[](2);

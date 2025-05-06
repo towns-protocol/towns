@@ -14,6 +14,7 @@ on:
         # Run every hour
         - cron: '0 * * * *'
     pull_request:
+    merge_group:
     workflow_dispatch: # Allow manual trigger in GitHub UI
         inputs:
             skip_common_ci:

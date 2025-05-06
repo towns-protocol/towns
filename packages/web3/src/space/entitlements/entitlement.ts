@@ -1,6 +1,6 @@
 import { type ExtractAbiFunction } from 'abitype'
-import { IRuleEntitlementBase, IRuleEntitlementAbi } from './IRuleEntitlementShim'
-import { IRuleEntitlementV2Base, IRuleEntitlementV2Abi } from './IRuleEntitlementV2Shim'
+import { IRuleEntitlementBase, IRuleEntitlementAbi } from './RuleEntitlementShim'
+import { IRuleEntitlementV2Base, IRuleEntitlementV2Abi } from './RuleEntitlementV2Shim'
 import { dlogger } from '@towns-protocol/dlog'
 
 import {

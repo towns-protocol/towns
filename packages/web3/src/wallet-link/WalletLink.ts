@@ -14,7 +14,7 @@ export class WalletLink {
     private readonly eip712Domain: ethers.TypedDataDomain
     public address: Address
 
-    constructor(config: BaseChainConfig, provider: ethers.providers.Provider | undefined) {
+    constructor(config: BaseChainConfig, provider: ethers.providers.Provider) {
         this.walletLinkShim = new IWalletLinkShim(config.addresses.spaceFactory, provider)
         this.address = config.addresses.spaceFactory
         this.eip712Domain = {
