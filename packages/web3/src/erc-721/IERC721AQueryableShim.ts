@@ -1,15 +1,11 @@
-import {
-    IERC721AQueryable as LocalhostContract,
-    IERC721AQueryableInterface as LocalhostInterface,
-} from '@towns-protocol/generated/dev/typings/IERC721AQueryable'
-
 import { ethers } from 'ethers'
 import { BaseContractShim } from '../BaseContractShim'
+import { IERC721AQueryable__factory } from '@towns-protocol/generated/dev/typings/factories/IERC721AQueryable__factory'
 
-import LocalhostAbi from '@towns-protocol/generated/dev/abis/IERC721AQueryable.abi.json' assert { type: 'json' }
+const { abi, connect } = IERC721AQueryable__factory
 
-export class IERC721AQueryableShim extends BaseContractShim<LocalhostContract, LocalhostInterface> {
-    constructor(address: string, provider: ethers.providers.Provider | undefined) {
-        super(address, provider, LocalhostAbi)
+export class IERC721AQueryableShim extends BaseContractShim<typeof connect> {
+    constructor(address: string, provider: ethers.providers.Provider) {
+        super(address, provider, connect, abi)
     }
 }

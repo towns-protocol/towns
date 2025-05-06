@@ -6,7 +6,7 @@ pragma solidity ^0.8.23;
 // libraries
 
 import {Permissions} from "src/spaces/facets/Permissions.sol";
-import {ChannelService__ChannelDoesNotExist} from "src/spaces/facets/channels/ChannelService.sol";
+import {IChannelBase} from "src/spaces/facets/channels/IChannel.sol";
 
 // contracts
 import {RolesBaseSetup} from "test/spaces/roles/RolesBaseSetup.sol";
@@ -51,7 +51,7 @@ contract RolesTestSetChannelPermissionsOverrides is RolesBaseSetup {
         permissions[0] = Permissions.Read;
 
         vm.prank(founder);
-        vm.expectRevert(ChannelService__ChannelDoesNotExist.selector);
+        vm.expectRevert(IChannelBase.ChannelService__ChannelDoesNotExist.selector);
         roles.setChannelPermissionOverrides(ROLE_ID, CHANNEL_ID, permissions);
     }
 

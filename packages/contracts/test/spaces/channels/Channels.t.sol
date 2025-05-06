@@ -17,9 +17,9 @@ import {Permissions} from "src/spaces/facets/Permissions.sol";
 import {BaseSetup} from "test/spaces/BaseSetup.sol";
 
 // solhint-disable-next-line max-line-length
-import {ChannelService__ChannelAlreadyExists, ChannelService__ChannelDoesNotExist, ChannelService__RoleAlreadyExists, ChannelService__RoleDoesNotExist} from "src/spaces/facets/channels/ChannelService.sol";
+import {IChannelBase} from "src/spaces/facets/channels/IChannel.sol";
 
-contract ChannelsTest is BaseSetup, IEntitlementBase {
+contract ChannelsTest is BaseSetup, IEntitlementBase, IChannelBase {
     function setUp() public override {
         super.setUp();
     }

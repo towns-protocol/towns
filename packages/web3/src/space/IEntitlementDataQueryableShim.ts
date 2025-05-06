@@ -1,21 +1,14 @@
-import {
-    IEntitlementDataQueryable as LocalhostContract,
-    IEntitlementDataQueryableInterface as LocalhostInterface,
-    IEntitlementDataQueryableBase as LocalhostBase,
-} from '@towns-protocol/generated/dev/typings/IEntitlementDataQueryable'
-
 import { ethers } from 'ethers'
 import { BaseContractShim } from '../BaseContractShim'
+import { IEntitlementDataQueryable__factory } from '@towns-protocol/generated/dev/typings/factories/IEntitlementDataQueryable__factory'
+import { IEntitlementDataQueryableBase } from '@towns-protocol/generated/dev/typings/IEntitlementDataQueryable'
 
-import LocalhostAbi from '@towns-protocol/generated/dev/abis/IEntitlementDataQueryable.abi.json' assert { type: 'json' }
+const { abi, connect } = IEntitlementDataQueryable__factory
 
-export class IEntitlementDataQueryableShim extends BaseContractShim<
-    LocalhostContract,
-    LocalhostInterface
-> {
-    constructor(address: string, provider: ethers.providers.Provider | undefined) {
-        super(address, provider, LocalhostAbi)
+export class IEntitlementDataQueryableShim extends BaseContractShim<typeof connect> {
+    constructor(address: string, provider: ethers.providers.Provider) {
+        super(address, provider, connect, abi)
     }
 }
 
-export type EntitlementDataStructOutput = LocalhostBase.EntitlementDataStructOutput
+export type EntitlementDataStructOutput = IEntitlementDataQueryableBase.EntitlementDataStructOutput
