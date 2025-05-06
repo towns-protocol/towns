@@ -35,7 +35,6 @@ contract InteractPostDeploy is Interaction {
         address townsBase = deployTownsBase.deploy(deployer);
         address proxyDelegation = deployProxyDelegation.deploy(deployer);
 
-
         // this is for anvil deployment only
         vm.startBroadcast(deployer);
         // this is for anvil deployment only
