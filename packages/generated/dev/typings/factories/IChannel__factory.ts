@@ -339,6 +339,31 @@ const _abi = [
     ],
     anonymous: false,
   },
+  {
+    type: "error",
+    name: "ChannelService__ChannelAlreadyExists",
+    inputs: [],
+  },
+  {
+    type: "error",
+    name: "ChannelService__ChannelDisabled",
+    inputs: [],
+  },
+  {
+    type: "error",
+    name: "ChannelService__ChannelDoesNotExist",
+    inputs: [],
+  },
+  {
+    type: "error",
+    name: "ChannelService__RoleAlreadyExists",
+    inputs: [],
+  },
+  {
+    type: "error",
+    name: "ChannelService__RoleDoesNotExist",
+    inputs: [],
+  },
 ] as const;
 
 export class IChannel__factory {
