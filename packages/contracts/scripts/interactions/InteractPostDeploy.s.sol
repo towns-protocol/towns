@@ -24,7 +24,7 @@ import {DeployBaseRegistry} from "scripts/deployments/diamonds/DeployBaseRegistr
 import {DeployRiverAirdrop} from "scripts/deployments/diamonds/DeployRiverAirdrop.s.sol";
 import {DeploySpaceFactory} from "scripts/deployments/diamonds/DeploySpaceFactory.s.sol";
 import {DeploySpaceOwner} from "scripts/deployments/diamonds/DeploySpaceOwner.s.sol";
-
+import {DeployAppRegistry} from "scripts/deployments/diamonds/DeployAppRegistry.s.sol";
 import {DeployProxyBatchDelegation} from "scripts/deployments/utils/DeployProxyBatchDelegation.s.sol";
 import {DeployTownsBase} from "scripts/deployments/utils/DeployTownsBase.s.sol";
 
@@ -38,6 +38,7 @@ contract InteractPostDeploy is Interaction {
         DeployTownsBase deployTownsBase = new DeployTownsBase();
         DeployProxyBatchDelegation deployProxyDelegation = new DeployProxyBatchDelegation();
         DeployRiverAirdrop deployRiverAirdrop = new DeployRiverAirdrop();
+        DeployAppRegistry deployAppRegistry = new DeployAppRegistry();
 
         address spaceOwner = deploySpaceOwner.deploy(deployer);
         address spaceFactory = deploySpaceFactory.deploy(deployer);
@@ -45,7 +46,7 @@ contract InteractPostDeploy is Interaction {
         address townsBase = deployTownsBase.deploy(deployer);
         address mainnetProxyDelegation = deployProxyDelegation.deploy(deployer);
         address riverAirdrop = deployRiverAirdrop.deploy(deployer);
-
+        address appRegistry = deployAppRegistry.deploy(deployer);
         // this is for anvil deployment only
         vm.startBroadcast(deployer);
         // this is for anvil deployment only
@@ -53,6 +54,7 @@ contract InteractPostDeploy is Interaction {
         ISpaceOwner(spaceOwner).setFactory(spaceFactory);
         IImplementationRegistry(spaceFactory).addImplementation(baseRegistry);
         IImplementationRegistry(spaceFactory).addImplementation(riverAirdrop);
+        IImplementationRegistry(spaceFactory).addImplementation(appRegistry);
         SpaceDelegationFacet(baseRegistry).setRiverToken(townsBase);
         IMainnetDelegation(baseRegistry).setProxyDelegation(mainnetProxyDelegation);
         vm.stopBroadcast();
