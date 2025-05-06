@@ -1,8 +1,8 @@
 import { ethers } from 'ethers'
 
 import { Address, EntitlementModuleType, EntitlementStruct } from '../../types/ContractTypes'
-import { IRuleEntitlementBase } from './IRuleEntitlementShim'
-import { IRuleEntitlementV2Base } from './IRuleEntitlementV2Shim'
+import { IRuleEntitlementBase } from './RuleEntitlementShim'
+import { IRuleEntitlementV2Base } from './RuleEntitlementV2Shim'
 import {
     CheckOperationType,
     encodeRuleData,
