@@ -4,7 +4,7 @@ import {
 } from '@towns-protocol/generated/dev/typings/ISwapRouter'
 
 import { ethers } from 'ethers'
-import { BaseContractShim } from './BaseContractShim'
+import { BaseContractShim } from '../BaseContractShim'
 
 import LocalhostAbi from '@towns-protocol/generated/dev/abis/ISwapRouter.abi.json' assert { type: 'json' }
 

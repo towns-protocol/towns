@@ -39,6 +39,7 @@ import { IReviewShim } from './IReviewShim'
 import { ITreasuryShim } from './ITreasuryShim'
 import { IRuleEntitlementBase } from './entitlements/IRuleEntitlementShim'
 import { IRuleEntitlementV2Base } from './entitlements/IRuleEntitlementV2Shim'
+import { ISwapRouterShim } from './ISwapRouterShim'
 
 interface AddressToEntitlement {
     [address: string]: EntitlementShim
