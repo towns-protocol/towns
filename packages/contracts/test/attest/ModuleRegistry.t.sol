@@ -7,7 +7,8 @@ import {BaseSetup} from "test/spaces/BaseSetup.sol";
 //interfaces
 import {ISchemaResolver} from "@ethereum-attestation-service/eas-contracts/resolver/ISchemaResolver.sol";
 import {IOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
-
+import {IModuleRegistryBase} from "src/modules/interfaces/IModuleRegistry.sol";
+import {IAttestationRegistryBase} from "src/modules/interfaces/IAttestationRegistry.sol";
 //libraries
 import {Attestation} from "@ethereum-attestation-service/eas-contracts/Common.sol";
 import {AttestationLib} from "src/modules/libraries/AttestationLib.sol";
@@ -18,10 +19,9 @@ import {ExecutionManifest} from "@erc6900/reference-implementation/interfaces/IE
 
 //contracts
 import {ModuleRegistry} from "src/modules/ModuleRegistry.sol";
-import {SchemaRegistry} from "src/modules/SchemaRegistry.sol";
 import {MockPlugin} from "test/mocks/MockPlugin.sol";
 
-contract ModuleRegistryTest is BaseSetup {
+contract ModuleRegistryTest is BaseSetup, IModuleRegistryBase, IAttestationRegistryBase {
     address internal developer;
 
     ModuleRegistry internal moduleRegistry;
@@ -65,7 +65,7 @@ contract ModuleRegistryTest is BaseSetup {
 
         // Module address cannot be zero
         vm.prank(owner);
-        vm.expectRevert(ModuleRegistryLib.InvalidAddressInput.selector);
+        vm.expectRevert(InvalidAddressInput.selector);
         moduleRegistry.registerModule(address(0), clients);
     }
 
@@ -77,7 +77,7 @@ contract ModuleRegistryTest is BaseSetup {
 
         // Client list cannot be empty
         vm.prank(owner);
-        vm.expectRevert(ModuleRegistryLib.InvalidArrayInput.selector);
+        vm.expectRevert(InvalidArrayInput.selector);
         moduleRegistry.registerModule(module, clients);
     }
 
@@ -141,13 +141,13 @@ contract ModuleRegistryTest is BaseSetup {
         bytes32 moduleId = moduleRegistry.registerModule(module, clients);
 
         vm.prank(notOwner);
-        vm.expectRevert(AttestationLib.InvalidRevoker.selector);
+        vm.expectRevert(InvalidRevoker.selector);
         moduleRegistry.removeModule(moduleId);
     }
 
     function test_revertWhen_removeModule_ModuleNotRegistered() external {
         bytes32 moduleId = bytes32(0);
-        vm.expectRevert(ModuleRegistryLib.InvalidModuleId.selector);
+        vm.expectRevert(InvalidModuleId.selector);
         moduleRegistry.removeModule(moduleId);
     }
 
@@ -200,7 +200,7 @@ contract ModuleRegistryTest is BaseSetup {
 
         // Even the admin cannot ban a module that doesn't exist
         vm.prank(deployer);
-        vm.expectRevert(ModuleRegistryLib.ModuleNotRegistered.selector);
+        vm.expectRevert(ModuleNotRegistered.selector);
         moduleRegistry.adminBanModule(module);
     }
 }

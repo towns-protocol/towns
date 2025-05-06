@@ -75,7 +75,7 @@ library ModularAccountLib {
 
         verifyManifests(module, cachedManifest);
 
-        ExecutorLib.createGroup(versionId, module);
+        ExecutorLib.createGroup(versionId);
 
         uint256 clientsLength = clients.length;
         for (uint256 i; i < clientsLength; ++i) {
@@ -242,10 +242,6 @@ library ModularAccountLib {
             att.data,
             (address, address, address[], bytes32[], ExecutionManifest)
         );
-    }
-
-    function getImplementation(address factory, bytes32 id) internal view returns (address) {
-        return IImplementationRegistry(factory).getLatestImplementation(id);
     }
 
     // Checks

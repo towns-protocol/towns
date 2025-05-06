@@ -6,24 +6,20 @@ import {BaseSetup} from "test/spaces/BaseSetup.sol";
 
 //interfaces
 import {IOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
-import {ISchemaResolver} from "@ethereum-attestation-service/eas-contracts/resolver/ISchemaResolver.sol";
+import {IExecutorBase} from "src/spaces/facets/account/interfaces/IExecutor.sol";
 import {IERC6900Account} from "@erc6900/reference-implementation/interfaces/IERC6900Account.sol";
 import {IAccountBase} from "src/spaces/facets/account/interfaces/IAccount.sol";
 // types
 import {ExecutionManifest} from "@erc6900/reference-implementation/interfaces/IERC6900ExecutionModule.sol";
 import {Attestation} from "@ethereum-attestation-service/eas-contracts/Common.sol";
-import {RevocationRequest} from "@ethereum-attestation-service/eas-contracts/IEAS.sol";
 
 //libraries
-import {Time} from "@openzeppelin/contracts/utils/types/Time.sol";
 import {ModularAccountLib} from "src/spaces/facets/account/libraries/ModularAccountLib.sol";
-import {ExecutorLib} from "src/spaces/facets/account/libraries/ExecutorLib.sol";
 
 //contracts
 import {ModularAccount} from "src/spaces/facets/account/ModularAccount.sol";
 import {ModuleRegistry} from "src/modules/ModuleRegistry.sol";
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
-import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
 // mocks
 import {MockModule, MockModuleV2} from "test/mocks/MockModule.sol";
@@ -211,15 +207,8 @@ contract ModularAccountTest is BaseSetup, IOwnableBase, IAccountBase {
         emit IERC6900Account.ExecutionUninstalled(address(mockModule), true, manifest);
         modularAccount.uninstallModule(versionId, "");
 
-        bytes memory expectedRevert = abi.encodeWithSelector(
-            ExecutorLib.UnauthorizedCall.selector,
-            client,
-            address(mockModule),
-            mockModule.mockFunction.selector
-        );
-
         vm.prank(client);
-        vm.expectRevert(expectedRevert);
+        vm.expectRevert(IExecutorBase.UnauthorizedCall.selector);
         modularAccount.execute({
             target: address(mockModule),
             value: 0,

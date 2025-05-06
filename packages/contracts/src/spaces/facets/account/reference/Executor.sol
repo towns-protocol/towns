@@ -2,27 +2,34 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {IExecutor} from "./interfaces/IExecutor.sol";
+import {IExecutor} from "../interfaces/IExecutor.sol";
 import {IImplementationRegistry} from "src/factory/facets/registry/IImplementationRegistry.sol";
 
 // libraries
 
-import {ExecutorLib} from "./libraries/ExecutorLib.sol";
+import {ExecutorLib} from "../libraries/ExecutorLib.sol";
 import {DiamondLoupeBase} from "@towns-protocol/diamond/src/facets/loupe/DiamondLoupeBase.sol";
+import {CustomRevert} from "src/utils/libraries/CustomRevert.sol";
 
 // contracts
-import {TokenOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/token/TokenOwnableBase.sol";
+import {OwnableBase} from "@towns-protocol/diamond/src/facets/ownable/OwnableBase.sol";
 import {MembershipStorage} from "src/spaces/facets/membership/MembershipStorage.sol";
 
 /**
  * @title Executor
- * @notice Facet that enables permissioned delegate calls from a Space
- * @dev This facet must be carefully controlled as delegate calls can be dangerous
+ * @notice Facet that enables permissioned calls from a Space
+ * @dev This contract is used for implementation reference purposes
  */
-contract Executor is TokenOwnableBase, IExecutor {
+contract Executor is OwnableBase, IExecutor {
+    using CustomRevert for bytes4;
+
+    constructor(address owner) {
+        _transferOwnership(owner);
+    }
+
     /**
-     * @notice Validates if the target address is allowed for delegate calls
-     * @dev Prevents delegate calls to critical system contracts
+     * @notice Validates if the target address is allowed for calls
+     * @dev Prevents calls to critical system contracts
      * @param target The contract address to check
      */
     modifier onlyAuthorized(address target) {
@@ -36,6 +43,7 @@ contract Executor is TokenOwnableBase, IExecutor {
         address account,
         uint32 delay
     ) external onlyOwner returns (bool newMember) {
+        ExecutorLib.createGroup(groupId);
         return
             ExecutorLib.grantGroupAccess(
                 groupId,
@@ -93,16 +101,20 @@ contract Executor is TokenOwnableBase, IExecutor {
         return ExecutorLib.getGroupGrantDelay(groupId);
     }
 
+    function setAllowance(bytes32 groupId, uint256 allowance) external onlyOwner {
+        ExecutorLib.setGroupAllowance(groupId, allowance);
+    }
+
+    function getAllowance(bytes32 groupId) external view returns (uint256) {
+        return ExecutorLib.getGroupAllowance(groupId);
+    }
+
     /// @inheritdoc IExecutor
     function setTargetFunctionGroup(
         address target,
         bytes4 selector,
         bytes32 groupId
     ) external onlyAuthorized(target) onlyOwner {
-        // Disallow setting any diamond functions
-        if (target == DiamondLoupeBase.facetAddress(selector)) {
-            revert ExecutorLib.UnauthorizedTarget(target);
-        }
         ExecutorLib.setTargetFunctionGroup(target, selector, groupId);
     }
 
@@ -160,20 +172,5 @@ contract Executor is TokenOwnableBase, IExecutor {
     /*                        Internal                            */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    function _getImplementation(address factory, bytes32 id) internal view returns (address) {
-        return IImplementationRegistry(factory).getLatestImplementation(id);
-    }
-
-    function _checkAuthorized(address target) internal virtual {
-        address factory = MembershipStorage.layout().spaceFactory;
-
-        // Unauthorized targets
-        if (
-            target == factory ||
-            target == _getImplementation(factory, bytes32("RiverAirdrop")) ||
-            target == _getImplementation(factory, bytes32("SpaceOperator"))
-        ) {
-            revert ExecutorLib.UnauthorizedTarget(target);
-        }
-    }
+    function _checkAuthorized(address target) internal virtual {}
 }

@@ -6,6 +6,7 @@ import {IERC6900Module} from "@erc6900/reference-implementation/interfaces/IERC6
 import {ISchemaRegistry} from "@ethereum-attestation-service/eas-contracts/ISchemaRegistry.sol";
 import {ISchemaResolver} from "@ethereum-attestation-service/eas-contracts/resolver/ISchemaResolver.sol";
 import {IDiamond} from "@towns-protocol/diamond/src/IDiamond.sol";
+import {IAttestationRegistryBase} from "src/modules/interfaces/IAttestationRegistry.sol";
 
 // libraries
 import {AttestationLib} from "src/modules/libraries/AttestationLib.sol";
@@ -23,14 +24,14 @@ import {DeployMockDiamond} from "scripts/deployments/utils/DeployMockDiamond.s.s
 import {DeployAttestationRegistry} from "scripts/deployments/facets/DeployAttestationRegistry.s.sol";
 import {DeploySchemaRegistry} from "scripts/deployments/facets/DeploySchemaRegistry.s.sol";
 
-import {AttestationRegistry} from "src/modules/AttestationRegistry.sol";
-import {SchemaRegistry} from "src/modules/SchemaRegistry.sol";
+import {AttestationRegistry} from "src/modules/reference/AttestationRegistry.sol";
+import {SchemaRegistry} from "src/modules/reference/SchemaRegistry.sol";
 
 // mocks
 import {MockPlugin} from "test/mocks/MockPlugin.sol";
 import {MockPluginResolver, MockPayableResolver} from "test/mocks/MockResolvers.sol";
 
-contract AttestationRegistryTest is TestUtils {
+contract AttestationRegistryTest is TestUtils, IAttestationRegistryBase {
     DeployMockDiamond diamondHelper = new DeployMockDiamond();
     DeployFacet facetHelper = new DeployFacet();
 
@@ -209,7 +210,7 @@ contract AttestationRegistryTest is TestUtils {
         AttestationRequest memory request = AttestationRequest({schema: schemaUID, data: data});
 
         vm.prank(developer);
-        vm.expectRevert(AttestationLib.InvalidExpirationTime.selector);
+        vm.expectRevert(InvalidExpirationTime.selector);
         attestationRegistry.attest(request);
     }
 
@@ -231,7 +232,7 @@ contract AttestationRegistryTest is TestUtils {
         AttestationRequest memory request = AttestationRequest({schema: schemaUID, data: data});
 
         vm.prank(developer);
-        vm.expectRevert(AttestationLib.Irrevocable.selector);
+        vm.expectRevert(Irrevocable.selector);
         attestationRegistry.attest(request);
     }
 
@@ -300,7 +301,7 @@ contract AttestationRegistryTest is TestUtils {
         RevocationRequest memory request = RevocationRequest({schema: schemaId, data: data});
 
         vm.prank(developer);
-        vm.expectRevert(AttestationLib.InvalidAttestation.selector);
+        vm.expectRevert(InvalidAttestation.selector);
         attestationRegistry.revoke(request);
     }
 
@@ -327,7 +328,7 @@ contract AttestationRegistryTest is TestUtils {
         RevocationRequest memory request = RevocationRequest({schema: schemaId, data: data});
 
         vm.prank(_randomAddress());
-        vm.expectRevert(AttestationLib.InvalidRevoker.selector);
+        vm.expectRevert(InvalidRevoker.selector);
         attestationRegistry.revoke(request);
     }
 
@@ -340,7 +341,7 @@ contract AttestationRegistryTest is TestUtils {
         RevocationRequest memory request = RevocationRequest({schema: schemaId, data: data});
 
         vm.prank(developer);
-        vm.expectRevert(AttestationLib.Irrevocable.selector);
+        vm.expectRevert(Irrevocable.selector);
         attestationRegistry.revoke(request);
     }
 
@@ -356,7 +357,7 @@ contract AttestationRegistryTest is TestUtils {
         attestationRegistry.revoke(request);
 
         vm.prank(developer);
-        vm.expectRevert(AttestationLib.InvalidRevocation.selector);
+        vm.expectRevert(InvalidRevocation.selector);
         attestationRegistry.revoke(request);
     }
 

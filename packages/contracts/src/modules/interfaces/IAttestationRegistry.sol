@@ -9,9 +9,23 @@ import {AttestationRequest, RevocationRequest} from "@ethereum-attestation-servi
 
 // contracts
 
+interface IAttestationRegistryBase {
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                           ERRORS                           */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    error NotPayable();
+    error InsufficientBalance();
+    error InvalidRevocation();
+    error InvalidAttestation();
+    error InvalidExpirationTime();
+    error Irrevocable();
+    error InvalidRevoker();
+}
+
 /// @title IAttestationRegistry Interface
 /// @notice Interface for managing attestations in the registry
-interface IAttestationRegistry {
+interface IAttestationRegistry is IAttestationRegistryBase {
     /// @notice Creates a new attestation
     /// @param request The attestation request containing schema ID and attestation data
     /// @return The UID of the created attestation

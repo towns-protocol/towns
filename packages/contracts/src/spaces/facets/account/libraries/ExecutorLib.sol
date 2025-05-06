@@ -7,6 +7,7 @@ import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import {Time} from "@openzeppelin/contracts/utils/types/Time.sol";
 
 // interfaces
+import {IExecutorBase} from "../interfaces/IExecutor.sol";
 
 // types
 
@@ -15,9 +16,11 @@ import {HookLib} from "./HookLib.sol";
 import {OwnableStorage} from "@towns-protocol/diamond/src/facets/ownable/OwnableStorage.sol";
 import {EnumerableSetLib} from "solady/utils/EnumerableSetLib.sol";
 import {LibCall} from "solady/utils/LibCall.sol";
+import {CustomRevert} from "src/utils/libraries/CustomRevert.sol";
 // contracts
 
 library ExecutorLib {
+    using CustomRevert for bytes4;
     using EnumerableSetLib for EnumerableSetLib.Uint256Set;
     using Time for Time.Delay;
     using Time for uint32;
@@ -93,68 +96,16 @@ library ExecutorLib {
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                           ERRORS                            */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-    error CallerAlreadyRegistered();
-    error CallerNotRegistered();
-    error ExecutionAlreadyRegistered();
-    error ExecutionNotRegistered();
-    error ExecutorCallFailed();
-    error ExecutionNotFound();
-    error UnauthorizedCall(address caller, address target, bytes4 selector);
-    error AlreadyScheduled(bytes32 operationId);
-    error NotScheduled(bytes32 operationId);
-    error NotReady(bytes32 operationId);
-    error Expired(bytes32 operationId);
-    error UnauthorizedCancel(address sender, address caller, address target, bytes4 selector);
-    error UnauthorizedRenounce(address account, bytes32 groupId);
-    error UnauthorizedTarget(address target);
-    error ExecutionFunctionAlreadySet(bytes4 selector);
-    error NullModule();
-    error ExecutionHookAlreadySet(bytes32 hookId);
-    error ModuleInstallCallbackFailed(address module, bytes revertReason);
-    error InvalidDataLength();
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                           EVENTS                            */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-    event GroupAccessGranted(
-        bytes32 indexed groupId,
-        address indexed account,
-        uint32 delay,
-        uint48 since,
-        bool newMember
-    );
-    event GroupAccessRevoked(bytes32 indexed groupId, address indexed account);
-    event GroupGuardianSet(bytes32 indexed groupId, bytes32 guardian);
-    event GroupGrantDelaySet(bytes32 indexed groupId, uint32 delay);
-    event GroupMaxEthValueSet(bytes32 indexed groupId, uint256 allowance);
-    event TargetFunctionGroupSet(
-        address indexed target,
-        bytes4 indexed selector,
-        bytes32 indexed groupId
-    );
-    event TargetFunctionDelaySet(address indexed target, uint32 newDelay, uint32 minSetback);
-    event TargetFunctionDisabledSet(address indexed target, bytes4 indexed selector, bool disabled);
-    event TargetDisabledSet(address indexed target, bool disabled);
-    event OperationScheduled(bytes32 indexed operationId, uint48 timepoint, uint32 nonce);
-    event OperationExecuted(bytes32 indexed operationId, uint32 nonce);
-    event OperationCanceled(bytes32 indexed operationId, uint32 nonce);
-
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           GROUP MANAGEMENT                 */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    function createGroup(bytes32 groupId, address module) internal {
-        if (module == address(0)) revert NullModule();
+    function createGroup(bytes32 groupId) internal {
         Group storage group = getLayout().groups[groupId];
-        group.module = module;
         group.active = true;
     }
 
     function removeGroup(bytes32 groupId) internal {
         Group storage group = getLayout().groups[groupId];
-        group.module = address(0);
         group.active = false;
     }
 
@@ -189,7 +140,13 @@ library ExecutorLib {
             );
         }
 
-        emit GroupAccessGranted(groupId, account, executionDelay, lastAccess, newMember);
+        emit IExecutorBase.GroupAccessGranted(
+            groupId,
+            account,
+            executionDelay,
+            lastAccess,
+            newMember
+        );
         return newMember;
     }
 
@@ -211,7 +168,7 @@ library ExecutorLib {
 
     function renounceGroupAccess(bytes32 groupId, address account) internal {
         if (account != msg.sender) {
-            revert UnauthorizedRenounce(account, groupId);
+            IExecutorBase.UnauthorizedRenounce.selector.revertWith();
         }
 
         revokeGroupAccess(groupId, account);
@@ -219,13 +176,13 @@ library ExecutorLib {
 
     function setGroupGuardian(bytes32 groupId, bytes32 guardian) internal {
         getLayout().groups[groupId].guardian = guardian;
-        emit GroupGuardianSet(groupId, guardian);
+        emit IExecutorBase.GroupGuardianSet(groupId, guardian);
     }
 
     function setGroupAllowance(bytes32 groupId, uint256 allowance) internal {
         Group storage group = getLayout().groups[groupId];
         group.allowance = allowance;
-        emit GroupMaxEthValueSet(groupId, allowance);
+        emit IExecutorBase.GroupMaxEthValueSet(groupId, allowance);
     }
 
     function getGroupGuardian(bytes32 groupId) internal view returns (bytes32) {
@@ -250,7 +207,7 @@ library ExecutorLib {
             .groups[groupId]
             .grantDelay
             .withUpdate(grantDelay, minSetback);
-        emit GroupGrantDelaySet(groupId, grantDelay);
+        emit IExecutorBase.GroupGrantDelaySet(groupId, grantDelay);
     }
 
     function hasGroupAccess(
@@ -293,17 +250,17 @@ library ExecutorLib {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
     function setTargetFunctionGroup(address target, bytes4 selector, bytes32 groupId) internal {
         getLayout().targets[target].allowedGroups[selector] = groupId;
-        emit TargetFunctionGroupSet(target, selector, groupId);
+        emit IExecutorBase.TargetFunctionGroupSet(target, selector, groupId);
     }
 
     function setTargetFunctionDisabled(address target, bytes4 selector, bool disabled) internal {
         getLayout().targets[target].disabledFunctions[selector] = disabled;
-        emit TargetFunctionDisabledSet(target, selector, disabled);
+        emit IExecutorBase.TargetFunctionDisabledSet(target, selector, disabled);
     }
 
     function setTargetDisabled(address target, bool disabled) internal {
         getLayout().targets[target].disabled = disabled;
-        emit TargetDisabledSet(target, disabled);
+        emit IExecutorBase.TargetDisabledSet(target, disabled);
     }
 
     function getTargetFunctionGroupId(
@@ -342,7 +299,7 @@ library ExecutorLib {
 
         // If call with delay is not authorized, or if requested timing is too soon, revert
         if (setback == 0 || (when > 0 && when < minWhen)) {
-            revert UnauthorizedCall(caller, target, checkSelector(data));
+            IExecutorBase.UnauthorizedCall.selector.revertWith();
         }
 
         when = uint48(Math.max(when, minWhen));
@@ -358,7 +315,7 @@ library ExecutorLib {
         }
 
         getLayout().schedules[operationId] = Schedule({timepoint: when, nonce: nonce});
-        emit OperationScheduled(operationId, when, nonce);
+        emit IExecutorBase.OperationScheduled(operationId, when, nonce);
     }
 
     function getSchedule(bytes32 id) internal view returns (uint48) {
@@ -371,16 +328,16 @@ library ExecutorLib {
         uint32 nonce = getLayout().schedules[operationId].nonce;
 
         if (timepoint == 0) {
-            revert NotScheduled(operationId);
+            IExecutorBase.NotScheduled.selector.revertWith();
         } else if (timepoint > Time.timestamp()) {
-            revert NotReady(operationId);
+            IExecutorBase.NotReady.selector.revertWith();
         } else if (_isExpired(timepoint, 0)) {
-            revert Expired(operationId);
+            IExecutorBase.Expired.selector.revertWith();
         }
 
         Schedule storage schedule = getLayout().schedules[operationId];
         delete schedule.timepoint; // reset the timepoint, keep the nonce
-        emit OperationExecuted(operationId, nonce);
+        emit IExecutorBase.OperationExecuted(operationId, nonce);
 
         return nonce;
     }
@@ -398,7 +355,7 @@ library ExecutorLib {
 
         // If call is not authorized, revert
         if (!allowed && delay == 0) {
-            revert UnauthorizedCall(caller, target, checkSelector(data));
+            IExecutorBase.UnauthorizedCall.selector.revertWith();
         }
 
         bytes32 operationId = hashOperation(caller, target, data);
@@ -442,7 +399,7 @@ library ExecutorLib {
 
         // If the operation is not scheduled, revert
         if (schedule.timepoint == 0) {
-            revert NotScheduled(operationId);
+            IExecutorBase.NotScheduled.selector.revertWith();
         } else if (caller != sender) {
             // calls can only be canceled by the account that scheduled them, a global admin, or by
             // a guardian of the required role.
@@ -452,14 +409,14 @@ library ExecutorLib {
             );
             bool isOwner = OwnableStorage.layout().owner == sender;
             if (!isGuardian && !isOwner) {
-                revert UnauthorizedCancel(sender, caller, target, selector);
+                IExecutorBase.UnauthorizedCancel.selector.revertWith();
             }
         }
 
         delete schedule.timepoint; // reset the timepoint,
         // keep the nonce
         uint32 nonce = schedule.nonce;
-        emit OperationCanceled(operationId, nonce);
+        emit IExecutorBase.OperationCanceled(operationId, nonce);
 
         return nonce;
     }
@@ -486,6 +443,7 @@ library ExecutorLib {
                 groupId,
                 caller
             );
+
             if (!active) return (false, 0);
             if (value > allowance) return (false, 0);
             return isMember ? (currentDelay == 0, currentDelay) : (false, 0);
@@ -506,7 +464,7 @@ library ExecutorLib {
     function _checkNotScheduled(bytes32 operationId) private view {
         uint48 prevTimepoint = getLayout().schedules[operationId].timepoint;
         if (prevTimepoint != 0 && !_isExpired(prevTimepoint, 0)) {
-            revert AlreadyScheduled(operationId);
+            IExecutorBase.AlreadyScheduled.selector.revertWith();
         }
     }
 
@@ -571,7 +529,7 @@ library ExecutorLib {
     }
 
     function checkSelector(bytes calldata data) internal pure returns (bytes4) {
-        if (data.length < 4) revert InvalidDataLength();
+        if (data.length < 4) IExecutorBase.InvalidDataLength.selector.revertWith();
         return bytes4(data[0:4]);
     }
 }

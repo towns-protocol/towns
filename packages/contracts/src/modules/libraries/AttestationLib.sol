@@ -3,6 +3,7 @@ pragma solidity ^0.8.23;
 
 // interfaces
 import {ISchemaResolver} from "@ethereum-attestation-service/eas-contracts/resolver/ISchemaResolver.sol";
+import {IAttestationRegistryBase} from "../interfaces/IAttestationRegistry.sol";
 
 // libraries
 
@@ -24,8 +25,7 @@ library AttestationLib {
     /*                           STORAGE                            */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    // keccak256(abi.encode(uint256(keccak256("attestations.module.attestation.storage")) - 1)) &
-    // ~bytes32(uint256(0xff))
+    // keccak256(abi.encode(uint256(keccak256("attestations.module.attestation.storage")) - 1)) & ~bytes32(uint256(0xff))
     bytes32 internal constant STORAGE_SLOT =
         0xb3faa0ced44596f3bee5bed62671ce37f7e9245f810f19748a1d69616f8f2b00;
 
@@ -40,18 +40,6 @@ library AttestationLib {
             ds.slot := STORAGE_SLOT
         }
     }
-
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                           ERRORS                           */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-    error NotPayable();
-    error InsufficientBalance();
-    error InvalidRevocation();
-    error InvalidAttestation();
-    error InvalidExpirationTime();
-    error Irrevocable();
-    error InvalidRevoker();
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                     Internal Functions                     */
@@ -113,7 +101,7 @@ library AttestationLib {
         bool isRevocation,
         uint256 availableValue,
         bool last
-    ) internal returns (uint256) {
+    ) private returns (uint256) {
         ISchemaResolver resolver = ISchemaResolver(schema.resolver);
 
         if (schema.uid == EMPTY_UID) {
@@ -121,15 +109,15 @@ library AttestationLib {
         }
 
         if (address(resolver) == address(0)) {
-            if (value != 0) NotPayable.selector.revertWith();
+            if (value != 0) IAttestationRegistryBase.NotPayable.selector.revertWith();
             if (last) _refund(availableValue);
             return 0;
         }
 
         if (value != 0) {
-            if (!resolver.isPayable()) NotPayable.selector.revertWith();
+            if (!resolver.isPayable()) IAttestationRegistryBase.NotPayable.selector.revertWith();
             if (value > availableValue) {
-                InsufficientBalance.selector.revertWith();
+                IAttestationRegistryBase.InsufficientBalance.selector.revertWith();
             }
 
             unchecked {
@@ -139,10 +127,10 @@ library AttestationLib {
 
         if (isRevocation) {
             if (!resolver.revoke{value: value}(attestation)) {
-                InvalidRevocation.selector.revertWith();
+                IAttestationRegistryBase.InvalidRevocation.selector.revertWith();
             }
         } else if (!resolver.attest{value: value}(attestation)) {
-            InvalidAttestation.selector.revertWith();
+            IAttestationRegistryBase.InvalidAttestation.selector.revertWith();
         }
 
         if (last) _refund(availableValue);
@@ -165,7 +153,7 @@ library AttestationLib {
         bool isRevocation,
         uint256 availableValue,
         bool last
-    ) internal returns (uint256 totalUsedValue) {
+    ) private returns (uint256 totalUsedValue) {
         // Get the total number of attestations to process
         uint256 len = attestations.length;
         // Optimization: If only one attestation, use the single attestation resolver
@@ -197,9 +185,10 @@ library AttestationLib {
             uint256 val = values[i];
             if (val == 0) continue; // Skip zero-value attestations
             // Ensure resolver accepts payments if value is non-zero
-            if (!isPayable) NotPayable.selector.revertWith();
+            if (!isPayable) IAttestationRegistryBase.NotPayable.selector.revertWith();
             // Ensure sufficient balance for this attestation
-            if (val > availableValue) InsufficientBalance.selector.revertWith();
+            if (val > availableValue)
+                IAttestationRegistryBase.InsufficientBalance.selector.revertWith();
             // Safe arithmetic: subtract from available and add to total
             unchecked {
                 availableValue -= val;
@@ -210,10 +199,10 @@ library AttestationLib {
         // Process either revocation or attestation for multiple items
         if (isRevocation) {
             if (!resolver.multiRevoke{value: totalUsedValue}(attestations, values)) {
-                InvalidRevocation.selector.revertWith();
+                IAttestationRegistryBase.InvalidRevocation.selector.revertWith();
             }
         } else if (!resolver.multiAttest{value: totalUsedValue}(attestations, values)) {
-            InvalidAttestation.selector.revertWith();
+            IAttestationRegistryBase.InvalidAttestation.selector.revertWith();
         }
 
         // The 'last' parameter indicates this is the final batch in a sequence of operations.
@@ -235,10 +224,10 @@ library AttestationLib {
         uint256[] memory values,
         uint256 availableValue,
         bool last
-    ) internal {
+    ) private {
         uint256 len = values.length;
         for (uint256 i; i < len; ++i) {
-            if (values[i] != 0) NotPayable.selector.revertWith();
+            if (values[i] != 0) IAttestationRegistryBase.NotPayable.selector.revertWith();
         }
         if (last) _refund(availableValue);
     }
@@ -257,7 +246,7 @@ library AttestationLib {
         address attester,
         uint256 availableValue,
         bool last
-    ) internal returns (uint256 usedValue, bytes32[] memory uids) {
+    ) private returns (uint256 usedValue, bytes32[] memory uids) {
         SchemaRecord memory schema = SchemaLib.getSchema(schemaId);
         if (schema.uid == EMPTY_UID) SchemaLib.InvalidSchema.selector.revertWith();
 
@@ -274,11 +263,11 @@ library AttestationLib {
             AttestationRequestData memory request = requests[i];
             // Ensure that either no expiration time was set or that it was set in the future.
             if (request.expirationTime != NO_EXPIRATION_TIME && request.expirationTime <= timeNow) {
-                InvalidExpirationTime.selector.revertWith();
+                IAttestationRegistryBase.InvalidExpirationTime.selector.revertWith();
             }
 
             if (!schema.revocable && request.revocable) {
-                Irrevocable.selector.revertWith();
+                IAttestationRegistryBase.Irrevocable.selector.revertWith();
             }
 
             Attestation memory attestation;
@@ -306,7 +295,7 @@ library AttestationLib {
             attestation.uid = attestationUID;
             db.attestations[attestationUID] = attestation;
 
-            _checkRefUID(db, request.refUID);
+            _checkRefUID(request.refUID, db.attestations[request.refUID]);
 
             attestations[i] = attestation;
             values[i] = request.value;
@@ -336,7 +325,7 @@ library AttestationLib {
         address revoker,
         uint256 availableValue,
         bool last
-    ) internal returns (uint256) {
+    ) private returns (uint256) {
         SchemaRecord memory schema = SchemaLib.getSchema(schemaId);
         if (schema.uid == EMPTY_UID) SchemaLib.InvalidSchema.selector.revertWith();
 
@@ -348,11 +337,14 @@ library AttestationLib {
 
         for (uint256 i; i < len; ++i) {
             Attestation storage attestation = db.attestations[requests[i].uid];
-            if (attestation.uid == EMPTY_UID) InvalidAttestation.selector.revertWith();
+            if (attestation.uid == EMPTY_UID)
+                IAttestationRegistryBase.InvalidAttestation.selector.revertWith();
             if (attestation.schema != schemaId) SchemaLib.InvalidSchema.selector.revertWith();
-            if (attestation.attester != revoker) InvalidRevoker.selector.revertWith();
-            if (!attestation.revocable) Irrevocable.selector.revertWith();
-            if (attestation.revocationTime != 0) InvalidRevocation.selector.revertWith();
+            if (attestation.attester != revoker)
+                IAttestationRegistryBase.InvalidRevoker.selector.revertWith();
+            if (!attestation.revocable) IAttestationRegistryBase.Irrevocable.selector.revertWith();
+            if (attestation.revocationTime != 0)
+                IAttestationRegistryBase.InvalidRevocation.selector.revertWith();
             attestation.revocationTime = uint64(block.timestamp);
             attestations[i] = attestation;
             values[i] = requests[i].value;
@@ -369,13 +361,11 @@ library AttestationLib {
     }
 
     /// @notice Validates that a referenced attestation UID exists
-    /// @param db The storage layout
     /// @param refUID The reference UID to check
-    function _checkRefUID(Layout storage db, bytes32 refUID) internal view {
-        if (refUID != EMPTY_UID) {
-            if (db.attestations[refUID].uid == EMPTY_UID) {
-                NotFound.selector.revertWith();
-            }
+    /// @param attestation The attestation to check
+    function _checkRefUID(bytes32 refUID, Attestation memory attestation) private pure {
+        if (refUID != EMPTY_UID && attestation.uid == EMPTY_UID) {
+            NotFound.selector.revertWith();
         }
     }
 
@@ -386,7 +376,7 @@ library AttestationLib {
     function _hashAttestation(
         Attestation memory attestation,
         uint32 bump
-    ) internal pure returns (bytes32) {
+    ) private pure returns (bytes32) {
         return
             keccak256(
                 abi.encodePacked(
@@ -405,7 +395,7 @@ library AttestationLib {
 
     /// @notice Refunds any remaining ETH value to the sender
     /// @param value The amount to refund
-    function _refund(uint256 value) internal {
+    function _refund(uint256 value) private {
         if (value > 0) {
             SafeTransferLib.safeTransferETH(msg.sender, value);
         }

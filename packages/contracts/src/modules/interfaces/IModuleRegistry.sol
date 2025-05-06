@@ -9,9 +9,33 @@ import {Attestation} from "@ethereum-attestation-service/eas-contracts/Common.so
 
 // contracts
 
+interface IModuleRegistryBase {
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                           ERRORS                           */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+    error ModuleAlreadyRegistered();
+    error ModuleNotRegistered();
+    error ModuleRevoked();
+    error NotModuleOwner();
+    error ModuleDoesNotImplementInterface();
+    error InvalidAddressInput();
+    error InvalidArrayInput();
+    error BannedModule();
+    error InvalidModuleId();
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                           EVENTS                           */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+    event ModuleRegistered(address indexed module, bytes32 uid);
+    event ModuleUnregistered(address indexed module, bytes32 uid);
+    event ModuleUpdated(address indexed module, bytes32 uid);
+    event ModuleBanned(address indexed module, bytes32 uid);
+    event ModuleSchemaSet(bytes32 uid);
+}
+
 /// @title IModuleRegistry Interface
 /// @notice Interface for managing module registrations and permissions
-interface IModuleRegistry {
+interface IModuleRegistry is IModuleRegistryBase {
     /// @notice Get the schema structure used for registering modules
     /// @return The schema structure
     function getModuleSchema() external view returns (string memory);

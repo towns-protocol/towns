@@ -8,6 +8,7 @@ import {IERC6900Module} from "@erc6900/reference-implementation/interfaces/IERC6
 import {IERC165} from "@openzeppelin/contracts/interfaces/IERC165.sol";
 import {ITownsApp} from "src/modules/interfaces/ITownsApp.sol";
 import {IERC173} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
+import {IModuleRegistryBase} from "src/modules/interfaces/IModuleRegistry.sol";
 
 // libraries
 import {CustomRevert} from "../../utils/libraries/CustomRevert.sol";
@@ -24,27 +25,6 @@ import {AttestationRequest, RevocationRequestData} from "@ethereum-attestation-s
 library ModuleRegistryLib {
     using CustomRevert for bytes4;
     using EnumerableSetLib for EnumerableSetLib.Bytes32Set;
-
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                           ERRORS                           */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-    error ModuleAlreadyRegistered();
-    error ModuleNotRegistered();
-    error ModuleRevoked();
-    error NotModuleOwner();
-    error ModuleDoesNotImplementInterface();
-    error InvalidAddressInput();
-    error InvalidArrayInput();
-    error BannedModule();
-    error InvalidModuleId();
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                           EVENTS                           */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-    event ModuleRegistered(address indexed module, bytes32 uid);
-    event ModuleUnregistered(address indexed module, bytes32 uid);
-    event ModuleUpdated(address indexed module, bytes32 uid);
-    event ModuleBanned(address indexed module, bytes32 uid);
-    event ModuleSchemaSet(bytes32 uid);
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           STRUCTS                            */
@@ -88,7 +68,7 @@ library ModuleRegistryLib {
     function setSchema(bytes32 schemaId) internal {
         Layout storage db = getLayout();
         db.schemaId = schemaId;
-        emit ModuleSchemaSet(schemaId);
+        emit IModuleRegistryBase.ModuleSchemaSet(schemaId);
     }
 
     /// @notice Retrieves the current schema ID
@@ -112,13 +92,13 @@ library ModuleRegistryLib {
     /// @dev Reverts if module is not registered, revoked, or banned
     function getModule(bytes32 versionId) internal view returns (Attestation memory attestation) {
         Attestation memory att = AttestationLib.getAttestation(versionId);
-        if (att.uid == EMPTY_UID) ModuleNotRegistered.selector.revertWith();
-        if (att.revocationTime > 0) ModuleRevoked.selector.revertWith();
+        if (att.uid == EMPTY_UID) IModuleRegistryBase.ModuleNotRegistered.selector.revertWith();
+        if (att.revocationTime > 0) IModuleRegistryBase.ModuleRevoked.selector.revertWith();
         (address module, , , , ) = abi.decode(
             att.data,
             (address, address, address[], bytes32[], ExecutionManifest)
         );
-        if (isBanned(module)) BannedModule.selector.revertWith();
+        if (isBanned(module)) IModuleRegistryBase.BannedModule.selector.revertWith();
         return att;
     }
 
@@ -142,15 +122,15 @@ library ModuleRegistryLib {
 
         ModuleInfo storage moduleInfo = getLayout().modules[module];
 
-        if (moduleInfo.isBanned) BannedModule.selector.revertWith();
+        if (moduleInfo.isBanned) IModuleRegistryBase.BannedModule.selector.revertWith();
 
         address owner = ITownsApp(module).owner();
-        if (msg.sender != owner) NotModuleOwner.selector.revertWith();
+        if (msg.sender != owner) IModuleRegistryBase.NotModuleOwner.selector.revertWith();
 
         bytes32[] memory permissions = ITownsApp(module).requiredPermissions();
         ExecutionManifest memory manifest = ITownsApp(module).executionManifest();
 
-        if (permissions.length == 0) InvalidArrayInput.selector.revertWith();
+        if (permissions.length == 0) IModuleRegistryBase.InvalidArrayInput.selector.revertWith();
 
         AttestationRequest memory request;
         request.schema = getSchema();
@@ -163,7 +143,7 @@ library ModuleRegistryLib {
         moduleInfo.latestVersion = version;
         moduleInfo.module = module;
 
-        emit ModuleRegistered(module, version);
+        emit IModuleRegistryBase.ModuleRegistered(module, version);
 
         return version;
     }
@@ -178,12 +158,12 @@ library ModuleRegistryLib {
         address revoker,
         bytes32 versionId
     ) internal returns (address module, bytes32 version) {
-        if (versionId == EMPTY_UID) InvalidModuleId.selector.revertWith();
+        if (versionId == EMPTY_UID) IModuleRegistryBase.InvalidModuleId.selector.revertWith();
 
         Attestation memory att = AttestationLib.getAttestation(versionId);
 
-        if (att.uid == EMPTY_UID) ModuleNotRegistered.selector.revertWith();
-        if (att.revocationTime > 0) ModuleRevoked.selector.revertWith();
+        if (att.uid == EMPTY_UID) IModuleRegistryBase.ModuleNotRegistered.selector.revertWith();
+        if (att.revocationTime > 0) IModuleRegistryBase.ModuleRevoked.selector.revertWith();
         (module, , , , ) = abi.decode(
             att.data,
             (address, address, address[], bytes32[], ExecutionManifest)
@@ -191,7 +171,7 @@ library ModuleRegistryLib {
 
         ModuleInfo storage moduleInfo = getLayout().modules[module];
 
-        if (moduleInfo.isBanned) BannedModule.selector.revertWith();
+        if (moduleInfo.isBanned) IModuleRegistryBase.BannedModule.selector.revertWith();
 
         RevocationRequestData memory request;
         request.uid = versionId;
@@ -202,7 +182,7 @@ library ModuleRegistryLib {
             moduleInfo.latestVersion = EMPTY_UID;
         }
 
-        emit ModuleUnregistered(module, versionId);
+        emit IModuleRegistryBase.ModuleUnregistered(module, versionId);
 
         return (module, version);
     }
@@ -212,16 +192,17 @@ library ModuleRegistryLib {
     /// @return version The version ID of the banned module
     /// @dev Reverts if module is not registered, already banned, or revoked
     function banModule(address module) internal returns (bytes32 version) {
-        if (module == address(0)) ModuleNotRegistered.selector.revertWith();
+        if (module == address(0)) IModuleRegistryBase.ModuleNotRegistered.selector.revertWith();
 
         ModuleInfo storage moduleInfo = getLayout().modules[module];
 
-        if (moduleInfo.module == address(0)) ModuleNotRegistered.selector.revertWith();
-        if (moduleInfo.isBanned) BannedModule.selector.revertWith();
+        if (moduleInfo.module == address(0))
+            IModuleRegistryBase.ModuleNotRegistered.selector.revertWith();
+        if (moduleInfo.isBanned) IModuleRegistryBase.BannedModule.selector.revertWith();
 
         Attestation memory att = AttestationLib.getAttestation(moduleInfo.latestVersion);
 
-        if (att.revocationTime > 0) ModuleRevoked.selector.revertWith();
+        if (att.revocationTime > 0) IModuleRegistryBase.ModuleRevoked.selector.revertWith();
 
         RevocationRequestData memory request;
         request.uid = moduleInfo.latestVersion;
@@ -229,7 +210,7 @@ library ModuleRegistryLib {
         AttestationLib.revoke(att.schema, request, att.attester, 0, true);
         moduleInfo.isBanned = true;
 
-        emit ModuleBanned(module, moduleInfo.latestVersion);
+        emit IModuleRegistryBase.ModuleBanned(module, moduleInfo.latestVersion);
 
         return moduleInfo.latestVersion;
     }
@@ -239,11 +220,12 @@ library ModuleRegistryLib {
     /// @param clients Array of client addresses to verify
     /// @dev Reverts if any input is invalid or module doesn't implement required interfaces
     function _verifyAddModuleInputs(address module, address[] memory clients) internal view {
-        if (module == address(0)) InvalidAddressInput.selector.revertWith();
-        if (clients.length == 0) InvalidArrayInput.selector.revertWith();
+        if (module == address(0)) IModuleRegistryBase.InvalidAddressInput.selector.revertWith();
+        if (clients.length == 0) IModuleRegistryBase.InvalidArrayInput.selector.revertWith();
 
         for (uint256 i = 0; i < clients.length; i++) {
-            if (clients[i] == address(0)) InvalidAddressInput.selector.revertWith();
+            if (clients[i] == address(0))
+                IModuleRegistryBase.InvalidAddressInput.selector.revertWith();
         }
 
         if (
@@ -252,7 +234,7 @@ library ModuleRegistryLib {
             !IERC165(module).supportsInterface(type(ITownsApp).interfaceId) ||
             !IERC165(module).supportsInterface(type(IERC173).interfaceId)
         ) {
-            ModuleDoesNotImplementInterface.selector.revertWith();
+            IModuleRegistryBase.ModuleDoesNotImplementInterface.selector.revertWith();
         }
     }
 }

@@ -10,7 +10,6 @@ import {ModuleRegistryLib} from "./libraries/ModuleRegistryLib.sol";
 import {SchemaLib} from "./libraries/SchemaLib.sol";
 
 // types
-import {ExecutionManifest} from "@erc6900/reference-implementation/interfaces/IERC6900ExecutionModule.sol";
 import {Attestation} from "@ethereum-attestation-service/eas-contracts/Common.sol";
 
 // contracts

@@ -1,7 +1,59 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-interface IExecutor {
+interface IExecutorBase {
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                           ERRORS                            */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+    error CallerAlreadyRegistered();
+    error CallerNotRegistered();
+    error ExecutionAlreadyRegistered();
+    error ExecutionNotRegistered();
+    error ExecutorCallFailed();
+    error ExecutionNotFound();
+    error UnauthorizedCall();
+    error AlreadyScheduled();
+    error NotScheduled();
+    error NotReady();
+    error Expired();
+    error UnauthorizedCancel();
+    error UnauthorizedRenounce();
+    error UnauthorizedTarget();
+    error ExecutionFunctionAlreadySet();
+    error NullModule();
+    error ExecutionHookAlreadySet();
+    error ModuleInstallCallbackFailed();
+    error InvalidDataLength();
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                           EVENTS                            */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    event GroupAccessGranted(
+        bytes32 indexed groupId,
+        address indexed account,
+        uint32 delay,
+        uint48 since,
+        bool newMember
+    );
+    event GroupAccessRevoked(bytes32 indexed groupId, address indexed account);
+    event GroupGuardianSet(bytes32 indexed groupId, bytes32 guardian);
+    event GroupGrantDelaySet(bytes32 indexed groupId, uint32 delay);
+    event GroupMaxEthValueSet(bytes32 indexed groupId, uint256 allowance);
+    event TargetFunctionGroupSet(
+        address indexed target,
+        bytes4 indexed selector,
+        bytes32 indexed groupId
+    );
+    event TargetFunctionDelaySet(address indexed target, uint32 newDelay, uint32 minSetback);
+    event TargetFunctionDisabledSet(address indexed target, bytes4 indexed selector, bool disabled);
+    event TargetDisabledSet(address indexed target, bool disabled);
+    event OperationScheduled(bytes32 indexed operationId, uint48 timepoint, uint32 nonce);
+    event OperationExecuted(bytes32 indexed operationId, uint32 nonce);
+    event OperationCanceled(bytes32 indexed operationId, uint32 nonce);
+}
+
+interface IExecutor is IExecutorBase {
     /**
      * @notice Grants access to a group for an account with a delay
      * @param groupId The group ID

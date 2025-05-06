@@ -2,20 +2,20 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {IAttestationRegistry} from "./interfaces/IAttestationRegistry.sol";
+import {IAttestationRegistry} from "../interfaces/IAttestationRegistry.sol";
 
 // libraries
-import {AttestationLib} from "./libraries/AttestationLib.sol";
+import {AttestationLib} from "../libraries/AttestationLib.sol";
 
 // contracts
 
 import {Attestation} from "@ethereum-attestation-service/eas-contracts/Common.sol";
-import {AttestationRequest, AttestationRequestData, RevocationRequest, RevocationRequestData} from "@ethereum-attestation-service/eas-contracts/IEAS.sol";
+import {AttestationRequest, RevocationRequest} from "@ethereum-attestation-service/eas-contracts/IEAS.sol";
 import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
 
 /// @title Attestation Registry
 /// @notice A registry for attestation requests
-/// @dev This contract is used for testing purposes
+/// @dev This contract is used for implementation reference purposes
 contract AttestationRegistry is IAttestationRegistry, Facet {
     function __AttestationRegistry_init() external onlyInitializing {}
 
