@@ -25,6 +25,7 @@ import {Attestation, EMPTY_UID} from "@ethereum-attestation-service/eas-contract
 
 library ModularAccountLib {
     using CustomRevert for bytes4;
+    using DependencyLib for MembershipStorage.Layout;
 
     function execute(
         address target,
@@ -32,8 +33,13 @@ library ModularAccountLib {
         bytes calldata data
     ) internal returns (bytes memory result, uint32 nonce) {
         if (target == address(0)) IModularAccountBase.InvalidModuleAddress.selector.revertWith();
-        if (IModuleRegistry(DependencyLib.getDependency("AppRegistry")).isModuleBanned(target))
+
+        MembershipStorage.Layout storage ms = MembershipStorage.layout();
+
+        if (IModuleRegistry(ms.getDependency("AppRegistry")).isModuleBanned(target)) {
             IModularAccountBase.InvalidModuleId.selector.revertWith();
+        }
+
         return ExecutorLib.execute(target, value, data);
     }
 
@@ -221,7 +227,8 @@ library ModularAccountLib {
             ExecutionManifest memory manifest
         )
     {
-        address appRegistry = DependencyLib.getDependency("AppRegistry");
+        MembershipStorage.Layout storage ms = MembershipStorage.layout();
+        address appRegistry = ms.getDependency("AppRegistry");
         Attestation memory att = IModuleRegistry(appRegistry).getModuleById(versionId);
 
         if (att.uid == EMPTY_UID) IModularAccountBase.ModuleNotRegistered.selector.revertWith();
@@ -237,14 +244,15 @@ library ModularAccountLib {
     function checkAuthorized(address module) internal view {
         if (module == address(0)) IModularAccountBase.InvalidModuleAddress.selector.revertWith();
 
-        address factory = MembershipStorage.layout().spaceFactory;
+        MembershipStorage.Layout storage ms = MembershipStorage.layout();
+        address factory = ms.spaceFactory;
 
         bytes32[] memory dependencies = new bytes32[](4);
         dependencies[0] = bytes32("RiverAirdrop");
         dependencies[1] = bytes32("SpaceOperator"); // BaseRegistry
         dependencies[2] = bytes32("ModuleRegistry");
         dependencies[3] = bytes32("AppRegistry");
-        address[] memory deps = DependencyLib.getDependencies(dependencies);
+        address[] memory deps = ms.getDependencies(dependencies);
 
         // Unauthorized targets
         if (
