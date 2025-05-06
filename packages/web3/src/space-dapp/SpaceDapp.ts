@@ -66,6 +66,7 @@ import {
     IsTokenBanned,
 } from '../cache/Keyable'
 import { SpaceOwner } from '../space-owner/SpaceOwner'
+import { ISwapRouterBase } from '@towns-protocol/generated/dev/typings/ISwapRouter'
 
 const logger = dlogger('csb:SpaceDapp:debug')
 
@@ -1908,6 +1909,28 @@ export class SpaceDapp {
             {
                 value: amount,
             },
+        )
+    }
+
+    public async executeSwap(
+        spaceId: string,
+        exactInputParams: ISwapRouterBase.ExactInputParamsStruct,
+        routerParams: ISwapRouterBase.RouterParamsStruct,
+        poster: string,
+        value: bigint,
+        signer: ethers.Signer,
+        txnOpts?: TransactionOpts,
+    ): Promise<ContractTransaction> {
+        const space = this.getSpace(spaceId)
+        if (!space) {
+            throw new Error(`Space with spaceId "${spaceId}" is not found.`)
+        }
+        return wrapTransaction(
+            () =>
+                space.SwapRouter.write(signer).executeSwap(exactInputParams, routerParams, poster, {
+                    value,
+                }),
+            txnOpts,
         )
     }
 }
