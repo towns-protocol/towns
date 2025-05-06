@@ -25,7 +25,7 @@ import {Architect} from "src/factory/facets/architect/Architect.sol";
 import {BaseSetup} from "test/spaces/BaseSetup.sol";
 
 // mocks
-import {CreateSpaceFacet} from "src/factory/facets/create/CreateSpace.sol";
+import {CreateSpaceFacet} from "src/factory/facets/create/CreateSpaceFacet.sol";
 import {MockERC721} from "test/mocks/MockERC721.sol";
 
 contract IntegrationCreateSpace is BaseSetup, IRolesBase, IArchitectBase, IRuleEntitlementBase {
