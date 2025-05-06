@@ -12,6 +12,7 @@ import {DeployEIP712Facet} from "@towns-protocol/diamond/scripts/deployments/fac
 import {DeployIntrospection} from "@towns-protocol/diamond/scripts/deployments/facets/DeployIntrospection.sol";
 import {DeployOwnable} from "@towns-protocol/diamond/scripts/deployments/facets/DeployOwnable.sol";
 import {DeployPausable} from "@towns-protocol/diamond/scripts/deployments/facets/DeployPausable.sol";
+import {LibDeploy} from "@towns-protocol/diamond/src/utils/LibDeploy.sol";
 import {DeployMetadata} from "../facets/DeployMetadata.s.sol";
 import {LibString} from "solady/utils/LibString.sol";
 
@@ -35,7 +36,6 @@ import {DeployPricingModules} from "scripts/deployments/facets/DeployPricingModu
 import {DeployProxyManager} from "scripts/deployments/facets/DeployProxyManager.s.sol";
 import {DeploySpaceFactoryInit} from "scripts/deployments/facets/DeploySpaceFactoryInit.s.sol";
 import {DeployWalletLink} from "scripts/deployments/facets/DeployWalletLink.s.sol";
-import {DeploySLCEIP6565} from "scripts/deployments/utils/DeploySLCEIP6565.s.sol";
 import {DeployTieredLogPricingV2} from "scripts/deployments/utils/DeployTieredLogPricingV2.s.sol";
 import {DeployTieredLogPricingV3} from "scripts/deployments/utils/DeployTieredLogPricingV3.s.sol";
 import {DeployFeatureManager} from "scripts/deployments/facets/DeployFeatureManager.s.sol";
@@ -59,7 +59,6 @@ contract DeploySpaceFactory is IDiamondInitHelper, DiamondHelper, Deployer {
     DeploySpaceOwner private deploySpaceOwner = new DeploySpaceOwner();
     DeployTieredLogPricingV2 private deployTieredLogPricingV2 = new DeployTieredLogPricingV2();
     DeployTieredLogPricingV3 private deployTieredLogPricingV3 = new DeployTieredLogPricingV3();
-    DeploySLCEIP6565 private deployVerifierLib = new DeploySLCEIP6565();
     DeploySpaceFactoryInit private deploySpaceFactoryInit = new DeploySpaceFactoryInit();
 
     // helpers
@@ -225,7 +224,10 @@ contract DeploySpaceFactory is IDiamondInitHelper, DiamondHelper, Deployer {
         );
 
         facet = walletLinkHelper.deploy(deployer);
-        sclEip6565 = deployVerifierLib.deploy(deployer);
+        sclEip6565 = LibDeploy.deployCode(
+            string.concat(outDir(), "/libSCL_EIP6565.sol/SCL_EIP6565.json"),
+            ""
+        );
         addFacet(
             walletLinkHelper.makeCut(facet, IDiamond.FacetCutAction.Add),
             facet,
@@ -338,7 +340,10 @@ contract DeploySpaceFactory is IDiamondInitHelper, DiamondHelper, Deployer {
                 );
             } else if (facetName.eq("WalletLink")) {
                 facet = walletLinkHelper.deploy(deployer);
-                sclEip6565 = deployVerifierLib.deploy(deployer);
+                sclEip6565 = LibDeploy.deployCode(
+                    string.concat(outDir(), "/libSCL_EIP6565.sol/SCL_EIP6565.json"),
+                    ""
+                );
                 addFacet(
                     walletLinkHelper.makeCut(facet, IDiamond.FacetCutAction.Add),
                     facet,
