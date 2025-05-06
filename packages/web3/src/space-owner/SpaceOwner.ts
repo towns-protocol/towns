@@ -44,35 +44,8 @@ export class SpaceOwner extends BaseContractShim<typeof connect> {
         return this.read.totalSupply()
     }
 
-    public async prepareUpdateSpaceInfo(args: {
-        spaceId: string
-        spaceAddress: string
-        name: string
-        uri: string
-        shortDescription: string
-        longDescription: string
-    }): Promise<{
-        args: {
-            spaceId: string
-            spaceAddress: string
-            name: string
-            uri: string
-            shortDescription: string
-            longDescription: string
-        }
-        encoded: string
-    }> {
-        this.spaceInfoCache.remove(new GetSpaceInfo(args.spaceId))
-        return {
-            args,
-            encoded: this.encodeFunctionData('updateSpaceInfo', [
-                args.spaceAddress,
-                args.name,
-                args.uri,
-                args.shortDescription,
-                args.longDescription,
-            ]),
-        }
+    public removeSpaceInfoCache(spaceId: string) {
+        this.spaceInfoCache.remove(new GetSpaceInfo(spaceId))
     }
 
     public async updateSpaceInfo(args: {
@@ -85,21 +58,19 @@ export class SpaceOwner extends BaseContractShim<typeof connect> {
         signer: ethers.Signer
         txnOpts?: TransactionOpts
     }) {
-        const { space, ...rest } = args
-        const request = await this.prepareUpdateSpaceInfo({
-            ...rest,
-            spaceAddress: space.Address,
-        })
-        return wrapTransaction(
+        const txn = wrapTransaction(
             () =>
                 this.write(args.signer).updateSpaceInfo(
-                    request.args.spaceAddress,
-                    request.args.name,
-                    request.args.uri,
-                    request.args.shortDescription,
-                    request.args.longDescription,
+                    args.space.Address,
+                    args.name,
+                    args.uri,
+                    args.shortDescription,
+                    args.longDescription,
                 ),
             args.txnOpts,
         )
+
+        this.removeSpaceInfoCache(args.spaceId)
+        return txn
     }
 }
