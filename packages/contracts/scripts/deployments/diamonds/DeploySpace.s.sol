@@ -29,6 +29,7 @@ import {DeploySpaceEntitlementGated} from "../facets/DeploySpaceEntitlementGated
 import {DeployTipping} from "../facets/DeployTipping.s.sol";
 import {DeployTreasury} from "../facets/DeployTreasury.s.sol";
 import {DeployModularAccount} from "../facets/DeployModularAccount.s.sol";
+
 // contracts
 import {Diamond} from "@towns-protocol/diamond/src/Diamond.sol";
 import {MultiInit} from "@towns-protocol/diamond/src/initializers/MultiInit.sol";
