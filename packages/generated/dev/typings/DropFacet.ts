@@ -60,13 +60,21 @@ export declare namespace DropClaimLib {
     conditionId: PromiseOrValue<BigNumberish>;
     account: PromiseOrValue<string>;
     quantity: PromiseOrValue<BigNumberish>;
+    points: PromiseOrValue<BigNumberish>;
     proof: PromiseOrValue<BytesLike>[];
   };
 
-  export type ClaimStructOutput = [BigNumber, string, BigNumber, string[]] & {
+  export type ClaimStructOutput = [
+    BigNumber,
+    string,
+    BigNumber,
+    BigNumber,
+    string[]
+  ] & {
     conditionId: BigNumber;
     account: string;
     quantity: BigNumber;
+    points: BigNumber;
     proof: string[];
   };
 }
@@ -75,8 +83,8 @@ export interface DropFacetInterface extends utils.Interface {
   functions: {
     "__DropFacet_init(address)": FunctionFragment;
     "addClaimCondition((address,uint40,uint40,uint16,uint256,uint256,bytes32))": FunctionFragment;
-    "claimAndStake((uint256,address,uint256,bytes32[]),address,uint256,bytes)": FunctionFragment;
-    "claimWithPenalty((uint256,address,uint256,bytes32[]),uint16)": FunctionFragment;
+    "claimAndStake((uint256,address,uint256,uint256,bytes32[]),address,uint256,bytes)": FunctionFragment;
+    "claimWithPenalty((uint256,address,uint256,uint256,bytes32[]),uint16)": FunctionFragment;
     "getActiveClaimConditionId()": FunctionFragment;
     "getClaimConditionById(uint256)": FunctionFragment;
     "getClaimConditions()": FunctionFragment;
