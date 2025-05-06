@@ -2,7 +2,7 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {IImplementationRegistry} from "src/factory/facets/registry/IImplementationRegistry.sol";
+import {IModularAccountBase} from "../interfaces/IModularAccount.sol";
 import {IModuleRegistry} from "src/modules/interfaces/IModuleRegistry.sol";
 import {ITownsApp} from "src/modules/interfaces/ITownsApp.sol";
 import {IERC6900Module} from "@erc6900/reference-implementation/interfaces/IERC6900Module.sol";
@@ -10,7 +10,6 @@ import {IERC6900ExecutionModule} from "@erc6900/reference-implementation/interfa
 import {IERC6900Account} from "@erc6900/reference-implementation/interfaces/IERC6900Account.sol";
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import {IDiamondCut} from "@towns-protocol/diamond/src/facets/cut/IDiamondCut.sol";
-import {IAccount} from "../interfaces/IAccount.sol";
 
 // libraries
 import {MembershipStorage} from "src/spaces/facets/membership/MembershipStorage.sol";
@@ -18,7 +17,6 @@ import {ExecutorLib} from "src/spaces/facets/account/libraries/ExecutorLib.sol";
 import {HookLib} from "src/spaces/facets/account/libraries/HookLib.sol";
 import {CustomRevert} from "src/utils/libraries/CustomRevert.sol";
 import {DependencyLib} from "../../DependencyLib.sol";
-import {DiamondLoupeBase} from "@towns-protocol/diamond/src/facets/loupe/DiamondLoupeBase.sol";
 import {LibCall} from "solady/utils/LibCall.sol";
 
 // types
@@ -28,27 +26,14 @@ import {Attestation, EMPTY_UID} from "@ethereum-attestation-service/eas-contract
 library ModularAccountLib {
     using CustomRevert for bytes4;
 
-    // errors
-    error UnauthorizedModule(address module);
-    error InvalidModuleAddress(address module);
-    error InvalidManifest(address module);
-    error UnauthorizedSelector();
-    error NotEnoughEth();
-    error ModuleAlreadyInstalled();
-
-    error InvalidModuleId();
-    error ModuleNotInstalled();
-    error ModuleNotRegistered();
-    error ModuleRevoked();
-
     function execute(
         address target,
         uint256 value,
         bytes calldata data
     ) internal returns (bytes memory result, uint32 nonce) {
-        if (target == address(0)) InvalidModuleAddress.selector.revertWith();
+        if (target == address(0)) IModularAccountBase.InvalidModuleAddress.selector.revertWith();
         if (IModuleRegistry(DependencyLib.getDependency("AppRegistry")).isModuleBanned(target))
-            InvalidModuleId.selector.revertWith();
+            IModularAccountBase.InvalidModuleId.selector.revertWith();
         return ExecutorLib.execute(target, value, data);
     }
 
@@ -59,7 +44,7 @@ library ModularAccountLib {
         uint256 allowance,
         bytes calldata postInstallData
     ) internal {
-        if (versionId == EMPTY_UID) InvalidModuleId.selector.revertWith();
+        if (versionId == EMPTY_UID) IModularAccountBase.InvalidModuleId.selector.revertWith();
 
         // get the module group id from the module registry
         (
@@ -71,7 +56,8 @@ library ModularAccountLib {
         ) = getModule(versionId);
 
         // verify if already installed
-        if (ExecutorLib.isGroupActive(versionId)) ModuleAlreadyInstalled.selector.revertWith();
+        if (ExecutorLib.isGroupActive(versionId))
+            IModularAccountBase.ModuleAlreadyInstalled.selector.revertWith();
 
         verifyManifests(module, cachedManifest);
 
@@ -94,7 +80,7 @@ library ModularAccountLib {
 
             // check if the function is a native function
             if (isInvalidSelector(func.executionSelector)) {
-                UnauthorizedSelector.selector.revertWith();
+                IModularAccountBase.UnauthorizedSelector.selector.revertWith();
             }
 
             ExecutorLib.setTargetFunctionGroup(module, func.executionSelector, versionId);
@@ -119,7 +105,8 @@ library ModularAccountLib {
 
         // Set the allowance for the module group
         if (allowance > 0) {
-            if (address(this).balance < allowance) NotEnoughEth.selector.revertWith();
+            if (address(this).balance < allowance)
+                IModularAccountBase.NotEnoughEth.selector.revertWith();
             ExecutorLib.setGroupAllowance(versionId, allowance);
         }
 
@@ -177,14 +164,16 @@ library ModularAccountLib {
     }
 
     function setModuleAllowance(bytes32 versionId, uint256 allowance) internal {
-        if (versionId == EMPTY_UID) InvalidModuleId.selector.revertWith();
-        if (!ExecutorLib.isGroupActive(versionId)) ModuleNotInstalled.selector.revertWith();
+        if (versionId == EMPTY_UID) IModularAccountBase.InvalidModuleId.selector.revertWith();
+        if (!ExecutorLib.isGroupActive(versionId))
+            IModularAccountBase.ModuleNotInstalled.selector.revertWith();
         ExecutorLib.setGroupAllowance(versionId, allowance);
     }
 
     function getModuleAllowance(bytes32 versionId) internal view returns (uint256) {
-        if (versionId == EMPTY_UID) InvalidModuleId.selector.revertWith();
-        if (!ExecutorLib.isGroupActive(versionId)) ModuleNotInstalled.selector.revertWith();
+        if (versionId == EMPTY_UID) IModularAccountBase.InvalidModuleId.selector.revertWith();
+        if (!ExecutorLib.isGroupActive(versionId))
+            IModularAccountBase.ModuleNotInstalled.selector.revertWith();
         return ExecutorLib.getGroupAllowance(versionId);
     }
 
@@ -235,8 +224,8 @@ library ModularAccountLib {
         address appRegistry = DependencyLib.getDependency("AppRegistry");
         Attestation memory att = IModuleRegistry(appRegistry).getModuleById(versionId);
 
-        if (att.uid == EMPTY_UID) ModuleNotRegistered.selector.revertWith();
-        if (att.revocationTime != 0) ModuleRevoked.selector.revertWith();
+        if (att.uid == EMPTY_UID) IModularAccountBase.ModuleNotRegistered.selector.revertWith();
+        if (att.revocationTime != 0) IModularAccountBase.ModuleRevoked.selector.revertWith();
 
         (module, owner, clients, permissions, manifest) = abi.decode(
             att.data,
@@ -246,7 +235,7 @@ library ModularAccountLib {
 
     // Checks
     function checkAuthorized(address module) internal view {
-        if (module == address(0)) InvalidModuleAddress.selector.revertWith();
+        if (module == address(0)) IModularAccountBase.InvalidModuleAddress.selector.revertWith();
 
         address factory = MembershipStorage.layout().spaceFactory;
 
@@ -265,7 +254,7 @@ library ModularAccountLib {
             module == deps[2] ||
             module == deps[3]
         ) {
-            UnauthorizedModule.selector.revertWith(module);
+            IModularAccountBase.UnauthorizedModule.selector.revertWith(module);
         }
     }
 
@@ -280,7 +269,7 @@ library ModularAccountLib {
         bytes32 cachedManifestHash = keccak256(abi.encode(cachedManifest));
 
         if (moduleManifestHash != cachedManifestHash) {
-            InvalidManifest.selector.revertWith(module);
+            IModularAccountBase.InvalidManifest.selector.revertWith(module);
         }
     }
 

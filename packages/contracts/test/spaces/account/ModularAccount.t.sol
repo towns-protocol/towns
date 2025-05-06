@@ -8,13 +8,10 @@ import {BaseSetup} from "test/spaces/BaseSetup.sol";
 import {IOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
 import {IExecutorBase} from "src/spaces/facets/account/interfaces/IExecutor.sol";
 import {IERC6900Account} from "@erc6900/reference-implementation/interfaces/IERC6900Account.sol";
-import {IAccountBase} from "src/spaces/facets/account/interfaces/IAccount.sol";
+import {IModularAccountBase} from "src/spaces/facets/account/interfaces/IModularAccount.sol";
 // types
 import {ExecutionManifest} from "@erc6900/reference-implementation/interfaces/IERC6900ExecutionModule.sol";
 import {Attestation} from "@ethereum-attestation-service/eas-contracts/Common.sol";
-
-//libraries
-import {ModularAccountLib} from "src/spaces/facets/account/libraries/ModularAccountLib.sol";
 
 //contracts
 import {ModularAccount} from "src/spaces/facets/account/ModularAccount.sol";
@@ -26,7 +23,7 @@ import {MockModule, MockModuleV2} from "test/mocks/MockModule.sol";
 import {MockSavingsModule} from "test/mocks/MockSavingsModule.sol";
 import {MockInvalidModule} from "test/mocks/MockInvalidModule.sol";
 
-contract ModularAccountTest is BaseSetup, IOwnableBase, IAccountBase {
+contract ModularAccountTest is BaseSetup, IOwnableBase, IModularAccountBase {
     ModuleRegistry internal moduleRegistry;
     ModularAccount internal modularAccount;
     MockModule internal mockModule;
@@ -111,7 +108,7 @@ contract ModularAccountTest is BaseSetup, IOwnableBase, IAccountBase {
         moduleRegistry.adminBanModule(address(mockModule));
 
         vm.prank(client);
-        vm.expectRevert(abi.encodeWithSelector(ModularAccountLib.InvalidModuleId.selector));
+        vm.expectRevert(IModularAccountBase.InvalidModuleId.selector);
         modularAccount.execute({
             target: address(mockModule),
             value: 0,
@@ -133,7 +130,7 @@ contract ModularAccountTest is BaseSetup, IOwnableBase, IAccountBase {
 
     function test_revertWhen_installModule_emptyModuleId() external {
         vm.prank(founder);
-        vm.expectRevert(abi.encodeWithSelector(ModularAccountLib.InvalidModuleId.selector));
+        vm.expectRevert(IModularAccountBase.InvalidModuleId.selector);
         modularAccount.installModule(
             versionId,
             "",
@@ -147,7 +144,10 @@ contract ModularAccountTest is BaseSetup, IOwnableBase, IAccountBase {
 
         vm.prank(founder);
         vm.expectRevert(
-            abi.encodeWithSelector(ModularAccountLib.InvalidManifest.selector, address(mockModule))
+            abi.encodeWithSelector(
+                IModularAccountBase.InvalidManifest.selector,
+                address(mockModule)
+            )
         );
         modularAccount.installModule(
             versionId,
@@ -158,7 +158,7 @@ contract ModularAccountTest is BaseSetup, IOwnableBase, IAccountBase {
 
     function test_revertWhen_installModule_moduleNotRegistered() external {
         vm.prank(founder);
-        vm.expectRevert(abi.encodeWithSelector(ModularAccountLib.ModuleNotRegistered.selector));
+        vm.expectRevert(IModularAccountBase.ModuleNotRegistered.selector);
         modularAccount.installModule(
             _randomBytes32(),
             "",
@@ -171,7 +171,7 @@ contract ModularAccountTest is BaseSetup, IOwnableBase, IAccountBase {
         moduleRegistry.removeModule(versionId);
 
         vm.prank(founder);
-        vm.expectRevert(abi.encodeWithSelector(ModularAccountLib.ModuleRevoked.selector));
+        vm.expectRevert(IModularAccountBase.ModuleRevoked.selector);
         modularAccount.installModule(
             versionId,
             "",
@@ -190,7 +190,7 @@ contract ModularAccountTest is BaseSetup, IOwnableBase, IAccountBase {
         versionId = moduleRegistry.registerModule(address(invalidModule), clients);
 
         vm.prank(founder);
-        vm.expectRevert(ModularAccountLib.UnauthorizedSelector.selector);
+        vm.expectRevert(IModularAccountBase.UnauthorizedSelector.selector);
         modularAccount.installModule(
             versionId,
             "",
@@ -245,7 +245,7 @@ contract ModularAccountTest is BaseSetup, IOwnableBase, IAccountBase {
         bytes32 invalidModule = _randomBytes32();
         uint256 allowance = 1 ether;
         vm.prank(founder);
-        vm.expectRevert(abi.encodeWithSelector(ModularAccountLib.ModuleNotInstalled.selector));
+        vm.expectRevert(IModularAccountBase.ModuleNotInstalled.selector);
         modularAccount.setModuleAllowance(invalidModule, allowance);
     }
 

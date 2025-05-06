@@ -6,7 +6,7 @@ pragma solidity ^0.8.23;
 // libraries
 
 // contracts
-interface IAccountBase {
+interface IModularAccountBase {
     /// @notice Params for installing a module
     /// @param allowance The maximum amount of ETH that can be spent by the module
     /// @param grantDelay The delay before the module can be granted access to the group
@@ -16,9 +16,23 @@ interface IAccountBase {
         uint32 grantDelay;
         uint32 executionDelay;
     }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                           ERRORS                           */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+    error UnauthorizedModule(address module);
+    error InvalidModuleAddress(address module);
+    error InvalidManifest(address module);
+    error UnauthorizedSelector();
+    error NotEnoughEth();
+    error ModuleAlreadyInstalled();
+    error InvalidModuleId();
+    error ModuleNotInstalled();
+    error ModuleNotRegistered();
+    error ModuleRevoked();
 }
 
-interface IAccount is IAccountBase {
+interface IModularAccount is IModularAccountBase {
     function installModule(
         bytes32 versionId,
         bytes calldata data,
