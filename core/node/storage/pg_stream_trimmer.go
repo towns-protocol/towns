@@ -3,6 +3,7 @@ package storage
 import (
 	"context"
 	"sync"
+	"time"
 
 	"github.com/gammazero/workerpool"
 	"github.com/jackc/pgx/v5"
@@ -77,7 +78,10 @@ func (t *streamTrimmer) monitorWorkerPool(ctx context.Context) {
 }
 
 // processTrimTask processes a single trim task
-func (t *streamTrimmer) processTrimTask(ctx context.Context, task trimTask) error {
+func (t *streamTrimmer) processTrimTask(task trimTask) error {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+	defer cancel()
+
 	return t.store.txRunner(
 		ctx,
 		"streamTrimmer.processTrimTask",
@@ -108,7 +112,7 @@ func (t *streamTrimmer) processTrimTaskTx(
 		return nil // Nothing to trim
 	}
 
-	// Delete miniblocks in a single batch
+	// Delete miniblocks in a single batch.
 	const batchSize = 1000
 	rows, err := tx.Query(
 		ctx,
@@ -168,8 +172,7 @@ func (t *streamTrimmer) scheduleTrimTask(streamId StreamId) {
 	// Submit the task to the worker pool
 	t.workerPool.Submit(func() {
 		// Create a new context for the task
-		ctx := context.Background()
-		if err := t.processTrimTask(ctx, task); err != nil {
+		if err := t.processTrimTask(task); err != nil {
 			t.log.Errorw("Failed to process trim task",
 				"stream", task.streamId,
 				"err", err,
