@@ -1607,6 +1607,10 @@ func lastSnapshotIndexFromMiniblocks(
 	target *pgxpool.Pool,
 	streamId string,
 ) (int64, error) {
+	if verbose {
+		fmt.Printf("Looking for snap for stream %v\n", streamId)
+	}
+
 	table := getPartitionName("miniblocks", streamId, 256)
 	rows, err := target.Query(
 		ctx,
@@ -1640,7 +1644,7 @@ func lastSnapshotIndexFromMiniblocks(
 			}
 
 			if mbInfo.GetSnapshot() != nil {
-				if verbose && seqNum != 0 {
+				if verbose {
 					fmt.Printf("debug -- saw a snapshot for stream %s, seq_num %d\n", streamId, seqNum)
 				}
 				return noError
