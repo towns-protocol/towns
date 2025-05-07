@@ -156,7 +156,7 @@ The project supports two methods for deploying facets:
    - Replace `[FacetName]` with the actual facet contract name (without "Deploy" prefix)
    - This approach uses the common `DeployFacet.s.sol` script with the `CONTRACT_NAME` environment variable
    - It leverages deterministic CREATE2 addresses and supports batch deployments
-   - For more details, see the [DeployFacet documentation](./node_modules/@towns-protocol/diamond/scripts/README.md)
+   - For more details, see the [DeployFacet documentation](https://github.com/towns-protocol/diamond/blob/main/scripts/README.md)
 
 ### Live Network Deployment
 
