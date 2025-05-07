@@ -176,14 +176,15 @@ func (t *streamTrimmer) trimStreamTx(
 				`WITH rows_to_delete AS (
 					SELECT ctid
 					FROM {{miniblocks}}
-					WHERE seq_num < $1
-					LIMIT $2
+					WHERE stream_id = $1 AND seq_num < $2
+					LIMIT $3
 				)
 				DELETE FROM {{miniblocks}}
 				WHERE ctid IN (SELECT ctid FROM rows_to_delete)
 				RETURNING *`,
 				streamId,
 			),
+			streamId,
 			miniblockToKeep,
 			batchSize,
 		)
