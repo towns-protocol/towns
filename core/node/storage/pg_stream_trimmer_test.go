@@ -1,13 +1,14 @@
 package storage
 
 import (
+	"slices"
 	"strconv"
 	"testing"
+	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 
-	"github.com/towns-protocol/towns/core/node/logging"
 	. "github.com/towns-protocol/towns/core/node/shared"
 	"github.com/towns-protocol/towns/core/node/testutils"
 )
@@ -53,22 +54,42 @@ func TestStreamTrimmer(t *testing.T) {
 	)
 	require.NoError(err)
 
-	// Force trim streams
-	pgStreamStore.streamTrimmer = &streamTrimmer{
-		store:            pgStreamStore,
-		miniblocksToKeep: 2,
-		log:              logging.FromCtx(ctx),
-		stop:             make(chan struct{}),
+	// Check if the streams are trimmed correctly
+	require.Eventually(func() bool {
+		mbsLeft := make([]int64, 0, 10)
+		err = pgStreamStore.ReadMiniblocksByStream(ctx, streamId, func(blockdata []byte, seqNum int64, snapshot []byte) error {
+			mbsLeft = append(mbsLeft, seqNum)
+			return nil
+		})
+		require.NoError(err)
+		return slices.Equal([]int64{45, 46, 47, 48, 49, 50, 51, 52, 53, 54}, mbsLeft)
+	}, time.Second*5, 100*time.Millisecond)
+
+	// Write a new miniblock with a snapshot and check if the stream is trimmed correctly
+	newMb := &WriteMiniblockData{
+		Number:   55,
+		Hash:     common.BytesToHash([]byte("block_hash" + strconv.Itoa(55))),
+		Data:     []byte("block" + strconv.Itoa(55)),
+		Snapshot: []byte("snapshot" + strconv.Itoa(55)),
 	}
-	pgStreamStore.streamTrimmer.onCreated(streamId)
-	pgStreamStore.streamTrimmer.trimStreams(ctx)
+	err = pgStreamStore.WriteMiniblocks(
+		ctx,
+		streamId,
+		[]*WriteMiniblockData{newMb},
+		newMb.Number+1,
+		testEnvelopes,
+		newMb.Number,
+		-1,
+	)
 
 	// Check if the streams are trimmed correctly
-	mbsWithSnapshot := make([]int64, 0)
-	err = pgStreamStore.ReadMiniblocksByStream(ctx, streamId, func(blockdata []byte, seqNum int64, snapshot []byte) error {
-		mbsWithSnapshot = append(mbsWithSnapshot, seqNum)
-		return nil
-	})
-	require.NoError(err)
-	require.Equal([]int64{48, 49, 50, 51, 52, 53, 54}, mbsWithSnapshot)
+	require.Eventually(func() bool {
+		mbsLeft := make([]int64, 0, 3)
+		err = pgStreamStore.ReadMiniblocksByStream(ctx, streamId, func(blockdata []byte, seqNum int64, snapshot []byte) error {
+			mbsLeft = append(mbsLeft, seqNum)
+			return nil
+		})
+		require.NoError(err)
+		return slices.Equal([]int64{50, 51, 52, 53, 54, 55}, mbsLeft)
+	}, time.Second*5, 100*time.Millisecond)
 }

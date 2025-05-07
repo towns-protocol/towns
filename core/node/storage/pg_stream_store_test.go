@@ -63,7 +63,7 @@ func setupStreamStorageTest(t *testing.T) *testStreamStoreParams {
 		exitSignal,
 		infra.NewMetricsFactory(nil, "", ""),
 		time.Minute*10,
-		0,
+		5,
 	)
 	require.NoError(err, "Error creating new postgres stream store")
 

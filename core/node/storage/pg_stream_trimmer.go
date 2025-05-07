@@ -3,7 +3,6 @@ package storage
 import (
 	"context"
 	"sync"
-	"time"
 
 	"github.com/gammazero/workerpool"
 	"github.com/jackc/pgx/v5"
@@ -12,16 +11,29 @@ import (
 	. "github.com/towns-protocol/towns/core/node/shared"
 )
 
+// trimTask represents a task to trim miniblocks from a stream
+type trimTask struct {
+	streamId StreamId
+}
+
 // streamTrimmer handles periodic trimming of space streams
 type streamTrimmer struct {
-	store            *PostgresStreamStore
+	store *PostgresStreamStore
+	// miniblocksToKeep is the number of miniblocks to keep before the last snapshot
 	miniblocksToKeep int64
 	log              *logging.Log
 
+	// Worker pool for trimming operations
+	workerPool *workerpool.WorkerPool
+
+	// Stream management
 	streamsLock sync.Mutex
 	streams     []StreamId
 
-	wg       sync.WaitGroup
+	// Task tracking
+	pendingTasksLock sync.Mutex
+	pendingTasks     map[StreamId]struct{}
+
 	stopOnce sync.Once
 	stop     chan struct{}
 }
@@ -36,45 +48,152 @@ func newStreamTrimmer(
 		store:            store,
 		miniblocksToKeep: miniblocksToKeep,
 		log:              logging.FromCtx(ctx),
+		workerPool:       workerpool.New(4),
+		pendingTasks:     make(map[StreamId]struct{}),
 		stop:             make(chan struct{}),
 	}
 
-	// Load all space streams from the database.
-	if err := st.loadSpaceStreams(ctx); err != nil {
+	// Schedule trimming for existing space streams
+	if err := st.scheduleSpaceStreamsTrimming(ctx); err != nil {
 		return nil, err
 	}
 
-	// Start the stream trimmer
-	st.start(ctx)
+	// Start the worker pool
+	go st.monitorWorkerPool(ctx)
 
 	return st, nil
 }
 
-// start starts the stream trimmer
-func (t *streamTrimmer) start(ctx context.Context) {
-	t.wg.Add(1)
-
-	t.log.Info("Starting stream trimmer")
-	go func() {
-		defer t.wg.Done()
-
-		ticker := time.NewTicker(time.Hour)
-		defer ticker.Stop()
-
-		for {
-			select {
-			case <-ctx.Done():
-				t.log.Info("Stream trimmer stopped due to context cancellation", "err", ctx.Err())
-				return
-			case <-t.stop:
-				t.log.Info("Stream trimmer stopped due to stop signal")
-				return
-			case <-ticker.C:
-				t.log.Debug("Starting periodic trim operation")
-				t.trimStreams(ctx)
-			}
+// monitorWorkerPool monitors the worker pool and handles shutdown
+func (t *streamTrimmer) monitorWorkerPool(ctx context.Context) {
+	for {
+		select {
+		case <-ctx.Done():
+			t.log.Info("Worker pool stopped due to context cancellation")
+			t.workerPool.Stop()
+			return
+		case <-t.stop:
+			t.log.Info("Worker pool stopped due to stop signal")
+			t.workerPool.Stop()
+			return
 		}
-	}()
+	}
+}
+
+// processTrimTask processes a single trim task
+func (t *streamTrimmer) processTrimTask(ctx context.Context, task trimTask) error {
+	return t.store.txRunner(
+		ctx,
+		"streamTrimmer.processTrimTask",
+		pgx.ReadWrite,
+		func(ctx context.Context, tx pgx.Tx) error {
+			return t.processTrimTaskTx(ctx, tx, task)
+		},
+		nil,
+		"streamId", task.streamId,
+	)
+}
+
+// processTrimTaskTx processes a single trim task within a transaction
+func (t *streamTrimmer) processTrimTaskTx(
+	ctx context.Context,
+	tx pgx.Tx,
+	task trimTask,
+) error {
+	// Get the last snapshot miniblock number
+	lastSnapshotMiniblock, err := t.store.lockStream(ctx, tx, task.streamId, true)
+	if err != nil {
+		return err
+	}
+
+	// Calculate the miniblock number to keep
+	miniblockToKeep := lastSnapshotMiniblock - t.miniblocksToKeep
+	if miniblockToKeep <= 0 {
+		return nil // Nothing to trim
+	}
+
+	// Delete miniblocks in a single batch
+	const batchSize = 1000
+	rows, err := tx.Query(
+		ctx,
+		t.store.sqlForStream(
+			`WITH rows_to_delete AS (
+				SELECT ctid
+				FROM {{miniblocks}}
+				WHERE stream_id = $1 AND seq_num < $2
+				LIMIT $3
+			)
+			DELETE FROM {{miniblocks}}
+			WHERE ctid IN (SELECT ctid FROM rows_to_delete)
+			RETURNING *`,
+			task.streamId,
+		),
+		task.streamId,
+		miniblockToKeep,
+		batchSize,
+	)
+	if err != nil {
+		return err
+	}
+
+	// Check if any rows were deleted
+	var deletedCount int
+	for rows.Next() {
+		deletedCount++
+	}
+	rows.Close()
+
+	// If we deleted a full batch, schedule another task
+	if deletedCount == batchSize {
+		t.scheduleTrimTask(task.streamId)
+	}
+
+	return nil
+}
+
+// scheduleTrimTask schedules a new trim task for a stream
+func (t *streamTrimmer) scheduleTrimTask(streamId StreamId) {
+	t.pendingTasksLock.Lock()
+	defer t.pendingTasksLock.Unlock()
+
+	// Check if there's already a pending task for this stream
+	if _, exists := t.pendingTasks[streamId]; exists {
+		return
+	}
+
+	// Mark the stream as having a pending task
+	t.pendingTasks[streamId] = struct{}{}
+
+	// Create a new task
+	task := trimTask{
+		streamId: streamId,
+	}
+
+	// Submit the task to the worker pool
+	t.workerPool.Submit(func() {
+		// Create a new context for the task
+		ctx := context.Background()
+		if err := t.processTrimTask(ctx, task); err != nil {
+			t.log.Errorw("Failed to process trim task",
+				"stream", task.streamId,
+				"err", err,
+			)
+		}
+
+		// Remove the pending task mark
+		t.pendingTasksLock.Lock()
+		delete(t.pendingTasks, streamId)
+		t.pendingTasksLock.Unlock()
+	})
+}
+
+// onSnapshotMiniblockWritten is called when a new miniblock with a snapshot is created
+func (t *streamTrimmer) onSnapshotMiniblockCreated(streamId StreamId) {
+	if !ValidSpaceStreamId(&streamId) {
+		return
+	}
+
+	t.scheduleTrimTask(streamId)
 }
 
 // close stops the stream trimmer
@@ -82,135 +201,11 @@ func (t *streamTrimmer) close() {
 	t.stopOnce.Do(func() {
 		close(t.stop)
 	})
-	t.wg.Wait()
+	t.workerPool.StopWait()
 }
 
-// onCreated is called when a new stream is created.
-func (t *streamTrimmer) onCreated(streamId StreamId) {
-	if ValidSpaceStreamId(&streamId) {
-		t.streamsLock.Lock()
-		t.streams = append(t.streams, streamId)
-		t.streamsLock.Unlock()
-	}
-}
-
-func (t *streamTrimmer) trimStreams(ctx context.Context) {
-	const workersCount = 10
-
-	// Copy streams to avoid holding the lock while processing
-	t.streamsLock.Lock()
-	streams := make([]StreamId, len(t.streams))
-	copy(streams, t.streams)
-	t.streamsLock.Unlock()
-
-	if len(streams) == 0 {
-		t.log.Debug("No space streams to trim")
-		return
-	}
-
-	t.log.Infow("Starting trim operation", "totalStreams", len(streams))
-
-	// Create a worker pool and start workers
-	wp := workerpool.New(workersCount)
-	for _, stream := range streams {
-		wp.Submit(func() {
-			if err := t.trimStream(ctx, stream); err != nil {
-				t.log.Errorw("Failed to trim stream",
-					"stream", stream,
-					"err", err,
-				)
-			}
-		})
-	}
-	wp.StopWait()
-
-	t.log.Infow("Completed trim operation", "totalStreams", len(streams))
-}
-
-// trimStream deletes old miniblocks for streams (10xxx streams only for now) keeping only the specified number of miniblocks
-// before the last snapshot. The deletion is done in batches to avoid long-running transactions.
-func (t *streamTrimmer) trimStream(
-	ctx context.Context,
-	streamId StreamId,
-) error {
-	return t.store.txRunner(
-		ctx,
-		"streamTrimmer.trimStream",
-		pgx.ReadWrite,
-		func(ctx context.Context, tx pgx.Tx) error {
-			return t.trimStreamTx(ctx, tx, streamId)
-		},
-		nil,
-		"streamId", streamId,
-		"miniblocksToKeep", t.miniblocksToKeep,
-	)
-}
-
-func (t *streamTrimmer) trimStreamTx(
-	ctx context.Context,
-	tx pgx.Tx,
-	streamId StreamId,
-) error {
-	ctx, cancel := context.WithTimeout(ctx, 10*time.Minute)
-	defer cancel()
-
-	// Get the last snapshot miniblock number
-	lastSnapshotMiniblock, err := t.store.lockStream(ctx, tx, streamId, true)
-	if err != nil {
-		return err
-	}
-
-	// Calculate the miniblock number to keep (last snapshot - miniblocksToKeep)
-	miniblockToKeep := lastSnapshotMiniblock - t.miniblocksToKeep
-	if miniblockToKeep <= 0 {
-		return nil // Nothing to trim
-	}
-
-	// Delete miniblocks in batches
-	const batchSize = 1000
-	for {
-		// Use CTID for efficient deletion
-		rows, err := tx.Query(
-			ctx,
-			t.store.sqlForStream(
-				`WITH rows_to_delete AS (
-					SELECT ctid
-					FROM {{miniblocks}}
-					WHERE stream_id = $1 AND seq_num < $2
-					LIMIT $3
-				)
-				DELETE FROM {{miniblocks}}
-				WHERE ctid IN (SELECT ctid FROM rows_to_delete)
-				RETURNING *`,
-				streamId,
-			),
-			streamId,
-			miniblockToKeep,
-			batchSize,
-		)
-		if err != nil {
-			return err
-		}
-
-		// Check if any rows were deleted
-		var deletedCount int
-		for rows.Next() {
-			deletedCount++
-		}
-		rows.Close()
-
-		if deletedCount == 0 {
-			break // No more rows to delete
-		}
-	}
-
-	return nil
-}
-
-// loadEphemeralStreams loads all space streams from the database.
-// This function is called only once on startup to load the streams into memory.
-// Ignoring ephemeral streams.
-func (t *streamTrimmer) loadSpaceStreams(ctx context.Context) error {
+// scheduleSpaceStreamsTrimming schedules trimming for all space streams.
+func (t *streamTrimmer) scheduleSpaceStreamsTrimming(ctx context.Context) error {
 	return t.store.txRunner(
 		ctx,
 		"streamTrimmer.loadSpaceStreams",
@@ -229,9 +224,7 @@ func (t *streamTrimmer) loadSpaceStreams(ctx context.Context) error {
 				}
 
 				if ValidSpaceStreamId(&streamId) {
-					t.streamsLock.Lock()
-					t.streams = append(t.streams, streamId)
-					t.streamsLock.Unlock()
+					t.scheduleTrimTask(streamId)
 				}
 
 				return nil

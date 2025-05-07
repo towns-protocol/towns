@@ -531,12 +531,6 @@ func (s *PostgresStreamStore) createStreamStorageTx(
 		}
 		return err
 	}
-
-	// Add the given stream to the stream trimmer
-	if s.streamTrimmer != nil {
-		s.streamTrimmer.onCreated(streamId)
-	}
-
 	return nil
 }
 
@@ -1627,6 +1621,11 @@ func (s *PostgresStreamStore) writeMiniblocksTx(
 			streamId,
 		); err != nil {
 			return err
+		}
+
+		// Let the stream trimmer know that a new snapshot miniblock was created.
+		if s.streamTrimmer != nil {
+			s.streamTrimmer.onSnapshotMiniblockCreated(streamId)
 		}
 	}
 
