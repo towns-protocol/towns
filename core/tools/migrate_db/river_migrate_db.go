@@ -1712,6 +1712,10 @@ func restoreSnapshotIndices(
 		return fmt.Errorf("unable to get existing stream ids: %w", err)
 	}
 
+	if verbose {
+		fmt.Printf("Restoring %d streams\n", len(streamIds))
+	}
+
 	numWorkers := viper.GetInt("RIVER_DB_NUM_WORKERS")
 	txSize := viper.GetInt("RIVER_DB_TX_SIZE")
 	if txSize <= 0 {
@@ -1720,6 +1724,10 @@ func restoreSnapshotIndices(
 
 	workerPool := workerpool.New(numWorkers)
 	workItems := chunk2(streamIds, txSize)
+
+	if verbose {
+		fmt.Println("work chunked...")
+	}
 
 	var progressCounter atomic.Int64
 	for _, workItem := range workItems {
@@ -1730,6 +1738,10 @@ func restoreSnapshotIndices(
 				fmt.Println("Streams that were not updated: ", workItem)
 			}
 		})
+	}
+
+	if verbose {
+		fmt.Println("Work submitted")
 	}
 
 	go reportProgress("Streams updated:", &progressCounter)
