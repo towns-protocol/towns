@@ -107,10 +107,7 @@ func (t *streamTrimmer) trimStreams(ctx context.Context) {
 		return
 	}
 
-	t.log.Infow("Starting trim operation",
-		"totalStreams", len(streams),
-		"spaceStreams", len(streams),
-	)
+	t.log.Infow("Starting trim operation", "totalStreams", len(streams))
 
 	// Create a worker pool
 	streamCh := make(chan StreamId, len(streams))
