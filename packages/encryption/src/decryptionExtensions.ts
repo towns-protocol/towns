@@ -339,7 +339,7 @@ export abstract class BaseDecryptionExtensions {
                 if (keySolicitation.deviceKey === this.userDevice.deviceKey) {
                     continue
                 }
-                if (!keySolicitation.isNewDevice || keySolicitation.sessionIds.length === 0) {
+                if (keySolicitation.sessionIds.length === 0 && !keySolicitation.isNewDevice) {
                     continue
                 }
                 const selectedQueue =
