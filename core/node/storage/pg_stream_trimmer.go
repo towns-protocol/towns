@@ -19,6 +19,7 @@ type trimTask struct {
 
 // streamTrimmer handles periodic trimming of space streams
 type streamTrimmer struct {
+	ctx   context.Context
 	store *PostgresStreamStore
 	// miniblocksToKeep is the number of miniblocks to keep before the last snapshot
 	miniblocksToKeep int64
@@ -42,6 +43,7 @@ func newStreamTrimmer(
 	miniblocksToKeep int64,
 ) (*streamTrimmer, error) {
 	st := &streamTrimmer{
+		ctx:              ctx,
 		store:            store,
 		miniblocksToKeep: miniblocksToKeep,
 		log:              logging.FromCtx(ctx),
@@ -79,7 +81,7 @@ func (t *streamTrimmer) monitorWorkerPool(ctx context.Context) {
 
 // processTrimTask processes a single trim task
 func (t *streamTrimmer) processTrimTask(task trimTask) error {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+	ctx, cancel := context.WithTimeout(t.ctx, time.Minute)
 	defer cancel()
 
 	return t.store.txRunner(
