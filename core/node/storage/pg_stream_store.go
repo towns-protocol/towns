@@ -34,8 +34,8 @@ type PostgresStreamStore struct {
 
 	numPartitions int
 
-	//
 	esm *ephemeralStreamMonitor
+	st  *streamTrimmer
 }
 
 var _ StreamStorage = (*PostgresStreamStore)(nil)
@@ -145,6 +145,9 @@ func NewPostgresStreamStore(
 	if err != nil {
 		return nil, AsRiverError(err).Func("NewPostgresStreamStore")
 	}
+
+	// Start the stream trimmer
+	store.st = newStreamTrimmer(ctx, store, defaultStreamTrimmerConfig())
 
 	return store, nil
 }
@@ -1671,6 +1674,7 @@ func (s *PostgresStreamStore) Close(ctx context.Context) {
 	// Cancel the notify listening func to release the listener connection before closing the pool.
 	s.cleanupListenFunc()
 	s.esm.close()
+	s.st.close()
 	s.PostgresEventStore.Close(ctx)
 }
 
