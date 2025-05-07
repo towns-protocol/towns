@@ -2,21 +2,17 @@
 pragma solidity ^0.8.23;
 
 // utils
-
 import {EIP712Utils} from "@towns-protocol/diamond/test/facets/signature/EIP712Utils.sol";
-
 import {SimpleAccount} from "account-abstraction/samples/SimpleAccount.sol";
 import {SimpleAccountFactory} from "account-abstraction/samples/SimpleAccountFactory.sol";
 import {TestUtils} from "@towns-protocol/diamond/test/TestUtils.sol";
 
 // interfaces
-
 import {IEntryPoint} from "account-abstraction/interfaces/IEntryPoint.sol";
 import {IEntitlementChecker} from "src/base/registry/facets/checker/IEntitlementChecker.sol";
 import {IMainnetDelegation} from "src/base/registry/facets/mainnet/IMainnetDelegation.sol";
 import {INodeOperator} from "src/base/registry/facets/operator/INodeOperator.sol";
 import {IArchitectBase} from "src/factory/facets/architect/IArchitect.sol";
-
 import {ICreateSpace} from "src/factory/facets/create/ICreateSpace.sol";
 import {IImplementationRegistry} from "src/factory/facets/registry/IImplementationRegistry.sol";
 import {IWalletLink} from "src/factory/facets/wallet-link/IWalletLink.sol";
@@ -34,15 +30,12 @@ import {MockMessenger} from "test/mocks/MockMessenger.sol";
 
 // deployments
 import {Architect} from "src/factory/facets/architect/Architect.sol";
-
 import {RuleEntitlement} from "src/spaces/entitlements/rule/RuleEntitlement.sol";
 import {SpaceHelper} from "test/spaces/SpaceHelper.sol";
-
 import {ISpaceDelegation} from "src/base/registry/facets/delegation/ISpaceDelegation.sol";
 import {SpaceOwner} from "src/spaces/facets/owner/SpaceOwner.sol";
 
 // deployments
-
 import {DeployBaseRegistry} from "scripts/deployments/diamonds/DeployBaseRegistry.s.sol";
 import {DeployRiverAirdrop} from "scripts/deployments/diamonds/DeployRiverAirdrop.s.sol";
 import {DeploySpaceFactory} from "scripts/deployments/diamonds/DeploySpaceFactory.s.sol";
@@ -173,8 +166,8 @@ contract BaseSetup is TestUtils, EIP712Utils, SpaceHelper {
         // POST DEPLOY
         vm.startPrank(deployer);
         ISpaceOwner(spaceOwner).setFactory(spaceFactory);
-        IImplementationRegistry(spaceFactory).addImplementation(baseRegistry);
-        IImplementationRegistry(spaceFactory).addImplementation(riverAirdrop);
+        implementationRegistry.addImplementation(baseRegistry);
+        implementationRegistry.addImplementation(riverAirdrop);
         ISpaceDelegation(baseRegistry).setRiverToken(townsToken);
         ISpaceDelegation(baseRegistry).setMainnetDelegation(baseRegistry);
         IMainnetDelegation(baseRegistry).setProxyDelegation(mainnetProxyDelegation);
@@ -201,6 +194,11 @@ contract BaseSetup is TestUtils, EIP712Utils, SpaceHelper {
         space = ICreateSpace(spaceFactory).createSpace(spaceInfo);
         everyoneSpace = ICreateSpace(spaceFactory).createSpace(everyoneSpaceInfo);
         vm.stopPrank();
+
+        vm.label(spaceFactory, "SpaceFactory");
+        vm.label(space, "Space");
+        vm.label(everyoneSpace, "EveryoneSpace");
+
         vm.resumeGasMetering();
     }
 
