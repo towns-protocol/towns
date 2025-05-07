@@ -208,9 +208,9 @@ deploy-ledger-verify-both :;
 	verifier=etherscan verifier-url=$(etherscan_url) etherscan=$(etherscan_key)
 
 deploy-facet-ledger-verify-both :;
-	@$(MAKE) deploy-facet-ledger rpc=$(rpc) hd_path=$(call format_hd_path,$(hd_path)) sender=$(sender) \
+	@$(MAKE) deploy-facet-ledger rpc=$(rpc) hd_path=$(call format_hd_path,$(HD_PATH)) sender=${SENDER_ADDRESS} \
 	verifier=blockscout verifier-url=$(blockscout_url) etherscan=$(blockscout_key)
-	@$(MAKE) resume-facet-ledger rpc=$(rpc) hd_path=$(call format_hd_path,$(hd_path)) sender=$(sender) \
+	@$(MAKE) resume-facet-ledger rpc=$(rpc) hd_path=$(call format_hd_path,$(HD_PATH)) sender=${SENDER_ADDRESS} \
 	verifier=etherscan verifier-url=$(etherscan_url) etherscan=$(etherscan_key)
 
 resume-any-ledger :;
