@@ -13,15 +13,12 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 
-	"github.com/towns-protocol/towns/core/contracts/river"
 	"github.com/towns-protocol/towns/core/node/crypto"
 	"github.com/towns-protocol/towns/core/node/logging"
-	"github.com/towns-protocol/towns/core/node/nodes"
-	"github.com/towns-protocol/towns/core/node/testutils/mocks"
 )
 
 func TestCreateCert(t *testing.T) {
-	logger := logging.DefaultZapLogger(zap.DebugLevel)
+	logger := logging.DefaultLogger(zap.DebugLevel)
 
 	wallet, err := crypto.NewWallet(context.Background())
 	require.NoError(t, err)
@@ -54,7 +51,7 @@ func TestCreateCert(t *testing.T) {
 }
 
 func TestCertGetter(t *testing.T) {
-	logger := logging.DefaultZapLogger(zap.DebugLevel)
+	logger := logging.DefaultLogger(zap.DebugLevel)
 
 	wallet, err := crypto.NewWallet(context.Background())
 	require.NoError(t, err)
@@ -88,7 +85,7 @@ func TestCertGetter(t *testing.T) {
 }
 
 func TestVerifyCert(t *testing.T) {
-	logger := logging.DefaultZapLogger(zap.DebugLevel)
+	logger := logging.DefaultLogger(zap.DebugLevel)
 
 	// Create test wallet
 	wallet, err := crypto.NewWallet(context.Background())
@@ -100,13 +97,6 @@ func TestVerifyCert(t *testing.T) {
 
 	x509Cert, err := x509.ParseCertificate(cert.Certificate[0])
 	require.NoError(t, err)
-
-	// Mock node registry
-	nodeRegistry := mocks.NewMockNodeRegistry(t)
-	nodeRegistry.On("GetNode", wallet.Address).Return(
-		nodes.NewNodeRecord(wallet.Address, wallet.Address, "", river.NodeStatus_Operational, false, nil, nil),
-		nil,
-	)
 
 	tests := []struct {
 		name    string
@@ -142,7 +132,7 @@ func TestVerifyCert(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := verifyCert(logger, nodeRegistry, tt.cert)
+			err := verifyCert(logger, tt.cert)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("verifyCert() error = %v, wantErr %v", err, tt.wantErr)
 			}
