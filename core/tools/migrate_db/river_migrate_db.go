@@ -1607,11 +1607,12 @@ func lastSnapshotIndexFromMiniblocks(
 	target *pgxpool.Pool,
 	streamId string,
 ) (int64, error) {
+	table := getPartitionName("miniblocks", streamId, 256)
+
 	if verbose {
-		fmt.Printf("Looking for snap for stream %v\n", streamId)
+		fmt.Printf("Looking for snap for stream %v in table %v\n", streamId, table)
 	}
 
-	table := getPartitionName("miniblocks", streamId, 256)
 	rows, err := target.Query(
 		ctx,
 		fmt.Sprintf("SELECT seq_num, blockdata from %s WHERE stream_id = $1 ORDER BY seq_num DESC LIMIT 101", table),
@@ -1619,6 +1620,10 @@ func lastSnapshotIndexFromMiniblocks(
 	)
 	if err != nil {
 		return int64(0), fmt.Errorf("error reading miniblocks from stream: %w", err)
+	}
+
+	if verbose {
+		fmt.Printf("Reading miniblocks for stream %s", streamId)
 	}
 
 	noError := fmt.Errorf("no error - terminate pgx.ForEachRow as soon as result is found")
