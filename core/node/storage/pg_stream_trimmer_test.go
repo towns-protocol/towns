@@ -58,8 +58,9 @@ func TestStreamTrimmer(t *testing.T) {
 		store:            pgStreamStore,
 		miniblocksToKeep: 2,
 		log:              logging.FromCtx(ctx),
-		stopCh:           make(chan struct{}),
+		stop:             make(chan struct{}),
 	}
+	pgStreamStore.st.onCreated(streamId)
 	pgStreamStore.st.trimStreams(ctx)
 
 	// Check if the streams are trimmed correctly

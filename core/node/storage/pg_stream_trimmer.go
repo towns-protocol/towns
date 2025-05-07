@@ -17,8 +17,12 @@ type streamTrimmer struct {
 	miniblocksToKeep int64
 	log              *logging.Log
 
-	stopCh chan struct{}
-	wg     sync.WaitGroup
+	streamsLock sync.Mutex
+	streams     []StreamId
+
+	wg       sync.WaitGroup
+	stopOnce sync.Once
+	stop     chan struct{}
 }
 
 // newStreamTrimmer creates a new stream trimmer
@@ -26,17 +30,23 @@ func newStreamTrimmer(
 	ctx context.Context,
 	store *PostgresStreamStore,
 	miniblocksToKeep int64,
-) *streamTrimmer {
+) (*streamTrimmer, error) {
 	st := &streamTrimmer{
 		store:            store,
 		miniblocksToKeep: miniblocksToKeep,
 		log:              logging.FromCtx(ctx),
-		stopCh:           make(chan struct{}),
+		stop:             make(chan struct{}),
 	}
 
+	// Load all space streams from the database.
+	if err := st.loadSpaceStreams(ctx); err != nil {
+		return nil, err
+	}
+
+	// Start the stream trimmer
 	st.start(ctx)
 
-	return st
+	return st, nil
 }
 
 // start starts the stream trimmer
@@ -44,6 +54,7 @@ func (t *streamTrimmer) start(ctx context.Context) {
 	t.wg.Add(1)
 	defer t.wg.Done()
 
+	t.log.Info("Starting stream trimmer")
 	go func() {
 		ticker := time.NewTicker(time.Hour)
 		defer ticker.Stop()
@@ -51,10 +62,14 @@ func (t *streamTrimmer) start(ctx context.Context) {
 		for {
 			select {
 			case <-ctx.Done():
+				t.log.Info("Stream trimmer stopped due to context cancellation", "err", ctx.Err())
 				return
-			case <-t.stopCh:
+			case <-t.stop:
+				t.log.Info("Stream trimmer stopped due to stop signal")
+				t.close()
 				return
 			case <-ticker.C:
+				t.log.Debug("Starting periodic trim operation")
 				t.trimStreams(ctx)
 			}
 		}
@@ -63,41 +78,50 @@ func (t *streamTrimmer) start(ctx context.Context) {
 
 // close stops the stream trimmer
 func (t *streamTrimmer) close() {
-	close(t.stopCh)
+	t.stopOnce.Do(func() {
+		close(t.stop)
+	})
 	t.wg.Wait()
 }
 
+// onCreated is called when a new stream is created.
+func (t *streamTrimmer) onCreated(streamId StreamId) {
+	if ValidSpaceStreamId(&streamId) {
+		t.streamsLock.Lock()
+		t.streams = append(t.streams, streamId)
+		t.streamsLock.Unlock()
+	}
+}
+
 func (t *streamTrimmer) trimStreams(ctx context.Context) {
-	// Get all streams
-	streams, err := t.store.GetStreams(ctx)
-	if err != nil {
-		t.log.Errorw("Failed to get streams for trimming", "error", err)
-		return
-	}
+	const workersCount = 4
 
-	// Filter space streams (10xxx)
-	var spaceStreams []StreamId
-	for _, stream := range streams {
-		if ValidSpaceStreamId(&stream) {
-			spaceStreams = append(spaceStreams, stream)
-		}
-	}
+	// Copy streams to avoid holding the lock while processing
+	t.streamsLock.Lock()
+	streams := make([]StreamId, len(t.streams))
+	copy(streams, t.streams)
+	t.streamsLock.Unlock()
 
-	if len(spaceStreams) == 0 {
+	if len(streams) == 0 {
 		t.log.Debug("No space streams to trim")
 		return
 	}
 
+	t.log.Infow("Starting trim operation",
+		"totalStreams", len(streams),
+		"spaceStreams", len(streams),
+	)
+
 	// Create a worker pool
-	streamCh := make(chan StreamId, len(spaceStreams))
+	streamCh := make(chan StreamId, len(streams))
 	var wg sync.WaitGroup
 
 	// Start workers
-	const workersCount = 4
 	for i := 0; i < workersCount; i++ {
 		wg.Add(1)
-		go func() {
+		go func(workerId int) {
 			defer wg.Done()
+			t.log.Debugw("Worker started", "workerId", workerId)
 			for stream := range streamCh {
 				if err := t.trimStream(ctx, stream); err != nil {
 					t.log.Errorw("Failed to trim stream",
@@ -106,17 +130,20 @@ func (t *streamTrimmer) trimStreams(ctx context.Context) {
 					)
 				}
 			}
-		}()
+			t.log.Debugw("Worker finished", "workerId", workerId)
+		}(i)
 	}
 
 	// Send streams to workers
-	for _, stream := range spaceStreams {
+	for _, stream := range streams {
 		streamCh <- stream
 	}
 	close(streamCh)
 
 	// Wait for all workers to finish
 	wg.Wait()
+
+	t.log.Infow("Completed trim operation", "totalStreams", len(streams))
 }
 
 // trimStream deletes old miniblocks for streams (10xxx streams only for now) keeping only the specified number of miniblocks
@@ -196,4 +223,39 @@ func (t *streamTrimmer) trimStreamTx(
 	}
 
 	return nil
+}
+
+// loadEphemeralStreams loads all space streams from the database.
+// This function is called only once on startup to load the streams into memory.
+// Ignoring ephemeral streams.
+func (t *streamTrimmer) loadSpaceStreams(ctx context.Context) error {
+	return t.store.txRunner(
+		ctx,
+		"streamTrimmer.loadSpaceStreams",
+		pgx.ReadWrite,
+		func(ctx context.Context, tx pgx.Tx) error {
+			rows, err := tx.Query(ctx, "SELECT stream_id FROM es WHERE ephemeral = false")
+			if err != nil {
+				return err
+			}
+
+			var stream string
+			_, err = pgx.ForEachRow(rows, []any{&stream}, func() error {
+				streamId, err := StreamIdFromString(stream)
+				if err != nil {
+					return err
+				}
+
+				if ValidSpaceStreamId(&streamId) {
+					t.streamsLock.Lock()
+					t.streams = append(t.streams, streamId)
+					t.streamsLock.Unlock()
+				}
+
+				return nil
+			})
+			return err
+		},
+		nil,
+	)
 }

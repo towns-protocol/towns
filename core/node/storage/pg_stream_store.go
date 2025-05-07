@@ -148,7 +148,10 @@ func NewPostgresStreamStore(
 	}
 
 	// Start the stream trimmer
-	store.st = newStreamTrimmer(ctx, store, spaceStreamMiniblocksToKeep)
+	store.st, err = newStreamTrimmer(ctx, store, spaceStreamMiniblocksToKeep)
+	if err != nil {
+		return nil, AsRiverError(err).Func("NewPostgresStreamStore")
+	}
 
 	return store, nil
 }
@@ -526,6 +529,10 @@ func (s *PostgresStreamStore) createStreamStorageTx(
 		}
 		return err
 	}
+
+	// Add the given stream to the stream trimmer
+	s.st.onCreated(streamId)
+
 	return nil
 }
 
