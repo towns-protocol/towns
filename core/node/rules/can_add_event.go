@@ -10,6 +10,8 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	ethTypes "github.com/ethereum/go-ethereum/core/types"
+	"google.golang.org/protobuf/proto"
+
 	"github.com/towns-protocol/towns/core/config"
 	baseContracts "github.com/towns-protocol/towns/core/contracts/base"
 	"github.com/towns-protocol/towns/core/node/auth"
@@ -20,7 +22,6 @@ import (
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/shared"
 	"github.com/towns-protocol/towns/core/xchain/bindings/erc20"
-	"google.golang.org/protobuf/proto"
 )
 
 type aeParams struct {
@@ -658,7 +659,10 @@ func (ru *aeMemberBlockchainTransactionRules) validMemberBlockchainTransaction_I
 	// loop over all events in the view, check if the transaction is already in the view
 	streamView := ru.params.streamView
 
-	hasTransaction, err := streamView.HasTransaction(ru.memberTransaction.Transaction.GetReceipt(), ru.memberTransaction.Transaction.GetSolanaReceipt())
+	hasTransaction, err := streamView.HasTransaction(
+		ru.memberTransaction.Transaction.GetReceipt(),
+		ru.memberTransaction.Transaction.GetSolanaReceipt(),
+	)
 	if err != nil {
 		return false, err
 	}
@@ -674,7 +678,10 @@ func (ru *aeReceivedBlockchainTransactionRules) validReceivedBlockchainTransacti
 	// loop over all events in the view, check if the transaction is already in the view
 	userStreamView := ru.params.streamView
 
-	hasTransaction, err := userStreamView.HasTransaction(ru.receivedTransaction.Transaction.GetReceipt(), ru.receivedTransaction.Transaction.GetSolanaReceipt())
+	hasTransaction, err := userStreamView.HasTransaction(
+		ru.receivedTransaction.Transaction.GetReceipt(),
+		ru.receivedTransaction.Transaction.GetSolanaReceipt(),
+	)
 	if err != nil {
 		return false, err
 	}
@@ -923,7 +930,7 @@ func (ru *aeBlockchainTransactionRules) validBlockchainTransaction_CheckReceiptM
 
 		// preTokenBalances isn't set when a user opens a token account (buys a token for the 1st time),
 		// so we need to check if it's not empty otherwise, we use 0 as the amount before
-		var amountBefore = big.NewInt(0)
+		amountBefore := big.NewInt(0)
 		if idx != len(meta.GetPreTokenBalances()) {
 			var ok bool
 			amountString := meta.GetPreTokenBalances()[idx].Amount.Amount
