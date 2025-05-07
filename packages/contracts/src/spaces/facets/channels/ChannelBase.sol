@@ -61,7 +61,7 @@ abstract contract ChannelBase is IChannelBase {
         }
     }
 
-    function _updateChannel(bytes32 channelId, string memory metadata, bool disabled) internal {
+    function _updateChannel(bytes32 channelId, string calldata metadata, bool disabled) internal {
         ChannelService.updateChannel(channelId, metadata, disabled);
         emit ChannelUpdated(msg.sender, channelId);
     }

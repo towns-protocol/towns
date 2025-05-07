@@ -534,6 +534,11 @@ const _abi = [
     name: "Roles__RoleDoesNotExist",
     inputs: [],
   },
+  {
+    type: "error",
+    name: "Roles__RoleIsImmutable",
+    inputs: [],
+  },
 ] as const;
 
 export class IRoles__factory {

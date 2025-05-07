@@ -32,6 +32,7 @@ make deploy-any-local context=$RIVER_ENV rpc=base_anvil type=utils contract=Depl
 make deploy-facet-local context=$RIVER_ENV rpc=base_anvil contract=FixedPricing
 make deploy-any-local context=$RIVER_ENV rpc=base_anvil type=diamonds contract=DeploySpaceFactory
 make deploy-any-local context=$RIVER_ENV rpc=base_anvil type=diamonds contract=DeployRiverAirdrop
+make deploy-any-local context=$RIVER_ENV rpc=base_anvil type=diamonds contract=DeploySwapRouter
 make interact-any-local context=$RIVER_ENV rpc=base_anvil contract=InteractPostDeploy
 make interact-any-local context=$RIVER_ENV rpc=base_anvil contract=InteractSetDefaultUriLocalhost
 make interact-any-local context=$RIVER_ENV rpc=base_anvil contract=InteractClaimCondition

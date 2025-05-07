@@ -1,5 +1,5 @@
 import { Client, createClient } from '@connectrpc/connect'
-import { type ConnectTransportOptions } from '@connectrpc/connect-web'
+import { ConnectTransportOptions } from '@connectrpc/connect-web'
 import { NotificationService } from '@towns-protocol/proto'
 import { dlog } from '@towns-protocol/dlog'
 import { getEnvVar, randomUrlSelector } from './utils'
@@ -17,11 +17,11 @@ let nextRpcClientNum = 0
 
 export type NotificationRpcClient = Client<typeof NotificationService> & { url: string }
 
-export async function makeNotificationRpcClient(
+export function makeNotificationRpcClient(
     dest: string,
     sessionToken: string,
     opts?: RpcOptions,
-): Promise<NotificationRpcClient> {
+): NotificationRpcClient {
     const transportId = nextRpcClientNum++
     const retryParams = opts?.retryParams ?? DEFAULT_RETRY_PARAMS
     const url = randomUrlSelector(dest)
@@ -53,7 +53,7 @@ export async function makeNotificationRpcClient(
             useProtoFieldName: true,
         }
     }
-    const transport = await createHttp2ConnectTransport(options)
+    const transport = createHttp2ConnectTransport(options)
     const client: NotificationRpcClient = createClient(
         NotificationService,
         transport,

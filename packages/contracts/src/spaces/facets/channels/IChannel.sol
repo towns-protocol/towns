@@ -49,7 +49,7 @@ interface IChannel is IChannelBase {
     function createChannel(
         bytes32 channelId,
         string calldata metadata,
-        uint256[] memory roleIds
+        uint256[] calldata roleIds
     ) external;
 
     /// @notice creates a channel with override permissions
@@ -75,7 +75,7 @@ interface IChannel is IChannelBase {
     /// @param channelId the channelId to update
     /// @param metadata the new metadata of the channel
     /// @param disabled whether or not the channel is disabled
-    function updateChannel(bytes32 channelId, string memory metadata, bool disabled) external;
+    function updateChannel(bytes32 channelId, string calldata metadata, bool disabled) external;
 
     /// @notice removes a channel
     /// @param channelId the channelId to remove

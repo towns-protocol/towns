@@ -135,6 +135,12 @@ type (
 			blockNumber int64,
 		) (*MiniblockDescriptor, error)
 
+		GetMiniblockCandidateCount(
+			ctx context.Context,
+			streamId StreamId,
+			miniblockNumber int64,
+		) (int, error)
+
 		// WriteMiniblocks writes miniblocks to the stream storage and creates new minipool.
 		//
 		// WriteMiniblocks checks that storage is in the consistent state matching the arguments.

@@ -63,6 +63,7 @@ import { EntitlementDataStructOutput } from '../space/IEntitlementDataQueryableS
 import { CacheResult, EntitlementCache } from '../cache/EntitlementCache'
 import { SimpleCache } from '../cache/SimpleCache'
 import { TipEventObject } from '@towns-protocol/generated/dev/typings/ITipping'
+import { ISwapRouterBase } from '@towns-protocol/generated/dev/typings/ISwapRouter'
 import {
     EntitlementRequest,
     BannedTokenIdsRequest,
@@ -1920,6 +1921,28 @@ export class SpaceDapp {
                         value: amount,
                     },
                 ),
+            txnOpts,
+        )
+    }
+
+    public async executeSwap(
+        spaceId: string,
+        exactInputParams: ISwapRouterBase.ExactInputParamsStruct,
+        routerParams: ISwapRouterBase.RouterParamsStruct,
+        poster: string,
+        value: bigint,
+        signer: ethers.Signer,
+        txnOpts?: TransactionOpts,
+    ): Promise<ContractTransaction> {
+        const space = this.getSpace(spaceId)
+        if (!space) {
+            throw new Error(`Space with spaceId "${spaceId}" is not found.`)
+        }
+        return wrapTransaction(
+            () =>
+                space.Swap.write(signer).executeSwap(exactInputParams, routerParams, poster, {
+                    value,
+                }),
             txnOpts,
         )
     }
