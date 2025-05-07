@@ -6,22 +6,10 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5"
+
 	"github.com/towns-protocol/towns/core/node/logging"
 	. "github.com/towns-protocol/towns/core/node/shared"
 )
-
-// streamTrimmerConfig holds configuration for the stream trimmer
-type streamTrimmerConfig struct {
-	// miniblocksToKeep is the number of miniblocks to keep before the last snapshot
-	miniblocksToKeep int64
-}
-
-// defaultStreamTrimmerConfig returns default configuration for the stream trimmer
-func defaultStreamTrimmerConfig() *streamTrimmerConfig {
-	return &streamTrimmerConfig{
-		miniblocksToKeep: 1000, // Keep 1000 miniblocks before last snapshot
-	}
-}
 
 // streamTrimmer handles periodic trimming of space streams
 type streamTrimmer struct {
