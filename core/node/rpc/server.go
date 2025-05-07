@@ -465,7 +465,7 @@ func (s *Service) loadTLSConfig() (*tls.Config, error) {
 		Certificates:          []tls.Certificate{*cert},
 		NextProtos:            []string{"h2"},
 		ClientAuth:            tls.RequestClientCert, // Optional client certs, needed for node2node auth
-		VerifyPeerCertificate: node2nodeauth.VerifyPeerCertificate(s.defaultLogger, s.nodeRegistry),
+		VerifyPeerCertificate: node2nodeauth.VerifyPeerCertificate(s.defaultLogger),
 	}, nil
 }
 

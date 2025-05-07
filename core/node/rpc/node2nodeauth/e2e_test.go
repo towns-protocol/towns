@@ -20,7 +20,7 @@ import (
 )
 
 func TestEndToEnd(t *testing.T) {
-	logger := logging.DefaultZapLogger(zap.DebugLevel)
+	logger := logging.DefaultLogger(zap.DebugLevel)
 
 	// Mock node registry
 	nodeRegistry := mocks.NewMockNodeRegistry(t)
@@ -42,7 +42,7 @@ func TestEndToEnd(t *testing.T) {
 			w.WriteHeader(http.StatusOK)
 		})),
 	)
-	server.TLS = testcert.GetHttp2LocalhostTLSConfig(node2nodeauth.VerifyPeerCertificate(logger, nodeRegistry))
+	server.TLS = testcert.GetHttp2LocalhostTLSConfig(node2nodeauth.VerifyPeerCertificate(logger))
 	server.StartTLS()
 	defer server.Close()
 
