@@ -70,11 +70,11 @@ func (t *streamTrimmer) monitorWorkerPool(ctx context.Context) {
 		select {
 		case <-ctx.Done():
 			t.log.Info("Worker pool stopped due to context cancellation")
-			t.workerPool.Stop()
+			t.workerPool.StopWait()
 			return
 		case <-t.stop:
 			t.log.Info("Worker pool stopped due to stop signal")
-			t.workerPool.Stop()
+			t.workerPool.StopWait()
 			return
 		}
 	}
