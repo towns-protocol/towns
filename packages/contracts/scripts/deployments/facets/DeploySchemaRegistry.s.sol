@@ -7,7 +7,7 @@ import {IDiamond} from "@towns-protocol/diamond/src/IDiamond.sol";
 //libraries
 
 //contracts
-import {DeployLib} from "@towns-protocol/diamond/scripts/common/DeployLib.sol";
+import {LibDeploy} from "@towns-protocol/diamond/src/utils/LibDeploy.sol";
 import {SchemaRegistry} from "src/modules/reference/SchemaRegistry.sol";
 
 library DeploySchemaRegistry {
@@ -34,6 +34,6 @@ library DeploySchemaRegistry {
     }
 
     function deploy() internal returns (address) {
-        return DeployLib.deployCode("SchemaRegistry.sol", "");
+        return LibDeploy.deployCode("SchemaRegistry.sol", "");
     }
 }
