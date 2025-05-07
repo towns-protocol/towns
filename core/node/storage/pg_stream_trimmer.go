@@ -52,10 +52,11 @@ func newStreamTrimmer(
 // start starts the stream trimmer
 func (t *streamTrimmer) start(ctx context.Context) {
 	t.wg.Add(1)
-	defer t.wg.Done()
 
 	t.log.Info("Starting stream trimmer")
 	go func() {
+		defer t.wg.Done()
+
 		ticker := time.NewTicker(time.Hour)
 		defer ticker.Stop()
 
