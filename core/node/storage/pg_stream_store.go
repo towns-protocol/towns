@@ -533,7 +533,9 @@ func (s *PostgresStreamStore) createStreamStorageTx(
 	}
 
 	// Add the given stream to the stream trimmer
-	s.st.onCreated(streamId)
+	if s.st != nil {
+		s.st.onCreated(streamId)
+	}
 
 	return nil
 }
