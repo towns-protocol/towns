@@ -37,6 +37,7 @@ import { IPrepayShim } from './IPrepayShim'
 import { IERC721AShim } from '../erc-721/IERC721AShim'
 import { IReviewShim } from './IReviewShim'
 import { ITreasuryShim } from './ITreasuryShim'
+import { ISwapShim } from './ISwapShim'
 
 interface AddressToEntitlement {
     [address: string]: EntitlementShim
@@ -62,6 +63,7 @@ export class Space {
     private readonly tipping: ITippingShim
     private readonly review: IReviewShim
     private readonly treasury: ITreasuryShim
+    private readonly swap: ISwapShim
 
     constructor(
         address: string,
@@ -90,6 +92,7 @@ export class Space {
         this.tipping = new ITippingShim(address, provider)
         this.review = new IReviewShim(address, provider)
         this.treasury = new ITreasuryShim(address, provider)
+        this.swap = new ISwapShim(address, provider)
     }
 
     private getAllShims() {
@@ -108,6 +111,7 @@ export class Space {
             this.erc721A,
             this.tipping,
             this.treasury,
+            this.swap,
         ] as const
     }
 
@@ -177,6 +181,10 @@ export class Space {
 
     public get Treasury(): ITreasuryShim {
         return this.treasury
+    }
+
+    public get Swap(): ISwapShim {
+        return this.swap
     }
 
     public async totalTips({ currency }: { currency: string }): Promise<{

@@ -26,6 +26,7 @@ import {DeployReferrals} from "../facets/DeployReferrals.s.sol";
 import {DeployReviewFacet} from "../facets/DeployReviewFacet.s.sol";
 import {DeployRoles} from "../facets/DeployRoles.s.sol";
 import {DeploySpaceEntitlementGated} from "../facets/DeploySpaceEntitlementGated.s.sol";
+import {DeploySwapFacet} from "../facets/DeploySwapFacet.s.sol";
 import {DeployTipping} from "../facets/DeployTipping.s.sol";
 import {DeployTreasury} from "../facets/DeployTreasury.s.sol";
 import {DeployModularAccount} from "../facets/DeployModularAccount.s.sol";
@@ -131,6 +132,9 @@ contract DeploySpace is IDiamondInitHelper, DiamondHelper, Deployer {
         facet = facetHelper.deploy("SpaceEntitlementGated", deployer);
         addCut(DeploySpaceEntitlementGated.makeCut(facet, IDiamond.FacetCutAction.Add));
 
+        facet = facetHelper.deploy("SwapFacet", deployer);
+        addCut(DeploySwapFacet.makeCut(facet, IDiamond.FacetCutAction.Add));
+
         facet = facetHelper.deploy("TippingFacet", deployer);
         addCut(DeployTipping.makeCut(facet, IDiamond.FacetCutAction.Add));
 
@@ -200,6 +204,9 @@ contract DeploySpace is IDiamondInitHelper, DiamondHelper, Deployer {
             } else if (facetName.eq("SpaceEntitlementGated")) {
                 facet = facetHelper.deploy("SpaceEntitlementGated", deployer);
                 addCut(DeploySpaceEntitlementGated.makeCut(facet, IDiamond.FacetCutAction.Add));
+            } else if (facetName.eq("SwapFacet")) {
+                facet = facetHelper.deploy("SwapFacet", deployer);
+                addCut(DeploySwapFacet.makeCut(facet, IDiamond.FacetCutAction.Add));
             } else if (facetName.eq("TippingFacet")) {
                 facet = facetHelper.deploy("TippingFacet", deployer);
                 addCut(DeployTipping.makeCut(facet, IDiamond.FacetCutAction.Add));
