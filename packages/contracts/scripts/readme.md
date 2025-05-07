@@ -2,6 +2,10 @@
 
 Inspired by [hardhat-deploy](https://github.com/wighawag/hardhat-deploy)
 
+This project supports two methods for deploying contracts:
+
+### Method 1: Custom Deployment Scripts
+
 For each contract being deployed, we create a script that will:
 
 1. inherit from `Deployer`
@@ -30,20 +34,45 @@ contract DeployMockERC721A is Deployer {
 
 The framework will:
 
-1. Load an existing deployment from `contracts/deployments/<deploymentContext>/<chainIdAlias>/<contracts>.json`
+1. Load an existing deployment from `contracts/deployments/<context>/<chainIdAlias>/<contracts>.json`
 
 2. if `OVERRIDE_DEPLOYMENTS=1` is set or if no deployments are found, it will:
 
 - read `PRIVATE_KEY` from env (LOCAL_PRIVATE_KEY for anvil) or wait for ledger
 - invoke `__deploy()` function
-- if `SAVE_DEPLOYMENTS` is set; it will save the deployment to `contracts/deployments/deploymentContext/<network>/<contract>.json`
+- if `SAVE_DEPLOYMENTS` is set; it will save the deployment to `contracts/deployments/<context>/<chainIdAlias>/<contract>.json`
 
-This makes it easy to:
+### Method 2: DeployFacet Script (For Facet Contracts)
 
-- redeploy a single contract but load existing dependencies
-- redeploy everything
-- save deployments to version control (addresses atm)
-- import existing deployments
+For facet contract deployments, we also support a standardized deployment process using the `DeployFacet.s.sol` script which:
+
+1. Uses deterministic CREATE2 addresses for predictable deployment outcomes
+2. Supports batch deployments for gas efficiency
+3. Provides advanced gas estimation and deployment verification
+
+To deploy a facet with this method, you set the `CONTRACT_NAME` environment variable and call the script:
+
+```
+CONTRACT_NAME=MyFacet forge script scripts/common/DeployFacet.s.sol
+```
+
+Or use the convenience makefile commands:
+
+```
+make deploy-facet rpc=base_sepolia contract=MyFacet
+```
+
+For more details on the DeployFacet functionality, see the [DeployFacet documentation](../node_modules/@towns-protocol/diamond/scripts/README.md).
+
+## Comparing the Two Methods
+
+| Feature             | Custom Deployment Scripts           | DeployFacet                         |
+| ------------------- | ----------------------------------- | ----------------------------------- |
+| Deployment Method   | Standard deployment                 | CREATE2 deterministic addresses     |
+| Contract Support    | Any contract type                   | Optimized for facet contracts       |
+| Implementation      | Requires custom script per contract | Standardized for all facets         |
+| Address Consistency | Different per deployment            | Same across networks with same salt |
+| Batch Deployments   | No native support                   | Built-in support                    |
 
 ## Flags
 
@@ -74,17 +103,30 @@ This makes it easy to:
 -> anvil
 
 # perform the deployment to a local network
+# Option 1: Custom deployment script
 -> make deploy-any-local contract=DeployMockERC721A type=facets
+
+# Option 2: Using the DeployFacet script (for facet contracts)
+-> make deploy-facet-local rpc=base_anvil contract=MockERC721A
 ```
 
 ## How to deploy to a testnet or mainnet
 
 ```bash
+# Method 1: Using custom deployment scripts
 # To deploy a contract to Base Sepolia in the "gamma" deployment context:
 -> make deploy-base-sepolia contract=DeployWalletLink type=facets context=gamma
 
+# Method 2: Using the DeployFacet script
+# To deploy a facet to Base Sepolia:
+-> make deploy-facet rpc=base_sepolia contract=WalletLink context=gamma
+
 # To deploy with a ledger hardware wallet to Base mainnet:
+# Method 1: Using custom deployment scripts
 -> make deploy-base contract=DeploySpaceFactory type=diamonds context=omega
+
+# Method 2: Using the DeployFacet script
+-> make deploy-facet-ledger rpc=base contract=WalletLink context=omega
 
 # To redeploy a contract to Base Sepolia in the "gamma" deployment context:
 -> OVERRIDE_DEPLOYMENTS=1 make deploy-base-sepolia contract=DeployWalletLink type=facets context=gamma
@@ -95,8 +137,8 @@ This makes it easy to:
 ```bash
 # say you want to mint from MockERC721A
 
-# deploy a local implementation of MockERC721A by calling DeployMockERC721A
--> make deploy-any-local rpc=base_anvil contract=DeployMockERC721A type=facets
+# deploy a local implementation of MockERC721A by calling DeployFacet
+-> make deploy-facet-local rpc=base_anvil contract=MockERC721A
 
 # next we'll call the script InteractMockERC721A
 # This will grab new and existing deployment addresses from our deployments cache and use those to interact with each other
