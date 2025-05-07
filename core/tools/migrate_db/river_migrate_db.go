@@ -1740,10 +1740,6 @@ func restoreSnapshotIndices(
 		})
 	}
 
-	if verbose {
-		fmt.Println("Work submitted")
-	}
-
 	go reportProgress("Streams updated:", &progressCounter)
 
 	workerPool.StopWait()
