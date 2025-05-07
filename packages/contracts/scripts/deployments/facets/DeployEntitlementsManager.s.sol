@@ -6,7 +6,7 @@ import {IDiamond} from "@towns-protocol/diamond/src/Diamond.sol";
 import {IEntitlementsManager} from "src/spaces/facets/entitlements/IEntitlementsManager.sol";
 
 // libraries
-import {DeployLib} from "@towns-protocol/diamond/scripts/common/DeployLib.sol";
+import {LibDeploy} from "@towns-protocol/diamond/src/utils/LibDeploy.sol";
 
 library DeployEntitlementsManager {
     function selectors() internal pure returns (bytes4[] memory res) {
@@ -28,6 +28,6 @@ library DeployEntitlementsManager {
     }
 
     function deploy() internal returns (address) {
-        return DeployLib.deployCode("EntitlementsManager.sol", "");
+        return LibDeploy.deployCode("EntitlementsManager.sol", "");
     }
 }
