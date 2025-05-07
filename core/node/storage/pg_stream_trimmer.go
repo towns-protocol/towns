@@ -26,10 +26,6 @@ type streamTrimmer struct {
 	// Worker pool for trimming operations
 	workerPool *workerpool.WorkerPool
 
-	// Stream management
-	streamsLock sync.Mutex
-	streams     []StreamId
-
 	// Task tracking
 	pendingTasksLock sync.Mutex
 	pendingTasks     map[StreamId]struct{}
