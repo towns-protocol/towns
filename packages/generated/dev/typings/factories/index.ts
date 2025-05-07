@@ -3,6 +3,10 @@
 /* eslint-disable */
 export * as iMockLegacyArchitectSol from "./IMockLegacyArchitect.sol";
 export * as iRuleEntitlementSol from "./IRuleEntitlement.sol";
+export { Architect__factory } from "./Architect__factory";
+export { Channels__factory } from "./Channels__factory";
+export { DropFacet__factory } from "./DropFacet__factory";
+export { EntitlementsManager__factory } from "./EntitlementsManager__factory";
 export { IArchitect__factory } from "./IArchitect__factory";
 export { IBanning__factory } from "./IBanning__factory";
 export { IChannel__factory } from "./IChannel__factory";
@@ -39,9 +43,15 @@ export { Member__factory } from "./Member__factory";
 export { MembershipFacet__factory } from "./MembershipFacet__factory";
 export { MockERC721A__factory } from "./MockERC721A__factory";
 export { MockEntitlementGated__factory } from "./MockEntitlementGated__factory";
+export { MockLegacyArchitect__factory } from "./MockLegacyArchitect__factory";
+export { NodeRegistry__factory } from "./NodeRegistry__factory";
+export { OperatorRegistry__factory } from "./OperatorRegistry__factory";
 export { OwnableFacet__factory } from "./OwnableFacet__factory";
 export { PlatformRequirementsFacet__factory } from "./PlatformRequirementsFacet__factory";
 export { PrepayFacet__factory } from "./PrepayFacet__factory";
+export { Roles__factory } from "./Roles__factory";
 export { SpaceOwner__factory } from "./SpaceOwner__factory";
+export { StreamRegistry__factory } from "./StreamRegistry__factory";
 export { TokenPausableFacet__factory } from "./TokenPausableFacet__factory";
 export { UserEntitlement__factory } from "./UserEntitlement__factory";
+export { WalletLink__factory } from "./WalletLink__factory";

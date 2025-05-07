@@ -15,6 +15,7 @@ import {SafeCastLib} from "solady/utils/SafeCastLib.sol";
 // contracts
 import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
 import {OwnableBase} from "@towns-protocol/diamond/src/facets/ownable/OwnableBase.sol";
+import {TownsPointsStorage} from "src/airdrop/points/TownsPointsStorage.sol";
 
 contract DropFacet is IDropFacet, OwnableBase, Facet {
     using DropFacetLib for DropFacetLib.Layout;
@@ -47,6 +48,9 @@ contract DropFacet is IDropFacet, OwnableBase, Facet {
 
         condition.updateClaim(claimed, amount);
 
+        TownsPointsStorage.Layout storage points = TownsPointsStorage.layout();
+        points.inner.burn(claim.account, claim.points);
+
         CurrencyTransfer.safeTransferERC20(
             condition.currency,
             address(this),
@@ -75,6 +79,9 @@ contract DropFacet is IDropFacet, OwnableBase, Facet {
 
         condition.verifyClaim(claimed, claim);
         condition.updateClaim(claimed, claim.quantity);
+
+        TownsPointsStorage.Layout storage points = TownsPointsStorage.layout();
+        points.inner.burn(claim.account, claim.points);
 
         DropFacetLib.getLayout().approveClaimToken(condition, claim.quantity);
 

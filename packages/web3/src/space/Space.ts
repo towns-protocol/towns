@@ -27,8 +27,8 @@ import { BaseChainConfig } from '../utils/IStaticContractsInfo'
 
 import { IMembershipShim } from './IMembershipShim'
 import { NoopRuleData } from './entitlements/entitlement'
-import { RuleEntitlementShim } from './entitlements/RuleEntitlementShim'
-import { RuleEntitlementV2Shim } from './entitlements/RuleEntitlementV2Shim'
+import { RuleEntitlementShim, IRuleEntitlementBase } from './entitlements/RuleEntitlementShim'
+import { RuleEntitlementV2Shim, IRuleEntitlementV2Base } from './entitlements/RuleEntitlementV2Shim'
 import { IBanningShim } from './IBanningShim'
 import { ITippingShim } from './ITippingShim'
 import { IERC721AQueryableShim } from '../erc-721/IERC721AQueryableShim'
@@ -37,8 +37,6 @@ import { IPrepayShim } from './IPrepayShim'
 import { IERC721AShim } from '../erc-721/IERC721AShim'
 import { IReviewShim } from './IReviewShim'
 import { ITreasuryShim } from './ITreasuryShim'
-import { IRuleEntitlementBase } from './entitlements/IRuleEntitlementShim'
-import { IRuleEntitlementV2Base } from './entitlements/IRuleEntitlementV2Shim'
 import { ISwapRouterShim } from './ISwapRouterShim'
 
 interface AddressToEntitlement {
@@ -49,7 +47,7 @@ export class Space {
     private readonly address: string
     private readonly addressToEntitlement: AddressToEntitlement = {}
     private readonly spaceId: string
-    public readonly provider: ethers.providers.Provider | undefined
+    public readonly provider: ethers.providers.Provider
     private readonly channel: IChannelShim
     private readonly entitlements: IEntitlementsShim
     private readonly multicall: IMulticallShim
@@ -71,7 +69,7 @@ export class Space {
         address: string,
         spaceId: string,
         config: BaseChainConfig,
-        provider: ethers.providers.Provider | undefined,
+        provider: ethers.providers.Provider,
     ) {
         this.address = address
         this.spaceId = spaceId
