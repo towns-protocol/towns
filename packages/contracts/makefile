@@ -61,7 +61,7 @@ deploy-facet-local :;
 	@SAVE_DEPLOYMENTS=1 $(if $(context),DEPLOYMENT_CONTEXT=$(context)) \
 	CONTRACT_NAME=$(contract) \
 	forge script scripts/common/DeployFacet.s.sol \
-	--ffi --rpc-url ${rpc} --private-key ${LOCAL_PRIVATE_KEY} --broadcast --slow
+	--ffi --rpc-url ${rpc} --private-key ${LOCAL_PRIVATE_KEY} --broadcast
 
 interact-any-local :;
 	@echo "Running $(contract) on local chain"
