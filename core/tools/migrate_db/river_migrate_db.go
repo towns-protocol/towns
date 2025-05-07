@@ -1612,12 +1612,6 @@ func lastSnapshotIndexFromMiniblocks(
 		"SELECT seq_num, blockdata from %s WHERE stream_id = $1 ORDER BY seq_num DESC LIMIT 101;",
 		table,
 	)
-
-	if verbose {
-		fmt.Printf("Looking for snap for stream %v in table %v\n", streamId, table)
-		fmt.Printf("Query: \"%v\"\n", query)
-	}
-
 	rows, err := target.Query(
 		ctx,
 		query,
@@ -1625,10 +1619,6 @@ func lastSnapshotIndexFromMiniblocks(
 	)
 	if err != nil {
 		return int64(0), fmt.Errorf("error reading miniblocks from stream: %w", err)
-	}
-
-	if verbose {
-		fmt.Printf("Reading miniblocks for stream %s", streamId)
 	}
 
 	noError := fmt.Errorf("no error - terminate pgx.ForEachRow as soon as result is found")
@@ -1738,10 +1728,6 @@ func restoreSnapshotIndices(
 
 	workerPool := workerpool.New(numWorkers)
 	workItems := chunk2(streamIds, txSize)
-
-	if verbose {
-		fmt.Println("work chunked...")
-	}
 
 	var progressCounter atomic.Int64
 	for _, workItem := range workItems {
