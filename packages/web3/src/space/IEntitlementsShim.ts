@@ -10,12 +10,12 @@ const { abi, connect } = EntitlementsManager__factory
 export type { IEntitlementsManagerBase as IEntitlementsBase }
 
 export class GetEntitlements implements Keyable {
-    spaceId: string
-    constructor(spaceId: string) {
-        this.spaceId = spaceId
+    spaceAddress: string
+    constructor(spaceAddress: string) {
+        this.spaceAddress = spaceAddress
     }
     toKey(): string {
-        return `getEntitlements:${this.spaceId}`
+        return `getEntitlements:${this.spaceAddress}`
     }
 }
 
@@ -33,11 +33,10 @@ export class IEntitlementsShim extends BaseContractShim<typeof connect> {
         })
     }
 
-    public async getEntitlements(
-        spaceId: string,
-    ): Promise<IEntitlementsManagerBase.EntitlementStructOutput[]> {
-        return this.getEntitlementsCache.executeUsingCache(new GetEntitlements(spaceId), async () =>
-            this.read.getEntitlements(),
+    public async getEntitlements(): Promise<IEntitlementsManagerBase.EntitlementStructOutput[]> {
+        return this.getEntitlementsCache.executeUsingCache(
+            new GetEntitlements(this.address),
+            async () => this.read.getEntitlements(),
         )
     }
 }

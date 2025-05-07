@@ -376,7 +376,7 @@ export class Space {
 
     public async getEntitlementShims(): Promise<EntitlementShim[]> {
         // get all the entitlement addresses supported in the space
-        const entitlementInfo = await this.entitlements.read.getEntitlements()
+        const entitlementInfo = await this.entitlements.getEntitlements()
         const getEntitlementShims: Promise<EntitlementShim>[] = []
         // with the addresses, get the entitlement shims
         for (const info of entitlementInfo) {
