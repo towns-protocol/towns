@@ -112,7 +112,6 @@ func (ssr *syncSessionRunner) AddStream(
 	// Wait for the sync to start. This waitgroup should be decremented even if the initial sync from the remote syncer fails.
 	ssr.syncStarted.Wait()
 	if !ssr.Assignable() {
-		ssr.mu.Unlock()
 		return errSyncSessionUnassignable
 	}
 
@@ -157,7 +156,7 @@ func (ssr *syncSessionRunner) applyUpdateToStream(
 		reset    = streamAndCookie.GetSyncReset()
 		streamId = record.streamId
 		log      = logging.FromCtx(ssr.syncCtx)
-		labels   = prometheus.Labels{"reset": fmt.Sprintf("%v", reset)}
+		labels   = prometheus.Labels{"type": shared.StreamTypeToString(streamId.Type())}
 	)
 
 	if reset {
@@ -494,13 +493,13 @@ type MultiSyncRunner struct {
 
 	// concurrentNodeRequests keeps track of a set of weighted semaphors, one per node address.
 	// These are used to rate limit concurrent requests to each remote node from this service.
-	concurrentNodeRequests sync.Map
+	concurrentNodeRequests sync.Map // map[commonAddress]*semaphore.Weighted
 
 	// unfilledSyncs tracks sync sessions that have not yet been filled to maximum capacity for each
-	// node. Once a sync session is filled, we remove the reference here. The sync session continues
+	// node. Once a sync session unassignable, we remove the reference here. The sync session continues
 	// to be accessed via it's go routine, but it will be garbage collected if the routine exits.
 	// In such cases the sync session runner will first relocate all of its streams.
-	unfilledSyncs sync.Map
+	unfilledSyncs sync.Map // map[commonAddress]*syncStreamRunner
 
 	// TODO: use a single node registry and modify http client settings for better performance.
 	nodeRegistries []nodes.NodeRegistry
@@ -571,6 +570,7 @@ func (msr *MultiSyncRunner) Run(
 	}
 
 	<-rootCtx.Done()
+	msr.workerPool.StopWait()
 }
 
 func (msr *MultiSyncRunner) getNodeRegistry() nodes.NodeRegistry {
@@ -614,7 +614,7 @@ func (msr *MultiSyncRunner) addToSync(
 		if err := pool.Acquire(rootCtx, 1); err != nil {
 			if !errors.Is(err, context.Canceled) {
 				log.Errorw(
-					"unable to acquire worker pool task for node; re-assigning stream",
+					"unable to acquire worker pool task for node; closing runner and re-assigning stream",
 					"error",
 					err,
 					"node",
@@ -665,6 +665,17 @@ func (msr *MultiSyncRunner) addToSync(
 	if err := runner.AddStream(rootCtx, record); err != nil {
 		// Aggressively release the lock on target node resources to maximize request throughput.
 		pool.Release(1)
+		// log.Debugw(
+		// 	"Failed to add stream to sync; creating new syncSessionRunner",
+		// 	"err",
+		// 	err,
+		// 	"stream",
+		// 	record.streamId,
+		// 	"syncId",
+		// 	runner.GetSyncId(),
+		// 	"pool",
+		// 	pool,
+		// )
 
 		// Create a new runner and replace this one
 		newRunner := NewSyncSessionRunner(
@@ -680,15 +691,15 @@ func (msr *MultiSyncRunner) addToSync(
 			msr.otelTracer,
 		)
 
-		if err := pool.Acquire(rootCtx, 1); err != nil {
-			if errors.Is(err, context.Canceled) {
+		if acquireErr := pool.Acquire(rootCtx, 1); acquireErr != nil {
+			if errors.Is(acquireErr, context.Canceled) {
 				return
 			}
 
 			log.Errorw(
 				"unable to acquire worker pool task for node; re-assigning stream",
 				"error",
-				err,
+				acquireErr,
 				"node",
 				targetNode,
 				"streamId",
@@ -703,7 +714,7 @@ func (msr *MultiSyncRunner) addToSync(
 			runner,
 			newRunner,
 		); swapped {
-			newRunner.Run(rootCtx)
+			go newRunner.Run(rootCtx)
 			newRunner.WaitUntilStarted()
 		}
 		pool.Release(1)
@@ -739,9 +750,6 @@ func (msr *MultiSyncRunner) AddStream(
 	rootCtx context.Context,
 	stream *river.StreamWithId,
 	applyHistoricalStreamContents bool,
-	nodeRegistry nodes.NodeRegistry,
-	onchainConfig crypto.OnChainConfiguration,
-	newTrackedStreamView TrackedViewConstructorFn,
 ) {
 	promLabels := prometheus.Labels{"type": shared.StreamTypeToString(stream.StreamId().Type())}
 	msr.metrics.TotalStreams.With(promLabels).Inc()
