@@ -1936,7 +1936,7 @@ export class SpaceDapp {
         }
         return wrapTransaction(
             () =>
-                space.SwapRouter.write(signer).executeSwap(exactInputParams, routerParams, poster, {
+                space.Swap.write(signer).executeSwap(exactInputParams, routerParams, poster, {
                     value,
                 }),
             txnOpts,
