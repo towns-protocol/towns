@@ -1702,8 +1702,12 @@ func writeLastSnapshotMiniblock(
 func restoreSnapshotIndices(
 	ctx context.Context,
 	target *pgxpool.Pool,
+	filteredStreamIds []shared.StreamId,
 ) error {
 	streamIds, _, _, err := getStreamIds(ctx, target)
+	if len(filteredStreamIds) > 0 {
+		streamIds = filterStreamList(streamIds, filteredStreamIds)
+	}
 	if err != nil {
 		return fmt.Errorf("unable to get existing stream ids: %w", err)
 	}
@@ -1734,25 +1738,36 @@ func restoreSnapshotIndices(
 	return nil
 }
 
-var restoreSnapshotIndicesCmd = &cobra.Command{
-	Use:   "restore-snapshot-indices",
-	Short: "Restore snapshot indices to data that was copied from an archiver backup",
-	RunE: func(cmd *cobra.Command, args []string) error {
-		ctx := cmd.Context()
-		targetPool, targetInfo, err := getTargetDbPool(ctx, true)
-		if err != nil {
-			return err
-		}
-		err = testDbConnection(ctx, targetPool, targetInfo)
-		if err != nil {
-			return err
-		}
+var (
+	restoreSnapshotIndicesCmdFilterStreamsFile string
+	restoreSnapshotIndicesCmd                  = &cobra.Command{
+		Use:   "restore-snapshot-indices",
+		Short: "Restore snapshot indices to data that was copied from an archiver backup",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			ctx := cmd.Context()
+			targetPool, targetInfo, err := getTargetDbPool(ctx, true)
+			if err != nil {
+				return err
+			}
+			err = testDbConnection(ctx, targetPool, targetInfo)
+			if err != nil {
+				return err
+			}
 
-		return restoreSnapshotIndices(ctx, targetPool)
-	},
-}
+			var filteredStreamIds []shared.StreamId
+			if copyCmdFilterStreamsFile != "" {
+				filteredStreamIds = readStreamIdFile(copyCmdFilterStreamsFile)
+			}
+
+			return restoreSnapshotIndices(ctx, targetPool, filteredStreamIds)
+		},
+	}
+)
 
 func init() {
+	restoreSnapshotIndicesCmd.Flags().
+		StringVar(&restoreSnapshotIndicesCmdFilterStreamsFile, "filter-streams-file", "", "File with the subset of streams to copy from the archiver in order to restore a node. If the copy is from an archiver, this must be a valid file with stream ids.")
+
 	targetCmd.AddCommand(restoreSnapshotIndicesCmd)
 }
 
