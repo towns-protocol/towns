@@ -1767,8 +1767,8 @@ var (
 			}
 
 			var filteredStreamIds []shared.StreamId
-			if copyCmdFilterStreamsFile != "" {
-				filteredStreamIds = readStreamIdFile(copyCmdFilterStreamsFile)
+			if restoreSnapshotIndicesCmdFilterStreamsFile != "" {
+				filteredStreamIds = readStreamIdFile(restoreSnapshotIndicesCmdFilterStreamsFile)
 			}
 
 			return restoreSnapshotIndices(ctx, targetPool, filteredStreamIds)
