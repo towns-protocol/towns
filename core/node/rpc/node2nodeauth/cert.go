@@ -16,7 +16,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	ethcrypto "github.com/ethereum/go-ethereum/crypto"
 
-	"github.com/towns-protocol/towns/core/contracts/river"
 	. "github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/crypto"
 	"github.com/towns-protocol/towns/core/node/http_client"
@@ -27,11 +26,11 @@ import (
 
 const (
 	certTTL            = time.Hour
-	certDurationBuffer = time.Second * 30
+	certDurationBuffer = time.Minute * 2
 	// certNameFmt is the format for the node-2-node client certificate name.
 	// The format is: <chain_id>.<node-address>.towns
 	certNameFmt = "%s.%s.towns"
-	certIssuer  = "towns"
+	certIssuer  = "towns.com"
 )
 
 var (
@@ -39,8 +38,8 @@ var (
 	certExtOID = asn1.ObjectIdentifier{1, 3, 6, 1, 4, 1, 50000, 1, 1}
 )
 
-// VerifyPeerCertificate goes through the peer certificates and verifies the node-2-node client certificate.
-// Returns nil if the certificate is valid or not found.
+// VerifyPeerCertificate returns a function that goes through the peer certificates
+// and verifies the node-2-node client certificate, and returns nil if the certificate is valid or not found.
 func VerifyPeerCertificate(logger *logging.Log, nodeRegistry nodes.NodeRegistry) func([][]byte, [][]*x509.Certificate) error {
 	return func(rawCerts [][]byte, certs [][]*x509.Certificate) error {
 		for _, raw := range rawCerts {
@@ -121,16 +120,6 @@ func verifyCert(logger *logging.Log, nodeRegistry nodes.NodeRegistry, cert *x509
 
 	if recoveredAddr.Cmp(common.HexToAddress(certExt.Address)) != 0 {
 		return RiverError(Err_UNAUTHENTICATED, "Node-2-node cert signature does not match address").LogError(logger)
-	}
-
-	node, err := nodeRegistry.GetNode(recoveredAddr)
-	if err != nil {
-		return err
-	}
-
-	// Check that that sender node is operational
-	if node.Status() != river.NodeStatus_Operational {
-		return RiverError(Err_UNAUTHENTICATED, "Node is not operational").LogError(logger)
 	}
 
 	return nil
