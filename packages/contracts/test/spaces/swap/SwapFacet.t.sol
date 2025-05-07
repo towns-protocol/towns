@@ -12,6 +12,7 @@ import {ISwapFacetBase, ISwapFacet} from "../../../src/spaces/facets/swap/ISwapF
 // libraries
 import {BasisPoints} from "../../../src/utils/libraries/BasisPoints.sol";
 import {CurrencyTransfer} from "../../../src/utils/libraries/CurrencyTransfer.sol";
+import {SwapFacetStorage} from "../../../src/spaces/facets/swap/SwapFacetStorage.sol";
 import {SafeTransferLib} from "solady/utils/SafeTransferLib.sol";
 
 // contracts
@@ -77,6 +78,12 @@ contract SwapFacetTest is BaseSetup, SwapTestBase, ISwapFacetBase, IOwnableBase,
             900,
             user
         );
+    }
+
+    function test_storageSlot() external pure {
+        bytes32 slot = keccak256(abi.encode(uint256(keccak256("spaces.facets.swap.storage")) - 1)) &
+            ~bytes32(uint256(0xff));
+        assertEq(slot, SwapFacetStorage.STORAGE_SLOT, "slot");
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/

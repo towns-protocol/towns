@@ -8,6 +8,7 @@ import {ISwapRouter} from "../../src/router/ISwapRouter.sol";
 // libraries
 import {BasisPoints} from "../../src/utils/libraries/BasisPoints.sol";
 import {CurrencyTransfer} from "../../src/utils/libraries/CurrencyTransfer.sol";
+import {SwapRouterStorage} from "../../src/router/SwapRouterStorage.sol";
 
 // contracts
 import {DeployMockERC20, MockERC20} from "../../scripts/deployments/utils/DeployMockERC20.s.sol";
@@ -55,6 +56,12 @@ contract SwapRouterTest is SwapTestBase {
         DeploySwapRouter deploySwapRouter = new DeploySwapRouter();
         deploySwapRouter.setDependencies(spaceFactory);
         swapRouter = ISwapRouter(deploySwapRouter.deploy(deployer));
+    }
+
+    function test_storageSlot() external pure {
+        bytes32 slot = keccak256(abi.encode(uint256(keccak256("router.swap.storage")) - 1)) &
+            ~bytes32(uint256(0xff));
+        assertEq(slot, SwapRouterStorage.STORAGE_SLOT, "slot");
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
