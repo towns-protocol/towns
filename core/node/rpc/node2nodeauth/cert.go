@@ -193,8 +193,8 @@ func createCert(logger *logging.Log, wallet *crypto.Wallet, riverChainId *big.In
 			Organization: []string{certIssuer},
 			CommonName:   fmt.Sprintf(certNameFmt, riverChainId, wallet.Address.Hex()),
 		},
-		NotBefore:       time.Now().Add(-certDurationBuffer), // Add a small buffer to avoid issues with time differences
-		NotAfter:        time.Now().Add(certTTL),
+		NotBefore:       time.Now().Add(-certDurationBuffer),          // Add a small buffer to avoid issues with time differences
+		NotAfter:        time.Now().Add(certTTL + certDurationBuffer), // Add a small buffer to avoid issues with time differences
 		KeyUsage:        x509.KeyUsageDigitalSignature,
 		ExtKeyUsage:     []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
 		ExtraExtensions: []pkix.Extension{{Id: certExtOID, Value: extensionValue}},
