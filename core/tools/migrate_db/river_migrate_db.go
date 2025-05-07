@@ -1608,14 +1608,19 @@ func lastSnapshotIndexFromMiniblocks(
 	streamId string,
 ) (int64, error) {
 	table := getPartitionName("miniblocks", streamId, 256)
+	query := fmt.Sprintf(
+		"SELECT seq_num, blockdata from %s WHERE stream_id = $1 ORDER BY seq_num DESC LIMIT 101;",
+		table,
+	)
 
 	if verbose {
 		fmt.Printf("Looking for snap for stream %v in table %v\n", streamId, table)
+		fmt.Printf("Query: \"%v\"\n", query)
 	}
 
 	rows, err := target.Query(
 		ctx,
-		fmt.Sprintf("SELECT seq_num, blockdata from %s WHERE stream_id = $1 ORDER BY seq_num DESC LIMIT 101", table),
+		query,
 		streamId,
 	)
 	if err != nil {
@@ -1787,7 +1792,7 @@ var (
 
 func init() {
 	restoreSnapshotIndicesCmd.Flags().
-		StringVar(&restoreSnapshotIndicesCmdFilterStreamsFile, "filter-streams-file", "", "File with the subset of streams to copy from the archiver in order to restore a node. If the copy is from an archiver, this must be a valid file with stream ids.")
+		StringVar(&restoreSnapshotIndicesCmdFilterStreamsFile, "filter-streams-file", "", "File with the subset of streams to copy from the archiver in order to restore a node.")
 
 	targetCmd.AddCommand(restoreSnapshotIndicesCmd)
 }
