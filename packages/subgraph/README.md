@@ -286,3 +286,10 @@ http://localhost:42069/ready
 http://localhost:42069/metrics
 
 http://localhost:42069/health
+
+## Update schema.graphql
+
+```
+# regenerate schema.graphql file with a headless instance
+yarn dev:no-ui
+```

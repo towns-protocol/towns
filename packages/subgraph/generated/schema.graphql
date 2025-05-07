@@ -1,0 +1,126 @@
+"""
+The `JSON` scalar type represents JSON values as specified by [ECMA-404](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf).
+"""
+scalar JSON
+
+scalar BigInt
+
+type PageInfo {
+  hasNextPage: Boolean!
+  hasPreviousPage: Boolean!
+  startCursor: String
+  endCursor: String
+}
+
+type Meta {
+  status: JSON
+}
+
+type Query {
+  space(id: String!): space
+  spaces(where: spaceFilter, orderBy: String, orderDirection: String, before: String, after: String, limit: Int): spacePage!
+  _meta: Meta
+}
+
+type space {
+  id: String!
+  owner: String
+  tokenId: BigInt
+  name: String
+  uri: String
+  shortDescription: String
+  longDescription: String
+  createdAt: BigInt
+  paused: Boolean
+}
+
+type spacePage {
+  items: [space!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+input spaceFilter {
+  AND: [spaceFilter]
+  OR: [spaceFilter]
+  id: String
+  id_not: String
+  id_in: [String]
+  id_not_in: [String]
+  id_contains: String
+  id_not_contains: String
+  id_starts_with: String
+  id_ends_with: String
+  id_not_starts_with: String
+  id_not_ends_with: String
+  owner: String
+  owner_not: String
+  owner_in: [String]
+  owner_not_in: [String]
+  owner_contains: String
+  owner_not_contains: String
+  owner_starts_with: String
+  owner_ends_with: String
+  owner_not_starts_with: String
+  owner_not_ends_with: String
+  tokenId: BigInt
+  tokenId_not: BigInt
+  tokenId_in: [BigInt]
+  tokenId_not_in: [BigInt]
+  tokenId_gt: BigInt
+  tokenId_lt: BigInt
+  tokenId_gte: BigInt
+  tokenId_lte: BigInt
+  name: String
+  name_not: String
+  name_in: [String]
+  name_not_in: [String]
+  name_contains: String
+  name_not_contains: String
+  name_starts_with: String
+  name_ends_with: String
+  name_not_starts_with: String
+  name_not_ends_with: String
+  uri: String
+  uri_not: String
+  uri_in: [String]
+  uri_not_in: [String]
+  uri_contains: String
+  uri_not_contains: String
+  uri_starts_with: String
+  uri_ends_with: String
+  uri_not_starts_with: String
+  uri_not_ends_with: String
+  shortDescription: String
+  shortDescription_not: String
+  shortDescription_in: [String]
+  shortDescription_not_in: [String]
+  shortDescription_contains: String
+  shortDescription_not_contains: String
+  shortDescription_starts_with: String
+  shortDescription_ends_with: String
+  shortDescription_not_starts_with: String
+  shortDescription_not_ends_with: String
+  longDescription: String
+  longDescription_not: String
+  longDescription_in: [String]
+  longDescription_not_in: [String]
+  longDescription_contains: String
+  longDescription_not_contains: String
+  longDescription_starts_with: String
+  longDescription_ends_with: String
+  longDescription_not_starts_with: String
+  longDescription_not_ends_with: String
+  createdAt: BigInt
+  createdAt_not: BigInt
+  createdAt_in: [BigInt]
+  createdAt_not_in: [BigInt]
+  createdAt_gt: BigInt
+  createdAt_lt: BigInt
+  createdAt_gte: BigInt
+  createdAt_lte: BigInt
+  paused: Boolean
+  paused_not: Boolean
+  paused_in: [Boolean]
+  paused_not_in: [Boolean]
+}
