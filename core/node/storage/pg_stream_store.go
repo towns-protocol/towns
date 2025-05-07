@@ -34,8 +34,8 @@ type PostgresStreamStore struct {
 
 	numPartitions int
 
-	esm *ephemeralStreamMonitor
-	st  *streamTrimmer
+	esm           *ephemeralStreamMonitor
+	streamTrimmer *streamTrimmer
 }
 
 var _ StreamStorage = (*PostgresStreamStore)(nil)
@@ -149,7 +149,7 @@ func NewPostgresStreamStore(
 
 	if spaceStreamMiniblocksToKeep > 0 {
 		// Start the stream trimmer
-		store.st, err = newStreamTrimmer(ctx, store, spaceStreamMiniblocksToKeep)
+		store.streamTrimmer, err = newStreamTrimmer(ctx, store, spaceStreamMiniblocksToKeep)
 		if err != nil {
 			return nil, AsRiverError(err).Func("NewPostgresStreamStore")
 		}
@@ -533,8 +533,8 @@ func (s *PostgresStreamStore) createStreamStorageTx(
 	}
 
 	// Add the given stream to the stream trimmer
-	if s.st != nil {
-		s.st.onCreated(streamId)
+	if s.streamTrimmer != nil {
+		s.streamTrimmer.onCreated(streamId)
 	}
 
 	return nil
@@ -1688,8 +1688,8 @@ func (s *PostgresStreamStore) Close(ctx context.Context) {
 	if s.esm != nil {
 		s.esm.close()
 	}
-	if s.st != nil {
-		s.st.close()
+	if s.streamTrimmer != nil {
+		s.streamTrimmer.close()
 	}
 	s.PostgresEventStore.Close(ctx)
 }

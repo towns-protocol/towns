@@ -155,7 +155,7 @@ func TestSetOnChain(t *testing.T) {
 	assert.EqualValues([]uint64{1, 10, 100}, s.XChain.Blockchains)
 	assert.Equal(addresses, s.NodeBlocklist)
 	assert.Equal(uint64(1000), s.StreamSnapshotIntervalInMiniblocks)
-	assert.Equal(uint64(1000), s.StreamSpaceStreamMiniblocksToKeepConfigKey)
+	assert.Equal(uint64(1000), s.StreamSpaceStreamMiniblocksToKeep)
 
 	btc.SetConfigValue(t, ctx, StreamReplicationFactorConfigKey, []byte("invalid value is ignored"))
 	assert.EqualValues(3, btc.OnChainConfig.Get().ReplicationFactor)

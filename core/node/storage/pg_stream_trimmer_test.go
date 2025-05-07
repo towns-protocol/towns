@@ -54,14 +54,14 @@ func TestStreamTrimmer(t *testing.T) {
 	require.NoError(err)
 
 	// Force trim streams
-	pgStreamStore.st = &streamTrimmer{
+	pgStreamStore.streamTrimmer = &streamTrimmer{
 		store:            pgStreamStore,
 		miniblocksToKeep: 2,
 		log:              logging.FromCtx(ctx),
 		stop:             make(chan struct{}),
 	}
-	pgStreamStore.st.onCreated(streamId)
-	pgStreamStore.st.trimStreams(ctx)
+	pgStreamStore.streamTrimmer.onCreated(streamId)
+	pgStreamStore.streamTrimmer.trimStreams(ctx)
 
 	// Check if the streams are trimmed correctly
 	mbsWithSnapshot := make([]int64, 0)
