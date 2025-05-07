@@ -5,6 +5,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/gammazero/workerpool"
 	"github.com/jackc/pgx/v5"
 
 	"github.com/towns-protocol/towns/core/node/logging"
@@ -94,7 +95,7 @@ func (t *streamTrimmer) onCreated(streamId StreamId) {
 }
 
 func (t *streamTrimmer) trimStreams(ctx context.Context) {
-	const workersCount = 4
+	const workersCount = 10
 
 	// Copy streams to avoid holding the lock while processing
 	t.streamsLock.Lock()
@@ -109,36 +110,19 @@ func (t *streamTrimmer) trimStreams(ctx context.Context) {
 
 	t.log.Infow("Starting trim operation", "totalStreams", len(streams))
 
-	// Create a worker pool
-	streamCh := make(chan StreamId, len(streams))
-	var wg sync.WaitGroup
-
-	// Start workers
-	for i := 0; i < workersCount; i++ {
-		wg.Add(1)
-		go func(workerId int) {
-			defer wg.Done()
-			t.log.Debugw("Worker started", "workerId", workerId)
-			for stream := range streamCh {
-				if err := t.trimStream(ctx, stream); err != nil {
-					t.log.Errorw("Failed to trim stream",
-						"stream", stream,
-						"err", err,
-					)
-				}
-			}
-			t.log.Debugw("Worker finished", "workerId", workerId)
-		}(i)
-	}
-
-	// Send streams to workers
+	// Create a worker pool and start workers
+	wp := workerpool.New(workersCount)
 	for _, stream := range streams {
-		streamCh <- stream
+		wp.Submit(func() {
+			if err := t.trimStream(ctx, stream); err != nil {
+				t.log.Errorw("Failed to trim stream",
+					"stream", stream,
+					"err", err,
+				)
+			}
+		})
 	}
-	close(streamCh)
-
-	// Wait for all workers to finish
-	wg.Wait()
+	wp.StopWait()
 
 	t.log.Infow("Completed trim operation", "totalStreams", len(streams))
 }
