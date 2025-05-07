@@ -145,7 +145,12 @@ func (t *streamTrimmer) processTrimTaskTx(
 	}
 	rows.Close()
 
-	// If we deleted a full batch, schedule another task
+	// Delete the pending task mark
+	t.pendingTasksLock.Lock()
+	delete(t.pendingTasks, task.streamId)
+	t.pendingTasksLock.Unlock()
+
+	// If we deleted a full batch, schedule another trim task
 	if deletedCount == batchSize {
 		t.scheduleTrimTask(task.streamId)
 	}
@@ -173,18 +178,12 @@ func (t *streamTrimmer) scheduleTrimTask(streamId StreamId) {
 
 	// Submit the task to the worker pool
 	t.workerPool.Submit(func() {
-		// Create a new context for the task
 		if err := t.processTrimTask(task); err != nil {
 			t.log.Errorw("Failed to process trim task",
 				"stream", task.streamId,
 				"err", err,
 			)
 		}
-
-		// Remove the pending task mark
-		t.pendingTasksLock.Lock()
-		delete(t.pendingTasks, streamId)
-		t.pendingTasksLock.Unlock()
 	})
 }
 
