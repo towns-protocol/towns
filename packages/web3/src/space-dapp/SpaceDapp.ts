@@ -590,7 +590,7 @@ export class SpaceDapp {
         if (!space) {
             throw new Error(`Space with spaceId "${spaceId}" is not found.`)
         }
-        const spaceInfo = await this.spaceOwner.read.getSpaceInfo(space.Address)
+        const spaceInfo = await this.spaceOwner.getSpaceInfo(space.Address)
         return this.spaceOwner.read.tokenURI(spaceInfo.tokenId)
     }
 
@@ -650,9 +650,9 @@ export class SpaceDapp {
         }
 
         const [owner, disabled, spaceInfo] = await Promise.all([
-            space.Ownable.read.owner(),
+            space.Ownable.getOwner(),
             space.Pausable.read.paused(),
-            this.spaceOwner.read.getSpaceInfo(space.Address),
+            this.spaceOwner.getSpaceInfo(space.Address),
         ])
         return {
             address: space.Address,
@@ -681,13 +681,16 @@ export class SpaceDapp {
         if (!space) {
             throw new Error(`Space with spaceId "${spaceId}" is not found.`)
         }
-        return wrapTransaction(
-            () =>
-                this.spaceOwner
-                    .write(signer)
-                    .updateSpaceInfo(space.Address, name, uri, shortDescription, longDescription),
+        return this.spaceOwner.updateSpaceInfo({
+            spaceId,
+            space,
+            name,
+            uri,
+            shortDescription,
+            longDescription,
+            signer,
             txnOpts,
-        )
+        })
     }
 
     private async decodeEntitlementData(
@@ -971,7 +974,7 @@ export class SpaceDapp {
             throw new Error(`Space with spaceId "${spaceId}" is not found.`)
         }
 
-        const owner = await space.Ownable.read.owner()
+        const owner = await space.Ownable.getOwner()
 
         // Space owner is entitled to all channels
         if (allWallets.includes(owner)) {
@@ -1070,7 +1073,7 @@ export class SpaceDapp {
 
         const linkedWallets = await this.getLinkedWalletsWithDelegations(user, xchainConfig)
 
-        const owner = await space.Ownable.read.owner()
+        const owner = await space.Ownable.getOwner()
 
         // Space owner is entitled to all channels
         if (linkedWallets.includes(owner)) {
@@ -1651,7 +1654,7 @@ export class SpaceDapp {
             this.getJoinSpacePriceDetails(spaceId),
             space.Membership.read.getMembershipLimit(),
             space.Membership.read.getMembershipCurrency(),
-            space.Ownable.read.owner(),
+            space.Ownable.getOwner(),
             space.Membership.read.getMembershipDuration(),
             space.ERC721A.read.totalSupply(),
             space.Membership.read.getMembershipPricingModule(),

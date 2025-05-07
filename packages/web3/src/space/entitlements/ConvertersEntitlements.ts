@@ -12,6 +12,7 @@ import {
 } from './entitlement'
 import { Hex } from 'viem'
 import { Space } from '../Space'
+import { SpaceIdFromSpaceAddress } from 'utils/ut'
 
 const UserAddressesEncoding = 'address[]'
 
@@ -174,7 +175,7 @@ export async function createLegacyEntitlementStruct(
 ): Promise<EntitlementStruct[]> {
     const space = spaceIn
     // figure out the addresses for each entitlement module
-    const entitlementModules = await space.Entitlements.read.getEntitlements()
+    const entitlementModules = await space.Entitlements.getEntitlements()
     let userEntitlementAddress
     let ruleEntitlementAddress
     for (const module of entitlementModules) {

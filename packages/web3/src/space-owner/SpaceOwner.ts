@@ -34,9 +34,9 @@ export class SpaceOwner extends BaseContractShim<typeof connect> {
         })
     }
 
-    public async getSpaceInfo(spaceId: string): Promise<ISpaceOwnerBase.SpaceStructOutput> {
-        return this.spaceInfoCache.executeUsingCache(new GetSpaceInfo(spaceId), async () =>
-            this.read.getSpaceInfo(spaceId),
+    public async getSpaceInfo(spaceAddress: string): Promise<ISpaceOwnerBase.SpaceStructOutput> {
+        return this.spaceInfoCache.executeUsingCache(new GetSpaceInfo(spaceAddress), async () =>
+            this.read.getSpaceInfo(spaceAddress),
         )
     }
 
