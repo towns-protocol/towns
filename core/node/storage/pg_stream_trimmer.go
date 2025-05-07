@@ -67,7 +67,6 @@ func (t *streamTrimmer) start(ctx context.Context) {
 				return
 			case <-t.stop:
 				t.log.Info("Stream trimmer stopped due to stop signal")
-				t.close()
 				return
 			case <-ticker.C:
 				t.log.Debug("Starting periodic trim operation")
