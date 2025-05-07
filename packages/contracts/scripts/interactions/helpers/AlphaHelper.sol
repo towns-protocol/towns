@@ -2,18 +2,15 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import {IDiamondCut} from "@towns-protocol/diamond/src/facets/cut/IDiamondCut.sol";
 import {IDiamondLoupe, IDiamondLoupeBase} from "@towns-protocol/diamond/src/facets/loupe/IDiamondLoupe.sol";
-
 import {IERC173} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
 import {IOwnablePending} from "@towns-protocol/diamond/src/facets/ownable/pending/IOwnablePending.sol";
 
 // libraries
 
 // contracts
-
 import {DiamondHelper} from "@towns-protocol/diamond/scripts/common/helpers/DiamondHelper.s.sol";
 import {Diamond} from "@towns-protocol/diamond/src/Diamond.sol";
 import {Interaction} from "scripts/common/Interaction.s.sol";
@@ -57,7 +54,7 @@ abstract contract AlphaHelper is Interaction, DiamondHelper, IDiamondLoupeBase {
         address facetAddress,
         address[] memory coreFacets
     ) internal pure returns (bool) {
-        for (uint256 i = 0; i < coreFacets.length; i++) {
+        for (uint256 i; i < coreFacets.length; ++i) {
             if (facetAddress == coreFacets[i]) {
                 return true;
             }
@@ -69,8 +66,10 @@ abstract contract AlphaHelper is Interaction, DiamondHelper, IDiamondLoupeBase {
     /// @param deployer The address that will execute the diamond cut
     /// @param diamond The diamond contract address
     function executeDiamondCut(address deployer, address diamond) internal {
+        FacetCut[] memory cuts = baseFacets();
+        if (cuts.length == 0) return;
         vm.broadcast(deployer);
-        IDiamondCut(diamond).diamondCut(baseFacets(), address(0), "");
+        IDiamondCut(diamond).diamondCut(cuts, address(0), "");
         clearCuts();
     }
 
@@ -81,7 +80,7 @@ abstract contract AlphaHelper is Interaction, DiamondHelper, IDiamondLoupeBase {
         Facet[] memory facets = IDiamondLoupe(diamond).facets();
         address[] memory coreFacets = getCoreFacetAddresses(diamond);
 
-        for (uint256 i; i < facets.length; i++) {
+        for (uint256 i; i < facets.length; ++i) {
             address facet = facets[i].facet;
 
             if (isCoreFacet(facet, coreFacets)) {
@@ -121,14 +120,14 @@ abstract contract AlphaHelper is Interaction, DiamondHelper, IDiamondLoupeBase {
         Facet[] memory facets = IDiamondLoupe(diamond).facets();
         address[] memory coreFacets = getCoreFacetAddresses(diamond);
 
-        for (uint256 i; i < facets.length; i++) {
+        for (uint256 i; i < facets.length; ++i) {
             address facet = facets[i].facet;
 
             if (isCoreFacet(facet, coreFacets)) {
                 continue;
             }
 
-            if (shouldRemoveFacet(facet, facetAddresses)) {
+            if (contains(facetAddresses, facet)) {
                 addCut(
                     FacetCut({
                         facetAddress: facet,
@@ -140,16 +139,10 @@ abstract contract AlphaHelper is Interaction, DiamondHelper, IDiamondLoupeBase {
         }
     }
 
-    /// @notice Check if a facet should be removed based on provided addresses
-    /// @param facet The facet address to check
-    /// @param facetAddresses Array of facet addresses to remove
-    /// @return True if the facet should be removed
-    function shouldRemoveFacet(
-        address facet,
-        address[] memory facetAddresses
-    ) internal pure returns (bool) {
-        for (uint256 j = 0; j < facetAddresses.length; j++) {
-            if (facet == facetAddresses[j]) return true;
+    /// @notice Check if an address is in an array of addresses
+    function contains(address[] memory facetAddresses, address facet) internal pure returns (bool) {
+        for (uint256 i; i < facetAddresses.length; ++i) {
+            if (facet == facetAddresses[i]) return true;
         }
         return false;
     }

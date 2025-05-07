@@ -5,7 +5,7 @@ pragma solidity ^0.8.23;
 import {IDiamond} from "@towns-protocol/diamond/src/IDiamond.sol";
 
 //libraries
-import {DeployLib} from "@towns-protocol/diamond/scripts/common/DeployLib.sol";
+import {LibDeploy} from "@towns-protocol/diamond/src/utils/LibDeploy.sol";
 
 //contracts
 import {MetadataFacet} from "src/diamond/facets/metadata/MetadataFacet.sol";
@@ -34,6 +34,6 @@ library DeployMetadata {
     }
 
     function deploy() internal returns (address) {
-        return DeployLib.deployCode("MetadataFacet.sol", "");
+        return LibDeploy.deployCode("MetadataFacet.sol", "");
     }
 }

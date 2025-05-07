@@ -6,7 +6,7 @@ import {IDiamond} from "@towns-protocol/diamond/src/Diamond.sol";
 import {IEntitlementDataQueryable} from "src/spaces/facets/entitlements/extensions/IEntitlementDataQueryable.sol";
 
 // libraries
-import {DeployLib} from "@towns-protocol/diamond/scripts/common/DeployLib.sol";
+import {LibDeploy} from "@towns-protocol/diamond/src/utils/LibDeploy.sol";
 
 library DeployEntitlementDataQueryable {
     function selectors() internal pure returns (bytes4[] memory res) {
@@ -24,6 +24,6 @@ library DeployEntitlementDataQueryable {
     }
 
     function deploy() internal returns (address) {
-        return DeployLib.deployCode("EntitlementDataQueryable.sol", "");
+        return LibDeploy.deployCode("EntitlementDataQueryable.sol", "");
     }
 }

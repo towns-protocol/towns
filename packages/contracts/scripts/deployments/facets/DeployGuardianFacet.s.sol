@@ -6,7 +6,7 @@ import {IDiamond} from "@towns-protocol/diamond/src/Diamond.sol";
 import {IGuardian} from "src/spaces/facets/guardian/IGuardian.sol";
 
 // libraries
-import {DeployLib} from "@towns-protocol/diamond/scripts/common/DeployLib.sol";
+import {LibDeploy} from "@towns-protocol/diamond/src/utils/LibDeploy.sol";
 
 // contracts
 import {GuardianFacet} from "src/spaces/facets/guardian/GuardianFacet.sol";
@@ -34,6 +34,6 @@ library DeployGuardianFacet {
     }
 
     function deploy() internal returns (address) {
-        return DeployLib.deployCode("GuardianFacet.sol", "");
+        return LibDeploy.deployCode("GuardianFacet.sol", "");
     }
 }

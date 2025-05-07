@@ -6,7 +6,7 @@ import {IDiamond} from "@towns-protocol/diamond/src/Diamond.sol";
 import {IMembership} from "src/spaces/facets/membership/IMembership.sol";
 
 // libraries
-import {DeployLib} from "@towns-protocol/diamond/scripts/common/DeployLib.sol";
+import {LibDeploy} from "@towns-protocol/diamond/src/utils/LibDeploy.sol";
 import {DynamicArrayLib} from "solady/utils/DynamicArrayLib.sol";
 
 library DeployMembership {
@@ -70,6 +70,6 @@ library DeployMembership {
     }
 
     function deploy() internal returns (address) {
-        return DeployLib.deployCode("MembershipFacet.sol", "");
+        return LibDeploy.deployCode("MembershipFacet.sol", "");
     }
 }

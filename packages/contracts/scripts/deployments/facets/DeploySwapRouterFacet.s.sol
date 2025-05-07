@@ -6,7 +6,7 @@ import {IDiamond} from "@towns-protocol/diamond/src/Diamond.sol";
 import {ISwapRouter} from "../../../src/router/ISwapRouter.sol";
 
 // libraries
-import {DeployLib} from "@towns-protocol/diamond/scripts/common/DeployLib.sol";
+import {LibDeploy} from "@towns-protocol/diamond/src/utils/LibDeploy.sol";
 
 // contracts
 import {SwapRouter} from "../../../src/router/SwapRouter.sol";
@@ -30,6 +30,6 @@ library DeploySwapRouterFacet {
     }
 
     function deploy() internal returns (address) {
-        return DeployLib.deployCode("SwapRouter.sol", "");
+        return LibDeploy.deployCode("SwapRouter.sol", "");
     }
 }

@@ -81,22 +81,49 @@ from within the `contracts/` folder you can run `make deploy-base-anvil contract
 the `[Contract]` part with the contract you want to deploy, you can see all the contracts available for deployment
 in [this](./scripts/deployments/diamonds) part of the project.
 
-<b>To deploy a facet base contract to your local anvil instance</b>\
-from within the `contracts/` folder you can run `make deploy-base-anvil contract=Deploy[Facet] type=facets` you will
-replace the `[Facet]` part with the contract you want to deploy, you can see all the facets available for deployment
-in [this](./scripts/deployments/facets) part of the project.
+<b>To deploy a facet contract to your local anvil instance</b>\
+The project supports two methods for deploying facets:
 
-<b>To deploy our contracts to a live network</b>\
+1. Using custom deployment scripts: `make deploy-base-anvil contract=Deploy[Facet] type=facets`
+
+   - Replace `[Facet]` with the name of your facet deployment script found in [./scripts/deployments/facets](./scripts/deployments/facets)
+   - This approach uses scripts that inherit from `Deployer` and implement `versionName()` and `__deploy()` functions
+
+2. Using the standardized `DeployFacet` script: `make deploy-facet-local rpc=base_anvil contract=[FacetName]`
+   - Replace `[FacetName]` with the actual facet contract name (without "Deploy" prefix)
+   - This approach uses the common `DeployFacet.s.sol` script with the `CONTRACT_NAME` environment variable
+   - It leverages deterministic CREATE2 addresses and supports batch deployments
+   - For more details, see the [DeployFacet documentation](./node_modules/@towns-protocol/diamond/scripts/README.md)
+
+<b>To deploy facets to a live network</b>\
 from within the `contracts/` folder you can run:
 
 ```shell
-make deploy-base-sepolia contract=Deploy[Contract] type=[type] context=[context]
+# For custom deployment scripts:
+make deploy-base-sepolia contract=Deploy[Contract] type=facets context=[context]
+
+# For standardized DeployFacet script:
+make deploy-facet rpc=base_sepolia contract=[FacetName] context=[context]
 ```
 
 For example, to deploy the WalletLink facet to Base Sepolia with a deployment context of "gamma":
 
 ```shell
+# Using custom deployment script:
 make deploy-base-sepolia contract=DeployWalletLink type=facets context=gamma
+
+# Using standardized DeployFacet script:
+make deploy-facet rpc=base_sepolia contract=WalletLink context=gamma
+```
+
+For hardware wallet deployments, use the corresponding ledger commands:
+
+```shell
+# Using custom deployment script:
+make deploy-ledger-base-sepolia contract=DeployWalletLink type=facets context=gamma
+
+# Using standardized DeployFacet script:
+make deploy-facet-ledger rpc=base_sepolia contract=WalletLink context=gamma
 ```
 
 You can see all the contracts available for deployment in the [deployments](./scripts/deployments) directory.

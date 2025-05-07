@@ -6,7 +6,7 @@ import {IDiamond} from "@towns-protocol/diamond/src/Diamond.sol";
 import {ISwapFacet} from "src/spaces/facets/swap/ISwapFacet.sol";
 
 // libraries
-import {DeployLib} from "@towns-protocol/diamond/scripts/common/DeployLib.sol";
+import {LibDeploy} from "@towns-protocol/diamond/src/utils/LibDeploy.sol";
 
 // contracts
 
@@ -28,6 +28,6 @@ library DeploySwapFacet {
     }
 
     function deploy() internal returns (address) {
-        return DeployLib.deployCode("SwapFacet.sol", "");
+        return LibDeploy.deployCode("SwapFacet.sol", "");
     }
 }

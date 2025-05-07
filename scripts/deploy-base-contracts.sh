@@ -12,12 +12,18 @@ set -a
 set +a
 
 : ${RIVER_ENV:?}
+: ${BASE_RPC_URL:?}
 : ${BASE_ANVIL_RPC_URL:?}
 
 # Build if not called with nobuild
 if [ "${1-}" != "nobuild" ]; then
     yarn turbo build --filter=@towns-protocol/contracts
 fi
+
+# Deploy Multicall3
+MULTICALL3_ADDRESS=0xcA11bde05977b3631167028862bE2a173976CA11
+MULTICALL3_BYTECODE=$(cast code $MULTICALL3_ADDRESS --rpc-url $BASE_RPC_URL)
+cast rpc anvil_setCode $MULTICALL3_ADDRESS $MULTICALL3_BYTECODE --rpc-url $BASE_ANVIL_RPC_URL
 
 # Space Architect
 make clear-anvil-deployments context=$RIVER_ENV

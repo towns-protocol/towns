@@ -5,7 +5,7 @@ pragma solidity ^0.8.23;
 import {IDiamond} from "@towns-protocol/diamond/src/Diamond.sol";
 
 // libraries
-import {DeployLib} from "@towns-protocol/diamond/scripts/common/DeployLib.sol";
+import {LibDeploy} from "@towns-protocol/diamond/src/utils/LibDeploy.sol";
 
 // contracts
 import {EntitlementGated} from "src/spaces/facets/gated/EntitlementGated.sol";
@@ -26,6 +26,6 @@ library DeploySpaceEntitlementGated {
     }
 
     function deploy() internal returns (address) {
-        return DeployLib.deployCode("SpaceEntitlementGated.sol", "");
+        return LibDeploy.deployCode("SpaceEntitlementGated.sol", "");
     }
 }

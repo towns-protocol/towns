@@ -49,11 +49,12 @@ help:
 # ================================== GENERIC TARGETS ==================================
 
 # === Local network targets ===
+# The `--slow` flag solves race conditions caused by fluctuations in the local fee market.
 deploy-any-local :;
 	@echo "Running $(contract) on local chain"
 	@SAVE_DEPLOYMENTS=1 $(if $(context),DEPLOYMENT_CONTEXT=$(context)) \
 	forge script scripts/deployments/${type}/${contract}.s.sol:${contract} \
-	--ffi --rpc-url ${rpc} --private-key ${LOCAL_PRIVATE_KEY} --broadcast
+	--ffi --rpc-url ${rpc} --private-key ${LOCAL_PRIVATE_KEY} --broadcast --slow
 
 deploy-facet-local :;
 	@echo "Deploying $(contract) on local chain"

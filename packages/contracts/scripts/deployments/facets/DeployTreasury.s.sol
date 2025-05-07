@@ -6,7 +6,7 @@ import {IDiamond} from "@towns-protocol/diamond/src/Diamond.sol";
 import {ITreasury} from "src/spaces/facets/treasury/ITreasury.sol";
 
 // libraries
-import {DeployLib} from "@towns-protocol/diamond/scripts/common/DeployLib.sol";
+import {LibDeploy} from "@towns-protocol/diamond/src/utils/LibDeploy.sol";
 
 library DeployTreasury {
     function selectors() internal pure returns (bytes4[] memory res) {
@@ -25,6 +25,6 @@ library DeployTreasury {
     }
 
     function deploy() internal returns (address) {
-        return DeployLib.deployCode("Treasury.sol", "");
+        return LibDeploy.deployCode("Treasury.sol", "");
     }
 }

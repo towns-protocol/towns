@@ -32,14 +32,14 @@ gas_reports = ["*"] # The contracts to print gas reports for.
 no_match_contract = "Fork"
 
 [rpc_endpoints]
-mainnet = "${MAINNET_RPC_URL}"
+mainnet = "${ETH_RPC_URL}"
 base = "${BASE_RPC_URL}"
 base_anvil = "${BASE_ANVIL_RPC_URL}"
 base_sepolia = "${BASE_SEPOLIA_RPC_URL}"
 river = "${RIVER_RPC_URL}"
 river_anvil = "${RIVER_ANVIL_RPC_URL}"
 river_devnet = "${RIVER_DEVNET_RPC_URL}"
-sepolia = "${SEPOLIA_RPC_URL}"
+sepolia = "${ETH_SEPOLIA_RPC_URL}"
 
 [fmt]
 bracket_spacing = false

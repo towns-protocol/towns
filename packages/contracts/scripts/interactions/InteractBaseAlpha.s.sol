@@ -9,9 +9,7 @@ import "forge-std/console.sol";
 
 // contracts
 import {Diamond} from "@towns-protocol/diamond/src/Diamond.sol";
-
 import {DeployBaseRegistry} from "scripts/deployments/diamonds/DeployBaseRegistry.s.sol";
-
 import {DeployRiverAirdrop} from "scripts/deployments/diamonds/DeployRiverAirdrop.s.sol";
 import {DeploySpace} from "scripts/deployments/diamonds/DeploySpace.s.sol";
 import {DeploySpaceFactory} from "scripts/deployments/diamonds/DeploySpaceFactory.s.sol";
@@ -40,43 +38,36 @@ contract InteractBaseAlpha is AlphaHelper {
         removeRemoteFacets(deployer, baseRegistry);
         removeRemoteFacets(deployer, riverAirdrop);
 
-        {
-            try this.deploySpaceCuts(deployer, space) {
-                console.log("Space deployment successful");
-            } catch Error(string memory reason) {
-                console.log("Space deployment failed:", reason);
-            }
-
-            try this.deploySpaceOwnerCuts(deployer, spaceOwner) {
-                console.log("Space Owner deployment successful");
-            } catch Error(string memory reason) {
-                console.log("Space Owner deployment failed:", reason);
-            }
+        try this.deploySpaceCuts(deployer, space) {
+            console.log("Space deployment successful");
+        } catch Error(string memory reason) {
+            console.log("Space deployment failed:", reason);
         }
 
-        {
-            try this.deploySpaceFactoryCuts(deployer, spaceFactory) {
-                console.log("Space Factory deployment successful");
-            } catch Error(string memory reason) {
-                console.log("Space Factory deployment failed:", reason);
-            }
+        try this.deploySpaceOwnerCuts(deployer, spaceOwner) {
+            console.log("Space Owner deployment successful");
+        } catch Error(string memory reason) {
+            console.log("Space Owner deployment failed:", reason);
         }
 
-        {
-            try this.deployBaseRegistryCuts(deployer, baseRegistry) {
-                console.log("Base Registry deployment successful");
-            } catch Error(string memory reason) {
-                console.log("Base Registry deployment failed:", reason);
-            }
+        try this.deploySpaceFactoryCuts(deployer, spaceFactory) {
+            console.log("Space Factory deployment successful");
+        } catch Error(string memory reason) {
+            console.log("Space Factory deployment failed:", reason);
         }
 
-        {
-            try this.deployRiverAirdropCuts(deployer, riverAirdrop) {
-                console.log("River Airdrop deployment successful");
-            } catch Error(string memory reason) {
-                console.log("River Airdrop deployment failed:", reason);
-            }
+        try this.deployBaseRegistryCuts(deployer, baseRegistry) {
+            console.log("Base Registry deployment successful");
+        } catch Error(string memory reason) {
+            console.log("Base Registry deployment failed:", reason);
         }
+
+        try this.deployRiverAirdropCuts(deployer, riverAirdrop) {
+            console.log("River Airdrop deployment successful");
+        } catch Error(string memory reason) {
+            console.log("River Airdrop deployment failed:", reason);
+        }
+
         vm.resumeGasMetering();
     }
 
