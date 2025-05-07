@@ -6,7 +6,7 @@ import {IDiamond} from "@towns-protocol/diamond/src/Diamond.sol";
 import {IReferrals} from "src/spaces/facets/referrals/IReferrals.sol";
 
 // libraries
-import {DeployLib} from "@towns-protocol/diamond/scripts/common/DeployLib.sol";
+import {LibDeploy} from "@towns-protocol/diamond/src/utils/LibDeploy.sol";
 
 library DeployReferrals {
     function selectors() internal pure returns (bytes4[] memory res) {
@@ -29,6 +29,6 @@ library DeployReferrals {
     }
 
     function deploy() internal returns (address) {
-        return DeployLib.deployCode("ReferralsFacet.sol", "");
+        return LibDeploy.deployCode("ReferralsFacet.sol", "");
     }
 }

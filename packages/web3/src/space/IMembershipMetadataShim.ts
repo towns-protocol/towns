@@ -1,18 +1,11 @@
-import {
-    IMembershipMetadata as LocalhostContract,
-    IMembershipMetadataInterface as LocalhostInterface,
-} from '@towns-protocol/generated/dev/typings/IMembershipMetadata'
-
-import LocalhostAbi from '@towns-protocol/generated/dev/abis/IMembershipMetadata.abi.json' assert { type: 'json' }
-
 import { ethers } from 'ethers'
 import { BaseContractShim } from '../BaseContractShim'
+import { IMembershipMetadata__factory } from '@towns-protocol/generated/dev/typings/factories/IMembershipMetadata__factory'
 
-export class IMembershipMetadataShim extends BaseContractShim<
-    LocalhostContract,
-    LocalhostInterface
-> {
-    constructor(address: string, provider: ethers.providers.Provider | undefined) {
-        super(address, provider, LocalhostAbi)
+const { abi, connect } = IMembershipMetadata__factory
+
+export class IMembershipMetadataShim extends BaseContractShim<typeof connect> {
+    constructor(address: string, provider: ethers.providers.Provider) {
+        super(address, provider, connect, abi)
     }
 }

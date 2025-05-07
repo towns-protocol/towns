@@ -1,19 +1,15 @@
-import {
-    IArchitect as LocalhostContract,
-    IArchitectInterface as LocalhostInterface,
-} from '@towns-protocol/generated/dev/typings/IArchitect'
-
-import LocalhostAbi from '@towns-protocol/generated/dev/abis/Architect.abi.json' assert { type: 'json' }
-
 import { ethers } from 'ethers'
 import { BaseContractShim } from '../BaseContractShim'
 import { LogDescription } from 'ethers/lib/utils'
 import { dlogger } from '@towns-protocol/dlog'
+import { Architect__factory } from '@towns-protocol/generated/dev/typings/factories/Architect__factory'
 const logger = dlogger('csb:SpaceDapp:debug')
 
-export class ISpaceArchitectShim extends BaseContractShim<LocalhostContract, LocalhostInterface> {
-    constructor(address: string, provider: ethers.providers.Provider | undefined) {
-        super(address, provider, LocalhostAbi)
+const { abi, connect } = Architect__factory
+
+export class ISpaceArchitectShim extends BaseContractShim<typeof connect> {
+    constructor(address: string, provider: ethers.providers.Provider) {
+        super(address, provider, connect, abi)
     }
 
     public getSpaceAddressFromLog(log: ethers.providers.Log, userId: string) {
