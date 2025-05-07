@@ -16,3 +16,4 @@
 "stream.getMiniblocksMaxPageSize",0,200
 "stream.ephemeralStreamTTLMs",0,600000
 "stream.snapshotIntervalInMiniblocks",0,0
+"stream.spaceStreamMiniblocksToKeep",0,1000

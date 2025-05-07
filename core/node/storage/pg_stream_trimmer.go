@@ -14,26 +14,20 @@ import (
 type streamTrimmerConfig struct {
 	// miniblocksToKeep is the number of miniblocks to keep before the last snapshot
 	miniblocksToKeep int64
-	// trimInterval is how often to run the trim operation
-	trimInterval time.Duration
-	// workerCount is the number of concurrent workers for trimming
-	workerCount int
 }
 
 // defaultStreamTrimmerConfig returns default configuration for the stream trimmer
 func defaultStreamTrimmerConfig() *streamTrimmerConfig {
 	return &streamTrimmerConfig{
 		miniblocksToKeep: 1000, // Keep 1000 miniblocks before last snapshot
-		trimInterval:     time.Hour,
-		workerCount:      4,
 	}
 }
 
 // streamTrimmer handles periodic trimming of space streams
 type streamTrimmer struct {
-	store  *PostgresStreamStore
-	config *streamTrimmerConfig
-	log    *logging.Log
+	store            *PostgresStreamStore
+	miniblocksToKeep int64
+	log              *logging.Log
 
 	stopCh chan struct{}
 	wg     sync.WaitGroup
@@ -43,13 +37,13 @@ type streamTrimmer struct {
 func newStreamTrimmer(
 	ctx context.Context,
 	store *PostgresStreamStore,
-	config *streamTrimmerConfig,
+	miniblocksToKeep int64,
 ) *streamTrimmer {
 	st := &streamTrimmer{
-		store:  store,
-		config: config,
-		log:    logging.FromCtx(ctx),
-		stopCh: make(chan struct{}),
+		store:            store,
+		miniblocksToKeep: miniblocksToKeep,
+		log:              logging.FromCtx(ctx),
+		stopCh:           make(chan struct{}),
 	}
 
 	st.start(ctx)
@@ -63,7 +57,7 @@ func (t *streamTrimmer) start(ctx context.Context) {
 	defer t.wg.Done()
 
 	go func() {
-		ticker := time.NewTicker(t.config.trimInterval)
+		ticker := time.NewTicker(time.Hour)
 		defer ticker.Stop()
 
 		for {
@@ -111,12 +105,13 @@ func (t *streamTrimmer) trimStreams(ctx context.Context) {
 	var wg sync.WaitGroup
 
 	// Start workers
-	for i := 0; i < t.config.workerCount; i++ {
+	const workersCount = 4
+	for i := 0; i < workersCount; i++ {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
 			for stream := range streamCh {
-				if err := t.trimStream(ctx, stream, t.config.miniblocksToKeep); err != nil {
+				if err := t.trimStream(ctx, stream); err != nil {
 					t.log.Errorw("Failed to trim stream",
 						"stream", stream,
 						"err", err,
@@ -141,18 +136,17 @@ func (t *streamTrimmer) trimStreams(ctx context.Context) {
 func (t *streamTrimmer) trimStream(
 	ctx context.Context,
 	streamId StreamId,
-	miniblocksToKeep int64,
 ) error {
 	return t.store.txRunner(
 		ctx,
 		"streamTrimmer.trimStream",
 		pgx.ReadWrite,
 		func(ctx context.Context, tx pgx.Tx) error {
-			return t.trimStreamTx(ctx, tx, streamId, miniblocksToKeep)
+			return t.trimStreamTx(ctx, tx, streamId)
 		},
 		nil,
 		"streamId", streamId,
-		"miniblocksToKeep", miniblocksToKeep,
+		"miniblocksToKeep", t.miniblocksToKeep,
 	)
 }
 
@@ -160,7 +154,6 @@ func (t *streamTrimmer) trimStreamTx(
 	ctx context.Context,
 	tx pgx.Tx,
 	streamId StreamId,
-	miniblocksToKeep int64,
 ) error {
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Minute)
 	defer cancel()
@@ -172,7 +165,7 @@ func (t *streamTrimmer) trimStreamTx(
 	}
 
 	// Calculate the miniblock number to keep (last snapshot - miniblocksToKeep)
-	miniblockToKeep := lastSnapshotMiniblock - miniblocksToKeep
+	miniblockToKeep := lastSnapshotMiniblock - t.miniblocksToKeep
 	if miniblockToKeep <= 0 {
 		return nil // Nothing to trim
 	}

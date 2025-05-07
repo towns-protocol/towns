@@ -115,6 +115,7 @@ func NewPostgresStreamStore(
 	exitSignal chan error,
 	metrics infra.MetricsFactory,
 	ephemeralStreamTtl time.Duration,
+	spaceStreamMiniblocksToKeep int64,
 ) (store *PostgresStreamStore, err error) {
 	store = &PostgresStreamStore{
 		nodeUUID:   instanceId,
@@ -147,7 +148,7 @@ func NewPostgresStreamStore(
 	}
 
 	// Start the stream trimmer
-	store.st = newStreamTrimmer(ctx, store, defaultStreamTrimmerConfig())
+	store.st = newStreamTrimmer(ctx, store, spaceStreamMiniblocksToKeep)
 
 	return store, nil
 }
