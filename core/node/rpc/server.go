@@ -461,12 +461,19 @@ func (s *Service) loadTLSConfig() (*tls.Config, error) {
 		}
 	}
 
-	return &tls.Config{
-		Certificates:          []tls.Certificate{*cert},
-		NextProtos:            []string{"h2"},
-		ClientAuth:            tls.RequestClientCert, // Optional client certs, needed for node2node auth
-		VerifyPeerCertificate: node2nodeauth.VerifyPeerCertificate(s.defaultLogger),
-	}, nil
+	cfg := &tls.Config{
+		Certificates: []tls.Certificate{*cert},
+		NextProtos:   []string{"h2"},
+	}
+
+	if s.chainConfig.Get().ServerEnableNode2NodeAuth == 1 {
+		// Since both stream and internode services are running on the same server,
+		// the client certificate is required for the internode service only so it should be optional here.
+		cfg.ClientAuth = tls.RequestClientCert
+		cfg.VerifyPeerCertificate = node2nodeauth.VerifyPeerCertificate(s.defaultLogger)
+	}
+
+	return cfg, nil
 }
 
 func (s *Service) runHttpServer() error {
@@ -774,7 +781,9 @@ func (s *Service) initHandlers() {
 	s.mux.Handle(streamServicePattern, newHttpHandler(streamServiceHandler, s.defaultLogger))
 
 	nodeServicePattern, nodeServiceHandler := protocolconnect.NewNodeToNodeHandler(s, interceptors)
-	// TODO: nodeServiceHandler = requireNode2NodeCertMiddleware(nodeServiceHandler)
+	if s.chainConfig.Get().ServerEnableNode2NodeAuth == 1 {
+		nodeServiceHandler = node2nodeauth.RequireCertMiddleware(nodeServiceHandler)
+	}
 	s.mux.Handle(nodeServicePattern, newHttpHandler(nodeServiceHandler, s.defaultLogger))
 
 	s.registerDebugHandlers()
