@@ -87,6 +87,11 @@ export default [
             "internalType": "uint256"
           },
           {
+            "name": "points",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
             "name": "proof",
             "type": "bytes32[]",
             "internalType": "bytes32[]"
@@ -139,6 +144,11 @@ export default [
           },
           {
             "name": "quantity",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "points",
             "type": "uint256",
             "internalType": "uint256"
           },
@@ -670,6 +680,11 @@ export default [
   },
   {
     "type": "error",
+    "name": "DropFacet__PointsMustBeGreaterThanZero",
+    "inputs": []
+  },
+  {
+    "type": "error",
     "name": "DropFacet__QuantityMustBeGreaterThanZero",
     "inputs": []
   },
@@ -682,6 +697,27 @@ export default [
     "type": "error",
     "name": "DropFacet__UnexpectedPenaltyBps",
     "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "ERC20InsufficientBalance",
+    "inputs": [
+      {
+        "name": "sender",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "balance",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "needed",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ]
   },
   {
     "type": "error",

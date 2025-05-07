@@ -54,9 +54,8 @@ describe('mediaWithEntitlements', () => {
         await provider.fundWallet()
         const spaceDapp = createSpaceDapp(provider, baseConfig.chainConfig)
 
-        const { fixedPricingModuleAddress, freeAllocation, price } = await getFreeSpacePricingSetup(
-            spaceDapp,
-        )
+        const { fixedPricingModuleAddress, freeAllocation, price } =
+            await getFreeSpacePricingSetup(spaceDapp)
         // create a space stream,
         const membershipInfo: LegacyMembershipStruct = {
             settings: {
@@ -152,9 +151,8 @@ describe('mediaWithEntitlements', () => {
         await provider.fundWallet()
         const spaceDapp = createSpaceDapp(provider, baseConfig.chainConfig)
 
-        const { fixedPricingModuleAddress, freeAllocation, price } = await getFreeSpacePricingSetup(
-            spaceDapp,
-        )
+        const { fixedPricingModuleAddress, freeAllocation, price } =
+            await getFreeSpacePricingSetup(spaceDapp)
 
         // create a space stream,
         const membershipInfo: LegacyMembershipStruct = {

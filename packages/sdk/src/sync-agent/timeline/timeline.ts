@@ -2,17 +2,16 @@
 import { SnapshotCaseType } from '@towns-protocol/proto'
 import { Stream } from '../../stream'
 import { StreamChange } from '../../streamEvents'
-import {
-    getEditsId,
-    getRedactsId,
-    makeRedactionEvent,
-    toEventSA,
-    toReplacedMessageEvent,
-} from './models/timelineEvent'
+import { makeRedactionEvent, toEventSA, toReplacedMessageEvent } from './models/timelineEvent'
 import { LocalTimelineEvent } from '../../types'
 import { TimelineEvents } from './models/timelineEvents'
 import { Reactions } from './models/reactions'
-import type { TimelineEvent, TimelineEventConfirmation } from './models/timeline-types'
+import {
+    RiverTimelineEvent,
+    type TimelineEvent,
+    type TimelineEvent_OneOf,
+    type TimelineEventConfirmation,
+} from './models/timeline-types'
 import { PendingReplacedEvents } from './models/pendingReplacedEvents'
 import { ReplacedEvents } from './models/replacedEvents'
 import { ThreadStats } from './models/threadStats'
@@ -54,12 +53,14 @@ export class MessageTimeline {
         this.appendEvents(events, this.userId)
     }
 
-    async scrollback(): Promise<{ terminus: boolean; firstEvent?: TimelineEvent }> {
+    async scrollback(): Promise<{ terminus: boolean; fromInclusiveMiniblockNum: bigint }> {
         return this.riverConnection.callWithStream(this.streamId, async (client) => {
-            return client.scrollback(this.streamId).then(({ terminus, firstEvent }) => ({
-                terminus,
-                firstEvent: firstEvent ? toEventSA(firstEvent, this.userId) : undefined,
-            }))
+            return client
+                .scrollback(this.streamId)
+                .then(({ terminus, fromInclusiveMiniblockNum }) => ({
+                    terminus,
+                    fromInclusiveMiniblockNum,
+                }))
         })
     }
 
@@ -293,4 +294,16 @@ export class MessageTimeline {
         this.threadsStats.remove(event)
         this.threads.remove(event)
     }
+}
+
+// todo this is duplicated
+function getEditsId(content: TimelineEvent_OneOf | undefined): string | undefined {
+    return content?.kind === RiverTimelineEvent.ChannelMessage ? content.editsEventId : undefined
+}
+
+// todo this is duplicated
+function getRedactsId(content: TimelineEvent_OneOf | undefined): string | undefined {
+    return content?.kind === RiverTimelineEvent.RedactionActionEvent
+        ? content.refEventId
+        : undefined
 }
