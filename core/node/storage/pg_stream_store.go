@@ -147,10 +147,12 @@ func NewPostgresStreamStore(
 		return nil, AsRiverError(err).Func("NewPostgresStreamStore")
 	}
 
-	// Start the stream trimmer
-	store.st, err = newStreamTrimmer(ctx, store, spaceStreamMiniblocksToKeep)
-	if err != nil {
-		return nil, AsRiverError(err).Func("NewPostgresStreamStore")
+	if spaceStreamMiniblocksToKeep > 0 {
+		// Start the stream trimmer
+		store.st, err = newStreamTrimmer(ctx, store, spaceStreamMiniblocksToKeep)
+		if err != nil {
+			return nil, AsRiverError(err).Func("NewPostgresStreamStore")
+		}
 	}
 
 	return store, nil
@@ -1681,8 +1683,12 @@ func (s *PostgresStreamStore) Close(ctx context.Context) {
 	s.cleanupLockFunc()
 	// Cancel the notify listening func to release the listener connection before closing the pool.
 	s.cleanupListenFunc()
-	s.esm.close()
-	s.st.close()
+	if s.esm != nil {
+		s.esm.close()
+	}
+	if s.st != nil {
+		s.st.close()
+	}
 	s.PostgresEventStore.Close(ctx)
 }
 
