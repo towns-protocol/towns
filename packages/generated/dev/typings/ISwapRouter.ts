@@ -85,13 +85,29 @@ export interface ISwapRouterInterface extends utils.Interface {
   ): Result;
 
   events: {
+    "FeeDistribution(address,address,address,uint256,uint256)": EventFragment;
     "Swap(address,address,address,address,uint256,uint256,address)": EventFragment;
     "SwapRouterInitialized(address)": EventFragment;
   };
 
+  getEvent(nameOrSignatureOrTopic: "FeeDistribution"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "Swap"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "SwapRouterInitialized"): EventFragment;
 }
+
+export interface FeeDistributionEventObject {
+  token: string;
+  treasury: string;
+  poster: string;
+  treasuryAmount: BigNumber;
+  posterAmount: BigNumber;
+}
+export type FeeDistributionEvent = TypedEvent<
+  [string, string, string, BigNumber, BigNumber],
+  FeeDistributionEventObject
+>;
+
+export type FeeDistributionEventFilter = TypedEventFilter<FeeDistributionEvent>;
 
 export interface SwapEventObject {
   router: string;
@@ -172,6 +188,21 @@ export interface ISwapRouter extends BaseContract {
   };
 
   filters: {
+    "FeeDistribution(address,address,address,uint256,uint256)"(
+      token?: PromiseOrValue<string> | null,
+      treasury?: PromiseOrValue<string> | null,
+      poster?: PromiseOrValue<string> | null,
+      treasuryAmount?: null,
+      posterAmount?: null
+    ): FeeDistributionEventFilter;
+    FeeDistribution(
+      token?: PromiseOrValue<string> | null,
+      treasury?: PromiseOrValue<string> | null,
+      poster?: PromiseOrValue<string> | null,
+      treasuryAmount?: null,
+      posterAmount?: null
+    ): FeeDistributionEventFilter;
+
     "Swap(address,address,address,address,uint256,uint256,address)"(
       router?: PromiseOrValue<string> | null,
       caller?: PromiseOrValue<string> | null,

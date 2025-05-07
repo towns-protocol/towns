@@ -184,7 +184,6 @@ contract SwapRouter is ReentrancyGuardTransient, ISwapRouter, Facet {
         address spaceFactory = _getSpaceFactory();
         (uint16 treasuryBps, uint16 posterBps) = _getSwapFees(spaceFactory);
 
-        // TODO: events
         // only take poster fee if the address is not zero
         if (poster != address(0)) {
             posterFee = BasisPoints.calculate(amount, posterBps);
@@ -195,6 +194,8 @@ contract SwapRouter is ReentrancyGuardTransient, ISwapRouter, Facet {
         treasuryFee = BasisPoints.calculate(amount, treasuryBps);
         address feeRecipient = IPlatformRequirements(spaceFactory).getFeeRecipient();
         CurrencyTransfer.transferCurrency(token, address(this), feeRecipient, treasuryFee);
+
+        emit FeeDistribution(token, feeRecipient, poster, treasuryFee, posterFee);
     }
 
     function _getSwapFees(

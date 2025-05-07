@@ -193,6 +193,29 @@ contract SwapRouterTest is SwapTestBase {
         token0.mint(caller, amountIn);
         token0.approve(address(swapRouter), amountIn);
 
+        uint256 expectedTreasuryFee = BasisPoints.calculate(amountOut, treasuryBps);
+        uint256 expectedPosterFee = BasisPoints.calculate(amountOut, posterBps);
+
+        vm.expectEmit(address(swapRouter));
+        emit FeeDistribution(
+            address(token1),
+            feeRecipient,
+            poster,
+            expectedTreasuryFee,
+            expectedPosterFee
+        );
+
+        vm.expectEmit(address(swapRouter));
+        emit Swap(
+            address(mockRouter),
+            caller,
+            address(token0),
+            address(token1),
+            amountIn,
+            amountOut - expectedTreasuryFee - expectedPosterFee,
+            recipient
+        );
+
         // execute swap
         uint256 actualAmountOut = swapRouter.executeSwap(inputParams, routerParams, poster);
         vm.stopPrank();

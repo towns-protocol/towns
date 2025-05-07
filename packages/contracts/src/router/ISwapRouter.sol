@@ -86,6 +86,20 @@ interface ISwapRouterBase {
         uint256 amountOut,
         address recipient
     );
+
+    /// @notice Emitted when fees are distributed after a swap
+    /// @param token The token in which fees are paid
+    /// @param treasury The address receiving the treasury fee
+    /// @param poster The address receiving the poster fee (if any)
+    /// @param treasuryAmount The amount of tokens sent to the treasury
+    /// @param posterAmount The amount of tokens sent to the poster
+    event FeeDistribution(
+        address indexed token,
+        address indexed treasury,
+        address indexed poster,
+        uint256 treasuryAmount,
+        uint256 posterAmount
+    );
 }
 
 interface ISwapRouter is ISwapRouterBase {
