@@ -12,7 +12,6 @@ import {
 } from './entitlement'
 import { Hex } from 'viem'
 import { Space } from '../Space'
-import { SpaceIdFromSpaceAddress } from 'utils/ut'
 
 const UserAddressesEncoding = 'address[]'
 
