@@ -125,13 +125,14 @@ func (t *streamTrimmer) processTrimTaskTx(
 		ctx,
 		t.store.sqlForStream(
 			`WITH rows_to_delete AS (
-				SELECT ctid
+				SELECT stream_id, seq_num
 				FROM {{miniblocks}}
 				WHERE stream_id = $1 AND seq_num < $2
+				ORDER BY seq_num ASC
 				LIMIT $3
 			)
 			DELETE FROM {{miniblocks}}
-			WHERE ctid IN (SELECT ctid FROM rows_to_delete)
+			WHERE (stream_id, seq_num) IN (SELECT stream_id, seq_num FROM rows_to_delete)
 			RETURNING *`,
 			task.streamId,
 		),
