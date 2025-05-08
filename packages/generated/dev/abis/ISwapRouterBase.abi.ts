@@ -112,5 +112,10 @@ export default [
     "type": "error",
     "name": "SwapRouter__InvalidRouter",
     "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "SwapRouter__UnexpectedETH",
+    "inputs": []
   }
 ] as const

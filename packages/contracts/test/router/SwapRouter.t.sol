@@ -228,6 +228,22 @@ contract SwapRouterTest is SwapTestBase, IOwnableBase, IPausableBase {
         swapRouter.executeSwap(inputParams, routerParams, poster);
     }
 
+    function test_executeSwap_revertWhen_unexpectedETH() external {
+        (ExactInputParams memory inputParams, RouterParams memory routerParams) = _createSwapParams(
+            address(swapRouter),
+            mockRouter,
+            address(token0), // ERC20 token (not native)
+            address(token1),
+            100 ether,
+            95 ether,
+            address(this)
+        );
+
+        // send ETH with the transaction even though tokenIn is not native token
+        vm.expectRevert(SwapRouter__UnexpectedETH.selector);
+        swapRouter.executeSwap{value: 0.1 ether}(inputParams, routerParams, poster);
+    }
+
     function test_executeSwap_gas() public {
         test_executeSwap(
             address(this),

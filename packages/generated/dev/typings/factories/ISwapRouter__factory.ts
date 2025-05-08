@@ -194,6 +194,11 @@ const _abi = [
     name: "SwapRouter__InvalidRouter",
     inputs: [],
   },
+  {
+    type: "error",
+    name: "SwapRouter__UnexpectedETH",
+    inputs: [],
+  },
 ] as const;
 
 export class ISwapRouter__factory {
