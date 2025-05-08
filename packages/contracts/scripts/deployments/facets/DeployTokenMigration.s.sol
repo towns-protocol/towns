@@ -6,7 +6,7 @@ import {IDiamond} from "@towns-protocol/diamond/src/Diamond.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 //libraries
-import {DeployLib} from "@towns-protocol/diamond/scripts/common/DeployLib.sol";
+import {LibDeploy} from "@towns-protocol/diamond/src/utils/LibDeploy.sol";
 
 //contracts
 import {TokenMigrationFacet} from "src/tokens/migration/TokenMigrationFacet.sol";
@@ -35,6 +35,6 @@ library DeployTokenMigration {
     }
 
     function deploy() internal returns (address) {
-        return DeployLib.deployCode("TokenMigrationFacet.sol", "");
+        return LibDeploy.deployCode("TokenMigrationFacet.sol", "");
     }
 }

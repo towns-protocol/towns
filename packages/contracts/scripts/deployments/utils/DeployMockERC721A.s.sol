@@ -5,7 +5,7 @@ pragma solidity ^0.8.24;
 import {IDiamond} from "@towns-protocol/diamond/src/Diamond.sol";
 
 // libraries
-import {DeployLib} from "@towns-protocol/diamond/scripts/common/DeployLib.sol";
+import {LibDeploy} from "@towns-protocol/diamond/src/utils/LibDeploy.sol";
 import {DynamicArrayLib} from "solady/utils/DynamicArrayLib.sol";
 import {DeployERC721A} from "../facets/DeployERC721A.s.sol";
 
@@ -40,6 +40,6 @@ library DeployMockERC721A {
     }
 
     function deploy() internal returns (address) {
-        return DeployLib.deployCode("MockERC721A.sol", "");
+        return LibDeploy.deployCode("MockERC721A.sol", "");
     }
 }

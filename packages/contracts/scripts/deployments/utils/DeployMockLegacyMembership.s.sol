@@ -5,7 +5,7 @@ pragma solidity ^0.8.23;
 import {IDiamond} from "@towns-protocol/diamond/src/Diamond.sol";
 
 //libraries
-import {DeployLib} from "@towns-protocol/diamond/scripts/common/DeployLib.sol";
+import {LibDeploy} from "@towns-protocol/diamond/src/utils/LibDeploy.sol";
 
 //contracts
 import {MockLegacyMembership} from "test/mocks/legacy/membership/MockLegacyMembership.sol";
@@ -24,6 +24,6 @@ library DeployMockLegacyMembership {
     }
 
     function deploy() internal returns (address) {
-        return DeployLib.deployCode("MockLegacyMembership.sol", "");
+        return LibDeploy.deployCode("MockLegacyMembership.sol", "");
     }
 }
