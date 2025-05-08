@@ -6,6 +6,12 @@ import {
     createSpaceFacetAbi,
     spaceOwnerAbi,
     tokenPausableFacetAbi,
+    mainnetDelegationAbi,
+    entitlementCheckerAbi,
+    nodeOperatorFacetAbi,
+    spaceDelegationFacetAbi,
+    rewardsDistributionAbi,
+    xChainAbi,
 } from '@towns-protocol/contracts/typings'
 
 // Import our contract address utility
@@ -28,6 +34,11 @@ if (!spaceOwner) {
     throw new Error('Space owner address not found')
 }
 
+const baseRegistry = getContractAddress('baseRegistry')
+if (!baseRegistry) {
+    throw new Error('Base registry address not found')
+}
+
 export default createConfig({
     networks: {
         anvil: {
@@ -42,6 +53,19 @@ export default createConfig({
         },
     },
     contracts: {
+        BaseRegistry: {
+            abi: mergeAbis([
+                mainnetDelegationAbi,
+                entitlementCheckerAbi,
+                nodeOperatorFacetAbi,
+                spaceDelegationFacetAbi,
+                rewardsDistributionAbi,
+                xChainAbi,
+            ]),
+            address: baseRegistry,
+            startBlock,
+            network: 'gamma',
+        },
         SpaceFactory: {
             abi: mergeAbis([createSpaceFacetAbi, tokenPausableFacetAbi]),
             address: spaceFactory,
