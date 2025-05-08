@@ -1608,9 +1608,13 @@ func lastSnapshotIndexFromMiniblocks(
 	streamId string,
 ) (int64, error) {
 	table := getPartitionName("miniblocks", streamId, 256)
+	query := fmt.Sprintf(
+		"SELECT seq_num, blockdata from %s WHERE stream_id = $1 ORDER BY seq_num DESC LIMIT 101;",
+		table,
+	)
 	rows, err := target.Query(
 		ctx,
-		fmt.Sprintf("SELECT seq_num, blockdata from %s WHERE stream_id = $1 ORDER BY seq_num DESC LIMIT 101", table),
+		query,
 		streamId,
 	)
 	if err != nil {
@@ -1640,7 +1644,7 @@ func lastSnapshotIndexFromMiniblocks(
 			}
 
 			if mbInfo.GetSnapshot() != nil {
-				if verbose && seqNum != 0 {
+				if verbose {
 					fmt.Printf("debug -- saw a snapshot for stream %s, seq_num %d\n", streamId, seqNum)
 				}
 				return noError
@@ -1702,10 +1706,18 @@ func writeLastSnapshotMiniblock(
 func restoreSnapshotIndices(
 	ctx context.Context,
 	target *pgxpool.Pool,
+	filteredStreamIds []shared.StreamId,
 ) error {
 	streamIds, _, _, err := getStreamIds(ctx, target)
+	if len(filteredStreamIds) > 0 {
+		streamIds = filterStreamList(streamIds, filteredStreamIds)
+	}
 	if err != nil {
 		return fmt.Errorf("unable to get existing stream ids: %w", err)
+	}
+
+	if verbose {
+		fmt.Printf("Restoring %d streams\n", len(streamIds))
 	}
 
 	numWorkers := viper.GetInt("RIVER_DB_NUM_WORKERS")
@@ -1734,25 +1746,36 @@ func restoreSnapshotIndices(
 	return nil
 }
 
-var restoreSnapshotIndicesCmd = &cobra.Command{
-	Use:   "restore-snapshot-indices",
-	Short: "Restore snapshot indices to data that was copied from an archiver backup",
-	RunE: func(cmd *cobra.Command, args []string) error {
-		ctx := cmd.Context()
-		targetPool, targetInfo, err := getTargetDbPool(ctx, true)
-		if err != nil {
-			return err
-		}
-		err = testDbConnection(ctx, targetPool, targetInfo)
-		if err != nil {
-			return err
-		}
+var (
+	restoreSnapshotIndicesCmdFilterStreamsFile string
+	restoreSnapshotIndicesCmd                  = &cobra.Command{
+		Use:   "restore-snapshot-indices",
+		Short: "Restore snapshot indices to data that was copied from an archiver backup",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			ctx := cmd.Context()
+			targetPool, targetInfo, err := getTargetDbPool(ctx, true)
+			if err != nil {
+				return err
+			}
+			err = testDbConnection(ctx, targetPool, targetInfo)
+			if err != nil {
+				return err
+			}
 
-		return restoreSnapshotIndices(ctx, targetPool)
-	},
-}
+			var filteredStreamIds []shared.StreamId
+			if restoreSnapshotIndicesCmdFilterStreamsFile != "" {
+				filteredStreamIds = readStreamIdFile(restoreSnapshotIndicesCmdFilterStreamsFile)
+			}
+
+			return restoreSnapshotIndices(ctx, targetPool, filteredStreamIds)
+		},
+	}
+)
 
 func init() {
+	restoreSnapshotIndicesCmd.Flags().
+		StringVar(&restoreSnapshotIndicesCmdFilterStreamsFile, "filter-streams-file", "", "File with the subset of streams to copy from the archiver in order to restore a node.")
+
 	targetCmd.AddCommand(restoreSnapshotIndicesCmd)
 }
 
