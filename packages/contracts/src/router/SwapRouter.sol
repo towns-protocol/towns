@@ -103,6 +103,9 @@ contract SwapRouter is PausableBase, ReentrancyGuardTransient, ISwapRouter, Face
             uint256 amountIn = params.amountIn;
             bool isNativeToken = params.tokenIn == CurrencyTransfer.NATIVE_TOKEN;
             if (!isNativeToken) {
+                // ensure no ETH is sent when tokenIn is not native
+                if (msg.value != 0) SwapRouter__UnexpectedETH.selector.revertWith();
+
                 // use the actual received amount to handle fee-on-transfer tokens
                 uint256 tokenInBalanceBefore = params.tokenIn.balanceOf(address(this));
                 params.tokenIn.safeTransferFrom(payer, address(this), amountIn);
