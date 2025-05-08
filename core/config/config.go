@@ -72,7 +72,7 @@ func GetDefaultConfig() *Config {
 			ScrubEligibleDuration: 4 * time.Hour,
 		},
 		RiverRegistry: RiverRegistryConfig{
-			PageSize:               5000,
+			PageSize:               1500,
 			ParallelReaders:        100,
 			MaxRetries:             100,
 			MaxRetryElapsedTime:    5 * time.Minute,

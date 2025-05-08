@@ -2,6 +2,8 @@
 pragma solidity ^0.8.23;
 
 // interfaces
+import {IOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
+import {IPausableBase, IPausable} from "@towns-protocol/diamond/src/facets/pausable/IPausable.sol";
 import {IPlatformRequirements} from "../../src/factory/facets/platform/requirements/IPlatformRequirements.sol";
 import {ISwapRouter} from "../../src/router/ISwapRouter.sol";
 
@@ -19,9 +21,10 @@ import {DeploySpaceFactory} from "../../scripts/deployments/diamonds/DeploySpace
 import {DeploySwapRouter} from "../../scripts/deployments/diamonds/DeploySwapRouter.s.sol";
 import {SwapTestBase} from "./SwapTestBase.sol";
 
-contract SwapRouterTest is SwapTestBase {
+contract SwapRouterTest is SwapTestBase, IOwnableBase, IPausableBase {
     address internal spaceFactory;
     ISwapRouter internal swapRouter;
+    IPausable internal pausableFacet;
     address internal mockRouter;
     MockERC20 internal token0;
     MockERC20 internal token1;
@@ -56,12 +59,94 @@ contract SwapRouterTest is SwapTestBase {
         DeploySwapRouter deploySwapRouter = new DeploySwapRouter();
         deploySwapRouter.setDependencies(spaceFactory);
         swapRouter = ISwapRouter(deploySwapRouter.deploy(deployer));
+        pausableFacet = IPausable(address(swapRouter));
     }
 
     function test_storageSlot() external pure {
         bytes32 slot = keccak256(abi.encode(uint256(keccak256("router.swap.storage")) - 1)) &
             ~bytes32(uint256(0xff));
         assertEq(slot, SwapRouterStorage.STORAGE_SLOT, "slot");
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                     PAUSABLE FUNCTIONS                     */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    function test_pause_revertWhen_notOwner(address notOwner) external {
+        vm.assume(notOwner != address(0) && notOwner != deployer);
+        vm.prank(notOwner);
+        vm.expectRevert(abi.encodeWithSelector(Ownable__NotOwner.selector, notOwner));
+        pausableFacet.pause();
+    }
+
+    function test_pause_success() external {
+        vm.prank(deployer);
+        pausableFacet.pause();
+
+        assertTrue(pausableFacet.paused(), "Router should be paused");
+    }
+
+    function test_unpause_revertWhen_notOwner(address notOwner) external {
+        vm.assume(notOwner != address(0) && notOwner != deployer);
+        // pause the router
+        vm.prank(deployer);
+        pausableFacet.pause();
+
+        // try to unpause with non-owner
+        vm.prank(notOwner);
+        vm.expectRevert(abi.encodeWithSelector(Ownable__NotOwner.selector, notOwner));
+        pausableFacet.unpause();
+    }
+
+    function test_unpause_success() external {
+        // pause the router
+        vm.prank(deployer);
+        pausableFacet.pause();
+        assertTrue(pausableFacet.paused(), "Router should be paused");
+
+        // unpause it
+        vm.prank(deployer);
+        pausableFacet.unpause();
+        assertFalse(pausableFacet.paused(), "Router should be unpaused");
+    }
+
+    function test_executeSwap_revertWhen_paused() external {
+        address caller = address(this);
+        uint256 amountIn = 100 ether;
+        uint256 amountOut = 95 ether;
+
+        // pause the router
+        vm.prank(deployer);
+        pausableFacet.pause();
+
+        // get swap parameters
+        (ExactInputParams memory inputParams, RouterParams memory routerParams) = _createSwapParams(
+            address(swapRouter),
+            mockRouter,
+            address(token0),
+            address(token1),
+            amountIn,
+            amountOut,
+            caller
+        );
+
+        // expect revert when paused
+        vm.expectRevert(Pausable__Paused.selector);
+        swapRouter.executeSwap(inputParams, routerParams, poster);
+    }
+
+    function test_isPaused() external {
+        assertFalse(pausableFacet.paused(), "Should not be paused initially");
+
+        vm.prank(deployer);
+        pausableFacet.pause();
+
+        assertTrue(pausableFacet.paused(), "Should be paused after pause()");
+
+        vm.prank(deployer);
+        pausableFacet.unpause();
+
+        assertFalse(pausableFacet.paused(), "Should not be paused after unpause()");
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -141,6 +226,22 @@ contract SwapRouterTest is SwapTestBase {
 
         vm.expectRevert(SwapRouter__InsufficientOutput.selector);
         swapRouter.executeSwap(inputParams, routerParams, poster);
+    }
+
+    function test_executeSwap_revertWhen_unexpectedETH() external {
+        (ExactInputParams memory inputParams, RouterParams memory routerParams) = _createSwapParams(
+            address(swapRouter),
+            mockRouter,
+            address(token0), // ERC20 token (not native)
+            address(token1),
+            100 ether,
+            95 ether,
+            address(this)
+        );
+
+        // send ETH with the transaction even though tokenIn is not native token
+        vm.expectRevert(SwapRouter__UnexpectedETH.selector);
+        swapRouter.executeSwap{value: 0.1 ether}(inputParams, routerParams, poster);
     }
 
     function test_executeSwap_gas() public {
