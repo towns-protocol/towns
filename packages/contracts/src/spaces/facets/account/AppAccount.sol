@@ -2,10 +2,10 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {IModularAccount} from "./interfaces/IModularAccount.sol";
+import {IAppAccount} from "./interfaces/IAppAccount.sol";
 
 // libraries
-import {ModularAccountLib} from "./libraries/ModularAccountLib.sol";
+import {AppAccountLib} from "./libraries/AppAccountLib.sol";
 
 // contracts
 import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
@@ -13,18 +13,18 @@ import {TokenOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/token
 import {ReentrancyGuard} from "solady/utils/ReentrancyGuard.sol";
 
 /**
- * @title ModularAccount
+ * @title AppAccount
  * @notice A lightweight modular erc6900 semi-compatible account
  * @dev This account is used to execute transactions on behalf of a Space
  */
-contract ModularAccount is IModularAccount, ReentrancyGuard, TokenOwnableBase, Facet {
+contract AppAccount is IAppAccount, ReentrancyGuard, TokenOwnableBase, Facet {
     /**
      * @notice Validates if the target address is allowed for delegate calls
      * @dev Prevents delegate calls to critical system contracts
      * @param target The contract address to check
      */
     modifier onlyAuthorized(address target) {
-        ModularAccountLib.checkAuthorized(target);
+        AppAccountLib.checkAuthorized(target);
         _;
     }
 
@@ -37,19 +37,19 @@ contract ModularAccount is IModularAccount, ReentrancyGuard, TokenOwnableBase, F
         uint256 value,
         bytes calldata data
     ) external payable onlyAuthorized(target) nonReentrant returns (bytes memory result) {
-        (result, ) = ModularAccountLib.execute(target, value, data);
+        (result, ) = AppAccountLib.execute(target, value, data);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                       Module Management                    */
+    /*                       App Management                    */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-    function installModule(
-        bytes32 versionId,
+    function installApp(
+        bytes32 appId,
         bytes calldata data,
-        ModuleParams calldata params
+        AppParams calldata params
     ) external onlyOwner {
-        ModularAccountLib.installModule(
-            versionId,
+        AppAccountLib.installApp(
+            appId,
             params.grantDelay,
             params.executionDelay,
             params.allowance,
@@ -57,32 +57,32 @@ contract ModularAccount is IModularAccount, ReentrancyGuard, TokenOwnableBase, F
         );
     }
 
-    function uninstallModule(bytes32 versionId, bytes calldata data) external onlyOwner {
-        ModularAccountLib.uninstallModule(versionId, data);
+    function uninstallApp(bytes32 appId, bytes calldata data) external onlyOwner {
+        AppAccountLib.uninstallApp(appId, data);
     }
 
     /// @notice Checks if a client is entitled to a permission for a module
-    /// @param versionId The module ID to check
+    /// @param appId The module ID to check
     /// @param publicKey The public key to check
     /// @param permission The permission to check
     /// @return True if the client is entitled to the permission, false otherwise
-    function isModuleEntitled(
-        bytes32 versionId,
+    function isAppEntitled(
+        bytes32 appId,
         address publicKey,
         bytes32 permission
     ) external view returns (bool) {
-        return ModularAccountLib.isEntitled(versionId, publicKey, permission);
+        return AppAccountLib.isEntitled(appId, publicKey, permission);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           Allowance                            */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    function setModuleAllowance(bytes32 versionId, uint256 allowance) external onlyOwner {
-        ModularAccountLib.setModuleAllowance(versionId, allowance);
+    function setAppAllowance(bytes32 appId, uint256 allowance) external onlyOwner {
+        AppAccountLib.setAppAllowance(appId, allowance);
     }
 
-    function getModuleAllowance(bytes32 versionId) external view returns (uint256) {
-        return ModularAccountLib.getModuleAllowance(versionId);
+    function getAppAllowance(bytes32 appId) external view returns (uint256) {
+        return AppAccountLib.getAppAllowance(appId);
     }
 }

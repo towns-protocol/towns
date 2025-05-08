@@ -2,7 +2,7 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {IModularAccountBase} from "../interfaces/IModularAccount.sol";
+import {IAppAccountBase} from "../interfaces/IAppAccount.sol";
 import {IModuleRegistry} from "src/modules/interfaces/IModuleRegistry.sol";
 import {ITownsApp} from "src/modules/interfaces/ITownsApp.sol";
 import {IERC6900Module} from "@erc6900/reference-implementation/interfaces/IERC6900Module.sol";
@@ -23,7 +23,7 @@ import {LibCall} from "solady/utils/LibCall.sol";
 import {ExecutionManifest, ManifestExecutionFunction, ManifestExecutionHook} from "@erc6900/reference-implementation/interfaces/IERC6900ExecutionModule.sol";
 import {Attestation, EMPTY_UID} from "@ethereum-attestation-service/eas-contracts/Common.sol";
 
-library ModularAccountLib {
+library AppAccountLib {
     using CustomRevert for bytes4;
     using DependencyLib for MembershipStorage.Layout;
 
@@ -32,25 +32,25 @@ library ModularAccountLib {
         uint256 value,
         bytes calldata data
     ) internal returns (bytes memory result, uint32 nonce) {
-        if (target == address(0)) IModularAccountBase.InvalidModuleAddress.selector.revertWith();
+        if (target == address(0)) IAppAccountBase.InvalidAppAddress.selector.revertWith();
 
         MembershipStorage.Layout storage ms = MembershipStorage.layout();
 
         if (IModuleRegistry(ms.getDependency("AppRegistry")).isModuleBanned(target)) {
-            IModularAccountBase.InvalidModuleId.selector.revertWith();
+            IAppAccountBase.InvalidAppId.selector.revertWith();
         }
 
         return ExecutorLib.execute(target, value, data);
     }
 
-    function installModule(
+    function installApp(
         bytes32 versionId,
         uint32 grantDelay,
         uint32 executionDelay,
         uint256 allowance,
         bytes calldata postInstallData
     ) internal {
-        if (versionId == EMPTY_UID) IModularAccountBase.InvalidModuleId.selector.revertWith();
+        if (versionId == EMPTY_UID) IAppAccountBase.InvalidAppId.selector.revertWith();
 
         // get the module group id from the module registry
         (
@@ -63,7 +63,7 @@ library ModularAccountLib {
 
         // verify if already installed
         if (ExecutorLib.isGroupActive(versionId))
-            IModularAccountBase.ModuleAlreadyInstalled.selector.revertWith();
+            IAppAccountBase.AppAlreadyInstalled.selector.revertWith();
 
         verifyManifests(module, cachedManifest);
 
@@ -86,7 +86,7 @@ library ModularAccountLib {
 
             // check if the function is a native function
             if (isInvalidSelector(func.executionSelector)) {
-                IModularAccountBase.UnauthorizedSelector.selector.revertWith();
+                IAppAccountBase.UnauthorizedSelector.selector.revertWith();
             }
 
             ExecutorLib.setTargetFunctionGroup(module, func.executionSelector, versionId);
@@ -112,7 +112,7 @@ library ModularAccountLib {
         // Set the allowance for the module group
         if (allowance > 0) {
             if (address(this).balance < allowance)
-                IModularAccountBase.NotEnoughEth.selector.revertWith();
+                IAppAccountBase.NotEnoughEth.selector.revertWith();
             ExecutorLib.setGroupAllowance(versionId, allowance);
         }
 
@@ -126,7 +126,7 @@ library ModularAccountLib {
         emit IERC6900Account.ExecutionInstalled(module, cachedManifest);
     }
 
-    function uninstallModule(bytes32 versionId, bytes calldata uninstallData) internal {
+    function uninstallApp(bytes32 versionId, bytes calldata uninstallData) internal {
         (
             address module,
             ,
@@ -169,17 +169,17 @@ library ModularAccountLib {
         emit IERC6900Account.ExecutionUninstalled(module, onUninstallSuccess, manifest);
     }
 
-    function setModuleAllowance(bytes32 versionId, uint256 allowance) internal {
-        if (versionId == EMPTY_UID) IModularAccountBase.InvalidModuleId.selector.revertWith();
+    function setAppAllowance(bytes32 versionId, uint256 allowance) internal {
+        if (versionId == EMPTY_UID) IAppAccountBase.InvalidAppId.selector.revertWith();
         if (!ExecutorLib.isGroupActive(versionId))
-            IModularAccountBase.ModuleNotInstalled.selector.revertWith();
+            IAppAccountBase.AppNotInstalled.selector.revertWith();
         ExecutorLib.setGroupAllowance(versionId, allowance);
     }
 
-    function getModuleAllowance(bytes32 versionId) internal view returns (uint256) {
-        if (versionId == EMPTY_UID) IModularAccountBase.InvalidModuleId.selector.revertWith();
+    function getAppAllowance(bytes32 versionId) internal view returns (uint256) {
+        if (versionId == EMPTY_UID) IAppAccountBase.InvalidAppId.selector.revertWith();
         if (!ExecutorLib.isGroupActive(versionId))
-            IModularAccountBase.ModuleNotInstalled.selector.revertWith();
+            IAppAccountBase.AppNotInstalled.selector.revertWith();
         return ExecutorLib.getGroupAllowance(versionId);
     }
 
@@ -231,8 +231,8 @@ library ModularAccountLib {
         address appRegistry = ms.getDependency("AppRegistry");
         Attestation memory att = IModuleRegistry(appRegistry).getModuleById(versionId);
 
-        if (att.uid == EMPTY_UID) IModularAccountBase.ModuleNotRegistered.selector.revertWith();
-        if (att.revocationTime != 0) IModularAccountBase.ModuleRevoked.selector.revertWith();
+        if (att.uid == EMPTY_UID) IAppAccountBase.AppNotRegistered.selector.revertWith();
+        if (att.revocationTime != 0) IAppAccountBase.AppRevoked.selector.revertWith();
 
         (module, owner, clients, permissions, manifest) = abi.decode(
             att.data,
@@ -242,7 +242,7 @@ library ModularAccountLib {
 
     // Checks
     function checkAuthorized(address module) internal view {
-        if (module == address(0)) IModularAccountBase.InvalidModuleAddress.selector.revertWith();
+        if (module == address(0)) IAppAccountBase.InvalidAppAddress.selector.revertWith();
 
         MembershipStorage.Layout storage ms = MembershipStorage.layout();
         address factory = ms.spaceFactory;
@@ -262,7 +262,7 @@ library ModularAccountLib {
             module == deps[2] ||
             module == deps[3]
         ) {
-            IModularAccountBase.UnauthorizedModule.selector.revertWith(module);
+            IAppAccountBase.UnauthorizedApp.selector.revertWith(module);
         }
     }
 
@@ -277,7 +277,7 @@ library ModularAccountLib {
         bytes32 cachedManifestHash = keccak256(abi.encode(cachedManifest));
 
         if (moduleManifestHash != cachedManifestHash) {
-            IModularAccountBase.InvalidManifest.selector.revertWith(module);
+            IAppAccountBase.InvalidManifest.selector.revertWith(module);
         }
     }
 
