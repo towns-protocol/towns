@@ -61,6 +61,9 @@ interface ISwapRouterBase {
     /// @notice Error thrown when the output amount is less than the minimum expected
     error SwapRouter__InsufficientOutput();
 
+    /// @notice Error thrown when ETH is sent but not expected (tokenIn is not the native token)
+    error SwapRouter__UnexpectedETH();
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           EVENTS                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
