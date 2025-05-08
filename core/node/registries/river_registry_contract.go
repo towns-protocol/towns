@@ -23,9 +23,6 @@ import (
 	. "github.com/towns-protocol/towns/core/node/shared"
 )
 
-var streamRegistryABI, _ = river.StreamRegistryV1MetaData.GetAbi()
-
-// RiverRegistryContract is the convenience wrapper for the IRiverRegistryV1 interface (abigen exports it as RiverRegistryV1)
 // RiverRegistryContract is the convinience wrapper for the IRiverRegistryV1 interface (abigen exports it as RiverRegistryV1)
 type RiverRegistryContract struct {
 	OperatorRegistry *river.OperatorRegistryV1
