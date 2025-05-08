@@ -587,6 +587,7 @@ func (s *Service) initStore() error {
 			s.metrics,
 			s.chainConfig.Get().StreamEphemeralStreamTTL,
 			s.chainConfig.Get().StreamTrimmingMiniblocksToKeep,
+			s.config.TrimmingBatchSize,
 		)
 		if err != nil {
 			return err

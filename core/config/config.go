@@ -20,8 +20,9 @@ func GetDefaultConfig() *Config {
 			StartupDelay:  2 * time.Second,
 			NumPartitions: 256,
 		},
-		StorageType:  "postgres",
-		DisableHttps: false,
+		StorageType:       "postgres",
+		TrimmingBatchSize: 100,
+		DisableHttps:      false,
 		BaseChain: ChainConfig{
 			// TODO: ChainId:
 			BlockTimeMs: 2000,
@@ -82,6 +83,7 @@ func GetDefaultConfig() *Config {
 	}
 }
 
+// Config contains all configuration settings for the node.
 // Viper uses mapstructure module to marshal settings into config struct.
 type Config struct {
 	// Network
@@ -94,8 +96,9 @@ type Config struct {
 	TLSConfig    TLSConfig
 
 	// Storage
-	Database    DatabaseConfig
-	StorageType string
+	Database          DatabaseConfig
+	StorageType       string
+	TrimmingBatchSize int
 
 	// Blockchain configuration
 	BaseChain  ChainConfig

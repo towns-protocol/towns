@@ -22,11 +22,12 @@ type trimTask struct {
 // streamTrimmer handles periodic trimming of streams
 type streamTrimmer struct {
 	ctx   context.Context
+	log   *logging.Log
 	store *PostgresStreamStore
 	// miniblocksToKeep is the number of miniblocks to keep before the last snapshot.
 	// Defined per stream type.
-	miniblocksToKeep crypto.StreamTrimmingMiniblocksToKeepSettings
-	log              *logging.Log
+	miniblocksToKeep  crypto.StreamTrimmingMiniblocksToKeepSettings
+	trimmingBatchSize int
 
 	// Worker pool for trimming operations
 	workerPool *workerpool.WorkerPool
@@ -44,15 +45,17 @@ func newStreamTrimmer(
 	ctx context.Context,
 	store *PostgresStreamStore,
 	miniblocksToKeep crypto.StreamTrimmingMiniblocksToKeepSettings,
+	trimmingBatchSize int,
 ) (*streamTrimmer, error) {
 	st := &streamTrimmer{
-		ctx:              ctx,
-		store:            store,
-		miniblocksToKeep: miniblocksToKeep,
-		log:              logging.FromCtx(ctx),
-		workerPool:       workerpool.New(4),
-		pendingTasks:     make(map[StreamId]struct{}),
-		stop:             make(chan struct{}),
+		ctx:               ctx,
+		log:               logging.FromCtx(ctx),
+		store:             store,
+		miniblocksToKeep:  miniblocksToKeep,
+		trimmingBatchSize: trimmingBatchSize,
+		workerPool:        workerpool.New(4),
+		pendingTasks:      make(map[StreamId]struct{}),
+		stop:              make(chan struct{}),
 	}
 
 	// Schedule trimming for existing streams
@@ -118,7 +121,6 @@ func (t *streamTrimmer) processTrimTaskTx(
 	}
 
 	// Delete miniblocks in a single batch.
-	const batchSize = 1000
 	rows, err := tx.Query(
 		ctx,
 		t.store.sqlForStream(
@@ -135,7 +137,7 @@ func (t *streamTrimmer) processTrimTaskTx(
 		),
 		task.streamId,
 		miniblockToKeep,
-		batchSize,
+		t.trimmingBatchSize,
 	)
 	if err != nil {
 		return err
@@ -154,7 +156,7 @@ func (t *streamTrimmer) processTrimTaskTx(
 	t.pendingTasksLock.Unlock()
 
 	// If we deleted a full batch, schedule another trim task
-	if deletedCount == batchSize {
+	if deletedCount == t.trimmingBatchSize {
 		t.scheduleTrimTask(task.streamId, task.miniblocksToKeep)
 	}
 

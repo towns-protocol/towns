@@ -117,6 +117,7 @@ func NewPostgresStreamStore(
 	metrics infra.MetricsFactory,
 	ephemeralStreamTtl time.Duration,
 	streamMiniblocksToKeep crypto.StreamTrimmingMiniblocksToKeepSettings,
+	trimmingBatchSize int,
 ) (store *PostgresStreamStore, err error) {
 	store = &PostgresStreamStore{
 		nodeUUID:   instanceId,
@@ -149,7 +150,7 @@ func NewPostgresStreamStore(
 	}
 
 	// Start the stream trimmer
-	store.streamTrimmer, err = newStreamTrimmer(ctx, store, streamMiniblocksToKeep)
+	store.streamTrimmer, err = newStreamTrimmer(ctx, store, streamMiniblocksToKeep, trimmingBatchSize)
 	if err != nil {
 		return nil, AsRiverError(err).Func("NewPostgresStreamStore")
 	}

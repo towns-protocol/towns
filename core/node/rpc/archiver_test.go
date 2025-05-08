@@ -314,6 +314,7 @@ func TestArchiveOneStream(t *testing.T) {
 		infra.NewMetricsFactory(nil, "", ""),
 		time.Minute*10,
 		crypto.StreamTrimmingMiniblocksToKeepSettings{},
+		100,
 	)
 	require.NoError(err)
 

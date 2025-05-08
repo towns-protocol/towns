@@ -36,6 +36,7 @@ func NewTestStreamStore(ctx context.Context) *TestStreamStore {
 		infra.NewMetricsFactory(nil, "", ""),
 		time.Minute*10,
 		crypto.StreamTrimmingMiniblocksToKeepSettings{},
+		100,
 	)
 	if err != nil {
 		panic(err)
