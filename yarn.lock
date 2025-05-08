@@ -4295,13 +4295,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@matrix-org/olm@npm:^3.2.15":
-  version: 3.2.15
-  resolution: "@matrix-org/olm@npm:3.2.15"
-  checksum: 1548d2d72db08e53056425b92bcf5a02d5fa5917dc34d519c6d89c4f80a31f4c36da11d957e9b55302d34595f67cac50efd4b6ff725de1dd448c645a42589f74
-  languageName: node
-  linkType: hard
-
 "@mdx-js/mdx@npm:^2.1.5, @mdx-js/mdx@npm:^2.2.1":
   version: 2.3.0
   resolution: "@mdx-js/mdx@npm:2.3.0"
@@ -8622,9 +8615,8 @@ __metadata:
   dependencies:
     "@bufbuild/protobuf": ^2.2.2
     "@ethereumjs/util": ^8.0.1
-    "@matrix-org/olm": ^3.2.15
     "@towns-protocol/dlog": "workspace:^"
-    "@towns-protocol/olm": 3.2.17
+    "@towns-protocol/olm": 3.2.18
     "@towns-protocol/proto": "workspace:^"
     "@towns-protocol/web3": "workspace:^"
     "@types/lodash": ^4.14.186
@@ -8677,11 +8669,12 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@towns-protocol/olm@portal:/Users/miguel/dev/hnt/olm/result/javascript::locator=towns-protocol%40workspace%3A.":
-  version: 0.0.0-use.local
-  resolution: "@towns-protocol/olm@portal:/Users/miguel/dev/hnt/olm/result/javascript::locator=towns-protocol%40workspace%3A."
+"@towns-protocol/olm@npm:3.2.18":
+  version: 3.2.18
+  resolution: "@towns-protocol/olm@npm:3.2.18"
+  checksum: aec356d6f74e7eed36c4d1723756b774ecdf1c8e20855aa391302b9d4c92cb45740bde6e813efaf1023eb7dff971f87267b611a8b9b88ae9cbe4b01efbed612d
   languageName: node
-  linkType: soft
+  linkType: hard
 
 "@towns-protocol/playground@workspace:packages/playground":
   version: 0.0.0-use.local
