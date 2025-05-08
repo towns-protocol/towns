@@ -782,6 +782,7 @@ func (s *Service) initHandlers() {
 
 	nodeServicePattern, nodeServiceHandler := protocolconnect.NewNodeToNodeHandler(s, interceptors)
 	if s.chainConfig.Get().ServerEnableNode2NodeAuth == 1 {
+		s.defaultLogger.Infow("Enabling node2node authentication")
 		nodeServiceHandler = node2nodeauth.RequireCertMiddleware(nodeServiceHandler)
 	}
 	s.mux.Handle(nodeServicePattern, newHttpHandler(nodeServiceHandler, s.defaultLogger))
