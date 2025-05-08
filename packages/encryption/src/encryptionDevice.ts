@@ -37,7 +37,13 @@ import { create, fromBinary, toBinary } from '@bufbuild/protobuf'
 
 const log = dlog('csb:encryption:encryptionDevice')
 
-const PICKLE_KEY = 'DEFAULT_PICKLE_KEY_1234567890___'
+const string_to32bytes = (str: string) => {
+    const encoder = new TextEncoder()
+    const src = encoder.encode(str) // Uint8Array of UTF-8 bytes
+    const out = new Uint8Array(32) // auto-filled with zeros
+    out.set(src.subarray(0, 32)) // copy & truncate
+    return out
+}
 
 // The maximum size of an event is 65K, and we base64 the content, so this is a
 // reasonable approximation to the biggest plaintext we can encrypt.
@@ -90,7 +96,7 @@ export type GroupSessionExtraDataVodozemac = {
 
 export class EncryptionDeviceVodozemac {
     // https://linear.app/hnt-labs/issue/HNT-4273/pick-a-better-pickle-key-in-olmdevice
-    public pickleKey = PICKLE_KEY // set by consumers
+    public pickleKey = 'DEFAULT_KEY' // set by consumers
 
     /** Curve25519 key for the account, unknown until we load the account from storage in init() */
     public deviceCurve25519Key: string | null = null
@@ -146,7 +152,7 @@ export class EncryptionDeviceVodozemac {
             if (fromExportedDevice) {
                 account = Account.from_libolm_pickle(
                     fromExportedDevice.pickledAccount,
-                    bin_fromString(fromExportedDevice.pickleKey),
+                    string_to32bytes(fromExportedDevice.pickleKey),
                 )
                 await this.initializeFromExportedDevice(fromExportedDevice)
             } else {
@@ -157,12 +163,12 @@ export class EncryptionDeviceVodozemac {
                     const pickledAccount = await this.cryptoStore.getAccount()
                     account = Account.from_libolm_pickle(
                         pickledAccount,
-                        bin_fromString(this.pickleKey),
+                        string_to32bytes(this.pickleKey),
                     )
                 } catch {
                     account = new Account()
                     account.generate_fallback_key()
-                    const pickledAccount = account.pickle_libolm(bin_fromString(this.pickleKey))
+                    const pickledAccount = account.pickle_libolm(string_to32bytes(this.pickleKey))
                     await this.cryptoStore.storeAccount(pickledAccount)
                 }
             }
@@ -185,7 +191,7 @@ export class EncryptionDeviceVodozemac {
         )
         await this.cryptoStore.withAccountTx(async () => {
             await this.cryptoStore.storeAccount(
-                account.pickle_libolm(bin_fromString(this.pickleKey)),
+                account.pickle_libolm(string_to32bytes(this.pickleKey)),
             )
         })
         account?.free()
@@ -228,7 +234,7 @@ export class EncryptionDeviceVodozemac {
      */
     public async exportDevice(): Promise<ExportedDevice> {
         const account = await this.getAccount()
-        const pickledAccount = account.pickle_libolm(bin_fromString(this.pickleKey))
+        const pickledAccount = account.pickle_libolm(string_to32bytes(this.pickleKey))
 
         const [inboundSessions, outboundSessions, hybridGroupSessions] = await Promise.all([
             this.cryptoStore.getAllEndToEndInboundGroupSessions(),
@@ -280,7 +286,7 @@ export class EncryptionDeviceVodozemac {
      */
     private async getAccount(): Promise<Account> {
         const pickledAccount = await this.cryptoStore.getAccount()
-        const account = Account.from_libolm_pickle(pickledAccount, bin_fromString(this.pickleKey))
+        const account = Account.from_libolm_pickle(pickledAccount, string_to32bytes(this.pickleKey))
         return account
     }
 
@@ -294,7 +300,7 @@ export class EncryptionDeviceVodozemac {
      * @internal
      */
     private async storeAccount(account: Account): Promise<void> {
-        await this.cryptoStore.storeAccount(account.pickle_libolm(bin_fromString(this.pickleKey)))
+        await this.cryptoStore.storeAccount(account.pickle_libolm(string_to32bytes(this.pickleKey)))
     }
 
     /**
@@ -356,7 +362,7 @@ export class EncryptionDeviceVodozemac {
         return this.cryptoStore.withGroupSessions(async () => {
             await this.cryptoStore.storeEndToEndOutboundGroupSession(
                 session.session_id,
-                session.pickle(bin_fromString(this.pickleKey)),
+                session.pickle(string_to32bytes(this.pickleKey)),
                 streamId,
             )
         })
@@ -371,7 +377,7 @@ export class EncryptionDeviceVodozemac {
             if (!pickled) {
                 throw new Error(`Unknown outbound group session ${streamId}`)
             }
-            return GroupSession.from_pickle(pickled, bin_fromString(this.pickleKey))
+            return GroupSession.from_pickle(pickled, string_to32bytes(this.pickleKey))
         })
     }
 
@@ -440,7 +446,7 @@ export class EncryptionDeviceVodozemac {
                 await this.saveOutboundGroupSession(session, streamId)
                 // While still inside the transaction, create an inbound counterpart session
                 // to make sure that the session is exported at message index 0.
-                const pickled = inboundSession.pickle(bin_fromString(this.pickleKey))
+                const pickled = inboundSession.pickle(string_to32bytes(this.pickleKey))
                 await this.cryptoStore.storeEndToEndInboundGroupSession(streamId, sessionId, {
                     session: pickled,
                     stream_id: streamId,
@@ -513,7 +519,7 @@ export class EncryptionDeviceVodozemac {
     ): InboundGroupSession {
         const session = InboundGroupSession.from_pickle(
             sessionData.session,
-            bin_fromString(this.pickleKey),
+            string_to32bytes(this.pickleKey),
         )
         return session
     }
@@ -631,7 +637,7 @@ export class EncryptionDeviceVodozemac {
 
             const sessionData = Object.assign({}, extraSessionData, {
                 stream_id: streamId,
-                session: session.pickle(bin_fromString(this.pickleKey)),
+                session: session.pickle(string_to32bytes(this.pickleKey)),
                 keysClaimed: keysClaimed,
             })
             await this.cryptoStore.withGroupSessions(async () => {
