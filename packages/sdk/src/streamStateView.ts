@@ -48,7 +48,6 @@ import { StreamStateView_UserInbox } from './streamStateView_UserInbox'
 import { DecryptedContent } from './encryptedContentTypes'
 import { StreamStateView_UnknownContent } from './streamStateView_UnknownContent'
 import { StreamStateView_MemberMetadata } from './streamStateView_MemberMetadata'
-import { StreamStateView_ChannelMetadata } from './streamStateView_ChannelMetadata'
 import { StreamEvents, StreamEncryptionEvents, StreamStateEvents } from './streamEvents'
 import isEqual from 'lodash/isEqual'
 import { DecryptionSessionError } from '@towns-protocol/encryption'
@@ -67,6 +66,7 @@ export interface IStreamStateView {
     readonly events: Map<string, StreamTimelineEvent>
     isInitialized: boolean
     prevMiniblockHash?: Uint8Array
+    prevMiniblockNum?: bigint
     lastEventNum: bigint
     prevSnapshotMiniblockNum: bigint
     miniblockInfo?: { max: bigint; min: bigint; terminusReached: boolean }
@@ -83,7 +83,6 @@ export interface IStreamStateView {
     get mediaContent(): StreamStateView_Media
     getMembers(): StreamStateView_Members
     getMemberMetadata(): StreamStateView_MemberMetadata
-    getChannelMetadata(): StreamStateView_ChannelMetadata | undefined
     getContent(): StreamStateView_AbstractContent
     userIsEntitledToKeyExchange(userId: string): boolean
     getUsersEntitledToKeyExchange(): Set<string>
@@ -97,6 +96,7 @@ export class StreamStateView implements IStreamStateView {
     readonly events = new Map<string, StreamTimelineEvent>()
     isInitialized = false
     prevMiniblockHash?: Uint8Array
+    prevMiniblockNum?: bigint
     lastEventNum = 0n
     prevSnapshotMiniblockNum: bigint
     miniblockInfo?: { max: bigint; min: bigint; terminusReached: boolean }
@@ -361,6 +361,7 @@ export class StreamStateView implements IStreamStateView {
                         Err.STREAM_BAD_EVENT,
                     )
                     this.prevMiniblockHash = event.hash
+                    this.prevMiniblockNum = payload.value.miniblockNum
                     this.updateMiniblockInfo(payload.value, { max: payload.value.miniblockNum })
                     timelineEvent.confirmedEventNum =
                         payload.value.eventNumOffset + BigInt(payload.value.eventHashes.length)
@@ -612,6 +613,7 @@ export class StreamStateView implements IStreamStateView {
         this.lastEventNum = lastBlock.header.eventNumOffset + BigInt(lastBlock.events.length)
         // and the prev miniblock has (if there were more than 1 miniblocks, this should already be set)
         this.prevMiniblockHash = lastBlock.hash
+        this.prevMiniblockNum = lastBlock.header.miniblockNum
         // append the minipool events
         this.appendStreamAndCookie(nextSyncCookie, minipoolEvents, cleartexts, emitter, undefined)
         this.prevSnapshotMiniblockNum = prevSnapshotMiniblockNum
@@ -762,10 +764,6 @@ export class StreamStateView implements IStreamStateView {
 
     getMemberMetadata(): StreamStateView_MemberMetadata {
         return this.membershipContent.memberMetadata
-    }
-
-    getChannelMetadata(): StreamStateView_ChannelMetadata | undefined {
-        return this.getContent().getChannelMetadata()
     }
 
     getContent(): StreamStateView_AbstractContent {

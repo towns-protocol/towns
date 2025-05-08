@@ -1,6 +1,7 @@
 import TypedEmitter from 'typed-emitter'
 import { RemoteTimelineEvent } from './types'
 import {
+    BlockchainTransaction_TokenTransfer,
     MembershipOp,
     Snapshot,
     UserPayload,
@@ -21,6 +22,7 @@ export class StreamStateView_User extends StreamStateView_AbstractContent {
     tipsReceived: { [key: string]: bigint } = {}
     tipsSentCount: { [key: string]: bigint } = {}
     tipsReceivedCount: { [key: string]: bigint } = {}
+    tokenTransfers: BlockchainTransaction_TokenTransfer[] = []
 
     constructor(streamId: string) {
         super()
@@ -59,6 +61,16 @@ export class StreamStateView_User extends StreamStateView_AbstractContent {
             case 'userMembershipAction':
                 break
             case 'blockchainTransaction':
+                {
+                    const transactionContent = payload.content.value.content
+                    switch (transactionContent?.case) {
+                        case 'tokenTransfer':
+                            this.tokenTransfers.unshift(transactionContent.value)
+                            break
+                        default:
+                            break
+                    }
+                }
                 break
             case 'receivedBlockchainTransaction':
                 break
@@ -102,6 +114,7 @@ export class StreamStateView_User extends StreamStateView_AbstractContent {
                         break
                     }
                     case 'tokenTransfer':
+                        this.tokenTransfers.push(transactionContent.value)
                         break
                     case 'spaceReview': {
                         // user left a review on a space

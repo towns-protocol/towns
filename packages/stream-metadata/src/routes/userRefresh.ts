@@ -42,8 +42,8 @@ export async function userRefresh(request: FastifyRequest, reply: FastifyReply) 
 		target === 'image'
 			? [`/user/${userId}/image`]
 			: target === 'bio'
-			? [`/user/${userId}/bio`]
-			: [`/user/${userId}/*`]
+				? [`/user/${userId}/bio`]
+				: [`/user/${userId}/*`]
 
 	try {
 		const invalidation = await CloudfrontManager.createCloudfrontInvalidation({ paths, logger })

@@ -71,6 +71,7 @@ export type TimelineEvent_OneOf =
     | ChannelMessageEvent
     | ChannelMessageMissingEvent
     | ChannelPropertiesEvent
+    | EncryptedChannelPropertiesEvent
     | FulfillmentEvent
     | InceptionEvent
     | KeySolicitationEvent
@@ -103,6 +104,7 @@ export enum RiverTimelineEvent {
     ChannelMessageEncryptedWithRef = 'm.channel.encrypted_with_ref',
     ChannelMessageMissing = 'm.channel.missing',
     ChannelProperties = 'm.channel.properties',
+    EncryptedChannelProperties = 'm.channel.encrypted_properties',
     Fulfillment = 'm.fulfillment',
     Inception = 'm.inception', // TODO: would be great to name this after space / channel name
     KeySolicitation = 'm.key_solicitation',
@@ -243,6 +245,11 @@ export interface ChannelMessageEncryptedRefEvent {
 export interface ChannelPropertiesEvent {
     kind: RiverTimelineEvent.ChannelProperties
     properties: ChannelProperties
+}
+
+export interface EncryptedChannelPropertiesEvent {
+    kind: RiverTimelineEvent.EncryptedChannelProperties
+    error?: DecryptionSessionError
 }
 
 export interface ChannelMessageMissingEvent {
@@ -399,7 +406,7 @@ export interface ThreadResult {
     isUnread: boolean
     fullyReadMarker?: FullyReadMarker
     thread: ThreadStatsData
-    channelId: string // NOTE: dispreancy with useCasablancaTimeline, where channel is ChannelData
+    channel: { id: string; label: string }
     timestamp: number
 }
 
@@ -409,7 +416,7 @@ export type MessageReactions = Record<string, Record<string, { eventId: string }
 export type MentionResult = {
     type: 'mention'
     unread: boolean
-    channelId: string // NOTE: dispreancy with useCasablancaTimeline, where channel is ChannelData
+    channelId: string
     timestamp: number
     event: TimelineEvent
     thread?: TimelineEvent
@@ -478,3 +485,16 @@ export type Attachment =
     | EmbeddedMessageAttachment
     | UnfurledLinkAttachment
     | TickerAttachment
+
+export type MessageTipEvent = Omit<TimelineEvent, 'content'> & {
+    content: TipEvent
+}
+// array of timeline events that all have content of type MemberBlockchainTransactionEvent
+export type MessageTips = MessageTipEvent[]
+
+export function isMessageTipEvent(event: TimelineEvent): event is MessageTipEvent {
+    return (
+        event.content?.kind === RiverTimelineEvent.TipEvent &&
+        event.content.transaction?.content.case === 'tip'
+    )
+}

@@ -42,10 +42,8 @@ fi
 # make deploy-any-local context=$RIVER_ENV rpc=base_anvil type=utils contract=DeployEntrypoint
 # make deploy-any-local context=$RIVER_ENV rpc=base_anvil type=utils contract=DeployAccountFactory
 
-# Only anvil supports automine but this might be a local geth node
-if [ "${BASE_EXECUTION_CLIENT}" != "geth_dev" ]; then
-    cast rpc evm_setAutomine true --rpc-url $BASE_ANVIL_RPC_URL
-fi
+# Deploying contracts with automine is faster
+cast rpc evm_setAutomine true --rpc-url $BASE_ANVIL_RPC_URL
 cast rpc evm_setAutomine true --rpc-url $RIVER_ANVIL_RPC_URL
 
 # Deploy base contracts
@@ -54,9 +52,8 @@ cast rpc evm_setAutomine true --rpc-url $RIVER_ANVIL_RPC_URL
 # River Registry
 make deploy-any-local context=$RIVER_ENV rpc=river_anvil type=diamonds contract=DeployRiverRegistry
 
-if [ "${BASE_EXECUTION_CLIENT}" != "geth_dev" ]; then
-    cast rpc evm_setIntervalMining $RIVER_BLOCK_TIME --rpc-url $BASE_ANVIL_RPC_URL
-fi
+# Restore to interval mining
+cast rpc evm_setIntervalMining $RIVER_BLOCK_TIME --rpc-url $BASE_ANVIL_RPC_URL
 cast rpc evm_setIntervalMining $RIVER_BLOCK_TIME --rpc-url $RIVER_ANVIL_RPC_URL
 
 cd "$PROJECT_ROOT"
