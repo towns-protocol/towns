@@ -184,7 +184,10 @@ export class Bot extends (EventEmitter as new () => TypedEmitter<BotEvents>) {
     private readonly client: ClientV2<BotActions>
     botId: string
 
-    constructor(clientV2: ClientV2<BotActions>, private readonly jwtSecret: string) {
+    constructor(
+        clientV2: ClientV2<BotActions>,
+        private readonly jwtSecret: string,
+    ) {
         super()
         this.client = clientV2
         this.botId = clientV2.userId
@@ -572,9 +575,10 @@ const buildBotActions = (client: ClientV2) => {
         payload: ChannelMessage
     }) => {
         const stream = await client.getStream(streamId)
-        const { hash: prevMiniblockHash } = await client.rpc.getLastMiniblockHash({
-            streamId: streamIdAsBytes(streamId),
-        })
+        const { hash: prevMiniblockHash, miniblockNum: prevMiniblockNum } =
+            await client.rpc.getLastMiniblockHash({
+                streamId: streamIdAsBytes(streamId),
+            })
         // TODO: Bot messages doesnt have the participants due to the lack of stream view / timeline capabilities
         const tags = unsafe_makeTags(payload)
         const encryptionAlgorithm = stream.snapshot.members?.encryptionAlgorithm?.algorithm
@@ -593,6 +597,7 @@ const buildBotActions = (client: ClientV2) => {
                 client.signer,
                 make_ChannelPayload_Message(message),
                 prevMiniblockHash,
+                prevMiniblockNum,
                 tags,
             )
         } else if (isDMChannelStreamId(streamId)) {
@@ -600,6 +605,7 @@ const buildBotActions = (client: ClientV2) => {
                 client.signer,
                 make_DMChannelPayload_Message(message),
                 prevMiniblockHash,
+                prevMiniblockNum,
                 tags,
             )
         } else if (isGDMChannelStreamId(streamId)) {
@@ -607,6 +613,7 @@ const buildBotActions = (client: ClientV2) => {
                 client.signer,
                 make_GDMChannelPayload_Message(message),
                 prevMiniblockHash,
+                prevMiniblockNum,
                 tags,
             )
         } else {
