@@ -387,4 +387,63 @@ describe('transactions_Tip', () => {
         expect(aliceMember?.tipsReceived?.[ETH_ADDRESS]).toEqual(1000n)
         expect(aliceMember?.tipsReceivedCount?.[ETH_ADDRESS]).toEqual(1n)
     })
+
+    test('addSecondTip', async () => {
+        // a user should be able to upload a transaction that
+        // is a tip and is valid on chain
+        const tx = await bob.riverConnection.spaceDapp.tip(
+            {
+                spaceId,
+                tokenId: aliceTokenId,
+                currency: ETH_ADDRESS,
+                amount: 1000n,
+                messageId: messageId,
+                channelId: defaultChannelId,
+                receiver: aliceIdentity.rootWallet.address,
+            },
+            bobIdentity.signer,
+        )
+        const receipt = await tx.wait(2)
+        expect(receipt.from).toEqual(bobIdentity.rootWallet.address)
+        const tipEvent = bob.riverConnection.spaceDapp.getTipEvent(
+            spaceId,
+            receipt,
+            bobIdentity.rootWallet.address,
+        )
+        expect(tipEvent).toBeDefined()
+        if (!tipEvent) throw new Error('no tip event found')
+        await expect(
+            bob.riverConnection.client!.addTransaction_Tip(
+                chainId,
+                receipt,
+                tipEvent,
+                aliceIdentity.rootWallet.address,
+            ),
+        ).resolves.not.toThrow()
+    })
+
+    test('bobSeesSecondTipInUserStream', async () => {
+        // get the user "stream" that is being synced by bob
+        const stream = bob.riverConnection.client!.stream(bob.riverConnection.client!.userStreamId!)
+        if (!stream) throw new Error('no stream found')
+        // the view should have been updated with the tip
+        await waitFor(() => {
+            expect(stream.view.userContent.tipsSent[ETH_ADDRESS]).toEqual(2000n)
+            expect(stream.view.userContent.tipsSentCount[ETH_ADDRESS]).toEqual(2n)
+            expect(stream.view.userContent.tipsReceived[ETH_ADDRESS]).toEqual(undefined)
+        })
+    })
+
+    test('aliceSeesSecondTipReceivedInUserStream', async () => {
+        // get the user "stream" that is being synced by alice
+        const stream = alice.riverConnection.client!.stream(
+            alice.riverConnection.client!.userStreamId!,
+        )
+        if (!stream) throw new Error('no stream found')
+        // the view should have been updated with the tip
+        await waitFor(() => {
+            expect(stream.view.userContent.tipsReceived[ETH_ADDRESS]).toEqual(2000n)
+            expect(stream.view.userContent.tipsReceivedCount[ETH_ADDRESS]).toEqual(2n)
+        })
+    })
 })

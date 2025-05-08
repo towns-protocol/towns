@@ -108,8 +108,8 @@ export class StreamStateView_User extends StreamStateView_AbstractContent {
                             return
                         }
                         const currency = utils.getAddress(bin_toHexString(event.currency))
-                        this.tipsSent[currency] = this.tipsSent[currency] ?? 0n + event.amount
-                        this.tipsSentCount[currency] = this.tipsSentCount[currency] ?? 0n + 1n
+                        this.tipsSent[currency] = (this.tipsSent[currency] ?? 0n) + event.amount
+                        this.tipsSentCount[currency] = (this.tipsSentCount[currency] ?? 0n) + 1n
                         stateEmitter?.emit('userTipSent', this.streamId, currency, event.amount)
                         break
                     }
@@ -138,9 +138,9 @@ export class StreamStateView_User extends StreamStateView_AbstractContent {
                         }
                         const currency = utils.getAddress(bin_toHexString(event.currency))
                         this.tipsReceived[currency] =
-                            this.tipsReceived[currency] ?? 0n + event.amount
+                            (this.tipsReceived[currency] ?? 0n) + event.amount
                         this.tipsReceivedCount[currency] =
-                            this.tipsReceivedCount[currency] ?? 0n + 1n
+                            (this.tipsReceivedCount[currency] ?? 0n) + 1n
                         stateEmitter?.emit('userTipReceived', this.streamId, currency, event.amount)
                         break
                     }
