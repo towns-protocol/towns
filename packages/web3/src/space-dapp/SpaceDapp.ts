@@ -668,31 +668,6 @@ export class SpaceDapp {
         }
     }
 
-    public async updateSpaceInfo(
-        spaceId: string,
-        name: string,
-        uri: string,
-        shortDescription: string,
-        longDescription: string,
-        signer: ethers.Signer,
-        txnOpts?: TransactionOpts,
-    ): Promise<ContractTransaction> {
-        const space = this.getSpace(spaceId)
-        if (!space) {
-            throw new Error(`Space with spaceId "${spaceId}" is not found.`)
-        }
-        return this.spaceOwner.updateSpaceInfo({
-            spaceId,
-            space,
-            name,
-            uri,
-            shortDescription,
-            longDescription,
-            signer,
-            txnOpts,
-        })
-    }
-
     private async decodeEntitlementData(
         space: Space,
         entitlementData: EntitlementDataStructOutput[],
