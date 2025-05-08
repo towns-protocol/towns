@@ -8624,6 +8624,7 @@ __metadata:
     "@ethereumjs/util": ^8.0.1
     "@matrix-org/olm": ^3.2.15
     "@towns-protocol/dlog": "workspace:^"
+    "@towns-protocol/olm": 3.2.17
     "@towns-protocol/proto": "workspace:^"
     "@towns-protocol/web3": "workspace:^"
     "@types/lodash": ^4.14.186
@@ -8674,6 +8675,12 @@ __metadata:
     typescript: ^5.8.2
     zod: ^3.21.4
   languageName: unknown
+  linkType: soft
+
+"@towns-protocol/olm@portal:/Users/miguel/dev/hnt/olm/result/javascript::locator=towns-protocol%40workspace%3A.":
+  version: 0.0.0-use.local
+  resolution: "@towns-protocol/olm@portal:/Users/miguel/dev/hnt/olm/result/javascript::locator=towns-protocol%40workspace%3A."
+  languageName: node
   linkType: soft
 
 "@towns-protocol/playground@workspace:packages/playground":
