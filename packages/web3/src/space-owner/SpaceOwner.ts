@@ -1,21 +1,19 @@
-import { ethers } from 'ethers'
-
+import { ContractTransaction, ethers } from 'ethers'
 import { ISpaceOwnerBase } from '@towns-protocol/generated/dev/typings/SpaceOwner'
 import { BaseContractShim } from '../BaseContractShim'
 import { SpaceOwner__factory } from '@towns-protocol/generated/dev/typings/factories/SpaceOwner__factory'
 import { Keyable } from '../cache/Keyable'
 import { SimpleCache } from '../cache/SimpleCache'
 import { TransactionOpts } from '../types/ContractTypes'
-import { Space } from '../space/Space'
-import { wrapTransaction } from '../space-dapp/wrapTransaction'
+import { SpaceAddressFromSpaceId } from '../utils/ut'
 
-export class GetSpaceInfo implements Keyable {
-    spaceId: string
-    constructor(spaceId: string) {
-        this.spaceId = spaceId
+class SpaceOwnerGetSpaceInfo implements Keyable {
+    spaceAddress: string
+    constructor(spaceAddress: string) {
+        this.spaceAddress = spaceAddress
     }
     toKey(): string {
-        return `getSpaceInfo:${this.spaceId}`
+        return `getSpaceInfo:${this.spaceAddress}`
     }
 }
 
@@ -24,7 +22,10 @@ export type { ISpaceOwnerBase }
 const { abi, connect } = SpaceOwner__factory
 
 export class SpaceOwner extends BaseContractShim<typeof connect> {
-    private readonly spaceInfoCache: SimpleCache<GetSpaceInfo, ISpaceOwnerBase.SpaceStructOutput>
+    private readonly spaceInfoCache: SimpleCache<
+        SpaceOwnerGetSpaceInfo,
+        ISpaceOwnerBase.SpaceStructOutput
+    >
 
     constructor(address: string, provider: ethers.providers.Provider) {
         super(address, provider, connect, abi)
@@ -35,8 +36,9 @@ export class SpaceOwner extends BaseContractShim<typeof connect> {
     }
 
     public async getSpaceInfo(spaceAddress: string): Promise<ISpaceOwnerBase.SpaceStructOutput> {
-        return this.spaceInfoCache.executeUsingCache(new GetSpaceInfo(spaceAddress), async () =>
-            this.read.getSpaceInfo(spaceAddress),
+        return this.spaceInfoCache.executeUsingCache(
+            new SpaceOwnerGetSpaceInfo(spaceAddress),
+            async () => this.read.getSpaceInfo(spaceAddress),
         )
     }
 
@@ -44,33 +46,37 @@ export class SpaceOwner extends BaseContractShim<typeof connect> {
         return this.read.totalSupply()
     }
 
-    public removeSpaceInfoCache(spaceId: string) {
-        this.spaceInfoCache.remove(new GetSpaceInfo(spaceId))
-    }
-
-    public async updateSpaceInfo(args: {
+    public async updateSpaceInfo<T = ContractTransaction>(args: {
         spaceId: string
-        space: Space
         name: string
         uri: string
         shortDescription: string
         longDescription: string
         signer: ethers.Signer
-        txnOpts?: TransactionOpts
+        overrideExecution?: (calldata: string) => Promise<T>
+        transactionOpts?: TransactionOpts
     }) {
-        const txn = wrapTransaction(
-            () =>
-                this.write(args.signer).updateSpaceInfo(
-                    args.space.Address,
-                    args.name,
-                    args.uri,
-                    args.shortDescription,
-                    args.longDescription,
-                ),
-            args.txnOpts,
-        )
+        const {
+            overrideExecution,
+            transactionOpts,
+            spaceId,
+            name,
+            uri,
+            shortDescription,
+            longDescription,
+            signer,
+        } = args
 
-        this.removeSpaceInfoCache(args.spaceId)
-        return txn
+        const spaceAddress = SpaceAddressFromSpaceId(spaceId)
+
+        const result = await this.executeCall({
+            signer,
+            functionName: 'updateSpaceInfo',
+            args: [spaceAddress, name, uri, shortDescription, longDescription],
+            overrideExecution,
+            transactionOpts,
+        })
+        this.spaceInfoCache.remove(new SpaceOwnerGetSpaceInfo(spaceAddress))
+        return result
     }
 }
