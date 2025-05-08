@@ -189,6 +189,7 @@ func (sc *SpaceContractV3) GetMembershipStatus(
 		IsExpired: true,
 		TokenIds: []*big.Int{},
 		ExpiryTime: nil,
+		ExpiredAt: nil,
 	}
 
 	spaceAsQueryable, err := base.NewErc721aQueryable(space.address, sc.backend)
@@ -216,10 +217,11 @@ func (sc *SpaceContractV3) GetMembershipStatus(
 	}
 
 	currentTime := big.NewInt(time.Now().Unix())
-	status.IsExpired = true // Assume expired until we find a non-expired token
 	
-	// If all tokens are expired, track the most recently expired token's time
-	var latestExpiredTime *big.Int
+	// Track active and expired tokens
+	var hasActiveToken bool
+	var furthestExpiryTime *big.Int
+	var mostRecentExpiry *big.Int
 
 	for _, tokenId := range tokens {
 		expiresAt, err := membership.ExpiresAt(&bind.CallOpts{Context: ctx}, tokenId)
@@ -228,28 +230,38 @@ func (sc *SpaceContractV3) GetMembershipStatus(
 			continue
 		}
 
-		// If expiresAt is 0, the token doesn't expire
-		// Otherwise, check if it's not expired yet
-		if expiresAt.Cmp(big.NewInt(0)) == 0 || expiresAt.Cmp(currentTime) > 0 {
-			status.IsExpired = false
-
-			// Track the earliest expiry time of non-expired tokens
-			if status.ExpiryTime == nil || 
-			   (expiresAt.Cmp(big.NewInt(0)) > 0 && expiresAt.Cmp(status.ExpiryTime) < 0) ||
-			   (status.ExpiryTime.Cmp(big.NewInt(0)) == 0 && expiresAt.Cmp(big.NewInt(0)) > 0) {
-				status.ExpiryTime = expiresAt
+		// Token never expires
+		if expiresAt.Cmp(big.NewInt(0)) == 0 {
+			hasActiveToken = true
+			// If a token is permanent, use 0 to indicate it never expires
+			if furthestExpiryTime == nil || furthestExpiryTime.Cmp(big.NewInt(0)) != 0 {
+				furthestExpiryTime = big.NewInt(0)
 			}
-		} else if expiresAt.Cmp(big.NewInt(0)) > 0 { // This is an expired token with non-zero expiry
-			// Track the most recently expired token
-			if latestExpiredTime == nil || expiresAt.Cmp(latestExpiredTime) > 0 {
-				latestExpiredTime = expiresAt
+			continue
+		}
+
+		// Check if token is not expired yet
+		if expiresAt.Cmp(currentTime) > 0 {
+			hasActiveToken = true
+			
+			// Track the furthest future expiry
+			if furthestExpiryTime == nil || 
+			   (furthestExpiryTime.Cmp(big.NewInt(0)) != 0 && expiresAt.Cmp(furthestExpiryTime) > 0) {
+				furthestExpiryTime = expiresAt
+			}
+		} else {
+			// This is an expired token
+			if mostRecentExpiry == nil || expiresAt.Cmp(mostRecentExpiry) > 0 {
+				mostRecentExpiry = expiresAt
 			}
 		}
 	}
 
-	// If all tokens are expired but we found an expired token, use its expiry time
-	if status.IsExpired && latestExpiredTime != nil {
-		status.ExpiryTime = latestExpiredTime
+	status.IsExpired = !hasActiveToken
+	status.ExpiryTime = furthestExpiryTime
+	
+	if status.IsExpired && mostRecentExpiry != nil {
+		status.ExpiredAt = mostRecentExpiry
 	}
 
 	return status, nil

@@ -16,7 +16,8 @@ type MembershipStatus struct {
 	IsMember   bool      // Whether the user is a member (has at least one token)
 	IsExpired  bool      // Whether the membership is expired
 	TokenIds   []*big.Int // List of token IDs owned by the user
-	ExpiryTime *big.Int  // Expiry time of the earliest non-expired token, or nil if no non-expired tokens
+	ExpiryTime *big.Int  // Expiry time of the farthest non-expired token, or nil if no non-expired tokens
+	ExpiredAt  *big.Int  // When membership expired (if all tokens are expired, this is the most recent expiry)
 }
 
 type SpaceContract interface {
