@@ -1,17 +1,19 @@
-# @river-build/bot
+# @towns-protocol/bot
 
 A bot framework for Towns.
 
 ## Usage
 
 ```ts
-import { makeTownsBot } from "@river-build/bot";
+import { makeTownsBot } from "@towns-protocol/bot";
+import { serve } from "@hono/node-server";
 
-const bot = await makeTownsBot("<private-key>", makeRiverConfig("gamma"));
+const bot = await makeTownsBot("<app-private-data-base64>", "<env>");
 
-bot.onBotMention((client, { channelId }) =>
+bot.onMentioned((client, { channelId }) =>
   client.sendMessage(channelId, "Hello, world!"),
 );
 
-bot.start(3000);
+const { fetch } = await bot.start();
+serve({ fetch });
 ```
