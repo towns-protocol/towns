@@ -21,9 +21,13 @@ func TestStreamTrimmer(t *testing.T) {
 	require := require.New(t)
 
 	streamId := testutils.FakeStreamId(STREAM_SPACE_BIN)
+	nonTrimmableStreamId := testutils.FakeStreamId(STREAM_MEDIA_BIN)
 
 	genesisMb := &WriteMiniblockData{Data: []byte("genesisMiniblock"), Snapshot: []byte("genesisSnapshot")}
+
 	err := pgStreamStore.CreateStreamStorage(ctx, streamId, genesisMb)
+	require.NoError(err)
+	err = pgStreamStore.CreateStreamStorage(ctx, nonTrimmableStreamId, genesisMb)
 	require.NoError(err)
 
 	var testEnvelopes [][]byte
@@ -43,9 +47,22 @@ func TestStreamTrimmer(t *testing.T) {
 		mbs[i-1] = mb
 	}
 
+	// Write to space stream
 	err = pgStreamStore.WriteMiniblocks(
 		ctx,
 		streamId,
+		mbs,
+		mbs[len(mbs)-1].Number+1,
+		testEnvelopes,
+		mbs[0].Number,
+		-1,
+	)
+	require.NoError(err)
+
+	// Write to non trimmable stream
+	err = pgStreamStore.WriteMiniblocks(
+		ctx,
+		nonTrimmableStreamId,
 		mbs,
 		mbs[len(mbs)-1].Number+1,
 		testEnvelopes,
@@ -63,6 +80,17 @@ func TestStreamTrimmer(t *testing.T) {
 		})
 		require.NoError(err)
 		return slices.Equal([]int64{45, 46, 47, 48, 49, 50, 51, 52, 53, 54}, mbsLeft)
+	}, time.Second*5, 100*time.Millisecond)
+
+	// Make sure the non-trimmable stream is not trimmed
+	require.Eventually(func() bool {
+		mbsLeft := make([]int64, 0, 55)
+		err = pgStreamStore.ReadMiniblocksByStream(ctx, nonTrimmableStreamId, func(blockdata []byte, seqNum int64, snapshot []byte) error {
+			mbsLeft = append(mbsLeft, seqNum)
+			return nil
+		})
+		require.NoError(err)
+		return len(mbsLeft) == 55
 	}, time.Second*5, 100*time.Millisecond)
 
 	// Write a new miniblock with a snapshot and check if the stream is trimmed correctly

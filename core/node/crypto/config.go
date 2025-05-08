@@ -51,7 +51,10 @@ const (
 	StreamEphemeralStreamTTLMsKey                   = "stream.ephemeralStreamTTLMs"
 	NodeBlocklistConfigKey                          = "node.blocklist"
 	StreamSnapshotIntervalInMiniblocksConfigKey     = "stream.snapshotIntervalInMiniblocks"
-	StreamSpaceStreamMiniblocksToKeepConfigKey      = "stream.spaceStreamMiniblocksToKeep"
+	// StreamDefaultStreamTrimmingMiniblocksToKeepConfigKey is the key for how many miniblocks to keep before the last
+	// snapshot for streams.
+	StreamDefaultStreamTrimmingMiniblocksToKeepConfigKey = "stream.defaultStreamTrimmingMiniblocksToKeep"
+	StreamSpaceStreamTrimmingMiniblocksToKeepConfigKey   = "stream.streamTrimmingMiniblocksToKeep.10"
 )
 
 var (
@@ -125,9 +128,9 @@ type OnChainSettings struct {
 
 	// StreamSnapshotIntervalInMiniblocks is the interval in miniblocks between snapshots.
 	StreamSnapshotIntervalInMiniblocks uint64 `mapstructure:"stream.snapshotIntervalInMiniblocks"`
-	// StreamSpaceStreamMiniblocksToKeep is the number of miniblocks to keep
-	// before the last snapshot for space streams.
-	StreamSpaceStreamMiniblocksToKeep uint64 `mapstructure:"stream.spaceStreamMiniblocksToKeep"`
+	// StreamTrimmingMiniblocksToKeep is the number of miniblocks to keep before the last snapshot.
+	// Defined with the default value and per stream type.
+	StreamTrimmingMiniblocksToKeep StreamTrimmingMiniblocksToKeepSettings `mapstructure:",squash"`
 }
 
 type XChainSettings struct {
@@ -173,6 +176,20 @@ func (m MembershipLimitsSettings) ForType(streamType byte) uint64 {
 	}
 }
 
+type StreamTrimmingMiniblocksToKeepSettings struct {
+	Default uint64 `mapstructure:"stream.defaultStreamTrimmingMiniblocksToKeep"`
+	Space   uint64 `mapstructure:"stream.streamTrimmingMiniblocksToKeep.10"`
+}
+
+func (m StreamTrimmingMiniblocksToKeepSettings) ForType(streamType byte) uint64 {
+	switch streamType {
+	case shared.STREAM_SPACE_BIN:
+		return m.Space
+	default:
+		return m.Default
+	}
+}
+
 func DefaultOnChainSettings() *OnChainSettings {
 	return &OnChainSettings{
 		MediaMaxChunkCount: 50,
@@ -191,12 +208,17 @@ func DefaultOnChainSettings() *OnChainSettings {
 			UserDevice:   10,
 		},
 
+		// 0 means space stream trimming is disabled
+		StreamTrimmingMiniblocksToKeep: StreamTrimmingMiniblocksToKeepSettings{
+			Default: 0,
+			Space:   0,
+		},
+
 		StreamCacheExpiration:    5 * time.Minute,
 		StreamCachePollIntterval: 30 * time.Second,
 
 		StreamEphemeralStreamTTL:           time.Minute * 10,
 		StreamSnapshotIntervalInMiniblocks: 0, // 0 means snapshots trimming is disabled
-		StreamSpaceStreamMiniblocksToKeep:  0, // 0 means space stream trimming is disabled
 
 		// TODO: Set it to the default value when the client side is updated.
 		GetMiniblocksMaxPageSize: 0,

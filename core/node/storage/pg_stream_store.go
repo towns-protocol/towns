@@ -18,6 +18,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	. "github.com/towns-protocol/towns/core/node/base"
+	"github.com/towns-protocol/towns/core/node/crypto"
 	"github.com/towns-protocol/towns/core/node/infra"
 	"github.com/towns-protocol/towns/core/node/logging"
 	. "github.com/towns-protocol/towns/core/node/protocol"
@@ -115,7 +116,7 @@ func NewPostgresStreamStore(
 	exitSignal chan error,
 	metrics infra.MetricsFactory,
 	ephemeralStreamTtl time.Duration,
-	spaceStreamMiniblocksToKeep int64,
+	streamMiniblocksToKeep crypto.StreamTrimmingMiniblocksToKeepSettings,
 ) (store *PostgresStreamStore, err error) {
 	store = &PostgresStreamStore{
 		nodeUUID:   instanceId,
@@ -147,12 +148,10 @@ func NewPostgresStreamStore(
 		return nil, AsRiverError(err).Func("NewPostgresStreamStore")
 	}
 
-	if spaceStreamMiniblocksToKeep > 0 {
-		// Start the stream trimmer
-		store.streamTrimmer, err = newStreamTrimmer(ctx, store, spaceStreamMiniblocksToKeep)
-		if err != nil {
-			return nil, AsRiverError(err).Func("NewPostgresStreamStore")
-		}
+	// Start the stream trimmer
+	store.streamTrimmer, err = newStreamTrimmer(ctx, store, streamMiniblocksToKeep)
+	if err != nil {
+		return nil, AsRiverError(err).Func("NewPostgresStreamStore")
 	}
 
 	return store, nil

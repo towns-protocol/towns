@@ -5,6 +5,7 @@ import (
 	"time"
 
 	. "github.com/towns-protocol/towns/core/node/base"
+	"github.com/towns-protocol/towns/core/node/crypto"
 	"github.com/towns-protocol/towns/core/node/infra"
 	"github.com/towns-protocol/towns/core/node/testutils/dbtestutils"
 )
@@ -34,7 +35,7 @@ func NewTestStreamStore(ctx context.Context) *TestStreamStore {
 		exitChan,
 		infra.NewMetricsFactory(nil, "", ""),
 		time.Minute*10,
-		0,
+		crypto.StreamTrimmingMiniblocksToKeepSettings{},
 	)
 	if err != nil {
 		panic(err)

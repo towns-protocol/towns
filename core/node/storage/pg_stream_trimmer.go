@@ -8,21 +8,24 @@ import (
 	"github.com/gammazero/workerpool"
 	"github.com/jackc/pgx/v5"
 
+	"github.com/towns-protocol/towns/core/node/crypto"
 	"github.com/towns-protocol/towns/core/node/logging"
 	. "github.com/towns-protocol/towns/core/node/shared"
 )
 
 // trimTask represents a task to trim miniblocks from a stream
 type trimTask struct {
-	streamId StreamId
+	streamId         StreamId
+	miniblocksToKeep int64
 }
 
-// streamTrimmer handles periodic trimming of space streams
+// streamTrimmer handles periodic trimming of streams
 type streamTrimmer struct {
 	ctx   context.Context
 	store *PostgresStreamStore
-	// miniblocksToKeep is the number of miniblocks to keep before the last snapshot
-	miniblocksToKeep int64
+	// miniblocksToKeep is the number of miniblocks to keep before the last snapshot.
+	// Defined per stream type.
+	miniblocksToKeep crypto.StreamTrimmingMiniblocksToKeepSettings
 	log              *logging.Log
 
 	// Worker pool for trimming operations
@@ -40,7 +43,7 @@ type streamTrimmer struct {
 func newStreamTrimmer(
 	ctx context.Context,
 	store *PostgresStreamStore,
-	miniblocksToKeep int64,
+	miniblocksToKeep crypto.StreamTrimmingMiniblocksToKeepSettings,
 ) (*streamTrimmer, error) {
 	st := &streamTrimmer{
 		ctx:              ctx,
@@ -52,8 +55,8 @@ func newStreamTrimmer(
 		stop:             make(chan struct{}),
 	}
 
-	// Schedule trimming for existing space streams
-	if err := st.scheduleSpaceStreamsTrimming(ctx); err != nil {
+	// Schedule trimming for existing streams
+	if err := st.scheduleStreamsTrimming(ctx); err != nil {
 		return nil, err
 	}
 
@@ -109,7 +112,7 @@ func (t *streamTrimmer) processTrimTaskTx(
 	}
 
 	// Calculate the miniblock number to keep
-	miniblockToKeep := lastSnapshotMiniblock - t.miniblocksToKeep
+	miniblockToKeep := lastSnapshotMiniblock - task.miniblocksToKeep
 	if miniblockToKeep <= 0 {
 		return nil // Nothing to trim
 	}
@@ -152,14 +155,14 @@ func (t *streamTrimmer) processTrimTaskTx(
 
 	// If we deleted a full batch, schedule another trim task
 	if deletedCount == batchSize {
-		t.scheduleTrimTask(task.streamId)
+		t.scheduleTrimTask(task.streamId, task.miniblocksToKeep)
 	}
 
 	return nil
 }
 
 // scheduleTrimTask schedules a new trim task for a stream
-func (t *streamTrimmer) scheduleTrimTask(streamId StreamId) {
+func (t *streamTrimmer) scheduleTrimTask(streamId StreamId, mbsToKeep int64) {
 	t.pendingTasksLock.Lock()
 	defer t.pendingTasksLock.Unlock()
 
@@ -173,7 +176,8 @@ func (t *streamTrimmer) scheduleTrimTask(streamId StreamId) {
 
 	// Create a new task
 	task := trimTask{
-		streamId: streamId,
+		streamId:         streamId,
+		miniblocksToKeep: mbsToKeep,
 	}
 
 	// Submit the task to the worker pool
@@ -189,11 +193,11 @@ func (t *streamTrimmer) scheduleTrimTask(streamId StreamId) {
 
 // onSnapshotMiniblockWritten is called when a new miniblock with a snapshot is created
 func (t *streamTrimmer) onSnapshotMiniblockCreated(streamId StreamId) {
-	if !ValidSpaceStreamId(&streamId) {
-		return
+	// Schedule trimming for the given stream if the trimming for this type is enabled.
+	mbsToKeep := int64(t.miniblocksToKeep.ForType(streamId.Type()))
+	if mbsToKeep > 0 {
+		t.scheduleTrimTask(streamId, mbsToKeep)
 	}
-
-	t.scheduleTrimTask(streamId)
 }
 
 // close stops the stream trimmer
@@ -204,11 +208,11 @@ func (t *streamTrimmer) close() {
 	t.workerPool.StopWait()
 }
 
-// scheduleSpaceStreamsTrimming schedules trimming for all space streams.
-func (t *streamTrimmer) scheduleSpaceStreamsTrimming(ctx context.Context) error {
+// scheduleStreamsTrimming schedules trimming for all trimmable streams.
+func (t *streamTrimmer) scheduleStreamsTrimming(ctx context.Context) error {
 	return t.store.txRunner(
 		ctx,
-		"streamTrimmer.loadSpaceStreams",
+		"streamTrimmer.scheduleStreamsTrimming",
 		pgx.ReadWrite,
 		func(ctx context.Context, tx pgx.Tx) error {
 			rows, err := tx.Query(ctx, "SELECT stream_id FROM es WHERE ephemeral = false")
@@ -223,8 +227,10 @@ func (t *streamTrimmer) scheduleSpaceStreamsTrimming(ctx context.Context) error 
 					return err
 				}
 
-				if ValidSpaceStreamId(&streamId) {
-					t.scheduleTrimTask(streamId)
+				// Check if the stream type can be trimmed
+				mbsToKeep := int64(t.miniblocksToKeep.ForType(streamId.Type()))
+				if mbsToKeep > 0 {
+					t.scheduleTrimTask(streamId, mbsToKeep)
 				}
 
 				return nil
