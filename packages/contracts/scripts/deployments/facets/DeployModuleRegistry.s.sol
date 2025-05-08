@@ -8,7 +8,7 @@ import {ISchemaResolver} from "@ethereum-attestation-service/eas-contracts/resol
 //libraries
 
 //contracts
-import {DeployLib} from "@towns-protocol/diamond/scripts/common/DeployLib.sol";
+import {LibDeploy} from "@towns-protocol/diamond/src/utils/LibDeploy.sol";
 import {ModuleRegistry} from "src/modules/ModuleRegistry.sol";
 import {DynamicArrayLib} from "solady/utils/DynamicArrayLib.sol";
 
@@ -56,6 +56,6 @@ library DeployModuleRegistry {
     }
 
     function deploy() internal returns (address) {
-        return DeployLib.deployCode("ModuleRegistry.sol", "");
+        return LibDeploy.deployCode("ModuleRegistry.sol", "");
     }
 }
