@@ -9,23 +9,23 @@ import {ISchemaResolver} from "@ethereum-attestation-service/eas-contracts/resol
 
 //contracts
 import {LibDeploy} from "@towns-protocol/diamond/src/utils/LibDeploy.sol";
-import {ModuleRegistry} from "src/modules/ModuleRegistry.sol";
+import {AppRegistryFacet} from "src/apps/AppRegistryFacet.sol";
 import {DynamicArrayLib} from "solady/utils/DynamicArrayLib.sol";
 
-library DeployModuleRegistry {
+library DeployAppRegistryFacet {
     using DynamicArrayLib for DynamicArrayLib.DynamicArray;
 
     function selectors() internal pure returns (bytes4[] memory res) {
         DynamicArrayLib.DynamicArray memory arr = DynamicArrayLib.p().reserve(9);
-        arr.p(ModuleRegistry.getModuleSchema.selector);
-        arr.p(ModuleRegistry.getModuleSchemaId.selector);
-        arr.p(ModuleRegistry.getModuleById.selector);
-        arr.p(ModuleRegistry.getLatestModuleId.selector);
-        arr.p(ModuleRegistry.registerModule.selector);
-        arr.p(ModuleRegistry.removeModule.selector);
-        arr.p(ModuleRegistry.adminRegisterModuleSchema.selector);
-        arr.p(ModuleRegistry.adminBanModule.selector);
-        arr.p(ModuleRegistry.isModuleBanned.selector);
+        arr.p(AppRegistryFacet.getAppSchema.selector);
+        arr.p(AppRegistryFacet.getAppSchemaId.selector);
+        arr.p(AppRegistryFacet.getAppById.selector);
+        arr.p(AppRegistryFacet.getLatestAppId.selector);
+        arr.p(AppRegistryFacet.registerApp.selector);
+        arr.p(AppRegistryFacet.removeApp.selector);
+        arr.p(AppRegistryFacet.adminRegisterAppSchema.selector);
+        arr.p(AppRegistryFacet.adminBanApp.selector);
+        arr.p(AppRegistryFacet.isAppBanned.selector);
         bytes32[] memory selectors_ = arr.asBytes32Array();
         assembly ("memory-safe") {
             res := selectors_
@@ -50,12 +50,12 @@ library DeployModuleRegistry {
     ) internal pure returns (bytes memory) {
         return
             abi.encodeCall(
-                ModuleRegistry.__ModuleRegistry_init,
+                AppRegistryFacet.__AppRegistry_init,
                 (schema, ISchemaResolver(resolver))
             );
     }
 
     function deploy() internal returns (address) {
-        return LibDeploy.deployCode("ModuleRegistry.sol", "");
+        return LibDeploy.deployCode("AppRegistryFacet.sol", "");
     }
 }
