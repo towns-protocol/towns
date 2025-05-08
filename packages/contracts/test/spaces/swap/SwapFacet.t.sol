@@ -98,7 +98,7 @@ contract SwapFacetTest is BaseSetup, SwapTestBase, ISwapFacetBase, IOwnableBase,
     }
 
     function test_setSwapFeeConfig_revertIf_totalFeeTooHigh() external {
-        // Total fee = TREASURY_BPS + posterFeeBps must be <= MAX_FEE_BPS (1%)
+        // Total fee = TREASURY_BPS + posterFeeBps must be <= MAX_FEE_BPS (2%)
         uint16 tooHighPosterFeeBps = MAX_FEE_BPS - TREASURY_BPS + 1;
 
         vm.prank(founder);
