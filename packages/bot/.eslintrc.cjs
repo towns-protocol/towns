@@ -3,8 +3,8 @@ module.exports = {
   root: true,
   extends: [
     "eslint:recommended",
-    "plugin:import/recommended",
-    "plugin:import/typescript",
+    "plugin:import-x/recommended",
+    "plugin:import-x/typescript",
     "plugin:@typescript-eslint/recommended",
     "plugin:@typescript-eslint/recommended-requiring-type-checking",
     "plugin:prettier/recommended",
@@ -13,7 +13,7 @@ module.exports = {
   parserOptions: {
     project: path.resolve(__dirname, "tsconfig.json"),
   },
-  plugins: ["@typescript-eslint", "import", "eslint-plugin-tsdoc"],
+  plugins: ["@typescript-eslint", "import-x", "eslint-plugin-tsdoc"],
   ignorePatterns: ["dist/**", ".turbo/**", "node_modules/**", "vitest.*"],
   rules: {
     "no-console": "error",
