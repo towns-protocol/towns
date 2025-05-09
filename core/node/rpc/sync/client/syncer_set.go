@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"connectrpc.com/connect"
-
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/linkdata/deadlock"
 	"go.opentelemetry.io/otel/attribute"
