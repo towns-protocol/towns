@@ -1,4 +1,5 @@
 /* eslint-disable no-console */
+import { serve } from '@hono/node-server'
 import { makeTownsBot } from '@towns-protocol/bot'
 
 type State = {
@@ -42,6 +43,7 @@ export const makeSurveyBot = async (...args: Parameters<typeof makeTownsBot>) =>
         for (const i of answers.sort().map((_, i) => i)) {
             await handler.sendReaction(channelId, messageId, emojis[i])
         }
+        console.log(`💭 Started a new survey: ${question}`)
         state.messageToSurvey[messageId] = {
             question,
             emoji: Object.fromEntries(answers.map((a, i) => [emojis[i], a.trim()])),
@@ -73,6 +75,7 @@ export const makeSurveyBot = async (...args: Parameters<typeof makeTownsBot>) =>
                 .map(([answer, count]) => `${answer} - ${count}`)
                 .join('\n')}`,
         )
+        console.log(`💭 User ${userId} voted ${answer} in the survey: ${survey.question}`)
         // change the messageId to the new eventId
         state.messageToSurvey[newMessageId] = state.messageToSurvey[messageId]
         delete state.messageToSurvey[messageId]
@@ -81,7 +84,7 @@ export const makeSurveyBot = async (...args: Parameters<typeof makeTownsBot>) =>
 
     // I'll need to rethink this. Having trouble wrapping my mind around refEventId -> eventId mapping.
     // i.e mapping a reaction redact to the original reaction event to remove it from the poll.
-    bot.onRedaction(async (handler, { channelId, refEventId }) => {
+    bot.onRedaction(async (handler, { channelId, refEventId, userId }) => {
         console.log('someone redacted a message', refEventId)
         const messageId = state.reactionEventIdToMessageId[refEventId]
         if (!messageId) return
@@ -89,6 +92,7 @@ export const makeSurveyBot = async (...args: Parameters<typeof makeTownsBot>) =>
         if (!survey) return
         delete survey.answers[refEventId]
         delete state.reactionEventIdToMessageId[refEventId]
+        console.log(`💭 User ${userId} removed their vote in the survey: ${survey.question}`)
         await handler.editMessage(
             channelId,
             messageId,
@@ -114,3 +118,16 @@ export const makeSurveyBot = async (...args: Parameters<typeof makeTownsBot>) =>
 
     return bot
 }
+
+async function main() {
+    const bot = await makeSurveyBot(
+        process.env.APP_PRIVATE_DATA_BASE64!,
+        process.env.JWT_SECRET!,
+        process.env.RIVER_ENV,
+    )
+    const { fetch } = await bot.start()
+    serve({ fetch, port: parseInt(process.env.PORT!) })
+    console.log(`✅ Survey Bot is running on http://localhost:${process.env.PORT}`)
+}
+
+void main()
