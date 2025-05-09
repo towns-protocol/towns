@@ -42,6 +42,7 @@ type nodeRegistryImpl struct {
 	onChainConfig    crypto.OnChainConfiguration
 	localNodeAddress common.Address
 	httpClient       *http.Client
+	httpClientWithCert *http.Client
 	connectOpts      []connect.ClientOption
 
 	mu                    sync.RWMutex
@@ -66,6 +67,7 @@ func LoadNodeRegistry(
 	chainMonitor crypto.ChainMonitor,
 	onChainConfig crypto.OnChainConfiguration,
 	httpClient *http.Client,
+	httpClientWithCert *http.Client,
 	connectOtelIterceptor *otelconnect.Interceptor,
 ) (*nodeRegistryImpl, error) {
 	log := logging.FromCtx(ctx)
@@ -85,6 +87,7 @@ func LoadNodeRegistry(
 		onChainConfig:         onChainConfig,
 		localNodeAddress:      localNodeAddress,
 		httpClient:            httpClient,
+		httpClientWithCert: httpClientWithCert,
 		nodesLocked:           make(map[common.Address]*NodeRecord, len(nodes)),
 		appliedBlockNumLocked: appliedBlockNum,
 		connectOpts:           connectOpts,
@@ -187,7 +190,7 @@ func (n *nodeRegistryImpl) addNodeLocked(
 		nn.local = true
 	} else {
 		nn.streamServiceClient = NewStreamServiceClient(n.httpClient, url, n.connectOpts...)
-		nn.nodeToNodeClient = NewNodeToNodeClient(n.httpClient, url, n.connectOpts...)
+		nn.nodeToNodeClient = NewNodeToNodeClient(n.httpClientWithCert, url, n.connectOpts...)
 	}
 	n.nodesLocked[addr] = nn
 	return nn, true

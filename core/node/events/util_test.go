@@ -131,6 +131,7 @@ func makeCacheTestContext(t *testing.T, p testParams) (context.Context, *cacheTe
 			btc.OnChainConfig,
 			nil,
 			nil,
+			nil,
 		)
 		ctc.require.NoError(err)
 

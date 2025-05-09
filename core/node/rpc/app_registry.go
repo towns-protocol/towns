@@ -64,6 +64,7 @@ func (s *Service) startAppRegistryMode(opts *ServerStartOpts) error {
 			s.riverChain.ChainMonitor,
 			s.chainConfig,
 			httpClient,
+			httpClient,
 			s.otelConnectIterceptor,
 		)
 		if err != nil {

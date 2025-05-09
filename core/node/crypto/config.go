@@ -51,6 +51,7 @@ const (
 	StreamEphemeralStreamTTLMsKey                   = "stream.ephemeralStreamTTLMs"
 	NodeBlocklistConfigKey                          = "node.blocklist"
 	StreamSnapshotIntervalInMiniblocksConfigKey     = "stream.snapshotIntervalInMiniblocks"
+	ServerEnableNode2NodeAuthConfigKey              = "server.enableNode2NodeAuth"
 )
 
 var (
@@ -124,6 +125,10 @@ type OnChainSettings struct {
 
 	// StreamSnapshotIntervalInMiniblocks is the interval in miniblocks between snapshots.
 	StreamSnapshotIntervalInMiniblocks uint64 `mapstructure:"stream.snapshotIntervalInMiniblocks"`
+
+	// ServerEnableNode2NodeAuth indicates whether node-to-node authentication is enabled.
+	// Options: 1 means enabled, 0 means disabled.
+	ServerEnableNode2NodeAuth uint64 `mapstructure:"server.enableNode2NodeAuth"`
 }
 
 type XChainSettings struct {
@@ -205,6 +210,8 @@ func DefaultOnChainSettings() *OnChainSettings {
 		XChain: XChainSettings{
 			Blockchains: []uint64{},
 		},
+
+		ServerEnableNode2NodeAuth: 1,
 	}
 }
 
