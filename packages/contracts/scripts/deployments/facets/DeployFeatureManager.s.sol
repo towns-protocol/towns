@@ -24,7 +24,7 @@ contract DeployFeatureManager is Deployer, FacetHelper {
 
     // Deploying
     function versionName() public pure override returns (string memory) {
-        return "featureManagerFacet";
+        return "facets/featureManagerFacet";
     }
 
     function initializer() public pure override returns (bytes4) {

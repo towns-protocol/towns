@@ -18,11 +18,12 @@ import {SafeTransferLib} from "solady/utils/SafeTransferLib.sol";
 
 // contracts
 import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
+import {PausableBase} from "@towns-protocol/diamond/src/facets/pausable/PausableBase.sol";
 import {ReentrancyGuardTransient} from "solady/utils/ReentrancyGuardTransient.sol";
 
 /// @title SwapRouter
 /// @notice Handles swaps through whitelisted routers with fee collection
-contract SwapRouter is ReentrancyGuardTransient, ISwapRouter, Facet {
+contract SwapRouter is PausableBase, ReentrancyGuardTransient, ISwapRouter, Facet {
     using CustomRevert for bytes4;
     using SafeTransferLib for address;
 
@@ -46,7 +47,7 @@ contract SwapRouter is ReentrancyGuardTransient, ISwapRouter, Facet {
         ExactInputParams calldata params,
         RouterParams calldata routerParams,
         address poster
-    ) external payable nonReentrant returns (uint256 amountOut) {
+    ) external payable nonReentrant whenNotPaused returns (uint256 amountOut) {
         // for standard swaps, the msg.sender provides the tokens
         return _executeSwap(params, routerParams, msg.sender, poster);
     }
@@ -57,7 +58,7 @@ contract SwapRouter is ReentrancyGuardTransient, ISwapRouter, Facet {
     //        RouterParams calldata routerParams,
     //        PermitParams calldata permit,
     //        address poster
-    //    ) external payable nonReentrant returns (uint256 amountOut) {
+    //    ) external payable nonReentrant whenNotPaused returns (uint256 amountOut) {
     //        // sanity check
     //        if (permit.value < params.amountIn) SwapRouter__InvalidAmount.selector.revertWith();
     //
@@ -102,6 +103,9 @@ contract SwapRouter is ReentrancyGuardTransient, ISwapRouter, Facet {
             uint256 amountIn = params.amountIn;
             bool isNativeToken = params.tokenIn == CurrencyTransfer.NATIVE_TOKEN;
             if (!isNativeToken) {
+                // ensure no ETH is sent when tokenIn is not native
+                if (msg.value != 0) SwapRouter__UnexpectedETH.selector.revertWith();
+
                 // use the actual received amount to handle fee-on-transfer tokens
                 uint256 tokenInBalanceBefore = params.tokenIn.balanceOf(address(this));
                 params.tokenIn.safeTransferFrom(payer, address(this), amountIn);

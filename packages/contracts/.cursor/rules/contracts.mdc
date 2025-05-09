@@ -19,47 +19,56 @@ These rules are essential for working with a complex blockchain-based space mana
 
 This project is a blockchain-based space/channel management system with role-based access control and entitlements. It implements a complex permission system using smart contracts that allows for cross-chain rule validation and user management.
 
+The system also supports cross-chain delegation between Ethereum L1 and Base L2, allowing users to stake tokens on L1 and have delegation benefits on L2. Node operators can receive delegations directly or via spaces, with rewards distributed based on stake amounts and time.
+
 ### The system allows for:
 - Creation and management of spaces and channels
 - Role-based access control with granular permissions
 - Cross-chain entitlement validation
 - User membership management
 - Rule-based entitlements with logical operations
+- Staking and rewards distribution for DAO participants and node operators
+- Cross-chain delegation and governance mechanisms
 
 ## Tech Stack
 
-- Solidity ^0.8.23/^0.8.24
+- Solidity ^0.8.23
 - OpenZeppelin Contracts
 - Solady Contracts
 - Diamond Pattern (EIP-2535) for upgradeable contracts
-- TypeScript for contract type generation
 - Foundry for development and testing
+- TypeScript for contract type generation
 
 ## Project Structure
 
-- [`/contracts/src/airdrop/`](mdc:contracts/src/airdrop) - Token distribution mechanisms (drops, points, streaks, rules)
-- [`/contracts/src/base/registry/`](mdc:contracts/src/base/registry) - Core registry, delegation, rewards, entitlement checking
-- [`/contracts/src/spaces/`](mdc:contracts/src/spaces) - Space management, entitlements, permissions, cross-chain rules
-- [`/contracts/src/factory/`](mdc:contracts/src/factory) - Factory contracts for space creation, deployment, wallet linking
-- [`/contracts/src/utils/`](mdc:contracts/src/utils) - Utility libraries (currency, math, reverts, patterns)
-- [`/contracts/src/diamond/`](mdc:contracts/src/diamond) - Diamond pattern implementation, facets, upgradeability
-- [`/contracts/src/tokens/`](mdc:contracts/src/tokens) - Token management, membership NFTs, locks, bridging, inflation
-- [`/contracts/scripts/diamonds`](mdc:contracts/scripts/diamonds) - Diamond deployment scripts
+- [`src/airdrop/`](mdc:packages/contracts/src/airdrop) - Token distribution mechanisms (drops, points, streaks, rules)
+- [`src/base/registry/`](mdc:packages/contracts/src/base/registry) - Core registry, delegation, rewards, entitlement checking
+  - [`/facets/distribution/`](mdc:packages/contracts/src/base/registry/facets/distribution) - Staking and rewards distribution for DAO participants and node operators
+  - [`/facets/mainnet/`](mdc:packages/contracts/src/base/registry/facets/mainnet) - Cross-chain delegation handling and message relaying
+  - [`/facets/delegation/`](mdc:packages/contracts/src/base/registry/facets/delegation) - Space-to-operator delegation management
+  - [`/facets/operator/`](mdc:packages/contracts/src/base/registry/facets/operator) - Node operator registration and management
+- [`src/spaces/`](mdc:packages/contracts/src/spaces) - Space management, entitlements, permissions, cross-chain rules
+- [`src/factory/`](mdc:packages/contracts/src/factory) - Factory contracts for space creation, deployment, wallet linking
+- [`src/utils/`](mdc:packages/contracts/src/utils) - Utility libraries (currency, math, reverts, patterns)
+- [`src/diamond/`](mdc:packages/contracts/src/diamond) - Diamond pattern implementation, facets, upgradeability
+- [`src/tokens/`](mdc:packages/contracts/src/tokens) - Token management, membership NFTs, locks, bridging, inflation
+- [`scripts/diamonds`](mdc:packages/contracts/scripts/diamonds) - Diamond deployment scripts
 
 ### Key Contracts
 
 - `RuleEntitlement.sol` - Rule-based entitlements, cross-chain permission validation
 - `EntitlementsManager.sol` - Entitlement validation and access control
 - `Architect.sol` - Factory for space creation/initialization
+- `CreateSpace.sol` - Space instance creation/initialization
 - `Roles.sol` - Role-based permissions and hierarchies
-- `contracts/src/tokens/towns/mainnet/Towns.sol` - Main ERC20 token (inflation, governance)
-- `contracts/src/tokens/towns/base/Towns.sol` - L2 ERC20 token (cross-chain minting, rewards)
+- `Towns.sol` - Main ERC20 token (inflation, governance)
 - `DropFacet.sol` - Token airdrops, claiming conditions
 - `TownsPoints.sol` - Points-based rewards, check-ins, streaks
-- `StakingManager.sol` - Staking and reward distribution
+- `RewardsDistribution.sol` - Manages token staking, delegation proxies, and reward calculations
+- `MainnetDelegation.sol` - Handles cross-chain delegation via cross-domain messengers
+- `SpaceDelegationFacet.sol` - Manages delegation of spaces to node operators
 - `EntitlementChecker.sol` - Cross-chain entitlement validation
 - `DiamondCutFacet.sol` - Diamond upgradeability
-- `CreateSpace.sol` - Space instance creation/initialization
 
 ## Rules
 
@@ -135,12 +144,8 @@ library FacetStorage {
   bytes32 internal constant STORAGE_SLOT =
     0x672ef851d5f92307da037116e23aa9e31af7e1f7e3ca62c4e6d540631df3fd00;
 
-  struct Object {
-    string variablesBeingUsedInFeature
-  }
-
   struct Layout {
-    mapping(uint256 => Object) varibleToWriteTo
+    // storage variables go here
   }
 
   function layout() internal pure returns (Layout storage ds) {
