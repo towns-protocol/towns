@@ -7,15 +7,13 @@ import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import {Time} from "@openzeppelin/contracts/utils/types/Time.sol";
 
 // interfaces
-import {IExecutorBase} from "./IExecutor.sol";
+import {IExecutorBase, Group, Schedule} from "./IExecutor.sol";
 
 // types
-import {Target, Group, Access, Schedule} from "./IExecutor.sol";
 
 // libraries
 import {ExecutorStorage} from "./ExecutorStorage.sol";
-import {GroupLib} from "./libraries/GroupLib.sol";
-import {HookLib} from "../hooks/HookLib.sol";
+import {GroupLib} from "./GroupLib.sol";
 import {OwnableStorage} from "@towns-protocol/diamond/src/facets/ownable/OwnableStorage.sol";
 import {EnumerableSetLib} from "solady/utils/EnumerableSetLib.sol";
 import {LibCall} from "solady/utils/LibCall.sol";
@@ -369,7 +367,7 @@ abstract contract ExecutorBase {
         }
 
         // Run pre hooks before execution
-        HookLib.executePreHooks(target, selector, value, data);
+        _executePreHooks(target, selector, value, data);
 
         // Mark the target and selector as authorized
         bytes32 executionIdBefore = ExecutorStorage.getLayout().executionId;
@@ -383,7 +381,7 @@ abstract contract ExecutorBase {
         result = LibCall.callContract(target, value, data);
 
         // Run post hooks after execution (will run even if execution fails)
-        HookLib.executePostHooks(target, selector);
+        _executePostHooks(target, selector);
 
         // Reset the executionId
         ExecutorStorage.getLayout().executionId = executionIdBefore;
@@ -539,4 +537,13 @@ abstract contract ExecutorBase {
         if (data.length < 4) IExecutorBase.InvalidDataLength.selector.revertWith();
         return bytes4(data[0:4]);
     }
+
+    function _executePreHooks(
+        address target,
+        bytes4 selector,
+        uint256 value,
+        bytes calldata data
+    ) internal virtual;
+
+    function _executePostHooks(address target, bytes4 selector) internal virtual;
 }

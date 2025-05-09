@@ -17,14 +17,13 @@ import {CustomRevert} from "src/utils/libraries/CustomRevert.sol";
 import {DependencyLib} from "../DependencyLib.sol";
 import {LibCall} from "solady/utils/LibCall.sol";
 
-import {ExecutorBase} from "./executor/ExecutorBase.sol";
-import {HookLib} from "./hooks/HookLib.sol";
-
+import {ExecutorBase} from "../executor/ExecutorBase.sol";
+import {HookBase} from "../executor/hooks/HookBase.sol";
 // types
 import {ExecutionManifest, ManifestExecutionFunction, ManifestExecutionHook} from "@erc6900/reference-implementation/interfaces/IERC6900ExecutionModule.sol";
 import {Attestation, EMPTY_UID} from "@ethereum-attestation-service/eas-contracts/Common.sol";
 
-abstract contract AppAccountBase is IAppAccountBase, ExecutorBase {
+abstract contract AppAccountBase is IAppAccountBase, ExecutorBase, HookBase {
     using CustomRevert for bytes4;
     using DependencyLib for MembershipStorage.Layout;
 
@@ -83,7 +82,7 @@ abstract contract AppAccountBase is IAppAccountBase, ExecutorBase {
         uint256 executionHooksLength = cachedManifest.executionHooks.length;
         for (uint256 i; i < executionHooksLength; ++i) {
             ManifestExecutionHook memory hook = cachedManifest.executionHooks[i];
-            HookLib.addHook(
+            _addHook(
                 module,
                 hook.executionSelector,
                 hook.entityId,
@@ -117,7 +116,7 @@ abstract contract AppAccountBase is IAppAccountBase, ExecutorBase {
         uint256 executionHooksLength = manifest.executionHooks.length;
         for (uint256 i; i < executionHooksLength; ++i) {
             ManifestExecutionHook memory hook = manifest.executionHooks[i];
-            HookLib.removeHook(module, hook.executionSelector, hook.entityId);
+            _removeHook(module, hook.executionSelector, hook.entityId);
         }
 
         // Remove function _group mappings
@@ -278,5 +277,18 @@ abstract contract AppAccountBase is IAppAccountBase, ExecutorBase {
             selector == IERC6900ExecutionModule.executionManifest.selector ||
             selector == IDiamondCut.diamondCut.selector ||
             selector == ITownsApp.requiredPermissions.selector;
+    }
+
+    function _executePreHooks(
+        address target,
+        bytes4 selector,
+        uint256 value,
+        bytes calldata data
+    ) internal virtual override {
+        _callPreHooks(target, selector, value, data);
+    }
+
+    function _executePostHooks(address target, bytes4 selector) internal virtual override {
+        _callPostHooks(target, selector);
     }
 }

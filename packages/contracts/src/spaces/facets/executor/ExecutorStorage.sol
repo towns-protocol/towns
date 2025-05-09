@@ -1,10 +1,17 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
+// interfaces
+
 // types
-import {Target, Group, Schedule} from "./IExecutor.sol";
+import {Time} from "@openzeppelin/contracts/utils/types/Time.sol";
 
 // libraries
+import {EnumerableSetLib} from "solady/utils/EnumerableSetLib.sol";
+
+// types
+import {Group, Schedule, Target} from "./IExecutor.sol";
+import {HookConfig} from "./hooks/IHookBase.sol";
 
 // contracts
 
@@ -22,6 +29,8 @@ library ExecutorStorage {
         mapping(bytes32 groupId => Group group) groups;
         // Schedule ID => Schedule
         mapping(bytes32 scheduleId => Schedule schedule) schedules;
+        // Hook Config ID => Hook Config
+        mapping(bytes32 configId => HookConfig config) hooks;
     }
 
     function getLayout() internal pure returns (Layout storage l) {
