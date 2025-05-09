@@ -37,7 +37,7 @@ contract AppAccount is IAppAccount, AppAccountBase, ReentrancyGuard, TokenOwnabl
         uint256 value,
         bytes calldata data
     ) external payable onlyAuthorized(target) nonReentrant returns (bytes memory result) {
-        (result, ) = _exec(target, value, data);
+        (result, ) = _execute(target, value, data);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
