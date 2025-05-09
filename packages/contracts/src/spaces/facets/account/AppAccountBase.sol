@@ -28,21 +28,6 @@ abstract contract AppAccountBase is IAppAccountBase, ExecutorBase {
     using CustomRevert for bytes4;
     using DependencyLib for MembershipStorage.Layout;
 
-    function _exec(
-        address target,
-        uint256 value,
-        bytes calldata data
-    ) internal returns (bytes memory result, uint32 nonce) {
-        if (target == address(0)) InvalidAppAddress.selector.revertWith();
-
-        MembershipStorage.Layout storage ms = MembershipStorage.layout();
-        if (IAppRegistry(ms.getDependency("AppRegistry")).isAppBanned(target)) {
-            InvalidAppId.selector.revertWith();
-        }
-
-        return _execute(target, value, data);
-    }
-
     function _installApp(
         bytes32 appId,
         uint32 grantDelay,
@@ -244,6 +229,10 @@ abstract contract AppAccountBase is IAppAccountBase, ExecutorBase {
         dependencies[2] = bytes32("ModuleRegistry");
         dependencies[3] = bytes32("AppRegistry");
         address[] memory deps = ms.getDependencies(dependencies);
+
+        if (IAppRegistry(deps[3]).isAppBanned(module)) {
+            UnauthorizedApp.selector.revertWith(module);
+        }
 
         // Unauthorized targets
         if (

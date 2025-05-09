@@ -14,7 +14,7 @@ import {Target, Group, Access, Schedule} from "./IExecutor.sol";
 
 // libraries
 import {ExecutorStorage} from "./ExecutorStorage.sol";
-import {GroupLib} from "./GroupLib.sol";
+import {GroupLib} from "./libraries/GroupLib.sol";
 import {HookLib} from "../hooks/HookLib.sol";
 import {OwnableStorage} from "@towns-protocol/diamond/src/facets/ownable/OwnableStorage.sol";
 import {EnumerableSetLib} from "solady/utils/EnumerableSetLib.sol";
