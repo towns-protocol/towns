@@ -35,7 +35,7 @@ export class AppRegistryService {
             signature,
             ...extraFinishAuthParams,
         })
-        const appRegistryRpcClient = await makeAppRegistryRpcClient(
+        const appRegistryRpcClient = makeAppRegistryRpcClient(
             serviceUrl,
             finishResponse.sessionToken,
             opts,
