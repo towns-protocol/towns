@@ -6,10 +6,10 @@ import {BaseSetup} from "test/spaces/BaseSetup.sol";
 
 //interfaces
 import {IOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
-import {IExecutorBase} from "src/spaces/facets/account/interfaces/IExecutor.sol";
+import {IExecutorBase} from "src/spaces/facets/account/executor/IExecutor.sol";
 import {IERC6900Account} from "@erc6900/reference-implementation/interfaces/IERC6900Account.sol";
-import {IAppAccountBase} from "src/spaces/facets/account/interfaces/IAppAccount.sol";
-import {IAppRegistryBase} from "src/apps/IAppRegistry.sol";
+import {IAppAccountBase} from "src/spaces/facets/account/IAppAccount.sol";
+import {IAppRegistryBase} from "src/apps/facets/registry/IAppRegistry.sol";
 
 // types
 import {ExecutionManifest} from "@erc6900/reference-implementation/interfaces/IERC6900ExecutionModule.sol";
@@ -17,7 +17,7 @@ import {Attestation} from "@ethereum-attestation-service/eas-contracts/Common.so
 
 //contracts
 import {AppAccount} from "src/spaces/facets/account/AppAccount.sol";
-import {AppRegistryFacet} from "src/apps/AppRegistryFacet.sol";
+import {AppRegistryFacet} from "src/apps/facets/registry/AppRegistryFacet.sol";
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
 // mocks

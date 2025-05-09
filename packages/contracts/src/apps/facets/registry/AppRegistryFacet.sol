@@ -5,9 +5,6 @@ pragma solidity ^0.8.23;
 import {IAppRegistry} from "./IAppRegistry.sol";
 import {ISchemaResolver} from "@ethereum-attestation-service/eas-contracts/resolver/ISchemaResolver.sol";
 
-// libraries
-import {SchemaLib} from "./libraries/SchemaLib.sol";
-
 // types
 import {Attestation} from "@ethereum-attestation-service/eas-contracts/Common.sol";
 
@@ -22,14 +19,13 @@ contract AppRegistryFacet is IAppRegistry, AppRegistryBase, OwnableBase, Reentra
         string calldata schema,
         ISchemaResolver resolver
     ) external onlyInitializing {
-        bytes32 schemaId = SchemaLib.registerSchema(schema, resolver, true);
-        _setSchema(schemaId);
+        __AppRegistry_init_unchained(schema, resolver);
     }
 
     /// @notice Get the schema structure used for registering modules
     /// @return The schema structure
     function getAppSchema() external view returns (string memory) {
-        return SchemaLib.getSchema(_getSchema()).schema;
+        return _getSchema(_getSchema()).schema;
     }
 
     /// @notice Get the active schema ID used for app attestations
@@ -94,7 +90,7 @@ contract AppRegistryFacet is IAppRegistry, AppRegistryBase, OwnableBase, Reentra
         ISchemaResolver resolver,
         bool revocable
     ) external onlyOwner returns (bytes32) {
-        bytes32 schemaId = SchemaLib.registerSchema(schema, resolver, revocable);
+        bytes32 schemaId = _registerSchema(schema, resolver, revocable);
         _setSchema(schemaId);
         return schemaId;
     }

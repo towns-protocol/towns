@@ -6,7 +6,6 @@ import {ISchemaRegistry} from "@ethereum-attestation-service/eas-contracts/ISche
 import {ISchemaResolver} from "@ethereum-attestation-service/eas-contracts/resolver/ISchemaResolver.sol";
 
 // libraries
-import {SchemaLib} from "../libraries/SchemaLib.sol";
 
 // types
 import {SchemaRecord} from "@ethereum-attestation-service/eas-contracts/ISchemaRegistry.sol";
@@ -14,11 +13,12 @@ import {SchemaRecord} from "@ethereum-attestation-service/eas-contracts/ISchemaR
 // contracts
 import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
 import {OwnableBase} from "@towns-protocol/diamond/src/facets/ownable/OwnableBase.sol";
+import {SchemaBase} from "./SchemaBase.sol";
 
 /// @title Schema Registry
 /// @notice A registry for schema records
 /// @dev This contract is used for implementation reference purposes
-contract SchemaRegistry is ISchemaRegistry, OwnableBase, Facet {
+contract SchemaRegistry is ISchemaRegistry, SchemaBase, OwnableBase, Facet {
     function __SchemaRegistry_init() external onlyInitializing {}
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -41,13 +41,13 @@ contract SchemaRegistry is ISchemaRegistry, OwnableBase, Facet {
         ISchemaResolver resolver,
         bool revocable
     ) external onlyOwner returns (bytes32) {
-        return SchemaLib.registerSchema(schema, resolver, revocable);
+        return _registerSchema(schema, resolver, revocable);
     }
 
     /// @notice Get the schema record for a given schemaId
     /// @param uid The schemaId of the schema
     /// @return The schema record
     function getSchema(bytes32 uid) external view returns (SchemaRecord memory) {
-        return SchemaLib.getSchema(uid);
+        return _getSchema(uid);
     }
 }

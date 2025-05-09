@@ -2,10 +2,10 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {IAttestationRegistry} from "../interfaces/IAttestationRegistry.sol";
+import {IAttestationRegistry} from "./IAttestationRegistry.sol";
 
 // libraries
-import {AttestationLib} from "../libraries/AttestationLib.sol";
+import {AttestationBase} from "./AttestationBase.sol";
 
 // contracts
 
@@ -16,26 +16,26 @@ import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
 /// @title Attestation Registry
 /// @notice A registry for attestation requests
 /// @dev This contract is used for implementation reference purposes
-contract AttestationRegistry is IAttestationRegistry, Facet {
+contract AttestationRegistry is IAttestationRegistry, AttestationBase, Facet {
     function __AttestationRegistry_init() external onlyInitializing {}
 
     /// @notice Create a new attestation
     /// @param request The attestation request data
     /// @return The UID of the created attestation
     function attest(AttestationRequest calldata request) external payable returns (bytes32) {
-        return AttestationLib.attest(msg.sender, msg.value, request).uid;
+        return _attest(msg.sender, msg.value, request).uid;
     }
 
     /// @notice Revoke an existing attestation
     /// @param request The revocation request data
     function revoke(RevocationRequest calldata request) external payable {
-        AttestationLib.revoke(request.schema, request.data, msg.sender, msg.value, true);
+        _revoke(request.schema, request.data, msg.sender, msg.value, true);
     }
 
     /// @notice Get an attestation by its UID
     /// @param uid The attestation UID
     /// @return The attestation data
     function getAttestation(bytes32 uid) external view returns (Attestation memory) {
-        return AttestationLib.getAttestation(uid);
+        return _getAttestation(uid);
     }
 }
