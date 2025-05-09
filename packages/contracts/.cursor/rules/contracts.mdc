@@ -163,7 +163,7 @@ A typical facet in this codebase is split into several files for clarity and upg
 - **Storage Library**: Handles diamond storage slot and layout.
 - **Base Contract**: Implements internal logic and interacts with storage.
 - **Facet Contract**: Exposes external/protected functions and inherits the base.
-- **Interfaces**: Define external/internal APIs.
+- **Interfaces**: Define external APIs.
 
 **Example: Votes Facet**
 
@@ -206,10 +206,11 @@ A typical facet in this codebase is split into several files for clarity and upg
     ```
 
 - **Guidelines**
-    - Use a storage library for all state.
+    - Use the diamond storage pattern to avoid collisions
+    - Split facet implementation into Storage Library, Base Contract, Facet Contract, and Interfaces
     - Place business logic in a base contract.
     - Expose only protected/external calls in the facet contract.
-    - Define interfaces for both internal and external APIs.
+    - Define interfaces for external APIs.
 
 ### Deployment Script Example: Using Libraries
 
