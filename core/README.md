@@ -136,6 +136,8 @@ Then generate the TLS certificates for the node:
 
     scripts/generate-ca.sh
 
+test
+
 # Running River Tests
 
 Run client tests:
