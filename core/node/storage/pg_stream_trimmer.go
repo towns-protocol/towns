@@ -206,8 +206,10 @@ func (t *streamTrimmer) scheduleTrimTask(streamId StreamId, startMiniblockNum in
 	// Submit the task to the worker pool
 	t.workerPool.Submit(func() {
 		if err := t.processTrimTask(task); err != nil {
-			t.log.Errorw("Failed to process trim task",
+			t.log.Errorw("Failed to process stream trimming task",
 				"stream", task.streamId,
+				"startMiniblockNum", task.startMiniblockNum,
+				"miniblocksToKeep", task.miniblocksToKeep,
 				"err", err,
 			)
 		}
