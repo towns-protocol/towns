@@ -98,7 +98,7 @@ type Config struct {
 	// Storage
 	Database          DatabaseConfig
 	StorageType       string
-	TrimmingBatchSize int
+	TrimmingBatchSize int64
 
 	// Blockchain configuration
 	BaseChain  ChainConfig

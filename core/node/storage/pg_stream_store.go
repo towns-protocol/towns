@@ -117,7 +117,7 @@ func NewPostgresStreamStore(
 	metrics infra.MetricsFactory,
 	ephemeralStreamTtl time.Duration,
 	streamMiniblocksToKeep crypto.StreamTrimmingMiniblocksToKeepSettings,
-	trimmingBatchSize int,
+	trimmingBatchSize int64,
 ) (store *PostgresStreamStore, err error) {
 	store = &PostgresStreamStore{
 		nodeUUID:   instanceId,
@@ -1625,7 +1625,7 @@ func (s *PostgresStreamStore) writeMiniblocksTx(
 
 		// Let the stream trimmer know that a new snapshot miniblock was created.
 		if s.streamTrimmer != nil {
-			s.streamTrimmer.onSnapshotMiniblockCreated(streamId)
+			s.streamTrimmer.tryScheduleTrimming(ctx, tx, streamId)
 		}
 	}
 

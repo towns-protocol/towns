@@ -15,11 +15,9 @@ import (
 
 // trimTask represents a task to trim miniblocks from a stream
 type trimTask struct {
-	streamId StreamId
-	// lastDeletedMiniblock is the last miniblock number that was deleted
-	// in the previous batch. This helps us continue from where we left off.
-	lastDeletedMiniblock int64
-	miniblocksToKeep     int64
+	streamId          StreamId
+	startMiniblockNum int64
+	miniblocksToKeep  int64
 }
 
 // streamTrimmer handles periodic trimming of streams
@@ -30,7 +28,7 @@ type streamTrimmer struct {
 	// miniblocksToKeep is the number of miniblocks to keep before the last snapshot.
 	// Defined per stream type.
 	miniblocksToKeep  crypto.StreamTrimmingMiniblocksToKeepSettings
-	trimmingBatchSize int
+	trimmingBatchSize int64
 
 	// Worker pool for trimming operations
 	workerPool *workerpool.WorkerPool
@@ -48,11 +46,11 @@ func newStreamTrimmer(
 	ctx context.Context,
 	store *PostgresStreamStore,
 	miniblocksToKeep crypto.StreamTrimmingMiniblocksToKeepSettings,
-	trimmingBatchSize int,
+	trimmingBatchSize int64,
 ) (*streamTrimmer, error) {
 	st := &streamTrimmer{
 		ctx:               ctx,
-		log:               logging.FromCtx(ctx),
+		log:               logging.FromCtx(ctx).Named("streamTrimmer"),
 		store:             store,
 		miniblocksToKeep:  miniblocksToKeep,
 		trimmingBatchSize: trimmingBatchSize,
@@ -111,12 +109,9 @@ func (t *streamTrimmer) processTrimTaskTx(
 	tx pgx.Tx,
 	task trimTask,
 ) error {
-	var lastDeletedMiniblock int64
-
-	// Delete the pending task mark in case of an error.
+	var scheduledNext bool
 	defer func() {
-		// If the task was already deleted, we don't need to do anything.
-		if lastDeletedMiniblock > 0 {
+		if scheduledNext {
 			return
 		}
 
@@ -133,21 +128,21 @@ func (t *streamTrimmer) processTrimTaskTx(
 	}
 
 	// Calculate the highest miniblock number to keep
-	miniblockToKeep := lastSnapshotMiniblock - task.miniblocksToKeep
-	if miniblockToKeep <= 0 {
+	lastMiniblockToKeep := lastSnapshotMiniblock - task.miniblocksToKeep
+	if lastMiniblockToKeep <= 0 {
 		return nil // Nothing to trim
 	}
 
-	// Calculate the range to delete starting from miniblock 0
-	var startSeq int64
-	if task.lastDeletedMiniblock == 0 {
-		startSeq = miniblockToKeep - int64(t.trimmingBatchSize)
-	} else {
-		startSeq = task.lastDeletedMiniblock - int64(t.trimmingBatchSize)
-		miniblockToKeep = task.lastDeletedMiniblock
+	// Just for safety reasons
+	if lastMiniblockToKeep <= task.startMiniblockNum {
+		return nil
 	}
-	if startSeq < 0 {
-		startSeq = 0
+
+	// Calculate the end sequence number for deletion.
+	// The given miniblock number will not be deleted.
+	exclusiveEndSeq := task.startMiniblockNum + t.trimmingBatchSize
+	if exclusiveEndSeq >= lastMiniblockToKeep {
+		exclusiveEndSeq = lastMiniblockToKeep
 	}
 
 	// Delete miniblocks in the calculated range
@@ -160,36 +155,39 @@ func (t *streamTrimmer) processTrimTaskTx(
 			task.streamId,
 		),
 		task.streamId,
-		startSeq,
-		miniblockToKeep,
+		task.startMiniblockNum,
+		exclusiveEndSeq,
 	)
 	if err != nil {
 		return err
 	}
 
 	// Check if any rows were deleted and track the last deleted miniblock
-	rows.Next()
-	if err = rows.Scan(&lastDeletedMiniblock); err != nil {
-		return err
+	var lastDeletedMiniblock int64 = -1
+	for rows.Next() {
+		if err = rows.Scan(&lastDeletedMiniblock); err != nil {
+			return err
+		}
 	}
 	rows.Close()
 
 	// Schedule the next trim task if there are more miniblocks to delete
-	if lastDeletedMiniblock > 0 {
+	if lastDeletedMiniblock >= 0 && lastDeletedMiniblock+1 < lastMiniblockToKeep {
 		// Delete the pending task mark
 		t.pendingTasksLock.Lock()
 		delete(t.pendingTasks, task.streamId)
 		t.pendingTasksLock.Unlock()
+		scheduledNext = true
 
 		// Schedule the next trim task
-		t.scheduleTrimTask(task.streamId, lastDeletedMiniblock, task.miniblocksToKeep)
+		t.scheduleTrimTask(task.streamId, lastDeletedMiniblock+1, task.miniblocksToKeep)
 	}
 
 	return nil
 }
 
 // scheduleTrimTask schedules a new trim task for a stream
-func (t *streamTrimmer) scheduleTrimTask(streamId StreamId, lastDeletedMiniblock int64, miniblocksToKeep int64) {
+func (t *streamTrimmer) scheduleTrimTask(streamId StreamId, startMiniblockNum int64, miniblocksToKeep int64) {
 	t.pendingTasksLock.Lock()
 	if _, exists := t.pendingTasks[streamId]; exists {
 		t.pendingTasksLock.Unlock()
@@ -200,9 +198,9 @@ func (t *streamTrimmer) scheduleTrimTask(streamId StreamId, lastDeletedMiniblock
 
 	// Create a new task
 	task := trimTask{
-		streamId:             streamId,
-		lastDeletedMiniblock: lastDeletedMiniblock,
-		miniblocksToKeep:     miniblocksToKeep,
+		streamId:          streamId,
+		startMiniblockNum: startMiniblockNum,
+		miniblocksToKeep:  miniblocksToKeep,
 	}
 
 	// Submit the task to the worker pool
@@ -216,12 +214,23 @@ func (t *streamTrimmer) scheduleTrimTask(streamId StreamId, lastDeletedMiniblock
 	})
 }
 
-// onSnapshotMiniblockWritten is called when a new miniblock with a snapshot is created
-func (t *streamTrimmer) onSnapshotMiniblockCreated(streamId StreamId) {
+// tryScheduleTrimming checks if the given stream type is trimmable and schedules trimming if it is.
+func (t *streamTrimmer) tryScheduleTrimming(
+	ctx context.Context,
+	tx pgx.Tx,
+	streamId StreamId,
+) {
 	// Schedule trimming for the given stream if the trimming for this type is enabled.
-	mbsToKeep := int64(t.miniblocksToKeep.ForType(streamId.Type()))
-	if mbsToKeep > 0 {
-		t.scheduleTrimTask(streamId, 0, mbsToKeep)
+	if mbsToKeep := int64(t.miniblocksToKeep.ForType(streamId.Type())); mbsToKeep > 0 {
+		// Get the miniblock number to start from
+		startMiniblockNum, err := t.getLowestStreamMiniblock(ctx, tx, streamId)
+		if err != nil {
+			t.log.Errorw("Failed to get lowest stream miniblock to schedule trimming, starting from miniblock 0",
+				"stream", streamId, "err", err)
+			startMiniblockNum = 0 // Just to explicitly reset if getLowestStreamMiniblock returns non 0 value
+		}
+
+		t.scheduleTrimTask(streamId, startMiniblockNum, mbsToKeep)
 	}
 }
 
@@ -240,23 +249,20 @@ func (t *streamTrimmer) scheduleStreamsTrimming(ctx context.Context) error {
 		"streamTrimmer.scheduleStreamsTrimming",
 		pgx.ReadWrite,
 		func(ctx context.Context, tx pgx.Tx) error {
-			rows, err := tx.Query(ctx, "SELECT stream_id FROM es WHERE ephemeral = false")
+			rows, err := tx.Query(ctx, "SELECT stream_id FROM es WHERE ephemeral = false FOR UPDATE SKIP LOCKED")
 			if err != nil {
 				return err
 			}
 
 			var stream string
-			_, err = pgx.ForEachRow(rows, []any{&stream}, func() error {
+			var snapshotMiniblock int64
+			_, err = pgx.ForEachRow(rows, []any{&stream, &snapshotMiniblock}, func() error {
 				streamId, err := StreamIdFromString(stream)
 				if err != nil {
 					return err
 				}
 
-				// Check if the stream type can be trimmed
-				mbsToKeep := int64(t.miniblocksToKeep.ForType(streamId.Type()))
-				if mbsToKeep > 0 {
-					t.scheduleTrimTask(streamId, 0, mbsToKeep)
-				}
+				t.tryScheduleTrimming(ctx, tx, streamId)
 
 				return nil
 			})
@@ -264,4 +270,21 @@ func (t *streamTrimmer) scheduleStreamsTrimming(ctx context.Context) error {
 		},
 		nil,
 	)
+}
+
+// getLowestStreamMiniblock retrieves the lowest miniblock number for a given stream
+func (t *streamTrimmer) getLowestStreamMiniblock(
+	ctx context.Context,
+	tx pgx.Tx,
+	streamId StreamId,
+) (int64, error) {
+	var lowestMiniblock int64
+	err := tx.QueryRow(ctx,
+		t.store.sqlForStream(
+			`SELECT MIN(seq_num) FROM {{miniblocks}} WHERE stream_id = $1`,
+			streamId,
+		),
+		streamId,
+	).Scan(&lowestMiniblock)
+	return lowestMiniblock, err
 }
