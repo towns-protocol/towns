@@ -9,7 +9,6 @@ import {AppAccountBase} from "./AppAccountBase.sol";
 
 // contracts
 import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
-import {TokenOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/token/TokenOwnableBase.sol";
 import {ReentrancyGuard} from "solady/utils/ReentrancyGuard.sol";
 
 /**
@@ -17,7 +16,7 @@ import {ReentrancyGuard} from "solady/utils/ReentrancyGuard.sol";
  * @notice A lightweight modular erc6900 semi-compatible account
  * @dev This account is used to execute transactions on behalf of a Space
  */
-contract AppAccount is IAppAccount, AppAccountBase, ReentrancyGuard, TokenOwnableBase, Facet {
+contract AppAccount is IAppAccount, AppAccountBase, ReentrancyGuard, Facet {
     /**
      * @notice Validates if the target address is allowed for delegate calls
      * @dev Prevents delegate calls to critical system contracts
