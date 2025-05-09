@@ -3,7 +3,8 @@
  */
 
 import { bin_fromHexString, bin_toHexString, dlog } from '@towns-protocol/dlog'
-import { getPublicKey, utils } from 'ethereum-cryptography/secp256k1'
+import { secp256k1 } from 'ethereum-cryptography/secp256k1'
+import { randomBytes } from '@noble/hashes/utils'
 import { readFileSync, writeFileSync } from 'fs'
 import { riverHash, riverRecoverPubKey, riverSign, riverVerifySignature } from '../../sign'
 
@@ -20,8 +21,8 @@ describe('crypto', () => {
 
     const generateData = async () => {
         const keys = Array.from({ length: 5 }, () => {
-            const pr = utils.randomPrivateKey()
-            const pu = getPublicKey(pr)
+            const pr = secp256k1.utils.randomPrivateKey()
+            const pu = secp256k1.getPublicKey(pr, false)
             return [pr, pu]
         })
         // Write CSV of keys to KEYS_FILE
@@ -46,7 +47,7 @@ describe('crypto', () => {
         }
         for (let len = 2; len <= 300; ++len) {
             for (let i = 0; i < 10; ++i) {
-                data.push(await genDataLine(utils.randomBytes(len)))
+                data.push(await genDataLine(randomBytes(len)))
             }
         }
 
@@ -68,7 +69,7 @@ describe('crypto', () => {
         test('keys', () => {
             log('Loaded keys, num =', keys.length)
             keys.forEach(([pr, pu]) => {
-                expect(getPublicKey(pr)).toEqual(pu)
+                expect(secp256k1.getPublicKey(pr, false)).toEqual(pu)
             })
             log('Keys OK')
         })

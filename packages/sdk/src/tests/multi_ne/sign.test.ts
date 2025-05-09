@@ -7,7 +7,7 @@ import { unpackEnvelope, makeEvent, publicKeyToAddress } from '../../sign'
 import { make_UserPayload_Inception } from '../../types'
 import { dlog, bin_fromHexString, bin_toHexString } from '@towns-protocol/dlog'
 import { makeUserStreamId, streamIdToBytes } from '../../id'
-import { getPublicKey } from 'ethereum-cryptography/secp256k1'
+import { secp256k1 } from 'ethereum-cryptography/secp256k1'
 import { ethers } from 'ethers'
 import { EncryptedData, PlainMessage, StreamEvent } from '@towns-protocol/proto'
 import { TEST_ENCRYPTED_MESSAGE_PROPS } from '../testUtils'
@@ -27,7 +27,7 @@ describe('sign', () => {
         '0123456789012345678901234567890123456789012345678901234567890125',
         'aaaa456789012345678901234567890123456789012345678901234567890125',
     ].map((key) => {
-        const pub = getPublicKey(key)
+        const pub = secp256k1.getPublicKey(key)
         return {
             privateKey: key,
             publicKey: pub,
