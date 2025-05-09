@@ -703,7 +703,8 @@ func (r *StreamView) ValidateNextEvent(
 				"prevMiniblockNum is greater than the last miniblock number in the stream",
 				"expected", lastBlock.Ref.Hash,
 				"expNum", lastBlock.Ref.Num,
-				"requestedBlock", parsedEvent.MiniblockRef,
+				"requestedBlockNum", parsedEvent.MiniblockRef.Num,
+				"requestedBlock", parsedEvent.MiniblockRef.Hash,
 				"streamId", r.streamId,
 				"event", parsedEvent.Hash,
 			).Func("ValidateNextEvent")
@@ -714,7 +715,8 @@ func (r *StreamView) ValidateNextEvent(
 				"prevMiniblockHash references block that is too old to be loaded",
 				"expected", lastBlock.Ref.Hash,
 				"expNum", lastBlock.Ref.Num,
-				"requestedBlock", parsedEvent.MiniblockRef,
+				"requestedBlockNum", parsedEvent.MiniblockRef.Num,
+				"requestedBlock", parsedEvent.MiniblockRef.Hash,
 				"streamId", r.streamId,
 				"event", parsedEvent.Hash,
 			).Func("ValidateNextEvent")
@@ -725,7 +727,8 @@ func (r *StreamView) ValidateNextEvent(
 			return RiverError(
 				Err_DATA_LOSS,
 				"prevMiniblockHash does not match the block number",
-				"requestedBlock", parsedEvent.MiniblockRef,
+				"requestedBlockNum", parsedEvent.MiniblockRef.Num,
+				"requestedBlock", parsedEvent.MiniblockRef.Hash,
 				"actualBlock", foundBlock.Ref,
 				"streamId", r.streamId,
 				"event", parsedEvent.Hash,
@@ -747,7 +750,8 @@ func (r *StreamView) ValidateNextEvent(
 			return RiverError(
 				Err_BAD_PREV_MINIBLOCK_HASH,
 				"prevMiniblockHash not found in recent blocks",
-				"requestedBlock", parsedEvent.MiniblockRef,
+				"requestedBlockNum", -1,
+				"requestedBlock", parsedEvent.MiniblockRef.Hash,
 				"expected", lastBlock.Ref.Hash,
 				"expNum", lastBlock.Ref.Num,
 				"streamId", r.streamId,
@@ -768,7 +772,8 @@ func (r *StreamView) ValidateNextEvent(
 		return RiverError(
 			Err_BAD_PREV_MINIBLOCK_HASH,
 			"referenced block is not recent",
-			"requestedBlock", parsedEvent.MiniblockRef,
+			"requestedBlockNum", parsedEvent.MiniblockRef.Num,
+			"requestedBlock", parsedEvent.MiniblockRef.Hash,
 			"expected", lastBlock.Ref.Hash,
 			"expNum", lastBlock.Ref.Num,
 			"streamId", r.streamId,

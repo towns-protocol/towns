@@ -108,7 +108,8 @@
             "towns-token/utility",
             "towns-token/economics",
             "towns-token/mechanics",
-            "towns-token/staking"
+            "towns-token/staking",
+            "towns-token/claiming"
           ]
         },
         {

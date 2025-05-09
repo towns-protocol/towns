@@ -796,7 +796,7 @@ export class SyncedStreamsLoop {
                         this.inFlightSyncCookies.delete(streamId)
                         if (
                             this.inFlightSyncCookies.size === 0 ||
-                            Date.now() - this.lastLogInflightAt > 3000
+                            Date.now() - this.lastLogInflightAt > 5000
                         ) {
                             if (
                                 this.inFlightSyncCookies.size === 0 &&
@@ -807,8 +807,7 @@ export class SyncedStreamsLoop {
                                 this.syncStartedAt = undefined
                             } else {
                                 this.log(
-                                    'onUpdate: remaining streams in flight',
-                                    this.inFlightSyncCookies.size,
+                                    `sync status inflight:${this.inFlightSyncCookies.size} enqueued:${this.pendingSyncCookies.length}`,
                                 )
                             }
                             this.lastLogInflightAt = Date.now()

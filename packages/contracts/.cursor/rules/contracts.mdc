@@ -106,6 +106,7 @@ Each contract follows the Diamond Pattern (EIP-2535) for upgradeability and impl
 6. Implement proper input validation
 7. Follow semantic versioning for contract upgrades
 8. Use calldata in external function argument definitions when possible
+9. Don't add unnecessary comments; use clear and descriptive function and variable names instead
 
 ### Storage Rules
 
@@ -147,11 +148,12 @@ Each contract follows the Diamond Pattern (EIP-2535) for upgradeability and impl
 
 ### Gas Optimization Rules
 
-1. Use proper data structures for gas efficiency
-2. Implement batch operations where possible
-3. Minimize storage operations
-4. Use unchecked blocks where safe
-5. Cache frequently accessed storage variables
+1. Use proper data structures for gas efficiency. Pack storage variables where possible.
+2. Implement batch operations where possible.
+3. Minimize storage reads and writes.
+4. Cache frequently accessed storage variables.
+5. Use unchecked blocks where safe.
+6. Don't assign `msg.sender` to a local variable. Use it directly in the code.
 
 ### Security Rules
 
