@@ -7,8 +7,6 @@ import {ISchemaResolver} from "@ethereum-attestation-service/eas-contracts/resol
 // libraries
 import {Attestation} from "@ethereum-attestation-service/eas-contracts/Common.sol";
 
-// contracts
-
 interface IAppRegistryBase {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           ERRORS                           */

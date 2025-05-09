@@ -295,7 +295,7 @@ library AttestationLib {
             attestation.uid = attestationUID;
             db.attestations[attestationUID] = attestation;
 
-            _checkRefUID(request.refUID, db.attestations[request.refUID]);
+            _checkRefUID(db.attestations[request.refUID], request.refUID);
 
             attestations[i] = attestation;
             values[i] = request.value;
@@ -337,57 +337,57 @@ library AttestationLib {
 
         for (uint256 i; i < len; ++i) {
             Attestation storage attestation = db.attestations[requests[i].uid];
-            if (attestation.uid == EMPTY_UID)
-                IAttestationRegistryBase.InvalidAttestation.selector.revertWith();
-            if (attestation.schema != schemaId) SchemaLib.InvalidSchema.selector.revertWith();
-            if (attestation.attester != revoker)
-                IAttestationRegistryBase.InvalidRevoker.selector.revertWith();
-            if (!attestation.revocable) IAttestationRegistryBase.Irrevocable.selector.revertWith();
-            if (attestation.revocationTime != 0)
-                IAttestationRegistryBase.InvalidRevocation.selector.revertWith();
-            attestation.revocationTime = uint64(block.timestamp);
+            _revokeAttestation(attestation, schemaId, revoker);
             attestations[i] = attestation;
             values[i] = requests[i].value;
-
-            emit IEAS.Revoked(
-                attestation.recipient,
-                attestation.attester,
-                attestation.uid,
-                attestation.schema
-            );
         }
 
         return _resolveAttestations(schema, attestations, values, true, availableValue, last);
     }
 
+    function _revokeAttestation(
+        Attestation storage self,
+        bytes32 schemaId,
+        address revoker
+    ) private {
+        if (self.uid == EMPTY_UID)
+            IAttestationRegistryBase.InvalidAttestation.selector.revertWith();
+        if (self.schema != schemaId) SchemaLib.InvalidSchema.selector.revertWith();
+        if (self.attester != revoker) IAttestationRegistryBase.InvalidRevoker.selector.revertWith();
+        if (!self.revocable) IAttestationRegistryBase.Irrevocable.selector.revertWith();
+        if (self.revocationTime != 0)
+            IAttestationRegistryBase.InvalidRevocation.selector.revertWith();
+
+        self.revocationTime = uint64(block.timestamp);
+
+        emit IEAS.Revoked(self.recipient, self.attester, self.uid, self.schema);
+    }
+
     /// @notice Validates that a referenced attestation UID exists
+    /// @param self The attestation to check
     /// @param refUID The reference UID to check
-    /// @param attestation The attestation to check
-    function _checkRefUID(bytes32 refUID, Attestation memory attestation) private pure {
-        if (refUID != EMPTY_UID && attestation.uid == EMPTY_UID) {
+    function _checkRefUID(Attestation storage self, bytes32 refUID) private view {
+        if (refUID != EMPTY_UID && self.uid == EMPTY_UID) {
             NotFound.selector.revertWith();
         }
     }
 
     /// @notice Generates a unique hash for an attestation
-    /// @param attestation The attestation to hash
+    /// @param self The attestation to hash
     /// @param bump Counter to handle hash collisions
     /// @return The unique hash for the attestation
-    function _hashAttestation(
-        Attestation memory attestation,
-        uint32 bump
-    ) private pure returns (bytes32) {
+    function _hashAttestation(Attestation memory self, uint32 bump) private pure returns (bytes32) {
         return
             keccak256(
                 abi.encodePacked(
-                    attestation.schema,
-                    attestation.recipient,
-                    attestation.attester,
-                    attestation.time,
-                    attestation.expirationTime,
-                    attestation.revocable,
-                    attestation.refUID,
-                    attestation.data,
+                    self.schema,
+                    self.recipient,
+                    self.attester,
+                    self.time,
+                    self.expirationTime,
+                    self.revocable,
+                    self.refUID,
+                    self.data,
                     bump
                 )
             );
@@ -399,12 +399,5 @@ library AttestationLib {
         if (value > 0) {
             SafeTransferLib.safeTransferETH(msg.sender, value);
         }
-    }
-
-    /// @notice Checks if an attestation exists and is valid
-    /// @param uid The unique identifier of the attestation to check
-    /// @return True if the attestation exists and is valid
-    function isValidAttestation(bytes32 uid) internal view returns (bool) {
-        return getAttestation(uid).uid != EMPTY_UID;
     }
 }
