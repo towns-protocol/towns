@@ -496,23 +496,5 @@ func (mr *ModifyRequest) Validate() error {
 		return RiverError(Err_INVALID_ARGUMENT, "Found the same stream in both add and remove lists")
 	}
 
-	// Prevent duplicates in the add list
-	if slices.ContainsFunc(mr.ToAdd, func(c *SyncCookie) bool {
-		return slices.ContainsFunc(mr.ToAdd, func(c1 *SyncCookie) bool {
-			return StreamId(c.GetStreamId()) == StreamId(c1.GetStreamId())
-		})
-	}) {
-		return RiverError(Err_ALREADY_EXISTS, "Duplicate stream in add operation")
-	}
-
-	// Prevent duplicates in the remove list
-	if slices.ContainsFunc(mr.ToRemove, func(s []byte) bool {
-		return slices.ContainsFunc(mr.ToRemove, func(s1 []byte) bool {
-			return StreamId(s) == StreamId(s1)
-		})
-	}) {
-		return RiverError(Err_ALREADY_EXISTS, "Duplicate stream in remove operation")
-	}
-
 	return nil
 }
