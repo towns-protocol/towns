@@ -2,7 +2,7 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {Group, Access, IExecutorBase} from "./IExecutor.sol";
+import {Group, Access, IExecutorBase} from "../IExecutor.sol";
 
 // contracts
 import {Time} from "@openzeppelin/contracts/utils/types/Time.sol";
@@ -25,14 +25,12 @@ library GroupLib {
     /// @param guardian The guardian role ID.
     function setGuardian(Group storage self, bytes32 guardian) internal {
         self.guardian = guardian;
-        // emit IExecutorBase.GroupGuardianSet(groupId, guardian);
     }
 
     /// @notice Sets the ETH allowance for a group.
     /// @param allowance The new ETH allowance.
     function setAllowance(Group storage self, uint256 allowance) internal {
         self.allowance = allowance;
-        // emit IExecutorBase.GroupMaxEthValueSet(groupId, allowance);
     }
 
     /// @notice Sets the grant delay for a group.

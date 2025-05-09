@@ -110,7 +110,9 @@ contract AppAccountTest is BaseSetup, IOwnableBase, IAppAccountBase {
         registry.adminBanApp(address(mockModule));
 
         vm.prank(client);
-        vm.expectRevert(IAppAccountBase.InvalidAppId.selector);
+        vm.expectRevert(
+            abi.encodeWithSelector(IAppAccountBase.UnauthorizedApp.selector, address(mockModule))
+        );
         appAccount.execute({
             target: address(mockModule),
             value: 0,
