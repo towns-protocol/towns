@@ -9,9 +9,6 @@ packages:
         interfaces:
             NodeRegistry:
             StreamRegistry:
-    github.com/towns-protocol/towns/core/node/crypto:
-        interfaces:
-            OnChainConfiguration:
     github.com/towns-protocol/towns/core/node/protocol/protocolconnect:
         interfaces:
             StreamServiceClient:

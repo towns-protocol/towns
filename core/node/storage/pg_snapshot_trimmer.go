@@ -3,7 +3,6 @@ package storage
 import (
 	"context"
 	"errors"
-	"fmt"
 	"sort"
 	"time"
 
@@ -104,7 +103,7 @@ func (st *snapshotTrimmer) trimStreams(ctx context.Context) {
 			"snapshotTrimmer.trimStreams",
 			pgx.ReadWrite,
 			func(ctx context.Context, tx pgx.Tx) error {
-				return st.trimStream(ctx, tx, streamId, lastMbNum, retentionInterval)
+				return st.trimStreamTx(ctx, tx, streamId, lastMbNum, retentionInterval)
 			},
 			nil,
 			"streamId", streamId,
@@ -122,7 +121,7 @@ func (st *snapshotTrimmer) trimStreams(ctx context.Context) {
 }
 
 // trimStream trims the snapshots for the given stream.
-func (st *snapshotTrimmer) trimStream(
+func (st *snapshotTrimmer) trimStreamTx(
 	ctx context.Context,
 	tx pgx.Tx,
 	streamId StreamId,
@@ -177,7 +176,6 @@ func (st *snapshotTrimmer) trimStream(
 		),
 		streamId, toNullify,
 	); err != nil {
-		fmt.Println(err)
 		return err
 	}
 
