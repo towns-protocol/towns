@@ -27,7 +27,7 @@ describe('sign', () => {
         '0123456789012345678901234567890123456789012345678901234567890125',
         'aaaa456789012345678901234567890123456789012345678901234567890125',
     ].map((key) => {
-        const pub = secp256k1.getPublicKey(key)
+        const pub = secp256k1.getPublicKey(key, false)
         return {
             privateKey: key,
             publicKey: pub,
