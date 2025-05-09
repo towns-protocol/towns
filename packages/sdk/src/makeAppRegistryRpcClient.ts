@@ -17,11 +17,11 @@ let nextRpcClientNum = 0
 
 export type AppRegistryRpcClient = Client<typeof AppRegistryService> & { url: string }
 
-export async function makeAppRegistryRpcClient(
+export function makeAppRegistryRpcClient(
     dest: string,
     sessionToken: string,
     opts?: RpcOptions,
-): Promise<AppRegistryRpcClient> {
+): AppRegistryRpcClient {
     const transportId = nextRpcClientNum++
     const retryParams = opts?.retryParams ?? DEFAULT_RETRY_PARAMS
     const url = randomUrlSelector(dest)
@@ -53,7 +53,7 @@ export async function makeAppRegistryRpcClient(
             useProtoFieldName: true,
         }
     }
-    const transport = await createHttp2ConnectTransport(options)
+    const transport = createHttp2ConnectTransport(options)
     const client: AppRegistryRpcClient = createClient(
         AppRegistryService,
         transport,

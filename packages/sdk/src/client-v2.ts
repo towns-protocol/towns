@@ -124,7 +124,7 @@ export const createTownsClient = async (
     const riverProvider = makeRiverProvider(config)
     const riverRegistryDapp = new RiverRegistry(config.river.chainConfig, riverProvider)
     const urls = await riverRegistryDapp.getOperationalNodeUrls()
-    const rpc = await makeStreamRpcClient(urls, () => riverRegistryDapp.getOperationalNodeUrls())
+    const rpc = makeStreamRpcClient(urls, () => riverRegistryDapp.getOperationalNodeUrls())
 
     const userId = userIdFromAddress(signer.creatorAddress)
 
