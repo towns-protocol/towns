@@ -3,7 +3,6 @@ pragma solidity ^0.8.23;
 
 // interfaces
 import {IDiamond} from "@towns-protocol/diamond/src/IDiamond.sol";
-import {IAppRegistry} from "src/apps/IAppRegistry.sol";
 
 // libraries
 

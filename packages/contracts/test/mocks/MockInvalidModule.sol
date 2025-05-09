@@ -7,7 +7,7 @@ import {IDiamond} from "@towns-protocol/diamond/src/Diamond.sol";
 // libraries
 import {ExecutionManifest, IERC6900ExecutionModule, ManifestExecutionFunction, ManifestExecutionHook} from "@erc6900/reference-implementation/interfaces/IERC6900ExecutionModule.sol";
 import {IERC6900Module} from "@erc6900/reference-implementation/interfaces/IERC6900Module.sol";
-import {ITownsApp} from "src/apps/interfaces/ITownsApp.sol";
+import {ITownsApp} from "src/apps/ITownsApp.sol";
 import {IERC173} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
 
 // contracts
